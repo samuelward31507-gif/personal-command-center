@@ -121,7 +121,7 @@ export async function PATCH(request: Request) {
     const user = await currentUser();
     if (!user) return jsonError("Unauthorized", 401);
     const body = await request.json();
-    if (typeof body.id !== "string" || !/^[0-9a-f-]{36}$/i.test(body.id)) return jsonError("Valid task id is required.", 400);
+    if (typeof body.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.id)) return jsonError("Valid task id is required.", 400);
     const sql = db();
     const existing = await sql`SELECT id, title, description, status, priority, due_at, contact_id, deal_id FROM public.tasks WHERE id = ${body.id}::uuid AND owner_id = ${user.id} LIMIT 1`;
     if (!existing.length) return jsonError("Task not found.", 404);
@@ -157,7 +157,7 @@ export async function DELETE(request: Request) {
     const user = await currentUser();
     if (!user) return jsonError("Unauthorized", 401);
     const body = await request.json();
-    if (typeof body.id !== "string" || !/^[0-9a-f-]{36}$/i.test(body.id)) return jsonError("Valid task id is required.", 400);
+    if (typeof body.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.id)) return jsonError("Valid task id is required.", 400);
     const sql = db();
     const rows = await sql`DELETE FROM public.tasks WHERE id = ${body.id}::uuid AND owner_id = ${user.id} RETURNING id`;
     if (!rows.length) return jsonError("Task not found.", 404);
