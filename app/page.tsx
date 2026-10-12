@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 function I({ children }: { children: string }) { return <span className="glyph" aria-hidden="true">{children}</span>; }
-const nav = [["⌂","Home","home"],["▦","My day","schedule"],["▤","Needs you","needs-you"],["↗","Contacts & growth","growth"],["♧","AI workforce","workforce"],["▱","Projects","projects"],["✳","Intelligence","intelligence"]];
+const nav = [["⌂","Home","home"],["▦","My day","schedule"],["▤","Needs you","needs-you"],["↗","Contacts & growth","growth"],["✓","Tasks","tasks"],["♧","AI workforce","workforce"],["▱","Projects","projects"],["✳","Intelligence","intelligence"]];
 const viewDetails: Record<string, { title: string; description: string; items: string[] }> = {
  "needs-you": { title: "Needs you", description: "A focused queue for decisions, approvals, blockers, and follow-ups.", items: ["Review urgent follow-ups", "Resolve blocked work", "Make pending decisions"] },
  growth: { title: "Contacts & growth", description: "Your personal CRM: people, prospects, relationships, conversations, and next actions.", items: ["Contacts and companies", "Outreach and conversations", "Follow-up reminders"] },
@@ -82,7 +82,7 @@ export default function Home() {
   } catch(e) { setPlanMessage(e instanceof Error?e.message:"Could not save your daily plan."); }
   finally { setPlanSaving(false); }
  };
- const navigate = (view: string) => { if (view === "growth") { window.location.assign("/crm"); return; } setActiveView(view); };
+ const navigate = (view: string) => { if (view === "growth") { window.location.assign("/crm"); return; } if (view === "tasks") { window.location.assign("/crm/tasks"); return; } if (view === "projects") { window.location.assign("/crm/projects"); return; } setActiveView(view); };
  const completed = (id: string) => done.includes(id);
  const toggle = (id: string) => setDone(old => old.includes(id) ? old.filter(x=>x!==id) : [...old,id]);
  return <main className="app-shell" id="home">
