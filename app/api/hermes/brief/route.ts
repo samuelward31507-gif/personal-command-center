@@ -33,6 +33,7 @@ export async function GET(request: Request) {
     const sql = neon(process.env.DATABASE_URL);
     const [
       contactStats,
+      workStats,
       dueContacts,
       openDeals,
       dueTasks,
@@ -46,6 +47,13 @@ export async function GET(request: Request) {
           COUNT(*) FILTER (WHERE status IN ('lead','prospect'))::int AS leads,
           COUNT(*) FILTER (WHERE follow_up_at <= CURRENT_DATE)::int AS due_follow_ups
         FROM public.contacts WHERE owner_id = ${ownerId}`,
+      sql`SELECT
+          (SELECT COUNT(*)::int FROM public.deals WHERE owner_id = ${ownerId} AND stage NOT IN ('won','lost')) AS open_deals,
+          (SELECT COUNT(*)::int FROM public.tasks WHERE owner_id = ${ownerId} AND status NOT IN ('done','cancelled') AND (status = 'blocked' OR due_at <= now())) AS due_or_blocked_tasks,
+          (SELECT COUNT(*)::int FROM public.projects WHERE owner_id = ${ownerId} AND status NOT IN ('completed','cancelled') AND (status = 'blocked' OR target_date < CURRENT_DATE)) AS blocked_or_overdue_projects,
+          (SELECT COUNT(*)::int FROM public.approval_requests WHERE owner_id = ${ownerId} AND status = 'pending') AS pending_approvals,
+          (SELECT COUNT(*)::int FROM public.agent_runs WHERE owner_id = ${ownerId} AND status = 'failed') AS failed_agent_runs,
+          (SELECT COUNT(*)::int FROM public.client_success WHERE owner_id = ${ownerId} AND (status = 'at_risk' OR health_score <= 2 OR (renewal_date IS NOT NULL AND renewal_date <= CURRENT_DATE + 30 AND status NOT IN ('paused','churned')))) AS at_risk_clients`,
       sql`SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name,
           c.company, c.email, c.phone, c.status, c.follow_up_at
         FROM public.contacts c
@@ -90,13 +98,14 @@ export async function GET(request: Request) {
         ORDER BY CASE WHEN status = 'at_risk' OR health_score <= 2 THEN 0 ELSE 1 END,
           renewal_date ASC NULLS LAST LIMIT 25`,
       sql`SELECT
-          COALESCE(SUM(amount) FILTER (WHERE status = 'paid' AND paid_at >= date_trunc('month', CURRENT_DATE)::date), 0) AS collected_this_month,
+          COALESCE(SUM(amount) FILTER (WHERE status = 'paid' AND paid_at >= date_trunc('month', CURRENT_DATE)::date AND paid_at < (date_trunc('month', CURRENT_DATE) + interval '1 month')::date), 0) AS collected_this_month,
           COALESCE(SUM(amount) FILTER (WHERE status IN ('expected','overdue')), 0) AS expected_revenue,
           COALESCE(SUM(amount) FILTER (WHERE status = 'overdue' OR (status = 'expected' AND due_date < CURRENT_DATE)), 0) AS overdue_revenue
         FROM public.revenue_entries WHERE owner_id = ${ownerId}`,
     ]);
 
     const contacts = contactStats[0] as Record<string, unknown>;
+    const stats = workStats[0] as Record<string, unknown>;
     const money = finance[0] as Record<string, unknown>;
     return Response.json({
       generatedAt: new Date().toISOString(),
@@ -105,12 +114,12 @@ export async function GET(request: Request) {
         contacts: Number(contacts?.total || 0),
         leads: Number(contacts?.leads || 0),
         dueFollowUps: Number(contacts?.due_follow_ups || 0),
-        openDeals: openDeals.length,
-        dueOrBlockedTasks: dueTasks.length,
-        blockedOrOverdueProjects: attentionProjects.length,
-        pendingApprovals: pendingApprovals.length,
-        failedAgentRuns: failedRuns.length,
-        atRiskClients: atRiskClients.length,
+        openDeals: Number(stats?.open_deals || 0),
+        dueOrBlockedTasks: Number(stats?.due_or_blocked_tasks || 0),
+        blockedOrOverdueProjects: Number(stats?.blocked_or_overdue_projects || 0),
+        pendingApprovals: Number(stats?.pending_approvals || 0),
+        failedAgentRuns: Number(stats?.failed_agent_runs || 0),
+        atRiskClients: Number(stats?.at_risk_clients || 0),
         collectedThisMonth: Number(money?.collected_this_month || 0),
         expectedRevenue: Number(money?.expected_revenue || 0),
         overdueRevenue: Number(money?.overdue_revenue || 0),
