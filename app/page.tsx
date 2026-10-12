@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function I({ children }: { children: string }) { return <span className="glyph" aria-hidden="true">{children}</span>; }
 const nav = [["⌂","Home","home"],["▦","My day","schedule"],["▤","Needs you","needs-you"],["↗","Contacts & growth","growth"],["♧","AI workforce","workforce"],["▱","Projects","projects"],["✳","Intelligence","intelligence"]];
