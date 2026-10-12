@@ -29,7 +29,7 @@ export default function Home() {
  const [activeView, setActiveView] = useState("home");
  const [done, setDone] = useState<string[]>([]);
  const [dailyNotes, setDailyNotes] = useState("");
- const navigate = (view: string) => setActiveView(view);
+ const navigate = (view: string) => { if (view === "growth") { window.location.assign("/crm"); return; } setActiveView(view); };
  const completed = (id: string) => done.includes(id);
  const toggle = (id: string) => setDone(old => old.includes(id) ? old.filter(x=>x!==id) : [...old,id]);
  return <main className="app-shell" id="home">
