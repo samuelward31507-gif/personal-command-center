@@ -5,7 +5,7 @@ type Contact={id:string;name:string;company:string;role:string;email:string;phon
 type Activity={id:string;contact_id:string;channel:"call"|"text"|"note";action:string;outcome:string;notes:string;sequence_step:number|null;occurred_at:string};
 const KEY="cinder.crm.contacts.v1";
 const blank={name:"",company:"",role:"",email:"",phone:"",status:"Lead" as Contact["status"],source:"",lastContact:"",nextFollowUp:"",notes:""};
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 const dateLabel=(v:string)=>v?new Date(v+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"—";
 const initials=(v:string)=>v.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase();
 
