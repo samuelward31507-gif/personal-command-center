@@ -1,69 +1,27 @@
-import Image from "next/image";
-
+function I({ children }: { children: string }) { return <span className="glyph" aria-hidden="true">{children}</span>; }
+const nav = [["⌂","Home","#home"],["▤","Needs you","#needs-you"],["↗","Sales & growth","#growth"],["♧","AI workforce","#workforce"],["▱","Projects","#projects"],["✳","Intelligence","#intelligence"]];
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+ return <main className="app-shell" id="home">
+  <aside className="sidebar">
+   <a className="brand" href="#home"><span className="brand-mark"><span/></span><span className="brand-name">hermes<span className="brand-period">.</span></span><span className="workspace-chevron">⌄</span></a>
+   <a className="workspace-switcher" href="#home"><span className="workspace-avatar">F</span><span className="workspace-copy"><strong>Founder workspace</strong><small>Personal operating system</small></span></a>
+   <div className="sidebar-search"><I>⌕</I><span>Search workspace</span><kbd>⌘ K</kbd></div><div className="nav-section-label">WORKSPACE</div>
+   <nav className="primary-nav" aria-label="Workspace">{nav.map(([icon,label,href],i)=><a key={label} className={i===0?"nav-item active":"nav-item"} href={href}><I>{icon}</I><span>{label}</span>{i===1&&<span className="nav-count">—</span>}</a>)}</nav>
+   <div className="sidebar-divider"/><div className="nav-section-label">YOUR SPACE</div><nav className="primary-nav"><a className="nav-item" href="#strategy"><I>✧</I><span>Strategy & memory</span></a><a className="nav-item" href="#settings"><I>⚙</I><span>Settings</span></a></nav>
+   <div className="sidebar-bottom"><div className="connection-card"><span className="connection-dot"/><div><strong>Workspace shell</strong><small>Live systems not connected</small></div></div><div className="profile-row"><span className="profile-avatar">F</span><span className="profile-copy"><strong>Founder</strong><small>Personal workspace</small></span></div></div>
+  </aside>
+  <section className="main-panel"><header className="topbar"><div className="breadcrumbs"><span>Workspace</span><span className="breadcrumb-slash">/</span><strong>Home</strong></div><div className="topbar-actions"><span className="topbar-status"><span className="status-ring"/> Personal command center</span><button className="quiet-button" disabled title="Hermes chat connection is not implemented yet">✧ Ask Hermes <span className="coming-soon">SOON</span></button></div></header>
+   <div className="page-content"><div className="welcome-row"><div><div className="eyebrow"><span className="eyebrow-line"/> FOUNDER WORKSPACE</div><h1>Your command center<span className="heading-period">.</span></h1><p className="page-subtitle">One place to see what matters, make decisions, and move the business forward.</p></div><div className="date-chip">◷ &nbsp;Your day, at a glance</div></div>
+    <section className="attention-banner" id="needs-you"><div className="attention-icon"><I>▤</I></div><div className="attention-copy"><div className="section-kicker">NEEDS YOUR ATTENTION</div><h2>Your priorities will live here.</h2><p>Decisions, approvals, blocked work, and important follow-ups—surfaced in one place, not buried in chat.</p></div><span className="banner-status"><span className="status-dot amber"/> Awaiting live connection</span></section>
+    <div className="section-heading-row"><div><h2>Business at a glance</h2><p>The signal, without the noise.</p></div><span className="section-note">LIVE DATA NOT CONNECTED</span></div>
+    <div className="overview-grid">
+     <article className="overview-card" id="growth"><div className="card-topline"><span className="card-icon purple"><I>↗</I></span><span className="card-arrow">↗</span></div><h3>Sales & growth</h3><p>Prospects, conversations, pipeline, and the next best move to create revenue.</p><div className="card-footer"><span className="mini-status"/> Connect sales pipeline <span>→</span></div></article>
+     <article className="overview-card" id="workforce"><div className="card-topline"><span className="card-icon green"><I>♧</I></span><span className="card-arrow">↗</span></div><h3>AI workforce</h3><p>See what agents are doing, what they found, and where they need approval.</p><div className="card-footer"><span className="mini-status"/> Connect Hermes activity <span>→</span></div></article>
+     <article className="overview-card" id="projects"><div className="card-topline"><span className="card-icon blue"><I>▱</I></span><span className="card-arrow">↗</span></div><h3>Projects & execution</h3><p>Active projects, commitments, blockers, and next actions in one view.</p><div className="card-footer"><span className="mini-status"/> Connect project records <span>→</span></div></article>
+     <article className="overview-card" id="intelligence"><div className="card-topline"><span className="card-icon orange"><I>✳</I></span><span className="card-arrow">↗</span></div><h3>Business intelligence</h3><p>Turn research and market signals into decisions you can act on.</p><div className="card-footer"><span className="mini-status"/> Connect intelligence feed <span>→</span></div></article>
     </div>
-  );
+    <div className="lower-grid"><section className="surface-panel focus-panel" id="strategy"><div className="panel-heading"><div><h2>Founder focus</h2><p>The order of operations</p></div><span className="small-icon-button">···</span></div><div className="focus-list"><div className="focus-row"><span className="focus-number">01</span><span className="focus-label">Revenue</span><span className="focus-detail">Create cash flow</span><span className="focus-priority">Primary</span></div><div className="focus-row"><span className="focus-number">02</span><span className="focus-label">Customer acquisition</span><span className="focus-detail">Build the pipeline</span></div><div className="focus-row"><span className="focus-number">03</span><span className="focus-label">Important opportunities</span><span className="focus-detail">Act on leverage</span></div><div className="focus-row"><span className="focus-number">04</span><span className="focus-label">High-value projects</span><span className="focus-detail">Move key work forward</span></div><div className="focus-row muted-row"><span className="focus-number">05</span><span className="focus-label">Product & automation</span><span className="focus-detail">Improve the machine</span></div></div><a className="panel-link" href="#strategy">View operating priorities <span>→</span></a></section>
+     <section className="surface-panel activity-panel"><div className="panel-heading"><div><h2>Operating pulse</h2><p>A clear view of what is moving</p></div><span className="pulse-indicator"><span/> SETUP</span></div><div className="empty-state"><div className="empty-graphic"><span className="empty-orbit orbit-one"/><span className="empty-orbit orbit-two"/><span className="empty-core">✧</span></div><h3>Your business, connected.</h3><p>Once connected, this space will show activity, wins, risks, and what changed since your last check-in.</p><span className="setup-note">✓ &nbsp;Interface foundation in place</span></div></section></div>
+    <footer className="page-footer"><span><span className="footer-mark"/> HERMES PERSONAL OS</span><span>Built for clarity, focus, and follow-through.</span></footer>
+   </div></section></main>;
 }
