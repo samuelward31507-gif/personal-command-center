@@ -24,7 +24,7 @@ function amount(value: unknown) {
   if (value !== undefined && value !== null && typeof value !== "number" && typeof value !== "string") return null;
   if (typeof value === "string" && value.trim() === "") return null;
   const n = Number(value ?? 0);
-  return Number.isFinite(n) && n >= 0 ? Math.min(n, 9999999999.99) : null;
+  return Number.isFinite(n) && n >= 0 && n <= 9999999999.99 ? n : null;
 }
 function validDate(value: unknown): string | null | false {
   if (value === undefined || value === null || value === "") return null;
@@ -74,6 +74,7 @@ export async function POST(request: Request) {
     const stage = stages.has(body.stage) ? body.stage : "new";
     const serviceType = services.has(body.serviceType) ? body.serviceType : "custom_ai_implementation";
     const contactId = typeof body.contactId === "string" && body.contactId ? body.contactId : null;
+    if (contactId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(contactId)) return jsonError("Invalid contact id.", 400);
     const sql = db();
     if (contactId) {
       const owned = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
@@ -98,7 +99,7 @@ export async function PATCH(request: Request) {
     const user = await currentUser();
     if (!user) return jsonError("Unauthorized", 401);
     const body = await request.json();
-    if (typeof body.id !== "string" || !body.id) return jsonError("Deal id is required.", 400);
+    if (typeof body.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.id)) return jsonError("Valid deal id is required.", 400);
     const title = typeof body.title === "string" ? body.title.trim() : "";
     if (!title || title.length > 240) return jsonError("Deal title is required (max 240 characters).", 400);
     const setupFee = amount(body.setupFee);
