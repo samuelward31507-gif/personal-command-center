@@ -108,6 +108,7 @@ export async function PATCH(request: Request) {
     if (!stages.has(body.stage)) return jsonError("Invalid deal stage.", 400);
     if (!services.has(body.serviceType)) return jsonError("Invalid service type.", 400);
     const contactId = typeof body.contactId === "string" && body.contactId ? body.contactId : null;
+    if (contactId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(contactId)) return jsonError("Invalid contact id.", 400);
     const sql = db();
     if (contactId) {
       const owned = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
@@ -135,7 +136,7 @@ export async function DELETE(request: Request) {
     const user = await currentUser();
     if (!user) return jsonError("Unauthorized", 401);
     const body = await request.json();
-    if (typeof body.id !== "string" || !body.id) return jsonError("Deal id is required.", 400);
+    if (typeof body.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.id)) return jsonError("Valid deal id is required.", 400);
     const sql = db();
     const rows = await sql`DELETE FROM public.deals WHERE id = ${body.id}::uuid AND owner_id = ${user.id} RETURNING id`;
     if (!rows.length) return jsonError("Deal not found.", 404);
