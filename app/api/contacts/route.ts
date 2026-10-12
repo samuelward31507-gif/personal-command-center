@@ -74,8 +74,6 @@ export async function POST(request: Request) {
     if (name.length > 200) return jsonError("Contact name is too long.", 400);
     const followUp = validFollowUp(body.nextFollowUp);
     if (followUp === false) return jsonError("Follow-up date must be a valid calendar date.", 400);
-    const followUp = validFollowUp(body.nextFollowUp);
-    if (followUp === false) return jsonError("Follow-up date must be a valid calendar date.", 400);
     const status = allowedStatuses.has(body.status) ? String(body.status).toLowerCase() : "lead";
     const [firstName, ...lastParts] = name.split(/\s+/);
     const lastName = lastParts.join(" ");
@@ -87,7 +85,7 @@ export async function POST(request: Request) {
         (${user.id}, ${firstName}, ${lastName}, ${String(body.company ?? "").slice(0, 300)},
          ${String(body.role ?? "").slice(0, 200)}, ${String(body.email ?? "").slice(0, 320)},
          ${String(body.phone ?? "").slice(0, 100)}, ${status}, ${String(body.source ?? "").slice(0, 200)},
-         ${String(body.notes ?? "").slice(0, 10000)}, ${body.nextFollowUp || null})
+         ${String(body.notes ?? "").slice(0, 10000)}, ${followUp})
       RETURNING id
     `;
     return Response.json({ id: rows[0]?.id }, { status: 201 });
@@ -105,6 +103,8 @@ export async function PATCH(request: Request) {
     if (typeof body.id !== "string" || !body.id) return jsonError("Contact id is required.", 400);
     const name = typeof body.name === "string" ? body.name.trim() : "";
     if (!name) return jsonError("Contact name is required.", 400);
+    const followUp = validFollowUp(body.nextFollowUp);
+    if (followUp === false) return jsonError("Follow-up date must be a valid calendar date.", 400);
     const status = allowedStatuses.has(body.status) ? String(body.status).toLowerCase() : "lead";
     const [firstName, ...lastParts] = name.split(/\s+/);
     const sql = db();
