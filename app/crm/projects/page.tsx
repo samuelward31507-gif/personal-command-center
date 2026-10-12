@@ -1,5 +1,6 @@
-import Link from "next/link";
 "use client";
+
+import Link from "next/link";
 import { useCallback,useEffect,useMemo,useState } from "react";
 import "./projects.css";
 type Status="planning"|"onboarding"|"in_progress"|"blocked"|"review"|"completed"|"on_hold"|"cancelled";
