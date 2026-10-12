@@ -1,5 +1,6 @@
-import Link from "next/link";
 "use client";
+
+import Link from "next/link";
 import {useEffect,useState} from "react";
 export default function WorkforcePage(){
  const [d,S]=useState<any>({agents:[],runs:[],approvals:[],memory:[]}),[tab,T]=useState("agents"),[form,F]=useState(false),[error,E]=useState(""),[name,N]=useState(""),[specialty,SP]=useState("research"),[title,TI]=useState(""),[detail,DE]=useState(""),[status,ST]=useState("planned"),[busy,B]=useState(false);
