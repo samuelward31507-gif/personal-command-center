@@ -1,0 +1,27 @@
+import { neon } from "@neondatabase/serverless";
+import { auth } from "@/lib/auth/server";
+export const runtime="nodejs";
+export const dynamic="force-dynamic";
+const statuses=new Set(["todo","in_progress","blocked","done","cancelled"]);
+function db(){if(!process.env.DATABASE_URL)throw new Error("DATABASE_URL is not configured.");return neon(process.env.DATABASE_URL);}
+async function currentUser(){const r=await auth.getSession();return r?.data?.session&&r?.data?.user?.id?{id:String(r.data.user.id)}:null;}
+function err(message:string,status:number){return Response.json({error:message},{status});}
+function uuid(v:unknown):string|null|false{if(v===null||v===undefined||v==="")return null;return typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v)?v:false;}
+function due(v:unknown):string|null|false{if(v===null||v===undefined||v==="")return null;if(typeof v!=="string"||Number.isNaN(Date.parse(v)))return false;return v;}
+function clean(v:unknown,n:number){return typeof v==="string"?v.trim().slice(0,n):"";}
+export async function GET(request:Request){
+ try{const user=await currentUser();if(!user)return err("Unauthorized",401);const url=new URL(request.url),projectId=uuid(url.searchParams.get("projectId"));if(!projectId)return err("Valid projectId is required.",400);const sql=db();const rows=await sql`SELECT m.id,m.project_id,m.title,m.description,m.status,m.due_at,m.sort_order,m.completed_at,m.created_at,m.updated_at FROM public.project_milestones m JOIN public.projects p ON p.id=m.project_id AND p.owner_id=m.owner_id WHERE m.owner_id=${user.id} AND m.project_id=${projectId}::uuid ORDER BY m.sort_order,m.created_at`;return Response.json({milestones:rows.map((r:Record<string,unknown>)=>({id:r.id,projectId:r.project_id,title:r.title,description:r.description,status:r.status,dueAt:r.due_at,sortOrder:r.sort_order,completedAt:r.completed_at,createdAt:r.created_at,updatedAt:r.updated_at}))});}
+ catch(e){console.error("Milestones GET failed",e);return err("Unable to load milestones. The project database migration may still be pending.",500);}
+}
+export async function POST(request:Request){
+ try{const user=await currentUser();if(!user)return err("Unauthorized",401);const b=await request.json(),projectId=uuid(b.projectId),title=clean(b.title,240),dueAt=due(b.dueAt);if(!projectId)return err("Valid projectId is required.",400);if(!title)return err("Milestone title is required.",400);if(dueAt===false)return err("Invalid due date.",400);const status=statuses.has(b.status)?b.status:"todo";const sortOrder=Number.isInteger(b.sortOrder)?Math.max(0,Math.min(100000,b.sortOrder)):0;const sql=db();const project=await sql`SELECT id FROM public.projects WHERE id=${projectId}::uuid AND owner_id=${user.id} LIMIT 1`;if(!project.length)return err("Project not found.",404);const rows=await sql`INSERT INTO public.project_milestones(owner_id,project_id,title,description,status,due_at,sort_order,completed_at) VALUES(${user.id},${projectId}::uuid,${title},${clean(b.description,5000)},${status},${dueAt}::timestamptz,${sortOrder},CASE WHEN ${status}='done' THEN now() ELSE NULL END) RETURNING id`;return Response.json({id:rows[0]?.id},{status:201});}
+ catch(e){console.error("Milestones POST failed",e);return err("Unable to create milestone.",500);}
+}
+export async function PATCH(request:Request){
+ try{const user=await currentUser();if(!user)return err("Unauthorized",401);const b=await request.json(),id=uuid(b.id);if(!id)return err("Valid milestone id is required.",400);const sql=db();const found=await sql`SELECT m.* FROM public.project_milestones m JOIN public.projects p ON p.id=m.project_id AND p.owner_id=m.owner_id WHERE m.id=${id}::uuid AND m.owner_id=${user.id} LIMIT 1`;if(!found.length)return err("Milestone not found.",404);const old=found[0] as Record<string,unknown>,title=b.title===undefined?String(old.title):clean(b.title,240);if(!title)return err("Milestone title is required.",400);const status=b.status===undefined?String(old.status):b.status;if(!statuses.has(status))return err("Invalid milestone status.",400);const dueAt=b.dueAt===undefined?(old.due_at?new Date(String(old.due_at)).toISOString():null):due(b.dueAt);if(dueAt===false)return err("Invalid due date.",400);const description=b.description===undefined?String(old.description):clean(b.description,5000),sortOrder=b.sortOrder===undefined?Number(old.sort_order):(Number.isInteger(b.sortOrder)?Math.max(0,Math.min(100000,b.sortOrder)):null);if(sortOrder===null)return err("Invalid sort order.",400);await sql`UPDATE public.project_milestones SET title=${title},description=${description},status=${status},due_at=${dueAt}::timestamptz,sort_order=${sortOrder},completed_at=CASE WHEN ${status}='done' THEN COALESCE(completed_at,now()) ELSE NULL END,updated_at=now() WHERE id=${id}::uuid AND owner_id=${user.id}`;return Response.json({ok:true});}
+ catch(e){console.error("Milestones PATCH failed",e);return err("Unable to update milestone.",500);}
+}
+export async function DELETE(request:Request){
+ try{const user=await currentUser();if(!user)return err("Unauthorized",401);const b=await request.json(),id=uuid(b.id);if(!id)return err("Valid milestone id is required.",400);const sql=db();const rows=await sql`DELETE FROM public.project_milestones WHERE id=${id}::uuid AND owner_id=${user.id} RETURNING id`;if(!rows.length)return err("Milestone not found.",404);return Response.json({ok:true});}
+ catch(e){console.error("Milestones DELETE failed",e);return err("Unable to delete milestone.",500);}
+}
