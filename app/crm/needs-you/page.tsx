@@ -1,5 +1,6 @@
-import Link from "next/link";
 "use client";
+
+import Link from "next/link";
 import {useCallback,useEffect,useMemo,useState} from "react";
 type Item={id:string;kind:"task"|"outreach"|"followup"|"project"|"deal"|"support"|"approval"|"renewal"|"agent"|"client";title:string;detail:string;due:string|null;priority:number;href:string;action:string};
 const dateLabel=(v:string|null)=>{if(!v)return "No due date";const dateOnly=/^\d{4}-\d{2}-\d{2}$/.test(v);const parsed=dateOnly?new Date(v+"T12:00:00"):new Date(v);return Number.isNaN(parsed.getTime())?"Date unavailable":parsed.toLocaleString(undefined,dateOnly?{month:"short",day:"numeric"}:{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});};
