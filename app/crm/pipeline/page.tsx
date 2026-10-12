@@ -36,7 +36,7 @@ export default function PipelinePage(){
     projectId=typeof data.id==="string"?data.id:"";
     if(!projectId)throw new Error("Project was created, but its ID was not returned. Open Projects and check the record before retrying.");
    }
-   const checklist=[["Kickoff and confirm scope","Confirm goals, stakeholders, communication channel, and definition of success."],["Collect access and requirements","Gather required accounts, phone numbers, integrations, FAQs, and permissions."],["Configure the agreed solution","Build the service and connect the required systems."],["Test end-to-end scenarios","Run realistic test cases and resolve launch-blocking issues."],["Client approval and launch","Get client sign-off, confirm launch timing, and document support expectations."]];
+   const checklist:[string,string][]=[["Kickoff and confirm scope","Confirm goals, stakeholders, communication channel, and definition of success."],["Collect access and requirements","Gather required accounts, phone numbers, integrations, FAQs, and permissions."],["Configure the agreed solution","Build the service and connect the required systems."],["Test end-to-end scenarios","Run realistic test cases and resolve launch-blocking issues."],["Client approval and launch","Get client sign-off, confirm launch timing, and document support expectations."]];
    const existingResponse=await fetch("/api/project-milestones?projectId="+encodeURIComponent(projectId),{cache:"no-store"});
    const existingData=await existingResponse.json().catch(()=>({}));
    if(!existingResponse.ok)throw new Error(existingData.error||"The project exists, but its onboarding checklist could not be checked. Retry without creating another project.");
