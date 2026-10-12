@@ -26,7 +26,18 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Install dependencies
+      # The committed lockfile predates the current Neon Auth dependency graph.
+      # Regenerate it in CI, publish the corrected lockfile for review, then verify
+      # that a clean install succeeds against the regenerated lock.
+      - name: Regenerate dependency lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Upload regenerated lockfile for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: regenerated-package-lock
+          path: package-lock.json
+          if-no-files-found: error
+      - name: Install dependencies cleanly
         run: npm ci
       - name: Run ESLint
         run: npm run lint
