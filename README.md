@@ -54,6 +54,12 @@ npm run build
 
 GitHub Actions runs ESLint and TypeScript checks on pushes and pull requests to `feat/crm-foundation`. Vercel deployment status is tracked separately from these checks.
 
+## Database migrations
+
+SQL migrations are stored in `db/migrations`. Test schema changes on an isolated Neon branch first, then apply the same migration to the intended target branch and verify the resulting indexes/constraints before relying on them in application code.
+
+The project handoff migration adds database-level uniqueness for one delivery project per deal and one milestone title per project (case-insensitive after trimming). The migration is idempotent and is applied to the current Neon `main` branch.
+
 ## Safety and implementation notes
 
 - API handlers require a signed-in user and scope database queries to that user's records.
