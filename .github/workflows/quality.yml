@@ -11,7 +11,12 @@ on:
 jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      # Build-only placeholders; never use these values in a deployed environment.
+      DATABASE_URL: "postgresql://build:build@127.0.0.1:5432/build"
+      NEON_AUTH_BASE_URL: "https://auth.example.invalid"
+      NEON_AUTH_COOKIE_SECRET: "github-actions-only-build-secret-at-least-32-chars"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -26,3 +31,5 @@ jobs:
         run: npm run lint
       - name: Check TypeScript
         run: npx tsc --noEmit
+      - name: Build Next.js application
+        run: npm run build
