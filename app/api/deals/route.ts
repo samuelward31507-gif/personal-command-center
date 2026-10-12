@@ -21,8 +21,16 @@ function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
 }
 function amount(value: unknown) {
+  if (value !== undefined && value !== null && typeof value !== "number" && typeof value !== "string") return null;
+  if (typeof value === "string" && value.trim() === "") return null;
   const n = Number(value ?? 0);
   return Number.isFinite(n) && n >= 0 ? Math.min(n, 9999999999.99) : null;
+}
+function validDate(value: unknown): string | null | false {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  const parsed = new Date(value + "T00:00:00.000Z");
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value ? value : false;
 }
 export async function GET() {
   try {
@@ -71,7 +79,8 @@ export async function POST(request: Request) {
       const owned = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
       if (!owned.length) return jsonError("Contact not found.", 404);
     }
-    const closeDate = typeof body.expectedCloseDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.expectedCloseDate) ? body.expectedCloseDate : null;
+    const closeDate = validDate(body.expectedCloseDate);
+    if (closeDate === false) return jsonError("Expected close date must use a valid YYYY-MM-DD date.", 400);
     const rows = await sql`
       INSERT INTO public.deals (owner_id, contact_id, title, service_type, stage, setup_fee, monthly_fee, expected_close_date, source, notes, lost_reason)
       VALUES (${user.id}, ${contactId}::uuid, ${title}, ${serviceType}, ${stage}, ${setupFee}, ${monthlyFee}, ${closeDate}::date,
