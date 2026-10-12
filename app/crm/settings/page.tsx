@@ -1,19 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createAuthClient } from "@neondatabase/auth/next";
 
 const authClient = createAuthClient();
 
-const integrations = [
-  { name: "Workspace database", detail: "Contacts, deals, tasks, projects, finance, and business memory", status: "Connected" },
-  { name: "Hermes assistant", detail: "Personal AI employee bridge and controlled task execution", status: "Not connected" },
-  { name: "External CRM integrations", detail: "Third-party CRM and messaging connections", status: "Not connected" },
-];
-
 export default function SettingsPage() {
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
+  const [databaseStatus, setDatabaseStatus] = useState("Checking…");
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/contacts", { cache: "no-store" })
+      .then((response) => {
+        if (!active) return;
+        setDatabaseStatus(response.ok ? "Connected" : response.status === 401 ? "Sign in required" : "Unavailable");
+      })
+      .catch(() => { if (active) setDatabaseStatus("Unavailable"); });
+    return () => { active = false; };
+  }, []);
+
+  const integrations = [
+    { name: "Workspace database", detail: "Contacts, deals, tasks, projects, finance, and business memory", status: databaseStatus },
+    { name: "Hermes assistant", detail: "Personal AI employee bridge and controlled task execution", status: "Not connected" },
+    { name: "External CRM integrations", detail: "Third-party CRM and messaging connections", status: "Not connected" },
+  ];
 
   async function signOut() {
     setSigningOut(true);
