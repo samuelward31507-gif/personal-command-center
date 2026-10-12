@@ -21,7 +21,7 @@ export default function IntelligencePage(){
   const activeOutreach=data.outreach.filter(x=>x.status==="active");const dueOutreach=activeOutreach.filter(x=>x.nextActionAt&&new Date(x.nextActionAt).getTime()<=now);
   const pending=(data.workforce.approvals||[]).filter((x:any)=>x.status==="pending");const failed=(data.workforce.runs||[]).filter((x:any)=>x.status==="failed");
   const atRisk=(data.success.accounts||[]).filter((x:any)=>["at_risk","renewal_due"].includes(x.status)||Number(x.health_score)<=2);
-  const paid=Number(data.finance.summary?.paidRevenue||0),expenses=Number(data.finance.summary?.monthExpenses||0),net=Number(data.finance.summary?.monthNet||paid-expenses);
+  const paid=Number(data.finance.summary?.paidRevenue||0),expenses=Number(data.finance.summary?.monthExpenses||0),net=Number(data.finance.summary?.monthNet??(paid-expenses));
   if(urgentTasks.length)out.push({id:"tasks",level:"urgent",title:urgentTasks.length+" tasks need attention",detail:"Blocked, urgent, or past-due tasks can slow delivery and sales.",href:"/crm/tasks",label:"Review tasks"});
   if(blockedProjects.length)out.push({id:"blocked-projects",level:"urgent",title:blockedProjects.length+" client projects are blocked",detail:"Unblock delivery before it affects launch dates or client confidence.",href:"/crm/projects",label:"Open projects"});
   if(pending.length)out.push({id:"approvals",level:"urgent",title:pending.length+" AI-workforce approvals are pending",detail:"These are recorded approval requests; no external action runs automatically from this page.",href:"/crm/workforce",label:"Review approvals"});
@@ -37,13 +37,20 @@ export default function IntelligencePage(){
  const counts=useMemo(()=>({all:signals.length,urgent:signals.filter(s=>s.level==="urgent").length,watch:signals.filter(s=>s.level==="watch").length,positive:signals.filter(s=>s.level==="positive").length}),[signals]);
  const visible=filter==="all"?signals:signals.filter(s=>s.level===filter);
  const d=data;
+ const closedDeals=d?.deals.filter(x=>x.stage==="won"||x.stage==="lost")||[];
+ const wonDeals=closedDeals.filter(x=>x.stage==="won").length;
+ const winRate=closedDeals.length?Math.round(wonDeals/closedDeals.length*100)+"%":"Not enough closed deals";
+ const activeProjects=d?.projects.filter(x=>!["completed","cancelled"].includes(x.status))||[];
+ const milestoneTotal=activeProjects.reduce((n,x)=>n+Number(x.milestoneCount||0),0);
+ const milestoneDone=activeProjects.reduce((n,x)=>n+Number(x.doneMilestones||0),0);
+ const deliveryRate=milestoneTotal?Math.round(milestoneDone/milestoneTotal*100)+"%":"No milestones yet";
  return <main style={{maxWidth:1100,margin:"0 auto",padding:"28px 22px 56px",color:"#252522",fontFamily:"inherit"}}>
   <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><a href="/">← Cinder workspace</a><button onClick={()=>void load()} disabled={loading}>↻ Refresh signals</button></header>
   <p style={{marginTop:34,fontSize:10,letterSpacing:2,color:"#a95335"}}>CINDER / BUSINESS INTELLIGENCE</p><h1 style={{fontSize:"clamp(32px,5vw,48px)",letterSpacing:"-1.8px",margin:"8px 0"}}>See what needs to move<span style={{color:"#bd5a36"}}>.</span></h1>
   <p style={{maxWidth:700,color:"#777",lineHeight:1.6}}>A read-only view across sales, outreach, delivery, client health, finances, and AI-workforce records. Signals are based on saved workspace data—not predictions or external integrations.</p>
   {error&&<p role="alert" style={{padding:14,background:"#fff1ed",borderRadius:10}}>{error}</p>}
   <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))",gap:10,margin:"24px 0"}}>
-   {[["CONTACTS",d?.contacts.length??"—"],["OPEN DEALS",d?d.deals.filter(x=>!["won","lost"].includes(x.stage)).length:"—"],["ACTIVE PROJECTS",d?d.projects.filter(x=>!["completed","cancelled"].includes(x.status)).length:"—"],["OUTREACH DUE",d?d.outreach.filter(x=>x.status==="active"&&x.nextActionAt&&new Date(x.nextActionAt).getTime()<=Date.now()).length:"—"],["COLLECTED THIS MONTH",d?money(d.finance.summary?.paidRevenue):"—"],["PENDING APPROVALS",d?(d.workforce.approvals||[]).filter((x:any)=>x.status==="pending").length:"—"]].map(([label,value])=><article key={label} style={{border:"1px solid #e9e7e2",borderRadius:12,padding:16,background:"#fff"}}><small style={{display:"block",fontSize:10,letterSpacing:1.1,color:"#777"}}>{label}</small><strong style={{display:"block",fontSize:25,marginTop:10,fontWeight:600}}>{loading?"—":value}</strong></article>)}
+   {[["CONTACTS",d?.contacts.length??"—"],["CLOSED-DEAL WIN RATE",d?winRate:"—"],["OPEN DEALS",d?d.deals.filter(x=>!["won","lost"].includes(x.stage)).length:"—"],["ACTIVE PROJECTS",d?activeProjects.length:"—"],["MILESTONES COMPLETE",d?deliveryRate:"—"],["OUTREACH DUE",d?d.outreach.filter(x=>x.status==="active"&&x.nextActionAt&&new Date(x.nextActionAt).getTime()<=Date.now()).length:"—"],["COLLECTED THIS MONTH",d?money(d.finance.summary?.paidRevenue):"—"],["PENDING APPROVALS",d?(d.workforce.approvals||[]).filter((x:any)=>x.status==="pending").length:"—"]].map(([label,value])=><article key={label} style={{border:"1px solid #e9e7e2",borderRadius:12,padding:16,background:"#fff"}}><small style={{display:"block",fontSize:10,letterSpacing:1.1,color:"#777"}}>{label}</small><strong style={{display:"block",fontSize:25,marginTop:10,fontWeight:600}}>{loading?"—":value}</strong></article>)}
   </section>
   <section style={{border:"1px solid #e9e7e2",borderRadius:14,padding:18,background:"#fff"}}>
    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><h2 style={{fontSize:21,margin:"0 0 4px"}}>Signals & recommended next steps</h2><p style={{margin:0,color:"#777",fontSize:13}}>Sorted by urgency. Signals do not change records or trigger actions.</p></div><span style={{fontSize:12,color:"#777"}}>{loading?"Loading…":signals.length+" signals"}</span></div>
