@@ -29,20 +29,22 @@ export default function Home() {
  const [activeView, setActiveView] = useState("home");
  const [done, setDone] = useState<string[]>([]);
  const [dailyNotes, setDailyNotes] = useState("");
- const [businessSnapshot, setBusinessSnapshot] = useState<{contacts:number;leads:number;dueFollowUps:number;openDeals:number;monthlyPipeline:number;dueOutreach:number;loading:boolean;error:boolean}>({contacts:0,leads:0,dueFollowUps:0,openDeals:0,monthlyPipeline:0,dueOutreach:0,loading:true,error:false});
+ const [businessSnapshot, setBusinessSnapshot] = useState<{contacts:number;leads:number;dueFollowUps:number;openDeals:number;monthlyPipeline:number;dueOutreach:number;openTasks:number;dueTasks:number;loading:boolean;error:boolean}>({contacts:0,leads:0,dueFollowUps:0,openDeals:0,monthlyPipeline:0,dueOutreach:0,openTasks:0,dueTasks:0,loading:true,error:false});
  useEffect(() => {
   let active = true;
   Promise.all([
    fetch("/api/contacts",{cache:"no-store"}),
    fetch("/api/deals",{cache:"no-store"}),
-   fetch("/api/outreach",{cache:"no-store"})
-  ]).then(async ([cr,dr,or]) => {
-   if (!cr.ok || !dr.ok || !or.ok) throw new Error("Workspace data unavailable");
-   const [cd,dd,od] = await Promise.all([cr.json(),dr.json(),or.json()]);
+   fetch("/api/outreach",{cache:"no-store"}),
+   fetch("/api/tasks",{cache:"no-store"})
+  ]).then(async ([cr,dr,or,tr]) => {
+   if (!cr.ok || !dr.ok || !or.ok || !tr.ok) throw new Error("Workspace data unavailable");
+   const [cd,dd,od,td] = await Promise.all([cr.json(),dr.json(),or.json(),tr.json()]);
    if (!active) return;
    const contacts = Array.isArray(cd.contacts) ? cd.contacts : [];
    const deals = Array.isArray(dd.deals) ? dd.deals : [];
    const outreach = Array.isArray(od.outreach) ? od.outreach : [];
+   const tasks = Array.isArray(td.tasks) ? td.tasks : [];
    const today = new Date().toISOString().slice(0,10);
    setBusinessSnapshot({
     contacts: contacts.length,
@@ -51,6 +53,8 @@ export default function Home() {
     openDeals: deals.filter((x:{stage?:string})=>x.stage!=="won"&&x.stage!=="lost").length,
     monthlyPipeline: deals.filter((x:{stage?:string})=>x.stage!=="won"&&x.stage!=="lost").reduce((s:number,x:{monthlyFee?:number})=>s+Number(x.monthlyFee||0),0),
     dueOutreach: outreach.filter((x:{status?:string;nextActionAt?:string})=>x.status==="active"&&x.nextActionAt&&new Date(x.nextActionAt).getTime()<=Date.now()).length,
+    openTasks: tasks.filter((x:{status?:string})=>x.status!=="done"&&x.status!=="cancelled").length,
+    dueTasks: tasks.filter((x:{status?:string;dueAt?:string|null})=>x.status!=="done"&&x.status!=="cancelled"&&x.dueAt&&new Date(x.dueAt).getTime()<=Date.now()).length,
     loading:false,error:false
    });
   }).catch(()=>{if(active)setBusinessSnapshot(s=>({...s,loading:false,error:true}))});
@@ -88,6 +92,7 @@ export default function Home() {
      <article className="snapshot-card"><span>FOLLOW-UPS DUE</span><strong>{businessSnapshot.loading?"—":businessSnapshot.dueFollowUps}</strong><small>Due today or overdue</small></article>
      <article className="snapshot-card"><span>OUTREACH DUE</span><strong>{businessSnapshot.loading?"—":businessSnapshot.dueOutreach}</strong><small>Next prospecting actions</small><button onClick={()=>navigate("growth")}>Open outreach →</button></article>
      <article className="snapshot-card"><span>OPEN DEALS</span><strong>{businessSnapshot.loading?"—":businessSnapshot.openDeals}</strong><small>{new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthlyPipeline)} potential monthly</small><button onClick={()=>window.location.assign("/crm/pipeline")}>Open pipeline →</button></article>
+     <article className="snapshot-card"><span>TASKS OPEN</span><strong>{businessSnapshot.loading?"—":businessSnapshot.openTasks}</strong><small>{businessSnapshot.loading?"Loading tasks":businessSnapshot.dueTasks+" due / overdue"}</small><button onClick={()=>window.location.assign("/crm/tasks")}>Open tasks →</button></article>
     </section>
     {businessSnapshot.error&&<p className="snapshot-error" role="status">Live business metrics will appear after you sign in to Cinder.</p>}
     <div className="lower-grid"><section className="surface-panel focus-panel"><div className="panel-heading"><div><h2>Founder focus</h2><p>Priority order for decisions</p></div></div><div className="focus-list"><div className="focus-row"><span className="focus-number">01</span><span className="focus-label">Revenue</span><span className="focus-detail">Create cash flow</span><span className="focus-priority">Primary</span></div><div className="focus-row"><span className="focus-number">02</span><span className="focus-label">Customer acquisition</span><span className="focus-detail">Build the pipeline</span></div><div className="focus-row"><span className="focus-number">03</span><span className="focus-label">Important opportunities</span><span className="focus-detail">Act on leverage</span></div><div className="focus-row"><span className="focus-number">04</span><span className="focus-label">High-value projects</span><span className="focus-detail">Move key work forward</span></div></div></section>
