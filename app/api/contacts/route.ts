@@ -24,6 +24,13 @@ function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
 }
 
+function validFollowUp(value: unknown): string | null | false {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  const parsed = new Date(value + "T00:00:00.000Z");
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value ? value : false;
+}
+
 export async function GET() {
   try {
     const user = await currentUser();
@@ -65,6 +72,10 @@ export async function POST(request: Request) {
     const name = typeof body.name === "string" ? body.name.trim() : "";
     if (!name) return jsonError("Contact name is required.", 400);
     if (name.length > 200) return jsonError("Contact name is too long.", 400);
+    const followUp = validFollowUp(body.nextFollowUp);
+    if (followUp === false) return jsonError("Follow-up date must be a valid calendar date.", 400);
+    const followUp = validFollowUp(body.nextFollowUp);
+    if (followUp === false) return jsonError("Follow-up date must be a valid calendar date.", 400);
     const status = allowedStatuses.has(body.status) ? String(body.status).toLowerCase() : "lead";
     const [firstName, ...lastParts] = name.split(/\s+/);
     const lastName = lastParts.join(" ");
@@ -106,7 +117,7 @@ export async function PATCH(request: Request) {
         phone = ${String(body.phone ?? "").slice(0, 100)},
         status = ${status}, source = ${String(body.source ?? "").slice(0, 200)},
         notes = ${String(body.notes ?? "").slice(0, 10000)},
-        follow_up_at = ${body.nextFollowUp || null}, updated_at = now()
+        follow_up_at = ${followUp}, updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id}
       RETURNING id
     `;
