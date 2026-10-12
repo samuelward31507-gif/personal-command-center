@@ -20,7 +20,7 @@ export async function POST(request:Request){
   for(const item of milestones as Record<string,unknown>[]){
    const marker="[project-milestone:"+String(item.id)+"]";
    const title=String(item.title||"").trim().slice(0,240);
-   const description=[String(item.description||"").trim(),marker,"Project: "+String(project.name||"")].filter(Boolean).join("\n\n").slice(0,5000);
+   const description=[String(item.description||"").trim().slice(0,4000),marker,"Project: "+String(project.name||"").slice(0,240)].filter(Boolean).join("\n\n").slice(0,5000);
    const existing=await sql`SELECT id FROM public.tasks WHERE owner_id=${user.id} AND description LIKE ${"%"+marker+"%"} LIMIT 1`;
    if(existing.length){skipped++;continue;}
    await sql`INSERT INTO public.tasks(owner_id,title,description,status,priority,due_at,contact_id,deal_id) VALUES(${user.id},${title},${description},'todo',CASE WHEN ${item.status}='blocked' THEN 'urgent' ELSE 'medium' END,${item.due_at}::timestamptz,${project.contact_id}::uuid,${project.deal_id}::uuid)`;
