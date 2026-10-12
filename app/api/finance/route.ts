@@ -7,7 +7,7 @@ async function userId(){const r=await auth.getSession();return r?.data?.session&
 const fail=(message:string,status:number)=>Response.json({error:message},{status});
 const text=(v:unknown,n:number)=>typeof v==="string"?v.trim().slice(0,n):"";
 const money=(v:unknown)=>{const n=Number(v);return Number.isFinite(n)&&n>=0&&n<=9999999999.99?n:null;};
-const date=(v:unknown)=>{if(v===""||v==null)return null;if(typeof v!=="string"||!/^\\d{4}-\\d{2}-\\d{2}$/.test(v))return false;const parsed=new Date(v+"T00:00:00.000Z");return !Number.isNaN(parsed.getTime())&&parsed.toISOString().slice(0,10)===v?v:false;};
+const date=(v:unknown)=>{if(v===""||v==null)return null;if(typeof v!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const parsed=new Date(v+"T00:00:00.000Z");return !Number.isNaN(parsed.getTime())&&parsed.toISOString().slice(0,10)===v?v:false;};
 const revenueTypes=new Set(["setup_fee","monthly_retainer","usage","one_time","other"]);
 const revenueStatuses=new Set(["expected","paid","overdue","cancelled"]);
 const expenseCategories=new Set(["software","marketing","contractor","telecom","hosting","education","equipment","travel","fees","taxes","other"]);
