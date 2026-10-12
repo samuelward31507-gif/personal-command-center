@@ -11,7 +11,7 @@ async function currentUser(){const result=await auth.getSession();const session=
 function error(message:string,status:number){return Response.json({error:message},{status});}
 function text(value:unknown,max:number){return typeof value==="string"?value.trim().slice(0,max):"";}
 function uuid(value:unknown):string|null|false{if(value===null||value===undefined||value==="")return null;return typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)?value:false;}
-function date(value:unknown):string|null|false{if(value===null||value===undefined||value==="")return null;if(typeof value!=="string"||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)||Number.isNaN(Date.parse(value)))return false;return value;}
+function date(value:unknown):string|null|false{if(value===null||value===undefined||value==="")return null;if(typeof value!=="string"||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value))return false;const parsed=new Date(value+"T00:00:00.000Z");return !Number.isNaN(parsed.getTime())&&parsed.toISOString().slice(0,10)===value?value:false;}
 function money(value:unknown){const n=Number(value??0);return Number.isFinite(n)&&n>=0&&n<=9999999999.99?n:null;}
 async function validateLinks(sql:ReturnType<typeof db>,ownerId:string,contactId:string|null,dealId:string|null){
  if(contactId){const rows=await sql`SELECT id FROM public.contacts WHERE id=${contactId}::uuid AND owner_id=${ownerId} LIMIT 1`;if(!rows.length)return "Contact not found in your workspace.";}
