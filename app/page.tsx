@@ -18,7 +18,7 @@ export default function Home() {
  const navigate = (view: string) => setActiveView(view);
  return <main className="app-shell" id="home">
   <aside className="sidebar">
-   <button className="brand brand-button" onClick={() => navigate("home")} aria-label="Go to Home"><span className="brand-mark"><span/></span><span className="brand-name">hermes<span className="brand-period">.</span></span><span className="workspace-chevron">⌄</span></button>
+   <button className="brand brand-button" onClick={() => navigate("home")} aria-label="Go to Home"><span className="cinder-mark" aria-hidden="true"><svg viewBox="0 0 32 32" role="img"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#bf542f"/></svg></span><span className="brand-name cinder-wordmark">CINDER</span><span className="workspace-chevron">⌄</span></button>
    <div className="nav-section-label">WORKSPACE</div>
    <nav className="primary-nav" aria-label="Workspace">{nav.map(([icon,label,href],i)=><button key={label} type="button" className={activeView === (i===0?"home":href.slice(1)) ? "nav-item active" : "nav-item"} onClick={() => navigate(i===0?"home":href.slice(1))}><I>{icon}</I><span>{label}</span>{i===1&&<span className="nav-count">—</span>}</button>)}</nav>
    <div className="sidebar-divider"/><div className="nav-section-label">YOUR SPACE</div><nav className="primary-nav"><button type="button" className={activeView==="strategy"?"nav-item active":"nav-item"} onClick={() => navigate("strategy")}><I>✧</I><span>Strategy & memory</span></button><button type="button" className={activeView==="settings"?"nav-item active":"nav-item"} onClick={() => navigate("settings")}><I>⚙</I><span>Settings</span></button></nav>
