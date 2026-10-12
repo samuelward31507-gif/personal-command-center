@@ -32,7 +32,7 @@ export async function GET() {
     const rows = await sql`
       SELECT d.id, d.contact_id, d.title, d.service_type, d.stage, d.setup_fee,
         d.monthly_fee, d.expected_close_date, d.source, d.notes, d.lost_reason,
-        d.created_at, d.updated_at, c.name AS contact_name, c.company
+        d.created_at, d.updated_at, trim(concat_ws(' ', c.first_name, c.last_name)) AS contact_name, c.company
       FROM public.deals d
       LEFT JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id
       WHERE d.owner_id = ${user.id}
