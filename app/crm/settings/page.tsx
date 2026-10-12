@@ -9,6 +9,7 @@ export default function SettingsPage() {
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
   const [databaseStatus, setDatabaseStatus] = useState("Checking…");
+  const [hermesStatus, setHermesStatus] = useState("Checking…");
 
   useEffect(() => {
     let active = true;
@@ -18,12 +19,21 @@ export default function SettingsPage() {
         setDatabaseStatus(response.ok ? "Connected" : response.status === 401 ? "Sign in required" : "Unavailable");
       })
       .catch(() => { if (active) setDatabaseStatus("Unavailable"); });
+    fetch("/api/hermes/status", { cache: "no-store" })
+      .then(async (response) => {
+        if (!active) return;
+        if (response.status === 401) { setHermesStatus("Sign in required"); return; }
+        if (!response.ok) { setHermesStatus("Unavailable"); return; }
+        const data = await response.json();
+        setHermesStatus(data.configured === true ? "Configured" : "Not configured");
+      })
+      .catch(() => { if (active) setHermesStatus("Unavailable"); });
     return () => { active = false; };
   }, []);
 
   const integrations = [
     { name: "Workspace database", detail: "Contacts, deals, tasks, projects, finance, and business memory", status: databaseStatus },
-    { name: "Hermes assistant", detail: "Personal AI employee bridge and controlled task execution", status: "Not connected" },
+    { name: "Hermes read-only bridge", detail: "Read-only workspace context for Hermes; no external actions are executed", status: hermesStatus },
     { name: "External CRM integrations", detail: "Third-party CRM and messaging connections", status: "Not connected" },
   ];
 
@@ -65,7 +75,7 @@ export default function SettingsPage() {
                 <h3 style={{ fontSize: 14, margin: 0 }}>{item.name}</h3>
                 <p style={{ color: "#777", fontSize: 12, lineHeight: 1.5, margin: "5px 0 0" }}>{item.detail}</p>
               </div>
-              <span style={{ flexShrink: 0, fontSize: 10, letterSpacing: .3, fontWeight: 700, color: item.status === "Connected" ? "#286749" : "#777", background: item.status === "Connected" ? "#edf7f0" : "#f3f3f0", borderRadius: 20, padding: "6px 9px" }}>{item.status}</span>
+              <span style={{ flexShrink: 0, fontSize: 10, letterSpacing: .3, fontWeight: 700, color: item.status === "Connected" || item.status === "Configured" ? "#286749" : "#777", background: item.status === "Connected" || item.status === "Configured" ? "#edf7f0" : "#f3f3f0", borderRadius: 20, padding: "6px 9px" }}>{item.status}</span>
             </article>
           ))}
         </div>
