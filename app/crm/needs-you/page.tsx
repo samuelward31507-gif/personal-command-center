@@ -1,6 +1,5 @@
 "use client";
 import {useCallback,useEffect,useMemo,useState} from "react";
-import "./needs-you.css";
 type Item={id:string;kind:"task"|"outreach"|"followup"|"project"|"deal";title:string;detail:string;due:string|null;priority:number;href:string;action:string};
 const dateLabel=(v:string|null)=>v?new Date(v).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"No due date";
 export default function NeedsYouPage(){
