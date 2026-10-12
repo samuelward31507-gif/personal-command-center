@@ -31,6 +31,9 @@ function validDue(value: unknown): string | null | false {
   if (typeof value !== "string") return false;
   const zonedDateTime = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,3})?)?(?:Z|[+-](?:[01]\d|2[0-3]):?[0-5]\d)$/;
   if (zonedDateTime.test(value)) {
+    const day = value.slice(0, 10);
+    const parsedDay = new Date(day + "T00:00:00.000Z");
+    if (Number.isNaN(parsedDay.getTime()) || parsedDay.toISOString().slice(0, 10) !== day) return false;
     const timestamp = Date.parse(value);
     return Number.isNaN(timestamp) ? false : new Date(timestamp).toISOString();
   }
