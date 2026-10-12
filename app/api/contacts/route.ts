@@ -109,7 +109,8 @@ export async function PATCH(request: Request) {
     if (!name) return jsonError("Contact name is required.", 400);
     const followUp = validFollowUp(body.nextFollowUp);
     if (followUp === false) return jsonError("Follow-up date must be a valid calendar date.", 400);
-    const status = allowedStatuses.has(body.status) ? String(body.status).toLowerCase() : "lead";
+    if (!allowedStatuses.has(body.status)) return jsonError("Invalid contact status.", 400);
+    const status = String(body.status).toLowerCase();
     const [firstName, ...lastParts] = name.split(/\s+/);
     const sql = db();
     const rows = await sql`
