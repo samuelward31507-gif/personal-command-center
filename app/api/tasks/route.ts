@@ -95,8 +95,10 @@ export async function POST(request: Request) {
     const title = cleanText(body.title, 240);
     if (!title) return jsonError("Task title is required (max 240 characters).", 400);
     const description = cleanText(body.description, 5000);
-    const status = statuses.has(body.status) ? body.status : "todo";
-    const priority = priorities.has(body.priority) ? body.priority : "medium";
+    if (body.status !== undefined && !statuses.has(body.status)) return jsonError("Invalid task status.", 400);
+    if (body.priority !== undefined && !priorities.has(body.priority)) return jsonError("Invalid task priority.", 400);
+    const status = body.status === undefined ? "todo" : body.status;
+    const priority = body.priority === undefined ? "medium" : body.priority;
     const dueAt = validDue(body.dueAt);
     const contactId = nullableUuid(body.contactId);
     const dealId = nullableUuid(body.dealId);
