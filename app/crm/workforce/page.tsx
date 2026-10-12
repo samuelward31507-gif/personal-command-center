@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 export default function WorkforcePage(){
- const [d,S]=useState<any>({agents:[],runs:[],approvals:[],memory:[]}),[tab,T]=useState("agents"),[form,F]=useState(false),[error,E]=useState(""),[name,N]=useState(""),[specialty,SP]=useState("research"),[title,TI]=useState(""),[detail,DE]=useState(""),[status,ST]=useState("planned"),[busy,B]=useState(false);
+ const [d,S]=useState<any>({agents:[],runs:[],approvals:[],memory:[]}),[tab,T]=useState("agents"),[form,F]=useState(false),[error,E]=useState(""),[name,N]=useState(""),[specialty,SP]=useState("research"),[title,TI]=useState(""),[detail,DE]=useState(""),[status,ST]=useState("planned"),[cost,COST]=useState("0"),[busy,B]=useState(false);
  async function load(){try{const r=await fetch("/api/workforce",{cache:"no-store"}),j=await r.json();if(!r.ok)throw Error(j.error||"Unable to load records");S(j)}catch(e){E(e instanceof Error?e.message:"Load failed")}}
  useEffect(()=>{void load()},[]);
  async function act(body:any,method="POST"){B(true);E("");try{const r=await fetch("/api/workforce",{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}),j=await r.json();if(!r.ok)throw Error(j.error||"Action failed");F(false);N("");TI("");DE("");await load()}catch(e){E(e instanceof Error?e.message:"Action failed")}finally{B(false)}}
