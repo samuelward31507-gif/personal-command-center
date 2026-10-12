@@ -39,11 +39,11 @@ export default function IntelligencePage(){
  const d=data;
  const closedDeals=d?.deals.filter(x=>x.stage==="won"||x.stage==="lost")||[];
  const wonDeals=closedDeals.filter(x=>x.stage==="won").length;
- const winRate=closedDeals.length?Math.round(wonDeals/closedDeals.length*100)+"%":"Not enough closed deals";
+ const winRate=closedDeals.length?Math.round(wonDeals/closedDeals.length*100)+"%":"—";
  const activeProjects=d?.projects.filter(x=>!["completed","cancelled"].includes(x.status))||[];
  const milestoneTotal=activeProjects.reduce((n,x)=>n+Number(x.milestoneCount||0),0);
  const milestoneDone=activeProjects.reduce((n,x)=>n+Number(x.doneMilestones||0),0);
- const deliveryRate=milestoneTotal?Math.round(milestoneDone/milestoneTotal*100)+"%":"No milestones yet";
+ const deliveryRate=milestoneTotal?Math.round(milestoneDone/milestoneTotal*100)+"%":"—";
  return <main style={{maxWidth:1100,margin:"0 auto",padding:"28px 22px 56px",color:"#252522",fontFamily:"inherit"}}>
   <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><a href="/">← Cinder workspace</a><button onClick={()=>void load()} disabled={loading}>↻ Refresh signals</button></header>
   <p style={{marginTop:34,fontSize:10,letterSpacing:2,color:"#a95335"}}>CINDER / BUSINESS INTELLIGENCE</p><h1 style={{fontSize:"clamp(32px,5vw,48px)",letterSpacing:"-1.8px",margin:"8px 0"}}>See what needs to move<span style={{color:"#bd5a36"}}>.</span></h1>
