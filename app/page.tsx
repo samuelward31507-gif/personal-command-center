@@ -13,6 +13,7 @@ const viewDetails: Record<string, { title: string; description: string; items: s
  strategy: { title: "Strategy & memory", description: "Your operating principles, long-term priorities, and important context for Cinder.", items: ["Founder priorities", "Operating principles", "Decisions and lessons"] },
  settings: { title: "Settings", description: "Manage Cinder connections and workspace preferences.", items: ["Connections and integrations", "Workspace preferences", "Permissions and approvals"] },
 };
+const localDateKey = () => { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
 const routine = [
  { time:"5:00–7:00 AM", title:"Gym", detail:"Training and personal health", category:"Personal" },
  { time:"7:00–7:30 AM", title:"Reset & breakfast", detail:"Shower, eat, and get set up", category:"Personal" },
@@ -29,7 +30,17 @@ export default function Home() {
  const [activeView, setActiveView] = useState("home");
  const [done, setDone] = useState<string[]>([]);
  const [dailyNotes, setDailyNotes] = useState("");
+ const [planDate, setPlanDate] = useState("");
+ const [planSaving, setPlanSaving] = useState(false);
+ const [planMessage, setPlanMessage] = useState("");
  const [businessSnapshot, setBusinessSnapshot] = useState<{contacts:number;leads:number;dueFollowUps:number;openDeals:number;monthlyPipeline:number;dueOutreach:number;openTasks:number;dueTasks:number;loading:boolean;error:boolean}>({contacts:0,leads:0,dueFollowUps:0,openDeals:0,monthlyPipeline:0,dueOutreach:0,openTasks:0,dueTasks:0,loading:true,error:false});
+ useEffect(() => {
+  const date = localDateKey();
+  setPlanDate(date);
+  let active = true;
+  fetch("/api/daily-plan?date="+date,{cache:"no-store"}).then(async r=>{if(!r.ok)throw new Error("Could not load daily plan");return r.json()}).then(data=>{if(!active)return;setDone(Array.isArray(data.plan?.completedBlocks)?data.plan.completedBlocks:[]);setDailyNotes(typeof data.plan?.notes==="string"?data.plan.notes:"");setPlanMessage("")}).catch(()=>{if(active)setPlanMessage("Daily plan could not load. Your edits are not saved until you retry.")});
+  return ()=>{active=false};
+ }, []);
  useEffect(() => {
   let active = true;
   Promise.all([
@@ -60,6 +71,17 @@ export default function Home() {
   }).catch(()=>{if(active)setBusinessSnapshot(s=>({...s,loading:false,error:true}))});
   return ()=>{active=false};
  }, []);
+ const saveDailyPlan = async () => {
+  if (!planDate) return;
+  setPlanSaving(true); setPlanMessage("");
+  try {
+   const response = await fetch("/api/daily-plan", {method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:planDate,completedBlocks:done,notes:dailyNotes})});
+   const data = await response.json().catch(()=>({}));
+   if (!response.ok) throw new Error(data.error || "Could not save your daily plan.");
+   setPlanMessage("Saved to your workspace · "+new Date(data.plan.updatedAt).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}));
+  } catch(e) { setPlanMessage(e instanceof Error?e.message:"Could not save your daily plan."); }
+  finally { setPlanSaving(false); }
+ };
  const navigate = (view: string) => { if (view === "growth") { window.location.assign("/crm"); return; } setActiveView(view); };
  const completed = (id: string) => done.includes(id);
  const toggle = (id: string) => setDone(old => old.includes(id) ? old.filter(x=>x!==id) : [...old,id]);
@@ -76,7 +98,7 @@ export default function Home() {
     <div className="welcome-row"><div><div className="eyebrow"><span className="eyebrow-line"/> DAILY OPERATING PLAN</div><h1>My day<span className="heading-period">.</span></h1><p className="page-subtitle">A repeatable founder routine, with revenue work protected and priorities visible.</p></div><span className="date-chip">Routine template · Central time</span></div>
     <section className="schedule-summary"><div><span className="summary-label">DAILY ROUTINE</span><strong>5:00 AM – 9:00 PM</strong></div><div><span className="summary-label">COMPLETED</span><strong>{done.filter(x=>x.startsWith("routine:")).length} / {routine.length} blocks</strong></div><div><span className="summary-label">TOP PRIORITY</span><strong>Revenue & acquisition</strong></div></section>
     <section className="surface-panel schedule-panel"><div className="panel-heading"><div><h2>Daily schedule</h2><p>Check off blocks as you complete them. This is your editable starting routine.</p></div><button className="text-action" onClick={()=>setDone(old=>old.filter(x=>!x.startsWith("routine:")))}>Reset day</button></div><div className="schedule-list">{routine.map((block,i)=><div className={completed("routine:"+i)?"schedule-row is-done":"schedule-row"} key={block.title}><button className="check-button" aria-label={completed("routine:"+i)?"Mark incomplete":"Mark complete"} onClick={()=>toggle("routine:"+i)}>{completed("routine:"+i)?"✓":""}</button><span className="schedule-time">{block.time}</span><div className="schedule-description"><strong>{block.title}</strong><small>{block.detail}</small></div><span className="schedule-category">{block.category}</span></div>)}</div></section>
-    <section className="surface-panel notes-panel"><div className="panel-heading"><div><h2>Daily notes</h2><p>Capture outcomes, reminders, and tomorrow's first move.</p></div></div><textarea value={dailyNotes} onChange={e=>setDailyNotes(e.target.value)} placeholder="What matters today? Who needs a follow-up? What did you learn?" rows={4}/><p className="local-note">Currently held in this page session only. Persistent saving will be added with the personal CRM data layer.</p></section>
+    <section className="surface-panel notes-panel"><div className="panel-heading"><div><h2>Daily notes</h2><p>Capture outcomes, reminders, and tomorrow's first move.</p></div></div><textarea value={dailyNotes} onChange={e=>setDailyNotes(e.target.value)} placeholder="What matters today? Who needs a follow-up? What did you learn?" rows={4}/><div className="daily-plan-save"><p className="local-note">Your notes and checked-off blocks are saved by date in your private workspace.</p><div className="daily-plan-save-row"><span role="status">{planMessage}</span><button className="text-action" onClick={()=>void saveDailyPlan()} disabled={planSaving}>{planSaving?"Saving…":"Save daily plan"}</button></div></div></section>
    </div> : activeView==="home" ? <div className="page-content">
     <div className="welcome-row"><div><div className="eyebrow"><span className="eyebrow-line"/> PERSONAL CRM & BUSINESS OS</div><h1>Run your day. Move business forward<span className="heading-period">.</span></h1><p className="page-subtitle">Your schedule, relationships, follow-ups, and next actions in one place.</p></div><div className="home-quick-actions"><button className="date-chip clickable-chip" onClick={()=>navigate("schedule")}>View today's schedule →</button><button className="date-chip clickable-chip" onClick={()=>window.location.assign("/crm/tasks")}>Open tasks →</button></div></div>
     <section className="attention-banner"><div className="attention-icon"><I>▤</I></div><div className="attention-copy"><div className="section-kicker">TODAY'S FOCUS</div><h2>Revenue first. Relationships never go cold.</h2><p>Protect your routine, contact the right people, and make every important conversation lead to a next step.</p></div></section>
