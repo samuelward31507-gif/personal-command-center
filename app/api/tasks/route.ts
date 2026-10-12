@@ -28,7 +28,13 @@ function nullableUuid(value: unknown): string | null | false {
 }
 function validDue(value: unknown): string | null | false {
   if (value === null || value === undefined || value === "") return null;
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}(T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(value)) return false;
+  if (typeof value !== "string") return false;
+  const zonedDateTime = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,3})?)?(?:Z|[+-](?:[01]\d|2[0-3]):?[0-5]\d)$/;
+  if (zonedDateTime.test(value)) {
+    const timestamp = Date.parse(value);
+    return Number.isNaN(timestamp) ? false : new Date(timestamp).toISOString();
+  }
+  if (!/^\d{4}-\d{2}-\d{2}(T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(value)) return false;
   const day = value.slice(0, 10);
   const parsedDay = new Date(day + "T00:00:00.000Z");
   if (Number.isNaN(parsedDay.getTime()) || parsedDay.toISOString().slice(0, 10) !== day) return false;
