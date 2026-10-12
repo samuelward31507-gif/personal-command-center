@@ -24,6 +24,10 @@ function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
 }
 
+function validUuid(value: unknown): value is string {
+  return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 function validFollowUp(value: unknown): string | null | false {
   if (value === undefined || value === null || value === "") return null;
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -100,7 +104,7 @@ export async function PATCH(request: Request) {
     const user = await currentUser();
     if (!user) return jsonError("Unauthorized", 401);
     const body = await request.json();
-    if (typeof body.id !== "string" || !body.id) return jsonError("Contact id is required.", 400);
+    if (!validUuid(body.id)) return jsonError("A valid contact id is required.", 400);
     const name = typeof body.name === "string" ? body.name.trim() : "";
     if (!name) return jsonError("Contact name is required.", 400);
     const followUp = validFollowUp(body.nextFollowUp);
@@ -135,7 +139,7 @@ export async function DELETE(request: Request) {
     if (!user) return jsonError("Unauthorized", 401);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
-    if (!id) return jsonError("Contact id is required.", 400);
+    if (!validUuid(id)) return jsonError("A valid contact id is required.", 400);
     const sql = db();
     const rows = await sql`
       DELETE FROM public.contacts WHERE id = ${id}::uuid AND owner_id = ${user.id} RETURNING id
