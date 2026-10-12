@@ -6,8 +6,8 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Hermes — Personal Command Center",
-  description: "Your personal operating system for running the business.",
+  title: "Cinder — Personal Command Center",
+  description: "Cinder personal command center — one place to run the business.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
