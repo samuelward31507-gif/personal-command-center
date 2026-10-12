@@ -28,7 +28,10 @@ function nullableUuid(value: unknown): string | null | false {
 }
 function validDue(value: unknown): string | null | false {
   if (value === null || value === undefined || value === "") return null;
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(value) || Number.isNaN(Date.parse(value))) return false;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}(T(?:[01]\d|2[0-3]):[0-5]\d)?$/.test(value)) return false;
+  const day = value.slice(0, 10);
+  const parsedDay = new Date(day + "T00:00:00.000Z");
+  if (Number.isNaN(parsedDay.getTime()) || parsedDay.toISOString().slice(0, 10) !== day) return false;
   return value.length === 16 ? value + ":00" : value;
 }
 async function validateLinks(sql: ReturnType<typeof db>, ownerId: string, contactId: string | null, dealId: string | null) {
