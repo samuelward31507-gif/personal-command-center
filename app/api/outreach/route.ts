@@ -64,6 +64,13 @@ export async function POST(request: Request) {
     const sql = db();
     const owned = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
     if (!owned.length) return jsonError("Contact not found.", 404);
+    const existing = await sql`
+      SELECT status FROM public.contact_outreach
+      WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid LIMIT 1
+    `;
+    if (existing[0]?.status === "do_not_contact") {
+      return jsonError("This prospect is marked do not contact and cannot be re-enrolled.", 409);
+    }
     const rows = await sql`
       INSERT INTO public.contact_outreach (owner_id, contact_id, niche, pain_point, research_notes, started_at, next_action_at)
       VALUES (${user.id}, ${contactId}::uuid, ${niche}, ${painPoint}, ${researchNotes}, now(), now())
