@@ -112,7 +112,8 @@ export async function PATCH(request: Request) {
       const owned = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
       if (!owned.length) return jsonError("Contact not found.", 404);
     }
-    const closeDate = typeof body.expectedCloseDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.expectedCloseDate) ? body.expectedCloseDate : null;
+    const closeDate = validDate(body.expectedCloseDate);
+    if (closeDate === false) return jsonError("Expected close date must be a valid YYYY-MM-DD date.", 400);
     const rows = await sql`
       UPDATE public.deals SET contact_id = ${contactId}::uuid, title = ${title},
         service_type = ${body.serviceType}, stage = ${body.stage}, setup_fee = ${setupFee},
