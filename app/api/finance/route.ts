@@ -18,9 +18,9 @@ export async function GET(){
  sql`SELECT r.id,r.title,r.revenue_type,r.amount,r.status,r.due_date,r.paid_at,r.notes,r.contact_id,r.deal_id,r.project_id,r.created_at,trim(concat_ws(' ',c.first_name,c.last_name)) AS contact_name,d.title AS deal_title,p.name AS project_name FROM public.revenue_entries r LEFT JOIN public.contacts c ON c.id=r.contact_id AND c.owner_id=r.owner_id LEFT JOIN public.deals d ON d.id=r.deal_id AND d.owner_id=r.owner_id LEFT JOIN public.projects p ON p.id=r.project_id AND p.owner_id=r.owner_id WHERE r.owner_id=${owner} ORDER BY CASE WHEN r.status='overdue' THEN 0 WHEN r.status='expected' THEN 1 ELSE 2 END,r.due_date ASC NULLS LAST,r.created_at DESC LIMIT 1000`,
  sql`SELECT id,title,category,amount,expense_date,recurring,notes,created_at FROM public.business_expenses WHERE owner_id=${owner} ORDER BY expense_date DESC,created_at DESC LIMIT 1000`
  ]);
- const revenue=rev.map((r:any)=>({...r,amount:Number(r.amount),due_date:r.due_date?String(r.due_date).slice(0,10):null,paid_at:r.paid_at?String(r.paid_at).slice(0,10):null}));
+ const now=new Date(),todayKey=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0"),month=todayKey.slice(0,7);
+ const revenue=rev.map((r:any)=>{const dueDate=r.due_date?String(r.due_date).slice(0,10):null,paidAt=r.paid_at?String(r.paid_at).slice(0,10):null;const overdue=r.status==="overdue"||(r.status==="expected"&&dueDate!==null&&dueDate<todayKey);return {...r,amount:Number(r.amount),due_date:dueDate,paid_at:paidAt,status:overdue?"overdue":r.status};});
  const expenses=exp.map((r:any)=>({...r,amount:Number(r.amount),expense_date:String(r.expense_date).slice(0,10)}));
- const today=new Date(),month=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0");
  const paidRevenue=revenue.filter((r:any)=>r.status==="paid"&&r.paid_at?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
  const setupRevenue=revenue.filter((r:any)=>r.status==="paid"&&r.revenue_type==="setup_fee"&&r.paid_at?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
  const mrr=revenue.filter((r:any)=>r.status!=="cancelled"&&r.revenue_type==="monthly_retainer").reduce((s:number,r:any)=>s+r.amount,0);
