@@ -6,7 +6,7 @@
   --muted: #858585;
   --line: #e9e9e6;
   --panel: #ffffff;
-  --accent: #6658d3;
+  --accent: #b65335;
 }
 @theme inline {
   --color-background: var(--background);
@@ -152,3 +152,24 @@ h1 { font-size: clamp(27px, 2.8vw, 35px); line-height: 1.2; letter-spacing: -1.5
 .cinder-mark { display: inline-flex; align-items: center; justify-content: center; width: 25px; height: 25px; color: #111714; flex: 0 0 auto; }
 .cinder-mark svg { width: 25px; height: 25px; display: block; }
 .cinder-wordmark { font-size: 14px; font-weight: 750; letter-spacing: 2px; color: #151916; }
+
+/* Cinder visual refinement: restrained monochrome with one warm brand accent */
+:root { --accent: #b65335; --background: #f5f4f0; --foreground: #171a18; --muted: #777873; --line: #e5e3dd; --panel: #fff; }
+.brand-period, .heading-period { color: #b65335; }
+.nav-item.active { background: #eeede8; color: #171a18; font-weight: 650; }
+.nav-item:hover { background: #f5f4f0; color: #171a18; }
+.attention-banner { border-color: #e5e3dd; background: #fff; }
+.attention-icon { background: #f0efeb; color: #42443f; }
+.section-kicker { color: #777873; }
+.eyebrow-line { background: #b65335; }
+.card-icon, .card-icon.purple, .card-icon.green, .card-icon.blue, .card-icon.orange { background: #f0efeb; color: #4b4d48; }
+.card-footer, .panel-link { color: #555750; }
+.mini-status { background: #b65335; }
+.focus-priority { color: #4b4d48; background: #f0efeb; }
+.empty-orbit { border-color: #e5e3dd; }
+.orbit-two { border-color: #d9d7d0; }
+.empty-core { background: #f0efeb; color: #454741; }
+.setup-note { color: #65665f; background: #f4f3ef; }
+.footer-mark { background: #b65335; transform: none; border-radius: 50%; }
+.back-home-button { color: #343631; }
+.route-note { background: #faf9f6; }
