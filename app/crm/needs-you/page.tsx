@@ -1,18 +1,18 @@
 "use client";
 import {useCallback,useEffect,useMemo,useState} from "react";
-type Item={id:string;kind:"task"|"outreach"|"followup"|"project"|"deal"|"support";title:string;detail:string;due:string|null;priority:number;href:string;action:string};
+type Item={id:string;kind:"task"|"outreach"|"followup"|"project"|"deal"|"support"|"approval"|"renewal";title:string;detail:string;due:string|null;priority:number;href:string;action:string};
 const dateLabel=(v:string|null)=>v?new Date(v).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"No due date";
 export default function NeedsYouPage(){
  const [items,setItems]=useState<Item[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[filter,setFilter]=useState("all");
  const load=useCallback(async()=>{
   setLoading(true);setError("");
   try{
-   const [tr,or,cr,pr,dr,sr]=await Promise.all([
-    fetch("/api/tasks",{cache:"no-store"}),fetch("/api/outreach",{cache:"no-store"}),fetch("/api/contacts",{cache:"no-store"}),fetch("/api/projects",{cache:"no-store"}),fetch("/api/deals",{cache:"no-store"}),fetch("/api/client-success",{cache:"no-store"})
+   const [tr,or,cr,pr,dr,sr,wr]=await Promise.all([
+    fetch("/api/tasks",{cache:"no-store"}),fetch("/api/outreach",{cache:"no-store"}),fetch("/api/contacts",{cache:"no-store"}),fetch("/api/projects",{cache:"no-store"}),fetch("/api/deals",{cache:"no-store"}),fetch("/api/client-success",{cache:"no-store"}),fetch("/api/workforce",{cache:"no-store"})
    ]);
-   if([tr,or,cr,pr,dr,sr].some(r=>r.status===401))throw new Error("Sign in to view your action queue.");
-   const [td,od,cd,pd,dd,sd]=await Promise.all([tr.json(),or.json(),cr.json(),pr.json(),dr.json(),sr.json()]);
-   if(!tr.ok||!or.ok||!cr.ok||!pr.ok||!dr.ok||!sr.ok)throw new Error("Some workspace data could not load. Check the task, outreach, and project pages.");
+   if([tr,or,cr,pr,dr,sr,wr].some(r=>r.status===401))throw new Error("Sign in to view your action queue.");
+   const [td,od,cd,pd,dd,sd,wd]=await Promise.all([tr.json(),or.json(),cr.json(),pr.json(),dr.json(),sr.json(),wr.json()]);
+   if(!tr.ok||!or.ok||!cr.ok||!pr.ok||!dr.ok||!sr.ok||!wr.ok)throw new Error("Some workspace data could not load. Check the task, outreach, project, and workforce pages.");
    const now=Date.now();const list:Item[]=[];
    for(const t of (td.tasks||[])){
     if(["done","cancelled"].includes(t.status))continue;
@@ -38,6 +38,8 @@ export default function NeedsYouPage(){
     else if(p.targetDate&&new Date(p.targetDate+"T23:59:59").getTime()<=today.getTime())list.push({id:"project-due:"+p.id,kind:"project",title:"Review project deadline: "+p.name,detail:statusesLabel(p.status)+" · "+(p.clientName||p.contactName||"Client"),due:p.targetDate+"T12:00:00",priority:2,href:"/crm/projects",action:"Open project"});
    }
    for(const t of (sd.tickets||[])){if(["resolved","closed"].includes(t.status))continue;const due=t.due_date?new Date(t.due_date+"T23:59:59").getTime():null;if(t.priority!=="urgent"&&t.priority!=="high"&&(due===null||due>today.getTime()))continue;list.push({id:"support:"+t.id,kind:"support",title:"Support: "+t.title,detail:[t.client_name||t.contact_name,t.priority+" priority",t.status].filter(Boolean).join(" · "),due:t.due_date,priority:t.priority==="urgent"?0:t.priority==="high"?1:2,href:"/crm/client-success",action:"Open ticket"});}
+   for(const a of (wd.approvals||[])){if(a.status!=="pending")continue;list.push({id:"approval:"+a.id,kind:"approval",title:"Approval needed: "+a.title,detail:[a.action_type,a.description].filter(Boolean).join(" · "),due:a.created_at||null,priority:1,href:"/crm/workforce",action:"Review approval"});}
+   for(const a of (sd.accounts||[])){if(["churned","paused"].includes(a.status)||!a.renewal_date)continue;const renewalMs=new Date(a.renewal_date+"T23:59:59").getTime();const days=(renewalMs-now)/86400000;if(days<=30)list.push({id:"renewal:"+a.id,kind:"renewal",title:(days<0?"Overdue renewal: ":"Renewal approaching: ")+a.client_name,detail:[a.service_name,a.status,"Health "+a.health_score+"/5"].filter(Boolean).join(" · "),due:a.renewal_date+"T12:00:00",priority:days<0?1:days<=7?2:3,href:"/crm/client-success",action:"Review client"});}
    for(const d of (dd.deals||[])){
     if(["won","lost"].includes(d.stage)||!d.expectedCloseDate)continue;
     const ms=new Date(d.expectedCloseDate+"T23:59:59").getTime();if(ms>today.getTime())continue;
@@ -49,12 +51,12 @@ export default function NeedsYouPage(){
  },[]);
  useEffect(()=>{void load()},[load]);
  const visible=useMemo(()=>filter==="all"?items:items.filter(x=>x.kind===filter),[items,filter]);
- const counts=useMemo(()=>({all:items.length,task:items.filter(x=>x.kind==="task").length,outreach:items.filter(x=>x.kind==="outreach").length,followup:items.filter(x=>x.kind==="followup").length,project:items.filter(x=>x.kind==="project").length,deal:items.filter(x=>x.kind==="deal").length,support:items.filter(x=>x.kind==="support").length}),[items]);
+ const counts=useMemo(()=>({all:items.length,task:items.filter(x=>x.kind==="task").length,outreach:items.filter(x=>x.kind==="outreach").length,followup:items.filter(x=>x.kind==="followup").length,project:items.filter(x=>x.kind==="project").length,deal:items.filter(x=>x.kind==="deal").length,support:items.filter(x=>x.kind==="support").length,approval:items.filter(x=>x.kind==="approval").length,renewal:items.filter(x=>x.kind==="renewal").length}),[items]);
  return <main className="needs-shell"><header className="needs-header"><a href="/">← Cinder workspace</a><button onClick={()=>void load()} disabled={loading}>↻ Refresh</button></header><section className="needs-content"><div className="needs-eyebrow">EXECUTION QUEUE</div><h1>Needs you<span>.</span></h1><p className="needs-subtitle">One queue for overdue follow-ups, blocked delivery, and work that needs a decision. Items are read from your workspace, not generated placeholders.</p>
  <div className="needs-stats"><div><small>NEEDS ATTENTION</small><strong>{loading?"—":items.length}</strong></div><div><small>OUTREACH DUE</small><strong>{loading?"—":counts.outreach}</strong></div><div><small>BLOCKED / URGENT</small><strong>{loading?"—":items.filter(x=>x.priority<=1).length}</strong></div></div>
  {error&&<div className="needs-error" role="alert">{error}</div>}
- <nav className="needs-filters" aria-label="Filter action queue">{[["all","All items"],["task","Tasks"],["outreach","Outreach"],["followup","Contact follow-ups"],["project","Projects"],["deal","Deals"],["support","Support"]].map(([id,label])=><button key={id} className={filter===id?"selected":""} onClick={()=>setFilter(id)}>{label}<span>{counts[id as keyof typeof counts]}</span></button>)}</nav>
- <section className="needs-list">{loading?<div className="needs-empty">Loading your live action queue…</div>:visible.length===0?<div className="needs-empty"><strong>You're all caught up.</strong><p>No items in this view currently need attention.</p></div>:visible.map(item=><article key={item.id} className="needs-item"><div className={"needs-kind kind-"+item.kind}>{({task:"✓",outreach:"↗",followup:"☎",project:"▱",deal:"$",support:"!"} as Record<string,string>)[item.kind]}</div><div className="needs-item-copy"><div className="needs-item-title">{item.title}</div><div className="needs-item-detail">{item.detail||item.kind}</div><div className="needs-item-due">{item.due?"Due "+dateLabel(item.due):"No due date"}</div></div><a className="needs-item-action" href={item.href}>{item.action} →</a></article>)}</section>
+ <nav className="needs-filters" aria-label="Filter action queue">{[["all","All items"],["task","Tasks"],["outreach","Outreach"],["followup","Contact follow-ups"],["project","Projects"],["deal","Deals"],["support","Support"],["approval","Approvals"],["renewal","Renewals"]].map(([id,label])=><button key={id} className={filter===id?"selected":""} onClick={()=>setFilter(id)}>{label}<span>{counts[id as keyof typeof counts]}</span></button>)}</nav>
+ <section className="needs-list">{loading?<div className="needs-empty">Loading your live action queue…</div>:visible.length===0?<div className="needs-empty"><strong>You're all caught up.</strong><p>No items in this view currently need attention.</p></div>:visible.map(item=><article key={item.id} className="needs-item"><div className={"needs-kind kind-"+item.kind}>{({task:"✓",outreach:"↗",followup:"☎",project:"▱",deal:"$",support:"!",approval:"✓",renewal:"$"} as Record<string,string>)[item.kind]}</div><div className="needs-item-copy"><div className="needs-item-title">{item.title}</div><div className="needs-item-detail">{item.detail||item.kind}</div><div className="needs-item-due">{item.due?"Due "+dateLabel(item.due):"No due date"}</div></div><a className="needs-item-action" href={item.href}>{item.action} →</a></article>)}</section>
  <p className="needs-footnote">This queue is advisory: it highlights records with overdue dates or explicit blockers. It does not send messages, make calls, or change record status automatically.</p>
  </section></main>;
 }
