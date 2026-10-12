@@ -47,10 +47,11 @@ export default function Home() {
    fetch("/api/contacts",{cache:"no-store"}),
    fetch("/api/deals",{cache:"no-store"}),
    fetch("/api/outreach",{cache:"no-store"}),
-   fetch("/api/tasks",{cache:"no-store"})
-  ]).then(async ([cr,dr,or,tr]) => {
-   if (!cr.ok || !dr.ok || !or.ok || !tr.ok) throw new Error("Workspace data unavailable");
-   const [cd,dd,od,td] = await Promise.all([cr.json(),dr.json(),or.json(),tr.json()]);
+   fetch("/api/tasks",{cache:"no-store"}),
+   fetch("/api/finance",{cache:"no-store"})
+  ]).then(async ([cr,dr,or,tr,fr]) => {
+   if (!cr.ok || !dr.ok || !or.ok || !tr.ok || !fr.ok) throw new Error("Workspace data unavailable");
+   const [cd,dd,od,td,fd] = await Promise.all([cr.json(),dr.json(),or.json(),tr.json(),fr.json()]);
    if (!active) return;
    const contacts = Array.isArray(cd.contacts) ? cd.contacts : [];
    const deals = Array.isArray(dd.deals) ? dd.deals : [];
@@ -66,6 +67,7 @@ export default function Home() {
     dueOutreach: outreach.filter((x:{status?:string;nextActionAt?:string})=>x.status==="active"&&x.nextActionAt&&new Date(x.nextActionAt).getTime()<=Date.now()).length,
     openTasks: tasks.filter((x:{status?:string})=>x.status!=="done"&&x.status!=="cancelled").length,
     dueTasks: tasks.filter((x:{status?:string;dueAt?:string|null})=>x.status!=="done"&&x.status!=="cancelled"&&x.dueAt&&new Date(x.dueAt).getTime()<=Date.now()).length,
+    monthlyCollected:Number(fd.summary?.paidRevenue||0),monthlyRetainer:Number(fd.summary?.mrr||0),monthExpenses:Number(fd.summary?.monthExpenses||0),monthNet:Number(fd.summary?.monthNet||0),
     loading:false,error:false
    });
   }).catch(()=>{if(active)setBusinessSnapshot(s=>({...s,loading:false,error:true}))});
