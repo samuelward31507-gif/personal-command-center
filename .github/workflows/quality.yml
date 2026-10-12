@@ -6,6 +6,7 @@ on:
       - feat/crm-foundation
   pull_request:
     branches:
+      - main
       - feat/crm-foundation
 
 jobs:
