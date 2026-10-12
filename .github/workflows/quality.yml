@@ -42,6 +42,8 @@ jobs:
       - name: Run ESLint
         run: npm run lint
       - name: Check TypeScript
+        if: always()
         run: npx tsc --noEmit
       - name: Build Next.js application
+        if: always()
         run: npm run build
