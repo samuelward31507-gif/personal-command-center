@@ -58,7 +58,7 @@ export async function GET() {
     const rows = await sql`
       SELECT t.id, t.title, t.description, t.status, t.priority, t.due_at, t.contact_id, t.deal_id,
         t.created_at, t.updated_at,
-        c.name AS contact_name,
+        trim(concat_ws(' ', c.first_name, c.last_name)) AS contact_name,
         d.title AS deal_title
       FROM public.tasks t
       LEFT JOIN public.contacts c ON c.id = t.contact_id AND c.owner_id = t.owner_id
