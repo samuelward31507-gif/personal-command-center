@@ -13,15 +13,12 @@ function error(message: string, status: number) {
   return Response.json({ error: message }, { status });
 }
 
-/**
- * Read-only, owner-scoped snapshot for a future Hermes bridge.
- * This route does not trigger agents, send messages, or perform external actions.
- */
+/** Read-only, owner-scoped snapshot for a future Hermes bridge. */
 export async function GET() {
   try {
-    const sessionResult = await auth.getSession();
-    const session = sessionResult?.data?.session;
-    const user = sessionResult?.data?.user;
+    const result = await auth.getSession();
+    const session = result?.data?.session;
+    const user = result?.data?.user;
     if (!session || !user?.id) return error("Unauthorized", 401);
 
     const ownerId = String(user.id);
@@ -36,9 +33,9 @@ export async function GET() {
           FROM public.deals WHERE owner_id = ${ownerId}
           ORDER BY CASE WHEN stage IN ('won','lost') THEN 1 ELSE 0 END,
             expected_close_date ASC NULLS LAST, updated_at DESC LIMIT 100`,
-      sql`SELECT id, first_name, last_name, company, role, status, source, next_follow_up, updated_at
+      sql`SELECT id, first_name, last_name, company, role, status, source, follow_up_at, updated_at
           FROM public.contacts WHERE owner_id = ${ownerId}
-          ORDER BY next_follow_up ASC NULLS LAST, updated_at DESC LIMIT 100`,
+          ORDER BY follow_up_at ASC NULLS LAST, updated_at DESC LIMIT 100`,
       sql`SELECT id, name, client_name, service_type, status, target_date, monthly_value, setup_value, contact_id, deal_id, updated_at
           FROM public.projects WHERE owner_id = ${ownerId}
           ORDER BY CASE WHEN status IN ('completed','cancelled') THEN 1 ELSE 0 END,
@@ -65,13 +62,11 @@ export async function GET() {
       })),
       pendingApprovals: approvals,
       limitations: [
-        "This endpoint is a read-only context snapshot.",
-        "It does not execute agent runs or approval requests.",
-        "It does not expose contact phone numbers, email addresses, or private notes.",
+        "Read-only snapshot; no agent execution or external actions.",
+        "Approval requests are listed but never executed.",
+        "Contact phone numbers, email addresses, and private notes are excluded.",
       ],
-    }, {
-      headers: { "Cache-Control": "private, no-store, max-age=0" },
-    });
+    }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
   } catch (e) {
     console.error("Workforce context GET failed", e);
     return error("Unable to load read-only business context.", 500);
