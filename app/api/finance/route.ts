@@ -22,7 +22,7 @@ export async function GET(){
  const today=new Date(),month=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0");
  const paidRevenue=revenue.filter((r:any)=>r.status==="paid"&&r.paid_at?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
  const setupRevenue=revenue.filter((r:any)=>r.status==="paid"&&r.revenue_type==="setup_fee"&&r.paid_at?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
- const mrr=revenue.filter((r:any)=>r.status==="paid"&&r.revenue_type==="monthly_retainer").reduce((s:number,r:any)=>s+r.amount,0);
+ const mrr=revenue.filter((r:any)=>r.status!=="cancelled"&&r.revenue_type==="monthly_retainer").reduce((s:number,r:any)=>s+r.amount,0);
  const monthExpenses=expenses.filter((r:any)=>r.expense_date?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
  const expected=revenue.filter((r:any)=>["expected","overdue"].includes(r.status)).reduce((s:number,r:any)=>s+r.amount,0);
  return Response.json({revenue,expenses,summary:{month,paidRevenue,setupRevenue,mrr,monthExpenses,monthNet:paidRevenue-monthExpenses,expected,overdue:revenue.filter((r:any)=>r.status==="overdue").reduce((s:number,r:any)=>s+r.amount,0)}})
