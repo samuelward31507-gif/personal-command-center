@@ -1,0 +1,136 @@
+import { neon } from "@neondatabase/serverless";
+import { auth } from "@/lib/auth/server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const stages = new Set(["new", "qualified", "discovery", "proposal", "negotiation", "won", "lost"]);
+const services = new Set(["ai_voice_agent", "speed_to_lead", "lead_follow_up", "appointment_booking", "workflow_automation", "custom_ai_implementation"]);
+function db() {
+  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured.");
+  return neon(process.env.DATABASE_URL);
+}
+async function currentUser() {
+  const result = await auth.getSession();
+  const session = result?.data?.session;
+  const user = result?.data?.user;
+  if (!session || !user?.id) return null;
+  return { id: String(user.id) };
+}
+function jsonError(message: string, status: number) {
+  return Response.json({ error: message }, { status });
+}
+function amount(value: unknown) {
+  const n = Number(value ?? 0);
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, 9999999999.99) : null;
+}
+export async function GET() {
+  try {
+    const user = await currentUser();
+    if (!user) return jsonError("Unauthorized", 401);
+    const sql = db();
+    const rows = await sql`
+      SELECT d.id, d.contact_id, d.title, d.service_type, d.stage, d.setup_fee,
+        d.monthly_fee, d.expected_close_date, d.source, d.notes, d.lost_reason,
+        d.created_at, d.updated_at, c.first_name, c.last_name, c.company
+      FROM public.deals d
+      LEFT JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id
+      WHERE d.owner_id = ${user.id}
+      ORDER BY CASE WHEN d.stage IN ('won','lost') THEN 1 ELSE 0 END,
+        d.expected_close_date ASC NULLS LAST, d.updated_at DESC
+      LIMIT 1000
+    `;
+    return Response.json({ deals: rows.map((r: Record<string, unknown>) => ({
+      id: r.id, contactId: r.contact_id, title: r.title, serviceType: r.service_type,
+      stage: r.stage, setupFee: Number(r.setup_fee), monthlyFee: Number(r.monthly_fee),
+      expectedCloseDate: r.expected_close_date ? String(r.expected_close_date).slice(0, 10) : "",
+      source: r.source, notes: r.notes, lostReason: r.lost_reason,
+      contactName: [r.first_name, r.last_name].filter(Boolean).join(" "),
+      company: r.company, createdAt: r.created_at, updatedAt: r.updated_at,
+    })) });
+  } catch (error) {
+    console.error("CRM deals GET failed", error);
+    return jsonError("Unable to load sales pipeline.", 500);
+  }
+}
+export async function POST(request: Request) {
+  try {
+    const user = await currentUser();
+    if (!user) return jsonError("Unauthorized", 401);
+    const body = await request.json();
+    const title = typeof body.title === "string" ? body.title.trim() : "";
+    if (!title || title.length > 240) return jsonError("Deal title is required (max 240 characters).", 400);
+    const setupFee = amount(body.setupFee);
+    const monthlyFee = amount(body.monthlyFee);
+    if (setupFee === null || monthlyFee === null) return jsonError("Fees must be non-negative numbers.", 400);
+    const stage = stages.has(body.stage) ? body.stage : "new";
+    const serviceType = services.has(body.serviceType) ? body.serviceType : "custom_ai_implementation";
+    const contactId = typeof body.contactId === "string" && body.contactId ? body.contactId : null;
+    const sql = db();
+    if (contactId) {
+      const owned = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
+      if (!owned.length) return jsonError("Contact not found.", 404);
+    }
+    const closeDate = typeof body.expectedCloseDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.expectedCloseDate) ? body.expectedCloseDate : null;
+    const rows = await sql`
+      INSERT INTO public.deals (owner_id, contact_id, title, service_type, stage, setup_fee, monthly_fee, expected_close_date, source, notes, lost_reason)
+      VALUES (${user.id}, ${contactId}::uuid, ${title}, ${serviceType}, ${stage}, ${setupFee}, ${monthlyFee}, ${closeDate}::date,
+        ${String(body.source ?? "").slice(0, 200)}, ${String(body.notes ?? "").slice(0, 10000)}, ${String(body.lostReason ?? "").slice(0, 1000)})
+      RETURNING id
+    `;
+    return Response.json({ id: rows[0]?.id }, { status: 201 });
+  } catch (error) {
+    console.error("CRM deals POST failed", error);
+    return jsonError("Unable to create deal.", 500);
+  }
+}
+export async function PATCH(request: Request) {
+  try {
+    const user = await currentUser();
+    if (!user) return jsonError("Unauthorized", 401);
+    const body = await request.json();
+    if (typeof body.id !== "string" || !body.id) return jsonError("Deal id is required.", 400);
+    const title = typeof body.title === "string" ? body.title.trim() : "";
+    if (!title || title.length > 240) return jsonError("Deal title is required (max 240 characters).", 400);
+    const setupFee = amount(body.setupFee);
+    const monthlyFee = amount(body.monthlyFee);
+    if (setupFee === null || monthlyFee === null) return jsonError("Fees must be non-negative numbers.", 400);
+    if (!stages.has(body.stage)) return jsonError("Invalid deal stage.", 400);
+    if (!services.has(body.serviceType)) return jsonError("Invalid service type.", 400);
+    const contactId = typeof body.contactId === "string" && body.contactId ? body.contactId : null;
+    const sql = db();
+    if (contactId) {
+      const owned = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
+      if (!owned.length) return jsonError("Contact not found.", 404);
+    }
+    const closeDate = typeof body.expectedCloseDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.expectedCloseDate) ? body.expectedCloseDate : null;
+    const rows = await sql`
+      UPDATE public.deals SET contact_id = ${contactId}::uuid, title = ${title},
+        service_type = ${body.serviceType}, stage = ${body.stage}, setup_fee = ${setupFee},
+        monthly_fee = ${monthlyFee}, expected_close_date = ${closeDate}::date,
+        source = ${String(body.source ?? "").slice(0, 200)}, notes = ${String(body.notes ?? "").slice(0, 10000)},
+        lost_reason = ${String(body.lostReason ?? "").slice(0, 1000)}, updated_at = now()
+      WHERE id = ${body.id}::uuid AND owner_id = ${user.id} RETURNING id
+    `;
+    if (!rows.length) return jsonError("Deal not found.", 404);
+    return Response.json({ ok: true });
+  } catch (error) {
+    console.error("CRM deals PATCH failed", error);
+    return jsonError("Unable to update deal.", 500);
+  }
+}
+export async function DELETE(request: Request) {
+  try {
+    const user = await currentUser();
+    if (!user) return jsonError("Unauthorized", 401);
+    const body = await request.json();
+    if (typeof body.id !== "string" || !body.id) return jsonError("Deal id is required.", 400);
+    const sql = db();
+    const rows = await sql`DELETE FROM public.deals WHERE id = ${body.id}::uuid AND owner_id = ${user.id} RETURNING id`;
+    if (!rows.length) return jsonError("Deal not found.", 404);
+    return Response.json({ ok: true });
+  } catch (error) {
+    console.error("CRM deals DELETE failed", error);
+    return jsonError("Unable to delete deal.", 500);
+  }
+}
