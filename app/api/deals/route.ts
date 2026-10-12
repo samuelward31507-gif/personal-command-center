@@ -71,8 +71,10 @@ export async function POST(request: Request) {
     const setupFee = amount(body.setupFee);
     const monthlyFee = amount(body.monthlyFee);
     if (setupFee === null || monthlyFee === null) return jsonError("Fees must be non-negative numbers.", 400);
-    const stage = stages.has(body.stage) ? body.stage : "new";
-    const serviceType = services.has(body.serviceType) ? body.serviceType : "custom_ai_implementation";
+    if (body.stage !== undefined && !stages.has(body.stage)) return jsonError("Invalid deal stage.", 400);
+    if (body.serviceType !== undefined && !services.has(body.serviceType)) return jsonError("Invalid service type.", 400);
+    const stage = body.stage === undefined ? "new" : body.stage;
+    const serviceType = body.serviceType === undefined ? "custom_ai_implementation" : body.serviceType;
     const contactId = typeof body.contactId === "string" && body.contactId ? body.contactId : null;
     if (contactId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(contactId)) return jsonError("Invalid contact id.", 400);
     const sql = db();
