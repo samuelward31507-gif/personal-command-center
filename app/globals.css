@@ -21,7 +21,7 @@ a { color: inherit; text-decoration: none; }
 button { font: inherit; }
 .app-shell { min-height: 100vh; display: flex; }
 .sidebar { width: 238px; flex: 0 0 238px; background: #fff; border-right: 1px solid var(--line); padding: 11px 13px 14px; display: flex; flex-direction: column; min-height: 100vh; }
-.brand { display: flex; align-items: center; gap: 9px; padding: 0 9px; height: 31px; margin-bottom: 25px; }
+.brand { display: flex; align-items: center; gap: 9px; padding: 0 9px; height: 31px; margin-bottom: 18px; }
 .brand-mark { width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; background: #28272d; }
 .brand-mark span { width: 9px; height: 9px; border: 2px solid white; border-radius: 3px; transform: rotate(45deg); }
 .brand-name { font-size: 19px; font-weight: 720; letter-spacing: -1px; }
@@ -41,7 +41,7 @@ button { font: inherit; }
 .nav-item:hover { background: #f7f7f5; color: #282828; }
 .nav-item.active { background: #f0efff; color: #5546b8; font-weight: 650; }
 .nav-count { margin-left: auto; color: #aaa; font-size: 10px; }
-.sidebar-divider { height: 1px; background: var(--line); margin: 20px 5px 19px; }
+.sidebar-divider { height: 1px; background: var(--line); margin: 16px 5px 15px; }
 .sidebar-bottom { margin-top: auto; }
 .connection-card { display: flex; align-items: center; gap: 8px; padding: 10px 8px; background: #fafaf9; border: 1px solid #efefed; border-radius: 7px; margin-bottom: 13px; }
 .connection-dot { width: 7px; height: 7px; border-radius: 50%; background: #d9a34d; flex: 0 0 auto; }
