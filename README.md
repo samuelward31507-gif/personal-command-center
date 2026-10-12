@@ -26,6 +26,8 @@ The workspace currently provides the operational foundation. **Hermes is not con
 Requirements: Node.js 22 and npm.
 
 ```bash
+cp .env.example .env.local
+# Fill in the required database and auth values in .env.local
 npm ci
 npm run dev
 ```
