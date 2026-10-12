@@ -33,7 +33,7 @@ export default function Home() {
  const [planDate, setPlanDate] = useState("");
  const [planSaving, setPlanSaving] = useState(false);
  const [planMessage, setPlanMessage] = useState("");
- const [businessSnapshot, setBusinessSnapshot] = useState<{contacts:number;leads:number;dueFollowUps:number;openDeals:number;monthlyPipeline:number;dueOutreach:number;openTasks:number;dueTasks:number;monthlyCollected:number;monthlyRetainer:number;monthExpenses:number;monthNet:number;loading:boolean;error:boolean}>({contacts:0,leads:0,dueFollowUps:0,openDeals:0,monthlyPipeline:0,dueOutreach:0,openTasks:0,dueTasks:0,monthlyCollected:0,monthlyRetainer:0,monthExpenses:0,monthNet:0,loading:true,error:false});
+ const [businessSnapshot, setBusinessSnapshot] = useState<{contacts:number;leads:number;dueFollowUps:number;openDeals:number;monthlyPipeline:number;dueOutreach:number;openTasks:number;dueTasks:number;monthlyCollected:number;monthlyRetainer:number;monthExpenses:number;monthNet:number;activeProjects:number;blockedProjects:number;milestonesDone:number;milestonesTotal:number;loading:boolean;error:boolean}>({contacts:0,leads:0,dueFollowUps:0,openDeals:0,monthlyPipeline:0,dueOutreach:0,openTasks:0,dueTasks:0,monthlyCollected:0,monthlyRetainer:0,monthExpenses:0,monthNet:0,activeProjects:0,blockedProjects:0,milestonesDone:0,milestonesTotal:0,loading:true,error:false});
  useEffect(() => {
   const date = localDateKey();
   setPlanDate(date);
@@ -48,16 +48,20 @@ export default function Home() {
    fetch("/api/deals",{cache:"no-store"}),
    fetch("/api/outreach",{cache:"no-store"}),
    fetch("/api/tasks",{cache:"no-store"}),
-   fetch("/api/finance",{cache:"no-store"})
-  ]).then(async ([cr,dr,or,tr,fr]) => {
-   if (!cr.ok || !dr.ok || !or.ok || !tr.ok || !fr.ok) throw new Error("Workspace data unavailable");
-   const [cd,dd,od,td,fd] = await Promise.all([cr.json(),dr.json(),or.json(),tr.json(),fr.json()]);
+   fetch("/api/finance",{cache:"no-store"}),
+   fetch("/api/projects",{cache:"no-store"})
+  ]).then(async ([cr,dr,or,tr,fr,pr]) => {
+   if (!cr.ok || !dr.ok || !or.ok || !tr.ok || !fr.ok || !pr.ok) throw new Error("Workspace data unavailable");
+   const [cd,dd,od,td,fd,pd] = await Promise.all([cr.json(),dr.json(),or.json(),tr.json(),fr.json(),pr.json()]);
    if (!active) return;
    const contacts = Array.isArray(cd.contacts) ? cd.contacts : [];
    const deals = Array.isArray(dd.deals) ? dd.deals : [];
    const outreach = Array.isArray(od.outreach) ? od.outreach : [];
    const tasks = Array.isArray(td.tasks) ? td.tasks : [];
-   const today = new Date().toISOString().slice(0,10);
+   const projects = Array.isArray(pd.projects) ? pd.projects : [];
+   const activeProjects = projects.filter((x:{status?:string})=>!["completed","cancelled"].includes(x.status||""));
+   const todayDate = new Date();
+   const today = todayDate.getFullYear()+"-"+String(todayDate.getMonth()+1).padStart(2,"0")+"-"+String(todayDate.getDate()).padStart(2,"0");
    setBusinessSnapshot({
     contacts: contacts.length,
     leads: contacts.filter((x:{status?:string})=>x.status==="Lead").length,
@@ -68,6 +72,8 @@ export default function Home() {
     openTasks: tasks.filter((x:{status?:string})=>x.status!=="done"&&x.status!=="cancelled").length,
     dueTasks: tasks.filter((x:{status?:string;dueAt?:string|null})=>x.status!=="done"&&x.status!=="cancelled"&&x.dueAt&&new Date(x.dueAt).getTime()<=Date.now()).length,
     monthlyCollected:Number(fd.summary?.paidRevenue||0),monthlyRetainer:Number(fd.summary?.mrr||0),monthExpenses:Number(fd.summary?.monthExpenses||0),monthNet:Number(fd.summary?.monthNet||0),
+    activeProjects:activeProjects.length,blockedProjects:activeProjects.filter((x:{status?:string})=>x.status==="blocked").length,
+    milestonesDone:activeProjects.reduce((n:number,x:{doneMilestones?:number})=>n+Number(x.doneMilestones||0),0),milestonesTotal:activeProjects.reduce((n:number,x:{milestoneCount?:number})=>n+Number(x.milestoneCount||0),0),
     loading:false,error:false
    });
   }).catch(()=>{if(active)setBusinessSnapshot(s=>({...s,loading:false,error:true}))});
@@ -116,7 +122,7 @@ export default function Home() {
      <article className="snapshot-card"><span>FOLLOW-UPS DUE</span><strong>{businessSnapshot.loading?"—":businessSnapshot.dueFollowUps}</strong><small>Due today or overdue</small></article>
      <article className="snapshot-card"><span>OUTREACH DUE</span><strong>{businessSnapshot.loading?"—":businessSnapshot.dueOutreach}</strong><small>Next prospecting actions</small><button onClick={()=>navigate("growth")}>Open outreach →</button></article>
      <article className="snapshot-card"><span>OPEN DEALS</span><strong>{businessSnapshot.loading?"—":businessSnapshot.openDeals}</strong><small>{new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthlyPipeline)} potential monthly</small><button onClick={()=>window.location.assign("/crm/pipeline")}>Open pipeline →</button></article>
-     <article className="snapshot-card"><span>TASKS OPEN</span><strong>{businessSnapshot.loading?"—":businessSnapshot.openTasks}</strong><small>{businessSnapshot.loading?"Loading tasks":businessSnapshot.dueTasks+" due / overdue"}</small><button onClick={()=>window.location.assign("/crm/tasks")}>Open tasks →</button></article>\n     <article className="snapshot-card"><span>COLLECTED THIS MONTH</span><strong>{businessSnapshot.loading?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthlyCollected)}</strong><small>Payments marked paid</small><button onClick={()=>navigate("finance")}>Open finances →</button></article>\n     <article className="snapshot-card"><span>MONTHLY RETAINER RUN-RATE</span><strong>{businessSnapshot.loading?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthlyRetainer)}</strong><small>Non-cancelled retainer records</small><button onClick={()=>navigate("finance")}>Review revenue →</button></article><article className="snapshot-card"><span>EXPENSES THIS MONTH</span><strong>{businessSnapshot.loading?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthExpenses)}</strong><small>Logged business costs</small><button onClick={()=>navigate("finance")}>Review expenses →</button></article><article className="snapshot-card"><span>NET THIS MONTH</span><strong>{businessSnapshot.loading?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthNet)}</strong><small>Collected less logged expenses</small><button onClick={()=>navigate("finance")}>View finances →</button></article>
+     <article className="snapshot-card"><span>TASKS OPEN</span><strong>{businessSnapshot.loading?"—":businessSnapshot.openTasks}</strong><small>{businessSnapshot.loading?"Loading tasks":businessSnapshot.dueTasks+" due / overdue"}</small><button onClick={()=>window.location.assign("/crm/tasks")}>Open tasks →</button></article>\n     <article className="snapshot-card"><span>ACTIVE CLIENT PROJECTS</span><strong>{businessSnapshot.loading?"—":businessSnapshot.activeProjects}</strong><small>{businessSnapshot.loading?"Loading delivery":businessSnapshot.blockedProjects+" blocked"}</small><button onClick={()=>navigate("projects")}>Open delivery →</button></article><article className="snapshot-card"><span>MILESTONES COMPLETE</span><strong>{businessSnapshot.loading?"—":businessSnapshot.milestonesDone+" / "+businessSnapshot.milestonesTotal}</strong><small>{businessSnapshot.milestonesTotal?Math.round(businessSnapshot.milestonesDone/businessSnapshot.milestonesTotal*100)+"% of active-project milestones": "Add milestones to measure delivery"}</small><button onClick={()=>navigate("projects")}>Track milestones →</button></article><article className="snapshot-card"><span>COLLECTED THIS MONTH</span><strong>{businessSnapshot.loading?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthlyCollected)}</strong><small>Payments marked paid</small><button onClick={()=>navigate("finance")}>Open finances →</button></article>\n     <article className="snapshot-card"><span>MONTHLY RETAINER RUN-RATE</span><strong>{businessSnapshot.loading?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthlyRetainer)}</strong><small>Non-cancelled retainer records</small><button onClick={()=>navigate("finance")}>Review revenue →</button></article><article className="snapshot-card"><span>EXPENSES THIS MONTH</span><strong>{businessSnapshot.loading?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthExpenses)}</strong><small>Logged business costs</small><button onClick={()=>navigate("finance")}>Review expenses →</button></article><article className="snapshot-card"><span>NET THIS MONTH</span><strong>{businessSnapshot.loading?"—":new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthNet)}</strong><small>Collected less logged expenses</small><button onClick={()=>navigate("finance")}>View finances →</button></article>
     </section>
     {businessSnapshot.error&&<p className="snapshot-error" role="status">Live business metrics will appear after you sign in to Cinder.</p>}
     <div className="lower-grid"><section className="surface-panel focus-panel"><div className="panel-heading"><div><h2>Founder focus</h2><p>Priority order for decisions</p></div></div><div className="focus-list"><div className="focus-row"><span className="focus-number">01</span><span className="focus-label">Revenue</span><span className="focus-detail">Create cash flow</span><span className="focus-priority">Primary</span></div><div className="focus-row"><span className="focus-number">02</span><span className="focus-label">Customer acquisition</span><span className="focus-detail">Build the pipeline</span></div><div className="focus-row"><span className="focus-number">03</span><span className="focus-label">Important opportunities</span><span className="focus-detail">Act on leverage</span></div><div className="focus-row"><span className="focus-number">04</span><span className="focus-label">High-value projects</span><span className="focus-detail">Move key work forward</span></div></div></section>
