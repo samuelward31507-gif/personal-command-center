@@ -97,7 +97,8 @@ export async function PATCH(request: Request) {
       if (!rows.length) return jsonError("Outreach record not found.", 404);
       return Response.json({ outreach: rows[0] });
     }
-    const outcome = typeof body.outcome === "string" ? body.outcome.slice(0, 80) : "completed";
+    const allowedOutcomes = new Set(["initiated", "answered", "no_answer", "voicemail", "reply_received", "meeting_booked", "completed", "other"]);
+    const outcome = typeof body.outcome === "string" && allowedOutcomes.has(body.outcome) ? body.outcome : "other";
     const notes = typeof body.notes === "string" ? body.notes.slice(0, 3000) : "";
     const rows = await sql`
       SELECT o.id, o.contact_id, o.current_step FROM public.contact_outreach o
@@ -108,22 +109,26 @@ export async function PATCH(request: Request) {
     const step = Number(record.current_step);
     const nextStep = step + 1;
     const finalStep = step >= 6;
+    const stopForResponse = outcome === "meeting_booked" || outcome === "reply_received";
+    const nextStatus = stopForResponse ? (outcome === "meeting_booked" ? "meeting_booked" : "interested") : finalStep ? "parked" : "active";
     const nextDate = new Date();
     nextDate.setDate(nextDate.getDate() + (dayOffsets[Math.min(nextStep - 1, 5)] - dayOffsets[step - 1]));
     const updated = await sql`
       UPDATE public.contact_outreach SET
-        current_step = CASE WHEN ${finalStep} THEN current_step ELSE ${nextStep} END,
-        status = CASE WHEN ${finalStep} THEN 'parked' ELSE 'active' END,
-        next_action_at = CASE WHEN ${finalStep} THEN next_action_at ELSE ${nextDate.toISOString()}::timestamptz END,
+        current_step = CASE WHEN ${finalStep} OR ${stopForResponse} THEN current_step ELSE ${nextStep} END,
+        status = ${nextStatus},
+        next_action_at = CASE WHEN ${finalStep} OR ${stopForResponse} THEN next_action_at ELSE ${nextDate.toISOString()}::timestamptz END,
         updated_at = now()
       WHERE id = ${id}::uuid AND owner_id = ${user.id}
       RETURNING id, contact_id, status, current_step, next_action_at
     `;
+    const channel = Number(record.current_step) === 3 || Number(record.current_step) === 5 ? "text" : "call";
+    const action = channel === "text" ? "outbound_text" : "outbound_call";
     await sql`
       INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes, sequence_step)
-      VALUES (${user.id}, ${record.contact_id}, 'call', 'outbound_call', ${outcome}, ${notes}, ${step})
+      VALUES (${user.id}, ${record.contact_id}, ${channel}, ${action}, ${outcome}, ${notes}, ${step})
     `;
-    return Response.json({ outreach: updated[0], finished: finalStep });
+    return Response.json({ outreach: updated[0], finished: finalStep || stopForResponse });
   } catch (error) {
     console.error("CRM outreach PATCH failed", error);
     return jsonError("Unable to update outreach step.", 500);
