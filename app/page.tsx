@@ -29,6 +29,33 @@ export default function Home() {
  const [activeView, setActiveView] = useState("home");
  const [done, setDone] = useState<string[]>([]);
  const [dailyNotes, setDailyNotes] = useState("");
+ const [businessSnapshot, setBusinessSnapshot] = useState<{contacts:number;leads:number;dueFollowUps:number;openDeals:number;monthlyPipeline:number;dueOutreach:number;loading:boolean;error:boolean}>({contacts:0,leads:0,dueFollowUps:0,openDeals:0,monthlyPipeline:0,dueOutreach:0,loading:true,error:false});
+ useEffect(() => {
+  let active = true;
+  Promise.all([
+   fetch("/api/contacts",{cache:"no-store"}),
+   fetch("/api/deals",{cache:"no-store"}),
+   fetch("/api/outreach",{cache:"no-store"})
+  ]).then(async ([cr,dr,or]) => {
+   if (!cr.ok || !dr.ok || !or.ok) throw new Error("Workspace data unavailable");
+   const [cd,dd,od] = await Promise.all([cr.json(),dr.json(),or.json()]);
+   if (!active) return;
+   const contacts = Array.isArray(cd.contacts) ? cd.contacts : [];
+   const deals = Array.isArray(dd.deals) ? dd.deals : [];
+   const outreach = Array.isArray(od.outreach) ? od.outreach : [];
+   const today = new Date().toISOString().slice(0,10);
+   setBusinessSnapshot({
+    contacts: contacts.length,
+    leads: contacts.filter((x:{status?:string})=>x.status==="Lead").length,
+    dueFollowUps: contacts.filter((x:{nextFollowUp?:string})=>x.nextFollowUp&&x.nextFollowUp<=today).length,
+    openDeals: deals.filter((x:{stage?:string})=>x.stage!=="won"&&x.stage!=="lost").length,
+    monthlyPipeline: deals.filter((x:{stage?:string})=>x.stage!=="won"&&x.stage!=="lost").reduce((s:number,x:{monthlyFee?:number})=>s+Number(x.monthlyFee||0),0),
+    dueOutreach: outreach.filter((x:{status?:string;nextActionAt?:string})=>x.status==="active"&&x.nextActionAt&&new Date(x.nextActionAt).getTime()<=Date.now()).length,
+    loading:false,error:false
+   });
+  }).catch(()=>{if(active)setBusinessSnapshot(s=>({...s,loading:false,error:true}))});
+  return ()=>{active=false};
+ }, []);
  const navigate = (view: string) => { if (view === "growth") { window.location.assign("/crm"); return; } setActiveView(view); };
  const completed = (id: string) => done.includes(id);
  const toggle = (id: string) => setDone(old => old.includes(id) ? old.filter(x=>x!==id) : [...old,id]);
@@ -56,8 +83,15 @@ export default function Home() {
      <button className="overview-card overview-card-button" onClick={()=>navigate("projects")}><div className="card-topline"><span className="card-icon"><I>▱</I></span><span className="card-arrow">↗</span></div><h3>Projects & execution</h3><p>Keep commitments, project next steps, and blockers visible.</p><div className="card-footer">Open projects <span>→</span></div></button>
      <button className="overview-card overview-card-button" onClick={()=>navigate("intelligence")}><div className="card-topline"><span className="card-icon"><I>✳</I></span><span className="card-arrow">↗</span></div><h3>Intelligence</h3><p>Turn research and useful signals into clear decisions.</p><div className="card-footer">Open intelligence <span>→</span></div></button>
     </div>
+    <section className="snapshot-grid" aria-label="Live business snapshot">
+     <article className="snapshot-card"><span>CONTACTS</span><strong>{businessSnapshot.loading?"—":businessSnapshot.contacts}</strong><small>{businessSnapshot.loading?"Loading workspace":businessSnapshot.error?"Sign in to load data":businessSnapshot.leads+" leads"}</small></article>
+     <article className="snapshot-card"><span>FOLLOW-UPS DUE</span><strong>{businessSnapshot.loading?"—":businessSnapshot.dueFollowUps}</strong><small>Due today or overdue</small></article>
+     <article className="snapshot-card"><span>OUTREACH DUE</span><strong>{businessSnapshot.loading?"—":businessSnapshot.dueOutreach}</strong><small>Next prospecting actions</small><button onClick={()=>navigate("growth")}>Open outreach →</button></article>
+     <article className="snapshot-card"><span>OPEN DEALS</span><strong>{businessSnapshot.loading?"—":businessSnapshot.openDeals}</strong><small>{new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(businessSnapshot.monthlyPipeline)} potential monthly</small><button onClick={()=>window.location.assign("/crm/pipeline")}>Open pipeline →</button></article>
+    </section>
+    {businessSnapshot.error&&<p className="snapshot-error" role="status">Live business metrics will appear after you sign in to Cinder.</p>}
     <div className="lower-grid"><section className="surface-panel focus-panel"><div className="panel-heading"><div><h2>Founder focus</h2><p>Priority order for decisions</p></div></div><div className="focus-list"><div className="focus-row"><span className="focus-number">01</span><span className="focus-label">Revenue</span><span className="focus-detail">Create cash flow</span><span className="focus-priority">Primary</span></div><div className="focus-row"><span className="focus-number">02</span><span className="focus-label">Customer acquisition</span><span className="focus-detail">Build the pipeline</span></div><div className="focus-row"><span className="focus-number">03</span><span className="focus-label">Important opportunities</span><span className="focus-detail">Act on leverage</span></div><div className="focus-row"><span className="focus-number">04</span><span className="focus-label">High-value projects</span><span className="focus-detail">Move key work forward</span></div></div></section>
-     <section className="surface-panel activity-panel"><div className="panel-heading"><div><h2>Next step</h2><p>Make Cinder useful every day</p></div></div><div className="empty-state"><h3>Build the contact database next.</h3><p>Contacts, companies, last contact, next follow-up, relationship notes, and a clear next action—then connect those records to your schedule.</p><button className="text-action" onClick={()=>navigate("growth")}>Open Contacts & growth →</button></div></section></div>
+     <section className="surface-panel activity-panel"><div className="panel-heading"><div><h2>Next step</h2><p>Make Cinder useful every day</p></div></div><div className="empty-state"><h3>Turn today’s activity into revenue.</h3><p>Clear due outreach first, follow up with existing leads, and move qualified opportunities toward a meeting or proposal. Cinder now pulls live counts from your CRM and pipeline.</p><button className="text-action" onClick={()=>navigate("growth")}>Open Contacts & growth →</button> <button className="text-action" onClick={()=>window.location.assign("/crm/pipeline")}>Review sales pipeline →</button></div></section></div>
     <footer className="page-footer"><span><span className="footer-mark"/> CINDER PERSONAL CRM</span><span>Clarity, relationships, follow-through.</span></footer>
    </div> : <div className="page-content route-page"><div className="welcome-row"><div><div className="eyebrow"><span className="eyebrow-line"/> CINDER WORKSPACE</div><h1>{viewDetails[activeView]?.title??"Home"}<span className="heading-period">.</span></h1><p className="page-subtitle">{viewDetails[activeView]?.description}</p></div><button className="back-home-button" onClick={()=>navigate("home")}>← Back to home</button></div><section className="route-panel"><div className="route-panel-heading"><span className="section-kicker">WORKSPACE VIEW</span><span className="banner-status"><span className="status-dot amber"/> Not connected</span></div><div className="route-items">{(viewDetails[activeView]?.items??[]).map((item,index)=><div className="route-item" key={item}><span className="route-item-number">{String(index+1).padStart(2,"0")}</span><span>{item}</span><span className="route-item-status">Needs implementation</span></div>)}</div><p className="route-note">This section is a planned part of your personal CRM. It is not connected to a persistent database yet.</p></section></div>}</section></main>;
 }
