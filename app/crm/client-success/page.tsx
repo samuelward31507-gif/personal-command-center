@@ -1,5 +1,6 @@
-import Link from "next/link";
 "use client";
+
+import Link from "next/link";
 import {useEffect,useState} from "react";
 export default function ClientSuccess(){const [d,S]=useState<any>({accounts:[],tickets:[]}),[tab,T]=useState("accounts"),[form,F]=useState(false),[error,E]=useState(""),[name,N]=useState(""),[goals,G]=useState(""),[service,V]=useState(""),[monthly,M]=useState(""),[renewal,R]=useState(""),[health,H]=useState("3"),[status,ST]=useState("active"),[title,TI]=useState(""),[detail,DE]=useState(""),[riskNote,RISK]=useState(""),[priority,P]=useState("normal"),[dueDate,DD]=useState(""),[contacts,C]=useState<any[]>([]),[projects,PR]=useState<any[]>([]),[contactId,CI]=useState(""),[projectId,PI]=useState(""),[busy,B]=useState(false);
 async function load(){try{const rs=await Promise.all(["/api/client-success","/api/contacts","/api/projects"].map(u=>fetch(u,{cache:"no-store"}))),js=await Promise.all(rs.map(r=>r.json()));if(rs.some(r=>!r.ok))throw Error("Unable to load client records.");S(js[0]);C(js[1].contacts||[]);PR(js[2].projects||[])}catch(e){E(e instanceof Error?e.message:"Unable to load")}}useEffect(()=>{void load()},[]);
