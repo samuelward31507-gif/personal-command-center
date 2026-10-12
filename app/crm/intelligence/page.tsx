@@ -1,5 +1,6 @@
-import Link from "next/link";
 "use client";
+
+import Link from "next/link";
 import {useCallback,useEffect,useMemo,useState} from "react";
 type Signal={id:string;level:"urgent"|"watch"|"positive";title:string;detail:string;href:string;label:string};
 type Snapshot={contacts:any[];deals:any[];outreach:any[];tasks:any[];projects:any[];finance:any;success:any;workforce:any};
