@@ -1,0 +1,28 @@
+name: Code quality
+
+on:
+  push:
+    branches:
+      - feat/crm-foundation
+  pull_request:
+    branches:
+      - feat/crm-foundation
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run ESLint
+        run: npm run lint
+      - name: Check TypeScript
+        run: npx tsc --noEmit
