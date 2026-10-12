@@ -69,7 +69,12 @@ export async function POST(request: Request) {
       VALUES (${user.id}, ${contactId}::uuid, ${niche}, ${painPoint}, ${researchNotes}, now(), now())
       ON CONFLICT (owner_id, contact_id) DO UPDATE SET
         niche = EXCLUDED.niche, pain_point = EXCLUDED.pain_point,
-        research_notes = EXCLUDED.research_notes, updated_at = now()
+        research_notes = EXCLUDED.research_notes,
+        status = CASE WHEN public.contact_outreach.status IN ('parked','completed') THEN 'active' ELSE public.contact_outreach.status END,
+        current_step = CASE WHEN public.contact_outreach.status IN ('parked','completed') THEN 1 ELSE public.contact_outreach.current_step END,
+        started_at = CASE WHEN public.contact_outreach.status IN ('parked','completed') THEN now() ELSE public.contact_outreach.started_at END,
+        next_action_at = CASE WHEN public.contact_outreach.status IN ('parked','completed') THEN now() ELSE public.contact_outreach.next_action_at END,
+        updated_at = now()
       RETURNING id, contact_id, status, current_step, next_action_at
     `;
     return Response.json({ outreach: rows[0] }, { status: 201 });
