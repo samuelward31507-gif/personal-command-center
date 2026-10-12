@@ -108,6 +108,7 @@ export async function PATCH(request: Request) {
     if (!validUuid(body.id)) return jsonError("A valid contact id is required.", 400);
     const name = typeof body.name === "string" ? body.name.trim() : "";
     if (!name) return jsonError("Contact name is required.", 400);
+    if (name.length > 200) return jsonError("Contact name is too long.", 400);
     const followUp = validFollowUp(body.nextFollowUp);
     if (followUp === false) return jsonError("Follow-up date must be a valid calendar date.", 400);
     if (!allowedStatuses.has(body.status)) return jsonError("Invalid contact status.", 400);
