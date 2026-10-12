@@ -4,7 +4,7 @@ import Link from "next/link";
 import "./outreach.css";
 
 type Contact={id:string;name:string;company:string;phone:string;notes:string;status:string};
-type Outreach={id:string;contactId:string;status:string;currentStep:number;nextActionAt:string;niche:string;painPoint:string;researchNotes:string;name:string;company:string;phone:string;contactNotes:string};
+type Outreach={id:string;contactId:string;status:string;currentStep:number;nextActionAt:string;niche:string;painPoint:string;researchNotes:string;name:string;company:string;role:string;phone:string;contactNotes:string};
 const steps=[
  {day:"DAY 1",label:"First call",channel:"call",goal:"Introduce yourself and find the owner"},
  {day:"DAY 2",label:"Second call",channel:"call",goal:"Try a different time of day"},
