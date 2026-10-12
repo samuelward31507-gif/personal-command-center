@@ -1,3 +1,4 @@
+import Link from "next/link";
 "use client";
 
 import { useEffect, useState } from "react";
@@ -53,7 +54,7 @@ export default function SettingsPage() {
   return (
     <main style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 22px 60px", color: "#252522" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        <a href="/" style={{ color: "#555", textDecoration: "none", fontSize: 13 }}>← Cinder workspace</a>
+        <Link href="/" style={{ color: "#555", textDecoration: "none", fontSize: 13 }}>← Cinder workspace</Link>
         <span style={{ fontSize: 11, color: "#777", border: "1px solid #e4e4df", borderRadius: 20, padding: "6px 10px" }}>Workspace settings</span>
       </header>
 
