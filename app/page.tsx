@@ -82,7 +82,7 @@ export default function Home() {
   } catch(e) { setPlanMessage(e instanceof Error?e.message:"Could not save your daily plan."); }
   finally { setPlanSaving(false); }
  };
- const navigate = (view: string) => { if (view === "growth") { window.location.assign("/crm"); return; } if (view === "tasks") { window.location.assign("/crm/tasks"); return; } if (view === "projects") { window.location.assign("/crm/projects"); return; } if (view === "finance") { window.location.assign("/crm/finance"); return; } if (view === "needs-you") { window.location.assign("/crm/needs-you"); return; } setActiveView(view); };
+ const navigate = (view: string) => { if (view === "growth") { window.location.assign("/crm"); return; } if (view === "tasks") { window.location.assign("/crm/tasks"); return; } if (view === "projects") { window.location.assign("/crm/projects"); return; } if (view === "finance") { window.location.assign("/crm/finance"); return; } if (view === "workforce") { window.location.assign("/crm/workforce"); return; } if (view === "needs-you") { window.location.assign("/crm/needs-you"); return; } setActiveView(view); };
  const completed = (id: string) => done.includes(id);
  const toggle = (id: string) => setDone(old => old.includes(id) ? old.filter(x=>x!==id) : [...old,id]);
  return <main className="app-shell" id="home">
