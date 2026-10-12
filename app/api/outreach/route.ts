@@ -90,6 +90,8 @@ export async function PATCH(request: Request) {
       if (typeof body.status !== "string" || !statuses.has(body.status)) return jsonError("Invalid outreach status.", 400);
       const rows = await sql`
         UPDATE public.contact_outreach SET status = ${body.status}, updated_at = now(),
+          current_step = CASE WHEN ${body.status} = 'active' AND status = 'parked' THEN 1 ELSE current_step END,
+          started_at = CASE WHEN ${body.status} = 'active' AND status = 'parked' THEN now() ELSE started_at END,
           next_action_at = CASE WHEN ${body.status} = 'active' THEN now() ELSE next_action_at END
         WHERE id = ${id}::uuid AND owner_id = ${user.id}
         RETURNING id, contact_id, status, current_step, next_action_at
