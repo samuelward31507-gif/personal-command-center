@@ -91,7 +91,7 @@ export async function GET(request: Request) {
           renewal_date ASC NULLS LAST LIMIT 25`,
       sql`SELECT
           COALESCE(SUM(amount) FILTER (WHERE status = 'paid' AND paid_at >= date_trunc('month', CURRENT_DATE)::date), 0) AS collected_this_month,
-          COALESCE(SUM(amount) FILTER (WHERE status = 'expected' OR (status = 'overdue') OR (status = 'expected' AND due_date < CURRENT_DATE)), 0) AS expected_revenue,
+          COALESCE(SUM(amount) FILTER (WHERE status IN ('expected','overdue')), 0) AS expected_revenue,
           COALESCE(SUM(amount) FILTER (WHERE status = 'overdue' OR (status = 'expected' AND due_date < CURRENT_DATE)), 0) AS overdue_revenue
         FROM public.revenue_entries WHERE owner_id = ${ownerId}`,
     ]);
