@@ -1,5 +1,6 @@
-import Link from "next/link";
 "use client";
+
+import Link from "next/link";
 import {useCallback,useEffect,useState} from "react";
 import "./finance.css";
 type Revenue={id:string;title:string;revenue_type:string;amount:number;status:string;due_date:string|null;paid_at:string|null;notes:string;contact_name:string;deal_title:string;project_name:string};
