@@ -78,7 +78,8 @@ export async function POST(request: Request) {
     if (name.length > 200) return jsonError("Contact name is too long.", 400);
     const followUp = validFollowUp(body.nextFollowUp);
     if (followUp === false) return jsonError("Follow-up date must be a valid calendar date.", 400);
-    const status = allowedStatuses.has(body.status) ? String(body.status).toLowerCase() : "lead";
+    if (body.status !== undefined && !allowedStatuses.has(body.status)) return jsonError("Invalid contact status.", 400);
+    const status = body.status === undefined ? "lead" : String(body.status).toLowerCase();
     const [firstName, ...lastParts] = name.split(/\s+/);
     const lastName = lastParts.join(" ");
     const sql = db();
