@@ -39,6 +39,8 @@ Configure these in your local environment and deployment environment; never comm
 - `DATABASE_URL` — Neon Postgres connection string.
 - `NEON_AUTH_BASE_URL` — Neon Auth base URL for the workspace.
 - `NEON_AUTH_COOKIE_SECRET` — secret used to secure auth cookies.
+- `HERMES_BRIDGE_TOKEN` — optional server-to-server bearer secret (at least 32 characters) for the read-only Hermes brief endpoint.
+- `HERMES_BRIDGE_OWNER_ID` — the single workspace owner ID that the Hermes bridge is allowed to read.
 
 The database must have the tables and constraints referenced by the API routes. Authentication and database access are required for CRM pages and API requests.
 
@@ -53,6 +55,12 @@ npm run build
 ```
 
 GitHub Actions runs ESLint and TypeScript checks on pushes and pull requests to `feat/crm-foundation`. Vercel deployment status is tracked separately from these checks.
+
+## Hermes read-only bridge
+
+`GET /api/hermes/brief` provides a bounded read-only snapshot of due follow-ups, open deals, overdue/blocked tasks and projects, pending approvals, failed agent runs, client risks, and finance totals. It requires `Authorization: Bearer <HERMES_BRIDGE_TOKEN>` and always scopes queries to the server-configured `HERMES_BRIDGE_OWNER_ID`; callers cannot choose an owner. The endpoint returns no-store responses and does not create records, send messages, or execute actions.
+
+Keep both Hermes bridge variables server-side. Do not put the token in client code, a URL, or a public environment variable. The bridge remains disabled until the variables are configured in the deployment environment and the endpoint is smoke-tested.
 
 ## Database migrations
 
