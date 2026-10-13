@@ -65,7 +65,9 @@ export async function GET(request: Request) {
     const params = new URL(request.url).searchParams;
     const from = validRange(params.get("from"));
     const to = validRange(params.get("to"));
-    if (!from || !to || to <= from) return fail("A valid calendar date range is required.", 400);
+    const fromAt = validTimestamp(params.get("fromAt"));
+    const toAt = validTimestamp(params.get("toAt"));
+    if (!from || !to || to <= from || typeof fromAt !== "string" || typeof toAt !== "string" || new Date(toAt).getTime() <= new Date(fromAt).getTime()) return fail("A valid calendar date range is required.", 400);
     const sql = db();
     const rows = await sql`
       SELECT e.id, e.title, e.description, e.starts_at, e.ends_at, e.all_day, e.event_type, e.status,
@@ -74,8 +76,8 @@ export async function GET(request: Request) {
       FROM public.calendar_events e
       LEFT JOIN public.contacts c ON c.id = e.contact_id AND c.owner_id = e.owner_id
       LEFT JOIN public.deals d ON d.id = e.deal_id AND d.owner_id = e.owner_id
-      WHERE e.owner_id = ${user.id} AND e.starts_at < ${to}::date
-        AND e.ends_at >= ${from}::date
+      WHERE e.owner_id = ${user.id} AND e.starts_at < ${toAt}::timestamptz
+        AND e.ends_at >= ${fromAt}::timestamptz
       ORDER BY e.starts_at ASC LIMIT 1000
     `;
     return Response.json({ events: rows.map((r: Record<string, unknown>) => mapEvent(r)) }, { headers: { "Cache-Control": "no-store" } });
