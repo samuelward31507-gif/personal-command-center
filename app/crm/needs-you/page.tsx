@@ -15,11 +15,13 @@ export default function NeedsYouPage(){
    if([tr,or,cr,pr,dr,sr,wr].some(r=>r.status===401))throw new Error("Sign in to view your action queue.");
    const [td,od,cd,pd,dd,sd,wd]=await Promise.all([tr.json(),or.json(),cr.json(),pr.json(),dr.json(),sr.json(),wr.json()]);
    if(!tr.ok||!or.ok||!cr.ok||!pr.ok||!dr.ok||!sr.ok||!wr.ok)throw new Error("Some workspace data could not load. Check the task, outreach, project, and workforce pages.");
-   const now=Date.now();const list:Item[]=[];
+   const now=Date.now();const todayEnd=new Date();todayEnd.setHours(23,59,59,999);const todayEndMs=todayEnd.getTime();const list:Item[]=[];
    for(const t of (td.tasks||[])){
     if(["done","cancelled"].includes(t.status))continue;
     const due=t.dueAt?new Date(t.dueAt).getTime():null;
-    list.push({id:"task:"+t.id,kind:"task",title:t.title,detail:[t.status==="blocked"?"Blocked":t.priority==="urgent"?"Urgent":t.priority==="high"?"High priority":"Task",t.contactName,t.dealTitle].filter(Boolean).join(" · "),due:t.dueAt,priority:t.status==="blocked"?0:t.priority==="urgent"?1:due!==null&&due<=now?2:4,href:"/crm/tasks",action:"Open task"});
+    const needsAttention=t.status==="blocked"||t.priority==="urgent"||t.priority==="high"||(due!==null&&Number.isFinite(due)&&due<=todayEndMs);
+    if(!needsAttention)continue;
+    list.push({id:"task:"+t.id,kind:"task",title:t.title,detail:[t.status==="blocked"?"Blocked":t.priority==="urgent"?"Urgent":t.priority==="high"?"High priority":due!==null&&due<=now?"Overdue":"Due today",t.contactName,t.dealTitle].filter(Boolean).join(" · "),due:t.dueAt,priority:t.status==="blocked"?0:t.priority==="urgent"?1:t.priority==="high"?2:due!==null&&due<=now?2:3,href:"/crm/tasks",action:"Open task"});
    }
    for(const o of (od.outreach||[])){
     if(o.status!=="active"||!o.nextActionAt)continue;
