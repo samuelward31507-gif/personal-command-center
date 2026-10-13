@@ -200,5 +200,18 @@ test("contact form's Website input is not type=url (blocks bare domains)", () =>
   );
 });
 
+// Regression guard: the Meeting booked quick action must go through the
+// shared outcome form, which persists the outcome and corresponding activity
+// via the existing outreach PATCH handler. Direct status-only updates skip the
+// contact activity timeline.
+test("Meeting booked quick action uses the outcome/activity workflow", () => {
+  const page = readFileSync("app/crm/outreach/page.tsx", "utf8");
+  assert.match(page, /setOutcomeFor\\(p\\);setOutcome\\("meeting_booked"\\)/);
+  assert.match(page, /body:JSON\\.stringify\\(\\{id:outcomeFor\\.id,outcome,notes:outcomeNotes\\}\\)/);
+  const api = readFileSync("app/api/outreach/route.ts", "utf8");
+  assert.match(api, /INSERT INTO public\\.contact_activities/);
+  assert.match(api, /outcome === "meeting_booked"/);
+});
+
 console.log(`${passed} passed`);
 if (process.exitCode) process.exit(process.exitCode);
