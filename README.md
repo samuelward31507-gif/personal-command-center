@@ -1,16 +1,22 @@
 # Cinder Personal Command Center
 
-Cinder is a private workspace for running the founder's day-to-day business operations. It brings personal CRM, sales, delivery, finance, tasks, and business memory into one place.
+Cinder Personal Command Center is the private operating workspace for running the entire AI agency: customer acquisition, sales, client delivery, finance, tasks, planning, and business memory. It is an internal agency operating system, not a client-facing product.
+
+## Product boundaries
+
+- **This workspace runs the agency as a whole.** It tracks the agency's prospects, customers, deals, delivery, finances, priorities, and AI workforce.
+- **Trackpr is separate.** Trackpr is a product the agency sells; it is not this CRM, and this project must not modify Trackpr's codebase, database, deployment, or product roadmap. Trackpr can be tracked as an agency product/opportunity in the future, but its internal product systems remain separate.
+- **Cinder is not the agency's public marketing website.** Keep this project focused on private operations and founder leverage.
 
 ## Product areas
 
 - **Home and My day** — business snapshot, founder routine, daily notes, live calendar events, and task deadlines.
 - **Interactive calendar** — month/week/day views, date navigation, meetings/calls/focus/personal blocks, editable events, contact/deal links, and task deadline overlays.
-- **Contacts and growth** — contacts, CSV import/export, call activity, outreach, and sales pipeline.
+- **Growth** — contacts, CSV import/export, call activity, outreach, and sales pipeline for the agency's own acquisition and relationships.
 - **Tasks and Needs you** — task tracking and a consolidated queue of overdue follow-ups, blockers, renewals, approvals, and failed agent runs.
 - **Projects and client success** — delivery projects, milestones, client health, and support tickets.
 - **Money** — revenue entries, payment status, recurring revenue, and expenses.
-- **AI workforce and Strategy & memory** — agent profiles/runs, approvals, and durable business memory.
+- **AI workforce and Strategy & memory** — agent profiles/runs, approvals, and durable business memory for operating the agency.
 
 The workspace currently provides the operational foundation. **Hermes is not connected yet**: saving business memory does not automatically inject it into Hermes prompts, and this application does not autonomously execute external actions.
 
