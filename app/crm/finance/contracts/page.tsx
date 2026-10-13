@@ -19,6 +19,13 @@ export default function RecurringContractsPage() {
   const [startDate, setStartDate] = useState(today());
   const [endDate, setEndDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editClientName, setEditClientName] = useState("");
+  const [editContractName, setEditContractName] = useState("");
+  const [editMonthlyAmount, setEditMonthlyAmount] = useState("");
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
+  const [editNotes, setEditNotes] = useState("");
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
@@ -39,6 +46,27 @@ export default function RecurringContractsPage() {
       setClientName(""); setContractName(""); setMonthlyAmount(""); setStartDate(today()); setEndDate(""); setNotes("");
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to save contract."); }
+    finally { setSaving(false); }
+  };
+  const beginEdit = (contract: Contract) => {
+    setEditingId(contract.id);
+    setEditClientName(contract.clientName);
+    setEditContractName(contract.contractName);
+    setEditMonthlyAmount(String(contract.monthlyAmount));
+    setEditStartDate(contract.startDate);
+    setEditEndDate(contract.endDate);
+    setEditNotes(contract.notes);
+    setError("");
+  };
+  const saveEdit = async (contractId: string) => {
+    setSaving(true); setError("");
+    try {
+      const response = await fetch("/api/recurring-contracts", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: contractId, clientName: editClientName, contractName: editContractName, monthlyAmount: Number(editMonthlyAmount), startDate: editStartDate, endDate: editEndDate || null, notes: editNotes }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to update contract.");
+      setEditingId(null);
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : "Unable to update contract."); }
     finally { setSaving(false); }
   };
   const updateStatus = async (contract: Contract) => {
@@ -80,9 +108,21 @@ export default function RecurringContractsPage() {
       </section>
       <div className="fin-records">
         {loading ? <div className="fin-empty">Loading recurring contracts…</div> : contracts.length === 0 ? <div className="fin-empty"><strong>No contracts recorded yet.</strong><p>Add a signed, current client agreement to establish reliable MRR.</p></div> : contracts.map(contract => <article className="fin-record" key={contract.id}>
-          <div className="fin-record-main"><strong>{contract.clientName} — {contract.contractName}</strong><small>{contract.startDate}{contract.endDate ? " to " + contract.endDate : " · no end date"}</small><small>{contract.notes || "No notes"}</small></div>
-          <div className="fin-record-side"><strong>{cash(contract.monthlyAmount)}/mo</strong><span className={"fin-status status-" + contract.status}>{contract.status}</span></div>
-          <div className="fin-record-actions">{contract.status !== "cancelled" && <button onClick={() => void updateStatus(contract)}>{contract.status === "active" ? "Pause" : "Activate"}</button>}<button onClick={() => void remove(contract)}>Delete record</button></div>
+          {editingId === contract.id ? <div className="fin-wide">
+            <div className="fin-form-grid">
+              <label>Client / company<input value={editClientName} onChange={e => setEditClientName(e.target.value)} maxLength={240} /></label>
+              <label>Contract / service<input value={editContractName} onChange={e => setEditContractName(e.target.value)} maxLength={240} /></label>
+              <label>Monthly amount ($)<input type="number" min="0" step="0.01" value={editMonthlyAmount} onChange={e => setEditMonthlyAmount(e.target.value)} /></label>
+              <label>Start date<input type="date" value={editStartDate} onChange={e => setEditStartDate(e.target.value)} /></label>
+              <label>End date (optional)<input type="date" value={editEndDate} onChange={e => setEditEndDate(e.target.value)} /></label>
+              <label className="fin-wide">Notes<textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={2} /></label>
+            </div>
+            <div className="fin-record-actions"><button disabled={saving || !editClientName.trim() || !editContractName.trim() || editMonthlyAmount === "" || !Number.isFinite(Number(editMonthlyAmount)) || Number(editMonthlyAmount) < 0 || !editStartDate || (!!editEndDate && editEndDate < editStartDate)} onClick={() => void saveEdit(contract.id)}>{saving ? "Saving…" : "Save changes"}</button><button disabled={saving} onClick={() => setEditingId(null)}>Cancel</button></div>
+          </div> : <>
+            <div className="fin-record-main"><strong>{contract.clientName} — {contract.contractName}</strong><small>{contract.startDate}{contract.endDate ? " to " + contract.endDate : " · no end date"}</small><small>{contract.notes || "No notes"}</small></div>
+            <div className="fin-record-side"><strong>{cash(contract.monthlyAmount)}/mo</strong><span className={"fin-status status-" + contract.status}>{contract.status}</span></div>
+            <div className="fin-record-actions"><button onClick={() => beginEdit(contract)}>Edit terms</button>{contract.status !== "cancelled" && <button onClick={() => void updateStatus(contract)}>{contract.status === "active" ? "Pause" : "Activate"}</button>}<button onClick={() => void remove(contract)}>Delete record</button></div>
+          </>}
         </article>)}
       </div>
       <p className="fin-footnote">MRR is a management metric, not proof of payment. Keep this list aligned with signed agreements, start dates, pauses, cancellations, and end dates. Deleting a record here only deletes the workspace record; it does not cancel a client agreement.</p>
