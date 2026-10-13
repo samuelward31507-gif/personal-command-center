@@ -7,6 +7,7 @@ import "./crm-shell.css";
 const mainLinks = [
   { href: "/", icon: "⌂", label: "Home" },
   { href: "/?view=schedule", icon: "▦", label: "My day" },
+  { href: "/crm/calendar", icon: "▦", label: "Calendar" },
   { href: "/?view=needs-you", icon: "▤", label: "Needs you" },
   { href: "/crm", icon: "↗", label: "Contacts & growth" },
   { href: "/?view=workforce", icon: "♧", label: "AI workforce" },
@@ -25,7 +26,10 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
         </Link>
         <div className="nav-section-label">WORKSPACE</div>
         <nav className="primary-nav" aria-label="Workspace">
-          {mainLinks.map(item => <Link key={item.label} href={item.href} className={"nav-item"+(pathname === item.href && item.href === "/crm" ? " active" : "")}><span className="glyph" aria-hidden="true">{item.icon}</span><span>{item.label}</span></Link>)}
+          {mainLinks.map(item => {
+            const active = item.href === "/crm" ? pathname === "/crm" : item.href === "/crm/calendar" ? pathname.startsWith("/crm/calendar") : false;
+            return <Link key={item.label} href={item.href} className={"nav-item" + (active ? " active" : "")}><span className="glyph" aria-hidden="true">{item.icon}</span><span>{item.label}</span></Link>;
+          })}
         </nav>
         <div className="sidebar-divider"/>
         <div className="nav-section-label">YOUR SPACE</div>
@@ -40,7 +44,7 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
       </aside>
       <section className="main-panel crm-shell-main">
         <header className="topbar">
-          <div className="breadcrumbs"><Link href="/">Cinder</Link><span className="breadcrumb-slash">/</span><strong>Contacts &amp; growth</strong></div>
+          <div className="breadcrumbs"><Link href="/">Cinder</Link><span className="breadcrumb-slash">/</span><strong>{pathname.startsWith("/crm/calendar") ? "Calendar" : "Contacts & growth"}</strong></div>
           <div className="topbar-actions"><span className="topbar-status"><span className="status-ring"/> Personal CRM</span><Link className="quiet-button crm-back-home" href="/">Home</Link></div>
         </header>
         {children}
