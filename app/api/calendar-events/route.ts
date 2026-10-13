@@ -94,7 +94,7 @@ export async function POST(request: Request) {
     const description = clean(body.description, 5000);
     const startsAt = validTimestamp(body.startsAt);
     const endsAt = validTimestamp(body.endsAt);
-    if (!startsAt || !endsAt || startsAt === false || endsAt === false || new Date(endsAt).getTime() <= new Date(startsAt).getTime()) return fail("A valid start and end time are required.", 400);
+    if (!startsAt || !endsAt || new Date(endsAt).getTime() <= new Date(startsAt).getTime()) return fail("A valid start and end time are required.", 400);
     const type = body.type === undefined ? "meeting" : body.type;
     const status = body.status === undefined ? "scheduled" : body.status;
     if (typeof type !== "string" || !types.has(type)) return fail("Invalid event type.", 400);
