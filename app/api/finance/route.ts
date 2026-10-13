@@ -15,20 +15,30 @@ const expenseCategories=new Set(["software","marketing","contractor","telecom","
 export async function GET(){
  try{const owner=await userId();if(!owner)return fail("Unauthorized",401);const sql=db();
  const now=new Date(),todayKey=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0"),month=todayKey.slice(0,7);
- const [rev,exp,contracts]=await Promise.all([
+ const [rev,exp,totals]=await Promise.all([
  sql`SELECT r.id,r.title,r.revenue_type,r.amount,r.status,r.due_date,r.paid_at,r.recognized_date,r.notes,r.contact_id,r.deal_id,r.project_id,r.created_at,trim(concat_ws(' ',c.first_name,c.last_name)) AS contact_name,d.title AS deal_title,p.name AS project_name FROM public.revenue_entries r LEFT JOIN public.contacts c ON c.id=r.contact_id AND c.owner_id=r.owner_id LEFT JOIN public.deals d ON d.id=r.deal_id AND d.owner_id=r.owner_id LEFT JOIN public.projects p ON p.id=r.project_id AND p.owner_id=r.owner_id WHERE r.owner_id=${owner} ORDER BY CASE WHEN r.status='overdue' THEN 0 WHEN r.status='expected' THEN 1 ELSE 2 END,r.due_date ASC NULLS LAST,r.created_at DESC LIMIT 1000`,
  sql`SELECT id,title,category,amount,expense_date,recurring,notes,created_at FROM public.business_expenses WHERE owner_id=${owner} ORDER BY expense_date DESC,created_at DESC LIMIT 1000`,
- sql`SELECT COALESCE(SUM(monthly_amount),0) AS mrr FROM public.recurring_revenue_contracts WHERE owner_id=${owner} AND status='active' AND start_date<=${todayKey}::date AND (end_date IS NULL OR end_date>=${todayKey}::date)`
+ sql`SELECT
+ COALESCE((SELECT SUM(amount) FROM public.revenue_entries WHERE owner_id=${owner} AND status='paid' AND paid_at>=date_trunc('month',${todayKey}::date) AND paid_at<date_trunc('month',${todayKey}::date)+interval '1 month'),0) AS paid_revenue,
+ COALESCE((SELECT SUM(amount) FROM public.revenue_entries WHERE owner_id=${owner} AND status='paid' AND revenue_type='setup_fee' AND paid_at>=date_trunc('month',${todayKey}::date) AND paid_at<date_trunc('month',${todayKey}::date)+interval '1 month'),0) AS setup_revenue,
+ COALESCE((SELECT SUM(amount) FROM public.revenue_entries WHERE owner_id=${owner} AND status<>'cancelled' AND recognized_date>=date_trunc('month',${todayKey}::date) AND recognized_date<date_trunc('month',${todayKey}::date)+interval '1 month'),0) AS recognized_revenue,
+ COALESCE((SELECT SUM(amount) FROM public.business_expenses WHERE owner_id=${owner} AND expense_date>=date_trunc('month',${todayKey}::date) AND expense_date<date_trunc('month',${todayKey}::date)+interval '1 month'),0) AS month_expenses,
+ COALESCE((SELECT SUM(amount) FROM public.revenue_entries WHERE owner_id=${owner} AND status IN ('expected','overdue')),0) AS expected,
+ COALESCE((SELECT SUM(amount) FROM public.revenue_entries WHERE owner_id=${owner} AND (status='overdue' OR (status='expected' AND due_date<${todayKey}::date))),0) AS overdue,
+ COALESCE((SELECT SUM(monthly_amount) FROM public.recurring_revenue_contracts WHERE owner_id=${owner} AND status='active' AND start_date<=${todayKey}::date AND (end_date IS NULL OR end_date>=${todayKey}::date)),0) AS mrr
+ `
  ]);
  const revenue=rev.map((r:any)=>{const dueDate=r.due_date?String(r.due_date).slice(0,10):null,paidAt=r.paid_at?String(r.paid_at).slice(0,10):null,recognizedDate=r.recognized_date?String(r.recognized_date).slice(0,10):null;const overdue=r.status==="overdue"||(r.status==="expected"&&dueDate!==null&&dueDate<todayKey);return {...r,amount:Number(r.amount),due_date:dueDate,paid_at:paidAt,recognized_date:recognizedDate,status:overdue?"overdue":r.status};});
  const expenses=exp.map((r:any)=>({...r,amount:Number(r.amount),expense_date:String(r.expense_date).slice(0,10)}));
- const paidRevenue=revenue.filter((r:any)=>r.status==="paid"&&r.paid_at?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
- const setupRevenue=revenue.filter((r:any)=>r.status==="paid"&&r.revenue_type==="setup_fee"&&r.paid_at?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
- const mrr=Number(contracts[0]?.mrr||0);
- const monthExpenses=expenses.filter((r:any)=>r.expense_date?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
- const recognizedRevenue=revenue.filter((r:any)=>r.status!=="cancelled"&&r.recognized_date?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
- const expected=revenue.filter((r:any)=>["expected","overdue"].includes(r.status)).reduce((s:number,r:any)=>s+r.amount,0);
- return Response.json({revenue,expenses,summary:{month,paidRevenue,setupRevenue,mrr,recognizedRevenue,recordedOperatingProfit:recognizedRevenue-monthExpenses,monthExpenses,monthNet:paidRevenue-monthExpenses,expected,overdue:revenue.filter((r:any)=>r.status==="overdue").reduce((s:number,r:any)=>s+r.amount,0)}})
+ const total=totals[0] as Record<string,unknown>;
+ const paidRevenue=Number(total.paid_revenue||0);
+ const setupRevenue=Number(total.setup_revenue||0);
+ const mrr=Number(total.mrr||0);
+ const monthExpenses=Number(total.month_expenses||0);
+ const recognizedRevenue=Number(total.recognized_revenue||0);
+ const expected=Number(total.expected||0);
+ const overdue=Number(total.overdue||0);
+ return Response.json({revenue,expenses,summary:{month,paidRevenue,setupRevenue,mrr,recognizedRevenue,recordedOperatingProfit:recognizedRevenue-monthExpenses,monthExpenses,monthNet:paidRevenue-monthExpenses,expected,overdue}})
  }catch(e){console.error("Finance GET failed",e);return fail("Unable to load financial records.",500);}
 }
 export async function POST(req:Request){
