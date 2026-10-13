@@ -212,6 +212,8 @@ test("Meeting booked quick action uses the outcome/activity workflow", () => {
   const api = readFileSync("app/api/outreach/route.ts", "utf8");
   assert.ok(api.includes("INSERT INTO public.contact_activities"));
   assert.ok(api.includes('outcome === "meeting_booked"'));
+  assert.ok(api.includes('body.status === "do_not_contact" && before[0].status !== "do_not_contact"'));
+  assert.ok(api.includes("Marked do-not-contact from outreach status action."));
 });
 
 console.log(`${passed} passed`);
