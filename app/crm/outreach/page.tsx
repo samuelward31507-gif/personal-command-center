@@ -33,6 +33,9 @@ export default function OutreachPage(){
  const [filter,setFilter]=useState("due");
  const [busy,setBusy]=useState<string|null>(null);
  const [message,setMessage]=useState("");
+ const [outcomeFor,setOutcomeFor]=useState<Outreach|null>(null);
+ const [outcome,setOutcome]=useState("no_answer");
+ const [outcomeNotes,setOutcomeNotes]=useState("");
  async function load(){
   setLoading(true);
   try{
@@ -57,18 +60,18 @@ export default function OutreachPage(){
    setShowAdd(false);setSelected("");setNotes("");await load();
   }catch{setMessage("Couldn't add that prospect to outreach.")}finally{setBusy(null)}
  }
- async function complete(p:Outreach){
-  setBusy(p.id);setMessage("");
-  const outcome=window.prompt("Call outcome? Type: no_answer, voicemail, answered, reply_received, meeting_booked, or other","no_answer");
-  if(outcome===null){setBusy(null);return}
-  const valid=["initiated","answered","no_answer","voicemail","reply_received","meeting_booked","completed","other"];
-  const normalized=valid.includes(outcome.trim().toLowerCase())?outcome.trim().toLowerCase():"other";
-  const details=window.prompt("Optional note (what happened / next step):","")||"";
+ function complete(p:Outreach){
+  setOutcomeFor(p);setOutcome("no_answer");setOutcomeNotes("");setMessage("");
+ }
+ async function saveOutcome(e:React.FormEvent){
+  e.preventDefault();if(!outcomeFor)return;
+  setBusy(outcomeFor.id);setMessage("");
   try{
-   const r=await fetch("/api/outreach",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:p.id,outcome:normalized,notes:details})});
-   if(!r.ok)throw new Error();
-   await load();
-  }catch{setMessage("Couldn't save this outcome. Please try again.")}finally{setBusy(null)}
+   const r=await fetch("/api/outreach",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:outcomeFor.id,outcome,notes:outcomeNotes})});
+   const data=await r.json().catch(()=>({}));
+   if(!r.ok)throw new Error(data.error||"Could not save outcome.");
+   setOutcomeFor(null);await load();
+  }catch(e){setMessage(e instanceof Error?e.message:"Could not save this outcome. Please try again.")}finally{setBusy(null)}
  }
  async function setStatus(p:Outreach,status:string){
   setBusy(p.id);setMessage("");
@@ -85,5 +88,6 @@ export default function OutreachPage(){
    {loading?<div className="outreach-empty">Loading your queue…</div>:shown.length===0?<div className="outreach-empty"><div>✓</div><h3>{filter==="due"?"You're all caught up.":"No prospects in this view yet."}</h3><p>{filter==="due"?"Add a prospect or switch to Active to review upcoming steps.":"Add a contact to start a follow-up sequence."}</p><button className="outreach-primary" onClick={()=>setShowAdd(true)}>＋ Add prospect</button></div>:<div className="outreach-list">{shown.map(p=>{const step=steps[Math.max(0,Math.min(5,p.currentStep-1))];const isDue=new Date(p.nextActionAt).getTime()<=Date.now();return <article className="outreach-card" key={p.id}><div className="outreach-card-main"><div className="outreach-card-title"><div className="outreach-avatar">{p.name.split(/\s+/).map(v=>v[0]).slice(0,2).join("").toUpperCase()}</div><div><h3>{p.name}</h3><p>{[p.role,p.company].filter(Boolean).join(" · ")||p.niche||"Prospect"}</p></div><span className={"outreach-status status-"+p.status}>{p.status.replaceAll("_"," ")}</span></div><div className="outreach-next"><span className={isDue&&p.status==="active"?"outreach-due":""}>{p.status==="active"?(isDue?"DUE NOW":"NEXT · "+humanDate(p.nextActionAt)):p.status.toUpperCase()}</span><strong>{p.status==="active"?step.label:p.status==="parked"?"Sequence complete":p.status==="meeting_booked"?"Meeting booked":"Outreach stopped"}</strong><small>{p.status==="active"?step.day+" · STEP "+p.currentStep+" OF 6":p.status==="parked"?"No response after six touches":"Update status when the prospect responds"}</small><p>{p.painPoint||"Personalize the reason for reaching out before contacting this prospect."}</p></div><div className="outreach-progress">{steps.map((s,i)=><span key={s.label} className={i<p.currentStep-1?"done":i===p.currentStep-1&&p.status==="active"?"current":""} title={s.label}/>)}</div></div><div className="outreach-card-actions">{p.status==="active"&&<>{step.channel==="call"?<button className="outreach-primary" onClick={()=>call(p)} disabled={!p.phone}>☎ Call</button>:<button className="outreach-primary" onClick={()=>copy(p)}>Copy text</button>}<button className="outreach-secondary" disabled={busy===p.id} onClick={()=>void complete(p)}>{busy===p.id?"Saving…":"Log outcome & next step"}</button><button className="outreach-quiet" disabled={busy===p.id} onClick={()=>void setStatus(p,"parked")}>Park</button><button className="outreach-quiet danger" disabled={busy===p.id} onClick={()=>void setStatus(p,"do_not_contact")}>Do not contact</button></>}{p.status==="parked"&&<button className="outreach-secondary" onClick={()=>void setStatus(p,"active")}>Restart sequence</button>}{p.status==="active"&&<button className="outreach-quiet" disabled={busy===p.id} onClick={()=>void setStatus(p,"meeting_booked")}>Meeting booked</button>}</div></article>})}</div>}
   </section>
   <section className="outreach-sequence"><h2>Sequence at a glance</h2><p>Manual outreach cadence. Mark each touch complete to schedule the next step. Replies, meetings, and opt-outs should stop the sequence.</p><div className="outreach-step-grid">{steps.map((s,i)=><article key={s.label}><span>{s.day}</span><strong>{s.label}</strong><small>{s.goal}</small></article>)}</div><small className="outreach-compliance">Use relevant, individualized outreach. Follow applicable calling/texting rules, respect opt-outs immediately, and don't treat a publicly listed number as consent for marketing texts.</small></section>
+  {outcomeFor&&<div className="outcome-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setOutcomeFor(null)}}><section className="outcome-modal" role="dialog" aria-modal="true" aria-labelledby="outcome-title"><header><div><span>LOG OUTREACH RESULT</span><h2 id="outcome-title">{outcomeFor.name}</h2><p>{outcomeFor.company} · {steps[Math.max(0,Math.min(5,outcomeFor.currentStep-1))].label}</p></div><button type="button" onClick={()=>setOutcomeFor(null)} aria-label="Close">×</button></header><form onSubmit={saveOutcome}><label>What happened?<select value={outcome} onChange={e=>setOutcome(e.target.value)}><option value="no_answer">No answer</option><option value="voicemail">Left voicemail</option><option value="answered">Spoke with prospect</option><option value="meeting_booked">Meeting booked</option><option value="reply_received">Got a reply</option><option value="completed">Completed touch</option><option value="other">Other</option></select></label><label>Notes and next step<textarea rows={4} maxLength={3000} value={outcomeNotes} onChange={e=>setOutcomeNotes(e.target.value)} placeholder="Who did you speak with? What did they say? What happens next?"/></label>{(outcome==="meeting_booked"||outcome==="reply_received")&&<p className="outcome-stop-note">This result will stop the current sequence so you do not keep sending routine follow-ups.</p>}<footer><button type="button" onClick={()=>setOutcomeFor(null)}>Cancel</button><button type="submit" disabled={busy===outcomeFor.id}>{busy===outcomeFor.id?"Saving…":"Save result & next step"}</button></footer></form></section></div>}
  </main>
 }
