@@ -9,19 +9,19 @@ const mainLinks = [
   { href: "/", icon: "⌂", label: "Home", match: (path: string) => path === "/" },
   { href: "/?view=schedule", icon: "▦", label: "My day", match: (_path: string, view: string) => view === "schedule" },
   { href: "/crm/calendar", icon: "▦", label: "Calendar", match: (path: string) => path.startsWith("/crm/calendar") },
-  { href: "/?view=needs-you", icon: "▤", label: "Needs you", match: (_path: string, view: string) => view === "needs-you" },
+  { href: "/crm/needs-you", icon: "▤", label: "Needs you", match: (path: string) => path.startsWith("/crm/needs-you") },
   { href: "/crm", icon: "↗", label: "Growth", match: (path: string) => ["/crm", "/crm/pipeline", "/crm/outreach"].includes(path) },
   { href: "/crm/tasks", icon: "✓", label: "Tasks", match: (path: string) => path.startsWith("/crm/tasks") },
   { href: "/crm/projects", icon: "▱", label: "Delivery", match: (path: string) => path.startsWith("/crm/projects") },
   { href: "/crm/client-success", icon: "♙", label: "Client success", match: (path: string) => path.startsWith("/crm/client-success") },
   { href: "/crm/finance", icon: "$", label: "Money", match: (path: string) => path.startsWith("/crm/finance") },
-  { href: "/?view=workforce", icon: "♧", label: "AI team", match: (_path: string, view: string) => view === "workforce" },
+  { href: "/crm/workforce", icon: "♧", label: "AI team", match: (path: string) => path.startsWith("/crm/workforce") },
 ];
 
 const secondaryLinks = [
-  { href: "/?view=intelligence", icon: "✳", label: "Intelligence", match: (path: string, view: string) => path.startsWith("/crm/intelligence") || view === "intelligence" },
-  { href: "/?view=strategy", icon: "✧", label: "Strategy & memory", match: (path: string, view: string) => path.startsWith("/crm/strategy") || view === "strategy" },
-  { href: "/?view=settings", icon: "⚙", label: "Settings", match: (path: string, view: string) => path.startsWith("/crm/settings") || view === "settings" },
+  { href: "/crm/intelligence", icon: "✳", label: "Intelligence", match: (path: string) => path.startsWith("/crm/intelligence") },
+  { href: "/crm/strategy", icon: "✧", label: "Strategy & memory", match: (path: string) => path.startsWith("/crm/strategy") },
+  { href: "/crm/settings", icon: "⚙", label: "Settings", match: (path: string) => path.startsWith("/crm/settings") },
 ];
 
 function pageTitle(pathname: string, view: string) {
