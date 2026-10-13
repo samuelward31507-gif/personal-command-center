@@ -78,6 +78,16 @@ export default function RecurringContractsPage() {
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to update contract."); }
   };
+  const cancelContract = async (contract: Contract) => {
+    if (!window.confirm("Mark this contract cancelled? It will stop counting toward contracted MRR immediately. This does not notify the client or cancel an external agreement.")) return;
+    setError("");
+    try {
+      const response = await fetch("/api/recurring-contracts", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: contract.id, status: "cancelled" }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to cancel contract record.");
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : "Unable to cancel contract record."); }
+  };
   const remove = async (contract: Contract) => {
     if (!window.confirm("Delete this contract record? This does not cancel a real-world client agreement.")) return;
     try {
@@ -121,7 +131,7 @@ export default function RecurringContractsPage() {
           </div> : <>
             <div className="fin-record-main"><strong>{contract.clientName} — {contract.contractName}</strong><small>{contract.startDate}{contract.endDate ? " to " + contract.endDate : " · no end date"}</small><small>{contract.notes || "No notes"}</small></div>
             <div className="fin-record-side"><strong>{cash(contract.monthlyAmount)}/mo</strong><span className={"fin-status status-" + contract.status}>{contract.status}</span></div>
-            <div className="fin-record-actions"><button onClick={() => beginEdit(contract)}>Edit terms</button>{contract.status !== "cancelled" && <button onClick={() => void updateStatus(contract)}>{contract.status === "active" ? "Pause" : "Activate"}</button>}<button onClick={() => void remove(contract)}>Delete record</button></div>
+            <div className="fin-record-actions"><button onClick={() => beginEdit(contract)}>Edit terms</button>{contract.status !== "cancelled" && <><button onClick={() => void updateStatus(contract)}>{contract.status === "active" ? "Pause" : "Activate"}</button><button onClick={() => void cancelContract(contract)}>Cancel contract</button></>}<button onClick={() => void remove(contract)}>Delete record</button></div>
           </>}
         </article>)}
       </div>
