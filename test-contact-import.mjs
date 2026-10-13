@@ -207,6 +207,7 @@ test("contact form's Website input is not type=url (blocks bare domains)", () =>
 test("Meeting booked quick action uses the outcome/activity workflow", () => {
   const page = readFileSync("app/crm/outreach/page.tsx", "utf8");
   assert.ok(page.includes('setOutcomeFor(p);setOutcome("meeting_booked")'));
+  assert.ok(page.includes('setOutcomeFor(p);setOutcome("do_not_contact")'));
   assert.ok(page.includes('body:JSON.stringify({id:outcomeFor.id,outcome,notes:outcomeNotes})'));
   const api = readFileSync("app/api/outreach/route.ts", "utf8");
   assert.ok(api.includes("INSERT INTO public.contact_activities"));
