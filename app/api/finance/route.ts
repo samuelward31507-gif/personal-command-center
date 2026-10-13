@@ -41,8 +41,27 @@ export async function POST(req:Request){
  }catch(e){console.error("Finance POST failed",e);return fail("Unable to save financial record.",500);}
 }
 export async function PATCH(req:Request){
- try{const owner=await userId();if(!owner)return fail("Unauthorized",401);const b=await req.json();if(!uuid(b.id)||!revenueStatuses.has(b.status))return fail("Valid revenue id and status are required.",400);const paid=date(b.paidAt);if(paid===false)return fail("Paid date must use YYYY-MM-DD.",400);const sql=db();const rows=await sql`UPDATE public.revenue_entries SET status=${b.status},paid_at=CASE WHEN ${b.status}='paid' THEN COALESCE(${paid}::date,CURRENT_DATE) ELSE NULL END,updated_at=now() WHERE id=${b.id}::uuid AND owner_id=${owner} RETURNING id`;if(!rows.length)return fail("Revenue record not found.",404);return Response.json({ok:true});}
- catch(e){console.error("Finance PATCH failed",e);return fail("Unable to update revenue status.",500);}
+ try{
+  const owner=await userId();if(!owner)return fail("Unauthorized",401);
+  const b=await req.json();
+  if(!uuid(b.id))return fail("Valid revenue id is required.",400);
+  const hasStatus=Object.prototype.hasOwnProperty.call(b,"status");
+  const hasRecognized=Object.prototype.hasOwnProperty.call(b,"recognizedDate");
+  if(!hasStatus&&!hasRecognized)return fail("Provide a status or earned date to update.",400);
+  if(hasStatus&&!revenueStatuses.has(b.status))return fail("Invalid revenue status.",400);
+  const paid=date(b.paidAt);if(paid===false)return fail("Paid date must use YYYY-MM-DD.",400);
+  const recognized=date(b.recognizedDate);if(recognized===false)return fail("Earned date must use YYYY-MM-DD.",400);
+  const sql=db();
+  const nextStatus=hasStatus?b.status:null;
+  const rows=await sql`UPDATE public.revenue_entries SET
+   status=COALESCE(${nextStatus},status),
+   paid_at=CASE WHEN ${nextStatus}='paid' THEN COALESCE(${paid}::date,CURRENT_DATE) WHEN ${nextStatus} IN ('expected','overdue','cancelled') THEN NULL ELSE paid_at END,
+   recognized_date=CASE WHEN ${hasRecognized} THEN ${recognized}::date ELSE recognized_date END,
+   updated_at=now()
+   WHERE id=${b.id}::uuid AND owner_id=${owner} RETURNING id`;
+  if(!rows.length)return fail("Revenue record not found.",404);
+  return Response.json({ok:true});
+ }catch(e){console.error("Finance PATCH failed",e);return fail("Unable to update revenue record.",500);}
 }
 export async function DELETE(req:Request){
  try{const owner=await userId();if(!owner)return fail("Unauthorized",401);const u=new URL(req.url),id=u.searchParams.get("id"),kind=u.searchParams.get("kind");if(!uuid(id)||!["revenue","expense"].includes(kind||""))return fail("Valid record id and kind are required.",400);const sql=db();const rows=kind==="revenue"?await sql`DELETE FROM public.revenue_entries WHERE id=${id}::uuid AND owner_id=${owner} RETURNING id`:await sql`DELETE FROM public.business_expenses WHERE id=${id}::uuid AND owner_id=${owner} RETURNING id`;if(!rows.length)return fail("Record not found.",404);return Response.json({ok:true});}
