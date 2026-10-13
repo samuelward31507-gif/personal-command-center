@@ -35,7 +35,7 @@ export default function RecurringContractsPage() {
       if (!response.ok) throw new Error(data.error || "Unable to load contracts.");
       setContracts(data.contracts || []);
       setContractSummary(data.summary || null);
-    } catch (e) { setError(e instanceof Error ? e.message : "Unable to load contracts."); }
+    } catch (e) { setError(e instanceof Error ? e.message : "Unable to load contracts."); setContractSummary(null); }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { void load(); }, [load]);
