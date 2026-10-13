@@ -140,7 +140,7 @@ export async function PATCH(request: Request) {
     const action = channel === "text" ? "outbound_text" : "outbound_call";
     const recentInitiated = await sql`
       UPDATE public.contact_activities SET outcome = ${outcome},
-        notes = CASE WHEN ${notes} = '' THEN notes ELSE concat_ws(E'\\n', NULLIF(notes, ''), ${notes}) END
+        notes = CASE WHEN ${notes} = '' THEN notes ELSE concat_ws(chr(10), NULLIF(notes, ''), ${notes}) END
       WHERE id = (
         SELECT id FROM public.contact_activities
         WHERE owner_id = ${user.id} AND contact_id = ${record.contact_id}
