@@ -59,7 +59,7 @@ export async function GET() {
       status: String(row.status).charAt(0).toUpperCase() + String(row.status).slice(1),
       source: row.source,
       nextFollowUp: row.follow_up_at ? String(row.follow_up_at).slice(0, 10) : "",
-      lastContact: row.last_contact_at ? String(row.last_contact_at).slice(0, 10) : "",
+      lastContact: row.last_contact_at ? new Date(String(row.last_contact_at)).toISOString() : "",
       notes: row.notes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
