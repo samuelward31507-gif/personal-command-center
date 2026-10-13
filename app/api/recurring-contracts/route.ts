@@ -86,7 +86,7 @@ export async function PATCH(request: Request) {
     const endDate = Object.prototype.hasOwnProperty.call(body, "endDate") ? validDate(body.endDate) : (row.end_date ? String(row.end_date).slice(0, 10) : null);
     const notes = Object.prototype.hasOwnProperty.call(body, "notes") ? cleanText(body.notes, 5000) : String(row.notes ?? "");
     if (!clientName || !contractName) return fail("Client and contract names are required.", 400);
-    if (monthlyAmount === null || monthlyAmount === false) return fail("Monthly amount must be a non-negative number.", 400);
+    if (monthlyAmount === null) return fail("Monthly amount must be a non-negative number.", 400);
     if (startDate === null || startDate === false || endDate === false) return fail("Provide a valid start date and optional end date.", 400);
     if (endDate && typeof startDate === "string" && endDate < startDate) return fail("End date cannot be before start date.", 400);
     const nextStatus = hasStatus ? body.status : String(row.status);
