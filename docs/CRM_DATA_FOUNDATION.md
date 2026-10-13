@@ -1,7 +1,7 @@
 # Cinder CRM data foundation
 
 ## Status
-Planning/specification only. No production database is connected. The initial /crm route is a local browser prototype and must not be used for confidential or business-critical records.
+This file began as a pre-implementation proposal and is now historical context, not the current system description. The current application uses authenticated server routes and owner-scoped Neon Postgres records for contacts, deals, tasks, daily plans, projects and milestones, outreach, finance, client success, workforce records, and calendar events. Do not rely on the older local-prototype statements below as current behavior; verify the actual migration files and API handlers before making schema changes.
 
 ## Proposed entities
 - contacts: person identity, channels, status, source, timestamps, archive marker.
@@ -24,10 +24,10 @@ Planning/specification only. No production database is connected. The initial /c
 7. Define backups, restore test, retention and export before critical data entry.
 8. Never fabricate contacts, interactions, deals, amounts, or history.
 
-## First milestone acceptance criteria
-- Create/edit/search/filter/archive contacts from /crm.
-- Contact list persists through reload in prototype mode; local-only warning remains visible.
-- Follow-up dates and overdue counts calculate from saved records.
-- CSV export works and correctly quotes commas, quotes and newlines.
-- Keyboard-accessible form controls, empty states and responsive layout.
-- Replace browser storage with authenticated database operations before production use.
+## Foundation acceptance criteria (ongoing)
+- Create/edit/search/filter contacts and persist them through authenticated API routes.
+- Follow-up dates, task deadlines, and calendar events use local dates consistently.
+- CSV import/export validates fields and handles duplicate contacts safely.
+- Every read and write is owner-scoped on the server; linked records are validated against the same owner.
+- Database changes are additive, migration-backed, and checked against the intended Neon branch.
+- Keep the CRM private and treat authenticated end-to-end tests, backup/restore checks, and integration verification as release requirements.
