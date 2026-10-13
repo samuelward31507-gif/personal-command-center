@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation";
 import "./crm-shell.css";
 
 const mainLinks = [
-  { href: "/", icon: "⌂", label: "Home" },
+  { href: "/", icon: "⌂", label: "Overview" },
   { href: "/?view=schedule", icon: "▦", label: "My day" },
-  { href: "/?view=needs-you", icon: "▤", label: "Needs you" },
-  { href: "/crm", icon: "↗", label: "Contacts & growth" },
-  { href: "/?view=workforce", icon: "♧", label: "AI workforce" },
-  { href: "/?view=projects", icon: "▱", label: "Projects" },
-  { href: "/?view=intelligence", icon: "✳", label: "Intelligence" },
+  { href: "/crm/needs-you", icon: "▤", label: "Needs attention" },
+  { href: "/crm", icon: "↗", label: "Contacts" },
+  { href: "/crm/tasks", icon: "✓", label: "Tasks" },
+  { href: "/crm/projects", icon: "▱", label: "Projects" },
+  { href: "/crm/finance", icon: "$", label: "Finances" },
 ];
 
 export default function CrmLayout({ children }: { children: React.ReactNode }) {
