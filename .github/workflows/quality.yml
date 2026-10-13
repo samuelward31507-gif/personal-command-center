@@ -44,6 +44,8 @@ jobs:
           if-no-files-found: error
       - name: Install dependencies cleanly
         run: npm ci
+      - name: Run regression tests
+        run: npm test
       - name: Run ESLint
         run: npm run lint
       - name: Check TypeScript
