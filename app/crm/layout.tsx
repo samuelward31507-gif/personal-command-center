@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import "./crm-shell.css";
@@ -41,7 +42,7 @@ function pageTitle(pathname: string, view: string) {
   return "Home";
 }
 
-export default function CrmLayout({ children }: { children: React.ReactNode }) {
+function CrmLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const view = searchParams.get("view") || "";
@@ -82,4 +83,9 @@ export default function CrmLayout({ children }: { children: React.ReactNode }) {
       </section>
     </div>
   );
+}
+
+
+export default function CrmLayout({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<div className="crm-layout-loading">Loading agency workspace…</div>}><CrmLayoutContent>{children}</CrmLayoutContent></Suspense>;
 }
