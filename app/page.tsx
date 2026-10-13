@@ -44,6 +44,7 @@ export default function Home() {
  }, []);
  useEffect(() => {
   let active = true;
+  setBusinessSnapshot(s=>({...s,loading:true,error:false}));
   Promise.all([
    fetch("/api/contacts",{cache:"no-store"}),
    fetch("/api/deals",{cache:"no-store"}),
