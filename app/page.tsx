@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 function I({ children }: { children: string }) { return <span className="glyph" aria-hidden="true">{children}</span>; }
 type CalendarItem = {id:string;title:string;startsAt:string;endsAt:string;allDay:boolean;type:string;status:string;contactName?:string;dealTitle?:string};
@@ -29,8 +30,14 @@ const routine = [
  { time:"6:00–8:00 PM", title:"High-value projects", detail:"Move the most important project forward", category:"Execution" },
  { time:"8:00–9:00 PM", title:"Review & prepare", detail:"Log outcomes and set tomorrow's priorities", category:"Planning" },
 ];
-export default function Home() {
+function HomeContent() {
+ const searchParams = useSearchParams();
+ const requestedView = searchParams.get("view");
  const [activeView, setActiveView] = useState("home");
+ useEffect(() => {
+  const allowed = ["schedule","needs-you","growth","tasks","workforce","projects","client-success","finance","intelligence","strategy","settings"];
+  setActiveView(requestedView && allowed.includes(requestedView) ? requestedView : "home");
+ }, [requestedView]);
  const [done, setDone] = useState<string[]>([]);
  const [dailyNotes, setDailyNotes] = useState("");
  const [planDate, setPlanDate] = useState("");
@@ -140,4 +147,9 @@ export default function Home() {
      <section className="surface-panel activity-panel"><div className="panel-heading"><div><h2>Next step</h2><p>Make Cinder useful every day</p></div></div><div className="empty-state"><h3>Turn today’s activity into revenue.</h3><p>Clear due outreach first, follow up with existing leads, and move qualified opportunities toward a meeting or proposal. Cinder now pulls live counts from your CRM and pipeline.</p><button className="text-action" onClick={()=>navigate("growth")}>Open Contacts & growth →</button> <button className="text-action" onClick={()=>window.location.assign("/crm/pipeline")}>Review sales pipeline →</button></div></section></div>
     <footer className="page-footer"><span><span className="footer-mark"/> CINDER PERSONAL CRM</span><span>Clarity, relationships, follow-through.</span></footer>
    </div> : <div className="page-content route-page"><div className="welcome-row"><div><div className="eyebrow"><span className="eyebrow-line"/> CINDER WORKSPACE</div><h1>{viewDetails[activeView]?.title??"Home"}<span className="heading-period">.</span></h1><p className="page-subtitle">{viewDetails[activeView]?.description}</p></div><button className="back-home-button" onClick={()=>navigate("home")}>← Back to home</button></div><section className="route-panel"><div className="route-panel-heading"><span className="section-kicker">WORKSPACE VIEW</span><span className="banner-status"><span className="status-dot amber"/> Not connected</span></div><div className="route-items">{(viewDetails[activeView]?.items??[]).map((item,index)=><div className="route-item" key={item}><span className="route-item-number">{String(index+1).padStart(2,"0")}</span><span>{item}</span><span className="route-item-status">Needs implementation</span></div>)}</div><p className="route-note">This section is a planned part of your personal CRM. It is not connected to a persistent database yet.</p></section></div>}</section></main>;
+}
+
+
+export default function Home() {
+ return <Suspense fallback={<main className="page-content">Loading agency workspace…</main>}><HomeContent /></Suspense>;
 }
