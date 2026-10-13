@@ -6,7 +6,7 @@ async function ownerId(){const r=await auth.getSession();return r?.data?.session
 const fail=(m:string,s:number)=>Response.json({error:m},{status:s});
 const txt=(v:unknown,n:number)=>typeof v==="string"?v.trim().slice(0,n):"";
 const uuid=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
-const states=new Set(["planned","active","paused","retired"]),runStates=new Set(["queued","running","succeeded","failed","cancelled"]),approvalStates=new Set(["pending","approved","rejected","cancelled"]),memoryCategories=new Set(["priority","preference","decision","lesson","customer","strategy","general"]);
+const states=new Set(["planned","active","paused","retired"]),runStates=new Set(["queued","running","succeeded","failed","cancelled"]),memoryCategories=new Set(["priority","preference","decision","lesson","customer","strategy","general"]);
 export async function GET(){try{const owner=await ownerId();if(!owner)return fail("Unauthorized",401);const sql=db();const [agents,runs,approvals,memory]=await Promise.all([
 sql`SELECT id,name,specialty,description,status,system_name,created_at,updated_at FROM public.agent_profiles WHERE owner_id=${owner} ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'planned' THEN 1 WHEN 'paused' THEN 2 ELSE 3 END,name`,
 sql`SELECT id,agent_id,agent_name,task_title,status,summary,result_text,cost_usd,started_at,finished_at,created_at,updated_at FROM public.agent_runs WHERE owner_id=${owner} ORDER BY created_at DESC LIMIT 200`,
