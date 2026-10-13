@@ -26,6 +26,7 @@ const secondaryLinks = [
 
 function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/calendar")) return "Calendar";
+  if (pathname.startsWith("/crm/needs-you")) return "Needs you";
   if (pathname.startsWith("/crm/tasks")) return "Tasks";
   if (pathname.startsWith("/crm/projects")) return "Delivery";
   if (pathname.startsWith("/crm/client-success")) return "Client success";
