@@ -132,7 +132,7 @@ export async function PATCH(request: Request) {
     const description = body.description === undefined ? String(old.description ?? "") : clean(body.description, 5000);
     const startsAt = body.startsAt === undefined ? new Date(String(old.starts_at)).toISOString() : validTimestamp(body.startsAt);
     const endsAt = body.endsAt === undefined ? new Date(String(old.ends_at)).toISOString() : validTimestamp(body.endsAt);
-    if (!startsAt || !endsAt || startsAt === false || endsAt === false || new Date(endsAt).getTime() <= new Date(startsAt).getTime()) return fail("A valid start and end time are required.", 400);
+    if (!startsAt || !endsAt || new Date(endsAt).getTime() <= new Date(startsAt).getTime()) return fail("A valid start and end time are required.", 400);
     const type = body.type === undefined ? String(old.event_type) : body.type;
     const status = body.status === undefined ? String(old.status) : body.status;
     if (typeof type !== "string" || !types.has(type)) return fail("Invalid event type.", 400);
