@@ -14,6 +14,7 @@ const typeLabels:Record<EventType,string>={meeting:"Meeting",call:"Call",focus:"
 const blank={title:"",description:"",startsAt:"",endsAt:"",allDay:false,type:"meeting" as EventType,status:"scheduled" as EventStatus,contactId:"",dealId:""};
 const pad=(n:number)=>String(n).padStart(2,"0");
 function dateKey(d:Date){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function localMidnightIso(key:string){const [y,m,d]=key.split("-").map(Number);return new Date(y,m-1,d).toISOString()}
 function atLocalInput(d:Date){return dateKey(d)+"T"+pad(d.getHours())+":"+pad(d.getMinutes())}
 function addDays(d:Date,n:number){const x=new Date(d);x.setDate(x.getDate()+n);return x}
 function startOfWeek(d:Date){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-x.getDay());return x}
@@ -42,7 +43,7 @@ export default function CalendarPage(){
   setLoading(true);setError("");
   try{
    const [er,tr,cr,dr]=await Promise.all([
-    fetch("/api/calendar-events?from="+range.from+"&to="+range.to,{cache:"no-store"}),
+    fetch("/api/calendar-events?from="+range.from+"&to="+range.to+"&fromAt="+encodeURIComponent(localMidnightIso(range.from))+"&toAt="+encodeURIComponent(localMidnightIso(range.to)),{cache:"no-store"}),
     fetch("/api/tasks",{cache:"no-store"}),fetch("/api/contacts",{cache:"no-store"}),fetch("/api/deals",{cache:"no-store"})
    ]);
    if(!er.ok)throw new Error(er.status===401?"Sign in to use your calendar.":"Could not load calendar events. If this is a new environment, confirm the calendar migration has been applied.");
