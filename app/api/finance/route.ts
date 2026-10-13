@@ -23,6 +23,7 @@ export async function GET(){
  COALESCE((SELECT SUM(amount) FROM public.revenue_entries WHERE owner_id=${owner} AND status='paid' AND revenue_type='setup_fee' AND paid_at>=date_trunc('month',${todayKey}::date) AND paid_at<date_trunc('month',${todayKey}::date)+interval '1 month'),0) AS setup_revenue,
  COALESCE((SELECT SUM(amount) FROM public.revenue_entries WHERE owner_id=${owner} AND status<>'cancelled' AND recognized_date>=date_trunc('month',${todayKey}::date) AND recognized_date<date_trunc('month',${todayKey}::date)+interval '1 month'),0) AS recognized_revenue,
  COALESCE((SELECT SUM(amount) FROM public.business_expenses WHERE owner_id=${owner} AND expense_date>=date_trunc('month',${todayKey}::date) AND expense_date<date_trunc('month',${todayKey}::date)+interval '1 month'),0) AS month_expenses,
+ COALESCE((SELECT SUM(amount) FROM public.business_expenses WHERE owner_id=${owner} AND category<>'taxes' AND expense_date>=date_trunc('month',${todayKey}::date) AND expense_date<date_trunc('month',${todayKey}::date)+interval '1 month'),0) AS operating_expenses,
  COALESCE((SELECT SUM(amount) FROM public.revenue_entries WHERE owner_id=${owner} AND status IN ('expected','overdue')),0) AS expected,
  COALESCE((SELECT SUM(amount) FROM public.revenue_entries WHERE owner_id=${owner} AND (status='overdue' OR (status='expected' AND due_date<${todayKey}::date))),0) AS overdue,
  COALESCE((SELECT SUM(monthly_amount) FROM public.recurring_revenue_contracts WHERE owner_id=${owner} AND status='active' AND start_date<=${todayKey}::date AND (end_date IS NULL OR end_date>=${todayKey}::date)),0) AS mrr
@@ -35,10 +36,11 @@ export async function GET(){
  const setupRevenue=Number(total.setup_revenue||0);
  const mrr=Number(total.mrr||0);
  const monthExpenses=Number(total.month_expenses||0);
+ const operatingExpenses=Number(total.operating_expenses||0);
  const recognizedRevenue=Number(total.recognized_revenue||0);
  const expected=Number(total.expected||0);
  const overdue=Number(total.overdue||0);
- return Response.json({revenue,expenses,summary:{month,paidRevenue,setupRevenue,mrr,recognizedRevenue,recordedOperatingProfit:recognizedRevenue-monthExpenses,monthExpenses,monthNet:paidRevenue-monthExpenses,expected,overdue}}, { headers: { "Cache-Control": "no-store, private" } })
+ return Response.json({revenue,expenses,summary:{month,paidRevenue,setupRevenue,mrr,recognizedRevenue,recordedOperatingProfit:recognizedRevenue-operatingExpenses,monthExpenses,monthNet:paidRevenue-monthExpenses,expected,overdue}}, { headers: { "Cache-Control": "no-store, private" } })
  }catch(e){console.error("Finance GET failed",e);return fail("Unable to load financial records.",500);}
 }
 export async function POST(req:Request){
