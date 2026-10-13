@@ -77,7 +77,7 @@ export default function OutreachPage(){
   setBusy(p.id);setMessage("");
   try{const r=await fetch("/api/outreach",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:p.id,status})});if(!r.ok)throw new Error();await load()}catch{setMessage("Couldn't update this prospect.")}finally{setBusy(null)}
  }
- function call(p:Outreach){if(!p.phone){setMessage("Add a phone number to this contact first.");return}window.location.href="tel:"+p.phone.replace(/[^+\d]/g,"")}
+ function call(p:Outreach){if(!p.phone){setMessage("Add a phone number to this contact first.");return}void fetch("/api/call-logs",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({contactId:p.contactId,channel:"call",action:"outbound_call",outcome:"initiated",sequenceStep:p.currentStep,notes:"Outbound call launched from Cinder outreach."})}).catch(()=>{});window.location.href="tel:"+p.phone.replace(/[^+\d]/g,"")}
  function copy(p:Outreach){const s=textScript(p,p.currentStep===5);void navigator.clipboard.writeText(s).then(()=>setMessage("Text copied for "+p.name)).catch(()=>setMessage("Clipboard unavailable — open this page in Safari and allow clipboard access."))}
  return <main className="outreach-page">
   <header className="outreach-header"><div><div className="outreach-eyebrow">CINDER / SALES & GROWTH</div><h1>Today's outreach<span>.</span></h1><p>A clear next action for every prospect. Calls open your normal phone app; texts are copied for you to send manually.</p></div><div className="outreach-head-actions"><Link href="/crm" className="outreach-link">← Contacts</Link><button className="outreach-primary" onClick={()=>setShowAdd(v=>!v)}>＋ Add prospect</button></div></header>
