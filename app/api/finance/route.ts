@@ -38,7 +38,7 @@ export async function GET(){
  const recognizedRevenue=Number(total.recognized_revenue||0);
  const expected=Number(total.expected||0);
  const overdue=Number(total.overdue||0);
- return Response.json({revenue,expenses,summary:{month,paidRevenue,setupRevenue,mrr,recognizedRevenue,recordedOperatingProfit:recognizedRevenue-monthExpenses,monthExpenses,monthNet:paidRevenue-monthExpenses,expected,overdue}})
+ return Response.json({revenue,expenses,summary:{month,paidRevenue,setupRevenue,mrr,recognizedRevenue,recordedOperatingProfit:recognizedRevenue-monthExpenses,monthExpenses,monthNet:paidRevenue-monthExpenses,expected,overdue}}, { headers: { "Cache-Control": "no-store, private" } })
  }catch(e){console.error("Finance GET failed",e);return fail("Unable to load financial records.",500);}
 }
 export async function POST(req:Request){
