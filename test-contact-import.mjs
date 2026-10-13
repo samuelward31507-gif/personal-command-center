@@ -204,6 +204,13 @@ test("contact form's Website input is not type=url (blocks bare domains)", () =>
 // shared outcome form, which persists the outcome and corresponding activity
 // via the existing outreach PATCH handler. Direct status-only updates skip the
 // contact activity timeline.
+test("outreach API rejects malformed UUIDs before database casts", () => {
+  const api = readFileSync("app/api/outreach/route.ts", "utf8");
+  assert.ok(api.includes("const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i"));
+  assert.ok(api.includes('if (!uuid.test(contactId)) return jsonError("Contact id must be a valid UUID.", 400)'));
+  assert.ok(api.includes('if (!uuid.test(id)) return jsonError("Outreach id must be a valid UUID.", 400)'));
+});
+
 test("Meeting booked quick action uses the outcome/activity workflow", () => {
   const page = readFileSync("app/crm/outreach/page.tsx", "utf8");
   assert.ok(page.includes('setOutcomeFor(p);setOutcome("meeting_booked")'));
