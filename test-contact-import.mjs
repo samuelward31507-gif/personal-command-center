@@ -3,6 +3,7 @@
 // both the import preview UI and the server-side import route).
 // Run with: node --experimental-strip-types test-contact-import.mjs
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   MAX_IMPORT_ROWS,
   normalizeHeader,
@@ -179,6 +180,24 @@ test("normalizeImportRow maps a provided status case-insensitively", () => {
 // --- MAX_IMPORT_ROWS sanity (unchanged batch limit) ---
 test("MAX_IMPORT_ROWS is still 500", () => {
   assert.equal(MAX_IMPORT_ROWS, 500);
+});
+
+// --- Regression guard: the manual "Add contact" form's Website field must
+// never regress to type="url". A live browser test found that type="url"
+// rejects bare domains like "acme.com" (native HTML5 validation requires a
+// scheme) with no visible error, silently blocking the whole form submit --
+// while the CSV import path (plain text, no browser validation) accepted
+// the exact same bare-domain value. This static check can't run a browser,
+// but it catches the regression at the source level. ---
+test("contact form's Website input is not type=url (blocks bare domains)", () => {
+  const src = readFileSync("app/crm/page.tsx", "utf8");
+  const idx = src.indexOf("Website<input");
+  assert.ok(idx >= 0, "Could not find the Website input in app/crm/page.tsx");
+  const fieldSrc = src.slice(idx, idx + 300);
+  assert.ok(
+    !/type="url"/.test(fieldSrc),
+    'Website input must not be type="url" -- it silently rejects bare domains (e.g. "acme.com") with no visible error, blocking contact creation. Use a plain text input (see lib/contact-import.ts, which already treats website as free text).'
+  );
 });
 
 console.log(`${passed} passed`);
