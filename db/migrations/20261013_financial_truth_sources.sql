@@ -22,3 +22,6 @@ CREATE TABLE IF NOT EXISTS public.recurring_revenue_contracts (
 
 CREATE INDEX IF NOT EXISTS recurring_contracts_owner_status_dates_idx
   ON public.recurring_revenue_contracts (owner_id, status, start_date, end_date);
+
+CREATE INDEX IF NOT EXISTS revenue_entries_owner_recognized_idx
+  ON public.revenue_entries (owner_id, recognized_date);
