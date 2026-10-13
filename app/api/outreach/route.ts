@@ -87,6 +87,11 @@ export async function PATCH(request: Request) {
     const sql = db();
     if (body.status !== undefined) {
       if (typeof body.status !== "string" || !statuses.has(body.status)) return jsonError("Invalid outreach status.", 400);
+      const before = await sql`
+        SELECT id, contact_id, status, current_step FROM public.contact_outreach
+        WHERE id = ${id}::uuid AND owner_id = ${user.id} LIMIT 1
+      `;
+      if (!before.length) return jsonError("Outreach record not found.", 404);
       const rows = await sql`
         UPDATE public.contact_outreach SET status = ${body.status}, updated_at = now(),
           current_step = CASE WHEN ${body.status} = 'active' AND status = 'parked' THEN 1 ELSE current_step END,
@@ -96,6 +101,21 @@ export async function PATCH(request: Request) {
         RETURNING id, contact_id, status, current_step, next_action_at
       `;
       if (!rows.length) return jsonError("Outreach record not found.", 404);
+      // Keep the activity timeline truthful even for clients that use the
+      // status endpoint directly instead of the outcome form for an opt-out.
+      if (body.status === "do_not_contact" && before[0].status !== "do_not_contact") {
+        const step = Number(before[0].current_step);
+        const channel = step === 3 || step === 5 ? "text" : "call";
+        await sql`
+          INSERT INTO public.contact_activities
+            (owner_id, contact_id, channel, action, outcome, notes, sequence_step)
+          VALUES (
+            ${user.id}, ${before[0].contact_id},
+            ${channel}, ${channel === "text" ? "outbound_text" : "outbound_call"},
+            'do_not_contact', 'Marked do-not-contact from outreach status action.', ${step}
+          )
+        `;
+      }
       return Response.json({ outreach: rows[0] });
     }
     const allowedOutcomes = new Set(["initiated", "answered", "connected", "no_answer", "voicemail", "callback_requested", "reply_received", "interested", "meeting_booked", "do_not_contact", "completed", "other"]);
