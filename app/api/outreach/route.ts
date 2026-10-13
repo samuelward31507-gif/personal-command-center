@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
+import { enrollContactInOutreach, DoNotContactError } from "@/lib/outreach";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -64,27 +65,13 @@ export async function POST(request: Request) {
     const sql = db();
     const owned = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
     if (!owned.length) return jsonError("Contact not found.", 404);
-    const existing = await sql`
-      SELECT status FROM public.contact_outreach
-      WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid LIMIT 1
-    `;
-    if (existing[0]?.status === "do_not_contact") {
-      return jsonError("This prospect is marked do not contact and cannot be re-enrolled.", 409);
+    try {
+      const outreach = await enrollContactInOutreach(sql, user.id, contactId, niche, painPoint, researchNotes);
+      return Response.json({ outreach: { id: outreach.id, contact_id: outreach.contactId, status: outreach.status, current_step: outreach.currentStep, next_action_at: outreach.nextActionAt } }, { status: 201 });
+    } catch (e) {
+      if (e instanceof DoNotContactError) return jsonError(e.message, 409);
+      throw e;
     }
-    const rows = await sql`
-      INSERT INTO public.contact_outreach (owner_id, contact_id, niche, pain_point, research_notes, started_at, next_action_at)
-      VALUES (${user.id}, ${contactId}::uuid, ${niche}, ${painPoint}, ${researchNotes}, now(), now())
-      ON CONFLICT (owner_id, contact_id) DO UPDATE SET
-        niche = EXCLUDED.niche, pain_point = EXCLUDED.pain_point,
-        research_notes = EXCLUDED.research_notes,
-        status = CASE WHEN public.contact_outreach.status IN ('parked','completed') THEN 'active' ELSE public.contact_outreach.status END,
-        current_step = CASE WHEN public.contact_outreach.status IN ('parked','completed') THEN 1 ELSE public.contact_outreach.current_step END,
-        started_at = CASE WHEN public.contact_outreach.status IN ('parked','completed') THEN now() ELSE public.contact_outreach.started_at END,
-        next_action_at = CASE WHEN public.contact_outreach.status IN ('parked','completed') THEN now() ELSE public.contact_outreach.next_action_at END,
-        updated_at = now()
-      RETURNING id, contact_id, status, current_step, next_action_at
-    `;
-    return Response.json({ outreach: rows[0] }, { status: 201 });
   } catch (error) {
     console.error("CRM outreach POST failed", error);
     return jsonError("Unable to add prospect to outreach.", 500);
@@ -111,7 +98,7 @@ export async function PATCH(request: Request) {
       if (!rows.length) return jsonError("Outreach record not found.", 404);
       return Response.json({ outreach: rows[0] });
     }
-    const allowedOutcomes = new Set(["initiated", "answered", "no_answer", "voicemail", "reply_received", "meeting_booked", "completed", "other"]);
+    const allowedOutcomes = new Set(["initiated", "answered", "connected", "no_answer", "voicemail", "callback_requested", "reply_received", "interested", "meeting_booked", "do_not_contact", "completed", "other"]);
     const outcome = typeof body.outcome === "string" && allowedOutcomes.has(body.outcome) ? body.outcome : "other";
     const notes = typeof body.notes === "string" ? body.notes.slice(0, 3000) : "";
     const rows = await sql`
@@ -121,9 +108,40 @@ export async function PATCH(request: Request) {
     if (!rows.length) return jsonError("Active outreach record not found.", 404);
     const record = rows[0];
     const step = Number(record.current_step);
+    // "not interested / do not contact" suppresses the prospect immediately and
+    // permanently (re-enrollment is blocked server-side in enrollContactInOutreach
+    // until a deliberate status change) rather than continuing the normal cadence.
+    if (outcome === "do_not_contact") {
+      const updated = await sql`
+        UPDATE public.contact_outreach SET status = 'do_not_contact', updated_at = now()
+        WHERE id = ${id}::uuid AND owner_id = ${user.id}
+        RETURNING id, contact_id, status, current_step, next_action_at
+      `;
+      const dncChannel = Number(record.current_step) === 3 || Number(record.current_step) === 5 ? "text" : "call";
+      const dncAction = dncChannel === "text" ? "outbound_text" : "outbound_call";
+      const recentInitiatedDnc = await sql`
+        UPDATE public.contact_activities SET outcome = 'do_not_contact',
+          notes = CASE WHEN ${notes}::text = '' THEN notes ELSE concat_ws(chr(10), NULLIF(notes, ''), ${notes}::text) END
+        WHERE id = (
+          SELECT id FROM public.contact_activities
+          WHERE owner_id = ${user.id} AND contact_id = ${record.contact_id}
+            AND channel = ${dncChannel} AND action = ${dncAction} AND outcome = 'initiated'
+            AND sequence_step = ${step} AND occurred_at >= now() - interval '30 minutes'
+          ORDER BY occurred_at DESC LIMIT 1
+        )
+        RETURNING id
+      `;
+      if (!recentInitiatedDnc.length) {
+        await sql`
+          INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes, sequence_step)
+          VALUES (${user.id}, ${record.contact_id}, ${dncChannel}, ${dncAction}, 'do_not_contact', ${notes}, ${step})
+        `;
+      }
+      return Response.json({ outreach: updated[0], finished: true });
+    }
     const nextStep = step + 1;
     const finalStep = step >= 6;
-    const stopForResponse = outcome === "meeting_booked" || outcome === "reply_received";
+    const stopForResponse = outcome === "meeting_booked" || outcome === "reply_received" || outcome === "interested";
     const nextStatus = stopForResponse ? (outcome === "meeting_booked" ? "meeting_booked" : "interested") : finalStep ? "parked" : "active";
     const nextDate = new Date();
     nextDate.setDate(nextDate.getDate() + (dayOffsets[Math.min(nextStep - 1, 5)] - dayOffsets[step - 1]));
@@ -140,7 +158,7 @@ export async function PATCH(request: Request) {
     const action = channel === "text" ? "outbound_text" : "outbound_call";
     const recentInitiated = await sql`
       UPDATE public.contact_activities SET outcome = ${outcome},
-        notes = CASE WHEN ${notes} = '' THEN notes ELSE concat_ws(chr(10), NULLIF(notes, ''), ${notes}) END
+        notes = CASE WHEN ${notes}::text = '' THEN notes ELSE concat_ws(chr(10), NULLIF(notes, ''), ${notes}::text) END
       WHERE id = (
         SELECT id FROM public.contact_activities
         WHERE owner_id = ${user.id} AND contact_id = ${record.contact_id}

@@ -42,7 +42,7 @@ export async function GET() {
     const sql = db();
     const rows = await sql`
       SELECT c.id, c.first_name, c.last_name, c.company, c.role, c.email, c.phone, c.status,
-             c.source, c.notes, c.follow_up_at, c.created_at, c.updated_at,
+             c.source, c.notes, c.follow_up_at, c.website, c.location, c.created_at, c.updated_at,
              (SELECT MAX(a.occurred_at) FROM public.contact_activities a
               WHERE a.owner_id = c.owner_id AND a.contact_id = c.id) AS last_contact_at
       FROM public.contacts c
@@ -56,6 +56,8 @@ export async function GET() {
       role: row.role,
       email: row.email,
       phone: row.phone,
+      website: row.website,
+      location: row.location,
       status: String(row.status).charAt(0).toUpperCase() + String(row.status).slice(1),
       source: row.source,
       nextFollowUp: row.follow_up_at ? (row.follow_up_at instanceof Date ? row.follow_up_at.toISOString().slice(0, 10) : String(row.follow_up_at).slice(0, 10)) : "",
@@ -87,12 +89,13 @@ export async function POST(request: Request) {
     const sql = db();
     const rows = await sql`
       INSERT INTO public.contacts
-        (owner_id, first_name, last_name, company, role, email, phone, status, source, notes, follow_up_at)
+        (owner_id, first_name, last_name, company, role, email, phone, status, source, notes, follow_up_at, website, location)
       VALUES
         (${user.id}, ${firstName}, ${lastName}, ${String(body.company ?? "").slice(0, 300)},
          ${String(body.role ?? "").slice(0, 200)}, ${String(body.email ?? "").slice(0, 320)},
          ${String(body.phone ?? "").slice(0, 100)}, ${status}, ${String(body.source ?? "").slice(0, 200)},
-         ${String(body.notes ?? "").slice(0, 10000)}, ${followUp})
+         ${String(body.notes ?? "").slice(0, 10000)}, ${followUp},
+         ${String(body.website ?? "").slice(0, 500)}, ${String(body.location ?? "").slice(0, 300)})
       RETURNING id
     `;
     return Response.json({ id: rows[0]?.id }, { status: 201 });
@@ -126,6 +129,8 @@ export async function PATCH(request: Request) {
         phone = ${String(body.phone ?? "").slice(0, 100)},
         status = ${status}, source = ${String(body.source ?? "").slice(0, 200)},
         notes = ${String(body.notes ?? "").slice(0, 10000)},
+        website = ${String(body.website ?? "").slice(0, 500)},
+        location = ${String(body.location ?? "").slice(0, 300)},
         follow_up_at = ${followUp}, updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id}
       RETURNING id

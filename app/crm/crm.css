@@ -11,3 +11,29 @@
 .crm-activity-item small{font-size:10px;color:#85867f}
 .crm-activity-item p{font-size:11px;color:#62645c;white-space:pre-wrap;margin:2px 0 0}
 @media(max-width:480px){.crm-contact-row{gap:7px;padding:11px 6px}.crm-contact-call{padding:5px 6px}.crm-contact-main strong{font-size:11px}.crm-contact-main small{font-size:9px}}
+.crm-import-modal{max-width:760px;width:92vw}
+.crm-import-pick p{font-size:12px;color:#62645c;line-height:1.6;margin:0 0 16px}
+.crm-import-error{color:#9b4e35;font-size:12px;background:#fdf1ec;border:1px solid #ecd2c4;border-radius:7px;padding:9px 11px;margin:0 0 12px}
+.crm-import-summary-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.crm-import-pill{font-size:10px;font-weight:700;letter-spacing:.3px;border-radius:20px;padding:6px 11px}
+.crm-import-pill.ok{background:#edf7f0;color:#286749}
+.crm-import-pill.warn{background:#fdf3e2;color:#9a6a12}
+.crm-import-pill.bad{background:#fdf1ec;color:#9b4e35}
+.crm-import-table-wrap{max-height:320px;overflow:auto;border:1px solid #e7e6e0;border-radius:8px;margin-bottom:14px}
+.crm-import-table{width:100%;border-collapse:collapse;font-size:11px}
+.crm-import-table th{position:sticky;top:0;background:#f7f6f2;text-align:left;padding:8px 10px;font-size:9px;letter-spacing:.5px;color:#77736b;border-bottom:1px solid #e7e6e0}
+.crm-import-table td{padding:7px 10px;border-bottom:1px solid #f0efeb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.crm-import-table tr.row-duplicate td{color:#9a6a12;background:#fffaf1}
+.crm-import-table tr.row-invalid td{color:#9b4e35;background:#fef9f7}
+.crm-import-options{border-top:1px solid #eee;padding-top:14px;margin-bottom:10px}
+.crm-import-check{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:650;margin-bottom:10px}
+.crm-import-enroll-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.crm-import-enroll-fields label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#62645c}
+.crm-import-enroll-fields input{border:1px solid #deded7;border-radius:7px;padding:8px 10px;font:inherit;font-size:12px}
+.crm-import-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.crm-import-footer button{border:1px solid #deded7;border-radius:7px;padding:9px 14px;font:inherit;font-size:12px;cursor:pointer;background:#fff}
+.crm-import-detail{margin:14px 0;font-size:11px}
+.crm-import-detail h3{font-size:11px;margin:0 0 6px}
+.crm-import-detail ul{margin:0;padding-left:18px;color:#62645c;line-height:1.7}
+.crm-import-detail button{margin-left:8px;border:1px solid #deded7;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;background:#fff}
+.crm-import-message{font-size:11px;color:#286749;background:#edf7f0;border:1px solid #cfe9d8;border-radius:7px;padding:9px 12px;margin-bottom:14px}

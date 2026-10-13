@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 const channels = new Set(["call", "text", "note"]);
 const actions = new Set(["outbound_call", "outbound_text", "note"]);
-const outcomes = new Set(["initiated", "answered", "no_answer", "voicemail", "reply_received", "meeting_booked", "completed", "other"]);
+const outcomes = new Set(["initiated", "answered", "connected", "no_answer", "voicemail", "callback_requested", "reply_received", "interested", "meeting_booked", "do_not_contact", "completed", "other"]);
 
 function db() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured.");
