@@ -5,7 +5,7 @@ import {useCallback,useEffect,useState} from "react";
 import "./finance.css";
 type Revenue={id:string;title:string;revenue_type:string;amount:number;status:string;due_date:string|null;paid_at:string|null;notes:string;contact_name:string;deal_title:string;project_name:string};
 type Expense={id:string;title:string;category:string;amount:number;expense_date:string;recurring:boolean;notes:string};
-type Summary={month:string;paidRevenue:number;setupRevenue:number;activeProjectMonthlyValue:number;monthExpenses:number;monthNet:number;expected:number;overdue:number};
+type Summary={month:string;paidRevenue:number;setupRevenue:number;mrr:number;recognizedRevenue:number;recordedOperatingProfit:number;monthExpenses:number;monthNet:number;expected:number;overdue:number};
 const cash=(n:number)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(n||0);
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const typeLabel=(v:string)=>({"setup_fee":"Setup fee","monthly_retainer":"Monthly retainer","usage":"Usage","one_time":"One-time","other":"Other"}[v]||v);
