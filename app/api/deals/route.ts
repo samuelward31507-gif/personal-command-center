@@ -51,7 +51,7 @@ export async function GET() {
     return Response.json({ deals: rows.map((r: Record<string, unknown>) => ({
       id: r.id, contactId: r.contact_id, title: r.title, serviceType: r.service_type,
       stage: r.stage, setupFee: Number(r.setup_fee), monthlyFee: Number(r.monthly_fee),
-      expectedCloseDate: r.expected_close_date ? String(r.expected_close_date).slice(0, 10) : "",
+      expectedCloseDate: r.expected_close_date ? (r.expected_close_date instanceof Date ? r.expected_close_date.toISOString().slice(0, 10) : String(r.expected_close_date).slice(0, 10)) : "",
       source: r.source, notes: r.notes, lostReason: r.lost_reason,
       contactName: String(r.contact_name ?? ""),
       company: r.company, createdAt: r.created_at, updatedAt: r.updated_at,

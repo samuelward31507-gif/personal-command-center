@@ -127,11 +127,11 @@ export async function GET(request: Request) {
       dueContacts,
       openDeals: openDeals.map((d: Record<string, unknown>) => ({
         ...d, setup_fee: Number(d.setup_fee || 0), monthly_fee: Number(d.monthly_fee || 0),
-        expected_close_date: d.expected_close_date ? String(d.expected_close_date).slice(0, 10) : null,
+        expected_close_date: d.expected_close_date ? (d.expected_close_date instanceof Date ? d.expected_close_date.toISOString().slice(0, 10) : String(d.expected_close_date).slice(0, 10)) : null,
       })),
       dueTasks,
       attentionProjects: attentionProjects.map((p: Record<string, unknown>) => ({
-        ...p, target_date: p.target_date ? String(p.target_date).slice(0, 10) : null,
+        ...p, target_date: p.target_date ? (p.target_date instanceof Date ? p.target_date.toISOString().slice(0, 10) : String(p.target_date).slice(0, 10)) : null,
       })),
       pendingApprovals,
       failedRuns,

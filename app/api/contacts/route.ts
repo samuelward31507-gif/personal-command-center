@@ -58,7 +58,7 @@ export async function GET() {
       phone: row.phone,
       status: String(row.status).charAt(0).toUpperCase() + String(row.status).slice(1),
       source: row.source,
-      nextFollowUp: row.follow_up_at ? String(row.follow_up_at).slice(0, 10) : "",
+      nextFollowUp: row.follow_up_at ? (row.follow_up_at instanceof Date ? row.follow_up_at.toISOString().slice(0, 10) : String(row.follow_up_at).slice(0, 10)) : "",
       lastContact: row.last_contact_at ? new Date(String(row.last_contact_at)).toISOString() : "",
       notes: row.notes,
       createdAt: row.created_at,

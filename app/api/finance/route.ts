@@ -20,8 +20,9 @@ export async function GET(){
  sql`SELECT COALESCE(SUM(monthly_value),0) AS mrr FROM public.projects WHERE owner_id=${owner} AND status IN ('onboarding','in_progress','blocked','review')`
  ]);
  const now=new Date(),todayKey=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0"),month=todayKey.slice(0,7);
- const revenue=rev.map((r:any)=>{const dueDate=r.due_date?String(r.due_date).slice(0,10):null,paidAt=r.paid_at?String(r.paid_at).slice(0,10):null;const overdue=r.status==="overdue"||(r.status==="expected"&&dueDate!==null&&dueDate<todayKey);return {...r,amount:Number(r.amount),due_date:dueDate,paid_at:paidAt,status:overdue?"overdue":r.status};});
- const expenses=exp.map((r:any)=>({...r,amount:Number(r.amount),expense_date:String(r.expense_date).slice(0,10)}));
+ const dateOnly=(v:unknown):string|null=>v==null?null:v instanceof Date?v.toISOString().slice(0,10):String(v).slice(0,10);
+ const revenue=rev.map((r:any)=>{const dueDate=dateOnly(r.due_date),paidAt=dateOnly(r.paid_at);const overdue=r.status==="overdue"||(r.status==="expected"&&dueDate!==null&&dueDate<todayKey);return {...r,amount:Number(r.amount),due_date:dueDate,paid_at:paidAt,status:overdue?"overdue":r.status};});
+ const expenses=exp.map((r:any)=>({...r,amount:Number(r.amount),expense_date:dateOnly(r.expense_date)}));
  const paidRevenue=revenue.filter((r:any)=>r.status==="paid"&&r.paid_at?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
  const setupRevenue=revenue.filter((r:any)=>r.status==="paid"&&r.revenue_type==="setup_fee"&&r.paid_at?.startsWith(month)).reduce((s:number,r:any)=>s+r.amount,0);
  // Invoice records may contain multiple months for the same client; active delivery commitments are the run-rate source.
