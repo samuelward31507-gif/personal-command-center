@@ -206,11 +206,11 @@ test("contact form's Website input is not type=url (blocks bare domains)", () =>
 // contact activity timeline.
 test("Meeting booked quick action uses the outcome/activity workflow", () => {
   const page = readFileSync("app/crm/outreach/page.tsx", "utf8");
-  assert.match(page, /setOutcomeFor\\(p\\);setOutcome\\("meeting_booked"\\)/);
-  assert.match(page, /body:JSON\\.stringify\\(\\{id:outcomeFor\\.id,outcome,notes:outcomeNotes\\}\\)/);
+  assert.ok(page.includes('setOutcomeFor(p);setOutcome("meeting_booked")'));
+  assert.ok(page.includes('body:JSON.stringify({id:outcomeFor.id,outcome,notes:outcomeNotes})'));
   const api = readFileSync("app/api/outreach/route.ts", "utf8");
-  assert.match(api, /INSERT INTO public\\.contact_activities/);
-  assert.match(api, /outcome === "meeting_booked"/);
+  assert.ok(api.includes("INSERT INTO public.contact_activities"));
+  assert.ok(api.includes('outcome === "meeting_booked"'));
 });
 
 console.log(`${passed} passed`);
