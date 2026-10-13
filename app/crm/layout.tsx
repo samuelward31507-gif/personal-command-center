@@ -5,7 +5,9 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import "./crm-shell.css";
 
-const mainLinks = [
+type NavLink = { href: string; icon: string; label: string; match: (path: string, view: string) => boolean };
+
+const mainLinks: NavLink[] = [
   { href: "/", icon: "⌂", label: "Home", match: (path: string) => path === "/" },
   { href: "/?view=schedule", icon: "▦", label: "My day", match: (_path: string, view: string) => view === "schedule" },
   { href: "/crm/calendar", icon: "▦", label: "Calendar", match: (path: string) => path.startsWith("/crm/calendar") },
@@ -18,7 +20,7 @@ const mainLinks = [
   { href: "/crm/workforce", icon: "♧", label: "AI team", match: (path: string) => path.startsWith("/crm/workforce") },
 ];
 
-const secondaryLinks = [
+const secondaryLinks: NavLink[] = [
   { href: "/crm/intelligence", icon: "✳", label: "Intelligence", match: (path: string) => path.startsWith("/crm/intelligence") },
   { href: "/crm/strategy", icon: "✧", label: "Strategy & memory", match: (path: string) => path.startsWith("/crm/strategy") },
   { href: "/crm/settings", icon: "⚙", label: "Settings", match: (path: string) => path.startsWith("/crm/settings") },
