@@ -59,7 +59,7 @@ export default function CalendarPage(){
   return Array.from({length:view==="week"?7:1},(_,i)=>addDays(first,i));
  },[anchor,view]);
  const title=useMemo(()=>view==="day"?anchor.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"}):view==="week"?startOfWeek(anchor).toLocaleDateString(undefined,{month:"short",day:"numeric"})+" – "+addDays(startOfWeek(anchor),6).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):anchor.toLocaleDateString(undefined,{month:"long",year:"numeric"}),[anchor,view]);
- function eventsOn(day:Date){const key=dateKey(day);return events.filter(e=>dateKey(new Date(e.startsAt))===key||dateKey(new Date(e.endsAt))===key).sort((a,b)=>Number(a.allDay===false)-Number(b.allDay===false)||a.startsAt.localeCompare(b.startsAt))}
+ function eventsOn(day:Date){const start=new Date(day.getFullYear(),day.getMonth(),day.getDate()).getTime();const end=addDays(new Date(day.getFullYear(),day.getMonth(),day.getDate()),1).getTime();return events.filter(e=>new Date(e.startsAt).getTime()<end&&new Date(e.endsAt).getTime()>start).sort((a,b)=>Number(a.allDay===false)-Number(b.allDay===false)||a.startsAt.localeCompare(b.startsAt))}
  function tasksOn(day:Date){const key=dateKey(day);return tasks.filter(t=>t.dueAt&&dateKey(new Date(t.dueAt))===key&&!["done","cancelled"].includes(t.status))}
  function startNew(day:Date){setDraft(defaultDraft(day));setEditing(null);setShow(true);setError("");setNotice("")}
  function startEdit(e:CalendarEvent){setDraft({title:e.title,description:e.description,startsAt:localInput(e.startsAt),endsAt:localInput(e.endsAt),allDay:e.allDay,type:e.type,status:e.status,contactId:e.contactId||"",dealId:e.dealId||""});setEditing(e.id);setShow(true);setError("");setNotice("")}
