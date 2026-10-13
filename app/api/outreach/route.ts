@@ -138,10 +138,24 @@ export async function PATCH(request: Request) {
     `;
     const channel = Number(record.current_step) === 3 || Number(record.current_step) === 5 ? "text" : "call";
     const action = channel === "text" ? "outbound_text" : "outbound_call";
-    await sql`
-      INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes, sequence_step)
-      VALUES (${user.id}, ${record.contact_id}, ${channel}, ${action}, ${outcome}, ${notes}, ${step})
+    const recentInitiated = await sql`
+      UPDATE public.contact_activities SET outcome = ${outcome},
+        notes = CASE WHEN ${notes} = '' THEN notes ELSE concat_ws(E'\\n', NULLIF(notes, ''), ${notes}) END
+      WHERE id = (
+        SELECT id FROM public.contact_activities
+        WHERE owner_id = ${user.id} AND contact_id = ${record.contact_id}
+          AND channel = ${channel} AND action = ${action} AND outcome = 'initiated'
+          AND sequence_step = ${step} AND occurred_at >= now() - interval '30 minutes'
+        ORDER BY occurred_at DESC LIMIT 1
+      )
+      RETURNING id
     `;
+    if (!recentInitiated.length) {
+      await sql`
+        INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes, sequence_step)
+        VALUES (${user.id}, ${record.contact_id}, ${channel}, ${action}, ${outcome}, ${notes}, ${step})
+      `;
+    }
     return Response.json({ outreach: updated[0], finished: finalStep || stopForResponse });
   } catch (error) {
     console.error("CRM outreach PATCH failed", error);
