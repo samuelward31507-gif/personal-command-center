@@ -46,7 +46,8 @@ Open [http://localhost:3000](http://localhost:3000).
 Configure these in your local environment and deployment environment; never commit secret values.
 
 - `DATABASE_URL` — Neon Postgres connection string.
-- `NEON_AUTH_BASE_URL` — Neon Auth base URL for the workspace.
+- `NEON_AUTH_BASE_URL` — server-side Neon Auth base URL for the workspace.
+- `NEXT_PUBLIC_NEON_AUTH_URL` — client-side Neon Auth URL used by `createAuthClient()`; set it to the same Neon Auth endpoint as `NEON_AUTH_BASE_URL`.
 - `NEON_AUTH_COOKIE_SECRET` — secret used to secure auth cookies.
 - `HERMES_BRIDGE_TOKEN` — optional server-to-server bearer secret (at least 32 characters) for the read-only Hermes brief endpoint.
 - `HERMES_BRIDGE_OWNER_ID` — the single workspace owner ID that the Hermes bridge is allowed to read.
