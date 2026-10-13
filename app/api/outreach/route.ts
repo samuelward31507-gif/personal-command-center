@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 const statuses = new Set(["active", "parked", "interested", "meeting_booked", "do_not_contact", "completed"]);
 const dayOffsets = [0, 1, 2, 4, 6, 7];
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function db() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured.");
   return neon(process.env.DATABASE_URL);
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const contactId = typeof body.contactId === "string" ? body.contactId : "";
     if (!contactId) return jsonError("Contact id is required.", 400);
+    if (!uuid.test(contactId)) return jsonError("Contact id must be a valid UUID.", 400);
     const niche = typeof body.niche === "string" ? body.niche.slice(0, 120) : "";
     const painPoint = typeof body.painPoint === "string" ? body.painPoint.slice(0, 1000) : "";
     const researchNotes = typeof body.researchNotes === "string" ? body.researchNotes.slice(0, 5000) : "";
@@ -84,6 +86,7 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const id = typeof body.id === "string" ? body.id : "";
     if (!id) return jsonError("Outreach id is required.", 400);
+    if (!uuid.test(id)) return jsonError("Outreach id must be a valid UUID.", 400);
     const sql = db();
     if (body.status !== undefined) {
       if (typeof body.status !== "string" || !statuses.has(body.status)) return jsonError("Invalid outreach status.", 400);
