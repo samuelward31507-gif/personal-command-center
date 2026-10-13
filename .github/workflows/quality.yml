@@ -9,9 +9,6 @@ on:
       - main
       - feat/crm-foundation
 
-permissions:
-  contents: write
-
 jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
@@ -40,19 +37,6 @@ jobs:
           name: regenerated-package-lock
           path: package-lock.json
           if-no-files-found: error
-      # One-time repair: commit the regenerated lockfile to this same-repository PR branch.
-      - name: Sync regenerated lockfile to PR branch
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          PR_BRANCH: ${{ github.head_ref }}
-        run: |
-          if ! git diff --quiet -- package-lock.json; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package-lock.json
-            git commit -m "chore: sync package lockfile with Neon Auth dependencies"
-            git push origin "HEAD:${PR_BRANCH}"
-          fi
       - name: Install dependencies cleanly
         run: npm ci
       - name: Run ESLint
