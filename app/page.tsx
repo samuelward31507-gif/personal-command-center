@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 function I({ children }: { children: string }) { return <span className="glyph" aria-hidden="true">{children}</span>; }
 type CalendarItem = {id:string;title:string;startsAt:string;endsAt:string;allDay:boolean;type:string;status:string;contactName?:string;dealTitle?:string};
 type AgendaTask = {id:string;title:string;status:string;priority:string;dueAt:string|null};
-const nav = [["⌂","Home","home"],["▦","My day","schedule"],["▦","Calendar","calendar"],["▤","Needs you","needs-you"],["↗","Contacts & growth","growth"],["✓","Tasks","tasks"],["♧","AI workforce","workforce"],["▱","Projects","projects"],["♙","Client success","client-success"],["$","Money","finance"],["✳","Intelligence","intelligence"]];
+const nav = [["⌂","Home","home"],["▦","My day","schedule"],["▦","Calendar","calendar"],["▤","Needs you","needs-you"],["↗","Growth","growth"],["✓","Tasks","tasks"],["♧","AI team","workforce"],["▱","Delivery","projects"],["♙","Client success","client-success"],["$","Money","finance"],["✳","Intelligence","intelligence"]];
 const viewDetails: Record<string, { title: string; description: string; items: string[] }> = {
  "needs-you": { title: "Needs you", description: "A focused queue for decisions, approvals, blockers, and follow-ups.", items: ["Review urgent follow-ups", "Resolve blocked work", "Make pending decisions"] },
  growth: { title: "Contacts & growth", description: "Your personal CRM: people, prospects, relationships, conversations, and next actions.", items: ["Contacts and companies", "Outreach and conversations", "Follow-up reminders"] },
