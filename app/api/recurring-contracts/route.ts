@@ -19,7 +19,7 @@ function amount(value: unknown) {
 }
 function validDate(value: unknown): string | null | false {
   if (value === undefined || value === null || value === "") return null;
-  if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(value + "T00:00:00.000Z");
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value ? value : false;
 }
@@ -34,7 +34,7 @@ export async function GET() {
     const user = await currentUser(); if (!user) return fail("Unauthorized", 401);
     const sql = db();
     const rows = await sql`SELECT id,client_name,contract_name,monthly_amount,status,start_date,end_date,notes
-      FROM public.recurring_revenue_contracts WHERE owner_id=\${user.id}
+      FROM public.recurring_revenue_contracts WHERE owner_id=${user.id}
       ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'paused' THEN 1 ELSE 2 END, client_name, contract_name LIMIT 1000`;
     return Response.json({ contracts: rows.map((row: Record<string, unknown>) => mapped(row)) }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) { console.error("Recurring contracts GET failed", e); return fail("Unable to load recurring contracts. Apply the financial truth-source migration first.", 500); }
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     const status = body.status === undefined ? "active" : body.status, sql = db();
     const rows = await sql`INSERT INTO public.recurring_revenue_contracts
       (owner_id,client_name,contract_name,monthly_amount,status,start_date,end_date,notes)
-      VALUES (\${user.id},\${clientName},\${contractName},\${monthlyAmount},\${status},\${startDate}::date,\${endDate}::date,\${cleanText(body.notes,5000)})
+      VALUES (${user.id},${clientName},${contractName},${monthlyAmount},${status},${startDate}::date,${endDate}::date,${cleanText(body.notes,5000)})
       RETURNING id,client_name,contract_name,monthly_amount,status,start_date,end_date,notes`;
     return Response.json({ contract: mapped(rows[0] as Record<string, unknown>) }, { status: 201 });
   } catch (e) { console.error("Recurring contracts POST failed", e); return fail("Unable to save recurring contract.", 500); }
@@ -64,8 +64,8 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     if (typeof body.id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.id) || !statuses.has(body.status)) return fail("Valid contract id and status are required.", 400);
     const sql = db();
-    const rows = await sql`UPDATE public.recurring_revenue_contracts SET status=\${body.status},updated_at=now()
-      WHERE id=\${body.id}::uuid AND owner_id=\${user.id}
+    const rows = await sql`UPDATE public.recurring_revenue_contracts SET status=${body.status},updated_at=now()
+      WHERE id=${body.id}::uuid AND owner_id=${user.id}
       RETURNING id,client_name,contract_name,monthly_amount,status,start_date,end_date,notes`;
     if (!rows.length) return fail("Contract not found.", 404);
     return Response.json({ contract: mapped(rows[0] as Record<string, unknown>) });
@@ -77,7 +77,7 @@ export async function DELETE(request: Request) {
     const id = new URL(request.url).searchParams.get("id");
     if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return fail("Valid contract id is required.", 400);
     const sql = db();
-    const rows = await sql`DELETE FROM public.recurring_revenue_contracts WHERE id=\${id}::uuid AND owner_id=\${user.id} RETURNING id`;
+    const rows = await sql`DELETE FROM public.recurring_revenue_contracts WHERE id=${id}::uuid AND owner_id=${user.id} RETURNING id`;
     if (!rows.length) return fail("Contract not found.", 404);
     return Response.json({ ok: true });
   } catch (e) { console.error("Recurring contracts DELETE failed", e); return fail("Unable to delete recurring contract.", 500); }
