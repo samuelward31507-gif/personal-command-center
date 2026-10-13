@@ -74,7 +74,7 @@ export async function GET(request: Request) {
       FROM public.calendar_events e
       LEFT JOIN public.contacts c ON c.id = e.contact_id AND c.owner_id = e.owner_id
       LEFT JOIN public.deals d ON d.id = e.deal_id AND d.owner_id = e.owner_id
-      WHERE e.owner_id = ${user.id} AND e.starts_at < ${to}::date + interval '1 day'
+      WHERE e.owner_id = ${user.id} AND e.starts_at < ${to}::date
         AND e.ends_at >= ${from}::date
       ORDER BY e.starts_at ASC LIMIT 1000
     `;
