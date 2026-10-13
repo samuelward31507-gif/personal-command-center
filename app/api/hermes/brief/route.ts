@@ -44,7 +44,7 @@ export async function GET(request: Request) {
       finance,
     ] = await Promise.all([
       sql`SELECT COUNT(*)::int AS total,
-          COUNT(*) FILTER (WHERE status = 'lead')::int AS leads,
+          COUNT(*) FILTER (WHERE status IN ('lead','prospect'))::int AS leads,
           COUNT(*) FILTER (WHERE follow_up_at <= CURRENT_DATE)::int AS due_follow_ups
         FROM public.contacts WHERE owner_id = ${ownerId}`,
       sql`SELECT
