@@ -33,10 +33,21 @@ export async function GET() {
   try {
     const user = await currentUser(); if (!user) return fail("Unauthorized", 401);
     const sql = db();
-    const rows = await sql`SELECT id,client_name,contract_name,monthly_amount,status,start_date,end_date,notes
-      FROM public.recurring_revenue_contracts WHERE owner_id=${user.id}
-      ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'paused' THEN 1 ELSE 2 END, client_name, contract_name LIMIT 1000`;
-    return Response.json({ contracts: rows.map((row: Record<string, unknown>) => mapped(row)) }, { headers: { "Cache-Control": "no-store" } });
+    const now = new Date();
+    const todayKey = now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+    const [rows, totals] = await Promise.all([
+      sql`SELECT id,client_name,contract_name,monthly_amount,status,start_date,end_date,notes
+        FROM public.recurring_revenue_contracts WHERE owner_id=${user.id}
+        ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'paused' THEN 1 ELSE 2 END, client_name, contract_name LIMIT 1000`,
+      sql`SELECT
+        COALESCE(SUM(monthly_amount) FILTER (WHERE status='active' AND start_date<=${todayKey}::date AND (end_date IS NULL OR end_date>=${todayKey}::date)),0) AS mrr,
+        COUNT(*) FILTER (WHERE status='active' AND start_date<=${todayKey}::date AND (end_date IS NULL OR end_date>=${todayKey}::date)) AS active_contracts
+        FROM public.recurring_revenue_contracts WHERE owner_id=${user.id}`
+    ]);
+    return Response.json({
+      contracts: rows.map((row: Record<string, unknown>) => mapped(row)),
+      summary: { mrr: Number(totals[0]?.mrr || 0), activeContracts: Number(totals[0]?.active_contracts || 0) }
+    }, { headers: { "Cache-Control": "no-store, private" } });
   } catch (e) { console.error("Recurring contracts GET failed", e); return fail("Unable to load recurring contracts. Apply the financial truth-source migration first.", 500); }
 }
 export async function POST(request: Request) {
