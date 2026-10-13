@@ -10,6 +10,7 @@ const today = () => { const d = new Date(); return d.getFullYear() + "-" + Strin
 
 export default function RecurringContractsPage() {
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [contractSummary, setContractSummary] = useState<{mrr:number;activeContracts:number}|null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -33,6 +34,7 @@ export default function RecurringContractsPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load contracts.");
       setContracts(data.contracts || []);
+      setContractSummary(data.summary || null);
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to load contracts."); }
     finally { setLoading(false); }
   }, []);
@@ -97,13 +99,13 @@ export default function RecurringContractsPage() {
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to delete contract."); }
   };
-  const mrr = contracts.filter(c => c.status === "active" && c.startDate <= today() && (!c.endDate || c.endDate >= today())).reduce((sum, c) => sum + c.monthlyAmount, 0);
+  const mrr = contractSummary?.mrr ?? 0;
   return <main className="fin-shell">
     <header className="fin-header"><Link href="/crm/finance">← Revenue intelligence</Link><span>RECURRING CONTRACTS</span></header>
     <section className="fin-content">
       <div className="fin-top"><div><div className="fin-eyebrow">CONTRACTED REVENUE</div><h1>Recurring contracts<span>.</span></h1><p>Record the actual monthly amount agreed with each client. Only active contracts inside their effective dates count toward MRR.</p></div></div>
       {error && <div className="fin-error" role="alert">{error}</div>}
-      <div className="fin-metrics"><article><small>CONTRACTED MONTHLY RECURRING REVENUE</small><strong>{loading ? "—" : cash(mrr)}</strong></article><article><small>ACTIVE CONTRACTS</small><strong>{loading ? "—" : contracts.filter(c => c.status === "active" && c.startDate <= today() && (!c.endDate || c.endDate >= today())).length}</strong></article></div>
+      <div className="fin-metrics"><article><small>CONTRACTED MONTHLY RECURRING REVENUE</small><strong>{loading || !contractSummary ? "—" : cash(mrr)}</strong></article><article><small>ACTIVE CONTRACTS</small><strong>{loading || !contractSummary ? "—" : contractSummary.activeContracts}</strong></article></div>
       <section className="fin-form">
         <h2>Add recurring contract</h2>
         <div className="fin-form-grid">
