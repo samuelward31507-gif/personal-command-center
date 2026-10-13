@@ -78,6 +78,8 @@ function HomeContent() {
    const projects = Array.isArray(pd.projects) ? pd.projects : [];
    const activeProjects = projects.filter((x:{status?:string})=>!["completed","cancelled"].includes(x.status||""));
    const todayDate = new Date();
+   const todayEnd = new Date(todayDate); todayEnd.setHours(23,59,59,999);
+   const todayEndTime = todayEnd.getTime();
    const today = todayDate.getFullYear()+"-"+String(todayDate.getMonth()+1).padStart(2,"0")+"-"+String(todayDate.getDate()).padStart(2,"0");
    setBusinessSnapshot({
     contacts: contacts.length,
@@ -87,7 +89,7 @@ function HomeContent() {
     monthlyPipeline: deals.filter((x:{stage?:string})=>x.stage!=="won"&&x.stage!=="lost").reduce((s:number,x:{monthlyFee?:number})=>s+Number(x.monthlyFee||0),0),
     dueOutreach: outreach.filter((x:{status?:string;nextActionAt?:string})=>x.status==="active"&&x.nextActionAt&&new Date(x.nextActionAt).getTime()<=Date.now()).length,
     openTasks: tasks.filter((x:{status?:string})=>x.status!=="done"&&x.status!=="cancelled").length,
-    dueTasks: tasks.filter((x:{status?:string;dueAt?:string|null})=>x.status!=="done"&&x.status!=="cancelled"&&x.dueAt&&new Date(x.dueAt).getTime()<=Date.now()).length,
+    dueTasks: tasks.filter((x:{status?:string;dueAt?:string|null})=>x.status!=="done"&&x.status!=="cancelled"&&x.dueAt&&new Date(x.dueAt).getTime()<=todayEndTime).length,
     monthlyCollected:Number(fd.summary?.paidRevenue||0),monthlyRetainer:Number(fd.summary?.mrr||0),monthExpenses:Number(fd.summary?.monthExpenses||0),monthNet:Number(fd.summary?.monthNet||0),
     activeProjects:activeProjects.length,blockedProjects:activeProjects.filter((x:{status?:string})=>x.status==="blocked").length,
     milestonesDone:activeProjects.reduce((n:number,x:{doneMilestones?:number})=>n+Number(x.doneMilestones||0),0),milestonesTotal:activeProjects.reduce((n:number,x:{milestoneCount?:number})=>n+Number(x.milestoneCount||0),0),
