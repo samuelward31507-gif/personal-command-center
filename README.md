@@ -4,7 +4,8 @@ Cinder is a private workspace for running the founder's day-to-day business oper
 
 ## Product areas
 
-- **Home and My day** — business snapshot, founder routine, daily notes, and date-specific completion tracking.
+- **Home and My day** — business snapshot, founder routine, daily notes, live calendar events, and task deadlines.
+- **Interactive calendar** — month/week/day views, date navigation, meetings/calls/focus/personal blocks, editable events, contact/deal links, and task deadline overlays.
 - **Contacts and growth** — contacts, CSV import/export, call activity, outreach, and sales pipeline.
 - **Tasks and Needs you** — task tracking and a consolidated queue of overdue follow-ups, blockers, renewals, approvals, and failed agent runs.
 - **Projects and client success** — delivery projects, milestones, client health, and support tickets.
@@ -68,7 +69,7 @@ Keep both Hermes bridge variables server-side. Do not put the token in client co
 
 SQL migrations are stored in `db/migrations`. Test schema changes on an isolated Neon branch first, then apply the same migration to the intended target branch and verify the resulting indexes/constraints before relying on them in application code.
 
-The project handoff migration adds database-level uniqueness for one delivery project per deal and one milestone title per project (case-insensitive after trimming). The migration is idempotent and is applied to the current Neon `main` branch.
+The project handoff migration adds database-level uniqueness for one delivery project per deal and one milestone title per project (case-insensitive after trimming). The calendar migration adds owner-scoped events with time-range constraints and indexes. These additive migrations are idempotent; the calendar event table has been applied to the current Neon `main` branch and its schema has been verified.
 
 ## Safety and implementation notes
 
