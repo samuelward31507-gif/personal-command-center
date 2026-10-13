@@ -76,7 +76,7 @@ function HomeContent() {
    const tasks = Array.isArray(td.tasks) ? td.tasks : [];
    setTodayTasks(tasks.filter((x:{status?:string;dueAt?:string|null})=>x.dueAt&&!["done","cancelled"].includes(x.status||"")&&new Date(x.dueAt).getFullYear()===new Date().getFullYear()&&new Date(x.dueAt).getMonth()===new Date().getMonth()&&new Date(x.dueAt).getDate()===new Date().getDate()));
    const projects = Array.isArray(pd.projects) ? pd.projects : [];
-   const activeProjects = projects.filter((x:{status?:string})=>!["completed","cancelled"].includes(x.status||""));
+   const activeProjects = projects.filter((x:{status?:string})=>["onboarding","in_progress","blocked","review"].includes(x.status||""));
    const todayDate = new Date();
    const todayEnd = new Date(todayDate); todayEnd.setHours(23,59,59,999);
    const todayEndTime = todayEnd.getTime();
