@@ -41,11 +41,13 @@ export async function GET() {
     if (!user) return jsonError("Unauthorized", 401);
     const sql = db();
     const rows = await sql`
-      SELECT id, first_name, last_name, company, role, email, phone, status,
-             source, notes, follow_up_at, created_at, updated_at
-      FROM public.contacts
-      WHERE owner_id = ${user.id}
-      ORDER BY follow_up_at ASC NULLS LAST, updated_at DESC
+      SELECT c.id, c.first_name, c.last_name, c.company, c.role, c.email, c.phone, c.status,
+             c.source, c.notes, c.follow_up_at, c.created_at, c.updated_at,
+             (SELECT MAX(a.occurred_at) FROM public.contact_activities a
+              WHERE a.owner_id = c.owner_id AND a.contact_id = c.id) AS last_contact_at
+      FROM public.contacts c
+      WHERE c.owner_id = ${user.id}
+      ORDER BY c.follow_up_at ASC NULLS LAST, c.updated_at DESC
     `;
     return Response.json({ contacts: rows.map((row: Record<string, unknown>) => ({
       id: row.id,
@@ -57,7 +59,7 @@ export async function GET() {
       status: String(row.status).charAt(0).toUpperCase() + String(row.status).slice(1),
       source: row.source,
       nextFollowUp: row.follow_up_at ? String(row.follow_up_at).slice(0, 10) : "",
-      lastContact: "",
+      lastContact: row.last_contact_at ? String(row.last_contact_at).slice(0, 10) : "",
       notes: row.notes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
