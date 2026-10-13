@@ -21,6 +21,7 @@ jobs:
       # Build-only placeholders; never use these values in a deployed environment.
       DATABASE_URL: "postgresql://build:build@127.0.0.1:5432/build"
       NEON_AUTH_BASE_URL: "https://auth.example.invalid"
+      NEXT_PUBLIC_NEON_AUTH_URL: "https://auth.example.invalid"
       NEON_AUTH_COOKIE_SECRET: "github-actions-only-build-secret-at-least-32-chars"
     steps:
       - name: Check out repository
