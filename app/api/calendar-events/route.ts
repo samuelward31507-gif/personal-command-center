@@ -26,6 +26,9 @@ function clean(value: unknown, max: number) {
 function validTimestamp(value: unknown): string | null | false {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:?\d{2})$/.test(value)) return false;
+  const day = value.slice(0, 10);
+  const parsedDay = new Date(day + "T00:00:00.000Z");
+  if (Number.isNaN(parsedDay.getTime()) || parsedDay.toISOString().slice(0, 10) !== day) return false;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? false : date.toISOString();
 }
