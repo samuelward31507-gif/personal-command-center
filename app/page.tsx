@@ -16,6 +16,7 @@ const viewDetails: Record<string, { title: string; description: string; items: s
  settings: { title: "Settings", description: "Manage Cinder connections and workspace preferences.", items: ["Connections and integrations", "Workspace preferences", "Permissions and approvals"] },
 };
 const localDateKey = () => { const d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+const localMidnightIso = (key:string) => { const [y,m,d]=key.split("-").map(Number); return new Date(y,m-1,d).toISOString(); };
 const routine = [
  { time:"5:00–7:00 AM", title:"Gym", detail:"Training and personal health", category:"Personal" },
  { time:"7:00–7:30 AM", title:"Reset & breakfast", detail:"Shower, eat, and get set up", category:"Personal" },
@@ -43,7 +44,9 @@ export default function Home() {
   const date = localDateKey();
   setPlanDate(date);
   let active = true;
-  fetch("/api/calendar-events?from="+date+"&to="+date,{cache:"no-store"}).then(async r=>{if(!r.ok)throw new Error("Calendar unavailable");return r.json()}).then(data=>{if(active)setTodayEvents(Array.isArray(data.events)?data.events:[])}).catch(()=>{if(active)setAgendaError("Calendar events could not load.")});
+  const tomorrow = new Date(); tomorrow.setHours(0,0,0,0); tomorrow.setDate(tomorrow.getDate()+1);
+  const tomorrowKey = tomorrow.getFullYear()+"-"+String(tomorrow.getMonth()+1).padStart(2,"0")+"-"+String(tomorrow.getDate()).padStart(2,"0");
+  fetch("/api/calendar-events?from="+date+"&to="+tomorrowKey+"&fromAt="+encodeURIComponent(localMidnightIso(date))+"&toAt="+encodeURIComponent(localMidnightIso(tomorrowKey)),{cache:"no-store"}).then(async r=>{if(!r.ok)throw new Error("Calendar unavailable");return r.json()}).then(data=>{if(active)setTodayEvents(Array.isArray(data.events)?data.events:[])}).catch(()=>{if(active)setAgendaError("Calendar events could not load.")});
   fetch("/api/daily-plan?date="+date,{cache:"no-store"}).then(async r=>{if(!r.ok)throw new Error("Could not load daily plan");return r.json()}).then(data=>{if(!active)return;setDone(Array.isArray(data.plan?.completedBlocks)?data.plan.completedBlocks:[]);setDailyNotes(typeof data.plan?.notes==="string"?data.plan.notes:"");setPlanMessage("")}).catch(()=>{if(active)setPlanMessage("Daily plan could not load. Your edits are not saved until you retry.")});
   return ()=>{active=false};
  }, []);
