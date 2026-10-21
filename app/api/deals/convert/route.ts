@@ -16,8 +16,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     if (typeof body.dealId !== "string" || !uuid.test(body.dealId)) return fail("A valid deal id is required.", 400);
     const ownerId = String(user.id);
-    const sql = neon(process.env.DATABASE_URL || "");
     if (!process.env.DATABASE_URL) return fail("DATABASE_URL is not configured.", 500);
+    const sql = neon(process.env.DATABASE_URL);
 
     const deals = await sql`
       SELECT d.id, d.contact_id, d.title, d.service_type, d.stage, d.setup_fee,
