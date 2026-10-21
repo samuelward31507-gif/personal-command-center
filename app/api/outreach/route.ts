@@ -31,7 +31,7 @@ export async function GET() {
       SELECT o.id AS outreach_id, o.contact_id, o.status AS outreach_status,
         o.current_step, o.started_at, o.next_action_at, o.niche, o.pain_point,
         o.research_notes, c.first_name, c.last_name, c.company, c.role, c.email,
-        c.phone, c.status AS contact_status, c.notes AS contact_notes
+        c.phone, c.status AS contact_status, c.notes AS contact_notes, c.sms_consent
       FROM public.contact_outreach o
       JOIN public.contacts c ON c.id = o.contact_id AND c.owner_id = o.owner_id
       WHERE o.owner_id = ${user.id}
@@ -46,7 +46,7 @@ export async function GET() {
       researchNotes: r.research_notes,
       name: [r.first_name, r.last_name].filter(Boolean).join(" "),
       company: r.company, role: r.role, email: r.email, phone: r.phone,
-      contactStatus: r.contact_status, contactNotes: r.contact_notes,
+      contactStatus: r.contact_status, contactNotes: r.contact_notes, smsConsent: r.sms_consent === true,
     })) });
   } catch (error) {
     console.error("CRM outreach GET failed", error);
@@ -67,6 +67,11 @@ export async function POST(request: Request) {
     const sql = db();
     const owned = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
     if (!owned.length) return jsonError("Contact not found.", 404);
+    if (body.smsConsentConfirmed === true) {
+      await sql`UPDATE public.contacts SET sms_consent = true, sms_consent_at = now(),
+        sms_consent_source = 'user_confirmed_in_outreach' , updated_at = now()
+        WHERE id = ${contactId}::uuid AND owner_id = ${user.id}`;
+    }
     try {
       const outreach = await enrollContactInOutreach(sql, user.id, contactId, niche, painPoint, researchNotes);
       return Response.json({ outreach: { id: outreach.id, contact_id: outreach.contactId, status: outreach.status, current_step: outreach.currentStep, next_action_at: outreach.nextActionAt } }, { status: 201 });
@@ -95,6 +100,13 @@ export async function PATCH(request: Request) {
         WHERE id = ${id}::uuid AND owner_id = ${user.id} LIMIT 1
       `;
       if (!before.length) return jsonError("Outreach record not found.", 404);
+      if (body.status === "active" && (before[0].status === "do_not_contact" || before[0].status === "interested" || before[0].status === "meeting_booked")) {
+        return jsonError("This sequence cannot be reactivated after a reply, meeting, or opt-out. Create a new reviewed workflow only if appropriate.", 409);
+      }
+      if (body.status === "active") {
+        const suppressed = await sql`SELECT id FROM public.contact_suppressions WHERE owner_id = ${user.id} AND contact_id = ${before[0].contact_id} LIMIT 1`;
+        if (suppressed.length) return jsonError("This contact is permanently suppressed from outreach.", 409);
+      }
       const rows = await sql`
         UPDATE public.contact_outreach SET status = ${body.status}, updated_at = now(),
           current_step = CASE WHEN ${body.status} = 'active' AND status = 'parked' THEN 1 ELSE current_step END,
@@ -106,6 +118,13 @@ export async function PATCH(request: Request) {
       if (!rows.length) return jsonError("Outreach record not found.", 404);
       // Keep the activity timeline truthful even for clients that use the
       // status endpoint directly instead of the outcome form for an opt-out.
+      if (body.status === "do_not_contact") {
+        await sql`INSERT INTO public.contact_suppressions(owner_id, contact_id, email_normalized, phone_normalized, reason, source)
+          SELECT c.owner_id, c.id, lower(trim(c.email)), regexp_replace(c.phone, '[^0-9]', '', 'g'),
+            'do_not_contact', 'outreach_status_action'
+          FROM public.contacts c WHERE c.id = ${before[0].contact_id} AND c.owner_id = ${user.id}
+          ON CONFLICT DO NOTHING`;
+      }
       if (body.status === "do_not_contact" && before[0].status !== "do_not_contact") {
         const step = Number(before[0].current_step);
         const channel = step === 3 || step === 5 ? "text" : "call";
@@ -131,10 +150,17 @@ export async function PATCH(request: Request) {
     if (!rows.length) return jsonError("Active outreach record not found.", 404);
     const record = rows[0];
     const step = Number(record.current_step);
+    const contactRows = await sql`SELECT sms_consent FROM public.contacts WHERE id = ${record.contact_id} AND owner_id = ${user.id} LIMIT 1`;
+    const hasSmsConsent = contactRows[0]?.sms_consent === true;
     // "not interested / do not contact" suppresses the prospect immediately and
     // permanently (re-enrollment is blocked server-side in enrollContactInOutreach
     // until a deliberate status change) rather than continuing the normal cadence.
     if (outcome === "do_not_contact") {
+      await sql`INSERT INTO public.contact_suppressions(owner_id, contact_id, email_normalized, phone_normalized, reason, source)
+        SELECT c.owner_id, c.id, lower(trim(c.email)), regexp_replace(c.phone, '[^0-9]', '', 'g'),
+          'do_not_contact', 'outreach_outcome'
+        FROM public.contacts c WHERE c.id = ${record.contact_id} AND c.owner_id = ${user.id}
+        ON CONFLICT DO NOTHING`;
       const updated = await sql`
         UPDATE public.contact_outreach SET status = 'do_not_contact', updated_at = now()
         WHERE id = ${id}::uuid AND owner_id = ${user.id}
@@ -162,8 +188,15 @@ export async function PATCH(request: Request) {
       }
       return Response.json({ outreach: updated[0], finished: true });
     }
-    const nextStep = step + 1;
-    const finalStep = step >= 6;
+    if (!hasSmsConsent && (step === 3 || step === 5)) {
+      return jsonError("This SMS step has no recorded consent. Refresh the queue; the sequence should continue with the next call step.", 409);
+    }
+    let nextStep = step + 1;
+    // SMS steps are never drafted or scheduled without recorded explicit consent.
+    // Skip them and continue to the next call step; the founder can still record
+    // the actual call outcome and the sequence history remains truthful.
+    if (!hasSmsConsent && (nextStep === 3 || nextStep === 5)) nextStep += 1;
+    const finalStep = step >= 6 || nextStep > 6;
     const stopForResponse = outcome === "meeting_booked" || outcome === "reply_received" || outcome === "interested";
     const nextStatus = stopForResponse ? (outcome === "meeting_booked" ? "meeting_booked" : "interested") : finalStep ? "parked" : "active";
     const nextDate = new Date();

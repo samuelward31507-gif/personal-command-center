@@ -42,7 +42,7 @@ export async function GET() {
     const sql = db();
     const rows = await sql`
       SELECT c.id, c.first_name, c.last_name, c.company, c.role, c.email, c.phone, c.status,
-             c.source, c.notes, c.follow_up_at, c.website, c.location, c.created_at, c.updated_at,
+             c.source, c.notes, c.follow_up_at, c.website, c.location, c.sms_consent, c.sms_consent_at, c.sms_consent_source, c.created_at, c.updated_at,
              (SELECT MAX(a.occurred_at) FROM public.contact_activities a
               WHERE a.owner_id = c.owner_id AND a.contact_id = c.id) AS last_contact_at
       FROM public.contacts c
@@ -58,6 +58,9 @@ export async function GET() {
       phone: row.phone,
       website: row.website,
       location: row.location,
+      smsConsent: row.sms_consent === true,
+      smsConsentAt: row.sms_consent_at ?? null,
+      smsConsentSource: row.sms_consent_source ?? "",
       status: String(row.status).charAt(0).toUpperCase() + String(row.status).slice(1),
       source: row.source,
       nextFollowUp: row.follow_up_at ? (row.follow_up_at instanceof Date ? row.follow_up_at.toISOString().slice(0, 10) : String(row.follow_up_at).slice(0, 10)) : "",
@@ -89,13 +92,13 @@ export async function POST(request: Request) {
     const sql = db();
     const rows = await sql`
       INSERT INTO public.contacts
-        (owner_id, first_name, last_name, company, role, email, phone, status, source, notes, follow_up_at, website, location)
+        (owner_id, first_name, last_name, company, role, email, phone, status, source, notes, follow_up_at, website, location, sms_consent, sms_consent_at, sms_consent_source)
       VALUES
         (${user.id}, ${firstName}, ${lastName}, ${String(body.company ?? "").slice(0, 300)},
          ${String(body.role ?? "").slice(0, 200)}, ${String(body.email ?? "").slice(0, 320)},
          ${String(body.phone ?? "").slice(0, 100)}, ${status}, ${String(body.source ?? "").slice(0, 200)},
          ${String(body.notes ?? "").slice(0, 10000)}, ${followUp},
-         ${String(body.website ?? "").slice(0, 500)}, ${String(body.location ?? "").slice(0, 300)})
+         ${String(body.website ?? "").slice(0, 500)}, ${String(body.location ?? "").slice(0, 300)}, ${body.smsConsent === true}, ${body.smsConsent === true ? new Date().toISOString() : null}::timestamptz, ${body.smsConsent === true ? String(body.smsConsentSource ?? "user_confirmed").slice(0, 200) : ""})
       RETURNING id
     `;
     return Response.json({ id: rows[0]?.id }, { status: 201 });
@@ -131,6 +134,9 @@ export async function PATCH(request: Request) {
         notes = ${String(body.notes ?? "").slice(0, 10000)},
         website = ${String(body.website ?? "").slice(0, 500)},
         location = ${String(body.location ?? "").slice(0, 300)},
+        sms_consent = CASE WHEN ${typeof body.smsConsent === "boolean"} THEN ${body.smsConsent === true} ELSE sms_consent END,
+        sms_consent_at = CASE WHEN ${body.smsConsent === true} THEN now() WHEN ${body.smsConsent === false} THEN NULL ELSE sms_consent_at END,
+        sms_consent_source = CASE WHEN ${body.smsConsent === true} THEN ${String(body.smsConsentSource ?? "user_confirmed").slice(0, 200)} WHEN ${body.smsConsent === false} THEN '' ELSE sms_consent_source END,
         follow_up_at = ${followUp}, updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id}
       RETURNING id

@@ -32,11 +32,15 @@ export async function enrollContactInOutreach(
   painPoint: string,
   researchNotes: string
 ): Promise<EnrollResult> {
+  const suppression = await sql`
+    SELECT s.id FROM public.contact_suppressions s
+    WHERE s.owner_id = ${ownerId} AND (s.contact_id = ${contactId}::uuid OR (s.email_normalized <> '' AND s.email_normalized = (SELECT lower(trim(email)) FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${ownerId})) OR (s.phone_normalized <> '' AND s.phone_normalized = (SELECT regexp_replace(phone, '[^0-9]', '', 'g') FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${ownerId}))) LIMIT 1
+  `;
   const existing = await sql`
     SELECT status FROM public.contact_outreach
     WHERE owner_id = ${ownerId} AND contact_id = ${contactId}::uuid LIMIT 1
   `;
-  if (existing[0]?.status === "do_not_contact") {
+  if (suppression.length || existing[0]?.status === "do_not_contact") {
     throw new DoNotContactError();
   }
   const rows = await sql`
