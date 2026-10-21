@@ -119,9 +119,11 @@ export async function PATCH(request: Request) {
       // Keep the activity timeline truthful even for clients that use the
       // status endpoint directly instead of the outcome form for an opt-out.
       if (body.status === "do_not_contact") {
-        await sql`INSERT INTO public.contact_suppressions(owner_id, contact_id, reason, source)
-          VALUES (${user.id}, ${before[0].contact_id}, 'do_not_contact', 'outreach_status_action')
-          ON CONFLICT (owner_id, contact_id) DO NOTHING`;
+        await sql`INSERT INTO public.contact_suppressions(owner_id, contact_id, email_normalized, phone_normalized, reason, source)
+          SELECT c.owner_id, c.id, lower(trim(c.email)), regexp_replace(c.phone, '[^0-9]', '', 'g'),
+            'do_not_contact', 'outreach_status_action'
+          FROM public.contacts c WHERE c.id = ${before[0].contact_id} AND c.owner_id = ${user.id}
+          ON CONFLICT DO NOTHING`;
       }
       if (body.status === "do_not_contact" && before[0].status !== "do_not_contact") {
         const step = Number(before[0].current_step);
@@ -154,9 +156,11 @@ export async function PATCH(request: Request) {
     // permanently (re-enrollment is blocked server-side in enrollContactInOutreach
     // until a deliberate status change) rather than continuing the normal cadence.
     if (outcome === "do_not_contact") {
-      await sql`INSERT INTO public.contact_suppressions(owner_id, contact_id, reason, source)
-        VALUES (${user.id}, ${record.contact_id}, 'do_not_contact', 'outreach_outcome')
-        ON CONFLICT (owner_id, contact_id) DO NOTHING`;
+      await sql`INSERT INTO public.contact_suppressions(owner_id, contact_id, email_normalized, phone_normalized, reason, source)
+        SELECT c.owner_id, c.id, lower(trim(c.email)), regexp_replace(c.phone, '[^0-9]', '', 'g'),
+          'do_not_contact', 'outreach_outcome'
+        FROM public.contacts c WHERE c.id = ${record.contact_id} AND c.owner_id = ${user.id}
+        ON CONFLICT DO NOTHING`;
       const updated = await sql`
         UPDATE public.contact_outreach SET status = 'do_not_contact', updated_at = now()
         WHERE id = ${id}::uuid AND owner_id = ${user.id}
