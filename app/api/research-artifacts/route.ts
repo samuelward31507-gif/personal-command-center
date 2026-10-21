@@ -68,17 +68,6 @@ function mapRow(row: Record<string, unknown>) {
     eventStartsAt: row.event_starts_at ?? null,
   };
 }
-const select = `
-  SELECT r.id, r.contact_id, r.deal_id, r.calendar_event_id, r.artifact_type, r.title,
-    r.source_urls, r.verified_facts, r.hypotheses, r.confidence, r.content, r.status,
-    r.researched_at, r.created_at, r.updated_at,
-    trim(concat_ws(' ', c.first_name, c.last_name)) AS contact_name, c.company,
-    d.title AS deal_title, e.title AS event_title, e.starts_at AS event_starts_at
-  FROM public.research_artifacts r
-  LEFT JOIN public.contacts c ON c.id = r.contact_id AND c.owner_id = r.owner_id
-  LEFT JOIN public.deals d ON d.id = r.deal_id AND d.owner_id = r.owner_id
-  LEFT JOIN public.calendar_events e ON e.id = r.calendar_event_id AND e.owner_id = r.owner_id
-`;
 export async function GET(request: Request) {
   try {
     const user = await currentUser();
@@ -184,7 +173,7 @@ export async function PATCH(request: Request) {
         artifact_type = ${type}, title = ${title}, source_urls = ${JSON.stringify(sources)}::jsonb,
         verified_facts = ${JSON.stringify(facts)}::jsonb, hypotheses = ${JSON.stringify(hypotheses)}::jsonb,
         confidence = ${confidence}, content = ${content}, status = ${status},
-        researched_at = CASE WHEN cardinality(${sources}::text[]) > 0 THEN COALESCE(researched_at, now()) ELSE researched_at END,
+        researched_at = CASE WHEN ${sources.length > 0} THEN COALESCE(researched_at, now()) ELSE researched_at END,
         updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id}
       RETURNING id
