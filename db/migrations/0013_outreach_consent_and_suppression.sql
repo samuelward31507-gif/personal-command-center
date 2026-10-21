@@ -22,4 +22,18 @@ SELECT owner_id, contact_id, 'do_not_contact', 'migration_existing_outreach'
 FROM public.contact_outreach
 WHERE status = 'do_not_contact'
 ON CONFLICT (owner_id, contact_id) DO NOTHING;
+
+-- Move existing active sequences off SMS-only steps when consent was never recorded.
+-- They remain active and due now for the next permitted call step.
+UPDATE public.contact_outreach o
+SET current_step = o.current_step + 1,
+    next_action_at = now(),
+    updated_at = now()
+FROM public.contacts c
+WHERE c.id = o.contact_id
+  AND c.owner_id = o.owner_id
+  AND o.status = 'active'
+  AND c.sms_consent = false
+  AND o.current_step IN (3, 5);
+
 COMMIT;
