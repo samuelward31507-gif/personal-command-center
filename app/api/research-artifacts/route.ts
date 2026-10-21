@@ -173,7 +173,7 @@ export async function PATCH(request: Request) {
         artifact_type = ${type}, title = ${title}, source_urls = ${JSON.stringify(sources)}::jsonb,
         verified_facts = ${JSON.stringify(facts)}::jsonb, hypotheses = ${JSON.stringify(hypotheses)}::jsonb,
         confidence = ${confidence}, content = ${content}, status = ${status},
-        researched_at = CASE WHEN ${sources.length > 0} THEN COALESCE(researched_at, now()) ELSE researched_at END,
+        researched_at = CASE WHEN ${sources.length > 0} THEN now() ELSE researched_at END,
         updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id}
       RETURNING id
