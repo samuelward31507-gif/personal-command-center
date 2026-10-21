@@ -96,8 +96,11 @@ Implemented on `feat/hermes-outreach-business-os` and merged into `feat/crm-foun
 - Won deals carry agreement status/effective/signed dates; finance reports contracted MRR and annualized ARR separately from live-service MRR.
 - Won-deal delivery handoff is idempotent: create/reuse a project, mark the linked contact as a customer, and create expected setup/first-period receivables without recording cash received.
 - Existing onboarding checklist creation remains retry-safe.
+- Added a persistent Preparation workspace for prospect research, call briefs, free-audit prep, meeting briefs, and follow-up drafts, linked to contacts, deals, and calendar events.
+- Research artifacts keep source URLs, verified facts, hypotheses, confidence, and editable content separate; drafts surface in the Needs You action queue.
+- Hermes' read-only brief now includes the preparation review queue without gaining any write or external-execution capability.
 
-Database migrations `0013_outreach_consent_and_suppression.sql` and `0014_signed_deal_handoff.sql` have been applied to the Neon default branch and schema-checked there. A separate branch-scoped Neon database is configured for Vercel preview app data; synthetic smoke-test records were removed. GitHub Actions regression tests, ESLint, TypeScript, and Next.js build passed. Vercel preview build is READY. Authenticated UI smoke testing remains outstanding because preview access is SSO-protected; do not promote the foundation PR to `main` until that account-level verification is completed.
+Database migrations `0013_outreach_consent_and_suppression.sql` and `0014_signed_deal_handoff.sql` have been applied to the Neon default branch and schema-checked there. A separate branch-scoped Neon database is configured for Vercel preview app data; synthetic smoke-test records were removed. Migrations 0013, 0014, and 0015 are applied and schema-verified on the Neon default branch and isolated preview database. The prior outreach/business OS milestone passed GitHub Actions regression tests, ESLint, TypeScript, and Next.js build; this new Preparation workspace is not yet verified. Authenticated UI smoke testing remains outstanding because preview access is SSO-protected; do not promote the foundation PR to `main` until account-level verification is completed.
 
 ## Implementation sequence
 
