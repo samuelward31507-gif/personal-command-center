@@ -184,6 +184,9 @@ export async function PATCH(request: Request) {
       }
       return Response.json({ outreach: updated[0], finished: true });
     }
+    if (!hasSmsConsent && (step === 3 || step === 5)) {
+      return jsonError("This SMS step has no recorded consent. Refresh the queue; the sequence should continue with the next call step.", 409);
+    }
     let nextStep = step + 1;
     // SMS steps are never drafted or scheduled without recorded explicit consent.
     // Skip them and continue to the next call step; the founder can still record
