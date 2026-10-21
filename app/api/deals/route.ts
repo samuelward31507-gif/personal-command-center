@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 
 const stages = new Set(["new", "qualified", "discovery", "proposal", "negotiation", "won", "lost"]);
 const services = new Set(["ai_voice_agent", "speed_to_lead", "lead_follow_up", "appointment_booking", "workflow_automation", "custom_ai_implementation"]);
+const agreementStatuses = new Set(["pending", "active", "paused", "ended"]);
 function db() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured.");
   return neon(process.env.DATABASE_URL);
@@ -119,15 +120,23 @@ export async function PATCH(request: Request) {
     }
     const closeDate = validDate(body.expectedCloseDate);
     if (closeDate === false) return jsonError("Expected close date must be a valid YYYY-MM-DD date.", 400);
+    if (body.agreementStatus !== undefined && !agreementStatuses.has(body.agreementStatus)) return jsonError("Invalid agreement status.", 400);
+    const endedAt = validDate(body.endedAt);
+    if (endedAt === false) return jsonError("Agreement end date must use a valid YYYY-MM-DD date.", 400);
     const rows = await sql`
       UPDATE public.deals SET contact_id = ${contactId}::uuid, title = ${title},
         service_type = ${body.serviceType}, stage = ${body.stage}, setup_fee = ${setupFee},
         monthly_fee = ${monthlyFee}, expected_close_date = ${closeDate}::date,
         source = ${String(body.source ?? "").slice(0, 200)}, notes = ${String(body.notes ?? "").slice(0, 10000)},
         lost_reason = ${String(body.lostReason ?? "").slice(0, 1000)},
-        agreement_status = CASE WHEN ${body.stage} = 'won' THEN 'active' ELSE agreement_status END,
+        agreement_status = CASE
+          WHEN ${body.agreementStatus ?? null}::text IS NOT NULL THEN ${body.agreementStatus ?? null}
+          WHEN ${body.stage} = 'won' AND stage <> 'won' THEN 'active'
+          ELSE agreement_status END,
         signed_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(signed_at, now()) ELSE signed_at END,
         effective_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(effective_at, CURRENT_DATE) ELSE effective_at END,
+        ended_at = CASE WHEN ${body.agreementStatus ?? null} = 'ended' THEN COALESCE(${endedAt}::date, CURRENT_DATE)
+          WHEN ${body.agreementStatus ?? null} = 'active' THEN NULL ELSE ended_at END,
         updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id} RETURNING id
     `;
