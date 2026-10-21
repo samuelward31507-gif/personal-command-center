@@ -42,6 +42,7 @@ export async function GET(request: Request) {
       failedRuns,
       atRiskClients,
       finance,
+      preparationQueue,
     ] = await Promise.all([
       sql`SELECT COUNT(*)::int AS total,
           COUNT(*) FILTER (WHERE status IN ('lead','prospect'))::int AS leads,
@@ -102,6 +103,16 @@ export async function GET(request: Request) {
           COALESCE(SUM(amount) FILTER (WHERE status = 'expected' AND (due_date IS NULL OR due_date >= CURRENT_DATE)), 0) AS expected_revenue,
           COALESCE(SUM(amount) FILTER (WHERE status = 'overdue' OR (status = 'expected' AND due_date < CURRENT_DATE)), 0) AS overdue_revenue
         FROM public.revenue_entries WHERE owner_id = ${ownerId}`,
+      sql`SELECT r.id, r.title, r.artifact_type, r.status, r.confidence, r.updated_at,
+          r.source_urls, r.verified_facts, r.hypotheses,
+          trim(concat_ws(' ', c.first_name, c.last_name)) AS contact_name, c.company,
+          d.title AS deal_title, e.title AS event_title, e.starts_at AS event_starts_at
+        FROM public.research_artifacts r
+        LEFT JOIN public.contacts c ON c.id = r.contact_id AND c.owner_id = r.owner_id
+        LEFT JOIN public.deals d ON d.id = r.deal_id AND d.owner_id = r.owner_id
+        LEFT JOIN public.calendar_events e ON e.id = r.calendar_event_id AND e.owner_id = r.owner_id
+        WHERE r.owner_id = ${ownerId} AND r.status IN ('draft','reviewed')
+        ORDER BY CASE WHEN r.status = 'draft' THEN 0 ELSE 1 END, r.updated_at DESC LIMIT 20`,
     ]);
 
     const contacts = contactStats[0] as Record<string, unknown>;
@@ -123,8 +134,17 @@ export async function GET(request: Request) {
         collectedThisMonth: Number(money?.collected_this_month || 0),
         expectedRevenue: Number(money?.expected_revenue || 0),
         overdueRevenue: Number(money?.overdue_revenue || 0),
+        preparationNeedsReview: preparationQueue.filter((r: Record<string, unknown>) => r.status === 'draft').length,
       },
       dueContacts,
+      preparationQueue: preparationQueue.map((r: Record<string, unknown>) => ({
+        id: r.id, title: r.title, type: r.artifact_type, status: r.status, confidence: r.confidence,
+        updated_at: r.updated_at, contact_name: r.contact_name ?? "", company: r.company ?? "",
+        deal_title: r.deal_title ?? "", event_title: r.event_title ?? "", event_starts_at: r.event_starts_at ?? null,
+        source_count: Array.isArray(r.source_urls) ? r.source_urls.length : 0,
+        verified_fact_count: Array.isArray(r.verified_facts) ? r.verified_facts.length : 0,
+        hypothesis_count: Array.isArray(r.hypotheses) ? r.hypotheses.length : 0,
+      })),
       openDeals: openDeals.map((d: Record<string, unknown>) => ({
         ...d, setup_fee: Number(d.setup_fee || 0), monthly_fee: Number(d.monthly_fee || 0),
         expected_close_date: d.expected_close_date ? (d.expected_close_date instanceof Date ? d.expected_close_date.toISOString().slice(0, 10) : String(d.expected_close_date).slice(0, 10)) : null,
