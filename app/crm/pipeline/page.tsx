@@ -28,15 +28,11 @@ export default function PipelinePage(){
   const existing=projects.find(p=>p.dealId===d.id);
   setCreatingProject(d.id);setError("");setNotice("");
   try{
-   let projectId=existing?.id||"";
-   if(!projectId){
-    const contact=contacts.find(c=>c.id===d.contactId);
-    const r=await fetch("/api/projects",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:d.title,clientName:d.company||contact?.company||d.contactName||"",serviceType:d.serviceType,status:"onboarding",startDate:localDateKey(),monthlyValue:d.monthlyFee,setupValue:d.setupFee,contactId:d.contactId||null,dealId:d.id,notes:"Created from won sales deal. Confirm scope, access requirements, success criteria, and launch date during onboarding."})});
-    const data=await r.json().catch(()=>({}));
-    if(!r.ok)throw new Error(data.error||"Could not create the delivery project.");
-    projectId=typeof data.id==="string"?data.id:"";
-    if(!projectId)throw new Error("Project was created, but its ID was not returned. Open Projects and check the record before retrying.");
-   }
+   const handoff=await fetch("/api/deals/convert",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dealId:d.id})});
+   const handoffData=await handoff.json().catch(()=>({}));
+   if(!handoff.ok)throw new Error(handoffData.error||"Could not hand off the signed deal.");
+   let projectId=typeof handoffData.projectId==="string"?handoffData.projectId:existing?.id||"";
+   if(!projectId)throw new Error("The deal handoff completed without returning a project ID. Check Projects before retrying.");
    const checklist:[string,string][]=[["Kickoff and confirm scope","Confirm goals, stakeholders, communication channel, and definition of success."],["Collect access and requirements","Gather required accounts, phone numbers, integrations, FAQs, and permissions."],["Configure the agreed solution","Build the service and connect the required systems."],["Test end-to-end scenarios","Run realistic test cases and resolve launch-blocking issues."],["Client approval and launch","Get client sign-off, confirm launch timing, and document support expectations."]];
    const existingResponse=await fetch("/api/project-milestones?projectId="+encodeURIComponent(projectId),{cache:"no-store"});
    const existingData=await existingResponse.json().catch(()=>({}));
