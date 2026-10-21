@@ -86,6 +86,19 @@ Do not use project monthly value as the sole MRR source. It is a delivery metric
 - Never make fake demo metrics appear to be live business data. Clearly label sample/empty data.
 - Keep business metrics visible without overwhelming the outreach workspace; Today and Outreach remain the primary daily surfaces.
 
+## Current implementation checkpoint (2026-10-21)
+
+Implemented on `feat/hermes-outreach-business-os`:
+- Explicit SMS-consent fields default to false; text drafts are hidden/blocked unless consent is recorded.
+- Outreach cadence skips SMS-only steps when consent is absent.
+- A permanent cross-channel suppression ledger is backfilled from existing do-not-contact enrollments; API enrollment and reactivation checks enforce it.
+- Replies, interested outcomes, meetings, and opt-outs stop the active sequence; opt-outs are not reactivated by the UI/API.
+- Won deals carry agreement status/effective/signed dates; finance reports contracted MRR and annualized ARR separately from live-service MRR.
+- Won-deal delivery handoff is idempotent: create/reuse a project, mark the linked contact as a customer, and create expected setup/first-period receivables without recording cash received.
+- Existing onboarding checklist creation remains retry-safe.
+
+Database migrations `0013_outreach_consent_and_suppression.sql` and `0014_signed_deal_handoff.sql` were successfully applied and schema-checked on a temporary Neon branch. They have **not** been applied to the production/default branch. Do not merge/deploy code that depends on these columns until the production migration is explicitly approved and applied. The current preview build and end-to-end smoke tests must also pass before release.
+
 ## Implementation sequence
 
 ### Phase 0 — Audit and protect
