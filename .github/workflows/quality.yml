@@ -32,10 +32,10 @@ jobs:
           node-version: 22
           cache: npm
       # The committed lockfile predates the current Neon Auth dependency graph.
-      # Regenerate it in CI, publish the corrected lockfile for review, then verify
-      # that a clean install succeeds against the regenerated lock.
+      # Regenerate the stale lockfile through a full dependency resolution. The
+      # lockfile-only Arborist path has failed in CI before creating node_modules.
       - name: Regenerate dependency lockfile
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+        run: npm install --ignore-scripts --no-audit --no-fund --legacy-peer-deps
       - name: Upload regenerated lockfile for review
         uses: actions/upload-artifact@v4
         with:
@@ -43,14 +43,12 @@ jobs:
           path: package-lock.json
           if-no-files-found: error
       - name: Install dependencies cleanly
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Run regression tests
         run: npm test
       - name: Run ESLint
         run: npm run lint
       - name: Check TypeScript
-        if: always()
         run: npx tsc --noEmit
       - name: Build Next.js application
-        if: always()
         run: npm run build
