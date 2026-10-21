@@ -124,7 +124,11 @@ export async function PATCH(request: Request) {
         service_type = ${body.serviceType}, stage = ${body.stage}, setup_fee = ${setupFee},
         monthly_fee = ${monthlyFee}, expected_close_date = ${closeDate}::date,
         source = ${String(body.source ?? "").slice(0, 200)}, notes = ${String(body.notes ?? "").slice(0, 10000)},
-        lost_reason = ${String(body.lostReason ?? "").slice(0, 1000)},\n        agreement_status = CASE WHEN ${body.stage} = 'won' THEN 'active' ELSE agreement_status END,\n        signed_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(signed_at, now()) ELSE signed_at END,\n        effective_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(effective_at, CURRENT_DATE) ELSE effective_at END,\n        updated_at = now()
+        lost_reason = ${String(body.lostReason ?? "").slice(0, 1000)},
+        agreement_status = CASE WHEN ${body.stage} = 'won' THEN 'active' ELSE agreement_status END,
+        signed_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(signed_at, now()) ELSE signed_at END,
+        effective_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(effective_at, CURRENT_DATE) ELSE effective_at END,
+        updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id} RETURNING id
     `;
     if (!rows.length) return jsonError("Deal not found.", 404);
