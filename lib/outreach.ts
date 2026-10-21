@@ -34,7 +34,7 @@ export async function enrollContactInOutreach(
 ): Promise<EnrollResult> {
   const suppression = await sql`
     SELECT s.id FROM public.contact_suppressions s
-    WHERE s.owner_id = ${ownerId} AND (s.contact_id = ${contactId}::uuid OR s.email_normalized = (SELECT lower(trim(email)) FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${ownerId}) OR s.phone_normalized = (SELECT regexp_replace(phone, '[^0-9]', '', 'g') FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${ownerId})) LIMIT 1
+    WHERE s.owner_id = ${ownerId} AND (s.contact_id = ${contactId}::uuid OR (s.email_normalized <> '' AND s.email_normalized = (SELECT lower(trim(email)) FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${ownerId})) OR (s.phone_normalized <> '' AND s.phone_normalized = (SELECT regexp_replace(phone, '[^0-9]', '', 'g') FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${ownerId}))) LIMIT 1
   `;
   const existing = await sql`
     SELECT status FROM public.contact_outreach
