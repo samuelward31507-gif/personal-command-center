@@ -58,6 +58,9 @@ export async function GET() {
       phone: row.phone,
       website: row.website,
       location: row.location,
+      smsConsent: row.sms_consent === true,
+      smsConsentAt: row.sms_consent_at ?? null,
+      smsConsentSource: row.sms_consent_source ?? "",
       status: String(row.status).charAt(0).toUpperCase() + String(row.status).slice(1),
       source: row.source,
       nextFollowUp: row.follow_up_at ? (row.follow_up_at instanceof Date ? row.follow_up_at.toISOString().slice(0, 10) : String(row.follow_up_at).slice(0, 10)) : "",
@@ -131,6 +134,9 @@ export async function PATCH(request: Request) {
         notes = ${String(body.notes ?? "").slice(0, 10000)},
         website = ${String(body.website ?? "").slice(0, 500)},
         location = ${String(body.location ?? "").slice(0, 300)},
+        sms_consent = CASE WHEN ${typeof body.smsConsent === "boolean"} THEN ${body.smsConsent === true} ELSE sms_consent END,
+        sms_consent_at = CASE WHEN ${body.smsConsent === true} THEN now() WHEN ${body.smsConsent === false} THEN NULL ELSE sms_consent_at END,
+        sms_consent_source = CASE WHEN ${body.smsConsent === true} THEN ${String(body.smsConsentSource ?? "user_confirmed").slice(0, 200)} WHEN ${body.smsConsent === false} THEN '' ELSE sms_consent_source END,
         follow_up_at = ${followUp}, updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id}
       RETURNING id
