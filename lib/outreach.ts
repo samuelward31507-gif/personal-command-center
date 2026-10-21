@@ -32,11 +32,15 @@ export async function enrollContactInOutreach(
   painPoint: string,
   researchNotes: string
 ): Promise<EnrollResult> {
+  const suppression = await sql`
+    SELECT id FROM public.contact_suppressions
+    WHERE owner_id = ${ownerId} AND contact_id = ${contactId}::uuid LIMIT 1
+  `;
   const existing = await sql`
     SELECT status FROM public.contact_outreach
     WHERE owner_id = ${ownerId} AND contact_id = ${contactId}::uuid LIMIT 1
   `;
-  if (existing[0]?.status === "do_not_contact") {
+  if (suppression.length || existing[0]?.status === "do_not_contact") {
     throw new DoNotContactError();
   }
   const rows = await sql`
