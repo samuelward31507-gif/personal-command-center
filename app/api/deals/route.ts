@@ -39,7 +39,7 @@ export async function GET() {
     const sql = db();
     const rows = await sql`
       SELECT d.id, d.contact_id, d.title, d.service_type, d.stage, d.setup_fee,
-        d.monthly_fee, d.expected_close_date, d.source, d.notes, d.lost_reason,
+        d.monthly_fee, d.expected_close_date, d.source, d.notes, d.lost_reason, d.agreement_status, d.signed_at, d.effective_at, d.ended_at, d.conversion_completed_at,
         d.created_at, d.updated_at, trim(concat_ws(' ', c.first_name, c.last_name)) AS contact_name, c.company
       FROM public.deals d
       LEFT JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id
@@ -52,7 +52,7 @@ export async function GET() {
       id: r.id, contactId: r.contact_id, title: r.title, serviceType: r.service_type,
       stage: r.stage, setupFee: Number(r.setup_fee), monthlyFee: Number(r.monthly_fee),
       expectedCloseDate: r.expected_close_date ? (r.expected_close_date instanceof Date ? r.expected_close_date.toISOString().slice(0, 10) : String(r.expected_close_date).slice(0, 10)) : "",
-      source: r.source, notes: r.notes, lostReason: r.lost_reason,
+      source: r.source, notes: r.notes, lostReason: r.lost_reason, agreementStatus: r.agreement_status, signedAt: r.signed_at, effectiveAt: r.effective_at, endedAt: r.ended_at, convertedAt: r.conversion_completed_at,
       contactName: String(r.contact_name ?? ""),
       company: r.company, createdAt: r.created_at, updatedAt: r.updated_at,
     })) });
@@ -85,9 +85,10 @@ export async function POST(request: Request) {
     const closeDate = validDate(body.expectedCloseDate);
     if (closeDate === false) return jsonError("Expected close date must use a valid YYYY-MM-DD date.", 400);
     const rows = await sql`
-      INSERT INTO public.deals (owner_id, contact_id, title, service_type, stage, setup_fee, monthly_fee, expected_close_date, source, notes, lost_reason)
+      INSERT INTO public.deals (owner_id, contact_id, title, service_type, stage, setup_fee, monthly_fee, expected_close_date, source, notes, lost_reason, agreement_status, signed_at, effective_at)
       VALUES (${user.id}, ${contactId}::uuid, ${title}, ${serviceType}, ${stage}, ${setupFee}, ${monthlyFee}, ${closeDate}::date,
-        ${String(body.source ?? "").slice(0, 200)}, ${String(body.notes ?? "").slice(0, 10000)}, ${String(body.lostReason ?? "").slice(0, 1000)})
+        ${String(body.source ?? "").slice(0, 200)}, ${String(body.notes ?? "").slice(0, 10000)}, ${String(body.lostReason ?? "").slice(0, 1000)},
+        ${stage === "won" ? "active" : "pending"}, ${stage === "won" ? new Date().toISOString() : null}::timestamptz, ${stage === "won" ? new Date().toISOString().slice(0, 10) : null}::date)
       RETURNING id
     `;
     return Response.json({ id: rows[0]?.id }, { status: 201 });
@@ -123,7 +124,7 @@ export async function PATCH(request: Request) {
         service_type = ${body.serviceType}, stage = ${body.stage}, setup_fee = ${setupFee},
         monthly_fee = ${monthlyFee}, expected_close_date = ${closeDate}::date,
         source = ${String(body.source ?? "").slice(0, 200)}, notes = ${String(body.notes ?? "").slice(0, 10000)},
-        lost_reason = ${String(body.lostReason ?? "").slice(0, 1000)}, updated_at = now()
+        lost_reason = ${String(body.lostReason ?? "").slice(0, 1000)},\n        agreement_status = CASE WHEN ${body.stage} = 'won' THEN 'active' ELSE agreement_status END,\n        signed_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(signed_at, now()) ELSE signed_at END,\n        effective_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(effective_at, CURRENT_DATE) ELSE effective_at END,\n        updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id} RETURNING id
     `;
     if (!rows.length) return jsonError("Deal not found.", 404);
