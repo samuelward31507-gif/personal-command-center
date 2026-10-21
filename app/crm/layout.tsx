@@ -13,6 +13,7 @@ const mainLinks: NavLink[] = [
   { href: "/crm/calendar", icon: "▦", label: "Calendar", match: (path: string) => path.startsWith("/crm/calendar") },
   { href: "/crm/needs-you", icon: "▤", label: "Needs you", match: (path: string) => path.startsWith("/crm/needs-you") },
   { href: "/crm", icon: "↗", label: "Growth", match: (path: string) => ["/crm", "/crm/pipeline", "/crm/outreach"].includes(path) },
+  { href: "/crm/preparation", icon: "✎", label: "Preparation", match: (path: string) => path.startsWith("/crm/preparation") },
   { href: "/crm/tasks", icon: "✓", label: "Tasks", match: (path: string) => path.startsWith("/crm/tasks") },
   { href: "/crm/projects", icon: "▱", label: "Delivery", match: (path: string) => path.startsWith("/crm/projects") },
   { href: "/crm/client-success", icon: "♙", label: "Client success", match: (path: string) => path.startsWith("/crm/client-success") },
@@ -35,6 +36,7 @@ function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/finance")) return "Money";
   if (pathname.startsWith("/crm/pipeline")) return "Sales pipeline";
   if (pathname.startsWith("/crm/outreach")) return "Outreach";
+  if (pathname.startsWith("/crm/preparation")) return "Preparation";
   if (pathname.startsWith("/crm/workforce") || view === "workforce") return "AI team";
   if (pathname.startsWith("/crm/intelligence") || view === "intelligence") return "Intelligence";
   if (pathname.startsWith("/crm/strategy") || view === "strategy") return "Strategy & memory";
