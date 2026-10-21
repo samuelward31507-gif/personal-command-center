@@ -88,7 +88,7 @@ Do not use project monthly value as the sole MRR source. It is a delivery metric
 
 ## Current implementation checkpoint (2026-10-21)
 
-Implemented on `feat/hermes-outreach-business-os`:
+Implemented on `feat/hermes-outreach-business-os` and merged into `feat/crm-foundation`:
 - Explicit SMS-consent fields default to false; text drafts are hidden/blocked unless consent is recorded.
 - Outreach cadence skips SMS-only steps when consent is absent.
 - A permanent cross-channel suppression ledger is backfilled from existing do-not-contact enrollments; API enrollment and reactivation checks enforce it.
@@ -97,7 +97,7 @@ Implemented on `feat/hermes-outreach-business-os`:
 - Won-deal delivery handoff is idempotent: create/reuse a project, mark the linked contact as a customer, and create expected setup/first-period receivables without recording cash received.
 - Existing onboarding checklist creation remains retry-safe.
 
-Database migrations `0013_outreach_consent_and_suppression.sql` and `0014_signed_deal_handoff.sql` were successfully applied and schema-checked on a temporary Neon branch. They have **not** been applied to the production/default branch. Do not merge/deploy code that depends on these columns until the production migration is explicitly approved and applied. The current preview build and end-to-end smoke tests must also pass before release.
+Database migrations `0013_outreach_consent_and_suppression.sql` and `0014_signed_deal_handoff.sql` have been applied to the Neon default branch and schema-checked there. A separate branch-scoped Neon database is configured for Vercel preview app data; synthetic smoke-test records were removed. GitHub Actions regression tests, ESLint, TypeScript, and Next.js build passed. Vercel preview build is READY. Authenticated UI smoke testing remains outstanding because preview access is SSO-protected; do not promote the foundation PR to `main` until that account-level verification is completed.
 
 ## Implementation sequence
 
