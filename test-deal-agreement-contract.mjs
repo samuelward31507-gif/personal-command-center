@@ -27,7 +27,8 @@ test("activating an agreement without a recorded signature is rejected", () => {
 });
 
 test("moving a deal to won requires an already active, signed agreement", () => {
-  assert.match(source, /body\.stage === "won" && agreementStatus !== "active"/);
+  assert.match(source, /body\.stage === "won" && agreementStatus !== undefined && agreementStatus !== "active"/);
+  assert.match(source, /A deal cannot be marked won while its agreement is not active/);
   assert.match(source, /existing\[0\]\.agreement_status !== "active" \|\| !\(signedDate \|\| existing\[0\]\.signed_at\)/);
 });
 
