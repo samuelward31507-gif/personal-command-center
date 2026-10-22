@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - feat/crm-foundation
+      - feat/cinder-lifecycle-excluding-payment-verification
   pull_request:
     branches:
       - main
       - feat/crm-foundation
+      - feat/cinder-lifecycle-excluding-payment-verification
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
