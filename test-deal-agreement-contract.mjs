@@ -42,3 +42,25 @@ test("signed and effective dates are validated as calendar dates", () => {
   assert.match(source, /const effectiveDate = validDate\(body\.effectiveAt\)/);
   assert.match(source, /Agreement dates must use valid YYYY-MM-DD dates\./);
 });
+
+const pipeline = readFileSync(new URL("./app/crm/pipeline/page.tsx", import.meta.url), "utf8");
+const home = readFileSync(new URL("./app/page.tsx", import.meta.url), "utf8");
+const finance = readFileSync(new URL("./app/crm/finance/page.tsx", import.meta.url), "utf8");
+
+test("sales pipeline exposes agreement status and signed/effective date fields", () => {
+  assert.match(pipeline, /value=\{draft\.agreementStatus\}/);
+  assert.match(pipeline, /value=\{draft\.signedAt\}/);
+  assert.match(pipeline, /value=\{draft\.effectiveAt\}/);
+});
+
+test("pipeline updates normalize stored timestamps to YYYY-MM-DD before sending them", () => {
+  assert.match(pipeline, /signedAt:d\.signedAt\?String\(d\.signedAt\)\.slice\(0,10\):null/);
+  assert.match(pipeline, /effectiveAt:d\.effectiveAt\?String\(d\.effectiveAt\)\.slice\(0,10\):null/);
+});
+
+test("finance dashboards do not label manually entered paid statuses as verified collection", () => {
+  assert.match(home, /MANUALLY MARKED PAID/);
+  assert.match(home, /Manual entries · not processor-verified/);
+  assert.match(home, /Manually marked paid less logged expenses/);
+  assert.match(finance, /Amounts marked paid are manual bookkeeping entries, not processor-verified collection/);
+});
