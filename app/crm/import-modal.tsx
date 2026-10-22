@@ -147,19 +147,21 @@ export default function ImportModal({ existingContacts, onClose, onImported }: {
             </div>
             <div className="crm-import-table-wrap">
               <table className="crm-import-table">
-                <thead><tr><th>#</th><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead>
+                <thead><tr><th>#</th><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Instagram</th><th>Facebook</th><th>Status</th></tr></thead>
                 <tbody>
                   {preview.slice(0, 500).map((p) => (
                     <tr key={p.rowNum} className={p.kind === "invalid" ? "row-invalid" : p.duplicate ? "row-duplicate" : "row-ok"}>
                       <td>{p.rowNum}</td>
                       {p.kind === "invalid" ? (
-                        <td colSpan={5}>Invalid — {p.reason}</td>
+                        <td colSpan={7}>Invalid — {p.reason}</td>
                       ) : (
                         <>
                           <td>{p.data.name}</td>
                           <td>{p.data.company}</td>
                           <td>{p.data.email}</td>
                           <td>{p.data.phone}</td>
+                          <td>{p.data.instagram}</td>
+                          <td>{p.data.facebook}</td>
                           <td>{p.duplicate ? "Duplicate — will skip" : "Will import"}</td>
                         </>
                       )}
