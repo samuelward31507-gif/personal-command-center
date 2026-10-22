@@ -138,6 +138,13 @@ export async function PATCH(request: Request) {
       if (!existing.length) return jsonError("Deal not found.", 404);
       if (!existing[0].signed_at) return jsonError("Record the agreement signed date before activating the agreement.", 409);
     }
+    if (body.stage === "won" && agreementStatus === "active" && !signedDate) {
+      const existing = await sql`SELECT signed_at FROM public.deals WHERE id = ${body.id}::uuid AND owner_id = ${user.id} LIMIT 1`;
+      if (!existing.length) return jsonError("Deal not found.", 404);
+      if (!existing[0].signed_at) {
+        return jsonError("A deal cannot be marked won until its agreement is explicitly signed.", 409);
+      }
+    }
     if (body.stage === "won" && agreementStatus !== undefined && agreementStatus !== "active") {
       return jsonError("A deal cannot be marked won while its agreement is not active.", 409);
     }
