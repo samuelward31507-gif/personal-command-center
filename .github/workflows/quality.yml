@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - feat/crm-foundation
+      - feat/cinder-minimal-premium-home
       - feat/cinder-lifecycle-excluding-payment-verification
 
 concurrency:
