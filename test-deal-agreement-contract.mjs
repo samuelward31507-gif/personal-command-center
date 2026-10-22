@@ -46,6 +46,14 @@ test("signed and effective dates are validated as calendar dates", () => {
 const pipeline = readFileSync(new URL("./app/crm/pipeline/page.tsx", import.meta.url), "utf8");
 const home = readFileSync(new URL("./app/page.tsx", import.meta.url), "utf8");
 const finance = readFileSync(new URL("./app/crm/finance/page.tsx", import.meta.url), "utf8");
+const authServer = readFileSync(new URL("./lib/auth/server.ts", import.meta.url), "utf8");
+
+test("Neon Auth handler is lazy and does not eagerly read environment at module import", () => {
+  assert.match(authServer, /const lazyHandlers = new Proxy/);
+  assert.match(authServer, /if \(property === "handler"\)/);
+  assert.match(authServer, /return \(\) => lazyHandlers/);
+  assert.match(authServer, /const handlers = getAuthClient\(\)\.handler\(\)/);
+});
 
 test("sales pipeline exposes agreement status and signed/effective date fields", () => {
   assert.match(pipeline, /value=\{draft\.agreementStatus\}/);
