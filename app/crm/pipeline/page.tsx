@@ -22,12 +22,12 @@ export default function PipelinePage(){
  function startNew(){setDraft(blank);setEditing(null);setShow(true)}
  function startEdit(d:Deal){setDraft({title:d.title,contactId:d.contactId||"",serviceType:d.serviceType,stage:d.stage,setupFee:String(d.setupFee),monthlyFee:String(d.monthlyFee),expectedCloseDate:d.expectedCloseDate,source:d.source,notes:d.notes,lostReason:d.lostReason,agreementStatus:d.agreementStatus||"pending",signedAt:d.signedAt?String(d.signedAt).slice(0,10):"",effectiveAt:d.effectiveAt?String(d.effectiveAt).slice(0,10):""});setEditing(d.id);setShow(true)}
  async function save(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");try{const body={...draft,setupFee:Number(draft.setupFee||0),monthlyFee:Number(draft.monthlyFee||0),contactId:draft.contactId||null,signedAt:draft.signedAt||null,effectiveAt:draft.effectiveAt||null};const r=await fetch("/api/deals",{method:editing?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(editing?{...body,id:editing}:body)});if(!r.ok){const data=await r.json().catch(()=>({}));throw new Error(data.error||"Couldn't save deal.")}setShow(false);await load()}catch(e){setError(e instanceof Error?e.message:"Couldn't save deal.")}finally{setBusy(false)}}
- async function quickStage(d:Deal,stage:Stage){const r=await fetch("/api/deals",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({...d,stage,contactId:d.contactId||null})});if(!r.ok){setError("Couldn't update deal stage.");return}await load()}
+ async function quickStage(d:Deal,stage:Stage){const r=await fetch("/api/deals",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({...d,stage,contactId:d.contactId||null,signedAt:d.signedAt?String(d.signedAt).slice(0,10):null,effectiveAt:d.effectiveAt?String(d.effectiveAt).slice(0,10):null})});if(!r.ok){setError("Couldn't update deal stage.");return}await load()}
  async function endAgreement(d:Deal){
   if(!window.confirm("End the recurring agreement for "+d.title+"? This removes it from contracted MRR and records today's end date."))return;
   setError("");setNotice("");
   try{
-   const r=await fetch("/api/deals",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({...d,stage:d.stage,contactId:d.contactId||null,agreementStatus:"ended",endedAt:new Date().toISOString().slice(0,10)})});
+   const r=await fetch("/api/deals",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({...d,stage:d.stage,contactId:d.contactId||null,signedAt:d.signedAt?String(d.signedAt).slice(0,10):null,effectiveAt:d.effectiveAt?String(d.effectiveAt).slice(0,10):null,agreementStatus:"ended",endedAt:new Date().toISOString().slice(0,10)})});
    const data=await r.json().catch(()=>({}));
    if(!r.ok)throw new Error(data.error||"Could not end agreement.");
    setNotice("Agreement ended. Contracted MRR has been updated; historical deal and delivery records remain.");
