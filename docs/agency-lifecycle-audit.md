@@ -1,6 +1,17 @@
 # Cinder Agency Lifecycle Audit
 
-**Scope:** Source-level review of `feat/cinder-minimal-premium-home`. This is a planning/audit artifact, not evidence that the live application has passed end-to-end tests.
+**Implementation scope:** Complete Cinder's agency lifecycle from prospect acquisition through sales, onboarding, delivery, agency finances, and client retention. **Payment verification is explicitly excluded.** This audit is a source-level baseline, not evidence of a passing end-to-end test suite.
+
+**Implementation tracker:** [Issue #8 — Implement Cinder agency lifecycle end-to-end (excluding payment verification)](https://github.com/samuelward31507-gif/personal-command-center/issues/8)
+
+## Scope guardrails
+
+- Do not add payment processors, payment SDKs, payment webhooks, or processor-backed payment verification in this workstream.
+- Never treat an unverified browser redirect or manually entered amount as proof of collection.
+- Keep contracted/expected revenue distinct from recorded cash; label each metric so Cinder does not imply a payment was verified.
+- Work on an isolated feature branch. No direct production/main changes.
+- Do not touch Trackpr, n8n, Twilio, production data, or live payment configuration.
+- Do not send outreach or make calls on the user's behalf.
 
 ## Executive summary
 
