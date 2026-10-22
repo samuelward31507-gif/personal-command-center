@@ -75,3 +75,33 @@ test("finance dashboards do not label manually entered paid statuses as verified
   assert.match(home, /Manually marked paid less logged expenses/);
   assert.match(finance, /Amounts marked paid are manual bookkeeping entries, not processor-verified collection/);
 });
+
+
+const conversion = readFileSync(new URL("./app/api/deals/convert/route.ts", import.meta.url), "utf8");
+const calendar = readFileSync(new URL("./app/api/calendar-events/route.ts", import.meta.url), "utf8");
+
+test("signed-deal handoff rejects deals without an active, signed agreement", () => {
+  assert.match(conversion, /deal\.stage !== "won" \|\| deal\.agreement_status !== "active" \|\| !deal\.signed_at/);
+  assert.match(conversion, /Mark the deal won only after the agreement is signed/);
+});
+
+test("signed-deal handoff prevents duplicate projects and duplicate expected receivables", () => {
+  assert.match(conversion, /ON CONFLICT \(owner_id, deal_id\) WHERE deal_id IS NOT NULL/);
+  assert.match(conversion, /ON CONFLICT \(owner_id, source_key\) WHERE source_key <> '' DO NOTHING/);
+  assert.match(conversion, /deal:" \+ deal\.id \+ ":setup/);
+  assert.match(conversion, /deal:" \+ deal\.id \+ ":first_month/);
+  assert.match(conversion, /No payment was recorded/);
+});
+
+test("calendar event reads are owner-scoped and require a valid increasing time range", () => {
+  assert.match(calendar, /WHERE e\.owner_id = \$\{user\.id\}/);
+  assert.match(calendar, /new Date\(toAt\)\.getTime\(\) <= new Date\(fromAt\)\.getTime\(\)/);
+  assert.match(calendar, /e\.contact_id = \$\{contactId\}::uuid AND owner_id = \$\{ownerId\}/);
+  assert.match(calendar, /e\.deal_id = \$\{dealId\}::uuid AND owner_id = \$\{ownerId\}/);
+});
+
+test("calendar create, update, and delete require an authenticated owner", () => {
+  assert.equal((calendar.match(/if \(!user\) return fail\("Unauthorized", 401\)/g) || []).length, 4);
+  assert.match(calendar, /WHERE id=\$\{body\.id\}::uuid AND owner_id=\$\{user\.id\}/);
+  assert.match(calendar, /DELETE FROM public\.calendar_events WHERE id=\$\{body\.id\}::uuid AND owner_id=\$\{user\.id\}/);
+});
