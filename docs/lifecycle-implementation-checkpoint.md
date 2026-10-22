@@ -11,7 +11,8 @@
 - Revenue create/update responses explain that marking a record paid is a manual entry and is not payment verification.
 - Updated the finance UI to label revenue as manually marked paid and to state that this ledger is not processor-verified collection.
 - Updated `app/api/deals/route.ts` so a deal cannot be created or moved to `won` by silently auto-activating an agreement or inventing a signature timestamp. The API now requires an explicit signed date and active agreement before the won transition.
-- Added `test-deal-agreement-contract.mjs` and included it in `npm test` to guard the signed-agreement lifecycle contract.
+- Added agreement status, signed date, and effective date controls to the sales pipeline deal editor so the API guard can be satisfied through the UI. Pipeline stage changes normalize stored timestamp values before sending date-only API fields.
+- Expanded `test-deal-agreement-contract.mjs` to cover the agreement UI contract, date normalization, and finance dashboard wording; included it in `npm test`.
 
 ## Why this matters
 
@@ -19,8 +20,9 @@ Cinder can track agency finances without falsely claiming that a payment process
 
 ## Not yet completed or tested
 
-- The full `npm test`, build, and lint commands have not yet been run in an executable checkout. GitHub source-level contract checks passed, but they do not replace running the actual test suite.
-- The finance UI wording now reflects manual bookkeeping, but the page has not yet been browser-tested.
+- The full `npm test` and lint commands have not yet been run in an executable checkout. Source-level checks were inspected, but they do not replace running the actual test suite.
+- Vercel preview builds have failed during Next.js page-data collection for `/api/auth/[...path]` because the Neon Auth preview environment is not configured. This appears to be preview environment configuration, not a verified code regression; the latest deployment is still queued/building and needs confirmation.
+- The finance and pipeline UI changes have not yet been browser-tested.
 - Meeting invitations/reminders, proposal records and UI, a complete agreement UI, onboarding completion, client handoff failure recovery, and the full acceptance journey remain open work. The agreement API guard is a partial foundation, not a finished user-facing workflow.
 - Existing deal conversion creates a project and expected revenue entries idempotently by deal/source key, but complete partial-failure recovery still needs verification.
 - No payment processor or payment verification was added.
