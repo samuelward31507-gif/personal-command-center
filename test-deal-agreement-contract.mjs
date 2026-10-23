@@ -105,3 +105,19 @@ test("calendar create, update, and delete require an authenticated owner", () =>
   assert.match(calendar, /WHERE id=\$\{body\.id\}::uuid AND owner_id=\$\{user\.id\}/);
   assert.match(calendar, /DELETE FROM public\.calendar_events WHERE id=\$\{body\.id\}::uuid AND owner_id=\$\{user\.id\}/);
 });
+
+const needsYou = readFileSync(new URL("./app/crm/needs-you/page.tsx", import.meta.url), "utf8");
+
+test("Needs You surfaces upcoming scheduled meetings and calls that have no prep notes", () => {
+  assert.match(needsYou, /fetch\("\/api\/calendar-events\?from=/);
+  assert.match(needsYou, /e\.status!=="scheduled"\|\|!\(\["meeting","call"\]\.includes\(e\.type\)\)/);
+  assert.match(needsYou, /String\(e\.description\|\|""\)\.trim\(\)/);
+  assert.match(needsYou, /hoursUntil<=24\?1:2/);
+  assert.match(needsYou, /action:"Review calendar"/);
+});
+
+test("meeting preparation remains a manual review cue and does not send invitations or messages", () => {
+  assert.match(needsYou, /This queue is advisory/);
+  assert.match(needsYou, /It does not send messages, make calls, or change record status automatically/);
+  assert.doesNotMatch(needsYou, /sendInvite|sendEmail|sendSms|fetch\("\/api\/send-message/);
+});
