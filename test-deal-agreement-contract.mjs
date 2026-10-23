@@ -96,8 +96,8 @@ test("signed-deal handoff prevents duplicate projects and duplicate expected rec
 test("calendar event reads are owner-scoped and require a valid increasing time range", () => {
   assert.match(calendar, /WHERE e\.owner_id = \$\{user\.id\}/);
   assert.match(calendar, /new Date\(toAt\)\.getTime\(\) <= new Date\(fromAt\)\.getTime\(\)/);
-  assert.match(calendar, /e\.contact_id = \$\{contactId\}::uuid AND owner_id = \$\{ownerId\}/);
-  assert.match(calendar, /e\.deal_id = \$\{dealId\}::uuid AND owner_id = \$\{ownerId\}/);
+  assert.match(calendar, /SELECT id FROM public\.contacts WHERE id = \\$\\{contactId\\}::uuid AND owner_id = \\$\\{ownerId\\} LIMIT 1/);
+  assert.match(calendar, /SELECT id FROM public\.deals WHERE id = \\$\\{dealId\\}::uuid AND owner_id = \\$\\{ownerId\\} LIMIT 1/);
 });
 
 test("calendar create, update, and delete require an authenticated owner", () => {
