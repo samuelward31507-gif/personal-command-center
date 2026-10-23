@@ -127,6 +127,10 @@ test("proposal drafts are owner-scoped preparation records and are not sent auto
   assert.match(preparation, /PROPOSAL DRAFT — REVIEW BEFORE SHARING/);
   assert.match(preparation, /Nothing has been sent or accepted/);
   assert.match(preparation, /type === "proposal_draft"/);
+  assert.match(preparation, /params\.get\("proposal"\)!=="1"\|\|deals\.length===0/);
+  assert.match(preparation, /dealId:deal\.id,contactId:deal\.contactId\|\|""/);
+  const pipeline = readFileSync(new URL("./app/crm/pipeline/page.tsx", import.meta.url), "utf8");
+  assert.match(pipeline, /crm\/preparation\?proposal=1&dealId=/);
   assert.doesNotMatch(preparation, /sendProposal|sendEmail|sendSms|fetch\("\/api\/send-message/);
 });
 
