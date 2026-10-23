@@ -96,6 +96,13 @@ export default function PreparationPage(){
   }catch(e){setError(e instanceof Error?e.message:"Could not save preparation record.");}
   finally{setSaving(false);}
  }
+ function createProposalRevision(a:Artifact){
+  const baseTitle=a.title.replace(/ — Revision \\d+$/,"");
+  const revisions=artifacts.filter(item=>item.type==="proposal_draft"&&item.dealId===a.dealId&&item.title.replace(/ — Revision \\d+$/,"")===baseTitle).length;
+  setEditing(null);
+  setDraft({...blank,type:"proposal_draft",contactId:a.contactId||"",dealId:a.dealId||"",title:baseTitle+" — Revision "+(revisions+1),sourceUrlsText:a.sourceUrls.join("\\n"),factsText:a.verifiedFacts.join("\\n"),hypothesesText:a.hypotheses.join("\\n"),confidence:a.confidence,content:a.content,status:"draft"});
+  setShowEditor(true);setError("");setNotice("New proposal revision opened. The prior version remains unchanged; review before saving or sharing.");
+ }
  async function changeStatus(a:Artifact,status:ArtifactStatus){
   setError("");setNotice("");
   try{
@@ -149,7 +156,7 @@ export default function PreparationPage(){
     {a.verifiedFacts.length>0&&<div style={{display:"grid",gap:5}}><small style={{fontWeight:700,color:"#477252",fontSize:10,letterSpacing:1}}>VERIFIED FACTS</small><ul style={{margin:0,paddingLeft:18,fontSize:12,lineHeight:1.5,color:"#444"}}>{a.verifiedFacts.slice(0,3).map((fact,i)=><li key={i}>{fact}</li>)}</ul></div>}
     {a.hypotheses.length>0&&<div style={{display:"grid",gap:5}}><small style={{fontWeight:700,color:"#986c28",fontSize:10,letterSpacing:1}}>HYPOTHESES TO TEST</small><ul style={{margin:0,paddingLeft:18,fontSize:12,lineHeight:1.5,color:"#555"}}>{a.hypotheses.slice(0,3).map((hypothesis,i)=><li key={i}>{hypothesis}</li>)}</ul></div>}
     <div style={{fontSize:11,color:"#888"}}>Updated {dateLabel(a.updatedAt)}{a.researchedAt?" · Sources recorded "+dateLabel(a.researchedAt):" · No source URLs recorded yet"}</div>
-    <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:"auto"}}><button style={buttonStyle} onClick={()=>editArtifact(a)}>Edit</button><button style={buttonStyle} onClick={()=>void copyContent(a)}>Copy content</button>{a.status==="draft"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"reviewed")}>Mark reviewed</button>}{a.status!=="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"archived")}>Archive</button>}{a.status==="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"draft")}>Restore draft</button>}</div>
+    <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:"auto"}}><button style={buttonStyle} onClick={()=>editArtifact(a)}>Edit</button>{a.type==="proposal_draft"&&<button style={buttonStyle} onClick={()=>createProposalRevision(a)}>Create revision</button>}<button style={buttonStyle} onClick={()=>void copyContent(a)}>Copy content</button>{a.status==="draft"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"reviewed")}>Mark reviewed</button>}{a.status!=="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"archived")}>Archive</button>}{a.status==="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"draft")}>Restore draft</button>}</div>
    </article>)}
   </div>}
  </main>;
