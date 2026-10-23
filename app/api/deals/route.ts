@@ -85,11 +85,18 @@ export async function POST(request: Request) {
     }
     const closeDate = validDate(body.expectedCloseDate);
     if (closeDate === false) return jsonError("Expected close date must use a valid YYYY-MM-DD date.", 400);
+    const requestedAgreementStatus = body.agreementStatus === undefined ? "pending" : body.agreementStatus;
+    if (!agreementStatuses.has(requestedAgreementStatus)) return jsonError("Invalid agreement status.", 400);
+    const signedDate = validDate(body.signedAt);
+    const effectiveDate = validDate(body.effectiveAt);
+    if (signedDate === false || effectiveDate === false) return jsonError("Agreement dates must use valid YYYY-MM-DD dates.", 400);
+    if (requestedAgreementStatus === "active" && !signedDate) return jsonError("An active agreement must have an explicitly recorded signed date.", 400);
+    if (stage === "won" && requestedAgreementStatus !== "active") return jsonError("A deal cannot be created as won until its agreement is explicitly marked active with a signed date.", 409);
     const rows = await sql`
       INSERT INTO public.deals (owner_id, contact_id, title, service_type, stage, setup_fee, monthly_fee, expected_close_date, source, notes, lost_reason, agreement_status, signed_at, effective_at)
       VALUES (${user.id}, ${contactId}::uuid, ${title}, ${serviceType}, ${stage}, ${setupFee}, ${monthlyFee}, ${closeDate}::date,
         ${String(body.source ?? "").slice(0, 200)}, ${String(body.notes ?? "").slice(0, 10000)}, ${String(body.lostReason ?? "").slice(0, 1000)},
-        ${stage === "won" ? "active" : "pending"}, ${stage === "won" ? new Date().toISOString() : null}::timestamptz, ${stage === "won" ? new Date().toISOString().slice(0, 10) : null}::date)
+        ${requestedAgreementStatus}, ${signedDate}::date::timestamptz, ${effectiveDate}::date)
       RETURNING id
     `;
     return Response.json({ id: rows[0]?.id }, { status: 201 });
@@ -122,7 +129,32 @@ export async function PATCH(request: Request) {
     if (closeDate === false) return jsonError("Expected close date must be a valid YYYY-MM-DD date.", 400);
     if (body.agreementStatus !== undefined && !agreementStatuses.has(body.agreementStatus)) return jsonError("Invalid agreement status.", 400);
     const endedAt = validDate(body.endedAt);
-    if (endedAt === false) return jsonError("Agreement end date must use a valid YYYY-MM-DD date.", 400);
+    const signedDate = body.signedAt === undefined ? null : validDate(body.signedAt);
+    const effectiveDate = body.effectiveAt === undefined ? null : validDate(body.effectiveAt);
+    if (endedAt === false || signedDate === false || effectiveDate === false) return jsonError("Agreement dates must use valid YYYY-MM-DD dates.", 400);
+    const agreementStatus = body.agreementStatus;
+    if (agreementStatus === "active" && !signedDate) {
+      const existing = await sql`SELECT signed_at FROM public.deals WHERE id = ${body.id}::uuid AND owner_id = ${user.id} LIMIT 1`;
+      if (!existing.length) return jsonError("Deal not found.", 404);
+      if (!existing[0].signed_at) return jsonError("Record the agreement signed date before activating the agreement.", 409);
+    }
+    if (body.stage === "won" && agreementStatus === "active" && !signedDate) {
+      const existing = await sql`SELECT signed_at FROM public.deals WHERE id = ${body.id}::uuid AND owner_id = ${user.id} LIMIT 1`;
+      if (!existing.length) return jsonError("Deal not found.", 404);
+      if (!existing[0].signed_at) {
+        return jsonError("A deal cannot be marked won until its agreement is explicitly signed.", 409);
+      }
+    }
+    if (body.stage === "won" && agreementStatus !== undefined && agreementStatus !== "active") {
+      return jsonError("A deal cannot be marked won while its agreement is not active.", 409);
+    }
+    if (body.stage === "won" && agreementStatus === undefined) {
+      const existing = await sql`SELECT agreement_status, signed_at FROM public.deals WHERE id = ${body.id}::uuid AND owner_id = ${user.id} LIMIT 1`;
+      if (!existing.length) return jsonError("Deal not found.", 404);
+      if (existing[0].agreement_status !== "active" || !(signedDate || existing[0].signed_at)) {
+        return jsonError("A deal cannot be marked won until its agreement is explicitly active and signed.", 409);
+      }
+    }
     const rows = await sql`
       UPDATE public.deals SET contact_id = ${contactId}::uuid, title = ${title},
         service_type = ${body.serviceType}, stage = ${body.stage}, setup_fee = ${setupFee},
@@ -131,10 +163,9 @@ export async function PATCH(request: Request) {
         lost_reason = ${String(body.lostReason ?? "").slice(0, 1000)},
         agreement_status = CASE
           WHEN ${body.agreementStatus ?? null}::text IS NOT NULL THEN ${body.agreementStatus ?? null}
-          WHEN ${body.stage} = 'won' AND stage <> 'won' THEN 'active'
           ELSE agreement_status END,
-        signed_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(signed_at, now()) ELSE signed_at END,
-        effective_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(effective_at, CURRENT_DATE) ELSE effective_at END,
+        signed_at = CASE WHEN ${signedDate}::date IS NOT NULL THEN ${signedDate}::date::timestamptz ELSE signed_at END,
+        effective_at = CASE WHEN ${effectiveDate}::date IS NOT NULL THEN ${effectiveDate}::date ELSE effective_at END,
         ended_at = CASE WHEN ${body.agreementStatus ?? null} = 'ended' THEN COALESCE(${endedAt}::date, CURRENT_DATE)
           WHEN ${body.agreementStatus ?? null} = 'active' THEN NULL ELSE ended_at END,
         updated_at = now()

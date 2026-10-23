@@ -2,19 +2,22 @@
 
 import Link from "next/link";
 import {useCallback,useEffect,useMemo,useState} from "react";
-type Item={id:string;kind:"task"|"outreach"|"followup"|"project"|"deal"|"support"|"approval"|"renewal"|"agent"|"client"|"preparation";title:string;detail:string;due:string|null;priority:number;href:string;action:string};
+type Item={id:string;kind:"task"|"outreach"|"followup"|"project"|"deal"|"support"|"approval"|"renewal"|"agent"|"client"|"preparation"|"meeting";title:string;detail:string;due:string|null;priority:number;href:string;action:string};
 const dateLabel=(v:string|null)=>{if(!v)return "No due date";const dateOnly=/^\d{4}-\d{2}-\d{2}$/.test(v);const parsed=dateOnly?new Date(v+"T12:00:00"):new Date(v);return Number.isNaN(parsed.getTime())?"Date unavailable":parsed.toLocaleString(undefined,dateOnly?{month:"short",day:"numeric"}:{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});};
+const dateKey=(d:Date)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const localMidnightIso=(key:string)=>{const [y,m,d]=key.split("-").map(Number);return new Date(y,m-1,d).toISOString();};
 export default function NeedsYouPage(){
  const [items,setItems]=useState<Item[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[filter,setFilter]=useState("all");
  const load=useCallback(async()=>{
   setLoading(true);setError("");
   try{
-   const [tr,or,cr,pr,dr,sr,wr,rr]=await Promise.all([
-    fetch("/api/tasks",{cache:"no-store"}),fetch("/api/outreach",{cache:"no-store"}),fetch("/api/contacts",{cache:"no-store"}),fetch("/api/projects",{cache:"no-store"}),fetch("/api/deals",{cache:"no-store"}),fetch("/api/client-success",{cache:"no-store"}),fetch("/api/workforce",{cache:"no-store"}),fetch("/api/research-artifacts?status=draft",{cache:"no-store"})
+   const calendarStart=new Date();calendarStart.setHours(0,0,0,0);const calendarFrom=dateKey(calendarStart);const calendarEnd=new Date(calendarStart);calendarEnd.setDate(calendarEnd.getDate()+8);const calendarTo=dateKey(calendarEnd);
+   const [tr,or,cr,pr,dr,sr,wr,rr,kr]=await Promise.all([
+    fetch("/api/tasks",{cache:"no-store"}),fetch("/api/outreach",{cache:"no-store"}),fetch("/api/contacts",{cache:"no-store"}),fetch("/api/projects",{cache:"no-store"}),fetch("/api/deals",{cache:"no-store"}),fetch("/api/client-success",{cache:"no-store"}),fetch("/api/workforce",{cache:"no-store"}),fetch("/api/research-artifacts?status=draft",{cache:"no-store"}),fetch("/api/calendar-events?from="+calendarFrom+"&to="+calendarTo+"&fromAt="+encodeURIComponent(localMidnightIso(calendarFrom))+"&toAt="+encodeURIComponent(localMidnightIso(calendarTo)),{cache:"no-store"})
    ]);
-   if([tr,or,cr,pr,dr,sr,wr,rr].some(r=>r.status===401))throw new Error("Sign in to view your action queue.");
-   const [td,od,cd,pd,dd,sd,wd,rd]=await Promise.all([tr.json(),or.json(),cr.json(),pr.json(),dr.json(),sr.json(),wr.json(),rr.json()]);
-   if(!tr.ok||!or.ok||!cr.ok||!pr.ok||!dr.ok||!sr.ok||!wr.ok||!rr.ok)throw new Error("Some workspace data could not load. Check the task, outreach, project, and workforce pages.");
+   if([tr,or,cr,pr,dr,sr,wr,rr,kr].some(r=>r.status===401))throw new Error("Sign in to view your action queue.");
+   const [td,od,cd,pd,dd,sd,wd,rd,kd]=await Promise.all([tr.json(),or.json(),cr.json(),pr.json(),dr.json(),sr.json(),wr.json(),rr.json(),kr.json()]);
+   if(!tr.ok||!or.ok||!cr.ok||!pr.ok||!dr.ok||!sr.ok||!wr.ok||!rr.ok||!kr.ok)throw new Error("Some workspace data could not load. Check the task, outreach, project, calendar, and workforce pages.");
    const now=Date.now();const todayEnd=new Date();todayEnd.setHours(23,59,59,999);const todayEndMs=todayEnd.getTime();const list:Item[]=[];
    for(const t of (td.tasks||[])){
     if(["done","cancelled"].includes(t.status))continue;
@@ -49,6 +52,13 @@ export default function NeedsYouPage(){
     if(a.status!=="draft")continue;
     list.push({id:"preparation:"+a.id,kind:"preparation",title:"Review preparation: "+a.title,detail:[a.contactName,a.company,a.dealTitle,a.eventTitle,a.sourceUrls?.length?a.sourceUrls.length+" sources":"No source URLs"].filter(Boolean).join(" · "),due:a.updatedAt||null,priority:2,href:"/crm/preparation",action:"Review brief"});
    }
+   for(const e of (kd.events||[])){
+    if(e.status!=="scheduled"||!(["meeting","call"].includes(e.type)))continue;
+    const startsAt=new Date(e.startsAt).getTime();
+    if(!Number.isFinite(startsAt)||startsAt<now||startsAt>now+7*86400000||String(e.description||"").trim())continue;
+    const hoursUntil=(startsAt-now)/3600000;
+    list.push({id:"meeting-prep:"+e.id,kind:"meeting",title:"Prepare for "+(e.type==="call"?"call: ":"meeting: ")+e.title,detail:[e.contactName,e.dealTitle,"No prep notes yet"].filter(Boolean).join(" · "),due:e.startsAt,priority:hoursUntil<=24?1:2,href:"/crm/calendar",action:"Review calendar"});
+   }
    for(const d of (dd.deals||[])){
     if(["won","lost"].includes(d.stage)||!d.expectedCloseDate)continue;
     const ms=new Date(d.expectedCloseDate+"T23:59:59").getTime();if(ms>today.getTime())continue;
@@ -60,12 +70,12 @@ export default function NeedsYouPage(){
  },[]);
  useEffect(()=>{void load()},[load]);
  const visible=useMemo(()=>filter==="all"?items:items.filter(x=>x.kind===filter),[items,filter]);
- const counts=useMemo(()=>({all:items.length,task:items.filter(x=>x.kind==="task").length,outreach:items.filter(x=>x.kind==="outreach").length,followup:items.filter(x=>x.kind==="followup").length,project:items.filter(x=>x.kind==="project").length,deal:items.filter(x=>x.kind==="deal").length,support:items.filter(x=>x.kind==="support").length,approval:items.filter(x=>x.kind==="approval").length,renewal:items.filter(x=>x.kind==="renewal").length,agent:items.filter(x=>x.kind==="agent").length,client:items.filter(x=>x.kind==="client").length,preparation:items.filter(x=>x.kind==="preparation").length}),[items]);
+ const counts=useMemo(()=>({all:items.length,task:items.filter(x=>x.kind==="task").length,outreach:items.filter(x=>x.kind==="outreach").length,followup:items.filter(x=>x.kind==="followup").length,project:items.filter(x=>x.kind==="project").length,deal:items.filter(x=>x.kind==="deal").length,support:items.filter(x=>x.kind==="support").length,approval:items.filter(x=>x.kind==="approval").length,renewal:items.filter(x=>x.kind==="renewal").length,agent:items.filter(x=>x.kind==="agent").length,client:items.filter(x=>x.kind==="client").length,preparation:items.filter(x=>x.kind==="preparation").length,meeting:items.filter(x=>x.kind==="meeting").length}),[items]);
  return <main className="needs-shell"><header className="needs-header"><Link href="/">← Cinder workspace</Link><button onClick={()=>void load()} disabled={loading}>↻ Refresh</button></header><section className="needs-content"><div className="needs-eyebrow">EXECUTION QUEUE</div><h1>Needs you<span>.</span></h1><p className="needs-subtitle">One queue for overdue follow-ups, blocked delivery, and work that needs a decision. Items are read from your workspace, not generated placeholders.</p>
  <div className="needs-stats"><div><small>NEEDS ATTENTION</small><strong>{loading?"—":items.length}</strong></div><div><small>OUTREACH DUE</small><strong>{loading?"—":counts.outreach}</strong></div><div><small>BLOCKED / URGENT</small><strong>{loading?"—":items.filter(x=>x.priority<=1).length}</strong></div></div>
  {error&&<div className="needs-error" role="alert">{error}</div>}
- <nav className="needs-filters" aria-label="Filter action queue">{[["all","All items"],["task","Tasks"],["outreach","Outreach"],["followup","Contact follow-ups"],["project","Projects"],["deal","Deals"],["support","Support"],["approval","Approvals"],["renewal","Renewals"],["agent","AI failures"],["client","Client health"],["preparation","Preparation"]].map(([id,label])=><button key={id} className={filter===id?"selected":""} onClick={()=>setFilter(id)}>{label}<span>{counts[id as keyof typeof counts]}</span></button>)}</nav>
- <section className="needs-list">{loading?<div className="needs-empty">Loading your live action queue…</div>:visible.length===0?<div className="needs-empty"><strong>You're all caught up.</strong><p>No items in this view currently need attention.</p></div>:visible.map(item=><article key={item.id} className="needs-item"><div className={"needs-kind kind-"+item.kind}>{({task:"✓",outreach:"↗",followup:"☎",project:"▱",deal:"$",support:"!",approval:"✓",renewal:"$",agent:"⚠",client:"♡",preparation:"✎"} as Record<string,string>)[item.kind]}</div><div className="needs-item-copy"><div className="needs-item-title">{item.title}</div><div className="needs-item-detail">{item.detail||item.kind}</div><div className="needs-item-due">{item.due?"Due "+dateLabel(item.due):"No due date"}</div></div><a className="needs-item-action" href={item.href}>{item.action} →</a></article>)}</section>
+ <nav className="needs-filters" aria-label="Filter action queue">{[["all","All items"],["task","Tasks"],["outreach","Outreach"],["followup","Contact follow-ups"],["meeting","Meeting prep"],["project","Projects"],["deal","Deals"],["support","Support"],["approval","Approvals"],["renewal","Renewals"],["agent","AI failures"],["client","Client health"],["preparation","Preparation"]].map(([id,label])=><button key={id} className={filter===id?"selected":""} onClick={()=>setFilter(id)}>{label}<span>{counts[id as keyof typeof counts]}</span></button>)}</nav>
+ <section className="needs-list">{loading?<div className="needs-empty">Loading your live action queue…</div>:visible.length===0?<div className="needs-empty"><strong>You're all caught up.</strong><p>No items in this view currently need attention.</p></div>:visible.map(item=><article key={item.id} className="needs-item"><div className={"needs-kind kind-"+item.kind}>{({task:"✓",outreach:"↗",followup:"☎",project:"▱",deal:"$",support:"!",approval:"✓",renewal:"$",agent:"⚠",client:"♡",preparation:"✎",meeting:"◷"} as Record<string,string>)[item.kind]}</div><div className="needs-item-copy"><div className="needs-item-title">{item.title}</div><div className="needs-item-detail">{item.detail||item.kind}</div><div className="needs-item-due">{item.due?"Due "+dateLabel(item.due):"No due date"}</div></div><a className="needs-item-action" href={item.href}>{item.action} →</a></article>)}</section>
  <p className="needs-footnote">This queue is advisory: it highlights records with overdue dates or explicit blockers. It does not send messages, make calls, or change record status automatically.</p>
  </section></main>;
 }
