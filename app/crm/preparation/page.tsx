@@ -57,6 +57,16 @@ export default function PreparationPage(){
   finally{setLoading(false);}
  },[]);
  useEffect(()=>{void load()},[load]);
+ useEffect(()=>{
+  const params=new URLSearchParams(window.location.search);
+  if(params.get("proposal")!=="1"||deals.length===0)return;
+  const dealId=params.get("dealId");
+  const deal=deals.find(d=>d.id===dealId);
+  if(!deal){setError("The selected deal could not be found in your pipeline.");return;}
+  const content="PROPOSAL DRAFT — REVIEW BEFORE SHARING\\n\\nClient objective\\n[Describe the outcome the client wants. Confirm with the client.]\\n\\nCurrent gap / opportunity\\n[Document observed facts; distinguish assumptions.]\\n\\nRecommended scope\\n- [Deliverable 1]\\n- [Deliverable 2]\\n- [Deliverable 3]\\n\\nImplementation and timeline\\n[Milestones, dependencies, and client responsibilities.]\\n\\nInvestment\\nSetup fee: $"+deal.setupFee+"\\nRecurring fee: $"+deal.monthlyFee+" / month\\nTerms and exclusions: [Specify clearly.]\\n\\nSuccess measures\\n[Define how the result will be measured.]\\n\\nOpen questions / assumptions\\n[List anything not yet confirmed.]\\n\\nNext step\\n[Proposed review meeting or decision date.]\\n\\nThis is an internal draft. Pricing, scope, claims, and terms require human review. Nothing has been sent or accepted.";
+  setEditing(null);setDraft({...blank,type:"proposal_draft",dealId:deal.id,contactId:deal.contactId||"",title:"Proposal draft — "+deal.title,content});setShowEditor(true);setError("");setNotice("Proposal draft started from "+deal.title+". Review all scope and pricing before sharing.");
+  window.history.replaceState({},"",window.location.pathname);
+ },[deals]);
 
  const visible=useMemo(()=>artifacts.filter(a=>(filter==="all"||a.status===filter)&&[a.title,a.content,a.contactName,a.company,a.dealTitle,a.eventTitle,a.type,...a.verifiedFacts,...a.hypotheses].join(" ").toLowerCase().includes(query.trim().toLowerCase())),[artifacts,filter,query]);
  const reviewed=artifacts.filter(a=>a.status==="reviewed").length;
