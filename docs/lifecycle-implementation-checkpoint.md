@@ -16,6 +16,7 @@
 - Added a live-data meeting-preparation queue to Needs You. It checks the next seven days of calendar events and surfaces scheduled meetings/calls that have no prep notes, prioritizing items starting within 24 hours.
 - Added regression assertions for the meeting-preparation queue and its manual-only behavior. It does not send invitations, messages, or calls.
 - Added a proposal-draft artifact type to Preparation, with a structured internal template for objectives, scope, implementation, investment, assumptions, success measures, and next steps. Drafts can be linked to an existing deal/contact, reviewed, edited, copied, or archived; no send/acceptance action exists.
+- Added a `Draft proposal` action to each pipeline deal. It opens Preparation with the selected deal and contact prelinked and prepopulates the template's setup and recurring fees from the deal record. Pricing remains editable draft content and must be reviewed before sharing.
 
 ## Why this matters
 
@@ -25,7 +26,7 @@ Cinder can track agency finances without falsely claiming that a payment process
 
 - The full `npm test` and lint commands have not yet been run in an executable checkout. Source-level checks were inspected, but they do not replace running the actual test suite.
 - Vercel preview builds have failed during Next.js page-data collection for `/api/auth/[...path]` because the Neon Auth preview environment is not configured. This appears to be preview environment configuration, not a verified code regression; the latest deployment is still queued/building and needs confirmation.
-- The finance, pipeline, and new proposal-draft UI changes have not yet been authenticated-browser-tested.
+- The finance, pipeline, and deal-linked proposal-draft UI changes have not yet been authenticated-browser-tested.
 - Meeting invitations/reminders are still not sent or scheduled externally; the new queue is an in-app preparation cue only. A formal proposal entity/version history, proposal approval and acceptance tracking, external delivery, a complete agreement/signature workflow, onboarding completion verification, client handoff failure recovery, and the full acceptance journey remain open work. The agreement API guard is a partial foundation, not a finished user-facing workflow.
 - Existing deal conversion creates a project and expected revenue entries idempotently by deal/source key, but complete partial-failure recovery still needs verification.
 - No payment processor or payment verification was added.
