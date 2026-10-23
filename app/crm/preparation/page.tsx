@@ -97,10 +97,10 @@ export default function PreparationPage(){
   finally{setSaving(false);}
  }
  function createProposalRevision(a:Artifact){
-  const baseTitle=a.title.replace(/ — Revision \\d+$/,"");
-  const revisions=artifacts.filter(item=>item.type==="proposal_draft"&&item.dealId===a.dealId&&item.title.replace(/ — Revision \\d+$/,"")===baseTitle).length;
+  const baseTitle=a.title.replace(/ — Revision \d+$/,"");
+  const revisions=artifacts.filter(item=>item.type==="proposal_draft"&&item.dealId===a.dealId&&item.title.replace(/ — Revision \d+$/,"")===baseTitle).length;
   setEditing(null);
-  setDraft({...blank,type:"proposal_draft",contactId:a.contactId||"",dealId:a.dealId||"",title:baseTitle+" — Revision "+(revisions+1),sourceUrlsText:a.sourceUrls.join("\\n"),factsText:a.verifiedFacts.join("\\n"),hypothesesText:a.hypotheses.join("\\n"),confidence:a.confidence,content:a.content,status:"draft"});
+  setDraft({...blank,type:"proposal_draft",contactId:a.contactId||"",dealId:a.dealId||"",title:baseTitle+" — Revision "+(revisions+1),sourceUrlsText:a.sourceUrls.join("\n"),factsText:a.verifiedFacts.join("\n"),hypothesesText:a.hypotheses.join("\n"),confidence:a.confidence,content:a.content,status:"draft"});
   setShowEditor(true);setError("");setNotice("New proposal revision opened. The prior version remains unchanged; review before saving or sharing.");
  }
  async function changeStatus(a:Artifact,status:ArtifactStatus){
