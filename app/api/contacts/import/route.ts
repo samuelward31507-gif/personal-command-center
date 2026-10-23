@@ -100,10 +100,10 @@ export async function POST(request: Request) {
       try {
         const insertedRows = await sql`
           INSERT INTO public.contacts
-            (owner_id, first_name, last_name, company, role, email, phone, status, source, notes, follow_up_at, website, location)
+            (owner_id, first_name, last_name, company, role, email, phone, status, source, notes, follow_up_at, website, location, instagram_url, facebook_url)
           VALUES
             (${user.id}, ${r.firstName}, ${r.lastName}, ${r.company}, ${r.role}, ${r.email}, ${r.phone},
-             ${r.status.toLowerCase()}, ${r.source}, ${r.notes}, ${r.nextFollowUp}, ${r.website}, ${r.location})
+             ${r.status.toLowerCase()}, ${r.source}, ${r.notes}, ${r.nextFollowUp}, ${r.website}, ${r.location}, ${r.instagramUrl}, ${r.facebookUrl})
           RETURNING id
         `;
         contactId = String(insertedRows[0]?.id);
