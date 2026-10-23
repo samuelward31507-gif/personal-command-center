@@ -123,6 +123,13 @@ test("proposal drafting Deal type includes the fields supplied by the deals API"
   assert.match(preparation, /type Deal = \{id:string;contactId:string\|null;title:string;contactName:string;company:string;stage:string;setupFee:number;monthlyFee:number\}/);
 });
 
+test("proposal revisions preserve prior drafts and begin as a new draft", () => {
+  assert.match(preparation, /function createProposalRevision\(a:Artifact\)/);
+  assert.match(preparation, /title:baseTitle\+" — Revision "\+\(revisions\+1\)/);
+  assert.match(preparation, /New proposal revision opened\. The prior version remains unchanged/);
+  assert.match(preparation, /a\.type==="proposal_draft"&&<button[^>]*onClick=\{\(\)=>createProposalRevision\(a\)\}>Create revision<\/button>/);
+});
+
 test("proposal drafts are owner-scoped preparation records and are not sent automatically", () => {
   assert.match(researchArtifacts, /"proposal_draft"/);
   assert.match(researchArtifacts, /WHERE r\.owner_id = \$\{user\.id\}/);
