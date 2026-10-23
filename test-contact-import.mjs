@@ -101,6 +101,14 @@ test("normalizeFollowUpDate rejects garbage", () => {
 });
 
 // --- buildHeaderIndex + normalizeImportRow ---
+test("Instagram and Facebook profile columns map through common aliases", () => {
+  const idx = buildHeaderIndex(["Name", "Instagram", "Facebook Page"]);
+  const outcome = normalizeImportRow(["Acme", "https://instagram.com/acme", "https://facebook.com/acme"], idx);
+  assert.equal(outcome.kind, "valid");
+  assert.equal(outcome.row.instagramUrl, "https://instagram.com/acme");
+  assert.equal(outcome.row.facebookUrl, "https://facebook.com/acme");
+});
+
 test("buildHeaderIndex maps common business-lead CSV headers via aliases", () => {
   const idx = buildHeaderIndex(["Business Name", "Contact Name", "Phone Number", "Email Address", "Website", "City", "Job Title", "Source", "Notes"]);
   assert.equal(idx.get("company"), 0);
