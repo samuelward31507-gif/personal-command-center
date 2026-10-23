@@ -18,6 +18,8 @@ export type NormalizedImportRow = {
   phone: string;
   website: string;
   location: string;
+  instagramUrl: string;
+  facebookUrl: string;
   source: string;
   notes: string;
   status: ContactStatusValue;
@@ -42,6 +44,8 @@ export const HEADER_ALIASES: Record<string, string[]> = {
   phone: ["phone", "phonenumber", "mobile", "cell", "telephone"],
   website: ["website", "url", "site", "web"],
   location: ["location", "city", "address", "region", "state"],
+  instagramUrl: ["instagram", "instagramurl", "instagramprofile", "instagramlink", "ig", "igurl"],
+  facebookUrl: ["facebook", "facebookurl", "facebookpage", "facebookprofile", "facebooklink", "fb", "fburl"],
   source: ["source", "leadsource"],
   notes: ["notes", "researchnotes", "comments", "description"],
   nextFollowUp: ["nextfollowup", "followup", "followupdate"],
@@ -173,6 +177,8 @@ export function normalizeImportRow(cells: string[], headerIndex: Map<string, num
       phone: cleanText(g("phone"), 100),
       website: cleanText(g("website"), 500),
       location: cleanText(g("location"), 300),
+      instagramUrl: cleanText(g("instagramUrl"), 500),
+      facebookUrl: cleanText(g("facebookUrl"), 500),
       source: cleanText(g("source"), 200) || "CSV import",
       notes: cleanText(g("notes"), 10000),
       status: normalizeStatus(g("status")),
