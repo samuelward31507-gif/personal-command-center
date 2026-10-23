@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type ArtifactType = "prospect_research" | "call_brief" | "audit_prep" | "meeting_brief" | "follow_up_draft";
+type ArtifactType = "prospect_research" | "call_brief" | "audit_prep" | "meeting_brief" | "follow_up_draft" | "proposal_draft";
 type ArtifactStatus = "draft" | "reviewed" | "archived";
 type Confidence = "low" | "medium" | "high";
 type Artifact = {
@@ -17,7 +17,7 @@ type Contact = {id:string;name:string;company:string};
 type Deal = {id:string;title:string;contactName:string;company:string;stage:string};
 type CalendarEvent = {id:string;title:string;startsAt:string;status:string;type:string;contactId:string|null;dealId:string|null};
 type Draft = {contactId:string;dealId:string;calendarEventId:string;type:ArtifactType;title:string;sourceUrlsText:string;factsText:string;hypothesesText:string;confidence:Confidence;content:string;status:ArtifactStatus};
-const types:Record<ArtifactType,string>={prospect_research:"Prospect research",call_brief:"Call brief",audit_prep:"Free-audit prep",meeting_brief:"Meeting brief",follow_up_draft:"Follow-up draft"};
+const types:Record<ArtifactType,string>={prospect_research:"Prospect research",call_brief:"Call brief",audit_prep:"Free-audit prep",meeting_brief:"Meeting brief",follow_up_draft:"Follow-up draft",proposal_draft:"Proposal draft"};
 const blank:Draft={contactId:"",dealId:"",calendarEventId:"",type:"prospect_research",title:"",sourceUrlsText:"",factsText:"",hypothesesText:"",confidence:"medium",content:"",status:"draft"};
 const splitLines=(v:string)=>v.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
 const dayKey=(d:Date)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -63,7 +63,9 @@ export default function PreparationPage(){
  const drafts=artifacts.filter(a=>a.status==="draft").length;
 
  function newArtifact(type:ArtifactType="prospect_research"){
-  setEditing(null);setDraft({...blank,type});setShowEditor(true);setError("");setNotice("");
+  setEditing(null);
+  const proposalContent = type === "proposal_draft" ? "PROPOSAL DRAFT — REVIEW BEFORE SHARING\n\nClient objective\n[Describe the outcome the client wants. Confirm with the client.]\n\nCurrent gap / opportunity\n[Document observed facts; distinguish assumptions.]\n\nRecommended scope\n- [Deliverable 1]\n- [Deliverable 2]\n- [Deliverable 3]\n\nImplementation and timeline\n[Milestones, dependencies, and client responsibilities.]\n\nInvestment\nSetup fee: $[amount]\nRecurring fee: $[amount] / month\nTerms and exclusions: [Specify clearly.]\n\nSuccess measures\n[Define how the result will be measured.]\n\nOpen questions / assumptions\n[List anything not yet confirmed.]\n\nNext step\n[Proposed review meeting or decision date.]\n\nThis is an internal draft. Pricing, scope, claims, and terms require human review. Nothing has been sent or accepted." : "";
+  setDraft({...blank,type,title:type==="proposal_draft"?"Proposal draft — ":"",content:proposalContent});setShowEditor(true);setError("");setNotice("");
  }
  function editArtifact(a:Artifact){
   setEditing(a.id);setDraft({contactId:a.contactId||"",dealId:a.dealId||"",calendarEventId:a.calendarEventId||"",type:a.type,title:a.title,sourceUrlsText:a.sourceUrls.join("\n"),factsText:a.verifiedFacts.join("\n"),hypothesesText:a.hypotheses.join("\n"),confidence:a.confidence,content:a.content,status:a.status});
@@ -100,8 +102,8 @@ export default function PreparationPage(){
 
  return <main style={{maxWidth:1180,margin:"0 auto",padding:"28px 22px 56px",color:"#252522"}}>
   <header style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:18,flexWrap:"wrap"}}>
-   <div><div style={{fontSize:10,letterSpacing:2,color:"#a95335",fontWeight:700}}>CINDER / PREPARATION</div><h1 style={{fontSize:"clamp(32px,5vw,46px)",letterSpacing:"-1.6px",margin:"8px 0"}}>Research & preparation<span style={{color:"#bd5a36"}}>.</span></h1><p style={{maxWidth:720,color:"#777",lineHeight:1.6,margin:0}}>Keep source-backed research, call briefs, free-audit prep, meeting briefs, and follow-up drafts connected to the right prospect, deal, or calendar event.</p></div>
-   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><Link href="/crm/outreach" style={{...buttonStyle,textDecoration:"none"}}>Outreach queue ↗</Link><Link href="/crm/calendar" style={{...buttonStyle,textDecoration:"none"}}>Calendar ↗</Link><button onClick={()=>newArtifact()} style={{...buttonStyle,background:"#282824",color:"#fff",borderColor:"#282824"}}>＋ New preparation</button></div>
+   <div><div style={{fontSize:10,letterSpacing:2,color:"#a95335",fontWeight:700}}>CINDER / PREPARATION</div><h1 style={{fontSize:"clamp(32px,5vw,46px)",letterSpacing:"-1.6px",margin:"8px 0"}}>Research & preparation<span style={{color:"#bd5a36"}}>.</span></h1><p style={{maxWidth:720,color:"#777",lineHeight:1.6,margin:0}}>Keep source-backed research, call briefs, meeting briefs, follow-up drafts, and reviewable proposal drafts connected to the right prospect, deal, or calendar event.</p></div>
+   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><Link href="/crm/outreach" style={{...buttonStyle,textDecoration:"none"}}>Outreach queue ↗</Link><Link href="/crm/calendar" style={{...buttonStyle,textDecoration:"none"}}>Calendar ↗</Link><button onClick={()=>newArtifact("proposal_draft")} style={buttonStyle}>＋ Proposal draft</button><button onClick={()=>newArtifact()} style={{...buttonStyle,background:"#282824",color:"#fff",borderColor:"#282824"}}>＋ New preparation</button></div>
   </header>
   <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:10,margin:"24px 0"}}>
    {[["TOTAL ARTIFACTS",artifacts.length,"Research and prep records"],["NEEDS REVIEW",drafts,"Drafts awaiting your review"],["REVIEWED",reviewed,"Approved for your own use"],["UPCOMING MEETINGS",events.filter(e=>e.type==="meeting").length,"Scheduled in the next 90 days"]].map(([label,value,sub])=><article key={String(label)} style={{border:"1px solid #e9e7e2",borderRadius:12,padding:16,background:"#fff"}}><small style={{display:"block",fontSize:10,letterSpacing:1.1,color:"#777"}}>{label}</small><strong style={{display:"block",fontSize:26,marginTop:10,fontWeight:600}}>{loading?"—":value}</strong><small style={{display:"block",marginTop:5,color:"#777"}}>{sub}</small></article>)}
@@ -128,7 +130,7 @@ export default function PreparationPage(){
     <div style={{gridColumn:"1 / -1",display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}><small style={{color:"#777",maxWidth:650}}>Preparation only: this workspace never sends messages or places calls. Text outreach remains subject to the separate SMS-consent gate.</small><div style={{display:"flex",gap:8}}><button type="button" style={buttonStyle} onClick={()=>setShowEditor(false)}>Cancel</button><button disabled={saving} type="submit" style={{...buttonStyle,background:"#282824",color:"#fff",borderColor:"#282824",opacity:saving ? 0.65 : 1}}>{saving?"Saving…":"Save draft"}</button></div></div>
    </form>
   </section>}
-  {loading?<p style={{padding:24,color:"#777"}}>Loading research and preparation…</p>:visible.length===0?<section style={{border:"1px dashed #d9d5cc",borderRadius:14,padding:30,textAlign:"center",background:"#fff"}}><h2 style={{marginTop:0}}>Nothing in this view yet</h2><p style={{color:"#777"}}>Create a research record, call brief, or meeting brief. Keep verified facts separate from hypotheses.</p><button style={{...buttonStyle,background:"#282824",color:"#fff"}} onClick={()=>newArtifact()}>＋ Create first record</button></section>:<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:12}}>
+  {loading?<p style={{padding:24,color:"#777"}}>Loading research and preparation…</p>:visible.length===0?<section style={{border:"1px dashed #d9d5cc",borderRadius:14,padding:30,textAlign:"center",background:"#fff"}}><h2 style={{marginTop:0}}>Nothing in this view yet</h2><p style={{color:"#777"}}>Create a research record, call brief, meeting brief, or internal proposal draft. Keep verified facts separate from hypotheses.</p><button style={{...buttonStyle,background:"#282824",color:"#fff"}} onClick={()=>newArtifact()}>＋ Create first record</button></section>:<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:12}}>
    {visible.map(a=><article key={a.id} style={{border:"1px solid #e9e7e2",borderRadius:13,padding:16,background:"#fff",display:"flex",flexDirection:"column",gap:12}}>
     <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"flex-start"}}><div><small style={{color:"#a95335",fontWeight:700,letterSpacing:1}}>{types[a.type].toUpperCase()}</small><h2 style={{fontSize:18,lineHeight:1.3,margin:"7px 0"}}>{a.title}</h2><p style={{fontSize:12,color:"#777",margin:0}}>{[a.contactName,a.company,a.dealTitle,a.eventTitle].filter(Boolean).join(" · ")||"Not linked to a CRM record"}</p></div><span style={{fontSize:10,border:"1px solid #e1ded7",borderRadius:999,padding:"5px 8px",whiteSpace:"nowrap"}}>{a.status}</span></div>
     {a.content&&<p style={{fontSize:13,lineHeight:1.6,whiteSpace:"pre-wrap",margin:0,color:"#444"}}>{a.content.length>700?a.content.slice(0,700)+"…":a.content}</p>}
