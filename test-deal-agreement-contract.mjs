@@ -125,6 +125,7 @@ test("proposal drafts are owner-scoped preparation records and are not sent auto
   assert.match(researchArtifacts, /WHERE id = \$\{body\.id\}::uuid AND owner_id = \$\{user\.id\}/);
   assert.match(preparation, /proposal_draft:"Proposal draft"/);
   assert.match(preparation, /PROPOSAL DRAFT — REVIEW BEFORE SHARING/);
+  assert.match(preparation, /Setup fee: \$"\+deal\.setupFee\+"\\nRecurring fee: \$"\+deal\.monthlyFee/);
   assert.match(preparation, /Nothing has been sent or accepted/);
   assert.match(preparation, /type === "proposal_draft"/);
   assert.match(preparation, /params\.get\("proposal"\)!=="1"\|\|deals\.length===0/);
