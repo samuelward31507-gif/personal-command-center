@@ -119,6 +119,10 @@ test("Needs You surfaces upcoming scheduled meetings and calls that have no prep
 const researchArtifacts = readFileSync(new URL("./app/api/research-artifacts/route.ts", import.meta.url), "utf8");
 const preparation = readFileSync(new URL("./app/crm/preparation/page.tsx", import.meta.url), "utf8");
 
+test("proposal drafting Deal type includes the fields supplied by the deals API", () => {
+  assert.match(preparation, /type Deal = \{id:string;contactId:string\|null;title:string;contactName:string;company:string;stage:string;setupFee:number;monthlyFee:number\}/);
+});
+
 test("proposal drafts are owner-scoped preparation records and are not sent automatically", () => {
   assert.match(researchArtifacts, /"proposal_draft"/);
   assert.match(researchArtifacts, /WHERE r\.owner_id = \$\{user\.id\}/);
