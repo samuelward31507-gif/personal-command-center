@@ -14,7 +14,7 @@ type Artifact = {
   eventTitle:string; eventStartsAt:string|null;
 };
 type Contact = {id:string;name:string;company:string};
-type Deal = {id:string;title:string;contactName:string;company:string;stage:string};
+type Deal = {id:string;contactId:string|null;title:string;contactName:string;company:string;stage:string;setupFee:number;monthlyFee:number};
 type CalendarEvent = {id:string;title:string;startsAt:string;status:string;type:string;contactId:string|null;dealId:string|null};
 type Draft = {contactId:string;dealId:string;calendarEventId:string;type:ArtifactType;title:string;sourceUrlsText:string;factsText:string;hypothesesText:string;confidence:Confidence;content:string;status:ArtifactStatus};
 const types:Record<ArtifactType,string>={prospect_research:"Prospect research",call_brief:"Call brief",audit_prep:"Free-audit prep",meeting_brief:"Meeting brief",follow_up_draft:"Follow-up draft",proposal_draft:"Proposal draft"};
