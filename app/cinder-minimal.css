@@ -193,3 +193,27 @@ input::placeholder,textarea::placeholder{color:#777!important}
 .cal-home-actions strong{color:#ededed!important}
 .cal-home-footer i{background:#bdbdbd!important}
 @media(max-width:760px){.sidebar,.crm-app-shell .sidebar{background:#111!important}.glyph-icon{width:18px!important;height:18px!important}}
+
+
+/* Softer dark palette pass: reduce harsh white surfaces and high-contrast highlights. */
+:root{--background:#151515!important;--foreground:#dedede!important;--muted:#929292!important;--line:#303030!important;--panel:#1b1b1b!important;--accent:#b7a08c!important}
+html,body,.app-shell,.main-panel,.crm-shell-main,.page-content,.route-page,.cal-home{background:#151515!important;color:#dedede!important}
+.sidebar,.crm-app-shell .sidebar{background:#141414!important;border-color:#2a2a2a!important}
+.brand-name,.cinder-wordmark,.cal-home-title h1,.cal-home-title h1 span,.cal-home-actions strong,.overview-card h3,.section-heading-row h2,.panel-heading h2,.attention-copy h2,.needs-item-title,.route-item>span,.schedule-description strong{color:#dedede!important}
+.cinder-mark svg path,.cinder-home-mark svg path{fill:#dedede!important}
+.cinder-mark svg circle,.cinder-home-mark svg circle{fill:#b78a70!important}
+.nav-item.active,.sidebar-nav a.active{background:#252525!important;color:#dedede!important}
+.nav-item,.sidebar-nav a{color:#b0b0b0!important}
+.nav-item:hover,.sidebar-nav a:hover{background:#202020!important;color:#dedede!important}
+.connection-card,.overview-card,.surface-panel,.route-panel,.route-item,.schedule-panel,.notes-panel,.attention-banner,.needs-list,.needs-item,.snapshot-card,.stat-card,.table-wrap,.modal,.dropdown-menu,.empty-state{background:#1b1b1b!important;border-color:#303030!important;color:#dedede!important;box-shadow:none!important}
+.cal-command-bar{background:#202020!important;border-color:#383838!important}
+.cal-command-bar button{background:#d5d5d5!important;color:#202020!important}
+.cal-prompt-chips button{background:#1b1b1b!important;border-color:#333!important;color:#aaa!important}
+.cal-home-actions button{background:#1b1b1b!important;border-color:#303030!important}
+.cal-home-actions button>span,.card-icon,.attention-icon,.focus-priority,.empty-core,.needs-kind,.mini-status{background:#292929!important;color:#c7c7c7!important}
+.quiet-button,.date-chip,.back-home-button,.text-action,.setup-note,.needs-item-action{background:#202020!important;border-color:#383838!important;color:#c8c8c8!important}
+input,textarea,select{background:#1b1b1b!important;color:#dedede!important;border-color:#383838!important}
+input::placeholder,textarea::placeholder{color:#808080!important}
+.cal-home-title h1 span{color:#c2c2c2!important}
+.cal-home-title p,.cal-home-footer,.cal-home-actions small,.overview-card>p,.section-heading-row p,.panel-heading p,.attention-copy p,.needs-item-detail,.needs-item-due,.route-note,.page-subtitle,.schedule-description small,.local-note{color:#929292!important}
+.crm-shell-main>.topbar,.topbar,.needs-header{background:#151515!important;border-color:#2c2c2c!important}
