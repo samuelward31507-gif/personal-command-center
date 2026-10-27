@@ -258,16 +258,24 @@ test("Meeting booked and interested outcomes stop routine outreach", () => {
 
 test("Cal.ai webhook requires server-side secret and verifies the provider signature", () => {
   const route = readFileSync("app/api/webhooks/cal-ai/route.ts", "utf8");
+  const helper = readFileSync("lib/cal-ai-webhook.ts", "utf8");
   assert.ok(route.includes("process.env.CAL_AI_WEBHOOK_SECRET"));
   assert.ok(route.includes('request.headers.get("x-cal-signature-256")'));
-  assert.ok(route.includes("createHmac(\"sha256\", secret)"));
-  assert.ok(route.includes("timingSafeEqual"));
+  assert.ok(route.includes("verifyCalAiSignature(raw, signature, secret)"));
+  assert.ok(helper.includes("createHmac(\"sha256\", secret)"));
+  assert.ok(helper.includes("timingSafeEqual"));
   assert.ok(route.includes("Invalid Cal.com webhook signature."));
 });
 
-test("Cal.ai booking sync is idempotent and updates Cinder calendar events", () => {
+test("Cal.ai booking sync handles nested payloads and reschedules without leaving stale meetings", () => {
   const route = readFileSync("app/api/webhooks/cal-ai/route.ts", "utf8");
+  const helper = readFileSync("lib/cal-ai-webhook.ts", "utf8");
   const migration = readFileSync("db/migrations/0013_cal_ai_booking_sync.sql", "utf8");
+  assert.ok(route.includes("unwrapCalAiPayload(parsed)"));
+  assert.ok(helper.includes("const nested = envelope.payload"));
+  assert.ok(route.includes("const rescheduleUid = text(payload.rescheduleUid, 300)"));
+  assert.ok(route.includes("provider_event_id = ${uid}"));
+  assert.ok(route.includes("WHERE owner_id = ${ownerId} AND provider = 'cal_ai' AND provider_event_id = ${rescheduleUid}"));
   assert.ok(route.includes("ON CONFLICT (owner_id, provider, provider_event_id)"));
   assert.ok(route.includes("BOOKING_RESCHEDULED"));
   assert.ok(route.includes("BOOKING_CANCELLED"));
