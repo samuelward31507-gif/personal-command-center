@@ -223,5 +223,37 @@ test("Meeting booked quick action uses the outcome/activity workflow", () => {
   assert.ok(api.includes("Marked do-not-contact from outreach status action."));
 });
 
+
+// --- Agency workflow regression guards ---
+// These source-level checks protect the key founder workflow from accidental
+// regressions. End-to-end authenticated browser testing is still required.
+test("My Day includes due outreach and standalone contact follow-ups", () => {
+  const home = readFileSync("app/page.tsx", "utf8");
+  assert.ok(home.includes("setDueOutreachItems(activeOutreach.map"));
+  assert.ok(home.includes("setDueContactFollowUps(contacts.filter"));
+  assert.ok(home.includes("const revenueActions = ["));
+  assert.ok(home.includes("revenueActions.map"));
+});
+
+test("My Day avoids duplicating contact follow-ups already handled by active outreach", () => {
+  const home = readFileSync("app/page.tsx", "utf8");
+  assert.ok(home.includes("activeOutreachContactIds"));
+  assert.ok(home.includes("!activeOutreachContactIds.has(x.id)"));
+  assert.ok(home.includes("!dueOutreachItems.some(outreachItem=>outreachItem.contactId===item.id)"));
+});
+
+test("Unconsented prospects cannot receive a copied SMS draft", () => {
+  const outreach = readFileSync("app/crm/outreach/page.tsx", "utf8");
+  assert.ok(outreach.includes('if(!p.smsConsent){setMessage("No SMS draft available: record explicit SMS consent first.'));
+  assert.ok(outreach.includes("SMS unavailable · no consent"));
+  assert.ok(outreach.includes("Only check this if consent was actually given."));
+});
+
+test("Meeting booked and interested outcomes stop routine outreach", () => {
+  const api = readFileSync("app/api/outreach/route.ts", "utf8");
+  assert.ok(api.includes('const stopForResponse = outcome === "meeting_booked" || outcome === "reply_received" || outcome === "interested"'));
+  assert.ok(api.includes("status: nextStatus"));
+});
+
 console.log(`${passed} passed`);
 if (process.exitCode) process.exit(process.exitCode);
