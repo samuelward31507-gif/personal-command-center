@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import "./crm-shell.css";
+import CinderSidebar from "../cinder-sidebar";
 
 type NavLink = { href: string; icon: string; label: string; match: (path: string, view: string) => boolean };
 
@@ -73,31 +74,7 @@ function CrmLayoutContent({ children }: { children: React.ReactNode }) {
   const title = pageTitle(pathname, view);
   return (
     <div className="app-shell crm-app-shell">
-      <aside className="sidebar">
-        <Link className="brand crm-brand" href="/" aria-label="Cinder agency workspace home">
-          <span className="cinder-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#bf542f"/></svg></span>
-          <span className="brand-name cinder-wordmark">CINDER</span><span className="workspace-chevron">⌄</span>
-        </Link>
-        <div className="nav-section-label">RUN THE AGENCY</div>
-        <nav className="primary-nav" aria-label="Agency operations">
-          {mainLinks.map(item => {
-            const active = item.match(pathname, view);
-            return <Link key={item.label} href={item.href} aria-current={active ? "page" : undefined} className={"nav-item" + (active ? " active" : "")}><span className="glyph"><NavIcon name={item.icon}/></span><span>{item.label}</span></Link>;
-          })}
-        </nav>
-        <div className="sidebar-divider"/>
-        <div className="nav-section-label">PLAN & CONFIGURE</div>
-        <nav className="primary-nav" aria-label="Planning and settings">
-          {secondaryLinks.map(item => {
-            const active = item.match(pathname, view);
-            return <Link key={item.label} href={item.href} aria-current={active ? "page" : undefined} className={"nav-item" + (active ? " active" : "")}><span className="glyph"><NavIcon name={item.icon}/></span><span>{item.label}</span></Link>;
-          })}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="connection-card"><span className="connection-dot"/><div><strong>Agency workspace</strong><small>Private CRM storage</small></div></div>
-          <div className="profile-row"><span className="profile-avatar">F</span><span className="profile-copy"><strong>Founder</strong><small>Agency operations</small></span></div>
-        </div>
-      </aside>
+      <CinderSidebar activeKey={view || (pathname === "/" ? "home" : "")} mode="crm" pathname={pathname} />
       <section className="main-panel crm-shell-main">
         <header className="topbar">
           <div className="breadcrumbs"><Link href="/">Cinder</Link><span className="breadcrumb-slash">/</span><strong>{title}</strong></div>
