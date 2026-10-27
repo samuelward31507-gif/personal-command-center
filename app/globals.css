@@ -327,3 +327,32 @@ body { background: var(--background); color: var(--foreground); }
  .command-search-box kbd { display: none; }
  .command-bottom { font-size: 8px; }
 }
+
+
+/* Hermes command composer in the search-first home */
+.hermes-command-panel { width: min(620px,100%); margin-top: 26px; padding: 15px; border: 1px solid #2c2c2c; border-radius: 13px; background: #141414; }
+.hermes-command-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+.hermes-command-icon { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 9px; color: #d7f4df; background: #222b24; font-size: 17px; }
+.hermes-command-heading > div { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.hermes-command-heading strong { color: #e8e8e8; font-size: 12px; font-weight: 600; }
+.hermes-command-heading small { color: #858585; font-size: 10px; }
+.hermes-bridge-state { display: inline-flex; align-items: center; gap: 5px; color: #9a9a9a; font-size: 9px; white-space: nowrap; }
+.hermes-bridge-state i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #777; }
+.hermes-bridge-state.ready i { background: #9bd5a9; }
+.hermes-bridge-state.ready { color: #a9d9b3; }
+.hermes-command-form { display: flex; align-items: center; gap: 8px; }
+.hermes-command-form input { min-width: 0; flex: 1; height: 39px; padding: 0 12px; border: 1px solid #343434; border-radius: 8px; outline: 0; color: #eee; background: #191919; font: inherit; font-size: 11px; }
+.hermes-command-form input:focus { border-color: #555; }
+.hermes-command-form input::placeholder { color: #707070; }
+.hermes-command-form button { height: 39px; padding: 0 13px; border: 0; border-radius: 8px; background: #d7f4df; color: #152018; font-size: 11px; font-weight: 650; white-space: nowrap; cursor: pointer; }
+.hermes-command-form button:disabled { opacity: .45; cursor: not-allowed; }
+.hermes-command-notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-top: 11px; color: #b7d9bf; font-size: 10px; }
+.hermes-command-notice button { border: 0; background: transparent; color: #d7f4df; font-size: 10px; cursor: pointer; }
+.hermes-command-footnote { margin-top: 10px; color: #666; font-size: 9px; line-height: 1.5; }
+@media (max-width: 540px) {
+ .hermes-command-panel { padding: 12px; margin-top: 22px; }
+ .hermes-command-heading { flex-wrap: wrap; }
+ .hermes-bridge-state { margin-left: 42px; }
+ .hermes-command-form { align-items: stretch; flex-direction: column; }
+ .hermes-command-form button { width: 100%; }
+}
