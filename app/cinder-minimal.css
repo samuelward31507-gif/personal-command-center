@@ -276,3 +276,107 @@ button{box-shadow:none!important}
 .cal-home{background:#0b0d0e!important}
 .cal-home-title h1{letter-spacing:-.045em!important}
 @media(max-width:760px){.sidebar,.crm-app-shell .sidebar{background:#090b0c!important}}
+
+
+/* CAL.AI-STYLE NEUTRAL DARK PASS — remove green tint and force every workspace surface into the same charcoal system. */
+:root {
+  color-scheme: dark !important;
+  --background: #101010 !important;
+  --foreground: #f0f0f0 !important;
+  --muted: #999999 !important;
+  --line: #2b2b2b !important;
+  --panel: #171717 !important;
+  --accent: #e5e5e5 !important;
+}
+html, body, #__next {
+  background-color: #101010 !important;
+  color: #eeeeee !important;
+}
+.app-shell, .main-panel, .crm-shell-main, .page-content, .route-page,
+.crm-app-shell, .crm-app-shell main, .crm-app-shell section, .cal-home {
+  background-color: #101010 !important;
+  color: #eeeeee !important;
+}
+/* Sidebar controls, tabs, filters, and segmented navigation */
+.sidebar, .crm-app-shell .sidebar, .workspace-switcher, .sidebar-search,
+.connection-card, .sidebar-bottom, .profile-row,
+[role="tablist"], [role="tab"], [role="tabpanel"],
+[class*="tab-bar"], [class*="tabs"], [class*="Tab"],
+[class*="filter"], [class*="Filter"], [class*="switcher"], [class*="Switcher"],
+[class*="toolbar"], [class*="Toolbar"] {
+  background-color: #141414 !important;
+  border-color: #2b2b2b !important;
+  color: #d5d5d5 !important;
+}
+[role="tab"][aria-selected="true"], [role="tab"][data-state="active"],
+[class*="tab"][aria-selected="true"], [class*="tab"][data-state="active"] {
+  background-color: #242424 !important;
+  color: #ffffff !important;
+  border-color: #3a3a3a !important;
+}
+/* All cards and content surfaces: no white cards, no sage/green panels. */
+[class*="card"], [class*="Card"], [class*="panel"], [class*="Panel"],
+[class*="surface"], [class*="Surface"], [class*="modal"], [class*="Modal"],
+[class*="popover"], [class*="Popover"], [class*="dropdown"], [class*="Dropdown"],
+[class*="menu"], [class*="Menu"], [class*="list-item"], [class*="ListItem"],
+[class*="stat"], [class*="Stat"], [class*="widget"], [class*="Widget"],
+.overview-card, .surface-panel, .route-panel, .route-item, .schedule-panel,
+.notes-panel, .attention-banner, .needs-list, .needs-item, .snapshot-card,
+.stat-card, .table-wrap, .empty-state, .cal-home-actions button {
+  background-color: #171717 !important;
+  border-color: #2d2d2d !important;
+  color: #dedede !important;
+  box-shadow: none !important;
+}
+[class*="card"]:hover, [class*="Card"]:hover, [class*="panel"]:hover,
+[class*="Panel"]:hover, .overview-card:hover, .cal-home-actions button:hover {
+  background-color: #1c1c1c !important;
+  border-color: #444444 !important;
+}
+.topbar, .crm-shell-main > .topbar, .needs-header {
+  background-color: #101010 !important;
+  border-color: #2b2b2b !important;
+}
+.brand-name, .cinder-wordmark, .breadcrumbs strong,
+h1, h2, h3, h4, .cal-home-title h1, .cal-home-title h1 span,
+.overview-card h3, .section-heading-row h2, .panel-heading h2,
+.attention-copy h2, .needs-item-title, .route-item > span,
+.schedule-description strong, .cal-home-actions strong {
+  color: #f0f0f0 !important;
+}
+p, small, .page-subtitle, .section-heading-row p, .panel-heading p,
+.attention-copy p, .needs-item-detail, .needs-item-due, .route-note,
+.schedule-description small, .local-note, .cal-home-title p,
+.cal-home-footer, .cal-home-actions small {
+  color: #a0a0a0 !important;
+}
+/* Explicitly neutralize green, teal, purple, and warm semantic icon chips. */
+.card-icon, .attention-icon, .focus-priority, .empty-core, .needs-kind,
+.mini-status, .cal-home-actions button > span, .profile-avatar, .workspace-avatar,
+.status-dot, .setup-note, .connection-dot {
+  background-color: #252525 !important;
+  color: #d0d0d0 !important;
+  border-color: #393939 !important;
+}
+.cinder-mark svg circle, .cinder-home-mark svg circle { fill: #bdbdbd !important; }
+.cinder-mark svg path, .cinder-home-mark svg path { fill: #eeeeee !important; }
+input, textarea, select, [contenteditable="true"] {
+  background-color: #171717 !important;
+  color: #eeeeee !important;
+  border-color: #363636 !important;
+}
+input::placeholder, textarea::placeholder { color: #777777 !important; }
+button, a, [role="button"] { accent-color: #eeeeee; }
+button:focus-visible, a:focus-visible, input:focus-visible,
+textarea:focus-visible, select:focus-visible {
+  outline: 2px solid #777777 !important;
+  outline-offset: 2px;
+}
+.cal-command-bar { background-color: #191919 !important; border-color: #353535 !important; }
+.cal-command-bar button { background-color: #e8e8e8 !important; color: #151515 !important; }
+.cal-prompt-chips button, .quiet-button, .date-chip, .back-home-button,
+.text-action, .setup-note, .needs-item-action {
+  background-color: #171717 !important;
+  border-color: #333333 !important;
+  color: #d0d0d0 !important;
+}
