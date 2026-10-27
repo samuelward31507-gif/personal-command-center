@@ -60,7 +60,7 @@ function CrmLayoutContent({ children }: { children: React.ReactNode }) {
         <nav className="primary-nav" aria-label="Agency operations">
           {mainLinks.map(item => {
             const active = item.match(pathname, view);
-            return <Link key={item.label} href={item.href} aria-current={active ? "page" : undefined} onClick={() => setMobileNavOpen(false)} className={"nav-item" + (active ? " active" : "")} onClick={() => setMobileNavOpen(false)}><span className="glyph" aria-hidden="true">{item.icon}</span><span>{item.label}</span></Link>;
+            return <Link key={item.label} href={item.href} aria-current={active ? "page" : undefined} className={"nav-item" + (active ? " active" : "")} onClick={() => setMobileNavOpen(false)}><span className="glyph" aria-hidden="true">{item.icon}</span><span>{item.label}</span></Link>;
           })}
         </nav>
         <div className="sidebar-divider"/>
