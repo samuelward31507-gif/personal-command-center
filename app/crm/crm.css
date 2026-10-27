@@ -37,3 +37,34 @@
 .crm-import-detail ul{margin:0;padding-left:18px;color:#62645c;line-height:1.7}
 .crm-import-detail button{margin-left:8px;border:1px solid #deded7;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;background:#fff}
 .crm-import-message{font-size:11px;color:#286749;background:#edf7f0;border:1px solid #cfe9d8;border-radius:7px;padding:9px 12px;margin-bottom:14px}
+
+
+/* CINDER DARK SURFACES — page-specific styles must follow their original light declarations. */
+.crm-page,.crm-page * { --crm-line:#303030; }
+.crm-page { background:#101010!important; color:#ededed!important; }
+.crm-page .crm-notice,.crm-page .crm-workspace,.crm-page .crm-list-pane,
+.crm-page .crm-detail-pane,.crm-page .crm-metrics article,.crm-page .crm-contact-row,
+.crm-page .crm-icon-btn,.crm-page .crm-search,.crm-page .crm-filters select,
+.crm-page .crm-field input,.crm-page .crm-field select,.crm-page .crm-field textarea,
+.crm-page .crm-modal,.crm-page .crm-empty-icon,.crm-page .crm-avatar,
+.crm-page .crm-contact-row:hover,.crm-page .crm-contact-row.selected {
+  background:#171717!important;background-image:none!important;color:#dedede!important;border-color:#303030!important;box-shadow:none!important;
+}
+.crm-page .crm-notice { background:#191919!important; }
+.crm-page .crm-notice p,.crm-page .crm-topline p,.crm-page .crm-metrics article span,
+.crm-page .crm-metrics article small,.crm-page .crm-contact-main small,
+.crm-page .crm-list-heading p,.crm-page .crm-detail-title p,.crm-page .crm-source,
+.crm-page .crm-detail-section dt,.crm-page .crm-notes,.crm-page .crm-empty p,
+.crm-page .crm-detail-empty p,.crm-page .crm-detail-footer { color:#a0a0a0!important; }
+.crm-page .crm-topline h1,.crm-page .crm-topline h2,.crm-page .crm-topline h3,
+.crm-page .crm-metrics article strong,.crm-page .crm-contact-main strong,
+.crm-page .crm-detail-title h2,.crm-page .crm-detail-section h3,
+.crm-page .crm-detail-section dd,.crm-page .crm-list-heading h2 { color:#f0f0f0!important; }
+.crm-page .crm-btn-quiet,.crm-page .crm-icon-btn,.crm-page .crm-filters select { background:#1b1b1b!important;color:#dedede!important;border-color:#363636!important; }
+.crm-page .crm-btn-primary { background:#e5e5e5!important;color:#111!important;border-color:#e5e5e5!important; }
+.crm-page .crm-avatar,.crm-page .crm-status,.crm-page .crm-status-lead,
+.crm-page .crm-status-customer,.crm-page .crm-status-partner,.crm-page .crm-empty-icon { background:#262626!important;color:#d8d8d8!important;border-color:#383838!important; }
+.crm-page .crm-detail-section,.crm-page .crm-detail-footer,.crm-page .crm-list-pane,
+.crm-page .crm-filters,.crm-page .crm-detail-section dd a { border-color:#303030!important; }
+.crm-page .crm-search input,.crm-page .crm-field input,.crm-page .crm-field select,.crm-page .crm-field textarea { background:#171717!important;color:#f0f0f0!important;border-color:#363636!important; }
+.crm-page .crm-overdue,.crm-page .crm-text-danger { color:#c4c4c4!important; }
