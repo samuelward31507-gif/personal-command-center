@@ -318,5 +318,23 @@ test("Needs You has a dedicated sales focus and prioritizes severely overdue out
   assert.ok(src.includes('SALES ACTIONS'), "Queue summary should show the number of sales actions");
 });
 
+test("Signed-deal handoff seeds an idempotent client onboarding checklist", () => {
+  const route = readFileSync("app/api/deals/convert/route.ts", "utf8");
+  assert.ok(route.includes('deal.stage !== "won" || deal.agreement_status !== "active" || !deal.signed_at'), "Only a signed, active won deal can be handed off");
+  assert.ok(route.includes("const onboardingMilestones = ["), "Signed-deal handoff must create a usable onboarding checklist");
+  for (const title of [
+    "Confirm scope and success criteria",
+    "Collect access and baseline metrics",
+    "Hold client kickoff",
+    "Configure the agreed implementation",
+    "Test the end-to-end lead journey",
+    "Review results and approve launch",
+    "Monitor launch and report outcomes"
+  ]) assert.ok(route.includes(title), "Missing onboarding milestone: " + title);
+  assert.ok(route.includes("lower(trim(title)) = lower(trim("), "Milestone seeding must be idempotent on retry");
+  assert.ok(route.includes("'todo'"), "New onboarding milestones must start incomplete");
+  assert.ok(route.includes("No payment was recorded."), "Deal handoff must not represent expected revenue as collected cash");
+});
+
 console.log(`${passed} passed`);
 if (process.exitCode) process.exit(process.exitCode);
