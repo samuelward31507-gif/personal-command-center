@@ -338,3 +338,30 @@ main:not(.calendar-page) [class*="Tab"][data-state="active"] {
 /* Dark controls for remaining workspace sections. */
 main .route-page button, main .route-page [role=button], main .route-page [role=tab], main .route-page [role=tablist], main .route-page [class*=tab], main .route-page [class*=Tab], main .route-page [class*=filter], main .route-page [class*=Filter], main .route-page select, main .route-page input, main .route-page textarea { background:#171717 !important; color:#dedede !important; border-color:#303030 !important; box-shadow:none !important; }
 main .route-page [aria-selected=true], main .route-page [data-state=active], main .route-page .active { background:#262626 !important; color:#f5f5f5 !important; border-color:#454545 !important; }
+
+/* Preparation workspace: replace the remaining light surfaces with the Cinder charcoal palette. */
+[class*="preparation"] [class*="stat"], [class*="preparation"] [class*="metric"],
+[class*="preparation"] [class*="summary"], [class*="preparation"] [class*="card"],
+[class*="preparation"] [class*="panel"], [class*="preparation"] [class*="filter"],
+[class*="preparation"] [class*="tab"], [class*="preparation"] [class*="Tab"],
+[class*="preparation"] button, [class*="preparation"] [role="button"],
+[class*="preparation"] input, [class*="preparation"] select, [class*="preparation"] textarea,
+[class*="preparation"] a[class], [class*="preparation"] [data-state] {
+  background-color:#171717 !important;
+  background-image:none !important;
+  color:#dedede !important;
+  border-color:#303030 !important;
+  box-shadow:none !important;
+}
+[class*="preparation"] [aria-selected="true"],
+[class*="preparation"] [data-state="active"],
+[class*="preparation"] button[class*="primary"],
+[class*="preparation"] a[class*="primary"] {
+  background-color:#262626 !important;
+  color:#f5f5f5 !important;
+  border-color:#454545 !important;
+}
+[class*="preparation"] p, [class*="preparation"] small, [class*="preparation"] label,
+[class*="preparation"] [class*="muted"], [class*="preparation"] [class*="eyebrow"] {
+  color:#999999 !important;
+}
