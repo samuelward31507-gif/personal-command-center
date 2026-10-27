@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { unwrapCalAiPayload, validCalAiDate, verifyCalAiSignature } from "./lib/cal-ai-webhook.ts";
+import { unwrapCalAiPayload, validCalAiDate, validCalAiEmail, verifyCalAiSignature } from "./lib/cal-ai-webhook.ts";
 
 const secret = "test-only-secret";
 const body = JSON.stringify({
@@ -20,6 +20,11 @@ assert.equal(verifyCalAiSignature(body, "a".repeat(64), secret), false, "signatu
 assert.equal(validCalAiDate("2026-10-28T16:00:00.000Z"), true, "valid ISO timestamps are accepted");
 assert.equal(validCalAiDate("not-a-date"), false, "invalid timestamps are rejected");
 assert.equal(validCalAiDate(""), false, "empty timestamps are rejected");
+assert.equal(validCalAiEmail("prospect@example.com"), true, "valid attendee emails are accepted");
+assert.equal(validCalAiEmail("first.last+tag@example.co.uk"), true, "valid emails with tags and subdomains are accepted");
+assert.equal(validCalAiEmail("not-an-email"), false, "malformed attendee emails are rejected");
+assert.equal(validCalAiEmail("prospect@example"), false, "emails without a dotted domain are rejected");
+assert.equal(validCalAiEmail("two@@example.com"), false, "emails with repeated separators are rejected");
 
 const nested = unwrapCalAiPayload({
   triggerEvent: "BOOKING_RESCHEDULED",
@@ -47,4 +52,4 @@ assert.equal(flat?.uid, "booking-flat", "flat payload fields remain intact");
 assert.equal(unwrapCalAiPayload(null), null, "null payload is rejected");
 assert.equal(unwrapCalAiPayload([]), null, "array payload is rejected");
 
-console.log("Cal.ai webhook validation tests passed (17 assertions).");
+console.log("Cal.ai webhook validation tests passed (22 assertions).");
