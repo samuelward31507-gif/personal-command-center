@@ -285,6 +285,10 @@ test("Needs You queue avoids duplicate contact follow-ups while outreach is acti
     src.includes("if(activeOutreachContactIds.has(c.id))continue;"),
     "A contact with an active sequence must not also appear as a generic follow-up"
   );
+  assert.ok(
+    src.includes('o.status==="active"&&o.contactId&&o.nextActionAt'),
+    "Only active outreach with a scheduled next action may suppress the generic follow-up"
+  );
 });
 
 test("Needs You queue includes upcoming scheduled meetings that still need a brief", () => {
