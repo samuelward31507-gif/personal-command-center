@@ -341,3 +341,18 @@ table, th, td, .table-row, .list-row { border-color:#29292e !important; }
 @media(prefers-reduced-motion:reduce){
   .sidebar,.app-shell .sidebar,.crm-app-shell .sidebar{transition:none!important}
 }
+
+
+/* Expanded mobile drawer must restore the desktop navigation labels. */
+@media (max-width:760px) {
+  .sidebar.mobile-open .brand { width:100%!important; padding:0 9px!important; }
+  .sidebar.mobile-open .brand-name,
+  .sidebar.mobile-open .workspace-chevron { display:inline!important; }
+  .sidebar.mobile-open .nav-section-label { display:block!important; }
+  .sidebar.mobile-open .nav-item { justify-content:flex-start!important; padding:0 10px!important; gap:9px!important; }
+  .sidebar.mobile-open .nav-item span { display:inline!important; }
+  .sidebar.mobile-open .sidebar-divider { display:block!important; }
+  .sidebar.mobile-open .connection-card { display:flex!important; }
+  .sidebar.mobile-open .profile-copy { display:flex!important; }
+  .sidebar.mobile-open .profile-row { justify-content:flex-start!important; padding:14px 5px 0!important; }
+}
