@@ -68,3 +68,52 @@
 .crm-page .crm-filters,.crm-page .crm-detail-section dd a { border-color:#303030!important; }
 .crm-page .crm-search input,.crm-page .crm-field input,.crm-page .crm-field select,.crm-page .crm-field textarea { background:#171717!important;color:#f0f0f0!important;border-color:#363636!important; }
 .crm-page .crm-overdue,.crm-page .crm-text-danger { color:#c4c4c4!important; }
+
+/* Readability pass: enforce high-contrast text across CRM/contact details, dialogs and import review. */
+.crm-page { color:#ededed!important; }
+.crm-page h1,.crm-page h2,.crm-page h3,.crm-page h4,
+.crm-page strong,.crm-page b,.crm-page label,
+.crm-page .crm-contact-main strong,.crm-page .crm-detail-section dd,
+.crm-page .crm-detail-section dd a,.crm-page .crm-activity-item p,
+.crm-page .crm-import-detail h3,.crm-page .crm-import-detail strong {
+  color:#f0f0f0!important;
+}
+.crm-page p,.crm-page small,.crm-page dt,.crm-page th,
+.crm-page .crm-contact-main small,.crm-page .crm-source,
+.crm-page .crm-detail-title p,.crm-page .crm-list-heading p,
+.crm-page .crm-notes,.crm-page .crm-activity-item small,
+.crm-page .crm-import-pick p,.crm-page .crm-import-enroll-fields label,
+.crm-page .crm-import-detail ul,.crm-page .crm-save-state {
+  color:#b5b5b5!important;
+}
+.crm-page input,.crm-page textarea,.crm-page select,
+.crm-page option,.crm-page .crm-search input,
+.crm-page .crm-field input,.crm-page .crm-field select,
+.crm-page .crm-field textarea,.crm-page .crm-import-table td,
+.crm-page .crm-import-table th {
+  color:#ededed!important;
+}
+.crm-page input::placeholder,.crm-page textarea::placeholder {
+  color:#929292!important; opacity:1!important;
+}
+.crm-page .crm-contact-call,.crm-page .crm-inline-call,
+.crm-page .crm-btn-quiet,.crm-page .crm-icon-btn,
+.crm-page .crm-filters select {
+  background:#202020!important;color:#ededed!important;border-color:#454545!important;
+}
+.crm-page .crm-status,.crm-page .crm-status-lead,
+.crm-page .crm-status-customer,.crm-page .crm-status-partner {
+  background:#292929!important;color:#e5e5e5!important;border-color:#454545!important;
+}
+.crm-page .crm-import-error,.crm-page .crm-import-message,
+.crm-page .crm-import-pill,.crm-page .crm-import-pill.ok,
+.crm-page .crm-import-pill.warn,.crm-page .crm-import-pill.bad,
+.crm-page .crm-import-table tr.row-duplicate td,
+.crm-page .crm-import-table tr.row-invalid td {
+  background:#202020!important;color:#e5e5e5!important;border-color:#414141!important;
+}
+.crm-page button:focus-visible,.crm-page a:focus-visible,
+.crm-page input:focus-visible,.crm-page select:focus-visible,
+.crm-page textarea:focus-visible {
+  outline:2px solid #a8a8a8!important;outline-offset:2px!important;
+}
