@@ -197,15 +197,29 @@ export async function PATCH(request: Request) {
     // the actual call outcome and the sequence history remains truthful.
     if (!hasSmsConsent && (nextStep === 3 || nextStep === 5)) nextStep += 1;
     const finalStep = step >= 6 || nextStep > 6;
+    const callbackRequested = outcome === "callback_requested";
+    const notAFit = outcome === "not_a_fit";
+    const wrongContact = outcome === "wrong_contact";
     const stopForResponse = outcome === "meeting_booked" || outcome === "reply_received" || outcome === "interested";
-    const nextStatus = stopForResponse ? (outcome === "meeting_booked" ? "meeting_booked" : "interested") : finalStep ? "parked" : "active";
+    // A callback request keeps the same action/step and schedules a reminder for tomorrow.
+    const nextStatus = outcome === "meeting_booked" ? "meeting_booked"
+      : stopForResponse ? "interested"
+      : notAFit ? "completed"
+      : wrongContact ? "parked"
+      : finalStep ? "parked" : "active";
     const nextDate = new Date();
-    nextDate.setDate(nextDate.getDate() + (dayOffsets[Math.min(nextStep - 1, 5)] - dayOffsets[step - 1]));
+    if (callbackRequested) {
+      nextDate.setDate(nextDate.getDate() + 1);
+    } else {
+      nextDate.setDate(nextDate.getDate() + (dayOffsets[Math.min(nextStep - 1, 5)] - dayOffsets[step - 1]));
+    }
+    const shouldHoldStep = finalStep || stopForResponse || callbackRequested || notAFit || wrongContact;
+    const shouldKeepDate = finalStep || stopForResponse || notAFit || wrongContact;
     const updated = await sql`
       UPDATE public.contact_outreach SET
-        current_step = CASE WHEN ${finalStep} OR ${stopForResponse} THEN current_step ELSE ${nextStep} END,
+        current_step = CASE WHEN ${shouldHoldStep} THEN current_step ELSE ${nextStep} END,
         status = ${nextStatus},
-        next_action_at = CASE WHEN ${finalStep} OR ${stopForResponse} THEN next_action_at ELSE ${nextDate.toISOString()}::timestamptz END,
+        next_action_at = CASE WHEN ${shouldKeepDate} THEN next_action_at ELSE ${nextDate.toISOString()}::timestamptz END,
         updated_at = now()
       WHERE id = ${id}::uuid AND owner_id = ${user.id}
       RETURNING id, contact_id, status, current_step, next_action_at
@@ -230,7 +244,7 @@ export async function PATCH(request: Request) {
         VALUES (${user.id}, ${record.contact_id}, ${channel}, ${action}, ${outcome}, ${notes}, ${step})
       `;
     }
-    return Response.json({ outreach: updated[0], finished: finalStep || stopForResponse });
+    return Response.json({ outreach: updated[0], finished: finalStep || stopForResponse || notAFit || wrongContact, callbackScheduled: callbackRequested });
   } catch (error) {
     console.error("CRM outreach PATCH failed", error);
     return jsonError("Unable to update outreach step.", 500);
