@@ -27,12 +27,12 @@
 - [x] GitHub Actions passed regression/unit tests, lint, TypeScript, and production build on the latest preview commit.
 - [x] Verified the latest Vercel preview is READY and returns the sign-in page; unauthenticated `/crm` requests are gated back to sign-in.
 - [x] Identified the repeated preview `Invalid origin` cause: the latest deployment hostname was missing from the isolated preview Neon Auth trusted-domain list. Added the exact current preview origin to preview branch `br-aged-hall-b79og5zb` and verified it is now listed. Production auth configuration was not changed.
-- [ ] Complete a real authenticated sign-in and post-login mobile navigation smoke test; this requires an interactive browser session and valid user credentials, which were not available to this check.
+- [x] User confirmed authenticated sign-in and desktop/sidebar visibility on the current preview. Mobile navigation was not confirmed; added an accessible responsive slide-out menu and backdrop to the shared sidebar. Still requires a deployed mobile viewport/tap-through smoke test before marking mobile verified.
 
 **Current priority:** get the current feature branch building reliably, run tests, then finish the prospect → outreach → meeting → deal path before expanding into other modules.
 
 ## Phase 0 — Baseline audit and release confidence
-**Status: In progress — automated checks and preview auth allowlist fixed; interactive smoke test still open**
+**Status: In progress — sign-in and desktop sidebar confirmed by user; mobile navigation implementation added, live mobile verification still open**
 - [x] Confirm the active code branch, latest deployment, and what code is actually deployed.
 - [ ] Map every page, API route, migration/table, and existing test to its real workflow.
 - [x] Run lint, TypeScript, production build, and existing regression/unit tests in GitHub Actions; all passed on the latest commit.
