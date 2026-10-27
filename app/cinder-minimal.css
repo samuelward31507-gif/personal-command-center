@@ -365,3 +365,36 @@ main .route-page [aria-selected=true], main .route-page [data-state=active], mai
 [class*="preparation"] [class*="muted"], [class*="preparation"] [class*="eyebrow"] {
   color:#999999 !important;
 }
+
+/* Normalize actual rendered controls and metric surfaces outside Calendar. */
+main:not(.calendar-page) article,
+main:not(.calendar-page) [class*="metric"],
+main:not(.calendar-page) [class*="Metric"],
+main:not(.calendar-page) [class*="summary-card"],
+main:not(.calendar-page) [class*="stat-card"],
+main:not(.calendar-page) [class*="StatCard"] {
+  background-color:#171717 !important;
+  background-image:none !important;
+  color:#dedede !important;
+  border-color:#303030 !important;
+  box-shadow:none !important;
+}
+main:not(.calendar-page) button:not(.crm-btn-primary):not([data-variant="primary"]),
+main:not(.calendar-page) [role="button"]:not(.crm-btn-primary):not([data-variant="primary"]),
+main:not(.calendar-page) [role="tab"],
+main:not(.calendar-page) [role="tablist"] button,
+main:not(.calendar-page) [class*="filter"] button,
+main:not(.calendar-page) [class*="Filter"] button {
+  background-color:#1b1b1b !important;
+  background-image:none !important;
+  color:#dedede !important;
+  border-color:#343434 !important;
+  box-shadow:none !important;
+}
+main:not(.calendar-page) button[aria-pressed="true"],
+main:not(.calendar-page) [role="tab"][aria-selected="true"],
+main:not(.calendar-page) [data-state="active"] {
+  background-color:#292929 !important;
+  color:#fff !important;
+  border-color:#454545 !important;
+}
