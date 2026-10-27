@@ -252,7 +252,7 @@ test("Unconsented prospects cannot receive a copied SMS draft", () => {
 test("Meeting booked and interested outcomes stop routine outreach", () => {
   const api = readFileSync("app/api/outreach/route.ts", "utf8");
   assert.ok(api.includes('const stopForResponse = outcome === "meeting_booked" || outcome === "reply_received" || outcome === "interested"'));
-  assert.ok(api.includes("status: nextStatus"));
+  assert.ok(api.includes("status = ${nextStatus}"));
 });
 
 console.log(`${passed} passed`);
