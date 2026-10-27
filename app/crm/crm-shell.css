@@ -30,3 +30,101 @@
 .crm-shell-main .quiet-button{background:#171717;border:1px solid #303030;color:#ddd}
 .crm-shell-main .crm-page,.crm-shell-main .page-content{color:#eee}
 @media(max-width:760px){.crm-app-shell .sidebar{width:216px;flex-basis:216px;padding:16px 10px 12px}.crm-shell-main>.topbar{padding:0 12px}}
+
+
+/* SHARED COMPACT SIDEBAR — identical sizing across Home/My Day and CRM routes. */
+.sidebar, .app-shell .sidebar, .crm-app-shell .sidebar {
+  box-sizing:border-box!important;
+  width:208px!important;
+  flex:0 0 208px!important;
+  padding:12px 9px 10px!important;
+  background:#111!important;
+  border-right:1px solid #262626!important;
+  gap:0!important;
+}
+.brand, .app-shell .brand, .crm-brand {
+  box-sizing:border-box!important;
+  min-height:30px!important;
+  height:30px!important;
+  padding:0 7px!important;
+  margin:0 0 17px!important;
+  gap:8px!important;
+  border:0!important;
+}
+.brand .cinder-mark, .crm-brand .cinder-mark,
+.brand .cinder-mark svg, .crm-brand .cinder-mark svg {
+  width:21px!important;height:21px!important;flex:0 0 21px!important;
+}
+.brand-name, .brand .cinder-wordmark, .crm-brand .cinder-wordmark {
+  font-size:15px!important;line-height:1!important;letter-spacing:-.4px!important;font-weight:650!important;
+}
+.nav-section-label, .app-shell .nav-section-label, .crm-app-shell .nav-section-label {
+  padding:0 8px!important;
+  margin:0 0 5px!important;
+  font-size:9px!important;
+  line-height:14px!important;
+  letter-spacing:.9px!important;
+  font-weight:650!important;
+}
+.primary-nav, .app-shell .primary-nav, .crm-app-shell .primary-nav {
+  display:flex!important;flex-direction:column!important;gap:1px!important;
+}
+.nav-item, .app-shell .nav-item, .crm-app-shell .nav-item {
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-height:29px!important;height:29px!important;
+  padding:0 8px!important;
+  gap:8px!important;
+  border-radius:6px!important;
+  font-size:11.5px!important;
+  line-height:1.2!important;
+  font-weight:450!important;
+}
+.nav-item .glyph, .app-shell .nav-item .glyph, .crm-app-shell .nav-item .glyph {
+  width:15px!important;height:16px!important;flex:0 0 15px!important;
+  display:grid!important;place-items:center!important;
+}
+.nav-item .glyph-icon, .app-shell .nav-item .glyph-icon, .crm-app-shell .nav-item .glyph-icon {
+  width:14px!important;height:14px!important;display:block!important;
+}
+.sidebar-divider, .app-shell .sidebar-divider, .crm-app-shell .sidebar-divider {
+  height:1px!important;min-height:1px!important;
+  margin:10px 4px 9px!important;
+  background:#292929!important;border:0!important;
+}
+.sidebar-bottom, .app-shell .sidebar-bottom, .crm-app-shell .sidebar-bottom {
+  margin-top:auto!important;padding-top:10px!important;
+}
+.connection-card, .app-shell .connection-card, .crm-app-shell .connection-card {
+  box-sizing:border-box!important;
+  margin:0 0 8px!important;
+  padding:8px!important;
+  min-height:0!important;
+  gap:7px!important;
+  border-radius:7px!important;
+}
+.connection-card strong, .app-shell .connection-card strong, .crm-app-shell .connection-card strong {
+  font-size:10px!important;line-height:1.35!important;
+}
+.connection-card small, .app-shell .connection-card small, .crm-app-shell .connection-card small {
+  font-size:9px!important;line-height:1.35!important;
+}
+.profile-row, .app-shell .profile-row, .crm-app-shell .profile-row {
+  padding:9px 4px 0!important;
+  gap:8px!important;
+}
+.profile-avatar, .app-shell .profile-avatar, .crm-app-shell .profile-avatar {
+  width:27px!important;height:27px!important;flex:0 0 27px!important;
+  font-size:10px!important;
+}
+.profile-copy strong, .app-shell .profile-copy strong, .crm-app-shell .profile-copy strong {
+  font-size:10px!important;line-height:1.3!important;
+}
+.profile-copy small, .app-shell .profile-copy small, .crm-app-shell .profile-copy small {
+  font-size:9px!important;line-height:1.3!important;
+}
+@media(max-width:760px) {
+  .sidebar, .app-shell .sidebar, .crm-app-shell .sidebar {
+    width:208px!important;flex-basis:208px!important;padding:12px 9px 10px!important;
+  }
+}
