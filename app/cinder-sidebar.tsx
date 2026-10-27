@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 type Props = {
   activeKey: string;
@@ -48,7 +48,9 @@ function Icon({ name }: { name: string }) {
 }
 
 export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavigate }: Props) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const go = (key: string, href: string) => {
+    setMobileOpen(false);
     if (mode === "home" && onNavigate) onNavigate(key);
     else window.location.assign(href);
   };
@@ -69,7 +71,19 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     if (key === "settings") return pathname.startsWith("/crm/settings");
     return activeKey === key;
   };
-  return <aside id="cinder-sidebar-shared" className="sidebar">
+  return <>
+    <button
+      type="button"
+      className="mobile-nav-toggle"
+      aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+      aria-expanded={mobileOpen}
+      aria-controls="cinder-sidebar-shared"
+      onClick={() => setMobileOpen((open) => !open)}
+    >
+      <span aria-hidden="true">{mobileOpen ? "×" : "☰"}</span>
+    </button>
+    {mobileOpen && <button type="button" className="mobile-nav-backdrop" aria-label="Close navigation menu" onClick={() => setMobileOpen(false)} />}
+    <aside id="cinder-sidebar-shared" className={"sidebar" + (mobileOpen ? " mobile-open" : "")}>
     <button type="button" className="brand brand-button" onClick={() => go("home", "/")} aria-label="Go to Home">
       <span className="cinder-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#bf542f"/></svg></span>
       <span className="brand-name cinder-wordmark">CINDER</span><span className="workspace-chevron">⌄</span>
@@ -87,5 +101,6 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
       <div className="connection-card"><span className="connection-dot"/><div><strong>Agency workspace</strong><small>{mode === "crm" ? "Private CRM storage" : "CRM integrations not connected"}</small></div></div>
       <div className="profile-row"><span className="profile-avatar">F</span><span className="profile-copy"><strong>Founder</strong><small>{mode === "crm" ? "Agency operations" : "Agency workspace"}</small></span></div>
     </div>
-  </aside>;
+    </aside>
+  </>;
 }
