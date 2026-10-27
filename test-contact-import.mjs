@@ -275,5 +275,17 @@ test("Cal.ai booking sync is idempotent and updates Cinder calendar events", () 
   assert.ok(migration.includes("cal_ai_webhook_events"));
 });
 
+test("Needs You queue avoids duplicate contact follow-ups while outreach is active", () => {
+  const src = readFileSync("app/crm/needs-you/page.tsx", "utf8");
+  assert.ok(
+    src.includes("const activeOutreachContactIds = new Set((od.outreach||[])"),
+    "Needs You must derive active outreach contact IDs before building generic contact follow-ups"
+  );
+  assert.ok(
+    src.includes("if(activeOutreachContactIds.has(c.id))continue;"),
+    "A contact with an active sequence must not also appear as a generic follow-up"
+  );
+});
+
 console.log(`${passed} passed`);
 if (process.exitCode) process.exit(process.exitCode);
