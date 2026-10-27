@@ -25,3 +25,7 @@ export function verifyCalAiSignature(raw: string, supplied: string, secret: stri
   const actual = Buffer.from(normalized, "hex");
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 }
+
+export function validCalAiEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
