@@ -39,7 +39,7 @@ export default function NeedsYouPage(){
    // A contact with an active outreach sequence has one source of truth for its next touch.
    // Do not create a second generic follow-up item for that same contact.
    const activeOutreachContactIds = new Set((od.outreach||[])
-    .filter((o:{status?:string;contactId?:string})=>o.status==="active"&&o.contactId)
+    .filter((o:{status?:string;contactId?:string;nextActionAt?:string|null})=>o.status==="active"&&o.contactId&&o.nextActionAt)
     .map((o:{contactId:string})=>o.contactId));
    for(const c of (cd.contacts||[])){
     if(activeOutreachContactIds.has(c.id))continue;
