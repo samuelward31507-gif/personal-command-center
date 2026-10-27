@@ -293,6 +293,8 @@ test("Needs You queue includes upcoming scheduled meetings that still need a bri
   assert.ok(src.includes('e.status!=="scheduled"||!(e.type==="meeting"||e.type==="call")'), "Only scheduled meetings and calls should become preparation actions");
   assert.ok(src.includes('a.calendarEventId===e.id&&a.type==="meeting_brief"&&(a.status==="draft"||a.status==="reviewed")'), "Meetings with an existing brief should not create a duplicate preparation action");
   assert.ok(src.includes('href:"/crm/preparation",action:"Prepare meeting"'), "Meeting preparation actions must link to the preparation workspace");
+  assert.ok(src.includes('["meeting","Meeting prep"]'), "Meeting preparation must be available as a queue filter");
+  assert.ok(src.includes('meeting:items.filter(x=>x.kind==="meeting").length'), "Meeting preparation must be included in queue counts");
 });
 
 console.log(`${passed} passed`);
