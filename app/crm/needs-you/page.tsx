@@ -70,7 +70,7 @@ export default function NeedsYouPage(){
     if(!Number.isFinite(startsAt)||startsAt<now)continue;
     const hasMeetingBrief=(rd.artifacts||[]).some((a:{calendarEventId?:string;type?:string;status?:string})=>a.calendarEventId===e.id&&a.type==="meeting_brief"&&(a.status==="draft"||a.status==="reviewed"));
     if(hasMeetingBrief)continue;
-    list.push({id:"meeting:"+e.id,kind:"meeting",title:"Prepare for "+(e.type==="call"?"call: ":"meeting: ")+e.title,detail:[e.contactName,e.dealTitle,new Date(e.startsAt).toLocaleString(undefined,{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})].filter(Boolean).join(" · "),due:e.startsAt,priority:startsAt<=now+86400000?1:2,href:"/crm/preparation",action:"Prepare meeting"});
+    list.push({id:"meeting:"+e.id,kind:"meeting",title:"Prepare for "+(e.type==="call"?"call: ":"meeting: ")+e.title,detail:[e.contactName,e.dealTitle,new Date(e.startsAt).toLocaleString(undefined,{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})].filter(Boolean).join(" · "),due:e.startsAt,priority:startsAt<=now+86400000?1:2,href:"/crm/preparation?event="+encodeURIComponent(e.id)+"&type=meeting_brief",action:"Prepare meeting"});
    }
    list.sort((a,b)=>a.priority-b.priority||(a.due?new Date(a.due).getTime():Infinity)-(b.due?new Date(b.due).getTime():Infinity));
    setItems(list);
