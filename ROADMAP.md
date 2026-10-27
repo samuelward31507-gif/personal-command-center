@@ -14,6 +14,21 @@
 - Keep auth, owner scoping, secret handling, suppression, and approval boundaries intact. No destructive production database changes without explicit approval.
 - Build on existing tables/routes after auditing them; do not rebuild working features just because they are not yet unified in the UI.
 
+## Current implementation checkpoint — 2026-10-27
+
+- [x] Current repository branch and Vercel preview branch identified: `feat/cinder-agency-operating-roadmap`.
+- [x] Existing database foundation verified for contacts, contact activity/outreach/suppressions, deals, tasks, calendar events, projects, and agent runs.
+- [x] Existing outreach UI/API reviewed: manual call launch, explicit SMS consent gate, activity/outcome logging, and sequence stop conditions are present.
+- [x] My Day already has a revenue-action list for due outreach and standalone contact follow-ups, with duplicate follow-ups filtered when a contact has an active outreach sequence.
+- [x] Added source-level regression guards for My Day revenue actions, duplicate follow-up filtering, SMS consent, and sequence stop conditions.
+- [x] Added initial Cal.ai/Cal.com booking-sync implementation: setup page, HMAC-SHA256-verified webhook endpoint, booking create/reschedule/cancel/meeting-ended handling, and an additive migration for provider IDs and webhook event tracking.
+- [ ] Apply migration through the release process, configure `CAL_AI_WEBHOOK_SECRET`, configure the Cal.com webhook and Cal.ai workflows, and run an end-to-end test booking. The integration is **not live or verified yet**.
+- [ ] Run `npm test`, lint, TypeScript/build checks and authenticated end-to-end tests. Repository source is available, but these checks have not been executed in this session.
+- [ ] Verify sign-in and core pages against the newest deployed commit; the last known successful preview was an earlier commit, and newer changes are still building/queued.
+- [ ] Fix or document preview-only Neon Auth configuration if the newest deployment repeats the earlier missing `NEON_AUTH_BASE_URL` / `NEON_AUTH_COOKIE_SECRET` build failure.
+
+**Current priority:** get the current feature branch building reliably, run tests, then finish the prospect → outreach → meeting → deal path before expanding into other modules.
+
 ## Phase 0 — Baseline audit and release confidence
 **Status: In progress**
 - [ ] Confirm the active code branch, latest deployment, and what code is actually deployed.
