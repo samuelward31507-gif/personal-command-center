@@ -124,8 +124,8 @@ export default function PreparationPage(){
   if(!a.contactId){setError("Link a contact to this brief before creating a deal.");return;}
   setError("");setNotice("");
   try{
-   const title=(a.company||a.contactName||a.title.replace(/^(Meeting brief|Call brief|Prospect research)\\s*[—-]\\s*/i,"")).trim().slice(0,240)||"New opportunity";
-   const response=await fetch("/api/deals",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,contactId:a.contactId,serviceType:"custom_ai_implementation",stage:"qualified",setupFee:0,monthlyFee:0,source:"Cinder meeting preparation",notes:"Created from preparation brief: "+a.title+"\\n\\n"+a.content.slice(0,8500)})});
+   const title=(a.company||a.contactName||a.title.replace(/^(Meeting brief|Call brief|Prospect research)\s*[—-]\s*/i,"")).trim().slice(0,240)||"New opportunity";
+   const response=await fetch("/api/deals",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,contactId:a.contactId,serviceType:"custom_ai_implementation",stage:"qualified",setupFee:0,monthlyFee:0,source:"Cinder meeting preparation",notes:"Created from preparation brief: "+a.title+"\n\n"+a.content.slice(0,8500)})});
    const data=await response.json().catch(()=>({}));
    if(!response.ok||typeof data.id!=="string")throw new Error(data.error||"Could not create a deal.");
    const linked=await fetch("/api/research-artifacts",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:a.id,contactId:a.contactId,dealId:data.id,calendarEventId:a.calendarEventId,type:a.type,title:a.title,sourceUrls:a.sourceUrls,verifiedFacts:a.verifiedFacts,hypotheses:a.hypotheses,confidence:a.confidence,content:a.content,status:a.status})});
