@@ -2,19 +2,23 @@
 
 import Link from "next/link";
 import {useCallback,useEffect,useMemo,useState} from "react";
-type Item={id:string;kind:"task"|"outreach"|"followup"|"project"|"deal"|"support"|"approval"|"renewal"|"agent"|"client"|"preparation";title:string;detail:string;due:string|null;priority:number;href:string;action:string};
+type Item={id:string;kind:"task"|"outreach"|"followup"|"project"|"deal"|"support"|"approval"|"renewal"|"agent"|"client"|"preparation"|"meeting";title:string;detail:string;due:string|null;priority:number;href:string;action:string};
 const dateLabel=(v:string|null)=>{if(!v)return "No due date";const dateOnly=/^\d{4}-\d{2}-\d{2}$/.test(v);const parsed=dateOnly?new Date(v+"T12:00:00"):new Date(v);return Number.isNaN(parsed.getTime())?"Date unavailable":parsed.toLocaleString(undefined,dateOnly?{month:"short",day:"numeric"}:{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});};
 export default function NeedsYouPage(){
  const [items,setItems]=useState<Item[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[filter,setFilter]=useState("all");
  const load=useCallback(async()=>{
   setLoading(true);setError("");
   try{
-   const [tr,or,cr,pr,dr,sr,wr,rr]=await Promise.all([
-    fetch("/api/tasks",{cache:"no-store"}),fetch("/api/outreach",{cache:"no-store"}),fetch("/api/contacts",{cache:"no-store"}),fetch("/api/projects",{cache:"no-store"}),fetch("/api/deals",{cache:"no-store"}),fetch("/api/client-success",{cache:"no-store"}),fetch("/api/workforce",{cache:"no-store"}),fetch("/api/research-artifacts?status=draft",{cache:"no-store"})
+   const calendarStart=new Date();calendarStart.setHours(0,0,0,0);
+   const calendarEnd=new Date(calendarStart);calendarEnd.setDate(calendarEnd.getDate()+8);
+   const dateKey=(d:Date)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+   const calendarUrl="/api/calendar-events?from="+dateKey(calendarStart)+"&to="+dateKey(calendarEnd)+"&fromAt="+encodeURIComponent(calendarStart.toISOString())+"&toAt="+encodeURIComponent(calendarEnd.toISOString());
+   const [tr,or,cr,pr,dr,sr,wr,rr,er]=await Promise.all([
+    fetch("/api/tasks",{cache:"no-store"}),fetch("/api/outreach",{cache:"no-store"}),fetch("/api/contacts",{cache:"no-store"}),fetch("/api/projects",{cache:"no-store"}),fetch("/api/deals",{cache:"no-store"}),fetch("/api/client-success",{cache:"no-store"}),fetch("/api/workforce",{cache:"no-store"}),fetch("/api/research-artifacts",{cache:"no-store"}),fetch(calendarUrl,{cache:"no-store"})
    ]);
-   if([tr,or,cr,pr,dr,sr,wr,rr].some(r=>r.status===401))throw new Error("Sign in to view your action queue.");
-   const [td,od,cd,pd,dd,sd,wd,rd]=await Promise.all([tr.json(),or.json(),cr.json(),pr.json(),dr.json(),sr.json(),wr.json(),rr.json()]);
-   if(!tr.ok||!or.ok||!cr.ok||!pr.ok||!dr.ok||!sr.ok||!wr.ok||!rr.ok)throw new Error("Some workspace data could not load. Check the task, outreach, project, and workforce pages.");
+   if([tr,or,cr,pr,dr,sr,wr,rr,er].some(r=>r.status===401))throw new Error("Sign in to view your action queue.");
+   const [td,od,cd,pd,dd,sd,wd,rd,ed]=await Promise.all([tr.json(),or.json(),cr.json(),pr.json(),dr.json(),sr.json(),wr.json(),rr.json(),er.json()]);
+   if(!tr.ok||!or.ok||!cr.ok||!pr.ok||!dr.ok||!sr.ok||!wr.ok||!rr.ok||!er.ok)throw new Error("Some workspace data could not load. Check the task, outreach, project, and workforce pages.");
    const now=Date.now();const todayEnd=new Date();todayEnd.setHours(23,59,59,999);const todayEndMs=todayEnd.getTime();const list:Item[]=[];
    for(const t of (td.tasks||[])){
     if(["done","cancelled"].includes(t.status))continue;
@@ -59,6 +63,14 @@ export default function NeedsYouPage(){
     if(["won","lost"].includes(d.stage)||!d.expectedCloseDate)continue;
     const ms=new Date(d.expectedCloseDate+"T23:59:59").getTime();if(ms>today.getTime())continue;
     list.push({id:"deal:"+d.id,kind:"deal",title:"Review overdue deal: "+d.title,detail:[d.company,d.stage].filter(Boolean).join(" · "),due:d.expectedCloseDate+"T12:00:00",priority:3,href:"/crm/pipeline",action:"Open pipeline"});
+   }
+   for(const e of (ed.events||[])){
+    if(e.status!=="scheduled"||!(e.type==="meeting"||e.type==="call"))continue;
+    const startsAt=new Date(e.startsAt).getTime();
+    if(!Number.isFinite(startsAt)||startsAt<now)continue;
+    const hasMeetingBrief=(rd.artifacts||[]).some((a:{calendarEventId?:string;type?:string;status?:string})=>a.calendarEventId===e.id&&a.type==="meeting_brief"&&(a.status==="draft"||a.status==="reviewed"));
+    if(hasMeetingBrief)continue;
+    list.push({id:"meeting:"+e.id,kind:"meeting",title:"Prepare for "+(e.type==="call"?"call: ":"meeting: ")+e.title,detail:[e.contactName,e.dealTitle,new Date(e.startsAt).toLocaleString(undefined,{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})].filter(Boolean).join(" · "),due:e.startsAt,priority:startsAt<=now+86400000?1:2,href:"/crm/preparation",action:"Prepare meeting"});
    }
    list.sort((a,b)=>a.priority-b.priority||(a.due?new Date(a.due).getTime():Infinity)-(b.due?new Date(b.due).getTime():Infinity));
    setItems(list);
