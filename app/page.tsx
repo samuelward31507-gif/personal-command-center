@@ -3,7 +3,23 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-function I({ children }: { children: string }) { return <span className="glyph" aria-hidden="true">{children}</span>; }
+function I({ children }: { children: string }) {
+ const paths: Record<string, React.ReactNode> = {
+  "⌂": <><path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/></>,
+  "▦": <><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></>,
+  "▤": <><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></>,
+  "↗": <><path d="M4 16 10 10l4 4 6-8"/><path d="M14 6h6v6"/></>,
+  "✓": <path d="m5 12 4 4L19 6"/>,
+  "♧": <><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></>,
+  "▱": <><path d="M3 7h18l-2 13H5L3 7Z"/><path d="M8 7V4h8v3"/></>,
+  "♙": <><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.5-4 3-6 7-6s6.5 2 7 6"/></>,
+  "$": <><path d="M12 2v20"/><path d="M17 6.5c-.8-1.3-2.3-2-4.5-2C9.8 4.5 8 6 8 8s1.7 3 4.5 3.5S17 13 17 15s-1.8 4-4.5 4c-2.2 0-4-.8-5-2.3"/></>,
+  "✳": <><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></>,
+  "✧": <><path d="m12 3 2.3 6.7L21 12l-6.7 2.3L12 21l-2.3-6.7L3 12l6.7-2.3L12 3Z"/></>,
+  "⚙": <><circle cx="12" cy="12" r="3"/><path d="M19 13.5 21 15l-2 3-2-.7-2 1v2h-4v-2l-2-1-2 .7-2-3 2-1.5v-3L5 9l2-3 2 .7 2-1V3h4v2l2 1 2-.7 2 3-2 1.5v3Z"/></>
+ };
+ return <span className="glyph" aria-hidden="true"><svg className="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[children] || paths["✳"]}</svg></span>;
+}
 type CalendarItem = {id:string;title:string;startsAt:string;endsAt:string;allDay:boolean;type:string;status:string;contactName?:string;dealTitle?:string};
 type AgendaTask = {id:string;title:string;status:string;priority:string;dueAt:string|null};
 const nav = [["⌂","Home","home"],["▦","My day","schedule"],["▦","Calendar","calendar"],["▤","Needs you","needs-you"],["↗","Growth","growth"],["✓","Tasks","tasks"],["♧","AI team","workforce"],["▱","Delivery","projects"],["♙","Client success","client-success"],["$","Money","finance"],["✳","Intelligence","intelligence"]];
@@ -129,9 +145,9 @@ function HomeContent() {
     <section className="surface-panel notes-panel"><div className="panel-heading"><div><h2>Daily notes</h2><p>Capture outcomes, reminders, and tomorrow's first move.</p></div></div><textarea value={dailyNotes} onChange={e=>setDailyNotes(e.target.value)} placeholder="What matters today? Who needs a follow-up? What did you learn?" rows={4}/><div className="daily-plan-save"><p className="local-note">Your notes and checked-off blocks are saved by date in your private workspace.</p><div className="daily-plan-save-row"><span role="status">{planMessage}</span><button className="text-action" onClick={()=>void saveDailyPlan()} disabled={planSaving}>{planSaving?"Saving…":"Save daily plan"}</button></div></div></section>
    </div> : activeView==="home" ? <div className="cal-home">
     <div className="cal-home-center">
-     <div className="cal-home-title"><div className="cal-home-eyebrow"><span>✳</span> CINDER WORKSPACE</div><h1>Ask Cinder<span>AI</span></h1><p>Your business, one conversation away.</p></div>
+     <div className="cal-home-title"><div className="cal-home-eyebrow"><span className="cinder-home-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z"/><circle cx="25.5" cy="16" r="3.1"/></svg></span> CINDER WORKSPACE</div><h1>Ask Cinder<span>AI</span></h1><p>Your business, one conversation away.</p></div>
      <form className="cal-command-bar" onSubmit={event=>{event.preventDefault(); const value=(event.currentTarget.elements.namedItem("cinderQuery") as HTMLInputElement).value.trim(); if(value){navigate("workforce");}}}>
-      <span className="cal-command-mark">✳</span><input name="cinderQuery" aria-label="Ask Cinder" placeholder="Search contacts, deals, or ask Cinder anything…"/><button type="submit" aria-label="Open Cinder AI">↑</button>
+      <span className="cal-command-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2Z"/></svg></span><input name="cinderQuery" aria-label="Ask Cinder" placeholder="Search contacts, deals, or ask Cinder anything…"/><button type="submit" aria-label="Open Cinder AI">↑</button>
      </form>
      <div className="cal-prompt-chips"><button onClick={()=>navigate("growth")} type="button">Find a prospect</button><button onClick={()=>navigate("needs-you")} type="button">Who needs a follow-up?</button><button onClick={()=>navigate("schedule")} type="button">What’s on my schedule?</button><button onClick={()=>navigate("workforce")} type="button">Put Hermes to work</button></div>
      <div className="cal-home-actions">
