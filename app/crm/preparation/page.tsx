@@ -120,6 +120,20 @@ export default function PreparationPage(){
    setNotice(status==="reviewed"?"Marked reviewed.":"Moved to archive.");await load();
   }catch(e){setError(e instanceof Error?e.message:"Could not update status.");}
  }
+ async function createDealFromBrief(a:Artifact){
+  if(!a.contactId){setError("Link a contact to this brief before creating a deal.");return;}
+  setError("");setNotice("");
+  try{
+   const title=(a.company||a.contactName||a.title.replace(/^(Meeting brief|Call brief|Prospect research)\\s*[—-]\\s*/i,"")).trim().slice(0,240)||"New opportunity";
+   const response=await fetch("/api/deals",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,contactId:a.contactId,serviceType:"custom_ai_implementation",stage:"qualified",setupFee:0,monthlyFee:0,source:"Cinder meeting preparation",notes:"Created from preparation brief: "+a.title+"\\n\\n"+a.content.slice(0,8500)})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok||typeof data.id!=="string")throw new Error(data.error||"Could not create a deal.");
+   const linked=await fetch("/api/research-artifacts",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:a.id,contactId:a.contactId,dealId:data.id,calendarEventId:a.calendarEventId,type:a.type,title:a.title,sourceUrls:a.sourceUrls,verifiedFacts:a.verifiedFacts,hypotheses:a.hypotheses,confidence:a.confidence,content:a.content,status:a.status})});
+   if(!linked.ok){const linkData=await linked.json().catch(()=>({}));setNotice("Deal created in Qualified. Brief link needs repair: "+(linkData.error||"open the brief and link the new deal manually."));await load();return;}
+   setNotice("Deal created in Qualified and linked to this brief. Add real pricing after discovery; nothing was marked won.");
+   await load();
+  }catch(e){setError(e instanceof Error?e.message:"Could not create a deal from this brief.");}
+ }
  async function copyContent(a:Artifact){
   try{await navigator.clipboard.writeText(a.content);setNotice("Copied draft content. Nothing was sent.");}
   catch{setError("Clipboard access is unavailable. Open the artifact to copy its content manually.");}
@@ -164,7 +178,7 @@ export default function PreparationPage(){
     {a.verifiedFacts.length>0&&<div style={{display:"grid",gap:5}}><small style={{fontWeight:700,color:"#477252",fontSize:10,letterSpacing:1}}>VERIFIED FACTS</small><ul style={{margin:0,paddingLeft:18,fontSize:12,lineHeight:1.5,color:"#444"}}>{a.verifiedFacts.slice(0,3).map((fact,i)=><li key={i}>{fact}</li>)}</ul></div>}
     {a.hypotheses.length>0&&<div style={{display:"grid",gap:5}}><small style={{fontWeight:700,color:"#986c28",fontSize:10,letterSpacing:1}}>HYPOTHESES TO TEST</small><ul style={{margin:0,paddingLeft:18,fontSize:12,lineHeight:1.5,color:"#555"}}>{a.hypotheses.slice(0,3).map((hypothesis,i)=><li key={i}>{hypothesis}</li>)}</ul></div>}
     <div style={{fontSize:11,color:"#888"}}>Updated {dateLabel(a.updatedAt)}{a.researchedAt?" · Sources recorded "+dateLabel(a.researchedAt):" · No source URLs recorded yet"}</div>
-    <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:"auto"}}><button style={buttonStyle} onClick={()=>editArtifact(a)}>Edit</button><button style={buttonStyle} onClick={()=>void copyContent(a)}>Copy content</button>{a.status==="draft"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"reviewed")}>Mark reviewed</button>}{a.status!=="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"archived")}>Archive</button>}{a.status==="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"draft")}>Restore draft</button>}</div>
+    <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:"auto"}}><button style={buttonStyle} onClick={()=>editArtifact(a)}>Edit</button>{a.contactId&&!a.dealId&&["meeting_brief","call_brief","follow_up_draft"].includes(a.type)&&<button style={buttonStyle} onClick={()=>void createDealFromBrief(a)}>Create deal</button>}<button style={buttonStyle} onClick={()=>void copyContent(a)}>Copy content</button>{a.status==="draft"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"reviewed")}>Mark reviewed</button>}{a.status!=="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"archived")}>Archive</button>}{a.status==="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"draft")}>Restore draft</button>}</div>
    </article>)}
   </div>}
  </main>;
