@@ -69,7 +69,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     if (key === "settings") return pathname.startsWith("/crm/settings");
     return activeKey === key;
   };
-  return <aside className="sidebar">
+  return <aside id="cinder-sidebar-shared" className="sidebar">
     <button type="button" className="brand brand-button" onClick={() => go("home", "/")} aria-label="Go to Home">
       <span className="cinder-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#bf542f"/></svg></span>
       <span className="brand-name cinder-wordmark">CINDER</span><span className="workspace-chevron">⌄</span>
