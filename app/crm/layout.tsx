@@ -49,8 +49,9 @@ function CrmLayoutContent({ children }: { children: React.ReactNode }) {
   const title = pageTitle(pathname, view);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   return (
-    <div className="app-shell crm-app-shell">
-      <aside className="sidebar">
+    <div className={"app-shell crm-app-shell" + (mobileNavOpen ? " mobile-nav-open" : "")}>
+      {mobileNavOpen && <button type="button" className="mobile-nav-backdrop" aria-label="Close navigation menu" onClick={() => setMobileNavOpen(false)} /> }
+      <aside id="cinder-mobile-navigation" className="sidebar">
         <Link className="brand crm-brand" href="/" aria-label="Cinder agency workspace home">
           <span className="cinder-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#bf542f"/></svg></span>
           <span className="brand-name cinder-wordmark">CINDER</span><span className="workspace-chevron">⌄</span>
@@ -59,7 +60,7 @@ function CrmLayoutContent({ children }: { children: React.ReactNode }) {
         <nav className="primary-nav" aria-label="Agency operations">
           {mainLinks.map(item => {
             const active = item.match(pathname, view);
-            return <Link key={item.label} href={item.href} aria-current={active ? "page" : undefined} onClick={() => setMobileNavOpen(false)} className={"nav-item" + (active ? " active" : "")}><span className="glyph" aria-hidden="true">{item.icon}</span><span>{item.label}</span></Link>;
+            return <Link key={item.label} href={item.href} aria-current={active ? "page" : undefined} onClick={() => setMobileNavOpen(false)} className={"nav-item" + (active ? " active" : "")} onClick={() => setMobileNavOpen(false)}><span className="glyph" aria-hidden="true">{item.icon}</span><span>{item.label}</span></Link>;
           })}
         </nav>
         <div className="sidebar-divider"/>
@@ -77,6 +78,7 @@ function CrmLayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
       <section className="main-panel crm-shell-main">
         <header className="topbar">
+          <button type="button" className="mobile-nav-toggle" aria-label={mobileNavOpen ? "Close navigation menu" : "Open navigation menu"} aria-expanded={mobileNavOpen} aria-controls="cinder-mobile-navigation" onClick={() => setMobileNavOpen(open => !open)}><span /><span /><span /></button>
           <div className="breadcrumbs"><Link href="/">Cinder</Link><span className="breadcrumb-slash">/</span><strong>{title}</strong></div>
           <div className="topbar-actions"><span className="topbar-status"><span className="status-ring"/> Agency workspace</span><Link className="quiet-button crm-back-home" href="/">Home</Link></div>
         </header>
