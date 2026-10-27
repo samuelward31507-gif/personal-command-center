@@ -334,3 +334,7 @@ main:not(.calendar-page) [class*="Tab"][data-state="active"] {
   color:#f5f5f5!important;
   border-color:#454545!important;
 }
+
+/* Dark controls for remaining workspace sections. */
+main .route-page button, main .route-page [role=button], main .route-page [role=tab], main .route-page [role=tablist], main .route-page [class*=tab], main .route-page [class*=Tab], main .route-page [class*=filter], main .route-page [class*=Filter], main .route-page select, main .route-page input, main .route-page textarea { background:#171717 !important; color:#dedede !important; border-color:#303030 !important; box-shadow:none !important; }
+main .route-page [aria-selected=true], main .route-page [data-state=active], main .route-page .active { background:#262626 !important; color:#f5f5f5 !important; border-color:#454545 !important; }
