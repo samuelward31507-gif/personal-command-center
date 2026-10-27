@@ -83,3 +83,55 @@ button:focus-visible, a:focus-visible { outline: 2px solid #777a73; outline-offs
   .overview-grid { grid-template-columns: 1fr; }
   .lower-grid { grid-template-columns: 1fr; }
 }
+
+
+/* Unified Cal.ai-inspired dark design system: neutral, restrained, consistent. */
+:root{color-scheme:dark;--background:#111111;--foreground:#f5f5f5;--muted:#a1a1a1;--line:#292929;--panel:#171717;--accent:#eeeeee}
+html,body{background:#111!important;color:#f1f1f1!important}
+body{font-family:var(--font-geist-sans),Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app-shell,.main-panel,.page-content,.route-page,main{background:#111!important;color:#f1f1f1}
+.crm-app-shell .sidebar,.app-shell .sidebar{background:#111!important;border-right:1px solid #292929!important;color:#e7e7e7}
+.brand-name,.cinder-wordmark{color:#f5f5f5!important}
+.nav-section-label,.eyebrow,.section-kicker{color:#929292!important}
+.nav-item,.sidebar-nav a{background:transparent!important;color:#bdbdbd!important;border-color:transparent!important}
+.nav-item:hover,.sidebar-nav a:hover{background:#1b1b1b!important;color:#f5f5f5!important}
+.nav-item.active,.sidebar-nav a.active{background:#202020!important;color:#f5f5f5!important}
+.glyph,.glyph-icon{color:currentColor}
+.sidebar-divider,.profile-row{border-color:#292929!important}
+.connection-card,.workspace-switcher,.sidebar-search,.date-chip,.attention-banner,.overview-card,.surface-panel,.route-panel,.route-item,.schedule-panel,.notes-panel,.needs-list,.needs-item,.table-wrap,.modal,.dropdown-menu{background:#171717!important;border-color:#2b2b2b!important;color:#eee!important;box-shadow:none!important}
+.connection-card strong,.profile-copy strong,.breadcrumbs strong,.overview-card h3,.section-heading-row h2,.panel-heading h2,.attention-copy h2,.schedule-description strong,.needs-item-title,.route-item>span{color:#ededed!important}
+.connection-card small,.profile-copy small,.page-subtitle,.attention-copy p,.section-heading-row p,.panel-heading p,.overview-card>p,.empty-state>p,.needs-item-detail,.needs-item-due,.route-note,.local-note,.schedule-description small{color:#929292!important}
+.topbar,.crm-shell-main>.topbar,.needs-header{background:#111!important;border-bottom:1px solid #292929!important;color:#aaa!important}
+.quiet-button,.back-home-button,.text-action,.date-chip,.needs-filters button{background:#181818!important;border:1px solid #333!important;color:#ddd!important}
+button,a,input,textarea,select{accent-color:#d6d6d6}
+input,textarea,select{background:#171717!important;color:#f3f3f3!important;border-color:#343434!important}
+input::placeholder,textarea::placeholder{color:#777!important}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #858585!important;outline-offset:2px}
+/* Home search surface */
+.cal-home{min-height:calc(100vh - 58px);background:#111!important;color:#f5f5f5!important;padding:36px 28px 22px}
+.cal-home-title h1,.cal-home-title h1 span{color:#f2f2f2!important}
+.cal-home-title h1 span{font-weight:500;color:#a7a7a7!important}
+.cal-home-title p{color:#999!important}
+.cal-home-eyebrow,.cal-home-footer{color:#888!important}
+.cal-home-eyebrow span{color:#e8e8e8!important}
+.cal-command-bar{background:#191919!important;border:1px solid #363636!important;box-shadow:0 10px 36px #0002!important}
+.cal-command-bar:focus-within{border-color:#5a5a5a!important}
+.cal-command-mark{color:#cfcfcf!important}
+.cal-command-bar input{background:transparent!important;border:0!important;color:#f3f3f3!important}
+.cal-command-bar input::placeholder{color:#777!important}
+.cal-command-bar button{background:#ededed!important;color:#171717!important;border:0!important}
+.cal-prompt-chips button{background:#171717!important;border:1px solid #303030!important;color:#aaa!important}
+.cal-prompt-chips button:hover{background:#222!important;border-color:#444!important;color:#f5f5f5!important}
+.cal-home-actions button{background:#171717!important;border:1px solid #2b2b2b!important;box-shadow:none!important}
+.cal-home-actions button:hover{background:#1c1c1c!important;border-color:#444!important}
+.cal-home-actions button>span{background:#242424!important;color:#ddd!important}
+.cal-home-actions strong{color:#eee!important}
+.cal-home-actions small{color:#909090!important}
+.cal-home-footer i{background:#bdbdbd!important}
+/* Remove inherited warm/blue/green semantic accents from generic workspace components. */
+.card-icon,.attention-icon,.needs-kind,.focus-priority,.empty-core,.setup-note,.status-dot,.mini-status{background:#242424!important;color:#d0d0d0!important}
+.setup-note,.needs-item-action,.needs-item-due,.needs-error{color:#c7c7c7!important;background:#1a1a1a!important;border-color:#383838!important}
+.overview-card:hover{border-color:#454545!important}
+.panel-heading,.focus-row,.schedule-row,.needs-item{border-color:#292929!important}
+.card-footer,.panel-link,.route-item-status,.focus-number,.focus-detail{color:#a0a0a0!important}
+@media(max-width:760px){.cal-home{padding:28px 16px 18px}.crm-app-shell .sidebar{width:216px;flex-basis:216px;padding:16px 10px 12px}}
