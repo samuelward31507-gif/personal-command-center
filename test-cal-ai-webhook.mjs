@@ -47,4 +47,4 @@ assert.equal(flat?.uid, "booking-flat", "flat payload fields remain intact");
 assert.equal(unwrapCalAiPayload(null), null, "null payload is rejected");
 assert.equal(unwrapCalAiPayload([]), null, "array payload is rejected");
 
-console.log("Cal.ai webhook validation tests passed (16 assertions).");
+console.log("Cal.ai webhook validation tests passed (17 assertions).");
