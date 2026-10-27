@@ -1,1 +1,9 @@
 .crm-app-shell{min-height:100vh;width:100%;background:var(--background)}.crm-app-shell .sidebar{position:sticky;top:0;height:100vh}.crm-brand{text-decoration:none;color:inherit}.crm-brand .cinder-mark{width:24px;height:24px;display:grid;place-items:center;flex:0 0 auto}.crm-brand .cinder-mark svg{width:26px;height:26px}.crm-brand .cinder-wordmark{font-size:19px;font-weight:720;letter-spacing:-1px}.crm-shell-main{flex:1;min-width:0}.crm-shell-main>.topbar{flex:0 0 58px}.crm-shell-main .crm-page{width:100%;max-width:1450px}.crm-back-home{text-decoration:none}.crm-shell-main .crm-topline{flex-wrap:wrap}@media(max-width:760px){.crm-app-shell .sidebar{position:sticky;top:0;height:100vh}.crm-app-shell .topbar{padding:0 12px}.crm-app-shell .topbar-actions{gap:8px}.crm-app-shell .topbar-status{display:none}.crm-shell-main .crm-page{padding:22px 12px 30px}}
+
+/* Shared premium, law-firm-inspired workspace shell */
+.crm-app-shell{background:#f4f5f7;color:#202b3a}
+.crm-app-shell .sidebar{background:#fbfbfa;border-color:#dfe3e8}
+.crm-brand .cinder-wordmark{font-family:Georgia,"Times New Roman",serif;color:#1e2b3b;letter-spacing:1.2px;font-weight:700}
+.crm-shell-main>.topbar{background:#fff;border-color:#dfe3e8}
+.crm-shell-main .topbar-status{color:#697586}
+@media(max-width:760px){.crm-app-shell .sidebar{background:#fbfbfa}}
