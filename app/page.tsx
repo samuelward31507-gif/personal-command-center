@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import CinderSidebar from "./cinder-sidebar";
 
 function I({ children }: { children: string }) {
  const paths: Record<string, React.ReactNode> = {
@@ -129,13 +130,7 @@ function HomeContent() {
  const completed = (id: string) => done.includes(id);
  const toggle = (id: string) => setDone(old => old.includes(id) ? old.filter(x=>x!==id) : [...old,id]);
  return <main className="app-shell" id="home">
-  <aside className="sidebar">
-   <button className="brand brand-button" onClick={() => navigate("home")} aria-label="Go to Home"><span className="cinder-mark" aria-hidden="true"><svg viewBox="0 0 32 32" role="img"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#bf542f"/></svg></span><span className="brand-name cinder-wordmark">CINDER</span><span className="workspace-chevron">⌄</span></button>
-   <div className="nav-section-label">WORKSPACE</div>
-   <nav className="primary-nav" aria-label="Workspace">{nav.map(([icon,label,view])=><button key={view} type="button" className={activeView===view?"nav-item active":"nav-item"} onClick={() => navigate(view)}><I>{icon}</I><span>{label}</span></button>)}</nav>
-   <div className="sidebar-divider"/><div className="nav-section-label">YOUR SPACE</div><nav className="primary-nav"><button type="button" className={activeView==="strategy"?"nav-item active":"nav-item"} onClick={() => navigate("strategy")}><I>✧</I><span>Strategy & memory</span></button><button type="button" className={activeView==="settings"?"nav-item active":"nav-item"} onClick={() => navigate("settings")}><I>⚙</I><span>Settings</span></button></nav>
-   <div className="sidebar-bottom"><div className="connection-card"><span className="connection-dot"/><div><strong>Agency workspace</strong><small>CRM integrations not connected</small></div></div><div className="profile-row"><span className="profile-avatar">F</span><span className="profile-copy"><strong>Founder</strong><small>Agency workspace</small></span></div></div>
-  </aside>
+  <CinderSidebar activeKey={activeView} mode="home" onNavigate={navigate} />
   <section className="main-panel"><header className="topbar"><div className="breadcrumbs"><span>Cinder</span><span className="breadcrumb-slash">/</span><strong>{activeView==="schedule"?"My day":activeView==="growth"?"Growth":activeView==="home"?"Home":viewDetails[activeView]?.title??"Home"}</strong></div><div className="topbar-actions"><span className="topbar-status"><span className="status-ring"/> Agency workspace</span><button className="quiet-button" disabled title="Cinder assistant is not connected yet">Ask Cinder <span className="coming-soon">SOON</span></button></div></header>
    {activeView==="schedule" ? <div className="page-content route-page">
     <div className="welcome-row"><div><div className="eyebrow"><span className="eyebrow-line"/> DAILY OPERATING PLAN</div><h1>My day<span className="heading-period">.</span></h1><p className="page-subtitle">A repeatable founder routine, with revenue work protected and priorities visible.</p></div><span className="date-chip">Routine template · Central time</span></div>
