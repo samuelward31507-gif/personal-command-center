@@ -39,6 +39,34 @@ function HomeContent() {
  const [commandLoading, setCommandLoading] = useState(false);
  const [commandError, setCommandError] = useState("");
  const [commandOpen, setCommandOpen] = useState(false);
+ const [hermesConfigured, setHermesConfigured] = useState<boolean | null>(null);
+ const [hermesTask, setHermesTask] = useState("");
+ const [hermesSubmitting, setHermesSubmitting] = useState(false);
+ const [hermesNotice, setHermesNotice] = useState("");
+ useEffect(() => {
+  let active = true;
+  fetch("/api/hermes/status", {cache:"no-store"}).then(async response => {
+   if (!response.ok) throw new Error("Status unavailable");
+   return response.json();
+  }).then(data => {if(active)setHermesConfigured(data.configured === true);})
+    .catch(()=>{if(active)setHermesConfigured(false);});
+  return ()=>{active=false;};
+ }, []);
+ const submitHermesTask = async () => {
+  const taskTitle = hermesTask.trim();
+  if (!taskTitle || hermesSubmitting) return;
+  setHermesSubmitting(true); setHermesNotice("");
+  try {
+   const response = await fetch("/api/workforce", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"run",agentName:"Hermes",taskTitle,status:"queued",summary:"Created from Cinder command home. Review and execute through the configured Hermes workflow."})});
+   const data = await response.json().catch(()=>({}));
+   if (!response.ok) throw new Error(typeof data.error==="string"?data.error:"Unable to queue task.");
+   setHermesTask("");
+   setHermesNotice("Task added to the AI team queue. Open AI team to review it.");
+   setCommandQuery(""); setCommandOpen(false);
+  } catch(error) { setHermesNotice(error instanceof Error?error.message:"Unable to queue task."); }
+  finally {setHermesSubmitting(false);}
+ };
+
  useEffect(() => {
   const onKeyDown = (event: KeyboardEvent) => {
    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -171,6 +199,15 @@ function HomeContent() {
        {commandQuery.trim() ? <><div className="command-results-label">CONTACTS</div>{commandLoading?<div className="command-empty">Searching your CRM…</div>:commandError?<div className="command-empty">{commandError}</div>:commandContacts.length ? commandContacts.map(contact=><button className="command-result" key={contact.id} onClick={()=>window.location.assign("/crm")}><span className="command-result-avatar">{(contact.name||contact.company||"?").slice(0,1).toUpperCase()}</span><span className="command-result-copy"><strong>{contact.name||contact.company||"Unnamed contact"}</strong><small>{[contact.company,contact.email,contact.location].filter(Boolean).join(" · ")}</small></span><span className="command-result-status">{contact.status||"Contact"}</span></button>):<div className="command-empty">No matching contacts found. Try a company name, email, or location.</div>}</>:
        <><div className="command-results-label">QUICK ACTIONS</div><button className="command-result" onClick={()=>window.location.assign("/crm")}><span className="command-action-icon">⌕</span><span className="command-result-copy"><strong>Open contacts</strong><small>Search and manage your prospect database</small></span><span className="command-result-status">↗</span></button><button className="command-result" onClick={()=>window.location.assign("/crm/outreach")}><span className="command-action-icon">↗</span><span className="command-result-copy"><strong>Review today's outreach</strong><small>See the next actions in your prospecting queue</small></span><span className="command-result-status">↗</span></button><button className="command-result" onClick={()=>window.location.assign("/crm/tasks")}><span className="command-action-icon">✓</span><span className="command-result-copy"><strong>Review tasks</strong><small>Follow-ups, priorities, and due work</small></span><span className="command-result-status">↗</span></button><button className="command-result" onClick={()=>window.location.assign("/crm/pipeline")}><span className="command-action-icon">▥</span><span className="command-result-copy"><strong>Open sales pipeline</strong><small>Meetings, opportunities, and deals</small></span><span className="command-result-status">↗</span></button></>}
       </div>}
+      <div className="hermes-command-panel">
+       <div className="hermes-command-heading"><span className="hermes-command-icon">✳</span><div><strong>Put Hermes to work</strong><small>Describe research or preparation you want done.</small></div><span className={hermesConfigured ? "hermes-bridge-state ready" : "hermes-bridge-state"}><i/>{hermesConfigured===null?"Checking bridge":hermesConfigured?"Bridge configured":"Bridge not configured"}</span></div>
+       <form className="hermes-command-form" onSubmit={event=>{event.preventDefault();void submitHermesTask();}}>
+        <input value={hermesTask} onChange={event=>setHermesTask(event.target.value)} placeholder="e.g. Research 25 pool builders in Texas on Instagram…" aria-label="Task for Hermes" maxLength={240}/>
+        <button type="submit" disabled={!hermesTask.trim()||hermesSubmitting}>{hermesSubmitting?"Queueing…":"Queue task"} <span>↗</span></button>
+       </form>
+       {hermesNotice && <div className="hermes-command-notice" role="status">{hermesNotice}<button type="button" onClick={()=>window.location.assign("/crm/workforce")}>Open AI team →</button></div>}
+       <div className="hermes-command-footnote">Tasks are recorded in Cinder’s AI team queue. Execution requires the Hermes worker to be connected.</div>
+      </div>
       <div className="command-suggestions"><button onClick={()=>{setCommandQuery("follow-up");setCommandOpen(true)}}>Who needs a follow-up?</button><button onClick={()=>window.location.assign("/crm/pipeline")}>Open pipeline</button><button onClick={()=>window.location.assign("/crm/tasks")}>Today's priorities</button><button onClick={()=>window.location.assign("/crm/workforce")}>Ask Hermes <span>↗</span></button></div>
      </div>
      <div className="command-bottom"><span><i/> CINDER WORKSPACE</span><span>Search first. Execute with intention.</span></div>
