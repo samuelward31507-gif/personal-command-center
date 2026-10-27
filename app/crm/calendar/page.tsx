@@ -1,0 +1,90 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import "./calendar.css";
+
+type EventType = "meeting" | "call" | "focus" | "personal" | "deadline" | "other";
+type EventStatus = "scheduled" | "completed" | "cancelled";
+type CalendarEvent = {id:string;title:string;description:string;startsAt:string;endsAt:string;allDay:boolean;type:EventType;status:EventStatus;contactId:string|null;dealId:string|null;contactName:string;dealTitle:string};
+type Task = {id:string;title:string;status:string;priority:string;dueAt:string|null;contactName:string;dealTitle:string};
+type Contact = {id:string;name:string;company:string};
+type Deal = {id:string;title:string;company:string;contactName:string};
+type View = "month" | "week" | "day";
+const typeLabels:Record<EventType,string>={meeting:"Meeting",call:"Call",focus:"Focus time",personal:"Personal",deadline:"Deadline",other:"Other"};
+const blank={title:"",description:"",startsAt:"",endsAt:"",allDay:false,type:"meeting" as EventType,status:"scheduled" as EventStatus,contactId:"",dealId:""};
+const pad=(n:number)=>String(n).padStart(2,"0");
+function dateKey(d:Date){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function localMidnightIso(key:string){const [y,m,d]=key.split("-").map(Number);return new Date(y,m-1,d).toISOString()}
+function atLocalInput(d:Date){return dateKey(d)+"T"+pad(d.getHours())+":"+pad(d.getMinutes())}
+function addDays(d:Date,n:number){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function startOfWeek(d:Date){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-x.getDay());return x}
+function startOfMonth(d:Date){return new Date(d.getFullYear(),d.getMonth(),1)}
+function endDate(d:Date){return dateKey(addDays(d,1))}
+function eventTime(e:CalendarEvent){return e.allDay?"All day":new Date(e.startsAt).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}
+function localInput(v:string){const d=new Date(v);return atLocalInput(d)}
+function defaultDraft(day:Date){const start=new Date(day);start.setHours(10,0,0,0);const end=new Date(start);end.setMinutes(end.getMinutes()+30);return {...blank,startsAt:atLocalInput(start),endsAt:atLocalInput(end)}}
+export default function CalendarPage(){
+ const [anchor,setAnchor]=useState(()=>new Date());
+ const [view,setView]=useState<View>("month");
+ const [events,setEvents]=useState<CalendarEvent[]>([]);
+ const [tasks,setTasks]=useState<Task[]>([]);
+ const [contacts,setContacts]=useState<Contact[]>([]);
+ const [deals,setDeals]=useState<Deal[]>([]);
+ const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false);
+ const [error,setError]=useState(""),[notice,setNotice]=useState("");
+ const [show,setShow]=useState(false),[editing,setEditing]=useState<string|null>(null);
+ const [draft,setDraft]=useState(blank);
+ const range=useMemo(()=>{
+  if(view==="month"){const first=startOfWeek(startOfMonth(anchor));return {from:dateKey(first),to:endDate(addDays(first,41))};}
+  const first=view==="week"?startOfWeek(anchor):new Date(anchor.getFullYear(),anchor.getMonth(),anchor.getDate());
+  return {from:dateKey(first),to:endDate(addDays(first,view==="week"?6:0))};
+ },[anchor,view]);
+ const load=useCallback(async()=>{
+  setLoading(true);setError("");
+  try{
+   const [er,tr,cr,dr]=await Promise.all([
+    fetch("/api/calendar-events?from="+range.from+"&to="+range.to+"&fromAt="+encodeURIComponent(localMidnightIso(range.from))+"&toAt="+encodeURIComponent(localMidnightIso(range.to)),{cache:"no-store"}),
+    fetch("/api/tasks",{cache:"no-store"}),fetch("/api/contacts",{cache:"no-store"}),fetch("/api/deals",{cache:"no-store"})
+   ]);
+   if(!er.ok)throw new Error(er.status===401?"Sign in to use your calendar.":"Could not load calendar events. If this is a new environment, confirm the calendar migration has been applied.");
+   const ed=await er.json();setEvents(Array.isArray(ed.events)?ed.events:[]);
+   if(tr.ok){const td=await tr.json();setTasks(Array.isArray(td.tasks)?td.tasks:[])}
+   if(cr.ok){const cd=await cr.json();setContacts(Array.isArray(cd.contacts)?cd.contacts:[])}
+   if(dr.ok){const dd=await dr.json();setDeals(Array.isArray(dd.deals)?dd.deals:[])}
+  }catch(e){setError(e instanceof Error?e.message:"Could not load calendar.")}finally{setLoading(false)}
+ },[range.from,range.to]);
+ useEffect(()=>{void load()},[load]);
+ const days=useMemo(()=>{
+  if(view==="month"){const first=startOfWeek(startOfMonth(anchor));return Array.from({length:42},(_,i)=>addDays(first,i))}
+  const first=view==="week"?startOfWeek(anchor):new Date(anchor.getFullYear(),anchor.getMonth(),anchor.getDate());
+  return Array.from({length:view==="week"?7:1},(_,i)=>addDays(first,i));
+ },[anchor,view]);
+ const title=useMemo(()=>view==="day"?anchor.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"}):view==="week"?startOfWeek(anchor).toLocaleDateString(undefined,{month:"short",day:"numeric"})+" – "+addDays(startOfWeek(anchor),6).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):anchor.toLocaleDateString(undefined,{month:"long",year:"numeric"}),[anchor,view]);
+ function eventsOn(day:Date){const start=new Date(day.getFullYear(),day.getMonth(),day.getDate()).getTime();const end=addDays(new Date(day.getFullYear(),day.getMonth(),day.getDate()),1).getTime();return events.filter(e=>new Date(e.startsAt).getTime()<end&&new Date(e.endsAt).getTime()>start).sort((a,b)=>Number(a.allDay===false)-Number(b.allDay===false)||a.startsAt.localeCompare(b.startsAt))}
+ function tasksOn(day:Date){const key=dateKey(day);return tasks.filter(t=>t.dueAt&&dateKey(new Date(t.dueAt))===key&&!["done","cancelled"].includes(t.status))}
+ function startNew(day:Date){setDraft(defaultDraft(day));setEditing(null);setShow(true);setError("");setNotice("")}
+ function startEdit(e:CalendarEvent){setDraft({title:e.title,description:e.description,startsAt:localInput(e.startsAt),endsAt:localInput(e.endsAt),allDay:e.allDay,type:e.type,status:e.status,contactId:e.contactId||"",dealId:e.dealId||""});setEditing(e.id);setShow(true);setError("");setNotice("")}
+ function navigate(direction:number){setAnchor(d=>{const x=new Date(d);if(view==="month")x.setMonth(x.getMonth()+direction,1);else x.setDate(x.getDate()+direction*(view==="week"?7:1));return x})}
+ async function save(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");try{
+  const body={...draft,startsAt:new Date(draft.startsAt).toISOString(),endsAt:new Date(draft.endsAt).toISOString(),contactId:draft.contactId||null,dealId:draft.dealId||null};
+  const r=await fetch("/api/calendar-events",{method:editing?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(editing?{...body,id:editing}:body)});
+  const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||"Could not save event.");
+  setShow(false);setNotice(editing?"Event updated.":"Event added to your calendar.");await load();
+ }catch(e){setError(e instanceof Error?e.message:"Could not save event.")}finally{setBusy(false)}}
+ async function remove(){if(!editing||!confirm("Delete this calendar event?"))return;setBusy(true);try{const r=await fetch("/api/calendar-events",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:editing})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||"Could not delete event.");setShow(false);setNotice("Event deleted.");await load()}catch(e){setError(e instanceof Error?e.message:"Could not delete event.")}finally{setBusy(false)}}
+ async function changeStatus(e:CalendarEvent,status:EventStatus){const r=await fetch("/api/calendar-events",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:e.id,status})});if(!r.ok){setError("Could not update event status.");return}setEvents(old=>old.map(x=>x.id===e.id?{...x,status}:x))}
+ return <main className="calendar-page">
+  <header className="calendar-header"><div><div className="calendar-eyebrow">CINDER / PLAN & EXECUTE</div><h1>Calendar<span>.</span></h1><p>Your meetings, calls, focus blocks, and task deadlines in one view.</p></div><button className="calendar-primary" onClick={()=>startNew(anchor)}>＋ New event</button></header>
+  {error&&<div className="calendar-alert" role="alert">{error}<button onClick={()=>setError("")}>Dismiss</button></div>}{notice&&<p className="calendar-notice" role="status">{notice}</p>}
+  <section className="calendar-shell">
+   <div className="calendar-toolbar"><div className="calendar-nav"><button onClick={()=>navigate(-1)} aria-label="Previous period">‹</button><button onClick={()=>setAnchor(new Date())}>Today</button><button onClick={()=>navigate(1)} aria-label="Next period">›</button><h2>{title}</h2></div><div className="calendar-toolbar-right"><div className="calendar-views">{(["month","week","day"] as View[]).map(v=><button key={v} className={view===v?"selected":""} onClick={()=>setView(v)}>{v[0].toUpperCase()+v.slice(1)}</button>)}</div><input aria-label="Jump to date" type="date" value={dateKey(anchor)} onChange={e=>{if(e.target.value){const [y,m,d]=e.target.value.split("-").map(Number);setAnchor(new Date(y,m-1,d))}}}/></div></div>
+   <div className={"calendar-grid calendar-"+(view==="day"?"day-view":view)}>
+    {view==="month"&&["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d=><div className="calendar-weekday" key={d}>{d}</div>)}
+    {days.map(day=>{const dayEvents=eventsOn(day);const dayTasks=tasksOn(day);const outside=view==="month"&&day.getMonth()!==anchor.getMonth();return <section key={dateKey(day)} className={"calendar-day"+(outside?" outside":"")+(dateKey(day)===dateKey(new Date())?" is-today":"")}><button className="calendar-day-number" onClick={()=>{setAnchor(day);setView("day")}} aria-label={"View "+dateKey(day)}><span>{day.getDate()}</span>{view!=="month"&&<small>{day.toLocaleDateString(undefined,{weekday:"short"})}</small>}</button><div className="calendar-day-items">{dayEvents.map(ev=><button key={ev.id} className={"calendar-event event-"+ev.type+(ev.status==="cancelled"?" event-cancelled":"")} onClick={()=>startEdit(ev)} title={ev.title+" · "+eventTime(ev)}><span className="calendar-event-time">{eventTime(ev)}</span><span className="calendar-event-title">{ev.title}</span></button>)}{dayTasks.map(t=><a key={"task-"+t.id} className={"calendar-task task-"+t.priority} href="/crm/tasks" title={"Task deadline: "+t.title}><span>✓</span><span>{t.title}</span></a>)}{view!=="month"&&dayEvents.length===0&&dayTasks.length===0&&<div className="calendar-empty-day">Nothing scheduled</div>}</div><button className="calendar-add-day" onClick={()=>startNew(day)} aria-label={"Add event on "+dateKey(day)}>＋ Add</button></section>})}
+   </div>
+   <footer className="calendar-legend"><span><i className="legend-meeting"/> Meetings</span><span><i className="legend-call"/> Calls</span><span><i className="legend-focus"/> Focus time</span><span><i className="legend-personal"/> Personal</span><span><i className="legend-task"/> Task deadline</span><span className="calendar-legend-note">Select an event to edit · Select a date to open day view</span></footer>
+  </section>
+  <section className="calendar-bottom"><div><h3>Upcoming</h3><p>Scheduled items in this view, ordered by start time.</p></div><div className="calendar-upcoming-list">{events.filter(e=>e.status!=="cancelled").sort((a,b)=>a.startsAt.localeCompare(b.startsAt)).slice(0,5).map(e=><button key={e.id} onClick={()=>startEdit(e)}><span className={"upcoming-dot event-"+e.type}/><span className="upcoming-copy"><strong>{e.title}</strong><small>{new Date(e.startsAt).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}{e.contactName?" · "+e.contactName:""}</small></span><span className="upcoming-type">{typeLabels[e.type]}</span></button>)}{!loading&&events.length===0&&<p className="calendar-empty-upcoming">No events in this view yet. Add a meeting, call, or focus block to get started.</p>}{loading&&<p className="calendar-empty-upcoming">Loading calendar…</p>}</div></section>
+  {show&&<div className="calendar-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShow(false)}}><section className="calendar-modal" role="dialog" aria-modal="true" aria-labelledby="calendar-form-title"><header><div><div className="calendar-eyebrow">{editing?"UPDATE EVENT":"ADD TO YOUR CALENDAR"}</div><h2 id="calendar-form-title">{editing?"Edit event":"New event"}</h2></div><button className="calendar-close" onClick={()=>setShow(false)} aria-label="Close">×</button></header><form onSubmit={save}><label className="calendar-field">Title *<input required maxLength={240} autoFocus value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})} placeholder="e.g. Discovery call with prospect"/></label><label className="calendar-field">Notes<textarea rows={3} maxLength={5000} value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})} placeholder="Agenda, context, or desired outcome"/></label><div className="calendar-form-grid"><label className="calendar-field">Type<select value={draft.type} onChange={e=>setDraft({...draft,type:e.target.value as EventType})}>{Object.entries(typeLabels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><label className="calendar-field">Status<select value={draft.status} onChange={e=>setDraft({...draft,status:e.target.value as EventStatus})}><option value="scheduled">Scheduled</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label><label className="calendar-field">Starts *<input type="datetime-local" required value={draft.startsAt} onChange={e=>setDraft({...draft,startsAt:e.target.value})}/></label><label className="calendar-field">Ends *<input type="datetime-local" required min={draft.startsAt} value={draft.endsAt} onChange={e=>setDraft({...draft,endsAt:e.target.value})}/></label><label className="calendar-check"><input type="checkbox" checked={draft.allDay} onChange={e=>{const allDay=e.target.checked;if(allDay&&draft.startsAt){const start=new Date(draft.startsAt);start.setHours(0,0,0,0);const end=new Date(start);end.setDate(end.getDate()+1);setDraft({...draft,allDay,startsAt:atLocalInput(start),endsAt:atLocalInput(end)})}else setDraft({...draft,allDay})}}/> All-day event</label><label className="calendar-field calendar-field-wide">Related contact<select value={draft.contactId} onChange={e=>setDraft({...draft,contactId:e.target.value})}><option value="">No linked contact</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.name}{c.company?" — "+c.company:""}</option>)}</select></label><label className="calendar-field calendar-field-wide">Related deal<select value={draft.dealId} onChange={e=>setDraft({...draft,dealId:e.target.value})}><option value="">No linked deal</option>{deals.map(d=><option key={d.id} value={d.id}>{d.title}{d.company?" — "+d.company:""}</option>)}</select></label></div><footer>{editing&&<button type="button" className="calendar-delete" disabled={busy} onClick={()=>void remove()}>Delete event</button>}<span/><button type="button" className="calendar-secondary" onClick={()=>setShow(false)}>Cancel</button><button type="submit" className="calendar-primary" disabled={busy}>{busy?"Saving…":editing?"Save changes":"Create event"}</button></footer></form></section></div>}
+ </main>;
+}
