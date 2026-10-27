@@ -118,9 +118,9 @@ export default function PreparationPage(){
   catch{setError("Clipboard access is unavailable. Open the artifact to copy its content manually.");}
  }
 
- return <main style={{maxWidth:1180,margin:"0 auto",padding:"28px 22px 56px",color:"#252522"}}>
+ return <main className="preparation-page" style={{maxWidth:1180,margin:"0 auto",padding:"28px 22px 56px",color:"#202b3a"}}>
   <header style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:18,flexWrap:"wrap"}}>
-   <div><div style={{fontSize:10,letterSpacing:2,color:"#a95335",fontWeight:700}}>CINDER / PREPARATION</div><h1 style={{fontSize:"clamp(32px,5vw,46px)",letterSpacing:"-1.6px",margin:"8px 0"}}>Research & preparation<span style={{color:"#bd5a36"}}>.</span></h1><p style={{maxWidth:720,color:"#777",lineHeight:1.6,margin:0}}>Keep source-backed research, call briefs, meeting briefs, follow-up drafts, and reviewable proposal drafts connected to the right prospect, deal, or calendar event.</p></div>
+   <div><div style={{fontSize:10,letterSpacing:2,color:"#7b8491",fontWeight:700}}>CINDER / PREPARATION</div><h1 style={{fontSize:"clamp(32px,5vw,46px)",letterSpacing:"-.7px",margin:"8px 0",fontFamily:'Georgia, "Times New Roman", serif',fontWeight:600}}>Research & preparation<span style={{color:"#9a7a45"}}>.</span></h1><p style={{maxWidth:720,color:"#777",lineHeight:1.6,margin:0}}>Keep source-backed research, call briefs, meeting briefs, follow-up drafts, and reviewable proposal drafts connected to the right prospect, deal, or calendar event.</p></div>
    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><Link href="/crm/outreach" style={{...buttonStyle,textDecoration:"none"}}>Outreach queue ↗</Link><Link href="/crm/calendar" style={{...buttonStyle,textDecoration:"none"}}>Calendar ↗</Link><button onClick={()=>newArtifact("proposal_draft")} style={buttonStyle}>＋ Proposal draft</button><button onClick={()=>newArtifact()} style={{...buttonStyle,background:"#282824",color:"#fff",borderColor:"#282824"}}>＋ New preparation</button></div>
   </header>
   <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:10,margin:"24px 0"}}>
