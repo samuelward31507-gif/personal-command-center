@@ -34,6 +34,41 @@ function HomeContent() {
  const searchParams = useSearchParams();
  const requestedView = searchParams.get("view");
  const [activeView, setActiveView] = useState("home");
+ const [commandQuery, setCommandQuery] = useState("");
+ const [commandContacts, setCommandContacts] = useState<Array<{id:string;name:string;company?:string;email?:string;status?:string;location?:string}>>([]);
+ const [commandLoading, setCommandLoading] = useState(false);
+ const [commandError, setCommandError] = useState("");
+ const [commandOpen, setCommandOpen] = useState(false);
+ useEffect(() => {
+  const onKeyDown = (event: KeyboardEvent) => {
+   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+    event.preventDefault(); setCommandOpen(true);
+    window.setTimeout(() => document.getElementById("cinder-command-search")?.focus(), 0);
+   }
+   if (event.key === "Escape") setCommandOpen(false);
+  };
+  window.addEventListener("keydown", onKeyDown);
+  return () => window.removeEventListener("keydown", onKeyDown);
+ }, []);
+ useEffect(() => {
+  const query = commandQuery.trim().toLowerCase();
+  if (!query) { setCommandContacts([]); setCommandError(""); setCommandLoading(false); return; }
+  let active = true;
+  setCommandLoading(true); setCommandError("");
+  fetch("/api/contacts", {cache:"no-store"}).then(async response => {
+   if (!response.ok) throw new Error(response.status === 401 ? "Sign in to search your contacts." : "Contacts could not be searched.");
+   return response.json();
+  }).then(data => {
+   if (!active) return;
+   const contacts = Array.isArray(data.contacts) ? data.contacts : [];
+   setCommandContacts(contacts.filter((contact:{name?:string;company?:string;email?:string;location?:string;instagramUrl?:string;facebookUrl?:string}) =>
+    [contact.name,contact.company,contact.email,contact.location,contact.instagramUrl,contact.facebookUrl].some(value => String(value||"").toLowerCase().includes(query))
+   ).slice(0,8));
+  }).catch(error => { if (active) {setCommandContacts([]);setCommandError(error instanceof Error?error.message:"Search unavailable.");} })
+   .finally(() => {if(active)setCommandLoading(false)});
+  return () => {active=false};
+ }, [commandQuery]);
+
  useEffect(() => {
   const allowed = ["schedule","needs-you","growth","tasks","workforce","projects","client-success","finance","intelligence","strategy","settings"];
   setActiveView(requestedView && allowed.includes(requestedView) ? requestedView : "home");
@@ -127,7 +162,19 @@ function HomeContent() {
     <section className="surface-panel schedule-panel"><div className="panel-heading"><div><h2>Today’s agenda</h2><p>Real calendar events and task deadlines for today.</p></div><button className="text-action" onClick={()=>navigate("calendar")}>Open calendar →</button></div>{agendaError&&<p className="local-note" role="status">{agendaError}</p>}<div className="schedule-list">{[...todayEvents.filter(e=>e.status!=="cancelled").map(e=>({id:"event:"+e.id,title:e.title,time:e.allDay?"All day":new Date(e.startsAt).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}),sortAt:e.allDay?-1:new Date(e.startsAt).getTime(),detail:[e.contactName,e.dealTitle].filter(Boolean).join(" · "),kind:"Calendar event"})),...todayTasks.map(t=>({id:"task:"+t.id,title:t.title,time:t.dueAt?new Date(t.dueAt).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}):"Today",sortAt:t.dueAt?new Date(t.dueAt).getTime():Number.MAX_SAFE_INTEGER,detail:t.priority==="urgent"?"Urgent task":t.priority==="high"?"High priority task":"Task deadline",kind:"Task"}))].sort((a,b)=>a.sortAt-b.sortAt).map(item=><div className="schedule-row" key={item.id}><span className="schedule-time">{item.time}</span><div className="schedule-description"><strong>{item.title}</strong><small>{item.detail||item.kind}</small></div><span className="schedule-category">{item.kind}</span></div>)}{!agendaError&&todayEvents.filter(e=>e.status!=="cancelled").length===0&&todayTasks.length===0&&<p className="local-note">Nothing scheduled yet. Add a meeting or focus block in your calendar.</p>}</div></section>
     <section className="surface-panel schedule-panel"><div className="panel-heading"><div><h2>Daily schedule</h2><p>Check off blocks as you complete them. This is your editable starting routine.</p></div><button className="text-action" onClick={()=>setDone(old=>old.filter(x=>!x.startsWith("routine:")))}>Reset day</button></div><div className="schedule-list">{routine.map((block,i)=><div className={completed("routine:"+i)?"schedule-row is-done":"schedule-row"} key={block.title}><button className="check-button" aria-label={completed("routine:"+i)?"Mark incomplete":"Mark complete"} onClick={()=>toggle("routine:"+i)}>{completed("routine:"+i)?"✓":""}</button><span className="schedule-time">{block.time}</span><div className="schedule-description"><strong>{block.title}</strong><small>{block.detail}</small></div><span className="schedule-category">{block.category}</span></div>)}</div></section>
     <section className="surface-panel notes-panel"><div className="panel-heading"><div><h2>Daily notes</h2><p>Capture outcomes, reminders, and tomorrow's first move.</p></div></div><textarea value={dailyNotes} onChange={e=>setDailyNotes(e.target.value)} placeholder="What matters today? Who needs a follow-up? What did you learn?" rows={4}/><div className="daily-plan-save"><p className="local-note">Your notes and checked-off blocks are saved by date in your private workspace.</p><div className="daily-plan-save-row"><span role="status">{planMessage}</span><button className="text-action" onClick={()=>void saveDailyPlan()} disabled={planSaving}>{planSaving?"Saving…":"Save daily plan"}</button></div></div></section>
-   </div> : activeView==="home" ? <div className="page-content">
+   </div> : activeView==="home" ? <div className="command-home">
+    <div className="command-home-inner">
+     <div className="command-greeting"><div className="command-kicker"><span className="command-spark">✳</span> YOUR AGENCY WORKSPACE</div><h1>What are we working on<span className="heading-period">?</span></h1><p>Search your CRM, find your next move, or put Hermes to work.</p></div>
+     <div className="command-search-wrap">
+      <div className="command-search-box"><span className="command-search-icon" aria-hidden="true">⌕</span><input id="cinder-command-search" value={commandQuery} onChange={event=>setCommandQuery(event.target.value)} onFocus={()=>setCommandOpen(true)} placeholder="Search contacts, companies, deals, or ask Hermes…" aria-label="Search Cinder" autoComplete="off"/><kbd>⌘ K</kbd><button aria-label="Search" onClick={()=>setCommandOpen(true)}>↑</button></div>
+      {(commandQuery.trim() || commandOpen) && <div className="command-results">
+       {commandQuery.trim() ? <><div className="command-results-label">CONTACTS</div>{commandLoading?<div className="command-empty">Searching your CRM…</div>:commandError?<div className="command-empty">{commandError}</div>:commandContacts.length ? commandContacts.map(contact=><button className="command-result" key={contact.id} onClick={()=>window.location.assign("/crm")}><span className="command-result-avatar">{(contact.name||contact.company||"?").slice(0,1).toUpperCase()}</span><span className="command-result-copy"><strong>{contact.name||contact.company||"Unnamed contact"}</strong><small>{[contact.company,contact.email,contact.location].filter(Boolean).join(" · ")}</small></span><span className="command-result-status">{contact.status||"Contact"}</span></button>):<div className="command-empty">No matching contacts found. Try a company name, email, or location.</div>}</>:
+       <><div className="command-results-label">QUICK ACTIONS</div><button className="command-result" onClick={()=>window.location.assign("/crm")}><span className="command-action-icon">⌕</span><span className="command-result-copy"><strong>Open contacts</strong><small>Search and manage your prospect database</small></span><span className="command-result-status">↗</span></button><button className="command-result" onClick={()=>window.location.assign("/crm/outreach")}><span className="command-action-icon">↗</span><span className="command-result-copy"><strong>Review today's outreach</strong><small>See the next actions in your prospecting queue</small></span><span className="command-result-status">↗</span></button><button className="command-result" onClick={()=>window.location.assign("/crm/tasks")}><span className="command-action-icon">✓</span><span className="command-result-copy"><strong>Review tasks</strong><small>Follow-ups, priorities, and due work</small></span><span className="command-result-status">↗</span></button><button className="command-result" onClick={()=>window.location.assign("/crm/pipeline")}><span className="command-action-icon">▥</span><span className="command-result-copy"><strong>Open sales pipeline</strong><small>Meetings, opportunities, and deals</small></span><span className="command-result-status">↗</span></button></>}
+      </div>}
+      <div className="command-suggestions"><button onClick={()=>{setCommandQuery("follow-up");setCommandOpen(true)}}>Who needs a follow-up?</button><button onClick={()=>window.location.assign("/crm/pipeline")}>Open pipeline</button><button onClick={()=>window.location.assign("/crm/tasks")}>Today's priorities</button><button onClick={()=>window.location.assign("/crm/workforce")}>Ask Hermes <span>↗</span></button></div>
+     </div>
+     <div className="command-bottom"><span><i/> CINDER WORKSPACE</span><span>Search first. Execute with intention.</span></div>
+    </div>
     <div className="welcome-row"><div><div className="eyebrow"><span className="eyebrow-line"/> AGENCY OPERATING SYSTEM</div><h1>Run your day. Move business forward<span className="heading-period">.</span></h1><p className="page-subtitle">Your schedule, relationships, follow-ups, and next actions in one place.</p></div><div className="home-quick-actions"><button className="date-chip clickable-chip" onClick={()=>navigate("schedule")}>View today's schedule →</button><button className="date-chip clickable-chip" onClick={()=>window.location.assign("/crm/tasks")}>Open tasks →</button></div></div>
     <section className="attention-banner"><div className="attention-icon"><I>▤</I></div><div className="attention-copy"><div className="section-kicker">TODAY'S FOCUS</div><h2>Revenue first. Relationships never go cold.</h2><p>Protect your routine, contact the right people, and make every important conversation lead to a next step.</p></div></section>
     <div className="section-heading-row"><div><h2>Your operating system</h2><p>Choose where to focus next.</p></div><span className="section-note">FOUNDATION MODE</span></div>
