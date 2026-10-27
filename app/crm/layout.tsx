@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import "./crm-shell.css";
@@ -47,6 +47,7 @@ function CrmLayoutContent({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const view = searchParams.get("view") || "";
   const title = pageTitle(pathname, view);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   return (
     <div className="app-shell crm-app-shell">
       <aside className="sidebar">
@@ -58,7 +59,7 @@ function CrmLayoutContent({ children }: { children: React.ReactNode }) {
         <nav className="primary-nav" aria-label="Agency operations">
           {mainLinks.map(item => {
             const active = item.match(pathname, view);
-            return <Link key={item.label} href={item.href} aria-current={active ? "page" : undefined} className={"nav-item" + (active ? " active" : "")}><span className="glyph" aria-hidden="true">{item.icon}</span><span>{item.label}</span></Link>;
+            return <Link key={item.label} href={item.href} aria-current={active ? "page" : undefined} onClick={() => setMobileNavOpen(false)} className={"nav-item" + (active ? " active" : "")}><span className="glyph" aria-hidden="true">{item.icon}</span><span>{item.label}</span></Link>;
           })}
         </nav>
         <div className="sidebar-divider"/>
