@@ -90,7 +90,7 @@ function CrmLayoutContent({ children }: { children: React.ReactNode }) {
         <nav className="primary-nav" aria-label="Planning and settings">
           {secondaryLinks.map(item => {
             const active = item.match(pathname, view);
-            return <Link key={item.label} href={item.href} aria-current={active ? "page" : undefined} className={"nav-item" + (active ? " active" : "")}><span className="glyph" aria-hidden="true">{item.icon}</span><span>{item.label}</span></Link>;
+            return <Link key={item.label} href={item.href} aria-current={active ? "page" : undefined} className={"nav-item" + (active ? " active" : "")}><span className="glyph"><NavIcon name={item.icon}/></span><span>{item.label}</span></Link>;
           })}
         </nav>
         <div className="sidebar-bottom">
