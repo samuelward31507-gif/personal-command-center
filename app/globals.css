@@ -281,3 +281,26 @@ h1 { font-family:var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFon
 .cal-home-footer span:first-child { display:flex; align-items:center; gap:7px; }
 .cal-home-footer i { width:6px; height:6px; display:inline-block; border-radius:50%; background:#dedede; }
 @media(max-width:650px){.cal-home{padding:28px 16px 18px}.cal-home-actions{grid-template-columns:1fr;margin-top:30px}.cal-home-actions button{display:grid;grid-template-columns:30px 1fr;column-gap:10px;align-items:center}.cal-home-actions button>span{grid-row:span 2}.cal-home-actions small{grid-column:2}.cal-home-footer{font-size:8px}}
+
+/* Cinder dark mode — persistent app-wide theme */
+:root { color-scheme: dark; --background:#0b0b0d; --foreground:#f4f4f5; --muted:#8c8c95; --line:#29292e; --panel:#141417; --accent:#d6a98c; }
+html, body { background:#0b0b0d !important; color:#f4f4f5 !important; }
+.app-shell, .main-content, .page-content, .route-page, .content-area, main { background:#0b0b0d !important; color:#f4f4f5; }
+.sidebar { background:#101013 !important; border-color:#29292e !important; color:#f4f4f5; }
+.workspace-switcher, .sidebar-search, .nav-item, .sidebar-nav a, .sidebar-footer, .profile-menu { background:#141417 !important; border-color:#29292e !important; color:#b9b9c2 !important; }
+.brand-mark { background:#e8e8ea !important; } .brand-mark span { border-color:#111114 !important; }
+.workspace-avatar, .profile-avatar { background:#27242d !important; color:#d8c4ff !important; }
+input, textarea, select { background:#141417 !important; color:#f4f4f5 !important; border-color:#34343b !important; }
+input::placeholder, textarea::placeholder { color:#777781 !important; }
+button { color:inherit; }
+button:not(.cal-home-submit):not(.primary-button):not(.btn-primary) { border-color:#303036; }
+.cal-home { background:#0b0b0d !important; color:#f4f4f5 !important; }
+.cal-home h1, .cal-home h2, .cal-home strong, .cal-home-title { color:#f4f4f5 !important; }
+.cal-home p, .cal-home small, .cal-home-footer, .cal-home-actions small { color:#8e8e98 !important; }
+.cal-home-search, .cal-home-actions button { background:#141417 !important; border-color:#303036 !important; color:#f4f4f5 !important; }
+.cal-home-search input { background:transparent !important; border:0 !important; }
+.cal-home-actions button:hover { background:#1b1b20 !important; border-color:#494950 !important; }
+.card, .panel, .stat-card, .table-wrap, .modal, .dropdown-menu, .empty-state { background:#141417 !important; border-color:#29292e !important; color:#f4f4f5 !important; }
+table, th, td, .table-row, .list-row { border-color:#29292e !important; }
+.muted, .text-muted, small { color:#90909a; }
+@media(max-width:760px){ .sidebar { background:#101013 !important; } }
