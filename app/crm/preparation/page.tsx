@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ArtifactType = "prospect_research" | "call_brief" | "audit_prep" | "meeting_brief" | "follow_up_draft";
 type ArtifactStatus = "draft" | "reviewed" | "archived";
@@ -28,6 +29,11 @@ const fieldStyle={display:"grid",gap:6,fontSize:12,color:"#555",fontWeight:600} 
 const buttonStyle={border:"1px solid #dedbd4",borderRadius:9,padding:"9px 12px",background:"#fff",color:"#292925",cursor:"pointer",font:"inherit",fontSize:12,fontWeight:600} as const;
 
 export default function PreparationPage(){
+ const searchParams=useSearchParams();
+ const prefillHandled=useRef(false);
+ const prefillEventId=searchParams.get("event")||"";
+ const prefillContactId=searchParams.get("contact")||"";
+ const prefillType=(searchParams.get("type")||"") as ArtifactType;
  const [artifacts,setArtifacts]=useState<Artifact[]>([]);
  const [contacts,setContacts]=useState<Contact[]>([]);
  const [deals,setDeals]=useState<Deal[]>([]);
@@ -57,6 +63,27 @@ export default function PreparationPage(){
   finally{setLoading(false);}
  },[]);
  useEffect(()=>{void load()},[load]);
+
+ useEffect(()=>{
+  if(prefillHandled.current||loading||(!prefillEventId&&!prefillContactId))return;
+  const allowedTypes:ArtifactType[]=["prospect_research","call_brief","audit_prep","meeting_brief","follow_up_draft"];
+  const type=allowedTypes.includes(prefillType)?prefillType:(prefillEventId?"meeting_brief":"call_brief");
+  const event=events.find(e=>e.id===prefillEventId);
+  const contact=contacts.find(c=>c.id===prefillContactId)||contacts.find(c=>c.id===event?.contactId);
+  if(prefillEventId&&!event)return;
+  prefillHandled.current=true;
+  const title=type==="meeting_brief"&&event?"Meeting brief — "+event.title:type==="call_brief"&&contact?"Call brief — "+(contact.company||contact.name):type==="prospect_research"&&contact?"Prospect research — "+(contact.company||contact.name):"New preparation brief";
+  const template=type==="meeting_brief"
+   ? "MEETING OBJECTIVE\n- What outcome should this meeting produce?\n\nCONTEXT TO VERIFY\n- What do we know from saved, source-backed research?\n- What is still an assumption?\n\nAGENDA\n1. Confirm their current process and goals\n2. Quantify the business impact of the problem\n3. Explore fit, constraints, and decision process\n4. Agree on a clear next step\n\nDISCOVERY QUESTIONS\n- How are new leads handled today?\n- Where do opportunities get delayed or lost?\n- What would improving this be worth?\n- Who else is involved in the decision?\n\nNEXT STEP\n- Record owner, action, and date."
+   : type==="call_brief"
+   ? "CALL OBJECTIVE\n- Secure a relevant 20–30 minute meeting; do not try to close on the first cold call.\n\nOPENING\n- Introduce yourself and the reason for the call in one sentence.\n- Ask one relevant question tied to a verified fact.\n\nDISCOVERY\n- How do new inquiries get handled today?\n- What happens when a lead does not answer or book?\n- Is this an active priority?\n\nHYPOTHESES TO TEST\n- Keep unverified pain points labelled as hypotheses.\n\nNEXT STEP\n- Log the result and schedule a specific follow-up if needed."
+   : "RESEARCH GOAL\n- Identify the decision maker, service focus, and relevant operational context.\n\nVERIFIED FACTS\n- Add only facts supported by the source URLs below.\n\nHYPOTHESES TO TEST\n- Label possible bottlenecks as hypotheses, not facts.\n\nNEXT ACTION\n- Define a relevant call opener and one clear meeting objective.";
+  setEditing(null);
+  setDraft({...blank,type,title,contactId:contact?.id||prefillContactId,dealId:event?.dealId||"",calendarEventId:event?.id||"",content:template});
+  setShowEditor(true);
+  setError("");
+  setNotice("");
+ },[loading,prefillEventId,prefillContactId,prefillType,events,contacts]);
 
  const visible=useMemo(()=>artifacts.filter(a=>(filter==="all"||a.status===filter)&&[a.title,a.content,a.contactName,a.company,a.dealTitle,a.eventTitle,a.type,...a.verifiedFacts,...a.hypotheses].join(" ").toLowerCase().includes(query.trim().toLowerCase())),[artifacts,filter,query]);
  const reviewed=artifacts.filter(a=>a.status==="reviewed").length;
