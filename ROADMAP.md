@@ -22,6 +22,7 @@
 - [x] My Day already has a revenue-action list for due outreach and standalone contact follow-ups, with duplicate follow-ups filtered when a contact has an active outreach sequence.
 - [x] Added source-level regression guards for My Day revenue actions, duplicate follow-up filtering, SMS consent, and sequence stop conditions.
 - [x] Added initial Cal.ai/Cal.com booking-sync implementation: setup page, HMAC-SHA256-verified webhook endpoint, booking create/reschedule/cancel/meeting-ended handling, and an additive migration for provider IDs and webhook event tracking.
+- [x] Corrected webhook parsing for Cal.com's documented nested booking-event payloads while retaining the flat `MEETING_ENDED` shape; rescheduling now updates the original Cinder calendar row to the new provider UID instead of leaving a stale meeting beside a duplicate. Added unit and source-level regression coverage; CI is running for these changes and is not yet confirmed green.
 - [ ] Apply migration through the release process, configure `CAL_AI_WEBHOOK_SECRET`, configure the Cal.com webhook and Cal.ai workflows, and run an end-to-end test booking. The integration is **not live or verified yet**.
 - [ ] Run `npm test`, lint, TypeScript/build checks and authenticated end-to-end tests. Repository source is available, but these checks have not been executed in this session.
 - [ ] Verify sign-in and core pages against the newest deployed commit; the last known successful preview was an earlier commit, and newer changes are still building/queued.
