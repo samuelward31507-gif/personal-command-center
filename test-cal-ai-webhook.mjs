@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { validCalAiDate, verifyCalAiSignature } from "./lib/cal-ai-webhook.ts";
+import { unwrapCalAiPayload, validCalAiDate, verifyCalAiSignature } from "./lib/cal-ai-webhook.ts";
 
 const secret = "test-only-secret";
 const body = JSON.stringify({
@@ -21,4 +21,30 @@ assert.equal(validCalAiDate("2026-10-28T16:00:00.000Z"), true, "valid ISO timest
 assert.equal(validCalAiDate("not-a-date"), false, "invalid timestamps are rejected");
 assert.equal(validCalAiDate(""), false, "empty timestamps are rejected");
 
-console.log("Cal.ai webhook validation tests passed (9 assertions).");
+const nested = unwrapCalAiPayload({
+  triggerEvent: "BOOKING_RESCHEDULED",
+  createdAt: "2026-10-27T12:00:00.000Z",
+  payload: {
+    uid: "booking-new",
+    rescheduleUid: "booking-old",
+    startTime: "2026-10-29T16:00:00.000Z",
+    endTime: "2026-10-29T16:30:00.000Z",
+    attendees: [{ email: "prospect@example.com" }],
+  },
+});
+assert.equal(nested?.triggerEvent, "BOOKING_RESCHEDULED", "nested webhook keeps the envelope trigger");
+assert.equal(nested?.uid, "booking-new", "nested webhook unwraps booking UID");
+assert.equal(nested?.rescheduleUid, "booking-old", "nested webhook keeps the original UID for rescheduling");
+assert.equal((nested?.attendees as Array<{ email: string }>)[0].email, "prospect@example.com", "nested webhook unwraps attendee data");
+
+const flat = unwrapCalAiPayload({
+  triggerEvent: "MEETING_ENDED",
+  uid: "booking-flat",
+  startTime: "2026-10-28T16:00:00.000Z",
+});
+assert.equal(flat?.triggerEvent, "MEETING_ENDED", "flat meeting-ended payload remains supported");
+assert.equal(flat?.uid, "booking-flat", "flat payload fields remain intact");
+assert.equal(unwrapCalAiPayload(null), null, "null payload is rejected");
+assert.equal(unwrapCalAiPayload([]), null, "array payload is rejected");
+
+console.log("Cal.ai webhook validation tests passed (16 assertions).");
