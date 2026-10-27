@@ -1,4 +1,4 @@
-import { unwrapCalAiPayload, verifyCalAiSignature, validCalAiDate } from "@/lib/cal-ai-webhook";
+import { unwrapCalAiPayload, validCalAiEmail, verifyCalAiSignature, validCalAiDate } from "@/lib/cal-ai-webhook";
 import { neon } from "@neondatabase/serverless";
 
 export const runtime = "nodejs";
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     const sql = db();
     const attendeeEmails = personList(payload.attendees)
       .map((person) => text(person.email, 320).toLowerCase())
-      .filter((email) => /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email));
+      .filter(validCalAiEmail);
     let contact: { id: string; owner_id: string } | undefined;
     for (const email of attendeeEmails) {
       const rows = await sql`
