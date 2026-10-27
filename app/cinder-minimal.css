@@ -255,3 +255,82 @@ textarea:focus-visible, select:focus-visible {
   .lower-grid { grid-template-columns: 1fr; }
   .cal-home { padding: 28px 16px 18px; }
 }
+
+
+/* FOLLOW-UP: remove the inset focus slab from the Home command field. */
+.cal-command-bar { overflow:hidden; }
+.cal-command-bar input,
+.cal-command-bar input:hover,
+.cal-command-bar input:focus,
+.cal-command-bar input:focus-visible,
+.cal-command-bar input:active {
+  background:transparent!important;
+  background-color:transparent!important;
+  box-shadow:none!important;
+  outline:0!important;
+  border:0!important;
+  border-radius:0!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+}
+.cal-command-bar:focus-within { background:#171717!important; }
+.cal-command-bar button { flex:0 0 32px; }
+
+/* Consistent charcoal summary tiles and tab/filter strips across unfinished workspace pages.
+   Calendar is intentionally excluded because its current appearance was approved. */
+main:not(.calendar-page) .schedule-summary > div,
+main:not(.calendar-page) .needs-stats > div,
+main:not(.calendar-page) [class*="summary"] > div,
+main:not(.calendar-page) [class*="Summary"] > div,
+main:not(.calendar-page) [class*="stat-card"],
+main:not(.calendar-page) [class*="StatCard"],
+main:not(.calendar-page) [class*="metric"],
+main:not(.calendar-page) [class*="Metric"],
+main:not(.calendar-page) [class*="stat"],
+main:not(.calendar-page) [class*="Stat"] {
+  background:#171717!important;
+  background-image:none!important;
+  color:#dedede!important;
+  border-color:#303030!important;
+  box-shadow:none!important;
+}
+main:not(.calendar-page) .summary-label,
+main:not(.calendar-page) [class*="summary"] small,
+main:not(.calendar-page) [class*="Summary"] small,
+main:not(.calendar-page) [class*="stat"] small,
+main:not(.calendar-page) [class*="Stat"] small,
+main:not(.calendar-page) [class*="metric"] small,
+main:not(.calendar-page) [class*="Metric"] small {
+  color:#a0a0a0!important;
+}
+main:not(.calendar-page) .schedule-summary strong,
+main:not(.calendar-page) [class*="summary"] strong,
+main:not(.calendar-page) [class*="Summary"] strong,
+main:not(.calendar-page) [class*="stat"] strong,
+main:not(.calendar-page) [class*="Stat"] strong,
+main:not(.calendar-page) [class*="metric"] strong,
+main:not(.calendar-page) [class*="Metric"] strong {
+  color:#f0f0f0!important;
+}
+main:not(.calendar-page) [class*="tab"],
+main:not(.calendar-page) [class*="Tab"],
+main:not(.calendar-page) [role="tablist"],
+main:not(.calendar-page) [role="tab"],
+main:not(.calendar-page) [class*="filter"],
+main:not(.calendar-page) [class*="Filter"] {
+  background-color:#141414!important;
+  background-image:none!important;
+  color:#cfcfcf!important;
+  border-color:#303030!important;
+  box-shadow:none!important;
+}
+main:not(.calendar-page) [role="tab"][aria-selected="true"],
+main:not(.calendar-page) [role="tab"][data-state="active"],
+main:not(.calendar-page) [class*="tab"][aria-selected="true"],
+main:not(.calendar-page) [class*="Tab"][aria-selected="true"],
+main:not(.calendar-page) [class*="tab"][data-state="active"],
+main:not(.calendar-page) [class*="Tab"][data-state="active"] {
+  background:#262626!important;
+  color:#f5f5f5!important;
+  border-color:#454545!important;
+}
