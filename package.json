@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types test-contact-import.mjs"
+    "test": "node --experimental-strip-types test-contact-import.mjs && node --experimental-strip-types test-cal-ai-webhook.mjs"
   },
   "dependencies": {
     "next": "16.3.8",
