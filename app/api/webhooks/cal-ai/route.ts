@@ -1,4 +1,4 @@
-import { verifyCalAiSignature, validCalAiDate } from "@/lib/cal-ai-webhook";
+import { unwrapCalAiPayload, verifyCalAiSignature, validCalAiDate } from "@/lib/cal-ai-webhook";
 import { neon } from "@neondatabase/serverless";
 
 export const runtime = "nodejs";
@@ -54,8 +54,9 @@ export async function POST(request: Request) {
   let payload: BookingPayload;
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") throw new Error("Invalid payload");
-    payload = parsed as BookingPayload;
+    const normalized = unwrapCalAiPayload(parsed);
+    if (!normalized) throw new Error("Invalid payload");
+    payload = normalized as BookingPayload;
   } catch {
     return Response.json({ error: "Invalid JSON payload." }, { status: 400 });
   }
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
     const sql = db();
     const attendeeEmails = personList(payload.attendees)
       .map((person) => text(person.email, 320).toLowerCase())
-      .filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+      .filter((email) => /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email));
     let contact: { id: string; owner_id: string } | undefined;
     for (const email of attendeeEmails) {
       const rows = await sql`
@@ -115,24 +116,49 @@ export async function POST(request: Request) {
       }
       const title = text(payload.title, 300) || "Cal.ai meeting";
       const description = text(payload.description, 3000);
-      await sql`
-        INSERT INTO public.calendar_events
-          (owner_id, title, description, starts_at, ends_at, all_day, event_type, status, contact_id, provider, provider_event_id)
-        VALUES
-          (${ownerId}, ${title}, ${description}, ${new Date(startsAt).toISOString()}::timestamptz,
-           ${new Date(endsAt).toISOString()}::timestamptz, false, 'meeting', 'scheduled',
-           ${contact?.id || null}::uuid, 'cal_ai', ${uid})
-        ON CONFLICT (owner_id, provider, provider_event_id)
-          WHERE provider IS NOT NULL AND provider_event_id IS NOT NULL
-        DO UPDATE SET
-          title = EXCLUDED.title,
-          description = EXCLUDED.description,
-          starts_at = EXCLUDED.starts_at,
-          ends_at = EXCLUDED.ends_at,
-          status = 'scheduled',
-          contact_id = COALESCE(EXCLUDED.contact_id, public.calendar_events.contact_id),
-          updated_at = now()
-      `;
+      const startsIso = new Date(startsAt).toISOString();
+      const endsIso = new Date(endsAt).toISOString();
+      const rescheduleUid = text(payload.rescheduleUid, 300);
+
+      // Cal.com assigns a new UID when a booking is rescheduled. Update the
+      // original Cinder row to the new UID first so the reschedule cannot leave
+      // a stale meeting plus a duplicate new meeting.
+      let updatedOriginal: unknown[] = [];
+      if (trigger === "BOOKING_RESCHEDULED" && rescheduleUid && rescheduleUid !== uid) {
+        updatedOriginal = await sql`
+          UPDATE public.calendar_events SET
+            title = ${title},
+            description = ${description},
+            starts_at = ${startsIso}::timestamptz,
+            ends_at = ${endsIso}::timestamptz,
+            status = 'scheduled',
+            contact_id = COALESCE(${contact?.id || null}::uuid, contact_id),
+            provider_event_id = ${uid},
+            updated_at = now()
+          WHERE owner_id = ${ownerId} AND provider = 'cal_ai' AND provider_event_id = ${rescheduleUid}
+          RETURNING id
+        `;
+      }
+      if (!updatedOriginal.length) {
+        await sql`
+          INSERT INTO public.calendar_events
+            (owner_id, title, description, starts_at, ends_at, all_day, event_type, status, contact_id, provider, provider_event_id)
+          VALUES
+            (${ownerId}, ${title}, ${description}, ${startsIso}::timestamptz,
+             ${endsIso}::timestamptz, false, 'meeting', 'scheduled',
+             ${contact?.id || null}::uuid, 'cal_ai', ${uid})
+          ON CONFLICT (owner_id, provider, provider_event_id)
+            WHERE provider IS NOT NULL AND provider_event_id IS NOT NULL
+          DO UPDATE SET
+            title = EXCLUDED.title,
+            description = EXCLUDED.description,
+            starts_at = EXCLUDED.starts_at,
+            ends_at = EXCLUDED.ends_at,
+            status = 'scheduled',
+            contact_id = COALESCE(EXCLUDED.contact_id, public.calendar_events.contact_id),
+            updated_at = now()
+        `;
+      }
     } else if (trigger === "MEETING_ENDED") {
       await sql`
         UPDATE public.calendar_events SET status = 'completed', updated_at = now()
