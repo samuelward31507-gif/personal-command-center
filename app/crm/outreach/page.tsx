@@ -48,6 +48,7 @@ export default function OutreachPage(){
   }catch{setMessage("Couldn't load outreach. Make sure you're signed in and try again.")}finally{setLoading(false)}
  }
  useEffect(()=>{void load()},[]);
+ useEffect(()=>{const contactId=new URLSearchParams(window.location.search).get("contactId");if(contactId){setSelected(contactId);setShowAdd(true)}},[]);
  const active=items.filter(x=>x.status==="active");
  const due=active.filter(x=>new Date(x.nextActionAt).getTime()<=Date.now());
  const shown=useMemo(()=>items.filter(x=>filter==="all"?x.status==="active":filter==="due"?x.status==="active"&&new Date(x.nextActionAt).getTime()<=Date.now():filter==="parked"?x.status==="parked":x.status!=="active"&&x.status!=="parked"),[items,filter]);

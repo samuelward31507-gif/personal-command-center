@@ -1,1 +1,53 @@
 .crm-app-shell{min-height:100vh;width:100%;background:var(--background)}.crm-app-shell .sidebar{position:sticky;top:0;height:100vh}.crm-brand{text-decoration:none;color:inherit}.crm-brand .cinder-mark{width:24px;height:24px;display:grid;place-items:center;flex:0 0 auto}.crm-brand .cinder-mark svg{width:26px;height:26px}.crm-brand .cinder-wordmark{font-size:19px;font-weight:720;letter-spacing:-1px}.crm-shell-main{flex:1;min-width:0}.crm-shell-main>.topbar{flex:0 0 58px}.crm-shell-main .crm-page{width:100%;max-width:1450px}.crm-back-home{text-decoration:none}.crm-shell-main .crm-topline{flex-wrap:wrap}@media(max-width:760px){.crm-app-shell .sidebar{position:sticky;top:0;height:100vh}.crm-app-shell .topbar{padding:0 12px}.crm-app-shell .topbar-actions{gap:8px}.crm-app-shell .topbar-status{display:none}.crm-shell-main .crm-page{padding:22px 12px 30px}}
+
+/* Shared premium, law-firm-inspired workspace shell */
+.crm-app-shell{background:#f4f5f7;color:#202b3a}
+.crm-app-shell .sidebar{background:#fbfbfa;border-color:#dfe3e8}
+.crm-brand .cinder-wordmark{font-family:Georgia,"Times New Roman",serif;color:#1e2b3b;letter-spacing:1.2px;font-weight:700}
+.crm-shell-main>.topbar{background:#fff;border-color:#dfe3e8}
+.crm-shell-main .topbar-status{color:#697586}
+@media(max-width:760px){.crm-app-shell .sidebar{background:#fbfbfa}}
+
+
+/* Mobile navigation: keep the premium desktop sidebar available behind a menu toggle. */
+.mobile-nav-toggle{display:none}
+.mobile-nav-backdrop{display:none}
+@media(max-width:760px){
+  .crm-app-shell .sidebar{
+    position:fixed;z-index:100;left:0;top:0;bottom:0;width:min(290px,84vw);
+    height:100dvh;min-height:0;overflow-y:auto;box-shadow:12px 0 36px rgba(18,30,46,.12);
+    transform:translateX(-105%);transition:transform .22s ease;visibility:hidden;
+    padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom));
+  }
+  .crm-app-shell.mobile-nav-open .sidebar{transform:translateX(0);visibility:visible}
+  .mobile-nav-backdrop{display:block;position:fixed;inset:0;z-index:99;border:0;padding:0;background:rgba(20,30,43,.38);touch-action:manipulation}
+  .mobile-nav-toggle{
+    display:flex;flex:0 0 36px;width:36px;height:36px;align-items:center;justify-content:center;
+    flex-direction:column;gap:4px;border:1px solid #dfe3e8;border-radius:8px;background:#fff;
+    color:#202b3a;cursor:pointer;padding:0;margin-right:10px
+  }
+  .mobile-nav-toggle span{display:block;width:15px;height:1.5px;border-radius:2px;background:currentColor}
+  .crm-shell-main>.topbar{height:58px;min-height:58px;flex-basis:58px;justify-content:flex-start;gap:0;padding:0 12px}
+  .crm-shell-main .breadcrumbs{min-width:0;flex:1;gap:7px;white-space:nowrap;overflow:hidden}
+  .crm-shell-main .breadcrumbs strong{overflow:hidden;text-overflow:ellipsis}
+  .crm-shell-main .topbar-actions{margin-left:auto}
+  .crm-shell-main .crm-back-home{padding:7px 9px}
+}
+@media(prefers-reduced-motion:reduce){.crm-app-shell .sidebar{transition:none}}
+
+
+/* Mobile drawer fix: override legacy global.css sidebar rules decisively. */
+@media (max-width:760px){
+  .crm-app-shell .mobile-nav-toggle{display:flex!important;position:relative;z-index:102;flex:0 0 40px;width:40px;height:40px;min-width:40px;min-height:40px;visibility:visible!important;opacity:1!important;}
+  .crm-app-shell .mobile-nav-toggle span{display:block!important;width:16px;height:2px;background:#202b3a!important;}
+  .crm-app-shell .sidebar{position:fixed!important;display:flex!important;flex-direction:column!important;left:0!important;top:0!important;bottom:0!important;width:min(290px,84vw)!important;max-width:84vw!important;height:100dvh!important;min-height:0!important;flex:0 0 min(290px,84vw)!important;overflow-y:auto!important;z-index:100!important;transform:translateX(-110%)!important;visibility:hidden!important;opacity:1!important;pointer-events:none!important;transition:transform .22s ease,visibility .22s ease!important;}
+  .crm-app-shell.mobile-nav-open .sidebar{transform:translateX(0)!important;visibility:visible!important;pointer-events:auto!important;}
+  .crm-app-shell .sidebar .brand-name,.crm-app-shell .sidebar .workspace-chevron,.crm-app-shell .sidebar .nav-section-label,.crm-app-shell .sidebar .nav-item span,.crm-app-shell .sidebar .sidebar-divider,.crm-app-shell .sidebar .connection-card,.crm-app-shell .sidebar .profile-copy{display:initial!important;}
+  .crm-app-shell .sidebar .brand{display:flex!important;}
+  .crm-app-shell .sidebar .nav-section-label{display:block!important;}
+  .crm-app-shell .sidebar .nav-item{display:flex!important;justify-content:flex-start!important;padding:0 10px!important;}
+  .crm-app-shell .sidebar .glyph{display:inline-flex!important;}
+  .crm-app-shell .mobile-nav-backdrop{display:block!important;position:fixed!important;inset:0!important;z-index:99!important;background:rgba(20,30,43,.42)!important;}
+  .crm-app-shell .main-panel{min-width:0!important;width:100%!important;}
+}
+@media(prefers-reduced-motion:reduce){.crm-app-shell .sidebar{transition:none!important}}

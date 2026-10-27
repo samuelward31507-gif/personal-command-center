@@ -3,3 +3,17 @@
 .outcome-stop-note.danger{background:#fdf1ec;color:#9b4e35}
 .outreach-research-notes{font-size:10px;color:#8b8c85;margin:4px 0 0;line-height:1.5}
 .outreach-phone{color:#44463f}
+
+/* Cinder firm-style visual system */
+.outreach-page{color:#202b3a}
+.outreach-header h1{font-family:Georgia,"Times New Roman",serif;color:#1e2b3b;font-weight:600;letter-spacing:-.7px}
+.outreach-header h1 span{color:#9a7a45}
+.outreach-eyebrow{color:#7b8491;letter-spacing:1.45px}
+.outreach-primary{background:#1f2d3d;border-color:#1f2d3d;border-radius:5px}
+.outreach-secondary{background:#fff;border-color:#d8dee6;color:#344155;border-radius:5px}
+.outreach-stats article,.outreach-card,.outreach-add,.outreach-workspace,.outreach-list{border-color:#dfe3e8;border-radius:5px;box-shadow:none}
+.outreach-avatar{background:#edf0f4;color:#34465c;border-radius:5px}
+.outreach-due{color:#705831}
+.outreach-card:hover{border-color:#c5cdd7;box-shadow:none}
+.outreach-page input:focus,.outreach-page select:focus,.outreach-page textarea:focus{border-color:#9a7a45;outline-color:#9a7a45}
+@media(max-width:760px){.outreach-page{padding:24px 14px 36px}.outreach-header{align-items:flex-start;flex-direction:column}.outreach-head-actions{flex-wrap:wrap;white-space:normal}}
