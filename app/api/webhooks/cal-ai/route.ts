@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { verifyCalAiSignature, validCalAiDate } from "@/lib/cal-ai-webhook";
 import { neon } from "@neondatabase/serverless";
 
 export const runtime = "nodejs";
@@ -28,16 +28,6 @@ function db() {
 function text(value: unknown, max = 500): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
-function validDate(value: string): boolean {
-  return !!value && !Number.isNaN(Date.parse(value));
-}
-function verifySignature(raw: string, supplied: string, secret: string): boolean {
-  const normalized = supplied.trim().replace(/^sha256=/i, "");
-  if (!/^[0-9a-f]{64}$/i.test(normalized)) return false;
-  const expected = createHmac("sha256", secret).update(raw, "utf8").digest();
-  const actual = Buffer.from(normalized, "hex");
-  return actual.length === expected.length && timingSafeEqual(actual, expected);
-}
 function personList(value: unknown): Person[] {
   return Array.isArray(value) ? value.filter((p): p is Person => !!p && typeof p === "object") : [];
 }
@@ -57,7 +47,7 @@ export async function POST(request: Request) {
 
   const raw = await request.text();
   const signature = request.headers.get("x-cal-signature-256") || "";
-  if (!verifySignature(raw, signature, secret)) {
+  if (!verifyCalAiSignature(raw, signature, secret)) {
     return Response.json({ error: "Invalid Cal.com webhook signature." }, { status: 401 });
   }
 
@@ -120,7 +110,7 @@ export async function POST(request: Request) {
     } else if (trigger === "BOOKING_CREATED" || trigger === "BOOKING_RESCHEDULED") {
       const startsAt = text(payload.startTime, 100);
       const endsAt = text(payload.endTime, 100);
-      if (!validDate(startsAt) || !validDate(endsAt) || Date.parse(endsAt) <= Date.parse(startsAt)) {
+      if (!validCalAiDate(startsAt) || !validCalAiDate(endsAt) || Date.parse(endsAt) <= Date.parse(startsAt)) {
         return Response.json({ error: "Booking startTime/endTime are invalid." }, { status: 400 });
       }
       const title = text(payload.title, 300) || "Cal.ai meeting";
