@@ -36,6 +36,7 @@ export default function SettingsPage() {
   const integrations = [
     { name: "Workspace database", detail: "Contacts, deals, tasks, projects, finance, and business memory", status: databaseStatus },
     { name: "Hermes read-only bridge", detail: "Read-only workspace context for Hermes; no external actions are executed", status: hermesStatus },
+    { name: "Cal.ai scheduling", detail: "Booking sync and AI scheduling-call setup; not enabled until configured and tested", status: "Setup required" },
     { name: "External CRM integrations", detail: "Third-party CRM and messaging connections", status: "Not connected" },
   ];
 
@@ -77,7 +78,10 @@ export default function SettingsPage() {
                 <h3 style={{ fontSize: 14, margin: 0 }}>{item.name}</h3>
                 <p style={{ color: "#777", fontSize: 12, lineHeight: 1.5, margin: "5px 0 0" }}>{item.detail}</p>
               </div>
-              <span style={{ flexShrink: 0, fontSize: 10, letterSpacing: .3, fontWeight: 700, color: item.status === "Connected" || item.status === "Configured" ? "#286749" : "#777", background: item.status === "Connected" || item.status === "Configured" ? "#edf7f0" : "#f3f3f0", borderRadius: 20, padding: "6px 9px" }}>{item.status}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                {item.name === "Cal.ai scheduling" && <Link href="/crm/settings/cal-ai" style={{ fontSize: 12, color: "#8d432c", textDecoration: "none", fontWeight: 700 }}>Configure →</Link>}
+                <span style={{ flexShrink: 0, fontSize: 10, letterSpacing: .3, fontWeight: 700, color: item.status === "Connected" || item.status === "Configured" ? "#286749" : "#777", background: item.status === "Connected" || item.status === "Configured" ? "#edf7f0" : "#f3f3f0", borderRadius: 20, padding: "6px 9px" }}>{item.status}</span>
+              </div>
             </article>
           ))}
         </div>
