@@ -35,7 +35,7 @@ const nested = unwrapCalAiPayload({
 assert.equal(nested?.triggerEvent, "BOOKING_RESCHEDULED", "nested webhook keeps the envelope trigger");
 assert.equal(nested?.uid, "booking-new", "nested webhook unwraps booking UID");
 assert.equal(nested?.rescheduleUid, "booking-old", "nested webhook keeps the original UID for rescheduling");
-assert.equal((nested?.attendees as Array<{ email: string }>)[0].email, "prospect@example.com", "nested webhook unwraps attendee data");
+assert.equal(nested?.attendees?.[0]?.email, "prospect@example.com", "nested webhook unwraps attendee data");
 
 const flat = unwrapCalAiPayload({
   triggerEvent: "MEETING_ENDED",
