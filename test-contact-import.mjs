@@ -255,5 +255,25 @@ test("Meeting booked and interested outcomes stop routine outreach", () => {
   assert.ok(api.includes("status = ${nextStatus}"));
 });
 
+
+test("Cal.ai webhook requires server-side secret and verifies the provider signature", () => {
+  const route = readFileSync("app/api/webhooks/cal-ai/route.ts", "utf8");
+  assert.ok(route.includes("process.env.CAL_AI_WEBHOOK_SECRET"));
+  assert.ok(route.includes('request.headers.get("x-cal-signature-256")'));
+  assert.ok(route.includes("createHmac(\"sha256\", secret)"));
+  assert.ok(route.includes("timingSafeEqual"));
+  assert.ok(route.includes("Invalid Cal.com webhook signature."));
+});
+
+test("Cal.ai booking sync is idempotent and updates Cinder calendar events", () => {
+  const route = readFileSync("app/api/webhooks/cal-ai/route.ts", "utf8");
+  const migration = readFileSync("db/migrations/0013_cal_ai_booking_sync.sql", "utf8");
+  assert.ok(route.includes("ON CONFLICT (owner_id, provider, provider_event_id)"));
+  assert.ok(route.includes("BOOKING_RESCHEDULED"));
+  assert.ok(route.includes("BOOKING_CANCELLED"));
+  assert.ok(migration.includes("calendar_events_provider_event_unique"));
+  assert.ok(migration.includes("cal_ai_webhook_events"));
+});
+
 console.log(`${passed} passed`);
 if (process.exitCode) process.exit(process.exitCode);
