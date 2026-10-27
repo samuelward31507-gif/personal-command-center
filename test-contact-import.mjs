@@ -287,5 +287,13 @@ test("Needs You queue avoids duplicate contact follow-ups while outreach is acti
   );
 });
 
+test("Needs You queue includes upcoming scheduled meetings that still need a brief", () => {
+  const src = readFileSync("app/crm/needs-you/page.tsx", "utf8");
+  assert.ok(src.includes('fetch(calendarUrl,{cache:"no-store"})'), "Needs You must load upcoming calendar events");
+  assert.ok(src.includes('e.status!=="scheduled"||!(e.type==="meeting"||e.type==="call")'), "Only scheduled meetings and calls should become preparation actions");
+  assert.ok(src.includes('a.calendarEventId===e.id&&a.type==="meeting_brief"&&(a.status==="draft"||a.status==="reviewed")'), "Meetings with an existing brief should not create a duplicate preparation action");
+  assert.ok(src.includes('href:"/crm/preparation",action:"Prepare meeting"'), "Meeting preparation actions must link to the preparation workspace");
+});
+
 console.log(`${passed} passed`);
 if (process.exitCode) process.exit(process.exitCode);
