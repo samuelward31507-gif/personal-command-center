@@ -309,5 +309,14 @@ test("Needs You queue includes upcoming scheduled meetings that still need a bri
   assert.ok(src.includes('meeting:items.filter(x=>x.kind==="meeting").length'), "Meeting preparation must be included in queue counts");
 });
 
+test("Needs You has a dedicated sales focus and prioritizes severely overdue outreach", () => {
+  const src = readFileSync("app/crm/needs-you/page.tsx", "utf8");
+  assert.ok(src.includes('const salesKinds=new Set(["outreach","followup","deal","preparation","meeting"])'), "Sales focus should group prospect follow-ups, deals, briefs, and meetings");
+  assert.ok(src.includes('filter==="sales"?items.filter(x=>salesKinds.has(x.kind))'), "Sales focus should filter the queue to sales actions");
+  assert.ok(src.includes('["sales","Sales focus"]'), "Sales focus should be visible as a queue filter");
+  assert.ok(src.includes('priority:due<=now-86400000?1:2'), "Outreach overdue by at least a day should rise above routine actions");
+  assert.ok(src.includes('SALES ACTIONS'), "Queue summary should show the number of sales actions");
+});
+
 console.log(`${passed} passed`);
 if (process.exitCode) process.exit(process.exitCode);
