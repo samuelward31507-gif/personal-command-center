@@ -57,6 +57,7 @@ export default function PreparationPage(){
   finally{setLoading(false);}
  },[]);
  useEffect(()=>{void load()},[load]);
+ useEffect(()=>{const contactId=new URLSearchParams(window.location.search).get("contactId");if(contactId){setEditing(null);setDraft({...blank,type:"call_brief",contactId,title:"Call brief",content:"\nReason for calling:\n\nVerified facts and source links:\n\nQuestions to ask:\n\nLikely objections to explore:\n\nDesired next step:\n"});setShowEditor(true)}},[]);
  useEffect(()=>{
   const params=new URLSearchParams(window.location.search);
   if(params.get("proposal")!=="1"||deals.length===0)return;
