@@ -140,7 +140,7 @@ export async function PATCH(request: Request) {
       }
       return Response.json({ outreach: rows[0] });
     }
-    const allowedOutcomes = new Set(["initiated", "answered", "connected", "no_answer", "voicemail", "callback_requested", "reply_received", "interested", "meeting_booked", "do_not_contact", "completed", "other"]);
+    const allowedOutcomes = new Set(["initiated", "answered", "connected", "no_answer", "voicemail", "callback_requested", "reply_received", "interested", "meeting_booked", "not_a_fit", "wrong_contact", "do_not_contact", "completed", "other"]);
     const outcome = typeof body.outcome === "string" && allowedOutcomes.has(body.outcome) ? body.outcome : "other";
     const notes = typeof body.notes === "string" ? body.notes.slice(0, 3000) : "";
     const rows = await sql`
