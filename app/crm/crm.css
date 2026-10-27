@@ -37,3 +37,27 @@
 .crm-import-detail ul{margin:0;padding-left:18px;color:#62645c;line-height:1.7}
 .crm-import-detail button{margin-left:8px;border:1px solid #deded7;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;background:#fff}
 .crm-import-message{font-size:11px;color:#286749;background:#edf7f0;border:1px solid #cfe9d8;border-radius:7px;padding:9px 12px;margin-bottom:14px}
+
+
+/* Cinder firm-style treatment for the contact workspace. */
+.crm-page { color: #202b3a; }
+.crm-topline h1 { font-family: Georgia, "Times New Roman", serif; color: #1e2b3b; font-weight: 600; letter-spacing: -.7px; }
+.crm-topline h1 span { color: #9a7a45; }
+.crm-topline p, .crm-list-heading p { color: #697586; }
+.crm-btn { border-radius: 5px; border-color: #d8dee6; }
+.crm-btn-quiet { background: #fff; color: #344155; }
+.crm-btn-primary { background: #1f2d3d; color: #fff; border-color: #1f2d3d; }
+.crm-notice { border-color: #e8deca; background: #faf8f2; border-radius: 5px; }
+.crm-notice-dot { background: #9a7a45; }
+.crm-metrics article, .crm-workspace { border-color: #dfe3e8; border-radius: 5px; }
+.crm-contact-row:hover, .crm-contact-row.selected { background: #f0f2f5; }
+.crm-avatar { background: #edf0f4; color: #34465c; border-radius: 5px; }
+.crm-status-lead { background: #f5f1e8; color: #705831; }
+.crm-status-customer { background: #edf3ee; color: #42624a; }
+.crm-status-partner { background: #edf0f4; color: #53677d; }
+.crm-field input:focus, .crm-field select:focus, .crm-field textarea:focus, .crm-search:focus-within { border-color: #9a7a45; }
+@media (max-width: 760px) {
+  .crm-page { padding: 24px 15px 36px; }
+  .crm-topline { align-items: flex-start; flex-direction: column; }
+  .crm-actions { flex-wrap: wrap; }
+}
