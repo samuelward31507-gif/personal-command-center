@@ -1,6 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
 import { isCallOutcome, followUpDate, sequenceStatusFor, dealChangeFor, OUTCOME_LABELS } from "@/lib/call-outcomes";
+import { suggestDeal } from "@/lib/offers";
+import { reportSection } from "@/lib/business-audit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,7 +40,10 @@ export async function POST(request: Request) {
     if (override && !/^\d{4}-\d{2}-\d{2}$/.test(override)) return fail("Follow-up date must be YYYY-MM-DD.", 400);
 
     const sql = db();
-    const contact = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
+    const contact = await sql`SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company,
+        (SELECT r.content FROM public.research_artifacts r WHERE r.owner_id = c.owner_id AND r.contact_id = c.id
+          AND r.artifact_type = 'audit_prep' AND r.status <> 'archived' ORDER BY r.created_at DESC LIMIT 1) AS audit
+      FROM public.contacts c WHERE c.id = ${contactId}::uuid AND c.owner_id = ${user.id} LIMIT 1`;
     if (!contact.length) return fail("Contact not found in your workspace.", 404);
 
     const nextFollowUp = followUpDate(outcome, new Date(), override);
@@ -97,8 +102,16 @@ export async function POST(request: Request) {
     const movedDeals = dealChanges.filter((_, i) => (results[dealOffset + i] as unknown[]).length > 0)
       .map(d => ({ id: d.id, title: d.title, from: d.from, to: d.change.stage }));
 
+    // Interest with no open deal: hand back a prefilled deal the founder can create in one tap.
+    let suggestedDeal = null;
+    if ((outcome === "interested" || outcome === "meeting_booked") && openDeals.length === 0) {
+      const audit = typeof contact[0].audit === "string" ? contact[0].audit : "";
+      const verdict = reportSection(audit, "Verdict") || reportSection(audit, "1\\. Executive verdict") || null;
+      suggestedDeal = { contactId, ...suggestDeal({ name: String(contact[0].name ?? ""), company: String(contact[0].company ?? "") }, verdict, outcome) };
+    }
+
     return Response.json({
-      outcome, label: OUTCOME_LABELS[outcome], activity, nextFollowUp,
+      outcome, label: OUTCOME_LABELS[outcome], activity, nextFollowUp, suggestedDeal,
       sequenceStopped: sequenceRows.length > 0 ? sequenceStatus : null,
       suppressed: outcome === "do_not_contact",
       deals: movedDeals,

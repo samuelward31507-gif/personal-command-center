@@ -163,12 +163,13 @@ export function buildQueue(input: QueueInput): QueueItem[] {
     const lastDay = day(d.lastActivityAt);
     const quiet = lastDay ? daysBetween(lastDay, today) : null;
     const pastClose = closeDay !== null && closeDay < today;
-    const stale = quiet === null || quiet >= 7;
+    // Nurture deals are parked on purpose: only an expected close date resurfaces them.
+    const stale = d.stage !== "nurture" && (quiet === null || quiet >= 7);
     if (!pastClose && !stale) continue;
     items.push({
       id: "deal:" + d.id, group: "deals", status: pastClose ? "overdue" : "today",
       title: `Move “${d.title}” forward`,
-      why: [`Stage: ${d.stage}`, pastClose ? `expected close ${closeDay} has passed` : quiet === null ? "no logged activity" : `no activity in ${quiet} days`].join(" · "),
+      why: [`Stage: ${d.stage.replaceAll("_", " ")}`, pastClose ? `expected close ${closeDay} has passed` : quiet === null ? "no logged activity" : `no activity in ${quiet} days`].join(" · "),
       lastActivity: lastTouch(d.contact), due: closeDay, href: "/crm/pipeline",
       contact: d.contact, callable: Boolean(d.contact?.phone), rank: pastClose ? 0 : 1,
     });

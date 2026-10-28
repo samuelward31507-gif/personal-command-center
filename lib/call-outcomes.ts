@@ -51,10 +51,11 @@ export function sequenceStatusFor(outcome: CallOutcome): string | null {
   }
 }
 
-const STAGE_RANK: Record<string, number> = { new: 0, qualified: 1, discovery: 2, proposal: 3, negotiation: 4 };
+const STAGE_RANK: Record<string, number> = { new: 0, nurture: 0, contacted: 1, meeting_booked: 2, meeting_held: 3, proposal: 4 };
 
 /**
- * Agreed mapping (2026-10-28): interested → qualified, meeting booked → discovery,
+ * Agreed mapping (2026-10-28, updated for the new pipeline stages):
+ * interested → contacted, meeting booked → meeting_booked,
  * not a fit / do not contact → lost with reason; everything else leaves the deal alone.
  * Deals only move forward, and won/lost deals are never touched.
  */
@@ -62,7 +63,7 @@ export function dealChangeFor(outcome: CallOutcome, currentStage: string): { sta
   if (currentStage === "won" || currentStage === "lost" || !(currentStage in STAGE_RANK)) return null;
   if (outcome === "not_a_fit") return { stage: "lost", lostReason: "Not a fit" };
   if (outcome === "do_not_contact") return { stage: "lost", lostReason: "Do not contact" };
-  const target = outcome === "interested" ? "qualified" : outcome === "meeting_booked" ? "discovery" : null;
+  const target = outcome === "interested" ? "contacted" : outcome === "meeting_booked" ? "meeting_booked" : null;
   if (!target || STAGE_RANK[target] <= STAGE_RANK[currentStage]) return null;
   return { stage: target };
 }
