@@ -31,6 +31,17 @@
 
 **Current priority:** get the current feature branch building reliably, run tests, then finish the prospect → outreach → meeting → deal path before expanding into other modules.
 
+## Business Audit / database checkpoint — 2026-10-28
+
+Evidence from Vercel runtime-error clusters (7-day window) and env metadata (names/scopes only, no values read):
+- [x] **Audit root cause confirmed:** 3× `404 not_found_error` from Anthropic on deployment `dpl_7wG6mNkcZpd5RrRgoWTw4cwH73iw` (commit `6d403d5`), which called `claude-sonnet-4-5`. The configured model was unavailable to the API key; `CINDER_AUDIT_MODEL` is not set in any environment.
+- [x] Fix deployed to preview `dpl_ESA8NLiKzC2ot6EwyZcgdV4BQ3q9` (commit `cc29382`, branch `feat/cinder-business-audit-engine`, READY): default model `claude-sonnet-5-5`, per-cause provider error messages, sanitized logs, website discovery when no URL, bare-domain normalization, pause_turn continuation, 300s function budget. CI (tests incl. 47 new audit assertions, lint, tsc, build) passed.
+- [x] **Database errors root cause confirmed:** every `NeonDbError: connection string … is not a valid URL` cluster (contacts, projects, outreach, tasks, deals, finance, calendar, daily plan, workforce) came from `feat/cinder-agency-operating-roadmap` deployment `dpl_6PAavMcQDwGtsQb6gfLbP8pihu9w`. The value passed to `neon()` was a Vercel *encrypted* env blob, not a `postgresql://` URL — the result of copying env values via API without decrypting. That branch's `DATABASE_URL` was replaced at 2026-10-28 00:19Z; no errors since, but not yet re-verified with signed-in requests.
+- [x] The audit branch's `DATABASE_URL` is a valid URL format (audit requests reached the provider call, which runs after `neon()` is constructed). Production env vars were not inspected for values and not changed.
+- [ ] Signed-in live run on the preview: audit with a website, audit without a website, artifact visible in Preparation after reload.
+- [ ] Retry idempotency for audits (needs an additive migration or request key; not built).
+- [ ] Vercel plan is Hobby: runtime logs retain 1 hour, so live debugging must happen within an hour of the failing request.
+
 ## Phase 0 — Baseline audit and release confidence
 **Status: In progress — sign-in and desktop sidebar confirmed by user; mobile navigation implementation added, live mobile verification still open**
 - [x] Confirm the active code branch, latest deployment, and what code is actually deployed.
