@@ -95,19 +95,19 @@ Use web search, prioritize first-party sources, cite URLs inline, and make a cle
     }
 
     const blocks = Array.isArray(payload.content) ? payload.content : [];
-    const report = blocks.filter((b: any) => b?.type === "text" && typeof b.text === "string").map((b: any) => b.text).join("\\n\\n").trim();
+    const report = blocks.filter((b: any) => b?.type === "text" && typeof b.text === "string").map((b: any) => b.text).join("\n\n").trim();
     if (!report) return fail("Research returned no usable report. Try again.", 502);
     const urls = new Set<string>();
     for (const block of blocks) {
-      if (Array.isArray(block?.citations)) for (const c of block.citations) if (typeof c?.url === "string" && /^https?:\\/\\//i.test(c.url)) urls.add(c.url);
+      if (Array.isArray(block?.citations)) for (const c of block.citations) if (typeof c?.url === "string" && /^https?:\/\//i.test(c.url)) urls.add(c.url);
     }
-    for (const match of report.matchAll(/https?:\\/\\/[^\\s)\\]>]+/g)) {
+    for (const match of report.matchAll(/https?:\/\/[^\s)\]>]+/g)) {
       const url = match[0].replace(/[.,;]+$/, "");
       try { if (["http:", "https:"].includes(new URL(url).protocol)) urls.add(url); } catch {}
     }
     const sourceUrls = [...urls].slice(0, 30);
-    const facts = report.split("\\n").filter((line: string) => /VERIFIED FACT|verified public evidence/i.test(line)).map((line: string) => line.replace(/^\\s*[-*#\\d.]+\\s*/, "").trim()).filter(Boolean).slice(0, 50);
-    const hypotheses = report.split("\\n").filter((line: string) => /HYPOTHESIS|UNKNOWN|fit decision|no sale/i.test(line)).map((line: string) => line.replace(/^\\s*[-*#\\d.]+\\s*/, "").trim()).filter(Boolean).slice(0, 50);
+    const facts = report.split("\n").filter((line: string) => /VERIFIED FACT|verified public evidence/i.test(line)).map((line: string) => line.replace(/^\s*[-*#\d.]+\s*/, "").trim()).filter(Boolean).slice(0, 50);
+    const hypotheses = report.split("\n").filter((line: string) => /HYPOTHESIS|UNKNOWN|fit decision|no sale/i.test(line)).map((line: string) => line.replace(/^\s*[-*#\d.]+\s*/, "").trim()).filter(Boolean).slice(0, 50);
 
     const saved = await sql\`INSERT INTO public.research_artifacts
       (owner_id, contact_id, deal_id, artifact_type, title, source_urls, verified_facts, hypotheses, confidence, content, status, researched_at)
