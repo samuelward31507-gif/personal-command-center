@@ -48,6 +48,7 @@ const secondaryLinks: NavLink[] = [
 ];
 
 function pageTitle(pathname: string, view: string) {
+  if (pathname.startsWith("/crm/audit")) return "Business audit";
   if (pathname.startsWith("/crm/calendar")) return "Calendar";
   if (pathname.startsWith("/crm/needs-you")) return "Needs you";
   if (pathname.startsWith("/crm/tasks")) return "Tasks";
