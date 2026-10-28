@@ -85,6 +85,7 @@ export type AuditMeta = {
   verifiedFacts: string[];
   hypotheses: string[];
   nextCrmAction: string;
+  futureUpsells: string[];
 };
 
 const META_FENCE = /```cinder-meta\s*([\s\S]*?)```/i;
@@ -121,6 +122,7 @@ export function parseAuditOutput(text: string): { report: string; meta: AuditMet
       verifiedFacts: strings(raw.verifiedFacts, 50, 500),
       hypotheses: strings(raw.hypotheses, 50, 500),
       nextCrmAction: typeof raw.nextCrmAction === "string" ? raw.nextCrmAction.slice(0, 300) : "",
+      futureUpsells: strings(raw.futureUpsells, 4, 300),
     },
   };
 }

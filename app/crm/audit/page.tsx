@@ -7,7 +7,7 @@ type Contact = {
   id: string; name: string; company?: string; role?: string; email?: string; phone?: string;
   website?: string; location?: string; notes?: string; source?: string; instagram?: string; facebook?: string;
 };
-type Audit = { id: string; title: string; companyName: string; content: string; sourceUrls: string[]; confidence: string; officialWebsite?: string | null; websiteStatus?: string; candidates?: string[]; fitDecision?: string | null; nextCrmAction?: string; incomplete?: boolean };
+type Audit = { id: string; title: string; companyName: string; content: string; sourceUrls: string[]; confidence: string; officialWebsite?: string | null; websiteStatus?: string; candidates?: string[]; fitDecision?: string | null; nextCrmAction?: string; futureUpsells?: string[]; incomplete?: boolean };
 
 export default function BusinessAuditPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -130,6 +130,7 @@ export default function BusinessAuditPage() {
         <div><strong style={{ color: "#f4f4f5" }}>Website:</strong> {audit.officialWebsite ? <a href={audit.officialWebsite} target="_blank" rel="noreferrer" style={{ color: "#d6a98c", overflowWrap: "anywhere" }}>{audit.officialWebsite}</a> : "Not found"} <span style={{ color: audit.websiteStatus === "verified" ? "#86efac" : "#fcd34d" }}>({(audit.websiteStatus || "unverified").replace("_", " ")})</span></div>
         {audit.fitDecision && <div><strong style={{ color: "#f4f4f5" }}>Fit:</strong> {audit.fitDecision.replace("_", " ")}</div>}
         {audit.nextCrmAction && <div><strong style={{ color: "#f4f4f5" }}>Next action:</strong> {audit.nextCrmAction}</div>}
+        {audit.futureUpsells && audit.futureUpsells.length > 0 && <div><strong style={{ color: "#f4f4f5" }}>Future upsells (later, not first pitch):</strong> {audit.futureUpsells.join(" · ")}</div>}
         {audit.candidates && audit.candidates.length > 0 && <div style={{ color: "#fcd34d" }}><strong>Similarly named businesses — confirm the right one:</strong> {audit.candidates.join(" · ")}</div>}
         {audit.incomplete && <div style={{ color: "#fca5a5" }}>Research stopped before finishing; treat this report as partial.</div>}
       </div>

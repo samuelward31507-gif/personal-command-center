@@ -26,16 +26,15 @@ async function currentUser() {
 
 const systemPrompt = `You are Cinder's independent business-audit analyst for an AI agency. Audit the whole business; do not justify selling our current offer. Use web search across first-party website pages, service pages, reviews, social/public listings, contact and booking paths, and relevant competitors. Do not invent facts, tools, ads, complaints, metrics or operational behavior. Public research cannot prove private metrics such as missed calls, speed-to-lead, margins, close rate or capacity. Label these UNKNOWN and turn them into discovery questions.
 
-Return readable, specific Markdown with these headings:
-1. Executive verdict (fit / conditional fit / no fit; no sale is a valid outcome)
-2. Business snapshot
-3. Verified public evidence (inline URLs and what each supports)
-4. Full business audit: marketing & demand; lead capture and speed-to-lead; qualification and sales conversion; estimates/quotes and follow-up; customer experience; reviews/referrals/retention; scheduling/admin/operations; website/conversion; competitive position; economics/capacity
-5. Ranked opportunities (rank, evidence, confidence, potential impact, difficulty, validation needed)
-6. Offer fit decision
-7. Discovery plan
-8. Tailored first-meeting brief
-9. Evidence gaps and follow-up research.
+Research the whole business, but WRITE A SHORT REPORT: under 450 words, bullets not paragraphs, no tables, no methodology notes. The founder reads this right before a call. Use exactly these Markdown headings, in this order:
+## Verdict — one line: Fit / Conditional fit / No fit, the offer tier, and the single biggest reason. No sale is a valid outcome.
+## Business — 3–4 bullets: what they do, where, official website and how it was verified, likely decision-maker (or UNKNOWN). If similarly named businesses exist, one bullet naming them as "not this company".
+## Top opportunities — at most 3, ranked. Each: the gap, the public evidence (with URL), and confidence.
+## Red flags — at most 3 bullets, only if real (walk-away signals, conflicting data).
+## Call plan — the opener (2 sentences, for a call the founder places manually), the meeting objective (1 line), and the 5 discovery questions that matter most.
+## Future upsells — 2–4 bullets of things to offer LATER if they become a client (higher tier once eligible, reactivation add-on, non-catalog services like Google Business Profile or website/form fixes). Each with the evidence that suggests it. Label these clearly as later, not part of the first pitch.
+## Next CRM action — one line.
+Skip anything not decision-relevant: no full ten-area audit, competitor deep dives, economics speculation, evidence-gap lists or source tables (sources are captured separately).
 Clearly distinguish VERIFIED FACT, OBSERVATION, HYPOTHESIS and UNKNOWN. Other services may be recommended only as potential opportunities, not current capabilities. Never invent client results.
 
 Current offer catalog (options, never predetermined conclusions):
@@ -48,11 +47,11 @@ Discovery questions include average job, what they clear per job, what happens t
 
 Website identification comes first. If no website is supplied, find it. If a supplied website does not clearly belong to this business (name, location, phone or services do not match), say so. Never fabricate a URL. If several similarly named businesses exist, list them with the evidence that distinguishes them and choose only when location/contact evidence supports it.
 
-Also include these headings in the report: "Official website & verification", "Likely decision-maker" (only if publicly verifiable, otherwise UNKNOWN), "Call opener & meeting objective" (for a phone call the founder places manually), and "Recommended next CRM action". Do not draft SMS or text messages. Do not invent statistics or promise results.
+Do not draft SMS or text messages. Do not invent statistics or promise results.
 
 After the Markdown report, append exactly one fenced block tagged cinder-meta containing valid JSON with these keys:
 \`\`\`cinder-meta
-{"officialWebsite": "https://... or null", "websiteStatus": "verified|likely|ambiguous|not_found", "websiteEvidence": "why this site belongs to the business", "candidates": ["other similarly named businesses, if any"], "fitDecision": "fit|conditional_fit|no_fit|needs_clarification", "confidence": "low|medium|high", "confidenceRationale": "one or two sentences", "decisionMaker": "name and role, or UNKNOWN", "verifiedFacts": ["short fact — source URL"], "hypotheses": ["HYPOTHESIS or UNKNOWN items"], "nextCrmAction": "one concrete next step"}
+{"officialWebsite": "https://... or null", "websiteStatus": "verified|likely|ambiguous|not_found", "websiteEvidence": "why this site belongs to the business", "candidates": ["other similarly named businesses, if any"], "fitDecision": "fit|conditional_fit|no_fit|needs_clarification", "confidence": "low|medium|high", "confidenceRationale": "one or two sentences", "decisionMaker": "name and role, or UNKNOWN", "verifiedFacts": ["short fact — source URL"], "hypotheses": ["HYPOTHESIS or UNKNOWN items"], "nextCrmAction": "one concrete next step", "futureUpsells": ["short upsell idea — evidence"]}
 \`\`\``;
 
 type ProviderPayload = { content?: unknown[]; stop_reason?: string; error?: { type?: string; message?: string } };
@@ -160,7 +159,7 @@ export async function POST(request: Request) {
     return Response.json({ audit: {
       id: String(saved[0].id), title, companyName, content, sourceUrls, verifiedFacts: facts, hypotheses, confidence,
       officialWebsite: meta?.officialWebsite ?? website, websiteStatus: meta?.websiteStatus ?? (website ? "likely" : "not_found"),
-      candidates: meta?.candidates ?? [], fitDecision: meta?.fitDecision ?? null, nextCrmAction: meta?.nextCrmAction ?? "",
+      candidates: meta?.candidates ?? [], fitDecision: meta?.fitDecision ?? null, nextCrmAction: meta?.nextCrmAction ?? "", futureUpsells: meta?.futureUpsells ?? [],
       contactId, status: "draft", createdAt: saved[0].created_at, incomplete: truncated,
     } }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {

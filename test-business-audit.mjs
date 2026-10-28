@@ -51,7 +51,7 @@ ok(() => assert.equal(sanitizeForLog(undefined), ""));
 
 // --- Meta parsing ---
 const metaText = `## Report\nVERIFIED FACT: Family owned — https://acme.com/about\n\n\`\`\`cinder-meta
-{"officialWebsite":"acme.com","websiteStatus":"verified","websiteEvidence":"Name and phone match","candidates":["Acme Fence TX"],"fitDecision":"conditional_fit","confidence":"high","confidenceRationale":"r","decisionMaker":"UNKNOWN","verifiedFacts":["Family owned — https://acme.com/about"],"hypotheses":["HYPOTHESIS: slow follow-up"],"nextCrmAction":"Call owner"}
+{"officialWebsite":"acme.com","websiteStatus":"verified","websiteEvidence":"Name and phone match","candidates":["Acme Fence TX"],"fitDecision":"conditional_fit","confidence":"high","confidenceRationale":"r","decisionMaker":"UNKNOWN","verifiedFacts":["Family owned — https://acme.com/about"],"hypotheses":["HYPOTHESIS: slow follow-up"],"nextCrmAction":"Call owner","futureUpsells":["Reactivation add-on — 8 permits in 2y","GBP cleanup — unclaimed Yelp","x","y","z"]}
 \`\`\``;
 ok(() => {
   const { report, meta } = parseAuditOutput(metaText);
@@ -59,6 +59,7 @@ ok(() => {
   assert.equal(meta.officialWebsite, "https://acme.com/");
   assert.equal(meta.fitDecision, "conditional_fit");
   assert.deepEqual(meta.candidates, ["Acme Fence TX"]);
+  assert.equal(meta.futureUpsells.length, 4, "upsells capped at 4");
 });
 ok(() => {
   const { meta } = parseAuditOutput("```cinder-meta\n{\"officialWebsite\":\"made up\",\"websiteStatus\":\"bogus\",\"confidence\":\"certain\"}\n```");
@@ -101,6 +102,10 @@ ok(() => assert.match(route, /VALUES \(\$\{user\.id\}/, "artifact saved under au
 ok(() => assert.doesNotMatch(route, /console\.\w+\([^)]*apiKey/, "API key never logged"));
 ok(() => assert.doesNotMatch(route, /console\.\w+\([^)]*DATABASE_URL\b(?! is)/, "DB URL never logged"));
 ok(() => assert.match(route, /Do not draft SMS or text messages/, "no SMS drafting in audit output"));
+ok(() => assert.match(route, /under 450 words/, "report kept short"));
+ok(() => assert.match(route, /## Future upsells/, "report includes future upsells"));
+ok(() => assert.doesNotMatch(route, /Full business audit:/, "ten-area audit section removed"));
+ok(() => assert.match(route, /futureUpsells: meta\?\.futureUpsells/, "upsells returned to the UI"));
 const ui = readFileSync("app/crm/audit/page.tsx", "utf8");
 ok(() => assert.doesNotMatch(ui, /type="url"/, "browser URL validation no longer blocks bare domains"));
 
