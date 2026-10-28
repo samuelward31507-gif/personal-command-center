@@ -56,6 +56,9 @@ Evidence from Vercel runtime-error clusters (7-day window) and env metadata (nam
 - [x] Call outcomes + migration 0017 released to production (user "ship outcome"): 0017 applied to Neon `main`; PR #16 merged (`8ba68a5`); production build `dpl_FjDcLkJGj6SCC3GjzxVbVvY5NsJf` READY, zero runtime errors.
 - [x] **Phase 1 — My Day queue** (`4ebad1c`, preview `dpl_9JcVq8wM1i4WueUxq1yoeoQXiHxE`): `/api/my-day` + `lib/my-day.ts` rank revenue follow-ups → meetings/prep → deal next steps → delivery → money & admin, each with why, last touch, audit verdict, Call / Log outcome / Open. CI green (21 new assertions); every query run read-only against the preview schema.
 - [ ] Signed-in test of My Day on the preview, then production release.
+- [x] My Day released to production (PR #17, `dd57ca1`, `dpl_De8KB3wpsTJczC1gyEaLS9ggLpRv`).
+- [x] **Production database switched (user "switch it"):** production `DATABASE_URL`, `NEON_AUTH_BASE_URL` and `NEXT_PUBLIC_NEON_AUTH_URL` now point to Neon branch `br-aged-hall-b79og5zb` (the 100-contact CRM the founder actually uses). Production domains added to that branch's trusted domains. Neon `main` (old 256-contact CRM) is untouched and kept as an archive. Production rebuilt: `dpl_3s1R1qmfcEiheK8wCHFToP2fkEdA`, READY, zero errors.
+- [ ] **Preview isolation is gone:** the audit and roadmap preview branches still use `br-aged-hall-b79og5zb`, so preview tests now touch real data. Create a disposable Neon branch for previews before the next mutation-heavy test.
 - [ ] Point Needs You at `/api/my-day` (it still assembles a parallel queue in the browser).
 
 ## Phase 0 — Baseline audit and release confidence
