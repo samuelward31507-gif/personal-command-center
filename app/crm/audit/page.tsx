@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { AuditReport } from "./audit-report";
 
 type Contact = {
   id: string; name: string; company?: string; role?: string; email?: string; phone?: string;
@@ -121,23 +122,7 @@ export default function BusinessAuditPage() {
     </form>
 
     {busy && <section aria-live="polite" style={{ marginTop: 18, ...panelStyle, padding: 20, color: "#a1a1aa" }}>Searching public sources and assessing opportunities across marketing, lead handling, sales, follow-up, customer experience, retention, operations, and competitive position. This may take up to a minute.</section>}
-    {audit && <section style={{ marginTop: 24, ...panelStyle, overflow: "hidden" }}>
-      <div style={{ padding: "18px 22px", borderBottom: "1px solid #29292e", display: "flex", gap: 12, justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}>
-        <div><p style={{ margin: "0 0 5px", fontSize: 10, letterSpacing: 1.5, color: "#d6a98c" }}>SAVED DRAFT · {audit.confidence.toUpperCase()} SOURCE CONFIDENCE</p><h2 style={{ margin: 0, fontSize: 21, color: "#f4f4f5" }}>{audit.title}</h2></div>
-        <button type="button" onClick={() => navigator.clipboard.writeText(audit.content)} style={{ border: "1px solid #3a3a42", borderRadius: 8, background: "#1c1c21", color: "#f4f4f5", padding: "9px 12px", cursor: "pointer" }}>Copy report</button>
-      </div>
-      <div style={{ padding: "14px 22px", borderBottom: "1px solid #29292e", display: "grid", gap: 6, fontSize: 13, color: "#d4d4d8" }}>
-        <div><strong style={{ color: "#f4f4f5" }}>Website:</strong> {audit.officialWebsite ? <a href={audit.officialWebsite} target="_blank" rel="noreferrer" style={{ color: "#d6a98c", overflowWrap: "anywhere" }}>{audit.officialWebsite}</a> : "Not found"} <span style={{ color: audit.websiteStatus === "verified" ? "#86efac" : "#fcd34d" }}>({(audit.websiteStatus || "unverified").replace("_", " ")})</span></div>
-        {audit.fitDecision && <div><strong style={{ color: "#f4f4f5" }}>Fit:</strong> {audit.fitDecision.replace("_", " ")}</div>}
-        {audit.nextCrmAction && <div><strong style={{ color: "#f4f4f5" }}>Next action:</strong> {audit.nextCrmAction}</div>}
-        {audit.futureUpsells && audit.futureUpsells.length > 0 && <div><strong style={{ color: "#f4f4f5" }}>Future upsells (later, not first pitch):</strong> {audit.futureUpsells.join(" · ")}</div>}
-        {audit.candidates && audit.candidates.length > 0 && <div style={{ color: "#fcd34d" }}><strong>Similarly named businesses — confirm the right one:</strong> {audit.candidates.join(" · ")}</div>}
-        {audit.incomplete && <div style={{ color: "#fca5a5" }}>Research stopped before finishing; treat this report as partial.</div>}
-      </div>
-      <article style={{ padding: 22, whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: 14, lineHeight: 1.75, color: "#e4e4e7" }}>{audit.content}</article>
-      {audit.sourceUrls.length > 0 && <div style={{ padding: "18px 22px", borderTop: "1px solid #29292e" }}><h3 style={{ margin: "0 0 10px", fontSize: 14, color: "#f4f4f5" }}>Research sources ({audit.sourceUrls.length})</h3><ul style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 7 }}>{audit.sourceUrls.map(url => <li key={url}><a href={url} target="_blank" rel="noreferrer" style={{ color: "#d6a98c", overflowWrap: "anywhere" }}>{url}</a></li>)}</ul></div>}
-      <div style={{ padding: "0 22px 22px" }}><Link href="/crm/preparation" style={{ color: "#d6a98c" }}>Open saved preparation records →</Link></div>
-    </section>}
+    {audit && <AuditReport audit={audit} />}
   </main>;
 }
 

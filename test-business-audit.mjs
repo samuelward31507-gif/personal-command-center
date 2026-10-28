@@ -123,4 +123,11 @@ const contactsUi = readFileSync("app/crm/page.tsx", "utf8");
 ok(() => assert.match(contactsUi, /type=audit_prep&contactId=/, "contact detail loads its audits"));
 ok(() => assert.match(contactsUi, /Latest audit/, "contact detail shows latest audit"));
 
+const reportUi = readFileSync("app/crm/audit/audit-report.tsx", "utf8");
+ok(() => assert.match(readFileSync("app/crm/audit/page.tsx", "utf8"), /<AuditReport audit=\{audit\} \/>/, "results use the structured report view"));
+ok(() => assert.doesNotMatch(readFileSync("app/crm/audit/page.tsx", "utf8"), /whiteSpace: "pre-wrap"[^\n]*\{audit\.content\}/, "raw markdown dump removed"));
+ok(() => assert.doesNotMatch(reportUi, /dangerouslySetInnerHTML/, "report renderer never injects HTML"));
+ok(() => assert.match(reportUi, /<details/, "sources are collapsed by default"));
+ok(() => assert.match(reportUi, /LATER — NOT THE FIRST PITCH/, "upsells clearly marked as later"));
+
 console.log(`Business audit regression checks passed (${n} assertions).`);
