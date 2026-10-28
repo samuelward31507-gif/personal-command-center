@@ -1,14 +1,15 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { DEAL_STAGES, STAGE_LABELS, OFFERS, type DealStage } from "@/lib/offers";
 import "./pipeline.css";
 
-type Stage="new"|"qualified"|"discovery"|"proposal"|"negotiation"|"won"|"lost";
+type Stage=DealStage;
 type Deal={id:string;contactId:string|null;title:string;serviceType:string;stage:Stage;setupFee:number;monthlyFee:number;expectedCloseDate:string;source:string;notes:string;lostReason:string;contactName:string;company:string;agreementStatus?:string;endedAt?:string|null};
 type Contact={id:string;name:string;company:string};
 type ExistingProject={id:string;dealId:string|null};
-const stages:{id:Stage;label:string}[]=[{id:"new",label:"New"},{id:"qualified",label:"Qualified"},{id:"discovery",label:"Discovery"},{id:"proposal",label:"Proposal"},{id:"negotiation",label:"Negotiation"},{id:"won",label:"Won"},{id:"lost",label:"Lost"}];
-const services=[{id:"ai_voice_agent",label:"AI voice agent"},{id:"speed_to_lead",label:"Speed-to-lead"},{id:"lead_follow_up",label:"Lead follow-up"},{id:"appointment_booking",label:"Appointment booking"},{id:"workflow_automation",label:"Workflow automation"},{id:"custom_ai_implementation",label:"Custom AI implementation"}];
+const stages:{id:Stage;label:string}[]=DEAL_STAGES.map(id=>({id,label:STAGE_LABELS[id]}));
+const services=[{id:OFFERS.tier1.serviceType,label:OFFERS.tier1.label},{id:OFFERS.tier2.serviceType,label:OFFERS.tier2.label},{id:"ai_voice_agent",label:"AI voice agent"},{id:"speed_to_lead",label:"Speed-to-lead"},{id:"lead_follow_up",label:"Lead follow-up"},{id:"appointment_booking",label:"Appointment booking"},{id:"workflow_automation",label:"Workflow automation"},{id:"custom_ai_implementation",label:"Custom AI implementation"}];
 const blank={title:"",contactId:"",serviceType:"custom_ai_implementation",stage:"new" as Stage,setupFee:"",monthlyFee:"",expectedCloseDate:"",source:"",notes:"",lostReason:""};
 const money=(n:number)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n||0);
 export default function PipelinePage(){

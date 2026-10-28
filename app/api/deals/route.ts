@@ -1,11 +1,12 @@
 import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
+import { DEAL_STAGES } from "@/lib/offers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const stages = new Set(["new", "qualified", "discovery", "proposal", "negotiation", "won", "lost"]);
-const services = new Set(["ai_voice_agent", "speed_to_lead", "lead_follow_up", "appointment_booking", "workflow_automation", "custom_ai_implementation"]);
+const stages = new Set<string>(DEAL_STAGES);
+const services = new Set(["tier1_speed_to_lead", "tier2_revenue_system", "ai_voice_agent", "speed_to_lead", "lead_follow_up", "appointment_booking", "workflow_automation", "custom_ai_implementation"]);
 const agreementStatuses = new Set(["pending", "active", "paused", "ended"]);
 function db() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured.");

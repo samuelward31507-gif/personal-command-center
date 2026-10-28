@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CALL_OUTCOMES, OUTCOME_LABELS, type CallOutcome } from "@/lib/call-outcomes";
 import type { QueueItem, QueueGroup, QueueStatus } from "@/lib/my-day";
+import SuggestedDeal, { type SuggestedDealData } from "./suggested-deal";
 
 const STATUS: Record<QueueStatus, { label: string; color: string }> = {
   overdue: { label: "Overdue", color: "#fca5a5" },
@@ -22,7 +23,7 @@ export default function MyDayQueue() {
   const [error, setError] = useState("");
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  const [notice, setNotice] = useState<{ ok: boolean; text: string; deal?: SuggestedDealData | null } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -62,7 +63,7 @@ export default function MyDayQueue() {
       const parts = [`${item.contact.name}: ${data.label}`, data.nextFollowUp ? `next follow-up ${data.nextFollowUp}` : "follow-up cleared"];
       if (data.sequenceStopped) parts.push("sequence stopped");
       for (const d of data.deals || []) parts.push(`“${d.title}” → ${d.to}`);
-      setNotice({ ok: true, text: parts.join(" · ") });
+      setNotice({ ok: true, text: parts.join(" · "), deal: data.suggestedDeal || null });
       setOpen(null);
       setItems(old => old.filter(i => i.id !== item.id)); // handled for today
     } catch (e) {
@@ -84,6 +85,7 @@ export default function MyDayQueue() {
     </div>
     {error && <p className="local-note" role="alert">{error}</p>}
     {notice && <p className="local-note" role="status" style={{ color: notice.ok ? "#86efac" : "#fca5a5" }}>{notice.text}</p>}
+    {notice?.deal && <SuggestedDeal key={notice.text} deal={notice.deal} />}
     {order.filter(g => byGroup[g]?.length).map(g => <div key={g} style={{ marginTop: 14 }}>
       <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase", color: "#9a9aa4", margin: "0 0 6px" }}>{groups[g] || g} · {byGroup[g].length}</div>
       <div className="schedule-list">
