@@ -17,7 +17,7 @@ async function currentUser() {
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 
-const systemPrompt = \`You are Cinder's independent business-audit analyst for an AI agency. Audit the whole business; do not justify selling our current offer. Use web search across first-party website pages, service pages, reviews, social/public listings, contact and booking paths, and relevant competitors. Do not invent facts, tools, ads, complaints, metrics or operational behavior. Public research cannot prove private metrics such as missed calls, speed-to-lead, margins, close rate or capacity. Label these UNKNOWN and turn them into discovery questions.
+const systemPrompt = `You are Cinder's independent business-audit analyst for an AI agency. Audit the whole business; do not justify selling our current offer. Use web search across first-party website pages, service pages, reviews, social/public listings, contact and booking paths, and relevant competitors. Do not invent facts, tools, ads, complaints, metrics or operational behavior. Public research cannot prove private metrics such as missed calls, speed-to-lead, margins, close rate or capacity. Label these UNKNOWN and turn them into discovery questions.
 
 Return readable, specific Markdown with these headings:
 1. Executive verdict (fit / conditional fit / no fit; no sale is a valid outcome)
@@ -37,7 +37,7 @@ Tier 2 — Revenue System for pool builders: $3,000 setup + $1,500/mo (setup fal
 Tier 3 — AI Front Office: $5,000 setup + $2,500/mo; WAITLIST ONLY until Tier 1/2 has been delivered twice. Includes voice receptionist, call screening, AI FB/IG DMs and reactivation. Add-on reactivation of old quotes/past customers: $500–$1,500 one-time.
 Terms: monthly starts at go-live; 3-month minimum then month-to-month with 30 days notice; live within 21 business days of kickoff info or setup refunded. Phase 1 around 1–2 weeks; texting only after 10DLC approval. Outbound follow-ups only 9am–7pm lead-local time.
 Ideal fence fit: 2–5 crews, roughly $40k+/mo, competitive US suburban/metro markets, paying for leads and admitting missed/delayed follow-up. Ideal pool fit: $30k+ projects (often $50k–$250k), long sales cycle/tire-kicker issue. Walk away: mostly word-of-mouth/rural low competition, one-person shop with few jobs, owner answers everything and closes most bids, repair-only small tickets, outside US, competitor/vendor.
-Discovery questions include average job, what they clear per job, what happens to missed calls, wasted trips out of 10, first contact to signed, and review last 7 days of call log where relevant. Never promise day-one texting, Tier 3 features in Tier 1/2, a number of leads/sales, zero mistakes, or guaranteed outcomes.\`;
+Discovery questions include average job, what they clear per job, what happens to missed calls, wasted trips out of 10, first contact to signed, and review last 7 days of call log where relevant. Never promise day-one texting, Tier 3 features in Tier 1/2, a number of leads/sales, zero mistakes, or guaranteed outcomes.`;
 
 export async function POST(request: Request) {
   try {
@@ -63,11 +63,11 @@ export async function POST(request: Request) {
 
     const sql = db();
     if (contactId) {
-      const rows = await sql\`SELECT id FROM public.contacts WHERE id = \${contactId}::uuid AND owner_id = \${user.id} LIMIT 1\`;
+      const rows = await sql`SELECT id FROM public.contacts WHERE id = ${contactId}::uuid AND owner_id = ${user.id} LIMIT 1`;
       if (!rows.length) return fail("Contact not found in your workspace.", 404);
     }
     if (dealId) {
-      const rows = await sql\`SELECT id FROM public.deals WHERE id = \${dealId}::uuid AND owner_id = \${user.id} LIMIT 1\`;
+      const rows = await sql`SELECT id FROM public.deals WHERE id = ${dealId}::uuid AND owner_id = ${user.id} LIMIT 1`;
       if (!rows.length) return fail("Deal not found in your workspace.", 404);
     }
 
@@ -78,12 +78,12 @@ export async function POST(request: Request) {
         model: process.env.CINDER_AUDIT_MODEL || "claude-sonnet-4-5",
         max_tokens: 7000,
         system: systemPrompt,
-        messages: [{ role: "user", content: \`Independently audit this business; do not assume our offer fits.
-Business: \${companyName}
-Website: \${website || "Find and verify the official website"}
-Location/service area: \${location || "Research if publicly available"}
-CRM context: \${context || "None supplied"}
-Use web search, prioritize first-party sources, cite URLs inline, and make a clear evidence-based fit/no-fit decision.\` }],
+        messages: [{ role: "user", content: `Independently audit this business; do not assume our offer fits.
+Business: ${companyName}
+Website: ${website || "Find and verify the official website"}
+Location/service area: ${location || "Research if publicly available"}
+CRM context: ${context || "None supplied"}
+Use web search, prioritize first-party sources, cite URLs inline, and make a clear evidence-based fit/no-fit decision.` }],
         tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 8 }]
       }),
       signal: AbortSignal.timeout(55000)
@@ -109,14 +109,14 @@ Use web search, prioritize first-party sources, cite URLs inline, and make a cle
     const facts = report.split("\n").filter((line: string) => /VERIFIED FACT|verified public evidence/i.test(line)).map((line: string) => line.replace(/^\s*[-*#\d.]+\s*/, "").trim()).filter(Boolean).slice(0, 50);
     const hypotheses = report.split("\n").filter((line: string) => /HYPOTHESIS|UNKNOWN|fit decision|no sale/i.test(line)).map((line: string) => line.replace(/^\s*[-*#\d.]+\s*/, "").trim()).filter(Boolean).slice(0, 50);
 
-    const saved = await sql\`INSERT INTO public.research_artifacts
+    const saved = await sql`INSERT INTO public.research_artifacts
       (owner_id, contact_id, deal_id, artifact_type, title, source_urls, verified_facts, hypotheses, confidence, content, status, researched_at)
-      VALUES (\${user.id}, \${contactId}::uuid, \${dealId}::uuid, 'audit_prep',
-        \${("Business audit — " + companyName).slice(0, 240)}, \${JSON.stringify(sourceUrls)}::jsonb,
-        \${JSON.stringify(facts)}::jsonb, \${JSON.stringify(hypotheses)}::jsonb,
-        \${sourceUrls.length >= 3 ? "medium" : "low"}, \${report.slice(0, 20000)}, 'draft', now())
-      RETURNING id, created_at\`;
-    return Response.json({ audit: { id: String(saved[0].id), title: \`Business audit — \${companyName}\`, companyName, content: report, sourceUrls, verifiedFacts: facts, hypotheses, confidence: sourceUrls.length >= 3 ? "medium" : "low", status: "draft", createdAt: saved[0].created_at } }, { status: 201, headers: { "Cache-Control": "no-store" } });
+      VALUES (${user.id}, ${contactId}::uuid, ${dealId}::uuid, 'audit_prep',
+        ${("Business audit — " + companyName).slice(0, 240)}, ${JSON.stringify(sourceUrls)}::jsonb,
+        ${JSON.stringify(facts)}::jsonb, ${JSON.stringify(hypotheses)}::jsonb,
+        ${sourceUrls.length >= 3 ? "medium" : "low"}, ${report.slice(0, 20000)}, 'draft', now())
+      RETURNING id, created_at`;
+    return Response.json({ audit: { id: String(saved[0].id), title: `Business audit — ${companyName}`, companyName, content: report, sourceUrls, verifiedFacts: facts, hypotheses, confidence: sourceUrls.length >= 3 ? "medium" : "low", status: "draft", createdAt: saved[0].created_at } }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (error instanceof Error && error.name === "TimeoutError") return fail("The audit timed out while researching. Try again with a more specific website.", 504);
     console.error("Business audit failed", error);
