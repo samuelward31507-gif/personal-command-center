@@ -88,7 +88,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     {mobileOpen && <button type="button" className="mobile-nav-backdrop" aria-label="Close navigation menu" onClick={() => setMobileOpen(false)} />}
     <aside id="cinder-sidebar-shared" className={"sidebar" + (mobileOpen ? " mobile-open" : "")}>
     <button type="button" className="brand brand-button" onClick={() => go("home", "/")} aria-label="Go to Home">
-      <span className="cinder-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#bf542f"/></svg></span>
+      <span className="cinder-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="var(--c-accent)"/></svg></span>
       <span className="brand-name cinder-wordmark">CINDER</span><span className="workspace-chevron">⌄</span>
     </button>
     <div className="nav-section-label">RUN THE AGENCY</div>
@@ -101,7 +101,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
       {secondary.map(([key, label, icon, href]) => <button key={key} type="button" className={"nav-item" + (isActive(key, href) ? " active" : "")} aria-current={isActive(key, href) ? "page" : undefined} onClick={() => go(key, href)}><Icon name={icon}/><span>{label}</span></button>)}
     </nav>
     <div className="sidebar-bottom">
-      <div className="connection-card"><span className="connection-dot"/><div><strong>Agency workspace</strong><small>{mode === "crm" ? "Private CRM storage" : "CRM integrations not connected"}</small></div></div>
+      <div className="connection-card"><span className="connection-dot"/><div><strong>Agency workspace</strong><small>Private CRM storage</small></div></div>
       <div className="profile-row"><span className="profile-avatar">F</span><span className="profile-copy"><strong>Founder</strong><small>{mode === "crm" ? "Agency operations" : "Agency workspace"}</small></span></div>
     </div>
     </aside>

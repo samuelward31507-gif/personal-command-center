@@ -23,7 +23,7 @@ export const GROUP_LABELS: Record<QueueGroup, string> = {
   prospects: "New prospects to call",
   meetings: "Meetings & prep",
   deals: "Deal next steps",
-  delivery: "Client delivery",
+  delivery: "Client delivery & success",
   admin: "Money & admin",
 };
 const GROUP_ORDER: QueueGroup[] = ["revenue", "prospects", "meetings", "deals", "delivery", "admin"];
@@ -44,6 +44,10 @@ export type QueueInput = {
   delivery: { id: string; kind: "project" | "milestone"; title: string; project: string; status: string; due: string | null }[];
   receivables: { id: string; title: string; amount: number; status: string; due: string | null; client: string }[];
   tasks: { id: string; title: string; status: string; priority: string; dueAt: string | null; contactName: string | null; dealTitle: string | null }[];
+  clients?: { id: string; client: string; status: string; health: number; renewal: string | null; nextReview: string | null; riskNotes: string }[];
+  tickets?: { id: string; title: string; client: string; priority: string; status: string; due: string | null }[];
+  approvals?: { id: string; title: string; actionType: string; createdAt: string | null }[];
+  failedRuns?: { id: string; title: string; agent: string; at: string | null }[];
   /** Never-contacted, not suppressed, no follow-up, not in a sequence. */
   prospects?: { contact: ContactRef; location: string; website: string; createdAt: string }[];
   /** Prospects whose first-ever logged call happened today (counts against the daily cap). */
@@ -152,7 +156,7 @@ export function buildQueue(input: QueueInput): QueueItem[] {
       title: m.title,
       why: [m.hasPrep ? "Prep brief ready" : "No prep brief yet", m.dealTitle].filter(Boolean).join(" · "),
       lastActivity: lastTouch(m.contact), due: when.toISOString(),
-      href: m.hasPrep ? "/crm/preparation" : m.contact ? "/crm/audit" : "/crm/calendar",
+      href: m.hasPrep ? "/crm/preparation" : "/crm/preparation?event=" + encodeURIComponent(m.id) + "&type=meeting_brief",
       contact: m.contact, callable: false, rank: m.hasPrep ? 1 : 0,
     });
   }
@@ -188,6 +192,38 @@ export function buildQueue(input: QueueInput): QueueItem[] {
     });
   }
 
+  // 4b. Client success: at-risk accounts, renewals within 30 days, urgent/due support.
+  for (const c of input.clients ?? []) {
+    if (c.status === "churned" || c.status === "paused") continue;
+    if (c.status === "at_risk" || c.health <= 2) {
+      items.push({
+        id: "client-risk:" + c.id, group: "delivery", status: "blocked", title: `Client at risk: ${c.client}`,
+        why: [`Health ${c.health}/5`, c.riskNotes || null].filter(Boolean).join(" · "),
+        lastActivity: null, due: c.nextReview, href: "/crm/client-success", contact: null, callable: false, rank: 0,
+      });
+    }
+    if (c.renewal) {
+      const days = daysBetween(today, c.renewal);
+      if (days <= 30) items.push({
+        id: "renewal:" + c.id, group: "delivery", status: days < 0 ? "overdue" : days === 0 ? "today" : "upcoming",
+        title: `${days < 0 ? "Overdue renewal" : "Renewal coming up"}: ${c.client}`,
+        why: days < 0 ? `Renewal date ${c.renewal} has passed` : `Renews in ${days} day${days === 1 ? "" : "s"} (${c.renewal})`,
+        lastActivity: null, due: c.renewal, href: "/crm/client-success", contact: null, callable: false, rank: 1,
+      });
+    }
+  }
+  for (const t of input.tickets ?? []) {
+    if (t.status === "resolved" || t.status === "closed") continue;
+    const dueDay = day(t.due);
+    const urgent = t.priority === "urgent" || t.priority === "high";
+    if (!urgent && !(dueDay && dueDay <= today)) continue;
+    items.push({
+      id: "support:" + t.id, group: "delivery", status: dueDay && dueDay < today ? "overdue" : "today",
+      title: `Support: ${t.title}`, why: [t.client, `${t.priority} priority`, dueDay ? `due ${dueDay}` : null].filter(Boolean).join(" · "),
+      lastActivity: null, due: t.due, href: "/crm/client-success", contact: null, callable: false, rank: t.priority === "urgent" ? 0 : 1,
+    });
+  }
+
   // 5. Money (receivables) and tasks.
   for (const r of input.receivables) {
     if (r.status !== "overdue" && !(r.status === "expected" && r.due && r.due <= today)) continue;
@@ -211,6 +247,17 @@ export function buildQueue(input: QueueInput): QueueItem[] {
       rank: t.priority === "urgent" ? 0 : t.priority === "high" ? 1 : 2,
     });
   }
+
+  // 6. AI team: approvals waiting on the founder and failed runs. Hermes never acts without approval.
+  for (const a of input.approvals ?? []) items.push({
+    id: "approval:" + a.id, group: "admin", status: "today", title: `Approval needed: ${a.title}`,
+    why: [a.actionType.replaceAll("_", " "), "nothing happens until you decide"].filter(Boolean).join(" · "),
+    lastActivity: null, due: a.createdAt, href: "/crm/workforce", contact: null, callable: false, rank: 0,
+  });
+  for (const r of input.failedRuns ?? []) items.push({
+    id: "agent-run:" + r.id, group: "admin", status: "blocked", title: `Failed AI run: ${r.title}`,
+    why: r.agent, lastActivity: null, due: r.at, href: "/crm/workforce", contact: null, callable: false, rank: 1,
+  });
 
   return items.sort((a, b) =>
     GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group)

@@ -127,6 +127,29 @@ export async function POST(request: Request) {
       if (!rows.length) return fail("Deal not found in your workspace.", 404);
     }
 
+    // Idempotency: a retry of the same audit within 10 minutes returns the saved report
+    // instead of paying for a second run and saving a duplicate. force=true re-runs.
+    const title = ("Business audit — " + companyName).slice(0, 240);
+    if (body.force !== true) {
+      const recent = await sql`SELECT id, content, source_urls, verified_facts, hypotheses, confidence, created_at
+        FROM public.research_artifacts
+        WHERE owner_id = ${user.id} AND artifact_type = 'audit_prep' AND title = ${title}
+          AND contact_id IS NOT DISTINCT FROM ${contactId}::uuid AND status <> 'archived'
+          AND created_at > now() - interval '10 minutes'
+        ORDER BY created_at DESC LIMIT 1`;
+      if (recent.length) {
+        const r = recent[0];
+        const content = String(r.content ?? "");
+        const verdict = content.toLowerCase();
+        const fitDecision = /\bno fit\b/.test(verdict) ? "no_fit" : /\bconditional fit\b/.test(verdict) ? "conditional_fit" : /\bfit\b/.test(verdict) ? "fit" : null;
+        return Response.json({ audit: {
+          id: String(r.id), title, companyName, content, sourceUrls: r.source_urls ?? [], verifiedFacts: r.verified_facts ?? [],
+          hypotheses: r.hypotheses ?? [], confidence: String(r.confidence), officialWebsite: website, websiteStatus: website ? "likely" : "not_found",
+          candidates: [], fitDecision, nextCrmAction: "", contactId, status: "draft", createdAt: r.created_at, incomplete: false, reused: true,
+        } }, { status: 200, headers: { "Cache-Control": "no-store" } });
+      }
+    }
+
     stage = "provider";
     const model = process.env.CINDER_AUDIT_MODEL?.trim() || DEFAULT_AUDIT_MODEL;
     const { blocks, stopReason } = await runResearch(apiKey, model, buildUserPrompt({ companyName, website, location, context }), startedAt + RESEARCH_BUDGET_MS);
@@ -147,7 +170,6 @@ export async function POST(request: Request) {
     const content = (truncated ? "> ⚠️ This report may be incomplete: research stopped before finishing.\n\n" : "") + report;
 
     stage = "persist";
-    const title = ("Business audit — " + companyName).slice(0, 240);
     const saved = await sql`INSERT INTO public.research_artifacts
       (owner_id, contact_id, deal_id, artifact_type, title, source_urls, verified_facts, hypotheses, confidence, content, status, researched_at)
       VALUES (${user.id}, ${contactId}::uuid, ${dealId}::uuid, 'audit_prep',

@@ -61,7 +61,7 @@ ok(() => {
   const q = buildQueue({ ...base(), meetings: [
     { id: "m1", title: "Prepped", startsAt: "2026-10-28T20:00:00Z", type: "meeting", hasPrep: true, contact: contact("j"), dealTitle: null },
     { id: "m2", title: "Unprepped", startsAt: "2026-10-28T21:00:00Z", type: "meeting", hasPrep: false, contact: contact("k"), dealTitle: null }] });
-  assert.equal(q[0].id, "meeting:m2"); assert.equal(q[0].href, "/crm/audit"); assert.match(q[0].why, /No prep brief/);
+  assert.equal(q[0].id, "meeting:m2"); assert.equal(q[0].href, "/crm/preparation?event=m2&type=meeting_brief"); assert.match(q[0].why, /No prep brief/);
 });
 
 // Deals: only past close date or 7+ quiet days.

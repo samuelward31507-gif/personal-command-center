@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     const owner = user.id;
 
     const dayStart = new Date(Date.parse(dayEnd) - 86400000).toISOString();
-    const [outreach, activeIds, followUps, meetings, deals, projects, milestones, receivables, tasks, prospects, firstTouches] = await Promise.all([
+    const [outreach, activeIds, followUps, meetings, deals, projects, milestones, receivables, tasks, prospects, firstTouches, clients, tickets, approvals, failedRuns] = await Promise.all([
       sql`SELECT id, contact_id, current_step, next_action_at FROM public.contact_outreach
         WHERE owner_id = ${owner} AND status = 'active' AND next_action_at < ${dayEnd}::timestamptz ORDER BY next_action_at LIMIT 100`,
       sql`SELECT DISTINCT contact_id FROM public.contact_outreach WHERE owner_id = ${owner} AND status = 'active'`,
@@ -94,6 +94,18 @@ export async function GET(request: Request) {
         ORDER BY c.created_at LIMIT 300`,
       sql`SELECT count(*)::int AS n FROM (SELECT contact_id, min(occurred_at) AS first_at FROM public.contact_activities
           WHERE owner_id = ${owner} AND outcome <> 'initiated' GROUP BY contact_id) x WHERE x.first_at >= ${dayStart}::timestamptz`,
+      sql`SELECT id, client_name, status, health_score, renewal_date, next_review_date, risk_notes FROM public.client_success
+        WHERE owner_id = ${owner} AND status NOT IN ('churned','paused')
+          AND (status = 'at_risk' OR health_score <= 2 OR renewal_date <= ${today}::date + 30) LIMIT 50`,
+      sql`SELECT t.id, t.title, t.priority, t.status, t.due_date, coalesce(nullif(cs.client_name,''), trim(concat_ws(' ', c.first_name, c.last_name))) AS client
+        FROM public.support_tickets t
+        LEFT JOIN public.client_success cs ON cs.id = t.client_success_id AND cs.owner_id = t.owner_id
+        LEFT JOIN public.contacts c ON c.id = t.contact_id AND c.owner_id = t.owner_id
+        WHERE t.owner_id = ${owner} AND t.status NOT IN ('resolved','closed')
+          AND (t.priority IN ('urgent','high') OR t.due_date <= ${today}::date) LIMIT 50`,
+      sql`SELECT id, title, action_type, created_at FROM public.approval_requests WHERE owner_id = ${owner} AND status = 'pending' ORDER BY created_at LIMIT 50`,
+      sql`SELECT id, task_title, agent_name, coalesce(finished_at, updated_at) AS at FROM public.agent_runs
+        WHERE owner_id = ${owner} AND status = 'failed' AND coalesce(finished_at, updated_at) > now() - interval '14 days' LIMIT 20`,
     ]);
 
     // One lookup for every contact referenced: name, phone, last call outcome, latest audit verdict.
@@ -132,6 +144,10 @@ export async function GET(request: Request) {
       receivables: receivables.map(r => ({ id: String(r.id), title: String(r.title), amount: Number(r.amount), status: String(r.status), due: dateOnly(r.due_date), client: String(r.client ?? "") })),
       prospects: prospects.filter(r => ref(r.id)).map(r => ({ contact: ref(r.id)!, location: String(r.location ?? ""), website: String(r.website ?? ""), createdAt: iso(r.created_at)! })),
       firstTouchesToday: Number(firstTouches[0]?.n ?? 0),
+      clients: clients.map(r => ({ id: String(r.id), client: String(r.client_name ?? "Client"), status: String(r.status), health: Number(r.health_score ?? 5), renewal: dateOnly(r.renewal_date), nextReview: dateOnly(r.next_review_date), riskNotes: String(r.risk_notes ?? "").slice(0, 140) })),
+      tickets: tickets.map(r => ({ id: String(r.id), title: String(r.title), client: String(r.client ?? ""), priority: String(r.priority), status: String(r.status), due: dateOnly(r.due_date) })),
+      approvals: approvals.map(r => ({ id: String(r.id), title: String(r.title), actionType: String(r.action_type ?? ""), createdAt: iso(r.created_at) })),
+      failedRuns: failedRuns.map(r => ({ id: String(r.id), title: String(r.task_title || "Untitled task"), agent: String(r.agent_name ?? ""), at: iso(r.at) })),
       tasks: tasks.map(r => ({ id: String(r.id), title: String(r.title), status: String(r.status), priority: String(r.priority), dueAt: iso(r.due_at), contactName: r.contact_name ? String(r.contact_name) : null, dealTitle: r.deal_title ? String(r.deal_title) : null })),
     };
     const items = buildQueue(input);

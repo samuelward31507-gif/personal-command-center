@@ -13,7 +13,7 @@ export default function SuggestedDeal({ deal, onDone }: { deal: SuggestedDealDat
   const [state, setState] = useState<"idle" | "saving" | "done" | "dismissed">("idle");
   const [error, setError] = useState("");
   if (state === "dismissed") return null;
-  if (state === "done") return <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "#86efac" }}>Deal created in your pipeline · <a href="/crm/pipeline" style={{ color: "#d6a98c" }}>Open pipeline →</a></p>;
+  if (state === "done") return <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "var(--c-success)" }}>Deal created in your pipeline · <a href="/crm/pipeline" style={{ color: "var(--c-accent)" }}>Open pipeline →</a></p>;
 
   async function create() {
     setState("saving"); setError("");
@@ -30,13 +30,13 @@ export default function SuggestedDeal({ deal, onDone }: { deal: SuggestedDealDat
     }
   }
 
-  return <div style={{ marginTop: 8, padding: "10px 12px", border: "1px solid #4a3a2f", background: "#1b1714", borderRadius: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-    <div style={{ flex: "1 1 220px", fontSize: 12.5, color: "#e4e4e7", lineHeight: 1.5 }}>
-      <strong style={{ color: "#f4f4f5" }}>No deal yet.</strong> Create “{deal.title}” at {money(deal.setupFee)} setup + {money(deal.monthlyFee)}/mo
-      <span style={{ color: "#9a9aa4" }}> · stage: {deal.stage.replaceAll("_", " ")} · list price, edit anytime</span>
+  return <div style={{ marginTop: 8, padding: "10px 12px", border: "1px solid var(--c-accent-line)", background: "var(--c-accent-bg)", borderRadius: 10, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+    <div style={{ flex: "1 1 220px", fontSize: 12.5, color: "var(--c-text)", lineHeight: 1.5 }}>
+      <strong style={{ color: "var(--c-text)" }}>No deal yet.</strong> Create “{deal.title}” at {money(deal.setupFee)} setup + {money(deal.monthlyFee)}/mo
+      <span style={{ color: "var(--c-muted)" }}> · stage: {deal.stage.replaceAll("_", " ")} · list price, edit anytime</span>
     </div>
-    <button type="button" onClick={() => void create()} disabled={state === "saving"} style={{ border: "1px solid #d6a98c", background: "#d6a98c", color: "#171311", borderRadius: 8, padding: "7px 12px", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>{state === "saving" ? "Creating…" : "Create deal"}</button>
-    <button type="button" onClick={() => setState("dismissed")} style={{ border: 0, background: "transparent", color: "#9a9aa4", fontSize: 12.5, cursor: "pointer" }}>Not now</button>
-    {error && <p role="alert" style={{ flexBasis: "100%", margin: 0, fontSize: 12, color: "#fca5a5" }}>{error}</p>}
+    <button type="button" onClick={() => void create()} disabled={state === "saving"} style={{ border: "1px solid var(--c-accent-line)", background: "var(--c-accent)", color: "var(--c-on-accent)", borderRadius: 8, padding: "7px 12px", fontWeight: 700, fontSize: 12.5, cursor: "pointer" }}>{state === "saving" ? "Creating…" : "Create deal"}</button>
+    <button type="button" onClick={() => setState("dismissed")} style={{ border: 0, background: "transparent", color: "var(--c-muted)", fontSize: 12.5, cursor: "pointer" }}>Not now</button>
+    {error && <p role="alert" style={{ flexBasis: "100%", margin: 0, fontSize: 12, color: "var(--c-danger)" }}>{error}</p>}
   </div>;
 }

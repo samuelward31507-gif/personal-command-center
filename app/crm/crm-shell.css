@@ -1,34 +1,34 @@
 .crm-app-shell{min-height:100vh;width:100%;background:var(--background)}.crm-app-shell .sidebar{position:sticky;top:0;height:100vh}.crm-brand{text-decoration:none;color:inherit}.crm-brand .cinder-mark{width:24px;height:24px;display:grid;place-items:center;flex:0 0 auto}.crm-brand .cinder-mark svg{width:26px;height:26px}.crm-brand .cinder-wordmark{font-size:19px;font-weight:720;letter-spacing:-1px}.crm-shell-main{flex:1;min-width:0}.crm-shell-main>.topbar{flex:0 0 58px}.crm-shell-main .crm-page{width:100%;max-width:1450px}.crm-back-home{text-decoration:none}.crm-shell-main .crm-topline{flex-wrap:wrap}@media(max-width:760px){.crm-app-shell .sidebar{position:sticky;top:0;height:100vh}.crm-app-shell .topbar{padding:0 12px}.crm-app-shell .topbar-actions{gap:8px}.crm-app-shell .topbar-status{display:none}.crm-shell-main .crm-page{padding:22px 12px 30px}}
 /* Cal.ai-inspired neutral dark shell */
-:root{--background:#111111;--foreground:#f3f3f3;--muted:#a1a1a1;--line:#292929;--panel:#171717;--accent:#f0f0f0}
-.crm-app-shell,.crm-shell-main,.main-panel{background:#111!important;color:#f3f3f3}
-.crm-app-shell .sidebar{width:216px;flex-basis:216px;padding:18px 12px 14px;background:#111!important;border-right:1px solid #262626!important}
-.crm-brand{height:34px;margin-bottom:28px;gap:9px;color:#f5f5f5}
-.crm-brand .cinder-mark{width:23px;height:23px;color:#f5f5f5}
+:root{--background:var(--c-primary);--foreground:var(--c-on-primary);--muted:var(--c-on-primary);--line:var(--c-line-strong);--panel:var(--c-primary);--accent:var(--c-accent)}
+.crm-app-shell,.crm-shell-main,.main-panel{background:var(--c-primary)!important;color:var(--c-on-primary)}
+.crm-app-shell .sidebar{width:216px;flex-basis:216px;padding:18px 12px 14px;background:var(--c-surface)!important;border-right:1px solid var(--c-line)!important}
+.crm-brand{height:34px;margin-bottom:28px;gap:9px;color:var(--c-text)}
+.crm-brand .cinder-mark{width:23px;height:23px;color:var(--c-text)}
 .crm-brand .cinder-mark svg{width:23px;height:23px}
-.crm-brand .cinder-wordmark{font-size:16px;font-weight:650;letter-spacing:-.45px;color:#f5f5f5}
-.crm-app-shell .workspace-chevron{color:#8d8d8d;font-size:14px}
-.crm-app-shell .nav-section-label{padding:0 10px;margin:0 0 8px;color:#9a9a9a;font-size:10px;letter-spacing:1.1px;font-weight:650}
+.crm-brand .cinder-wordmark{font-size:16px;font-weight:650;letter-spacing:-.45px;color:var(--c-text)}
+.crm-app-shell .workspace-chevron{color:var(--c-muted);font-size:14px}
+.crm-app-shell .nav-section-label{padding:0 10px;margin:0 0 8px;color:var(--c-muted);font-size:10px;letter-spacing:1.1px;font-weight:650}
 .crm-app-shell .primary-nav{gap:2px}
-.crm-app-shell .nav-item{min-height:33px;padding:0 10px;gap:10px;border-radius:8px;color:#bdbdbd;font-size:12px;font-weight:450;background:transparent;transition:background .12s,color .12s}
-.crm-app-shell .nav-item:hover{background:#1a1a1a;color:#f5f5f5}
-.crm-app-shell .nav-item.active{background:#202020;color:#f5f5f5;font-weight:600}
+.crm-app-shell .nav-item{min-height:33px;padding:0 10px;gap:10px;border-radius:8px;color:var(--c-muted);font-size:12px;font-weight:450;background:transparent;transition:background .12s,color .12s}
+.crm-app-shell .nav-item:hover{background:var(--c-primary);color:var(--c-on-primary)}
+.crm-app-shell .nav-item.active{background:var(--c-primary);color:var(--c-on-primary);font-weight:600}
 .crm-app-shell .glyph{width:15px;height:18px;display:grid;place-items:center;flex:0 0 15px;color:currentColor}
 .crm-app-shell .glyph-icon{width:16px;height:16px;display:block}
-.crm-app-shell .sidebar-divider{height:1px;background:#2b2b2b;margin:16px 5px 14px}
-.crm-app-shell .connection-card{background:#171717;border:1px solid #2b2b2b;border-radius:8px;margin-bottom:12px;padding:10px 9px}
-.crm-app-shell .connection-card strong{color:#d6d6d6;font-size:10px}
-.crm-app-shell .connection-card small{color:#888;font-size:9px}
-.crm-app-shell .connection-dot{width:6px;height:6px;background:#777}
-.crm-app-shell .profile-row{border-top:1px solid #2b2b2b;color:#aaa;padding-top:13px}
-.crm-app-shell .profile-avatar{background:#292929;color:#f0f0f0}
-.crm-app-shell .profile-copy strong{color:#ddd;font-size:11px}
-.crm-app-shell .profile-copy small{color:#8b8b8b;font-size:10px}
-.crm-shell-main>.topbar{background:#111!important;border-bottom:1px solid #262626!important;color:#aaa;padding:0 28px}
-.crm-shell-main .breadcrumbs strong{color:#eee;font-weight:550}
-.crm-shell-main .topbar-status{color:#999}
-.crm-shell-main .quiet-button{background:#171717;border:1px solid #303030;color:#ddd}
-.crm-shell-main .crm-page,.crm-shell-main .page-content{color:#eee}
+.crm-app-shell .sidebar-divider{height:1px;background:var(--c-surface-3);margin:16px 5px 14px}
+.crm-app-shell .connection-card{background:var(--c-surface-2);border:1px solid var(--c-line-strong);border-radius:8px;margin-bottom:12px;padding:10px 9px}
+.crm-app-shell .connection-card strong{color:var(--c-text);font-size:10px}
+.crm-app-shell .connection-card small{color:var(--c-muted);font-size:9px}
+.crm-app-shell .connection-dot{width:6px;height:6px;background:var(--c-surface-3)}
+.crm-app-shell .profile-row{border-top:1px solid var(--c-line-strong);color:var(--c-muted);padding-top:13px}
+.crm-app-shell .profile-avatar{background:var(--c-primary);color:var(--c-on-primary)}
+.crm-app-shell .profile-copy strong{color:var(--c-text);font-size:11px}
+.crm-app-shell .profile-copy small{color:var(--c-muted);font-size:10px}
+.crm-shell-main>.topbar{background:var(--c-surface)!important;border-bottom:1px solid var(--c-line)!important;color:var(--c-muted);padding:0 28px}
+.crm-shell-main .breadcrumbs strong{color:var(--c-text);font-weight:550}
+.crm-shell-main .topbar-status{color:var(--c-muted)}
+.crm-shell-main .quiet-button{background:var(--c-primary);border:1px solid var(--c-line-strong);color:var(--c-on-primary)}
+.crm-shell-main .crm-page,.crm-shell-main .page-content{color:var(--c-text)}
 @media(max-width:760px){.crm-app-shell .sidebar{width:216px;flex-basis:216px;padding:16px 10px 12px}.crm-shell-main>.topbar{padding:0 12px}}
 
 
@@ -38,8 +38,8 @@
   width:208px!important;
   flex:0 0 208px!important;
   padding:12px 9px 10px!important;
-  background:#111!important;
-  border-right:1px solid #262626!important;
+  background:var(--c-surface)!important;
+  border-right:1px solid var(--c-line)!important;
   gap:0!important;
 }
 .brand, .app-shell .brand, .crm-brand {
@@ -90,7 +90,7 @@
 .sidebar-divider, .app-shell .sidebar-divider, .crm-app-shell .sidebar-divider {
   height:1px!important;min-height:1px!important;
   margin:10px 4px 9px!important;
-  background:#292929!important;border:0!important;
+  background:var(--c-surface-3)!important;border:0!important;
 }
 .sidebar-bottom, .app-shell .sidebar-bottom, .crm-app-shell .sidebar-bottom {
   margin-top:auto!important;padding-top:10px!important;
