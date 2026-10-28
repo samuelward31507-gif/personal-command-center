@@ -23,6 +23,7 @@ const primary = [
   ["workforce", "AI team", "spark", "/crm/workforce"],
 ] as const;
 const secondary = [
+  ["audit", "Business audit", "strategy", "/crm/audit"],
   ["intelligence", "Intelligence", "spark", "/crm/intelligence"],
   ["strategy", "Strategy & memory", "strategy", "/crm/strategy"],
   ["settings", "Settings", "settings", "/crm/settings"],
@@ -51,7 +52,8 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
   const [mobileOpen, setMobileOpen] = useState(false);
   const go = (key: string, href: string) => {
     setMobileOpen(false);
-    if (mode === "home" && onNavigate) onNavigate(key);
+    // Only Home and My day are in-page views; every other item is a real route.
+    if (mode === "home" && onNavigate && (key === "home" || key === "schedule")) onNavigate(key);
     else window.location.assign(href);
   };
   const isActive = (key: string, href: string) => {
@@ -66,6 +68,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     if (key === "needs-you") return pathname.startsWith("/crm/needs-you");
     if (key === "calendar") return pathname.startsWith("/crm/calendar");
     if (key === "tasks") return pathname.startsWith("/crm/tasks");
+    if (key === "audit") return pathname.startsWith("/crm/audit");
     if (key === "intelligence") return pathname.startsWith("/crm/intelligence");
     if (key === "strategy") return pathname.startsWith("/crm/strategy");
     if (key === "settings") return pathname.startsWith("/crm/settings");
