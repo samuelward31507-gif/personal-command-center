@@ -34,7 +34,10 @@ export default function CalendarPage(){
  const [loading,setLoading]=useState(true),[busy,setBusy]=useState(false);
  const [error,setError]=useState(""),[notice,setNotice]=useState("");
  const [show,setShow]=useState(false),[editing,setEditing]=useState<string|null>(null);
- const [draft,setDraft]=useState(blank);\n const [prep,setPrep]=useState<MeetingPrep|null>(null);\n const [prepLoading,setPrepLoading]=useState(false);\n const [prepError,setPrepError]=useState("");
+ const [draft,setDraft]=useState(blank);
+ const [prep,setPrep]=useState<MeetingPrep|null>(null);
+ const [prepLoading,setPrepLoading]=useState(false);
+ const [prepError,setPrepError]=useState("");
  const range=useMemo(()=>{
   if(view==="month"){const first=startOfWeek(startOfMonth(anchor));return {from:dateKey(first),to:endDate(addDays(first,41))};}
   const first=view==="week"?startOfWeek(anchor):new Date(anchor.getFullYear(),anchor.getMonth(),anchor.getDate());
@@ -73,7 +76,8 @@ export default function CalendarPage(){
   setShow(false);setNotice(editing?"Event updated.":"Event added to your calendar.");await load();
  }catch(e){setError(e instanceof Error?e.message:"Could not save event.")}finally{setBusy(false)}}
  async function remove(){if(!editing||!confirm("Delete this calendar event?"))return;setBusy(true);try{const r=await fetch("/api/calendar-events",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:editing})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||"Could not delete event.");setShow(false);setNotice("Event deleted.");await load()}catch(e){setError(e instanceof Error?e.message:"Could not delete event.")}finally{setBusy(false)}}
- async function changeStatus(e:CalendarEvent,status:EventStatus){const r=await fetch("/api/calendar-events",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:e.id,status})});if(!r.ok){setError("Could not update event status.");return}setEvents(old=>old.map(x=>x.id===e.id?{...x,status}:x))}\n async function openPrep(e:CalendarEvent){setPrep(null);setPrepError("");setPrepLoading(true);try{const r=await fetch("/api/meeting-prep?eventId="+encodeURIComponent(e.id),{cache:"no-store"});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||"Could not load meeting brief.");setPrep(data as MeetingPrep)}catch(err){setPrepError(err instanceof Error?err.message:"Could not load meeting brief.")}finally{setPrepLoading(false)}}
+ async function changeStatus(e:CalendarEvent,status:EventStatus){const r=await fetch("/api/calendar-events",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:e.id,status})});if(!r.ok){setError("Could not update event status.");return}setEvents(old=>old.map(x=>x.id===e.id?{...x,status}:x))}
+ async function openPrep(e:CalendarEvent){setPrep(null);setPrepError("");setPrepLoading(true);try{const r=await fetch("/api/meeting-prep?eventId="+encodeURIComponent(e.id),{cache:"no-store"});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||"Could not load meeting brief.");setPrep(data as MeetingPrep)}catch(err){setPrepError(err instanceof Error?err.message:"Could not load meeting brief.")}finally{setPrepLoading(false)}}
  return <main className="calendar-page">
   <header className="calendar-header"><div><div className="calendar-eyebrow">CINDER / PLAN & EXECUTE</div><h1>Calendar<span>.</span></h1><p>Your meetings, calls, focus blocks, and task deadlines in one view.</p></div><button className="calendar-primary" onClick={()=>startNew(anchor)}>＋ New event</button></header>
   {error&&<div className="calendar-alert" role="alert">{error}<button onClick={()=>setError("")}>Dismiss</button></div>}{notice&&<p className="calendar-notice" role="status">{notice}</p>}
