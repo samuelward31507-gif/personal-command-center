@@ -62,7 +62,9 @@ export async function POST(request: Request) {
   }
 
   const trigger = text(payload.triggerEvent, 100).toUpperCase();
-  if (!trigger) return Response.json({ error: "Webhook triggerEvent is required." }, { status: 400 });
+  // Cal.com Ping diagnostics can be signed JSON without a booking trigger or UID.
+  // Acknowledge those diagnostics; only booking events should require booking fields.
+  if (!trigger) return Response.json({ received: true, ignored: true, diagnostic: true });
   // Acknowledge signed Cal.com diagnostic events before requiring booking-only fields.
   const supported = new Set(["BOOKING_CREATED", "BOOKING_RESCHEDULED", "BOOKING_CANCELLED", "MEETING_ENDED"]);
   if (!supported.has(trigger)) return Response.json({ received: true, ignored: true, trigger });
