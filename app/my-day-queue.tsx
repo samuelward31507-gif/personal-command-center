@@ -71,7 +71,7 @@ export default function MyDayQueue() {
   }
 
   const byGroup = items.reduce<Record<string, QueueItem[]>>((acc, i) => { (acc[i.group] ||= []).push(i); return acc; }, {});
-  const order: QueueGroup[] = ["revenue", "meetings", "deals", "delivery", "admin"];
+  const order: QueueGroup[] = ["revenue", "prospects", "meetings", "deals", "delivery", "admin"];
   const overdue = items.filter(i => i.status === "overdue" || i.status === "blocked").length;
 
   return <section className="surface-panel schedule-panel" aria-labelledby="queue-heading">
@@ -96,7 +96,7 @@ export default function MyDayQueue() {
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
             {item.callable && <button className="text-action" onClick={() => call(item)}>Call</button>}
-            {item.contact && (item.group === "revenue" || item.group === "deals") && <button className="text-action" onClick={() => setOpen(open === item.id ? null : item.id)} aria-expanded={open === item.id}>Log outcome</button>}
+            {item.contact && (item.group === "revenue" || item.group === "prospects" || item.group === "deals") && <button className="text-action" onClick={() => setOpen(open === item.id ? null : item.id)} aria-expanded={open === item.id}>Log outcome</button>}
             <a className="text-action" href={item.href}>Open →</a>
           </div>
           {open === item.id && item.contact && <div style={{ flexBasis: "100%", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(120px,1fr))", gap: 6, marginTop: 8 }}>
