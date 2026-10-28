@@ -21,3 +21,17 @@
 .calendar-page .calendar-shell,.calendar-page .calendar-bottom { border-color:#303030!important; }
 .calendar-page .calendar-views button { color:#bcbcbc!important; }
 .calendar-page .calendar-day.is-today .calendar-day-number>span { background:#e5e5e5!important;color:#111!important; }
+
+.calendar-upcoming-item{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line,#e5e7eb);padding:4px 0}
+.calendar-upcoming-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;text-align:left;background:transparent;border:0;color:inherit;padding:12px 8px;cursor:pointer}
+.calendar-prep-button{white-space:nowrap;border:1px solid var(--line,#d9dce1);background:transparent;border-radius:8px;padding:8px 10px;color:inherit;font-size:12px;cursor:pointer}
+.calendar-prep-button:hover{background:rgba(120,130,145,.1)}
+.meeting-prep-modal{max-height:88vh;overflow:auto}
+.meeting-prep-content{display:grid;gap:14px;padding:0 22px 22px}
+.meeting-prep-content section{border:1px solid var(--line,#e5e7eb);border-radius:10px;padding:14px}
+.meeting-prep-content h3{margin:0 0 8px;font-size:14px}
+.meeting-prep-content p{margin:6px 0;line-height:1.5;font-size:13px;overflow-wrap:anywhere}
+.meeting-prep-content ol{padding-left:20px;margin:6px 0}
+.meeting-prep-content li{margin:8px 0;font-size:13px;line-height:1.5}
+.meeting-prep-unlinked{border-color:#d6b46b!important}
+@media(max-width:600px){.calendar-upcoming-item{align-items:stretch;gap:4px}.calendar-prep-button{padding:7px;font-size:11px}.calendar-upcoming-main{gap:7px;padding:10px 4px}.upcoming-type{display:none}}
