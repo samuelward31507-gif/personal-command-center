@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ArtifactType = "prospect_research" | "call_brief" | "audit_prep" | "meeting_brief" | "follow_up_draft";
 type ArtifactStatus = "draft" | "reviewed" | "archived";
@@ -28,6 +29,11 @@ const fieldStyle={display:"grid",gap:6,fontSize:12,color:"#555",fontWeight:600} 
 const buttonStyle={border:"1px solid #dedbd4",borderRadius:9,padding:"9px 12px",background:"#fff",color:"#292925",cursor:"pointer",font:"inherit",fontSize:12,fontWeight:600} as const;
 
 export default function PreparationPage(){
+ const searchParams=useSearchParams();
+ const prefillHandled=useRef(false);
+ const prefillEventId=searchParams.get("event")||"";
+ const prefillContactId=searchParams.get("contact")||"";
+ const prefillType=(searchParams.get("type")||"") as ArtifactType;
  const [artifacts,setArtifacts]=useState<Artifact[]>([]);
  const [contacts,setContacts]=useState<Contact[]>([]);
  const [deals,setDeals]=useState<Deal[]>([]);
@@ -57,6 +63,27 @@ export default function PreparationPage(){
   finally{setLoading(false);}
  },[]);
  useEffect(()=>{void load()},[load]);
+
+ useEffect(()=>{
+  if(prefillHandled.current||loading||(!prefillEventId&&!prefillContactId))return;
+  const allowedTypes:ArtifactType[]=["prospect_research","call_brief","audit_prep","meeting_brief","follow_up_draft"];
+  const type=allowedTypes.includes(prefillType)?prefillType:(prefillEventId?"meeting_brief":"call_brief");
+  const event=events.find(e=>e.id===prefillEventId);
+  const contact=contacts.find(c=>c.id===prefillContactId)||contacts.find(c=>c.id===event?.contactId);
+  if(prefillEventId&&!event)return;
+  prefillHandled.current=true;
+  const title=type==="meeting_brief"&&event?"Meeting brief — "+event.title:type==="call_brief"&&contact?"Call brief — "+(contact.company||contact.name):type==="prospect_research"&&contact?"Prospect research — "+(contact.company||contact.name):"New preparation brief";
+  const template=type==="meeting_brief"
+   ? "MEETING OBJECTIVE\n- What outcome should this meeting produce?\n\nCONTEXT TO VERIFY\n- What do we know from saved, source-backed research?\n- What is still an assumption?\n\nAGENDA\n1. Confirm their current process and goals\n2. Quantify the business impact of the problem\n3. Explore fit, constraints, and decision process\n4. Agree on a clear next step\n\nDISCOVERY QUESTIONS\n- How are new leads handled today?\n- Where do opportunities get delayed or lost?\n- What would improving this be worth?\n- Who else is involved in the decision?\n\nNEXT STEP\n- Record owner, action, and date."
+   : type==="call_brief"
+   ? "CALL OBJECTIVE\n- Secure a relevant 20–30 minute meeting; do not try to close on the first cold call.\n\nOPENING\n- Introduce yourself and the reason for the call in one sentence.\n- Ask one relevant question tied to a verified fact.\n\nDISCOVERY\n- How do new inquiries get handled today?\n- What happens when a lead does not answer or book?\n- Is this an active priority?\n\nHYPOTHESES TO TEST\n- Keep unverified pain points labelled as hypotheses.\n\nNEXT STEP\n- Log the result and schedule a specific follow-up if needed."
+   : "RESEARCH GOAL\n- Identify the decision maker, service focus, and relevant operational context.\n\nVERIFIED FACTS\n- Add only facts supported by the source URLs below.\n\nHYPOTHESES TO TEST\n- Label possible bottlenecks as hypotheses, not facts.\n\nNEXT ACTION\n- Define a relevant call opener and one clear meeting objective.";
+  setEditing(null);
+  setDraft({...blank,type,title,contactId:contact?.id||prefillContactId,dealId:event?.dealId||"",calendarEventId:event?.id||"",content:template});
+  setShowEditor(true);
+  setError("");
+  setNotice("");
+ },[loading,prefillEventId,prefillContactId,prefillType,events,contacts]);
 
  const visible=useMemo(()=>artifacts.filter(a=>(filter==="all"||a.status===filter)&&[a.title,a.content,a.contactName,a.company,a.dealTitle,a.eventTitle,a.type,...a.verifiedFacts,...a.hypotheses].join(" ").toLowerCase().includes(query.trim().toLowerCase())),[artifacts,filter,query]);
  const reviewed=artifacts.filter(a=>a.status==="reviewed").length;
@@ -92,6 +119,20 @@ export default function PreparationPage(){
    if(!response.ok)throw new Error(data.error||"Could not update status.");
    setNotice(status==="reviewed"?"Marked reviewed.":"Moved to archive.");await load();
   }catch(e){setError(e instanceof Error?e.message:"Could not update status.");}
+ }
+ async function createDealFromBrief(a:Artifact){
+  if(!a.contactId){setError("Link a contact to this brief before creating a deal.");return;}
+  setError("");setNotice("");
+  try{
+   const title=(a.company||a.contactName||a.title.replace(/^(Meeting brief|Call brief|Prospect research)\s*[—-]\s*/i,"")).trim().slice(0,240)||"New opportunity";
+   const response=await fetch("/api/deals",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,contactId:a.contactId,serviceType:"custom_ai_implementation",stage:"qualified",setupFee:0,monthlyFee:0,source:"Cinder meeting preparation",notes:"Created from preparation brief: "+a.title+"\n\n"+a.content.slice(0,8500)})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok||typeof data.id!=="string")throw new Error(data.error||"Could not create a deal.");
+   const linked=await fetch("/api/research-artifacts",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:a.id,contactId:a.contactId,dealId:data.id,calendarEventId:a.calendarEventId,type:a.type,title:a.title,sourceUrls:a.sourceUrls,verifiedFacts:a.verifiedFacts,hypotheses:a.hypotheses,confidence:a.confidence,content:a.content,status:a.status})});
+   if(!linked.ok){const linkData=await linked.json().catch(()=>({}));setNotice("Deal created in Qualified. Brief link needs repair: "+(linkData.error||"open the brief and link the new deal manually."));await load();return;}
+   setNotice("Deal created in Qualified and linked to this brief. Add real pricing after discovery; nothing was marked won.");
+   await load();
+  }catch(e){setError(e instanceof Error?e.message:"Could not create a deal from this brief.");}
  }
  async function copyContent(a:Artifact){
   try{await navigator.clipboard.writeText(a.content);setNotice("Copied draft content. Nothing was sent.");}
@@ -137,7 +178,7 @@ export default function PreparationPage(){
     {a.verifiedFacts.length>0&&<div style={{display:"grid",gap:5}}><small style={{fontWeight:700,color:"#477252",fontSize:10,letterSpacing:1}}>VERIFIED FACTS</small><ul style={{margin:0,paddingLeft:18,fontSize:12,lineHeight:1.5,color:"#444"}}>{a.verifiedFacts.slice(0,3).map((fact,i)=><li key={i}>{fact}</li>)}</ul></div>}
     {a.hypotheses.length>0&&<div style={{display:"grid",gap:5}}><small style={{fontWeight:700,color:"#986c28",fontSize:10,letterSpacing:1}}>HYPOTHESES TO TEST</small><ul style={{margin:0,paddingLeft:18,fontSize:12,lineHeight:1.5,color:"#555"}}>{a.hypotheses.slice(0,3).map((hypothesis,i)=><li key={i}>{hypothesis}</li>)}</ul></div>}
     <div style={{fontSize:11,color:"#888"}}>Updated {dateLabel(a.updatedAt)}{a.researchedAt?" · Sources recorded "+dateLabel(a.researchedAt):" · No source URLs recorded yet"}</div>
-    <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:"auto"}}><button style={buttonStyle} onClick={()=>editArtifact(a)}>Edit</button><button style={buttonStyle} onClick={()=>void copyContent(a)}>Copy content</button>{a.status==="draft"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"reviewed")}>Mark reviewed</button>}{a.status!=="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"archived")}>Archive</button>}{a.status==="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"draft")}>Restore draft</button>}</div>
+    <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:"auto"}}><button style={buttonStyle} onClick={()=>editArtifact(a)}>Edit</button>{a.contactId&&!a.dealId&&["meeting_brief","call_brief","follow_up_draft"].includes(a.type)&&<button style={buttonStyle} onClick={()=>void createDealFromBrief(a)}>Create deal</button>}<button style={buttonStyle} onClick={()=>void copyContent(a)}>Copy content</button>{a.status==="draft"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"reviewed")}>Mark reviewed</button>}{a.status!=="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"archived")}>Archive</button>}{a.status==="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"draft")}>Restore draft</button>}</div>
    </article>)}
   </div>}
  </main>;

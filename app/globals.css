@@ -304,3 +304,55 @@ button:not(.cal-home-submit):not(.primary-button):not(.btn-primary) { border-col
 table, th, td, .table-row, .list-row { border-color:#29292e !important; }
 .muted, .text-muted, small { color:#90909a; }
 @media(max-width:760px){ .sidebar { background:#101013 !important; } }
+
+
+/* Accessible shared mobile navigation for Home and the CRM workspace. */
+.mobile-nav-toggle,.mobile-nav-backdrop{display:none}
+@media(max-width:760px){
+  .mobile-nav-toggle{
+    display:grid!important;place-items:center!important;
+    position:fixed!important;left:12px!important;top:12px!important;z-index:1202!important;
+    width:34px!important;height:34px!important;padding:0!important;
+    border:1px solid #333!important;border-radius:8px!important;
+    background:#171717!important;color:#f5f5f5!important;
+    font-size:18px!important;line-height:1!important;cursor:pointer!important;
+    box-shadow:0 2px 10px #0002!important;
+  }
+  .mobile-nav-toggle span{display:block;transform:translateY(-1px)}
+  .mobile-nav-backdrop{
+    display:block!important;position:fixed!important;inset:0!important;z-index:1200!important;
+    width:100%!important;height:100%!important;padding:0!important;border:0!important;
+    background:rgba(0,0,0,.55)!important;cursor:pointer!important;
+  }
+  .sidebar,.app-shell .sidebar,.crm-app-shell .sidebar{
+    position:fixed!important;left:0!important;top:0!important;bottom:0!important;z-index:1201!important;
+    height:100dvh!important;min-height:100dvh!important;width:min(280px,86vw)!important;
+    max-width:86vw!important;flex:0 0 min(280px,86vw)!important;
+    overflow-y:auto!important;overscroll-behavior:contain!important;
+    transform:translateX(-105%)!important;transition:transform .18s ease!important;
+    box-shadow:none!important;
+  }
+  .sidebar.mobile-open,.app-shell .sidebar.mobile-open,.crm-app-shell .sidebar.mobile-open{
+    transform:translateX(0)!important;box-shadow:12px 0 32px #0003!important;
+  }
+  .topbar,.crm-shell-main>.topbar{padding-left:56px!important}
+  .page-content{padding-top:62px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .sidebar,.app-shell .sidebar,.crm-app-shell .sidebar{transition:none!important}
+}
+
+
+/* Expanded mobile drawer must restore the desktop navigation labels. */
+@media (max-width:760px) {
+  .sidebar.mobile-open .brand { width:100%!important; padding:0 9px!important; }
+  .sidebar.mobile-open .brand-name,
+  .sidebar.mobile-open .workspace-chevron { display:inline!important; }
+  .sidebar.mobile-open .nav-section-label { display:block!important; }
+  .sidebar.mobile-open .nav-item { justify-content:flex-start!important; padding:0 10px!important; gap:9px!important; }
+  .sidebar.mobile-open .nav-item span { display:inline!important; }
+  .sidebar.mobile-open .sidebar-divider { display:block!important; }
+  .sidebar.mobile-open .connection-card { display:flex!important; }
+  .sidebar.mobile-open .profile-copy { display:flex!important; }
+  .sidebar.mobile-open .profile-row { justify-content:flex-start!important; padding:14px 5px 0!important; }
+}

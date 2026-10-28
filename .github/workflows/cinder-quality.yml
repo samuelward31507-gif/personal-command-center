@@ -1,0 +1,37 @@
+name: Cinder quality checks
+
+on:
+  push:
+    branches:
+      - feat/cinder-agency-operating-roadmap
+  pull_request:
+    branches:
+      - feat/cinder-agency-operating-roadmap
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEON_AUTH_BASE_URL: https://example.neon.tech/neondb/auth
+      NEXT_PUBLIC_NEON_AUTH_URL: https://example.neon.tech/neondb/auth
+      NEON_AUTH_COOKIE_SECRET: ci-only-cookie-secret-not-for-deployment
+      DATABASE_URL: postgresql://ci:ci@example.invalid/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Upgrade npm to avoid npm 10 Arborist failure
+        run: npm install --global npm@11
+      - name: Install dependencies
+        run: npm install --package-lock=false --no-audit --no-fund
+      - name: Unit tests
+        run: npm test
+      - name: Lint
+        run: npm run lint
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Production build
+        run: npm run build

@@ -77,6 +77,8 @@ export async function GET(request: Request) {
     const status = params.get("status");
     if (type && !types.has(type)) return fail("Invalid artifact type.", 400);
     if (status && !statuses.has(status)) return fail("Invalid artifact status.", 400);
+    const contactFilter = params.get("contactId");
+    if (contactFilter && !uuid.test(contactFilter)) return fail("Invalid contact id.", 400);
     const sql = db();
     const rows = await sql`
       SELECT r.id, r.contact_id, r.deal_id, r.calendar_event_id, r.artifact_type, r.title,
@@ -91,6 +93,7 @@ export async function GET(request: Request) {
       WHERE r.owner_id = ${user.id}
         AND (${type ?? null}::text IS NULL OR r.artifact_type = ${type ?? null})
         AND (${status ?? null}::text IS NULL OR r.status = ${status ?? null})
+        AND (${contactFilter ?? null}::uuid IS NULL OR r.contact_id = ${contactFilter ?? null}::uuid)
       ORDER BY CASE WHEN r.status = 'draft' THEN 0 WHEN r.status = 'reviewed' THEN 1 ELSE 2 END,
         r.updated_at DESC
       LIMIT 500

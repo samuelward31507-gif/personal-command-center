@@ -223,5 +223,118 @@ test("Meeting booked quick action uses the outcome/activity workflow", () => {
   assert.ok(api.includes("Marked do-not-contact from outreach status action."));
 });
 
+
+// --- Agency workflow regression guards ---
+// These source-level checks protect the key founder workflow from accidental
+// regressions. End-to-end authenticated browser testing is still required.
+test("My Day includes due outreach and standalone contact follow-ups", () => {
+  const home = readFileSync("app/page.tsx", "utf8");
+  assert.ok(home.includes("setDueOutreachItems(activeOutreach.map"));
+  assert.ok(home.includes("setDueContactFollowUps(contacts.filter"));
+  assert.ok(home.includes("const revenueActions = ["));
+  assert.ok(home.includes("revenueActions.map"));
+});
+
+test("My Day avoids duplicating contact follow-ups already handled by active outreach", () => {
+  const home = readFileSync("app/page.tsx", "utf8");
+  assert.ok(home.includes("activeOutreachContactIds"));
+  assert.ok(home.includes("!activeOutreachContactIds.has(x.id)"));
+  assert.ok(home.includes("!dueOutreachItems.some(outreachItem=>outreachItem.contactId===item.id)"));
+});
+
+test("Unconsented prospects cannot receive a copied SMS draft", () => {
+  const outreach = readFileSync("app/crm/outreach/page.tsx", "utf8");
+  assert.ok(outreach.includes('if(!p.smsConsent){setMessage("No SMS draft available: record explicit SMS consent first.'));
+  assert.ok(outreach.includes("SMS unavailable · no consent"));
+  assert.ok(outreach.includes("Only check this if consent was actually given."));
+});
+
+test("Meeting booked and interested outcomes stop routine outreach", () => {
+  const api = readFileSync("app/api/outreach/route.ts", "utf8");
+  assert.ok(api.includes('const stopForResponse = outcome === "meeting_booked" || outcome === "reply_received" || outcome === "interested"'));
+  assert.ok(api.includes("status = ${nextStatus}"));
+});
+
+
+test("Cal.ai webhook requires server-side secret and verifies the provider signature", () => {
+  const route = readFileSync("app/api/webhooks/cal-ai/route.ts", "utf8");
+  const helper = readFileSync("lib/cal-ai-webhook.ts", "utf8");
+  assert.ok(route.includes("process.env.CAL_AI_WEBHOOK_SECRET"));
+  assert.ok(route.includes('request.headers.get("x-cal-signature-256")'));
+  assert.ok(route.includes("verifyCalAiSignature(raw, signature, secret)"));
+  assert.ok(helper.includes("createHmac(\"sha256\", secret)"));
+  assert.ok(helper.includes("timingSafeEqual"));
+  assert.ok(route.includes("Invalid Cal.com webhook signature."));
+});
+
+test("Cal.ai booking sync handles nested payloads and reschedules without leaving stale meetings", () => {
+  const route = readFileSync("app/api/webhooks/cal-ai/route.ts", "utf8");
+  const helper = readFileSync("lib/cal-ai-webhook.ts", "utf8");
+  const migration = readFileSync("db/migrations/0013_cal_ai_booking_sync.sql", "utf8");
+  assert.ok(route.includes("unwrapCalAiPayload(parsed)"));
+  assert.ok(helper.includes("const nested = envelope.payload"));
+  assert.ok(route.includes("const rescheduleUid = text(payload.rescheduleUid, 300)"));
+  assert.ok(route.includes("provider_event_id = ${uid}"));
+  assert.ok(route.includes("WHERE owner_id = ${ownerId} AND provider = 'cal_ai' AND provider_event_id = ${rescheduleUid}"));
+  assert.ok(route.includes("ON CONFLICT (owner_id, provider, provider_event_id)"));
+  assert.ok(route.includes("BOOKING_RESCHEDULED"));
+  assert.ok(route.includes("BOOKING_CANCELLED"));
+  assert.ok(migration.includes("calendar_events_provider_event_unique"));
+  assert.ok(migration.includes("cal_ai_webhook_events"));
+});
+
+test("Needs You queue avoids duplicate contact follow-ups while outreach is active", () => {
+  const src = readFileSync("app/crm/needs-you/page.tsx", "utf8");
+  assert.ok(
+    src.includes("const activeOutreachContactIds = new Set((od.outreach||[])"),
+    "Needs You must derive active outreach contact IDs before building generic contact follow-ups"
+  );
+  assert.ok(
+    src.includes("if(activeOutreachContactIds.has(c.id))continue;"),
+    "A contact with an active sequence must not also appear as a generic follow-up"
+  );
+  assert.ok(
+    src.includes('o.status==="active"&&o.contactId&&o.nextActionAt'),
+    "Only active outreach with a scheduled next action may suppress the generic follow-up"
+  );
+});
+
+test("Needs You queue includes upcoming scheduled meetings that still need a brief", () => {
+  const src = readFileSync("app/crm/needs-you/page.tsx", "utf8");
+  assert.ok(src.includes('fetch(calendarUrl,{cache:"no-store"})'), "Needs You must load upcoming calendar events");
+  assert.ok(src.includes('e.status!=="scheduled"||!(e.type==="meeting"||e.type==="call")'), "Only scheduled meetings and calls should become preparation actions");
+  assert.ok(src.includes('a.calendarEventId===e.id&&a.type==="meeting_brief"&&(a.status==="draft"||a.status==="reviewed")'), "Meetings with an existing brief should not create a duplicate preparation action");
+  assert.ok(src.includes('href:"/crm/preparation?event="+encodeURIComponent(e.id)+"&type=meeting_brief",action:"Prepare meeting"'), "Meeting preparation actions must link to a brief for the selected event");
+  assert.ok(src.includes('["meeting","Meeting prep"]'), "Meeting preparation must be available as a queue filter");
+  assert.ok(src.includes('meeting:items.filter(x=>x.kind==="meeting").length'), "Meeting preparation must be included in queue counts");
+});
+
+test("Needs You has a dedicated sales focus and prioritizes severely overdue outreach", () => {
+  const src = readFileSync("app/crm/needs-you/page.tsx", "utf8");
+  assert.ok(src.includes('const salesKinds=new Set(["outreach","followup","deal","preparation","meeting"])'), "Sales focus should group prospect follow-ups, deals, briefs, and meetings");
+  assert.ok(src.includes('filter==="sales"?items.filter(x=>salesKinds.has(x.kind))'), "Sales focus should filter the queue to sales actions");
+  assert.ok(src.includes('["sales","Sales focus"]'), "Sales focus should be visible as a queue filter");
+  assert.ok(src.includes('priority:due<=now-86400000?1:2'), "Outreach overdue by at least a day should rise above routine actions");
+  assert.ok(src.includes('SALES ACTIONS'), "Queue summary should show the number of sales actions");
+});
+
+test("Signed-deal handoff seeds an idempotent client onboarding checklist", () => {
+  const route = readFileSync("app/api/deals/convert/route.ts", "utf8");
+  assert.ok(route.includes('deal.stage !== "won" || deal.agreement_status !== "active" || !deal.signed_at'), "Only a signed, active won deal can be handed off");
+  assert.ok(route.includes("const onboardingMilestones = ["), "Signed-deal handoff must create a usable onboarding checklist");
+  for (const title of [
+    "Confirm scope and success criteria",
+    "Collect access and baseline metrics",
+    "Hold client kickoff",
+    "Configure the agreed implementation",
+    "Test the end-to-end lead journey",
+    "Review results and approve launch",
+    "Monitor launch and report outcomes"
+  ]) assert.ok(route.includes(title), "Missing onboarding milestone: " + title);
+  assert.ok(route.includes("lower(trim(title)) = lower(trim("), "Milestone seeding must be idempotent on retry");
+  assert.ok(route.includes("'todo'"), "New onboarding milestones must start incomplete");
+  assert.ok(route.includes("No payment was recorded."), "Deal handoff must not represent expected revenue as collected cash");
+});
+
 console.log(`${passed} passed`);
 if (process.exitCode) process.exit(process.exitCode);

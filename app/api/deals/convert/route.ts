@@ -52,6 +52,31 @@ export async function POST(request: Request) {
     `;
     const projectId = String(projects[0].id);
 
+    // Seed an idempotent client-onboarding checklist on the first signed-deal
+    // handoff. Existing milestones are preserved; retries never duplicate them.
+    const onboardingMilestones = [
+      ["Confirm scope and success criteria", "Confirm signed deliverables, exclusions, target outcome, owner, and acceptance criteria."],
+      ["Collect access and baseline metrics", "Request only required system access and capture current lead response, booking, and conversion baselines."],
+      ["Hold client kickoff", "Confirm stakeholders, communication channel, timeline, dependencies, and approval process."],
+      ["Configure the agreed implementation", "Set up only the systems and workflows included in the signed scope."],
+      ["Test the end-to-end lead journey", "Run test scenarios for intake, follow-up, routing, booking, exceptions, and handoff; record failures and fixes."],
+      ["Review results and approve launch", "Walk through the working implementation with the client and obtain explicit launch approval."],
+      ["Monitor launch and report outcomes", "Check early performance, resolve issues, and share an initial results summary with next steps."]
+    ] as const;
+    for (const [index, milestone] of onboardingMilestones.entries()) {
+      await sql`
+        INSERT INTO public.project_milestones
+          (owner_id, project_id, title, description, status, sort_order)
+        SELECT ${ownerId}, ${projectId}::uuid, ${milestone[0]}, ${milestone[1]}, 'todo', ${index}
+        WHERE NOT EXISTS (
+          SELECT 1 FROM public.project_milestones
+          WHERE owner_id = ${ownerId} AND project_id = ${projectId}::uuid
+            AND lower(trim(title)) = lower(trim(${milestone[0]}))
+        )
+        ON CONFLICT DO NOTHING
+      `;
+    }
+
     if (deal.contact_id) {
       await sql`UPDATE public.contacts SET status = 'customer', updated_at = now()
         WHERE id = ${deal.contact_id}::uuid AND owner_id = ${ownerId}`;

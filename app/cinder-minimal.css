@@ -566,3 +566,47 @@ main:not(.calendar-page) [data-state="active"] {
 @media(max-width:760px) {
   #cinder-sidebar-shared { width:208px!important;min-width:208px!important;max-width:208px!important;flex-basis:208px!important;padding:12px 9px 10px!important; }
 }
+
+
+/* BUSINESS AUDIT: isolate its surfaces from legacy global card/form overrides. */
+#cinder-business-audit {
+  background: #101010 !important;
+  color: #f0f0f0 !important;
+  color-scheme: dark;
+}
+#cinder-business-audit form,
+#cinder-business-audit section {
+  background: #141414 !important;
+  background-color: #141414 !important;
+  background-image: none !important;
+  color: #e5e5e5 !important;
+  border-color: #303030 !important;
+  box-shadow: none !important;
+}
+#cinder-business-audit form > div,
+#cinder-business-audit form > label,
+#cinder-business-audit section > div,
+#cinder-business-audit article {
+  background-color: transparent;
+  color: #e5e5e5 !important;
+}
+#cinder-business-audit label,
+#cinder-business-audit h1,
+#cinder-business-audit h2,
+#cinder-business-audit h3 {
+  color: #f0f0f0 !important;
+}
+#cinder-business-audit input,
+#cinder-business-audit textarea {
+  background: #141414 !important;
+  background-color: #141414 !important;
+  color: #f0f0f0 !important;
+  border-color: #383838 !important;
+  box-shadow: none !important;
+}
+#cinder-business-audit button[type="submit"] {
+  background: #d6a98c !important;
+  background-color: #d6a98c !important;
+  color: #171311 !important;
+  border-color: #d6a98c !important;
+}
