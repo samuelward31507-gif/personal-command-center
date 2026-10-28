@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
 import { DEAL_STAGES } from "@/lib/offers";
+import { runDealHandoff, HandoffNotReady } from "@/lib/deal-handoff";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +34,16 @@ function validDate(value: unknown): string | null | false {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(value + "T00:00:00.000Z");
   return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value ? value : false;
+}
+/** A won deal starts delivery automatically. The deal save never fails because of it; the result says what happened. */
+async function autoHandoff(sql: ReturnType<typeof db>, ownerId: string, dealId: string) {
+  try {
+    const out = await runDealHandoff(sql, ownerId, dealId);
+    return { ok: true as const, ...out };
+  } catch (error) {
+    console.error("Automatic deal handoff failed", { name: error instanceof Error ? error.name : typeof error, message: error instanceof Error ? error.message.slice(0, 200) : "" });
+    return { ok: false as const, error: error instanceof HandoffNotReady ? error.message : "Delivery setup failed; use Start delivery to retry safely." };
+  }
 }
 export async function GET() {
   try {
@@ -93,7 +104,8 @@ export async function POST(request: Request) {
         ${stage === "won" ? "active" : "pending"}, ${stage === "won" ? new Date().toISOString() : null}::timestamptz, ${stage === "won" ? new Date().toISOString().slice(0, 10) : null}::date)
       RETURNING id
     `;
-    return Response.json({ id: rows[0]?.id }, { status: 201 });
+    const handoff = stage === "won" ? await autoHandoff(sql, user.id, String(rows[0]?.id)) : null;
+    return Response.json({ id: rows[0]?.id, handoff }, { status: 201 });
   } catch (error) {
     console.error("CRM deals POST failed", error);
     return jsonError("Unable to create deal.", 500);
@@ -142,7 +154,8 @@ export async function PATCH(request: Request) {
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id} RETURNING id
     `;
     if (!rows.length) return jsonError("Deal not found.", 404);
-    return Response.json({ ok: true });
+    const handoff = body.stage === "won" ? await autoHandoff(sql, user.id, body.id) : null;
+    return Response.json({ ok: true, handoff });
   } catch (error) {
     console.error("CRM deals PATCH failed", error);
     return jsonError("Unable to update deal.", 500);
