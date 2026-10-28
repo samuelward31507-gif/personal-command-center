@@ -60,7 +60,9 @@ Evidence from Vercel runtime-error clusters (7-day window) and env metadata (nam
 - [x] **Production database switched (user "switch it"):** production `DATABASE_URL`, `NEON_AUTH_BASE_URL` and `NEXT_PUBLIC_NEON_AUTH_URL` now point to Neon branch `br-aged-hall-b79og5zb` (the 100-contact CRM the founder actually uses). Production domains added to that branch's trusted domains. Neon `main` (old 256-contact CRM) is untouched and kept as an archive. Production rebuilt: `dpl_3s1R1qmfcEiheK8wCHFToP2fkEdA`, READY, zero errors.
 - [ ] **Preview isolation is gone:** the audit and roadmap preview branches still use `br-aged-hall-b79og5zb`, so preview tests now touch real data. Create a disposable Neon branch for previews before the next mutation-heavy test.
 - [x] **Daily prospect queue** (`623befa`, preview): up to 15/day never-contacted contacts with a phone, ranked fit audit > conditional > fence/pool > others; no-fit excluded; first calls today count against the cap. Queries verified read-only on the live data: 73 callable prospects, 4 audited. CI green.
-- [ ] Release the prospect queue to production.
+- [x] Prospect queue released (PR #18, `dpl_Fp6PrCdY3UTTCkGfr6feyTTopaZy`).
+- [x] **Preview test DB:** Neon branch `preview-test` (`br-dark-fire-b7nlbpq8`, copy of production data). The audit branch's preview `DATABASE_URL` points there; sign-in still uses the production auth endpoint so owner ids match. Writes from previews no longer touch real data. Reset from parent when stale.
+- [x] **Phase 4 start — pipeline** (`9b76e92`, PR #19): stages new → contacted → meeting booked → meeting held → proposal → won / lost / nurture (migration 0018, applied to preview-test and production; production had 0 deals). Tier 1/2 offers as service types. Interested / Meeting booked with no open deal → one-tap "Create deal" prefilled from the audit tier. CI green (66 call-outcome assertions).
 - [ ] Point Needs You at `/api/my-day` (it still assembles a parallel queue in the browser).
 
 ## Phase 0 — Baseline audit and release confidence

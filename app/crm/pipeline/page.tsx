@@ -22,8 +22,8 @@ export default function PipelinePage(){
  const won=deals.filter(d=>d.stage==="won");
  function startNew(){setDraft(blank);setEditing(null);setShow(true)}
  function startEdit(d:Deal){setDraft({title:d.title,contactId:d.contactId||"",serviceType:d.serviceType,stage:d.stage,setupFee:String(d.setupFee),monthlyFee:String(d.monthlyFee),expectedCloseDate:d.expectedCloseDate,source:d.source,notes:d.notes,lostReason:d.lostReason});setEditing(d.id);setShow(true)}
- async function save(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");try{const body={...draft,setupFee:Number(draft.setupFee||0),monthlyFee:Number(draft.monthlyFee||0),contactId:draft.contactId||null};const r=await fetch("/api/deals",{method:editing?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(editing?{...body,id:editing}:body)});if(!r.ok){const data=await r.json().catch(()=>({}));throw new Error(data.error||"Couldn't save deal.")}setShow(false);await load()}catch(e){setError(e instanceof Error?e.message:"Couldn't save deal.")}finally{setBusy(false)}}
- async function quickStage(d:Deal,stage:Stage){const r=await fetch("/api/deals",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({...d,stage,contactId:d.contactId||null})});if(!r.ok){setError("Couldn't update deal stage.");return}await load()}
+ async function save(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");try{const body={...draft,setupFee:Number(draft.setupFee||0),monthlyFee:Number(draft.monthlyFee||0),contactId:draft.contactId||null};const r=await fetch("/api/deals",{method:editing?"PATCH":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(editing?{...body,id:editing}:body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||"Couldn't save deal.");if(draft.stage==="won"&&data.handoff)setNotice(data.handoff.ok?"Won! Onboarding project, delivery checklist and expected receivables are ready. No payment was recorded.":"Deal saved as won, but delivery setup failed: "+data.handoff.error);setShow(false);await load()}catch(e){setError(e instanceof Error?e.message:"Couldn't save deal.")}finally{setBusy(false)}}
+ async function quickStage(d:Deal,stage:Stage){setNotice("");const r=await fetch("/api/deals",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({...d,stage,contactId:d.contactId||null})});const data=await r.json().catch(()=>({}));if(!r.ok){setError(data.error||"Couldn't update deal stage.");return}if(stage==="won"&&data.handoff)setNotice(data.handoff.ok?"Won! Onboarding project, 9-step delivery checklist and expected receivables are ready in Delivery and Money. No payment was recorded.":"Deal marked won, but delivery setup failed: "+data.handoff.error);await load()}
  async function endAgreement(d:Deal){
   if(!window.confirm("End the recurring agreement for "+d.title+"? This removes it from contracted MRR and records today's end date."))return;
   setError("");setNotice("");
@@ -39,29 +39,11 @@ export default function PipelinePage(){
   const existing=projects.find(p=>p.dealId===d.id);
   setCreatingProject(d.id);setError("");setNotice("");
   try{
-   const handoff=await fetch("/api/deals/convert",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dealId:d.id})});
-   const handoffData=await handoff.json().catch(()=>({}));
-   if(!handoff.ok)throw new Error(handoffData.error||"Could not hand off the signed deal.");
-   const projectId=typeof handoffData.projectId==="string"?handoffData.projectId:existing?.id||"";
-   if(!projectId)throw new Error("The deal handoff completed without returning a project ID. Check Projects before retrying.");
-   const checklist:[string,string][]=[["Kickoff and confirm scope","Confirm goals, stakeholders, communication channel, and definition of success."],["Collect access and requirements","Gather required accounts, phone numbers, integrations, FAQs, and permissions."],["Configure the agreed solution","Build the service and connect the required systems."],["Test end-to-end scenarios","Run realistic test cases and resolve launch-blocking issues."],["Client approval and launch","Get client sign-off, confirm launch timing, and document support expectations."]];
-   const existingResponse=await fetch("/api/project-milestones?projectId="+encodeURIComponent(projectId),{cache:"no-store"});
-   const existingData=await existingResponse.json().catch(()=>({}));
-   if(!existingResponse.ok)throw new Error(existingData.error||"The project exists, but its onboarding checklist could not be checked. Retry without creating another project.");
-   const knownTitles=new Set((Array.isArray(existingData.milestones)?existingData.milestones:[]).map((m:{title?:string})=>(m.title||"").trim().toLowerCase()));
-   let failed=0,created=0;
-   for(let i=0;i<checklist.length;i++){
-    const [title,description]=checklist[i];
-    if(knownTitles.has(title.toLowerCase()))continue;
-    const mr=await fetch("/api/project-milestones",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({projectId,title,description,sortOrder:i})});
-    if(mr.ok){created++;knownTitles.add(title.toLowerCase());}else failed++;
-   }
-   if(failed){
-    setNotice("Project is saved. "+created+" missing onboarding milestone(s) added; "+failed+" could not be created. Use Finish checklist to safely retry.");
-    await load();
-    return;
-   }
-   setNotice(existing?"Existing project and onboarding checklist are ready.":"Project and onboarding checklist created from "+d.title+".");
+   // The server owns the onboarding template; retries never duplicate projects, milestones or receivables.
+   const r=await fetch("/api/deals/convert",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({dealId:d.id})});
+   const data=await r.json().catch(()=>({}));
+   if(!r.ok)throw new Error(data.error||"Could not hand off the signed deal.");
+   setNotice(existing?"Delivery project is up to date"+(data.milestonesAdded?" ("+data.milestonesAdded+" missing milestone(s) added).":"."):"Onboarding project, checklist and expected receivables created from "+d.title+". No payment was recorded.");
    await load();
    window.location.assign("/crm/projects");
   }catch(e){setError(e instanceof Error?e.message:"Could not start or resume delivery.");await load();}
