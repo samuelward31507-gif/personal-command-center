@@ -34,7 +34,7 @@ export default function BusinessAuditPage() {
   const panelStyle: React.CSSProperties = { border: "1px solid #29292e", borderRadius: 14, background: "#141417", color: "#f4f4f5" };
   const mutedStyle: React.CSSProperties = { color: "#a1a1aa", lineHeight: 1.65 };
 
-  return <main style={{ maxWidth: 1080, margin: "0 auto", padding: "30px 22px 60px", color: "#f4f4f5", background: "#0b0b0d", minHeight: "calc(100vh - 58px)" }}>
+  return <main id="cinder-business-audit" style={{ maxWidth: 1080, margin: "0 auto", padding: "30px 22px 60px", color: "#f4f4f5", background: "#0b0b0d", minHeight: "calc(100vh - 58px)" }}>
     <header style={{ marginBottom: 30 }}>
       <Link href="/crm/preparation" style={{ color: "#a1a1aa", fontSize: 13 }}>← Preparation</Link>
       <p style={{ marginTop: 26, fontSize: 10, letterSpacing: 2, color: "#d6a98c" }}>CINDER / PROSPECT INTELLIGENCE</p>
