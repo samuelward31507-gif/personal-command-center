@@ -53,6 +53,10 @@ Evidence from Vercel runtime-error clusters (7-day window) and env metadata (nam
 - [x] **Bug fixed:** `contact_activities` CHECK rejected `not_a_fit` / `wrong_contact` although the outreach UI offered them. Migration `0017` applied to the **preview DB only**.
 - [ ] Apply migration `0017` to production (needs approval), then release this slice.
 - [ ] Signed-in live test of each outcome on the preview.
+- [x] Call outcomes + migration 0017 released to production (user "ship outcome"): 0017 applied to Neon `main`; PR #16 merged (`8ba68a5`); production build `dpl_FjDcLkJGj6SCC3GjzxVbVvY5NsJf` READY, zero runtime errors.
+- [x] **Phase 1 — My Day queue** (`4ebad1c`, preview `dpl_9JcVq8wM1i4WueUxq1yoeoQXiHxE`): `/api/my-day` + `lib/my-day.ts` rank revenue follow-ups → meetings/prep → deal next steps → delivery → money & admin, each with why, last touch, audit verdict, Call / Log outcome / Open. CI green (21 new assertions); every query run read-only against the preview schema.
+- [ ] Signed-in test of My Day on the preview, then production release.
+- [ ] Point Needs You at `/api/my-day` (it still assembles a parallel queue in the browser).
 
 ## Phase 0 — Baseline audit and release confidence
 **Status: In progress — sign-in and desktop sidebar confirmed by user; mobile navigation implementation added, live mobile verification still open**
