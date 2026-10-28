@@ -62,10 +62,12 @@ export async function POST(request: Request) {
   }
 
   const trigger = text(payload.triggerEvent, 100).toUpperCase();
-  const uid = text(payload.uid, 300);
-  if (!trigger || !uid) return Response.json({ error: "Webhook triggerEvent and uid are required." }, { status: 400 });
+  if (!trigger) return Response.json({ error: "Webhook triggerEvent is required." }, { status: 400 });
+  // Acknowledge signed Cal.com diagnostic events before requiring booking-only fields.
   const supported = new Set(["BOOKING_CREATED", "BOOKING_RESCHEDULED", "BOOKING_CANCELLED", "MEETING_ENDED"]);
-  if (!supported.has(trigger)) return Response.json({ received: true, ignored: true });
+  if (!supported.has(trigger)) return Response.json({ received: true, ignored: true, trigger });
+  const uid = text(payload.uid, 300);
+  if (!uid) return Response.json({ error: "Webhook uid is required for booking events." }, { status: 400 });
 
   try {
     const sql = db();
