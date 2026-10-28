@@ -52,7 +52,8 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
   const [mobileOpen, setMobileOpen] = useState(false);
   const go = (key: string, href: string) => {
     setMobileOpen(false);
-    if (mode === "home" && onNavigate) onNavigate(key);
+    // Only Home and My day are in-page views; every other item is a real route.
+    if (mode === "home" && onNavigate && (key === "home" || key === "schedule")) onNavigate(key);
     else window.location.assign(href);
   };
   const isActive = (key: string, href: string) => {
