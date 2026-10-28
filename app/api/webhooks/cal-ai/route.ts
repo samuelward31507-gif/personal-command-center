@@ -76,19 +76,29 @@ export async function POST(request: Request) {
     const attendeeEmails = personList(payload.attendees)
       .map((person) => text(person.email, 320).toLowerCase())
       .filter(validCalAiEmail);
+    // Keep every imported booking inside Cinder's configured workspace.
+    // Never let an attendee email from another workspace redirect calendar ownership.
+    const configuredOwnerId = text(process.env.CINDER_OWNER_ID, 200);
     let contact: { id: string; owner_id: string } | undefined;
     for (const email of attendeeEmails) {
-      const rows = await sql`
-        SELECT id, owner_id FROM public.contacts
-        WHERE lower(trim(email)) = ${email}
-        ORDER BY updated_at DESC LIMIT 1
-      `;
-      if (rows[0]) {
+      const rows = configuredOwnerId
+        ? await sql`
+            SELECT id, owner_id FROM public.contacts
+            WHERE owner_id = ${configuredOwnerId} AND lower(trim(email)) = ${email}
+            ORDER BY updated_at DESC LIMIT 1
+          `
+        : await sql`
+            SELECT id, owner_id FROM public.contacts
+            WHERE lower(trim(email)) = ${email}
+            GROUP BY id, owner_id
+            LIMIT 2
+          `;
+      if (rows.length === 1 || (configuredOwnerId && rows[0])) {
         contact = { id: String(rows[0].id), owner_id: String(rows[0].owner_id) };
         break;
       }
     }
-    const ownerId = contact?.owner_id || text(process.env.CINDER_OWNER_ID, 200);
+    const ownerId = configuredOwnerId || contact?.owner_id || "";
     const summary = safeSummary(payload);
 
     // Do not lose unlinked bookings: record a minimal event summary so setup
@@ -108,9 +118,13 @@ export async function POST(request: Request) {
     }
 
     if (trigger === "BOOKING_CANCELLED") {
+      const rescheduleUid = text(payload.rescheduleUid, 300);
+      // Cal.com payload variants may reference the booking being cancelled via
+      // either uid or rescheduleUid. Mark matching rows cancelled; keep history.
       await sql`
         UPDATE public.calendar_events SET status = 'cancelled', updated_at = now()
-        WHERE owner_id = ${ownerId} AND provider = 'cal_ai' AND provider_event_id = ${uid}
+        WHERE owner_id = ${ownerId} AND provider = 'cal_ai'
+          AND provider_event_id IN (${uid}, ${rescheduleUid || uid})
       `;
     } else if (trigger === "BOOKING_CREATED" || trigger === "BOOKING_RESCHEDULED") {
       const startsAt = text(payload.startTime, 100);
