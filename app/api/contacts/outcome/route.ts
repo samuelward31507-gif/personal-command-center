@@ -30,8 +30,9 @@ export async function POST(request: Request) {
     if (!body || typeof body !== "object") return fail("Invalid request body.", 400);
     const contactId = typeof body.contactId === "string" ? body.contactId : "";
     if (!uuid.test(contactId)) return fail("Invalid contact id.", 400);
-    if (!isCallOutcome(body.outcome)) return fail("Choose a valid call outcome.", 400);
-    const outcome = body.outcome;
+    const rawOutcome: unknown = body.outcome;
+    if (!isCallOutcome(rawOutcome)) return fail("Choose a valid call outcome.", 400);
+    const outcome = rawOutcome;
     const notes = typeof body.notes === "string" ? body.notes.trim().slice(0, 3000) : "";
     const override = typeof body.followUpDate === "string" ? body.followUpDate : null;
     if (override && !/^\d{4}-\d{2}-\d{2}$/.test(override)) return fail("Follow-up date must be YYYY-MM-DD.", 400);
