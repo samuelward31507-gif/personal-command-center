@@ -24,7 +24,8 @@ const dateOnly = (v: unknown) => {
 };
 function shortVerdict(content: unknown): string | null {
   if (typeof content !== "string") return null;
-  const v = reportSection(content, "Verdict").replace(/\*\*/g, "").replace(/^[-*•]\s+/, "").split(/[.!]\s/)[0].trim();
+  const section = reportSection(content, "Verdict") || reportSection(content, "1\\. Executive verdict");
+  const v = section.replace(/\*\*/g, "").replace(/^[-*•]\s+/, "").split(/[.!]\s/)[0].trim();
   return v ? "Audit: " + v.slice(0, 90) : null;
 }
 
@@ -46,7 +47,8 @@ export async function GET(request: Request) {
     const sql = db();
     const owner = user.id;
 
-    const [outreach, activeIds, followUps, meetings, deals, projects, milestones, receivables, tasks] = await Promise.all([
+    const dayStart = new Date(Date.parse(dayEnd) - 86400000).toISOString();
+    const [outreach, activeIds, followUps, meetings, deals, projects, milestones, receivables, tasks, prospects, firstTouches] = await Promise.all([
       sql`SELECT id, contact_id, current_step, next_action_at FROM public.contact_outreach
         WHERE owner_id = ${owner} AND status = 'active' AND next_action_at < ${dayEnd}::timestamptz ORDER BY next_action_at LIMIT 100`,
       sql`SELECT DISTINCT contact_id FROM public.contact_outreach WHERE owner_id = ${owner} AND status = 'active'`,
@@ -83,12 +85,21 @@ export async function GET(request: Request) {
         LEFT JOIN public.deals d ON d.id = t.deal_id AND d.owner_id = t.owner_id
         WHERE t.owner_id = ${owner} AND t.status NOT IN ('done','cancelled')
           AND (t.status = 'blocked' OR t.priority = 'urgent' OR t.due_at < ${dayEnd}::timestamptz) LIMIT 100`,
+      // Never-contacted prospects: no logged call outcome, no follow-up, no sequence, not suppressed.
+      sql`SELECT c.id, c.location, c.website, c.created_at FROM public.contacts c
+        WHERE c.owner_id = ${owner} AND c.status IN ('lead','contact','prospect') AND c.phone <> '' AND c.follow_up_at IS NULL
+          AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND a.outcome <> 'initiated')
+          AND NOT EXISTS (SELECT 1 FROM public.contact_outreach o WHERE o.owner_id = c.owner_id AND o.contact_id = c.id)
+          AND NOT EXISTS (SELECT 1 FROM public.contact_suppressions s WHERE s.owner_id = c.owner_id AND s.contact_id = c.id)
+        ORDER BY c.created_at LIMIT 300`,
+      sql`SELECT count(*)::int AS n FROM (SELECT contact_id, min(occurred_at) AS first_at FROM public.contact_activities
+          WHERE owner_id = ${owner} AND outcome <> 'initiated' GROUP BY contact_id) x WHERE x.first_at >= ${dayStart}::timestamptz`,
     ]);
 
     // One lookup for every contact referenced: name, phone, last call outcome, latest audit verdict.
     const contactIds = [...new Set([
       ...outreach.map(r => r.contact_id), ...followUps.map(r => r.id),
-      ...meetings.map(r => r.contact_id), ...deals.map(r => r.contact_id),
+      ...meetings.map(r => r.contact_id), ...deals.map(r => r.contact_id), ...prospects.map(r => r.id),
     ].filter(Boolean).map(String))];
     const refs = contactIds.length ? await sql`
       SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company, c.phone,
@@ -119,6 +130,8 @@ export async function GET(request: Request) {
         ...milestones.map(r => ({ id: String(r.id), kind: "milestone" as const, title: String(r.title), project: String(r.project), status: String(r.status), due: iso(r.due_at) })),
       ],
       receivables: receivables.map(r => ({ id: String(r.id), title: String(r.title), amount: Number(r.amount), status: String(r.status), due: dateOnly(r.due_date), client: String(r.client ?? "") })),
+      prospects: prospects.filter(r => ref(r.id)).map(r => ({ contact: ref(r.id)!, location: String(r.location ?? ""), website: String(r.website ?? ""), createdAt: iso(r.created_at)! })),
+      firstTouchesToday: Number(firstTouches[0]?.n ?? 0),
       tasks: tasks.map(r => ({ id: String(r.id), title: String(r.title), status: String(r.status), priority: String(r.priority), dueAt: iso(r.due_at), contactName: r.contact_name ? String(r.contact_name) : null, dealTitle: r.deal_title ? String(r.deal_title) : null })),
     };
     const items = buildQueue(input);

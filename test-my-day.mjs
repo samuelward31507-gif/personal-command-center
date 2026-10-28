@@ -2,7 +2,7 @@
 // Run with: node --experimental-strip-types test-my-day.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { buildQueue } from "./lib/my-day.ts";
+import { buildQueue, pickProspects, prospectScore, DAILY_NEW_PROSPECTS } from "./lib/my-day.ts";
 
 let n = 0;
 const ok = fn => { fn(); n++; };
@@ -96,6 +96,39 @@ ok(() => {
     { id: "t3", title: "Later", status: "todo", priority: "low", dueAt: "2026-11-10T00:00:00Z", contactName: null, dealTitle: null },
     { id: "t4", title: "Blocked", status: "blocked", priority: "low", dueAt: null, contactName: null, dealTitle: null }] });
   assert.deepEqual(q.map(i => i.id), ["task:t4"]);
+});
+
+// --- Daily prospect queue ---
+const pr = (id, company, extra = {}, website = "") => ({ contact: contact(id, { company, ...extra }), location: "Phoenix AZ", website, createdAt: "2026-10-27T00:00:00Z" });
+ok(() => assert.equal(DAILY_NEW_PROSPECTS, 15));
+ok(() => assert.equal(prospectScore(pr("x", "Acme Fence", { verdict: "Audit: No fit — rural" })), null, "no-fit audits never appear"));
+ok(() => {
+  const picked = pickProspects({ ...base(), prospects: [
+    pr("plain", "Bob's Roofing"), pr("pool", "Blue Pools LLC"), pr("cond", "Desert Fence", { verdict: "Audit: Conditional fit — Tier 1" }),
+    pr("fit", "Big Pools", { verdict: "Audit: Fit — Tier 2" }), pr("nofit", "Tiny Fence", { verdict: "Audit: No fit" }), pr("nophone", "Peak Fence", { phone: "" }) ] });
+  assert.deepEqual(picked.map(p => p.contact.id), ["fit", "cond", "pool", "plain"], "fit > conditional > niche > others; no-fit and no-phone excluded");
+});
+ok(() => {
+  const many = Array.from({ length: 30 }, (_, i) => pr("p" + i, "Fence Co " + i));
+  assert.equal(pickProspects({ ...base(), prospects: many }).length, 15, "capped at the daily number");
+  assert.equal(pickProspects({ ...base(), prospects: many, firstTouchesToday: 6 }).length, 9, "first calls made today count against the cap");
+  assert.equal(pickProspects({ ...base(), prospects: many, firstTouchesToday: 20 }).length, 0);
+  assert.equal(pickProspects({ ...base(), prospects: many, dailyNewProspects: 5 }).length, 5);
+});
+ok(() => {
+  const q = buildQueue({ ...base(), prospects: [pr("n1", "Mesa Pools")], followUps: [{ followUpAt: today, contact: contact("f1") }],
+    tasks: [{ id: "t9", title: "x", status: "blocked", priority: "low", dueAt: null, contactName: null, dealTitle: null }] });
+  assert.deepEqual(q.map(i => i.group), ["revenue", "prospects", "admin"], "follow-ups before new prospects, prospects before admin");
+  const p = q.find(i => i.group === "prospects");
+  assert.equal(p.callable, true); assert.match(p.why, /Pool · Phoenix AZ · No audit yet/); assert.equal(p.href, "/crm/audit");
+});
+ok(() => {
+  const q = buildQueue({ ...base(), prospects: [pr("dup", "Fence")], followUps: [{ followUpAt: today, contact: contact("dup") }] });
+  assert.equal(q.filter(i => i.contact?.id === "dup").length, 1, "a contact appears once");
+});
+ok(() => {
+  const r = readFileSync("app/api/my-day/route.ts", "utf8");
+  assert.match(r, /a\.outcome <> 'initiated'\)[\s\S]*contact_outreach o[\s\S]*contact_suppressions s/, "prospects exclude contacted, sequenced and suppressed contacts");
 });
 
 // Route guards

@@ -2,7 +2,7 @@
 // this module decides what shows, in what order, and why. No I/O — unit tested.
 
 export type QueueStatus = "overdue" | "today" | "blocked" | "upcoming";
-export type QueueGroup = "revenue" | "meetings" | "deals" | "delivery" | "admin";
+export type QueueGroup = "revenue" | "prospects" | "meetings" | "deals" | "delivery" | "admin";
 
 export type QueueItem = {
   id: string;
@@ -20,12 +20,16 @@ export type QueueItem = {
 
 export const GROUP_LABELS: Record<QueueGroup, string> = {
   revenue: "Revenue follow-ups",
+  prospects: "New prospects to call",
   meetings: "Meetings & prep",
   deals: "Deal next steps",
   delivery: "Client delivery",
   admin: "Money & admin",
 };
-const GROUP_ORDER: QueueGroup[] = ["revenue", "meetings", "deals", "delivery", "admin"];
+const GROUP_ORDER: QueueGroup[] = ["revenue", "prospects", "meetings", "deals", "delivery", "admin"];
+
+/** How many never-contacted prospects to put in front of the founder per day. */
+export const DAILY_NEW_PROSPECTS = 15;
 const STATUS_ORDER: Record<QueueStatus, number> = { blocked: 0, overdue: 1, today: 2, upcoming: 3 };
 
 type ContactRef = { id: string; name: string; company: string; phone: string; lastOutcome: string | null; lastAt: string | null; verdict: string | null };
@@ -40,7 +44,38 @@ export type QueueInput = {
   delivery: { id: string; kind: "project" | "milestone"; title: string; project: string; status: string; due: string | null }[];
   receivables: { id: string; title: string; amount: number; status: string; due: string | null; client: string }[];
   tasks: { id: string; title: string; status: string; priority: string; dueAt: string | null; contactName: string | null; dealTitle: string | null }[];
+  /** Never-contacted, not suppressed, no follow-up, not in a sequence. */
+  prospects?: { contact: ContactRef; location: string; website: string; createdAt: string }[];
+  /** Prospects whose first-ever logged call happened today (counts against the daily cap). */
+  firstTouchesToday?: number;
+  dailyNewProspects?: number;
 };
+
+const NICHE = /\b(fence|fencing)\b/i;
+const POOL = /\b(pool|pools|spa|spas)\b/i;
+
+/** Fit audits first, then the agency's Tier 1/2 niches (fence, pool), then everyone else. No-fit audits never appear. */
+export function prospectScore(p: { contact: ContactRef; website: string }): number | null {
+  const v = (p.contact.verdict ?? "").toLowerCase();
+  if (/\bno fit\b/.test(v)) return null;
+  let score = 0;
+  if (/\bconditional fit\b/.test(v)) score += 40;
+  else if (/\bfit\b/.test(v)) score += 50;
+  if (NICHE.test(p.contact.company) || POOL.test(p.contact.company)) score += 20;
+  if (p.website) score += 5;
+  return score;
+}
+
+export function pickProspects(input: QueueInput): QueueInput["prospects"] {
+  const cap = Math.max(0, (input.dailyNewProspects ?? DAILY_NEW_PROSPECTS) - (input.firstTouchesToday ?? 0));
+  return (input.prospects ?? [])
+    .filter(p => p.contact.phone)
+    .map(p => ({ p, score: prospectScore(p) }))
+    .filter((x): x is { p: NonNullable<QueueInput["prospects"]>[number]; score: number } => x.score !== null)
+    .sort((a, b) => b.score - a.score || a.p.createdAt.localeCompare(b.p.createdAt) || a.p.contact.name.localeCompare(b.p.contact.name))
+    .slice(0, cap)
+    .map(x => x.p);
+}
 
 const day = (iso: string | null) => (iso ? iso.slice(0, 10) : null);
 function daysBetween(a: string, b: string) {
@@ -93,6 +128,20 @@ export function buildQueue(input: QueueInput): QueueItem[] {
       contact: f.contact, callable: Boolean(f.contact.phone), rank: isHot ? 0 : 1,
     });
   }
+
+  // 1b. New prospects: a capped daily slice of never-contacted contacts, best fit first.
+  (pickProspects(input) ?? []).forEach((p, i) => {
+    if (seenContacts.has(p.contact.id)) return;
+    seenContacts.add(p.contact.id);
+    const niche = NICHE.test(p.contact.company) ? "Fence" : POOL.test(p.contact.company) ? "Pool" : null;
+    items.push({
+      id: "prospect:" + p.contact.id, group: "prospects", status: "today",
+      title: `Call ${p.contact.name}${p.contact.company && p.contact.company !== p.contact.name ? " · " + p.contact.company : ""}`,
+      why: [niche, p.location || null, p.contact.verdict ?? "No audit yet — run one first"].filter(Boolean).join(" · "),
+      lastActivity: null, due: null, href: p.contact.verdict ? "/crm" : "/crm/audit",
+      contact: p.contact, callable: true, rank: i,
+    });
+  });
 
   // 2. Meetings in the next ~36h; unprepared ones rank first.
   for (const m of input.meetings) {
