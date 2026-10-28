@@ -44,7 +44,7 @@ export default function SignInPage() {
         <button disabled={busy} type="submit" style={{border:0,borderRadius:9,padding:"12px 16px",background:"#20232a",color:"#fff",fontWeight:700,cursor:busy?"wait":"pointer",marginTop:4}}>{busy?"Please wait…":mode==="sign-in"?"Sign in":"Create account"}</button>
       </form>
       <p style={{fontSize:13,color:"#667085",marginTop:20}}>{mode==="sign-in"?"New to Cinder?":"Already have an account?"} <button onClick={()=>{setMode(mode==="sign-in"?"sign-up":"sign-in");setError("");}} style={{border:0,padding:0,background:"transparent",color:"#344054",fontWeight:700,cursor:"pointer"}}>{mode==="sign-in"?"Create account":"Sign in"}</button></p>
-      <p style={{fontSize:11,color:"#98a2b3",marginTop:24}}>Preview environment only. Keep production data out of this test workspace.</p>
+      {process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" && <p style={{fontSize:11,color:"#98a2b3",marginTop:24}}>Preview environment only. Keep production data out of this test workspace.</p>}
     </section>
   </main>;
 }

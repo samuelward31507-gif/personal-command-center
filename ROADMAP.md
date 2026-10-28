@@ -46,6 +46,14 @@ Evidence from Vercel runtime-error clusters (7-day window) and env metadata (nam
 - [ ] Retry idempotency for audits (needs an additive migration or request key; not built).
 - [ ] Vercel plan is Hobby: runtime logs retain 1 hour, so live debugging must happen within an hour of the failing request.
 
+## Release + Phase 2 slice 1 — 2026-10-28
+
+- [x] **Production release** (user-approved "ship it"): `ANTHROPIC_API_KEY` extended to Production (value not read); PRs #15 → #14 merged into `feat/cinder-minimal-premium-home` (`cfdf10f`); fresh production build `dpl_Dbcm5qgtKLmmvfHEpgDLo8kiQD3D` READY on production aliases. Not promoted from preview (that would reuse preview env/DB). Signed-out smoke test passed; signed-in production check pending. Rollback candidate: `dpl_Eh7VoRjGtGopVvFNgNMGYGdgUd5X`. Note: production does not auto-deploy from git; each release is a deliberate production build.
+- [x] **One-tap call outcomes** on the contact detail (`f1bf8ce`, `5c3ea4b`, preview): `/api/contacts/outcome` updates activity, follow-up, sequence, suppression and deals in one transaction. Agreed mapping: interested → qualified, meeting booked → discovery, not a fit / do not contact → lost (with reason); others leave deals alone; forward-only. CI green (49 new assertions); every write statement EXPLAIN-checked against the preview schema.
+- [x] **Bug fixed:** `contact_activities` CHECK rejected `not_a_fit` / `wrong_contact` although the outreach UI offered them. Migration `0017` applied to the **preview DB only**.
+- [ ] Apply migration `0017` to production (needs approval), then release this slice.
+- [ ] Signed-in live test of each outcome on the preview.
+
 ## Phase 0 — Baseline audit and release confidence
 **Status: In progress — sign-in and desktop sidebar confirmed by user; mobile navigation implementation added, live mobile verification still open**
 - [x] Confirm the active code branch, latest deployment, and what code is actually deployed.
