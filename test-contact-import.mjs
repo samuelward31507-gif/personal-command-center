@@ -227,19 +227,16 @@ test("Meeting booked quick action uses the outcome/activity workflow", () => {
 // --- Agency workflow regression guards ---
 // These source-level checks protect the key founder workflow from accidental
 // regressions. End-to-end authenticated browser testing is still required.
-test("My Day includes due outreach and standalone contact follow-ups", () => {
+test("My Day shows the unified server-built queue", () => {
   const home = readFileSync("app/page.tsx", "utf8");
-  assert.ok(home.includes("setDueOutreachItems(activeOutreach.map"));
-  assert.ok(home.includes("setDueContactFollowUps(contacts.filter"));
-  assert.ok(home.includes("const revenueActions = ["));
-  assert.ok(home.includes("revenueActions.map"));
+  assert.ok(home.includes("<MyDayQueue />"));
+  const queue = readFileSync("app/my-day-queue.tsx", "utf8");
+  assert.ok(queue.includes('fetch("/api/my-day?"'));
 });
 
 test("My Day avoids duplicating contact follow-ups already handled by active outreach", () => {
-  const home = readFileSync("app/page.tsx", "utf8");
-  assert.ok(home.includes("activeOutreachContactIds"));
-  assert.ok(home.includes("!activeOutreachContactIds.has(x.id)"));
-  assert.ok(home.includes("!dueOutreachItems.some(outreachItem=>outreachItem.contactId===item.id)"));
+  const lib = readFileSync("lib/my-day.ts", "utf8");
+  assert.ok(lib.includes("active.has(f.contact.id) || seenContacts.has(f.contact.id)"));
 });
 
 test("Unconsented prospects cannot receive a copied SMS draft", () => {
