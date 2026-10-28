@@ -175,3 +175,18 @@ ${input.context || "None supplied"}
 
 Use web search, prioritize first-party sources, cite URLs inline, and make a clear evidence-based fit/no-fit decision.`;
 }
+
+/** Pull one "## Heading" section out of a saved short-format report. Returns "" if absent (e.g. older long reports). */
+export function reportSection(content: string, heading: string): string {
+  const lines = content.split("\n");
+  const start = lines.findIndex(l => new RegExp(`^#{2,3}\\s*${heading}\\b`, "i").test(l.trim()));
+  if (start === -1) return "";
+  const out: string[] = [];
+  const inline = lines[start].replace(/^#{2,3}\s*[^—:-]+[—:-]?\s*/, "").trim();
+  if (inline && !new RegExp(`^${heading}$`, "i").test(inline)) out.push(inline);
+  for (const line of lines.slice(start + 1)) {
+    if (/^#{1,3}\s/.test(line.trim()) || line.trim().startsWith("```")) break;
+    if (line.trim()) out.push(line.trim());
+  }
+  return out.join("\n").trim();
+}

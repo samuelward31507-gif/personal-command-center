@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   normalizeWebsite, classifyProviderError, sanitizeForLog, parseAuditOutput,
-  collectSourceUrls, effectiveConfidence, buildUserPrompt, DEFAULT_AUDIT_MODEL, WEB_SEARCH_TOOL,
+  collectSourceUrls, effectiveConfidence, buildUserPrompt, reportSection, DEFAULT_AUDIT_MODEL, WEB_SEARCH_TOOL,
 } from "./lib/business-audit.ts";
 
 let n = 0;
@@ -108,5 +108,19 @@ ok(() => assert.doesNotMatch(route, /Full business audit:/, "ten-area audit sect
 ok(() => assert.match(route, /futureUpsells: meta\?\.futureUpsells/, "upsells returned to the UI"));
 const ui = readFileSync("app/crm/audit/page.tsx", "utf8");
 ok(() => assert.doesNotMatch(ui, /type="url"/, "browser URL validation no longer blocks bare domains"));
+
+// --- Contact panel: section extraction from saved reports ---
+const shortReport = "## Verdict\nConditional fit — Tier 2\n## Future upsells\n- Reactivation add-on\n- GBP cleanup\n## Next CRM action\nCall Daniel.";
+ok(() => assert.equal(reportSection(shortReport, "Verdict"), "Conditional fit — Tier 2"));
+ok(() => assert.equal(reportSection(shortReport, "Future upsells"), "- Reactivation add-on\n- GBP cleanup"));
+ok(() => assert.equal(reportSection(shortReport, "Next CRM action"), "Call Daniel."));
+ok(() => assert.equal(reportSection("## Verdict — No fit — rural\n## Business", "Verdict"), "No fit — rural"), "inline heading form");
+ok(() => assert.equal(reportSection("## 1. Executive verdict\nx", "Verdict"), ""), "old long reports fall back cleanly");
+const artifactsApi = readFileSync("app/api/research-artifacts/route.ts", "utf8");
+ok(() => assert.match(artifactsApi, /r\.contact_id = \$\{contactFilter/, "artifacts can be filtered by contact"));
+ok(() => assert.match(artifactsApi, /WHERE r\.owner_id = \$\{user\.id\}/, "contact filter stays owner-scoped"));
+const contactsUi = readFileSync("app/crm/page.tsx", "utf8");
+ok(() => assert.match(contactsUi, /type=audit_prep&contactId=/, "contact detail loads its audits"));
+ok(() => assert.match(contactsUi, /Latest audit/, "contact detail shows latest audit"));
 
 console.log(`Business audit regression checks passed (${n} assertions).`);
