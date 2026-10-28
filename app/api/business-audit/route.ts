@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
-        model: process.env.CINDER_AUDIT_MODEL || "claude-sonnet-4-5",
+        model: process.env.CINDER_AUDIT_MODEL || "claude-sonnet-5",
         max_tokens: 7000,
         system: systemPrompt,
         messages: [{ role: "user", content: `Independently audit this business; do not assume our offer fits.
