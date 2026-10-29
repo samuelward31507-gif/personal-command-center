@@ -3,6 +3,7 @@ import "./cinder-sidebar.css";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { CinderLogo, CinderMark } from "./cinder-brand";
 
 type Props = {
   activeKey: string;
@@ -14,6 +15,7 @@ type Props = {
 const primary = [
   ["schedule", "My day", "sun", "/?view=schedule"],
   ["needs-you", "Needs you", "inbox", "/crm/needs-you"],
+  ["call", "Call mode", "phone", "/crm/call"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
   ["growth", "Contacts & pipeline", "growth", "/crm"],
   ["preparation", "Preparation", "edit", "/crm/preparation"],
@@ -45,13 +47,13 @@ function Icon({ name }: { name: string }) {
     bulb: <><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z"/></>,
     strategy: <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></>,
     settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></>,
+    phone: <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/>,
     chat: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/>,
     rail: <><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></>,
   };
   return <svg className="cx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.spark}</svg>;
 }
 
-const Mark = () => <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#d6a98c"/></svg>;
 
 /**
  * Claude-style sidebar: always visible on desktop until collapsed with the toggle, then a slim
@@ -81,7 +83,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     if (key === "schedule") return mode === "home" && activeKey === "schedule";
     if (key === "growth") return pathname === "/crm" || pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/outreach");
     const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
-      "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
+      "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
       intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings" };
     return map[key] ? pathname.startsWith(map[key]) : activeKey === key;
   };
@@ -99,7 +101,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Cinder navigation">
       <div className="cx-top">
         <Link href="/" className="cx-brand" onClick={e => go(e, "home", "/")} title="Cinder home">
-          <span className="cx-mark"><Mark /></span><span className="cx-wordmark">Cinder</span>
+          {collapsed ? <CinderMark className="cx-mark" /> : <CinderLogo className="cx-logo" title="Cinder" />}
         </Link>
         <button type="button" data-variant="primary" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <Icon name="rail" />

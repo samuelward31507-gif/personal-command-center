@@ -1,0 +1,118 @@
+/* Call mode. Stealth palette; class names avoid the legacy "card/panel/stat" overrides. */
+.cm-page { max-width: 1180px; margin: 0 auto; padding: 28px 28px 60px; color: #ededed; }
+.cm-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; }
+.cm-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #6b6b6b; margin-bottom: 6px; }
+html body main .cm-title { margin: 0; font-size: 28px !important; font-weight: 600 !important; letter-spacing: -0.03em !important; }
+html body main p.cm-sub { margin: 6px 0 0; font-size: 14px; color: #8f8f8f !important; }
+.cm-head-actions { display: flex; gap: 8px; align-items: center; }
+.cm-link, .cm-btn-link { color: #bdbdbd !important; text-decoration: none !important; font-size: 13px; }
+.cm-link:hover { color: #fff !important; }
+.cm-btn-link { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 9px; border: 1px solid #2a2a2a; background: #171717; color: #e5e5e5 !important; font-weight: 500; }
+.cm-btn-link:hover { border-color: #3a3a3a; background: #1d1d1d; }
+html body main button.cm-btn {
+  height: 34px; padding: 0 14px; border-radius: 9px; border: 1px solid #2a2a2a !important; background: #171717 !important; color: #e0e0e0 !important;
+  font: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+html body main button.cm-btn:hover:not(:disabled) { border-color: #3a3a3a !important; background: #1f1f1f !important; color: #fff !important; }
+html body main button.cm-btn:disabled { opacity: .45; cursor: default; }
+html body main button.cm-primary { background: #ededed !important; border-color: #ededed !important; color: #0b0b0b !important; font-weight: 600; }
+html body main button.cm-primary:hover:not(:disabled) { background: #fff !important; color: #000 !important; }
+
+.cm-flash { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid #1f3a2a; background: #0f1a13; color: #9ee6b5; font-size: 13px; }
+.cm-flash.is-bad { border-color: #3a2222; background: #1a0f0f; color: #f2a5a5; }
+.cm-deal-wrap { margin: -4px 0 14px; }
+
+.cm-grid { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 18px; align-items: start; }
+.cm-queue { position: sticky; top: 70px; display: flex; flex-direction: column; gap: 4px; max-height: calc(100vh - 90px); overflow-y: auto; padding-right: 4px; scrollbar-width: thin; }
+html body main button.cm-q {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 9px 12px; border-radius: 10px; text-align: left;
+  border: 1px solid transparent !important; background: transparent !important; color: #cfcfcf !important; cursor: pointer; font: inherit;
+}
+html body main button.cm-q:hover { background: #151515 !important; }
+html body main button.cm-q.is-on { background: #181818 !important; border-color: #2a2a2a !important; color: #fff !important; }
+.cm-q-name { font-size: 13.5px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.cm-q-why { font-size: 12px; color: #737373; }
+.cm-logged { margin-top: 14px; padding-top: 12px; border-top: 1px solid #1f1f1f; }
+.cm-logged-row { display: flex; justify-content: space-between; gap: 8px; padding: 4px 12px; font-size: 12.5px; color: #a3a3a3; }
+.cm-logged-row small { color: #6b6b6b !important; white-space: nowrap; }
+
+.cm-main { border: 1px solid #1f1f1f; border-radius: 16px; background: #131313; padding: 22px 24px 20px; }
+.cm-mini { font-size: 11.5px; font-weight: 550; letter-spacing: .04em; color: #737373; text-transform: uppercase; }
+.cm-who { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
+.cm-who-main { min-width: 0; }
+html body main h2.cm-company { margin: 6px 0 6px; font-size: 24px !important; font-weight: 600 !important; letter-spacing: -0.025em !important; }
+.cm-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: #8f8f8f; }
+.cm-meta a { color: #cfcfcf !important; text-decoration: none !important; }
+.cm-meta a:hover { color: #fff !important; }
+.cm-dial { display: flex; align-items: center; gap: 12px; }
+.cm-phone { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; color: #f2f2f2; }
+html body main button.cm-call {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 999px; border: 0 !important;
+  background: #ededed !important; color: #0b0b0b !important; font: inherit; font-size: 14px; font-weight: 650; cursor: pointer;
+}
+html body main button.cm-call:hover { background: #fff !important; }
+.cm-page kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 4px; font: 600 10.5px/1 ui-sans-serif, system-ui; border: 1px solid currentColor; opacity: .5; }
+.cm-why { margin: 14px 0 16px; font-size: 13.5px; color: #a3a3a3; line-height: 1.55; }
+
+.cm-tabs { display: flex; gap: 4px; border-bottom: 1px solid #222; margin-bottom: 16px; }
+html body main button.cm-tabbtn { height: 34px; padding: 0 12px; margin-bottom: -1px; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0; background: transparent !important; color: #8f8f8f !important; font: inherit; font-size: 13.5px; font-weight: 550; cursor: pointer; }
+html body main button.cm-tabbtn:hover { color: #e5e5e5 !important; }
+html body main button.cm-tabbtn.is-on { color: #fff !important; border-bottom-color: #e58c63 !important; }
+.cm-body { min-height: 180px; }
+html body main .cm-muted { color: #7a7a7a !important; font-size: 13px; }
+.cm-verdict { padding: 12px 14px; border-radius: 10px; background: #1a1714; border: 1px solid #3a2f27; color: #f2d9c7; font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
+.cm-block { margin-bottom: 14px; }
+.cm-block ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; list-style: disc; }
+.cm-block li { font-size: 14px; line-height: 1.55; color: #d9d9d9; }
+.cm-noaudit p { color: #a3a3a3 !important; font-size: 14px; margin: 0 0 12px; }
+.cm-noaudit .cm-block { margin-top: 18px; }
+.cm-script { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; counter-reset: step; }
+.cm-script li { position: relative; padding-left: 34px; counter-increment: step; }
+.cm-script li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: #1f1f1f; color: #bdbdbd; font-size: 12px; font-weight: 600; }
+.cm-step { font-size: 12px; font-weight: 600; color: #8f8f8f; letter-spacing: .03em; text-transform: uppercase; }
+html body main p.cm-say { margin: 4px 0 4px; font-size: 15.5px !important; line-height: 1.6; color: #f0f0f0 !important; }
+html body main small.cm-tip { font-size: 12.5px; color: #737373 !important; }
+.cm-objs { display: grid; gap: 6px; }
+.cm-obj { border: 1px solid #222; border-radius: 10px; background: #111; }
+.cm-obj.is-open { border-color: #2e2e2e; background: #151515; }
+html body main button.cm-obj-head { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 11px 14px; border: 0 !important; background: transparent !important; color: #e5e5e5 !important; font: inherit; font-size: 14px; font-weight: 550; cursor: pointer; text-align: left; }
+.cm-obj-body { padding: 0 14px 12px; }
+
+.cm-notes { display: block; margin: 18px 0 14px; }
+html body main .cm-notes textarea { width: 100%; margin-top: 6px; resize: vertical; min-height: 64px; font-size: 14px; }
+.cm-outcomes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+html body main button.cm-out {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 38px; padding: 0 12px; border-radius: 9px;
+  border: 1px solid #2a2a2a !important; background: #161616 !important; color: #dedede !important; font: inherit; font-size: 13px; font-weight: 550; cursor: pointer;
+}
+html body main button.cm-out:hover:not(:disabled) { border-color: #3a3a3a !important; background: #1d1d1d !important; color: #fff !important; }
+html body main button.cm-out.is-good { color: #9ee6b5 !important; border-color: #234231 !important; }
+html body main button.cm-out.is-bad { color: #f2a5a5 !important; border-color: #3a2424 !important; }
+html body main button.cm-out:disabled { opacity: .5; }
+.cm-nav { display: flex; justify-content: space-between; margin-top: 14px; }
+
+.cm-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 50vh; text-align: center; color: #a3a3a3; }
+.cm-done h2 { margin: 0; font-size: 20px !important; }
+.cm-spinner { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #2a2a2a; border-top-color: #e58c63; animation: cm-spin .8s linear infinite; }
+@keyframes cm-spin { to { transform: rotate(360deg); } }
+.cm-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.cm-right { justify-content: flex-end; }
+
+.cm-scrim { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.66); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.cm-dialog { width: min(480px, 100%); padding: 22px; border-radius: 16px; border: 1px solid #2a2a2a; background: #141414; box-shadow: 0 30px 80px -20px rgba(0,0,0,.8); }
+html body main .cm-dialog h3 { margin: 0 0 14px; font-size: 16px !important; }
+.cm-when { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.cm-when label { display: grid; gap: 6px; font-size: 12.5px; color: #8f8f8f; }
+
+@media (max-width: 900px) {
+  .cm-grid { grid-template-columns: 1fr; }
+  .cm-queue { position: static; max-height: none; flex-direction: row; overflow-x: auto; }
+  html body main button.cm-q { min-width: 180px; }
+  .cm-logged { display: none; }
+  .cm-page { padding: 20px 14px 40px; }
+}
+
+/* Notes + outcomes stay pinned while the brief scrolls */
+.cm-dock { position: sticky; bottom: 0; z-index: 5; margin: 18px -24px -20px; padding: 14px 24px 16px; background: linear-gradient(180deg, rgba(19,19,19,.92), #131313 18px); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-top: 1px solid #222; border-radius: 0 0 16px 16px; }
+.cm-dock .cm-notes { margin: 0 0 10px; }
+.cm-dock .cm-nav { margin-top: 10px; }

@@ -13,7 +13,8 @@
 .cx-top { display: flex; align-items: center; justify-content: space-between; height: 34px; padding: 0 0 0 6px; margin-bottom: 6px; }
 .cx-brand { display: flex; align-items: center; gap: 8px; min-width: 0; color: #f2f2f2 !important; text-decoration: none; }
 .cx-mark { display: grid; place-items: center; width: 22px; height: 22px; flex: 0 0 22px; color: #f2f2f2; }
-.cx-mark svg { width: 19px; height: 19px; }
+.cx-logo { height: 21px; width: auto; display: block; }
+.cx-side .cx-mark { width: 24px; height: 24px; flex: 0 0 24px; }
 .cx-wordmark { font-size: 14.5px; font-weight: 620; letter-spacing: -0.03em; white-space: nowrap; }
 .cx-side button.cx-collapse {
   display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px; padding: 0; border-radius: 7px;
