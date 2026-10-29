@@ -2,6 +2,7 @@
 import "./cinder-sidebar.css";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 
 type Props = {
   activeKey: string;
@@ -85,10 +86,10 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     return map[key] ? pathname.startsWith(map[key]) : activeKey === key;
   };
   const item = ([key, label, icon, href]: readonly [string, string, string, string]) =>
-    <a key={key} href={href} className={"cx-item" + (isActive(key) ? " is-active" : "")} aria-current={isActive(key) ? "page" : undefined}
+    <Link key={key} href={href} className={"cx-item" + (isActive(key) ? " is-active" : "")} aria-current={isActive(key) ? "page" : undefined}
       onClick={e => go(e, key, href)} title={collapsed ? label : undefined}>
       <Icon name={icon} /><span className="cx-label">{label}</span>
-    </a>;
+    </Link>;
 
   return <>
     <button type="button" data-variant="primary" className="cx-mobile-toggle" aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen} onClick={() => setMobileOpen(o => !o)}>
@@ -97,17 +98,17 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     {mobileOpen && <button type="button" data-variant="primary" className="cx-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
     <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Cinder navigation">
       <div className="cx-top">
-        <a href="/" className="cx-brand" onClick={e => go(e, "home", "/")} title="Cinder home">
+        <Link href="/" className="cx-brand" onClick={e => go(e, "home", "/")} title="Cinder home">
           <span className="cx-mark"><Mark /></span><span className="cx-wordmark">Cinder</span>
-        </a>
+        </Link>
         <button type="button" data-variant="primary" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <Icon name="rail" />
         </button>
       </div>
 
-      <a href="/" className={"cx-new" + (isActive("home") ? " is-active" : "")} onClick={e => go(e, "home", "/")} title={collapsed ? "Ask Cinder" : undefined}>
+      <Link href="/" className={"cx-new" + (isActive("home") ? " is-active" : "")} onClick={e => go(e, "home", "/")} title={collapsed ? "Ask Cinder" : undefined}>
         <span className="cx-new-icon"><Icon name="chat" /></span><span className="cx-label">Ask Cinder</span>
-      </a>
+      </Link>
 
       <nav className="cx-nav" aria-label="Agency">
         <div className="cx-group">Agency</div>
