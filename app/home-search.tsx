@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { AskAction } from "@/lib/ask";
 import { ActionCard, Markdown } from "./ask-answer";
-import { CinderMark } from "./cinder-brand";
+import { CinderMark, CINDER_MONO } from "./cinder-brand";
 import "./home-search.css";
 
 type Turn = {
@@ -23,7 +23,7 @@ function greeting() {
   return h < 5 ? "Up late, Samuel" : h < 12 ? "Good morning, Samuel" : h < 18 ? "Good afternoon, Samuel" : "Good evening, Samuel";
 }
 
-const Mark = ({ className = "" }: { className?: string }) => <CinderMark className={className} />;
+const Mark = ({ className = "" }: { className?: string }) => <CinderMark className={className} ring={CINDER_MONO} ember={CINDER_MONO} />;
 
 function Icon({ name }: { name: "up" | "stop" | "globe" | "copy" | "check" | "retry" | "new" | "phone" | "chart" | "calendar" }) {
   const p = { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
@@ -159,8 +159,8 @@ export default function HomeSearch() {
       />
       <div className="ask-composer-row">
         <div className="ask-tools">
-          <button data-variant="primary" type="button" className={"ask-tool" + (web ? " is-on" : "")} onClick={e => { e.stopPropagation(); toggleWeb(); }} aria-pressed={web} title={web ? "Web search on" : "Web search off"}>
-            <Icon name="globe" /><span>Web</span>
+          <button data-variant="primary" type="button" className={"ask-tool" + (web ? " is-on" : "")} onClick={e => { e.stopPropagation(); toggleWeb(); }} aria-pressed={web} title={web ? "Searching the web: on" : "Searching the web: off"} aria-label={web ? "Web search on" : "Web search off"}>
+            <Icon name="globe" /><span className="ask-sr">Search the web</span>
           </button>
           {chat && <button data-variant="primary" type="button" className="ask-tool" onClick={e => { e.stopPropagation(); reset(); }} title="Start a new chat"><Icon name="new" /><span>New chat</span></button>}
         </div>

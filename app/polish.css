@@ -110,17 +110,17 @@ html body .calendar-page a.calendar-task.task-high { color: #f0c38a !important; 
 html body main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(.ask-root *) {
   font-size: 14px !important; border-radius: 10px !important;
 }
-html body main :is(input, select, textarea):focus { outline: none !important; border-color: #4a3a2f !important; box-shadow: 0 0 0 3px rgba(229,140,99,.12) !important; }
+html body main :is(input, select, textarea):focus { outline: none !important; border-color: #3d3d3d !important; box-shadow: 0 0 0 3px rgba(255,255,255,.05) !important; }
 html body main button { letter-spacing: -0.005em; }
 
 /* Links inside body copy */
-html body main p a:not([class]) { color: #e9d2c2 !important; text-decoration: underline; text-decoration-color: #4a3a2f; text-underline-offset: 3px; }
+html body main p a:not([class]) { color: #e6e6e6 !important; text-decoration: underline; text-decoration-color: #444; text-underline-offset: 3px; }
 
 /* Empty states read as calm hints */
 html body main :is(.empty, [class*="empty"]) p { color: var(--pl-muted) !important; }
 
 /* Focus rings for keyboard users */
-html body :is(a, button):focus-visible { outline: 2px solid rgba(229,140,99,.55) !important; outline-offset: 2px; }
+html body :is(a, button):focus-visible { outline: 2px solid rgba(255,255,255,.35) !important; outline-offset: 2px; }
 
 /* Money: the page frame already pads; drop the inner wrapper's extra padding. */
 html body main.fin-shell { min-height: 0 !important; }

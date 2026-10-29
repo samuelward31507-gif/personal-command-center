@@ -3,7 +3,7 @@ import "./cinder-sidebar.css";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { CinderLogo, CinderMark } from "./cinder-brand";
+import { CinderLogo, CinderMark, CINDER_MONO } from "./cinder-brand";
 
 type Props = {
   activeKey: string;
@@ -102,7 +102,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Cinder navigation">
       <div className="cx-top">
         <Link href="/" className="cx-brand" onClick={e => go(e, "home", "/")} title="Cinder home">
-          {collapsed ? <CinderMark className="cx-mark" /> : <CinderLogo className="cx-logo" title="Cinder" />}
+          {collapsed ? <CinderMark className="cx-mark" ring={CINDER_MONO} ember={CINDER_MONO} /> : <CinderLogo className="cx-logo" title="Cinder" mono />}
         </Link>
         <button type="button" data-variant="primary" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <Icon name="rail" />
