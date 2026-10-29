@@ -56,7 +56,7 @@ export default function CallModePage() {
   useEffect(() => { void load(); }, [load]);
 
   const item = queue[index];
-  const contact = item?.contact ? { ...item.contact, ...(contacts[item.contact.id] ?? {}) } as Contact & { verdict?: string | null } : null;
+  const contact = item?.contact ? { ...item.contact, ...(contacts[item.contact.id] ?? {}) } as Contact : null;
 
   useEffect(() => {
     setAudit(undefined); setNotes(""); setTab("brief"); setOpenObj(null);
@@ -167,7 +167,7 @@ export default function CallModePage() {
       <aside className="cm-queue" aria-label="Call list">
         {queue.map((q, i) => <button data-variant="primary" key={q.id} className={"cm-q" + (i === index ? " is-on" : "")} onClick={() => setIndex(i)}>
           <span className="cm-q-name">{q.contact?.company || q.contact?.name}</span>
-          <span className="cm-q-why">{q.group === "prospects" ? "New prospect" : q.status === "overdue" ? "Overdue follow-up" : "Follow-up"}{q.contact?.verdict ? " · audited" : ""}</span>
+          <span className="cm-q-why">{q.group === "prospects" ? "New prospect" : q.status === "overdue" ? "Overdue follow-up" : "Follow-up"}{/Audit:/.test(q.why) ? " · audited" : ""}</span>
         </button>)}
         {logged.length > 0 && <div className="cm-logged"><div className="cm-mini">Logged</div>{logged.slice(0, 8).map((l, i) => <div key={i} className="cm-logged-row"><span>{l.name}</span><small>{l.outcome}</small></div>)}</div>}
       </aside>
