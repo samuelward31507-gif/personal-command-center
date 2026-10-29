@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { sendAlert } from "@/lib/notify";
 import { hashToken, contentHash, isTokenShape, validateSignature, clientIp, CONSENT_TEXT } from "@/lib/esign";
 import { runDealHandoff, HandoffNotReady } from "@/lib/deal-handoff";
 import { sanitizeForLog } from "@/lib/business-audit";
@@ -83,6 +84,10 @@ export async function POST(request: Request) {
         await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
           VALUES (${owner}, ${String(moved[0].contact_id)}::uuid, 'note', 'note', 'other', ${`Signed the service agreement electronically (${v.ok.name}${v.ok.title ? ", " + v.ok.title : ""}).`})`;
       }
+      await sendAlert({ subject: `Signed: ${String(row.company || "your client")} signed the agreement`, lines: [
+        `${v.ok.name}${v.ok.title ? `, ${v.ok.title}` : ""} signed the service agreement for ${String(row.company || "the client")}.`,
+        "The deal is Won and onboarding has started. Payments stay expected until you record them on Money.",
+      ], link: { label: "Open the deal", path: `/crm/deals/${dealId}` } });
       try { await runDealHandoff(sql, owner, dealId); }
       catch (e) { console.error("Handoff after signature failed", { name: e instanceof HandoffNotReady ? "HandoffNotReady" : e instanceof Error ? e.name : typeof e }); }
     }

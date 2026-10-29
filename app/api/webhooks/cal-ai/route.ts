@@ -1,4 +1,5 @@
 import { unwrapCalAiPayload, validCalAiEmail, verifyCalAiSignature, validCalAiDate } from "@/lib/cal-ai-webhook";
+import { sendAlert } from "@/lib/notify";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { bookingPerson, splitName, stageAfterBooking, stageAfterMeeting, localDate } from "@/lib/cal-booking";
 import { suggestOffer } from "@/lib/offers";
@@ -247,7 +248,14 @@ export async function POST(request: Request) {
       }
       if (contact) {
         const who = person?.company || person?.name || "";
-        await bookingToDeal(sql, ownerId, contact.id, who, uid, startsIso, trigger === "BOOKING_CREATED" || createdContact);
+        const dealId = await bookingToDeal(sql, ownerId, contact.id, who, uid, startsIso, trigger === "BOOKING_CREATED" || createdContact);
+        const when = new Intl.DateTimeFormat("en-US", { timeZone: TZ(), weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(startsIso));
+        await sendAlert({ subject: `${trigger === "BOOKING_RESCHEDULED" ? "Rescheduled" : "New booking"}: ${who || person?.email || "a call"} · ${when}`, lines: [
+          `${person?.name || "Someone"}${person?.company ? ` (${person.company})` : ""} ${trigger === "BOOKING_RESCHEDULED" ? "moved their call to" : "booked a call for"} ${when}.`,
+          [person?.phone && `Phone: ${person.phone}`, person?.email && `Email: ${person.email}`].filter(Boolean).join(" · "),
+          person?.notes ? `They wrote: ${person.notes.slice(0, 300)}` : "",
+          createdContact ? "New contact and deal created at Meeting booked, with a prep task." : "",
+        ].filter(Boolean), link: { label: "Open the deal", path: dealId ? `/crm/deals/${dealId}` : `/crm?contact=${contact.id}` } });
       }
     } else if (trigger === "MEETING_ENDED") {
       const ev = await sql`

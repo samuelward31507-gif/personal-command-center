@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/start", "destination": "https://personal-command-center-ten-ruby.vercel.app/start" },
+    { "source": "/sign/:token", "destination": "https://personal-command-center-ten-ruby.vercel.app/sign/:token" },
+    { "source": "/api/inbound-lead", "destination": "https://personal-command-center-ten-ruby.vercel.app/api/inbound-lead" },
+    { "source": "/api/sign", "destination": "https://personal-command-center-ten-ruby.vercel.app/api/sign" },
+    { "source": "/_next/:path*", "destination": "https://personal-command-center-ten-ruby.vercel.app/_next/:path*" }
+  ],
+  "headers": [
+    { "source": "/sign/(.*)", "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }, { "key": "Referrer-Policy", "value": "no-referrer" }] }
+  ]
+}
