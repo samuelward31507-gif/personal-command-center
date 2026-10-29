@@ -173,3 +173,12 @@ Evidence from Vercel runtime-error clusters (7-day window) and env metadata (nam
 6. Complete onboarding/delivery, finance, Hermes assistance, then final release hardening.
 
 **Working rule:** Each slice must be implemented, tested, and deployed before moving on. Never report “done” based only on a code change or a green build; report separately what is implemented, what passed automated checks, and what was verified in the live app.
+
+## Gaps closed — 2026-10-29 (second pass)
+- Agreement step: Accepted keeps the deal open → Draft agreement (AI, from the accepted proposal; unknown facts stay [bracketed]) → Mark sent (follow-up in 2 business days) → Signed → Won + onboarding handoff. Legal name comes from env `CINDER_LEGAL_NAME` (blank until set).
+- Follow-up email drafts on every deal (recap, proposal nudge, agreement nudge, missed meeting, check-in, referral ask). Email only; opens in the founder's own mail app; Cinder sends nothing.
+- Contact record lists the contact's deals and can start one.
+- "NOT FOUND"-style placeholders read as blank everywhere and are dropped on import; "Missing phone & email" contacts filter. No data deleted or rewritten.
+- Phone layout fixes (Call mode dock, deal stage bar, contacts header). Calendar aligned with the stealth tokens. Leftover back-links removed.
+- Call opener: "Samuel with CGC".
+- Still waiting on the founder: legal/client-facing name, trackPR form hookup approval, Cal.com webhook setup.
