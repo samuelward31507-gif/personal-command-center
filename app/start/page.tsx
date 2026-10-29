@@ -25,7 +25,8 @@ export default function StartPage() {
   }
 
   return <div className="st-page">
-    <header className="st-top"><CinderLogo className="st-logo" title="Cinder Revenue Company" /></header>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" precedence="default" />
+    <header className="st-top"><a href="/" aria-label="Cinder Revenue Company home"><CinderLogo className="st-logo" title="Cinder Revenue Company" /></a></header>
     <div className="st-main">
       {state === "done" ? <div className="st-done">
         <div className="st-check" aria-hidden="true">✓</div>
@@ -33,7 +34,6 @@ export default function StartPage() {
         <p>Usually the same day. If you&apos;d rather talk now, keep your phone close.</p>
       </div> : <>
         <div className="st-intro">
-          <div className="st-eyebrow">Cinder Revenue Company</div>
           <h1>Stop losing jobs to slow replies.</h1>
           <p>We set up systems that answer every new lead in under a minute, follow up until they book, and put the good ones on your calendar. Tell us about your business and we&apos;ll show you what it would look like for you.</p>
         </div>
