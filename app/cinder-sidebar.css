@@ -1,42 +1,42 @@
 /* Claude-style sidebar. New class names (cx-*) so the legacy .sidebar theme rules don't apply. */
 .cx-side {
-  --cx-w: 256px;
+  --cx-w: 220px;
   position: sticky; top: 0; height: 100vh; flex: 0 0 var(--cx-w); width: var(--cx-w);
-  display: flex; flex-direction: column; gap: 2px; padding: 10px 10px 12px;
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 8px 10px;
   background: #0d0d0d; border-right: 1px solid #1a1a1a; color: #d4d4d4;
   font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
   transition: width .2s cubic-bezier(.2,.8,.2,1), flex-basis .2s cubic-bezier(.2,.8,.2,1);
   overflow: hidden; z-index: 50;
 }
-.cx-side.is-collapsed { --cx-w: 60px; }
+.cx-side.is-collapsed { --cx-w: 52px; }
 
-.cx-top { display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 2px 0 6px; margin-bottom: 8px; }
-.cx-brand { display: flex; align-items: center; gap: 10px; min-width: 0; color: #f2f2f2 !important; text-decoration: none; }
-.cx-mark { display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 26px; color: #f2f2f2; }
-.cx-mark svg { width: 22px; height: 22px; }
-.cx-wordmark { font-size: 16.5px; font-weight: 620; letter-spacing: -0.03em; white-space: nowrap; }
+.cx-top { display: flex; align-items: center; justify-content: space-between; height: 34px; padding: 0 0 0 6px; margin-bottom: 6px; }
+.cx-brand { display: flex; align-items: center; gap: 8px; min-width: 0; color: #f2f2f2 !important; text-decoration: none; }
+.cx-mark { display: grid; place-items: center; width: 22px; height: 22px; flex: 0 0 22px; color: #f2f2f2; }
+.cx-mark svg { width: 19px; height: 19px; }
+.cx-wordmark { font-size: 14.5px; font-weight: 620; letter-spacing: -0.03em; white-space: nowrap; }
 .cx-side button.cx-collapse {
-  display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; padding: 0; border-radius: 8px;
+  display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px; padding: 0; border-radius: 7px;
   border: 0 !important; background: transparent !important; color: #8a8a8a !important; cursor: pointer; transition: background .15s, color .15s;
 }
 .cx-side button.cx-collapse:hover { background: #1a1a1a !important; color: #f0f0f0 !important; }
-.cx-icon { width: 18px; height: 18px; flex: 0 0 18px; }
+.cx-icon { width: 15px; height: 15px; flex: 0 0 15px; }
 
 .cx-new {
-  display: flex; align-items: center; gap: 11px; height: 38px; padding: 0 9px; margin-bottom: 10px; border-radius: 10px;
-  color: #f0f0f0 !important; text-decoration: none; font-size: 14px; font-weight: 560; white-space: nowrap; transition: background .15s;
+  display: flex; align-items: center; gap: 9px; height: 32px; padding: 0 8px; margin-bottom: 6px; border-radius: 8px;
+  color: #f0f0f0 !important; text-decoration: none; font-size: 13px; font-weight: 560; white-space: nowrap; transition: background .15s;
 }
-.cx-new-icon { display: grid; place-items: center; width: 22px; height: 22px; flex: 0 0 22px; margin-left: -2px; border-radius: 50%; background: #d6a98c; color: #15110e; }
-.cx-new-icon .cx-icon { width: 13px; height: 13px; flex-basis: 13px; stroke-width: 2.2; }
+.cx-new-icon { display: grid; place-items: center; width: 19px; height: 19px; flex: 0 0 19px; margin-left: -2px; border-radius: 50%; background: #d6a98c; color: #15110e; }
+.cx-new-icon .cx-icon { width: 11px; height: 11px; flex-basis: 11px; stroke-width: 2.2; }
 .cx-new:hover, .cx-new.is-active { background: #1a1a1a; }
 
 .cx-nav { display: flex; flex-direction: column; gap: 1px; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
 .cx-nav::-webkit-scrollbar { display: none; }
-.cx-group { padding: 14px 10px 6px; font-size: 12px; font-weight: 500; color: #6b6b6b; white-space: nowrap; letter-spacing: 0; text-transform: none; }
+.cx-group { padding: 12px 8px 4px; font-size: 11px; font-weight: 500; color: #6b6b6b; white-space: nowrap; letter-spacing: 0; text-transform: none; }
 .cx-group:first-child { padding-top: 4px; }
 .cx-item {
-  display: flex; align-items: center; gap: 11px; height: 34px; padding: 0 10px; border-radius: 8px;
-  color: #b5b5b5 !important; text-decoration: none; font-size: 14px; font-weight: 450; white-space: nowrap; transition: background .12s, color .12s;
+  display: flex; align-items: center; gap: 9px; height: 28px; padding: 0 8px; border-radius: 7px;
+  color: #b5b5b5 !important; text-decoration: none; font-size: 13px; font-weight: 450; white-space: nowrap; transition: background .12s, color .12s;
 }
 .cx-item .cx-icon { color: #8a8a8a; transition: color .12s; }
 .cx-item:hover { background: #171717; color: #f0f0f0 !important; }
@@ -45,12 +45,12 @@
 .cx-item.is-active .cx-icon { color: #f2f2f2; }
 .cx-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; transition: opacity .15s; }
 
-.cx-foot { display: flex; flex-direction: column; gap: 2px; padding-top: 8px; border-top: 1px solid #1a1a1a; }
-.cx-profile { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 7px; border-radius: 10px; white-space: nowrap; }
-.cx-avatar { display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px; border-radius: 50%; background: #262626; color: #ededed; font-size: 12.5px; font-weight: 600; }
+.cx-foot { display: flex; flex-direction: column; gap: 2px; padding-top: 6px; border-top: 1px solid #1a1a1a; }
+.cx-profile { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 6px; border-radius: 8px; white-space: nowrap; }
+.cx-avatar { display: grid; place-items: center; width: 24px; height: 24px; flex: 0 0 24px; border-radius: 50%; background: #262626; color: #ededed; font-size: 11px; font-weight: 600; }
 .cx-profile-copy { display: flex; flex-direction: column; line-height: 1.25; }
-.cx-profile-copy strong { font-size: 13.5px; font-weight: 560; color: #ececec !important; }
-.cx-profile-copy small { font-size: 12px; color: #727272 !important; }
+.cx-profile-copy strong { font-size: 12.5px; font-weight: 560; color: #ececec !important; }
+.cx-profile-copy small { font-size: 11px; color: #727272 !important; }
 
 /* Collapsed rail */
 .cx-side.is-collapsed .cx-label, .cx-side.is-collapsed .cx-wordmark, .cx-side.is-collapsed .cx-group { opacity: 0; pointer-events: none; width: 0; }
