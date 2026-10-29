@@ -67,7 +67,7 @@ export default function HomeSearch() {
     if (data || loading.current) return;
     loading.current = true;
     try {
-      const [c, d, a] = await Promise.all(["/api/contacts", "/api/deals", "/api/research-artifacts?type=audit_prep"].map(u => fetch(u, { cache: "no-store" }).then(r => (r.ok ? r.json() : {})).catch(() => ({}))));
+      const [c, d, a] = await Promise.all(["/api/contacts", "/api/deals", "/api/research-artifacts?type=audit_prep"].map(u => fetch(u, { cache: "no-store" }).then(r => (r.ok ? r.json() : {})).catch(() => ({})) as Promise<{ contacts?: Contact[]; deals?: Deal[]; artifacts?: Artifact[] }>));
       setData({ contacts: c.contacts ?? [], deals: d.deals ?? [], audits: (a.artifacts ?? []).filter((x: Artifact) => x.status !== "archived") });
     } finally { loading.current = false; }
   }
