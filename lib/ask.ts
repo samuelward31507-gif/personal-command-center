@@ -231,7 +231,7 @@ export function resolveLink(href: string): string | null {
   if (m) {
     const [, type, id] = m;
     if (type === "contact") return "/crm?contact=" + id;
-    if (type === "deal") return "/crm/pipeline?deal=" + id;
+    if (type === "deal") return "/crm/deals/" + id;
     return "/crm/preparation?artifact=" + id;
   }
   if (/^\/(?!\/)[\w\-/?=&%.#]*$/.test(href)) return href;

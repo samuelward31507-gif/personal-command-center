@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const types = new Set(["prospect_research", "call_brief", "audit_prep", "meeting_brief", "follow_up_draft"]);
+const types = new Set(["prospect_research", "call_brief", "audit_prep", "meeting_brief", "follow_up_draft", "proposal"]);
 const statuses = new Set(["draft", "reviewed", "archived"]);
 const confidences = new Set(["low", "medium", "high"]);
 function db() {
