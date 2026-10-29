@@ -78,3 +78,8 @@
   border: 1px solid #2c2c2c; border-radius: 4px; background: #191919; color: #9a9a9a; font: 600 10px/1 ui-sans-serif, system-ui, sans-serif;
 }
 @media (max-width: 560px) { .hs-foot { display: none; } .hs-kbd { display: none; } }
+
+/* Command bar sits in the upper third (like Cal.com) so results have room to open downward. */
+.cal-home-center:has(.hs-wrap) { margin: 0 auto auto; padding-top: min(22vh, 200px); }
+.hs-row { background: transparent !important; }
+.hs-row.is-active { background: #1c1c1c !important; }

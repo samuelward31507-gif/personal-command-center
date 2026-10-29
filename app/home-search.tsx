@@ -104,7 +104,7 @@ export default function HomeSearch() {
     contacts.slice(0, auditVerb ? 3 : 5).forEach(({ c }) => out.push({
       key: "c:" + c.id, group: "Contacts", icon: initials(c.company || c.name), title: c.company || c.name,
       sub: [c.company && c.name !== c.company ? c.name : "", c.location].filter(Boolean).join(" · ") || c.email || c.phone || "Contact",
-      tag: c.status, href: "/crm?contact=" + encodeURIComponent(c.id) + "&q=" + encodeURIComponent(c.company || c.name),
+      tag: c.status && norm(c.status) !== "contact" ? c.status : undefined, href: "/crm?contact=" + encodeURIComponent(c.id) + "&q=" + encodeURIComponent(c.company || c.name),
     }));
 
     (data?.deals ?? []).map(d => ({ d, s: score([d.title, d.company, d.contactName].map(norm).join(" "), q, terms) }))
