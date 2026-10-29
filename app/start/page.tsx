@@ -25,8 +25,7 @@ export default function StartPage() {
   }
 
   return <div className="st-page">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" precedence="default" />
-    <header className="st-top"><a href="/" aria-label="Cinder Revenue Company home"><CinderLogo className="st-logo" title="Cinder Revenue Company" /></a></header>
+    <header className="st-top"><a href="/" aria-label="Cinder Revenue Company home"><CinderLogo mono className="st-logo" title="Cinder Revenue Company" /></a></header>
     <div className="st-main">
       {state === "done" ? <div className="st-done">
         <div className="st-check" aria-hidden="true">✓</div>
