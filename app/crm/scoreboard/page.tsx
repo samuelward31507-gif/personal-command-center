@@ -47,7 +47,7 @@ export default function ScoreboardPage() {
 
   return <main className="sb-page">
     <header className="sb-head">
-      <div><div className="sb-eyebrow">Scoreboard</div><h1 className="sb-title">The numbers.</h1>
+      <div><div className="sb-eyebrow">On pace?</div><h1 className="sb-title">Scoreboard</h1>
         <p className="sb-sub">Only what&apos;s logged and recorded. Calls come from Call mode outcomes, money from what you mark paid.</p></div>
       <Link className="sb-cta" href="/crm/call">Start calling →</Link>
     </header>

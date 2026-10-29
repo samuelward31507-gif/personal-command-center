@@ -107,14 +107,10 @@ export default function SettingsPage() {
 
   return (
     <main style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 22px 60px", color:"#e5e5e5" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        
-        <span style={{ fontSize: 11, color:"#a1a1a1", border:"1px solid #303030", borderRadius: 20, padding: "6px 10px" }}>Workspace settings</span>
-      </header>
 
       <section style={{ marginTop: 36, maxWidth: 720 }}>
-        <p style={{ fontSize: 10, letterSpacing: 2, color:"#a95335", fontWeight: 700 }}>CINDER / CONFIGURATION</p>
-        <h1 style={{ fontSize: 38, letterSpacing: -1.5, margin: "8px 0" }}>Settings<span style={{ color:"#a95335" }}>.</span></h1>
+        <p style={{ fontSize: 10, letterSpacing: 2, color:"#a95335", fontWeight: 700 }}>Workspace</p>
+        <h1 style={{ fontSize: 38, letterSpacing: -1.5, margin: "8px 0" }}>Settings</h1>
         <p style={{ color:"#a1a1a1", lineHeight: 1.65, fontSize: 14 }}>Review the workspace foundation and connected capabilities. External integrations are shown honestly as disconnected until they are configured and verified.</p>
       </section>
 

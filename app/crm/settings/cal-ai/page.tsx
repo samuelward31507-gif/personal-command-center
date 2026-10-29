@@ -12,8 +12,8 @@ export default function CalAiSettingsPage() {
         <span style={{ fontSize: 11, border:"1px solid #303030", borderRadius: 20, padding: "6px 10px" }}>Integration setup</span>
       </header>
       <section style={{ marginTop: 36, maxWidth: 760 }}>
-        <p style={{ fontSize: 10, letterSpacing: 2, color:"#a95335", fontWeight: 700 }}>CINDER / CAL.AI</p>
-        <h1 style={{ fontSize: 38, letterSpacing: -1.5, margin: "8px 0" }}>Cal.ai scheduling<span style={{ color:"#a95335" }}>.</span></h1>
+        <p style={{ fontSize: 10, letterSpacing: 2, color:"#a95335", fontWeight: 700 }}>Integration.AI</p>
+        <h1 style={{ fontSize: 38, letterSpacing: -1.5, margin: "8px 0" }}>Cal.ai scheduling</h1>
         <p style={{ color:"#a1a1a1", lineHeight: 1.65, fontSize: 14 }}>
           Sync Cal.com booking events into Cinder so meetings stay attached to the agency's contacts and daily workflow. Cal.ai phone calls are configured in Cal.com Workflows; Cinder does not start prospecting calls.
         </p>

@@ -54,7 +54,7 @@ export default function StrategyPage() {
 
   return <main style={{maxWidth:1080,margin:"0 auto",padding:"28px 22px 60px",color:"#e5e5e5"}}>
     <header style={{display:"flex",justifyContent:"space-between",gap:16,alignItems:"center",flexWrap:"wrap"}}><span/><button onClick={()=>void load()} disabled={loading}>↻ Refresh</button></header>
-    <div style={{marginTop:36}}><p style={{fontSize:10,letterSpacing:2,color:"#a95335",fontWeight:700}}>FOUNDER OPERATING SYSTEM</p><h1 style={{fontSize:38,letterSpacing:-1.5,margin:"8px 0"}}>Strategy & memory.</h1><p style={{color:"#a1a1a1",maxWidth:680}}>Keep durable context in one place: priorities, decisions, customer knowledge, lessons, and operating principles. These notes are saved to your workspace database.</p></div>
+    <div style={{marginTop:36}}><p style={{fontSize:10,letterSpacing:2,color:"#a95335",fontWeight:700}}>Business memory</p><h1 style={{fontSize:38,letterSpacing:-1.5,margin:"8px 0"}}>Strategy & memory</h1><p style={{color:"#a1a1a1",maxWidth:680}}>Keep durable context in one place: priorities, decisions, customer knowledge, lessons, and operating principles. These notes are saved to your workspace database.</p></div>
     {error&&<p role="alert" style={{background:"#2a1414",color:"#fca5a5",padding:12,borderRadius:8}}>{error}</p>}
     {notice&&<p role="status" style={{color:"#86efac",fontSize:13}}>{notice}</p>}
     <div style={{display:"grid",gridTemplateColumns:"minmax(0,1.15fr) minmax(280px,.85fr)",gap:20,marginTop:24,alignItems:"start"}}>
