@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import { DEFAULT_AUDIT_MODEL, normalizeWebsite, sanitizeForLog } from "@/lib/business-audit";
 import { researchAndSave } from "@/lib/audit-engine";
 import { loadMyDay } from "@/lib/my-day-data";
+import { isPlaceholder } from "@/lib/contact-import";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
       const site = normalizeWebsite(String(c.website ?? "").slice(0, 2000));
       const r = await researchAndSave({
         sql, ownerId: owner, apiKey, model, companyName: company,
-        website: site && !("error" in site) ? site.url : null, location: String(c.location ?? "").slice(0, 300),
+        website: site && !("error" in site) ? site.url : null, location: isPlaceholder(c.location) ? "" : String(c.location ?? "").slice(0, 300),
         context: ["Overnight pre-audit before a cold call the founder will place himself.", c.notes ? `CRM notes: ${String(c.notes).slice(0, 1500)}` : ""].filter(Boolean).join("\n"),
         contactId: String(c.id), dealId: null, deadline,
       });

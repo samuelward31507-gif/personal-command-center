@@ -1,4 +1,5 @@
 import type { NeonQueryFunction } from "@neondatabase/serverless";
+import { isPlaceholder } from "./contact-import";
 import { reportSection } from "@/lib/business-audit";
 import { loadMyDay } from "@/lib/my-day-data";
 import type { AskContext } from "@/lib/ask";
@@ -56,7 +57,7 @@ export async function runAskTool(sql: Sql, owner: string, ctx: AskRequestContext
         LIMIT ${limit}`;
       return {
         total: Number(rows[0]?.total ?? 0), shown: rows.length,
-        contacts: rows.map(r => ({ id: r.id, company: s(r.company, 120), name: name(r), status: r.status, location: s(r.location, 80),
+        contacts: rows.map(r => ({ id: r.id, company: s(r.company, 120), name: name(r), status: r.status, location: s(isPlaceholder(r.location) ? "" : r.location, 80),
           phone: s(r.phone, 40), hasWebsite: Boolean(String(r.website ?? "").trim()), website: s(r.website, 120), followUp: d10(r.follow_up_at),
           lastOutcome: r.last_outcome ?? null, lastTouch: d10(r.last_at), doNotContact: r.suppressed === true, notes: s(r.notes, 160) })),
       };

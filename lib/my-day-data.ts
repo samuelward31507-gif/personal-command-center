@@ -1,4 +1,5 @@
 import type { NeonQueryFunction } from "@neondatabase/serverless";
+import { blankIfPlaceholder } from "./contact-import";
 import { buildQueue, type QueueInput } from "@/lib/my-day";
 import { reportSection } from "@/lib/business-audit";
 
@@ -114,7 +115,7 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
       ...milestones.map(r => ({ id: String(r.id), kind: "milestone" as const, title: String(r.title), project: String(r.project), status: String(r.status), due: iso(r.due_at) })),
     ],
     receivables: receivables.map(r => ({ id: String(r.id), title: String(r.title), amount: Number(r.amount), status: String(r.status), due: dateOnly(r.due_date), client: String(r.client ?? "") })),
-    prospects: prospects.filter(r => ref(r.id)).map(r => ({ contact: ref(r.id)!, location: String(r.location ?? ""), website: String(r.website ?? ""), createdAt: iso(r.created_at)! })),
+    prospects: prospects.filter(r => ref(r.id)).map(r => ({ contact: ref(r.id)!, location: String(blankIfPlaceholder(r.location ?? "")), website: String(r.website ?? ""), createdAt: iso(r.created_at)! })),
     firstTouchesToday: Number(firstTouches[0]?.n ?? 0),
     clients: clients.map(r => ({ id: String(r.id), client: String(r.client_name ?? "Client"), status: String(r.status), health: Number(r.health_score ?? 5), renewal: dateOnly(r.renewal_date), nextReview: dateOnly(r.next_review_date), riskNotes: String(r.risk_notes ?? "").slice(0, 140) })),
     tickets: tickets.map(r => ({ id: String(r.id), title: String(r.title), client: String(r.client ?? ""), priority: String(r.priority), status: String(r.status), due: dateOnly(r.due_date) })),

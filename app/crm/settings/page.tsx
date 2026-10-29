@@ -73,7 +73,7 @@ export default function SettingsPage() {
   return (
     <main style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 22px 60px", color:"#e5e5e5" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        <Link href="/" style={{ color:"#a1a1a1", textDecoration: "none", fontSize: 13 }}>← Cinder workspace</Link>
+        
         <span style={{ fontSize: 11, color:"#a1a1a1", border:"1px solid #303030", borderRadius: 20, padding: "6px 10px" }}>Workspace settings</span>
       </header>
 

@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
-import { cleanDiscovery, PROPOSAL_STATUSES, stageForProposal, type ProposalStatus } from "@/lib/deal-workspace";
+import { cleanDiscovery, PROPOSAL_STATUSES, stageForProposal, CONTRACT_STATUSES, stageForContract, type ProposalStatus, type ContractStatus } from "@/lib/deal-workspace";
 import { DEAL_STAGES } from "@/lib/offers";
 import { runDealHandoff, HandoffNotReady } from "@/lib/deal-handoff";
 import { reportSection, sanitizeForLog } from "@/lib/business-audit";
@@ -36,13 +36,14 @@ export async function GET(request: Request) {
     if (!rows.length) return fail("Deal not found.", 404);
     const d = rows[0];
     const cid = d.contact_id ? String(d.contact_id) : null;
-    const [acts, tasks, events, audits, proposals, project] = await Promise.all([
+    const [acts, tasks, events, audits, proposals, project, agreements] = await Promise.all([
       cid ? sql`SELECT channel, outcome, notes, occurred_at FROM public.contact_activities WHERE owner_id = ${user.id} AND contact_id = ${cid}::uuid AND outcome IS DISTINCT FROM 'initiated' ORDER BY occurred_at DESC LIMIT 12` : [],
       sql`SELECT id, title, status, priority, due_at FROM public.tasks WHERE owner_id = ${user.id} AND status NOT IN ('done','cancelled') AND (deal_id = ${id}::uuid OR (${cid}::uuid IS NOT NULL AND contact_id = ${cid}::uuid)) ORDER BY due_at NULLS LAST LIMIT 10`,
       sql`SELECT id, title, starts_at, event_type, status FROM public.calendar_events WHERE owner_id = ${user.id} AND status <> 'cancelled' AND (deal_id = ${id}::uuid OR (${cid}::uuid IS NOT NULL AND contact_id = ${cid}::uuid)) ORDER BY starts_at DESC LIMIT 8`,
       cid ? sql`SELECT id, title, content, created_at FROM public.research_artifacts WHERE owner_id = ${user.id} AND contact_id = ${cid}::uuid AND artifact_type = 'audit_prep' AND status <> 'archived' ORDER BY created_at DESC LIMIT 1` : [],
       sql`SELECT id, title, content, status, created_at, updated_at FROM public.research_artifacts WHERE owner_id = ${user.id} AND deal_id = ${id}::uuid AND artifact_type = 'proposal' AND status <> 'archived' ORDER BY created_at DESC LIMIT 5`,
       sql`SELECT id, name, status, target_date FROM public.projects WHERE owner_id = ${user.id} AND deal_id = ${id}::uuid LIMIT 1`,
+      sql`SELECT id, title, content, status, created_at, updated_at FROM public.research_artifacts WHERE owner_id = ${user.id} AND deal_id = ${id}::uuid AND artifact_type = 'agreement' AND status <> 'archived' ORDER BY created_at DESC LIMIT 3`,
     ]);
     const a = audits[0];
     return Response.json({
@@ -51,6 +52,7 @@ export async function GET(request: Request) {
         expectedCloseDate: d10(d.expected_close_date), source: d.source, notes: d.notes, lostReason: d.lost_reason, agreementStatus: d.agreement_status,
         discovery: d.discovery ?? {}, nextStep: d.next_step ?? "", nextStepAt: d10(d.next_step_at),
         proposalStatus: d.proposal_status ?? "none", proposalSentAt: iso(d.proposal_sent_at), proposalDecidedAt: iso(d.proposal_decided_at),
+        contractStatus: d.contract_status ?? "none", contractSentAt: iso(d.contract_sent_at), signedAt: iso(d.signed_at),
         createdAt: iso(d.created_at), updatedAt: iso(d.updated_at),
       },
       contact: cid ? { id: cid, name: [d.first_name, d.last_name].filter(Boolean).join(" "), company: d.company, phone: d.phone, email: d.email, website: d.website, location: d.location, notes: d.contact_notes } : null,
@@ -59,6 +61,7 @@ export async function GET(request: Request) {
       events: events.map(e => ({ id: e.id, title: e.title, startsAt: iso(e.starts_at), type: e.event_type, status: e.status })),
       audit: a ? { id: a.id, title: a.title, date: d10(a.created_at), verdict: reportSection(String(a.content), "Verdict"), opportunities: reportSection(String(a.content), "Top opportunities"), upsells: reportSection(String(a.content), "Future upsells") } : null,
       proposals: proposals.map(p => ({ id: p.id, title: p.title, content: p.content, status: p.status, createdAt: iso(p.created_at), updatedAt: iso(p.updated_at) })),
+      agreements: agreements.map(p => ({ id: p.id, title: p.title, content: p.content, status: p.status, createdAt: iso(p.created_at), updatedAt: iso(p.updated_at) })),
       project: project[0] ? { id: project[0].id, name: project[0].name, status: project[0].status, targetDate: d10(project[0].target_date) } : null,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
@@ -68,7 +71,8 @@ export async function GET(request: Request) {
 }
 
 /**
- * PATCH /api/deal-workspace { id, discovery?, nextStep?, nextStepAt?, proposalStatus?, stage?, lostReason? }
+ * PATCH /api/deal-workspace { id, discovery?, nextStep?, nextStepAt?, proposalStatus?, contractStatus?, stage?, lostReason? }
+ * Proposal accepted keeps the deal open; a signed agreement (or moving the stage to Won) makes it Won.
  * Won runs the onboarding handoff (expected payments only — never marks anything paid).
  */
 export async function PATCH(request: Request) {
@@ -91,11 +95,17 @@ export async function PATCH(request: Request) {
       if (!(PROPOSAL_STATUSES as readonly string[]).includes(body.proposalStatus)) return fail("Invalid proposal status.", 400);
       proposalStatus = body.proposalStatus;
     }
+    let contractStatus: ContractStatus | null = null;
+    if (body.contractStatus !== undefined) {
+      if (!(CONTRACT_STATUSES as readonly string[]).includes(body.contractStatus)) return fail("Invalid agreement status.", 400);
+      contractStatus = body.contractStatus;
+    }
     let stage: string | null = null;
     if (body.stage !== undefined) {
       if (!(DEAL_STAGES as readonly string[]).includes(body.stage)) return fail("Invalid deal stage.", 400);
       stage = body.stage;
-    } else if (proposalStatus) stage = stageForProposal(proposalStatus, stageNow);
+    } else if (contractStatus) stage = stageForContract(contractStatus, stageNow);
+    else if (proposalStatus) stage = stageForProposal(proposalStatus, stageNow);
     const lostReason = typeof body.lostReason === "string" ? body.lostReason.trim().slice(0, 1000) : "";
     if (stage === "lost" && stageNow !== "lost" && !lostReason) return fail("Say why it was lost — it's how the pipeline gets better.", 400);
 
@@ -107,6 +117,8 @@ export async function PATCH(request: Request) {
         proposal_status = COALESCE(${proposalStatus}, proposal_status),
         proposal_sent_at = CASE WHEN ${proposalStatus} = 'sent' THEN COALESCE(proposal_sent_at, now()) ELSE proposal_sent_at END,
         proposal_decided_at = CASE WHEN ${proposalStatus} IN ('accepted','declined') THEN now() ELSE proposal_decided_at END,
+        contract_status = COALESCE(${contractStatus}, CASE WHEN ${stage} = 'won' THEN 'signed' ELSE contract_status END),
+        contract_sent_at = CASE WHEN ${contractStatus} = 'sent' THEN COALESCE(contract_sent_at, now()) ELSE contract_sent_at END,
         stage = COALESCE(${stage}, stage),
         lost_reason = CASE WHEN ${stage} = 'lost' AND ${lostReason} <> '' THEN ${lostReason} ELSE lost_reason END,
         agreement_status = CASE WHEN ${stage} = 'won' AND stage <> 'won' THEN 'active' ELSE agreement_status END,

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {useCallback,useEffect,useMemo,useState} from "react";
 type Signal={id:string;level:"urgent"|"watch"|"positive";title:string;detail:string;href:string;label:string};
 type Snapshot={contacts:any[];deals:any[];outreach:any[];tasks:any[];projects:any[];finance:any;success:any;workforce:any};
@@ -47,8 +46,8 @@ export default function IntelligencePage(){
  const milestoneDone=activeProjects.reduce((n,x)=>n+Number(x.doneMilestones||0),0);
  const deliveryRate=milestoneTotal?Math.round(milestoneDone/milestoneTotal*100)+"%":"—";
  return <main style={{maxWidth:1100,margin:"0 auto",padding:"28px 22px 56px",color:"#e5e5e5",fontFamily:"inherit"}}>
-  <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><Link href="/">← Cinder workspace</Link><button onClick={()=>void load()} disabled={loading}>↻ Refresh signals</button></header>
-  <p style={{marginTop:34,fontSize:10,letterSpacing:2,color:"#a95335"}}>CINDER / BUSINESS INTELLIGENCE</p><h1 style={{fontSize:"clamp(32px,5vw,48px)",letterSpacing:"-1.8px",margin:"8px 0"}}>See what needs to move<span style={{color:"#bd5a36"}}>.</span></h1>
+  <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><span/><button onClick={()=>void load()} disabled={loading}>↻ Refresh signals</button></header>
+  <p style={{marginTop:34,fontSize:10,letterSpacing:2,color:"#a95335"}}>SIGNALS</p><h1 style={{fontSize:"clamp(32px,5vw,48px)",letterSpacing:"-1.8px",margin:"8px 0"}}>See what needs to move<span style={{color:"#bd5a36"}}>.</span></h1>
   <p style={{maxWidth:700,color:"#a1a1a1",lineHeight:1.6}}>A read-only view across sales, outreach, delivery, client health, finances, and AI-workforce records. Signals are based on saved workspace data—not predictions or external integrations.</p>
   {error&&<p role="alert" style={{padding:14,background:"#2a1414",borderRadius:10}}>{error}</p>}
   <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))",gap:10,margin:"24px 0"}}>

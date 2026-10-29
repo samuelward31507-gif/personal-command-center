@@ -14,7 +14,7 @@ ok(() => assert.equal(cityOf("Las Vegas, NV"), "Las Vegas"));
 ok(() => assert.equal(cityOf("NOT FOUND"), ""));
 ok(() => assert.deepEqual(nextTwoWeekdays(new Date("2026-10-30T12:00:00")), ["Monday", "Tuesday"], "skips the weekend"));
 const s = buildScript(base);
-ok(() => assert.match(s[0].say, /^Hey Randy, it's Samuel with Cinder/));
+ok(() => assert.match(s[0].say, /^Hey Randy, it's Samuel with CGC/));
 ok(() => assert.match(s[1].say, /fence companies around Las Vegas/));
 ok(() => assert.match(s.find(x => x.key === "ask").say, /Friday or Monday/));
 ok(() => assert.match(buildScript({ ...base, firstName: "" })[0].say, /^Hey there/));
