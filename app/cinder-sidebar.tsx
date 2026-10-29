@@ -101,7 +101,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
       {secondary.map(([key, label, icon, href]) => <button key={key} type="button" className={"nav-item" + (isActive(key, href) ? " active" : "")} aria-current={isActive(key, href) ? "page" : undefined} onClick={() => go(key, href)}><Icon name={icon}/><span>{label}</span></button>)}
     </nav>
     <div className="sidebar-bottom">
-      <div className="connection-card"><span className="connection-dot"/><div><strong>Agency workspace</strong><small>{mode === "crm" ? "Private CRM storage" : "CRM integrations not connected"}</small></div></div>
+      <div className="connection-card"><span className="connection-dot"/><div><strong>Agency workspace</strong><small>Private CRM storage</small></div></div>
       <div className="profile-row"><span className="profile-avatar">F</span><span className="profile-copy"><strong>Founder</strong><small>{mode === "crm" ? "Agency operations" : "Agency workspace"}</small></span></div>
     </div>
     </aside>

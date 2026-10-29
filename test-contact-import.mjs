@@ -280,39 +280,15 @@ test("Cal.ai booking sync handles nested payloads and reschedules without leavin
   assert.ok(migration.includes("cal_ai_webhook_events"));
 });
 
-test("Needs You queue avoids duplicate contact follow-ups while outreach is active", () => {
-  const src = readFileSync("app/crm/needs-you/page.tsx", "utf8");
-  assert.ok(
-    src.includes("const activeOutreachContactIds = new Set((od.outreach||[])"),
-    "Needs You must derive active outreach contact IDs before building generic contact follow-ups"
-  );
-  assert.ok(
-    src.includes("if(activeOutreachContactIds.has(c.id))continue;"),
-    "A contact with an active sequence must not also appear as a generic follow-up"
-  );
-  assert.ok(
-    src.includes('o.status==="active"&&o.contactId&&o.nextActionAt'),
-    "Only active outreach with a scheduled next action may suppress the generic follow-up"
-  );
-});
-
-test("Needs You queue includes upcoming scheduled meetings that still need a brief", () => {
-  const src = readFileSync("app/crm/needs-you/page.tsx", "utf8");
-  assert.ok(src.includes('fetch(calendarUrl,{cache:"no-store"})'), "Needs You must load upcoming calendar events");
-  assert.ok(src.includes('e.status!=="scheduled"||!(e.type==="meeting"||e.type==="call")'), "Only scheduled meetings and calls should become preparation actions");
-  assert.ok(src.includes('a.calendarEventId===e.id&&a.type==="meeting_brief"&&(a.status==="draft"||a.status==="reviewed")'), "Meetings with an existing brief should not create a duplicate preparation action");
-  assert.ok(src.includes('href:"/crm/preparation?event="+encodeURIComponent(e.id)+"&type=meeting_brief",action:"Prepare meeting"'), "Meeting preparation actions must link to a brief for the selected event");
-  assert.ok(src.includes('["meeting","Meeting prep"]'), "Meeting preparation must be available as a queue filter");
-  assert.ok(src.includes('meeting:items.filter(x=>x.kind==="meeting").length'), "Meeting preparation must be included in queue counts");
-});
-
-test("Needs You has a dedicated sales focus and prioritizes severely overdue outreach", () => {
-  const src = readFileSync("app/crm/needs-you/page.tsx", "utf8");
-  assert.ok(src.includes('const salesKinds=new Set(["outreach","followup","deal","preparation","meeting"])'), "Sales focus should group prospect follow-ups, deals, briefs, and meetings");
-  assert.ok(src.includes('filter==="sales"?items.filter(x=>salesKinds.has(x.kind))'), "Sales focus should filter the queue to sales actions");
-  assert.ok(src.includes('["sales","Sales focus"]'), "Sales focus should be visible as a queue filter");
-  assert.ok(src.includes('priority:due<=now-86400000?1:2'), "Outreach overdue by at least a day should rise above routine actions");
-  assert.ok(src.includes('SALES ACTIONS'), "Queue summary should show the number of sales actions");
+test("Needs You uses the shared server queue with sales focus and meeting prep", () => {
+  const page = readFileSync("app/crm/needs-you/page.tsx", "utf8");
+  assert.ok(page.includes("<MyDayQueue showFilters"), "Needs You must render the shared queue, not a parallel one");
+  const queue = readFileSync("app/my-day-queue.tsx", "utf8");
+  assert.ok(queue.includes('["sales", "Sales focus"'), "Sales focus filter is preserved");
+  const lib = readFileSync("lib/my-day.ts", "utf8");
+  assert.ok(lib.includes('"/crm/preparation?event=" + encodeURIComponent(m.id) + "&type=meeting_brief"'), "Unprepared meetings link to a prefilled brief");
+  assert.ok(lib.includes("active.has(f.contact.id) || seenContacts.has(f.contact.id)"), "No duplicate follow-ups for contacts in an active sequence");
+  for (const k of ["client-risk:", "renewal:", "support:", "approval:", "agent-run:"]) assert.ok(lib.includes('"' + k + '"'), "Queue still covers " + k);
 });
 
 test("Signed-deal handoff seeds an idempotent client onboarding checklist", () => {

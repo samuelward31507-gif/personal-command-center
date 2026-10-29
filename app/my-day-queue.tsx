@@ -16,13 +16,21 @@ function localKey(d: Date) {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 
-export default function MyDayQueue() {
+const ROW: React.CSSProperties = { background: "#151515", border: "1px solid #262626", borderRadius: 12, padding: "14px 16px" };
+const PILL: React.CSSProperties = { flex: "0 0 auto", minWidth: 74, textAlign: "center", fontSize: 11, fontWeight: 700, letterSpacing: .4, border: "1px solid", borderRadius: 999, padding: "4px 10px", marginTop: 1 };
+const BTN: React.CSSProperties = { display: "inline-flex", alignItems: "center", border: "1px solid #303030", background: "#1b1b1b", color: "#ddd", borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", lineHeight: 1.2 };
+const BTN_PRIMARY: React.CSSProperties = { ...BTN, background: "#e5e5e5", color: "#111", borderColor: "#e5e5e5" };
+const SALES: QueueGroup[] = ["revenue", "prospects", "meetings", "deals"];
+const chip = (on: boolean): React.CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid " + (on ? "#d6a98c" : "#34343b"), background: on ? "#d6a98c" : "#17171b", color: on ? "#171311" : "#d4d4d8", borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" });
+
+export default function MyDayQueue({ showFilters = false, title = "Today’s queue" }: { showFilters?: boolean; title?: string }) {
   const [items, setItems] = useState<QueueItem[]>([]);
   const [groups, setGroups] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [focus, setFocus] = useState<"all" | "sales" | "delivery" | "admin">("all");
   const [notice, setNotice] = useState<{ ok: boolean; text: string; deal?: SuggestedDealData | null } | null>(null);
 
   const load = useCallback(async () => {
@@ -71,39 +79,46 @@ export default function MyDayQueue() {
     } finally { setBusy(null); }
   }
 
-  const byGroup = items.reduce<Record<string, QueueItem[]>>((acc, i) => { (acc[i.group] ||= []).push(i); return acc; }, {});
+  const visible = items.filter(i => focus === "all" || (focus === "sales" ? SALES.includes(i.group) : i.group === focus));
+  const byGroup = visible.reduce<Record<string, QueueItem[]>>((acc, i) => { (acc[i.group] ||= []).push(i); return acc; }, {});
   const order: QueueGroup[] = ["revenue", "prospects", "meetings", "deals", "delivery", "admin"];
   const overdue = items.filter(i => i.status === "overdue" || i.status === "blocked").length;
 
   return <section className="surface-panel schedule-panel" aria-labelledby="queue-heading">
     <div className="panel-heading">
       <div>
-        <h2 id="queue-heading">Today’s queue</h2>
+        <h2 id="queue-heading">{title}</h2>
         <p>{loading ? "Building your queue…" : items.length ? `${items.length} item${items.length === 1 ? "" : "s"}${overdue ? ` · ${overdue} overdue or blocked` : ""}. Revenue first. Cinder prepares; you make the calls.` : "Nothing due. Prospect, or prep tomorrow."}</p>
       </div>
       <button className="text-action" onClick={() => void load()} disabled={loading}>{loading ? "Refreshing…" : "Refresh"}</button>
     </div>
+    {showFilters && items.length > 0 && <div role="tablist" aria-label="Queue focus" style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "6px 0 2px" }}>
+      {([["all", "All", items.length], ["sales", "Sales focus", items.filter(i => SALES.includes(i.group)).length], ["delivery", "Delivery", items.filter(i => i.group === "delivery").length], ["admin", "Money & admin", items.filter(i => i.group === "admin").length]] as const).map(([key, label, count]) =>
+        <button key={key} type="button" role="tab" aria-selected={focus === key} style={chip(focus === key)} onClick={() => setFocus(key)}>{label} <span style={{ opacity: .6 }}>{count}</span></button>)}
+    </div>}
     {error && <p className="local-note" role="alert">{error}</p>}
     {notice && <p className="local-note" role="status" style={{ color: notice.ok ? "#86efac" : "#fca5a5" }}>{notice.text}</p>}
     {notice?.deal && <SuggestedDeal key={notice.text} deal={notice.deal} />}
     {order.filter(g => byGroup[g]?.length).map(g => <div key={g} style={{ marginTop: 14 }}>
       <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase", color: "#9a9aa4", margin: "0 0 6px" }}>{groups[g] || g} · {byGroup[g].length}</div>
-      <div className="schedule-list">
-        {byGroup[g].map(item => <div key={item.id} className="schedule-row" style={{ alignItems: "flex-start", flexWrap: "wrap" }}>
-          <span className="schedule-time" style={{ color: STATUS[item.status].color, fontWeight: 700 }}>{STATUS[item.status].label}</span>
-          <div className="schedule-description" style={{ minWidth: 0, flex: "1 1 260px" }}>
-            <strong>{item.title}</strong>
-            <small>{item.why}</small>
-            {item.lastActivity && <small style={{ color: "#7c7c86" }}>Last touch: {item.lastActivity}</small>}
+      <div style={{ display: "grid", gap: 8 }}>
+        {byGroup[g].map(item => <div key={item.id} style={ROW}>
+          <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
+            <span style={{ ...PILL, color: STATUS[item.status].color, borderColor: STATUS[item.status].color + "55" }}>{STATUS[item.status].label}</span>
+            <div style={{ flex: "1 1 320px", minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 650, color: "#f3f3f3", lineHeight: 1.35 }}>{item.title}</div>
+              <div style={{ fontSize: 12.5, color: "#a1a1a1", lineHeight: 1.55, marginTop: 3 }}>{item.why}</div>
+              {item.lastActivity && <div style={{ fontSize: 12, color: "#7c7c86", marginTop: 2 }}>Last touch: {item.lastActivity}</div>}
+            </div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginLeft: "auto" }}>
+              {item.callable && <button type="button" style={BTN_PRIMARY} onClick={() => call(item)}>Call</button>}
+              {item.contact && (item.group === "revenue" || item.group === "prospects" || item.group === "deals") && <button type="button" style={BTN} onClick={() => setOpen(open === item.id ? null : item.id)} aria-expanded={open === item.id}>Log outcome</button>}
+              <a style={{ ...BTN, textDecoration: "none" }} href={item.href}>Open</a>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            {item.callable && <button className="text-action" onClick={() => call(item)}>Call</button>}
-            {item.contact && (item.group === "revenue" || item.group === "prospects" || item.group === "deals") && <button className="text-action" onClick={() => setOpen(open === item.id ? null : item.id)} aria-expanded={open === item.id}>Log outcome</button>}
-            <a className="text-action" href={item.href}>Open →</a>
-          </div>
-          {open === item.id && item.contact && <div style={{ flexBasis: "100%", display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(120px,1fr))", gap: 6, marginTop: 8 }}>
-            {CALL_OUTCOMES.map(o => <button key={o} type="button" className="quiet-button" disabled={busy !== null} onClick={() => void logOutcome(item, o)}
-              style={{ fontSize: 12, padding: "7px 9px", color: o === "do_not_contact" ? "#fca5a5" : o === "meeting_booked" || o === "interested" ? "#86efac" : undefined }}>
+          {open === item.id && item.contact && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 6, marginTop: 12, paddingTop: 12, borderTop: "1px solid #262626" }}>
+            {CALL_OUTCOMES.map(o => <button key={o} type="button" disabled={busy !== null} onClick={() => void logOutcome(item, o)}
+              style={{ ...BTN, justifyContent: "center", color: o === "do_not_contact" ? "#fca5a5" : o === "meeting_booked" || o === "interested" ? "#86efac" : "#ddd" }}>
               {busy === item.id + o ? "Saving…" : OUTCOME_LABELS[o]}
             </button>)}
           </div>}

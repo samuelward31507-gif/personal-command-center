@@ -8,7 +8,7 @@ type Contact = {
   id: string; name: string; company?: string; role?: string; email?: string; phone?: string;
   website?: string; location?: string; notes?: string; source?: string; instagram?: string; facebook?: string;
 };
-type Audit = { id: string; title: string; companyName: string; content: string; sourceUrls: string[]; confidence: string; officialWebsite?: string | null; websiteStatus?: string; candidates?: string[]; fitDecision?: string | null; nextCrmAction?: string; futureUpsells?: string[]; incomplete?: boolean };
+type Audit = { reused?: boolean; createdAt?: string; id: string; title: string; companyName: string; content: string; sourceUrls: string[]; confidence: string; officialWebsite?: string | null; websiteStatus?: string; candidates?: string[]; fitDecision?: string | null; nextCrmAction?: string; futureUpsells?: string[]; incomplete?: boolean };
 
 export default function BusinessAuditPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -61,14 +61,14 @@ export default function BusinessAuditPage() {
     setError("");
   }
 
-  async function runAudit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function runAudit(event: React.FormEvent<HTMLFormElement> | null, force = false) {
+    event?.preventDefault();
     setBusy(true); setError(""); setAudit(null);
     try {
       const response = await fetch("/api/business-audit", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ companyName, website, location, context, contactId: selectedContactId || null }),
+        body: JSON.stringify({ companyName, website, location, context, contactId: selectedContactId || null, force }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "The audit could not be completed.");
@@ -122,6 +122,10 @@ export default function BusinessAuditPage() {
     </form>
 
     {busy && <section aria-live="polite" style={{ marginTop: 18, ...panelStyle, padding: 20, color: "#a1a1aa" }}>Searching public sources and assessing opportunities across marketing, lead handling, sales, follow-up, customer experience, retention, operations, and competitive position. This may take up to a minute.</section>}
+    {audit?.reused && <p role="status" style={{ marginTop: 18, padding: "10px 14px", border: "1px solid #34343b", borderRadius: 10, background: "#141417", color: "#d4d4d8", fontSize: 13 }}>
+      This business was audited in the last 10 minutes, so this is the saved report (no new research was run or charged).{" "}
+      <button type="button" onClick={() => void runAudit(null, true)} disabled={busy} style={{ border: 0, background: "transparent", color: "#d6a98c", fontWeight: 700, cursor: "pointer", padding: 0 }}>Run a fresh audit</button>
+    </p>}
     {audit && <AuditReport audit={audit} />}
   </main>;
 }
