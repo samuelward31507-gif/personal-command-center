@@ -58,7 +58,7 @@ html body main button.dw-bad { color: #f2a5a5 !important; border-color: #3a2424 
 .dw-pill-sent { color: #cbdcf5; border-color: #2a3a52; }
 .dw-pill-accepted { color: #9ee6b5; border-color: #234231; }
 .dw-pill-declined { color: #f2a5a5; border-color: #3a2424; }
-.dw-proposal { background: transparent !important; padding: 4px 2px; max-height: 520px; overflow-y: auto; }
+.dw-proposal.ask-root { background: transparent !important; padding: 4px 2px; max-height: 520px; overflow-y: auto; }
 .dw-proposal .ask-md { font-size: 14.5px; }
 .dw-side .dw-box { padding: 16px; }
 .dw-label { font-size: 11.5px; color: #737373; text-transform: uppercase; letter-spacing: .04em; margin: 8px 0 4px; }
@@ -68,3 +68,5 @@ html body main button.dw-bad { color: #f2a5a5 !important; border-color: #3a2424 
 .dw-win { border-color: #23402f; background: #111a14; }
 .dw-win a { color: #9ee6b5 !important; }
 @media (max-width: 960px) { .dw-grid { grid-template-columns: 1fr; } .dw-fields { grid-template-columns: 1fr; } .dw-next { grid-template-columns: 1fr; } .dw-page { padding: 18px 14px 40px; } }
+
+html body main button.dw-stage.is-on { opacity: 1 !important; }

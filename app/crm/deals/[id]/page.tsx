@@ -7,6 +7,7 @@ import { DISCOVERY_FIELDS, discoveryCompleteness, type Discovery, type ProposalS
 import { DEAL_STAGES, STAGE_LABELS, OFFERS } from "@/lib/offers";
 import { OUTCOME_LABELS, type CallOutcome } from "@/lib/call-outcomes";
 import { Markdown } from "../../../ask-answer";
+import "../../../home-search.css";
 import "./deal.css";
 
 type Workspace = {
