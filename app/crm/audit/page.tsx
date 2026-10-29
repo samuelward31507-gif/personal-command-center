@@ -29,7 +29,15 @@ export default function BusinessAuditPage() {
         const response = await fetch("/api/contacts", { cache: "no-store" });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || "Could not load CRM contacts.");
-        if (!cancelled) setContacts(Array.isArray(payload.contacts) ? payload.contacts : []);
+        const list: Contact[] = Array.isArray(payload.contacts) ? payload.contacts : [];
+        if (!cancelled) setContacts(list);
+        // Deep link from the Home command bar: /crm/audit?contact=<id> pre-fills that contact.
+        const wanted = new URLSearchParams(window.location.search).get("contact");
+        const hit = wanted ? list.find(c => c.id === wanted) : null;
+        if (!cancelled && hit) {
+          setSelectedContactId(hit.id); setCompanyName((hit.company || hit.name || "").trim()); setWebsite(hit.website || ""); setLocation(hit.location || "");
+          setContext([hit.name ? `CRM contact: ${hit.name}` : "", hit.role ? `Role: ${hit.role}` : "", hit.phone ? `Phone: ${hit.phone}` : "", hit.notes ? `Existing CRM notes: ${hit.notes}` : ""].filter(Boolean).join("\n"));
+        }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load CRM contacts.");
       } finally {
