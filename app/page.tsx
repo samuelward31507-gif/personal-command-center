@@ -145,7 +145,7 @@ function HomeContent() {
     <section className="surface-panel notes-panel"><div className="panel-heading"><div><h2>Daily notes</h2><p>Capture outcomes, reminders, and tomorrow's first move.</p></div></div><textarea value={dailyNotes} onChange={e=>setDailyNotes(e.target.value)} placeholder="What matters today? Who needs a follow-up? What did you learn?" rows={4}/><div className="daily-plan-save"><p className="local-note">Your notes and checked-off blocks are saved by date in your private workspace.</p><div className="daily-plan-save-row"><span role="status">{planMessage}</span><button className="text-action" onClick={()=>void saveDailyPlan()} disabled={planSaving}>{planSaving?"Saving…":"Save daily plan"}</button></div></div></section>
    </div> : activeView==="home" ? <div className="cal-home">
     <div className="cal-home-center">
-     <div className="cal-home-title"><div className="cal-home-eyebrow">CINDER WORKSPACE</div><h1>Find anything<span>.</span></h1><p>Contacts, deals, audits and pages — or jump straight to an action.</p></div>
+     <div className="cal-home-title"><div className="cal-home-eyebrow">CINDER WORKSPACE</div><h1>Ask anything<span>.</span></h1><p>Your contacts, pipeline, calendar and money, plus the web. Ask a question or tell Cinder what to do.</p></div>
      <HomeSearch />
     </div>
     <footer className="cal-home-footer"><span><i/> PRIVATE FOUNDER WORKSPACE</span><span>Search first. Move with intent.</span></footer>
