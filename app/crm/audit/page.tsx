@@ -91,7 +91,7 @@ export default function BusinessAuditPage() {
 
   return <main id="cinder-business-audit" style={{ maxWidth: 1080, margin: "0 auto", padding: "30px 22px 60px", color: "#f4f4f5", background: "#0b0b0d", minHeight: "calc(100vh - 58px)" }}>
     <header style={{ marginBottom: 30 }}>
-      <Link href="/crm/preparation" style={{ color: "#a1a1aa", fontSize: 13 }}>← Preparation</Link>
+      <Link href="/crm/preparation" style={{ color: "#8a8a8a", fontSize: 13, display: "inline-block", marginBottom: 18, textDecoration: "none" }}>← Preparation</Link>
       <p style={{ marginTop: 26, fontSize: 10, letterSpacing: 2, color: "#d6a98c" }}>Prospect research</p>
       <h1 style={{ fontSize: "clamp(32px,5vw,46px)", letterSpacing: "-1.6px", margin: "8px 0", color: "#f4f4f5" }}>Business audit</h1>
       <p style={{ maxWidth: 720, ...mutedStyle }}>Investigate the whole business before deciding whether we should sell anything. The audit ranks evidence-backed opportunities, calls out unknowns, and can recommend no sale.</p>
