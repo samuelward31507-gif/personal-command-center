@@ -182,3 +182,16 @@
 .ask-root .ask-slow { margin-top: 8px; font-size: 12.5px; color: #6f6f6f !important; }
 .ask-root .ask-composer { background: linear-gradient(180deg, #161616, #121212) !important; }
 .ask-hello-mark { filter: none; }
+
+/* ---------- Stealth: no copper on the Ask page ---------- */
+.ask-root { --ask-accent: #cfcfcf; }
+.ask-hello-mark { fill: #d6d6d6; filter: none !important; }
+.ask-avatar svg { fill: #cfcfcf; }
+.ask-action-icon { background: #1c1c1c !important; color: #d6d6d6 !important; }
+.ask-root .ask-pill:hover svg { color: #ececec; }
+/* Web search: an icon-only toggle. Off = dim, on = bright. Label is for screen readers. */
+.ask-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ask-root .ask-tool:has(.ask-sr) { width: 32px; padding: 0 !important; justify-content: center; position: relative; }
+.ask-root .ask-tool.is-on { color: #f2f2f2 !important; background: #222 !important; border-color: #2e2e2e !important; }
+.ask-root .ask-tool:not(.is-on):has(.ask-sr) { color: #6b6b6b !important; }
+.ask-root .ask-composer:focus-within { border-color: #3a3a3a !important; box-shadow: 0 0 0 1px #2a2a2a, 0 20px 50px -20px rgba(0,0,0,.8) !important; }
