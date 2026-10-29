@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { DISCOVERY_FIELDS, discoveryCompleteness, type Discovery, type ProposalStatus } from "@/lib/deal-workspace";
+import { DISCOVERY_FIELDS, discoveryCompleteness, EMAIL_PURPOSES, mailtoLink, type Discovery, type ProposalStatus, type ContractStatus, type EmailPurpose } from "@/lib/deal-workspace";
 import { DEAL_STAGES, STAGE_LABELS, OFFERS } from "@/lib/offers";
 import { OUTCOME_LABELS, type CallOutcome } from "@/lib/call-outcomes";
 import { Markdown } from "../../../ask-answer";
@@ -12,13 +12,15 @@ import "./deal.css";
 
 type Workspace = {
   deal: { id: string; title: string; stage: string; serviceType: string; setupFee: number; monthlyFee: number; expectedCloseDate: string | null; lostReason: string; notes: string;
-    discovery: Discovery; nextStep: string; nextStepAt: string | null; proposalStatus: ProposalStatus; proposalSentAt: string | null; proposalDecidedAt: string | null; agreementStatus: string };
+    discovery: Discovery; nextStep: string; nextStepAt: string | null; proposalStatus: ProposalStatus; proposalSentAt: string | null; proposalDecidedAt: string | null; agreementStatus: string;
+    contractStatus: ContractStatus; contractSentAt: string | null; signedAt: string | null };
   contact: { id: string; name: string; company: string; phone: string; email: string; website: string; location: string } | null;
   activity: { channel: string; outcome: string; notes: string; at: string }[];
   tasks: { id: string; title: string; status: string; priority: string; due: string | null }[];
   events: { id: string; title: string; startsAt: string; type: string; status: string }[];
   audit: { id: string; title: string; date: string; verdict: string; opportunities: string; upsells: string } | null;
   proposals: { id: string; title: string; content: string; status: string; createdAt: string; updatedAt: string }[];
+  agreements: { id: string; title: string; content: string; status: string; createdAt: string; updatedAt: string }[];
   project: { id: string; name: string; status: string; targetDate: string | null } | null;
 };
 
@@ -32,6 +34,16 @@ function upsellIdeas(text: string): string[] {
     .map(l => l.split(/[:(—]/)[0].trim()).filter(l => l.length > 3 && l.length < 70).slice(0, 4);
 }
 const PROPOSAL_COPY: Record<ProposalStatus, string> = { none: "No proposal yet", draft: "Draft ready", sent: "Sent — waiting on them", accepted: "Accepted", declined: "Declined" };
+const CONTRACT_COPY: Record<ContractStatus, string> = { none: "Not drafted", draft: "Draft ready", sent: "Sent — waiting on signature", signed: "Signed" };
+const twoBusinessDays = () => { const d = new Date(); let added = 0; while (added < 2) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) added++; } return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+function defaultPurpose(stage: string, proposal: ProposalStatus, contract: ContractStatus): EmailPurpose {
+  if (stage === "won") return "referral_ask";
+  if (contract === "sent" || contract === "draft" || proposal === "accepted") return "agreement_follow_up";
+  if (proposal === "sent") return "proposal_follow_up";
+  if (stage === "nurture") return "check_in";
+  if (stage === "meeting_booked") return "no_show";
+  return "meeting_recap";
+}
 
 export default function DealWorkspacePage() {
   const { id } = useParams<{ id: string }>();
@@ -43,7 +55,12 @@ export default function DealWorkspacePage() {
   const [flash, setFlash] = useState<{ ok: boolean; text: string } | null>(null);
   const [draftNotes, setDraftNotes] = useState("");
   const [editing, setEditing] = useState<{ id: string; content: string } | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [agEdit, setAgEdit] = useState<{ id: string; content: string } | null>(null);
+  const [purpose, setPurpose] = useState<EmailPurpose | "">("");
+  const [mailNotes, setMailNotes] = useState("");
+  const [mail, setMail] = useState<{ subject: string; body: string; to: string } | null>(null);
+  const copy = (key: string, text: string) => { void navigator.clipboard?.writeText(text).then(() => { setCopied(key); setTimeout(() => setCopied(null), 1400); }); };
 
   const load = useCallback(async () => {
     try {
@@ -91,28 +108,71 @@ export default function DealWorkspacePage() {
     finally { setSaving(null); }
   }
 
+  async function draftAgreement() {
+    setSaving("agreement"); setFlash(null);
+    try {
+      const r = await fetch("/api/agreements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Could not draft the agreement.");
+      setFlash({ ok: true, text: "Agreement drafted. Fill in every [bracketed] blank and read it top to bottom before you send it." });
+      await load();
+    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not draft the agreement." }); }
+    finally { setSaving(null); }
+  }
+
+  async function saveAgreement() {
+    if (!agEdit) return;
+    setSaving("agedit");
+    try {
+      const r = await fetch("/api/agreements", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(agEdit) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Could not save.");
+      setAgEdit(null); await load();
+    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not save." }); }
+    finally { setSaving(null); }
+  }
+
+  function setContract(status: ContractStatus) {
+    if (status === "sent") {
+      const at = twoBusinessDays();
+      void patch({ contractStatus: status, nextStep: "Follow up on the agreement", nextStepAt: at }, "contract", `Agreement marked sent. Follow-up set for ${dateLabel(at)}.`);
+    } else if (status === "signed") {
+      if (!confirm("Mark the agreement signed? The deal moves to Won and onboarding starts. Payments stay 'expected' until you record them on Money.")) return;
+      void patch({ contractStatus: status, nextStep: "Kickoff call", nextStepAt: inDays(1) }, "contract", "Signed. Deal is Won.");
+    }
+  }
+
+  async function draftEmail(p: EmailPurpose) {
+    setSaving("mail"); setFlash(null); setMail(null);
+    try {
+      const r = await fetch("/api/follow-up-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id, purpose: p, notes: mailNotes }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Could not draft the email.");
+      setMail({ subject: d.subject ?? "", body: d.body ?? "", to: d.to ?? "" });
+    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not draft the email." }); }
+    finally { setSaving(null); }
+  }
+
   function setProposal(status: ProposalStatus) {
     if (status === "declined") {
       const reason = prompt("Why did they decline? (price, timing, went with someone else, not a fit…)");
       if (!reason) return;
       void patch({ proposalStatus: status, lostReason: reason }, "status", "Marked declined and moved to Lost.");
     } else if (status === "accepted") {
-      if (!confirm("Mark accepted? The deal moves to Won and onboarding starts. Payments stay 'expected' until you record them.")) return;
-      void patch({ proposalStatus: status }, "status", "Accepted. Deal is Won.");
+      if (!confirm("Mark accepted? Next you send the agreement. The deal becomes Won when the agreement is signed.")) return;
+      void patch({ proposalStatus: status, nextStep: "Send the agreement", nextStepAt: inDays(0) }, "status", "Accepted. Next: draft and send the agreement below.");
     } else if (status === "sent") {
-      const d = new Date(); let added = 0;
-      while (added < 2) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) added++; }
-      const at = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const at = twoBusinessDays();
       void patch({ proposalStatus: status, nextStep: "Follow up on the proposal", nextStepAt: at }, "status", `Marked sent. Deal moved to Proposal, follow-up set for ${dateLabel(at)}.`);
     } else void patch({ proposalStatus: status }, "status", "Saved.");
   }
 
-  function printProposal(content: string) {
+  function printDoc(content: string, heading: string) {
     const w = window.open("", "_blank");
     if (!w) return;
     const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const html = esc(content).replace(/^## (.*)$/gm, "<h2>$1</h2>").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/^[-*] (.*)$/gm, "<li>$1</li>").replace(/\n{2,}/g, "</p><p>");
-    w.document.write(`<!doctype html><title>${esc(ws?.deal.title ?? "Proposal")}</title><style>body{font:15px/1.65 -apple-system,Segoe UI,Inter,sans-serif;color:#1a1a1a;max-width:720px;margin:48px auto;padding:0 24px}h1{font-size:24px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px}li{margin:4px 0 4px 18px}.m{color:#666;font-size:13px;margin-bottom:28px}</style><h1>Proposal for ${esc(ws?.contact?.company || ws?.deal.title || "")}</h1><div class="m">Cinder Revenue Company · ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div><p>${html}</p><script>setTimeout(()=>print(),300)</script>`);
+    const html = esc(content).replace(/^# (.*)$/gm, "").replace(/^### (.*)$/gm, "<h3>$1</h3>").replace(/^## (.*)$/gm, "<h2>$1</h2>").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/^[-*] (.*)$/gm, "<li>$1</li>").replace(/\n{2,}/g, "</p><p>");
+    w.document.write(`<!doctype html><title>${esc(heading)}</title><style>body{font:15px/1.65 -apple-system,Segoe UI,Inter,sans-serif;color:#1a1a1a;max-width:720px;margin:48px auto;padding:0 24px}h1{font-size:24px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px}h3{font-size:15px;margin:20px 0 6px}li{margin:4px 0 4px 18px}.m{color:#666;font-size:13px;margin-bottom:28px}</style><h1>${esc(heading)}</h1><div class="m">Cinder Revenue Company · ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div><p>${html}</p><script>setTimeout(()=>print(),300)</script>`);
     w.document.close();
   }
 
@@ -137,6 +197,9 @@ export default function DealWorkspacePage() {
   const pct = discoveryCompleteness(disc);
   const proposal = ws.proposals[0];
   const closed = deal.stage === "won" || deal.stage === "lost";
+  const agreement = ws.agreements[0];
+  const showAgreement = deal.proposalStatus === "accepted" || deal.contractStatus !== "none" || !!agreement;
+  const blanks = agreement ? (agreement.content.match(/\[[^\]\n]{2,80}\]/g) ?? []).length : 0;
 
   return <main className="dw-page">
     <Link className="dw-back" href="/crm/pipeline">← Pipeline</Link>
@@ -186,7 +249,7 @@ export default function DealWorkspacePage() {
             <input type="date" value={next.at} onChange={e => setNext({ ...next, at: e.target.value })} />
             <button data-variant="primary" className="dw-btn" disabled={saving === "next"} onClick={() => void patch({ nextStep: next.step, nextStepAt: next.at || null }, "next", "Next step saved.")}>{saving === "next" ? "Saving…" : "Save"}</button>
           </div>
-          {!deal.nextStep && !closed && <p className="dw-hint">Every open deal needs a next step with a date. It shows up in Needs you when it&apos;s due.</p>}
+          {!deal.nextStep && !closed && <p className="dw-hint">Every open deal needs a next step with a date. It shows up in Today when it&apos;s due.</p>}
         </section>
 
         <section className="dw-box">
@@ -216,18 +279,63 @@ export default function DealWorkspacePage() {
             <div className="dw-proposal ask-root"><Markdown text={proposal.content} /></div>
             <div className="dw-row">
               <button data-variant="primary" className="dw-btn" onClick={() => setEditing({ id: proposal.id, content: proposal.content })}>Edit</button>
-              <button data-variant="primary" className="dw-btn" onClick={() => { void navigator.clipboard?.writeText(proposal.content).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); }); }}>{copied ? "Copied" : "Copy text"}</button>
-              <button data-variant="primary" className="dw-btn" onClick={() => printProposal(proposal.content)}>Print / PDF</button>
+              <button data-variant="primary" className="dw-btn" onClick={() => copy("proposal", proposal.content)}>{copied === "proposal" ? "Copied" : "Copy text"}</button>
+              <button data-variant="primary" className="dw-btn" onClick={() => printDoc(proposal.content, `Proposal for ${contact?.company || deal.title}`)}>Print / PDF</button>
               <button data-variant="primary" className="dw-btn" disabled={saving === "proposal"} onClick={() => void draftProposal()}>{saving === "proposal" ? "Redrafting…" : "Redraft"}</button>
             </div>
             {!closed && <div className="dw-row dw-decide">
               <span className="dw-muted">After you send it yourself:</span>
-              {deal.proposalStatus !== "sent" && <button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => setProposal("sent")}>Mark sent</button>}
-              <button data-variant="primary" className="dw-btn dw-good" disabled={!!saving} onClick={() => setProposal("accepted")}>Accepted</button>
+              {deal.proposalStatus !== "sent" && deal.proposalStatus !== "accepted" && <button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => setProposal("sent")}>Mark sent</button>}
+              {deal.proposalStatus !== "accepted" && <button data-variant="primary" className="dw-btn dw-good" disabled={!!saving} onClick={() => setProposal("accepted")}>Accepted</button>}
               <button data-variant="primary" className="dw-btn dw-bad" disabled={!!saving} onClick={() => setProposal("declined")}>Declined</button>
             </div>}
           </>}
         </section>
+
+        {showAgreement && <section className="dw-box" id="agreement">
+          <div className="dw-boxhead"><h2>Agreement</h2><span className={"dw-pill dw-pill-c-" + deal.contractStatus}>{CONTRACT_COPY[deal.contractStatus]}{deal.contractSentAt && deal.contractStatus === "sent" ? ` · ${dateLabel(deal.contractSentAt)}` : ""}{deal.signedAt && deal.contractStatus === "signed" ? ` · ${dateLabel(deal.signedAt)}` : ""}</span></div>
+          {!agreement ? <>
+            <p className="dw-hint">{proposal ? "Cinder drafts a plain-English service agreement from the accepted proposal and this deal's price. Anything it doesn't know stays as a [bracketed] blank for you." : "Draft the proposal first. The agreement is written from it."}</p>
+            <button data-variant="primary" className="dw-btn dw-primary" disabled={!proposal || saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Drafting… (about 30s)" : "Draft agreement"}</button>
+          </> : agEdit?.id === agreement.id ? <>
+            <textarea className="dw-editor" rows={22} value={agEdit.content} onChange={e => setAgEdit({ ...agEdit, content: e.target.value })} />
+            <div className="dw-row"><button data-variant="primary" className="dw-btn" onClick={() => setAgEdit(null)}>Cancel</button><button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "agedit"} onClick={() => void saveAgreement()}>{saving === "agedit" ? "Saving…" : "Save edits"}</button></div>
+          </> : <>
+            <p className="dw-warn">A draft for your review, not legal advice. Fill in every [bracketed] blank{blanks ? ` (${blanks} left)` : ""} and have it checked before you rely on it.</p>
+            <div className="dw-proposal ask-root"><Markdown text={agreement.content} /></div>
+            <div className="dw-row">
+              <button data-variant="primary" className="dw-btn" onClick={() => setAgEdit({ id: agreement.id, content: agreement.content })}>Edit</button>
+              <button data-variant="primary" className="dw-btn" onClick={() => copy("agreement", agreement.content)}>{copied === "agreement" ? "Copied" : "Copy text"}</button>
+              <button data-variant="primary" className="dw-btn" onClick={() => printDoc(agreement.content, `Service Agreement — ${contact?.company || deal.title}`)}>Print / PDF</button>
+              {deal.contractStatus !== "signed" && <button data-variant="primary" className="dw-btn" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Redrafting…" : "Redraft"}</button>}
+            </div>
+            {deal.contractStatus !== "signed" && !closed && <div className="dw-row dw-decide">
+              <span className="dw-muted">After you send it yourself:</span>
+              {deal.contractStatus !== "sent" && <button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => setContract("sent")}>Mark sent</button>}
+              <button data-variant="primary" className="dw-btn dw-good" disabled={!!saving} onClick={() => setContract("signed")}>Signed</button>
+            </div>}
+          </>}
+        </section>}
+
+        {!closed || deal.stage === "won" ? <section className="dw-box">
+          <div className="dw-boxhead"><h2>Follow-up email</h2><span className="dw-muted dw-small">Email only · you send it</span></div>
+          <div className="dw-mailbar">
+            <select value={purpose || defaultPurpose(deal.stage, deal.proposalStatus, deal.contractStatus)} onChange={e => setPurpose(e.target.value as EmailPurpose)}>
+              {(Object.keys(EMAIL_PURPOSES) as EmailPurpose[]).map(k => <option key={k} value={k}>{EMAIL_PURPOSES[k].label}</option>)}
+            </select>
+            <input value={mailNotes} onChange={e => setMailNotes(e.target.value)} placeholder="Anything to mention? (optional)" />
+            <button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "mail"} onClick={() => void draftEmail(purpose || defaultPurpose(deal.stage, deal.proposalStatus, deal.contractStatus))}>{saving === "mail" ? "Drafting…" : mail ? "Redraft" : "Draft email"}</button>
+          </div>
+          {mail && <div className="dw-mail">
+            <input className="dw-mail-subject" value={mail.subject} onChange={e => setMail({ ...mail, subject: e.target.value })} aria-label="Subject" />
+            <textarea className="dw-editor" rows={9} value={mail.body} onChange={e => setMail({ ...mail, body: e.target.value })} aria-label="Email body" />
+            <div className="dw-row">
+              <button data-variant="primary" className="dw-btn" onClick={() => copy("mail", `Subject: ${mail.subject}\n\n${mail.body}`)}>{copied === "mail" ? "Copied" : "Copy"}</button>
+              <a className="dw-btn dw-primary dw-linkbtn" href={mailtoLink(mail.to || contact?.email || "", mail.subject, mail.body)}>Open in my email</a>
+              {!(mail.to || contact?.email) && <span className="dw-muted dw-small">No email on this contact. Add one on the contact record.</span>}
+            </div>
+          </div>}
+        </section> : null}
       </div>
 
       <aside className="dw-col dw-side">

@@ -45,18 +45,20 @@ async function autoHandoff(sql: ReturnType<typeof db>, ownerId: string, dealId: 
     return { ok: false as const, error: error instanceof HandoffNotReady ? error.message : "Delivery setup failed; use Start delivery to retry safely." };
   }
 }
-export async function GET() {
+export async function GET(request?: Request) {
   try {
     const user = await currentUser();
     if (!user) return jsonError("Unauthorized", 401);
     const sql = db();
+    const contactFilter = request ? new URL(request.url).searchParams.get("contactId") : null;
+    if (contactFilter !== null && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(contactFilter)) return jsonError("Invalid contact id.", 400);
     const rows = await sql`
       SELECT d.id, d.contact_id, d.title, d.service_type, d.stage, d.setup_fee,
         d.monthly_fee, d.expected_close_date, d.source, d.notes, d.lost_reason, d.agreement_status, d.signed_at, d.effective_at, d.ended_at, d.conversion_completed_at,
         d.created_at, d.updated_at, trim(concat_ws(' ', c.first_name, c.last_name)) AS contact_name, c.company
       FROM public.deals d
       LEFT JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id
-      WHERE d.owner_id = ${user.id}
+      WHERE d.owner_id = ${user.id} AND (${contactFilter}::uuid IS NULL OR d.contact_id = ${contactFilter}::uuid)
       ORDER BY CASE WHEN d.stage IN ('won','lost') THEN 1 ELSE 0 END,
         d.expected_close_date ASC NULLS LAST, d.updated_at DESC
       LIMIT 1000

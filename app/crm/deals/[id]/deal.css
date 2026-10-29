@@ -72,3 +72,15 @@ html body main button.dw-bad { color: #f2a5a5 !important; border-color: #3a2424 
 html body main button.dw-stage.is-on { opacity: 1 !important; }
 .dw-upsell{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #1c1c1c;font-size:13px;color:#d4d4d4}
 .dw-mini-link{font-size:12.5px;color:#bdbdbd!important;text-decoration:none!important}.dw-mini-link:hover{color:#fff!important}
+.dw-pill-c-draft { color: #e7c2a8; border-color: #4a3a2f; }
+.dw-pill-c-sent { color: #cbdcf5; border-color: #2a3a52; }
+.dw-pill-c-signed { color: #9ee6b5; border-color: #234231; }
+.dw-warn { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid #4a3c25; background: #17130c; color: #f0d5a8 !important; font-size: 13px; line-height: 1.5; }
+.dw-mailbar { display: grid; grid-template-columns: 210px 1fr auto; gap: 8px; align-items: center; }
+.dw-mailbar select, .dw-mailbar input, .dw-mail-subject { height: 34px; padding: 0 10px; border-radius: 9px; border: 1px solid #2a2a2a !important; background: #0f0f0f !important; color: #e8e8e8 !important; font: inherit; font-size: 13.5px; outline: none; }
+.dw-mail { display: grid; gap: 8px; margin-top: 12px; }
+.dw-mail-subject { font-weight: 600; }
+.dw-mail .dw-editor { font: 14px/1.6 var(--font-geist-sans), Inter, system-ui, sans-serif !important; }
+html body main a.dw-linkbtn { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 9px; background: #ededed !important; color: #0b0b0b !important; font-size: 13px; font-weight: 600; text-decoration: none !important; }
+html body main a.dw-linkbtn:hover { background: #fff !important; }
+@media (max-width: 960px) { .dw-mailbar { grid-template-columns: 1fr; } }

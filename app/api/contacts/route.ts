@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { blankIfPlaceholder } from "@/lib/contact-import";
 import { auth } from "@/lib/auth/server";
 
 export const runtime = "nodejs";
@@ -54,12 +55,12 @@ export async function GET() {
       name: [row.first_name, row.last_name].filter(Boolean).join(" "),
       company: row.company,
       role: row.role,
-      email: row.email,
-      phone: row.phone,
-      website: row.website,
+      email: blankIfPlaceholder(row.email),
+      phone: blankIfPlaceholder(row.phone),
+      website: blankIfPlaceholder(row.website),
       instagram: row.instagram,
       facebook: row.facebook,
-      location: row.location,
+      location: blankIfPlaceholder(row.location),
       smsConsent: row.sms_consent === true,
       smsConsentAt: row.sms_consent_at ?? null,
       smsConsentSource: row.sms_consent_source ?? "",

@@ -84,8 +84,16 @@ export function parseCsv(input: string): string[][] {
   return rows;
 }
 
+/** Scraper/list placeholders like "NOT FOUND" or "N/A" mean "no value". */
+export function isPlaceholder(v: unknown): boolean {
+  return typeof v === "string" && /^\s*(not\s*found|n\/?a|none|unknown|null|-+)\s*$/i.test(v);
+}
+export function blankIfPlaceholder<T>(v: T): T | "" {
+  return isPlaceholder(v) ? "" : v;
+}
+
 export function cleanText(v: unknown, maxLen: number): string {
-  return typeof v === "string" ? v.trim().slice(0, maxLen) : "";
+  return typeof v === "string" && !isPlaceholder(v) ? v.trim().slice(0, maxLen) : "";
 }
 
 export function normalizeStatus(v: unknown): ContactStatusValue {

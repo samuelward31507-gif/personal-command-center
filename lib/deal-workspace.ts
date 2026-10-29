@@ -39,13 +39,14 @@ export function discoveryCompleteness(d: Discovery): number {
 
 /**
  * What happens to the deal when the proposal status changes. Forward-only for the pipeline:
- * sent → proposal stage (unless already won/lost); accepted → won (handoff runs, payment stays expected);
+ * sent/accepted → proposal stage (unless already won/lost). Accepted is not Won: the deal is Won when the
+ * agreement is signed (see stageForContract);
  * declined → lost with a reason. Never marks anything paid.
  */
 export function stageForProposal(status: ProposalStatus, currentStage: string): string | null {
   if (currentStage === "won" || currentStage === "lost") return null;
   if (status === "sent") return ["new", "contacted", "meeting_booked", "meeting_held", "nurture"].includes(currentStage) ? "proposal" : null;
-  if (status === "accepted") return "won";
+  if (status === "accepted") return ["new", "contacted", "meeting_booked", "meeting_held", "nurture"].includes(currentStage) ? "proposal" : null;
   if (status === "declined") return "lost";
   return null;
 }
@@ -73,4 +74,99 @@ ${facts}
 ${p.auditSummary ? `Audit summary (public research, may be partly unverified):\n${p.auditSummary}\n` : ""}${p.notes ? `Founder notes: ${p.notes}\n` : ""}
 Write the proposal.`;
   return { system, user };
+}
+
+// ---------- Service agreement ----------
+
+export const CONTRACT_STATUSES = ["none", "draft", "sent", "signed"] as const;
+export type ContractStatus = typeof CONTRACT_STATUSES[number];
+
+/** Signed agreement → Won (handoff runs; payments stay expected). Closed deals never move. */
+export function stageForContract(status: ContractStatus, currentStage: string): string | null {
+  if (currentStage === "won" || currentStage === "lost") return null;
+  return status === "signed" ? "won" : null;
+}
+
+export type AgreementInput = {
+  providerName: string; company: string; contactName: string; location: string;
+  offerLabel: string; setupFee: number; monthlyFee: number; proposal: string; today: string;
+};
+
+/** Prompt for a plain-English service agreement drafted from the accepted proposal. Unknown facts stay as [bracketed] blanks. */
+export function buildAgreementPrompt(p: AgreementInput) {
+  const provider = p.providerName.trim() || "[Your legal business name]";
+  const system = `You draft short, plain-English service agreements for a one-founder agency that installs AI speed-to-lead and follow-up systems for contractors.
+Rules: Base the scope only on the accepted proposal and the fees given. Never invent facts. Anything not given (legal names, addresses, notice periods, caps, third-party costs) stays as a [bracketed blank] the founder fills in. No guarantees of results. Keep it under 900 words. Markdown, with these sections exactly:
+# Service Agreement
+A line naming the parties: ${provider} ("Provider") and the client ("Client"), and the effective date.
+## 1. Services — bullets of exactly what's in scope, from the proposal. One line on what's out of scope (anything not listed).
+## 2. Timeline — live within 21 business days after signing, payment of the setup fee and receiving the access listed in section 5; delays in access move the date.
+## 3. Fees and payment — setup fee due at signing; monthly fee billed monthly starting at go-live; late payment pauses work after [X] days. Use the exact amounts given.
+## 4. Term and cancellation — month-to-month after go-live; either side can cancel with [notice period] written notice; setup fee is non-refundable once work begins.
+## 5. Client responsibilities — access (phone/forms/calendar/CRM logins as relevant), a 30-minute kickoff, timely answers, and responsibility for how they use the system to contact their own leads.
+## 6. Third-party costs — software, phone and messaging usage fees: [included / billed at cost], as the founder chooses.
+## 7. Ownership and data — Client owns its data, accounts and leads; Provider keeps its templates, know-how and tools; Provider uses Client data only to deliver the services and keeps it confidential.
+## 8. No guarantee — Provider doesn't guarantee a number of leads, bookings or revenue.
+## 9. Liability — each side's total liability is capped at [amount, e.g. fees paid in the prior 3 months], except for unpaid fees.
+## 10. General — governing law [State]; this is the whole agreement; changes must be in writing.
+## Signatures — two blocks (Provider / Client) with Name, Title, Signature, Date lines.`;
+  const user = `Provider: ${provider}
+Client: ${p.company}${p.contactName ? ` (signer: ${p.contactName})` : ""}${p.location ? `, ${p.location}` : ""}
+Effective date: ${p.today}
+Offer: ${p.offerLabel} — $${p.setupFee.toLocaleString("en-US")} setup + $${p.monthlyFee.toLocaleString("en-US")}/month
+Accepted proposal:
+${p.proposal.slice(0, 6000)}
+
+Draft the agreement.`;
+  return { system, user };
+}
+
+// ---------- Follow-up emails (drafts only — Cinder never sends) ----------
+
+export const EMAIL_PURPOSES = {
+  meeting_recap: { label: "Recap after the call", brief: "Thank them for the call, recap what you heard in 2–3 short bullets (their words where possible), and confirm the next step." },
+  proposal_follow_up: { label: "Proposal follow-up", brief: "A short, friendly nudge on the proposal you sent. Offer to answer questions or hop on a 10-minute call. One clear ask." },
+  agreement_follow_up: { label: "Agreement nudge", brief: "They accepted the proposal; the agreement is waiting for a signature. Make signing easy and say what happens right after (kickoff)." },
+  no_show: { label: "Missed meeting", brief: "They missed the scheduled call. No guilt. Offer two specific times to reschedule." },
+  check_in: { label: "Check-in (nurture)", brief: "They said not now. A light check-in that gives them something useful in one line and asks if timing has changed." },
+  referral_ask: { label: "Referral ask", brief: "They're a happy client. Ask if they know one other contractor who's losing leads to slow replies. Easy to say no." },
+} as const;
+export type EmailPurpose = keyof typeof EMAIL_PURPOSES;
+export const isEmailPurpose = (v: unknown): v is EmailPurpose => typeof v === "string" && Object.prototype.hasOwnProperty.call(EMAIL_PURPOSES, v);
+
+export type EmailInput = {
+  purpose: EmailPurpose; company: string; firstName: string; senderName: string;
+  stage: string; discovery: Discovery; nextStep: string; proposalSentAt: string | null; notes: string;
+};
+
+export function buildEmailPrompt(p: EmailInput) {
+  const facts = DISCOVERY_FIELDS.filter(f => p.discovery[f.key]).slice(0, 8).map(f => `- ${f.label}: ${p.discovery[f.key]}`).join("\n") || "- (none)";
+  const system = `You write short follow-up emails that ${p.senderName} sends himself to contractors (fence, pool and similar). Email only.
+Rules: Plain text, no markdown. Under 120 words in the body. Sound like a real person: direct, warm, no hype words, no exclamation marks, no "I hope this finds you well". One clear ask. Use only the facts given; never invent numbers, results or claims. Sign off with just "${p.senderName}".
+Output exactly:
+Subject: <short subject, under 8 words>
+
+<body>`;
+  const user = `Purpose: ${EMAIL_PURPOSES[p.purpose].label} — ${EMAIL_PURPOSES[p.purpose].brief}
+To: ${p.firstName || "the owner"} at ${p.company}
+Deal stage: ${p.stage}${p.proposalSentAt ? ` · proposal sent ${p.proposalSentAt.slice(0, 10)}` : ""}${p.nextStep ? ` · next step: ${p.nextStep}` : ""}
+What we know:
+${facts}
+${p.notes ? `Founder notes: ${p.notes}\n` : ""}
+Write the email.`;
+  return { system, user };
+}
+
+/** Split a model reply into subject and body. Tolerates a missing "Subject:" line. */
+export function parseEmailDraft(text: string): { subject: string; body: string } {
+  const t = String(text ?? "").replace(/\r/g, "").trim();
+  const m = t.match(/^\s*\**subject:?\**\s*(.+)\n+([\s\S]*)$/i);
+  if (m) return { subject: m[1].trim().replace(/^["']|["']$/g, "").slice(0, 200), body: m[2].trim() };
+  return { subject: "", body: t };
+}
+
+/** mailto: link that opens the founder's own email app with the draft filled in. Nothing is sent by Cinder. */
+export function mailtoLink(to: string, subject: string, body: string): string {
+  const addr = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(to.trim()) ? to.trim() : "";
+  return `mailto:${encodeURIComponent(addr).replace(/%40/g, "@")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
