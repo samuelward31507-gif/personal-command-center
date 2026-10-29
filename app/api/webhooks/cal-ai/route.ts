@@ -42,7 +42,7 @@ function safeSummary(payload: BookingPayload) {
 }
 
 export async function POST(request: Request) {
-  const secret = process.env.CAL_AI_WEBHOOK_SECRET;
+  const secret = process.env.CAL_AI_WEBHOOK_SECRET?.trim();
   if (!secret) return Response.json({ error: "Cal.ai webhook is not configured." }, { status: 503 });
 
   const raw = await request.text();
