@@ -1,0 +1,43 @@
+.sg-page { min-height: 100vh; background: #0d0d0d; color: #ededed; font-family: var(--font-geist-sans), Inter, system-ui, sans-serif; }
+.sg-top { padding: 22px 28px; }
+.sg-logo { height: 24px; width: auto; display: block; }
+.sg-main { max-width: 760px; margin: 0 auto; padding: 12px 20px 90px; }
+.sg-eyebrow { font-size: 11.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #e58c63; }
+.sg-intro p, .sg-msg p { color: #a8a8a8 !important; font-size: 15px; line-height: 1.6; margin: 8px 0 0; }
+.sg-msg h1 { font-size: 28px; margin: 30px 0 6px; color: #f4f2ec !important; letter-spacing: -.02em; }
+.sg-muted { color: #8a8a8a !important; }
+.sg-done { padding: 14px 16px; border-radius: 12px; border: 1px solid #234231; background: #101a14; color: #cfe9d7 !important; font-size: 14.5px; line-height: 1.5; }
+.sg-doc { margin-top: 22px; padding: 30px 32px; border-radius: 16px; border: 1px solid #222; background: #131313; font-size: 15px; line-height: 1.7; color: #dcdcdc; }
+.sg-doc h1 { font-size: 24px; margin: 0 0 14px; color: #f4f2ec !important; letter-spacing: -.02em; }
+.sg-doc h2 { font-size: 16.5px; margin: 24px 0 8px; color: #f0f0f0 !important; }
+.sg-doc h3 { font-size: 15px; margin: 18px 0 6px; color: #e6e6e6 !important; }
+.sg-doc p { margin: 0 0 10px; color: #d6d6d6 !important; }
+.sg-doc ul { margin: 0 0 10px; padding-left: 22px; list-style: disc !important; }
+.sg-doc li { margin: 4px 0; color: #d6d6d6; display: list-item !important; list-style: disc !important; }
+.sg-sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; padding: 18px 20px; border-radius: 14px; border: 1px solid #222; background: #111; }
+.sg-k { font-size: 11px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; color: #6f6f6f; }
+.sg-sig { font-family: "Snell Roundhand", "Segoe Script", "Brush Script MT", cursive; font-size: 26px; color: #f2f0ea; margin: 6px 0 2px; min-height: 34px; }
+.sg-sm { font-size: 12.5px; color: #8a8a8a; line-height: 1.5; }
+.sg-form { margin-top: 10px; padding: 22px; border-radius: 16px; border: 1px solid #222; background: #131313; }
+.sg-form h2 { margin: 0 0 14px; font-size: 18px; color: #f2f0ea !important; }
+.sg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.sg-grid label { display: grid; gap: 6px; font-size: 13px; color: #b5b5b5; }
+.sg-grid i { color: #6f6f6f; font-style: normal; }
+.sg-wide { grid-column: 1 / -1; }
+.sg-form input:not([type="checkbox"]) { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid #2a2a2a !important; background: #0c0c0c !important; color: #ededed !important; font: inherit; font-size: 15px; outline: none; }
+.sg-form input:focus { border-color: #4a3a2f !important; box-shadow: 0 0 0 3px rgba(229,140,99,.12); }
+.sg-consent { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; font-size: 13.5px; line-height: 1.5; color: #cfcfcf; }
+.sg-consent input { margin-top: 3px; width: 16px; height: 16px; accent-color: #e58c63; }
+.sg-preview { margin-top: 12px; padding: 8px 12px; border-bottom: 1px solid #333; font-family: "Snell Roundhand", "Segoe Script", "Brush Script MT", cursive; font-size: 28px; color: #f2f0ea; }
+.sg-err { color: #f2a5a5 !important; font-size: 14px; margin: 12px 0 0; }
+html body button.sg-btn { margin-top: 14px; height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid #2c2c2c !important; background: #181818 !important; color: #e5e5e5 !important; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+html body button.sg-primary { width: 100%; background: #f2f0ea !important; color: #0b0b0b !important; border-color: #f2f0ea !important; }
+html body button.sg-btn:disabled { opacity: .55; cursor: default; }
+.sg-fine { margin: 10px 0 0; font-size: 12px; color: #6b6b6b !important; text-align: center; }
+@media (max-width: 600px) { .sg-grid, .sg-sigs { grid-template-columns: 1fr; } .sg-doc { padding: 20px 18px; } }
+@media print {
+  .sg-page, .sg-doc, .sg-sigs { background: #fff !important; color: #111 !important; border-color: #ccc !important; }
+  .sg-doc p, .sg-doc li, .sg-doc h1, .sg-doc h2, .sg-doc h3, .sg-sig, .sg-done { color: #111 !important; }
+  .sg-done { background: #fff !important; border-color: #ccc !important; }
+  .sg-btn, .sg-top { display: none !important; }
+}

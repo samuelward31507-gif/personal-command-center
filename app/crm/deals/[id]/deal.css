@@ -85,3 +85,8 @@ html body main a.dw-linkbtn { display: inline-flex; align-items: center; height:
 html body main a.dw-linkbtn:hover { background: #fff !important; }
 @media (max-width: 960px) { .dw-mailbar { grid-template-columns: 1fr; } }
 @media (max-width: 960px) { html body main button.dw-stage { flex: 0 0 auto; white-space: nowrap; } .dw-head { flex-direction: column; align-items: flex-start; gap: 12px; } }
+.dw-sign { margin-top: 14px; padding: 14px; border: 1px solid #262626; border-radius: 12px; background: #111; }
+.dw-sign-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 14px; color: #ededed; }
+.dw-sign .dw-hint { margin: 6px 0 0; }
+.dw-sign-url { flex: 1 1 260px; font-weight: 400 !important; font-size: 12.5px !important; }
+.dw-signed { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid #234231; background: #101a14; color: #cfe9d7 !important; font-size: 13.5px; }
