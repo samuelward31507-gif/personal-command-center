@@ -131,6 +131,17 @@ ok(() => {
   assert.match(r, /a\.outcome <> 'initiated'\)[\s\S]*contact_outreach o[\s\S]*contact_suppressions s/, "prospects exclude contacted, sequenced and suppressed contacts");
 });
 
+// Deal next steps
+ok(() => {
+  const q = buildQueue({ ...base(), deals: [{ id: "d1", title: "Dive Deep — Tier 2", stage: "proposal", closeDate: null, lastActivityAt: null, contact: contact("dd"), nextStep: "Follow up on the proposal", nextStepAt: today }] });
+  const it = q.find(i => i.id === "deal:d1");
+  assert.ok(it && it.status === "today" && /^Follow up on the proposal/.test(it.title) && it.href === "/crm/deals/d1", "a due next step surfaces with its own words and links to the deal");
+});
+ok(() => {
+  const q = buildQueue({ ...base(), deals: [{ id: "d2", title: "Later deal", stage: "proposal", closeDate: null, lastActivityAt: null, contact: contact("x"), nextStep: "Call", nextStepAt: "2999-01-01" }] });
+  assert.ok(!q.some(i => i.id === "deal:d2"), "a future next step keeps the deal quiet even with no activity");
+});
+
 // Route guards
 const route = (readFileSync("app/api/my-day/route.ts", "utf8") + readFileSync("lib/my-day-data.ts", "utf8"));
 ok(() => assert.match(route, /if \(!user\) return fail\("Unauthorized", 401\)/));

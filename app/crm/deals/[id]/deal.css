@@ -1,0 +1,72 @@
+/* Deal workspace. Stealth palette; class names avoid legacy "card/panel/stat/tab" overrides. */
+.dw-page { max-width: 1180px; margin: 0 auto; padding: 22px 28px 60px; color: #ededed; }
+.dw-back { display: inline-block; margin-bottom: 14px; font-size: 13px; color: #8f8f8f !important; text-decoration: none !important; }
+.dw-back:hover { color: #fff !important; }
+.dw-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; flex-wrap: wrap; }
+.dw-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #6b6b6b; }
+html body main h1.dw-title { margin: 6px 0 6px; font-size: 28px !important; }
+.dw-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: #8f8f8f; }
+.dw-meta a { color: #d0d0d0 !important; text-decoration: none !important; }
+.dw-meta a:hover { color: #fff !important; }
+.dw-value { display: grid; grid-template-columns: auto auto; column-gap: 6px; align-items: baseline; text-align: right; }
+.dw-value strong { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.dw-value span { font-size: 12.5px; color: #737373; text-align: left; }
+
+.dw-stages { display: flex; gap: 4px; margin: 20px 0 10px; padding: 4px; border: 1px solid #222; border-radius: 12px; background: #0e0e0e; overflow-x: auto; }
+html body main button.dw-stage { flex: 1 0 auto; height: 32px; padding: 0 12px; border-radius: 8px; border: 0 !important; background: transparent !important; color: #8a8a8a !important; font: inherit; font-size: 13px; font-weight: 550; cursor: pointer; white-space: nowrap; }
+html body main button.dw-stage:hover:not(:disabled) { background: #181818 !important; color: #e5e5e5 !important; }
+html body main button.dw-stage.is-past { color: #cfcfcf !important; }
+html body main button.dw-stage.is-on { background: #ededed !important; color: #0b0b0b !important; cursor: default; }
+html body main button.dw-stage:disabled:not(.is-on) { opacity: .6; }
+
+.dw-flash { margin: 10px 0; padding: 10px 14px; border-radius: 10px; border: 1px solid #1f3a2a; background: #0f1a13; color: #9ee6b5; font-size: 13px; }
+.dw-flash.is-bad { border-color: #3a2222; background: #1a0f0f; color: #f2a5a5; }
+.dw-err { color: #f2a5a5 !important; }
+html body main .dw-muted { color: #737373 !important; font-size: 13px; margin: 0; }
+html body main .dw-hint { color: #7a7a7a !important; font-size: 13px; margin: 6px 0 12px; }
+html body main .dw-small { color: #bdbdbd !important; font-size: 13px; line-height: 1.55; margin: 0 0 8px; }
+
+.dw-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; margin-top: 14px; align-items: start; }
+.dw-col { display: grid; gap: 14px; min-width: 0; }
+.dw-box { border: 1px solid #1f1f1f; border-radius: 14px; background: #131313; padding: 18px 18px 16px; }
+html body main .dw-box h2 { margin: 0 0 8px; font-size: 14.5px !important; font-weight: 600 !important; }
+.dw-boxhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.dw-pct { position: relative; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #8f8f8f; }
+.dw-pct::before { content: ""; width: 80px; height: 4px; border-radius: 4px; background: #262626; }
+.dw-pct i { position: absolute; left: 0; height: 4px; max-width: 80px; border-radius: 4px; background: #e58c63; }
+.dw-next { display: grid; grid-template-columns: minmax(0, 1fr) 150px auto; gap: 8px; }
+.dw-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.dw-field { display: grid; gap: 5px; }
+.dw-field.is-wide { grid-column: 1 / -1; }
+.dw-field span { font-size: 12.5px; color: #9a9a9a; font-weight: 500; }
+html body main .dw-box :is(input, textarea) { width: 100%; font-size: 14px; }
+html body main .dw-box textarea { resize: vertical; }
+.dw-notes { margin-bottom: 10px; }
+.dw-editor { font: 13.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace !important; }
+.dw-right { display: flex; justify-content: flex-end; margin-top: 12px; }
+.dw-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.dw-decide { padding-top: 12px; border-top: 1px solid #222; }
+html body main button.dw-btn { height: 34px; padding: 0 14px; border-radius: 9px; border: 1px solid #2a2a2a !important; background: #171717 !important; color: #e0e0e0 !important; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+html body main button.dw-btn:hover:not(:disabled) { border-color: #3a3a3a !important; background: #1f1f1f !important; color: #fff !important; }
+html body main button.dw-btn:disabled { opacity: .5; cursor: default; }
+html body main button.dw-primary { background: #ededed !important; border-color: #ededed !important; color: #0b0b0b !important; font-weight: 600; }
+html body main button.dw-primary:hover:not(:disabled) { background: #fff !important; color: #000 !important; }
+html body main button.dw-good { color: #9ee6b5 !important; border-color: #234231 !important; }
+html body main button.dw-bad { color: #f2a5a5 !important; border-color: #3a2424 !important; }
+.dw-pill { font-size: 12px; font-weight: 550; padding: 3px 10px; border-radius: 999px; border: 1px solid #2a2a2a; color: #a3a3a3; white-space: nowrap; }
+.dw-pill-draft { color: #e7c2a8; border-color: #4a3a2f; }
+.dw-pill-sent { color: #cbdcf5; border-color: #2a3a52; }
+.dw-pill-accepted { color: #9ee6b5; border-color: #234231; }
+.dw-pill-declined { color: #f2a5a5; border-color: #3a2424; }
+.dw-proposal.ask-root { background: transparent !important; padding: 4px 2px; max-height: 520px; overflow-y: auto; }
+.dw-proposal .ask-md { font-size: 14.5px; }
+.dw-side .dw-box { padding: 16px; }
+.dw-label { font-size: 11.5px; color: #737373; text-transform: uppercase; letter-spacing: .04em; margin: 8px 0 4px; }
+.dw-line { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid #1c1c1c; font-size: 13px; color: #cfcfcf; }
+.dw-line:first-of-type { border-top: 0; }
+.dw-line small { color: #6f6f6f !important; white-space: nowrap; }
+.dw-win { border-color: #23402f; background: #111a14; }
+.dw-win a { color: #9ee6b5 !important; }
+@media (max-width: 960px) { .dw-grid { grid-template-columns: 1fr; } .dw-fields { grid-template-columns: 1fr; } .dw-next { grid-template-columns: 1fr; } .dw-page { padding: 18px 14px 40px; } }
+
+html body main button.dw-stage.is-on { opacity: 1 !important; }

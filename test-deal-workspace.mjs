@@ -1,0 +1,32 @@
+// Regression tests for discovery + proposals. Run with: node --experimental-strip-types test-deal-workspace.mjs
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { cleanDiscovery, discoveryCompleteness, stageForProposal, buildProposalPrompt, DISCOVERY_FIELDS } from "./lib/deal-workspace.ts";
+
+let n = 0;
+const ok = fn => { fn(); n++; };
+ok(() => assert.deepEqual(cleanDiscovery({ pain: "  missed calls  ", hacker: "x", monthlyLeads: 5 }), { pain: "missed calls" }, "unknown keys and non-strings dropped"));
+ok(() => assert.equal(cleanDiscovery({ pain: "x".repeat(5000) }).pain.length, 2000));
+ok(() => assert.equal(discoveryCompleteness({}), 0));
+ok(() => assert.equal(discoveryCompleteness({ decisionMaker: "a", leadSources: "b", monthlyLeads: "c", avgJobValue: "d", responseTime: "e", pain: "f", timeline: "g" }), 100));
+ok(() => assert.equal(stageForProposal("sent", "meeting_held"), "proposal"));
+ok(() => assert.equal(stageForProposal("sent", "proposal"), null));
+ok(() => assert.equal(stageForProposal("accepted", "proposal"), "won"));
+ok(() => assert.equal(stageForProposal("declined", "proposal"), "lost"));
+ok(() => assert.equal(stageForProposal("accepted", "won"), null, "closed deals are never moved"));
+ok(() => assert.equal(stageForProposal("sent", "lost"), null));
+const pr = buildProposalPrompt({ company: "Dive Deep Custom Pools", contactName: "", location: "DFW", offerLabel: "Tier 2", setupFee: 3000, monthlyFee: 1500, discovery: { pain: "leads go cold" }, auditSummary: "", notes: "" });
+ok(() => assert.match(pr.system, /Never invent statistics/));
+ok(() => assert.match(pr.system, /guarantees/));
+ok(() => assert.match(pr.user, /\$3,000 setup \+ \$1,500\/month/));
+ok(() => assert.match(pr.user, /Biggest pain, in their words: leads go cold/));
+ok(() => assert.ok(DISCOVERY_FIELDS.length >= 10));
+const api = readFileSync("app/api/deal-workspace/route.ts", "utf8") + readFileSync("app/api/proposals/route.ts", "utf8");
+ok(() => assert.doesNotMatch(api, /status\s*=\s*'paid'|DELETE FROM/i, "never marks paid, never deletes"));
+ok(() => assert.ok((api.match(/owner_id = \$\{user\.id\}/g) || []).length >= 10, "owner-scoped"));
+ok(() => assert.match(api, /if \(!user\) return fail\("Unauthorized", 401\)/));
+ok(() => assert.match(api, /runDealHandoff/, "won runs the onboarding handoff"));
+const page = readFileSync("app/crm/deals/[id]/page.tsx", "utf8");
+ok(() => assert.match(page, /confirm\("Mark accepted\?/, "accepted asks first"));
+ok(() => assert.doesNotMatch(page, /sendEmail|resend|twilio|sms/i, "never sends anything"));
+console.log(`Deal workspace regression checks passed (${n} assertions).`);
