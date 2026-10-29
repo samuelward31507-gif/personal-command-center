@@ -1,0 +1,29 @@
+/* Desktop auto-hide: after opening a page from the sidebar it slides away; hover the left edge to bring it back. */
+.sidebar-hotzone, .sidebar-pin { display: none; }
+@media (min-width: 761px) {
+  .sidebar.is-autohide, .app-shell .sidebar.is-autohide, .crm-app-shell .sidebar.is-autohide {
+    position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important;
+    height: 100vh !important; z-index: 1100 !important;
+    transform: translateX(-100%) !important; transition: transform .2s ease, box-shadow .2s ease !important;
+    box-shadow: none !important;
+  }
+  .sidebar.is-autohide.is-peek, .app-shell .sidebar.is-autohide.is-peek, .crm-app-shell .sidebar.is-autohide.is-peek {
+    transform: translateX(0) !important; box-shadow: 14px 0 44px rgba(0, 0, 0, .55) !important;
+  }
+  .sidebar-hotzone { display: block; position: fixed; left: 0; top: 0; bottom: 0; width: 16px; z-index: 1099; cursor: e-resize; }
+  .sidebar-hotzone::after {
+    content: ""; position: absolute; left: 5px; top: 50%; width: 3px; height: 46px; margin-top: -23px;
+    border-radius: 3px; background: #2e2e2e; transition: background .2s ease, height .2s ease;
+  }
+  .sidebar-hotzone:hover::after { background: #d6a98c; height: 64px; margin-top: -32px; }
+  .sidebar-pin {
+    display: grid; place-items: center; position: absolute; top: 18px; right: 10px; width: 26px; height: 26px;
+    border: 1px solid #2c2c2c; border-radius: 7px; background: #161616; color: #8a8a8a; cursor: pointer; font-size: 13px; line-height: 1;
+  }
+  .sidebar-pin:hover { color: #f0f0f0; border-color: #444; }
+  .sidebar-pin.is-pinned { color: #d6a98c; border-color: #4a3a2f; }
+  .sidebar .workspace-chevron { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar.is-autohide { transition: none !important; }
+}
