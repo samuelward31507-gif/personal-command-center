@@ -232,7 +232,7 @@ export default function DealWorkspacePage() {
 
       <aside className="dw-col dw-side">
         {ws.project && <section className="dw-box dw-win"><h2>Onboarding</h2><p><Link href="/crm/projects">{ws.project.name}</Link> · {ws.project.status.replace(/_/g, " ")}{ws.project.targetDate ? ` · launch ${dateLabel(ws.project.targetDate)}` : ""}</p></section>}
-        {ws.audit && <section className="dw-box"><h2>Audit</h2><p className="dw-small">{ws.audit.verdict.replace(/\*\*/g, "")}</p>{ws.audit.upsells && deal.stage !== "won" && <><div className="dw-label">Later upsells</div><p className="dw-small">{ws.audit.upsells.replace(/\*\*/g, "").split("\n").slice(0, 3).join(" · ")}</p></>}</section>}
+        {ws.audit && <section className="dw-box"><div className="dw-boxhead"><h2>Audit</h2><Link href={`/crm/audits/${ws.audit.id}`} className="dw-mini-link">Full report →</Link></div><p className="dw-small">{ws.audit.verdict.replace(/\*\*/g, "")}</p>{ws.audit.upsells && deal.stage !== "won" && <><div className="dw-label">Later upsells</div><p className="dw-small">{ws.audit.upsells.replace(/\*\*/g, "").split("\n").slice(0, 3).join(" · ")}</p></>}</section>}
         {deal.stage === "won" && <section className="dw-box"><h2>Grow this client</h2>
           <p className="dw-small">Upsells and referrals come from clients who are getting results. Start one as its own deal.</p>
           {upsellIdeas(ws.audit?.upsells ?? "").map(idea => <div key={idea} className="dw-upsell"><span>{idea}</span>

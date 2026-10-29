@@ -93,12 +93,12 @@ ok(() => assert.equal(DEFAULT_AUDIT_MODEL, "claude-sonnet-5-5"));
 ok(() => assert.equal(WEB_SEARCH_TOOL, "web_search_20250305"));
 
 // --- Route source guards ---
-const route = readFileSync("app/api/business-audit/route.ts", "utf8");
+const route = readFileSync("app/api/business-audit/route.ts", "utf8") + readFileSync("lib/audit-engine.ts", "utf8");
 ok(() => assert.doesNotMatch(route, /Check server configuration and try again/, "generic provider error removed"));
 ok(() => assert.match(route, /classifyProviderError\(/));
 ok(() => assert.match(route, /stopReason !== "pause_turn"/, "pause_turn is continued"));
 ok(() => assert.match(route, /owner_id = \$\{user\.id\}/, "contact lookup stays owner-scoped"));
-ok(() => assert.match(route, /VALUES \(\$\{user\.id\}/, "artifact saved under authenticated owner"));
+ok(() => assert.match(route, /VALUES \(\$\{ownerId\}/, "artifact saved under the owner passed in") && assert.match(route, /ownerId: user\.id/, "the page saves under the authenticated owner"));
 ok(() => assert.doesNotMatch(route, /console\.\w+\([^)]*apiKey/, "API key never logged"));
 ok(() => assert.doesNotMatch(route, /console\.\w+\([^)]*DATABASE_URL\b(?! is)/, "DB URL never logged"));
 ok(() => assert.match(route, /Do not draft SMS or text messages/, "no SMS drafting in audit output"));

@@ -33,6 +33,7 @@ export default function CallModePage() {
   const [dialog, setDialog] = useState<null | "meeting" | "callback">(null);
   const [when, setWhen] = useState({ date: "", time: "10:00", minutes: "30" });
   const [openObj, setOpenObj] = useState<string | null>(null);
+  const [auditing, setAuditing] = useState<{ done: number; total: number; current: string } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -103,6 +104,33 @@ export default function CallModePage() {
     finally { setBusy(false); }
   }
 
+  /** Research every unaudited prospect in the list, two at a time, so each call opens with a brief. */
+  async function auditRest() {
+    const todo = queue.filter(q => q.contact && !/Audit:/.test(q.why));
+    if (!todo.length || auditing) return;
+    if (!confirm(`Run audits on ${todo.length} prospect${todo.length === 1 ? "" : "s"}? About a minute each, two at a time. Uses Anthropic API credit.`)) return;
+    let done = 0;
+    setAuditing({ done, total: todo.length, current: "" });
+    const one = async (q: QueueItem) => {
+      const c = { ...q.contact!, ...(contacts[q.contact!.id] ?? {}) } as Contact;
+      setAuditing(a => a && { ...a, current: c.company || c.name });
+      try {
+        const r = await fetch("/api/business-audit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+          companyName: c.company || c.name, website: c.website ?? "", location: c.location ?? "", contactId: c.id,
+          context: c.notes ? `CRM notes: ${c.notes.slice(0, 1500)}` : "" }) });
+        if (r.ok) setQueue(qs => qs.map(x => x.id === q.id ? { ...x, why: x.why.replace(/No audit yet — run one first/, "Audit: ready") } : x));
+      } catch { /* keep going */ }
+      done++; setAuditing(a => a && { ...a, done });
+    };
+    for (let i = 0; i < todo.length; i += 2) await Promise.all(todo.slice(i, i + 2).map(one));
+    setAuditing(null);
+    setFlash({ ok: true, text: `Audits finished for ${done} prospect${done === 1 ? "" : "s"}.` });
+    if (contact?.id) {
+      setAudit(undefined);
+      fetch(`/api/research-artifacts?type=audit_prep&contactId=${contact.id}`, { cache: "no-store" }).then(r => r.json()).then(d => setAudit((d.artifacts ?? [])[0] ?? null)).catch(() => setAudit(null));
+    }
+  }
+
   function openDialog(kind: "meeting" | "callback") {
     const d = new Date(); d.setDate(d.getDate() + (kind === "callback" ? 1 : 2));
     if (d.getDay() === 6) d.setDate(d.getDate() + 2); if (d.getDay() === 0) d.setDate(d.getDate() + 1);
@@ -152,6 +180,8 @@ export default function CallModePage() {
       </div>
       <div className="cm-head-actions">
         <Link className="cm-link" href="/crm/needs-you">Today</Link>
+        {queue.some(q => q.contact && !/Audit:/.test(q.why)) && <button data-variant="primary" className="cm-btn" disabled={!!auditing} onClick={() => void auditRest()}>
+          {auditing ? `Auditing ${auditing.done}/${auditing.total}${auditing.current ? ` · ${auditing.current}` : ""}…` : `Audit the rest (${queue.filter(q => q.contact && !/Audit:/.test(q.why)).length})`}</button>}
         <button data-variant="primary" className="cm-btn" onClick={() => void load()}>Refresh</button>
       </div>
     </header>
@@ -203,6 +233,7 @@ export default function CallModePage() {
             {brief.plan && <Block title="Call plan" text={brief.plan} />}
             {brief.opps && <Block title="Top opportunities" text={brief.opps} />}
             {brief.flags && <Block title="Red flags" text={brief.flags} />}
+            {audit && <Link className="cm-link" href={`/crm/audits/${audit.id}`}>Full audit report →</Link>}
             <p className="cm-muted">Suggested offer: {offer.label} · ${offer.setupFee.toLocaleString()} + ${offer.monthlyFee.toLocaleString()}/mo</p>
           </div> : <div className="cm-noaudit">
             <p>No audit yet. Use the script, or research them first so you know their gaps before you dial.</p>
