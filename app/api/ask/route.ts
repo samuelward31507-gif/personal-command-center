@@ -80,6 +80,9 @@ async function streamTurn(apiKey: string, payload: Record<string, unknown>, sign
           if (delta.type === "text_delta") { block.text = String(block.text ?? "") + String(delta.text ?? ""); on.text(String(delta.text ?? "")); }
           else if (delta.type === "input_json_delta") partial[index] = (partial[index] ?? "") + String(delta.partial_json ?? "");
           else if (delta.type === "citations_delta") (block.citations = Array.isArray(block.citations) ? block.citations : []).push(delta.citation);
+          // Thinking blocks must be replayed intact (text + signature) when tool results are sent back.
+          else if (delta.type === "thinking_delta") block.thinking = String(block.thinking ?? "") + String(delta.thinking ?? "");
+          else if (delta.type === "signature_delta") block.signature = String(block.signature ?? "") + String(delta.signature ?? "");
           break;
         }
         case "content_block_stop": {
