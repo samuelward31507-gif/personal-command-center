@@ -145,15 +145,9 @@ function HomeContent() {
    </div> : activeView==="home" ? <div className="cal-home">
     <div className="cal-home-center">
      <div className="cal-home-title"><div className="cal-home-eyebrow"><span className="cinder-home-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z"/><circle cx="25.5" cy="16" r="3.1"/></svg></span> CINDER WORKSPACE</div><h1>Ask Cinder<span>AI</span></h1><p>Your business, one conversation away.</p></div>
-     <form className="cal-command-bar" onSubmit={event=>{event.preventDefault(); const value=(event.currentTarget.elements.namedItem("cinderQuery") as HTMLInputElement).value.trim(); if(value){navigate("workforce");}}}>
-      <span className="cal-command-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2Z"/></svg></span><input name="cinderQuery" aria-label="Ask Cinder" placeholder="Search contacts, deals, or ask Cinder anything…"/><button type="submit" aria-label="Open Cinder AI">↑</button>
+     <form className="cal-command-bar" onSubmit={event=>{event.preventDefault(); const value=(event.currentTarget.elements.namedItem("cinderQuery") as HTMLInputElement).value.trim(); if(value){window.location.assign("/crm?q="+encodeURIComponent(value));}}}>
+      <span className="cal-command-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2Z"/></svg></span><input name="cinderQuery" aria-label="Ask Cinder" placeholder="Search contacts and companies…"/><button type="submit" aria-label="Search">↑</button>
      </form>
-     <div className="cal-prompt-chips"><button onClick={()=>navigate("growth")} type="button">Find a prospect</button><button onClick={()=>navigate("needs-you")} type="button">Who needs a follow-up?</button><button onClick={()=>navigate("schedule")} type="button">What’s on my schedule?</button><button onClick={()=>navigate("workforce")} type="button">Put Hermes to work</button></div>
-     <div className="cal-home-actions">
-      <button onClick={()=>navigate("growth")}><span>↗</span><strong>Prospects & pipeline</strong><small>Research, contacts, and deals</small></button>
-      <button onClick={()=>navigate("needs-you")}><span>✓</span><strong>Needs your attention</strong><small>Follow-ups and next actions</small></button>
-      <button onClick={()=>navigate("workforce")}><span>✳</span><strong>Hermes & AI team</strong><small>Research and prepared work</small></button>
-     </div>
     </div>
     <footer className="cal-home-footer"><span><i/> PRIVATE FOUNDER WORKSPACE</span><span>Search first. Move with intent.</span></footer>
    </div> : null}</section></main>;
