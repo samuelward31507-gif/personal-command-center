@@ -7,12 +7,12 @@
    ========================================================================== */
 
 :root {
-  --st-bg: #0b0b0b;
-  --st-bg-2: #0e0e0e;
-  --st-surface: #121212;
-  --st-raised: #171717;
+  --st-bg: #101010;
+  --st-bg-2: #0c0c0c;
+  --st-surface: #141414;
+  --st-raised: #191919;
   --st-hover: #1b1b1b;
-  --st-line: #1f1f1f;
+  --st-line: #222222;
   --st-line-2: #2a2a2a;
   --st-text: #ededed;
   --st-soft: #a3a3a3;
@@ -35,7 +35,7 @@ html body aside.sidebar { display: none !important; }
 
 /* ---------- Top bar ---------- */
 html body .topbar, html body .crm-shell-main > .topbar {
-  height: 52px !important; padding: 0 24px !important; background: rgba(11, 11, 11, .82) !important;
+  height: 52px !important; padding: 0 24px !important; background: rgba(16, 16, 16, .82) !important;
   -webkit-backdrop-filter: saturate(140%) blur(10px); backdrop-filter: saturate(140%) blur(10px);
   border-bottom: 1px solid var(--st-line) !important; position: sticky; top: 0; z-index: 40;
 }
@@ -152,3 +152,22 @@ html body ::-webkit-scrollbar-track { background: transparent; }
 
 /* ---------- Focus ring (keyboard) ---------- */
 html body :is(a, button):focus-visible { outline: 2px solid rgba(214, 169, 140, .55) !important; outline-offset: 2px; }
+
+/* ---------- Structural borders: no light leftovers ---------- */
+html body main:not(.calendar-page) :is(section, article, form, fieldset, header, footer, aside, details, table,
+  [class*="board"], [class*="section"], [class*="workspace"], [class*="list"], [class*="record"], [class*="row"]):not([style*="border"]):not(.cx-side):not(.cx-side *):not([class*="ask-"]) {
+  border-color: var(--st-line) !important;
+}
+
+/* ---------- Search fields: one box, not two ---------- */
+html body main:not(.calendar-page) :is(label, div)[class*="search"]:has(> input) {
+  display: flex; align-items: center; gap: 8px; background: var(--st-bg-2) !important; border: 1px solid var(--st-line-2) !important;
+  border-radius: 9px !important; padding: 0 10px !important; color: var(--st-muted) !important; transition: border-color .15s, box-shadow .15s;
+}
+html body main:not(.calendar-page) :is(label, div)[class*="search"]:has(> input:focus) { border-color: #3d3d3d !important; box-shadow: 0 0 0 3px rgba(214,169,140,.10) !important; }
+html body main:not(.calendar-page) :is(label, div)[class*="search"] > input {
+  flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; padding-left: 0 !important; padding-right: 0 !important;
+}
+
+/* ---------- Top bar status: text only ---------- */
+html body .topbar-status { background: transparent !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; }

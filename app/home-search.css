@@ -2,7 +2,7 @@
    Class names deliberately avoid "card", "panel", "stat", "menu"… which global theme rules force to gray. */
 
 .ask-root {
-  --ask-bg: #0b0b0b;
+  --ask-bg: #101010;
   --ask-composer: #141414;
   --ask-composer-line: #262626;
   --ask-bubble: #1c1c1c;
@@ -72,7 +72,7 @@
 .ask-thread { width: min(760px, 100%); flex: 1; padding: 36px 0 28px; display: flex; flex-direction: column; gap: 34px; }
 .ask-root-chat > .ask-composer-wrap {
   position: sticky; bottom: 0; z-index: 30; width: min(760px, 100%); padding: 14px 0 14px;
-  background: linear-gradient(to bottom, rgba(11,11,11,0), var(--ask-bg) 26px);
+  background: linear-gradient(to bottom, rgba(16,16,16,0), var(--ask-bg) 26px);
 }
 .ask-exchange { display: flex; flex-direction: column; gap: 22px; animation: ask-in .22s ease-out; }
 @keyframes ask-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
