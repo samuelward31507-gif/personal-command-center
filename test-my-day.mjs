@@ -127,12 +127,12 @@ ok(() => {
   assert.equal(q.filter(i => i.contact?.id === "dup").length, 1, "a contact appears once");
 });
 ok(() => {
-  const r = readFileSync("app/api/my-day/route.ts", "utf8");
+  const r = (readFileSync("app/api/my-day/route.ts", "utf8") + readFileSync("lib/my-day-data.ts", "utf8"));
   assert.match(r, /a\.outcome <> 'initiated'\)[\s\S]*contact_outreach o[\s\S]*contact_suppressions s/, "prospects exclude contacted, sequenced and suppressed contacts");
 });
 
 // Route guards
-const route = readFileSync("app/api/my-day/route.ts", "utf8");
+const route = (readFileSync("app/api/my-day/route.ts", "utf8") + readFileSync("lib/my-day-data.ts", "utf8"));
 ok(() => assert.match(route, /if \(!user\) return fail\("Unauthorized", 401\)/));
 ok(() => assert.equal((route.match(/owner_id = \$\{owner\}/g) || []).length >= 10, true, "every query is owner-scoped"));
 ok(() => assert.match(route, /NOT EXISTS \(SELECT 1 FROM public\.contact_suppressions/, "suppressed contacts never appear as follow-ups"));
