@@ -111,3 +111,8 @@ html body main .cm-dialog h3 { margin: 0 0 14px; font-size: 16px !important; }
   .cm-logged { display: none; }
   .cm-page { padding: 20px 14px 40px; }
 }
+
+/* Notes + outcomes stay pinned while the brief scrolls */
+.cm-dock { position: sticky; bottom: 0; z-index: 5; margin: 18px -24px -20px; padding: 14px 24px 16px; background: linear-gradient(180deg, rgba(19,19,19,.92), #131313 18px); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-top: 1px solid #222; border-radius: 0 0 16px 16px; }
+.cm-dock .cm-notes { margin: 0 0 10px; }
+.cm-dock .cm-nav { margin-top: 10px; }

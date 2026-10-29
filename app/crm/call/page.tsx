@@ -192,8 +192,8 @@ export default function CallModePage() {
 
         <div className="cm-why">{item.why}</div>
 
-        <div className="cm-tabs" role="tablist">
-          {(["brief", "script", "objections"] as const).map(t => <button data-variant="primary" key={t} role="tab" aria-selected={tab === t} className={"cm-tabbtn" + (tab === t ? " is-on" : "")} onClick={() => setTab(t)}>
+        <div className="cm-tabs">
+          {(["brief", "script", "objections"] as const).map(t => <button data-variant="primary" key={t} aria-current={tab === t ? "true" : undefined} className={"cm-tabbtn" + (tab === t ? " is-on" : "")} onClick={() => setTab(t)}>
             {t === "brief" ? "Brief" : t === "script" ? "Script" : "Objections"}</button>)}
         </div>
 
@@ -216,8 +216,9 @@ export default function CallModePage() {
           </div>)}</div>}
         </div>
 
+        <div className="cm-dock">
         <label className="cm-notes"><span className="cm-mini">Call notes (saved with the outcome)</span>
-          <textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Who you spoke to, what they said, their lead flow, best time to call back…" />
+          <textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Who you spoke to, what they said, their lead flow, best time to call back…" />
         </label>
 
         <div className="cm-outcomes">
@@ -230,6 +231,7 @@ export default function CallModePage() {
         <div className="cm-nav">
           <button data-variant="primary" className="cm-btn" disabled={index === 0} onClick={() => setIndex(i => Math.max(0, i - 1))}>← Previous</button>
           <button data-variant="primary" className="cm-btn" disabled={index >= queue.length - 1} onClick={() => setIndex(i => i + 1)}>Skip →</button>
+        </div>
         </div>
       </section>
     </div>}
