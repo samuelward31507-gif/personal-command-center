@@ -140,10 +140,10 @@
 <script>
 (function(){var n=document.getElementById("nav");var f=function(){n.classList.toggle("is-scrolled",scrollY>8)};f();addEventListener("scroll",f,{passive:true});
 var root=document.documentElement,live=document.getElementById("live");if(!live||!root.classList.contains("motion"))return;
-var q=function(k){return live.querySelector('[data-step="'+k+'"]')},on=function(k){q(k).classList.add("on")},off=function(k){q(k).classList.remove("on")},c=document.getElementById("clock");
+var q=function(k){return document.querySelector('[data-step="'+k+'"]')},on=function(k){q(k).classList.add("on")},off=function(k){q(k).classList.remove("on")},c=document.getElementById("clock");
 c.textContent="0:00";
 setTimeout(function(){on(1)},350);
-setTimeout(function(){on(2);var t0=performance.now(),D=1700;(function tick(now){var p=Math.min(1,(now-t0)/D),s=Math.round(38*p);c.textContent="0:"+(s<10?"0":"")+s;if(p<1)requestAnimationFrame(tick);else{off(2);on(3);setTimeout(function(){on(4)},900);setTimeout(function(){on(5)},1500)}})(t0)},950);
+setTimeout(function(){on(2);var t0=performance.now(),D=1700;(function tick(now){var p=Math.min(1,(now-t0)/D),s=Math.round(38*p);c.textContent="0:"+(s<10?"0":"")+s;if(p<1)requestAnimationFrame(tick);else{off(2);on(3);setTimeout(function(){on(4)},900);setTimeout(function(){on(5)},1500);setTimeout(function(){on(6)},2300)}})(t0)},950);
 })();
 </script>
 </body>
