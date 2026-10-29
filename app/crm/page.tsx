@@ -16,7 +16,7 @@ const initials=(v:string)=>v.trim().split(/\s+/).slice(0,2).map(x=>x[0]).join(""
 
 export default function ContactsPage(){
  const [contacts,setContacts]=useState<Contact[]>([]),[loaded,setLoaded]=useState(false),[query,setQuery]=useState(""),[filter,setFilter]=useState("All contacts"),[show,setShow]=useState(false),[selected,setSelected]=useState<string|null>(null),[editing,setEditing]=useState<string|null>(null),[draft,setDraft]=useState(blank),[saved,setSaved]=useState(true),[activities,setActivities]=useState<Activity[]>([]),[activityLoading,setActivityLoading]=useState(false),[showImport,setShowImport]=useState(false);
- useEffect(()=>{const q=new URLSearchParams(window.location.search).get("q");if(q)setQuery(q.slice(0,200))},[]);
+ useEffect(()=>{const p=new URLSearchParams(window.location.search);const q=p.get("q");if(q)setQuery(q.slice(0,200));const c=p.get("contact");if(c&&/^[0-9a-f-]{36}$/i.test(c))setSelected(c);if(p.get("new")==="1"){setDraft(blank);setEditing(null);setShow(true)}},[]);
  useEffect(()=>{let active=true;fetch("/api/contacts",{cache:"no-store"}).then(async r=>{if(!r.ok)throw new Error("Could not load contacts");return r.json()}).then(data=>{if(active)setContacts(Array.isArray(data.contacts)?data.contacts:[]);if(active)setSaved(true)}).catch(()=>{if(active)setSaved(false)}).finally(()=>{if(active)setLoaded(true)});return()=>{active=false}},[]);
  const [outcomeNote,setOutcomeNote]=useState(""),[outcomeBusy,setOutcomeBusy]=useState<CallOutcome|null>(null),[outcomeResult,setOutcomeResult]=useState<{ok:boolean;text:string;deal?:SuggestedDealData|null}|null>(null),[callFor,setCallFor]=useState<string|null>(null);
  useEffect(()=>{setOutcomeNote("");setOutcomeResult(null)},[selected]);

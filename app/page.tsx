@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import CinderSidebar from "./cinder-sidebar";
 import MyDayQueue from "./my-day-queue";
+import HomeSearch from "./home-search";
 
 function I({ children }: { children: string }) {
  const paths: Record<string, React.ReactNode> = {
@@ -144,10 +145,8 @@ function HomeContent() {
     <section className="surface-panel notes-panel"><div className="panel-heading"><div><h2>Daily notes</h2><p>Capture outcomes, reminders, and tomorrow's first move.</p></div></div><textarea value={dailyNotes} onChange={e=>setDailyNotes(e.target.value)} placeholder="What matters today? Who needs a follow-up? What did you learn?" rows={4}/><div className="daily-plan-save"><p className="local-note">Your notes and checked-off blocks are saved by date in your private workspace.</p><div className="daily-plan-save-row"><span role="status">{planMessage}</span><button className="text-action" onClick={()=>void saveDailyPlan()} disabled={planSaving}>{planSaving?"Saving…":"Save daily plan"}</button></div></div></section>
    </div> : activeView==="home" ? <div className="cal-home">
     <div className="cal-home-center">
-     <div className="cal-home-title"><div className="cal-home-eyebrow"><span className="cinder-home-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z"/><circle cx="25.5" cy="16" r="3.1"/></svg></span> CINDER WORKSPACE</div><h1>Ask Cinder<span>AI</span></h1><p>Your business, one conversation away.</p></div>
-     <form className="cal-command-bar" onSubmit={event=>{event.preventDefault(); const value=(event.currentTarget.elements.namedItem("cinderQuery") as HTMLInputElement).value.trim(); if(value){window.location.assign("/crm?q="+encodeURIComponent(value));}}}>
-      <span className="cal-command-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2 2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2Z"/></svg></span><input name="cinderQuery" aria-label="Ask Cinder" placeholder="Search contacts and companies…"/><button type="submit" aria-label="Search">↑</button>
-     </form>
+     <div className="cal-home-title"><div className="cal-home-eyebrow">CINDER WORKSPACE</div><h1>Find anything<span>.</span></h1><p>Contacts, deals, audits and pages — or jump straight to an action.</p></div>
+     <HomeSearch />
     </div>
     <footer className="cal-home-footer"><span><i/> PRIVATE FOUNDER WORKSPACE</span><span>Search first. Move with intent.</span></footer>
    </div> : null}</section></main>;

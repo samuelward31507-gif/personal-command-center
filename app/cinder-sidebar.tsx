@@ -1,6 +1,7 @@
 "use client";
+import "./cinder-sidebar.css";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type Props = {
   activeKey: string;
@@ -50,8 +51,28 @@ function Icon({ name }: { name: string }) {
 
 export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavigate }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Desktop auto-hide: opening a page hides the sidebar; hovering the left edge peeks it back.
+  const [hidden, setHidden] = useState(false);
+  const [peek, setPeek] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  useEffect(() => {
+    try {
+      const isPinned = localStorage.getItem("cinder.sidebar.pinned") === "1";
+      setPinned(isPinned);
+      setHidden(!isPinned && sessionStorage.getItem("cinder.sidebar.hidden") === "1");
+    } catch { /* storage unavailable: keep the sidebar visible */ }
+  }, []);
+  const togglePin = () => {
+    const next = !pinned;
+    setPinned(next); setHidden(!next); setPeek(false);
+    try { localStorage.setItem("cinder.sidebar.pinned", next ? "1" : "0"); sessionStorage.setItem("cinder.sidebar.hidden", next ? "0" : "1"); } catch { /* ignore */ }
+  };
   const go = (key: string, href: string) => {
     setMobileOpen(false);
+    if (!pinned) {
+      try { sessionStorage.setItem("cinder.sidebar.hidden", "1"); } catch { /* ignore */ }
+      setHidden(true); setPeek(false);
+    }
     // Only Home and My day are in-page views; every other item is a real route.
     if (mode === "home" && onNavigate && (key === "home" || key === "schedule")) onNavigate(key);
     else window.location.assign(href);
@@ -86,7 +107,11 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
       <span aria-hidden="true">{mobileOpen ? "×" : "☰"}</span>
     </button>
     {mobileOpen && <button type="button" className="mobile-nav-backdrop" aria-label="Close navigation menu" onClick={() => setMobileOpen(false)} />}
-    <aside id="cinder-sidebar-shared" className={"sidebar" + (mobileOpen ? " mobile-open" : "")}>
+    {hidden && <div className="sidebar-hotzone" aria-hidden="true" onMouseEnter={() => setPeek(true)} />}
+    <aside id="cinder-sidebar-shared" className={"sidebar" + (mobileOpen ? " mobile-open" : "") + (hidden ? " is-autohide" : "") + (hidden && peek ? " is-peek" : "")}
+      onMouseLeave={() => setPeek(false)} onFocus={() => hidden && setPeek(true)}>
+    <button type="button" className={"sidebar-pin" + (pinned ? " is-pinned" : "")} onClick={togglePin}
+      aria-pressed={pinned} title={pinned ? "Unpin sidebar (auto-hide after opening a page)" : "Pin sidebar open"} aria-label={pinned ? "Unpin sidebar" : "Pin sidebar open"}>{pinned ? "◧" : "◨"}</button>
     <button type="button" className="brand brand-button" onClick={() => go("home", "/")} aria-label="Go to Home">
       <span className="cinder-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#bf542f"/></svg></span>
       <span className="brand-name cinder-wordmark">CINDER</span><span className="workspace-chevron">⌄</span>
