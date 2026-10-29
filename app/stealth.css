@@ -116,7 +116,7 @@ html body main:not(.calendar-page) .text-action { background: transparent !impor
 html body main:not(.calendar-page) .text-action:hover { color: var(--st-text) !important; background: var(--st-raised) !important; }
 
 /* ---------- Inputs ---------- */
-html body main:not(.calendar-page) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not([class*="ask-"]):not(.ask-composer *) {
+html body main:not(.calendar-page) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not([class*="ask-"]):not(.ask-composer *):not([class*="search"] > *) {
   background-color: var(--st-bg-2) !important; border: 1px solid var(--st-line-2) !important; border-radius: 9px !important;
   color: var(--st-text) !important; font-family: var(--st-font) !important; font-size: 14px; box-shadow: none !important;
   transition: border-color .15s ease, box-shadow .15s ease;
@@ -171,3 +171,8 @@ html body main:not(.calendar-page) :is(label, div)[class*="search"] > input {
 
 /* ---------- Top bar status: text only ---------- */
 html body .topbar-status { background: transparent !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; }
+
+/* ---------- Small chips ---------- */
+html body main:not(.calendar-page) :is(.schedule-category, .date-chip, .crm-import-pill, [class*="-chip"]):not([style*="border"]) {
+  border-color: var(--st-line-2) !important; color: var(--st-soft) !important; background: transparent !important;
+}
