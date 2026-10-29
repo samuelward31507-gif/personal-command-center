@@ -108,8 +108,8 @@ export function ActionCard({ action }: { action: AskAction }) {
     {state === "done"
       ? result?.href && <a className="ask-btn" href={result.href}>Open</a>
       : <div className="ask-action-btns">
-          <button type="button" className="ask-btn ask-btn-ghost" onClick={() => setState("dismissed")} disabled={state === "saving"}>Dismiss</button>
-          <button type="button" className="ask-btn ask-btn-primary" onClick={() => void confirm()} disabled={state === "saving"}>{state === "saving" ? "Saving…" : state === "error" ? "Retry" : "Confirm"}</button>
+          <button data-variant="primary" type="button" className="ask-btn ask-btn-ghost" onClick={() => setState("dismissed")} disabled={state === "saving"}>Dismiss</button>
+          <button data-variant="primary" type="button" className="ask-btn ask-btn-primary" onClick={() => void confirm()} disabled={state === "saving"}>{state === "saving" ? "Saving…" : state === "error" ? "Retry" : "Confirm"}</button>
         </div>}
   </div>;
 }

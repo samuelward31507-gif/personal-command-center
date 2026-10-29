@@ -153,14 +153,14 @@ export default function HomeSearch() {
       />
       <div className="ask-composer-row">
         <div className="ask-tools">
-          <button type="button" className={"ask-tool" + (web ? " is-on" : "")} onClick={e => { e.stopPropagation(); toggleWeb(); }} aria-pressed={web} title={web ? "Web search on" : "Web search off"}>
+          <button data-variant="primary" type="button" className={"ask-tool" + (web ? " is-on" : "")} onClick={e => { e.stopPropagation(); toggleWeb(); }} aria-pressed={web} title={web ? "Web search on" : "Web search off"}>
             <Icon name="globe" /><span>Web</span>
           </button>
-          {chat && <button type="button" className="ask-tool" onClick={e => { e.stopPropagation(); reset(); }} title="Start a new chat"><Icon name="new" /><span>New chat</span></button>}
+          {chat && <button data-variant="primary" type="button" className="ask-tool" onClick={e => { e.stopPropagation(); reset(); }} title="Start a new chat"><Icon name="new" /><span>New chat</span></button>}
         </div>
         {busy
-          ? <button type="button" className="ask-send is-stop" onClick={e => { e.stopPropagation(); abort.current?.abort(); }} aria-label="Stop"><Icon name="stop" /></button>
-          : <button type="submit" className="ask-send" disabled={!input.trim()} aria-label="Send"><Icon name="up" /></button>}
+          ? <button data-variant="primary" type="button" className="ask-send is-stop" onClick={e => { e.stopPropagation(); abort.current?.abort(); }} aria-label="Stop"><Icon name="stop" /></button>
+          : <button data-variant="primary" type="submit" className="ask-send" disabled={!input.trim()} aria-label="Send"><Icon name="up" /></button>}
       </div>
     </form>
     {chat && <p className="ask-fineprint">Cinder can make mistakes. Nothing changes until you confirm it.</p>}
@@ -189,8 +189,8 @@ export default function HomeSearch() {
             {t.actions.length > 0 && <div className="ask-actions">{t.actions.map((a, i) => <ActionCard key={i} action={a} />)}</div>}
             {!!t.sources?.length && <div className="ask-sources">{t.sources.map(s => <a key={s.url} href={s.url} target="_blank" rel="noreferrer"><span>{hostOf(s.url)}</span>{s.title.slice(0, 70)}</a>)}</div>}
             {t.done && <div className="ask-tools-row">
-              {t.answer && <button type="button" className="ask-icon-btn" onClick={() => copy(t)} title="Copy"><Icon name={copied === t.id ? "check" : "copy"} /></button>}
-              <button type="button" className="ask-icon-btn" onClick={() => retry(t.id)} disabled={busy} title="Retry"><Icon name="retry" /></button>
+              {t.answer && <button data-variant="primary" type="button" className="ask-icon-btn" onClick={() => copy(t)} title="Copy"><Icon name={copied === t.id ? "check" : "copy"} /></button>}
+              <button data-variant="primary" type="button" className="ask-icon-btn" onClick={() => retry(t.id)} disabled={busy} title="Retry"><Icon name="retry" /></button>
             </div>}
           </div>
         </div>
