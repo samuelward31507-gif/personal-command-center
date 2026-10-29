@@ -121,3 +121,7 @@ html body main :is(.empty, [class*="empty"]) p { color: var(--pl-muted) !importa
 
 /* Focus rings for keyboard users */
 html body :is(a, button):focus-visible { outline: 2px solid rgba(229,140,99,.55) !important; outline-offset: 2px; }
+
+/* Money: the page frame already pads; drop the inner wrapper's extra padding. */
+html body main.fin-shell { min-height: 0 !important; }
+html body main.fin-shell .fin-content { padding: 0 !important; max-width: none !important; }
