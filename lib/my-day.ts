@@ -40,7 +40,7 @@ export type QueueInput = {
   activeOutreachContactIds: string[];
   followUps: { followUpAt: string; contact: ContactRef }[];
   meetings: { id: string; title: string; startsAt: string; type: string; hasPrep: boolean; contact: ContactRef | null; dealTitle: string | null }[];
-  deals: { id: string; title: string; stage: string; closeDate: string | null; lastActivityAt: string | null; contact: ContactRef | null }[];
+  deals: { id: string; title: string; stage: string; closeDate: string | null; lastActivityAt: string | null; contact: ContactRef | null; nextStep?: string; nextStepAt?: string | null }[];
   delivery: { id: string; kind: "project" | "milestone"; title: string; project: string; status: string; due: string | null }[];
   receivables: { id: string; title: string; amount: number; status: string; due: string | null; client: string }[];
   tasks: { id: string; title: string; status: string; priority: string; dueAt: string | null; contactName: string | null; dealTitle: string | null }[];
@@ -167,6 +167,18 @@ export function buildQueue(input: QueueInput): QueueItem[] {
     const lastDay = day(d.lastActivityAt);
     const quiet = lastDay ? daysBetween(lastDay, today) : null;
     const pastClose = closeDay !== null && closeDay < today;
+    // A dated next step is the strongest signal: surface it when due, and only then.
+    if (d.nextStepAt) {
+      if (d.nextStepAt > today) continue;
+      items.push({
+        id: "deal:" + d.id, group: "deals", status: d.nextStepAt < today ? "overdue" : "today",
+        title: `${d.nextStep?.trim() || "Next step"}: ${d.title}`,
+        why: [`Stage: ${d.stage.replaceAll("_", " ")}`, d.nextStepAt < today ? `next step was due ${d.nextStepAt}` : "next step due today"].join(" · "),
+        lastActivity: lastTouch(d.contact), due: d.nextStepAt, href: "/crm/deals/" + d.id,
+        contact: d.contact, callable: Boolean(d.contact?.phone), rank: 0,
+      });
+      continue;
+    }
     // Nurture deals are parked on purpose: only an expected close date resurfaces them.
     const stale = d.stage !== "nurture" && (quiet === null || quiet >= 7);
     if (!pastClose && !stale) continue;
@@ -174,7 +186,7 @@ export function buildQueue(input: QueueInput): QueueItem[] {
       id: "deal:" + d.id, group: "deals", status: pastClose ? "overdue" : "today",
       title: `Move “${d.title}” forward`,
       why: [`Stage: ${d.stage.replaceAll("_", " ")}`, pastClose ? `expected close ${closeDay} has passed` : quiet === null ? "no logged activity" : `no activity in ${quiet} days`].join(" · "),
-      lastActivity: lastTouch(d.contact), due: closeDay, href: "/crm/pipeline",
+      lastActivity: lastTouch(d.contact), due: closeDay, href: "/crm/deals/" + d.id,
       contact: d.contact, callable: Boolean(d.contact?.phone), rank: pastClose ? 0 : 1,
     });
   }

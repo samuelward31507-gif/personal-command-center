@@ -34,7 +34,7 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
       WHERE e.owner_id = ${owner} AND e.status = 'scheduled' AND e.event_type IN ('meeting','call')
         AND e.starts_at >= now() - interval '2 hours' AND e.starts_at < ${windowEnd}::timestamptz
       ORDER BY e.starts_at LIMIT 50`,
-    sql`SELECT d.id, d.title, d.stage, d.expected_close_date, d.contact_id,
+    sql`SELECT d.id, d.title, d.stage, d.expected_close_date, d.contact_id, d.next_step, d.next_step_at,
         (SELECT max(a.occurred_at) FROM public.contact_activities a WHERE a.owner_id = d.owner_id AND a.contact_id = d.contact_id) AS last_activity_at
       FROM public.deals d WHERE d.owner_id = ${owner} AND d.stage NOT IN ('won','lost') LIMIT 100`,
     sql`SELECT id, name, status, target_date FROM public.projects
@@ -108,7 +108,7 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
     activeOutreachContactIds: activeIds.map(r => String(r.contact_id)),
     followUps: followUps.filter(r => ref(r.id)).map(r => ({ followUpAt: dateOnly(r.follow_up_at)!, contact: ref(r.id)! })),
     meetings: meetings.map(r => ({ id: String(r.id), title: String(r.title), startsAt: iso(r.starts_at)!, type: String(r.event_type), hasPrep: r.has_prep === true, contact: ref(r.contact_id), dealTitle: r.deal_title ? String(r.deal_title) : null })),
-    deals: deals.map(r => ({ id: String(r.id), title: String(r.title), stage: String(r.stage), closeDate: dateOnly(r.expected_close_date), lastActivityAt: iso(r.last_activity_at), contact: ref(r.contact_id) })),
+    deals: deals.map(r => ({ id: String(r.id), title: String(r.title), stage: String(r.stage), closeDate: dateOnly(r.expected_close_date), lastActivityAt: iso(r.last_activity_at), contact: ref(r.contact_id), nextStep: String(r.next_step ?? ""), nextStepAt: dateOnly(r.next_step_at) })),
     delivery: [
       ...projects.map(r => ({ id: String(r.id), kind: "project" as const, title: String(r.name), project: String(r.name), status: String(r.status), due: dateOnly(r.target_date) })),
       ...milestones.map(r => ({ id: String(r.id), kind: "milestone" as const, title: String(r.title), project: String(r.project), status: String(r.status), due: iso(r.due_at) })),

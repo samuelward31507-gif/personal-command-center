@@ -92,7 +92,12 @@ export default function DealWorkspacePage() {
     } else if (status === "accepted") {
       if (!confirm("Mark accepted? The deal moves to Won and onboarding starts. Payments stay 'expected' until you record them.")) return;
       void patch({ proposalStatus: status }, "status", "Accepted. Deal is Won.");
-    } else void patch({ proposalStatus: status }, "status", status === "sent" ? "Marked sent. Deal moved to Proposal." : "Saved.");
+    } else if (status === "sent") {
+      const d = new Date(); let added = 0;
+      while (added < 2) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) added++; }
+      const at = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      void patch({ proposalStatus: status, nextStep: "Follow up on the proposal", nextStepAt: at }, "status", `Marked sent. Deal moved to Proposal, follow-up set for ${dateLabel(at)}.`);
+    } else void patch({ proposalStatus: status }, "status", "Saved.");
   }
 
   function printProposal(content: string) {
