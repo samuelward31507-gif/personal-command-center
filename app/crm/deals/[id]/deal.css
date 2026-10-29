@@ -84,3 +84,4 @@ html body main button.dw-stage.is-on { opacity: 1 !important; }
 html body main a.dw-linkbtn { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 9px; background: #ededed !important; color: #0b0b0b !important; font-size: 13px; font-weight: 600; text-decoration: none !important; }
 html body main a.dw-linkbtn:hover { background: #fff !important; }
 @media (max-width: 960px) { .dw-mailbar { grid-template-columns: 1fr; } }
+@media (max-width: 960px) { html body main button.dw-stage { flex: 0 0 auto; white-space: nowrap; } .dw-head { flex-direction: column; align-items: flex-start; gap: 12px; } }

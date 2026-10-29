@@ -45,7 +45,7 @@ export function buildScript(input: ScriptInput): ScriptStep[] {
   const company = input.company || "your company";
   return [
     { key: "open", label: "Open", tip: "Smile, slow down. Asking permission lowers their guard.",
-      say: `${hi}, it's Samuel with Cinder. Did I catch you at a bad time?` },
+      say: `${hi}, it's Samuel with CGC. Did I catch you at a bad time?` },
     { key: "reason", label: "Reason for the call", tip: "Then stop talking and let them answer.",
       say: `I'll be quick. I work with ${niche}${city ? ` around ${city}` : ""}. When a new lead fills out your form or calls after hours, how fast does someone usually get back to them?` },
     { key: "dig", label: "Dig into the pain", tip: "Listen for: voicemail, 'next day', 'when I get to it'. That's the gap.",
@@ -84,7 +84,7 @@ export function buildObjections(input: ScriptInput): Objection[] {
       say: `No, it's me, Samuel. A real person. The system we set up uses AI to respond to your leads instantly, but you stay in control of every booking.`,
       then: `Go back to the reason for the call.` },
     { key: "gatekeeper", heard: "Gatekeeper: 'What's this about?'",
-      say: `It's Samuel with Cinder. I help ${job} companies make sure new leads get answered fast. Who handles that side of the business?`,
+      say: `It's Samuel with CGC. I help ${job} companies make sure new leads get answered fast. Who handles that side of the business?`,
       then: `Get the owner's name and the best time to reach them. Log "Wrong contact" or "Callback requested".` },
   ];
 }

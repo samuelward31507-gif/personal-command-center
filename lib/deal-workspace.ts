@@ -139,7 +139,16 @@ export type EmailInput = {
   stage: string; discovery: Discovery; nextStep: string; proposalSentAt: string | null; notes: string;
 };
 
+/** First name to greet by — skipped when it's really the start of the company name (bad list data like "Dive" for "Dive Deep Pools"). */
+export function greetingName(firstName: string, company: string): string {
+  const f = firstName.trim();
+  if (!f || f.length < 2) return "";
+  if (company.trim().toLowerCase().startsWith(f.toLowerCase())) return "";
+  return f;
+}
+
 export function buildEmailPrompt(p: EmailInput) {
+  const first = greetingName(p.firstName, p.company);
   const facts = DISCOVERY_FIELDS.filter(f => p.discovery[f.key]).slice(0, 8).map(f => `- ${f.label}: ${p.discovery[f.key]}`).join("\n") || "- (none)";
   const system = `You write short follow-up emails that ${p.senderName} sends himself to contractors (fence, pool and similar). Email only.
 Rules: Plain text, no markdown. Under 120 words in the body. Sound like a real person: direct, warm, no hype words, no exclamation marks, no "I hope this finds you well". One clear ask. Use only the facts given; never invent numbers, results or claims. Sign off with just "${p.senderName}".
@@ -148,7 +157,7 @@ Subject: <short subject, under 8 words>
 
 <body>`;
   const user = `Purpose: ${EMAIL_PURPOSES[p.purpose].label} — ${EMAIL_PURPOSES[p.purpose].brief}
-To: ${p.firstName || "the owner"} at ${p.company}
+To: ${first || "the owner (name unknown — greet with \"Hi there\")"} at ${p.company}
 Deal stage: ${p.stage}${p.proposalSentAt ? ` · proposal sent ${p.proposalSentAt.slice(0, 10)}` : ""}${p.nextStep ? ` · next step: ${p.nextStep}` : ""}
 What we know:
 ${facts}

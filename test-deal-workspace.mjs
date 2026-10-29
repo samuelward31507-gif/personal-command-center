@@ -1,7 +1,7 @@
 // Regression tests for discovery + proposals. Run with: node --experimental-strip-types test-deal-workspace.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { cleanDiscovery, discoveryCompleteness, stageForProposal, buildProposalPrompt, DISCOVERY_FIELDS, stageForContract, buildAgreementPrompt, buildEmailPrompt, parseEmailDraft, mailtoLink, isEmailPurpose, EMAIL_PURPOSES } from "./lib/deal-workspace.ts";
+import { cleanDiscovery, discoveryCompleteness, stageForProposal, buildProposalPrompt, DISCOVERY_FIELDS, stageForContract, buildAgreementPrompt, buildEmailPrompt, parseEmailDraft, mailtoLink, isEmailPurpose, EMAIL_PURPOSES, greetingName } from "./lib/deal-workspace.ts";
 
 let n = 0;
 const ok = fn => { fn(); n++; };
@@ -40,6 +40,8 @@ const em = buildEmailPrompt({ purpose: "no_show", company: "Ironwood", firstName
 ok(() => assert.match(em.system, /Email only/));
 ok(() => assert.match(em.system, /never invent/));
 ok(() => assert.match(em.user, /To: Dale at Ironwood/));
+ok(() => assert.equal(greetingName("Dive", "Dive Deep Custom Pools"), "", "company-name fragments aren't greeted as a person"));
+ok(() => assert.equal(greetingName("Mike", "Ridgeline Fence"), "Mike"));
 ok(() => assert.deepEqual(parseEmailDraft("Subject: Quick follow-up\n\nHi Dale,\nThanks."), { subject: "Quick follow-up", body: "Hi Dale,\nThanks." }));
 ok(() => assert.deepEqual(parseEmailDraft("**Subject:** Hi\nBody"), { subject: "Hi", body: "Body" }));
 ok(() => assert.deepEqual(parseEmailDraft("Just a body"), { subject: "", body: "Just a body" }));
