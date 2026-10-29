@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { sendAlert } from "@/lib/notify";
 import { sanitizeForLog } from "@/lib/business-audit";
 import { runPreAudit, logRun } from "@/lib/pre-audit";
 
@@ -18,7 +19,10 @@ export async function GET(request: Request) {
   const fromVercelCron = /vercel-cron/i.test(request.headers.get("user-agent") ?? "");
   const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null;
   if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
-    if (sql && fromVercelCron) await logRun(sql, "pre-audit", "cron", "unauthorized", { reason: secret ? "authorization header did not match CRON_SECRET" : "CRON_SECRET is not set" }, started);
+    if (sql && fromVercelCron) {
+      await logRun(sql, "pre-audit", "cron", "unauthorized", { reason: secret ? "authorization header did not match CRON_SECRET" : "CRON_SECRET is not set" }, started);
+      await sendAlert({ subject: "Overnight audits didn't run", lines: ["The overnight audit job was refused: its secret didn't match.", "Run them by hand from Settings → Overnight audits → Run now."], link: { label: "Open Settings", path: "/crm/settings" } });
+    }
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const owner = process.env.CINDER_OWNER_ID?.trim();
@@ -37,6 +41,7 @@ export async function GET(request: Request) {
     const message = sanitizeForLog(error instanceof Error ? error.message : "");
     console.error("Pre-audit failed", { name: error instanceof Error ? error.name : typeof error, message });
     await logRun(sql, "pre-audit", "cron", "error", { reason: (error instanceof Error ? error.name : "error") + ": " + message.slice(0, 300) }, started);
+    await sendAlert({ subject: "Overnight audits failed", lines: ["The overnight audit job hit an error.", "Run them by hand from Settings → Overnight audits → Run now."], link: { label: "Open Settings", path: "/crm/settings" } });
     return Response.json({ error: "Pre-audit failed" }, { status: 500 });
   }
 }

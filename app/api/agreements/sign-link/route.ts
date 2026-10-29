@@ -70,7 +70,8 @@ export async function POST(request: Request) {
     await sql`UPDATE public.deals SET contract_status = 'sent', contract_sent_at = COALESCE(contract_sent_at, now()),
       next_step = 'Follow up on the agreement', next_step_at = ${twoBusinessDays(tz)}::date, updated_at = now()
       WHERE id = ${body.dealId}::uuid AND owner_id = ${user.id}`;
-    const origin = new URL(request.url).origin;
+    // Client-facing links use the public website domain when set (it proxies /sign to Cinder).
+    const origin = process.env.CINDER_PUBLIC_ORIGIN?.trim().replace(/\/$/, "") || new URL(request.url).origin;
     return Response.json({ url: `${origin}/sign/${token}` }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Sign-link create failed", { name: error instanceof Error ? error.name : typeof error, message: sanitizeForLog(error instanceof Error ? error.message : "") });
