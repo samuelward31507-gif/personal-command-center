@@ -36,7 +36,7 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
       ORDER BY e.starts_at LIMIT 50`,
     sql`SELECT d.id, d.title, d.stage, d.expected_close_date, d.contact_id, d.next_step, d.next_step_at,
         (SELECT max(a.occurred_at) FROM public.contact_activities a WHERE a.owner_id = d.owner_id AND a.contact_id = d.contact_id) AS last_activity_at
-      FROM public.deals d WHERE d.owner_id = ${owner} AND d.stage NOT IN ('won','lost') LIMIT 100`,
+      FROM public.deals d WHERE d.owner_id = ${owner} AND (d.stage NOT IN ('won','lost') OR (d.stage = 'won' AND d.next_step_at IS NOT NULL)) LIMIT 100`,
     sql`SELECT id, name, status, target_date FROM public.projects
       WHERE owner_id = ${owner} AND status NOT IN ('completed','cancelled','on_hold')
         AND (status = 'blocked' OR target_date <= ${today}::date) LIMIT 50`,
