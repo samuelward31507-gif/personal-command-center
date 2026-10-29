@@ -71,3 +71,4 @@ html body main button.dw-bad { color: #f2a5a5 !important; border-color: #3a2424 
 
 html body main button.dw-stage.is-on { opacity: 1 !important; }
 .dw-upsell{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid #1c1c1c;font-size:13px;color:#d4d4d4}
+.dw-mini-link{font-size:12.5px;color:#bdbdbd!important;text-decoration:none!important}.dw-mini-link:hover{color:#fff!important}
