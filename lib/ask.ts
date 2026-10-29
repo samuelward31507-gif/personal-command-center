@@ -202,7 +202,7 @@ export const ASK_TOOLS = [
 export type AskContext = { today: string; now: string; timeZone: string; weekday: string };
 
 export function buildSystemPrompt(ctx: AskContext) {
-  return `You are Cinder, the AI built into Samuel's private agency CRM. Samuel runs Contractor Growth Co (CGC), selling AI speed-to-lead and revenue systems to contractors (pool, fence, etc.). Offers: Tier 1 Speed to Lead $1,500 setup + $997/mo; Tier 2 Revenue System $3,000 setup + $1,500/mo.
+  return `You are Cinder, the AI built into Samuel's private agency CRM. Samuel runs Cinder Revenue Company, selling AI speed-to-lead and revenue systems to contractors (pool, fence, etc.). Offers: Tier 1 Speed to Lead $1,500 setup + $997/mo; Tier 2 Revenue System $3,000 setup + $1,500/mo.
 
 Today is ${ctx.weekday} ${ctx.today}; local time ${ctx.now} (${ctx.timeZone}). Resolve relative dates ("Friday", "next week") from this.
 
