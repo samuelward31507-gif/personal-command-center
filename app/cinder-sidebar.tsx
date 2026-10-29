@@ -122,9 +122,9 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
 
       <div className="cx-foot">
         {item(["settings", "Settings", "settings", "/crm/settings"])}
-        <div className="cx-profile" title={collapsed ? "Samuel · Contractor Growth Co" : undefined}>
+        <div className="cx-profile" title={collapsed ? "Samuel · Cinder Revenue Company" : undefined}>
           <span className="cx-avatar">S</span>
-          <span className="cx-label cx-profile-copy"><strong>Samuel</strong><small>Contractor Growth Co</small></span>
+          <span className="cx-label cx-profile-copy"><strong>Samuel</strong><small>Cinder Revenue Company</small></span>
         </div>
       </div>
     </aside>
