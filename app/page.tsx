@@ -56,6 +56,7 @@ function HomeContent() {
  useEffect(() => {
   // Old ?view= links point at real pages now; only My day lives inside Home.
   const routes: Record<string,string> = {"needs-you":"/crm/needs-you",growth:"/crm",tasks:"/crm/tasks",workforce:"/crm/workforce",projects:"/crm/projects","client-success":"/crm/client-success",finance:"/crm/finance",intelligence:"/crm/intelligence",strategy:"/crm/strategy",settings:"/crm/settings",calendar:"/crm/calendar",audit:"/crm/audit",preparation:"/crm/preparation"};
+  if (requestedView === "schedule") { window.location.replace("/crm/needs-you"); return; } // My day merged into Today
   if (requestedView && routes[requestedView]) { window.location.replace(routes[requestedView]); return; }
   setActiveView(requestedView === "schedule" ? "schedule" : "home");
  }, [requestedView]);
@@ -135,7 +136,7 @@ function HomeContent() {
  const toggle = (id: string) => setDone(old => old.includes(id) ? old.filter(x=>x!==id) : [...old,id]);
  return <main className="app-shell" id="home">
   <CinderSidebar activeKey={activeView} mode="home" onNavigate={navigate} />
-  <section className="main-panel"><header className="topbar"><div className="breadcrumbs"><span>Cinder</span><span className="breadcrumb-slash">/</span><strong>{activeView==="schedule"?"My day":activeView==="growth"?"Growth":activeView==="home"?"Home":viewDetails[activeView]?.title??"Home"}</strong></div><div className="topbar-actions"><span className="topbar-status"><span className="status-ring"/> Agency workspace</span><a className="quiet-button" href="/crm/needs-you" style={{textDecoration:"none"}}>Needs you →</a></div></header>
+  <section className="main-panel"><header className="topbar"><div className="breadcrumbs"><span>Cinder</span><span className="breadcrumb-slash">/</span><strong>{activeView==="schedule"?"My day":activeView==="growth"?"Growth":activeView==="home"?"Home":viewDetails[activeView]?.title??"Home"}</strong></div><div className="topbar-actions"><span className="topbar-status"><span className="status-ring"/> Agency workspace</span><a className="quiet-button" href="/crm/needs-you" style={{textDecoration:"none"}}>Today →</a></div></header>
    {activeView==="schedule" ? <div className="page-content route-page">
     <div className="welcome-row"><div><div className="eyebrow"><span className="eyebrow-line"/> DAILY OPERATING PLAN</div><h1>My day<span className="heading-period">.</span></h1><p className="page-subtitle">A repeatable founder routine, with revenue work protected and priorities visible.</p></div><span className="date-chip">Routine template · Central time</span></div>
     <section className="schedule-summary"><div><span className="summary-label">DAILY ROUTINE</span><strong>5:00 AM – 9:00 PM</strong></div><div><span className="summary-label">COMPLETED</span><strong>{done.filter(x=>x.startsWith("routine:")).length} / {routine.length} blocks</strong></div><div><span className="summary-label">TOP PRIORITY</span><strong>Revenue & acquisition</strong></div></section>

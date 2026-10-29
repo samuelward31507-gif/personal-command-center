@@ -151,7 +151,7 @@ export default function CallModePage() {
         <p className="cm-sub">{logged.length ? `${logged.length} logged this session · ` : ""}Follow-ups first, then today&apos;s fresh prospects. You dial; Cinder keeps score.</p>
       </div>
       <div className="cm-head-actions">
-        <Link className="cm-link" href="/crm/needs-you">Needs you</Link>
+        <Link className="cm-link" href="/crm/needs-you">Today</Link>
         <button data-variant="primary" className="cm-btn" onClick={() => void load()}>Refresh</button>
       </div>
     </header>

@@ -66,6 +66,16 @@ Evidence from Vercel runtime-error clusters (7-day window) and env metadata (nam
 - [x] **Phase 5 — won deal → onboarding → money** (`07edbf5`, PR #20): marking a deal won auto-runs the idempotent handoff (`lib/deal-handoff.ts`): onboarding project (launch target +28 days), 9 dated milestones incl. 7- and 30-day reviews, contact → customer, prospecting sequence completed, expected receivables (setup at signing, first retainer at go-live). Never records payment. Fixed duplicate client-side checklist and the projects service-type constraint that would have blocked tier deals (migration 0019, applied to preview-test and production). Money page: open pipeline, due-in-30-days, recurring costs. Handoff SQL exercised end-to-end on preview-test.
 - [ ] Point Needs You at `/api/my-day` (it still assembles a parallel queue in the browser).
 
+## Sales process A–Z checkpoint — 2026-10-29
+- [x] **Ask Cinder** (Home): AI chat over the CRM + web; owner-scoped read tools; changes proposed as confirm cards and executed by `/api/ask/execute`; streamed replies; fixed intermittent 400 from unreplayed thinking blocks.
+- [x] **Stealth design layer** (`app/stealth.css`) + Claude-style collapsible sidebar with the website's Cinder mark.
+- [x] **Call mode** (`/crm/call`): follow-ups then fresh prospects; audit brief, talk track, objection answers; tel: dialing; outcomes with notes; meeting booking creates a calendar event; callback dates.
+- [x] **Deal workspace** (`/crm/deals/[id]`): next step (feeds Needs you), structured discovery, AI-drafted proposal (edit/copy/print), sent → Proposal, accepted → Won (handoff, payments stay expected), declined → Lost with reason. Migration 0020 (additive) applied to preview-test and production.
+- [x] **Scoreboard** (`/crm/scoreboard`): $50k goal (collected vs expected vs gap, deals needed), calls/streak, 14-day activity, 30-day funnel, open pipeline.
+- [ ] **Inbound leads from the website** — needs a change in the website repo, which also hosts trackPR routes; requires explicit approval before touching it.
+- [ ] Nurture re-engagement dates, referral source tracking, upsell deals from existing clients (audit "Future upsells" → one-tap deal).
+- [ ] Cal.ai booking sync go-live (founder config in Cal.com), Hermes daily brief, ⌘K chat on every page, Calendar page stealth pass (needs explicit OK).
+
 ## Phase 0 — Baseline audit and release confidence
 **Status: In progress — sign-in and desktop sidebar confirmed by user; mobile navigation implementation added, live mobile verification still open**
 - [x] Confirm the active code branch, latest deployment, and what code is actually deployed.

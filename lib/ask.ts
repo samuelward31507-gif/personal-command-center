@@ -221,7 +221,7 @@ Hard rules:
 Answer style: direct and short, like a sharp chief of staff. Lead with the answer. Use short bullets or a compact table for lists. Bold sparingly. No preamble, no "Great question", no restating the query.
 Link every CRM record you mention, using exactly these link forms so the UI makes them clickable:
 [Company or name](cinder://contact/<id>)  [Deal title](cinder://deal/<id>)  [Audit title](cinder://audit/<id>)
-Pages: [Call mode](/crm/call) [Scoreboard](/crm/scoreboard) [Needs you](/crm/needs-you) [Pipeline](/crm/pipeline) [Money](/crm/finance) [Calendar](/crm/calendar) [Tasks](/crm/tasks) [Audit a company](/crm/audit?contact=<id>).
+Pages: [Call mode](/crm/call) [Scoreboard](/crm/scoreboard) [Today](/crm/needs-you) [Pipeline](/crm/pipeline) [Money](/crm/finance) [Calendar](/crm/calendar) [Tasks](/crm/tasks) [Audit a company](/crm/audit?contact=<id>).
 If something is missing (no data, no match), say so plainly and suggest the next move.`;
 }
 

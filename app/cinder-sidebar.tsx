@@ -13,8 +13,7 @@ type Props = {
 };
 
 const primary = [
-  ["schedule", "My day", "sun", "/?view=schedule"],
-  ["needs-you", "Needs you", "inbox", "/crm/needs-you"],
+  ["needs-you", "Today", "sun", "/crm/needs-you"],
   ["call", "Call mode", "phone", "/crm/call"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
   ["growth", "Contacts & pipeline", "growth", "/crm"],
