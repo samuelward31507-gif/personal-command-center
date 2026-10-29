@@ -7,6 +7,23 @@ import { createAuthClient } from "@neondatabase/auth/next";
 
 const authClient = createAuthClient();
 
+/** Public lead form link: share it in your bio, email signature or anywhere prospects find you. */
+function LeadFormLink() {
+  const [url, setUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+  useEffect(() => { setUrl(window.location.origin + "/start"); }, []);
+  return <section style={{ marginTop: 26, border: "1px solid #2a221c", borderRadius: 14, background: "#151210", padding: 20 }}>
+    <h2 style={{ fontSize: 18, margin: 0 }}>Your lead form</h2>
+    <p style={{ color: "#a1a1a1", fontSize: 13, margin: "6px 0 14px" }}>Anyone who fills this out lands in Contacts as a lead, with a follow-up for today and an urgent task to call them. Nothing is sent to them automatically.</p>
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+      <code style={{ flex: "1 1 260px", padding: "9px 12px", borderRadius: 9, border: "1px solid #2a2a2a", background: "#0c0c0c", color: "#ededed", fontSize: 13 }}>{url || "/start"}</code>
+      <button data-variant="primary" onClick={() => { void navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); }); }}
+        style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #ededed", background: "#ededed", color: "#0b0b0b", fontWeight: 600, cursor: "pointer" }}>{copied ? "Copied" : "Copy link"}</button>
+      <Link href="/start" target="_blank" rel="noreferrer" style={{ color: "#cfcfcf", fontSize: 13 }}>Open ↗</Link>
+    </div>
+  </section>;
+}
+
 export default function SettingsPage() {
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
@@ -67,6 +84,8 @@ export default function SettingsPage() {
       </section>
 
       {error && <p role="alert" style={{ marginTop: 20, padding: 12, borderRadius: 8, background:"#2a1414", color:"#fca5a5", fontSize: 13 }}>{error}</p>}
+
+      <LeadFormLink />
 
       <section style={{ marginTop: 26, border:"1px solid #303030", borderRadius: 14, background:"#171717", padding: 20 }}>
         <h2 style={{ fontSize: 18, margin: 0 }}>Workspace connections</h2>

@@ -24,6 +24,13 @@ type Workspace = {
 
 const money = (n: number) => "$" + Number(n || 0).toLocaleString("en-US");
 const dateLabel = (v: string | null) => (v ? new Date(v.length === 10 ? v + "T12:00:00" : v).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "");
+const inDays = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+/** Turn the audit's "Future upsells" section into short, clickable ideas. */
+function upsellIdeas(text: string): string[] {
+  return text.split("\n").map(l => l.replace(/\*+/g, "").replace(/^[-•\d.)\s]+/, "").trim())
+    .filter(l => l && !/^later only|not part of the first pitch/i.test(l))
+    .map(l => l.split(/[:(—]/)[0].trim()).filter(l => l.length > 3 && l.length < 70).slice(0, 4);
+}
 const PROPOSAL_COPY: Record<ProposalStatus, string> = { none: "No proposal yet", draft: "Draft ready", sent: "Sent — waiting on them", accepted: "Accepted", declined: "Declined" };
 
 export default function DealWorkspacePage() {
@@ -109,6 +116,20 @@ export default function DealWorkspacePage() {
     w.document.close();
   }
 
+  async function createUpsell(idea: string) {
+    if (!ws) return;
+    setSaving("upsell"); setFlash(null);
+    try {
+      const who = ws.contact?.company || ws.deal.title.split(" — ")[0];
+      const r = await fetch("/api/deals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        title: `${who} — Upsell: ${idea}`.slice(0, 240), contactId: ws.contact?.id ?? null, serviceType: "custom_ai_implementation",
+        stage: "contacted", setupFee: 0, monthlyFee: 0, source: "upsell", notes: `Upsell from ${ws.deal.title}: ${idea}` }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Could not create the upsell deal.");
+      window.location.assign("/crm/deals/" + d.id);
+    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not create the upsell deal." }); setSaving(null); }
+  }
+
   if (error) return <main className="dw-page"><p className="dw-err">{error}</p><Link href="/crm/pipeline">← Pipeline</Link></main>;
   if (!ws) return <main className="dw-page"><p className="dw-muted">Loading deal…</p></main>;
   const { deal, contact } = ws;
@@ -134,7 +155,7 @@ export default function DealWorkspacePage() {
     </header>
 
     <div className="dw-stages" aria-label="Stage">
-      {DEAL_STAGES.filter(s => s !== "nurture").map(s => {
+      {DEAL_STAGES.map(s => {
         const order = DEAL_STAGES.indexOf(s as typeof DEAL_STAGES[number]);
         const cur = DEAL_STAGES.indexOf(deal.stage as typeof DEAL_STAGES[number]);
         const state = s === deal.stage ? "is-on" : deal.stage !== "lost" && order < cur && s !== "lost" ? "is-past" : "";
@@ -142,6 +163,13 @@ export default function DealWorkspacePage() {
           onClick={() => {
             if (s === "won" && !confirm("Mark Won? Onboarding starts and payments are booked as expected, not paid.")) return;
             if (s === "lost") { const reason = prompt("Why was it lost?"); if (!reason) return; void patch({ stage: s, lostReason: reason }, "stage", "Moved to Lost."); return; }
+            if (s === "nurture") {
+              const d = new Date(); d.setDate(d.getDate() + 30);
+              const def = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+              const at = prompt("Not now, but maybe later. When should Cinder remind you to check back? (YYYY-MM-DD)", def);
+              if (!at || !/^\d{4}-\d{2}-\d{2}$/.test(at)) return;
+              void patch({ stage: s, nextStep: "Check back in", nextStepAt: at }, "stage", `Parked in Nurture. It comes back to Today on ${dateLabel(at)}.`); return;
+            }
             void patch({ stage: s }, "stage", `Moved to ${STAGE_LABELS[s]}.`);
           }}>{STAGE_LABELS[s]}</button>;
       })}
@@ -204,7 +232,14 @@ export default function DealWorkspacePage() {
 
       <aside className="dw-col dw-side">
         {ws.project && <section className="dw-box dw-win"><h2>Onboarding</h2><p><Link href="/crm/projects">{ws.project.name}</Link> · {ws.project.status.replace(/_/g, " ")}{ws.project.targetDate ? ` · launch ${dateLabel(ws.project.targetDate)}` : ""}</p></section>}
-        {ws.audit && <section className="dw-box"><h2>Audit</h2><p className="dw-small">{ws.audit.verdict.replace(/\*\*/g, "")}</p>{ws.audit.upsells && <><div className="dw-label">Later upsells</div><p className="dw-small">{ws.audit.upsells.replace(/\*\*/g, "").split("\n").slice(0, 3).join(" · ")}</p></>}</section>}
+        {ws.audit && <section className="dw-box"><h2>Audit</h2><p className="dw-small">{ws.audit.verdict.replace(/\*\*/g, "")}</p>{ws.audit.upsells && deal.stage !== "won" && <><div className="dw-label">Later upsells</div><p className="dw-small">{ws.audit.upsells.replace(/\*\*/g, "").split("\n").slice(0, 3).join(" · ")}</p></>}</section>}
+        {deal.stage === "won" && <section className="dw-box"><h2>Grow this client</h2>
+          <p className="dw-small">Upsells and referrals come from clients who are getting results. Start one as its own deal.</p>
+          {upsellIdeas(ws.audit?.upsells ?? "").map(idea => <div key={idea} className="dw-upsell"><span>{idea}</span>
+            <button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => void createUpsell(idea)}>Create deal</button></div>)}
+          <div className="dw-row"><button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => { const idea = prompt("What's the upsell? (e.g. Old-lead reactivation, Tier 2 upgrade)"); if (idea) void createUpsell(idea); }}>+ Other upsell</button>
+            <button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => void patch({ nextStep: "Ask for a referral", nextStepAt: inDays(30) }, "next", "Referral ask scheduled for 30 days out — it'll show in Today.")}>Remind me to ask for a referral</button></div>
+        </section>}
         <section className="dw-box"><h2>Meetings</h2>{ws.events.length ? ws.events.map(e => <div key={e.id} className="dw-line"><span>{e.title}</span><small>{new Date(e.startsAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</small></div>) : <p className="dw-muted">None yet.</p>}</section>
         <section className="dw-box"><h2>Open tasks</h2>{ws.tasks.length ? ws.tasks.map(t => <div key={t.id} className="dw-line"><span>{t.title}</span><small>{t.due ? dateLabel(t.due) : t.priority}</small></div>) : <p className="dw-muted">None.</p>}</section>
         <section className="dw-box"><h2>Call history</h2>{ws.activity.length ? ws.activity.map((a, i) => <div key={i} className="dw-line"><span>{OUTCOME_LABELS[a.outcome as CallOutcome] ?? a.outcome.replace(/_/g, " ")}{a.notes ? ` — ${a.notes.slice(0, 80)}` : ""}</span><small>{dateLabel(a.at)}</small></div>) : <p className="dw-muted">No calls logged.</p>}</section>
