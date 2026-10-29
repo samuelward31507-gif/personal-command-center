@@ -103,7 +103,7 @@ export function ActionCard({ action }: { action: AskAction }) {
     <span className="ask-action-icon" aria-hidden="true">{state === "done" ? "✓" : KIND_ICON[action.kind] ?? "•"}</span>
     <div className="ask-action-main">
       <strong>{action.label}</strong>
-      <small>{state === "done" || state === "error" ? result?.message : [action.summary, ...describe(action)].filter(Boolean).join(" · ")}</small>
+      <small>{state === "done" || state === "error" ? result?.message : (describe(action).filter(Boolean).join(" · ") || action.summary)}</small>
     </div>
     {state === "done"
       ? result?.href && <a className="ask-btn" href={result.href}>Open</a>

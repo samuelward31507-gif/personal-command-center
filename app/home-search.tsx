@@ -158,6 +158,7 @@ export default function HomeSearch() {
   const open = focused && !busy && (query.trim().length > 0 || !thread);
 
   return <div className={"hs-wrap" + (thread ? " has-thread" : "")}>
+    <div className="hs-head">
     <div className={"hs-bar" + (focused ? " is-focused" : "") + (open ? " is-open" : "") + (busy ? " is-busy" : "")}>
       <span className="hs-logo" aria-hidden="true"><Logo /></span>
       <span className="hs-divider" aria-hidden="true" />
@@ -205,6 +206,7 @@ export default function HomeSearch() {
       </div>
       <div className="hs-foot"><span><kbd>↵</kbd> ask</span><span><kbd>↑</kbd><kbd>↓</kbd> pick</span><span><kbd>esc</kbd> {query ? "clear" : "close"}</span></div>
     </div>}
+    </div>
 
     {thread && <div className="ask-thread">
       {turns.map(t => <article key={t.id} className="ask-turn">

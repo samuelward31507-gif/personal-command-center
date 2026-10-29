@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       }
       case "set_follow_up": {
         await sql`UPDATE public.contacts SET follow_up_at = ${p.date}::date, updated_at = now() WHERE id = ${p.contactId}::uuid AND owner_id = ${owner}`;
-        return Response.json({ ok: true, message: `Follow-up set for ${p.date}.`, href: "/crm?contact=" + p.contactId });
+        return Response.json({ ok: true, message: `Follow-up set for ${new Date(String(p.date) + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" })}.`, href: "/crm?contact=" + p.contactId });
       }
       case "add_note": {
         await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes) VALUES (${owner}, ${p.contactId}::uuid, 'note', 'note', 'other', ${p.note})`;
