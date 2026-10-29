@@ -8,7 +8,7 @@
 .st-form { padding: 24px; border: 1px solid #222; border-radius: 18px; background: #131313; }
 .st-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .st-grid label { display: grid; gap: 6px; font-size: 13px; font-weight: 500; color: #b5b5b5; }
-.st-grid label span { color: #e58c63; }
+.st-l i { color: #e58c63; font-style: normal; }
 .st-wide { grid-column: 1 / -1; }
 .st-hp { position: absolute !important; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .st-form input, .st-form select, .st-form textarea {

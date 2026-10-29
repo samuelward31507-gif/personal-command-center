@@ -39,8 +39,8 @@ export default function StartPage() {
         </div>
         <form className="st-form" onSubmit={submit}>
           <div className="st-grid">
-            <label>Your name <span>*</span><input name="name" required autoComplete="name" /></label>
-            <label>Business name <span>*</span><input name="company" required autoComplete="organization" /></label>
+            <label><span className="st-l">Your name <i>*</i></span><input name="name" required autoComplete="name" /></label>
+            <label><span className="st-l">Business name <i>*</i></span><input name="company" required autoComplete="organization" /></label>
             <label>Phone<input name="phone" type="tel" autoComplete="tel" placeholder="(555) 555-5555" /></label>
             <label>Email<input name="email" type="email" autoComplete="email" /></label>
             <label>Trade<select name="trade" defaultValue=""><option value="" disabled>Choose one</option>{INBOUND_TRADES.map(t => <option key={t}>{t}</option>)}</select></label>
