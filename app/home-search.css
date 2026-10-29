@@ -2,10 +2,10 @@
    Class names deliberately avoid "card", "panel", "stat", "menu"… which global theme rules force to gray. */
 
 .ask-root {
-  --ask-bg: #101010;
-  --ask-composer: #1d1d1d;
-  --ask-composer-line: #2f2f2f;
-  --ask-bubble: #262626;
+  --ask-bg: #0b0b0b;
+  --ask-composer: #141414;
+  --ask-composer-line: #262626;
+  --ask-bubble: #1c1c1c;
   --ask-text: #ececec;
   --ask-soft: #b4b4b4;
   --ask-faint: #7a7a7a;
@@ -15,7 +15,7 @@
 }
 
 /* ---------- Empty state ---------- */
-.ask-root-empty { min-height: calc(100vh - 58px); display: flex; align-items: center; justify-content: center; padding: 0 20px 12vh; }
+.ask-root-empty { min-height: calc(100vh - 52px); display: flex; align-items: center; justify-content: center; padding: 0 20px 12vh; }
 .ask-hero { width: min(740px, 100%); display: flex; flex-direction: column; align-items: center; }
 .ask-root .ask-hello {
   display: flex; align-items: center; gap: 14px; margin: 0 0 30px; color: #ededed !important;
@@ -26,7 +26,7 @@
 .ask-suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
 .ask-root .ask-pill {
   display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px;
-  border: 1px solid #2c2c2c !important; background: transparent !important; color: var(--ask-soft) !important;
+  border: 1px solid #222 !important; background: #0f0f0f !important; color: var(--ask-soft) !important;
   font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
 }
 .ask-root .ask-pill svg { color: #8a8a8a; }
@@ -68,11 +68,11 @@
 .ask-root .ask-fineprint { margin: 8px 0 0; text-align: center; font-size: 11.5px; color: #6a6a6a !important; }
 
 /* ---------- Chat ---------- */
-.ask-root-chat { min-height: calc(100vh - 58px); display: flex; flex-direction: column; align-items: center; padding: 0 20px; }
+.ask-root-chat { min-height: calc(100vh - 52px); display: flex; flex-direction: column; align-items: center; padding: 0 20px; }
 .ask-thread { width: min(760px, 100%); flex: 1; padding: 36px 0 28px; display: flex; flex-direction: column; gap: 34px; }
 .ask-root-chat > .ask-composer-wrap {
   position: sticky; bottom: 0; z-index: 30; width: min(760px, 100%); padding: 14px 0 14px;
-  background: linear-gradient(to bottom, rgba(16,16,16,0), var(--ask-bg) 26px);
+  background: linear-gradient(to bottom, rgba(11,11,11,0), var(--ask-bg) 26px);
 }
 .ask-exchange { display: flex; flex-direction: column; gap: 22px; animation: ask-in .22s ease-out; }
 @keyframes ask-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -178,3 +178,7 @@
   .ask-action-btns { width: 100%; justify-content: flex-end; }
   .ask-tool span { display: none; }
 }
+
+.ask-root .ask-slow { margin-top: 8px; font-size: 12.5px; color: #6f6f6f !important; }
+.ask-root .ask-composer { background: linear-gradient(180deg, #161616, #121212) !important; }
+.ask-hello-mark { filter: none; }
