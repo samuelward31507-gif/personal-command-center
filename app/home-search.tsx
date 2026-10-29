@@ -6,7 +6,7 @@ import { ActionCard, Markdown } from "./ask-answer";
 import "./home-search.css";
 
 type Turn = {
-  id: number; query: string; status: string; draft: string;
+  id: number; started: number; query: string; status: string; draft: string;
   answer?: string; actions: AskAction[]; sources?: { url: string; title: string }[]; error?: string; done: boolean;
 };
 
@@ -53,6 +53,12 @@ export default function HomeSearch() {
   const abort = useRef<AbortController | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!busy) return;
+    const iv = setInterval(() => setTick(n => n + 1), 1000);
+    return () => clearInterval(iv);
+  }, [busy]);
 
   useEffect(() => {
     setHello(greeting());
@@ -87,7 +93,7 @@ export default function HomeSearch() {
     const ctrl = new AbortController(); abort.current = ctrl;
     const id = Date.now();
     const history = base.filter(t => t.answer).flatMap(t => [{ role: "user", content: t.query }, { role: "assistant", content: t.answer! }]);
-    setTurns([...base, { id, query: q, status: "Thinking", draft: "", actions: [], done: false }]);
+    setTurns([...base, { id, started: Date.now(), query: q, status: "Thinking", draft: "", actions: [], done: false }]);
     setInput(""); setBusy(true); atBottom.current = true;
     const update = (fn: (t: Turn) => Turn) => setTurns(old => old.map(t => (t.id === id ? fn(t) : t)));
     try {
@@ -185,6 +191,7 @@ export default function HomeSearch() {
           <div className="ask-body">
             {t.error && !t.answer && <div className="ask-err" role="alert">{t.error}</div>}
             {(t.answer ?? t.draft) ? <Markdown text={t.answer ?? t.draft} /> : !t.done && <div className="ask-think">{t.status}…</div>}
+            {!t.done && !t.draft && Date.now() - t.started > 12000 && <div className="ask-slow">Still working. The first question after a quiet stretch can take up to half a minute.</div>}
             {!t.done && (t.draft) && <div className="ask-think ask-think-inline">{t.status === "Writing" || t.status === "Thinking" ? "" : t.status + "…"}</div>}
             {t.actions.length > 0 && <div className="ask-actions">{t.actions.map((a, i) => <ActionCard key={i} action={a} />)}</div>}
             {!!t.sources?.length && <div className="ask-sources">{t.sources.map(s => <a key={s.url} href={s.url} target="_blank" rel="noreferrer"><span>{hostOf(s.url)}</span>{s.title.slice(0, 70)}</a>)}</div>}

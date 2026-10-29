@@ -61,4 +61,5 @@ ok(() => assert.match(route, /if \(!user\) return fail\("Unauthorized", 401\)/))
 ok(() => assert.match(exec, /if \(!user\) return fail\("Unauthorized", 401\)/));
 ok(() => assert.doesNotMatch(route + exec + data, /twilio|n8n|sendSms|resend/i));
 
+ok(() => assert.match(route, /thinking_delta/) && assert.match(route, /signature_delta/), "streamed thinking blocks are rebuilt for tool-result replays");
 console.log(`Ask Cinder regression checks passed (${n} assertions).`);

@@ -2,6 +2,7 @@
 import "./cinder-sidebar.css";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 
 type Props = {
   activeKey: string;
@@ -11,124 +12,118 @@ type Props = {
 };
 
 const primary = [
-  ["home", "Home", "home", "/"],
-  ["schedule", "My day", "grid", "/?view=schedule"],
+  ["schedule", "My day", "sun", "/?view=schedule"],
+  ["needs-you", "Needs you", "inbox", "/crm/needs-you"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
-  ["needs-you", "Needs you", "list", "/crm/needs-you"],
-  ["growth", "Growth", "growth", "/crm"],
+  ["growth", "Contacts & pipeline", "growth", "/crm"],
   ["preparation", "Preparation", "edit", "/crm/preparation"],
   ["tasks", "Tasks", "check", "/crm/tasks"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
-  ["client-success", "Client success", "client", "/crm/client-success"],
+  ["client-success", "Clients", "client", "/crm/client-success"],
   ["finance", "Money", "money", "/crm/finance"],
-  ["workforce", "AI team", "spark", "/crm/workforce"],
 ] as const;
 const secondary = [
-  ["audit", "Business audit", "strategy", "/crm/audit"],
-  ["intelligence", "Intelligence", "spark", "/crm/intelligence"],
+  ["audit", "Business audit", "search", "/crm/audit"],
+  ["workforce", "AI team", "spark", "/crm/workforce"],
+  ["intelligence", "Intelligence", "bulb", "/crm/intelligence"],
   ["strategy", "Strategy & memory", "strategy", "/crm/strategy"],
-  ["settings", "Settings", "settings", "/crm/settings"],
 ] as const;
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
-    home: <><path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/></>,
-    grid: <><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></>,
+    sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></>,
+    inbox: <><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6Z"/></>,
     calendar: <><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M7.5 3v4M16.5 3v4M4 9.5h16"/></>,
-    list: <><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></>,
     growth: <><path d="M4 16 10 10l4 4 6-8"/><path d="M14 6h6v6"/></>,
     edit: <><path d="m14 5 5 5"/><path d="M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"/></>,
-    check: <path d="m5 12 4 4L19 6"/>,
-    delivery: <><path d="M3 7h18l-2 13H5L3 7Z"/><path d="M8 7V4h8v3"/></>,
+    check: <><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="m8 12 3 3 5-6"/></>,
+    delivery: <><path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="m3 8 9 5 9-5M12 13v8"/></>,
     client: <><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.5-4 3-6 7-6s6.5 2 7 6"/></>,
     money: <><path d="M12 2v20"/><path d="M17 6.5c-.8-1.3-2.3-2-4.5-2C9.8 4.5 8 6 8 8s1.7 3 4.5 3.5S17 13 17 15s-1.8 4-4.5 4c-2.2 0-4-.8-5-2.3"/></>,
-    spark: <><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z"/></>,
-    strategy: <><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></>,
-    settings: <><circle cx="12" cy="12" r="3"/><path d="M19 13.5 21 15l-2 3-2-.7-2 1v2h-4v-2l-2-1-2 .7-2-3 2-1.5v-3L5 9l2-3 2 .7 2-1V3h4v2l2 1 2-.7 2 3-2 1.5v3Z"/></>,
+    search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></>,
+    spark: <path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"/>,
+    bulb: <><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z"/></>,
+    strategy: <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></>,
+    settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></>,
+    chat: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/>,
+    rail: <><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></>,
   };
-  return <span className="glyph" aria-hidden="true"><svg className="glyph-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{paths[name] || paths.spark}</svg></span>;
+  return <svg className="cx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.spark}</svg>;
 }
 
+const Mark = () => <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#d6a98c"/></svg>;
+
+/**
+ * Claude-style sidebar: always visible on desktop until collapsed with the toggle, then a slim
+ * icon rail. The choice is remembered. On phones it is a drawer.
+ */
 export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavigate }: Props) {
+  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  // Desktop auto-hide: opening a page hides the sidebar; hovering the left edge peeks it back.
-  const [hidden, setHidden] = useState(false);
-  const [peek, setPeek] = useState(false);
-  const [pinned, setPinned] = useState(false);
   useEffect(() => {
-    try {
-      const isPinned = localStorage.getItem("cinder.sidebar.pinned") === "1";
-      setPinned(isPinned);
-      setHidden(!isPinned && sessionStorage.getItem("cinder.sidebar.hidden") === "1");
-    } catch { /* storage unavailable: keep the sidebar visible */ }
+    try { setCollapsed(localStorage.getItem("cinder.sidebar.collapsed") === "1"); } catch { /* storage unavailable */ }
   }, []);
-  const togglePin = () => {
-    const next = !pinned;
-    setPinned(next); setHidden(!next); setPeek(false);
-    try { localStorage.setItem("cinder.sidebar.pinned", next ? "1" : "0"); sessionStorage.setItem("cinder.sidebar.hidden", next ? "0" : "1"); } catch { /* ignore */ }
-  };
-  const go = (key: string, href: string) => {
+  useEffect(() => {
+    document.documentElement.classList.toggle("cx-rail-mode", collapsed);
+  }, [collapsed]);
+  const toggle = () => setCollapsed(c => {
+    try { localStorage.setItem("cinder.sidebar.collapsed", c ? "0" : "1"); } catch { /* ignore */ }
+    return !c;
+  });
+
+  const go = (e: React.MouseEvent, key: string, href: string) => {
     setMobileOpen(false);
-    if (!pinned) {
-      try { sessionStorage.setItem("cinder.sidebar.hidden", "1"); } catch { /* ignore */ }
-      setHidden(true); setPeek(false);
-    }
-    // Only Home and My day are in-page views; every other item is a real route.
-    if (mode === "home" && onNavigate && (key === "home" || key === "schedule")) onNavigate(key);
-    else window.location.assign(href);
+    // Home and My day are in-page views on the Home route; everything else is a normal link.
+    if (mode === "home" && onNavigate && (key === "home" || key === "schedule")) { e.preventDefault(); onNavigate(key); }
   };
-  const isActive = (key: string, href: string) => {
-    if (key === "home") return mode === "home" ? activeKey === "home" : pathname === "/";
-    if (key === "schedule") return mode === "home" ? activeKey === "schedule" : false;
+  const isActive = (key: string) => {
+    if (key === "home") return mode === "home" ? activeKey === "home" : false;
+    if (key === "schedule") return mode === "home" && activeKey === "schedule";
     if (key === "growth") return pathname === "/crm" || pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/outreach");
-    if (key === "preparation") return pathname.startsWith("/crm/preparation");
-    if (key === "projects") return pathname.startsWith("/crm/projects");
-    if (key === "finance") return pathname.startsWith("/crm/finance");
-    if (key === "workforce") return pathname.startsWith("/crm/workforce");
-    if (key === "client-success") return pathname.startsWith("/crm/client-success");
-    if (key === "needs-you") return pathname.startsWith("/crm/needs-you");
-    if (key === "calendar") return pathname.startsWith("/crm/calendar");
-    if (key === "tasks") return pathname.startsWith("/crm/tasks");
-    if (key === "audit") return pathname.startsWith("/crm/audit");
-    if (key === "intelligence") return pathname.startsWith("/crm/intelligence");
-    if (key === "strategy") return pathname.startsWith("/crm/strategy");
-    if (key === "settings") return pathname.startsWith("/crm/settings");
-    return activeKey === key;
+    const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
+      "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
+      intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings" };
+    return map[key] ? pathname.startsWith(map[key]) : activeKey === key;
   };
+  const item = ([key, label, icon, href]: readonly [string, string, string, string]) =>
+    <Link key={key} href={href} className={"cx-item" + (isActive(key) ? " is-active" : "")} aria-current={isActive(key) ? "page" : undefined}
+      onClick={e => go(e, key, href)} title={collapsed ? label : undefined}>
+      <Icon name={icon} /><span className="cx-label">{label}</span>
+    </Link>;
+
   return <>
-    <button
-      type="button"
-      className="mobile-nav-toggle"
-      aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
-      aria-expanded={mobileOpen}
-      aria-controls="cinder-sidebar-shared"
-      onClick={() => setMobileOpen((open) => !open)}
-    >
-      <span aria-hidden="true">{mobileOpen ? "×" : "☰"}</span>
+    <button type="button" data-variant="primary" className="cx-mobile-toggle" aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen} onClick={() => setMobileOpen(o => !o)}>
+      <Icon name="rail" />
     </button>
-    {mobileOpen && <button type="button" className="mobile-nav-backdrop" aria-label="Close navigation menu" onClick={() => setMobileOpen(false)} />}
-    {hidden && <div className="sidebar-hotzone" aria-hidden="true" onMouseEnter={() => setPeek(true)} />}
-    <aside id="cinder-sidebar-shared" className={"sidebar" + (mobileOpen ? " mobile-open" : "") + (hidden ? " is-autohide" : "") + (hidden && peek ? " is-peek" : "")}
-      onMouseLeave={() => setPeek(false)} onFocus={() => hidden && setPeek(true)}>
-    <button type="button" className={"sidebar-pin" + (pinned ? " is-pinned" : "")} onClick={togglePin}
-      aria-pressed={pinned} title={pinned ? "Unpin sidebar (auto-hide after opening a page)" : "Pin sidebar open"} aria-label={pinned ? "Unpin sidebar" : "Pin sidebar open"}>{pinned ? "◧" : "◨"}</button>
-    <button type="button" className="brand brand-button" onClick={() => go("home", "/")} aria-label="Go to Home">
-      <span className="cinder-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" fill="currentColor"/><circle cx="25.5" cy="16" r="3.1" fill="#bf542f"/></svg></span>
-      <span className="brand-name cinder-wordmark">CINDER</span><span className="workspace-chevron">⌄</span>
-    </button>
-    <div className="nav-section-label">RUN THE AGENCY</div>
-    <nav className="primary-nav" aria-label="Agency operations">
-      {primary.map(([key, label, icon, href]) => <button key={key} type="button" className={"nav-item" + (isActive(key, href) ? " active" : "")} aria-current={isActive(key, href) ? "page" : undefined} onClick={() => go(key, href)}><Icon name={icon}/><span>{label}</span></button>)}
-    </nav>
-    <div className="sidebar-divider"/>
-    <div className="nav-section-label">PLAN & CONFIGURE</div>
-    <nav className="primary-nav" aria-label="Planning and settings">
-      {secondary.map(([key, label, icon, href]) => <button key={key} type="button" className={"nav-item" + (isActive(key, href) ? " active" : "")} aria-current={isActive(key, href) ? "page" : undefined} onClick={() => go(key, href)}><Icon name={icon}/><span>{label}</span></button>)}
-    </nav>
-    <div className="sidebar-bottom">
-      <div className="connection-card"><span className="connection-dot"/><div><strong>Agency workspace</strong><small>Private CRM storage</small></div></div>
-      <div className="profile-row"><span className="profile-avatar">F</span><span className="profile-copy"><strong>Founder</strong><small>{mode === "crm" ? "Agency operations" : "Agency workspace"}</small></span></div>
-    </div>
+    {mobileOpen && <button type="button" data-variant="primary" className="cx-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
+    <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Cinder navigation">
+      <div className="cx-top">
+        <Link href="/" className="cx-brand" onClick={e => go(e, "home", "/")} title="Cinder home">
+          <span className="cx-mark"><Mark /></span><span className="cx-wordmark">Cinder</span>
+        </Link>
+        <button type="button" data-variant="primary" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+          <Icon name="rail" />
+        </button>
+      </div>
+
+      <Link href="/" className={"cx-new" + (isActive("home") ? " is-active" : "")} onClick={e => go(e, "home", "/")} title={collapsed ? "Ask Cinder" : undefined}>
+        <span className="cx-new-icon"><Icon name="chat" /></span><span className="cx-label">Ask Cinder</span>
+      </Link>
+
+      <nav className="cx-nav" aria-label="Agency">
+        <div className="cx-group">Agency</div>
+        {primary.map(item)}
+        <div className="cx-group">Plan</div>
+        {secondary.map(item)}
+      </nav>
+
+      <div className="cx-foot">
+        {item(["settings", "Settings", "settings", "/crm/settings"])}
+        <div className="cx-profile" title={collapsed ? "Samuel · Contractor Growth Co" : undefined}>
+          <span className="cx-avatar">S</span>
+          <span className="cx-label cx-profile-copy"><strong>Samuel</strong><small>Contractor Growth Co</small></span>
+        </div>
+      </div>
     </aside>
   </>;
 }
