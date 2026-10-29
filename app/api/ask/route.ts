@@ -182,7 +182,7 @@ export async function POST(request: Request) {
             results.push({ type: "tool_result", tool_use_id: b.id, content: JSON.stringify(result).slice(0, 60000) });
           }
           messages.push({ role: "user", content: results });
-          send({ type: "status", text: "Writing" });
+          send({ type: "status", text: "Thinking" });
         }
         send({ type: "answer", text: text.trim() || (actions.length ? "Ready for you to confirm:" : "I couldn't find an answer to that."), actions, sources: [...sources].slice(0, 6).map(([url, title]) => ({ url, title })) });
       } catch (error) {

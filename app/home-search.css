@@ -113,7 +113,9 @@
 .ask-root .ask-md a:hover { text-decoration-color: var(--ask-accent); }
 .ask-root .ask-md .ask-h { margin: 22px 0 8px; font-size: 16.5px; font-weight: 650; letter-spacing: -0.01em; color: #f4f4f4 !important; text-transform: none; }
 .ask-root .ask-md .ask-h:first-child { margin-top: 0; }
-.ask-root .ask-list { margin: 0 0 14px; padding-left: 22px; display: grid; gap: 6px; }
+.ask-root .ask-list { margin: 0 0 14px; padding-left: 22px; display: grid; gap: 6px; list-style: disc outside !important; }
+.ask-root ol.ask-list { list-style: decimal outside !important; }
+.ask-root .ask-list li { display: list-item !important; }
 .ask-root .ask-list li { padding-left: 4px; color: var(--ask-text); }
 .ask-root .ask-list li::marker { color: #777; }
 .ask-root .ask-md a.ask-chip {
