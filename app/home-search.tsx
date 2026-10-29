@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { AskAction } from "@/lib/ask";
 import { ActionCard, Markdown } from "./ask-answer";
+import { CinderMark } from "./cinder-brand";
 import "./home-search.css";
 
 type Turn = {
@@ -22,8 +23,7 @@ function greeting() {
   return h < 5 ? "Up late, Samuel" : h < 12 ? "Good morning, Samuel" : h < 18 ? "Good afternoon, Samuel" : "Good evening, Samuel";
 }
 
-const Mark = ({ className = "" }: { className?: string }) =>
-  <svg className={className} viewBox="0 0 32 32" aria-hidden="true"><path d="M25.2 7.1A13 13 0 1 0 25.2 24.9L20.8 20.5a6.8 6.8 0 1 1 0-9L25.2 7.1Z" /><circle cx="25.5" cy="16" r="3.1" /></svg>;
+const Mark = ({ className = "" }: { className?: string }) => <CinderMark className={className} />;
 
 function Icon({ name }: { name: "up" | "stop" | "globe" | "copy" | "check" | "retry" | "new" | "phone" | "chart" | "calendar" }) {
   const p = { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
