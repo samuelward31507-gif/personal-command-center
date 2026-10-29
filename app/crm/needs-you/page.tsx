@@ -33,7 +33,7 @@ export default function TodayPage() {
     <header className="td-head">
       <div>
         <div className="td-eyebrow">{dateLabel}</div>
-        <h1 className="td-title">{greeting}, Samuel.</h1>
+        <h1 className="td-title">{greeting}, Samuel</h1>
         <p className="td-sub">Everything waiting on you today, revenue first. Calls go through Call mode; nothing is sent or dialed for you.</p>
       </div>
       <Link href="/crm/call" className="td-cta">Start calling →</Link>

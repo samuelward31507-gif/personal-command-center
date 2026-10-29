@@ -2,7 +2,7 @@
 .cm-page { max-width: 1180px; margin: 0 auto; padding: 28px 28px 60px; color: #ededed; }
 .cm-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; }
 .cm-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #6b6b6b; margin-bottom: 6px; }
-html body main .cm-title { margin: 0; font-size: 28px !important; font-weight: 600 !important; letter-spacing: -0.03em !important; }
+html body main .cm-title { margin: 0; }
 html body main p.cm-sub { margin: 6px 0 0; font-size: 14px; color: #8f8f8f !important; }
 .cm-head-actions { display: flex; gap: 8px; align-items: center; }
 .cm-link, .cm-btn-link { color: #bdbdbd !important; text-decoration: none !important; font-size: 13px; }

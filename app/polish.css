@@ -1,0 +1,123 @@
+/* ============================================================================
+   Cinder · Polish layer (loaded after stealth.css)
+   One type system across every page: a quiet serif for page titles and the
+   greeting (Newsreader), Geist for everything you read and click. One page
+   frame, one eyebrow, one card, one pill. Dark only; copper used sparingly.
+   ========================================================================== */
+
+:root {
+  --pl-display: var(--font-display), "Iowan Old Style", Georgia, serif;
+  --pl-text: #ececec;
+  --pl-title: #f3f1ec;
+  --pl-soft: #a6a6a6;
+  --pl-muted: #7a7a7a;
+  --pl-line: #232323;
+  --pl-surface: #141414;
+  --pl-raised: #181818;
+  --pl-accent: #e58c63;
+}
+
+/* ---------- Type scale ---------- */
+html body { font-size: 14.5px; line-height: 1.55; text-rendering: optimizeLegibility; }
+html body main p { line-height: 1.6; }
+
+/* Page titles: serif, calm, one size everywhere (Calendar included). */
+html body main h1,
+html body main:not(.calendar-page) h1,
+html body .calendar-page .calendar-header h1,
+html body main h1.td-title, html body main h1.sb-title, html body main .cm-title {
+  font-family: var(--pl-display) !important;
+  font-size: clamp(30px, 2.7vw, 36px) !important;
+  font-weight: 450 !important;
+  letter-spacing: -0.022em !important;
+  line-height: 1.12 !important;
+  color: var(--pl-title) !important;
+  margin: 6px 0 8px !important;
+  font-optical-sizing: auto;
+}
+html body main h1 span, html body main h1 em { color: inherit !important; }
+/* The greeting on Home matches the page titles. */
+html body .ask-root .ask-hello {
+  font-family: var(--pl-display) !important; font-weight: 400 !important; letter-spacing: -0.02em !important;
+  font-size: clamp(32px, 3.2vw, 42px) !important; color: var(--pl-title) !important;
+}
+
+/* Subtitle under a page title */
+html body .page-subtitle, html body main h1 + p {
+  font-size: 15px !important; line-height: 1.6 !important; color: var(--pl-soft) !important; max-width: 680px; margin-top: 0 !important;
+}
+
+/* Eyebrows: one quiet label above titles. */
+html body .eyebrow, html body .crm-eyebrow, html body .projects-eyebrow, html body .tasks-eyebrow, html body .pipeline-eyebrow,
+html body .fin-eyebrow, html body .sb-eyebrow, html body .calendar-eyebrow, html body .td-eyebrow, html body .cm-eyebrow, html body .dw-eyebrow,
+html body .section-kicker, html body [class$="-eyebrow"] {
+  font-family: var(--st-font) !important; font-size: 11.5px !important; font-weight: 600 !important;
+  letter-spacing: .08em !important; text-transform: uppercase !important; color: var(--pl-muted) !important;
+}
+/* Inline-styled legacy eyebrows (small uppercase <p>/<div> right above an h1) */
+html body main p:has(+ h1), html body main div:has(+ h1):not(:has(*)) {
+  font-size: 11.5px !important; letter-spacing: .08em !important; text-transform: uppercase; color: var(--pl-muted) !important; font-weight: 600 !important; margin: 0 !important;
+}
+
+/* Section headings */
+html body main:not(.calendar-page) h2 { font-size: 16.5px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: #f1f1f1 !important; }
+html body main:not(.calendar-page) h3 { font-size: 14.5px !important; font-weight: 600 !important; color: #ececec !important; }
+
+/* ---------- Page frame ---------- */
+/* Same width and breathing room on every page; wide boards (Calendar, Pipeline) keep their width. */
+html body .crm-shell-main > main:not(.calendar-page):not(.pipeline-page):not(.cm-page):not(.ask-root) {
+  width: 100% !important; max-width: 1120px !important; margin-left: auto !important; margin-right: auto !important;
+  padding: 40px 40px 80px !important; box-sizing: border-box !important; background: transparent !important;
+}
+@media (max-width: 760px) {
+  html body .crm-shell-main > main:not(.calendar-page):not(.ask-root) { padding: 24px 16px 60px !important; }
+}
+
+/* ---------- Top bar ---------- */
+html body .topbar .topbar-status, html body .topbar .crm-back-home { display: none !important; }
+html body .topbar { height: 48px !important; }
+html body .breadcrumbs { font-size: 13px !important; }
+
+/* ---------- Cards & stat tiles ---------- */
+html body main :is([class*="card"], [class*="panel"], [class*="Panel"]):not(.calendar-page *):not(.ask-root *) {
+  border-radius: 14px !important; border-color: var(--pl-line) !important;
+}
+/* Stat labels: small, calm, readable. Values: tabular. */
+html body main :is(.stat-label, [class*="stat"] > span:first-child, [class*="metric"] > span:first-child) {
+  letter-spacing: .06em !important; font-size: 11px !important; color: var(--pl-muted) !important;
+}
+html body main :is([class*="stat"], [class*="metric"]) strong, html body main :is([class*="stat"], [class*="metric"]) b { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+/* ---------- Pills & chips: dark, outlined, never light ---------- */
+html body main :is(.task-priority, .task-chip, .overdue) {
+  background: transparent !important; border: 1px solid #2c2c2c !important; color: #bdbdbd !important; border-radius: 999px !important;
+}
+html body main .task-priority.priority-urgent, html body main .overdue { color: #f2a5a5 !important; border-color: #4a2a2a !important; }
+html body main .task-priority.priority-high { color: #f0c38a !important; border-color: #4a3c25 !important; }
+html body main .task-meta > span { background: transparent !important; border: 1px solid #2c2c2c !important; color: #a6a6a6 !important; }
+
+/* Pipeline board: dark column headers and counts */
+html body main .pipeline-column > header { background: #161616 !important; color: #d6d6d6 !important; border-color: var(--pl-line) !important; }
+html body main .pipeline-column > header b { background: #232323 !important; color: #bdbdbd !important; border: 1px solid #2c2c2c !important; }
+html body main a.pipeline-open { background: #ededed !important; color: #0b0b0b !important; }
+
+/* Calendar task chips */
+html body .calendar-page a.calendar-task { background: #1c1c1c !important; color: #d6d6d6 !important; border-color: #2c2c2c !important; }
+html body .calendar-page a.calendar-task.task-urgent { color: #f2a5a5 !important; }
+html body .calendar-page a.calendar-task.task-high { color: #f0c38a !important; }
+
+/* ---------- Controls ---------- */
+html body main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(.ask-root *) {
+  font-size: 14px !important; border-radius: 10px !important;
+}
+html body main :is(input, select, textarea):focus { outline: none !important; border-color: #4a3a2f !important; box-shadow: 0 0 0 3px rgba(229,140,99,.12) !important; }
+html body main button { letter-spacing: -0.005em; }
+
+/* Links inside body copy */
+html body main p a:not([class]) { color: #e9d2c2 !important; text-decoration: underline; text-decoration-color: #4a3a2f; text-underline-offset: 3px; }
+
+/* Empty states read as calm hints */
+html body main :is(.empty, [class*="empty"]) p { color: var(--pl-muted) !important; }
+
+/* Focus rings for keyboard users */
+html body :is(a, button):focus-visible { outline: 2px solid rgba(229,140,99,.55) !important; outline-offset: 2px; }
