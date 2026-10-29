@@ -60,6 +60,8 @@ export default function DealWorkspacePage() {
   const [purpose, setPurpose] = useState<EmailPurpose | "">("");
   const [mailNotes, setMailNotes] = useState("");
   const [mail, setMail] = useState<{ subject: string; body: string; to: string } | null>(null);
+  const [signReq, setSignReq] = useState<{ status: string; createdAt: string; signedAt: string | null; signerName: string | null; signerTitle: string | null } | null>(null);
+  const [signUrl, setSignUrl] = useState("");
   const copy = (key: string, text: string) => { void navigator.clipboard?.writeText(text).then(() => { setCopied(key); setTimeout(() => setCopied(null), 1400); }); };
 
   const load = useCallback(async () => {
@@ -68,6 +70,8 @@ export default function DealWorkspacePage() {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(r.status === 401 ? "Sign in to see this deal." : d.error || "Could not load this deal.");
       setWs(d); setDisc(d.deal.discovery ?? {}); setNext({ step: d.deal.nextStep ?? "", at: d.deal.nextStepAt ?? "" });
+      const s = await fetch(`/api/agreements/sign-link?dealId=${id}`, { cache: "no-store" }).then(x => x.ok ? x.json() : null).catch(() => null);
+      setSignReq(s?.request ?? null);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not load this deal."); }
   }, [id]);
   useEffect(() => { void load(); }, [load]);
@@ -129,6 +133,19 @@ export default function DealWorkspacePage() {
       if (!r.ok) throw new Error(d.error || "Could not save.");
       setAgEdit(null); await load();
     } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not save." }); }
+    finally { setSaving(null); }
+  }
+
+  async function createSignLink() {
+    setSaving("sign"); setFlash(null); setSignUrl("");
+    try {
+      const r = await fetch("/api/agreements/sign-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Could not create the signing link.");
+      setSignUrl(d.url);
+      setFlash({ ok: true, text: "Signing link ready. Send it from your own email. When they sign, the deal moves to Won and onboarding starts by itself." });
+      await load();
+    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not create the signing link." }); }
     finally { setSaving(null); }
   }
 
@@ -199,7 +216,7 @@ export default function DealWorkspacePage() {
   const closed = deal.stage === "won" || deal.stage === "lost";
   const agreement = ws.agreements[0];
   const showAgreement = deal.proposalStatus === "accepted" || deal.contractStatus !== "none" || !!agreement;
-  const blanks = agreement ? (agreement.content.match(/\[[^\]\n]{2,80}\]/g) ?? []).length : 0;
+  const blanks = agreement ? (agreement.content.match(/\[[^\]\n]{1,80}\]/g) ?? []).length : 0;
 
   return <main className="dw-page">
     <Link className="dw-back" href="/crm/pipeline">← Pipeline</Link>
@@ -309,8 +326,21 @@ export default function DealWorkspacePage() {
               <button data-variant="primary" className="dw-btn" onClick={() => printDoc(agreement.content, `Service Agreement — ${contact?.company || deal.title}`)}>Print / PDF</button>
               {deal.contractStatus !== "signed" && <button data-variant="primary" className="dw-btn" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Redrafting…" : "Redraft"}</button>}
             </div>
+            {signReq?.status === "signed" && <p className="dw-signed">Signed electronically by {signReq.signerName}{signReq.signerTitle ? `, ${signReq.signerTitle}` : ""} · {signReq.signedAt ? new Date(signReq.signedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}</p>}
+            {deal.contractStatus !== "signed" && !closed && <div className="dw-sign">
+              <div className="dw-sign-head"><strong>Get it signed online</strong>
+                {signReq?.status === "open" && <span className="dw-muted dw-small">Link sent {dateLabel(signReq.createdAt)} · waiting on signature</span>}</div>
+              {blanks ? <p className="dw-hint">Fill in the {blanks} [bracketed] blank{blanks === 1 ? "" : "s"} first (Edit). A client should never sign a draft with gaps.</p>
+                : <p className="dw-hint">They read it, type their name and sign. Cinder records who, when, their IP and the exact text, then marks the deal Won and starts onboarding.</p>}
+              <div className="dw-row">
+                <button data-variant="primary" className="dw-btn dw-primary" disabled={!!blanks || saving === "sign"} onClick={() => void createSignLink()}>{saving === "sign" ? "Creating…" : signReq?.status === "open" ? "New signing link" : "Create signing link"}</button>
+                {signUrl && <><input className="dw-mail-subject dw-sign-url" readOnly value={signUrl} onFocus={e => e.currentTarget.select()} aria-label="Signing link" />
+                  <button data-variant="primary" className="dw-btn" onClick={() => copy("sign", signUrl)}>{copied === "sign" ? "Copied" : "Copy link"}</button></>}
+              </div>
+              {signReq?.status === "open" && !signUrl && <p className="dw-muted dw-small">The link was shown once when you created it. Lost it? Create a new one; the old one stops working.</p>}
+            </div>}
             {deal.contractStatus !== "signed" && !closed && <div className="dw-row dw-decide">
-              <span className="dw-muted">After you send it yourself:</span>
+              <span className="dw-muted">Signing on paper instead? After you send it yourself:</span>
               {deal.contractStatus !== "sent" && <button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => setContract("sent")}>Mark sent</button>}
               <button data-variant="primary" className="dw-btn dw-good" disabled={!!saving} onClick={() => setContract("signed")}>Signed</button>
             </div>}

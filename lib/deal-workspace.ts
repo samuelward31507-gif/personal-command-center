@@ -179,3 +179,8 @@ export function mailtoLink(to: string, subject: string, body: string): string {
   const addr = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(to.trim()) ? to.trim() : "";
   return `mailto:${encodeURIComponent(addr).replace(/%40/g, "@")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
+
+/** [Bracketed] placeholders the founder still has to fill in. A draft with blanks can't go out for signature. */
+export function countBlanks(content: string): number {
+  return (content.match(/\[[^\]\n]{1,80}\]/g) ?? []).length;
+}

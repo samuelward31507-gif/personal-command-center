@@ -8,7 +8,8 @@ const ok = fn => { fn(); n++; };
 const id = "3baafaf6-d182-463a-98c9-5272c063cb73";
 ok(() => assert.equal(resolveLink(`cinder://audit/${id}`), "/crm/audits/" + id));
 ok(() => assert.equal(resolveLink(`cinder://deal/${id}`), "/crm/deals/" + id));
-const cron = readFileSync("app/api/cron/pre-audit/route.ts", "utf8");
+const cron = readFileSync("app/api/cron/pre-audit/route.ts", "utf8") + readFileSync("lib/pre-audit.ts", "utf8");
+const cronRoute = readFileSync("app/api/cron/pre-audit/route.ts", "utf8");
 ok(() => assert.match(cron, /authorization"\) !== `Bearer \$\{secret\}`/, "cron requires the bearer secret"));
 ok(() => assert.match(cron, /if \(!secret/, "no secret configured means no run"));
 ok(() => assert.match(cron, /DAILY_CAP = 20/, "spend is capped"));
@@ -17,6 +18,8 @@ ok(() => assert.doesNotMatch(cron, /sms|twilio|sendEmail|INSERT INTO public\.con
 ok(() => assert.doesNotMatch(cron, /console\.\w+\([^)]*secret/i, "secret never logged"));
 const vercel = JSON.parse(readFileSync("vercel.json", "utf8"));
 ok(() => assert.equal(vercel.crons[0].path, "/api/cron/pre-audit"));
+ok(() => assert.match(cronRoute, /logRun\(sql, "pre-audit", "cron", "unauthorized"/, "refused cron calls are recorded, so a silent night is visible"));
+ok(() => assert.match(readFileSync("app/api/pre-audit/route.ts", "utf8"), /if \(!user\) return fail\("Unauthorized", 401\)/, "manual run requires sign-in"));
 const prep = readFileSync("app/crm/preparation/page.tsx", "utf8");
 ok(() => assert.match(prep, /proposal:"Proposal"/, "proposal artifacts have a label (no crash)"));
 ok(() => assert.match(prep, /\(types\[a\.type\]\?\?a\.type\)/, "unknown types never crash the list"));
