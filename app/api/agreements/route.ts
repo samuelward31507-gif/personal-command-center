@@ -7,7 +7,7 @@ import { claudeText, AiTextError } from "@/lib/ai-text";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 90;
+export const maxDuration = 200;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const fail = (message: string, status: number) => Response.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       location: String(d.location ?? ""), offerLabel: offer?.label ?? "Custom AI implementation",
       setupFee: Number(d.setup_fee), monthlyFee: Number(d.monthly_fee), proposal: String(prop[0].content), today,
     });
-    const content = await claudeText({ apiKey, system, user: prompt, maxTokens: 6000, label: "Agreement" });
+    const content = await claudeText({ apiKey, system, user: prompt, maxTokens: 8000, timeoutMs: 180_000, label: "Agreement" });
     const saved = await sql`
       INSERT INTO public.research_artifacts (owner_id, contact_id, deal_id, artifact_type, title, content, confidence, status, researched_at)
       VALUES (${user.id}, ${d.contact_id}, ${d.id}, 'agreement', ${("Agreement — " + company).slice(0, 240)}, ${content}, 'medium', 'draft', now())

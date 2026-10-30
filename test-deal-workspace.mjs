@@ -31,6 +31,12 @@ const ag = buildAgreementPrompt({ providerName: "", company: "Ridgeline Fence", 
 ok(() => assert.match(ag.user, /Provider: \[Your legal business name\]/, "unknown legal name stays a blank, never guessed"));
 ok(() => assert.match(ag.system, /No guarantees of results/));
 ok(() => assert.match(ag.system, /\[bracketed blank\]/));
+ok(() => assert.match(ag.system, /Client pays all usage and third-party costs/, "usage is the client's, never included"));
+ok(() => assert.match(ag.system, /NOT included in the monthly fee/));
+ok(() => assert.match(ag.system, /A2P 10DLC/));
+ok(() => assert.match(ag.system, /21 business days/, "matches the website's go-live guarantee"));
+ok(() => assert.match(ag.system, /initial term of 3 months/, "matches the website's 3-month start"));
+ok(() => assert.match(ag.system, /honors opt-outs/));
 ok(() => assert.match(ag.user, /\$1,500 setup \+ \$997\/month/));
 ok(() => assert.match(buildAgreementPrompt({ providerName: "CGC LLC", company: "X", contactName: "", location: "", offerLabel: "T", setupFee: 1, monthlyFee: 1, proposal: "p", today: "t" }).user, /Provider: CGC LLC/));
 // follow-up emails
