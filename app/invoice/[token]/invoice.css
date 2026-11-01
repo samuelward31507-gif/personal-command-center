@@ -35,7 +35,7 @@ a.iv-paybtn:hover { background: #fff; }
 @media print {
   .iv-page { background: #fff !important; color: #333 !important; }
   .iv-top button, .iv-paybtn { display: none !important; }
-  .iv-logo { filter: invert(1); }
+  .iv-logo path { fill: #1a1a1a !important; }
   .iv-sheet { border: 0; background: #fff; padding: 0; }
   .iv-head h1, .iv-parties strong, .iv-lines tfoot td, .iv-pay h2 { color: #111 !important; }
   .iv-parties, .iv-lines td, .iv-lines tfoot td { border-color: #ddd !important; color: #333 !important; }

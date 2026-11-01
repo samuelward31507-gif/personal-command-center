@@ -90,29 +90,29 @@ button:focus-visible, a:focus-visible { outline: 2px solid #777a73; outline-offs
 /* CINDER DESIGN SYSTEM — one source of truth; neutral charcoal, no green tint. */
 :root {
   color-scheme: dark;
-  --background: #191919;
+  --background: #141414;
   --foreground: #eeeeee;
   --muted: #9a9a9a;
   --line: #3a3a3a;
   --panel: #262626;
   --accent: #e6e6e6;
-  --surface-1: #1f1f1f;
+  --surface-1: #1a1a1a;
   --surface-2: #262626;
   --surface-hover: #2a2a2a;
 }
-html, body { background: #191919 !important; color: #eeeeee !important; }
+html, body { background: #141414 !important; color: #eeeeee !important; }
 body, #__next { min-height: 100%; }
 .app-shell, .main-panel, .crm-shell-main, .page-content, .route-page,
 .crm-app-shell, .crm-app-shell main, .crm-app-shell section, .cal-home,
 main, [role="main"] {
-  background-color: #191919 !important;
+  background-color: #141414 !important;
   color: #eeeeee !important;
 }
 /* Sidebar and its pseudo-elements: deliberately flat, neutral charcoal. */
 .sidebar, .crm-app-shell .sidebar, .app-shell .sidebar,
 .sidebar::before, .sidebar::after, .crm-app-shell .sidebar::before,
 .crm-app-shell .sidebar::after {
-  background: #191919 !important;
+  background: #141414 !important;
   background-image: none !important;
   border-color: #3a3a3a !important;
   color: #dedede !important;
@@ -144,7 +144,7 @@ main, [role="main"] {
 }
 /* Headers and text. */
 .topbar, .crm-shell-main > .topbar, .needs-header {
-  background: #191919 !important; background-image: none !important;
+  background: #141414 !important; background-image: none !important;
   border-color: #3a3a3a !important; color: #bdbdbd !important;
 }
 .breadcrumbs strong, h1, h2, h3, h4, h5, h6,
@@ -214,7 +214,7 @@ button, [role="button"], [role="tab"], [role="switch"] {
 [class*="tab-bar"], [class*="tabs"], [class*="Tab"],
 [class*="filter"], [class*="Filter"], [class*="switcher"], [class*="Switcher"],
 [class*="toolbar"], [class*="Toolbar"] {
-  background-color: #1f1f1f !important; background-image: none !important;
+  background-color: #1a1a1a !important; background-image: none !important;
   color: #d5d5d5 !important; border-color: #3a3a3a !important;
 }
 [role="tab"][aria-selected="true"], [role="tab"][data-state="active"],
@@ -318,7 +318,7 @@ main:not(.calendar-page) [role="tablist"],
 main:not(.calendar-page) [role="tab"],
 main:not(.calendar-page) [class*="filter"],
 main:not(.calendar-page) [class*="Filter"] {
-  background-color:#1f1f1f!important;
+  background-color:#1a1a1a!important;
   background-image:none!important;
   color:#cfcfcf!important;
   border-color:#3a3a3a!important;
@@ -570,14 +570,14 @@ main:not(.calendar-page) [data-state="active"] {
 
 /* BUSINESS AUDIT: isolate its surfaces from legacy global card/form overrides. */
 #cinder-business-audit {
-  background: #191919 !important;
+  background: #141414 !important;
   color: #f0f0f0 !important;
   color-scheme: dark;
 }
 #cinder-business-audit form,
 #cinder-business-audit section {
-  background: #1f1f1f !important;
-  background-color: #1f1f1f !important;
+  background: #1a1a1a !important;
+  background-color: #1a1a1a !important;
   background-image: none !important;
   color: #e6e6e6 !important;
   border-color: #3a3a3a !important;
@@ -598,8 +598,8 @@ main:not(.calendar-page) [data-state="active"] {
 }
 #cinder-business-audit input,
 #cinder-business-audit textarea {
-  background: #1f1f1f !important;
-  background-color: #1f1f1f !important;
+  background: #1a1a1a !important;
+  background-color: #1a1a1a !important;
   color: #f0f0f0 !important;
   border-color: #555555 !important;
   box-shadow: none !important;

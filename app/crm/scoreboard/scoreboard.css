@@ -4,12 +4,12 @@
 .sb-eyebrow, .sb-label { font-size: 11px; font-weight: 600; color: #6b6b6b; }
 html body main h1.sb-title { margin: 6px 0 4px; }
 html body main p.sb-sub { margin: 0; font-size: 14px; color: #8f8f8f !important; }
-.sb-cta { display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border-radius: 999px; background: #efefef; color: #1f1f1f !important; font-size: 14px; font-weight: 650; text-decoration: none !important; }
+.sb-cta { display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border-radius: 999px; background: #efefef; color: #1a1a1a !important; font-size: 14px; font-weight: 650; text-decoration: none !important; }
 .sb-cta:hover { background: #fff; }
 html body main .sb-muted { color: #9e9e9e !important; font-size: 13px; margin: 0; }
 .sb-err { color: #f2a5a5 !important; }
 
-.sb-goal { border: 1px solid #2a221c; border-radius: 16px; padding: 22px 22px 18px; margin-bottom: 14px; background: radial-gradient(120% 140% at 0% 0%, #1c1612 0%, #1f1f1f 55%); }
+.sb-goal { border: 1px solid #2a221c; border-radius: 16px; padding: 22px 22px 18px; margin-bottom: 14px; background: radial-gradient(120% 140% at 0% 0%, #1c1612 0%, #1a1a1a 55%); }
 .sb-goal-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; }
 .sb-goal-num { margin-top: 6px; font-size: 34px; font-weight: 650; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
 .sb-goal-num span { font-size: 15px; font-weight: 500; color: #8f8f8f; letter-spacing: 0; }
@@ -27,7 +27,7 @@ html body main p.sb-goal-need { margin: 14px 0 0; font-size: 14px; color: #d4d4d
 .sb-goal-need strong { color: #fff; }
 
 .sb-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
-.sb-tile { border: 1px solid #2a2a2a; border-radius: 14px; background: #1f1f1f; padding: 16px; }
+.sb-tile { border: 1px solid #2a2a2a; border-radius: 14px; background: #1a1a1a; padding: 16px; }
 .sb-num { margin: 8px 0 6px; font-size: 26px; font-weight: 650; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .sb-num span { font-size: 14px; font-weight: 500; color: #9e9e9e; letter-spacing: 0; }
 .sb-tile small { font-size: 12.5px; color: #8a8a8a !important; }
@@ -35,7 +35,7 @@ html body main p.sb-goal-need { margin: 14px 0 0; font-size: 14px; color: #d4d4d
 .sb-mini-bar i { display: block; height: 100%; background: #efefef; border-radius: 4px; }
 
 .sb-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; margin-bottom: 14px; }
-.sb-box { border: 1px solid #2a2a2a; border-radius: 14px; background: #1f1f1f; padding: 18px; }
+.sb-box { border: 1px solid #2a2a2a; border-radius: 14px; background: #1a1a1a; padding: 18px; }
 .sb-boxhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 14px; }
 html body main .sb-box h2 { margin: 0; font-size: 14.5px !important; }
 .sb-chart { position: relative; display: grid; grid-template-columns: repeat(14, 1fr); gap: 6px; height: 190px; align-items: end; }

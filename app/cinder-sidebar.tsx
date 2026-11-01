@@ -56,6 +56,7 @@ function Icon({ name }: { name: string }) {
     chart: <><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></>,
     chat: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/>,
     rail: <><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></>,
+    plus: <path d="M12 5v14M5 12h14"/>,
   };
   return <svg className="cx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.spark}</svg>;
 }
@@ -67,6 +68,17 @@ function Icon({ name }: { name: string }) {
  */
 export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavigate }: Props) {
   const ws = useWorkspace();
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    let on = true;
+    fetch("/api/projects", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(d => {
+      if (!on || !d?.projects) return;
+      setClients((d.projects as { id: string; name: string; clientName: string; contactName: string; status: string }[])
+        .filter(p => !["completed", "cancelled"].includes(p.status)).slice(0, 5)
+        .map(p => ({ id: p.id, name: p.clientName || p.contactName || p.name })));
+    }).catch(() => {});
+    return () => { on = false; };
+  }, []);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const inSecondary = SECONDARY_PATHS.some(p => pathname.startsWith(p));
@@ -123,8 +135,8 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
         </button>
       </div>
 
-      <Link href="/" className={"cx-new" + (isActive("home") ? " is-active" : "")} onClick={e => go(e, "home", "/")} title={collapsed ? "Ask Cinder" : undefined}>
-        <span className="cx-new-icon"><Icon name="chat" /></span><span className="cx-label">Ask Cinder</span>
+      <Link href="/" className={"cx-new" + (isActive("home") ? " is-active" : "")} onClick={e => go(e, "home", "/")} title={collapsed ? "New chat" : undefined}>
+        <span className="cx-new-icon"><Icon name="plus" /></span><span className="cx-label">New chat</span>
       </Link>
       <button type="button" data-variant="primary" className="cx-item cx-search" onClick={() => { setMobileOpen(false); window.dispatchEvent(new Event("cinder:command")); }} title={collapsed ? "Search (⌘K)" : undefined}>
         <Icon name="search" /><span className="cx-label">Search</span><kbd className="cx-kbd">⌘K</kbd>
@@ -136,6 +148,12 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
           <Icon name="more" /><span className="cx-label">More</span><span className={"cx-chev" + (moreOpen ? " is-open" : "")} aria-hidden="true">›</span>
         </button>
         {moreOpen && <div className="cx-sub">{secondary.map(item)}</div>}
+        {!collapsed && clients.length > 0 && <>
+          <div className="cx-group">Clients</div>
+          {clients.map(c => <Link key={c.id} href={`/crm/client-success/${c.id}`} className={"cx-item cx-client" + (pathname === `/crm/client-success/${c.id}` ? " is-active" : "")} onClick={() => setMobileOpen(false)}>
+            <span className="cx-dot" aria-hidden="true">{c.name.slice(0, 1).toUpperCase()}</span><span className="cx-label">{c.name}</span>
+          </Link>)}
+        </>}
       </nav>
 
       <div className="cx-foot">

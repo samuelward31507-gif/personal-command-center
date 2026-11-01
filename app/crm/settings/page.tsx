@@ -17,9 +17,9 @@ function LeadFormLink() {
     <h2 style={{ fontSize: 18, margin: 0 }}>Your lead form</h2>
     <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 14px" }}>Anyone who fills this out lands in Contacts as a lead, with a follow-up for today and an urgent task to call them. Nothing is sent to them automatically.</p>
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-      <code style={{ flex: "1 1 260px", padding: "9px 12px", borderRadius: 9, border: "1px solid #3a3a3a", background: "#1f1f1f", color: "#efefef", fontSize: 13 }}>{url || "/start"}</code>
+      <code style={{ flex: "1 1 260px", padding: "9px 12px", borderRadius: 9, border: "1px solid #3a3a3a", background: "#1a1a1a", color: "#efefef", fontSize: 13 }}>{url || "/start"}</code>
       <button data-variant="primary" onClick={() => { void navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); }); }}
-        style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #efefef", background: "#efefef", color: "#1f1f1f", fontWeight: 600, cursor: "pointer" }}>{copied ? "Copied" : "Copy link"}</button>
+        style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #efefef", background: "#efefef", color: "#1a1a1a", fontWeight: 600, cursor: "pointer" }}>{copied ? "Copied" : "Copy link"}</button>
       <Link href="/start" target="_blank" rel="noreferrer" style={{ color: "#cfcfcf", fontSize: 13 }}>Open ↗</Link>
     </div>
   </section>;
@@ -91,7 +91,7 @@ function SundayReview() {
     </div>
     <p style={{ fontSize: 13, margin: "12px 0 0", color: "#8f8f8f" }}>{data === null ? "Loading…" : !data.email ? "Email alerts aren't set up yet." : last ? `Last sent: ${new Date(last.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${last.status}` : "Not sent yet. The first one goes out this Sunday."}</p>
     {note && <p style={{ fontSize: 13, margin: "6px 0 0", color: "#cfcfcf" }}>{note}</p>}
-    {open && data && <div style={{ marginTop: 14, padding: 16, borderRadius: 10, border: "1px solid #2e2e2e", background: "#191919", fontSize: 13.5, lineHeight: 1.6, color: "#d6d6d6", whiteSpace: "pre-wrap" }}><b style={{ display: "block", marginBottom: 8, color: "#f0f0f0" }}>{data.review.subject}</b>{data.review.lines.join("\n")}</div>}
+    {open && data && <div style={{ marginTop: 14, padding: 16, borderRadius: 10, border: "1px solid #2e2e2e", background: "#141414", fontSize: 13.5, lineHeight: 1.6, color: "#d6d6d6", whiteSpace: "pre-wrap" }}><b style={{ display: "block", marginBottom: 8, color: "#f0f0f0" }}>{data.review.subject}</b>{data.review.lines.join("\n")}</div>}
   </section>;
 }
 

@@ -22,12 +22,12 @@ function tomorrowAt9(): { iso: string; day: string } {
   return { iso: d.toISOString(), day: localKey(d) };
 }
 
-const ROW: React.CSSProperties = { background: "#1f1f1f", border: "1px solid #2a2a2a", borderRadius: 12, padding: "14px 16px" };
+const ROW: React.CSSProperties = { background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: "14px 16px" };
 const PILL: React.CSSProperties = { flex: "0 0 auto", minWidth: 74, textAlign: "center", fontSize: 11, fontWeight: 700, letterSpacing: .4, border: "1px solid", borderRadius: 999, padding: "4px 10px", marginTop: 1 };
 const BTN: React.CSSProperties = { display: "inline-flex", alignItems: "center", border: "1px solid #3a3a3a", background: "#303030", color: "#ddd", borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", lineHeight: 1.2 };
-const BTN_PRIMARY: React.CSSProperties = { ...BTN, background: "#efefef", color: "#1f1f1f", borderColor: "#efefef" };
+const BTN_PRIMARY: React.CSSProperties = { ...BTN, background: "#efefef", color: "#1a1a1a", borderColor: "#efefef" };
 const SALES: QueueGroup[] = ["revenue", "prospects", "meetings", "deals"];
-const chip = (on: boolean): React.CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid " + (on ? "#efefef" : "#3a3a3a"), background: on ? "#efefef" : "#1f1f1f", color: on ? "#1f1f1f" : "#cfcfcf", borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" });
+const chip = (on: boolean): React.CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid " + (on ? "#efefef" : "#3a3a3a"), background: on ? "#efefef" : "#1a1a1a", color: on ? "#1a1a1a" : "#cfcfcf", borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" });
 
 export default function MyDayQueue({ showFilters = false, title = "Today’s queue" }: { showFilters?: boolean; title?: string }) {
   const [items, setItems] = useState<QueueItem[]>([]);

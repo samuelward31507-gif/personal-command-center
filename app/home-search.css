@@ -2,8 +2,8 @@
    Class names deliberately avoid "card", "panel", "stat", "menu"… which global theme rules force to gray. */
 
 .ask-root {
-  --ask-bg: #191919;
-  --ask-composer: #1f1f1f;
+  --ask-bg: #141414;
+  --ask-composer: #1a1a1a;
   --ask-composer-line: #2e2e2e;
   --ask-bubble: #303030;
   --ask-text: #ececec;
@@ -22,7 +22,6 @@
   font-size: clamp(28px, 3.4vw, 38px); font-weight: 500; letter-spacing: -0.035em; line-height: 1.15; text-align: center;
 }
 .ask-hello-mark { width: 34px; height: 34px; flex: 0 0 34px; fill: var(--ask-accent); filter: drop-shadow(0 0 18px rgba(220,220,220,.25)); }
-.ask-hello-mark circle { fill: #efefef; }
 .ask-suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
 .ask-root .ask-pill {
   display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px;
@@ -180,7 +179,7 @@
 }
 
 .ask-root .ask-slow { margin-top: 8px; font-size: 12.5px; color: #6f6f6f !important; }
-.ask-root .ask-composer { background: linear-gradient(180deg, #262626, #1f1f1f) !important; }
+.ask-root .ask-composer { background: linear-gradient(180deg, #262626, #1a1a1a) !important; }
 .ask-hello-mark { filter: none; }
 
 /* ---------- Stealth: no copper on the Ask page ---------- */

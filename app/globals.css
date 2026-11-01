@@ -254,7 +254,7 @@ h1 { font-family:var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFon
 
 
 /* Cal.ai-inspired search-first Cinder home. Applied to the actual premium-home branch. */
-.cal-home { min-height: calc(100vh - 60px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:34px 28px 20px; background:#191919; color:#f0f0f0; }
+.cal-home { min-height: calc(100vh - 60px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:34px 28px 20px; background:#141414; color:#f0f0f0; }
 .cal-home-center { width:min(650px,100%); margin:auto; display:flex; flex-direction:column; align-items:center; }
 .cal-home-title { text-align:center; margin-bottom:24px; }
 .cal-home-eyebrow { display:flex; justify-content:center; align-items:center; gap:8px; color:#858585; font-size:10px; font-weight:650; letter-spacing:1.5px; margin-bottom:18px; }
@@ -272,7 +272,7 @@ h1 { font-family:var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFon
 .cal-prompt-chips button { padding:7px 10px; border:1px solid #3a3a3a; border-radius:999px; background:#262626; color:#929292; font-size:10px; cursor:pointer; }
 .cal-prompt-chips button:hover { background:#2e2e2e; color:#eee; border-color:#444; }
 .cal-home-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; width:100%; margin-top:48px; }
-.cal-home-actions button { display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding:15px; border:1px solid #3a3a3a; border-radius:12px; background:#1f1f1f; text-align:left; cursor:pointer; }
+.cal-home-actions button { display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding:15px; border:1px solid #3a3a3a; border-radius:12px; background:#1a1a1a; text-align:left; cursor:pointer; }
 .cal-home-actions button:hover { background:#303030; border-color:#414141; }
 .cal-home-actions button>span { display:grid; place-items:center; width:29px; height:29px; border-radius:8px; background:#2e2e2e; color:#eee; font-size:15px; }
 .cal-home-actions strong { color:#e7e7e7; font-size:11px; font-weight:600; }
@@ -283,27 +283,27 @@ h1 { font-family:var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFon
 @media(max-width:650px){.cal-home{padding:28px 16px 18px}.cal-home-actions{grid-template-columns:1fr;margin-top:30px}.cal-home-actions button{display:grid;grid-template-columns:30px 1fr;column-gap:10px;align-items:center}.cal-home-actions button>span{grid-row:span 2}.cal-home-actions small{grid-column:2}.cal-home-footer{font-size:8px}}
 
 /* Cinder dark mode — persistent app-wide theme */
-:root { color-scheme: dark; --background:#1f1f1f; --foreground:#f4f4f5; --muted:#8c8c95; --line:#29292e; --panel:#1f1f1f; --accent:#c4c4c4; }
-html, body { background:#1f1f1f !important; color:#f4f4f5 !important; }
-.app-shell, .main-content, .page-content, .route-page, .content-area, main { background:#1f1f1f !important; color:#f4f4f5; }
-.sidebar { background:#191919 !important; border-color:#29292e !important; color:#f4f4f5; }
-.workspace-switcher, .sidebar-search, .nav-item, .sidebar-nav a, .sidebar-footer, .profile-menu { background:#1f1f1f !important; border-color:#29292e !important; color:#b9b9c2 !important; }
+:root { color-scheme: dark; --background:#1a1a1a; --foreground:#f4f4f5; --muted:#8c8c95; --line:#29292e; --panel:#1a1a1a; --accent:#c4c4c4; }
+html, body { background:#1a1a1a !important; color:#f4f4f5 !important; }
+.app-shell, .main-content, .page-content, .route-page, .content-area, main { background:#1a1a1a !important; color:#f4f4f5; }
+.sidebar { background:#141414 !important; border-color:#29292e !important; color:#f4f4f5; }
+.workspace-switcher, .sidebar-search, .nav-item, .sidebar-nav a, .sidebar-footer, .profile-menu { background:#1a1a1a !important; border-color:#29292e !important; color:#b9b9c2 !important; }
 .brand-mark { background:#e8e8ea !important; } .brand-mark span { border-color:#111114 !important; }
 .workspace-avatar, .profile-avatar { background:#27242d !important; color:#d8c4ff !important; }
-input, textarea, select { background:#1f1f1f !important; color:#f4f4f5 !important; border-color:#34343b !important; }
+input, textarea, select { background:#1a1a1a !important; color:#f4f4f5 !important; border-color:#34343b !important; }
 input::placeholder, textarea::placeholder { color:#777781 !important; }
 button { color:inherit; }
 button:not(.cal-home-submit):not(.primary-button):not(.btn-primary) { border-color:#303036; }
-.cal-home { background:#1f1f1f !important; color:#f4f4f5 !important; }
+.cal-home { background:#1a1a1a !important; color:#f4f4f5 !important; }
 .cal-home h1, .cal-home h2, .cal-home strong, .cal-home-title { color:#f4f4f5 !important; }
 .cal-home p, .cal-home small, .cal-home-footer, .cal-home-actions small { color:#8e8e98 !important; }
-.cal-home-search, .cal-home-actions button { background:#1f1f1f !important; border-color:#303036 !important; color:#f4f4f5 !important; }
+.cal-home-search, .cal-home-actions button { background:#1a1a1a !important; border-color:#303036 !important; color:#f4f4f5 !important; }
 .cal-home-search input { background:transparent !important; border:0 !important; }
 .cal-home-actions button:hover { background:#1b1b20 !important; border-color:#494950 !important; }
-.card, .panel, .stat-card, .table-wrap, .modal, .dropdown-menu, .empty-state { background:#1f1f1f !important; border-color:#29292e !important; color:#f4f4f5 !important; }
+.card, .panel, .stat-card, .table-wrap, .modal, .dropdown-menu, .empty-state { background:#1a1a1a !important; border-color:#29292e !important; color:#f4f4f5 !important; }
 table, th, td, .table-row, .list-row { border-color:#29292e !important; }
 .muted, .text-muted, small { color:#90909a; }
-@media(max-width:760px){ .sidebar { background:#191919 !important; } }
+@media(max-width:760px){ .sidebar { background:#141414 !important; } }
 
 
 /* Accessible shared mobile navigation for Home and the CRM workspace. */

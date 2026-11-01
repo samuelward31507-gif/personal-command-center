@@ -1,10 +1,10 @@
-.ws-card { margin-top: 26px; border: 1px solid #2a2a2a; border-radius: 16px; background: #1f1f1f; padding: 22px; }
+.ws-card { margin-top: 26px; border: 1px solid #2a2a2a; border-radius: 16px; background: #1a1a1a; padding: 22px; }
 .ws-card h2 { font-size: 18px; margin: 0; }
 .ws-card h3 { font-size: 13px; font-weight: 600; color: #efefef; margin: 24px 0 10px; padding-top: 18px; border-top: 1px solid #2a2a2a; }
 .ws-sub { color: #ababab; font-size: 13px; margin: 6px 0 0; line-height: 1.5; }
 .ws-card h3 + .ws-sub { margin: -4px 0 12px; }
 .ws-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
-.ws-save { height: 36px; padding: 0 16px; border-radius: 9px; border: 1px solid #efefef; background: #efefef; color: #1f1f1f; font-weight: 600; font-size: 13px; cursor: pointer; }
+.ws-save { height: 36px; padding: 0 16px; border-radius: 9px; border: 1px solid #efefef; background: #efefef; color: #1a1a1a; font-weight: 600; font-size: 13px; cursor: pointer; }
 .ws-save:disabled { background: transparent; color: #9e9e9e; border-color: #2a2a2a; cursor: default; }
 .ws-note { font-size: 13px; margin: 12px 0 0; padding: 9px 12px; border-radius: 9px; }
 .ws-note.ok { background: #1c2a20; color: #a9e2bb; }
@@ -15,14 +15,14 @@
 .ws-field.wide { grid-column: 1 / -1; }
 .ws-field > span { font-size: 12.5px; color: #c9c9c9; font-weight: 500; }
 .ws-field small { font-size: 12px; color: #9e9e9e; line-height: 1.4; }
-.ws-field textarea { width: 100%; box-sizing: border-box; padding: 9px 11px; border-radius: 9px; border: 1px solid #3a3a3a; background: #1f1f1f; color: #efefef; font: inherit; font-size: 14px; resize: vertical; }
-.ws-field input, .ws-field select { height: 38px; width: 100%; box-sizing: border-box; padding: 0 11px; border-radius: 9px; border: 1px solid #3a3a3a; background: #1f1f1f; color: #efefef; font: inherit; font-size: 14px; }
+.ws-field textarea { width: 100%; box-sizing: border-box; padding: 9px 11px; border-radius: 9px; border: 1px solid #3a3a3a; background: #1a1a1a; color: #efefef; font: inherit; font-size: 14px; resize: vertical; }
+.ws-field input, .ws-field select { height: 38px; width: 100%; box-sizing: border-box; padding: 0 11px; border-radius: 9px; border: 1px solid #3a3a3a; background: #1a1a1a; color: #efefef; font: inherit; font-size: 14px; }
 .ws-field input:focus, .ws-field select:focus { outline: none; border-color: #9e9e9e; }
 .ws-money { position: relative; }
 .ws-money i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-style: normal; color: #9e9e9e; font-size: 14px; pointer-events: none; }
 .ws-money input { padding-left: 22px; }
 .ws-tiers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.ws-tier { display: grid; gap: 12px; padding: 14px; border: 1px solid #2a2a2a; border-radius: 12px; background: #191919; }
+.ws-tier { display: grid; gap: 12px; padding: 14px; border: 1px solid #2a2a2a; border-radius: 12px; background: #141414; }
 .ws-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 720px) {
   .ws-grid, .ws-grid.three, .ws-tiers { grid-template-columns: 1fr; }

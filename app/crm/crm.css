@@ -41,7 +41,7 @@
 
 /* CINDER DARK SURFACES — page-specific styles must follow their original light declarations. */
 .crm-page,.crm-page * { --crm-line:#3a3a3a; }
-.crm-page { background:#191919!important; color:#efefef!important; }
+.crm-page { background:#141414!important; color:#efefef!important; }
 .crm-page .crm-notice,.crm-page .crm-workspace,.crm-page .crm-list-pane,
 .crm-page .crm-detail-pane,.crm-page .crm-metrics article,.crm-page .crm-contact-row,
 .crm-page .crm-icon-btn,.crm-page .crm-search,.crm-page .crm-filters select,

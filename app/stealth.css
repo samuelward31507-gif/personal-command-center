@@ -7,9 +7,9 @@
    ========================================================================== */
 
 :root {
-  --st-bg: #191919;
-  --st-bg-2: #1f1f1f;
-  --st-surface: #1f1f1f;
+  --st-bg: #141414;
+  --st-bg-2: #1a1a1a;
+  --st-surface: #1a1a1a;
   --st-raised: #303030;
   --st-hover: #303030;
   --st-line: #2e2e2e;
@@ -85,7 +85,7 @@ html body main:not(.calendar-page) [style*="border: 1px solid #fff"], html body 
 
 /* Popovers, menus, dropdowns, dialogs sit one step above */
 html body :is([role="dialog"], .modal, .crm-modal, .calendar-modal, [class*="popover"], [class*="Popover"], [class*="dropdown"], [class*="Dropdown"], [class*="menu"]:not(.cx-side *), [class*="Menu"]) {
-  background-color: #1f1f1f !important; border-color: var(--st-line-2) !important; color: var(--st-text) !important;
+  background-color: #1a1a1a !important; border-color: var(--st-line-2) !important; color: var(--st-text) !important;
 }
 html body :is(.crm-modal, .calendar-modal, [role="dialog"]) { border-radius: 16px !important; box-shadow: 0 30px 80px -20px rgba(0,0,0,.8) !important; }
 html body :is(.crm-modal-backdrop, .calendar-backdrop) { background: rgba(0, 0, 0, .66) !important; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -105,7 +105,7 @@ html body main:not(.calendar-page) button:not([data-variant="primary"]):not(.cx-
 }
 /* Primary actions: light pill on dark, like Claude/ChatGPT */
 html body main:not(.calendar-page) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]) {
-  background-color: #efefef !important; border-color: #efefef !important; color: #1f1f1f !important; font-weight: 600 !important;
+  background-color: #efefef !important; border-color: #efefef !important; color: #1a1a1a !important; font-weight: 600 !important;
 }
 html body main:not(.calendar-page) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]):hover:not(:disabled) {
   background-color: #ffffff !important; border-color: #ffffff !important; color: #000 !important;
@@ -136,7 +136,7 @@ html body main:not(.calendar-page) th {
   color: var(--st-muted) !important; background: transparent !important; border-color: var(--st-line) !important;
 }
 html body main:not(.calendar-page) td { border-color: var(--st-line) !important; color: #d6d6d6; }
-html body main:not(.calendar-page) tr:hover td { background: #191919; }
+html body main:not(.calendar-page) tr:hover td { background: #141414; }
 html body main:not(.calendar-page) hr { border-color: var(--st-line) !important; }
 
 /* ---------- Links ---------- */
