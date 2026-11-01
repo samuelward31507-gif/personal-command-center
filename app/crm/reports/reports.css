@@ -24,3 +24,6 @@
 .rp-ok { color: #9ee6b5; font-size: 13.5px; } .rp-err { color: #f2a5a5; font-size: 13.5px; }
 .rp-empty { margin-top: 22px; padding: 28px; border: 1px dashed #3a3a3a; border-radius: 14px; color: #ababab; }
 @media (max-width: 860px) { .rp-grid, .rp-row, .rp-fields { grid-template-columns: 1fr; } }
+.rp-queue { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 0; padding: 12px 14px; border: 1px solid #4a3e22; border-radius: 12px; background: #1d1a12; font-size: 13.5px; color: #ecc98c; }
+.rp-queue b { font-weight: 600; margin-right: 6px; }
+html body main .rp-queue button { height: 30px; padding: 0 11px; border-radius: 8px; border: 1px solid #5a4a2a !important; color: #f5dcae !important; font: inherit; font-size: 13px; cursor: pointer; }

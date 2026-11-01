@@ -20,6 +20,7 @@ export type WorkspaceSettings = {
   goalAmount: number;
   goalBy: string;         // YYYY-MM-DD
   dailyCallTarget: number;
+  taxSetAsidePct: number; // share of every payment to set aside for taxes, 0–60
 };
 
 export const DEFAULT_WORKSPACE: WorkspaceSettings = {
@@ -40,6 +41,7 @@ export const DEFAULT_WORKSPACE: WorkspaceSettings = {
   goalAmount: 50_000,
   goalBy: "2026-12-31",
   dailyCallTarget: 20,
+  taxSetAsidePct: 28,
 };
 
 type Env = Record<string, string | undefined>;
@@ -97,6 +99,8 @@ export function mergeWorkspace(saved: unknown, base: WorkspaceSettings = DEFAULT
   if (typeof r.goalBy === "string" && DATE.test(r.goalBy) && Number.isFinite(Date.parse(r.goalBy))) out.goalBy = r.goalBy;
   const calls = money(r.dailyCallTarget);
   if (Number.isFinite(calls) && calls >= 1 && calls <= 500) out.dailyCallTarget = Math.round(calls);
+  const tax = money(r.taxSetAsidePct);
+  if (Number.isFinite(tax) && tax >= 0 && tax <= 60) out.taxSetAsidePct = Math.round(tax);
   return out;
 }
 
@@ -125,6 +129,7 @@ export function validateWorkspace(input: unknown): { error: string } | { ok: Wor
   if (typeof r.goalBy !== "string" || !DATE.test(r.goalBy) || !Number.isFinite(Date.parse(r.goalBy))) return { error: "Goal date must be a real date." };
   const calls = money(r.dailyCallTarget);
   if (!Number.isFinite(calls) || calls < 1 || calls > 500) return { error: "Daily call target must be between 1 and 500." };
+  if (r.taxSetAsidePct !== undefined) { const t = money(r.taxSetAsidePct); if (!Number.isFinite(t) || t < 0 || t > 60) return { error: "Tax set-aside must be between 0 and 60%." }; }
   return { ok: mergeWorkspace(r, { ...DEFAULT_WORKSPACE, address: "", contactEmail: "", paymentLink: "", paymentInstructions: "", bookingLink: "" }) };
 }
 
