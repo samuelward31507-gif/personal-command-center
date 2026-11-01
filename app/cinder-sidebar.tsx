@@ -14,26 +14,23 @@ type Props = {
   onNavigate?: (key: string) => void;
 };
 
-// Six places you use every day; everything else lives under "More" so the sidebar stays calm.
+// The places you use every day; the rest lives under "More" so the sidebar stays calm.
 const primary = [
   ["needs-you", "Today", "sun", "/crm/needs-you"],
   ["call", "Call mode", "phone", "/crm/call"],
-  ["growth", "Pipeline", "growth", "/crm"],
+  ["contacts", "Contacts", "client", "/crm"],
+  ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
+  ["client-success", "Clients", "delivery", "/crm/client-success"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
-  ["projects", "Delivery", "delivery", "/crm/projects"],
   ["finance", "Money", "money", "/crm/finance"],
 ] as const;
 const secondary = [
+  ["projects", "Delivery", "check", "/crm/projects"],
   ["tasks", "Tasks", "check", "/crm/tasks"],
-  ["preparation", "Preparation", "edit", "/crm/preparation"],
-  ["client-success", "Clients", "client", "/crm/client-success"],
+  ["preparation", "Research", "search", "/crm/preparation"],
   ["scoreboard", "Scoreboard", "chart", "/crm/scoreboard"],
-  ["audit", "Business audit", "search", "/crm/audit"],
-  ["workforce", "AI team", "spark", "/crm/workforce"],
-  ["intelligence", "Intelligence", "bulb", "/crm/intelligence"],
-  ["strategy", "Strategy & memory", "strategy", "/crm/strategy"],
 ] as const;
-const SECONDARY_PATHS = ["/crm/tasks", "/crm/preparation", "/crm/client-success", "/crm/reports", "/crm/scoreboard", "/crm/audit", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
+const SECONDARY_PATHS = ["/crm/projects", "/crm/tasks", "/crm/preparation", "/crm/audit", "/crm/scoreboard", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
@@ -107,7 +104,9 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     if (key === "home") return mode === "home" ? activeKey === "home" : false;
     if (key === "schedule") return mode === "home" && activeKey === "schedule";
     if (key === "client-success") return pathname.startsWith("/crm/client-success") || pathname.startsWith("/crm/reports");
-    if (key === "growth") return pathname === "/crm" || pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/outreach");
+    if (key === "contacts") return pathname === "/crm" || pathname.startsWith("/crm/outreach");
+    if (key === "pipeline") return pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/deals");
+    if (key === "preparation") return pathname.startsWith("/crm/preparation") || pathname.startsWith("/crm/audit");
     const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
       "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", scoreboard: "/crm/scoreboard", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
       intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings" };
