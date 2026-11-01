@@ -136,3 +136,14 @@ html body .fin-metrics article { background: var(--d-card) !important; border: 1
 html body .cx-logo { height: 23px !important; width: auto; }
 html body .cx-side .cx-mark { width: 26px; height: 26px; flex-basis: 26px; }
 html body .ask-hello-mark { width: 20px !important; height: 20px !important; flex-basis: 20px !important; margin-top: 4px; }
+
+/* Sidebar type a step smaller */
+html body .cx-item, html body .cx-new { font-size: 13.5px !important; }
+html body .cx-item { height: 32px !important; }
+html body .cx-new { height: 36px !important; }
+html body .cx-icon { width: 16px; height: 16px; flex-basis: 16px; }
+html body .cx-group { font-size: 12px; }
+html body .cx-profile-copy strong { font-size: 13.5px !important; }
+html body .cx-profile-copy small { font-size: 11.5px !important; }
+/* The ember beside the greeting always keeps its glow */
+

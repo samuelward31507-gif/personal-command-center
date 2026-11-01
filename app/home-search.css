@@ -22,7 +22,6 @@
   font-size: clamp(28px, 3.4vw, 38px); font-weight: 500; letter-spacing: -0.035em; line-height: 1.15; text-align: center;
 }
 .ask-hello-mark { width: 34px; height: 34px; flex: 0 0 34px; fill: var(--ask-accent); filter: drop-shadow(0 0 18px rgba(220,220,220,.25)); }
-.ask-hello-mark circle { fill: #efefef; }
 .ask-suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
 .ask-root .ask-pill {
   display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px;
