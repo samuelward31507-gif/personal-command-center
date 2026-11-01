@@ -1,12 +1,12 @@
 /* ============================================================================
    Cinder · Polish layer (loaded after stealth.css)
-   One type system across every page: a quiet serif for page titles and the
-   greeting (Newsreader), Geist for everything you read and click. One page
+   One type system across every page: Geist for titles and everything you
+   read and click. One page
    frame, one eyebrow, one card, one pill. Dark only; copper used sparingly.
    ========================================================================== */
 
 :root {
-  --pl-display: var(--font-display), "Iowan Old Style", Georgia, serif;
+  --pl-display: var(--font-geist-sans), Inter, system-ui, sans-serif;
   --pl-text: #ececec;
   --pl-title: #f3f1ec;
   --pl-soft: #b5b2a8;
@@ -21,7 +21,7 @@
 html body { font-size: 14.5px; line-height: 1.55; text-rendering: optimizeLegibility; }
 html body main p { line-height: 1.6; }
 
-/* Page titles: serif, calm, one size everywhere (Calendar included). */
+/* Page titles: one size everywhere (Calendar included). */
 html body main h1,
 html body main:not(.calendar-page) h1,
 html body .calendar-page .calendar-header h1,
@@ -52,11 +52,11 @@ html body .eyebrow, html body .crm-eyebrow, html body .projects-eyebrow, html bo
 html body .fin-eyebrow, html body .sb-eyebrow, html body .calendar-eyebrow, html body .td-eyebrow, html body .cm-eyebrow, html body .dw-eyebrow,
 html body .section-kicker, html body [class$="-eyebrow"] {
   font-family: var(--st-font) !important; font-size: 11.5px !important; font-weight: 600 !important;
-  letter-spacing: .08em !important; text-transform: uppercase !important; color: var(--pl-muted) !important;
+ color: var(--pl-muted) !important;
 }
 /* Inline-styled legacy eyebrows (small uppercase <p>/<div> right above an h1) */
 html body main p:has(+ h1), html body main div:has(+ h1):not(:has(*)) {
-  font-size: 11.5px !important; letter-spacing: .08em !important; text-transform: uppercase; color: var(--pl-muted) !important; font-weight: 600 !important; margin: 0 !important;
+  font-size: 11.5px !important; color: var(--pl-muted) !important; font-weight: 600 !important; margin: 0 !important;
 }
 
 /* Section headings */

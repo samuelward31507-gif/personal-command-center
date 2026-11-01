@@ -52,7 +52,7 @@ export async function GET(request: Request) {
     return reply({
       today, ...summary,
       groups: summary.groups.map(g => ({ ...g, items: g.items.map(e => ({ ...e, token: undefined, url: (e as { token?: string | null }).token ? `${base}/invoice/${(e as { token?: string }).token}` : null, next: nextMove(e, today) })) })),
-      retainersToBill: plan.create.length, paymentReady: !!(ws.paymentLink || ws.paymentInstructions),
+      retainersToBill: plan.create.length, paymentReady: !!(ws.paymentLink || ws.paymentInstructions || ws.tier1.setupLink || ws.tier1.monthlyLink || ws.tier2.setupLink || ws.tier2.monthlyLink),
     });
   } catch (error) {
     console.error("Invoices GET failed", { name: error instanceof Error ? error.name : typeof error });

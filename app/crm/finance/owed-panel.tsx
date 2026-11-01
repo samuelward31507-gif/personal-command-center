@@ -77,7 +77,7 @@ export default function OwedPanel({ onChange }: { onChange?: () => void }) {
         <p className="ow-sub">{d.totalOpen ? <>{usd(d.totalOpen)} open{d.totalOverdue ? <> · <b className="ow-late">{usd(d.totalOverdue)} overdue</b></> : null}{d.notInvoiced ? ` · ${d.notInvoiced} not invoiced yet` : ""}</> : "Nobody owes you anything right now."}</p></div>
       {d.retainersToBill > 0 && <button className="ow-btn primary" disabled={busy === "bill"} onClick={() => void billMonth()}>{busy === "bill" ? "Billing…" : `Bill this month (${d.retainersToBill})`}</button>}
     </div>
-    {!d.paymentReady && d.totalOpen > 0 && <p className="ow-warn">Invoices have no way to pay yet. Add your payment link in <Link href="/crm/settings">Settings → Getting paid</Link>.</p>}
+    {!d.paymentReady && d.totalOpen > 0 && <p className="ow-warn">Invoices have no way to pay yet. Add your payment links in <Link href="/crm/settings">Settings</Link> (Offers and Getting paid).</p>}
     {note && <p className={note.ok ? "ow-note ok" : "ow-note bad"} role={note.ok ? "status" : "alert"}>{note.text}</p>}
     {d.groups.map(g => <div key={g.bucket} className={"ow-group " + g.bucket}>
       <div className="ow-group-h"><span>{g.label}</span><span>{usd(g.total)}</span></div>

@@ -1,7 +1,7 @@
 // Workspace settings: who the business is, what it sells, and the goal. One row per owner.
 // Pure: no I/O. Defaults are today's values, so an empty row behaves exactly like before.
 
-export type TierSettings = { label: string; setupFee: number; monthlyFee: number };
+export type TierSettings = { label: string; setupFee: number; monthlyFee: number; setupLink: string; monthlyLink: string };
 export type WorkspaceSettings = {
   businessName: string;   // shown to clients: sidebar, signing, kickoff, reports, call opener
   shortName: string;      // what you say on the phone ("Samuel with CGC")
@@ -33,8 +33,8 @@ export const DEFAULT_WORKSPACE: WorkspaceSettings = {
   niche: "fence and pool companies",
   paymentLink: "",
   paymentInstructions: "",
-  tier1: { label: "Tier 1 · Speed to Lead", setupFee: 1500, monthlyFee: 997 },
-  tier2: { label: "Tier 2 · Revenue System", setupFee: 3000, monthlyFee: 1500 },
+  tier1: { label: "Tier 1 · Speed to Lead", setupFee: 1500, monthlyFee: 997, setupLink: "", monthlyLink: "" },
+  tier2: { label: "Tier 2 · Revenue System", setupFee: 3000, monthlyFee: 1500, setupLink: "", monthlyLink: "" },
   goalAmount: 50_000,
   goalBy: "2026-12-31",
   dailyCallTarget: 20,
@@ -87,6 +87,7 @@ export function mergeWorkspace(saved: unknown, base: WorkspaceSettings = DEFAULT
     const setup = money(s.setupFee), monthly = money(s.monthlyFee);
     if (Number.isFinite(setup) && setup >= 0) out[t].setupFee = Math.round(setup);
     if (Number.isFinite(monthly) && monthly >= 0) out[t].monthlyFee = Math.round(monthly);
+    for (const k of ["setupLink", "monthlyLink"] as const) if (typeof s[k] === "string" && isPaymentLink((s[k] as string).trim())) out[t][k] = (s[k] as string).trim();
   }
   const goal = money(r.goalAmount);
   if (Number.isFinite(goal) && goal > 0) out.goalAmount = Math.round(goal);
@@ -111,6 +112,9 @@ export function validateWorkspace(input: unknown): { error: string } | { ok: Wor
       const v = money(s[k]);
       if (!Number.isFinite(v) || v < 0 || v > 1_000_000) return { error: `${n} ${label} must be a dollar amount.` };
     }
+    for (const [k, label] of [["setupLink", "setup payment link"], ["monthlyLink", "monthly payment link"]] as const) {
+      if (typeof s[k] === "string" && s[k].trim() && !isPaymentLink(s[k].trim())) return { error: `${n} ${label} must be a full https:// address.` };
+    }
   }
   const goal = money(r.goalAmount);
   if (!Number.isFinite(goal) || goal <= 0) return { error: "Revenue goal must be a dollar amount." };
@@ -123,9 +127,20 @@ export function validateWorkspace(input: unknown): { error: string } | { ok: Wor
 /** The offer catalog, priced from settings. Service types never change: deals and agreements key off them. */
 export function offersFrom(w: WorkspaceSettings) {
   return {
-    tier1: { serviceType: "tier1_speed_to_lead", ...w.tier1 },
-    tier2: { serviceType: "tier2_revenue_system", ...w.tier2 },
+    tier1: { serviceType: "tier1_speed_to_lead", label: w.tier1.label, setupFee: w.tier1.setupFee, monthlyFee: w.tier1.monthlyFee },
+    tier2: { serviceType: "tier2_revenue_system", label: w.tier2.label, setupFee: w.tier2.setupFee, monthlyFee: w.tier2.monthlyFee },
   };
+}
+
+/**
+ * Which payment link goes on an invoice. Tier links are fixed-price (a Stripe link charges its own amount),
+ * so a tier link is used only when the invoice amount matches that tier's price. Otherwise: the general link, or none.
+ */
+export function paymentLinkFor(w: WorkspaceSettings, serviceType: string | null, revenueType: string, amount: number): { link: string; kind: "setup" | "monthly" | "general" | "none" } {
+  const tier = serviceType === "tier1_speed_to_lead" ? w.tier1 : serviceType === "tier2_revenue_system" ? w.tier2 : null;
+  if (tier && revenueType === "setup_fee" && tier.setupLink && Math.round(amount) === tier.setupFee) return { link: tier.setupLink, kind: "setup" };
+  if (tier && revenueType === "monthly_retainer" && tier.monthlyLink && Math.round(amount) === tier.monthlyFee) return { link: tier.monthlyLink, kind: "monthly" };
+  return w.paymentLink ? { link: w.paymentLink, kind: "general" } : { link: "", kind: "none" };
 }
 
 export function goalLabel(w: WorkspaceSettings): string {

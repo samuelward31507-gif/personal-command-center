@@ -1,7 +1,7 @@
 /* Call mode. Stealth palette; class names avoid the legacy "card/panel/stat" overrides. */
 .cm-page { max-width: 1180px; margin: 0 auto; padding: 28px 28px 60px; color: #f0eee6; }
 .cm-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 18px; }
-.cm-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #6b6b6b; margin-bottom: 6px; }
+.cm-eyebrow { font-size: 11px; font-weight: 600; color: #6b6b6b; margin-bottom: 6px; }
 html body main .cm-title { margin: 0; }
 html body main p.cm-sub { margin: 6px 0 0; font-size: 14px; color: #8f8f8f !important; }
 .cm-head-actions { display: flex; gap: 8px; align-items: center; }
@@ -37,7 +37,7 @@ html body main button.cm-q.is-on { background: #30302d !important; border-color:
 .cm-logged-row small { color: #6b6b6b !important; white-space: nowrap; }
 
 .cm-main { border: 1px solid #3a3935; border-radius: 16px; background: #2b2a28; padding: 22px 24px 20px; }
-.cm-mini { font-size: 11.5px; font-weight: 550; letter-spacing: .04em; color: #8e8b82; text-transform: uppercase; }
+.cm-mini { font-size: 11.5px; font-weight: 550; color: #8e8b82; }
 .cm-who { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
 .cm-who-main { min-width: 0; }
 html body main h2.cm-company { margin: 6px 0 6px; font-size: 24px !important; font-weight: 600 !important; letter-spacing: -0.025em !important; }
@@ -69,7 +69,7 @@ html body main .cm-muted { color: #8e8b82 !important; font-size: 13px; }
 .cm-script { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; counter-reset: step; }
 .cm-script li { position: relative; padding-left: 34px; counter-increment: step; }
 .cm-script li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: #3a3935; color: #bdbdbd; font-size: 12px; font-weight: 600; }
-.cm-step { font-size: 12px; font-weight: 600; color: #8f8f8f; letter-spacing: .03em; text-transform: uppercase; }
+.cm-step { font-size: 12px; font-weight: 600; color: #8f8f8f; }
 html body main p.cm-say { margin: 4px 0 4px; font-size: 15.5px !important; line-height: 1.6; color: #f0f0f0 !important; }
 html body main small.cm-tip { font-size: 12.5px; color: #8e8b82 !important; }
 .cm-objs { display: grid; gap: 6px; }
