@@ -131,3 +131,8 @@ html body .fin-metrics article { background: var(--d-card) !important; border: 1
 .ow-warn a { color: var(--d-text) !important; }
 .ow-note.ok, .ws-note.ok { background: #1f1f1f !important; color: var(--d-soft) !important; }
 .ow-btn.primary, .ws-save:not(:disabled) { background: var(--d-text) !important; color: #141414 !important; border-color: var(--d-text) !important; }
+
+/* Brand: the wordmark in the sidebar, the ember beside the greeting */
+html body .cx-logo { height: 23px !important; width: auto; }
+html body .cx-side .cx-mark { width: 26px; height: 26px; flex-basis: 26px; }
+html body .ask-hello-mark { width: 20px !important; height: 20px !important; flex-basis: 20px !important; margin-top: 4px; }
