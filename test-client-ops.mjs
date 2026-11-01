@@ -22,6 +22,7 @@ const pre = prefillSetup({ owner_name: "Rod" }, { service_area: "OKC metro", que
 ok(() => assert.equal(pre.owner_name, "Rod", "saved values win over kickoff"));
 ok(() => assert.equal(pre.service_area, "OKC metro"));
 ok(() => assert.equal(pre.display_name, "Double R Fence"));
+ok(() => assert.equal(prefillSetup({}, {}, { company: "Double R Fence, LLC" }).display_name, "Double R Fence", "legal suffix dropped from the name customers see"));
 ok(() => assert.equal(pre.a2p_status, "Not started"));
 ok(() => assert.deepEqual(cleanSetup({ trade: "Roofing", hours: "  8-5 ", bogus: "x" }), { hours: "8-5" }, "unknown fields and bad options dropped"));
 ok(() => assert.ok(setupGaps({}).includes("Booking link")));

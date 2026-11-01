@@ -58,9 +58,9 @@ export default function OpsPanel({ projectId }: { projectId: string }) {
       {c.state !== "not_started" && c.state !== "live" && <div className="op-bar" aria-hidden="true"><i style={{ width: Math.min(100, (c.day / c.of) * 100) + "%" }} /></div>}
     </div>
 
-    <div className="op-tabs" role="tablist" aria-label="Build operations">
+    <div className="op-tabs" role="group" aria-label="Build operations">
       {([["setup", "Setup sheet", ops.gaps.length ? `${ops.gaps.length} missing` : "Complete"], ["messages", "Messages", msgSummary], ["launch", "Launch test", `${ops.launchState.passed} of ${ops.launchState.total}`], ["share", "Client portal", ops.portal.link ? "On" : "Off"]] as const).map(([k, label, sub]) =>
-        <button key={k} type="button" role="tab" aria-selected={tab === k} style={{ background: tab === k ? "#262626" : "transparent" }} onClick={() => setTab(k)}><b>{label}</b><small>{sub}</small></button>)}
+        <button key={k} type="button" aria-pressed={tab === k} style={{ background: tab === k ? "#2c2c2c" : "transparent" }} onClick={() => setTab(k)}><b>{label}</b><small>{sub}</small></button>)}
     </div>
     {note && <p className={"op-note " + (note.ok ? "ok" : "bad")} role="status">{note.text}</p>}
 
