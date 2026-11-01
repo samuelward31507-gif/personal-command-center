@@ -87,3 +87,8 @@ html body main :is(strong, b, td, .sb-num, .sb-goal-num, .ow-amt, [class*="amoun
 html body .fin-metrics strong, html body .sb-num, html body .hb-tile strong { letter-spacing: -0.02em; font-weight: 600; }
 /* Small labels: sentence case, quiet; no shouting uppercase */
 html body .main-panel main :is(.fin-metrics small, .fin-secondary small) { text-transform: none !important; letter-spacing: 0 !important; font-size: 12.5px !important; font-weight: 500 !important; color: #9a978d !important; }
+
+/* Pipeline cards: the stage picker gets its own full-width row so it never truncates. */
+html body .pipeline-deal footer { flex-wrap: wrap !important; }
+html body .pipeline-deal footer select { flex: 1 1 100% !important; max-width: none !important; order: 3; font-size: 12.5px !important; padding: 6px 8px !important; }
+html body .pipeline-deal-monthly { color: #a9e2bb !important; }

@@ -85,7 +85,7 @@ function Blocks({ text }: { text: string }) {
 
 function Card({ title, children, tone, tag }: { title: string; children: ReactNode; tone?: string; tag?: string }) {
   return <section style={{ background: C.card, border: `1px solid ${C.line}`, borderTop: tone ? `2px solid ${tone}` : `1px solid ${C.line}`, borderRadius: 12, padding: "16px 18px", minWidth: 0 }}>
-    <h3 style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase", color: tone ?? C.muted, display: "flex", alignItems: "center", gap: 8 }}>
+    <h3 style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, color: tone ?? C.muted, display: "flex", alignItems: "center", gap: 8 }}>
       {title}{tag && <span style={{ fontSize: 9.5, letterSpacing: 0.8, color: C.faint, border: `1px solid ${C.line}`, borderRadius: 999, padding: "1px 7px" }}>{tag}</span>}
     </h3>
     {children}

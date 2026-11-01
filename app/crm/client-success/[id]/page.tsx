@@ -25,6 +25,7 @@ type Hub = {
   activity: { channel: string; action: string; outcome: string; notes: string; at: string | null }[];
 };
 
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const fmt = (d: string | null) => (d ? new Date(d.slice(0, 10) + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "—");
 const period = (p: string) => new Date(p + "-15T12:00:00Z").toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
@@ -96,7 +97,7 @@ export default function ClientHubPage() {
           {h.money.length === 0 ? <p className="hb-muted">No money recorded for this client.</p> :
             <ul className="hb-money">{h.money.map(m => {
               const late = m.status !== "paid" && m.dueDate && m.dueDate < h.today;
-              return <li key={m.id}><span>{m.title.split(" — ").slice(1).join(" — ") || m.title}{m.invoiceNumber ? <em> INV-{m.invoiceNumber}</em> : null}</span><b>{usd(m.amount)}</b><small className={m.status === "paid" ? "ok" : late ? "bad" : ""}>{m.status === "paid" ? `Paid ${fmt(m.paidAt)}` : late ? `Overdue since ${fmt(m.dueDate)}` : `Due ${fmt(m.dueDate)}`}</small></li>;
+              return <li key={m.id}><span>{cap(m.title.split(" — ").slice(1).join(" — ") || m.title)}{m.invoiceNumber ? <em> INV-{m.invoiceNumber}</em> : null}</span><b>{usd(m.amount)}</b><small className={m.status === "paid" ? "ok" : late ? "bad" : ""}>{m.status === "paid" ? `Paid ${fmt(m.paidAt)}` : late ? `Overdue since ${fmt(m.dueDate)}` : `Due ${fmt(m.dueDate)}`}</small></li>;
             })}</ul>}
         </section>
 

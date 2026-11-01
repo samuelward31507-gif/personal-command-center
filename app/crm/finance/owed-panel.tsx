@@ -9,6 +9,7 @@ type Group = { bucket: string; label: string; total: number; items: Item[] };
 type Data = { today: string; groups: Group[]; totalOpen: number; totalOverdue: number; notInvoiced: number; retainersToBill: number; paymentReady: boolean };
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 });
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const short = (d: string | null) => (d ? new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "No date");
 
 /** Who owes you: open money by urgency, with one-tap invoice links and reminder drafts. Nothing is sent or charged by Cinder. */
@@ -82,7 +83,7 @@ export default function OwedPanel({ onChange }: { onChange?: () => void }) {
     {d.groups.map(g => <div key={g.bucket} className={"ow-group " + g.bucket}>
       <div className="ow-group-h"><span>{g.label}</span><span>{usd(g.total)}</span></div>
       {g.items.map(it => <div key={it.id} className="ow-row">
-        <div className="ow-main"><strong>{it.client || it.title}</strong><small>{it.client ? it.title.split(" — ").slice(1).join(" — ") || it.title : ""}{it.invoiceNumber ? ` · INV-${it.invoiceNumber}` : ""} · {short(it.dueDate)}</small></div>
+        <div className="ow-main"><strong>{it.client || it.title}</strong><small>{it.client ? cap(it.title.split(" — ").slice(1).join(" — ") || it.title) : ""}{it.invoiceNumber ? ` · INV-${it.invoiceNumber}` : ""} · {short(it.dueDate)}</small></div>
         <div className="ow-amt">{usd(it.amount)}</div>
         <div className="ow-next">{it.next}</div>
         <div className="ow-acts">

@@ -124,7 +124,7 @@ export default function MyDayQueue({ showFilters = false, title = "Today’s que
     {notice && <p className="local-note" role="status" style={{ color: notice.ok ? "#86efac" : "#fca5a5" }}>{notice.text}</p>}
     {notice?.deal && <SuggestedDeal key={notice.text} deal={notice.deal} />}
     {order.filter(g => byGroup[g]?.length).map(g => <div key={g} style={{ marginTop: 14 }}>
-      <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase", color: "#9a9aa4", margin: "0 0 6px" }}>{groups[g] || g} · {byGroup[g].length}</div>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: "#9a978d", margin: "0 0 6px" }}>{groups[g] || g} · {byGroup[g].length}</div>
       <div style={{ display: "grid", gap: 8 }}>
         {byGroup[g].map(item => <div key={item.id} style={ROW}>
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
