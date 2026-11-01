@@ -36,7 +36,7 @@ export default function OperationsPage() {
   return <main className="ops-page">
     <h1>Operations</h1>
     <p className="ops-sub">Deadlines, registrations and the playbook that keep the business running.</p>
-    <div className="ops-tabs" role="tablist">{(["deadlines", "playbook"] as const).map(k => <button key={k} type="button" role="tab" aria-selected={tab === k} style={{ background: tab === k ? "#2c2c2c" : "transparent" }} onClick={() => setTab(k)}>{k === "deadlines" ? "Deadlines" : "Playbook"}</button>)}</div>
+    <div className="ops-tabs" role="group" aria-label="Section">{(["deadlines", "playbook"] as const).map(k => <button key={k} type="button" aria-pressed={tab === k} style={{ background: tab === k ? "#2c2c2c" : "transparent" }} onClick={() => setTab(k)}>{k === "deadlines" ? "Deadlines" : "Playbook"}</button>)}</div>
     {error && <p className="ops-err" role="alert">{error}</p>}
 
     {tab === "deadlines" && <>

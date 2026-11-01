@@ -80,7 +80,7 @@ export function prefillSetup(setup: Record<string, string>, kickoff: Record<stri
   const out: Record<string, string> = { ...setup };
   const fill = (k: string, v: string | undefined) => { if (!out[k]?.trim() && v?.trim()) out[k] = v.trim(); };
   for (const k of ["legal_name", "website", "service_area", "lead_sources", "questions", "rules", "prices", "calendar", "availability", "owner_cell"]) fill(k, kickoff[k]);
-  fill("display_name", extra.company); fill("website", extra.website); fill("owner_name", extra.ownerName);
+  fill("display_name", extra.company?.replace(/,?\s+(LLC|L\.L\.C\.|Inc\.?|Corp\.?)$/i, "")); fill("website", extra.website); fill("owner_name", extra.ownerName);
   if (!out.a2p_status) out.a2p_status = "Not started";
   return out;
 }
