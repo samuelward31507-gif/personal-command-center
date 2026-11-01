@@ -53,3 +53,8 @@ html body .crm-shell-main > main:not(.calendar-page):not(.pipeline-page):not(.cm
 /* Scrollbars that don't shout. */
 html body ::-webkit-scrollbar { width: 10px; height: 10px; }
 html body ::-webkit-scrollbar-thumb { background: #3d3c38; border-radius: 10px; border: 2px solid #262624; }
+
+/* Sidebar buttons (Search, More) look like plain nav items, not filled buttons. */
+html body .cx-side button.cx-search, html body .cx-side button.cx-more { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #c2c0b6 !important; }
+html body .cx-side button.cx-search:hover, html body .cx-side button.cx-more:hover { background: #2a2927 !important; }
+html body .topbar, html body .crm-shell-main > .topbar { box-shadow: none !important; border: 0 !important; }
