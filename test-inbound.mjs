@@ -35,7 +35,9 @@ ok(() => assert.match(inboundTask(validateInbound(speed)).title, /^Run speed tes
 ok(() => assert.match(inboundTask(validateInbound(good)).title, /^Call new inbound lead/));
 const api = readFileSync("app/api/inbound-lead/route.ts", "utf8");
 ok(() => assert.match(api, /CINDER_OWNER_ID/, "filed under the configured owner only"));
-ok(() => assert.doesNotMatch(api, /sms|twilio|sendEmail|resend|fetch\(/i, "never contacts the lead"));
+// Never contacts the lead. (The consent columns are named sms_consent*, so match sending, not the word.)
+ok(() => assert.doesNotMatch(api.replace(/sms_consent\w*|smsConsent/g, ""), /sms|twilio|sendEmail|resend|fetch\(/i, "never contacts the lead"));
+ok(() => assert.match(api, /sms_consent = sms_consent OR/, "consent is recorded and never revoked by a new form"));
 ok(() => assert.doesNotMatch(api, /DELETE FROM/i));
 ok(() => assert.match(api, /'urgent'/, "creates an urgent call task"));
 console.log(`Inbound lead regression checks passed (${n} assertions).`);

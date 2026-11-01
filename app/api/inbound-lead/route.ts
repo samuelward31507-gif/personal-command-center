@@ -43,12 +43,16 @@ export async function POST(request: Request) {
           phone = CASE WHEN coalesce(phone,'') = '' THEN ${lead.phone} ELSE phone END,
           email = CASE WHEN coalesce(email,'') = '' THEN ${lead.email} ELSE email END,
           website = CASE WHEN coalesce(website,'') = '' THEN ${lead.website} ELSE website END,
+          sms_consent = sms_consent OR ${lead.smsConsent},
+          sms_consent_at = CASE WHEN ${lead.smsConsent} AND NOT sms_consent THEN now() ELSE sms_consent_at END,
+          sms_consent_source = CASE WHEN ${lead.smsConsent} AND NOT sms_consent THEN 'website_form' ELSE sms_consent_source END,
           updated_at = now()
         WHERE id = ${contactId}::uuid AND owner_id = ${owner}`;
     } else {
       const rows = await sql`
-        INSERT INTO public.contacts (owner_id, first_name, last_name, company, email, phone, status, source, notes, follow_up_at, website)
-        VALUES (${owner}, ${first ?? ""}, ${rest.join(" ")}, ${lead.company}, ${lead.email}, ${lead.phone}, 'lead', ${sourceFor(lead)}, ${notesFor(lead, now)}, ${today}::date, ${lead.website})
+        INSERT INTO public.contacts (owner_id, first_name, last_name, company, email, phone, status, source, notes, follow_up_at, website, sms_consent, sms_consent_at, sms_consent_source)
+        VALUES (${owner}, ${first ?? ""}, ${rest.join(" ")}, ${lead.company}, ${lead.email}, ${lead.phone}, 'lead', ${sourceFor(lead)}, ${notesFor(lead, now)}, ${today}::date, ${lead.website},
+          ${lead.smsConsent}, ${lead.smsConsent ? now.toISOString() : null}::timestamptz, ${lead.smsConsent ? "website_form" : ""})
         RETURNING id`;
       contactId = String(rows[0].id);
     }
