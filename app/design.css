@@ -78,7 +78,7 @@ html body .ask-root .ask-composer textarea { font-size: 16.5px !important; line-
 html body .ask-root .ask-composer textarea::placeholder { color: var(--d-faint) !important; }
 html body .ask-root .ask-tool { width: 34px; height: 34px; padding: 0; justify-content: center; border: 0 !important; color: var(--d-text) !important; }
 html body .ask-root .ask-tool:hover { background: #3a3a3a !important; }
-html body .ask-root .ask-tool.is-on { color: #191919 !important; background: #d9d9d9 !important; }
+html body .ask-root .ask-tool.is-on { color: #efefef !important; background: #404040 !important; }
 html body .ask-root .ask-send { width: 34px; height: 34px; flex-basis: 34px; border-radius: 10px; background: #efefef !important; color: #191919 !important; }
 html body .ask-root .ask-send:hover:not(:disabled) { background: #ffffff !important; }
 html body .ask-root .ask-send:disabled { background: #3d3d3d !important; color: #8a8a8a !important; }
@@ -131,3 +131,5 @@ html body .main-panel main :is(button, a)[data-variant="primary"]:not(.ask-root 
 .ow-warn a { color: var(--d-text) !important; }
 .ow-note.ok, .ws-note.ok { background: #262626 !important; color: var(--d-soft) !important; }
 .ow-btn.primary, .ws-save:not(:disabled) { background: #efefef !important; color: #191919 !important; border-color: #efefef !important; }
+
+html body .main-panel main .fin-metrics, html body main .fin-metrics { background: transparent !important; background-color: transparent !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; }
