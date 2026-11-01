@@ -28,7 +28,8 @@ export default function ReportsPage() {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(r.status === 401 ? "Sign in to see reports." : d.error || "Could not load reports.");
       setClients(d.clients); setReports(d.reports);
-      setProjectId(p => p || d.clients[0]?.id || "");
+      const want = new URLSearchParams(window.location.search).get("project");
+      setProjectId(p => p || (want && d.clients.some((c: { id: string }) => c.id === want) ? want : "") || d.clients[0]?.id || "");
     } catch (e) { setError(e instanceof Error ? e.message : "Could not load reports."); }
   }
   useEffect(() => { void load(); }, []);

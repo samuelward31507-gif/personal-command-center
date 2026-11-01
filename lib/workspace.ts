@@ -12,6 +12,8 @@ export type WorkspaceSettings = {
   contactEmail: string;   // provider email on agreements; where alerts go
   timezone: string;       // IANA zone for "today", crons, agreement dates
   niche: string;          // who you sell to, in plain words ("fence and pool companies")
+  paymentLink: string;    // your own payment page (Stripe, Square, PayPal…); shown on invoices
+  paymentInstructions: string; // other ways to pay (ACH details, Zelle…); shown on invoices
   tier1: TierSettings;
   tier2: TierSettings;
   goalAmount: number;
@@ -29,6 +31,8 @@ export const DEFAULT_WORKSPACE: WorkspaceSettings = {
   contactEmail: "",
   timezone: "America/Denver",
   niche: "fence and pool companies",
+  paymentLink: "",
+  paymentInstructions: "",
   tier1: { label: "Tier 1 · Speed to Lead", setupFee: 1500, monthlyFee: 997 },
   tier2: { label: "Tier 2 · Revenue System", setupFee: 3000, monthlyFee: 1500 },
   goalAmount: 50_000,
@@ -51,12 +55,17 @@ export function envDefaults(env: Env): WorkspaceSettings {
   };
 }
 
+export function isPaymentLink(v: string): boolean {
+  if (!v || v.length > 300) return false;
+  try { const u = new URL(v); return u.protocol === "https:" && !!u.hostname.includes("."); } catch { return false; }
+}
+
 export function isTimezone(tz: string): boolean {
   if (!tz) return false;
   try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); return true; } catch { return false; }
 }
 
-const TEXT_LIMITS: Record<string, number> = { businessName: 80, shortName: 60, ownerFirstName: 40, ownerFullName: 80, legalName: 160, address: 200, contactEmail: 160, niche: 120 };
+const TEXT_LIMITS: Record<string, number> = { businessName: 80, shortName: 60, ownerFirstName: 40, ownerFullName: 80, legalName: 160, address: 200, contactEmail: 160, niche: 120, paymentInstructions: 600 };
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -71,6 +80,7 @@ export function mergeWorkspace(saved: unknown, base: WorkspaceSettings = DEFAULT
     if (typeof v === "string" && v.trim()) (out[k] as string) = v.trim().slice(0, TEXT_LIMITS[k]);
   }
   if (typeof r.timezone === "string" && isTimezone(r.timezone)) out.timezone = r.timezone;
+  if (typeof r.paymentLink === "string" && isPaymentLink(r.paymentLink.trim())) out.paymentLink = r.paymentLink.trim().slice(0, 300);
   for (const t of ["tier1", "tier2"] as const) {
     const s = (r[t] && typeof r[t] === "object" ? r[t] : {}) as Record<string, unknown>;
     if (typeof s.label === "string" && s.label.trim()) out[t].label = s.label.trim().slice(0, 60);
@@ -93,6 +103,7 @@ export function validateWorkspace(input: unknown): { error: string } | { ok: Wor
   for (const [k, label] of need) if (typeof r[k] !== "string" || !(r[k] as string).trim()) return { error: `${label} can't be empty.` };
   if (typeof r.contactEmail === "string" && r.contactEmail.trim() && !EMAIL.test(r.contactEmail.trim())) return { error: "That email address doesn't look right." };
   if (typeof r.timezone === "string" && r.timezone && !isTimezone(r.timezone)) return { error: "Pick a valid time zone." };
+  if (typeof r.paymentLink === "string" && r.paymentLink.trim() && !isPaymentLink(r.paymentLink.trim())) return { error: "Payment link must be a full https:// address." };
   for (const t of ["tier1", "tier2"] as const) {
     const s = (r[t] && typeof r[t] === "object" ? r[t] : {}) as Record<string, unknown>;
     const n = t === "tier1" ? "Tier 1" : "Tier 2";
@@ -106,7 +117,7 @@ export function validateWorkspace(input: unknown): { error: string } | { ok: Wor
   if (typeof r.goalBy !== "string" || !DATE.test(r.goalBy) || !Number.isFinite(Date.parse(r.goalBy))) return { error: "Goal date must be a real date." };
   const calls = money(r.dailyCallTarget);
   if (!Number.isFinite(calls) || calls < 1 || calls > 500) return { error: "Daily call target must be between 1 and 500." };
-  return { ok: mergeWorkspace(r, { ...DEFAULT_WORKSPACE, address: "", contactEmail: "" }) };
+  return { ok: mergeWorkspace(r, { ...DEFAULT_WORKSPACE, address: "", contactEmail: "", paymentLink: "", paymentInstructions: "" }) };
 }
 
 /** The offer catalog, priced from settings. Service types never change: deals and agreements key off them. */

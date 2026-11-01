@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth/server";
 import { CONNECT_OUTCOMES, funnelRates, goalMath } from "@/lib/scoreboard";
 import { goalLabel, offersFrom } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
+import { channelReport } from "@/lib/lead-source";
 import { sanitizeForLog } from "@/lib/business-audit";
 
 export const runtime = "nodejs";
@@ -71,6 +72,13 @@ export async function GET(request: Request) {
           WHERE owner_id = ${owner} AND channel = 'call' AND outcome IS DISTINCT FROM 'initiated' AND occurred_at > now() - interval '120 days' ORDER BY 1 DESC`,
     ]);
 
+    // Where deals come from: last 180 days, channel from the deal's source or the contact's.
+    const srcRows = await sql`SELECT d.source, COALESCE(c.source, '') AS contact_source, d.stage, d.monthly_fee, d.setup_fee,
+        EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = d.owner_id AND a.contact_id = d.contact_id AND a.outcome = 'meeting_booked') AS meeting
+      FROM public.deals d LEFT JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id
+      WHERE d.owner_id = ${owner} AND d.created_at > now() - interval '180 days'` as Record<string, unknown>[];
+    const sources = channelReport(srcRows.map(r => ({ dealSource: String(r.source ?? ""), contactSource: String(r.contact_source ?? ""), stage: String(r.stage), meeting: r.meeting === true, monthlyFee: Number(r.monthly_fee), setupFee: Number(r.setup_fee) })));
+
     const byDay = new Map(daily.map(r => [day(r.d), r]));
     const days = Array.from({ length: 14 }, (_, i) => {
       const d = new Date(Date.parse(from14 + "T00:00:00Z") + i * 86_400_000).toISOString().slice(0, 10);
@@ -97,6 +105,7 @@ export async function GET(request: Request) {
       recurring: { clients: mrr[0]?.clients ?? 0, mrr: mrr[0]?.mrr ?? 0 },
       goal: goalMath({ today, collected: money[0]?.collected ?? 0, expectedByGoal: money[0]?.expected ?? 0, offers: Object.values(offersFrom(ws)), goal: { amount: ws.goalAmount, by: ws.goalBy } }),
       targets: { goalLabel: goalLabel(ws), dailyCalls: ws.dailyCallTarget },
+      sources,
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Scoreboard failed", { name: error instanceof Error ? error.name : typeof error, message: sanitizeForLog(error instanceof Error ? error.message : "") });
