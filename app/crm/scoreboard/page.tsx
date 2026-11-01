@@ -17,6 +17,7 @@ type Data = {
   pipeline: { stage: string; deals: number; setup: number; monthly: number }[];
   recurring: { clients: number; mrr: number };
   targets?: { goalLabel: string; dailyCalls: number };
+  sources?: { rows: { channel: string; label: string; deals: number; meetings: number; won: number; lost: number; wonMonthly: number; meetingRate: number | null; closeRate: number | null }[]; best: { label: string; meetingRate: number | null } | null; unknownShare: number };
   goal: { goal: number; collected: number; expected: number; remaining: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
 };
 
@@ -96,6 +97,17 @@ export default function ScoreboardPage() {
         <p className="sb-muted">All-time close rate: {rate(d.allTime.closeRate)} ({d.allTime.won} won, {d.allTime.lost} lost)</p>
       </section>
     </div>
+
+    {d.sources && <section className="sb-box">
+      <div className="sb-boxhead"><h2>Where deals come from</h2><span className="sb-muted">last 180 days</span></div>
+      {d.sources.rows.length === 0 ? <p className="sb-muted">No deals yet. Once you start booking calls this shows which channel works.</p> : <>
+        <div className="sb-src">
+          <div className="sb-src-row sb-src-h"><span>Channel</span><span>Deals</span><span>Meetings</span><span>Won</span><span>Close rate</span></div>
+          {d.sources.rows.map(r => <div key={r.channel} className="sb-src-row"><span>{r.label}</span><span>{r.deals}</span><span>{r.meetings}{r.meetingRate !== null ? <em> {r.meetingRate}%</em> : null}</span><span>{r.won}{r.wonMonthly ? <em> {money(r.wonMonthly)}/mo</em> : null}</span><span>{rate(r.closeRate)}</span></div>)}
+        </div>
+        <p className="sb-muted">{d.sources.best ? `${d.sources.best.label} books the most calls per deal (${d.sources.best.meetingRate}%). Put more time there.` : "Not enough deals yet to say which channel works best (needs 3+ deals with a meeting)."}{d.sources.unknownShare >= 20 ? ` ${d.sources.unknownShare}% of deals have no source. Set it when you create a deal.` : ""}</p>
+      </>}
+    </section>}
 
     <section className="sb-box">
       <div className="sb-boxhead"><h2>Open pipeline</h2><span className="sb-muted">{money(openSetup)} setup + {money(openMonthly)}/mo</span></div>

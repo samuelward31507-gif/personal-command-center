@@ -87,6 +87,13 @@ export function WorkspaceCard() {
       </div>)}
     </div>
 
+    <h3>Getting paid</h3>
+    <p className="ws-sub">Shown on every invoice. Cinder never takes payments or checks them: you mark invoices paid when the money lands.</p>
+    <div className="ws-grid">
+      <label className="ws-field wide"><span>Payment link</span><input type="url" placeholder="https://buy.stripe.com/…" value={w.paymentLink} onChange={e => set("paymentLink", e.target.value)} /><small>Your own Stripe, Square or PayPal payment page. Leave blank if you don&apos;t have one.</small></label>
+      <label className="ws-field wide"><span>Other ways to pay</span><textarea rows={3} value={w.paymentInstructions} onChange={e => set("paymentInstructions", e.target.value)} placeholder="e.g. Zelle to you@email.com, or ask for ACH details." /><small>Don&apos;t put full bank account numbers here. The invoice page is reachable by anyone with its link.</small></label>
+    </div>
+
     <h3>Goal</h3>
     <div className="ws-grid three">
       <label className="ws-field"><span>Revenue goal</span><div className="ws-money"><i>$</i><input inputMode="numeric" value={money(w.goalAmount)} onChange={e => set("goalAmount", Number(e.target.value.replace(/[^\d]/g, "") || 0))} /></div><small>Cash collected counts. Won deals don&apos;t.</small></label>

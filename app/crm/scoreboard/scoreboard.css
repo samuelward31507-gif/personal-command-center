@@ -60,3 +60,9 @@ html body main .sb-box h2 { margin: 0; font-size: 14.5px !important; }
 .sb-pipe-row:hover { color: #fff !important; }
 .sb-pipe-row span:last-child { font-variant-numeric: tabular-nums; color: #b5b2a8; }
 @media (max-width: 900px) { .sb-tiles { grid-template-columns: 1fr 1fr; } .sb-grid { grid-template-columns: 1fr; } .sb-page { padding: 20px 14px 40px; } }
+
+.sb-src { display: grid; margin: 4px 0 10px; }
+.sb-src-row { display: grid; grid-template-columns: minmax(0, 1.6fr) .7fr 1fr 1.2fr .9fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid #33322f; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.sb-src-row em { font-style: normal; color: #8f8d86; font-size: 12px; }
+.sb-src-h { font-size: 12px; color: #8f8d86; padding-top: 0; }
+@media (max-width: 640px) { .sb-src-row { grid-template-columns: minmax(0, 1.4fr) .6fr .9fr .8fr; } .sb-src-row > :last-child { display: none; } }
