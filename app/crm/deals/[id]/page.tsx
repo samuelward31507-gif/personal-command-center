@@ -12,6 +12,7 @@ import { Markdown } from "../../../ask-answer";
 import "../../../home-search.css";
 import "./deal.css";
 
+type DealTab = "discovery" | "proposal" | "agreement" | "kickoff" | "email";
 type Workspace = {
   deal: { id: string; title: string; stage: string; serviceType: string; setupFee: number; monthlyFee: number; expectedCloseDate: string | null; lostReason: string; notes: string;
     discovery: Discovery; nextStep: string; nextStepAt: string | null; proposalStatus: ProposalStatus; proposalSentAt: string | null; proposalDecidedAt: string | null; agreementStatus: string;
@@ -67,6 +68,9 @@ export default function DealWorkspacePage() {
   const [signUrl, setSignUrl] = useState("");
   const [kick, setKick] = useState<{ tier: string; status: string; createdAt: string; submittedAt: string | null; items: { label: string; value: string }[] } | null>(null);
   const [kickUrl, setKickUrl] = useState("");
+  const [dtab, setDtab] = useState<DealTab | null>(null);
+  // Links like /crm/deals/<id>#agreement open that step.
+  useEffect(() => { const h = window.location.hash.slice(1); if (["discovery", "proposal", "agreement", "kickoff", "email"].includes(h)) setDtab(h as DealTab); }, []);
   async function newKickoffLink() {
     setSaving("kickoff"); setFlash(null);
     try {
@@ -242,6 +246,17 @@ export default function DealWorkspacePage() {
   const closed = deal.stage === "won" || deal.stage === "lost";
   const agreement = ws.agreements[0];
   const showAgreement = deal.proposalStatus === "accepted" || deal.contractStatus !== "none" || !!agreement;
+  const showKickoff = deal.stage === "won" && (deal.serviceType === "tier1_speed_to_lead" || deal.serviceType === "tier2_revenue_system");
+  const showEmail = !closed || deal.stage === "won";
+  const tabs: { key: DealTab; label: string }[] = [
+    { key: "discovery", label: "Discovery" }, { key: "proposal", label: "Proposal" },
+    ...(showAgreement ? [{ key: "agreement" as const, label: "Agreement" }] : []),
+    ...(showKickoff ? [{ key: "kickoff" as const, label: "Kickoff" }] : []),
+    ...(showEmail ? [{ key: "email" as const, label: "Email" }] : []),
+  ];
+  // Opens on the step the deal is at; you can switch freely.
+  const stepTab: DealTab = showKickoff ? "kickoff" : showAgreement && deal.contractStatus !== "signed" ? "agreement" : deal.stage === "proposal" || deal.proposalStatus !== "none" ? "proposal" : "discovery";
+  const tab: DealTab = dtab && tabs.some(t => t.key === dtab) ? dtab : stepTab;
   const blanks = agreement ? (agreement.content.match(/\[[^\]\n]{1,80}\]/g) ?? []).length : 0;
 
   return <main className="dw-page">
@@ -295,7 +310,11 @@ export default function DealWorkspacePage() {
           {!deal.nextStep && !closed && <p className="dw-hint">Every open deal needs a next step with a date. It shows up in Today when it&apos;s due.</p>}
         </section>
 
-        <section className="dw-box">
+        <div className="dw-tabs" role="tablist" aria-label="Deal steps">
+          {tabs.map(t => <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} onClick={() => setDtab(t.key)}>{t.label}{t.key === stepTab && <i aria-label="current step" />}</button>)}
+        </div>
+
+        {tab === "discovery" && <section className="dw-box">
           <div className="dw-boxhead"><h2>Discovery</h2><span className="dw-pct"><i style={{ width: pct + "%" }} />{pct}% captured</span></div>
           <p className="dw-hint">Fill this in during or right after the discovery call. The proposal is written from it.</p>
           <div className="dw-fields">
@@ -307,9 +326,9 @@ export default function DealWorkspacePage() {
             </label>)}
           </div>
           <div className="dw-right"><button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "disc"} onClick={() => void patch({ discovery: disc }, "disc", "Discovery saved.")}>{saving === "disc" ? "Saving…" : "Save discovery"}</button></div>
-        </section>
+        </section>}
 
-        <section className="dw-box">
+        {tab === "proposal" && <section className="dw-box">
           <div className="dw-boxhead"><h2>Proposal</h2><span className={"dw-pill dw-pill-" + deal.proposalStatus}>{PROPOSAL_COPY[deal.proposalStatus]}{deal.proposalSentAt && deal.proposalStatus === "sent" ? ` · ${dateLabel(deal.proposalSentAt)}` : ""}</span></div>
           {!proposal ? <>
             <p className="dw-hint">{pct < 50 ? "Capture discovery first — a proposal written without it will be generic." : "Cinder drafts it from your discovery notes, the audit and this deal's price. You review before anything goes out."}</p>
@@ -333,9 +352,9 @@ export default function DealWorkspacePage() {
               <button data-variant="primary" className="dw-btn dw-bad" disabled={!!saving} onClick={() => setProposal("declined")}>Declined</button>
             </div>}
           </>}
-        </section>
+        </section>}
 
-        {showAgreement && <section className="dw-box" id="agreement">
+        {tab === "agreement" && <section className="dw-box" id="agreement">
           <div className="dw-boxhead"><h2>Agreement</h2><span className={"dw-pill dw-pill-c-" + deal.contractStatus}>{CONTRACT_COPY[deal.contractStatus]}{deal.contractSentAt && deal.contractStatus === "sent" ? ` · ${dateLabel(deal.contractSentAt)}` : ""}{deal.signedAt && deal.contractStatus === "signed" ? ` · ${dateLabel(deal.signedAt)}` : ""}</span></div>
           {!agreement ? <>
             <p className="dw-hint">Your service agreement, filled in with this deal's plan, price and client. Anything Cinder doesn't know stays as a [bracketed] blank for you.</p>
@@ -373,7 +392,7 @@ export default function DealWorkspacePage() {
           </>}
         </section>}
 
-        {deal.stage === "won" && (deal.serviceType === "tier1_speed_to_lead" || deal.serviceType === "tier2_revenue_system") && <section className="dw-box" id="kickoff">
+        {tab === "kickoff" && <section className="dw-box" id="kickoff">
           <div className="dw-boxhead"><h2>Kickoff checklist</h2><span className={"dw-pill " + (kick?.status === "submitted" ? "dw-pill-c-signed" : "dw-pill-c-sent")}>{kick?.status === "submitted" ? "Received" : kick ? "Waiting on client" : "Not sent"}</span></div>
           {kick?.status === "submitted" ? <>
             <p className="dw-hint">Received {new Date(kick.submittedAt ?? kick.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}. The 21-business-day go-live clock started then. It's also saved in the project notes.</p>
@@ -388,7 +407,7 @@ export default function DealWorkspacePage() {
           </>}
         </section>}
 
-        {!closed || deal.stage === "won" ? <section className="dw-box">
+        {tab === "email" ? <section className="dw-box">
           <div className="dw-boxhead"><h2>Follow-up email</h2><span className="dw-muted dw-small">Email only · you send it</span></div>
           <div className="dw-mailbar">
             <select value={purpose || defaultPurpose(deal.stage, deal.proposalStatus, deal.contractStatus)} onChange={e => setPurpose(e.target.value as EmailPurpose)}>
