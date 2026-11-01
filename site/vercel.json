@@ -84,5 +84,12 @@
         }
       ]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/fence-and-pool",
+      "destination": "/fence",
+      "permanent": true
+    }
   ]
 }

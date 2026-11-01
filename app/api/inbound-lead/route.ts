@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { sendAlert } from "@/lib/notify";
-import { notesFor, phoneDigits, sourceFor, validateInbound } from "@/lib/inbound";
+import { consentLine, inboundTask, notesFor, phoneDigits, sourceFor, validateInbound } from "@/lib/inbound";
 import { sanitizeForLog } from "@/lib/business-audit";
 
 export const runtime = "nodejs";
@@ -54,15 +54,18 @@ export async function POST(request: Request) {
     }
     await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
       VALUES (${owner}, ${contactId}::uuid, 'note', 'note', 'other', ${("Submitted the website form. " + notesFor(lead, now)).slice(0, 3000)})`;
+    const task = inboundTask(lead);
     await sql`INSERT INTO public.tasks (owner_id, title, description, status, priority, due_at, contact_id)
-      VALUES (${owner}, ${("Call new inbound lead: " + lead.company).slice(0, 240)}, ${"They filled out your form. Speed wins: call within 5 minutes if you can.\n" + (lead.phone ? "Phone: " + lead.phone : "Email: " + lead.email)}, 'todo', 'urgent', now(), ${contactId}::uuid)`;
+      VALUES (${owner}, ${task.title}, ${task.description}, 'todo', 'urgent', now(), ${contactId}::uuid)`;
     console.info("Inbound lead captured", { existing: existing.length > 0 });
-    await sendAlert({ subject: `New lead: ${lead.company}`, lines: [
-      `${lead.name} from ${lead.company} just filled out your form.`,
+    const speed = lead.offer === "speed-test";
+    await sendAlert({ subject: speed ? `Speed test request: ${lead.company}` : `New lead: ${lead.company}`, lines: [
+      speed ? `${lead.name} from ${lead.company} asked for the free speed test (${lead.website}).` : `${lead.name} from ${lead.company} just filled out your form.`,
       [lead.phone && `Phone: ${lead.phone}`, lead.email && `Email: ${lead.email}`].filter(Boolean).join(" · "),
       [lead.trade && `Trade: ${lead.trade}`, lead.leadVolume && `Leads/month: ${lead.leadVolume}`].filter(Boolean).join(" · "),
       lead.challenge ? `Biggest headache: ${lead.challenge.slice(0, 300)}` : "",
-      "Speed wins. Call within 5 minutes if you can.",
+      speed ? "Run the test, then send them the result within 48 hours." : "Speed wins. Call within 5 minutes if you can.",
+      consentLine(lead),
     ].filter(Boolean), link: { label: "Open in Cinder", path: `/crm?contact=${contactId}` } });
     return reply({ ok: true });
   } catch (error) {

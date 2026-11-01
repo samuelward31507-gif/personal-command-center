@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /sign/
+Disallow: /kickoff/
+Disallow: /invoice/
+Sitemap: https://cinder-revenue-company.vercel.app/sitemap.xml
