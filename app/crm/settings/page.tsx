@@ -159,7 +159,7 @@ export default function SettingsPage() {
       {error && <p role="alert" style={{ marginTop: 20, padding: 12, borderRadius: 8, background:"#2a1414", color:"#fca5a5", fontSize: 13 }}>{error}</p>}
 
       <nav className="set-tabs" role="tablist" aria-label="Settings sections">
-        {TABS.map(t => <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} onClick={() => pick(t.key)}>{t.label}</button>)}
+        {TABS.map(t => <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} style={{ background: tab === t.key ? "#2c2c2c" : "transparent" }} onClick={() => pick(t.key)}>{t.label}</button>)}
       </nav>
 
       {tab === "business" && <WorkspaceCard />}
