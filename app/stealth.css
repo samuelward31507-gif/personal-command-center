@@ -7,16 +7,16 @@
    ========================================================================== */
 
 :root {
-  --st-bg: #101010;
-  --st-bg-2: #0c0c0c;
-  --st-surface: #141414;
-  --st-raised: #191919;
-  --st-hover: #1b1b1b;
-  --st-line: #222222;
-  --st-line-2: #2a2a2a;
-  --st-text: #ededed;
-  --st-soft: #a3a3a3;
-  --st-muted: #737373;
+  --st-bg: #262624;
+  --st-bg-2: #1f1e1d;
+  --st-surface: #2b2a28;
+  --st-raised: #353431;
+  --st-hover: #353431;
+  --st-line: #3d3c38;
+  --st-line-2: #45443f;
+  --st-text: #f0eee6;
+  --st-soft: #b5b2a8;
+  --st-muted: #8e8b82;
   --st-faint: #525252;
   --st-accent: #cfcfcf;
   --st-radius: 12px;
@@ -35,21 +35,21 @@ html body aside.sidebar { display: none !important; }
 
 /* ---------- Top bar ---------- */
 html body .topbar, html body .crm-shell-main > .topbar {
-  height: 52px !important; padding: 0 24px !important; background: rgba(16, 16, 16, .82) !important;
+  height: 52px !important; padding: 0 24px !important; background: rgba(38, 38, 36, .86) !important;
   -webkit-backdrop-filter: saturate(140%) blur(10px); backdrop-filter: saturate(140%) blur(10px);
   border-bottom: 1px solid var(--st-line) !important; position: sticky; top: 0; z-index: 40;
 }
 html body .breadcrumbs { font-size: 13.5px !important; color: var(--st-muted) !important; gap: 8px; }
 html body .breadcrumbs a, html body .breadcrumbs span { color: var(--st-muted) !important; }
 html body .breadcrumbs strong { color: var(--st-text) !important; font-weight: 550 !important; }
-html body .breadcrumb-slash { color: #3a3a3a !important; }
+html body .breadcrumb-slash { color: #57554f !important; }
 html body .topbar-status { font-size: 12.5px !important; color: var(--st-muted) !important; }
 html body .status-ring { border-color: #3b3b3b !important; }
 html body .topbar .quiet-button, html body .topbar a.quiet-button {
   height: 30px; display: inline-flex; align-items: center; padding: 0 12px !important; border-radius: 8px !important;
   background: transparent !important; border: 1px solid var(--st-line-2) !important; color: var(--st-soft) !important; font-size: 13px !important; font-weight: 500;
 }
-html body .topbar .quiet-button:hover { color: var(--st-text) !important; border-color: #3a3a3a !important; background: var(--st-raised) !important; }
+html body .topbar .quiet-button:hover { color: var(--st-text) !important; border-color: #57554f !important; background: var(--st-raised) !important; }
 @media (max-width: 760px) { html body .topbar, html body .crm-shell-main > .topbar { padding-left: 60px !important; } }
 
 /* ---------- Page headers ---------- */
@@ -61,7 +61,7 @@ html body main:not(.calendar-page) h1 {
 html body main:not(.calendar-page) h1 span, html body main:not(.calendar-page) h1 em { color: inherit !important; font-style: normal; }
 html body main:not(.calendar-page) h1 .heading-period, html body main:not(.calendar-page) h1 .brand-period { color: #4a4a4a !important; }
 html body main:not(.calendar-page) h2 { font-size: 16px !important; font-weight: 600 !important; letter-spacing: -0.015em !important; color: #f0f0f0 !important; }
-html body main:not(.calendar-page) h3 { font-size: 14.5px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; color: #ededed !important; }
+html body main:not(.calendar-page) h3 { font-size: 14.5px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; color: #f0eee6 !important; }
 html body main:not(.calendar-page) p { color: var(--st-soft) !important; line-height: 1.6; }
 html body main:not(.calendar-page) small { color: var(--st-muted) !important; }
 html body .page-subtitle, html body main:not(.calendar-page) h1 + p { font-size: 14.5px !important; color: var(--st-soft) !important; max-width: 720px; }
@@ -70,7 +70,7 @@ html body .eyebrow, html body .crm-eyebrow, html body .projects-eyebrow, html bo
 html body [class$="-eyebrow"]:not(.calendar-eyebrow) {
   font-size: 11px !important; font-weight: 600 !important; letter-spacing: .09em !important; color: var(--st-faint) !important; text-transform: uppercase;
 }
-html body .eyebrow-line { background: #2a2a2a !important; }
+html body .eyebrow-line { background: #45443f !important; }
 
 /* ---------- Surfaces ---------- */
 html body main:not(.calendar-page) :is(.overview-card, .surface-panel, .route-panel, .schedule-panel, .notes-panel, .attention-banner,
@@ -85,7 +85,7 @@ html body main:not(.calendar-page) [style*="border: 1px solid #fff"], html body 
 
 /* Popovers, menus, dropdowns, dialogs sit one step above */
 html body :is([role="dialog"], .modal, .crm-modal, .calendar-modal, [class*="popover"], [class*="Popover"], [class*="dropdown"], [class*="Dropdown"], [class*="menu"]:not(.cx-side *), [class*="Menu"]) {
-  background-color: #141414 !important; border-color: var(--st-line-2) !important; color: var(--st-text) !important;
+  background-color: #2b2a28 !important; border-color: var(--st-line-2) !important; color: var(--st-text) !important;
 }
 html body :is(.crm-modal, .calendar-modal, [role="dialog"]) { border-radius: 16px !important; box-shadow: 0 30px 80px -20px rgba(0,0,0,.8) !important; }
 html body :is(.crm-modal-backdrop, .calendar-backdrop) { background: rgba(0, 0, 0, .66) !important; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -101,11 +101,11 @@ html body main:not(.calendar-page) a.crm-btn, html body main:not(.calendar-page)
   transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
 html body main:not(.calendar-page) button:not([data-variant="primary"]):not(.cx-side *):not([class*="ask-"]):not(.check-button):not([style*="background"]):hover:not(:disabled) {
-  background-color: #1f1f1f !important; border-color: #3a3a3a !important; color: #fafafa !important;
+  background-color: #3a3935 !important; border-color: #57554f !important; color: #fafafa !important;
 }
 /* Primary actions: light pill on dark, like Claude/ChatGPT */
 html body main:not(.calendar-page) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]) {
-  background-color: #ededed !important; border-color: #ededed !important; color: #0b0b0b !important; font-weight: 600 !important;
+  background-color: #f0eee6 !important; border-color: #f0eee6 !important; color: #1f1e1d !important; font-weight: 600 !important;
 }
 html body main:not(.calendar-page) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]):hover:not(:disabled) {
   background-color: #ffffff !important; border-color: #ffffff !important; color: #000 !important;
@@ -123,7 +123,7 @@ html body main:not(.calendar-page) :is(input:not([type="checkbox"]):not([type="r
 }
 html body main:not(.calendar-page) :is(input, select, textarea):not(.ask-composer *):focus,
 html body main:not(.calendar-page) :is(input, select, textarea):not(.ask-composer *):focus-visible {
-  outline: none !important; border-color: #3d3d3d !important; box-shadow: 0 0 0 3px rgba(214, 169, 140, .10) !important;
+  outline: none !important; border-color: #57554f !important; box-shadow: 0 0 0 3px rgba(214, 169, 140, .10) !important;
 }
 html body main:not(.calendar-page) :is(input, textarea)::placeholder { color: #5c5c5c !important; }
 html body main:not(.calendar-page) label { color: var(--st-soft); }
@@ -136,7 +136,7 @@ html body main:not(.calendar-page) th {
   color: var(--st-muted) !important; background: transparent !important; border-color: var(--st-line) !important;
 }
 html body main:not(.calendar-page) td { border-color: var(--st-line) !important; color: #d6d6d6; }
-html body main:not(.calendar-page) tr:hover td { background: #101010; }
+html body main:not(.calendar-page) tr:hover td { background: #262624; }
 html body main:not(.calendar-page) hr { border-color: var(--st-line) !important; }
 
 /* ---------- Links ---------- */
@@ -144,10 +144,10 @@ html body main:not(.calendar-page) a:not([class]):not(.cx-side *) { color: #e6e6
 html body main:not(.calendar-page) a:not([class]):hover { text-decoration-color: var(--st-accent); }
 
 /* ---------- Scrollbars ---------- */
-html { scrollbar-color: #2a2a2a transparent; }
+html { scrollbar-color: #45443f transparent; }
 html body ::-webkit-scrollbar { width: 10px; height: 10px; }
 html body ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; border: 3px solid var(--st-bg); }
-html body ::-webkit-scrollbar-thumb:hover { background: #2e2e2e; }
+html body ::-webkit-scrollbar-thumb:hover { background: #45443f; }
 html body ::-webkit-scrollbar-track { background: transparent; }
 
 /* ---------- Focus ring (keyboard) ---------- */
@@ -164,7 +164,7 @@ html body main:not(.calendar-page) :is(label, div)[class*="search"]:has(> input)
   display: flex; align-items: center; gap: 8px; background: var(--st-bg-2) !important; border: 1px solid var(--st-line-2) !important;
   border-radius: 9px !important; padding: 0 10px !important; color: var(--st-muted) !important; transition: border-color .15s, box-shadow .15s;
 }
-html body main:not(.calendar-page) :is(label, div)[class*="search"]:has(> input:focus) { border-color: #3d3d3d !important; box-shadow: 0 0 0 3px rgba(255,255,255,.05) !important; }
+html body main:not(.calendar-page) :is(label, div)[class*="search"]:has(> input:focus) { border-color: #57554f !important; box-shadow: 0 0 0 3px rgba(255,255,255,.05) !important; }
 html body main:not(.calendar-page) :is(label, div)[class*="search"] > input {
   flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; padding-left: 0 !important; padding-right: 0 !important;
 }

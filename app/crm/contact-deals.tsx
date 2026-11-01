@@ -52,14 +52,14 @@ export default function ContactDeals({ contactId, name, company }: { contactId: 
       {/^[0-9a-f-]{36}$/i.test(contactId) && <button type="button" data-variant="primary" className="cd-start" disabled={busy} onClick={() => void start()}>{busy ? "Starting…" : deals.some(d => !["won", "lost"].includes(d.stage)) ? "+ Another deal" : "+ Start a deal"}</button>}
     </>}
     <style>{`
-      .cd-deals .cd-deal{display:grid;grid-template-columns:minmax(0,1fr) auto auto 14px;gap:10px;align-items:center;padding:9px 11px;margin-top:6px;border:1px solid #232323;border-radius:10px;background:#141414;color:#e6e6e6!important;text-decoration:none!important;font-size:13px}
-      .cd-deals .cd-deal:hover{border-color:#353535;background:#181818}
+      .cd-deals .cd-deal{display:grid;grid-template-columns:minmax(0,1fr) auto auto 14px;gap:10px;align-items:center;padding:9px 11px;margin-top:6px;border:1px solid #3d3c38;border-radius:10px;background:#2b2a28;color:#e6e6e6!important;text-decoration:none!important;font-size:13px}
+      .cd-deals .cd-deal:hover{border-color:#353535;background:#30302d}
       .cd-deals .cd-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:550}
-      .cd-deals .cd-stage{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid #2c2c2c;color:#a8a8a8}
+      .cd-deals .cd-stage{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid #45443f;color:#a8a8a8}
       .cd-deals .cd-won .cd-stage{color:#9ee6b5;border-color:#234231}.cd-deals .cd-lost .cd-stage{color:#f2a5a5;border-color:#3a2424}.cd-deals .cd-proposal .cd-stage{color:#e7c2a8;border-color:#4a3a2f}
       .cd-deals .cd-val{color:#8f8f8f;font-size:12px;white-space:nowrap}.cd-deals .cd-go{color:#666}
-      html body main button.cd-start{margin-top:8px;height:30px;padding:0 12px;border-radius:9px;border:1px solid #2a2a2a!important;background:#171717!important;color:#e0e0e0!important;font:inherit;font-size:12.5px;cursor:pointer}
-      html body main button.cd-start:hover:not(:disabled){background:#1f1f1f!important;color:#fff!important}
+      html body main button.cd-start{margin-top:8px;height:30px;padding:0 12px;border-radius:9px;border:1px solid #45443f!important;background:#30302d!important;color:#e0e0e0!important;font:inherit;font-size:12.5px;cursor:pointer}
+      html body main button.cd-start:hover:not(:disabled){background:#3a3935!important;color:#fff!important}
       .cd-deals .cd-err{color:#f2a5a5!important}
     `}</style>
   </div>;
