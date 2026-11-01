@@ -68,7 +68,7 @@ p { margin: 0; }
 .nav.is-scrolled { border-bottom-color: var(--line); }
 .nav-in { display: flex; align-items: center; gap: 32px; height: 68px; }
 .brand { display: inline-flex; flex: none; }
-.brand svg { height: 26px; width: auto; }
+.brand svg { height: 24px; width: auto; }
 .nav-links { display: flex; gap: 26px; margin-left: auto; font-size: 14px; }
 .nav-links a { text-decoration: none; color: var(--fog); }
 .nav-links a:hover { color: var(--paper); }
