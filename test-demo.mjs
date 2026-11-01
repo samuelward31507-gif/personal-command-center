@@ -21,3 +21,13 @@ ok(() => assert.doesNotMatch(api, /twilio|INSERT INTO public\.contacts|sendAlert
 ok(() => assert.match(api, /createHash\("sha256"\)/, "only a hashed IP is stored"));
 ok(() => assert.match(readFileSync("site/vercel.json", "utf8"), /\/api\/demo-reply/));
 console.log(`Demo checks passed (${n} assertions).`);
+{
+  const { validateTestimonial, publishable } = await import("./lib/testimonial.ts");
+  const a = (await import("node:assert/strict")).default;
+  a.match(validateTestimonial({ quote: "short", name: "Rod" }).error, /sentence/);
+  a.match(validateTestimonial({ quote: "Every lead gets a reply now.", name: "" }).error, /name/);
+  a.equal(validateTestimonial({ quote: "Every lead gets a reply now.", name: "Rod", permission: "yes" }).permission, false, "permission must be an explicit true");
+  a.equal(publishable({ status: "submitted", permission: false, quote: "x", name: "Rod", role: "", company: "" }), null, "never publish without permission");
+  a.match(publishable({ status: "submitted", permission: true, quote: "Great", name: "Rod", role: "Owner", company: "Double R Fence" }), /Rod, Owner, Double R Fence/);
+  console.log("Testimonial checks passed.");
+}

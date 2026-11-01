@@ -49,3 +49,6 @@ html body main .op-pf button[aria-pressed=true] { background: #2c2c2c !important
 html body main .op-tabs button[aria-pressed=true] { border-color: #5a5a5a !important; }
 html body main .op-tabs.op-tabs.op-tabs button { background: transparent !important; }
 html body main .op-tabs.op-tabs.op-tabs button[aria-pressed=true] { background: #262626 !important; border-color: #5a5a5a !important; }
+.op-testi { margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid #2a2a2a; display: grid; gap: 8px; }
+.op-testi b { font-size: 13.5px; color: #ededed; }
+.op-testi blockquote { margin: 0; font-size: 15px; line-height: 1.55; color: #ededed; }
