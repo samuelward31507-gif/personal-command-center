@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import "./hub.css";
+import OpsPanel from "./ops-panel";
 
 type Hub = {
   today: string;
@@ -73,6 +74,8 @@ export default function ClientHubPage() {
       <h2>Needs you</h2>
       {s.attention.map((a, i) => <div key={i} className={"hb-attn-row " + a.level}><i />{a.href ? <Link href={a.href}>{a.text}</Link> : <span>{a.text}</span>}</div>)}
     </section>}
+
+    <OpsPanel projectId={c.id} />
 
     <div className="hb-tiles">
       <div className="hb-tile"><small>Stage</small><strong>{s.stage.label}</strong><span>{s.goLiveDate && s.stage.key === "live" ? `Live since ${fmt(s.goLiveDate)}` : h.kickoff?.submittedAt ? `Kickoff in ${fmt(h.kickoff.submittedAt)}` : ""}</span></div>
