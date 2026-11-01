@@ -1,7 +1,7 @@
 // Regression tests for discovery + proposals. Run with: node --experimental-strip-types test-deal-workspace.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { cleanDiscovery, discoveryCompleteness, stageForProposal, buildProposalPrompt, DISCOVERY_FIELDS, stageForContract, buildAgreementPrompt, buildEmailPrompt, parseEmailDraft, mailtoLink, isEmailPurpose, EMAIL_PURPOSES, greetingName } from "./lib/deal-workspace.ts";
+import { cleanDiscovery, discoveryCompleteness, stageForProposal, buildProposalPrompt, DISCOVERY_FIELDS, stageForContract, buildEmailPrompt, parseEmailDraft, mailtoLink, isEmailPurpose, EMAIL_PURPOSES, greetingName } from "./lib/deal-workspace.ts";
 
 let n = 0;
 const ok = fn => { fn(); n++; };
@@ -27,18 +27,6 @@ ok(() => assert.equal(stageForContract("signed", "proposal"), "won"));
 ok(() => assert.equal(stageForContract("sent", "proposal"), null));
 ok(() => assert.equal(stageForContract("signed", "lost"), null, "closed deals are never moved"));
 ok(() => assert.equal(stageForContract("signed", "won"), null));
-const ag = buildAgreementPrompt({ providerName: "", company: "Ridgeline Fence", contactName: "Mike R.", location: "Denver", offerLabel: "Tier 1", setupFee: 1500, monthlyFee: 997, proposal: "## Investment\n$1,500 setup", today: "October 29, 2026" });
-ok(() => assert.match(ag.user, /Provider: \[Your legal business name\]/, "unknown legal name stays a blank, never guessed"));
-ok(() => assert.match(ag.system, /No guarantees of results/));
-ok(() => assert.match(ag.system, /\[bracketed blank\]/));
-ok(() => assert.match(ag.system, /Client pays all usage and third-party costs/, "usage is the client's, never included"));
-ok(() => assert.match(ag.system, /NOT included in the monthly fee/));
-ok(() => assert.match(ag.system, /A2P 10DLC/));
-ok(() => assert.match(ag.system, /21 business days/, "matches the website's go-live guarantee"));
-ok(() => assert.match(ag.system, /initial term of 3 months/, "matches the website's 3-month start"));
-ok(() => assert.match(ag.system, /honors opt-outs/));
-ok(() => assert.match(ag.user, /\$1,500 setup \+ \$997\/month/));
-ok(() => assert.match(buildAgreementPrompt({ providerName: "CGC LLC", company: "X", contactName: "", location: "", offerLabel: "T", setupFee: 1, monthlyFee: 1, proposal: "p", today: "t" }).user, /Provider: CGC LLC/));
 // follow-up emails
 ok(() => assert.ok(isEmailPurpose("proposal_follow_up") && !isEmailPurpose("sms") && !isEmailPurpose("toString")));
 ok(() => assert.ok(Object.keys(EMAIL_PURPOSES).every(k => !/sms|text message/i.test(EMAIL_PURPOSES[k].label + EMAIL_PURPOSES[k].brief)), "email only"));

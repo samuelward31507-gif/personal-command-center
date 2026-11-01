@@ -118,7 +118,7 @@ export default function DealWorkspacePage() {
       const r = await fetch("/api/agreements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Could not draft the agreement.");
-      setFlash({ ok: true, text: "Agreement drafted. Fill in every [bracketed] blank and read it top to bottom before you send it." });
+      setFlash({ ok: true, text: "Agreement created from your template. Fill in every [bracketed] blank before you send it." });
       await load();
     } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not draft the agreement." }); }
     finally { setSaving(null); }
@@ -312,8 +312,8 @@ export default function DealWorkspacePage() {
         {showAgreement && <section className="dw-box" id="agreement">
           <div className="dw-boxhead"><h2>Agreement</h2><span className={"dw-pill dw-pill-c-" + deal.contractStatus}>{CONTRACT_COPY[deal.contractStatus]}{deal.contractSentAt && deal.contractStatus === "sent" ? ` · ${dateLabel(deal.contractSentAt)}` : ""}{deal.signedAt && deal.contractStatus === "signed" ? ` · ${dateLabel(deal.signedAt)}` : ""}</span></div>
           {!agreement ? <>
-            <p className="dw-hint">{proposal ? "Cinder drafts a plain-English service agreement from the accepted proposal and this deal's price. Anything it doesn't know stays as a [bracketed] blank for you." : "Draft the proposal first. The agreement is written from it."}</p>
-            <button data-variant="primary" className="dw-btn dw-primary" disabled={!proposal || saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Drafting… (about 30s)" : "Draft agreement"}</button>
+            <p className="dw-hint">Your service agreement, filled in with this deal's plan, price and client. Anything Cinder doesn't know stays as a [bracketed] blank for you.</p>
+            <button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Creating…" : "Create agreement"}</button>
           </> : agEdit?.id === agreement.id ? <>
             <textarea className="dw-editor" rows={22} value={agEdit.content} onChange={e => setAgEdit({ ...agEdit, content: e.target.value })} />
             <div className="dw-row"><button data-variant="primary" className="dw-btn" onClick={() => setAgEdit(null)}>Cancel</button><button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "agedit"} onClick={() => void saveAgreement()}>{saving === "agedit" ? "Saving…" : "Save edits"}</button></div>
@@ -324,7 +324,7 @@ export default function DealWorkspacePage() {
               <button data-variant="primary" className="dw-btn" onClick={() => setAgEdit({ id: agreement.id, content: agreement.content })}>Edit</button>
               <button data-variant="primary" className="dw-btn" onClick={() => copy("agreement", agreement.content)}>{copied === "agreement" ? "Copied" : "Copy text"}</button>
               <button data-variant="primary" className="dw-btn" onClick={() => printDoc(agreement.content, `Service Agreement — ${contact?.company || deal.title}`)}>Print / PDF</button>
-              {deal.contractStatus !== "signed" && <button data-variant="primary" className="dw-btn" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Redrafting…" : "Redraft"}</button>}
+              {deal.contractStatus !== "signed" && <button data-variant="primary" className="dw-btn" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Recreating…" : "Recreate from template"}</button>}
             </div>
             {signReq?.status === "signed" && <p className="dw-signed">Signed electronically by {signReq.signerName}{signReq.signerTitle ? `, ${signReq.signerTitle}` : ""} · {signReq.signedAt ? new Date(signReq.signedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}</p>}
             {deal.contractStatus !== "signed" && !closed && <div className="dw-sign">

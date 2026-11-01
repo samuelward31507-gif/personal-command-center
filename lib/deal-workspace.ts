@@ -87,45 +87,6 @@ export function stageForContract(status: ContractStatus, currentStage: string): 
   return status === "signed" ? "won" : null;
 }
 
-export type AgreementInput = {
-  providerName: string; company: string; contactName: string; location: string;
-  offerLabel: string; setupFee: number; monthlyFee: number; proposal: string; today: string;
-};
-
-/** Prompt for a plain-English service agreement drafted from the accepted proposal. Unknown facts stay as [bracketed] blanks. */
-export function buildAgreementPrompt(p: AgreementInput) {
-  const provider = p.providerName.trim() || "[Your legal business name]";
-  const system = `You draft complete, plain-English service agreements for a one-founder agency that installs and runs AI speed-to-lead and follow-up systems for contractors.
-Rules: Base the scope only on the accepted proposal and the fees given. Never invent facts. Anything not given (legal names, addresses, state, notice periods, caps, response times) stays as a [bracketed blank] the founder fills in. No guarantees of results. Plain English a contractor can read, short numbered clauses, no legalese filler. Aim for 1,800–2,500 words. Markdown, with these sections exactly, in this order:
-# Service Agreement
-A line naming the parties: ${provider} ("Provider") and the client ("Client"), the Client's address [Client address], and the effective date.
-## 1. Services — bullets of exactly what's in scope, from the proposal. Out of scope: anything not listed, including ad spend, website rebuilds and lead generation. Changes or additions are quoted in writing before any work starts.
-## 2. Setup and go-live — the system goes live within 21 business days after the Client signs, pays the setup fee and provides the access and information in section 6. Delays in access or approvals move the date day for day. Client approves all message wording before launch. Provider tests every path before go-live.
-## 3. Go-live guarantee — if the system isn't live within 21 business days after everything in section 6 is received, and the delay is Provider's, Provider refunds the setup fee on request. This is the only refund of the setup fee; otherwise it's non-refundable once work begins.
-## 4. Fees and payment — setup fee due at signing; monthly fee starts on the go-live date and is billed monthly in advance; payment method [card / ACH] on file. If a payment is more than [X] days late, Provider may pause the services (including messaging) until paid. Fees exclude taxes. Use the exact amounts given.
-## 5. Usage and third-party costs — the Client pays all usage and third-party costs. These are NOT included in the monthly fee. Name them: text and picture messages, phone numbers, call minutes, AI and voice usage, email sending, carrier registration and compliance fees (for example A2P 10DLC brand and campaign fees), and any software subscriptions the system needs. They're paid either directly on the Client's own accounts or billed back to the Client at cost each month with the invoice, as [direct / billed at cost]. Provider gives an estimate of monthly usage at kickoff and tells the Client if usage is running well above it. Provider may pause sending if usage costs go unpaid.
-## 6. Client responsibilities — access (phone, website forms, calendar, CRM and ad-platform logins as relevant), the business details needed for carrier registration, a 30-minute kickoff, approvals and answers within [X] business days, and accurate information about its services and pricing.
-## 7. Messaging compliance — the Client is responsible for having permission to text and call the people it contacts, for the content it approves, and for following texting and calling laws (such as the TCPA) and carrier rules. The system honors opt-outs (STOP) automatically and the Client won't override them. Provider won't send messages to purchased lists or contacts without permission. The Client covers Provider for claims that come from the Client's contact lists, consent or approved content.
-## 8. Monitoring and support — Provider monitors the system, fixes problems within [X business hours] of finding them, and sends a monthly report. Support is by [email / text] on business days. Provider isn't responsible for outages of third-party services (phone carriers, calendar, AI or software providers) but will work around them where it can.
-## 9. Term and cancellation — an initial term of 3 months from the go-live date, then month to month. After the initial term, either side can cancel with [notice period] written notice. Either side can end the agreement right away if the other seriously breaks it and doesn't fix it within 10 days of written notice. Fees already paid aren't refunded except under section 3.
-## 10. What happens at the end — Provider stops the services, gives the Client an export of its data and leads within [X] days on request, and helps move or release phone numbers and accounts that belong to the Client. Usage incurred up to the end date is still owed.
-## 11. Ownership and data — Client owns its data, leads, conversations, phone numbers and accounts. Provider keeps its templates, workflows, know-how and tools, and gives the Client a license to use them while the agreement is active. Provider uses Client data only to deliver the services.
-## 12. Confidentiality — each side keeps the other's non-public information confidential and uses it only for this agreement, during the term and for 2 years after.
-## 13. No guarantee of results — Provider doesn't guarantee a number of leads, bookings, sales or revenue. The only guarantee is the go-live guarantee in section 3.
-## 14. Liability — neither side is liable for indirect or lost-profit damages. Each side's total liability is capped at [amount, e.g. fees paid in the prior 3 months], except for unpaid fees and the Client's obligations in section 7.
-## 15. General — independent contractor relationship; governing law [State]; neither side assigns this agreement without consent; delays from events outside either side's control are excused; if one clause is invalid the rest stands; this is the whole agreement and changes must be in writing; electronic signatures count as originals; notices go to the emails in the signature blocks.
-## Signatures — two blocks (Provider / Client) with Name, Title, Email, Signature, Date lines.`;
-  const user = `Provider: ${provider}
-Client: ${p.company}${p.contactName ? ` (signer: ${p.contactName})` : ""}${p.location ? `, ${p.location}` : ""}
-Effective date: ${p.today}
-Offer: ${p.offerLabel} — $${p.setupFee.toLocaleString("en-US")} setup + $${p.monthlyFee.toLocaleString("en-US")}/month
-Accepted proposal:
-${p.proposal.slice(0, 6000)}
-
-Draft the agreement.`;
-  return { system, user };
-}
-
 // ---------- Follow-up emails (drafts only — Cinder never sends) ----------
 
 export const EMAIL_PURPOSES = {
