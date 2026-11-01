@@ -6,6 +6,7 @@ import { ActionCard, Markdown } from "./ask-answer";
 import { CinderMark, CINDER_MONO } from "./cinder-brand";
 import "./home-search.css";
 import { useWorkspace } from "./use-workspace";
+import HomeNext from "./home-next";
 
 type Turn = {
   id: number; started: number; query: string; status: string; draft: string;
@@ -176,11 +177,12 @@ export default function HomeSearch() {
 
   if (!chat) return <div className="ask-root ask-root-empty">
     <div className="ask-hero">
-      <h1 className="ask-hello"><Mark className="ask-hello-mark" />{hello}</h1>
+      <h1 className="ask-hello"><CinderMark className="ask-hello-mark" ring="#d97757" ember="#f3c4ae" />{hello}</h1>
       {composer}
       <div className="ask-suggest">
         {SUGGESTIONS.map(s => <button key={s.label} type="button" className="ask-pill" onClick={() => void ask(s.prompt)}><Icon name={s.icon} />{s.label}</button>)}
       </div>
+      <HomeNext />
     </div>
   </div>;
 

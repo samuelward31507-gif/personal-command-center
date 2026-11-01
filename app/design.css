@@ -1,0 +1,108 @@
+/* ============================================================================
+   Cinder · Design layer (loaded last). The shell and Home, at the standard of
+   the Claude app: generous spacing, no chrome you don't need, one warm accent.
+   ========================================================================== */
+
+:root {
+  --d-bg: #262624;          /* canvas */
+  --d-side: #1f1e1d;        /* sidebar, one step darker */
+  --d-raise: #30302e;       /* composer, cards */
+  --d-hover: #2c2b29;
+  --d-active: #353432;
+  --d-line: rgba(255, 255, 255, .07);
+  --d-line-2: rgba(255, 255, 255, .11);
+  --d-text: #f5f4ef;
+  --d-soft: #c3c1b8;
+  --d-muted: #95938b;
+  --d-faint: #6f6d66;
+  --d-accent: #d97757;      /* the one warm accent (Cinder ember) */
+}
+
+/* ---------- Sidebar: wider, airier, larger type ---------- */
+html body .cx-side { --cx-w: 264px; padding: 10px 10px 12px !important; gap: 2px; border-right: 0 !important; background: var(--d-side) !important; }
+html body .cx-side.is-collapsed { --cx-w: 60px; }
+html body .cx-top { height: 40px; margin-bottom: 10px; padding-left: 8px; }
+html body .cx-wordmark { font-size: 15.5px; }
+html body .cx-icon { width: 17px; height: 17px; flex-basis: 17px; }
+html body .cx-new {
+  height: 38px; padding: 0 10px; margin-bottom: 10px; gap: 11px; border-radius: 10px;
+  font-size: 14.5px; font-weight: 550; color: var(--d-text) !important; background: transparent !important;
+}
+html body .cx-new:hover, html body .cx-new.is-active { background: var(--d-active) !important; }
+html body .cx-new-icon { width: 24px; height: 24px; flex-basis: 24px; margin-left: -3px; background: var(--d-accent) !important; color: #1f1e1d !important; box-shadow: none; }
+html body .cx-new-icon .cx-icon { width: 13px; height: 13px; flex-basis: 13px; stroke-width: 2.4; }
+html body .cx-item {
+  height: 36px; padding: 0 10px; gap: 11px; border-radius: 9px;
+  font-size: 14.5px; font-weight: 450; color: var(--d-soft) !important; letter-spacing: -0.008em;
+}
+html body .cx-item .cx-icon { color: var(--d-muted); }
+html body .cx-item:hover { background: var(--d-hover) !important; color: var(--d-text) !important; }
+html body .cx-item.is-active { background: var(--d-active) !important; color: var(--d-text) !important; font-weight: 520; }
+html body .cx-item.is-active .cx-icon, html body .cx-item:hover .cx-icon { color: var(--d-text); }
+html body .cx-group { padding: 16px 10px 6px; font-size: 12.5px; color: var(--d-faint); }
+html body .cx-sub { padding-left: 0; }
+html body .cx-foot { border-top: 0 !important; padding-top: 8px; gap: 2px; }
+html body .cx-profile { height: 46px; padding: 0 8px; gap: 10px; border-radius: 10px; }
+html body .cx-profile:hover { background: var(--d-hover); }
+html body .cx-avatar { width: 30px; height: 30px; flex-basis: 30px; font-size: 12.5px; background: #3a3936; }
+html body .cx-profile-copy strong { font-size: 14px; color: var(--d-text) !important; }
+html body .cx-profile-copy small { font-size: 12px; color: var(--d-faint) !important; }
+
+/* ---------- No breadcrumb bar on desktop: the page title says where you are ---------- */
+@media (min-width: 761px) {
+  html body .topbar, html body .crm-shell-main > .topbar { display: none !important; }
+  html body .crm-shell-main > main:not(.calendar-page):not(.pipeline-page):not(.cm-page):not(.ask-root) { padding-top: 56px !important; }
+}
+html body .main-panel, html body .crm-shell-main, html body .main-panel main { background: var(--d-bg) !important; }
+
+/* ---------- Home ---------- */
+html body .ask-root { --ask-bg: var(--d-bg); --ask-composer: var(--d-raise); --ask-composer-line: var(--d-line-2); --ask-accent: var(--d-accent); }
+html body .ask-root-empty { min-height: 100vh; padding: 0 24px 14vh; }
+html body .ask-hero { width: min(680px, 100%); }
+html body .ask-root .ask-hello {
+  gap: 14px; margin: 0 0 28px !important; color: var(--d-text) !important;
+  font-size: clamp(32px, 3.4vw, 40px) !important; font-weight: 500 !important; letter-spacing: -0.035em !important;
+}
+html body .ask-hello-mark { width: 38px; height: 38px; flex-basis: 38px; filter: none; }
+html body .ask-root .ask-composer {
+  min-height: 118px; padding: 18px 14px 12px 20px; gap: 10px; justify-content: space-between;
+  border-radius: 22px; background: var(--d-raise) !important; border: 1px solid var(--d-line-2) !important;
+  box-shadow: 0 10px 40px -18px rgba(0, 0, 0, .7), 0 1px 0 rgba(255, 255, 255, .03) inset;
+}
+html body .ask-root .ask-composer:focus-within { border-color: rgba(255, 255, 255, .18) !important; box-shadow: 0 10px 40px -18px rgba(0, 0, 0, .75); }
+html body .ask-root .ask-composer textarea { font-size: 16.5px !important; line-height: 1.5; }
+html body .ask-root .ask-composer textarea::placeholder { color: var(--d-faint) !important; }
+html body .ask-root .ask-tool { width: 34px; height: 34px; padding: 0; justify-content: center; border: 1px solid var(--d-line-2) !important; color: var(--d-soft) !important; }
+html body .ask-root .ask-tool:hover { background: var(--d-active) !important; }
+html body .ask-root .ask-tool.is-on { color: var(--d-accent) !important; border-color: rgba(217, 119, 87, .35) !important; background: rgba(217, 119, 87, .08) !important; }
+html body .ask-root .ask-send { width: 36px; height: 36px; flex-basis: 36px; border-radius: 10px; background: var(--d-accent) !important; color: #1f1e1d !important; }
+html body .ask-root .ask-send:hover:not(:disabled) { background: #e2876a !important; }
+html body .ask-root .ask-send:disabled { background: #3a3936 !important; color: var(--d-faint) !important; }
+html body .ask-suggest { gap: 8px; margin-top: 16px; }
+html body .ask-root .ask-pill {
+  height: 36px; padding: 0 13px; border-radius: 10px; gap: 8px;
+  background: transparent !important; border: 1px solid var(--d-line-2) !important; color: var(--d-soft) !important; font-size: 13.5px;
+}
+html body .ask-root .ask-pill:hover { background: var(--d-hover) !important; color: var(--d-text) !important; border-color: rgba(255, 255, 255, .16) !important; }
+
+/* "Up next" under the composer, like recent work in Claude */
+.hn-next { width: 100%; margin-top: 44px; }
+.hn-next-h { display: flex; justify-content: space-between; align-items: baseline; margin: 0 2px 12px; }
+.hn-next-h span { font-size: 13.5px; color: var(--d-muted); }
+.hn-next-h a { font-size: 13.5px; color: var(--d-muted); text-decoration: none; }
+.hn-next-h a:hover { color: var(--d-text); }
+.hn-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+a.hn-tile {
+  display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 112px; padding: 16px 16px 14px;
+  border-radius: 14px; background: #2b2a28; border: 1px solid var(--d-line); color: var(--d-text) !important; text-decoration: none;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+a.hn-tile:hover { background: #302f2d; border-color: var(--d-line-2); transform: translateY(-1px); }
+.hn-tile-k { font-size: 12.5px; color: var(--d-muted); }
+.hn-tile-v { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.hn-tile-s { font-size: 13px; color: var(--d-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hn-tile-s.bad { color: #f0a493; }
+@media (max-width: 640px) { .hn-grid { grid-template-columns: 1fr; } a.hn-tile { min-height: 0; } }
+
+/* ---------- Pages: a touch more air under titles ---------- */
+html body main h1 + p, html body .main-panel main h1 + p { margin-bottom: 26px !important; }
