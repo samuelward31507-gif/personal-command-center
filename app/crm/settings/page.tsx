@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createAuthClient } from "@neondatabase/auth/next";
 import { WorkspaceCard } from "./workspace-card";
+import "./settings.css";
 
 const authClient = createAuthClient();
 
@@ -13,7 +14,7 @@ function LeadFormLink() {
   const [url, setUrl] = useState("");
   const [copied, setCopied] = useState(false);
   useEffect(() => { setUrl(window.location.origin + "/start"); }, []);
-  return <section style={{ marginTop: 26, border: "1px solid #2a221c", borderRadius: 14, background: "#151210", padding: 20 }}>
+  return <section style={CARD}>
     <h2 style={{ fontSize: 18, margin: 0 }}>Your lead form</h2>
     <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 14px" }}>Anyone who fills this out lands in Contacts as a lead, with a follow-up for today and an urgent task to call them. Nothing is sent to them automatically.</p>
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -46,7 +47,7 @@ function OvernightAudits() {
   }
   const when = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   const lastCron = runs?.find(r => r.trigger === "cron");
-  return <section style={{ marginTop: 18, border: "1px solid #3a3a3a", borderRadius: 14, background: "#262626", padding: 20 }}>
+  return <section style={CARD}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
       <div><h2 style={{ fontSize: 18, margin: 0 }}>Overnight audits</h2>
         <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 0" }}>Every night around 3 AM Cinder audits up to 6 prospects in the day&apos;s call list. Research only; nobody is contacted. Capped at 20 audits a day.</p></div>
@@ -80,7 +81,7 @@ function SundayReview() {
   }
   const btn = { height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #3a3a3a", background: "#262626", color: "#e6e6e6", cursor: "pointer" } as const;
   const last = data?.runs[0];
-  return <section style={{ marginTop: 18, border: "1px solid #3a3a3a", borderRadius: 14, background: "#262626", padding: 20 }}>
+  return <section style={CARD}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
       <div><h2 style={{ fontSize: 18, margin: 0 }}>Sunday review</h2>
         <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 0" }}>Every Sunday around 8 AM you get one email: the week&apos;s numbers, what slipped, and your 5 moves for the week.</p></div>
@@ -100,6 +101,13 @@ export default function SettingsPage() {
   const [error, setError] = useState("");
   const [databaseStatus, setDatabaseStatus] = useState("Checking…");
   const [hermesStatus, setHermesStatus] = useState("Checking…");
+  const [tab, setTab] = useState<Tab>("business");
+  // The tab lives in the URL hash so links like /crm/settings#automations open the right one.
+  useEffect(() => {
+    const read = () => { const h = window.location.hash.slice(1); if (TABS.some(t => t.key === h)) setTab(h as Tab); };
+    read(); window.addEventListener("hashchange", read); return () => window.removeEventListener("hashchange", read);
+  }, []);
+  const pick = (t: Tab) => { setTab(t); history.replaceState(null, "", "#" + t); };
 
   useEffect(() => {
     let active = true;
@@ -122,10 +130,9 @@ export default function SettingsPage() {
   }, []);
 
   const integrations = [
-    { name: "Workspace database", detail: "Contacts, deals, tasks, projects, finance, and business memory", status: databaseStatus },
-    { name: "Hermes read-only bridge", detail: "Read-only workspace context for Hermes; no external actions are executed", status: hermesStatus },
-    { name: "Cal.ai scheduling", detail: "Booking sync and AI scheduling-call setup; not enabled until configured and tested", status: "Setup required" },
-    { name: "External CRM integrations", detail: "Third-party CRM and messaging connections", status: "Not connected" },
+    { name: "Database", detail: "Contacts, deals, tasks, clients and money", status: databaseStatus },
+    { name: "Hermes", detail: "Lets your AI chief of staff read Cinder. It can't take actions.", status: hermesStatus },
+    { name: "Cal.ai scheduling", detail: "Bookings flow into Cinder automatically", status: "Setup required" },
   ];
 
   async function signOut() {
@@ -144,58 +151,53 @@ export default function SettingsPage() {
   return (
     <main style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 22px 60px", color:"#e6e6e6" }}>
 
-      <section style={{ marginTop: 36, maxWidth: 720 }}>
+      <section style={{ marginTop: 20, maxWidth: 720 }}>
         <h1 style={{ fontSize: 38, letterSpacing: -1.5, margin: "8px 0" }}>Settings</h1>
         <p style={{ color:"#ababab", lineHeight: 1.65, fontSize: 14 }}>Your business details, prices and goal, plus the jobs Cinder runs for you.</p>
       </section>
 
       {error && <p role="alert" style={{ marginTop: 20, padding: 12, borderRadius: 8, background:"#2a1414", color:"#fca5a5", fontSize: 13 }}>{error}</p>}
 
-      <WorkspaceCard />
-      <LeadFormLink />
-      <OvernightAudits />
-      <SundayReview />
+      <nav className="set-tabs" role="tablist" aria-label="Settings sections">
+        {TABS.map(t => <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} onClick={() => pick(t.key)}>{t.label}</button>)}
+      </nav>
 
-      <section style={{ marginTop: 26, border:"1px solid #3a3a3a", borderRadius: 14, background:"#262626", padding: 20 }}>
-        <h2 style={{ fontSize: 18, margin: 0 }}>Workspace connections</h2>
-        <p style={{ color:"#ababab", fontSize: 13, margin: "6px 0 18px" }}>Current connection state, not a promise that future integrations are already active.</p>
+      {tab === "business" && <WorkspaceCard />}
+
+      {tab === "automations" && <><LeadFormLink /><OvernightAudits /><SundayReview /></>}
+
+      {tab === "account" && <>
+      <section style={CARD}>
+        <h2 style={{ fontSize: 18, margin: 0 }}>Connections</h2>
+        <p style={{ color:"#ababab", fontSize: 13, margin: "6px 0 18px" }}>What&apos;s connected right now.</p>
         <div style={{ display: "grid", gap: 0 }}>
-          {integrations.map((item, index) => (
-            <article key={item.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, padding: "16px 0", borderTop:index === 0 ? "1px solid #3a3a3a" : "1px solid #3a3a3a" }}>
+          {integrations.map((item) => (
+            <article key={item.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, padding: "16px 0", borderTop: "1px solid #2a2a2a" }}>
               <div>
                 <h3 style={{ fontSize: 14, margin: 0 }}>{item.name}</h3>
-                <p style={{ color:"#ababab", fontSize: 12, lineHeight: 1.5, margin: "5px 0 0" }}>{item.detail}</p>
+                <p style={{ color:"#9e9e9e", fontSize: 12.5, lineHeight: 1.5, margin: "5px 0 0" }}>{item.detail}</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                {item.name === "Cal.ai scheduling" && <Link href="/crm/settings/cal-ai" style={{ fontSize: 12, color:"#fca5a5", textDecoration: "none", fontWeight: 700 }}>Configure →</Link>}
-                <span style={{ flexShrink: 0, fontSize: 10, letterSpacing: .3, fontWeight: 700, color:item.status === "Connected" || item.status === "Configured" ? "#86efac" : "#ababab", background:item.status === "Connected" || item.status === "Configured" ? "#10241a" : "#262626", borderRadius: 20, padding: "6px 9px" }}>{item.status}</span>
+                {item.name === "Cal.ai scheduling" && <Link href="/crm/settings/cal-ai" style={{ fontSize: 12.5, color:"#e6e6e6", textDecoration: "none", fontWeight: 600 }}>Set up</Link>}
+                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color:item.status === "Connected" || item.status === "Configured" ? "#a9e2bb" : "#ababab", background:item.status === "Connected" || item.status === "Configured" ? "#1c2a20" : "#232323", borderRadius: 20, padding: "5px 10px" }}>{item.status}</span>
               </div>
             </article>
           ))}
         </div>
       </section>
 
-      <section style={{ marginTop: 18, border:"1px solid #3a3a3a", borderRadius: 14, background:"#262626", padding: 20 }}>
-        <h2 style={{ fontSize: 18, margin: 0 }}>Your workspace data</h2>
-        <p style={{ color:"#ababab", fontSize: 13, lineHeight: 1.65, margin: "8px 0 16px" }}>Your signed-in workspace contains your CRM records, sales pipeline, tasks, client delivery, financial entries, AI workforce records, and business memory. The Hermes bridge is not active, so saved business memory is not automatically injected into an AI agent.</p>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <a href="/crm" style={linkStyle}>Contacts</a>
-          <a href="/crm/pipeline" style={linkStyle}>Sales pipeline</a>
-          <a href="/crm/tasks" style={linkStyle}>Tasks</a>
-          <a href="/crm/projects" style={linkStyle}>Projects</a>
-          <a href="/crm/strategy" style={linkStyle}>Strategy & memory</a>
-        </div>
-      </section>
-
-      <section style={{ marginTop: 18, border:"1px solid #3a3a3a", borderRadius: 14, background:"#262626", padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+      <section style={{ ...CARD, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
         <div>
-          <h2 style={{ fontSize: 18, margin: 0 }}>Account session</h2>
-          <p style={{ color:"#ababab", fontSize: 13, lineHeight: 1.5, margin: "6px 0 0" }}>Sign out of this Cinder workspace on this browser.</p>
+          <h2 style={{ fontSize: 18, margin: 0 }}>Sign out</h2>
+          <p style={{ color:"#ababab", fontSize: 13, lineHeight: 1.5, margin: "6px 0 0" }}>Sign out of Cinder on this browser.</p>
         </div>
-        <button type="button" onClick={() => void signOut()} disabled={signingOut} style={{ border:"1px solid #3a3a3a", borderRadius: 8, padding: "10px 14px", background:"#262626", color:"#e6e6e6", fontWeight: 650, cursor: signingOut ? "wait" : "pointer" }}>{signingOut ? "Signing out…" : "Sign out"}</button>
+        <button type="button" onClick={() => void signOut()} disabled={signingOut} style={{ border:"1px solid #3a3a3a", borderRadius: 9, padding: "9px 14px", background:"transparent", color:"#e6e6e6", fontWeight: 600, fontSize: 13, cursor: signingOut ? "wait" : "pointer" }}>{signingOut ? "Signing out…" : "Sign out"}</button>
       </section>
+      </>}
     </main>
   );
 }
 
-const linkStyle: React.CSSProperties = { color:"#e6e6e6", fontSize: 12, textDecoration: "none", border:"1px solid #3a3a3a", borderRadius: 7, padding: "8px 10px", background:"#262626" };
+const CARD: React.CSSProperties = { marginTop: 18, border: "1px solid #2a2a2a", borderRadius: 16, background: "#1a1a1a", padding: 22 };
+type Tab = "business" | "automations" | "account";
+const TABS: { key: Tab; label: string }[] = [{ key: "business", label: "Business" }, { key: "automations", label: "Automations" }, { key: "account", label: "Account" }];

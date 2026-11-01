@@ -16,6 +16,7 @@ const IDENTITY: Field[] = [
   { key: "address", label: "Business address", wide: true },
   { key: "contactEmail", label: "Contact email", type: "email", help: "Printed on agreements." },
   { key: "niche", label: "Who you sell to", help: "Used in the Sunday review: “send 20 DMs to …”." },
+  { key: "bookingLink", label: "Booking link", type: "url", help: "Where prospects book a call. Used on prospect reports." },
 ];
 
 const money = (n: number) => String(n);

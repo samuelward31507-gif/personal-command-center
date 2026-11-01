@@ -109,3 +109,13 @@ console.log(`workspace: ${n} checks passed`);
   ok2(() => assert.equal(vw({ ...D, tier1: { ...D.tier1, setupLink: "" } }).ok.tier1.setupLink, "", "a link can be cleared"));
   console.log(`payment links: ${m} checks passed`);
 }
+// Booking link: https only, defaults to the existing Cal.com page.
+{
+  const { mergeWorkspace, validateWorkspace, DEFAULT_WORKSPACE } = await import("./lib/workspace.ts");
+  const a = (await import("node:assert/strict")).default;
+  a.match(DEFAULT_WORKSPACE.bookingLink, /^https:\/\//);
+  a.equal(mergeWorkspace({ bookingLink: "http://x.com" }).bookingLink, DEFAULT_WORKSPACE.bookingLink);
+  a.equal(mergeWorkspace({ bookingLink: "https://calendly.com/me" }).bookingLink, "https://calendly.com/me");
+  a.match(validateWorkspace({ ...DEFAULT_WORKSPACE, bookingLink: "nope" }).error, /Booking link/);
+  console.log("Booking link checks passed.");
+}
