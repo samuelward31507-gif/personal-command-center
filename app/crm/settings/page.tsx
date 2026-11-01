@@ -15,11 +15,11 @@ function LeadFormLink() {
   useEffect(() => { setUrl(window.location.origin + "/start"); }, []);
   return <section style={{ marginTop: 26, border: "1px solid #2a221c", borderRadius: 14, background: "#151210", padding: 20 }}>
     <h2 style={{ fontSize: 18, margin: 0 }}>Your lead form</h2>
-    <p style={{ color: "#b5b2a8", fontSize: 13, margin: "6px 0 14px" }}>Anyone who fills this out lands in Contacts as a lead, with a follow-up for today and an urgent task to call them. Nothing is sent to them automatically.</p>
+    <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 14px" }}>Anyone who fills this out lands in Contacts as a lead, with a follow-up for today and an urgent task to call them. Nothing is sent to them automatically.</p>
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-      <code style={{ flex: "1 1 260px", padding: "9px 12px", borderRadius: 9, border: "1px solid #45443f", background: "#1f1e1d", color: "#f0eee6", fontSize: 13 }}>{url || "/start"}</code>
+      <code style={{ flex: "1 1 260px", padding: "9px 12px", borderRadius: 9, border: "1px solid #3a3a3a", background: "#1f1f1f", color: "#efefef", fontSize: 13 }}>{url || "/start"}</code>
       <button data-variant="primary" onClick={() => { void navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); }); }}
-        style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #f0eee6", background: "#f0eee6", color: "#1f1e1d", fontWeight: 600, cursor: "pointer" }}>{copied ? "Copied" : "Copy link"}</button>
+        style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #efefef", background: "#efefef", color: "#1f1f1f", fontWeight: 600, cursor: "pointer" }}>{copied ? "Copied" : "Copy link"}</button>
       <Link href="/start" target="_blank" rel="noreferrer" style={{ color: "#cfcfcf", fontSize: 13 }}>Open ↗</Link>
     </div>
   </section>;
@@ -46,11 +46,11 @@ function OvernightAudits() {
   }
   const when = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   const lastCron = runs?.find(r => r.trigger === "cron");
-  return <section style={{ marginTop: 18, border: "1px solid #4b4a45", borderRadius: 14, background: "#30302d", padding: 20 }}>
+  return <section style={{ marginTop: 18, border: "1px solid #3a3a3a", borderRadius: 14, background: "#262626", padding: 20 }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
       <div><h2 style={{ fontSize: 18, margin: 0 }}>Overnight audits</h2>
-        <p style={{ color: "#b5b2a8", fontSize: 13, margin: "6px 0 0" }}>Every night around 3 AM Cinder audits up to 6 prospects in the day&apos;s call list. Research only; nobody is contacted. Capped at 20 audits a day.</p></div>
-      <button data-variant="primary" disabled={busy} onClick={() => void runNow()} style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #45443f", background: "#30302d", color: "#e8e6de", cursor: "pointer" }}>{busy ? "Running…" : "Run now"}</button>
+        <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 0" }}>Every night around 3 AM Cinder audits up to 6 prospects in the day&apos;s call list. Research only; nobody is contacted. Capped at 20 audits a day.</p></div>
+      <button data-variant="primary" disabled={busy} onClick={() => void runNow()} style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #3a3a3a", background: "#262626", color: "#e6e6e6", cursor: "pointer" }}>{busy ? "Running…" : "Run now"}</button>
     </div>
     <p style={{ fontSize: 13, margin: "12px 0 0", color: lastCron ? (lastCron.status === "ok" || lastCron.status === "skipped" ? "#9ee6b5" : "#f2a5a5") : "#f0c38a" }}>
       {runs === null ? "Loading…" : lastCron ? `Last overnight run: ${when(lastCron.startedAt)} · ${lastCron.status}${lastCron.summary.reason ? ` (${lastCron.summary.reason})` : ""}${typeof lastCron.summary.audited === "number" ? ` · ${lastCron.summary.audited} audited` : ""}` : "No overnight run recorded yet."}
@@ -78,12 +78,12 @@ function SundayReview() {
     } catch (e) { setNote(e instanceof Error ? e.message : "Couldn't send it."); }
     finally { setBusy(false); void load(); }
   }
-  const btn = { height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #45443f", background: "#30302d", color: "#e8e6de", cursor: "pointer" } as const;
+  const btn = { height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #3a3a3a", background: "#262626", color: "#e6e6e6", cursor: "pointer" } as const;
   const last = data?.runs[0];
-  return <section style={{ marginTop: 18, border: "1px solid #4b4a45", borderRadius: 14, background: "#30302d", padding: 20 }}>
+  return <section style={{ marginTop: 18, border: "1px solid #3a3a3a", borderRadius: 14, background: "#262626", padding: 20 }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
       <div><h2 style={{ fontSize: 18, margin: 0 }}>Sunday review</h2>
-        <p style={{ color: "#b5b2a8", fontSize: 13, margin: "6px 0 0" }}>Every Sunday around 8 AM you get one email: the week&apos;s numbers, what slipped, and your 5 moves for the week.</p></div>
+        <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 0" }}>Every Sunday around 8 AM you get one email: the week&apos;s numbers, what slipped, and your 5 moves for the week.</p></div>
       <div style={{ display: "flex", gap: 8 }}>
         <button data-variant="primary" onClick={() => setOpen(o => !o)} style={btn}>{open ? "Hide preview" : "Preview"}</button>
         <button data-variant="primary" disabled={busy || !data?.email} onClick={() => void sendNow()} style={btn}>{busy ? "Sending…" : "Send now"}</button>
@@ -91,7 +91,7 @@ function SundayReview() {
     </div>
     <p style={{ fontSize: 13, margin: "12px 0 0", color: "#8f8f8f" }}>{data === null ? "Loading…" : !data.email ? "Email alerts aren't set up yet." : last ? `Last sent: ${new Date(last.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${last.status}` : "Not sent yet. The first one goes out this Sunday."}</p>
     {note && <p style={{ fontSize: 13, margin: "6px 0 0", color: "#cfcfcf" }}>{note}</p>}
-    {open && data && <div style={{ marginTop: 14, padding: 16, borderRadius: 10, border: "1px solid #3d3c38", background: "#262624", fontSize: 13.5, lineHeight: 1.6, color: "#d6d6d6", whiteSpace: "pre-wrap" }}><b style={{ display: "block", marginBottom: 8, color: "#f0f0f0" }}>{data.review.subject}</b>{data.review.lines.join("\n")}</div>}
+    {open && data && <div style={{ marginTop: 14, padding: 16, borderRadius: 10, border: "1px solid #2e2e2e", background: "#191919", fontSize: 13.5, lineHeight: 1.6, color: "#d6d6d6", whiteSpace: "pre-wrap" }}><b style={{ display: "block", marginBottom: 8, color: "#f0f0f0" }}>{data.review.subject}</b>{data.review.lines.join("\n")}</div>}
   </section>;
 }
 
@@ -142,11 +142,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <main style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 22px 60px", color:"#e8e6de" }}>
+    <main style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 22px 60px", color:"#e6e6e6" }}>
 
       <section style={{ marginTop: 36, maxWidth: 720 }}>
         <h1 style={{ fontSize: 38, letterSpacing: -1.5, margin: "8px 0" }}>Settings</h1>
-        <p style={{ color:"#b5b2a8", lineHeight: 1.65, fontSize: 14 }}>Your business details, prices and goal, plus the jobs Cinder runs for you.</p>
+        <p style={{ color:"#ababab", lineHeight: 1.65, fontSize: 14 }}>Your business details, prices and goal, plus the jobs Cinder runs for you.</p>
       </section>
 
       {error && <p role="alert" style={{ marginTop: 20, padding: 12, borderRadius: 8, background:"#2a1414", color:"#fca5a5", fontSize: 13 }}>{error}</p>}
@@ -156,28 +156,28 @@ export default function SettingsPage() {
       <OvernightAudits />
       <SundayReview />
 
-      <section style={{ marginTop: 26, border:"1px solid #4b4a45", borderRadius: 14, background:"#30302d", padding: 20 }}>
+      <section style={{ marginTop: 26, border:"1px solid #3a3a3a", borderRadius: 14, background:"#262626", padding: 20 }}>
         <h2 style={{ fontSize: 18, margin: 0 }}>Workspace connections</h2>
-        <p style={{ color:"#b5b2a8", fontSize: 13, margin: "6px 0 18px" }}>Current connection state, not a promise that future integrations are already active.</p>
+        <p style={{ color:"#ababab", fontSize: 13, margin: "6px 0 18px" }}>Current connection state, not a promise that future integrations are already active.</p>
         <div style={{ display: "grid", gap: 0 }}>
           {integrations.map((item, index) => (
-            <article key={item.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, padding: "16px 0", borderTop:index === 0 ? "1px solid #4b4a45" : "1px solid #4b4a45" }}>
+            <article key={item.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, padding: "16px 0", borderTop:index === 0 ? "1px solid #3a3a3a" : "1px solid #3a3a3a" }}>
               <div>
                 <h3 style={{ fontSize: 14, margin: 0 }}>{item.name}</h3>
-                <p style={{ color:"#b5b2a8", fontSize: 12, lineHeight: 1.5, margin: "5px 0 0" }}>{item.detail}</p>
+                <p style={{ color:"#ababab", fontSize: 12, lineHeight: 1.5, margin: "5px 0 0" }}>{item.detail}</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
                 {item.name === "Cal.ai scheduling" && <Link href="/crm/settings/cal-ai" style={{ fontSize: 12, color:"#fca5a5", textDecoration: "none", fontWeight: 700 }}>Configure →</Link>}
-                <span style={{ flexShrink: 0, fontSize: 10, letterSpacing: .3, fontWeight: 700, color:item.status === "Connected" || item.status === "Configured" ? "#86efac" : "#b5b2a8", background:item.status === "Connected" || item.status === "Configured" ? "#10241a" : "#30302d", borderRadius: 20, padding: "6px 9px" }}>{item.status}</span>
+                <span style={{ flexShrink: 0, fontSize: 10, letterSpacing: .3, fontWeight: 700, color:item.status === "Connected" || item.status === "Configured" ? "#86efac" : "#ababab", background:item.status === "Connected" || item.status === "Configured" ? "#10241a" : "#262626", borderRadius: 20, padding: "6px 9px" }}>{item.status}</span>
               </div>
             </article>
           ))}
         </div>
       </section>
 
-      <section style={{ marginTop: 18, border:"1px solid #4b4a45", borderRadius: 14, background:"#30302d", padding: 20 }}>
+      <section style={{ marginTop: 18, border:"1px solid #3a3a3a", borderRadius: 14, background:"#262626", padding: 20 }}>
         <h2 style={{ fontSize: 18, margin: 0 }}>Your workspace data</h2>
-        <p style={{ color:"#b5b2a8", fontSize: 13, lineHeight: 1.65, margin: "8px 0 16px" }}>Your signed-in workspace contains your CRM records, sales pipeline, tasks, client delivery, financial entries, AI workforce records, and business memory. The Hermes bridge is not active, so saved business memory is not automatically injected into an AI agent.</p>
+        <p style={{ color:"#ababab", fontSize: 13, lineHeight: 1.65, margin: "8px 0 16px" }}>Your signed-in workspace contains your CRM records, sales pipeline, tasks, client delivery, financial entries, AI workforce records, and business memory. The Hermes bridge is not active, so saved business memory is not automatically injected into an AI agent.</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <a href="/crm" style={linkStyle}>Contacts</a>
           <a href="/crm/pipeline" style={linkStyle}>Sales pipeline</a>
@@ -187,15 +187,15 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section style={{ marginTop: 18, border:"1px solid #4b4a45", borderRadius: 14, background:"#30302d", padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+      <section style={{ marginTop: 18, border:"1px solid #3a3a3a", borderRadius: 14, background:"#262626", padding: 20, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
         <div>
           <h2 style={{ fontSize: 18, margin: 0 }}>Account session</h2>
-          <p style={{ color:"#b5b2a8", fontSize: 13, lineHeight: 1.5, margin: "6px 0 0" }}>Sign out of this Cinder workspace on this browser.</p>
+          <p style={{ color:"#ababab", fontSize: 13, lineHeight: 1.5, margin: "6px 0 0" }}>Sign out of this Cinder workspace on this browser.</p>
         </div>
-        <button type="button" onClick={() => void signOut()} disabled={signingOut} style={{ border:"1px solid #4b4a45", borderRadius: 8, padding: "10px 14px", background:"#30302d", color:"#e8e6de", fontWeight: 650, cursor: signingOut ? "wait" : "pointer" }}>{signingOut ? "Signing out…" : "Sign out"}</button>
+        <button type="button" onClick={() => void signOut()} disabled={signingOut} style={{ border:"1px solid #3a3a3a", borderRadius: 8, padding: "10px 14px", background:"#262626", color:"#e6e6e6", fontWeight: 650, cursor: signingOut ? "wait" : "pointer" }}>{signingOut ? "Signing out…" : "Sign out"}</button>
       </section>
     </main>
   );
 }
 
-const linkStyle: React.CSSProperties = { color:"#e8e6de", fontSize: 12, textDecoration: "none", border:"1px solid #4b4a45", borderRadius: 7, padding: "8px 10px", background:"#30302d" };
+const linkStyle: React.CSSProperties = { color:"#e6e6e6", fontSize: 12, textDecoration: "none", border:"1px solid #3a3a3a", borderRadius: 7, padding: "8px 10px", background:"#262626" };

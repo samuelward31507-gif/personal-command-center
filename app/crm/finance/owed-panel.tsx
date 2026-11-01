@@ -80,12 +80,12 @@ export default function OwedPanel({ onChange }: { onChange?: () => void }) {
     </div>
     {!d.paymentReady && d.totalOpen > 0 && <p className="ow-warn">Invoices have no way to pay yet. Add your payment links in <Link href="/crm/settings">Settings</Link> (Offers and Getting paid).</p>}
     {note && <p className={note.ok ? "ow-note ok" : "ow-note bad"} role={note.ok ? "status" : "alert"}>{note.text}</p>}
-    {d.groups.map(g => <div key={g.bucket} className={"ow-group " + g.bucket}>
+    {d.groups.map(g => <div key={g.bucket} className="ow-group" data-urgent={g.bucket.startsWith("overdue") ? "1" : undefined}>
       <div className="ow-group-h"><span>{g.label}</span><span>{usd(g.total)}</span></div>
       {g.items.map(it => <div key={it.id} className="ow-row">
         <div className="ow-main"><strong>{it.client || it.title}</strong><small>{it.client ? cap(it.title.split(" — ").slice(1).join(" — ") || it.title) : ""}{it.invoiceNumber ? ` · INV-${it.invoiceNumber}` : ""} · {short(it.dueDate)}</small></div>
         <div className="ow-amt">{usd(it.amount)}</div>
-        <div className="ow-next">{it.next}</div>
+        <div className="ow-next">{it.next === "Send the invoice" ? "" : it.next}</div>
         <div className="ow-acts">
           {!it.invoiceSentAt
             ? <button className="ow-btn primary" disabled={busy === it.id} onClick={() => void send(it, "sent")}>Send invoice</button>

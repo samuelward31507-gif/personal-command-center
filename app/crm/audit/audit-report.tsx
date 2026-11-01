@@ -11,7 +11,7 @@ export type AuditView = {
 
 const C = {
   text: "#f4f4f5", body: "#d4d4d8", muted: "#9a9aa4", faint: "#6f6f78", line: "#26262b",
-  card: "#2b2a28", inset: "#262624", accent: "#d6a98c",
+  card: "#1f1f1f", inset: "#191919", accent: "#c4c4c4",
 };
 
 const FIT: Record<string, { label: string; fg: string; bg: string; border: string }> = {
@@ -127,7 +127,7 @@ export function AuditReport({ audit }: { audit: AuditView }) {
       {audit.incomplete && <p style={{ margin: 0, fontSize: 12.5, color: "#fca5a5" }}>Research stopped early. Treat this report as partial.</p>}
     </header>
 
-    {sections.next && <div style={{ display: "flex", gap: 12, alignItems: "baseline", background: "#1b1714", border: "1px solid #4a3a2f", borderRadius: 12, padding: "13px 18px" }}>
+    {sections.next && <div style={{ display: "flex", gap: 12, alignItems: "baseline", background: "#1b1714", border: "1px solid #3a3a3a", borderRadius: 12, padding: "13px 18px" }}>
       <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1.4, color: C.accent, whiteSpace: "nowrap" }}>Next step</span>
       <div style={{ fontSize: 13.5, lineHeight: 1.6, color: C.text }}>{inline(sections.next, "next")}</div>
     </div>}

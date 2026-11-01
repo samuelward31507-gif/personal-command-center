@@ -6,6 +6,7 @@ import { ActionCard, Markdown } from "./ask-answer";
 import { CinderMark, CINDER_MONO } from "./cinder-brand";
 import "./home-search.css";
 import { useWorkspace } from "./use-workspace";
+import HomeNext from "./home-next";
 
 type Turn = {
   id: number; started: number; query: string; status: string; draft: string;
@@ -16,8 +17,7 @@ const SUGGESTIONS: { label: string; prompt: string; icon: "phone" | "chart" | "c
   { label: "Who should I call today?", prompt: "Who should I call today?", icon: "phone" },
   { label: "What's my pipeline worth?", prompt: "What's my pipeline worth right now, and what's closest to closing?", icon: "chart" },
   { label: "My week", prompt: "What's on my calendar this week, and what do I need to prep?", icon: "calendar" },
-  { label: "Research a market", prompt: "What do pool builders in Arizona usually charge for a new pool?", icon: "globe" },
-];
+  ];
 
 function greeting(name: string) {
   const h = new Date().getHours();
@@ -176,11 +176,12 @@ export default function HomeSearch() {
 
   if (!chat) return <div className="ask-root ask-root-empty">
     <div className="ask-hero">
-      <h1 className="ask-hello"><Mark className="ask-hello-mark" />{hello}</h1>
+      <h1 className="ask-hello"><CinderMark className="ask-hello-mark" ring="#efefef" ember="#efefef" />{hello}</h1>
       {composer}
       <div className="ask-suggest">
         {SUGGESTIONS.map(s => <button key={s.label} type="button" className="ask-pill" onClick={() => void ask(s.prompt)}><Icon name={s.icon} />{s.label}</button>)}
       </div>
+      <HomeNext />
     </div>
   </div>;
 

@@ -13,11 +13,11 @@ export default function ClientCards() {
   if (!list) return null;
   return <section style={{ margin: "22px 0 8px" }}>
     <h2 style={{ fontSize: 15, margin: "0 0 10px" }}>Your clients</h2>
-    {list.length === 0 ? <p style={{ color: "#8f8d86", fontSize: 13.5, margin: 0 }}>No clients yet. Each won deal shows up here with its own page.</p> :
+    {list.length === 0 ? <p style={{ color: "#9e9e9e", fontSize: 13.5, margin: 0 }}>No clients yet. Each won deal shows up here with its own page.</p> :
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 10 }}>
-        {list.map(p => <Link key={p.id} href={`/crm/client-success/${p.id}`} style={{ display: "grid", gap: 4, padding: "13px 15px", borderRadius: 14, border: "1px solid #3a3935", background: "#2b2a28", color: "#e8e6de", textDecoration: "none" }}>
+        {list.map(p => <Link key={p.id} href={`/crm/client-success/${p.id}`} style={{ display: "grid", gap: 4, padding: "13px 15px", borderRadius: 14, border: "1px solid #2a2a2a", background: "#1f1f1f", color: "#e6e6e6", textDecoration: "none" }}>
           <strong style={{ fontSize: 14 }}>{p.clientName || p.contactName || p.name}</strong>
-          <span style={{ fontSize: 12.5, color: "#8f8d86" }}>{p.status.replace(/_/g, " ")} · {p.milestoneCount ? `${p.doneMilestones}/${p.milestoneCount} steps` : "no plan"}{p.monthlyValue ? ` · ${usd(p.monthlyValue)}/mo` : ""}</span>
+          <span style={{ fontSize: 12.5, color: "#9e9e9e" }}>{p.status.replace(/_/g, " ")} · {p.milestoneCount ? `${p.doneMilestones}/${p.milestoneCount} steps` : "no plan"}{p.monthlyValue ? ` · ${usd(p.monthlyValue)}/mo` : ""}</span>
         </Link>)}
       </div>}
   </section>;

@@ -86,19 +86,19 @@ export default function BusinessAuditPage() {
     } finally { setBusy(false); }
   }
 
-  const panelStyle: React.CSSProperties = { border: "1px solid #29292e", borderRadius: 14, background: "#2b2a28", color: "#f4f4f5" };
+  const panelStyle: React.CSSProperties = { border: "1px solid #29292e", borderRadius: 14, background: "#1f1f1f", color: "#f4f4f5" };
   const mutedStyle: React.CSSProperties = { color: "#a1a1aa", lineHeight: 1.65 };
 
-  return <main id="cinder-business-audit" style={{ maxWidth: 1080, margin: "0 auto", padding: "30px 22px 60px", color: "#f4f4f5", background: "#1f1e1d", minHeight: "calc(100vh - 58px)" }}>
+  return <main id="cinder-business-audit" style={{ maxWidth: 1080, margin: "0 auto", padding: "30px 22px 60px", color: "#f4f4f5", background: "#1f1f1f", minHeight: "calc(100vh - 58px)" }}>
     <header style={{ marginBottom: 30 }}>
       <Link href="/crm/preparation" style={{ color: "#8a8a8a", fontSize: 13, display: "inline-block", marginBottom: 18, textDecoration: "none" }}>← Preparation</Link>
-      <p style={{ marginTop: 26, fontSize: 10, letterSpacing: 2, color: "#d6a98c" }}>Prospect research</p>
+      <p style={{ marginTop: 26, fontSize: 10, letterSpacing: 2, color: "#c4c4c4" }}>Prospect research</p>
       <h1 style={{ fontSize: "clamp(32px,5vw,46px)", letterSpacing: "-1.6px", margin: "8px 0", color: "#f4f4f5" }}>Business audit</h1>
       <p style={{ maxWidth: 720, ...mutedStyle }}>Investigate the whole business before deciding whether we should sell anything. The audit ranks evidence-backed opportunities, calls out unknowns, and can recommend no sale.</p>
     </header>
 
     <form onSubmit={runAudit} style={{ display: "grid", gap: 18, ...panelStyle, padding: "24px clamp(16px, 3vw, 26px)" }}>
-      <section style={{ display: "grid", gap: 9, padding: 15, border: "1px solid #34343b", borderRadius: 10, background: "#262624" }}>
+      <section style={{ display: "grid", gap: 9, padding: 15, border: "1px solid #34343b", borderRadius: 10, background: "#191919" }}>
         <label htmlFor="audit-contact" style={{ fontSize: 12, fontWeight: 700, color: "#e4e4e7" }}>Import from your CRM</label>
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 10, alignItems: "center" }}>
           <select id="audit-contact" value={selectedContactId} onChange={e => importContact(e.target.value)} disabled={contactsLoading || contacts.length === 0} style={inputStyle}>
@@ -111,7 +111,7 @@ export default function BusinessAuditPage() {
       </section>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: 16 }}>
-        <label style={{ display: "grid", gap: 8, fontSize: 12, fontWeight: 600, color: "#e4e4e7" }}>Business name <span style={{ color: "#d6a98c" }}>*</span>
+        <label style={{ display: "grid", gap: 8, fontSize: 12, fontWeight: 600, color: "#e4e4e7" }}>Business name <span style={{ color: "#c4c4c4" }}>*</span>
           <input required value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="e.g. Horizon Pools" style={inputStyle}/>
         </label>
         <label style={{ display: "grid", gap: 8, fontSize: 12, fontWeight: 600, color: "#e4e4e7" }}>Website
@@ -126,16 +126,16 @@ export default function BusinessAuditPage() {
       </label>
       <p style={{ margin: 0, fontSize: 12, color: "#92929c", lineHeight: 1.65 }}>Research uses public web sources. Private operating metrics remain unknown until verified with the owner. The report is saved against the imported contact when one is selected; no outreach is sent.</p>
       {error && <p role="alert" style={{ margin: 0, padding: 12, borderRadius: 8, color: "#ffb4a5", background: "#2a1716", border: "1px solid #63332b" }}>{error}</p>}
-      <div><button type="submit" disabled={busy || !companyName.trim()} style={{ border: "1px solid #d6a98c", borderRadius: 8, background: busy ? "#3a3431" : "#d6a98c", color: "#171311", padding: "12px 17px", fontWeight: 700, cursor: busy ? "wait" : "pointer" }}>{busy ? "Researching business…" : "Run independent audit →"}</button></div>
+      <div><button type="submit" disabled={busy || !companyName.trim()} style={{ border: "1px solid #c4c4c4", borderRadius: 8, background: busy ? "#3a3431" : "#c4c4c4", color: "#171311", padding: "12px 17px", fontWeight: 700, cursor: busy ? "wait" : "pointer" }}>{busy ? "Researching business…" : "Run independent audit →"}</button></div>
     </form>
 
     {busy && <section aria-live="polite" style={{ marginTop: 18, ...panelStyle, padding: 20, color: "#a1a1aa" }}>Searching public sources and assessing opportunities across marketing, lead handling, sales, follow-up, customer experience, retention, operations, and competitive position. This may take up to a minute.</section>}
-    {audit?.reused && <p role="status" style={{ marginTop: 18, padding: "10px 14px", border: "1px solid #34343b", borderRadius: 10, background: "#2b2a28", color: "#d4d4d8", fontSize: 13 }}>
+    {audit?.reused && <p role="status" style={{ marginTop: 18, padding: "10px 14px", border: "1px solid #34343b", borderRadius: 10, background: "#1f1f1f", color: "#d4d4d8", fontSize: 13 }}>
       This business was audited in the last 10 minutes, so this is the saved report (no new research was run or charged).{" "}
-      <button type="button" onClick={() => void runAudit(null, true)} disabled={busy} style={{ border: 0, background: "transparent", color: "#d6a98c", fontWeight: 700, cursor: "pointer", padding: 0 }}>Run a fresh audit</button>
+      <button type="button" onClick={() => void runAudit(null, true)} disabled={busy} style={{ border: 0, background: "transparent", color: "#c4c4c4", fontWeight: 700, cursor: "pointer", padding: 0 }}>Run a fresh audit</button>
     </p>}
     {audit && <AuditReport audit={audit} />}
   </main>;
 }
 
-const inputStyle: React.CSSProperties = { width: "100%", minWidth: 0, boxSizing: "border-box", border: "1px solid #34343b", borderRadius: 8, padding: "12px 13px", background: "#2b2a28", color: "#f4f4f5", font: "inherit", fontSize: 13, fontWeight: 400, outlineColor: "#d6a98c" };
+const inputStyle: React.CSSProperties = { width: "100%", minWidth: 0, boxSizing: "border-box", border: "1px solid #34343b", borderRadius: 8, padding: "12px 13px", background: "#1f1f1f", color: "#f4f4f5", font: "inherit", fontSize: 13, fontWeight: 400, outlineColor: "#c4c4c4" };
