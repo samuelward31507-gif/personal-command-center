@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { auth } from "@/lib/auth/server";
 import { buildEmailPrompt, cleanDiscovery, isEmailPurpose, parseEmailDraft, EMAIL_PURPOSES } from "@/lib/deal-workspace";
 import { sanitizeForLog } from "@/lib/business-audit";
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
     const d = rows[0];
     const company = String(d.company || d.title);
     const { system, user: prompt } = buildEmailPrompt({
-      purpose: body.purpose, company, firstName: String(d.first_name ?? ""), senderName: "Samuel", stage: String(d.stage),
+      purpose: body.purpose, company, firstName: String(d.first_name ?? ""), senderName: (await loadWorkspace(user.id)).ownerFirstName, stage: String(d.stage),
       discovery: cleanDiscovery(d.discovery), nextStep: String(d.next_step ?? ""),
       proposalSentAt: d.proposal_sent_at ? new Date(String(d.proposal_sent_at)).toISOString() : null,
       notes: typeof body.notes === "string" ? body.notes.slice(0, 1000) : "",

@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { auth } from "@/lib/auth/server";
 import { countBlanks } from "@/lib/deal-workspace";
 import { newSigningToken, hashToken, contentHash } from "@/lib/esign";
@@ -61,12 +62,13 @@ export async function POST(request: Request) {
     const blanks = countBlanks(content);
     if (blanks) return fail(`Fill in the ${blanks} [bracketed] blank${blanks === 1 ? "" : "s"} first. A client should never sign a draft with gaps.`, 400);
 
+    const ws = await loadWorkspace(user.id);
     const token = newSigningToken();
     await sql`UPDATE public.signing_requests SET status = 'void' WHERE owner_id = ${user.id} AND deal_id = ${body.dealId}::uuid AND status = 'open'`;
     await sql`INSERT INTO public.signing_requests (owner_id, deal_id, artifact_id, token_hash, content_hash, provider_name, provider_signer)
       VALUES (${user.id}, ${body.dealId}::uuid, ${ag[0].id}::uuid, ${hashToken(token)}, ${contentHash(content)},
-        ${process.env.CINDER_LEGAL_NAME?.trim() || ""}, ${process.env.CINDER_SIGNER_NAME?.trim() || "Samuel Ward"})`;
-    const tz = process.env.CINDER_TIMEZONE?.trim() || "America/Denver";
+        ${ws.legalName}, ${ws.ownerFullName})`;
+    const tz = ws.timezone;
     await sql`UPDATE public.deals SET contract_status = 'sent', contract_sent_at = COALESCE(contract_sent_at, now()),
       next_step = 'Follow up on the agreement', next_step_at = ${twoBusinessDays(tz)}::date, updated_at = now()
       WHERE id = ${body.dealId}::uuid AND owner_id = ${user.id}`;

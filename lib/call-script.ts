@@ -4,6 +4,8 @@
 export type ScriptInput = {
   firstName: string; company: string; location: string; notes: string;
   setupFee: number; monthlyFee: number; today?: Date;
+  me?: string;    // your first name
+  brand?: string; // the name you say on calls
 };
 export type ScriptStep = { key: string; label: string; say: string; tip: string };
 export type Objection = { key: string; heard: string; say: string; then: string };
@@ -45,7 +47,7 @@ export function buildScript(input: ScriptInput): ScriptStep[] {
   const company = input.company || "your company";
   return [
     { key: "open", label: "Open", tip: "Smile, slow down. Asking permission lowers their guard.",
-      say: `${hi}, it's Samuel with Cinder Revenue Company. Did I catch you at a bad time?` },
+      say: `${hi}, it's ${input.me || "Samuel"} with ${input.brand || "Cinder Revenue Company"}. Did I catch you at a bad time?` },
     { key: "reason", label: "Reason for the call", tip: "Then stop talking and let them answer.",
       say: `I'll be quick. I work with ${niche}${city ? ` around ${city}` : ""}. When a new lead fills out your form or calls after hours, how fast does someone usually get back to them?` },
     { key: "dig", label: "Dig into the pain", tip: "Listen for: voicemail, 'next day', 'when I get to it'. That's the gap.",
@@ -81,10 +83,10 @@ export function buildObjections(input: ScriptInput): Objection[] {
       say: `That's a great spot to be in. Then it's about closing more of the ones you already get. How many quotes go out in a month that never hear back?`,
       then: `"Following up on those automatically is usually the fastest win. Want me to show you?"` },
     { key: "ai", heard: "Is this a robot / AI?",
-      say: `No, it's me, Samuel. A real person. The system we set up uses AI to respond to your leads instantly, but you stay in control of every booking.`,
+      say: `No, it's me, ${input.me || "Samuel"}. A real person. The system we set up uses AI to respond to your leads instantly, but you stay in control of every booking.`,
       then: `Go back to the reason for the call.` },
     { key: "gatekeeper", heard: "Gatekeeper: 'What's this about?'",
-      say: `It's Samuel with Cinder Revenue Company. I help ${job} companies make sure new leads get answered fast. Who handles that side of the business?`,
+      say: `It's ${input.me || "Samuel"} with ${input.brand || "Cinder Revenue Company"}. I help ${job} companies make sure new leads get answered fast. Who handles that side of the business?`,
       then: `Get the owner's name and the best time to reach them. Log "Wrong contact" or "Callback requested".` },
   ];
 }

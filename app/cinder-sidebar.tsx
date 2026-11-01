@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { CinderLogo, CinderMark, CINDER_MONO } from "./cinder-brand";
 import CommandBar from "./command-bar";
+import { useWorkspace } from "./use-workspace";
 
 type Props = {
   activeKey: string;
@@ -65,6 +66,7 @@ function Icon({ name }: { name: string }) {
  * icon rail. The choice is remembered. On phones it is a drawer.
  */
 export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavigate }: Props) {
+  const ws = useWorkspace();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const inSecondary = SECONDARY_PATHS.some(p => pathname.startsWith(p));
@@ -138,9 +140,9 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
 
       <div className="cx-foot">
         {item(["settings", "Settings", "settings", "/crm/settings"])}
-        <div className="cx-profile" title={collapsed ? "Samuel · Cinder Revenue Company" : undefined}>
-          <span className="cx-avatar">S</span>
-          <span className="cx-label cx-profile-copy"><strong>Samuel</strong><small>Cinder Revenue Company</small></span>
+        <div className="cx-profile" title={collapsed ? `${ws.ownerFirstName} · ${ws.businessName}` : undefined}>
+          <span className="cx-avatar">{ws.ownerFirstName.slice(0, 1).toUpperCase()}</span>
+          <span className="cx-label cx-profile-copy"><strong>{ws.ownerFirstName}</strong><small>{ws.businessName}</small></span>
         </div>
       </div>
     </aside>

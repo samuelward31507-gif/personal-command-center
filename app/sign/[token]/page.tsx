@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from
 import { useParams } from "next/navigation";
 import { CinderLogo } from "../../cinder-brand";
 import "./sign.css";
+import { usePublicBrand } from "../../use-workspace";
 
 type Doc = {
   status: "open" | "signed" | "expired" | "changed"; client: string; provider: string; providerSigner: string; sentAt: string | null;
@@ -38,6 +39,7 @@ const fmt = (v: string | null) => (v ? new Date(v).toLocaleString("en-US", { mon
 
 /** Public signing page: the client reads the agreement and signs by typing their name. */
 export default function SignPage() {
+  const brand = usePublicBrand();
   const { token } = useParams<{ token: string }>();
   const [doc, setDoc] = useState<Doc | null>(null);
   const [error, setError] = useState("");
@@ -70,7 +72,7 @@ export default function SignPage() {
   }
 
   return <div className="sg-page">
-    <header className="sg-top"><CinderLogo className="sg-logo" title="Cinder Revenue Company" /></header>
+    <header className="sg-top"><CinderLogo className="sg-logo" title={brand.businessName} /></header>
     <main className="sg-main">
       {error ? <div className="sg-msg"><h1>Link not available</h1><p>{error}</p></div>
         : !doc ? <p className="sg-muted">Loading the agreement…</p>

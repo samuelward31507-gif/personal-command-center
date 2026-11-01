@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
 import { fillAgreement, agreementTier } from "@/lib/agreement-template";
 import { sanitizeForLog } from "@/lib/business-audit";
+import { loadWorkspace } from "@/lib/workspace-data";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,11 +37,11 @@ export async function POST(request: Request) {
     const tier = agreementTier(d.service_type ? String(d.service_type) : null);
     if (!tier) return fail("Set the deal's service to Tier 1 or Tier 2 first. The agreement template covers those two plans.", 400);
     const company = String(d.company || d.title);
-    const tz = process.env.CINDER_TIMEZONE?.trim() || "America/Denver";
-    const today = new Intl.DateTimeFormat("en-US", { timeZone: tz, month: "long", day: "numeric", year: "numeric" }).format(new Date());
+    const ws = await loadWorkspace(user.id);
+    const today = new Intl.DateTimeFormat("en-US", { timeZone: ws.timezone, month: "long", day: "numeric", year: "numeric" }).format(new Date());
     const content = fillAgreement({
       tier, date: today,
-      providerName: process.env.CINDER_PROVIDER_LEGAL_NAME, providerAddress: process.env.CINDER_PROVIDER_ADDRESS, providerEmail: process.env.CINDER_ALERT_EMAIL,
+      providerName: ws.legalName, providerAddress: ws.address, providerEmail: ws.contactEmail, signerName: ws.ownerFullName,
       company, ownerName: [d.first_name, d.last_name].filter(Boolean).join(" "), email: d.email ? String(d.email) : "", phone: d.phone ? String(d.phone) : "",
       location: d.location ? String(d.location) : "", setupFee: Number(d.setup_fee), monthlyFee: Number(d.monthly_fee),
     });

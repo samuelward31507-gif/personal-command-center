@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { sendAlert, alertsConfigured } from "@/lib/notify";
 import { buildWeeklyReview } from "@/lib/weekly-review";
 import { loadReviewData } from "@/lib/weekly-review-data";
@@ -25,8 +26,9 @@ export async function GET(request: Request) {
   }
   try {
     const data = await loadReviewData(sql, owner);
-    const weekOf = new Intl.DateTimeFormat("en-US", { timeZone: process.env.CINDER_TIMEZONE?.trim() || "America/Denver", month: "long", day: "numeric" }).format(new Date());
-    const sent = await sendAlert(buildWeeklyReview(data, weekOf));
+    const wsp = await loadWorkspace(owner);
+    const weekOf = new Intl.DateTimeFormat("en-US", { timeZone: wsp.timezone, month: "long", day: "numeric" }).format(new Date());
+    const sent = await sendAlert(buildWeeklyReview(data, weekOf, { niche: wsp.niche, firstName: wsp.ownerFirstName }));
     await logRun(sql, "weekly-review", "cron", sent ? "ok" : "error", { sent }, started);
     return Response.json({ ok: sent });
   } catch (error) {

@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useEffect, useState } from "react";
 import { createAuthClient } from "@neondatabase/auth/next";
+import { WorkspaceCard } from "./workspace-card";
 
 const authClient = createAuthClient();
 
@@ -144,13 +145,13 @@ export default function SettingsPage() {
     <main style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 22px 60px", color:"#e8e6de" }}>
 
       <section style={{ marginTop: 36, maxWidth: 720 }}>
-        <p style={{ fontSize: 10, letterSpacing: 2, color:"#a95335", fontWeight: 700 }}>Workspace</p>
         <h1 style={{ fontSize: 38, letterSpacing: -1.5, margin: "8px 0" }}>Settings</h1>
-        <p style={{ color:"#b5b2a8", lineHeight: 1.65, fontSize: 14 }}>Review the workspace foundation and connected capabilities. External integrations are shown honestly as disconnected until they are configured and verified.</p>
+        <p style={{ color:"#b5b2a8", lineHeight: 1.65, fontSize: 14 }}>Your business details, prices and goal, plus the jobs Cinder runs for you.</p>
       </section>
 
       {error && <p role="alert" style={{ marginTop: 20, padding: 12, borderRadius: 8, background:"#2a1414", color:"#fca5a5", fontSize: 13 }}>{error}</p>}
 
+      <WorkspaceCard />
       <LeadFormLink />
       <OvernightAudits />
       <SundayReview />

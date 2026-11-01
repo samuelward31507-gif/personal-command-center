@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { REPORT_FIELDS, renderReport, cleanFigures, lastMonth, periodLabel, type ReportFigures } from "@/lib/client-report";
+import { useWorkspace } from "../../use-workspace";
 import { mailtoLink } from "@/lib/deal-workspace";
 import "./reports.css";
 
@@ -10,6 +11,7 @@ type Report = { id: string; projectId: string; period: string; figures: ReportFi
 
 /** Monthly client reports: enter the month's numbers from the live system, get an email-ready report. */
 export default function ReportsPage() {
+  const wsp = useWorkspace();
   const [clients, setClients] = useState<Client[] | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [error, setError] = useState("");
@@ -41,7 +43,7 @@ export default function ReportsPage() {
   }, [projectId, period, saved?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cleaned = useMemo(() => cleanFigures(form), [form]);
-  const preview = client ? renderReport(client.name, period, "ok" in cleaned ? cleaned.ok : {}) : null;
+  const preview = client ? renderReport(client.name, period, "ok" in cleaned ? cleaned.ok : {}, wsp.ownerFirstName, wsp.businessName) : null;
 
   async function save() {
     setBusy(true); setFlash(null);

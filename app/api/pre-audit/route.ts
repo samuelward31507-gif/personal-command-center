@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { auth } from "@/lib/auth/server";
 import { sanitizeForLog } from "@/lib/business-audit";
 import { runPreAudit, logRun } from "@/lib/pre-audit";
@@ -38,7 +39,7 @@ export async function POST() {
   const sql = neon(process.env.DATABASE_URL);
   const started = new Date();
   try {
-    const result = await runPreAudit({ sql, owner: user.id, apiKey, tz: process.env.CINDER_TIMEZONE?.trim() || "America/Denver" });
+    const result = await runPreAudit({ sql, owner: user.id, apiKey, tz: (await loadWorkspace(user.id)).timezone });
     await logRun(sql, "pre-audit", "manual", result.status, result, started);
     return Response.json(result);
   } catch (error) {

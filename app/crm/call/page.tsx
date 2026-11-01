@@ -5,7 +5,9 @@ import Link from "next/link";
 import { CALL_OUTCOMES, OUTCOME_LABELS, type CallOutcome } from "@/lib/call-outcomes";
 import { buildObjections, buildScript, cityOf } from "@/lib/call-script";
 import { reportSection } from "@/lib/business-audit";
-import { OFFERS, suggestOffer } from "@/lib/offers";
+import { suggestOffer } from "@/lib/offers";
+import { offersFrom } from "@/lib/workspace";
+import { useWorkspace } from "../../use-workspace";
 import type { QueueItem } from "@/lib/my-day";
 import SuggestedDeal, { type SuggestedDealData } from "../../suggested-deal";
 import "./call-mode.css";
@@ -69,8 +71,10 @@ export default function CallModePage() {
     return () => { live = false; };
   }, [contact?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const offer = useMemo(() => suggestOffer(contact?.company ?? "", audit ? reportSection(audit.content, "Verdict") : null), [contact?.company, audit]);
-  const scriptInput = contact ? { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, location: contact.location ?? "", notes: contact.notes ?? "", setupFee: OFFERS.tier1.setupFee, monthlyFee: OFFERS.tier1.monthlyFee } : null;
+  const wsp = useWorkspace();
+  const offers = useMemo(() => offersFrom(wsp), [wsp]);
+  const offer = useMemo(() => suggestOffer(contact?.company ?? "", audit ? reportSection(audit.content, "Verdict") : null, offers), [contact?.company, audit, offers]);
+  const scriptInput = contact ? { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, location: contact.location ?? "", notes: contact.notes ?? "", setupFee: offers.tier1.setupFee, monthlyFee: offers.tier1.monthlyFee, me: wsp.ownerFirstName, brand: wsp.shortName } : null;
   const script = scriptInput ? buildScript(scriptInput) : [];
   const objections = scriptInput ? buildObjections(scriptInput) : [];
   const brief = audit ? {

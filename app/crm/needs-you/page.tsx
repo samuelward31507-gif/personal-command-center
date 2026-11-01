@@ -5,6 +5,7 @@ import Link from "next/link";
 import MyDayQueue from "../../my-day-queue";
 import DailyPlanPanel from "../../daily-plan-panel";
 import "./today.css";
+import { useWorkspace } from "../../use-workspace";
 
 type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string };
 
@@ -13,6 +14,7 @@ type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay:
  * with filters), and the founder's routine + notes. Call mode works through the call items from this list.
  */
 export default function TodayPage() {
+  const ws = useWorkspace();
   const [events, setEvents] = useState<Ev[] | null>(null);
   const now = new Date();
   const greeting = now.getHours() < 12 ? "Morning" : now.getHours() < 18 ? "Afternoon" : "Evening";
@@ -33,7 +35,7 @@ export default function TodayPage() {
     <header className="td-head">
       <div>
         <div className="td-eyebrow">{dateLabel}</div>
-        <h1 className="td-title">{greeting}, Samuel</h1>
+        <h1 className="td-title">{greeting}, {ws.ownerFirstName}</h1>
         <p className="td-sub">Everything waiting on you today, revenue first. Calls go through Call mode; nothing is sent or dialed for you.</p>
       </div>
       <Link href="/crm/call" className="td-cta">Start calling →</Link>

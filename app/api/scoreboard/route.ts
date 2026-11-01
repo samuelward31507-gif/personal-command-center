@@ -1,7 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
-import { CONNECT_OUTCOMES, REVENUE_GOAL, funnelRates, goalMath } from "@/lib/scoreboard";
-import { OFFERS } from "@/lib/offers";
+import { CONNECT_OUTCOMES, funnelRates, goalMath } from "@/lib/scoreboard";
+import { goalLabel, offersFrom } from "@/lib/workspace";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { sanitizeForLog } from "@/lib/business-audit";
 
 export const runtime = "nodejs";
@@ -25,6 +26,7 @@ export async function GET(request: Request) {
     const tz = Math.max(-900, Math.min(900, Number(params.get("tz")) || 0));
     const sql = neon(process.env.DATABASE_URL);
     const owner = user.id;
+    const ws = await loadWorkspace(owner);
     const connects = [...CONNECT_OUTCOMES];
     const from14 = new Date(Date.parse(today + "T00:00:00Z") - 13 * 86_400_000).toISOString().slice(0, 10);
     const from30 = new Date(Date.parse(today + "T00:00:00Z") - 29 * 86_400_000).toISOString().slice(0, 10);
@@ -62,7 +64,7 @@ export async function GET(request: Request) {
           FROM public.deals WHERE owner_id = ${owner} AND stage NOT IN ('won','lost') GROUP BY stage`,
       sql`SELECT
             coalesce(sum(amount) FILTER (WHERE status = 'paid' AND paid_at >= ${yearStart}::date), 0)::float AS collected,
-            coalesce(sum(amount) FILTER (WHERE status IN ('expected','overdue') AND (due_date IS NULL OR due_date <= ${REVENUE_GOAL.by}::date)), 0)::float AS expected
+            coalesce(sum(amount) FILTER (WHERE status IN ('expected','overdue') AND (due_date IS NULL OR due_date <= ${ws.goalBy}::date)), 0)::float AS expected
           FROM public.revenue_entries WHERE owner_id = ${owner}`,
       sql`SELECT count(*)::int AS clients, coalesce(sum(monthly_fee),0)::float AS mrr FROM public.deals WHERE owner_id = ${owner} AND stage = 'won' AND agreement_status = 'active'`,
       sql`SELECT DISTINCT (occurred_at - make_interval(mins => ${tz}))::date AS d FROM public.contact_activities
@@ -93,7 +95,8 @@ export async function GET(request: Request) {
       days, streak,
       pipeline: pipeline.map(p => ({ stage: p.stage, deals: p.n, setup: p.setup, monthly: p.monthly })),
       recurring: { clients: mrr[0]?.clients ?? 0, mrr: mrr[0]?.mrr ?? 0 },
-      goal: goalMath({ today, collected: money[0]?.collected ?? 0, expectedByGoal: money[0]?.expected ?? 0, offers: Object.values(OFFERS) }),
+      goal: goalMath({ today, collected: money[0]?.collected ?? 0, expectedByGoal: money[0]?.expected ?? 0, offers: Object.values(offersFrom(ws)), goal: { amount: ws.goalAmount, by: ws.goalBy } }),
+      targets: { goalLabel: goalLabel(ws), dailyCalls: ws.dailyCallTarget },
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Scoreboard failed", { name: error instanceof Error ? error.name : typeof error, message: sanitizeForLog(error instanceof Error ? error.message : "") });

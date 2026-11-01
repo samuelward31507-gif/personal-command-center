@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { DISCOVERY_FIELDS, discoveryCompleteness, EMAIL_PURPOSES, mailtoLink, type Discovery, type ProposalStatus, type ContractStatus, type EmailPurpose } from "@/lib/deal-workspace";
-import { DEAL_STAGES, STAGE_LABELS, OFFERS } from "@/lib/offers";
+import { DEAL_STAGES, STAGE_LABELS } from "@/lib/offers";
+import { offersFrom } from "@/lib/workspace";
+import { useWorkspace } from "../../../use-workspace";
 import { OUTCOME_LABELS, type CallOutcome } from "@/lib/call-outcomes";
 import { Markdown } from "../../../ask-answer";
 import "../../../home-search.css";
@@ -46,6 +48,7 @@ function defaultPurpose(stage: string, proposal: ProposalStatus, contract: Contr
 }
 
 export default function DealWorkspacePage() {
+  const wsp = useWorkspace();
   const { id } = useParams<{ id: string }>();
   const [ws, setWs] = useState<Workspace | null>(null);
   const [error, setError] = useState("");
@@ -212,7 +215,7 @@ export default function DealWorkspacePage() {
     if (!w) return;
     const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const html = esc(content).replace(/^# (.*)$/gm, "").replace(/^### (.*)$/gm, "<h3>$1</h3>").replace(/^## (.*)$/gm, "<h2>$1</h2>").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/^[-*] (.*)$/gm, "<li>$1</li>").replace(/\n{2,}/g, "</p><p>");
-    w.document.write(`<!doctype html><title>${esc(heading)}</title><style>body{font:15px/1.65 -apple-system,Segoe UI,Inter,sans-serif;color:#353431;max-width:720px;margin:48px auto;padding:0 24px}h1{font-size:24px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px}h3{font-size:15px;margin:20px 0 6px}li{margin:4px 0 4px 18px}.m{color:#666;font-size:13px;margin-bottom:28px}</style><h1>${esc(heading)}</h1><div class="m">Cinder Revenue Company · ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div><p>${html}</p><script>setTimeout(()=>print(),300)</script>`);
+    w.document.write(`<!doctype html><title>${esc(heading)}</title><style>body{font:15px/1.65 -apple-system,Segoe UI,Inter,sans-serif;color:#353431;max-width:720px;margin:48px auto;padding:0 24px}h1{font-size:24px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px}h3{font-size:15px;margin:20px 0 6px}li{margin:4px 0 4px 18px}.m{color:#666;font-size:13px;margin-bottom:28px}</style><h1>${esc(heading)}</h1><div class="m">${esc(wsp.businessName)} · ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div><p>${html}</p><script>setTimeout(()=>print(),300)</script>`);
     w.document.close();
   }
 
@@ -233,7 +236,7 @@ export default function DealWorkspacePage() {
   if (error) return <main className="dw-page"><p className="dw-err">{error}</p><Link href="/crm/pipeline">← Pipeline</Link></main>;
   if (!ws) return <main className="dw-page"><p className="dw-muted">Loading deal…</p></main>;
   const { deal, contact } = ws;
-  const offer = Object.values(OFFERS).find(o => o.serviceType === deal.serviceType);
+  const offer = Object.values(offersFrom(wsp)).find(o => o.serviceType === deal.serviceType);
   const pct = discoveryCompleteness(disc);
   const proposal = ws.proposals[0];
   const closed = deal.stage === "won" || deal.stage === "lost";
