@@ -23,3 +23,7 @@
 @media (max-width: 760px) { .pj-row { grid-template-columns: 1fr; gap: 12px; } .pj-controls { flex-wrap: wrap; } }
 html body main .pj-row .pj-main.pj-main.pj-main { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; color: inherit !important; }
 html body main .pj-row .pj-controls.pj-controls button { background: transparent !important; border: 1px solid #3a3a3a !important; color: #e6e6e6 !important; }
+.pj-clock { color: #c9c9c9; }
+.pj-clock.is-watch { color: #e3b766; }
+.pj-clock.is-at_risk, .pj-clock.is-overdue { color: #f2b0a5; font-weight: 600; }
+.pj-clock.is-not_started { color: #8a8a8a; }

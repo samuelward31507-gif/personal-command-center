@@ -103,6 +103,7 @@ export function WorkspaceCard() {
       <label className="ws-field"><span>Revenue goal</span><div className="ws-money"><i>$</i><input inputMode="numeric" value={money(w.goalAmount)} onChange={e => set("goalAmount", Number(e.target.value.replace(/[^\d]/g, "") || 0))} /></div><small>Cash collected counts. Won deals don&apos;t.</small></label>
       <label className="ws-field"><span>By</span><input type="date" value={w.goalBy} onChange={e => set("goalBy", e.target.value)} /></label>
       <label className="ws-field"><span>Daily call target</span><input inputMode="numeric" value={String(w.dailyCallTarget)} onChange={e => set("dailyCallTarget", Number(e.target.value.replace(/[^\d]/g, "") || 0))} /></label>
+      <label className="ws-field"><span>Tax set-aside (%)</span><input inputMode="numeric" value={String(w.taxSetAsidePct)} onChange={e => set("taxSetAsidePct", Number(e.target.value.replace(/[^\d]/g, "") || 0))} /><small>Share of every payment to move to tax savings. Ask your CPA for your number.</small></label>
     </div>
   </section>;
 }

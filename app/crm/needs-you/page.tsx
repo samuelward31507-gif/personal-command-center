@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import MyDayQueue from "../../my-day-queue";
 import DailyPlanPanel from "../../daily-plan-panel";
+import OpsAlerts from "./ops-alerts";
+import ProspectQueue from "./prospect-queue";
 import "./today.css";
 import { useWorkspace } from "../../use-workspace";
 
@@ -50,6 +52,10 @@ export default function TodayPage() {
           {e.contactName && <small>{e.contactName}</small>}
         </Link>)}</div>}
     </section>
+
+    <OpsAlerts />
+
+    <ProspectQueue />
 
     <MyDayQueue showFilters title="Your queue" />
 

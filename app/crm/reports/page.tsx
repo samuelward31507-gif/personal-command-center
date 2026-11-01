@@ -76,6 +76,11 @@ export default function ReportsPage() {
     <p className="rp-sub">The one-page results report every client gets each month. Enter the numbers from their live system; Cinder writes the report. Nothing is estimated.</p>
     {error && <p className="rp-err" role="alert">{error}</p>}
     {clients && !clients.length && <div className="rp-empty"><b>No clients yet.</b><p>Reports appear here once a deal is signed and its delivery project exists.</p></div>}
+    {clients && !!clients.length && (() => {
+      const last = months[0];
+      const due = clients.filter(c => !["completed", "cancelled"].includes(c.status) && !reports.some(r => r.projectId === c.id && r.period === last && r.status === "sent"));
+      return due.length ? <div className="rp-queue"><b>{periodLabel(last)} reports to send: {due.length}</b>{due.map(c => <button key={c.id} type="button" style={{ background: "transparent" }} onClick={() => { setProjectId(c.id); setPeriod(last); }}>{c.name}{reports.some(r => r.projectId === c.id && r.period === last) ? " (draft)" : ""}</button>)}</div> : null;
+    })()}
     {clients && !!clients.length && <div className="rp-grid">
       <section className="rp-card">
         <div className="rp-row">

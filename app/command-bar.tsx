@@ -11,7 +11,7 @@ const PAGES: Item[] = [
   ["Today", "/crm/needs-you", "my day queue"], ["Call mode", "/crm/call", "dial phone"], ["Calendar", "/crm/calendar", "meetings schedule"],
   ["Contacts", "/crm", "leads people"], ["Pipeline", "/crm/pipeline", "deals board"], ["Research", "/crm/preparation", "preparation audits briefs"],
   ["Tasks", "/crm/tasks", "todo"], ["Delivery", "/crm/projects", "projects onboarding playbook"], ["Clients", "/crm/client-success", "health renewals"],
-  ["Monthly reports", "/crm/reports", "client report results"], ["Money", "/crm/finance", "revenue payments invoices"], ["Scoreboard", "/crm/scoreboard", "goal calls stats"],
+  ["Monthly reports", "/crm/reports", "client report results"], ["Money", "/crm/finance", "revenue payments invoices"], ["Scoreboard", "/crm/scoreboard", "goal calls stats"], ["Operations", "/crm/operations", "deadlines compliance taxes playbook registration a2p"],
   ["Business audit", "/crm/audit", "research prospect audit"], ["AI team", "/crm/workforce", "agents"], ["Intelligence", "/crm/intelligence", "signals problems"],
   ["Strategy & memory", "/crm/strategy", "offer icp goals"], ["Settings", "/crm/settings", "business offers prices payment links goal"], ["Automations", "/crm/settings#automations", "lead form overnight audits sunday review"],
 ].map(([label, href, keywords]) => ({ id: "p:" + href, label, hint: "Page", href, group: "Go to" as const, keywords }));

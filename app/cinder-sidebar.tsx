@@ -29,8 +29,9 @@ const secondary = [
   ["tasks", "Tasks", "check", "/crm/tasks"],
   ["preparation", "Research", "search", "/crm/preparation"],
   ["scoreboard", "Scoreboard", "chart", "/crm/scoreboard"],
+  ["operations", "Operations", "check", "/crm/operations"],
 ] as const;
-const SECONDARY_PATHS = ["/crm/projects", "/crm/tasks", "/crm/preparation", "/crm/audit", "/crm/scoreboard", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
+const SECONDARY_PATHS = ["/crm/projects", "/crm/tasks", "/crm/preparation", "/crm/audit", "/crm/scoreboard", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
@@ -108,7 +109,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     if (key === "pipeline") return pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/deals");
     if (key === "preparation") return pathname.startsWith("/crm/preparation") || pathname.startsWith("/crm/audit");
     const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
-      "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", scoreboard: "/crm/scoreboard", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
+      "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", scoreboard: "/crm/scoreboard", operations: "/crm/operations", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
       intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings" };
     return map[key] ? pathname.startsWith(map[key]) : activeKey === key;
   };
