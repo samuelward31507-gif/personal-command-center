@@ -1,0 +1,60 @@
+/* ============================================================================
+   Cinder · Claude-style layer (loaded last)
+   Warm charcoal canvas, serif page titles, calm sans body, soft rounded cards,
+   very little chrome. Monochrome actions; no labels stacked above titles.
+   ========================================================================== */
+
+:root {
+  --st-bg: #262624; --st-bg-2: #1f1e1d; --st-surface: #2b2a28; --st-raised: #30302d; --st-hover: #353431;
+  --st-line: #3a3935; --st-line-2: #45443f; --st-text: #f0eee6; --st-soft: #c2c0b6; --st-muted: #9a978d; --st-faint: #6f6d66;
+  --st-accent: #e8e6de; --st-radius: 14px;
+  --pl-text: #f0eee6; --pl-title: #f5f3ec; --pl-soft: #c2c0b6; --pl-muted: #9a978d; --pl-line: #3a3935; --pl-surface: #2b2a28; --pl-raised: #30302d;
+}
+
+/* Canvas: the main area is the warm charcoal; the sidebar sits a step darker, like Claude. */
+html body .app-shell, html body .main-panel, html body .crm-shell-main, html body .main-panel main, html body .page-content { background-color: var(--st-bg) !important; }
+html body .cx-side { background: #1f1e1d !important; border-right: 1px solid #2f2e2b !important; }
+html body .cx-item.is-active, html body .cx-new.is-active { background: #2f2e2b !important; color: #f5f3ec !important; }
+html body .cx-item:hover, html body .cx-new:hover { background: #2a2927 !important; }
+html body .cx-new-icon { background: #33322f !important; color: #f0eee6 !important; }
+
+/* Top bar: no hard line, just the breadcrumb. */
+html body .topbar, html body .crm-shell-main > .topbar { background: rgba(38, 38, 36, .88) !important; border-bottom: 1px solid transparent !important; }
+html body .breadcrumbs, html body .breadcrumbs a { color: #9a978d !important; }
+html body .breadcrumbs strong { color: #e8e6de !important; font-weight: 500 !important; }
+
+/* No labels stacked above page titles; the title says it. */
+html body .main-panel main [class$="-eyebrow"], html body .main-panel main .eyebrow, html body .main-panel main .section-kicker,
+html body .main-panel main p:has(+ h1), html body .main-panel main div:has(+ h1):not(:has(*)) { display: none !important; }
+
+/* Page titles: Claude's serif, a touch larger and lighter. */
+html body .main-panel main h1, html body .main-panel main h1.td-title, html body .main-panel main h1.sb-title, html body .main-panel main .cm-title {
+  font-size: clamp(30px, 2.8vw, 38px) !important; font-weight: 400 !important; letter-spacing: -0.02em !important; margin: 4px 0 10px !important;
+}
+html body .page-subtitle, html body .main-panel main h1 + p { color: #b5b2a8 !important; font-size: 15px !important; }
+
+/* Cards and panels: soft, rounded, barely-there borders. */
+html body .main-panel main :is([class*="card"], [class*="panel"], [class*="Panel"], article, .c):not(.calendar-page *) {
+  border-radius: 16px !important; border-color: #3a3935 !important; box-shadow: none !important;
+}
+/* Stat tiles read as numbers, not boxes full of labels. */
+html body .main-panel main :is(.stat-label, [class*="stat"] > span:first-child, [class*="metric"] > span:first-child, .fin-metrics small, .fin-secondary small) {
+  text-transform: none !important; letter-spacing: 0 !important; font-size: 12.5px !important; font-weight: 500 !important; color: #9a978d !important;
+}
+
+/* Buttons: rounded, quiet; primary is the light pill. */
+html body .main-panel main button, html body .main-panel main .btn, html body .main-panel main a[data-variant] { border-radius: 10px !important; }
+html body .main-panel main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) { background: #1f1e1d !important; border-color: #3d3c38 !important; color: #f0eee6 !important; }
+html body .main-panel main :is(input, select, textarea):focus { border-color: #6f6d66 !important; box-shadow: 0 0 0 3px rgba(240, 238, 230, .06) !important; }
+
+/* Breathing room. */
+html body .crm-shell-main > main:not(.calendar-page):not(.pipeline-page):not(.cm-page):not(.ask-root) { max-width: 1040px !important; padding-top: 36px !important; }
+
+/* Scrollbars that don't shout. */
+html body ::-webkit-scrollbar { width: 10px; height: 10px; }
+html body ::-webkit-scrollbar-thumb { background: #3d3c38; border-radius: 10px; border: 2px solid #262624; }
+
+/* Sidebar buttons (Search, More) look like plain nav items, not filled buttons. */
+html body .cx-side button.cx-search, html body .cx-side button.cx-more { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #c2c0b6 !important; }
+html body .cx-side button.cx-search:hover, html body .cx-side button.cx-more:hover { background: #2a2927 !important; }
+html body .topbar, html body .crm-shell-main > .topbar { box-shadow: none !important; border: 0 !important; }

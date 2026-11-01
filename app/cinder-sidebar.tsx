@@ -13,27 +13,30 @@ type Props = {
   onNavigate?: (key: string) => void;
 };
 
+// Six places you use every day; everything else lives under "More" so the sidebar stays calm.
 const primary = [
   ["needs-you", "Today", "sun", "/crm/needs-you"],
   ["call", "Call mode", "phone", "/crm/call"],
+  ["growth", "Pipeline", "growth", "/crm"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
-  ["growth", "Contacts & pipeline", "growth", "/crm"],
-  ["preparation", "Preparation", "edit", "/crm/preparation"],
-  ["tasks", "Tasks", "check", "/crm/tasks"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
-  ["client-success", "Clients", "client", "/crm/client-success"],
   ["finance", "Money", "money", "/crm/finance"],
-  ["scoreboard", "Scoreboard", "chart", "/crm/scoreboard"],
 ] as const;
 const secondary = [
+  ["tasks", "Tasks", "check", "/crm/tasks"],
+  ["preparation", "Preparation", "edit", "/crm/preparation"],
+  ["client-success", "Clients", "client", "/crm/client-success"],
+  ["scoreboard", "Scoreboard", "chart", "/crm/scoreboard"],
   ["audit", "Business audit", "search", "/crm/audit"],
   ["workforce", "AI team", "spark", "/crm/workforce"],
   ["intelligence", "Intelligence", "bulb", "/crm/intelligence"],
   ["strategy", "Strategy & memory", "strategy", "/crm/strategy"],
 ] as const;
+const SECONDARY_PATHS = ["/crm/tasks", "/crm/preparation", "/crm/client-success", "/crm/reports", "/crm/scoreboard", "/crm/audit", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
+    more: <><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></>,
     sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></>,
     inbox: <><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6Z"/></>,
     calendar: <><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M7.5 3v4M16.5 3v4M4 9.5h16"/></>,
@@ -64,6 +67,12 @@ function Icon({ name }: { name: string }) {
 export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavigate }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const inSecondary = SECONDARY_PATHS.some(p => pathname.startsWith(p));
+  const [moreOpen, setMoreOpen] = useState(false);
+  useEffect(() => {
+    try { setMoreOpen(inSecondary || localStorage.getItem("cinder.sidebar.more") === "1"); } catch { setMoreOpen(inSecondary); }
+  }, [inSecondary]);
+  const toggleMore = () => setMoreOpen(o => { try { localStorage.setItem("cinder.sidebar.more", o ? "0" : "1"); } catch { /* ignore */ } return !o; });
   useEffect(() => {
     try { setCollapsed(localStorage.getItem("cinder.sidebar.collapsed") === "1"); } catch { /* storage unavailable */ }
   }, []);
@@ -120,10 +129,11 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
       </button>
 
       <nav className="cx-nav" aria-label="Agency">
-        <div className="cx-group">Agency</div>
         {primary.map(item)}
-        <div className="cx-group">Plan</div>
-        {secondary.map(item)}
+        <button type="button" data-variant="primary" className="cx-item cx-more" aria-expanded={moreOpen} onClick={toggleMore} title={collapsed ? "More" : undefined}>
+          <Icon name="more" /><span className="cx-label">More</span><span className={"cx-chev" + (moreOpen ? " is-open" : "")} aria-hidden="true">›</span>
+        </button>
+        {moreOpen && <div className="cx-sub">{secondary.map(item)}</div>}
       </nav>
 
       <div className="cx-foot">
