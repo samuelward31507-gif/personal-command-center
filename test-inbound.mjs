@@ -1,7 +1,7 @@
 // Regression tests for the public lead form. Run with: node --experimental-strip-types test-inbound.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { validateInbound, phoneDigits, sourceFor, notesFor } from "./lib/inbound.ts";
+import { validateInbound, phoneDigits, sourceFor, notesFor, inboundTask, SMS_CONSENT_TEXT } from "./lib/inbound.ts";
 
 let n = 0;
 const ok = fn => { fn(); n++; };
@@ -18,6 +18,21 @@ ok(() => assert.equal(validateInbound({ ...good, trade: "<script>" }).trade, "Ot
 ok(() => assert.equal(phoneDigits("+1 (405) 555-0142"), "4055550142"));
 ok(() => assert.equal(sourceFor(validateInbound(good)), "Website form · Instagram"));
 ok(() => assert.match(notesFor(validateInbound(good), new Date("2026-10-29T10:00:00Z")), /Biggest challenge: Missed calls/));
+// Text consent: never assumed, recorded with the exact wording and time when given.
+ok(() => assert.equal(validateInbound(good).smsConsent, false, "no consent unless ticked"));
+ok(() => assert.match(notesFor(validateInbound(good), new Date()), /Text consent: not given/));
+ok(() => assert.equal(validateInbound({ ...good, smsConsent: "on" }).smsConsent, true));
+ok(() => assert.ok(notesFor(validateInbound({ ...good, smsConsent: "on" }), new Date("2026-11-01T17:00:00Z")).includes(SMS_CONSENT_TEXT)));
+ok(() => assert.match(SMS_CONSENT_TEXT, /STOP/) && assert.match(SMS_CONSENT_TEXT, /not a condition of purchase/));
+// Speed test: needs a website and explicit permission; gets its own task and source.
+const speed = { ...good, offer: "speed-test", website: "fencemasters.com", testOk: "on" };
+ok(() => assert.match(validateInbound({ ...speed, website: "" }).error, /website/));
+ok(() => assert.match(validateInbound({ ...speed, testOk: "" }).error, /OK/));
+ok(() => assert.equal(validateInbound(speed).offer, "speed-test"));
+ok(() => assert.equal(validateInbound({ ...good, offer: "anything" }).offer, ""));
+ok(() => assert.equal(sourceFor(validateInbound(speed)), "Website speed test · Instagram"));
+ok(() => assert.match(inboundTask(validateInbound(speed)).title, /^Run speed test: Fence Masters OKC/));
+ok(() => assert.match(inboundTask(validateInbound(good)).title, /^Call new inbound lead/));
 const api = readFileSync("app/api/inbound-lead/route.ts", "utf8");
 ok(() => assert.match(api, /CINDER_OWNER_ID/, "filed under the configured owner only"));
 ok(() => assert.doesNotMatch(api, /sms|twilio|sendEmail|resend|fetch\(/i, "never contacts the lead"));
