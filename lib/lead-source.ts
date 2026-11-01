@@ -15,7 +15,7 @@ export const CHANNELS = [
 export type Channel = typeof CHANNELS[number]["key"];
 export const CHANNEL_LABEL = Object.fromEntries(CHANNELS.map(c => [c.key, c.label])) as Record<Channel, string>;
 /** Choices for the deal form (the label is what gets stored). */
-export const SOURCE_CHOICES = CHANNELS.filter(c => c.key !== "unknown" && c.key !== "upsell").map(c => c.label);
+export const SOURCE_CHOICES: string[] = CHANNELS.filter(c => c.key !== "unknown" && c.key !== "upsell").map(c => c.label);
 
 const RULES: [Channel, RegExp][] = [
   ["upsell", /\bupsell\b/i],

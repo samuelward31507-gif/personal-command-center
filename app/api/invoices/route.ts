@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/serverless";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
 import { newSigningToken } from "@/lib/esign";
 import { owedSummary, reminderEmail, retainerPlan, nextMove, type OwedEntry, type RetainerDeal } from "@/lib/invoice";
@@ -18,7 +18,7 @@ const day = (v: unknown) => (v == null ? null : v instanceof Date ? v.toISOStrin
 const iso = (v: unknown) => (v == null ? null : v instanceof Date ? v.toISOString() : String(v));
 const origin = (request: Request) => process.env.CINDER_PUBLIC_ORIGIN?.trim().replace(/\/$/, "") || new URL(request.url).origin;
 
-type Sql = ReturnType<typeof neon>;
+type Sql = NeonQueryFunction<false, false>;
 async function openEntries(sql: Sql, owner: string): Promise<(OwedEntry & { token: string | null })[]> {
   const rows = await sql`
     SELECT r.id, r.title, r.amount, r.status, r.due_date, r.invoice_number, r.invoice_token, r.invoice_sent_at, r.reminded_at,
