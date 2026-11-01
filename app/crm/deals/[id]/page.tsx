@@ -311,7 +311,7 @@ export default function DealWorkspacePage() {
         </section>
 
         <div className="dw-tabs" role="tablist" aria-label="Deal steps">
-          {tabs.map(t => <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} onClick={() => setDtab(t.key)}>{t.label}{t.key === stepTab && <i aria-label="current step" />}</button>)}
+          {tabs.map(t => <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} style={{ background: "transparent" }} onClick={() => setDtab(t.key)}>{t.label}{t.key === stepTab && <i aria-label="current step" />}</button>)}
         </div>
 
         {tab === "discovery" && <section className="dw-box">
