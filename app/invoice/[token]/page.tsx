@@ -31,13 +31,13 @@ export default function InvoicePage() {
   return <div className="iv-page">
     <header className="iv-top"><CinderLogo mono className="iv-logo" title={doc?.from.name ?? "Invoice"} />
       {doc && <button className="iv-print" onClick={() => window.print()}>Download PDF</button>}</header>
-    <div className="iv-main" role="main">
+    <div className="iv-main">
       {error ? <div className="iv-msg"><h1>Invoice not available</h1><p>{error}</p></div>
         : !doc ? <p className="iv-muted">Loading invoice…</p>
         : <article className="iv-sheet">
           <div className="iv-head">
             <div><h1>Invoice</h1><p className="iv-num">{doc.number}</p></div>
-            <span className={"iv-status " + (doc.status === "paid" ? "paid" : late ? "late" : "open")}>{doc.status === "paid" ? `Paid ${fmt(doc.paidOn)}` : late ? "Past due" : `Due ${fmt(doc.due)}`}</span>
+            <span className={"iv-badge " + (doc.status === "paid" ? "paid" : late ? "late" : "open")}>{doc.status === "paid" ? `Paid ${fmt(doc.paidOn)}` : late ? "Past due" : `Due ${fmt(doc.due)}`}</span>
           </div>
           <div className="iv-parties">
             <div><small>From</small><strong>{doc.from.name}</strong>{doc.from.legalName !== doc.from.name && <span>{doc.from.legalName}</span>}{doc.from.address && <span>{doc.from.address}</span>}{doc.from.email && <span>{doc.from.email}</span>}</div>
