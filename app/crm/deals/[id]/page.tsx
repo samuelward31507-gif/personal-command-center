@@ -62,6 +62,25 @@ export default function DealWorkspacePage() {
   const [mail, setMail] = useState<{ subject: string; body: string; to: string } | null>(null);
   const [signReq, setSignReq] = useState<{ status: string; createdAt: string; signedAt: string | null; signerName: string | null; signerTitle: string | null } | null>(null);
   const [signUrl, setSignUrl] = useState("");
+  const [kick, setKick] = useState<{ tier: string; status: string; createdAt: string; submittedAt: string | null; items: { label: string; value: string }[] } | null>(null);
+  const [kickUrl, setKickUrl] = useState("");
+  async function newKickoffLink() {
+    setSaving("kickoff"); setFlash(null);
+    try {
+      const r = await fetch("/api/kickoff/link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Could not create the kickoff link.");
+      setKickUrl(d.url); void navigator.clipboard?.writeText(d.url);
+      setFlash({ ok: true, text: "Kickoff link created and copied. Send it to your client. Older links stop working." });
+      const k = await fetch(`/api/kickoff/link?dealId=${id}`, { cache: "no-store" }).then(x => x.ok ? x.json() : null).catch(() => null);
+      setKick(k?.request ?? null);
+    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not create the kickoff link." }); }
+    finally { setSaving(null); }
+  }
+  async function revealEin() {
+    const k = await fetch(`/api/kickoff/link?dealId=${id}&reveal=ein`, { cache: "no-store" }).then(x => x.ok ? x.json() : null).catch(() => null);
+    if (k?.request) setKick(k.request);
+  }
   const copy = (key: string, text: string) => { void navigator.clipboard?.writeText(text).then(() => { setCopied(key); setTimeout(() => setCopied(null), 1400); }); };
 
   const load = useCallback(async () => {
@@ -72,6 +91,10 @@ export default function DealWorkspacePage() {
       setWs(d); setDisc(d.deal.discovery ?? {}); setNext({ step: d.deal.nextStep ?? "", at: d.deal.nextStepAt ?? "" });
       const s = await fetch(`/api/agreements/sign-link?dealId=${id}`, { cache: "no-store" }).then(x => x.ok ? x.json() : null).catch(() => null);
       setSignReq(s?.request ?? null);
+      if (d.deal.stage === "won") {
+        const k = await fetch(`/api/kickoff/link?dealId=${id}`, { cache: "no-store" }).then(x => x.ok ? x.json() : null).catch(() => null);
+        setKick(k?.request ?? null);
+      }
     } catch (e) { setError(e instanceof Error ? e.message : "Could not load this deal."); }
   }, [id]);
   useEffect(() => { void load(); }, [load]);
@@ -344,6 +367,21 @@ export default function DealWorkspacePage() {
               {deal.contractStatus !== "sent" && <button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => setContract("sent")}>Mark sent</button>}
               <button data-variant="primary" className="dw-btn dw-good" disabled={!!saving} onClick={() => setContract("signed")}>Signed</button>
             </div>}
+          </>}
+        </section>}
+
+        {deal.stage === "won" && (deal.serviceType === "tier1_speed_to_lead" || deal.serviceType === "tier2_revenue_system") && <section className="dw-box" id="kickoff">
+          <div className="dw-boxhead"><h2>Kickoff checklist</h2><span className={"dw-pill " + (kick?.status === "submitted" ? "dw-pill-c-signed" : "dw-pill-c-sent")}>{kick?.status === "submitted" ? "Received" : kick ? "Waiting on client" : "Not sent"}</span></div>
+          {kick?.status === "submitted" ? <>
+            <p className="dw-hint">Received {new Date(kick.submittedAt ?? kick.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}. The 21-business-day go-live clock started then. It's also saved in the project notes.</p>
+            <dl className="dw-kick">{kick.items.map(it => <div key={it.label}><dt>{it.label}</dt><dd>{it.value}</dd></div>)}</dl>
+            <div className="dw-row"><button data-variant="primary" className="dw-btn" onClick={() => copy("kickoff", kick.items.map(it => `${it.label}: ${it.value}`).join("\n"))}>{copied === "kickoff" ? "Copied" : "Copy answers"}</button>
+              {kick.items.some(it => it.value.startsWith("••")) && <button data-variant="primary" className="dw-btn" onClick={() => void revealEin()}>Show EIN</button>}</div>
+          </> : <>
+            <p className="dw-hint">Your client gets this link right after signing: hours, service area, prices, rules and the details carriers need to register their texting number. Answers land here and check off the kickoff steps in Delivery.</p>
+            {kickUrl && <div className="dw-row"><input className="dw-mail-subject dw-sign-url" readOnly value={kickUrl} onFocus={e => e.currentTarget.select()} aria-label="Kickoff link" /><button data-variant="primary" className="dw-btn" onClick={() => copy("kickurl", kickUrl)}>{copied === "kickurl" ? "Copied" : "Copy"}</button></div>}
+            <div className="dw-row"><button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "kickoff"} onClick={() => void newKickoffLink()}>{saving === "kickoff" ? "Creating…" : kick ? "Create a new link" : "Create kickoff link"}</button>
+              {kick && !kickUrl && <span className="dw-muted dw-small">A link was sent{signReq?.status === "signed" ? " on the signing page" : ""}. Lost it? Create a new one; the old one stops working.</span>}</div>
           </>}
         </section>}
 

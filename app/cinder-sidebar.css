@@ -76,3 +76,7 @@
   .cx-side .cx-top { padding-left: 46px; }
 }
 @media (prefers-reduced-motion: reduce) { .cx-side { transition: none; } }
+/* Search / command bar entry */
+.cx-search { width: 100%; border: 0; background: transparent; font: inherit; cursor: pointer; text-align: left; }
+.cx-kbd { margin-left: auto; padding: 1px 6px; border: 1px solid #2c2c2c; border-radius: 6px; font: 11px/1.5 var(--font-geist-mono), ui-monospace, monospace; color: #7a7a7a; }
+.cx-side.is-collapsed .cx-kbd { display: none; }

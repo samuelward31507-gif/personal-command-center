@@ -2,7 +2,7 @@
 // Run with: node --experimental-strip-types test-deal-handoff.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { ONBOARDING_TEMPLATE, LAUNCH_TARGET_DAYS } from "./lib/deal-handoff.ts";
+import { ONBOARDING_TEMPLATE, LAUNCH_TARGET_DAYS, TIER1_PLAYBOOK, TIER2_PLAYBOOK, TIER2_EXTRAS, playbookFor, GO_LIVE_STEP, KICKOFF_STEP } from "./lib/deal-handoff.ts";
 
 let n = 0;
 const ok = fn => { fn(); n++; };
@@ -19,8 +19,23 @@ ok(() => {
   assert.equal(ONBOARDING_TEMPLATE.find(m => m.title === "30-day results review").dueInDays, launch + 30);
 });
 
+// Plan playbooks
+ok(() => assert.equal(playbookFor("tier1_speed_to_lead"), TIER1_PLAYBOOK));
+ok(() => assert.equal(playbookFor("tier2_revenue_system"), TIER2_PLAYBOOK));
+ok(() => assert.equal(playbookFor("ai_voice_agent"), null, "other services keep the generic template"));
+for (const pb of [TIER1_PLAYBOOK, TIER2_PLAYBOOK]) {
+  ok(() => assert.deepEqual(pb.map(m => m.dueInDays), [...pb.map(m => m.dueInDays)].sort((a, b) => a - b), "steps are due in order"));
+  ok(() => assert.equal(pb.find(m => m.title === GO_LIVE_STEP).dueInDays, LAUNCH_TARGET_DAYS, "go-live lands on the launch target"));
+  ok(() => assert.ok(pb.find(m => m.title === KICKOFF_STEP).dueInDays <= 3, "kickoff checklist is collected first"));
+  ok(() => assert.ok(pb.findIndex(m => /A2P/.test(m.title)) < pb.findIndex(m => /Test every path/.test(m.title)), "SMS registration is submitted well before testing"));
+  ok(() => assert.equal(new Set(pb.map(m => m.title.toLowerCase())).size, pb.length, "titles are unique (milestones dedupe by title)"));
+}
+ok(() => assert.equal(TIER2_PLAYBOOK.length, TIER1_PLAYBOOK.length + TIER2_EXTRAS.length));
+ok(() => assert.ok(!TIER1_PLAYBOOK.some(m => /reactivation|CRM/i.test(m.title)), "Tier 1 never gets Tier 2 work"));
+
 // Handoff safety
 const lib = readFileSync("lib/deal-handoff.ts", "utf8");
+ok(() => assert.match(lib, /existing > 0 \? \[\] : template/, "old projects never get a second plan appended"));
 ok(() => assert.match(lib, /ON CONFLICT \(owner_id, deal_id\) WHERE deal_id IS NOT NULL/, "one project per deal"));
 ok(() => assert.match(lib, /ON CONFLICT \(owner_id, source_key\) WHERE source_key <> '' DO NOTHING/, "receivables never duplicate"));
 ok(() => assert.equal((lib.match(/'expected'/g) || []).length, 2, "handoff only creates expected receivables"));

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CALL_OUTCOMES, OUTCOME_LABELS, type CallOutcome } from "@/lib/call-outcomes";
 import type { QueueItem, QueueGroup, QueueStatus } from "@/lib/my-day";
 import SuggestedDeal, { type SuggestedDealData } from "./suggested-deal";
+import { quickActions } from "@/lib/crm-ux";
 
 const STATUS: Record<QueueStatus, { label: string; color: string }> = {
   overdue: { label: "Overdue", color: "#f0a3a3" },
@@ -14,6 +15,11 @@ const STATUS: Record<QueueStatus, { label: string; color: string }> = {
 
 function localKey(d: Date) {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function tomorrowAt9(): { iso: string; day: string } {
+  const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0);
+  return { iso: d.toISOString(), day: localKey(d) };
 }
 
 const ROW: React.CSSProperties = { background: "#121212", border: "1px solid #1f1f1f", borderRadius: 12, padding: "14px 16px" };
@@ -79,6 +85,24 @@ export default function MyDayQueue({ showFilters = false, title = "Today’s que
     } finally { setBusy(null); }
   }
 
+  async function quick(item: QueueItem, action: "done" | "snooze") {
+    const [kind, recId] = item.id.split(":");
+    const t = tomorrowAt9();
+    const req = kind === "task" ? { url: "/api/tasks", body: action === "done" ? { id: recId, status: "done" } : { id: recId, dueAt: t.iso } }
+      : kind === "milestone" ? { url: "/api/project-milestones", body: action === "done" ? { id: recId, status: "done" } : { id: recId, dueAt: t.iso } }
+      : kind === "deal" && action === "snooze" ? { url: "/api/deal-workspace", body: { id: recId, nextStepAt: t.day } } : null;
+    if (!req) return;
+    setBusy(item.id + action); setNotice(null);
+    try {
+      const r = await fetch(req.url, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(req.body) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || "Couldn't update it.");
+      setItems(old => old.filter(i => i.id !== item.id));
+      setNotice({ ok: true, text: action === "done" ? `Done: ${item.title}` : `Moved to tomorrow: ${item.title}` });
+    } catch (e) { setNotice({ ok: false, text: e instanceof Error ? e.message : "Couldn't update it." }); }
+    finally { setBusy(null); }
+  }
+
   const visible = items.filter(i => focus === "all" || (focus === "sales" ? SALES.includes(i.group) : i.group === focus));
   const byGroup = visible.reduce<Record<string, QueueItem[]>>((acc, i) => { (acc[i.group] ||= []).push(i); return acc; }, {});
   const order: QueueGroup[] = ["revenue", "prospects", "meetings", "deals", "delivery", "admin"];
@@ -113,6 +137,8 @@ export default function MyDayQueue({ showFilters = false, title = "Today’s que
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginLeft: "auto" }}>
               {item.callable && <button type="button" style={BTN_PRIMARY} onClick={() => call(item)}>Call</button>}
               {item.contact && (item.group === "revenue" || item.group === "prospects" || item.group === "deals") && <button type="button" style={BTN} onClick={() => setOpen(open === item.id ? null : item.id)} aria-expanded={open === item.id}>Log outcome</button>}
+              {quickActions(item.id).done && <button type="button" style={BTN} disabled={busy !== null} onClick={() => void quick(item, "done")}>{busy === item.id + "done" ? "Saving…" : "Done"}</button>}
+              {quickActions(item.id).snooze && <button type="button" style={BTN} disabled={busy !== null} onClick={() => void quick(item, "snooze")} title="Push to tomorrow 9 AM">{busy === item.id + "snooze" ? "Saving…" : "Tomorrow"}</button>}
               <a style={{ ...BTN, textDecoration: "none" }} href={item.href}>Open</a>
             </div>
           </div>

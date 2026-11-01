@@ -57,6 +57,7 @@ function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/tasks")) return "Tasks";
   if (pathname.startsWith("/crm/projects")) return "Delivery";
   if (pathname.startsWith("/crm/client-success")) return "Clients";
+  if (pathname.startsWith("/crm/reports")) return "Monthly reports";
   if (pathname.startsWith("/crm/finance")) return "Money";
   if (pathname.startsWith("/crm/pipeline")) return "Pipeline";
   if (pathname.startsWith("/crm/deals")) return "Deal";
