@@ -36,7 +36,7 @@ h1 { font-size: clamp(28px, 2.4vw, 34px); line-height: 1.14; letter-spacing: -1.
 .page-subtitle { color: #777a73; font-size: 12px; }
 .date-chip { background: #fff; border-color: #e8e6df; border-radius: 8px; }
 .attention-banner { background: #fff; border-color: #e8e6df; border-radius: 10px; padding: 17px 18px; margin-bottom: 28px; }
-.attention-icon { background: #f2f0ea; color: #4c5048; border-radius: 8px; }
+.attention-icon { background: #efefef; color: #4c5048; border-radius: 8px; }
 .section-kicker { color: #85877f; }
 .attention-copy h2 { font-size: 14px; font-weight: 640; }
 .attention-copy p { color: #777a73; }
@@ -90,31 +90,31 @@ button:focus-visible, a:focus-visible { outline: 2px solid #777a73; outline-offs
 /* CINDER DESIGN SYSTEM — one source of truth; neutral charcoal, no green tint. */
 :root {
   color-scheme: dark;
-  --background: #262624;
+  --background: #191919;
   --foreground: #eeeeee;
   --muted: #9a9a9a;
-  --line: #45443f;
-  --panel: #30302d;
-  --accent: #e8e6de;
-  --surface-1: #2b2a28;
-  --surface-2: #30302d;
-  --surface-hover: #3a3935;
+  --line: #3a3a3a;
+  --panel: #262626;
+  --accent: #e6e6e6;
+  --surface-1: #1f1f1f;
+  --surface-2: #262626;
+  --surface-hover: #2a2a2a;
 }
-html, body { background: #262624 !important; color: #eeeeee !important; }
+html, body { background: #191919 !important; color: #eeeeee !important; }
 body, #__next { min-height: 100%; }
 .app-shell, .main-panel, .crm-shell-main, .page-content, .route-page,
 .crm-app-shell, .crm-app-shell main, .crm-app-shell section, .cal-home,
 main, [role="main"] {
-  background-color: #262624 !important;
+  background-color: #191919 !important;
   color: #eeeeee !important;
 }
 /* Sidebar and its pseudo-elements: deliberately flat, neutral charcoal. */
 .sidebar, .crm-app-shell .sidebar, .app-shell .sidebar,
 .sidebar::before, .sidebar::after, .crm-app-shell .sidebar::before,
 .crm-app-shell .sidebar::after {
-  background: #262624 !important;
+  background: #191919 !important;
   background-image: none !important;
-  border-color: #45443f !important;
+  border-color: #3a3a3a !important;
   color: #dedede !important;
   box-shadow: none !important;
 }
@@ -128,24 +128,24 @@ main, [role="main"] {
   color: #bcbcbc !important;
   border-color: transparent !important;
 }
-.nav-item:hover, .sidebar-nav a:hover { background: #353431 !important; color: #f5f5f5 !important; }
+.nav-item:hover, .sidebar-nav a:hover { background: #303030 !important; color: #f5f5f5 !important; }
 .nav-item.active, .sidebar-nav a.active {
-  background: #3d3c38 !important; color: #f5f5f5 !important;
-  border-color: #4b4a45 !important; font-weight: 600 !important;
+  background: #2e2e2e !important; color: #f5f5f5 !important;
+  border-color: #3a3a3a !important; font-weight: 600 !important;
 }
-.sidebar-divider, .profile-row { border-color: #45443f !important; }
+.sidebar-divider, .profile-row { border-color: #3a3a3a !important; }
 .workspace-switcher, .sidebar-search, .connection-card, .sidebar-bottom,
 .profile-row, .workspace-avatar, .profile-avatar {
-  background-color: #30302d !important; background-image: none !important;
-  border-color: #45443f !important; color: #dedede !important;
+  background-color: #262626 !important; background-image: none !important;
+  border-color: #3a3a3a !important; color: #dedede !important;
 }
 .workspace-avatar, .profile-avatar, .connection-dot, .status-dot {
-  background-color: #45443f !important; color: #dedede !important;
+  background-color: #3a3a3a !important; color: #dedede !important;
 }
 /* Headers and text. */
 .topbar, .crm-shell-main > .topbar, .needs-header {
-  background: #262624 !important; background-image: none !important;
-  border-color: #45443f !important; color: #bdbdbd !important;
+  background: #191919 !important; background-image: none !important;
+  border-color: #3a3a3a !important; color: #bdbdbd !important;
 }
 .breadcrumbs strong, h1, h2, h3, h4, h5, h6,
 .overview-card h3, .section-heading-row h2, .panel-heading h2,
@@ -166,7 +166,7 @@ p, small, .page-subtitle, .section-heading-row p, .panel-heading p,
 [class*="surface"], [class*="Surface"], [class*="stat"], [class*="Stat"],
 [class*="widget"], [class*="Widget"], [class*="popover"], [class*="Popover"],
 [class*="dropdown"], [class*="Dropdown"], [class*="menu"], [class*="Menu"] {
-  background-color: #30302d !important;
+  background-color: #262626 !important;
   background-image: none !important;
   border-color: #2d2d2d !important;
   color: #dedede !important;
@@ -174,24 +174,24 @@ p, small, .page-subtitle, .section-heading-row p, .panel-heading p,
 }
 .overview-card:hover, .cal-home-actions button:hover,
 [class*="card"]:hover, [class*="Card"]:hover {
-  background-color: #353431 !important; border-color: #414141 !important;
+  background-color: #303030 !important; border-color: #414141 !important;
 }
 /* Neutralize hard-coded Tailwind color utilities used by page-level components. */
 [class*="bg-white"], [class*="bg-gray-50"], [class*="bg-gray-100"],
 [class*="bg-slate-50"], [class*="bg-slate-100"], [class*="bg-zinc-50"],
 [class*="bg-neutral-50"], [class*="bg-stone-50"] {
-  background-color: #30302d !important; background-image: none !important;
+  background-color: #262626 !important; background-image: none !important;
 }
 [class*="bg-green-"], [class*="bg-emerald-"], [class*="bg-teal-"],
 [class*="from-green-"], [class*="to-green-"], [class*="via-green-"],
 [class*="from-emerald-"], [class*="to-emerald-"], [class*="via-emerald-"],
 [class*="from-teal-"], [class*="to-teal-"], [class*="via-teal-"] {
-  background-color: #30302d !important; background-image: none !important;
-  color: #dedede !important; border-color: #4b4a45 !important;
+  background-color: #262626 !important; background-image: none !important;
+  color: #dedede !important; border-color: #3a3a3a !important;
 }
 [class*="text-green-"], [class*="text-emerald-"], [class*="text-teal-"],
 [class*="border-green-"], [class*="border-emerald-"], [class*="border-teal-"] {
-  color: #c8c8c8 !important; border-color: #4b4a45 !important;
+  color: #c8c8c8 !important; border-color: #3a3a3a !important;
 }
 .card-icon, .attention-icon, .focus-priority, .empty-core, .needs-kind,
 .mini-status, .cal-home-actions button > span, .setup-note {
@@ -200,7 +200,7 @@ p, small, .page-subtitle, .section-heading-row p, .panel-heading p,
 }
 .panel-heading, .focus-row, .schedule-row, .needs-item,
 .sidebar-divider, .profile-row, .table-wrap tr, th, td {
-  border-color: #45443f !important;
+  border-color: #3a3a3a !important;
 }
 /* Buttons, filters, tabs, segmented controls and form elements. */
 button, [role="button"], [role="tab"], [role="switch"], [role="checkbox"],
@@ -208,27 +208,27 @@ button, [role="button"], [role="tab"], [role="switch"], [role="checkbox"],
   accent-color: #eeeeee;
 }
 button, [role="button"], [role="tab"], [role="switch"] {
-  border-color: #4b4a45;
+  border-color: #3a3a3a;
 }
 [role="tablist"], [role="tab"], [role="tabpanel"],
 [class*="tab-bar"], [class*="tabs"], [class*="Tab"],
 [class*="filter"], [class*="Filter"], [class*="switcher"], [class*="Switcher"],
 [class*="toolbar"], [class*="Toolbar"] {
-  background-color: #2b2a28 !important; background-image: none !important;
-  color: #d5d5d5 !important; border-color: #45443f !important;
+  background-color: #1f1f1f !important; background-image: none !important;
+  color: #d5d5d5 !important; border-color: #3a3a3a !important;
 }
 [role="tab"][aria-selected="true"], [role="tab"][data-state="active"],
 [class*="tab"][aria-selected="true"], [class*="tab"][data-state="active"] {
-  background: #3d3c38 !important; color: #ffffff !important; border-color: #414141 !important;
+  background: #2e2e2e !important; color: #ffffff !important; border-color: #414141 !important;
 }
 button:not(.cal-command-bar button), [role="button"], .quiet-button, .date-chip,
 .back-home-button, .text-action, .needs-item-action, .cal-prompt-chips button {
-  background-color: #353431; color: #dedede; border-color: #4b4a45;
+  background-color: #303030; color: #dedede; border-color: #3a3a3a;
 }
 button:hover, [role="button"]:hover { border-color: #505050; }
 input, textarea, select, [contenteditable="true"] {
-  background-color: #30302d !important; background-image: none !important;
-  color: #eeeeee !important; border-color: #4b4a45 !important;
+  background-color: #262626 !important; background-image: none !important;
+  color: #eeeeee !important; border-color: #3a3a3a !important;
 }
 input::placeholder, textarea::placeholder { color: #777777 !important; }
 input[type="checkbox"], input[type="radio"] { accent-color: #eeeeee !important; }
@@ -236,10 +236,10 @@ button:focus-visible, a:focus-visible, input:focus-visible,
 textarea:focus-visible, select:focus-visible {
   outline: 2px solid #777777 !important; outline-offset: 2px;
 }
-.cal-command-bar { background: #353431 !important; border-color: #353535 !important; box-shadow: none !important; }
+.cal-command-bar { background: #303030 !important; border-color: #353535 !important; box-shadow: none !important; }
 .cal-command-bar input { background: transparent !important; border: 0 !important; }
-.cal-command-bar button { background: #e8e8e8 !important; color: #30302d !important; }
-.cal-home-actions button { background: #30302d !important; border-color: #2d2d2d !important; }
+.cal-command-bar button { background: #e8e8e8 !important; color: #262626 !important; }
+.cal-home-actions button { background: #262626 !important; border-color: #2d2d2d !important; }
 .cinder-mark svg circle, .cinder-home-mark svg circle { fill: #bdbdbd !important; }
 .cinder-mark svg path, .cinder-home-mark svg path { fill: #eeeeee !important; }
 @media (max-width: 1100px) {
@@ -273,7 +273,7 @@ textarea:focus-visible, select:focus-visible {
   appearance:none!important;
   -webkit-appearance:none!important;
 }
-.cal-command-bar:focus-within { background:#30302d!important; }
+.cal-command-bar:focus-within { background:#262626!important; }
 .cal-command-bar button { flex:0 0 32px; }
 
 /* Consistent charcoal summary tiles and tab/filter strips across unfinished workspace pages.
@@ -288,10 +288,10 @@ main:not(.calendar-page) [class*="metric"],
 main:not(.calendar-page) [class*="Metric"],
 main:not(.calendar-page) [class*="stat"],
 main:not(.calendar-page) [class*="Stat"] {
-  background:#30302d!important;
+  background:#262626!important;
   background-image:none!important;
   color:#dedede!important;
-  border-color:#4b4a45!important;
+  border-color:#3a3a3a!important;
   box-shadow:none!important;
 }
 main:not(.calendar-page) .summary-label,
@@ -318,10 +318,10 @@ main:not(.calendar-page) [role="tablist"],
 main:not(.calendar-page) [role="tab"],
 main:not(.calendar-page) [class*="filter"],
 main:not(.calendar-page) [class*="Filter"] {
-  background-color:#2b2a28!important;
+  background-color:#1f1f1f!important;
   background-image:none!important;
   color:#cfcfcf!important;
-  border-color:#4b4a45!important;
+  border-color:#3a3a3a!important;
   box-shadow:none!important;
 }
 main:not(.calendar-page) [role="tab"][aria-selected="true"],
@@ -330,14 +330,14 @@ main:not(.calendar-page) [class*="tab"][aria-selected="true"],
 main:not(.calendar-page) [class*="Tab"][aria-selected="true"],
 main:not(.calendar-page) [class*="tab"][data-state="active"],
 main:not(.calendar-page) [class*="Tab"][data-state="active"] {
-  background:#3d3c38!important;
+  background:#2e2e2e!important;
   color:#f5f5f5!important;
   border-color:#454545!important;
 }
 
 /* Dark controls for remaining workspace sections. */
-main .route-page button, main .route-page [role=button], main .route-page [role=tab], main .route-page [role=tablist], main .route-page [class*=tab], main .route-page [class*=Tab], main .route-page [class*=filter], main .route-page [class*=Filter], main .route-page select, main .route-page input, main .route-page textarea { background:#30302d !important; color:#dedede !important; border-color:#4b4a45 !important; box-shadow:none !important; }
-main .route-page [aria-selected=true], main .route-page [data-state=active], main .route-page .active { background:#3d3c38 !important; color:#f5f5f5 !important; border-color:#454545 !important; }
+main .route-page button, main .route-page [role=button], main .route-page [role=tab], main .route-page [role=tablist], main .route-page [class*=tab], main .route-page [class*=Tab], main .route-page [class*=filter], main .route-page [class*=Filter], main .route-page select, main .route-page input, main .route-page textarea { background:#262626 !important; color:#dedede !important; border-color:#3a3a3a !important; box-shadow:none !important; }
+main .route-page [aria-selected=true], main .route-page [data-state=active], main .route-page .active { background:#2e2e2e !important; color:#f5f5f5 !important; border-color:#454545 !important; }
 
 /* Preparation workspace: replace the remaining light surfaces with the Cinder charcoal palette. */
 [class*="preparation"] [class*="stat"], [class*="preparation"] [class*="metric"],
@@ -347,17 +347,17 @@ main .route-page [aria-selected=true], main .route-page [data-state=active], mai
 [class*="preparation"] button, [class*="preparation"] [role="button"],
 [class*="preparation"] input, [class*="preparation"] select, [class*="preparation"] textarea,
 [class*="preparation"] a[class], [class*="preparation"] [data-state] {
-  background-color:#30302d !important;
+  background-color:#262626 !important;
   background-image:none !important;
   color:#dedede !important;
-  border-color:#4b4a45 !important;
+  border-color:#3a3a3a !important;
   box-shadow:none !important;
 }
 [class*="preparation"] [aria-selected="true"],
 [class*="preparation"] [data-state="active"],
 [class*="preparation"] button[class*="primary"],
 [class*="preparation"] a[class*="primary"] {
-  background-color:#3d3c38 !important;
+  background-color:#2e2e2e !important;
   color:#f5f5f5 !important;
   border-color:#454545 !important;
 }
@@ -373,10 +373,10 @@ main:not(.calendar-page) [class*="Metric"],
 main:not(.calendar-page) [class*="summary-card"],
 main:not(.calendar-page) [class*="stat-card"],
 main:not(.calendar-page) [class*="StatCard"] {
-  background-color:#30302d !important;
+  background-color:#262626 !important;
   background-image:none !important;
   color:#dedede !important;
-  border-color:#4b4a45 !important;
+  border-color:#3a3a3a !important;
   box-shadow:none !important;
 }
 main:not(.calendar-page) button:not(.crm-btn-primary):not([data-variant="primary"]),
@@ -385,7 +385,7 @@ main:not(.calendar-page) [role="tab"],
 main:not(.calendar-page) [role="tablist"] button,
 main:not(.calendar-page) [class*="filter"] button,
 main:not(.calendar-page) [class*="Filter"] button {
-  background-color:#353431 !important;
+  background-color:#303030 !important;
   background-image:none !important;
   color:#dedede !important;
   border-color:#343434 !important;
@@ -394,7 +394,7 @@ main:not(.calendar-page) [class*="Filter"] button {
 main:not(.calendar-page) button[aria-pressed="true"],
 main:not(.calendar-page) [role="tab"][aria-selected="true"],
 main:not(.calendar-page) [data-state="active"] {
-  background-color:#45443f !important;
+  background-color:#3a3a3a !important;
   color:#fff !important;
   border-color:#454545 !important;
 }
@@ -402,7 +402,7 @@ main:not(.calendar-page) [data-state="active"] {
 /* Keep the Home/My Day shell visually aligned with the shared CRM shell. */
 .app-shell .sidebar {
   width:216px!important;flex-basis:216px!important;padding:18px 12px 14px!important;
-  background:#111!important;border-right:1px solid #3d3c38!important;color:#f3f3f3!important;
+  background:#111!important;border-right:1px solid #2e2e2e!important;color:#f3f3f3!important;
 }
 .app-shell .brand { height:34px!important;margin-bottom:28px!important;gap:9px!important;color:#f5f5f5!important; }
 .app-shell .brand .cinder-mark { width:23px!important;height:23px!important;color:#f5f5f5!important; }
@@ -411,14 +411,14 @@ main:not(.calendar-page) [data-state="active"] {
 .app-shell .nav-section-label { padding:0 10px!important;margin:0 0 8px!important;color:#9a9a9a!important;font-size:10px!important;letter-spacing:1.1px!important;font-weight:650!important; }
 .app-shell .primary-nav { gap:2px!important; }
 .app-shell .nav-item { min-height:33px!important;padding:0 10px!important;gap:10px!important;border-radius:8px!important;color:#bdbdbd!important;font-size:12px!important;font-weight:450!important;background:transparent!important; }
-.app-shell .nav-item:hover { background:#353431!important;color:#f5f5f5!important; }
-.app-shell .nav-item.active { background:#3a3935!important;color:#f5f5f5!important;font-weight:600!important; }
-.app-shell .sidebar-divider { height:1px!important;background:#45443f!important;margin:16px 5px 14px!important; }
-.app-shell .connection-card { background:#30302d!important;border:1px solid #45443f!important;border-radius:8px!important; }
+.app-shell .nav-item:hover { background:#303030!important;color:#f5f5f5!important; }
+.app-shell .nav-item.active { background:#2a2a2a!important;color:#f5f5f5!important;font-weight:600!important; }
+.app-shell .sidebar-divider { height:1px!important;background:#3a3a3a!important;margin:16px 5px 14px!important; }
+.app-shell .connection-card { background:#262626!important;border:1px solid #3a3a3a!important;border-radius:8px!important; }
 .app-shell .connection-card strong { color:#d6d6d6!important;font-size:10px!important; }
 .app-shell .connection-card small { color:#888!important;font-size:9px!important; }
-.app-shell .profile-row { border-top:1px solid #45443f!important;color:#aaa!important; }
-.app-shell .profile-avatar { background:#45443f!important;color:#f0f0f0!important; }
+.app-shell .profile-row { border-top:1px solid #3a3a3a!important;color:#aaa!important; }
+.app-shell .profile-avatar { background:#3a3a3a!important;color:#f0f0f0!important; }
 .app-shell .profile-copy strong { color:#ddd!important;font-size:11px!important; }
 .app-shell .profile-copy small { color:#8b8b8b!important;font-size:10px!important; }
 @media(max-width:760px) { .app-shell .sidebar { width:216px!important;flex-basis:216px!important;padding:16px 10px 12px!important; } }
@@ -431,7 +431,7 @@ main:not(.calendar-page) [data-state="active"] {
   flex:0 0 208px!important;
   padding:12px 9px 10px!important;
   background:#111!important;
-  border-right:1px solid #3d3c38!important;
+  border-right:1px solid #2e2e2e!important;
   gap:0!important;
 }
 .brand, .app-shell .brand, .crm-brand {
@@ -482,7 +482,7 @@ main:not(.calendar-page) [data-state="active"] {
 .sidebar-divider, .app-shell .sidebar-divider, .crm-app-shell .sidebar-divider {
   height:1px!important;min-height:1px!important;
   margin:10px 4px 9px!important;
-  background:#45443f!important;border:0!important;
+  background:#3a3a3a!important;border:0!important;
 }
 .sidebar-bottom, .app-shell .sidebar-bottom, .crm-app-shell .sidebar-bottom {
   margin-top:auto!important;padding-top:10px!important;
@@ -529,7 +529,7 @@ main:not(.calendar-page) [data-state="active"] {
   width:208px!important; min-width:208px!important; max-width:208px!important;
   flex:0 0 208px!important; padding:12px 9px 10px!important; gap:0!important;
   display:flex!important; flex-direction:column!important;
-  background:#111!important; border-right:1px solid #3d3c38!important;
+  background:#111!important; border-right:1px solid #2e2e2e!important;
   color:#dedede!important;
 }
 #cinder-sidebar-shared > .brand {
@@ -550,17 +550,17 @@ main:not(.calendar-page) [data-state="active"] {
   font-size:11.5px!important;line-height:1.2!important;font-weight:450!important;
   color:#bcbcbc!important;background:transparent!important;border:1px solid transparent!important;
 }
-#cinder-sidebar-shared .nav-item:hover { background:#353431!important;color:#f5f5f5!important; }
-#cinder-sidebar-shared .nav-item.active { background:#3d3c38!important;color:#f5f5f5!important;border-color:#4b4a45!important;font-weight:600!important; }
+#cinder-sidebar-shared .nav-item:hover { background:#303030!important;color:#f5f5f5!important; }
+#cinder-sidebar-shared .nav-item.active { background:#2e2e2e!important;color:#f5f5f5!important;border-color:#3a3a3a!important;font-weight:600!important; }
 #cinder-sidebar-shared .nav-item .glyph { width:15px!important;height:16px!important;flex:0 0 15px!important;display:grid!important;place-items:center!important; }
 #cinder-sidebar-shared .nav-item .glyph-icon { width:14px!important;height:14px!important;display:block!important; }
-#cinder-sidebar-shared .sidebar-divider { height:1px!important;min-height:1px!important;margin:10px 4px 9px!important;background:#45443f!important;border:0!important; }
+#cinder-sidebar-shared .sidebar-divider { height:1px!important;min-height:1px!important;margin:10px 4px 9px!important;background:#3a3a3a!important;border:0!important; }
 #cinder-sidebar-shared .sidebar-bottom { margin-top:auto!important;padding-top:10px!important; }
-#cinder-sidebar-shared .connection-card { box-sizing:border-box!important;margin:0 0 8px!important;padding:8px!important;min-height:0!important;gap:7px!important;border-radius:7px!important;background:#30302d!important;border:1px solid #45443f!important; }
+#cinder-sidebar-shared .connection-card { box-sizing:border-box!important;margin:0 0 8px!important;padding:8px!important;min-height:0!important;gap:7px!important;border-radius:7px!important;background:#262626!important;border:1px solid #3a3a3a!important; }
 #cinder-sidebar-shared .connection-card strong { font-size:10px!important;line-height:1.35!important;color:#d6d6d6!important; }
 #cinder-sidebar-shared .connection-card small { font-size:9px!important;line-height:1.35!important;color:#888!important; }
-#cinder-sidebar-shared .profile-row { padding:9px 4px 0!important;gap:8px!important;border-top:1px solid #45443f!important; }
-#cinder-sidebar-shared .profile-avatar { width:27px!important;height:27px!important;flex:0 0 27px!important;font-size:10px!important;background:#45443f!important;color:#f0f0f0!important; }
+#cinder-sidebar-shared .profile-row { padding:9px 4px 0!important;gap:8px!important;border-top:1px solid #3a3a3a!important; }
+#cinder-sidebar-shared .profile-avatar { width:27px!important;height:27px!important;flex:0 0 27px!important;font-size:10px!important;background:#3a3a3a!important;color:#f0f0f0!important; }
 #cinder-sidebar-shared .profile-copy strong { font-size:10px!important;line-height:1.3!important;color:#ddd!important; }
 #cinder-sidebar-shared .profile-copy small { font-size:9px!important;line-height:1.3!important;color:#8b8b8b!important; }
 @media(max-width:760px) {
@@ -570,17 +570,17 @@ main:not(.calendar-page) [data-state="active"] {
 
 /* BUSINESS AUDIT: isolate its surfaces from legacy global card/form overrides. */
 #cinder-business-audit {
-  background: #262624 !important;
+  background: #191919 !important;
   color: #f0f0f0 !important;
   color-scheme: dark;
 }
 #cinder-business-audit form,
 #cinder-business-audit section {
-  background: #2b2a28 !important;
-  background-color: #2b2a28 !important;
+  background: #1f1f1f !important;
+  background-color: #1f1f1f !important;
   background-image: none !important;
-  color: #e8e6de !important;
-  border-color: #4b4a45 !important;
+  color: #e6e6e6 !important;
+  border-color: #3a3a3a !important;
   box-shadow: none !important;
 }
 #cinder-business-audit form > div,
@@ -588,7 +588,7 @@ main:not(.calendar-page) [data-state="active"] {
 #cinder-business-audit section > div,
 #cinder-business-audit article {
   background-color: transparent;
-  color: #e8e6de !important;
+  color: #e6e6e6 !important;
 }
 #cinder-business-audit label,
 #cinder-business-audit h1,
@@ -598,15 +598,15 @@ main:not(.calendar-page) [data-state="active"] {
 }
 #cinder-business-audit input,
 #cinder-business-audit textarea {
-  background: #2b2a28 !important;
-  background-color: #2b2a28 !important;
+  background: #1f1f1f !important;
+  background-color: #1f1f1f !important;
   color: #f0f0f0 !important;
-  border-color: #57554f !important;
+  border-color: #555555 !important;
   box-shadow: none !important;
 }
 #cinder-business-audit button[type="submit"] {
-  background: #d6a98c !important;
-  background-color: #d6a98c !important;
+  background: #c4c4c4 !important;
+  background-color: #c4c4c4 !important;
   color: #171311 !important;
-  border-color: #d6a98c !important;
+  border-color: #c4c4c4 !important;
 }

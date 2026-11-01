@@ -1,21 +1,24 @@
 /* ============================================================================
    Cinder · Design layer (loaded last). The shell and Home, at the standard of
-   the Claude app: generous spacing, no chrome you don't need, one warm accent.
+   the Claude app: its exact neutral dark palette, generous spacing, no colour.
    ========================================================================== */
 
 :root {
-  --d-bg: #262624;          /* canvas */
-  --d-side: #1f1e1d;        /* sidebar, one step darker */
-  --d-raise: #30302e;       /* composer, cards */
-  --d-hover: #2c2b29;
-  --d-active: #353432;
-  --d-line: rgba(255, 255, 255, .07);
-  --d-line-2: rgba(255, 255, 255, .11);
-  --d-text: #f5f4ef;
-  --d-soft: #c3c1b8;
-  --d-muted: #95938b;
-  --d-faint: #6f6d66;
-  --d-accent: #d97757;      /* the one warm accent (Cinder ember) */
+  /* Sampled from the Claude desktop app */
+  --d-bg: #191919;          /* canvas */
+  --d-side: #1f1f1f;        /* sidebar */
+  --d-raise: #303030;       /* composer */
+  --d-card: #1f1f1f;        /* cards and tiles */
+  --d-hover: #262626;
+  --d-active: #2e2e2e;
+  --d-selected: #404040;    /* the highlighted "new" button */
+  --d-line: #2a2a2a;
+  --d-line-2: #333333;
+  --d-text: #efefef;
+  --d-soft: #c4c4c4;
+  --d-muted: #9e9e9e;
+  --d-faint: #797979;
+  --d-accent: #efefef;      /* no colour: the accent is simply white */
 }
 
 /* ---------- Sidebar: wider, airier, larger type ---------- */
@@ -28,8 +31,9 @@ html body .cx-new {
   height: 38px; padding: 0 10px; margin-bottom: 10px; gap: 11px; border-radius: 10px;
   font-size: 14.5px; font-weight: 550; color: var(--d-text) !important; background: transparent !important;
 }
-html body .cx-new:hover, html body .cx-new.is-active { background: var(--d-active) !important; }
-html body .cx-new-icon { width: 24px; height: 24px; flex-basis: 24px; margin-left: -3px; background: var(--d-accent) !important; color: #1f1e1d !important; box-shadow: none; }
+html body .cx-new:hover { background: var(--d-hover) !important; }
+html body .cx-new.is-active { background: var(--d-selected) !important; }
+html body .cx-new-icon { width: 22px; height: 22px; flex-basis: 22px; margin-left: -2px; background: transparent !important; color: var(--d-text) !important; box-shadow: none; }
 html body .cx-new-icon .cx-icon { width: 13px; height: 13px; flex-basis: 13px; stroke-width: 2.4; }
 html body .cx-item {
   height: 36px; padding: 0 10px; gap: 11px; border-radius: 9px;
@@ -44,7 +48,7 @@ html body .cx-sub { padding-left: 0; }
 html body .cx-foot { border-top: 0 !important; padding-top: 8px; gap: 2px; }
 html body .cx-profile { height: 46px; padding: 0 8px; gap: 10px; border-radius: 10px; }
 html body .cx-profile:hover { background: var(--d-hover); }
-html body .cx-avatar { width: 30px; height: 30px; flex-basis: 30px; font-size: 12.5px; background: #3a3936; }
+html body .cx-avatar { width: 30px; height: 30px; flex-basis: 30px; font-size: 12.5px; background: #333333; }
 html body .cx-profile-copy strong { font-size: 14px; color: var(--d-text) !important; }
 html body .cx-profile-copy small { font-size: 12px; color: var(--d-faint) !important; }
 
@@ -66,22 +70,22 @@ html body .ask-root .ask-hello {
 html body .ask-hello-mark { width: 38px; height: 38px; flex-basis: 38px; filter: none; }
 html body .ask-root .ask-composer {
   min-height: 118px; padding: 18px 14px 12px 20px; gap: 10px; justify-content: space-between;
-  border-radius: 22px; background: var(--d-raise) !important; border: 1px solid var(--d-line-2) !important;
-  box-shadow: 0 10px 40px -18px rgba(0, 0, 0, .7), 0 1px 0 rgba(255, 255, 255, .03) inset;
+  border-radius: 20px; background: var(--d-raise) !important; border: 1px solid transparent !important;
+  box-shadow: none;
 }
-html body .ask-root .ask-composer:focus-within { border-color: rgba(255, 255, 255, .18) !important; box-shadow: 0 10px 40px -18px rgba(0, 0, 0, .75); }
+html body .ask-root .ask-composer:focus-within { border-color: #444444 !important; box-shadow: none; }
 html body .ask-root .ask-composer textarea { font-size: 16.5px !important; line-height: 1.5; }
 html body .ask-root .ask-composer textarea::placeholder { color: var(--d-faint) !important; }
-html body .ask-root .ask-tool { width: 34px; height: 34px; padding: 0; justify-content: center; border: 1px solid var(--d-line-2) !important; color: var(--d-soft) !important; }
-html body .ask-root .ask-tool:hover { background: var(--d-active) !important; }
-html body .ask-root .ask-tool.is-on { color: var(--d-accent) !important; border-color: rgba(217, 119, 87, .35) !important; background: rgba(217, 119, 87, .08) !important; }
-html body .ask-root .ask-send { width: 36px; height: 36px; flex-basis: 36px; border-radius: 10px; background: var(--d-accent) !important; color: #1f1e1d !important; }
-html body .ask-root .ask-send:hover:not(:disabled) { background: #e2876a !important; }
-html body .ask-root .ask-send:disabled { background: #3a3936 !important; color: var(--d-faint) !important; }
+html body .ask-root .ask-tool { width: 34px; height: 34px; padding: 0; justify-content: center; border: 0 !important; color: var(--d-text) !important; }
+html body .ask-root .ask-tool:hover { background: #3a3a3a !important; }
+html body .ask-root .ask-tool.is-on { color: #191919 !important; background: #d9d9d9 !important; }
+html body .ask-root .ask-send { width: 34px; height: 34px; flex-basis: 34px; border-radius: 10px; background: #efefef !important; color: #191919 !important; }
+html body .ask-root .ask-send:hover:not(:disabled) { background: #ffffff !important; }
+html body .ask-root .ask-send:disabled { background: #3d3d3d !important; color: #8a8a8a !important; }
 html body .ask-suggest { gap: 8px; margin-top: 16px; }
 html body .ask-root .ask-pill {
   height: 36px; padding: 0 13px; border-radius: 10px; gap: 8px;
-  background: transparent !important; border: 1px solid var(--d-line-2) !important; color: var(--d-soft) !important; font-size: 13.5px;
+  background: transparent !important; border: 1px solid var(--d-line-2) !important; color: var(--d-soft) !important; font-size: 13.5px; font-weight: 450;
 }
 html body .ask-root .ask-pill:hover { background: var(--d-hover) !important; color: var(--d-text) !important; border-color: rgba(255, 255, 255, .16) !important; }
 
@@ -94,14 +98,14 @@ html body .ask-root .ask-pill:hover { background: var(--d-hover) !important; col
 .hn-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 a.hn-tile {
   display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-height: 112px; padding: 16px 16px 14px;
-  border-radius: 14px; background: #2b2a28; border: 1px solid var(--d-line); color: var(--d-text) !important; text-decoration: none;
+  border-radius: 14px; background: var(--d-card); border: 1px solid var(--d-line); color: var(--d-text) !important; text-decoration: none;
   transition: background .15s, border-color .15s, transform .15s;
 }
-a.hn-tile:hover { background: #302f2d; border-color: var(--d-line-2); transform: translateY(-1px); }
+a.hn-tile:hover { background: #262626; border-color: var(--d-line-2); transform: translateY(-1px); }
 .hn-tile-k { font-size: 12.5px; color: var(--d-muted); }
 .hn-tile-v { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .hn-tile-s { font-size: 13px; color: var(--d-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hn-tile-s.bad { color: #f0a493; }
+.hn-tile-s.bad { color: #e8a598; }
 @media (max-width: 640px) { .hn-grid { grid-template-columns: 1fr; } a.hn-tile { min-height: 0; } }
 
 /* ---------- Pages: a touch more air under titles ---------- */
@@ -109,6 +113,21 @@ html body main h1 + p, html body .main-panel main h1 + p { margin-bottom: 26px !
 
 /* Money totals: four clean tiles, no strip behind them */
 html body .fin-metrics { background: transparent !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; gap: 12px !important; }
-html body .fin-metrics article { background: #2b2a28 !important; border: 1px solid var(--d-line) !important; border-radius: 14px !important; }
+html body .fin-metrics article { background: #1f1f1f !important; border: 1px solid var(--d-line) !important; border-radius: 14px !important; }
 html body .ask-suggest { flex-wrap: nowrap; }
 @media (max-width: 720px) { html body .ask-suggest { flex-wrap: wrap; } }
+
+/* ---------- Every page: Claude's neutral cards, lines and notices ---------- */
+html body .main-panel main :is([class*="card"], [class*="panel"], [class*="Panel"], article):not(.calendar-page *):not(.ask-root *) { background-color: var(--d-card) !important; border-color: var(--d-line) !important; }
+html body .main-panel main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(.ask-root *) { background: #262626 !important; border-color: #363636 !important; color: var(--d-text) !important; }
+html body .main-panel main :is(input, select, textarea):focus:not(.ask-root *) { border-color: #555555 !important; box-shadow: none !important; }
+/* Primary buttons are white on dark, secondary are quiet outlines, like Claude */
+html body .main-panel main :is(button, a)[data-variant="primary"]:not(.ask-root *) { border-radius: 10px !important; }
+/* Notices: neutral, never coloured blocks */
+.hb-attn { background: var(--d-card) !important; border-color: var(--d-line) !important; }
+.hb-attn-row { color: var(--d-soft) !important; }
+.hb-attn-row a { border-bottom-color: #3d3d3d !important; }
+.ow-warn { background: #262626 !important; color: var(--d-soft) !important; }
+.ow-warn a { color: var(--d-text) !important; }
+.ow-note.ok, .ws-note.ok { background: #262626 !important; color: var(--d-soft) !important; }
+.ow-btn.primary, .ws-save:not(:disabled) { background: #efefef !important; color: #191919 !important; border-color: #efefef !important; }

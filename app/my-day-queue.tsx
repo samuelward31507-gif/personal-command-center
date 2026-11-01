@@ -9,7 +9,7 @@ import { quickActions } from "@/lib/crm-ux";
 const STATUS: Record<QueueStatus, { label: string; color: string }> = {
   overdue: { label: "Overdue", color: "#f0a3a3" },
   blocked: { label: "Blocked", color: "#e8b08a" },
-  today: { label: "Today", color: "#d6a98c" },
+  today: { label: "Today", color: "#c4c4c4" },
   upcoming: { label: "Upcoming", color: "#8a8a8a" },
 };
 
@@ -22,12 +22,12 @@ function tomorrowAt9(): { iso: string; day: string } {
   return { iso: d.toISOString(), day: localKey(d) };
 }
 
-const ROW: React.CSSProperties = { background: "#2b2a28", border: "1px solid #3a3935", borderRadius: 12, padding: "14px 16px" };
+const ROW: React.CSSProperties = { background: "#1f1f1f", border: "1px solid #2a2a2a", borderRadius: 12, padding: "14px 16px" };
 const PILL: React.CSSProperties = { flex: "0 0 auto", minWidth: 74, textAlign: "center", fontSize: 11, fontWeight: 700, letterSpacing: .4, border: "1px solid", borderRadius: 999, padding: "4px 10px", marginTop: 1 };
-const BTN: React.CSSProperties = { display: "inline-flex", alignItems: "center", border: "1px solid #4b4a45", background: "#353431", color: "#ddd", borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", lineHeight: 1.2 };
-const BTN_PRIMARY: React.CSSProperties = { ...BTN, background: "#f0eee6", color: "#1f1e1d", borderColor: "#f0eee6" };
+const BTN: React.CSSProperties = { display: "inline-flex", alignItems: "center", border: "1px solid #3a3a3a", background: "#303030", color: "#ddd", borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", lineHeight: 1.2 };
+const BTN_PRIMARY: React.CSSProperties = { ...BTN, background: "#efefef", color: "#1f1f1f", borderColor: "#efefef" };
 const SALES: QueueGroup[] = ["revenue", "prospects", "meetings", "deals"];
-const chip = (on: boolean): React.CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid " + (on ? "#f0eee6" : "#45443f"), background: on ? "#f0eee6" : "#2b2a28", color: on ? "#1f1e1d" : "#cfcfcf", borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" });
+const chip = (on: boolean): React.CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid " + (on ? "#efefef" : "#3a3a3a"), background: on ? "#efefef" : "#1f1f1f", color: on ? "#1f1f1f" : "#cfcfcf", borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" });
 
 export default function MyDayQueue({ showFilters = false, title = "Today’s queue" }: { showFilters?: boolean; title?: string }) {
   const [items, setItems] = useState<QueueItem[]>([]);
@@ -124,14 +124,14 @@ export default function MyDayQueue({ showFilters = false, title = "Today’s que
     {notice && <p className="local-note" role="status" style={{ color: notice.ok ? "#86efac" : "#fca5a5" }}>{notice.text}</p>}
     {notice?.deal && <SuggestedDeal key={notice.text} deal={notice.deal} />}
     {order.filter(g => byGroup[g]?.length).map(g => <div key={g} style={{ marginTop: 14 }}>
-      <div style={{ fontSize: 12.5, fontWeight: 600, color: "#9a978d", margin: "0 0 6px" }}>{groups[g] || g} · {byGroup[g].length}</div>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: "#9e9e9e", margin: "0 0 6px" }}>{groups[g] || g} · {byGroup[g].length}</div>
       <div style={{ display: "grid", gap: 8 }}>
         {byGroup[g].map(item => <div key={item.id} style={ROW}>
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
             <span style={{ ...PILL, color: STATUS[item.status].color, borderColor: STATUS[item.status].color + "55" }}>{STATUS[item.status].label}</span>
             <div style={{ flex: "1 1 320px", minWidth: 0 }}>
               <div style={{ fontSize: 14, fontWeight: 650, color: "#f3f3f3", lineHeight: 1.35 }}>{item.title}</div>
-              <div style={{ fontSize: 12.5, color: "#b5b2a8", lineHeight: 1.55, marginTop: 3 }}>{item.why}</div>
+              <div style={{ fontSize: 12.5, color: "#ababab", lineHeight: 1.55, marginTop: 3 }}>{item.why}</div>
               {item.lastActivity && <div style={{ fontSize: 12, color: "#7c7c86", marginTop: 2 }}>Last touch: {item.lastActivity}</div>}
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginLeft: "auto" }}>
@@ -142,7 +142,7 @@ export default function MyDayQueue({ showFilters = false, title = "Today’s que
               <a style={{ ...BTN, textDecoration: "none" }} href={item.href}>Open</a>
             </div>
           </div>
-          {open === item.id && item.contact && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 6, marginTop: 12, paddingTop: 12, borderTop: "1px solid #3d3c38" }}>
+          {open === item.id && item.contact && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 6, marginTop: 12, paddingTop: 12, borderTop: "1px solid #2e2e2e" }}>
             {CALL_OUTCOMES.map(o => <button key={o} type="button" disabled={busy !== null} onClick={() => void logOutcome(item, o)}
               style={{ ...BTN, justifyContent: "center", color: o === "do_not_contact" ? "#fca5a5" : o === "meeting_booked" || o === "interested" ? "#86efac" : "#ddd" }}>
               {busy === item.id + o ? "Saving…" : OUTCOME_LABELS[o]}

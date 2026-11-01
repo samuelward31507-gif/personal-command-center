@@ -18,7 +18,7 @@ export default function AuditViewPage() {
       .catch(e => setError(e instanceof Error ? e.message : "Could not load this audit."));
   }, [id]);
   if (error) return <main style={{ maxWidth: 980, margin: "0 auto", padding: "28px 24px" }}><p style={{ color: "#f2a5a5" }}>{error}</p><Link href="/crm/preparation">← Preparation</Link></main>;
-  if (!a) return <main style={{ maxWidth: 980, margin: "0 auto", padding: "28px 24px" }}><p style={{ color: "#8e8b82" }}>Loading audit…</p></main>;
+  if (!a) return <main style={{ maxWidth: 980, margin: "0 auto", padding: "28px 24px" }}><p style={{ color: "#9e9e9e" }}>Loading audit…</p></main>;
   const view: AuditView = { id: a.id, title: a.title, companyName: a.company || a.title.replace(/^Business audit — /, ""), content: a.content, sourceUrls: a.sourceUrls, confidence: a.confidence, createdAt: a.createdAt };
   return <main style={{ maxWidth: 980, margin: "0 auto", padding: "24px 24px 60px" }}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>

@@ -1,7 +1,7 @@
 // The Cinder mark and wordmark, from the Cinder website's brand artwork (night tones).
 import { CINDER_MARK_EMBER, CINDER_MARK_RING, CINDER_MARK_VIEWBOX, CINDER_WORDMARK, CINDER_WORDMARK_WIDTH } from "@/lib/cinder-brand-paths";
 
-export const CINDER_ON_NIGHT = "#f2f0ea";
+export const CINDER_ON_NIGHT = "#efefef";
 export const CINDER_EMBER_ON_NIGHT = "#e58c63";
 /** Stealth (in-app) tone: one quiet light gray, no copper. Client-facing pages keep the ember. */
 export const CINDER_MONO = "#d6d6d6";

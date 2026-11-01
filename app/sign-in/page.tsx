@@ -31,8 +31,8 @@ export default function SignInPage() {
     }
   }
 
-  return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:24,background:"#1f1e1d",color:"#f4f4f5"}}>
-    <section style={{width:"100%",maxWidth:420,background:"#2b2a28",border:"1px solid #303036",borderRadius:18,padding:32,boxShadow:"0 12px 40px #00000055"}}>
+  return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:24,background:"#1f1f1f",color:"#f4f4f5"}}>
+    <section style={{width:"100%",maxWidth:420,background:"#1f1f1f",border:"1px solid #303036",borderRadius:18,padding:32,boxShadow:"0 12px 40px #00000055"}}>
       <Link href="/" style={{fontSize:12,letterSpacing:3,fontWeight:800,color:"#f4f4f5",textDecoration:"none"}}>Cinder</Link>
       <h1 style={{fontSize:30,margin:"28px 0 8px",letterSpacing:-1}}>{mode === "sign-in" ? "Welcome back." : "Create your workspace."}</h1>
       <p style={{color:"#9999a3",fontSize:14,marginBottom:24}}>Sign in to securely access your personal CRM.</p>
