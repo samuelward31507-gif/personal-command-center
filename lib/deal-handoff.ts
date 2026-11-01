@@ -30,7 +30,7 @@ export const TIER1_PLAYBOOK: readonly PlaybookStep[] = [
   { title: "Send the kickoff checklist link", description: "The client gets the link right after signing. Resend it if they haven't opened it.", dueInDays: 1 },
   { title: KICKOFF_STEP, description: "Items 1–9 of Schedule B. The 21-business-day clock starts when these are in.", dueInDays: 3 },
   { title: "Hold the kickoff call", description: "30 minutes: confirm qualifying questions, job rules, service area, estimate availability and who gets alerts.", dueInDays: 4 },
-  { title: "Submit SMS registration (A2P 10DLC)", description: "Brand and campaign registration with the client's legal name, EIN and website. Carrier review takes 1–3 weeks, so do this first.", dueInDays: 5 },
+  { title: "Submit SMS registration (A2P 10DLC)", description: "Brand and campaign registration with the client's legal name, EIN and website. Carrier review usually takes 3–6 weeks (AT&T is slowest), so do this first. The go-live clock pauses during carrier review (agreement 3.3).", dueInDays: 5 },
   { title: "Set up the texting number and missed-call text-back", description: "Provision the business texting number and set up call forwarding or missed-call detection on the client's line.", dueInDays: 7 },
   { title: "Connect website forms and Facebook lead ads", description: "Every form and lead ad sends the lead into the system within seconds. Facebook page instant reply too.", dueInDays: 9 },
   { title: "Build the qualifying flow and job rules", description: "Client's questions, photo request, ballpark ranges with caveat, minimums, small jobs and service area.", dueInDays: 11 },
