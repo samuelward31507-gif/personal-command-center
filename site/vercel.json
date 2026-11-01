@@ -64,6 +64,10 @@
       "destination": "https://personal-command-center-ten-ruby.vercel.app/api/portal"
     },
     {
+      "source": "/api/demo-reply",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/demo-reply"
+    },
+    {
       "source": "/_next/:path*",
       "destination": "https://personal-command-center-ten-ruby.vercel.app/_next/:path*"
     }
