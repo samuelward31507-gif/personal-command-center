@@ -147,3 +147,6 @@ html body .cx-profile-copy strong { font-size: 13.5px !important; }
 html body .cx-profile-copy small { font-size: 11.5px !important; }
 /* The ember beside the greeting always keeps its glow */
 
+
+/* Home: greeting and composer sit in the middle of the screen, like Claude; the cards follow below */
+html body .ask-root-empty { padding-top: max(72px, calc(50vh - 150px)) !important; padding-bottom: 6vh !important; }
