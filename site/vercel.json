@@ -40,6 +40,14 @@
       "destination": "https://personal-command-center-ten-ruby.vercel.app/api/invoice"
     },
     {
+      "source": "/report/:token",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/report/:token"
+    },
+    {
+      "source": "/api/report",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/report"
+    },
+    {
       "source": "/_next/:path*",
       "destination": "https://personal-command-center-ten-ruby.vercel.app/_next/:path*"
     }
@@ -73,6 +81,19 @@
     },
     {
       "source": "/invoice/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        }
+      ]
+    },
+    {
+      "source": "/report/(.*)",
       "headers": [
         {
           "key": "X-Robots-Tag",

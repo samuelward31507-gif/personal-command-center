@@ -3,4 +3,5 @@ Allow: /
 Disallow: /sign/
 Disallow: /kickoff/
 Disallow: /invoice/
+Disallow: /report/
 Sitemap: https://cinder-revenue-company.vercel.app/sitemap.xml
