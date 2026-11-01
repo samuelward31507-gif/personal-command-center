@@ -1,0 +1,20 @@
+// CRM ease-of-use checks: command bar matching and one-tap Today actions.
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { matches, quickActions } from "./lib/crm-ux.ts";
+let n = 0; const ok = f => { f(); n++; };
+const bar = readFileSync("app/command-bar.tsx", "utf8");
+ok(() => assert.ok(matches({ label: "Monthly reports", hint: "Page", keywords: "client report results" }, "report")));
+ok(() => assert.ok(matches({ label: "Ridgeline Fence", hint: "Mike · 719", keywords: "Mike Torres mike@x.com" }, "mike ridge")));
+ok(() => assert.ok(!matches({ label: "Money", hint: "Page", keywords: "revenue" }, "calendar")));
+ok(() => assert.ok(matches({ label: "Add a deal", hint: "New opportunity", keywords: "new create" }, "NEW DEAL"), "case-insensitive"));
+ok(() => assert.match(bar, /\(e\.metaKey \|\| e\.ctrlKey\) && e\.key\.toLowerCase\(\) === "k"/, "Cmd-K and Ctrl-K open it"));
+ok(() => assert.match(bar, /"\/crm\?new=1"/) && assert.match(bar, /"\/crm\/pipeline\?new=1"/), "quick-add actions use the existing new-record deep links");
+ok(() => assert.match(readFileSync("app/cinder-sidebar.tsx", "utf8"), /<CommandBar \/>/, "mounted once, in the sidebar shared by every signed-in page"));
+const q = readFileSync("app/my-day-queue.tsx", "utf8");
+ok(() => assert.deepEqual(quickActions("task:1"), { done: true, snooze: true }));
+ok(() => assert.deepEqual(quickActions("milestone:1"), { done: true, snooze: true }));
+ok(() => assert.deepEqual(quickActions("deal:1"), { done: false, snooze: true }, "deals can be pushed, never auto-completed"));
+ok(() => assert.deepEqual(quickActions("receivable:1"), { done: false, snooze: false }, "money is never marked done from Today"));
+ok(() => assert.deepEqual(quickActions("prospect:1"), { done: false, snooze: false }));
+console.log(`CRM UX checks passed (${n} assertions).`);

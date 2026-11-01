@@ -59,6 +59,41 @@ function OvernightAudits() {
   </section>;
 }
 
+/** Sunday review: preview this week's email, send it now, and see when it last went out. */
+function SundayReview() {
+  const [data, setData] = useState<{ review: { subject: string; lines: string[] }; runs: { status: string; at: string }[]; email: boolean } | null>(null);
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+  const load = () => fetch("/api/weekly-review", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(setData).catch(() => setData(null));
+  useEffect(() => { void load(); }, []);
+  async function sendNow() {
+    setBusy(true); setNote("");
+    try {
+      const r = await fetch("/api/weekly-review", { method: "POST" });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Couldn't send it.");
+      setNote("Sent. Check your inbox.");
+    } catch (e) { setNote(e instanceof Error ? e.message : "Couldn't send it."); }
+    finally { setBusy(false); void load(); }
+  }
+  const btn = { height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #2a2a2a", background: "#171717", color: "#e5e5e5", cursor: "pointer" } as const;
+  const last = data?.runs[0];
+  return <section style={{ marginTop: 18, border: "1px solid #303030", borderRadius: 14, background: "#171717", padding: 20 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+      <div><h2 style={{ fontSize: 18, margin: 0 }}>Sunday review</h2>
+        <p style={{ color: "#a1a1a1", fontSize: 13, margin: "6px 0 0" }}>Every Sunday around 8 AM you get one email: the week&apos;s numbers, what slipped, and your 5 moves for the week.</p></div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button data-variant="primary" onClick={() => setOpen(o => !o)} style={btn}>{open ? "Hide preview" : "Preview"}</button>
+        <button data-variant="primary" disabled={busy || !data?.email} onClick={() => void sendNow()} style={btn}>{busy ? "Sending…" : "Send now"}</button>
+      </div>
+    </div>
+    <p style={{ fontSize: 13, margin: "12px 0 0", color: "#8f8f8f" }}>{data === null ? "Loading…" : !data.email ? "Email alerts aren't set up yet." : last ? `Last sent: ${new Date(last.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${last.status}` : "Not sent yet. The first one goes out this Sunday."}</p>
+    {note && <p style={{ fontSize: 13, margin: "6px 0 0", color: "#cfcfcf" }}>{note}</p>}
+    {open && data && <div style={{ marginTop: 14, padding: 16, borderRadius: 10, border: "1px solid #262626", background: "#101010", fontSize: 13.5, lineHeight: 1.6, color: "#d6d6d6", whiteSpace: "pre-wrap" }}><b style={{ display: "block", marginBottom: 8, color: "#f0f0f0" }}>{data.review.subject}</b>{data.review.lines.join("\n")}</div>}
+  </section>;
+}
+
 export default function SettingsPage() {
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
@@ -118,6 +153,7 @@ export default function SettingsPage() {
 
       <LeadFormLink />
       <OvernightAudits />
+      <SundayReview />
 
       <section style={{ marginTop: 26, border:"1px solid #303030", borderRadius: 14, background:"#171717", padding: 20 }}>
         <h2 style={{ fontSize: 18, margin: 0 }}>Workspace connections</h2>

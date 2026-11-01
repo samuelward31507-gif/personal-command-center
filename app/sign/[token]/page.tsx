@@ -44,6 +44,7 @@ export default function SignPage() {
   const [form, setForm] = useState({ name: "", title: "", email: "", consent: false });
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState("");
+  const [kickoffUrl, setKickoffUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -61,6 +62,7 @@ export default function SignPage() {
       const r = await fetch("/api/sign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, ...form }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Couldn't record your signature.");
+      if (typeof d.kickoffUrl === "string") setKickoffUrl(d.kickoffUrl);
       await load();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) { setFormError(err instanceof Error ? err.message : "Couldn't record your signature."); }
@@ -76,7 +78,8 @@ export default function SignPage() {
             <p>{doc.status === "expired" ? "Signing links last 30 days." : "It changed after this link was sent, so this link can't be used."} Reply to {doc.providerSigner || "us"} and we&apos;ll send a fresh one.</p></div>
         : <>
           {doc.status === "signed"
-            ? <div className="sg-done" role="status"><b>Signed.</b> {doc.signerName} signed electronically on {fmt(doc.signedAt)}. Save a copy with the button below.</div>
+            ? <div className="sg-done" role="status"><b>Signed.</b> {doc.signerName} signed electronically on {fmt(doc.signedAt)}. Save a copy with the button below.
+                {kickoffUrl && <div className="sg-next"><p><b>Next step:</b> a 10-minute kickoff checklist (your hours, service area, prices and the details carriers need to register your texting number). The 21-business-day go-live clock starts when it&apos;s in.</p><a className="sg-btn" href={kickoffUrl}>Start the kickoff checklist</a></div>}</div>
             : <div className="sg-intro"><div className="sg-eyebrow">Service agreement · {doc.client}</div><p>Please read the agreement below. To sign, type your name at the bottom.</p></div>}
           <DocBody text={doc.content} />
           <section className="sg-sigs" aria-label="Signatures">

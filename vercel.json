@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/pre-audit",
       "schedule": "17 9 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-review",
+      "schedule": "7 15 * * 0"
     }
   ]
 }

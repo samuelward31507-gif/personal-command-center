@@ -41,3 +41,7 @@ html body button.sg-btn:disabled { opacity: .55; cursor: default; }
   .sg-done { background: #fff !important; border-color: #ccc !important; }
   .sg-btn, .sg-top { display: none !important; }
 }
+.sg-next { margin-top: 12px; padding-top: 12px; border-top: 1px solid #234231; }
+.sg-next p { margin: 0; color: #cfe9d7 !important; }
+html body a.sg-btn { display: inline-flex; align-items: center; margin-top: 12px; height: 44px; padding: 0 18px; border-radius: 12px; background: #ededed; color: #0a0a0a !important; font-size: 15px; font-weight: 600; text-decoration: none; }
+@media print { .sg-next { display: none !important; } }

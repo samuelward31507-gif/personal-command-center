@@ -90,3 +90,8 @@ html body main a.dw-linkbtn:hover { background: #fff !important; }
 .dw-sign .dw-hint { margin: 6px 0 0; }
 .dw-sign-url { flex: 1 1 260px; font-weight: 400 !important; font-size: 12.5px !important; }
 .dw-signed { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid #234231; background: #101a14; color: #cfe9d7 !important; font-size: 13.5px; }
+.dw-kick { display: grid; gap: 10px; margin: 10px 0 14px; }
+.dw-kick div { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid #1f1f1f; }
+.dw-kick dt { font-size: 13px; color: #8a8a8a; }
+.dw-kick dd { margin: 0; font-size: 14px; color: #e5e5e5; white-space: pre-wrap; }
+@media (max-width: 640px) { .dw-kick div { grid-template-columns: 1fr; gap: 4px; } }

@@ -1,0 +1,27 @@
+// Monthly client report checks: never invents numbers, clean input, honest wording.
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { cleanFigures, renderReport, lastMonth, periodLabel, isPeriod } from "./lib/client-report.ts";
+let n = 0; const ok = f => { f(); n++; };
+ok(() => assert.equal(lastMonth(new Date("2026-11-01T12:00:00Z")), "2026-10"));
+ok(() => assert.equal(lastMonth(new Date("2026-01-15T12:00:00Z")), "2025-12"));
+ok(() => assert.equal(periodLabel("2026-10"), "October 2026"));
+ok(() => assert.ok(isPeriod("2026-10") && !isPeriod("2026-13") && !isPeriod("26-10")));
+ok(() => { const c = cleanFigures({ inquiries: "142", estimates: "31", jobsValue: "$18,400", firstReply: "38 seconds" }); assert.ok("ok" in c); assert.deepEqual(c.ok, { inquiries: 142, firstReply: "38 seconds", estimates: 31, jobsValue: 18400 }); });
+ok(() => assert.ok("error" in cleanFigures({ estimates: "3.5" }), "counts must be whole"));
+ok(() => assert.ok("error" in cleanFigures({ inquiries: "-2" })));
+ok(() => assert.ok("error" in cleanFigures({ inquiries: "lots" })));
+const full = renderReport("Ridgeline Fence", "2026-10", { inquiries: 142, firstReply: "38 seconds", estimates: 31, estimatesPrev: 19, followedUp: 24, jobsWon: 3, jobsValue: 18400, highlight: "Weekend leads booked on Sunday.", nextMonth: "Add a third quote follow-up." });
+ok(() => assert.equal(full.subject, "Ridgeline Fence: your October 2026 results"));
+ok(() => assert.match(full.body, /Inquiries answered: 142 \(average first reply 38 seconds\)/));
+ok(() => assert.match(full.body, /Estimates booked: 31 \(up from 19\)/));
+ok(() => assert.match(full.body, /Jobs won from follow-up: 3 \(\$18,400\)/));
+ok(() => assert.match(full.body, /What went well\nWeekend leads/));
+ok(() => assert.match(renderReport("X", "2026-10", { estimates: 10, estimatesPrev: 12 }).body, /down from 12/, "bad months are reported honestly"));
+const sparse = renderReport("X", "2026-10", { estimates: 5 }).body;
+ok(() => assert.ok(!/Inquiries|Quotes followed|Jobs won|up from/.test(sparse), "blank figures are left out, never guessed"));
+ok(() => assert.match(renderReport("X", "2026-10", {}).body, /No figures entered yet/));
+const api = readFileSync("app/api/client-reports/route.ts", "utf8");
+ok(() => assert.match(api, /ON CONFLICT \(owner_id, project_id, period\)/, "one report per client per month"));
+ok(() => assert.doesNotMatch(api, /claudeText|ANTHROPIC/, "no AI: numbers come from Samuel"));
+console.log(`Client report checks passed (${n} assertions).`);

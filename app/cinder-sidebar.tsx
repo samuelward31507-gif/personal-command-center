@@ -4,6 +4,7 @@ import "./cinder-sidebar.css";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { CinderLogo, CinderMark, CINDER_MONO } from "./cinder-brand";
+import CommandBar from "./command-bar";
 
 type Props = {
   activeKey: string;
@@ -82,6 +83,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
   const isActive = (key: string) => {
     if (key === "home") return mode === "home" ? activeKey === "home" : false;
     if (key === "schedule") return mode === "home" && activeKey === "schedule";
+    if (key === "client-success") return pathname.startsWith("/crm/client-success") || pathname.startsWith("/crm/reports");
     if (key === "growth") return pathname === "/crm" || pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/outreach");
     const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
       "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", scoreboard: "/crm/scoreboard", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
@@ -95,6 +97,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     </Link>;
 
   return <>
+    <CommandBar />
     <button type="button" data-variant="primary" className="cx-mobile-toggle" aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen} onClick={() => setMobileOpen(o => !o)}>
       <Icon name="rail" />
     </button>
@@ -112,6 +115,9 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
       <Link href="/" className={"cx-new" + (isActive("home") ? " is-active" : "")} onClick={e => go(e, "home", "/")} title={collapsed ? "Ask Cinder" : undefined}>
         <span className="cx-new-icon"><Icon name="chat" /></span><span className="cx-label">Ask Cinder</span>
       </Link>
+      <button type="button" data-variant="primary" className="cx-item cx-search" onClick={() => { setMobileOpen(false); window.dispatchEvent(new Event("cinder:command")); }} title={collapsed ? "Search (⌘K)" : undefined}>
+        <Icon name="search" /><span className="cx-label">Search</span><kbd className="cx-kbd">⌘K</kbd>
+      </button>
 
       <nav className="cx-nav" aria-label="Agency">
         <div className="cx-group">Agency</div>

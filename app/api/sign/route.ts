@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import { sendAlert } from "@/lib/notify";
 import { hashToken, contentHash, isTokenShape, validateSignature, clientIp, CONSENT_TEXT } from "@/lib/esign";
 import { runDealHandoff, HandoffNotReady } from "@/lib/deal-handoff";
+import { createKickoffLink, publicOrigin } from "@/lib/kickoff-link";
 import { sanitizeForLog } from "@/lib/business-audit";
 
 export const runtime = "nodejs";
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
     if (!signedRows.length) return reply({ error: "This agreement is already signed." }, 409);
 
     const owner = String(row.owner_id), dealId = String(row.deal_id);
+    let kickoffUrl: string | null = null;
     const moved = await sql`
       UPDATE public.deals SET contract_status = 'signed', stage = 'won', agreement_status = 'active', signed_at = COALESCE(signed_at, now()),
         effective_at = COALESCE(effective_at, CURRENT_DATE), next_step = 'Kickoff call', next_step_at = CURRENT_DATE + 1, updated_at = now()
@@ -90,8 +92,11 @@ export async function POST(request: Request) {
       ], link: { label: "Open the deal", path: `/crm/deals/${dealId}` } });
       try { await runDealHandoff(sql, owner, dealId); }
       catch (e) { console.error("Handoff after signature failed", { name: e instanceof HandoffNotReady ? "HandoffNotReady" : e instanceof Error ? e.name : typeof e }); }
+      // Hand the client straight to their kickoff checklist, so the go-live clock can start today.
+      try { kickoffUrl = await createKickoffLink(sql, owner, dealId, publicOrigin(request.url)); }
+      catch (e) { console.error("Kickoff link after signature failed", { name: e instanceof Error ? e.name : typeof e }); }
     }
-    return reply({ ok: true, signedAt: iso(signedRows[0].signed_at) });
+    return reply({ ok: true, signedAt: iso(signedRows[0].signed_at), kickoffUrl });
   } catch (error) {
     console.error("Sign POST failed", { name: error instanceof Error ? error.name : typeof error, message: sanitizeForLog(error instanceof Error ? error.message : "") });
     return reply({ error: "Couldn't record your signature. Try again." }, 500);
