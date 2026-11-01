@@ -31,7 +31,7 @@ export default function InvoicePage() {
   return <div className="iv-page">
     <header className="iv-top"><CinderLogo mono className="iv-logo" title={doc?.from.name ?? "Invoice"} />
       {doc && <button className="iv-print" onClick={() => window.print()}>Download PDF</button>}</header>
-    <main className="iv-main">
+    <div className="iv-main" role="main">
       {error ? <div className="iv-msg"><h1>Invoice not available</h1><p>{error}</p></div>
         : !doc ? <p className="iv-muted">Loading invoice…</p>
         : <article className="iv-sheet">
@@ -56,6 +56,6 @@ export default function InvoicePage() {
           </section>}
           {doc.status === "paid" && <p className="iv-thanks">Thank you. This invoice is paid.</p>}
         </article>}
-    </main>
+    </div>
   </div>;
 }
