@@ -2,3 +2,8 @@
 .set-tabs button { height: 34px; padding: 0 16px; border-radius: 8px; border: 0; background: transparent; color: #9e9e9e; font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; white-space: nowrap; }
 .set-tabs button:hover { color: #ededed; }
 .set-tabs button[aria-selected=true] { background: #2c2c2c; color: #ededed; }
+/* Beat the global tab/button paint (cinder-minimal.css uses !important on main buttons and role=tab). */
+html body main .set-tabs { background: #1a1a1a !important; border-color: #2a2a2a !important; }
+html body main .set-tabs button { background: transparent !important; border: 0 !important; color: #9e9e9e !important; }
+html body main .set-tabs button:hover { color: #ededed !important; }
+html body main .set-tabs button[aria-selected=true] { background: #2c2c2c !important; color: #ededed !important; }
