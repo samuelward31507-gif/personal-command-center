@@ -17,18 +17,20 @@ export const OFFERS = {
 /**
  * Pick the starting offer for a new deal: the tier the audit recommended, else the
  * niche default (pool → Tier 2, fence → Tier 1), else Tier 1. Tier 3 is waitlist-only
- * and never suggested. Prices are the catalog list prices; the founder can edit them.
+ * and never suggested. Prices come from Workspace settings (passed in); the built-in list is the fallback.
  */
-export function suggestOffer(company: string, auditVerdict: string | null): Offer {
+export type OfferCatalog = { tier1: Offer; tier2: Offer };
+
+export function suggestOffer(company: string, auditVerdict: string | null, offers: OfferCatalog = OFFERS): Offer {
   const v = auditVerdict ?? "";
-  if (/\btier\s*2\b/i.test(v)) return OFFERS.tier2;
-  if (/\btier\s*1\b/i.test(v)) return OFFERS.tier1;
-  if (/\b(pool|pools|spa|spas)\b/i.test(company)) return OFFERS.tier2;
-  return OFFERS.tier1;
+  if (/\btier\s*2\b/i.test(v)) return offers.tier2;
+  if (/\btier\s*1\b/i.test(v)) return offers.tier1;
+  if (/\b(pool|pools|spa|spas)\b/i.test(company)) return offers.tier2;
+  return offers.tier1;
 }
 
-export function suggestDeal(contact: { name: string; company: string }, auditVerdict: string | null, outcome: "interested" | "meeting_booked") {
-  const offer = suggestOffer(contact.company, auditVerdict);
+export function suggestDeal(contact: { name: string; company: string }, auditVerdict: string | null, outcome: "interested" | "meeting_booked", offers: OfferCatalog = OFFERS) {
+  const offer = suggestOffer(contact.company, auditVerdict, offers);
   const who = contact.company || contact.name || "New deal";
   return {
     title: `${who} — ${offer.label}`.slice(0, 240),

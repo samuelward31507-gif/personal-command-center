@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
 import { cleanFigures, renderReport, isPeriod } from "@/lib/client-report";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { sanitizeForLog } from "@/lib/business-audit";
 
 export const runtime = "nodejs";
@@ -51,7 +52,8 @@ export async function POST(request: Request) {
     const sql = neon(process.env.DATABASE_URL);
     const p = await sql`SELECT client_name, name FROM public.projects WHERE id = ${b.projectId}::uuid AND owner_id = ${user.id} LIMIT 1`;
     if (!p.length) return fail("Client not found.", 404);
-    const { subject, body } = renderReport(String(p[0].client_name || p[0].name), b.period, f.ok);
+    const wsp = await loadWorkspace(user.id);
+    const { subject, body } = renderReport(String(p[0].client_name || p[0].name), b.period, f.ok, wsp.ownerFirstName, wsp.businessName);
     const content = `Subject: ${subject}\n\n${body}`;
     const rows = await sql`INSERT INTO public.client_reports (owner_id, project_id, period, figures, content)
       VALUES (${user.id}, ${b.projectId}::uuid, ${b.period}, ${JSON.stringify(f.ok)}::jsonb, ${content})

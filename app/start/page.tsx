@@ -4,9 +4,11 @@ import { useState, type FormEvent } from "react";
 import { INBOUND_TRADES, INBOUND_VOLUMES } from "@/lib/inbound";
 import { CinderLogo } from "../cinder-brand";
 import "./start.css";
+import { usePublicBrand } from "../use-workspace";
 
 /** Public lead form. Submissions land in Cinder as a lead with a same-day follow-up and an urgent call task. */
 export default function StartPage() {
+  const brand = usePublicBrand();
   const [startedAt] = useState(() => Date.now());
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState("");
@@ -25,11 +27,11 @@ export default function StartPage() {
   }
 
   return <div className="st-page">
-    <header className="st-top"><a href="/" aria-label="Cinder Revenue Company home"><CinderLogo mono className="st-logo" title="Cinder Revenue Company" /></a></header>
+    <header className="st-top"><a href="/" aria-label={`${brand.businessName} home`}><CinderLogo mono className="st-logo" title={brand.businessName} /></a></header>
     <div className="st-main">
       {state === "done" ? <div className="st-done">
         <div className="st-check" aria-hidden="true">✓</div>
-        <h1>Got it. You&apos;ll hear from Samuel shortly.</h1>
+        <h1>Got it. You&apos;ll hear from {brand.ownerFirstName} shortly.</h1>
         <p>Usually the same day. If you&apos;d rather talk now, keep your phone close.</p>
       </div> : <>
         <div className="st-intro">

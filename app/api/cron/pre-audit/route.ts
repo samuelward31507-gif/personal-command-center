@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { sendAlert } from "@/lib/notify";
 import { sanitizeForLog } from "@/lib/business-audit";
 import { runPreAudit, logRun } from "@/lib/pre-audit";
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
     return Response.json({ error: "Not configured" }, { status: 503 });
   }
   try {
-    const result = await runPreAudit({ sql, owner, apiKey, tz: process.env.CINDER_TIMEZONE?.trim() || "America/Denver" });
+    const result = await runPreAudit({ sql, owner, apiKey, tz: (await loadWorkspace(owner)).timezone });
     console.info("Pre-audit run", result);
     await logRun(sql, "pre-audit", "cron", result.status, result, started);
     return Response.json({ ok: true, ...result });

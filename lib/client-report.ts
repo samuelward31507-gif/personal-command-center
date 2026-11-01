@@ -1,5 +1,5 @@
 // Monthly client report: the one-page results report the agreement promises. Pure: safe to unit test.
-// Numbers come from Samuel (read off the live system); nothing is estimated or invented. Blank figures are left out.
+// Numbers come from the owner (read off the live system); nothing is estimated or invented. Blank figures are left out.
 
 export type ReportFigures = {
   inquiries?: number; firstReply?: string; estimates?: number; estimatesPrev?: number;
@@ -52,7 +52,7 @@ export function cleanFigures(input: unknown): { error: string } | { ok: ReportFi
 
 const num = (n: number) => n.toLocaleString("en-US");
 
-export function renderReport(client: string, period: string, f: ReportFigures, sender = "Samuel"): { subject: string; body: string } {
+export function renderReport(client: string, period: string, f: ReportFigures, sender = "Samuel", business = "Cinder Revenue Company"): { subject: string; body: string } {
   const label = periodLabel(period);
   const rows: string[] = [];
   if (f.inquiries !== undefined) rows.push(`Inquiries answered: ${num(f.inquiries)}${f.firstReply ? ` (average first reply ${f.firstReply})` : ""}`);
@@ -77,7 +77,7 @@ export function renderReport(client: string, period: string, f: ReportFigures, s
     `Questions about any of this? Just reply.`,
     ``,
     sender,
-    `Cinder Revenue Company`,
+    business,
   ].join("\n");
   return { subject: `${client}: your ${label} results`, body };
 }

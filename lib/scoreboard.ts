@@ -22,27 +22,28 @@ export function monthsUntil(from: string, by: string = REVENUE_GOAL.by): number 
   return Math.max(0, (by_ - fy) * 12 + (bm - fm) + 1);
 }
 
-export type GoalInput = { today: string; collected: number; expectedByGoal: number; offers: { label: string; setupFee: number; monthlyFee: number }[] };
+export type GoalInput = { today: string; collected: number; expectedByGoal: number; offers: { label: string; setupFee: number; monthlyFee: number }[]; goal?: { amount: number; by: string } };
 
 /**
  * How far along the goal is and what it would take. "Expected" is money already booked as expected
  * receivables due before the goal date — not counted as collected.
  */
 export function goalMath(g: GoalInput) {
-  const remaining = Math.max(0, REVENUE_GOAL.amount - g.collected);
+  const goal = g.goal ?? REVENUE_GOAL;
+  const remaining = Math.max(0, goal.amount - g.collected);
   const gapAfterExpected = Math.max(0, remaining - g.expectedByGoal);
-  const left = daysLeft(g.today);
+  const left = daysLeft(g.today, goal.by);
   // A deal signed today pays setup now and a retainer from roughly a month out (go-live), through the goal date.
   const goLive = new Date(Date.parse(g.today + "T00:00:00Z") + 30 * 86_400_000).toISOString().slice(0, 10);
-  const months = left > 30 ? monthsUntil(goLive) : 0;
+  const months = left > 30 ? monthsUntil(goLive, goal.by) : 0;
   const perDeal = g.offers.map(o => {
     const value = o.setupFee + o.monthlyFee * months;
     return { label: o.label, valueByGoal: value, dealsNeeded: value > 0 ? Math.ceil(gapAfterExpected / value) : null };
   });
   return {
-    goal: REVENUE_GOAL.amount, collected: g.collected, expected: g.expectedByGoal, remaining, gapAfterExpected, daysLeft: left,
-    progressPct: Math.min(100, Math.round((g.collected / REVENUE_GOAL.amount) * 100)),
-    withExpectedPct: Math.min(100, Math.round(((g.collected + g.expectedByGoal) / REVENUE_GOAL.amount) * 100)),
+    goal: goal.amount, collected: g.collected, expected: g.expectedByGoal, remaining, gapAfterExpected, daysLeft: left,
+    progressPct: Math.min(100, Math.round((g.collected / goal.amount) * 100)),
+    withExpectedPct: Math.min(100, Math.round(((g.collected + g.expectedByGoal) / goal.amount) * 100)),
     perDeal,
   };
 }

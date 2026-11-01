@@ -16,6 +16,7 @@ type Data = {
   streak: number;
   pipeline: { stage: string; deals: number; setup: number; monthly: number }[];
   recurring: { clients: number; mrr: number };
+  targets?: { goalLabel: string; dailyCalls: number };
   goal: { goal: number; collected: number; expected: number; remaining: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
 };
 
@@ -36,8 +37,9 @@ export default function ScoreboardPage() {
   if (error) return <main className="sb-page"><p className="sb-err">{error}</p></main>;
   if (!d) return <main className="sb-page"><p className="sb-muted">Counting…</p></main>;
   const g = d.goal;
-  const max = Math.max(DAILY_CALL_TARGET, ...d.days.map(x => x.calls));
-  const todayPct = Math.min(100, Math.round((d.today.calls / DAILY_CALL_TARGET) * 100));
+  const TARGET = d.targets?.dailyCalls ?? DAILY_CALL_TARGET;
+  const max = Math.max(TARGET, ...d.days.map(x => x.calls));
+  const todayPct = Math.min(100, Math.round((d.today.calls / TARGET) * 100));
   const openSetup = d.pipeline.reduce((s, p) => s + p.setup, 0), openMonthly = d.pipeline.reduce((s, p) => s + p.monthly, 0);
   const steps = [
     { label: "Calls", n: d.month.calls }, { label: "Connects", n: d.month.connects, r: d.rates.connectRate },
@@ -54,7 +56,7 @@ export default function ScoreboardPage() {
 
     <section className="sb-goal">
       <div className="sb-goal-top">
-        <div><div className="sb-label">{REVENUE_GOAL.label}</div><div className="sb-goal-num">{money(g.collected)} <span>of {money(g.goal)} collected</span></div></div>
+        <div><div className="sb-label">{d.targets?.goalLabel ?? REVENUE_GOAL.label}</div><div className="sb-goal-num">{money(g.collected)} <span>of {money(g.goal)} collected</span></div></div>
         <div className="sb-goal-days"><strong>{g.daysLeft}</strong><span>days left</span></div>
       </div>
       <div className="sb-bar" aria-label={`${g.progressPct}% collected`}>
@@ -66,7 +68,7 @@ export default function ScoreboardPage() {
     </section>
 
     <div className="sb-tiles">
-      <div className="sb-tile"><div className="sb-label">Calls today</div><div className="sb-num">{d.today.calls}<span>/{DAILY_CALL_TARGET}</span></div><div className="sb-mini-bar"><i style={{ width: todayPct + "%" }} /></div></div>
+      <div className="sb-tile"><div className="sb-label">Calls today</div><div className="sb-num">{d.today.calls}<span>/{TARGET}</span></div><div className="sb-mini-bar"><i style={{ width: todayPct + "%" }} /></div></div>
       <div className="sb-tile"><div className="sb-label">Streak</div><div className="sb-num">{d.streak}<span> day{d.streak === 1 ? "" : "s"}</span></div><small>{d.streak ? "Days in a row with calls" : "Log a call to start one"}</small></div>
       <div className="sb-tile"><div className="sb-label">This week</div><div className="sb-num">{d.week.calls}<span> calls</span></div><small>{d.week.connects} connects · {d.week.meetings} meetings booked</small></div>
       <div className="sb-tile"><div className="sb-label">Recurring</div><div className="sb-num">{money(d.recurring.mrr)}<span>/mo</span></div><small>{d.recurring.clients} active client{d.recurring.clients === 1 ? "" : "s"}</small></div>
@@ -80,7 +82,7 @@ export default function ScoreboardPage() {
             <div className="sb-colbar"><i className="sb-c-calls" style={{ height: (x.calls / max) * 100 + "%" }} /><i className="sb-c-conn" style={{ height: (x.connects / max) * 100 + "%" }} /></div>
             <span>{new Date(x.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "narrow" })}</span>
           </div>)}
-          <div className="sb-target" style={{ bottom: `calc(${(DAILY_CALL_TARGET / max) * 100}% * 0.86 + 22px)` }}><span>target {DAILY_CALL_TARGET}</span></div>
+          <div className="sb-target" style={{ bottom: `calc(${(TARGET / max) * 100}% * 0.86 + 22px)` }}><span>target {TARGET}</span></div>
         </div>
       </section>
 

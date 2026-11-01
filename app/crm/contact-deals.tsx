@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { STAGE_LABELS, suggestOffer, type DealStage } from "@/lib/offers";
+import { offersFrom } from "@/lib/workspace";
+import { useWorkspace } from "../use-workspace";
 
 type Deal = { id: string; title: string; stage: DealStage; setupFee: number; monthlyFee: number; updatedAt: string };
 const money = (n: number) => "$" + Number(n || 0).toLocaleString("en-US");
 
 /** The contact's deals, each linking to its deal page, plus a one-tap "Start a deal". */
 export default function ContactDeals({ contactId, name, company }: { contactId: string; name: string; company: string }) {
+  const wsp = useWorkspace();
   const [deals, setDeals] = useState<Deal[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -28,7 +31,7 @@ export default function ContactDeals({ contactId, name, company }: { contactId: 
   async function start() {
     setBusy(true); setError("");
     try {
-      const offer = suggestOffer(company, null);
+      const offer = suggestOffer(company, null, offersFrom(wsp));
       const r = await fetch("/api/deals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         title: `${company || name || "New deal"} — ${offer.label}`.slice(0, 240), contactId, serviceType: offer.serviceType,
         stage: "contacted", setupFee: offer.setupFee, monthlyFee: offer.monthlyFee, source: "contact record", notes: "" }) });

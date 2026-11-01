@@ -5,6 +5,7 @@ import type { AskAction } from "@/lib/ask";
 import { ActionCard, Markdown } from "./ask-answer";
 import { CinderMark, CINDER_MONO } from "./cinder-brand";
 import "./home-search.css";
+import { useWorkspace } from "./use-workspace";
 
 type Turn = {
   id: number; started: number; query: string; status: string; draft: string;
@@ -18,9 +19,9 @@ const SUGGESTIONS: { label: string; prompt: string; icon: "phone" | "chart" | "c
   { label: "Research a market", prompt: "What do pool builders in Arizona usually charge for a new pool?", icon: "globe" },
 ];
 
-function greeting() {
+function greeting(name: string) {
   const h = new Date().getHours();
-  return h < 5 ? "Up late, Samuel" : h < 12 ? "Good morning, Samuel" : h < 18 ? "Good afternoon, Samuel" : "Good evening, Samuel";
+  return `${h < 5 ? "Up late" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"}, ${name}`;
 }
 
 const Mark = ({ className = "" }: { className?: string }) => <CinderMark className={className} ring={CINDER_MONO} ember={CINDER_MONO} />;
@@ -47,7 +48,9 @@ export default function HomeSearch() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
   const [web, setWeb] = useState(true);
-  const [hello, setHello] = useState("Good evening, Samuel");
+  const ws = useWorkspace();
+  const [hello, setHello] = useState("");
+  useEffect(() => { setHello(greeting(ws.ownerFirstName)); }, [ws.ownerFirstName]);
   const [copied, setCopied] = useState<number | null>(null);
   const box = useRef<HTMLTextAreaElement>(null);
   const abort = useRef<AbortController | null>(null);
@@ -61,7 +64,6 @@ export default function HomeSearch() {
   }, [busy]);
 
   useEffect(() => {
-    setHello(greeting());
     try { if (localStorage.getItem("cinder.ask.web") === "off") setWeb(false); } catch { /* storage unavailable */ }
     const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); box.current?.focus(); } };
     window.addEventListener("keydown", onKey);

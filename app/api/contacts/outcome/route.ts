@@ -2,6 +2,8 @@ import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
 import { isCallOutcome, followUpDate, sequenceStatusFor, dealChangeFor, OUTCOME_LABELS } from "@/lib/call-outcomes";
 import { suggestDeal } from "@/lib/offers";
+import { offersFrom } from "@/lib/workspace";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { reportSection } from "@/lib/business-audit";
 
 export const runtime = "nodejs";
@@ -107,7 +109,7 @@ export async function POST(request: Request) {
     if ((outcome === "interested" || outcome === "meeting_booked") && openDeals.length === 0) {
       const audit = typeof contact[0].audit === "string" ? contact[0].audit : "";
       const verdict = reportSection(audit, "Verdict") || reportSection(audit, "1\\. Executive verdict") || null;
-      suggestedDeal = { contactId, ...suggestDeal({ name: String(contact[0].name ?? ""), company: String(contact[0].company ?? "") }, verdict, outcome) };
+      suggestedDeal = { contactId, ...suggestDeal({ name: String(contact[0].name ?? ""), company: String(contact[0].company ?? "") }, verdict, outcome, offersFrom(await loadWorkspace(user.id))) };
     }
 
     return Response.json({

@@ -3,6 +3,8 @@ import { sendAlert } from "@/lib/notify";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { bookingPerson, splitName, stageAfterBooking, stageAfterMeeting, localDate } from "@/lib/cal-booking";
 import { suggestOffer } from "@/lib/offers";
+import { offersFrom } from "@/lib/workspace";
+import { loadWorkspace } from "@/lib/workspace-data";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,7 +44,7 @@ async function bookingToDeal(sql: Sql, ownerId: string, contactId: string, who: 
   const day = localDate(startsIso, TZ());
   let deal = await openDeal(sql, ownerId, contactId);
   if (!deal && created) {
-    const offer = suggestOffer(who, null);
+    const offer = suggestOffer(who, null, offersFrom(await loadWorkspace(ownerId)));
     const rows = await sql`
       INSERT INTO public.deals (owner_id, contact_id, title, service_type, stage, setup_fee, monthly_fee, source, notes, next_step, next_step_at)
       VALUES (${ownerId}, ${contactId}::uuid, ${`${who || "New lead"} — ${offer.label}`.slice(0, 240)}, ${offer.serviceType}, 'meeting_booked',

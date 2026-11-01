@@ -1,6 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
 import { ASK_TOOLS, buildSystemPrompt, validateAction, type AskAction } from "@/lib/ask";
+import { offersFrom } from "@/lib/workspace";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { runAskTool, type AskRequestContext } from "@/lib/ask-data";
 import { classifyProviderError, sanitizeForLog } from "@/lib/business-audit";
 
@@ -136,7 +138,8 @@ export async function POST(request: Request) {
   const sql = neon(process.env.DATABASE_URL);
   const encoder = new TextEncoder();
   const tools = web ? [...ASK_TOOLS, { type: "web_search_20250305", name: "web_search", max_uses: 4 }] : [...ASK_TOOLS];
-  const system = buildSystemPrompt(ctx) + (web ? "" : "\nWeb search is switched off for this question; answer from the CRM and say so if the web would be needed.");
+  const wsp = await loadWorkspace(user.id);
+  const system = buildSystemPrompt(ctx, { owner: wsp.ownerFirstName, name: wsp.businessName, niche: wsp.niche, offers: Object.values(offersFrom(wsp)) }) + (web ? "" : "\nWeb search is switched off for this question; answer from the CRM and say so if the web would be needed.");
 
   const stream = new ReadableStream({
     async start(controller) {

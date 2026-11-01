@@ -27,7 +27,7 @@ export async function GET(request: Request) {
   if (!process.env.DATABASE_URL) return reply({ error: "The checklist is unavailable right now." }, 503);
   try {
     const { row } = await load(token);
-    if (!row || row.status === "void") return reply({ error: "This kickoff link is no longer active. Ask Samuel for a new one." }, 404);
+    if (!row || row.status === "void") return reply({ error: "This kickoff link is no longer active. Ask for a new one." }, 404);
     const tier = String(row.tier) as KickoffTier;
     return reply({
       status: row.status === "submitted" ? "submitted" : "open",
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
 
 /**
  * POST /api/kickoff { token, answers } — the client submits the checklist. Answers land on the project,
- * the kickoff steps are checked off, and Samuel gets an email (without the EIN).
+ * the kickoff steps are checked off, and the owner gets an email (without the EIN).
  */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   if (!process.env.DATABASE_URL) return reply({ error: "The checklist is unavailable right now." }, 503);
   try {
     const { sql, row } = await load(token);
-    if (!row || row.status === "void") return reply({ error: "This kickoff link is no longer active. Ask Samuel for a new one." }, 404);
+    if (!row || row.status === "void") return reply({ error: "This kickoff link is no longer active. Ask for a new one." }, 404);
     if (row.status === "submitted") return reply({ error: "This checklist was already sent. Thanks!" }, 409);
     const tier = String(row.tier) as KickoffTier;
     const v = validateKickoff(body?.answers, tier);

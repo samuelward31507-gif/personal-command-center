@@ -1,7 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 import { auth } from "@/lib/auth/server";
 import { buildProposalPrompt, cleanDiscovery } from "@/lib/deal-workspace";
-import { OFFERS } from "@/lib/offers";
+import { offersFrom } from "@/lib/workspace";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { classifyProviderError, reportSection, sanitizeForLog } from "@/lib/business-audit";
 
 export const runtime = "nodejs";
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     const d = rows[0];
     const audit = d.contact_id ? await sql`SELECT content FROM public.research_artifacts WHERE owner_id = ${user.id} AND contact_id = ${d.contact_id} AND artifact_type = 'audit_prep' AND status <> 'archived' ORDER BY created_at DESC LIMIT 1` : [];
     const auditText = audit[0] ? [reportSection(String(audit[0].content), "Verdict"), reportSection(String(audit[0].content), "Top opportunities")].filter(Boolean).join("\n").slice(0, 2500) : "";
-    const offer = Object.values(OFFERS).find(o => o.serviceType === d.service_type);
+    const offer = Object.values(offersFrom(await loadWorkspace(user.id))).find(o => o.serviceType === d.service_type);
     const company = String(d.company || d.title);
     const { system, user: prompt } = buildProposalPrompt({
       company, contactName: [d.first_name, d.last_name].filter(Boolean).join(" "), location: String(d.location ?? ""),

@@ -200,9 +200,15 @@ export const ASK_TOOLS = [
 ] as const;
 
 export type AskContext = { today: string; now: string; timeZone: string; weekday: string };
+export type AskBusiness = { owner: string; name: string; niche: string; offers: { label: string; setupFee: number; monthlyFee: number }[] };
 
-export function buildSystemPrompt(ctx: AskContext) {
-  return `You are Cinder, the AI built into Samuel's private agency CRM. Samuel runs Cinder Revenue Company, selling AI speed-to-lead and revenue systems to contractors (pool, fence, etc.). Offers: Tier 1 Speed to Lead $1,500 setup + $997/mo; Tier 2 Revenue System $3,000 setup + $1,500/mo.
+const DEFAULT_BUSINESS: AskBusiness = { owner: "Samuel", name: "Cinder Revenue Company", niche: "contractors (pool, fence, etc.)", offers: [
+  { label: "Tier 1 Speed to Lead", setupFee: 1500, monthlyFee: 997 }, { label: "Tier 2 Revenue System", setupFee: 3000, monthlyFee: 1500 }] };
+const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
+
+export function buildSystemPrompt(ctx: AskContext, b: AskBusiness = DEFAULT_BUSINESS) {
+  const offers = b.offers.map(o => `${o.label.replace(" · ", " ")} ${usd(o.setupFee)} setup + ${usd(o.monthlyFee)}/mo`).join("; ");
+  return `You are Cinder, the AI built into ${b.owner}'s private agency CRM. ${b.owner} runs ${b.name}, selling AI speed-to-lead and revenue systems to ${b.niche}. Offers: ${offers}.
 
 Today is ${ctx.weekday} ${ctx.today}; local time ${ctx.now} (${ctx.timeZone}). Resolve relative dates ("Friday", "next week") from this.
 
