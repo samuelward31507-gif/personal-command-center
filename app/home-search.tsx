@@ -17,8 +17,7 @@ const SUGGESTIONS: { label: string; prompt: string; icon: "phone" | "chart" | "c
   { label: "Who should I call today?", prompt: "Who should I call today?", icon: "phone" },
   { label: "What's my pipeline worth?", prompt: "What's my pipeline worth right now, and what's closest to closing?", icon: "chart" },
   { label: "My week", prompt: "What's on my calendar this week, and what do I need to prep?", icon: "calendar" },
-  { label: "Research a market", prompt: "What do pool builders in Arizona usually charge for a new pool?", icon: "globe" },
-];
+  ];
 
 function greeting(name: string) {
   const h = new Date().getHours();

@@ -106,3 +106,9 @@ a.hn-tile:hover { background: #302f2d; border-color: var(--d-line-2); transform:
 
 /* ---------- Pages: a touch more air under titles ---------- */
 html body main h1 + p, html body .main-panel main h1 + p { margin-bottom: 26px !important; }
+
+/* Money totals: four clean tiles, no strip behind them */
+html body .fin-metrics { background: transparent !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; gap: 12px !important; }
+html body .fin-metrics article { background: #2b2a28 !important; border: 1px solid var(--d-line) !important; border-radius: 14px !important; }
+html body .ask-suggest { flex-wrap: nowrap; }
+@media (max-width: 720px) { html body .ask-suggest { flex-wrap: wrap; } }
