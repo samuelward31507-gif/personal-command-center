@@ -20,8 +20,10 @@ const SUGGESTIONS: { label: string; prompt: string; icon: "phone" | "chart" | "c
   ];
 
 function greeting(name: string) {
-  const h = new Date().getHours();
-  return `${h < 5 ? "Up late" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"}, ${name}`;
+  const now = new Date(), h = now.getHours(), day = now.toLocaleDateString("en-US", { weekday: "long" });
+  if (h < 5) return `Up late, ${name}`;
+  if (now.getDay() === 0 || now.getDay() === 6) return `Happy ${day}, ${name}`;
+  return `${h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"}, ${name}`;
 }
 
 const Mark = ({ className = "" }: { className?: string }) => <CinderMark className={className} ring={CINDER_MONO} ember={CINDER_MONO} />;
@@ -157,7 +159,7 @@ export default function HomeSearch() {
     <form className={"ask-composer" + (busy ? " is-busy" : "")} onSubmit={e => { e.preventDefault(); void ask(input); }} onClick={() => box.current?.focus()}>
       <textarea
         ref={box} rows={1} value={input} onChange={e => setInput(e.target.value)} onKeyDown={onKeyDown}
-        placeholder={chat ? "Reply to Cinder…" : "Ask anything, or tell Cinder what to do"} aria-label="Message Cinder" spellCheck={false}
+        placeholder={chat ? "Reply to Cinder…" : "What should we work on?"} aria-label="Message Cinder" spellCheck={false}
       />
       <div className="ask-composer-row">
         <div className="ask-tools">
@@ -176,7 +178,7 @@ export default function HomeSearch() {
 
   if (!chat) return <div className="ask-root ask-root-empty">
     <div className="ask-hero">
-      <h1 className="ask-hello"><CinderMark className="ask-hello-mark" ring="#efefef" ember="#efefef" />{hello}</h1>
+      <h1 className="ask-hello"><CinderMark className="ask-hello-mark" ring="#d97757" ember="#f3c4ae" />{hello}</h1>
       {composer}
       <div className="ask-suggest">
         {SUGGESTIONS.map(s => <button key={s.label} type="button" className="ask-pill" onClick={() => void ask(s.prompt)}><Icon name={s.icon} />{s.label}</button>)}

@@ -55,7 +55,7 @@ export default function ContactDeals({ contactId, name, company }: { contactId: 
       {/^[0-9a-f-]{36}$/i.test(contactId) && <button type="button" data-variant="primary" className="cd-start" disabled={busy} onClick={() => void start()}>{busy ? "Starting…" : deals.some(d => !["won", "lost"].includes(d.stage)) ? "+ Another deal" : "+ Start a deal"}</button>}
     </>}
     <style>{`
-      .cd-deals .cd-deal{display:grid;grid-template-columns:minmax(0,1fr) auto auto 14px;gap:10px;align-items:center;padding:9px 11px;margin-top:6px;border:1px solid #2e2e2e;border-radius:10px;background:#1f1f1f;color:#e6e6e6!important;text-decoration:none!important;font-size:13px}
+      .cd-deals .cd-deal{display:grid;grid-template-columns:minmax(0,1fr) auto auto 14px;gap:10px;align-items:center;padding:9px 11px;margin-top:6px;border:1px solid #2e2e2e;border-radius:10px;background:#1a1a1a;color:#e6e6e6!important;text-decoration:none!important;font-size:13px}
       .cd-deals .cd-deal:hover{border-color:#353535;background:#262626}
       .cd-deals .cd-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:550}
       .cd-deals .cd-stage{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid #3a3a3a;color:#a8a8a8}

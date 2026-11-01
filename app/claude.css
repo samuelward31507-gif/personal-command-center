@@ -5,15 +5,15 @@
    ========================================================================== */
 
 :root {
-  --st-bg: #191919; --st-bg-2: #1f1f1f; --st-surface: #1f1f1f; --st-raised: #262626; --st-hover: #303030;
+  --st-bg: #141414; --st-bg-2: #1a1a1a; --st-surface: #1a1a1a; --st-raised: #262626; --st-hover: #303030;
   --st-line: #2a2a2a; --st-line-2: #3a3a3a; --st-text: #efefef; --st-soft: #c4c4c4; --st-muted: #9e9e9e; --st-faint: #797979;
   --st-accent: #e6e6e6; --st-radius: 14px;
-  --pl-text: #efefef; --pl-title: #efefef; --pl-soft: #c4c4c4; --pl-muted: #9e9e9e; --pl-line: #2a2a2a; --pl-surface: #1f1f1f; --pl-raised: #262626;
+  --pl-text: #efefef; --pl-title: #efefef; --pl-soft: #c4c4c4; --pl-muted: #9e9e9e; --pl-line: #2a2a2a; --pl-surface: #1a1a1a; --pl-raised: #262626;
 }
 
 /* Canvas: the main area is the warm charcoal; the sidebar sits a step darker, like Claude. */
 html body .app-shell, html body .main-panel, html body .crm-shell-main, html body .main-panel main, html body .page-content { background-color: var(--st-bg) !important; }
-html body .cx-side { background: #1f1f1f !important; border-right: 1px solid #262626 !important; }
+html body .cx-side { background: #1a1a1a !important; border-right: 1px solid #262626 !important; }
 html body .cx-item.is-active, html body .cx-new.is-active { background: #262626 !important; color: #efefef !important; }
 html body .cx-item:hover, html body .cx-new:hover { background: #262626 !important; }
 html body .cx-new-icon { background: #2a2a2a !important; color: #efefef !important; }
@@ -44,7 +44,7 @@ html body .main-panel main :is(.stat-label, [class*="stat"] > span:first-child, 
 
 /* Buttons: rounded, quiet; primary is the light pill. */
 html body .main-panel main button, html body .main-panel main .btn, html body .main-panel main a[data-variant] { border-radius: 10px !important; }
-html body .main-panel main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) { background: #1f1f1f !important; border-color: #2e2e2e !important; color: #efefef !important; }
+html body .main-panel main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) { background: #1a1a1a !important; border-color: #2e2e2e !important; color: #efefef !important; }
 html body .main-panel main :is(input, select, textarea):focus { border-color: #797979 !important; box-shadow: 0 0 0 3px rgba(240, 238, 230, .06) !important; }
 
 /* Breathing room. */
@@ -52,7 +52,7 @@ html body .crm-shell-main > main:not(.calendar-page):not(.pipeline-page):not(.cm
 
 /* Scrollbars that don't shout. */
 html body ::-webkit-scrollbar { width: 10px; height: 10px; }
-html body ::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 10px; border: 2px solid #191919; }
+html body ::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 10px; border: 2px solid #141414; }
 
 /* Sidebar buttons (Search, More) look like plain nav items, not filled buttons. */
 html body .cx-side button.cx-search, html body .cx-side button.cx-more { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #c4c4c4 !important; }

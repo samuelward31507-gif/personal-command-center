@@ -11,7 +11,7 @@ export type AuditView = {
 
 const C = {
   text: "#f4f4f5", body: "#d4d4d8", muted: "#9a9aa4", faint: "#6f6f78", line: "#26262b",
-  card: "#1f1f1f", inset: "#191919", accent: "#c4c4c4",
+  card: "#1a1a1a", inset: "#141414", accent: "#c4c4c4",
 };
 
 const FIT: Record<string, { label: string; fg: string; bg: string; border: string }> = {

@@ -3,7 +3,7 @@
   --cx-w: 220px;
   position: sticky; top: 0; height: 100vh; flex: 0 0 var(--cx-w); width: var(--cx-w);
   display: flex; flex-direction: column; gap: 2px; padding: 8px 8px 10px;
-  background: #1f1f1f; border-right: 1px solid #303030; color: #d4d4d4;
+  background: #1a1a1a; border-right: 1px solid #303030; color: #d4d4d4;
   font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
   transition: width .2s cubic-bezier(.2,.8,.2,1), flex-basis .2s cubic-bezier(.2,.8,.2,1);
   overflow: hidden; z-index: 50;
@@ -70,7 +70,7 @@
   .cx-side .cx-collapse { display: none !important; }
   .cx-mobile-toggle {
     display: grid; place-items: center; position: fixed; top: 10px; left: 10px; z-index: 60; width: 38px; height: 38px; padding: 0;
-    border-radius: 10px; border: 1px solid #2e2e2e !important; background: #1f1f1f !important; color: #d0d0d0 !important;
+    border-radius: 10px; border: 1px solid #2e2e2e !important; background: #1a1a1a !important; color: #d0d0d0 !important;
   }
   .cx-scrim { display: block; position: fixed; inset: 0; z-index: 45; border: 0 !important; background: rgba(0,0,0,.55) !important; }
   .cx-side .cx-top { padding-left: 46px; }

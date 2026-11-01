@@ -1,6 +1,6 @@
 .crm-app-shell{min-height:100vh;width:100%;background:var(--background)}.crm-app-shell .sidebar{position:sticky;top:0;height:100vh}.crm-brand{text-decoration:none;color:inherit}.crm-brand .cinder-mark{width:24px;height:24px;display:grid;place-items:center;flex:0 0 auto}.crm-brand .cinder-mark svg{width:26px;height:26px}.crm-brand .cinder-wordmark{font-size:19px;font-weight:720;letter-spacing:-1px}.crm-shell-main{flex:1;min-width:0}.crm-shell-main>.topbar{flex:0 0 58px}.crm-shell-main .crm-page{width:100%;max-width:1450px}.crm-back-home{text-decoration:none}.crm-shell-main .crm-topline{flex-wrap:wrap}@media(max-width:760px){.crm-app-shell .sidebar{position:sticky;top:0;height:100vh}.crm-app-shell .topbar{padding:0 12px}.crm-app-shell .topbar-actions{gap:8px}.crm-app-shell .topbar-status{display:none}.crm-shell-main .crm-page{padding:22px 12px 30px}}
 /* Cal.ai-inspired neutral dark shell */
-:root{--background:#191919;--foreground:#f3f3f3;--muted:#ababab;--line:#3a3a3a;--panel:#262626;--accent:#f0f0f0}
+:root{--background:#141414;--foreground:#f3f3f3;--muted:#ababab;--line:#3a3a3a;--panel:#262626;--accent:#f0f0f0}
 .crm-app-shell,.crm-shell-main,.main-panel{background:#111!important;color:#f3f3f3}
 .crm-app-shell .sidebar{width:216px;flex-basis:216px;padding:18px 12px 14px;background:#111!important;border-right:1px solid #2e2e2e!important}
 .crm-brand{height:34px;margin-bottom:28px;gap:9px;color:#f5f5f5}
@@ -135,7 +135,7 @@
 .task-search{border-color:#3a3a3a!important;background:#262626!important}
 .task-empty-mark,.project-empty-mark{background:#303030!important;border-color:#333!important;color:#ddd!important}
 /* Calendar legend footer was white */
-.calendar-legend{background:#1f1f1f!important;border-color:#3a3a3a!important;color:#ababab!important}
+.calendar-legend{background:#1a1a1a!important;border-color:#3a3a3a!important;color:#ababab!important}
 /* Money tab counters were white boxes */
 .fin-tabs span{background:#2e2e2e!important;color:#ddd!important}
 /* Pages that use plain, unstyled buttons (Client success, AI team): give them the app's dark chip style */

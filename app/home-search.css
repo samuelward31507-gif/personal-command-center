@@ -2,8 +2,8 @@
    Class names deliberately avoid "card", "panel", "stat", "menu"… which global theme rules force to gray. */
 
 .ask-root {
-  --ask-bg: #191919;
-  --ask-composer: #1f1f1f;
+  --ask-bg: #141414;
+  --ask-composer: #1a1a1a;
   --ask-composer-line: #2e2e2e;
   --ask-bubble: #303030;
   --ask-text: #ececec;
@@ -180,7 +180,7 @@
 }
 
 .ask-root .ask-slow { margin-top: 8px; font-size: 12.5px; color: #6f6f6f !important; }
-.ask-root .ask-composer { background: linear-gradient(180deg, #262626, #1f1f1f) !important; }
+.ask-root .ask-composer { background: linear-gradient(180deg, #262626, #1a1a1a) !important; }
 .ask-hello-mark { filter: none; }
 
 /* ---------- Stealth: no copper on the Ask page ---------- */
