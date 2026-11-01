@@ -179,7 +179,7 @@ export default function CallModePage() {
     <header className="cm-head">
       <div>
         <div className="cm-eyebrow">Call mode</div>
-        <h1 className="cm-title">{queue.length ? `${queue.length} to call` : "List cleared"}</h1>
+        <h1 className="cm-title">{queue.length ? `${queue.length} to call` : "Nothing to call right now"}</h1>
         <p className="cm-sub">{logged.length ? `${logged.length} logged this session · ` : ""}Follow-ups first, then today&apos;s fresh prospects. You dial; Cinder keeps score.</p>
       </div>
       <div className="cm-head-actions">

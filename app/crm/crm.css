@@ -120,3 +120,11 @@
 
 /* Phones: header actions wrap instead of pushing the page sideways. */
 @media (max-width: 700px) { .crm-topline .crm-actions { flex-wrap: wrap; } .crm-topline .crm-actions > * { flex: 0 0 auto; } }
+
+/* Mid-width screens: the sidebar takes ~260px, so collapse the two-pane layout earlier than the viewport breakpoint. */
+@media(max-width:1180px){.crm-page .crm-workspace{grid-template-columns:1fr}.crm-page .crm-list-pane{border-right:0;border-bottom:1px solid #2a2a2a}.crm-page .crm-detail-empty{min-height:0;padding:30px 0 24px}}
+@media(max-width:1050px){.crm-page .crm-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* With no contacts yet, the "select a person" panel has nothing to point at. */
+.crm-page .crm-workspace:has(.crm-list-pane .crm-empty){grid-template-columns:1fr}
+.crm-page .crm-workspace:has(.crm-list-pane .crm-empty) .crm-detail-pane:has(.crm-detail-empty){display:none}
+.crm-page .crm-workspace:has(.crm-list-pane .crm-empty) .crm-list-pane{border-right:0}
