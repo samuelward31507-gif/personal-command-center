@@ -112,6 +112,7 @@ export default function OpsPanel({ projectId }: { projectId: string }) {
     </div>}
 
     {tab === "share" && <div>
+      <TestimonialBlock projectId={projectId} />
       <p className="op-hint">One private page for the client: where the build is, what&apos;s waiting on them, their reports and invoices. Fewer &quot;where are we at?&quot; messages.</p>
       <div className="op-acts">
         {!ops.portal.link ? <button type="button" style={NB} className="op-primary" disabled={!!busy} onClick={() => act("portal-link", {}, "Portal is on.")}>Turn on the client portal</button>
@@ -119,4 +120,21 @@ export default function OpsPanel({ projectId }: { projectId: string }) {
       </div>
     </div>}
   </section>;
+}
+
+type T = { id: string; status: string; quote: string; result: string; name: string; role: string; company: string; permission: boolean; link: string; publishable: string | null };
+/** Ask a happy client for a testimonial on a private link; see their words and whether you may publish them. */
+function TestimonialBlock({ projectId }: { projectId: string }) {
+  const [t, setT] = useState<T | null | undefined>(undefined);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => { fetch("/api/testimonials?project=" + encodeURIComponent(projectId), { cache: "no-store" }).then(r => (r.ok ? r.json() : { testimonials: [] })).then(d => setT(d.testimonials?.[0] ?? null)).catch(() => setT(null)); }, [projectId]);
+  async function create() { const r = await fetch("/api/testimonials", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: projectId }) }); if (r.ok) setT((await r.json()).testimonial); }
+  async function copy(l: string) { try { await navigator.clipboard.writeText(l); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { window.prompt("Copy this link", l); } }
+  if (t === undefined) return null;
+  return <div className="op-testi">
+    <b>Testimonial</b>
+    {!t ? <><p className="op-hint">Once their results are in, send a private link asking what changed. They choose whether you may publish it.</p><div className="op-acts"><button type="button" style={NB} onClick={create}>Create testimonial link</button></div></>
+    : t.status === "submitted" ? <><blockquote>&ldquo;{t.quote}&rdquo;</blockquote><p className="op-hint">{[t.name, t.role, t.company].filter(Boolean).join(", ")}{t.result ? ` · ${t.result}` : ""} · {t.permission ? "OK to publish" : "Private: not for publishing"}</p></>
+    : <><p className="op-hint">Link created, waiting on their answer.</p><div className="op-acts"><button type="button" style={NB} onClick={() => copy(t.link)}>{copied ? "Copied" : "Copy testimonial link"}</button></div></>}
+  </div>;
 }

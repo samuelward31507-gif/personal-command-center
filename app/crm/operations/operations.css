@@ -34,3 +34,5 @@ html body main .ops-primary { height: 34px; padding: 0 14px; border-radius: 8px;
 @media (max-width: 760px) { .ops-list li { grid-template-columns: minmax(0, 1fr) auto; } .ops-add { grid-template-columns: 1fr 1fr; } }
 html body main .ops-tabs.ops-tabs.ops-tabs button { background: transparent !important; }
 html body main .ops-tabs.ops-tabs.ops-tabs button[aria-pressed=true] { background: #2c2c2c !important; color: #ededed !important; }
+@media (max-width: 1180px) { .ops-add { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto; } .ops-add > input:first-child { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .ops-add { grid-template-columns: 1fr 1fr; } .ops-add > button { grid-column: 1 / -1; } }

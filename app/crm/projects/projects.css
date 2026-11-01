@@ -27,3 +27,4 @@ html body main .pj-row .pj-controls.pj-controls button { background: transparent
 .pj-clock.is-watch { color: #e3b766; }
 .pj-clock.is-at_risk, .pj-clock.is-overdue { color: #f2b0a5; font-weight: 600; }
 .pj-clock.is-not_started { color: #8a8a8a; }
+@media(max-width:1050px){.projects-page .project-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}

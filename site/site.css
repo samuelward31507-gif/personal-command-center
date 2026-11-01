@@ -1,6 +1,6 @@
-/* Cinder Revenue Company — stealth.
-   Matches the Cinder app: true black, neutral greys, Geist throughout, quiet medium-weight headlines,
-   monochrome logo. No accent colour; "live" moments are marked in white. */
+/* Cinder Revenue Company.
+   True black, neutral greys, Geist throughout, quiet medium-weight headlines.
+   One accent: the ember from the logo, used only for live moments and money. Never for decoration alone. */
 
 :root {
   --night: #0a0a0a;
@@ -369,3 +369,80 @@ p { margin: 0; }
 .legal ul { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
 .legal strong { color: var(--paper); font-weight: 600; }
 .legal a { color: var(--paper); text-underline-offset: 3px; }
+
+/* ---------- Demo ---------- */
+.demo-form { display: grid; gap: 14px; max-width: 520px; width: 100%; }
+.demo-f { display: grid; gap: 7px; font-size: 14.5px; color: var(--fog); }
+.demo-f input, .demo-f textarea { width: 100%; padding: 12px 13px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--night-2); color: var(--paper); font: inherit; font-size: 16px; resize: vertical; }
+.demo-f input:focus, .demo-f textarea:focus { outline: none; border-color: var(--concrete); }
+.demo-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.demo-note { font-size: 13.5px; color: var(--concrete); }
+.demo-empty { color: var(--concrete); font-size: 14.5px; padding: 20px 4px; }
+.demo-hero .duo { padding-bottom: 150px; }
+.msg u { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #555; }
+.notif[hidden] { display: none; }
+
+/* ---------- Ember pass ---------- */
+:root { --spark: #e58a66; --spark-2: #d97757; --spark-deep: #b8583b; --glow: rgba(217,119,87,.16); }
+::selection { background: rgba(217,119,87,.35); color: #fff; }
+.spark-text { background: linear-gradient(180deg, #f6c2a6 0%, var(--spark) 55%, var(--spark-2) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* Hero: a low ember glow behind the live thread */
+.hero-grid { isolation: isolate; }
+.hero .duo::before, .hero .life::before { content: ""; position: absolute; z-index: -1; inset: -12% -18% 4% -10%; background: radial-gradient(closest-side, rgba(217,119,87,.26), rgba(217,119,87,.08) 55%, transparent 100%); filter: blur(10px); pointer-events: none; }
+.hero .life { position: relative; }
+.phone { box-shadow: 0 40px 80px -40px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.04); }
+.clock b { color: var(--spark); }
+.booked { border-color: rgba(217,119,87,.35); background: rgba(217,119,87,.06); }
+.booked::before { background: var(--spark); box-shadow: 0 0 0 4px rgba(217,119,87,.18); }
+.js.motion .booked.on::before { animation: pulse 2.4s ease-out infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(229,138,102,.55); } 70% { box-shadow: 0 0 0 9px rgba(229,138,102,0); } 100% { box-shadow: 0 0 0 0 rgba(229,138,102,0); } }
+.life .pt.live { background: var(--spark); box-shadow: 0 0 0 4px rgba(217,119,87,.18); }
+.notif-top .notif-app { color: var(--fog); }
+
+/* Leaks: the one place the problem gets colour */
+.stage .leak { color: #b5b5b5; padding-left: 16px; position: relative; }
+.stage .leak::before { content: ""; position: absolute; left: 0; top: calc(14px + .62em); width: 6px; height: 6px; border-radius: 50%; background: var(--spark-2); }
+.pipe .stage:hover::after { border-color: var(--spark); }
+
+/* Money */
+.calc-big { background: linear-gradient(180deg, #f6c2a6 0%, var(--spark) 60%, var(--spark-2) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .04em; }
+.calc-out { background: radial-gradient(120% 70% at 0% 0%, rgba(217,119,87,.08), transparent 60%), var(--night-2); }
+.guarantee .big { color: var(--spark); }
+.guarantee { background: radial-gradient(60% 140% at 0% 50%, rgba(217,119,87,.08), transparent 70%), var(--night-2); }
+
+/* Plans: the featured one is lit from the top */
+.plan.is-feature { box-shadow: inset 0 1px 0 var(--spark-2); background: linear-gradient(180deg, rgba(217,119,87,.07), transparent 140px), var(--night-2); }
+.plan.is-feature .name { color: var(--spark); }
+@media (max-width: 900px) { .plan.is-feature { box-shadow: inset 0 0 0 1px var(--line-2), inset 0 1px 0 var(--spark-2); } }
+
+/* Trades: the trade name as a big quiet watermark */
+.who a { position: relative; overflow: hidden; padding-bottom: clamp(120px, 12vw, 160px); }
+.who .word { position: absolute; right: -4px; bottom: -0.22em; font-size: clamp(100px, 11vw, 150px); line-height: 1; font-weight: 640; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px #262626; pointer-events: none; transition: -webkit-text-stroke-color .3s; }
+.who a:hover .word { -webkit-text-stroke-color: rgba(217,119,87,.45); }
+.who h3, .who p, .who .go { position: relative; }
+.who a:hover .go { text-decoration-color: var(--spark); }
+
+/* Report */
+.sheet-head span { white-space: nowrap; }
+.srow:nth-child(3) b { color: var(--spark); }
+
+/* Final call: the ember, big */
+.final { position: relative; overflow: hidden; isolation: isolate; }
+.final::after { content: ""; position: absolute; z-index: -1; right: max(-200px, calc((100vw - var(--wrap)) / 2 - 220px)); top: 50%; width: clamp(420px, 48vw, 680px); aspect-ratio: 1; transform: translateY(-50%); border-radius: 50%; background: radial-gradient(circle, #fbe0d0 0%, #f0a07e 7%, #e58a66 13%, rgba(217,119,87,.55) 24%, rgba(200,100,70,.22) 42%, rgba(184,88,59,.07) 58%, transparent 70%); pointer-events: none; }
+.js.motion .final::after { animation: breathe 7s ease-in-out infinite; }
+@keyframes breathe { 0%,100% { opacity: .8; transform: translateY(-50%) scale(1); } 50% { opacity: 1; transform: translateY(-50%) scale(1.06); } }
+@media (max-width: 900px) { .final::after { width: 380px; right: -170px; top: -40px; transform: none; opacity: .6; } .js.motion .final::after { animation: none; } }
+
+/* Demo: a waiting state that looks alive */
+.demo-empty { display: flex; align-items: center; gap: 10px; }
+.demo-empty::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--spark); flex: none; animation: pulse 2.4s ease-out infinite; }
+
+/* Phones: full-width actions */
+@media (max-width: 520px) {
+  .hero-ctas, .final-ctas, .calc-ctas { display: grid; grid-template-columns: 1fr; width: 100%; }
+  .hero-ctas .btn, .final-ctas .btn, .calc-ctas .btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .booked::before, .demo-empty::before, .final::after { animation: none !important; } }
+.hero { overflow-x: clip; }
+html, body { overflow-x: clip; }

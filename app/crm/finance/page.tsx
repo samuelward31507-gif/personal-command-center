@@ -7,7 +7,7 @@ import PlanPanel from "./plan-panel";
 type Revenue={id:string;title:string;revenue_type:string;amount:number;status:string;due_date:string|null;paid_at:string|null;notes:string;contact_name:string;deal_title:string;project_name:string};
 type Expense={id:string;title:string;category:string;amount:number;expense_date:string;recurring:boolean;notes:string};
 type Summary={openDeals:number;openPipelineSetup:number;openPipelineMrr:number;dueNext30:number;recurringCosts:number;month:string;paidRevenue:number;setupRevenue:number;mrr:number;contractedMrr:number;arr:number;monthExpenses:number;monthNet:number;expected:number;overdue:number};
-const cash=(n:number)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(n||0);
+const cash=(n:number)=>{const v=n||0,whole=Math.abs(v%1)<0.005;return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:whole?0:2,maximumFractionDigits:whole?0:2}).format(v)};
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const typeLabel=(v:string)=>({"setup_fee":"Setup fee","monthly_retainer":"Monthly retainer","usage":"Usage","one_time":"One-time","other":"Other"}[v]||v);
 export default function FinancePage(){

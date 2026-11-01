@@ -5,13 +5,13 @@ export class AiTextError extends Error {
 }
 
 /** One non-streaming Claude call that returns plain text. Errors become short, safe client messages. */
-export async function claudeText(opts: { apiKey: string; system: string; user: string; maxTokens?: number; timeoutMs?: number; label: string }): Promise<string> {
+export async function claudeText(opts: { apiKey: string; system: string; user: string; maxTokens?: number; timeoutMs?: number; label: string; model?: string }): Promise<string> {
   let res: Response;
   try {
     res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": opts.apiKey, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: process.env.CINDER_ASK_MODEL?.trim() || "claude-sonnet-5-5", max_tokens: opts.maxTokens ?? 4000, system: opts.system, messages: [{ role: "user", content: opts.user }] }),
+      body: JSON.stringify({ model: opts.model || process.env.CINDER_ASK_MODEL?.trim() || "claude-sonnet-5-5", max_tokens: opts.maxTokens ?? 4000, system: opts.system, messages: [{ role: "user", content: opts.user }] }),
       signal: AbortSignal.timeout(opts.timeoutMs ?? 80_000),
     });
   } catch (e) {
