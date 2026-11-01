@@ -36,8 +36,9 @@ export function WorkspaceCard() {
 
   const dirty = JSON.stringify(w) !== saved;
   const set = <K extends keyof WorkspaceSettings>(k: K, v: WorkspaceSettings[K]) => { setW({ ...w, [k]: v }); setNote(null); };
-  const setTier = (t: "tier1" | "tier2", k: "label" | "setupFee" | "monthlyFee", v: string) => {
-    setW({ ...w, [t]: { ...w[t], [k]: k === "label" ? v : (v.replace(/[^\d]/g, "") === "" ? 0 : Number(v.replace(/[^\d]/g, ""))) } }); setNote(null);
+  const setTier = (t: "tier1" | "tier2", k: "label" | "setupFee" | "monthlyFee" | "setupLink" | "monthlyLink", v: string) => {
+    const text = k === "label" || k === "setupLink" || k === "monthlyLink";
+    setW({ ...w, [t]: { ...w[t], [k]: text ? v : (v.replace(/[^\d]/g, "") === "" ? 0 : Number(v.replace(/[^\d]/g, ""))) } }); setNote(null);
   };
 
   async function save() {
@@ -84,13 +85,15 @@ export function WorkspaceCard() {
           <label className="ws-field"><span>Setup</span><div className="ws-money"><i>$</i><input inputMode="numeric" value={money(w[t].setupFee)} onChange={e => setTier(t, "setupFee", e.target.value)} /></div></label>
           <label className="ws-field"><span>Monthly</span><div className="ws-money"><i>$</i><input inputMode="numeric" value={money(w[t].monthlyFee)} onChange={e => setTier(t, "monthlyFee", e.target.value)} /></div></label>
         </div>
+        <label className="ws-field"><span>Setup payment link</span><input type="url" placeholder="https://buy.stripe.com/…" value={w[t].setupLink} onChange={e => setTier(t, "setupLink", e.target.value)} /></label>
+        <label className="ws-field"><span>Monthly payment link</span><input type="url" placeholder="https://buy.stripe.com/…" value={w[t].monthlyLink} onChange={e => setTier(t, "monthlyLink", e.target.value)} /></label>
       </div>)}
     </div>
 
     <h3>Getting paid</h3>
-    <p className="ws-sub">Shown on every invoice. Cinder never takes payments or checks them: you mark invoices paid when the money lands.</p>
+    <p className="ws-sub">Each invoice shows the matching tier link from Offers (setup or monthly) when its amount matches that tier&apos;s price. Anything else (custom prices, other services) uses the fallback below. Cinder never takes payments or checks them: you mark invoices paid when the money lands.</p>
     <div className="ws-grid">
-      <label className="ws-field wide"><span>Payment link</span><input type="url" placeholder="https://buy.stripe.com/…" value={w.paymentLink} onChange={e => set("paymentLink", e.target.value)} /><small>Your own Stripe, Square or PayPal payment page. Leave blank if you don&apos;t have one.</small></label>
+      <label className="ws-field wide"><span>Fallback payment link</span><input type="url" placeholder="Optional" value={w.paymentLink} onChange={e => set("paymentLink", e.target.value)} /><small>For invoices that don&apos;t match a tier price. Leave blank to show only the instructions below.</small></label>
       <label className="ws-field wide"><span>Other ways to pay</span><textarea rows={3} value={w.paymentInstructions} onChange={e => set("paymentInstructions", e.target.value)} placeholder="e.g. Zelle to you@email.com, or ask for ACH details." /><small>Don&apos;t put full bank account numbers here. The invoice page is reachable by anyone with its link.</small></label>
     </div>
 

@@ -9,7 +9,7 @@
 .ow-note.ok { background: #1c2a20; color: #a9e2bb; }
 .ow-note.bad { background: #2e1c1a; color: #f2b0a5; }
 .ow-group { margin-top: 18px; }
-.ow-group-h { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #8f8d86; text-transform: uppercase; letter-spacing: .05em; padding-bottom: 8px; border-bottom: 1px solid #3a3935; }
+.ow-group-h { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #8f8d86; padding-bottom: 8px; border-bottom: 1px solid #3a3935; }
 .ow-group.overdue_30 .ow-group-h, .ow-group.overdue .ow-group-h { color: #e7a497; }
 .ow-row { display: grid; grid-template-columns: minmax(0, 1fr) 100px 170px auto; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid #33322f; }
 .ow-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }

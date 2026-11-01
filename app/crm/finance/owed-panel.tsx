@@ -9,6 +9,7 @@ type Group = { bucket: string; label: string; total: number; items: Item[] };
 type Data = { today: string; groups: Group[]; totalOpen: number; totalOverdue: number; notInvoiced: number; retainersToBill: number; paymentReady: boolean };
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 });
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const short = (d: string | null) => (d ? new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "No date");
 
 /** Who owes you: open money by urgency, with one-tap invoice links and reminder drafts. Nothing is sent or charged by Cinder. */
@@ -77,12 +78,12 @@ export default function OwedPanel({ onChange }: { onChange?: () => void }) {
         <p className="ow-sub">{d.totalOpen ? <>{usd(d.totalOpen)} open{d.totalOverdue ? <> · <b className="ow-late">{usd(d.totalOverdue)} overdue</b></> : null}{d.notInvoiced ? ` · ${d.notInvoiced} not invoiced yet` : ""}</> : "Nobody owes you anything right now."}</p></div>
       {d.retainersToBill > 0 && <button className="ow-btn primary" disabled={busy === "bill"} onClick={() => void billMonth()}>{busy === "bill" ? "Billing…" : `Bill this month (${d.retainersToBill})`}</button>}
     </div>
-    {!d.paymentReady && d.totalOpen > 0 && <p className="ow-warn">Invoices have no way to pay yet. Add your payment link in <Link href="/crm/settings">Settings → Getting paid</Link>.</p>}
+    {!d.paymentReady && d.totalOpen > 0 && <p className="ow-warn">Invoices have no way to pay yet. Add your payment links in <Link href="/crm/settings">Settings</Link> (Offers and Getting paid).</p>}
     {note && <p className={note.ok ? "ow-note ok" : "ow-note bad"} role={note.ok ? "status" : "alert"}>{note.text}</p>}
     {d.groups.map(g => <div key={g.bucket} className={"ow-group " + g.bucket}>
       <div className="ow-group-h"><span>{g.label}</span><span>{usd(g.total)}</span></div>
       {g.items.map(it => <div key={it.id} className="ow-row">
-        <div className="ow-main"><strong>{it.client || it.title}</strong><small>{it.client ? it.title.split(" — ").slice(1).join(" — ") || it.title : ""}{it.invoiceNumber ? ` · INV-${it.invoiceNumber}` : ""} · {short(it.dueDate)}</small></div>
+        <div className="ow-main"><strong>{it.client || it.title}</strong><small>{it.client ? cap(it.title.split(" — ").slice(1).join(" — ") || it.title) : ""}{it.invoiceNumber ? ` · INV-${it.invoiceNumber}` : ""} · {short(it.dueDate)}</small></div>
         <div className="ow-amt">{usd(it.amount)}</div>
         <div className="ow-next">{it.next}</div>
         <div className="ow-acts">

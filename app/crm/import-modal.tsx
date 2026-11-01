@@ -120,7 +120,7 @@ export default function ImportModal({ existingContacts, onClose, onImported }: {
     <div className="crm-modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <section className="crm-modal crm-import-modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
         <header>
-          <div><div className="crm-eyebrow">IMPORT LEADS</div><h2 id="import-title">
+          <div><div className="crm-eyebrow">Import leads</div><h2 id="import-title">
             {stage === "pick" ? "Import contacts from CSV" : stage === "preview" ? "Review before import" : "Import complete"}
           </h2></div>
           <button type="button" className="crm-icon-btn" onClick={onClose} aria-label="Close">×</button>

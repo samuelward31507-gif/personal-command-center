@@ -85,7 +85,7 @@ function Blocks({ text }: { text: string }) {
 
 function Card({ title, children, tone, tag }: { title: string; children: ReactNode; tone?: string; tag?: string }) {
   return <section style={{ background: C.card, border: `1px solid ${C.line}`, borderTop: tone ? `2px solid ${tone}` : `1px solid ${C.line}`, borderRadius: 12, padding: "16px 18px", minWidth: 0 }}>
-    <h3 style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, letterSpacing: 1.4, textTransform: "uppercase", color: tone ?? C.muted, display: "flex", alignItems: "center", gap: 8 }}>
+    <h3 style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, color: tone ?? C.muted, display: "flex", alignItems: "center", gap: 8 }}>
       {title}{tag && <span style={{ fontSize: 9.5, letterSpacing: 0.8, color: C.faint, border: `1px solid ${C.line}`, borderRadius: 999, padding: "1px 7px" }}>{tag}</span>}
     </h3>
     {children}
@@ -108,7 +108,7 @@ export function AuditReport({ audit }: { audit: AuditView }) {
     <header style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 14, padding: "20px 22px", display: "grid", gap: 14 }}>
       <div style={{ display: "flex", gap: 12, justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap" }}>
         <div style={{ minWidth: 0 }}>
-          <p style={{ margin: "0 0 6px", fontSize: 10, letterSpacing: 1.6, color: C.accent }}>BUSINESS AUDIT · SAVED DRAFT</p>
+          <p style={{ margin: "0 0 6px", fontSize: 10, letterSpacing: 1.6, color: C.accent }}>Business audit · saved draft</p>
           <h2 style={{ margin: 0, fontSize: 24, letterSpacing: "-0.5px", color: C.text }}>{audit.companyName}</h2>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -128,7 +128,7 @@ export function AuditReport({ audit }: { audit: AuditView }) {
     </header>
 
     {sections.next && <div style={{ display: "flex", gap: 12, alignItems: "baseline", background: "#1b1714", border: "1px solid #4a3a2f", borderRadius: 12, padding: "13px 18px" }}>
-      <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1.4, color: C.accent, whiteSpace: "nowrap" }}>NEXT STEP</span>
+      <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1.4, color: C.accent, whiteSpace: "nowrap" }}>Next step</span>
       <div style={{ fontSize: 13.5, lineHeight: 1.6, color: C.text }}>{inline(sections.next, "next")}</div>
     </div>}
 

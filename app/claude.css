@@ -1,6 +1,6 @@
 /* ============================================================================
    Cinder · Claude-style layer (loaded last)
-   Warm charcoal canvas, serif page titles, calm sans body, soft rounded cards,
+   Warm charcoal canvas, one sans typeface (Geist) everywhere, soft rounded cards,
    very little chrome. Monochrome actions; no labels stacked above titles.
    ========================================================================== */
 
@@ -27,7 +27,7 @@ html body .breadcrumbs strong { color: #e8e6de !important; font-weight: 500 !imp
 html body .main-panel main [class$="-eyebrow"], html body .main-panel main .eyebrow, html body .main-panel main .section-kicker,
 html body .main-panel main p:has(+ h1), html body .main-panel main div:has(+ h1):not(:has(*)) { display: none !important; }
 
-/* Page titles: Claude's serif, a touch larger and lighter. */
+/* Page titles (type set in the Type system block at the end). */
 html body .main-panel main h1, html body .main-panel main h1.td-title, html body .main-panel main h1.sb-title, html body .main-panel main .cm-title {
   font-size: clamp(30px, 2.8vw, 38px) !important; font-weight: 400 !important; letter-spacing: -0.02em !important; margin: 4px 0 10px !important;
 }
@@ -58,3 +58,37 @@ html body ::-webkit-scrollbar-thumb { background: #3d3c38; border-radius: 10px; 
 html body .cx-side button.cx-search, html body .cx-side button.cx-more { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #c2c0b6 !important; }
 html body .cx-side button.cx-search:hover, html body .cx-side button.cx-more:hover { background: #2a2927 !important; }
 html body .topbar, html body .crm-shell-main > .topbar { box-shadow: none !important; border: 0 !important; }
+
+/* ============================================================================
+   Type system: one typeface (Geist) for everything, like the website.
+   Titles are set tight and confident; body is calm; numbers line up.
+   ========================================================================== */
+:root { --pl-display: var(--st-font); }
+html body { font-family: var(--st-font) !important; font-size: 14px; line-height: 1.55; letter-spacing: -0.006em; }
+html body :is(button, input, select, textarea) { font-family: inherit; }
+
+/* Page titles and greetings */
+html body main h1, html body main:not(.calendar-page) h1, html body .calendar-page .calendar-header h1,
+html body .main-panel main h1, html body main h1.td-title, html body main h1.sb-title, html body main .cm-title,
+html body .main-panel main h1.td-title, html body .main-panel main h1.sb-title, html body .main-panel main .cm-title {
+  font-family: var(--st-font) !important; font-size: clamp(24px, 2.1vw, 28px) !important; font-weight: 600 !important;
+  letter-spacing: -0.028em !important; line-height: 1.2 !important; color: #f5f3ec !important; font-optical-sizing: auto;
+}
+html body .ask-root .ask-hello {
+  font-family: var(--st-font) !important; font-size: clamp(26px, 2.6vw, 32px) !important; font-weight: 600 !important; letter-spacing: -0.03em !important;
+}
+/* Subtitles */
+html body .page-subtitle, html body main h1 + p, html body .main-panel main h1 + p { font-size: 14.5px !important; line-height: 1.55 !important; color: #a8a59c !important; letter-spacing: -0.004em; }
+/* Section and card headings */
+html body main:not(.calendar-page) h2, html body .main-panel main h2 { font-family: var(--st-font) !important; font-size: 15px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: #f0eee6 !important; }
+html body main:not(.calendar-page) h3, html body .main-panel main h3 { font-family: var(--st-font) !important; font-size: 13.5px !important; font-weight: 600 !important; letter-spacing: -0.006em !important; color: #e8e6de !important; }
+/* Big numbers: tabular figures so columns line up */
+html body main :is(strong, b, td, .sb-num, .sb-goal-num, .ow-amt, [class*="amount"], [class*="money"], [class*="metric"] strong, .fin-metrics strong) { font-variant-numeric: tabular-nums; }
+html body .fin-metrics strong, html body .sb-num, html body .hb-tile strong { letter-spacing: -0.02em; font-weight: 600; }
+/* Small labels: sentence case, quiet; no shouting uppercase */
+html body .main-panel main :is(.fin-metrics small, .fin-secondary small) { text-transform: none !important; letter-spacing: 0 !important; font-size: 12.5px !important; font-weight: 500 !important; color: #9a978d !important; }
+
+/* Pipeline cards: the stage picker gets its own full-width row so it never truncates. */
+html body .pipeline-deal footer { flex-wrap: wrap !important; }
+html body .pipeline-deal footer select { flex: 1 1 100% !important; max-width: none !important; order: 3; font-size: 12.5px !important; padding: 6px 8px !important; }
+html body .pipeline-deal-monthly { color: #a9e2bb !important; }

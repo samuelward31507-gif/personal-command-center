@@ -90,3 +90,22 @@ ok(() => assert.match(topMoves(empty)[0].text, /fence and pool companies/));
 ok(() => assert.match(renderReport("Ridgeline", "2026-10", {}, "Jordan", "Acme").body, /Jordan\nAcme$/));
 
 console.log(`workspace: ${n} checks passed`);
+
+// Four payment links: the tier link is used only when the invoice amount matches that tier's price.
+{
+  const { paymentLinkFor, validateWorkspace: vw, mergeWorkspace: mw, DEFAULT_WORKSPACE: D } = await import("./lib/workspace.ts");
+  let m = 0; const ok2 = f => { f(); m++; };
+  const w = mw({ paymentLink: "https://pay.example.com/any", tier1: { setupLink: "https://buy.stripe.com/t1s", monthlyLink: "https://buy.stripe.com/t1m" }, tier2: { setupLink: "https://buy.stripe.com/t2s", monthlyLink: "https://buy.stripe.com/t2m" } });
+  ok2(() => assert.deepEqual(paymentLinkFor(w, "tier1_speed_to_lead", "setup_fee", 1500), { link: "https://buy.stripe.com/t1s", kind: "setup" }));
+  ok2(() => assert.equal(paymentLinkFor(w, "tier1_speed_to_lead", "monthly_retainer", 997).link, "https://buy.stripe.com/t1m"));
+  ok2(() => assert.equal(paymentLinkFor(w, "tier2_revenue_system", "setup_fee", 3000).link, "https://buy.stripe.com/t2s"));
+  ok2(() => assert.equal(paymentLinkFor(w, "tier2_revenue_system", "monthly_retainer", 1500).link, "https://buy.stripe.com/t2m"));
+  ok2(() => assert.equal(paymentLinkFor(w, "tier1_speed_to_lead", "setup_fee", 1200).kind, "general", "discounted price never gets the fixed-price link"));
+  ok2(() => assert.equal(paymentLinkFor(w, "ai_voice_agent", "one_time", 500).kind, "general"));
+  ok2(() => assert.equal(paymentLinkFor(D, "tier1_speed_to_lead", "setup_fee", 1500).kind, "none"));
+  ok2(() => assert.equal(mw({ tier1: { setupLink: "http://insecure.com" } }).tier1.setupLink, "", "http links are ignored"));
+  ok2(() => assert.match(vw({ ...D, tier2: { ...D.tier2, monthlyLink: "not a url" } }).error, /Tier 2 monthly payment link/));
+  ok2(() => assert.equal(vw({ ...D, tier1: { ...D.tier1, setupLink: "https://buy.stripe.com/x" } }).ok.tier1.setupLink, "https://buy.stripe.com/x"));
+  ok2(() => assert.equal(vw({ ...D, tier1: { ...D.tier1, setupLink: "" } }).ok.tier1.setupLink, "", "a link can be cleared"));
+  console.log(`payment links: ${m} checks passed`);
+}

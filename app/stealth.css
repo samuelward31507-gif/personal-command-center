@@ -68,7 +68,7 @@ html body .page-subtitle, html body main:not(.calendar-page) h1 + p { font-size:
 /* Eyebrows ("CINDER / SALES") */
 html body .eyebrow, html body .crm-eyebrow, html body .projects-eyebrow, html body .tasks-eyebrow, html body .section-kicker,
 html body [class$="-eyebrow"]:not(.calendar-eyebrow) {
-  font-size: 11px !important; font-weight: 600 !important; letter-spacing: .09em !important; color: var(--st-faint) !important; text-transform: uppercase;
+  font-size: 11px !important; font-weight: 600 !important; color: var(--st-faint) !important;
 }
 html body .eyebrow-line { background: #45443f !important; }
 
