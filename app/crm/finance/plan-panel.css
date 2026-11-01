@@ -28,3 +28,5 @@ html body main .mp-seg button[aria-pressed=true] { color: #ededed !important; }
 .mp-clients em { font-style: normal; text-align: right; color: #c9c9c9; }
 .mp-clients em.is-paid { color: #a9e2bb; } .mp-clients em.is-overdue { color: #f2b0a5; font-weight: 600; } .mp-clients em.is-not_billed { color: #ecc98c; } .mp-clients em.is-not_live { color: #8a8a8a; }
 @media (max-width: 700px) { .mp-flow i { display: none; } .mp-clients li { grid-template-columns: minmax(0, 1fr) auto; } .mp-clients em { grid-column: 1 / -1; text-align: left; } }
+html body main .mp-seg.mp-seg.mp-seg button { background: transparent !important; }
+html body main .mp-seg.mp-seg.mp-seg button[aria-pressed=true] { background: #2c2c2c !important; color: #ededed !important; }

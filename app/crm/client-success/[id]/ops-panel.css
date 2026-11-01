@@ -47,3 +47,5 @@ html body main .op-pf button[aria-pressed=true] { background: #2c2c2c !important
 .op-bad { font-size: 13px; color: #f2b0a5; margin: 10px 0 0; }
 @media (max-width: 760px) { .op-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .op-fields { grid-template-columns: 1fr; } .op-steps li { grid-template-columns: 1fr; } }
 html body main .op-tabs button[aria-pressed=true] { border-color: #5a5a5a !important; }
+html body main .op-tabs.op-tabs.op-tabs button { background: transparent !important; }
+html body main .op-tabs.op-tabs.op-tabs button[aria-pressed=true] { background: #262626 !important; border-color: #5a5a5a !important; }
