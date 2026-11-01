@@ -62,7 +62,7 @@ function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/pipeline")) return "Pipeline";
   if (pathname.startsWith("/crm/deals")) return "Deal";
   if (pathname.startsWith("/crm/outreach")) return "Outreach";
-  if (pathname.startsWith("/crm/preparation")) return "Preparation";
+  if (pathname.startsWith("/crm/preparation")) return "Research";
   if (pathname.startsWith("/crm/workforce") || view === "workforce") return "AI team";
   if (pathname.startsWith("/crm/intelligence") || view === "intelligence") return "Intelligence";
   if (pathname.startsWith("/crm/strategy") || view === "strategy") return "Strategy & memory";

@@ -132,6 +132,8 @@ ok(() => assert.match(reportUi, /LATER — NOT THE FIRST PITCH/, "upsells clearl
 
 const sidebar = readFileSync("app/cinder-sidebar.tsx", "utf8");
 ok(() => assert.match(sidebar, /onNavigate && \(key === "home" \|\| key === "schedule"\)\) \{ e\.preventDefault\(\); onNavigate\(key\); \}/, "sidebar only uses in-page views for Home and My day"));
-ok(() => assert.match(sidebar, /\["audit", "Business audit", "search", "\/crm\/audit"\]/, "Business audit links to its real route"));
+ok(() => assert.match(sidebar, /\["preparation", "Research", "search", "\/crm\/preparation"\]/, "Research is in the sidebar"));
+ok(() => assert.match(readFileSync("app/crm/preparation/page.tsx", "utf8"), /href="\/crm\/audit"/, "Business audit opens from Research"));
+ok(() => assert.match(readFileSync("app/command-bar.tsx", "utf8"), /\["Business audit", "\/crm\/audit"/, "Business audit is in search"));
 
 console.log(`Business audit regression checks passed (${n} assertions).`);
