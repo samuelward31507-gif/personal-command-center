@@ -45,8 +45,15 @@ export async function GET() {
       SELECT c.id, c.first_name, c.last_name, c.company, c.role, c.email, c.phone, c.status,
              c.source, c.notes, c.follow_up_at, c.website, c.instagram, c.facebook, c.location, c.sms_consent, c.sms_consent_at, c.sms_consent_source, c.created_at, c.updated_at,
              (SELECT MAX(a.occurred_at) FROM public.contact_activities a
-              WHERE a.owner_id = c.owner_id AND a.contact_id = c.id) AS last_contact_at
+              WHERE a.owner_id = c.owner_id AND a.contact_id = c.id) AS last_contact_at,
+             lt.occurred_at AS last_touch_at, lt.outcome AS last_touch_outcome
       FROM public.contacts c
+      LEFT JOIN LATERAL (
+        SELECT a.occurred_at, a.outcome FROM public.contact_activities a
+        WHERE a.owner_id = c.owner_id AND a.contact_id = c.id
+          AND a.action <> 'note' AND a.outcome IS DISTINCT FROM 'initiated'
+        ORDER BY a.occurred_at DESC LIMIT 1
+      ) lt ON true
       WHERE c.owner_id = ${user.id}
       ORDER BY c.follow_up_at ASC NULLS LAST, c.updated_at DESC
     `;
@@ -68,6 +75,8 @@ export async function GET() {
       source: row.source,
       nextFollowUp: row.follow_up_at ? (row.follow_up_at instanceof Date ? row.follow_up_at.toISOString().slice(0, 10) : String(row.follow_up_at).slice(0, 10)) : "",
       lastContact: row.last_contact_at ? new Date(String(row.last_contact_at)).toISOString() : "",
+      lastTouchAt: row.last_touch_at ? new Date(String(row.last_touch_at)).toISOString() : "",
+      lastTouchOutcome: row.last_touch_outcome ? String(row.last_touch_outcome) : "",
       notes: row.notes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

@@ -149,3 +149,10 @@ html body .crm-page .crm-step-btn:disabled{opacity:.35;cursor:default}
   .crm-page .crm-workspace{overflow:clip;align-items:start}
   .crm-page .crm-detail-pane{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:thin}
 }
+/* Called-today clarity */
+html body main .crm-contact-row.crm-contact-row.called{opacity:.55!important}
+html body main .crm-contact-row.crm-contact-row.called.selected{opacity:1!important}
+html body main .crm-contact-main .crm-called-badge.crm-called-badge{align-self:flex-start;display:inline-flex;padding:2px 7px;border-radius:999px;font-size:10px!important;font-weight:650;color:#ffb27a!important;background:rgba(255,122,48,.14)!important;border:1px solid rgba(255,122,48,.35)!important}
+html body main .crm-detail-pane p.crm-called-note.crm-called-note{margin:14px 0 0;padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.5;font-weight:600;color:#ffcfa8!important;background:rgba(255,122,48,.12)!important;border:1px solid rgba(255,122,48,.4)!important}
+html body main .crm-detail-pane p.crm-last-touch.crm-last-touch{margin:12px 0 0;font-size:11px}
+.crm-filters select{width:132px}
