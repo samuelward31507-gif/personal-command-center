@@ -128,3 +128,12 @@
 .crm-page .crm-workspace:has(.crm-list-pane .crm-empty){grid-template-columns:1fr}
 .crm-page .crm-workspace:has(.crm-list-pane .crm-empty) .crm-detail-pane:has(.crm-detail-empty){display:none}
 .crm-page .crm-workspace:has(.crm-list-pane .crm-empty) .crm-list-pane{border-right:0}
+
+/* Small screens: tapping a contact opens their record as a full-screen sheet, with a way back to the list. */
+.crm-page .crm-sheet-back{display:none}
+@media(max-width:1180px){
+  .crm-page .crm-workspace:not(.has-sheet) .crm-detail-pane{display:none}
+  .crm-page .crm-workspace.has-sheet .crm-detail-pane{display:block;position:fixed;inset:0;z-index:80;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#141414!important;padding:14px 16px 48px;border:0!important;border-radius:0!important}
+  .crm-page .crm-workspace.has-sheet .crm-sheet-back{display:inline-flex;align-items:center;margin:0 0 14px;padding:8px 12px;border-radius:8px;border:1px solid #2e2e2e;background:#1c1c1c!important;color:#ededed!important;font-size:14px;cursor:pointer}
+  .crm-page .crm-detail-section dl>div{grid-template-columns:110px minmax(0,1fr)}
+}
