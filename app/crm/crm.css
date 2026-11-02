@@ -137,3 +137,15 @@
   .crm-page .crm-workspace.has-sheet .crm-sheet-back{display:inline-flex;align-items:center;margin:0 0 14px;padding:8px 12px;border-radius:8px;border:1px solid #2e2e2e;background:#1c1c1c!important;color:#ededed!important;font-size:14px;cursor:pointer}
   .crm-page .crm-detail-section dl>div{grid-template-columns:110px minmax(0,1fr)}
 }
+
+/* Work the list top to bottom: stable order, a step bar, and the record stays in view while you scroll. */
+.crm-page .crm-step{display:flex;align-items:center;gap:8px;margin:0 0 14px;font-size:12.5px;color:#8f8f8f}
+.crm-page .crm-step span{margin-right:auto}
+html body .crm-page .crm-step-btn.crm-step-btn{min-height:32px;padding:6px 11px!important;border-radius:8px!important;border:1px solid #2e2e2e!important;background:#1c1c1c!important;color:#d4d4d4!important;font-size:13px!important;cursor:pointer}
+html body .crm-page .crm-step-btn.crm-step-next{background:#ededed!important;color:#141414!important;border-color:#ededed!important;font-weight:600!important}
+html body .crm-page .crm-step-btn:disabled{opacity:.35;cursor:default}
+.crm-page .crm-filters select+select{width:118px}
+@media(min-width:1181px){
+  .crm-page .crm-workspace{overflow:clip;align-items:start}
+  .crm-page .crm-detail-pane{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto;scrollbar-width:thin}
+}

@@ -6,4 +6,4 @@ Disallow: /invoice/
 Disallow: /report/
 Disallow: /approve/
 Disallow: /portal/
-Sitemap: https://cinder-revenue-company.vercel.app/sitemap.xml
+Sitemap: https://cinderrevenue.com/sitemap.xml
