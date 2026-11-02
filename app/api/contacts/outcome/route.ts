@@ -109,7 +109,19 @@ export async function POST(request: Request) {
     if ((outcome === "interested" || outcome === "meeting_booked") && openDeals.length === 0) {
       const audit = typeof contact[0].audit === "string" ? contact[0].audit : "";
       const verdict = reportSection(audit, "Verdict") || reportSection(audit, "1\\. Executive verdict") || null;
-      suggestedDeal = { contactId, ...suggestDeal({ name: String(contact[0].name ?? ""), company: String(contact[0].company ?? "") }, verdict, outcome, offersFrom(await loadWorkspace(user.id))) };
+      const draft = suggestDeal({ name: String(contact[0].name ?? ""), company: String(contact[0].company ?? "") }, verdict, outcome, offersFrom(await loadWorkspace(user.id)));
+      // A booked meeting or real interest always lands in the pipeline; no extra tap to forget.
+      // Guarded so double-taps never create two open deals for the same contact.
+      const created = await sql`INSERT INTO public.deals (owner_id, contact_id, title, service_type, stage, setup_fee, monthly_fee, source, notes, agreement_status)
+        SELECT ${user.id}, ${contactId}::uuid, ${draft.title}, ${draft.serviceType}, ${draft.stage}, ${draft.setupFee}, ${draft.monthlyFee}, 'Call outcome', ${notes}, 'pending'
+        WHERE NOT EXISTS (SELECT 1 FROM public.deals WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND stage NOT IN ('won','lost'))
+        RETURNING id, title, stage`;
+      if (created.length) movedDeals.push({ id: String(created[0].id), title: String(created[0].title), from: "none", to: String(created[0].stage) });
+      else suggestedDeal = { contactId, ...draft };
+    }
+    if (outcome === "interested" || outcome === "meeting_booked") {
+      await sql`UPDATE public.contacts SET status = 'contact', updated_at = now()
+        WHERE id = ${contactId}::uuid AND owner_id = ${user.id} AND status = 'lead'`;
     }
 
     return Response.json({
