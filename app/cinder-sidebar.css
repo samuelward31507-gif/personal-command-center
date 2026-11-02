@@ -86,3 +86,4 @@
 .cx-chev.is-open { transform: rotate(90deg); }
 .cx-sub { display: grid; gap: 1px; margin: 2px 0 0; }
 .cx-side.is-collapsed .cx-chev { display: none; }
+.cx-nav > *, .cx-sub > * { flex-shrink: 0; }

@@ -26,7 +26,7 @@ export default function OutreachPage(){
  const [contacts,setContacts]=useState<Contact[]>([]);
  const [loading,setLoading]=useState(true);
  const [selected,setSelected]=useState("");
- const [niche,setNiche]=useState("HVAC");
+ const [niche,setNiche]=useState("Fence");
  const [pain,setPain]=useState("responding to new leads quickly and following up until they book");
  const [notes,setNotes]=useState("");
  const [smsConsentConfirmed,setSmsConsentConfirmed]=useState(false);
