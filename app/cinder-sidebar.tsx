@@ -18,6 +18,7 @@ type Props = {
 const primary = [
   ["needs-you", "Today", "sun", "/crm/needs-you"],
   ["call", "Call mode", "phone", "/crm/call"],
+  ["practice", "Practice", "mic", "/crm/practice"],
   ["contacts", "Contacts", "users", "/crm"],
   ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
   ["client-success", "Clients", "briefcase", "/crm/client-success"],
@@ -56,6 +57,7 @@ function Icon({ name }: { name: string }) {
     settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></>,
     phone: <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/>,
     chart: <><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></>,
+    mic: <><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></>,
     chat: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/>,
     users: <><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.4-3.6 2.6-5.5 6-5.5s5.6 1.9 6 5.5"/><path d="M16 5.2a3 3 0 0 1 0 5.6M18 14.7c1.8.7 2.8 2.4 3 5.3"/></>,
     briefcase: <><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8.5 7V5a1.5 1.5 0 0 1 1.5-1.5h4A1.5 1.5 0 0 1 15.5 5v2M3 12.5h18"/></>,
@@ -120,7 +122,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     if (key === "pipeline") return pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/deals");
     if (key === "preparation") return pathname.startsWith("/crm/preparation") || pathname.startsWith("/crm/audit");
     const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
-      "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", outreach: "/crm/outreach", reports: "/crm/reports", scoreboard: "/crm/scoreboard", operations: "/crm/operations", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
+      "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", practice: "/crm/practice", outreach: "/crm/outreach", reports: "/crm/reports", scoreboard: "/crm/scoreboard", operations: "/crm/operations", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
       intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings" };
     return map[key] ? pathname.startsWith(map[key]) : activeKey === key;
   };

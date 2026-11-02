@@ -4,6 +4,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { isAllowedUser } from "./lib/owner-gate.ts";
 import { bearerMatches } from "./lib/bearer.ts";
+import { validatePractice, parseScore, ownerPrompt } from "./lib/practice.ts";
 import { weightedPipeline, DEAL_STAGES, STAGE_PROBABILITY } from "./lib/offers.ts";
 let n = 0; const ok = fn => { fn(); n++; };
 const read = p => readFileSync(p, "utf8");
@@ -58,5 +59,14 @@ ok(() => assert.deepEqual(weightedPipeline([{ stage: "proposal", setupFee: 1000,
 ok(() => assert.deepEqual(weightedPipeline([{ stage: "proposal", setupFee: 1000, monthlyFee: 1000, probability: 90 }]), { setup: 900, monthly: 900 }));
 ok(() => assert.deepEqual(weightedPipeline([{ stage: "won", setupFee: 1000, monthlyFee: 1000 }, { stage: "lost", setupFee: 9, monthlyFee: 9 }]), { setup: 0, monthly: 0 }));
 ok(() => assert.match(readFileSync("db/migrations/0032_pipeline_stages_probability.sql", "utf8"), /'negotiation'/));
+
+// Practice calls: validation, scoring parse, and the owner never breaks character or coaches.
+ok(() => assert.equal(validatePractice({ persona: "nope", turns: [] }).persona, "fence_busy"));
+ok(() => assert.match(validatePractice({ action: "score", turns: [] }).error, /Say something first/));
+ok(() => assert.equal(validatePractice({ turns: Array.from({ length: 60 }, () => ({ who: "you", text: "hi" })) }).turns.length, 40));
+ok(() => assert.equal(parseScore('noise {"score": 140, "verdict": "ok", "wins": ["a"], "fixes": [], "betterLine": "x"} tail').score, 100));
+ok(() => assert.equal(parseScore("no json"), null));
+ok(() => assert.match(ownerPrompt("pool_skeptic", { company: "Cinder", repName: "Sam" }).system, /Never say you're an AI/));
+ok(() => assert.match(read("app/api/practice/route.ts"), /aiAllowed\(user\.id\)/));
 
 console.log(`integrity: ${n} checks passed`);

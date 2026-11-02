@@ -1,0 +1,36 @@
+.pr-page { max-width: 760px; margin: 0 auto; padding: 34px 24px 80px; }
+.pr-head h1 { margin: 0 0 6px; }
+.pr-head p { margin: 0; font-size: 14.5px; }
+.pr-reps { margin-top: 10px; font-size: 13px; color: #e9a383; }
+.pr-label { font-size: 12px; font-weight: 500; color: #8f8f8f; margin: 18px 0 8px; }
+.pr-personas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 640px) { .pr-personas { grid-template-columns: 1fr; } }
+html body main .pr-persona.pr-persona { display: grid; gap: 4px; text-align: left; padding: 12px 14px !important; border: 1px solid #2a2a2a !important; border-radius: 10px !important; color: #a3a3a3 !important; cursor: pointer; height: auto !important; }
+.pr-persona b { color: #ededed; font-size: 14px; font-weight: 560; }
+.pr-persona span { font-size: 12.5px; line-height: 1.45; white-space: normal; }
+html body main .pr-persona.pr-persona.is-on { border-color: rgba(217,119,87,.6) !important; background: rgba(217,119,87,.07) !important; }
+.pr-start { margin-top: 16px; height: 42px; padding: 0 18px; border: 0; border-radius: 9px; background: #ededed; color: #141414; font-weight: 600; font-size: 14px; cursor: pointer; }
+.pr-call { margin-top: 18px; border: 1px solid #262626; border-radius: 14px; background: #181818; overflow: hidden; }
+.pr-call-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #262626; font-size: 13.5px; color: #ededed; }
+html body main .pr-end.pr-end { border: 1px solid #333 !important; border-radius: 8px !important; padding: 6px 10px !important; font-size: 12.5px !important; color: #ededed !important; cursor: pointer; height: auto !important; }
+.pr-thread { display: grid; gap: 10px; padding: 16px; max-height: 52vh; overflow-y: auto; }
+.pr-msg { max-width: 82%; padding: 10px 13px; border-radius: 14px; font-size: 14.5px; line-height: 1.45; color: #ededed; }
+.pr-msg small { display: block; font-size: 11.5px; color: #8f8f8f; margin-bottom: 2px; }
+.pr-owner { justify-self: start; background: #232323; border-bottom-left-radius: 5px; }
+.pr-you { justify-self: end; background: #2e2e2e; border-bottom-right-radius: 5px; }
+.pr-typing { display: inline-flex; gap: 4px; }
+.pr-typing i { width: 6px; height: 6px; border-radius: 50%; background: #8f8f8f; animation: prb 1s infinite; }
+.pr-typing i:nth-child(2) { animation-delay: .15s; } .pr-typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes prb { 0%, 80%, 100% { opacity: .3; } 40% { opacity: 1; } }
+.pr-input { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #262626; }
+.pr-input textarea { flex: 1; resize: none; border: 1px solid #2e2e2e; border-radius: 10px; background: #141414; color: #ededed; padding: 10px 12px; font: inherit; font-size: 15px; }
+.pr-input button { align-self: stretch; padding: 0 16px; border: 0; border-radius: 10px; background: #ededed; color: #141414; font-weight: 600; cursor: pointer; }
+.pr-input button:disabled, .pr-start:disabled { opacity: .45; cursor: default; }
+.pr-err { margin-top: 12px; font-size: 13.5px; }
+.pr-card { margin-top: 18px; padding: 20px 22px; border: 1px solid #262626; border-radius: 14px; background: #181818; }
+.pr-score b { font-size: 44px; font-weight: 520; letter-spacing: -0.04em; color: #e58a66; }
+.pr-score span { color: #8f8f8f; margin-left: 4px; }
+.pr-verdict { margin: 4px 0 0; font-size: 15px; color: #ededed !important; }
+.pr-card ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; color: #c9c9c9; }
+.pr-better { margin: 0; font-size: 14.5px; color: #ededed !important; }
+.pr-ai { margin-top: 16px; font-size: 12px; color: #767676; }
