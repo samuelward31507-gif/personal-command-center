@@ -101,6 +101,7 @@ export default function SettingsPage() {
   const [error, setError] = useState("");
   const [databaseStatus, setDatabaseStatus] = useState("Checking…");
   const [hermesStatus, setHermesStatus] = useState("Checking…");
+  const [calStatus, setCalStatus] = useState("Checking…");
   const [tab, setTab] = useState<Tab>("business");
   // The tab lives in the URL hash so links like /crm/settings#automations open the right one.
   useEffect(() => {
@@ -124,6 +125,7 @@ export default function SettingsPage() {
         if (!response.ok) { setHermesStatus("Unavailable"); return; }
         const data = await response.json();
         setHermesStatus(data.configured === true ? "Configured" : "Not configured");
+        setCalStatus(data.calAi === true ? "Connected" : "Setup required");
       })
       .catch(() => { if (active) setHermesStatus("Unavailable"); });
     return () => { active = false; };
@@ -132,7 +134,7 @@ export default function SettingsPage() {
   const integrations = [
     { name: "Database", detail: "Contacts, deals, tasks, clients and money", status: databaseStatus },
     { name: "Hermes", detail: "Lets your AI chief of staff read Cinder. It can't take actions.", status: hermesStatus },
-    { name: "Cal.ai scheduling", detail: "Bookings flow into Cinder automatically", status: "Setup required" },
+    { name: "Cal.ai scheduling", detail: "Bookings flow into Cinder automatically", status: calStatus },
   ];
 
   async function signOut() {
@@ -179,7 +181,7 @@ export default function SettingsPage() {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
                 {item.name === "Cal.ai scheduling" && <Link href="/crm/settings/cal-ai" style={{ fontSize: 12.5, color:"#e6e6e6", textDecoration: "none", fontWeight: 600 }}>Set up</Link>}
-                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color:item.status === "Connected" || item.status === "Configured" ? "#a9e2bb" : "#ababab", background:item.status === "Connected" || item.status === "Configured" ? "#1c2a20" : "#232323", borderRadius: 20, padding: "5px 10px" }}>{item.status}</span>
+                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color:item.status === "Connected" || item.status === "Configured" ? "#e4e4e4" : "#ababab", background:item.status === "Connected" || item.status === "Configured" ? "#1c2a20" : "#232323", borderRadius: 20, padding: "5px 10px" }}>{item.status}</span>
               </div>
             </article>
           ))}

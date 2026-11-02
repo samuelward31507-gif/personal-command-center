@@ -32,7 +32,7 @@ ok(() => assert.match(buildWeeklyReview(empty, "x").lines.join("\n"), /No open d
 ok(() => assert.equal(r.link.path, "/crm/needs-you"));
 ok(() => assert.ok(r.subject.length <= 140));
 const cron = readFileSync("app/api/cron/weekly-review/route.ts", "utf8");
-ok(() => assert.match(cron, /authorization"\) !== `Bearer \$\{secret\}`/, "cron requires CRON_SECRET"));
+ok(() => assert.match(cron, /bearerMatches\(request\.headers\.get\("authorization"\), secret\)/, "cron requires CRON_SECRET"));
 ok(() => assert.match(cron, /logRun\(sql, "weekly-review"/, "every run is logged"));
 const data = readFileSync("lib/weekly-review-data.ts", "utf8");
 ok(() => assert.doesNotMatch(data, /\b(UPDATE|INSERT|DELETE)\b/, "the review is read-only"));

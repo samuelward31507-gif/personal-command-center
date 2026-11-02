@@ -4,7 +4,7 @@
 // by the model; the founder confirms each change, and /api/ask/execute re-validates it.
 // Cinder never sends messages, places calls, drafts SMS, deletes records or marks money paid.
 
-export const ASK_STAGES = ["new", "contacted", "meeting_booked", "meeting_held", "proposal", "won", "lost", "nurture"] as const;
+export const ASK_STAGES = ["new", "qualified", "contacted", "interested", "meeting_booked", "meeting_held", "proposal", "negotiation", "won", "lost", "nurture"] as const;
 export const ASK_TIERS = {
   tier1: { serviceType: "tier1_speed_to_lead", label: "Tier 1 · Speed to Lead", setupFee: 1500, monthlyFee: 997 },
   tier2: { serviceType: "tier2_revenue_system", label: "Tier 2 · Revenue System", setupFee: 3000, monthlyFee: 1500 },

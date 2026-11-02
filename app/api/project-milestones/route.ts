@@ -1,10 +1,10 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const statuses=new Set(["todo","in_progress","blocked","done","cancelled"]);
 function db(){if(!process.env.DATABASE_URL)throw new Error("DATABASE_URL is not configured.");return neon(process.env.DATABASE_URL);}
-async function currentUser(){const r=await auth.getSession();return r?.data?.session&&r?.data?.user?.id?{id:String(r.data.user.id)}:null;}
+async function currentUser(){const r=await getAllowedSession();return r?.data?.session&&r?.data?.user?.id?{id:String(r.data.user.id)}:null;}
 function err(message:string,status:number){return Response.json({error:message},{status});}
 function uuid(v:unknown):string|null|false{if(v===null||v===undefined||v==="")return null;return typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v)?v:false;}
 function due(v:unknown):string|null|false{if(v===null||v===undefined||v==="")return null;if(typeof v!=="string"||v.length>40)return false;const day=v.slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return false;const parsed=new Date(day+"T00:00:00.000Z");if(Number.isNaN(parsed.getTime())||parsed.toISOString().slice(0,10)!==day)return false;if(v===day)return v;const timestamp=/^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,3})?)?(?:Z|[+-](?:[01]\d|2[0-3]):?[0-5]\d)$/;return timestamp.test(v)&&!Number.isNaN(Date.parse(v))?v:false;}

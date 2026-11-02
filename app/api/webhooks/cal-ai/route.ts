@@ -118,35 +118,32 @@ export async function POST(request: Request) {
   if (!supported.has(trigger)) return Response.json({ received: true, ignored: true, trigger });
   const uid = text(payload.uid, 300);
   if (!uid) return Response.json({ error: "Webhook uid is required for booking events." }, { status: 400 });
+  // Bookings always belong to the configured workspace; never match contacts across accounts.
+  const configuredOwnerId = text(process.env.CINDER_OWNER_ID, 200);
+  if (!configuredOwnerId) return Response.json({ error: "CINDER_OWNER_ID is not configured." }, { status: 503 });
 
   try {
     const sql = db();
     const attendeeEmails = personList(payload.attendees)
       .map((person) => text(person.email, 320).toLowerCase())
       .filter(validCalAiEmail);
-    // Keep every imported booking inside Cinder's configured workspace.
-    // Never let an attendee email from another workspace redirect calendar ownership.
-    const configuredOwnerId = text(process.env.CINDER_OWNER_ID, 200);
+    // Cal.com retries deliveries. An event that was already processed is acknowledged, not re-run,
+    // so deal changes and alert emails never happen twice.
+    const seen = await sql`SELECT 1 FROM public.cal_ai_webhook_events WHERE provider_event_id = ${uid + ":" + trigger} AND processing_status = 'processed' LIMIT 1`;
+    if (seen.length) return Response.json({ received: true, duplicate: true, trigger });
     let contact: { id: string; owner_id: string } | undefined;
     for (const email of attendeeEmails) {
-      const rows = configuredOwnerId
-        ? await sql`
+      const rows = await sql`
             SELECT id, owner_id FROM public.contacts
             WHERE owner_id = ${configuredOwnerId} AND lower(trim(email)) = ${email}
             ORDER BY updated_at DESC LIMIT 1
-          `
-        : await sql`
-            SELECT id, owner_id FROM public.contacts
-            WHERE lower(trim(email)) = ${email}
-            GROUP BY id, owner_id
-            LIMIT 2
           `;
-      if (rows.length === 1 || (configuredOwnerId && rows[0])) {
+      if (rows[0]) {
         contact = { id: String(rows[0].id), owner_id: String(rows[0].owner_id) };
         break;
       }
     }
-    const ownerId = configuredOwnerId || contact?.owner_id || "";
+    const ownerId = configuredOwnerId;
     const summary = safeSummary(payload);
     const person = bookingPerson(payload);
     let createdContact = false;
@@ -249,6 +246,9 @@ export async function POST(request: Request) {
         `;
       }
       if (contact) {
+        // A booked call is a reply: stop any call/text sequence for this person.
+        await sql`UPDATE public.contact_outreach SET status = 'meeting_booked', updated_at = now()
+          WHERE owner_id = ${ownerId} AND contact_id = ${contact.id}::uuid AND status = 'active'`;
         const who = person?.company || person?.name || "";
         const dealId = await bookingToDeal(sql, ownerId, contact.id, who, uid, startsIso, trigger === "BOOKING_CREATED" || createdContact);
         const when = new Intl.DateTimeFormat("en-US", { timeZone: TZ(), weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(startsIso));
@@ -274,6 +274,12 @@ export async function POST(request: Request) {
       if (deal && next) {
         await sql`UPDATE public.deals SET stage = ${next}, next_step = 'Fill in discovery and draft the proposal', next_step_at = ${localDate(new Date().toISOString(), TZ())}::date, updated_at = now()
           WHERE id = ${deal.id}::uuid AND owner_id = ${ownerId} AND stage NOT IN ('won','lost')`;
+      }
+      // Every finished call gets a follow-up task, linked to the contact and deal.
+      if (contactId) {
+        const due = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+        await sql`INSERT INTO public.tasks (owner_id, title, description, status, priority, due_at, contact_id, deal_id)
+          VALUES (${ownerId}, ${"Follow up after the call"}, ${"Log what you learned in discovery, then send the recap or proposal while it's fresh."}, 'todo', 'high', ${due}::timestamptz, ${contactId}::uuid, ${deal?.id ?? null}::uuid)`;
       }
     }
 

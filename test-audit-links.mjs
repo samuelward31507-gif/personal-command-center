@@ -10,8 +10,8 @@ ok(() => assert.equal(resolveLink(`cinder://audit/${id}`), "/crm/audits/" + id))
 ok(() => assert.equal(resolveLink(`cinder://deal/${id}`), "/crm/deals/" + id));
 const cron = readFileSync("app/api/cron/pre-audit/route.ts", "utf8") + readFileSync("lib/pre-audit.ts", "utf8");
 const cronRoute = readFileSync("app/api/cron/pre-audit/route.ts", "utf8");
-ok(() => assert.match(cron, /authorization"\) !== `Bearer \$\{secret\}`/, "cron requires the bearer secret"));
-ok(() => assert.match(cron, /if \(!secret/, "no secret configured means no run"));
+ok(() => assert.match(cron, /bearerMatches\(request\.headers\.get\("authorization"\), secret\)/, "cron requires the bearer secret"));
+ok(() => assert.match(readFileSync("lib/bearer.ts", "utf8"), /if \(!secret\) return false/, "no secret configured means no run"));
 ok(() => assert.match(cron, /DAILY_CAP = 20/, "spend is capped"));
 ok(() => assert.match(cron, /NOT EXISTS \(SELECT 1 FROM public\.research_artifacts/, "never re-audits a contact that already has one"));
 ok(() => assert.doesNotMatch(cron, /sms|twilio|sendEmail|INSERT INTO public\.contact_activities/i, "research only — no outreach"));

@@ -7,7 +7,7 @@
 .ws-save { height: 36px; padding: 0 16px; border-radius: 9px; border: 1px solid #efefef; background: #efefef; color: #1a1a1a; font-weight: 600; font-size: 13px; cursor: pointer; }
 .ws-save:disabled { background: transparent; color: #9e9e9e; border-color: #2a2a2a; cursor: default; }
 .ws-note { font-size: 13px; margin: 12px 0 0; padding: 9px 12px; border-radius: 9px; }
-.ws-note.ok { background: #1c2a20; color: #a9e2bb; }
+.ws-note.ok { background: #1c2a20; color: #e4e4e4; }
 .ws-note.bad { background: #2e1c1a; color: #f2b0a5; }
 .ws-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
 .ws-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }

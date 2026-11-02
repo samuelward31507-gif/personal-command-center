@@ -18,7 +18,8 @@ type Data = {
   recurring: { clients: number; mrr: number };
   targets?: { goalLabel: string; dailyCalls: number };
   sources?: { rows: { channel: string; label: string; deals: number; meetings: number; won: number; lost: number; wonMonthly: number; meetingRate: number | null; closeRate: number | null }[]; best: { label: string; meetingRate: number | null } | null; unknownShare: number };
-  goal: { goal: number; collected: number; expected: number; remaining: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
+  outreach?: { dmWeek: number; dmMonth: number }; avgDeal?: { deals: number; setup: number; monthly: number };
+  goal: { goal: number; by?: string; collected: number; expected: number; remaining: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
 };
 
 const money = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
@@ -38,6 +39,7 @@ export default function ScoreboardPage() {
   if (error) return <main className="sb-page"><p className="sb-err">{error}</p></main>;
   if (!d) return <main className="sb-page"><p className="sb-muted">Counting…</p></main>;
   const g = d.goal;
+  const byLabel = g.by ? new Date(g.by + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "your goal date";
   const TARGET = d.targets?.dailyCalls ?? DAILY_CALL_TARGET;
   const max = Math.max(TARGET, ...d.days.map(x => x.calls));
   const todayPct = Math.min(100, Math.round((d.today.calls / TARGET) * 100));
@@ -64,14 +66,16 @@ export default function ScoreboardPage() {
         <i className="sb-bar-paid" style={{ width: g.progressPct + "%" }} />
         <i className="sb-bar-expected" style={{ left: g.progressPct + "%", width: Math.max(0, g.withExpectedPct - g.progressPct) + "%" }} />
       </div>
-      <div className="sb-goal-legend"><span><i className="sb-dot-paid" />Collected {money(g.collected)}</span><span><i className="sb-dot-exp" />Expected before Dec 31 {money(g.expected)}</span><span>Gap {money(g.gapAfterExpected)}</span></div>
-      {g.gapAfterExpected > 0 && <p className="sb-goal-need">To close the gap by Dec 31: {g.perDeal.filter(p => p.dealsNeeded).map((p, i) => <span key={p.label}>{i > 0 && " or "}<strong>{p.dealsNeeded} {p.label.split(" · ")[0]} deal{p.dealsNeeded === 1 ? "" : "s"}</strong> ({money(p.valueByGoal)} each by year-end)</span>)} signed soon.</p>}
+      <div className="sb-goal-legend"><span><i className="sb-dot-paid" />Collected {money(g.collected)}</span><span><i className="sb-dot-exp" />Expected before {byLabel} {money(g.expected)}</span><span>Gap {money(g.gapAfterExpected)}</span></div>
+      {g.gapAfterExpected > 0 && <p className="sb-goal-need">To close the gap by {byLabel}: {g.perDeal.filter(p => p.dealsNeeded).map((p, i) => <span key={p.label}>{i > 0 && " or "}<strong>{p.dealsNeeded} {p.label.split(" · ")[0]} deal{p.dealsNeeded === 1 ? "" : "s"}</strong> ({money(p.valueByGoal)} each by year-end)</span>)} signed soon.</p>}
     </section>
 
     <div className="sb-tiles">
       <div className="sb-tile"><div className="sb-label">Calls today</div><div className="sb-num">{d.today.calls}<span>/{TARGET}</span></div><div className="sb-mini-bar"><i style={{ width: todayPct + "%" }} /></div></div>
       <div className="sb-tile"><div className="sb-label">Streak</div><div className="sb-num">{d.streak}<span> day{d.streak === 1 ? "" : "s"}</span></div><small>{d.streak ? "Days in a row with calls" : "Log a call to start one"}</small></div>
       <div className="sb-tile"><div className="sb-label">This week</div><div className="sb-num">{d.week.calls}<span> calls</span></div><small>{d.week.connects} connects · {d.week.meetings} meetings booked</small></div>
+      {d.outreach && <div className="sb-tile"><div className="sb-label">Messages sent</div><div className="sb-num">{d.outreach.dmWeek}<span> this week</span></div><small>{d.outreach.dmMonth} in the last 30 days · DMs and follow-ups</small></div>}
+      {d.avgDeal && <div className="sb-tile"><div className="sb-label">Average won deal</div><div className="sb-num">{d.avgDeal.deals ? money(d.avgDeal.monthly) : "—"}<span>{d.avgDeal.deals ? "/mo" : ""}</span></div><small>{d.avgDeal.deals ? `${money(d.avgDeal.setup)} setup · ${d.avgDeal.deals} won` : "No won deals yet"}</small></div>}
       <div className="sb-tile"><div className="sb-label">Recurring</div><div className="sb-num">{money(d.recurring.mrr)}<span>/mo</span></div><small>{d.recurring.clients} active client{d.recurring.clients === 1 ? "" : "s"}</small></div>
     </div>
 

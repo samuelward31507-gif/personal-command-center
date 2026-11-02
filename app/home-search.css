@@ -140,7 +140,7 @@
 }
 .ask-root .ask-action.is-done { border-color: #23402f; background: #121a15; }
 .ask-action-icon { flex: 0 0 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: #241e19; color: var(--ask-accent); font-size: 15px; font-weight: 700; }
-.ask-action.is-done .ask-action-icon { background: #173022; color: #86efac; }
+.ask-action.is-done .ask-action-icon { background: #173022; color: #e4e4e4; }
 .ask-action-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .ask-root .ask-action-main strong { font-size: 14px; font-weight: 600; color: #f0f0f0 !important; }
 .ask-root .ask-action-main small { font-size: 12.5px; color: #9a9a9a !important; }

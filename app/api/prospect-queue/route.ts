@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { KIND_LABEL, pickNew, touchState, type Touch } from "@/lib/prospect-queue";
 import { todayIn } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
@@ -13,7 +13,7 @@ const day = (v: unknown) => (v == null ? null : v instanceof Date ? v.toISOStrin
 const iso = (v: unknown) => (v == null ? "" : v instanceof Date ? v.toISOString() : String(v));
 const origin = (request: Request) => process.env.CINDER_PUBLIC_ORIGIN?.trim().replace(/\/$/, "") || new URL(request.url).origin;
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 const KINDS = new Set(["dm_sent", "follow_up_sent", "replied", "not_interested"]);
@@ -83,6 +83,11 @@ export async function POST(request: Request) {
   const ws = await loadWorkspace(owner);
   const s = touchState(all, todayIn(ws.timezone));
   await sql`UPDATE public.contacts SET follow_up_at = ${s.due}::date, updated_at = now() WHERE id = ${contactId}::uuid AND owner_id = ${owner}`;
+  // A reply (or a clear no) on any channel stops the call/text sequence, so nobody gets chased after they've answered.
+  if (kind === "replied" || kind === "not_interested") {
+    await sql`UPDATE public.contact_outreach SET status = ${kind === "replied" ? "interested" : "completed"}, updated_at = now()
+      WHERE owner_id = ${owner} AND contact_id = ${contactId}::uuid AND status = 'active'`;
+  }
   await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
     VALUES (${owner}, ${contactId}::uuid, 'note', 'note', ${kind === "replied" ? "reply_received" : kind === "not_interested" ? "not_a_fit" : "other"}, ${`${KIND_LABEL[kind]} on ${channel}.`})`;
   return reply(await build(owner, origin(request)));

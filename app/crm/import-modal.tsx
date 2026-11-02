@@ -177,7 +177,7 @@ export default function ImportModal({ existingContacts, onClose, onImported }: {
               </label>
               {enrollOutreach && (
                 <div className="crm-import-enroll-fields">
-                  <label>Niche<input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder="HVAC, garage doors…" /></label>
+                  <label>Niche<input value={niche} onChange={(e) => setNiche(e.target.value)} placeholder="Fence, pools…" /></label>
                   <label>Reason for outreach<input value={painPoint} onChange={(e) => setPainPoint(e.target.value)} placeholder="e.g. missed calls and slow lead follow-up" /></label>
                 </div>
               )}

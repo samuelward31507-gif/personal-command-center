@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { validateWorkspace } from "@/lib/workspace";
 import { loadWorkspace, saveWorkspace } from "@/lib/workspace-data";
 
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 const reply = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 

@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { blankIfPlaceholder } from "@/lib/contact-import";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ function db() {
 }
 
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   const session = result?.data?.session;
   const user = result?.data?.user;
   if (!session || !user?.id) return null;
@@ -93,6 +93,20 @@ export async function POST(request: Request) {
     const [firstName, ...lastParts] = name.split(/\s+/);
     const lastName = lastParts.join(" ");
     const sql = db();
+    // Duplicate check: same email, or same phone number (last 10 digits). The client can confirm a separate record.
+    if (body.allowDuplicate !== true) {
+      const email = String(body.email ?? "").trim().toLowerCase();
+      const digits = String(body.phone ?? "").replace(/\D/g, "").slice(-10);
+      if (email || digits.length === 10) {
+        const dup = await sql`SELECT id, trim(concat_ws(' ', first_name, last_name)) AS name,
+            CASE WHEN ${email} <> '' AND lower(trim(email)) = ${email} THEN 'email' ELSE 'phone number' END AS matched
+          FROM public.contacts WHERE owner_id = ${user.id} AND (
+            (${email} <> '' AND lower(trim(email)) = ${email}) OR
+            (${digits.length === 10} AND right(regexp_replace(coalesce(phone, ''), '\\D', '', 'g'), 10) = ${digits}))
+          ORDER BY updated_at DESC LIMIT 1`;
+        if (dup.length) return Response.json({ error: `${dup[0].name || "This person"} is already in Cinder.`, duplicateId: dup[0].id, duplicateName: dup[0].name, matchedOn: dup[0].matched }, { status: 409 });
+      }
+    }
     const rows = await sql`
       INSERT INTO public.contacts
         (owner_id, first_name, last_name, company, role, email, phone, status, source, notes, follow_up_at, website, instagram, facebook, location, sms_consent, sms_consent_at, sms_consent_source)

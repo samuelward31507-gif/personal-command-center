@@ -2,15 +2,13 @@
 
 import { useState } from "react";
 import { createAuthClient } from "@neondatabase/auth/next";
-import Link from "next/link";
 
 const authClient = createAuthClient();
 
+/** Owner sign-in. Cinder is a single-owner workspace, so there is no public sign-up. */
 export default function SignInPage() {
-  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -19,34 +17,31 @@ export default function SignInPage() {
     setBusy(true);
     setError("");
     try {
-      const result = mode === "sign-up"
-        ? await authClient.signUp.email({ email, password, name: name.trim() || email.split("@")[0] })
-        : await authClient.signIn.email({ email, password });
-      if (result.error) throw new Error(result.error.message || "Authentication failed.");
-      window.location.assign("/crm");
+      const result = await authClient.signIn.email({ email, password });
+      if (result.error) throw new Error(result.error.message || "That email and password didn't match.");
+      window.location.assign("/crm/needs-you");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to authenticate. Please try again.");
+      setError(err instanceof Error ? err.message : "Couldn't sign in. Please try again.");
     } finally {
       setBusy(false);
     }
   }
 
-  return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",padding:24,background:"#1a1a1a",color:"#f4f4f5"}}>
-    <section style={{width:"100%",maxWidth:420,background:"#1a1a1a",border:"1px solid #303036",borderRadius:18,padding:32,boxShadow:"0 12px 40px #00000055"}}>
-      <Link href="/" style={{fontSize:12,letterSpacing:3,fontWeight:800,color:"#f4f4f5",textDecoration:"none"}}>Cinder</Link>
-      <h1 style={{fontSize:30,margin:"28px 0 8px",letterSpacing:-1}}>{mode === "sign-in" ? "Welcome back." : "Create your workspace."}</h1>
-      <p style={{color:"#9999a3",fontSize:14,marginBottom:24}}>Sign in to securely access your personal CRM.</p>
-      <form onSubmit={submit} style={{display:"grid",gap:14}}>
-        {mode === "sign-up" && <label style={{display:"grid",gap:6,fontSize:13,fontWeight:600}}>Name<input autoComplete="name" value={name} onChange={e=>setName(e.target.value)} placeholder="Your name" style={inputStyle}/></label>}
-        <label style={{display:"grid",gap:6,fontSize:13,fontWeight:600}}>Email<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" style={inputStyle}/></label>
-        <label style={{display:"grid",gap:6,fontSize:13,fontWeight:600}}>Password<input required minLength={8} type="password" autoComplete={mode==="sign-in"?"current-password":"new-password"} value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 8 characters" style={inputStyle}/></label>
-        {error && <p role="alert" style={{color:"#b42318",fontSize:13}}>{error}</p>}
-        <button disabled={busy} type="submit" style={{border:0,borderRadius:9,padding:"12px 16px",background:"#20232a",color:"#fff",fontWeight:700,cursor:busy?"wait":"pointer",marginTop:4}}>{busy?"Please wait…":mode==="sign-in"?"Sign in":"Create account"}</button>
+  return <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, background: "#141414", color: "#ededed", fontFamily: "inherit" }}>
+    <section style={{ width: "100%", maxWidth: 380, background: "#1a1a1a", border: "1px solid #262626", borderRadius: 14, padding: "32px 28px" }}>
+      <div style={{ fontSize: 13, letterSpacing: ".02em", fontWeight: 600, color: "#a3a3a3" }}>Cinder</div>
+      <h1 style={{ fontSize: 24, fontWeight: 560, letterSpacing: "-0.02em", margin: "18px 0 6px", color: "#ededed" }}>Sign in</h1>
+      <div style={{ color: "#8f8f8f", fontSize: 14, marginBottom: 22 }}>Your agency workspace.</div>
+      <form onSubmit={submit} style={{ display: "grid", gap: 14 }}>
+        <label style={labelStyle}>Email<input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} /></label>
+        <label style={labelStyle}>Password<input required minLength={8} type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} /></label>
+        {error && <div role="alert" style={{ color: "#f0a07e", fontSize: 13 }}>{error}</div>}
+        <button disabled={busy} type="submit" data-variant="primary" style={{ border: 0, borderRadius: 9, padding: "11px 16px", background: "#ededed", color: "#141414", fontWeight: 600, fontSize: 14, cursor: busy ? "wait" : "pointer", marginTop: 4 }}>{busy ? "Signing in…" : "Sign in"}</button>
       </form>
-      <p style={{fontSize:13,color:"#667085",marginTop:20}}>{mode==="sign-in"?"New to Cinder?":"Already have an account?"} <button onClick={()=>{setMode(mode==="sign-in"?"sign-up":"sign-in");setError("");}} style={{border:0,padding:0,background:"transparent",color:"#344054",fontWeight:700,cursor:"pointer"}}>{mode==="sign-in"?"Create account":"Sign in"}</button></p>
-      {process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" && <p style={{fontSize:11,color:"#98a2b3",marginTop:24}}>Preview environment only. Keep production data out of this test workspace.</p>}
+      {process.env.NEXT_PUBLIC_VERCEL_ENV !== "production" && <div style={{ fontSize: 12, color: "#767676", marginTop: 22 }}>Preview environment. Keep production data out of this workspace.</div>}
     </section>
-  </main>;
+  </div>;
 }
 
-const inputStyle: React.CSSProperties = {width:"100%",boxSizing:"border-box",border:"1px solid #d0d5dd",borderRadius:9,padding:"11px 12px",fontSize:14,outlineOffset:2,background:"#fff",color:"#20232a"};
+const labelStyle: React.CSSProperties = { display: "grid", gap: 6, fontSize: 13, fontWeight: 500, color: "#a3a3a3" };
+const inputStyle: React.CSSProperties = { width: "100%", boxSizing: "border-box", border: "1px solid #2e2e2e", borderRadius: 9, padding: "10px 12px", fontSize: 15, background: "#141414", color: "#ededed", outlineOffset: 2 };

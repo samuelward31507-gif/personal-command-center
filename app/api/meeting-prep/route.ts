@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 
 export async function GET(request: Request) {
   try {
-    const result = await auth.getSession();
+    const result = await getAllowedSession();
     const session = result?.data?.session;
     const user = result?.data?.user;
     if (!session || !user?.id) return fail("Unauthorized", 401);

@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { validateAction } from "@/lib/ask";
 import { runDealHandoff, HandoffNotReady } from "@/lib/deal-handoff";
 import { sanitizeForLog } from "@/lib/business-audit";
@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 const fail = (message: string, status: number) => Response.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
@@ -67,8 +67,7 @@ export async function POST(request: Request) {
         const rows = await sql`
           UPDATE public.deals SET stage = ${p.stage},
             lost_reason = CASE WHEN ${p.stage} = 'lost' THEN ${p.lostReason ?? ""} ELSE lost_reason END,
-            agreement_status = CASE WHEN ${p.stage} = 'won' AND stage <> 'won' THEN 'active' ELSE agreement_status END,
-            signed_at = CASE WHEN ${p.stage} = 'won' THEN coalesce(signed_at, now()) ELSE signed_at END,
+            agreement_status = CASE WHEN ${p.stage} = 'won' AND stage <> 'won' AND signed_at IS NOT NULL THEN 'active' ELSE agreement_status END,
             effective_at = CASE WHEN ${p.stage} = 'won' THEN coalesce(effective_at, CURRENT_DATE) ELSE effective_at END,
             updated_at = now()
           WHERE id = ${p.dealId}::uuid AND owner_id = ${owner} RETURNING id`;

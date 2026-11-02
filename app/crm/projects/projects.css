@@ -8,7 +8,7 @@
 .pj-top strong { font-size: 15.5px; font-weight: 600; color: #ededed; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pj-top .project-status { font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 999px; background: #262626 !important; color: #c9c9c9 !important; }
 .pj-top .status-blocked { background: #2e1c1a !important; color: #f2b0a5 !important; }
-.pj-top .status-completed { background: #1c2a20 !important; color: #a9e2bb !important; }
+.pj-top .status-completed { background: #1c2a20 !important; color: #e4e4e4 !important; }
 .pj-client { font-size: 13.5px; color: #c9c9c9; }
 .pj-service { font-size: 13px; color: #9e9e9e; }
 .pj-meta { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12.5px; color: #9e9e9e; font-variant-numeric: tabular-nums; }

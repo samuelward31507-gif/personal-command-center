@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import { sendAlert } from "@/lib/notify";
 import { consentLine, inboundTask, notesFor, phoneDigits, sourceFor, validateInbound } from "@/lib/inbound";
 import { sanitizeForLog } from "@/lib/business-audit";
+import { allowEvent, clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,10 @@ export async function POST(request: Request) {
   if (!owner || !process.env.DATABASE_URL) {
     console.error("Inbound lead rejected: intake not configured", { hasOwner: !!owner, hasDb: !!process.env.DATABASE_URL });
     return reply({ error: "This form isn't accepting submissions right now. Please email us instead." }, 503);
+  }
+  // Five submissions an hour per visitor and 200 a day overall stop a bot from flooding contacts, tasks and alerts.
+  if (!(await allowEvent("inbound-ip", clientIp(request), 5, 60)) || !(await allowEvent("inbound-all", "all", 200, 24 * 60))) {
+    return reply({ error: "Too many submissions. Please try again later, or email us." }, 429);
   }
   const body = await request.json().catch(() => null);
   const lead = validateInbound(body);

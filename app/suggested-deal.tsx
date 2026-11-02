@@ -13,7 +13,7 @@ export default function SuggestedDeal({ deal, onDone }: { deal: SuggestedDealDat
   const [state, setState] = useState<"idle" | "saving" | "done" | "dismissed">("idle");
   const [error, setError] = useState("");
   if (state === "dismissed") return null;
-  if (state === "done") return <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "#86efac" }}>Deal created in your pipeline · <a href="/crm/pipeline" style={{ color: "#c4c4c4" }}>Open pipeline →</a></p>;
+  if (state === "done") return <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "#e4e4e4" }}>Deal created in your pipeline · <a href="/crm/pipeline" style={{ color: "#c4c4c4" }}>Open pipeline →</a></p>;
 
   async function create() {
     setState("saving"); setError("");

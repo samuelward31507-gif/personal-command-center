@@ -228,8 +228,9 @@ test("Meeting booked quick action uses the outcome/activity workflow", () => {
 // These source-level checks protect the key founder workflow from accidental
 // regressions. End-to-end authenticated browser testing is still required.
 test("My Day shows the unified server-built queue", () => {
-  const home = readFileSync("app/page.tsx", "utf8");
-  assert.ok(home.includes("<MyDayQueue />"));
+  // Home redirects to Today, which renders the queue.
+  assert.ok(readFileSync("app/page.tsx", "utf8").includes('"/crm/needs-you"'));
+  assert.ok(readFileSync("app/crm/needs-you/page.tsx", "utf8").includes("<MyDayQueue"));
   const queue = readFileSync("app/my-day-queue.tsx", "utf8");
   assert.ok(queue.includes('fetch("/api/my-day?"'));
 });

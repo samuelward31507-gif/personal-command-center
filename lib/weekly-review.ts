@@ -35,7 +35,7 @@ export function topMoves(d: ReviewData, o: ReviewOptions = {}): Move[] {
   return out.slice(0, 5);
 }
 
-const STAGE_ORDER = ["new", "contacted", "meeting_booked", "meeting_held", "proposal", "nurture"];
+const STAGE_ORDER = ["new", "qualified", "contacted", "interested", "meeting_booked", "meeting_held", "proposal", "negotiation", "nurture"];
 const STAGE_LABEL: Record<string, string> = { new: "New", contacted: "Contacted", meeting_booked: "Meeting booked", meeting_held: "Meeting held", proposal: "Proposal", nurture: "Nurture" };
 
 export function buildWeeklyReview(d: ReviewData, weekOf: string, o: ReviewOptions = {}): Alert {

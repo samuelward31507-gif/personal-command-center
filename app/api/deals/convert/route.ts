@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { runDealHandoff, HandoffNotReady } from "@/lib/deal-handoff";
 
 export const runtime = "nodejs";
@@ -11,7 +11,7 @@ const fail = (message: string, status: number) => Response.json({ error: message
 /** Manual/retry entry point for the signed-deal handoff. Saving a deal as won also runs it. */
 export async function POST(request: Request) {
   try {
-    const result = await auth.getSession();
+    const result = await getAllowedSession();
     const session = result?.data?.session;
     const user = result?.data?.user;
     if (!session || !user?.id) return fail("Unauthorized", 401);

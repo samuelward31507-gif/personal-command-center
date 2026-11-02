@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { CONNECT_OUTCOMES, funnelRates, goalMath } from "@/lib/scoreboard";
 import { goalLabel, offersFrom } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 const fail = (message: string, status: number) => Response.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 const day = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10));
@@ -93,6 +93,11 @@ export async function GET(request: Request) {
     if (!callDays.has(today)) cursor.setUTCDate(cursor.getUTCDate() - 1);
     while (callDays.has(cursor.toISOString().slice(0, 10))) { streak++; cursor.setUTCDate(cursor.getUTCDate() - 1); }
 
+    // Outreach you sent by DM (the main prospecting channel) and the size of deals you've won.
+    const [dm] = await sql`SELECT count(*) FILTER (WHERE at > now() - interval '7 days')::int AS week, count(*) FILTER (WHERE at > now() - interval '30 days')::int AS month
+      FROM public.prospect_touches WHERE owner_id = ${owner} AND kind IN ('dm_sent','follow_up_sent')` as { week: number; month: number }[];
+    const [avg] = await sql`SELECT count(*)::int AS n, coalesce(avg(setup_fee),0)::float AS setup, coalesce(avg(monthly_fee),0)::float AS monthly
+      FROM public.deals WHERE owner_id = ${owner} AND stage = 'won'` as { n: number; setup: number; monthly: number }[];
     const dl = deals[0];
     const month = { calls: w.month?.calls ?? 0, connects: w.month?.connects ?? 0, meetingsBooked: w.month?.meetings ?? 0, meetingsHeld: meetingsHeld[0]?.month ?? 0, proposalsSent: dl.proposals_month, won: dl.won_month, lost: dl.lost_month };
     return Response.json({
@@ -106,6 +111,8 @@ export async function GET(request: Request) {
       goal: goalMath({ today, collected: money[0]?.collected ?? 0, expectedByGoal: money[0]?.expected ?? 0, offers: Object.values(offersFrom(ws)), goal: { amount: ws.goalAmount, by: ws.goalBy } }),
       targets: { goalLabel: goalLabel(ws), dailyCalls: ws.dailyCallTarget },
       sources,
+      outreach: { dmWeek: dm?.week ?? 0, dmMonth: dm?.month ?? 0 },
+      avgDeal: { deals: avg?.n ?? 0, setup: Math.round(avg?.setup ?? 0), monthly: Math.round(avg?.monthly ?? 0) },
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Scoreboard failed", { name: error instanceof Error ? error.name : typeof error, message: sanitizeForLog(error instanceof Error ? error.message : "") });

@@ -45,8 +45,8 @@ export function discoveryCompleteness(d: Discovery): number {
  */
 export function stageForProposal(status: ProposalStatus, currentStage: string): string | null {
   if (currentStage === "won" || currentStage === "lost") return null;
-  if (status === "sent") return ["new", "contacted", "meeting_booked", "meeting_held", "nurture"].includes(currentStage) ? "proposal" : null;
-  if (status === "accepted") return ["new", "contacted", "meeting_booked", "meeting_held", "nurture"].includes(currentStage) ? "proposal" : null;
+  if (status === "sent") return ["new", "qualified", "contacted", "interested", "meeting_booked", "meeting_held", "nurture"].includes(currentStage) ? "proposal" : null;
+  if (status === "accepted") return ["new", "qualified", "contacted", "interested", "meeting_booked", "meeting_held", "nurture"].includes(currentStage) ? "proposal" : null;
   if (status === "declined") return "lost";
   return null;
 }

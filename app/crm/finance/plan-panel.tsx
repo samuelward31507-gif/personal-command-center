@@ -16,9 +16,10 @@ const fmt = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US"
 /** Profit after expenses, the tax set-aside, the goal forecast and who's paid this month. */
 export default function PlanPanel({ refresh }: { refresh: number }) {
   const [p, setP] = useState<Plan | null>(null);
+  const [failed, setFailed] = useState(false);
   const [period, setPeriod] = useState<"month" | "year">("month");
-  useEffect(() => { fetch("/api/money-plan", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).then(setP).catch(() => {}); }, [refresh]);
-  if (!p) return null;
+  useEffect(() => { fetch("/api/money-plan", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(j => { setP(j); setFailed(false); }).catch(() => setFailed(true)); }, [refresh]);
+  if (!p) return failed ? <p role="alert" style={{ color: "#f28b82", fontSize: 13.5, margin: "0 0 12px" }}>Couldn&apos;t load profit and taxes. Refresh to try again.</p> : null;
   const s = p[period], f = p.forecast;
   return <section className="mp-card">
     <div className="mp-head"><h2>Profit and taxes</h2>

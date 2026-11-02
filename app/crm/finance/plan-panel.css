@@ -9,13 +9,13 @@ html body main .mp-seg button[aria-pressed=true] { color: #ededed !important; }
 .mp-flow small { font-size: 12.5px; color: #9e9e9e; }
 .mp-flow b { font-size: 22px; font-weight: 560; color: #ededed; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .mp-flow i { font-style: normal; color: #5a5a5a; font-size: 18px; }
-.mp-take b { color: #a9e2bb; }
+.mp-take b { color: #e4e4e4; }
 .mp-fine { margin: 12px 0 0; font-size: 13px; color: #9e9e9e; }
 .mp-fine a { color: #c9c9c9; }
 .mp-goal { margin-top: 20px; padding-top: 18px; border-top: 1px solid #2a2a2a; }
 .mp-goal-h { display: flex; justify-content: space-between; gap: 10px; font-size: 14.5px; color: #ededed; }
 .mp-goal-h span { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
-.mp-goal-h span.ok { background: #1c2a20; color: #a9e2bb; } .mp-goal-h span.bad { background: #2e1c1a; color: #f2b0a5; }
+.mp-goal-h span.ok { background: #1c2a20; color: #e4e4e4; } .mp-goal-h span.bad { background: #2e1c1a; color: #f2b0a5; }
 .mp-bar { height: 6px; margin: 10px 0; border-radius: 99px; background: #2a2a2a; overflow: hidden; }
 .mp-bar i { display: block; height: 100%; background: #ededed; border-radius: 99px; }
 .mp-goal p { margin: 0; font-size: 13.5px; color: #ababab; line-height: 1.55; }
@@ -26,7 +26,7 @@ html body main .mp-seg button[aria-pressed=true] { color: #ededed !important; }
 .mp-clients a { color: #ededed; text-decoration: none; }
 .mp-clients span { color: #9e9e9e; font-variant-numeric: tabular-nums; }
 .mp-clients em { font-style: normal; text-align: right; color: #c9c9c9; }
-.mp-clients em.is-paid { color: #a9e2bb; } .mp-clients em.is-overdue { color: #f2b0a5; font-weight: 600; } .mp-clients em.is-not_billed { color: #ecc98c; } .mp-clients em.is-not_live { color: #8a8a8a; }
+.mp-clients em.is-paid { color: #e4e4e4; } .mp-clients em.is-overdue { color: #f2b0a5; font-weight: 600; } .mp-clients em.is-not_billed { color: #ecc98c; } .mp-clients em.is-not_live { color: #8a8a8a; }
 @media (max-width: 700px) { .mp-flow i { display: none; } .mp-clients li { grid-template-columns: minmax(0, 1fr) auto; } .mp-clients em { grid-column: 1 / -1; text-align: left; } }
 html body main .mp-seg.mp-seg.mp-seg button { background: transparent !important; }
 html body main .mp-seg.mp-seg.mp-seg button[aria-pressed=true] { background: #2c2c2c !important; color: #ededed !important; }

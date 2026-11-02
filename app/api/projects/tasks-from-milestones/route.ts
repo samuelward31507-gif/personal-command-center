@@ -1,12 +1,12 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 function db(){if(!process.env.DATABASE_URL)throw new Error("DATABASE_URL is not configured.");return neon(process.env.DATABASE_URL);}
 function error(message:string,status:number){return Response.json({error:message},{status});}
 export async function POST(request:Request){
  try{
-  const result=await auth.getSession(),user=result?.data?.session&&result?.data?.user?.id?{id:String(result.data.user.id)}:null;
+  const result=await getAllowedSession(),user=result?.data?.session&&result?.data?.user?.id?{id:String(result.data.user.id)}:null;
   if(!user)return error("Unauthorized",401);
   const body=await request.json();
   if(typeof body.projectId!=="string"||!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.projectId))return error("Valid project id is required.",400);

@@ -18,20 +18,24 @@ type Props = {
 const primary = [
   ["needs-you", "Today", "sun", "/crm/needs-you"],
   ["call", "Call mode", "phone", "/crm/call"],
-  ["contacts", "Contacts", "client", "/crm"],
+  ["contacts", "Contacts", "users", "/crm"],
   ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
-  ["client-success", "Clients", "delivery", "/crm/client-success"],
-  ["calendar", "Calendar", "calendar", "/crm/calendar"],
+  ["client-success", "Clients", "briefcase", "/crm/client-success"],
+  ["calendar", "Meetings", "calendar", "/crm/calendar"],
   ["finance", "Money", "money", "/crm/finance"],
 ] as const;
 const secondary = [
-  ["projects", "Delivery", "check", "/crm/projects"],
-  ["tasks", "Tasks", "check", "/crm/tasks"],
+  ["outreach", "Outreach", "send", "/crm/outreach"],
   ["preparation", "Research", "search", "/crm/preparation"],
+  ["projects", "Delivery", "delivery", "/crm/projects"],
+  ["tasks", "Tasks", "check", "/crm/tasks"],
   ["scoreboard", "Scoreboard", "chart", "/crm/scoreboard"],
-  ["operations", "Operations", "check", "/crm/operations"],
+  ["reports", "Client reports", "doc", "/crm/reports"],
+  ["operations", "Operations", "clipboard", "/crm/operations"],
+  ["workforce", "AI team", "spark", "/crm/workforce"],
+  ["intelligence", "Signals", "bulb", "/crm/intelligence"],
 ] as const;
-const SECONDARY_PATHS = ["/crm/projects", "/crm/tasks", "/crm/preparation", "/crm/audit", "/crm/scoreboard", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
+const SECONDARY_PATHS = ["/crm/outreach", "/crm/projects", "/crm/tasks", "/crm/preparation", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
@@ -53,6 +57,11 @@ function Icon({ name }: { name: string }) {
     phone: <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/>,
     chart: <><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></>,
     chat: <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/>,
+    users: <><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.4-3.6 2.6-5.5 6-5.5s5.6 1.9 6 5.5"/><path d="M16 5.2a3 3 0 0 1 0 5.6M18 14.7c1.8.7 2.8 2.4 3 5.3"/></>,
+    briefcase: <><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8.5 7V5a1.5 1.5 0 0 1 1.5-1.5h4A1.5 1.5 0 0 1 15.5 5v2M3 12.5h18"/></>,
+    send: <><path d="m21 3-9.5 9.5"/><path d="M21 3 14.5 21l-3-8.5L3 9.5 21 3Z"/></>,
+    doc: <><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></>,
+    clipboard: <><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1M9 11h6M9 15h4"/></>,
     rail: <><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></>,
     plus: <path d="M12 5v14M5 12h14"/>,
   };
@@ -104,12 +113,14 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
   const isActive = (key: string) => {
     if (key === "home") return mode === "home" ? activeKey === "home" : false;
     if (key === "schedule") return mode === "home" && activeKey === "schedule";
-    if (key === "client-success") return pathname.startsWith("/crm/client-success") || pathname.startsWith("/crm/reports");
-    if (key === "contacts") return pathname === "/crm" || pathname.startsWith("/crm/outreach");
+    if (key === "ask") return pathname.startsWith("/crm/ask");
+    if (key === "client-success") return pathname.startsWith("/crm/client-success");
+    if (key === "contacts") return pathname === "/crm";
+    if (key === "workforce") return pathname.startsWith("/crm/workforce") || pathname.startsWith("/crm/strategy");
     if (key === "pipeline") return pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/deals");
     if (key === "preparation") return pathname.startsWith("/crm/preparation") || pathname.startsWith("/crm/audit");
     const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
-      "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", scoreboard: "/crm/scoreboard", operations: "/crm/operations", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
+      "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", outreach: "/crm/outreach", reports: "/crm/reports", scoreboard: "/crm/scoreboard", operations: "/crm/operations", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
       intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings" };
     return map[key] ? pathname.startsWith(map[key]) : activeKey === key;
   };
@@ -127,7 +138,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     {mobileOpen && <button type="button" data-variant="primary" className="cx-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
     <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Cinder navigation">
       <div className="cx-top">
-        <Link href="/" className="cx-brand" onClick={e => go(e, "home", "/")} title="Cinder home">
+        <Link href="/crm/needs-you" className="cx-brand" onClick={() => setMobileOpen(false)} title="Today">
           {collapsed ? <CinderMark className="cx-mark" ring={CINDER_MONO} ember={CINDER_MONO} /> : <CinderLogo className="cx-logo" title="Cinder" mono />}
         </Link>
         <button type="button" data-variant="primary" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
@@ -135,8 +146,8 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
         </button>
       </div>
 
-      <Link href="/" className={"cx-new" + (isActive("home") ? " is-active" : "")} onClick={e => go(e, "home", "/")} title={collapsed ? "New chat" : undefined}>
-        <span className="cx-new-icon"><Icon name="plus" /></span><span className="cx-label">New chat</span>
+      <Link href="/crm/ask" className={"cx-new" + (isActive("ask") ? " is-active" : "")} onClick={() => setMobileOpen(false)} title={collapsed ? "Ask Cinder" : undefined}>
+        <span className="cx-new-icon"><Icon name="chat" /></span><span className="cx-label">Ask Cinder</span>
       </Link>
       <button type="button" data-variant="primary" className="cx-item cx-search" onClick={() => { setMobileOpen(false); window.dispatchEvent(new Event("cinder:command")); }} title={collapsed ? "Search (⌘K)" : undefined}>
         <Icon name="search" /><span className="cx-label">Search</span><kbd className="cx-kbd">⌘K</kbd>
