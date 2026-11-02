@@ -193,3 +193,15 @@ html body main :is(.status-overdue, .status-blocked) { color: #f28b82 !important
 /* AI-generated content is always labelled as such. */
 html body .ai-badge { display: inline-flex; align-items: center; margin-left: 8px; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(217,119,87,.35); background: rgba(217,119,87,.08); color: #e9a383 !important; font-size: 11px !important; font-weight: 500 !important; letter-spacing: 0 !important; vertical-align: 2px; white-space: nowrap; }
 .cm-brief > .ai-badge { margin: 0 0 10px; }
+
+/* ---------- Phones (audit pass) ---------- */
+@media (max-width: 760px) {
+  /* iOS zooms the page when a field under 16px gets focus; keep every field at 16px on phones. */
+  html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), html body select, html body textarea { font-size: 16px !important; }
+  /* Comfortable tap targets for small buttons. */
+  html body main button, html body main a.crm-btn { min-height: 36px; }
+  /* Wide tables scroll inside their card instead of pushing the page sideways. */
+  html body main table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  html body { overflow-x: hidden; }
+}
+@media (max-width: 520px) { .pr-grid { grid-template-columns: 1fr !important; } }

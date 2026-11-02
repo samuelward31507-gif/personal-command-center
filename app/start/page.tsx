@@ -58,12 +58,12 @@ export default function StartPage() {
             <label className="st-wide">What&apos;s the biggest headache with leads right now?<textarea name="challenge" rows={3} placeholder="Missed calls, slow follow-up, quotes that go cold…" /></label>
             <label className="st-wide">How did you hear about us?<input name="heardFrom" placeholder="Instagram, a friend, Google…" /></label>
             {speed && <label className="st-check-row st-wide"><input type="checkbox" name="testOk" required /><span>{TEST_OK_TEXT}</span></label>}
-            <label className="st-check-row st-wide"><input type="checkbox" name="smsConsent" /><span>{SMS_CONSENT_TEXT} See our <a href="https://cinder-revenue-company.vercel.app/privacy">privacy policy</a>.</span></label>
+            <label className="st-check-row st-wide"><input type="checkbox" name="smsConsent" /><span>{SMS_CONSENT_TEXT} See our <a href="https://cinderrevenue.com/privacy">privacy policy</a>.</span></label>
             <label className="st-hp" aria-hidden="true">Fax<input name="fax" tabIndex={-1} autoComplete="off" /></label>
           </div>
           {error && <p className="st-err" role="alert">{error}</p>}
           <button type="submit" data-variant="primary" className="st-submit" disabled={state === "sending"}>{state === "sending" ? "Sending…" : speed ? "Request my speed test" : "Send"}</button>
-          <p className="st-fine">Phone or email is enough. We&apos;ll never sell your information. By submitting you agree we can contact you about your inquiry by phone or email. We only text you if you tick the box above. <a href="https://cinder-revenue-company.vercel.app/privacy">Privacy</a> · <a href="https://cinder-revenue-company.vercel.app/terms">Terms</a></p>
+          <p className="st-fine">Phone or email is enough. We&apos;ll never sell your information. By submitting you agree we can contact you about your inquiry by phone or email. We only text you if you tick the box above. <a href="https://cinderrevenue.com/privacy">Privacy</a> · <a href="https://cinderrevenue.com/terms">Terms</a></p>
         </form>
       </>}
     </div>
