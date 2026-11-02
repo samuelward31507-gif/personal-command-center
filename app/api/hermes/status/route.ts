@@ -12,7 +12,9 @@ export async function GET() {
     const token = process.env.HERMES_BRIDGE_TOKEN;
     const ownerId = process.env.HERMES_BRIDGE_OWNER_ID;
     const configured = Boolean(process.env.DATABASE_URL && token && token.length >= 32 && ownerId);
-    return Response.json({ configured }, { headers: { "Cache-Control": "no-store" } });
+    // Cal.ai bookings need the webhook secret and the owner the bookings belong to.
+    const calAi = Boolean(process.env.DATABASE_URL && process.env.CAL_AI_WEBHOOK_SECRET && process.env.CINDER_OWNER_ID);
+    return Response.json({ configured, calAi }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Hermes bridge status failed", error);
     return Response.json({ error: "Unable to check Hermes bridge status." }, { status: 500, headers: { "Cache-Control": "no-store" } });

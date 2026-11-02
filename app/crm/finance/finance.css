@@ -32,3 +32,5 @@
 .fin-shell textarea:focus-visible { outline:2px solid #aaa!important;outline-offset:2px!important; }
 .fin-more{margin:0 0 22px}.fin-more>summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#ababab;padding:4px 0 12px}.fin-more>summary::-webkit-details-marker{display:none}.fin-more>summary::after{content:"›";transition:transform .15s}.fin-more[open]>summary::after{transform:rotate(90deg)}.fin-more .fin-secondary{margin-bottom:0}
 @media(max-width:1050px){main .fin-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.fin-projected{margin:-2px 0 18px;font-size:13.5px;color:#a3a3a3}.fin-projected span{color:#ededed;font-weight:500}.fin-projected a{color:#ededed;margin-left:6px;text-underline-offset:3px}

@@ -233,6 +233,7 @@ export default function CallModePage() {
 
         <div className="cm-body">
           {tab === "brief" && (audit === undefined ? <p className="cm-muted">Loading audit…</p> : brief ? <div className="cm-brief">
+            <span className="ai-badge" title="Written by AI from public web research. Check anything important before you rely on it.">AI research · verify</span>
             {brief.verdict && <div className="cm-verdict">{clean(brief.verdict)}</div>}
             {brief.plan && <Block title="Call plan" text={brief.plan} />}
             {brief.opps && <Block title="Top opportunities" text={brief.opps} />}

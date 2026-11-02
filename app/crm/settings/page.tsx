@@ -101,6 +101,7 @@ export default function SettingsPage() {
   const [error, setError] = useState("");
   const [databaseStatus, setDatabaseStatus] = useState("Checking…");
   const [hermesStatus, setHermesStatus] = useState("Checking…");
+  const [calStatus, setCalStatus] = useState("Checking…");
   const [tab, setTab] = useState<Tab>("business");
   // The tab lives in the URL hash so links like /crm/settings#automations open the right one.
   useEffect(() => {
@@ -124,6 +125,7 @@ export default function SettingsPage() {
         if (!response.ok) { setHermesStatus("Unavailable"); return; }
         const data = await response.json();
         setHermesStatus(data.configured === true ? "Configured" : "Not configured");
+        setCalStatus(data.calAi === true ? "Connected" : "Setup required");
       })
       .catch(() => { if (active) setHermesStatus("Unavailable"); });
     return () => { active = false; };
@@ -132,7 +134,7 @@ export default function SettingsPage() {
   const integrations = [
     { name: "Database", detail: "Contacts, deals, tasks, clients and money", status: databaseStatus },
     { name: "Hermes", detail: "Lets your AI chief of staff read Cinder. It can't take actions.", status: hermesStatus },
-    { name: "Cal.ai scheduling", detail: "Bookings flow into Cinder automatically", status: "Setup required" },
+    { name: "Cal.ai scheduling", detail: "Bookings flow into Cinder automatically", status: calStatus },
   ];
 
   async function signOut() {

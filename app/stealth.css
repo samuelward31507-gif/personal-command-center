@@ -189,3 +189,7 @@ html body main :is(.crm-status, .fin-status, [class*="status-"]):not(.status-dot
 html body main :is(.crm-status-lead, .status-onboarding, .status-expected, .status-review, .status-interested) { color: #e9a383 !important; border-color: rgba(217,119,87,.35) !important; background: rgba(217,119,87,.08) !important; }
 html body main :is(.crm-status-customer, .status-active, .status-paid, .status-completed) { color: #e4e4e4 !important; border-color: #3d3d3d !important; background: #262626 !important; }
 html body main :is(.status-overdue, .status-blocked) { color: #f28b82 !important; border-color: rgba(242,139,130,.35) !important; background: rgba(242,139,130,.08) !important; }
+
+/* AI-generated content is always labelled as such. */
+html body .ai-badge { display: inline-flex; align-items: center; margin-left: 8px; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(217,119,87,.35); background: rgba(217,119,87,.08); color: #e9a383 !important; font-size: 11px !important; font-weight: 500 !important; letter-spacing: 0 !important; vertical-align: 2px; white-space: nowrap; }
+.cm-brief > .ai-badge { margin: 0 0 10px; }

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const greetingSerif = Newsreader({ variable: "--font-greeting", subsets: ["latin"], axes: ["opsz"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Cinder — Personal Command Center",
+  title: "Cinder",
   description: "Cinder personal command center — one place to run the business.",
 };
 

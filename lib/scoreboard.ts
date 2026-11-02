@@ -41,7 +41,7 @@ export function goalMath(g: GoalInput) {
     return { label: o.label, valueByGoal: value, dealsNeeded: value > 0 ? Math.ceil(gapAfterExpected / value) : null };
   });
   return {
-    goal: goal.amount, collected: g.collected, expected: g.expectedByGoal, remaining, gapAfterExpected, daysLeft: left,
+    goal: goal.amount, by: goal.by, collected: g.collected, expected: g.expectedByGoal, remaining, gapAfterExpected, daysLeft: left,
     progressPct: Math.min(100, Math.round((g.collected / goal.amount) * 100)),
     withExpectedPct: Math.min(100, Math.round(((g.collected + g.expectedByGoal) / goal.amount) * 100)),
     perDeal,
