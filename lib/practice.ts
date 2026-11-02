@@ -63,19 +63,26 @@ export function scorePrompt(persona: Persona): { system: string } {
 
 Judge it against these principles: agree before answering an objection; ask a question before pitching; use the owner's own numbers; end every answer with a question that moves things forward; never invent results or clients; ask for a specific next step.
 
-Reply with JSON only, no prose around it:
+Reply with one JSON object only: start with { and end with }. No code fences, no prose. When you quote the rep, use single quotes, never double quotes inside a value.
 {"score": <0-100>, "verdict": "<one blunt sentence>", "wins": ["<specific thing done well>", ...up to 3], "fixes": ["<specific thing to change, quoting their words>", ...up to 3], "betterLine": "<one line they should have said at the weakest moment>"}`,
   };
 }
 
 export type Scorecard = { score: number; verdict: string; wins: string[]; fixes: string[]; betterLine: string };
 
+/** Strips stage directions like *sound of a truck* so the owner only "says" words. */
+export function cleanOwnerLine(text: string): string {
+  return text.replace(/^OWNER:\s*/i, "").replace(/\*[^*]{1,200}\*/g, "").replace(/\s{2,}/g, " ").replace(/^["\s]+|["\s]+$/g, "").trim() || "…";
+}
+
 /** Pulls the scorecard out of the model's reply. Returns null if it isn't usable. */
 export function parseScore(text: string): Scorecard | null {
-  const m = text.match(/\{[\s\S]*\}/);
+  const body = text.replace(/```(?:json)?/gi, "");
+  const m = body.match(/\{[\s\S]*\}/);
   if (!m) return null;
   try {
-    const o = JSON.parse(m[0]) as Record<string, unknown>;
+    // Tolerate trailing commas, the most common way a model breaks JSON.
+    const o = JSON.parse(m[0].replace(/,\s*([}\]])/g, "$1")) as Record<string, unknown>;
     const score = Math.round(Number(o.score));
     if (!Number.isFinite(score)) return null;
     const list = (v: unknown) => (Array.isArray(v) ? v.map(x => clean(x, 300)).filter(Boolean).slice(0, 3) : []);

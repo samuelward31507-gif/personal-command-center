@@ -4,7 +4,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { isAllowedUser } from "./lib/owner-gate.ts";
 import { bearerMatches } from "./lib/bearer.ts";
-import { validatePractice, parseScore, ownerPrompt } from "./lib/practice.ts";
+import { validatePractice, parseScore, ownerPrompt, cleanOwnerLine } from "./lib/practice.ts";
 import { weightedPipeline, DEAL_STAGES, STAGE_PROBABILITY } from "./lib/offers.ts";
 let n = 0; const ok = fn => { fn(); n++; };
 const read = p => readFileSync(p, "utf8");
@@ -66,6 +66,8 @@ ok(() => assert.match(validatePractice({ action: "score", turns: [] }).error, /S
 ok(() => assert.equal(validatePractice({ turns: Array.from({ length: 60 }, () => ({ who: "you", text: "hi" })) }).turns.length, 40));
 ok(() => assert.equal(parseScore('noise {"score": 140, "verdict": "ok", "wins": ["a"], "fixes": [], "betterLine": "x"} tail').score, 100));
 ok(() => assert.equal(parseScore("no json"), null));
+ok(() => assert.equal(parseScore('```json\n{"score": 62, "verdict": "v", "wins": ["a",], "fixes": [], "betterLine": "b",}\n```').score, 62));
+ok(() => assert.equal(cleanOwnerLine("*Sound of a truck idling.* Yeah, this is Mike."), "Yeah, this is Mike."));
 ok(() => assert.match(ownerPrompt("pool_skeptic", { company: "Cinder", repName: "Sam" }).system, /Never say you're an AI/));
 ok(() => assert.match(read("app/api/practice/route.ts"), /aiAllowed\(user\.id\)/));
 

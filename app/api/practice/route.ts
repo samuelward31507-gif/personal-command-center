@@ -2,7 +2,7 @@ import { getAllowedSession } from "@/lib/auth/server";
 import { aiAllowed, AI_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import { claudeText, AiTextError } from "@/lib/ai-text";
 import { loadWorkspace } from "@/lib/workspace-data";
-import { validatePractice, ownerPrompt, scorePrompt, transcript, parseScore } from "@/lib/practice";
+import { validatePractice, ownerPrompt, scorePrompt, transcript, parseScore, cleanOwnerLine } from "@/lib/practice";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,14 +22,15 @@ export async function POST(request: Request) {
   try {
     const ws = await loadWorkspace(user.id);
     if (input.action === "score") {
-      const text = await claudeText({ apiKey: key, system: scorePrompt(input.persona).system, user: transcript(input.turns), maxTokens: 700, timeoutMs: 40_000, label: "Practice score" });
-      const card = parseScore(text);
+      const ask = () => claudeText({ apiKey: key, system: scorePrompt(input.persona).system, user: transcript(input.turns), maxTokens: 900, timeoutMs: 40_000, label: "Practice score" });
+      // One retry: an unreadable scorecard is usually a one-off formatting slip.
+      const card = parseScore(await ask()) ?? parseScore(await ask());
       return card ? reply({ score: card }) : reply({ error: "The coach's notes came back garbled. Try again." }, 502);
     }
     const sys = ownerPrompt(input.persona, { company: ws.businessName, repName: ws.ownerFirstName }).system;
     const user_ = input.turns.length ? `${transcript(input.turns)}\n\nReply as the OWNER, in character, to the rep's last line.` : "The phone rings. Answer it as the OWNER.";
     const text = await claudeText({ apiKey: key, system: sys, user: user_, maxTokens: 200, timeoutMs: 25_000, label: "Practice reply", model: process.env.CINDER_DEMO_MODEL?.trim() || "claude-haiku-5-5" });
-    return reply({ owner: text.replace(/^OWNER:\s*/i, "").replace(/^"|"$/g, "").trim() });
+    return reply({ owner: cleanOwnerLine(text) });
   } catch (e) {
     const err = e instanceof AiTextError ? e : null;
     return reply({ error: err?.message || "Practice is unavailable right now." }, err?.status || 500);
