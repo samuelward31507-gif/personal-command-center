@@ -15,14 +15,20 @@ export default function ProspectQueue() {
   const [busy, setBusy] = useState("");
   const [copied, setCopied] = useState("");
   const [open, setOpen] = useState(false);
-  useEffect(() => { fetch("/api/prospect-queue", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).then(setQ).catch(() => {}); }, []);
+  const [err, setErr] = useState("");
+  useEffect(() => { fetch("/api/prospect-queue", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(setQ).catch(() => setErr("Couldn't load prospects to message. Refresh to try again.")); }, []);
   async function log(contactId: string, kind: string, channel: string) {
     setBusy(contactId + kind);
-    const r = await fetch("/api/prospect-queue", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId, kind, channel }) });
-    if (r.ok) setQ(await r.json());
+    setErr("");
+    try {
+      const r = await fetch("/api/prospect-queue", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId, kind, channel }) });
+      if (!r.ok) throw new Error();
+      setQ(await r.json());
+    } catch { setErr("That didn't save. Try again."); }
     setBusy("");
   }
   async function copy(link: string) { try { await navigator.clipboard.writeText(link); setCopied(link); setTimeout(() => setCopied(""), 1500); } catch { window.prompt("Copy this link", link); } }
+  if (err && !q) return <section className="td-pq" aria-label="Prospects to message"><div className="td-label">Prospects to message</div><p role="alert" style={{ color: "#f28b82", fontSize: 13.5, margin: "8px 0 0" }}>{err}</p></section>;
   if (!q || (!q.newToday.length && !q.followUps.length)) return null;
   const channel = (p: { instagram: string; facebook: string }) => (p.instagram ? "instagram" : p.facebook ? "facebook" : "other");
   const shown = open ? q.newToday : q.newToday.slice(0, 5);

@@ -67,10 +67,8 @@ export default function HomeSearch() {
 
   useEffect(() => {
     try { if (localStorage.getItem("cinder.ask.web") === "off") setWeb(false); } catch { /* storage unavailable */ }
-    const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); box.current?.focus(); } };
-    window.addEventListener("keydown", onKey);
+    // ⌘K belongs to the global command bar; this page just focuses the question box on open.
     box.current?.focus();
-    return () => window.removeEventListener("keydown", onKey);
   }, []);
   useEffect(() => {
     const el = bottom.current;

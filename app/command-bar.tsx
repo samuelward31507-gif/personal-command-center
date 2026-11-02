@@ -8,11 +8,11 @@ import { matches } from "@/lib/crm-ux";
 type Item = { id: string; label: string; hint: string; href: string; group: "Go to" | "Do" | "Contacts" | "Deals"; keywords?: string };
 
 const PAGES: Item[] = [
-  ["Today", "/crm/needs-you", "my day queue"], ["Call mode", "/crm/call", "dial phone"], ["Calendar", "/crm/calendar", "meetings schedule"],
+  ["Today", "/crm/needs-you", "my day queue"], ["Call mode", "/crm/call", "dial phone"], ["Meetings", "/crm/calendar", "calendar schedule cal.ai bookings"], ["Outreach", "/crm/outreach", "sequence calls follow-up queue"], ["Ask Cinder", "/crm/ask", "chat ai question"],
   ["Contacts", "/crm", "leads people"], ["Pipeline", "/crm/pipeline", "deals board"], ["Research", "/crm/preparation", "preparation audits briefs"],
   ["Tasks", "/crm/tasks", "todo"], ["Delivery", "/crm/projects", "projects onboarding playbook"], ["Clients", "/crm/client-success", "health renewals"],
-  ["Monthly reports", "/crm/reports", "client report results"], ["Money", "/crm/finance", "revenue payments invoices"], ["Scoreboard", "/crm/scoreboard", "goal calls stats"], ["Operations", "/crm/operations", "deadlines compliance taxes playbook registration a2p"],
-  ["Business audit", "/crm/audit", "research prospect audit"], ["AI team", "/crm/workforce", "agents"], ["Intelligence", "/crm/intelligence", "signals problems"],
+  ["Client reports", "/crm/reports", "monthly client report results"], ["Money", "/crm/finance", "revenue payments invoices"], ["Scoreboard", "/crm/scoreboard", "goal calls stats"], ["Operations", "/crm/operations", "deadlines compliance taxes playbook registration a2p"],
+  ["Business audit", "/crm/audit", "research prospect audit"], ["AI team", "/crm/workforce", "agents"], ["Signals", "/crm/intelligence", "intelligence problems alerts"],
   ["Strategy & memory", "/crm/strategy", "offer icp goals"], ["Settings", "/crm/settings", "business offers prices payment links goal"], ["Automations", "/crm/settings#automations", "lead form overnight audits sunday review"],
 ].map(([label, href, keywords]) => ({ id: "p:" + href, label, hint: "Page", href, group: "Go to" as const, keywords }));
 
@@ -22,7 +22,7 @@ const ACTIONS: Item[] = [
   { id: "a:call", label: "Start calling", hint: "Call mode", href: "/crm/call", group: "Do", keywords: "dial phone" },
   { id: "a:audit", label: "Audit a business", hint: "Research before you call", href: "/crm/audit", group: "Do", keywords: "research" },
   { id: "a:report", label: "Write a monthly report", hint: "Clients", href: "/crm/reports", group: "Do", keywords: "client results" },
-  { id: "a:ask", label: "Ask Cinder", hint: "Chat about your business", href: "/", group: "Do", keywords: "chat question ai" },
+  { id: "a:ask", label: "Ask Cinder", hint: "Chat about your business", href: "/crm/ask", group: "Do", keywords: "chat question ai" },
 ];
 
 /** ⌘K / Ctrl+K: jump to any page, contact or deal, or start a common action. */

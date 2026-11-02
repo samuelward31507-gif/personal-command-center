@@ -62,7 +62,7 @@ html body main:not(.calendar-page) h1 span, html body main:not(.calendar-page) h
 html body main:not(.calendar-page) h1 .heading-period, html body main:not(.calendar-page) h1 .brand-period { color: #4a4a4a !important; }
 html body main:not(.calendar-page) h2 { font-size: 16px !important; font-weight: 600 !important; letter-spacing: -0.015em !important; color: #f0f0f0 !important; }
 html body main:not(.calendar-page) h3 { font-size: 14.5px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; color: #efefef !important; }
-html body main:not(.calendar-page) p { color: var(--st-soft) !important; line-height: 1.6; }
+html body main:not(.calendar-page) p:not([role="alert"]):not([role="status"]):not([class*="err"]):not([class*="error"]):not([class*="danger"]) { color: var(--st-soft) !important; line-height: 1.6; }
 html body main:not(.calendar-page) small { color: var(--st-muted) !important; }
 html body .page-subtitle, html body main:not(.calendar-page) h1 + p { font-size: 14.5px !important; color: var(--st-soft) !important; max-width: 720px; }
 /* Eyebrows ("CINDER / SALES") */
@@ -75,7 +75,7 @@ html body .eyebrow-line { background: #3a3a3a !important; }
 /* ---------- Surfaces ---------- */
 html body main:not(.calendar-page) :is(.overview-card, .surface-panel, .route-panel, .schedule-panel, .notes-panel, .attention-banner,
   .needs-list, .snapshot-card, .stat-card, .table-wrap, .empty-state, [class*="card"], [class*="Card"], [class*="panel"]:not(.main-panel),
-  [class*="Panel"], [class*="surface"], [class*="stat"]:not(.status-ring):not(.topbar-status), [class*="widget"]) {
+  [class*="Panel"], [class*="surface"], [class*="stat"]:not([class*="status"]):not([class*="state"]), [class*="widget"]) {
   background-color: var(--st-surface) !important; background-image: none !important;
   border-color: var(--st-line) !important; box-shadow: none !important; color: var(--st-text) !important;
 }
@@ -176,3 +176,16 @@ html body .topbar-status { background: transparent !important; border: 0 !import
 html body main:not(.calendar-page) :is(.schedule-category, .date-chip, .crm-import-pill, [class*="-chip"]):not([style*="border"]) {
   border-color: var(--st-line-2) !important; color: var(--st-soft) !important; background: transparent !important;
 }
+
+
+/* ---------- Meaning colours (audit fix) ----------
+   The theme above repaints text and surfaces. These rules give back the few colours that carry meaning:
+   errors, overdue items and status pills. Muted on dark, never bright light-theme pills. */
+html body main [role="alert"], html body main [class*="-err"], html body main .error-text, html body main .crm-text-danger { color: #f28b82 !important; }
+html body main .crm-overdue, html body main .status-overdue, html body main .status-blocked { color: #f28b82 !important; }
+html body main :is(.crm-status, .fin-status, [class*="status-"]):not(.status-dot):not(.status-menu):not(.status-ring):not([class*="select"]) {
+  background: #222 !important; border: 1px solid #333 !important; color: #c9c9c9 !important; border-radius: 999px !important;
+}
+html body main :is(.crm-status-lead, .status-onboarding, .status-expected, .status-review, .status-interested) { color: #e9a383 !important; border-color: rgba(217,119,87,.35) !important; background: rgba(217,119,87,.08) !important; }
+html body main :is(.crm-status-customer, .status-active, .status-paid, .status-completed) { color: #e4e4e4 !important; border-color: #3d3d3d !important; background: #262626 !important; }
+html body main :is(.status-overdue, .status-blocked) { color: #f28b82 !important; border-color: rgba(242,139,130,.35) !important; background: rgba(242,139,130,.08) !important; }

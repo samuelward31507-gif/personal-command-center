@@ -19,8 +19,12 @@ export default function OwedPanel({ onChange }: { onChange?: () => void }) {
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [paying, setPaying] = useState<Item | null>(null);
   const [paidOn, setPaidOn] = useState("");
+  const [failed, setFailed] = useState(false);
 
-  const load = useCallback(() => fetch("/api/invoices", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(setD).catch(() => setD(null)), []);
+  const load = useCallback(() => fetch("/api/invoices", { cache: "no-store" })
+    .then(r => { if (!r.ok) throw new Error("load"); return r.json(); })
+    .then(j => { setD(j); setFailed(false); })
+    .catch(() => { setD(null); setFailed(true); }), []);
   useEffect(() => { void load(); }, [load]);
   const refresh = async () => { await load(); onChange?.(); };
 
@@ -71,7 +75,9 @@ export default function OwedPanel({ onChange }: { onChange?: () => void }) {
     finally { setBusy(null); }
   }
 
-  if (!d) return <section className="ow-card"><h2>Who owes you</h2><p className="ow-sub">Loading…</p></section>;
+  if (!d) return <section className="ow-card"><h2>Who owes you</h2>{failed
+    ? <p className="ow-sub" role="alert">Couldn&apos;t load what you&apos;re owed. <button type="button" className="ow-retry" onClick={() => void load()}>Try again</button></p>
+    : <p className="ow-sub" role="status">Loading…</p>}</section>;
   return <section className="ow-card">
     <div className="ow-head">
       <div><h2>Who owes you</h2>
