@@ -45,7 +45,7 @@ export default function PracticePage() {
   }
   const live = turns.length > 0 && !card;
 
-  return <div className="pr-page">
+  return <main className="pr-page">
     <header className="pr-head">
       <h1>Practice calls</h1>
       <p>Cinder plays a contractor who doesn't want to talk to you. Get through the opener, handle the objections, ask for the meeting. Then get scored.</p>
@@ -86,5 +86,5 @@ export default function PracticePage() {
       <div className="pr-ai">Scored by AI. Use it as a sparring partner, not a verdict.</div>
     </section>}
     <div ref={end} />
-  </div>;
+  </main>;
 }
