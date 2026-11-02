@@ -8,7 +8,7 @@ import { matches } from "@/lib/crm-ux";
 type Item = { id: string; label: string; hint: string; href: string; group: "Go to" | "Do" | "Contacts" | "Deals"; keywords?: string };
 
 const PAGES: Item[] = [
-  ["Today", "/crm/needs-you", "my day queue"], ["Call mode", "/crm/call", "dial phone"], ["Meetings", "/crm/calendar", "calendar schedule cal.ai bookings"], ["Outreach", "/crm/outreach", "sequence calls follow-up queue"], ["Ask Cinder", "/crm/ask", "chat ai question"],
+  ["Today", "/crm/needs-you", "my day queue"], ["Call mode", "/crm/call", "dial phone"], ["Practice calls", "/crm/practice", "roleplay objections rehearse"], ["Meetings", "/crm/calendar", "calendar schedule cal.ai bookings"], ["Outreach", "/crm/outreach", "sequence calls follow-up queue"], ["Ask Cinder", "/crm/ask", "chat ai question"],
   ["Contacts", "/crm", "leads people"], ["Pipeline", "/crm/pipeline", "deals board"], ["Research", "/crm/preparation", "preparation audits briefs"],
   ["Tasks", "/crm/tasks", "todo"], ["Delivery", "/crm/projects", "projects onboarding playbook"], ["Clients", "/crm/client-success", "health renewals"],
   ["Client reports", "/crm/reports", "monthly client report results"], ["Money", "/crm/finance", "revenue payments invoices"], ["Scoreboard", "/crm/scoreboard", "goal calls stats"], ["Operations", "/crm/operations", "deadlines compliance taxes playbook registration a2p"],

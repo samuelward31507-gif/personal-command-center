@@ -6,7 +6,7 @@
 .sg-intro p, .sg-msg p { color: #a8a8a8 !important; font-size: 15px; line-height: 1.6; margin: 8px 0 0; }
 .sg-msg h1 { font-size: 28px; margin: 30px 0 6px; color: #f4f2ec !important; letter-spacing: -.02em; }
 .sg-muted { color: #8a8a8a !important; }
-.sg-done { padding: 14px 16px; border-radius: 12px; border: 1px solid #234231; background: #101a14; color: #cfe9d7 !important; font-size: 14.5px; line-height: 1.5; }
+.sg-done { padding: 14px 16px; border-radius: 12px; border: 1px solid #4a3127; background: #101a14; color: #cfe9d7 !important; font-size: 14.5px; line-height: 1.5; }
 .sg-doc { margin-top: 22px; padding: 30px 32px; border-radius: 16px; border: 1px solid #222; background: #131313; font-size: 15px; line-height: 1.7; color: #dcdcdc; }
 .sg-doc h1 { font-size: 24px; margin: 0 0 14px; color: #f4f2ec !important; letter-spacing: -.02em; }
 .sg-doc h2 { font-size: 16.5px; margin: 24px 0 8px; color: #f0f0f0 !important; }
@@ -41,7 +41,7 @@ html body button.sg-btn:disabled { opacity: .55; cursor: default; }
   .sg-done { background: #fff !important; border-color: #ccc !important; }
   .sg-btn, .sg-top { display: none !important; }
 }
-.sg-next { margin-top: 12px; padding-top: 12px; border-top: 1px solid #234231; }
+.sg-next { margin-top: 12px; padding-top: 12px; border-top: 1px solid #4a3127; }
 .sg-next p { margin: 0; color: #cfe9d7 !important; }
 html body a.sg-btn { display: inline-flex; align-items: center; margin-top: 12px; height: 44px; padding: 0 18px; border-radius: 12px; background: #ededed; color: #0a0a0a !important; font-size: 15px; font-weight: 600; text-decoration: none; }
 @media print { .sg-next { display: none !important; } }

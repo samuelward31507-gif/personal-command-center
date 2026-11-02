@@ -59,7 +59,7 @@ export default function ContactDeals({ contactId, name, company }: { contactId: 
       .cd-deals .cd-deal:hover{border-color:#353535;background:#262626}
       .cd-deals .cd-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:550}
       .cd-deals .cd-stage{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid #3a3a3a;color:#a8a8a8}
-      .cd-deals .cd-won .cd-stage{color:#9ee6b5;border-color:#234231}.cd-deals .cd-lost .cd-stage{color:#f2a5a5;border-color:#3a2424}.cd-deals .cd-proposal .cd-stage{color:#c4c4c4;border-color:#3a3a3a}
+      .cd-deals .cd-won .cd-stage{color:#e9a383;border-color:#4a3127}.cd-deals .cd-lost .cd-stage{color:#f2a5a5;border-color:#3a2424}.cd-deals .cd-proposal .cd-stage{color:#c4c4c4;border-color:#3a3a3a}
       .cd-deals .cd-val{color:#8f8f8f;font-size:12px;white-space:nowrap}.cd-deals .cd-go{color:#666}
       html body main button.cd-start{margin-top:8px;height:30px;padding:0 12px;border-radius:9px;border:1px solid #3a3a3a!important;background:#262626!important;color:#e0e0e0!important;font:inherit;font-size:12.5px;cursor:pointer}
       html body main button.cd-start:hover:not(:disabled){background:#2a2a2a!important;color:#fff!important}

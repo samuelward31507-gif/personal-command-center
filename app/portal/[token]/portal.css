@@ -33,7 +33,7 @@
 .pt-inv { list-style: none; margin: 0; padding: 0; }
 .pt-inv li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid #1a1a1a; font-size: 14px; color: #d6d6d6; }
 .pt-inv b { font-weight: 560; font-variant-numeric: tabular-nums; }
-.pt-inv small { font-size: 12.5px; color: #8a8a8a; } .pt-inv small.ok { color: #9ee6b5; } .pt-inv small.bad { color: #f2b0a5; }
+.pt-inv small { font-size: 12.5px; color: #8a8a8a; } .pt-inv small.ok { color: #e9a383; } .pt-inv small.bad { color: #f2b0a5; }
 .pt-inv a, .pt-foot a { color: #ededed; }
 .pt-foot { margin-top: 40px; font-size: 14px; color: #8a8a8a !important; }
 @media (max-width: 640px) { .pt-figs { grid-template-columns: 1fr; } .pt-inv li { grid-template-columns: minmax(0, 1fr) auto; } }
