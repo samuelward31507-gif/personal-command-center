@@ -181,7 +181,7 @@ export default function SettingsPage() {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
                 {item.name === "Cal.ai scheduling" && <Link href="/crm/settings/cal-ai" style={{ fontSize: 12.5, color:"#e6e6e6", textDecoration: "none", fontWeight: 600 }}>Set up</Link>}
-                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color:item.status === "Connected" || item.status === "Configured" ? "#a9e2bb" : "#ababab", background:item.status === "Connected" || item.status === "Configured" ? "#1c2a20" : "#232323", borderRadius: 20, padding: "5px 10px" }}>{item.status}</span>
+                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color:item.status === "Connected" || item.status === "Configured" ? "#e4e4e4" : "#ababab", background:item.status === "Connected" || item.status === "Configured" ? "#1c2a20" : "#232323", borderRadius: 20, padding: "5px 10px" }}>{item.status}</span>
               </div>
             </article>
           ))}

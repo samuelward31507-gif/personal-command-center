@@ -4,6 +4,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { isAllowedUser } from "./lib/owner-gate.ts";
 import { bearerMatches } from "./lib/bearer.ts";
+import { weightedPipeline, DEAL_STAGES, STAGE_PROBABILITY } from "./lib/offers.ts";
 let n = 0; const ok = fn => { fn(); n++; };
 const read = p => readFileSync(p, "utf8");
 const env = { CINDER_OWNER_ID: "owner-1", CINDER_SIGNUPS_CLOSED_AT: "2026-11-02T10:00:00Z" };
@@ -49,5 +50,13 @@ ok(() => assert.equal(bearerMatches("Bearer nope", "s3cret"), false));
 ok(() => assert.equal(bearerMatches(null, "s3cret"), false));
 ok(() => assert.equal(bearerMatches("Bearer ", undefined), false));
 for (const f of ["pre-audit", "weekly-review"]) ok(() => assert.match(read(`app/api/cron/${f}/route.ts`), /bearerMatches\(/));
+
+// Pipeline: directive stages exist; weighting uses the deal's own probability over the stage default.
+ok(() => { for (const st of ["qualified", "interested", "negotiation"]) assert.ok(DEAL_STAGES.includes(st), st); });
+ok(() => assert.ok(DEAL_STAGES.every(st => st in STAGE_PROBABILITY)));
+ok(() => assert.deepEqual(weightedPipeline([{ stage: "proposal", setupFee: 1000, monthlyFee: 1000 }]), { setup: 600, monthly: 600 }));
+ok(() => assert.deepEqual(weightedPipeline([{ stage: "proposal", setupFee: 1000, monthlyFee: 1000, probability: 90 }]), { setup: 900, monthly: 900 }));
+ok(() => assert.deepEqual(weightedPipeline([{ stage: "won", setupFee: 1000, monthlyFee: 1000 }, { stage: "lost", setupFee: 9, monthlyFee: 9 }]), { setup: 0, monthly: 0 }));
+ok(() => assert.match(readFileSync("db/migrations/0032_pipeline_stages_probability.sql", "utf8"), /'negotiation'/));
 
 console.log(`integrity: ${n} checks passed`);

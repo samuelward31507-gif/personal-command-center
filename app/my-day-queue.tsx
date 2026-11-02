@@ -121,7 +121,7 @@ export default function MyDayQueue({ showFilters = false, title = "Today’s que
         <button key={key} type="button" role="tab" aria-selected={focus === key} style={chip(focus === key)} onClick={() => setFocus(key)}>{label} <span style={{ opacity: .6 }}>{count}</span></button>)}
     </div>}
     {error && <p className="local-note" role="alert">{error}</p>}
-    {notice && <p className="local-note" role="status" style={{ color: notice.ok ? "#86efac" : "#fca5a5" }}>{notice.text}</p>}
+    {notice && <p className="local-note" role="status" style={{ color: notice.ok ? "#e4e4e4" : "#fca5a5" }}>{notice.text}</p>}
     {notice?.deal && <SuggestedDeal key={notice.text} deal={notice.deal} />}
     {order.filter(g => byGroup[g]?.length).map(g => <div key={g} style={{ marginTop: 14 }}>
       <div style={{ fontSize: 12.5, fontWeight: 600, color: "#9e9e9e", margin: "0 0 6px" }}>{groups[g] || g} · {byGroup[g].length}</div>
@@ -144,7 +144,7 @@ export default function MyDayQueue({ showFilters = false, title = "Today’s que
           </div>
           {open === item.id && item.contact && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 6, marginTop: 12, paddingTop: 12, borderTop: "1px solid #2e2e2e" }}>
             {CALL_OUTCOMES.map(o => <button key={o} type="button" disabled={busy !== null} onClick={() => void logOutcome(item, o)}
-              style={{ ...BTN, justifyContent: "center", color: o === "do_not_contact" ? "#fca5a5" : o === "meeting_booked" || o === "interested" ? "#86efac" : "#ddd" }}>
+              style={{ ...BTN, justifyContent: "center", color: o === "do_not_contact" ? "#fca5a5" : o === "meeting_booked" || o === "interested" ? "#e4e4e4" : "#ddd" }}>
               {busy === item.id + o ? "Saving…" : OUTCOME_LABELS[o]}
             </button>)}
           </div>}

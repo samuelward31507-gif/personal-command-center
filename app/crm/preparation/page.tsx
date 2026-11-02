@@ -153,7 +153,7 @@ export default function PreparationPage(){
    <div style={{display:"flex",gap:6,flexWrap:"wrap",alignSelf:"end"}}>{(["all","draft","reviewed","archived"] as const).map(x=><button key={x} onClick={()=>setFilter(x)} style={{...buttonStyle,background:filter===x?"#e6e6e6":"#262626",color:filter===x?"#111":"#ababab",borderColor:filter===x?"#e6e6e6":"#3a3a3a"}}>{x==="all"?"All records":x.charAt(0).toUpperCase()+x.slice(1)}</button>)}</div>
   </section>
   {error&&<p role="alert" style={{padding:12,background:"#2a1414",borderRadius:9,color:"#fca5a5"}}>{error}</p>}
-  {notice&&<p role="status" style={{padding:12,background:"#10241a",borderRadius:9,color:"#86efac"}}>{notice}</p>}
+  {notice&&<p role="status" style={{padding:12,background:"#10241a",borderRadius:9,color:"#e4e4e4"}}>{notice}</p>}
   {showEditor&&<section style={{border:"1px solid #3a3a3a",borderRadius:14,padding:18,background:"#262626",marginBottom:20}}>
    <header style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center"}}><div><h2 style={{fontSize:21,margin:"0 0 4px"}}>{editing?"Edit preparation record":"Create preparation record"}</h2><p style={{margin:0,fontSize:12,color:"#ababab"}}>Save as a draft first. Mark reviewed only after you verify the facts and sources.</p></div><button style={buttonStyle} type="button" onClick={()=>setShowEditor(false)}>Close</button></header>
    <form onSubmit={save} style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:14,marginTop:18}}>

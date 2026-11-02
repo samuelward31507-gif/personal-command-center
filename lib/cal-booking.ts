@@ -49,13 +49,13 @@ export function splitName(name: string): { first: string; last: string } {
 /** Booking a call moves early deals to Meeting booked; later stages are left alone. */
 export function stageAfterBooking(stage: string | null): string | null {
   if (!stage) return "meeting_booked";
-  return ["new", "contacted", "nurture"].includes(stage) ? "meeting_booked" : null;
+  return ["new", "qualified", "contacted", "interested", "nurture"].includes(stage) ? "meeting_booked" : null;
 }
 
 /** A finished meeting moves Meeting booked (or earlier) to Meeting held. */
 export function stageAfterMeeting(stage: string | null): string | null {
   if (!stage) return null;
-  return ["new", "contacted", "meeting_booked", "nurture"].includes(stage) ? "meeting_held" : null;
+  return ["new", "qualified", "contacted", "interested", "meeting_booked", "nurture"].includes(stage) ? "meeting_held" : null;
 }
 
 /** YYYY-MM-DD in the founder's timezone. */

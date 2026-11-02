@@ -7,6 +7,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const stages = new Set<string>(DEAL_STAGES);
+/** Optional 0-100 close probability. Blank clears it (the stage default is used); anything else invalid is rejected. */
+const probabilityOf = (v: unknown): number | null | false => { if (v === undefined || v === null || v === "") return null; const n = Number(v); return Number.isInteger(n) && n >= 0 && n <= 100 ? n : false; };
 const services = new Set(["tier1_speed_to_lead", "tier2_revenue_system", "ai_voice_agent", "speed_to_lead", "lead_follow_up", "appointment_booking", "workflow_automation", "custom_ai_implementation"]);
 const agreementStatuses = new Set(["pending", "active", "paused", "ended"]);
 function db() {
@@ -55,7 +57,7 @@ export async function GET(request?: Request) {
     const rows = await sql`
       SELECT d.id, d.contact_id, d.title, d.service_type, d.stage, d.setup_fee,
         d.monthly_fee, d.expected_close_date, d.source, d.notes, d.lost_reason, d.agreement_status, d.signed_at, d.effective_at, d.ended_at, d.conversion_completed_at,
-        d.created_at, d.updated_at, trim(concat_ws(' ', c.first_name, c.last_name)) AS contact_name, c.company
+        d.probability, d.created_at, d.updated_at, trim(concat_ws(' ', c.first_name, c.last_name)) AS contact_name, c.company
       FROM public.deals d
       LEFT JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id
       WHERE d.owner_id = ${user.id} AND (${contactFilter}::uuid IS NULL OR d.contact_id = ${contactFilter}::uuid)
@@ -68,6 +70,7 @@ export async function GET(request?: Request) {
       stage: r.stage, setupFee: Number(r.setup_fee), monthlyFee: Number(r.monthly_fee),
       expectedCloseDate: r.expected_close_date ? (r.expected_close_date instanceof Date ? r.expected_close_date.toISOString().slice(0, 10) : String(r.expected_close_date).slice(0, 10)) : "",
       source: r.source, notes: r.notes, lostReason: r.lost_reason, agreementStatus: r.agreement_status, signedAt: r.signed_at, effectiveAt: r.effective_at, endedAt: r.ended_at, convertedAt: r.conversion_completed_at,
+      probability: r.probability == null ? null : Number(r.probability),
       contactName: String(r.contact_name ?? ""),
       company: r.company, createdAt: r.created_at, updatedAt: r.updated_at,
     })) });
@@ -89,6 +92,8 @@ export async function POST(request: Request) {
     if (body.stage !== undefined && !stages.has(body.stage)) return jsonError("Invalid deal stage.", 400);
     if (body.serviceType !== undefined && !services.has(body.serviceType)) return jsonError("Invalid service type.", 400);
     const stage = body.stage === undefined ? "new" : body.stage;
+    const probability = probabilityOf(body.probability);
+    if (probability === false) return jsonError("Probability must be a whole number from 0 to 100.", 400);
     const serviceType = body.serviceType === undefined ? "custom_ai_implementation" : body.serviceType;
     const contactId = typeof body.contactId === "string" && body.contactId ? body.contactId : null;
     if (contactId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(contactId)) return jsonError("Invalid contact id.", 400);
@@ -100,8 +105,8 @@ export async function POST(request: Request) {
     const closeDate = validDate(body.expectedCloseDate);
     if (closeDate === false) return jsonError("Expected close date must use a valid YYYY-MM-DD date.", 400);
     const rows = await sql`
-      INSERT INTO public.deals (owner_id, contact_id, title, service_type, stage, setup_fee, monthly_fee, expected_close_date, source, notes, lost_reason, agreement_status, signed_at, effective_at)
-      VALUES (${user.id}, ${contactId}::uuid, ${title}, ${serviceType}, ${stage}, ${setupFee}, ${monthlyFee}, ${closeDate}::date,
+      INSERT INTO public.deals (owner_id, contact_id, title, service_type, stage, setup_fee, monthly_fee, expected_close_date, probability, source, notes, lost_reason, agreement_status, signed_at, effective_at)
+      VALUES (${user.id}, ${contactId}::uuid, ${title}, ${serviceType}, ${stage}, ${setupFee}, ${monthlyFee}, ${closeDate}::date, ${probability}::smallint,
         ${String(body.source ?? "").slice(0, 200)}, ${String(body.notes ?? "").slice(0, 10000)}, ${String(body.lostReason ?? "").slice(0, 1000)},
         'pending', NULL::timestamptz, ${stage === "won" ? new Date().toISOString().slice(0, 10) : null}::date)
       RETURNING id
@@ -138,10 +143,13 @@ export async function PATCH(request: Request) {
     if (body.agreementStatus !== undefined && !agreementStatuses.has(body.agreementStatus)) return jsonError("Invalid agreement status.", 400);
     const endedAt = validDate(body.endedAt);
     if (endedAt === false) return jsonError("Agreement end date must use a valid YYYY-MM-DD date.", 400);
+    const probability = probabilityOf(body.probability);
+    if (probability === false) return jsonError("Probability must be a whole number from 0 to 100.", 400);
     const rows = await sql`
       UPDATE public.deals SET contact_id = ${contactId}::uuid, title = ${title},
         service_type = ${body.serviceType}, stage = ${body.stage}, setup_fee = ${setupFee},
         monthly_fee = ${monthlyFee}, expected_close_date = ${closeDate}::date,
+        probability = CASE WHEN ${body.probability !== undefined} THEN ${probability}::smallint ELSE probability END,
         source = ${String(body.source ?? "").slice(0, 200)}, notes = ${String(body.notes ?? "").slice(0, 10000)},
         lost_reason = ${String(body.lostReason ?? "").slice(0, 1000)},
         agreement_status = CASE

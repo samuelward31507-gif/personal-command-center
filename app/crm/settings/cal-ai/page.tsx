@@ -20,7 +20,7 @@ export default function CalAiSettingsPage() {
       </section>
       <section style={{ marginTop: 24, border:"1px solid #3a3a3a", borderRadius: 14, padding: 22, background:"#262626" }}>
         <h2 style={{ fontSize: 18, margin: "0 0 8px" }}>Connection status</h2>
-        <p style={{ fontSize: 13, color:configured ? "#86efac" : "#8b5b20", margin: "0 0 14px" }}>
+        <p style={{ fontSize: 13, color:configured ? "#e4e4e4" : "#8b5b20", margin: "0 0 14px" }}>
           {configured ? "Webhook endpoint configured at the environment level." : "Not configured — add the required server-side environment variable before enabling a webhook."}
         </p>
         <p style={{ fontSize: 13, color:"#ababab", lineHeight: 1.6, margin: 0 }}>

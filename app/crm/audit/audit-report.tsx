@@ -15,14 +15,14 @@ const C = {
 };
 
 const FIT: Record<string, { label: string; fg: string; bg: string; border: string }> = {
-  fit: { label: "Fit", fg: "#86efac", bg: "#10241a", border: "#1f4d33" },
+  fit: { label: "Fit", fg: "#e4e4e4", bg: "#10241a", border: "#1f4d33" },
   conditional_fit: { label: "Conditional fit", fg: "#fcd34d", bg: "#2a2410", border: "#5a4a1a" },
   no_fit: { label: "No fit", fg: "#fca5a5", bg: "#2a1414", border: "#5c2a2a" },
   needs_clarification: { label: "Needs clarification", fg: "#c4b5fd", bg: "#1c1830", border: "#3b3366" },
 };
 
 const TAGS: Record<string, string> = {
-  "VERIFIED FACT": "#86efac", VERIFIED: "#86efac", OBSERVATION: "#93c5fd", HYPOTHESIS: "#fcd34d", UNKNOWN: "#a1a1aa",
+  "VERIFIED FACT": "#e4e4e4", VERIFIED: "#e4e4e4", OBSERVATION: "#93c5fd", HYPOTHESIS: "#fcd34d", UNKNOWN: "#a1a1aa",
 };
 
 function host(url: string) {
@@ -120,7 +120,7 @@ export function AuditReport({ audit }: { audit: AuditView }) {
         {fit && <span style={{ color: fit.fg, background: fit.bg, border: `1px solid ${fit.border}`, borderRadius: 999, padding: "4px 11px", fontWeight: 700, fontSize: 12 }}>{fit.label}</span>}
         <span style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px" }}>{audit.confidence} confidence</span>
         {audit.officialWebsite
-          ? <a href={audit.officialWebsite} target="_blank" rel="noreferrer" style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px", color: C.body, textDecoration: "none" }}>{host(audit.officialWebsite)} <span style={{ color: audit.websiteStatus === "verified" ? "#86efac" : "#fcd34d" }}>{audit.websiteStatus === "verified" ? "✓ verified" : `· ${(audit.websiteStatus ?? "unverified").replace("_", " ")}`}</span></a>
+          ? <a href={audit.officialWebsite} target="_blank" rel="noreferrer" style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px", color: C.body, textDecoration: "none" }}>{host(audit.officialWebsite)} <span style={{ color: audit.websiteStatus === "verified" ? "#e4e4e4" : "#fcd34d" }}>{audit.websiteStatus === "verified" ? "✓ verified" : `· ${(audit.websiteStatus ?? "unverified").replace("_", " ")}`}</span></a>
           : <span style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px", color: "#fcd34d" }}>No website found</span>}
       </div>
       {verdict && <p style={{ margin: 0, padding: "12px 14px", background: C.inset, borderLeft: `3px solid ${fit?.fg ?? C.accent}`, borderRadius: 8, fontSize: 14.5, lineHeight: 1.6, color: C.text }}>{inline(verdict.replace(/\*\*/g, ""), "verdict")}</p>}

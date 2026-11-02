@@ -21,7 +21,7 @@ export async function GET(){
  sql`SELECT COALESCE(SUM(monthly_value),0) AS mrr FROM public.projects WHERE owner_id=${owner} AND status IN ('onboarding','in_progress','blocked','review')`,
  sql`SELECT COALESCE(SUM(monthly_fee),0) AS mrr FROM public.deals WHERE owner_id=${owner} AND stage='won' AND agreement_status='active' AND signed_at IS NOT NULL AND (effective_at IS NULL OR effective_at<=CURRENT_DATE) AND (ended_at IS NULL OR ended_at>CURRENT_DATE)`,
  sql`SELECT COUNT(*)::int AS deals,COALESCE(SUM(setup_fee),0) AS setup,COALESCE(SUM(monthly_fee),0) AS mrr FROM public.deals WHERE owner_id=${owner} AND stage NOT IN ('won','lost','nurture')`,
- sql`SELECT stage,COALESCE(SUM(setup_fee),0) AS setup,COALESCE(SUM(monthly_fee),0) AS mrr FROM public.deals WHERE owner_id=${owner} AND stage NOT IN ('won','lost') GROUP BY stage`
+ sql`SELECT stage,setup_fee AS setup,monthly_fee AS mrr,probability FROM public.deals WHERE owner_id=${owner} AND stage NOT IN ('won','lost') LIMIT 2000`
  ]);
  const now=new Date(),todayKey=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0"),month=todayKey.slice(0,7);
  const dateOnly=(v:unknown):string|null=>v==null?null:v instanceof Date?v.toISOString().slice(0,10):String(v).slice(0,10);
@@ -38,7 +38,7 @@ export async function GET(){
  const dueNext30=revenue.filter((r:any)=>r.status==="expected"&&r.due_date!==null&&r.due_date>=todayKey&&r.due_date<=in30Key).reduce((s:number,r:any)=>s+r.amount,0);
  const since30=new Date(now.getTime()-30*86400000).toISOString().slice(0,10);
  const recurringCosts=expenses.filter((r:any)=>r.recurring&&r.expense_date&&r.expense_date>=since30).reduce((s:number,r:any)=>s+r.amount,0);
- const weighted=weightedPipeline(byStage.map((r:any)=>({stage:String(r.stage),setupFee:Number(r.setup),monthlyFee:Number(r.mrr)})));
+ const weighted=weightedPipeline(byStage.map((r:any)=>({stage:String(r.stage),setupFee:Number(r.setup),monthlyFee:Number(r.mrr),probability:r.probability==null?null:Number(r.probability)})));
  return Response.json({revenue,expenses,summary:{weightedSetup:weighted.setup,weightedMrr:weighted.monthly,openDeals:Number(openPipeline[0]?.deals||0),openPipelineSetup:Number(openPipeline[0]?.setup||0),openPipelineMrr:Number(openPipeline[0]?.mrr||0),dueNext30,recurringCosts,month,paidRevenue,setupRevenue,mrr,contractedMrr,arr:contractedMrr*12,monthExpenses,monthNet:paidRevenue-monthExpenses,expected,overdue:revenue.filter((r:any)=>r.status==="overdue").reduce((s:number,r:any)=>s+r.amount,0)}})
  }catch(e){console.error("Finance GET failed",e);return fail("Unable to load financial records.",500);}
 }
