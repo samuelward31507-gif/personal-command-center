@@ -53,7 +53,7 @@ function OvernightAudits() {
         <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 0" }}>Every night around 3 AM Cinder audits up to 6 prospects in the day&apos;s call list. Research only; nobody is contacted. Capped at 20 audits a day.</p></div>
       <button data-variant="primary" disabled={busy} onClick={() => void runNow()} style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #3a3a3a", background: "#262626", color: "#e6e6e6", cursor: "pointer" }}>{busy ? "Running…" : "Run now"}</button>
     </div>
-    <p style={{ fontSize: 13, margin: "12px 0 0", color: lastCron ? (lastCron.status === "ok" || lastCron.status === "skipped" ? "#9ee6b5" : "#f2a5a5") : "#f0c38a" }}>
+    <p style={{ fontSize: 13, margin: "12px 0 0", color: lastCron ? (lastCron.status === "ok" || lastCron.status === "skipped" ? "#e9a383" : "#f2a5a5") : "#f0c38a" }}>
       {runs === null ? "Loading…" : lastCron ? `Last overnight run: ${when(lastCron.startedAt)} · ${lastCron.status}${lastCron.summary.reason ? ` (${lastCron.summary.reason})` : ""}${typeof lastCron.summary.audited === "number" ? ` · ${lastCron.summary.audited} audited` : ""}` : "No overnight run recorded yet."}
     </p>
     {note && <p style={{ fontSize: 13, margin: "6px 0 0", color: "#cfcfcf" }}>{note}</p>}

@@ -18,7 +18,7 @@ html body main button.cm-btn:disabled { opacity: .45; cursor: default; }
 html body main button.cm-primary { background: #efefef !important; border-color: #efefef !important; color: #1a1a1a !important; font-weight: 600; }
 html body main button.cm-primary:hover:not(:disabled) { background: #fff !important; color: #000 !important; }
 
-.cm-flash { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid #1f3a2a; background: #0f1a13; color: #9ee6b5; font-size: 13px; }
+.cm-flash { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid #1f3a2a; background: #0f1a13; color: #e9a383; font-size: 13px; }
 .cm-flash.is-bad { border-color: #3a2222; background: #1a0f0f; color: #f2a5a5; }
 .cm-deal-wrap { margin: -4px 0 14px; }
 
@@ -86,7 +86,7 @@ html body main button.cm-out {
   border: 1px solid #3a3a3a !important; background: #262626 !important; color: #dedede !important; font: inherit; font-size: 13px; font-weight: 550; cursor: pointer;
 }
 html body main button.cm-out:hover:not(:disabled) { border-color: #555555 !important; background: #303030 !important; color: #fff !important; }
-html body main button.cm-out.is-good { color: #9ee6b5 !important; border-color: #234231 !important; }
+html body main button.cm-out.is-good { color: #e9a383 !important; border-color: rgba(217,119,87,.4) !important; }
 html body main button.cm-out.is-bad { color: #f2a5a5 !important; border-color: #3a2424 !important; }
 html body main button.cm-out:disabled { opacity: .5; }
 .cm-nav { display: flex; justify-content: space-between; margin-top: 14px; }
