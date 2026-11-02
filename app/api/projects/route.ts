@@ -1,7 +1,7 @@
 import { guaranteeClock } from "@/lib/client-ops";
 import { GO_LIVE_STEP } from "@/lib/deal-handoff";
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const statuses = new Set(["planning","onboarding","in_progress","blocked","review","completed","on_hold","cancelled"]);
 const services = new Set(["ai_voice_agent","speed_to_lead","lead_follow_up","appointment_booking","workflow_automation","custom_ai_implementation"]);
 function db(){if(!process.env.DATABASE_URL)throw new Error("DATABASE_URL is not configured.");return neon(process.env.DATABASE_URL);}
-async function currentUser(){const result=await auth.getSession();const session=result?.data?.session;const user=result?.data?.user;return session&&user?.id?{id:String(user.id)}:null;}
+async function currentUser(){const result=await getAllowedSession();const session=result?.data?.session;const user=result?.data?.user;return session&&user?.id?{id:String(user.id)}:null;}
 function error(message:string,status:number){return Response.json({error:message},{status});}
 function text(value:unknown,max:number){return typeof value==="string"?value.trim().slice(0,max):"";}
 function uuid(value:unknown):string|null|false{if(value===null||value===undefined||value==="")return null;return typeof value==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)?value:false;}

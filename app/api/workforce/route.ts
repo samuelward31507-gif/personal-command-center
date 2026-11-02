@@ -1,8 +1,8 @@
 import {neon} from "@neondatabase/serverless";
-import {auth} from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 export const runtime="nodejs";export const dynamic="force-dynamic";
 function db(){if(!process.env.DATABASE_URL)throw Error("DATABASE_URL is not configured.");return neon(process.env.DATABASE_URL);}
-async function ownerId(){const r=await auth.getSession();return r?.data?.session&&r?.data?.user?.id?String(r.data.user.id):null;}
+async function ownerId(){const r=await getAllowedSession();return r?.data?.session&&r?.data?.user?.id?String(r.data.user.id):null;}
 const fail=(m:string,s:number)=>Response.json({error:m},{status:s});
 const txt=(v:unknown,n:number)=>typeof v==="string"?v.trim().slice(0,n):"";
 const uuid=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);

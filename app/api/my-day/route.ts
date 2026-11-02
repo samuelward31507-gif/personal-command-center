@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { GROUP_LABELS } from "@/lib/my-day";
 import { loadMyDay } from "@/lib/my-day-data";
 
@@ -12,7 +12,7 @@ function db() {
   return neon(process.env.DATABASE_URL);
 }
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 /**

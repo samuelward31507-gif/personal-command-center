@@ -1,9 +1,9 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 function db(){if(!process.env.DATABASE_URL)throw new Error("DATABASE_URL is not configured.");return neon(process.env.DATABASE_URL);}
-async function userId(){const r=await auth.getSession();return r?.data?.session&&r?.data?.user?.id?String(r.data.user.id):null;}
+async function userId(){const r=await getAllowedSession();return r?.data?.session&&r?.data?.user?.id?String(r.data.user.id):null;}
 const fail=(message:string,status:number)=>Response.json({error:message},{status});
 const text=(v:unknown,n:number)=>typeof v==="string"?v.trim().slice(0,n):"";
 const money=(v:unknown)=>{if(typeof v!=="number"&&typeof v!=="string")return null;if(typeof v==="string"&&!v.trim())return null;const n=Number(v);return Number.isFinite(n)&&n>=0&&n<=9999999999.99?n:null;};

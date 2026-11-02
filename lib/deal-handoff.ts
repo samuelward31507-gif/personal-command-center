@@ -81,7 +81,7 @@ export async function runDealHandoff(sql: NeonQueryFunction<false, false>, owner
   const deal = deals[0];
   if (!deal) throw new HandoffNotReady("Deal not found.");
   if (deal.stage !== "won" || deal.agreement_status !== "active" || !deal.signed_at) {
-    throw new HandoffNotReady("Mark the deal won only after the agreement is signed, then retry this handoff.");
+    throw new HandoffNotReady("Onboarding starts once the agreement is signed. Send it for e-signature, or press Signed on the deal's Agreement tab if they signed on paper.");
   }
   const clientName = String(deal.company || deal.contact_name || deal.title).slice(0, 240);
   const projects = await sql`

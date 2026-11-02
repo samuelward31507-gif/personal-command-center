@@ -3,6 +3,7 @@ import { loadWorkspace } from "@/lib/workspace-data";
 import { sendAlert } from "@/lib/notify";
 import { sanitizeForLog } from "@/lib/business-audit";
 import { runPreAudit, logRun } from "@/lib/pre-audit";
+import { bearerMatches } from "@/lib/bearer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   const fromVercelCron = /vercel-cron/i.test(request.headers.get("user-agent") ?? "");
   const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!bearerMatches(request.headers.get("authorization"), secret)) {
     if (sql && fromVercelCron) {
       await logRun(sql, "pre-audit", "cron", "unauthorized", { reason: secret ? "authorization header did not match CRON_SECRET" : "CRON_SECRET is not set" }, started);
       await sendAlert({ subject: "Overnight audits didn't run", lines: ["The overnight audit job was refused: its secret didn't match.", "Run them by hand from Settings → Overnight audits → Run now."], link: { label: "Open Settings", path: "/crm/settings" } });

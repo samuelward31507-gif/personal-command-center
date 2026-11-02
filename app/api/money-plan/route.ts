@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { billingStatus, goalForecast, periodSummary } from "@/lib/money-plan";
 import { todayIn } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 const reply = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const day = (v: unknown) => (v == null ? null : v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10));
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 

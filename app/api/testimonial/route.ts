@@ -38,7 +38,9 @@ export async function POST(request: Request) {
   if ("error" in v) return reply(v, 400);
   const { sql, row } = await find(token);
   if (!row) return reply({ error: "This link is no longer active." }, 404);
-  await sql`UPDATE public.testimonials SET status = 'submitted', quote = ${v.quote}, result = ${v.result}, name = ${v.name}, role = ${v.role}, company = ${v.company}, permission = ${v.permission}, submitted_at = now() WHERE token = ${token}`;
+  // Once submitted, a testimonial can't be overwritten through the public link.
+  const saved = await sql`UPDATE public.testimonials SET status = 'submitted', quote = ${v.quote}, result = ${v.result}, name = ${v.name}, role = ${v.role}, company = ${v.company}, permission = ${v.permission}, submitted_at = now() WHERE token = ${token} AND status = 'requested' RETURNING id`;
+  if (!saved.length) return reply({ error: "This testimonial was already submitted. Thank you!" }, 409);
   await sendAlert({ subject: `${v.company || row.client} left a testimonial`, lines: [`“${v.quote.slice(0, 400)}”`, `${v.name}${v.role ? ", " + v.role : ""}`, v.permission ? "They said you can publish it." : "They did NOT give permission to publish it."], link: { label: "Open the client", path: `/crm/client-success/${row.project_id}` } });
   return reply({ ok: true });
 }

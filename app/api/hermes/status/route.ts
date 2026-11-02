@@ -1,11 +1,11 @@
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const result = await auth.getSession();
+    const result = await getAllowedSession();
     if (!result?.data?.session || !result?.data?.user?.id) {
       return Response.json({ error: "Unauthorized." }, { status: 401, headers: { "Cache-Control": "no-store" } });
     }

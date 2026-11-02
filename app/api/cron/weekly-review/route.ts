@@ -5,6 +5,7 @@ import { buildWeeklyReview } from "@/lib/weekly-review";
 import { loadReviewData } from "@/lib/weekly-review-data";
 import { logRun } from "@/lib/pre-audit";
 import { sanitizeForLog } from "@/lib/business-audit";
+import { bearerMatches } from "@/lib/bearer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
   const started = new Date();
   const secret = process.env.CRON_SECRET;
   const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!bearerMatches(request.headers.get("authorization"), secret)) {
     if (sql && /vercel-cron/i.test(request.headers.get("user-agent") ?? "")) await logRun(sql, "weekly-review", "cron", "unauthorized", { reason: secret ? "authorization header did not match CRON_SECRET" : "CRON_SECRET is not set" }, started);
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }

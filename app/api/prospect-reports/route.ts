@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { newSigningToken } from "@/lib/esign";
 import { readInputs, validateReport } from "@/lib/prospect-report";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const reply = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 const iso = (v: unknown) => (v == null ? null : v instanceof Date ? v.toISOString() : String(v));

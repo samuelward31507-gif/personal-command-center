@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { isTokenShape } from "@/lib/esign";
 import { leakMath, readInputs, SPEEDS } from "@/lib/prospect-report";
 import { loadWorkspace } from "@/lib/workspace-data";
@@ -11,7 +11,7 @@ const reply = (body: Record<string, unknown>, status = 200) => Response.json(bod
 
 /** True when the person opening the link is signed in to Cinder (you previewing it), so it doesn't count as a view. */
 async function isOwnerPreview() {
-  try { const r = await auth.getSession(); return !!r?.data?.session; } catch { return false; }
+  try { const r = await getAllowedSession(); return !!r?.data?.session; } catch { return false; }
 }
 
 /** GET /api/report?token=… — public: one prospect report behind its private link. Counts the open. */

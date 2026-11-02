@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
+import { aiAllowed, AI_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import { DEFAULT_AUDIT_MODEL, normalizeWebsite, classifyProviderError, sanitizeForLog } from "@/lib/business-audit";
 import { ProviderHttpError, researchAndSave } from "@/lib/audit-engine";
 
@@ -17,7 +18,7 @@ function db() {
   return neon(process.env.DATABASE_URL);
 }
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
   try {
     const user = await currentUser();
     if (!user) return fail("Unauthorized", 401);
+    if (!(await aiAllowed(user.id))) return fail(AI_LIMIT_MESSAGE, 429);
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return fail("Business Audit requires ANTHROPIC_API_KEY in the Cinder deployment environment.", 503);
     stage = "validate";

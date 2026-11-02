@@ -42,6 +42,8 @@ export async function POST(request: Request) {
   if (!name) return reply({ error: "Add your name so we have a record of who approved." }, 400);
   const { sql, row } = await find(token);
   if (!row) return reply({ error: "This link is no longer active." }, 404);
+  // A finished approval is locked. It reopens only when the owner edits a message.
+  if (row.approved_at) return reply({ error: "These messages are already approved. Reply to your contact if something needs to change." }, 409);
   const next = applyApproval(cleanMessages(row.messages), body?.answers);
   if ("error" in next) return reply(next, 400);
   const done = allApproved(next);

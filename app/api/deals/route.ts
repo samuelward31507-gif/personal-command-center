@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { DEAL_STAGES } from "@/lib/offers";
 import { runDealHandoff, HandoffNotReady } from "@/lib/deal-handoff";
 
@@ -14,7 +14,7 @@ function db() {
   return neon(process.env.DATABASE_URL);
 }
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   const session = result?.data?.session;
   const user = result?.data?.user;
   if (!session || !user?.id) return null;
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       INSERT INTO public.deals (owner_id, contact_id, title, service_type, stage, setup_fee, monthly_fee, expected_close_date, source, notes, lost_reason, agreement_status, signed_at, effective_at)
       VALUES (${user.id}, ${contactId}::uuid, ${title}, ${serviceType}, ${stage}, ${setupFee}, ${monthlyFee}, ${closeDate}::date,
         ${String(body.source ?? "").slice(0, 200)}, ${String(body.notes ?? "").slice(0, 10000)}, ${String(body.lostReason ?? "").slice(0, 1000)},
-        ${stage === "won" ? "active" : "pending"}, ${stage === "won" ? new Date().toISOString() : null}::timestamptz, ${stage === "won" ? new Date().toISOString().slice(0, 10) : null}::date)
+        'pending', NULL::timestamptz, ${stage === "won" ? new Date().toISOString().slice(0, 10) : null}::date)
       RETURNING id
     `;
     const handoff = stage === "won" ? await autoHandoff(sql, user.id, String(rows[0]?.id)) : null;
@@ -146,9 +146,8 @@ export async function PATCH(request: Request) {
         lost_reason = ${String(body.lostReason ?? "").slice(0, 1000)},
         agreement_status = CASE
           WHEN ${body.agreementStatus ?? null}::text IS NOT NULL THEN ${body.agreementStatus ?? null}
-          WHEN ${body.stage} = 'won' AND stage <> 'won' THEN 'active'
+          WHEN ${body.stage} = 'won' AND stage <> 'won' AND signed_at IS NOT NULL THEN 'active'
           ELSE agreement_status END,
-        signed_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(signed_at, now()) ELSE signed_at END,
         effective_at = CASE WHEN ${body.stage} = 'won' THEN COALESCE(effective_at, CURRENT_DATE) ELSE effective_at END,
         ended_at = CASE WHEN ${body.agreementStatus ?? null} = 'ended' THEN COALESCE(${endedAt}::date, CURRENT_DATE)
           WHEN ${body.agreementStatus ?? null} = 'active' THEN NULL ELSE ended_at END,

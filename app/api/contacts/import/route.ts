@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { enrollContactInOutreach, DoNotContactError } from "@/lib/outreach";
 import {
   MAX_IMPORT_ROWS,
@@ -21,7 +21,7 @@ function db() {
   return neon(process.env.DATABASE_URL);
 }
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   const session = result?.data?.session;
   const user = result?.data?.user;
   if (!session || !user?.id) return null;

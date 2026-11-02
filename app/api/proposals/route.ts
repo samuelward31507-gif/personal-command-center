@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
+import { aiAllowed, AI_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import { buildProposalPrompt, cleanDiscovery } from "@/lib/deal-workspace";
 import { offersFrom } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
@@ -12,7 +13,7 @@ export const maxDuration = 90;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const fail = (message: string, status: number) => Response.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
   try {
     const user = await currentUser();
     if (!user) return fail("Unauthorized", 401);
+    if (!(await aiAllowed(user.id))) return fail(AI_LIMIT_MESSAGE, 429);
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return fail("Proposal drafting needs ANTHROPIC_API_KEY in the deployment environment.", 503);
     if (!process.env.DATABASE_URL) return fail("DATABASE_URL is not configured.", 503);

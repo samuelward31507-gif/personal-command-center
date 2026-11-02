@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { loadWorkspace } from "@/lib/workspace-data";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
+import { aiAllowed, AI_LIMIT_MESSAGE } from "@/lib/rate-limit";
 import { sanitizeForLog } from "@/lib/business-audit";
 import { runPreAudit, logRun } from "@/lib/pre-audit";
 
@@ -10,7 +11,7 @@ export const maxDuration = 300;
 
 const fail = (message: string, status: number) => Response.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 
@@ -33,6 +34,7 @@ export async function GET() {
 export async function POST() {
   const user = await currentUser();
   if (!user) return fail("Unauthorized", 401);
+  if (!(await aiAllowed(user.id))) return fail(AI_LIMIT_MESSAGE, 429);
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return fail("Audits need ANTHROPIC_API_KEY in the deployment environment.", 503);
   if (!process.env.DATABASE_URL) return fail("DATABASE_URL is not configured.", 503);

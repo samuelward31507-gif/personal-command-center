@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ function db() {
   return neon(process.env.DATABASE_URL);
 }
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   const session = result?.data?.session;
   const user = result?.data?.user;
   if (!session || !user?.id) return null;

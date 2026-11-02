@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 import { cleanDiscovery, PROPOSAL_STATUSES, stageForProposal, CONTRACT_STATUSES, stageForContract, type ProposalStatus, type ContractStatus } from "@/lib/deal-workspace";
 import { DEAL_STAGES } from "@/lib/offers";
 import { runDealHandoff, HandoffNotReady } from "@/lib/deal-handoff";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const fail = (message: string, status: number) => Response.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
 async function currentUser() {
-  const result = await auth.getSession();
+  const result = await getAllowedSession();
   return result?.data?.session && result?.data?.user?.id ? { id: String(result.data.user.id) } : null;
 }
 function db() {
@@ -117,12 +117,13 @@ export async function PATCH(request: Request) {
         proposal_status = COALESCE(${proposalStatus}, proposal_status),
         proposal_sent_at = CASE WHEN ${proposalStatus} = 'sent' THEN COALESCE(proposal_sent_at, now()) ELSE proposal_sent_at END,
         proposal_decided_at = CASE WHEN ${proposalStatus} IN ('accepted','declined') THEN now() ELSE proposal_decided_at END,
-        contract_status = COALESCE(${contractStatus}, CASE WHEN ${stage} = 'won' THEN 'signed' ELSE contract_status END),
+        contract_status = COALESCE(${contractStatus}, contract_status),
         contract_sent_at = CASE WHEN ${contractStatus} = 'sent' THEN COALESCE(contract_sent_at, now()) ELSE contract_sent_at END,
         stage = COALESCE(${stage}, stage),
         lost_reason = CASE WHEN ${stage} = 'lost' AND ${lostReason} <> '' THEN ${lostReason} ELSE lost_reason END,
-        agreement_status = CASE WHEN ${stage} = 'won' AND stage <> 'won' THEN 'active' ELSE agreement_status END,
-        signed_at = CASE WHEN ${stage} = 'won' THEN COALESCE(signed_at, now()) ELSE signed_at END,
+        agreement_status = CASE WHEN COALESCE(${stage}, stage) = 'won' AND agreement_status <> 'ended'
+          AND (signed_at IS NOT NULL OR ${contractStatus} = 'signed') THEN 'active' ELSE agreement_status END,
+        signed_at = CASE WHEN ${contractStatus} = 'signed' THEN COALESCE(signed_at, now()) ELSE signed_at END,
         effective_at = CASE WHEN ${stage} = 'won' THEN COALESCE(effective_at, CURRENT_DATE) ELSE effective_at END,
         updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id}`;

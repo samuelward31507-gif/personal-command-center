@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { auth } from "@/lib/auth/server";
+import { getAllowedSession } from "@/lib/auth/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ function error(message: string, status: number) {
 /** Read-only, owner-scoped snapshot for a future Hermes bridge. */
 export async function GET() {
   try {
-    const result = await auth.getSession();
+    const result = await getAllowedSession();
     const session = result?.data?.session;
     const user = result?.data?.user;
     if (!session || !user?.id) return error("Unauthorized", 401);
