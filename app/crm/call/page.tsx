@@ -43,7 +43,7 @@ export default function CallModePage() {
       const now = new Date();
       const tomorrow = new Date(now); tomorrow.setHours(0, 0, 0, 0); tomorrow.setDate(tomorrow.getDate() + 1);
       const dayAfter = new Date(tomorrow); dayAfter.setDate(dayAfter.getDate() + 1);
-      const q = new URLSearchParams({ today: localKey(now), dayEnd: tomorrow.toISOString(), windowEnd: dayAfter.toISOString() });
+      const q = new URLSearchParams({ today: localKey(now), dayEnd: tomorrow.toISOString(), windowEnd: dayAfter.toISOString(), prospects: "300" });
       const [dayRes, cRes] = await Promise.all([fetch("/api/my-day?" + q, { cache: "no-store" }), fetch("/api/contacts", { cache: "no-store" })]);
       if (dayRes.status === 401) throw new Error("Sign in to start calling.");
       const day = await dayRes.json().catch(() => ({}));
@@ -110,7 +110,8 @@ export default function CallModePage() {
 
   /** Research every unaudited prospect in the list, two at a time, so each call opens with a brief. */
   async function auditRest() {
-    const todo = queue.filter(q => q.contact && !/Audit:/.test(q.why));
+    // With a full calling day in the queue, audit only the next few people, not all of them.
+    const todo = queue.slice(index).filter(q => q.contact && !/Audit:/.test(q.why)).slice(0, 10);
     if (!todo.length || auditing) return;
     if (!confirm(`Run audits on ${todo.length} prospect${todo.length === 1 ? "" : "s"}? About a minute each, two at a time. Uses Anthropic API credit.`)) return;
     let done = 0;
@@ -185,7 +186,7 @@ export default function CallModePage() {
       <div className="cm-head-actions">
         <Link className="cm-link" href="/crm/needs-you">Today</Link>
         {queue.some(q => q.contact && !/Audit:/.test(q.why)) && <button data-variant="primary" className="cm-btn" disabled={!!auditing} onClick={() => void auditRest()}>
-          {auditing ? `Auditing ${auditing.done}/${auditing.total}${auditing.current ? ` · ${auditing.current}` : ""}…` : `Audit the rest (${queue.filter(q => q.contact && !/Audit:/.test(q.why)).length})`}</button>}
+          {auditing ? `Auditing ${auditing.done}/${auditing.total}${auditing.current ? ` · ${auditing.current}` : ""}…` : `Audit the next ${Math.min(10, queue.slice(index).filter(q => q.contact && !/Audit:/.test(q.why)).length)}`}</button>}
         <button data-variant="primary" className="cm-btn" onClick={() => void load()}>Refresh</button>
       </div>
     </header>

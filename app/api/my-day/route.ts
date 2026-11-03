@@ -30,7 +30,10 @@ export async function GET(request: Request) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(today) || Number.isNaN(Date.parse(dayEnd)) || Number.isNaN(Date.parse(windowEnd))) {
       return fail("today, dayEnd and windowEnd are required.", 400);
     }
-    const { items, now } = await loadMyDay(db(), user.id, today, dayEnd, windowEnd);
+    // Call mode asks for a full calling day; Today keeps the short default.
+    const rawCap = Number(params.get("prospects"));
+    const newProspects = Number.isInteger(rawCap) && rawCap > 0 ? Math.min(rawCap, 300) : undefined;
+    const { items, now } = await loadMyDay(db(), user.id, today, dayEnd, windowEnd, newProspects);
     return Response.json({ items, groups: GROUP_LABELS, generatedAt: now }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("My Day queue failed", { name: error instanceof Error ? error.name : typeof error, message: error instanceof Error ? error.message.slice(0, 200) : "" });

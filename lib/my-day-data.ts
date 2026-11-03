@@ -18,7 +18,7 @@ function shortVerdict(content: unknown): string | null {
 }
 
 /** Loads one owner's My Day inputs and returns the ranked queue. Shared by /api/my-day and Ask Cinder. */
-export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: string, today: string, dayEnd: string, windowEnd: string) {
+export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: string, today: string, dayEnd: string, windowEnd: string, newProspects?: number) {
 
   const dayStart = new Date(Date.parse(dayEnd) - 86400000).toISOString();
   const [outreach, activeIds, followUps, meetings, deals, projects, milestones, receivables, tasks, prospects, firstTouches, clients, tickets, approvals, failedRuns] = await Promise.all([
@@ -117,6 +117,7 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
     receivables: receivables.map(r => ({ id: String(r.id), title: String(r.title), amount: Number(r.amount), status: String(r.status), due: dateOnly(r.due_date), client: String(r.client ?? "") })),
     prospects: prospects.filter(r => ref(r.id)).map(r => ({ contact: ref(r.id)!, location: String(blankIfPlaceholder(r.location ?? "")), website: String(r.website ?? ""), createdAt: iso(r.created_at)! })),
     firstTouchesToday: Number(firstTouches[0]?.n ?? 0),
+    ...(newProspects !== undefined ? { dailyNewProspects: newProspects } : {}),
     clients: clients.map(r => ({ id: String(r.id), client: String(r.client_name ?? "Client"), status: String(r.status), health: Number(r.health_score ?? 5), renewal: dateOnly(r.renewal_date), nextReview: dateOnly(r.next_review_date), riskNotes: String(r.risk_notes ?? "").slice(0, 140) })),
     tickets: tickets.map(r => ({ id: String(r.id), title: String(r.title), client: String(r.client ?? ""), priority: String(r.priority), status: String(r.status), due: dateOnly(r.due_date) })),
     approvals: approvals.map(r => ({ id: String(r.id), title: String(r.title), actionType: String(r.action_type ?? ""), createdAt: iso(r.created_at) })),
