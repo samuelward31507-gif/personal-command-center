@@ -113,7 +113,7 @@ html body main .cm-dialog h3 { margin: 0 0 14px; font-size: 16px !important; }
 }
 
 /* Notes + outcomes stay pinned while the brief scrolls */
-.cm-dock { position: sticky; bottom: 0; z-index: 5; margin: 18px -24px -20px; padding: 14px 24px 16px; background: linear-gradient(180deg, rgba(19,19,19,.92), #1a1a1a 18px); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-top: 1px solid #222; border-radius: 0 0 16px 16px; }
+.cm-dock { position: static; bottom: 0; z-index: 5; margin: 18px -24px -20px; padding: 14px 24px 16px; background: linear-gradient(180deg, rgba(19,19,19,.92), #1a1a1a 18px); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-top: 1px solid #222; border-radius: 0 0 16px 16px; }
 .cm-dock .cm-notes { margin: 0 0 10px; }
 .cm-dock .cm-nav { margin-top: 10px; }
 
@@ -150,3 +150,9 @@ html body main .cm-dialog h3 { margin: 0 0 14px; font-size: 16px !important; }
 .cm-page .cm-draft-head b { color: #ededed; font-size: 14px; }
 .cm-page .cm-draft-head span, .cm-page .cm-draft-subject { color: #a3a3a3; font-size: 12.5px; }
 .cm-page .cm-draft textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; line-height: 1.5; padding: 10px 12px; border-radius: 8px; border: 1px solid #2e2e2e !important; background: #111 !important; color: #ededed !important; resize: vertical; }
+
+/* The outcome dock only sticks to the bottom on tall screens, where it can't cover the brief. */
+@media (min-width: 901px) and (min-height: 1000px) { .cm-dock { position: sticky; } }
+.cm-page .cm-outgroup .cm-mini { margin-bottom: 0; }
+.cm-page .cm-outcomes { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
+html body main .cm-outgroup button.cm-out { height: 34px; font-size: 12.5px; }

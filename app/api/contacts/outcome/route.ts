@@ -97,6 +97,14 @@ export async function POST(request: Request) {
       queries.push(sql`UPDATE public.contact_outreach SET status = ${sequenceStatus}, updated_at = now()
         WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND status = 'active'
         RETURNING id, status`);
+    } else {
+      // The call happened: push any running sequence's next touch to the follow-up date, so the
+      // contact doesn't come straight back up in Call mode as "due" after you've already called them.
+      queries.push(nextFollowUp
+        ? sql`UPDATE public.contact_outreach SET next_action_at = (${nextFollowUp}::date + time '14:00') AT TIME ZONE 'UTC', updated_at = now()
+            WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND status = 'active'`
+        : sql`UPDATE public.contact_outreach SET status = 'completed', updated_at = now()
+            WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND status = 'active'`);
     }
     for (const d of dealChanges) {
       // Guard on the stage we read so a concurrent edit is never overwritten.
