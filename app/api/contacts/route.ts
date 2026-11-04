@@ -56,7 +56,7 @@ export async function GET() {
       LEFT JOIN LATERAL (
         SELECT a.notes FROM public.contact_activities a
         WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND coalesce(a.notes, '') <> ''
-          AND a.notes NOT LIKE 'Call launched from%' AND a.notes NOT LIKE 'Outbound call launched%'
+          AND a.notes NOT IN ('Call launched from Cinder CRM.', 'Call launched from Call mode.', 'Call launched from My Day.', 'Outbound call launched from Cinder outreach.')
         ORDER BY a.occurred_at DESC LIMIT 1
       ) ln ON true
       LEFT JOIN LATERAL (
