@@ -11,19 +11,19 @@ function sentence(pain?: string) {
 }
 
 export function buildDraft(kind: DraftKind, i: DraftInput): { subject?: string; body: string } {
-  const hi = i.firstName ? `Hey ${i.firstName}` : "Hey";
+  const name = i.firstName ? ` ${i.firstName}` : "";
   const co = i.company || "your business";
-  const how = isPool(i.company)
-    ? "every lead gets a text back within a minute, screened for budget and fit, and the design consult booked on your calendar."
-    : "every lead, whether it's a missed call, a website form or a Facebook ad, gets a text back within a minute and the estimate booked on your calendar.";
+  const pain = sentence(i.pain);
+  const books = isPool(i.company) ? "books a design consult" : "books the estimate";
+  const what = `anyone who calls while you're busy, or fills out your form, gets a text back within a minute and ${books} themselves`;
   switch (kind) {
     case "info_text":
-      return { body: `${hi}, ${i.me} with Cinder. Good talking just now.${sentence(i.pain)} Here's the short version: ${how} Grab 15 min and I'll show you how it'd work for ${co}: ${i.bookingLink}` };
+      return { body: `Hey${name}, it's ${i.me}, we just talked.${pain} That's what I fix: ${what}. Here's my calendar if you want me to show you how it'd work for ${co}: ${i.bookingLink}` };
     case "info_dm":
-      return { body: `${hi}, ${i.me} from Cinder, we just talked on the phone.${sentence(i.pain)} Whoever texts back first usually gets the job, and that's what I set up: ${how} Grab 15 min and I'll show you how it'd work for ${co}: ${i.bookingLink}` };
+      return { body: `Hey${name}, ${i.me} from the call earlier, sending this so you have my info.${pain} Quick version: ${what}. 15 min to see it? ${i.bookingLink}` };
     case "info_email":
-      return { subject: `${co} + Cinder`, body: `${hi},\n\nGood talking just now.${sentence(i.pain)}\n\nHere's the short version: ${how}\n\nGrab 15 minutes and I'll show you exactly how it'd work for ${co}: ${i.bookingLink}\n\n${i.me}\nCinder Revenue Company` };
+      return { subject: "What we talked about", body: `Hey${name},\n\nThanks for taking my call.${pain}\n\nQuick version of what I do: ${what}.\n\nIf you want to see how it'd work for ${co}, grab 15 minutes here: ${i.bookingLink}\n\n${i.me}\nCinder` };
     case "stay_in_touch":
-      return { body: `${hi}, ${i.me} with Cinder. Appreciate the time. Save my number: I build AI systems for contractors, like texting leads back, booking estimates, Google reviews and websites. If anything ever needs fixing, text me.` };
+      return { body: `Appreciate you taking the call${name ? "," + name : ""}. If you ever need help with anything tech, like your website, Google reviews or getting back to leads faster, just text me. ${i.me}, Cinder` };
   }
 }
