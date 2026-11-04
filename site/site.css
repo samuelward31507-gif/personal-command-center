@@ -448,3 +448,48 @@ p { margin: 0; }
 html, body { overflow-x: clip; }
 
 .guarantee .g-fine { margin-top: 8px; font-size: 13.5px; color: var(--concrete); max-width: 46em; }
+
+/* ── Conversion pass: everything points at the booking calendar ── */
+.hero-trust { margin: 14px 0 0; font-size: 13.5px; color: var(--concrete); letter-spacing: .005em; }
+.price .plan-cta { display: flex; width: fit-content; margin-top: 14px; }
+.plan .wait { color: var(--paper); font-weight: 600; text-underline-offset: 4px; }
+
+.cta-band { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: linear-gradient(90deg, rgba(217,119,87,.07), transparent 60%); }
+.cta-band-in { display: flex; align-items: center; justify-content: space-between; gap: 18px 28px; flex-wrap: wrap; padding-top: 30px; padding-bottom: 30px; }
+.cta-band p { margin: 0; color: var(--paper); font-size: clamp(19px, 2vw, 24px); font-weight: 520; letter-spacing: -0.02em; }
+
+.book-in { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(32px, 5vw, 64px); align-items: start; }
+.book-copy { display: grid; gap: 20px; align-content: start; }
+.book-eyebrow { justify-self: start; font-size: 12.5px; font-weight: 600; letter-spacing: .04em; color: var(--spark); border: 1px solid rgba(217,119,87,.35); background: rgba(217,119,87,.08); padding: 5px 11px; border-radius: 999px; }
+.book .book-copy h2 { font-size: clamp(34px, 4vw, 54px); max-width: 12em; }
+.book-steps { list-style: none; counter-reset: s; margin: 4px 0 0; padding: 0; display: grid; gap: 14px; }
+.book-steps li { counter-increment: s; display: grid; grid-template-columns: 30px 1fr; column-gap: 12px; }
+.book-steps li::before { content: counter(s); grid-row: span 2; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 600; color: var(--night); background: var(--spark); }
+.book-steps b { color: var(--paper); font-weight: 600; font-size: 15.5px; }
+.book-steps span { font-size: 14.5px; color: var(--fog); }
+.book-promise { margin: 4px 0 0; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line-2); color: var(--paper); font-size: 14.5px; font-weight: 520; }
+.book-alt { margin: 0; font-size: 14px; color: var(--concrete); }
+.book-alt a { color: var(--fog); text-underline-offset: 4px; }
+.book-cal { min-width: 0; }
+.cal-inline { position: relative; min-height: 560px; border: 1px solid var(--line-2); border-radius: 16px; background: var(--night-2); overflow: hidden; }
+.cal-inline iframe { position: relative; z-index: 1; }
+.cal-loading { position: absolute; inset: 0; margin: 0; display: grid; place-items: center; font-size: 14px; color: var(--concrete); }
+.cal-fallback { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); white-space: nowrap; }
+.cal-inline:has(iframe) .cal-loading, .cal-inline:has(iframe) .cal-fallback { display: none; }
+
+.stickybook { display: none; }
+@media (max-width: 900px) {
+  .book-in { grid-template-columns: 1fr; gap: 20px; }
+  /* On phones the calendar comes right after the headline; the "what happens" steps follow it. */
+  .book-copy { display: contents; }
+  .book-eyebrow { order: 1; } .book .book-copy h2 { order: 2; } .book-copy .lede { order: 3; }
+  .book-cal { order: 4; margin-top: 4px; }
+  .book-steps { order: 5; margin-top: 12px; } .book-promise { order: 6; } .book-alt { order: 7; }
+  .cal-inline { min-height: 620px; border-radius: 12px; }
+  .cta-band-in .btn { width: 100%; }
+  .price .plan-cta { width: 100%; justify-content: center; }
+  .stickybook { display: flex; position: fixed; z-index: 60; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); justify-content: center; align-items: center; min-height: 52px; border-radius: 12px; background: var(--paper); color: var(--night); font-weight: 650; font-size: 16px; text-decoration: none; box-shadow: 0 10px 30px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06); transform: translateY(140%); transition: transform .25s ease; }
+  .stickybook.on { transform: none; }
+  .foot { padding-bottom: 88px; }
+}
+@media (prefers-reduced-motion: reduce) { .stickybook { transition: none; } }
