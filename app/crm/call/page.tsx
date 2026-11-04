@@ -36,6 +36,9 @@ export default function CallModePage() {
   const [when, setWhen] = useState({ date: "", time: "10:00", minutes: "30" });
   const [openObj, setOpenObj] = useState<string | null>(null);
   const [auditing, setAuditing] = useState<{ done: number; total: number; current: string } | null>(null);
+  // Callbacks: find anyone by name, company or phone and log the result without leaving Call mode.
+  const [search, setSearch] = useState("");
+  const [picked, setPicked] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -59,7 +62,17 @@ export default function CallModePage() {
   useEffect(() => { void load(); }, [load]);
 
   const item = queue[index];
-  const contact = item?.contact ? { ...item.contact, ...(contacts[item.contact.id] ?? {}) } as Contact : null;
+  const contact = picked && contacts[picked] ? contacts[picked] : item?.contact ? { ...item.contact, ...(contacts[item.contact.id] ?? {}) } as Contact : null;
+  const matches = useMemo(() => {
+    const t = search.trim().toLowerCase();
+    if (t.length < 2) return [];
+    const digits = t.replace(/\D/g, "");
+    return (Object.values(contacts) as Contact[]).filter(c => {
+      if (digits.length >= 3 && (c.phone ?? "").replace(/\D/g, "").includes(digits)) return true;
+      return /[a-z]/.test(t) && `${c.company ?? ""} ${c.name ?? ""}`.toLowerCase().includes(t);
+    }).slice(0, 8);
+  }, [search, contacts]);
+  function pick(id: string) { setPicked(id); setSearch(""); setFlash(null); }
 
   useEffect(() => {
     setAudit(undefined); setNotes(""); setTab("brief"); setOpenObj(null);
@@ -102,8 +115,15 @@ export default function CallModePage() {
       const who = contact.company || contact.name;
       setLogged(l => [{ name: who, outcome: OUTCOME_LABELS[outcome] }, ...l]);
       setFlash({ ok: true, text: `${who}: ${data.label}${data.nextFollowUp ? ` · follow-up ${data.nextFollowUp}` : ""}`, deal: data.suggestedDeal || null });
-      setQueue(q => q.filter((_, i) => i !== index));
-      setIndex(i => Math.min(i, Math.max(0, queue.length - 2)));
+      if (picked) {
+        // A callback: drop them from today's list too so they never come back up by mistake.
+        const id = picked;
+        setQueue(q => { const next = q.filter(x => x.contact?.id !== id); setIndex(i => Math.min(i, Math.max(0, next.length - 1))); return next; });
+        setPicked(null);
+      } else {
+        setQueue(q => q.filter((_, i) => i !== index));
+        setIndex(i => Math.min(i, Math.max(0, queue.length - 2)));
+      }
     } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not log that outcome." }); }
     finally { setBusy(false); }
   }
@@ -194,7 +214,17 @@ export default function CallModePage() {
     {flash && <div className={"cm-flash" + (flash.ok ? "" : " is-bad")} role="status">{flash.text}</div>}
     {flash?.deal && <div className="cm-deal-wrap"><SuggestedDeal key={flash.text} deal={flash.deal} /></div>}
 
-    {!item ? <div className="cm-empty cm-done">
+    <div className="cm-find">
+      <input type="search" inputMode="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Someone calling back? Search name, company or phone number" aria-label="Find a contact by name, company or phone number" />
+      {search.trim().length >= 2 && <div className="cm-find-results" role="listbox">
+        {matches.length ? matches.map(c => <button type="button" data-variant="primary" key={c.id} className="cm-find-row" onClick={() => pick(c.id)}>
+          <span>{c.company || c.name}</span><small>{[c.company ? c.name : "", c.phone].filter(Boolean).join(" · ")}</small>
+        </button>) : <div className="cm-find-none">No contact matches “{search.trim()}”.</div>}
+      </div>}
+    </div>
+    {picked && contact && <div className="cm-flash" role="status">Logging a callback from {contact.company || contact.name}. Tap the result below. <button type="button" data-variant="primary" className="cm-btn" onClick={() => setPicked(null)}>Back to my list</button></div>}
+
+    {!item && !picked ? <div className="cm-empty cm-done">
       <h2>Nothing left in today&apos;s list.</h2>
       <p>{logged.length ? `You logged ${logged.length} call${logged.length === 1 ? "" : "s"}. ` : ""}Add prospects or run audits to fill tomorrow.</p>
       <div className="cm-row"><Link className="cm-btn-link" href="/crm">Contacts</Link><Link className="cm-btn-link" href="/crm/audit">Run an audit</Link></div>
@@ -210,7 +240,7 @@ export default function CallModePage() {
       <section className="cm-main">
         <div className="cm-who">
           <div className="cm-who-main">
-            <div className="cm-mini">{index + 1} of {queue.length} · {item.group === "prospects" ? "New prospect" : "Follow-up"}</div>
+            <div className="cm-mini">{picked ? "Callback" : `${index + 1} of ${queue.length} · ${item?.group === "prospects" ? "New prospect" : "Follow-up"}`}</div>
             <h2 className="cm-company">{contact?.company || contact?.name}</h2>
             <div className="cm-meta">
               {contact?.name && contact.name !== contact.company && <span>{contact.name}</span>}
@@ -225,7 +255,7 @@ export default function CallModePage() {
           </div>
         </div>
 
-        <div className="cm-why">{item.why}</div>
+        {!picked && item && <div className="cm-why">{item.why}</div>}
 
         <div className="cm-tabs">
           {(["brief", "script", "objections"] as const).map(t => <button data-variant="primary" key={t} aria-current={tab === t ? "true" : undefined} className={"cm-tabbtn" + (tab === t ? " is-on" : "")} onClick={() => setTab(t)}>

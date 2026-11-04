@@ -124,3 +124,12 @@ html body main .cm-dialog h3 { margin: 0 0 14px; font-size: 16px !important; }
   html body main .cm-head-actions button { white-space: nowrap; }
   .cm-dock { position: static; margin: 18px 0 0; padding: 14px 0 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; border-radius: 0; }
 }
+/* Callback search */
+.cm-page .cm-find{position:relative;margin:0 0 14px}
+.cm-page .cm-find input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:11px 14px;border-radius:10px;border:1px solid #2e2e2e!important;background:#141414!important;color:#ededed!important}
+.cm-page .cm-find input:focus{outline:2px solid rgba(217,119,87,.6);outline-offset:1px}
+.cm-page .cm-find-results{position:absolute;z-index:20;left:0;right:0;top:calc(100% + 4px);background:#1a1a1a!important;border:1px solid #2e2e2e;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+.cm-page .cm-find-row.cm-find-row{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;padding:10px 14px;border:0!important;border-bottom:1px solid #262626!important;border-radius:0!important;background:transparent!important;color:#ededed!important;cursor:pointer;min-height:44px}
+.cm-page .cm-find-row.cm-find-row:hover,.cm-page .cm-find-row.cm-find-row:focus-visible{background:#222!important}
+.cm-page .cm-find-row small{color:#8f8f8f;font-size:12px}
+.cm-page .cm-find-none{padding:12px 14px;color:#8f8f8f;font-size:13px}
