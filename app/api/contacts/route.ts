@@ -46,8 +46,19 @@ export async function GET() {
              c.source, c.notes, c.follow_up_at, c.website, c.instagram, c.facebook, c.location, c.sms_consent, c.sms_consent_at, c.sms_consent_source, c.created_at, c.updated_at,
              (SELECT MAX(a.occurred_at) FROM public.contact_activities a
               WHERE a.owner_id = c.owner_id AND a.contact_id = c.id) AS last_contact_at,
-             lt.occurred_at AS last_touch_at, lt.outcome AS last_touch_outcome
+             lt.occurred_at AS last_touch_at, lt.outcome AS last_touch_outcome, ln.notes AS last_note,
+             (SELECT count(*) FROM public.contact_activities a
+              WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND a.outcome IN ('no_answer','voicemail','gatekeeper')
+                AND a.occurred_at > COALESCE((SELECT max(b.occurred_at) FROM public.contact_activities b
+                  WHERE b.owner_id = c.owner_id AND b.contact_id = c.id AND b.action <> 'note'
+                    AND b.outcome NOT IN ('initiated','no_answer','voicemail','gatekeeper','other')), 'epoch'::timestamptz)) AS attempts
       FROM public.contacts c
+      LEFT JOIN LATERAL (
+        SELECT a.notes FROM public.contact_activities a
+        WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND coalesce(a.notes, '') <> ''
+          AND a.notes NOT LIKE 'Call launched from%' AND a.notes NOT LIKE 'Outbound call launched%'
+        ORDER BY a.occurred_at DESC LIMIT 1
+      ) ln ON true
       LEFT JOIN LATERAL (
         SELECT a.occurred_at, a.outcome FROM public.contact_activities a
         WHERE a.owner_id = c.owner_id AND a.contact_id = c.id
@@ -77,6 +88,8 @@ export async function GET() {
       lastContact: row.last_contact_at ? new Date(String(row.last_contact_at)).toISOString() : "",
       lastTouchAt: row.last_touch_at ? new Date(String(row.last_touch_at)).toISOString() : "",
       lastTouchOutcome: row.last_touch_outcome ? String(row.last_touch_outcome) : "",
+      lastNote: row.last_note ? String(row.last_note).replace(/^Call launched from[^\n]*\n?/, "").slice(0, 400) : "",
+      attempts: Number(row.attempts ?? 0),
       notes: row.notes,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

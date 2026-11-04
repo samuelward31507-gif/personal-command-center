@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CALL_OUTCOMES, OUTCOME_LABELS, type CallOutcome } from "@/lib/call-outcomes";
+import { CALL_MODE_GROUPS, CONVERSATIONS, OUTCOME_LABELS, ATTEMPT_LIMIT, type CallOutcome } from "@/lib/call-outcomes";
+import { buildDraft, type DraftKind } from "@/lib/call-drafts";
+import { localCallInfo } from "@/lib/local-time";
 import { buildObjections, buildScript, cityOf } from "@/lib/call-script";
 import { reportSection } from "@/lib/business-audit";
 import { suggestOffer } from "@/lib/offers";
@@ -12,12 +14,16 @@ import type { QueueItem } from "@/lib/my-day";
 import SuggestedDeal, { type SuggestedDealData } from "../../suggested-deal";
 import "./call-mode.css";
 
-type Contact = { id: string; name: string; company: string; phone: string; email?: string; website?: string; location?: string; notes?: string; status?: string; lastContact?: string };
+type Contact = { id: string; name: string; company: string; phone: string; email?: string; website?: string; location?: string; notes?: string; status?: string; lastContact?: string; lastTouchAt?: string; lastTouchOutcome?: string; lastNote?: string; attempts?: number };
 type Audit = { id: string; content: string; createdAt: string };
 
 const localKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const firstName = (name: string, company: string) => { const f = name.trim().split(/\s+/)[0] ?? ""; return f && f.toLowerCase() !== company.trim().split(/\s+/)[0]?.toLowerCase() ? f : ""; };
-const KEYS: Partial<Record<CallOutcome, string>> = { no_answer: "1", voicemail: "2", connected: "3", callback_requested: "4", interested: "5", meeting_booked: "6", not_a_fit: "7", wrong_contact: "8" };
+const KEYS: Partial<Record<CallOutcome, string>> = { no_answer: "1", voicemail: "2", gatekeeper: "3", wrong_number: "4", meeting_booked: "5", send_info: "6", callback_requested: "7", interested: "8", not_interested: "9", not_a_fit: "0" };
+type Dialog = null | "meeting" | "callback" | "gatekeeper" | "info";
+type Draft = { title: string; subject?: string; body: string; contactId: string; channel: "text" | "dm" | "email" | "stay" };
+const CHANNEL_LABEL = { text: "Text", dm: "Facebook DM", email: "Email" } as const;
+const shortDate = (iso: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric" }); };
 
 /** Call mode: one prospect at a time with the brief, script, objections and one-tap outcomes. Calls are placed by the founder. */
 export default function CallModePage() {
@@ -32,7 +38,13 @@ export default function CallModePage() {
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<{ ok: boolean; text: string; deal?: SuggestedDealData | null } | null>(null);
   const [logged, setLogged] = useState<{ name: string; outcome: string }[]>([]);
-  const [dialog, setDialog] = useState<null | "meeting" | "callback">(null);
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const [gk, setGk] = useState({ name: "", best: "" });
+  const [info, setInfo] = useState<{ channel: "text" | "dm" | "email"; pain: string }>({ channel: "text", pain: "" });
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [stats, setStats] = useState<{ dials: number; conversations: number; meetings: number } | null>(null);
+  const [clock, setClock] = useState(() => new Date());
   const [when, setWhen] = useState({ date: "", time: "10:00", minutes: "30" });
   const [openObj, setOpenObj] = useState<string | null>(null);
   const [auditing, setAuditing] = useState<{ done: number; total: number; current: string } | null>(null);
@@ -60,6 +72,13 @@ export default function CallModePage() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+    fetch("/api/call-stats?since=" + encodeURIComponent(midnight.toISOString()), { cache: "no-store" })
+      .then(r => r.ok ? r.json() : null).then(d => d && setStats({ dials: d.dials, conversations: d.conversations, meetings: d.meetings })).catch(() => {});
+    const t = setInterval(() => setClock(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
 
   const item = queue[index];
   const contact = picked && contacts[picked] ? contacts[picked] : item?.contact ? { ...item.contact, ...(contacts[item.contact.id] ?? {}) } as Contact : null;
@@ -104,17 +123,27 @@ export default function CallModePage() {
     window.location.href = "tel:" + contact.phone.replace(/[^+\d]/g, "");
   }
 
-  async function log(outcome: CallOutcome, extra: { followUpDate?: string } = {}) {
+  async function log(outcome: CallOutcome, extra: { followUpDate?: string } = {}, extraNote = "") {
     if (!contact || busy) return;
     if (outcome === "do_not_contact" && !confirm(`Mark ${contact.company || contact.name} do not contact? This stops all outreach and suppresses the number and email.`)) return;
     setBusy(true); setFlash(null);
     try {
-      const r = await fetch("/api/contacts/outcome", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: contact.id, outcome, notes, ...extra }) });
+      const r = await fetch("/api/contacts/outcome", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: contact.id, outcome, notes: [extraNote, notes.trim()].filter(Boolean).join("\n"), ...extra }) });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data.error || "Could not log that outcome.");
+      setStats(st => st && { dials: st.dials + 1, conversations: st.conversations + (CONVERSATIONS.includes(outcome) ? 1 : 0), meetings: st.meetings + (outcome === "meeting_booked" ? 1 : 0) });
+      setCopied(false);
+      const draftInput = { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, pain: info.pain, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cal.com/samuel-ward-saqpvb/15min" };
+      if (outcome === "send_info") {
+        const kind: DraftKind = info.channel === "dm" ? "info_dm" : info.channel === "email" ? "info_email" : "info_text";
+        setDraft({ title: `${CHANNEL_LABEL[info.channel]} for ${contact.company || contact.name}`, ...buildDraft(kind, draftInput), contactId: contact.id, channel: info.channel });
+      } else if (outcome === "not_a_fit") {
+        setDraft({ title: `Optional stay-in-touch text for ${contact.company || contact.name}`, ...buildDraft("stay_in_touch", draftInput), contactId: contact.id, channel: "stay" });
+      } else setDraft(null);
       const who = contact.company || contact.name;
       setLogged(l => [{ name: who, outcome: OUTCOME_LABELS[outcome] }, ...l]);
-      setFlash({ ok: true, text: `${who}: ${data.label}${data.nextFollowUp ? ` · follow-up ${data.nextFollowUp}` : ""}`, deal: data.suggestedDeal || null });
+      const parkedNote = data.parked ? ` · ${ATTEMPT_LIMIT} tries with no answer, so they're parked for 30 days` : data.attempts ? ` · try ${data.attempts} of ${ATTEMPT_LIMIT}` : "";
+      setFlash({ ok: true, text: `${who}: ${data.label}${data.nextFollowUp ? ` · back on ${data.nextFollowUp}` : ""}${parkedNote}`, deal: data.suggestedDeal || null });
       if (picked) {
         // A callback: drop them from today's list too so they never come back up by mistake.
         const id = picked;
@@ -156,7 +185,9 @@ export default function CallModePage() {
     }
   }
 
-  function openDialog(kind: "meeting" | "callback") {
+  function openDialog(kind: Exclude<Dialog, null>) {
+    if (kind === "gatekeeper") { setGk({ name: "", best: "" }); setDialog(kind); return; }
+    if (kind === "info") { setInfo(i => ({ ...i, pain: "" })); setDialog(kind); return; }
     const d = new Date(); d.setDate(d.getDate() + (kind === "callback" ? 1 : 2));
     if (d.getDay() === 6) d.setDate(d.getDate() + 2); if (d.getDay() === 0) d.setDate(d.getDate() + 1);
     setWhen(w => ({ ...w, date: localKey(d) })); setDialog(kind);
@@ -178,6 +209,29 @@ export default function CallModePage() {
     } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not book the meeting." }); setBusy(false); }
   }
 
+  function pickOutcome(o: CallOutcome) {
+    if (o === "meeting_booked") openDialog("meeting");
+    else if (o === "callback_requested") openDialog("callback");
+    else if (o === "gatekeeper") openDialog("gatekeeper");
+    else if (o === "send_info") openDialog("info");
+    else void log(o);
+  }
+
+  async function copyDraft() {
+    if (!draft) return;
+    try { await navigator.clipboard.writeText(draft.subject ? `${draft.subject}\n\n${draft.body}` : draft.body); setCopied(true); } catch { setCopied(false); }
+  }
+  async function markSent() {
+    if (!draft) return;
+    const via = draft.channel === "dm" ? "Facebook DM" : draft.channel === "email" ? "email" : "text";
+    const isText = draft.channel === "text" || draft.channel === "stay";
+    const r = await fetch("/api/call-logs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      contactId: draft.contactId, channel: isText ? "text" : "note", action: isText ? "outbound_text" : "note", outcome: "other",
+      notes: `Sent by ${via} from my phone (Cinder draft):\n${draft.body}`.slice(0, 5000) }) }).catch(() => null);
+    setFlash(r?.ok ? { ok: true, text: `Marked as sent by ${via}.` } : { ok: false, text: "Couldn't mark it as sent. Try again." });
+    if (r?.ok) setDraft(null);
+  }
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (dialog || (e.target as HTMLElement)?.closest?.("textarea, input, select")) return;
@@ -186,7 +240,7 @@ export default function CallModePage() {
       else if (e.key === "ArrowLeft" || e.key === "p") setIndex(i => Math.max(0, i - 1));
       else {
         const o = (Object.entries(KEYS) as [CallOutcome, string][]).find(([, k]) => k === e.key)?.[0];
-        if (o === "meeting_booked") openDialog("meeting"); else if (o === "callback_requested") openDialog("callback"); else if (o) void log(o);
+        if (o) pickOutcome(o);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -201,7 +255,8 @@ export default function CallModePage() {
       <div>
         <div className="cm-eyebrow">Call mode</div>
         <h1 className="cm-title">{queue.length ? `${queue.length} to call` : "Nothing to call right now"}</h1>
-        <p className="cm-sub">{logged.length ? `${logged.length} logged this session · ` : ""}Follow-ups first, then today&apos;s fresh prospects. You dial; Cinder keeps score.</p>
+        <p className="cm-sub">Follow-ups first, then people you haven&apos;t called. You dial; Cinder keeps score.</p>
+        {stats && <div className="cm-stats" aria-label="Today's numbers"><span><b>{stats.dials}</b> dials</span><span><b>{stats.conversations}</b> conversations</span><span><b>{stats.meetings}</b> meetings</span></div>}
       </div>
       <div className="cm-head-actions">
         <Link className="cm-link" href="/crm/needs-you">Today</Link>
@@ -213,6 +268,16 @@ export default function CallModePage() {
 
     {flash && <div className={"cm-flash" + (flash.ok ? "" : " is-bad")} role="status">{flash.text}</div>}
     {flash?.deal && <div className="cm-deal-wrap"><SuggestedDeal key={flash.text} deal={flash.deal} /></div>}
+    {draft && <div className="cm-draft">
+      <div className="cm-draft-head"><b>{draft.title}</b><span>Nothing is sent from Cinder. Copy it and send it from your phone.</span></div>
+      {draft.subject && <div className="cm-draft-subject">Subject: {draft.subject}</div>}
+      <textarea rows={draft.channel === "email" ? 7 : 4} value={draft.body} onChange={e => setDraft({ ...draft, body: e.target.value })} aria-label="Message draft" />
+      <div className="cm-row">
+        <button type="button" data-variant="primary" className="cm-btn cm-primary" onClick={() => void copyDraft()}>{copied ? "Copied ✓" : "Copy"}</button>
+        <button type="button" data-variant="primary" className="cm-btn" onClick={() => void markSent()}>Mark as sent</button>
+        <button type="button" data-variant="primary" className="cm-btn" onClick={() => setDraft(null)}>Dismiss</button>
+      </div>
+    </div>}
 
     <div className="cm-find">
       <input type="search" inputMode="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Someone calling back? Search name, company or phone number" aria-label="Find a contact by name, company or phone number" />
@@ -255,6 +320,16 @@ export default function CallModePage() {
           </div>
         </div>
 
+        {(() => {
+          const lt = contact?.location ? localCallInfo(contact.location, clock) : null;
+          const last = contact?.lastTouchOutcome ? `Last: ${OUTCOME_LABELS[contact.lastTouchOutcome as CallOutcome] ?? contact.lastTouchOutcome}${contact.lastTouchAt ? ` · ${shortDate(contact.lastTouchAt)}` : ""}` : "Never called";
+          const tries = contact?.attempts ? ` · ${contact.attempts} of ${ATTEMPT_LIMIT} tries with no answer` : "";
+          return <div className="cm-history">
+            {lt && <span className={"cm-local is-" + lt.window} title={lt.window === "good" ? "Good time: owners are usually off the job" : lt.window === "late" ? "Too early or too late to call" : "During the work day"}><i aria-hidden="true" />{lt.time} their time</span>}
+            <span>{last}{tries}</span>
+            {contact?.lastNote && <p className="cm-lastnote">{contact.lastNote}</p>}
+          </div>;
+        })()}
         {!picked && item && <div className="cm-why">{item.why}</div>}
 
         <div className="cm-tabs">
@@ -288,13 +363,16 @@ export default function CallModePage() {
           <textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Who you spoke to, what they said, their lead flow, best time to call back…" />
         </label>
 
-        <div className="cm-outcomes">
-          {CALL_OUTCOMES.map(o => <button data-variant="primary" key={o} disabled={busy}
-            className={"cm-out" + (o === "meeting_booked" || o === "interested" ? " is-good" : o === "do_not_contact" ? " is-bad" : "")}
-            onClick={() => o === "meeting_booked" ? openDialog("meeting") : o === "callback_requested" ? openDialog("callback") : void log(o)}>
-            {OUTCOME_LABELS[o]}{KEYS[o] && <kbd>{KEYS[o]}</kbd>}
-          </button>)}
-        </div>
+        {CALL_MODE_GROUPS.map(g => <div key={g.label} className="cm-outgroup">
+          <div className="cm-mini">{g.label}</div>
+          <div className="cm-outcomes">
+            {g.outcomes.map(o => <button data-variant="primary" key={o} disabled={busy}
+              className={"cm-out" + (o === "meeting_booked" || o === "send_info" || o === "interested" ? " is-good" : o === "do_not_contact" ? " is-bad" : "")}
+              onClick={() => pickOutcome(o)}>
+              {OUTCOME_LABELS[o]}{KEYS[o] && <kbd>{KEYS[o]}</kbd>}
+            </button>)}
+          </div>
+        </div>)}
         <div className="cm-nav">
           <button data-variant="primary" className="cm-btn" disabled={index === 0} onClick={() => setIndex(i => Math.max(0, i - 1))}>← Previous</button>
           <button data-variant="primary" className="cm-btn" disabled={index >= queue.length - 1} onClick={() => setIndex(i => i + 1)}>Skip →</button>
@@ -305,19 +383,30 @@ export default function CallModePage() {
 
     {dialog && <div className="cm-scrim" onMouseDown={e => { if (e.target === e.currentTarget) setDialog(null); }}>
       <div className="cm-dialog" role="dialog" aria-modal="true" aria-labelledby="cm-dialog-title">
-        <h3 id="cm-dialog-title">{dialog === "meeting" ? `Book a meeting with ${contact?.company || contact?.name}` : `When should you call ${contact?.company || contact?.name} back?`}</h3>
-        <div className="cm-when">
+        <h3 id="cm-dialog-title">{dialog === "meeting" ? `Book a meeting with ${contact?.company || contact?.name}` : dialog === "gatekeeper" ? "Who picked up?" : dialog === "info" ? `Send ${contact?.company || contact?.name} info` : `When should you call ${contact?.company || contact?.name} back?`}</h3>
+        {dialog === "gatekeeper" ? <div className="cm-when">
+          <label>Their name (optional)<input value={gk.name} onChange={e => setGk({ ...gk, name: e.target.value })} placeholder="e.g. Lisa at the front desk" autoFocus /></label>
+          <label>Best time to reach the owner (optional)<input value={gk.best} onChange={e => setGk({ ...gk, best: e.target.value })} placeholder="e.g. before 8am" /></label>
+        </div> : dialog === "info" ? <div className="cm-when">
+          <label>Send it by<select value={info.channel} onChange={e => setInfo({ ...info, channel: e.target.value as "text" | "dm" | "email" })}><option value="text">Text</option><option value="dm">Facebook DM</option><option value="email">Email</option></select></label>
+          <label>Their problem, in their words (optional)<input value={info.pain} onChange={e => setInfo({ ...info, pain: e.target.value })} placeholder="e.g. they miss calls when the crew is out" autoFocus /></label>
+        </div> : <div className="cm-when">
           <label>Date<input type="date" value={when.date} onChange={e => setWhen({ ...when, date: e.target.value })} /></label>
           {dialog === "meeting" && <>
             <label>Time<input type="time" value={when.time} onChange={e => setWhen({ ...when, time: e.target.value })} /></label>
             <label>Length<select value={when.minutes} onChange={e => setWhen({ ...when, minutes: e.target.value })}><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></label>
           </>}
-        </div>
-        <p className="cm-muted">{dialog === "meeting" ? "Adds it to your Cinder calendar, logs Meeting booked, and moves any open deal to Meeting booked. Send the invite yourself." : "Logs Callback requested and puts them back in your queue on that day."}</p>
+        </div>}
+        <p className="cm-muted">{dialog === "meeting" ? "Adds it to your Cinder calendar, logs Meeting booked, and moves any open deal to Meeting booked. Send the invite yourself." : dialog === "gatekeeper" ? "Saves who you talked to and brings them back tomorrow. You'll see the name and best time on the next call." : dialog === "info" ? "Logs Send info and writes a message for you to copy and send from your phone. Nothing is sent from Cinder. They come back tomorrow for a follow-up call." : "Logs Callback requested and puts them back in your queue on that day."}</p>
         <div className="cm-row cm-right">
           <button data-variant="primary" className="cm-btn" onClick={() => setDialog(null)}>Cancel</button>
-          <button data-variant="primary" className="cm-btn cm-primary" disabled={busy || !when.date} onClick={() => dialog === "meeting" ? void bookMeeting() : (setDialog(null), void log("callback_requested", { followUpDate: when.date }))}>
-            {busy ? "Saving…" : dialog === "meeting" ? "Book meeting" : "Set callback"}</button>
+          <button data-variant="primary" className="cm-btn cm-primary" disabled={busy || ((dialog === "meeting" || dialog === "callback") && !when.date)} onClick={() => {
+            if (dialog === "meeting") void bookMeeting();
+            else if (dialog === "gatekeeper") { setDialog(null); void log("gatekeeper", {}, ["Gatekeeper answered", gk.name && `Name: ${gk.name.trim()}`, gk.best && `Best time to reach the owner: ${gk.best.trim()}`].filter(Boolean).join(". ") + "."); }
+            else if (dialog === "info") { setDialog(null); void log("send_info", {}, `Asked for info by ${CHANNEL_LABEL[info.channel].toLowerCase()}.${info.pain.trim() ? ` Their problem: ${info.pain.trim()}` : ""}`); }
+            else { setDialog(null); void log("callback_requested", { followUpDate: when.date }); }
+          }}>
+            {busy ? "Saving…" : dialog === "meeting" ? "Book meeting" : dialog === "gatekeeper" ? "Save" : dialog === "info" ? "Log and write the message" : "Set callback"}</button>
         </div>
       </div>
     </div>}

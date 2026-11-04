@@ -10,7 +10,17 @@ const ok = fn => { fn(); n++; };
 const from = new Date("2026-10-28T15:00:00Z");
 
 // Outcome set
-ok(() => assert.deepEqual([...CALL_OUTCOMES].sort(), ["callback_requested", "connected", "do_not_contact", "interested", "meeting_booked", "no_answer", "not_a_fit", "voicemail", "wrong_contact"]));
+ok(() => assert.deepEqual([...CALL_OUTCOMES].sort(), ["callback_requested", "connected", "do_not_contact", "gatekeeper", "interested", "meeting_booked", "no_answer", "not_a_fit", "not_interested", "send_info", "voicemail", "wrong_contact", "wrong_number"]));
+// Attempts: the fifth no-contact try parks the lead for 30 days
+ok(() => assert.equal(followUpDate("no_answer", from, null, 4), "2026-10-30"));
+ok(() => assert.equal(followUpDate("voicemail", from, null, 5), "2026-11-27"));
+ok(() => assert.equal(followUpDate("gatekeeper", from, null, 1), "2026-10-29"));
+ok(() => assert.equal(followUpDate("not_interested", from), "2027-04-26"));
+ok(() => assert.equal(followUpDate("wrong_number", from), null));
+ok(() => assert.equal(followUpDate("send_info", from), "2026-10-29"));
+ok(() => assert.deepEqual(dealChangeFor("not_interested", "contacted"), { stage: "lost", lostReason: "Not interested" }));
+ok(() => assert.deepEqual(dealChangeFor("send_info", "contacted"), { stage: "interested" }));
+ok(() => assert.equal(sequenceStatusFor("wrong_number"), "parked"));
 ok(() => assert.equal(isCallOutcome("initiated"), false, "'initiated' is the launch marker, not an outcome"));
 ok(() => assert.equal(isCallOutcome("drop table"), false));
 
