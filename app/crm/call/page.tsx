@@ -389,7 +389,7 @@ export default function CallModePage() {
           <label>Best time to reach the owner (optional)<input value={gk.best} onChange={e => setGk({ ...gk, best: e.target.value })} placeholder="e.g. before 8am" /></label>
         </div> : dialog === "info" ? <div className="cm-when">
           <label>Send it by<select value={info.channel} onChange={e => setInfo({ ...info, channel: e.target.value as "text" | "dm" | "email" })}><option value="text">Text</option><option value="dm">Facebook DM</option><option value="email">Email</option></select></label>
-          <label>Their problem, in their words (optional)<input value={info.pain} onChange={e => setInfo({ ...info, pain: e.target.value })} placeholder="e.g. they miss calls when the crew is out" autoFocus /></label>
+          <label>Their problem, starting with “you” (optional)<input value={info.pain} onChange={e => setInfo({ ...info, pain: e.target.value })} placeholder="e.g. you miss calls when the crew's out" autoFocus /></label>
         </div> : <div className="cm-when">
           <label>Date<input type="date" value={when.date} onChange={e => setWhen({ ...when, date: e.target.value })} /></label>
           {dialog === "meeting" && <>
