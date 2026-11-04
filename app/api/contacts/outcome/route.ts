@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
-import { isCallOutcome, followUpDate, sequenceStatusFor, dealChangeFor, OUTCOME_LABELS } from "@/lib/call-outcomes";
+import { isCallOutcome, followUpDate, sequenceStatusFor, dealChangeFor, OUTCOME_LABELS, NO_CONTACT, ATTEMPT_LIMIT } from "@/lib/call-outcomes";
 import { suggestDeal } from "@/lib/offers";
 import { offersFrom } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
@@ -48,7 +48,17 @@ export async function POST(request: Request) {
       FROM public.contacts c WHERE c.id = ${contactId}::uuid AND c.owner_id = ${user.id} LIMIT 1`;
     if (!contact.length) return fail("Contact not found in your workspace.", 404);
 
-    const nextFollowUp = followUpDate(outcome, new Date(), override);
+    // No-contact attempts in a row (this one included). The fifth parks the lead for a month.
+    let attempts = 0;
+    if (NO_CONTACT.includes(outcome)) {
+      const prior = await sql`SELECT outcome FROM public.contact_activities
+        WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND action = 'outbound_call' AND outcome <> 'initiated'
+        ORDER BY occurred_at DESC LIMIT 20`;
+      let n = 0;
+      for (const r of prior) { if (NO_CONTACT.includes(String(r.outcome) as never)) n++; else break; }
+      attempts = n + 1;
+    }
+    const nextFollowUp = followUpDate(outcome, new Date(), override, attempts);
     const sequenceStatus = sequenceStatusFor(outcome);
     const openDeals = await sql`SELECT id, title, stage FROM public.deals
       WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND stage NOT IN ('won','lost')`;
@@ -125,7 +135,7 @@ export async function POST(request: Request) {
     }
 
     return Response.json({
-      outcome, label: OUTCOME_LABELS[outcome], activity, nextFollowUp, suggestedDeal,
+      outcome, label: OUTCOME_LABELS[outcome], activity, nextFollowUp, suggestedDeal, attempts, parked: attempts >= ATTEMPT_LIMIT,
       sequenceStopped: sequenceRows.length > 0 ? sequenceStatus : null,
       suppressed: outcome === "do_not_contact",
       deals: movedDeals,

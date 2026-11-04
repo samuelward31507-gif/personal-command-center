@@ -133,3 +133,20 @@ html body main .cm-dialog h3 { margin: 0 0 14px; font-size: 16px !important; }
 .cm-page .cm-find-row.cm-find-row:hover,.cm-page .cm-find-row.cm-find-row:focus-visible{background:#222!important}
 .cm-page .cm-find-row small{color:#8f8f8f;font-size:12px}
 .cm-page .cm-find-none{padding:12px 14px;color:#8f8f8f;font-size:13px}
+/* Call mode v2 */
+.cm-page .cm-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.cm-page .cm-stats span { font-size: 12.5px; color: #a3a3a3; border: 1px solid #2a2a2a; border-radius: 999px; padding: 4px 10px; }
+.cm-page .cm-stats b { color: #ededed; font-weight: 650; margin-right: 3px; font-variant-numeric: tabular-nums; }
+.cm-page .cm-history { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 4px 0 12px; font-size: 13px; color: #a3a3a3; }
+.cm-page .cm-local { display: inline-flex; align-items: center; gap: 6px; color: #ededed; }
+.cm-page .cm-local i { width: 8px; height: 8px; border-radius: 50%; background: #8f8f8f; }
+.cm-page .cm-local.is-good i { background: #7fd19b; box-shadow: 0 0 0 3px rgba(127,209,155,.15); }
+.cm-page .cm-local.is-ok i { background: #e0b25c; }
+.cm-page .cm-local.is-late i { background: #f28b82; }
+.cm-page p.cm-lastnote.cm-lastnote { flex-basis: 100%; margin: 2px 0 0; padding: 8px 10px; border-left: 2px solid #d97757; background: #161616 !important; color: #d4d4d4 !important; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.cm-page .cm-outgroup { display: grid; gap: 6px; margin-top: 8px; }
+.cm-page .cm-draft { margin: 0 0 14px; padding: 14px; border: 1px solid rgba(217,119,87,.45); border-radius: 12px; background: #17110e; display: grid; gap: 10px; }
+.cm-page .cm-draft-head { display: grid; gap: 2px; }
+.cm-page .cm-draft-head b { color: #ededed; font-size: 14px; }
+.cm-page .cm-draft-head span, .cm-page .cm-draft-subject { color: #a3a3a3; font-size: 12.5px; }
+.cm-page .cm-draft textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; line-height: 1.5; padding: 10px 12px; border-radius: 8px; border: 1px solid #2e2e2e !important; background: #111 !important; color: #ededed !important; resize: vertical; }
