@@ -731,20 +731,19 @@ html, body { overflow-x: clip; }
 :root { --ease-out: cubic-bezier(.16,1,.3,1); }
 
 /* Hero entrance: copy rises out of a soft blur in sequence, the visual settles in after */
-@keyframes rise { from { opacity: 0; transform: translateY(22px); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
-@keyframes settle { from { opacity: 0; transform: translateY(28px) scale(.965); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
-.motion .hero-copy > * { animation: rise 1s var(--ease-out) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes settle { from { opacity: 0; transform: translateY(12px) scale(.99); } to { opacity: 1; transform: none; } }
+.motion .hero-copy > * { animation: rise .8s var(--ease-out) both; }
 .motion .hero-copy > :nth-child(1) { animation-delay: .05s; }
-.motion .hero-copy > :nth-child(2) { animation-delay: .14s; }
-.motion .hero-copy > :nth-child(3) { animation-delay: .28s; }
-.motion .hero-copy > :nth-child(4) { animation-delay: .38s; }
-.motion .hero-copy > :nth-child(5) { animation-delay: .46s; }
-.motion .hero-grid > :not(.hero-copy) { animation: settle 1.25s var(--ease-out) .3s both; }
-.motion .nav-in { animation: rise .8s var(--ease-out) both; }
+.motion .hero-copy > :nth-child(2) { animation-delay: .1s; }
+.motion .hero-copy > :nth-child(3) { animation-delay: .18s; }
+.motion .hero-copy > :nth-child(4) { animation-delay: .24s; }
+.motion .hero-copy > :nth-child(5) { animation-delay: .3s; }
+.motion .hero-grid > :not(.hero-copy) { animation: settle 1s var(--ease-out) .2s both; }
 
 /* Scroll reveals (motion.js marks elements below the fold) */
-.motion .rv { opacity: 0; transform: translateY(26px); filter: blur(6px); transition: opacity .9s var(--ease-out), transform 1s var(--ease-out), filter .9s var(--ease-out); transition-delay: calc(var(--d, 0) * 75ms); }
-.motion .rv.in { opacity: 1; transform: none; filter: none; }
+.motion .rv { opacity: 0; transform: translateY(12px); transition: opacity .7s ease-out, transform .8s var(--ease-out); transition-delay: calc(var(--d, 0) * 50ms); }
+.motion .rv.in { opacity: 1; transform: none; }
 
 /* Problem pipeline: each stage's line draws in and its node lights up */
 .motion .stage.rv::before { transform: scaleX(0); transform-origin: 0 50%; transition: transform 1.1s var(--ease-out); transition-delay: calc(var(--d, 0) * 110ms + .15s); }
@@ -762,10 +761,10 @@ html, body { overflow-x: clip; }
 /* Buttons: a light sweep and a slight lift on the primary, quiet border on the ghost */
 .btn { transition: background-color .2s, border-color .2s, color .2s, transform .25s var(--ease-out), box-shadow .3s var(--ease-out); }
 .btn-primary { position: relative; overflow: hidden; isolation: isolate; }
-.btn-primary::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(105deg, transparent 30%, rgba(217,119,87,.28) 48%, rgba(255,255,255,.0) 64%); transform: translateX(-110%); }
-.motion .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 30px -12px rgba(237,237,237,.45), 0 0 0 1px rgba(255,255,255,.4); }
+.btn-primary::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(105deg, transparent 30%, rgba(217,119,87,.14) 48%, rgba(255,255,255,.0) 64%); transform: translateX(-110%); }
+.motion .btn-primary:hover { box-shadow: 0 8px 24px -14px rgba(237,237,237,.35); }
 .motion .btn-primary:hover::after { transform: translateX(110%); transition: transform .8s var(--ease-out); }
-.motion .btn-ghost:hover { background: var(--night-2); transform: translateY(-1px); }
+.motion .btn-ghost:hover { background: var(--night-2); }
 .btn:active, .motion .btn:active { transform: translateY(0) scale(.985); transition-duration: .08s; }
 
 /* Nav links: underline grows from the left */
@@ -776,14 +775,13 @@ html, body { overflow-x: clip; }
 
 /* Cards: a soft ember spotlight follows the pointer */
 .spot { position: relative; }
-.spot::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .4s ease; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(217,119,87,.10), transparent 60%); z-index: 0; }
+.spot::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .4s ease; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(217,119,87,.06), transparent 60%); z-index: 0; }
 .spot:hover::before { opacity: 1; }
 .spot > * { position: relative; z-index: 1; }
 .plan { transition: background-color .3s; }
 
 /* Industries + FAQ + plan list micro-interactions */
 .inds li { transition: color .2s, transform .35s var(--ease-out); }
-.motion .inds li:hover { transform: translateX(3px); }
 .qa summary { transition: color .2s; }
 .qa summary i::before, .qa summary i::after { transition: transform .4s var(--ease-out), background-color .2s; }
 .qa details[open] summary i::before, .qa details[open] summary i::after { background: var(--spark); }
@@ -791,17 +789,16 @@ html, body { overflow-x: clip; }
 /* Hero visual: a slow breathing ember glow behind the phone */
 .demo-phone.film { position: relative; isolation: isolate; }
 .demo-phone.film::before { content: ""; position: absolute; z-index: -1; left: -30%; right: -30%; top: 6%; height: 70%; background: radial-gradient(closest-side, rgba(217,119,87,.22), rgba(217,119,87,.06) 55%, transparent 100%); filter: blur(20px); pointer-events: none; }
-.motion .demo-phone.film::before { animation: breathe 7s ease-in-out infinite; }
-@keyframes breathe { 0%, 100% { opacity: .7; transform: scale(.96); } 50% { opacity: 1; transform: scale(1.05); } }
-.motion .film-phone { transition: transform .6s var(--ease-out); }
-.motion .film-phone:hover { transform: translateY(-4px); }
+.motion .demo-phone.film::before { animation: breathe 10s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { opacity: .85; transform: scale(.99); } 50% { opacity: 1; transform: scale(1.02); } }
 
 /* Story tabs above the homepage phone */
 .film-tabs { justify-self: stretch; display: flex; min-width: 0; gap: 2px; padding: 4px; border: 1px solid var(--line-2); border-radius: 999px; background: rgba(19,19,19,.8); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .film-tab { flex: 1 1 0; min-width: 0; white-space: nowrap; font: inherit; font-size: 13px; font-weight: 560; min-height: 34px; padding: 0 6px; border: 0; border-radius: 999px; background: transparent; color: var(--fog); cursor: pointer; transition: background-color .25s, color .2s; }
 .film-tab:hover { color: var(--paper); }
 .film-tab.is-on { background: var(--paper); color: var(--night); }
-.motion .film-tabs + .film-phone { animation: settle .7s var(--ease-out) both; }
+.motion .film-tabs + .film-phone { animation: fadein .4s ease-out both; }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
 .hero:has(.film) .hero-grid { align-items: center; }
 @media (min-width: 941px) { .hero:has(.film) { padding-top: 32px; padding-bottom: 80px; } }
 @media (min-width: 941px) and (max-width: 1499px) { .demo-phone.hero-film { width: min(290px, 100%); gap: 16px; } }
