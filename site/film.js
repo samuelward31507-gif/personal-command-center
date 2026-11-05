@@ -8,6 +8,25 @@
   var PHOTO = '<svg viewBox="0 0 200 140" aria-hidden="true"><defs><linearGradient id="fsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb8de"/><stop offset="1" stop-color="#d6e6f2"/></linearGradient><linearGradient id="fwood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6a3c"/><stop offset="1" stop-color="#6e4724"/></linearGradient></defs><rect width="200" height="140" fill="url(#fsky)"/><circle cx="150" cy="58" r="34" fill="#4d7a35"/><circle cx="128" cy="70" r="24" fill="#5b8a3e"/><rect x="146" y="78" width="6" height="30" fill="#5a3d22"/><rect y="104" width="200" height="36" fill="#6f9442"/><rect y="104" width="200" height="6" fill="#5f8338"/><g fill="url(#fwood)"><rect x="0" y="66" width="200" height="6" opacity=".9"/><rect x="0" y="92" width="200" height="6" opacity=".9"/><rect x="4" y="58" width="13" height="52"/><rect x="19" y="60" width="13" height="50"/><rect x="34" y="57" width="13" height="53"/><rect x="49" y="62" width="13" height="48" transform="rotate(4 55 110)"/><rect x="66" y="59" width="13" height="51"/><rect x="96" y="58" width="13" height="52"/><rect x="111" y="61" width="13" height="49"/><rect x="126" y="57" width="13" height="53"/><rect x="141" y="64" width="13" height="46" transform="rotate(-6 147 110)"/><rect x="158" y="58" width="13" height="52"/><rect x="173" y="60" width="13" height="50"/><rect x="188" y="58" width="13" height="52"/></g><g fill="#3d2814" opacity=".35"><rect x="10" y="58" width="1.5" height="52"/><rect x="40" y="57" width="1.5" height="53"/><rect x="117" y="61" width="1.5" height="49"/><rect x="164" y="58" width="1.5" height="52"/></g></svg>';
 
   var STORIES = {
+    general: {
+      contact: { name: "Dana", sub: "New lead · website", initial: "D" },
+      opener: { kind: "call", time: "3:40", number: "(303) 555-0187", place: "Aurora, CO" },
+      replyIn: "Replied in 6 sec",
+      chapters: [
+        ["The call", "3:40 PM. You're on a job when a new customer calls."],
+        ["Missed", "You can't pick up. When nobody answers, most people call the next company on the list."],
+        ["Texted back", "6 seconds later, your business texts them back."],
+        ["Qualified", "It asks the questions you'd ask on every job."],
+        ["Booked", "Then it books the estimate on your calendar."],
+        ["Your text", "You get one text with everything. They never called the next company."]
+      ],
+      thread: [
+        ["ch", 2], ["out", "Hi, it's Summit Home Services. Sorry we missed you, the crew is on a job! What can we help you with?"], ["in", "need a quote. we have water damage in an upstairs bedroom"],
+        ["ch", 3], ["time", "3:41"], ["out", "Sorry to hear that. Is it still getting worse, or has it stopped for now?"], ["in", "stopped, but the ceiling is stained"], ["out", "Got it. What's the address so we can take a look?"], ["in", "4471 S Kittredge St"],
+        ["ch", 4], ["time", "3:43"], ["out", "Thanks. I can have someone out:\n1) Tomorrow 9:00 AM\n2) Tomorrow 1:30 PM"], ["in", "9 please"], ["out", "You're booked for tomorrow at 9:00 AM ✓ We'll text when we're on the way."]
+      ],
+      booked: { date: "Tuesday, November 4", time: "3:44", title: "Estimate booked: Dana", lines: ["Wed 9:00 AM · 4471 S Kittredge St", "Water damage · upstairs bedroom", "Leak stopped · ceiling stained"] }
+    },
     plumbing: {
       contact: { name: "Maria", sub: "New lead · plumbing", initial: "M" },
       opener: { kind: "call", time: "7:05", number: "(720) 555-0162", place: "Lakewood, CO" },
