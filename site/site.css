@@ -8,7 +8,7 @@
   --night-3: #1b1b1b;
   --line: #1f1f1f;
   --line-2: #2a2a2a;
-  --concrete: #767676;
+  --concrete: #868686;
   --fog: #a3a3a3;
   --paper: #ededed;
   --ember: #ededed;
@@ -76,7 +76,7 @@ p { margin: 0; }
 @media (max-width: 900px) { .nav-links { display: none; } .nav-cta { margin-left: auto; } }
 
 /* ---------- Sections ---------- */
-.sec { padding: clamp(80px, 11vw, 148px) 0; border-top: 1px solid var(--line); }
+.sec { padding: clamp(72px, 9vw, 128px) 0; border-top: 1px solid var(--line); }
 .sec-head { display: grid; gap: 20px; max-width: 760px; margin-bottom: clamp(44px, 6vw, 72px); }
 .split-head { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 48px; align-items: end; margin-bottom: clamp(44px, 6vw, 72px); }
 .split-head .lede { justify-self: end; }
@@ -550,3 +550,17 @@ html, body { overflow-x: clip; }
   .demo-phone { width: min(420px, 100%); }
   .phone { transform: scale(1.08); transform-origin: center; }
 }
+
+/* Who it's for: industries grid */
+.inds { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line-2); border-left: 1px solid var(--line-2); }
+.inds li { padding: 26px 24px; border-right: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); color: var(--paper); font-size: clamp(16px, 1.3vw, 19px); font-weight: 520; letter-spacing: -0.01em; transition: background-color .2s; }
+.inds li:hover { background: var(--night-2); }
+.inds-note { margin: 22px 0 0; color: var(--fog); font-size: 15.5px; }
+@media (max-width: 900px) { .inds { grid-template-columns: repeat(2, minmax(0, 1fr)); } .inds li { padding: 18px 16px; } }
+.demo-f select { width: 100%; padding: 12px 40px 12px 13px; border-radius: 10px; border: 1px solid var(--line-2); background: var(--night-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23a3a3a3' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 14px center; color: var(--paper); font: inherit; font-size: 16px; -webkit-appearance: none; appearance: none; cursor: pointer; }
+.demo-f select:focus { outline: none; border-color: var(--concrete); }
+.demo-f select option { background: #161616; color: var(--paper); }
+
+/* 404 */
+.nf { min-height: 62vh; display: grid; align-content: center; }
+.nf .wrap { display: grid; gap: 24px; justify-items: start; }
