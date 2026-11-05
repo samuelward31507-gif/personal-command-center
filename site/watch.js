@@ -1,4 +1,4 @@
-// /watch: a 40-second sequence (stats, live demo, stat, end card) rendered in the page.
+// /watch: a 28-second sequence (two stats, the live demo, end card) rendered in the page.
 // The same page is captured frame by frame to produce the MP4s, so all timing runs off
 // requestAnimationFrame + performance.now and every moment is logged to window.__events.
 (function () {
@@ -18,7 +18,6 @@
   fit(); addEventListener("resize", fit);
 
   var SRC_HBR = "Source: Oldroyd, McElheran & Elkington, “The Short Life of Online Sales Leads,” Harvard Business Review, March 2011. Audit of 2,241 U.S. companies.";
-  var SRC_MIT = "Source: Oldroyd, Lead Response Management Study, MIT & InsideSales.com, 2007. 15,000+ leads across six companies.";
 
   var events = window.__events = [];
   var t0 = 0, now = 0, raf = 0, cues = [], ci = 0, counters = [];
@@ -31,31 +30,24 @@
     };
   }
   function source(text) { return function () { if (text) src.textContent = text; src.classList.toggle("on", !!text); }; }
-  function count(id) {
+  function count(id, dur) {
     return function () {
       var b = document.querySelector("#" + id + " [data-count]"); if (!b) return;
-      counters.push({ el: b, to: +b.getAttribute("data-count"), start: now + 250, dur: 1100, landed: false });
+      counters.push({ el: b, to: +b.getAttribute("data-count"), start: now + 250, dur: dur, landed: false });
     };
   }
 
-  // Build cues relative to t=0 (ms). The demo's end is event-driven, so later cues are added when it books.
-  var P = window.__personal ? 2900 : 0, at = function (ms, fn) { cues.push({ t: ms, fn: fn }); };
+  // Fixed schedule (ms). Stats 0-6.5s, demo 6.5-24.5s (its six steps are timed inside film.js), end card to 28s.
+  var P = window.__personal ? 2600 : 0, at = function (ms, fn) { cues.push({ t: ms, fn: fn }); };
+  var DEMO = filmEl.film ? filmEl.film.D : 18000;
   if (P) at(0, scene("s0"));
-  at(P + 0, scene("s1")); at(P + 0, source(SRC_HBR)); at(P + 0, count("s1"));
-  at(P + 3600, scene("s2")); at(P + 3600, count("s2"));
-  at(P + 6400, scene("s3")); at(P + 6400, source(""));
-  at(P + 9200, scene("s4")); at(P + 9500, function () { if (filmEl.film) { filmEl.film.play(); log("film:start"); } });
-
-  filmEl.addEventListener("film:chapter", function (e) {
-    log("chapter:" + e.detail);
-    if (e.detail === 5) { // the booked notification just landed
-      var b = now;
-      cues.push({ t: b + 3000, fn: function () { if (filmEl.film) filmEl.film.pause(); scene("s5")(); source(SRC_MIT)(); count("s5")(); } });
-      cues.push({ t: b + 7100, fn: function () { scene("s6")(); source("")(); } });
-      cues.push({ t: b + 11800, fn: function () { log("end"); window.__watchDone = true; body.classList.add("done"); } });
-      cues.sort(function (a, c) { return a.t - c.t; });
-    }
-  });
+  at(P + 0, scene("s1")); at(P + 0, source(SRC_HBR)); at(P + 0, count("s1", 1100));
+  at(P + 2500, scene("s2")); at(P + 2500, count("s2", 1000));
+  at(P + 4500, scene("s3")); at(P + 4500, source(""));
+  at(P + 6500, scene("s4")); at(P + 6500, function () { if (filmEl.film) { filmEl.film.play(); log("film:start"); } });
+  at(P + 6500 + DEMO, function () { if (filmEl.film) filmEl.film.pause(); scene("s6")(); });
+  at(P + 6500 + DEMO + 3500, function () { log("end"); window.__watchDone = true; body.classList.add("done"); });
+  filmEl.addEventListener("film:chapter", function (e) { log("chapter:" + e.detail); });
 
   function tick() {
     now = performance.now() - t0;
@@ -77,7 +69,7 @@
     t0 = performance.now(); now = 0;
     raf = requestAnimationFrame(tick);
   }
-  var base = cues.slice(); // the demo adds its own cues each run; a replay starts from these
+  var base = cues.slice();
 
   document.getElementById("replay").addEventListener("click", start);
   var go = function () { (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(function () { window.__watchReady = true; if (!document.documentElement.classList.contains("render")) start(); }); };
