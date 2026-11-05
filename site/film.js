@@ -2,12 +2,50 @@
 // Plays a scripted lead conversation inside a drawn phone, with chapter captions outside it.
 // Pauses off screen and in background tabs. Reduced motion: shows the finished conversation, paused.
 (function () {
-  var root = document.querySelector("[data-film]");
-  if (!root) return;
+  var roots = [].slice.call(document.querySelectorAll("[data-film]"));
+  if (!roots.length) return;
 
   var PHOTO = '<svg viewBox="0 0 200 140" aria-hidden="true"><defs><linearGradient id="fsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb8de"/><stop offset="1" stop-color="#d6e6f2"/></linearGradient><linearGradient id="fwood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6a3c"/><stop offset="1" stop-color="#6e4724"/></linearGradient></defs><rect width="200" height="140" fill="url(#fsky)"/><circle cx="150" cy="58" r="34" fill="#4d7a35"/><circle cx="128" cy="70" r="24" fill="#5b8a3e"/><rect x="146" y="78" width="6" height="30" fill="#5a3d22"/><rect y="104" width="200" height="36" fill="#6f9442"/><rect y="104" width="200" height="6" fill="#5f8338"/><g fill="url(#fwood)"><rect x="0" y="66" width="200" height="6" opacity=".9"/><rect x="0" y="92" width="200" height="6" opacity=".9"/><rect x="4" y="58" width="13" height="52"/><rect x="19" y="60" width="13" height="50"/><rect x="34" y="57" width="13" height="53"/><rect x="49" y="62" width="13" height="48" transform="rotate(4 55 110)"/><rect x="66" y="59" width="13" height="51"/><rect x="96" y="58" width="13" height="52"/><rect x="111" y="61" width="13" height="49"/><rect x="126" y="57" width="13" height="53"/><rect x="141" y="64" width="13" height="46" transform="rotate(-6 147 110)"/><rect x="158" y="58" width="13" height="52"/><rect x="173" y="60" width="13" height="50"/><rect x="188" y="58" width="13" height="52"/></g><g fill="#3d2814" opacity=".35"><rect x="10" y="58" width="1.5" height="52"/><rect x="40" y="57" width="1.5" height="53"/><rect x="117" y="61" width="1.5" height="49"/><rect x="164" y="58" width="1.5" height="52"/></g></svg>';
 
   var STORIES = {
+    roofing: {
+      contact: { name: "Dana", sub: "New lead · roofing", initial: "D" },
+      opener: { kind: "call", time: "3:40", number: "(303) 555-0187", place: "Aurora, CO" },
+      replyIn: "Replied in 6 sec",
+      chapters: [
+        ["The call", "3:40 PM. You're on a tear-off when a homeowner with a leaking roof calls."],
+        ["Missed", "You can't pick up. When nobody answers, most people call the next roofer on the list."],
+        ["Texted back", "6 seconds later, your business texts them back."],
+        ["Qualified", "It finds out what they need and whether insurance is involved."],
+        ["Booked", "Then it books the inspection on your calendar."],
+        ["Your text", "You get one text with everything. They never called the next roofer."]
+      ],
+      thread: [
+        ["ch", 2], ["out", "Hi, it's Summit Roofing. Sorry we missed you, the crew is up on a roof! Is this a leak, storm damage or a full replacement?"], ["in", "leak in the upstairs bedroom after the hail last week"],
+        ["ch", 3], ["time", "3:41"], ["out", "Sorry to hear that. Are you going through insurance, or paying out of pocket?"], ["in", "insurance, already have a claim number"], ["out", "Perfect, we work with insurance all the time. What's the address?"], ["in", "4471 S Kittredge St"],
+        ["ch", 4], ["time", "3:43"], ["out", "Got it. I can have an inspector out:\n1) Tomorrow 9:00 AM\n2) Tomorrow 1:30 PM"], ["in", "9 please"], ["out", "You're booked for tomorrow at 9:00 AM ✓ We'll text when we're on the way."]
+      ],
+      booked: { date: "Tuesday, November 4", time: "3:44", title: "Inspection booked: Dana", lines: ["Wed 9:00 AM · 4471 S Kittredge St", "Hail leak · insurance claim open", "Upstairs bedroom"] }
+    },
+    hvac: {
+      contact: { name: "Chris", sub: "New lead · HVAC", initial: "C" },
+      opener: { kind: "form", date: "Saturday, July 12", time: "10:47", app: "Website", title: "New service request", body: "AC not cooling · Chris" },
+      replyIn: "Replied in 9 sec",
+      chapters: [
+        ["The form", "10:47 PM on a Saturday in July. A family's AC just quit."],
+        ["Waiting", "Most shops reply Monday. By then they've hired whoever answered tonight."],
+        ["Texted back", "9 seconds later, your business texts them back."],
+        ["Sorted", "It tells the emergency from the tune-up."],
+        ["Booked", "And books the first slot in the morning."],
+        ["Your text", "You start Sunday with an urgent call already on the board."]
+      ],
+      thread: [
+        ["ch", 2], ["out", "Hi Chris, it's Peak Air. Sorry your AC is out. Is it blowing warm air, or not turning on at all?"], ["in", "blowing warm. house is 84 and we have a baby"],
+        ["ch", 3], ["time", "10:48"], ["out", "Understood, we'll treat this as urgent. Roughly how old is the system?"], ["in", "maybe 12 years"],
+        ["ch", 4], ["time", "10:49"], ["out", "Thanks. Our first openings tomorrow:\n1) 8:00 AM\n2) 10:30 AM"], ["in", "8am please!!"], ["out", "You're booked for 8:00 AM ✓ Your tech will text when they're on the way."]
+      ],
+      booked: { date: "Sunday, July 13", time: "6:15", title: "Urgent service booked: Chris", lines: ["Today 8:00 AM · AC blowing warm", "~12-year system · infant at home", "Marked urgent"] }
+    },
     fence: {
       contact: { name: "Jen", sub: "New lead · fence", initial: "J" },
       opener: { kind: "call", time: "2:14", number: "(720) 555-0143", place: "Denver, CO" },
@@ -48,8 +86,13 @@
     }
   };
 
-  var story = STORIES[root.getAttribute("data-film")];
+  var LABELS = { roofing: "Roofing", hvac: "HVAC", fence: "Fence", pool: "Pools" };
+  roots.forEach(function (r) { mount(r, r.getAttribute("data-film"), false); });
+
+  function mount(root, key, autoplay) {
+  var story = STORIES[key];
   if (!story) return;
+  var tabKeys = (root.getAttribute("data-film-tabs") || "").split(",").filter(function (k) { return STORIES[k]; });
 
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   var HANDSET = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>';
@@ -61,7 +104,7 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
       '<div class="fs fs-missed" data-s="missed"><span class="fs-missicon">' + HANDSET + '</span><b>Missed call</b><span>' + esc(o.number) + ' · ' + esc(o.time) + ' PM</span><em>No voicemail</em></div>'
     : '<div class="fs fs-lock fs-night" data-s="call"><div class="fs-lockhead"><small>' + esc(o.date) + '</small><b>' + esc(o.time) + '</b></div><div class="fs-notif"><span class="fs-app fs-app-web"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span><div><p><span>' + esc(o.app) + '</span><span>now</span></p><b>' + esc(o.title) + '</b><span>' + esc(o.body) + '</span></div></div><p class="fs-stale">No reply yet</p><div class="fs-zzz" aria-hidden="true"><i>z</i><i>z</i><i>z</i></div>' + LOCKFOOT + '</div>';
 
-  root.innerHTML =
+  root.innerHTML = (tabKeys.length ? '<div class="film-tabs" role="group" aria-label="Pick a business">' + tabKeys.map(function (k) { return '<button type="button" class="film-tab' + (k === key ? ' is-on' : '') + '" data-k="' + k + '" aria-pressed="' + (k === key) + '">' + LABELS[k] + '</button>'; }).join('') + '</div>' : '') +
     '<div class="film-phone" aria-hidden="true"><div class="fs-island"></div>' +
       '<div class="fs-status"><b data-clock>' + esc(o.time) + '</b><span><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="22" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".45"/><rect x="2.5" y="2.5" width="15" height="7" rx="2"/><rect x="24" y="4" width="2" height="4" rx="1" opacity=".45"/></svg></span></div>' +
       opener +
@@ -179,12 +222,25 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
   pp.addEventListener("click", function () { if (playing) { userPaused = true; pause(); } else { userPaused = false; if (cur >= threadDone && !document.documentElement.classList.contains("motion")) seek(0); play(); } });
   segs.forEach(function (s) { s.addEventListener("click", function () { seek(chapAt[+s.getAttribute("data-i")]); userPaused = false; play(); }); });
   phone.addEventListener("click", function () { pp.click(); });
-  document.addEventListener("visibilitychange", function () { if (document.hidden) pause(); else if (visible && !userPaused) play(); });
+  var onVis = function () { if (document.hidden) pause(); else if (visible && !userPaused) play(); };
+  document.addEventListener("visibilitychange", onVis);
+  var io = null;
+  function destroy() { pause(); document.removeEventListener("visibilitychange", onVis); if (io) io.disconnect(); }
+  [].forEach.call(root.querySelectorAll(".film-tab"), function (b) {
+    b.addEventListener("click", function () {
+      var k = b.getAttribute("data-k"); if (k === key) return;
+      destroy(); mount(root, k, true);
+      var nb = root.querySelector('.film-tab[data-k="' + k + '"]'); if (nb) nb.focus({ preventScroll: true });
+    });
+  });
 
   var motion = document.documentElement.classList.contains("motion");
   if (!motion) { seek(threadDone); show("thread")(); userPaused = true; pause(); return; }
   seek(0); pause();
+  if (autoplay) { visible = true; play(); }
   if ("IntersectionObserver" in window) {
-    new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible && !userPaused) play(); else if (!visible) pause(); }, { threshold: 0.35 }).observe(phone);
+    io = new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible && !userPaused) play(); else if (!visible) pause(); }, { threshold: 0.35 });
+    io.observe(phone);
   } else { visible = true; play(); }
+  }
 })();
