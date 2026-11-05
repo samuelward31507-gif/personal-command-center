@@ -35,10 +35,10 @@
       <p class="demo-eyebrow">For fence companies</p>
       <h1>This is what your customers see when you miss their call.</h1>
       <p class="lede">A homeowner calls while you're on a job. Within a minute they get a text from your business, answer your questions, and book the estimate on your calendar. You get one text with the job.</p>
-      <div class="hero-ctas"><a class="btn btn-primary" href="#book">See how it'd work for your business</a></div>
-      <p class="hero-trust">15 minutes on a screen share. No pressure, you'll know right away if it fits.</p>
+      <div class="hero-ctas"><a class="btn btn-primary" href="#book">Book your free 15-min call</a></div>
+      <p class="hero-trust">No obligation · Live in 21 business days or your setup fee back</p>
     </div>
-    <div class="demo-phone"><video src="/fence-demo/demo.mp4" poster="/fence-demo/poster.jpg" autoplay muted loop playsinline controls preload="metadata" aria-label="Demo: a customer gets an instant text reply and books the estimate"></video></div>
+    <div class="demo-phone"><video src="/fence-demo/demo.mp4" poster="/fence-demo/poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Demo: a customer gets an instant text reply and books the estimate"></video><button class="vid-sound" type="button" aria-pressed="false">Tap for sound</button></div>
   </div>
 </section>
 
@@ -48,7 +48,7 @@
 
 <section class="sec" id="faq">
   <div class="wrap faq">
-    <div class="sec-head"><h2>Questions owners ask</h2></div>
+    <div class="sec-head"><h2>What owners ask us.</h2></div>
     <div class="qa">
       <details><summary>Does my number change?<i aria-hidden="true"></i></summary><p>No. Customers call the same number. It only steps in when you don't pick up.</p></details>
       <details><summary>What about family and suppliers?<i aria-hidden="true"></i></summary><p>They go on a do-not-text list and never get a text.</p></details>
@@ -91,6 +91,11 @@ c.textContent="0:00";
 setTimeout(function(){on(1)},350);
 setTimeout(function(){on(2);var t0=performance.now(),D=1700;(function tick(now){var p=Math.min(1,(now-t0)/D),s=Math.round(38*p);c.textContent="0:"+(s<10?"0":"")+s;if(p<1)requestAnimationFrame(tick);else{off(2);on(3);setTimeout(function(){on(4)},900);setTimeout(function(){on(5)},1500);setTimeout(function(){on(6)},2300)}})(t0)},950);
 })();
+</script>
+<script>
+(function(){var b=document.querySelector(".vid-sound"),v=b&&b.previousElementSibling;if(!b||!v)return;
+b.addEventListener("click",function(){v.muted=!v.muted;if(!v.muted){v.currentTime=0;}var p=v.play();if(p&&p.catch)p.catch(function(){});b.textContent=v.muted?"Tap for sound":"Sound on";b.setAttribute("aria-pressed",v.muted?"false":"true");});
+v.addEventListener("click",function(){if(v.paused){v.play();}else{v.pause();}});})();
 </script>
 <a id="stickybook" class="stickybook" href="#book">Book your free 15-min call</a>
 <script src="/book.js" defer></script>
