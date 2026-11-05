@@ -46,7 +46,7 @@
         <label class="demo-f">Customer's first name<input name="customer" maxlength="30" placeholder="Dana"></label>
         <label class="demo-f">What they send you<textarea name="request" rows="3" maxlength="400" required>Our roof is leaking in two spots after the storm. Two-story house, about 15 years old. Can someone come look?</textarea></label>
         <label class="demo-hp" aria-hidden="true">Website<input name="website" tabindex="-1"></label>
-        <button class="btn btn-primary" type="submit" id="demo-go">Send it</button>
+        <button class="btn btn-primary" type="submit" id="demo-go">See the reply</button>
         <p class="demo-note" id="demo-note">Nothing is texted or saved. This shows the wording; the real system sends it from your business number.</p>
       </form>
     </div>
@@ -115,7 +115,7 @@ f.addEventListener("submit",function(e){e.preventDefault();
     if(d.ownerAlert){setTimeout(function(){document.getElementById("demo-alert").textContent=d.ownerAlert;document.getElementById("demo-notif").hidden=false},1700)}
     note.textContent="That's the wording your customer gets, in "+s+" second"+(s===1?"":"s")+". Change the request and try again.";})
   .catch(function(err){clearInterval(tick);ty.remove();note.textContent=err.message})
-  .finally(function(){go.disabled=false;go.textContent="Send it"});
+  .finally(function(){go.disabled=false;go.textContent="See the reply"});
 });
 })();
 </script>
