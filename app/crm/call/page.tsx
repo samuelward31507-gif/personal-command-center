@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CALL_MODE_GROUPS, CONVERSATIONS, OUTCOME_LABELS, ATTEMPT_LIMIT, type CallOutcome } from "@/lib/call-outcomes";
-import { buildDraft, type DraftKind } from "@/lib/call-drafts";
+import { buildDraft, contactFirstName, type DraftKind } from "@/lib/call-drafts";
 import { localCallInfo } from "@/lib/local-time";
 import { buildObjections, buildScript, cityOf } from "@/lib/call-script";
 import { reportSection } from "@/lib/business-audit";
@@ -18,7 +18,7 @@ type Contact = { id: string; name: string; company: string; phone: string; email
 type Audit = { id: string; content: string; createdAt: string };
 
 const localKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-const firstName = (name: string, company: string) => { const f = name.trim().split(/\s+/)[0] ?? ""; return f && f.toLowerCase() !== company.trim().split(/\s+/)[0]?.toLowerCase() ? f : ""; };
+const firstName = contactFirstName;
 const KEYS: Partial<Record<CallOutcome, string>> = { no_answer: "1", voicemail: "2", gatekeeper: "3", wrong_number: "4", meeting_booked: "5", send_info: "6", callback_requested: "7", interested: "8", not_interested: "9", not_a_fit: "0" };
 type Dialog = null | "meeting" | "callback" | "gatekeeper" | "info";
 type Draft = { title: string; subject?: string; body: string; contactId: string; channel: "text" | "dm" | "email" | "stay" };
