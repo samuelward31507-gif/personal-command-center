@@ -8,6 +8,25 @@
   var PHOTO = '<svg viewBox="0 0 200 140" aria-hidden="true"><defs><linearGradient id="fsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb8de"/><stop offset="1" stop-color="#d6e6f2"/></linearGradient><linearGradient id="fwood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6a3c"/><stop offset="1" stop-color="#6e4724"/></linearGradient></defs><rect width="200" height="140" fill="url(#fsky)"/><circle cx="150" cy="58" r="34" fill="#4d7a35"/><circle cx="128" cy="70" r="24" fill="#5b8a3e"/><rect x="146" y="78" width="6" height="30" fill="#5a3d22"/><rect y="104" width="200" height="36" fill="#6f9442"/><rect y="104" width="200" height="6" fill="#5f8338"/><g fill="url(#fwood)"><rect x="0" y="66" width="200" height="6" opacity=".9"/><rect x="0" y="92" width="200" height="6" opacity=".9"/><rect x="4" y="58" width="13" height="52"/><rect x="19" y="60" width="13" height="50"/><rect x="34" y="57" width="13" height="53"/><rect x="49" y="62" width="13" height="48" transform="rotate(4 55 110)"/><rect x="66" y="59" width="13" height="51"/><rect x="96" y="58" width="13" height="52"/><rect x="111" y="61" width="13" height="49"/><rect x="126" y="57" width="13" height="53"/><rect x="141" y="64" width="13" height="46" transform="rotate(-6 147 110)"/><rect x="158" y="58" width="13" height="52"/><rect x="173" y="60" width="13" height="50"/><rect x="188" y="58" width="13" height="52"/></g><g fill="#3d2814" opacity=".35"><rect x="10" y="58" width="1.5" height="52"/><rect x="40" y="57" width="1.5" height="53"/><rect x="117" y="61" width="1.5" height="49"/><rect x="164" y="58" width="1.5" height="52"/></g></svg>';
 
   var STORIES = {
+    fence_co: {
+      contact: { name: "Dana", sub: "New lead · fence", initial: "D" },
+      opener: { kind: "call", time: "3:40", number: "(303) 555-0187", place: "Aurora, CO" },
+      replyIn: "Replied in 6 sec",
+      chapters: [
+        ["The call", "3:40 PM. You're on a job when a new customer calls."],
+        ["Missed", "You can't pick up. When nobody answers, most people call the next company on the list."],
+        ["Texted back", "Seconds later, your business texts them back."],
+        ["Qualified", "It asks the questions you'd ask on every job."],
+        ["Booked", "Then it books the estimate on your calendar."],
+        ["Your text", "You get one text with everything. They never called the next company."]
+      ],
+      thread: [
+        ["ch", 2], ["out", "Hi, it's Summit Fence Co. Sorry we missed you, the crew is on a job! What can we help you with?"], ["in", "need a quote for a new fence in the backyard"],
+        ["ch", 3], ["time", "3:41"], ["out", "Nice! Wood privacy, vinyl or something else? About how many feet?"], ["in", "wood privacy, maybe 150 ft, 1 gate"], ["out", "Perfect. What's the address so we can come measure?"], ["in", "4471 S Kittredge St"],
+        ["ch", 4], ["time", "3:43"], ["out", "Thanks! I can have someone out:\n1) Tomorrow 9:00 AM\n2) Tomorrow 1:30 PM"], ["in", "9 please"], ["out", "You're booked for tomorrow at 9:00 AM. We'll text when we're on the way."]
+      ],
+      booked: { date: "Tuesday, November 4", time: "3:44", title: "Estimate booked: Dana", lines: ["Wed 9:00 AM", "Wood privacy ~150 ft, 1 gate"] }
+    },
     general: {
       contact: { name: "Dana", sub: "New lead · website", initial: "D" },
       opener: { kind: "call", time: "3:40", number: "(303) 555-0187", place: "Aurora, CO" },
@@ -15,7 +34,7 @@
       chapters: [
         ["The call", "3:40 PM. You're on a job when a new customer calls."],
         ["Missed", "You can't pick up. When nobody answers, most people call the next company on the list."],
-        ["Texted back", "6 seconds later, your business texts them back."],
+        ["Texted back", "Seconds later, your business texts them back."],
         ["Qualified", "It asks the questions you'd ask on every job."],
         ["Booked", "Then it books the estimate on your calendar."],
         ["Your text", "You get one text with everything. They never called the next company."]
@@ -72,7 +91,7 @@
       chapters: [
         ["The call", "3:40 PM. You're on a tear-off when a homeowner with a leaking roof calls."],
         ["Missed", "You can't pick up. When nobody answers, most people call the next roofer on the list."],
-        ["Texted back", "6 seconds later, your business texts them back."],
+        ["Texted back", "Seconds later, your business texts them back."],
         ["Qualified", "It finds out what they need and whether insurance is involved."],
         ["Booked", "Then it books the inspection on your calendar."],
         ["Your text", "You get one text with everything. They never called the next roofer."]
@@ -218,6 +237,31 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
   var wait = function (ms) { t += ms; };
   var chap = function (i) { chapAt[i] = t; at(setCap(i)); };
 
+  var durs = (root.getAttribute("data-film-durs") || "").split(",").map(Number).filter(function (n) { return n > 0; });
+  if (durs.length === 6) {
+    // Fixed-length cut: every chapter runs exactly its slot; messages land 0.6s apart.
+    chap(0); at(show("call")); at(setTime(o.time)); wait(durs[0]);
+    chap(1); if (o.kind === "call") at(show("missed")); else at(stale); wait(durs[1]);
+    var firstOut = true, slotStart = t, slot = 2;
+    story.thread.forEach(function (s) {
+      var k = s[0];
+      if (k === "ch") {
+        if (s[1] > 2) { t = Math.max(t, slotStart + durs[slot]); }
+        slot = s[1]; slotStart = t; chap(slot);
+        if (slot === 2) { at(show("thread")); wait(300); }
+      } else if (k === "time") at(setTime(s[1]));
+      else {
+        var side = k === "out" ? "out" : "in";
+        at(typing(side)); wait(280);
+        if (k === "photo") at(bubble("in", PHOTO, "fb-photo"));
+        else at(bubble(side, side === "out" ? esc(s[1]).replace(/\n/g, "<br>") : esc(s[1])));
+        if (side === "out" && firstOut) { at(setChip(true)); firstOut = false; }
+        wait(320);
+      }
+    });
+    t = Math.max(t, slotStart + durs[slot]);
+    chap(5); at(show("booked")); at(setTime(b.time)); wait(durs[5]);
+  } else {
   chap(0); at(show("call")); at(setTime(o.time)); wait(3400);
   chap(1);
   if (o.kind === "call") at(show("missed")); else at(stale);
@@ -243,6 +287,7 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
   wait(600);
   chap(5); at(show("booked")); at(setTime(b.time));
   wait(5200);
+  }
   var D = t;
   var chapEnd = chapAt.map(function (s, i) { return i + 1 < chapAt.length ? chapAt[i + 1] : D; });
   var threadDone = chapAt[5] - 1; // used for reduced motion: the full conversation
