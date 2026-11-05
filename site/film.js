@@ -8,6 +8,44 @@
   var PHOTO = '<svg viewBox="0 0 200 140" aria-hidden="true"><defs><linearGradient id="fsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb8de"/><stop offset="1" stop-color="#d6e6f2"/></linearGradient><linearGradient id="fwood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6a3c"/><stop offset="1" stop-color="#6e4724"/></linearGradient></defs><rect width="200" height="140" fill="url(#fsky)"/><circle cx="150" cy="58" r="34" fill="#4d7a35"/><circle cx="128" cy="70" r="24" fill="#5b8a3e"/><rect x="146" y="78" width="6" height="30" fill="#5a3d22"/><rect y="104" width="200" height="36" fill="#6f9442"/><rect y="104" width="200" height="6" fill="#5f8338"/><g fill="url(#fwood)"><rect x="0" y="66" width="200" height="6" opacity=".9"/><rect x="0" y="92" width="200" height="6" opacity=".9"/><rect x="4" y="58" width="13" height="52"/><rect x="19" y="60" width="13" height="50"/><rect x="34" y="57" width="13" height="53"/><rect x="49" y="62" width="13" height="48" transform="rotate(4 55 110)"/><rect x="66" y="59" width="13" height="51"/><rect x="96" y="58" width="13" height="52"/><rect x="111" y="61" width="13" height="49"/><rect x="126" y="57" width="13" height="53"/><rect x="141" y="64" width="13" height="46" transform="rotate(-6 147 110)"/><rect x="158" y="58" width="13" height="52"/><rect x="173" y="60" width="13" height="50"/><rect x="188" y="58" width="13" height="52"/></g><g fill="#3d2814" opacity=".35"><rect x="10" y="58" width="1.5" height="52"/><rect x="40" y="57" width="1.5" height="53"/><rect x="117" y="61" width="1.5" height="49"/><rect x="164" y="58" width="1.5" height="52"/></g></svg>';
 
   var STORIES = {
+    plumbing: {
+      contact: { name: "Maria", sub: "New lead · plumbing", initial: "M" },
+      opener: { kind: "call", time: "7:05", number: "(720) 555-0162", place: "Lakewood, CO" },
+      replyIn: "Replied in 7 sec",
+      chapters: [
+        ["The call", "7:05 PM. You're at dinner when a homeowner with water on the floor calls."],
+        ["Missed", "You miss it. Someone with a leak calls down the list until a plumber answers."],
+        ["Texted back", "7 seconds later, your business texts them back."],
+        ["Qualified", "It finds out how urgent it is and what's going on."],
+        ["Booked", "Then it books the first open visit."],
+        ["Your text", "You get one text. The job never went to the next plumber."]
+      ],
+      thread: [
+        ["ch", 2], ["out", "Hi, it's Clearline Plumbing. Sorry we missed you! Is water actively leaking right now?"], ["in", "yes under the kitchen sink. I turned the valve off"],
+        ["ch", 3], ["time", "7:06"], ["out", "Good call shutting it off. Is it the faucet line, the drain, or the disposal?"], ["in", "looks like the drain pipe"], ["out", "Got it. What's the address?"], ["in", "1180 Garrison St"],
+        ["ch", 4], ["time", "7:07"], ["out", "Thanks. We can be there:\n1) Tomorrow 7:30 AM\n2) Tomorrow 11:00 AM"], ["in", "7:30"], ["out", "You're booked for 7:30 AM ✓ Your plumber will text when they're on the way."]
+      ],
+      booked: { date: "Tuesday, November 4", time: "7:08", title: "Repair booked: Maria", lines: ["Wed 7:30 AM · 1180 Garrison St", "Kitchen drain leak", "Water already shut off"] }
+    },
+    remodeling: {
+      contact: { name: "Jordan", sub: "New lead · remodel", initial: "J" },
+      opener: { kind: "form", date: "Sunday, March 8", time: "8:36", app: "Website", title: "New project inquiry", body: "Kitchen remodel · Jordan" },
+      replyIn: "Replied in 12 sec",
+      chapters: [
+        ["The form", "8:36 PM on a Sunday. Someone is planning a $60,000 kitchen."],
+        ["Waiting", "Most remodelers reply Monday afternoon. By then they've asked three others for quotes."],
+        ["Texted back", "12 seconds later, your business texts them back."],
+        ["Screened", "It checks budget and timeline before anyone drives out."],
+        ["Booked", "Then it books the in-home consultation."],
+        ["Your text", "Monday starts with a qualified project on your calendar."]
+      ],
+      thread: [
+        ["ch", 2], ["out", "Hi Jordan, it's Ridgeline Remodeling. Thanks for reaching out! Is this a full kitchen remodel or a refresh?"], ["in", "full remodel. new layout, cabinets, counters"],
+        ["ch", 3], ["time", "8:37"], ["out", "Love it. Full kitchens with us usually run $45k–$80k. Does that fit what you had in mind?"], ["in", "yes we budgeted around 60"], ["out", "Great. When are you hoping to start?"], ["in", "this summer"],
+        ["ch", 4], ["time", "8:39"], ["out", "Perfect timing. Can we come see the space?\n1) Wed 5:30 PM\n2) Sat 10:00 AM"], ["in", "saturday"], ["out", "You're booked for Saturday at 10:00 AM ✓ We'll send a reminder Friday."]
+      ],
+      booked: { date: "Monday, March 9", time: "7:02", title: "Consultation booked: Jordan", lines: ["Sat 10:00 AM · in-home", "Full kitchen · budget ~$60k", "Start: this summer"] }
+    },
     roofing: {
       contact: { name: "Dana", sub: "New lead · roofing", initial: "D" },
       opener: { kind: "call", time: "3:40", number: "(303) 555-0187", place: "Aurora, CO" },
@@ -86,7 +124,7 @@
     }
   };
 
-  var LABELS = { roofing: "Roofing", hvac: "HVAC", fence: "Fence", pool: "Pools" };
+  var LABELS = { roofing: "Roofing", hvac: "HVAC", plumbing: "Plumbing", remodeling: "Remodel", fence: "Fence", pool: "Pools" };
   roots.forEach(function (r) { mount(r, r.getAttribute("data-film"), false); });
 
   function mount(root, key, autoplay) {
