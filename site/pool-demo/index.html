@@ -8,8 +8,7 @@
 <meta name="theme-color" content="#0a0a0a">
 <meta property="og:title" content="See what your customers see · Cinder">
 <meta property="og:description" content="This is what your leads see when they reach out after hours.">
-<meta property="og:image" content="https://cinderrevenue.com/pool-demo/poster.jpg">
-<meta property="og:video" content="https://cinderrevenue.com/pool-demo/demo.mp4">
+<meta property="og:image" content="https://cinderrevenue.com/og.jpg">
 <meta property="og:url" content="https://cinderrevenue.com/pool-demo">
 <meta name="robots" content="noindex">
 <meta name="twitter:card" content="summary_large_image">
@@ -38,7 +37,7 @@
       <div class="hero-ctas"><a class="btn btn-primary" href="#book">Book your free 15-min call</a></div>
       <p class="hero-trust">No obligation · Live in 21 business days or your setup fee back</p>
     </div>
-    <div class="demo-phone"><video src="/pool-demo/demo.mp4" poster="/pool-demo/poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Demo: a customer gets an instant text reply and books the design consultation"></video><button class="vid-sound" type="button" aria-pressed="false">Tap for sound</button></div>
+    <div class="demo-phone film" data-film="pool"></div>
   </div>
 </section>
 
@@ -84,20 +83,10 @@
   <span>© 2026 Cinder Revenue Company, Colorado</span>
 </div></footer>
 <script>
-(function(){var n=document.getElementById("nav");var f=function(){n.classList.toggle("is-scrolled",scrollY>8)};f();addEventListener("scroll",f,{passive:true});
-var root=document.documentElement,live=document.getElementById("live");if(!live||!root.classList.contains("motion"))return;
-var q=function(k){return document.querySelector('[data-step="'+k+'"]')},on=function(k){q(k).classList.add("on")},off=function(k){q(k).classList.remove("on")},c=document.getElementById("clock");
-c.textContent="0:00";
-setTimeout(function(){on(1)},350);
-setTimeout(function(){on(2);var t0=performance.now(),D=1700;(function tick(now){var p=Math.min(1,(now-t0)/D),s=Math.round(38*p);c.textContent="0:"+(s<10?"0":"")+s;if(p<1)requestAnimationFrame(tick);else{off(2);on(3);setTimeout(function(){on(4)},900);setTimeout(function(){on(5)},1500);setTimeout(function(){on(6)},2300)}})(t0)},950);
-})();
-</script>
-<script>
-(function(){var b=document.querySelector(".vid-sound"),v=b&&b.previousElementSibling;if(!b||!v)return;
-b.addEventListener("click",function(){v.muted=!v.muted;if(!v.muted){v.currentTime=0;}var p=v.play();if(p&&p.catch)p.catch(function(){});b.textContent=v.muted?"Tap for sound":"Sound on";b.setAttribute("aria-pressed",v.muted?"false":"true");});
-v.addEventListener("click",function(){if(v.paused){v.play();}else{v.pause();}});})();
+(function(){var n=document.getElementById("nav");var f=function(){n.classList.toggle("is-scrolled",scrollY>8)};f();addEventListener("scroll",f,{passive:true});})();
 </script>
 <a id="stickybook" class="stickybook" href="#book">Book your free 15-min call</a>
+<script src="/film.js" defer></script>
 <script src="/book.js" defer></script>
 </body>
 </html>
