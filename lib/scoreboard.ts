@@ -6,7 +6,7 @@ export const REVENUE_GOAL = { amount: 50_000, by: "2026-12-31", label: "$50k by 
 export const DAILY_CALL_TARGET = 20;
 
 /** Outcomes where a human actually spoke to someone. */
-export const CONNECT_OUTCOMES = ["connected", "callback_requested", "interested", "meeting_booked", "not_a_fit"] as const;
+export const CONNECT_OUTCOMES = ["connected", "callback_requested", "interested", "meeting_booked", "not_a_fit", "send_info", "not_interested"] as const;
 
 export const pct = (num: number, den: number) => (den > 0 ? Math.round((num / den) * 100) : null);
 
