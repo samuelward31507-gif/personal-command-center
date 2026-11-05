@@ -1,7 +1,7 @@
 import { unwrapCalAiPayload, validCalAiEmail, verifyCalAiSignature, validCalAiDate } from "@/lib/cal-ai-webhook";
 import { sendAlert } from "@/lib/notify";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
-import { bookingPerson, splitName, stageAfterBooking, stageAfterMeeting, localDate } from "@/lib/cal-booking";
+import { bookingPerson, splitName, stageAfterBooking, stageAfterMeeting, localDate, lastTenDigits } from "@/lib/cal-booking";
 import { suggestOffer } from "@/lib/offers";
 import { offersFrom } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
@@ -147,6 +147,33 @@ export async function POST(request: Request) {
     const summary = safeSummary(payload);
     const person = bookingPerson(payload);
     let createdContact = false;
+
+    // People often book with a personal email that isn't the one in Cinder. Before creating a new
+    // contact, match by phone, then by first name against someone Sam called in the last 3 days.
+    let matchedBy: "phone" | "recent call" | null = null;
+    if (!contact && person) {
+      const digits = lastTenDigits(person.phone);
+      if (digits) {
+        const rows = await sql`SELECT id, owner_id FROM public.contacts
+          WHERE owner_id = ${configuredOwnerId} AND right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) = ${digits}
+          ORDER BY updated_at DESC LIMIT 2`;
+        if (rows.length === 1) { contact = { id: String(rows[0].id), owner_id: String(rows[0].owner_id) }; matchedBy = "phone"; }
+      }
+      const first = splitName(person.name).first.toLowerCase();
+      if (!contact && first.length >= 2) {
+        const rows = await sql`SELECT c.id, c.owner_id FROM public.contacts c
+          WHERE c.owner_id = ${configuredOwnerId} AND lower(trim(c.first_name)) = ${first}
+            AND EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id
+              AND a.action = 'outbound_call' AND a.outcome <> 'initiated' AND a.occurred_at > now() - interval '3 days')
+          LIMIT 2`;
+        if (rows.length === 1) { contact = { id: String(rows[0].id), owner_id: String(rows[0].owner_id) }; matchedBy = "recent call"; }
+      }
+      if (contact && matchedBy) {
+        await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
+          VALUES (${configuredOwnerId}, ${contact.id}::uuid, 'note', 'note', 'other',
+            ${`Booked through Cal.com as ${person.name || "unknown"}${person.email ? ` (${person.email})` : ""}${person.phone ? `, ${person.phone}` : ""}. Matched by ${matchedBy}.`.slice(0, 3000)})`;
+      }
+    }
 
     // A booking from someone new is a new lead: create the contact instead of dropping it.
     if (!contact && ownerId && person && (trigger === "BOOKING_CREATED" || trigger === "BOOKING_RESCHEDULED")) {

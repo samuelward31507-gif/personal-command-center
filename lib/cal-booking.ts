@@ -62,3 +62,9 @@ export function stageAfterMeeting(stage: string | null): string | null {
 export function localDate(iso: string, tz: string): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
 }
+
+/** Last 10 digits of a phone number, for matching "+1 (404) 555-0100" to "404-555-0100". Empty if too short. */
+export function lastTenDigits(phone: string): string {
+  const d = (phone ?? "").replace(/\D/g, "");
+  return d.length >= 10 ? d.slice(-10) : "";
+}

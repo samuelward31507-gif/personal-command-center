@@ -22,6 +22,8 @@ ok(() => assert.equal(g2.progressPct, 20));
 ok(() => assert.equal(g2.withExpectedPct, 30));
 ok(() => assert.deepEqual(funnelRates({ calls: 40, connects: 10, meetingsBooked: 3, meetingsHeld: 2, proposalsSent: 2, won: 1, lost: 1 }), { connectRate: 25, meetingRate: 30, showRate: 67, closeRate: 50 }));
 ok(() => assert.ok(!CONNECT_OUTCOMES.includes("no_answer") && !CONNECT_OUTCOMES.includes("voicemail")));
+ok(() => assert.ok(!CONNECT_OUTCOMES.includes("gatekeeper") && !CONNECT_OUTCOMES.includes("wrong_number")));
+import("./lib/call-outcomes.ts").then(m => assert.deepEqual([...CONNECT_OUTCOMES].sort(), [...m.CONVERSATIONS].sort(), "Scoreboard and Call mode count conversations the same way"));
 const api = readFileSync("app/api/scoreboard/route.ts", "utf8");
 ok(() => assert.match(api, /status = 'paid'/, "collected counts only money marked paid"));
 ok(() => assert.doesNotMatch(api, /\b(INSERT|UPDATE|DELETE)\b/, "read-only"));

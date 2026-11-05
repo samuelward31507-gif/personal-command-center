@@ -97,7 +97,7 @@ function lastTouch(c: ContactRef | null): string | null {
   if (!c?.lastOutcome || !c.lastAt) return null;
   return `${c.lastOutcome.replaceAll("_", " ")} · ${c.lastAt.slice(0, 10)}`;
 }
-const hot = (c: ContactRef) => c.lastOutcome === "interested" || c.lastOutcome === "callback_requested" || c.lastOutcome === "connected";
+const hot = (c: ContactRef) => c.lastOutcome === "interested" || c.lastOutcome === "callback_requested" || c.lastOutcome === "connected" || c.lastOutcome === "send_info";
 
 export function buildQueue(input: QueueInput): QueueItem[] {
   const { today } = input;

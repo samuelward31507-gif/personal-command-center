@@ -1,7 +1,7 @@
 // Regression tests for Cal.com bookings → contacts, deals and tasks. Run with: node --experimental-strip-types test-cal-booking.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { bookingPerson, splitName, stageAfterBooking, stageAfterMeeting, localDate } from "./lib/cal-booking.ts";
+import { bookingPerson, splitName, stageAfterBooking, stageAfterMeeting, localDate, lastTenDigits } from "./lib/cal-booking.ts";
 
 let n = 0;
 const ok = fn => { fn(); n++; };
@@ -36,4 +36,8 @@ ok(() => assert.match(route, /Reschedule the cancelled call/));
 ok(() => assert.match(route, /verifyCalAiSignature/, "still signature-checked"));
 ok(() => assert.doesNotMatch(route, /DELETE FROM|status\s*=\s*'paid'/i));
 ok(() => assert.match(route, /title = \$\{title\} AND status NOT IN \('done','cancelled'\)/, "prep task not duplicated on retries"));
+ok(() => assert.equal(lastTenDigits("+1 (404) 555-0100"), "4045550100"));
+ok(() => assert.equal(lastTenDigits("555-0100"), ""));
+ok(() => assert.match(route, /Matched by \$\{matchedBy\}/, "bookings match an existing contact by phone or a recent call before creating one"));
+ok(() => assert.match(route, /rows\.length === 1\) \{ contact = /, "only an unambiguous match is used"));
 console.log(`Cal.com booking regression checks passed (${n} assertions).`);
