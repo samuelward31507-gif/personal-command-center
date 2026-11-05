@@ -321,7 +321,7 @@ export default function CallModePage() {
         </div>
 
         {(() => {
-          const lt = contact?.location ? localCallInfo(contact.location, clock) : null;
+          const lt = contact ? localCallInfo(contact.location ?? "", clock, contact.phone ?? "") : null;
           const last = contact?.lastTouchOutcome ? `Last: ${OUTCOME_LABELS[contact.lastTouchOutcome as CallOutcome] ?? contact.lastTouchOutcome}${contact.lastTouchAt ? ` · ${shortDate(contact.lastTouchAt)}` : ""}` : "Never called";
           const tries = contact?.attempts ? ` · ${contact.attempts} of ${ATTEMPT_LIMIT} tries with no answer` : "";
           return <div className="cm-history">
