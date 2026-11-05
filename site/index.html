@@ -45,24 +45,7 @@
       <p class="hero-trust">No obligation · Live in 21 business days or your setup fee back</p>
     </div>
 
-    <div class="duo">
-    <div class="phone" id="live" aria-label="Sample: a quote request answered after hours">
-      <div class="phone-top"><b>New quote request</b><span>Sample, Tuesday night</span></div>
-      <div class="thread" aria-live="off">
-        <div class="msg in" data-step="1"><small>Website form, 8:47:02 PM</small>Need a quote to replace our roof. Two-story house, a couple of leaks.</div>
-        <div class="typing" data-step="2" aria-hidden="true"><i></i><i></i><i></i></div>
-        <div class="msg out" data-step="3"><small>Text reply, 8:47:40 PM</small>Hi Dana, thanks for reaching out! We can come take a look this week. Does Thursday at 10 am or Friday at 3 pm work better?</div>
-        <div class="msg in" data-step="4"><small>Reply, 8:52 PM</small>Friday at 3 works.</div>
-        <div class="booked" data-step="5">Estimate booked for Friday, 3 pm. Owner notified.</div>
-      </div>
-      <div class="clock"><span>First reply sent in</span><b id="clock">0:38</b></div>
-    </div>
-    <div class="notif" data-step="6" aria-label="Sample: the text the owner gets">
-      <div class="notif-top"><span class="notif-app"><svg viewBox="-163 -1256 1500 1500" aria-hidden="true" class="notif-mark"><defs><radialGradient id="em2" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#f7cdb6"/><stop offset=".55" stop-color="#d97757"/><stop offset="1" stop-color="#b8583b"/></radialGradient></defs><path fill="#ededed" d="M576.9998372457922 -933.9968668669462Q669.9331542961299 -933.9968668669462 726.2997395806015 -913.8968668691814Q782.666324865073 -893.7968668714166 808.1329304967076 -862.930230723694Q833.5995361283422 -832.0635945759714 833.5995361283422 -799.1303304135799Q833.5995361283422 -767.9969238378108 820.0994588173926 -744.5968546643853Q806.599381506443 -721.1967854909599 782.8992716427892 -708.4967346284539Q759.1991617791355 -695.7966837659478 728.7991170175374 -695.7966837659478Q705.4652587808669 -695.7966837659478 682.8650390543044 -711.7299296148121Q660.2648193277419 -727.6631754636765 637.5648356042802 -751.0963846910745Q614.8648518808186 -774.5295939184725 590.3983642514795 -798.0627929735929Q565.9318766221404 -821.5959920287132 538.6654602009803 -837.5292378775775Q511.3990437798202 -853.4624837264419 480.2659667953849 -853.4624837264419Q424.2665649354458 -853.4624837264419 375.96691283397377 -820.329465739429Q327.66726073250175 -787.1964477524161 298.00074258446693 -717.2970662396401Q268.3342244364321 -647.3976847268641 268.3342244364321 -537.5986043214798Q268.3342244364321 -402.59954019263387 307.10081786103547 -311.6666829343885Q345.8674112856388 -220.73382567614317 418.233848053962 -175.06730142608285Q490.6002848222852 -129.40077717602253 591.3331095315516 -129.40077717602253Q656.3993896432221 -129.40077717602253 715.032279457897 -154.03379312716424Q773.6651692725718 -178.66680907830596 825.5319335907698 -229.53291828930378L849.9990152977407 -202.59886880591512Q794.332291662693 -122.66600748151541 737.3322611432523 -73.09955444000661Q680.3322306238115 -23.53310139849782 618.2656087167561 -0.76648966409266Q556.1989868097007 22.0001220703125 485.0658813454211 22.0001220703125Q362.9991617836058 22.0001220703125 269.13261311873794 -35.19985351525247Q175.26606445387006 -92.39982910081744 122.26619466207922 -194.9994974769652Q69.26632487028837 -297.59916585311294 69.26632487028837 -433.7315714545548Q69.26632487028837 -538.2645060271025 104.53292643278837 -629.1642456110567Q139.79952799528837 -720.0639851950109 205.89947102963924 -788.4638265036047Q271.9994140639901 -856.8636678121984 365.8994873072952 -895.4302673395723Q459.7995605506003 -933.9968668669462 576.9998372457922 -933.9968668669462Z"/><circle cx="930" cy="-860" r="175" fill="url(#em2)"/></svg> Text to you</span><span>now</span></div>
-      <b>Estimate booked</b>
-      <p>Dana, Friday 3:00 pm. Roof replacement, two-story home. It's on your calendar.</p>
-    </div>
-    </div>
+    <div class="demo-phone film hero-film" data-film="roofing" data-film-tabs="roofing,hvac,fence,pool"></div>
   </div>
 </section>
 
@@ -250,15 +233,12 @@
 </div></footer>
 <script>
 (function(){var n=document.getElementById("nav");var f=function(){n.classList.toggle("is-scrolled",scrollY>8)};f();addEventListener("scroll",f,{passive:true});
-var root=document.documentElement,live=document.getElementById("live");if(!live||!root.classList.contains("motion"))return;
-var q=function(k){return document.querySelector('[data-step="'+k+'"]')},on=function(k){q(k).classList.add("on")},off=function(k){q(k).classList.remove("on")},c=document.getElementById("clock");
-c.textContent="0:00";
-setTimeout(function(){on(1)},350);
-setTimeout(function(){on(2);var t0=performance.now(),D=1700;(function tick(now){var p=Math.min(1,(now-t0)/D),s=Math.round(38*p);c.textContent="0:"+(s<10?"0":"")+s;if(p<1)requestAnimationFrame(tick);else{off(2);on(3);setTimeout(function(){on(4)},900);setTimeout(function(){on(5)},1500);setTimeout(function(){on(6)},2300)}})(t0)},950);
 })();
 </script>
+<script src="/film.js" defer></script>
 <script src="/calc.js" defer></script>
 <a id="stickybook" class="stickybook" href="#book">Book your free 15-min call</a>
 <script src="/book.js" defer></script>
+<script src="/motion.js" defer></script>
 </body>
 </html>
