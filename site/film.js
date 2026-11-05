@@ -149,6 +149,11 @@
   function mount(root, key, autoplay) {
   var story = STORIES[key];
   if (!story) return;
+  // Personalization: replace the sample business name in the conversation (used by /watch?b=...).
+  var biz = (root.getAttribute("data-biz") || "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, 40);
+  if (biz) story = Object.assign({}, story, { thread: story.thread.map(function (s) { return s.map(function (x) { return typeof x === "string" ? x.split("Summit Home Services").join(biz) : x; }); }) });
+  var SPEED = parseFloat(root.getAttribute("data-film-speed")) || 1;
+  var manual = root.hasAttribute("data-film-manual");
   var tabKeys = (root.getAttribute("data-film-tabs") || "").split(",").filter(function (k) { return STORIES[k]; });
 
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
@@ -193,7 +198,7 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
   function setChip(on) { return function () { chip.classList.toggle("on", on); }; }
   function stale() { var s = root.querySelector(".fs-stale"); if (s) s.classList.add("on"); }
   var curCap = -1;
-  function setCap(i) { return function (instant) { curCap = i; kick.textContent = (i + 1) + " / " + story.chapters.length; txt.textContent = story.chapters[i][1]; var cap = kick.parentNode; cap.classList.remove("in"); if (!instant) { void cap.offsetWidth; cap.classList.add("in"); } segs.forEach(function (s, j) { s.classList.toggle("is-on", j === i); }); }; }
+  function setCap(i) { return function (instant) { curCap = i; kick.textContent = (i + 1) + " / " + story.chapters.length; txt.textContent = story.chapters[i][1]; var cap = kick.parentNode; cap.classList.remove("in"); if (!instant) { void cap.offsetWidth; cap.classList.add("in"); } segs.forEach(function (s, j) { s.classList.toggle("is-on", j === i); }); if (!instant) root.dispatchEvent(new CustomEvent("film:chapter", { detail: i })); }; }
 
   function flip(mutate, instant) {
     if (instant) { mutate(); return; }
@@ -264,7 +269,8 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
   }
   function frame(now) {
     if (!playing) return;
-    var dt = Math.min(80, now - last); last = now; cur += dt;
+    var dt = Math.min(80, now - last); last = now; cur += dt * SPEED;
+    if (cur >= D && manual) { cur = D; fire(false); paint(); playing = false; root.dispatchEvent(new CustomEvent("film:end")); return; }
     if (cur >= D) {
       playing = false; phone.classList.add("fade");
       setTimeout(function () { seek(0); phone.classList.remove("fade"); if (!userPaused && visible) play(); }, 450);
@@ -291,6 +297,12 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
     });
   });
 
+  if (manual) {
+    seek(0); pause();
+    root.film = { play: function () { userPaused = false; play(); }, pause: pause, seek: seek, D: D, chapAt: chapAt.slice(), speed: SPEED };
+    root.dispatchEvent(new CustomEvent("film:ready"));
+    return;
+  }
   var motion = document.documentElement.classList.contains("motion");
   if (!motion) { seek(threadDone); show("thread")(); userPaused = true; pause(); return; }
   seek(0); pause();
