@@ -86,22 +86,25 @@
           <input type="range" name="missed" min="1" max="100" step="1" value="20" style="--p:19.2%"></label>
         <label class="calc-f"><span>Average job size <output data-o="job">$6,000</output></span>
           <input type="range" name="job" min="1000" max="50000" step="500" value="6000" style="--p:10.2%"></label>
+        <label class="calc-f"><span>New customers in every 10 missed calls <output data-o="new10">5</output></span>
+          <input type="range" name="new10" min="1" max="10" step="1" value="5" style="--p:44.4%"></label>
         <label class="calc-f"><span>Your close rate on estimates <output data-o="close">25%</output></span>
           <input type="range" name="close" min="5" max="70" step="1" value="25" style="--p:30.8%"></label>
       </form>
       <div class="calc-out" aria-live="polite">
         <small>What those missed calls could be worth</small>
-        <b class="calc-big num" data-o="year">$90,000</b>
-        <span class="calc-per">a year, about <strong class="num" data-o="month">$7,500</strong> a month</span>
+        <b class="calc-big num" data-o="year">$81,000</b>
+        <span class="calc-per">a year, about <strong class="num" data-o="month">$6,750</strong> a month</span>
         <ul class="calc-break">
           <li><span>Missed calls a month</span><b class="num" data-o="missed2">20</b></li>
-          <li><span>Estimates they would have booked (about 1 in 4)</span><b class="num" data-o="booked">5</b></li>
+          <li><span>New customers among them</span><b class="num" data-o="newc">10</b></li>
+          <li><span>Estimates they would have booked (45%)</span><b class="num" data-o="booked">4.5</b></li>
           <li><span>Jobs those estimates become</span><b class="num" data-o="jobs">about 1 a month</b></li>
         </ul>
         <p class="onejob-out">Cinder pays for itself with <b data-o="onejob">1</b> <span data-o="onejobUnit">booked estimate</span> a month.</p>
         <div class="calc-ctas"><a class="btn btn-primary" href="#book">Get your exact number</a></div>
         <details class="calc-how"><summary>How this is worked out</summary>
-          <p>Not every missed call is a new customer. Some are existing customers, suppliers or spam, and some people were never going to book. So we assume about 1 in 4 missed calls would have turned into a booked estimate, then apply your close rate and job size. That 1 in 4 is our working assumption, not a measured figure. The pays-for-itself line is $997 ÷ (job size × close rate), rounded up. These are estimates, not promises.</p>
+          <p>Missed calls × the share that are new customers (you set this) × 45% who would have booked an estimate if someone had answered × your close rate × your job size. The 45% comes from <a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca's 2026 home-services benchmarks</a>: 45% of home-service phone leads book on the call. The pays-for-itself line is $997 ÷ (job size × close rate), rounded up. These are estimates, not promises.</p>
         </details>
       </div>
     </div>
