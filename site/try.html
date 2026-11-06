@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Try it — Cinder Revenue Company</title>
-<meta name="description" content="Type a quote request like a homeowner would and watch the instant reply your customer would get. Works for any service business.">
+<meta name="description" content="Type a quote request like a homeowner would and watch the instant reply your customer would get. Built for fence, pool and roofing companies.">
 <meta name="theme-color" content="#0a0a0a">
 <meta property="og:title" content="Try it — Cinder Revenue Company">
-<meta property="og:description" content="Type a quote request like a homeowner would and watch the instant reply your customer would get. Works for any service business.">
+<meta property="og:description" content="Type a quote request like a homeowner would and watch the instant reply your customer would get. Built for fence, pool and roofing companies.">
 <meta property="og:type" content="website">
 <link rel="canonical" href="https://cinderrevenue.com/try">
 <meta property="og:url" content="https://cinderrevenue.com/try">
@@ -38,9 +38,8 @@
       <p class="lede">Pretend you're a homeowner. Type what they'd send your business, and see the reply they'd get in seconds, written about their actual project.</p>
       <form class="demo-form" id="demo" autocomplete="off">
         <label class="demo-f">Your type of business<select name="trade">
-          <option value="Roofing">Roofing</option><option value="HVAC">Heating and air</option><option value="Plumbing">Plumbing</option>
-          <option value="Landscaping">Landscaping</option><option value="Fence">Fence</option><option value="Pool">Pools and spas</option>
-          <option value="Remodeling">Remodeling</option><option value="Other">Something else</option>
+          <option value="Roofing">Roofing</option><option value="Fence">Fence</option><option value="Pool">Pools and spas</option>
+          <option value="Other">Something else</option>
         </select></label>
         <label class="demo-f">Your business name<input name="business" maxlength="60" placeholder="Summit Roofing"></label>
         <label class="demo-f">Customer's first name<input name="customer" maxlength="30" placeholder="Dana"></label>
@@ -49,6 +48,7 @@
         <button class="btn btn-primary" type="submit" id="demo-go">See the reply</button>
         <p class="demo-note" id="demo-note">Nothing is texted or saved. This shows the wording; the real system sends it from your business number.</p>
       </form>
+      <p class="demo-offer">Founding offer: $1,000 setup, monthly starts after your first booked estimate. Pool builders: $2,000 setup.</p>
     </div>
     <div class="duo">
       <div class="phone" aria-live="polite">
@@ -71,7 +71,7 @@
         <li><b>We put a number on the gap</b><span>Using your job size and your close rate, not ours.</span></li>
         <li><b>You leave with a clear plan</b><span>What we'd set up, what it costs and when it'd be live. If it's not a fit, we'll say so.</span></li>
       </ol>
-      <p class="book-promise">Founding offer: $1,000 setup, monthly starts after your first booked estimate.</p>
+      <p class="book-promise">Founding offer: $1,000 setup, monthly starts after your first booked estimate. Pool builders: $2,000 setup.</p>
       <p class="book-alt">Rather write? Email <a href="mailto:cinderrevenuecompany@gmail.com">cinderrevenuecompany@gmail.com</a>.</p>
     </div>
     <div class="book-cal">
@@ -99,12 +99,8 @@ setTimeout(function(){on(2);var t0=performance.now(),D=1700;(function tick(now){
 var f=document.getElementById("demo"),t=document.getElementById("demo-thread"),clk=document.getElementById("demo-clock"),note=document.getElementById("demo-note"),go=document.getElementById("demo-go");
 var ex={
  Roofing:["Summit Roofing","Our roof is leaking in two spots after the storm. Two-story house, about 15 years old. Can someone come look?"],
- HVAC:["Peak Heating & Air","Our AC stopped blowing cold this afternoon. It's about 12 years old. How soon could someone come out?"],
- Plumbing:["Clearline Plumbing","Water heater is leaking from the bottom and there's water on the garage floor. Can you help today?"],
- Landscaping:["Greenway Landscapes","Looking to redo our backyard: new sod, a small patio and some plants. Yard is about 2,000 sq ft."],
  Fence:["Summit Fence Co.","Need a quote for about 150 ft of cedar privacy fence in the backyard. We have a dog so need a gate too."],
  Pool:["Blue Ridge Pools","Thinking about putting in an inground pool next spring. Backyard is about 40x60. What's the process?"],
- Remodeling:["Oakline Remodeling","We want to redo our kitchen: new cabinets, counters and flooring. Hoping to start in the spring."],
  Other:["Your Business","Hi, I saw your website and I'd like to get a quote. When could someone come out?"]};
 function setTrade(v){if(!ex[v])v="Other";f.trade.value=v;if(!f.request.dataset.edited)f.request.value=ex[v][1];f.business.placeholder=ex[v][0];if(!f.business.value.trim())document.getElementById("demo-biz").textContent=ex[v][0];}
 f.addEventListener("change",function(e){if(e.target.name==="trade")setTrade(e.target.value)});

@@ -40,9 +40,9 @@
       <p class="lede">We text your old quotes, answer every new lead in under 10 seconds, and get you reviews after every job. You don't touch the tech.</p>
       <div class="hero-ctas">
         <a class="btn btn-primary" href="https://cal.com/samuel-ward-saqpvb/15min">Book a free 15-minute call</a>
-        <a class="btn btn-ghost" href="/try">Try it yourself</a>
+        <a class="btn btn-ghost" href="/demo">See the demo</a>
       </div>
-      <p class="hero-trust">No contract · Cancel by text · Monthly starts after your first booked estimate</p>
+      <p class="hero-trust">No contract. Monthly starts after your first booked estimate.</p>
     </div>
 
     <div class="demo-phone hero-video"><video data-src="/media/demo.mp4" poster="/media/demo-poster.jpg" autoplay muted loop playsinline preload="none" controls aria-label="28-second demo: a missed call gets an instant text reply and the estimate gets booked"></video></div>
@@ -62,8 +62,48 @@
       <div class="stage"><h3>Quote</h3><p>Did anyone follow up?</p><p class="leak">Sent once. Never chased.</p></div>
       <div class="stage"><h3>After the job</h3><p>Did they review, refer, return?</p><p class="leak">Happy customers nobody asked.</p></div>
     </div>
+    <h3 class="stats-head">Why jobs get lost</h3>
+    <div class="how3 stats">
+      <div><p class="stat">Home-service businesses answer about half their calls with a person.</p><p class="stat-src">Source: <a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca, 2026</a></p></div>
+      <div><p class="stat">Only about 2% of callers who don't get through leave a voicemail.</p><p class="stat-src">Source: <a href="https://www.prnewswire.com/news-releases/invoca-launches-new-solution-to-recover-revenue-from-missed-sales-and-appointment-setting-calls-301419335.html" rel="noopener">Invoca, 2021</a></p></div>
+      <div><p class="stat">Owners guessed they answered 97% of calls. Recordings showed 66%.</p><p class="stat-src">Source: <a href="https://blog.servicedirect.com/home-service-call-performance-report" rel="noopener">Service Direct, 2019</a></p></div>
+    </div>
     <div class="pull">
       <p>Most businesses don't have a lead problem. <span>They have a follow-through problem.</span></p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="calculator">
+  <div class="wrap">
+    <div class="split-head">
+      <h2>What missed calls cost you.</h2>
+      <p class="lede">Put in your own numbers. It takes 20 seconds and nothing is sent anywhere.</p>
+    </div>
+    <div class="calc" data-calc>
+      <form class="calc-in" onsubmit="return false">
+        <label class="calc-f"><span>Missed calls a month <output data-o="missed">20</output></span>
+          <input type="range" name="missed" min="1" max="100" step="1" value="20" style="--p:19.2%"></label>
+        <label class="calc-f"><span>Average job size <output data-o="job">$6,000</output></span>
+          <input type="range" name="job" min="1000" max="50000" step="500" value="6000" style="--p:10.2%"></label>
+        <label class="calc-f"><span>Your close rate on estimates <output data-o="close">25%</output></span>
+          <input type="range" name="close" min="5" max="70" step="1" value="25" style="--p:30.8%"></label>
+      </form>
+      <div class="calc-out" aria-live="polite">
+        <small>What those missed calls could be worth</small>
+        <b class="calc-big num" data-o="year">$360,000</b>
+        <span class="calc-per">a year, about <strong class="num" data-o="month">$30,000</strong> a month</span>
+        <ul class="calc-break">
+          <li><span>Missed calls a month</span><b class="num" data-o="missed2">20</b></li>
+          <li><span>Jobs those calls could become</span><b class="num" data-o="jobs">about 5 a month</b></li>
+        </ul>
+        <p class="calc-half">Even if only half were new job requests, that's <strong class="num" data-o="half">$180,000</strong> a year.</p>
+        <p class="onejob-out">Cinder pays for itself with <b data-o="onejob">1</b> <span data-o="onejobUnit">booked estimate</span> a month.</p>
+        <div class="calc-ctas"><a class="btn btn-primary" href="#book">Get your exact number</a></div>
+        <details class="calc-how"><summary>How this is worked out</summary>
+          <p>Missed calls × your close rate × your job size. It treats every missed call as a new job request, which won't be true for every call, so the half figure is the safer number. The pays-for-itself line is $997 ÷ (job size × close rate), rounded up. These are estimates, not promises.</p>
+        </details>
+      </div>
     </div>
   </div>
 </section>
@@ -72,12 +112,13 @@
   <div class="wrap">
     <div class="split-head">
       <h2>How it works.</h2>
-      <p class="lede">Three jobs, done for you. You approve the wording once, then you show up to the estimates.</p>
+      <p class="lede">Four steps, done for you. You approve the wording, then you show up to the estimates.</p>
     </div>
-    <div class="how3">
-      <div><span class="when">Week 1</span><h3>Dead Quote Revival</h3><p>We text your old quotes and cold leads and book the ones who are ready.</p></div>
-      <div><span class="when">Every day</span><h3>10-Second Callback</h3><p>Every missed call, web form and Facebook lead gets a text from your business in under 10 seconds, gets qualified, and gets an estimate booked on your calendar.</p></div>
-      <div><span class="when">After every job</span><h3>Review Builder</h3><p>Every customer gets a Google review request a few days later, plus a one-time review push to your last 12 months of customers.</p></div>
+    <div class="how3 how4">
+      <div><span class="when">Step 1 · 30 minutes</span><h3>Intake call</h3><p>Your questions, your calendar, your old-quote list and your do-not-text list.</p></div>
+      <div><span class="when">Step 2</span><h3>Approval + build</h3><p>We register your texting number the day you sign and build your texts in your voice. You approve every message.</p></div>
+      <div><span class="when">Step 3</span><h3>Week 1 live</h3><p>Old quotes get texted, and new leads get answered in under 10 seconds.</p></div>
+      <div><span class="when">Step 4</span><h3>Every month</h3><p>Estimate follow-ups, review requests, and a one-page report.</p></div>
     </div>
   </div>
 </section>
@@ -86,9 +127,9 @@
   <div class="wrap">
     <div class="sec-head"><h2>Built for fence, pool and roofing companies.</h2><p class="lede">High-ticket work where a missed call or a slow reply hands the job to the next company on the list. We set it up around how you book estimates.</p></div>
     <ul class="inds inds-3" aria-label="Businesses we work with">
-      <li>Fence</li><li>Pools and spas</li><li>Roofing</li>
+      <li>Fence companies</li><li>Pool builders</li><li>Roofing companies</li>
     </ul>
-    <p class="inds-note">Another trade that books estimates by phone, form or Facebook? Ask on the call. We'll tell you straight if it fits.</p>
+    <p class="inds-note">Built for owner-run shops doing 20+ leads a month, or sitting on 150+ old quotes.</p>
   </div>
 </section>
 
@@ -99,42 +140,38 @@
       <p class="lede">Most companies start with the Estimate Sprint. Same monthly as Speed to Lead, with old-quote revival, reviews and the guarantee included.</p>
     </div>
     <div class="plans plans-offer">
-      <div class="plan"><span class="name">Speed to Lead</span><h3>10-Second Callback only.</h3><p class="for">Every missed call, web form and Facebook lead texted back, qualified and booked.</p>
-        <ul><li>10-Second Callback</li><li>Your qualifying questions, asked for you</li><li>Estimates booked on your calendar</li><li>A text when someone books</li></ul>
+      <div class="plan"><span class="name">Speed to Lead</span><h3>The 10-second callback.</h3><p class="for">Every missed call, web form and Facebook lead texted back, qualified and booked.</p>
+        <ul><li>10-second callback</li><li>Your qualifying questions, asked for you</li><li>Estimates booked on your calendar</li><li>Reminders before every estimate</li></ul>
         <p class="price"><span class="setup">$1,500 setup</span><span><b>$997</b>/mo</span></p>
         <a class="btn btn-ghost btn-sm plan-cta" href="#book">Book a call</a></div>
-      <div class="plan is-feature is-offer"><span class="name">Estimate Sprint <span class="offer-tag" data-spots-label>Founding offer: <span data-spots>5</span> spots</span></span><h3>The 30-Day Estimate Sprint.</h3><p class="for">For fence, pool and roofing companies. Everything you need to book more estimates this month.</p>
-        <ul><li>Week 1: Dead Quote Revival</li><li>Every day: 10-Second Callback</li><li>After every job: Review Builder</li><li>Bonuses: missed-call audit and a one-page monthly report</li><li>The 3-Estimate Guarantee</li></ul>
-        <p class="price"><span class="setup"><s>$1,500</s> $1,000 setup</span><span><b>$997</b>/mo</span><span class="starts">Starts after your first booked estimate</span></p>
+      <div class="plan is-feature is-offer"><span class="name">Estimate Sprint <span class="offer-tag" data-spots-label>Founding offer — 5 spots</span></span><h3>The 30-Day Estimate Sprint.</h3><p class="for">For fence, pool and roofing companies. Everything you need to book more estimates this month.</p>
+        <ul><li>Week 1: we text your old quotes and past customers and book the ones who are ready</li><li>Every day: every missed call, web form and Facebook lead texted back in under 10 seconds, qualified, booked and reminded. You get a text when an estimate books or someone asks for you.</li><li>Estimate follow-up texts on day 2 and day 7</li><li>After every job: a Google review request + one reminder, plus a one-time review push to your last 12 months of customers</li><li>Bonuses: missed-call audit and a one-page monthly report</li><li>Texting number + 2,000 texts a month included</li><li>The 3-Estimate Guarantee and the 21-day go-live guarantee</li></ul>
+        <p class="price"><span class="setup"><s>$1,500</s> $1,000 setup</span><span><b>$997</b>/mo</span><span class="starts">Starts after your first booked estimate</span><span class="spots-left">Spots left: <span data-spots>5</span></span><span class="pool-line">Pool builders: $2,000 setup + $1,500/mo, same guarantee.</span></p>
         <a class="btn btn-primary btn-sm plan-cta" href="#book">Claim a founding spot</a></div>
       <div class="plan"><span class="name">Revenue System</span><h3>Everything, plus calls answered.</h3><p class="for">Everything in the Estimate Sprint, plus an AI receptionist that answers your calls.</p>
-        <ul><li>Everything in the Estimate Sprint</li><li>AI receptionist for calls</li><li>Quote follow-up until they decide</li></ul>
+        <ul><li>Everything in the Estimate Sprint</li><li>AI receptionist for calls</li></ul>
         <p class="price"><span class="setup">$3,000 setup</span><span><b>$1,500</b>/mo</span></p>
         <a class="btn btn-ghost btn-sm plan-cta" href="#book">Book a call</a></div>
     </div>
-    <p class="plans-terms">No contract. Cancel by text. You keep your number. You own your data. Includes your texting number and 2,000 texts a month.</p>
+    <p class="plans-terms">No contract. Cancel by text. You keep your number. You own your data.</p>
 
     <div class="g-box" id="guarantee">
-      <div class="g-head"><span class="g-num num">3</span><div><h3>The 3-Estimate Guarantee</h3><p class="g-line">At least 3 booked estimates in your first 30 days live, or month two is free and we keep working.</p></div></div>
+      <div class="g-head"><span class="g-num num">3</span><div><h3>The 3-Estimate Guarantee</h3><p class="g-line">If you don't get at least 3 booked estimates in your first 30 days after go-live, your next monthly payment is waived and we keep working.</p></div></div>
       <div class="g-body">
-        <p><b>What counts:</b> a booked estimate = a homeowner in your service area with a confirmed date and time on your calendar, from a lead our system contacted.</p>
-        <p><b>Conditions:</b></p>
+        <p><b>What counts:</b> a booked estimate = a homeowner in your service area, asking about a job type you told us you want, with a confirmed date and time on your calendar from a lead our system contacted. Each household counts once. A homeowner who cancels without rebooking or doesn't show doesn't count. An estimate you cancel or move does count.</p>
+        <p><b>Applies when you:</b></p>
         <ol>
           <li>Connect missed-call forwarding and lead forms within 3 business days of signing.</li>
-          <li>Provide at least 150 past quotes/leads that contacted you.</li>
+          <li>Have at least 150 past quotes/leads OR 20+ new leads a month.</li>
           <li>Keep calendar availability current.</li>
         </ol>
-        <p class="g-credit">Month two free is a service credit, not a refund.</p>
+        <p class="g-credit">The waived payment is a service credit, not a refund.</p>
       </div>
     </div>
 
-    <div class="onejob" data-onejob>
-      <div class="onejob-in">
-        <h3>Does it pay for itself?</h3>
-        <label>Average job value ($)<input type="number" name="job" min="1" step="100" value="6000" inputmode="numeric"></label>
-        <label>Your close rate on estimates (%)<input type="number" name="close" min="1" max="100" step="1" value="30" inputmode="numeric"></label>
-      </div>
-      <p class="onejob-out" aria-live="polite">Cinder pays for itself with <b data-onejob-out>1</b> <span data-onejob-unit>booked estimate</span> a month.</p>
+    <div class="g-box g-box-short" id="go-live">
+      <div class="g-head"><span class="g-num num">21</span><div><h3>Live in 21 days or your setup back</h3><p class="g-line">Live within 21 days of carrier approval and your intake call, or your setup fee back.</p></div></div>
+      <div class="g-body"><p>Carrier approval usually takes up to 5 business days; we start it the day you sign.</p></div>
     </div>
   </div>
 </section>
@@ -153,14 +190,20 @@
   <div class="wrap faq">
     <div class="sec-head"><h2>What owners ask us.</h2></div>
     <div class="qa">
+      <details><summary>Do I sign a contract?<i aria-hidden="true"></i></summary><p>No. Month to month, cancel by text with 30 days' notice.</p></details>
+      <details><summary>When do I start paying monthly?<i aria-hidden="true"></i></summary><p>The day your first booked estimate lands.</p></details>
+      <details><summary>What counts as a booked estimate?<i aria-hidden="true"></i></summary><p>A homeowner in your service area, asking about a job type you told us you want, with a confirmed date and time on your calendar from a lead our system contacted. Each household counts once. A homeowner who cancels without rebooking or doesn't show doesn't count. An estimate you cancel or move does count.</p></details>
       <details><summary>Does my number change?<i aria-hidden="true"></i></summary><p>No. Customers call the same number. It only steps in when you don't pick up.</p></details>
+      <details><summary>Can I jump into a conversation?<i aria-hidden="true"></i></summary><p>Yes. You get a text when an estimate books or someone asks for you. Reply and the automation steps back.</p></details>
       <details><summary>What about family and suppliers?<i aria-hidden="true"></i></summary><p>They go on a do-not-text list and never get a text.</p></details>
       <details><summary>Is texting my old customers legal?<i aria-hidden="true"></i></summary><p>We only text people who contacted you, from your business name, with opt-out on every message, and we confirm consent with you before anything goes out.</p></details>
-      <details><summary>Do I sign a contract?<i aria-hidden="true"></i></summary><p>No. Month to month, cancel by text with 30 days' notice.</p></details>
-      <details><summary>When do I start paying monthly?<i aria-hidden="true"></i></summary><p>After we book your first estimate.</p></details>
-      <details><summary>How fast is setup?<i aria-hidden="true"></i></summary><p>Live within 14 days of carrier approval and your intake call.</p></details>
-      <details><summary>Will it sound like a robot?<i aria-hidden="true"></i></summary><p>You approve every text before it goes live. It's written in your voice, and you can take over any conversation.</p></details>
-      <details><summary>What if I don't have many old leads?<i aria-hidden="true"></i></summary><p>Then we'll tell you on the call whether the guarantee applies.</p></details>
+      <details><summary>What if I don't have many old leads?<i aria-hidden="true"></i></summary><p>We'll tell you on the call whether the guarantee applies.</p></details>
+      <details><summary>How much of my time does it take?<i aria-hidden="true"></i></summary><p>About 30 minutes at the intake call, plus approving your messages.</p></details>
+      <details><summary>What happens if I cancel?<i aria-hidden="true"></i></summary><p>We send you every contact, conversation and booked estimate within 3 business days, and transfer the texting number to you or forward it for 60 days. You keep your main business number.</p></details>
+      <details><summary>How fast is setup?<i aria-hidden="true"></i></summary><p>Live within 21 days of carrier approval and your intake call, or your setup fee back. Carrier approval usually takes up to 5 business days; we start it the day you sign.</p></details>
+      <details><summary>What does the AI actually do?<i aria-hidden="true"></i></summary><p>It reads each new call, form or message, replies in your approved wording within seconds, asks your qualifying questions, offers open times from your calendar, and books the estimate. Anything sensitive, like pricing or a complaint, goes straight to you. You can read every conversation and take over at any time.</p></details>
+      <details><summary>Will my customers know it's automated?<i aria-hidden="true"></i></summary><p>Replies use wording you approve and mention the customer's actual project. If someone asks, it says it's your assistant and offers a real person. Pricing, complaints and anything unusual go straight to you.</p></details>
+      <details><summary>Do I have to change my software?<i aria-hidden="true"></i></summary><p>No. We connect to the phone, website forms and calendar you already use. If you don't have a CRM, we set one up as part of the build.</p></details>
       <details><summary>What happens on the 15-minute call?<i aria-hidden="true"></i></summary><p>We ask how leads reach you today and what happens after hours, run your numbers, and tell you whether the guarantee applies to you. No slides and no pressure. If it isn't a fit, we'll tell you.</p></details>
     </div>
   </div>
@@ -177,7 +220,7 @@
         <li><b>We put a number on the gap</b><span>Using your job size and your close rate, not ours.</span></li>
         <li><b>You find out if the guarantee applies</b><span>What we'd set up, what it costs and when it'd be live. If it's not a fit, we'll say so.</span></li>
       </ol>
-      <p class="book-promise">Founding offer: $1,000 setup, monthly starts after your first booked estimate.</p>
+      <p class="book-promise">Founding offer: $1,000 setup, monthly starts after your first booked estimate. Pool builders: $2,000 setup.</p>
       <p class="book-alt">Rather write? Email <a href="mailto:cinderrevenuecompany@gmail.com">cinderrevenuecompany@gmail.com</a>.</p>
     </div>
     <div class="book-cal">
@@ -206,7 +249,7 @@ if(document.readyState==="complete")later();else addEventListener("load",later);
 if("IntersectionObserver" in window)new IntersectionObserver(function(es){seen=es[0].isIntersecting;if(!loaded)return;if(seen){var p=v.play();if(p&&p.catch)p.catch(function(){});}else v.pause();},{threshold:.25}).observe(v);})();
 </script>
 <script src="/offer-config.js"></script>
-<script src="/onejob.js" defer></script>
+<script src="/calc.js" defer></script>
 <a id="stickybook" class="stickybook" href="#book">Book your free 15-min call</a>
 <script src="/book.js" defer></script>
 <script src="/motion.js" defer></script>

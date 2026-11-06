@@ -85,4 +85,17 @@ ok(() => assert.equal(estimatesToPayFor(997, 6000, 30), 1));
 ok(() => assert.equal(estimatesToPayFor(997, 3000, 25), 2));
 ok(() => assert.equal(estimatesToPayFor(997, 0, 30), null));
 
+// Website copy (site alignment SOW)
+import { readFileSync, readdirSync, statSync } from "node:fs";
+const home = readFileSync("site/index.html", "utf8");
+ok(() => assert.match(home, /\$360,000/), "calculator shows real numbers before JS runs (20 × $6,000 × 25%)");
+ok(() => assert.match(home, /Cinder pays for itself with <b data-o="onejob">1<\/b>/), "one-job line default: 6000 / 25% → 1");
+ok(() => assert.match(home, /your next monthly payment is waived and we keep working/));
+ok(() => assert.match(home, /Pool builders: \$2,000 setup \+ \$1,500\/mo, same guarantee\./));
+ok(() => assert.match(home, /No contract\. Cancel by text\. You keep your number\. You own your data\./));
+const walk = d => readdirSync(d).flatMap(f => { const p = d + "/" + f; return statSync(p).isDirectory() ? walk(p) : [p]; });
+const text = walk("site").filter(f => /\.(html|js|xml|txt|md)$/.test(f)).map(f => readFileSync(f, "utf8")).join("\n");
+for (const bad of [/3-month/i, /initial term/i, /once the system is live/i, /HVAC/i, /plumbing/i, /pest/i, /98%/, /under a minute/i, /two weeks/i])
+  ok(() => assert.doesNotMatch(text, bad), "banned on the site: " + bad);
+
 console.log(`Founding offer checks passed (${n} assertions).`);
