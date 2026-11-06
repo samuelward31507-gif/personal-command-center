@@ -86,22 +86,25 @@
           <input type="range" name="missed" min="1" max="100" step="1" value="20" style="--p:19.2%"></label>
         <label class="calc-f"><span>Average job size <output data-o="job">$6,000</output></span>
           <input type="range" name="job" min="1000" max="50000" step="500" value="6000" style="--p:10.2%"></label>
+        <label class="calc-f"><span>Share that are new job requests <output data-o="share">50%</output></span>
+          <input type="range" name="share" min="10" max="100" step="5" value="50" style="--p:44.4%"></label>
         <label class="calc-f"><span>Your close rate on estimates <output data-o="close">25%</output></span>
           <input type="range" name="close" min="5" max="70" step="1" value="25" style="--p:30.8%"></label>
       </form>
       <div class="calc-out" aria-live="polite">
         <small>What those missed calls could be worth</small>
-        <b class="calc-big num" data-o="year">$360,000</b>
-        <span class="calc-per">a year, about <strong class="num" data-o="month">$30,000</strong> a month</span>
+        <b class="calc-big num" data-o="year">$90,000</b>
+        <span class="calc-per">a year, about <strong class="num" data-o="month">$7,500</strong> a month</span>
         <ul class="calc-break">
           <li><span>Missed calls a month</span><b class="num" data-o="missed2">20</b></li>
-          <li><span>Jobs those calls could become</span><b class="num" data-o="jobs">about 5 a month</b></li>
+          <li><span>New job requests among them</span><b class="num" data-o="requests">10</b></li>
+          <li><span>Estimates they would have booked</span><b class="num" data-o="booked">5</b></li>
+          <li><span>Jobs those estimates become</span><b class="num" data-o="jobs">about 1 a month</b></li>
         </ul>
-        <p class="calc-half">Even if only half were new job requests, that's <strong class="num" data-o="half">$180,000</strong> a year.</p>
         <p class="onejob-out">Cinder pays for itself with <b data-o="onejob">1</b> <span data-o="onejobUnit">booked estimate</span> a month.</p>
         <div class="calc-ctas"><a class="btn btn-primary" href="#book">Get your exact number</a></div>
         <details class="calc-how"><summary>How this is worked out</summary>
-          <p>Missed calls × your close rate × your job size. It treats every missed call as a new job request, which won't be true for every call, so the half figure is the safer number. The pays-for-itself line is $997 ÷ (job size × close rate), rounded up. These are estimates, not promises.</p>
+          <p>Missed calls × the share that are new job requests × about half of those booking an estimate if someone had reached them × your close rate × your job size. The other missed calls are existing customers, suppliers, spam and people who were never going to book. The 50% booking step is our working assumption, not a measured figure. The pays-for-itself line is $997 ÷ (job size × close rate), rounded up. These are estimates, not promises.</p>
         </details>
       </div>
     </div>

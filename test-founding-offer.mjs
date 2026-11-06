@@ -88,7 +88,8 @@ ok(() => assert.equal(estimatesToPayFor(997, 0, 30), null));
 // Website copy (site alignment SOW)
 import { readFileSync, readdirSync, statSync } from "node:fs";
 const home = readFileSync("site/index.html", "utf8");
-ok(() => assert.match(home, /\$360,000/), "calculator shows real numbers before JS runs (20 × $6,000 × 25%)");
+ok(() => assert.match(home, /\$90,000/), "calculator shows real numbers before JS runs (20 × 50% × 50% × 25% × $6,000 × 12)");
+ok(() => assert.doesNotMatch(home, /calc-half/), "no inflated every-call-is-a-job figure");
 ok(() => assert.match(home, /Cinder pays for itself with <b data-o="onejob">1<\/b>/), "one-job line default: 6000 / 25% → 1");
 ok(() => assert.match(home, /your next monthly payment is waived and we keep working/));
 ok(() => assert.match(home, /Pool builders: \$2,000 setup \+ \$1,500\/mo, same guarantee\./));
