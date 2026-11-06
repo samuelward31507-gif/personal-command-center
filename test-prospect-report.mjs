@@ -12,8 +12,8 @@ ok(() => assert.equal(Math.round(leakMath(base).year), 273600));
 ok(() => assert.equal(Math.round(leakMath(base).half), 136800));
 ok(() => assert.equal(leakMath({ ...base, followsUp: true }).followUpJobs, 0));
 ok(() => assert.ok(leakMath({ ...base, speed: "next" }).month > leakMath({ ...base, speed: "5min" }).month));
-// The website's one-job calculator (site/onejob.js) uses the founding offer's formula: ceil(997 / (job × close rate)).
-const site = readFileSync("site/onejob.js", "utf8");
+// The website calculator's one-job line (site/calc.js) uses the founding offer's formula: ceil(997 / (job × close rate)).
+const site = readFileSync("site/calc.js", "utf8");
 ok(() => assert.ok(site.includes("var MONTHLY = 997;"), "site calculator monthly fee"));
 ok(() => assert.ok(site.includes("Math.ceil(MONTHLY / (j * c))"), "site calculator formula"));
 // Validation
