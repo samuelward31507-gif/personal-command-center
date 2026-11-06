@@ -805,3 +805,11 @@ html, body { overflow-x: clip; }
 .calc-adv-note { margin: 8px 0 0; font-size: 13px; color: var(--concrete); }
 .calc-out .calc-x { margin: 10px 0 0; font-size: 15px; color: var(--fog); }
 .calc-out .calc-x b { color: var(--paper); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Pricing: side cards size to their own content instead of stretching to the featured card's height */
+@media (min-width: 821px) {
+  .plans.plans-offer { align-items: start; }
+  .plans-offer .plan { grid-row: auto; grid-template-rows: none; align-content: start; }
+  .plans-offer .plan:not(.is-offer) .price { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .plans-offer .plan:not(.is-offer) .plan-cta { justify-self: start; margin-top: 6px; }
+}
