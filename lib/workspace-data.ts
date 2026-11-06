@@ -20,7 +20,8 @@ export async function saveWorkspace(ownerId: string, settings: WorkspaceSettings
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured.");
   const sql = neon(process.env.DATABASE_URL);
   await sql`INSERT INTO public.workspace_settings (owner_id, settings) VALUES (${ownerId}, ${JSON.stringify(settings)}::jsonb)
-    ON CONFLICT (owner_id) DO UPDATE SET settings = EXCLUDED.settings, updated_at = now()`;
+    ON CONFLICT (owner_id) DO UPDATE SET settings = EXCLUDED.settings || jsonb_strip_nulls(jsonb_build_object('offer', public.workspace_settings.settings->'offer')), updated_at = now()`;
+  // The founding offer settings live in the same row and are saved separately (lib/offer-data.ts), so they are kept here.
 }
 
 /** The single owner used by background jobs and public pages (signing, kickoff, lead form). */

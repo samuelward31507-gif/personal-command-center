@@ -79,7 +79,7 @@ export default function ReportPage() {
           <section className="prp-sec">
             <h2>What fixing it looks like</h2>
             <div className="prp-steps">
-              <div><b>Every inquiry answered in under a minute</b><p>Forms, Facebook leads and missed calls get a personal reply right away, in your wording, day or night.</p></div>
+              <div><b>Every inquiry answered in under 10 seconds</b><p>Forms, Facebook leads and missed calls get a personal reply right away, in your wording, day or night.</p></div>
               <div><b>The {unit} booked without phone tag</b><p>Serious leads pick a time on your calendar and get reminders, so they show up. You get a text with the details.</p></div>
               <div><b>Every quote followed up</b><p>Polite follow-ups until you get a yes or a no, so no job is lost to silence.</p></div>
             </div>

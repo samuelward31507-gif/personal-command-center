@@ -21,6 +21,10 @@ ok(() => assert.match(buildScript({ ...base, firstName: "" })[0].say, /^Hey ther
 const o = buildObjections(base);
 ok(() => assert.ok(o.length >= 6));
 ok(() => assert.match(o.find(x => x.key === "price").say, /\$1,500.*\$997/));
+{ const o2 = buildObjections({ ...base, priceLine: "It's $1,000 to set up, then $997 a month", spotsLeft: 4 }); const pr = o2.find(x => x.key === "price");
+  ok(() => assert.equal(pr.say, "It's $1,000 to set up, then $997 a month")); ok(() => assert.match(pr.then, /^Spots left: 4\./)); }
+ok(() => assert.match(buildScript(base).find(x => x.key === "bridge").say, /under 10 seconds/));
+ok(() => assert.doesNotMatch(buildScript(base).map(x => x.say).join(" "), /minute,/), "no 'within a minute' promise");
 ok(() => assert.doesNotMatch(JSON.stringify([s, o]), /\d+%|guarantee/i, "no invented stats or guarantees"));
 const page = readFileSync("app/crm/call/page.tsx", "utf8");
 ok(() => assert.match(page, /tel:/, "the founder dials via tel:"));

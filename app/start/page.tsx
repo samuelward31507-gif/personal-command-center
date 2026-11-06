@@ -43,7 +43,7 @@ export default function StartPage() {
             <p>With your OK, we send one test inquiry through your website, clearly marked as our test, and time how long it takes to get a reply. You get the result by email within 48 hours. Free, and no call needed.</p>
           </> : <>
             <h1>Stop losing jobs to slow replies.</h1>
-            <p>We set up systems that answer every new lead in under a minute, follow up until they book, and put the good ones on your calendar. Tell us about your business and we&apos;ll show you what it would look like for you.</p>
+            <p>We set up systems that answer every new lead in under 10 seconds, follow up until they book, and put the good ones on your calendar. Tell us about your business and we&apos;ll show you what it would look like for you.</p>
           </>}
         </div>
         <form className="st-form" onSubmit={submit}>

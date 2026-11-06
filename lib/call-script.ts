@@ -6,6 +6,8 @@ export type ScriptInput = {
   setupFee: number; monthlyFee: number; today?: Date;
   me?: string;    // your first name
   brand?: string; // the name you say on calls
+  priceLine?: string; // the founding-offer price answer (lib/founding-offer priceScript); falls back to the tier price
+  spotsLeft?: number;
 };
 export type ScriptStep = { key: string; label: string; say: string; tip: string };
 export type Objection = { key: string; heard: string; say: string; then: string };
@@ -53,7 +55,7 @@ export function buildScript(input: ScriptInput): ScriptStep[] {
     { key: "dig", label: "Dig into the pain", tip: "Listen for: voicemail, 'next day', 'when I get to it'. That's the gap.",
       say: `And when you're out on a ${job} job and miss a call, what happens to that lead?` },
     { key: "bridge", label: "Bridge to the fix", tip: "One sentence. Don't pitch features.",
-      say: `That's exactly what we fix. We set up a system that answers and follows up with every new lead within a minute, day or night, and books the good ones straight onto your calendar.` },
+      say: `That's exactly what we fix. Every missed call, web form and Facebook lead gets a text from your business in under 10 seconds, day or night, and the good ones get booked straight onto your calendar.` },
     { key: "ask", label: "Ask for the meeting", tip: "Offer two times. Silence after the question is fine.",
       say: `I'm not trying to sell you on the phone. Would you be open to 15 minutes where I show you what that would look like for ${company}? Does ${d1} or ${d2} work better?` },
     { key: "close", label: "Lock it in", tip: "Confirm the best number and email, then log 'Meeting booked'.",
@@ -77,8 +79,8 @@ export function buildObjections(input: ScriptInput): Objection[] {
       say: `Good, that means you care about follow-up. Most of the companies we work with had something too. The gap is usually speed in the first five minutes. How fast does your current setup answer a web lead at 9pm?`,
       then: `If it's slow: "That window is where most jobs get lost. Worth 15 minutes to see the difference?"` },
     { key: "price", heard: "How much is it?",
-      say: `Depends on what you need. Setups start at ${money(input.setupFee)} with a monthly plan from ${money(input.monthlyFee)}. Before price means anything, I'd want to see if it actually pays for itself for you.`,
-      then: `"If one extra ${job} job a month covers it, would that be worth 15 minutes to look at?"` },
+      say: input.priceLine || `Depends on what you need. Setups start at ${money(input.setupFee)} with a monthly plan from ${money(input.monthlyFee)}. Before price means anything, I'd want to see if it actually pays for itself for you.`,
+      then: `${input.spotsLeft !== undefined ? `Spots left: ${input.spotsLeft}. ` : ""}"If one extra ${job} job a month covers it, would that be worth 15 minutes to look at?"` },
     { key: "enough-leads", heard: "We get plenty of leads",
       say: `That's a great spot to be in. Then it's about closing more of the ones you already get. How many quotes go out in a month that never hear back?`,
       then: `"Following up on those automatically is usually the fastest win. Want me to show you?"` },

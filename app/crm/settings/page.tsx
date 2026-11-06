@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createAuthClient } from "@neondatabase/auth/next";
 import { WorkspaceCard } from "./workspace-card";
+import { OfferCard } from "./offer-card";
 import "./settings.css";
 
 const authClient = createAuthClient();
@@ -164,7 +165,7 @@ export default function SettingsPage() {
         {TABS.map(t => <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} style={{ background: tab === t.key ? "#2c2c2c" : "transparent" }} onClick={() => pick(t.key)}>{t.label}</button>)}
       </nav>
 
-      {tab === "business" && <WorkspaceCard />}
+      {tab === "business" && <><OfferCard /><WorkspaceCard /></>}
 
       {tab === "automations" && <><LeadFormLink /><OvernightAudits /><SundayReview /></>}
 
