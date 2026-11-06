@@ -16,8 +16,9 @@ export function nicheFor(...hints: (string | null | undefined)[]): "fence" | "po
   return "";
 }
 export function demoLinkFor(niche: string): string {
-  if (niche === "fence") return "https://cinderrevenue.com/fence-demo";
-  if (niche === "pool") return "https://cinderrevenue.com/pool-demo";
+  // /fence-demo and /pool-demo were retired (they redirect to /demo). Fence gets the fence cut of the video.
+  if (niche === "fence") return "https://cinderrevenue.com/watch?story=fence";
+  if (niche === "pool") return "https://cinderrevenue.com/demo";
   return "https://cinderrevenue.com";
 }
 

@@ -15,10 +15,10 @@ const gaTz = tzOf(ga);
 ok(() => assert.equal(gaTz, "America/New_York"));
 ok(() => assert.equal(callTimeText(calledAt, gaTz), "6:15"), "call time in their zone");
 const link = demoLinkFor(nicheFor("Peachtree Fence Co."));
-ok(() => assert.equal(link, "https://cinderrevenue.com/fence-demo"));
+ok(() => assert.equal(link, "https://cinderrevenue.com/watch?story=fence"));
 const vm = voicemailText({ firstName: "Mike", callTime: callTimeText(calledAt, gaTz), demoLink: link });
 ok(() => assert.match(vm, /^Hey Mike, Sam with Cinder\. Called your shop at 6:15 and got voicemail\./));
-ok(() => assert.match(vm, /cinderrevenue\.com\/fence-demo\n\nWorth a quick call tomorrow\?$/));
+ok(() => assert.match(vm, /cinderrevenue\.com\/watch\?story=fence\n\nWorth a quick call tomorrow\?$/));
 const p1 = planFor("voicemail", { now: calledAt, tz: gaTz });
 ok(() => assert.equal(p1.template, "T-VM"));
 ok(() => assert.equal(p1.tasks[0].title, "Call back"));
@@ -70,7 +70,7 @@ ok(() => assert.equal(ip.template, "T-INFO"));
 ok(() => assert.deepEqual(ip.tasks.map(t => t.title), ["Follow up on info (day 1)", "Follow up on info (day 2)", "Follow up on info (day 3)", "Follow up on info (day 7)"]));
 
 // Merge field details
-ok(() => assert.equal(demoLinkFor(nicheFor("Blue Haven Pools")), "https://cinderrevenue.com/pool-demo"));
+ok(() => assert.equal(demoLinkFor(nicheFor("Blue Haven Pools")), "https://cinderrevenue.com/demo"));
 ok(() => assert.equal(demoLinkFor(nicheFor("Summit Roofing")), "https://cinderrevenue.com"));
 ok(() => assert.equal(demoLinkFor(""), "https://cinderrevenue.com"));
 ok(() => assert.equal(tzOf({ timeZone: "America/Chicago", location: "Atlanta, GA" }), "America/Chicago"), "contact field wins");

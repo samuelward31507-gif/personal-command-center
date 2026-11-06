@@ -20,7 +20,7 @@
 <style>
 html, body { margin: 0; height: 100%; background: #0b0b0b; overflow: hidden; }
 body.watch { font-family: var(--sans); -webkit-font-smoothing: antialiased; color: var(--paper); }
-.wstage { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: #0b0b0b; }
+.wstage { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: #0b0b0b; visibility: hidden; } /* shown once scaled to fit: no layout shift */
 /* Vertical: social safe zones. Nothing in the bottom 380px or the right 140px. */
 .wstage[data-l="v"] { width: 1080px; height: 1920px; --l: 90px; --r: 140px; --top: 92px; --bot: 380px; }
 .wstage[data-l="w"] { width: 1920px; height: 1080px; --l: 96px; --r: 96px; --top: 72px; --bot: 96px; }
