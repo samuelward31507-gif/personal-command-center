@@ -55,7 +55,9 @@ ok(() => assert.deepEqual(dealChangeFor("interested", "qualified"), { stage: "in
 ok(() => assert.equal(dealChangeFor("interested", "negotiation"), null, "deals never move backwards"));
 ok(() => assert.deepEqual(dealChangeFor("not_a_fit", "proposal"), { stage: "lost", lostReason: "Not a fit" }));
 ok(() => assert.deepEqual(dealChangeFor("do_not_contact", "new"), { stage: "lost", lostReason: "Do not contact" }));
-for (const o of ["no_answer", "voicemail", "callback_requested", "wrong_contact", "connected"]) ok(() => assert.equal(dealChangeFor(o, "new"), null, `${o} leaves the deal alone`));
+for (const o of ["no_answer", "callback_requested", "wrong_contact", "connected"]) ok(() => assert.equal(dealChangeFor(o, "new"), null, `${o} leaves the deal alone`));
+ok(() => assert.deepEqual(dealChangeFor("voicemail", "new"), { stage: "contacted" }), "voicemail = Contacted - VM");
+ok(() => assert.equal(dealChangeFor("voicemail", "interested"), null), "voicemail never moves a deal backward");
 for (const s of ["won", "lost"]) ok(() => assert.equal(dealChangeFor("not_a_fit", s), null, `${s} deals are never touched`));
 ok(() => assert.equal(dealChangeFor("interested", "bogus"), null));
 
