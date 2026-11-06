@@ -14,6 +14,7 @@
     stage.style.transform = "scale(" + s + ")";
     stage.style.left = Math.round((innerWidth - W * s) / 2) + "px";
     stage.style.top = Math.round((innerHeight - H * s) / 2) + "px";
+    stage.style.visibility = "visible";
   }
   fit(); addEventListener("resize", fit);
 

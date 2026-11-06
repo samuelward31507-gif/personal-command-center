@@ -1,11 +1,10 @@
-// Animated phone demo for /fence-demo and /pool-demo.
+// Animated phone demo used by /watch (and the MP4 renders made from it).
 // Plays a scripted lead conversation inside a drawn phone, with chapter captions outside it.
 // Pauses off screen and in background tabs. Reduced motion: shows the finished conversation, paused.
 (function () {
   var roots = [].slice.call(document.querySelectorAll("[data-film]"));
   if (!roots.length) return;
 
-  var PHOTO = '<svg viewBox="0 0 200 140" aria-hidden="true"><defs><linearGradient id="fsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb8de"/><stop offset="1" stop-color="#d6e6f2"/></linearGradient><linearGradient id="fwood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6a3c"/><stop offset="1" stop-color="#6e4724"/></linearGradient></defs><rect width="200" height="140" fill="url(#fsky)"/><circle cx="150" cy="58" r="34" fill="#4d7a35"/><circle cx="128" cy="70" r="24" fill="#5b8a3e"/><rect x="146" y="78" width="6" height="30" fill="#5a3d22"/><rect y="104" width="200" height="36" fill="#6f9442"/><rect y="104" width="200" height="6" fill="#5f8338"/><g fill="url(#fwood)"><rect x="0" y="66" width="200" height="6" opacity=".9"/><rect x="0" y="92" width="200" height="6" opacity=".9"/><rect x="4" y="58" width="13" height="52"/><rect x="19" y="60" width="13" height="50"/><rect x="34" y="57" width="13" height="53"/><rect x="49" y="62" width="13" height="48" transform="rotate(4 55 110)"/><rect x="66" y="59" width="13" height="51"/><rect x="96" y="58" width="13" height="52"/><rect x="111" y="61" width="13" height="49"/><rect x="126" y="57" width="13" height="53"/><rect x="141" y="64" width="13" height="46" transform="rotate(-6 147 110)"/><rect x="158" y="58" width="13" height="52"/><rect x="173" y="60" width="13" height="50"/><rect x="188" y="58" width="13" height="52"/></g><g fill="#3d2814" opacity=".35"><rect x="10" y="58" width="1.5" height="52"/><rect x="40" y="57" width="1.5" height="53"/><rect x="117" y="61" width="1.5" height="49"/><rect x="164" y="58" width="1.5" height="52"/></g></svg>';
 
   var STORIES = {
     fence_co: {
@@ -46,123 +45,8 @@
       ],
       booked: { date: "Tuesday, November 4", time: "3:44", title: "Estimate booked: Dana", lines: ["Wed 9:00 AM · 4471 S Kittredge St", "Water damage · upstairs bedroom", "Leak stopped · ceiling stained"] }
     },
-    plumbing: {
-      contact: { name: "Maria", sub: "New lead · plumbing", initial: "M" },
-      opener: { kind: "call", time: "7:05", number: "(720) 555-0162", place: "Lakewood, CO" },
-      replyIn: "Replied in 7 sec",
-      chapters: [
-        ["The call", "7:05 PM. You're at dinner when a homeowner with water on the floor calls."],
-        ["Missed", "You miss it. Someone with a leak calls down the list until a plumber answers."],
-        ["Texted back", "7 seconds later, your business texts them back."],
-        ["Qualified", "It finds out how urgent it is and what's going on."],
-        ["Booked", "Then it books the first open visit."],
-        ["Your text", "You get one text. The job never went to the next plumber."]
-      ],
-      thread: [
-        ["ch", 2], ["out", "Hi, it's Clearline Plumbing. Sorry we missed you! Is water actively leaking right now?"], ["in", "yes under the kitchen sink. I turned the valve off"],
-        ["ch", 3], ["time", "7:06"], ["out", "Good call shutting it off. Is it the faucet line, the drain, or the disposal?"], ["in", "looks like the drain pipe"], ["out", "Got it. What's the address?"], ["in", "1180 Garrison St"],
-        ["ch", 4], ["time", "7:07"], ["out", "Thanks. We can be there:\n1) Tomorrow 7:30 AM\n2) Tomorrow 11:00 AM"], ["in", "7:30"], ["out", "You're booked for 7:30 AM ✓ Your plumber will text when they're on the way."]
-      ],
-      booked: { date: "Tuesday, November 4", time: "7:08", title: "Repair booked: Maria", lines: ["Wed 7:30 AM · 1180 Garrison St", "Kitchen drain leak", "Water already shut off"] }
-    },
-    remodeling: {
-      contact: { name: "Jordan", sub: "New lead · remodel", initial: "J" },
-      opener: { kind: "form", date: "Sunday, March 8", time: "8:36", app: "Website", title: "New project inquiry", body: "Kitchen remodel · Jordan" },
-      replyIn: "Replied in 12 sec",
-      chapters: [
-        ["The form", "8:36 PM on a Sunday. Someone is planning a $60,000 kitchen."],
-        ["Waiting", "Most remodelers reply Monday afternoon. By then they've asked three others for quotes."],
-        ["Texted back", "12 seconds later, your business texts them back."],
-        ["Screened", "It checks budget and timeline before anyone drives out."],
-        ["Booked", "Then it books the in-home consultation."],
-        ["Your text", "Monday starts with a qualified project on your calendar."]
-      ],
-      thread: [
-        ["ch", 2], ["out", "Hi Jordan, it's Ridgeline Remodeling. Thanks for reaching out! Is this a full kitchen remodel or a refresh?"], ["in", "full remodel. new layout, cabinets, counters"],
-        ["ch", 3], ["time", "8:37"], ["out", "Love it. Full kitchens with us usually run $45k–$80k. Does that fit what you had in mind?"], ["in", "yes we budgeted around 60"], ["out", "Great. When are you hoping to start?"], ["in", "this summer"],
-        ["ch", 4], ["time", "8:39"], ["out", "Perfect timing. Can we come see the space?\n1) Wed 5:30 PM\n2) Sat 10:00 AM"], ["in", "saturday"], ["out", "You're booked for Saturday at 10:00 AM ✓ We'll send a reminder Friday."]
-      ],
-      booked: { date: "Monday, March 9", time: "7:02", title: "Consultation booked: Jordan", lines: ["Sat 10:00 AM · in-home", "Full kitchen · budget ~$60k", "Start: this summer"] }
-    },
-    roofing: {
-      contact: { name: "Dana", sub: "New lead · roofing", initial: "D" },
-      opener: { kind: "call", time: "3:40", number: "(303) 555-0187", place: "Aurora, CO" },
-      replyIn: "Replied in 6 sec",
-      chapters: [
-        ["The call", "3:40 PM. You're on a tear-off when a homeowner with a leaking roof calls."],
-        ["Missed", "You can't pick up. When nobody answers, most people call the next roofer on the list."],
-        ["Texted back", "Seconds later, your business texts them back."],
-        ["Qualified", "It finds out what they need and whether insurance is involved."],
-        ["Booked", "Then it books the inspection on your calendar."],
-        ["Your text", "You get one text with everything. They never called the next roofer."]
-      ],
-      thread: [
-        ["ch", 2], ["out", "Hi, it's Summit Roofing. Sorry we missed you, the crew is up on a roof! Is this a leak, storm damage or a full replacement?"], ["in", "leak in the upstairs bedroom after the hail last week"],
-        ["ch", 3], ["time", "3:41"], ["out", "Sorry to hear that. Are you going through insurance, or paying out of pocket?"], ["in", "insurance, already have a claim number"], ["out", "Perfect, we work with insurance all the time. What's the address?"], ["in", "4471 S Kittredge St"],
-        ["ch", 4], ["time", "3:43"], ["out", "Got it. I can have an inspector out:\n1) Tomorrow 9:00 AM\n2) Tomorrow 1:30 PM"], ["in", "9 please"], ["out", "You're booked for tomorrow at 9:00 AM ✓ We'll text when we're on the way."]
-      ],
-      booked: { date: "Tuesday, November 4", time: "3:44", title: "Inspection booked: Dana", lines: ["Wed 9:00 AM · 4471 S Kittredge St", "Hail leak · insurance claim open", "Upstairs bedroom"] }
-    },
-    hvac: {
-      contact: { name: "Chris", sub: "New lead · HVAC", initial: "C" },
-      opener: { kind: "form", date: "Saturday, July 12", time: "10:47", app: "Website", title: "New service request", body: "AC not cooling · Chris" },
-      replyIn: "Replied in 9 sec",
-      chapters: [
-        ["The form", "10:47 PM on a Saturday in July. A family's AC just quit."],
-        ["Waiting", "Most shops reply Monday. By then they've hired whoever answered tonight."],
-        ["Texted back", "9 seconds later, your business texts them back."],
-        ["Sorted", "It tells the emergency from the tune-up."],
-        ["Booked", "And books the first slot in the morning."],
-        ["Your text", "You start Sunday with an urgent call already on the board."]
-      ],
-      thread: [
-        ["ch", 2], ["out", "Hi Chris, it's Peak Air. Sorry your AC is out. Is it blowing warm air, or not turning on at all?"], ["in", "blowing warm. house is 84 and we have a baby"],
-        ["ch", 3], ["time", "10:48"], ["out", "Understood, we'll treat this as urgent. Roughly how old is the system?"], ["in", "maybe 12 years"],
-        ["ch", 4], ["time", "10:49"], ["out", "Thanks. Our first openings tomorrow:\n1) 8:00 AM\n2) 10:30 AM"], ["in", "8am please!!"], ["out", "You're booked for 8:00 AM ✓ Your tech will text when they're on the way."]
-      ],
-      booked: { date: "Sunday, July 13", time: "6:15", title: "Urgent service booked: Chris", lines: ["Today 8:00 AM · AC blowing warm", "~12-year system · infant at home", "Marked urgent"] }
-    },
-    fence: {
-      contact: { name: "Jen", sub: "New lead · fence", initial: "J" },
-      opener: { kind: "call", time: "2:14", number: "(720) 555-0143", place: "Denver, CO" },
-      replyIn: "Replied in 8 sec",
-      chapters: [
-        ["The call", "2:14 PM. You're up on a roof when a $9,000 fence lead calls."],
-        ["Missed", "You can't pick up. Most companies call back tonight, after the lead has hired someone else."],
-        ["Texted back", "8 seconds later, your business texts them back."],
-        ["Qualified", "It asks the questions you'd ask on every estimate."],
-        ["Booked", "It gives your ballpark and books the estimate."],
-        ["Your text", "You climb down. The job is already on your calendar."]
-      ],
-      thread: [
-        ["ch", 2], ["out", "Sorry we missed you, the crew's on a job! I can help right here. New fence or a repair?"], ["in", "new fence. backyard, wood privacy"],
-        ["ch", 3], ["time", "2:15"], ["out", "Nice! Roughly how much fence? A guess is fine. Any gates?"], ["in", "maybe 150 ft, 1 gate"], ["out", "Perfect. Can you snap a photo of the yard?"], ["photo"],
-        ["ch", 4], ["time", "2:17"], ["out", "Thanks! Most jobs like this run $7,800–9,600. I can have someone out:\n1) Thu 2:30 PM\n2) Fri 8:00 AM"], ["in", "1"], ["out", "You're booked for Thu 2:30 PM ✓ What's the address?"], ["in", "2290 Elm St"]
-      ],
-      booked: { date: "Tuesday, November 4", time: "2:19", title: "New estimate booked: Jen", lines: ["Thu 2:30 PM · 2290 Elm St", "Wood privacy · ~150 ft · 1 gate · photo", "Ballpark given: $7,800–9,600"] }
-    },
-    pool: {
-      contact: { name: "Marcus", sub: "New lead · pool", initial: "M" },
-      opener: { kind: "form", date: "Tuesday, November 4", time: "9:12", app: "Website", title: "New form submission", body: "Inground pool · Marcus" },
-      replyIn: "Replied in 11 sec",
-      chapters: [
-        ["The form", "9:12 PM. You're off for the night when someone asks about a $70,000 pool."],
-        ["Waiting", "Most builders call back at 10 AM. By then the buyer has reached out to two more."],
-        ["Texted back", "11 seconds later, your business texts them back."],
-        ["Screened", "It screens the budget and checks the yard."],
-        ["Booked", "Then it books the design consultation."],
-        ["Your text", "You wake up to a qualified buyer on your calendar."]
-      ],
-      thread: [
-        ["ch", 2], ["out", "Hi Marcus, it's Bluewater Pools! Thanks for reaching out. New pool or a remodel?"], ["in", "new. just bought the house"],
-        ["ch", 3], ["time", "9:13"], ["out", "Congrats! Most of our pools land between $65k and $110k, and financing is available. Does that range work?"], ["in", "yeah around 80"], ["out", "Great. Is there 8–10 ft of side access for an excavator? Any HOA?"], ["in", "10 ft gate. HOA yes"],
-        ["ch", 4], ["time", "9:15"], ["out", "Perfect. Let's get you a 15-min video call with our designer tomorrow:\n1) 12:30 PM\n2) 5:00 PM"], ["in", "5 works. my wife will join"], ["out", "You're booked for tomorrow at 5:00 PM ✓ The link is on its way."]
-      ],
-      booked: { date: "Wednesday, November 5", time: "6:40", title: "Design consultation booked: Marcus", lines: ["Today 5:00 PM · video call", "Budget ~$80k · 10 ft access · HOA yes", "Spouse joining"] }
-    }
   };
 
-  var LABELS = { roofing: "Roofing", hvac: "HVAC", plumbing: "Plumbing", remodeling: "Remodel", fence: "Fence", pool: "Pools" };
   roots.forEach(function (r) { mount(r, r.getAttribute("data-film"), false); });
 
   function mount(root, key, autoplay) {
@@ -173,7 +57,6 @@
   if (biz) story = Object.assign({}, story, { thread: story.thread.map(function (s) { return s.map(function (x) { return typeof x === "string" ? x.split("Summit Home Services").join(biz) : x; }); }) });
   var SPEED = parseFloat(root.getAttribute("data-film-speed")) || 1;
   var manual = root.hasAttribute("data-film-manual");
-  var tabKeys = (root.getAttribute("data-film-tabs") || "").split(",").filter(function (k) { return STORIES[k]; });
 
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   var HANDSET = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>';
@@ -185,7 +68,7 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
       '<div class="fs fs-missed" data-s="missed"><span class="fs-missicon">' + HANDSET + '</span><b>Missed call</b><span>' + esc(o.number) + ' · ' + esc(o.time) + ' PM</span><em>No voicemail</em></div>'
     : '<div class="fs fs-lock fs-night" data-s="call"><div class="fs-lockhead"><small>' + esc(o.date) + '</small><b>' + esc(o.time) + '</b></div><div class="fs-notif"><span class="fs-app fs-app-web"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></span><div><p><span>' + esc(o.app) + '</span><span>now</span></p><b>' + esc(o.title) + '</b><span>' + esc(o.body) + '</span></div></div><p class="fs-stale">No reply yet</p><div class="fs-zzz" aria-hidden="true"><i>z</i><i>z</i><i>z</i></div>' + LOCKFOOT + '</div>';
 
-  root.innerHTML = (tabKeys.length ? '<div class="film-tabs" role="group" aria-label="Pick a business">' + tabKeys.map(function (k) { return '<button type="button" class="film-tab' + (k === key ? ' is-on' : '') + '" data-k="' + k + '" aria-pressed="' + (k === key) + '">' + LABELS[k] + '</button>'; }).join('') + '</div>' : '') +
+  root.innerHTML =
     '<div class="film-phone" aria-hidden="true"><div class="fs-island"></div>' +
       '<div class="fs-status"><b data-clock>' + esc(o.time) + '</b><span><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="22" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".45"/><rect x="2.5" y="2.5" width="15" height="7" rx="2"/><rect x="24" y="4" width="2" height="4" rx="1" opacity=".45"/></svg></span></div>' +
       opener +
@@ -201,7 +84,7 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
   function transcript() {
     var out = ["Example conversation."];
     story.chapters.forEach(function (ch) { out.push(ch[1]); });
-    story.thread.forEach(function (s) { if (s[0] === "out") out.push("Business: " + s[1]); else if (s[0] === "in") out.push(c.name + ": " + s[1]); else if (s[0] === "photo") out.push(c.name + " sends a photo of the yard."); });
+    story.thread.forEach(function (s) { if (s[0] === "out") out.push("Business: " + s[1]); else if (s[0] === "in") out.push(c.name + ": " + s[1]); });
     out.push("Notification: " + b.title + ". " + b.lines.join(". ") + ".");
     return out.join(" ");
   }
@@ -253,8 +136,7 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
       else {
         var side = k === "out" ? "out" : "in";
         at(typing(side)); wait(280);
-        if (k === "photo") at(bubble("in", PHOTO, "fb-photo"));
-        else at(bubble(side, side === "out" ? esc(s[1]).replace(/\n/g, "<br>") : esc(s[1])));
+        at(bubble(side, side === "out" ? esc(s[1]).replace(/\n/g, "<br>") : esc(s[1])));
         if (side === "out" && firstOut) { at(setChip(true)); firstOut = false; }
         wait(320);
       }
@@ -279,9 +161,6 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
     } else if (k === "in") {
       wait(250); at(typing("in")); wait(1100);
       at(bubble("in", esc(s[1]))); wait(650 + s[1].length * 20);
-    } else if (k === "photo") {
-      wait(250); at(typing("in")); wait(1300);
-      at(bubble("in", PHOTO, "fb-photo")); wait(1500);
     }
   });
   wait(600);
@@ -334,13 +213,6 @@ var LOCKFOOT = '<div class="fs-lockfoot"><i><svg viewBox="0 0 24 24" aria-hidden
   document.addEventListener("visibilitychange", onVis);
   var io = null;
   function destroy() { pause(); document.removeEventListener("visibilitychange", onVis); if (io) io.disconnect(); }
-  [].forEach.call(root.querySelectorAll(".film-tab"), function (b) {
-    b.addEventListener("click", function () {
-      var k = b.getAttribute("data-k"); if (k === key) return;
-      destroy(); mount(root, k, true);
-      var nb = root.querySelector('.film-tab[data-k="' + k + '"]'); if (nb) nb.focus({ preventScroll: true });
-    });
-  });
 
   if (manual) {
     seek(0); pause();

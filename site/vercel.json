@@ -175,11 +175,6 @@
   ],
   "redirects": [
     {
-      "source": "/fence-and-pool",
-      "destination": "/fence",
-      "permanent": true
-    },
-    {
       "source": "/demo",
       "has": [
         {
@@ -188,6 +183,31 @@
         }
       ],
       "destination": "/try",
+      "permanent": false
+    },
+    {
+      "source": "/fence",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/pools",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/fence-and-pool",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/fence-demo",
+      "destination": "/demo",
+      "permanent": false
+    },
+    {
+      "source": "/pool-demo",
+      "destination": "/demo",
       "permanent": false
     }
   ]
