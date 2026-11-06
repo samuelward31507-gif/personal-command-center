@@ -13,6 +13,7 @@ import { useWorkspace } from "../../use-workspace";
 import type { QueueItem } from "@/lib/my-day";
 import SuggestedDeal, { type SuggestedDealData } from "../../suggested-deal";
 import TextDraft, { type TextContext } from "../text-draft";
+import DiscoveryPanel from "../discovery-panel";
 import "./call-mode.css";
 
 type Contact = { id: string; name: string; company: string; phone: string; email?: string; website?: string; location?: string; notes?: string; status?: string; lastContact?: string; lastTouchAt?: string; lastTouchOutcome?: string; lastNote?: string; attempts?: number };
@@ -34,7 +35,8 @@ export default function CallModePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [audit, setAudit] = useState<Audit | null | undefined>(undefined);
-  const [tab, setTab] = useState<"brief" | "script" | "objections">("brief");
+  const [tab, setTab] = useState<"brief" | "script" | "objections" | "discovery">("brief");
+  const [founding, setFounding] = useState<{ script: string; left: number } | null>(null);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<{ ok: boolean; text: string; deal?: SuggestedDealData | null } | null>(null);
@@ -75,6 +77,9 @@ export default function CallModePage() {
   }, []);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
+    fetch("/api/offer", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(d => d && setFounding({ script: d.script, left: d.left })).catch(() => {});
+  }, []);
+  useEffect(() => {
     const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
     fetch("/api/call-stats?since=" + encodeURIComponent(midnight.toISOString()), { cache: "no-store" })
       .then(r => r.ok ? r.json() : null).then(d => d && setStats({ dials: d.dials, conversations: d.conversations, meetings: d.meetings })).catch(() => {});
@@ -108,7 +113,7 @@ export default function CallModePage() {
   const wsp = useWorkspace();
   const offers = useMemo(() => offersFrom(wsp), [wsp]);
   const offer = useMemo(() => suggestOffer(contact?.company ?? "", audit ? reportSection(audit.content, "Verdict") : null, offers), [contact?.company, audit, offers]);
-  const scriptInput = contact ? { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, location: contact.location ?? "", notes: contact.notes ?? "", setupFee: offers.tier1.setupFee, monthlyFee: offers.tier1.monthlyFee, me: wsp.ownerFirstName, brand: wsp.shortName } : null;
+  const scriptInput = contact ? { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, location: contact.location ?? "", notes: contact.notes ?? "", setupFee: offers.tier1.setupFee, monthlyFee: offers.tier1.monthlyFee, me: wsp.ownerFirstName, brand: wsp.shortName, priceLine: founding?.script, spotsLeft: founding?.left } : null;
   const script = scriptInput ? buildScript(scriptInput) : [];
   const objections = scriptInput ? buildObjections(scriptInput) : [];
   const brief = audit ? {
@@ -336,8 +341,8 @@ export default function CallModePage() {
         {!picked && item && <div className="cm-why">{item.why}</div>}
 
         <div className="cm-tabs">
-          {(["brief", "script", "objections"] as const).map(t => <button data-variant="primary" key={t} aria-current={tab === t ? "true" : undefined} className={"cm-tabbtn" + (tab === t ? " is-on" : "")} onClick={() => setTab(t)}>
-            {t === "brief" ? "Brief" : t === "script" ? "Script" : "Objections"}</button>)}
+          {(["brief", "script", "objections", "discovery"] as const).map(t => <button data-variant="primary" key={t} aria-current={tab === t ? "true" : undefined} className={"cm-tabbtn" + (tab === t ? " is-on" : "")} onClick={() => setTab(t)}>
+            {t === "brief" ? "Brief" : t === "script" ? "Script" : t === "objections" ? "Objections" : "Discovery"}</button>)}
         </div>
 
         <div className="cm-body">
@@ -355,6 +360,8 @@ export default function CallModePage() {
             {contact?.notes && <Block title="Notes on file" text={contact.notes} />}
           </div>)}
           {tab === "script" && <ol className="cm-script">{script.map(s => <li key={s.key}><div className="cm-step">{s.label}</div><p className="cm-say">&ldquo;{s.say}&rdquo;</p><small className="cm-tip">{s.tip}</small></li>)}</ol>}
+          {tab === "discovery" && contact?.id && <DiscoveryPanel key={contact.id} contactId={contact.id} compact />}
+          {tab === "objections" && founding && <div className="fo-chip" style={{ marginBottom: 10 }}><p>&ldquo;{founding.script}&rdquo;</p><small>Spots left: {founding.left}</small></div>}
           {tab === "objections" && <div className="cm-objs">{objections.map(o => <div key={o.key} className={"cm-obj" + (openObj === o.key ? " is-open" : "")}>
             <button data-variant="primary" className="cm-obj-head" onClick={() => setOpenObj(openObj === o.key ? null : o.key)} aria-expanded={openObj === o.key}><span>&ldquo;{o.heard}&rdquo;</span><span aria-hidden="true">{openObj === o.key ? "−" : "+"}</span></button>
             {openObj === o.key && <div className="cm-obj-body"><p className="cm-say">&ldquo;{o.say}&rdquo;</p><small className="cm-tip">{o.then}</small></div>}

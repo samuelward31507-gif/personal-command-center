@@ -31,7 +31,7 @@ export function buildDraft(kind: DraftKind, i: DraftInput): { subject?: string; 
   const co = i.company || "your business";
   const pain = sentence(i.pain);
   const books = isPool(i.company) ? "books a design consult" : "books the estimate";
-  const what = `anyone who calls while you're busy, or fills out your form, gets a text back within a minute and ${books} themselves`;
+  const what = `anyone who calls while you're busy, or fills out your form, gets a text back in under 10 seconds and ${books} themselves`;
   const video = watchLink(i.firstName, i.company);
   switch (kind) {
     case "info_text":
