@@ -810,3 +810,8 @@ html, body { overflow-x: clip; }
 @media (prefers-reduced-motion: reduce) {
   .btn, .btn-primary::after, .nav-links a::after, .spot::before { transition: none !important; }
 }
+
+/* Homepage "See it work" video: phone frame capped at 640px tall (9:16), ~85% width on phones. The box is reserved up front, so no layout shift. */
+.see .see-video { width: min(360px, 100%); max-height: 640px; border-radius: 40px; }
+@media (max-width: 900px) { .see .see-video { width: min(85vw, 360px); justify-self: center; } }
+@media (max-width: 900px) { .see .see-ctas { order: 4; } .see .see-video { order: 5; margin: 12px 0 0; } }
