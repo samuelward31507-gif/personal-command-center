@@ -82,29 +82,30 @@
     </div>
     <div class="calc" data-calc>
       <form class="calc-in" onsubmit="return false">
-        <label class="calc-f"><span>Missed calls a month <output data-o="missed">20</output></span>
-          <input type="range" name="missed" min="1" max="100" step="1" value="20" style="--p:19.2%"></label>
+        <label class="calc-f"><span>Missed calls a month <output data-o="missed">40</output></span>
+          <input type="range" name="missed" min="0" max="150" step="1" value="40" style="--p:26.7%"></label>
         <label class="calc-f"><span>Average job size <output data-o="job">$6,000</output></span>
           <input type="range" name="job" min="1000" max="50000" step="500" value="6000" style="--p:10.2%"></label>
         <label class="calc-f"><span>New customers in every 10 missed calls <output data-o="new10">5</output></span>
           <input type="range" name="new10" min="1" max="10" step="1" value="5" style="--p:44.4%"></label>
+        <label class="calc-f"><span>Form &amp; Facebook leads a month that wait over an hour <output data-o="forms">10</output></span>
+          <input type="range" name="forms" min="0" max="150" step="1" value="10" style="--p:6.7%"></label>
         <label class="calc-f"><span>Your close rate on estimates <output data-o="close">25%</output></span>
           <input type="range" name="close" min="5" max="70" step="1" value="25" style="--p:30.8%"></label>
       </form>
       <div class="calc-out" aria-live="polite">
-        <small>What those missed calls could be worth</small>
-        <b class="calc-big num" data-o="year">$81,000</b>
-        <span class="calc-per">a year, about <strong class="num" data-o="month">$6,750</strong> a month</span>
+        <small>What missed calls and slow replies could be worth</small>
+        <b class="calc-big num" data-o="year">$202,500</b>
+        <span class="calc-per">a year, about <strong class="num" data-o="month">$16,875</strong> a month</span>
         <ul class="calc-break">
-          <li><span>Missed calls a month</span><b class="num" data-o="missed2">20</b></li>
-          <li><span>New customers among them</span><b class="num" data-o="newc">10</b></li>
-          <li><span>Estimates they would have booked (45%)</span><b class="num" data-o="booked">4.5</b></li>
+          <li><span>Estimates lost from missed calls</span><b class="num" data-o="bookedCalls">9</b></li>
+          <li><span>Estimates lost from slow form &amp; Facebook replies</span><b class="num" data-o="bookedForms">2.3</b></li>
           <li><span>Jobs those estimates become</span><b class="num" data-o="jobs">about 1 a month</b></li>
         </ul>
         <p class="onejob-out">Cinder pays for itself with <b data-o="onejob">1</b> <span data-o="onejobUnit">booked estimate</span> a month.</p>
         <div class="calc-ctas"><a class="btn btn-primary" href="#book">Get your exact number</a></div>
         <details class="calc-how"><summary>How this is worked out</summary>
-          <p>Missed calls × the share that are new customers (you set this) × 45% who would have booked an estimate if someone had answered × your close rate × your job size. The 45% comes from <a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca's 2026 home-services benchmarks</a>: 45% of home-service phone leads book on the call. The pays-for-itself line is $997 ÷ (job size × close rate), rounded up. These are estimates, not promises.</p>
+          <p><b>Calls:</b> missed calls × the share that are new customers (you set this) × 45% who would have booked an estimate if someone had answered. The 45% comes from <a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca's 2026 home-services benchmarks</a>: 45% of home-service phone leads book on the call. <b>Forms and Facebook:</b> leads that wait over an hour × the same 45% × half lost to a faster company. The "half lost" is our working assumption; in Invoca's 2026 consumer survey, 79% said they'd switch to a business that replies faster. <b>Then:</b> estimates × your close rate × your job size. The pays-for-itself line is $997 ÷ (job size × close rate), rounded up. These are estimates, not promises.</p>
         </details>
       </div>
     </div>
