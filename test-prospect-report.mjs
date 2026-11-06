@@ -14,7 +14,7 @@ ok(() => assert.equal(leakMath({ ...base, followsUp: true }).followUpJobs, 0));
 ok(() => assert.ok(leakMath({ ...base, speed: "next" }).month > leakMath({ ...base, speed: "5min" }).month));
 // The website calculator's one-job line (site/calc.js) uses the founding offer's formula: ceil(997 / (job × close rate)).
 const site = readFileSync("site/calc.js", "utf8");
-ok(() => assert.ok(site.includes("var MONTHLY = 997;"), "site calculator monthly fee"));
+ok(() => assert.match(site, /var MONTHLY = 997[,;]/, "site calculator monthly fee"));
 ok(() => assert.ok(site.includes("Math.ceil(MONTHLY / (j * c))"), "site calculator formula"));
 // Validation
 const good = { company: "Front Range Fence", trade: "fence", inputs: { leads: "40", jobValue: "$7,000", closeRate: "30%", speed: "day", followsUp: false }, findings: [FINDING_CHOICES[0], "  ", "Own note"], note: "Hi" };
