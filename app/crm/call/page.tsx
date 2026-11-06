@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CALL_MODE_GROUPS, CONVERSATIONS, OUTCOME_LABELS, ATTEMPT_LIMIT, type CallOutcome } from "@/lib/call-outcomes";
-import { buildDraft, contactFirstName, type DraftKind } from "@/lib/call-drafts";
+import { buildDraft, contactFirstName } from "@/lib/call-drafts";
 import { localCallInfo } from "@/lib/local-time";
 import { buildObjections, buildScript, cityOf } from "@/lib/call-script";
 import { reportSection } from "@/lib/business-audit";
@@ -12,6 +12,7 @@ import { offersFrom } from "@/lib/workspace";
 import { useWorkspace } from "../../use-workspace";
 import type { QueueItem } from "@/lib/my-day";
 import SuggestedDeal, { type SuggestedDealData } from "../../suggested-deal";
+import TextDraft, { type TextContext } from "../text-draft";
 import "./call-mode.css";
 
 type Contact = { id: string; name: string; company: string; phone: string; email?: string; website?: string; location?: string; notes?: string; status?: string; lastContact?: string; lastTouchAt?: string; lastTouchOutcome?: string; lastNote?: string; attempts?: number };
@@ -42,6 +43,7 @@ export default function CallModePage() {
   const [gk, setGk] = useState({ name: "", best: "" });
   const [info, setInfo] = useState<{ channel: "text" | "dm" | "email"; pain: string }>({ channel: "text", pain: "" });
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [textCtx, setTextCtx] = useState<{ ctx: TextContext; contactId: string; who: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState<{ dials: number; conversations: number; meetings: number } | null>(null);
   const [clock, setClock] = useState(() => new Date());
@@ -134,10 +136,9 @@ export default function CallModePage() {
       setStats(st => st && { dials: st.dials + 1, conversations: st.conversations + (CONVERSATIONS.includes(outcome) ? 1 : 0), meetings: st.meetings + (outcome === "meeting_booked" ? 1 : 0) });
       setCopied(false);
       const draftInput = { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, pain: info.pain, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cal.com/samuel-ward-saqpvb/15min" };
-      if (outcome === "send_info") {
-        const kind: DraftKind = info.channel === "dm" ? "info_dm" : info.channel === "email" ? "info_email" : "info_text";
-        setDraft({ title: `${CHANNEL_LABEL[info.channel]} for ${contact.company || contact.name}`, ...buildDraft(kind, draftInput), contactId: contact.id, channel: info.channel });
-      } else if (outcome === "not_a_fit") {
+      const t: TextContext | undefined = data.text;
+      setTextCtx(t && (t.template || t.notice || t.tasks?.length || t.closed) ? { ctx: t, contactId: contact.id, who: contact.company || contact.name } : null);
+      if (outcome === "not_a_fit") {
         setDraft({ title: `Optional stay-in-touch text for ${contact.company || contact.name}`, ...buildDraft("stay_in_touch", draftInput), contactId: contact.id, channel: "stay" });
       } else setDraft(null);
       const who = contact.company || contact.name;
@@ -187,7 +188,7 @@ export default function CallModePage() {
 
   function openDialog(kind: Exclude<Dialog, null>) {
     if (kind === "gatekeeper") { setGk({ name: "", best: "" }); setDialog(kind); return; }
-    if (kind === "info") { setInfo(i => ({ ...i, pain: "" })); setDialog(kind); return; }
+    if (kind === "info") { void log("send_info"); return; } // drafts the info text right away
     const d = new Date(); d.setDate(d.getDate() + (kind === "callback" ? 1 : 2));
     if (d.getDay() === 6) d.setDate(d.getDate() + 2); if (d.getDay() === 0) d.setDate(d.getDate() + 1);
     setWhen(w => ({ ...w, date: localKey(d) })); setDialog(kind);
@@ -278,6 +279,8 @@ export default function CallModePage() {
         <button type="button" data-variant="primary" className="cm-btn" onClick={() => setDraft(null)}>Dismiss</button>
       </div>
     </div>}
+
+    {textCtx && <TextDraft key={textCtx.contactId + textCtx.ctx.callAt} ctx={textCtx.ctx} contactId={textCtx.contactId} who={textCtx.who} primaryClass="cm-btn cm-primary" quietClass="cm-btn" />}
 
     <div className="cm-find">
       <input type="search" inputMode="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Someone calling back? Search name, company or phone number" aria-label="Find a contact by name, company or phone number" />

@@ -5,10 +5,15 @@ import { suggestDeal } from "@/lib/offers";
 import { offersFrom } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
 import { reportSection } from "@/lib/business-audit";
+import { planFor, resolveTimeZone, nicheFor, demoLinkFor, DEFAULT_SLOTS } from "@/lib/sms-templates";
+import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
+import { contactFirstName } from "@/lib/call-drafts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Postgres word-boundary match for opt-out replies (same words as isStop in lib/sms-templates).
+const STOP_RE = "\\m(stop|stopall|unsubscribe)\\M";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const fail = (message: string, status: number) => Response.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
 function db() {
@@ -42,7 +47,17 @@ export async function POST(request: Request) {
     if (override && !/^\d{4}-\d{2}-\d{2}$/.test(override)) return fail("Follow-up date must be YYYY-MM-DD.", 400);
 
     const sql = db();
-    const contact = await sql`SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company,
+    const contact = await sql`SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company, c.first_name,
+        c.phone, c.location, c.time_zone, c.notes,
+        (SELECT o.niche FROM public.contact_outreach o WHERE o.owner_id = c.owner_id AND o.contact_id = c.id ORDER BY o.updated_at DESC LIMIT 1) AS niche,
+        (SELECT s.reason FROM public.contact_suppressions s WHERE s.owner_id = c.owner_id
+          AND (s.contact_id = c.id OR (s.phone_normalized <> '' AND s.phone_normalized = regexp_replace(c.phone, '[^0-9]', '', 'g'))) LIMIT 1) AS suppressed,
+        EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND a.action = 'inbound_text'
+          AND a.notes ~* ${STOP_RE}) AS replied_stop,
+        (SELECT min(a.occurred_at) FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id
+          AND a.action = 'outbound_text' AND a.template = 'T-VM') AS vm_sent_at,
+        (SELECT count(*)::int FROM public.tasks t WHERE t.owner_id = c.owner_id AND t.contact_id = c.id AND t.title LIKE 'Redial%'
+          AND t.status IN ('todo','in_progress')) AS open_redials,
         (SELECT r.content FROM public.research_artifacts r WHERE r.owner_id = c.owner_id AND r.contact_id = c.id
           AND r.artifact_type = 'audit_prep' AND r.status <> 'archived' ORDER BY r.created_at DESC LIMIT 1) AS audit
       FROM public.contacts c WHERE c.id = ${contactId}::uuid AND c.owner_id = ${user.id} LIMIT 1`;
@@ -58,7 +73,25 @@ export async function POST(request: Request) {
       for (const r of prior) { if (NO_CONTACT.includes(String(r.outcome) as never)) n++; else break; }
       attempts = n + 1;
     }
-    const nextFollowUp = followUpDate(outcome, new Date(), override, attempts);
+    // Consecutive plain no-answers (this one included) drive the redial plan: day 3, day 7, then close.
+    let noAnswers = 0;
+    if (outcome === "no_answer") {
+      const prior = await sql`SELECT outcome FROM public.contact_activities
+        WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND action = 'outbound_call' AND outcome <> 'initiated'
+        ORDER BY occurred_at DESC LIMIT 10`;
+      let k = 0;
+      for (const r of prior) { if (String(r.outcome) === "no_answer") k++; else break; }
+      noAnswers = k + 1;
+    }
+    const c0 = contact[0];
+    const now = new Date();
+    const tz = resolveTimeZone({ timeZone: String(c0.time_zone ?? ""), location: String(c0.location ?? ""), phone: String(c0.phone ?? "") }, timeZoneFor, timeZoneForPhone);
+    const suppressedWhy = c0.replied_stop ? "they replied STOP" : c0.suppressed ? "marked do not contact" : null;
+    const vmSentAt = c0.vm_sent_at ? new Date(String(c0.vm_sent_at)).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/Denver" }) : null;
+    const plan = planFor(outcome, { now, tz, suppressed: suppressedWhy, vmSentAt, consecutiveNoAnswers: noAnswers, hasOpenRedials: Number(c0.open_redials ?? 0) > 0 });
+    const parked = NO_CONTACT.includes(outcome) && attempts >= ATTEMPT_LIMIT;
+    if (parked) { plan.tasks = []; plan.followUp = undefined; }
+    const nextFollowUp = override || plan.followUp === undefined ? followUpDate(outcome, now, override, attempts) : plan.followUp;
     const sequenceStatus = sequenceStatusFor(outcome);
     const openDeals = await sql`SELECT id, title, stage FROM public.deals
       WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND stage NOT IN ('won','lost')`;
@@ -106,6 +139,24 @@ export async function POST(request: Request) {
         : sql`UPDATE public.contact_outreach SET status = 'completed', updated_at = now()
             WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND status = 'active'`);
     }
+    // Tasks: call back / redials / info follow-ups, due 9:30am the prospect's time. Never duplicated.
+    for (const t of plan.tasks) {
+      queries.push(sql`INSERT INTO public.tasks (owner_id, title, description, due_at, contact_id, priority)
+        SELECT ${user.id}, ${t.title}, ${`${String(c0.company || c0.name || "")} · after "${OUTCOME_LABELS[outcome]}"`}, ${t.due.toISOString()}::timestamptz, ${contactId}::uuid, 'medium'
+        WHERE NOT EXISTS (SELECT 1 FROM public.tasks WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid
+          AND title = ${t.title} AND status IN ('todo','in_progress'))`);
+    }
+    if (plan.completeRedials > 0) {
+      queries.push(sql`UPDATE public.tasks SET status = 'done', updated_at = now()
+        WHERE id IN (SELECT id FROM public.tasks WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid
+          AND title LIKE 'Redial%' AND status IN ('todo','in_progress') ORDER BY due_at LIMIT ${plan.completeRedials})`);
+    }
+    if (!NO_CONTACT.includes(outcome)) {
+      // Reached them (or closed them out): open call-back and redial reminders are moot.
+      queries.push(sql`UPDATE public.tasks SET status = 'cancelled', updated_at = now()
+        WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND status IN ('todo','in_progress')
+          AND (title = 'Call back' OR title LIKE 'Redial%')`);
+    }
     for (const d of dealChanges) {
       // Guard on the stage we read so a concurrent edit is never overwritten.
       queries.push(sql`UPDATE public.deals SET stage = ${d.change.stage},
@@ -142,8 +193,18 @@ export async function POST(request: Request) {
         WHERE id = ${contactId}::uuid AND owner_id = ${user.id} AND status = 'lead'`;
     }
 
+    // What to draft. Cinder never sends: the panel lets Sam edit, copy, open Messages or skip.
+    const firstName = String(c0.first_name ?? "").trim() ? contactFirstName(String(c0.first_name), String(c0.company ?? "")) : "";
+    const text = {
+      template: plan.template, notice: plan.notice,
+      firstName, timeZone: tz, callAt: activity && typeof activity === "object" && "occurred_at" in activity ? String((activity as Record<string, unknown>).occurred_at) : now.toISOString(),
+      demoLink: demoLinkFor(nicheFor(String(c0.company ?? ""), String(c0.niche ?? ""), String(c0.notes ?? ""))),
+      phone: String(c0.phone ?? ""), slots: [...DEFAULT_SLOTS],
+      tasks: plan.tasks.map(t => ({ title: t.title, due: t.due.toISOString() })), closed: plan.close,
+    };
+
     return Response.json({
-      outcome, label: OUTCOME_LABELS[outcome], activity, nextFollowUp, suggestedDeal, attempts, parked: attempts >= ATTEMPT_LIMIT,
+      outcome, label: OUTCOME_LABELS[outcome], activity, nextFollowUp, suggestedDeal, attempts, parked: attempts >= ATTEMPT_LIMIT, text,
       sequenceStopped: sequenceRows.length > 0 ? sequenceStatus : null,
       suppressed: outcome === "do_not_contact",
       deals: movedDeals,

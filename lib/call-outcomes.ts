@@ -92,7 +92,8 @@ export function dealChangeFor(outcome: CallOutcome, currentStage: string): { sta
   if (outcome === "not_a_fit") return { stage: "lost", lostReason: "Not a fit" };
   if (outcome === "do_not_contact") return { stage: "lost", lostReason: "Do not contact" };
   if (outcome === "not_interested") return { stage: "lost", lostReason: "Not interested" };
-  const target = outcome === "interested" || outcome === "send_info" ? "interested" : outcome === "meeting_booked" ? "meeting_booked" : null;
+  // Left voicemail = "Contacted - VM": an early-stage deal moves up to contacted (the activity records the VM).
+  const target = outcome === "interested" || outcome === "send_info" ? "interested" : outcome === "meeting_booked" ? "meeting_booked" : outcome === "voicemail" ? "contacted" : null;
   if (!target || STAGE_RANK[target] <= STAGE_RANK[currentStage]) return null;
   return { stage: target };
 }
