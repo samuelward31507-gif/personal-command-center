@@ -21,6 +21,7 @@
       set("missed", String(m)); set("missed2", String(m)); set("job", usd(j)); set("close", Math.round(c * 100) + "%");
       set("new10", String(Math.round(nw * 10))); set("forms", String(fm)); set("bookedCalls", r1(bookedCalls)); set("bookedForms", r1(bookedForms));
       set("jobs", per(jobs)); set("month", usd(month)); set("year", usd(month * 12));
+      var x = month / MONTHLY; set("multiple", x >= 10 ? Math.round(x) + "×" : (Math.round(x * 10) / 10) + "×");
       var n = Math.ceil(MONTHLY / (j * c));
       set("onejob", String(n)); set("onejobUnit", n === 1 ? "booked estimate" : "booked estimates");
       el.querySelectorAll("input[type=range]").forEach(function (r) { r.style.setProperty("--p", ((r.value - r.min) / (r.max - r.min) * 100) + "%"); });

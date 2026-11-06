@@ -794,3 +794,14 @@ html, body { overflow-x: clip; }
 .plans-offer .price .spots-left { color: var(--paper); font-size: 14.5px; font-weight: 600; }
 .plans-offer .price .pool-line { margin-top: 6px; color: var(--fog); font-size: 14px; }
 .g-box-short { margin-top: 16px; }
+
+/* calculator: fine-tune + multiple */
+.calc-adv { margin-top: 4px; }
+.calc-adv summary { cursor: pointer; color: var(--fog); font-size: 14px; list-style: none; display: inline-flex; align-items: center; gap: 6px; }
+.calc-adv summary::-webkit-details-marker { display: none; }
+.calc-adv summary::before { content: "+"; display: inline-grid; place-items: center; width: 18px; height: 18px; border: 1px solid var(--line-2); border-radius: 50%; font-size: 13px; line-height: 1; }
+.calc-adv[open] summary::before { content: "\2212"; }
+.calc-adv .calc-f { margin-top: 16px; }
+.calc-adv-note { margin: 8px 0 0; font-size: 13px; color: var(--concrete); }
+.calc-out .calc-x { margin: 10px 0 0; font-size: 15px; color: var(--fog); }
+.calc-out .calc-x b { color: var(--paper); font-weight: 600; font-variant-numeric: tabular-nums; }

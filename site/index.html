@@ -77,26 +77,30 @@
 <section class="sec" id="calculator">
   <div class="wrap">
     <div class="split-head">
-      <h2>What missed calls cost you.</h2>
+      <h2>What missed calls and slow replies cost you.</h2>
       <p class="lede">Put in your own numbers. It takes 20 seconds and nothing is sent anywhere.</p>
     </div>
     <div class="calc" data-calc>
       <form class="calc-in" onsubmit="return false">
         <label class="calc-f"><span>Missed calls a month <output data-o="missed">40</output></span>
           <input type="range" name="missed" min="0" max="150" step="1" value="40" style="--p:26.7%"></label>
+        <label class="calc-f"><span>Form &amp; Facebook leads that wait 1+ hour <output data-o="forms">10</output></span>
+          <input type="range" name="forms" min="0" max="150" step="1" value="10" style="--p:6.7%"></label>
         <label class="calc-f"><span>Average job size <output data-o="job">$6,000</output></span>
           <input type="range" name="job" min="1000" max="50000" step="500" value="6000" style="--p:10.2%"></label>
-        <label class="calc-f"><span>New customers in every 10 missed calls <output data-o="new10">5</output></span>
-          <input type="range" name="new10" min="1" max="10" step="1" value="5" style="--p:44.4%"></label>
-        <label class="calc-f"><span>Form &amp; Facebook leads a month that wait over an hour <output data-o="forms">10</output></span>
-          <input type="range" name="forms" min="0" max="150" step="1" value="10" style="--p:6.7%"></label>
         <label class="calc-f"><span>Your close rate on estimates <output data-o="close">25%</output></span>
           <input type="range" name="close" min="5" max="70" step="1" value="25" style="--p:30.8%"></label>
+        <details class="calc-adv"><summary>Fine-tune</summary>
+          <label class="calc-f"><span>New customers in every 10 missed calls <output data-o="new10">5</output></span>
+            <input type="range" name="new10" min="1" max="10" step="1" value="5" style="--p:44.4%"></label>
+          <p class="calc-adv-note">The rest are existing customers, suppliers or spam. Most shops are around 5.</p>
+        </details>
       </form>
       <div class="calc-out" aria-live="polite">
-        <small>What missed calls and slow replies could be worth</small>
-        <b class="calc-big num" data-o="year">$202,500</b>
-        <span class="calc-per">a year, about <strong class="num" data-o="month">$16,875</strong> a month</span>
+        <small>What missed calls and slow replies could be costing you</small>
+        <b class="calc-big num" data-o="month">$16,875</b>
+        <span class="calc-per">a month, about <strong class="num" data-o="year">$202,500</strong> a year</span>
+        <p class="calc-x">That's about <b data-o="multiple">17×</b> what Cinder costs.</p>
         <ul class="calc-break">
           <li><span>Estimates lost from missed calls</span><b class="num" data-o="bookedCalls">9</b></li>
           <li><span>Estimates lost from slow form &amp; Facebook replies</span><b class="num" data-o="bookedForms">2.3</b></li>
