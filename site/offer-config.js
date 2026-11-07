@@ -1,6 +1,6 @@
 // Founding offer settings. Edit this number by hand when a founding client signs.
-// It is shown on the homepage pricing card as "Spots left: N". There is no automatic countdown.
-window.CINDER_OFFER = { spotsLeft: 5 };
+// Founding offer = half-price setup for the first 3 clients. Shown under the plans as "Spots left: N". There is no automatic countdown.
+window.CINDER_OFFER = { spotsLeft: 3 };
 (function () {
   var n = Math.max(0, Math.floor(Number(window.CINDER_OFFER.spotsLeft) || 0));
   var apply = function () {

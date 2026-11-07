@@ -813,3 +813,9 @@ html, body { overflow-x: clip; }
   .plans-offer .plan:not(.is-offer) .price { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
   .plans-offer .plan:not(.is-offer) .plan-cta { justify-self: start; margin-top: 6px; }
 }
+/* Nov 2026 offer: two-card repeat-service plans + founding line */
+.plans-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.plans-founding { margin: 8px 0 0; color: var(--fog); font-size: 15px; }
+.plans-founding [data-spots] { color: var(--paper); font-weight: 600; }
+.plans-offer .price .starts { color: var(--fog); font-size: 14px; }
+@media (max-width: 900px) { .plans-2 { grid-template-columns: 1fr; } }

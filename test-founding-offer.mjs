@@ -92,11 +92,15 @@ ok(() => assert.match(home, /\$202,500/), "calculator default: (40×0.5×0.45 + 
 ok(() => assert.doesNotMatch(home, /calc-half/), "no inflated every-call-is-a-job figure");
 ok(() => assert.match(home, /Cinder pays for itself with <b data-o="onejob">1<\/b>/), "one-job line default: 6000 / 25% → 1");
 ok(() => assert.match(home, /your next monthly payment is waived and we keep working/));
-ok(() => assert.match(home, /Pool builders: \$2,000 setup \+ \$1,500\/mo, same guarantee\./));
+ok(() => assert.match(home, /Never Miss a Lead[\s\S]*\$997<\/b>\/mo/), "tier 1 price");
+ok(() => assert.match(home, /Book &amp; Close[\s\S]*\$1,997<\/b>\/mo/), "tier 2 price");
+ok(() => assert.match(home, /Full Front Office[\s\S]*\$2,997<\/b>\/mo/), "tier 3 price");
+ok(() => assert.match(home, /Reactivation Sprint[\s\S]*\$997<\/b>/), "repeat-service sprint");
+ok(() => assert.match(home, /at least 5 booked appointments in your first 30 days live/));
 ok(() => assert.match(home, /No contract\. Cancel by text\. You keep your number\. You own your data\./));
 const walk = d => readdirSync(d).flatMap(f => { const p = d + "/" + f; return statSync(p).isDirectory() ? walk(p) : [p]; });
 const text = walk("site").filter(f => /\.(html|js|xml|txt|md)$/.test(f)).map(f => readFileSync(f, "utf8")).join("\n");
-for (const bad of [/3-month/i, /initial term/i, /once the system is live/i, /HVAC/i, /plumbing/i, /pest/i, /98%/, /under a minute/i, /two weeks/i])
+for (const bad of [/3-month/i, /initial term/i, /once the system is live/i, /pest/i, /98%/, /under a minute/i, /two weeks/i, /Estimate Sprint/, /3-Estimate/, /Pool builders/, /21 days/])
   ok(() => assert.doesNotMatch(text, bad), "banned on the site: " + bad);
 
 console.log(`Founding offer checks passed (${n} assertions).`);
