@@ -1,7 +1,7 @@
 // Regression tests for Cal.com bookings → contacts, deals and tasks. Run with: node --experimental-strip-types test-cal-booking.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { bookingPerson, splitName, stageAfterBooking, stageAfterMeeting, localDate, lastTenDigits } from "./lib/cal-booking.ts";
+import { bookingPerson, bookingAnswers, splitName, stageAfterBooking, stageAfterMeeting, localDate, lastTenDigits } from "./lib/cal-booking.ts";
 
 let n = 0;
 const ok = fn => { fn(); n++; };
@@ -11,7 +11,12 @@ const payload = {
   attendees: [{ email: "Samuel@Cinder.test", name: "Samuel" }, { email: "Dana@PeakPools.test", name: "Dana Whitfield", phoneNumber: "+1 719 555 0147" }],
   responses: { company: { value: "Peak Pools & Spas" }, notes: { value: "Weekend leads go cold" } },
 };
-ok(() => assert.deepEqual(bookingPerson(payload), { email: "dana@peakpools.test", name: "Dana Whitfield", phone: "+1 719 555 0147", company: "Peak Pools & Spas", notes: "Weekend leads go cold" }));
+ok(() => assert.deepEqual(bookingPerson(payload), { email: "dana@peakpools.test", name: "Dana Whitfield", phone: "+1 719 555 0147", company: "Peak Pools & Spas", notes: "Weekend leads go cold", trade: "", leadVolume: "" }));
+const withForm = bookingPerson({ attendees: [{ email: "a@b.test", name: "Rosa" }], responses: { company: "Rosa Fence", trade: { value: "Fence" }, leads: { value: "10–30" }, notes: { value: "Weekend calls" } } });
+ok(() => assert.equal(withForm.trade, "Fence")); ok(() => assert.equal(withForm.leadVolume, "10–30"));
+ok(() => assert.equal(bookingAnswers(withForm), "Trade: Fence · Leads a month: 10–30 · Wants fixed: Weekend calls"));
+ok(() => assert.equal(bookingAnswers(withForm, true), "Business: Rosa Fence · Trade: Fence · Leads a month: 10–30 · Wants fixed: Weekend calls"));
+ok(() => assert.equal(bookingAnswers({ company: "", trade: "", leadVolume: "", notes: "" }), "", "no answers, no line"));
 ok(() => assert.equal(bookingPerson({ organizer: { email: "me@x.test" }, attendees: [{ email: "me@x.test", name: "Me" }] }), null, "your own test booking never becomes a contact"));
 ok(() => assert.equal(bookingPerson({ attendees: [{ email: "not-an-email" }] }), null));
 ok(() => assert.equal(bookingPerson({ attendees: [{ email: "a@b.test", phoneNumber: "call me" }] }).phone, "", "junk phone dropped"));

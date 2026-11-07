@@ -1,6 +1,6 @@
 // Turning a Cal.com booking into CRM records. Pure: no I/O, safe to unit test.
 
-export type BookingPerson = { email: string; name: string; phone: string; company: string; notes: string };
+export type BookingPerson = { email: string; name: string; phone: string; company: string; notes: string; trade: string; leadVolume: string };
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const str = (v: unknown, max = 300) => (typeof v === "string" ? v.trim().slice(0, max) : "");
@@ -37,7 +37,19 @@ export function bookingPerson(payload: { attendees?: unknown; organizer?: unknow
     phone: /\d{7,}/.test(phone.replace(/\D/g, "")) ? phone : "",
     company: responseValue(payload.responses, "company", "business", "companyName", "Company").slice(0, 200),
     notes: (responseValue(payload.responses, "notes", "description", "message") || str(payload.description, 2000)).slice(0, 2000),
+    trade: responseValue(payload.responses, "trade", "Trade", "industry").slice(0, 100),
+    leadVolume: responseValue(payload.responses, "leads", "leadVolume", "leads_per_month").slice(0, 100),
   };
+}
+
+/** The booking-form answers as one line for the CRM, e.g. "Trade: Fence · Leads a month: 10–30 · Wants fixed: weekend calls". Empty if none. */
+export function bookingAnswers(p: Pick<BookingPerson, "company" | "trade" | "leadVolume" | "notes">, includeCompany = false): string {
+  return [
+    includeCompany && p.company ? `Business: ${p.company}` : "",
+    p.trade ? `Trade: ${p.trade}` : "",
+    p.leadVolume ? `Leads a month: ${p.leadVolume}` : "",
+    p.notes ? `Wants fixed: ${p.notes}` : "",
+  ].filter(Boolean).join(" · ").slice(0, 2500);
 }
 
 export function splitName(name: string): { first: string; last: string } {

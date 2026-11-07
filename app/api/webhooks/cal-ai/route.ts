@@ -1,7 +1,7 @@
 import { unwrapCalAiPayload, validCalAiEmail, verifyCalAiSignature, validCalAiDate } from "@/lib/cal-ai-webhook";
 import { sendAlert } from "@/lib/notify";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
-import { bookingPerson, splitName, stageAfterBooking, stageAfterMeeting, localDate, lastTenDigits } from "@/lib/cal-booking";
+import { bookingPerson, bookingAnswers, splitName, stageAfterBooking, stageAfterMeeting, localDate, lastTenDigits } from "@/lib/cal-booking";
 import { suggestOffer } from "@/lib/offers";
 import { offersFrom } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
@@ -171,7 +171,7 @@ export async function POST(request: Request) {
       if (contact && matchedBy) {
         await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
           VALUES (${configuredOwnerId}, ${contact.id}::uuid, 'note', 'note', 'other',
-            ${`Booked through Cal.com as ${person.name || "unknown"}${person.email ? ` (${person.email})` : ""}${person.phone ? `, ${person.phone}` : ""}. Matched by ${matchedBy}.`.slice(0, 3000)})`;
+            ${`Booked through Cal.com as ${person.name || "unknown"}${person.email ? ` (${person.email})` : ""}${person.phone ? `, ${person.phone}` : ""}. Matched by ${matchedBy}.${bookingAnswers(person, true) ? " Booking form: " + bookingAnswers(person, true) : ""}`.slice(0, 3000)})`;
       }
     }
 
@@ -182,12 +182,21 @@ export async function POST(request: Request) {
       const rows = await sql`
         INSERT INTO public.contacts (owner_id, first_name, last_name, company, email, phone, status, source, notes, follow_up_at)
         VALUES (${ownerId}, ${first}, ${last}, ${person.company}, ${person.email}, ${person.phone}, 'lead', 'Cal.com booking',
-          ${(person.notes ? "From the booking form: " + person.notes : "Booked a call through Cal.com.").slice(0, 3000)}, ${startDay}::date)
+          ${(bookingAnswers(person) ? "From the booking form: " + bookingAnswers(person) : "Booked a call through Cal.com.").slice(0, 3000)}, ${startDay}::date)
         RETURNING id`;
       contact = { id: String(rows[0].id), owner_id: ownerId };
       createdContact = true;
       await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
         VALUES (${ownerId}, ${contact.id}::uuid, 'note', 'note', 'other', ${("Booked a call through Cal.com: " + (text(payload.title, 200) || "meeting")).slice(0, 3000)})`;
+    }
+
+    // An existing contact matched by email still gets the booking-form answers, once, on the first booking.
+    if (contact && !createdContact && !matchedBy && person && trigger === "BOOKING_CREATED") {
+      const answers = bookingAnswers(person, true);
+      if (answers) {
+        await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
+          VALUES (${contact.owner_id}, ${contact.id}::uuid, 'note', 'note', 'other', ${("Booking form: " + answers).slice(0, 3000)})`;
+      }
     }
 
     // Do not lose unlinked bookings: record a minimal event summary so setup
