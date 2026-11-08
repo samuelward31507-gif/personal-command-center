@@ -9,9 +9,9 @@ import CinderSidebar from "../cinder-sidebar";
 function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/audits")) return "Audit report";
   if (pathname.startsWith("/crm/audit")) return "Business audit";
-  if (pathname.startsWith("/crm/calendar")) return "Meetings";
+  if (pathname.startsWith("/crm/calendar")) return "Calendar";
   if (pathname.startsWith("/crm/ask")) return "Ask Cinder";
-  if (pathname.startsWith("/crm/needs-you")) return "Today";
+  if (pathname.startsWith("/crm/needs-you")) return "Dashboard";
   if (pathname.startsWith("/crm/call")) return "Call mode";
   if (pathname.startsWith("/crm/practice")) return "Practice";
   if (pathname.startsWith("/crm/scoreboard")) return "Scoreboard";

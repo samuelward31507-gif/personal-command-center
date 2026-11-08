@@ -16,25 +16,23 @@ type Props = {
 
 // The places you use every day; the rest lives under "More" so the sidebar stays calm.
 const primary = [
-  ["needs-you", "Today", "sun", "/crm/needs-you"],
+  ["needs-you", "Dashboard", "chart", "/crm/needs-you"],
   ["call", "Call mode", "phone", "/crm/call"],
   ["contacts", "Contacts", "users", "/crm"],
   ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
-  ["tasks", "Follow-ups", "check", "/crm/tasks"],
   ["finance", "Money", "money", "/crm/finance"],
 ] as const;
-// Useful, not daily. Operations, AI team and Signals stay reachable by URL but are off the sidebar.
+// Useful, not daily. Outreach, Operations, AI team and Signals stay reachable by URL but are off the sidebar.
 const secondary = [
-  ["scoreboard", "Scoreboard", "chart", "/crm/scoreboard"],
-  ["practice", "Practice", "mic", "/crm/practice"],
-  ["outreach", "Outreach", "send", "/crm/outreach"],
-  ["preparation", "Research", "search", "/crm/preparation"],
   ["client-success", "Clients", "briefcase", "/crm/client-success"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
   ["reports", "Client reports", "doc", "/crm/reports"],
+  ["preparation", "Research", "search", "/crm/preparation"],
+  ["practice", "Practice", "mic", "/crm/practice"],
+  ["tasks", "Follow-ups", "check", "/crm/tasks"],
 ] as const;
-const SECONDARY_PATHS = ["/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/client-success", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
+const SECONDARY_PATHS = ["/crm/tasks", "/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/client-success", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
@@ -138,7 +136,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     {mobileOpen && <button type="button" data-variant="primary" className="cx-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
     <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Cinder navigation">
       <div className="cx-top">
-        <Link href="/crm/needs-you" className="cx-brand" onClick={() => setMobileOpen(false)} title="Today">
+        <Link href="/crm/needs-you" className="cx-brand" onClick={() => setMobileOpen(false)} title="Dashboard">
           {collapsed ? <CinderMark className="cx-mark" ring={CINDER_MONO} ember={CINDER_MONO} /> : <CinderLogo className="cx-logo" title="Cinder" mono />}
         </Link>
         <button type="button" data-variant="primary" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>

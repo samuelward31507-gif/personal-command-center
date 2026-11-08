@@ -1,0 +1,25 @@
+body .db-page a.u-fig { display: block; color: inherit; border-radius: 0; }
+body .db-page a.u-fig:hover .u-fig-k { color: var(--u-text) !important; }
+body .db-page .db-ev { gap: 18px; }
+body .db-page .db-ev-t { width: 104px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 2px; }
+body .db-page .db-ev-t b { font-size: 14px; font-weight: 500; color: var(--u-text); }
+body .db-page .db-ev-t span { font-size: 12px; color: var(--u-muted); }
+body .db-page .db-funnel { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line); }
+body .db-page .db-step { position: relative; padding: 18px 18px 18px 0; min-width: 0; }
+body .db-page .db-step + .db-step { padding-left: 22px; }
+body .db-page .db-step + .db-step::before { content: ""; position: absolute; left: -7px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-top: 1px solid var(--u-line-2, #3a3633); border-right: 1px solid var(--u-line-2, #3a3633); transform: rotate(45deg); background: var(--u-bg); }
+body .db-page .db-step .u-fig-k { margin-bottom: 8px; }
+body .db-page .db-step-n { display: block; font-family: var(--u-display); font-stretch: 125%; font-variation-settings: "wdth" 125; font-size: 30px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; color: var(--u-text); font-variant-numeric: tabular-nums; }
+body .db-page .db-step-r { display: block; margin-top: 10px; min-height: 1.2em; font-size: 12.5px; color: var(--u-muted); }
+body .db-page .db-goalbar { position: relative; height: 10px; border-radius: 5px; background: var(--u-line-soft); overflow: hidden; }
+body .db-page .db-goalbar i { position: absolute; top: 0; bottom: 0; left: 0; }
+body .db-page .db-goalbar .is-paid { background: #d9d3cb; border-radius: 5px 0 0 5px; }
+body .db-page .db-goalbar .is-exp { background: repeating-linear-gradient(-45deg, #5a544e 0 4px, #3a3633 4px 8px); }
+body .db-page .db-goal-need { margin-top: 14px !important; font-size: 15px; color: var(--u-soft); }
+body .db-page .db-goal-need b { color: var(--u-text); font-weight: 550; }
+@media (max-width: 700px) {
+  body .db-page .db-funnel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body .db-page .db-step::before { display: none; }
+  body .db-page .db-step, body .db-page .db-step + .db-step { padding: 14px 10px 14px 0; border-bottom: 1px solid var(--u-line-soft); }
+  body .db-page .db-ev-t { width: 90px; }
+}
