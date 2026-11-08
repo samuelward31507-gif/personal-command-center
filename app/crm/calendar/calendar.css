@@ -44,3 +44,5 @@
 .calendar-page .calendar-day:hover { background:#262626!important; }
 .calendar-page .calendar-prep-button:hover { background:#303030; color:#fff; }
 .meeting-prep-unlinked { border-color:#4a3c25!important; }
+
+.calendar-page .calendar-routine{cursor:default;opacity:.82}.calendar-page .calendar-task-count{font-weight:600}
