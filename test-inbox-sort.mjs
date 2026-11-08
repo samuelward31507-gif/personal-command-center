@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-const { parseFrom, isBulk, parseSort, sortPrompt, USEFUL } = await import("./lib/inbox-sort.ts");
+const { parseFrom, isBulk, parseSort, sortPrompt, USEFUL, replyPrompt, REPLY_SYSTEM } = await import("./lib/inbox-sort.ts");
 let n = 0; const ok = f => { f(); n++; };
 ok(() => assert.deepEqual(parseFrom('"Mark Delgado" <Mark@Ridgeline.com>'), { name: "Mark Delgado", addr: "mark@ridgeline.com" }));
 ok(() => assert.deepEqual(parseFrom("mark@ridgeline.com"), { name: "", addr: "mark@ridgeline.com" }));
@@ -14,4 +14,6 @@ ok(() => assert.equal(out[1].category, "other", "unknown category falls back"));
 ok(() => assert.equal(out.length, 2, "out-of-range index ignored"));
 ok(() => assert.match(sortPrompt([m("Mark <mark@ridgeline.com>")], new Set(["mark@ridgeline.com"])), /a prospect we cold-emailed/));
 ok(() => assert.ok(USEFUL.includes("interested") && !USEFUL.includes("other")));
+ok(() => assert.match(replyPrompt({ from: "Mark", subject: "Re: more work", snippet: "how much?", category: "interested", summary: "" }, { ownerFirstName: "Sam", bookingLink: "https://cal.com/x" }), /Booking link: https:\/\/cal\.com\/x/));
+ok(() => assert.match(REPLY_SYSTEM, /Don't invent prices/));
 console.log(`Inbox sort checks passed (${n} assertions).`);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { DEFAULT_LINKEDIN, CONNECT_NOTE_LIMIT } from "./lib/linkedin-outreach.ts";
-import { greetName, mergeFor, fillTemplate, DEFAULT_TEMPLATES, DETAILING_TEMPLATES, trackOf, cityOf, dueFollowUps } from "./lib/email-outreach.ts";
+import { greetName, mergeFor, fillTemplate, DEFAULT_TEMPLATES, DETAILING_TEMPLATES, trackOf, cityOf, dueFollowUps, dueContacts } from "./lib/email-outreach.ts";
 let n = 0; const ok = f => { f(); n++; };
 ok(() => assert.equal(greetName("Mark Delgado", "Ridgeline Fence"), "Mark"));
 ok(() => assert.equal(greetName("Foster Fence", "Foster Fence"), "there", "company as name greets 'there'"));
@@ -36,4 +36,5 @@ const log = [
   { contactId: "d", step: "intro", at: new Date(T0 - 6 * D).toISOString() },
 ];
 ok(() => assert.deepEqual(dueFollowUps(log, [{ contactId: "d" }], T0), { follow_up: 1, breakup: 1 }, "a due, b too soon, c last try, d replied"));
+ok(() => assert.deepEqual(dueContacts(log, [{ contactId: "d" }], T0).map(x => x.contactId + ":" + x.step), ["c:breakup", "a:follow_up"], "oldest waiting first"));
 console.log(`Email outreach checks passed (${n} assertions).`);

@@ -58,3 +58,23 @@ export function parseSort(text: string, count: number): { category: InboxCategor
   }
   return out;
 }
+
+export const REPLY_SYSTEM = `You write short email replies for Sam Ward of Cinder Revenue Company. He sells contractors and detailers a system that texts back missed calls, follows up on quotes and books jobs, with a guarantee: 5 booked appointments in the first 30 days or the next month is free.
+Write the reply body only: no subject, no signature block beyond his first name.
+- 2 to 5 short sentences, plain and friendly, like a person texting from his phone. No exclamation marks, no buzzwords, never the word "AI".
+- Answer what they asked using only what's given. Don't invent prices, numbers or features. If they ask price, say it depends on the setup and is easiest to cover on a quick call.
+- Always end by moving to a call: offer the booking link, or two times if they asked to meet.
+- If they asked to move a meeting, confirm the new time they gave, or offer the booking link if none.`;
+
+/** The user message for a reply draft. */
+export function replyPrompt(m: { from: string; subject: string; snippet: string; category: string; summary: string }, ws: { ownerFirstName: string; bookingLink: string; demoLink?: string }): string {
+  return `Their email (Gmail preview, may be cut off):
+From: ${m.from}
+Subject: ${m.subject}
+Preview: ${m.snippet}
+Sorted as: ${m.category}${m.summary ? ` (${m.summary})` : ""}
+
+Sam's first name: ${ws.ownerFirstName || "Sam"}
+Booking link: ${ws.bookingLink}
+${ws.demoLink ? `Demo: ${ws.demoLink}\n` : ""}Write the reply.`;
+}

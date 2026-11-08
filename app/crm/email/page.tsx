@@ -40,6 +40,7 @@ export default function EmailPage() {
   const [reconnect, setReconnect] = useState(false);
   const [inbox, setInbox] = useState<{ account: string | null; mail: Mail[] }>({ account: null, mail: [] });
   const [sorting, setSorting] = useState(false);
+  const [replyTo, setReplyTo] = useState<{ id: string; body: string; busy: boolean; error: string } | null>(null);
   const [error, setError] = useState("");
   const [step, setStep] = useState<EmailStep>("intro");
   const [picked, setPicked] = useState<string | null>(null);
@@ -102,6 +103,20 @@ export default function EmailPage() {
       else if (!r.ok && j.error) setError(j.error);
       await loadInbox();
     } finally { setSorting(false); }
+  }
+  async function draftReply(id: string) {
+    setReplyTo({ id, body: "", busy: true, error: "" });
+    const r = await fetch("/api/gmail/inbox", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ draft: id }) }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {};
+    setReplyTo(x => x && x.id === id ? { ...x, body: j.draft ?? "", busy: false, error: r?.ok ? "" : j.error || "Couldn't draft a reply." } : x);
+  }
+  async function sendReply() {
+    if (!replyTo?.body.trim()) return;
+    setReplyTo({ ...replyTo, busy: true, error: "" });
+    const r = await fetch("/api/gmail/inbox", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reply: replyTo.id, body: replyTo.body }) }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {};
+    if (!r?.ok) { setReplyTo(x => x && { ...x, busy: false, error: j.error || "Couldn't send." }); return; }
+    setInbox(x => ({ ...x, mail: x.mail.filter(m => m.id !== replyTo.id) })); setReplyTo(null); setNotice("Reply sent from Gmail.");
   }
   async function doneMail(id: string) {
     setInbox(x => ({ ...x, mail: x.mail.filter(m => m.id !== id) }));
@@ -240,11 +255,22 @@ export default function EmailPage() {
           <span className={"em-cat em-cat-" + m.category}>{({ interested: "Interested", meeting: "Meeting", question: "Question", follow_up: "Follow up" } as Record<string, string>)[m.category] ?? m.category}</span>
           <div className="u-row-main"><strong>{m.from}{m.summary ? `: ${m.summary}` : ""}</strong><span>{m.next ? `Next: ${m.next} · ` : ""}{m.subject}</span></div>
           <div style={{ display: "flex", gap: 6, flex: "none" }}>
-            <a className="u-btn u-btn-light" href={`https://mail.google.com/mail/?authuser=${encodeURIComponent(inbox.account || "")}#all/${m.threadId}`} target="_blank" rel="noreferrer">Open</a>
+            <button type="button" className="u-btn u-btn-light" onClick={() => void draftReply(m.id)}>Reply</button>
+            <a className="u-btn u-btn-bare" href={`https://mail.google.com/mail/?authuser=${encodeURIComponent(inbox.account || "")}#all/${m.threadId}`} target="_blank" rel="noreferrer">Open</a>
             {m.contactId && <Link className="u-btn u-btn-bare" href={`/crm?contact=${m.contactId}`}>Contact</Link>}
             <button type="button" className="u-btn u-btn-bare" onClick={() => void doneMail(m.id)}>Done</button>
           </div>
         </div>)}</div>}
+      {replyTo && <div className="em-replybox">
+        <span className="u-note">{replyTo.busy && !replyTo.body ? "Drafting a reply…" : `Reply to ${inbox.mail.find(m => m.id === replyTo.id)?.from ?? ""}. Edit anything, then send. It goes out from Gmail in the same thread.`}</span>
+        <textarea className="u-field" rows={6} value={replyTo.body} onChange={e => setReplyTo({ ...replyTo, body: e.target.value })} disabled={replyTo.busy && !replyTo.body} />
+        {replyTo.error && <p className="u-flash is-bad" role="alert">{replyTo.error}</p>}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <button type="button" className="u-btn u-btn-bare" onClick={() => setReplyTo(null)}>Cancel</button>
+          <button type="button" className="u-btn" disabled={replyTo.busy} onClick={() => void draftReply(replyTo.id)}>Redraft</button>
+          <button type="button" className="u-btn u-btn-light" disabled={replyTo.busy || !replyTo.body.trim()} onClick={() => void sendReply()}>Send reply</button>
+        </div>
+      </div>}
     </section>}
 
     {gmail && !gmail.connected && <div className="em-connect">
@@ -271,7 +297,7 @@ export default function EmailPage() {
     <div className="u-figs">
       <div className="u-fig"><span className="u-fig-k">Sent today</span><div className="u-fig-v">{sentToday}<small>/ {DAILY}</small></div><div className="u-meter"><i style={{ width: Math.min(100, (sentToday / DAILY) * 100) + "%" }} /></div><div className="u-fig-sub">{sentToday >= DAILY ? "Daily batch done" : <><b>{DAILY - sentToday}</b> left in today&apos;s batch</>}</div></div>
       <div className="u-fig"><span className="u-fig-k">Ready for a first email</span><div className="u-fig-v">{queues.intro.length}</div><div className="u-fig-sub">people with an email you haven&apos;t written yet</div></div>
-      <div className="u-fig"><span className="u-fig-k">Follow-ups due</span><div className="u-fig-v">{queues.follow_up.length + queues.breakup.length}</div><div className="u-fig-sub">{STEP_GAP_DAYS.follow_up} days after the first, {STEP_GAP_DAYS.breakup} after the follow-up</div></div>
+      <div className="u-fig"><span className="u-fig-k">Follow-ups due</span><div className="u-fig-v">{queues.follow_up.length + queues.breakup.length}</div><div className="u-fig-sub">Cinder sends these for you every weekday morning</div></div>
       <div className="u-fig"><span className="u-fig-k">Sent this week</span><div className="u-fig-v">{sentWeek}</div><div className="u-fig-sub">{(() => { const wk = heard.filter(h => Date.now() - Date.parse(h.at) < 7 * 86400000); const r = wk.filter(h => h.kind === "reply").length, b = wk.length - r; return `${r} repl${r === 1 ? "y" : "ies"}${b ? `, ${b} bounced` : ""}${sentWeek ? ` · ${Math.round((r / sentWeek) * 100)}% reply rate` : ""}`; })()}</div></div>
     </div>
 

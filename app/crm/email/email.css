@@ -43,3 +43,5 @@ body .em-page .em-reply .u-row-main span { white-space: nowrap; overflow: hidden
 body .em-page .em-cat { flex: none; min-width: 84px; font-size: 12px; font-weight: 600; color: var(--u-soft); }
 body .em-page .em-cat-interested, body .em-page .em-cat-meeting { color: var(--u-text); }
 body .em-page .em-inbox .u-row-main strong { white-space: normal; }
+
+body .em-page .em-replybox { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--u-line); }

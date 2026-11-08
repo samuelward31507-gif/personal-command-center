@@ -144,19 +144,25 @@ Worth a quick call this week? Just reply with a good time.
   },
 };
 
-/** How many follow-ups and last tries are due, from the send log alone (replies and bounces excluded). Pure. */
-export function dueFollowUps(sent: { contactId: string; step: string; at: string }[], heard: { contactId: string }[], now = Date.now()): { follow_up: number; breakup: number } {
+/** Who is due a follow-up or last try right now, from the send log alone (replies and bounces excluded). Pure. */
+export function dueContacts(sent: { contactId: string; step: string; at: string }[], heard: { contactId: string }[], now = Date.now()): { contactId: string; step: "follow_up" | "breakup"; lastAt: number }[] {
   const done = new Set(heard.map(h => h.contactId));
   const by = new Map<string, Record<string, number>>();
   for (const s of sent) { const m = by.get(s.contactId) ?? {}; m[s.step] = Math.max(m[s.step] ?? 0, Date.parse(s.at)); by.set(s.contactId, m); }
-  let follow_up = 0, breakup = 0;
   const days = (t: number) => (now - t) / 86400000;
+  const out: { contactId: string; step: "follow_up" | "breakup"; lastAt: number }[] = [];
   for (const [id, m] of by) {
     if (done.has(id)) continue;
-    if (m.intro && !m.follow_up && !m.breakup && days(m.intro) >= STEP_GAP_DAYS.follow_up) follow_up++;
-    else if (m.follow_up && !m.breakup && days(m.follow_up) >= STEP_GAP_DAYS.breakup) breakup++;
+    if (m.intro && !m.follow_up && !m.breakup && days(m.intro) >= STEP_GAP_DAYS.follow_up) out.push({ contactId: id, step: "follow_up", lastAt: m.intro });
+    else if (m.follow_up && !m.breakup && days(m.follow_up) >= STEP_GAP_DAYS.breakup) out.push({ contactId: id, step: "breakup", lastAt: m.follow_up });
   }
-  return { follow_up, breakup };
+  return out.sort((x, y) => x.lastAt - y.lastAt);
+}
+
+/** How many follow-ups and last tries are due (for the Today count). */
+export function dueFollowUps(sent: { contactId: string; step: string; at: string }[], heard: { contactId: string }[], now = Date.now()): { follow_up: number; breakup: number } {
+  const d = dueContacts(sent, heard, now);
+  return { follow_up: d.filter(x => x.step === "follow_up").length, breakup: d.filter(x => x.step === "breakup").length };
 }
 
 const LEGAL = /\b(llc|inc|co|corp|company|ltd|fence|fencing|construction|services?)\b/i;
