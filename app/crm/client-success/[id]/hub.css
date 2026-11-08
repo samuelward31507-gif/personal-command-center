@@ -67,3 +67,27 @@
   .hb-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hb-grid { grid-template-columns: 1fr; }
 }
+
+/* Cinder UI alignment: warm graphite, display title, figures as instrument readouts, quiet panels. */
+html body:not(#u) main.hb-page { max-width: none !important; padding: 36px clamp(20px, 3vw, 48px) 72px !important; background: var(--u-bg) !important; color: var(--u-text) !important; }
+html body:not(#u) .hb-page .hb-back { font-size: 13px; color: var(--u-muted) !important; }
+html body:not(#u) .hb-page .hb-head { padding-bottom: 22px; border-bottom: 1px solid var(--u-line); }
+html body:not(#u) .hb-page .hb-head h1 { font-family: var(--u-display) !important; font-stretch: 122%; font-variation-settings: "wdth" 122; font-size: clamp(30px, 3vw, 46px) !important; font-weight: 600 !important; letter-spacing: -0.015em !important; line-height: 1.04 !important; color: var(--u-text) !important; }
+html body:not(#u) .hb-page .hb-sub { color: var(--u-muted) !important; font-size: 14px !important; margin-top: 10px !important; }
+html body:not(#u) .hb-page .hb-contact a { color: var(--u-soft) !important; text-decoration: underline; text-decoration-color: var(--u-line); text-underline-offset: 3px; }
+html body:not(#u) .hb-page a.hb-btn { height: 36px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 8px !important; border: 1px solid var(--u-line) !important; background: transparent !important; color: var(--u-text) !important; font-weight: 500; text-decoration: none; }
+html body:not(#u) .hb-page a.hb-btn:hover { background: var(--u-hover) !important; }
+html body:not(#u) .hb-page .hb-tiles { gap: 0 !important; border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line); margin: 0 0 28px !important; }
+html body:not(#u) .hb-page .hb-tile { background: transparent !important; border: 0 !important; border-radius: 0 !important; padding: 20px 20px 18px 0 !important; }
+html body:not(#u) .hb-page .hb-tile + .hb-tile { padding-left: 22px !important; border-left: 1px solid var(--u-line) !important; }
+html body:not(#u) .hb-page .hb-tile small { font-size: 13px !important; color: var(--u-muted) !important; text-transform: none !important; letter-spacing: 0 !important; font-family: var(--u-text-font) !important; }
+html body:not(#u) .hb-page .hb-tile strong { margin-top: 8px; font-family: var(--u-display) !important; font-stretch: 122%; font-variation-settings: "wdth" 122; font-size: 26px !important; font-weight: 500 !important; letter-spacing: -0.015em; color: var(--u-text) !important; }
+html body:not(#u) .hb-page .hb-tile span { color: var(--u-muted) !important; margin-top: 6px; }
+html body:not(#u) .hb-page :is(.hb-card, section.hb-card) { background: var(--u-sheet) !important; border: 1px solid var(--u-line) !important; border-radius: 14px !important; box-shadow: none !important; }
+html body:not(#u) .hb-page .hb-card-h h2 { font: 600 15px/1.3 var(--u-text-font) !important; letter-spacing: -0.01em !important; color: var(--u-text) !important; text-transform: none !important; }
+html body:not(#u) .hb-page .hb-card-h a { font-size: 12.5px; color: var(--u-muted) !important; text-decoration: underline; text-underline-offset: 3px; }
+html body:not(#u) .hb-page :is(.hb-muted, .hb-list small) { color: var(--u-muted) !important; }
+html body:not(#u) .hb-page .hb-stages li.now { color: var(--u-text) !important; }
+html body:not(#u) .hb-page .hb-stages li.now span { background: var(--u-text) !important; border-color: var(--u-text) !important; }
+html body:not(#u) .hb-page .hb-stages li.done span { background: #6b655e !important; border-color: #6b655e !important; }
+@media (max-width: 700px) { html body:not(#u) .hb-page .hb-tiles { grid-template-columns: 1fr 1fr !important; } html body:not(#u) .hb-page .hb-tile + .hb-tile { border-left: 0 !important; padding-left: 0 !important; } }

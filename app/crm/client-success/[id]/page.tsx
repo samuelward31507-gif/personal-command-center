@@ -49,7 +49,7 @@ export default function ClientHubPage() {
   const stageIdx = STAGES.findIndex(([k]) => k === s.stage.key);
 
   return <main className="hb-page">
-    <Link href="/crm/client-success" className="hb-back">← Clients</Link>
+    <Link href="/crm/client-success" className="hb-back">‹ Clients</Link>
     <header className="hb-head">
       <div>
         <h1>{c.name}</h1>
@@ -57,7 +57,7 @@ export default function ClientHubPage() {
         <div className="hb-contact">
           {c.phone && <a href={`tel:${c.phone.replace(/[^\d+]/g, "")}`}>{c.phone}</a>}
           {c.email && <a href={`mailto:${c.email}`}>{c.email}</a>}
-          {c.website && <a href={c.website.startsWith("http") ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer">Website ↗</a>}
+          {c.website && <a href={c.website.startsWith("http") ? c.website : `https://${c.website}`} target="_blank" rel="noreferrer">Website</a>}
         </div>
       </div>
       <div className="hb-head-acts">

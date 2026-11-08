@@ -237,8 +237,8 @@ export default function DealWorkspacePage() {
     } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not create the upsell deal." }); setSaving(null); }
   }
 
-  if (error) return <main className="dw-page"><p className="dw-err">{error}</p><Link href="/crm/pipeline">← Pipeline</Link></main>;
-  if (!ws) return <main className="dw-page"><p className="dw-muted">Loading deal…</p></main>;
+  if (error) return <div className="u-page dw-page" role="region" aria-label="Deal"><p className="dw-err">{error}</p><Link href="/crm/pipeline">Back to pipeline</Link></div>;
+  if (!ws) return <div className="u-page dw-page" role="region" aria-label="Deal"><p className="dw-muted">Loading deal…</p></div>;
   const { deal, contact } = ws;
   const offer = Object.values(offersFrom(wsp)).find(o => o.serviceType === deal.serviceType);
   const pct = discoveryCompleteness(disc);
@@ -259,8 +259,8 @@ export default function DealWorkspacePage() {
   const tab: DealTab = dtab && tabs.some(t => t.key === dtab) ? dtab : stepTab;
   const blanks = agreement ? (agreement.content.match(/\[[^\]\n]{1,80}\]/g) ?? []).length : 0;
 
-  return <main className="dw-page">
-    <Link className="dw-back" href="/crm/pipeline">← Pipeline</Link>
+  return <div className="u-page dw-page" role="region" aria-label="Deal">
+    <Link className="dw-back" href="/crm/pipeline">Pipeline</Link>
     <header className="dw-head">
       <div>
         <div className="dw-eyebrow">{offer?.label ?? "Deal"}</div>
@@ -300,7 +300,7 @@ export default function DealWorkspacePage() {
 
     <div className="dw-grid">
       <div className="dw-col">
-        <section className="dw-box">
+        <section className="u-sheet dw-box">
           <h2>Next step</h2>
           <div className="dw-next">
             <input value={next.step} onChange={e => setNext({ ...next, step: e.target.value })} placeholder="e.g. Send proposal, follow up on decision, kickoff call…" />
@@ -310,12 +310,12 @@ export default function DealWorkspacePage() {
           {!deal.nextStep && !closed && <p className="dw-hint">Every open deal needs a next step with a date. It shows up in Today when it&apos;s due.</p>}
         </section>
 
-        <div className="dw-tabs" role="tablist" aria-label="Deal steps">
-          {tabs.map(t => <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} style={{ background: "transparent" }} onClick={() => setDtab(t.key)}>{t.label}{t.key === stepTab && <i aria-label="current step" />}</button>)}
+        <div className="dw-tabs" role="group" aria-label="Deal steps">
+          {tabs.map(t => <button key={t.key} type="button" aria-pressed={tab === t.key} onClick={() => setDtab(t.key)}>{t.label}{t.key === stepTab && <i aria-label="current step" />}</button>)}
         </div>
 
-        {tab === "discovery" && <section className="dw-box">
-          <div className="dw-boxhead"><h2>Discovery</h2><span className="dw-pct"><i style={{ width: pct + "%" }} />{pct}% captured</span></div>
+        {tab === "discovery" && <section className="u-sheet dw-box">
+          <div className="u-sheet dw-boxhead"><h2>Discovery</h2><span className="dw-pct"><b><i style={{ width: pct + "%" }} /></b>{pct}% captured</span></div>
           <p className="dw-hint">Fill this in during or right after the discovery call. The proposal is written from it.</p>
           <div className="dw-fields">
             {DISCOVERY_FIELDS.map(f => <label key={f.key} className={"dw-field" + (f.kind === "long" ? " is-wide" : "")}>
@@ -328,8 +328,8 @@ export default function DealWorkspacePage() {
           <div className="dw-right"><button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "disc"} onClick={() => void patch({ discovery: disc }, "disc", "Discovery saved.")}>{saving === "disc" ? "Saving…" : "Save discovery"}</button></div>
         </section>}
 
-        {tab === "proposal" && <section className="dw-box">
-          <div className="dw-boxhead"><h2>Proposal</h2><span className={"dw-pill dw-pill-" + deal.proposalStatus}>{PROPOSAL_COPY[deal.proposalStatus]}{deal.proposalSentAt && deal.proposalStatus === "sent" ? ` · ${dateLabel(deal.proposalSentAt)}` : ""}</span></div>
+        {tab === "proposal" && <section className="u-sheet dw-box">
+          <div className="u-sheet dw-boxhead"><h2>Proposal</h2><span className={"dw-pill dw-pill-" + deal.proposalStatus}>{PROPOSAL_COPY[deal.proposalStatus]}{deal.proposalSentAt && deal.proposalStatus === "sent" ? ` · ${dateLabel(deal.proposalSentAt)}` : ""}</span></div>
           {!proposal ? <>
             <p className="dw-hint">{pct < 50 ? "Capture discovery first — a proposal written without it will be generic." : "Cinder drafts it from your discovery notes, the audit and this deal's price. You review before anything goes out."}</p>
             <textarea className="dw-notes" rows={2} value={draftNotes} onChange={e => setDraftNotes(e.target.value)} placeholder="Anything to emphasise? (optional)" />
@@ -354,8 +354,8 @@ export default function DealWorkspacePage() {
           </>}
         </section>}
 
-        {tab === "agreement" && <section className="dw-box" id="agreement">
-          <div className="dw-boxhead"><h2>Agreement</h2><span className={"dw-pill dw-pill-c-" + deal.contractStatus}>{CONTRACT_COPY[deal.contractStatus]}{deal.contractSentAt && deal.contractStatus === "sent" ? ` · ${dateLabel(deal.contractSentAt)}` : ""}{deal.signedAt && deal.contractStatus === "signed" ? ` · ${dateLabel(deal.signedAt)}` : ""}</span></div>
+        {tab === "agreement" && <section className="u-sheet dw-box" id="agreement">
+          <div className="u-sheet dw-boxhead"><h2>Agreement</h2><span className={"dw-pill dw-pill-c-" + deal.contractStatus}>{CONTRACT_COPY[deal.contractStatus]}{deal.contractSentAt && deal.contractStatus === "sent" ? ` · ${dateLabel(deal.contractSentAt)}` : ""}{deal.signedAt && deal.contractStatus === "signed" ? ` · ${dateLabel(deal.signedAt)}` : ""}</span></div>
           {!agreement ? <>
             <p className="dw-hint">Your service agreement, filled in with this deal's plan, price and client. Anything Cinder doesn't know stays as a [bracketed] blank for you.</p>
             <button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Creating…" : "Create agreement"}</button>
@@ -392,8 +392,8 @@ export default function DealWorkspacePage() {
           </>}
         </section>}
 
-        {tab === "kickoff" && <section className="dw-box" id="kickoff">
-          <div className="dw-boxhead"><h2>Kickoff checklist</h2><span className={"dw-pill " + (kick?.status === "submitted" ? "dw-pill-c-signed" : "dw-pill-c-sent")}>{kick?.status === "submitted" ? "Received" : kick ? "Waiting on client" : "Not sent"}</span></div>
+        {tab === "kickoff" && <section className="u-sheet dw-box" id="kickoff">
+          <div className="u-sheet dw-boxhead"><h2>Kickoff checklist</h2><span className={"dw-pill " + (kick?.status === "submitted" ? "dw-pill-c-signed" : "dw-pill-c-sent")}>{kick?.status === "submitted" ? "Received" : kick ? "Waiting on client" : "Not sent"}</span></div>
           {kick?.status === "submitted" ? <>
             <p className="dw-hint">Received {new Date(kick.submittedAt ?? kick.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}. The 21-business-day go-live clock started then. It's also saved in the project notes.</p>
             <dl className="dw-kick">{kick.items.map(it => <div key={it.label}><dt>{it.label}</dt><dd>{it.value}</dd></div>)}</dl>
@@ -407,8 +407,8 @@ export default function DealWorkspacePage() {
           </>}
         </section>}
 
-        {tab === "email" ? <section className="dw-box">
-          <div className="dw-boxhead"><h2>Follow-up email</h2><span className="dw-muted dw-small">Email only · you send it</span></div>
+        {tab === "email" ? <section className="u-sheet dw-box">
+          <div className="u-sheet dw-boxhead"><h2>Follow-up email</h2><span className="dw-muted dw-small">Email only · you send it</span></div>
           <div className="dw-mailbar">
             <select value={purpose || defaultPurpose(deal.stage, deal.proposalStatus, deal.contractStatus)} onChange={e => setPurpose(e.target.value as EmailPurpose)}>
               {(Object.keys(EMAIL_PURPOSES) as EmailPurpose[]).map(k => <option key={k} value={k}>{EMAIL_PURPOSES[k].label}</option>)}
@@ -428,20 +428,20 @@ export default function DealWorkspacePage() {
         </section> : null}
       </div>
 
-      <aside className="dw-col dw-side">
-        {ws.project && <section className="dw-box dw-win"><h2>Onboarding</h2><p><Link href="/crm/projects">{ws.project.name}</Link> · {ws.project.status.replace(/_/g, " ")}{ws.project.targetDate ? ` · launch ${dateLabel(ws.project.targetDate)}` : ""}</p></section>}
-        {ws.audit && <section className="dw-box"><div className="dw-boxhead"><h2>Audit</h2><Link href={`/crm/audits/${ws.audit.id}`} className="dw-mini-link">Full report →</Link></div><p className="dw-small">{ws.audit.verdict.replace(/\*\*/g, "")}</p>{ws.audit.upsells && deal.stage !== "won" && <><div className="dw-label">Later upsells</div><p className="dw-small">{ws.audit.upsells.replace(/\*\*/g, "").split("\n").slice(0, 3).join(" · ")}</p></>}</section>}
-        {deal.stage === "won" && <section className="dw-box"><h2>Grow this client</h2>
+      <div className="dw-col dw-side">
+        {ws.project && <section className="u-sheet dw-box dw-win"><h2>Onboarding</h2><p><Link href="/crm/projects">{ws.project.name}</Link> · {ws.project.status.replace(/_/g, " ")}{ws.project.targetDate ? ` · launch ${dateLabel(ws.project.targetDate)}` : ""}</p></section>}
+        {ws.audit && <section className="u-sheet dw-box"><div className="u-sheet dw-boxhead"><h2>Audit</h2><Link href={`/crm/audits/${ws.audit.id}`} className="dw-mini-link">Full report</Link></div><p className="dw-small">{ws.audit.verdict.replace(/\*\*/g, "")}</p>{ws.audit.upsells && deal.stage !== "won" && <><div className="dw-label">Later upsells</div><p className="dw-small">{ws.audit.upsells.replace(/\*\*/g, "").split("\n").slice(0, 3).join(" · ")}</p></>}</section>}
+        {deal.stage === "won" && <section className="u-sheet dw-box"><h2>Grow this client</h2>
           <p className="dw-small">Upsells and referrals come from clients who are getting results. Start one as its own deal.</p>
           {upsellIdeas(ws.audit?.upsells ?? "").map(idea => <div key={idea} className="dw-upsell"><span>{idea}</span>
             <button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => void createUpsell(idea)}>Create deal</button></div>)}
           <div className="dw-row"><button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => { const idea = prompt("What's the upsell? (e.g. Old-lead reactivation, Tier 2 upgrade)"); if (idea) void createUpsell(idea); }}>+ Other upsell</button>
             <button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => void patch({ nextStep: "Ask for a referral", nextStepAt: inDays(30) }, "next", "Referral ask scheduled for 30 days out — it'll show in Today.")}>Remind me to ask for a referral</button></div>
         </section>}
-        <section className="dw-box"><h2>Meetings</h2>{ws.events.length ? ws.events.map(e => <div key={e.id} className="dw-line"><span>{e.title}</span><small>{new Date(e.startsAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</small></div>) : <p className="dw-muted">None yet.</p>}</section>
-        <section className="dw-box"><h2>Open tasks</h2>{ws.tasks.length ? ws.tasks.map(t => <div key={t.id} className="dw-line"><span>{t.title}</span><small>{t.due ? dateLabel(t.due) : t.priority}</small></div>) : <p className="dw-muted">None.</p>}</section>
-        <section className="dw-box"><h2>Call history</h2>{ws.activity.length ? ws.activity.map((a, i) => <div key={i} className="dw-line"><span>{OUTCOME_LABELS[a.outcome as CallOutcome] ?? a.outcome.replace(/_/g, " ")}{a.notes ? ` — ${a.notes.slice(0, 80)}` : ""}</span><small>{dateLabel(a.at)}</small></div>) : <p className="dw-muted">No calls logged.</p>}</section>
-      </aside>
+        <section className="u-sheet dw-box"><h2>Meetings</h2>{ws.events.length ? ws.events.map(e => <div key={e.id} className="dw-line"><span>{e.title}</span><small>{new Date(e.startsAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</small></div>) : <p className="dw-muted">None yet.</p>}</section>
+        <section className="u-sheet dw-box"><h2>Open tasks</h2>{ws.tasks.length ? ws.tasks.map(t => <div key={t.id} className="dw-line"><span>{t.title}</span><small>{t.due ? dateLabel(t.due) : t.priority}</small></div>) : <p className="dw-muted">None.</p>}</section>
+        <section className="u-sheet dw-box"><h2>Call history</h2>{ws.activity.length ? ws.activity.map((a, i) => <div key={i} className="dw-line"><span>{OUTCOME_LABELS[a.outcome as CallOutcome] ?? a.outcome.replace(/_/g, " ")}{a.notes ? ` — ${a.notes.slice(0, 80)}` : ""}</span><small>{dateLabel(a.at)}</small></div>) : <p className="dw-muted">No calls logged.</p>}</section>
+      </div>
     </div>
-  </main>;
+  </div>;
 }
