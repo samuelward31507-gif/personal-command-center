@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useParams } from "next/navigation";
-import { CinderLogo } from "../../cinder-brand";
+import { BrandLogo } from "../../cinder-brand";
 import "./kickoff.css";
 import { usePublicBrand } from "../../use-workspace";
 
@@ -43,7 +43,7 @@ export default function KickoffPage() {
 
   const groups = doc ? [...new Set(doc.fields.map(f => f.group))] : [];
   return <div className="ko-page">
-    <header className="ko-top"><CinderLogo mono className="ko-logo" title={brand.businessName} /></header>
+    <header className="ko-top"><BrandLogo mono className="ko-logo" title={brand.businessName} /></header>
     <main className="ko-main">
       {error ? <div className="ko-msg"><h1>Link not available</h1><p>{error}</p></div>
         : !doc ? <p className="ko-muted">Loading your checklist…</p>

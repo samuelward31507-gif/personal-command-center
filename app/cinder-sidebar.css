@@ -87,3 +87,5 @@
 .cx-sub { display: grid; gap: 1px; margin: 2px 0 0; }
 .cx-side.is-collapsed .cx-chev { display: none; }
 .cx-nav > *, .cx-sub > * { flex-shrink: 0; }
+.cx-side .cx-logo:is(img, span) { height: 26px; max-width: 170px; }
+.cx-side .cx-mark-text { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--u-ember, #ff6a1f); color: #141210; font: 700 14px/1 var(--font-display), sans-serif; }

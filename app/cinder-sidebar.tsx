@@ -3,9 +3,9 @@ import "./cinder-sidebar.css";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { CinderLogo, CinderMark, CINDER_MONO } from "./cinder-brand";
+import { BrandWordmark, CinderMark, CINDER_MONO } from "./cinder-brand";
 import CommandBar from "./command-bar";
-import { useWorkspace } from "./use-workspace";
+import { applyAccent, useWorkspace } from "./use-workspace";
 
 type Props = {
   activeKey: string;
@@ -72,6 +72,9 @@ function Icon({ name }: { name: string }) {
  */
 export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavigate }: Props) {
   const ws = useWorkspace();
+  const custom = !!ws.logoUrl || !/^cinder\b/i.test(ws.businessName.trim());
+  // White-label: the workspace's accent replaces the ember, and the tab title carries their name.
+  useEffect(() => { applyAccent(ws.accentColor); if (custom) document.title = ws.shortName || ws.businessName; }, [ws.accentColor, ws.shortName, ws.businessName, custom]);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => {
     let on = true;
@@ -136,7 +139,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Cinder navigation">
       <div className="cx-top">
         <Link href="/crm/needs-you" className="cx-brand" onClick={() => setMobileOpen(false)} title="Dashboard">
-          {collapsed ? <CinderMark className="cx-mark" ring={CINDER_MONO} ember={CINDER_MONO} /> : <CinderLogo className="cx-logo" title="Cinder" mono />}
+          {collapsed ? (custom ? <span className="cx-mark cx-mark-text" aria-label={ws.businessName}>{(ws.shortName || ws.businessName).trim().charAt(0).toUpperCase()}</span> : <CinderMark className="cx-mark" ring={CINDER_MONO} ember={CINDER_MONO} />) : <BrandWordmark name={ws.businessName} logoUrl={ws.logoUrl} className="cx-logo" mono fallbackTitle="Cinder" />}
         </Link>
         <button type="button" data-variant="primary" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <Icon name="rail" />

@@ -65,21 +65,21 @@ export function LineChart({ labels, series, height = 260, format = compactUsd, t
   return <div ref={ref} style={{ position: "relative" }}>
     <svg className="u-chart" width={w} height={height} onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img"
       aria-label={series.map(s => `${s.name}: ${s.values.map((v, i) => `${labels[i]} ${format(v)}`).join(", ")}`).join(". ")}>
-      <defs><linearGradient id={`u-fade-${gid}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ff6a1f" stopOpacity=".10" /><stop offset="1" stopColor="#ff6a1f" stopOpacity="0" /></linearGradient></defs>
+      <defs><linearGradient id={`u-fade-${gid}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" style={{ stopColor: "var(--u-ember)", stopOpacity: .1 }} /><stop offset="1" style={{ stopColor: "var(--u-ember)", stopOpacity: 0 }} /></linearGradient></defs>
       <g className="u-grid">{ticks.map(t => <g key={t}><line x1={padL} x2={w - padR} y1={y(t)} y2={y(t)} /><text x={padL - 10} y={y(t) + 4} textAnchor="end">{format(t)}</text></g>)}</g>
       {labels.map((l, i) => i % every === 0 || i === n - 1 ? <text key={i} x={x(i)} y={height - 8} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"}>{l}</text> : null)}
       {target != null && target > 0 && <g><line className="u-target" x1={padL} x2={w - padR} y1={y(target)} y2={y(target)} />{targetLabel && <text x={w - padR} y={y(target) - 6} textAnchor="end" style={{ fill: "#8f8880" }}>{targetLabel}</text>}</g>}
       {main && n > 1 && <path d={`${path(main.values)}L${x(n - 1)},${y(0)}L${x(0)},${y(0)}Z`} fill={`url(#u-fade-${gid})`} />}
       {series.map(s => <path key={s.name} d={path(s.values)} className={(s.tone ?? "main") === "main" ? "u-series" : "u-series-2"} />)}
-      {main && n > 0 && hover == null && <circle cx={x(n - 1)} cy={y(main.values[n - 1])} r={3.5} fill="#ff6a1f" />}
+      {main && n > 0 && hover == null && <circle cx={x(n - 1)} cy={y(main.values[n - 1])} r={3.5} style={{ fill: "var(--u-ember)" }} />}
       {hover != null && <g>
         <line x1={x(hover)} x2={x(hover)} y1={padT} y2={padT + ih} stroke="#3a3633" />
-        {series.map(s => <circle key={s.name} cx={x(hover)} cy={y(s.values[hover])} r={4} fill={(s.tone ?? "main") === "main" ? "#ff6a1f" : "#8f8880"} stroke="#131211" strokeWidth={2} />)}
+        {series.map(s => <circle key={s.name} cx={x(hover)} cy={y(s.values[hover])} r={4} style={{ fill: (s.tone ?? "main") === "main" ? "var(--u-ember)" : "#8f8880" }} stroke="#131211" strokeWidth={2} />)}
       </g>}
     </svg>
     {hover != null && <div style={{ position: "absolute", top: 0, left: Math.min(Math.max(x(hover) + 12, 0), w - 180), pointerEvents: "none", minWidth: 150, padding: "9px 11px", borderRadius: 9, background: "#22201e", border: "1px solid #34312d", boxShadow: "0 12px 30px -10px rgba(0,0,0,.6)", fontSize: 12.5, color: "#c4bdb4" }}>
       <div style={{ color: "#f3efe9", fontWeight: 600, marginBottom: 5 }}>{labels[hover]}</div>
-      {series.map(s => <div key={s.name} style={{ display: "flex", justifyContent: "space-between", gap: 14 }}><span><i style={{ display: "inline-block", width: 8, height: 2, marginRight: 6, verticalAlign: "middle", background: (s.tone ?? "main") === "main" ? "#ff6a1f" : "#8f8880" }} />{s.name}</span><b style={{ color: "#f3efe9", fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{format(s.values[hover])}</b></div>)}
+      {series.map(s => <div key={s.name} style={{ display: "flex", justifyContent: "space-between", gap: 14 }}><span><i style={{ display: "inline-block", width: 8, height: 2, marginRight: 6, verticalAlign: "middle", background: (s.tone ?? "main") === "main" ? "var(--u-ember)" : "#8f8880" }} />{s.name}</span><b style={{ color: "#f3efe9", fontWeight: 500, fontVariantNumeric: "tabular-nums" }}>{format(s.values[hover])}</b></div>)}
     </div>}
   </div>;
 }
@@ -104,7 +104,7 @@ export function Columns({ labels, values, height = 200, format = (n: number) => 
       {values.map((v, i) => { const cx = padL + slot * i + slot / 2; return <g key={i} onPointerEnter={() => setHover(i)}>
         <rect x={cx - slot / 2} y={padT} width={slot} height={ih} fill="transparent" />
         <rect className={"u-bar" + (i === (highlight ?? n - 1) ? " is-on" : "")} x={cx - bw / 2} y={y(v)} width={bw} height={Math.max(v > 0 ? 2 : 0, padT + ih - y(v))} rx={3} style={hover === i ? { opacity: .85 } : undefined} />
-        {marks?.[i] && <circle cx={cx} cy={padT + ih + 6} r={2.5} fill="#ff6a1f" />}
+        {marks?.[i] && <circle cx={cx} cy={padT + ih + 6} r={2.5} style={{ fill: "var(--u-ember)" }} />}
         {(i % every === 0 || i === n - 1) && <text x={cx} y={height - 6} textAnchor="middle">{labels[i]}</text>}
       </g>; })}
       {target != null && target > 0 && <line className="u-target" x1={padL} x2={w - padR} y1={y(target)} y2={y(target)} />}
@@ -120,5 +120,5 @@ export function Spark({ values, width = 96, height = 28 }: { values: number[]; w
     const max = Math.max(...values), min = Math.min(...values), span = max - min || 1;
     return values.map((v, i) => `${i ? "L" : "M"}${((i / (values.length - 1)) * (width - 4) + 2).toFixed(1)},${(height - 3 - ((v - min) / span) * (height - 6)).toFixed(1)}`).join("");
   }, [values, width, height]);
-  return <svg width={width} height={height} aria-hidden="true" style={{ display: "block" }}><path d={d} fill="none" stroke="#ff6a1f" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  return <svg width={width} height={height} aria-hidden="true" style={{ display: "block" }}><path d={d} fill="none" style={{ stroke: "var(--u-ember)" }} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }

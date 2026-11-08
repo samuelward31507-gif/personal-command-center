@@ -119,3 +119,20 @@ console.log(`workspace: ${n} checks passed`);
   a.match(validateWorkspace({ ...DEFAULT_WORKSPACE, bookingLink: "nope" }).error, /Booking link/);
   console.log("Booking link checks passed.");
 }
+
+// White-label: logo and accent are optional, validated, and default to Cinder.
+{
+  const { isWhiteLabel } = await import("./lib/workspace.ts");
+  const a = assert;
+  a.equal(DEFAULT_WORKSPACE.logoUrl, ""); a.equal(DEFAULT_WORKSPACE.accentColor, "");
+  a.equal(isWhiteLabel(DEFAULT_WORKSPACE), false, "Cinder itself is not white-labelled");
+  a.equal(isWhiteLabel({ ...DEFAULT_WORKSPACE, businessName: "Ridgeline Growth" }), true);
+  a.equal(isWhiteLabel({ ...DEFAULT_WORKSPACE, logoUrl: "https://x.com/logo.png" }), true);
+  a.equal(mergeWorkspace({ accentColor: "#22AA88" }).accentColor, "#22aa88");
+  a.equal(mergeWorkspace({ accentColor: "red" }).accentColor, "", "bad colors fall back to Cinder");
+  a.equal(mergeWorkspace({ logoUrl: "http://x.com/a.png" }).logoUrl, "", "logos must be https");
+  a.match(validateWorkspace({ ...DEFAULT_WORKSPACE, logoUrl: "javascript:alert(1)" }).error, /Logo/);
+  a.match(validateWorkspace({ ...DEFAULT_WORKSPACE, accentColor: "#12" }).error, /Accent/);
+  a.equal(validateWorkspace({ ...DEFAULT_WORKSPACE, logoUrl: "https://cdn.x.com/l.svg", accentColor: "#123456" }).ok.logoUrl, "https://cdn.x.com/l.svg");
+  console.log("White-label checks passed.");
+}

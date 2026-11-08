@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { CinderLogo } from "../../cinder-brand";
+import { BrandLogo } from "../../cinder-brand";
 import "./approve.css";
 
 type Msg = { key: string; label: string; body: string; status: "draft" | "approved" | "changes"; clientNote?: string };
@@ -41,7 +41,7 @@ export default function ApprovePage() {
   }
 
   return <div className="ap-page">
-    <header className="ap-top"><CinderLogo mono className="ap-logo" title={doc?.from.name ?? "Approval"} /></header>
+    <header className="ap-top"><BrandLogo mono className="ap-logo" title={doc?.from.name ?? "Approval"} /></header>
     <div className="ap-main">
       {!doc ? <p className="ap-muted">{error || "Loading…"}</p>
       : state === "done" && result ? <div className="ap-done">

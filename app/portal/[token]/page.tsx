@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { CinderLogo } from "../../cinder-brand";
+import { BrandLogo } from "../../cinder-brand";
 import "./portal.css";
 
 type Figures = { inquiries?: number; firstReply?: string; estimates?: number; jobsWon?: number; jobsValue?: number; highlight?: string; nextMonth?: string };
@@ -33,7 +33,7 @@ export default function PortalPage() {
   const idx = STAGES.findIndex(([k]) => k === doc.stage.key);
   const done = doc.milestones.filter(m => m.done).length;
   return <div className="pt-page">
-    <header className="pt-top"><CinderLogo mono className="pt-logo" title={doc.from.name} /><span>{doc.client}</span></header>
+    <header className="pt-top"><BrandLogo mono className="pt-logo" title={doc.from.name} /><span>{doc.client}</span></header>
     <div className="pt-main">
       <h1>{doc.stage.key === "live" ? "Your system is live." : "Your build"}</h1>
       <ol className="pt-stages">{STAGES.map(([k, l], i) => <li key={k} className={i < idx ? "done" : i === idx ? "now" : ""}><span />{l}</li>)}</ol>

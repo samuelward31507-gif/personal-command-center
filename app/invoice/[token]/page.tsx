@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { CinderLogo } from "../../cinder-brand";
+import { BrandLogo } from "../../cinder-brand";
 import "./invoice.css";
 
 type Doc = {
@@ -29,7 +29,7 @@ export default function InvoicePage() {
 
   const late = doc && doc.status === "open" && doc.due && doc.due < new Date().toISOString().slice(0, 10);
   return <div className="iv-page">
-    <header className="iv-top"><CinderLogo mono className="iv-logo" title={doc?.from.name ?? "Invoice"} />
+    <header className="iv-top"><BrandLogo mono className="iv-logo" title={doc?.from.name ?? "Invoice"} />
       {doc && <button className="iv-print" onClick={() => window.print()}>Download PDF</button>}</header>
     <div className="iv-main">
       {error ? <div className="iv-msg"><h1>Invoice not available</h1><p>{error}</p></div>

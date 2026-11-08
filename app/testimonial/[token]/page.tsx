@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { CinderLogo } from "../../cinder-brand";
+import { BrandLogo } from "../../cinder-brand";
 import "../../approve/[token]/approve.css";
 
 /** Public testimonial form: a client says what changed, and whether it may be shared. */
@@ -27,7 +27,7 @@ export default function TestimonialPage() {
     } catch (e) { setError(e instanceof Error ? e.message : "Something went wrong."); setState("idle"); }
   }
   return <div className="ap-page">
-    <header className="ap-top"><CinderLogo mono className="ap-logo" title={d?.from.name ?? "Testimonial"} /></header>
+    <header className="ap-top"><BrandLogo mono className="ap-logo" title={d?.from.name ?? "Testimonial"} /></header>
     <div className="ap-main">
       {!d ? <p className="ap-muted">{error || "Loading…"}</p>
       : state === "done" || d.done ? <div className="ap-done"><h1>Thank you.</h1><p>{d.from.owner} really appreciates it.</p></div>

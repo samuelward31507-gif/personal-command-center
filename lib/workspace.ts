@@ -15,6 +15,8 @@ export type WorkspaceSettings = {
   paymentLink: string;    // your own payment page (Stripe, Square, PayPal…); shown on invoices
   paymentInstructions: string; // other ways to pay (ACH details, Zelle…); shown on invoices
   bookingLink: string;    // where prospects book a call (Cal.com, Calendly…); used on prospect reports
+  logoUrl: string;        // white-label: https image shown in place of the Cinder wordmark ("" = Cinder)
+  accentColor: string;    // white-label: the one accent color, #rrggbb ("" = Cinder ember)
   tier1: TierSettings;
   tier2: TierSettings;
   goalAmount: number;
@@ -36,6 +38,8 @@ export const DEFAULT_WORKSPACE: WorkspaceSettings = {
   paymentLink: "",
   paymentInstructions: "",
   bookingLink: "https://cal.com/samuel-ward-saqpvb/15min",
+  logoUrl: "",
+  accentColor: "",
   tier1: { label: "Never Miss a Lead", setupFee: 1500, monthlyFee: 997, setupLink: "", monthlyLink: "" },
   tier2: { label: "Book & Close", setupFee: 2500, monthlyFee: 1997, setupLink: "", monthlyLink: "" },
   goalAmount: 50_000,
@@ -64,6 +68,16 @@ export function isPaymentLink(v: string): boolean {
   try { const u = new URL(v); return u.protocol === "https:" && !!u.hostname.includes("."); } catch { return false; }
 }
 
+export const isHexColor = (v: string) => /^#[0-9a-fA-F]{6}$/.test(v);
+export function isLogoUrl(v: string): boolean {
+  if (!v || v.length > 500) return false;
+  try { const u = new URL(v); return u.protocol === "https:" && !!u.hostname.includes("."); } catch { return false; }
+}
+/** True when the workspace is branded as something other than Cinder (custom logo or a different business name). */
+export function isWhiteLabel(w: Pick<WorkspaceSettings, "logoUrl" | "businessName">): boolean {
+  return !!w.logoUrl || !/^cinder\b/i.test(w.businessName.trim());
+}
+
 export function isTimezone(tz: string): boolean {
   if (!tz) return false;
   try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); return true; } catch { return false; }
@@ -86,6 +100,8 @@ export function mergeWorkspace(saved: unknown, base: WorkspaceSettings = DEFAULT
   if (typeof r.timezone === "string" && isTimezone(r.timezone)) out.timezone = r.timezone;
   if (typeof r.paymentLink === "string" && isPaymentLink(r.paymentLink.trim())) out.paymentLink = r.paymentLink.trim().slice(0, 300);
   if (typeof r.bookingLink === "string" && isPaymentLink(r.bookingLink.trim())) out.bookingLink = r.bookingLink.trim().slice(0, 300);
+  if (typeof r.logoUrl === "string" && isLogoUrl(r.logoUrl.trim())) out.logoUrl = r.logoUrl.trim();
+  if (typeof r.accentColor === "string" && isHexColor(r.accentColor.trim())) out.accentColor = r.accentColor.trim().toLowerCase();
   for (const t of ["tier1", "tier2"] as const) {
     const s = (r[t] && typeof r[t] === "object" ? r[t] : {}) as Record<string, unknown>;
     if (typeof s.label === "string" && s.label.trim()) out[t].label = s.label.trim().slice(0, 60);
@@ -113,6 +129,8 @@ export function validateWorkspace(input: unknown): { error: string } | { ok: Wor
   if (typeof r.timezone === "string" && r.timezone && !isTimezone(r.timezone)) return { error: "Pick a valid time zone." };
   if (typeof r.paymentLink === "string" && r.paymentLink.trim() && !isPaymentLink(r.paymentLink.trim())) return { error: "Payment link must be a full https:// address." };
   if (typeof r.bookingLink === "string" && r.bookingLink.trim() && !isPaymentLink(r.bookingLink.trim())) return { error: "Booking link must be a full https:// address." };
+  if (typeof r.logoUrl === "string" && r.logoUrl.trim() && !isLogoUrl(r.logoUrl.trim())) return { error: "Logo must be a full https:// image address." };
+  if (typeof r.accentColor === "string" && r.accentColor.trim() && !isHexColor(r.accentColor.trim())) return { error: "Accent color must look like #ff6a1f." };
   for (const t of ["tier1", "tier2"] as const) {
     const s = (r[t] && typeof r[t] === "object" ? r[t] : {}) as Record<string, unknown>;
     const n = t === "tier1" ? "Tier 1" : "Tier 2";
@@ -130,7 +148,7 @@ export function validateWorkspace(input: unknown): { error: string } | { ok: Wor
   const calls = money(r.dailyCallTarget);
   if (!Number.isFinite(calls) || calls < 1 || calls > 500) return { error: "Daily call target must be between 1 and 500." };
   if (r.taxSetAsidePct !== undefined) { const t = money(r.taxSetAsidePct); if (!Number.isFinite(t) || t < 0 || t > 60) return { error: "Tax set-aside must be between 0 and 60%." }; }
-  return { ok: mergeWorkspace(r, { ...DEFAULT_WORKSPACE, address: "", contactEmail: "", paymentLink: "", paymentInstructions: "", bookingLink: "" }) };
+  return { ok: mergeWorkspace(r, { ...DEFAULT_WORKSPACE, address: "", contactEmail: "", paymentLink: "", paymentInstructions: "", bookingLink: "", logoUrl: "", accentColor: "" }) };
 }
 
 /** The offer catalog, priced from settings. Service types never change: deals and agreements key off them. */

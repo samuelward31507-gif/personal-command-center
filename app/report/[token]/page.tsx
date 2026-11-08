@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { CinderLogo } from "../../cinder-brand";
+import { BrandLogo } from "../../cinder-brand";
 import { FOLLOW_UP_LIFT, leakMath, SPEEDS, type LeakInputs, type Speed } from "@/lib/prospect-report";
 import "./report.css";
 
@@ -32,7 +32,7 @@ export default function ReportPage() {
   const unit = doc?.trade === "pool" ? "consultation" : "estimate";
 
   return <div className="prp-page">
-    <header className="prp-top"><CinderLogo mono className="prp-logo" title={doc?.from.name ?? "Report"} />
+    <header className="prp-top"><BrandLogo mono className="prp-logo" title={doc?.from.name ?? "Report"} />
       {doc && <span className="prp-for">Prepared for {doc.company} · {fmt(doc.date)}</span>}</header>
     <div className="prp-main">
       {error ? <div className="prp-msg"><h1>Report not available</h1><p>{error}</p></div>

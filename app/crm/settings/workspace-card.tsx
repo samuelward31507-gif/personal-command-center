@@ -17,6 +17,7 @@ const IDENTITY: Field[] = [
   { key: "contactEmail", label: "Contact email", type: "email", help: "Printed on agreements." },
   { key: "niche", label: "Who you sell to", help: "Used in the Sunday review: “send 20 DMs to …”." },
   { key: "bookingLink", label: "Booking link", type: "url", help: "Where prospects book a call. Used on prospect reports." },
+  { key: "logoUrl", label: "Logo image link", type: "url", help: "White-label: an https link to your logo (PNG or SVG). Replaces the Cinder wordmark in the app and on everything clients see. Leave empty for Cinder." },
 ];
 
 const money = (n: number) => String(n);
@@ -68,6 +69,14 @@ export function WorkspaceCard() {
         <input type={f.type ?? "text"} value={String(w[f.key] ?? "")} onChange={e => set(f.key, e.target.value as never)} />
         {f.help && <small>{f.help}</small>}
       </label>)}
+      <label className="ws-field">
+        <span>Accent color</span>
+        <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input type="color" aria-label="Pick accent color" value={/^#[0-9a-f]{6}$/i.test(w.accentColor ?? "") ? w.accentColor : "#ff6a1f"} onChange={e => set("accentColor", e.target.value)} style={{ width: 42, height: 36, padding: 2, flex: "0 0 auto" }} />
+          <input type="text" value={w.accentColor ?? ""} placeholder="#ff6a1f (Cinder)" onChange={e => set("accentColor", e.target.value.trim())} />
+        </span>
+        <small>White-label: the one color used for the Call button and the main chart line. Empty keeps Cinder orange.</small>
+      </label>
       <label className="ws-field">
         <span>Time zone</span>
         <select value={w.timezone} onChange={e => set("timezone", e.target.value)}>

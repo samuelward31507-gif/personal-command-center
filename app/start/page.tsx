@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { INBOUND_TRADES, INBOUND_VOLUMES, SMS_CONSENT_TEXT, TEST_OK_TEXT } from "@/lib/inbound";
-import { CinderLogo } from "../cinder-brand";
+import { BrandLogo } from "../cinder-brand";
 import "./start.css";
 import { usePublicBrand } from "../use-workspace";
 
@@ -30,7 +30,7 @@ export default function StartPage() {
   }
 
   return <div className="st-page">
-    <header className="st-top"><a href="/" aria-label={`${brand.businessName} home`}><CinderLogo mono className="st-logo" title={brand.businessName} /></a></header>
+    <header className="st-top"><a href="/" aria-label={`${brand.businessName} home`}><BrandLogo mono className="st-logo" title={brand.businessName} /></a></header>
     <div className="st-main">
       {state === "done" ? <div className="st-done">
         <div className="st-check" aria-hidden="true">✓</div>
