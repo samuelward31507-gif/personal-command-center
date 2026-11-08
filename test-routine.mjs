@@ -12,8 +12,10 @@ ok(() => assert.deepEqual(routineFor(mon, true).map(b => b.title), ["Trading", "
 ok(() => assert.equal(routineFor(mon)[1].startsAt.getHours(), 9));
 ok(() => assert.equal(blockTime({ start: "09:00", end: "11:30" }), "9–11:30"));
 ok(() => assert.equal(blockTime({ start: "12:15", end: "15:00" }), "12:15–3"));
-const page = readFileSync("app/crm/calendar/page.tsx", "utf8");
-ok(() => assert.doesNotMatch(page, /dayTasks\.map/, "individual tasks are not drawn on the calendar"));
-ok(() => assert.match(page, /routineFor\(/, "the routine is drawn"));
-ok(() => assert.match(page, /follow-up\{.{0,60}\} due/, "tasks collapse to one count per day"));
+const page = readFileSync("app/crm/calendar/page.tsx", "utf8"), views = readFileSync("app/crm/calendar/views.tsx", "utf8");
+ok(() => assert.doesNotMatch(page + views, /dayTasks\.map|tasks\.map\(t ?=>/, "individual tasks are not drawn on the calendar"));
+ok(() => assert.match(views, /routineFor\(/, "the routine is drawn"));
+ok(() => assert.match(page, /followUpsOn=\{d=>tasksOn\(d\)\.length\}/, "tasks collapse to one count per day"));
+ok(() => assert.match(views, /follow-up\{fu === 1 \? "" : "s"\}/, "the count reads 'N follow-ups'"));
+ok(() => assert.doesNotMatch(readFileSync("app/crm/calendar/calendar.css", "utf8"), /!important[\s\S]*!important[\s\S]*!important/, "the calendar stylesheet is not a pile of overrides"));
 console.log(`Routine checks passed (${n} assertions).`);
