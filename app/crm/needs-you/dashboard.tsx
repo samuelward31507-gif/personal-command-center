@@ -6,6 +6,7 @@ import { STAGE_LABELS, type DealStage } from "@/lib/offers";
 import { MOVE_OUT_MRR, WEEKLY_MEETING_TARGET, DAILY_EMAIL_TARGET, DAILY_LINKEDIN_TARGET } from "@/lib/scoreboard";
 import { Columns } from "../../ui/charts";
 import { dueFollowUps } from "@/lib/email-outreach";
+import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
 import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
@@ -74,7 +75,7 @@ export default function Dashboard() {
   const [nudged, setNudged] = useState<Record<string, true>>(() => { try { return JSON.parse(localStorage.getItem("cinder.nudged.v1") || "{}"); } catch { return {}; } });
   function nudge(e: Ev, kind: "confirm" | "remind") {
     if (!e.contactPhone || !e.contactId) return;
-    const tz = resolveTimeZone(e.contactTimeZone ?? "", e.contactLocation ?? "", e.contactPhone);
+    const tz = resolveTimeZone({ timeZone: e.contactTimeZone, location: e.contactLocation, phone: e.contactPhone }, timeZoneFor, timeZoneForPhone);
     const at = meetingWhen(new Date(e.startsAt), new Date(), tz);
     const body = kind === "confirm" ? confirmText({ firstName: e.contactFirst && e.contactFirst !== e.contactCompany ? e.contactFirst : "", when: at, business: ws.businessName }) : reminderText({ firstName: e.contactFirst && e.contactFirst !== e.contactCompany ? e.contactFirst : "", when: at });
     window.location.href = smsHref(e.contactPhone, body);
