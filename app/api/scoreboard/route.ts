@@ -38,7 +38,7 @@ export async function GET(request: Request) {
       sql`SELECT (occurred_at - make_interval(mins => ${tz}))::date AS d,
             count(*) FILTER (WHERE channel = 'call')::int AS calls,
             count(*) FILTER (WHERE channel = 'call' AND outcome = ANY(${connects}::text[]))::int AS connects,
-            count(*) FILTER (WHERE outcome = 'meeting_booked')::int AS meetings
+            count(DISTINCT contact_id) FILTER (WHERE outcome = 'meeting_booked')::int AS meetings
           FROM public.contact_activities
           WHERE owner_id = ${owner} AND action <> 'note' AND outcome IS DISTINCT FROM 'initiated'
             AND (occurred_at - make_interval(mins => ${tz}))::date >= ${from14}::date
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       sql`SELECT w.k,
             count(a.*) FILTER (WHERE a.channel = 'call')::int AS calls,
             count(a.*) FILTER (WHERE a.channel = 'call' AND a.outcome = ANY(${connects}::text[]))::int AS connects,
-            count(a.*) FILTER (WHERE a.outcome = 'meeting_booked')::int AS meetings
+            count(DISTINCT a.contact_id) FILTER (WHERE a.outcome = 'meeting_booked')::int AS meetings
           FROM (VALUES ('today', ${today}::date), ('week', ${from7}::date), ('month', ${from30}::date)) AS w(k, since)
           LEFT JOIN public.contact_activities a ON a.owner_id = ${owner} AND a.action <> 'note' AND a.outcome IS DISTINCT FROM 'initiated'
             AND (a.occurred_at - make_interval(mins => ${tz}))::date BETWEEN w.since AND ${today}::date
@@ -120,7 +120,7 @@ export async function GET(request: Request) {
           NULLIF(split_part(c.location, ',', 1), '') AS city, NULLIF(trim(split_part(c.location, ',', 2)), '') AS st,
           count(*)::int AS dials,
           count(*) FILTER (WHERE a.outcome = ANY(${connects}::text[]))::int AS convos,
-          count(*) FILTER (WHERE a.outcome = 'meeting_booked')::int AS meetings
+          count(DISTINCT a.contact_id) FILTER (WHERE a.outcome = 'meeting_booked')::int AS meetings
         FROM public.contact_activities a JOIN public.contacts c ON c.id = a.contact_id AND c.owner_id = a.owner_id
         WHERE a.owner_id = ${owner} AND a.channel = 'call' AND a.action <> 'note' AND a.outcome IS DISTINCT FROM 'initiated'
           AND (a.occurred_at - make_interval(mins => ${tz}))::date >= ${from30}::date
