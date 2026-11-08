@@ -213,3 +213,25 @@ export function infoFollowUpText(i: { firstName?: string; company?: string; day:
     : `${hi}, quick one: how many calls go to voicemail on a busy week? That's usually where the first month's jobs come from. Want me to show you?`;
   return `${hi}, last one from me. If it ever makes sense to look at this, just text back "demo" and I'll set it up.`;
 }
+
+/** Text that carries a Loom you recorded for one prospect. */
+export function loomText(i: { firstName?: string; company?: string; loomUrl: string }): string {
+  const hi = `Hey${(i.firstName ?? "").trim() ? " " + i.firstName!.trim() : ""}`;
+  return `${hi}, Sam with Cinder. I recorded a quick 2-minute video for ${i.company || "you"} showing exactly how this would work for your shop: ${i.loomUrl.trim()}\n\nWorth 15 minutes this week to set it up?`;
+}
+/** Referral ask, 14+ days after a client goes live. "Quick favor:" marks it as sent (don't reword that part). */
+export function referralText(i: { firstName?: string }): string {
+  const hi = `Hey${(i.firstName ?? "").trim() ? " " + i.firstName!.trim() : ""}`;
+  return `${hi}, Sam here. Quick favor: know any other owners who'd want more booked jobs the same way? If you send them my way and they sign, your next month's on me.`;
+}
+/** Talking points for a Loom: who, their problem in their words, what to show, the ask. */
+export function loomPoints(i: { company: string; city?: string; niche?: string; callNote?: string }): string[] {
+  const detail = i.niche === "detailing";
+  return [
+    `Open on their website or Google listing: "Hey, this is for ${i.company || "you"}${i.city ? ` in ${i.city}` : ""}."`,
+    i.callNote ? `Their problem, in their words: ${i.callNote.replace(/^[\s\S]*?their problem:\s*/i, "").replace(/^asked for info by text\.\s*/i, "")}` : detail ? "Their problem: past customers not rebooking, calls missed mid-detail." : "Their problem: calls after hours and on weekends, quotes that go quiet.",
+    detail ? "Show it: a past customer gets a 'due for your next detail' text and books from it." : "Show it: call their number after hours, the text-back lands in seconds, the caller books.",
+    "The guarantee: 5 booked appointments in 30 days or the next month is free.",
+    "The ask: \"Reply with a time this week and I'll set it up with you.\" Keep it under 2 minutes.",
+  ];
+}

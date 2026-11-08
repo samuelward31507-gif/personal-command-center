@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+const { DEFAULT_GROUP_SCRIPTS, nextScript, daysUntilDue, groupSource } = await import("./lib/group-posts.ts");
+let n = 0; const ok = f => { f(); n++; };
+const S = DEFAULT_GROUP_SCRIPTS;
+ok(() => assert.equal(nextScript(S, []).key, S[0].key, "fresh group gets the first script"));
+ok(() => assert.equal(nextScript(S, [{ script: S[0].key, at: "2026-11-01T00:00:00Z" }]).key, S[1].key, "next unused"));
+ok(() => assert.equal(nextScript(S, S.map((s, i) => ({ script: s.key, at: new Date(Date.UTC(2026, 10, 1 + i)).toISOString() }))).key, S[0].key, "all used: oldest first"));
+const now = Date.parse("2026-11-08T12:00:00Z");
+ok(() => assert.equal(daysUntilDue(null, 7, now), 0, "never posted: due now"));
+ok(() => assert.equal(daysUntilDue("2026-11-06T12:00:00Z", 7, now), 5));
+ok(() => assert.ok(daysUntilDue("2026-10-30T12:00:00Z", 7, now) <= 0, "overdue"));
+ok(() => assert.equal(groupSource("Fence Pros of TX"), "Facebook group: Fence Pros of TX"));
+for (const s of S) ok(() => assert.doesNotMatch(s.body, /\bAI\b/, "never lead with AI: " + s.key));
+console.log(`Group post checks passed (${n} assertions).`);

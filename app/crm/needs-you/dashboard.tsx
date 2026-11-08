@@ -6,8 +6,9 @@ import { STAGE_LABELS, type DealStage } from "@/lib/offers";
 import { MOVE_OUT_MRR, WEEKLY_MEETING_TARGET, DAILY_EMAIL_TARGET, DAILY_LINKEDIN_TARGET } from "@/lib/scoreboard";
 import { Columns } from "../../ui/charts";
 import { dueFollowUps } from "@/lib/email-outreach";
+import { INBOX_URL, CHANNEL_LABEL } from "@/lib/inbox-links";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
-import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref, infoText, infoFollowUpText, demoLinkFor, nicheFor } from "@/lib/sms-templates";
+import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref, infoText, infoFollowUpText, demoLinkFor, nicheFor, loomText, loomPoints, referralText } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
 
@@ -28,8 +29,9 @@ type Board = {
   goal: { goal: number; by?: string; collected: number; expected: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
 };
 type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string; contactFirst?: string; contactCompany?: string; contactPhone?: string; contactTimeZone?: string; contactLocation?: string };
-type Warm = { id: string; firstName: string; company: string; phone: string; niche: string; outcome: string; at: string | null; infoSentAt: string | null; repliedAt: string | null; tasks: { id: string; title: string; due: string | null; day: number }[] };
-type Todo = { key: string; title: string; why: string; overdue: boolean; href: string; action: string; onClick?: () => void };
+type Referral = { dealId: string; title: string; id: string; firstName: string; company: string; phone: string; wonAt: string | null };
+type Warm = { id: string; firstName: string; company: string; phone: string; niche: string; location?: string; callNote?: string; outcome: string; at: string | null; infoSentAt: string | null; repliedAt: string | null; tasks: { id: string; title: string; due: string | null; day: number }[] };
+type Todo = { key: string; title: string; why: string; overdue: boolean; href: string; action: string; onClick?: () => void; alt?: { label: string; onClick: () => void } };
 type Alert = { level: "urgent" | "soon" | "info"; kind: string; text: string; href: string };
 
 const usd = (n: number) => "$" + Math.round(n || 0).toLocaleString("en-US");
@@ -46,7 +48,10 @@ export default function Dashboard() {
   const [todo, setTodo] = useState<Todo[] | null>(null);
   const [allTodo, setAllTodo] = useState(false);
   const [warm, setWarm] = useState<Warm[] | null>(null);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [loom, setLoom] = useState<{ w: Warm; taskId?: string; key: string; url: string } | null>(null);
   const [doneKeys, setDoneKeys] = useState<Record<string, true>>({});
+  const [dms, setDms] = useState<{ id: string; channel: "instagram" | "facebook"; from: string; body: string; at: string }[]>([]);
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -59,7 +64,8 @@ export default function Dashboard() {
     fetch(`/api/calendar-events?fromAt=${encodeURIComponent(start.toISOString())}&toAt=${encodeURIComponent(end.toISOString())}`, { cache: "no-store" })
       .then(r => (r.ok ? r.json() : { events: [] })).then(d => setEvents((d.events ?? []).filter((e: Ev) => e.status !== "cancelled")))
       .catch(() => setEvents([]));
-    fetch("/api/follow-ups", { cache: "no-store" }).then(r => (r.ok ? r.json() : { leads: [] })).then(d => setWarm(d.leads ?? [])).catch(() => setWarm([]));
+    fetch("/api/inbox", { cache: "no-store" }).then(r => (r.ok ? r.json() : { messages: [] })).then(d => setDms(d.messages ?? [])).catch(() => {});
+    fetch("/api/follow-ups", { cache: "no-store" }).then(r => (r.ok ? r.json() : { leads: [] })).then(d => { setWarm(d.leads ?? []); setReferrals(d.referrals ?? []); }).catch(() => setWarm([]));
     // Your manual follow-ups: email, LinkedIn and texts only. Calls (callbacks, redials) live in Call mode.
     Promise.all([
       fetch("/api/email-outreach", { cache: "no-store" }).then(r => (r.ok ? r.json() : { sent: [], heard: [] })).catch(() => ({ sent: [], heard: [] })),
@@ -129,7 +135,7 @@ export default function Dashboard() {
       const key = "info:" + w.id;
       if (doneKeys[key]) return [];
       return [{ key, title: `Send info to ${who}`, why: `Said ${w.outcome === "interested" ? "they're interested" : "send info"} on ${short(w.at)}. No text sent yet.`, overdue: true, href: `/crm?contact=${w.id}`, action: "Text",
-        onClick: () => log(infoText({ firstName: first, demoLink: demoLinkFor(niche), niche }), undefined, key) }];
+        onClick: () => log(infoText({ firstName: first, demoLink: demoLinkFor(niche), niche }), undefined, key), alt: { label: "Loom", onClick: () => setLoom({ w, key, url: "" }) } }];
     }
     const next = w.tasks[0];
     if (!next || !next.due) return [];
@@ -138,9 +144,32 @@ export default function Dashboard() {
     const key = "fu:" + next.id;
     if (doneKeys[key]) return [];
     return [{ key, title: `Follow up with ${who}`, why: `Info sent ${short(w.infoSentAt)}. ${next.day === 7 ? "Last" : `Day ${next.day}`} follow-up text.`, overdue: Date.parse(next.due) < startToday.getTime(), href: `/crm?contact=${w.id}`, action: "Text",
-      onClick: () => log(infoFollowUpText({ firstName: first, company: w.company, day: next.day, niche }), next.id, key) }];
+      onClick: () => log(infoFollowUpText({ firstName: first, company: w.company, day: next.day, niche }), next.id, key), alt: { label: "Loom", onClick: () => setLoom({ w, taskId: next.id, key, url: "" }) } }];
   });
-  const all = [...warmTexts, ...meetingTexts];
+  // Unread Instagram / Facebook DMs: one row per channel, newest message as the preview.
+  const dmRows: Todo[] = (["instagram", "facebook"] as const).flatMap(ch => {
+    const m = dms.filter(d => d.channel === ch);
+    if (!m.length) return [];
+    return [{ key: "dm:" + ch, title: `Reply to ${m.length} ${CHANNEL_LABEL[ch]} DM${m.length === 1 ? "" : "s"}`, why: `${m[0].from || "Someone"}: "${m[0].body.slice(0, 90)}"`, overdue: true, href: INBOX_URL[ch], action: "Open",
+      onClick: () => { window.open(INBOX_URL[ch], "_blank", "noopener"); setDms(d => d.filter(x => x.channel !== ch)); void fetch("/api/inbox", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ channel: ch }) }).catch(() => {}); } }];
+  });
+  const refRows: Todo[] = referrals.flatMap(r => {
+    const key = "ref:" + r.dealId;
+    if (doneKeys[key]) return [];
+    const first = r.firstName && r.firstName !== r.company ? r.firstName : "";
+    return [{ key, title: `Ask ${r.company || r.firstName || "your client"} for a referral`, why: `Client since ${short(r.wonAt)}. Two weeks in is when happy clients say yes.`, overdue: false, href: `/crm?contact=${r.id}`, action: "Text",
+      onClick: () => { const body = referralText({ firstName: first }); window.location.href = smsHref(r.phone, body); void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: r.id, direction: "outbound", body }) }).catch(() => {}); setDoneKeys(k => ({ ...k, [key]: true })); } }];
+  });
+  function sendLoom() {
+    if (!loom || !/^https?:\/\/\S+$/.test(loom.url.trim())) return;
+    const w = loom.w, first = w.firstName && w.firstName !== w.company ? w.firstName : "";
+    const body = loomText({ firstName: first, company: w.company, loomUrl: loom.url });
+    window.location.href = smsHref(w.phone, body);
+    void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: w.id, direction: "outbound", body }) }).catch(() => {});
+    if (loom.taskId) void fetch("/api/tasks", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: loom.taskId, status: "done" }) }).catch(() => {});
+    setDoneKeys(k => ({ ...k, [loom.key]: true })); setLoom(null);
+  }
+  const all = [...dmRows, ...warmTexts, ...meetingTexts, ...refRows];
   const list: Todo[] | null = todo === null || warm === null ? null : [...all.filter(t => t.overdue), ...todo.filter(t => t.overdue), ...all.filter(t => !t.overdue), ...todo.filter(t => !t.overdue)];
   const when = (e: Ev) => {
     const s = new Date(e.startsAt), isToday = localDay(s) === localDay();
@@ -208,11 +237,12 @@ export default function Dashboard() {
     })()}
 
     <section className="u-block">
-      <div className="u-h2-row"><h2 className="u-h2">Your follow-ups today {list && <span className="u-quiet">{list.length}</span>}</h2><span className="u-note">Emails, texts and LinkedIn. Calls stay in Call mode.</span></div>
+      <div className="u-h2-row"><h2 className="u-h2">Your follow-ups today {list && <span className="u-quiet">{list.length}</span>}</h2><span className="u-note">DMs, texts, email and LinkedIn. Calls stay in Call mode.</span></div>
       {list === null ? <p className="u-note" role="status">Loading…</p> : list.length === 0 ? <p className="u-note">{upcomingTexts ? `Nothing due right now. ${upcomingTexts} follow-up text${upcomingTexts === 1 ? "" : "s"} coming up in the next few days.` : "No follow-ups waiting. Go make calls."}</p>
         : <div className="u-rows">{(allTodo ? list : list.slice(0, 8)).map(t => <div key={t.key} className="u-row db-todo">
             <span className={"u-dot" + (t.overdue ? " is-bad" : "")} aria-label={t.overdue ? "Overdue" : "Due today"} />
             <div className="u-row-main"><strong>{t.title}</strong>{t.why && <span>{t.why}</span>}</div>
+            {t.alt && <button type="button" className="u-btn u-btn-bare" title="Record a 2-minute Loom for them instead of the plain text" onClick={t.alt.onClick}>{t.alt.label}</button>}
             {t.onClick ? <button type="button" className="u-btn u-btn-light" onClick={t.onClick}>{t.action}</button> : <Link className="u-btn u-btn-bare" href={t.href}>{t.action}</Link>}
           </div>)}</div>}
       {list && list.length > 0 && upcomingTexts > 0 && <p className="u-note" style={{ marginTop: 10 }}>{upcomingTexts} more follow-up text{upcomingTexts === 1 ? "" : "s"} coming up in the next few days.</p>}
@@ -285,5 +315,17 @@ export default function Dashboard() {
       </tbody></table></div>
       {b.sources.best && <p className="u-note" style={{ marginTop: 12 }}>{b.sources.best.label} books the most meetings per deal ({b.sources.best.meetingRate}%). Spend more time there.</p>}
     </section>}
+    {loom && <div className="u-scrim" role="dialog" aria-modal="true" aria-label="Send a Loom" onMouseDown={e => { if (e.target === e.currentTarget) setLoom(null); }}>
+      <div className="u-dialog" style={{ width: "min(560px, 100%)" }}>
+        <h3>Loom for {loom.w.company || loom.w.firstName}</h3>
+        <p className="u-note" style={{ marginBottom: 10 }}>Record 2 minutes in Loom, paste the link, and it goes out by text. Talking points:</p>
+        <ol className="db-loom">{loomPoints({ company: loom.w.company, city: (loom.w.location ?? "").split(",")[0], niche: nicheFor(loom.w.niche, loom.w.company), callNote: loom.w.callNote }).map((p, i) => <li key={i}>{p}</li>)}</ol>
+        <label className="u-lab">Loom link<input className="u-field" value={loom.url} onChange={e => setLoom({ ...loom, url: e.target.value })} placeholder="https://www.loom.com/share/…" inputMode="url" /></label>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 18 }}>
+          <a className="u-btn u-btn-bare" href="https://www.loom.com/record" target="_blank" rel="noreferrer">Open Loom</a>
+          <div style={{ display: "flex", gap: 8 }}><button className="u-btn" onClick={() => setLoom(null)}>Cancel</button><button className="u-btn u-btn-light" disabled={!/^https?:\/\/\S+$/.test(loom.url.trim())} onClick={sendLoom}>Text it</button></div>
+        </div>
+      </div>
+    </div>}
   </div>;
 }

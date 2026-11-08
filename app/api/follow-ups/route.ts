@@ -16,11 +16,11 @@ export async function GET() {
   const sql = neon(process.env.DATABASE_URL);
   try {
     const rows = await sql`WITH last AS (
-        SELECT DISTINCT ON (a.contact_id) a.contact_id, a.outcome, a.occurred_at
+        SELECT DISTINCT ON (a.contact_id) a.contact_id, a.outcome, a.occurred_at, a.notes
         FROM public.contact_activities a
         WHERE a.owner_id = ${o} AND a.channel = 'call' AND a.action <> 'note' AND a.outcome IS DISTINCT FROM 'initiated'
         ORDER BY a.contact_id, a.occurred_at DESC)
-      SELECT c.id, c.first_name, c.last_name, c.company, c.phone, c.niche, l.outcome, l.occurred_at,
+      SELECT c.id, c.first_name, c.last_name, c.company, c.phone, c.niche, c.location, l.outcome, l.occurred_at, l.notes AS call_note,
         (SELECT max(t.occurred_at) FROM public.contact_activities t WHERE t.owner_id = c.owner_id AND t.contact_id = c.id
            AND t.action = 'outbound_text' AND t.occurred_at >= l.occurred_at) AS info_sent_at,
         (SELECT max(t.occurred_at) FROM public.contact_activities t WHERE t.owner_id = c.owner_id AND t.contact_id = c.id
@@ -36,10 +36,22 @@ export async function GET() {
     const leads = rows.map(x => ({
       id: String(x.id), firstName: String(x.first_name ?? ""), lastName: String(x.last_name ?? ""), company: String(x.company ?? ""),
       phone: String(x.phone ?? ""), niche: String(x.niche ?? ""), outcome: String(x.outcome), at: iso(x.occurred_at),
-      infoSentAt: iso(x.info_sent_at), repliedAt: iso(x.replied_at),
+      infoSentAt: iso(x.info_sent_at), repliedAt: iso(x.replied_at), location: String(x.location ?? ""),
+      callNote: String(x.call_note ?? "").split("\n").filter(l => l && !/^Call launched/.test(l)).join(" ").slice(0, 300),
       tasks: (Array.isArray(x.tasks) ? x.tasks : []).map((t: { id: string; title: string; due: string }) => ({ id: String(t.id), title: String(t.title), due: iso(t.due), day: Number(/day (\d+)/.exec(t.title)?.[1] ?? 0) })),
     }));
-    return Response.json({ leads }, { headers: { "Cache-Control": "no-store" } });
+    // Clients won 14+ days ago (within 6 months) who haven't been asked for a referral yet.
+    const won = await sql`SELECT d.id AS deal_id, d.title, c.id, c.first_name, c.company, c.phone,
+        COALESCE(d.signed_at, d.conversion_completed_at, d.updated_at) AS won_at
+      FROM public.deals d JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id
+      WHERE d.owner_id = ${o} AND d.stage = 'won' AND c.phone <> ''
+        AND COALESCE(d.signed_at, d.conversion_completed_at, d.updated_at) < now() - interval '14 days'
+        AND COALESCE(d.signed_at, d.conversion_completed_at, d.updated_at) > now() - interval '180 days'
+        AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = d.owner_id AND a.contact_id = c.id
+          AND a.action = 'outbound_text' AND a.notes ILIKE '%quick favor:%')
+      ORDER BY won_at LIMIT 20`;
+    const referrals = won.map(x => ({ dealId: String(x.deal_id), title: String(x.title ?? ""), id: String(x.id), firstName: String(x.first_name ?? ""), company: String(x.company ?? ""), phone: String(x.phone ?? ""), wonAt: iso(x.won_at) }));
+    return Response.json({ leads, referrals }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     console.error("Follow-ups GET failed", e);
     return Response.json({ error: "Couldn't load follow-ups." }, { status: 500 });
