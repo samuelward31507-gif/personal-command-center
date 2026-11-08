@@ -6,7 +6,6 @@ import { STAGE_LABELS, type DealStage } from "@/lib/offers";
 import { MOVE_OUT_MRR, WEEKLY_MEETING_TARGET, DAILY_EMAIL_TARGET, DAILY_LINKEDIN_TARGET } from "@/lib/scoreboard";
 import { Columns } from "../../ui/charts";
 import { dueFollowUps } from "@/lib/email-outreach";
-import type { QueueItem } from "@/lib/my-day";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
 import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
@@ -29,6 +28,7 @@ type Board = {
   goal: { goal: number; by?: string; collected: number; expected: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
 };
 type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string; contactFirst?: string; contactCompany?: string; contactPhone?: string; contactTimeZone?: string; contactLocation?: string };
+type Todo = { key: string; title: string; why: string; overdue: boolean; href: string; action: string; onClick?: () => void };
 type Alert = { level: "urgent" | "soon" | "info"; kind: string; text: string; href: string };
 
 const usd = (n: number) => "$" + Math.round(n || 0).toLocaleString("en-US");
@@ -42,7 +42,7 @@ export default function Dashboard() {
   const [err, setErr] = useState("");
   const [events, setEvents] = useState<Ev[] | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [todo, setTodo] = useState<{ key: string; title: string; why: string; overdue: boolean; href: string; action: string }[] | null>(null);
+  const [todo, setTodo] = useState<Todo[] | null>(null);
   const [allTodo, setAllTodo] = useState(false);
   const [, tick] = useState(0);
 
@@ -56,37 +56,28 @@ export default function Dashboard() {
     fetch(`/api/calendar-events?fromAt=${encodeURIComponent(start.toISOString())}&toAt=${encodeURIComponent(end.toISOString())}`, { cache: "no-store" })
       .then(r => (r.ok ? r.json() : { events: [] })).then(d => setEvents((d.events ?? []).filter((e: Ev) => e.status !== "cancelled")))
       .catch(() => setEvents([]));
-    // Your manual follow-ups for today: callbacks and follow-ups due, deal next steps, tasks, plus the email and
-    // LinkedIn steps waiting on you. New cold calls live in Call mode; meetings in Next up.
-    {
-      const now = new Date();
-      const tomorrow = new Date(now); tomorrow.setHours(0, 0, 0, 0); tomorrow.setDate(tomorrow.getDate() + 1);
-      const dayAfter = new Date(tomorrow); dayAfter.setDate(dayAfter.getDate() + 1);
-      const key = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      const q = new URLSearchParams({ today: key(now), dayEnd: tomorrow.toISOString(), windowEnd: dayAfter.toISOString(), prospects: "0" });
-      Promise.all([
-        fetch("/api/my-day?" + q, { cache: "no-store" }).then(r => (r.ok ? r.json() : { items: [] })).catch(() => ({ items: [] })),
-        fetch("/api/email-outreach", { cache: "no-store" }).then(r => (r.ok ? r.json() : { sent: [], heard: [] })).catch(() => ({ sent: [], heard: [] })),
-        fetch("/api/linkedin-outreach", { cache: "no-store" }).then(r => (r.ok ? r.json() : { log: [] })).catch(() => ({ log: [] })),
-      ]).then(([d, e, l]) => {
-        const items: QueueItem[] = (d.items ?? []).filter((i: QueueItem) => ["revenue", "deals", "admin", "delivery"].includes(i.group) && (i.status === "overdue" || i.status === "today" || i.status === "blocked"));
-        const rows = items.sort((x, y) => (x.status === "overdue" ? 0 : 1) - (y.status === "overdue" ? 0 : 1) || x.rank - y.rank).map(i => ({
-          key: i.id, title: i.title, why: i.why, overdue: i.status === "overdue",
-          href: i.callable && i.contact ? `/crm/call?contact=${i.contact.id}` : i.href, action: i.callable && i.contact ? "Call" : "Open",
-        }));
-        const replies = (e.heard ?? []).filter((h: { kind: string; at: string }) => h.kind === "reply" && Date.now() - Date.parse(h.at) < 3 * 86400000).length;
-        const due = dueFollowUps(e.sent ?? [], e.heard ?? []);
-        const steps = new Map<string, Set<string>>();
-        for (const x of (l.log ?? []) as { contactId: string; step: string }[]) steps.set(x.contactId, (steps.get(x.contactId) ?? new Set()).add(x.step));
-        const liMsg = [...steps.values()].filter(s => s.has("accepted") && !s.has("message")).length;
-        const extra = [
-          replies ? { key: "email-replies", title: `Answer ${replies} email repl${replies === 1 ? "y" : "ies"}`, why: "They wrote back. Their follow-ups stopped.", overdue: true, href: "/crm/email", action: "Open" } : null,
-          due.follow_up + due.breakup ? { key: "email-due", title: `Send ${due.follow_up + due.breakup} email follow-up${due.follow_up + due.breakup === 1 ? "" : "s"}`, why: due.breakup ? `${due.breakup} of them are last tries` : "3 days since the first email", overdue: false, href: "/crm/email", action: "Open" } : null,
-          liMsg ? { key: "li-msg", title: `Message ${liMsg} new LinkedIn connection${liMsg === 1 ? "" : "s"}`, why: "They accepted. Your first message is ready to copy.", overdue: false, href: "/crm/linkedin", action: "Open" } : null,
-        ].filter(Boolean) as { key: string; title: string; why: string; overdue: boolean; href: string; action: string }[];
-        setTodo([...extra.filter(x => x.overdue), ...rows, ...extra.filter(x => !x.overdue)]);
-      });
-    }
+    // Your manual follow-ups: email, LinkedIn and texts only. Calls (callbacks, redials) live in Call mode.
+    Promise.all([
+      fetch("/api/email-outreach", { cache: "no-store" }).then(r => (r.ok ? r.json() : { sent: [], heard: [] })).catch(() => ({ sent: [], heard: [] })),
+      fetch("/api/linkedin-outreach", { cache: "no-store" }).then(r => (r.ok ? r.json() : { log: [] })).catch(() => ({ log: [] })),
+    ]).then(([e, l]) => {
+      const replies = (e.heard ?? []).filter((h: { kind: string; at: string }) => h.kind === "reply" && Date.now() - Date.parse(h.at) < 3 * 86400000).length;
+      const due = dueFollowUps(e.sent ?? [], e.heard ?? []);
+      const steps = new Map<string, { s: Set<string>; at: number }>();
+      for (const x of (l.log ?? []) as { contactId: string; step: string; at: string }[]) {
+        const m = steps.get(x.contactId) ?? { s: new Set<string>(), at: 0 };
+        m.s.add(x.step); if (x.step === "connect") m.at = Math.max(m.at, Date.parse(x.at)); steps.set(x.contactId, m);
+      }
+      const liMsg = [...steps.values()].filter(m => m.s.has("accepted") && !m.s.has("message")).length;
+      const liCheck = [...steps.values()].filter(m => m.s.has("connect") && !m.s.has("accepted") && !m.s.has("message") && Date.now() - m.at > 3 * 86400000).length;
+      const n = due.follow_up + due.breakup;
+      setTodo([
+        replies ? { key: "email-replies", title: `Answer ${replies} email repl${replies === 1 ? "y" : "ies"}`, why: "They wrote back. Their follow-ups stopped.", overdue: true, href: "/crm/email", action: "Open" } : null,
+        n ? { key: "email-due", title: `Send ${n} email follow-up${n === 1 ? "" : "s"}`, why: due.breakup ? `${due.breakup} of them ${due.breakup === 1 ? "is a last try" : "are last tries"}` : "3 days since the first email", overdue: false, href: "/crm/email", action: "Open" } : null,
+        liMsg ? { key: "li-msg", title: `Message ${liMsg} new LinkedIn connection${liMsg === 1 ? "" : "s"}`, why: "They accepted. Your first message is ready to copy.", overdue: false, href: "/crm/linkedin", action: "Open" } : null,
+        liCheck ? { key: "li-check", title: `Check ${liCheck} LinkedIn request${liCheck === 1 ? "" : "s"} for accepts`, why: "Sent 3+ days ago. Mark the ones who accepted.", overdue: false, href: "/crm/linkedin", action: "Open" } : null,
+      ].filter(Boolean) as Todo[]);
+    });
     fetch("/api/ops-alerts", { cache: "no-store" }).then(r => (r.ok ? r.json() : { alerts: [] })).then(d => setAlerts(d.alerts ?? [])).catch(() => {});
     const t = setInterval(() => tick(x => x + 1), 60000);
     return () => clearInterval(t);
@@ -107,6 +98,14 @@ export default function Dashboard() {
     try { localStorage.setItem("cinder.nudged.v1", JSON.stringify(next)); } catch { /* fine */ }
   }
   const upcoming = (events ?? []).filter(e => new Date(e.endsAt).getTime() > Date.now()).sort((x, y) => x.startsAt.localeCompare(y.startsAt));
+  // Meeting texts (confirm the day before, remind in the last 3 hours) join the follow-up list.
+  const meetingTexts: Todo[] = upcoming.flatMap(e => {
+    const k = e.contactPhone ? meetingNudge(new Date(e.startsAt), new Date(), null) : null;
+    if (!k || nudged[e.id + ":" + k]) return [];
+    const who = e.contactName || e.title;
+    return [{ key: "text:" + e.id + k, title: k === "confirm" ? `Text ${who} to confirm` : `Text ${who} a reminder`, why: e.title, overdue: k === "remind", href: "/crm/calendar", action: "Text", onClick: () => nudge(e, k) }];
+  });
+  const list: Todo[] | null = todo === null ? null : [...meetingTexts.filter(t => t.overdue), ...todo.filter(t => t.overdue), ...meetingTexts.filter(t => !t.overdue), ...todo.filter(t => !t.overdue)];
   const when = (e: Ev) => {
     const s = new Date(e.startsAt), isToday = localDay(s) === localDay();
     const t = e.allDay ? "All day" : s.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
@@ -173,14 +172,14 @@ export default function Dashboard() {
     })()}
 
     <section className="u-block">
-      <div className="u-h2-row"><h2 className="u-h2">Your follow-ups today {todo && <span className="u-quiet">{todo.length}</span>}</h2><span className="u-note">Overdue first. Logging the call or step clears it.</span></div>
-      {todo === null ? <p className="u-note" role="status">Loading…</p> : todo.length === 0 ? <p className="u-note">Nothing waiting on you. Every follow-up is done, so go make new calls.</p>
-        : <div className="u-rows">{(allTodo ? todo : todo.slice(0, 8)).map(t => <div key={t.key} className="u-row db-todo">
+      <div className="u-h2-row"><h2 className="u-h2">Your follow-ups today {list && <span className="u-quiet">{list.length}</span>}</h2><span className="u-note">Emails, texts and LinkedIn. Calls stay in Call mode.</span></div>
+      {list === null ? <p className="u-note" role="status">Loading…</p> : list.length === 0 ? <p className="u-note">No follow-ups waiting. Go make calls.</p>
+        : <div className="u-rows">{(allTodo ? list : list.slice(0, 8)).map(t => <div key={t.key} className="u-row db-todo">
             <span className={"u-dot" + (t.overdue ? " is-bad" : "")} aria-label={t.overdue ? "Overdue" : "Due today"} />
             <div className="u-row-main"><strong>{t.title}</strong>{t.why && <span>{t.why}</span>}</div>
-            <Link className={"u-btn " + (t.action === "Call" ? "u-btn-light" : "u-btn-bare")} href={t.href}>{t.action}</Link>
+            {t.onClick ? <button type="button" className="u-btn u-btn-light" onClick={t.onClick}>{t.action}</button> : <Link className="u-btn u-btn-bare" href={t.href}>{t.action}</Link>}
           </div>)}</div>}
-      {todo && todo.length > 8 && <button type="button" className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${todo.length}`}</button>}
+      {list && list.length > 8 && <button type="button" className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${list.length}`}</button>}
     </section>
 
     <div className="u-split u-split-2 u-block">
