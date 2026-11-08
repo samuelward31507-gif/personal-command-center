@@ -9,13 +9,13 @@
 .calendar-page button { font-family: inherit; }
 .calendar-page *, .calendar-page *::before, .calendar-page *::after { box-sizing: border-box; }
 
-/* Tones */
-.calendar-page .tone-blue   { --t-bg: rgba(66, 133, 244, .18); --t-ink: #a8c7fa; --t-dot: #5b9cf5; }
-.calendar-page .tone-green  { --t-bg: rgba(52, 168, 83, .17);  --t-ink: #94d7aa; --t-dot: #45b36b; }
-.calendar-page .tone-amber  { --t-bg: rgba(242, 169, 0, .16);  --t-ink: #f5cf7a; --t-dot: #e8a917; }
-.calendar-page .tone-violet { --t-bg: rgba(161, 110, 230, .18); --t-ink: #cdb2f5; --t-dot: #a77ee6; }
-.calendar-page .tone-red    { --t-bg: rgba(234, 84, 85, .17);  --t-ink: #f5a3a3; --t-dot: #e55b5b; }
-.calendar-page .tone-gray   { --t-bg: rgba(255, 255, 255, .07); --t-ink: #c9c9c9; --t-dot: #8a8a8a; }
+/* Tones: monochrome like the rest of Cinder. Routine = quiet grays; real meetings = solid light. */
+.calendar-page .tone-amber  { --t-bg: rgba(255, 255, 255, .055); --t-ink: #d6d6d6; --t-dot: #7a7a7a; }
+.calendar-page .tone-green  { --t-bg: rgba(255, 255, 255, .075); --t-ink: #e6e6e6; --t-dot: #9a9a9a; }
+.calendar-page .tone-violet { --t-bg: rgba(255, 255, 255, .045); --t-ink: #c4c4c4; --t-dot: #6a6a6a; }
+.calendar-page .tone-gray   { --t-bg: rgba(255, 255, 255, .04);  --t-ink: #b8b8b8; --t-dot: #5e5e5e; }
+.calendar-page .tone-blue   { --t-bg: #ececec; --t-ink: #121212; --t-dot: #ececec; }
+.calendar-page .tone-red    { --t-bg: rgba(229, 91, 91, .2); --t-ink: #f2a9a9; --t-dot: #e55b5b; }
 
 /* Shell + toolbar */
 .calendar-page .cal-shell { background: var(--c-surface); border: 1px solid var(--c-line); border-radius: 14px; overflow: hidden; }
@@ -84,14 +84,14 @@
 .calendar-page .cal-tg-col { position: relative; border-left: 1px solid var(--c-line-soft); cursor: cell; }
 .calendar-page .cal-tg-col.is-today { background: rgba(255, 255, 255, .015); }
 .calendar-page .cal-tg-line { position: absolute; left: 0; right: 0; border-top: 1px solid var(--c-line-soft); pointer-events: none; }
-.calendar-page .cal-block { position: absolute; z-index: 2; display: flex; flex-direction: column; gap: 1px; padding: 5px 8px 5px 10px; border: 0; border-radius: 6px; background: linear-gradient(var(--t-bg), var(--t-bg)), var(--c-surface); color: var(--t-ink); text-align: left; overflow: hidden; cursor: pointer; box-shadow: 0 0 0 1.5px var(--c-surface), 0 4px 14px rgba(0,0,0,.35); }
+.calendar-page .cal-block { position: absolute; z-index: 2; display: flex; flex-direction: column; gap: 1px; padding: 5px 9px; border: 0; border-radius: 6px; background: linear-gradient(var(--t-bg), var(--t-bg)), var(--c-surface); color: var(--t-ink); text-align: left; overflow: hidden; cursor: pointer; box-shadow: 0 0 0 1.5px var(--c-surface), 0 4px 14px rgba(0,0,0,.35); }
 .calendar-page .cal-block:hover { filter: brightness(1.15); z-index: 3; }
 .calendar-page .cal-block-title { font-size: 12.5px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-page .cal-block-time { font-size: 11px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .calendar-page .cal-block.is-compact { flex-direction: row; align-items: center; gap: 6px; padding-top: 2px; padding-bottom: 2px; }
 .calendar-page .cal-block.is-routine { cursor: default; background: transparent; box-shadow: none; z-index: 1; }
 .calendar-page .cal-block.is-routine::before { content: ""; position: absolute; inset: 0; background: var(--t-bg); opacity: .6; border-radius: 6px; pointer-events: none; }
-.calendar-page .cal-block.is-routine::after { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; border-radius: 2px; background: var(--t-dot); opacity: .8; }
+
 .calendar-page .cal-block.is-routine > * { position: relative; }
 .calendar-page .cal-block.is-routine .cal-block-title { font-weight: 500; }
 .calendar-page .cal-block.is-routine:hover { filter: none; }
@@ -112,8 +112,8 @@
 .calendar-page .calendar-upcoming-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 6px; border: 0; background: transparent; text-align: left; cursor: pointer; border-radius: 8px; }
 .calendar-page .calendar-upcoming-main:hover { background: var(--c-hover); }
 .calendar-page .upcoming-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; background: var(--c-muted); }
-.calendar-page .upcoming-dot.event-meeting { background: #5b9cf5; } .upcoming-dot.event-call { background: #45b36b; } .upcoming-dot.event-focus { background: #a77ee6; }
-.calendar-page .upcoming-dot.event-personal { background: #e8a917; } .upcoming-dot.event-deadline { background: #e55b5b; }
+.calendar-page .upcoming-dot.event-meeting, .calendar-page .upcoming-dot.event-call, .calendar-page .upcoming-dot.event-focus { background: #e6e6e6; }
+.calendar-page .upcoming-dot.event-personal { background: #9a9a9a; } .calendar-page .upcoming-dot.event-deadline { background: #e55b5b; }
 .calendar-page .upcoming-copy { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
 .calendar-page .upcoming-copy strong { font-size: 13px; font-weight: 600; color: var(--c-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-page .upcoming-copy small { font-size: 12px; color: var(--c-muted); }

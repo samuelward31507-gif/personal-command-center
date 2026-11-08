@@ -32,8 +32,8 @@ export function shortTime(d: Date): string {
   return `${h % 12 || 12}${m ? ":" + pad(m) : ""}${h < 12 ? "am" : "pm"}`;
 }
 
-const ROUTINE_TONE: Record<RoutineKind, string> = { trading: "amber", dial: "green", outreach: "gray", followup: "blue", build: "violet", personal: "gray" };
-const EVENT_TONE: Record<EventType, string> = { meeting: "blue", call: "green", focus: "violet", personal: "amber", deadline: "red", other: "gray" };
+const ROUTINE_TONE: Record<RoutineKind, string> = { trading: "amber", dial: "green", outreach: "gray", followup: "amber", build: "violet", personal: "gray" };
+const EVENT_TONE: Record<EventType, string> = { meeting: "blue", call: "blue", focus: "blue", personal: "blue", deadline: "red", other: "blue" };
 
 type Item = { id: string; title: string; start: Date; end: Date; tone: string; routine: boolean; event?: CalendarEvent; sub?: string };
 
