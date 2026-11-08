@@ -1,0 +1,204 @@
+/* ==========================================================================
+   Cinder UI — the design system for rebuilt pages (everything under .u-page).
+   Warm graphite, one ember accent, Archivo Expanded for titles and figures,
+   Geist for interface text. Fewer boxes: space and hairlines do the grouping.
+
+   Class names deliberately avoid substrings the legacy stylesheets target
+   (card, panel, stat, metric, tab, filter, toolbar, menu, summary, eyebrow …),
+   and paint properties carry !important so legacy rules can't repaint them.
+   ========================================================================== */
+
+:root {
+  --u-bg: #131211;
+  --u-sheet: #1a1918;
+  --u-raise: #22201e;
+  --u-hover: #272523;
+  --u-line: #2c2a27;
+  --u-line-soft: #232120;
+  --u-text: #f3efe9;
+  --u-soft: #c4bdb4;
+  --u-muted: #8f8880;
+  --u-faint: #625c55;
+  --u-ember: #ff6a1f;
+  --u-ember-ink: #ffb48a;
+  --u-ember-wash: rgba(255, 106, 31, .12);
+  --u-good: #8fcf9f;
+  --u-bad: #f0877a;
+  --u-display: var(--font-display), "Archivo", var(--font-geist-sans), sans-serif;
+  --u-text-font: var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --u-r-lg: 14px; --u-r-md: 10px; --u-r-sm: 8px;
+}
+
+/* Re-point the older mission tokens at warm graphite so pages not yet rebuilt match. */
+:root {
+  --mc-bg: #131211; --mc-panel: #1a1918; --mc-raised: #22201e; --mc-hover: #272523; --mc-line: #2c2a27; --mc-line-2: #36332f;
+  --mc-text: #f3efe9; --mc-soft: #c4bdb4; --mc-muted: #8f8880; --mc-faint: #625c55;
+}
+html body:not(#u) .cx-side { background: #0f0e0d !important; border-right-color: #24221f !important; }
+html body:not(#u) .cx-side .cx-item.is-active { background: #1d1b1a !important; }
+
+/* The app frame behind every page takes the graphite field too. */
+html body:not(#u), html body:not(#u) .crm-app-shell, html body:not(#u) .main-panel, html body:not(#u) .crm-shell-main { background: var(--u-bg) !important; }
+html body:not(#u) .crm-shell-main:has(> .u-page) > .topbar { display: none !important; }
+
+/* ---------- Page ---------- */
+body .u-page {
+  box-sizing: border-box; width: 100%; min-height: 100vh;
+  padding: 36px clamp(20px, 3vw, 48px) 72px;
+  background: var(--u-bg) !important; color: var(--u-text) !important;
+  font-family: var(--u-text-font); font-size: 14px; line-height: 1.5; letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+}
+body .u-page *, body .u-page *::before, body .u-page *::after { box-sizing: border-box; }
+body .u-page a { color: inherit; text-decoration: none; }
+body .u-page :is(h1, h2, h3, p) { margin: 0; }
+/* Legacy sheets paint bare section/article/aside elements; inside the new pages they're plain structure. */
+body .u-page :is(section, article, aside, header, nav, form):not(.u-sheet):not(.u-dialog) { background: transparent !important; border-color: var(--u-line); box-shadow: none !important; }
+
+/* Page head: title left, actions right. No subtitle lines, no labels above titles. */
+body .u-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 32px; }
+body .u-page h1.u-title {
+  font-family: var(--u-display) !important; font-stretch: 118%; font-variation-settings: "wdth" 118;
+  font-size: clamp(30px, 2.6vw, 40px) !important; font-weight: 600 !important; letter-spacing: -0.012em !important; line-height: 1.05 !important;
+  color: var(--u-text) !important; margin: 0 !important;
+}
+body .u-page .u-title-sub { margin-top: 8px; color: var(--u-muted) !important; font-size: 14px; }
+body .u-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Section heading inside a page */
+body .u-page h2.u-h2 { font-family: var(--u-text-font) !important; font-size: 15px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; color: var(--u-text) !important; }
+body .u-page .u-h2-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+body .u-page .u-note { color: var(--u-muted) !important; font-size: 13px; }
+body .u-page .u-quiet { color: var(--u-faint) !important; }
+
+/* ---------- Figures: the signature. Wide, calm instrument readouts. ---------- */
+body .u-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line); margin-bottom: 36px; }
+body .u-fig { padding: 22px 24px 20px 0; min-width: 0; }
+body .u-fig + .u-fig { padding-left: 24px; border-left: 1px solid var(--u-line); }
+body .u-fig-k { display: block; color: var(--u-muted) !important; font-size: 13px; margin-bottom: 10px; }
+body .u-fig-v {
+  display: flex; align-items: baseline; gap: 8px; white-space: nowrap;
+  font-family: var(--u-display) !important; font-stretch: 125%; font-variation-settings: "wdth" 125;
+  font-size: clamp(30px, 2.8vw, 44px); font-weight: 500; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums;
+  color: var(--u-text) !important;
+}
+body .u-fig-v small { font-family: var(--u-text-font); font-stretch: 100%; font-variation-settings: normal; font-size: 13px; letter-spacing: 0; color: var(--u-faint) !important; font-weight: 400; }
+body .u-fig-sub { margin-top: 10px; color: var(--u-muted) !important; font-size: 12.5px; }
+body .u-fig-sub b { color: var(--u-soft) !important; font-weight: 500; }
+body .u-meter { height: 3px; margin-top: 14px; background: var(--u-line) !important; border-radius: 2px; overflow: hidden; }
+body .u-meter > i { display: block; height: 100%; background: var(--u-ember) !important; border-radius: 2px; }
+body .u-up { color: var(--u-good) !important; } body .u-down { color: var(--u-bad) !important; }
+
+/* ---------- Sheets (the only boxed surface; used sparingly) ---------- */
+body .u-page .u-sheet { background: var(--u-sheet) !important; border: 1px solid var(--u-line) !important; border-radius: var(--u-r-lg) !important; box-shadow: none !important; }
+body .u-page .u-sheet-pad { padding: 20px 22px; }
+body .u-page .u-split { display: grid; gap: 28px; }
+@media (min-width: 1100px) { body .u-page .u-split-2 { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); } body .u-page .u-split-even { grid-template-columns: 1fr 1fr; } }
+body .u-page .u-block + .u-block { margin-top: 40px; }
+
+/* ---------- Buttons ---------- */
+body .u-page .u-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 14px;
+  border-radius: var(--u-r-sm) !important; border: 1px solid var(--u-line) !important; background: transparent !important; color: var(--u-text) !important;
+  font: 500 13.5px/1 var(--u-text-font) !important; letter-spacing: -0.005em; cursor: pointer; white-space: nowrap; text-decoration: none;
+}
+body .u-page .u-btn:hover:not(:disabled) { background: var(--u-hover) !important; border-color: #3a3734 !important; }
+body .u-page .u-btn:disabled { opacity: .45; cursor: default; }
+body .u-page .u-btn-go { background: var(--u-ember) !important; border-color: var(--u-ember) !important; color: #1a0d05 !important; font-weight: 600 !important; }
+body .u-page .u-btn-go:hover:not(:disabled) { background: #ff7d3a !important; border-color: #ff7d3a !important; }
+body .u-page .u-btn-light { background: var(--u-text) !important; border-color: var(--u-text) !important; color: #141210 !important; font-weight: 600 !important; }
+body .u-page .u-btn-light:hover:not(:disabled) { background: #fff !important; }
+body .u-page .u-btn-bare { border-color: transparent !important; color: var(--u-muted) !important; }
+body .u-page .u-btn-bare:hover:not(:disabled) { color: var(--u-text) !important; background: var(--u-hover) !important; }
+body .u-page .u-btn-lg { height: 44px; padding: 0 20px; font-size: 15px !important; border-radius: 10px !important; }
+body .u-page .u-btn kbd { font: 500 11px/1 var(--u-text-font); padding: 3px 5px; border-radius: 4px; background: rgba(0,0,0,.18); color: inherit; opacity: .75; }
+body .u-page :is(a, button, input, select, textarea):focus-visible { outline: 2px solid var(--u-ember) !important; outline-offset: 2px; }
+
+/* Segmented switch (named "seg" to stay clear of legacy tab rules) */
+body .u-page .u-seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--u-sheet) !important; border: 1px solid var(--u-line) !important; }
+body .u-page .u-seg > button { height: 28px; padding: 0 12px; border: 0 !important; border-radius: 6px !important; background: transparent !important; color: var(--u-muted) !important; font: 500 13px/1 var(--u-text-font) !important; cursor: pointer; }
+body .u-page .u-seg > button:hover { color: var(--u-text) !important; }
+body .u-page .u-seg > button[aria-pressed="true"] { background: var(--u-raise) !important; color: var(--u-text) !important; }
+
+/* ---------- Fields ---------- */
+body .u-page :is(input, textarea, select).u-field {
+  width: 100%; height: 38px; padding: 0 12px; border-radius: var(--u-r-sm) !important;
+  background: var(--u-sheet) !important; border: 1px solid var(--u-line) !important; color: var(--u-text) !important;
+  font: 400 14px/1.4 var(--u-text-font) !important; box-shadow: none !important; color-scheme: dark;
+}
+body .u-page textarea.u-field { height: auto; padding: 10px 12px; resize: vertical; line-height: 1.5 !important; }
+body .u-page :is(input, textarea, select).u-field:focus { outline: none !important; border-color: var(--u-ember) !important; box-shadow: 0 0 0 3px var(--u-ember-wash) !important; }
+body .u-page :is(input, textarea).u-field::placeholder { color: var(--u-faint) !important; }
+body .u-page label.u-lab { display: flex; flex-direction: column; gap: 6px; color: var(--u-muted); font-size: 12.5px; }
+
+/* ---------- Status marks ---------- */
+body .u-page .u-mark { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--u-soft) !important; background: var(--u-raise) !important; white-space: nowrap; }
+body .u-page .u-mark.is-ember { color: var(--u-ember-ink) !important; background: var(--u-ember-wash) !important; }
+body .u-page .u-mark.is-good { color: var(--u-good) !important; background: rgba(143, 207, 159, .1) !important; }
+body .u-page .u-mark.is-bad { color: var(--u-bad) !important; background: rgba(240, 135, 122, .1) !important; }
+body .u-page .u-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--u-faint); flex: 0 0 auto; }
+body .u-page .u-dot.is-ember { background: var(--u-ember); } body .u-page .u-dot.is-good { background: var(--u-good); } body .u-page .u-dot.is-bad { background: var(--u-bad); }
+
+/* ---------- Rows / lists (instead of card piles) ---------- */
+body .u-page .u-rows { border-top: 1px solid var(--u-line); }
+body .u-page .u-row { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 10px 4px; border-bottom: 1px solid var(--u-line-soft); }
+body .u-page a.u-row:hover, body .u-page button.u-row:hover { background: rgba(255, 255, 255, .02) !important; }
+body .u-page button.u-row { width: 100%; border: 0; border-bottom: 1px solid var(--u-line-soft); background: transparent !important; color: inherit !important; text-align: left; cursor: pointer; font: inherit !important; border-radius: 0 !important; }
+body .u-page .u-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+body .u-page .u-row-main strong { font-weight: 550; color: var(--u-text) !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body .u-page .u-row-main span { color: var(--u-muted) !important; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body .u-page .u-row-end { flex: 0 0 auto; text-align: right; color: var(--u-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+body .u-page .u-num { font-family: var(--u-display); font-stretch: 112%; font-variation-settings: "wdth" 112; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* ---------- Table ---------- */
+body .u-page .u-tablewrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+body .u-page .u-tablewrap table.u-table { min-width: 760px; }
+body .u-page table.u-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+body .u-page table.u-table th { text-align: left; font: 500 12.5px/1 var(--u-text-font) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--u-muted) !important; padding: 0 12px 12px; border-bottom: 1px solid var(--u-line) !important; background: transparent !important; white-space: nowrap; }
+body .u-page table.u-table td { padding: 14px 12px; border-bottom: 1px solid var(--u-line-soft) !important; color: var(--u-soft) !important; background: transparent !important; vertical-align: middle; }
+body .u-page table.u-table td:first-child, body .u-page table.u-table th:first-child { padding-left: 4px; }
+body .u-page table.u-table td.is-strong { color: var(--u-text) !important; font-weight: 550; }
+body .u-page table.u-table td.is-num, body .u-page table.u-table th.is-num { text-align: right; font-variant-numeric: tabular-nums; }
+body .u-page table.u-table tbody tr { cursor: default; }
+body .u-page table.u-table tbody tr.is-link { cursor: pointer; }
+body .u-page table.u-table tbody tr:hover td { background: rgba(255, 255, 255, .018) !important; }
+
+/* ---------- Empty states ---------- */
+body .u-page .u-void { display: grid; place-items: start; gap: 14px; padding: 48px 0 8px; max-width: 520px; }
+body .u-page .u-void h2 { font-family: var(--u-display) !important; font-stretch: 112%; font-variation-settings: "wdth" 112; font-size: 22px !important; font-weight: 550 !important; letter-spacing: -0.015em !important; color: var(--u-text) !important; }
+body .u-page .u-void p { color: var(--u-muted) !important; font-size: 14px; line-height: 1.6; }
+body .u-page .u-void-art { width: 100%; max-width: 520px; height: 120px; border-radius: var(--u-r-lg); border: 1px dashed var(--u-line); position: relative; overflow: hidden; }
+
+/* ---------- Charts (SVG drawn by components in app/ui) ---------- */
+body .u-page .u-chart { width: 100%; display: block; overflow: visible; }
+body .u-page .u-chart text { font: 400 11.5px var(--u-text-font); fill: var(--u-faint); font-variant-numeric: tabular-nums; }
+body .u-page .u-chart .u-grid line { stroke: var(--u-line-soft); stroke-width: 1; }
+body .u-page .u-chart .u-series { fill: none; stroke: var(--u-ember); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+body .u-page .u-chart .u-series-2 { fill: none; stroke: #8f8880; stroke-width: 1.5; stroke-dasharray: 4 4; }
+body .u-page .u-chart .u-area { fill: url(#u-ember-fade); }
+body .u-page .u-chart .u-bar { fill: #3a3633; } body .u-page .u-chart .u-bar.is-on { fill: var(--u-ember); }
+body .u-page .u-chart .u-target { stroke: var(--u-faint); stroke-dasharray: 3 4; }
+body .u-page .u-legend { display: flex; gap: 16px; color: var(--u-muted); font-size: 12.5px; }
+body .u-page .u-legend i { display: inline-block; width: 12px; height: 2px; margin-right: 6px; vertical-align: middle; background: var(--u-ember); }
+body .u-page .u-legend i.is-2 { background: #8f8880; }
+
+/* ---------- Notice line ---------- */
+body .u-page .u-flash { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--u-r-md); background: var(--u-sheet) !important; border: 1px solid var(--u-line) !important; color: var(--u-soft) !important; font-size: 13.5px; }
+body .u-page .u-flash.is-bad { border-color: rgba(240, 135, 122, .35) !important; color: var(--u-bad) !important; }
+
+/* ---------- Dialog ---------- */
+body .u-scrim { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 18px; background: rgba(10, 9, 8, .7) !important; backdrop-filter: blur(3px); }
+body .u-dialog { width: min(460px, 100%); padding: 22px; border-radius: 16px; background: #1d1b1a !important; border: 1px solid var(--u-line) !important; color: var(--u-text) !important; box-shadow: 0 30px 80px -20px rgba(0,0,0,.7); font-family: var(--u-text-font); }
+body .u-dialog h3 { margin: 0 0 16px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--u-text) !important; }
+
+@media (max-width: 700px) {
+  body .u-page { padding: 64px 16px 56px; }
+  body .u-page .u-row { flex-wrap: wrap; }
+  body .u-page .u-row > .u-row-main { flex-basis: calc(100% - 140px); }
+  body .u-page .u-row-acts { width: 100%; padding-left: 21px; }
+  body .u-page .u-head-actions { width: 100%; }
+  body .u-fig + .u-fig { padding-left: 0; border-left: 0; }
+  body .u-figs { grid-template-columns: 1fr 1fr; }
+  body .u-fig { padding-right: 12px; border-bottom: 1px solid var(--u-line-soft); }
+}
+@media (prefers-reduced-motion: reduce) { body .u-page * { transition: none !important; animation: none !important; } }

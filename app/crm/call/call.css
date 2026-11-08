@@ -1,0 +1,104 @@
+/* Call mode on the Cinder UI. Everything is scoped under .dl-call. */
+body .dl-call { padding-top: 26px; }
+body .dl-call kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 4px; font: 500 11px/1 var(--u-text-font); background: rgba(255,255,255,.06); color: var(--u-muted); border: 1px solid var(--u-line); }
+
+/* Today's readout */
+body .dl-call .dl-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-bottom: 22px; margin-bottom: 26px; border-bottom: 1px solid var(--u-line); }
+body .dl-call .dl-score { display: flex; gap: 44px; flex-wrap: wrap; }
+body .dl-call .dl-score > div { min-width: 92px; }
+body .dl-call .dl-score .u-fig-k { margin-bottom: 6px; }
+body .dl-call .dl-score b { display: block; font-family: var(--u-display); font-stretch: 125%; font-variation-settings: "wdth" 125; font-size: 28px; font-weight: 500; line-height: 1; letter-spacing: -0.03em; color: var(--u-text); }
+body .dl-call .dl-score b small { font-family: var(--u-text-font); font-stretch: 100%; font-variation-settings: normal; font-size: 13px; letter-spacing: 0; color: var(--u-faint); font-weight: 400; }
+body .dl-call .dl-score .u-meter { width: 120px; margin-top: 10px; }
+
+body .dl-call .dl-after { display: grid; gap: 10px; margin-bottom: 22px; }
+
+/* Rail + main */
+body .dl-call .dl-grid { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 44px; align-items: start; }
+body .dl-call .dl-rail { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 40px); }
+body .dl-call .dl-find { position: relative; }
+body .dl-call .dl-find-list { position: absolute; z-index: 20; top: 44px; left: 0; right: 0; max-height: 340px; overflow: auto; border-radius: 12px; background: var(--u-raise) !important; border: 1px solid var(--u-line); box-shadow: 0 20px 50px -18px rgba(0,0,0,.7); }
+body .dl-call .dl-find-list .u-row { padding: 10px 12px; min-height: 0; }
+body .dl-call .dl-list { overflow: auto; flex: 1; min-height: 120px; margin: 0 -6px; padding: 0 6px; }
+body .dl-call .dl-q { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; border: 0 !important; border-radius: 9px !important; background: transparent !important; color: var(--u-soft) !important; text-align: left; cursor: pointer; font: inherit !important; }
+body .dl-call .dl-q:hover { background: rgba(255,255,255,.03) !important; }
+body .dl-call .dl-q.is-on { background: var(--u-sheet) !important; box-shadow: inset 2px 0 0 var(--u-ember); }
+body .dl-call .dl-q-n { font-size: 12px; color: var(--u-faint); width: 22px; flex: 0 0 auto; }
+body .dl-call .dl-q.is-on .dl-q-n { color: var(--u-ember); }
+body .dl-call .dl-q-main { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+body .dl-call .dl-q-main b { font-weight: 500; font-size: 13.5px; color: var(--u-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body .dl-call .dl-q-main small { font-size: 12px; color: var(--u-faint); }
+body .dl-call .dl-logged { border-top: 1px solid var(--u-line); padding-top: 12px; font-size: 12.5px; }
+body .dl-call .dl-logged > div { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; color: var(--u-soft); }
+body .dl-call .dl-logged small { color: var(--u-faint); white-space: nowrap; }
+
+/* Who you're calling: the one loud thing on the page */
+body .dl-call .dl-main { min-width: 0; }
+body .dl-call .dl-who { display: flex; justify-content: space-between; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
+body .dl-call .dl-pos { display: flex; align-items: center; font-size: 13px; color: var(--u-muted); margin-bottom: 10px !important; }
+body .dl-call h1.dl-name { font-family: var(--u-display) !important; font-stretch: 125%; font-variation-settings: "wdth" 125; font-size: clamp(34px, 3.6vw, 56px) !important; font-weight: 600 !important; letter-spacing: -0.018em !important; line-height: 1.02 !important; color: var(--u-text) !important; margin: 0 !important; overflow-wrap: anywhere; }
+body .dl-call .dl-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; font-size: 13.5px; color: var(--u-muted); }
+body .dl-call .dl-meta a { color: var(--u-soft); text-decoration: underline; text-decoration-color: var(--u-line); text-underline-offset: 3px; }
+body .dl-call .dl-meta a:hover { color: var(--u-text); text-decoration-color: var(--u-muted); }
+body .dl-call .dl-local { display: inline-flex; align-items: center; gap: 7px; }
+body .dl-call .dl-local i { width: 7px; height: 7px; border-radius: 50%; background: var(--u-faint); }
+body .dl-call .dl-local.is-good i { background: var(--u-good); }
+body .dl-call .dl-local.is-late i { background: var(--u-bad); }
+body .dl-call .dl-dial { display: flex; align-items: center; gap: 18px; }
+body .dl-call .dl-phone { font-size: 22px; color: var(--u-text); letter-spacing: -0.01em; white-space: nowrap; }
+body .dl-call .dl-dial .u-btn-lg { height: 52px; padding: 0 26px; font-size: 16px !important; border-radius: 12px !important; }
+body .dl-call .dl-dial kbd { background: rgba(0,0,0,.16); border-color: rgba(0,0,0,.18); color: #1a0d05; }
+
+body .dl-call .dl-history { display: flex; flex-wrap: wrap; gap: 10px 36px; margin-top: 26px; padding: 16px 0; border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line-soft); font-size: 13.5px; color: var(--u-soft); }
+body .dl-call .dl-history span { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+body .dl-call .dl-history b { font-weight: 400; font-size: 12.5px; color: var(--u-faint); }
+body .dl-call .dl-lastnote { margin-top: 14px !important; padding-left: 14px; border-left: 2px solid var(--u-line); color: var(--u-soft); font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
+
+/* The brief */
+body .dl-call .dl-brief { padding: 28px 0 8px; }
+body .dl-call .dl-verdict { max-width: 70ch; font-size: 19px; line-height: 1.5; letter-spacing: -0.012em; color: var(--u-text); margin-bottom: 28px !important; }
+body .dl-call .dl-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 28px 32px; }
+body .dl-call .dl-col h2.u-h2 { font-size: 13px !important; color: var(--u-muted) !important; font-weight: 500 !important; margin-bottom: 10px !important; }
+body .dl-call .dl-col ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+body .dl-call .dl-col li { position: relative; padding-left: 16px; font-size: 14px; line-height: 1.55; color: var(--u-soft); }
+body .dl-call .dl-col li::before { content: ""; position: absolute; left: 0; top: .72em; width: 6px; height: 1px; background: var(--u-faint); }
+body .dl-call .dl-brief-foot { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--u-line-soft); font-size: 13px; color: var(--u-muted); }
+body .dl-call .dl-brief-foot b { color: var(--u-text); font-weight: 550; }
+body .dl-call .dl-noaudit { display: grid; gap: 14px; justify-items: start; max-width: 70ch; }
+body .dl-call .dl-noaudit > p { font-size: 15px; color: var(--u-soft); }
+
+/* Outcome dock */
+body .dl-call .dl-dock { position: sticky; bottom: 14px; z-index: 5; box-shadow: 0 -18px 40px -12px rgba(10,9,8,.9), 0 20px 50px -20px rgba(0,0,0,.6); margin-top: 28px; padding: 14px 16px 10px; border-radius: 16px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); display: grid; gap: 12px; }
+body .dl-call .dl-dock textarea.u-field { background: var(--u-bg) !important; }
+body .dl-call .dl-outs { display: flex; flex-wrap: wrap; gap: 6px; }
+body .dl-call .dl-outs > div { display: contents; }
+body .dl-call .dl-sep { width: 1px; height: 24px; align-self: center; margin: 0 6px; background: var(--u-line); }
+body .dl-call .dl-out { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 9px !important; border: 1px solid var(--u-line) !important; background: var(--u-raise) !important; color: var(--u-text) !important; font: 500 13px/1 var(--u-text-font) !important; cursor: pointer; }
+body .dl-call .dl-out:hover:not(:disabled) { border-color: #45413c !important; background: var(--u-hover) !important; }
+body .dl-call .dl-out:disabled { opacity: .5; }
+body .dl-call .dl-out.is-win { background: var(--u-ember) !important; border-color: var(--u-ember) !important; color: #1a0d05 !important; font-weight: 600 !important; }
+body .dl-call .dl-out.is-win kbd { background: rgba(0,0,0,.16); border-color: rgba(0,0,0,.16); color: #1a0d05; }
+body .dl-call .dl-out.is-stop { background: transparent !important; color: var(--u-muted) !important; border-style: dashed !important; }
+body .dl-call .dl-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 8px; border-top: 1px solid var(--u-line-soft); }
+
+@media (max-width: 1000px) {
+  body .dl-call .dl-grid { grid-template-columns: 1fr; gap: 24px; }
+  body .dl-call .dl-rail { position: static; max-height: none; }
+  body .dl-call .dl-list { max-height: 220px; }
+  body .dl-call .dl-score { gap: 24px; }
+  body .dl-call .dl-rail { order: 2; }
+  body .dl-call .dl-dock { position: static; box-shadow: none; }
+}
+@media (max-width: 700px) {
+  body .dl-call { padding-top: 64px; }
+  body .dl-call .dl-score { display: grid; grid-template-columns: repeat(4, auto); gap: 16px; }
+  body .dl-call .dl-score b { font-size: 22px; }
+  body .dl-call .dl-score > div:nth-child(4) { display: none; }
+  body .dl-call .dl-score { grid-template-columns: repeat(3, auto); }
+  body .dl-call .dl-score .u-meter { width: 70px; }
+  body .dl-call .dl-dial { width: 100%; justify-content: space-between; }
+  body .dl-call .dl-sep { display: none; }
+}
+body .dl-call .dl-dock textarea.u-field { min-height: 38px; height: 38px; padding-top: 9px; }
+body .dl-call .dl-dock textarea.u-field:focus { height: 76px; }
+body .dl-call .dl-dock textarea.u-field { max-width: 100%; min-width: 0; }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CALL_MODE_GROUPS, CONVERSATIONS, OUTCOME_LABELS, ATTEMPT_LIMIT, type CallOutcome } from "@/lib/call-outcomes";
 import { buildDraft, contactFirstName } from "@/lib/call-drafts";
 import { localCallInfo } from "@/lib/local-time";
-import { buildObjections, buildScript, cityOf } from "@/lib/call-script";
+import { cityOf } from "@/lib/call-script";
 import { reportSection } from "@/lib/business-audit";
 import { suggestOffer } from "@/lib/offers";
 import { offersFrom } from "@/lib/workspace";
@@ -13,8 +13,7 @@ import { useWorkspace } from "../../use-workspace";
 import type { QueueItem } from "@/lib/my-day";
 import SuggestedDeal, { type SuggestedDealData } from "../../suggested-deal";
 import TextDraft, { type TextContext } from "../text-draft";
-import DiscoveryPanel from "../discovery-panel";
-import "./call-mode.css";
+import "./call.css";
 
 type Contact = { id: string; name: string; company: string; phone: string; email?: string; website?: string; location?: string; notes?: string; status?: string; lastContact?: string; lastTouchAt?: string; lastTouchOutcome?: string; lastNote?: string; attempts?: number };
 type Audit = { id: string; content: string; createdAt: string };
@@ -27,7 +26,7 @@ type Draft = { title: string; subject?: string; body: string; contactId: string;
 const CHANNEL_LABEL = { text: "Text", dm: "Facebook DM", email: "Email" } as const;
 const shortDate = (iso: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric" }); };
 
-/** Call mode: one prospect at a time with the brief, script, objections and one-tap outcomes. Calls are placed by the founder. */
+/** Call mode: one prospect at a time, the research brief, and one-tap outcomes. Calls are placed by the founder from his own phone. */
 export default function CallModePage() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [contacts, setContacts] = useState<Record<string, Contact>>({});
@@ -35,7 +34,6 @@ export default function CallModePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [audit, setAudit] = useState<Audit | null | undefined>(undefined);
-  const [tab, setTab] = useState<"brief" | "script" | "objections" | "discovery">("brief");
   const [founding, setFounding] = useState<{ script: string; left: number } | null>(null);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,7 +48,6 @@ export default function CallModePage() {
   const [stats, setStats] = useState<{ dials: number; conversations: number; meetings: number } | null>(null);
   const [clock, setClock] = useState(() => new Date());
   const [when, setWhen] = useState({ date: "", time: "10:00", minutes: "30" });
-  const [openObj, setOpenObj] = useState<string | null>(null);
   const [auditing, setAuditing] = useState<{ done: number; total: number; current: string } | null>(null);
   // Callbacks: find anyone by name, company or phone and log the result without leaving Call mode.
   const [search, setSearch] = useState("");
@@ -101,7 +98,7 @@ export default function CallModePage() {
   function pick(id: string) { setPicked(id); setSearch(""); setFlash(null); }
 
   useEffect(() => {
-    setAudit(undefined); setNotes(""); setTab("brief"); setOpenObj(null);
+    setAudit(undefined); setNotes("");
     if (!contact?.id) return;
     let live = true;
     fetch(`/api/research-artifacts?type=audit_prep&contactId=${contact.id}`, { cache: "no-store" })
@@ -113,9 +110,6 @@ export default function CallModePage() {
   const wsp = useWorkspace();
   const offers = useMemo(() => offersFrom(wsp), [wsp]);
   const offer = useMemo(() => suggestOffer(contact?.company ?? "", audit ? reportSection(audit.content, "Verdict") : null, offers), [contact?.company, audit, offers]);
-  const scriptInput = contact ? { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, location: contact.location ?? "", notes: contact.notes ?? "", setupFee: offers.tier1.setupFee, monthlyFee: offers.tier1.monthlyFee, me: wsp.ownerFirstName, brand: wsp.shortName, priceLine: founding?.script, spotsLeft: founding?.left } : null;
-  const script = scriptInput ? buildScript(scriptInput) : [];
-  const objections = scriptInput ? buildObjections(scriptInput) : [];
   const brief = audit ? {
     verdict: reportSection(audit.content, "Verdict"),
     plan: reportSection(audit.content, "Call plan"),
@@ -253,179 +247,174 @@ export default function CallModePage() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  if (loading) return <main className="cm-page"><div className="cm-empty"><div className="cm-spinner" />Building your call list…</div></main>;
-  if (error) return <main className="cm-page"><div className="cm-empty"><p>{error}</p><button data-variant="primary" className="cm-btn" onClick={() => void load()}>Try again</button></div></main>;
+  const target = wsp.dailyCallTarget || 100;
+  const who = contact?.company || contact?.name || "";
+  const lt = contact ? localCallInfo(contact.location ?? "", clock, contact.phone ?? "") : null;
+  const last = contact?.lastTouchOutcome ? `${OUTCOME_LABELS[contact.lastTouchOutcome as CallOutcome] ?? contact.lastTouchOutcome}${contact.lastTouchAt ? `, ${shortDate(contact.lastTouchAt)}` : ""}` : "Never called";
+  const unaudited = queue.slice(index).filter(q => q.contact && !/Audit:/.test(q.why)).length;
 
-  return <main className="cm-page">
-    <header className="cm-head">
-      <div>
-        <div className="cm-eyebrow">Call mode</div>
-        <h1 className="cm-title">{queue.length ? `${queue.length} to call` : "Nothing to call right now"}</h1>
-        <p className="cm-sub">Follow-ups first, then people you haven&apos;t called. You dial; Cinder keeps score.</p>
-        {stats && <div className="cm-stats" aria-label="Today's numbers"><span><b>{stats.dials}</b> dials</span><span><b>{stats.conversations}</b> conversations</span><span><b>{stats.meetings}</b> meetings</span></div>}
-      </div>
-      <div className="cm-head-actions">
-        <Link className="cm-link" href="/crm/needs-you">Today</Link>
-        {queue.some(q => q.contact && !/Audit:/.test(q.why)) && <button data-variant="primary" className="cm-btn" disabled={!!auditing} onClick={() => void auditRest()}>
-          {auditing ? `Auditing ${auditing.done}/${auditing.total}${auditing.current ? ` · ${auditing.current}` : ""}…` : `Audit the next ${Math.min(10, queue.slice(index).filter(q => q.contact && !/Audit:/.test(q.why)).length)}`}</button>}
-        <button data-variant="primary" className="cm-btn" onClick={() => void load()}>Refresh</button>
-      </div>
-    </header>
+  if (loading) return <div className="u-page dl-call" role="region" aria-label="Call mode"><p className="u-note" role="status">Building your call list…</p></div>;
+  if (error) return <div className="u-page dl-call" role="region" aria-label="Call mode"><div className="u-void"><h2>{error}</h2><button className="u-btn u-btn-go" onClick={() => void load()}>Try again</button></div></div>;
 
-    {flash && <div className={"cm-flash" + (flash.ok ? "" : " is-bad")} role="status">{flash.text}</div>}
-    {flash?.deal && <div className="cm-deal-wrap"><SuggestedDeal key={flash.text} deal={flash.deal} /></div>}
-    {draft && <div className="cm-draft">
-      <div className="cm-draft-head"><b>{draft.title}</b><span>Nothing is sent from Cinder. Copy it and send it from your phone.</span></div>
-      {draft.subject && <div className="cm-draft-subject">Subject: {draft.subject}</div>}
-      <textarea rows={draft.channel === "email" ? 7 : 4} value={draft.body} onChange={e => setDraft({ ...draft, body: e.target.value })} aria-label="Message draft" />
-      <div className="cm-row">
-        <button type="button" data-variant="primary" className="cm-btn cm-primary" onClick={() => void copyDraft()}>{copied ? "Copied ✓" : "Copy"}</button>
-        <button type="button" data-variant="primary" className="cm-btn" onClick={() => void markSent()}>Mark as sent</button>
-        <button type="button" data-variant="primary" className="cm-btn" onClick={() => setDraft(null)}>Dismiss</button>
+  return <div className="u-page dl-call" role="region" aria-label="Call mode">
+    <div className="dl-top">
+      <div className="dl-score" aria-label="Today's numbers">
+        <div><span className="u-fig-k">Dials today</span><b className="u-num">{stats?.dials ?? 0}<small> / {target}</small></b><div className="u-meter"><i style={{ width: Math.min(100, ((stats?.dials ?? 0) / target) * 100) + "%" }} /></div></div>
+        <div><span className="u-fig-k">Conversations</span><b className="u-num">{stats?.conversations ?? 0}</b></div>
+        <div><span className="u-fig-k">Meetings</span><b className="u-num" style={stats?.meetings ? { color: "var(--u-ember)" } : undefined}>{stats?.meetings ?? 0}</b></div>
+        <div><span className="u-fig-k">Left in list</span><b className="u-num">{queue.length}</b></div>
       </div>
+      <div className="u-head-actions">
+        {unaudited > 0 && <button className="u-btn" disabled={!!auditing} onClick={() => void auditRest()}>
+          {auditing ? `Researching ${auditing.done}/${auditing.total}${auditing.current ? `, ${auditing.current}` : ""}` : `Research the next ${Math.min(10, unaudited)}`}</button>}
+        <button className="u-btn u-btn-bare" onClick={() => void load()}>Refresh list</button>
+      </div>
+    </div>
+
+    {(flash || draft || textCtx) && <div className="dl-after">
+      {flash && <p className={"u-flash" + (flash.ok ? "" : " is-bad")} role="status">{flash.text}</p>}
+      {flash?.deal && <SuggestedDeal key={flash.text} deal={flash.deal} />}
+      {draft && <div className="u-sheet u-sheet-pad">
+        <div className="u-h2-row"><h2 className="u-h2">{draft.title}</h2><span className="u-note">Copy it and send it from your phone.</span></div>
+        {draft.subject && <p className="u-note" style={{ marginBottom: 8 }}>Subject: {draft.subject}</p>}
+        <textarea className="u-field" rows={draft.channel === "email" ? 7 : 4} value={draft.body} onChange={e => setDraft({ ...draft, body: e.target.value })} aria-label="Message draft" />
+        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+          <button type="button" className="u-btn u-btn-go" onClick={() => void copyDraft()}>{copied ? "Copied" : "Copy"}</button>
+          <button type="button" className="u-btn" onClick={() => void markSent()}>Mark as sent</button>
+          <button type="button" className="u-btn u-btn-bare" onClick={() => setDraft(null)}>Dismiss</button>
+        </div>
+      </div>}
+      {textCtx && <TextDraft key={textCtx.contactId + textCtx.ctx.callAt} ctx={textCtx.ctx} contactId={textCtx.contactId} who={textCtx.who} primaryClass="u-btn u-btn-go" quietClass="u-btn" />}
     </div>}
 
-    {textCtx && <TextDraft key={textCtx.contactId + textCtx.ctx.callAt} ctx={textCtx.ctx} contactId={textCtx.contactId} who={textCtx.who} primaryClass="cm-btn cm-primary" quietClass="cm-btn" />}
-
-    <div className="cm-find">
-      <input type="search" inputMode="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Someone calling back? Search name, company or phone number" aria-label="Find a contact by name, company or phone number" />
-      {search.trim().length >= 2 && <div className="cm-find-results" role="listbox">
-        {matches.length ? matches.map(c => <button type="button" data-variant="primary" key={c.id} className="cm-find-row" onClick={() => pick(c.id)}>
-          <span>{c.company || c.name}</span><small>{[c.company ? c.name : "", c.phone].filter(Boolean).join(" · ")}</small>
-        </button>) : <div className="cm-find-none">No contact matches “{search.trim()}”.</div>}
-      </div>}
-    </div>
-    {picked && contact && <div className="cm-flash" role="status">Logging a callback from {contact.company || contact.name}. Tap the result below. <button type="button" data-variant="primary" className="cm-btn" onClick={() => setPicked(null)}>Back to my list</button></div>}
-
-    {!item && !picked ? <div className="cm-empty cm-done">
-      <h2>Nothing left in today&apos;s list.</h2>
-      <p>{logged.length ? `You logged ${logged.length} call${logged.length === 1 ? "" : "s"}. ` : ""}Add prospects or run audits to fill tomorrow.</p>
-      <div className="cm-row"><Link className="cm-btn-link" href="/crm">Contacts</Link><Link className="cm-btn-link" href="/crm/audit">Run an audit</Link></div>
-    </div> : <div className="cm-grid">
-      <aside className="cm-queue" aria-label="Call list">
-        {queue.map((q, i) => <button data-variant="primary" key={q.id} className={"cm-q" + (i === index ? " is-on" : "")} onClick={() => setIndex(i)}>
-          <span className="cm-q-name">{q.contact?.company || q.contact?.name}</span>
-          <span className="cm-q-why">{q.group === "prospects" ? "New prospect" : q.status === "overdue" ? "Overdue follow-up" : "Follow-up"}{/Audit:/.test(q.why) ? " · audited" : ""}</span>
-        </button>)}
-        {logged.length > 0 && <div className="cm-logged"><div className="cm-mini">Logged</div>{logged.slice(0, 8).map((l, i) => <div key={i} className="cm-logged-row"><span>{l.name}</span><small>{l.outcome}</small></div>)}</div>}
+    <div className="dl-grid">
+      <aside className="dl-rail" aria-label="Call list">
+        <div className="dl-find">
+          <input className="u-field" type="search" inputMode="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Calling back? Name, company or number" aria-label="Find a contact by name, company or phone number" />
+          {search.trim().length >= 2 && <div className="dl-find-list" role="listbox">
+            {matches.length ? matches.map(c => <button type="button" key={c.id} className="u-row" onClick={() => pick(c.id)}>
+              <div className="u-row-main"><strong>{c.company || c.name}</strong><span>{[c.company ? c.name : "", c.phone].filter(Boolean).join(" · ")}</span></div>
+            </button>) : <p className="u-note" style={{ padding: 12 }}>No contact matches “{search.trim()}”.</p>}
+          </div>}
+        </div>
+        <div className="dl-list">
+          {queue.map((q, i) => <button type="button" key={q.id} className={"dl-q" + (i === index && !picked ? " is-on" : "")} onClick={() => { setPicked(null); setIndex(i); }}>
+            <span className="dl-q-n u-num">{String(i + 1).padStart(2, "0")}</span>
+            <span className="dl-q-main"><b>{q.contact?.company || q.contact?.name}</b><small>{q.group === "prospects" ? "New" : q.status === "overdue" ? "Overdue follow-up" : "Follow-up"}{/Audit:/.test(q.why) ? " · researched" : ""}</small></span>
+          </button>)}
+          {queue.length === 0 && <p className="u-note" style={{ padding: "8px 4px" }}>The list is empty.</p>}
+        </div>
+        {logged.length > 0 && <div className="dl-logged"><span className="u-fig-k">Logged this session</span>{logged.slice(0, 8).map((l, i) => <div key={i}><span>{l.name}</span><small>{l.outcome}</small></div>)}</div>}
       </aside>
 
-      <section className="cm-main">
-        <div className="cm-who">
-          <div className="cm-who-main">
-            <div className="cm-mini">{picked ? "Callback" : `${index + 1} of ${queue.length} · ${item?.group === "prospects" ? "New prospect" : "Follow-up"}`}</div>
-            <h2 className="cm-company">{contact?.company || contact?.name}</h2>
-            <div className="cm-meta">
-              {contact?.name && contact.name !== contact.company && <span>{contact.name}</span>}
-              {contact?.location && cityOf(contact.location) && <span>{contact.location}</span>}
-              {contact?.website && <a href={/^https?:/.test(contact.website) ? contact.website : "https://" + contact.website} target="_blank" rel="noreferrer">Website ↗</a>}
-              <Link href={`/crm?contact=${contact?.id}`}>Open record</Link>
+      {!contact ? <section className="dl-main"><div className="u-void">
+        <h2>That&apos;s the whole list</h2>
+        <p>{logged.length ? `${logged.length} call${logged.length === 1 ? "" : "s"} logged. ` : ""}Import more prospects or research the ones you have so tomorrow starts full.</p>
+        <div style={{ display: "flex", gap: 8 }}><Link className="u-btn u-btn-go" href="/crm">Open contacts</Link><Link className="u-btn" href="/crm/audit">Research a business</Link></div>
+      </div></section> : <section className="dl-main">
+        <div className="dl-who">
+          <div className="dl-who-l">
+            <p className="dl-pos">{picked ? "Callback" : `${index + 1} of ${queue.length} · ${item?.group === "prospects" ? "New prospect" : item?.status === "overdue" ? "Overdue follow-up" : "Follow-up"}`}{picked && <button type="button" className="u-btn u-btn-bare" style={{ height: 24, marginLeft: 8 }} onClick={() => setPicked(null)}>Back to my list</button>}</p>
+            <h1 className="dl-name">{who}</h1>
+            <div className="dl-meta">
+              {contact.name && contact.name !== contact.company && <span>{contact.name}</span>}
+              {contact.location && cityOf(contact.location) && <span>{contact.location}</span>}
+              {lt && <span className={"dl-local is-" + lt.window} title={lt.window === "good" ? "Good time: owners are usually off the job" : lt.window === "late" ? "Too early or too late to call" : "During the work day"}><i aria-hidden="true" />{lt.time} their time</span>}
+              {contact.website && <a href={/^https?:/.test(contact.website) ? contact.website : "https://" + contact.website} target="_blank" rel="noreferrer">Website</a>}
+              <Link href={`/crm?contact=${contact.id}`}>Open record</Link>
             </div>
           </div>
-          <div className="cm-dial">
-            <div className="cm-phone">{contact?.phone}</div>
-            <button data-variant="primary" className="cm-call" onClick={dial}>Call <kbd>C</kbd></button>
+          <div className="dl-dial">
+            <span className="dl-phone u-num">{contact.phone}</span>
+            <button type="button" className="u-btn u-btn-go u-btn-lg" onClick={dial}>Call <kbd>C</kbd></button>
           </div>
         </div>
 
-        {(() => {
-          const lt = contact ? localCallInfo(contact.location ?? "", clock, contact.phone ?? "") : null;
-          const last = contact?.lastTouchOutcome ? `Last: ${OUTCOME_LABELS[contact.lastTouchOutcome as CallOutcome] ?? contact.lastTouchOutcome}${contact.lastTouchAt ? ` · ${shortDate(contact.lastTouchAt)}` : ""}` : "Never called";
-          const tries = contact?.attempts ? ` · ${contact.attempts} of ${ATTEMPT_LIMIT} tries with no answer` : "";
-          return <div className="cm-history">
-            {lt && <span className={"cm-local is-" + lt.window} title={lt.window === "good" ? "Good time: owners are usually off the job" : lt.window === "late" ? "Too early or too late to call" : "During the work day"}><i aria-hidden="true" />{lt.time} their time</span>}
-            <span>{last}{tries}</span>
-            {contact?.lastNote && <p className="cm-lastnote">{contact.lastNote}</p>}
-          </div>;
-        })()}
-        {!picked && item && <div className="cm-why">{item.why}</div>}
+        <div className="dl-history">
+          <span><b>Last touch</b>{last}</span>
+          {!!contact.attempts && <span><b>No-answer tries</b>{contact.attempts} of {ATTEMPT_LIMIT}</span>}
+          {!picked && item && <span><b>Why now</b>{item.why}</span>}
+        </div>
+        {contact.lastNote && <p className="dl-lastnote">{contact.lastNote}</p>}
 
-        <div className="cm-tabs">
-          {(["brief", "script", "objections", "discovery"] as const).map(t => <button data-variant="primary" key={t} aria-current={tab === t ? "true" : undefined} className={"cm-tabbtn" + (tab === t ? " is-on" : "")} onClick={() => setTab(t)}>
-            {t === "brief" ? "Brief" : t === "script" ? "Script" : t === "objections" ? "Objections" : "Discovery"}</button>)}
+        <div className="dl-brief">
+          {audit === undefined ? <p className="u-note">Loading research…</p> : brief ? <>
+            {brief.verdict && <p className="dl-verdict">{clean(brief.verdict)}</p>}
+            <div className="dl-cols">
+              {brief.plan && <Block title="How to run the call" text={brief.plan} />}
+              {brief.opps && <Block title="Where they're losing jobs" text={brief.opps} />}
+              {brief.flags && <Block title="Watch out for" text={brief.flags} />}
+            </div>
+            <div className="dl-brief-foot">
+              <span>Pitch <b>{offer.label}</b>, ${offer.setupFee.toLocaleString()} setup + ${offer.monthlyFee.toLocaleString()}/mo{founding && founding.left > 0 ? ` · ${founding.left} founding spot${founding.left === 1 ? "" : "s"} left` : ""}</span>
+              <span title="Written by AI from public web research. Check anything important before you rely on it.">AI research, verify before quoting</span>
+              <Link href={`/crm/audits/${audit!.id}`} style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Full report</Link>
+            </div>
+          </> : <div className="dl-noaudit">
+            <p>No research on {who} yet. Know their gaps before you dial.</p>
+            <Link className="u-btn" href={`/crm/audit?contact=${contact.id}`}>Research {who}</Link>
+            {contact.notes && <Block title="Notes on file" text={contact.notes} />}
+          </div>}
         </div>
 
-        <div className="cm-body">
-          {tab === "brief" && (audit === undefined ? <p className="cm-muted">Loading audit…</p> : brief ? <div className="cm-brief">
-            <span className="ai-badge" title="Written by AI from public web research. Check anything important before you rely on it.">AI research · verify</span>
-            {brief.verdict && <div className="cm-verdict">{clean(brief.verdict)}</div>}
-            {brief.plan && <Block title="Call plan" text={brief.plan} />}
-            {brief.opps && <Block title="Top opportunities" text={brief.opps} />}
-            {brief.flags && <Block title="Red flags" text={brief.flags} />}
-            {audit && <Link className="cm-link" href={`/crm/audits/${audit.id}`}>Full audit report →</Link>}
-            <p className="cm-muted">Suggested offer: {offer.label} · ${offer.setupFee.toLocaleString()} + ${offer.monthlyFee.toLocaleString()}/mo</p>
-          </div> : <div className="cm-noaudit">
-            <p>No audit yet. Use the script, or research them first so you know their gaps before you dial.</p>
-            <Link className="cm-btn-link" href={`/crm/audit?contact=${contact?.id}`}>Run an audit on {contact?.company || contact?.name}</Link>
-            {contact?.notes && <Block title="Notes on file" text={contact.notes} />}
-          </div>)}
-          {tab === "script" && <ol className="cm-script">{script.map(s => <li key={s.key}><div className="cm-step">{s.label}</div><p className="cm-say">&ldquo;{s.say}&rdquo;</p><small className="cm-tip">{s.tip}</small></li>)}</ol>}
-          {tab === "discovery" && contact?.id && <DiscoveryPanel key={contact.id} contactId={contact.id} compact />}
-          {tab === "objections" && founding && <div className="fo-chip" style={{ marginBottom: 10 }}><p>&ldquo;{founding.script}&rdquo;</p><small>Spots left: {founding.left}</small></div>}
-          {tab === "objections" && <div className="cm-objs">{objections.map(o => <div key={o.key} className={"cm-obj" + (openObj === o.key ? " is-open" : "")}>
-            <button data-variant="primary" className="cm-obj-head" onClick={() => setOpenObj(openObj === o.key ? null : o.key)} aria-expanded={openObj === o.key}><span>&ldquo;{o.heard}&rdquo;</span><span aria-hidden="true">{openObj === o.key ? "−" : "+"}</span></button>
-            {openObj === o.key && <div className="cm-obj-body"><p className="cm-say">&ldquo;{o.say}&rdquo;</p><small className="cm-tip">{o.then}</small></div>}
-          </div>)}</div>}
-        </div>
-
-        <div className="cm-dock">
-        <label className="cm-notes"><span className="cm-mini">Call notes (saved with the outcome)</span>
-          <textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Who you spoke to, what they said, their lead flow, best time to call back…" />
-        </label>
-
-        {CALL_MODE_GROUPS.map(g => <div key={g.label} className="cm-outgroup">
-          <div className="cm-mini">{g.label}</div>
-          <div className="cm-outcomes">
-            {g.outcomes.map(o => <button data-variant="primary" key={o} disabled={busy}
-              className={"cm-out" + (o === "meeting_booked" || o === "send_info" || o === "interested" ? " is-good" : o === "do_not_contact" ? " is-bad" : "")}
-              onClick={() => pickOutcome(o)}>
-              {OUTCOME_LABELS[o]}{KEYS[o] && <kbd>{KEYS[o]}</kbd>}
-            </button>)}
+        <div className="dl-dock">
+          <textarea className="u-field" rows={1} value={notes} onChange={e => setNotes(e.target.value)} aria-label="Call notes, saved with the outcome" placeholder="Notes, saved with the outcome: who you spoke to, what they said, best time to call back" />
+          <div className="dl-outs">
+            {CALL_MODE_GROUPS.filter(g => g.label !== "Remove").map((g, gi) => <div key={g.label} role="group" aria-label={g.label}>
+              {gi > 0 && <span className="dl-sep" aria-hidden="true" />}
+              {g.outcomes.map(o => <button type="button" key={o} disabled={busy} title={g.label}
+                className={"dl-out" + (o === "meeting_booked" ? " is-win" : "")}
+                onClick={() => pickOutcome(o)}>{OUTCOME_LABELS[o]}{KEYS[o] && <kbd>{KEYS[o]}</kbd>}</button>)}
+            </div>)}
           </div>
-        </div>)}
-        <div className="cm-nav">
-          <button data-variant="primary" className="cm-btn" disabled={index === 0} onClick={() => setIndex(i => Math.max(0, i - 1))}>← Previous</button>
-          <button data-variant="primary" className="cm-btn" disabled={index >= queue.length - 1} onClick={() => setIndex(i => i + 1)}>Skip →</button>
+          <div className="dl-nav">
+            <span className="u-note">Keys: <kbd>C</kbd> call, <kbd>1</kbd>–<kbd>0</kbd> outcome, <kbd>←</kbd> <kbd>→</kbd> move</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => void log("do_not_contact")}>Do not contact</button>
+              <button type="button" className="u-btn u-btn-bare" disabled={index === 0 || !!picked} onClick={() => setIndex(i => Math.max(0, i - 1))}>Previous</button>
+              <button type="button" className="u-btn" disabled={index >= queue.length - 1 || !!picked} onClick={() => setIndex(i => i + 1)}>Skip</button>
+            </div>
+          </div>
         </div>
-        </div>
-      </section>
-    </div>}
+      </section>}
+    </div>
 
-    {dialog && <div className="cm-scrim" onMouseDown={e => { if (e.target === e.currentTarget) setDialog(null); }}>
-      <div className="cm-dialog" role="dialog" aria-modal="true" aria-labelledby="cm-dialog-title">
-        <h3 id="cm-dialog-title">{dialog === "meeting" ? `Book a meeting with ${contact?.company || contact?.name}` : dialog === "gatekeeper" ? "Who picked up?" : dialog === "info" ? `Send ${contact?.company || contact?.name} info` : `When should you call ${contact?.company || contact?.name} back?`}</h3>
-        {dialog === "gatekeeper" ? <div className="cm-when">
-          <label>Their name (optional)<input value={gk.name} onChange={e => setGk({ ...gk, name: e.target.value })} placeholder="e.g. Lisa at the front desk" autoFocus /></label>
-          <label>Best time to reach the owner (optional)<input value={gk.best} onChange={e => setGk({ ...gk, best: e.target.value })} placeholder="e.g. before 8am" /></label>
-        </div> : dialog === "info" ? <div className="cm-when">
-          <label>Send it by<select value={info.channel} onChange={e => setInfo({ ...info, channel: e.target.value as "text" | "dm" | "email" })}><option value="text">Text</option><option value="dm">Facebook DM</option><option value="email">Email</option></select></label>
-          <label>Their problem, starting with “you” (optional)<input value={info.pain} onChange={e => setInfo({ ...info, pain: e.target.value })} placeholder="e.g. you miss calls when the crew's out" autoFocus /></label>
-        </div> : <div className="cm-when">
-          <label>Date<input type="date" value={when.date} onChange={e => setWhen({ ...when, date: e.target.value })} /></label>
-          {dialog === "meeting" && <>
-            <label>Time<input type="time" value={when.time} onChange={e => setWhen({ ...when, time: e.target.value })} /></label>
-            <label>Length<select value={when.minutes} onChange={e => setWhen({ ...when, minutes: e.target.value })}><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></label>
-          </>}
-        </div>}
-        <p className="cm-muted">{dialog === "meeting" ? "Adds it to your Cinder calendar, logs Meeting booked, and moves any open deal to Meeting booked. Send the invite yourself." : dialog === "gatekeeper" ? "Saves who you talked to and brings them back tomorrow. You'll see the name and best time on the next call." : dialog === "info" ? "Logs Send info and writes a message for you to copy and send from your phone. Nothing is sent from Cinder. They come back tomorrow for a follow-up call." : "Logs Callback requested and puts them back in your queue on that day."}</p>
-        <div className="cm-row cm-right">
-          <button data-variant="primary" className="cm-btn" onClick={() => setDialog(null)}>Cancel</button>
-          <button data-variant="primary" className="cm-btn cm-primary" disabled={busy || ((dialog === "meeting" || dialog === "callback") && !when.date)} onClick={() => {
+    {dialog && <div className="u-scrim" onMouseDown={e => { if (e.target === e.currentTarget) setDialog(null); }}>
+      <div className="u-dialog" role="dialog" aria-modal="true" aria-labelledby="dl-dialog-title">
+        <h3 id="dl-dialog-title">{dialog === "meeting" ? `Book a meeting with ${who}` : dialog === "gatekeeper" ? "Who picked up?" : dialog === "info" ? `Send ${who} info` : `When should you call ${who} back?`}</h3>
+        <div style={{ display: "grid", gap: 12 }}>
+          {dialog === "gatekeeper" ? <>
+            <label className="u-lab">Their name (optional)<input className="u-field" value={gk.name} onChange={e => setGk({ ...gk, name: e.target.value })} placeholder="Lisa at the front desk" autoFocus /></label>
+            <label className="u-lab">Best time to reach the owner (optional)<input className="u-field" value={gk.best} onChange={e => setGk({ ...gk, best: e.target.value })} placeholder="Before 8am" /></label>
+          </> : dialog === "info" ? <>
+            <label className="u-lab">Send it by<select className="u-field" value={info.channel} onChange={e => setInfo({ ...info, channel: e.target.value as "text" | "dm" | "email" })}><option value="text">Text</option><option value="dm">Facebook DM</option><option value="email">Email</option></select></label>
+            <label className="u-lab">Their problem, starting with “you” (optional)<input className="u-field" value={info.pain} onChange={e => setInfo({ ...info, pain: e.target.value })} placeholder="you miss calls when the crew's out" autoFocus /></label>
+          </> : <div style={{ display: "grid", gridTemplateColumns: dialog === "meeting" ? "1.3fr 1fr 1fr" : "1fr", gap: 10 }}>
+            <label className="u-lab">Date<input className="u-field" type="date" value={when.date} onChange={e => setWhen({ ...when, date: e.target.value })} /></label>
+            {dialog === "meeting" && <>
+              <label className="u-lab">Time<input className="u-field" type="time" value={when.time} onChange={e => setWhen({ ...when, time: e.target.value })} /></label>
+              <label className="u-lab">Length<select className="u-field" value={when.minutes} onChange={e => setWhen({ ...when, minutes: e.target.value })}><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></label>
+            </>}
+          </div>}
+        </div>
+        <p className="u-note" style={{ marginTop: 14, lineHeight: 1.55 }}>{dialog === "meeting" ? "Adds it to your calendar, logs Meeting booked and moves any open deal forward. Send the invite yourself." : dialog === "gatekeeper" ? "Saves who you talked to and brings them back tomorrow with the name and best time." : dialog === "info" ? "Logs Send info and writes a message for you to send from your phone. They come back tomorrow for a follow-up." : "Logs Callback requested and puts them back in your list that day."}</p>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18 }}>
+          <button type="button" className="u-btn" onClick={() => setDialog(null)}>Cancel</button>
+          <button type="button" className="u-btn u-btn-go" disabled={busy || ((dialog === "meeting" || dialog === "callback") && !when.date)} onClick={() => {
             if (dialog === "meeting") void bookMeeting();
             else if (dialog === "gatekeeper") { setDialog(null); void log("gatekeeper", {}, ["Gatekeeper answered", gk.name && `Name: ${gk.name.trim()}`, gk.best && `Best time to reach the owner: ${gk.best.trim()}`].filter(Boolean).join(". ") + "."); }
             else if (dialog === "info") { setDialog(null); void log("send_info", {}, `Asked for info by ${CHANNEL_LABEL[info.channel].toLowerCase()}.${info.pain.trim() ? ` Their problem: ${info.pain.trim()}` : ""}`); }
             else { setDialog(null); void log("callback_requested", { followUpDate: when.date }); }
-          }}>
-            {busy ? "Saving…" : dialog === "meeting" ? "Book meeting" : dialog === "gatekeeper" ? "Save" : dialog === "info" ? "Log and write the message" : "Set callback"}</button>
+          }}>{busy ? "Saving…" : dialog === "meeting" ? "Book meeting" : dialog === "gatekeeper" ? "Save" : dialog === "info" ? "Log and write the message" : "Set callback"}</button>
         </div>
       </div>
     </div>}
-  </main>;
+  </div>;
 }
 
 function clean(text: string) { return text.replace(/\*\*/g, "").replace(/^[-*•]\s+/gm, ""); }
 
 function Block({ title, text }: { title: string; text: string }) {
   const lines = text.split("\n").map(l => l.replace(/\*\*/g, "").trim()).filter(Boolean);
-  return <div className="cm-block"><div className="cm-mini">{title}</div><ul>{lines.map((l, i) => <li key={i}>{l.replace(/^[-*•]\s+|^\d+[.)]\s+/, "")}</li>)}</ul></div>;
+  return <div className="dl-col"><h2 className="u-h2">{title}</h2><ul>{lines.map((l, i) => <li key={i}>{l.replace(/^[-*•]\s+|^\d+[.)]\s+/, "")}</li>)}</ul></div>;
 }
