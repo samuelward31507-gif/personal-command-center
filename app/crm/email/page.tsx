@@ -34,6 +34,8 @@ export default function EmailPage() {
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
+  const [gmail, setGmail] = useState<{ configured: boolean; connected: boolean; email: string | null; sentLast24h: number; cap: number } | null>(null);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => { setTemplates(loadTemplates()); }, []);
   const load = useCallback(async () => {
@@ -45,6 +47,13 @@ export default function EmailPage() {
     } catch (e) { setError(e instanceof Error ? e.message : "Couldn't load contacts."); setContacts([]); }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  const loadGmail = useCallback(() => fetch("/api/gmail", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).then(setGmail).catch(() => setGmail(null)), []);
+  useEffect(() => {
+    void loadGmail();
+    const g = new URLSearchParams(window.location.search).get("gmail");
+    const msg: Record<string, string> = { connected: "Gmail connected. Emails now send straight from the CRM.", denied: "You didn't allow Gmail access, so nothing changed.", expired: "That sign-in took too long. Try Connect Gmail again.", "no-refresh": "Google didn't give lasting access. Disconnect Cinder in your Google account settings, then connect again.", "no-scope": "Allow \"Send email on your behalf\" when Google asks, or sending can't work.", "not-configured": "Gmail sending isn't set up on the server yet.", error: "Couldn't connect Gmail. Try again." };
+    if (g && msg[g]) { setNotice(msg[g]); window.history.replaceState(null, "", "/crm/email"); }
+  }, [loadGmail]);
 
   // Who's due for each step: never emailed → first email; first email 3+ days ago → follow-up; follow-up 4+ days ago → last try.
   const queues = useMemo(() => {
@@ -88,6 +97,21 @@ export default function EmailPage() {
     } catch (e) { setError(e instanceof Error ? e.message : "Couldn't log that email."); }
     finally { setBusy(false); }
   }
+  async function sendNow() {
+    if (!current || !filled) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const r = await fetch("/api/gmail/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: current.id, step, subject: filled.subject, body: filled.body }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Couldn't send.");
+      setSent(s => [{ contactId: current.id, step, at: new Date().toISOString() }, ...s]);
+      setGmail(g => g && { ...g, sentLast24h: g.sentLast24h + 1 });
+      setNotice(`Sent to ${current.company || current.name}.`);
+      const idx = list.findIndex(x => x.id === current.id);
+      setPicked(list[idx + 1]?.id ?? null);
+    } catch (e) { setError(e instanceof Error ? e.message : "Couldn't send."); }
+    finally { setBusy(false); }
+  }
   function open(kind: "gmail" | "mail") {
     if (!current || !filled) return;
     const url = kind === "gmail"
@@ -106,6 +130,11 @@ export default function EmailPage() {
       </div>
     </div>
     {error && <p className="u-flash is-bad" role="alert" style={{ marginBottom: 16 }}>{error}</p>}
+    {notice && <p className="u-flash" role="status" style={{ marginBottom: 16 }}>{notice}</p>}
+    {gmail && !gmail.connected && <div className="em-connect">
+      <div><b>Send straight from the CRM</b><span>{gmail.configured ? "Connect your Google Workspace inbox once. Emails go out from your address, replies land in your inbox, follow-ups thread under the first email." : "Sending from the CRM needs a one-time Google setup on the server (Google Cloud sign-in keys). Until then, use Open in Gmail."}</span></div>
+      {gmail.configured && <a className="u-btn u-btn-light" href="/api/gmail/connect">Connect Gmail</a>}
+    </div>}
 
     <div className="u-figs">
       <div className="u-fig"><span className="u-fig-k">Sent today</span><div className="u-fig-v">{sentToday}<small>/ {DAILY}</small></div><div className="u-meter"><i style={{ width: Math.min(100, (sentToday / DAILY) * 100) + "%" }} /></div><div className="u-fig-sub">{sentToday >= DAILY ? "Daily batch done" : <><b>{DAILY - sentToday}</b> left in today&apos;s batch</>}</div></div>
@@ -136,20 +165,25 @@ export default function EmailPage() {
       </div>
 
       {current && filled && <div className="em-read">
-        <div className="em-to"><span>To</span><b>{current.email}</b><Link href={`/crm?contact=${current.id}`} className="u-note" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Contact</Link></div>
+        <div className="em-to">{gmail?.connected && <><span>From</span><b>{gmail.email}</b></>}<span>To</span><b>{current.email}</b><Link href={`/crm?contact=${current.id}`} className="u-note" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Contact</Link></div>
         <div className="em-paper">
           <div className="em-subj">{filled.subject}</div>
           <pre className="em-body">{filled.body}</pre>
+          {gmail?.connected && <pre className="em-foot">{`--\n${ws.businessName}\n${ws.address || "[Add your mailing address in Settings]"}\nNot interested? Reply "unsubscribe" and you won't hear from me again.`}</pre>}
         </div>
         <div className="em-acts">
-          <button className="u-btn u-btn-light u-btn-lg" disabled={busy} onClick={() => open("gmail")}>Open in Gmail</button>
-          <button className="u-btn" disabled={busy} onClick={() => open("mail")}>Mail app</button>
+          {gmail?.connected
+            ? <button className="u-btn u-btn-light u-btn-lg" disabled={busy || !ws.address || gmail.sentLast24h >= gmail.cap} onClick={() => void sendNow()}>{busy ? "Sending…" : "Send"}</button>
+            : <button className="u-btn u-btn-light u-btn-lg" disabled={busy} onClick={() => open("gmail")}>Open in Gmail</button>}
+          {!gmail?.connected && <button className="u-btn" disabled={busy} onClick={() => open("mail")}>Mail app</button>}
           <button className="u-btn u-btn-bare" disabled={busy} onClick={() => void navigator.clipboard?.writeText(`${filled.subject}\n\n${filled.body}`)}>Copy</button>
           <span style={{ flex: 1 }} />
           <button className="u-btn u-btn-bare" disabled={busy} onClick={() => void markSent(current, filled.subject)}>Already sent</button>
           <button className="u-btn u-btn-bare" onClick={() => { setSkipped(s => new Set(s).add(current.id)); setPicked(null); }}>Skip</button>
         </div>
-        <p className="u-note" style={{ marginTop: 10 }}>Opening it logs it as sent and moves to the next person. You hit send in your own inbox; nothing is sent from Cinder.</p>
+        <p className="u-note" style={{ marginTop: 10 }}>{gmail?.connected
+          ? (!ws.address ? <>Add your mailing address in <Link href="/crm/settings" style={{ textDecoration: "underline" }}>Settings</Link> to send. The law requires it on cold email.</> : <>Sends from {gmail.email} and moves to the next person. {gmail.sentLast24h} of {gmail.cap} sent in the last 24 hours. <button type="button" className="em-disc" onClick={() => { if (confirm("Disconnect Gmail? Sending goes back to opening each email in Gmail.")) void fetch("/api/gmail", { method: "DELETE" }).then(() => loadGmail()); }}>Disconnect</button></>)
+          : "Opening it logs it as sent and moves to the next person. You hit send in your own inbox."}</p>
       </div>}
     </div>}
   </div>;

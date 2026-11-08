@@ -14,3 +14,9 @@ body .em-page .em-acts { display: flex; flex-wrap: wrap; align-items: center; ga
 body .em-page .em-edit { padding: 20px 22px; margin-bottom: 32px; display: flex; flex-direction: column; }
 body .em-page .em-edit code { padding: 1px 6px; border-radius: 5px; background: var(--u-raise); color: var(--u-soft); font-size: 12.5px; }
 @media (max-width: 700px) { body .em-page .em-paper { padding: 20px; } body .em-page .em-read { position: static; } body .em-page .em-list { max-height: 300px; } }
+body .em-page .em-connect { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 28px; padding: 16px 18px; border-radius: 14px; background: var(--u-sheet); border: 1px solid var(--u-line); }
+body .em-page .em-connect b { display: block; font-size: 14.5px; color: var(--u-text); margin-bottom: 3px; }
+body .em-page .em-connect span { font-size: 13.5px; color: var(--u-muted); line-height: 1.5; }
+body .em-page pre.em-foot { margin: 22px 0 0; white-space: pre-wrap; font: 400 12.5px/1.55 var(--u-text-font); color: #8a8178 !important; background: transparent !important; border: 0 !important; padding: 0 !important; }
+body .em-page .em-disc { border: 0; background: none; padding: 0; color: var(--u-muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font: inherit; }
+body .em-page .em-to span + b + span { margin-left: 8px; }
