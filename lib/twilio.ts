@@ -20,11 +20,15 @@ function candidateUrls(request: Request): string[] {
 /** Parse a Twilio webhook. Returns null when the signature doesn't check out. */
 export async function readTwilioRequest(request: Request): Promise<Record<string, string> | null> {
   const token = process.env.TWILIO_AUTH_TOKEN?.trim() || "";
-  const form = await request.formData().catch(() => null);
-  console.log("Twilio webhook", { path: new URL(request.url).pathname, hasForm: !!form, configured: twilioConfigured() });
-  if (!form) return null;
+  const isGet = request.method === "GET";
+  const form = isGet ? null : await request.formData().catch(() => null);
+  console.log("Twilio webhook", { method: request.method, path: new URL(request.url).pathname, hasForm: !!form, configured: twilioConfigured() });
+  if (!isGet && !form) return null;
   const params: Record<string, string> = {};
-  for (const [k, v] of form.entries()) if (typeof v === "string") params[k] = v;
+  // GET webhooks carry everything in the query string, which is already part of the signed URL.
+  if (isGet) for (const [k, v] of new URL(request.url).searchParams) params[k] = v;
+  else for (const [k, v] of form!.entries()) if (typeof v === "string") params[k] = v;
+  const signed = isGet ? {} : params;
   const sid = process.env.TWILIO_ACCOUNT_SID?.trim() || "";
   if (params.AccountSid !== sid) {
     console.error("Twilio webhook rejected: AccountSid mismatch", { got: (params.AccountSid || "").slice(0, 6), want: sid.slice(0, 6), sidLen: sid.length });
@@ -32,7 +36,7 @@ export async function readTwilioRequest(request: Request): Promise<Record<string
   }
   const urls = candidateUrls(request);
   const sig = request.headers.get("x-twilio-signature");
-  if (!validTwilioSignature(token, sig, urls, params)) {
+  if (!validTwilioSignature(token, sig, urls, signed)) {
     console.error("Twilio webhook rejected: bad signature", { hasSig: !!sig, tokenLen: token.length, urls });
     return null;
   }

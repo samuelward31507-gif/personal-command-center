@@ -13,3 +13,4 @@ export async function POST(request: Request) {
   const timeout = Math.min(40, Math.max(10, Number(process.env.CINDER_RING_SECONDS) || 20));
   return twiml(voiceTwiml(forwardTo, p.To ?? "", "/api/twilio/dial-status", timeout));
 }
+export const GET = POST;

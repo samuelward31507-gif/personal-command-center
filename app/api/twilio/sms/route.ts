@@ -21,3 +21,4 @@ export async function POST(request: Request) {
   }
   return twiml(EMPTY_TWIML);
 }
+export const GET = POST;

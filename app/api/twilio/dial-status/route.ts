@@ -23,3 +23,4 @@ export async function POST(request: Request) {
   }
   return twiml(afterDialTwiml(missed, business));
 }
+export const GET = POST;
