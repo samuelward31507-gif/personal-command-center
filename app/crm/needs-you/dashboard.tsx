@@ -7,7 +7,7 @@ import { MOVE_OUT_MRR, WEEKLY_MEETING_TARGET, DAILY_EMAIL_TARGET, DAILY_LINKEDIN
 import { Columns } from "../../ui/charts";
 import { dueFollowUps } from "@/lib/email-outreach";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
-import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref } from "@/lib/sms-templates";
+import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref, infoText, infoFollowUpText, demoLinkFor, nicheFor } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
 
@@ -28,6 +28,7 @@ type Board = {
   goal: { goal: number; by?: string; collected: number; expected: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
 };
 type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string; contactFirst?: string; contactCompany?: string; contactPhone?: string; contactTimeZone?: string; contactLocation?: string };
+type Warm = { id: string; firstName: string; company: string; phone: string; niche: string; outcome: string; at: string | null; infoSentAt: string | null; repliedAt: string | null; tasks: { id: string; title: string; due: string | null; day: number }[] };
 type Todo = { key: string; title: string; why: string; overdue: boolean; href: string; action: string; onClick?: () => void };
 type Alert = { level: "urgent" | "soon" | "info"; kind: string; text: string; href: string };
 
@@ -44,6 +45,8 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [todo, setTodo] = useState<Todo[] | null>(null);
   const [allTodo, setAllTodo] = useState(false);
+  const [warm, setWarm] = useState<Warm[] | null>(null);
+  const [doneKeys, setDoneKeys] = useState<Record<string, true>>({});
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -56,6 +59,7 @@ export default function Dashboard() {
     fetch(`/api/calendar-events?fromAt=${encodeURIComponent(start.toISOString())}&toAt=${encodeURIComponent(end.toISOString())}`, { cache: "no-store" })
       .then(r => (r.ok ? r.json() : { events: [] })).then(d => setEvents((d.events ?? []).filter((e: Ev) => e.status !== "cancelled")))
       .catch(() => setEvents([]));
+    fetch("/api/follow-ups", { cache: "no-store" }).then(r => (r.ok ? r.json() : { leads: [] })).then(d => setWarm(d.leads ?? [])).catch(() => setWarm([]));
     // Your manual follow-ups: email, LinkedIn and texts only. Calls (callbacks, redials) live in Call mode.
     Promise.all([
       fetch("/api/email-outreach", { cache: "no-store" }).then(r => (r.ok ? r.json() : { sent: [], heard: [] })).catch(() => ({ sent: [], heard: [] })),
@@ -105,7 +109,39 @@ export default function Dashboard() {
     const who = e.contactName || e.title;
     return [{ key: "text:" + e.id + k, title: k === "confirm" ? `Text ${who} to confirm` : `Text ${who} a reminder`, why: e.title, overdue: k === "remind", href: "/crm/calendar", action: "Text", onClick: () => nudge(e, k) }];
   });
-  const list: Todo[] | null = todo === null ? null : [...meetingTexts.filter(t => t.overdue), ...todo.filter(t => t.overdue), ...meetingTexts.filter(t => !t.overdue), ...todo.filter(t => !t.overdue)];
+  // Warm leads: the info text they asked for, then the day 1/2/3/7 follow-up texts. One text per lead per day.
+  const endToday = new Date(); endToday.setHours(23, 59, 59, 999);
+  const startToday = new Date(); startToday.setHours(0, 0, 0, 0);
+  const short = (v: string | null) => (v ? new Date(v).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "");
+  let upcomingTexts = 0;
+  const warmTexts: Todo[] = (warm ?? []).flatMap(w => {
+    if (w.repliedAt) return [];
+    const who = w.company || w.firstName || "this lead";
+    const first = w.firstName && w.firstName !== w.company ? w.firstName : "";
+    const niche = nicheFor(w.niche, w.company);
+    const log = (body: string, taskId?: string, key?: string) => {
+      window.location.href = smsHref(w.phone, body);
+      void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: w.id, direction: "outbound", body }) }).catch(() => {});
+      if (taskId) void fetch("/api/tasks", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: taskId, status: "done" }) }).catch(() => {});
+      if (key) setDoneKeys(k => ({ ...k, [key]: true }));
+    };
+    if (!w.infoSentAt) {
+      const key = "info:" + w.id;
+      if (doneKeys[key]) return [];
+      return [{ key, title: `Send info to ${who}`, why: `Said ${w.outcome === "interested" ? "they're interested" : "send info"} on ${short(w.at)}. No text sent yet.`, overdue: true, href: `/crm?contact=${w.id}`, action: "Text",
+        onClick: () => log(infoText({ firstName: first, demoLink: demoLinkFor(niche), niche }), undefined, key) }];
+    }
+    const next = w.tasks[0];
+    if (!next || !next.due) return [];
+    const textedRecently = Date.now() - Date.parse(w.infoSentAt) < 20 * 3600000;
+    if (Date.parse(next.due) > endToday.getTime() || textedRecently) { upcomingTexts++; return []; }
+    const key = "fu:" + next.id;
+    if (doneKeys[key]) return [];
+    return [{ key, title: `Follow up with ${who}`, why: `Info sent ${short(w.infoSentAt)}. ${next.day === 7 ? "Last" : `Day ${next.day}`} follow-up text.`, overdue: Date.parse(next.due) < startToday.getTime(), href: `/crm?contact=${w.id}`, action: "Text",
+      onClick: () => log(infoFollowUpText({ firstName: first, company: w.company, day: next.day, niche }), next.id, key) }];
+  });
+  const all = [...warmTexts, ...meetingTexts];
+  const list: Todo[] | null = todo === null || warm === null ? null : [...all.filter(t => t.overdue), ...todo.filter(t => t.overdue), ...all.filter(t => !t.overdue), ...todo.filter(t => !t.overdue)];
   const when = (e: Ev) => {
     const s = new Date(e.startsAt), isToday = localDay(s) === localDay();
     const t = e.allDay ? "All day" : s.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
@@ -173,12 +209,13 @@ export default function Dashboard() {
 
     <section className="u-block">
       <div className="u-h2-row"><h2 className="u-h2">Your follow-ups today {list && <span className="u-quiet">{list.length}</span>}</h2><span className="u-note">Emails, texts and LinkedIn. Calls stay in Call mode.</span></div>
-      {list === null ? <p className="u-note" role="status">Loading…</p> : list.length === 0 ? <p className="u-note">No follow-ups waiting. Go make calls.</p>
+      {list === null ? <p className="u-note" role="status">Loading…</p> : list.length === 0 ? <p className="u-note">{upcomingTexts ? `Nothing due right now. ${upcomingTexts} follow-up text${upcomingTexts === 1 ? "" : "s"} coming up in the next few days.` : "No follow-ups waiting. Go make calls."}</p>
         : <div className="u-rows">{(allTodo ? list : list.slice(0, 8)).map(t => <div key={t.key} className="u-row db-todo">
             <span className={"u-dot" + (t.overdue ? " is-bad" : "")} aria-label={t.overdue ? "Overdue" : "Due today"} />
             <div className="u-row-main"><strong>{t.title}</strong>{t.why && <span>{t.why}</span>}</div>
             {t.onClick ? <button type="button" className="u-btn u-btn-light" onClick={t.onClick}>{t.action}</button> : <Link className="u-btn u-btn-bare" href={t.href}>{t.action}</Link>}
           </div>)}</div>}
+      {list && list.length > 0 && upcomingTexts > 0 && <p className="u-note" style={{ marginTop: 10 }}>{upcomingTexts} more follow-up text{upcomingTexts === 1 ? "" : "s"} coming up in the next few days.</p>}
       {list && list.length > 8 && <button type="button" className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${list.length}`}</button>}
     </section>
 
