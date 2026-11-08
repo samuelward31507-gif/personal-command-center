@@ -65,7 +65,7 @@ export default function PipelinePage(){
  const listRows=filter==="open"?deals.filter(d=>!["won","lost","nurture"].includes(d.stage)):deals.filter(d=>d.stage===filter);
  const card=(d:Deal)=><div key={d.id} className={"pb-deal"+(dragging===d.id?" is-drag":"")} draggable onDragStart={e=>{setDragging(d.id);e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",d.id)}} onDragEnd={()=>{setDragging(null);setOver(null)}}>
   <Link className="pb-deal-co" href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link>
-  <span className="pb-deal-sub">{d.company||d.contactName?d.title.replace(new RegExp("^"+(d.company||d.contactName).replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\s*[—–-]\\s*"),""):svc(d.serviceType)}</span>
+  <span className="pb-deal-sub">{svc(d.serviceType)}</span>
   <div className="pb-deal-money"><b className="u-num">{money(d.monthlyFee)}</b><span>/mo</span><span className="pb-deal-setup">+ {money(d.setupFee)} setup</span></div>
   {(d.expectedCloseDate||d.probability!=null)&&<div className="pb-deal-meta">{d.expectedCloseDate&&<span className={late(d)?"is-late":""}>{late(d)?"Was due ":"Close "}{closeLabel(d)}</span>}<span>{Math.round(d.probability!=null?d.probability:(STAGE_PROBABILITY[d.stage]??0)*100)}%</span></div>}
  </div>;
@@ -90,15 +90,15 @@ export default function PipelinePage(){
   {loading?<p className="u-note" role="status">Loading your pipeline…</p>
   :deals.length===0?<div className="u-void"><h2>No deals yet</h2><p>A deal starts when a call goes well. Book a meeting in Call mode and it shows up here, or add one by hand.</p><button className="u-btn u-btn-light" onClick={startNew}>New deal</button></div>
   :view==="board"?<>
-   <div className={"pb-board"+(dragging?" is-dragging":"")}>{OPEN.map(st=>{const col=deals.filter(d=>d.stage===st);const sum=col.reduce((a,d)=>a+d.monthlyFee,0);return <div key={st} className={"pb-col"+(col.length?"":" is-empty")+(over===st?" is-over":"")} onDragOver={e=>{if(dragging){e.preventDefault();setOver(st)}}} onDragLeave={()=>setOver(o=>o===st?null:o)} onDrop={e=>{e.preventDefault();const d=deals.find(x=>x.id===(dragging||e.dataTransfer.getData("text/plain")));setDragging(null);setOver(null);if(d&&d.stage!==st){setDeals(ds=>ds.map(x=>x.id===d.id?{...x,stage:st}:x));void quickStage(d,st)}}}>
-    <div className="pb-col-h"><span>{STAGE_LABELS[st]}</span><b>{col.length||""}</b></div>
-    {col.length>0&&<div className="pb-col-sum u-num">{money(sum)}/mo</div>}
-    <div className="pb-col-body">{col.map(card)}{!col.length&&<div className="pb-drop">Drop here</div>}</div>
-   </div>})}
-    <div className={"pb-col pb-col-end"+(over==="won"?" is-over":"")} onDragOver={e=>{if(dragging){e.preventDefault();setOver("won")}}} onDragLeave={()=>setOver(o=>o==="won"?null:o)} onDrop={e=>{e.preventDefault();const d=deals.find(x=>x.id===dragging);setDragging(null);setOver(null);if(d&&d.stage!=="won")void quickStage(d,"won")}}><div className="pb-col-h"><span>Won</span><b>{won.length||""}</b></div><div className="pb-drop">{dragging?"Drop to mark won":"Drag a deal here when they sign"}</div></div>
-    <div className={"pb-col pb-col-end"+(over==="lost"?" is-over":"")} onDragOver={e=>{if(dragging){e.preventDefault();setOver("lost")}}} onDragLeave={()=>setOver(o=>o==="lost"?null:o)} onDrop={e=>{e.preventDefault();const d=deals.find(x=>x.id===dragging);setDragging(null);setOver(null);if(d&&d.stage!=="lost")void quickStage(d,"lost")}}><div className="pb-col-h"><span>Lost</span><b>{deals.filter(d=>d.stage==="lost").length||""}</b></div><div className="pb-drop">{dragging?"Drop to mark lost":"Dead deals land here"}</div></div>
-   </div>
-   <p className="u-note" style={{marginTop:14}}>Drag a deal to change its stage. Won, lost and nurture deals are in List.</p>
+   <div className={"pb-rail"+(dragging?" is-dragging":"")} role="list" aria-label="Stages">{([...OPEN,"won","lost"] as Stage[]).map(st=>{const col=deals.filter(d=>d.stage===st);return <div key={st} role="listitem" className={"pb-stop"+(col.length?" has":"")+(over===st?" is-over":"")+(st==="won"||st==="lost"?" is-end":"")} onDragOver={e=>{if(dragging){e.preventDefault();setOver(st)}}} onDragLeave={()=>setOver(o=>o===st?null:o)} onDrop={e=>{e.preventDefault();const d=deals.find(x=>x.id===dragging);setDragging(null);setOver(null);if(d&&d.stage!==st){setDeals(ds=>ds.map(x=>x.id===d.id?{...x,stage:st}:x));void quickStage(d,st)}}}>
+    <span className="pb-stop-k">{STAGE_LABELS[st]}</span>
+    <b className="pb-stop-n u-num">{col.length}</b>
+   </div>})}</div>
+   <div className="pb-board">{OPEN.filter(st=>deals.some(d=>d.stage===st)).map(st=>{const col=deals.filter(d=>d.stage===st);return <div key={st} className={"pb-col"+(over===st?" is-over":"")} onDragOver={e=>{if(dragging){e.preventDefault();setOver(st)}}} onDragLeave={()=>setOver(o=>o===st?null:o)} onDrop={e=>{e.preventDefault();const d=deals.find(x=>x.id===dragging);setDragging(null);setOver(null);if(d&&d.stage!==st){setDeals(ds=>ds.map(x=>x.id===d.id?{...x,stage:st}:x));void quickStage(d,st)}}}>
+    <div className="pb-col-h"><span>{STAGE_LABELS[st]} <i>{col.length}</i></span><b className="u-num">{money(col.reduce((a,d)=>a+d.monthlyFee,0))}/mo</b></div>
+    <div className="pb-col-body">{col.map(card)}</div>
+   </div>})}{!OPEN.some(st=>deals.some(d=>d.stage===st))&&<p className="u-note">No open deals. Won and lost deals are in List.</p>}</div>
+   <p className="u-note" style={{marginTop:14}}>Drag a deal onto any stage in the strip above to move it, including Won and Lost.</p>
   </>:<>
    <div className="u-h2-row"><div className="u-seg" role="group" aria-label="Which deals">{([["open","Open"],["won","Won"],["lost","Lost"],["nurture","Nurture"]] as const).map(([k,l])=><button key={k} type="button" aria-pressed={filter===k} onClick={()=>setFilter(k)}>{l} <span className="u-quiet">{k==="open"?active.filter(d=>d.stage!=="nurture").length:deals.filter(d=>d.stage===k).length}</span></button>)}</div></div>
    {listRows.length===0?<p className="u-note">Nothing here.</p>:<div className="u-tablewrap"><table className="u-table"><thead><tr><th>Business</th><th>Stage</th><th>Service</th><th>Close</th><th className="is-num">Monthly</th><th className="is-num">Setup</th><th/></tr></thead><tbody>

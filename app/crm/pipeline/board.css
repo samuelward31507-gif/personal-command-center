@@ -1,20 +1,21 @@
 /* Pipeline on the Cinder UI: a real board, columns side by side, drag to move. */
-body .pb-page .pb-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; margin: 0 calc(-1 * clamp(20px, 3vw, 48px)); padding-left: clamp(20px, 3vw, 48px); padding-right: clamp(20px, 3vw, 48px); align-items: stretch; min-height: 460px; }
-body .pb-page .pb-col { flex: 0 0 262px; display: flex; flex-direction: column; border-radius: 14px; background: var(--u-sheet) !important; border: 1px solid var(--u-line-soft); padding: 12px 10px 10px; transition: border-color .12s, background .12s; }
-body .pb-page .pb-col.is-empty { flex-basis: 52px; padding: 14px 0; align-items: center; background: transparent !important; border-style: dashed; border-color: var(--u-line); transition: flex-basis .15s ease; }
-body .pb-page .pb-col.is-empty .pb-col-h { writing-mode: vertical-rl; transform: rotate(180deg); color: var(--u-muted); font-weight: 500; padding: 0; }
-body .pb-page .pb-col.is-empty .pb-drop { display: none; }
-body .pb-page .pb-board.is-dragging .pb-col.is-empty { flex-basis: 168px; padding: 12px 10px 10px; align-items: stretch; }
-body .pb-page .pb-board.is-dragging .pb-col.is-empty .pb-col-h { writing-mode: horizontal-tb; transform: none; padding: 0 4px; }
-body .pb-page .pb-board.is-dragging .pb-col.is-empty .pb-drop { display: grid; }
-body .pb-page .pb-col.is-over { border-color: var(--u-text) !important; border-style: solid; background: var(--u-raise) !important; }
-body .pb-page .pb-col-end { flex-basis: 168px; background: transparent !important; border-style: dashed; border-color: var(--u-line); }
-body .pb-page .pb-col-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 0 4px; font-size: 13px; font-weight: 550; color: var(--u-text); }
-body .pb-page .pb-col-h b { font-weight: 500; color: var(--u-faint); font-variant-numeric: tabular-nums; }
-body .pb-page .pb-col-sum { padding: 2px 4px 0; font-size: 12.5px; color: var(--u-muted); }
-body .pb-page .pb-col-body { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; flex: 1; }
-body .pb-page .pb-drop { flex: 1; display: grid; place-items: center; min-height: 90px; margin-top: 12px; padding: 12px; text-align: center; font-size: 12.5px; line-height: 1.45; color: var(--u-faint); }
-body .pb-page .pb-col-body .pb-drop { margin-top: 0; }
+/* Stage strip: every stage at a glance, and the drop targets while dragging. */
+body .pb-page .pb-rail { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; margin-bottom: 22px; }
+body .pb-page .pb-stop { display: flex; flex-direction: column; justify-content: space-between; gap: 6px; min-width: 0; padding: 12px 12px 11px; border-radius: 10px; background: var(--u-sheet) !important; border: 1px solid transparent; transition: background .12s, border-color .12s; }
+body .pb-page .pb-stop.is-end { background: transparent !important; border: 1px dashed var(--u-line); }
+body .pb-page .pb-stop-k { font-size: 12px; line-height: 1.3; min-height: 2.6em; color: var(--u-faint); }
+body .pb-page .pb-stop-n { font-size: 22px; font-weight: 500; line-height: 1; color: var(--u-faint); }
+body .pb-page .pb-stop.has .pb-stop-k { color: var(--u-soft); }
+body .pb-page .pb-stop.has .pb-stop-n { color: var(--u-text); }
+body .pb-page .pb-rail.is-dragging .pb-stop { border: 1px dashed #45413c; }
+body .pb-page .pb-rail .pb-stop.is-over { border: 1px solid var(--u-text) !important; background: var(--u-raise) !important; }
+body .pb-page .pb-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+body .pb-page .pb-col { display: flex; flex-direction: column; min-width: 0; border-radius: 14px; background: var(--u-sheet) !important; border: 1px solid var(--u-line-soft); padding: 14px 12px 12px; transition: border-color .12s; }
+body .pb-page .pb-col.is-over { border-color: var(--u-text) !important; }
+body .pb-page .pb-col-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 0 4px; font-size: 13.5px; font-weight: 550; color: var(--u-text); }
+body .pb-page .pb-col-h b { font-weight: 500; color: var(--u-muted); font-size: 13px; }
+body .pb-page .pb-col-h i { font-style: normal; font-weight: 400; color: var(--u-faint); margin-left: 6px; }
+body .pb-page .pb-col-body { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 body .pb-page .pb-deal { display: flex; flex-direction: column; gap: 3px; padding: 12px 12px 11px; border-radius: 10px; background: var(--u-raise) !important; border: 1px solid var(--u-line); cursor: grab; }
 body .pb-page .pb-deal:hover { border-color: #45413c; }
 body .pb-page .pb-deal.is-drag { opacity: .4; }
@@ -29,4 +30,5 @@ body .pb-page .pb-deal-meta .is-late, body .pb-page td.pb-late { color: var(--u-
 body .pb-page select.pb-stage { height: 30px; width: auto; font-size: 13px !important; padding: 0 26px 0 10px; }
 body .pb-page .pb-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 body .pb-page .pb-form .pb-full { grid-column: 1 / -1; }
-@media (max-width: 700px) { body .pb-page .pb-form { grid-template-columns: 1fr; } body .pb-page .pb-board { margin: 0 -16px; padding: 0 16px 12px; } }
+@media (max-width: 1200px) { body .pb-page .pb-rail { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 700px) { body .pb-page .pb-form { grid-template-columns: 1fr; } body .pb-page .pb-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
