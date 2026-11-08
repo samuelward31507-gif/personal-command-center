@@ -1,4 +1,4 @@
-// Cold email scripts with fill-ins. Pure: no I/O. Cinder never sends these; the founder sends each one from his own inbox.
+// Cold email scripts with fill-ins. Pure: no I/O. Sent from the founder's own inbox.
 
 export type EmailStep = "intro" | "follow_up" | "breakup";
 export type EmailTemplate = { subject: string; body: string };
@@ -7,41 +7,44 @@ export type Merge = { first_name: string; company: string; city: string; my_name
 /** Days to wait after the previous email before the next step comes due. */
 export const STEP_GAP_DAYS: Record<"follow_up" | "breakup", number> = { follow_up: 3, breakup: 4 };
 
+/* Written to get a reply, not a click: short, plain text, one question at the end.
+   The first email has no link on purpose. Links in a first cold email from a new inbox hurt delivery,
+   and a one-word reply ("sure") is easier to get than a booking. The link comes in the follow-up. */
 export const DEFAULT_TEMPLATES: Record<EmailStep, EmailTemplate> = {
   intro: {
-    subject: "{company} calls after hours",
-    body: `Hey {first_name},
+    subject: "missed calls at {company}",
+    body: `Hi {first_name},
 
-Quick one. When someone calls {company} while your crew is out on a job or after hours, what happens to that call?
+When someone calls {company} and nobody picks up (you're on a job, it's after 5, it's Saturday), most of them don't leave a voicemail. They call the next company on Google.
 
-Most of those callers don't leave a voicemail. They call the next company on Google.
+I set up a system that texts every missed caller back within seconds, gets the job details and books the estimate on your calendar. Nothing new for you to learn.
 
-We set up a system that texts every missed caller back within seconds, answers their questions and books the estimate straight onto your calendar. You don't touch any tech.
+If it doesn't book you at least 5 estimates in the first 30 days, your next month is free.
 
-We guarantee 5 booked appointments in your first 30 days, or your next month is free.
-
-Worth a 15-minute look this week? {booking_link}
+Open to seeing how it would work for {company}?
 
 {my_name}
 {business}`,
   },
   follow_up: {
-    subject: "Re: {company} calls after hours",
-    body: `Hey {first_name},
+    subject: "Re: missed calls at {company}",
+    body: `Hi {first_name},
 
-Bumping this up in case it got buried.
+Following up on my note below. Do you know roughly how many calls {company} misses in a busy week?
 
-If I showed you how many estimates {company} could book from the calls you're already getting, would that be worth 15 minutes? {booking_link}
+Most owners don't, because those callers never leave a voicemail. That's the work I'd be winning back for you.
+
+Worth 15 minutes to see it? {booking_link}
 
 {my_name}`,
   },
   breakup: {
-    subject: "Close the file on {company}?",
-    body: `Hey {first_name},
+    subject: "Re: missed calls at {company}",
+    body: `Hi {first_name},
 
-Haven't heard back, so I'll assume missed calls aren't a problem for {company} right now and stop reaching out.
+I haven't heard back, so I'll take it this isn't a priority for {company} right now and stop emailing.
 
-If that changes, just reply to this email and I'll send over a quick demo.
+If missed calls ever turn into a headache, reply "calls" and I'll send over how it works.
 
 {my_name}`,
   },

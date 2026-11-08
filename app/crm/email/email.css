@@ -20,3 +20,15 @@ body .em-page .em-connect span { font-size: 13.5px; color: var(--u-muted); line-
 body .em-page pre.em-foot { margin: 22px 0 0; white-space: pre-wrap; font: 400 12.5px/1.55 var(--u-text-font); color: #8a8178 !important; background: transparent !important; border: 0 !important; padding: 0 !important; }
 body .em-page .em-disc { border: 0; background: none; padding: 0; color: var(--u-muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font: inherit; }
 body .em-page .em-to span + b + span { margin-left: 8px; }
+
+/* Select and send in bulk */
+body .em-page .em-item { display: flex !important; align-items: center; gap: 12px; }
+body .em-page .em-pick { flex: 1; min-width: 0; display: block; text-align: left; border: 0; background: none; padding: 8px 0; color: inherit; font: inherit; cursor: pointer; }
+body .em-page .em-check, body .em-page .em-all input { width: 16px; height: 16px; margin: 0; flex: none; accent-color: var(--u-text); cursor: pointer; }
+body .em-page .em-item.is-sel { background: color-mix(in srgb, var(--u-sheet) 70%, transparent) !important; }
+body .em-page .em-bulk { display: flex; align-items: center; gap: 10px; min-height: 40px; margin-bottom: 8px; padding: 0 12px; }
+body .em-page .em-all { display: flex; align-items: center; gap: 12px; margin-right: auto; font-size: 13.5px; color: var(--u-soft); cursor: pointer; }
+body .em-page .em-run { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding: 14px 16px; border-radius: 12px; background: var(--u-sheet); border: 1px solid var(--u-line); }
+body .em-page .em-run-top { display: flex; align-items: center; gap: 12px; font-size: 13.5px; color: var(--u-muted); }
+body .em-page .em-run-top b { color: var(--u-text); font-weight: 600; }
+body .em-page .em-run-top button { margin-left: auto; }
