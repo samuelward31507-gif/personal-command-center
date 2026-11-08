@@ -15,7 +15,7 @@ import TextDraft, { type TextContext } from "./text-draft";
 type Contact={id:string;name:string;company:string;role:string;email:string;phone:string;website:string;instagram:string;facebook:string;linkedin?:string;niche?:string;location:string;timeZone:string;status:"Lead"|"Contact"|"Customer"|"Partner";source:string;lastContact:string;lastTouchAt?:string;lastTouchOutcome?:string;nextFollowUp:string;notes:string;createdAt:string};
 type Activity={id:string;contact_id:string;channel:"call"|"text"|"note";action:string;outcome:string;notes:string;sequence_step:number|null;occurred_at:string};
 const KEY="cinder.crm.contacts.v1";
-const blank={name:"",company:"",role:"",email:"",phone:"",website:"",instagram:"",facebook:"",linkedin:"",location:"",timeZone:"",status:"Lead" as Contact["status"],source:"",lastContact:"",nextFollowUp:"",notes:""};
+const blank={name:"",company:"",role:"",email:"",phone:"",website:"",instagram:"",facebook:"",linkedin:"" as string|undefined,location:"",timeZone:"",status:"Lead" as Contact["status"],source:"",lastContact:"",nextFollowUp:"",notes:""};
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 const localDay=(iso:string)=>{const d=new Date(iso);return Number.isNaN(d.getTime())?"":d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 const touchedToday=(c:Contact)=>!!c.lastTouchAt&&localDay(c.lastTouchAt)===today();
