@@ -8,7 +8,7 @@ const ok = fn => { fn(); n++; };
 const mon = new Date(2026, 10, 9), sat = new Date(2026, 10, 7);
 ok(() => assert.equal(routineFor(sat).length, 0, "no routine on weekends"));
 ok(() => assert.equal(routineFor(mon).length, WEEKDAY_ROUTINE.length));
-ok(() => assert.deepEqual(routineFor(mon, true).map(b => b.title), ["Trading", "Dial block 1", "Dial block 2"], "month view shows only the key blocks"));
+ok(() => assert.deepEqual(routineFor(mon, true).map(b => b.title), ["Trading", "Dial block", "Dial block"], "month view shows only the key blocks"));
 ok(() => assert.equal(routineFor(mon)[1].startsAt.getHours(), 9));
 ok(() => assert.equal(blockTime({ start: "09:00", end: "11:30" }), "9–11:30"));
 ok(() => assert.equal(blockTime({ start: "12:15", end: "15:00" }), "12:15–3"));

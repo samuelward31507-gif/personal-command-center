@@ -38,7 +38,7 @@ const EVENT_TONE: Record<EventType, string> = { meeting: "blue", call: "blue", f
 type Item = { id: string; title: string; start: Date; end: Date; tone: string; routine: boolean; event?: CalendarEvent; sub?: string };
 
 function itemsFor(day: Date, events: CalendarEvent[], monthOnly: boolean): Item[] {
-  const routine: Item[] = routineFor(day, monthOnly).map(b => ({ id: "r-" + b.start, title: b.title, start: b.startsAt, end: b.endsAt, tone: ROUTINE_TONE[b.kind], routine: true, sub: blockTime(b) }));
+  const routine: Item[] = (monthOnly ? [] : routineFor(day)).map(b => ({ id: "r-" + b.start, title: b.title, start: b.startsAt, end: b.endsAt, tone: ROUTINE_TONE[b.kind], routine: true, sub: blockTime(b) }));
   const evs: Item[] = events.filter(e => !e.allDay).map(e => ({ id: e.id, title: e.title, start: new Date(e.startsAt), end: new Date(e.endsAt), tone: EVENT_TONE[e.type] ?? "gray", routine: false, event: e, sub: e.contactName || undefined }));
   return [...routine, ...evs].sort((a, b) => a.start.getTime() - b.start.getTime() || Number(a.routine) - Number(b.routine));
 }
@@ -82,7 +82,7 @@ function MonthView({ days, anchor, eventsOn, followUpsOn, onEdit, onNew, onOpenD
 
 // ---------- Week / Day time grid ----------
 
-const START_H = 6, END_H = 24, HOUR_PX = 52;
+const START_H = 6, END_H = 24, HOUR_PX = 64;
 
 /** Side-by-side lanes for overlapping items (Google-Calendar style). */
 function layout(items: Item[]): (Item & { lane: number; lanes: number })[] {
@@ -150,7 +150,7 @@ function TimeGrid({ days, eventsOn, followUpsOn, onEdit, onNew, onOpenDay, view 
             // inset from the left when they cover a routine block so both stay readable.
             const items = [
               ...layout(routineItems).map(it => ({ ...it, inset: 0 })),
-              ...layout(visible.filter(it => !it.routine)).map(it => ({ ...it, inset: routineItems.some(r => r.start < it.end && r.end > it.start) ? 18 : 0 })),
+              ...layout(visible.filter(it => !it.routine)).map(it => ({ ...it, inset: 0 })),
             ];
             const isToday = sameDay(d, today);
             const nowTop = minutesFromStart(today) / 60 * HOUR_PX;
@@ -168,11 +168,11 @@ function TimeGrid({ days, eventsOn, followUpsOn, onEdit, onNew, onOpenDay, view 
                   const top = startM / 60 * HOUR_PX + 1, height = Math.max(20, (endM - startM) / 60 * HOUR_PX - 3);
                   const width = (100 - it.inset) / it.lanes;
                   const style = { top, height, left: `calc(${it.inset + it.lane * width}% + 3px)`, width: `calc(${width}% - 7px)` };
-                  const compact = height < 40;
-                  const body = <><span className="cal-block-title">{it.title}</span>{!compact && <span className="cal-block-time">{shortTime(it.start)}–{shortTime(it.end)}{it.event && it.sub ? " · " + it.sub : ""}</span>}</>;
+                  const compact = height < 44;
+                  const body = <><span className="cal-block-title">{it.title}{compact && <span className="cal-block-inline"> {shortTime(it.start)}</span>}</span>{!compact && <span className="cal-block-time">{shortTime(it.start)}–{shortTime(it.end)}{it.event && it.sub ? " · " + it.sub : ""}</span>}</>;
                   return it.event
                     ? <button type="button" key={it.id} className={"cal-block tone-" + it.tone + (compact ? " is-compact" : "") + (it.event.status === "cancelled" ? " is-cancelled" : "")} style={style} onClick={() => onEdit(it.event!)}>{body}</button>
-                    : <div key={it.id} className={"cal-block is-routine tone-" + it.tone + (compact ? " is-compact" : "")} style={style} title={it.title}>{body}</div>;
+                    : <div key={it.id} className={"cal-band tone-" + it.tone} style={{ top: startM / 60 * HOUR_PX, height: (endM - startM) / 60 * HOUR_PX }} title={it.title + " · " + it.sub}><span className="cal-band-label">{it.title}</span><span className="cal-band-time">{it.sub}</span></div>;
                 })}
                 {isToday && nowTop > 0 && nowTop < hours.length * HOUR_PX && <div className="cal-now" style={{ top: nowTop }} aria-hidden="true" />}
               </div>

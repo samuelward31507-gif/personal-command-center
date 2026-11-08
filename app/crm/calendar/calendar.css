@@ -175,3 +175,17 @@
   .calendar-page .calendar-upcoming-item { gap: 4px; }
   .calendar-page .upcoming-type { display: none; }
 }
+
+/* Routine as background bands (structure, not appointments) */
+.calendar-page .cal-band { position: absolute; left: 0; right: 0; z-index: 1; display: flex; align-items: baseline; gap: 6px; padding: 6px 10px; background: var(--t-bg); border-top: 1px solid rgba(255,255,255,.07); pointer-events: none; overflow: hidden; }
+.calendar-page .cal-band-label { font-size: 11px; font-weight: 600; letter-spacing: .02em; color: #9d9d9d; white-space: nowrap; }
+.calendar-page .cal-band-time { font-size: 10.5px; color: #626262; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.calendar-page .cal-band.tone-green { background: rgba(255,255,255,.045); }
+.calendar-page .cal-band.tone-green .cal-band-label { color: #c8c8c8; }
+.calendar-page .cal-band.tone-amber, .calendar-page .cal-band.tone-violet { background: rgba(255,255,255,.028); }
+.calendar-page .cal-band.tone-gray { background: rgba(255,255,255,.018); }
+.calendar-page .cal-block-inline { font-weight: 400; opacity: .7; margin-left: 4px; }
+.calendar-page .cal-tg-hour { font-size: 11px; color: #6e6e6e; }
+.calendar-page .cal-tg-line { border-top-color: #222; }
+.calendar-page .cal-block { box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.4); }
+.calendar-page .cal-block-title { font-size: 12.5px; }
