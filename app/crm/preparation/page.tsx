@@ -4,6 +4,7 @@ import { reportSection } from "@/lib/business-audit";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import "./research.css";
 
 type ArtifactType = "prospect_research" | "call_brief" | "audit_prep" | "meeting_brief" | "follow_up_draft" | "proposal";
 type ArtifactStatus = "draft" | "reviewed" | "archived";
@@ -25,9 +26,6 @@ const splitLines=(v:string)=>v.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
 const dayKey=(d:Date)=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const midnightIso=(d:Date)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()).toISOString();
 const dateLabel=(v:string|null|undefined)=>v?new Date(v).toLocaleString(undefined,{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}):"";
-const inputStyle={width:"100%",padding:"10px 12px",border:"1px solid #3a3a3a",borderRadius:9,background:"#262626",color:"#e6e6e6",font:"inherit",fontSize:13};
-const fieldStyle={display:"grid",gap:6,fontSize:12,color:"#ababab",fontWeight:600} as const;
-const buttonStyle={border:"1px solid #3a3a3a",borderRadius:9,padding:"9px 12px",background:"#262626",color:"#e6e6e6",cursor:"pointer",font:"inherit",fontSize:12,fontWeight:600} as const;
 
 export default function PreparationPage(){
  const searchParams=useSearchParams();
@@ -42,7 +40,7 @@ export default function PreparationPage(){
  const [loading,setLoading]=useState(true),[saving,setSaving]=useState(false);
  const [error,setError]=useState(""),[notice,setNotice]=useState("");
  const [filter,setFilter]=useState<"all"|ArtifactStatus>("all"),[query,setQuery]=useState("");
- const [editing,setEditing]=useState<string|null>(null),[showEditor,setShowEditor]=useState(false),[draft,setDraft]=useState<Draft>(blank);
+ const [editing,setEditing]=useState<string|null>(null),[showEditor,setShowEditor]=useState(false),[draft,setDraft]=useState<Draft>(blank),[picked,setPicked]=useState<string|null>(null);
 
  const load=useCallback(async()=>{
   setLoading(true);setError("");
@@ -140,47 +138,74 @@ export default function PreparationPage(){
   catch{setError("Clipboard access is unavailable. Open the artifact to copy its content manually.");}
  }
 
- return <main style={{maxWidth:1180,margin:"0 auto",padding:"28px 22px 56px",color:"#e6e6e6"}}>
-  <header style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:18,flexWrap:"wrap"}}>
-   <div><h1>Research</h1><p>Audits and briefs for the people you're about to call or meet.</p></div>
-   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><Link href="/crm/audit" style={{...buttonStyle,textDecoration:"none"}}>Run a business audit</Link><button onClick={()=>newArtifact()} style={{...buttonStyle,background:"#e6e6e6",color:"#111",borderColor:"#e6e6e6"}}>＋ New brief</button></div>
-  </header>
-  <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:10,margin:"24px 0"}}>
-   {[["Saved research",artifacts.length,"Audits and briefs"],["To review",drafts,"Drafts to check"],["Reviewed",reviewed,"Ready to use"],["Upcoming meetings",events.filter(e=>e.type==="meeting").length,"Scheduled in the next 90 days"]].map(([label,value,sub])=><article key={String(label)} style={{border:"1px solid #3a3a3a",borderRadius:12,padding:16,background:"#262626"}}><small style={{display:"block",fontSize:10,letterSpacing:1.1,color:"#ababab"}}>{label}</small><strong style={{display:"block",fontSize:26,marginTop:10,fontWeight:600}}>{loading?"—":value}</strong><small style={{display:"block",marginTop:5,color:"#ababab"}}>{sub}</small></article>)}
-  </section>
-  <section style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap",alignItems:"center",marginBottom:16}}>
-   <label style={{...fieldStyle,flex:"1 1 260px"}}><span>Search preparation</span><input style={inputStyle} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search titles, prospects, facts, or briefs…"/></label>
-   <div style={{display:"flex",gap:6,flexWrap:"wrap",alignSelf:"end"}}>{(["all","draft","reviewed","archived"] as const).map(x=><button key={x} onClick={()=>setFilter(x)} style={{...buttonStyle,background:filter===x?"#e6e6e6":"#262626",color:filter===x?"#111":"#ababab",borderColor:filter===x?"#e6e6e6":"#3a3a3a"}}>{x==="all"?"All records":x.charAt(0).toUpperCase()+x.slice(1)}</button>)}</div>
-  </section>
-  {error&&<p role="alert" style={{padding:12,background:"#2a1414",borderRadius:9,color:"#fca5a5"}}>{error}</p>}
-  {notice&&<p role="status" style={{padding:12,background:"#10241a",borderRadius:9,color:"#e4e4e4"}}>{notice}</p>}
-  {showEditor&&<section style={{border:"1px solid #3a3a3a",borderRadius:14,padding:18,background:"#262626",marginBottom:20}}>
-   <header style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center"}}><div><h2 style={{fontSize:21,margin:"0 0 4px"}}>{editing?"Edit preparation record":"Create preparation record"}</h2><p style={{margin:0,fontSize:12,color:"#ababab"}}>Save as a draft first. Mark reviewed only after you verify the facts and sources.</p></div><button style={buttonStyle} type="button" onClick={()=>setShowEditor(false)}>Close</button></header>
-   <form onSubmit={save} style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:14,marginTop:18}}>
-    <label style={fieldStyle}>Artifact type<select style={inputStyle} value={draft.type} onChange={e=>setDraft({...draft,type:e.target.value as ArtifactType})}>{Object.entries(types).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
-    <label style={fieldStyle}>Title<input required maxLength={240} style={inputStyle} value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})} placeholder="e.g. Garage door company — first call brief"/></label>
-    <label style={fieldStyle}>Linked contact<select style={inputStyle} value={draft.contactId} onChange={e=>setDraft({...draft,contactId:e.target.value})}><option value="">No linked contact</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.name}{c.company?" — "+c.company:""}</option>)}</select></label>
-    <label style={fieldStyle}>Linked deal<select style={inputStyle} value={draft.dealId} onChange={e=>setDraft({...draft,dealId:e.target.value})}><option value="">No linked deal</option>{deals.map(d=><option key={d.id} value={d.id}>{d.title}{d.company?" — "+d.company:""}</option>)}</select></label>
-    <label style={fieldStyle}>Linked upcoming calendar event<select style={inputStyle} value={draft.calendarEventId} onChange={e=>setDraft({...draft,calendarEventId:e.target.value})}><option value="">No linked event</option>{events.map(e=><option key={e.id} value={e.id}>{e.title} · {dateLabel(e.startsAt)}</option>)}</select></label>
-    <label style={fieldStyle}>Confidence<select style={inputStyle} value={draft.confidence} onChange={e=>setDraft({...draft,confidence:e.target.value as Confidence})}><option value="low">Low — limited evidence</option><option value="medium">Medium — some evidence</option><option value="high">High — strong source evidence</option></select></label>
-    <label style={{...fieldStyle,gridColumn:"1 / -1"}}>Source URLs (one per line)<textarea rows={3} style={inputStyle} value={draft.sourceUrlsText} onChange={e=>setDraft({...draft,sourceUrlsText:e.target.value})} placeholder="https://company.example/about"/></label>
-    <label style={{...fieldStyle,gridColumn:"1 / -1"}}>Verified facts (one per line)<textarea rows={3} style={inputStyle} value={draft.factsText} onChange={e=>setDraft({...draft,factsText:e.target.value})} placeholder="Only facts directly supported by the sources above"/></label>
-    <label style={{...fieldStyle,gridColumn:"1 / -1"}}>Hypotheses to test (one per line)<textarea rows={3} style={inputStyle} value={draft.hypothesesText} onChange={e=>setDraft({...draft,hypothesesText:e.target.value})} placeholder="Potential bottlenecks or angles — clearly label these as hypotheses"/></label>
-    <label style={{...fieldStyle,gridColumn:"1 / -1"}}>Brief / draft content<textarea rows={7} maxLength={20000} style={{...inputStyle,resize:"vertical"}} value={draft.content} onChange={e=>setDraft({...draft,content:e.target.value})} placeholder="Opening, discovery questions, evidence, objections, agenda, next step, or draft follow-up. Keep it factual and editable."/></label>
-    <div style={{gridColumn:"1 / -1",display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}><small style={{color:"#ababab",maxWidth:650}}>Preparation only: this workspace never sends messages or places calls. Text outreach remains subject to the separate SMS-consent gate.</small><div style={{display:"flex",gap:8}}><button type="button" style={buttonStyle} onClick={()=>setShowEditor(false)}>Cancel</button><button disabled={saving} type="submit" style={{...buttonStyle,background:"#e6e6e6",color:"#111",borderColor:"#e6e6e6",opacity:saving ? 0.65 : 1}}>{saving?"Saving…":"Save draft"}</button></div></div>
-   </form>
-  </section>}
-  {loading?<p style={{padding:24,color:"#ababab"}}>Loading research and preparation…</p>:visible.length===0?<section style={{border:"1px dashed #3a3a3a",borderRadius:14,padding:30,textAlign:"center",background:"#262626"}}><h2 style={{marginTop:0}}>Nothing in this view yet</h2><p style={{color:"#ababab"}}>Create a research record, call brief, or meeting brief. Keep verified facts separate from hypotheses.</p><button style={{...buttonStyle,background:"#e6e6e6",color:"#111"}} onClick={()=>newArtifact()}>＋ Create first record</button></section>:<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:12}}>
-   {visible.map(a=><article key={a.id} style={{border:"1px solid #3a3a3a",borderRadius:13,padding:16,background:"#262626",display:"flex",flexDirection:"column",gap:12}}>
-    <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"flex-start"}}><div><small style={{color:"#9e9e9e",fontWeight:700,letterSpacing:1}}>{(types[a.type]??a.type).toUpperCase()}</small><h2 style={{fontSize:18,lineHeight:1.3,margin:"7px 0"}}>{a.title}</h2><p style={{fontSize:12,color:"#ababab",margin:0}}>{[a.contactName,a.company,a.dealTitle,a.eventTitle].filter(Boolean).join(" · ")||"Not linked to a CRM record"}</p></div><span style={{fontSize:10,border:"1px solid #3a3a3a",borderRadius:999,padding:"5px 8px",whiteSpace:"nowrap"}}>{a.status}</span></div>
-    {a.content&&(a.type==="audit_prep"&&reportSection(a.content,"Verdict")?<div style={{display:"grid",gap:8}}>{([["Verdict",reportSection(a.content,"Verdict")],["Next step",reportSection(a.content,"Next CRM action")]] as const).filter(([,v])=>v).map(([k,v])=><p key={k} style={{fontSize:13,lineHeight:1.6,margin:0,color:"#d4d4d4"}}><span style={{display:"block",fontSize:10,letterSpacing:1.2,color:"#8a8a8a",fontWeight:700,marginBottom:2}}>{k}</span>{v.replace(/\*\*/g,"").replace(/^[-*•]\s+/gm,"").slice(0,320)}</p>)}<a href="/crm/audit" style={{fontSize:12,color:"#c4c4c4",textDecoration:"none"}}>Run or view audits →</a></div>:<p style={{fontSize:13,lineHeight:1.6,whiteSpace:"pre-wrap",margin:0,color:"#ababab"}}>{(()=>{const t=a.content.replace(/^#{1,6}\s+/gm,"").replace(/\*\*|__|`/g,"").replace(/^\s*[-*•]\s+/gm,"").replace(/\n{3,}/g,"\n\n").trim();return t.length>420?t.slice(0,420)+"…":t})()}</p>)}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div style={{background:"#221d0c",borderRadius:9,padding:10}}><small style={{display:"block",color:"#ababab",fontSize:10,letterSpacing:.8}}>Verified facts</small><strong style={{fontSize:18}}>{a.verifiedFacts.length}</strong><small style={{display:"block",color:"#ababab"}}>Recorded</small></div><div style={{background:"#221d0c",borderRadius:9,padding:10}}><small style={{display:"block",color:"#ababab",fontSize:10,letterSpacing:.8}}>Sources / confidence</small><strong style={{fontSize:18}}>{a.sourceUrls.length} · {a.confidence}</strong><small style={{display:"block",color:"#ababab"}}>{a.hypotheses.length} hypotheses</small></div></div>
-    {a.sourceUrls.length>0&&<div style={{display:"grid",gap:4}}><small style={{fontWeight:700,color:"#ababab",fontSize:10,letterSpacing:1}}>Sources</small>{a.sourceUrls.slice(0,3).map(url=><a key={url} href={url} target="_blank" rel="noreferrer" style={{fontSize:12,color:"#c4c4c4",overflowWrap:"anywhere"}}>{url}</a>)}{a.sourceUrls.length>3&&<small style={{color:"#ababab"}}>+{a.sourceUrls.length-3} more sources</small>}</div>}
-    {a.verifiedFacts.length>0&&<div style={{display:"grid",gap:5}}><small style={{fontWeight:700,color:"#477252",fontSize:10,letterSpacing:1}}>Verified facts</small><ul style={{margin:0,paddingLeft:18,fontSize:12,lineHeight:1.5,color:"#ababab"}}>{a.verifiedFacts.slice(0,3).map((fact,i)=><li key={i}>{fact}</li>)}</ul></div>}
-    {a.hypotheses.length>0&&<div style={{display:"grid",gap:5}}><small style={{fontWeight:700,color:"#986c28",fontSize:10,letterSpacing:1}}>Hypotheses to test</small><ul style={{margin:0,paddingLeft:18,fontSize:12,lineHeight:1.5,color:"#ababab"}}>{a.hypotheses.slice(0,3).map((hypothesis,i)=><li key={i}>{hypothesis}</li>)}</ul></div>}
-    <div style={{fontSize:11,color:"#888"}}>Updated {dateLabel(a.updatedAt)}{a.researchedAt?" · Sources recorded "+dateLabel(a.researchedAt):" · No source URLs recorded yet"}</div>
-    <div style={{display:"flex",gap:7,flexWrap:"wrap",marginTop:"auto"}}>{a.type==="audit_prep"&&<Link href={"/crm/audits/"+a.id} style={{...buttonStyle,textDecoration:"none",display:"inline-flex",alignItems:"center"}}>Open report</Link>}<button style={buttonStyle} onClick={()=>editArtifact(a)}>Edit</button>{a.contactId&&!a.dealId&&["meeting_brief","call_brief","follow_up_draft"].includes(a.type)&&<button style={buttonStyle} onClick={()=>void createDealFromBrief(a)}>Create deal</button>}<button style={buttonStyle} onClick={()=>void copyContent(a)}>Copy content</button>{a.status==="draft"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"reviewed")}>Mark reviewed</button>}{a.status!=="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"archived")}>Archive</button>}{a.status==="archived"&&<button style={buttonStyle} onClick={()=>void changeStatus(a,"draft")}>Restore draft</button>}</div>
-   </article>)}
+ const chosen=visible.find(a=>a.id===picked)??visible[0];
+ const set=(k:keyof Draft)=>(e:{target:{value:string}})=>setDraft({...draft,[k]:e.target.value});
+ const blocks=(text:string)=>text.replace(/\*\*|__|`/g,"").split(/\n{2,}/).map(b=>b.trim()).filter(Boolean);
+ const isHead=(line:string)=>/^#{1,6}\s/.test(line)||(/^[A-Z][A-Z0-9 &/,'()-]{3,}$/.test(line.trim())&&line.trim().length<60);
+ return <div className="u-page rs-page" role="region" aria-label="Research">
+  <div className="u-head">
+   <h1 className="u-title">Research</h1>
+   <div className="u-head-actions"><button className="u-btn u-btn-bare" onClick={()=>newArtifact("call_brief")}>Write a brief</button><Link className="u-btn u-btn-light" href="/crm/audit">Research a business</Link></div>
+  </div>
+  {error&&<p className="u-flash is-bad" role="alert" style={{marginBottom:16}}>{error}</p>}
+  {notice&&<p className="u-flash" role="status" style={{marginBottom:16}}>{notice}</p>}
+
+  {loading?<p className="u-note" role="status">Loading…</p>:artifacts.length===0?<div className="u-void"><h2>Nothing researched yet</h2><p>Research a business before you call and Cinder reads their website, reviews and listings, then writes a one-page brief: where they lose jobs, how to open the call, what to watch for. It shows up in Call mode when you dial them.</p><Link className="u-btn u-btn-light" href="/crm/audit">Research a business</Link></div>
+  :<div className="rs-split">
+   <div>
+    <div className="rs-bar">
+     <div className="u-seg" role="group" aria-label="Show">{(["all","draft","reviewed","archived"] as const).map(x=><button key={x} type="button" aria-pressed={filter===x} onClick={()=>setFilter(x)}>{x==="all"?"All":x==="draft"?`To review ${drafts}`:x==="reviewed"?`Reviewed ${reviewed}`:"Archived"}</button>)}</div>
+     <input className="u-field" type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search" aria-label="Search research"/>
+    </div>
+    {visible.length===0?<p className="u-note">Nothing in this view.</p>:<div className="u-rows">{visible.map(a=><button key={a.id} type="button" className={"u-row rs-item"+(chosen?.id===a.id?" is-on":"")} onClick={()=>setPicked(a.id)}>
+     <div className="u-row-main"><strong>{a.company||a.contactName||a.title}</strong><span>{types[a.type]??a.type}, {new Date(a.updatedAt).toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span></div>
+     <span className={"u-mark"+(a.status==="reviewed"?" is-good":"")}>{a.status==="draft"?"To review":a.status==="reviewed"?"Reviewed":"Archived"}</span>
+    </button>)}</div>}
+   </div>
+
+   {chosen&&<article className="rs-read">
+    <p className="u-note">{types[chosen.type]??chosen.type}{chosen.confidence?`, ${chosen.confidence} confidence`:""}{chosen.type==="audit_prep"?", written by AI, verify before quoting":""}</p>
+    <h2 className="rs-title">{chosen.company||chosen.contactName||chosen.title}</h2>
+    <p className="rs-linked">{[chosen.company&&chosen.contactName?chosen.contactName:"",chosen.dealTitle,chosen.eventTitle?`${chosen.eventTitle}${chosen.eventStartsAt?", "+dateLabel(chosen.eventStartsAt):""}`:""].filter(Boolean).join(" · ")||chosen.title}</p>
+    <div className="rs-acts">
+     {chosen.type==="audit_prep"&&<Link className="u-btn u-btn-light" href={"/crm/audits/"+chosen.id}>Open full report</Link>}
+     {chosen.contactId&&<Link className="u-btn" href={`/crm?contact=${chosen.contactId}`}>Open contact</Link>}
+     {chosen.status==="draft"&&<button className="u-btn" onClick={()=>void changeStatus(chosen,"reviewed")}>Mark reviewed</button>}
+     <button className="u-btn u-btn-bare" onClick={()=>editArtifact(chosen)}>Edit</button>
+     <button className="u-btn u-btn-bare" onClick={()=>void copyContent(chosen)}>Copy</button>
+     {chosen.contactId&&!chosen.dealId&&["meeting_brief","call_brief","follow_up_draft"].includes(chosen.type)&&<button className="u-btn u-btn-bare" onClick={()=>void createDealFromBrief(chosen)}>Create deal</button>}
+     {chosen.status!=="archived"?<button className="u-btn u-btn-bare" onClick={()=>void changeStatus(chosen,"archived")}>Archive</button>:<button className="u-btn u-btn-bare" onClick={()=>void changeStatus(chosen,"draft")}>Restore</button>}
+    </div>
+    {chosen.type==="audit_prep"&&reportSection(chosen.content,"Verdict")?<>
+     <p className="rs-verdict">{reportSection(chosen.content,"Verdict").replace(/\*\*/g,"").replace(/^[-*•]\s+/gm,"")}</p>
+     {(["Call plan","Top opportunities","Red flags","Next CRM action"] as const).map(h=>{const v=reportSection(chosen.content,h);if(!v)return null;const lines=v.split("\n").map(l=>l.replace(/\*\*/g,"").replace(/^[-*•]\s+|^\d+[.)]\s+/,"").trim()).filter(Boolean);return <section key={h} className="rs-sec"><h3>{h==="Call plan"?"How to run the call":h==="Top opportunities"?"Where they're losing jobs":h==="Red flags"?"Watch out for":"Next step"}</h3><ul>{lines.map((l,i)=><li key={i}>{l}</li>)}</ul></section>})}
+    </>:<div className="rs-body">{blocks(chosen.content).map((b,i)=>{const lines=b.split("\n");return isHead(lines[0])?<section key={i} className="rs-sec"><h3>{lines[0].replace(/^#{1,6}\s+/,"").toLowerCase().replace(/^./,c=>c.toUpperCase())}</h3>{lines.length>1&&<ul>{lines.slice(1).map((l,j)=><li key={j}>{l.replace(/^\s*[-*•]\s+|^\d+[.)]\s+/,"")}</li>)}</ul>}</section>:<p key={i}>{b}</p>})}</div>}
+    {(chosen.verifiedFacts.length>0||chosen.hypotheses.length>0)&&<div className="rs-two">
+     {chosen.verifiedFacts.length>0&&<section className="rs-sec"><h3>Verified</h3><ul>{chosen.verifiedFacts.map((f,i)=><li key={i}>{f}</li>)}</ul></section>}
+     {chosen.hypotheses.length>0&&<section className="rs-sec"><h3>Still a guess</h3><ul>{chosen.hypotheses.map((f,i)=><li key={i}>{f}</li>)}</ul></section>}
+    </div>}
+    {chosen.sourceUrls.length>0&&<section className="rs-sec"><h3>Sources</h3><ul className="rs-src">{chosen.sourceUrls.map(u=><li key={u}><a href={u} target="_blank" rel="noreferrer">{u.replace(/^https?:\/\/(www\.)?/,"")}</a></li>)}</ul></section>}
+    <p className="u-note" style={{marginTop:22}}>Updated {dateLabel(chosen.updatedAt)}</p>
+   </article>}
   </div>}
- </main>;
+
+  {showEditor&&<div className="u-scrim" onMouseDown={e=>{if(e.target===e.currentTarget)setShowEditor(false)}}>
+   <form className="u-dialog" style={{width:"min(720px,100%)",maxHeight:"calc(100vh - 36px)",overflowY:"auto"}} onSubmit={save} role="dialog" aria-modal="true" aria-label={editing?"Edit brief":"New brief"}>
+    <h3>{editing?"Edit brief":"New brief"}</h3>
+    <div className="rs-form">
+     <label className="u-lab">Kind<select className="u-field" value={draft.type} onChange={e=>setDraft({...draft,type:e.target.value as ArtifactType})}>{Object.entries(types).filter(([v])=>v!=="proposal").map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+     <label className="u-lab">Title<input className="u-field" required maxLength={240} value={draft.title} onChange={set("title")} placeholder="Ridgeline Fence, first call"/></label>
+     <label className="u-lab">Contact<select className="u-field" value={draft.contactId} onChange={set("contactId")}><option value="">None</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.company||c.name}</option>)}</select></label>
+     <label className="u-lab">Deal<select className="u-field" value={draft.dealId} onChange={set("dealId")}><option value="">None</option>{deals.map(d=><option key={d.id} value={d.id}>{d.title}</option>)}</select></label>
+     <label className="u-lab">Meeting<select className="u-field" value={draft.calendarEventId} onChange={set("calendarEventId")}><option value="">None</option>{events.map(e=><option key={e.id} value={e.id}>{e.title}, {dateLabel(e.startsAt)}</option>)}</select></label>
+     <label className="u-lab">How sure are you<select className="u-field" value={draft.confidence} onChange={e=>setDraft({...draft,confidence:e.target.value as Confidence})}><option value="low">Low, little to go on</option><option value="medium">Medium, some evidence</option><option value="high">High, solid sources</option></select></label>
+     <label className="u-lab rs-full">The brief<textarea className="u-field" rows={9} maxLength={20000} value={draft.content} onChange={set("content")} placeholder="Opener, questions to ask, what you know, next step"/></label>
+     <label className="u-lab rs-full">Verified facts, one per line<textarea className="u-field" rows={3} value={draft.factsText} onChange={set("factsText")} placeholder="Only what a source backs up"/></label>
+     <label className="u-lab rs-full">Guesses to test, one per line<textarea className="u-field" rows={3} value={draft.hypothesesText} onChange={set("hypothesesText")} placeholder="Probably misses calls on weekends"/></label>
+     <label className="u-lab rs-full">Sources, one per line<textarea className="u-field" rows={2} value={draft.sourceUrlsText} onChange={set("sourceUrlsText")} placeholder="https://"/></label>
+    </div>
+    <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:20}}><button type="button" className="u-btn" onClick={()=>setShowEditor(false)}>Cancel</button><button type="submit" className="u-btn u-btn-light" disabled={saving}>{saving?"Saving…":"Save"}</button></div>
+   </form>
+  </div>}
+ </div>;
 }

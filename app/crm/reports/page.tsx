@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { REPORT_FIELDS, renderReport, cleanFigures, lastMonth, periodLabel, type ReportFigures } from "@/lib/client-report";
 import { useWorkspace } from "../../use-workspace";
 import { mailtoLink } from "@/lib/deal-workspace";
-import "./reports.css";
+import "./report.css";
 
 type Client = { id: string; name: string; status: string; email: string; firstName: string };
 type Report = { id: string; projectId: string; period: string; figures: ReportFigures; content: string; status: string; updatedAt: string | null };
@@ -70,46 +70,60 @@ export default function ReportsPage() {
   const months = Array.from({ length: 12 }, (_, i) => { const d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - 1 - i); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`; });
   const history = reports.filter(r => r.projectId === projectId);
 
-  return <main className="rp-page">
-    <div className="rp-eyebrow">Clients</div>
-    <h1>Monthly reports</h1>
-    <p className="rp-sub">The one-page results report every client gets each month. Enter the numbers from their live system; Cinder writes the report. Nothing is estimated.</p>
-    {error && <p className="rp-err" role="alert">{error}</p>}
-    {clients && !clients.length && <div className="rp-empty"><b>No clients yet.</b><p>Reports appear here once a deal is signed and its delivery project exists.</p></div>}
-    {clients && !!clients.length && (() => {
-      const last = months[0];
-      const due = clients.filter(c => !["completed", "cancelled"].includes(c.status) && !reports.some(r => r.projectId === c.id && r.period === last && r.status === "sent"));
-      return due.length ? <div className="rp-queue"><b>{periodLabel(last)} reports to send: {due.length}</b>{due.map(c => <button key={c.id} type="button" style={{ background: "transparent" }} onClick={() => { setProjectId(c.id); setPeriod(last); }}>{c.name}{reports.some(r => r.projectId === c.id && r.period === last) ? " (draft)" : ""}</button>)}</div> : null;
-    })()}
-    {clients && !!clients.length && <div className="rp-grid">
-      <section className="rp-card">
-        <div className="rp-row">
-          <label>Client<select value={projectId} onChange={e => setProjectId(e.target.value)}>{clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
-          <label>Month<select value={period} onChange={e => setPeriod(e.target.value)}>{months.map(m => <option key={m} value={m}>{periodLabel(m)}</option>)}</select></label>
-        </div>
-        <div className="rp-fields">
-          {REPORT_FIELDS.map(f => <label key={f.key} className={f.kind === "long" ? "rp-wide" : ""}>{f.label}
-            {f.kind === "long"
-              ? <textarea rows={3} value={form[f.key] ?? ""} onChange={e => setForm(v => ({ ...v, [f.key]: e.target.value }))} />
-              : <input inputMode={f.kind === "text" ? "text" : "numeric"} placeholder={f.help ?? ""} value={form[f.key] ?? ""} onChange={e => setForm(v => ({ ...v, [f.key]: e.target.value }))} />}
-          </label>)}
-        </div>
-        {"error" in cleaned && <p className="rp-err">{cleaned.error}</p>}
-        <div className="rp-actions"><button data-variant="primary" className="rp-btn rp-primary" disabled={busy || "error" in cleaned || !projectId} onClick={() => void save()}>{busy ? "Saving…" : saved ? "Update report" : "Save report"}</button>
-          {saved && <span className={"rp-pill " + (saved.status === "sent" ? "rp-sent" : "")}>{saved.status === "sent" ? "Sent" : "Draft"}</span>}</div>
-        {flash && <p className={flash.ok ? "rp-ok" : "rp-err"}>{flash.text}</p>}
-      </section>
-      <section className="rp-card rp-preview">
-        <div className="rp-k">Preview</div>
-        {preview && <><div className="rp-subject">{preview.subject}</div><pre>{preview.body}</pre>
-          <div className="rp-actions">
-            <button data-variant="primary" className="rp-btn" onClick={copyReport}>{copied ? "Copied" : "Copy"}</button>
-            <a className="rp-btn" href={mailtoLink(client?.email ?? "", preview.subject, preview.body)}>Open in my email</a>
-            {saved && saved.status !== "sent" && <button data-variant="primary" className="rp-btn" onClick={() => void markSent()}>Mark sent</button>}
+  const last = months[0];
+  const due = (clients ?? []).filter(c => !["completed", "cancelled"].includes(c.status) && !reports.some(r => r.projectId === c.id && r.period === last && r.status === "sent"));
+  const sentCount = (clients ?? []).length - due.length;
+
+  return <div className="u-page rx-page" role="region" aria-label="Client reports">
+    <div className="u-head">
+      <h1 className="u-title">Client reports</h1>
+      {clients && !!clients.length && <div className="u-head-actions">
+        <select className="u-field rx-sel" aria-label="Client" value={projectId} onChange={e => setProjectId(e.target.value)}>{clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+        <select className="u-field rx-sel" aria-label="Month" value={period} onChange={e => setPeriod(e.target.value)}>{months.map(m => <option key={m} value={m}>{periodLabel(m)}</option>)}</select>
+      </div>}
+    </div>
+    {error && <p className="u-flash is-bad" role="alert" style={{ marginBottom: 16 }}>{error}</p>}
+    {!clients && !error && <p className="u-note" role="status">Loading…</p>}
+    {clients && !clients.length && <div className="u-void"><h2>No clients to report on yet</h2><p>Every client gets a one-page results report each month: missed calls caught, jobs booked, revenue it brought in. Once a deal is won, their report lives here.</p><a className="u-btn u-btn-light" href="/crm/pipeline">Open pipeline</a></div>}
+
+    {clients && !!clients.length && <>
+      <div className="rx-due">
+        <div><span className="u-fig-k">{periodLabel(last)} reports</span><b className="u-num">{sentCount}<small> of {clients.length} sent</small></b></div>
+        <div className="rx-due-list">{due.length === 0 ? <span className="u-note">Every client has their {periodLabel(last)} report.</span> : due.map(c => <button key={c.id} type="button" className={"rx-chip" + (c.id === projectId && period === last ? " is-on" : "")} onClick={() => { setProjectId(c.id); setPeriod(last); }}>{c.name}<span>{reports.some(r => r.projectId === c.id && r.period === last) ? "Draft" : "Not started"}</span></button>)}</div>
+      </div>
+
+      <div className="rx-grid">
+        <section>
+          <div className="u-h2-row"><h2 className="u-h2">{client?.name}, {periodLabel(period)}</h2>{saved && <span className={"u-mark" + (saved.status === "sent" ? " is-good" : "")}>{saved.status === "sent" ? "Sent" : "Draft"}</span>}</div>
+          <p className="u-note" style={{ marginBottom: 18, lineHeight: 1.55 }}>Enter the numbers from their live system. Only what you type goes in the report, nothing is estimated.</p>
+          <div className="rx-fields">
+            {REPORT_FIELDS.map(f => <label key={f.key} className={"u-lab" + (f.kind === "long" ? " rx-wide" : "")}>{f.label}
+              {f.kind === "long"
+                ? <textarea className="u-field" rows={3} value={form[f.key] ?? ""} onChange={e => setForm(v => ({ ...v, [f.key]: e.target.value }))} />
+                : <input className="u-field" inputMode={f.kind === "text" ? "text" : "numeric"} placeholder={f.help ?? ""} value={form[f.key] ?? ""} onChange={e => setForm(v => ({ ...v, [f.key]: e.target.value }))} />}
+            </label>)}
           </div>
-          <p className="rp-fine">{client?.email ? `Goes to ${client.email} when you open it in your email.` : "No email on this client's contact. Add one to send straight from here."} Cinder never sends it for you.</p></>}
-        {!!history.length && <div className="rp-history"><div className="rp-k">Past reports</div>{history.map(h => <button key={h.id} className="rp-hist" onClick={() => setPeriod(h.period)}>{periodLabel(h.period)} <span>{h.status === "sent" ? "Sent" : "Draft"}</span></button>)}</div>}
-      </section>
-    </div>}
-  </main>;
+          {"error" in cleaned && <p className="u-flash is-bad" style={{ marginTop: 14 }}>{cleaned.error}</p>}
+          <div style={{ display: "flex", gap: 8, marginTop: 18 }}><button className="u-btn u-btn-light" disabled={busy || "error" in cleaned || !projectId} onClick={() => void save()}>{busy ? "Saving…" : saved ? "Update report" : "Save report"}</button></div>
+          {flash && <p className={"u-flash" + (flash.ok ? "" : " is-bad")} style={{ marginTop: 12 }}>{flash.text}</p>}
+          {!!history.length && <div style={{ marginTop: 36 }}><div className="u-h2-row"><h2 className="u-h2">Past reports</h2></div><div className="u-rows">{history.map(h => <button key={h.id} type="button" className="u-row" style={{ minHeight: 44 }} onClick={() => setPeriod(h.period)}><div className="u-row-main"><strong style={{ fontWeight: 500 }}>{periodLabel(h.period)}</strong></div><span className={"u-mark" + (h.status === "sent" ? " is-good" : "")}>{h.status === "sent" ? "Sent" : "Draft"}</span></button>)}</div></div>}
+        </section>
+
+        <section className="rx-preview">
+          <div className="u-h2-row"><h2 className="u-h2">What {client?.firstName || "they"} will get</h2></div>
+          {preview && <div className="rx-paper">
+            <div className="rx-paper-from">{wsp.businessName || "Cinder"}</div>
+            <div className="rx-paper-subj">{preview.subject}</div>
+            <pre className="rx-paper-body">{preview.body}</pre>
+          </div>}
+          {preview && <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 16 }}>
+            <a className="u-btn u-btn-light" href={mailtoLink(client?.email ?? "", preview.subject, preview.body)}>Open in my email</a>
+            <button className="u-btn" onClick={copyReport}>{copied ? "Copied" : "Copy"}</button>
+            {saved && saved.status !== "sent" && <button className="u-btn u-btn-bare" onClick={() => void markSent()}>Mark sent</button>}
+          </div>}
+          <p className="u-note" style={{ marginTop: 12 }}>{client?.email ? `Opens addressed to ${client.email}.` : "No email on this client's contact yet."} Nothing is sent for you.</p>
+        </section>
+      </div>
+    </>}
+  </div>;
 }

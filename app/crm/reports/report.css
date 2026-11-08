@@ -1,0 +1,19 @@
+body .rx-page select.u-field.rx-sel { width: auto; height: 36px; padding: 0 30px 0 12px; }
+body .rx-page .rx-due { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; padding: 20px 0; margin-bottom: 36px; border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line); }
+body .rx-page .rx-due b { display: block; margin-top: 6px; font-family: var(--u-display); font-stretch: 125%; font-variation-settings: "wdth" 125; font-size: 32px; font-weight: 500; line-height: 1; color: var(--u-text); }
+body .rx-page .rx-due b small { font-family: var(--u-text-font); font-stretch: 100%; font-variation-settings: normal; font-size: 13px; color: var(--u-faint); font-weight: 400; }
+body .rx-page .rx-due-list { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+body .rx-page .rx-chip { display: inline-flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: 9px !important; border: 1px solid var(--u-line) !important; background: transparent !important; color: var(--u-text) !important; font: 500 13px/1 var(--u-text-font) !important; cursor: pointer; }
+body .rx-page .rx-chip span { color: var(--u-muted); font-weight: 400; }
+body .rx-page .rx-chip.is-on, body .rx-page .rx-chip:hover { background: var(--u-raise) !important; }
+body .rx-page .rx-grid { display: grid; gap: 44px; align-items: start; }
+@media (min-width: 1100px) { body .rx-page .rx-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+body .rx-page .rx-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+body .rx-page .rx-fields .rx-wide { grid-column: 1 / -1; }
+body .rx-page .rx-preview { position: sticky; top: 24px; }
+/* The report as the client sees it: a sheet of paper on the desk. */
+body .rx-page .rx-paper { padding: 34px 36px 38px; border-radius: 6px; background: #f4f0ea !important; color: #24211e !important; box-shadow: 0 1px 0 rgba(255,255,255,.04), 0 30px 60px -30px rgba(0,0,0,.8); }
+body .rx-page .rx-paper-from { font-size: 12px; letter-spacing: .02em; color: #8a8178; }
+body .rx-page .rx-paper-subj { margin: 10px 0 18px; padding-bottom: 16px; border-bottom: 1px solid #ddd5ca; font-family: var(--u-display); font-stretch: 112%; font-variation-settings: "wdth" 112; font-size: 21px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; color: #1b1917; }
+body .rx-page pre.rx-paper-body { margin: 0; white-space: pre-wrap; font: 400 14.5px/1.65 var(--u-text-font); color: #3a3530 !important; background: transparent !important; border: 0 !important; padding: 0 !important; }
+@media (max-width: 700px) { body .rx-page .rx-fields { grid-template-columns: 1fr; } body .rx-page .rx-paper { padding: 22px 20px; } body .rx-page .rx-preview { position: static; } }
