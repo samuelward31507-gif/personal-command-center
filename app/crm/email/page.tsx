@@ -4,24 +4,28 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useWorkspace } from "../../use-workspace";
 import { mailtoLink } from "@/lib/deal-workspace";
-import { fillTemplate, mergeFor, DEFAULT_TEMPLATES, STEP_GAP_DAYS, type EmailStep, type EmailTemplate } from "@/lib/email-outreach";
+import { fillTemplate, mergeFor, TEMPLATE_SETS, TRACK_LABEL, trackOf, STEP_GAP_DAYS, type EmailStep, type EmailTemplate, type Track } from "@/lib/email-outreach";
 import "./email.css";
 
-type Contact = { id: string; name: string; company: string; email: string; location?: string; status?: string; lastTouchOutcome?: string; nextFollowUp?: string; source?: string };
+type Contact = { id: string; name: string; company: string; email: string; location?: string; status?: string; lastTouchOutcome?: string; nextFollowUp?: string; source?: string; niche?: string };
 type Sent = { contactId: string; step: string; at: string };
 
 const DAILY = 25;
 const STEPS: { key: EmailStep; label: string }[] = [{ key: "intro", label: "First email" }, { key: "follow_up", label: "Follow-up" }, { key: "breakup", label: "Last try" }];
 const STOP = new Set(["do_not_contact", "not_interested", "not_a_fit", "meeting_booked", "wrong_contact"]);
-const KEY = "cinder.email.templates.v4";
+const KEY = "cinder.email.templates.v5";
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 /** Seconds to wait between bulk sends. A steady trickle looks like a person; a burst looks like a blast. */
 const GAP = [15, 30] as const;
 const localDay = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-function loadTemplates(): Record<EmailStep, EmailTemplate> {
-  try { const raw = localStorage.getItem(KEY); if (raw) return { ...DEFAULT_TEMPLATES, ...JSON.parse(raw) }; } catch { /* storage unavailable */ }
-  return DEFAULT_TEMPLATES;
+type Sets = Record<Track, Record<EmailStep, EmailTemplate>>;
+function loadTemplates(): Sets {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) { const j = JSON.parse(raw); return { trades: { ...TEMPLATE_SETS.trades, ...j.trades }, detailing: { ...TEMPLATE_SETS.detailing, ...j.detailing } }; }
+  } catch { /* storage unavailable */ }
+  return TEMPLATE_SETS;
 }
 
 /** Cold email: a merge-filled script per prospect, sent one at a time or in a selected batch. Cinder logs each send and lines up the follow-up. */
@@ -33,7 +37,8 @@ export default function EmailPage() {
   const [step, setStep] = useState<EmailStep>("intro");
   const [picked, setPicked] = useState<string | null>(null);
   const [skipped, setSkipped] = useState<Set<string>>(new Set());
-  const [templates, setTemplates] = useState(DEFAULT_TEMPLATES);
+  const [templates, setTemplates] = useState<Sets>(TEMPLATE_SETS);
+  const [editTrack, setEditTrack] = useState<Track | null>(null);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
@@ -83,14 +88,16 @@ export default function EmailPage() {
 
   const list = queues[step].filter(c => !skipped.has(c.id) && (!query.trim() || `${c.company} ${c.name} ${c.email} ${c.location}`.toLowerCase().includes(query.trim().toLowerCase())));
   const current = list.find(c => c.id === picked) ?? list[0] ?? null;
-  const tpl = templates[step];
+  const tpl = templates[trackOf(current?.niche)][step];
+  const et: Track = editTrack ?? trackOf(current?.niche);
+  const etpl = templates[et][step];
   const merge = current ? mergeFor(current, ws) : null;
   const filled = current && merge ? { subject: fillTemplate(tpl.subject, merge), body: fillTemplate(tpl.body, merge) } : null;
   const today = localDay();
   const sentToday = sent.filter(s => localDay(new Date(s.at)) === today).length;
   const sentWeek = sent.filter(s => Date.now() - Date.parse(s.at) < 7 * 86400000).length;
 
-  function saveTemplates(next: Record<EmailStep, EmailTemplate>) { setTemplates(next); try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* fine */ } }
+  function saveTemplates(next: Sets) { setTemplates(next); try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* fine */ } }
 
   async function markSent(c: Contact, subject: string) {
     setBusy(true); setError("");
@@ -126,8 +133,8 @@ export default function EmailPage() {
 
   /** Send the selected emails one at a time from Gmail, with a short random pause between each. */
   async function sendBulk() {
-    const runStep = step, tplNow = templates[runStep];
-    const batch = chosen.map(c => { const m = mergeFor(c, ws); return { c, subject: fillTemplate(tplNow.subject, m), body: fillTemplate(tplNow.body, m) }; });
+    const runStep = step;
+    const batch = chosen.map(c => { const m = mergeFor(c, ws), tplNow = templates[trackOf(c.niche)][runStep]; return { c, subject: fillTemplate(tplNow.subject, m), body: fillTemplate(tplNow.body, m) }; });
     if (!batch.length || !confirm(`Send ${batch.length} email${batch.length === 1 ? "" : "s"} from ${gmail?.email}? They go out one at a time over about ${Math.ceil((batch.length * (GAP[0] + GAP[1])) / 2 / 60)} min. Keep this tab open.`)) return;
     stopRef.current = false; setError(""); setNotice("");
     const failed: string[] = []; let done = 0;
@@ -189,10 +196,12 @@ export default function EmailPage() {
     </div>
 
     {editing && <section className="em-edit u-sheet">
-      <div className="u-h2-row"><h2 className="u-h2">{STEPS.find(s => s.key === step)?.label} script</h2><button className="u-btn u-btn-bare" onClick={() => saveTemplates({ ...templates, [step]: DEFAULT_TEMPLATES[step] })}>Reset to default</button></div>
+      <div className="u-h2-row"><h2 className="u-h2">{STEPS.find(s => s.key === step)?.label} script</h2>
+        <div className="u-seg" role="group" aria-label="Which script">{(Object.keys(TRACK_LABEL) as Track[]).map(t => <button key={t} type="button" aria-pressed={et === t} onClick={() => setEditTrack(t)}>{TRACK_LABEL[t]}</button>)}</div>
+        <button className="u-btn u-btn-bare" onClick={() => saveTemplates({ ...templates, [et]: { ...templates[et], [step]: TEMPLATE_SETS[et][step] } })}>Reset to default</button></div>
       <p className="u-note" style={{ marginBottom: 12 }}>Fill-ins: <code>{"{first_name}"}</code> <code>{"{company}"}</code> <code>{"{city}"}</code> <code>{"{my_name}"}</code> <code>{"{business}"}</code> <code>{"{booking_link}"}</code> <code>{"{website}"}</code> <code>{"{demo_link}"}</code>. A missing first name becomes &ldquo;there&rdquo;.</p>
-      <label className="u-lab">Subject<input className="u-field" value={tpl.subject} onChange={e => saveTemplates({ ...templates, [step]: { ...tpl, subject: e.target.value } })} /></label>
-      <label className="u-lab" style={{ marginTop: 12 }}>Body<textarea className="u-field" rows={11} value={tpl.body} onChange={e => saveTemplates({ ...templates, [step]: { ...tpl, body: e.target.value } })} /></label>
+      <label className="u-lab">Subject<input className="u-field" value={etpl.subject} onChange={e => saveTemplates({ ...templates, [et]: { ...templates[et], [step]: { ...etpl, subject: e.target.value } } })} /></label>
+      <label className="u-lab" style={{ marginTop: 12 }}>Body<textarea className="u-field" rows={11} value={etpl.body} onChange={e => saveTemplates({ ...templates, [et]: { ...templates[et], [step]: { ...etpl, body: e.target.value } } })} /></label>
       <p className="u-note" style={{ marginTop: 8 }}>Saved in this browser as you type.</p>
     </section>}
 
@@ -222,7 +231,7 @@ export default function EmailPage() {
         <div className="u-rows em-list">{list.map(c => <div key={c.id} className={"u-row em-item" + (current?.id === c.id ? " is-on" : "") + (selected.has(c.id) ? " is-sel" : "")}>
           <input type="checkbox" className="em-check" checked={selected.has(c.id)} disabled={!!run} onChange={() => toggle(c.id)} aria-label={`Select ${c.company || c.name}`} />
           <button type="button" className="em-pick" onClick={() => setPicked(c.id)}>
-            <div className="u-row-main"><strong>{c.company || c.name}</strong><span>{[c.location, c.email].filter(Boolean).join(" · ")}</span></div>
+            <div className="u-row-main"><strong>{c.company || c.name}</strong><span>{[c.location, trackOf(c.niche) === "detailing" ? "Detailer" : "", c.email].filter(Boolean).join(" · ")}</span></div>
           </button>
         </div>)}</div>
         {skipped.size > 0 && <button className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setSkipped(new Set())}>Bring back {skipped.size} skipped</button>}

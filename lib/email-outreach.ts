@@ -55,6 +55,58 @@ Or reply "jobs" and I'll walk you through it.
   },
 };
 
+/** Detailers get a different pitch: their money is repeat customers, not missed quotes. */
+export const DETAILING_TEMPLATES: Record<EmailStep, EmailTemplate> = {
+  intro: {
+    subject: "repeat customers for {company}",
+    body: `Hi {first_name},
+
+Quick question: how many past customers does {company} have who haven't booked in the last 3 months?
+
+For most detailers it's a few hundred. They liked the work and they'd book again. Nobody asked them to.
+
+I set up a system that texts your past customers when they're due for their next detail, texts back anyone who calls while you're mid-job, and asks every happy customer for a Google review. Nothing new for you to learn.
+
+If it doesn't put 5 booked appointments on your calendar in the first 30 days, your next month is free.
+
+Worth a look?
+
+{my_name}
+{business}
+{website}`,
+  },
+  follow_up: {
+    subject: "Re: repeat customers for {company}",
+    body: `Hi {first_name},
+
+Following up on my note below. If {company} had 5 more booked details next month from customers you've already served, could you fit them in?
+
+Here's a quick demo of how it works: {demo_link}
+
+If the answer is yes, I'll show you how it would work for you in 15 minutes: {booking_link}
+
+{my_name}`,
+  },
+  breakup: {
+    subject: "Re: repeat customers for {company}",
+    body: `Hi {first_name},
+
+I'll stop here so I'm not cluttering your inbox.
+
+If you ever want to fill slow weeks from your own customer list, the demo is here: {demo_link}
+
+Or reply "book" and I'll walk you through it.
+
+{my_name}`,
+  },
+};
+
+/** Which script a contact gets: detailers get the repeat-customer pitch, everyone else the contractor one. */
+export type Track = "trades" | "detailing";
+export const trackOf = (niche?: string): Track => (/detail/i.test(niche || "") ? "detailing" : "trades");
+export const TEMPLATE_SETS: Record<Track, Record<EmailStep, EmailTemplate>> = { trades: DEFAULT_TEMPLATES, detailing: DETAILING_TEMPLATES };
+export const TRACK_LABEL: Record<Track, string> = { trades: "Contractors", detailing: "Detailers" };
+
 const LEGAL = /\b(llc|inc|co|corp|company|ltd|fence|fencing|construction|services?)\b/i;
 
 /** First name to greet with: the contact's first name when it's a person, "there" when the name is really the company. */

@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useWorkspace } from "../../use-workspace";
-import { fillTemplate, mergeFor } from "@/lib/email-outreach";
-import { DEFAULT_LINKEDIN, CONNECT_NOTE_LIMIT, WEEKLY_CONNECT_CAP, type LinkedInStep } from "@/lib/linkedin-outreach";
+import { fillTemplate, mergeFor, trackOf } from "@/lib/email-outreach";
+import { DEFAULT_LINKEDIN, DETAILING_LINKEDIN_MESSAGE, CONNECT_NOTE_LIMIT, WEEKLY_CONNECT_CAP, type LinkedInStep } from "@/lib/linkedin-outreach";
 import "../email/email.css";
 
 type Contact = { id: string; name: string; company: string; linkedin?: string; location?: string; status?: string; lastTouchOutcome?: string; niche?: string };
@@ -13,7 +13,7 @@ type Tab = "connect" | "waiting" | "message";
 
 const TABS: { key: Tab; label: string }[] = [{ key: "connect", label: "Connect" }, { key: "waiting", label: "Waiting" }, { key: "message", label: "Message" }];
 const STOP = new Set(["do_not_contact", "not_interested", "not_a_fit", "meeting_booked", "wrong_contact"]);
-const KEY = "cinder.linkedin.templates.v3";
+const KEY = "cinder.linkedin.templates.v4";
 const url = (v: string) => (v.startsWith("http") ? v : "https://www.linkedin.com/in/" + v.replace(/^@/, "").replace(/^linkedin\.com\/in\//, ""));
 
 /** LinkedIn: a queue of owners to connect with, then message once they accept. You do each step on LinkedIn; Cinder keeps the list and the script. */
@@ -27,10 +27,10 @@ export default function LinkedInPage() {
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
   const [useNote, setUseNote] = useState(false);
-  const [tpl, setTpl] = useState(DEFAULT_LINKEDIN);
+  const [tpl, setTpl] = useState({ ...DEFAULT_LINKEDIN, detailing: DETAILING_LINKEDIN_MESSAGE });
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => { try { const raw = localStorage.getItem(KEY); if (raw) setTpl({ ...DEFAULT_LINKEDIN, ...JSON.parse(raw) }); } catch { /* storage unavailable */ } }, []);
+  useEffect(() => { try { const raw = localStorage.getItem(KEY); if (raw) setTpl({ ...DEFAULT_LINKEDIN, detailing: DETAILING_LINKEDIN_MESSAGE, ...JSON.parse(raw) }); } catch { /* storage unavailable */ } }, []);
   const load = useCallback(async () => {
     try {
       const [c, l] = await Promise.all([fetch("/api/contacts", { cache: "no-store" }), fetch("/api/linkedin-outreach", { cache: "no-store" })]);
@@ -58,7 +58,7 @@ export default function LinkedInPage() {
   const list = queues[tab];
   const current = list.find(c => c.id === picked) ?? list[0] ?? null;
   const merge = current ? mergeFor(current, ws) : null;
-  const text = current && merge ? (tab === "message" ? fillTemplate(tpl.message, merge) : useNote ? fillTemplate(tpl.connect, merge) : "") : "";
+  const text = current && merge ? (tab === "message" ? fillTemplate(trackOf(current.niche) === "detailing" ? tpl.detailing : tpl.message, merge) : useNote ? fillTemplate(tpl.connect, merge) : "") : "";
 
   function saveTpl(next: typeof tpl) { setTpl(next); try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* fine */ } }
   async function mark(c: Contact, step: "connect" | "accepted" | "message") {
@@ -77,7 +77,7 @@ export default function LinkedInPage() {
     window.open(url(current.linkedin), "_blank", "noopener");
   }
 
-  const editKey: LinkedInStep = tab === "message" ? "message" : "connect";
+  const editKey: LinkedInStep | "detailing" = tab === "message" ? (trackOf(current?.niche) === "detailing" ? "detailing" : "message") : "connect";
   return <div className="u-page em-page" role="region" aria-label="LinkedIn">
     <div className="u-head">
       <h1 className="u-title">LinkedIn</h1>
@@ -96,9 +96,9 @@ export default function LinkedInPage() {
     </div>
 
     {editing && <section className="em-edit u-sheet">
-      <div className="u-h2-row"><h2 className="u-h2">{editKey === "message" ? "First message" : "Connection note"}</h2><button className="u-btn u-btn-bare" onClick={() => saveTpl({ ...tpl, [editKey]: DEFAULT_LINKEDIN[editKey] })}>Reset to default</button></div>
+      <div className="u-h2-row"><h2 className="u-h2">{editKey === "message" ? "First message (contractors)" : editKey === "detailing" ? "First message (detailers)" : "Connection note"}</h2><button className="u-btn u-btn-bare" onClick={() => saveTpl({ ...tpl, [editKey]: editKey === "detailing" ? DETAILING_LINKEDIN_MESSAGE : DEFAULT_LINKEDIN[editKey] })}>Reset to default</button></div>
       <p className="u-note" style={{ marginBottom: 12 }}>Fill-ins: <code>{"{first_name}"}</code> <code>{"{company}"}</code> <code>{"{city}"}</code> <code>{"{my_name}"}</code> <code>{"{booking_link}"}</code> <code>{"{demo_link}"}</code>.{editKey === "connect" && ` Notes are capped at ${CONNECT_NOTE_LIMIT} characters.`}</p>
-      <textarea className="u-field" rows={editKey === "message" ? 11 : 4} value={tpl[editKey]} onChange={e => saveTpl({ ...tpl, [editKey]: e.target.value })} />
+      <textarea className="u-field" rows={editKey === "connect" ? 4 : 11} value={tpl[editKey]} onChange={e => saveTpl({ ...tpl, [editKey]: e.target.value })} />
     </section>}
 
     {contacts === null ? <p className="u-note" role="status">Loading…</p> : list.length === 0 ? <div className="u-void">

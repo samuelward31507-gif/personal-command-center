@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { DEFAULT_LINKEDIN, CONNECT_NOTE_LIMIT } from "./lib/linkedin-outreach.ts";
-import { greetName, mergeFor, fillTemplate, DEFAULT_TEMPLATES, cityOf } from "./lib/email-outreach.ts";
+import { greetName, mergeFor, fillTemplate, DEFAULT_TEMPLATES, DETAILING_TEMPLATES, trackOf, cityOf } from "./lib/email-outreach.ts";
 let n = 0; const ok = f => { f(); n++; };
 ok(() => assert.equal(greetName("Mark Delgado", "Ridgeline Fence"), "Mark"));
 ok(() => assert.equal(greetName("Foster Fence", "Foster Fence"), "there", "company as name greets 'there'"));
@@ -23,4 +23,9 @@ ok(() => assert.equal(fillTemplate("Hi {nope}", m), "Hi {nope}", "typos stay vis
 for (const k of Object.keys(DEFAULT_TEMPLATES)) ok(() => assert.doesNotMatch(fillTemplate(DEFAULT_TEMPLATES[k].body, m), /\{\w+\}/, k));
 ok(() => assert.ok(fillTemplate(DEFAULT_LINKEDIN.connect, mergeFor({ name: "Christopher Montgomery", company: "Montgomery Premium Fence & Deck Builders of North Texas", location: "Dallas, TX" }, ws)).length <= CONNECT_NOTE_LIMIT, "connection note fits LinkedIn's limit"));
 for (const k of Object.keys(DEFAULT_LINKEDIN)) ok(() => assert.doesNotMatch(fillTemplate(DEFAULT_LINKEDIN[k], m), /\{\w+\}/, k));
+ok(() => assert.equal(trackOf("Auto detailing"), "detailing"));
+ok(() => assert.equal(trackOf("Fence"), "trades"));
+ok(() => assert.equal(trackOf(undefined), "trades"));
+for (const k of Object.keys(DETAILING_TEMPLATES)) ok(() => assert.doesNotMatch(fillTemplate(DETAILING_TEMPLATES[k].body, m) + fillTemplate(DETAILING_TEMPLATES[k].subject, m), /\{\w+\}|crew|quote/i, "detailing " + k));
+ok(() => assert.doesNotMatch(fillTemplate(DETAILING_TEMPLATES.intro.body, m), /https?:\/\//, "no link in the detailer first email"));
 console.log(`Email outreach checks passed (${n} assertions).`);
