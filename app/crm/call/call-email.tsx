@@ -6,7 +6,7 @@ import { AFTER_CALL_TEMPLATES, fillTemplate, mergeFor, trackOf } from "@/lib/ema
 type Who = { id: string; name: string; company: string; email: string; location?: string; niche?: string };
 type Ws = { ownerFirstName: string; businessName: string; bookingLink: string; websiteUrl?: string; demoLink?: string; address?: string };
 
-/** After a no-answer or voicemail: one click sends "just tried calling" as their first cold email. */
+/** After a voicemail: one click sends "just tried calling" as their first cold email. */
 export function CallEmail({ who, ws, gmail, onClose }: { who: Who; ws: Ws; gmail: { connected: boolean; email: string | null } | null; onClose: () => void }) {
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState("");
@@ -31,7 +31,7 @@ export function CallEmail({ who, ws, gmail, onClose }: { who: Who; ws: Ws; gmail
   return <div className="dl-callmail" role="status">
     <div className="dl-callmail-txt">
       {state === "sent" ? <><b>Emailed {name}.</b> The follow-up comes up on the Email page in 3 days.</>
-        : <><b>No answer. Email {name} now?</b> <span>&ldquo;Just tried calling…&rdquo; to {who.email}. It becomes their first email, so the follow-ups run after it.</span></>}
+        : <><b>Left a voicemail. Email {name} too?</b> <span>&ldquo;Just tried calling…&rdquo; to {who.email}. It becomes their first email, so the follow-ups run after it.</span></>}
       {error && <span className="dl-callmail-err">{error}</span>}
     </div>
     <div className="dl-callmail-acts">

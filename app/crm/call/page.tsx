@@ -140,7 +140,7 @@ export default function CallModePage() {
       if (!r.ok) throw new Error(data.error || "Could not log that outcome.");
       setStats(st => st && { dials: st.dials + 1, conversations: st.conversations + (CONVERSATIONS.includes(outcome) ? 1 : 0), meetings: st.meetings + (outcome === "meeting_booked" ? 1 : 0) });
       setCopied(false);
-      setMailAfter((outcome === "no_answer" || outcome === "voicemail") && contact.email ? { id: contact.id, name: contact.name, company: contact.company, email: contact.email, location: contact.location, niche: contact.niche } : null);
+      setMailAfter(outcome === "voicemail" && contact.email ? { id: contact.id, name: contact.name, company: contact.company, email: contact.email, location: contact.location, niche: contact.niche } : null);
       const draftInput = { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, pain: info.pain, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cal.com/samuel-ward-saqpvb/15min" };
       const t: TextContext | undefined = data.text;
       setTextCtx(t && (t.template || t.notice || t.tasks?.length || t.closed) ? { ctx: t, contactId: contact.id, who: contact.company || contact.name } : null);
