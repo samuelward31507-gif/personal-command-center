@@ -30,7 +30,7 @@ export function topMoves(d: ReviewData, o: ReviewOptions = {}): Move[] {
   for (const s of d.lateSteps) m.push({ text: `${s.company}: ${s.step || "next step"} (${days(s.days)} late).`, weight: 40 + s.days });
   m.sort((a, b) => b.weight - a.weight);
   const out = m.slice(0, 5);
-  if (out.length < 5 && d.week.meetings < 3) out.push({ text: `Book more calls: send 20 DMs to ${o.niche || "fence and pool companies"} on Monday morning.`, weight: 0 });
+  if (out.length < 5 && d.week.meetings < 3) out.push({ text: `Book more calls: send 20 DMs to ${o.niche || "contractors and home-service companies"} on Monday morning.`, weight: 0 });
   if (out.length < 5 && d.overdueTasks > 0) out.push({ text: `Clear ${d.overdueTasks} overdue task${d.overdueTasks === 1 ? "" : "s"} in Tasks.`, weight: 0 });
   return out.slice(0, 5);
 }

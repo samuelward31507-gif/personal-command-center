@@ -11,7 +11,7 @@ export type WorkspaceSettings = {
   address: string;        // provider address on agreements
   contactEmail: string;   // provider email on agreements; where alerts go
   timezone: string;       // IANA zone for "today", crons, agreement dates
-  niche: string;          // who you sell to, in plain words ("fence and pool companies")
+  niche: string;          // who you sell to, in plain words ("contractors and home-service companies")
   paymentLink: string;    // your own payment page (Stripe, Square, PayPal…); shown on invoices
   paymentInstructions: string; // other ways to pay (ACH details, Zelle…); shown on invoices
   bookingLink: string;    // where prospects book a call (Cal.com, Calendly…); used on prospect reports
@@ -25,22 +25,22 @@ export type WorkspaceSettings = {
 
 export const DEFAULT_WORKSPACE: WorkspaceSettings = {
   businessName: "Cinder Revenue Company",
-  shortName: "Cinder Revenue Company",
-  ownerFirstName: "Samuel",
+  shortName: "Cinder",
+  ownerFirstName: "Sam",
   ownerFullName: "Samuel Ward",
   legalName: "Samuel Ward, doing business as Cinder Revenue Company",
   address: "",
   contactEmail: "",
   timezone: "America/Denver",
-  niche: "fence and pool companies",
+  niche: "contractors and home-service companies",
   paymentLink: "",
   paymentInstructions: "",
   bookingLink: "https://cal.com/samuel-ward-saqpvb/15min",
-  tier1: { label: "Tier 1 · Speed to Lead", setupFee: 1500, monthlyFee: 997, setupLink: "", monthlyLink: "" },
-  tier2: { label: "Tier 2 · Revenue System", setupFee: 3000, monthlyFee: 1500, setupLink: "", monthlyLink: "" },
+  tier1: { label: "Never Miss a Lead", setupFee: 1500, monthlyFee: 997, setupLink: "", monthlyLink: "" },
+  tier2: { label: "Book & Close", setupFee: 2500, monthlyFee: 1997, setupLink: "", monthlyLink: "" },
   goalAmount: 50_000,
   goalBy: "2026-12-31",
-  dailyCallTarget: 20,
+  dailyCallTarget: 100,
   taxSetAsidePct: 28,
 };
 

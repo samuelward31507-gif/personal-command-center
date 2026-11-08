@@ -3,7 +3,7 @@
 /** The founder's stated goal: $50k by the end of 2026. Cash recorded as paid is what counts toward it. */
 export const REVENUE_GOAL = { amount: 50_000, by: "2026-12-31", label: "$50k by year-end" } as const;
 /** Default daily dial target — a working assumption, not a rule. */
-export const DAILY_CALL_TARGET = 20;
+export const DAILY_CALL_TARGET = 100;
 
 /** Outcomes where a human actually spoke to someone. */
 export const CONNECT_OUTCOMES = ["connected", "callback_requested", "interested", "meeting_booked", "not_a_fit", "send_info", "not_interested"] as const;

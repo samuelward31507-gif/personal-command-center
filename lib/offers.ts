@@ -33,13 +33,13 @@ export function weightedPipeline(deals: { stage: string; setupFee: number; month
 
 export type Offer = { serviceType: string; label: string; setupFee: number; monthlyFee: number };
 export const OFFERS = {
-  tier1: { serviceType: "tier1_speed_to_lead", label: "Tier 1 · Speed to Lead", setupFee: 1500, monthlyFee: 997 },
-  tier2: { serviceType: "tier2_revenue_system", label: "Tier 2 · Revenue System", setupFee: 3000, monthlyFee: 1500 },
+  tier1: { serviceType: "tier1_speed_to_lead", label: "Never Miss a Lead", setupFee: 1500, monthlyFee: 997 },
+  tier2: { serviceType: "tier2_revenue_system", label: "Book & Close", setupFee: 2500, monthlyFee: 1997 },
 } satisfies Record<string, Offer>;
 
 /**
  * Pick the starting offer for a new deal: the tier the audit recommended, else the
- * niche default (pool → Tier 2, fence → Tier 1), else Tier 1. Tier 3 is waitlist-only
+ * Book & Close (the featured plan). Full Front Office is quoted by hand
  * and never suggested. Prices come from Workspace settings (passed in); the built-in list is the fallback.
  */
 export type OfferCatalog = { tier1: Offer; tier2: Offer };
@@ -48,8 +48,8 @@ export function suggestOffer(company: string, auditVerdict: string | null, offer
   const v = auditVerdict ?? "";
   if (/\btier\s*2\b/i.test(v)) return offers.tier2;
   if (/\btier\s*1\b/i.test(v)) return offers.tier1;
-  if (/\b(pool|pools|spa|spas)\b/i.test(company)) return offers.tier2;
-  return offers.tier1;
+  // Book & Close is the featured plan; Never Miss a Lead is the step down when price is the objection.
+  return offers.tier2;
 }
 
 export function suggestDeal(contact: { name: string; company: string }, auditVerdict: string | null, outcome: "interested" | "meeting_booked", offers: OfferCatalog = OFFERS) {

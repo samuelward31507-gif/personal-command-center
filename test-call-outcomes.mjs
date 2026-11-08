@@ -83,13 +83,13 @@ ok(() => assert.match(migration, /'not_a_fit','wrong_contact'/, "DB constraint a
 ok(() => assert.deepEqual([...DEAL_STAGES], ["new", "qualified", "contacted", "interested", "meeting_booked", "meeting_held", "proposal", "negotiation", "won", "lost", "nurture"]));
 ok(() => assert.equal(suggestOffer("Acme Fence", "Conditional fit. Tier 2 (Revenue System)"), OFFERS.tier2, "audit tier wins over niche"));
 ok(() => assert.equal(suggestOffer("Blue Pools", "Conditional fit — Tier 1"), OFFERS.tier1));
-ok(() => assert.equal(suggestOffer("Blue Pools LLC", null), OFFERS.tier2, "pool niche defaults to Tier 2"));
-ok(() => assert.equal(suggestOffer("Peak Fence", null), OFFERS.tier1, "fence niche defaults to Tier 1"));
-ok(() => assert.equal(suggestOffer("Random Co", "Tier 3 front office"), OFFERS.tier1, "Tier 3 is waitlist-only, never suggested"));
+ok(() => assert.equal(suggestOffer("Blue Pools LLC", null), OFFERS.tier2, "Book & Close is the default plan"));
+ok(() => assert.equal(suggestOffer("Peak Fence", null), OFFERS.tier2, "any trade defaults to Book & Close"));
+ok(() => assert.equal(suggestOffer("Random Co", "Tier 3 front office"), OFFERS.tier2, "Full Front Office is quoted by hand, never auto-suggested"));
 ok(() => {
   const d = suggestDeal({ name: "Sabrina", company: "Sabrina Layne Pools" }, "Conditional fit. Tier 2", "meeting_booked");
-  assert.equal(d.title, "Sabrina Layne Pools — Tier 2 · Revenue System");
-  assert.equal(d.setupFee, 3000); assert.equal(d.monthlyFee, 1500); assert.equal(d.stage, "meeting_booked");
+  assert.equal(d.title, "Sabrina Layne Pools — Book & Close");
+  assert.equal(d.setupFee, 2500); assert.equal(d.monthlyFee, 1997); assert.equal(d.stage, "meeting_booked");
 });
 ok(() => assert.equal(suggestDeal({ name: "Bob", company: "" }, null, "interested").stage, "interested"));
 ok(() => assert.match(route, /outcome === "interested" \|\| outcome === "meeting_booked"\) && openDeals\.length === 0/, "deal suggested only when no open deal exists"));

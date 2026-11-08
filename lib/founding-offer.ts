@@ -1,4 +1,4 @@
-// The founding offer (The 30-Day Estimate Sprint): settings, discovery fields, the guarantee
+// The founding offer (Book & Close, half-price setup for the first 3 clients): settings, discovery fields, the guarantee
 // calculator, the price script, client delivery tracking, Review Builder setup and the monthly report.
 // Pure: no I/O. Safe to unit test.
 
@@ -18,11 +18,11 @@ export type OfferSettings = {
 };
 
 export const DEFAULT_OFFER: OfferSettings = {
-  offerName: "The 30-Day Estimate Sprint",
-  setupFee: 1000,
-  standardSetup: 1500,
-  monthly: 997,
-  spotsTotal: 5,
+  offerName: "Book & Close (founding)",
+  setupFee: 1250,
+  standardSetup: 2500,
+  monthly: 1997,
+  spotsTotal: 3,
   rates: { oldReply: 0.10, oldBook: 0.25, newReply: 0.30, newBook: 0.30 },
   minOldLeads: 150,
 };
@@ -136,7 +136,10 @@ export function guaranteeCalc(d: Discovery, o: OfferSettings = DEFAULT_OFFER): G
 
 const usd = (n: number) => "$" + n.toLocaleString("en-US");
 export function priceScript(o: OfferSettings = DEFAULT_OFFER): string {
-  return `It's ${usd(o.setupFee)} to set up, then ${usd(o.monthly)} a month, month to month, and the monthly doesn't start until we book your first estimate. If you don't get at least 3 booked estimates in your first 30 days, month two is free.`;
+  const setup = o.setupFee < o.standardSetup
+    ? `It's normally ${usd(o.standardSetup)} to set up. For our first ${o.spotsTotal} clients it's ${usd(o.setupFee)}`
+    : `It's ${usd(o.setupFee)} to set up`;
+  return `${setup}, then ${usd(o.monthly)} a month, month to month, no contract, and the monthly starts after your first booked appointment. If you don't get at least 5 booked appointments in your first 30 days live, your next monthly payment is waived and we keep working.`;
 }
 
 // ---------- Delivery tracker (B5) ----------

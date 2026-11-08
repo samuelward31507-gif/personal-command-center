@@ -22,7 +22,7 @@ ok(() => assert.equal(typeof validateAction({ kind: "set_follow_up", params: { c
 ok(() => assert.deepEqual(validateAction({ kind: "set_follow_up", label: "Friday", params: { contactId: id, date: "2026-10-30" } }).params, { contactId: id, date: "2026-10-30" }));
 ok(() => {
   const a = validateAction({ kind: "create_deal", params: { title: "Able Pool — Tier 2", contactId: id, tier: "tier2" } });
-  assert.equal(a.params.setupFee, 3000); assert.equal(a.params.monthlyFee, 1500); assert.equal(a.params.serviceType, "tier2_revenue_system"); assert.equal(a.params.stage, "new");
+  assert.equal(a.params.setupFee, 2500); assert.equal(a.params.monthlyFee, 1997); assert.equal(a.params.serviceType, "tier2_revenue_system"); assert.equal(a.params.stage, "new");
 });
 ok(() => assert.equal(typeof validateAction({ kind: "create_deal", params: { title: "x", stage: "won" } }), "string", "deals can't be created already won"));
 ok(() => assert.equal(typeof validateAction({ kind: "create_deal", params: { title: "x", setupFee: -5 } }), "string"));

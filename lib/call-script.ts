@@ -48,18 +48,18 @@ export function buildScript(input: ScriptInput): ScriptStep[] {
   const [d1, d2] = nextTwoWeekdays(input.today);
   const company = input.company || "your company";
   return [
-    { key: "open", label: "Open", tip: "Smile, slow down. Asking permission lowers their guard.",
-      say: `${hi}, it's ${input.me || "Samuel"} with ${input.brand || "Cinder Revenue Company"}. Did I catch you at a bad time?` },
-    { key: "reason", label: "Reason for the call", tip: "Then stop talking and let them answer.",
-      say: `I'll be quick. I work with ${niche}${city ? ` around ${city}` : ""}. When a new lead fills out your form or calls after hours, how fast does someone usually get back to them?` },
-    { key: "dig", label: "Dig into the pain", tip: "Listen for: voicemail, 'next day', 'when I get to it'. That's the gap.",
-      say: `And when you're out on a ${job} job and miss a call, what happens to that lead?` },
-    { key: "bridge", label: "Bridge to the fix", tip: "One sentence. Don't pitch features.",
-      say: `That's exactly what we fix. Every missed call, web form and Facebook lead gets a text from your business in under 10 seconds, day or night, and the good ones get booked straight onto your calendar.` },
+    { key: "open", label: "Open", tip: "Smile, slow down. Say it like you're calling a friend's business.",
+      say: `${hi}, it's ${input.me || "Sam"} with ${input.brand || "Cinder"}. Quick one, I'll be fast.` },
+    { key: "reason", label: "Reason for the call", tip: "Then stop talking. Their answer is the pitch.",
+      say: `I help ${niche}${city ? ` around ${city}` : ""} book more jobs from the calls they already get. When you're out on a ${job} job and a homeowner calls, what happens to that call?` },
+    { key: "dig", label: "Dig into the pain", tip: "Listen for: voicemail, 'I call back later', 'quotes go quiet'. That's where the jobs leak.",
+      say: `And the quotes you send out, how many never hear back?` },
+    { key: "bridge", label: "Bridge to the fix", tip: "One sentence. Jobs, not features. Don't say AI unless they ask.",
+      say: `That's what we fix. Every missed call gets a text back from your business in seconds, the homeowner's questions get answered, and the estimate lands on your calendar. Quotes get followed up until it's a yes or a no.` },
     { key: "ask", label: "Ask for the meeting", tip: "Offer two times. Silence after the question is fine.",
       say: `I'm not trying to sell you on the phone. Would you be open to 15 minutes where I show you what that would look like for ${company}? Does ${d1} or ${d2} work better?` },
-    { key: "close", label: "Lock it in", tip: "Confirm the best number and email, then log 'Meeting booked'.",
-      say: `Perfect. I'll send a calendar invite. What's the best email for it? And is this the best number to reach you?` },
+    { key: "close", label: "Lock it in", tip: "Text them the booking link while you're still on the phone, then log 'Meeting booked'.",
+      say: `Perfect. I'll text you a calendar link right now so it's locked in. Is this the best number for that? And what's the best email for the invite?` },
   ];
 }
 
@@ -67,8 +67,8 @@ export function buildObjections(input: ScriptInput): Objection[] {
   const { job } = nicheOf(`${input.company} ${input.notes}`);
   return [
     { key: "not-interested", heard: "Not interested",
-      say: `Totally fair. One quick question before I go: if a lead called while you were on a job today, would you know about it within five minutes?`,
-      then: `If they hesitate: "That's the only thing I'd want to show you. 15 minutes, and if it's not useful I'll get out of your hair."` },
+      say: `Totally fair. Are you booked out right now, or is it more that you've been burned by marketing companies before?`,
+      then: `If burned: "Makes sense. We don't sell leads or ads. We help you book more of the calls you already get. 15 minutes, and if it's not useful I'll get out of your hair." If booked out: "Good problem. When does it slow down?" Log a callback for then.` },
     { key: "send-info", heard: "Just send me some info",
       say: `Happy to. So I send the right thing: what's the bigger headache right now, missed calls or leads that go cold after you quote?`,
       then: `"Honestly it's easier to show you than to explain in an email. 15 minutes this week?"` },
@@ -85,10 +85,10 @@ export function buildObjections(input: ScriptInput): Objection[] {
       say: `That's a great spot to be in. Then it's about closing more of the ones you already get. How many quotes go out in a month that never hear back?`,
       then: `"Following up on those automatically is usually the fastest win. Want me to show you?"` },
     { key: "ai", heard: "Is this a robot / AI?",
-      say: `No, it's me, ${input.me || "Samuel"}. A real person. The system we set up uses AI to respond to your leads instantly, but you stay in control of every booking.`,
+      say: `No, it's me, ${input.me || "Sam"}. A real person. The system we set up uses AI to respond to your leads instantly, but you stay in control of every booking.`,
       then: `Go back to the reason for the call.` },
     { key: "gatekeeper", heard: "Gatekeeper: 'What's this about?'",
-      say: `It's ${input.me || "Samuel"} with ${input.brand || "Cinder Revenue Company"}. I help ${job} companies make sure new leads get answered fast. Who handles that side of the business?`,
+      say: `It's ${input.me || "Sam"} with ${input.brand || "Cinder"}. I help ${job} companies book more jobs from the calls they already get. Who handles that side of the business?`,
       then: `Get the owner's name and the best time to reach them. Log "Wrong contact" or "Callback requested".` },
   ];
 }

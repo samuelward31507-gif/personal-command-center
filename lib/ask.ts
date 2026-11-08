@@ -6,8 +6,8 @@
 
 export const ASK_STAGES = ["new", "qualified", "contacted", "interested", "meeting_booked", "meeting_held", "proposal", "negotiation", "won", "lost", "nurture"] as const;
 export const ASK_TIERS = {
-  tier1: { serviceType: "tier1_speed_to_lead", label: "Tier 1 · Speed to Lead", setupFee: 1500, monthlyFee: 997 },
-  tier2: { serviceType: "tier2_revenue_system", label: "Tier 2 · Revenue System", setupFee: 3000, monthlyFee: 1500 },
+  tier1: { serviceType: "tier1_speed_to_lead", label: "Never Miss a Lead", setupFee: 1500, monthlyFee: 997 },
+  tier2: { serviceType: "tier2_revenue_system", label: "Book & Close", setupFee: 2500, monthlyFee: 1997 },
 } as const;
 export const ACTION_KINDS = ["create_contact", "set_follow_up", "add_note", "create_task", "create_deal", "move_deal", "schedule_event"] as const;
 export type ActionKind = typeof ACTION_KINDS[number];
@@ -202,13 +202,13 @@ export const ASK_TOOLS = [
 export type AskContext = { today: string; now: string; timeZone: string; weekday: string };
 export type AskBusiness = { owner: string; name: string; niche: string; offers: { label: string; setupFee: number; monthlyFee: number }[] };
 
-const DEFAULT_BUSINESS: AskBusiness = { owner: "Samuel", name: "Cinder Revenue Company", niche: "contractors (pool, fence, etc.)", offers: [
-  { label: "Tier 1 Speed to Lead", setupFee: 1500, monthlyFee: 997 }, { label: "Tier 2 Revenue System", setupFee: 3000, monthlyFee: 1500 }] };
+const DEFAULT_BUSINESS: AskBusiness = { owner: "Sam", name: "Cinder Revenue Company", niche: "contractors and home-service companies", offers: [
+  { label: "Never Miss a Lead", setupFee: 1500, monthlyFee: 997 }, { label: "Book & Close", setupFee: 2500, monthlyFee: 1997 }, { label: "Full Front Office", setupFee: 3500, monthlyFee: 2997 }] };
 const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
 
 export function buildSystemPrompt(ctx: AskContext, b: AskBusiness = DEFAULT_BUSINESS) {
   const offers = b.offers.map(o => `${o.label.replace(" · ", " ")} ${usd(o.setupFee)} setup + ${usd(o.monthlyFee)}/mo`).join("; ");
-  return `You are Cinder, the AI built into ${b.owner}'s private agency CRM. ${b.owner} runs ${b.name}, selling AI speed-to-lead and revenue systems to ${b.niche}. Offers: ${offers}.
+  return `You are Cinder, the AI built into ${b.owner}'s private agency CRM. ${b.owner} runs ${b.name}, helping ${b.niche} book more jobs from the leads they already get (missed-call text-back, quote follow-up, booking). Offers: ${offers}.
 
 Today is ${ctx.weekday} ${ctx.today}; local time ${ctx.now} (${ctx.timeZone}). Resolve relative dates ("Friday", "next week") from this.
 
