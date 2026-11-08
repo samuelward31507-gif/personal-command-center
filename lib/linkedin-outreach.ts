@@ -5,14 +5,14 @@ export type LinkedInStep = "connect" | "message";
     and the pitch goes in the first message after they accept. LinkedIn caps notes at 200 characters. */
 export const CONNECT_NOTE_LIMIT = 200;
 export const DEFAULT_LINKEDIN: Record<LinkedInStep, string> = {
-  connect: `Hi {first_name}, I work with contractors on getting more booked jobs from the calls they already get. Would be good to connect.`,
+  connect: `Hi {first_name}, I help service businesses book more jobs from the leads they already get. Would be good to connect.`,
   message: `Thanks for connecting, {first_name}.
 
-Straight question: when someone calls {company} after hours or on a weekend and nobody picks up, what happens to that job?
+Straight question: could {company} handle more work right now?
 
-I set up a system that texts those callers back in seconds and books the estimate on your calendar. If it doesn't book you 5 estimates in the first 30 days, your next month is free.
+Most owners aren't short on leads, they lose them: missed calls after hours, quotes nobody follows up on, past customers who never hear back. I set up a system that books all three for you.
 
-Worth a quick look? {booking_link}
+If it doesn't put 5 booked appointments on your calendar in 30 days, your next month is free. Worth a quick look? {booking_link}
 
 {my_name}`,
 };

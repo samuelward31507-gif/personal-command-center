@@ -11,7 +11,7 @@ ok(() => assert.equal(cityOf("Houston, TX"), "Houston"));
 const ws = { ownerFirstName: "Sam", businessName: "Cinder Revenue Company", bookingLink: "https://cal.com/x" };
 const m = mergeFor({ name: "Foster Fence", company: "Foster Fence", location: "Houston, TX" }, ws);
 const s = fillTemplate(DEFAULT_TEMPLATES.intro.subject, m), b = fillTemplate(DEFAULT_TEMPLATES.intro.body, m);
-ok(() => assert.equal(s, "missed calls at Foster Fence"));
+ok(() => assert.equal(s, "more work for Foster Fence"));
 ok(() => assert.match(b, /^Hi there,/));
 ok(() => assert.doesNotMatch(b, /https?:\/\//, "no link in the first email"));
 ok(() => assert.match(fillTemplate(DEFAULT_TEMPLATES.follow_up.body, m), /https:\/\/cal\.com\/x/));

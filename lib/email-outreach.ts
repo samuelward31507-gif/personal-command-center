@@ -12,39 +12,39 @@ export const STEP_GAP_DAYS: Record<"follow_up" | "breakup", number> = { follow_u
    and a one-word reply ("sure") is easier to get than a booking. The link comes in the follow-up. */
 export const DEFAULT_TEMPLATES: Record<EmailStep, EmailTemplate> = {
   intro: {
-    subject: "missed calls at {company}",
+    subject: "more work for {company}",
     body: `Hi {first_name},
 
-When someone calls {company} and nobody picks up (you're on a job, it's after 5, it's Saturday), most of them don't leave a voicemail. They call the next company on Google.
+Quick question: could {company} handle more work right now?
 
-I set up a system that texts every missed caller back within seconds, gets the job details and books the estimate on your calendar. Nothing new for you to learn.
+Most owners I talk to aren't short on leads. They lose them. A call comes in after hours or on a Saturday and nobody picks up. A quote goes out and nobody follows up. A happy customer from last year never hears from you again.
 
-If it doesn't book you at least 5 estimates in the first 30 days, your next month is free.
+I set up a system that fixes all three. It texts every missed caller back in seconds and books them, follows up on open quotes until they answer, and brings past customers back for their next job. Nothing new for you to learn and nobody to hire.
 
-Open to seeing how it would work for {company}?
+If it doesn't put 5 booked appointments on your calendar in the first 30 days, your next month is free.
+
+Worth a look?
 
 {my_name}
 {business}`,
   },
   follow_up: {
-    subject: "Re: missed calls at {company}",
+    subject: "Re: more work for {company}",
     body: `Hi {first_name},
 
-Following up on my note below. Do you know roughly how many calls {company} misses in a busy week?
+Following up on my note below. If {company} had 5 more booked jobs next month, could your crew take them?
 
-Most owners don't, because those callers never leave a voicemail. That's the work I'd be winning back for you.
-
-Worth 15 minutes to see it? {booking_link}
+If the answer is yes, I'll show you exactly where they'd come from in 15 minutes: {booking_link}
 
 {my_name}`,
   },
   breakup: {
-    subject: "Re: missed calls at {company}",
+    subject: "Re: more work for {company}",
     body: `Hi {first_name},
 
-I haven't heard back, so I'll take it this isn't a priority for {company} right now and stop emailing.
+I'll stop here so I'm not cluttering your inbox.
 
-If missed calls ever turn into a headache, reply "calls" and I'll send over how it works.
+If {company} ever wants more jobs on the calendar without adding office staff, reply "jobs" and I'll send over how it works.
 
 {my_name}`,
   },
