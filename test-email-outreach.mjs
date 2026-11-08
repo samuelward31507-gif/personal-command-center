@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { DEFAULT_LINKEDIN, CONNECT_NOTE_LIMIT } from "./lib/linkedin-outreach.ts";
-import { greetName, mergeFor, fillTemplate, DEFAULT_TEMPLATES, DETAILING_TEMPLATES, trackOf, cityOf } from "./lib/email-outreach.ts";
+import { greetName, mergeFor, fillTemplate, DEFAULT_TEMPLATES, DETAILING_TEMPLATES, trackOf, cityOf, dueFollowUps } from "./lib/email-outreach.ts";
 let n = 0; const ok = f => { f(); n++; };
 ok(() => assert.equal(greetName("Mark Delgado", "Ridgeline Fence"), "Mark"));
 ok(() => assert.equal(greetName("Foster Fence", "Foster Fence"), "there", "company as name greets 'there'"));
@@ -28,4 +28,12 @@ ok(() => assert.equal(trackOf("Fence"), "trades"));
 ok(() => assert.equal(trackOf(undefined), "trades"));
 for (const k of Object.keys(DETAILING_TEMPLATES)) ok(() => assert.doesNotMatch(fillTemplate(DETAILING_TEMPLATES[k].body, m) + fillTemplate(DETAILING_TEMPLATES[k].subject, m), /\{\w+\}|crew|quote/i, "detailing " + k));
 ok(() => assert.doesNotMatch(fillTemplate(DETAILING_TEMPLATES.intro.body, m), /https?:\/\//, "no link in the detailer first email"));
+const D = 86400000, T0 = Date.parse("2026-11-09T12:00:00Z");
+const log = [
+  { contactId: "a", step: "intro", at: new Date(T0 - 4 * D).toISOString() },
+  { contactId: "b", step: "intro", at: new Date(T0 - 1 * D).toISOString() },
+  { contactId: "c", step: "intro", at: new Date(T0 - 9 * D).toISOString() }, { contactId: "c", step: "follow_up", at: new Date(T0 - 5 * D).toISOString() },
+  { contactId: "d", step: "intro", at: new Date(T0 - 6 * D).toISOString() },
+];
+ok(() => assert.deepEqual(dueFollowUps(log, [{ contactId: "d" }], T0), { follow_up: 1, breakup: 1 }, "a due, b too soon, c last try, d replied"));
 console.log(`Email outreach checks passed (${n} assertions).`);

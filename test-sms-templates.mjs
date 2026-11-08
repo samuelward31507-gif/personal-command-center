@@ -5,6 +5,7 @@ import {
   quietHoursWarning, planFor, dueAt, nextBusinessDay, zonedTime, localDate,
 } from "./lib/sms-templates.ts";
 import { timeZoneFor, timeZoneForPhone } from "./lib/local-time.ts";
+import { meetingNudge, meetingWhen, confirmText, reminderText } from "./lib/sms-templates.ts";
 let n = 0; const ok = (fn, msg) => { try { fn(); n++; } catch (e) { e.message = (msg ? msg + ": " : "") + e.message; throw e; } };
 const tzOf = c => resolveTimeZone(c, timeZoneFor, timeZoneForPhone);
 
@@ -95,5 +96,17 @@ ok(() => assert.equal(zonedTime(2026, 7, 1, 9, 30, "America/New_York").toISOStri
 ok(() => assert.equal(nextBusinessDay(new Date("2026-11-06T20:00:00Z"), "America/New_York").toISOString(), "2026-11-09T14:30:00.000Z"), "Friday → Monday");
 ok(() => assert.equal(localDate(new Date("2026-11-06T03:00:00Z"), "America/Los_Angeles"), "2026-11-05"));
 ok(() => assert.equal(dueAt(calledAt, "America/Phoenix", 1).toISOString(), "2026-11-06T16:30:00.000Z"));
+
+
+// no-show texts
+const nowM = new Date("2026-11-09T16:00:00Z"); // Mon 9:00 AM Denver
+ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null), "confirm", "tomorrow: confirm"));
+ok(() => assert.equal(meetingNudge(new Date("2026-11-09T18:00:00Z"), nowM, null), "remind", "2h out: remind"));
+ok(() => assert.equal(meetingNudge(new Date("2026-11-12T17:00:00Z"), nowM, null), null, "3 days out: nothing yet"));
+ok(() => assert.equal(meetingNudge(new Date("2026-11-09T15:00:00Z"), nowM, null), null, "past: nothing"));
+ok(() => assert.equal(meetingWhen(new Date("2026-11-10T17:00:00Z"), nowM, "America/Denver"), "tomorrow at 10:00 AM"));
+ok(() => assert.equal(meetingWhen(new Date("2026-11-09T18:00:00Z"), nowM, "America/New_York"), "today at 1:00 PM", "prospect's own time zone"));
+ok(() => assert.match(confirmText({ firstName: "Mark", when: "tomorrow at 10:00 AM", business: "Cinder" }), /^Hey Mark, Sam with Cinder\. Confirming our call tomorrow at 10:00 AM\. Still good\?/));
+ok(() => assert.match(reminderText({ when: "today at 1:00 PM" }), /^Hey, Sam here\./, "no name: no dangling space"));
 
 console.log(`Text template checks passed (${n} assertions).`);

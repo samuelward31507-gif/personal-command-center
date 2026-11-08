@@ -170,3 +170,32 @@ export function planFor(outcome: string, ctx: {
   }
   return plan;
 }
+
+// ---- no-show protection: texts for booked meetings ----
+
+/** "tomorrow at 10:00 AM" / "today at 2:30 PM", in the prospect's time zone when known. */
+export function meetingWhen(startsAt: Date, now: Date, tz: string | null): string {
+  const zone = tz && isTimeZone(tz) ? tz : undefined;
+  const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+  const time = new Intl.DateTimeFormat("en-US", { timeZone: zone, hour: "numeric", minute: "2-digit" }).format(startsAt);
+  const diff = Math.round((Date.parse(day(startsAt)) - Date.parse(day(now))) / 86400000);
+  const label = diff === 0 ? "today" : diff === 1 ? "tomorrow" : new Intl.DateTimeFormat("en-US", { timeZone: zone, weekday: "long" }).format(startsAt);
+  return `${label} at ${time}`;
+}
+/** Day-before confirmation. Asking for a reply is what cuts no-shows: people show up for what they said yes to. */
+export function confirmText(i: { firstName?: string; when: string; business?: string }): string {
+  const name = (i.firstName ?? "").trim();
+  return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. Confirming our call ${i.when}. Still good? Just reply yes, or tell me a better time.`;
+}
+/** Same-day reminder, about an hour before. */
+export function reminderText(i: { firstName?: string; when: string }): string {
+  const name = (i.firstName ?? "").trim();
+  return `Hey${name ? " " + name : ""}, Sam here. Quick reminder we're talking ${i.when}. I'll call you at this number. Talk soon.`;
+}
+/** Which no-show text a meeting needs right now: confirm when it's within ~a day and a half, remind in the last 3 hours. */
+export function meetingNudge(startsAt: Date, now: Date, tz: string | null): "confirm" | "remind" | null {
+  const ms = startsAt.getTime() - now.getTime();
+  if (ms <= 0) return null;
+  if (ms <= 3 * 3600000) return "remind";
+  return ms <= 36 * 3600000 ? "confirm" : null;
+}

@@ -71,8 +71,16 @@ export default function CallModePage() {
       const c = await cRes.json().catch(() => ({}));
       if (!dayRes.ok) throw new Error(day.error || "Could not build the call list.");
       const items: QueueItem[] = (day.items ?? []).filter((i: QueueItem) => i.callable && i.contact && ["revenue", "prospects", "deals"].includes(i.group));
+      const byId: Record<string, Contact> = Object.fromEntries((c.contacts ?? []).map((x: Contact) => [x.id, x]));
+      // New prospects: whoever is at a good time to call right now goes first (owners off the job: early morning,
+      // late afternoon), then the work day, then anyone where it's too early or too late. Callbacks keep their place.
+      const rank = { good: 0, ok: 1, late: 2 } as const;
+      const winOf = (i: QueueItem) => { const x = byId[i.contact!.id]; const w = localCallInfo(x?.location ?? "", now, x?.phone ?? i.contact!.phone ?? "")?.window; return w ? rank[w] : 1; };
+      const slots = items.map((it, n) => (it.group === "prospects" ? n : -1)).filter(n => n >= 0);
+      const ordered = slots.map(n => items[n]).map((it, k) => ({ it, k, w: winOf(it) })).sort((x, y) => x.w - y.w || x.k - y.k).map(x => x.it);
+      slots.forEach((n, k) => { items[n] = ordered[k]; });
       setQueue(items);
-      setContacts(Object.fromEntries((c.contacts ?? []).map((x: Contact) => [x.id, x])));
+      setContacts(byId);
       setIndex(0);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not build the call list."); }
     finally { setLoading(false); }

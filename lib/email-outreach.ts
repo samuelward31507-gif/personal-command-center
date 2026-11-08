@@ -144,6 +144,21 @@ Worth a quick call this week? Just reply with a good time.
   },
 };
 
+/** How many follow-ups and last tries are due, from the send log alone (replies and bounces excluded). Pure. */
+export function dueFollowUps(sent: { contactId: string; step: string; at: string }[], heard: { contactId: string }[], now = Date.now()): { follow_up: number; breakup: number } {
+  const done = new Set(heard.map(h => h.contactId));
+  const by = new Map<string, Record<string, number>>();
+  for (const s of sent) { const m = by.get(s.contactId) ?? {}; m[s.step] = Math.max(m[s.step] ?? 0, Date.parse(s.at)); by.set(s.contactId, m); }
+  let follow_up = 0, breakup = 0;
+  const days = (t: number) => (now - t) / 86400000;
+  for (const [id, m] of by) {
+    if (done.has(id)) continue;
+    if (m.intro && !m.follow_up && !m.breakup && days(m.intro) >= STEP_GAP_DAYS.follow_up) follow_up++;
+    else if (m.follow_up && !m.breakup && days(m.follow_up) >= STEP_GAP_DAYS.breakup) breakup++;
+  }
+  return { follow_up, breakup };
+}
+
 const LEGAL = /\b(llc|inc|co|corp|company|ltd|fence|fencing|construction|services?)\b/i;
 
 /** First name to greet with: the contact's first name when it's a person, "there" when the name is really the company. */

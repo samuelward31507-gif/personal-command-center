@@ -36,3 +36,8 @@ body .db-page .db-out-gap { height: 3px; margin-top: 12px; }
 body .db-page .db-out-c.is-hot .db-step-r { color: var(--u-text); }
 @media (max-width: 1100px) { body .db-page .db-out { grid-template-columns: repeat(4, minmax(0, 1fr)); } body .db-page a.db-out-c:nth-child(5) { border-left: 0; padding-left: 0; } }
 @media (max-width: 700px) { body .db-page .db-out { grid-template-columns: repeat(2, minmax(0, 1fr)); } body .db-page a.db-out-c, body .db-page a.db-out-c + a.db-out-c { padding: 14px 10px 14px 0; border-left: 0; border-bottom: 1px solid var(--u-line-soft); } }
+
+/* Next up: meeting row with a no-show text button */
+body .db-page .db-ev-wrap { display: flex !important; align-items: center; gap: 12px; }
+body .db-page .db-ev-link { display: flex; align-items: center; gap: inherit; flex: 1; min-width: 0; color: inherit; }
+body .db-page .db-ev-wrap .u-btn { flex: none; font-size: 12.5px; padding: 6px 10px; }

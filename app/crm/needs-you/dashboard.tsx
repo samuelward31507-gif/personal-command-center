@@ -5,6 +5,8 @@ import Link from "next/link";
 import { STAGE_LABELS, type DealStage } from "@/lib/offers";
 import { MOVE_OUT_MRR, WEEKLY_MEETING_TARGET, DAILY_EMAIL_TARGET, DAILY_LINKEDIN_TARGET } from "@/lib/scoreboard";
 import { Columns } from "../../ui/charts";
+import { dueFollowUps } from "@/lib/email-outreach";
+import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
 
@@ -24,7 +26,7 @@ type Board = {
   working?: Record<"trades" | "cities", { label: string; dials: number; convos: number; meetings: number }[]>;
   goal: { goal: number; by?: string; collected: number; expected: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
 };
-type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string };
+type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string; contactFirst?: string; contactCompany?: string; contactPhone?: string; contactTimeZone?: string; contactLocation?: string };
 type Alert = { level: "urgent" | "soon" | "info"; kind: string; text: string; href: string };
 
 const usd = (n: number) => "$" + Math.round(n || 0).toLocaleString("en-US");
@@ -50,7 +52,18 @@ export default function Dashboard() {
     fetch(`/api/calendar-events?fromAt=${encodeURIComponent(start.toISOString())}&toAt=${encodeURIComponent(end.toISOString())}`, { cache: "no-store" })
       .then(r => (r.ok ? r.json() : { events: [] })).then(d => setEvents((d.events ?? []).filter((e: Ev) => e.status !== "cancelled")))
       .catch(() => setEvents([]));
-    fetch("/api/ops-alerts", { cache: "no-store" }).then(r => (r.ok ? r.json() : { alerts: [] })).then(d => setAlerts(d.alerts ?? [])).catch(() => {});
+    Promise.all([
+      fetch("/api/ops-alerts", { cache: "no-store" }).then(r => (r.ok ? r.json() : { alerts: [] })).catch(() => ({ alerts: [] })),
+      fetch("/api/email-outreach", { cache: "no-store" }).then(r => (r.ok ? r.json() : { sent: [], heard: [] })).catch(() => ({ sent: [], heard: [] })),
+    ]).then(([a, e]) => {
+      const list: Alert[] = a.alerts ?? [];
+      const replies = (e.heard ?? []).filter((h: { kind: string; at: string }) => h.kind === "reply" && Date.now() - Date.parse(h.at) < 3 * 86400000).length;
+      const due = dueFollowUps(e.sent ?? [], e.heard ?? []);
+      const extra: Alert[] = [];
+      if (replies) extra.push({ level: "urgent", kind: "email-reply", text: `${replies} email repl${replies === 1 ? "y" : "ies"} in the last 3 days. Answer them first.`, href: "/crm/email" });
+      if (due.follow_up + due.breakup) extra.push({ level: "info", kind: "email-due", text: `${due.follow_up + due.breakup} email follow-up${due.follow_up + due.breakup === 1 ? "" : "s"} due${due.breakup ? ` (${due.breakup} last tr${due.breakup === 1 ? "y" : "ies"})` : ""}.`, href: "/crm/email" });
+      setAlerts([...extra, ...list]);
+    });
     const t = setInterval(() => tick(x => x + 1), 60000);
     return () => clearInterval(t);
   }, []);
@@ -58,6 +71,17 @@ export default function Dashboard() {
   const now = new Date();
   const greeting = now.getHours() < 5 ? "Late night" : now.getHours() < 12 ? "Morning" : now.getHours() < 18 ? "Afternoon" : "Evening";
   const target = b?.targets?.dailyCalls ?? ws.dailyCallTarget ?? 100;
+  const [nudged, setNudged] = useState<Record<string, true>>(() => { try { return JSON.parse(localStorage.getItem("cinder.nudged.v1") || "{}"); } catch { return {}; } });
+  function nudge(e: Ev, kind: "confirm" | "remind") {
+    if (!e.contactPhone || !e.contactId) return;
+    const tz = resolveTimeZone(e.contactTimeZone ?? "", e.contactLocation ?? "", e.contactPhone);
+    const at = meetingWhen(new Date(e.startsAt), new Date(), tz);
+    const body = kind === "confirm" ? confirmText({ firstName: e.contactFirst && e.contactFirst !== e.contactCompany ? e.contactFirst : "", when: at, business: ws.businessName }) : reminderText({ firstName: e.contactFirst && e.contactFirst !== e.contactCompany ? e.contactFirst : "", when: at });
+    window.location.href = smsHref(e.contactPhone, body);
+    void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: e.contactId, direction: "outbound", body }) }).catch(() => {});
+    const next = { ...nudged, [e.id + ":" + kind]: true as const }; setNudged(next);
+    try { localStorage.setItem("cinder.nudged.v1", JSON.stringify(next)); } catch { /* fine */ }
+  }
   const upcoming = (events ?? []).filter(e => new Date(e.endsAt).getTime() > Date.now()).sort((x, y) => x.startsAt.localeCompare(y.startsAt));
   const when = (e: Ev) => {
     const s = new Date(e.startsAt), isToday = localDay(s) === localDay();
@@ -133,10 +157,13 @@ export default function Dashboard() {
         <div className="u-h2-row"><h2 className="u-h2">Next up</h2><Link className="u-note" href="/crm/calendar" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Calendar</Link></div>
         {events === null ? <p className="u-note">Loading…</p> : upcoming.length === 0
           ? <div className="u-rows"><div className="u-row"><div className="u-row-main"><strong>Nothing booked today or tomorrow</strong><span>Meetings come from dials. Book one in Call mode.</span></div></div></div>
-          : <div className="u-rows">{upcoming.slice(0, 4).map((e, i) => <Link key={e.id} className="u-row db-ev" href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"}>
-            <div className="db-ev-t"><b className="u-num">{when(e).t}</b><span>{[when(e).day, i === 0 ? until(e.startsAt) : ""].filter(Boolean).join(", ")}</span></div>
-            <div className="u-row-main"><strong>{e.title}</strong>{e.contactName && <span>{e.contactName}</span>}</div>
-          </Link>)}</div>}
+          : <div className="u-rows">{upcoming.slice(0, 4).map((e, i) => { const k = e.contactPhone ? meetingNudge(new Date(e.startsAt), new Date(), null) : null; const done = k && nudged[e.id + ":" + k]; return <div key={e.id} className="u-row db-ev db-ev-wrap">
+            <Link className="db-ev-link" href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"}>
+              <div className="db-ev-t"><b className="u-num">{when(e).t}</b><span>{[when(e).day, i === 0 ? until(e.startsAt) : ""].filter(Boolean).join(", ")}</span></div>
+              <div className="u-row-main"><strong>{e.title}</strong>{e.contactName && <span>{e.contactName}</span>}</div>
+            </Link>
+            {k && <button type="button" className={"u-btn " + (done ? "u-btn-bare" : "u-btn-light")} title={k === "confirm" ? "Text them to confirm. Prospects who reply yes almost always show." : "Text a reminder before the call"} onClick={() => nudge(e, k)}>{done ? (k === "confirm" ? "Confirm sent" : "Reminder sent") : k === "confirm" ? "Text to confirm" : "Text reminder"}</button>}
+          </div>; })}</div>}
         {alerts.length > 0 && <div style={{ marginTop: 28 }}>
           <div className="u-h2-row"><h2 className="u-h2">Needs attention</h2></div>
           <div className="u-rows">{alerts.slice(0, 5).map((a, i) => <Link key={i} className="u-row" href={a.href} style={{ minHeight: 46 }}><span className={"u-dot" + (a.level === "urgent" ? " is-bad" : "")} /><div className="u-row-main"><span style={{ color: "var(--u-soft)", fontSize: 13.5, whiteSpace: "normal" }}>{a.text}</span></div></Link>)}</div>
