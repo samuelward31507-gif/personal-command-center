@@ -51,4 +51,8 @@ for (const f of ["voice", "dial-status", "sms"]) {
 const sms = readFileSync("app/api/twilio/sms/route.ts", "utf8");
 ok(() => assert.match(sms, /from !== me/, "the founder's own texts are not forwarded back to them"));
 
+ok(() => assert.match(voiceTwiml("", "+1303", "/api/twilio/dial-status?key=abc"), /dial-status\?key=abc&amp;direct=1/, "key survives the no-forward redirect"));
+const tw = readFileSync("lib/twilio.ts", "utf8");
+ok(() => assert.match(tw, /if \(!sig && webhookKeyOk/, "unsigned requests need the secret key"));
+ok(() => assert.match(tw, /want.length < 16/, "the key fallback is off unless a long key is set"));
 console.log(`missed-call: ${n} assertions passed`);

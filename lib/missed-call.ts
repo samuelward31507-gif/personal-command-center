@@ -31,7 +31,7 @@ export function missedCallText(business: string, template?: string): string {
 
 /** TwiML for an incoming call: ring the forward number for `timeout` seconds, else go straight to the missed path. */
 export function voiceTwiml(forwardTo: string, callerId: string, statusUrl: string, timeout = 20): string {
-  if (!forwardTo) return `<?xml version="1.0" encoding="UTF-8"?><Response><Redirect method="POST">${xml(statusUrl)}?direct=1</Redirect></Response>`;
+  if (!forwardTo) return `<?xml version="1.0" encoding="UTF-8"?><Response><Redirect method="POST">${xml(statusUrl + (statusUrl.includes("?") ? "&" : "?") + "direct=1")}</Redirect></Response>`;
   return `<?xml version="1.0" encoding="UTF-8"?><Response><Dial timeout="${timeout}" callerId="${xml(callerId)}" action="${xml(statusUrl)}" method="POST"><Number>${xml(forwardTo)}</Number></Dial></Response>`;
 }
 

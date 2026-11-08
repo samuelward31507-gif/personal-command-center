@@ -11,6 +11,9 @@ export async function POST(request: Request) {
   if (!p) return new Response("Forbidden", { status: 403 });
   const forwardTo = e164(process.env.CINDER_FORWARD_TO ?? "");
   const timeout = Math.min(40, Math.max(10, Number(process.env.CINDER_RING_SECONDS) || 20));
-  return twiml(voiceTwiml(forwardTo, p.To ?? "", "/api/twilio/dial-status", timeout));
+  // Carry the trial ?key= through to the follow-up webhook so it is accepted too.
+  const key = new URL(request.url).searchParams.get("key");
+  const statusUrl = "/api/twilio/dial-status" + (key ? `?key=${encodeURIComponent(key)}` : "");
+  return twiml(voiceTwiml(forwardTo, p.To ?? "", statusUrl, timeout));
 }
 export const GET = POST;

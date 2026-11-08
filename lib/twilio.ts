@@ -1,4 +1,5 @@
 // Twilio I/O for the missed-call text-back: verify webhook requests and send texts over the REST API.
+import { timingSafeEqual } from "node:crypto";
 import { validTwilioSignature } from "@/lib/missed-call";
 
 export function twilioConfigured(): boolean {
@@ -15,6 +16,14 @@ function candidateUrls(request: Request): string[] {
   const app = process.env.CINDER_APP_URL?.trim();
   if (app) out.add(app.replace(/\/$/, "") + path);
   return [...out];
+}
+
+/** Constant-time check of the ?key= secret for unsigned (trial) webhooks. Off unless CINDER_WEBHOOK_KEY is 16+ chars. */
+export function webhookKeyOk(got: string | null): boolean {
+  const want = process.env.CINDER_WEBHOOK_KEY?.trim() || "";
+  if (want.length < 16 || !got) return false;
+  const a = Buffer.from(got), b = Buffer.from(want);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 /** Parse a Twilio webhook. Returns null when the signature doesn't check out. */
@@ -36,6 +45,8 @@ export async function readTwilioRequest(request: Request): Promise<Record<string
   }
   const urls = candidateUrls(request);
   const sig = request.headers.get("x-twilio-signature");
+  // Twilio's trial "Try it out" webhooks arrive unsigned. Accept those only with the secret ?key= from CINDER_WEBHOOK_KEY.
+  if (!sig && webhookKeyOk(new URL(request.url).searchParams.get("key"))) return params;
   if (!validTwilioSignature(token, sig, urls, signed)) {
     console.error("Twilio webhook rejected: bad signature", { hasSig: !!sig, tokenLen: token.length, urls });
     return null;
