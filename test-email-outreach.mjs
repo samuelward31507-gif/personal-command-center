@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { DEFAULT_LINKEDIN, CONNECT_NOTE_LIMIT } from "./lib/linkedin-outreach.ts";
 import { greetName, mergeFor, fillTemplate, DEFAULT_TEMPLATES, cityOf } from "./lib/email-outreach.ts";
 let n = 0; const ok = f => { f(); n++; };
 ok(() => assert.equal(greetName("Mark Delgado", "Ridgeline Fence"), "Mark"));
@@ -18,4 +19,6 @@ ok(() => assert.equal(fillTemplate(DEFAULT_TEMPLATES.breakup.subject, m), fillTe
 ok(() => assert.doesNotMatch(b, /\{\w+\}/, "every fill-in is filled"));
 ok(() => assert.equal(fillTemplate("Hi {nope}", m), "Hi {nope}", "typos stay visible"));
 for (const k of Object.keys(DEFAULT_TEMPLATES)) ok(() => assert.doesNotMatch(fillTemplate(DEFAULT_TEMPLATES[k].body, m), /\{\w+\}/, k));
+ok(() => assert.ok(fillTemplate(DEFAULT_LINKEDIN.connect, mergeFor({ name: "Christopher Montgomery", company: "Montgomery Premium Fence & Deck Builders of North Texas", location: "Dallas, TX" }, ws)).length <= CONNECT_NOTE_LIMIT, "connection note fits LinkedIn's limit"));
+for (const k of Object.keys(DEFAULT_LINKEDIN)) ok(() => assert.doesNotMatch(fillTemplate(DEFAULT_LINKEDIN[k], m), /\{\w+\}/, k));
 console.log(`Email outreach checks passed (${n} assertions).`);

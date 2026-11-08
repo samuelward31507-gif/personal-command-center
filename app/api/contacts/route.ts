@@ -47,7 +47,7 @@ export async function GET() {
     const sql = db();
     const rows = await sql`
       SELECT c.id, c.first_name, c.last_name, c.company, c.role, c.email, c.phone, c.status,
-             c.source, c.notes, c.follow_up_at, c.website, c.instagram, c.facebook, c.location, c.time_zone, c.sms_consent, c.sms_consent_at, c.sms_consent_source, c.created_at, c.updated_at,
+             c.source, c.notes, c.follow_up_at, c.website, c.instagram, c.facebook, c.linkedin_url, c.niche, c.location, c.time_zone, c.sms_consent, c.sms_consent_at, c.sms_consent_source, c.created_at, c.updated_at,
              (SELECT MAX(a.occurred_at) FROM public.contact_activities a
               WHERE a.owner_id = c.owner_id AND a.contact_id = c.id) AS last_contact_at,
              lt.occurred_at AS last_touch_at, lt.outcome AS last_touch_outcome, ln.notes AS last_note,
@@ -82,6 +82,8 @@ export async function GET() {
       website: blankIfPlaceholder(row.website),
       instagram: row.instagram,
       facebook: row.facebook,
+      linkedin: String(row.linkedin_url ?? ""),
+      niche: String(row.niche ?? ""),
       location: blankIfPlaceholder(row.location),
       timeZone: String(row.time_zone ?? ""),
       smsConsent: row.sms_consent === true,
@@ -180,6 +182,7 @@ export async function PATCH(request: Request) {
         instagram = ${String(body.instagram ?? "").slice(0, 500)},
         facebook = ${String(body.facebook ?? "").slice(0, 500)},
         location = ${String(body.location ?? "").slice(0, 300)},
+        linkedin_url = CASE WHEN ${typeof body.linkedin === "string"} THEN ${String(body.linkedin ?? "").slice(0, 500)} ELSE linkedin_url END,
         time_zone = CASE WHEN ${typeof body.timeZone === "string"} THEN ${timeZoneOf(body.timeZone)} ELSE time_zone END,
         sms_consent = CASE WHEN ${typeof body.smsConsent === "boolean"} THEN ${body.smsConsent === true} ELSE sms_consent END,
         sms_consent_at = CASE WHEN ${body.smsConsent === true} THEN now() WHEN ${body.smsConsent === false} THEN NULL ELSE sms_consent_at END,

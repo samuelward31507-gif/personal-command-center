@@ -12,10 +12,10 @@ import ImportModal from "./import-modal";
 import InfoKit from "./info-kit";
 import DiscoveryPanel from "./discovery-panel";
 import TextDraft, { type TextContext } from "./text-draft";
-type Contact={id:string;name:string;company:string;role:string;email:string;phone:string;website:string;instagram:string;facebook:string;location:string;timeZone:string;status:"Lead"|"Contact"|"Customer"|"Partner";source:string;lastContact:string;lastTouchAt?:string;lastTouchOutcome?:string;nextFollowUp:string;notes:string;createdAt:string};
+type Contact={id:string;name:string;company:string;role:string;email:string;phone:string;website:string;instagram:string;facebook:string;linkedin?:string;niche?:string;location:string;timeZone:string;status:"Lead"|"Contact"|"Customer"|"Partner";source:string;lastContact:string;lastTouchAt?:string;lastTouchOutcome?:string;nextFollowUp:string;notes:string;createdAt:string};
 type Activity={id:string;contact_id:string;channel:"call"|"text"|"note";action:string;outcome:string;notes:string;sequence_step:number|null;occurred_at:string};
 const KEY="cinder.crm.contacts.v1";
-const blank={name:"",company:"",role:"",email:"",phone:"",website:"",instagram:"",facebook:"",location:"",timeZone:"",status:"Lead" as Contact["status"],source:"",lastContact:"",nextFollowUp:"",notes:""};
+const blank={name:"",company:"",role:"",email:"",phone:"",website:"",instagram:"",facebook:"",linkedin:"",location:"",timeZone:"",status:"Lead" as Contact["status"],source:"",lastContact:"",nextFollowUp:"",notes:""};
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 const localDay=(iso:string)=>{const d=new Date(iso);return Number.isNaN(d.getTime())?"":d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
 const touchedToday=(c:Contact)=>!!c.lastTouchAt&&localDay(c.lastTouchAt)===today();
@@ -131,6 +131,7 @@ export default function ContactsPage(){
      <div><dt>Location</dt><dd>{current.location||"—"}</dd></div>
      <div><dt>Instagram</dt><dd>{current.instagram?<a href={href(current.instagram,"instagram.com/")} target="_blank" rel="noreferrer">{current.instagram}</a>:"—"}</dd></div>
      <div><dt>Facebook</dt><dd>{current.facebook?<a href={href(current.facebook,"facebook.com/")} target="_blank" rel="noreferrer">Page</a>:"—"}</dd></div>
+     <div><dt>LinkedIn</dt><dd>{current.linkedin?<a href={href(current.linkedin,"linkedin.com/in/")} target="_blank" rel="noreferrer">Profile</a>:"—"}</dd></div>
      <div><dt>Last call</dt><dd>{current.lastTouchAt?`${dateLabel(localDay(current.lastTouchAt))}, ${outcomeText(current.lastTouchOutcome).toLowerCase()}`:"Never"}</dd></div>
      <div><dt>Next follow-up</dt><dd>{dateLabel(current.nextFollowUp)}</dd></div>
     </dl>
@@ -178,6 +179,7 @@ export default function ContactsPage(){
      <label className="u-lab">Location<input className="u-field" maxLength={300} value={draft.location} onChange={e=>setDraft({...draft,location:e.target.value})} placeholder="Denver, CO"/></label>
      <label className="u-lab">Instagram<input className="u-field" maxLength={500} value={draft.instagram} onChange={e=>setDraft({...draft,instagram:e.target.value})} placeholder="instagram.com/handle"/></label>
      <label className="u-lab">Facebook<input className="u-field" maxLength={500} value={draft.facebook} onChange={e=>setDraft({...draft,facebook:e.target.value})} placeholder="facebook.com/page"/></label>
+     <label className="u-lab">LinkedIn<input className="u-field" maxLength={500} value={draft.linkedin??""} onChange={e=>setDraft({...draft,linkedin:e.target.value})} placeholder="linkedin.com/in/name"/></label>
      <label className="u-lab">Status<select className="u-field" value={draft.status} onChange={e=>setDraft({...draft,status:e.target.value as Contact["status"]})}><option>Lead</option><option>Contact</option><option>Customer</option><option>Partner</option></select></label>
      <label className="u-lab">Time zone<select className="u-field" value={draft.timeZone||""} onChange={e=>setDraft({...draft,timeZone:e.target.value})}><option value="">Auto, from state or area code</option><option value="America/New_York">Eastern</option><option value="America/Chicago">Central</option><option value="America/Denver">Mountain</option><option value="America/Phoenix">Arizona</option><option value="America/Los_Angeles">Pacific</option><option value="America/Anchorage">Alaska</option><option value="Pacific/Honolulu">Hawaii</option></select></label>
      <label className="u-lab">Source<input className="u-field" maxLength={100} value={draft.source} onChange={e=>setDraft({...draft,source:e.target.value})} placeholder="Cold call, referral"/></label>
