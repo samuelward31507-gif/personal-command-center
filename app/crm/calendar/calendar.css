@@ -9,13 +9,13 @@
 .calendar-page button { font-family: inherit; }
 .calendar-page *, .calendar-page *::before, .calendar-page *::after { box-sizing: border-box; }
 
-/* Tones: monochrome like the rest of Cinder. Routine = quiet grays; real meetings = solid light. */
-.calendar-page .tone-amber  { --t-bg: rgba(255, 255, 255, .055); --t-ink: #d6d6d6; --t-dot: #7a7a7a; }
-.calendar-page .tone-green  { --t-bg: rgba(255, 255, 255, .075); --t-ink: #e6e6e6; --t-dot: #9a9a9a; }
-.calendar-page .tone-violet { --t-bg: rgba(255, 255, 255, .045); --t-ink: #c4c4c4; --t-dot: #6a6a6a; }
-.calendar-page .tone-gray   { --t-bg: rgba(255, 255, 255, .04);  --t-ink: #b8b8b8; --t-dot: #5e5e5e; }
-.calendar-page .tone-blue   { --t-bg: #ececec; --t-ink: #121212; --t-dot: #ececec; }
-.calendar-page .tone-red    { --t-bg: rgba(229, 91, 91, .2); --t-ink: #f2a9a9; --t-dot: #e55b5b; }
+/* Tones: color carries meaning (blue meetings, green dialing/calls, amber trading/personal, violet build). */
+.calendar-page .tone-blue   { --t-solid: #3d72db; --t-bg: rgba(77, 144, 254, .26); --t-ink: #cfe0ff; --t-dot: #4d90fe; --t-band: rgba(77, 144, 254, .10); --t-label: #8fb6ff; }
+.calendar-page .tone-green  { --t-solid: #22975a; --t-bg: rgba(46, 189, 107, .24); --t-ink: #c4f0d4; --t-dot: #2ebd6b; --t-band: rgba(46, 189, 107, .10); --t-label: #6fd69a; }
+.calendar-page .tone-amber  { --t-solid: #c8850f; --t-bg: rgba(245, 166, 35, .24); --t-ink: #ffe2b0; --t-dot: #f5a623; --t-band: rgba(245, 166, 35, .09); --t-label: #f2c06a; }
+.calendar-page .tone-violet { --t-solid: #7b55d9; --t-bg: rgba(155, 109, 255, .26); --t-ink: #e2d6ff; --t-dot: #9b6dff; --t-band: rgba(155, 109, 255, .10); --t-label: #b99cff; }
+.calendar-page .tone-red    { --t-bg: rgba(240, 82, 82, .24); --t-ink: #ffc9c9; --t-dot: #f05252; --t-band: rgba(240, 82, 82, .10); --t-label: #ff8f8f; }
+.calendar-page .tone-gray   { --t-solid: #4a4a4a; --t-bg: rgba(255, 255, 255, .09); --t-ink: #dcdcdc; --t-dot: #8a8a8a; --t-band: rgba(255, 255, 255, .035); --t-label: #a8a8a8; }
 
 /* Shell + toolbar */
 .calendar-page .cal-shell { background: var(--c-surface); border: 1px solid var(--c-line); border-radius: 14px; overflow: hidden; }
@@ -112,8 +112,8 @@
 .calendar-page .calendar-upcoming-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 6px; border: 0; background: transparent; text-align: left; cursor: pointer; border-radius: 8px; }
 .calendar-page .calendar-upcoming-main:hover { background: var(--c-hover); }
 .calendar-page .upcoming-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; background: var(--c-muted); }
-.calendar-page .upcoming-dot.event-meeting, .calendar-page .upcoming-dot.event-call, .calendar-page .upcoming-dot.event-focus { background: #e6e6e6; }
-.calendar-page .upcoming-dot.event-personal { background: #9a9a9a; } .calendar-page .upcoming-dot.event-deadline { background: #e55b5b; }
+.calendar-page .upcoming-dot.event-meeting { background: #4d90fe; } .calendar-page .upcoming-dot.event-call { background: #2ebd6b; } .calendar-page .upcoming-dot.event-focus { background: #9b6dff; }
+.calendar-page .upcoming-dot.event-personal { background: #f5a623; } .calendar-page .upcoming-dot.event-deadline { background: #e55b5b; }
 .calendar-page .upcoming-copy { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
 .calendar-page .upcoming-copy strong { font-size: 13px; font-weight: 600; color: var(--c-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-page .upcoming-copy small { font-size: 12px; color: var(--c-muted); }
@@ -180,10 +180,7 @@
 .calendar-page .cal-band { position: absolute; left: 0; right: 0; z-index: 1; display: flex; align-items: baseline; gap: 6px; padding: 6px 10px; background: var(--t-bg); border-top: 1px solid rgba(255,255,255,.07); pointer-events: none; overflow: hidden; }
 .calendar-page .cal-band-label { font-size: 11px; font-weight: 600; letter-spacing: .02em; color: #9d9d9d; white-space: nowrap; }
 .calendar-page .cal-band-time { font-size: 10.5px; color: #626262; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.calendar-page .cal-band.tone-green { background: rgba(255,255,255,.045); }
-.calendar-page .cal-band.tone-green .cal-band-label { color: #c8c8c8; }
-.calendar-page .cal-band.tone-amber, .calendar-page .cal-band.tone-violet { background: rgba(255,255,255,.028); }
-.calendar-page .cal-band.tone-gray { background: rgba(255,255,255,.018); }
+
 .calendar-page .cal-block-inline { font-weight: 400; opacity: .7; margin-left: 4px; }
 .calendar-page .cal-tg-hour { font-size: 11px; color: #6e6e6e; }
 .calendar-page .cal-tg-line { border-top-color: #222; }
@@ -204,9 +201,8 @@
 .calendar-page .cal-tg-col.is-today { background: #1e1e1e; box-shadow: inset 0 0 0 1px #343434; }
 .calendar-page .cal-tg-line { border-top-color: #232323; }
 .calendar-page .cal-band { left: 5px; right: 5px; border-top: 0; border-radius: 8px; padding: 7px 9px; }
-.calendar-page .cal-band.tone-green { background: rgba(255,255,255,.055); }
-.calendar-page .cal-band.tone-amber, .calendar-page .cal-band.tone-violet { background: rgba(255,255,255,.035); }
-.calendar-page .cal-band.tone-gray { background: rgba(255,255,255,.025); }
+.calendar-page .cal-band { background: var(--t-band); box-shadow: none; }
+.calendar-page .cal-band .cal-band-label { color: var(--t-label); }
 .calendar-page .cal-now { left: 0; }
 .calendar-page .cal-now::before { left: -4px; }
 
@@ -216,3 +212,7 @@
 .calendar-page .cal-cell.is-outside { background: #161616; }
 .calendar-page .cal-cell.is-today { background: #1f1f1f; box-shadow: inset 0 0 0 1px #3a3a3a; }
 .calendar-page .cal-shell { background: #151515; }
+
+/* Meetings and calls: solid, unmistakable over the routine bands */
+.calendar-page .cal-block { background: var(--t-solid); color: #fff; }
+.calendar-page .cal-block .cal-block-time { opacity: .85; }
