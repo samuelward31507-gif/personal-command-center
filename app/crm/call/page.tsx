@@ -109,6 +109,8 @@ export default function CallModePage() {
     }).slice(0, 8);
   }, [search, contacts]);
   function pick(id: string) { setPicked(id); setSearch(""); setFlash(null); }
+  // Opened from the Dashboard's follow-up list: /crm/call?contact=<id> jumps straight to that person.
+  useEffect(() => { const id = new URLSearchParams(window.location.search).get("contact"); if (id) { setPicked(id); window.history.replaceState(null, "", "/crm/call"); } }, []);
 
   useEffect(() => {
     setAudit(undefined); setNotes("");

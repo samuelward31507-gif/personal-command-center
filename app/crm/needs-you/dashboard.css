@@ -41,3 +41,8 @@ body .db-page .db-out-c.is-hot .db-step-r { color: var(--u-text); }
 body .db-page .db-ev-wrap { display: flex !important; align-items: center; gap: 12px; }
 body .db-page .db-ev-link { display: flex; align-items: center; gap: inherit; flex: 1; min-width: 0; color: inherit; }
 body .db-page .db-ev-wrap .u-btn { flex: none; font-size: 12.5px; padding: 6px 10px; }
+
+/* Your follow-ups today */
+body .db-page .db-todo { display: flex !important; align-items: center; gap: 14px; min-height: 54px; }
+body .db-page .db-todo .u-row-main { flex: 1; min-width: 0; }
+body .db-page .db-todo .u-btn { flex: none; }
