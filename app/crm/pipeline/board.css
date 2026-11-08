@@ -1,0 +1,32 @@
+/* Pipeline on the Cinder UI: a real board, columns side by side, drag to move. */
+body .pb-page .pb-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 12px; margin: 0 calc(-1 * clamp(20px, 3vw, 48px)); padding-left: clamp(20px, 3vw, 48px); padding-right: clamp(20px, 3vw, 48px); align-items: stretch; min-height: 460px; }
+body .pb-page .pb-col { flex: 0 0 262px; display: flex; flex-direction: column; border-radius: 14px; background: var(--u-sheet) !important; border: 1px solid var(--u-line-soft); padding: 12px 10px 10px; transition: border-color .12s, background .12s; }
+body .pb-page .pb-col.is-empty { flex-basis: 52px; padding: 14px 0; align-items: center; background: transparent !important; border-style: dashed; border-color: var(--u-line); transition: flex-basis .15s ease; }
+body .pb-page .pb-col.is-empty .pb-col-h { writing-mode: vertical-rl; transform: rotate(180deg); color: var(--u-muted); font-weight: 500; padding: 0; }
+body .pb-page .pb-col.is-empty .pb-drop { display: none; }
+body .pb-page .pb-board.is-dragging .pb-col.is-empty { flex-basis: 168px; padding: 12px 10px 10px; align-items: stretch; }
+body .pb-page .pb-board.is-dragging .pb-col.is-empty .pb-col-h { writing-mode: horizontal-tb; transform: none; padding: 0 4px; }
+body .pb-page .pb-board.is-dragging .pb-col.is-empty .pb-drop { display: grid; }
+body .pb-page .pb-col.is-over { border-color: var(--u-text) !important; border-style: solid; background: var(--u-raise) !important; }
+body .pb-page .pb-col-end { flex-basis: 168px; background: transparent !important; border-style: dashed; border-color: var(--u-line); }
+body .pb-page .pb-col-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 0 4px; font-size: 13px; font-weight: 550; color: var(--u-text); }
+body .pb-page .pb-col-h b { font-weight: 500; color: var(--u-faint); font-variant-numeric: tabular-nums; }
+body .pb-page .pb-col-sum { padding: 2px 4px 0; font-size: 12.5px; color: var(--u-muted); }
+body .pb-page .pb-col-body { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; flex: 1; }
+body .pb-page .pb-drop { flex: 1; display: grid; place-items: center; min-height: 90px; margin-top: 12px; padding: 12px; text-align: center; font-size: 12.5px; line-height: 1.45; color: var(--u-faint); }
+body .pb-page .pb-col-body .pb-drop { margin-top: 0; }
+body .pb-page .pb-deal { display: flex; flex-direction: column; gap: 3px; padding: 12px 12px 11px; border-radius: 10px; background: var(--u-raise) !important; border: 1px solid var(--u-line); cursor: grab; }
+body .pb-page .pb-deal:hover { border-color: #45413c; }
+body .pb-page .pb-deal.is-drag { opacity: .4; }
+body .pb-page .pb-deal-co { font-size: 14px; font-weight: 550; color: var(--u-text) !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body .pb-page .pb-deal-co:hover { text-decoration: underline; text-underline-offset: 3px; }
+body .pb-page .pb-deal-sub { font-size: 12.5px; color: var(--u-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body .pb-page .pb-deal-money { display: flex; align-items: baseline; gap: 3px; flex-wrap: wrap; margin-top: 8px; font-size: 12.5px; color: var(--u-faint); }
+body .pb-page .pb-deal-money b { font-size: 17px; font-weight: 500; color: var(--u-text); }
+body .pb-page .pb-deal-setup { margin-left: 6px; }
+body .pb-page .pb-deal-meta { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--u-line-soft); font-size: 12px; color: var(--u-muted); }
+body .pb-page .pb-deal-meta .is-late, body .pb-page td.pb-late { color: var(--u-bad) !important; }
+body .pb-page select.pb-stage { height: 30px; width: auto; font-size: 13px !important; padding: 0 26px 0 10px; }
+body .pb-page .pb-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+body .pb-page .pb-form .pb-full { grid-column: 1 / -1; }
+@media (max-width: 700px) { body .pb-page .pb-form { grid-template-columns: 1fr; } body .pb-page .pb-board { margin: 0 -16px; padding: 0 16px 12px; } }
