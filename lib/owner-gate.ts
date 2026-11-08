@@ -10,8 +10,8 @@ export function isAllowedUser(user: { id?: string | null; createdAt?: unknown } 
   const owners = String(env.CINDER_OWNER_ID || "").split(",").map(s => s.trim()).filter(Boolean);
   if (owners.includes(user.id)) return true;
   const created = user.createdAt instanceof Date ? user.createdAt.getTime() : typeof user.createdAt === "string" ? Date.parse(user.createdAt) : NaN;
-  // Accounts that existed before sign-ups closed keep working. If the auth provider ever stops sending a
-  // creation time, fail open rather than lock the owner out; the owner-id check above is the primary gate.
-  if (!Number.isFinite(created) || !Number.isFinite(SIGNUPS_CLOSED_AT)) return true;
+  // Accounts that existed before sign-ups closed keep working. With no creation time we can't tell, so fail
+  // closed: the owner-id list above already lets the owner in.
+  if (!Number.isFinite(created) || !Number.isFinite(SIGNUPS_CLOSED_AT)) return false;
   return created <= SIGNUPS_CLOSED_AT;
 }

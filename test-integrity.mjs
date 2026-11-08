@@ -16,6 +16,8 @@ ok(() => assert.equal(isAllowedUser({ id: "x", createdAt: "2026-10-01T00:00:00Z"
 ok(() => assert.equal(isAllowedUser({ id: "x", createdAt: "2026-11-03T00:00:00Z" }, env), false));
 ok(() => assert.equal(isAllowedUser({ id: "x", createdAt: new Date("2026-12-01") }, env), false));
 ok(() => assert.equal(isAllowedUser(null, env), false));
+ok(() => assert.equal(isAllowedUser({ id: "x" }, env), false, "no creation time: fail closed"));
+ok(() => assert.equal(isAllowedUser({ id: "owner-1" }, env), true, "the owner never depends on the creation time"));
 // Every API route goes through the gated session, never the raw one.
 const walk = d => readdirSync(d).flatMap(f => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
 const routes = walk("app/api").filter(p => p.endsWith(".ts"));

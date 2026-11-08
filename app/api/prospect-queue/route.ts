@@ -30,8 +30,8 @@ async function build(owner: string, base: string) {
         (SELECT r.view_count FROM public.prospect_reports r WHERE r.contact_id = c.id AND r.owner_id = c.owner_id ORDER BY r.created_at DESC LIMIT 1) AS views,
         (SELECT a.notes FROM public.contact_activities a WHERE a.contact_id = c.id AND a.owner_id = c.owner_id AND a.notes LIKE 'Research (%' ORDER BY a.occurred_at DESC LIMIT 1) AS research
       FROM public.contacts c WHERE c.owner_id = ${owner} AND c.status IN ('contact','lead')
-        AND NOT EXISTS (SELECT 1 FROM public.prospect_touches t WHERE t.contact_id = c.id)
-        AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.contact_id = c.id AND a.outcome IN ('do_not_contact','not_a_fit','wrong_contact'))
+        AND NOT EXISTS (SELECT 1 FROM public.prospect_touches t WHERE t.contact_id = c.id AND t.owner_id = c.owner_id)
+        AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.contact_id = c.id AND a.owner_id = c.owner_id AND a.outcome IN ('do_not_contact','not_a_fit','wrong_contact'))
       ORDER BY c.created_at LIMIT 600` as Promise<Record<string, unknown>[]>,
   ]);
   const byContact = new Map<string, { info: Record<string, unknown>; touches: Touch[] }>();

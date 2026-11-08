@@ -44,7 +44,7 @@ export async function GET() {
       LEFT JOIN public.client_ops o ON o.project_id = p.id AND o.owner_id = p.owner_id
       WHERE p.owner_id = ${owner} AND p.status NOT IN ('completed','cancelled')` as Promise<Record<string, unknown>[]>,
     sql`SELECT r.contact_id, r.company, r.view_count, r.last_viewed_at,
-        EXISTS (SELECT 1 FROM public.prospect_touches t WHERE t.contact_id = r.contact_id AND t.at > r.last_viewed_at) AS touched
+        EXISTS (SELECT 1 FROM public.prospect_touches t WHERE t.contact_id = r.contact_id AND t.owner_id = r.owner_id AND t.at > r.last_viewed_at) AS touched
       FROM public.prospect_reports r WHERE r.owner_id = ${owner} AND r.view_count > 0 AND r.contact_id IS NOT NULL AND r.last_viewed_at > now() - interval '8 days'` as Promise<Record<string, unknown>[]>,
     sql`SELECT title, due_date, status FROM public.compliance_items WHERE owner_id = ${owner} AND status = 'open'` as Promise<Record<string, unknown>[]>,
   ]);
