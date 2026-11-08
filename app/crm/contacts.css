@@ -1,0 +1,67 @@
+/* Contacts on the Cinder UI: a table you can scan, and a drawer for the person you're on. */
+body .ct-page .ct-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 18px; }
+body .ct-page .ct-n { margin-left: 7px; color: var(--u-faint); font-variant-numeric: tabular-nums; }
+body .ct-page .u-seg > button[aria-pressed="true"] .ct-n { color: var(--u-muted); }
+body .ct-page input.ct-search { flex: 1; min-width: 220px; width: auto; height: 36px; }
+body .ct-page select.ct-sort { width: auto; height: 36px; padding-right: 28px; }
+body .ct-page .ct-table td { padding-top: 12px; padding-bottom: 12px; }
+body .ct-page .ct-who { display: flex; flex-direction: column; gap: 2px; min-width: 200px; }
+body .ct-page .ct-who strong { color: var(--u-text); font-weight: 550; }
+body .ct-page .ct-who span { font-size: 12.5px; color: var(--u-muted); }
+body .ct-page .ct-phone { white-space: nowrap; color: var(--u-soft); }
+body .ct-page .ct-table tr.is-on td { background: rgba(255,255,255,.035) !important; }
+body .ct-page .ct-table tr.is-on td:first-child { box-shadow: inset 2px 0 0 var(--u-text); }
+
+/* Drawer */
+body .ct-page .ct-scrim { position: fixed; inset: 0; z-index: 80; background: rgba(10, 9, 8, .45) !important; display: flex; justify-content: flex-end; }
+body .ct-page .ct-drawer { width: min(620px, 100%); height: 100%; overflow-y: auto; padding: 18px 32px 40px; background: #171615 !important; border-left: 1px solid var(--u-line); box-shadow: -30px 0 80px -30px rgba(0,0,0,.8); }
+body .ct-page .ct-dtop { position: sticky; top: -18px; z-index: 2; display: flex; justify-content: space-between; align-items: center; margin: -18px -32px 18px; padding: 12px 24px 12px 32px; background: #171615; border-bottom: 1px solid var(--u-line-soft); }
+body .ct-page h2.ct-name { font-family: var(--u-display) !important; font-stretch: 118%; font-variation-settings: "wdth" 118; font-size: 30px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; line-height: 1.08 !important; color: var(--u-text) !important; overflow-wrap: anywhere; }
+body .ct-page .ct-sub { display: flex; flex-wrap: wrap; align-items: center; margin-top: 8px !important; color: var(--u-muted); font-size: 13.5px; }
+body .ct-page .ct-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+body .ct-page .ct-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; margin: 26px 0 0; padding: 20px 0; border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line); }
+body .ct-page .ct-facts dt { font-size: 12.5px; color: var(--u-faint); margin-bottom: 3px; }
+body .ct-page .ct-facts dd { margin: 0; font-size: 14px; color: var(--u-soft); overflow-wrap: anywhere; }
+body .ct-page .ct-facts a { color: var(--u-text); text-decoration: underline; text-decoration-color: var(--u-line); text-underline-offset: 3px; }
+body .ct-page .ct-sec { padding: 22px 0; border-bottom: 1px solid var(--u-line-soft); }
+body .ct-page .ct-sec h3.u-h2 { margin-bottom: 12px !important; }
+body .ct-page .ct-sec .u-h2-row h3.u-h2 { margin-bottom: 0 !important; }
+body .ct-page .ct-notes { font-size: 14px; line-height: 1.6; color: var(--u-soft); white-space: pre-wrap; }
+body .ct-page .ct-outs { display: flex; flex-wrap: wrap; gap: 6px; }
+body .ct-page .ct-out { height: 34px; padding: 0 12px; border-radius: 8px !important; border: 1px solid var(--u-line) !important; background: var(--u-raise) !important; color: var(--u-text) !important; font: 500 13px/1 var(--u-text-font) !important; cursor: pointer; }
+body .ct-page .ct-out:hover:not(:disabled) { background: var(--u-hover) !important; border-color: #45413c !important; }
+body .ct-page .ct-out:disabled { opacity: .5; }
+body .ct-page .ct-out.is-win { background: var(--u-text) !important; border-color: var(--u-text) !important; color: #141210 !important; font-weight: 600 !important; }
+body .ct-page .ct-out.is-stop { background: transparent !important; border-style: dashed !important; color: var(--u-muted) !important; }
+body .ct-page .ct-more { padding: 18px 0; border-bottom: 1px solid var(--u-line-soft); }
+body .ct-page .ct-more > summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--u-text); list-style: none; }
+body .ct-page .ct-more > summary::-webkit-details-marker { display: none; }
+body .ct-page .ct-more > summary::after { content: "Show"; float: right; font-weight: 400; font-size: 13px; color: var(--u-muted); }
+body .ct-page .ct-more[open] > summary::after { content: "Hide"; }
+body .ct-page .ct-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+body .ct-page .ct-log li { display: grid; grid-template-columns: 112px 1fr; gap: 14px; font-size: 13.5px; }
+body .ct-page .ct-log-t { color: var(--u-faint); font-size: 12.5px; padding-top: 1px; }
+body .ct-page .ct-log strong { font-weight: 500; color: var(--u-text); }
+body .ct-page .ct-log p { margin-top: 4px !important; color: var(--u-muted); white-space: pre-wrap; line-height: 1.5; }
+body .ct-page .ct-foot { display: flex; justify-content: space-between; align-items: center; padding-top: 18px; }
+body .ct-page .ct-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+body .ct-page .ct-form .ct-full { grid-column: 1 / -1; }
+
+/* Older panels (deals, info kit, discovery, report card) dropped into the drawer: same tokens. */
+body .ct-page .ct-legacy .crm-detail-section { padding: 22px 0; border: 0 !important; border-bottom: 1px solid var(--u-line-soft) !important; background: transparent !important; }
+body .ct-page .ct-legacy h3 { margin: 0 0 12px; font: 600 15px/1.3 var(--u-text-font) !important; letter-spacing: -0.01em; color: var(--u-text) !important; text-transform: none !important; }
+body .ct-page .ct-legacy :is(.crm-notes, p, small, li) { font-size: 13.5px; line-height: 1.55; color: var(--u-soft) !important; }
+body .ct-page .ct-legacy :is(.crm-btn, .fo-btn, button):not(.u-btn) { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 8px !important; border: 1px solid var(--u-line) !important; background: transparent !important; color: var(--u-text) !important; font: 500 13px/1 var(--u-text-font) !important; cursor: pointer; }
+body .ct-page .ct-legacy :is(.crm-btn, .fo-btn, button):not(.u-btn):hover:not(:disabled) { background: var(--u-hover) !important; }
+body .ct-page .ct-legacy :is(.crm-btn-primary, .fo-btn.primary) { background: var(--u-text) !important; border-color: var(--u-text) !important; color: #141210 !important; }
+body .ct-page .ct-legacy :is(input, textarea, select):not([type="checkbox"]):not([type="radio"]) { width: 100%; background: var(--u-bg) !important; border: 1px solid var(--u-line) !important; color: var(--u-text) !important; border-radius: 8px !important; padding: 8px 10px; font: 400 13.5px/1.4 var(--u-text-font) !important; }
+body .ct-page .ct-legacy a { color: var(--u-text) !important; text-decoration: underline; text-underline-offset: 3px; }
+body .ct-page .ct-legacy :is(.fo, .pr-card, .cd-deals, .fo-chip, .pr-block) { background: transparent !important; border-color: var(--u-line) !important; box-shadow: none !important; }
+
+@media (max-width: 700px) {
+  body .ct-page .ct-drawer { padding: 18px 18px 40px; }
+  body .ct-page .ct-dtop { margin: -18px -18px 18px; padding: 10px 12px 10px 18px; }
+  body .ct-page .ct-facts, body .ct-page .ct-form { grid-template-columns: 1fr; }
+  body .ct-page .ct-bar .u-seg { width: 100%; overflow-x: auto; }
+  body .ct-page .ct-log li { grid-template-columns: 1fr; gap: 2px; }
+}
