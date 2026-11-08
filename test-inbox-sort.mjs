@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";
+const { parseFrom, isBulk, parseSort, sortPrompt, USEFUL } = await import("./lib/inbox-sort.ts");
+let n = 0; const ok = f => { f(); n++; };
+ok(() => assert.deepEqual(parseFrom('"Mark Delgado" <Mark@Ridgeline.com>'), { name: "Mark Delgado", addr: "mark@ridgeline.com" }));
+ok(() => assert.deepEqual(parseFrom("mark@ridgeline.com"), { name: "", addr: "mark@ridgeline.com" }));
+const m = (from, extra = {}) => ({ id: "1", threadId: "t", from, subject: "s", snippet: "x", listUnsubscribe: false, date: "", ...extra });
+ok(() => assert.equal(isBulk(m("Mark <mark@ridgeline.com>")), false, "a person"));
+ok(() => assert.equal(isBulk(m("Stripe <receipts@stripe.com>")), true));
+ok(() => assert.equal(isBulk(m("Some Shop <deals@shop.com>", { listUnsubscribe: true })), true, "newsletter header"));
+ok(() => assert.equal(isBulk(m("noreply@whatever.io")), true));
+const out = parseSort('{"i":0,"category":"interested","summary":"Wants pricing","next":"Call today"}\ngarbage\n{"i":1,"category":"weird"}\n{"i":7,"category":"meeting"}', 2);
+ok(() => assert.equal(out[0].category, "interested"));
+ok(() => assert.equal(out[1].category, "other", "unknown category falls back"));
+ok(() => assert.equal(out.length, 2, "out-of-range index ignored"));
+ok(() => assert.match(sortPrompt([m("Mark <mark@ridgeline.com>")], new Set(["mark@ridgeline.com"])), /a prospect we cold-emailed/));
+ok(() => assert.ok(USEFUL.includes("interested") && !USEFUL.includes("other")));
+console.log(`Inbox sort checks passed (${n} assertions).`);

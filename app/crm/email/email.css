@@ -38,3 +38,8 @@ body .em-page .em-replies { padding: 18px 20px; margin-bottom: 28px; }
 body .em-page .em-reply { display: flex !important; align-items: center; gap: 14px; }
 body .em-page .em-reply .u-row-main { min-width: 0; }
 body .em-page .em-reply .u-row-main span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Inbox sorter */
+body .em-page .em-cat { flex: none; min-width: 84px; font-size: 12px; font-weight: 600; color: var(--u-soft); }
+body .em-page .em-cat-interested, body .em-page .em-cat-meeting { color: var(--u-text); }
+body .em-page .em-inbox .u-row-main strong { white-space: normal; }

@@ -70,7 +70,8 @@ export default function Dashboard() {
     Promise.all([
       fetch("/api/email-outreach", { cache: "no-store" }).then(r => (r.ok ? r.json() : { sent: [], heard: [] })).catch(() => ({ sent: [], heard: [] })),
       fetch("/api/linkedin-outreach", { cache: "no-store" }).then(r => (r.ok ? r.json() : { log: [] })).catch(() => ({ log: [] })),
-    ]).then(([e, l]) => {
+      fetch("/api/gmail/inbox", { cache: "no-store" }).then(r => (r.ok ? r.json() : { mail: [] })).catch(() => ({ mail: [] })),
+    ]).then(([e, l, ib]) => {
       const replies = (e.heard ?? []).filter((h: { kind: string; at: string }) => h.kind === "reply" && Date.now() - Date.parse(h.at) < 3 * 86400000).length;
       const due = dueFollowUps(e.sent ?? [], e.heard ?? []);
       const steps = new Map<string, { s: Set<string>; at: number }>();
@@ -81,7 +82,10 @@ export default function Dashboard() {
       const liMsg = [...steps.values()].filter(m => m.s.has("accepted") && !m.s.has("message")).length;
       const liCheck = [...steps.values()].filter(m => m.s.has("connect") && !m.s.has("accepted") && !m.s.has("message") && Date.now() - m.at > 3 * 86400000).length;
       const n = due.follow_up + due.breakup;
+      const mail = (ib.mail ?? []) as { category: string; from: string; summary: string }[];
+      const hot = mail.filter(m => m.category === "interested" || m.category === "meeting").length;
       setTodo([
+        mail.length ? { key: "inbox", title: `${mail.length} email${mail.length === 1 ? "" : "s"} in your inbox need${mail.length === 1 ? "s" : ""} you`, why: `${mail[0].from}${mail[0].summary ? `: ${mail[0].summary}` : ""}`, overdue: hot > 0, href: "/crm/email", action: "Open" } : null,
         replies ? { key: "email-replies", title: `Answer ${replies} email repl${replies === 1 ? "y" : "ies"}`, why: "They wrote back. Their follow-ups stopped.", overdue: true, href: "/crm/email", action: "Open" } : null,
         n ? { key: "email-due", title: `Send ${n} email follow-up${n === 1 ? "" : "s"}`, why: due.breakup ? `${due.breakup} of them ${due.breakup === 1 ? "is a last try" : "are last tries"}` : "3 days since the first email", overdue: false, href: "/crm/email", action: "Open" } : null,
         liMsg ? { key: "li-msg", title: `Message ${liMsg} new LinkedIn connection${liMsg === 1 ? "" : "s"}`, why: "They accepted. Your first message is ready to copy.", overdue: false, href: "/crm/linkedin", action: "Open" } : null,

@@ -11,6 +11,7 @@ type Contact = { id: string; name: string; company: string; email: string; locat
 type Sent = { contactId: string; step: string; at: string };
 type Heard = { contactId: string; kind: "reply" | "bounce"; at: string; preview: string; from: string };
 const SYNC_KEY = "cinder.gmail.sync.at";
+type Mail = { id: string; threadId: string; from: string; addr: string; subject: string; snippet: string; at: string; category: string; summary: string; next: string; contactId: string | null };
 
 const DAILY = 25;
 const STEPS: { key: EmailStep; label: string }[] = [{ key: "intro", label: "First email" }, { key: "follow_up", label: "Follow-up" }, { key: "breakup", label: "Last try" }];
@@ -36,6 +37,9 @@ export default function EmailPage() {
   const [contacts, setContacts] = useState<Contact[] | null>(null);
   const [sent, setSent] = useState<Sent[]>([]);
   const [heard, setHeard] = useState<Heard[]>([]);
+  const [reconnect, setReconnect] = useState(false);
+  const [inbox, setInbox] = useState<{ account: string | null; mail: Mail[] }>({ account: null, mail: [] });
+  const [sorting, setSorting] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState<EmailStep>("intro");
   const [picked, setPicked] = useState<string | null>(null);
@@ -76,10 +80,33 @@ export default function EmailPage() {
     if (Date.now() - last < 5 * 60000) return;
     try { localStorage.setItem(SYNC_KEY, String(Date.now())); } catch { /* fine */ }
     void fetch("/api/gmail/sync", { method: "POST" }).then(r => r.json().catch(() => ({}))).then((j: { replies?: number; bounces?: number; error?: string }) => {
-      if (j.error) { setError(j.error); void loadGmail(); return; }
+      if (j.error) { if (/reconnect/i.test(j.error)) setReconnect(true); else setError(j.error); void loadGmail(); return; }
       if ((j.replies ?? 0) + (j.bounces ?? 0) > 0) { setNotice([j.replies ? `${j.replies} new repl${j.replies === 1 ? "y" : "ies"}` : "", j.bounces ? `${j.bounces} bounced` : ""].filter(Boolean).join(", ") + ". Their sequences stopped."); void load(); }
     }).catch(() => {});
+    void sortInbox();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gmail?.connected, load, loadGmail]);
+
+  const loadInbox = useCallback(async () => {
+    const r = await fetch("/api/gmail/inbox", { cache: "no-store" }).catch(() => null);
+    if (r?.ok) setInbox(await r.json());
+  }, []);
+  useEffect(() => { if (gmail?.connected) void loadInbox(); }, [gmail?.connected, loadInbox]);
+  /** Pull new inbox mail into the sorter, then refresh the "needs you" list. */
+  async function sortInbox() {
+    setSorting(true);
+    try {
+      const r = await fetch("/api/gmail/inbox", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      const j = await r.json().catch(() => ({}));
+      if (j.needsReconnect) setReconnect(true);
+      else if (!r.ok && j.error) setError(j.error);
+      await loadInbox();
+    } finally { setSorting(false); }
+  }
+  async function doneMail(id: string) {
+    setInbox(x => ({ ...x, mail: x.mail.filter(m => m.id !== id) }));
+    await fetch("/api/gmail/inbox", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ done: id }) }).catch(() => {});
+  }
 
   // Who's due for each step: never emailed → first email; first email 3+ days ago → follow-up; follow-up 4+ days ago → last try.
   const queues = useMemo(() => {
@@ -200,6 +227,26 @@ export default function EmailPage() {
     </div>
     {error && <p className="u-flash is-bad" role="alert" style={{ marginBottom: 16 }}>{error}</p>}
     {notice && <p className="u-flash" role="status" style={{ marginBottom: 16 }}>{notice}</p>}
+    {reconnect && gmail?.connected && <div className="em-connect" role="alert">
+      <div><b>Reconnect Gmail to turn on reply tracking and the inbox sorter.</b><span>You connected before Cinder could read who emails you. Reconnect and tick both boxes Google shows. Nothing you sent is lost.</span></div>
+      <a className="u-btn u-btn-light" href="/api/gmail/connect">Reconnect Gmail</a>
+    </div>}
+
+    {gmail?.connected && !reconnect && <section className="u-sheet em-replies em-inbox" aria-label="Inbox">
+      <div className="u-h2-row"><h2 className="u-h2">Inbox: needs you <span className="u-quiet">{inbox.mail.length}</span></h2>
+        <button type="button" className="u-btn u-btn-bare" disabled={sorting} onClick={() => void sortInbox()}>{sorting ? "Sorting…" : "Check inbox"}</button></div>
+      {inbox.mail.length === 0 ? <p className="u-note">Nothing waiting. Cinder sorts {gmail.email} for people who are interested, asking questions or booking, and files the rest.</p>
+        : <div className="u-rows">{inbox.mail.map(m => <div key={m.id} className="u-row em-reply">
+          <span className={"em-cat em-cat-" + m.category}>{({ interested: "Interested", meeting: "Meeting", question: "Question", follow_up: "Follow up" } as Record<string, string>)[m.category] ?? m.category}</span>
+          <div className="u-row-main"><strong>{m.from}{m.summary ? `: ${m.summary}` : ""}</strong><span>{m.next ? `Next: ${m.next} · ` : ""}{m.subject}</span></div>
+          <div style={{ display: "flex", gap: 6, flex: "none" }}>
+            <a className="u-btn u-btn-light" href={`https://mail.google.com/mail/?authuser=${encodeURIComponent(inbox.account || "")}#all/${m.threadId}`} target="_blank" rel="noreferrer">Open</a>
+            {m.contactId && <Link className="u-btn u-btn-bare" href={`/crm?contact=${m.contactId}`}>Contact</Link>}
+            <button type="button" className="u-btn u-btn-bare" onClick={() => void doneMail(m.id)}>Done</button>
+          </div>
+        </div>)}</div>}
+    </section>}
+
     {gmail && !gmail.connected && <div className="em-connect">
       <div><b>Send straight from the CRM</b><span>{gmail.configured ? "Connect your Google Workspace inbox once. Emails go out from your address, replies land in your inbox, follow-ups thread under the first email." : "Sending from the CRM needs a one-time Google setup on the server (Google Cloud sign-in keys). Until then, use Open in Gmail."}</span></div>
       {gmail.configured && <a className="u-btn u-btn-light" href="/api/gmail/connect">Connect Gmail</a>}
