@@ -13,7 +13,10 @@ export async function POST(request: Request) {
   const timeout = Math.min(40, Math.max(10, Number(process.env.CINDER_RING_SECONDS) || 20));
   // Carry the trial ?key= through to the follow-up webhook so it is accepted too.
   const key = new URL(request.url).searchParams.get("key");
-  const statusUrl = "/api/twilio/dial-status" + (key ? `?key=${encodeURIComponent(key)}` : "");
+  // Absolute URL: Twilio's trial webhooks are fetched through a proxy, so a relative link resolves to the wrong host.
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || new URL(request.url).host;
+  const base = process.env.CINDER_APP_URL?.trim().replace(/\/$/, "") || `https://${host}`;
+  const statusUrl = `${base}/api/twilio/dial-status` + (key ? `?key=${encodeURIComponent(key)}` : "");
   return twiml(voiceTwiml(forwardTo, p.To ?? "", statusUrl, timeout));
 }
 export const GET = POST;
