@@ -5,7 +5,7 @@ import {
   quietHoursWarning, planFor, dueAt, nextBusinessDay, zonedTime, localDate,
 } from "./lib/sms-templates.ts";
 import { timeZoneFor, timeZoneForPhone } from "./lib/local-time.ts";
-import { meetingNudge, meetingWhen, confirmText, reminderText, infoFollowUpText, infoText as infoT, loomText, referralText, loomPoints } from "./lib/sms-templates.ts";
+import { meetingNudge, meetingWhen, confirmText, reminderText, infoFollowUpText, infoText as infoT, loomText, referralText, loomPoints, pickDemoLink } from "./lib/sms-templates.ts";
 let n = 0; const ok = (fn, msg) => { try { fn(); n++; } catch (e) { e.message = (msg ? msg + ": " : "") + e.message; throw e; } };
 const tzOf = c => resolveTimeZone(c, timeZoneFor, timeZoneForPhone);
 
@@ -117,4 +117,8 @@ ok(() => assert.match(loomText({ firstName: "", company: "Pinnacle Fence", loomU
 ok(() => assert.match(referralText({ firstName: "Dave" }), /Quick favor:/, "the marker the follow-up list uses to know it was sent"));
 ok(() => assert.equal(loomPoints({ company: "Elite Fence", callNote: "says they answer every call" })[1], "Their problem, in their words: says they answer every call"));
 ok(() => assert.equal(loomPoints({ company: "M", callNote: "Asked for info by text. Their problem: missed call / voicemail" })[1], "Their problem, in their words: missed call / voicemail"));
+ok(() => assert.equal(pickDemoLink("fence", "https://cinderrevenue.com/demo"), "https://cinderrevenue.com/watch?story=fence", "Settings default keeps the fence cut"));
+ok(() => assert.equal(pickDemoLink("fence", "https://www.loom.com/share/abc"), "https://www.loom.com/share/abc", "an overview Loom wins everywhere"));
+ok(() => assert.equal(pickDemoLink("detailing", ""), "https://cinderrevenue.com/demo"));
+ok(() => assert.equal(pickDemoLink("fence", "not a link"), "https://cinderrevenue.com/watch?story=fence"));
 console.log(`Text template checks passed (${n} assertions).`);

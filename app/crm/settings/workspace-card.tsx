@@ -18,7 +18,7 @@ const IDENTITY: Field[] = [
   { key: "niche", label: "Who you sell to", help: "Used in the Sunday review: “send 20 DMs to …”." },
   { key: "bookingLink", label: "Booking link", type: "url", help: "Where prospects book a call. Used on prospect reports." },
   { key: "websiteUrl", label: "Your website", type: "url", help: "Signs your cold emails." },
-  { key: "demoLink", label: "Demo link", type: "url", help: "A demo page or video. Linked in email follow-ups and LinkedIn." },
+  { key: "demoLink", label: "Demo link", type: "url", help: "Your overview Loom or demo page. Paste a Loom here and every info text, voicemail text, email follow-up and LinkedIn message uses it. Leave it as cinderrevenue.com/demo to send fence leads the fence video." },
   { key: "logoUrl", label: "Logo image link", type: "url", help: "White-label: an https link to your logo (PNG or SVG). Replaces the Cinder wordmark in the app and on everything clients see. Leave empty for Cinder." },
 ];
 

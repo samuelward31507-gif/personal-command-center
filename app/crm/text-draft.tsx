@@ -2,7 +2,8 @@
 // Drafted voicemail / info text after a call outcome. Cinder never sends it:
 // Sam edits it, copies it or opens his Messages app, then taps Mark sent so it's logged.
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { voicemailText, infoText, callTimeText, smsHref, quietHoursWarning, TEMPLATE_LABEL, type TextTemplate } from "@/lib/sms-templates";
+import { useWorkspace } from "../use-workspace";
+import { voicemailText, infoText, callTimeText, smsHref, quietHoursWarning, pickDemoLink, TEMPLATE_LABEL, type TextTemplate } from "@/lib/sms-templates";
 
 export type TextContext = {
   template: TextTemplate | null; notice: string | null;
@@ -22,13 +23,16 @@ function dueLabel(iso: string, tz: string | null) {
 export default function TextDraft({ ctx, contactId, who, onDone, primaryClass = "crm-btn crm-btn-primary", quietClass = "crm-btn crm-btn-quiet" }: {
   ctx: TextContext; contactId: string; who: string; onDone?: () => void; primaryClass?: string; quietClass?: string;
 }) {
+  const ws = useWorkspace();
+  // A demo link set in Settings (an overview Loom) wins; otherwise the trade's default the server picked.
+  const demo = pickDemoLink("", ws.demoLink) === pickDemoLink("", "") ? ctx.demoLink : pickDemoLink("", ws.demoLink);
   const [slot1, setSlot1] = useState(ctx.slots[0] ?? "2pm");
   const [slot2, setSlot2] = useState(ctx.slots[1] ?? "4pm");
   const generated = useMemo(() => {
-    if (ctx.template === "T-VM") return voicemailText({ firstName: ctx.firstName, callTime: callTimeText(new Date(ctx.callAt), ctx.timeZone), demoLink: ctx.demoLink, niche: ctx.niche });
-    if (ctx.template === "T-INFO") return infoText({ firstName: ctx.firstName, demoLink: ctx.demoLink, slot1, slot2, niche: ctx.niche });
+    if (ctx.template === "T-VM") return voicemailText({ firstName: ctx.firstName, callTime: callTimeText(new Date(ctx.callAt), ctx.timeZone), demoLink: demo, niche: ctx.niche });
+    if (ctx.template === "T-INFO") return infoText({ firstName: ctx.firstName, demoLink: demo, slot1, slot2, niche: ctx.niche });
     return "";
-  }, [ctx, slot1, slot2]);
+  }, [ctx, slot1, slot2, demo]);
   const [body, setBody] = useState(generated);
   const [edited, setEdited] = useState(false);
   useEffect(() => { if (!edited) setBody(generated); }, [generated, edited]);

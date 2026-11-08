@@ -23,6 +23,14 @@ export function demoLinkFor(niche: string): string {
   return "https://cinderrevenue.com";
 }
 
+/** The site's general demo page, which is also the Settings default. A different link in Settings (an overview Loom)
+    replaces the trade defaults everywhere; leaving the default keeps the fence cut for fence leads. */
+export const DEFAULT_DEMO_LINK = "https://cinderrevenue.com/demo";
+export function pickDemoLink(niche: string, settingsLink?: string | null): string {
+  const s = (settingsLink ?? "").trim();
+  return /^https:\/\/\S+$/.test(s) && s.replace(/\/$/, "") !== DEFAULT_DEMO_LINK ? s : demoLinkFor(niche);
+}
+
 export function isTimeZone(tz: string): boolean {
   if (!tz) return false;
   try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); return true; } catch { return false; }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CALL_MODE_GROUPS, CONVERSATIONS, OUTCOME_LABELS, ATTEMPT_LIMIT, type CallOutcome } from "@/lib/call-outcomes";
 import { buildDraft, contactFirstName } from "@/lib/call-drafts";
@@ -15,6 +15,10 @@ import type { QueueItem } from "@/lib/my-day";
 import SuggestedDeal, { type SuggestedDealData } from "../../suggested-deal";
 import TextDraft, { type TextContext } from "../text-draft";
 import { CallEmail } from "./call-email";
+
+/** Outcomes that roll straight into the next dial when auto-dial is on. */
+const AUTO_NEXT: string[] = ["no_answer", "voicemail", "gatekeeper", "wrong_number", "not_interested", "not_a_fit"];
+const AUTO_SECONDS = 3;
 import "./call.css";
 
 type Contact = { id: string; name: string; company: string; phone: string; email?: string; website?: string; location?: string; notes?: string; status?: string; lastContact?: string; lastTouchAt?: string; lastTouchOutcome?: string; lastNote?: string; attempts?: number; niche?: string };
@@ -41,6 +45,11 @@ export default function CallModePage() {
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<{ ok: boolean; text: string; deal?: SuggestedDealData | null } | null>(null);
   const [logged, setLogged] = useState<{ name: string; outcome: string }[]>([]);
+  // Auto-dial: after a quick outcome (no answer, voicemail, gatekeeper…), the next call opens on its own after a short countdown.
+  const [autoDial, setAutoDial] = useState(() => { try { return localStorage.getItem("cinder.autodial") !== "off"; } catch { return true; } });
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const pendingDial = useRef(false);
+  const [session, setSession] = useState<{ start: number; dials: number } | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
   const [gk, setGk] = useState({ name: "", owner: "", direct: "", best: "" });
   const [info, setInfo] = useState<{ channel: "text" | "dm" | "email"; pain: string }>({ channel: "text", pain: "" });
@@ -135,6 +144,8 @@ export default function CallModePage() {
   function dial(number?: string) {
     const to = number || contact?.phone;
     if (!contact || !to) return;
+    setCountdown(null); pendingDial.current = false;
+    setSession(s => s ?? { start: Date.now(), dials: 0 });
     void fetch("/api/call-logs", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contactId: contact.id, channel: "call", action: "outbound_call", outcome: "initiated", notes: "Call launched from Call mode." }) }).catch(() => {});
     window.location.href = "tel:" + to.replace(/[^+\d]/g, "");
@@ -159,6 +170,9 @@ export default function CallModePage() {
       } else setDraft(null);
       const who = contact.company || contact.name;
       setLogged(l => [{ name: who, outcome: OUTCOME_LABELS[outcome] }, ...l]);
+      setSession(s => s ? { ...s, dials: s.dials + 1 } : { start: Date.now(), dials: 1 });
+      // Quick outcomes roll straight into the next dial; real conversations pause so you can text, book or take notes.
+      if (autoDial && !picked && AUTO_NEXT.includes(outcome)) pendingDial.current = true;
       const parkedNote = data.parked ? ` · ${ATTEMPT_LIMIT} tries with no answer, so they're parked for 30 days` : data.attempts ? ` · try ${data.attempts} of ${ATTEMPT_LIMIT}` : "";
       setFlash({ ok: true, text: `${who}: ${data.label}${data.nextFollowUp ? ` · back on ${data.nextFollowUp}` : ""}${parkedNote}`, deal: data.suggestedDeal || null });
       if (picked) {
@@ -248,8 +262,24 @@ export default function CallModePage() {
     if (r?.ok) setDraft(null);
   }
 
+  // Start the countdown once the next contact is on screen; dial when it hits zero.
+  useEffect(() => {
+    if (!pendingDial.current || !contact?.phone) return;
+    pendingDial.current = false;
+    setCountdown(AUTO_SECONDS);
+  }, [contact?.id, contact?.phone]);
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) { setCountdown(null); dial(); return; }
+    const t = setTimeout(() => setCountdown(c => (c === null ? null : c - 1)), 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countdown]);
+  function toggleAuto() { setAutoDial(a => { const n = !a; try { localStorage.setItem("cinder.autodial", n ? "on" : "off"); } catch { /* fine */ } if (!n) setCountdown(null); return n; }); }
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (countdown !== null && (e.key === "Escape" || e.key === " ")) { e.preventDefault(); setCountdown(null); return; }
       if (dialog || (e.target as HTMLElement)?.closest?.("textarea, input, select")) return;
       if (e.key === "c" || e.key === "C") { e.preventDefault(); dial(); }
       else if (e.key === "ArrowRight" || e.key === "n") setIndex(i => Math.min(i + 1, Math.max(0, queue.length - 1)));
@@ -279,13 +309,21 @@ export default function CallModePage() {
         <div><span className="u-fig-k">Conversations</span><b className="u-num">{stats?.conversations ?? 0}</b></div>
         <div><span className="u-fig-k">Meetings</span><b className="u-num" >{stats?.meetings ?? 0}</b></div>
         <div><span className="u-fig-k">Left in list</span><b className="u-num">{queue.length}</b></div>
+        {session && (() => { const mins = Math.max(1, Math.round((clock.getTime() - session.start) / 60000)); return <div><span className="u-fig-k">This session</span><b className="u-num">{session.dials}<small> in {mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h ${mins % 60}m`}</small></b><span className="dl-pace">{mins >= 10 ? `${Math.round(session.dials / (mins / 60))}/hr pace` : "pace after 10 min"}</span></div>; })()}
       </div>
       <div className="u-head-actions">
         {unaudited > 0 && <button className="u-btn" disabled={!!auditing} onClick={() => void auditRest()}>
           {auditing ? `Researching ${auditing.done}/${auditing.total}${auditing.current ? `, ${auditing.current}` : ""}` : `Research the next ${Math.min(10, unaudited)}`}</button>}
+        <button className="u-btn u-btn-bare" aria-pressed={autoDial} title="After no answer, voicemail, gatekeeper, wrong number or a quick no, the next call opens by itself" onClick={toggleAuto}>Auto-dial {autoDial ? "on" : "off"}</button>
         <button className="u-btn u-btn-bare" onClick={() => void load()}>Refresh list</button>
       </div>
     </div>
+
+    {countdown !== null && contact && <div className="dl-auto" role="status">
+      <span>Calling <b>{contact.company || contact.name}</b> in {countdown}…</span>
+      <button type="button" className="u-btn u-btn-light" onClick={() => dial()}>Call now</button>
+      <button type="button" className="u-btn u-btn-bare" onClick={() => setCountdown(null)}>Stop (Esc)</button>
+    </div>}
 
     {(flash || draft || textCtx) && <div className="dl-after">
       {flash && <p className={"u-flash" + (flash.ok ? "" : " is-bad")} role="status">{flash.text}</p>}

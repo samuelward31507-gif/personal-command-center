@@ -119,3 +119,9 @@ body .dl-callmail b { color: var(--u-text); font-weight: 600; }
 body .dl-callmail-txt { min-width: 0; flex: 1 1 320px; }
 body .dl-callmail-acts { display: flex; gap: 6px; }
 body .dl-callmail-err { display: block; margin-top: 4px; color: var(--u-bad, #f0877a); }
+
+/* Auto-dial countdown and session pace */
+body .dl-call .dl-auto { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 16px; padding: 12px 16px; border-radius: 12px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); font-size: 14.5px; color: var(--u-soft); }
+body .dl-call .dl-auto > span { flex: 1; min-width: 200px; }
+body .dl-call .dl-auto b { color: var(--u-text); font-weight: 600; }
+body .dl-call .dl-pace { display: block; margin-top: 4px; font-size: 12px; color: var(--u-muted); }

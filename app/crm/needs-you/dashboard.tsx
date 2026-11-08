@@ -8,7 +8,7 @@ import { Columns } from "../../ui/charts";
 import { dueFollowUps } from "@/lib/email-outreach";
 import { INBOX_URL, CHANNEL_LABEL } from "@/lib/inbox-links";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
-import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref, infoText, infoFollowUpText, demoLinkFor, nicheFor, loomText, loomPoints, referralText } from "@/lib/sms-templates";
+import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
 
@@ -135,7 +135,7 @@ export default function Dashboard() {
       const key = "info:" + w.id;
       if (doneKeys[key]) return [];
       return [{ key, title: `Send info to ${who}`, why: `Said ${w.outcome === "interested" ? "they're interested" : "send info"} on ${short(w.at)}. No text sent yet.`, overdue: true, href: `/crm?contact=${w.id}`, action: "Text",
-        onClick: () => log(infoText({ firstName: first, demoLink: demoLinkFor(niche), niche }), undefined, key), alt: { label: "Loom", onClick: () => setLoom({ w, key, url: "" }) } }];
+        onClick: () => log(infoText({ firstName: first, demoLink: pickDemoLink(niche, ws.demoLink), niche }), undefined, key), alt: { label: "Loom", onClick: () => setLoom({ w, key, url: "" }) } }];
     }
     const next = w.tasks[0];
     if (!next || !next.due) return [];
