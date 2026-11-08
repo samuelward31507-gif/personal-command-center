@@ -113,7 +113,7 @@ export default function MoneyPage() {
       <div className="u-head-actions">
         <div className="u-seg" role="group" aria-label="Range">{([6, 12] as const).map(n => <button key={n} type="button" aria-pressed={range === n} onClick={() => setRange(n)}>{n} months</button>)}</div>
         <button className="u-btn" onClick={() => setAdding("expense")}>Log expense</button>
-        <button className="u-btn u-btn-go" onClick={() => setAdding("revenue")}>Record revenue</button>
+        <button className="u-btn u-btn-light" onClick={() => setAdding("revenue")}>Record revenue</button>
       </div>
     </div>
 
@@ -123,7 +123,7 @@ export default function MoneyPage() {
       <div className="u-fig"><span className="u-fig-k">Collected in {monthName(thisMonth, true)}</span><div className="u-fig-v">{loading ? "—" : usd(collectedNow)}</div><div className="u-fig-sub"><Delta now={collectedNow} before={collectedBefore} /></div></div>
       <div className="u-fig"><span className="u-fig-k">Monthly recurring</span><div className="u-fig-v">{loading ? "—" : usd(mrr)}<small>/mo</small></div><div className="u-meter"><i style={{ width: Math.min(100, (mrr / MOVE_OUT_MRR) * 100) + "%" }} /></div><div className="u-fig-sub"><b>{usd(Math.max(0, MOVE_OUT_MRR - mrr))}</b> to the {usd(MOVE_OUT_MRR)} move-out number</div></div>
       <div className="u-fig"><span className="u-fig-k">Profit in {monthName(thisMonth, true)}</span><div className="u-fig-v">{loading ? "—" : usd(collectedNow - spentNow)}</div><div className="u-fig-sub">after <b>{usd(spentNow)}</b> in costs</div></div>
-      <div className="u-fig"><span className="u-fig-k">Owed to you</span><div className="u-fig-v">{owed ? usd(owed.totalOpen) : "—"}</div><div className="u-fig-sub">{owed?.totalOverdue ? <span style={{ color: "var(--u-ember-ink)" }}>{usd(owed.totalOverdue)} overdue</span> : owed?.totalOpen ? "Nothing overdue" : "All paid up"}</div></div>
+      <div className="u-fig"><span className="u-fig-k">Owed to you</span><div className="u-fig-v">{owed ? usd(owed.totalOpen) : "—"}</div><div className="u-fig-sub">{owed?.totalOverdue ? <span style={{ color: "var(--u-text)" }}>{usd(owed.totalOverdue)} overdue</span> : owed?.totalOpen ? "Nothing overdue" : "All paid up"}</div></div>
     </div>
 
     <div className="u-split u-split-2 u-block">
@@ -144,13 +144,13 @@ export default function MoneyPage() {
           </div>)}
           <div className="u-row" style={{ minHeight: 64, borderBottom: 0 }}>
             <span style={{ width: 14, color: "var(--u-faint)" }}>=</span><div className="u-row-main"><span style={{ fontSize: 13.5, color: "var(--u-text)" }}>Yours to keep</span></div>
-            <div className="u-fig-v" style={{ fontSize: 30, color: "var(--u-ember)" }}>{s ? usd(s.takeHome) : "—"}</div>
+            <div className="u-fig-v" style={{ fontSize: 30 }}>{s ? usd(s.takeHome) : "—"}</div>
           </div>
         </div>
         {f && <div style={{ marginTop: 22, paddingTop: 18, borderTop: "1px solid var(--u-line)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
             <span style={{ fontSize: 13.5 }}>{usd(f.goal)} by {dayLabel(f.goalBy)}</span>
-            <span className={"u-mark " + (f.onTrack ? "is-good" : "is-ember")}>{f.onTrack ? "On track" : "Behind"}</span>
+            <span className={"u-mark " + (f.onTrack ? "is-good" : "")}>{f.onTrack ? "On track" : "Behind"}</span>
           </div>
           <div className="u-meter" style={{ height: 4 }}><i style={{ width: f.pct + "%" }} /></div>
           <p className="u-note" style={{ marginTop: 10, lineHeight: 1.55 }}>{usd(f.collected)} collected this year{f.gap > 0 && f.months > 0 ? `. You need ${usd(f.perMonthNeeded)} a month for the next ${f.months} month${f.months === 1 ? "" : "s"}.` : "."}</p>
@@ -197,16 +197,16 @@ export default function MoneyPage() {
         <button className="u-btn u-btn-bare" onClick={() => setAdding(ledger === "revenue" ? "revenue" : "expense")}>{ledger === "revenue" ? "Record revenue" : "Log expense"}</button>
       </div>
       {loading ? <p className="u-note">Loading…</p> : ledger === "revenue"
-        ? revenue.length === 0 ? <div className="u-void"><h2>No revenue yet</h2><p>Record a setup fee or retainer when a client signs. Paid records feed the charts above.</p><button className="u-btn u-btn-go" onClick={() => setAdding("revenue")}>Record revenue</button></div>
+        ? revenue.length === 0 ? <div className="u-void"><h2>No revenue yet</h2><p>Record a setup fee or retainer when a client signs. Paid records feed the charts above.</p><button className="u-btn u-btn-light" onClick={() => setAdding("revenue")}>Record revenue</button></div>
           : <div className="u-tablewrap"><table className="u-table"><thead><tr><th>Record</th><th>Type</th><th>Client</th><th>Date</th><th>Status</th><th className="is-num">Amount</th><th /></tr></thead><tbody>
             {revSorted.slice(0, all ? undefined : 12).map(r => <tr key={r.id}>
               <td className="is-strong">{r.title}</td><td>{TYPE[r.revenue_type] || r.revenue_type}</td><td>{r.contact_name || r.project_name || "—"}</td>
               <td>{r.status === "paid" ? dayLabel(r.paid_at) : dayLabel(r.due_date)}</td>
-              <td><span className={"u-mark" + (r.status === "paid" ? " is-good" : r.status === "overdue" ? " is-ember" : "")}>{cap(r.status)}</span></td>
+              <td><span className={"u-mark" + (r.status === "paid" ? " is-good" : r.status === "overdue" ? " is-bad" : "")}>{cap(r.status)}</span></td>
               <td className="is-num is-strong">{usdc(r.amount)}</td>
               <td style={{ textAlign: "right", whiteSpace: "nowrap" }}><button className="u-btn u-btn-bare" onClick={() => void togglePaid(r)}>{r.status === "paid" ? "Undo paid" : "Mark paid"}</button><button className="u-btn u-btn-bare" onClick={() => void remove("revenue", r.id)}>Delete</button></td>
             </tr>)}</tbody></table></div>
-        : expenses.length === 0 ? <div className="u-void"><h2>No expenses yet</h2><p>Log what it costs to run Cinder: software, phone numbers, ads, contractors.</p><button className="u-btn u-btn-go" onClick={() => setAdding("expense")}>Log expense</button></div>
+        : expenses.length === 0 ? <div className="u-void"><h2>No expenses yet</h2><p>Log what it costs to run Cinder: software, phone numbers, ads, contractors.</p><button className="u-btn u-btn-light" onClick={() => setAdding("expense")}>Log expense</button></div>
           : <div className="u-tablewrap"><table className="u-table"><thead><tr><th>Expense</th><th>Category</th><th>Date</th><th>Repeats</th><th className="is-num">Amount</th><th /></tr></thead><tbody>
             {expenses.slice(0, all ? undefined : 12).map(e => <tr key={e.id}><td className="is-strong">{e.title}</td><td>{cap(e.category)}</td><td>{dayLabel(e.expense_date)}</td><td>{e.recurring ? "Monthly" : "—"}</td><td className="is-num is-strong">{usdc(e.amount)}</td><td style={{ textAlign: "right" }}><button className="u-btn u-btn-bare" onClick={() => void remove("expense", e.id)}>Delete</button></td></tr>)}
           </tbody></table></div>}
@@ -266,7 +266,7 @@ function AddRecord({ kind, links, onClose, onSaved }: { kind: "revenue" | "expen
       {err && <p className="u-flash is-bad" role="alert" style={{ marginTop: 14 }}>{err}</p>}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
         <button type="button" className="u-btn" onClick={onClose}>Cancel</button>
-        <button type="submit" className="u-btn u-btn-go" disabled={saving || !title.trim() || amount === "" || Number(amount) < 0}>{saving ? "Saving…" : kind === "revenue" ? "Save revenue" : "Save expense"}</button>
+        <button type="submit" className="u-btn u-btn-light" disabled={saving || !title.trim() || amount === "" || Number(amount) < 0}>{saving ? "Saving…" : kind === "revenue" ? "Save revenue" : "Save expense"}</button>
       </div>
     </form>
   </div>;

@@ -65,7 +65,7 @@ export function LineChart({ labels, series, height = 260, format = compactUsd, t
   return <div ref={ref} style={{ position: "relative" }}>
     <svg className="u-chart" width={w} height={height} onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img"
       aria-label={series.map(s => `${s.name}: ${s.values.map((v, i) => `${labels[i]} ${format(v)}`).join(", ")}`).join(". ")}>
-      <defs><linearGradient id={`u-fade-${gid}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ff6a1f" stopOpacity=".22" /><stop offset="1" stopColor="#ff6a1f" stopOpacity="0" /></linearGradient></defs>
+      <defs><linearGradient id={`u-fade-${gid}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ff6a1f" stopOpacity=".10" /><stop offset="1" stopColor="#ff6a1f" stopOpacity="0" /></linearGradient></defs>
       <g className="u-grid">{ticks.map(t => <g key={t}><line x1={padL} x2={w - padR} y1={y(t)} y2={y(t)} /><text x={padL - 10} y={y(t) + 4} textAnchor="end">{format(t)}</text></g>)}</g>
       {labels.map((l, i) => i % every === 0 || i === n - 1 ? <text key={i} x={x(i)} y={height - 8} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"}>{l}</text> : null)}
       {target != null && target > 0 && <g><line className="u-target" x1={padL} x2={w - padR} y1={y(target)} y2={y(target)} />{targetLabel && <text x={w - padR} y={y(target) - 6} textAnchor="end" style={{ fill: "#8f8880" }}>{targetLabel}</text>}</g>}

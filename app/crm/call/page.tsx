@@ -254,14 +254,14 @@ export default function CallModePage() {
   const unaudited = queue.slice(index).filter(q => q.contact && !/Audit:/.test(q.why)).length;
 
   if (loading) return <div className="u-page dl-call" role="region" aria-label="Call mode"><p className="u-note" role="status">Building your call list…</p></div>;
-  if (error) return <div className="u-page dl-call" role="region" aria-label="Call mode"><div className="u-void"><h2>{error}</h2><button className="u-btn u-btn-go" onClick={() => void load()}>Try again</button></div></div>;
+  if (error) return <div className="u-page dl-call" role="region" aria-label="Call mode"><div className="u-void"><h2>{error}</h2><button className="u-btn u-btn-light" onClick={() => void load()}>Try again</button></div></div>;
 
   return <div className="u-page dl-call" role="region" aria-label="Call mode">
     <div className="dl-top">
       <div className="dl-score" aria-label="Today's numbers">
         <div><span className="u-fig-k">Dials today</span><b className="u-num">{stats?.dials ?? 0}<small> / {target}</small></b><div className="u-meter"><i style={{ width: Math.min(100, ((stats?.dials ?? 0) / target) * 100) + "%" }} /></div></div>
         <div><span className="u-fig-k">Conversations</span><b className="u-num">{stats?.conversations ?? 0}</b></div>
-        <div><span className="u-fig-k">Meetings</span><b className="u-num" style={stats?.meetings ? { color: "var(--u-ember)" } : undefined}>{stats?.meetings ?? 0}</b></div>
+        <div><span className="u-fig-k">Meetings</span><b className="u-num" >{stats?.meetings ?? 0}</b></div>
         <div><span className="u-fig-k">Left in list</span><b className="u-num">{queue.length}</b></div>
       </div>
       <div className="u-head-actions">
@@ -279,12 +279,12 @@ export default function CallModePage() {
         {draft.subject && <p className="u-note" style={{ marginBottom: 8 }}>Subject: {draft.subject}</p>}
         <textarea className="u-field" rows={draft.channel === "email" ? 7 : 4} value={draft.body} onChange={e => setDraft({ ...draft, body: e.target.value })} aria-label="Message draft" />
         <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-          <button type="button" className="u-btn u-btn-go" onClick={() => void copyDraft()}>{copied ? "Copied" : "Copy"}</button>
+          <button type="button" className="u-btn u-btn-light" onClick={() => void copyDraft()}>{copied ? "Copied" : "Copy"}</button>
           <button type="button" className="u-btn" onClick={() => void markSent()}>Mark as sent</button>
           <button type="button" className="u-btn u-btn-bare" onClick={() => setDraft(null)}>Dismiss</button>
         </div>
       </div>}
-      {textCtx && <TextDraft key={textCtx.contactId + textCtx.ctx.callAt} ctx={textCtx.ctx} contactId={textCtx.contactId} who={textCtx.who} primaryClass="u-btn u-btn-go" quietClass="u-btn" />}
+      {textCtx && <TextDraft key={textCtx.contactId + textCtx.ctx.callAt} ctx={textCtx.ctx} contactId={textCtx.contactId} who={textCtx.who} primaryClass="u-btn u-btn-light" quietClass="u-btn" />}
     </div>}
 
     <div className="dl-grid">
@@ -310,7 +310,7 @@ export default function CallModePage() {
       {!contact ? <section className="dl-main"><div className="u-void">
         <h2>That&apos;s the whole list</h2>
         <p>{logged.length ? `${logged.length} call${logged.length === 1 ? "" : "s"} logged. ` : ""}Import more prospects or research the ones you have so tomorrow starts full.</p>
-        <div style={{ display: "flex", gap: 8 }}><Link className="u-btn u-btn-go" href="/crm">Open contacts</Link><Link className="u-btn" href="/crm/audit">Research a business</Link></div>
+        <div style={{ display: "flex", gap: 8 }}><Link className="u-btn u-btn-light" href="/crm">Open contacts</Link><Link className="u-btn" href="/crm/audit">Research a business</Link></div>
       </div></section> : <section className="dl-main">
         <div className="dl-who">
           <div className="dl-who-l">
@@ -400,7 +400,7 @@ export default function CallModePage() {
         <p className="u-note" style={{ marginTop: 14, lineHeight: 1.55 }}>{dialog === "meeting" ? "Adds it to your calendar, logs Meeting booked and moves any open deal forward. Send the invite yourself." : dialog === "gatekeeper" ? "Saves who you talked to and brings them back tomorrow with the name and best time." : dialog === "info" ? "Logs Send info and writes a message for you to send from your phone. They come back tomorrow for a follow-up." : "Logs Callback requested and puts them back in your list that day."}</p>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18 }}>
           <button type="button" className="u-btn" onClick={() => setDialog(null)}>Cancel</button>
-          <button type="button" className="u-btn u-btn-go" disabled={busy || ((dialog === "meeting" || dialog === "callback") && !when.date)} onClick={() => {
+          <button type="button" className="u-btn u-btn-light" disabled={busy || ((dialog === "meeting" || dialog === "callback") && !when.date)} onClick={() => {
             if (dialog === "meeting") void bookMeeting();
             else if (dialog === "gatekeeper") { setDialog(null); void log("gatekeeper", {}, ["Gatekeeper answered", gk.name && `Name: ${gk.name.trim()}`, gk.best && `Best time to reach the owner: ${gk.best.trim()}`].filter(Boolean).join(". ") + "."); }
             else if (dialog === "info") { setDialog(null); void log("send_info", {}, `Asked for info by ${CHANNEL_LABEL[info.channel].toLowerCase()}.${info.pain.trim() ? ` Their problem: ${info.pain.trim()}` : ""}`); }

@@ -70,7 +70,7 @@ export default function Owed({ onChange, onData }: { onChange?: () => void; onDa
 
   const head = <div className="u-h2-row">
     <h2 className="u-h2">Who owes you</h2>
-    {d && d.retainersToBill > 0 && <button className="u-btn u-btn-go" disabled={busy === "bill"} onClick={() => void billMonth()}>{busy === "bill" ? "Billing…" : `Bill this month's retainers (${d.retainersToBill})`}</button>}
+    {d && d.retainersToBill > 0 && <button className="u-btn" disabled={busy === "bill"} onClick={() => void billMonth()}>{busy === "bill" ? "Billing…" : `Bill this month's retainers (${d.retainersToBill})`}</button>}
   </div>;
 
   if (!d) return <div>{head}{failed
@@ -84,7 +84,7 @@ export default function Owed({ onChange, onData }: { onChange?: () => void; onDa
     {d.groups.length === 0
       ? <div className="u-rows"><div className="u-row"><div className="u-row-main"><strong>Nobody owes you anything right now.</strong><span>Invoices you send show up here until they&apos;re paid.</span></div></div></div>
       : d.groups.map(g => <div key={g.bucket} style={{ marginBottom: 18 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", padding: "0 4px 8px", fontSize: 12.5, color: g.bucket.startsWith("overdue") ? "var(--u-ember-ink)" : "var(--u-muted)" }}><span>{g.label}</span><span className="u-num">{usd(g.total)}</span></div>
+        <div style={{ display: "flex", justifyContent: "space-between", padding: "0 4px 8px", fontSize: 12.5, color: g.bucket.startsWith("overdue") ? "var(--u-text)" : "var(--u-muted)" }}><span>{g.label}</span><span className="u-num">{usd(g.total)}</span></div>
         <div className="u-rows">{g.items.map(it => <div key={it.id} className="u-row">
           <span className={"u-dot" + (g.bucket.startsWith("overdue") ? " is-ember" : "")} />
           <div className="u-row-main"><strong>{it.client || it.title}</strong><span>{it.invoiceNumber ? `INV-${it.invoiceNumber} · ` : ""}{short(it.dueDate)}{it.next && it.next !== "Send the invoice" ? ` · ${it.next}` : ""}</span></div>
@@ -103,7 +103,7 @@ export default function Owed({ onChange, onData }: { onChange?: () => void; onDa
         <h3>Mark {usd(paying.amount)} paid?</h3>
         <p className="u-note" style={{ marginBottom: 16 }}>Only once the money is in your account. A signed agreement or a promise to pay doesn&apos;t count.</p>
         <label className="u-lab">Date received<input className="u-field" type="date" value={paidOn} max={d.today} onChange={e => setPaidOn(e.target.value)} /></label>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18 }}><button className="u-btn" onClick={() => setPaying(null)}>Cancel</button><button className="u-btn u-btn-go" disabled={!paidOn || busy === paying.id} onClick={() => void markPaid()}>Money received</button></div>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18 }}><button className="u-btn" onClick={() => setPaying(null)}>Cancel</button><button className="u-btn u-btn-light" disabled={!paidOn || busy === paying.id} onClick={() => void markPaid()}>Money received</button></div>
       </div>
     </div>}
   </div>;

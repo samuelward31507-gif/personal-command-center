@@ -22,9 +22,9 @@ body .dl-call .dl-find-list .u-row { padding: 10px 12px; min-height: 0; }
 body .dl-call .dl-list { overflow: auto; flex: 1; min-height: 120px; margin: 0 -6px; padding: 0 6px; }
 body .dl-call .dl-q { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; border: 0 !important; border-radius: 9px !important; background: transparent !important; color: var(--u-soft) !important; text-align: left; cursor: pointer; font: inherit !important; }
 body .dl-call .dl-q:hover { background: rgba(255,255,255,.03) !important; }
-body .dl-call .dl-q.is-on { background: var(--u-sheet) !important; box-shadow: inset 2px 0 0 var(--u-ember); }
+body .dl-call .dl-q.is-on { background: var(--u-sheet) !important; box-shadow: inset 2px 0 0 var(--u-text); }
 body .dl-call .dl-q-n { font-size: 12px; color: var(--u-faint); width: 22px; flex: 0 0 auto; }
-body .dl-call .dl-q.is-on .dl-q-n { color: var(--u-ember); }
+body .dl-call .dl-q.is-on .dl-q-n { color: var(--u-text); }
 body .dl-call .dl-q-main { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
 body .dl-call .dl-q-main b { font-weight: 500; font-size: 13.5px; color: var(--u-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body .dl-call .dl-q-main small { font-size: 12px; color: var(--u-faint); }
@@ -76,7 +76,7 @@ body .dl-call .dl-sep { width: 1px; height: 24px; align-self: center; margin: 0 
 body .dl-call .dl-out { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 9px !important; border: 1px solid var(--u-line) !important; background: var(--u-raise) !important; color: var(--u-text) !important; font: 500 13px/1 var(--u-text-font) !important; cursor: pointer; }
 body .dl-call .dl-out:hover:not(:disabled) { border-color: #45413c !important; background: var(--u-hover) !important; }
 body .dl-call .dl-out:disabled { opacity: .5; }
-body .dl-call .dl-out.is-win { background: var(--u-ember) !important; border-color: var(--u-ember) !important; color: #1a0d05 !important; font-weight: 600 !important; }
+body .dl-call .dl-out.is-win { background: var(--u-text) !important; border-color: var(--u-text) !important; color: #141210 !important; font-weight: 600 !important; }
 body .dl-call .dl-out.is-win kbd { background: rgba(0,0,0,.16); border-color: rgba(0,0,0,.16); color: #1a0d05; }
 body .dl-call .dl-out.is-stop { background: transparent !important; color: var(--u-muted) !important; border-style: dashed !important; }
 body .dl-call .dl-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 8px; border-top: 1px solid var(--u-line-soft); }

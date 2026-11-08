@@ -36,6 +36,8 @@
 }
 html body:not(#u) .cx-side { background: #0f0e0d !important; border-right-color: #24221f !important; }
 html body:not(#u) .cx-side .cx-item.is-active { background: #1d1b1a !important; }
+html body:not(#u) .cx-side .cx-item.is-active::before { background: var(--u-text) !important; }
+html body:not(#u) .cx-side .cx-item.is-active .cx-icon { color: var(--u-text) !important; }
 
 /* The app frame behind every page takes the graphite field too. */
 html body:not(#u), html body:not(#u) .crm-app-shell, html body:not(#u) .main-panel, html body:not(#u) .crm-shell-main { background: var(--u-bg) !important; }
@@ -86,7 +88,7 @@ body .u-fig-v small { font-family: var(--u-text-font); font-stretch: 100%; font-
 body .u-fig-sub { margin-top: 10px; color: var(--u-muted) !important; font-size: 12.5px; }
 body .u-fig-sub b { color: var(--u-soft) !important; font-weight: 500; }
 body .u-meter { height: 3px; margin-top: 14px; background: var(--u-line) !important; border-radius: 2px; overflow: hidden; }
-body .u-meter > i { display: block; height: 100%; background: var(--u-ember) !important; border-radius: 2px; }
+body .u-meter > i { display: block; height: 100%; background: #d9d3cb !important; border-radius: 2px; }
 body .u-up { color: var(--u-good) !important; } body .u-down { color: var(--u-bad) !important; }
 
 /* ---------- Sheets (the only boxed surface; used sparingly) ---------- */
@@ -176,7 +178,7 @@ body .u-page .u-chart .u-grid line { stroke: var(--u-line-soft); stroke-width: 1
 body .u-page .u-chart .u-series { fill: none; stroke: var(--u-ember); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 body .u-page .u-chart .u-series-2 { fill: none; stroke: #8f8880; stroke-width: 1.5; stroke-dasharray: 4 4; }
 body .u-page .u-chart .u-area { fill: url(#u-ember-fade); }
-body .u-page .u-chart .u-bar { fill: #3a3633; } body .u-page .u-chart .u-bar.is-on { fill: var(--u-ember); }
+body .u-page .u-chart .u-bar { fill: #3a3633; } body .u-page .u-chart .u-bar.is-on { fill: #d9d3cb; }
 body .u-page .u-chart .u-target { stroke: var(--u-faint); stroke-dasharray: 3 4; }
 body .u-page .u-legend { display: flex; gap: 16px; color: var(--u-muted); font-size: 12.5px; }
 body .u-page .u-legend i { display: inline-block; width: 12px; height: 2px; margin-right: 6px; vertical-align: middle; background: var(--u-ember); }
