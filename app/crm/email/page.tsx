@@ -13,7 +13,7 @@ type Sent = { contactId: string; step: string; at: string };
 const DAILY = 25;
 const STEPS: { key: EmailStep; label: string }[] = [{ key: "intro", label: "First email" }, { key: "follow_up", label: "Follow-up" }, { key: "breakup", label: "Last try" }];
 const STOP = new Set(["do_not_contact", "not_interested", "not_a_fit", "meeting_booked", "wrong_contact"]);
-const KEY = "cinder.email.templates.v3";
+const KEY = "cinder.email.templates.v4";
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 /** Seconds to wait between bulk sends. A steady trickle looks like a person; a burst looks like a blast. */
 const GAP = [15, 30] as const;
@@ -190,7 +190,7 @@ export default function EmailPage() {
 
     {editing && <section className="em-edit u-sheet">
       <div className="u-h2-row"><h2 className="u-h2">{STEPS.find(s => s.key === step)?.label} script</h2><button className="u-btn u-btn-bare" onClick={() => saveTemplates({ ...templates, [step]: DEFAULT_TEMPLATES[step] })}>Reset to default</button></div>
-      <p className="u-note" style={{ marginBottom: 12 }}>Fill-ins: <code>{"{first_name}"}</code> <code>{"{company}"}</code> <code>{"{city}"}</code> <code>{"{my_name}"}</code> <code>{"{business}"}</code> <code>{"{booking_link}"}</code>. A missing first name becomes &ldquo;there&rdquo;.</p>
+      <p className="u-note" style={{ marginBottom: 12 }}>Fill-ins: <code>{"{first_name}"}</code> <code>{"{company}"}</code> <code>{"{city}"}</code> <code>{"{my_name}"}</code> <code>{"{business}"}</code> <code>{"{booking_link}"}</code> <code>{"{website}"}</code> <code>{"{demo_link}"}</code>. A missing first name becomes &ldquo;there&rdquo;.</p>
       <label className="u-lab">Subject<input className="u-field" value={tpl.subject} onChange={e => saveTemplates({ ...templates, [step]: { ...tpl, subject: e.target.value } })} /></label>
       <label className="u-lab" style={{ marginTop: 12 }}>Body<textarea className="u-field" rows={11} value={tpl.body} onChange={e => saveTemplates({ ...templates, [step]: { ...tpl, body: e.target.value } })} /></label>
       <p className="u-note" style={{ marginTop: 8 }}>Saved in this browser as you type.</p>

@@ -2,7 +2,7 @@
 
 export type EmailStep = "intro" | "follow_up" | "breakup";
 export type EmailTemplate = { subject: string; body: string };
-export type Merge = { first_name: string; company: string; city: string; my_name: string; business: string; booking_link: string };
+export type Merge = { first_name: string; company: string; city: string; my_name: string; business: string; booking_link: string; website: string; demo_link: string };
 
 /** Days to wait after the previous email before the next step comes due. */
 export const STEP_GAP_DAYS: Record<"follow_up" | "breakup", number> = { follow_up: 3, breakup: 4 };
@@ -26,13 +26,16 @@ If it doesn't put 5 booked appointments on your calendar in the first 30 days, y
 Worth a look?
 
 {my_name}
-{business}`,
+{business}
+{website}`,
   },
   follow_up: {
     subject: "Re: more work for {company}",
     body: `Hi {first_name},
 
 Following up on my note below. If {company} had 5 more booked jobs next month, could your crew take them?
+
+Here's a quick demo of how it works: {demo_link}
 
 If the answer is yes, I'll show you exactly where they'd come from in 15 minutes: {booking_link}
 
@@ -44,7 +47,9 @@ If the answer is yes, I'll show you exactly where they'd come from in 15 minutes
 
 I'll stop here so I'm not cluttering your inbox.
 
-If {company} ever wants more jobs on the calendar without adding office staff, reply "jobs" and I'll send over how it works.
+If {company} ever wants more jobs on the calendar without adding office staff, the demo is here: {demo_link}
+
+Or reply "jobs" and I'll walk you through it.
 
 {my_name}`,
   },
@@ -63,7 +68,7 @@ export function greetName(name: string, company: string): string {
 /** City from "City, ST" (or the whole thing when there's no comma). */
 export const cityOf = (location = "") => location.split(",")[0].trim();
 
-export function mergeFor(c: { name: string; company: string; location?: string }, ws: { ownerFirstName: string; businessName: string; bookingLink: string }): Merge {
+export function mergeFor(c: { name: string; company: string; location?: string }, ws: { ownerFirstName: string; businessName: string; bookingLink: string; websiteUrl?: string; demoLink?: string }): Merge {
   return {
     first_name: greetName(c.name, c.company),
     company: (c.company || c.name || "your company").trim(),
@@ -71,6 +76,8 @@ export function mergeFor(c: { name: string; company: string; location?: string }
     my_name: ws.ownerFirstName || "Sam",
     business: ws.businessName,
     booking_link: ws.bookingLink,
+    website: (ws.websiteUrl || "").replace(/^https?:\/\//, "").replace(/\/$/, ""),
+    demo_link: ws.demoLink || ws.websiteUrl || "",
   };
 }
 

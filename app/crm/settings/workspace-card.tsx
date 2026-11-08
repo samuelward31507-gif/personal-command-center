@@ -17,6 +17,8 @@ const IDENTITY: Field[] = [
   { key: "contactEmail", label: "Contact email", type: "email", help: "Printed on agreements." },
   { key: "niche", label: "Who you sell to", help: "Used in the Sunday review: “send 20 DMs to …”." },
   { key: "bookingLink", label: "Booking link", type: "url", help: "Where prospects book a call. Used on prospect reports." },
+  { key: "websiteUrl", label: "Your website", type: "url", help: "Signs your cold emails." },
+  { key: "demoLink", label: "Demo link", type: "url", help: "A demo page or video. Linked in email follow-ups and LinkedIn." },
   { key: "logoUrl", label: "Logo image link", type: "url", help: "White-label: an https link to your logo (PNG or SVG). Replaces the Cinder wordmark in the app and on everything clients see. Leave empty for Cinder." },
 ];
 

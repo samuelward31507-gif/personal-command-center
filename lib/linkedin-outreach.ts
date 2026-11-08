@@ -12,7 +12,9 @@ Straight question: could {company} handle more work right now?
 
 Most owners aren't short on leads, they lose them: missed calls after hours, quotes nobody follows up on, past customers who never hear back. I set up a system that books all three for you.
 
-If it doesn't put 5 booked appointments on your calendar in 30 days, your next month is free. Worth a quick look? {booking_link}
+If it doesn't put 5 booked appointments on your calendar in 30 days, your next month is free. Here's how it works: {demo_link}
+
+Worth a 15-minute look? {booking_link}
 
 {my_name}`,
 };

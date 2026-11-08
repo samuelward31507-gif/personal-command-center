@@ -13,7 +13,7 @@ type Tab = "connect" | "waiting" | "message";
 
 const TABS: { key: Tab; label: string }[] = [{ key: "connect", label: "Connect" }, { key: "waiting", label: "Waiting" }, { key: "message", label: "Message" }];
 const STOP = new Set(["do_not_contact", "not_interested", "not_a_fit", "meeting_booked", "wrong_contact"]);
-const KEY = "cinder.linkedin.templates.v2";
+const KEY = "cinder.linkedin.templates.v3";
 const url = (v: string) => (v.startsWith("http") ? v : "https://www.linkedin.com/in/" + v.replace(/^@/, "").replace(/^linkedin\.com\/in\//, ""));
 
 /** LinkedIn: a queue of owners to connect with, then message once they accept. You do each step on LinkedIn; Cinder keeps the list and the script. */
@@ -97,7 +97,7 @@ export default function LinkedInPage() {
 
     {editing && <section className="em-edit u-sheet">
       <div className="u-h2-row"><h2 className="u-h2">{editKey === "message" ? "First message" : "Connection note"}</h2><button className="u-btn u-btn-bare" onClick={() => saveTpl({ ...tpl, [editKey]: DEFAULT_LINKEDIN[editKey] })}>Reset to default</button></div>
-      <p className="u-note" style={{ marginBottom: 12 }}>Fill-ins: <code>{"{first_name}"}</code> <code>{"{company}"}</code> <code>{"{city}"}</code> <code>{"{my_name}"}</code> <code>{"{booking_link}"}</code>.{editKey === "connect" && ` Notes are capped at ${CONNECT_NOTE_LIMIT} characters.`}</p>
+      <p className="u-note" style={{ marginBottom: 12 }}>Fill-ins: <code>{"{first_name}"}</code> <code>{"{company}"}</code> <code>{"{city}"}</code> <code>{"{my_name}"}</code> <code>{"{booking_link}"}</code> <code>{"{demo_link}"}</code>.{editKey === "connect" && ` Notes are capped at ${CONNECT_NOTE_LIMIT} characters.`}</p>
       <textarea className="u-field" rows={editKey === "message" ? 11 : 4} value={tpl[editKey]} onChange={e => saveTpl({ ...tpl, [editKey]: e.target.value })} />
     </section>}
 
