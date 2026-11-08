@@ -12,4 +12,5 @@ html body main .set-tabs.set-tabs.set-tabs button[aria-selected=true] { backgrou
 html body:not(#u) main.set-page h1.set-title { margin: 8px 0 !important; font-family: var(--font-display), var(--font-geist-sans), sans-serif !important; font-stretch: 118%; font-variation-settings: "wdth" 118; font-size: clamp(30px, 2.6vw, 40px) !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: var(--u-text) !important; }
 html body:not(#u) main.set-page .ws-card { border-color: var(--u-line) !important; background: var(--u-sheet) !important; border-radius: 14px !important; }
 html body:not(#u) main.set-page .ws-save:not(:disabled) { background: var(--u-text) !important; border-color: var(--u-text) !important; color: #141210 !important; }
+html body:not(#u) main.set-page .set-tabs button { border: 0 !important; background: transparent !important; color: var(--u-muted) !important; }
 html body:not(#u) main.set-page .set-tabs button[aria-pressed=true] { background: var(--u-raise) !important; color: var(--u-text) !important; }
