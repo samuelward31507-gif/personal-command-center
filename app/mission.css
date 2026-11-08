@@ -16,8 +16,8 @@
   --mc-soft: #a6a6ad;
   --mc-muted: #74747c;
   --mc-faint: #4b4b52;
-  --mc-accent: #3d8bff;
-  --mc-accent-soft: rgba(61, 139, 255, .14);
+  --mc-accent: #ff6a1f;
+  --mc-accent-soft: rgba(255, 106, 31, .16);
   --mc-good: #2fd27a;
   --mc-warn: #f5b23d;
   --mc-bad: #ff5f5f;
@@ -33,7 +33,7 @@
 }
 
 html, html body { background: var(--mc-bg) !important; color: var(--mc-text) !important; }
-html body:not(#mc) ::selection { background: rgba(61, 139, 255, .35); color: #fff; }
+html body:not(#mc) ::selection { background: rgba(255, 106, 31, .35); color: #fff; }
 html body:not(#mc) main, html body:not(#mc) .page-content, html body:not(#mc) .route-page, html body:not(#mc) .crm-app-shell, html body:not(#mc) .crm-shell-main { background-color: var(--mc-bg) !important; }
 
 /* ---------- Type ---------- */
@@ -52,9 +52,6 @@ html body:not(#mc) main :is([class$="-metrics"], [class*="-metrics "], .fo-kpis,
 html body:not(#mc) main :is([class$="-metrics"], [class*="-metrics "], .fo-kpis, .cm-stats, .outreach-stats) > :is(article, div) {
   position: relative; background: var(--mc-panel) !important; border: 1px solid var(--mc-line) !important;
   border-radius: 10px !important; padding: 18px 18px 16px !important; box-shadow: none !important; overflow: hidden;
-}
-html body:not(#mc) main :is([class$="-metrics"], [class*="-metrics "], .fo-kpis, .cm-stats, .outreach-stats) > :is(article, div)::before {
-  content: ""; position: absolute; left: 0; top: 0; width: 28px; height: 2px; background: var(--mc-accent); opacity: .9;
 }
 html body:not(#mc) main :is([class$="-metrics"], [class*="-metrics "], .fo-kpis, .cm-stats, .outreach-stats) > :is(article, div) > span:first-child {
   display: block; font-family: var(--mc-mono) !important; font-size: 10.5px !important; font-weight: 500 !important;
@@ -118,3 +115,12 @@ html body:not(#mc) * { scrollbar-width: thin; scrollbar-color: #26262c transpare
 /* Older sheets painted every <article>/workspace pane its own gray; one panel color now. */
 html body:not(#mc) main:not(.calendar-page):not(:has(.calendar-page)) article:not([class$="-metrics"] > article) { background-color: var(--mc-panel) !important; border-color: var(--mc-line) !important; }
 html body:not(#mc) main:not(.calendar-page):not(:has(.calendar-page)) :is(.crm-workspace, .crm-list-pane, .crm-detail-pane, .crm-notice) { background-color: var(--mc-panel) !important; border-color: var(--mc-line) !important; }
+
+/* Every page uses the full width of the window (one consistent gutter), instead of each page picking its own cap. */
+html body:not(#mc) .crm-shell-main > main,
+html body:not(#mc) .crm-shell-main > main.calendar-page {
+  max-width: none !important; width: 100% !important; margin: 0 !important; box-sizing: border-box !important;
+  padding: 32px clamp(18px, 2.6vw, 40px) 56px !important;
+}
+html body:not(#mc) .crm-shell-main > main > :is(header, section, div, form) { max-width: none !important; }
+@media (max-width: 700px) { html body:not(#mc) .crm-shell-main > main { padding: 20px 14px 48px !important; } }

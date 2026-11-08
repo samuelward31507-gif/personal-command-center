@@ -62,7 +62,7 @@ export default function DeliveryPanel({ projectId }: { projectId: string }) {
       <div><small>Booked in window</small><b>{s.bookedInWindow} / 3</b></div>
       <div><small>Window</small><b>{s.guaranteeWindowEnd ? `Day ${s.windowDay ?? "—"} · ends ${fmt(s.guaranteeWindowEnd)}` : "Starts at go-live"}</b></div>
       <div><small>First booked estimate</small><b>{fmt(s.firstBookedEstimateDate)}</b></div>
-      <div><small>Monthly billing starts</small><b>{s.monthlyBillingStart ? fmt(s.monthlyBillingStart) : "After first booked estimate"}</b></div>
+      <div><small>Monthly billing starts</small><b>{s.monthlyBillingStart ? fmt(s.monthlyBillingStart) : "After first booked appointment"}</b></div>
     </div>
 
     <h4>Plan and dates</h4>

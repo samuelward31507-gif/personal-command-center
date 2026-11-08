@@ -33,6 +33,12 @@ export default function TodayPage() {
 
   const time = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   const upcoming = (events ?? []).filter(e => new Date(e.endsAt).getTime() > Date.now());
+  const until = (iso: string) => {
+    const mins = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
+    if (mins <= 0) return "now";
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return "in " + (h ? `${h}h ` : "") + (m || !h ? `${m}m` : "");
+  };
 
   return <main className="td-page">
     <header className="td-head">
@@ -46,14 +52,15 @@ export default function TodayPage() {
 
     <MissionStrip />
 
-    <section className="td-meetings" aria-label="Today's meetings">
-      <div className="td-label">On the calendar</div>
-      {events === null ? <p className="td-muted">Loading…</p> : upcoming.length === 0 ? <p className="td-muted">No more meetings today. <Link href="/crm/calendar">Calendar</Link></p> :
-        <div className="td-ev-row">{upcoming.map(e => <Link key={e.id} href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"} className="td-ev">
-          <span className="td-ev-time">{e.allDay ? "All day" : `${time(e.startsAt)} – ${time(e.endsAt)}`}</span>
-          <strong>{e.title}</strong>
-          {e.contactName && <small>{e.contactName}</small>}
-        </Link>)}</div>}
+    <section className="td-next" aria-label="Next up">
+      <div className="td-next-k">Next up</div>
+      {events === null ? <p className="td-muted">Loading…</p> : upcoming.length === 0
+        ? <p className="td-next-empty">Nothing booked for the rest of today. <Link href="/crm/call">Book one →</Link></p>
+        : <div className="td-next-row">{upcoming.slice(0, 3).map((e, i) => <Link key={e.id} href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"} className={"td-next-ev" + (i === 0 ? " is-first" : "")}>
+            <span className="td-next-time">{e.allDay ? "All day" : time(e.startsAt)}<em>{e.allDay ? "" : until(e.startsAt)}</em></span>
+            <strong>{e.title}</strong>
+            {e.contactName && <small>{e.contactName}</small>}
+          </Link>)}</div>}
     </section>
 
     <OpsAlerts />

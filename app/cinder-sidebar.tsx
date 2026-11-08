@@ -18,25 +18,23 @@ type Props = {
 const primary = [
   ["needs-you", "Today", "sun", "/crm/needs-you"],
   ["call", "Call mode", "phone", "/crm/call"],
-  ["practice", "Practice", "mic", "/crm/practice"],
   ["contacts", "Contacts", "users", "/crm"],
   ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
-  ["client-success", "Clients", "briefcase", "/crm/client-success"],
-  ["calendar", "Meetings", "calendar", "/crm/calendar"],
+  ["calendar", "Calendar", "calendar", "/crm/calendar"],
+  ["tasks", "Follow-ups", "check", "/crm/tasks"],
   ["finance", "Money", "money", "/crm/finance"],
 ] as const;
+// Useful, not daily. Operations, AI team and Signals stay reachable by URL but are off the sidebar.
 const secondary = [
+  ["scoreboard", "Scoreboard", "chart", "/crm/scoreboard"],
+  ["practice", "Practice", "mic", "/crm/practice"],
   ["outreach", "Outreach", "send", "/crm/outreach"],
   ["preparation", "Research", "search", "/crm/preparation"],
+  ["client-success", "Clients", "briefcase", "/crm/client-success"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
-  ["tasks", "Tasks", "check", "/crm/tasks"],
-  ["scoreboard", "Scoreboard", "chart", "/crm/scoreboard"],
   ["reports", "Client reports", "doc", "/crm/reports"],
-  ["operations", "Operations", "clipboard", "/crm/operations"],
-  ["workforce", "AI team", "spark", "/crm/workforce"],
-  ["intelligence", "Signals", "bulb", "/crm/intelligence"],
 ] as const;
-const SECONDARY_PATHS = ["/crm/outreach", "/crm/projects", "/crm/tasks", "/crm/preparation", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
+const SECONDARY_PATHS = ["/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/client-success", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {

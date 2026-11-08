@@ -53,7 +53,7 @@ export function OfferCard() {
       <label className="ws-field wide"><span>Offer name</span><input value={form.offerName} onChange={e => set("offerName", e.target.value)} /></label>
       {f("setupFee", "Founding setup fee", undefined, "$")}
       {f("standardSetup", "Standard setup (shown struck through)", undefined, "$")}
-      {f("monthly", "Monthly", "Starts after the first booked estimate.", "$")}
+      {f("monthly", "Monthly", "Starts after the first booked appointment.", "$")}
       {f("spotsTotal", "Founding spots total")}
       {f("minOldLeads", "Old leads needed for the guarantee")}
     </div>
