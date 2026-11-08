@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { STAGE_LABELS, type DealStage } from "@/lib/offers";
-import { MOVE_OUT_MRR, WEEKLY_MEETING_TARGET } from "@/lib/scoreboard";
+import { MOVE_OUT_MRR, WEEKLY_MEETING_TARGET, DAILY_EMAIL_TARGET, DAILY_LINKEDIN_TARGET } from "@/lib/scoreboard";
 import { Columns } from "../../ui/charts";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
@@ -20,6 +20,8 @@ type Board = {
   recurring: { clients: number; mrr: number };
   targets?: { goalLabel: string; dailyCalls: number };
   sources?: { rows: { channel: string; label: string; deals: number; meetings: number; won: number; wonMonthly: number; meetingRate: number | null; closeRate: number | null }[]; best: { label: string; meetingRate: number | null } | null; unknownShare: number };
+  channels?: Record<"today" | "week", { emails: number; replies: number; bounces: number; liRequests: number; liAccepted: number; liMessages: number; texts: number; textReplies: number }>;
+  working?: Record<"trades" | "cities", { label: string; dials: number; convos: number; meetings: number }[]>;
   goal: { goal: number; by?: string; collected: number; expected: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
 };
 type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string };
@@ -100,6 +102,28 @@ export default function Dashboard() {
       <Link href="/crm/finance" className="u-fig"><span className="u-fig-k">{b?.targets?.goalLabel ?? "Revenue goal"}</span><div className="u-fig-v">{g ? usd(g.collected) : "—"}</div><div className="u-meter"><i style={{ width: (g?.progressPct ?? 0) + "%" }} /></div><div className="u-fig-sub">{g ? <><b>{g.daysLeft}</b> days left, {usd(g.goal)} goal</> : ""}</div></Link>
     </div>
 
+    {b && (() => {
+      const t = b.channels?.today, w = b.channels?.week;
+      const cells: { k: string; href: string; n: number; of?: number; wk: string; hot?: boolean }[] = [
+        { k: "Dials", href: "/crm/call", n: b.today.calls, of: target, wk: `${b.week.calls} this week` },
+        { k: "Conversations", href: "/crm/call", n: b.today.connects, wk: `${b.week.connects} this week` },
+        { k: "Meetings", href: "/crm/calendar", n: b.today.meetings, wk: `${b.week.meetings} this week` },
+        { k: "Emails", href: "/crm/email", n: t?.emails ?? 0, of: DAILY_EMAIL_TARGET, wk: `${w?.emails ?? 0} this week${w?.bounces ? `, ${w.bounces} bounced` : ""}` },
+        { k: "Replies", href: "/crm/email", n: (t?.replies ?? 0) + (t?.textReplies ?? 0), wk: ((t?.replies ?? 0) + (t?.textReplies ?? 0)) > 0 ? "Answer them first" : `${(w?.replies ?? 0) + (w?.textReplies ?? 0)} this week`, hot: ((t?.replies ?? 0) + (t?.textReplies ?? 0)) > 0 },
+        { k: "LinkedIn", href: "/crm/linkedin", n: t?.liRequests ?? 0, of: DAILY_LINKEDIN_TARGET, wk: `${w?.liRequests ?? 0} sent, ${w?.liAccepted ?? 0} accepted` },
+        { k: "Texts", href: "/crm/call", n: t?.texts ?? 0, wk: `${w?.texts ?? 0} this week` },
+      ];
+      return <section className="u-block">
+        <div className="u-h2-row"><h2 className="u-h2">Outreach today</h2><span className="u-note">Counts itself as you work. LinkedIn counts what you mark on the LinkedIn page.</span></div>
+        <div className="db-out">{cells.map(c => <Link key={c.k} href={c.href} className={"db-out-c" + (c.hot ? " is-hot" : "")}>
+          <span className="u-fig-k">{c.k}</span>
+          <b className="db-step-n">{c.n}{c.of ? <small> / {c.of}</small> : null}</b>
+          {c.of ? <div className="u-meter"><i style={{ width: Math.min(100, (c.n / c.of) * 100) + "%" }} /></div> : <div className="db-out-gap" />}
+          <span className="db-step-r">{c.wk}</span>
+        </Link>)}</div>
+      </section>;
+    })()}
+
     <div className="u-split u-split-2 u-block">
       <section>
         <div className="u-h2-row"><h2 className="u-h2">Dials, last 14 days</h2><span className="u-note">Dashed line is your {target}/day target. Dots are meetings booked.</span></div>
@@ -128,6 +152,16 @@ export default function Dashboard() {
         <span className="db-step-r">{i === 0 ? "" : st.r != null ? `${st.r}% ${st.of}` : ""}</span>
       </div>)}</div>
     </section>
+
+    {b?.working && b.working.trades.length > 0 && <section className="u-block">
+      <div className="u-h2-row"><h2 className="u-h2">What&apos;s working</h2><span className="u-note">Last 30 days. Meetings per 100 dials is the number to compare.</span></div>
+      <div className="u-split u-split-even">{(["trades", "cities"] as const).map(k => <div key={k} className="u-tablewrap">
+        <table className="u-table">
+          <thead><tr><th>{k === "trades" ? "Trade" : "City"}</th><th className="u-num">Dials</th><th className="u-num">Talked</th><th className="u-num">Meetings</th><th className="u-num" title="Meetings per 100 dials">Per 100</th></tr></thead>
+          <tbody>{b.working![k].map(r => <tr key={r.label}><td>{r.label}</td><td className="u-num">{r.dials}</td><td className="u-num">{r.convos}</td><td className="u-num">{r.meetings}</td><td className="u-num">{r.dials >= 20 ? (r.meetings / r.dials * 100).toFixed(1) : <span className="u-quiet" title="Needs 20+ dials to mean anything">—</span>}</td></tr>)}</tbody>
+        </table>
+      </div>)}</div>
+    </section>}
 
     <div className="u-split u-split-even u-block">
       <section>

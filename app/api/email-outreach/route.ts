@@ -9,15 +9,21 @@ const uuid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}
 async function owner() { const r = await getAllowedSession(); return r?.data?.session && r?.data?.user?.id ? String(r.data.user.id) : null; }
 function db() { if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured."); return neon(process.env.DATABASE_URL); }
 
-/** GET: every cold email you've marked sent (contact, step, when). Cinder never sends email itself. */
+/** GET: every cold email sent (contact, step, when), plus replies and bounces the Gmail sync found. */
 export async function GET() {
   const o = await owner();
   if (!o) return Response.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const rows = await db()`SELECT contact_id, notes, occurred_at FROM public.contact_activities
-      WHERE owner_id = ${o} AND channel = 'note' AND action = 'note' AND notes LIKE 'Email sent: %' ORDER BY occurred_at DESC LIMIT 5000`;
-    const sent = rows.map(r => ({ contactId: String(r.contact_id), step: String(r.notes).slice("Email sent: ".length).split(/\s|\n/)[0], at: new Date(r.occurred_at as string).toISOString() }));
-    return Response.json({ sent }, { headers: { "Cache-Control": "no-store" } });
+      WHERE owner_id = ${o} AND channel = 'note' AND action = 'note' AND (notes LIKE 'Email sent: %' OR notes LIKE 'Email reply:%' OR notes LIKE 'Email bounced:%') ORDER BY occurred_at DESC LIMIT 6000`;
+    const at = (r: Record<string, unknown>) => new Date(r.occurred_at as string).toISOString();
+    const sent = rows.filter(r => String(r.notes).startsWith("Email sent: ")).map(r => ({ contactId: String(r.contact_id), step: String(r.notes).slice("Email sent: ".length).split(/\s|\n/)[0], at: at(r) }));
+    // Replies and bounces: the sequence stops for these contacts.
+    const heard = rows.filter(r => !String(r.notes).startsWith("Email sent: ")).map(r => {
+      const n = String(r.notes), bounce = n.startsWith("Email bounced:");
+      return { contactId: String(r.contact_id), kind: bounce ? "bounce" : "reply", at: at(r), preview: n.split("\n").slice(1).join(" ").slice(0, 240), from: bounce ? "" : n.split("\n")[0].slice("Email reply: ".length) };
+    });
+    return Response.json({ sent, heard }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) { console.error("Email outreach GET failed", e); return Response.json({ error: "Couldn't load email history." }, { status: 500 }); }
 }
 

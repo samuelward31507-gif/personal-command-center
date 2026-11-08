@@ -1,7 +1,8 @@
-// Gmail sending for cold email: OAuth (gmail.send only), token encryption, and the RFC 2822 message. node:crypto only.
+// Gmail sending for cold email: OAuth (send + read headers for replies), token encryption, and the RFC 2822 message. node:crypto only.
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
-export const GMAIL_SCOPES = ["openid", "email", "https://www.googleapis.com/auth/gmail.send"];
+/** gmail.send to send; gmail.metadata to see who replied or bounced (headers only, never message bodies). */
+export const GMAIL_SCOPES = ["openid", "email", "https://www.googleapis.com/auth/gmail.send", "https://www.googleapis.com/auth/gmail.metadata"];
 export const DAILY_SEND_CAP = 50;
 
 function key(): Buffer {
@@ -75,3 +76,24 @@ export function buildRaw(m: { from: string; fromName: string; to: string; subjec
 }
 
 export const isEmail = (v: string) => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(v);
+
+// ---- replies and bounces ----
+
+export type ThreadMessage = { from: string; snippet?: string; internalDate?: string; labelIds?: string[] };
+export type ThreadVerdict = { kind: "reply" | "bounce" | "unsubscribe"; from: string; snippet: string; at: string } | null;
+const BOUNCER = /mailer-daemon|postmaster|mail delivery (subsystem|system)/i;
+const STOP_WORDS = /\b(unsubscribe|remove me|stop emailing|take me off|not interested)\b/i;
+
+/** What happened in a cold-email thread: a bounce, an unsubscribe, a reply, or nothing yet. Pure. */
+export function classifyThread(messages: ThreadMessage[], myEmail: string): ThreadVerdict {
+  const me = myEmail.trim().toLowerCase();
+  const others = messages.filter(m => m.from && !m.from.toLowerCase().includes(me));
+  if (!others.length) return null;
+  const at = (m: ThreadMessage) => (m.internalDate && /^\d+$/.test(m.internalDate) ? new Date(Number(m.internalDate)).toISOString() : new Date().toISOString());
+  const bounce = others.find(m => BOUNCER.test(m.from));
+  if (bounce) return { kind: "bounce", from: bounce.from, snippet: (bounce.snippet ?? "").slice(0, 300), at: at(bounce) };
+  const first = others[0];
+  const stop = others.find(m => STOP_WORDS.test(m.snippet ?? ""));
+  if (stop) return { kind: "unsubscribe", from: stop.from, snippet: (stop.snippet ?? "").slice(0, 300), at: at(stop) };
+  return { kind: "reply", from: first.from, snippet: (first.snippet ?? "").slice(0, 300), at: at(first) };
+}

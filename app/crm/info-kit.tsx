@@ -28,7 +28,7 @@ export default function InfoKit({ id, name, company, notes, onReply }: { id: str
 
   async function copy(kind: Kind) {
     let text = link;
-    if (kind === "info_text") text = infoText({ firstName: first, demoLink: demoLinkFor(nicheFor(company, notes)) });
+    if (kind === "info_text") text = infoText({ firstName: first, demoLink: demoLinkFor(nicheFor(company, notes)), niche: nicheFor(company, notes) });
     else if (kind !== "link") { const d = buildDraft(kind as DraftKind, input); text = d.subject ? `${d.subject}\n\n${d.body}` : d.body; }
     try { await navigator.clipboard.writeText(text); setCopied(kind); setTimeout(() => setCopied(c => (c === kind ? null : c)), 2000); } catch { setCopied(null); }
   }

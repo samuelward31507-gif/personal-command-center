@@ -6,6 +6,7 @@ import { CALL_MODE_GROUPS, CONVERSATIONS, OUTCOME_LABELS, ATTEMPT_LIMIT, type Ca
 import { buildDraft, contactFirstName } from "@/lib/call-drafts";
 import { localCallInfo } from "@/lib/local-time";
 import { cityOf } from "@/lib/call-script";
+import { openerFor } from "@/lib/openers";
 import { reportSection } from "@/lib/business-audit";
 import { suggestOffer } from "@/lib/offers";
 import { offersFrom } from "@/lib/workspace";
@@ -13,9 +14,10 @@ import { useWorkspace } from "../../use-workspace";
 import type { QueueItem } from "@/lib/my-day";
 import SuggestedDeal, { type SuggestedDealData } from "../../suggested-deal";
 import TextDraft, { type TextContext } from "../text-draft";
+import { CallEmail } from "./call-email";
 import "./call.css";
 
-type Contact = { id: string; name: string; company: string; phone: string; email?: string; website?: string; location?: string; notes?: string; status?: string; lastContact?: string; lastTouchAt?: string; lastTouchOutcome?: string; lastNote?: string; attempts?: number };
+type Contact = { id: string; name: string; company: string; phone: string; email?: string; website?: string; location?: string; notes?: string; status?: string; lastContact?: string; lastTouchAt?: string; lastTouchOutcome?: string; lastNote?: string; attempts?: number; niche?: string };
 type Audit = { id: string; content: string; createdAt: string };
 
 const localKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -45,6 +47,9 @@ export default function CallModePage() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [textCtx, setTextCtx] = useState<{ ctx: TextContext; contactId: string; who: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [mailAfter, setMailAfter] = useState<{ id: string; name: string; company: string; email: string; location?: string; niche?: string } | null>(null);
+  const [gmail, setGmail] = useState<{ connected: boolean; email: string | null } | null>(null);
+  useEffect(() => { fetch("/api/gmail", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).then(setGmail).catch(() => setGmail(null)); }, []);
   const [stats, setStats] = useState<{ dials: number; conversations: number; meetings: number } | null>(null);
   const [clock, setClock] = useState(() => new Date());
   const [when, setWhen] = useState({ date: "", time: "10:00", minutes: "30" });
@@ -135,6 +140,7 @@ export default function CallModePage() {
       if (!r.ok) throw new Error(data.error || "Could not log that outcome.");
       setStats(st => st && { dials: st.dials + 1, conversations: st.conversations + (CONVERSATIONS.includes(outcome) ? 1 : 0), meetings: st.meetings + (outcome === "meeting_booked" ? 1 : 0) });
       setCopied(false);
+      setMailAfter((outcome === "no_answer" || outcome === "voicemail") && contact.email ? { id: contact.id, name: contact.name, company: contact.company, email: contact.email, location: contact.location, niche: contact.niche } : null);
       const draftInput = { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, pain: info.pain, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cal.com/samuel-ward-saqpvb/15min" };
       const t: TextContext | undefined = data.text;
       setTextCtx(t && (t.template || t.notice || t.tasks?.length || t.closed) ? { ctx: t, contactId: contact.id, who: contact.company || contact.name } : null);
@@ -284,6 +290,7 @@ export default function CallModePage() {
           <button type="button" className="u-btn u-btn-bare" onClick={() => setDraft(null)}>Dismiss</button>
         </div>
       </div>}
+      {mailAfter && <CallEmail key={mailAfter.id} who={mailAfter} ws={wsp} gmail={gmail} onClose={() => setMailAfter(null)} />}
       {textCtx && <TextDraft key={textCtx.contactId + textCtx.ctx.callAt} ctx={textCtx.ctx} contactId={textCtx.contactId} who={textCtx.who} primaryClass="u-btn u-btn-light" quietClass="u-btn" />}
     </div>}
 
@@ -347,6 +354,12 @@ export default function CallModePage() {
           }
           return note ? <p className="dl-lastnote">{note}</p> : null;
         })()}
+
+        {(() => { const op = openerFor(contact.niche, contact.company, contact.notes); return <div className="dl-open" aria-label="What to say">
+          <div><span>Open</span><p>{op.open}</p></div>
+          <div><span>Dig</span><p>{op.dig}</p></div>
+          <div><span>Pitch</span><p>{op.pitch}</p></div>
+        </div>; })()}
 
         <div className="dl-brief">
           {audit === undefined ? <p className="u-note">Loading research…</p> : brief ? <>

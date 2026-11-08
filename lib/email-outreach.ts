@@ -107,6 +107,43 @@ export const trackOf = (niche?: string): Track => (/detail/i.test(niche || "") ?
 export const TEMPLATE_SETS: Record<Track, Record<EmailStep, EmailTemplate>> = { trades: DEFAULT_TEMPLATES, detailing: DETAILING_TEMPLATES };
 export const TRACK_LABEL: Record<Track, string> = { trades: "Contractors", detailing: "Detailers" };
 
+/** Sent right after a no-answer or voicemail in Call mode. It counts as the first email, so the
+    normal follow-up and last try come after it in the same thread (the subject matches theirs). */
+export const AFTER_CALL_TEMPLATES: Record<Track, EmailTemplate> = {
+  trades: {
+    subject: "more work for {company}",
+    body: `Hi {first_name},
+
+Just tried calling {company}. Sorry I missed you.
+
+Short version: could you handle more work right now? I set up a system that texts back every missed call in seconds and books them, follows up on open quotes, and brings past customers back for their next job.
+
+If it doesn't put 5 booked appointments on your calendar in the first 30 days, your next month is free.
+
+Worth a quick call this week? Just reply with a good time.
+
+{my_name}
+{business}
+{website}`,
+  },
+  detailing: {
+    subject: "repeat customers for {company}",
+    body: `Hi {first_name},
+
+Just tried calling {company}. Probably caught you mid-detail.
+
+Short version: how many past customers haven't rebooked in the last 3 months? I set up a system that texts them when they're due and books them back in, texts back anyone who calls while you're working, and asks happy customers for reviews.
+
+If it doesn't put 5 booked appointments on your calendar in the first 30 days, your next month is free.
+
+Worth a quick call this week? Just reply with a good time.
+
+{my_name}
+{business}
+{website}`,
+  },
+};
+
 const LEGAL = /\b(llc|inc|co|corp|company|ltd|fence|fencing|construction|services?)\b/i;
 
 /** First name to greet with: the contact's first name when it's a person, "there" when the name is really the company. */

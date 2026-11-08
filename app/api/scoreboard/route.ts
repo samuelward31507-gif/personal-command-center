@@ -98,6 +98,39 @@ export async function GET(request: Request) {
       FROM public.prospect_touches WHERE owner_id = ${owner} AND kind IN ('dm_sent','follow_up_sent')` as { week: number; month: number }[];
     const [avg] = await sql`SELECT count(*)::int AS n, coalesce(avg(setup_fee),0)::float AS setup, coalesce(avg(monthly_fee),0)::float AS monthly
       FROM public.deals WHERE owner_id = ${owner} AND stage = 'won'` as { n: number; setup: number; monthly: number }[];
+    // Every outreach channel, today and this week. Calls count when logged; email, replies and bounces count themselves;
+    // LinkedIn counts what you mark on the LinkedIn page.
+    const chan = await sql`SELECT w.k,
+          count(a.*) FILTER (WHERE a.notes LIKE 'Email sent: %')::int AS emails,
+          count(a.*) FILTER (WHERE a.notes LIKE 'Email reply:%')::int AS replies,
+          count(a.*) FILTER (WHERE a.notes LIKE 'Email bounced:%')::int AS bounces,
+          count(a.*) FILTER (WHERE a.notes LIKE 'LinkedIn: connect%')::int AS li_requests,
+          count(a.*) FILTER (WHERE a.notes LIKE 'LinkedIn: accepted%')::int AS li_accepted,
+          count(a.*) FILTER (WHERE a.notes LIKE 'LinkedIn: message%')::int AS li_messages,
+          count(a.*) FILTER (WHERE a.action = 'outbound_text')::int AS texts,
+          count(a.*) FILTER (WHERE a.action = 'inbound_text')::int AS text_replies
+        FROM (VALUES ('today', ${today}::date), ('week', ${from7}::date)) AS w(k, since)
+        LEFT JOIN public.contact_activities a ON a.owner_id = ${owner}
+          AND (a.occurred_at - make_interval(mins => ${tz}))::date BETWEEN w.since AND ${today}::date
+        GROUP BY w.k` as Record<string, unknown>[];
+    const chanOf = (k: string) => { const r = chan.find(x => x.k === k) ?? {}; const n = (f: string) => Number(r[f] ?? 0);
+      return { emails: n("emails"), replies: n("replies"), bounces: n("bounces"), liRequests: n("li_requests"), liAccepted: n("li_accepted"), liMessages: n("li_messages"), texts: n("texts"), textReplies: n("text_replies") }; };
+    // What's working: dials, conversations and meetings by trade and by city, last 30 days.
+    const split = await sql`SELECT CASE WHEN c.niche ~* 'detail' OR c.company ~* 'detail' THEN 'Detailers' ELSE 'Fence and trades' END AS trade,
+          NULLIF(split_part(c.location, ',', 1), '') AS city, NULLIF(trim(split_part(c.location, ',', 2)), '') AS st,
+          count(*)::int AS dials,
+          count(*) FILTER (WHERE a.outcome = ANY(${connects}::text[]))::int AS convos,
+          count(*) FILTER (WHERE a.outcome = 'meeting_booked')::int AS meetings
+        FROM public.contact_activities a JOIN public.contacts c ON c.id = a.contact_id AND c.owner_id = a.owner_id
+        WHERE a.owner_id = ${owner} AND a.channel = 'call' AND a.action <> 'note' AND a.outcome IS DISTINCT FROM 'initiated'
+          AND (a.occurred_at - make_interval(mins => ${tz}))::date >= ${from30}::date
+        GROUP BY 1, 2, 3` as { trade: string; city: string | null; st: string | null; dials: number; convos: number; meetings: number }[];
+    const roll = (key: (r: typeof split[number]) => string) => {
+      const m = new Map<string, { label: string; dials: number; convos: number; meetings: number }>();
+      for (const r of split) { const k = key(r); const x = m.get(k) ?? { label: k, dials: 0, convos: 0, meetings: 0 }; x.dials += r.dials; x.convos += r.convos; x.meetings += r.meetings; m.set(k, x); }
+      return [...m.values()].sort((a, b) => b.dials - a.dials);
+    };
+    const working = { trades: roll(r => r.trade), cities: roll(r => r.city ? `${r.city}${r.st ? ", " + r.st : ""}` : "Unknown").slice(0, 8) };
     const dl = deals[0];
     const month = { calls: w.month?.calls ?? 0, connects: w.month?.connects ?? 0, meetingsBooked: w.month?.meetings ?? 0, meetingsHeld: meetingsHeld[0]?.month ?? 0, proposalsSent: dl.proposals_month, won: dl.won_month, lost: dl.lost_month };
     return Response.json({
@@ -112,6 +145,8 @@ export async function GET(request: Request) {
       targets: { goalLabel: goalLabel(ws), dailyCalls: ws.dailyCallTarget },
       sources,
       outreach: { dmWeek: dm?.week ?? 0, dmMonth: dm?.month ?? 0 },
+      channels: { today: chanOf("today"), week: chanOf("week") },
+      working,
       avgDeal: { deals: avg?.n ?? 0, setup: Math.round(avg?.setup ?? 0), monthly: Math.round(avg?.monthly ?? 0) },
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

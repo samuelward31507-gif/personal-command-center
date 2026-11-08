@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   try {
     const t = await exchangeCode(code, url.origin);
     if (!t.refresh_token) return back(req, "no-refresh");
-    if (!(t.scope ?? "").includes("gmail.send")) return back(req, "no-scope");
+    if (!(t.scope ?? "").includes("gmail.send") || !(t.scope ?? "").includes("gmail.metadata")) return back(req, "no-scope");
     const email = emailFromIdToken(t.id_token ?? "");
     if (!email) return back(req, "error");
     const sql = neon(process.env.DATABASE_URL);

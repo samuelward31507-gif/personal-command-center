@@ -9,6 +9,8 @@ import "./email.css";
 
 type Contact = { id: string; name: string; company: string; email: string; location?: string; status?: string; lastTouchOutcome?: string; nextFollowUp?: string; source?: string; niche?: string };
 type Sent = { contactId: string; step: string; at: string };
+type Heard = { contactId: string; kind: "reply" | "bounce"; at: string; preview: string; from: string };
+const SYNC_KEY = "cinder.gmail.sync.at";
 
 const DAILY = 25;
 const STEPS: { key: EmailStep; label: string }[] = [{ key: "intro", label: "First email" }, { key: "follow_up", label: "Follow-up" }, { key: "breakup", label: "Last try" }];
@@ -33,6 +35,7 @@ export default function EmailPage() {
   const ws = useWorkspace();
   const [contacts, setContacts] = useState<Contact[] | null>(null);
   const [sent, setSent] = useState<Sent[]>([]);
+  const [heard, setHeard] = useState<Heard[]>([]);
   const [error, setError] = useState("");
   const [step, setStep] = useState<EmailStep>("intro");
   const [picked, setPicked] = useState<string | null>(null);
@@ -53,8 +56,8 @@ export default function EmailPage() {
     try {
       const [c, s] = await Promise.all([fetch("/api/contacts", { cache: "no-store" }), fetch("/api/email-outreach", { cache: "no-store" })]);
       if (!c.ok) throw new Error(c.status === 401 ? "Sign in to send email." : "Couldn't load contacts.");
-      const cj = await c.json(); const sj = s.ok ? await s.json() : { sent: [] };
-      setContacts(cj.contacts ?? []); setSent(sj.sent ?? []);
+      const cj = await c.json(); const sj = s.ok ? await s.json() : { sent: [], heard: [] };
+      setContacts(cj.contacts ?? []); setSent(sj.sent ?? []); setHeard(sj.heard ?? []);
     } catch (e) { setError(e instanceof Error ? e.message : "Couldn't load contacts."); setContacts([]); }
   }, []);
   useEffect(() => { void load(); }, [load]);
@@ -62,18 +65,31 @@ export default function EmailPage() {
   useEffect(() => {
     void loadGmail();
     const g = new URLSearchParams(window.location.search).get("gmail");
-    const msg: Record<string, string> = { connected: "Gmail connected. Emails now send straight from the CRM.", denied: "You didn't allow Gmail access, so nothing changed.", expired: "That sign-in took too long. Try Connect Gmail again.", "no-refresh": "Google didn't give lasting access. Disconnect Cinder in your Google account settings, then connect again.", "no-scope": "Allow \"Send email on your behalf\" when Google asks, or sending can't work.", "not-configured": "Gmail sending isn't set up on the server yet.", error: "Couldn't connect Gmail. Try again." };
+    const msg: Record<string, string> = { connected: "Gmail connected. Emails now send straight from the CRM.", denied: "You didn't allow Gmail access, so nothing changed.", expired: "That sign-in took too long. Try Connect Gmail again.", "no-refresh": "Google didn't give lasting access. Disconnect Cinder in your Google account settings, then connect again.", "no-scope": "Tick both boxes when Google asks (send email, and view email headers so Cinder can see replies). Connect again.", "not-configured": "Gmail sending isn't set up on the server yet.", error: "Couldn't connect Gmail. Try again." };
     if (g && msg[g]) { setNotice(msg[g]); window.history.replaceState(null, "", "/crm/email"); }
   }, [loadGmail]);
+
+  // Check Gmail for replies and bounces when the page opens (at most every 5 minutes), then refresh the queues.
+  useEffect(() => {
+    if (!gmail?.connected) return;
+    let last = 0; try { last = Number(localStorage.getItem(SYNC_KEY) || 0); } catch { /* storage unavailable */ }
+    if (Date.now() - last < 5 * 60000) return;
+    try { localStorage.setItem(SYNC_KEY, String(Date.now())); } catch { /* fine */ }
+    void fetch("/api/gmail/sync", { method: "POST" }).then(r => r.json().catch(() => ({}))).then((j: { replies?: number; bounces?: number; error?: string }) => {
+      if (j.error) { setError(j.error); return; }
+      if ((j.replies ?? 0) + (j.bounces ?? 0) > 0) { setNotice([j.replies ? `${j.replies} new repl${j.replies === 1 ? "y" : "ies"}` : "", j.bounces ? `${j.bounces} bounced` : ""].filter(Boolean).join(", ") + ". Their sequences stopped."); void load(); }
+    }).catch(() => {});
+  }, [gmail?.connected, load]);
 
   // Who's due for each step: never emailed → first email; first email 3+ days ago → follow-up; follow-up 4+ days ago → last try.
   const queues = useMemo(() => {
     const by = new Map<string, Sent[]>();
+    const done = new Set(heard.map(h => h.contactId));
     for (const s of sent) by.set(s.contactId, [...(by.get(s.contactId) ?? []), s]);
     const now = Date.now(), days = (iso: string) => (now - Date.parse(iso)) / 86400000;
     const out: Record<EmailStep, Contact[]> = { intro: [], follow_up: [], breakup: [] };
     for (const c of contacts ?? []) {
-      if (!c.email || STOP.has(c.lastTouchOutcome ?? "") || (c.status ?? "").toLowerCase() === "customer") continue;
+      if (!c.email || done.has(c.id) || STOP.has(c.lastTouchOutcome ?? "") || (c.status ?? "").toLowerCase() === "customer") continue;
       const mine = by.get(c.id) ?? [];
       const last = (k: string) => mine.find(s => s.step === k);
       if (!mine.length) out.intro.push(c);
@@ -84,7 +100,7 @@ export default function EmailPage() {
     const today = localDay();
     for (const k of Object.keys(out) as EmailStep[]) out[k].sort((a, b) => (a.nextFollowUp || today).localeCompare(b.nextFollowUp || today) || (a.company || a.name).localeCompare(b.company || b.name));
     return out;
-  }, [contacts, sent]);
+  }, [contacts, sent, heard]);
 
   const list = queues[step].filter(c => !skipped.has(c.id) && (!query.trim() || `${c.company} ${c.name} ${c.email} ${c.location}`.toLowerCase().includes(query.trim().toLowerCase())));
   const current = list.find(c => c.id === picked) ?? list[0] ?? null;
@@ -188,11 +204,27 @@ export default function EmailPage() {
       {gmail.configured && <a className="u-btn u-btn-light" href="/api/gmail/connect">Connect Gmail</a>}
     </div>}
 
+    {(() => {
+      const recent = heard.filter(h => h.kind === "reply" && Date.now() - Date.parse(h.at) < 14 * 86400000);
+      if (!recent.length) return null;
+      const byId = new Map<string, Contact>((contacts ?? []).map(c => [c.id, c] as [string, Contact]));
+      return <section className="u-sheet em-replies" aria-label="Replies">
+        <div className="u-h2-row"><h2 className="u-h2">Replies <span className="u-quiet">{recent.length}</span></h2><span className="u-note">Answer these first. Their follow-ups stopped.</span></div>
+        <div className="u-rows">{recent.slice(0, 8).map(h => { const c = byId.get(h.contactId); return <div key={h.contactId + h.at} className="u-row em-reply">
+          <div className="u-row-main"><strong>{c ? c.company || c.name : "Contact"}</strong><span>{h.preview || h.from}</span></div>
+          <div style={{ display: "flex", gap: 6, flex: "none" }}>
+            {c?.email && <a className="u-btn u-btn-light" href={`https://mail.google.com/mail/u/0/#search/${encodeURIComponent("from:" + c.email)}`} target="_blank" rel="noreferrer">Answer in Gmail</a>}
+            <Link className="u-btn u-btn-bare" href={`/crm?contact=${h.contactId}`}>Contact</Link>
+          </div>
+        </div>; })}</div>
+      </section>;
+    })()}
+
     <div className="u-figs">
       <div className="u-fig"><span className="u-fig-k">Sent today</span><div className="u-fig-v">{sentToday}<small>/ {DAILY}</small></div><div className="u-meter"><i style={{ width: Math.min(100, (sentToday / DAILY) * 100) + "%" }} /></div><div className="u-fig-sub">{sentToday >= DAILY ? "Daily batch done" : <><b>{DAILY - sentToday}</b> left in today&apos;s batch</>}</div></div>
       <div className="u-fig"><span className="u-fig-k">Ready for a first email</span><div className="u-fig-v">{queues.intro.length}</div><div className="u-fig-sub">people with an email you haven&apos;t written yet</div></div>
       <div className="u-fig"><span className="u-fig-k">Follow-ups due</span><div className="u-fig-v">{queues.follow_up.length + queues.breakup.length}</div><div className="u-fig-sub">{STEP_GAP_DAYS.follow_up} days after the first, {STEP_GAP_DAYS.breakup} after the follow-up</div></div>
-      <div className="u-fig"><span className="u-fig-k">Sent this week</span><div className="u-fig-v">{sentWeek}</div><div className="u-fig-sub">Replies get logged on the contact</div></div>
+      <div className="u-fig"><span className="u-fig-k">Sent this week</span><div className="u-fig-v">{sentWeek}</div><div className="u-fig-sub">{(() => { const wk = heard.filter(h => Date.now() - Date.parse(h.at) < 7 * 86400000); const r = wk.filter(h => h.kind === "reply").length, b = wk.length - r; return `${r} repl${r === 1 ? "y" : "ies"}${b ? `, ${b} bounced` : ""}${sentWeek ? ` · ${Math.round((r / sentWeek) * 100)}% reply rate` : ""}`; })()}</div></div>
     </div>
 
     {editing && <section className="em-edit u-sheet">

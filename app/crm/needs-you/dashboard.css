@@ -23,3 +23,16 @@ body .db-page .db-goal-need b { color: var(--u-text); font-weight: 550; }
   body .db-page .db-step, body .db-page .db-step + .db-step { padding: 14px 10px 14px 0; border-bottom: 1px solid var(--u-line-soft); }
   body .db-page .db-ev-t { width: 90px; }
 }
+
+/* Outreach today: every channel in one row */
+body .db-page .db-out { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line); }
+body .db-page a.db-out-c { display: flex; flex-direction: column; padding: 18px 16px 16px 0; min-width: 0; color: inherit; }
+body .db-page a.db-out-c + a.db-out-c { padding-left: 16px; border-left: 1px solid var(--u-line-soft, #24221f); }
+body .db-page a.db-out-c:hover .u-fig-k { color: var(--u-text) !important; }
+body .db-page .db-out-c .u-fig-k { margin-bottom: 8px; }
+body .db-page .db-out-c .db-step-n small { font-family: var(--u-text-font); font-stretch: 100%; font-variation-settings: normal; font-size: 13px; font-weight: 400; color: var(--u-muted); letter-spacing: 0; }
+body .db-page .db-out-c .u-meter { margin-top: 12px; }
+body .db-page .db-out-gap { height: 3px; margin-top: 12px; }
+body .db-page .db-out-c.is-hot .db-step-r { color: var(--u-text); }
+@media (max-width: 1100px) { body .db-page .db-out { grid-template-columns: repeat(4, minmax(0, 1fr)); } body .db-page a.db-out-c:nth-child(5) { border-left: 0; padding-left: 0; } }
+@media (max-width: 700px) { body .db-page .db-out { grid-template-columns: repeat(2, minmax(0, 1fr)); } body .db-page a.db-out-c, body .db-page a.db-out-c + a.db-out-c { padding: 14px 10px 14px 0; border-left: 0; border-bottom: 1px solid var(--u-line-soft); } }

@@ -40,6 +40,8 @@ export async function POST(req: Request) {
   if (n >= DAILY_SEND_CAP) return fail(`You've sent ${DAILY_SEND_CAP} in the last 24 hours. That's the cap to protect your inbox's reputation; the rest can go tomorrow.`, 429);
   const [dup] = await sql`SELECT 1 FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND notes LIKE ${`Email sent: ${b.step}%`} LIMIT 1`;
   if (dup) return fail("This email already went to them.", 409);
+  const [heard] = await sql`SELECT notes FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND (notes LIKE 'Email reply:%' OR notes LIKE 'Email bounced:%') LIMIT 1` as { notes: string }[];
+  if (heard) return fail(heard.notes.startsWith("Email bounced") ? "Their address bounced. Nothing was sent." : "They already replied. Answer them from Gmail instead.", 409);
 
   // Follow-ups reply in the same thread as the first email.
   const [prev] = await sql`SELECT notes FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND notes LIKE 'Email sent: %via Gmail%' ORDER BY occurred_at ASC LIMIT 1` as { notes: string }[];

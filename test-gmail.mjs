@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 process.env.CINDER_TOKEN_KEY = "x".repeat(40);
-const { encryptToken, decryptToken, buildRaw, complianceFooter, emailFromIdToken, isEmail } = await import("./lib/gmail.ts");
+const { encryptToken, decryptToken, buildRaw, complianceFooter, emailFromIdToken, isEmail, classifyThread, GMAIL_SCOPES } = await import("./lib/gmail.ts");
 let n = 0; const ok = f => { f(); n++; };
 const enc = encryptToken("1//refresh-token");
 ok(() => assert.notEqual(enc, "1//refresh-token"));
@@ -18,4 +18,13 @@ ok(() => assert.match(complianceFooter("Cinder Revenue Company", "PO Box 1, Denv
 const tok = "h." + Buffer.from(JSON.stringify({ email: "Sam@CinderRevenue.com" })).toString("base64url") + ".s";
 ok(() => assert.equal(emailFromIdToken(tok), "sam@cinderrevenue.com"));
 ok(() => assert.equal(isEmail("a@b.co"), true)); ok(() => assert.equal(isEmail("a@b"), false));
+
+const me = "sam.cinderrevenue@gmail.com";
+const mine = { from: "Sam at Cinder <sam.cinderrevenue@gmail.com>", internalDate: "1794000000000" };
+ok(() => assert.equal(classifyThread([mine], me), null, "only our own email: nothing yet"));
+ok(() => assert.equal(classifyThread([mine, { from: "Mail Delivery Subsystem <mailer-daemon@googlemail.com>", snippet: "Address not found" }], me).kind, "bounce"));
+ok(() => assert.equal(classifyThread([mine, { from: "Mark <mark@ridgeline.com>", snippet: "Sure, what times work?" }], me).kind, "reply"));
+ok(() => assert.equal(classifyThread([mine, { from: "Mark <mark@ridgeline.com>", snippet: "Please unsubscribe me" }], me).kind, "unsubscribe"));
+ok(() => assert.equal(classifyThread([mine, { from: "Mark <mark@ridgeline.com>", snippet: "ok", internalDate: "1794000000000" }], me).at, new Date(1794000000000).toISOString()));
+ok(() => assert.ok(GMAIL_SCOPES.some(s => s.endsWith("gmail.metadata")) && !GMAIL_SCOPES.some(s => s.endsWith("gmail.readonly")), "headers only, never bodies"));
 console.log(`Gmail checks passed (${n} assertions).`);

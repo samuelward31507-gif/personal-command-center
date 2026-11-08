@@ -104,3 +104,18 @@ body .dl-call .dl-dock textarea.u-field:focus { height: 76px; }
 body .dl-call .dl-dock textarea.u-field { max-width: 100%; min-width: 0; }
 body .dl-call .dl-gk { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); font-size: 14.5px; line-height: 1.5; color: var(--u-soft); }
 body .dl-call .dl-gk b { color: var(--u-text); font-weight: 600; }
+
+/* What to say: opener, dig, pitch by trade */
+body .dl-call .dl-open { display: grid; gap: 10px; margin-top: 18px; padding: 16px 18px; border-radius: 12px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); }
+body .dl-call .dl-open > div { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: baseline; }
+body .dl-call .dl-open span { font-size: 12.5px; color: var(--u-muted); }
+body .dl-call .dl-open p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--u-text); }
+body .dl-call .dl-open > div + div p { color: var(--u-soft); font-size: 14px; }
+@media (max-width: 700px) { body .dl-call .dl-open > div { grid-template-columns: 1fr; gap: 2px; } }
+
+/* Email after a no-answer */
+body .dl-call .dl-callmail, body .dl-callmail { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 12px; padding: 14px 16px; border-radius: 12px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); font-size: 14px; line-height: 1.5; color: var(--u-soft); }
+body .dl-callmail b { color: var(--u-text); font-weight: 600; }
+body .dl-callmail-txt { min-width: 0; flex: 1 1 320px; }
+body .dl-callmail-acts { display: flex; gap: 6px; }
+body .dl-callmail-err { display: block; margin-top: 4px; color: var(--u-bad, #f0877a); }

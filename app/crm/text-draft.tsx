@@ -6,7 +6,7 @@ import { voicemailText, infoText, callTimeText, smsHref, quietHoursWarning, TEMP
 
 export type TextContext = {
   template: TextTemplate | null; notice: string | null;
-  firstName: string; timeZone: string | null; callAt: string; demoLink: string; phone: string; slots: string[];
+  firstName: string; timeZone: string | null; callAt: string; demoLink: string; phone: string; slots: string[]; niche?: string;
   tasks?: { title: string; due: string }[]; closed?: boolean;
 };
 
@@ -25,8 +25,8 @@ export default function TextDraft({ ctx, contactId, who, onDone, primaryClass = 
   const [slot1, setSlot1] = useState(ctx.slots[0] ?? "2pm");
   const [slot2, setSlot2] = useState(ctx.slots[1] ?? "4pm");
   const generated = useMemo(() => {
-    if (ctx.template === "T-VM") return voicemailText({ firstName: ctx.firstName, callTime: callTimeText(new Date(ctx.callAt), ctx.timeZone), demoLink: ctx.demoLink });
-    if (ctx.template === "T-INFO") return infoText({ firstName: ctx.firstName, demoLink: ctx.demoLink, slot1, slot2 });
+    if (ctx.template === "T-VM") return voicemailText({ firstName: ctx.firstName, callTime: callTimeText(new Date(ctx.callAt), ctx.timeZone), demoLink: ctx.demoLink, niche: ctx.niche });
+    if (ctx.template === "T-INFO") return infoText({ firstName: ctx.firstName, demoLink: ctx.demoLink, slot1, slot2, niche: ctx.niche });
     return "";
   }, [ctx, slot1, slot2]);
   const [body, setBody] = useState(generated);

@@ -68,3 +68,7 @@ export const WEEKLY_MEETING_TARGET = 5;
 export function pctOf(value: number, target: number): number {
   return target > 0 ? Math.max(0, Math.min(100, Math.round((value / target) * 100))) : 0;
 }
+
+/** Daily outreach targets beside the dial target: a warmed-up inbox and LinkedIn's ~100 requests a week. */
+export const DAILY_EMAIL_TARGET = 25;
+export const DAILY_LINKEDIN_TARGET = 20;

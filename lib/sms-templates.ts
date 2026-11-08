@@ -8,17 +8,18 @@ export const DEFAULT_SLOTS = ["2pm", "4pm"] as const;
 
 // ---- merge fields ----
 
-/** fence / pool / "" from the company name, notes or an outreach niche. */
-export function nicheFor(...hints: (string | null | undefined)[]): "fence" | "pool" | "" {
+/** fence / pool / detailing / "" from the company name, notes or an outreach niche. */
+export function nicheFor(...hints: (string | null | undefined)[]): "fence" | "pool" | "detailing" | "" {
   const s = hints.filter(Boolean).join(" ");
   if (/\bfenc(e|es|ing)\b/i.test(s)) return "fence";
+  if (/\bdetail(s|ing|ers?)?\b|\bceramic coating|\bppf\b/i.test(s)) return "detailing";
   if (/\bpools?\b|\bspas?\b|\bswim/i.test(s)) return "pool";
   return "";
 }
 export function demoLinkFor(niche: string): string {
   // /fence-demo and /pool-demo were retired (they redirect to /demo). Fence gets the fence cut of the video.
   if (niche === "fence") return "https://cinderrevenue.com/watch?story=fence";
-  if (niche === "pool") return "https://cinderrevenue.com/demo";
+  if (niche === "pool" || niche === "detailing") return "https://cinderrevenue.com/demo";
   return "https://cinderrevenue.com";
 }
 
@@ -58,12 +59,14 @@ export function localClock(at: Date, tz: string | null): string {
 
 // ---- templates ----
 
-export function voicemailText(i: { firstName?: string; callTime: string; demoLink: string }): string {
+export function voicemailText(i: { firstName?: string; callTime: string; demoLink: string; niche?: string }): string {
   const name = (i.firstName ?? "").trim() || "there";
+  if (i.niche === "detailing") return `Hey ${name}, Sam with Cinder. Called at ${i.callTime} and got voicemail, probably mid-detail. Quick one: how many past customers haven't rebooked in 3+ months? We text them when they're due and book them back in. Here's how: ${i.demoLink}\n\nWorth a quick call tomorrow?`;
   return `Hey ${name}, Sam with Cinder. Called your shop at ${i.callTime} and got voicemail. Fewer than 3% of callers leave one, so most just call the next company. Here's what they'd get instead: ${i.demoLink}\n\nWorth a quick call tomorrow?`;
 }
-export function infoText(i: { firstName?: string; demoLink: string; slot1?: string; slot2?: string }): string {
+export function infoText(i: { firstName?: string; demoLink: string; slot1?: string; slot2?: string; niche?: string }): string {
   const name = (i.firstName ?? "").trim();
+  if (i.niche === "detailing") return `Hey ${name}, Sam with Cinder. Good talking with you. Here's how it works: ${i.demoLink}\n\nWe text your past customers when they're due for their next detail and book them back in, text back anyone who calls while you're mid-job, and ask happy customers for reviews. You don't touch the tech. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow?`;
   return `Hey ${name}, Sam with Cinder. Good talking with you. Here's the 25-second demo of what your customers would get when you can't pick up: ${i.demoLink}\n\nWe build it, run it and book the estimates on your calendar. You don't touch the tech. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow?`;
 }
 
