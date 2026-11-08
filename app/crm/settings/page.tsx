@@ -152,17 +152,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <main style={{ maxWidth: 1040, margin: "0 auto", padding: "28px 22px 60px", color:"#e6e6e6" }}>
+    <main className="set-page" style={{ maxWidth: 1040, margin: "0 auto", color: "var(--u-text)" }}>
 
       <section style={{ marginTop: 20, maxWidth: 720 }}>
-        <h1 style={{ fontSize: 38, letterSpacing: -1.5, margin: "8px 0" }}>Settings</h1>
+        <h1 className="set-title">Settings</h1>
         <p style={{ color:"#ababab", lineHeight: 1.65, fontSize: 14 }}>Your business details, prices and goal, plus the jobs Cinder runs for you.</p>
       </section>
 
       {error && <p role="alert" style={{ marginTop: 20, padding: 12, borderRadius: 8, background:"#2a1414", color:"#fca5a5", fontSize: 13 }}>{error}</p>}
 
-      <nav className="set-tabs" role="tablist" aria-label="Settings sections">
-        {TABS.map(t => <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} style={{ background: tab === t.key ? "#2c2c2c" : "transparent" }} onClick={() => pick(t.key)}>{t.label}</button>)}
+      <nav className="set-tabs" aria-label="Settings sections">
+        {TABS.map(t => <button key={t.key} type="button" aria-pressed={tab === t.key} aria-selected={tab === t.key} onClick={() => pick(t.key)}>{t.label}</button>)}
       </nav>
 
       {tab === "business" && <><OfferCard /><WorkspaceCard /></>}

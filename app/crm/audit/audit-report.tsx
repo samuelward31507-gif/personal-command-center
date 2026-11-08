@@ -10,19 +10,19 @@ export type AuditView = {
 };
 
 const C = {
-  text: "#f4f4f5", body: "#d4d4d8", muted: "#9a9aa4", faint: "#6f6f78", line: "#26262b",
-  card: "#1a1a1a", inset: "#141414", accent: "#c4c4c4",
+  text: "var(--u-text)", body: "#d4d4d8", muted: "#9a9aa4", faint: "#6f6f78", line: "#26262b",
+  card: "var(--u-sheet)", inset: "var(--u-sheet)", accent: "#c4c4c4",
 };
 
 const FIT: Record<string, { label: string; fg: string; bg: string; border: string }> = {
   fit: { label: "Fit", fg: "#e4e4e4", bg: "#10241a", border: "#1f4d33" },
-  conditional_fit: { label: "Conditional fit", fg: "#fcd34d", bg: "#2a2410", border: "#5a4a1a" },
+  conditional_fit: { label: "Conditional fit", fg: "var(--u-ember-ink)", bg: "#2a2410", border: "#5a4a1a" },
   no_fit: { label: "No fit", fg: "#fca5a5", bg: "#2a1414", border: "#5c2a2a" },
-  needs_clarification: { label: "Needs clarification", fg: "#c4b5fd", bg: "#1c1830", border: "#3b3366" },
+  needs_clarification: { label: "Needs clarification", fg: "var(--u-soft)", bg: "#1c1830", border: "#3b3366" },
 };
 
 const TAGS: Record<string, string> = {
-  "VERIFIED FACT": "#e4e4e4", VERIFIED: "#e4e4e4", OBSERVATION: "#93c5fd", HYPOTHESIS: "#fcd34d", UNKNOWN: "#a1a1aa",
+  "VERIFIED FACT": "#e4e4e4", VERIFIED: "#e4e4e4", OBSERVATION: "var(--u-soft)", HYPOTHESIS: "var(--u-ember-ink)", UNKNOWN: "#a1a1aa",
 };
 
 function host(url: string) {
@@ -120,8 +120,8 @@ export function AuditReport({ audit }: { audit: AuditView }) {
         {fit && <span style={{ color: fit.fg, background: fit.bg, border: `1px solid ${fit.border}`, borderRadius: 999, padding: "4px 11px", fontWeight: 700, fontSize: 12 }}>{fit.label}</span>}
         <span style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px" }}>{audit.confidence} confidence</span>
         {audit.officialWebsite
-          ? <a href={audit.officialWebsite} target="_blank" rel="noreferrer" style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px", color: C.body, textDecoration: "none" }}>{host(audit.officialWebsite)} <span style={{ color: audit.websiteStatus === "verified" ? "#e4e4e4" : "#fcd34d" }}>{audit.websiteStatus === "verified" ? "✓ verified" : `· ${(audit.websiteStatus ?? "unverified").replace("_", " ")}`}</span></a>
-          : <span style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px", color: "#fcd34d" }}>No website found</span>}
+          ? <a href={audit.officialWebsite} target="_blank" rel="noreferrer" style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px", color: C.body, textDecoration: "none" }}>{host(audit.officialWebsite)} <span style={{ color: audit.websiteStatus === "verified" ? "#e4e4e4" : "var(--u-ember-ink)" }}>{audit.websiteStatus === "verified" ? "✓ verified" : `· ${(audit.websiteStatus ?? "unverified").replace("_", " ")}`}</span></a>
+          : <span style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px", color: "var(--u-ember-ink)" }}>No website found</span>}
       </div>
       {verdict && <p style={{ margin: 0, padding: "12px 14px", background: C.inset, borderLeft: `3px solid ${fit?.fg ?? C.accent}`, borderRadius: 8, fontSize: 14.5, lineHeight: 1.6, color: C.text }}>{inline(verdict.replace(/\*\*/g, ""), "verdict")}</p>}
       {audit.incomplete && <p style={{ margin: 0, fontSize: 12.5, color: "#fca5a5" }}>Research stopped early. Treat this report as partial.</p>}
@@ -140,7 +140,7 @@ export function AuditReport({ audit }: { audit: AuditView }) {
       {sections.opportunities && <Card title="Top opportunities"><Blocks text={sections.opportunities} /></Card>}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 14 }}>
         {sections.flags && <Card title="Red flags" tone="#fca5a5"><Blocks text={sections.flags} /></Card>}
-        {sections.upsells && <Card title="Future upsells" tag="LATER — NOT THE FIRST PITCH" tone="#93c5fd"><Blocks text={sections.upsells} /></Card>}
+        {sections.upsells && <Card title="Future upsells" tag="LATER — NOT THE FIRST PITCH" tone="var(--u-soft)"><Blocks text={sections.upsells} /></Card>}
       </div>
     </> : <Card title="Report"><Blocks text={audit.content.replace(/^#+\s*/gm, "")} /></Card>}
 
