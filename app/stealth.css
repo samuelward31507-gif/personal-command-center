@@ -7,13 +7,13 @@
    ========================================================================== */
 
 :root {
-  --st-bg: #141414;
-  --st-bg-2: #1a1a1a;
-  --st-surface: #1a1a1a;
-  --st-raised: #303030;
-  --st-hover: #303030;
-  --st-line: #2e2e2e;
-  --st-line-2: #3a3a3a;
+  --st-bg: var(--mc-bg);
+  --st-bg-2: var(--mc-panel);
+  --st-surface: var(--mc-panel);
+  --st-raised: var(--mc-hover);
+  --st-hover: var(--mc-hover);
+  --st-line: var(--mc-hover);
+  --st-line-2: var(--mc-line-2);
   --st-text: #efefef;
   --st-soft: #ababab;
   --st-muted: #9e9e9e;
@@ -44,7 +44,7 @@ html body .breadcrumbs a, html body .breadcrumbs span { color: var(--st-muted) !
 html body .breadcrumbs strong { color: var(--st-text) !important; font-weight: 550 !important; }
 html body .breadcrumb-slash { color: #555555 !important; }
 html body .topbar-status { font-size: 12.5px !important; color: var(--st-muted) !important; }
-html body .status-ring { border-color: #3b3b3b !important; }
+html body .status-ring { border-color: var(--mc-line-2) !important; }
 html body .topbar .quiet-button, html body .topbar a.quiet-button {
   height: 30px; display: inline-flex; align-items: center; padding: 0 12px !important; border-radius: 8px !important;
   background: transparent !important; border: 1px solid var(--st-line-2) !important; color: var(--st-soft) !important; font-size: 13px !important; font-weight: 500;
@@ -70,7 +70,7 @@ html body .eyebrow, html body .crm-eyebrow, html body .projects-eyebrow, html bo
 html body [class$="-eyebrow"]:not(.calendar-eyebrow) {
   font-size: 11px !important; font-weight: 600 !important; color: var(--st-faint) !important;
 }
-html body .eyebrow-line { background: #3a3a3a !important; }
+html body .eyebrow-line { background: var(--mc-line-2) !important; }
 
 /* ---------- Surfaces ---------- */
 html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.overview-card, .surface-panel, .route-panel, .schedule-panel, .notes-panel, .attention-banner,
@@ -85,7 +85,7 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) [style*="border: 1p
 
 /* Popovers, menus, dropdowns, dialogs sit one step above */
 html body :is([role="dialog"], .modal, .crm-modal, .calendar-modal, [class*="popover"], [class*="Popover"], [class*="dropdown"], [class*="Dropdown"], [class*="menu"]:not(.cx-side *), [class*="Menu"]) {
-  background-color: #1a1a1a !important; border-color: var(--st-line-2) !important; color: var(--st-text) !important;
+  background-color: var(--mc-panel) !important; border-color: var(--st-line-2) !important; color: var(--st-text) !important;
 }
 html body :is(.crm-modal, .calendar-modal, [role="dialog"]) { border-radius: 16px !important; box-shadow: 0 30px 80px -20px rgba(0,0,0,.8) !important; }
 html body :is(.crm-modal-backdrop, .calendar-backdrop) { background: rgba(0, 0, 0, .66) !important; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -101,11 +101,11 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) a.crm-btn, html bod
   transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
 html body main:not(.calendar-page):not(:has(.calendar-page)) button:not([data-variant="primary"]):not(.cx-side *):not([class*="ask-"]):not(.check-button):not([style*="background"]):hover:not(:disabled) {
-  background-color: #2a2a2a !important; border-color: #555555 !important; color: #fafafa !important;
+  background-color: var(--mc-hover) !important; border-color: #555555 !important; color: #fafafa !important;
 }
 /* Primary actions: light pill on dark, like Claude/ChatGPT */
 html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]) {
-  background-color: #efefef !important; border-color: #efefef !important; color: #1a1a1a !important; font-weight: 600 !important;
+  background-color: #efefef !important; border-color: #efefef !important; color: var(--mc-panel) !important; font-weight: 600 !important;
 }
 html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]):hover:not(:disabled) {
   background-color: #ffffff !important; border-color: #ffffff !important; color: #000 !important;
@@ -136,7 +136,7 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) th {
   color: var(--st-muted) !important; background: transparent !important; border-color: var(--st-line) !important;
 }
 html body main:not(.calendar-page):not(:has(.calendar-page)) td { border-color: var(--st-line) !important; color: #d6d6d6; }
-html body main:not(.calendar-page):not(:has(.calendar-page)) tr:hover td { background: #141414; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) tr:hover td { background: var(--mc-bg); }
 html body main:not(.calendar-page):not(:has(.calendar-page)) hr { border-color: var(--st-line) !important; }
 
 /* ---------- Links ---------- */
@@ -144,10 +144,10 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) a:not([class]):not(
 html body main:not(.calendar-page):not(:has(.calendar-page)) a:not([class]):hover { text-decoration-color: var(--st-accent); }
 
 /* ---------- Scrollbars ---------- */
-html { scrollbar-color: #3a3a3a transparent; }
+html { scrollbar-color: var(--mc-line-2) transparent; }
 html body ::-webkit-scrollbar { width: 10px; height: 10px; }
-html body ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; border: 3px solid var(--st-bg); }
-html body ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+html body ::-webkit-scrollbar-thumb { background: var(--mc-raised); border-radius: 10px; border: 3px solid var(--st-bg); }
+html body ::-webkit-scrollbar-thumb:hover { background: var(--mc-line-2); }
 html body ::-webkit-scrollbar-track { background: transparent; }
 
 /* ---------- Focus ring (keyboard) ---------- */
@@ -184,10 +184,10 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.schedule-categ
 html body main [role="alert"], html body main [class*="-err"], html body main .error-text, html body main .crm-text-danger { color: #f28b82 !important; }
 html body main .crm-overdue, html body main .status-overdue, html body main .status-blocked { color: #f28b82 !important; }
 html body main :is(.crm-status, .fin-status, [class*="status-"]):not(.status-dot):not(.status-menu):not(.status-ring):not([class*="select"]) {
-  background: #222 !important; border: 1px solid #333 !important; color: #c9c9c9 !important; border-radius: 999px !important;
+  background: var(--mc-raised) !important; border: 1px solid var(--mc-line-2) !important; color: #c9c9c9 !important; border-radius: 999px !important;
 }
 html body main :is(.crm-status-lead, .status-onboarding, .status-expected, .status-review, .status-interested) { color: #e9a383 !important; border-color: rgba(217,119,87,.35) !important; background: rgba(217,119,87,.08) !important; }
-html body main :is(.crm-status-customer, .status-active, .status-paid, .status-completed) { color: #e4e4e4 !important; border-color: #3d3d3d !important; background: #262626 !important; }
+html body main :is(.crm-status-customer, .status-active, .status-paid, .status-completed) { color: #e4e4e4 !important; border-color: #3d3d3d !important; background: var(--mc-raised) !important; }
 html body main :is(.status-overdue, .status-blocked) { color: #f28b82 !important; border-color: rgba(242,139,130,.35) !important; background: rgba(242,139,130,.08) !important; }
 
 /* AI-generated content is always labelled as such. */

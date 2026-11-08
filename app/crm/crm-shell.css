@@ -1,8 +1,8 @@
 .crm-app-shell{min-height:100vh;width:100%;background:var(--background)}.crm-app-shell .sidebar{position:sticky;top:0;height:100vh}.crm-brand{text-decoration:none;color:inherit}.crm-brand .cinder-mark{width:24px;height:24px;display:grid;place-items:center;flex:0 0 auto}.crm-brand .cinder-mark svg{width:26px;height:26px}.crm-brand .cinder-wordmark{font-size:19px;font-weight:720;letter-spacing:-1px}.crm-shell-main{flex:1;min-width:0}.crm-shell-main>.topbar{flex:0 0 58px}.crm-shell-main .crm-page{width:100%;max-width:1450px}.crm-back-home{text-decoration:none}.crm-shell-main .crm-topline{flex-wrap:wrap}@media(max-width:760px){.crm-app-shell .sidebar{position:sticky;top:0;height:100vh}.crm-app-shell .topbar{padding:0 12px}.crm-app-shell .topbar-actions{gap:8px}.crm-app-shell .topbar-status{display:none}.crm-shell-main .crm-page{padding:22px 12px 30px}}
 /* Cal.ai-inspired neutral dark shell */
-:root{--background:#141414;--foreground:#f3f3f3;--muted:#ababab;--line:#3a3a3a;--panel:#262626;--accent:#f0f0f0}
+:root{--background:var(--mc-bg);--foreground:#f3f3f3;--muted:#ababab;--line:var(--mc-line-2);--panel:var(--mc-raised);--accent:#f0f0f0}
 .crm-app-shell,.crm-shell-main,.main-panel{background:#111!important;color:#f3f3f3}
-.crm-app-shell .sidebar{width:216px;flex-basis:216px;padding:18px 12px 14px;background:#111!important;border-right:1px solid #2e2e2e!important}
+.crm-app-shell .sidebar{width:216px;flex-basis:216px;padding:18px 12px 14px;background:#111!important;border-right:1px solid var(--mc-hover)!important}
 .crm-brand{height:34px;margin-bottom:28px;gap:9px;color:#f5f5f5}
 .crm-brand .cinder-mark{width:23px;height:23px;color:#f5f5f5}
 .crm-brand .cinder-mark svg{width:23px;height:23px}
@@ -11,23 +11,23 @@
 .crm-app-shell .nav-section-label{padding:0 10px;margin:0 0 8px;color:#9a9a9a;font-size:10px;letter-spacing:1.1px;font-weight:650}
 .crm-app-shell .primary-nav{gap:2px}
 .crm-app-shell .nav-item{min-height:33px;padding:0 10px;gap:10px;border-radius:8px;color:#bdbdbd;font-size:12px;font-weight:450;background:transparent;transition:background .12s,color .12s}
-.crm-app-shell .nav-item:hover{background:#303030;color:#f5f5f5}
-.crm-app-shell .nav-item.active{background:#2a2a2a;color:#f5f5f5;font-weight:600}
+.crm-app-shell .nav-item:hover{background:var(--mc-hover);color:#f5f5f5}
+.crm-app-shell .nav-item.active{background:var(--mc-hover);color:#f5f5f5;font-weight:600}
 .crm-app-shell .glyph{width:15px;height:18px;display:grid;place-items:center;flex:0 0 15px;color:currentColor}
 .crm-app-shell .glyph-icon{width:16px;height:16px;display:block}
-.crm-app-shell .sidebar-divider{height:1px;background:#3a3a3a;margin:16px 5px 14px}
-.crm-app-shell .connection-card{background:#262626;border:1px solid #3a3a3a;border-radius:8px;margin-bottom:12px;padding:10px 9px}
+.crm-app-shell .sidebar-divider{height:1px;background:var(--mc-line-2);margin:16px 5px 14px}
+.crm-app-shell .connection-card{background:var(--mc-raised);border:1px solid var(--mc-line-2);border-radius:8px;margin-bottom:12px;padding:10px 9px}
 .crm-app-shell .connection-card strong{color:#d6d6d6;font-size:10px}
 .crm-app-shell .connection-card small{color:#888;font-size:9px}
 .crm-app-shell .connection-dot{width:6px;height:6px;background:#777}
-.crm-app-shell .profile-row{border-top:1px solid #3a3a3a;color:#aaa;padding-top:13px}
-.crm-app-shell .profile-avatar{background:#3a3a3a;color:#f0f0f0}
+.crm-app-shell .profile-row{border-top:1px solid var(--mc-line-2);color:#aaa;padding-top:13px}
+.crm-app-shell .profile-avatar{background:var(--mc-line-2);color:#f0f0f0}
 .crm-app-shell .profile-copy strong{color:#ddd;font-size:11px}
 .crm-app-shell .profile-copy small{color:#8b8b8b;font-size:10px}
-.crm-shell-main>.topbar{background:#111!important;border-bottom:1px solid #2e2e2e!important;color:#aaa;padding:0 28px}
+.crm-shell-main>.topbar{background:#111!important;border-bottom:1px solid var(--mc-hover)!important;color:#aaa;padding:0 28px}
 .crm-shell-main .breadcrumbs strong{color:#eee;font-weight:550}
 .crm-shell-main .topbar-status{color:#999}
-.crm-shell-main .quiet-button{background:#262626;border:1px solid #3a3a3a;color:#ddd}
+.crm-shell-main .quiet-button{background:var(--mc-raised);border:1px solid var(--mc-line-2);color:#ddd}
 .crm-shell-main .crm-page,.crm-shell-main .page-content{color:#eee}
 @media(max-width:760px){.crm-app-shell .sidebar{width:216px;flex-basis:216px;padding:16px 10px 12px}.crm-shell-main>.topbar{padding:0 12px}}
 
@@ -39,7 +39,7 @@
   flex:0 0 208px!important;
   padding:12px 9px 10px!important;
   background:#111!important;
-  border-right:1px solid #2e2e2e!important;
+  border-right:1px solid var(--mc-hover)!important;
   gap:0!important;
 }
 .brand, .app-shell .brand, .crm-brand {
@@ -90,7 +90,7 @@
 .sidebar-divider, .app-shell .sidebar-divider, .crm-app-shell .sidebar-divider {
   height:1px!important;min-height:1px!important;
   margin:10px 4px 9px!important;
-  background:#3a3a3a!important;border:0!important;
+  background:var(--mc-line-2)!important;border:0!important;
 }
 .sidebar-bottom, .app-shell .sidebar-bottom, .crm-app-shell .sidebar-bottom {
   margin-top:auto!important;padding-top:10px!important;
@@ -131,15 +131,15 @@
 
 /* ---- Polish pass (2026-10-28): light-theme leftovers found by scanning every page ---- */
 /* Workspace boards had bright white outlines */
-.task-workspace,.project-workspace,.outreach-board,.outreach-sequence{border-color:#3a3a3a!important}
-.task-search{border-color:#3a3a3a!important;background:#262626!important}
-.task-empty-mark,.project-empty-mark{background:#303030!important;border-color:#333!important;color:#ddd!important}
+.task-workspace,.project-workspace,.outreach-board,.outreach-sequence{border-color:var(--mc-line-2)!important}
+.task-search{border-color:var(--mc-line-2)!important;background:var(--mc-raised)!important}
+.task-empty-mark,.project-empty-mark{background:var(--mc-hover)!important;border-color:var(--mc-line-2)!important;color:#ddd!important}
 /* Calendar legend footer was white */
-.calendar-legend{background:#1a1a1a!important;border-color:#3a3a3a!important;color:#ababab!important}
+.calendar-legend{background:var(--mc-panel)!important;border-color:var(--mc-line-2)!important;color:#ababab!important}
 /* Money tab counters were white boxes */
-.fin-tabs span{background:#2e2e2e!important;color:#ddd!important}
+.fin-tabs span{background:var(--mc-hover)!important;color:#ddd!important}
 /* Pages that use plain, unstyled buttons (Client success, AI team): give them the app's dark chip style */
-.crm-shell-main main button:not([class]):not([style]){background:#262626;border:1px solid #3a3a3a;color:#ddd;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer;line-height:1.3}
+.crm-shell-main main button:not([class]):not([style]){background:var(--mc-raised);border:1px solid var(--mc-line-2);color:#ddd;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer;line-height:1.3}
 .crm-shell-main main button:not([class]):not([style]):hover:not(:disabled){border-color:#4a4a4a;color:#fff}
 .crm-shell-main main button:not([class]):not([style]):disabled{opacity:.55;cursor:not-allowed}
-.fin-records,.fin-empty{border-color:#3a3a3a!important}
+.fin-records,.fin-empty{border-color:var(--mc-line-2)!important}

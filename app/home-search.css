@@ -2,10 +2,10 @@
    Class names deliberately avoid "card", "panel", "stat", "menu"… which global theme rules force to gray. */
 
 .ask-root {
-  --ask-bg: #141414;
-  --ask-composer: #1a1a1a;
-  --ask-composer-line: #2e2e2e;
-  --ask-bubble: #303030;
+  --ask-bg: var(--mc-bg);
+  --ask-composer: var(--mc-panel);
+  --ask-composer-line: var(--mc-hover);
+  --ask-bubble: var(--mc-hover);
   --ask-text: #ececec;
   --ask-soft: #b4b4b4;
   --ask-faint: #9e9e9e;
@@ -25,11 +25,11 @@
 .ask-suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
 .ask-root .ask-pill {
   display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px;
-  border: 1px solid #222 !important; background: #0f0f0f !important; color: var(--ask-soft) !important;
+  border: 1px solid var(--mc-raised) !important; background: #0f0f0f !important; color: var(--ask-soft) !important;
   font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
 }
 .ask-root .ask-pill svg { color: #8a8a8a; }
-.ask-root .ask-pill:hover { background: #303030 !important; color: #f0f0f0 !important; border-color: #555555 !important; }
+.ask-root .ask-pill:hover { background: var(--mc-hover) !important; color: #f0f0f0 !important; border-color: #555555 !important; }
 .ask-root .ask-pill:hover svg { color: var(--ask-accent); }
 
 /* ---------- Composer ---------- */
@@ -54,7 +54,7 @@
   border: 1px solid transparent !important; background: transparent !important; color: #9a9a9a !important;
   font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
 }
-.ask-root .ask-tool:hover { background: #2e2e2e !important; color: #e8e8e8 !important; }
+.ask-root .ask-tool:hover { background: var(--mc-hover) !important; color: #e8e8e8 !important; }
 .ask-root .ask-tool.is-on { color: #c4c4c4 !important; background: rgba(220,220,220,.10) !important; border-color: rgba(220,220,220,.22) !important; }
 .ask-root .ask-send {
   flex: 0 0 34px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; padding: 0;
@@ -62,7 +62,7 @@
 }
 .ask-root .ask-send:hover:not(:disabled) { background: #fff !important; }
 .ask-root .ask-send:active:not(:disabled) { transform: scale(.94); }
-.ask-root .ask-send:disabled { background: #333 !important; color: #6e6e6e !important; cursor: default; }
+.ask-root .ask-send:disabled { background: var(--mc-line-2) !important; color: #6e6e6e !important; cursor: default; }
 .ask-root .ask-send.is-stop { background: #ececec !important; color: #111 !important; }
 .ask-root .ask-fineprint { margin: 8px 0 0; text-align: center; font-size: 11.5px; color: #6a6a6a !important; }
 
@@ -107,7 +107,7 @@
 .ask-root .ask-md p:last-child { margin-bottom: 0; }
 .ask-root .ask-md strong { color: #fff !important; font-weight: 640; }
 .ask-root .ask-md em { color: #d6d6d6; }
-.ask-root .ask-md code { font: 13.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: #2e2e2e; border-radius: 6px; padding: 2px 6px; color: #e8e8e8; }
+.ask-root .ask-md code { font: 13.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--mc-hover); border-radius: 6px; padding: 2px 6px; color: #e8e8e8; }
 .ask-root .ask-md a { color: #ececec; text-decoration: underline; text-decoration-color: #5a5a5a; text-underline-offset: 3px; }
 .ask-root .ask-md a:hover { text-decoration-color: var(--ask-accent); }
 .ask-root .ask-md .ask-h { margin: 22px 0 8px; font-size: 16.5px; font-weight: 650; letter-spacing: -0.01em; color: #f4f4f4 !important; text-transform: none; }
@@ -126,17 +126,17 @@
 .ask-root .ask-md a.ask-chip-deal:hover { background: #22322a; }
 .ask-root .ask-md a.ask-chip-audit { background: #1b2029; color: #cbdcf5; }
 .ask-root .ask-md a.ask-chip-audit:hover { background: #222b38; }
-.ask-root .ask-table-wrap { overflow-x: auto; margin: 6px 0 16px; border: 1px solid #3a3a3a; border-radius: 12px; }
+.ask-root .ask-table-wrap { overflow-x: auto; margin: 6px 0 16px; border: 1px solid var(--mc-line-2); border-radius: 12px; }
 .ask-root .ask-table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.5; }
-.ask-root .ask-table th { text-align: left; font-size: 13px; font-weight: 600; color: #d8d8d8; background: #262626; padding: 10px 14px; border-bottom: 1px solid #3a3a3a; white-space: nowrap; }
-.ask-root .ask-table td { padding: 10px 14px; border-bottom: 1px solid #222; color: #dcdcdc; vertical-align: top; }
+.ask-root .ask-table th { text-align: left; font-size: 13px; font-weight: 600; color: #d8d8d8; background: var(--mc-raised); padding: 10px 14px; border-bottom: 1px solid var(--mc-line-2); white-space: nowrap; }
+.ask-root .ask-table td { padding: 10px 14px; border-bottom: 1px solid var(--mc-raised); color: #dcdcdc; vertical-align: top; }
 .ask-root .ask-table tr:last-child td { border-bottom: 0; }
 
 /* Proposed changes */
 .ask-actions { display: grid; gap: 10px; margin-top: 18px; }
 .ask-root .ask-action {
   display: flex; align-items: center; gap: 14px; padding: 12px 12px 12px 14px; border-radius: 16px;
-  border: 1px solid #3a3a3a; background: #262626;
+  border: 1px solid var(--mc-line-2); background: var(--mc-raised);
 }
 .ask-root .ask-action.is-done { border-color: #23402f; background: #121a15; }
 .ask-action-icon { flex: 0 0 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: #241e19; color: var(--ask-accent); font-size: 15px; font-weight: 700; }
@@ -145,25 +145,25 @@
 .ask-root .ask-action-main strong { font-size: 14px; font-weight: 600; color: #f0f0f0 !important; }
 .ask-root .ask-action-main small { font-size: 12.5px; color: #9a9a9a !important; }
 .ask-action-btns { display: flex; gap: 6px; flex: 0 0 auto; }
-.ask-root .ask-btn { display: inline-flex; align-items: center; height: 32px; border-radius: 999px; padding: 0 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; border: 1px solid #333 !important; background: #2a2a2a !important; color: #e0e0e0 !important; }
+.ask-root .ask-btn { display: inline-flex; align-items: center; height: 32px; border-radius: 999px; padding: 0 14px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; border: 1px solid var(--mc-line-2) !important; background: var(--mc-hover) !important; color: #e0e0e0 !important; }
 .ask-root .ask-btn-primary { background: #ececec !important; border-color: #ececec !important; color: #111 !important; }
 .ask-root .ask-btn-primary:hover { background: #fff !important; }
 .ask-root .ask-btn-ghost { background: transparent !important; border-color: transparent !important; color: #9a9a9a !important; }
-.ask-root .ask-btn-ghost:hover { color: #ececec !important; background: #222 !important; }
+.ask-root .ask-btn-ghost:hover { color: #ececec !important; background: var(--mc-raised) !important; }
 .ask-root .ask-btn:disabled { opacity: .6; cursor: default; }
 
 /* Sources + message tools */
 .ask-sources { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .ask-root .ask-sources a {
   display: inline-flex; align-items: center; gap: 7px; max-width: 280px; height: 30px; padding: 0 12px; border-radius: 999px;
-  background: #303030; border: 1px solid #3a3a3a; color: #bdbdbd; font-size: 12.5px; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: var(--mc-hover); border: 1px solid var(--mc-line-2); color: #bdbdbd; font-size: 12.5px; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .ask-root .ask-sources a span { color: #e8e8e8; font-weight: 600; }
 .ask-root .ask-sources a:hover { border-color: #555555; color: #e8e8e8; }
 .ask-tools-row { display: flex; gap: 2px; margin: 10px 0 0 -7px; opacity: .75; transition: opacity .15s; }
 .ask-exchange:hover .ask-tools-row, .ask-exchange:last-child .ask-tools-row { opacity: 1; }
 .ask-root .ask-icon-btn { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; padding: 0; border: 0 !important; background: transparent !important; color: #8a8a8a !important; cursor: pointer; }
-.ask-root .ask-icon-btn:hover:not(:disabled) { background: #222 !important; color: #ececec !important; }
+.ask-root .ask-icon-btn:hover:not(:disabled) { background: var(--mc-raised) !important; color: #ececec !important; }
 .ask-root .ask-icon-btn:disabled { opacity: .4; cursor: default; }
 .ask-bottom { height: 1px; }
 
@@ -179,18 +179,18 @@
 }
 
 .ask-root .ask-slow { margin-top: 8px; font-size: 12.5px; color: #6f6f6f !important; }
-.ask-root .ask-composer { background: linear-gradient(180deg, #262626, #1a1a1a) !important; }
+.ask-root .ask-composer { background: linear-gradient(180deg, var(--mc-raised), var(--mc-panel)) !important; }
 .ask-hello-mark { filter: none; }
 
 /* ---------- Stealth: no copper on the Ask page ---------- */
 .ask-root { --ask-accent: #cfcfcf; }
 .ask-hello-mark { fill: #d6d6d6; filter: none !important; }
 .ask-avatar svg { fill: #cfcfcf; }
-.ask-action-icon { background: #303030 !important; color: #d6d6d6 !important; }
+.ask-action-icon { background: var(--mc-hover) !important; color: #d6d6d6 !important; }
 .ask-root .ask-pill:hover svg { color: #ececec; }
 /* Web search: an icon-only toggle. Off = dim, on = bright. Label is for screen readers. */
 .ask-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .ask-root .ask-tool:has(.ask-sr) { width: 32px; padding: 0 !important; justify-content: center; position: relative; }
-.ask-root .ask-tool.is-on { color: #f2f2f2 !important; background: #222 !important; border-color: #3a3a3a !important; }
+.ask-root .ask-tool.is-on { color: #f2f2f2 !important; background: var(--mc-raised) !important; border-color: var(--mc-line-2) !important; }
 .ask-root .ask-tool:not(.is-on):has(.ask-sr) { color: #6b6b6b !important; }
-.ask-root .ask-composer:focus-within { border-color: #555555 !important; box-shadow: 0 0 0 1px #3a3a3a, 0 20px 50px -20px rgba(0,0,0,.8) !important; }
+.ask-root .ask-composer:focus-within { border-color: #555555 !important; box-shadow: 0 0 0 1px var(--mc-line-2), 0 20px 50px -20px rgba(0,0,0,.8) !important; }

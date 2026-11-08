@@ -5,16 +5,16 @@
    ========================================================================== */
 
 :root {
-  --d-bg: #141414;          /* canvas (Claude is #191919) */
-  --d-side: #1a1a1a;        /* sidebar */
-  --d-raise: #262626;       /* composer */
-  --d-card: #1a1a1a;        /* cards and tiles */
+  --d-bg: var(--mc-bg);          /* canvas (Claude is #191919) */
+  --d-side: var(--mc-panel);        /* sidebar */
+  --d-raise: var(--mc-raised);       /* composer */
+  --d-card: var(--mc-panel);        /* cards and tiles */
   --d-thumb: #212121;       /* previews inside cards */
-  --d-hover: #1f1f1f;
-  --d-active: #262626;
-  --d-selected: #2c2c2c;
-  --d-line: #232323;
-  --d-line-2: #2e2e2e;
+  --d-hover: var(--mc-raised);
+  --d-active: var(--mc-raised);
+  --d-selected: var(--mc-hover);
+  --d-line: var(--mc-raised);
+  --d-line-2: var(--mc-hover);
   --d-text: #ededed;
   --d-soft: #c2c2c2;
   --d-muted: #969696;
@@ -41,13 +41,13 @@ html body .cx-item .cx-icon { color: var(--d-muted); }
 html body .cx-item:hover { background: var(--d-hover) !important; color: var(--d-text) !important; }
 html body .cx-item.is-active { background: var(--d-selected) !important; color: var(--d-text) !important; font-weight: 500; }
 html body .cx-item.is-active .cx-icon, html body .cx-item:hover .cx-icon { color: var(--d-text); }
-html body .cx-kbd { border-color: #333 !important; color: var(--d-faint) !important; background: transparent !important; }
+html body .cx-kbd { border-color: var(--mc-line-2) !important; color: var(--d-faint) !important; background: transparent !important; }
 html body .cx-group { padding: 18px 10px 6px; font-size: 12.5px; color: var(--d-faint); }
-html body .cx-dot { width: 20px; height: 20px; flex: 0 0 20px; margin-left: -2px; border-radius: 6px; display: grid; place-items: center; font-size: 10.5px; font-weight: 600; background: #262626; color: var(--d-soft); }
+html body .cx-dot { width: 20px; height: 20px; flex: 0 0 20px; margin-left: -2px; border-radius: 6px; display: grid; place-items: center; font-size: 10.5px; font-weight: 600; background: var(--mc-raised); color: var(--d-soft); }
 html body .cx-foot { border-top: 0 !important; padding-top: 8px; gap: 2px; }
 html body .cx-profile { height: 48px; padding: 0 8px; gap: 10px; border-radius: 10px; }
 html body .cx-profile:hover { background: var(--d-hover); }
-html body .cx-avatar { width: 30px; height: 30px; flex-basis: 30px; font-size: 12.5px; background: #2e2e2e; color: var(--d-text); }
+html body .cx-avatar { width: 30px; height: 30px; flex-basis: 30px; font-size: 12.5px; background: var(--mc-hover); color: var(--d-text); }
 html body .cx-profile-copy strong { font-size: 14px; font-weight: 500; color: var(--d-text) !important; }
 html body .cx-profile-copy small { font-size: 12px; color: var(--d-faint) !important; }
 
@@ -70,16 +70,16 @@ html body .ask-root .ask-hello {
 html body .ask-hello-mark { width: 30px; height: 30px; flex-basis: 30px; filter: none; }
 html body .ask-root .ask-composer {
   min-height: 112px; padding: 17px 12px 11px 19px; gap: 10px; justify-content: space-between;
-  border-radius: 20px; background: var(--d-raise) !important; border: 1px solid #2c2c2c !important;
+  border-radius: 20px; background: var(--d-raise) !important; border: 1px solid var(--mc-hover) !important;
   box-shadow: 0 1px 0 rgba(255, 255, 255, .025) inset, 0 16px 40px -28px rgba(0, 0, 0, .9);
 }
-html body .ask-root .ask-composer:focus-within { border-color: #3a3a3a !important; }
+html body .ask-root .ask-composer:focus-within { border-color: var(--mc-line-2) !important; }
 html body .ask-root .ask-composer textarea { font-size: 16px !important; line-height: 1.5; color: var(--d-text) !important; }
 html body .ask-root .ask-composer textarea::placeholder { color: #808080 !important; }
 html body .ask-root .ask-tool { width: 32px; height: 32px; padding: 0; justify-content: center; border: 0 !important; border-radius: 9px; color: var(--d-soft) !important; background: transparent !important; }
-html body .ask-root .ask-tool:hover { background: #303030 !important; color: var(--d-text) !important; }
-html body .ask-root .ask-tool.is-on { color: var(--d-text) !important; background: #303030 !important; }
-html body .ask-root .ask-send { width: 32px; height: 32px; flex-basis: 32px; border-radius: 9px; background: var(--d-ember) !important; color: #1a1a1a !important; }
+html body .ask-root .ask-tool:hover { background: var(--mc-hover) !important; color: var(--d-text) !important; }
+html body .ask-root .ask-tool.is-on { color: var(--d-text) !important; background: var(--mc-hover) !important; }
+html body .ask-root .ask-send { width: 32px; height: 32px; flex-basis: 32px; border-radius: 9px; background: var(--d-ember) !important; color: var(--mc-panel) !important; }
 html body .ask-root .ask-send:hover:not(:disabled) { background: #e2876a !important; }
 html body .ask-root .ask-send:disabled { background: #343434 !important; color: #7a7a7a !important; }
 html body .ask-suggest { gap: 8px; margin-top: 14px; flex-wrap: nowrap; }
@@ -87,7 +87,7 @@ html body .ask-root .ask-pill {
   height: 34px; padding: 0 12px; border-radius: 9px; gap: 8px; font-size: 13.5px; font-weight: 400;
   background: transparent !important; border: 1px solid var(--d-line-2) !important; color: var(--d-soft) !important;
 }
-html body .ask-root .ask-pill:hover { background: var(--d-hover) !important; color: var(--d-text) !important; border-color: #3a3a3a !important; }
+html body .ask-root .ask-pill:hover { background: var(--d-hover) !important; color: var(--d-text) !important; border-color: var(--mc-line-2) !important; }
 @media (max-width: 720px) { html body .ask-suggest { flex-wrap: wrap; } }
 
 /* Pick up where you left off */
@@ -110,7 +110,7 @@ a.hn-card:hover { background: #1d1d1d; border-color: var(--d-line-2); transform:
 .hn-thumb .hn-money { display: flex; justify-content: space-between; gap: 8px; }
 .hn-thumb .hn-money em { font-style: normal; overflow: hidden; text-overflow: ellipsis; }
 .hn-thumb .hn-money i { font-style: normal; color: var(--d-soft); font-variant-numeric: tabular-nums; }
-.hn-thumb .hn-bar { display: block; height: 5px; border-radius: 5px; background: #2e2e2e; overflow: hidden; margin: 4px 0 2px; }
+.hn-thumb .hn-bar { display: block; height: 5px; border-radius: 5px; background: var(--mc-hover); overflow: hidden; margin: 4px 0 2px; }
 .hn-thumb .hn-bar i { display: block; height: 100%; border-radius: 5px; background: #bdbdbd; min-width: 4px; }
 .hn-t { font-size: 13.5px; font-weight: 500; margin: 11px 8px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hn-s { font-size: 12.5px; color: var(--d-faint); margin: 3px 8px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -119,18 +119,18 @@ a.hn-card:hover { background: #1d1d1d; border-color: var(--d-line-2); transform:
 
 /* ---------- Every page: cards, lines, inputs, notices in the same greys ---------- */
 html body .main-panel main :is([class*="card"], [class*="panel"], [class*="Panel"], article):not(.calendar-page *):not(.ask-root *) { background-color: var(--d-card) !important; border-color: var(--d-line) !important; }
-html body .main-panel main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(.ask-root *) { background: #1f1f1f !important; border-color: #303030 !important; color: var(--d-text) !important; }
+html body .main-panel main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(.ask-root *) { background: var(--mc-raised) !important; border-color: var(--mc-hover) !important; color: var(--d-text) !important; }
 html body .main-panel main :is(input, select, textarea):focus:not(.ask-root *) { border-color: #4a4a4a !important; box-shadow: none !important; }
 html body main h1 + p, html body .main-panel main h1 + p { margin-bottom: 26px !important; }
 html body .main-panel main .fin-metrics, html body main .fin-metrics { background: transparent !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; gap: 12px !important; }
 html body .fin-metrics article { background: var(--d-card) !important; border: 1px solid var(--d-line) !important; border-radius: 14px !important; }
 .hb-attn { background: var(--d-card) !important; border-color: var(--d-line) !important; }
 .hb-attn-row { color: var(--d-soft) !important; }
-.hb-attn-row a { border-bottom-color: #3a3a3a !important; }
-.ow-warn { background: #1f1f1f !important; color: var(--d-soft) !important; }
+.hb-attn-row a { border-bottom-color: var(--mc-line-2) !important; }
+.ow-warn { background: var(--mc-raised) !important; color: var(--d-soft) !important; }
 .ow-warn a { color: var(--d-text) !important; }
-.ow-note.ok, .ws-note.ok { background: #1f1f1f !important; color: var(--d-soft) !important; }
-.ow-btn.primary, .ws-save:not(:disabled) { background: var(--d-text) !important; color: #141414 !important; border-color: var(--d-text) !important; }
+.ow-note.ok, .ws-note.ok { background: var(--mc-raised) !important; color: var(--d-soft) !important; }
+.ow-btn.primary, .ws-save:not(:disabled) { background: var(--d-text) !important; color: var(--mc-bg) !important; border-color: var(--d-text) !important; }
 
 /* Brand: the wordmark in the sidebar, the ember beside the greeting */
 html body .cx-logo { height: 23px !important; width: auto; }

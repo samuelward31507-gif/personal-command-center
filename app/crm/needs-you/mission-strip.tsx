@@ -33,7 +33,7 @@ export default function MissionStrip() {
   const tiles = [
     { k: "Dials today", v: b ? `${b.today.calls}` : "—", of: `/ ${target}`, pct: b ? pctOf(b.today.calls, target) : 0, note: b ? (b.today.calls >= target ? "Target hit" : `${target - b.today.calls} to go`) : "", href: "/crm/call" },
     { k: "Conversations", v: b ? `${b.today.connects}` : "—", of: "today", pct: -1, note: b ? `${b.today.meetings} meeting${b.today.meetings === 1 ? "" : "s"} booked today` : "", href: "/crm/scoreboard" },
-    { k: "Meetings · 7 days", v: b ? `${b.week.meetings}` : "—", of: `/ ${WEEKLY_MEETING_TARGET}`, pct: b ? pctOf(b.week.meetings, WEEKLY_MEETING_TARGET) : 0, note: "The number that matters", href: "/crm/calendar" },
+    { k: "Meetings · 7d", v: b ? `${b.week.meetings}` : "—", of: `/ ${WEEKLY_MEETING_TARGET}`, pct: b ? pctOf(b.week.meetings, WEEKLY_MEETING_TARGET) : 0, note: "The number that matters", href: "/crm/calendar" },
     { k: "MRR", v: b ? money(b.recurring.mrr) : "—", of: `/ ${money(MOVE_OUT_MRR)}`, pct: b ? pctOf(b.recurring.mrr, MOVE_OUT_MRR) : 0, note: b ? (b.recurring.mrr >= MOVE_OUT_MRR ? "Move-out line cleared" : `${money(MOVE_OUT_MRR - b.recurring.mrr)} to move out · ${b.recurring.clients} client${b.recurring.clients === 1 ? "" : "s"}`) : "", href: "/crm/client-success" },
     { k: b?.targets.goalLabel ?? "Goal", v: b ? money(b.goal.collected) : "—", of: b ? `/ ${money(b.goal.goal)}` : "", pct: b ? b.goal.progressPct : 0, note: b ? `${b.goal.daysLeft} days left` : "", href: "/crm/finance" },
     { k: "Streak", v: b ? `${b.streak}` : "—", of: b?.streak === 1 ? "day" : "days", pct: -1, note: "Days in a row with dials", href: "/crm/scoreboard" },
