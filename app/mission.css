@@ -1,0 +1,116 @@
+/* ==========================================================================
+   MISSION CONTROL — Cinder's single visual layer. Loaded last; owns the look.
+   Near-black field, hairline structure, monospaced telemetry for numbers,
+   uppercase micro-labels, one electric-blue accent. Earlier stylesheets only
+   handle layout; anything visual that conflicts is decided here.
+   ========================================================================== */
+
+:root {
+  --mc-bg: #050506;
+  --mc-panel: #0b0b0d;
+  --mc-raised: #121215;
+  --mc-hover: #17171b;
+  --mc-line: #1c1c21;
+  --mc-line-2: #2a2a31;
+  --mc-text: #f4f4f5;
+  --mc-soft: #a6a6ad;
+  --mc-muted: #74747c;
+  --mc-faint: #4b4b52;
+  --mc-accent: #3d8bff;
+  --mc-accent-soft: rgba(61, 139, 255, .14);
+  --mc-good: #2fd27a;
+  --mc-warn: #f5b23d;
+  --mc-bad: #ff5f5f;
+  --mc-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  --mc-sans: var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Re-point the older token sets at the mission palette. */
+  --st-bg: var(--mc-bg); --st-bg-2: var(--mc-panel); --st-surface: var(--mc-panel);
+  --st-raised: var(--mc-raised); --st-hover: var(--mc-hover); --st-line: var(--mc-line); --st-line-2: var(--mc-line-2);
+  --st-text: var(--mc-text); --st-soft: var(--mc-soft); --st-muted: var(--mc-muted); --st-faint: var(--mc-faint);
+  --st-accent: var(--mc-accent); --st-radius: 10px;
+  --background: var(--mc-bg);
+}
+
+html, html body { background: var(--mc-bg) !important; color: var(--mc-text) !important; }
+html body ::selection { background: rgba(61, 139, 255, .35); color: #fff; }
+html body main, html body .page-content, html body .route-page, html body .crm-app-shell, html body .crm-shell-main { background-color: var(--mc-bg) !important; }
+
+/* ---------- Type ---------- */
+html body main:not(.calendar-page) h1 {
+  font-family: var(--mc-sans) !important; font-size: clamp(26px, 2.3vw, 32px) !important; font-weight: 600 !important;
+  letter-spacing: -0.035em !important; color: #fff !important;
+}
+html body main:not(.calendar-page):not(:has(.calendar-page)) h1 + p,
+html body .page-subtitle { color: var(--mc-muted) !important; font-size: 14px !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h2 { color: #fff !important; letter-spacing: -0.02em !important; }
+
+/* ---------- Telemetry stat cards (every "*-metrics" row: span label / strong value / small note) ---------- */
+html body main :is([class$="-metrics"], [class*="-metrics "], .fo-kpis, .cm-stats, .outreach-stats) {
+  gap: 10px !important; background: transparent !important; border: 0 !important; box-shadow: none !important;
+}
+html body main :is([class$="-metrics"], [class*="-metrics "], .fo-kpis, .cm-stats, .outreach-stats) > :is(article, div) {
+  position: relative; background: var(--mc-panel) !important; border: 1px solid var(--mc-line) !important;
+  border-radius: 10px !important; padding: 18px 18px 16px !important; box-shadow: none !important; overflow: hidden;
+}
+html body main :is([class$="-metrics"], [class*="-metrics "], .fo-kpis, .cm-stats, .outreach-stats) > :is(article, div)::before {
+  content: ""; position: absolute; left: 0; top: 0; width: 28px; height: 2px; background: var(--mc-accent); opacity: .9;
+}
+html body main :is([class$="-metrics"], [class*="-metrics "], .fo-kpis, .cm-stats, .outreach-stats) > :is(article, div) > span:first-child {
+  display: block; font-family: var(--mc-mono) !important; font-size: 10.5px !important; font-weight: 500 !important;
+  letter-spacing: .14em !important; text-transform: uppercase !important; color: var(--mc-muted) !important;
+}
+html body main :is([class$="-metrics"], [class*="-metrics "], .fo-kpis, .cm-stats, .outreach-stats) > :is(article, div) > strong {
+  display: block; margin: 10px 0 6px; font-family: var(--mc-mono) !important; font-size: 30px !important; font-weight: 500 !important;
+  letter-spacing: -0.03em !important; line-height: 1.05 !important; color: #fff !important; font-variant-numeric: tabular-nums;
+}
+html body main :is([class$="-metrics"], [class*="-metrics "], .fo-kpis, .cm-stats, .outreach-stats) > :is(article, div) > small {
+  font-size: 12px !important; color: var(--mc-faint) !important;
+}
+
+/* ---------- Panels and cards ---------- */
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.surface-panel, .schedule-panel, .notes-panel, .route-panel, .overview-card, .table-wrap, .crm-detail-section, .milestone-panel, [class$="-card"], [class*="-card "], [class$="-panel"], [class*="-panel "]):not(.main-panel):not(.cx-side *) {
+  background-color: var(--mc-panel) !important; border-color: var(--mc-line) !important; border-radius: 10px !important; box-shadow: none !important;
+}
+html body main:not(.calendar-page):not(:has(.calendar-page)) section:not([class*="calendar"]) { border-color: var(--mc-line) !important; }
+
+/* Micro-labels: eyebrows, table headers, field labels */
+html body [class$="-eyebrow"], html body [class*="-eyebrow "], html body main table th, html body main thead td {
+  font-family: var(--mc-mono) !important; font-size: 10.5px !important; font-weight: 500 !important;
+  letter-spacing: .14em !important; text-transform: uppercase !important; color: var(--mc-muted) !important;
+}
+html body main table td { border-color: var(--mc-line) !important; font-variant-numeric: tabular-nums; }
+html body main table tr:hover td { background: rgba(255,255,255,.015); }
+
+/* ---------- Buttons ---------- */
+html body main:not(.calendar-page):not(:has(.calendar-page)) button:not([data-variant="primary"]):not(.cx-side *):not([class*="ask-"]):not(.check-button):not([style*="background"]),
+html body main:not(.calendar-page):not(:has(.calendar-page)) a.crm-btn, html body main:not(.calendar-page):not(:has(.calendar-page)) a.quiet-button {
+  background-color: transparent !important; border: 1px solid var(--mc-line-2) !important; color: var(--mc-text) !important; border-radius: 8px !important;
+}
+html body main:not(.calendar-page):not(:has(.calendar-page)) button:not([data-variant="primary"]):not(.cx-side *):not([class*="ask-"]):not(.check-button):not([style*="background"]):hover:not(:disabled) {
+  background-color: var(--mc-hover) !important; border-color: #3a3a42 !important;
+}
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]) {
+  background-color: #fff !important; border-color: #fff !important; color: #050506 !important; font-weight: 600 !important;
+}
+
+/* ---------- Inputs ---------- */
+html body :is(input, textarea, select):not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  background-color: var(--mc-panel) !important; border-color: var(--mc-line-2) !important; color: var(--mc-text) !important; border-radius: 8px !important;
+}
+html body :is(input, textarea, select):focus-visible { outline: none !important; border-color: var(--mc-accent) !important; box-shadow: 0 0 0 3px var(--mc-accent-soft) !important; }
+html body :is(a, button):focus-visible { outline: 2px solid var(--mc-accent) !important; outline-offset: 2px; }
+
+/* ---------- Sidebar ---------- */
+html body .cx-side { background: #08080a !important; border-right: 1px solid var(--mc-line) !important; }
+html body .cx-side .cx-item { color: var(--mc-soft) !important; border-radius: 7px !important; }
+html body .cx-side .cx-item:hover { background: var(--mc-hover) !important; color: #fff !important; }
+html body .cx-side .cx-item.is-active { position: relative; background: var(--mc-raised) !important; color: #fff !important; }
+html body .cx-side .cx-item.is-active::before { content: ""; position: absolute; left: -8px; top: 7px; bottom: 7px; width: 2px; border-radius: 2px; background: var(--mc-accent); }
+html body .cx-side .cx-item.is-active .cx-icon { color: var(--mc-accent) !important; }
+
+/* ---------- Pills, badges, status ---------- */
+html body main :is([class*="badge"], [class*="pill"], [class*="chip"]):not(button):not(.cx-side *) { border-color: var(--mc-line-2) !important; }
+
+/* ---------- Scrollbars ---------- */
+html body * { scrollbar-width: thin; scrollbar-color: #26262c transparent; }
