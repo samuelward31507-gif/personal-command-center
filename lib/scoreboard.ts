@@ -58,3 +58,13 @@ export function funnelRates(f: Funnel) {
     closeRate: pct(f.won, f.won + f.lost),
   };
 }
+
+/** Monthly recurring revenue that funds moving out (about $3k/mo costs, held with margin). */
+export const MOVE_OUT_MRR = 6000;
+/** Meetings booked per week the outreach plan is built on. */
+export const WEEKLY_MEETING_TARGET = 5;
+
+/** Share of a target reached, 0–100, for progress bars. */
+export function pctOf(value: number, target: number): number {
+  return target > 0 ? Math.max(0, Math.min(100, Math.round((value / target) * 100))) : 0;
+}

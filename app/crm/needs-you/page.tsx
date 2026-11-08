@@ -6,6 +6,7 @@ import MyDayQueue from "../../my-day-queue";
 import DailyPlanPanel from "../../daily-plan-panel";
 import OpsAlerts from "./ops-alerts";
 import ProspectQueue from "./prospect-queue";
+import MissionStrip from "./mission-strip";
 import "./today.css";
 import { useWorkspace } from "../../use-workspace";
 
@@ -38,10 +39,12 @@ export default function TodayPage() {
       <div>
         <div className="td-eyebrow">{dateLabel}</div>
         <h1 className="td-title">{greeting}, {ws.ownerFirstName}</h1>
-        <p className="td-sub">Everything waiting on you today, revenue first. Calls go through Call mode; nothing is sent or dialed for you.</p>
+        <p className="td-sub">Where you stand, then what to do next.</p>
       </div>
       <Link href="/crm/call" className="td-cta">Start calling →</Link>
     </header>
+
+    <MissionStrip />
 
     <section className="td-meetings" aria-label="Today's meetings">
       <div className="td-label">On the calendar</div>
