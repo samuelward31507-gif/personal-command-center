@@ -1,0 +1,18 @@
+body .cl-page .cl-who { display: flex; flex-direction: column; gap: 2px; min-width: 180px; }
+body .cl-page .cl-who strong { color: var(--u-text); font-weight: 550; }
+body .cl-page .cl-who a:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+body .cl-page .cl-who span { font-size: 12.5px; color: var(--u-muted); }
+body .cl-page .cl-prog { display: flex; align-items: center; gap: 10px; min-width: 150px; }
+body .cl-page .cl-prog-bar { flex: 1; max-width: 110px; height: 5px; border-radius: 3px; background: var(--u-line-soft); overflow: hidden; }
+body .cl-page .cl-prog-bar i { display: block; height: 100%; background: #d9d3cb; border-radius: 3px; }
+body .cl-page .cl-prog span { font-size: 12.5px; color: var(--u-muted); white-space: nowrap; }
+body .cl-page select.cl-sel { height: 30px; width: auto; padding: 0 26px 0 10px; font-size: 13px !important; }
+body .cl-page .cl-health { display: inline-flex; gap: 3px; }
+body .cl-page .cl-health i { width: 14px; height: 6px; border-radius: 2px; background: var(--u-line); }
+body .cl-page .cl-health i.is-on { background: #d9d3cb; }
+body .cl-page .cl-health i.is-bad { background: var(--u-bad); }
+body .cl-page .cl-soon, body .cl-page .cl-late { color: var(--u-text) !important; }
+body .cl-page .cl-late { color: var(--u-bad) !important; }
+body .cl-page .cl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+body .cl-page .cl-grid .cl-full { grid-column: 1 / -1; }
+@media (max-width: 700px) { body .cl-page .cl-grid { grid-template-columns: 1fr; } }

@@ -1,11 +1,187 @@
 "use client";
 
-import {useEffect,useState} from "react";
-import ClientCards from "./client-cards";
-export default function ClientSuccess(){const [d,S]=useState<any>({accounts:[],tickets:[]}),[tab,T]=useState("accounts"),[form,F]=useState(false),[error,E]=useState(""),[name,N]=useState(""),[goals,G]=useState(""),[service,V]=useState(""),[monthly,M]=useState(""),[renewal,R]=useState(""),[health,H]=useState("3"),[status,ST]=useState("active"),[title,TI]=useState(""),[detail,DE]=useState(""),[riskNote,RISK]=useState(""),[priority,P]=useState("normal"),[dueDate,DD]=useState(""),[contacts,C]=useState<any[]>([]),[projects,PR]=useState<any[]>([]),[contactId,CI]=useState(""),[projectId,PI]=useState(""),[busy,B]=useState(false);
-async function load(){try{const rs=await Promise.all(["/api/client-success","/api/contacts","/api/projects"].map(u=>fetch(u,{cache:"no-store"}))),js=await Promise.all(rs.map(r=>r.json()));if(rs.some(r=>!r.ok))throw Error("Unable to load client records.");S(js[0]);C(js[1].contacts||[]);PR(js[2].projects||[])}catch(e){E(e instanceof Error?e.message:"Unable to load")}}useEffect(()=>{void load()},[]);
-async function act(body:any,method="POST"){B(true);E("");try{const r=await fetch("/api/client-success",{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}),j=await r.json();if(!r.ok)throw Error(j.error||"Action failed");if(method==="POST"){F(false);N("");G("");TI("");DE("");RISK("");DD("");CI("");PI("");}await load()}catch(e){E(e instanceof Error?e.message:"Action failed")}finally{B(false)}}
-return <main style={{maxWidth:1050,margin:"0 auto",padding:28,color:"#e6e6e6"}}><h1>Clients</h1><p>Everyone who's signed, and how they're doing.</p><ClientCards/>{error&&<p role="alert" style={{color:"#fca5a5"}}>{error}</p>}<h2 style={{margin:"36px 0 10px",fontSize:15}}>Health and support</h2><div style={{display:"flex",gap:8,margin:"0 0 20px",flexWrap:"wrap"}}><button onClick={()=>{T("accounts");F(false)}} aria-pressed={tab==="accounts"}>Health & renewals ({d.accounts.length})</button><button onClick={()=>{T("tickets");F(false)}} aria-pressed={tab==="tickets"}>Support ({d.tickets.filter((x:any)=>!["resolved","closed"].includes(x.status)).length} open)</button><button onClick={()=>F(!form)}>{form?"Cancel":"+ Add"}</button><a href="/crm/reports" style={{display:"inline-flex",alignItems:"center",padding:"0 14px",borderRadius:10,border:"1px solid #3a3a3a",color:"#e6e6e6",textDecoration:"none"}}>Monthly reports</a></div>{form&&<section style={{padding:18,border:"1px solid #3a3a3a",borderRadius:10,marginBottom:20}}><h3>New {tab==="accounts"?"client success record":"support ticket"}</h3>{tab==="accounts"?<div style={{display:"grid",gap:10,maxWidth:600}}><input placeholder="Client name" value={name} onChange={e=>N(e.target.value)}/><input placeholder="Service / package" value={service} onChange={e=>V(e.target.value)}/><input type="number" min="0" step="0.01" placeholder="Monthly value ($)" value={monthly} onChange={e=>M(e.target.value)}/><label>Renewal date <input type="date" value={renewal} onChange={e=>R(e.target.value)}/></label><label>Health (1–5) <select value={health} onChange={e=>H(e.target.value)}>{["1","2","3","4","5"].map(x=><option key={x}>{x}</option>)}</select></label><label>Status <select value={status} onChange={e=>ST(e.target.value)}>{["onboarding","active","at_risk","renewal_due","paused","churned"].map(x=><option key={x}>{x}</option>)}</select></label><label>Link contact <select value={contactId} onChange={e=>CI(e.target.value)}><option value="">No contact linked</option>{contacts.map(x=><option key={x.id} value={x.id}>{x.name}{x.company?" — "+x.company:""}</option>)}</select></label><label>Link project <select value={projectId} onChange={e=>PI(e.target.value)}><option value="">No project linked</option>{projects.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label><textarea placeholder="Client goals and success criteria" value={goals} onChange={e=>G(e.target.value)}/><textarea placeholder="Results achieved so far" value={detail} onChange={e=>DE(e.target.value)}/><textarea placeholder="Risks or concerns (optional)" value={riskNote} onChange={e=>RISK(e.target.value)}/></div>:<div style={{display:"grid",gap:10,maxWidth:600}}><input placeholder="Issue title" value={title} onChange={e=>TI(e.target.value)}/><textarea placeholder="Describe the problem and context" value={detail} onChange={e=>DE(e.target.value)}/><label>Due date <input type="date" value={dueDate} onChange={e=>DD(e.target.value)}/></label><label>Priority <select value={priority} onChange={e=>P(e.target.value)}>{["low","normal","high","urgent"].map(x=><option key={x}>{x}</option>)}</select></label><label>Link contact <select value={contactId} onChange={e=>CI(e.target.value)}><option value="">No contact linked</option>{contacts.map(x=><option key={x.id} value={x.id}>{x.name}{x.company?" — "+x.company:""}</option>)}</select></label><label>Link project <select value={projectId} onChange={e=>PI(e.target.value)}><option value="">No project linked</option>{projects.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label></div>}<button disabled={busy} onClick={()=>void act(tab==="accounts"?{kind:"account",clientName:name,serviceName:service,monthlyValue:Number(monthly||0),renewalDate:renewal,healthScore:Number(health),status,goals,results:detail,riskNotes:riskNote,contactId:contactId||null,projectId:projectId||null}:{kind:"ticket",title,description:detail,priority,dueDate:dueDate||null,contactId:contactId||null,projectId:projectId||null})}>{busy?"Saving…":"Save"}</button></section>}
-{tab==="accounts"&&d.accounts.map((x:any)=><article key={x.id} style={{padding:16,borderBottom:"1px solid #3a3a3a",display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}}><div style={{flex:1,minWidth:200}}><b>{x.client_name}</b><p style={{color:"#ababab",fontSize:12}}>{x.service_name||"Service not specified"} · {x.status} · {x.renewal_date?"Renewal "+x.renewal_date:"No renewal date"}</p><label style={{fontSize:12}}>Service / engagement <input aria-label={"Service for "+x.client_name} defaultValue={x.service_name||""} maxLength={240} onBlur={e=>{if(e.currentTarget.value!==String(x.service_name||""))void act({kind:"account",id:x.id,status:x.status,serviceName:e.currentTarget.value},"PATCH")}}/></label><p style={{fontSize:12}}>Health {x.health_score}/5 · ${Number(x.monthly_value).toLocaleString()}/mo</p><label style={{fontSize:12,width:"100%"}}>Client goals <textarea aria-label={"Goals for "+x.client_name} defaultValue={x.goals||""} rows={2} onBlur={e=>{if(e.currentTarget.value!==String(x.goals||""))void act({kind:"account",id:x.id,status:x.status,goals:e.currentTarget.value},"PATCH")}} style={{display:"block",width:"100%",maxWidth:520}}/></label><label style={{fontSize:12,width:"100%"}}>Results achieved <textarea aria-label={"Results for "+x.client_name} defaultValue={x.results||""} rows={2} onBlur={e=>{if(e.currentTarget.value!==String(x.results||""))void act({kind:"account",id:x.id,status:x.status,results:e.currentTarget.value},"PATCH")}} style={{display:"block",width:"100%",maxWidth:520}}/></label><label style={{fontSize:12,width:"100%"}}>Risks / concerns <textarea aria-label={"Risks for "+x.client_name} defaultValue={x.risk_notes||""} rows={2} onBlur={e=>{if(e.currentTarget.value!==String(x.risk_notes||""))void act({kind:"account",id:x.id,status:x.status,riskNotes:e.currentTarget.value},"PATCH")}} style={{display:"block",width:"100%",maxWidth:520}}/></label></div><label style={{fontSize:12}}>Status <select value={x.status} onChange={e=>void act({kind:"account",id:x.id,status:e.target.value,healthScore:x.health_score,results:x.results||"",riskNotes:x.risk_notes||""},"PATCH")}>{["onboarding","active","at_risk","renewal_due","paused","churned"].map(s=><option key={s}>{s}</option>)}</select></label><label style={{fontSize:12}}>Health <select value={String(x.health_score)} onChange={e=>void act({kind:"account",id:x.id,status:x.status,healthScore:Number(e.target.value),results:x.results||"",riskNotes:x.risk_notes||""},"PATCH")}>{["1","2","3","4","5"].map(s=><option key={s} value={s}>{s}/5</option>)}</select></label><label style={{fontSize:12}}>Renewal <input aria-label={"Renewal date for "+x.client_name} type="date" value={x.renewal_date||""} onChange={e=>void act({kind:"account",id:x.id,status:x.status,renewalDate:e.target.value||null},"PATCH")}/></label><label style={{fontSize:12}}>Next review <input aria-label={"Next review date for "+x.client_name} type="date" value={x.next_review_date||""} onChange={e=>void act({kind:"account",id:x.id,status:x.status,nextReviewDate:e.target.value||null},"PATCH")}/></label><label style={{fontSize:12}}>Monthly $ <input aria-label={"Monthly value for "+x.client_name} type="number" min="0" max="9999999999.99" step="0.01" defaultValue={x.monthly_value} onBlur={e=>{const value=Number(e.currentTarget.value);if(e.currentTarget.value!==""&&value!==Number(x.monthly_value))void act({kind:"account",id:x.id,status:x.status,monthlyValue:value},"PATCH")}} style={{width:110}}/></label></article>)}
-{tab==="tickets"&&d.tickets.map((x:any)=><article key={x.id} style={{padding:16,borderBottom:"1px solid #3a3a3a",display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}}><div style={{flex:1,minWidth:200}}><b>{x.title}</b><p style={{color:"#ababab",fontSize:12}}>{x.client_name||x.contact_name||"Client issue"} · {x.priority} priority · {x.due_date||"No due date"}</p><small>{x.description}</small></div><label style={{fontSize:12}}>Due date <input aria-label={"Due date for "+x.title} type="date" value={x.due_date||""} onChange={e=>void act({kind:"ticket",id:x.id,status:x.status,dueDate:e.target.value||null,resolutionNotes:x.resolution_notes||""},"PATCH")}/></label><select aria-label={"Status for "+x.title} value={x.status} onChange={e=>void act({kind:"ticket",id:x.id,status:e.target.value,resolutionNotes:x.resolution_notes||""},"PATCH")}>{["open","in_progress","waiting_on_client","resolved","closed"].map(s=><option key={s}>{s}</option>)}</select></article>)}
-{((tab==="accounts"&&!d.accounts.length)||(tab==="tickets"&&!d.tickets.length))&&<p style={{padding:"22px 4px",color:"#8f8f8f",fontSize:13.5,lineHeight:1.6,maxWidth:520}}>{tab==="accounts"?"No health records yet. A client gets one once their system is live, so you can track renewals and risk.":"No open support requests. When a client reports a problem, log it with + Add so nothing slips."}</p>}</main>}
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import "./clients.css";
+
+type Project = { id: string; name: string; clientName: string; contactName: string; status: string; monthlyValue: number; milestoneCount: number; doneMilestones: number; targetDate?: string | null; startDate?: string | null };
+type Account = { id: string; client_name: string; service_name: string | null; status: string; renewal_date: string | null; next_review_date: string | null; health_score: number; monthly_value: number | string; goals: string | null; results: string | null; risk_notes: string | null; project_id: string | null; contact_id: string | null };
+type Ticket = { id: string; title: string; description: string | null; status: string; priority: string; due_date: string | null; client_name: string | null; contact_name: string | null; resolution_notes: string | null };
+type Opt = { id: string; name: string; company?: string };
+
+const STATUSES = ["onboarding", "active", "at_risk", "renewal_due", "paused", "churned"];
+const TICKET_STATUSES = ["open", "in_progress", "waiting_on_client", "resolved", "closed"];
+const label = (s: string) => { const t = s.replace(/_/g, " "); return t.charAt(0).toUpperCase() + t.slice(1); };
+const usd = (n: number) => "$" + Math.round(n || 0).toLocaleString("en-US");
+const day = (d: string | null) => d ? new Date(String(d).slice(0, 10) + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
+const daysUntil = (d: string | null) => d ? Math.round((Date.parse(String(d).slice(0, 10) + "T12:00:00") - Date.now()) / 86400000) : null;
+const open = (t: Ticket) => !["resolved", "closed"].includes(t.status);
+
+function Health({ n }: { n: number }) {
+  return <span className="cl-health" aria-label={`Health ${n} of 5`} title={`Health ${n} of 5`}>{[1, 2, 3, 4, 5].map(i => <i key={i} className={i <= n ? (n <= 2 ? "is-bad" : "is-on") : ""} />)}</span>;
+}
+
+/** Clients: everyone who signed, their onboarding progress, health, renewals and support issues. */
+export default function ClientsPage() {
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [contacts, setContacts] = useState<Opt[]>([]);
+  const [error, setError] = useState("");
+  const [editing, setEditing] = useState<Account | "new" | null>(null);
+  const [ticketForm, setTicketForm] = useState(false);
+  const [showClosed, setShowClosed] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const rs = await Promise.all(["/api/client-success", "/api/projects", "/api/contacts"].map(u => fetch(u, { cache: "no-store" })));
+      const [cs, pr, ct] = await Promise.all(rs.map(r => r.json().catch(() => ({}))));
+      if (!rs[0].ok) throw new Error(cs.error || "Couldn't load your clients.");
+      setAccounts(cs.accounts ?? []); setTickets(cs.tickets ?? []);
+      setProjects((pr.projects ?? []).filter((p: Project) => p.status !== "cancelled"));
+      setContacts((ct.contacts ?? []).map((c: Opt) => ({ id: c.id, name: c.name, company: c.company })));
+    } catch (e) { setError(e instanceof Error ? e.message : "Couldn't load your clients."); setProjects(p => p ?? []); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+
+  async function act(body: Record<string, unknown>, method = "POST") {
+    setError("");
+    const r = await fetch("/api/client-success", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { setError(j.error || "That didn't save."); return false; }
+    await load(); return true;
+  }
+
+  // One row per client: the delivery project, joined with its health record when there is one.
+  const rows = useMemo(() => {
+    const used = new Set<string>();
+    const fromProjects = (projects ?? []).map(p => {
+      const acc = accounts.find(a => a.project_id === p.id) ?? accounts.find(a => !a.project_id && a.client_name.trim().toLowerCase() === (p.clientName || p.name).trim().toLowerCase());
+      if (acc) used.add(acc.id);
+      return { key: p.id, name: p.clientName || p.contactName || p.name, project: p, acc };
+    });
+    const orphans = accounts.filter(a => !used.has(a.id)).map(a => ({ key: a.id, name: a.client_name, project: undefined as Project | undefined, acc: a as Account | undefined }));
+    return [...fromProjects, ...orphans];
+  }, [projects, accounts]);
+
+  const live = rows.filter(r => !["churned", "paused"].includes(r.acc?.status ?? "") && r.project?.status !== "completed");
+  const mrr = live.reduce((s, r) => s + Number(r.acc?.monthly_value ?? r.project?.monthlyValue ?? 0), 0);
+  const atRisk = rows.filter(r => r.acc && (r.acc.status === "at_risk" || r.acc.health_score <= 2));
+  const openTickets = tickets.filter(open);
+  const nextRenewal = accounts.filter(a => a.renewal_date && (daysUntil(a.renewal_date) ?? -1) >= 0).sort((a, b) => String(a.renewal_date).localeCompare(String(b.renewal_date)))[0];
+  const ticketRows = showClosed ? tickets : openTickets;
+
+  return <div className="u-page cl-page" role="region" aria-label="Clients">
+    <div className="u-head">
+      <h1 className="u-title">Clients</h1>
+      <div className="u-head-actions">
+        <Link className="u-btn u-btn-bare" href="/crm/reports">Monthly reports</Link>
+        <button className="u-btn" onClick={() => setTicketForm(true)}>Log a support issue</button>
+        <button className="u-btn u-btn-light" onClick={() => setEditing("new")}>Add health record</button>
+      </div>
+    </div>
+    {error && <p className="u-flash is-bad" role="alert" style={{ marginBottom: 18 }}>{error}</p>}
+
+    <div className="u-figs">
+      <div className="u-fig"><span className="u-fig-k">Active clients</span><div className="u-fig-v">{projects ? live.length : "—"}</div><div className="u-fig-sub">{rows.length - live.length ? `${rows.length - live.length} paused, churned or finished` : "Nobody has churned"}</div></div>
+      <div className="u-fig"><span className="u-fig-k">Recurring from clients</span><div className="u-fig-v">{usd(mrr)}<small>/mo</small></div><div className="u-fig-sub"><b>{usd(mrr * 12)}</b> a year at this rate</div></div>
+      <div className="u-fig"><span className="u-fig-k">At risk</span><div className="u-fig-v">{atRisk.length}</div><div className="u-fig-sub">{atRisk.length ? atRisk.slice(0, 2).map(r => r.name).join(", ") : "Health 3 or better across the board"}</div></div>
+      <div className="u-fig"><span className="u-fig-k">Next renewal</span><div className="u-fig-v" style={{ fontSize: 30 }}>{nextRenewal ? `${daysUntil(nextRenewal.renewal_date)} days` : "—"}</div><div className="u-fig-sub">{nextRenewal ? <><b>{nextRenewal.client_name}</b>, {day(nextRenewal.renewal_date)}</> : "No renewal dates set"}</div></div>
+    </div>
+
+    {projects === null ? <p className="u-note" role="status">Loading clients…</p> : rows.length === 0 ? <div className="u-void">
+      <h2>No clients yet</h2>
+      <p>When a deal is marked won, the client shows up here with an onboarding checklist, their own page, and a health record you can track to renewal.</p>
+      <Link className="u-btn u-btn-light" href="/crm/pipeline">Open pipeline</Link>
+    </div> : <div className="u-tablewrap"><table className="u-table cl-table">
+      <thead><tr><th>Client</th><th>Onboarding</th><th>Status</th><th>Health</th><th>Renewal</th><th className="is-num">Monthly</th><th /></tr></thead>
+      <tbody>{rows.map(r => {
+        const p = r.project, a = r.acc, done = p?.milestoneCount ? p.doneMilestones / p.milestoneCount : 0, rd = daysUntil(a?.renewal_date ?? null);
+        return <tr key={r.key}>
+          <td><div className="cl-who">{p ? <Link href={`/crm/client-success/${p.id}`}><strong>{r.name}</strong></Link> : <strong>{r.name}</strong>}<span>{a?.service_name || (p ? label(p.status) : "")}</span></div></td>
+          <td>{p?.milestoneCount ? <div className="cl-prog"><div className="cl-prog-bar"><i style={{ width: done * 100 + "%" }} /></div><span>{p.doneMilestones} of {p.milestoneCount}</span></div> : <span className="u-quiet">No checklist</span>}</td>
+          <td>{a ? <select className="u-field cl-sel" aria-label={`Status for ${r.name}`} value={a.status} onChange={e => void act({ kind: "account", id: a.id, status: e.target.value, healthScore: a.health_score, results: a.results || "", riskNotes: a.risk_notes || "" }, "PATCH")}>{STATUSES.map(s => <option key={s} value={s}>{label(s)}</option>)}</select> : <span className="u-quiet">No record</span>}</td>
+          <td>{a ? <Health n={a.health_score} /> : <span className="u-quiet">—</span>}</td>
+          <td>{a?.renewal_date ? <span className={rd != null && rd <= 30 && rd >= 0 ? "cl-soon" : ""}>{day(a.renewal_date)}</span> : <span className="u-quiet">—</span>}</td>
+          <td className="is-num is-strong">{usd(Number(a?.monthly_value ?? p?.monthlyValue ?? 0))}</td>
+          <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+            {a ? <button className="u-btn u-btn-bare" onClick={() => setEditing(a)}>Edit</button> : <button className="u-btn u-btn-bare" onClick={() => setEditing({ id: "", client_name: r.name, service_name: "", status: "active", renewal_date: null, next_review_date: null, health_score: 4, monthly_value: p?.monthlyValue ?? 0, goals: "", results: "", risk_notes: "", project_id: p?.id ?? null, contact_id: null })}>Track health</button>}
+            {p && <Link className="u-btn" href={`/crm/client-success/${p.id}`}>Open</Link>}
+          </td>
+        </tr>;
+      })}</tbody>
+    </table></div>}
+
+    <section style={{ marginTop: 44 }}>
+      <div className="u-h2-row">
+        <h2 className="u-h2">Support issues</h2>
+        <div className="u-seg" role="group" aria-label="Which issues"><button type="button" aria-pressed={!showClosed} onClick={() => setShowClosed(false)}>Open {openTickets.length}</button><button type="button" aria-pressed={showClosed} onClick={() => setShowClosed(true)}>All {tickets.length}</button></div>
+      </div>
+      {ticketRows.length === 0 ? <p className="u-note">No open issues. When a client reports a problem, log it so nothing slips.</p> : <div className="u-rows">{ticketRows.map(t => {
+        const late = t.due_date && open(t) && (daysUntil(t.due_date) ?? 0) < 0;
+        return <div key={t.id} className="u-row">
+          <span className={"u-dot" + (t.priority === "urgent" || t.priority === "high" ? " is-bad" : "")} title={label(t.priority) + " priority"} />
+          <div className="u-row-main"><strong>{t.title}</strong><span>{[t.client_name || t.contact_name, label(t.priority) + " priority", t.description].filter(Boolean).join(" · ")}</span></div>
+          <span className={"u-row-end" + (late ? " cl-late" : "")}>{t.due_date ? (late ? "Was due " : "Due ") + day(t.due_date).replace(/, \d{4}$/, "") : "No due date"}</span>
+          <select className="u-field cl-sel" aria-label={`Status for ${t.title}`} value={t.status} onChange={e => void act({ kind: "ticket", id: t.id, status: e.target.value, resolutionNotes: t.resolution_notes || "" }, "PATCH")}>{TICKET_STATUSES.map(s => <option key={s} value={s}>{label(s)}</option>)}</select>
+        </div>;
+      })}</div>}
+    </section>
+
+    {editing && <AccountDialog acc={editing === "new" ? null : editing} projects={projects ?? []} contacts={contacts} onClose={() => setEditing(null)} onSave={async body => { if (await act(body, body.id ? "PATCH" : "POST")) setEditing(null); }} />}
+    {ticketForm && <TicketDialog projects={projects ?? []} contacts={contacts} onClose={() => setTicketForm(false)} onSave={async body => { if (await act(body)) setTicketForm(false); }} />}
+  </div>;
+}
+
+function AccountDialog({ acc, projects, contacts, onClose, onSave }: { acc: Account | null; projects: Project[]; contacts: Opt[]; onClose: () => void; onSave: (b: Record<string, unknown>) => Promise<void> }) {
+  const [f, setF] = useState({
+    name: acc?.client_name ?? "", service: acc?.service_name ?? "", monthly: String(acc?.monthly_value ?? ""), status: acc?.status ?? "active", health: String(acc?.health_score ?? 4),
+    renewal: acc?.renewal_date ? String(acc.renewal_date).slice(0, 10) : "", review: acc?.next_review_date ? String(acc.next_review_date).slice(0, 10) : "",
+    goals: acc?.goals ?? "", results: acc?.results ?? "", risks: acc?.risk_notes ?? "", projectId: acc?.project_id ?? "", contactId: acc?.contact_id ?? "",
+  });
+  const [busy, setBusy] = useState(false);
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  const isEdit = !!acc?.id;
+  return <div className="u-scrim" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <form className="u-dialog cl-form" style={{ width: "min(620px, 100%)", maxHeight: "calc(100vh - 36px)", overflowY: "auto" }} role="dialog" aria-modal="true" aria-label="Client health"
+      onSubmit={async e => { e.preventDefault(); setBusy(true); await onSave({ kind: "account", ...(isEdit ? { id: acc!.id } : { clientName: f.name, contactId: f.contactId || null, projectId: f.projectId || null }), serviceName: f.service, monthlyValue: Number(f.monthly || 0), status: f.status, healthScore: Number(f.health), renewalDate: f.renewal || null, nextReviewDate: f.review || null, goals: f.goals, results: f.results, riskNotes: f.risks }); setBusy(false); }}>
+      <h3>{isEdit ? acc!.client_name : acc?.client_name ? `Track ${acc.client_name}` : "Add health record"}</h3>
+      <div className="cl-grid">
+        {!isEdit && <label className="u-lab cl-full">Client name<input className="u-field" required value={f.name} onChange={set("name")} placeholder="Ridgeline Fence Co." /></label>}
+        <label className="u-lab">What they bought<input className="u-field" value={f.service} onChange={set("service")} placeholder="Book & Close" /></label>
+        <label className="u-lab">Monthly<input className="u-field" type="number" min="0" step="0.01" value={f.monthly} onChange={set("monthly")} /></label>
+        <label className="u-lab">Status<select className="u-field" value={f.status} onChange={set("status")}>{STATUSES.map(s => <option key={s} value={s}>{label(s)}</option>)}</select></label>
+        <label className="u-lab">Health<select className="u-field" value={f.health} onChange={set("health")}>{["5", "4", "3", "2", "1"].map(s => <option key={s} value={s}>{s} of 5{s === "5" ? ", thrilled" : s === "1" ? ", about to leave" : ""}</option>)}</select></label>
+        <label className="u-lab">Renewal<input className="u-field" type="date" value={f.renewal} onChange={set("renewal")} /></label>
+        <label className="u-lab">Next check-in<input className="u-field" type="date" value={f.review} onChange={set("review")} /></label>
+        {!isEdit && <label className="u-lab">Client page<select className="u-field" value={f.projectId} onChange={set("projectId")}><option value="">None</option>{projects.map(p => <option key={p.id} value={p.id}>{p.clientName || p.name}</option>)}</select></label>}
+        {!isEdit && <label className="u-lab">Contact<select className="u-field" value={f.contactId} onChange={set("contactId")}><option value="">None</option>{contacts.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}</select></label>}
+        <label className="u-lab cl-full">What they want out of it<textarea className="u-field" rows={2} value={f.goals} onChange={set("goals")} placeholder="10 booked estimates a month from missed calls" /></label>
+        <label className="u-lab cl-full">Results so far<textarea className="u-field" rows={2} value={f.results} onChange={set("results")} placeholder="23 missed calls texted back, 6 booked in October" /></label>
+        <label className="u-lab cl-full">Risks<textarea className="u-field" rows={2} value={f.risks} onChange={set("risks")} placeholder="Owner hasn't opened the last report" /></label>
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}><button type="button" className="u-btn" onClick={onClose}>Cancel</button><button type="submit" className="u-btn u-btn-light" disabled={busy || (!isEdit && !f.name.trim())}>{busy ? "Saving…" : "Save"}</button></div>
+    </form>
+  </div>;
+}
+
+function TicketDialog({ projects, contacts, onClose, onSave }: { projects: Project[]; contacts: Opt[]; onClose: () => void; onSave: (b: Record<string, unknown>) => Promise<void> }) {
+  const [f, setF] = useState({ title: "", detail: "", priority: "normal", due: "", projectId: "", contactId: "" });
+  const [busy, setBusy] = useState(false);
+  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
+  return <div className="u-scrim" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <form className="u-dialog cl-form" style={{ width: "min(560px, 100%)" }} role="dialog" aria-modal="true" aria-label="Log a support issue"
+      onSubmit={async e => { e.preventDefault(); setBusy(true); await onSave({ kind: "ticket", title: f.title, description: f.detail, priority: f.priority, dueDate: f.due || null, projectId: f.projectId || null, contactId: f.contactId || null }); setBusy(false); }}>
+      <h3>Log a support issue</h3>
+      <div className="cl-grid">
+        <label className="u-lab cl-full">What&apos;s wrong<input className="u-field" required autoFocus value={f.title} onChange={set("title")} placeholder="Missed-call texts stopped sending" /></label>
+        <label className="u-lab">Client<select className="u-field" value={f.projectId} onChange={set("projectId")}><option value="">None</option>{projects.map(p => <option key={p.id} value={p.id}>{p.clientName || p.name}</option>)}</select></label>
+        <label className="u-lab">Contact<select className="u-field" value={f.contactId} onChange={set("contactId")}><option value="">None</option>{contacts.map(c => <option key={c.id} value={c.id}>{c.company || c.name}</option>)}</select></label>
+        <label className="u-lab">Priority<select className="u-field" value={f.priority} onChange={set("priority")}>{["low", "normal", "high", "urgent"].map(s => <option key={s} value={s}>{label(s)}</option>)}</select></label>
+        <label className="u-lab">Fix by<input className="u-field" type="date" value={f.due} onChange={set("due")} /></label>
+        <label className="u-lab cl-full">Details<textarea className="u-field" rows={3} value={f.detail} onChange={set("detail")} placeholder="What they said, when it started" /></label>
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}><button type="button" className="u-btn" onClick={onClose}>Cancel</button><button type="submit" className="u-btn u-btn-light" disabled={busy || !f.title.trim()}>{busy ? "Saving…" : "Log issue"}</button></div>
+    </form>
+  </div>;
+}

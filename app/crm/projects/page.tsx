@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback,useEffect,useMemo,useState } from "react";
-import "./projects.css";
+import "./delivery.css";
 type Status="planning"|"onboarding"|"in_progress"|"blocked"|"review"|"completed"|"on_hold"|"cancelled";
 type Project={clock?:{state:string;label:string};id:string;name:string;clientName:string;serviceType:string;status:Status;startDate:string|null;targetDate:string|null;monthlyValue:number;setupValue:number;notes:string;contactId:string|null;dealId:string|null;contactName:string;dealTitle:string;milestoneCount:number;doneMilestones:number};
 type Milestone={id:string;projectId:string;title:string;description:string;status:string;dueAt:string|null;sortOrder:number};
@@ -34,13 +34,89 @@ export default function ProjectsPage(){
  async function deleteMilestone(m:Milestone){const r=await fetch("/api/project-milestones",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:m.id})});if(!r.ok){setError("Could not delete milestone.");return}if(selected)await Promise.all([loadMilestones(selected),load()])}
  async function handoffMilestones(){if(!selected)return;setHandoffBusy(true);setError("");try{const r=await fetch("/api/projects/tasks-from-milestones",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({projectId:selected})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Could not create tasks from milestones.");setNotice("Task handoff complete: "+d.created+" created"+(d.skipped?", "+d.skipped+" already existed":"")+". Open Tasks to assign priorities and manage execution.");}catch(e){setError(e instanceof Error?e.message:"Could not create tasks.")}finally{setHandoffBusy(false)}}
  const chosen=projects.find(p=>p.id===selected);
- return <main className="projects-page"><header className="projects-header"><div><div className="projects-eyebrow">Delivery</div><h1>Delivery</h1><p>Every client build, from kickoff to live.</p></div><div className="projects-actions"><a href="/crm/pipeline">Sales pipeline ↗</a><button className="project-primary" onClick={newProject}>＋ New project</button></div></header>
- {error&&<div className="project-alert" role="alert">{error}<button onClick={()=>setError("")}>Dismiss</button></div>}{notice&&<p className="project-notice" role="status">{notice}</p>}
- <section className="project-metrics"><article><span>Active projects</span><strong>{active.length}</strong><small>In delivery or onboarding</small></article><article><span>Monthly value</span><strong>{money(monthly)}</strong><small>Active client contracts</small></article><article><span>Blocked</span><strong>{blocked.length}</strong><small>Needs attention</small></article><article><span>Completed</span><strong>{projects.filter(p=>p.status==="completed").length}</strong><small>Delivered projects</small></article></section>
- <section className="project-workspace"><div className="project-toolbar"><input aria-label="Search projects" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search projects, clients, services…"/><label>Show <select value={filter} onChange={e=>setFilter(e.target.value)}><option value="active">Active</option><option value="blocked">Blocked</option><option value="planning">Planning</option><option value="onboarding">Onboarding</option><option value="in_progress">In progress</option><option value="review">In review</option><option value="completed">Completed</option><option value="on_hold">On hold</option><option value="cancelled">Cancelled</option><option value="all">All projects</option></select></label></div>
- {loading?<div className="project-empty">Loading client projects…</div>:shown.length===0?<div className="project-empty"><div className="project-empty-mark">↗</div><h2>{projects.length?"No projects match this view":"Turn a signed deal into a delivery plan"}</h2><p>{projects.length?"Try another filter or search.":"Create a project, set the target date, then break the implementation into milestones so delivery never lives only in your head."}</p><button className="project-primary" onClick={newProject}>＋ Create a project</button></div>:<div className="project-list">{shown.map(p=><article className={"pj-row "+(selected===p.id?"project-selected":"")} key={p.id}><button className="pj-main" style={{background:"transparent"}} onClick={()=>setSelected(selected===p.id?null:p.id)}><span className="pj-top"><strong>{p.name}</strong><span className={"project-status status-"+p.status}>{statuses[p.status]}</span></span><span className="pj-client">{p.clientName||p.contactName||"Client not specified"}{p.contactName&&p.clientName?" · "+p.contactName:""}</span><span className="pj-service">{services[p.serviceType]||p.serviceType}</span><span className="pj-meta"><span>{p.doneMilestones} of {p.milestoneCount} milestones done</span><span>Launch {dateLabel(p.targetDate)}</span>{p.clock&&p.clock.state!=="live"&&<span className={"pj-clock is-"+p.clock.state}>{p.clock.label}</span>}<span>{money(p.monthlyValue)}/mo</span></span><span className="pj-progress"><i style={{width:(p.milestoneCount?Math.round(p.doneMilestones/p.milestoneCount*100):0)+"%"}}/></span></button><div className="pj-controls"><label><span className="sr-only">Project status</span><select value={p.status} onChange={e=>void updateStatus(p,e.target.value as Status)}>{Object.entries(statuses).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><a className="pj-link" href={"/crm/client-success/"+p.id}>Client page</a><button style={{background:"transparent"}} onClick={()=>editProject(p)}>Edit</button><button style={{background:"transparent"}} className="project-remove" onClick={()=>void remove(p)} aria-label={"Delete "+p.name}>×</button></div></article>)}</div>}
- </section>
- {chosen&&<section className="milestone-panel"><header><div><div className="projects-eyebrow">Delivery plan</div><h2>{chosen.name} <span>· milestones</span></h2><p>Track the concrete steps between kickoff and a successful handoff.</p></div><div className="projects-actions"><button className="project-secondary" onClick={()=>void handoffMilestones()} disabled={handoffBusy||milestones.every(m=>["done","cancelled"].includes(m.status))}>{handoffBusy?"Creating tasks…":"Create tasks from milestones"}</button><button className="project-secondary" onClick={()=>setSelected(null)}>Close</button></div></header><form className="milestone-add" onSubmit={addMilestone}><label>Milestone title<input required maxLength={240} value={milestoneTitle} onChange={e=>setMilestoneTitle(e.target.value)} placeholder="e.g. Connect phone system and test call routing"/></label><label>Due date<input type="datetime-local" value={milestoneDue} onChange={e=>setMilestoneDue(e.target.value)}/></label><button className="project-primary" disabled={milestoneBusy}>{milestoneBusy?"Adding…":"＋ Add milestone"}</button></form>{milestones.length===0?<p className="project-empty-inline">No milestones yet. Add the first deliverable above.</p>:<div className="milestone-list">{milestones.map(m=><article key={m.id} className={"milestone-row milestone-"+m.status}><span className="milestone-dot">{m.status==="done"?"✓":""}</span><div><strong>{m.title}</strong><small>{m.dueAt?"Due "+milestoneDateLabel(m.dueAt):"No due date"}</small></div><label><span className="sr-only">Milestone status</span><select value={m.status} onChange={e=>void milestoneStatus(m,e.target.value)}>{["todo","in_progress","blocked","done","cancelled"].map(s=><option key={s} value={s}>{s.replace("_"," ")}</option>)}</select></label><button className="project-remove" onClick={()=>void deleteMilestone(m)} aria-label={"Delete "+m.title}>×</button></article>)}</div>}</section>}
- {show&&<div className="project-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setShow(false)}}><section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-form-title"><header><div><div className="projects-eyebrow">{editing?"UPDATE PROJECT":"NEW CLIENT PROJECT"}</div><h2 id="project-form-title">{editing?"Edit project":"Create a project"}</h2></div><button className="project-close" onClick={()=>setShow(false)} aria-label="Close">×</button></header><form onSubmit={save}><div className="project-form-grid"><label className="project-field project-field-full">Project name *<input required maxLength={240} autoFocus value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})} placeholder="e.g. Summit Fence — Tier 1 build"/></label><label className="project-field">Client / company<input maxLength={240} value={draft.clientName} onChange={e=>setDraft({...draft,clientName:e.target.value})} placeholder="Company name"/></label><label className="project-field">Service<select value={draft.serviceType} onChange={e=>setDraft({...draft,serviceType:e.target.value})}>{Object.entries(services).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><label className="project-field">Status<select value={draft.status} onChange={e=>setDraft({...draft,status:e.target.value as Status})}>{Object.entries(statuses).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label><label className="project-field">Start date<input type="date" value={draft.startDate} onChange={e=>setDraft({...draft,startDate:e.target.value})}/></label><label className="project-field">Target date<input type="date" value={draft.targetDate} onChange={e=>setDraft({...draft,targetDate:e.target.value})}/></label><label className="project-field">Setup fee ($)<input type="number" min="0" step="0.01" value={draft.setupValue} onChange={e=>setDraft({...draft,setupValue:e.target.value})}/></label><label className="project-field">Monthly value ($)<input type="number" min="0" step="0.01" value={draft.monthlyValue} onChange={e=>setDraft({...draft,monthlyValue:e.target.value})}/></label><label className="project-field project-field-full">Link contact<select value={draft.contactId} onChange={e=>setDraft({...draft,contactId:e.target.value})}><option value="">No linked contact</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.name}{c.company?" — "+c.company:""}</option>)}</select></label><label className="project-field project-field-full">Link sales deal<select value={draft.dealId} onChange={e=>setDraft({...draft,dealId:e.target.value})}><option value="">No linked deal</option>{deals.map(d=><option key={d.id} value={d.id}>{d.title}{d.company?" — "+d.company:""}</option>)}</select></label><label className="project-field project-field-full">Delivery notes<textarea rows={3} maxLength={10000} value={draft.notes} onChange={e=>setDraft({...draft,notes:e.target.value})} placeholder="Scope, access needed, success criteria, dependencies…"/></label></div><footer><button type="button" className="project-secondary" onClick={()=>setShow(false)}>Cancel</button><button className="project-primary" disabled={busy}>{busy?"Saving…":editing?"Save changes":"Create project"}</button></footer></form></section></div>}
- </main>
+ useEffect(()=>{if(!selected&&!loading){const first=projects.find(p=>!["completed","cancelled"].includes(p.status));if(first)setSelected(first.id)}},[selected,loading,projects]);
+ const pctDone=(p:Project)=>p.milestoneCount?Math.round(p.doneMilestones/p.milestoneCount*100):0;
+ const openSteps=milestones.filter(m=>!["done","cancelled"].includes(m.status));
+ const nextStep=openSteps[0];
+ return <div className="u-page dv-page" role="region" aria-label="Delivery">
+  <div className="u-head">
+   <h1 className="u-title">Delivery</h1>
+   <div className="u-head-actions"><button className="u-btn u-btn-light" onClick={newProject}>New project</button></div>
+  </div>
+  {error&&<p className="u-flash is-bad" role="alert" style={{marginBottom:16}}>{error}<button className="u-btn u-btn-bare" style={{marginLeft:"auto"}} onClick={()=>setError("")}>Dismiss</button></p>}
+  {notice&&<p className="u-flash" role="status" style={{marginBottom:16}}>{notice}</p>}
+
+  <div className="u-figs">
+   <div className="u-fig"><span className="u-fig-k">In delivery</span><div className="u-fig-v">{loading?"—":active.length}</div><div className="u-fig-sub">{projects.filter(p=>p.status==="completed").length} finished all time</div></div>
+   <div className="u-fig"><span className="u-fig-k">Blocked</span><div className="u-fig-v">{blocked.length}</div><div className="u-fig-sub">{blocked.length?blocked.map(p=>p.clientName||p.name).slice(0,2).join(", "):"Nothing waiting on you or them"}</div></div>
+   <div className="u-fig"><span className="u-fig-k">Monthly riding on these</span><div className="u-fig-v">{money(monthly)}<small>/mo</small></div><div className="u-fig-sub">Starts billing once each one goes live</div></div>
+   <div className="u-fig"><span className="u-fig-k">Steps left</span><div className="u-fig-v">{active.reduce((n,p)=>n+Math.max(0,p.milestoneCount-p.doneMilestones),0)}</div><div className="u-fig-sub">across every active build</div></div>
+  </div>
+
+  {loading?<p className="u-note" role="status">Loading…</p>:projects.length===0?<div className="u-void"><h2>Nothing in delivery</h2><p>Mark a deal won in Pipeline and the build shows up here with a step-by-step plan from kickoff to live. You can also start one by hand.</p><div style={{display:"flex",gap:8}}><a className="u-btn u-btn-light" href="/crm/pipeline">Open pipeline</a><button className="u-btn" onClick={newProject}>New project</button></div></div>
+  :<div className="dv-split">
+   <div>
+    <div className="dv-bar">
+     <div className="u-seg" role="group" aria-label="Show">{([["active","Active"],["blocked","Blocked"],["completed","Finished"],["all","All"]] as const).map(([k,l])=><button key={k} type="button" aria-pressed={filter===k} onClick={()=>setFilter(k)}>{l}</button>)}</div>
+     <input className="u-field" type="search" aria-label="Search projects" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search"/>
+    </div>
+    {shown.length===0?<p className="u-note">Nothing in this view.</p>:<div className="u-rows">{shown.map(p=><button type="button" key={p.id} className={"u-row dv-proj"+(selected===p.id?" is-on":"")} onClick={()=>setSelected(p.id)}>
+     <div className="u-row-main"><strong>{p.clientName||p.contactName||p.name}</strong><span>{services[p.serviceType]||p.serviceType}{p.targetDate?`, live by ${dateLabel(p.targetDate).replace(/, \d{4}$/,"")}`:""}</span></div>
+     <div className="dv-proj-end">
+      <span className={"u-mark"+(p.status==="blocked"?" is-bad":p.status==="completed"?" is-good":"")}>{statuses[p.status]}</span>
+      <div className="dv-prog"><i style={{width:pctDone(p)+"%"}}/></div>
+      <span className="u-note">{p.doneMilestones}/{p.milestoneCount}</span>
+     </div>
+    </button>)}</div>}
+   </div>
+
+   {chosen?<div className="dv-plan">
+    <div className="dv-plan-head">
+     <div>
+      <h2 className="dv-name">{chosen.clientName||chosen.name}</h2>
+      <p className="u-note" style={{marginTop:6}}>{chosen.name}{chosen.clock&&chosen.clock.state!=="live"?` · ${chosen.clock.label}`:""}</p>
+     </div>
+     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+      <select className="u-field dv-sel" aria-label="Project status" value={chosen.status} onChange={e=>void updateStatus(chosen,e.target.value as Status)}>{Object.entries(statuses).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>
+      <a className="u-btn" href={"/crm/client-success/"+chosen.id}>Client page</a>
+      <button className="u-btn u-btn-bare" onClick={()=>editProject(chosen)}>Edit</button>
+     </div>
+    </div>
+    <div className="dv-pct"><b className="u-num">{pctDone(chosen)}%</b><div className="dv-prog dv-prog-lg"><i style={{width:pctDone(chosen)+"%"}}/></div><span className="u-note">{nextStep?<>Next: <span style={{color:"var(--u-text)"}}>{nextStep.title}</span></>:milestones.length?"Every step is done":"No steps yet"}</span></div>
+    <ol className="dv-steps">{milestones.map(m=>{const done=m.status==="done";return <li key={m.id} className={"dv-step is-"+m.status}>
+     <button type="button" className="dv-check" aria-pressed={done} aria-label={(done?"Mark not done: ":"Mark done: ")+m.title} onClick={()=>void milestoneStatus(m,done?"todo":"done")}>{done&&<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}</button>
+     <div className="dv-step-main"><span className="dv-step-t">{m.title}</span><span className="u-note">{m.dueAt?"Due "+milestoneDateLabel(m.dueAt).replace(/, \d{4}$/,""):"No due date"}{m.status==="blocked"?" · Blocked":m.status==="in_progress"?" · In progress":""}</span></div>
+     <select className="u-field dv-sel dv-sel-sm" aria-label={"Status for "+m.title} value={m.status} onChange={e=>void milestoneStatus(m,e.target.value)}>{["todo","in_progress","blocked","done","cancelled"].map(s=><option key={s} value={s}>{s==="todo"?"To do":s.replace("_"," ").replace(/^./,c=>c.toUpperCase())}</option>)}</select>
+     <button type="button" className="u-btn u-btn-bare dv-del" onClick={()=>void deleteMilestone(m)} aria-label={"Delete "+m.title}>Remove</button>
+    </li>})}</ol>
+    <form className="dv-add" onSubmit={addMilestone}>
+     <input className="u-field" required maxLength={240} value={milestoneTitle} onChange={e=>setMilestoneTitle(e.target.value)} placeholder="Add a step, like: connect the phone number and test a missed call" aria-label="New step"/>
+     <input className="u-field" type="datetime-local" value={milestoneDue} onChange={e=>setMilestoneDue(e.target.value)} aria-label="Due"/>
+     <button className="u-btn" disabled={milestoneBusy}>{milestoneBusy?"Adding…":"Add step"}</button>
+    </form>
+    <div className="dv-foot">
+     <button className="u-btn u-btn-bare" onClick={()=>void handoffMilestones()} disabled={handoffBusy||milestones.every(m=>["done","cancelled"].includes(m.status))}>{handoffBusy?"Creating…":"Copy open steps to Follow-ups"}</button>
+     <button className="u-btn u-btn-bare" onClick={()=>void remove(chosen)}>Delete project</button>
+    </div>
+   </div>:<div className="dv-plan"><p className="u-note">Pick a project to see its plan.</p></div>}
+  </div>}
+
+  {show&&<div className="u-scrim" onMouseDown={e=>{if(e.target===e.currentTarget)setShow(false)}}><form className="u-dialog" style={{width:"min(620px,100%)",maxHeight:"calc(100vh - 36px)",overflowY:"auto"}} onSubmit={save} role="dialog" aria-modal="true" aria-labelledby="dv-form-title">
+   <h3 id="dv-form-title">{editing?"Edit project":"New project"}</h3>
+   <div className="dv-form">
+    <label className="u-lab dv-full">Project name<input className="u-field" required maxLength={240} autoFocus value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})} placeholder="Summit Fence, Book & Close build"/></label>
+    <label className="u-lab">Client<input className="u-field" maxLength={240} value={draft.clientName} onChange={e=>setDraft({...draft,clientName:e.target.value})} placeholder="Summit Fence & Gate"/></label>
+    <label className="u-lab">What you're building<select className="u-field" value={draft.serviceType} onChange={e=>setDraft({...draft,serviceType:e.target.value})}>{Object.entries(services).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+    <label className="u-lab">Status<select className="u-field" value={draft.status} onChange={e=>setDraft({...draft,status:e.target.value as Status})}>{Object.entries(statuses).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+    <label className="u-lab">Start<input className="u-field" type="date" value={draft.startDate} onChange={e=>setDraft({...draft,startDate:e.target.value})}/></label>
+    <label className="u-lab">Live by<input className="u-field" type="date" value={draft.targetDate} onChange={e=>setDraft({...draft,targetDate:e.target.value})}/></label>
+    <label className="u-lab">Setup fee<input className="u-field" type="number" min="0" step="0.01" value={draft.setupValue} onChange={e=>setDraft({...draft,setupValue:e.target.value})}/></label>
+    <label className="u-lab">Monthly<input className="u-field" type="number" min="0" step="0.01" value={draft.monthlyValue} onChange={e=>setDraft({...draft,monthlyValue:e.target.value})}/></label>
+    <label className="u-lab">Contact<select className="u-field" value={draft.contactId} onChange={e=>setDraft({...draft,contactId:e.target.value})}><option value="">None</option>{contacts.map(c=><option key={c.id} value={c.id}>{c.company||c.name}</option>)}</select></label>
+    <label className="u-lab dv-full">Deal<select className="u-field" value={draft.dealId} onChange={e=>setDraft({...draft,dealId:e.target.value})}><option value="">None</option>{deals.map(d=><option key={d.id} value={d.id}>{d.title}</option>)}</select></label>
+    <label className="u-lab dv-full">Notes<textarea className="u-field" rows={3} maxLength={10000} value={draft.notes} onChange={e=>setDraft({...draft,notes:e.target.value})} placeholder="Scope, logins you need, what success looks like"/></label>
+   </div>
+   <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:20}}><button type="button" className="u-btn" onClick={()=>setShow(false)}>Cancel</button><button className="u-btn u-btn-light" disabled={busy}>{busy?"Saving…":editing?"Save changes":"Create project"}</button></div>
+  </form></div>}
+ </div>
 }

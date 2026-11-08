@@ -1,0 +1,37 @@
+body .dv-page .dv-split { display: grid; gap: 40px; align-items: start; }
+@media (min-width: 1100px) { body .dv-page .dv-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); } }
+body .dv-page .dv-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+body .dv-page .dv-bar input { flex: 1; min-width: 140px; width: auto; height: 36px; }
+body .dv-page .dv-proj { padding-left: 12px !important; padding-right: 12px !important; }
+body .dv-page .dv-proj.is-on { background: var(--u-sheet) !important; box-shadow: inset 2px 0 0 var(--u-text); }
+body .dv-page .dv-proj-end { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+body .dv-page .dv-prog { width: 70px; height: 5px; border-radius: 3px; background: var(--u-line); overflow: hidden; }
+body .dv-page .dv-prog i { display: block; height: 100%; background: #d9d3cb; border-radius: 3px; }
+body .dv-page .dv-prog-lg { flex: 1; width: auto; height: 6px; }
+body .dv-page .dv-plan { position: sticky; top: 24px; padding: 24px 26px; border-radius: 16px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); }
+body .dv-page .dv-plan-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+body .dv-page h2.dv-name { font-family: var(--u-display) !important; font-stretch: 118%; font-variation-settings: "wdth" 118; font-size: 26px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: var(--u-text) !important; }
+body .dv-page select.dv-sel { height: 36px; width: auto; padding: 0 28px 0 12px; }
+body .dv-page select.u-field.dv-sel-sm { height: 30px; font-size: 12.5px !important; background: transparent !important; border-color: transparent !important; color: var(--u-muted) !important; }
+body .dv-page select.u-field.dv-sel-sm:hover { border-color: var(--u-line) !important; }
+body .dv-page .dv-pct { display: flex; align-items: center; gap: 14px; margin: 22px 0 8px; flex-wrap: wrap; }
+body .dv-page .dv-pct b { font-family: var(--u-display); font-stretch: 125%; font-variation-settings: "wdth" 125; font-size: 30px; font-weight: 500; color: var(--u-text); }
+body .dv-page .dv-pct .u-note { flex-basis: 100%; }
+body .dv-page .dv-steps { list-style: none; margin: 18px 0 0; padding: 0; border-top: 1px solid var(--u-line); }
+body .dv-page .dv-step { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--u-line-soft); }
+body .dv-page .dv-check { flex: 0 0 auto; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border-radius: 6px !important; border: 1.5px solid #4a4540 !important; background: transparent !important; color: #141210 !important; cursor: pointer; }
+body .dv-page .dv-check:hover { border-color: var(--u-text) !important; }
+body .dv-page .dv-check[aria-pressed="true"] { background: #d9d3cb !important; border-color: #d9d3cb !important; }
+body .dv-page .dv-step-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+body .dv-page .dv-step-t { font-size: 14px; color: var(--u-text); }
+body .dv-page .dv-step.is-done .dv-step-t, body .dv-page .dv-step.is-cancelled .dv-step-t { color: var(--u-faint); text-decoration: line-through; text-decoration-color: var(--u-line); }
+body .dv-page .dv-step.is-blocked .dv-step-t { color: var(--u-bad); }
+body .dv-page .dv-del { opacity: 0; }
+body .dv-page .dv-step:hover .dv-del, body .dv-page .dv-del:focus-visible { opacity: 1; }
+body .dv-page .dv-add { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+body .dv-page .dv-add input:first-child { flex: 1; min-width: 200px; width: auto; }
+body .dv-page .dv-add input[type="datetime-local"] { width: 200px; }
+body .dv-page .dv-foot { display: flex; justify-content: space-between; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--u-line-soft); }
+body .dv-page .dv-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+body .dv-page .dv-form .dv-full { grid-column: 1 / -1; }
+@media (max-width: 700px) { body .dv-page .dv-form { grid-template-columns: 1fr; } body .dv-page .dv-plan { position: static; padding: 18px; } body .dv-page .dv-del { opacity: 1; } }
