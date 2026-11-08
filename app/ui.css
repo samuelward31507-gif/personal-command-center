@@ -204,3 +204,8 @@ body .u-dialog h3 { margin: 0 0 16px; font-size: 17px; font-weight: 600; letter-
   body .u-fig { padding-right: 12px; border-bottom: 1px solid var(--u-line-soft); }
 }
 @media (prefers-reduced-motion: reduce) { body .u-page * { transition: none !important; animation: none !important; } }
+
+/* Ask Cinder composer: the field inherits the global input fill, which drew a dark bar inside the box. */
+html body:not(#u) .ask-composer :is(textarea, input):not([type="checkbox"]):not([type="radio"]),
+html body:not(#u) .ask-composer :is(textarea, input):focus,
+html body:not(#u) .ask-composer :is(textarea, input):focus-visible { background: transparent !important; border: 0 !important; box-shadow: none !important; outline: none !important; }

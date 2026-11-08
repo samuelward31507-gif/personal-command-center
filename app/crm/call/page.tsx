@@ -20,7 +20,7 @@ type Audit = { id: string; content: string; createdAt: string };
 
 const localKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const firstName = contactFirstName;
-const KEYS: Partial<Record<CallOutcome, string>> = { no_answer: "1", voicemail: "2", gatekeeper: "3", wrong_number: "4", meeting_booked: "5", send_info: "6", callback_requested: "7", interested: "8", not_interested: "9", not_a_fit: "0" };
+const KEYS: Partial<Record<CallOutcome, string>> = { no_answer: "1", voicemail: "2", gatekeeper: "3", wrong_number: "4", meeting_booked: "5", interested: "6", callback_requested: "7", not_interested: "8", not_a_fit: "9" };
 type Dialog = null | "meeting" | "callback" | "gatekeeper" | "info";
 type Draft = { title: string; subject?: string; body: string; contactId: string; channel: "text" | "dm" | "email" | "stay" };
 const CHANNEL_LABEL = { text: "Text", dm: "Facebook DM", email: "Email" } as const;
@@ -40,7 +40,7 @@ export default function CallModePage() {
   const [flash, setFlash] = useState<{ ok: boolean; text: string; deal?: SuggestedDealData | null } | null>(null);
   const [logged, setLogged] = useState<{ name: string; outcome: string }[]>([]);
   const [dialog, setDialog] = useState<Dialog>(null);
-  const [gk, setGk] = useState({ name: "", best: "" });
+  const [gk, setGk] = useState({ name: "", owner: "", direct: "", best: "" });
   const [info, setInfo] = useState<{ channel: "text" | "dm" | "email"; pain: string }>({ channel: "text", pain: "" });
   const [draft, setDraft] = useState<Draft | null>(null);
   const [textCtx, setTextCtx] = useState<{ ctx: TextContext; contactId: string; who: string } | null>(null);
@@ -117,11 +117,12 @@ export default function CallModePage() {
     opps: reportSection(audit.content, "Top opportunities"),
   } : null;
 
-  function dial() {
-    if (!contact?.phone) return;
+  function dial(number?: string) {
+    const to = number || contact?.phone;
+    if (!contact || !to) return;
     void fetch("/api/call-logs", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contactId: contact.id, channel: "call", action: "outbound_call", outcome: "initiated", notes: "Call launched from Call mode." }) }).catch(() => {});
-    window.location.href = "tel:" + contact.phone.replace(/[^+\d]/g, "");
+    window.location.href = "tel:" + to.replace(/[^+\d]/g, "");
   }
 
   async function log(outcome: CallOutcome, extra: { followUpDate?: string } = {}, extraNote = "") {
@@ -186,7 +187,7 @@ export default function CallModePage() {
   }
 
   function openDialog(kind: Exclude<Dialog, null>) {
-    if (kind === "gatekeeper") { setGk({ name: "", best: "" }); setDialog(kind); return; }
+    if (kind === "gatekeeper") { setGk({ name: "", owner: firstName(contact?.name ?? "", contact?.company ?? "") || "", direct: "", best: "" }); setDialog(kind); return; }
     if (kind === "info") { void log("send_info"); return; } // drafts the info text right away
     const d = new Date(); d.setDate(d.getDate() + (kind === "callback" ? 1 : 2));
     if (d.getDay() === 6) d.setDate(d.getDate() + 2); if (d.getDay() === 0) d.setDate(d.getDate() + 1);
@@ -213,7 +214,6 @@ export default function CallModePage() {
     if (o === "meeting_booked") openDialog("meeting");
     else if (o === "callback_requested") openDialog("callback");
     else if (o === "gatekeeper") openDialog("gatekeeper");
-    else if (o === "send_info") openDialog("info");
     else void log(o);
   }
 
@@ -326,7 +326,7 @@ export default function CallModePage() {
           </div>
           <div className="dl-dial">
             <span className="dl-phone u-num">{contact.phone}</span>
-            <button type="button" className="u-btn u-btn-go u-btn-lg" onClick={dial}>Call <kbd>C</kbd></button>
+            <button type="button" className="u-btn u-btn-go u-btn-lg" onClick={() => dial()}>Call <kbd>C</kbd></button>
           </div>
         </div>
 
@@ -335,7 +335,18 @@ export default function CallModePage() {
           {!!contact.attempts && <span><b>No-answer tries</b>{contact.attempts} of {ATTEMPT_LIMIT}</span>}
           {!picked && item && <span><b>Why now</b>{item.why}</span>}
         </div>
-        {contact.lastNote && <p className="dl-lastnote">{contact.lastNote}</p>}
+        {(() => {
+          const note = contact.lastNote ?? "";
+          if (contact.lastTouchOutcome === "gatekeeper" || /Gatekeeper answered/i.test(note)) {
+            const grab = (k: string) => note.match(new RegExp(k + ":\\s*([^.\\n]+)", "i"))?.[1]?.trim() ?? "";
+            const who = grab("Gatekeeper answered"), ask = grab("Ask for") || grab("Name"), direct = grab("Direct line"), best = grab("Best time") || grab("Best time to reach the owner");
+            return <div className="dl-gk">
+              <div><b>Gatekeeper last time{who ? `: ${who}` : ""}.</b> {ask ? <>Ask for <b>{ask}</b>{best ? <>, best {best.replace(/^(at|around)\s+/i, "")}</> : ""}.</> : best ? <>Best time: {best}.</> : "Ask for the owner by name."}</div>
+              {direct && <button type="button" className="u-btn u-btn-light" onClick={() => dial(direct)}>Call direct line {direct}</button>}
+            </div>;
+          }
+          return note ? <p className="dl-lastnote">{note}</p> : null;
+        })()}
 
         <div className="dl-brief">
           {audit === undefined ? <p className="u-note">Loading research…</p> : brief ? <>
@@ -384,8 +395,12 @@ export default function CallModePage() {
         <h3 id="dl-dialog-title">{dialog === "meeting" ? `Book a meeting with ${who}` : dialog === "gatekeeper" ? "Who picked up?" : dialog === "info" ? `Send ${who} info` : `When should you call ${who} back?`}</h3>
         <div style={{ display: "grid", gap: 12 }}>
           {dialog === "gatekeeper" ? <>
-            <label className="u-lab">Their name (optional)<input className="u-field" value={gk.name} onChange={e => setGk({ ...gk, name: e.target.value })} placeholder="Lisa at the front desk" autoFocus /></label>
-            <label className="u-lab">Best time to reach the owner (optional)<input className="u-field" value={gk.best} onChange={e => setGk({ ...gk, best: e.target.value })} placeholder="Before 8am" /></label>
+            <label className="u-lab">Who picked up<input className="u-field" value={gk.name} onChange={e => setGk({ ...gk, name: e.target.value })} placeholder="Lisa at the front desk" autoFocus /></label>
+            <label className="u-lab">Who to ask for next time<input className="u-field" value={gk.owner} onChange={e => setGk({ ...gk, owner: e.target.value })} placeholder="Mark, the owner" /></label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <label className="u-lab">Their cell or direct line<input className="u-field" type="tel" value={gk.direct} onChange={e => setGk({ ...gk, direct: e.target.value })} placeholder="If they gave it" /></label>
+              <label className="u-lab">Best time to catch them<input className="u-field" value={gk.best} onChange={e => setGk({ ...gk, best: e.target.value })} placeholder="Before 8am" /></label>
+            </div>
           </> : dialog === "info" ? <>
             <label className="u-lab">Send it by<select className="u-field" value={info.channel} onChange={e => setInfo({ ...info, channel: e.target.value as "text" | "dm" | "email" })}><option value="text">Text</option><option value="dm">Facebook DM</option><option value="email">Email</option></select></label>
             <label className="u-lab">Their problem, starting with “you” (optional)<input className="u-field" value={info.pain} onChange={e => setInfo({ ...info, pain: e.target.value })} placeholder="you miss calls when the crew's out" autoFocus /></label>
@@ -397,12 +412,12 @@ export default function CallModePage() {
             </>}
           </div>}
         </div>
-        <p className="u-note" style={{ marginTop: 14, lineHeight: 1.55 }}>{dialog === "meeting" ? "Adds it to your calendar, logs Meeting booked and moves any open deal forward. Send the invite yourself." : dialog === "gatekeeper" ? "Saves who you talked to and brings them back tomorrow with the name and best time." : dialog === "info" ? "Logs Send info and writes a message for you to send from your phone. They come back tomorrow for a follow-up." : "Logs Callback requested and puts them back in your list that day."}</p>
+        <p className="u-note" style={{ marginTop: 14, lineHeight: 1.55 }}>{dialog === "meeting" ? "Adds it to your calendar, logs Meeting booked and moves any open deal forward. Send the invite yourself." : dialog === "gatekeeper" ? "Next time they come up, Call mode tells you who to ask for and when, and lets you dial the direct line instead of the front desk." : dialog === "info" ? "Logs Send info and writes a message for you to send from your phone. They come back tomorrow for a follow-up." : "Logs Callback requested and puts them back in your list that day."}</p>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18 }}>
           <button type="button" className="u-btn" onClick={() => setDialog(null)}>Cancel</button>
           <button type="button" className="u-btn u-btn-light" disabled={busy || ((dialog === "meeting" || dialog === "callback") && !when.date)} onClick={() => {
             if (dialog === "meeting") void bookMeeting();
-            else if (dialog === "gatekeeper") { setDialog(null); void log("gatekeeper", {}, ["Gatekeeper answered", gk.name && `Name: ${gk.name.trim()}`, gk.best && `Best time to reach the owner: ${gk.best.trim()}`].filter(Boolean).join(". ") + "."); }
+            else if (dialog === "gatekeeper") { setDialog(null); void log("gatekeeper", {}, [gk.name.trim() ? `Gatekeeper answered: ${gk.name.trim()}` : "Gatekeeper answered", gk.owner.trim() && `Ask for: ${gk.owner.trim()}`, gk.direct.trim() && `Direct line: ${gk.direct.trim()}`, gk.best.trim() && `Best time: ${gk.best.trim()}`].filter(Boolean).join(". ") + "."); }
             else if (dialog === "info") { setDialog(null); void log("send_info", {}, `Asked for info by ${CHANNEL_LABEL[info.channel].toLowerCase()}.${info.pain.trim() ? ` Their problem: ${info.pain.trim()}` : ""}`); }
             else { setDialog(null); void log("callback_requested", { followUpDate: when.date }); }
           }}>{busy ? "Saving…" : dialog === "meeting" ? "Book meeting" : dialog === "gatekeeper" ? "Save" : dialog === "info" ? "Log and write the message" : "Set callback"}</button>

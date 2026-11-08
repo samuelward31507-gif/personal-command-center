@@ -58,8 +58,8 @@ const fin = readFileSync("app/api/finance/route.ts", "utf8");
 ok(() => assert.match(fin, /stage NOT IN \('won','lost','nurture'\)/, "open pipeline excludes won, lost and nurture"));
 ok(() => assert.match(fin, /dueNext30/));
 const finUi = readFileSync("app/crm/finance/page.tsx", "utf8");
-ok(() => assert.match(finUi, /Record payment received/, "payments are recorded manually, never verified automatically"));
-ok(() => assert.match(finUi, /OPEN PIPELINE/));
+ok(() => assert.match(finUi, /Mark paid/, "payments are recorded manually, never verified automatically"));
+ok(() => assert.match(finUi, /Coming from the pipeline/));
 
 const mig19 = readFileSync("db/migrations/0019_project_tier_service_types.sql", "utf8");
 ok(() => assert.match(mig19, /'tier1_speed_to_lead','tier2_revenue_system'/, "projects accept tier service types (handoff of a tier deal failed without this)"));

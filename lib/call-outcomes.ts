@@ -11,8 +11,8 @@ export const OUTCOME_LABELS: Record<CallOutcome, string> = {
   no_answer: "No answer",
   voicemail: "Left voicemail",
   connected: "Connected",
-  callback_requested: "Call back",
-  interested: "Interested",
+  callback_requested: "Busy, call back",
+  interested: "Interested, send info",
   meeting_booked: "Meeting booked",
   not_a_fit: "Not a fit",
   wrong_contact: "Wrong contact",
@@ -26,7 +26,7 @@ export const OUTCOME_LABELS: Record<CallOutcome, string> = {
 /** Call mode button rows. Connected and Wrong contact stay valid for older screens but aren't offered here. */
 export const CALL_MODE_GROUPS: { label: string; outcomes: CallOutcome[] }[] = [
   { label: "Didn't reach the owner", outcomes: ["no_answer", "voicemail", "gatekeeper", "wrong_number"] },
-  { label: "Talked to the owner", outcomes: ["meeting_booked", "send_info", "callback_requested", "interested", "not_interested", "not_a_fit"] },
+  { label: "Talked to the owner", outcomes: ["meeting_booked", "interested", "callback_requested", "not_interested", "not_a_fit"] },
   { label: "Remove", outcomes: ["do_not_contact"] },
 ];
 

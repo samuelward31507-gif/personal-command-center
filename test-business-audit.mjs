@@ -121,7 +121,7 @@ ok(() => assert.match(artifactsApi, /r\.contact_id = \$\{contactFilter/, "artifa
 ok(() => assert.match(artifactsApi, /WHERE r\.owner_id = \$\{user\.id\}/, "contact filter stays owner-scoped"));
 const contactsUi = readFileSync("app/crm/page.tsx", "utf8");
 ok(() => assert.match(contactsUi, /type=audit_prep&contactId=/, "contact detail loads its audits"));
-ok(() => assert.match(contactsUi, /Latest audit/, "contact detail shows latest audit"));
+ok(() => assert.match(contactsUi, /reportSection\(latestAudit\.content,"Verdict"\)/, "contact detail shows the latest audit verdict"));
 
 const reportUi = readFileSync("app/crm/audit/audit-report.tsx", "utf8");
 ok(() => assert.match(readFileSync("app/crm/audit/page.tsx", "utf8"), /<AuditReport audit=\{audit\} \/>/, "results use the structured report view"));

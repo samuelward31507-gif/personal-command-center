@@ -10,8 +10,8 @@ export type TextContext = {
   tasks?: { title: string; due: string }[]; closed?: boolean;
 };
 
-const box: CSSProperties = { marginTop: 12, padding: 14, border: "1px solid #34343b", borderRadius: 12, background: "#141414" };
-const field: CSSProperties = { width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 8, border: "1px solid #34343b", background: "#1a1a1a", color: "#f4f4f5", font: "inherit", fontSize: 14, lineHeight: 1.45, resize: "vertical" };
+const box: CSSProperties = { marginTop: 12, padding: 16, border: "1px solid var(--u-line, #2c2a27)", borderRadius: 14, background: "var(--u-sheet, #1a1918)" };
+const field: CSSProperties = { width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--u-line, #2c2a27)", background: "var(--u-bg, #131211)", color: "var(--u-text, #f3efe9)", font: "inherit", fontSize: 14, lineHeight: 1.45, resize: "vertical" };
 const btn: CSSProperties = { justifyContent: "center", fontSize: 13, padding: "9px 12px" };
 const warn: CSSProperties = { margin: "8px 0 0", fontSize: 12.5, color: "#fbbf24" };
 

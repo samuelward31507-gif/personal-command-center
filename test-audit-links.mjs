@@ -22,5 +22,5 @@ ok(() => assert.match(cronRoute, /logRun\(sql, "pre-audit", "cron", "unauthorize
 ok(() => assert.match(readFileSync("app/api/pre-audit/route.ts", "utf8"), /if \(!user\) return fail\("Unauthorized", 401\)/, "manual run requires sign-in"));
 const prep = readFileSync("app/crm/preparation/page.tsx", "utf8");
 ok(() => assert.match(prep, /proposal:"Proposal"/, "proposal artifacts have a label (no crash)"));
-ok(() => assert.match(prep, /\(types\[a\.type\]\?\?a\.type\)/, "unknown types never crash the list"));
+ok(() => assert.match(prep, /types\[a\.type\]\?\?a\.type/, "unknown types never crash the list"));
 console.log(`Audit link + pre-audit regression checks passed (${n} assertions).`);

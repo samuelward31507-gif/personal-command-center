@@ -227,10 +227,11 @@ test("Meeting booked quick action uses the outcome/activity workflow", () => {
 // --- Agency workflow regression guards ---
 // These source-level checks protect the key founder workflow from accidental
 // regressions. End-to-end authenticated browser testing is still required.
-test("My Day shows the unified server-built queue", () => {
-  // Home redirects to Today, which renders the queue.
+test("Call mode works the unified server-built queue", () => {
+  // Home redirects to the dashboard; Call mode works through the same server-built queue.
   assert.ok(readFileSync("app/page.tsx", "utf8").includes('"/crm/needs-you"'));
-  assert.ok(readFileSync("app/crm/needs-you/page.tsx", "utf8").includes("<MyDayQueue"));
+  assert.ok(readFileSync("app/crm/needs-you/page.tsx", "utf8").includes("<Dashboard"));
+  assert.ok(readFileSync("app/crm/call/page.tsx", "utf8").includes('fetch("/api/my-day?"'));
   const queue = readFileSync("app/my-day-queue.tsx", "utf8");
   assert.ok(queue.includes('fetch("/api/my-day?"'));
 });
@@ -281,9 +282,9 @@ test("Cal.ai booking sync handles nested payloads and reschedules without leavin
   assert.ok(migration.includes("cal_ai_webhook_events"));
 });
 
-test("Needs You uses the shared server queue with sales focus and meeting prep", () => {
-  const page = readFileSync("app/crm/needs-you/page.tsx", "utf8");
-  assert.ok(page.includes("<MyDayQueue showFilters"), "Needs You must render the shared queue, not a parallel one");
+test("The shared server queue keeps sales focus and meeting prep", () => {
+  // The dashboard replaced the queue page; Call mode reads the same server-built queue.
+  assert.ok(readFileSync("app/crm/call/page.tsx", "utf8").includes("/api/my-day?"), "Call mode uses the shared queue, not a parallel one");
   const queue = readFileSync("app/my-day-queue.tsx", "utf8");
   assert.ok(queue.includes('["sales", "Sales focus"'), "Sales focus filter is preserved");
   const lib = readFileSync("lib/my-day.ts", "utf8");

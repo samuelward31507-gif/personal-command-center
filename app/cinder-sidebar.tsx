@@ -30,7 +30,6 @@ const secondary = [
   ["reports", "Client reports", "doc", "/crm/reports"],
   ["preparation", "Research", "search", "/crm/preparation"],
   ["practice", "Practice", "mic", "/crm/practice"],
-  ["tasks", "Follow-ups", "check", "/crm/tasks"],
 ] as const;
 const SECONDARY_PATHS = ["/crm/tasks", "/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/client-success", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 

@@ -58,7 +58,7 @@ ok(() => assert.equal(href, "sms:+14045550100?&body=Hey%20Mike%2C%20test%20%26%2
 ok(() => assert.equal(smsHref("+1 404 555 0100", "x"), "sms:+14045550100?&body=x"));
 
 // Other outcomes: answered / meeting booked / not interested → no voicemail text
-for (const o of ["meeting_booked", "not_interested", "interested", "callback_requested"]) ok(() => assert.equal(planFor(o, { now: calledAt, tz: gaTz }).template, null), o);
+for (const o of ["meeting_booked", "not_interested", "callback_requested"]) ok(() => assert.equal(planFor(o, { now: calledAt, tz: gaTz }).template, null), o);
 
 // T-INFO
 const info = infoText({ firstName: "Mike", demoLink: link });
@@ -67,6 +67,7 @@ ok(() => assert.match(info, /More about us: https:\/\/cinderrevenue\.com\n\nEasi
 ok(() => assert.match(infoText({ firstName: "Mike", demoLink: link, slot1: "10am", slot2: "1pm" }), /10am or 1pm tomorrow\?$/));
 const ip = planFor("send_info", { now: calledAt, tz: gaTz });
 ok(() => assert.equal(ip.template, "T-INFO"));
+ok(() => assert.equal(planFor("interested", { now: calledAt, tz: gaTz }).template, "T-INFO", "interested gets the same info text"));
 ok(() => assert.deepEqual(ip.tasks.map(t => t.title), ["Follow up on info (day 1)", "Follow up on info (day 2)", "Follow up on info (day 3)", "Follow up on info (day 7)"]));
 
 // Merge field details

@@ -102,3 +102,5 @@ body .dl-call .dl-nav { display: flex; justify-content: space-between; align-ite
 body .dl-call .dl-dock textarea.u-field { min-height: 38px; height: 38px; padding-top: 9px; }
 body .dl-call .dl-dock textarea.u-field:focus { height: 76px; }
 body .dl-call .dl-dock textarea.u-field { max-width: 100%; min-width: 0; }
+body .dl-call .dl-gk { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); font-size: 14.5px; line-height: 1.5; color: var(--u-soft); }
+body .dl-call .dl-gk b { color: var(--u-text); font-weight: 600; }

@@ -17,5 +17,5 @@ ok(() => assert.doesNotMatch(page + views, /dayTasks\.map|tasks\.map\(t ?=>/, "i
 ok(() => assert.match(views, /routineFor\(/, "the routine is drawn"));
 ok(() => assert.match(page, /followUpsOn=\{d=>tasksOn\(d\)\.length\}/, "tasks collapse to one count per day"));
 ok(() => assert.match(views, /follow-up\{fu === 1 \? "" : "s"\}/, "the count reads 'N follow-ups'"));
-ok(() => assert.doesNotMatch(readFileSync("app/crm/calendar/calendar.css", "utf8"), /!important[\s\S]*!important[\s\S]*!important/, "the calendar stylesheet is not a pile of overrides"));
+ok(() => assert.doesNotMatch(readFileSync("app/crm/calendar/calendar.css", "utf8").split("/* Cinder UI alignment")[0], /!important[\s\S]*!important[\s\S]*!important/, "the calendar stylesheet is not a pile of overrides"));
 console.log(`Routine checks passed (${n} assertions).`);

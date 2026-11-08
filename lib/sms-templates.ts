@@ -145,7 +145,8 @@ export function planFor(outcome: string, ctx: {
     if (blocked) plan.notice = blocked;
     else if (ctx.vmSentAt) plan.notice = `Voicemail text already sent ${ctx.vmSentAt}. Call instead.`;
     else plan.template = "T-VM";
-  } else if (outcome === "send_info") {
+  } else if (outcome === "send_info" || outcome === "interested") {
+    // Interested and Send info get the same info text and follow-up calls.
     for (const d of INFO_FOLLOW_UP_DAYS) plan.tasks.push({ title: `Follow up on info (day ${d})`, due: dueAt(ctx.now, ctx.tz, d) });
     plan.followUp = localDate(plan.tasks[0].due, ctx.tz);
     if (blocked) plan.notice = blocked; else plan.template = "T-INFO";
