@@ -87,7 +87,7 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
     ...meetings.map(r => r.contact_id), ...deals.map(r => r.contact_id), ...prospects.map(r => r.id),
   ].filter(Boolean).map(String))];
   const refs = contactIds.length ? await sql`
-    SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company, c.phone,
+    SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company, c.phone, c.niche,
       la.outcome AS last_outcome, la.occurred_at AS last_at, au.content AS audit
     FROM public.contacts c
     LEFT JOIN LATERAL (SELECT outcome, occurred_at FROM public.contact_activities a
@@ -99,7 +99,7 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
   const byId = new Map(refs.map(r => [String(r.id), {
     id: String(r.id), name: String(r.name || r.company || "Unnamed contact"), company: String(r.company ?? ""),
     phone: String(r.phone ?? ""), lastOutcome: r.last_outcome ? String(r.last_outcome) : null,
-    lastAt: iso(r.last_at), verdict: shortVerdict(r.audit),
+    lastAt: iso(r.last_at), verdict: shortVerdict(r.audit), niche: String(r.niche ?? ""),
   }]));
   const ref = (id: unknown) => (id ? byId.get(String(id)) ?? null : null);
 

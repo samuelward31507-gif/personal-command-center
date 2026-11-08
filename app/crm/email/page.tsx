@@ -76,10 +76,10 @@ export default function EmailPage() {
     if (Date.now() - last < 5 * 60000) return;
     try { localStorage.setItem(SYNC_KEY, String(Date.now())); } catch { /* fine */ }
     void fetch("/api/gmail/sync", { method: "POST" }).then(r => r.json().catch(() => ({}))).then((j: { replies?: number; bounces?: number; error?: string }) => {
-      if (j.error) { setError(j.error); return; }
+      if (j.error) { setError(j.error); void loadGmail(); return; }
       if ((j.replies ?? 0) + (j.bounces ?? 0) > 0) { setNotice([j.replies ? `${j.replies} new repl${j.replies === 1 ? "y" : "ies"}` : "", j.bounces ? `${j.bounces} bounced` : ""].filter(Boolean).join(", ") + ". Their sequences stopped."); void load(); }
     }).catch(() => {});
-  }, [gmail?.connected, load]);
+  }, [gmail?.connected, load, loadGmail]);
 
   // Who's due for each step: never emailed → first email; first email 3+ days ago → follow-up; follow-up 4+ days ago → last try.
   const queues = useMemo(() => {
@@ -132,7 +132,7 @@ export default function EmailPage() {
     try {
       const r = await fetch("/api/gmail/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: current.id, step, subject: filled.subject, body: filled.body }) });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "Couldn't send.");
+      if (!r.ok) { if (r.status === 401) void loadGmail(); throw new Error(j.error || "Couldn't send."); }
       setSent(s => [{ contactId: current.id, step, at: new Date().toISOString() }, ...s]);
       setGmail(g => g && { ...g, sentLast24h: g.sentLast24h + 1 });
       setNotice(`Sent to ${current.company || current.name}.`);
@@ -176,6 +176,7 @@ export default function EmailPage() {
       }
     }
     setRun(null);
+    void loadGmail();
     setNotice(`Sent ${done} of ${batch.length}.${stopRef.current && done + failed.length < batch.length ? " Stopped early." : ""}`);
     if (failed.length) setError(`Didn't send: ${failed.join("; ")}`);
   }

@@ -34,7 +34,13 @@ export async function POST() {
 
   let token: string;
   try { token = await accessToken(decryptToken(acc.refresh_token_enc)); }
-  catch (e) { return Response.json({ error: e instanceof Error ? e.message : "Couldn't reach Gmail.", connected: true }, { status: 502 }); }
+  catch (e) {
+    if (e instanceof Error && /revoked/.test(e.message)) {
+      await sql`DELETE FROM public.gmail_accounts WHERE owner_id = ${o}`;
+      return Response.json({ error: "Gmail disconnected (Google expires access every 7 days for now). Click Connect Gmail to turn sending and reply tracking back on.", connected: false }, { status: 401 });
+    }
+    return Response.json({ error: e instanceof Error ? e.message : "Couldn't reach Gmail.", connected: true }, { status: 502 });
+  }
 
   let replies = 0, bounces = 0, checked = 0;
   for (const t of todo) {

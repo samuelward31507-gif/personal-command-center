@@ -66,6 +66,12 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, from: acc.email });
   } catch (e) {
     console.error("Gmail send failed", e instanceof Error ? e.message : e);
+    // Google expired or revoked access (every 7 days while the Google app is in Testing). Forget the dead
+    // token so the Email page shows Connect Gmail again instead of failing on every send.
+    if (e instanceof Error && /revoked/.test(e.message)) {
+      await sql`DELETE FROM public.gmail_accounts WHERE owner_id = ${o}`;
+      return fail("Gmail disconnected (Google expires access every 7 days for now). Click Connect Gmail on the Email page, then send again.", 401);
+    }
     return fail(e instanceof Error && /revoked|reach Gmail/.test(e.message) ? e.message : "Couldn't send through Gmail.", 502);
   }
 }
