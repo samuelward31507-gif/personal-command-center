@@ -155,7 +155,7 @@ function TimeGrid({ days, eventsOn, followUpsOn, onEdit, onNew, onOpenDay, view 
             const isToday = sameDay(d, today);
             const nowTop = minutesFromStart(today) / 60 * HOUR_PX;
             return (
-              <div key={keyOf(d)} className={"cal-tg-col" + (isToday ? " is-today" : "")} onClick={e => {
+              <div key={keyOf(d)} className={"cal-tg-col" + (isToday ? " is-today" : "") + (d.getDay() === 0 || d.getDay() === 6 ? " is-weekend" : "")} onClick={e => {
                 if (e.target !== e.currentTarget) return;
                 const rect = e.currentTarget.getBoundingClientRect();
                 const mins = Math.max(0, Math.floor((e.clientY - rect.top) / HOUR_PX * 2) * 30);

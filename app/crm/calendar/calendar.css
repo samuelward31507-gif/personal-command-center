@@ -189,3 +189,30 @@
 .calendar-page .cal-tg-line { border-top-color: #222; }
 .calendar-page .cal-block { box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.4); }
 .calendar-page .cal-block-title { font-size: 12.5px; }
+
+/* Separate days: every day is its own rounded column with a gap between days. */
+.calendar-page .cal-tg-head, .calendar-page .cal-tg-allday, .calendar-page .cal-tg-body { column-gap: 6px; padding: 0 10px 0 0; }
+.calendar-page .cal-tg-head { border-bottom: 0; padding-top: 8px; padding-bottom: 6px; }
+.calendar-page .cal-tg-dayhead { border-left: 0; border-radius: 10px; background: #1a1a1a; padding: 9px 0; }
+.calendar-page .cal-tg-dayhead:hover { background: #202020; }
+.calendar-page .cal-tg-dayhead.is-today { background: #232323; box-shadow: inset 0 0 0 1px #3a3a3a; }
+.calendar-page .cal-tg-allday { border-bottom: 0; padding-bottom: 6px; }
+.calendar-page .cal-tg-allday-col { border-left: 0; border-radius: 8px; background: #191919; min-height: 30px; }
+.calendar-page .cal-tg-scroll { padding-bottom: 10px; }
+.calendar-page .cal-tg-col { border-left: 0; border-radius: 12px; background: #1a1a1a; overflow: hidden; }
+.calendar-page .cal-tg-col.is-weekend { background: #171717; }
+.calendar-page .cal-tg-col.is-today { background: #1e1e1e; box-shadow: inset 0 0 0 1px #343434; }
+.calendar-page .cal-tg-line { border-top-color: #232323; }
+.calendar-page .cal-band { left: 5px; right: 5px; border-top: 0; border-radius: 8px; padding: 7px 9px; }
+.calendar-page .cal-band.tone-green { background: rgba(255,255,255,.055); }
+.calendar-page .cal-band.tone-amber, .calendar-page .cal-band.tone-violet { background: rgba(255,255,255,.035); }
+.calendar-page .cal-band.tone-gray { background: rgba(255,255,255,.025); }
+.calendar-page .cal-now { left: 0; }
+.calendar-page .cal-now::before { left: -4px; }
+
+.calendar-page .cal-month-head { column-gap: 6px; padding: 8px 10px 0; border-bottom: 0; }
+.calendar-page .cal-month-body { gap: 6px; padding: 6px 10px 10px; }
+.calendar-page .cal-cell { border: 0; border-radius: 10px; background: #1a1a1a; padding: 8px; }
+.calendar-page .cal-cell.is-outside { background: #161616; }
+.calendar-page .cal-cell.is-today { background: #1f1f1f; box-shadow: inset 0 0 0 1px #3a3a3a; }
+.calendar-page .cal-shell { background: #151515; }
