@@ -144,7 +144,14 @@ function TimeGrid({ days, eventsOn, followUpsOn, onEdit, onNew, onOpenDay, view 
             {hours.map(h => <div key={h} className="cal-tg-hour" style={{ top: (h - START_H) * HOUR_PX }}>{h === START_H ? "" : `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`}</div>)}
           </div>
           {days.map(d => {
-            const items = layout(itemsFor(d, eventsOn(d), false).filter(it => it.end.getHours() * 60 + it.end.getMinutes() > START_H * 60 || it.end.getDate() !== it.start.getDate()));
+            const visible = itemsFor(d, eventsOn(d), false).filter(it => it.end.getHours() * 60 + it.end.getMinutes() > START_H * 60 || it.end.getDate() !== it.start.getDate());
+            const routineItems = visible.filter(it => it.routine);
+            // Routine blocks are the backdrop; real events lay out among themselves and sit on top,
+            // inset from the left when they cover a routine block so both stay readable.
+            const items = [
+              ...layout(routineItems).map(it => ({ ...it, inset: 0 })),
+              ...layout(visible.filter(it => !it.routine)).map(it => ({ ...it, inset: routineItems.some(r => r.start < it.end && r.end > it.start) ? 18 : 0 })),
+            ];
             const isToday = sameDay(d, today);
             const nowTop = minutesFromStart(today) / 60 * HOUR_PX;
             return (
@@ -159,8 +166,8 @@ function TimeGrid({ days, eventsOn, followUpsOn, onEdit, onNew, onOpenDay, view 
                   const startM = Math.max(0, minutesFromStart(it.start));
                   const endM = sameDay(it.end, d) ? minutesFromStart(it.end) : (END_H - START_H) * 60;
                   const top = startM / 60 * HOUR_PX + 1, height = Math.max(20, (endM - startM) / 60 * HOUR_PX - 3);
-                  const width = 100 / it.lanes;
-                  const style = { top, height, left: `calc(${it.lane * width}% + 3px)`, width: `calc(${width}% - 7px)` };
+                  const width = (100 - it.inset) / it.lanes;
+                  const style = { top, height, left: `calc(${it.inset + it.lane * width}% + 3px)`, width: `calc(${width}% - 7px)` };
                   const compact = height < 40;
                   const body = <><span className="cal-block-title">{it.title}</span>{!compact && <span className="cal-block-time">{shortTime(it.start)}–{shortTime(it.end)}{it.event && it.sub ? " · " + it.sub : ""}</span>}</>;
                   return it.event

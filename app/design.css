@@ -54,7 +54,7 @@ html body .cx-profile-copy small { font-size: 12px; color: var(--d-faint) !impor
 /* ---------- No breadcrumb bar on desktop ---------- */
 @media (min-width: 761px) {
   html body .topbar, html body .crm-shell-main > .topbar { display: none !important; }
-  html body .crm-shell-main > main:not(.calendar-page):not(.pipeline-page):not(.cm-page):not(.ask-root) { padding-top: 56px !important; }
+  html body .crm-shell-main > main:not(.calendar-page):not(:has(.calendar-page)):not(.pipeline-page):not(.cm-page):not(.ask-root) { padding-top: 56px !important; }
 }
 
 /* ---------- Home ---------- */

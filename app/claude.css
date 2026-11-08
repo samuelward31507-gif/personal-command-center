@@ -43,12 +43,12 @@ html body .main-panel main :is(.stat-label, [class*="stat"] > span:first-child, 
 }
 
 /* Buttons: rounded, quiet; primary is the light pill. */
-html body .main-panel main button, html body .main-panel main .btn, html body .main-panel main a[data-variant] { border-radius: 10px !important; }
+html body .main-panel main button:not(.calendar-page *), html body .main-panel main .btn, html body .main-panel main a[data-variant] { border-radius: 10px !important; }
 html body .main-panel main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) { background: #1a1a1a !important; border-color: #2e2e2e !important; color: #efefef !important; }
 html body .main-panel main :is(input, select, textarea):focus { border-color: #797979 !important; box-shadow: 0 0 0 3px rgba(240, 238, 230, .06) !important; }
 
 /* Breathing room. */
-html body .crm-shell-main > main:not(.calendar-page):not(.pipeline-page):not(.cm-page):not(.ask-root) { max-width: 1040px !important; padding-top: 36px !important; }
+html body .crm-shell-main > main:not(.calendar-page):not(:has(.calendar-page)):not(.pipeline-page):not(.cm-page):not(.ask-root) { max-width: 1040px !important; padding-top: 36px !important; }
 
 /* Scrollbars that don't shout. */
 html body ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -68,7 +68,7 @@ html body { font-family: var(--st-font) !important; font-size: 14px; line-height
 html body :is(button, input, select, textarea) { font-family: inherit; }
 
 /* Page titles and greetings */
-html body main h1, html body main:not(.calendar-page) h1, html body .calendar-page .calendar-header h1,
+html body main h1, html body main:not(.calendar-page):not(:has(.calendar-page)) h1, html body .calendar-page .calendar-header h1,
 html body .main-panel main h1, html body main h1.td-title, html body main h1.sb-title, html body main .cm-title,
 html body .main-panel main h1.td-title, html body .main-panel main h1.sb-title, html body .main-panel main .cm-title {
   font-family: var(--st-font) !important; font-size: clamp(24px, 2.1vw, 28px) !important; font-weight: 600 !important;
@@ -80,8 +80,8 @@ html body .ask-root .ask-hello {
 /* Subtitles */
 html body .page-subtitle, html body main h1 + p, html body .main-panel main h1 + p { font-size: 14.5px !important; line-height: 1.55 !important; color: #ababab !important; letter-spacing: -0.004em; }
 /* Section and card headings */
-html body main:not(.calendar-page) h2, html body .main-panel main h2 { font-family: var(--st-font) !important; font-size: 15px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: #efefef !important; }
-html body main:not(.calendar-page) h3, html body .main-panel main h3 { font-family: var(--st-font) !important; font-size: 13.5px !important; font-weight: 600 !important; letter-spacing: -0.006em !important; color: #e6e6e6 !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h2, html body .main-panel main h2 { font-family: var(--st-font) !important; font-size: 15px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: #efefef !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h3, html body .main-panel main h3 { font-family: var(--st-font) !important; font-size: 13.5px !important; font-weight: 600 !important; letter-spacing: -0.006em !important; color: #e6e6e6 !important; }
 /* Big numbers: tabular figures so columns line up */
 html body main :is(strong, b, td, .sb-num, .sb-goal-num, .ow-amt, [class*="amount"], [class*="money"], [class*="metric"] strong, .fin-metrics strong) { font-variant-numeric: tabular-nums; }
 html body .fin-metrics strong, html body .sb-num, html body .hb-tile strong { letter-spacing: -0.02em; font-weight: 600; }

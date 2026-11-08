@@ -23,7 +23,7 @@ html body main p { line-height: 1.6; }
 
 /* Page titles: one size everywhere (Calendar included). */
 html body main h1,
-html body main:not(.calendar-page) h1,
+html body main:not(.calendar-page):not(:has(.calendar-page)) h1,
 html body .calendar-page .calendar-header h1,
 html body main h1.td-title, html body main h1.sb-title, html body main .cm-title {
   font-family: var(--pl-display) !important;
@@ -60,17 +60,17 @@ html body main p:has(+ h1), html body main div:has(+ h1):not(:has(*)) {
 }
 
 /* Section headings */
-html body main:not(.calendar-page) h2 { font-size: 16.5px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: #f1f1f1 !important; }
-html body main:not(.calendar-page) h3 { font-size: 14.5px !important; font-weight: 600 !important; color: #ececec !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h2 { font-size: 16.5px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: #f1f1f1 !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h3 { font-size: 14.5px !important; font-weight: 600 !important; color: #ececec !important; }
 
 /* ---------- Page frame ---------- */
 /* Same width and breathing room on every page; wide boards (Calendar, Pipeline) keep their width. */
-html body .crm-shell-main > main:not(.calendar-page):not(.pipeline-page):not(.cm-page):not(.ask-root) {
+html body .crm-shell-main > main:not(.calendar-page):not(:has(.calendar-page)):not(.pipeline-page):not(.cm-page):not(.ask-root) {
   width: 100% !important; max-width: 1120px !important; margin-left: auto !important; margin-right: auto !important;
   padding: 40px 40px 80px !important; box-sizing: border-box !important; background: transparent !important;
 }
 @media (max-width: 760px) {
-  html body .crm-shell-main > main:not(.calendar-page):not(.ask-root) { padding: 24px 16px 60px !important; }
+  html body .crm-shell-main > main:not(.calendar-page):not(:has(.calendar-page)):not(.ask-root) { padding: 24px 16px 60px !important; }
 }
 
 /* ---------- Top bar ---------- */

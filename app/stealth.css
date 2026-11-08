@@ -53,18 +53,18 @@ html body .topbar .quiet-button:hover { color: var(--st-text) !important; border
 @media (max-width: 760px) { html body .topbar, html body .crm-shell-main > .topbar { padding-left: 60px !important; } }
 
 /* ---------- Page headers ---------- */
-html body main:not(.calendar-page) h1 {
+html body main:not(.calendar-page):not(:has(.calendar-page)) h1 {
   font-family: var(--st-font) !important; font-size: clamp(26px, 2.4vw, 30px) !important; font-weight: 600 !important;
   letter-spacing: -0.032em !important; line-height: 1.15 !important; color: #f4f4f4 !important;
 }
 /* Accent words and trailing dots in headings go quiet: stealth, not orange. */
-html body main:not(.calendar-page) h1 span, html body main:not(.calendar-page) h1 em { color: inherit !important; font-style: normal; }
-html body main:not(.calendar-page) h1 .heading-period, html body main:not(.calendar-page) h1 .brand-period { color: #4a4a4a !important; }
-html body main:not(.calendar-page) h2 { font-size: 16px !important; font-weight: 600 !important; letter-spacing: -0.015em !important; color: #f0f0f0 !important; }
-html body main:not(.calendar-page) h3 { font-size: 14.5px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; color: #efefef !important; }
-html body main:not(.calendar-page) p:not([role="alert"]):not([role="status"]):not([class*="err"]):not([class*="error"]):not([class*="danger"]) { color: var(--st-soft) !important; line-height: 1.6; }
-html body main:not(.calendar-page) small { color: var(--st-muted) !important; }
-html body .page-subtitle, html body main:not(.calendar-page) h1 + p { font-size: 14.5px !important; color: var(--st-soft) !important; max-width: 720px; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h1 span, html body main:not(.calendar-page):not(:has(.calendar-page)) h1 em { color: inherit !important; font-style: normal; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h1 .heading-period, html body main:not(.calendar-page):not(:has(.calendar-page)) h1 .brand-period { color: #4a4a4a !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h2 { font-size: 16px !important; font-weight: 600 !important; letter-spacing: -0.015em !important; color: #f0f0f0 !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h3 { font-size: 14.5px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; color: #efefef !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) p:not([role="alert"]):not([role="status"]):not([class*="err"]):not([class*="error"]):not([class*="danger"]) { color: var(--st-soft) !important; line-height: 1.6; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) small { color: var(--st-muted) !important; }
+html body .page-subtitle, html body main:not(.calendar-page):not(:has(.calendar-page)) h1 + p { font-size: 14.5px !important; color: var(--st-soft) !important; max-width: 720px; }
 /* Eyebrows ("CINDER / SALES") */
 html body .eyebrow, html body .crm-eyebrow, html body .projects-eyebrow, html body .tasks-eyebrow, html body .section-kicker,
 html body [class$="-eyebrow"]:not(.calendar-eyebrow) {
@@ -73,15 +73,15 @@ html body [class$="-eyebrow"]:not(.calendar-eyebrow) {
 html body .eyebrow-line { background: #3a3a3a !important; }
 
 /* ---------- Surfaces ---------- */
-html body main:not(.calendar-page) :is(.overview-card, .surface-panel, .route-panel, .schedule-panel, .notes-panel, .attention-banner,
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.overview-card, .surface-panel, .route-panel, .schedule-panel, .notes-panel, .attention-banner,
   .needs-list, .snapshot-card, .stat-card, .table-wrap, .empty-state, [class*="card"], [class*="Card"], [class*="panel"]:not(.main-panel),
   [class*="Panel"], [class*="surface"], [class*="stat"]:not([class*="status"]):not([class*="state"]), [class*="widget"]) {
   background-color: var(--st-surface) !important; background-image: none !important;
   border-color: var(--st-line) !important; box-shadow: none !important; color: var(--st-text) !important;
 }
-html body main:not(.calendar-page) :is(.surface-panel, .schedule-panel, .notes-panel, .route-panel, .overview-card, .table-wrap, .crm-detail-section) { border-radius: var(--st-radius) !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.surface-panel, .schedule-panel, .notes-panel, .route-panel, .overview-card, .table-wrap, .crm-detail-section) { border-radius: var(--st-radius) !important; }
 /* Anything with a bright leftover border */
-html body main:not(.calendar-page) [style*="border: 1px solid #fff"], html body main:not(.calendar-page) [style*="border:1px solid #fff"] { border-color: var(--st-line) !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) [style*="border: 1px solid #fff"], html body main:not(.calendar-page):not(:has(.calendar-page)) [style*="border:1px solid #fff"] { border-color: var(--st-line) !important; }
 
 /* Popovers, menus, dropdowns, dialogs sit one step above */
 html body :is([role="dialog"], .modal, .crm-modal, .calendar-modal, [class*="popover"], [class*="Popover"], [class*="dropdown"], [class*="Dropdown"], [class*="menu"]:not(.cx-side *), [class*="Menu"]) {
@@ -91,57 +91,57 @@ html body :is(.crm-modal, .calendar-modal, [role="dialog"]) { border-radius: 16p
 html body :is(.crm-modal-backdrop, .calendar-backdrop) { background: rgba(0, 0, 0, .66) !important; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
 
 /* Stat tiles: quiet label, confident number */
-html body main:not(.calendar-page) :is(.summary-label, .stat-label, .metric-label, .overview-card small:first-child) { letter-spacing: .06em !important; color: var(--st-muted) !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.summary-label, .stat-label, .metric-label, .overview-card small:first-child) { letter-spacing: .06em !important; color: var(--st-muted) !important; }
 
 /* ---------- Buttons ---------- */
-html body main:not(.calendar-page) button:not([data-variant="primary"]):not(.cx-side *):not([class*="ask-"]):not(.check-button):not([style*="background"]),
-html body main:not(.calendar-page) a.crm-btn, html body main:not(.calendar-page) a.quiet-button {
+html body main:not(.calendar-page):not(:has(.calendar-page)) button:not([data-variant="primary"]):not(.cx-side *):not([class*="ask-"]):not(.check-button):not([style*="background"]),
+html body main:not(.calendar-page):not(:has(.calendar-page)) a.crm-btn, html body main:not(.calendar-page):not(:has(.calendar-page)) a.quiet-button {
   border-radius: 8px !important; font-family: var(--st-font) !important; font-weight: 500 !important; letter-spacing: -0.005em;
   background-color: var(--st-raised) !important; border-color: var(--st-line-2) !important; color: #dcdcdc !important;
   transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
-html body main:not(.calendar-page) button:not([data-variant="primary"]):not(.cx-side *):not([class*="ask-"]):not(.check-button):not([style*="background"]):hover:not(:disabled) {
+html body main:not(.calendar-page):not(:has(.calendar-page)) button:not([data-variant="primary"]):not(.cx-side *):not([class*="ask-"]):not(.check-button):not([style*="background"]):hover:not(:disabled) {
   background-color: #2a2a2a !important; border-color: #555555 !important; color: #fafafa !important;
 }
 /* Primary actions: light pill on dark, like Claude/ChatGPT */
-html body main:not(.calendar-page) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]) {
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]) {
   background-color: #efefef !important; border-color: #efefef !important; color: #1a1a1a !important; font-weight: 600 !important;
 }
-html body main:not(.calendar-page) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]):hover:not(:disabled) {
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]):hover:not(:disabled) {
   background-color: #ffffff !important; border-color: #ffffff !important; color: #000 !important;
 }
-html body main:not(.calendar-page) :is(.danger, .project-remove):is(button) { color: #f0a3a3 !important; }
-html body main:not(.calendar-page) button:disabled { opacity: .55; }
-html body main:not(.calendar-page) .text-action { background: transparent !important; border-color: transparent !important; color: var(--st-soft) !important; }
-html body main:not(.calendar-page) .text-action:hover { color: var(--st-text) !important; background: var(--st-raised) !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.danger, .project-remove):is(button) { color: #f0a3a3 !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) button:disabled { opacity: .55; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) .text-action { background: transparent !important; border-color: transparent !important; color: var(--st-soft) !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) .text-action:hover { color: var(--st-text) !important; background: var(--st-raised) !important; }
 
 /* ---------- Inputs ---------- */
-html body main:not(.calendar-page) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not([class*="ask-"]):not(.ask-composer *):not([class*="search"] > *) {
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea):not([class*="ask-"]):not(.ask-composer *):not([class*="search"] > *) {
   background-color: var(--st-bg-2) !important; border: 1px solid var(--st-line-2) !important; border-radius: 9px !important;
   color: var(--st-text) !important; font-family: var(--st-font) !important; font-size: 14px; box-shadow: none !important;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
-html body main:not(.calendar-page) :is(input, select, textarea):not(.ask-composer *):focus,
-html body main:not(.calendar-page) :is(input, select, textarea):not(.ask-composer *):focus-visible {
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(input, select, textarea):not(.ask-composer *):focus,
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(input, select, textarea):not(.ask-composer *):focus-visible {
   outline: none !important; border-color: #555555 !important; box-shadow: 0 0 0 3px rgba(214, 169, 140, .10) !important;
 }
-html body main:not(.calendar-page) :is(input, textarea)::placeholder { color: #5c5c5c !important; }
-html body main:not(.calendar-page) label { color: var(--st-soft); }
-html body main:not(.calendar-page) input[type="checkbox"], html body main:not(.calendar-page) input[type="radio"] { accent-color: var(--st-accent); }
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(input, textarea)::placeholder { color: #5c5c5c !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) label { color: var(--st-soft); }
+html body main:not(.calendar-page):not(:has(.calendar-page)) input[type="checkbox"], html body main:not(.calendar-page):not(:has(.calendar-page)) input[type="radio"] { accent-color: var(--st-accent); }
 
 /* ---------- Tables & lists ---------- */
-html body main:not(.calendar-page) table { border-collapse: collapse; }
-html body main:not(.calendar-page) th {
+html body main:not(.calendar-page):not(:has(.calendar-page)) table { border-collapse: collapse; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) th {
   font-size: 12px !important; font-weight: 550 !important; letter-spacing: 0 !important; text-transform: none !important;
   color: var(--st-muted) !important; background: transparent !important; border-color: var(--st-line) !important;
 }
-html body main:not(.calendar-page) td { border-color: var(--st-line) !important; color: #d6d6d6; }
-html body main:not(.calendar-page) tr:hover td { background: #141414; }
-html body main:not(.calendar-page) hr { border-color: var(--st-line) !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) td { border-color: var(--st-line) !important; color: #d6d6d6; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) tr:hover td { background: #141414; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) hr { border-color: var(--st-line) !important; }
 
 /* ---------- Links ---------- */
-html body main:not(.calendar-page) a:not([class]):not(.cx-side *) { color: #e6e6e6; text-decoration: underline; text-decoration-color: #3f3f3f; text-underline-offset: 3px; }
-html body main:not(.calendar-page) a:not([class]):hover { text-decoration-color: var(--st-accent); }
+html body main:not(.calendar-page):not(:has(.calendar-page)) a:not([class]):not(.cx-side *) { color: #e6e6e6; text-decoration: underline; text-decoration-color: #3f3f3f; text-underline-offset: 3px; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) a:not([class]):hover { text-decoration-color: var(--st-accent); }
 
 /* ---------- Scrollbars ---------- */
 html { scrollbar-color: #3a3a3a transparent; }
@@ -154,18 +154,18 @@ html body ::-webkit-scrollbar-track { background: transparent; }
 html body :is(a, button):focus-visible { outline: 2px solid rgba(214, 169, 140, .55) !important; outline-offset: 2px; }
 
 /* ---------- Structural borders: no light leftovers ---------- */
-html body main:not(.calendar-page) :is(section, article, form, fieldset, header, footer, aside, details, table,
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(section, article, form, fieldset, header, footer, aside, details, table,
   [class*="board"], [class*="section"], [class*="workspace"], [class*="list"], [class*="record"], [class*="row"]):not([style*="border"]):not(.cx-side):not(.cx-side *):not([class*="ask-"]) {
   border-color: var(--st-line) !important;
 }
 
 /* ---------- Search fields: one box, not two ---------- */
-html body main:not(.calendar-page) :is(label, div)[class*="search"]:has(> input) {
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(label, div)[class*="search"]:has(> input) {
   display: flex; align-items: center; gap: 8px; background: var(--st-bg-2) !important; border: 1px solid var(--st-line-2) !important;
   border-radius: 9px !important; padding: 0 10px !important; color: var(--st-muted) !important; transition: border-color .15s, box-shadow .15s;
 }
-html body main:not(.calendar-page) :is(label, div)[class*="search"]:has(> input:focus) { border-color: #555555 !important; box-shadow: 0 0 0 3px rgba(255,255,255,.05) !important; }
-html body main:not(.calendar-page) :is(label, div)[class*="search"] > input {
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(label, div)[class*="search"]:has(> input:focus) { border-color: #555555 !important; box-shadow: 0 0 0 3px rgba(255,255,255,.05) !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(label, div)[class*="search"] > input {
   flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; padding-left: 0 !important; padding-right: 0 !important;
 }
 
@@ -173,7 +173,7 @@ html body main:not(.calendar-page) :is(label, div)[class*="search"] > input {
 html body .topbar-status { background: transparent !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; }
 
 /* ---------- Small chips ---------- */
-html body main:not(.calendar-page) :is(.schedule-category, .date-chip, .crm-import-pill, [class*="-chip"]):not([style*="border"]) {
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.schedule-category, .date-chip, .crm-import-pill, [class*="-chip"]):not([style*="border"]) {
   border-color: var(--st-line-2) !important; color: var(--st-soft) !important; background: transparent !important;
 }
 
