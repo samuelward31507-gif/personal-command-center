@@ -1,5 +1,6 @@
-import { e164, voiceTwiml, EMPTY_TWIML } from "@/lib/missed-call";
-import { readTwilioRequest, twilioConfigured, twiml } from "@/lib/twilio";
+import { e164, voiceTwiml, afterDialTwiml, missedCallText, EMPTY_TWIML } from "@/lib/missed-call";
+import { readTwilioRequest, sendSms, twilioConfigured, twiml } from "@/lib/twilio";
+import { sendAlert } from "@/lib/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +11,19 @@ export async function POST(request: Request) {
   const p = await readTwilioRequest(request);
   if (!p) return new Response("Forbidden", { status: 403 });
   const forwardTo = e164(process.env.CINDER_FORWARD_TO ?? "");
+  const business = process.env.CINDER_BUSINESS_NAME?.trim() || "Cinder Revenue Company";
+  if (!forwardTo) {
+    // Nobody to ring: every call is a missed call. Text back right here, no second webhook hop.
+    const caller = e164(p.From ?? "");
+    if (caller) {
+      const [sent] = await Promise.all([
+        sendSms(caller, p.To ?? "", missedCallText(business, process.env.MISSED_CALL_TEXT)),
+        sendAlert({ subject: `Missed call from ${caller}`, lines: [`Missed call from ${caller} to ${p.To ?? "your Twilio number"}.`, "They were texted back automatically."] }),
+      ]);
+      if (!sent) console.error("Missed-call text not sent", { callSid: p.CallSid });
+    }
+    return twiml(afterDialTwiml(true, business));
+  }
   const timeout = Math.min(40, Math.max(10, Number(process.env.CINDER_RING_SECONDS) || 20));
   // Carry the trial ?key= through to the follow-up webhook so it is accepted too.
   const key = new URL(request.url).searchParams.get("key");
