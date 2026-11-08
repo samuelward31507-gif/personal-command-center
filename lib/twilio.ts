@@ -21,11 +21,22 @@ function candidateUrls(request: Request): string[] {
 export async function readTwilioRequest(request: Request): Promise<Record<string, string> | null> {
   const token = process.env.TWILIO_AUTH_TOKEN?.trim() || "";
   const form = await request.formData().catch(() => null);
+  console.log("Twilio webhook", { path: new URL(request.url).pathname, hasForm: !!form, configured: twilioConfigured() });
   if (!form) return null;
   const params: Record<string, string> = {};
   for (const [k, v] of form.entries()) if (typeof v === "string") params[k] = v;
-  if (params.AccountSid !== process.env.TWILIO_ACCOUNT_SID?.trim()) return null;
-  return validTwilioSignature(token, request.headers.get("x-twilio-signature"), candidateUrls(request), params) ? params : null;
+  const sid = process.env.TWILIO_ACCOUNT_SID?.trim() || "";
+  if (params.AccountSid !== sid) {
+    console.error("Twilio webhook rejected: AccountSid mismatch", { got: (params.AccountSid || "").slice(0, 6), want: sid.slice(0, 6), sidLen: sid.length });
+    return null;
+  }
+  const urls = candidateUrls(request);
+  const sig = request.headers.get("x-twilio-signature");
+  if (!validTwilioSignature(token, sig, urls, params)) {
+    console.error("Twilio webhook rejected: bad signature", { hasSig: !!sig, tokenLen: token.length, urls });
+    return null;
+  }
+  return params;
 }
 
 /** Send one SMS. Returns false (and logs) instead of throwing. */
