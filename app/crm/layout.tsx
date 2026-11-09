@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import "./crm-shell.css";
 import CinderSidebar from "../cinder-sidebar";
+import BookingAlerts from "./booking-alerts";
 
 function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/audits")) return "Audit report";
@@ -51,6 +52,7 @@ function CrmLayoutContent({ children }: { children: React.ReactNode }) {
         </header>
         {children}
       </section>
+      <BookingAlerts />
     </div>
   );
 }

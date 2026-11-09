@@ -143,3 +143,15 @@
 .crm-shell-main main button:not([class]):not([style]):hover:not(:disabled){border-color:#4a4a4a;color:#fff}
 .crm-shell-main main button:not([class]):not([style]):disabled{opacity:.55;cursor:not-allowed}
 .fin-records,.fin-empty{border-color:var(--mc-line-2)!important}
+
+/* New-booking alert cards (booking-alerts.tsx) */
+.ba-stack { position: fixed; z-index: 60; top: calc(16px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 10px; width: min(340px, calc(100vw - 32px)); }
+.ba-card { background: #1d1b19; border: 1px solid #3a352f; border-radius: 14px; padding: 14px 16px; box-shadow: 0 18px 50px rgba(0,0,0,.45); color: #f3efe9; animation: ba-in .25s ease-out; }
+.ba-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; color: #86d1a8; }
+.ba-x { all: unset; cursor: pointer; font-size: 20px; line-height: 1; color: #a49d94; padding: 0 4px; }
+.ba-x:focus-visible { outline: 2px solid #f3efe9; border-radius: 4px; }
+.ba-who { margin: 6px 0 0; font-size: 17px; font-weight: 600; }
+.ba-when { margin: 2px 0 0; font-size: 14px; color: #a49d94; }
+.ba-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+@keyframes ba-in { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ba-card { animation: none; } }
