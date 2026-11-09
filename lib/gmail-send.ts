@@ -24,7 +24,9 @@ async function tokenFor(sql: Sql, o: string): Promise<{ email: string; token: st
 }
 
 /** One cold email (intro, follow-up or last try) to a contact, with every safety check, threaded and logged. */
-export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, m: { contactId: string; step: "intro" | "follow_up" | "breakup"; subject: string; body: string }): Promise<SendResult> {
+export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, m: { contactId: string; step: "intro" | "follow_up" | "breakup" | "info"; subject: string; body: string }): Promise<SendResult> {
+  // Follow-ups and last tries reply in the first email's thread; an intro or an info email starts its own.
+  const inThread = m.step === "follow_up" || m.step === "breakup";
   if (!ws.address.trim()) return fail("Add your business mailing address in Settings first. Every cold email has to include it.", 400);
   const [c] = await sql`SELECT c.id, c.email,
       EXISTS (SELECT 1 FROM public.contact_suppressions s WHERE s.owner_id = c.owner_id AND (s.contact_id = c.id OR (s.email_normalized <> '' AND s.email_normalized = lower(c.email)))) AS suppressed,
@@ -54,7 +56,7 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
   const t = await tokenFor(sql, o);
   if ("ok" in t) return t;
   // Last check right before a follow-up: did they answer since the last reply sync? Catches replies the batch sync hasn't reached.
-  if (m.step !== "intro" && threadId) {
+  if (inThread && threadId) {
     try {
       const th = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${encodeURIComponent(threadId)}?format=metadata&metadataHeaders=From`, { headers: { Authorization: `Bearer ${t.token}` }, signal: AbortSignal.timeout(8000) });
       if (th.ok) {
@@ -69,9 +71,9 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
     } catch { /* couldn't check; the reply sync already ran, so send */ }
   }
   try {
-    const raw = buildRaw({ from: t.email, fromName: `${ws.ownerFirstName} at ${ws.businessName}`.trim(), to: c.email, subject: m.subject, body: `${m.body}\n\n${complianceFooter(ws.businessName, ws.address.trim())}`, inReplyTo: m.step !== "intro" ? messageId : undefined });
+    const raw = buildRaw({ from: t.email, fromName: `${ws.ownerFirstName} at ${ws.businessName}`.trim(), to: c.email, subject: m.subject, body: `${m.body}\n\n${complianceFooter(ws.businessName, ws.address.trim())}`, inReplyTo: inThread ? messageId : undefined });
     const sent = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", { method: "POST", headers: { Authorization: `Bearer ${t.token}`, "Content-Type": "application/json" },
-      body: JSON.stringify(m.step !== "intro" && threadId ? { raw, threadId } : { raw }) });
+      body: JSON.stringify(inThread && threadId ? { raw, threadId } : { raw }) });
     const sj = await sent.json().catch(() => ({}));
     if (!sent.ok) return fail(sj?.error?.message ? `Gmail said: ${sj.error.message}` : "Gmail didn't accept the email.", 502);
     let mid = "";

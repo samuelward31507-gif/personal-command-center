@@ -6,11 +6,13 @@ import { sendColdEmail } from "@/lib/gmail-send";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const STEPS = new Set(["intro", "follow_up", "breakup"]);
+const STEPS = new Set(["intro", "follow_up", "breakup", "info"]);
+const EMAIL = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 const uuid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 const fail = (error: string, status: number) => Response.json({ error }, { status });
 
-/** POST { contactId, step, subject, body }: send one cold email from the owner's connected Gmail and log it. */
+/** POST { contactId, step, subject, body, email? }: send one email from the owner's connected Gmail and log it.
+ *  step "info" is the info email after a call; email (optional) saves the address the receptionist gave first. */
 export async function POST(req: Request) {
   const r = await getAllowedSession();
   const o = r?.data?.session && r?.data?.user?.id ? String(r.data.user.id) : null;
@@ -20,6 +22,12 @@ export async function POST(req: Request) {
   const subject = typeof b.subject === "string" ? b.subject.trim().slice(0, 200) : "";
   const body = typeof b.body === "string" ? b.body.trim().slice(0, 10000) : "";
   if (!uuid(b.contactId) || !STEPS.has(b.step) || !subject || !body) return fail("Contact, step, subject and body are required.", 400);
-  const res = await sendColdEmail(neon(process.env.DATABASE_URL), o, await loadWorkspace(o), { contactId: b.contactId, step: b.step, subject, body });
+  const sql = neon(process.env.DATABASE_URL);
+  if (typeof b.email === "string" && b.email.trim()) {
+    const email = b.email.trim().toLowerCase().slice(0, 200);
+    if (!EMAIL.test(email)) return fail("That email address doesn't look right.", 400);
+    await sql`UPDATE public.contacts SET email = ${email}, updated_at = now() WHERE id = ${b.contactId}::uuid AND owner_id = ${o}`;
+  }
+  const res = await sendColdEmail(sql, o, await loadWorkspace(o), { contactId: b.contactId, step: b.step, subject, body });
   return res.ok ? Response.json({ ok: true, from: res.from }) : fail(res.error, res.status);
 }

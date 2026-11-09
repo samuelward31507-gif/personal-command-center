@@ -45,3 +45,21 @@ body .em-page .em-cat-interested, body .em-page .em-cat-meeting { color: var(--u
 body .em-page .em-inbox .u-row-main strong { white-space: normal; }
 
 body .em-page .em-replybox { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--u-line); }
+
+.em-info { margin-bottom: 16px; }
+.em-info-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
+.em-info-row > .u-field { flex: 1 1 200px; min-width: 0; }
+.em-info-row select.u-field { flex: 0 0 auto; width: auto; }
+.em-info-search { position: relative; flex: 1 1 240px; min-width: 0; }
+.em-info-search .u-field { width: 100%; }
+.em-info-list { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; background: var(--u-panel, #1b1a18); border: 1px solid var(--u-line, #2f2c29); border-radius: 10px; }
+.em-info-list button { all: unset; display: block; width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 7px; cursor: pointer; }
+.em-info-list button:hover, .em-info-list button:focus-visible { background: var(--u-panel2, #24221f); }
+.em-info-list small { color: var(--u-mute, #a49d94); }
+.em-info-pick { flex: 1 1 240px; display: flex; align-items: center; gap: 8px; min-height: 40px; }
+.em-info-preview { margin-top: 10px; }
+.em-info-preview summary { cursor: pointer; color: var(--u-mute, #a49d94); font-size: 13px; }
+.em-info-preview pre { white-space: pre-wrap; font: inherit; font-size: 13.5px; line-height: 1.5; margin: 8px 0 0; }
+.em-info .em-info-row > .u-field[type="email"] { flex: 1 1 220px; width: auto; }
+.em-info .em-info-row > select.u-field { flex: 0 0 150px; width: 150px; }
+.em-info .em-info-row > .u-btn { flex: 0 0 auto; }

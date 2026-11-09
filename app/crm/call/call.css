@@ -139,3 +139,13 @@ body .dl-call .dl-more { margin-left: 4px; padding: 0; border: 0; background: no
 body .dl-call .dl-more:hover { text-decoration-color: var(--u-text); }
 body .dl-call .dl-if-sep { width: 1px; height: 16px; margin: 4px 2px 0; background: var(--u-line); }
 @media (max-width: 700px) { body .dl-call .dl-play > div { grid-template-columns: 1fr; gap: 4px; } }
+
+.dl-mail { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--u-line, #2f2c29); }
+.dl-mail-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.dl-mail-row input { flex: 1 1 220px; min-width: 0; }
+.dl-mail-row select { flex: 0 0 auto; width: auto; }
+.dl-mail .dl-mail-row { flex-wrap: nowrap; align-items: center; }
+.dl-mail .dl-mail-row > input.u-field { flex: 1 1 auto; width: auto; min-width: 0; }
+.dl-mail .dl-mail-row > select.u-field { flex: 0 0 130px; width: 130px; }
+.dl-mail .dl-mail-row > .u-btn { flex: 0 0 auto; }
+@media (max-width: 640px) { .dl-mail .dl-mail-row { flex-wrap: wrap; } }

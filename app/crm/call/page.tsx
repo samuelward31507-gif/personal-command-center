@@ -50,6 +50,8 @@ export default function CallModePage() {
   const [countdown, setCountdown] = useState<number | null>(null);
   // Browsers block a call that starts without a click or key press, so auto-dial lines up the next call and one key places it.
   const [ready, setReady] = useState(false);
+  // Info email straight from Call mode: type the address the receptionist gave, pick More work or Time back, send.
+  const [mail, setMail] = useState<{ to: string; style: "info_email" | "info_email_time"; busy: boolean; msg: { ok: boolean; text: string } | null }>({ to: "", style: "info_email", busy: false, msg: null });
   const readyLink = useRef<HTMLAnchorElement | null>(null);
   useEffect(() => { if (ready) readyLink.current?.focus(); }, [ready]);
   // "New only" hides follow-ups so the list is just people you have never called.
@@ -156,6 +158,20 @@ export default function CallModePage() {
     flags: reportSection(audit.content, "Red flags"),
     opps: reportSection(audit.content, "Top opportunities"),
   } : null;
+
+  async function sendInfoMail() {
+    if (!contact || mail.busy) return;
+    const to = mail.to.trim();
+    const d = buildDraft(mail.style, { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, pain: info.pain, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cal.com/samuel-ward-saqpvb/15min" });
+    setMail(m => ({ ...m, busy: true, msg: null }));
+    try {
+      const r = await fetch("/api/gmail/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: contact.id, step: "info", subject: d.subject, body: d.body, email: to }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Couldn't send it.");
+      setContacts(cs => ({ ...cs, [contact.id]: { ...(cs[contact.id] ?? contact), email: to.toLowerCase() } as Contact }));
+      setMail(m => ({ ...m, busy: false, msg: { ok: true, text: `Sent "${d.subject}" to ${to} from ${j.from || "your Gmail"}.` } }));
+    } catch (e) { setMail(m => ({ ...m, busy: false, msg: { ok: false, text: e instanceof Error ? e.message : "Couldn't send it." } })); }
+  }
 
   /** Logs that a call went out. The call itself is started by a real tel: link (or location change for the C key). */
   function noteLaunch() {
@@ -292,6 +308,7 @@ export default function CallModePage() {
   useEffect(() => {
     const go = pendingDial.current;
     pendingDial.current = false;
+    setMail({ to: contact?.email ?? "", style: "info_email", busy: false, msg: null });
     const isReady = !!(go && contact?.phone && !picked);
     setReady(isReady);
     // Take focus out of the notes box (or the outcome button) so Enter places the call instead of typing a new line.
@@ -512,6 +529,17 @@ export default function CallModePage() {
                 onClick={() => pickOutcome(o)}>{OUTCOME_LABELS[o]}{KEYS[o] && <kbd>{KEYS[o]}</kbd>}</button>)}
             </div>)}
           </div>
+          <form className="dl-mail" onSubmit={e => { e.preventDefault(); void sendInfoMail(); }}>
+            <label className="u-note" htmlFor="dl-mail-to">Got their email? Send the info email from your Gmail:</label>
+            <div className="dl-mail-row">
+              <input id="dl-mail-to" className="u-field" type="email" placeholder="owner@theircompany.com" value={mail.to} onChange={e => setMail({ ...mail, to: e.target.value, msg: null })} />
+              <select className="u-field" aria-label="Which email" value={mail.style} onChange={e => setMail({ ...mail, style: e.target.value as "info_email" | "info_email_time", msg: null })}>
+                {INFO_EMAIL_STYLES.map(o => <option key={o.kind} value={o.kind}>{o.label}</option>)}
+              </select>
+              <button type="submit" className="u-btn u-btn-light" disabled={mail.busy || !mail.to.trim()}>{mail.busy ? "Sending…" : "Send email"}</button>
+            </div>
+            {mail.msg && <p className={"u-flash" + (mail.msg.ok ? "" : " is-bad")} role="status">{mail.msg.text}</p>}
+          </form>
           <div className="dl-nav">
             <span className="u-note">Keys: <kbd>C</kbd> call, <kbd>1</kbd>–<kbd>0</kbd> outcome, <kbd>←</kbd> <kbd>→</kbd> move</span>
             <div style={{ display: "flex", gap: 6 }}>
