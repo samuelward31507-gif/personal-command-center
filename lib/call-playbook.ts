@@ -41,25 +41,25 @@ export type Script = { open: string; dig: string[]; pitch: string; guarantee: st
 
 export const SCRIPTS: Record<Track, Script> = {
   trades: {
-    open: "Hey {first}, it's Sam with Cinder Revenue. I know I'm catching you out of the blue. Mind if I take 30 seconds to tell you why I called, and you can tell me if it's even in your world?",
+    open: "Hey {first}, it's Sam with Cinder Revenue. I know I'm catching you out of the blue. Can I take 30 seconds to tell you why I called, and then you can tell me to get lost?",
     dig: [
       "\"Last thing before I let you go. Most fence owners I talk to have one of three things going on: missed calls while they're on a job, quotes that go quiet, or doing office work at night. Which one's biggest for you?\"",
       "\"Where's most of your work coming from right now?\" and \"Roughly how many estimates a month?\"",
       "\"Anyone else, like a partner, who should be on that call?\" Then text the invite while you're still on the phone.",
     ],
-    pitch: "So I talk to fence owners all day, and the same thing keeps coming up. A homeowner wants a fence, so they call three companies. Whoever gets back to them first usually gets the job. But you're out setting posts and can't pick up, and by the time you call back that night, they've booked someone else. And the quotes you do send, a lot of them just go quiet. What we do is put a system behind your phone and your website. Every missed call gets a text back in seconds, it answers their questions, and it books the estimate on your calendar. Every quote gets followed up until it's a yes or a no. Nothing changes about how you run things.",
+    pitch: "Fence guys I talk to all say the same thing: homeowners call three companies, and whoever calls back first gets the job. When you're out on a job you can't pick up, so they book someone else. I set it up so every missed call gets a text back in seconds and the estimate books itself on your calendar. How are you handling calls while you're out on a job right now? ... (let them talk, then) That's exactly what this fixes.",
     guarantee: "We guarantee 5 booked appointments in your first 30 days, or your next month is free. And monthly doesn't start until your first appointment lands.",
     price: "Most shops start on Book & Close: $2,500 setup and $1,997 a month. Our first 3 clients get half off setup, so $1,250.",
     objections: [...SHARED, ...TRADES_ONLY],
   },
   detailing: {
-    open: "Hey {first}, it's Sam with Cinder Revenue. I know I'm catching you out of the blue. Mind if I take 30 seconds to tell you why I called, and you can tell me if it's even in your world?",
+    open: "Hey {first}, it's Sam with Cinder Revenue. I know I'm catching you out of the blue. Can I take 30 seconds to tell you why I called, and then you can tell me to get lost?",
     dig: [
       "\"Last thing before I let you go. Most detailers I talk to have one of three things going on: slow weeks, customers who never come back, or answering texts all night. Which one's biggest for you?\"",
       "\"Roughly how many customers did you do last year?\" That sizes the reactivation list.",
       "\"Anyone else who should be on that call?\" Then text the invite while you're still on the phone.",
     ],
-    pitch: "So I talk to detailers all day, and the same thing keeps coming up. You do a great job, the customer loves it, and then you never hear from them again. Not because they went somewhere else, just because nobody reminded them. Meanwhile you're mid-detail when someone calls, you can't pick up, and they book the next guy. What we do is text your past customers when they're due and book them back in, text back anyone you miss in seconds, and ask every happy customer for a review. It runs in your words, and you approve every message.",
+    pitch: "Detailers I talk to all say the same thing: customers love the job, then never come back, not because they left, just because nobody reminded them. I set it up so your past customers get a text when they're due and book themselves back in. How are you getting past customers back right now? ... (let them talk, then) That's exactly what this fixes.",
     guarantee: "Our Reactivation Sprint is a one-time $997: we text your past customers with a real offer and book every reply. If it doesn't book at least 3 times the fee in jobs, it's free.",
     price: "The Reactivation Sprint is a one-time $997. To keep it running every month, Repeat Revenue is $750 setup and $497 a month, half off setup for our first 3 clients.",
     objections: [...SHARED, ...DETAILING_ONLY],
