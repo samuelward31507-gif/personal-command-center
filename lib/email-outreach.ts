@@ -39,6 +39,8 @@ Here's a quick demo of how it works: {demo_link}
 
 If the answer is yes, I'll show you exactly where they'd come from in 15 minutes: {booking_link}
 
+You don't pay monthly until the first one is booked.
+
 {my_name}`,
   },
   breakup: {
@@ -67,7 +69,7 @@ For most detailers it's a few hundred. They liked the work and they'd book again
 
 I set up a system that texts your past customers when they're due for their next detail, texts back anyone who calls while you're mid-job, and asks every happy customer for a Google review. Nothing new for you to learn.
 
-If it doesn't put 5 booked appointments on your calendar in the first 30 days, your next month is free.
+We start with one campaign to your past customers. If it doesn't book at least 3 times what you pay for it, it's free.
 
 Worth a look?
 
@@ -79,7 +81,7 @@ Worth a look?
     subject: "Re: repeat customers for {company}",
     body: `Hi {first_name},
 
-Following up on my note below. If {company} had 5 more booked details next month from customers you've already served, could you fit them in?
+Following up on my note below. If a handful of past customers rebooked with {company} next month, could you fit them in?
 
 Here's a quick demo of how it works: {demo_link}
 
@@ -134,7 +136,7 @@ Just tried calling {company}. Probably caught you mid-detail.
 
 Short version: how many past customers haven't rebooked in the last 3 months? I set up a system that texts them when they're due and books them back in, texts back anyone who calls while you're working, and asks happy customers for reviews.
 
-If it doesn't put 5 booked appointments on your calendar in the first 30 days, your next month is free.
+We start with one campaign to your past customers. If it doesn't book at least 3 times what you pay for it, it's free.
 
 Worth a quick call this week? Just reply with a good time.
 

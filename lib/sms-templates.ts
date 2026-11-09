@@ -70,12 +70,12 @@ export function localClock(at: Date, tz: string | null): string {
 export function voicemailText(i: { firstName?: string; callTime: string; demoLink: string; niche?: string }): string {
   const name = (i.firstName ?? "").trim() || "there";
   if (i.niche === "detailing") return `Hey${name ? " " + name : ""}, Sam with Cinder. Called at ${i.callTime} and got voicemail, probably mid-detail. Quick one: how many past customers haven't rebooked in 3+ months? We text them when they're due and book them back in. Here's how: ${i.demoLink}\n\nWorth a quick call tomorrow?`;
-  return `Hey${name ? " " + name : ""}, Sam with Cinder. Called your shop at ${i.callTime} and got voicemail. Fewer than 3% of callers leave one, so most just call the next company. Here's what they'd get instead: ${i.demoLink}\n\nWorth a quick call tomorrow?`;
+  return `Hey${name ? " " + name : ""}, Sam with Cinder. Called your shop at ${i.callTime} and got voicemail. Only about 2% of callers leave one. The rest call the next company. Here's what they'd get instead: ${i.demoLink}\n\nWorth a quick call tomorrow?`;
 }
 export function infoText(i: { firstName?: string; demoLink: string; slot1?: string; slot2?: string; niche?: string }): string {
   const name = (i.firstName ?? "").trim();
-  if (i.niche === "detailing") return `Hey${name ? " " + name : ""}, Sam with Cinder. Good talking with you. Here's how it works: ${i.demoLink}\n\nWe text your past customers when they're due for their next detail and book them back in, text back anyone who calls while you're mid-job, and ask happy customers for reviews. You don't touch the tech. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow?`;
-  return `Hey${name ? " " + name : ""}, Sam with Cinder. Good talking with you. Here's the 25-second demo of what your customers would get when you can't pick up: ${i.demoLink}\n\nWe build it, run it and book the estimates on your calendar. You don't touch the tech. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow?`;
+  if (i.niche === "detailing") return `Hey${name ? " " + name : ""}, Sam with Cinder. Good talking with you. Here's how it works: ${i.demoLink}\n\nWe text your past customers when they're due for their next detail and book them back in, text back anyone who calls while you're mid-job, and ask happy customers for reviews. You don't touch the tech. Our first campaign to your past customers books at least 3x what you pay or it's free. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow?`;
+  return `Hey${name ? " " + name : ""}, Sam with Cinder. Good talking with you. Here's the demo of what your customers would get when you can't pick up: ${i.demoLink}\n\nEvery lead gets a text back in 10 seconds and the estimate lands on your calendar. Every quote gets followed up until it's a yes or a no. We build it and run it, you don't touch the tech. 5 booked appointments in your first 30 days or your next month is free. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow?`;
 }
 
 // ---- sending helpers ----
@@ -214,7 +214,7 @@ export function meetingNudge(startsAt: Date, now: Date, tz: string | null): "con
 export function infoFollowUpText(i: { firstName?: string; company?: string; day: number; slot1?: string; slot2?: string; niche?: string }): string {
   const hi = `Hey${(i.firstName ?? "").trim() ? " " + i.firstName!.trim() : ""}`;
   const s1 = (i.slot1 || DEFAULT_SLOTS[0]).trim(), s2 = (i.slot2 || DEFAULT_SLOTS[1]).trim();
-  if (i.day <= 1) return `${hi}, Sam with Cinder. Did you get a chance to watch the demo I sent yesterday?`;
+  if (i.day <= 1) return `${hi}, Sam with Cinder. Did you get a chance to look at the demo I sent yesterday? Happy to answer anything by text.`;
   if (i.day === 2) return `${hi}, Sam again. Easiest way to see if it fits ${i.company || "you"} is a quick 15 min call. ${s1} or ${s2}?`;
   if (i.day === 3) return i.niche === "detailing"
     ? `${hi}, quick one: how many past customers haven't rebooked in the last 3 months? That's usually where the first month's bookings come from. Want me to show you?`

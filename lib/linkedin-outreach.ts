@@ -28,6 +28,6 @@ Straight question: how many past customers does {company} have who haven't booke
 
 Most detailers are sitting on a few hundred who'd book again if someone asked. I set up a system that texts them when they're due, texts back missed calls while you're mid-job, and asks happy customers for reviews.
 
-If it doesn't put 5 booked appointments on your calendar in 30 days, your next month is free. Here's how it works: {demo_link}
+We start with one campaign to your past customers. If it doesn't book at least 3 times what you pay for it, it's free. Here's how it works: {demo_link}
 
 {my_name}`;
