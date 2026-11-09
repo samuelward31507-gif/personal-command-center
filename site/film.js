@@ -47,6 +47,85 @@
     },
   };
 
+
+  // Plan demos (examples). Book & Close: quote follow-up. Slammed: price range first. Detailers: reactivation. Every plan: reviews.
+  STORIES.quote = {
+    contact: { name: "Mike R.", sub: "Quote · cedar fence", initial: "M" },
+    opener: { kind: "notif", date: "Thursday, November 6", time: "9:12", app: "Summit Fence Co.", title: "Quote sent: Mike R.", body: "Cedar privacy, 180 ft · $8,400" },
+    replyIn: "Follow-up 2 of 4",
+    chapters: [
+      ["Quote sent", "Thursday. You send Mike a quote with one text."],
+      ["Silence", "Two days, no answer. Most shops never send a second message."],
+      ["Day 2", "Cinder follows up for you, in your words."],
+      ["Price", "Price comes up. It offers your financing or a cheaper option, not a discount."],
+      ["Signed", "Mike picks a start date. You never had to chase him."],
+      ["Your text", "One text: the job is won."]
+    ],
+    thread: [
+      ["ch", 2], ["time", "10:02"], ["out", "Hi Mike, it's Summit Fence Co. Just checking you got the quote for the cedar fence. Any questions I can answer?"], ["in", "yeah got it. honestly a bit more than I was hoping"],
+      ["ch", 3], ["time", "10:04"], ["out", "Totally fair. A lot of our customers spread it out with our financing, about $165 a month. Or pressure-treated pine comes in around $6,900. Want either option?"], ["in", "financing works. when could you start?"],
+      ["ch", 4], ["time", "10:05"], ["out", "We can start Monday the 17th or Wednesday the 19th. Which is better?"], ["in", "monday"], ["out", "You're on the schedule for Monday the 17th. Sending the agreement to sign now."]
+    ],
+    booked: { date: "Saturday, November 8", time: "10:06", title: "Quote won: Mike R. · $8,400", lines: ["Starts Mon, Nov 17", "Financing · cedar privacy 180 ft"] }
+  };
+  STORIES.prequal = {
+    contact: { name: "Rob", sub: "New lead · vinyl fence", initial: "R" },
+    opener: { kind: "call", time: "2:15", number: "(720) 555-0142", place: "Denver, CO" },
+    replyIn: "Replied in 7 sec",
+    chapters: [
+      ["The call", "You're booked out three weeks. Another call comes in."],
+      ["Missed", "You can't pick up, and you don't want to drive out to tire-kickers."],
+      ["Texted back", "Cinder answers in seconds."],
+      ["Price range", "It gives your price range before anything gets booked."],
+      ["Serious only", "Only people who are fine with the range land on your calendar."],
+      ["Your text", "You only drive out to jobs worth your time."]
+    ],
+    thread: [
+      ["ch", 2], ["out", "Hi, it's Summit Fence Co. Sorry we missed you, we're on a job! What can we help with?"], ["in", "looking for a quote on a vinyl privacy fence, about 200 ft"],
+      ["ch", 3], ["time", "2:16"], ["out", "Got it. Vinyl privacy usually runs $38 to $45 a foot installed, so about $7,600 to $9,000 for 200 ft. Does that fit what you had in mind?"], ["in", "yes that's about what we expected"],
+      ["ch", 4], ["time", "2:17"], ["out", "Great. Our next estimate slots are Thursday 8:00 AM or Friday 3:00 PM."], ["in", "friday"], ["out", "You're booked for Friday at 3:00 PM. We'll text when we're on the way."]
+    ],
+    booked: { date: "Monday, November 10", time: "2:18", title: "Estimate booked: Rob", lines: ["Fri 3:00 PM", "Vinyl privacy ~200 ft", "OK with the $7,600 to $9,000 range"] }
+  };
+  STORIES.detail = {
+    contact: { name: "Jess K.", sub: "Past customer · ceramic", initial: "J" },
+    opener: { kind: "notif", date: "Tuesday, November 4", time: "8:30", app: "Craft Detailing", title: "Jess K. · last visit 7 months ago", body: "Ceramic coating · maintenance overdue" },
+    replyIn: "Past customer",
+    chapters: [
+      ["Overdue", "Jess got a ceramic coating in April. Her maintenance wash was due in October."],
+      ["Forgotten", "Nobody reached out. She isn't unhappy, she just forgot."],
+      ["Due text", "Cinder texts her from your business, with a real offer and a deadline."],
+      ["Booked", "She replies, and it books her into an open slot."],
+      ["Add-on", "It offers an add-on at booking, the way you would."],
+      ["Your text", "One booking from a single campaign to your past customers."]
+    ],
+    thread: [
+      ["ch", 2], ["out", "Hi Jess, it's Craft Detailing. Your ceramic coating is due for its maintenance wash to keep the shine and the warranty. This week only: $89 (normally $129). Want a spot?"], ["in", "oh yes I totally forgot about that!"],
+      ["ch", 3], ["time", "8:34"], ["out", "Easy fix. I have Thursday 10:00 AM or Saturday 9:00 AM open."], ["in", "saturday"],
+      ["ch", 4], ["time", "8:35"], ["out", "Done, Saturday 9:00 AM. Want an interior refresh while it's here? $60 more."], ["in", "sure why not"], ["out", "Booked: Saturday 9:00 AM, maintenance wash and interior refresh. See you then!"]
+    ],
+    booked: { date: "Tuesday, November 4", time: "8:36", title: "Booked: Jess K. · $149", lines: ["Sat 9:00 AM", "Maintenance wash + interior refresh"] }
+  };
+  STORIES.reviews = {
+    contact: { name: "Dana", sub: "Job done · fence", initial: "D" },
+    opener: { kind: "notif", date: "Friday, November 7", time: "3:05", app: "Summit Fence Co.", title: "Job done: Dana", body: "Marked complete from your phone" },
+    replyIn: "1 hour after the job",
+    chapters: [
+      ["Job done", "You finish Dana's fence and tap Done."],
+      ["Next job", "You're on to the next one. You meant to ask for a review."],
+      ["The ask", "An hour later, Cinder asks for you, while she's still looking at the work."],
+      ["Review", "She's happy, so it sends your Google review link."],
+      ["Unhappy?", "If she hadn't been, it would have come straight to you instead."],
+      ["Your text", "A new 5-star review, without you asking."]
+    ],
+    thread: [
+      ["ch", 2], ["time", "4:06"], ["out", "Hi Dana, it's Summit Fence Co. Thanks for having us out today! How does the new fence look?"], ["in", "it looks amazing, the guys were great"],
+      ["ch", 3], ["time", "4:08"], ["out", "So glad to hear that! Would you mind leaving us a quick Google review? It really helps a small business: g.page/r/summitfence"], ["in", "done! 5 stars"],
+      ["ch", 4], ["time", "4:12"], ["out", "Thank you, Dana! If you ever need a gate or a stain touch-up, just text this number."]
+    ],
+    booked: { date: "Friday, November 7", time: "4:12", title: "New 5-star Google review", lines: ["Dana: \"The guys were great\"", "Asked 1 hour after the job"] }
+  };
+
   roots.forEach(function (r) { mount(r, r.getAttribute("data-film"), false); });
 
   function mount(root, key, autoplay) {

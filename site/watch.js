@@ -41,13 +41,17 @@
   // Fixed schedule (ms). Stats 0-6.5s, demo 6.5-24.5s (its six steps are timed inside film.js), end card to 28s.
   var P = window.__personal ? 2600 : 0, at = function (ms, fn) { cues.push({ t: ms, fn: fn }); };
   var DEMO = filmEl.film ? filmEl.film.D : 18000;
+  // Plan demos (?story=quote|prequal|detail|reviews) skip the lead-response stats and open on their own headline.
+  var Q = window.__skipStats ? 2500 : 6500;
   if (P) at(0, scene("s0"));
-  at(P + 0, scene("s1")); at(P + 0, source(SRC_HBR)); at(P + 0, count("s1", 1100));
-  at(P + 2500, scene("s2")); at(P + 2500, count("s2", 1000));
-  at(P + 4500, scene("s3")); at(P + 4500, source(""));
-  at(P + 6500, scene("s4")); at(P + 6500, function () { if (filmEl.film) { filmEl.film.play(); log("film:start"); } });
-  at(P + 6500 + DEMO, function () { if (filmEl.film) filmEl.film.pause(); scene("s6")(); });
-  at(P + 6500 + DEMO + 3500, function () { log("end"); window.__watchDone = true; body.classList.add("done"); });
+  if (!window.__skipStats) {
+    at(P + 0, scene("s1")); at(P + 0, source(SRC_HBR)); at(P + 0, count("s1", 1100));
+    at(P + 2500, scene("s2")); at(P + 2500, count("s2", 1000));
+  }
+  at(P + Q - 2000, scene("s3")); at(P + Q - 2000, source(""));
+  at(P + Q, scene("s4")); at(P + Q, function () { if (filmEl.film) { filmEl.film.play(); log("film:start"); } });
+  at(P + Q + DEMO, function () { if (filmEl.film) filmEl.film.pause(); scene("s6")(); });
+  at(P + Q + DEMO + 3500, function () { log("end"); window.__watchDone = true; body.classList.add("done"); });
   filmEl.addEventListener("film:chapter", function (e) { log("chapter:" + e.detail); });
 
   function tick() {

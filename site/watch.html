@@ -129,6 +129,20 @@ body.watch { font-family: var(--sans); -webkit-font-smoothing: antialiased; colo
   var st = document.getElementById("stage"), film = document.getElementById("film");
   st.setAttribute("data-l", q.get("l") === "w" || q.get("l") === "v" ? q.get("l") : (innerWidth / innerHeight > 1 ? "w" : "v"));
   if (q.get("story") === "fence") film.setAttribute("data-film", "fence_co");
+  var PLAN = {
+    quote: ["Most quotes get sent once and never chased.", "Every quote chased to a yes or a no.", "Follow-up on day 2, 5, 10 and 21, with replies answered in seconds. Part of Book & Close."],
+    prequal: ["Booked out? Stop driving to tire-kickers.", "Your price range first. Only serious jobs get booked.", "Every lead answered in seconds and qualified before it lands on your calendar."],
+    detail: ["Your past customers already know you.", "Past customers, booked back in.", "We text them when they're due and book every reply. Reactivation Sprint, $997 one time."],
+    reviews: ["The best time to ask for a review is right after the job.", "A review request after every job.", "Happy customers get your review link. Unhappy ones come straight to you."]
+  }[q.get("story") || ""];
+  if (PLAN) {
+    film.setAttribute("data-film", q.get("story"));
+    film.setAttribute("data-film-durs", "2500,2200,3000,4800,4300,2800");
+    document.querySelector("#s3 .big").textContent = PLAN[0];
+    document.querySelector("#s6 .big").textContent = PLAN[1];
+    document.querySelector("#s6 .sub").textContent = PLAN[2];
+    window.__skipStats = true;
+  }
   if (b) film.setAttribute("data-biz", b);
   if (q.get("cta") === "social") document.body.classList.add("social");
   var hello = document.getElementById("hello");
