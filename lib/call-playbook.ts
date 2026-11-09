@@ -19,7 +19,7 @@ export const GATEKEEPER = "Hey, Sam with Cinder. Is the owner around? ... No wor
 const SHARED: Objection[] = [
   { id: "busy", label: "Busy, call back", key: "b", say: "No problem, I'll be quick another time. Is tomorrow morning or afternoon better?", then: "Log Busy, call back with the time they gave." },
   { id: "info", label: "Send me info", key: "i", say: "Happy to. So I send the right thing: is it the missed calls or the quotes that go quiet that costs you more?", then: "Text the info now, then: \"It's a 2-minute read. Can I grab 15 minutes Thursday to walk you through it?\"" },
-  { id: "not-interested", label: "Not interested", key: "x", say: "Totally fair. Is that because you've got calls and follow-up handled, or just not a good time?", then: "If handled: \"Good, most shops aren't. Mind if I check back in a couple months?\" Then let them go." },
+  { id: "not-interested", label: "Not interested", key: "x", say: "Totally fair, most guys say that before they know what it is. Is it that you've got missed calls covered, or it's just not a priority right now?", then: "If handled: \"Good, most shops aren't. Mind if I check back in a couple months?\" Then let them go." },
   { id: "price", label: "How much?", key: "$", say: "{price} The monthly doesn't start until your first booked appointment lands, and there's no contract.", then: "Ask: \"What's an average job worth to you?\" One extra job a month usually covers it. Then book the 15 minutes." },
   { id: "expensive", label: "Too expensive", key: "e", say: "I hear you. What's one job worth to you? ... So one extra job a month covers it, and if we don't hit the guarantee your next month is free. You're not betting on me, I am.", then: "Then the close." },
   { id: "software", label: "Already have software", key: "s", say: "Good, keep it. We work alongside Jobber, Housecall, whatever you use, and you keep your number. What happens to a quote after it goes out?", then: "Let them answer. The gap is usually follow-up." },
@@ -43,11 +43,11 @@ export const SCRIPTS: Record<Track, Script> = {
   trades: {
     open: "Hey, is this {first}? Sam with Cinder. I'll be quick, I know you're probably on a job. Straight question: could you handle more work right now?",
     dig: [
-      "If yes: most owners I talk to aren't short on leads, they lose them. When someone calls after 5 or while you're on a job, what happens to that call?",
-      "And the quotes you send out, how many just go quiet? Who chases those?",
+      "If yes: \"Where's most of your work coming from right now?\"",
+      "\"And when a call comes in while you're on a job, what happens to it?\" Let them say voicemail. Then: \"How many of those slip a week, you think?\"",
       "If no: press W, \"No, we're slammed\".",
     ],
-    pitch: "Here's what we do. Every lead that calls, fills out a form or messages you gets a text back in 10 seconds, gets your price range, and gets booked on your calendar. Every quote you send gets followed up until it's a yes or a no. You don't touch any of it, and you keep your number and your software.",
+    pitch: "Keep it to one sentence, using their words: \"That's exactly what I fix. Every call you miss gets a text back in seconds and gets booked on your calendar, so those jobs stop slipping.\" Then go straight to the close. No features, no price unless they ask.",
     guarantee: "We guarantee 5 booked appointments in your first 30 days, or your next month is free. And monthly doesn't start until your first appointment lands.",
     price: "Most shops start on Book & Close: $2,500 setup and $1,997 a month. Our first 3 clients get half off setup, so $1,250.",
     objections: [...SHARED, ...TRADES_ONLY],
