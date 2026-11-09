@@ -8,13 +8,13 @@ export const DEFAULT_LINKEDIN: Record<LinkedInStep, string> = {
   connect: `Hi {first_name}, I help service businesses book more jobs from the leads they already get. Would be good to connect.`,
   message: `Thanks for connecting, {first_name}.
 
-Straight question: could {company} handle more work right now?
+Quick question: when you're out on a job and a homeowner calls, what happens to that call?
 
-Most owners aren't short on leads, they lose them: missed calls after hours, forms nobody answers until morning, quotes nobody follows up on. I set up a system that fixes all three: every lead answered in 10 seconds and booked, every quote chased to a yes or a no.
+Most owners I talk to say voicemail, and most homeowners don't leave one. I set contractors up so every missed call and form gets a text back in about 10 seconds and the estimate books itself on your calendar. Every quote gets followed up until it's a yes or a no.
 
-If it doesn't put 5 booked appointments on your calendar in 30 days, your next month is free. Here's how it works: {demo_link}
+No contract, monthly doesn't start until the first appointment is booked, and 5 booked appointments in 30 days or your next month is free. Here's a 30-second look: {demo_link}
 
-Worth a 15-minute look? {booking_link}
+Worth 15 minutes? {booking_link}
 
 {my_name}`,
 };
@@ -29,5 +29,7 @@ Straight question: how many past customers does {company} have who haven't booke
 Most detailers are sitting on a few hundred who'd book again if someone asked. I set up a system that texts them when they're due, texts back missed calls while you're mid-job, and asks happy customers for reviews.
 
 We start with one campaign to your past customers. If it doesn't book at least 3 times what you pay for it, it's free. Here's how it works: {demo_link}
+
+Worth 15 minutes? {booking_link}
 
 {my_name}`;

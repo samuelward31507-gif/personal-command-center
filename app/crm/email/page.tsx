@@ -17,7 +17,7 @@ type Mail = { id: string; threadId: string; from: string; addr: string; subject:
 const DAILY = 25;
 const STEPS: { key: EmailStep; label: string }[] = [{ key: "intro", label: "First email" }, { key: "follow_up", label: "Follow-up" }, { key: "breakup", label: "Last try" }];
 const STOP = new Set(["do_not_contact", "not_interested", "not_a_fit", "meeting_booked", "wrong_contact"]);
-const KEY = "cinder.email.templates.v5";
+const KEY = "cinder.email.templates.v6";
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 /** Seconds to wait between bulk sends. A steady trickle looks like a person; a burst looks like a blast. */
 const GAP = [15, 30] as const;

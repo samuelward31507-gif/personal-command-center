@@ -4,7 +4,9 @@
 export type TextTemplate = "T-VM" | "T-INFO";
 export const TEMPLATE_LABEL: Record<TextTemplate, string> = { "T-VM": "Voicemail text", "T-INFO": "Info request" };
 export const SAM_TZ = "America/Denver";
-export const DEFAULT_SLOTS = ["2pm", "4pm"] as const;
+export const DEFAULT_SLOTS = ["10am", "2pm"] as const;
+/** 35-second explainer: why the first call back matters (HBR 2011 response-time study). Served from the CRM's public folder. */
+export const FIRST_CALL_VIDEO = "https://personal-command-center-ten-ruby.vercel.app/content/videos/why-first-call.mp4";
 
 // ---- merge fields ----
 
@@ -89,13 +91,15 @@ export function localClock(at: Date, tz: string | null): string {
 
 export function voicemailText(i: { firstName?: string; callTime: string; demoLink: string; niche?: string }): string {
   const name = (i.firstName ?? "").trim() || "there";
-  if (i.niche === "detailing") return `Hey${name ? " " + name : ""}, Sam with Cinder. Called at ${i.callTime} and got voicemail, probably mid-detail. Quick one: how many past customers haven't rebooked in 3+ months? We text them when they're due and book them back in. Here's how: ${i.demoLink}\n\nWorth a quick call tomorrow?`;
-  return `Hey${name ? " " + name : ""}, Sam with Cinder. Called your shop at ${i.callTime} and got voicemail. Only about 2% of callers leave one. The rest call the next company. Here's what they'd get instead: ${i.demoLink}\n\nWorth a quick call tomorrow?`;
+  if (i.niche === "detailing") return `Hey${name ? " " + name : ""}, Sam with Cinder. Tried you at ${i.callTime}, probably caught you mid-detail. Quick one: how many past customers haven't rebooked in 3+ months? I set it up so they get a text when they're due and book themselves back in. Here's how: ${i.demoLink}\n\nWorth a quick call tomorrow, morning or afternoon?`;
+  return `Hey${name ? " " + name : ""}, Sam with Cinder. Tried you at ${i.callTime}, probably caught you on a job. When that happens with a homeowner, most don't leave a voicemail, they call the next company. Here's what they'd get from you instead: ${i.demoLink}\n\nWorth a quick call tomorrow, morning or afternoon?`;
 }
 export function infoText(i: { firstName?: string; demoLink: string; slot1?: string; slot2?: string; niche?: string }): string {
   const name = (i.firstName ?? "").trim();
-  if (i.niche === "detailing") return `Hey${name ? " " + name : ""}, Sam with Cinder. Good talking with you. Here's how it works: ${i.demoLink}\n\nWe text your past customers when they're due for their next detail and book them back in, text back anyone who calls while you're mid-job, and ask happy customers for reviews. You don't touch the tech. Our first campaign to your past customers books at least 3x what you pay or it's free. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow? Or grab any time here: ${BOOKING_LINK}`;
-  return `Hey${name ? " " + name : ""}, Sam with Cinder. Good talking with you. Here's the demo of what your customers would get when you can't pick up: ${i.demoLink}\n\nEvery lead gets a text back in 10 seconds and the estimate lands on your calendar. Every quote gets followed up until it's a yes or a no. We build it and run it, you don't touch the tech. 5 booked appointments in your first 30 days or your next month is free. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow? Or grab any time here: ${BOOKING_LINK}`;
+  const hi = `Hey${name ? " " + name : ""}, Sam with Cinder, good talking with you.`;
+  const ask = `Easiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow? Or pick any time here: ${BOOKING_LINK}`;
+  if (i.niche === "detailing") return `${hi} Here's how it works: ${i.demoLink}\n\nYour past customers get a text when they're due and book themselves back in, anyone who calls while you're mid-detail gets a text back in seconds, and happy customers get asked for a review. I build it and run it, you don't touch the tech.\n\nWe start with one campaign to your past customers. If it doesn't book at least 3x what you pay, it's free.\n\n${ask}`;
+  return `${hi} Here's the 30-second demo of what your customers get when you can't pick up: ${i.demoLink}\n\nEvery missed call and form gets a text back in about 10 seconds and the estimate lands on your calendar. Every quote gets followed up until it's a yes or a no. I build it and run it, you don't touch the tech.\n\nNo contract, monthly starts after your first booked appointment, and 5 booked in 30 days or your next month is free. Our first 3 clients get half-price setup.\n\n${ask}`;
 }
 
 // ---- sending helpers ----
@@ -234,7 +238,9 @@ export function meetingNudge(startsAt: Date, now: Date, tz: string | null): "con
 export function infoFollowUpText(i: { firstName?: string; company?: string; day: number; slot1?: string; slot2?: string; niche?: string }): string {
   const hi = `Hey${(i.firstName ?? "").trim() ? " " + i.firstName!.trim() : ""}`;
   const s1 = (i.slot1 || DEFAULT_SLOTS[0]).trim(), s2 = (i.slot2 || DEFAULT_SLOTS[1]).trim();
-  if (i.day <= 1) return `${hi}, Sam with Cinder. Did you get a chance to look at the demo I sent yesterday? Happy to answer anything by text.`;
+  if (i.day <= 1) return i.niche === "detailing"
+    ? `${hi}, Sam with Cinder. Did you get a chance to look at the demo I sent yesterday? Happy to answer anything by text.`
+    : `${hi}, Sam with Cinder. Here's a quick 35-second video on why the first call back matters so much: ${FIRST_CALL_VIDEO}\n\nHappy to answer anything by text.`;
   if (i.day === 2) return `${hi}, Sam again. Easiest way to see if it fits ${i.company || "you"} is a quick 15 min call. ${s1} or ${s2}?`;
   if (i.day === 3) return i.niche === "detailing"
     ? `${hi}, quick one: how many past customers haven't rebooked in the last 3 months? That's usually where the first month's bookings come from. Want me to show you?`
@@ -245,12 +251,12 @@ export function infoFollowUpText(i: { firstName?: string; company?: string; day:
 /** Text that carries a Loom you recorded for one prospect. */
 export function loomText(i: { firstName?: string; company?: string; loomUrl: string }): string {
   const hi = `Hey${(i.firstName ?? "").trim() ? " " + i.firstName!.trim() : ""}`;
-  return `${hi}, Sam with Cinder. I recorded a quick 2-minute video for ${i.company || "you"} showing exactly how this would work for your shop: ${i.loomUrl.trim()}\n\nWorth 15 minutes this week to set it up?`;
+  return `${hi}, Sam with Cinder. I recorded a quick 2-minute video for ${i.company || "you"} showing exactly how this would work for your shop: ${i.loomUrl.trim()}\n\nWorth 15 minutes this week to set it up? Morning or afternoon?`;
 }
 /** Referral ask, 14+ days after a client goes live. "Quick favor:" marks it as sent (don't reword that part). */
 export function referralText(i: { firstName?: string }): string {
   const hi = `Hey${(i.firstName ?? "").trim() ? " " + i.firstName!.trim() : ""}`;
-  return `${hi}, Sam here. Quick favor: know any other owners who'd want more booked jobs the same way? If you send them my way and they sign, your next month's on me.`;
+  return `${hi}, Sam here. Quick favor: know any other owners who'd want more booked jobs the same way? If you send them my way and they sign, your next month's on me, and they get half off setup.`;
 }
 /** Talking points for a Loom: who, their problem in their words, what to show, the ask. */
 export function loomPoints(i: { company: string; city?: string; niche?: string; callNote?: string }): string[] {

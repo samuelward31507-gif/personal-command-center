@@ -13,7 +13,7 @@ type Tab = "connect" | "waiting" | "message";
 
 const TABS: { key: Tab; label: string }[] = [{ key: "connect", label: "Connect" }, { key: "waiting", label: "Waiting" }, { key: "message", label: "Message" }];
 const STOP = new Set(["do_not_contact", "not_interested", "not_a_fit", "meeting_booked", "wrong_contact"]);
-const KEY = "cinder.linkedin.templates.v4";
+const KEY = "cinder.linkedin.templates.v5";
 const url = (v: string) => (v.startsWith("http") ? v : "https://www.linkedin.com/in/" + v.replace(/^@/, "").replace(/^linkedin\.com\/in\//, ""));
 
 /** LinkedIn: a queue of owners to connect with, then message once they accept. You do each step on LinkedIn; Cinder keeps the list and the script. */

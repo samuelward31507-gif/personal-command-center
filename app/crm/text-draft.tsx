@@ -26,8 +26,8 @@ export default function TextDraft({ ctx, contactId, who, onDone, primaryClass = 
   const ws = useWorkspace();
   // A demo link set in Settings (an overview Loom) wins; otherwise the trade's default the server picked.
   const demo = pickDemoLink("", ws.demoLink) === pickDemoLink("", "") ? ctx.demoLink : pickDemoLink("", ws.demoLink);
-  const [slot1, setSlot1] = useState(ctx.slots[0] ?? "2pm");
-  const [slot2, setSlot2] = useState(ctx.slots[1] ?? "4pm");
+  const [slot1, setSlot1] = useState(ctx.slots[0] ?? "10am");
+  const [slot2, setSlot2] = useState(ctx.slots[1] ?? "2pm");
   const generated = useMemo(() => {
     if (ctx.template === "T-VM") return voicemailText({ firstName: ctx.firstName, callTime: callTimeText(new Date(ctx.callAt), ctx.timeZone), demoLink: demo, niche: ctx.niche });
     if (ctx.template === "T-INFO") return infoText({ firstName: ctx.firstName, demoLink: demo, slot1, slot2, niche: ctx.niche });

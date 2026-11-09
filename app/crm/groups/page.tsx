@@ -7,7 +7,7 @@ import "./groups.css";
 
 type Group = { id: string; name: string; url: string; rules: string; everyDays: number; lastPosted: string | null; posts30: number; leads: number; meetings: number };
 type Post = { groupId: string; script: string; at: string };
-const KEY = "cinder.group.scripts.v1";
+const KEY = "cinder.group.scripts.v2";
 const ago = (iso: string | null) => { if (!iso) return "Never"; const d = Math.floor((Date.now() - Date.parse(iso)) / 86400000); return d <= 0 ? "Today" : d === 1 ? "Yesterday" : `${d} days ago`; };
 
 /** Facebook groups: post by hand (Meta blocks apps from posting to groups), but in 30 seconds, and see which groups bring leads. */

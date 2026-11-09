@@ -23,7 +23,7 @@ I set up a simple text campaign to past customers that books those jobs for you.
 
 I've been asking owners this all month. The honest answer is usually "that night" or "next morning." By then they've got two other companies coming out.
 
-The shop that answers first usually gets the estimate. I set up a system that replies in about 10 seconds with your price range and a time to come out. Comment "fast" and I'll show you how it works, no pitch.` },
+The shop that answers first has the best shot at the estimate. I set up a system that replies in about 10 seconds with your price range and a time to come out. Comment "fast" and I'll show you how it works, no pitch.` },
   { key: "reviews", label: "Reviews", body: `Owners: how many of your jobs last month turned into a Google review?
 
 Most guys I talk to do great work and have half the reviews of the shop down the street, because nobody asks at the right moment.
@@ -36,7 +36,7 @@ Most shops I talk to have hundreds of past customers sitting in their phone who'
 I run a simple text campaign that reminds them when they're due and books them back in. Comment "rebook" and I'll show you how it works.` },
   { key: "office", label: "No office manager", body: `For the owner-operators in here without an office manager: who's answering the phone while you're on a job?
 
-Not a knock, I get it, you can't do both. But every call that goes to voicemail is a job someone else gets.
+Not a knock, I get it, you can't do both. But most callers don't leave a voicemail. They call the next company.
 
 I set up text-back for missed calls that answers in seconds and books the estimate for you. Free to see how it works, comment "office" and I'll DM you.` },
 ];

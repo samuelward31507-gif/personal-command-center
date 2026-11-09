@@ -12,46 +12,40 @@ export const STEP_GAP_DAYS: Record<"follow_up" | "breakup", number> = { follow_u
    and a one-word reply ("sure") is easier to get than a booking. The link comes in the follow-up. */
 export const DEFAULT_TEMPLATES: Record<EmailStep, EmailTemplate> = {
   intro: {
-    subject: "more work for {company}",
+    subject: "missed calls at {company}",
     body: `Hi {first_name},
 
-Quick question: could {company} handle more work right now?
+When you're out on a job and a homeowner calls, what happens to that call?
 
-Most owners I talk to aren't short on leads. They lose them. A call comes in after hours or on a Saturday and nobody picks up. A form sits until the next morning. A quote goes out and nobody follows up.
+Most owners I talk to say voicemail, and most homeowners don't leave one. They call the next company on the list.
 
-I set up a system that fixes all three. Every call, form and Facebook lead gets a text back in 10 seconds and gets booked on your calendar, and every open quote gets followed up until it's a yes or a no, including the ones from the last 90 days. Nothing new for you to learn and nobody to hire.
+I set contractors up so every missed call and web form gets a text back in about 10 seconds, the homeowner's questions get answered, and the estimate books itself on your calendar. Every quote gets followed up until it's a yes or a no.
 
-If it doesn't put 5 booked appointments on your calendar in the first 30 days, your next month is free.
+No contract, and you don't pay monthly until the first appointment is booked. If it doesn't book 5 appointments in your first 30 days, your next month is free.
 
-Worth a look?
+Open to a quick look? Just reply "yes" and I'll send a couple of times.
 
 {my_name}
 {business}
 {website}`,
   },
   follow_up: {
-    subject: "Re: more work for {company}",
+    subject: "Re: missed calls at {company}",
     body: `Hi {first_name},
 
-Following up on my note below. If {company} had 5 more booked jobs next month, could your crew take them?
+Following up on my note below. Here's a 30-second look at what your customer gets when you can't pick up: {demo_link}
 
-Here's a quick demo of how it works: {demo_link}
-
-If the answer is yes, I'll show you exactly where they'd come from in 15 minutes: {booking_link}
-
-You don't pay monthly until the first one is booked.
+Worth 15 minutes to see it set up for {company}? Grab a time here: {booking_link}, or just reply with a morning or afternoon that works.
 
 {my_name}`,
   },
   breakup: {
-    subject: "Re: more work for {company}",
+    subject: "Re: missed calls at {company}",
     body: `Hi {first_name},
 
-I'll stop here so I'm not cluttering your inbox.
+I'll leave it here so I'm not cluttering your inbox.
 
-If {company} ever wants more jobs on the calendar without adding office staff, the demo is here: {demo_link}
-
-Or reply "jobs" and I'll walk you through it.
+If missed calls or quotes that go quiet ever start costing {company} jobs, reply "show me" and I'll walk you through it in 15 minutes.
 
 {my_name}`,
   },
@@ -60,44 +54,40 @@ Or reply "jobs" and I'll walk you through it.
 /** Detailers get a different pitch: their money is repeat customers, not missed quotes. */
 export const DETAILING_TEMPLATES: Record<EmailStep, EmailTemplate> = {
   intro: {
-    subject: "repeat customers for {company}",
+    subject: "past customers at {company}",
     body: `Hi {first_name},
 
-Quick question: how many past customers does {company} have who haven't booked in the last 3 months?
+How many customers has {company} detailed who haven't been back in 3 months or more?
 
-For most detailers it's a few hundred. They liked the work and they'd book again. Nobody asked them to.
+For most shops it's a few hundred. They liked the work. Nobody reminded them.
 
-I set up a system that texts your past customers when they're due for their next detail, texts back anyone who calls while you're mid-job, and asks every happy customer for a Google review. Nothing new for you to learn.
+I set detailers up so past customers get a text when they're due and book themselves back in, anyone who calls while you're mid-detail gets a text back in seconds, and every happy customer gets asked for a Google review.
 
 We start with one campaign to your past customers. If it doesn't book at least 3 times what you pay for it, it's free.
 
-Worth a look?
+Open to a quick look? Just reply "yes" and I'll send a couple of times.
 
 {my_name}
 {business}
 {website}`,
   },
   follow_up: {
-    subject: "Re: repeat customers for {company}",
+    subject: "Re: past customers at {company}",
     body: `Hi {first_name},
 
-Following up on my note below. If a handful of past customers rebooked with {company} next month, could you fit them in?
+Following up on my note below. Here's a quick look at how past customers get booked back in: {demo_link}
 
-Here's a quick demo of how it works: {demo_link}
-
-If the answer is yes, I'll show you how it would work for you in 15 minutes: {booking_link}
+Worth 15 minutes to see it for {company}? Grab a time here: {booking_link}, or just reply with a morning or afternoon that works.
 
 {my_name}`,
   },
   breakup: {
-    subject: "Re: repeat customers for {company}",
+    subject: "Re: past customers at {company}",
     body: `Hi {first_name},
 
-I'll stop here so I'm not cluttering your inbox.
+I'll leave it here so I'm not cluttering your inbox.
 
-If you ever want to fill slow weeks from your own customer list, the demo is here: {demo_link}
-
-Or reply "book" and I'll walk you through it.
+If you ever want to fill slow weeks from your own customer list, reply "show me" and I'll walk you through it in 15 minutes.
 
 {my_name}`,
   },
@@ -113,32 +103,32 @@ export const TRACK_LABEL: Record<Track, string> = { trades: "Contractors", detai
     normal follow-up and last try come after it in the same thread (the subject matches theirs). */
 export const AFTER_CALL_TEMPLATES: Record<Track, EmailTemplate> = {
   trades: {
-    subject: "more work for {company}",
+    subject: "missed calls at {company}",
     body: `Hi {first_name},
 
-Just tried calling {company}. Sorry I missed you.
+Just tried calling {company}. Probably caught you on a job, which is exactly why I was calling.
 
-Short version: could you handle more work right now? I set up a system that texts back every missed call and form in 10 seconds and books them, and follows up on every open quote until it's a yes or a no.
+When a homeowner calls and you can't pick up, most don't leave a voicemail. They call the next company. I set contractors up so every missed call gets a text back in about 10 seconds and the estimate books itself on your calendar.
 
-If it doesn't put 5 booked appointments on your calendar in the first 30 days, your next month is free.
+No contract, monthly doesn't start until the first appointment is booked, and if it doesn't book 5 in your first 30 days, your next month is free.
 
-Worth a quick call this week? Just reply with a good time.
+Worth a quick call? Just reply with a morning or afternoon that works.
 
 {my_name}
 {business}
 {website}`,
   },
   detailing: {
-    subject: "repeat customers for {company}",
+    subject: "past customers at {company}",
     body: `Hi {first_name},
 
 Just tried calling {company}. Probably caught you mid-detail.
 
-Short version: how many past customers haven't rebooked in the last 3 months? I set up a system that texts them when they're due and books them back in, texts back anyone who calls while you're working, and asks happy customers for reviews.
+Short version: how many past customers haven't rebooked in the last 3 months? I set detailers up so those customers get a text when they're due and book themselves back in, and anyone who calls while you're working gets a text back in seconds.
 
 We start with one campaign to your past customers. If it doesn't book at least 3 times what you pay for it, it's free.
 
-Worth a quick call this week? Just reply with a good time.
+Worth a quick call? Just reply with a morning or afternoon that works.
 
 {my_name}
 {business}
