@@ -80,9 +80,9 @@ export default function ContentPage() {
           const done = list.filter(p => p.channel === ch.id && localDay(new Date(p.at)) === today);
           const doneLabel = done.length ? ALL_POSTS.find(p => p.key === done[0].key)?.label ?? done[0].key : "";
           const post = nextPost(ch.id, list.filter(p => p.channel === ch.id));
-          return <section key={ch.id} className="u-sheet ct-card" aria-label={ch.title}>
-            <div className="ct-card-top">
-              <span className="ct-eyebrow">{ch.title}</span>
+          return <section key={ch.id} className="u-sheet ct-slot" aria-label={ch.title}>
+            <div className="ct-slot-head">
+              <span className="ct-chan">{ch.title}</span>
               <span className="ct-when">{done.length ? "Next up" : "Today"}</span>
             </div>
             {done.length > 0 && <div className="ct-done" role="status">

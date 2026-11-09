@@ -52,6 +52,7 @@ export default function Dashboard() {
   const [loom, setLoom] = useState<{ w: Warm; taskId?: string; key: string; url: string } | null>(null);
   const [doneKeys, setDoneKeys] = useState<Record<string, true>>({});
   const [dms, setDms] = useState<{ id: string; channel: "instagram" | "facebook"; from: string; body: string; at: string }[]>([]);
+  const [content, setContent] = useState<{ key: string; channel: string; at: string }[] | null>(null);
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -66,6 +67,8 @@ export default function Dashboard() {
       .then(r => (r.ok ? r.json() : { events: [] })).then(d => setEvents((d.events ?? []).filter((e: Ev) => e.status !== "cancelled")))
       .catch(() => setEvents([]));
     fetch("/api/inbox", { cache: "no-store" }).then(r => (r.ok ? r.json() : { messages: [] })).then(d => setDms(d.messages ?? [])).catch(() => {});
+    // Content log: only used to nudge today's page post. No row if it fails (e.g. table not migrated yet).
+    fetch("/api/content", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).then(d => setContent(Array.isArray(d?.posted) ? d.posted : null)).catch(() => {});
     fetch("/api/follow-ups", { cache: "no-store" }).then(r => (r.ok ? r.json() : { leads: [] })).then(d => { setWarm(d.leads ?? []); setReferrals(d.referrals ?? []); }).catch(() => setWarm([]));
     // Your manual follow-ups: email, LinkedIn and texts only. Calls (callbacks, redials) live in Call mode.
     Promise.all([
@@ -174,7 +177,9 @@ export default function Dashboard() {
     if (loom.taskId) void fetch("/api/tasks", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: loom.taskId, status: "done" }) }).catch(() => {});
     setDoneKeys(k => ({ ...k, [loom.key]: true })); setLoom(null);
   }
-  const all = [...dmRows, ...warmTexts, ...meetingTexts, ...refRows];
+  const contentRows: Todo[] = content && !content.some(p => p.channel === "page" && localDay(new Date(p.at)) === localDay())
+    ? [{ key: "content:page", title: "Post today's page post", why: "Facebook page and Instagram. It's written, copy it and post.", overdue: false, href: "/crm/content", action: "Open" }] : [];
+  const all = [...dmRows, ...warmTexts, ...meetingTexts, ...refRows, ...contentRows];
   const list: Todo[] | null = todo === null || warm === null ? null : [...all.filter(t => t.overdue), ...todo.filter(t => t.overdue), ...all.filter(t => !t.overdue), ...todo.filter(t => !t.overdue)];
   const when = (e: Ev) => {
     const s = new Date(e.startsAt), isToday = localDay(s) === localDay();

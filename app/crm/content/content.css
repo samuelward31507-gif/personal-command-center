@@ -1,8 +1,8 @@
 /* Content (ct-) */
 body .ct-page .ct-today { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-body .ct-page .ct-card { display: flex; flex-direction: column; gap: 12px; padding: 20px 22px; min-width: 0; }
-body .ct-page .ct-card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-body .ct-page .ct-eyebrow { font-size: 12.5px; color: var(--u-muted); }
+body .ct-page .ct-slot { display: flex; flex-direction: column; gap: 12px; padding: 20px 22px; min-width: 0; }
+body .ct-page .ct-slot-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+body .ct-page .ct-chan { font-size: 12.5px; color: var(--u-muted); }
 body .ct-page .ct-when { font-size: 12px; color: var(--u-soft); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--u-line); }
 body .ct-page .ct-label { margin: 0; font-family: var(--u-text-font); font-size: 18px; font-weight: 600; letter-spacing: -0.01em; color: var(--u-text); }
 body .ct-page .ct-shoot { margin: 0; padding: 10px 12px; border-radius: var(--u-r-sm); background: var(--u-raise); font-size: 13px; line-height: 1.5; color: var(--u-soft); }
@@ -22,7 +22,7 @@ body .ct-page .ct-last { min-width: 92px; }
   body .ct-page .ct-today { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
-  body .ct-page .ct-card { padding: 16px; }
+  body .ct-page .ct-slot { padding: 16px; }
   body .ct-page .ct-acts .u-btn { flex: 1 1 0; justify-content: center; }
   body .ct-page .ct-row .u-row-end { text-align: left; min-width: 0; }
 }

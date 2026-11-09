@@ -21,6 +21,7 @@ const primary = [
   ["email", "Email", "send", "/crm/email"],
   ["linkedin", "LinkedIn", "link", "/crm/linkedin"],
   ["groups", "Groups", "groups", "/crm/groups"],
+  ["content", "Content", "megaphone", "/crm/content"],
   ["contacts", "Contacts", "users", "/crm"],
   ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
@@ -66,6 +67,7 @@ function Icon({ name }: { name: string }) {
     clipboard: <><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1M9 11h6M9 15h4"/></>,
     rail: <><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></>,
     plus: <path d="M12 5v14M5 12h14"/>,
+    megaphone: <><path d="M4 10v4l11 5V5L4 10Z"/><path d="M15 9h1.5a3 3 0 0 1 0 6H15"/><path d="M7 15.4V19a1.5 1.5 0 0 0 3 0v-2.3"/></>,
   };
   return <svg className="cx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.spark}</svg>;
 }
@@ -126,7 +128,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     if (key === "preparation") return pathname.startsWith("/crm/preparation") || pathname.startsWith("/crm/audit");
     const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
       "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", email: "/crm/email", practice: "/crm/practice", outreach: "/crm/outreach", reports: "/crm/reports", scoreboard: "/crm/scoreboard", operations: "/crm/operations", calendar: "/crm/calendar", tasks: "/crm/tasks", audit: "/crm/audit",
-      intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings" };
+      intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings", content: "/crm/content" };
     return map[key] ? pathname.startsWith(map[key]) : activeKey === key;
   };
   const item = ([key, label, icon, href]: readonly [string, string, string, string]) =>

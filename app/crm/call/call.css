@@ -113,15 +113,29 @@ body .dl-call .dl-open p { margin: 0; font-size: 15px; line-height: 1.5; color: 
 body .dl-call .dl-open > div + div p { color: var(--u-soft); font-size: 14px; }
 @media (max-width: 700px) { body .dl-call .dl-open > div { grid-template-columns: 1fr; gap: 2px; } }
 
-/* Email after a no-answer */
-body .dl-call .dl-callmail, body .dl-callmail { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 12px; padding: 14px 16px; border-radius: 12px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); font-size: 14px; line-height: 1.5; color: var(--u-soft); }
-body .dl-callmail b { color: var(--u-text); font-weight: 600; }
-body .dl-callmail-txt { min-width: 0; flex: 1 1 320px; }
-body .dl-callmail-acts { display: flex; gap: 6px; }
-body .dl-callmail-err { display: block; margin-top: 4px; color: var(--u-bad, #f0877a); }
-
-/* Auto-dial countdown and session pace */
-body .dl-call .dl-auto { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 16px; padding: 12px 16px; border-radius: 12px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); font-size: 14.5px; color: var(--u-soft); }
-body .dl-call .dl-auto > span { flex: 1; min-width: 200px; }
-body .dl-call .dl-auto b { color: var(--u-text); font-weight: 600; }
-body .dl-call .dl-pace { display: block; margin-top: 4px; font-size: 12px; color: var(--u-muted); }
+/* Playbook: script, or the line for what they just said */
+body .dl-call .dl-play { gap: 6px; margin-top: 14px; padding: 11px 16px 9px; }
+body .dl-call .dl-play > div { grid-template-columns: 48px 1fr; gap: 10px; }
+body .dl-call .dl-play p { font-size: 14px; line-height: 1.42; }
+body .dl-call .dl-play > div + div p { font-size: 13px; }
+body .dl-call .dl-play .dl-dig span { margin-right: 6px; font-size: inherit; color: inherit; }
+body .dl-call .dl-play .dl-dig i { font-style: normal; margin-right: 5px; color: var(--u-faint); font-variant-numeric: tabular-nums; }
+body .dl-call .dl-say > div { display: grid; gap: 5px; }
+body .dl-call .dl-play .dl-say p { font-size: 15px; color: var(--u-text); }
+body .dl-call .dl-play .dl-say p.dl-then { font-size: 13px; color: var(--u-soft); }
+body .dl-call .dl-play .dl-say p.dl-say-h { font-size: 12.5px; color: var(--u-muted); }
+body .dl-call .dl-say b { color: var(--u-text); font-weight: 550; }
+body .dl-call .dl-say-x { justify-self: start; display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--u-muted); font: 500 12px/1.4 var(--u-text-font); cursor: pointer; }
+body .dl-call .dl-say-x:hover { color: var(--u-text); }
+body .dl-call .dl-play > .dl-ifs { display: block; padding-top: 7px; border-top: 1px solid var(--u-line-soft); }
+body .dl-call .dl-ifs > div { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 3px; }
+body .dl-call .dl-play .dl-ifs-k { margin-right: 6px; font-size: 12.5px; color: var(--u-muted); white-space: nowrap; }
+body .dl-call .dl-if { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 4px 0 7px; border-radius: 6px; border: 1px solid var(--u-line); background: transparent; color: var(--u-soft); font: 500 11px/1 var(--u-text-font); cursor: pointer; white-space: nowrap; }
+body .dl-call .dl-if:not(:has(kbd)) { padding-right: 7px; }
+body .dl-call .dl-if:hover { color: var(--u-text); background: var(--u-hover); }
+body .dl-call .dl-if[aria-pressed="true"] { color: var(--u-text); background: var(--u-raise); border-color: #57524c; }
+body .dl-call .dl-if kbd { min-width: 0; height: auto; padding: 0; border: 0; background: none; font-size: 11px; color: var(--u-muted); }
+body .dl-call .dl-more { margin-left: 4px; padding: 0; border: 0; background: none; color: var(--u-text); font: 500 12.5px/1.4 var(--u-text-font); text-decoration: underline; text-decoration-color: var(--u-faint); text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
+body .dl-call .dl-more:hover { text-decoration-color: var(--u-text); }
+body .dl-call .dl-if-sep { width: 1px; height: 16px; margin: 4px 2px 0; background: var(--u-line); }
+@media (max-width: 700px) { body .dl-call .dl-play > div { grid-template-columns: 1fr; gap: 4px; } }

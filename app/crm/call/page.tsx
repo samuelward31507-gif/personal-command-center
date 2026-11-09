@@ -7,6 +7,7 @@ import { buildDraft, contactFirstName } from "@/lib/call-drafts";
 import { localCallInfo } from "@/lib/local-time";
 import { cityOf } from "@/lib/call-script";
 import { openerFor } from "@/lib/openers";
+import { SCRIPTS, CLOSE, VOICEMAIL, GATEKEEPER, fillLine, type Track } from "@/lib/call-playbook";
 import { reportSection } from "@/lib/business-audit";
 import { suggestOffer } from "@/lib/offers";
 import { offersFrom } from "@/lib/workspace";
@@ -66,6 +67,8 @@ export default function CallModePage() {
   // Callbacks: find anyone by name, company or phone and log the result without leaving Call mode.
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
+  // Playbook panel: an objection id, or "close", "voicemail", "gatekeeper". null shows the script.
+  const [say, setSay] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -110,6 +113,10 @@ export default function CallModePage() {
 
   const item = queue[index];
   const contact = picked && contacts[picked] ? contacts[picked] : item?.contact ? { ...item.contact, ...(contacts[item.contact.id] ?? {}) } as Contact : null;
+  const track: Track = contact && openerFor(contact.niche, contact.company, contact.notes).trade === "detailing" ? "detailing" : "trades";
+  const play = SCRIPTS[track];
+  const playFirst = contact ? firstName(contact.name ?? "", contact.company ?? "") : "";
+  useEffect(() => { setSay(null); }, [contact?.id]);
   const matches = useMemo(() => {
     const t = search.trim().toLowerCase();
     if (t.length < 2) return [];
@@ -290,7 +297,10 @@ export default function CallModePage() {
       const typing = !!(e.target as HTMLElement)?.closest?.("textarea, input, select, [contenteditable]");
       if (countdown !== null && (e.key === "Escape" || (e.key === " " && !typing))) { e.preventDefault(); setCountdown(null); return; }
       if (dialog || typing) return;
-      if (e.key === "c" || e.key === "C") { e.preventDefault(); dial(); }
+      const ob = contact ? play.objections.find(o => o.key === e.key) : undefined;
+      if (e.key === "Escape" && say) { e.preventDefault(); setSay(null); }
+      else if (ob) { e.preventDefault(); setSay(s => (s === ob.id ? null : ob.id)); }
+      else if (e.key === "c" || e.key === "C") { e.preventDefault(); dial(); }
       else if (e.key === "ArrowRight" || e.key === "n") setIndex(i => Math.min(i + 1, Math.max(0, queue.length - 1)));
       else if (e.key === "ArrowLeft" || e.key === "p") setIndex(i => Math.max(0, i - 1));
       else {
@@ -412,11 +422,40 @@ export default function CallModePage() {
           return note ? <p className="dl-lastnote">{note}</p> : null;
         })()}
 
-        {(() => { const op = openerFor(contact.niche, contact.company, contact.notes); return <div className="dl-open" aria-label="What to say">
-          <div><span>Open</span><p>{op.open}</p></div>
-          <div><span>Dig</span><p>{op.dig}</p></div>
-          <div><span>Pitch</span><p>{op.pitch}</p></div>
-        </div>; })()}
+        {(() => {
+          const f = (line: string) => fillLine(line, track, playFirst);
+          const ob = play.objections.find(o => o.id === say);
+          const extra = [["voicemail", "Voicemail"], ["gatekeeper", "Gatekeeper"]] as const;
+          return <div className="dl-open dl-play" aria-label="What to say">
+            {say === null ? <>
+              <div><span>Open</span><p>{f(play.open)}</p></div>
+              <div><span>Dig</span><p className="dl-dig">{play.dig.map((q, i) => <span key={i}><i>{i + 1}</i>{f(q)} </span>)}</p></div>
+              <div><span>Pitch</span><p>{f(play.pitch)} <button type="button" className="dl-more" onClick={() => setSay("close")}>Guarantee and close</button></p></div>
+            </> : <div className="dl-say" role="status">
+              <span>{ob ? "Say" : say === "close" ? "Close" : say === "voicemail" ? "Voicemail" : "Gatekeeper"}</span>
+              <div>
+              {ob && <p className="dl-say-h">If they say “{ob.label}”</p>}
+              {ob ? <>
+                <p>{f(ob.say)}</p>
+                {ob.then && !/^then the close\.?$/i.test(ob.then.trim()) && <p className="dl-then">{f(ob.then)}</p>}
+                {ob.then && /the close/i.test(ob.then) && <p className="dl-then"><b>Then close:</b> {f(CLOSE)}</p>}
+              </> : say === "close" ? <>
+                <p className="dl-then"><b>Guarantee:</b> {f(play.guarantee)}</p>
+                <p>{f(CLOSE)}</p>
+              </> : say === "voicemail" ? <p>{f(VOICEMAIL[track])}</p> : say === "gatekeeper" ? <p>{f(GATEKEEPER)}</p> : null}
+              <button type="button" className="dl-say-x" onClick={() => setSay(null)}>Back to script <kbd>Esc</kbd></button>
+              </div>
+            </div>}
+            <div className="dl-ifs" role="group" aria-label="If they say">
+              <div>
+                <span className="dl-ifs-k">If they say</span>
+                {play.objections.map(o => <button type="button" key={o.id} className="dl-if" aria-pressed={say === o.id} onClick={() => setSay(s => (s === o.id ? null : o.id))}>{o.label}<kbd>{o.key}</kbd></button>)}
+                <i className="dl-if-sep" aria-hidden="true" />
+                {extra.map(([id, label]) => <button type="button" key={id} className="dl-if" aria-pressed={say === id} onClick={() => setSay(s => (s === id ? null : id))}>{label}</button>)}
+              </div>
+            </div>
+          </div>;
+        })()}
 
         <div className="dl-brief">
           {audit === undefined ? <p className="u-note">Loading research…</p> : brief ? <>
