@@ -18,7 +18,27 @@ I help owners follow up on every open quote automatically by text until it's a y
 
 Stain, repairs, gates, the neighbor who asked who did their fence. Most of that work never gets booked because nobody asks.
 
-I set up a simple text campaign to past customers that books those jobs for you. Want me to show you how one went? Comment "past" and I'll message you.` },
+I set up a simple text campaign to past customers that books those jobs for you. Want me to show you how it works? Comment "past" and I'll message you.` },
+  { key: "speed", label: "Who answers first", body: `Real question: when a homeowner fills out a quote form on your site, how long until they hear back?
+
+I've been asking owners this all month. The honest answer is usually "that night" or "next morning." By then they've got two other companies coming out.
+
+The shop that answers first usually gets the estimate. I set up a system that replies in about 10 seconds with your price range and a time to come out. Comment "fast" and I'll show you how it works, no pitch.` },
+  { key: "reviews", label: "Reviews", body: `Owners: how many of your jobs last month turned into a Google review?
+
+Most guys I talk to do great work and have half the reviews of the shop down the street, because nobody asks at the right moment.
+
+I set up an automatic text that goes out right after the job, while the customer is still happy. If you want the exact wording I use, comment "reviews" and I'll send it.` },
+  { key: "detailing-rebook", label: "Detailers: rebooking", body: `Detailers: how many of your ceramic and maintenance customers actually come back on schedule without you reaching out?
+
+Most shops I talk to have hundreds of past customers sitting in their phone who'd book if someone just texted them at the right time.
+
+I run a simple text campaign that reminds them when they're due and books them back in. Comment "rebook" and I'll show you how it works.` },
+  { key: "office", label: "No office manager", body: `For the owner-operators in here without an office manager: who's answering the phone while you're on a job?
+
+Not a knock, I get it, you can't do both. But every call that goes to voicemail is a job someone else gets.
+
+I set up text-back for missed calls that answers in seconds and books the estimate for you. Free to see how it works, comment "office" and I'll DM you.` },
 ];
 
 /** The script to use next in a group: one you haven't posted there yet, else the one used longest ago. */
