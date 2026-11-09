@@ -47,7 +47,7 @@ export const SCRIPTS: Record<Track, Script> = {
       "\"Where's most of your work coming from right now?\" and \"Roughly how many estimates a month?\"",
       "\"Anyone else, like a partner, who should be on that call?\" Then text the invite while you're still on the phone.",
     ],
-    pitch: "Fence guys I talk to all say the same thing: homeowners call three companies, and whoever calls back first gets the job. When you're out on a job you can't pick up, so they book someone else. I set it up so every missed call gets a text back in seconds and the estimate books itself on your calendar. How are you handling calls while you're out on a job right now? ... (let them talk, then) That's exactly what this fixes.",
+    pitch: "Fence guys I talk to all say the same thing: homeowners call three or four companies, and whoever talks to them first gets their foot in the door. When you're out on a job you can't pick up, so someone else gets that first conversation. I set it up so every missed call gets a text back in seconds and the estimate books itself on your calendar. How are you handling calls while you're out on a job right now? ... (let them talk, then) That's exactly what this fixes.",
     guarantee: "We guarantee 5 booked appointments in your first 30 days, or your next month is free. And monthly doesn't start until your first appointment lands.",
     price: "Most shops start on Book & Close: $2,500 setup and $1,997 a month. Our first 3 clients get half off setup, so $1,250.",
     objections: [...SHARED, ...TRADES_ONLY],
