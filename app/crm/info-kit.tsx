@@ -6,11 +6,12 @@ import { buildDraft, contactFirstName, watchLink, type DraftKind } from "@/lib/c
 import { infoText, pickDemoLink, nicheFor } from "@/lib/sms-templates";
 import { useWorkspace } from "../use-workspace";
 
-type Kind = "info_text" | "info_dm" | "info_email" | "link";
+type Kind = "info_text" | "info_dm" | "info_email" | "info_email_time" | "link";
 const OPTIONS: { kind: Kind; label: string }[] = [
   { kind: "info_text", label: "Copy info text" },
   { kind: "info_dm", label: "Copy DM" },
-  { kind: "info_email", label: "Copy email" },
+  { kind: "info_email", label: "Copy email: more work" },
+  { kind: "info_email_time", label: "Copy email: time back" },
   { kind: "link", label: "Copy video link" },
 ];
 type Activity = { id: string; contact_id: string; channel: "call" | "text" | "note"; action: string; outcome: string; notes: string; sequence_step: number | null; occurred_at: string };

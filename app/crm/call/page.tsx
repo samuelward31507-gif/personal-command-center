@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CALL_MODE_GROUPS, CONVERSATIONS, OUTCOME_LABELS, ATTEMPT_LIMIT, type CallOutcome } from "@/lib/call-outcomes";
-import { buildDraft, contactFirstName } from "@/lib/call-drafts";
+import { buildDraft, contactFirstName, INFO_EMAIL_STYLES } from "@/lib/call-drafts";
 import { localCallInfo } from "@/lib/local-time";
 import { cityOf } from "@/lib/call-script";
 import { openerFor } from "@/lib/openers";
@@ -58,7 +58,7 @@ export default function CallModePage() {
   const [session, setSession] = useState<{ start: number; dials: number } | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
   const [gk, setGk] = useState({ name: "", owner: "", direct: "", best: "" });
-  const [info, setInfo] = useState<{ channel: "text" | "dm" | "email"; pain: string }>({ channel: "text", pain: "" });
+  const [info, setInfo] = useState<{ channel: "text" | "dm" | "email"; pain: string; style: "info_email" | "info_email_time" }>({ channel: "text", pain: "", style: "info_email" });
   const [draft, setDraft] = useState<Draft | null>(null);
   const [textCtx, setTextCtx] = useState<{ ctx: TextContext; contactId: string; who: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -189,6 +189,8 @@ export default function CallModePage() {
       setTextCtx(t && (t.template || t.notice || t.tasks?.length || t.closed) ? { ctx: t, contactId: contact.id, who: contact.company || contact.name } : null);
       if (outcome === "not_a_fit") {
         setDraft({ title: `Optional stay-in-touch text for ${contact.company || contact.name}`, ...buildDraft("stay_in_touch", draftInput), contactId: contact.id, channel: "stay" });
+      } else if (outcome === "send_info" && info.channel === "email") {
+        setDraft({ title: `Info email for ${contact.company || contact.name}${contact.email ? ` (${contact.email})` : ""}`, ...buildDraft(info.style, draftInput), contactId: contact.id, channel: "email" });
       } else setDraft(null);
       const who = contact.company || contact.name;
       setLogged(l => [{ name: who, outcome: OUTCOME_LABELS[outcome] }, ...l]);
@@ -535,6 +537,7 @@ export default function CallModePage() {
             </div>
           </> : dialog === "info" ? <>
             <label className="u-lab">Send it by<select className="u-field" value={info.channel} onChange={e => setInfo({ ...info, channel: e.target.value as "text" | "dm" | "email" })}><option value="text">Text</option><option value="dm">Facebook DM</option><option value="email">Email</option></select></label>
+            {info.channel === "email" && <label className="u-lab">Which email<select className="u-field" value={info.style} onChange={e => setInfo({ ...info, style: e.target.value as "info_email" | "info_email_time" })}>{INFO_EMAIL_STYLES.map(o => <option key={o.kind} value={o.kind}>{o.label}{o.kind === "info_email_time" ? " (for owners who are slammed)" : " (for owners with room)"}</option>)}</select></label>}
             <label className="u-lab">Their problem, starting with “you” (optional)<input className="u-field" value={info.pain} onChange={e => setInfo({ ...info, pain: e.target.value })} placeholder="you miss calls when the crew's out" autoFocus /></label>
           </> : <div style={{ display: "grid", gridTemplateColumns: dialog === "meeting" ? "1.3fr 1fr 1fr" : "1fr", gap: 10 }}>
             <label className="u-lab">Date<input className="u-field" type="date" value={when.date} onChange={e => setWhen({ ...when, date: e.target.value })} /></label>
