@@ -28,7 +28,7 @@ export const redirectUri = (origin: string) => `${origin.replace(/\/$/, "")}/api
 
 export function authUrl(origin: string, state: string): string {
   const p = new URLSearchParams({ client_id: process.env.GOOGLE_CLIENT_ID!.trim(), redirect_uri: redirectUri(origin), response_type: "code",
-    scope: GMAIL_SCOPES.join(" "), access_type: "offline", prompt: "consent", include_granted_scopes: "true", state });
+    scope: GMAIL_SCOPES.join(" "), access_type: "offline", prompt: "select_account consent", include_granted_scopes: "true", state });
   return `https://accounts.google.com/o/oauth2/v2/auth?${p}`;
 }
 

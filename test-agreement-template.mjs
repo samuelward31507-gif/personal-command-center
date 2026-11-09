@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { fillAgreement, agreementTier, AGREEMENT_TEMPLATE } from "./lib/agreement-template.ts";
 let n = 0; const ok = f => { f(); n++; };
 const blanks = s => s.match(/\[[^\]\n]{1,80}\]/g) ?? [];
-const base = { date: "November 3, 2026", providerEmail: "cinderrevenuecompany@gmail.com", company: "Ridgeline Fence", ownerName: "Mike Torres", email: "mike@ridgeline.com", phone: "(719) 555-0182", location: "Denver, CO" };
+const base = { date: "November 3, 2026", providerEmail: "sam.cinderrevenue@gmail.com", company: "Ridgeline Fence", ownerName: "Mike Torres", email: "mike@ridgeline.com", phone: "(719) 555-0182", location: "Denver, CO" };
 const t1 = fillAgreement({ ...base, tier: "tier1", setupFee: 1500, monthlyFee: 997 });
 const t2 = fillAgreement({ ...base, tier: "tier2", setupFee: 3000, monthlyFee: 1500 });
 ok(() => assert.equal(agreementTier("tier1_speed_to_lead"), "tier1"));
