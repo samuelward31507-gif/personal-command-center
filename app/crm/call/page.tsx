@@ -281,7 +281,10 @@ export default function CallModePage() {
   useEffect(() => {
     const go = pendingDial.current;
     pendingDial.current = false;
-    setReady(!!(go && contact?.phone && !picked));
+    const isReady = !!(go && contact?.phone && !picked);
+    setReady(isReady);
+    // Take focus out of the notes box (or the outcome button) so Enter places the call instead of typing a new line.
+    if (isReady && document.activeElement instanceof HTMLElement) document.activeElement.blur();
   }, [contact?.id, contact?.phone]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (countdown === null) return;
