@@ -10,8 +10,8 @@ const localDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).pad
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 const CHANNELS: { id: Channel; title: string; target: number; unit: string }[] = [
-  { id: "page", title: "Facebook page and Instagram", target: 14, unit: "page posts" },
-  { id: "video", title: "TikTok and Reels", target: 21, unit: "videos" },
+  { id: "page", title: "Facebook page and Instagram", target: 35, unit: "page posts" },
+  { id: "video", title: "TikTok and Reels", target: 35, unit: "videos" },
 ];
 
 /** Content: today's post for the Facebook page and Instagram, today's video, and what you've posted this week. You post by hand; this picks the post and keeps count. */
@@ -69,7 +69,7 @@ export default function ContentPage() {
     <div className="u-head">
       <div>
         <h1 className="u-title">Content</h1>
-        <p className="u-title-sub">Post as often as you can: 2 page posts and 3 videos a day. Copy it, post it, mark it posted, and the next one comes up.</p>
+        <p className="u-title-sub">5 page posts and 5 videos a day. Download it, paste the caption, post, mark it posted, and the next one comes up.</p>
       </div>
     </div>
     {error && <p className="u-flash is-bad" role="alert" style={{ marginBottom: 16 }}>{error}</p>}
@@ -93,8 +93,10 @@ export default function ContentPage() {
             <h2 className="ct-label">{post.label}</h2>
             {post.file && (
               <div className="ct-video">
-                <video src={post.file} controls playsInline preload="metadata" />
-                <a className="u-btn" href={post.file} download>Download video</a>
+                {post.file.endsWith(".mp4")
+                  ? <video src={post.file} controls playsInline preload="metadata" />
+                  : <img src={post.file} alt="" className="ct-img" />}
+                <a className="u-btn" href={post.file} download>{post.file.endsWith(".mp4") ? "Download video" : "Download image"}</a>
               </div>
             )}
             {post.shoot && !post.file && <p className="ct-shoot"><b>Shoot it:</b> {post.shoot}</p>}
@@ -108,7 +110,7 @@ export default function ContentPage() {
       </div>
 
       <section className="u-block ct-week">
-        <div className="u-h2-row"><h2 className="u-h2">This week</h2><span className="u-note">Last 7 days. Target is 14 page posts and 21 videos (2 and 3 a day). Post each video to TikTok, Reels and Shorts.</span></div>
+        <div className="u-h2-row"><h2 className="u-h2">This week</h2><span className="u-note">Last 7 days. Target is 35 page posts and 35 videos (5 a day each). Page posts share to Facebook and Instagram; videos go to TikTok.</span></div>
         <div className="u-figs">
           {CHANNELS.map(ch => {
             const n = list.filter(p => p.channel === ch.id && Date.parse(p.at) > weekAgo).length;

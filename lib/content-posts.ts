@@ -172,7 +172,19 @@ VO: Plug in your own numbers. 40 missed calls, a $6,000 average job, close 1 in 
 VO: (pause on the result) That's what's walking to the next company. It takes 20 seconds, link in bio.` },
 ];
 
-export const ALL_POSTS: ContentPost[] = [...PAGE_POSTS, ...DEMO_CLIPS, ...VIDEO_SCRIPTS];
+// Every page post has a ready image (Facebook + Instagram) and a slide video (TikTok); every script has a rendered video.
+// Files live in /public/content/posts and /public/content/videos (rendered from these posts).
+const NO_RENDER = new Set(["v-day"]);
+for (const p of PAGE_POSTS) p.file = `/content/posts/${p.key}.jpg`;
+for (const v of VIDEO_SCRIPTS) if (!NO_RENDER.has(v.key)) v.file = `/content/videos/${v.key}.mp4`;
+
+/** Slide-video versions of the page posts, so TikTok gets as many posts as the page does. */
+export const PAGE_VIDEOS: ContentPost[] = PAGE_POSTS.map(p => ({
+  key: "pv-" + p.key.slice(2), channel: "video", label: p.label + " (video)", file: `/content/videos/${p.key}.mp4`,
+  body: p.body + "\n\n#contractor #smallbusiness #homeservices",
+}));
+
+export const ALL_POSTS: ContentPost[] = [...PAGE_POSTS, ...DEMO_CLIPS, ...VIDEO_SCRIPTS.filter(v => !NO_RENDER.has(v.key)), ...PAGE_VIDEOS];
 
 /** Next post on a channel: one never posted, else the one posted longest ago. */
 export function nextPost(channel: Channel, posted: { key: string; at: string }[]): ContentPost {

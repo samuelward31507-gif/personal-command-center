@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-const { ALL_POSTS, PAGE_POSTS, DEMO_CLIPS, VIDEO_SCRIPTS, nextPost } = await import("./lib/content-posts.ts");
+const { ALL_POSTS, PAGE_POSTS, DEMO_CLIPS, VIDEO_SCRIPTS, PAGE_VIDEOS, nextPost } = await import("./lib/content-posts.ts");
 let n = 0; const ok = f => { f(); n++; };
 
 // Keys unique across every channel, and each post sits on the channel it's listed under.
 const keys = ALL_POSTS.map(p => p.key);
 ok(() => assert.equal(new Set(keys).size, keys.length, "post keys are unique across ALL_POSTS"));
-ok(() => assert.equal(ALL_POSTS.length, PAGE_POSTS.length + DEMO_CLIPS.length + VIDEO_SCRIPTS.length));
+ok(() => assert.equal(ALL_POSTS.length, PAGE_POSTS.length + DEMO_CLIPS.length + VIDEO_SCRIPTS.length - 1 + PAGE_VIDEOS.length));
+for (const p of ALL_POSTS) ok(() => assert.ok(p.file && /^\/content\/(posts|videos)?\/?[a-z0-9-]+\.(jpg|mp4)$/.test(p.file), `${p.key}: has a ready file`));
 for (const c of DEMO_CLIPS) ok(() => assert.ok(c.channel === "video" && /^\/content\/demo-[a-z-]+\.mp4$/.test(c.file ?? ""), `${c.key}: has a demo file`));
 ok(() => assert.ok(PAGE_POSTS.every(p => p.channel === "page") && VIDEO_SCRIPTS.every(p => p.channel === "video")));
 ok(() => assert.ok(VIDEO_SCRIPTS.every(p => p.shoot && p.shoot.trim()), "every video has a shoot note"));
@@ -36,9 +37,9 @@ ok(() => assert.equal(nextPost("page", [{ key: VIDEO_SCRIPTS[0].key, at: "2026-1
 }
 // Only the newest post of a key counts.
 ok(() => {
-  const V = [...DEMO_CLIPS, ...VIDEO_SCRIPTS];
+  const V = ALL_POSTS.filter(p => p.channel === "video");
   const [a, b] = V;
-  const rest = V.slice(2).map((p, i) => ({ key: p.key, at: `2026-11-1${i}T12:00:00Z` }));
+  const rest = V.slice(2).map((p, i) => ({ key: p.key, at: `2026-11-${String(i + 1).padStart(2, "0")}T12:00:00Z` }));
   const log = [...rest, { key: a.key, at: "2026-10-01T12:00:00Z" }, { key: a.key, at: "2026-11-30T12:00:00Z" }, { key: b.key, at: "2026-10-15T12:00:00Z" }];
   assert.equal(nextPost("video", log).key, b.key);
 });
