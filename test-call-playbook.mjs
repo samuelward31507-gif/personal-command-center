@@ -17,4 +17,8 @@ ok(() => assert.ok(fillLine(GATEKEEPER, "trades", "").includes("who should I ask
 ok(() => assert.ok(fillLine("{price} x", "trades").includes("$1,997")));
 ok(() => assert.ok(fillLine("{price} x", "detailing").includes("$997")));
 ok(() => assert.ok(!/\{/.test(fillLine(CLOSE, "trades", "A"))));
+ok(() => assert.match(SCRIPTS.trades.open, /handle more work/));
+ok(() => assert.match(SCRIPTS.detailing.open, /handle more cars/));
+ok(() => assert.ok(SCRIPTS.trades.objections.some(o => o.key === "w" && /slammed/.test(o.label))));
+ok(() => assert.ok(SCRIPTS.detailing.objections.some(o => o.key === "w" && /booked out/.test(o.label))));
 console.log(`Call playbook checks passed (${n} assertions).`);
