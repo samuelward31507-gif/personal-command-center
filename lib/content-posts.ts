@@ -2,7 +2,7 @@
 // Rules: lead with more jobs, not "AI". No made-up results or testimonials. Stats only with their source.
 
 export type Channel = "page" | "video";
-export type ContentPost = { key: string; channel: Channel; label: string; body: string; shoot?: string };
+export type ContentPost = { key: string; channel: Channel; label: string; body: string; shoot?: string; file?: string };
 
 /** Facebook page + Instagram feed. Same caption works on both; pair it with a demo screenshot or a plain text graphic. */
 export const PAGE_POSTS: ContentPost[] = [
@@ -61,6 +61,79 @@ Cinder sends a review request after every job, automatically, in your words. It'
 4. Every month: quote follow-ups, review requests, and a Monday text report.
 
 You show up to the appointments. We handle the rest.` },
+  { key: "p-weekend", channel: "page", label: "Saturday calls", body: `Saturday, 10am. A homeowner finally has time to deal with the fence. They call three companies.
+
+The first one to answer gets the estimate. On a Saturday, that's usually nobody.
+
+Cinder answers every call, form and message in 10 seconds, nights and weekends included, and books the estimate on your calendar.` },
+  { key: "p-forms", channel: "page", label: "Website forms", body: `When was the last time you checked your website form at 9pm?
+
+Homeowners fill out quote forms at night, after work. By morning they've filled out two more.
+
+Every form gets a text back in 10 seconds, with your price range and a time to come out. Link in bio.` },
+  { key: "p-angi", channel: "page", label: "Paid leads", body: `Paying for Angi, Thumbtack or Facebook leads?
+
+Those leads get sent to 3 or 4 companies at once. The one that replies first usually wins.
+
+Cinder replies to every paid lead in 10 seconds, so the money you spend on leads turns into booked estimates.` },
+  { key: "p-noshow", channel: "page", label: "No-shows", body: `Booked estimates that don't show cost you a drive and an hour.
+
+Cinder texts a reminder the day before and the morning of. If they can't make it, it rebooks them automatically instead of letting the job disappear.` },
+  { key: "p-spanish", channel: "page", label: "English and Spanish", body: `Half your calls in Spanish? Cinder answers in whichever language the customer writes in, English or Spanish, and books the estimate the same way.
+
+Every lead answered. Every language.` },
+  { key: "p-time", channel: "page", label: "Your evenings", body: `How many hours a week do you spend texting people back, chasing quotes and answering "are you available Thursday?"
+
+That's the work Cinder takes off your plate. You show up to the appointments. We handle the rest.` },
+  { key: "p-nocontract", channel: "page", label: "No contract", body: `What it takes to start with Cinder:
+
+1. A 30-minute call about your service area, prices and calendar.
+2. You approve the messages.
+3. That's it.
+
+No contract. You keep your number and your software. Monthly doesn't start until your first booked appointment.` },
+  { key: "p-oldquotes", channel: "page", label: "Old quotes", body: `How many quotes from the last 90 days never got a yes or a no?
+
+Those are the easiest jobs you'll close this month. They already asked you for a price.
+
+When we set you up, we follow up on every open quote from the last 90 days. That's where the first week's jobs come from.` },
+  { key: "p-detail-slow", channel: "page", label: "Detailers: slow weeks", body: `Detailers: slow weeks aren't bad luck. They're customers who were due and never got a reminder.
+
+We text your customers when they're due and offer next week's open slots first. Your calendar fills before the week gets slow.` },
+  { key: "p-question", channel: "page", label: "Question post", body: `Contractors, honest question: what happens to a call that comes in while you're on a roof?
+
+Voicemail? Call back at 6pm? Your wife answers?
+
+Drop it in the comments. I'm collecting answers.` },
+];
+
+/** Ready-made demo videos (in /public/content). Download, post to TikTok, Reels and Shorts with the caption. */
+export const DEMO_CLIPS: ContentPost[] = [
+  { key: "c-missed", channel: "video", label: "Demo: missed call, booked", file: "/content/demo-missed-call.mp4", body: `A fence company misses a call on a job site. 6 seconds later the customer gets a text back, answers two questions, and the estimate is on the calendar. Nobody touched a phone.
+
+Contractors: this is what every missed call should look like. Link in bio.
+
+#fencecontractor #contractorlife #smallbusiness #homeimprovement` },
+  { key: "c-quote", channel: "video", label: "Demo: quote follow-up", file: "/content/demo-quote.mp4", body: `The quote went quiet for two days. This is the follow-up that won it: "a bit more than I was hoping" gets financing or a cheaper option, not a discount. Then a start date.
+
+Most quotes get sent once and never chased. Link in bio.
+
+#contractor #fencecompany #salesfollowup #smallbusinessowner` },
+  { key: "c-price", channel: "video", label: "Demo: price range first", file: "/content/demo-price-range.mp4", body: `Booked out and tired of driving to tire-kickers? Every lead gets your price range before anything is booked. Only serious jobs land on your calendar.
+
+Link in bio.
+
+#contractorbusiness #fenceinstallation #roofingcontractor #tradesman` },
+  { key: "c-detail", channel: "video", label: "Demo: detailer past customers", file: "/content/demo-detailer.mp4", body: `Detailers: your ceramic customers should be back every few months. Most never get asked. One text when they're due, a slot on the calendar, an add-on at booking.
+
+Link in bio.
+
+#autodetailing #ceramiccoating #detailingbusiness #mobiledetailing` },
+  { key: "c-reviews", channel: "video", label: "Demo: review requests", file: "/content/demo-reviews.mp4", body: `The best time to ask for a review is an hour after the job, while they're still looking at the work. Happy customers get your Google link. Unhappy ones come straight to you.
+
+Link in bio.
+
+#googlereviews #contractor #smallbusinesstips #homeservices` },
 ];
 
 /** TikTok, Reels and Shorts. No face needed: screen recording of the demo plus text on screen and a voiceover. */
@@ -99,7 +172,7 @@ VO: Plug in your own numbers. 40 missed calls, a $6,000 average job, close 1 in 
 VO: (pause on the result) That's what's walking to the next company. It takes 20 seconds, link in bio.` },
 ];
 
-export const ALL_POSTS: ContentPost[] = [...PAGE_POSTS, ...VIDEO_SCRIPTS];
+export const ALL_POSTS: ContentPost[] = [...PAGE_POSTS, ...DEMO_CLIPS, ...VIDEO_SCRIPTS];
 
 /** Next post on a channel: one never posted, else the one posted longest ago. */
 export function nextPost(channel: Channel, posted: { key: string; at: string }[]): ContentPost {
