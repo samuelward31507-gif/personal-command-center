@@ -25,6 +25,7 @@ export function demoLinkFor(niche: string): string {
 
 /** The site's general demo page, which is also the Settings default. A different link in Settings (an overview Loom)
     replaces the trade defaults everywhere; leaving the default keeps the fence cut for fence leads. */
+export const BOOKING_LINK = "https://cal.com/samuel-ward-saqpvb/15min";
 export const DEFAULT_DEMO_LINK = "https://cinderrevenue.com/demo";
 export function pickDemoLink(niche: string, settingsLink?: string | null): string {
   const s = (settingsLink ?? "").trim();
@@ -74,8 +75,8 @@ export function voicemailText(i: { firstName?: string; callTime: string; demoLin
 }
 export function infoText(i: { firstName?: string; demoLink: string; slot1?: string; slot2?: string; niche?: string }): string {
   const name = (i.firstName ?? "").trim();
-  if (i.niche === "detailing") return `Hey${name ? " " + name : ""}, Sam with Cinder. Good talking with you. Here's how it works: ${i.demoLink}\n\nWe text your past customers when they're due for their next detail and book them back in, text back anyone who calls while you're mid-job, and ask happy customers for reviews. You don't touch the tech. Our first campaign to your past customers books at least 3x what you pay or it's free. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow?`;
-  return `Hey${name ? " " + name : ""}, Sam with Cinder. Good talking with you. Here's the demo of what your customers would get when you can't pick up: ${i.demoLink}\n\nEvery lead gets a text back in 10 seconds and the estimate lands on your calendar. Every quote gets followed up until it's a yes or a no. We build it and run it, you don't touch the tech. 5 booked appointments in your first 30 days or your next month is free. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow?`;
+  if (i.niche === "detailing") return `Hey${name ? " " + name : ""}, Sam with Cinder. Good talking with you. Here's how it works: ${i.demoLink}\n\nWe text your past customers when they're due for their next detail and book them back in, text back anyone who calls while you're mid-job, and ask happy customers for reviews. You don't touch the tech. Our first campaign to your past customers books at least 3x what you pay or it's free. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow? Or grab any time here: ${BOOKING_LINK}`;
+  return `Hey${name ? " " + name : ""}, Sam with Cinder. Good talking with you. Here's the demo of what your customers would get when you can't pick up: ${i.demoLink}\n\nEvery lead gets a text back in 10 seconds and the estimate lands on your calendar. Every quote gets followed up until it's a yes or a no. We build it and run it, you don't touch the tech. 5 booked appointments in your first 30 days or your next month is free. More about us: https://cinderrevenue.com\n\nEasiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow? Or grab any time here: ${BOOKING_LINK}`;
 }
 
 // ---- sending helpers ----

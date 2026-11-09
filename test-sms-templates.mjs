@@ -64,8 +64,8 @@ for (const o of ["meeting_booked", "not_interested", "callback_requested"]) ok((
 // T-INFO
 const info = infoText({ firstName: "Mike", demoLink: link });
 ok(() => assert.match(info, /^Hey Mike, Sam with Cinder\. Good talking with you\. Here's the demo/));
-ok(() => assert.match(info, /More about us: https:\/\/cinderrevenue\.com\n\nEasiest is I show you in 15 min\. 2pm or 4pm tomorrow\?$/));
-ok(() => assert.match(infoText({ firstName: "Mike", demoLink: link, slot1: "10am", slot2: "1pm" }), /10am or 1pm tomorrow\?$/));
+ok(() => assert.match(info, /More about us: https:\/\/cinderrevenue\.com\n\nEasiest is I show you in 15 min\. 2pm or 4pm tomorrow\? Or grab any time here: https:\/\/cal\.com\/samuel-ward-saqpvb\/15min$/));
+ok(() => assert.match(infoText({ firstName: "Mike", demoLink: link, slot1: "10am", slot2: "1pm" }), /10am or 1pm tomorrow\? Or grab any time here: https:\/\/cal\.com\/samuel-ward-saqpvb\/15min$/));
 const ip = planFor("send_info", { now: calledAt, tz: gaTz });
 ok(() => assert.equal(ip.template, "T-INFO"));
 ok(() => assert.equal(planFor("interested", { now: calledAt, tz: gaTz }).template, "T-INFO", "interested gets the same info text"));

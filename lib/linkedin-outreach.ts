@@ -10,7 +10,7 @@ export const DEFAULT_LINKEDIN: Record<LinkedInStep, string> = {
 
 Straight question: could {company} handle more work right now?
 
-Most owners aren't short on leads, they lose them: missed calls after hours, quotes nobody follows up on, past customers who never hear back. I set up a system that books all three for you.
+Most owners aren't short on leads, they lose them: missed calls after hours, forms nobody answers until morning, quotes nobody follows up on. I set up a system that fixes all three: every lead answered in 10 seconds and booked, every quote chased to a yes or a no.
 
 If it doesn't put 5 booked appointments on your calendar in 30 days, your next month is free. Here's how it works: {demo_link}
 

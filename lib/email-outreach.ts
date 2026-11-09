@@ -17,9 +17,9 @@ export const DEFAULT_TEMPLATES: Record<EmailStep, EmailTemplate> = {
 
 Quick question: could {company} handle more work right now?
 
-Most owners I talk to aren't short on leads. They lose them. A call comes in after hours or on a Saturday and nobody picks up. A quote goes out and nobody follows up. A happy customer from last year never hears from you again.
+Most owners I talk to aren't short on leads. They lose them. A call comes in after hours or on a Saturday and nobody picks up. A form sits until the next morning. A quote goes out and nobody follows up.
 
-I set up a system that fixes all three. It texts every missed caller back in seconds and books them, follows up on open quotes until they answer, and brings past customers back for their next job. Nothing new for you to learn and nobody to hire.
+I set up a system that fixes all three. Every call, form and Facebook lead gets a text back in 10 seconds and gets booked on your calendar, and every open quote gets followed up until it's a yes or a no, including the ones from the last 90 days. Nothing new for you to learn and nobody to hire.
 
 If it doesn't put 5 booked appointments on your calendar in the first 30 days, your next month is free.
 
@@ -118,7 +118,7 @@ export const AFTER_CALL_TEMPLATES: Record<Track, EmailTemplate> = {
 
 Just tried calling {company}. Sorry I missed you.
 
-Short version: could you handle more work right now? I set up a system that texts back every missed call in seconds and books them, follows up on open quotes, and brings past customers back for their next job.
+Short version: could you handle more work right now? I set up a system that texts back every missed call and form in 10 seconds and books them, and follows up on every open quote until it's a yes or a no.
 
 If it doesn't put 5 booked appointments on your calendar in the first 30 days, your next month is free.
 
