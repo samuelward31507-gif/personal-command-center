@@ -19,7 +19,6 @@ import { CallEmail } from "./call-email";
 
 /** Outcomes that roll straight into the next dial when auto-dial is on. */
 const AUTO_NEXT: string[] = ["no_answer", "voicemail", "gatekeeper", "wrong_number", "not_interested", "not_a_fit"];
-const AUTO_SECONDS = 3;
 import "./call.css";
 
 type Contact = { id: string; name: string; company: string; phone: string; email?: string; website?: string; location?: string; notes?: string; status?: string; lastContact?: string; lastTouchAt?: string; lastTouchOutcome?: string; lastNote?: string; attempts?: number; niche?: string };
@@ -49,6 +48,8 @@ export default function CallModePage() {
   // Auto-dial: after a quick outcome (no answer, voicemail, gatekeeper…), the next call opens on its own after a short countdown.
   const [autoDial, setAutoDial] = useState(() => { try { return localStorage.getItem("cinder.autodial") !== "off"; } catch { return true; } });
   const [countdown, setCountdown] = useState<number | null>(null);
+  // Browsers block a call that starts without a click or key press, so auto-dial lines up the next call and one key places it.
+  const [ready, setReady] = useState(false);
   const pendingDial = useRef(false);
   const [session, setSession] = useState<{ start: number; dials: number } | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -153,6 +154,7 @@ export default function CallModePage() {
   } : null;
 
   function dial(number?: string) {
+    setReady(false);
     const to = number || contact?.phone;
     if (!contact || !to) return;
     setCountdown(null); pendingDial.current = false;
@@ -279,7 +281,7 @@ export default function CallModePage() {
   useEffect(() => {
     const go = pendingDial.current;
     pendingDial.current = false;
-    if (go && contact?.phone && !picked) setCountdown(AUTO_SECONDS);
+    setReady(!!(go && contact?.phone && !picked));
   }, [contact?.id, contact?.phone]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (countdown === null) return;
@@ -288,7 +290,7 @@ export default function CallModePage() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countdown]);
-  function toggleAuto() { setAutoDial(a => { const n = !a; try { localStorage.setItem("cinder.autodial", n ? "on" : "off"); } catch { /* fine */ } if (!n) setCountdown(null); return n; }); }
+  function toggleAuto() { setAutoDial(a => { const n = !a; try { localStorage.setItem("cinder.autodial", n ? "on" : "off"); } catch { /* fine */ } if (!n) { setCountdown(null); setReady(false); } return n; }); }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -296,6 +298,8 @@ export default function CallModePage() {
       if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
       const typing = !!(e.target as HTMLElement)?.closest?.("textarea, input, select, [contenteditable]");
       if (countdown !== null && (e.key === "Escape" || (e.key === " " && !typing))) { e.preventDefault(); setCountdown(null); return; }
+      if (ready && !typing && !dialog && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); dial(); return; }
+      if (ready && e.key === "Escape") { e.preventDefault(); setReady(false); return; }
       if (dialog || typing) return;
       const ob = contact ? play.objections.find(o => o.key === e.key) : undefined;
       if (e.key === "Escape" && say) { e.preventDefault(); setSay(null); }
@@ -337,6 +341,12 @@ export default function CallModePage() {
         <button className="u-btn u-btn-bare" onClick={() => void load()}>Refresh list</button>
       </div>
     </div>
+
+    {ready && countdown === null && contact && <div className="dl-auto" role="status">
+      <span>Next call: <b>{contact.company || contact.name}</b>. Press <kbd>Enter</kbd> to call.</span>
+      <button type="button" className="u-btn u-btn-light" onClick={() => dial()}>Call now</button>
+      <button type="button" className="u-btn u-btn-bare" onClick={() => setReady(false)}>Not now (Esc)</button>
+    </div>}
 
     {countdown !== null && contact && <div className="dl-auto" role="status">
       <span>Calling <b>{contact.company || contact.name}</b> in {countdown}…</span>
