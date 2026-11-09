@@ -11,20 +11,20 @@
 <meta property="og:description" content="A 30-second look at AI lead response for service businesses.">
 <meta property="og:image" content="https://cinderrevenue.com/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#0b0b0b">
+<meta name="theme-color" content="#131211">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=Geist:wght@400..700&display=swap">
 <link rel="stylesheet" href="/site.css">
 <style>
-html, body { margin: 0; height: 100%; background: #0b0b0b; overflow: hidden; }
+html, body { margin: 0; height: 100%; background: #131211; overflow: hidden; }
 body.watch { font-family: var(--sans); -webkit-font-smoothing: antialiased; color: var(--paper); }
-.wstage { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: #0b0b0b; visibility: hidden; } /* shown once scaled to fit: no layout shift */
+.wstage { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: #131211; visibility: hidden; } /* shown once scaled to fit: no layout shift */
 /* Vertical: social safe zones. Nothing in the bottom 380px or the right 140px. */
 .wstage[data-l="v"] { width: 1080px; height: 1920px; --l: 90px; --r: 140px; --top: 92px; --bot: 380px; }
 .wstage[data-l="w"] { width: 1920px; height: 1080px; --l: 96px; --r: 96px; --top: 72px; --bot: 96px; }
-.w-top { position: absolute; left: var(--l); right: var(--r); top: var(--top); display: flex; justify-content: space-between; align-items: center; color: #7c7c7c; font-weight: 500; letter-spacing: -.01em; }
+.w-top { position: absolute; left: var(--l); right: var(--r); top: var(--top); display: flex; justify-content: space-between; align-items: center; color: #8f8881; font-weight: 500; letter-spacing: -.01em; }
 .w-top .logo svg { display: block; width: auto; }
 [data-l="v"] .w-top { font-size: 26px; } [data-l="v"] .w-top .logo svg { height: 34px; }
 [data-l="w"] .w-top { font-size: 22px; } [data-l="w"] .w-top .logo svg { height: 30px; }
@@ -33,14 +33,14 @@ body.watch { font-family: var(--sans); -webkit-font-smoothing: antialiased; colo
 .sc { position: absolute; left: var(--l); right: var(--r); top: calc(var(--top) + 60px); bottom: var(--bot); display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
   opacity: 0; visibility: hidden; transform: translateY(18px); transition: opacity .3s ease, transform .3s ease, visibility 0s linear .3s; }
 .sc.on { opacity: 1; visibility: visible; transform: none; transition: opacity .6s ease .25s, transform 1s cubic-bezier(.16,1,.3,1) .25s, visibility 0s; }
-.lbl { display: flex; align-items: center; gap: 16px; margin: 0; color: #8c8c8c; font-weight: 560; text-transform: uppercase; letter-spacing: .16em; }
+.lbl { display: flex; align-items: center; gap: 16px; margin: 0; color: #8f8881; font-weight: 560; text-transform: uppercase; letter-spacing: .16em; }
 .lbl i { width: 10px; height: 10px; border-radius: 50%; background: var(--spark); flex: none; }
 .num { display: flex; align-items: baseline; margin: 0; font-variant-numeric: tabular-nums; }
-.num b { font-weight: 600; letter-spacing: -.06em; line-height: .9; color: #f3f3f3; }
-.num span { font-weight: 500; color: #b9b9b9; letter-spacing: -.03em; }
-.txt { margin: 0; font-weight: 500; color: #e4e4e4; letter-spacing: -.025em; line-height: 1.12; text-wrap: balance; }
-.big { margin: 0; font-weight: 600; letter-spacing: -.04em; line-height: 1.04; color: #f3f3f3; text-wrap: balance; }
-.sub { margin: 0; color: #9d9d9d; font-weight: 450; letter-spacing: -.015em; line-height: 1.3; text-wrap: balance; }
+.num b { font-family: var(--wide); font-stretch: 125%; font-weight: 750; letter-spacing: -.03em; line-height: .9; color: #f3efe9; }
+.num span { font-weight: 500; color: #b2aba3; letter-spacing: -.03em; }
+.txt { margin: 0; font-weight: 500; color: #e6e1da; letter-spacing: -.025em; line-height: 1.12; text-wrap: balance; }
+.big { margin: 0; font-family: var(--wide); font-stretch: 112%; font-weight: 750; letter-spacing: -.025em; line-height: 1.04; color: #f3efe9; text-wrap: balance; }
+.sub { margin: 0; color: #a8a199; font-weight: 450; letter-spacing: -.015em; line-height: 1.3; text-wrap: balance; }
 
 [data-l="v"] .lbl { font-size: 25px; }
 [data-l="v"] .num { margin-top: 30px; } [data-l="v"] .num b { font-size: 320px; } [data-l="v"] .num span { font-size: 110px; margin-left: 14px; }
@@ -60,8 +60,8 @@ body.watch { font-family: var(--sans); -webkit-font-smoothing: antialiased; colo
 .watch .film-ui { display: contents; }
 .watch .film-pp { display: none !important; }
 .watch .film-seg { height: 10px; } .watch .film-seg::before, .watch .film-seg i { height: 3px; margin-top: -1.5px; }
-.watch .film-cap { position: absolute; min-height: 0; display: grid; gap: 14px; align-content: start; margin: 0; font-weight: 580; letter-spacing: -.028em; line-height: 1.12; color: #f0f0f0; text-wrap: balance; }
-.watch .film-kick { color: #8c8c8c; font-weight: 560; text-transform: uppercase; letter-spacing: .16em; }
+.watch .film-cap { position: absolute; min-height: 0; display: grid; gap: 14px; align-content: start; margin: 0; font-weight: 580; letter-spacing: -.028em; line-height: 1.12; color: #f3efe9; text-wrap: balance; }
+.watch .film-kick { color: #8f8881; font-weight: 560; text-transform: uppercase; letter-spacing: .16em; }
 .watch .film-cap.in { animation: wcap .45s cubic-bezier(.16,1,.3,1) both; }
 @keyframes wcap { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 /* bigger message text so bubbles read on a phone screen */
@@ -83,11 +83,11 @@ body.watch { font-family: var(--sans); -webkit-font-smoothing: antialiased; colo
 [data-l="w"] .film-kick { font-size: 21px; }
 
 /* End card */
-.w-cta { display: inline-flex; align-items: center; border-radius: 20px; background: #f3f3f3; color: #0b0b0b; font-weight: 600; letter-spacing: -.01em; text-decoration: none; }
-.w-social { display: none; margin: 0; border: 1px solid #2f2f2f; border-radius: 22px; background: #141414; color: #f0f0f0; font-weight: 560; letter-spacing: -.02em; line-height: 1.2; }
-.w-social b { color: #f2a383; font-weight: 700; letter-spacing: .02em; }
+.w-cta { display: inline-flex; align-items: center; border-radius: 20px; background: #ff6a1f; color: #1a0c04; font-weight: 600; letter-spacing: -.01em; text-decoration: none; }
+.w-social { display: none; margin: 0; border: 1px solid #33302c; border-radius: 22px; background: #1a1917; color: #f3efe9; font-weight: 560; letter-spacing: -.02em; line-height: 1.2; }
+.w-social b { color: #f3efe9; font-weight: 700; letter-spacing: .02em; }
 .social .w-cta { display: none; } .social .w-social { display: block; }
-.w-url2 { margin: 0; color: #8a8a8a; font-weight: 500; letter-spacing: -.01em; }
+.w-url2 { margin: 0; color: #8f8881; font-weight: 500; letter-spacing: -.01em; }
 [data-l="v"] .w-cta { margin-top: 80px; height: 104px; padding: 0 48px; font-size: 40px; }
 [data-l="v"] .w-social { margin-top: 70px; padding: 34px 40px; font-size: 44px; max-width: 850px; box-sizing: border-box; }
 [data-l="v"] .w-url2 { margin-top: 32px; font-size: 34px; }
@@ -96,7 +96,7 @@ body.watch { font-family: var(--sans); -webkit-font-smoothing: antialiased; colo
 [data-l="w"] .w-url2 { margin-top: 26px; font-size: 28px; }
 
 /* Source line sits at the bottom edge of the safe area */
-.w-src { position: absolute; left: var(--l); right: var(--r); bottom: calc(var(--bot) + 12px); margin: 0; color: #6a6a6a; line-height: 1.4; opacity: 0; transition: opacity .5s ease; }
+.w-src { position: absolute; left: var(--l); right: var(--r); bottom: calc(var(--bot) + 12px); margin: 0; color: #8a837c; line-height: 1.4; opacity: 0; transition: opacity .5s ease; }
 .w-src.on { opacity: 1; }
 [data-l="v"] .w-src { font-size: 22px; } [data-l="w"] .w-src { font-size: 19px; bottom: 56px; }
 
