@@ -33,13 +33,20 @@ export function shortTime(d: Date): string {
 }
 
 const ROUTINE_TONE: Record<RoutineKind, string> = { trading: "amber", dial: "green", outreach: "gray", followup: "blue", build: "violet", personal: "gray" };
-const EVENT_TONE: Record<EventType, string> = { meeting: "blue", call: "green", focus: "violet", personal: "amber", deadline: "red", other: "gray" };
+export const EVENT_TONE: Record<EventType, string> = { meeting: "meet", call: "call", focus: "focus", personal: "personal", deadline: "red", other: "gray" };
+
+/** A true all-day event spans whole local days. A timed event saved with the all-day box ticked is drawn at its time. */
+export function isAllDay(e: Pick<CalendarEvent, "allDay" | "startsAt" | "endsAt">): boolean {
+  if (!e.allDay) return false;
+  const s = new Date(e.startsAt), en = new Date(e.endsAt);
+  return s.getHours() === 0 && s.getMinutes() === 0 && en.getHours() === 0 && en.getMinutes() === 0;
+}
 
 type Item = { id: string; title: string; start: Date; end: Date; tone: string; routine: boolean; event?: CalendarEvent; sub?: string };
 
 function itemsFor(day: Date, events: CalendarEvent[], monthOnly: boolean): Item[] {
   const routine: Item[] = (monthOnly ? [] : routineFor(day)).map(b => ({ id: "r-" + b.start, title: b.title, start: b.startsAt, end: b.endsAt, tone: ROUTINE_TONE[b.kind], routine: true, sub: blockTime(b) }));
-  const evs: Item[] = events.filter(e => !e.allDay).map(e => ({ id: e.id, title: e.title, start: new Date(e.startsAt), end: new Date(e.endsAt), tone: EVENT_TONE[e.type] ?? "gray", routine: false, event: e, sub: e.contactName || undefined }));
+  const evs: Item[] = events.filter(e => !isAllDay(e)).map(e => ({ id: e.id, title: e.title, start: new Date(e.startsAt), end: new Date(e.endsAt), tone: EVENT_TONE[e.type] ?? "gray", routine: false, event: e, sub: e.contactName || undefined }));
   return [...routine, ...evs].sort((a, b) => a.start.getTime() - b.start.getTime() || Number(a.routine) - Number(b.routine));
 }
 
@@ -54,7 +61,7 @@ function MonthView({ days, anchor, eventsOn, followUpsOn, onEdit, onNew, onOpenD
       <div className="cal-month-body">
         {days.map(day => {
           const all = eventsOn(day);
-          const allDay = all.filter(e => e.allDay);
+          const allDay = all.filter(isAllDay);
           const items = itemsFor(day, all, true);
           const fu = followUpsOn(day);
           const shown = items.slice(0, MAX - Math.min(allDay.length, 2));
@@ -109,7 +116,7 @@ function TimeGrid({ days, eventsOn, followUpsOn, onEdit, onNew, onOpenDay, view 
   useEffect(() => { if (scroller.current) scroller.current.scrollTop = (7 - START_H) * HOUR_PX - 8; }, [view]);
   const hours = Array.from({ length: END_H - START_H }, (_, i) => START_H + i);
   const cols = { gridTemplateColumns: `64px repeat(${days.length}, minmax(0, 1fr))` };
-  const anyAllDay = days.some(d => eventsOn(d).some(e => e.allDay) || followUpsOn(d) > 0);
+  const anyAllDay = days.some(d => eventsOn(d).some(isAllDay) || followUpsOn(d) > 0);
   return (
     <div className={"cal-tg" + (days.length === 1 ? " is-day" : "")}>
       <div className="cal-tg-head" style={cols}>
@@ -131,7 +138,7 @@ function TimeGrid({ days, eventsOn, followUpsOn, onEdit, onNew, onOpenDay, view 
             const fu = followUpsOn(d);
             return (
               <div key={keyOf(d)} className="cal-tg-allday-col">
-                {eventsOn(d).filter(e => e.allDay).map(e => <button type="button" key={e.id} className={"cal-bar tone-" + (EVENT_TONE[e.type] ?? "gray")} onClick={() => onEdit(e)}>{e.title}</button>)}
+                {eventsOn(d).filter(isAllDay).map(e => <button type="button" key={e.id} className={"cal-bar tone-" + (EVENT_TONE[e.type] ?? "gray")} onClick={() => onEdit(e)}>{e.title}</button>)}
                 {fu > 0 && <a className="cal-followups" href="/crm/tasks">{fu} follow-up{fu === 1 ? "" : "s"}</a>}
               </div>
             );

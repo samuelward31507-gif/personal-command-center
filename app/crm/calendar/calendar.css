@@ -289,3 +289,13 @@ html body .calendar-page .cal-top { flex-wrap: nowrap; }
 html body .calendar-page .cal-title { font-size: clamp(22px, 1.8vw, 28px) !important; white-space: nowrap; }
 html body .calendar-page .cal-btn { white-space: nowrap; }
 html body .calendar-page .cr-nums b { white-space: nowrap; }
+
+/* Event colors by type. Routine blocks stay neutral bands; real events are solid and color-coded. */
+html body .calendar-page .tone-meet     { --t-solid: #1f8a5b; --t-bg: rgba(46, 170, 112, .2);  --t-ink: #bdf0d5; --t-dot: #34c07f; }
+html body .calendar-page .tone-call     { --t-solid: #2f6fd1; --t-bg: rgba(64, 132, 235, .2);  --t-ink: #cfe0ff; --t-dot: #5b9bff; }
+html body .calendar-page .tone-focus    { --t-solid: #6b4fc8; --t-bg: rgba(130, 100, 230, .2); --t-ink: #e0d6ff; --t-dot: #9b82f0; }
+html body .calendar-page .tone-personal { --t-solid: #a86f1c; --t-bg: rgba(214, 150, 50, .2);  --t-ink: #ffe3b8; --t-dot: #e0a548; }
+html body .calendar-page .tone-gray:is(.cal-block, .cal-bar, .cal-chip, .cal-dot) { --t-solid: #4a4541; --t-bg: rgba(255,255,255,.08); --t-ink: #e6e0d8; --t-dot: #8f8880; }
+html body .calendar-page .cal-block.is-cancelled { opacity: .45; text-decoration: line-through; }
+.calendar-page .cr-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--c-soft); }
+.calendar-page .cr-legend span { display: inline-flex; align-items: center; gap: 6px; }
