@@ -34,7 +34,7 @@ export default function ContentPage() {
   function copy(p: ContentPost) {
     const fail = () => setError("Couldn't copy. Select the text and copy it by hand.");
     if (!navigator.clipboard?.writeText) { fail(); return; }
-    navigator.clipboard.writeText(p.body).then(() => {
+    navigator.clipboard.writeText(p.caption ?? p.body).then(() => {
       setCopied(p.key);
       setTimeout(() => setCopied(c => (c === p.key ? null : c)), 1800);
     }, fail);
@@ -100,9 +100,10 @@ export default function ContentPage() {
               </div>
             )}
             {post.shoot && !post.file && <p className="ct-shoot"><b>Shoot it:</b> {post.shoot}</p>}
-            <div className="ct-body">{post.body}</div>
+            <p className="ct-cap-label">Caption</p>
+            <div className="ct-body">{post.caption ?? post.body}</div>
             <div className="ct-acts">
-              <button type="button" className="u-btn" onClick={() => copy(post)}>{copied === post.key ? "Copied" : "Copy"}</button>
+              <button type="button" className="u-btn" onClick={() => copy(post)}>{copied === post.key ? "Copied" : "Copy caption"}</button>
               <button type="button" className={"u-btn" + (done.length ? "" : " u-btn-light")} disabled={busy === post.key} onClick={() => void markPosted(post)}>{busy === post.key ? "Saving…" : "Mark posted"}</button>
             </div>
           </section>;

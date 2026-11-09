@@ -2,7 +2,7 @@
 // Rules: lead with more jobs, not "AI". No made-up results or testimonials. Stats only with their source.
 
 export type Channel = "page" | "video";
-export type ContentPost = { key: string; channel: Channel; label: string; body: string; shoot?: string; file?: string };
+export type ContentPost = { key: string; channel: Channel; label: string; body: string; shoot?: string; file?: string; caption?: string };
 
 /** Facebook page + Instagram feed. Same caption works on both; pair it with a demo screenshot or a plain text graphic. */
 export const PAGE_POSTS: ContentPost[] = [
@@ -175,13 +175,44 @@ VO: (pause on the result) That's what's walking to the next company. It takes 20
 // Every page post has a ready image (Facebook + Instagram) and a slide video (TikTok); every script has a rendered video.
 // Files live in /public/content/posts and /public/content/videos (rendered from these posts).
 const NO_RENDER = new Set(["v-day"]);
+
+/** Captions for the rendered script videos (their body is the script, not something to paste). */
+const VIDEO_CAPTIONS: Record<string, string> = {
+  "v-10s": `A homeowner fills out a quote form at 9pm. 10 seconds later they have a price range and a time to come out. No one touched a phone.
+
+Most companies reply the next morning. By then they've booked someone else. Link in bio.`,
+  "v-voicemail": `Only about 2% of people who can't get through leave a voicemail (Invoca). The rest call the next company on Google.
+
+Every missed call gets a text back in seconds and the estimate booked. Link in bio.`,
+  "v-quote": `You didn't lose that job. You just never followed up.
+
+Day 2, day 5, day 10, day 21: every quote chased until it's a yes or a no, without you lifting a finger. Link in bio.`,
+  "v-19": `I'm 19 and I cold call contractors every day. They all say the same thing: they're not short on leads, they lose them.
+
+So I built the fix. First 3 founding clients get half-price setup. Follow along.`,
+  "v-detail": `Detailers, you're sitting on money. Every ceramic customer from last year should be back for maintenance, and most never get asked.
+
+One text when they're due, a slot on your calendar, done. Link in bio.`,
+  "v-math": `What missed calls actually cost a fence company. Put your own numbers into the calculator on our site, it takes 20 seconds and nothing gets sent anywhere.
+
+Link in bio.`,
+};
+const TAGS = {
+  page: "#contractor #smallbusiness #homeservices #fencecompany #roofing #hvac",
+  video: "#contractor #contractorlife #smallbusiness #homeimprovement #fyp",
+  detail: "#autodetailing #ceramiccoating #detailingbusiness #smallbusiness",
+};
+const isDetail = (k: string) => /detail/.test(k);
 for (const p of PAGE_POSTS) p.file = `/content/posts/${p.key}.jpg`;
 for (const v of VIDEO_SCRIPTS) if (!NO_RENDER.has(v.key)) v.file = `/content/videos/${v.key}.mp4`;
+for (const p of PAGE_POSTS) p.caption = `${p.body}\n\n${isDetail(p.key) ? TAGS.detail : TAGS.page}`;
+for (const v of VIDEO_SCRIPTS) if (VIDEO_CAPTIONS[v.key]) v.caption = `${VIDEO_CAPTIONS[v.key]}\n\n${isDetail(v.key) ? TAGS.detail : TAGS.video}`;
+for (const c of DEMO_CLIPS) c.caption = c.body;
 
 /** Slide-video versions of the page posts, so TikTok gets as many posts as the page does. */
 export const PAGE_VIDEOS: ContentPost[] = PAGE_POSTS.map(p => ({
   key: "pv-" + p.key.slice(2), channel: "video", label: p.label + " (video)", file: `/content/videos/${p.key}.mp4`,
-  body: p.body + "\n\n#contractor #smallbusiness #homeservices",
+  body: p.body, caption: `${p.body}\n\n${isDetail(p.key) ? TAGS.detail : TAGS.video}`,
 }));
 
 export const ALL_POSTS: ContentPost[] = [...PAGE_POSTS, ...DEMO_CLIPS, ...VIDEO_SCRIPTS.filter(v => !NO_RENDER.has(v.key)), ...PAGE_VIDEOS];

@@ -44,4 +44,5 @@ ok(() => {
   assert.equal(nextPost("video", log).key, b.key);
 });
 
+for (const p of ALL_POSTS) ok(() => assert.ok(p.caption && p.caption.length > 60 && !/\bAI\b|^Hook|^VO:/m.test(p.caption), `${p.key}: has a paste-ready caption`));
 console.log(`Content post checks passed (${n} assertions).`);
