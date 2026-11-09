@@ -10,15 +10,16 @@ for (const t of ["trades", "detailing"]) {
   ok(() => assert.ok(!/\bAI\b/.test(s.open + s.pitch), `${t}: don't lead with AI`));
   ok(() => assert.ok(!keys.some(k => /^[0-9cnp]$/i.test(k)), `${t}: objection keys don't clash with call-mode keys`));
 }
-ok(() => assert.equal(fillLine(SCRIPTS.trades.open, "trades", "Mark").startsWith("Hey, is this Mark?"), true));
-ok(() => assert.ok(fillLine(SCRIPTS.trades.open, "trades", "").startsWith("Hey, is this the owner?")));
+ok(() => assert.ok(fillLine(SCRIPTS.trades.open, "trades", "Mark").startsWith("Hey Mark, it's Sam")));
+ok(() => assert.ok(fillLine(SCRIPTS.trades.open, "trades", "").startsWith("Hey, it's Sam")));
 ok(() => assert.ok(fillLine(VOICEMAIL.trades, "trades", null).startsWith("Hey, Sam")));
 ok(() => assert.ok(fillLine(GATEKEEPER, "trades", "").includes("who should I ask for?")));
 ok(() => assert.ok(fillLine("{price} x", "trades").includes("$1,997")));
 ok(() => assert.ok(fillLine("{price} x", "detailing").includes("$997")));
 ok(() => assert.ok(!/\{/.test(fillLine(CLOSE, "trades", "A"))));
-ok(() => assert.match(SCRIPTS.trades.open, /handle more work/));
-ok(() => assert.match(SCRIPTS.detailing.open, /handle more cars/));
+for (const t of ["trades", "detailing"]) ok(() => assert.match(SCRIPTS[t].open, /30 seconds to tell you why I called/, "permission-based opener"));
+ok(() => assert.doesNotMatch(CLOSE, /interested|open to/i, "soft ask only"));
+ok(() => assert.match(CLOSE, /morning or afternoon/));
 ok(() => assert.ok(SCRIPTS.trades.objections.some(o => o.key === "w" && /slammed/.test(o.label))));
 ok(() => assert.ok(SCRIPTS.detailing.objections.some(o => o.key === "w" && /booked out/.test(o.label))));
 console.log(`Call playbook checks passed (${n} assertions).`);

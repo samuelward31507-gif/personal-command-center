@@ -4,8 +4,8 @@
 export type Track = "trades" | "detailing";
 export type Objection = { id: string; label: string; key: string; say: string; then?: string };
 
-/** The one ask on every call: a 15-minute walkthrough, offered as two times. */
-export const CLOSE = "I'm not going to sell you on the phone. Give me 15 minutes and I'll show you exactly what it looks like for your shop, with your numbers. Does tomorrow morning or Thursday afternoon work better?";
+/** The soft ask: assume the meeting, ask about logistics. Never "are you interested" or "would you be open to". */
+export const CLOSE = "Easiest thing is if I just show you what it'd look like for your shop. Are you more of a morning or afternoon guy? ... Cool, tomorrow at 10 or Wednesday at 2?";
 
 export const FOUNDING = "We're taking our first 3 clients at half-price setup, so if it's a fit you'd get in at half off.";
 
@@ -14,7 +14,7 @@ export const VOICEMAIL: Record<Track, string> = {
   detailing: "Hey {first}, Sam with Cinder. Quick one about getting your past customers back in without you chasing them. I'll shoot you a text. Talk soon.",
 };
 
-export const GATEKEEPER = "Hey, Sam with Cinder. Is the owner around? ... No worries, when's the best time to catch them? And is it {first} I'd ask for?";
+export const GATEKEEPER = "Calm, like you already know them: \"Hey, it's Sam. Is the owner around?\" ... \"No worries, when's he usually back? And is it {first} I'd ask for?\" Don't pitch the receptionist. If they push: \"It's about the calls that come in while he's on a job. I'll catch him direct.\"";
 
 const SHARED: Objection[] = [
   { id: "busy", label: "Busy, call back", key: "b", say: "No problem, I'll be quick another time. Is tomorrow morning or afternoon better?", then: "Log Busy, call back with the time they gave." },
@@ -41,25 +41,25 @@ export type Script = { open: string; dig: string[]; pitch: string; guarantee: st
 
 export const SCRIPTS: Record<Track, Script> = {
   trades: {
-    open: "Hey, is this {first}? Sam with Cinder. I'll be quick, I know you're probably on a job. Straight question: could you handle more work right now?",
+    open: "Hey {first}, it's Sam with Cinder Revenue. I know I'm catching you out of the blue. Mind if I take 30 seconds to tell you why I called, and you can tell me if it's even in your world?",
     dig: [
-      "If yes: \"Where's most of your work coming from right now?\"",
-      "\"And when a call comes in while you're on a job, what happens to it?\" Let them say voicemail. Then: \"How many of those slip a week, you think?\"",
-      "If no: press W, \"No, we're slammed\".",
+      "\"Last thing before I let you go. Most fence owners I talk to have one of three things going on: missed calls while they're on a job, quotes that go quiet, or doing office work at night. Which one's biggest for you?\"",
+      "\"Where's most of your work coming from right now?\" and \"Roughly how many estimates a month?\"",
+      "\"Anyone else, like a partner, who should be on that call?\" Then text the invite while you're still on the phone.",
     ],
-    pitch: "Keep it to one sentence, using their words: \"That's exactly what I fix. Every call you miss gets a text back in seconds and gets booked on your calendar, so those jobs stop slipping.\" Then go straight to the close. No features, no price unless they ask.",
+    pitch: "So I talk to fence owners all day, and the same thing keeps coming up. A homeowner wants a fence, so they call three companies. Whoever gets back to them first usually gets the job. But you're out setting posts and can't pick up, and by the time you call back that night, they've booked someone else. And the quotes you do send, a lot of them just go quiet. What we do is put a system behind your phone and your website. Every missed call gets a text back in seconds, it answers their questions, and it books the estimate on your calendar. Every quote gets followed up until it's a yes or a no. Nothing changes about how you run things.",
     guarantee: "We guarantee 5 booked appointments in your first 30 days, or your next month is free. And monthly doesn't start until your first appointment lands.",
     price: "Most shops start on Book & Close: $2,500 setup and $1,997 a month. Our first 3 clients get half off setup, so $1,250.",
     objections: [...SHARED, ...TRADES_ONLY],
   },
   detailing: {
-    open: "Hey, is this {first}? Sam with Cinder. I'll be quick. Straight question: could you handle more cars right now?",
+    open: "Hey {first}, it's Sam with Cinder Revenue. I know I'm catching you out of the blue. Mind if I take 30 seconds to tell you why I called, and you can tell me if it's even in your world?",
     dig: [
-      "If yes: the fastest cars to fill your calendar are past customers. How many haven't been back in 3 months or more?",
-      "And when someone calls while you're mid-detail, what happens?",
-      "If no: press W, \"No, we're booked out\".",
+      "\"Last thing before I let you go. Most detailers I talk to have one of three things going on: slow weeks, customers who never come back, or answering texts all night. Which one's biggest for you?\"",
+      "\"Roughly how many customers did you do last year?\" That sizes the reactivation list.",
+      "\"Anyone else who should be on that call?\" Then text the invite while you're still on the phone.",
     ],
-    pitch: "We text your past customers when they're due and book them back in, text back anyone who calls while you're working, and ask every happy customer for a review. It all runs in your words, and you approve every message.",
+    pitch: "So I talk to detailers all day, and the same thing keeps coming up. You do a great job, the customer loves it, and then you never hear from them again. Not because they went somewhere else, just because nobody reminded them. Meanwhile you're mid-detail when someone calls, you can't pick up, and they book the next guy. What we do is text your past customers when they're due and book them back in, text back anyone you miss in seconds, and ask every happy customer for a review. It runs in your words, and you approve every message.",
     guarantee: "Our Reactivation Sprint is a one-time $997: we text your past customers with a real offer and book every reply. If it doesn't book at least 3 times the fee in jobs, it's free.",
     price: "The Reactivation Sprint is a one-time $997. To keep it running every month, Repeat Revenue is $750 setup and $497 a month, half off setup for our first 3 clients.",
     objections: [...SHARED, ...DETAILING_ONLY],
