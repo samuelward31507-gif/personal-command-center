@@ -50,6 +50,8 @@ export default function CallModePage() {
   const [countdown, setCountdown] = useState<number | null>(null);
   // Browsers block a call that starts without a click or key press, so auto-dial lines up the next call and one key places it.
   const [ready, setReady] = useState(false);
+  const readyLink = useRef<HTMLAnchorElement | null>(null);
+  useEffect(() => { if (ready) readyLink.current?.focus(); }, [ready]);
   // "New only" hides follow-ups so the list is just people you have never called.
   const [newOnly, setNewOnly] = useState(() => { try { return localStorage.getItem("cinder.newonly") !== "off"; } catch { return true; } });
   const pendingDial = useRef(false);
@@ -155,14 +157,19 @@ export default function CallModePage() {
     opps: reportSection(audit.content, "Top opportunities"),
   } : null;
 
+  /** Logs that a call went out. The call itself is started by a real tel: link (or location change for the C key). */
+  function noteLaunch() {
+    if (!contact) return;
+    setReady(false); setCountdown(null); pendingDial.current = false;
+    setSession(s => s ?? { start: Date.now(), dials: 0 });
+    void fetch("/api/call-logs", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contactId: contact.id, channel: "call", action: "outbound_call", outcome: "initiated", notes: "Call launched from Call mode." }) }).catch(() => {});
+  }
   function dial(number?: string) {
     setReady(false);
     const to = number || contact?.phone;
     if (!contact || !to) return;
-    setCountdown(null); pendingDial.current = false;
-    setSession(s => s ?? { start: Date.now(), dials: 0 });
-    void fetch("/api/call-logs", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contactId: contact.id, channel: "call", action: "outbound_call", outcome: "initiated", notes: "Call launched from Call mode." }) }).catch(() => {});
+    noteLaunch();
     window.location.href = "tel:" + to.replace(/[^+\d]/g, "");
   }
 
@@ -303,13 +310,12 @@ export default function CallModePage() {
       if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
       const typing = !!(e.target as HTMLElement)?.closest?.("textarea, input, select, [contenteditable]");
       if (countdown !== null && (e.key === "Escape" || (e.key === " " && !typing))) { e.preventDefault(); setCountdown(null); return; }
-      if (ready && !typing && !dialog && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); dial(); return; }
       if (ready && e.key === "Escape") { e.preventDefault(); setReady(false); return; }
       if (dialog || typing) return;
       const ob = contact ? play.objections.find(o => o.key === e.key) : undefined;
       if (e.key === "Escape" && say) { e.preventDefault(); setSay(null); }
       else if (ob) { e.preventDefault(); setSay(s => (s === ob.id ? null : ob.id)); }
-      else if (e.key === "c" || e.key === "C") { e.preventDefault(); dial(); }
+      else if (e.key === "c" || e.key === "C") { e.preventDefault(); const link = document.querySelector<HTMLAnchorElement>(".dl-call-link"); if (link) link.click(); else dial(); }
       else if (e.key === "ArrowRight" || e.key === "n") setIndex(i => Math.min(i + 1, Math.max(0, queue.length - 1)));
       else if (e.key === "ArrowLeft" || e.key === "p") setIndex(i => Math.max(0, i - 1));
       else {
@@ -350,7 +356,8 @@ export default function CallModePage() {
 
     {ready && countdown === null && contact && <div className="dl-auto" role="status">
       <span>Next call: <b>{contact.company || contact.name}</b>. Press <kbd>Enter</kbd> to call.</span>
-      <button type="button" className="u-btn u-btn-light" onClick={() => dial()}>Call now</button>
+      {/* A real link: Safari only lets a page start a call from a link or button the user activates. Enter on the focused link counts. */}
+      <a ref={readyLink} className="u-btn u-btn-light" href={"tel:" + (contact.phone || "").replace(/[^+\d]/g, "")} onClick={() => noteLaunch()}>Call now</a>
       <button type="button" className="u-btn u-btn-bare" onClick={() => setReady(false)}>Not now (Esc)</button>
     </div>}
 
@@ -416,7 +423,7 @@ export default function CallModePage() {
           </div>
           <div className="dl-dial">
             <span className="dl-phone u-num">{contact.phone}</span>
-            <button type="button" className="u-btn u-btn-go u-btn-lg" onClick={() => dial()}>Call <kbd>C</kbd></button>
+            <a className="u-btn u-btn-go u-btn-lg dl-call-link" href={"tel:" + (contact.phone || "").replace(/[^+\d]/g, "")} onClick={() => noteLaunch()}>Call <kbd>C</kbd></a>
           </div>
         </div>
 
