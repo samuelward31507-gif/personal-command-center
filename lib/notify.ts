@@ -18,10 +18,13 @@ export function alertsConfigured(): boolean {
 }
 
 /** Send an alert to the founder. Returns false (and logs) instead of throwing. */
+/** Why the last sendAlert failed (for run logs). */
+export let lastAlertError = "";
+
 export async function sendAlert(a: Alert): Promise<boolean> {
   const key = process.env.RESEND_API_KEY?.trim();
   const to = process.env.CINDER_ALERT_EMAIL?.trim();
-  if (!key || !to) return false;
+  if (!key || !to) { lastAlertError = "RESEND_API_KEY or CINDER_ALERT_EMAIL missing"; return false; }
   const appUrl = process.env.CINDER_APP_URL?.trim() || "https://personal-command-center-ten-ruby.vercel.app";
   const { text, html } = renderAlert(a, appUrl);
   try {
@@ -31,9 +34,14 @@ export async function sendAlert(a: Alert): Promise<boolean> {
       body: JSON.stringify({ from: process.env.CINDER_ALERT_FROM?.trim() || "Cinder <onboarding@resend.dev>", to: [to], subject: a.subject.slice(0, 150), text, html }),
       signal: AbortSignal.timeout(4000),
     });
-    if (!res.ok) console.error("Alert email failed", { status: res.status });
+    if (!res.ok) {
+      const detail = (await res.text().catch(() => "")).slice(0, 200);
+      lastAlertError = `Resend ${res.status}: ${detail}`;
+      console.error("Alert email failed", { status: res.status, detail });
+    }
     return res.ok;
   } catch (e) {
+    lastAlertError = `Resend request failed: ${e instanceof Error ? e.name : typeof e}`;
     console.error("Alert email failed", { name: e instanceof Error ? e.name : typeof e });
     return false;
   }

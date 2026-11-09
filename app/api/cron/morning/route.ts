@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { loadWorkspace } from "@/lib/workspace-data";
-import { sendAlert } from "@/lib/notify";
+import { sendAlert, lastAlertError } from "@/lib/notify";
 import { logRun } from "@/lib/pre-audit";
 import { bearerMatches } from "@/lib/bearer";
 import { syncReplies } from "@/lib/gmail-sync";
@@ -113,6 +113,7 @@ export async function GET(request: Request) {
   for (const p of problems) lines.push(`Heads up: ${p}`);
   const sentBrief = await sendAlert({ subject: `Today: ${counts.calls_due} callbacks, ${warm.length + (counts.texts_due || 0)} texts, ${mail.length} emails`, lines, link: { label: "Open Today", path: "/crm/needs-you" } });
   result.brief = sentBrief;
+  if (!sentBrief) result.briefError = lastAlertError;
   await logRun(sql, "morning", "cron", problems.length ? "error" : "ok", result, started);
   return Response.json({ ok: true, ...result });
 }
