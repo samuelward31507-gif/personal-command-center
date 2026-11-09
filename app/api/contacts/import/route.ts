@@ -5,7 +5,7 @@ import {
   MAX_IMPORT_ROWS,
   buildHeaderIndex,
   normalizeImportRow,
-  normalizePhoneDigits,
+  phoneDedupeKey,
   cleanText,
 } from "@/lib/contact-import";
 
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       existing.map((r: Record<string, unknown>) => String(r.email ?? "").trim().toLowerCase()).filter(Boolean)
     );
     const existingPhones = new Set(
-      existing.map((r: Record<string, unknown>) => normalizePhoneDigits(String(r.phone ?? ""))).filter((v: string) => v.length > 0)
+      existing.map((r: Record<string, unknown>) => phoneDedupeKey(String(r.phone ?? ""))).filter((v: string) => v.length > 0)
     );
     const seenEmails = new Set<string>();
     const seenPhones = new Set<string>();
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       }
       const r = outcome.row;
       const emailKey = r.email.toLowerCase();
-      const phoneKey = normalizePhoneDigits(r.phone);
+      const phoneKey = phoneDedupeKey(r.phone);
       const isDuplicate =
         (emailKey && (existingEmails.has(emailKey) || seenEmails.has(emailKey))) ||
         (phoneKey && (existingPhones.has(phoneKey) || seenPhones.has(phoneKey)));

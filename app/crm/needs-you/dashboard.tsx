@@ -61,7 +61,8 @@ export default function Dashboard() {
       .catch(e => setErr(e instanceof Error ? e.message : "Couldn't load your numbers."));
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const end = new Date(start); end.setDate(end.getDate() + 2);
-    fetch(`/api/calendar-events?fromAt=${encodeURIComponent(start.toISOString())}&toAt=${encodeURIComponent(end.toISOString())}`, { cache: "no-store" })
+    // The route requires from/to (YYYY-MM-DD) as well as fromAt/toAt, or it 400s and no meetings show.
+    fetch(`/api/calendar-events?from=${localDay(start)}&to=${localDay(end)}&fromAt=${encodeURIComponent(start.toISOString())}&toAt=${encodeURIComponent(end.toISOString())}`, { cache: "no-store" })
       .then(r => (r.ok ? r.json() : { events: [] })).then(d => setEvents((d.events ?? []).filter((e: Ev) => e.status !== "cancelled")))
       .catch(() => setEvents([]));
     fetch("/api/inbox", { cache: "no-store" }).then(r => (r.ok ? r.json() : { messages: [] })).then(d => setDms(d.messages ?? [])).catch(() => {});

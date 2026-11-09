@@ -44,6 +44,8 @@ export async function GET(request: Request) {
   const sync = await syncReplies(sql, o).catch(() => null);
   result.sync = sync;
   if (sync?.needsReconnect) problems.push("Gmail needs reconnecting (Email page) before replies can be tracked.");
+  else if (sync?.error) problems.push(`${sync.error} No follow-ups went out.`);
+  else if (!sync) problems.push("Couldn't check Gmail for replies, so no follow-ups went out.");
 
   // 2. Due follow-ups, weekdays only, only when Gmail is connected and replies were checked.
   const [acc] = await sql`SELECT email FROM public.gmail_accounts WHERE owner_id = ${o}` as { email: string }[];
@@ -52,21 +54,27 @@ export async function GET(request: Request) {
       AND (notes LIKE 'Email sent: %' OR notes LIKE 'Email reply:%' OR notes LIKE 'Email bounced:%') ORDER BY occurred_at DESC LIMIT 6000`;
     const sent = rows.filter(r => String(r.notes).startsWith("Email sent: ")).map(r => ({ contactId: String(r.contact_id), step: String(r.notes).slice(12).split(/\s|\n/)[0], at: new Date(r.occurred_at as string).toISOString() }));
     const heard = rows.filter(r => !String(r.notes).startsWith("Email sent: ")).map(r => ({ contactId: String(r.contact_id) }));
-    const due = dueContacts(sent, heard).slice(0, AUTO_FOLLOW_UPS_PER_DAY);
+    // The job runs once each morning, so count gaps in calendar days: an intro sent any time 3 days ago is due today,
+    // not tomorrow because it went out in the afternoon. Contacts that can't be sent (suppressed, booked, already
+    // replied) don't use up the daily allowance, or they would sit at the front of the queue and block everyone forever.
+    const due = dueContacts(sent, heard, started.getTime() + 18 * 3600000);
     for (const d of due) {
+      if (sentTo.length >= AUTO_FOLLOW_UPS_PER_DAY || Date.now() - started.getTime() > 35_000) break;
       const [c] = await sql`SELECT id, trim(concat_ws(' ', first_name, last_name)) AS name, company, location, niche FROM public.contacts WHERE id = ${d.contactId}::uuid AND owner_id = ${o}` as { id: string; name: string; company: string; location: string; niche: string }[];
       if (!c) continue;
       const t = TEMPLATE_SETS[trackOf(c.niche)][d.step], m = mergeFor(c, ws);
       const r = await sendColdEmail(sql, o, ws, { contactId: c.id, step: d.step, subject: fillTemplate(t.subject, m), body: fillTemplate(t.body, m) });
       if (r.ok) sentTo.push(`${c.company || c.name} (${d.step === "breakup" ? "last try" : "follow-up"})`);
-      else if (r.status === 429 || r.status === 401) { problems.push(r.error); break; }
+      else if (r.status === 429 || r.status === 401 || r.status === 500 || /mailing address/i.test(r.error)) { problems.push(r.error); break; }
+      else continue;
       await new Promise(res => setTimeout(res, 1200));
     }
   }
   result.autoSent = sentTo.length;
 
   // 3. Sort new inbox mail.
-  const sort = acc ? await sortNewMail(sql, o).catch(() => null) : null;
+  // Skip it when the sends ran long, so the brief still goes out inside the 60 second limit (the Email page sorts on open).
+  const sort = acc && Date.now() - started.getTime() < 15_000 ? await sortNewMail(sql, o).catch(() => null) : null;
   result.sort = sort;
 
   // 4. The brief.

@@ -5,7 +5,7 @@ import { suggestDeal } from "@/lib/offers";
 import { offersFrom } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
 import { reportSection } from "@/lib/business-audit";
-import { planFor, resolveTimeZone, nicheFor, demoLinkFor, DEFAULT_SLOTS } from "@/lib/sms-templates";
+import { planFor, resolveTimeZone, nicheFor, demoLinkFor, localDate, DEFAULT_SLOTS } from "@/lib/sms-templates";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
 import { contactFirstName } from "@/lib/call-drafts";
 
@@ -91,7 +91,10 @@ export async function POST(request: Request) {
     const plan = planFor(outcome, { now, tz, suppressed: suppressedWhy, vmSentAt, consecutiveNoAnswers: noAnswers, hasOpenRedials: Number(c0.open_redials ?? 0) > 0 });
     const parked = NO_CONTACT.includes(outcome) && attempts >= ATTEMPT_LIMIT;
     if (parked) { plan.tasks = []; plan.followUp = undefined; }
-    const nextFollowUp = override || plan.followUp === undefined ? followUpDate(outcome, now, override, attempts) : plan.followUp;
+    // followUpDate counts from the UTC date; after ~5pm Mountain that is already tomorrow, which pushed
+    // follow-ups a day late. Count from Sam's local date instead (the same "today" My Day uses).
+    const localToday = new Date(localDate(now, null) + "T12:00:00Z");
+    const nextFollowUp = override || plan.followUp === undefined ? followUpDate(outcome, localToday, override, attempts) : plan.followUp;
     const sequenceStatus = sequenceStatusFor(outcome);
     const openDeals = await sql`SELECT id, title, stage FROM public.deals
       WHERE owner_id = ${user.id} AND contact_id = ${contactId}::uuid AND stage NOT IN ('won','lost')`;

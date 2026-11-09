@@ -54,6 +54,8 @@ export async function accessToken(refreshToken: string): Promise<string> {
 
 const header = (v: string) => /^[\x20-\x7e]*$/.test(v) ? v : `=?UTF-8?B?${Buffer.from(v, "utf8").toString("base64")}?=`;
 const clean = (v: string) => v.replace(/[\r\n]+/g, " ").trim();
+/** Display name for From: quoted when it has RFC 5322 specials (a comma in "Cinder, LLC" would otherwise split it into two addresses). */
+const displayName = (v: string) => /^[\x20-\x7e]*$/.test(v) && /[()<>[\]:;@\\,."]/.test(v) ? `"${v.replace(/["\\]/g, "\\$&")}"` : header(v);
 
 /** The compliance footer every cold email carries: who you are, where you are, how to stop. */
 export function complianceFooter(business: string, address: string): string {
@@ -63,7 +65,7 @@ export function complianceFooter(business: string, address: string): string {
 /** RFC 2822 message, base64url-encoded for the Gmail API. Replies thread with In-Reply-To/References. */
 export function buildRaw(m: { from: string; fromName: string; to: string; subject: string; body: string; inReplyTo?: string }): string {
   const lines = [
-    `From: ${header(clean(m.fromName))} <${clean(m.from)}>`,
+    `From: ${displayName(clean(m.fromName))} <${clean(m.from)}>`,
     `To: <${clean(m.to)}>`,
     `Subject: ${header(clean(m.subject))}`,
     "MIME-Version: 1.0",
@@ -85,9 +87,10 @@ const BOUNCER = /mailer-daemon|postmaster|mail delivery (subsystem|system)/i;
 const STOP_WORDS = /\b(unsubscribe|remove me|stop emailing|take me off|not interested)\b/i;
 
 /** What happened in a cold-email thread: a bounce, an unsubscribe, a reply, or nothing yet. Pure. */
-export function classifyThread(messages: ThreadMessage[], myEmail: string): ThreadVerdict {
-  const me = myEmail.trim().toLowerCase();
-  const others = messages.filter(m => m.from && !m.from.toLowerCase().includes(me));
+export function classifyThread(messages: ThreadMessage[], myEmail: string | string[]): ThreadVerdict {
+  const mine = (Array.isArray(myEmail) ? myEmail : [myEmail]).map(e => e.trim().toLowerCase()).filter(Boolean);
+  // Gmail labels everything you sent SENT, whatever address it shows (a renamed Gmail keeps the old one as an alias).
+  const others = messages.filter(m => m.from && !(m.labelIds ?? []).includes("SENT") && !mine.some(e => m.from.toLowerCase().includes(e)));
   if (!others.length) return null;
   const at = (m: ThreadMessage) => (m.internalDate && /^\d+$/.test(m.internalDate) ? new Date(Number(m.internalDate)).toISOString() : new Date().toISOString());
   const bounce = others.find(m => BOUNCER.test(m.from));

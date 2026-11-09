@@ -1,6 +1,7 @@
 // Sending through the owner's connected Gmail. Shared by the Email page, the morning auto follow-ups and inbox replies.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { accessToken, buildRaw, complianceFooter, decryptToken, isEmail, DAILY_SEND_CAP } from "@/lib/gmail";
+import { accessToken, buildRaw, classifyThread, complianceFooter, decryptToken, isEmail, DAILY_SEND_CAP, type ThreadMessage } from "@/lib/gmail";
+import { recordVerdict } from "@/lib/gmail-sync";
 import type { WorkspaceSettings } from "@/lib/workspace";
 
 type Sql = NeonQueryFunction<false, false>;
@@ -27,11 +28,18 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
   if (!ws.address.trim()) return fail("Add your business mailing address in Settings first. Every cold email has to include it.", 400);
   const [c] = await sql`SELECT c.id, c.email,
       EXISTS (SELECT 1 FROM public.contact_suppressions s WHERE s.owner_id = c.owner_id AND (s.contact_id = c.id OR (s.email_normalized <> '' AND s.email_normalized = lower(c.email)))) AS suppressed,
-      (SELECT a.outcome FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND a.outcome IN ('do_not_contact','not_interested','wrong_contact') ORDER BY a.occurred_at DESC LIMIT 1) AS stop
-    FROM public.contacts c WHERE c.id = ${m.contactId}::uuid AND c.owner_id = ${o} LIMIT 1` as { id: string; email: string; suppressed: boolean; stop: string | null }[];
+      (SELECT a.outcome FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND a.outcome IN ('do_not_contact','not_interested','wrong_contact') ORDER BY a.occurred_at DESC LIMIT 1) AS stop,
+      -- Same rule as the Email page queue: a booked meeting, "not a fit" or a customer gets no more cold email (the morning job relies on this).
+      (lower(coalesce(c.status, '')) = 'customer' OR (SELECT a.outcome FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id
+        AND a.action <> 'note' AND a.outcome IS DISTINCT FROM 'initiated' ORDER BY a.occurred_at DESC LIMIT 1) IN ('meeting_booked','not_a_fit')) AS engaged,
+      -- They emailed in (any thread, any subject), so the "following up on my note" script would be wrong.
+      EXISTS (SELECT 1 FROM public.gmail_inbox g WHERE g.owner_id = c.owner_id AND g.contact_id = c.id AND g.category <> 'out_of_office') AS wrote_in
+    FROM public.contacts c WHERE c.id = ${m.contactId}::uuid AND c.owner_id = ${o} LIMIT 1` as { id: string; email: string; suppressed: boolean; stop: string | null; engaged: boolean; wrote_in: boolean }[];
   if (!c) return fail("Contact not found.", 404);
   if (!isEmail(c.email)) return fail("This contact has no valid email address.", 400);
   if (c.suppressed || c.stop) return fail("This contact asked not to be contacted. Nothing was sent.", 409);
+  if (c.engaged) return fail("They booked a meeting, aren't a fit, or are a customer. Nothing was sent.", 409);
+  if (c.wrote_in) return fail("They already emailed you. Answer them from the inbox instead.", 409);
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM public.contact_activities WHERE owner_id = ${o} AND notes LIKE 'Email sent: %via Gmail%' AND occurred_at > now() - interval '24 hours'` as { n: number }[];
   if (n >= DAILY_SEND_CAP) return fail(`You've sent ${DAILY_SEND_CAP} in the last 24 hours. That's the cap to protect your inbox's reputation; the rest can go tomorrow.`, 429);
   const [dup] = await sql`SELECT 1 FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND notes LIKE ${`Email sent: ${m.step}%`} LIMIT 1`;
@@ -45,6 +53,21 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
   const messageId = prev?.notes.match(/Message-ID: (\S+)/)?.[1];
   const t = await tokenFor(sql, o);
   if ("ok" in t) return t;
+  // Last check right before a follow-up: did they answer since the last reply sync? Catches replies the batch sync hasn't reached.
+  if (m.step !== "intro" && threadId) {
+    try {
+      const th = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/threads/${encodeURIComponent(threadId)}?format=metadata&metadataHeaders=From`, { headers: { Authorization: `Bearer ${t.token}` }, signal: AbortSignal.timeout(8000) });
+      if (th.ok) {
+        const j = await th.json().catch(() => ({})) as { messages?: { snippet?: string; internalDate?: string; labelIds?: string[]; payload?: { headers?: { name: string; value: string }[] } }[] };
+        const msgs: ThreadMessage[] = (j.messages ?? []).map(x => ({ from: x.payload?.headers?.find(h => h.name.toLowerCase() === "from")?.value ?? "", snippet: x.snippet, internalDate: x.internalDate, labelIds: x.labelIds }));
+        const v = classifyThread(msgs, t.email);
+        if (v) {
+          await recordVerdict(sql, o, c.id, v);
+          return fail(v.kind === "bounce" ? "Their address bounced. Nothing was sent." : "They already replied. Answer them from Gmail instead.", 409);
+        }
+      }
+    } catch { /* couldn't check; the reply sync already ran, so send */ }
+  }
   try {
     const raw = buildRaw({ from: t.email, fromName: `${ws.ownerFirstName} at ${ws.businessName}`.trim(), to: c.email, subject: m.subject, body: `${m.body}\n\n${complianceFooter(ws.businessName, ws.address.trim())}`, inReplyTo: m.step !== "intro" ? messageId : undefined });
     const sent = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", { method: "POST", headers: { Authorization: `Bearer ${t.token}`, "Content-Type": "application/json" },
@@ -56,9 +79,15 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
       const meta = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${sj.id}?format=metadata&metadataHeaders=Message-ID`, { headers: { Authorization: `Bearer ${t.token}` } });
       const mj = await meta.json(); mid = (mj.payload?.headers ?? []).find((h: { name: string }) => /^message-id$/i.test(h.name))?.value ?? "";
     } catch { /* threading falls back to the Gmail thread id */ }
-    await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
-      VALUES (${o}, ${c.id}::uuid, 'note', 'note', 'other', ${`Email sent: ${m.step} via Gmail\nSubject: ${m.subject}\nThread: ${sj.threadId ?? ""}${mid ? `\nMessage-ID: ${mid}` : ""}`})`;
-    await sql`UPDATE public.contacts SET updated_at = now() WHERE id = ${c.id}::uuid AND owner_id = ${o}`;
+    // Gmail already sent it: never report a failure that invites a resend. Retry the log once if the DB blips.
+    const note = `Email sent: ${m.step} via Gmail\nSubject: ${m.subject}\nThread: ${sj.threadId ?? ""}${mid ? `\nMessage-ID: ${mid}` : ""}`;
+    const log = () => sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
+      VALUES (${o}, ${c.id}::uuid, 'note', 'note', 'other', ${note})`;
+    try { await log(); } catch (e) {
+      console.error("Gmail send log failed, retrying", e instanceof Error ? e.message : e);
+      try { await log(); } catch { return fail("Sent from Gmail, but Cinder couldn't log it. Don't send it again; mark it Already sent.", 500); }
+    }
+    await sql`UPDATE public.contacts SET updated_at = now() WHERE id = ${c.id}::uuid AND owner_id = ${o}`.catch(() => {});
     return { ok: true, from: t.email };
   } catch (e) {
     console.error("Gmail send failed", e instanceof Error ? e.message : e);

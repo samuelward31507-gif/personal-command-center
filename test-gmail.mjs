@@ -26,5 +26,6 @@ ok(() => assert.equal(classifyThread([mine, { from: "Mail Delivery Subsystem <ma
 ok(() => assert.equal(classifyThread([mine, { from: "Mark <mark@ridgeline.com>", snippet: "Sure, what times work?" }], me).kind, "reply"));
 ok(() => assert.equal(classifyThread([mine, { from: "Mark <mark@ridgeline.com>", snippet: "Please unsubscribe me" }], me).kind, "unsubscribe"));
 ok(() => assert.equal(classifyThread([mine, { from: "Mark <mark@ridgeline.com>", snippet: "ok", internalDate: "1794000000000" }], me).at, new Date(1794000000000).toISOString()));
+ok(() => assert.equal(classifyThread([{ from: "Sam <old.alias@gmail.com>", labelIds: ["SENT"] }], me), null, "a SENT message from an old alias is still ours"));
 ok(() => assert.ok(GMAIL_SCOPES.some(s => s.endsWith("gmail.metadata")) && !GMAIL_SCOPES.some(s => s.endsWith("gmail.readonly")), "headers only, never bodies"));
 console.log(`Gmail checks passed (${n} assertions).`);

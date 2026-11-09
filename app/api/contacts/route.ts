@@ -185,8 +185,8 @@ export async function PATCH(request: Request) {
         linkedin_url = CASE WHEN ${typeof body.linkedin === "string"} THEN ${String(body.linkedin ?? "").slice(0, 500)} ELSE linkedin_url END,
         time_zone = CASE WHEN ${typeof body.timeZone === "string"} THEN ${timeZoneOf(body.timeZone)} ELSE time_zone END,
         sms_consent = CASE WHEN ${typeof body.smsConsent === "boolean"} THEN ${body.smsConsent === true} ELSE sms_consent END,
-        sms_consent_at = CASE WHEN ${body.smsConsent === true} THEN now() WHEN ${body.smsConsent === false} THEN NULL ELSE sms_consent_at END,
-        sms_consent_source = CASE WHEN ${body.smsConsent === true} THEN ${String(body.smsConsentSource ?? "user_confirmed").slice(0, 200)} WHEN ${body.smsConsent === false} THEN '' ELSE sms_consent_source END,
+        sms_consent_at = CASE WHEN ${body.smsConsent === true} AND NOT sms_consent THEN now() WHEN ${body.smsConsent === false} THEN NULL ELSE sms_consent_at END,
+        sms_consent_source = CASE WHEN ${body.smsConsent === true} AND NOT sms_consent THEN ${String(body.smsConsentSource ?? "user_confirmed").slice(0, 200)} WHEN ${body.smsConsent === false} THEN '' ELSE sms_consent_source END,
         follow_up_at = ${followUp}, updated_at = now()
       WHERE id = ${body.id}::uuid AND owner_id = ${user.id}
       RETURNING id
@@ -207,11 +207,18 @@ export async function DELETE(request: Request) {
     const id = searchParams.get("id");
     if (!validUuid(id)) return jsonError("A valid contact id is required.", 400);
     const sql = db();
+    // Leads are parked, never deleted: a hard delete would cascade away every call, text and outreach row.
+    // "Archive" clears the follow-up, parks any active sequence and leaves a note; the record and history stay.
     const rows = await sql`
-      DELETE FROM public.contacts WHERE id = ${id}::uuid AND owner_id = ${user.id} RETURNING id
+      UPDATE public.contacts SET follow_up_at = NULL, updated_at = now()
+      WHERE id = ${id}::uuid AND owner_id = ${user.id} RETURNING id
     `;
     if (!rows.length) return jsonError("Contact not found.", 404);
-    return Response.json({ ok: true });
+    await sql`UPDATE public.contact_outreach SET status = 'parked', updated_at = now()
+      WHERE owner_id = ${user.id} AND contact_id = ${id}::uuid AND status = 'active'`;
+    await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
+      VALUES (${user.id}, ${id}::uuid, 'note', 'note', 'other', 'Parked from Contacts (follow-up cleared, sequence parked).')`;
+    return Response.json({ ok: true, parked: true });
   } catch (error) {
     console.error("CRM contacts DELETE failed", error);
     return jsonError("Unable to delete contact.", 500);

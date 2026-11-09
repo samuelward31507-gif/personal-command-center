@@ -31,10 +31,10 @@ export async function sortNewMail(sql: Sql, o: string): Promise<SortResult> {
   for (const x of fresh) {
     const r = await g(`messages/${x.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=List-Unsubscribe`);
     if (!r.ok) continue;
-    const m = await r.json() as { id: string; threadId: string; snippet?: string; internalDate?: string; payload?: { headers?: { name: string; value: string }[] } };
+    const m = await r.json() as { id: string; threadId: string; labelIds?: string[]; snippet?: string; internalDate?: string; payload?: { headers?: { name: string; value: string }[] } };
     const h = (n: string) => m.payload?.headers?.find(y => y.name.toLowerCase() === n.toLowerCase())?.value ?? "";
     const from = h("From");
-    if (parseFrom(from).addr === acc.email.toLowerCase()) continue;
+    if ((m.labelIds ?? []).includes("SENT") || parseFrom(from).addr === acc.email.toLowerCase()) continue;
     mails.push({ id: m.id, threadId: m.threadId, from, subject: h("Subject").slice(0, 300), snippet: (m.snippet ?? "").replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&").slice(0, 400), listUnsubscribe: !!h("List-Unsubscribe"), date: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : new Date().toISOString() });
   }
   const people = mails.filter(m => !isBulk(m));

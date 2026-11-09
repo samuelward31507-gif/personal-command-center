@@ -174,7 +174,7 @@ export default function EmailPage() {
     try {
       const r = await fetch("/api/gmail/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: current.id, step, subject: filled.subject, body: filled.body }) });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) { if (r.status === 401) void loadGmail(); throw new Error(j.error || "Couldn't send."); }
+      if (!r.ok) { if (r.status === 401) void loadGmail(); if (r.status === 409) void load(); throw new Error(j.error || "Couldn't send."); }
       setSent(s => [{ contactId: current.id, step, at: new Date().toISOString() }, ...s]);
       setGmail(g => g && { ...g, sentLast24h: g.sentLast24h + 1 });
       setNotice(`Sent to ${current.company || current.name}.`);
@@ -210,7 +210,7 @@ export default function EmailPage() {
       } else {
         failed.push(`${c.company || c.name}: ${j.error || "couldn't send"}`);
         // Stop the whole run on problems that will hit every email: the daily cap, a lost Gmail connection, a missing address.
-        if (!r || r.status === 429 || r.status === 401 || r.status >= 500 || /address|Connect Gmail|reconnect/i.test(j.error || "")) stopRef.current = true;
+        if (!r || r.status === 429 || r.status === 401 || r.status >= 500 || /mailing address|Connect Gmail|reconnect/i.test(j.error || "")) stopRef.current = true;
       }
       setRun({ done, total: batch.length, failed: [...failed], wait: 0 });
       if (i < batch.length - 1 && !stopRef.current) {
@@ -219,6 +219,7 @@ export default function EmailPage() {
     }
     setRun(null);
     void loadGmail();
+    if (failed.length) void load(); // replies/bounces found at send time drop those contacts from the queue
     setNotice(`Sent ${done} of ${batch.length}.${stopRef.current && done + failed.length < batch.length ? " Stopped early." : ""}`);
     if (failed.length) setError(`Didn't send: ${failed.join("; ")}`);
   }

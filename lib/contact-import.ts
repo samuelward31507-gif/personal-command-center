@@ -108,6 +108,13 @@ export function normalizePhoneDigits(v: string): string {
   return v.replace(/\D/g, "");
 }
 
+/** Duplicate key for a phone: the last 10 digits, so "+1 (555) 123-4567" and "555-123-4567" match
+ * (same rule as the single-contact duplicate check in /api/contacts). */
+export function phoneDedupeKey(v: string): string {
+  const d = normalizePhoneDigits(v);
+  return d.length > 10 ? d.slice(-10) : d;
+}
+
 // Lenient but real shape check — bulk-imported spreadsheets commonly have
 // garbage in the email column (a second phone number, "n/a", etc.) and we
 // want those rows flagged as failed rather than silently saved as "email".

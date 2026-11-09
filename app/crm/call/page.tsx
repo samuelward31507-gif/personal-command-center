@@ -88,7 +88,9 @@ export default function CallModePage() {
       const slots = items.map((it, n) => (it.group === "prospects" ? n : -1)).filter(n => n >= 0);
       const ordered = slots.map(n => items[n]).map((it, k) => ({ it, k, w: winOf(it) })).sort((x, y) => x.w - y.w || x.k - y.k).map(x => x.it);
       slots.forEach((n, k) => { items[n] = ordered[k]; });
-      setQueue(items);
+      // A contact can show up as both a follow-up and a deal next step: call them once.
+      const seen = new Set<string>();
+      setQueue(items.filter(i => { const id = i.contact!.id; if (seen.has(id)) return false; seen.add(id); return true; }));
       setContacts(byId);
       setIndex(0);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not build the call list."); }
@@ -120,6 +122,8 @@ export default function CallModePage() {
   function pick(id: string) { setPicked(id); setSearch(""); setFlash(null); }
   // Opened from the Dashboard's follow-up list: /crm/call?contact=<id> jumps straight to that person.
   useEffect(() => { const id = new URLSearchParams(window.location.search).get("contact"); if (id) { setPicked(id); window.history.replaceState(null, "", "/crm/call"); } }, []);
+  // A ?contact= id that isn't in your contacts would otherwise log outcomes on the list's current person as a "callback".
+  useEffect(() => { if (!loading && picked && !contacts[picked]) setPicked(null); }, [loading, picked, contacts]);
 
   useEffect(() => {
     setAudit(undefined); setNotes("");
@@ -263,11 +267,13 @@ export default function CallModePage() {
   }
 
   // Start the countdown once the next contact is on screen; dial when it hits zero.
+  // A pending auto-dial only applies to the very next contact; never carry it over (e.g. to a later
+  // callback pick or a refreshed list) when that contact has no phone or the list ran out.
   useEffect(() => {
-    if (!pendingDial.current || !contact?.phone) return;
+    const go = pendingDial.current;
     pendingDial.current = false;
-    setCountdown(AUTO_SECONDS);
-  }, [contact?.id, contact?.phone]);
+    if (go && contact?.phone && !picked) setCountdown(AUTO_SECONDS);
+  }, [contact?.id, contact?.phone]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (countdown === null) return;
     if (countdown <= 0) { setCountdown(null); dial(); return; }
@@ -279,8 +285,11 @@ export default function CallModePage() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (countdown !== null && (e.key === "Escape" || e.key === " ")) { e.preventDefault(); setCountdown(null); return; }
-      if (dialog || (e.target as HTMLElement)?.closest?.("textarea, input, select")) return;
+      // Never hijack Cmd/Ctrl+C (copy), Cmd+1..9 (switch tab) or key-repeat.
+      if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+      const typing = !!(e.target as HTMLElement)?.closest?.("textarea, input, select, [contenteditable]");
+      if (countdown !== null && (e.key === "Escape" || (e.key === " " && !typing))) { e.preventDefault(); setCountdown(null); return; }
+      if (dialog || typing) return;
       if (e.key === "c" || e.key === "C") { e.preventDefault(); dial(); }
       else if (e.key === "ArrowRight" || e.key === "n") setIndex(i => Math.min(i + 1, Math.max(0, queue.length - 1)));
       else if (e.key === "ArrowLeft" || e.key === "p") setIndex(i => Math.max(0, i - 1));

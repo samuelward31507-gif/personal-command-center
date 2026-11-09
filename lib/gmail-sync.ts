@@ -1,6 +1,6 @@
 // Reply and bounce detection for cold-email threads. Shared by the Email page and the 7am morning job.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { accessToken, classifyThread, decryptToken, type ThreadMessage } from "@/lib/gmail";
+import { accessToken, classifyThread, decryptToken, type ThreadMessage, type ThreadVerdict } from "@/lib/gmail";
 
 type Sql = NeonQueryFunction<false, false>;
 const BATCH = 60;
@@ -12,12 +12,19 @@ export async function syncReplies(sql: Sql, o: string): Promise<SyncResult> {
   if (!acc) return { checked: 0, replies: 0, bounces: 0, connected: false };
 
   // One thread per contact: the first Gmail send holds the thread every follow-up joins.
-  const rows = await sql`SELECT DISTINCT ON (a.contact_id) a.contact_id, substring(a.notes from 'Thread: ([A-Za-z0-9]+)') AS thread
-    FROM public.contact_activities a
-    WHERE a.owner_id = ${o} AND a.notes LIKE 'Email sent: %via Gmail%' AND a.occurred_at > now() - interval '30 days'
-      AND NOT EXISTS (SELECT 1 FROM public.contact_activities b WHERE b.owner_id = a.owner_id AND b.contact_id = a.contact_id
-        AND (b.notes LIKE 'Email reply:%' OR b.notes LIKE 'Email bounced:%'))
-    ORDER BY a.contact_id, a.occurred_at ASC` as { contact_id: string; thread: string | null }[];
+  // Unfinished sequences first, oldest last email first (they're next in line for a follow-up), so a long
+  // list never starves the contacts that are about to be emailed again.
+  const rows = await sql`SELECT contact_id, thread FROM (
+      SELECT DISTINCT ON (a.contact_id) a.contact_id, substring(a.notes from 'Thread: ([A-Za-z0-9]+)') AS thread,
+        (SELECT max(x.occurred_at) FROM public.contact_activities x WHERE x.owner_id = a.owner_id AND x.contact_id = a.contact_id AND x.notes LIKE 'Email sent: %') AS last_at,
+        EXISTS (SELECT 1 FROM public.contact_activities x WHERE x.owner_id = a.owner_id AND x.contact_id = a.contact_id AND x.notes LIKE 'Email sent: breakup%') AS finished
+      FROM public.contact_activities a
+      WHERE a.owner_id = ${o} AND a.notes LIKE 'Email sent: %via Gmail%' AND a.occurred_at > now() - interval '30 days'
+        AND substring(a.notes from 'Thread: ([A-Za-z0-9]+)') IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM public.contact_activities b WHERE b.owner_id = a.owner_id AND b.contact_id = a.contact_id
+          AND (b.notes LIKE 'Email reply:%' OR b.notes LIKE 'Email bounced:%'))
+      ORDER BY a.contact_id, a.occurred_at ASC) t
+    ORDER BY finished, last_at ASC` as { contact_id: string; thread: string | null }[];
   const todo = rows.filter(x => x.thread).slice(0, BATCH);
   if (!todo.length) return { checked: 0, replies: 0, bounces: 0, connected: true };
 
@@ -41,21 +48,25 @@ export async function syncReplies(sql: Sql, o: string): Promise<SyncResult> {
     const msgs: ThreadMessage[] = (j.messages ?? []).map(m => ({ from: m.payload?.headers?.find(h => h.name.toLowerCase() === "from")?.value ?? "", snippet: m.snippet, internalDate: m.internalDate, labelIds: m.labelIds }));
     const v = classifyThread(msgs, acc.email);
     if (!v) continue;
-    if (v.kind === "bounce") {
-      bounces++;
-      await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes, occurred_at)
-        VALUES (${o}, ${t.contact_id}::uuid, 'note', 'note', 'other', ${`Email bounced: the address didn't accept mail.\n${v.snippet}`}, ${v.at}::timestamptz)`;
-    } else {
-      replies++;
-      await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes, occurred_at)
-        VALUES (${o}, ${t.contact_id}::uuid, 'note', 'note', 'reply_received', ${`Email reply: ${v.from}${v.kind === "unsubscribe" ? " (asked to stop)" : ""}\n${v.snippet}`}, ${v.at}::timestamptz)`;
-      if (v.kind === "unsubscribe") {
-        await sql`INSERT INTO public.contact_suppressions (owner_id, contact_id, email_normalized, reason, source)
-          SELECT ${o}, c.id, lower(c.email), 'do_not_contact', 'email_unsubscribe' FROM public.contacts c WHERE c.id = ${t.contact_id}::uuid AND c.owner_id = ${o}
-          ON CONFLICT DO NOTHING`;
-      }
-    }
-    await sql`UPDATE public.contacts SET updated_at = now() WHERE id = ${t.contact_id}::uuid AND owner_id = ${o}`;
+    if (v.kind === "bounce") bounces++; else replies++;
+    await recordVerdict(sql, o, t.contact_id, v);
   }
   return { checked, replies, bounces, connected: true, more: rows.length > todo.length };
+}
+
+/** Log a reply or bounce so every sequence stops for that contact; a "stop" reply also suppresses them. */
+export async function recordVerdict(sql: Sql, o: string, contactId: string, v: NonNullable<ThreadVerdict>): Promise<void> {
+  if (v.kind === "bounce") {
+    await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes, occurred_at)
+      VALUES (${o}, ${contactId}::uuid, 'note', 'note', 'other', ${`Email bounced: the address didn't accept mail.\n${v.snippet}`}, ${v.at}::timestamptz)`;
+  } else {
+    await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes, occurred_at)
+      VALUES (${o}, ${contactId}::uuid, 'note', 'note', 'reply_received', ${`Email reply: ${v.from}${v.kind === "unsubscribe" ? " (asked to stop)" : ""}\n${v.snippet}`}, ${v.at}::timestamptz)`;
+    if (v.kind === "unsubscribe") {
+      await sql`INSERT INTO public.contact_suppressions (owner_id, contact_id, email_normalized, reason, source)
+        SELECT ${o}, c.id, lower(c.email), 'do_not_contact', 'email_unsubscribe' FROM public.contacts c WHERE c.id = ${contactId}::uuid AND c.owner_id = ${o}
+        ON CONFLICT DO NOTHING`;
+    }
+  }
+  await sql`UPDATE public.contacts SET updated_at = now() WHERE id = ${contactId}::uuid AND owner_id = ${o}`;
 }
