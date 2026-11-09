@@ -29,7 +29,8 @@ ok(() => assert.doesNotMatch(buildScript(base).map(x => x.say).join(" "), /\bAI\
 ok(() => assert.doesNotMatch(JSON.stringify([s, o]), /\d+%|guarantee/i, "no invented stats or guarantees"));
 const page = readFileSync("app/crm/call/page.tsx", "utf8");
 ok(() => assert.match(page, /tel:/, "the founder dials via tel:"));
-ok(() => assert.doesNotMatch(page, /sms|twilio|sendText/i, "call mode never texts"));
+ok(() => assert.doesNotMatch(page, /twilio|sendText/i, "call mode never sends texts itself"));
+ok(() => assert.match(page, /smsHref\(contact\.phone, demoText\(/, "Text the demo opens your own Messages app"));
 ok(() => assert.match(page, /\/api\/contacts\/outcome/, "outcomes go through the shared outcome route"));
 ok(() => assert.match(page, /confirm\(`Mark/, "do-not-contact asks first"));
 console.log(`Call script regression checks passed (${n} assertions).`);

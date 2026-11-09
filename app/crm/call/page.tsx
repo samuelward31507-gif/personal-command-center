@@ -6,6 +6,7 @@ import { CALL_MODE_GROUPS, CONVERSATIONS, OUTCOME_LABELS, ATTEMPT_LIMIT, type Ca
 import { buildDraft, contactFirstName, INFO_EMAIL_STYLES } from "@/lib/call-drafts";
 import { localCallInfo } from "@/lib/local-time";
 import { cityOf } from "@/lib/call-script";
+import { demoText, smsHref, nicheFor } from "@/lib/sms-templates";
 import { openerFor } from "@/lib/openers";
 import { SCRIPTS, CLOSE, VOICEMAIL, GATEKEEPER, fillLine, type Track } from "@/lib/call-playbook";
 import { reportSection } from "@/lib/business-audit";
@@ -334,6 +335,7 @@ export default function CallModePage() {
       const ob = contact ? play.objections.find(o => o.key === e.key) : undefined;
       if (e.key === "Escape" && say) { e.preventDefault(); setSay(null); }
       else if (ob) { e.preventDefault(); setSay(s => (s === ob.id ? null : ob.id)); }
+      else if (e.key === "d" || e.key === "D") { const link = document.querySelector<HTMLAnchorElement>(".dl-demo-text"); if (link) { e.preventDefault(); link.click(); } }
       else if (e.key === "c" || e.key === "C") { e.preventDefault(); const link = document.querySelector<HTMLAnchorElement>(".dl-call-link"); if (link) link.click(); else dial(); }
       else if (e.key === "ArrowRight" || e.key === "n") setIndex(i => Math.min(i + 1, Math.max(0, queue.length - 1)));
       else if (e.key === "ArrowLeft" || e.key === "p") setIndex(i => Math.max(0, i - 1));
@@ -443,6 +445,7 @@ export default function CallModePage() {
           <div className="dl-dial">
             <span className="dl-phone u-num">{contact.phone}</span>
             <a className="u-btn u-btn-go u-btn-lg dl-call-link" href={"tel:" + (contact.phone || "").replace(/[^+\d]/g, "")} onClick={() => noteLaunch()}>Call <kbd>C</kbd></a>
+            {contact.phone && <a className="u-btn u-btn-light dl-demo-text" href={smsHref(contact.phone, demoText({ firstName: playFirst, company: contact.company, niche: track === "detailing" ? "detailing" : nicheFor(contact.company, contact.notes, contact.niche), settingsLink: wsp.demoLink }).body)} title="Opens Messages with the demo clip filled in">Text the demo <kbd>D</kbd></a>}
           </div>
         </div>
 

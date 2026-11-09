@@ -32,6 +32,25 @@ export function pickDemoLink(niche: string, settingsLink?: string | null): strin
   return /^https:\/\/\S+$/.test(s) && s.replace(/\/$/, "") !== DEFAULT_DEMO_LINK ? s : demoLinkFor(niche);
 }
 
+/** The "Text the demo" message from Call mode: a short clip of what their customer gets, personalized when it's the site's film page. */
+export function demoText(i: { firstName?: string; company?: string; niche?: string; settingsLink?: string | null }): { body: string; link: string } {
+  const custom = (i.settingsLink ?? "").trim();
+  let link = /^https:\/\/\S+$/.test(custom) && custom.replace(/\/$/, "") !== DEFAULT_DEMO_LINK ? custom
+    : i.niche === "detailing" || i.niche === "pool" ? "https://cinderrevenue.com/demo"
+    : i.niche === "fence" ? "https://cinderrevenue.com/watch?story=fence" : "https://cinderrevenue.com/watch";
+  if (/^https:\/\/cinderrevenue\.com\/watch/.test(link)) {
+    const u = new URL(link);
+    if (i.firstName?.trim()) u.searchParams.set("n", i.firstName.trim());
+    if (i.company?.trim()) u.searchParams.set("b", i.company.trim());
+    link = u.toString();
+  }
+  const hi = `Hey${i.firstName?.trim() ? " " + i.firstName.trim() : ""}, Sam with Cinder.`;
+  const body = i.niche === "detailing"
+    ? `${hi} Here's the quick demo I mentioned, how your past customers get booked back in: ${link}`
+    : `${hi} Here's the quick clip I mentioned, what your customer gets when you miss their call: ${link}`;
+  return { body, link };
+}
+
 export function isTimeZone(tz: string): boolean {
   if (!tz) return false;
   try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); return true; } catch { return false; }

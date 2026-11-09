@@ -121,4 +121,10 @@ ok(() => assert.equal(pickDemoLink("fence", "https://cinderrevenue.com/demo"), "
 ok(() => assert.equal(pickDemoLink("fence", "https://www.loom.com/share/abc"), "https://www.loom.com/share/abc", "an overview Loom wins everywhere"));
 ok(() => assert.equal(pickDemoLink("detailing", ""), "https://cinderrevenue.com/demo"));
 ok(() => assert.equal(pickDemoLink("fence", "not a link"), "https://cinderrevenue.com/watch?story=fence"));
+{ const { demoText } = await import("./lib/sms-templates.ts");
+  const d = demoText({ firstName: "Mark", company: "JC Fence", niche: "fence" });
+  assert.match(d.link, /^https:\/\/cinderrevenue\.com\/watch\?story=fence&n=Mark&b=JC\+Fence$/);
+  assert.match(d.body, /^Hey Mark, Sam with Cinder\. Here's the quick clip/);
+  assert.equal(demoText({ niche: "detailing" }).link, "https://cinderrevenue.com/demo");
+  assert.equal(demoText({ niche: "", settingsLink: "https://loom.com/share/abc" }).link, "https://loom.com/share/abc"); }
 console.log(`Text template checks passed (${n} assertions).`);
