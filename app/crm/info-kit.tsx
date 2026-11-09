@@ -6,9 +6,10 @@ import { buildDraft, contactFirstName, watchLink, type DraftKind } from "@/lib/c
 import { infoText, pickDemoLink, nicheFor } from "@/lib/sms-templates";
 import { useWorkspace } from "../use-workspace";
 
-type Kind = "info_text" | "info_dm" | "info_email" | "info_email_time" | "link";
+type Kind = "info_text" | "info_dm" | "info_email" | "info_email_time" | "followup_text" | "link";
 const OPTIONS: { kind: Kind; label: string }[] = [
   { kind: "info_text", label: "Copy info text" },
+  { kind: "followup_text", label: "Copy follow-up text (video)" },
   { kind: "info_dm", label: "Copy DM" },
   { kind: "info_email", label: "Copy email: more work" },
   { kind: "info_email_time", label: "Copy email: time back" },

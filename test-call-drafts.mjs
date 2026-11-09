@@ -40,4 +40,7 @@ ok(() => assert.match(watchLink("Jo", "A&B <Plumbing>"), /b=A%26B\+%3CPlumbing%3
 for (const d of ["info_text", "info_dm", "info_email", "info_email_time"]) ok(() => assert.match(buildDraft(d, base).body, /https:\/\/cinderrevenue\.com\/watch\?n=Mike&b=Tripp\+Fence\+Company/), d + " includes the personal video link");
 for (const d of ["info_text", "info_dm", "info_email", "info_email_time"]) ok(() => assert.match(buildDraft(d, base).body, /cal\.com\/x\/15min/), d + " still includes the booking link");
 ok(() => assert.doesNotMatch(buildDraft("stay_in_touch", base).body, /watch/), "stay-in-touch stays short");
+{ const f = buildDraft("followup_text", { firstName: "Mark", company: "JC Fence Company, LLC", me: "Sam", bookingLink: "x" });
+  assert.match(f.body, /^Hey Mark, Sam with Cinder\. Here's a quick 35-second video/);
+  assert.match(f.body, /why-first-call\.mp4/); assert.match(f.body, /work for JC Fence Company\? Morning or afternoon/); }
 console.log(`Call draft + local time checks passed (${n} assertions).`);
