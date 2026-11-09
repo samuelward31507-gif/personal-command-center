@@ -64,7 +64,7 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
         AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND a.outcome <> 'initiated')
         AND NOT EXISTS (SELECT 1 FROM public.contact_outreach o WHERE o.owner_id = c.owner_id AND o.contact_id = c.id)
         AND NOT EXISTS (SELECT 1 FROM public.contact_suppressions s WHERE s.owner_id = c.owner_id AND s.contact_id = c.id)
-      ORDER BY c.created_at LIMIT 300`,
+      ORDER BY c.created_at LIMIT 1500`,
     sql`SELECT count(*)::int AS n FROM (SELECT contact_id, min(occurred_at) AS first_at FROM public.contact_activities
         WHERE owner_id = ${owner} AND outcome <> 'initiated' GROUP BY contact_id) x WHERE x.first_at >= ${dayStart}::timestamptz`,
     sql`SELECT id, client_name, status, health_score, renewal_date, next_review_date, risk_notes FROM public.client_success

@@ -50,6 +50,8 @@ export default function CallModePage() {
   const [countdown, setCountdown] = useState<number | null>(null);
   // Browsers block a call that starts without a click or key press, so auto-dial lines up the next call and one key places it.
   const [ready, setReady] = useState(false);
+  // "New only" hides follow-ups so the list is just people you have never called.
+  const [newOnly, setNewOnly] = useState(() => { try { return localStorage.getItem("cinder.newonly") !== "off"; } catch { return true; } });
   const pendingDial = useRef(false);
   const [session, setSession] = useState<{ start: number; dials: number } | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -77,7 +79,7 @@ export default function CallModePage() {
       const now = new Date();
       const tomorrow = new Date(now); tomorrow.setHours(0, 0, 0, 0); tomorrow.setDate(tomorrow.getDate() + 1);
       const dayAfter = new Date(tomorrow); dayAfter.setDate(dayAfter.getDate() + 1);
-      const q = new URLSearchParams({ today: localKey(now), dayEnd: tomorrow.toISOString(), windowEnd: dayAfter.toISOString(), prospects: "300" });
+      const q = new URLSearchParams({ today: localKey(now), dayEnd: tomorrow.toISOString(), windowEnd: dayAfter.toISOString(), prospects: "1500" });
       const [dayRes, cRes] = await Promise.all([fetch("/api/my-day?" + q, { cache: "no-store" }), fetch("/api/contacts", { cache: "no-store" })]);
       if (dayRes.status === 401) throw new Error("Sign in to start calling.");
       const day = await dayRes.json().catch(() => ({}));
@@ -94,12 +96,12 @@ export default function CallModePage() {
       slots.forEach((n, k) => { items[n] = ordered[k]; });
       // A contact can show up as both a follow-up and a deal next step: call them once.
       const seen = new Set<string>();
-      setQueue(items.filter(i => { const id = i.contact!.id; if (seen.has(id)) return false; seen.add(id); return true; }));
+      setQueue(items.filter(i => { const id = i.contact!.id; if (seen.has(id)) return false; seen.add(id); return !newOnly || i.group === "prospects"; }));
       setContacts(byId);
       setIndex(0);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not build the call list."); }
     finally { setLoading(false); }
-  }, []);
+  }, [newOnly]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     fetch("/api/offer", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(d => d && setFounding({ script: d.script, left: d.left })).catch(() => {});
@@ -341,6 +343,7 @@ export default function CallModePage() {
         {unaudited > 0 && <button className="u-btn" disabled={!!auditing} onClick={() => void auditRest()}>
           {auditing ? `Researching ${auditing.done}/${auditing.total}${auditing.current ? `, ${auditing.current}` : ""}` : `Research the next ${Math.min(10, unaudited)}`}</button>}
         <button className="u-btn u-btn-bare" aria-pressed={autoDial} title="After no answer, voicemail, gatekeeper, wrong number or a quick no, the next call opens by itself" onClick={toggleAuto}>Auto-dial {autoDial ? "on" : "off"}</button>
+        <button className="u-btn u-btn-bare" aria-pressed={newOnly} title="Show only people you have never called" onClick={() => setNewOnly(v => { const n = !v; try { localStorage.setItem("cinder.newonly", n ? "on" : "off"); } catch { /* fine */ } return n; })}>{newOnly ? "New only" : "Everyone"}</button>
         <button className="u-btn u-btn-bare" onClick={() => void load()}>Refresh list</button>
       </div>
     </div>

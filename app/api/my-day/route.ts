@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     }
     // Call mode asks for a full calling day; Today keeps the short default.
     const rawCap = Number(params.get("prospects"));
-    const newProspects = Number.isInteger(rawCap) && rawCap > 0 ? Math.min(rawCap, 300) : undefined;
+    const newProspects = Number.isInteger(rawCap) && rawCap > 0 ? Math.min(rawCap, 1500) : undefined;
     const { items, now } = await loadMyDay(db(), user.id, today, dayEnd, windowEnd, newProspects);
     return Response.json({ items, groups: GROUP_LABELS, generatedAt: now }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
