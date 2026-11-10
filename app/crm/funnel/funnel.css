@@ -1,0 +1,14 @@
+.fn-leak { font-size: 17px; line-height: 1.45; margin: 0 0 22px; max-width: 46em; }
+.fn-steps { list-style: none; margin: 0 0 26px; padding: 0; display: grid; gap: 14px; }
+.fn-steps li { display: grid; grid-template-columns: minmax(150px, 220px) 1fr 70px; gap: 14px; align-items: center; }
+.fn-label { display: flex; flex-direction: column; gap: 2px; }
+.fn-label span { font-size: 13px; color: var(--c-soft, #a49d94); }
+.fn-bar { height: 14px; border-radius: 7px; background: rgba(255,255,255,.06); overflow: hidden; }
+.fn-bar i { display: block; height: 100%; background: #c9c2b8; border-radius: 7px; }
+.fn-steps li:last-child .fn-bar i { background: #34c07f; }
+.fn-n { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.fn-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.fn-facts div { border: 1px solid var(--c-line, #2f2c29); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.fn-facts span { font-size: 13px; color: var(--c-soft, #a49d94); }
+.fn-facts b { font-size: 22px; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .fn-steps li { grid-template-columns: 1fr 60px; } .fn-bar { grid-column: 1 / -1; grid-row: 2; } }

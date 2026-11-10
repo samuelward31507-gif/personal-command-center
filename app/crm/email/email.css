@@ -68,3 +68,8 @@ body .em-page .em-replybox { display: grid; gap: 10px; margin-top: 14px; padding
 .em-inbox-list { list-style: none; margin: 8px 0 10px; padding: 0; display: grid; gap: 8px; }
 .em-inbox-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; padding: 10px 12px; border: 1px solid var(--c-line, #2f2c29); border-radius: 10px; }
 .em-inbox-list li .u-note { margin-left: auto; }
+.em-auto-toggle { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; }
+.em-auto-toggle input { width: 18px; height: 18px; accent-color: #34c07f; }
+.em-auto-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 10px 0; }
+.em-auto-row input { width: 80px; margin-left: 8px; }
+.em-auto-list { margin: 6px 0 0; padding-left: 18px; font-size: 14px; display: grid; gap: 3px; }

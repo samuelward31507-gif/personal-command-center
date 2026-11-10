@@ -169,11 +169,11 @@ export default function DealWorkspacePage() {
   async function createSignLink() {
     setSaving("sign"); setFlash(null); setSignUrl("");
     try {
-      const r = await fetch("/api/agreements/sign-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id }) });
+      const r = await fetch("/api/agreements/sign-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id, email: true }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Could not create the signing link.");
       setSignUrl(d.url);
-      setFlash({ ok: true, text: "Signing link ready. Send it from your own email. When they sign, the deal moves to Won and onboarding starts by itself." });
+      setFlash({ ok: true, text: d.emailed ? `Agreement emailed to ${d.emailed}. You'll get an alert when they open it and when they sign. Signing sends them the setup payment link and kickoff checklist by itself.` : `Signing link ready.${d.emailError ? ` ${d.emailError}` : ""} When they sign, the deal moves to Won and they get the payment link and kickoff checklist.` });
       await load();
     } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not create the signing link." }); }
     finally { setSaving(null); }
@@ -378,7 +378,7 @@ export default function DealWorkspacePage() {
               {blanks ? <p className="dw-hint">Fill in the {blanks} [bracketed] blank{blanks === 1 ? "" : "s"} first (Edit). A client should never sign a draft with gaps.</p>
                 : <p className="dw-hint">They read it, type their name and sign. Cinder records who, when, their IP and the exact text, then marks the deal Won and starts onboarding.</p>}
               <div className="dw-row">
-                <button data-variant="primary" className="dw-btn dw-primary" disabled={!!blanks || saving === "sign"} onClick={() => void createSignLink()}>{saving === "sign" ? "Creating…" : signReq?.status === "open" ? "New signing link" : "Create signing link"}</button>
+                <button data-variant="primary" className="dw-btn dw-primary" disabled={!!blanks || saving === "sign"} onClick={() => void createSignLink()}>{saving === "sign" ? "Sending…" : signReq?.status === "open" ? "Send a new signing link" : "Email it to sign"}</button>
                 {signUrl && <><input className="dw-mail-subject dw-sign-url" readOnly value={signUrl} onFocus={e => e.currentTarget.select()} aria-label="Signing link" />
                   <button data-variant="primary" className="dw-btn" onClick={() => copy("sign", signUrl)}>{copied === "sign" ? "Copied" : "Copy link"}</button></>}
               </div>

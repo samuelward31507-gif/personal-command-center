@@ -4,6 +4,7 @@ import { getAllowedSession } from "@/lib/auth/server";
 import { countBlanks } from "@/lib/deal-workspace";
 import { newSigningToken, hashToken, contentHash } from "@/lib/esign";
 import { sanitizeForLog } from "@/lib/business-audit";
+import { sendDirectEmail } from "@/lib/gmail-send";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -74,7 +75,20 @@ export async function POST(request: Request) {
       WHERE id = ${body.dealId}::uuid AND owner_id = ${user.id}`;
     // Client-facing links use the public website domain when set (it proxies /sign to Cinder).
     const origin = process.env.CINDER_PUBLIC_ORIGIN?.trim().replace(/\/$/, "") || new URL(request.url).origin;
-    return Response.json({ url: `${origin}/sign/${token}` }, { status: 201, headers: { "Cache-Control": "no-store" } });
+    const url = `${origin}/sign/${token}`;
+    // { email: true }: email the link to the deal's contact from your main inbox, so nothing needs copying.
+    let emailed: string | null = null, emailError: string | null = null;
+    if (body.email) {
+      const [c] = await sql`SELECT c.id, c.first_name, c.email, c.company FROM public.deals d JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id WHERE d.id = ${body.dealId}::uuid AND d.owner_id = ${user.id}` as { id: string; first_name: string | null; email: string | null; company: string | null }[];
+      if (!c?.email) emailError = "No email on this contact. Copy the link and text it instead.";
+      else {
+        const me = ws.ownerFirstName || "Sam";
+        const r = await sendDirectEmail(sql, user.id, ws, { to: c.email, contactId: c.id, kind: "agreement", subject: `Your agreement with ${ws.businessName || "Cinder Revenue Company"}`,
+          body: `Hi ${(c.first_name ?? "").trim() || "there"},\n\nHere's the service agreement we talked through for ${c.company || "your business"}. It takes about two minutes to read and sign on your phone:\n\n${url}\n\nOnce it's signed you'll get the setup payment link and a short kickoff checklist, and we start building.\n\nAny questions, just reply or text me.\n\n${me}\n${ws.businessName || "Cinder Revenue Company"}` });
+        if (r.ok) emailed = c.email; else emailError = r.error;
+      }
+    }
+    return Response.json({ url, emailed, emailError }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Sign-link create failed", { name: error instanceof Error ? error.name : typeof error, message: sanitizeForLog(error instanceof Error ? error.message : "") });
     return fail("Could not create the signing link.", 500);

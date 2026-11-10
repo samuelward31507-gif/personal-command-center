@@ -47,6 +47,7 @@ export default function SignPage() {
   const [sending, setSending] = useState(false);
   const [formError, setFormError] = useState("");
   const [kickoffUrl, setKickoffUrl] = useState<string | null>(null);
+  const [payUrl, setPayUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -65,6 +66,7 @@ export default function SignPage() {
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Couldn't record your signature.");
       if (typeof d.kickoffUrl === "string") setKickoffUrl(d.kickoffUrl);
+      if (typeof d.payUrl === "string") setPayUrl(d.payUrl);
       await load();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) { setFormError(err instanceof Error ? err.message : "Couldn't record your signature."); }
@@ -81,6 +83,7 @@ export default function SignPage() {
         : <>
           {doc.status === "signed"
             ? <div className="sg-done" role="status"><b>Signed.</b> {doc.signerName} signed electronically on {fmt(doc.signedAt)}. Save a copy with the button below.
+                {payUrl && <div className="sg-next"><p><b>Setup payment:</b> pay the setup fee to lock in your start date. We also emailed you this link.</p><a className="sg-btn" href={payUrl} target="_blank" rel="noopener noreferrer">Pay the setup fee</a></div>}
                 {kickoffUrl && <div className="sg-next"><p><b>Next step:</b> a 10-minute kickoff checklist (your hours, service area, prices and the details carriers need to register your texting number). The 21-business-day go-live clock starts when it&apos;s in.</p><a className="sg-btn" href={kickoffUrl}>Start the kickoff checklist</a></div>}</div>
             : <div className="sg-intro"><div className="sg-eyebrow">Service agreement · {doc.client}</div><p>Please read the agreement below. To sign, type your name at the bottom.</p></div>}
           <DocBody text={doc.content} />

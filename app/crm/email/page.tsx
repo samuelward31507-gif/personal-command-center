@@ -8,6 +8,7 @@ import { fillTemplate, mergeFor, TEMPLATE_SETS, TRACK_LABEL, trackOf, STEP_GAP_D
 import "./email.css";
 import InfoSend from "./info-send";
 import FindEmails from "./find-emails";
+import AutopilotPanel from "./autopilot-panel";
 
 type Contact = { id: string; name: string; company: string; email: string; location?: string; status?: string; lastTouchOutcome?: string; nextFollowUp?: string; source?: string; niche?: string };
 type Sent = { contactId: string; step: string; at: string };
@@ -260,6 +261,7 @@ export default function EmailPage() {
     </div>}
 
     <FindEmails onDone={() => void load()} />
+    {gmail?.connected && <AutopilotPanel room={room} onRan={() => { void load(); void loadGmail(); }} />}
     {gmail?.connected && <section className="u-sheet em-inboxes" aria-label="Sending inboxes">
       <div className="u-h2-row"><h2 className="u-h2">Sending inboxes <span className="u-quiet">{gmail.sentLast24h} of {gmail.cap} in the last 24 hours</span></h2><a className="u-btn u-btn-light" href="/api/gmail/connect">Connect another inbox</a></div>
       <ul className="em-inbox-list">{(gmail.inboxes ?? []).map(i => <li key={i.email}>

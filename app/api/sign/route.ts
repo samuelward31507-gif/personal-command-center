@@ -4,6 +4,9 @@ import { hashToken, contentHash, isTokenShape, validateSignature, clientIp, CONS
 import { runDealHandoff, HandoffNotReady } from "@/lib/deal-handoff";
 import { createKickoffLink, publicOrigin } from "@/lib/kickoff-link";
 import { sanitizeForLog } from "@/lib/business-audit";
+import { loadWorkspace } from "@/lib/workspace-data";
+import { paymentLinkFor } from "@/lib/workspace";
+import { sendDirectEmail } from "@/lib/gmail-send";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,9 +33,11 @@ export async function GET(request: Request) {
   if (!isTokenShape(token)) return reply({ error: "This signing link isn't valid." }, 404);
   if (!process.env.DATABASE_URL) return reply({ error: "Signing is unavailable right now." }, 503);
   try {
-    const { row } = await load(token);
+    const { sql, row } = await load(token);
     if (!row || row.status === "void") return reply({ error: "This signing link is no longer active. Ask for a new one." }, 404);
     const signed = row.status === "signed";
+    // First open: note it, so the CRM can tell you they're reading it.
+    if (!signed) await sql`UPDATE public.signing_requests SET viewed_at = now() WHERE id = ${row.id}::uuid AND viewed_at IS NULL`.catch(() => {});
     const expired = !signed && Date.parse(String(row.expires_at)) < Date.now();
     const changed = !signed && contentHash(String(row.content)) !== row.content_hash;
     return reply({
@@ -96,7 +101,20 @@ export async function POST(request: Request) {
       try { kickoffUrl = await createKickoffLink(sql, owner, dealId, publicOrigin(request.url)); }
       catch (e) { console.error("Kickoff link after signature failed", { name: e instanceof Error ? e.name : typeof e }); }
     }
-    return reply({ ok: true, signedAt: iso(signedRows[0].signed_at), kickoffUrl });
+    // Send the setup payment link straight away (and show it on the page): collect while they're ready.
+    let payUrl: string | null = null;
+    try {
+      const ws = await loadWorkspace(owner);
+      const [d] = await sql`SELECT service_type, setup_fee FROM public.deals WHERE id = ${dealId}::uuid AND owner_id = ${owner}` as { service_type: string | null; setup_fee: number | null }[];
+      const fee = Number(d?.setup_fee ?? 0);
+      payUrl = paymentLinkFor(ws, d?.service_type ?? null, "setup_fee", fee).link || null;
+      if (payUrl && v.ok.email) {
+        await sendDirectEmail(sql, owner, ws, { to: v.ok.email, contactId: moved[0]?.contact_id ? String(moved[0].contact_id) : null, kind: "setup payment",
+          subject: `Next steps for ${String(row.company || "your setup")}`,
+          body: `Hi ${v.ok.name.split(" ")[0]},\n\nThanks for signing. Two quick things and we start building:\n\n1. Setup payment${fee ? ` ($${fee.toLocaleString("en-US")})` : ""}: ${payUrl}\n${kickoffUrl ? `2. Kickoff checklist (about 10 minutes): ${kickoffUrl}\n` : ""}\nYour monthly plan doesn't start until your first booked appointment.\n\n${ws.ownerFirstName || "Sam"}\n${ws.businessName || "Cinder Revenue Company"}` });
+      }
+    } catch (e) { console.error("Payment link after signature failed", { name: e instanceof Error ? e.name : typeof e }); }
+    return reply({ ok: true, signedAt: iso(signedRows[0].signed_at), kickoffUrl, payUrl });
   } catch (error) {
     console.error("Sign POST failed", { name: error instanceof Error ? error.name : typeof error, message: sanitizeForLog(error instanceof Error ? error.message : "") });
     return reply({ error: "Couldn't record your signature. Try again." }, 500);

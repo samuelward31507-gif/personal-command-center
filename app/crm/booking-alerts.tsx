@@ -6,6 +6,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 type Booking = { id: string; title: string; startsAt: string; createdAt: string; contactId: string | null; who: string };
+type Pending = { id: string; title: string; startsAt: string; who: string };
+type Reply = { id: string; who: string; summary: string; category: string };
+type Sign = { id: string; dealId: string; who: string; signed: boolean };
+type Done = { id: string; who: string; text: string; sms?: { href: string; body: string } };
 const KEY = "cinder.bookings.seen";
 
 function when(iso: string) {
@@ -28,6 +32,14 @@ function chime() {
 
 export default function BookingAlerts() {
   const [items, setItems] = useState<Booking[]>([]);
+  const [pending, setPending] = useState<Pending[]>([]);
+  const [replies, setReplies] = useState<Reply[]>([]);
+  const [done, setDone] = useState<Done[]>([]);
+  const [signs, setSigns] = useState<Sign[]>([]);
+  const seenSigns = useRef<Set<string>>(new Set());
+  const [busy, setBusy] = useState<string>("");
+  const skipped = useRef<Set<string>>(new Set());
+  const seenReplies = useRef<Set<string>>(new Set());
   const [canNotify, setCanNotify] = useState<NotificationPermission | "none">("none");
   const since = useRef<string>("");
   const baseTitle = useRef<string>("");
@@ -43,7 +55,13 @@ export default function BookingAlerts() {
     try {
       const r = await fetch(`/api/alerts/bookings?since=${encodeURIComponent(since.current)}`, { cache: "no-store" });
       if (!r.ok) return;
-      const j = await r.json() as { now?: string; bookings?: Booking[] };
+      const j = await r.json() as { now?: string; bookings?: Booking[]; pending?: Pending[]; replies?: Reply[]; signing?: Sign[] };
+      const newSigns = (j.signing ?? []).filter(x => !seenSigns.current.has(x.id));
+      if (newSigns.length) { newSigns.forEach(x => seenSigns.current.add(x.id)); setSigns(cur => [...newSigns, ...cur].slice(0, 3)); chime(); }
+      setPending((j.pending ?? []).filter(p => !skipped.current.has(p.id)));
+      const newReplies = (j.replies ?? []).filter(x => !seenReplies.current.has(x.id));
+      if (newReplies.length) { newReplies.forEach(x => seenReplies.current.add(x.id)); setReplies(cur => [...newReplies, ...cur].slice(0, 4)); chime();
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") for (const x of newReplies) { try { new Notification(`${x.who} replied`, { body: x.summary || "Positive reply in your inbox", tag: x.id }); } catch { /* fine */ } } }
       const fresh = (j.bookings ?? []).filter(b => !shown.current.has(b.id));
       fresh.forEach(b => shown.current.add(b.id));
       if (j.now) { since.current = j.now; try { localStorage.setItem(KEY, j.now); } catch { /* fine */ } }
@@ -69,8 +87,49 @@ export default function BookingAlerts() {
     document.title = items.length ? `(${items.length}) New booking · ${baseTitle.current}` : baseTitle.current;
   }, [items.length]);
 
-  if (!items.length) return null;
+  async function mark(p: Pending, outcome: "showed" | "no_show" | "rescheduled") {
+    setBusy(p.id);
+    try {
+      const r = await fetch("/api/calendar-events/outcome", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: p.id, outcome }) });
+      const j = await r.json().catch(() => ({})) as { emailed?: string; emailError?: string; text?: { href: string; body: string }; task?: string; error?: string };
+      if (!r.ok) throw new Error(j.error || "Couldn't save that.");
+      setPending(cur => cur.filter(x => x.id !== p.id));
+      const text = outcome === "no_show"
+        ? [j.emailed ? `Reschedule email sent to ${j.emailed}.` : j.emailError ? `Couldn't email them: ${j.emailError}` : "No email on file.", j.task ? `Callback set for tomorrow 10am.` : ""].filter(Boolean).join(" ")
+        : outcome === "showed" ? "Logged. \"Send next step\" is on today's list." : "Logged as rescheduled.";
+      setDone(cur => [{ id: p.id, who: p.who, text, sms: j.text }, ...cur].slice(0, 3));
+    } catch (e) { setDone(cur => [{ id: p.id, who: p.who, text: e instanceof Error ? e.message : "Couldn't save that." }, ...cur]); }
+    setBusy("");
+  }
+  if (!items.length && !pending.length && !replies.length && !done.length && !signs.length) return null;
   return <div className="ba-stack" role="status" aria-live="polite">
+    {pending.map(p => <div key={"p" + p.id} className="ba-card">
+      <div className="ba-top"><b className="ba-ask">Did they show?</b><button type="button" className="ba-x" aria-label="Ask later" onClick={() => { skipped.current.add(p.id); setPending(cur => cur.filter(x => x.id !== p.id)); }}>×</button></div>
+      <p className="ba-who">{p.who || p.title}</p>
+      <p className="ba-when">{when(p.startsAt)}</p>
+      <div className="ba-actions">
+        <button type="button" className="u-btn u-btn-light" disabled={busy === p.id} onClick={() => void mark(p, "showed")}>Showed</button>
+        <button type="button" className="u-btn u-btn-light" disabled={busy === p.id} onClick={() => void mark(p, "no_show")}>No-show</button>
+        <button type="button" className="u-btn u-btn-bare" disabled={busy === p.id} onClick={() => void mark(p, "rescheduled")}>Rescheduled</button>
+      </div>
+    </div>)}
+    {done.map(d => <div key={"d" + d.id} className="ba-card">
+      <div className="ba-top"><b>{d.who}</b><button type="button" className="ba-x" aria-label="Dismiss" onClick={() => setDone(cur => cur.filter(x => x.id !== d.id))}>×</button></div>
+      <p className="ba-when">{d.text}</p>
+      {d.sms && <div className="ba-actions"><a className="u-btn u-btn-light" href={d.sms.href}>Text them a new time</a></div>}
+    </div>)}
+    {signs.map(x => <div key={"s" + x.id} className="ba-card">
+      <div className="ba-top"><b>{x.signed ? "Agreement signed" : "Agreement opened"}</b><button type="button" className="ba-x" aria-label="Dismiss" onClick={() => setSigns(cur => cur.filter(y => y.id !== x.id))}>×</button></div>
+      <p className="ba-who">{x.who}</p>
+      <p className="ba-when">{x.signed ? "They got the setup payment link and kickoff checklist by email." : "They're reading it now. Good time to call."}</p>
+      <div className="ba-actions"><Link className="u-btn u-btn-light" href={`/crm/deals/${x.dealId}#agreement`} onClick={() => setSigns(cur => cur.filter(y => y.id !== x.id))}>Open the deal</Link></div>
+    </div>)}
+    {replies.map(x => <div key={"r" + x.id} className="ba-card">
+      <div className="ba-top"><b>{x.category === "meeting" ? "Wants to meet" : x.category === "question" ? "Asked a question" : "Interested reply"}</b><button type="button" className="ba-x" aria-label="Dismiss" onClick={() => setReplies(cur => cur.filter(y => y.id !== x.id))}>×</button></div>
+      <p className="ba-who">{x.who}</p>
+      {x.summary && <p className="ba-when">{x.summary}</p>}
+      <div className="ba-actions"><Link className="u-btn u-btn-light" href="/crm/email" onClick={() => setReplies(cur => cur.filter(y => y.id !== x.id))}>Answer it</Link></div>
+    </div>)}
     {items.map(b => <div key={b.id} className="ba-card">
       <div className="ba-top"><b>New meeting booked</b><button type="button" className="ba-x" aria-label="Dismiss" onClick={() => setItems(cur => cur.filter(x => x.id !== b.id))}>×</button></div>
       <p className="ba-who">{b.who || b.title}</p>

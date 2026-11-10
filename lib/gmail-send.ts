@@ -134,3 +134,23 @@ export async function sendThreadReply(sql: Sql, o: string, ws: WorkspaceSettings
     return { ok: true, from: t.email };
   } catch (e) { console.error("Gmail reply failed", e instanceof Error ? e.message : e); return fail("Couldn't send the reply through Gmail.", 502); }
 }
+
+/** A one-off email to a client or booked prospect (no-show reschedule, agreement link, payment link) from the main inbox.
+ *  Not cold outreach: no sequence checks and no daily cap, but it still respects "do not contact". */
+export async function sendDirectEmail(sql: Sql, o: string, ws: WorkspaceSettings, m: { to: string; subject: string; body: string; contactId?: string | null; kind: string }): Promise<SendResult> {
+  if (!isEmail(m.to)) return fail("No valid email address.", 400);
+  const [sup] = await sql`SELECT 1 FROM public.contact_suppressions s WHERE s.owner_id = ${o} AND (s.email_normalized = lower(${m.to}) OR (${m.contactId ?? null}::uuid IS NOT NULL AND s.contact_id = ${m.contactId ?? null}::uuid)) LIMIT 1`;
+  if (sup) return fail("They asked not to be contacted. Nothing was sent.", 409);
+  const inboxes = await loadInboxes(sql, o);
+  const t = await tokenFor(sql, o, mainOf(inboxes));
+  if ("ok" in t) return t;
+  try {
+    const raw = buildRaw({ from: t.email, fromName: `${ws.ownerFirstName} at ${ws.businessName}`.trim(), to: m.to, subject: m.subject, body: m.body });
+    const sent = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", { method: "POST", headers: { Authorization: `Bearer ${t.token}`, "Content-Type": "application/json" }, body: JSON.stringify({ raw }) });
+    const sj = await sent.json().catch(() => ({}));
+    if (!sent.ok) return fail(sj?.error?.message ? `Gmail said: ${sj.error.message}` : "Gmail didn't accept the email.", 502);
+    if (m.contactId) await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
+      VALUES (${o}, ${m.contactId}::uuid, 'note', 'note', 'other', ${`Direct email (${m.kind}) via Gmail to ${m.to}\nSubject: ${m.subject}`})`.catch(() => {});
+    return { ok: true, from: t.email };
+  } catch (e) { console.error("Direct email failed", e instanceof Error ? e.message : e); return fail("Couldn't send through Gmail.", 502); }
+}

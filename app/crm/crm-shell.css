@@ -155,3 +155,4 @@
 .ba-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
 @keyframes ba-in { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .ba-card { animation: none; } }
+.ba-ask { color: #e9c46a; }

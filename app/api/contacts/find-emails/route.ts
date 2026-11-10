@@ -1,18 +1,11 @@
 import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
 import { emailsIn, pickEmail, contactPages } from "@/lib/email-finder";
+import { fetchPage as page } from "@/lib/website-text";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-async function page(url: string): Promise<string> {
-  try {
-    const r = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(7000), headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", Accept: "text/html" } });
-    if (!r.ok || !/text\/html/i.test(r.headers.get("content-type") ?? "text/html")) return "";
-    return (await r.text()).slice(0, 600_000);
-  } catch { return ""; }
-}
 
 async function lookup(website: string): Promise<string> {
   const base = /^https?:\/\//i.test(website) ? website : "https://" + website;
