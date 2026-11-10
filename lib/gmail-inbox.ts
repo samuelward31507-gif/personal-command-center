@@ -1,30 +1,44 @@
 // Inbox sorter: pull new mail from the cold-email inbox and sort it with Claude. Shared by the Email page and the 7am job.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { accessToken, decryptToken } from "@/lib/gmail";
+import { loadInboxes } from "@/lib/gmail-accounts";
 import { claudeText } from "@/lib/ai-text";
 import { isBulk, parseFrom, parseSort, sortPrompt, SORT_SYSTEM, USEFUL, type RawMail } from "@/lib/inbox-sort";
 
 type Sql = NeonQueryFunction<false, false>;
 export type SortResult = { sorted: number; useful: number; more?: boolean; connected?: boolean; error?: string; needsReconnect?: boolean; status?: number };
 
-/** Sort up to 40 new inbox emails. Bulk senders are filed without AI; the rest go to Claude in one batch. */
+/** Sort new mail across every connected inbox (up to 40 per run in total). */
 export async function sortNewMail(sql: Sql, o: string): Promise<SortResult> {
-  const [acc] = await sql`SELECT email, refresh_token_enc FROM public.gmail_accounts WHERE owner_id = ${o}` as { email: string; refresh_token_enc: string }[];
-  if (!acc) return { sorted: 0, useful: 0, connected: false };
+  const inboxes = await loadInboxes(sql, o);
+  if (!inboxes.length) return { sorted: 0, useful: 0, connected: false };
+  const out: SortResult = { sorted: 0, useful: 0 };
+  for (const acc of inboxes) {
+    const r = await sortInbox(sql, o, acc, Math.max(0, 40 - out.sorted));
+    out.sorted += r.sorted; out.useful += r.useful; out.more = out.more || r.more;
+    if (r.error && !out.error) { out.error = r.error; out.needsReconnect = r.needsReconnect; out.status = r.status; }
+    if (out.sorted >= 40) { out.more = true; break; }
+  }
+  if (out.error && out.sorted) delete out.status;
+  return out;
+}
+
+async function sortInbox(sql: Sql, o: string, acc: { email: string; refresh_token_enc: string }, room: number): Promise<SortResult> {
+  if (room <= 0) return { sorted: 0, useful: 0, more: true };
   let token: string;
   try { token = await accessToken(decryptToken(acc.refresh_token_enc)); }
   catch (e) {
-    if (e instanceof Error && /revoked/.test(e.message)) { await sql`DELETE FROM public.gmail_accounts WHERE owner_id = ${o}`; return { sorted: 0, useful: 0, error: "Gmail disconnected. Click Connect Gmail.", connected: false, status: 401 }; }
+    if (e instanceof Error && /revoked/.test(e.message)) { await sql`DELETE FROM public.gmail_accounts WHERE owner_id = ${o} AND lower(email) = lower(${acc.email})`; return { sorted: 0, useful: 0, error: `${acc.email} disconnected. Connect it again on the Email page.`, status: 401 }; }
     return { sorted: 0, useful: 0, error: "Couldn't reach Gmail.", status: 502 };
   }
   const g = (path: string) => fetch(`https://gmail.googleapis.com/gmail/v1/users/me/${path}`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(8000) });
   const list = await g("messages?labelIds=INBOX&maxResults=60");
-  if (list.status === 403) return { sorted: 0, useful: 0, error: "Reconnect Gmail so Cinder can read who emailed you.", needsReconnect: true, status: 403 };
+  if (list.status === 403) return { sorted: 0, useful: 0, error: `Reconnect ${acc.email} so Cinder can read who emailed you.`, needsReconnect: true, status: 403 };
   if (!list.ok) return { sorted: 0, useful: 0, error: "Couldn't read the inbox.", status: 502 };
   const ids = ((await list.json()).messages ?? []) as { id: string; threadId: string }[];
   if (!ids.length) return { sorted: 0, useful: 0 };
   const known = new Set((await sql`SELECT message_id FROM public.gmail_inbox WHERE owner_id = ${o} AND message_id = ANY(${ids.map(x => x.id)}::text[])`).map(r => String(r.message_id)));
-  const fresh = ids.filter(x => !known.has(x.id)).slice(0, 40);
+  const fresh = ids.filter(x => !known.has(x.id)).slice(0, room);
   if (!fresh.length) return { sorted: 0, useful: 0 };
 
   const mails: RawMail[] = [];
@@ -53,8 +67,8 @@ export async function sortNewMail(sql: Sql, o: string): Promise<SortResult> {
     const k = people.indexOf(m), s = k >= 0 ? sorted[k] : { category: "other", summary: "", next: "" };
     if ((USEFUL as string[]).includes(s.category)) useful++;
     const { name, addr } = parseFrom(m.from);
-    await sql`INSERT INTO public.gmail_inbox (owner_id, message_id, thread_id, from_addr, from_name, subject, snippet, received_at, category, summary, next_step, contact_id)
-      VALUES (${o}, ${m.id}, ${m.threadId}, ${addr}, ${name}, ${m.subject}, ${m.snippet}, ${m.date}::timestamptz, ${s.category}, ${s.summary}, ${s.next}, ${contactOf.get(addr) ?? null})
+    await sql`INSERT INTO public.gmail_inbox (owner_id, message_id, thread_id, from_addr, from_name, subject, snippet, received_at, category, summary, next_step, contact_id, account_email)
+      VALUES (${o}, ${m.id}, ${m.threadId}, ${addr}, ${name}, ${m.subject}, ${m.snippet}, ${m.date}::timestamptz, ${s.category}, ${s.summary}, ${s.next}, ${contactOf.get(addr) ?? null}, ${acc.email.toLowerCase()})
       ON CONFLICT (owner_id, message_id) DO NOTHING`;
   }
   return { sorted: mails.length, useful, more: ids.length > known.size + fresh.length };

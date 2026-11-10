@@ -1,6 +1,7 @@
 // Sending through the owner's connected Gmail. Shared by the Email page, the morning auto follow-ups and inbox replies.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { accessToken, buildRaw, classifyThread, complianceFooter, decryptToken, isEmail, DAILY_SEND_CAP, type ThreadMessage } from "@/lib/gmail";
+import { accessToken, buildRaw, classifyThread, complianceFooter, decryptToken, isEmail, type ThreadMessage } from "@/lib/gmail";
+import { inboxCap, loadInboxes, mainOf, pickInbox, senderOf, sendsToday, type Inbox } from "@/lib/gmail-accounts";
 import { recordVerdict } from "@/lib/gmail-sync";
 import type { WorkspaceSettings } from "@/lib/workspace";
 
@@ -8,16 +9,15 @@ type Sql = NeonQueryFunction<false, false>;
 export type SendResult = { ok: true; from: string } | { ok: false; error: string; status: number };
 const fail = (error: string, status: number): SendResult => ({ ok: false, error, status });
 
-async function tokenFor(sql: Sql, o: string): Promise<{ email: string; token: string } | SendResult> {
-  const [acc] = await sql`SELECT email, refresh_token_enc FROM public.gmail_accounts WHERE owner_id = ${o}` as { email: string; refresh_token_enc: string }[];
+async function tokenFor(sql: Sql, o: string, acc: Pick<Inbox, "email" | "refresh_token_enc"> | undefined): Promise<{ email: string; token: string } | SendResult> {
   if (!acc) return fail("Connect Gmail first.", 400);
   try { return { email: acc.email, token: await accessToken(decryptToken(acc.refresh_token_enc)) }; }
   catch (e) {
     // Google expired or revoked access (every 7 days while the Google app is in Testing): forget the dead token
     // so the Email page shows Connect Gmail again instead of failing on every send.
     if (e instanceof Error && /revoked/.test(e.message)) {
-      await sql`DELETE FROM public.gmail_accounts WHERE owner_id = ${o}`;
-      return fail("Gmail disconnected (Google expires access every 7 days for now). Click Connect Gmail on the Email page, then send again.", 401);
+      await sql`DELETE FROM public.gmail_accounts WHERE owner_id = ${o} AND lower(email) = lower(${acc.email})`;
+      return fail(`${acc.email} disconnected (Google expires access every 7 days for now). Connect it again on the Email page, then send again.`, 401);
     }
     return fail("Couldn't reach Gmail.", 502);
   }
@@ -42,8 +42,6 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
   if (c.suppressed || c.stop) return fail("This contact asked not to be contacted. Nothing was sent.", 409);
   if (c.engaged) return fail("They booked a meeting, aren't a fit, or are a customer. Nothing was sent.", 409);
   if (c.wrote_in) return fail("They already emailed you. Answer them from the inbox instead.", 409);
-  const [{ n }] = await sql`SELECT count(*)::int AS n FROM public.contact_activities WHERE owner_id = ${o} AND notes LIKE 'Email sent: %via Gmail%' AND occurred_at > now() - interval '24 hours'` as { n: number }[];
-  if (n >= DAILY_SEND_CAP) return fail(`You've sent ${DAILY_SEND_CAP} in the last 24 hours. That's the cap to protect your inbox's reputation; the rest can go tomorrow.`, 429);
   const [dup] = await sql`SELECT 1 FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND notes LIKE ${`Email sent: ${m.step}%`} LIMIT 1`;
   if (dup) return fail("This email already went to them.", 409);
   const [heard] = await sql`SELECT notes FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND (notes LIKE 'Email reply:%' OR notes LIKE 'Email bounced:%') LIMIT 1` as { notes: string }[];
@@ -53,7 +51,22 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
   const [prev] = await sql`SELECT notes FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND notes LIKE 'Email sent: %via Gmail%' ORDER BY occurred_at ASC LIMIT 1` as { notes: string }[];
   const threadId = prev?.notes.match(/Thread: (\S+)/)?.[1];
   const messageId = prev?.notes.match(/Message-ID: (\S+)/)?.[1];
-  const t = await tokenFor(sql, o);
+  // Which inbox sends it: a follow-up stays in the inbox that started the thread; anything new goes to the
+  // inbox with the most room left today. Every inbox has its own daily cap.
+  const inboxes = await loadInboxes(sql, o);
+  if (!inboxes.length) return fail("Connect Gmail first.", 400);
+  const sent = await sendsToday(sql, o, inboxes);
+  let acc: Inbox | null | undefined;
+  if (inThread && prev) {
+    const from = senderOf(prev.notes) ?? mainOf(inboxes)?.email.toLowerCase();
+    acc = inboxes.find(i => i.email.toLowerCase() === from);
+    if (!acc) return fail(`This thread started from ${from}, which isn't connected anymore. Connect it again on the Email page to send the follow-up.`, 409);
+    if ((sent.get(acc.email.toLowerCase()) ?? 0) >= inboxCap(acc)) return fail(`${acc.email} hit today's limit of ${inboxCap(acc)}. This follow-up goes tomorrow.`, 429);
+  } else {
+    acc = pickInbox(inboxes, sent);
+    if (!acc) return fail(`All ${inboxes.length} inbox${inboxes.length === 1 ? "" : "es"} hit today's limit. The rest can go tomorrow.`, 429);
+  }
+  const t = await tokenFor(sql, o, acc);
   if ("ok" in t) return t;
   // Last check right before a follow-up: did they answer since the last reply sync? Catches replies the batch sync hasn't reached.
   if (inThread && threadId) {
@@ -62,7 +75,7 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
       if (th.ok) {
         const j = await th.json().catch(() => ({})) as { messages?: { snippet?: string; internalDate?: string; labelIds?: string[]; payload?: { headers?: { name: string; value: string }[] } }[] };
         const msgs: ThreadMessage[] = (j.messages ?? []).map(x => ({ from: x.payload?.headers?.find(h => h.name.toLowerCase() === "from")?.value ?? "", snippet: x.snippet, internalDate: x.internalDate, labelIds: x.labelIds }));
-        const v = classifyThread(msgs, t.email);
+        const v = classifyThread(msgs, inboxes.map(i => i.email));
         if (v) {
           await recordVerdict(sql, o, c.id, v);
           return fail(v.kind === "bounce" ? "Their address bounced. Nothing was sent." : "They already replied. Answer them from Gmail instead.", 409);
@@ -82,7 +95,7 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
       const mj = await meta.json(); mid = (mj.payload?.headers ?? []).find((h: { name: string }) => /^message-id$/i.test(h.name))?.value ?? "";
     } catch { /* threading falls back to the Gmail thread id */ }
     // Gmail already sent it: never report a failure that invites a resend. Retry the log once if the DB blips.
-    const note = `Email sent: ${m.step} via Gmail\nSubject: ${m.subject}\nThread: ${sj.threadId ?? ""}${mid ? `\nMessage-ID: ${mid}` : ""}`;
+    const note = `Email sent: ${m.step} via Gmail\nSubject: ${m.subject}\nThread: ${sj.threadId ?? ""}${mid ? `\nMessage-ID: ${mid}` : ""}\nFrom: ${t.email.toLowerCase()}`;
     const log = () => sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
       VALUES (${o}, ${c.id}::uuid, 'note', 'note', 'other', ${note})`;
     try { await log(); } catch (e) {
@@ -98,9 +111,12 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
 }
 
 /** A reply in an existing inbox thread (answering someone who wrote in). No footer: it's a conversation, not outreach. */
-export async function sendThreadReply(sql: Sql, o: string, ws: WorkspaceSettings, m: { gmailMessageId: string; threadId: string; to: string; subject: string; body: string; contactId?: string | null }): Promise<SendResult> {
+export async function sendThreadReply(sql: Sql, o: string, ws: WorkspaceSettings, m: { gmailMessageId: string; threadId: string; to: string; subject: string; body: string; contactId?: string | null; account?: string | null }): Promise<SendResult> {
   if (!isEmail(m.to)) return fail("No valid address to reply to.", 400);
-  const t = await tokenFor(sql, o);
+  // Reply from the inbox the email arrived in (older inbox rows don't say: the main inbox).
+  const inboxes = await loadInboxes(sql, o);
+  const acc = inboxes.find(i => m.account && i.email.toLowerCase() === m.account.toLowerCase()) ?? mainOf(inboxes);
+  const t = await tokenFor(sql, o, acc);
   if ("ok" in t) return t;
   try {
     let inReplyTo = "";

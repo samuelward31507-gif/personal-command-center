@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   if (b.draft !== undefined || b.reply !== undefined) {
     const id = b.draft ?? b.reply;
     if (!uuid(id)) return Response.json({ error: "Email id is required." }, { status: 400 });
-    const [m] = await sql`SELECT message_id, thread_id, from_addr, from_name, subject, snippet, category, summary, contact_id FROM public.gmail_inbox WHERE id = ${id}::uuid AND owner_id = ${o}` as Record<string, string | null>[];
+    const [m] = await sql`SELECT message_id, thread_id, from_addr, from_name, subject, snippet, category, summary, contact_id, account_email FROM public.gmail_inbox WHERE id = ${id}::uuid AND owner_id = ${o}` as Record<string, string | null>[];
     if (!m) return Response.json({ error: "Email not found." }, { status: 404 });
     const ws = await loadWorkspace(o);
     if (b.draft !== undefined) {
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     }
     const body = typeof b.body === "string" ? b.body.trim().slice(0, 5000) : "";
     if (!body) return Response.json({ error: "Write the reply first." }, { status: 400 });
-    const r = await sendThreadReply(sql, o, ws, { gmailMessageId: String(m.message_id), threadId: String(m.thread_id), to: String(m.from_addr), subject: String(m.subject), body, contactId: m.contact_id });
+    const r = await sendThreadReply(sql, o, ws, { gmailMessageId: String(m.message_id), threadId: String(m.thread_id), to: String(m.from_addr), subject: String(m.subject), body, contactId: m.contact_id, account: m.account_email });
     if (!r.ok) return Response.json({ error: r.error }, { status: r.status });
     await sql`UPDATE public.gmail_inbox SET handled_at = now() WHERE id = ${id}::uuid AND owner_id = ${o}`;
     return Response.json({ ok: true });

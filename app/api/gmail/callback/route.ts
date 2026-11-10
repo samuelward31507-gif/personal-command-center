@@ -29,8 +29,10 @@ export async function GET(req: Request) {
     const email = emailFromIdToken(t.id_token ?? "");
     if (!email) return back(req, "error");
     const sql = neon(process.env.DATABASE_URL);
-    await sql`INSERT INTO public.gmail_accounts (owner_id, email, refresh_token_enc) VALUES (${ownerId}, ${email}, ${encryptToken(t.refresh_token)})
-      ON CONFLICT (owner_id) DO UPDATE SET email = EXCLUDED.email, refresh_token_enc = EXCLUDED.refresh_token_enc, updated_at = now()`;
+    // One row per inbox. Reconnecting an inbox keeps its warm-up start; the first inbox is the main one.
+    await sql`INSERT INTO public.gmail_accounts (owner_id, email, refresh_token_enc, is_main, ramp)
+      VALUES (${ownerId}, ${email}, ${encryptToken(t.refresh_token)}, NOT EXISTS (SELECT 1 FROM public.gmail_accounts WHERE owner_id = ${ownerId}), true)
+      ON CONFLICT (owner_id, lower(email)) DO UPDATE SET refresh_token_enc = EXCLUDED.refresh_token_enc, updated_at = now()`;
     return back(req, "connected");
   } catch (e) {
     console.error("Gmail connect failed", e instanceof Error ? e.message : e);

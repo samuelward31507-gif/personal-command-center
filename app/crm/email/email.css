@@ -63,3 +63,8 @@ body .em-page .em-replybox { display: grid; gap: 10px; margin-top: 14px; padding
 .em-info .em-info-row > .u-field[type="email"] { flex: 1 1 220px; width: auto; }
 .em-info .em-info-row > select.u-field { flex: 0 0 150px; width: 150px; }
 .em-info .em-info-row > .u-btn { flex: 0 0 auto; }
+
+/* Sending inboxes list */
+.em-inbox-list { list-style: none; margin: 8px 0 10px; padding: 0; display: grid; gap: 8px; }
+.em-inbox-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; padding: 10px 12px; border: 1px solid var(--c-line, #2f2c29); border-radius: 10px; }
+.em-inbox-list li .u-note { margin-left: auto; }

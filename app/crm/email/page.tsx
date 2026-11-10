@@ -52,7 +52,7 @@ export default function EmailPage() {
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
-  const [gmail, setGmail] = useState<{ configured: boolean; connected: boolean; email: string | null; sentLast24h: number; cap: number } | null>(null);
+  const [gmail, setGmail] = useState<{ configured: boolean; connected: boolean; email: string | null; sentLast24h: number; cap: number; inboxes?: { email: string; main: boolean; sent: number; cap: number; warming: boolean }[] } | null>(null);
   const [notice, setNotice] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [run, setRun] = useState<{ done: number; total: number; failed: string[]; wait: number } | null>(null);
@@ -195,7 +195,7 @@ export default function EmailPage() {
   async function sendBulk() {
     const runStep = step;
     const batch = chosen.map(c => { const m = mergeFor(c, ws), tplNow = templates[trackOf(c.niche)][runStep]; return { c, subject: fillTemplate(tplNow.subject, m), body: fillTemplate(tplNow.body, m) }; });
-    if (!batch.length || !confirm(`Send ${batch.length} email${batch.length === 1 ? "" : "s"} from ${gmail?.email}? They go out one at a time over about ${Math.ceil((batch.length * (GAP[0] + GAP[1])) / 2 / 60)} min. Keep this tab open.`)) return;
+    if (!batch.length || !confirm(`Send ${batch.length} email${batch.length === 1 ? "" : "s"} from ${(gmail?.inboxes?.length ?? 1) > 1 ? `your ${gmail?.inboxes?.length} inboxes (they rotate)` : gmail?.email}? They go out one at a time over about ${Math.ceil((batch.length * (GAP[0] + GAP[1])) / 2 / 60)} min. Keep this tab open.`)) return;
     stopRef.current = false; setError(""); setNotice("");
     const failed: string[] = []; let done = 0;
     setRun({ done, total: batch.length, failed, wait: 0 });
@@ -251,6 +251,15 @@ export default function EmailPage() {
     </div>}
 
     <FindEmails onDone={() => void load()} />
+    {gmail?.connected && <section className="u-sheet em-inboxes" aria-label="Sending inboxes">
+      <div className="u-h2-row"><h2 className="u-h2">Sending inboxes <span className="u-quiet">{gmail.sentLast24h} of {gmail.cap} today</span></h2><a className="u-btn u-btn-light" href="/api/gmail/connect">Connect another inbox</a></div>
+      <ul className="em-inbox-list">{(gmail.inboxes ?? []).map(i => <li key={i.email}>
+        <b>{i.email}</b>{i.main && <span className="u-quiet"> main</span>}
+        <span className="u-note">{i.sent} of {i.cap} sent{i.warming ? ", warming up" : ""}</span>
+        <button type="button" className="em-disc" onClick={() => { if (confirm(`Disconnect ${i.email}? Follow-ups on threads it started can't go out until it's connected again.`)) void fetch(`/api/gmail?email=${encodeURIComponent(i.email)}`, { method: "DELETE" }).then(() => loadGmail()); }}>Disconnect</button>
+      </li>)}</ul>
+      <p className="u-note">New emails go out from whichever inbox has the most room. Follow-ups stay in the inbox that sent the first email. New inboxes start at 10 a day and add 10 each week, up to 40.</p>
+    </section>}
     {contacts && <InfoSend contacts={contacts} connected={!!gmail?.connected} onSent={(id, email) => setContacts(cs => cs && cs.map(c => c.id === id ? { ...c, email } : c))} />}
     {gmail?.connected && !reconnect && <section className="u-sheet em-replies em-inbox" aria-label="Inbox">
       <div className="u-h2-row"><h2 className="u-h2">Inbox: needs you <span className="u-quiet">{inbox.mail.length}</span></h2>
@@ -349,7 +358,7 @@ export default function EmailPage() {
       </div>
 
       {current && filled && <div className="em-read">
-        <div className="em-to">{gmail?.connected && <><span>From</span><b>{gmail.email}</b></>}<span>To</span><b>{current.email}</b><Link href={`/crm?contact=${current.id}`} className="u-note" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Contact</Link></div>
+        <div className="em-to">{gmail?.connected && <><span>From</span><b>{(gmail.inboxes?.length ?? 1) > 1 ? "Next inbox in rotation" : gmail.email}</b></>}<span>To</span><b>{current.email}</b><Link href={`/crm?contact=${current.id}`} className="u-note" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Contact</Link></div>
         <div className="em-paper">
           <div className="em-subj">{filled.subject}</div>
           <pre className="em-body">{filled.body}</pre>
@@ -366,7 +375,7 @@ export default function EmailPage() {
           <button className="u-btn u-btn-bare" onClick={() => { setSkipped(s => new Set(s).add(current.id)); setPicked(null); }}>Skip</button>
         </div>
         <p className="u-note" style={{ marginTop: 10 }}>{gmail?.connected
-          ? (!ws.address ? <>Add your mailing address in <Link href="/crm/settings" style={{ textDecoration: "underline" }}>Settings</Link> to send. The law requires it on cold email.</> : <>Sends from {gmail.email} and moves to the next person. {gmail.sentLast24h} of {gmail.cap} sent in the last 24 hours. <button type="button" className="em-disc" onClick={() => { if (confirm("Disconnect Gmail? Sending goes back to opening each email in Gmail.")) void fetch("/api/gmail", { method: "DELETE" }).then(() => loadGmail()); }}>Disconnect</button></>)
+          ? (!ws.address ? <>Add your mailing address in <Link href="/crm/settings" style={{ textDecoration: "underline" }}>Settings</Link> to send. The law requires it on cold email.</> : <>Sends from {(gmail.inboxes?.length ?? 1) > 1 ? "the inbox with the most room left" : gmail.email} and moves to the next person. {gmail.sentLast24h} of {gmail.cap} sent in the last 24 hours.</>)
           : "Opening it logs it as sent and moves to the next person. You hit send in your own inbox."}</p>
       </div>}
     </div>}
