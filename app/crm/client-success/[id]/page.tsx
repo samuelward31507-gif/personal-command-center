@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import "./hub.css";
 import OpsPanel from "./ops-panel";
+import LivePanel from "./live-panel";
 import DeliveryPanel from "./delivery-panel";
 
 type Hub = {
@@ -77,6 +78,7 @@ export default function ClientHubPage() {
     </section>}
 
     <DeliveryPanel projectId={c.id} />
+    <LivePanel projectId={c.id} />
     <OpsPanel projectId={c.id} />
 
     <div className="hb-tiles">

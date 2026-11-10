@@ -9,6 +9,7 @@ import { sendColdEmail } from "@/lib/gmail-send";
 import { dueContacts, fillTemplate, mergeFor, TEMPLATE_SETS, trackOf } from "@/lib/email-outreach";
 import { USEFUL } from "@/lib/inbox-sort";
 import { auditLinkFor, withAuditLine } from "@/lib/auto-audit";
+import { runQuoteFollowUps } from "@/lib/client-runtime-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,6 +77,12 @@ export async function GET(request: Request) {
     }
   }
   result.autoSent = sentTo.length;
+
+  // 3. Clients' quote follow-ups (days 2, 5, 10, 21), weekdays and Saturdays, from each client's own number.
+  if (new Date().getUTCDay() !== 0) {
+    const q = await runQuoteFollowUps(sql, started.toISOString().slice(0, 10)).catch(e => { console.error("Client quote follow-ups failed", e); return null; });
+    result.clientQuotes = q;
+  }
 
   // 3. Sort new inbox mail.
   // Skip it when the sends ran long, so the brief still goes out inside the 60 second limit (the Email page sorts on open).
