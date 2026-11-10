@@ -84,7 +84,7 @@ export default function TextDraft({ ctx, contactId, who, onDone, primaryClass = 
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(120px,1fr))", gap: 6, marginTop: 10 }}>
         <button type="button" className={primaryClass} data-variant="primary" style={btn} onClick={() => void copy()}>{state === "copied" ? "Copied ✓" : "Copy"}</button>
-        {ctx.phone ? <a className={quietClass} data-variant="primary" style={{ ...btn, textDecoration: "none", display: "inline-flex", alignItems: "center" }} href={smsHref(ctx.phone, body)} onClick={() => { if (state !== "sent") void markSent(); }}>Open in Messages</a>
+        {ctx.phone ? <a className={quietClass} data-variant="primary" style={{ ...btn, textDecoration: "none", display: "inline-flex", alignItems: "center" }} href={smsHref(ctx.phone, body)} onClick={() => { void markSent(); }}>Open in Messages</a>
           : <button type="button" className={quietClass} data-variant="primary" style={btn} disabled title="No phone number on this contact">Open in Messages</button>}
         <button type="button" className={quietClass} data-variant="primary" style={btn} disabled={state === "saving" || !body.trim()} onClick={() => void markSent()}>{state === "saving" ? "Logging…" : "Mark sent"}</button>
         <button type="button" className={quietClass} data-variant="primary" style={btn} onClick={() => setState("skipped")}>Skip</button>
