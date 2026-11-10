@@ -52,15 +52,15 @@
         <div class="sb"><span>2:14</span><i></i><span class="sb-r">5G</span></div>
         <div class="thread-head"><div class="av">D</div><b>Dana Ruiz</b><span>Missed call · 2:14 PM</span></div>
         <div class="thread">
-          <div class="msg out" style="--i:0">Hey Dana, it's Mike with Ridgeline Fence. Sorry I missed you, I'm on a job. What can I help with?</div>
+          <div class="msg out" style="--i:0">Hey Dana, <span class="p-intro">it's Mike with</span> <span class="p-biz">Ridgeline Fence</span>. Sorry I missed you, I'm on a job. What can I help with?</div>
           <div class="chip" style="--i:1">Sent in 9 sec</div>
           <div class="msg in" style="--i:2">Need a quote on about 120 ft of cedar privacy fence. The old one's leaning bad</div>
           <div class="msg out" style="--i:3">Cedar privacy with tear-out usually runs $42–56 a foot. I can measure Thursday at 8 or Friday at 3. Which works?</div>
           <div class="msg in" style="--i:4">Thursday works</div>
-          <div class="booked" style="--i:5"><b>Estimate booked</b><span>Thu, 8:00 AM · on Mike's calendar</span></div>
+          <div class="booked" style="--i:5"><b>Estimate booked</b><span>Thu, 8:00 AM · on <span class="p-owner-s">Mike's</span> calendar</span></div>
         </div>
       </div></div>
-      <p class="phone-cap">Example: Ridgeline Fence</p>
+      <p class="phone-cap">Example: <span class="p-biz">Ridgeline Fence</span></p>
     </div>
   </div>
 </section>
@@ -83,6 +83,40 @@
       <div class="fact"><b class="fig">2%</b><p>of callers who don't get through leave a voicemail. The rest call the next company.</p><a href="https://www.prnewswire.com/news-releases/invoca-launches-new-solution-to-recover-revenue-from-missed-sales-and-appointment-setting-calls-301419335.html" rel="noopener">Invoca, 2021</a></div>
       <div class="fact"><b class="fig">66%</b><p>of calls actually answered, when owners guessed 97%. Call recordings told the truth.</p><a href="https://blog.servicedirect.com/home-service-call-performance-report" rel="noopener">Service Direct, 2019</a></div>
       <div class="fact"><b class="fig">~½</b><p>of calls to home-service businesses reach a person. The other half ring out or hit voicemail.</p><a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca, 2026</a></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec sec-tint" id="compare">
+  <div class="wrap">
+    <div class="center-head">
+      <h2>Same missed call. <span>Two different endings.</span></h2>
+      <p class="lede">Dana needs a fence and you're up on a job. Here's what happens next, with and without Cinder.</p>
+    </div>
+    <div class="vs">
+      <div class="vs-col vs-without">
+        <p class="vs-k">Without Cinder</p>
+        <ol class="tl">
+          <li><time>2:14 PM</time><div><b>Missed call</b><span>You're on a ladder. It rings out.</span></div></li>
+          <li><time>2:14 PM</time><div><b>Voicemail</b><span>Dana hangs up without leaving one, like most people do.</span></div></li>
+          <li><time>2:16 PM</time><div><b>She calls the next fence company on Google</b><span>They pick up and book her for tomorrow.</span></div></li>
+          <li class="bad"><time>6:40 PM</time><div><b>You call back</b><span>"Thanks, we already found someone."</span></div></li>
+        </ol>
+        <p class="vs-end bad">Job lost. You never even knew what it was.</p>
+      </div>
+      <div class="vs-col vs-with">
+        <p class="vs-k">With Cinder</p>
+        <ol class="tl">
+          <li><time>2:14 PM</time><div><b>Missed call</b><span>You're on a ladder. It rings out.</span></div></li>
+          <li><time>2:14 PM</time><div><b>Text back in 9 seconds</b><span>From your business, in your words.</span></div></li>
+          <li><time>2:15 PM</time><div><b>Her questions answered, your price range sent</b><span>Cedar privacy, about 120 ft, tear-out included.</span></div></li>
+          <li class="good"><time>2:17 PM</time><div><b>Estimate booked for Thursday at 8</b><span>On your calendar, reminder set.</span></div></li>
+        </ol>
+        <div class="lock" aria-label="What you see on your phone">
+          <p class="lock-k">What you see when you climb down</p>
+          <div class="notif"><span class="ic">c</span><div><b>Cinder <time>2:17 PM</time></b><p>New estimate booked: Dana Ruiz, Thu 8:00 AM. Cedar privacy, ~120 ft, tear-out. Price range sent: $42–56/ft.</p></div></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -324,6 +358,13 @@
 
 <script>
 (function(){var n=document.getElementById("nav");var f=function(){n.classList.toggle("is-scrolled",scrollY>8)};f();addEventListener("scroll",f,{passive:true});})();
+// Personal links (?b=Company&n=Owner, or the ones t.js saved this visit): the example becomes their shop.
+(function(){var q=new URLSearchParams(location.search),g=function(k){try{return sessionStorage.getItem(k)||""}catch(e){return""}};
+var clean=function(v){return (v||"").replace(/[<>]/g,"").trim().slice(0,40)};
+var b=clean(q.get("b")||g("cinder.b")),n=clean(q.get("n")||g("cinder.n")).split(" ")[0];
+if(b){document.querySelectorAll(".p-biz").forEach(function(e){e.textContent=b});var c=document.querySelector(".phone-cap");if(c)c.textContent="What this looks like for "+b;}
+var set=function(c,t){document.querySelectorAll(c).forEach(function(e){e.textContent=t})};
+if(n){set(".p-intro","it's "+n+" with");set(".p-owner-s",n+"'s");}else if(b){set(".p-intro","this is");set(".p-owner-s","your");}})();
 // Founding prices: full price once the founding spots are gone.
 (function(){var n=window.CINDER_OFFER?Number(window.CINDER_OFFER.spotsLeft):3;if(n>0)return;
 document.querySelectorAll("[data-founding]").forEach(function(b){b.remove()});document.querySelectorAll("[data-founding-old]").forEach(function(s){var b=document.createElement("b");b.textContent=s.textContent;s.replaceWith(b)});})();
