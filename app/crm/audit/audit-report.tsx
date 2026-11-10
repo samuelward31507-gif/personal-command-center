@@ -96,7 +96,7 @@ export function AuditReport({ audit }: { audit: AuditView }) {
   const s = (h: string) => reportSection(audit.content, h);
   const verdict = s("Verdict").replace(/^[-*•]\s+/, "");
   const sections = {
-    business: s("Business"), opportunities: s("Top opportunities"), flags: s("Red flags"),
+    business: s("Business"), scorecard: s("Scorecard"), opportunities: s("Top opportunities"), flags: s("Red flags"),
     call: s("Call plan"), upsells: s("Future upsells").replace(/^\*\*?Later[^\n]*\n?/i, ""), next: s("Next CRM action").replace(/^[-*•]\s+/, ""),
   };
   const structured = Boolean(verdict || sections.business || sections.call);
@@ -137,6 +137,7 @@ export function AuditReport({ audit }: { audit: AuditView }) {
         {sections.business && <Card title="Business"><Blocks text={sections.business} /></Card>}
         {sections.call && <Card title="Call plan" tone={C.accent}><Blocks text={sections.call} /></Card>}
       </div>
+      {sections.scorecard && <Card title="Scorecard"><Blocks text={sections.scorecard} /></Card>}
       {sections.opportunities && <Card title="Top opportunities"><Blocks text={sections.opportunities} /></Card>}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 14 }}>
         {sections.flags && <Card title="Red flags" tone="#fca5a5"><Blocks text={sections.flags} /></Card>}

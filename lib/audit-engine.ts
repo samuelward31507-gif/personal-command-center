@@ -2,14 +2,32 @@ import type { NeonQueryFunction } from "@neondatabase/serverless";
 import {
   WEB_SEARCH_TOOL, parseAuditOutput, collectSourceUrls, effectiveConfidence, extractLabeledLines, buildUserPrompt,
 } from "@/lib/business-audit";
+import { readSite, siteCheckLines } from "@/lib/site-check";
+import { fetchPage } from "@/lib/website-text";
+
+/** Fetch the homepage (timed) and read what it shows. Never throws. */
+async function checkSite(website: string | null | undefined) {
+  if (!website) return null;
+  const url = /^https?:\/\//i.test(website) ? website : "https://" + website;
+  const t = Date.now();
+  const html = await fetchPage(url, 9000);
+  return readSite(html, url, html ? Date.now() - t : null);
+}
 
 // The Business Audit engine, shared by the audit page (/api/business-audit) and overnight pre-audits (/api/cron/pre-audit).
 const MAX_CONTINUATIONS = 3;
 
 export const systemPrompt = `You are Cinder's independent business-audit analyst for an AI agency. Audit the whole business; do not justify selling our current offer. Use web search across first-party website pages, service pages, reviews, social/public listings, contact and booking paths, and relevant competitors. Do not invent facts, tools, ads, complaints, metrics or operational behavior. Public research cannot prove private metrics such as missed calls, speed-to-lead, margins, close rate or capacity. Label these UNKNOWN and turn them into discovery questions.
 
-Research the whole business, but WRITE A SHORT REPORT: under 450 words, bullets not paragraphs, no tables, no methodology notes. The founder reads this right before a call. Use exactly these Markdown headings, in this order:
+Research the whole business, but WRITE A TIGHT REPORT: under 650 words, bullets not paragraphs, no tables, no methodology notes. The founder reads this right before a call, and the scorecard is useful even when nothing we sell fits. Use exactly these Markdown headings, in this order:
 ## Verdict — one line: Fit / Conditional fit / No fit, the offer tier, and the single biggest reason. No sale is a valid outcome.
+## Scorecard — grade each area A to F with one line of evidence (URL or the automated check). Grade only what you found; write "UNKNOWN" instead of guessing.
+- Website: speed, mobile, clear services and service area, call-to-action, stale or broken pages (use the automated website check when given).
+- Lead capture: how a homeowner can reach them (tap-to-call, form, booking, chat, text) and what happens after hours.
+- Reviews: Google rating and review count, how recent the newest reviews are, whether the owner replies, plus Yelp/Facebook/BBB/Angi if found; recurring complaints in reviews (quote with source).
+- Online presence: Google Business Profile completeness (hours, photos, services), social activity and last post date, and any ads you can verify (Google Ads Transparency Center, Meta Ad Library) or "no ads found".
+- Competitors: the 2–3 nearby competitors that outrank them on Google, and their rating/review count, for comparison.
+- Overall: one line.
 ## Business — 3–4 bullets: what they do, where, official website and how it was verified, likely decision-maker (or UNKNOWN). If similarly named businesses exist, one bullet naming them as "not this company".
 ## Top opportunities — at most 3, ranked. Each: the gap, the public evidence (with URL), and confidence.
 ## Red flags — at most 3 bullets, only if real (walk-away signals, conflicting data).
@@ -22,7 +40,7 @@ Clearly distinguish VERIFIED FACT, OBSERVATION, HYPOTHESIS and UNKNOWN. Other se
 Current offer catalog (options, never predetermined conclusions). Sold to any contractor or home-service trade (fence, concrete/hardscaping, roofing, remodeling, HVAC/plumbing, carpet cleaning, auto detailing, exterior cleaning). No contract; they keep their number and software; the monthly starts after the first booked appointment; live within 14 days of A2P carrier approval and the intake call.
 Tier 1 — Never Miss a Lead: $1,500 setup + $997/mo. Missed-call text-back in seconds, text replies that answer questions and qualify the job, books the appointment on their calendar, reminders, owner alerts. Guarantee: every lead gets a reply within 60 seconds.
 Tier 2 — Book & Close (featured, the default recommendation): $2,500 setup + $1,997/mo. Tier 1 plus quote follow-up until a yes or no (send a quote with one text and the follow-up starts), review requests, a weekly report. Guarantee: at least 5 booked appointments in the first 30 days live, or the next monthly payment is waived.
-Tier 3 — Full Front Office: $3,500 setup + $2,997/mo. Book & Close plus an AI voice receptionist. Guarantee: at least 10 booked appointments in the first 30 days live.
+Tier 3 — Full Front Office: $3,500 setup + $2,997/mo. Book & Close plus an AI voice receptionist (still rolling out: never recommend Tier 3 for the first pitch). Guarantee: at least 10 booked appointments in the first 30 days live.
 FOUNDING OFFER: half-price setup for the first 3 clients on any plan.
 Repeat-revenue offers (best for carpet cleaners, detailers and other repeat-service trades): Reactivation Sprint $997 one-time (text past customers; books at least 3x the fee in jobs or it's free) and Repeat Revenue $750 setup + $497/mo (maintenance reminders and rebooking).
 Not offered yet: syncing with Housecall Pro/Jobber, Google LSA or Yelp lead capture, automatic job-status updates.
@@ -61,7 +79,7 @@ export async function runResearch(apiKey: string, model: string, userPrompt: str
         max_tokens: 16000,
         system: systemPrompt,
         messages,
-        tools: [{ type: WEB_SEARCH_TOOL, name: "web_search", max_uses: 8 }],
+        tools: [{ type: WEB_SEARCH_TOOL, name: "web_search", max_uses: 12 }],
       }),
       signal: AbortSignal.timeout(remaining),
     });
@@ -87,7 +105,10 @@ export type AuditRunInput = {
 export async function researchAndSave(i: AuditRunInput) {
   const { sql, ownerId, companyName, website, contactId, dealId } = i;
   const title = ("Business audit — " + companyName).slice(0, 240);
-  const { blocks, stopReason } = await runResearch(i.apiKey, i.model, buildUserPrompt({ companyName, website, location: i.location, context: i.context }), i.deadline);
+  // Look at their homepage ourselves first, so the website grade rests on what the page actually does.
+  const check = await checkSite(website).catch(() => null);
+  const prompt = buildUserPrompt({ companyName, website, location: i.location, context: i.context }) + (check ? "\n\n" + siteCheckLines(check) : "");
+  const { blocks, stopReason } = await runResearch(i.apiKey, i.model, prompt, i.deadline);
   const text = (blocks as Array<{ type?: string; text?: unknown }>).filter(b => b?.type === "text" && typeof b.text === "string").map(b => b.text as string).join("").trim();
   const { report, meta } = parseAuditOutput(text);
   if (!report) return { ok: false as const, stopReason, blocks: blocks.length };
