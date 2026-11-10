@@ -445,7 +445,7 @@ export default function CallModePage() {
           <div className="dl-dial">
             <span className="dl-phone u-num">{contact.phone}</span>
             <a className="u-btn u-btn-go u-btn-lg dl-call-link" href={"tel:" + (contact.phone || "").replace(/[^+\d]/g, "")} onClick={() => noteLaunch()}>Call <kbd>C</kbd></a>
-            {contact.phone && <a className="u-btn u-btn-light dl-demo-text" href={smsHref(contact.phone, demoText({ firstName: playFirst, company: contact.company, niche: track === "detailing" ? "detailing" : nicheFor(contact.company, contact.notes, contact.niche), settingsLink: wsp.demoLink }).body)} title="Opens Messages with the demo clip filled in">Text the demo <kbd>D</kbd></a>}
+            {contact.phone && <a className="u-btn u-btn-light dl-demo-text" href={smsHref(contact.phone, demoText({ firstName: playFirst, company: contact.company, niche: track === "detailing" ? "detailing" : nicheFor(contact.company, contact.notes, contact.niche), settingsLink: wsp.demoLink }).body)} title="Opens Messages with the demo clip filled in" onClick={e => { const body = decodeURIComponent((e.currentTarget.getAttribute("href") ?? "").split("body=")[1] ?? ""); void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: contact.id, direction: "outbound", body }) }).catch(() => {}); }}>Text the demo <kbd>D</kbd></a>}
           </div>
         </div>
 
