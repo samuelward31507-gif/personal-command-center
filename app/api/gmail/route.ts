@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
 import { gmailConfigured } from "@/lib/gmail";
-import { inboxCap, loadInboxes, mainOf, sendsToday, PER_INBOX_CAP } from "@/lib/gmail-accounts";
+import { inboxCap, inboxHealth, loadInboxes, mainOf, resting, sendsToday, PER_INBOX_CAP } from "@/lib/gmail-accounts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +17,8 @@ export async function GET() {
   try {
     const inboxes = await loadInboxes(sql, o);
     const sent = await sendsToday(sql, o, inboxes);
-    const list = inboxes.map(i => ({ email: i.email, main: i.is_main, sent: sent.get(i.email.toLowerCase()) ?? 0, cap: inboxCap(i), warming: inboxCap(i) < PER_INBOX_CAP }));
+    const health = await inboxHealth(sql, o, inboxes).catch(() => new Map<string, { sent: number; bounced: number }>());
+    const list = inboxes.map(i => { const h = health.get(i.email.toLowerCase()); return { email: i.email, main: i.is_main, sent: sent.get(i.email.toLowerCase()) ?? 0, cap: inboxCap(i), warming: inboxCap(i) < PER_INBOX_CAP, bounces14d: h?.bounced ?? 0, sent14d: h?.sent ?? 0, resting: resting(h) }; });
     const main = mainOf(inboxes);
     // The limit is a rolling 24 hours: each send frees its slot exactly 24 hours later.
     const [w] = await sql`SELECT min(occurred_at) AS first FROM public.contact_activities WHERE owner_id = ${o} AND notes LIKE 'Email sent: %via Gmail%' AND occurred_at > now() - interval '24 hours'` as { first: string | null }[];

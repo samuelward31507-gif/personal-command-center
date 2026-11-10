@@ -89,11 +89,33 @@ export const QUOTE_TEXTS = [
   "Hi {first}, I'll close out your quote for now so I'm not bugging you. If you want to move forward later, just reply here.",
 ] as const;
 
+/** Reviving old leads (people who contacted the business before and never booked): 3 texts over 5 days. */
+export const REHASH_DAYS = [0, 2, 5] as const;
+export const REHASH_TEXTS = [
+  "Hi {first}, it's {owner} with {business}. You reached out a while back about a project. Is that still on your list? Reply STOP to opt out.",
+  "Hi {first}, {owner} again. We have free estimate openings in the next couple of weeks if you'd like one. Want me to send a few times?",
+  "Last one from me, {first}. If the project's still happening, just reply and I'll get you on the schedule.",
+] as const;
+export const SEQUENCES = { quote: { days: QUOTE_DAYS, texts: QUOTE_TEXTS }, rehash: { days: REHASH_DAYS, texts: REHASH_TEXTS } } as const;
+
 const dayNum = (ymd: string) => Math.floor(Date.parse(ymd.slice(0, 10) + "T12:00:00Z") / 86400000);
-/** Which follow-up is due today (0–3), or null. One step per day at most, and never a step out of order. */
-export function quoteStepDue(sentOn: string, stepsSent: number, today: string): number | null {
-  if (stepsSent >= QUOTE_DAYS.length) return null;
-  return dayNum(today) - dayNum(sentOn) >= QUOTE_DAYS[stepsSent] ? stepsSent : null;
+/** Which follow-up is due today, or null. One step per run at most, and never a step out of order. */
+export function quoteStepDue(sentOn: string, stepsSent: number, today: string, days: readonly number[] = QUOTE_DAYS): number | null {
+  if (stepsSent >= days.length) return null;
+  return dayNum(today) - dayNum(sentOn) >= days[stepsSent] ? stepsSent : null;
+}
+
+/** "Dana Ruiz, 720-555-0148" per line (comma, tab or space before the number) → contacts; bad lines are skipped. */
+export function parseLeadList(text: string): { name: string; phone: string }[] {
+  const seen = new Set<string>(), out: { name: string; phone: string }[] = [];
+  for (const line of (text || "").split(/\r?\n/)) {
+    const m = line.match(/^(.*?)[,\t ]*((?:\+?1[\s.-]*)?\(?\d{3}\)?[\s.-]*\d{3}[\s.-]*\d{4})\s*$/);
+    if (!m) continue;
+    const phone = digits10(m[2]);
+    if (phone.length !== 10 || seen.has(phone)) continue;
+    seen.add(phone); out.push({ name: m[1].replace(/[,\t]+$/, "").trim().slice(0, 80), phone: "+1" + phone });
+  }
+  return out.slice(0, 500);
 }
 
 export const REVIEW_TEXT = "Hi {first}, thanks again for choosing {business}. If you were happy with the work, would you leave us a quick Google review? It really helps a small business: {review_link}";

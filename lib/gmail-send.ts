@@ -1,7 +1,7 @@
 // Sending through the owner's connected Gmail. Shared by the Email page, the morning auto follow-ups and inbox replies.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { accessToken, buildRaw, classifyThread, complianceFooter, decryptToken, isEmail, type ThreadMessage } from "@/lib/gmail";
-import { inboxCap, loadInboxes, mainOf, pickInbox, senderOf, sendsToday, type Inbox } from "@/lib/gmail-accounts";
+import { inboxCap, inboxHealth, loadInboxes, mainOf, pickInbox, resting, senderOf, sendsToday, type Inbox } from "@/lib/gmail-accounts";
 import { recordVerdict } from "@/lib/gmail-sync";
 import type { WorkspaceSettings } from "@/lib/workspace";
 
@@ -63,8 +63,12 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
     if (!acc) return fail(`This thread started from ${from}, which isn't connected anymore. Connect it again on the Email page to send the follow-up.`, 409);
     if ((sent.get(acc.email.toLowerCase()) ?? 0) >= inboxCap(acc)) return fail(`${acc.email} hit today's limit of ${inboxCap(acc)}. This follow-up goes tomorrow from the same inbox.`, 409);
   } else {
-    acc = pickInbox(inboxes, sent);
-    if (!acc) return fail(`All ${inboxes.length} inbox${inboxes.length === 1 ? "" : "es"} hit today's limit. The rest can go tomorrow.`, 429);
+    // New threads skip any inbox whose bounces are climbing, so one bad list can't burn a domain.
+    const health = await inboxHealth(sql, o, inboxes).catch(() => new Map());
+    const healthy = inboxes.filter(i => !resting(health.get(i.email.toLowerCase())));
+    if (!healthy.length) return fail("Every inbox is resting: too many bounces in the last 14 days. Clean the list (Find emails, drop bad addresses) before sending more.", 429);
+    acc = pickInbox(healthy, sent);
+    if (!acc) return fail(`All ${healthy.length} inbox${healthy.length === 1 ? "" : "es"} hit today's limit${healthy.length < inboxes.length ? " (some are resting after bounces)" : ""}. The rest can go tomorrow.`, 429);
   }
   const t = await tokenFor(sql, o, acc);
   if ("ok" in t) return t;

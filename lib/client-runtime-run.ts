@@ -4,7 +4,7 @@ import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { claudeText } from "@/lib/ai-text";
 import { sendSms } from "@/lib/twilio";
 import { cleanMessages } from "@/lib/client-ops";
-import { digits10, fill, wording, FALLBACK, isStop, isStart, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, QUOTE_TEXTS, REVIEW_TEXT, type Vars } from "@/lib/client-runtime";
+import { digits10, fill, wording, FALLBACK, isStop, isStart, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, REVIEW_TEXT, type Vars } from "@/lib/client-runtime";
 
 type Sql = NeonQueryFunction<false, false>;
 export type Client = { projectId: string; owner: string; setup: Record<string, string>; messages: ReturnType<typeof cleanMessages> };
@@ -76,6 +76,8 @@ export async function draftReply(sql: Sql, c: Client, threadId: string, customer
 export async function clientInboundText(sql: Sql, c: Client, from: string, body: string): Promise<void> {
   const t = await thread(sql, c, from, "text");
   await log(sql, c, t.id, "in", "customer", body);
+  const [{ n: inbound }] = await sql`SELECT count(*)::int AS n FROM public.client_texts WHERE thread_id = ${t.id}::uuid AND direction = 'in' AND author = 'customer'` as { n: number }[];
+  const firstText = inbound <= 1;
   // Any reply stops the quote follow-ups for that number: a person is talking now.
   await sql`UPDATE public.client_quotes SET status = 'replied' WHERE project_id = ${c.projectId}::uuid AND status = 'open' AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(from)}`;
   if (isStop(body)) {
@@ -98,26 +100,27 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
   if (d.stage === "booked") {
     await sql`UPDATE public.client_threads SET status = 'booked', updated_at = now() WHERE id = ${t.id}::uuid`;
     await alertOwner(c, ownerAlert("booked", who, d.summary));
-  } else if (t.fresh) await alertOwner(c, ownerAlert("new", who, d.summary));
+  } else if (firstText) await alertOwner(c, ownerAlert("new", who, d.summary));
 }
 
 /** Morning job: send every quote follow-up that's due today, across all clients. */
 export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Promise<{ sent: number; skipped: number }> {
-  const quotes = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.sent_on, q.steps_sent
-    FROM public.client_quotes q WHERE q.status = 'open' ORDER BY q.sent_on LIMIT 500` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; sent_on: string; steps_sent: number }[];
+  const quotes = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.sent_on, q.steps_sent, q.kind
+    FROM public.client_quotes q WHERE q.status = 'open' ORDER BY q.sent_on LIMIT 1000` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; sent_on: string; steps_sent: number; kind: string }[];
   let sent = 0, skipped = 0;
   for (const q of quotes) {
     if (sent >= limit) break;
-    const step = quoteStepDue(String(q.sent_on).slice(0, 10), q.steps_sent, today);
+    const seq = q.kind === "rehash" ? SEQUENCES.rehash : SEQUENCES.quote;
+    const step = quoteStepDue(String(q.sent_on).slice(0, 10), q.steps_sent, today, seq.days);
     if (step === null) continue;
     const c = await clientById(sql, q.owner_id, q.project_id);
     if (!c?.setup.texting_number) { skipped++; continue; }
     const t = await thread(sql, c, q.customer_phone, "quote");
     if (t.status === "opted_out" || t.status === "paused") { skipped++; continue; }
-    const body = fill(wording(c.messages, `quote_${step + 1}`, QUOTE_TEXTS[step]), varsFor(c, q.customer_name.split(" ")[0]));
+    const body = fill(wording(c.messages, `${q.kind === "rehash" ? "rehash" : "quote"}_${step + 1}`, seq.texts[step]), varsFor(c, q.customer_name.split(" ")[0]));
     const ok = await sendToCustomer(sql, c, t.id, q.customer_phone, body, "template");
     await sql`UPDATE public.client_quotes SET steps_sent = steps_sent + 1, last_step_at = now(),
-      status = CASE WHEN steps_sent + 1 >= 4 THEN 'lost' ELSE status END WHERE id = ${q.id}::uuid`;
+      status = CASE WHEN steps_sent + 1 >= ${seq.days.length} THEN 'lost' ELSE status END WHERE id = ${q.id}::uuid`;
     if (ok) sent++; else skipped++;
   }
   return { sent, skipped };

@@ -8,9 +8,9 @@ import "./live-panel.css";
 
 type Thread = { id: string; customer_phone: string; customer_name: string; source: string; status: string; updated_at: string; last: { body: string; direction: string; at: string } | null };
 type Text = { direction: string; author: string; body: string; ok: boolean; at: string };
-type Quote = { id: string; customer_phone: string; customer_name: string; amount: string | null; sent_on: string; steps_sent: number; status: string };
-type Data = { threads: Thread[]; quotes: Quote[]; reviews: number; ready: { live: boolean; missing: string[]; number: string } };
-type Tab = "inbox" | "quotes" | "reviews" | "test";
+type Quote = { id: string; customer_phone: string; customer_name: string; amount: string | null; sent_on: string; steps_sent: number; status: string; kind: string };
+type Data = { threads: Thread[]; quotes: Quote[]; reviews: number; chatKey: string; ready: { live: boolean; missing: string[]; number: string } };
+type Tab = "inbox" | "quotes" | "revive" | "reviews" | "chat" | "test";
 const NB = { background: "transparent" };
 const when = (d: string) => new Date(d).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const STATUS: Record<string, string> = { auto: "Handled for them", paused: "Needs a person", opted_out: "Opted out", booked: "Booked", closed: "Closed" };
@@ -28,6 +28,8 @@ export default function LivePanel({ projectId }: { projectId: string }) {
   const [rv, setRv] = useState({ name: "", phone: "" });
   const [sim, setSim] = useState<{ direction: string; body: string }[]>([]);
   const [simIn, setSimIn] = useState("");
+  const [list, setList] = useState("");
+  const [consent, setConsent] = useState(false);
 
   const load = useCallback(() => fetch("/api/client-threads?project=" + projectId, { cache: "no-store" }).then(r => r.json()).then(x => { if (!x.error) setD(x); }).catch(() => {}), [projectId]);
   useEffect(() => { load(); const t = setInterval(load, 20000); return () => clearInterval(t); }, [load]);
@@ -52,7 +54,8 @@ export default function LivePanel({ projectId }: { projectId: string }) {
   }
 
   const needs = d?.threads.filter(t => t.status === "paused").length ?? 0;
-  const openQ = d?.quotes.filter(x => x.status === "open").length ?? 0;
+  const openQ = d?.quotes.filter(x => x.status === "open" && x.kind !== "rehash").length ?? 0;
+  const revive = d?.quotes.filter(x => x.kind === "rehash") ?? [];
   const cur = d?.threads.find(t => t.id === open) ?? null;
 
   return <section className="op-card lv">
@@ -61,7 +64,7 @@ export default function LivePanel({ projectId }: { projectId: string }) {
       {d?.ready.live && <span className="lv-on">Live</span>}
     </div>
     <div className="op-tabs" role="group" aria-label="Live system">
-      {([["inbox", "Conversations", needs ? `${needs} need you` : `${d?.threads.length ?? 0} total`], ["quotes", "Quotes", `${openQ} being chased`], ["reviews", "Reviews", `${d?.reviews ?? 0} asked`], ["test", "Test replies", "Before go-live"]] as const).map(([k, label, sub]) =>
+      {([["inbox", "Conversations", needs ? `${needs} need you` : `${d?.threads.length ?? 0} total`], ["quotes", "Quotes", `${openQ} being chased`], ["revive", "Revive old leads", revive.length ? `${revive.filter(x => x.status === "replied").length} replied of ${revive.length}` : "Week-1 win"], ["reviews", "Reviews", `${d?.reviews ?? 0} asked`], ["chat", "Website chat", "Bubble for their site"], ["test", "Test replies", "Before go-live"]] as const).map(([k, label, sub]) =>
         <button key={k} type="button" aria-pressed={tab === k} style={{ background: tab === k ? "#2c2c2c" : "transparent" }} onClick={() => setTab(k)}><b>{label}</b><small>{sub}</small></button>)}
     </div>
     {note && <p className={"op-note " + (note.ok ? "ok" : "bad")} role="status">{note.text}</p>}
@@ -98,11 +101,19 @@ export default function LivePanel({ projectId }: { projectId: string }) {
         <label><span>Sent on</span><input type="date" value={q.sentOn} onChange={e => setQ({ ...q, sentOn: e.target.value })} /></label>
         <div className="op-acts"><button type="submit" className="op-primary" style={NB} disabled={!!busy}>Add quote</button></div>
       </form>
-      <ul className="lv-quotes">{d?.quotes.map(x => <li key={x.id}>
+      <ul className="lv-quotes">{d?.quotes.filter(x => x.kind !== "rehash").map(x => <li key={x.id}>
         <b>{x.customer_name || x.customer_phone}</b><span>{x.amount ? "$" + Number(x.amount).toLocaleString() : ""}</span><span>Sent {x.sent_on.slice(0, 10)} · {x.steps_sent} of 4 follow-ups</span>
         <span className={"lv-st is-" + x.status}>{x.status}</span>
         {(x.status === "open" || x.status === "replied") && <span className="op-acts"><button type="button" style={NB} onClick={() => act("quote_status", { quote: x.id, status: "won" }, "Marked won.")}>Won</button><button type="button" style={NB} onClick={() => act("quote_status", { quote: x.id, status: "lost" }, "Marked lost.")}>Lost</button></span>}
       </li>)}</ul>
+    </div>}
+
+    {tab === "revive" && <div>
+      <p className="op-hint">The fastest win for a new client: their leads from the last few months that never booked. Each gets 3 short texts over 5 days from the client&apos;s number, and every reply is answered and booked for them. Texts go out during the day on weekdays.</p>
+      <label className="op-owner"><span>One per line: name, then cell. Paste straight from their CRM or a spreadsheet.</span><textarea rows={6} value={list} onChange={e => setList(e.target.value)} placeholder={"Dana Ruiz, 720-555-0148\nMarcus Hill\t(303) 555-0192"} /></label>
+      <label className="lv-check"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} /> These people contacted {d?.ready.number ? "this business" : "the business"} themselves (old inquiries or past quotes), not a bought list.</label>
+      <div className="op-acts"><button type="button" className="op-primary" style={NB} disabled={!!busy || !list.trim() || !consent} onClick={async () => { const x = await act("rehash", { list, consent }, ""); if (x) { setNote({ ok: true, text: `${x.added} added${x.skipped ? `, ${x.skipped} skipped (already in a revive or opted out)` : ""}. The first texts go out in the next daytime run.` }); setList(""); } }}>Start the revive</button></div>
+      <ul className="lv-quotes">{revive.map(x => <li key={x.id}><b>{x.customer_name || x.customer_phone}</b><span>{x.steps_sent} of 3 texts</span><span className={"lv-st is-" + x.status}>{x.status === "replied" ? "Replied" : x.status === "lost" ? "No reply" : x.status}</span></li>)}</ul>
     </div>}
 
     {tab === "reviews" && <div>
@@ -112,6 +123,13 @@ export default function LivePanel({ projectId }: { projectId: string }) {
         <label><span>Cell</span><input value={rv.phone} onChange={e => setRv({ ...rv, phone: e.target.value })} required /></label>
         <div className="op-acts"><button type="submit" className="op-primary" style={NB} disabled={!!busy}>Send review request</button></div>
       </form>
+    </div>}
+
+    {tab === "chat" && <div>
+      <p className="op-hint">Paste this one line into the client&apos;s website, just before the closing body tag (on Wix, Squarespace or WordPress it goes in &quot;custom code&quot;). Visitors leave a name, cell and question, and get a text back in seconds from the client&apos;s number. The conversation shows up in Conversations like any other lead.</p>
+      <pre className="lv-code">{`<script src="${typeof location !== "undefined" ? location.origin : ""}/chat.js" data-key="${d?.chatKey ?? ""}" async></script>`}</pre>
+      <div className="op-acts"><button type="button" style={NB} onClick={() => { void navigator.clipboard.writeText(`<script src="${location.origin}/chat.js" data-key="${d?.chatKey ?? ""}" async></script>`); setNote({ ok: true, text: "Copied. Send it to whoever manages their site." }); }}>Copy the code</button></div>
+      <p className="op-hint">Add data-color=&quot;#1a5c3a&quot; to match their brand. The bubble hides itself until the texting number is set.</p>
     </div>}
 
     {tab === "test" && <div>

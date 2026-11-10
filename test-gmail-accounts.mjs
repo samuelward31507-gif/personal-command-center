@@ -19,3 +19,14 @@ ok(() => assert.equal(pickInbox([main, { ...b, is_main: false }], new Map([["sam
 ok(() => assert.equal(pickInbox([main, a], new Map([["sam@cinder.com", 40], ["sam@trycinder.com", 10]]), NOW), null, "everyone at cap"));
 ok(() => assert.equal(mainOf([a, main]).email, "sam@cinder.com"));
 console.log(`Inbox rotation checks passed (${n} assertions).`);
+
+{
+  const { resting, BOUNCE_LIMIT } = await import("./lib/gmail-accounts.ts");
+  const assert = (await import("node:assert/strict")).default;
+  assert.equal(resting(undefined), false);
+  assert.equal(resting({ sent: 10, bounced: 5 }), false, "too few sends to judge");
+  assert.equal(resting({ sent: 100, bounced: 2 }), false);
+  assert.equal(resting({ sent: 100, bounced: 3 }), true);
+  assert.equal(BOUNCE_LIMIT, 0.03);
+  console.log("Sending health checks passed (5 assertions).");
+}

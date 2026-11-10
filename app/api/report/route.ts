@@ -26,6 +26,11 @@ export async function GET(request: Request) {
     if (!r) return reply({ error: "This report is no longer available." }, 404);
     if (!(await isOwnerPreview())) {
       await sql`UPDATE public.prospect_reports SET view_count = view_count + 1, first_viewed_at = COALESCE(first_viewed_at, now()), last_viewed_at = now() WHERE token = ${token}`;
+      // Their audit is open right now: put a call at the top of today's list (once a day per prospect).
+      await sql`INSERT INTO public.tasks (owner_id, title, description, due_at, contact_id, priority)
+        SELECT r.owner_id, 'Call now: opened their audit', ${"They opened the free audit for " + String(r.company) + ". Call while it's fresh."}, now(), r.contact_id, 'high'
+        FROM public.prospect_reports r WHERE r.token = ${token} AND r.contact_id IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM public.tasks t WHERE t.owner_id = r.owner_id AND t.contact_id = r.contact_id AND t.title = 'Call now: opened their audit' AND t.created_at > now() - interval '20 hours')`.catch(() => {});
     }
     const ws = await loadWorkspace(String(r.owner_id));
     const trade = String(r.trade);

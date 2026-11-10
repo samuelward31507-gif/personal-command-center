@@ -8,7 +8,7 @@ import Link from "next/link";
 type Booking = { id: string; title: string; startsAt: string; createdAt: string; contactId: string | null; who: string };
 type Pending = { id: string; title: string; startsAt: string; who: string };
 type Reply = { id: string; who: string; summary: string; category: string };
-type Watch = { id: string; who: string; name: string; played: boolean; contactId: string | null; phone: string };
+type Watch = { id: string; who: string; name: string; played: boolean; audit?: boolean; contactId: string | null; phone: string };
 type Sign = { id: string; dealId: string; who: string; signed: boolean };
 type Done = { id: string; who: string; text: string; sms?: { href: string; body: string } };
 const KEY = "cinder.bookings.seen";
@@ -125,7 +125,7 @@ export default function BookingAlerts() {
       {d.sms && <div className="ba-actions"><a className="u-btn u-btn-light" href={d.sms.href}>Text them a new time</a></div>}
     </div>)}
     {watch.map(x => <div key={x.id} className="ba-card">
-      <div className="ba-top"><b className="ba-ask">{x.played ? "Watching your demo now" : "Opened your demo"}</b><button type="button" className="ba-x" aria-label="Dismiss" onClick={() => setWatch(cur => cur.filter(y => y.id !== x.id))}>×</button></div>
+      <div className="ba-top"><b className="ba-ask">{x.audit ? "Reading their free audit now" : x.played ? "Watching your demo now" : "Opened your demo"}</b><button type="button" className="ba-x" aria-label="Dismiss" onClick={() => setWatch(cur => cur.filter(y => y.id !== x.id))}>×</button></div>
       <p className="ba-who">{x.who}</p>
       <p className="ba-when">They're looking at it right now. Best time to call.</p>
       <div className="ba-actions">

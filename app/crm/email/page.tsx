@@ -53,7 +53,7 @@ export default function EmailPage() {
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
-  const [gmail, setGmail] = useState<{ configured: boolean; connected: boolean; email: string | null; sentLast24h: number; cap: number; inboxes?: { email: string; main: boolean; sent: number; cap: number; warming: boolean }[]; freesAt?: string | null } | null>(null);
+  const [gmail, setGmail] = useState<{ configured: boolean; connected: boolean; email: string | null; sentLast24h: number; cap: number; inboxes?: { email: string; main: boolean; sent: number; cap: number; warming: boolean; resting?: boolean; bounces14d?: number; sent14d?: number }[]; freesAt?: string | null } | null>(null);
   const [notice, setNotice] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [run, setRun] = useState<{ done: number; total: number; failed: string[]; wait: number } | null>(null);
@@ -266,7 +266,7 @@ export default function EmailPage() {
       <div className="u-h2-row"><h2 className="u-h2">Sending inboxes <span className="u-quiet">{gmail.sentLast24h} of {gmail.cap} in the last 24 hours</span></h2><a className="u-btn u-btn-light" href="/api/gmail/connect">Connect another inbox</a></div>
       <ul className="em-inbox-list">{(gmail.inboxes ?? []).map(i => <li key={i.email}>
         <b>{i.email}</b>{i.main && <span className="u-quiet"> main</span>}
-        <span className="u-note">{i.sent} of {i.cap} sent{i.warming ? ", warming up" : ""}</span>
+        <span className="u-note">{i.sent} of {i.cap} sent{i.warming ? ", warming up" : ""}{i.resting ? ` · resting: ${i.bounces14d} bounces of ${i.sent14d} in 14 days` : ""}</span>
         <button type="button" className="em-disc" onClick={() => { if (confirm(`Disconnect ${i.email}? Follow-ups on threads it started can't go out until it's connected again.`)) void fetch(`/api/gmail?email=${encodeURIComponent(i.email)}`, { method: "DELETE" }).then(() => loadGmail()); }}>Disconnect</button>
       </li>)}</ul>
       <p className="u-note">{gmail.freesAt && gmail.sentLast24h > 0 && <>The limit rolls: each email frees its slot 24 hours after it went out. Next slots open {new Date(gmail.freesAt).toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" })}. </>}New emails go out from whichever inbox has the most room. Follow-ups stay in the inbox that sent the first email. New inboxes start at 10 a day and add 10 each week, up to 40.</p>

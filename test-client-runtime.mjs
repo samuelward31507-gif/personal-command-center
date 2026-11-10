@@ -26,3 +26,14 @@ ok(() => assert.equal(R.QUOTE_TEXTS.length, R.QUOTE_DAYS.length));
 ok(() => assert.ok(R.ownerAlert("booked", "Dana Ruiz", "Thu 8:00").startsWith("Cinder · Estimate booked: Dana Ruiz")));
 ok(() => assert.match(R.replyUser([{ direction: "in", body: "need a fence" }], "Dana"), /Customer: need a fence/));
 console.log(`Client runtime checks passed (${n} assertions).`);
+{
+  const R = await import("./lib/client-runtime.ts");
+  const assert = (await import("node:assert/strict")).default;
+  const l = R.parseLeadList("Dana Ruiz, 720-555-0148\nMarcus Hill\t(303) 555-0192\njunk line\nDupe, 7205550148\n+1 970 555 0100");
+  assert.equal(l.length, 3); assert.deepEqual(l[0], { name: "Dana Ruiz", phone: "+17205550148" }); assert.equal(l[1].name, "Marcus Hill"); assert.equal(l[2].name, "");
+  assert.equal(R.quoteStepDue("2026-11-10", 0, "2026-11-10", R.REHASH_DAYS), 0, "revive starts the same day");
+  assert.equal(R.quoteStepDue("2026-11-10", 1, "2026-11-11", R.REHASH_DAYS), null);
+  assert.equal(R.quoteStepDue("2026-11-10", 1, "2026-11-12", R.REHASH_DAYS), 1);
+  assert.match(R.REHASH_TEXTS[0], /STOP/, "first revive text carries the opt-out");
+  console.log("Revive checks passed (8 assertions).");
+}

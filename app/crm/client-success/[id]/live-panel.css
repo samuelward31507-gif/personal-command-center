@@ -31,3 +31,5 @@
 .lv-quotes li > span { color: #9a948c; }
 .lv-quotes .op-acts { margin: 0 0 0 auto; }
 @media (max-width: 860px) { .lv-inbox { grid-template-columns: 1fr; } }
+.lv-code { white-space: pre-wrap; word-break: break-all; padding: 12px 14px; border-radius: 10px; background: #161616; border: 1px solid #2c2c2c; font-size: 13px; }
+.lv-check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; margin: 10px 0; color: #b8b2aa; }

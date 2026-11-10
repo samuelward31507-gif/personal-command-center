@@ -37,8 +37,12 @@ export async function GET(req: Request) {
     FROM public.site_events e LEFT JOIN public.contacts c ON c.owner_id = e.owner_id AND lower(c.company) = lower(e.who_company)
     WHERE e.owner_id = ${o} AND e.who_company <> '' AND e.at > ${since}::timestamptz AND e.type IN ('view', 'play')
     ORDER BY lower(e.who_company), e.at DESC LIMIT 5`.catch(() => []);
+  // A prospect opened the free audit from your follow-up email: the best moment to call.
+  const audits = await sql`SELECT r.token, r.company, r.last_viewed_at, c.id AS contact_id, c.phone, c.first_name
+    FROM public.prospect_reports r LEFT JOIN public.contacts c ON c.id = r.contact_id AND c.owner_id = r.owner_id
+    WHERE r.owner_id = ${o} AND r.last_viewed_at > ${since}::timestamptz ORDER BY r.last_viewed_at DESC LIMIT 5`.catch(() => []);
   return Response.json({
-    watching: watching.map(x => ({ id: "w:" + String(x.who_company).toLowerCase() + ":" + new Date(x.at as string).toISOString().slice(0, 13), who: String(x.who_company), name: String(x.who_name ?? ""), played: x.type === "play", contactId: x.contact_id ? String(x.contact_id) : null, phone: String(x.phone ?? "") })),
+    watching: [...audits.map(x => ({ id: "a:" + String(x.token).slice(0, 10) + ":" + new Date(x.last_viewed_at as string).toISOString().slice(0, 13), who: String(x.company), name: String(x.first_name ?? ""), played: false, audit: true, contactId: x.contact_id ? String(x.contact_id) : null, phone: String(x.phone ?? "") })), ...watching.map(x => ({ id: "w:" + String(x.who_company).toLowerCase() + ":" + new Date(x.at as string).toISOString().slice(0, 13), who: String(x.who_company), name: String(x.who_name ?? ""), played: x.type === "play", contactId: x.contact_id ? String(x.contact_id) : null, phone: String(x.phone ?? "") }))],
     signing: signing.map(x => ({ id: String(x.id) + (x.signed_at ? ":s" : ":v"), dealId: String(x.deal_id), who: String(x.who ?? ""), signed: !!x.signed_at })),
     pending: pending.map(x => ({ id: String(x.id), title: String(x.title ?? ""), startsAt: new Date(x.starts_at as string).toISOString(), who: String(x.company || x.name || x.title || "").trim() })),
     replies: replies.map(x => ({ id: String(x.id), who: String(x.from_name || x.from_addr), summary: String(x.summary ?? ""), category: String(x.category) })),

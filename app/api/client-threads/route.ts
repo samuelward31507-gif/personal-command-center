@@ -2,7 +2,8 @@ import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
 import { claudeText } from "@/lib/ai-text";
 import { clientById, sendToCustomer, sendReviewRequest } from "@/lib/client-runtime-run";
-import { digits10, parseDecision, replySystem, replyUser } from "@/lib/client-runtime";
+import { digits10, parseDecision, parseLeadList, replySystem, replyUser } from "@/lib/client-runtime";
+import { randomBytes } from "node:crypto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,13 +31,20 @@ export async function GET(req: Request) {
     sql`SELECT t.id, t.customer_phone, t.customer_name, t.source, t.status, t.last_in_at, t.last_out_at, t.updated_at,
         (SELECT json_build_object('body', x.body, 'direction', x.direction, 'at', x.at) FROM public.client_texts x WHERE x.thread_id = t.id ORDER BY x.at DESC LIMIT 1) AS last
       FROM public.client_threads t WHERE t.owner_id = ${o} AND t.project_id = ${project}::uuid ORDER BY t.updated_at DESC LIMIT 100`,
-    sql`SELECT id, customer_phone, customer_name, amount, sent_on, steps_sent, status FROM public.client_quotes WHERE owner_id = ${o} AND project_id = ${project}::uuid ORDER BY created_at DESC LIMIT 100`,
+    sql`SELECT id, customer_phone, customer_name, amount, sent_on, steps_sent, status, kind FROM public.client_quotes WHERE owner_id = ${o} AND project_id = ${project}::uuid ORDER BY created_at DESC LIMIT 100`,
     sql`SELECT count(*)::int AS n FROM public.client_reviews WHERE owner_id = ${o} AND project_id = ${project}::uuid`,
   ]);
   const s = c?.setup ?? {};
+  // The website chat bubble's key: made once per client, safe to put in their site's HTML.
+  let chatKey = "";
+  if (c) {
+    const [k] = await sql`SELECT chat_key FROM public.client_ops WHERE project_id = ${project}::uuid AND owner_id = ${o}` as { chat_key: string | null }[];
+    chatKey = k?.chat_key || randomBytes(18).toString("base64url");
+    if (!k?.chat_key) await sql`UPDATE public.client_ops SET chat_key = ${chatKey} WHERE project_id = ${project}::uuid AND owner_id = ${o} AND chat_key IS NULL`;
+  }
   const missing = [!s.texting_number && "Texting number", !s.owner_cell && "Owner's cell", !s.booking_link && "Booking link", !s.review_link && "Google review link",
     !(c?.messages ?? []).some(m => m.status === "approved") && "Approved messages"].filter(Boolean);
-  return reply({ threads, quotes, reviews: rv[0]?.n ?? 0, ready: { live: missing.length === 0, missing, number: s.texting_number || "" } });
+  return reply({ threads, quotes, reviews: rv[0]?.n ?? 0, chatKey, ready: { live: missing.length === 0, missing, number: s.texting_number || "" } });
 }
 
 /** POST {project, action, ...}: reply as the owner, change a thread's status, add or close a quote, send a review request, or test the reply engine. */
@@ -93,6 +101,23 @@ export async function POST(req: Request) {
     await sql`INSERT INTO public.client_quotes (owner_id, project_id, customer_phone, customer_name, amount, sent_on)
       VALUES (${o}, ${project}::uuid, ${phone}, ${name}, ${Number.isFinite(amount) && amount > 0 ? amount : null}, ${sentOn}::date)`;
     return reply({ ok: true });
+  }
+  if (action === "rehash") {
+    // Only people who already contacted this business: their old inquiries, never a bought list.
+    if (b.consent !== true) return reply({ error: "Confirm these are people who contacted the business before." }, 400);
+    const leads = parseLeadList(str(b.list, 40000));
+    if (!leads.length) return reply({ error: "Paste one lead per line: name, then cell number." }, 400);
+    const today = new Date().toISOString().slice(0, 10);
+    let added = 0;
+    for (const l of leads) {
+      const r = await sql`INSERT INTO public.client_quotes (owner_id, project_id, customer_phone, customer_name, sent_on, kind)
+        SELECT ${o}, ${project}::uuid, ${l.phone}, ${l.name}, ${today}::date, 'rehash'
+        WHERE NOT EXISTS (SELECT 1 FROM public.client_quotes q WHERE q.project_id = ${project}::uuid AND q.customer_phone = ${l.phone} AND q.kind = 'rehash')
+          AND NOT EXISTS (SELECT 1 FROM public.client_threads t WHERE t.project_id = ${project}::uuid AND t.customer_phone = ${l.phone} AND t.status = 'opted_out')
+        RETURNING id`;
+      added += r.length;
+    }
+    return reply({ ok: true, added, skipped: leads.length - added });
   }
   if (action === "quote_status") {
     const st = str(b.status, 10), id = str(b.quote, 40);
