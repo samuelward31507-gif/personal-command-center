@@ -8,6 +8,9 @@ import { reportSection } from "@/lib/business-audit";
 import { planFor, resolveTimeZone, nicheFor, demoLinkFor, localDate, DEFAULT_SLOTS } from "@/lib/sms-templates";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
 import { contactFirstName } from "@/lib/call-drafts";
+import { sendColdEmail } from "@/lib/gmail-send";
+import { fillTemplate, mergeFor, TEMPLATE_SETS, trackOf } from "@/lib/email-outreach";
+import { insertLine, fullSendFor, MISSED_CALL_LINE } from "@/lib/autopilot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,7 +51,8 @@ export async function POST(request: Request) {
 
     const sql = db();
     const contact = await sql`SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company, c.first_name,
-        c.phone, c.location, c.time_zone, c.notes,
+        c.phone, c.location, c.time_zone, c.notes, c.email, c.website,
+        EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND (a.notes LIKE 'Email sent: %' OR a.notes LIKE 'Email reply:%' OR a.notes LIKE 'Email bounced:%')) AS emailed,
         COALESCE(NULLIF(c.niche, ''), (SELECT o.niche FROM public.contact_outreach o WHERE o.owner_id = c.owner_id AND o.contact_id = c.id ORDER BY o.updated_at DESC LIMIT 1)) AS niche,
         (SELECT s.reason FROM public.contact_suppressions s WHERE s.owner_id = c.owner_id
           AND (s.contact_id = c.id OR (s.phone_normalized <> '' AND s.phone_normalized = regexp_replace(c.phone, '[^0-9]', '', 'g'))) LIMIT 1) AS suppressed,
@@ -207,8 +211,24 @@ export async function POST(request: Request) {
       tasks: plan.tasks.map(t => ({ title: t.title, due: t.due.toISOString() })), closed: plan.close,
     };
 
+    // Full send: missed the owner, so the intro email lands while the missed call is still on their phone.
+    // Same checks as every cold email (suppression, inbox caps, mailing address); a failure never fails the log.
+    let emailed: { from: string } | { error: string } | null = null;
+    const email = String(c0.email ?? "").trim();
+    if (!parked && !suppressedWhy && /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email) && fullSendFor(outcome, attempts, !!c0.emailed)) {
+      try {
+        const ws = await loadWorkspace(user.id);
+        if (ws.address.trim()) {
+          const t = TEMPLATE_SETS[trackOf(String(c0.niche ?? ""))].intro;
+          const m = mergeFor({ name: String(c0.name ?? ""), company: String(c0.company ?? ""), location: String(c0.location ?? "") }, ws);
+          const r = await sendColdEmail(sql, user.id, ws, { contactId, step: "intro", subject: fillTemplate(t.subject, m), body: insertLine(fillTemplate(t.body, m), MISSED_CALL_LINE) });
+          emailed = r.ok ? { from: r.from } : { error: r.error };
+        }
+      } catch (e) { emailed = { error: e instanceof Error ? e.message.slice(0, 120) : "Email failed." }; }
+    }
+
     return Response.json({
-      outcome, label: OUTCOME_LABELS[outcome], activity, nextFollowUp, suggestedDeal, attempts, parked: attempts >= ATTEMPT_LIMIT, text,
+      outcome, label: OUTCOME_LABELS[outcome], activity, emailed, nextFollowUp, suggestedDeal, attempts, parked: attempts >= ATTEMPT_LIMIT, text,
       sequenceStopped: sequenceRows.length > 0 ? sequenceStatus : null,
       suppressed: outcome === "do_not_contact",
       deals: movedDeals,

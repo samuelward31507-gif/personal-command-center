@@ -12,3 +12,16 @@ ok(() => assert.equal(runAllowance(40, 12), 28)); ok(() => assert.equal(runAllow
 ok(() => assert.match(personalPrompt([{ company: "JC Fence", niche: "fence", city: "Austin", site: "Cedar fences" }]), /^#1 JC Fence \(fence, Austin\)\nWebsite text: Cedar fences$/));
 ok(() => assert.equal(htmlToText("<title>JC Fence</title><script>x()</script><p>Cedar &amp; vinyl</p>"), "JC Fence | Cedar & vinyl"));
 console.log(`Autopilot checks passed (${n} assertions).`);
+
+{
+  const { fullSendFor, MISSED_CALL_LINE } = await import("./lib/autopilot.ts");
+  const assert = (await import("node:assert/strict")).default;
+  assert.equal(fullSendFor("no_answer", 1, false), true);
+  assert.equal(fullSendFor("voicemail", 1, false), true);
+  assert.equal(fullSendFor("gatekeeper", 1, false), true);
+  assert.equal(fullSendFor("no_answer", 2, false), false, "only the first missed call");
+  assert.equal(fullSendFor("no_answer", 1, true), false, "never a second intro");
+  assert.equal(fullSendFor("interested", 1, false), false);
+  assert.ok(MISSED_CALL_LINE.includes("tried giving you a call"));
+  console.log("Full send checks passed (7 assertions).");
+}

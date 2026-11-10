@@ -215,7 +215,8 @@ export default function CallModePage() {
       // Quick outcomes roll straight into the next dial; real conversations pause so you can text, book or take notes.
       if (autoDial && !picked && AUTO_NEXT.includes(outcome)) pendingDial.current = true;
       const parkedNote = data.parked ? ` · ${ATTEMPT_LIMIT} tries with no answer, so they're parked for 30 days` : data.attempts ? ` · try ${data.attempts} of ${ATTEMPT_LIMIT}` : "";
-      setFlash({ ok: true, text: `${who}: ${data.label}${data.nextFollowUp ? ` · back on ${data.nextFollowUp}` : ""}${parkedNote}`, deal: data.suggestedDeal || null });
+      const emailNote = data.emailed?.from ? ` · intro email sent from ${data.emailed.from}` : "";
+      setFlash({ ok: true, text: `${who}: ${data.label}${data.nextFollowUp ? ` · back on ${data.nextFollowUp}` : ""}${parkedNote}${emailNote}`, deal: data.suggestedDeal || null });
       if (picked) {
         // A callback: drop them from today's list too so they never come back up by mistake.
         const id = picked;

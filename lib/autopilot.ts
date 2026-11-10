@@ -35,3 +35,10 @@ export function insertLine(body: string, line: string): string {
 export function runAllowance(perDay: number, sentLast24h: number): number {
   return Math.max(0, Math.min(200, perDay) - sentLast24h);
 }
+
+/** Full send: when a call doesn't reach the owner, the intro email goes out in the same minute. */
+export const MISSED_CALL_LINE = "I just tried giving you a call and missed you, so I figured I'd send this over too.";
+/** Only the first missed call of a run triggers it, and only for someone never emailed. */
+export function fullSendFor(outcome: string, attempts: number, alreadyEmailed: boolean): boolean {
+  return ["no_answer", "voicemail", "gatekeeper"].includes(outcome) && attempts === 1 && !alreadyEmailed;
+}
