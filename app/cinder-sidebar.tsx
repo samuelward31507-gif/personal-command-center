@@ -25,6 +25,7 @@ const primary = [
   ["contacts", "Contacts", "users", "/crm"],
   ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
   ["funnel", "Funnel", "chart", "/crm/funnel"],
+  ["partners", "Partners", "users", "/crm/partners"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
   ["finance", "Money", "money", "/crm/finance"],
 ] as const;

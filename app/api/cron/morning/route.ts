@@ -8,6 +8,7 @@ import { sortNewMail } from "@/lib/gmail-inbox";
 import { sendColdEmail } from "@/lib/gmail-send";
 import { dueContacts, fillTemplate, mergeFor, TEMPLATE_SETS, trackOf } from "@/lib/email-outreach";
 import { USEFUL } from "@/lib/inbox-sort";
+import { auditLinkFor, withAuditLine } from "@/lib/auto-audit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,10 +61,13 @@ export async function GET(request: Request) {
     const due = dueContacts(sent, heard, started.getTime() + 18 * 3600000);
     for (const d of due) {
       if (sentTo.length >= AUTO_FOLLOW_UPS_PER_DAY || Date.now() - started.getTime() > 35_000) break;
-      const [c] = await sql`SELECT id, trim(concat_ws(' ', first_name, last_name)) AS name, company, location, niche FROM public.contacts WHERE id = ${d.contactId}::uuid AND owner_id = ${o}` as { id: string; name: string; company: string; location: string; niche: string }[];
+      const [c] = await sql`SELECT id, trim(concat_ws(' ', first_name, last_name)) AS name, company, location, niche, website FROM public.contacts WHERE id = ${d.contactId}::uuid AND owner_id = ${o}` as { id: string; name: string; company: string; location: string; niche: string; website: string | null }[];
       if (!c) continue;
       const t = TEMPLATE_SETS[trackOf(c.niche)][d.step], m = mergeFor(c, ws);
-      const r = await sendColdEmail(sql, o, ws, { contactId: c.id, step: d.step, subject: fillTemplate(t.subject, m), body: fillTemplate(t.body, m) });
+      // The follow-up carries a free audit of their site when there's something real to show.
+      const audit = d.step === "follow_up" ? await auditLinkFor(sql, o, c).catch(() => null) : null;
+      const body = audit ? withAuditLine(fillTemplate(t.body, m), m.company, audit) : fillTemplate(t.body, m);
+      const r = await sendColdEmail(sql, o, ws, { contactId: c.id, step: d.step, subject: fillTemplate(t.subject, m), body });
       if (r.ok) sentTo.push(`${c.company || c.name} (${d.step === "breakup" ? "last try" : "follow-up"})`);
       else if (r.status === 401) { problems.push(r.error); continue; } // one inbox lost access: the others keep sending
       else if (r.status === 429 || r.status === 500 || /mailing address|Connect Gmail first/i.test(r.error)) { problems.push(r.error); break; }

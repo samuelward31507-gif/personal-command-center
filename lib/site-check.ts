@@ -44,3 +44,29 @@ export function siteCheckLines(c: SiteCheck | null, nowYear = new Date().getFull
     `- Copyright year: ${c.copyrightYear ?? "none"}${c.copyrightYear && c.copyrightYear < nowYear - 1 ? " (site may be stale)" : ""}; links to: ${c.socials.join(", ") || "no social or review profiles"}; about ${c.words} words of text`,
   ].join("\n");
 }
+
+/**
+ * Findings for a free audit, written to the owner, only from what the homepage actually shows.
+ * Nothing here guesses at things we can't see from outside (like whether missed calls get a text back).
+ * Most important first, at most 4. An empty list means the site is in good shape: send no audit.
+ */
+export function autoFindings(c: SiteCheck, year: number): string[] {
+  if (!c.reached) return [];
+  const out: string[] = [];
+  if (!c.booking) out.push("There's no way to book an estimate on your website, so every inquiry has to wait for a call back.");
+  if (!c.chat && !c.textUs) out.push("Your site has no way to text or chat, so someone looking at 9pm has to call or fill out a form and wait.");
+  if (!c.mobile) out.push("Your website isn't set up for phones, and most homeowners will open it on one.");
+  else if (!c.tapToCall) out.push("On a phone, your number isn't tap-to-call, so people have to copy it by hand to reach you.");
+  if (c.ms !== null && c.ms > 4000) out.push(`Your homepage took about ${Math.round(c.ms / 1000)} seconds to load. People start leaving after about 3.`);
+  if (!c.https) out.push("Your website isn't secure (no https), so some browsers warn visitors before they reach it.");
+  if (!c.reviewsShown) out.push("Your homepage doesn't show any reviews, so a first-time visitor has nothing to go on.");
+  if (c.copyrightYear !== null && c.copyrightYear < year - 1) out.push(`Your website footer still says ${c.copyrightYear}, which makes the site look unattended.`);
+  return out.slice(0, 4);
+}
+
+/** Puts the audit line just above the sign-off. */
+export function withAuditLine(body: string, company: string, link: string): string {
+  const line = `I also put together a quick free audit of ${company}'s website, from a customer's side: ${link}`;
+  const m = body.match(/\n\n([^\n]+)\s*$/);
+  return m ? body.slice(0, m.index) + "\n\n" + line + "\n\n" + m[1] : body + "\n\n" + line;
+}
