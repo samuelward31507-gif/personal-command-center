@@ -474,7 +474,7 @@ export default function CallModePage() {
           return <div className="dl-open dl-play" aria-label="What to say">
             {say === null ? <>
               <div><span>Open</span><p>{f(play.open)}</p></div>
-              <div><span>Story</span><p>{f(play.pitch)}</p></div>
+              <div><span>Pain</span>{f(play.pitch).split(" ... (let them talk, then) ").map((part, i) => <p key={i}>{i > 0 && <em style={{ display: "block", opacity: 0.6, fontSize: "0.85em" }}>Let them talk.</em>}{part}</p>)}</div>
               <div><span>Ask</span><p>{f(CLOSE)} <button type="button" className="dl-more" onClick={() => setSay("close")}>Guarantee</button></p></div>
               <div><span>After they book</span><p className="dl-dig">{play.dig.map((q, i) => <span key={i}><i>{i + 1}</i>{f(q)} </span>)}</p></div>
             </> : <div className="dl-say" role="status">
