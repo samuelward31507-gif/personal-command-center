@@ -19,8 +19,11 @@ export async function GET() {
     const sent = await sendsToday(sql, o, inboxes);
     const list = inboxes.map(i => ({ email: i.email, main: i.is_main, sent: sent.get(i.email.toLowerCase()) ?? 0, cap: inboxCap(i), warming: inboxCap(i) < PER_INBOX_CAP }));
     const main = mainOf(inboxes);
+    // The limit is a rolling 24 hours: each send frees its slot exactly 24 hours later.
+    const [w] = await sql`SELECT min(occurred_at) AS first FROM public.contact_activities WHERE owner_id = ${o} AND notes LIKE 'Email sent: %via Gmail%' AND occurred_at > now() - interval '24 hours'` as { first: string | null }[];
+    const freesAt = w?.first ? new Date(Date.parse(w.first) + 86400000).toISOString() : null;
     return Response.json({ configured: gmailConfigured(), connected: list.length > 0, email: main?.email ?? null, inboxes: list,
-      sentLast24h: list.reduce((n, i) => n + i.sent, 0), cap: list.reduce((n, i) => n + i.cap, 0) }, { headers: { "Cache-Control": "no-store" } });
+      sentLast24h: list.reduce((n, i) => n + i.sent, 0), cap: list.reduce((n, i) => n + i.cap, 0), freesAt }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     console.error("Gmail status failed", e);
     return Response.json({ configured: gmailConfigured(), connected: false, email: null, inboxes: [], sentLast24h: 0, cap: 0 });
