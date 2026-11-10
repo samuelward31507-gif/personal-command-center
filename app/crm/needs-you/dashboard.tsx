@@ -313,7 +313,7 @@ export default function Dashboard() {
       <section className="db-goal">{!g ? null : g.gapAfterExpected <= 0 ? <><div className="u-h2-row"><h2 className="u-h2">Goal</h2></div><p className="db-goal-need">Collected plus expected covers {g ? usd(g.goal) : ""}. Keep billing on time.</p></> : <>
       <div className="u-h2-row"><h2 className="u-h2">What closes the gap to {usd(g.goal)} by {byLabel}</h2></div>
       <div className="db-goalbar" aria-label={`${g.progressPct}% collected`}><i className="is-paid" style={{ width: g.progressPct + "%" }} /><i className="is-exp" style={{ left: g.progressPct + "%", width: Math.max(0, g.withExpectedPct - g.progressPct) + "%" }} /></div>
-      <div className="u-legend" style={{ marginTop: 12 }}><span><i style={{ background: "#d9d3cb" }} />Collected {usd(g.collected)}</span><span><i className="is-2" />Expected {usd(g.expected)}</span><span>Gap {usd(g.gapAfterExpected)}</span></div>
+      <div className="u-legend" style={{ marginTop: 12 }}><span><i style={{ background: "#292c32" }} />Collected {usd(g.collected)}</span><span><i className="is-2" />Expected {usd(g.expected)}</span><span>Gap {usd(g.gapAfterExpected)}</span></div>
       <p className="db-goal-need">{g.perDeal.filter(p => p.dealsNeeded).map((p, i) => <span key={p.label}>{i > 0 && " or "}<b>{p.dealsNeeded} {p.label.split(" · ")[0]} deal{p.dealsNeeded === 1 ? "" : "s"}</b></span>)} signed soon.</p>
     </>}</section>
     </div>

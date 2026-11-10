@@ -7,7 +7,7 @@ import { EMBER_STOPS, MARK_EMBER, MARK_PATH, MARK_VIEWBOX, WORDMARK_EMBER, WORDM
 export const CINDER_ON_NIGHT = "#ededed";
 export const CINDER_EMBER_ON_NIGHT = "#d97757";
 /** In-app ink for the wordmark letters. The ember always keeps its colour. */
-export const CINDER_MONO = "#ededed";
+export const CINDER_MONO = "currentColor";
 
 function EmberGradient({ id }: { id: string }) {
   return <radialGradient id={id} cx="38%" cy="34%" r="70%">{EMBER_STOPS.map(([o, c]) => <stop key={o} offset={o} stopColor={c} />)}</radialGradient>;

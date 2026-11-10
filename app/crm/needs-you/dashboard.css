@@ -7,14 +7,14 @@ body .db-page .db-ev-t span { font-size: 12px; color: var(--u-muted); }
 body .db-page .db-funnel { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line); }
 body .db-page .db-step { position: relative; padding: 18px 18px 18px 0; min-width: 0; }
 body .db-page .db-step + .db-step { padding-left: 22px; }
-body .db-page .db-step + .db-step::before { content: ""; position: absolute; left: -7px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-top: 1px solid var(--u-line-2, #3a3633); border-right: 1px solid var(--u-line-2, #3a3633); transform: rotate(45deg); background: var(--u-bg); }
+body .db-page .db-step + .db-step::before { content: ""; position: absolute; left: -7px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-top: 1px solid var(--u-line-2, #dcddda); border-right: 1px solid var(--u-line-2, #dcddda); transform: rotate(45deg); background: var(--u-bg); }
 body .db-page .db-step .u-fig-k { margin-bottom: 8px; }
 body .db-page .db-step-n { display: block; font-family: var(--u-display); font-stretch: 125%; font-variation-settings: "wdth" 125; font-size: 30px; font-weight: 500; letter-spacing: -0.02em; line-height: 1; color: var(--u-text); font-variant-numeric: tabular-nums; }
 body .db-page .db-step-r { display: block; margin-top: 10px; min-height: 1.2em; font-size: 12.5px; color: var(--u-muted); }
 body .db-page .db-goalbar { position: relative; height: 10px; border-radius: 5px; background: var(--u-line-soft); overflow: hidden; }
 body .db-page .db-goalbar i { position: absolute; top: 0; bottom: 0; left: 0; }
-body .db-page .db-goalbar .is-paid { background: #d9d3cb; border-radius: 5px 0 0 5px; }
-body .db-page .db-goalbar .is-exp { background: repeating-linear-gradient(-45deg, #5a544e 0 4px, #3a3633 4px 8px); }
+body .db-page .db-goalbar .is-paid { background: #292c32; border-radius: 5px 0 0 5px; }
+body .db-page .db-goalbar .is-exp { background: repeating-linear-gradient(-45deg, #a6aab0 0 4px, #dcddda 4px 8px); }
 body .db-page .db-goal-need { margin-top: 14px !important; font-size: 15px; color: var(--u-soft); }
 body .db-page .db-goal-need b { color: var(--u-text); font-weight: 550; }
 @media (max-width: 700px) {
@@ -27,7 +27,7 @@ body .db-page .db-goal-need b { color: var(--u-text); font-weight: 550; }
 /* Outreach today: every channel in one row */
 body .db-page .db-out { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line); }
 body .db-page a.db-out-c { display: flex; flex-direction: column; padding: 18px 16px 16px 0; min-width: 0; color: inherit; }
-body .db-page a.db-out-c + a.db-out-c { padding-left: 16px; border-left: 1px solid var(--u-line-soft, #24221f); }
+body .db-page a.db-out-c + a.db-out-c { padding-left: 16px; border-left: 1px solid var(--u-line-soft, #ffffff); }
 body .db-page a.db-out-c:hover .u-fig-k { color: var(--u-text) !important; }
 body .db-page .db-out-c .u-fig-k { margin-bottom: 8px; }
 body .db-page .db-out-c .db-step-n small { font-family: var(--u-text-font); font-stretch: 100%; font-variation-settings: normal; font-size: 13px; font-weight: 400; color: var(--u-muted); letter-spacing: 0; }

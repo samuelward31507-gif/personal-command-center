@@ -1,6 +1,6 @@
 /* Call mode on the Cinder UI. Everything is scoped under .dl-call. */
 body .dl-call { padding-top: 26px; }
-body .dl-call kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 4px; font: 500 11px/1 var(--u-text-font); background: rgba(255,255,255,.06); color: var(--u-muted); border: 1px solid var(--u-line); }
+body .dl-call kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 4px; font: 500 11px/1 var(--u-text-font); background: rgba(18,20,23,.054); color: var(--u-muted); border: 1px solid var(--u-line); }
 
 /* Today's readout */
 body .dl-call .dl-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-bottom: 22px; margin-bottom: 26px; border-bottom: 1px solid var(--u-line); }
@@ -17,11 +17,11 @@ body .dl-call .dl-after { display: grid; gap: 10px; margin-bottom: 22px; }
 body .dl-call .dl-grid { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 44px; align-items: start; }
 body .dl-call .dl-rail { position: sticky; top: 20px; display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 40px); }
 body .dl-call .dl-find { position: relative; }
-body .dl-call .dl-find-list { position: absolute; z-index: 20; top: 44px; left: 0; right: 0; max-height: 340px; overflow: auto; border-radius: 12px; background: var(--u-raise) !important; border: 1px solid var(--u-line); box-shadow: 0 20px 50px -18px rgba(0,0,0,.7); }
+body .dl-call .dl-find-list { position: absolute; z-index: 20; top: 44px; left: 0; right: 0; max-height: 340px; overflow: auto; border-radius: 12px; background: var(--u-raise) !important; border: 1px solid var(--u-line); box-shadow: 0 20px 50px -18px rgba(18,20,23,.224); }
 body .dl-call .dl-find-list .u-row { padding: 10px 12px; min-height: 0; }
 body .dl-call .dl-list { overflow: auto; flex: 1; min-height: 120px; margin: 0 -6px; padding: 0 6px; }
 body .dl-call .dl-q { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; border: 0 !important; border-radius: 9px !important; background: transparent !important; color: var(--u-soft) !important; text-align: left; cursor: pointer; font: inherit !important; }
-body .dl-call .dl-q:hover { background: rgba(255,255,255,.03) !important; }
+body .dl-call .dl-q:hover { background: rgba(18,20,23,.027) !important; }
 body .dl-call .dl-q.is-on { background: var(--u-sheet) !important; box-shadow: inset 2px 0 0 var(--u-text); }
 body .dl-call .dl-q-n { font-size: 12px; color: var(--u-faint); width: 22px; flex: 0 0 auto; }
 body .dl-call .dl-q.is-on .dl-q-n { color: var(--u-text); }
@@ -47,7 +47,7 @@ body .dl-call .dl-local.is-late i { background: var(--u-bad); }
 body .dl-call .dl-dial { display: flex; align-items: center; gap: 18px; }
 body .dl-call .dl-phone { font-size: 22px; color: var(--u-text); letter-spacing: -0.01em; white-space: nowrap; }
 body .dl-call .dl-dial .u-btn-lg { height: 52px; padding: 0 26px; font-size: 16px !important; border-radius: 12px !important; }
-body .dl-call .dl-dial kbd { background: rgba(0,0,0,.16); border-color: rgba(0,0,0,.18); color: #1a0d05; }
+body .dl-call .dl-dial kbd { background: rgba(18,20,23,.064); border-color: rgba(18,20,23,.072); color: #fcf7f4; }
 
 body .dl-call .dl-history { display: flex; flex-wrap: wrap; gap: 10px 36px; margin-top: 26px; padding: 16px 0; border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line-soft); font-size: 13.5px; color: var(--u-soft); }
 body .dl-call .dl-history span { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
@@ -68,16 +68,16 @@ body .dl-call .dl-noaudit { display: grid; gap: 14px; justify-items: start; max-
 body .dl-call .dl-noaudit > p { font-size: 15px; color: var(--u-soft); }
 
 /* Outcome dock */
-body .dl-call .dl-dock { position: sticky; bottom: 14px; z-index: 5; box-shadow: 0 -18px 40px -12px rgba(10,9,8,.9), 0 20px 50px -20px rgba(0,0,0,.6); margin-top: 28px; padding: 14px 16px 10px; border-radius: 16px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); display: grid; gap: 12px; }
+body .dl-call .dl-dock { position: sticky; bottom: 14px; z-index: 5; box-shadow: 0 -18px 40px -12px rgba(18,20,23,.288), 0 20px 50px -20px rgba(18,20,23,.192); margin-top: 28px; padding: 14px 16px 10px; border-radius: 16px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); display: grid; gap: 12px; }
 body .dl-call .dl-dock textarea.u-field { background: var(--u-bg) !important; }
 body .dl-call .dl-outs { display: flex; flex-wrap: wrap; gap: 6px; }
 body .dl-call .dl-outs > div { display: contents; }
 body .dl-call .dl-sep { width: 1px; height: 24px; align-self: center; margin: 0 6px; background: var(--u-line); }
 body .dl-call .dl-out { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 9px !important; border: 1px solid var(--u-line) !important; background: var(--u-raise) !important; color: var(--u-text) !important; font: 500 13px/1 var(--u-text-font) !important; cursor: pointer; }
-body .dl-call .dl-out:hover:not(:disabled) { border-color: #45413c !important; background: var(--u-hover) !important; }
+body .dl-call .dl-out:hover:not(:disabled) { border-color: #bbbec2 !important; background: var(--u-hover) !important; }
 body .dl-call .dl-out:disabled { opacity: .5; }
-body .dl-call .dl-out.is-win { background: var(--u-text) !important; border-color: var(--u-text) !important; color: #141210 !important; font-weight: 600 !important; }
-body .dl-call .dl-out.is-win kbd { background: rgba(0,0,0,.16); border-color: rgba(0,0,0,.16); color: #1a0d05; }
+body .dl-call .dl-out.is-win { background: var(--u-text) !important; border-color: var(--u-text) !important; color: #f6f6f4 !important; font-weight: 600 !important; }
+body .dl-call .dl-out.is-win kbd { background: rgba(18,20,23,.064); border-color: rgba(18,20,23,.064); color: #fcf7f4; }
 body .dl-call .dl-out.is-stop { background: transparent !important; color: var(--u-muted) !important; border-style: dashed !important; }
 body .dl-call .dl-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 8px; border-top: 1px solid var(--u-line-soft); }
 
@@ -133,14 +133,14 @@ body .dl-call .dl-play .dl-ifs-k { margin-right: 6px; font-size: 12.5px; color: 
 body .dl-call .dl-if { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 4px 0 7px; border-radius: 6px; border: 1px solid var(--u-line); background: transparent; color: var(--u-soft); font: 500 11px/1 var(--u-text-font); cursor: pointer; white-space: nowrap; }
 body .dl-call .dl-if:not(:has(kbd)) { padding-right: 7px; }
 body .dl-call .dl-if:hover { color: var(--u-text); background: var(--u-hover); }
-body .dl-call .dl-if[aria-pressed="true"] { color: var(--u-text); background: var(--u-raise); border-color: #57524c; }
+body .dl-call .dl-if[aria-pressed="true"] { color: var(--u-text); background: var(--u-raise); border-color: #a9adb2; }
 body .dl-call .dl-if kbd { min-width: 0; height: auto; padding: 0; border: 0; background: none; font-size: 11px; color: var(--u-muted); }
 body .dl-call .dl-more { margin-left: 4px; padding: 0; border: 0; background: none; color: var(--u-text); font: 500 12.5px/1.4 var(--u-text-font); text-decoration: underline; text-decoration-color: var(--u-faint); text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
 body .dl-call .dl-more:hover { text-decoration-color: var(--u-text); }
 body .dl-call .dl-if-sep { width: 1px; height: 16px; margin: 4px 2px 0; background: var(--u-line); }
 @media (max-width: 700px) { body .dl-call .dl-play > div { grid-template-columns: 1fr; gap: 4px; } }
 
-.dl-mail { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--u-line, #2f2c29); }
+.dl-mail { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--u-line, #e7e7e4); }
 .dl-mail-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .dl-mail-row input { flex: 1 1 220px; min-width: 0; }
 .dl-mail-row select { flex: 0 0 auto; width: auto; }

@@ -169,7 +169,7 @@ export default function MoneyPage() {
           ? <p className="u-note" style={{ paddingTop: 8 }}>No costs logged in this range. Log software, ads and contractors so profit stays honest.</p>
           : <div className="u-rows">{byCategory.slice(0, 6).map(([c, v]) => <div key={c} className="u-row" style={{ minHeight: 44, gap: 16 }}>
             <span style={{ width: 96, fontSize: 13.5, color: "var(--u-soft)" }}>{cap(c)}</span>
-            <div style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--u-line-soft)", overflow: "hidden" }}><div style={{ width: (v / catMax) * 100 + "%", height: "100%", background: "#4a4540", borderRadius: 3 }} /></div>
+            <div style={{ flex: 1, height: 6, borderRadius: 3, background: "var(--u-line-soft)", overflow: "hidden" }}><div style={{ width: (v / catMax) * 100 + "%", height: "100%", background: "#b6b9be", borderRadius: 3 }} /></div>
             <span className="u-row-end u-num" style={{ minWidth: 72, color: "var(--u-text)" }}>{usd(v)}</span>
           </div>)}</div>}
       </section>

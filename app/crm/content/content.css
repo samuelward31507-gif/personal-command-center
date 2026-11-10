@@ -28,6 +28,6 @@ body .ct-page .ct-last { min-width: 92px; }
 }
 
 .ct-video { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
-.ct-video video { width: 100%; max-width: 240px; aspect-ratio: 9 / 16; border-radius: 12px; border: 1px solid var(--line, #2f2c29); background: #000; }
-.ct-img { width: 100%; max-width: 280px; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 12px; border: 1px solid var(--line, #2f2c29); }
-.ct-cap-label { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--u-mute, #a49d94); }
+.ct-video video { width: 100%; max-width: 240px; aspect-ratio: 9 / 16; border-radius: 12px; border: 1px solid var(--line, #e7e7e4); background: #f6f6f4; }
+.ct-img { width: 100%; max-width: 280px; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 12px; border: 1px solid var(--line, #e7e7e4); }
+.ct-cap-label { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--u-mute, #59616d); }

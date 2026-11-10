@@ -1,0 +1,57 @@
+/* ==========================================================================
+   Cinder light: the CRM in the same look as cinderrevenue.com.
+   Off-white page, white cards with a hairline and a soft shadow, near-black
+   text and buttons, Inter Tight for titles and figures, Inter for everything else.
+   Loaded last so it settles the tokens every older sheet reads.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+  --site-bg: #f6f6f4; --site-card: #fff; --site-text: #121417; --site-text-2: #4a4f57; --site-text-3: #80858d;
+  --site-line: rgba(18, 20, 23, .08); --site-line-2: rgba(18, 20, 23, .15); --site-ok: #17905a; --site-blue: #0a84ff;
+  --site-shadow: 0 1px 2px rgba(18, 20, 23, .04), 0 12px 32px -14px rgba(18, 20, 23, .16);
+
+  --u-bg: var(--site-bg); --u-sheet: var(--site-card); --u-raise: #fbfbfa; --u-hover: #efefec;
+  --u-line: #e6e6e2; --u-line-soft: #eeeeeb;
+  --u-text: var(--site-text); --u-soft: var(--site-text-2); --u-muted: #6f747c; --u-faint: #9a9ea5;
+  --u-ember: var(--site-text); --u-ember-ink: var(--site-text); --u-ember-wash: rgba(18, 20, 23, .05);
+  --u-good: var(--site-ok); --u-bad: #c0392b;
+  --u-display: var(--font-display), "Inter Tight", "Inter", system-ui, sans-serif;
+  --u-text-font: var(--font-geist-sans), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --mc-bg: var(--site-bg); --mc-panel: var(--site-card); --mc-raised: #fbfbfa; --mc-hover: #efefec; --mc-line: #e6e6e2; --mc-line-2: #dadad5;
+  --mc-text: var(--site-text); --mc-soft: var(--site-text-2); --mc-muted: #6f747c; --mc-faint: #9a9ea5;
+  --mc-accent: var(--site-text);
+
+  --background: var(--site-bg); --foreground: var(--site-text); --panel: var(--site-card); --muted: #6f747c; --line: #e6e6e2; --accent: var(--site-text);
+}
+
+html, body { background: var(--site-bg) !important; color: var(--site-text) !important; }
+html body:not(#u), html body:not(#u) .crm-app-shell, html body:not(#u) .main-panel, html body:not(#u) .crm-shell-main { background: var(--site-bg) !important; }
+
+/* Titles and big numbers: Inter Tight, tight tracking, no stretched widths. */
+html body :is(h1, h2, .u-title, .u-fig-v, .cx-logo) { font-variation-settings: normal !important; font-stretch: 100% !important; }
+html body .u-page h1.u-title { letter-spacing: -0.035em !important; font-weight: 600 !important; }
+html body .u-fig-v { letter-spacing: -0.04em !important; font-weight: 600 !important; }
+
+/* Sidebar: white rail, a soft fill on the current page. */
+html body:not(#u) .cx-side { background: #fff !important; border-right-color: var(--site-line) !important; }
+html body:not(#u) .cx-side .cx-item.is-active { background: #f1f1ee !important; }
+
+/* Cards lift off the page the way they do on the site. */
+html body .u-page .u-sheet { background: #fff !important; border-color: var(--site-line) !important; box-shadow: var(--site-shadow) !important; }
+
+/* Buttons: primary is near-black with white text, secondary is white with a hairline. */
+html body .u-page .u-btn { background: #fff !important; border-color: var(--site-line-2) !important; }
+html body .u-page .u-btn:hover:not(:disabled) { background: #f4f4f1 !important; border-color: rgba(18, 20, 23, .22) !important; }
+html body .u-page :is(.u-btn-go, .u-btn-light) { background: var(--site-text) !important; border-color: var(--site-text) !important; color: #fff !important; }
+html body .u-page :is(.u-btn-go, .u-btn-light):hover:not(:disabled) { background: #2a2d32 !important; border-color: #2a2d32 !important; }
+html body .u-page .u-btn-bare { background: transparent !important; border-color: transparent !important; }
+html body .u-page .u-btn kbd { background: rgba(255, 255, 255, .16); }
+html body :is(a, button, input, select, textarea):focus-visible { outline-color: var(--site-blue) !important; }
+
+/* Form fields: white, hairline, dark text. */
+html body :is(input, textarea, select):not([type="checkbox"]):not([type="radio"]):not([type="range"]) { background-color: #fff !important; color: var(--site-text) !important; border-color: rgba(18, 20, 23, .14) !important; }
+html body :is(input, textarea)::placeholder { color: #a0a4ab !important; }
+
+::selection { background: rgba(10, 132, 255, .18); }

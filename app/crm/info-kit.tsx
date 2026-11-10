@@ -64,9 +64,9 @@ export default function InfoKit({ id, name, company, notes, onReply }: { id: str
       <div style={{ marginTop: 12 }}>
         <label className="crm-notes" htmlFor={"reply-" + id} style={{ display: "block", marginBottom: 6 }}>They texted back? Paste their reply to log it.</label>
         <textarea id={"reply-" + id} value={reply} onChange={e => setReply(e.target.value)} maxLength={2000} rows={2} placeholder="Their reply…"
-          style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: 8, border: "1px solid #34343b", background: "#1a1a1a", color: "#f4f4f5", font: "inherit", fontSize: 12.5, resize: "vertical" }} />
+          style={{ width: "100%", boxSizing: "border-box", padding: "8px 10px", borderRadius: 8, border: "1px solid #dcddda", background: "#ffffff", color: "#121417", font: "inherit", fontSize: 12.5, resize: "vertical" }} />
         <button type="button" className="crm-btn crm-btn-quiet" disabled={!reply.trim() || saving} onClick={() => void logReply()} style={{ marginTop: 6, fontSize: 12.5, padding: "8px 10px" }}>{saving ? "Logging…" : "Log reply"}</button>
-        {replyState && <p className="crm-notes" role="status" style={{ marginTop: 6, color: replyState.ok ? "#e4e4e4" : "#fca5a5" }}>{replyState.text}</p>}
+        {replyState && <p className="crm-notes" role="status" style={{ marginTop: 6, color: replyState.ok ? "#181a1e" : "#a31414" }}>{replyState.text}</p>}
       </div>
     </div>
   );

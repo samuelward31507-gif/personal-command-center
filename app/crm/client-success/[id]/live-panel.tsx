@@ -65,7 +65,7 @@ export default function LivePanel({ projectId }: { projectId: string }) {
     </div>
     <div className="op-tabs" role="group" aria-label="Live system">
       {([["inbox", "Conversations", needs ? `${needs} need you` : `${d?.threads.length ?? 0} total`], ["quotes", "Quotes", `${openQ} being chased`], ["revive", "Revive old leads", revive.length ? `${revive.filter(x => x.status === "replied").length} replied of ${revive.length}` : "Week-1 win"], ["reviews", "Reviews", `${d?.reviews ?? 0} asked`], ["chat", "Website chat", "Bubble for their site"], ["test", "Test replies", "Before go-live"]] as const).map(([k, label, sub]) =>
-        <button key={k} type="button" aria-pressed={tab === k} style={{ background: tab === k ? "#2c2c2c" : "transparent" }} onClick={() => setTab(k)}><b>{label}</b><small>{sub}</small></button>)}
+        <button key={k} type="button" aria-pressed={tab === k} style={{ background: tab === k ? "#e7e7e4" : "transparent" }} onClick={() => setTab(k)}><b>{label}</b><small>{sub}</small></button>)}
     </div>
     {note && <p className={"op-note " + (note.ok ? "ok" : "bad")} role="status">{note.text}</p>}
 

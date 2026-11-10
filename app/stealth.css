@@ -14,11 +14,11 @@
   --st-hover: var(--mc-hover);
   --st-line: var(--mc-hover);
   --st-line-2: var(--mc-line-2);
-  --st-text: #efefef;
-  --st-soft: #ababab;
-  --st-muted: #9e9e9e;
-  --st-faint: #525252;
-  --st-accent: #cfcfcf;
+  --st-text: #121417;
+  --st-soft: #4c525c;
+  --st-muted: #575f6b;
+  --st-faint: #a8acb2;
+  --st-accent: #2b2f35;
   --st-radius: 12px;
   --st-font: var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -26,7 +26,7 @@
 /* ---------- Canvas & type ---------- */
 html, html body { background: var(--st-bg) !important; color: var(--st-text) !important; }
 html body { font-family: var(--st-font) !important; font-size: 14px; letter-spacing: -0.006em; font-feature-settings: "ss01", "cv11"; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-html body ::selection { background: rgba(255, 255, 255, .18); color: #fff; }
+html body ::selection { background: rgba(18,20,23,.162); color: #121417; }
 html body .app-shell, html body .main-panel, html body .crm-shell-main, html body .crm-app-shell,
 html body main, html body .page-content, html body .route-page { background-color: var(--st-bg) !important; }
 
@@ -35,33 +35,33 @@ html body aside.sidebar { display: none !important; }
 
 /* ---------- Top bar ---------- */
 html body .topbar, html body .crm-shell-main > .topbar {
-  height: 52px !important; padding: 0 24px !important; background: rgba(38, 38, 36, .86) !important;
+  height: 52px !important; padding: 0 24px !important; background: rgba(18,20,23,.344) !important;
   -webkit-backdrop-filter: saturate(140%) blur(10px); backdrop-filter: saturate(140%) blur(10px);
   border-bottom: 1px solid var(--st-line) !important; position: sticky; top: 0; z-index: 40;
 }
 html body .breadcrumbs { font-size: 13.5px !important; color: var(--st-muted) !important; gap: 8px; }
 html body .breadcrumbs a, html body .breadcrumbs span { color: var(--st-muted) !important; }
 html body .breadcrumbs strong { color: var(--st-text) !important; font-weight: 550 !important; }
-html body .breadcrumb-slash { color: #555555 !important; }
+html body .breadcrumb-slash { color: #a5a9af !important; }
 html body .topbar-status { font-size: 12.5px !important; color: var(--st-muted) !important; }
 html body .status-ring { border-color: var(--mc-line-2) !important; }
 html body .topbar .quiet-button, html body .topbar a.quiet-button {
   height: 30px; display: inline-flex; align-items: center; padding: 0 12px !important; border-radius: 8px !important;
   background: transparent !important; border: 1px solid var(--st-line-2) !important; color: var(--st-soft) !important; font-size: 13px !important; font-weight: 500;
 }
-html body .topbar .quiet-button:hover { color: var(--st-text) !important; border-color: #555555 !important; background: var(--st-raised) !important; }
+html body .topbar .quiet-button:hover { color: var(--st-text) !important; border-color: #a5a9af !important; background: var(--st-raised) !important; }
 @media (max-width: 760px) { html body .topbar, html body .crm-shell-main > .topbar { padding-left: 60px !important; } }
 
 /* ---------- Page headers ---------- */
 html body main:not(.calendar-page):not(:has(.calendar-page)) h1 {
   font-family: var(--st-font) !important; font-size: clamp(26px, 2.4vw, 30px) !important; font-weight: 600 !important;
-  letter-spacing: -0.032em !important; line-height: 1.15 !important; color: #f4f4f4 !important;
+  letter-spacing: -0.032em !important; line-height: 1.15 !important; color: #121417 !important;
 }
 /* Accent words and trailing dots in headings go quiet: stealth, not orange. */
 html body main:not(.calendar-page):not(:has(.calendar-page)) h1 span, html body main:not(.calendar-page):not(:has(.calendar-page)) h1 em { color: inherit !important; font-style: normal; }
-html body main:not(.calendar-page):not(:has(.calendar-page)) h1 .heading-period, html body main:not(.calendar-page):not(:has(.calendar-page)) h1 .brand-period { color: #4a4a4a !important; }
-html body main:not(.calendar-page):not(:has(.calendar-page)) h2 { font-size: 16px !important; font-weight: 600 !important; letter-spacing: -0.015em !important; color: #f0f0f0 !important; }
-html body main:not(.calendar-page):not(:has(.calendar-page)) h3 { font-size: 14.5px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; color: #efefef !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h1 .heading-period, html body main:not(.calendar-page):not(:has(.calendar-page)) h1 .brand-period { color: #b1b4b9 !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h2 { font-size: 16px !important; font-weight: 600 !important; letter-spacing: -0.015em !important; color: #121417 !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h3 { font-size: 14.5px !important; font-weight: 600 !important; letter-spacing: -0.01em !important; color: #121417 !important; }
 html body main:not(.calendar-page):not(:has(.calendar-page)) p:not([role="alert"]):not([role="status"]):not([class*="err"]):not([class*="error"]):not([class*="danger"]) { color: var(--st-soft) !important; line-height: 1.6; }
 html body main:not(.calendar-page):not(:has(.calendar-page)) small { color: var(--st-muted) !important; }
 html body .page-subtitle, html body main:not(.calendar-page):not(:has(.calendar-page)) h1 + p { font-size: 14.5px !important; color: var(--st-soft) !important; max-width: 720px; }
@@ -87,8 +87,8 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) [style*="border: 1p
 html body :is([role="dialog"], .modal, .crm-modal, .calendar-modal, [class*="popover"], [class*="Popover"], [class*="dropdown"], [class*="Dropdown"], [class*="menu"]:not(.cx-side *), [class*="Menu"]) {
   background-color: var(--mc-panel) !important; border-color: var(--st-line-2) !important; color: var(--st-text) !important;
 }
-html body :is(.crm-modal, .calendar-modal, [role="dialog"]) { border-radius: 16px !important; box-shadow: 0 30px 80px -20px rgba(0,0,0,.8) !important; }
-html body :is(.crm-modal-backdrop, .calendar-backdrop) { background: rgba(0, 0, 0, .66) !important; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+html body :is(.crm-modal, .calendar-modal, [role="dialog"]) { border-radius: 16px !important; box-shadow: 0 30px 80px -20px rgba(18,20,23,.256) !important; }
+html body :is(.crm-modal-backdrop, .calendar-backdrop) { background: rgba(18,20,23,.264) !important; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
 
 /* Stat tiles: quiet label, confident number */
 html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.summary-label, .stat-label, .metric-label, .overview-card small:first-child) { letter-spacing: .06em !important; color: var(--st-muted) !important; }
@@ -97,20 +97,20 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.summary-label,
 html body main:not(.calendar-page):not(:has(.calendar-page)) button:not([data-variant="primary"]):not(.cx-side *):not([class*="ask-"]):not(.check-button):not([style*="background"]),
 html body main:not(.calendar-page):not(:has(.calendar-page)) a.crm-btn, html body main:not(.calendar-page):not(:has(.calendar-page)) a.quiet-button {
   border-radius: 8px !important; font-family: var(--st-font) !important; font-weight: 500 !important; letter-spacing: -0.005em;
-  background-color: var(--st-raised) !important; border-color: var(--st-line-2) !important; color: #dcdcdc !important;
+  background-color: var(--st-raised) !important; border-color: var(--st-line-2) !important; color: #1f2226 !important;
   transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
 html body main:not(.calendar-page):not(:has(.calendar-page)) button:not([data-variant="primary"]):not(.cx-side *):not([class*="ask-"]):not(.check-button):not([style*="background"]):hover:not(:disabled) {
-  background-color: var(--mc-hover) !important; border-color: #555555 !important; color: #fafafa !important;
+  background-color: var(--mc-hover) !important; border-color: #a5a9af !important; color: #121417 !important;
 }
 /* Primary actions: light pill on dark, like Claude/ChatGPT */
 html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]) {
-  background-color: #efefef !important; border-color: #efefef !important; color: var(--mc-panel) !important; font-weight: 600 !important;
+  background-color: #121417 !important; border-color: #121417 !important; color: var(--mc-panel) !important; font-weight: 600 !important;
 }
 html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.crm-btn-primary, .pipeline-primary, .project-primary, .task-primary, .outreach-primary, .fin-primary, .primary-button, .btn-primary, [class$="-primary"]):is(button, a):not([class*="ask-"]):hover:not(:disabled) {
-  background-color: #ffffff !important; border-color: #ffffff !important; color: #000 !important;
+  background-color: #121417 !important; border-color: #121417 !important; color: #f6f6f4 !important;
 }
-html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.danger, .project-remove):is(button) { color: #f0a3a3 !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.danger, .project-remove):is(button) { color: #9e1a1a !important; }
 html body main:not(.calendar-page):not(:has(.calendar-page)) button:disabled { opacity: .55; }
 html body main:not(.calendar-page):not(:has(.calendar-page)) .text-action { background: transparent !important; border-color: transparent !important; color: var(--st-soft) !important; }
 html body main:not(.calendar-page):not(:has(.calendar-page)) .text-action:hover { color: var(--st-text) !important; background: var(--st-raised) !important; }
@@ -123,9 +123,9 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) :is(input:not([type
 }
 html body main:not(.calendar-page):not(:has(.calendar-page)) :is(input, select, textarea):not(.ask-composer *):focus,
 html body main:not(.calendar-page):not(:has(.calendar-page)) :is(input, select, textarea):not(.ask-composer *):focus-visible {
-  outline: none !important; border-color: #555555 !important; box-shadow: 0 0 0 3px rgba(214, 169, 140, .10) !important;
+  outline: none !important; border-color: #a5a9af !important; box-shadow: 0 0 0 3px rgba(135,82,48,.1) !important;
 }
-html body main:not(.calendar-page):not(:has(.calendar-page)) :is(input, textarea)::placeholder { color: #5c5c5c !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(input, textarea)::placeholder { color: #9da2a9 !important; }
 html body main:not(.calendar-page):not(:has(.calendar-page)) label { color: var(--st-soft); }
 html body main:not(.calendar-page):not(:has(.calendar-page)) input[type="checkbox"], html body main:not(.calendar-page):not(:has(.calendar-page)) input[type="radio"] { accent-color: var(--st-accent); }
 
@@ -135,12 +135,12 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) th {
   font-size: 12px !important; font-weight: 550 !important; letter-spacing: 0 !important; text-transform: none !important;
   color: var(--st-muted) !important; background: transparent !important; border-color: var(--st-line) !important;
 }
-html body main:not(.calendar-page):not(:has(.calendar-page)) td { border-color: var(--st-line) !important; color: #d6d6d6; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) td { border-color: var(--st-line) !important; color: #25282d; }
 html body main:not(.calendar-page):not(:has(.calendar-page)) tr:hover td { background: var(--mc-bg); }
 html body main:not(.calendar-page):not(:has(.calendar-page)) hr { border-color: var(--st-line) !important; }
 
 /* ---------- Links ---------- */
-html body main:not(.calendar-page):not(:has(.calendar-page)) a:not([class]):not(.cx-side *) { color: #e6e6e6; text-decoration: underline; text-decoration-color: #3f3f3f; text-underline-offset: 3px; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) a:not([class]):not(.cx-side *) { color: #121417; text-decoration: underline; text-decoration-color: #dcddda; text-underline-offset: 3px; }
 html body main:not(.calendar-page):not(:has(.calendar-page)) a:not([class]):hover { text-decoration-color: var(--st-accent); }
 
 /* ---------- Scrollbars ---------- */
@@ -151,7 +151,7 @@ html body ::-webkit-scrollbar-thumb:hover { background: var(--mc-line-2); }
 html body ::-webkit-scrollbar-track { background: transparent; }
 
 /* ---------- Focus ring (keyboard) ---------- */
-html body :is(a, button):focus-visible { outline: 2px solid rgba(214, 169, 140, .55) !important; outline-offset: 2px; }
+html body :is(a, button):focus-visible { outline: 2px solid rgba(135,82,48,.55) !important; outline-offset: 2px; }
 
 /* ---------- Structural borders: no light leftovers ---------- */
 html body main:not(.calendar-page):not(:has(.calendar-page)) :is(section, article, form, fieldset, header, footer, aside, details, table,
@@ -164,7 +164,7 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) :is(label, div)[cla
   display: flex; align-items: center; gap: 8px; background: var(--st-bg-2) !important; border: 1px solid var(--st-line-2) !important;
   border-radius: 9px !important; padding: 0 10px !important; color: var(--st-muted) !important; transition: border-color .15s, box-shadow .15s;
 }
-html body main:not(.calendar-page):not(:has(.calendar-page)) :is(label, div)[class*="search"]:has(> input:focus) { border-color: #555555 !important; box-shadow: 0 0 0 3px rgba(255,255,255,.05) !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) :is(label, div)[class*="search"]:has(> input:focus) { border-color: #a5a9af !important; box-shadow: 0 0 0 3px rgba(255,255,255,.05) !important; }
 html body main:not(.calendar-page):not(:has(.calendar-page)) :is(label, div)[class*="search"] > input {
   flex: 1; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; padding-left: 0 !important; padding-right: 0 !important;
 }
@@ -181,17 +181,17 @@ html body main:not(.calendar-page):not(:has(.calendar-page)) :is(.schedule-categ
 /* ---------- Meaning colours (audit fix) ----------
    The theme above repaints text and surfaces. These rules give back the few colours that carry meaning:
    errors, overdue items and status pills. Muted on dark, never bright light-theme pills. */
-html body main [role="alert"], html body main [class*="-err"], html body main .error-text, html body main .crm-text-danger { color: #f28b82 !important; }
-html body main .crm-overdue, html body main .status-overdue, html body main .status-blocked { color: #f28b82 !important; }
+html body main [role="alert"], html body main [class*="-err"], html body main .error-text, html body main .crm-text-danger { color: #a32014 !important; }
+html body main .crm-overdue, html body main .status-overdue, html body main .status-blocked { color: #a32014 !important; }
 html body main :is(.crm-status, .fin-status, [class*="status-"]):not(.status-dot):not(.status-menu):not(.status-ring):not([class*="select"]) {
-  background: var(--mc-raised) !important; border: 1px solid var(--mc-line-2) !important; color: #c9c9c9 !important; border-radius: 999px !important;
+  background: var(--mc-raised) !important; border: 1px solid var(--mc-line-2) !important; color: #31353b !important; border-radius: 999px !important;
 }
-html body main :is(.crm-status-lead, .status-onboarding, .status-expected, .status-review, .status-interested) { color: #e9a383 !important; border-color: rgba(217,119,87,.35) !important; background: rgba(217,119,87,.08) !important; }
-html body main :is(.crm-status-customer, .status-active, .status-paid, .status-completed) { color: #e4e4e4 !important; border-color: #3d3d3d !important; background: var(--mc-raised) !important; }
-html body main :is(.status-overdue, .status-blocked) { color: #f28b82 !important; border-color: rgba(242,139,130,.35) !important; background: rgba(242,139,130,.08) !important; }
+html body main :is(.crm-status-lead, .status-onboarding, .status-expected, .status-review, .status-interested) { color: #2a2d32 !important; border-color: rgba(18,20,23,.175) !important; background: rgba(18,20,23,.04) !important; }
+html body main :is(.crm-status-customer, .status-active, .status-paid, .status-completed) { color: #181a1e !important; border-color: #dcddda !important; background: var(--mc-raised) !important; }
+html body main :is(.status-overdue, .status-blocked) { color: #a32014 !important; border-color: rgba(163,32,20,.35) !important; background: rgba(163,32,20,.08) !important; }
 
 /* AI-generated content is always labelled as such. */
-html body .ai-badge { display: inline-flex; align-items: center; margin-left: 8px; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(217,119,87,.35); background: rgba(217,119,87,.08); color: #e9a383 !important; font-size: 11px !important; font-weight: 500 !important; letter-spacing: 0 !important; vertical-align: 2px; white-space: nowrap; }
+html body .ai-badge { display: inline-flex; align-items: center; margin-left: 8px; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(18,20,23,.175); background: rgba(18,20,23,.04); color: #2a2d32 !important; font-size: 11px !important; font-weight: 500 !important; letter-spacing: 0 !important; vertical-align: 2px; white-space: nowrap; }
 .cm-brief > .ai-badge { margin: 0 0 10px; }
 
 /* ---------- Phones (audit pass) ---------- */

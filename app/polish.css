@@ -7,14 +7,14 @@
 
 :root {
   --pl-display: var(--font-geist-sans), Inter, system-ui, sans-serif;
-  --pl-text: #ececec;
-  --pl-title: #efefef;
-  --pl-soft: #ababab;
-  --pl-muted: #9e9e9e;
+  --pl-text: #121417;
+  --pl-title: #121417;
+  --pl-soft: #4c525c;
+  --pl-muted: #575f6b;
   --pl-line: var(--mc-hover);
   --pl-surface: var(--mc-panel);
   --pl-raised: var(--mc-raised);
-  --pl-accent: #d9d9d9;
+  --pl-accent: #22252a;
 }
 
 /* ---------- Type scale ---------- */
@@ -60,8 +60,8 @@ html body main p:has(+ h1), html body main div:has(+ h1):not(:has(*)) {
 }
 
 /* Section headings */
-html body main:not(.calendar-page):not(:has(.calendar-page)) h2 { font-size: 16.5px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: #f1f1f1 !important; }
-html body main:not(.calendar-page):not(:has(.calendar-page)) h3 { font-size: 14.5px !important; font-weight: 600 !important; color: #ececec !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h2 { font-size: 16.5px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: #121417 !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h3 { font-size: 14.5px !important; font-weight: 600 !important; color: #121417 !important; }
 
 /* ---------- Page frame ---------- */
 /* Same width and breathing room on every page; wide boards (Calendar, Pipeline) keep their width. */
@@ -90,37 +90,37 @@ html body main :is([class*="stat"], [class*="metric"]) strong, html body main :i
 
 /* ---------- Pills & chips: dark, outlined, never light ---------- */
 html body main :is(.task-priority, .task-chip, .overdue) {
-  background: transparent !important; border: 1px solid var(--mc-line-2) !important; color: #bdbdbd !important; border-radius: 999px !important;
+  background: transparent !important; border: 1px solid var(--mc-line-2) !important; color: #3b4149 !important; border-radius: 999px !important;
 }
-html body main .task-priority.priority-urgent, html body main .overdue { color: #f2a5a5 !important; border-color: #4a2a2a !important; }
-html body main .task-priority.priority-high { color: #f0c38a !important; border-color: #4a3c25 !important; }
-html body main .task-meta > span { background: transparent !important; border: 1px solid var(--mc-line-2) !important; color: #ababab !important; }
+html body main .task-priority.priority-urgent, html body main .overdue { color: #a01717 !important; border-color: #ecdede !important; }
+html body main .task-priority.priority-high { color: #a36415 !important; border-color: #eee8de !important; }
+html body main .task-meta > span { background: transparent !important; border: 1px solid var(--mc-line-2) !important; color: #4c525c !important; }
 
 /* Pipeline board: dark column headers and counts */
-html body main .pipeline-column > header { background: var(--mc-raised) !important; color: #d6d6d6 !important; border-color: var(--pl-line) !important; }
-html body main .pipeline-column > header b { background: var(--mc-hover) !important; color: #bdbdbd !important; border: 1px solid var(--mc-line-2) !important; }
-html body main a.pipeline-open { background: #efefef !important; color: var(--mc-panel) !important; }
+html body main .pipeline-column > header { background: var(--mc-raised) !important; color: #25282d !important; border-color: var(--pl-line) !important; }
+html body main .pipeline-column > header b { background: var(--mc-hover) !important; color: #3b4149 !important; border: 1px solid var(--mc-line-2) !important; }
+html body main a.pipeline-open { background: #121417 !important; color: var(--mc-panel) !important; }
 
 /* Calendar task chips */
-html body .calendar-page a.calendar-task { background: var(--mc-hover) !important; color: #d6d6d6 !important; border-color: var(--mc-line-2) !important; }
-html body .calendar-page a.calendar-task.task-urgent { color: #f2a5a5 !important; }
-html body .calendar-page a.calendar-task.task-high { color: #f0c38a !important; }
+html body .calendar-page a.calendar-task { background: var(--mc-hover) !important; color: #25282d !important; border-color: var(--mc-line-2) !important; }
+html body .calendar-page a.calendar-task.task-urgent { color: #a01717 !important; }
+html body .calendar-page a.calendar-task.task-high { color: #a36415 !important; }
 
 /* ---------- Controls ---------- */
 html body main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(.ask-root *) {
   font-size: 14px !important; border-radius: 10px !important;
 }
-html body main :is(input, select, textarea):focus { outline: none !important; border-color: #555555 !important; box-shadow: 0 0 0 3px rgba(255,255,255,.05) !important; }
+html body main :is(input, select, textarea):focus { outline: none !important; border-color: #a5a9af !important; box-shadow: 0 0 0 3px rgba(255,255,255,.05) !important; }
 html body main button { letter-spacing: -0.005em; }
 
 /* Links inside body copy */
-html body main p a:not([class]) { color: #e6e6e6 !important; text-decoration: underline; text-decoration-color: #444; text-underline-offset: 3px; }
+html body main p a:not([class]) { color: #121417 !important; text-decoration: underline; text-decoration-color: #b7babf; text-underline-offset: 3px; }
 
 /* Empty states read as calm hints */
 html body main :is(.empty, [class*="empty"]) p { color: var(--pl-muted) !important; }
 
 /* Focus rings for keyboard users */
-html body :is(a, button):focus-visible { outline: 2px solid rgba(255,255,255,.35) !important; outline-offset: 2px; }
+html body :is(a, button):focus-visible { outline: 2px solid rgba(18,20,23,.315) !important; outline-offset: 2px; }
 
 /* Money: the page frame already pads; drop the inner wrapper's extra padding. */
 html body main.fin-shell { min-height: 0 !important; }

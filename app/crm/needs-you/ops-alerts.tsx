@@ -10,7 +10,7 @@ export default function OpsAlerts() {
   const [alerts, setAlerts] = useState<Alert[] | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => { fetch("/api/ops-alerts", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => setAlerts(d.alerts ?? [])).catch(() => setFailed(true)); }, []);
-  if (failed) return <p role="alert" style={{ color: "#f28b82", fontSize: 13.5, margin: "0 0 12px" }}>Couldn&apos;t check client and compliance alerts. Refresh to try again.</p>;
+  if (failed) return <p role="alert" style={{ color: "#a32014", fontSize: 13.5, margin: "0 0 12px" }}>Couldn&apos;t check client and compliance alerts. Refresh to try again.</p>;
   if (!alerts || !alerts.length) return null;
   return <section className="td-ops" aria-label="Business alerts">
     <div className="td-label">Running the business</div>

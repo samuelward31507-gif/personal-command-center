@@ -66,6 +66,6 @@ export function OfferCard() {
       {f("newBook", "New leads: replies that book (%)")}
     </div>
     <h3>Price answer in Call mode</h3>
-    <p className="ws-sub" style={{ color: "#e4e4e4" }}>&ldquo;{d.script}&rdquo;</p>
+    <p className="ws-sub" style={{ color: "#181a1e" }}>&ldquo;{d.script}&rdquo;</p>
   </section>;
 }

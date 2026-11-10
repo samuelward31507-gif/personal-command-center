@@ -10,19 +10,19 @@ export type AuditView = {
 };
 
 const C = {
-  text: "var(--u-text)", body: "#d4d4d8", muted: "#9a9aa4", faint: "#6f6f78", line: "#26262b",
-  card: "var(--u-sheet)", inset: "var(--u-sheet)", accent: "#c4c4c4",
+  text: "var(--u-text)", body: "#25282d", muted: "#565e6a", faint: "#858a92", line: "#e7e7e4",
+  card: "var(--u-sheet)", inset: "var(--u-sheet)", accent: "#353a41",
 };
 
 const FIT: Record<string, { label: string; fg: string; bg: string; border: string }> = {
-  fit: { label: "Fit", fg: "#e4e4e4", bg: "#10241a", border: "#1f4d33" },
-  conditional_fit: { label: "Conditional fit", fg: "var(--u-ember-ink)", bg: "#2a2410", border: "#5a4a1a" },
-  no_fit: { label: "No fit", fg: "#fca5a5", bg: "#2a1414", border: "#5c2a2a" },
-  needs_clarification: { label: "Needs clarification", fg: "var(--u-soft)", bg: "#1c1830", border: "#3b3366" },
+  fit: { label: "Fit", fg: "#181a1e", bg: "#eff8f3", border: "#dcf1e5" },
+  conditional_fit: { label: "Conditional fit", fg: "var(--u-ember-ink)", bg: "#f8f5ec", border: "#f3ecd7" },
+  no_fit: { label: "No fit", fg: "#a31414", bg: "#f6ecec", border: "#ecd6d6" },
+  needs_clarification: { label: "Needs clarification", fg: "var(--u-soft)", bg: "#ebe9f4", border: "#574b96" },
 };
 
 const TAGS: Record<string, string> = {
-  "VERIFIED FACT": "#e4e4e4", VERIFIED: "#e4e4e4", OBSERVATION: "var(--u-soft)", HYPOTHESIS: "var(--u-ember-ink)", UNKNOWN: "#a1a1aa",
+  "VERIFIED FACT": "#181a1e", VERIFIED: "#181a1e", OBSERVATION: "var(--u-soft)", HYPOTHESIS: "var(--u-ember-ink)", UNKNOWN: "#515862",
 };
 
 function host(url: string) {
@@ -40,7 +40,7 @@ function inline(text: string, key: string): ReactNode[] {
     if (m[1]) nodes.push(<strong key={k} style={{ color: C.text, fontWeight: 600 }}>{inline(m[1].slice(2, -2), k)}</strong>);
     else if (m[2]) {
       const url = m[2].replace(/[.,;:]+$/, "");
-      nodes.push(<a key={k} href={url} target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none", borderBottom: "1px dotted #6b5446", whiteSpace: "nowrap" }}>{host(url)}</a>);
+      nodes.push(<a key={k} href={url} target="_blank" rel="noreferrer" style={{ color: C.accent, textDecoration: "none", borderBottom: "1px dotted #886a59", whiteSpace: "nowrap" }}>{host(url)}</a>);
       if (url.length < m[2].length) nodes.push(m[2].slice(url.length));
     } else if (m[3]) {
       const color = TAGS[m[3]];
@@ -101,7 +101,7 @@ export function AuditReport({ audit }: { audit: AuditView }) {
   };
   const structured = Boolean(verdict || sections.business || sections.call);
   const fit = FIT[audit.fitDecision ?? ""] ?? null;
-  const btn: CSSProperties = { border: `1px solid ${C.line}`, borderRadius: 8, background: "#1a1a1e", color: C.text, padding: "8px 12px", fontSize: 12.5, cursor: "pointer", textDecoration: "none" };
+  const btn: CSSProperties = { border: `1px solid ${C.line}`, borderRadius: 8, background: "#ffffff", color: C.text, padding: "8px 12px", fontSize: 12.5, cursor: "pointer", textDecoration: "none" };
 
   return <div style={{ marginTop: 24, display: "grid", gap: 14 }}>
     {/* Header */}
@@ -120,14 +120,14 @@ export function AuditReport({ audit }: { audit: AuditView }) {
         {fit && <span style={{ color: fit.fg, background: fit.bg, border: `1px solid ${fit.border}`, borderRadius: 999, padding: "4px 11px", fontWeight: 700, fontSize: 12 }}>{fit.label}</span>}
         <span style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px" }}>{audit.confidence} confidence</span>
         {audit.officialWebsite
-          ? <a href={audit.officialWebsite} target="_blank" rel="noreferrer" style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px", color: C.body, textDecoration: "none" }}>{host(audit.officialWebsite)} <span style={{ color: audit.websiteStatus === "verified" ? "#e4e4e4" : "var(--u-ember-ink)" }}>{audit.websiteStatus === "verified" ? "✓ verified" : `· ${(audit.websiteStatus ?? "unverified").replace("_", " ")}`}</span></a>
+          ? <a href={audit.officialWebsite} target="_blank" rel="noreferrer" style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px", color: C.body, textDecoration: "none" }}>{host(audit.officialWebsite)} <span style={{ color: audit.websiteStatus === "verified" ? "#181a1e" : "var(--u-ember-ink)" }}>{audit.websiteStatus === "verified" ? "✓ verified" : `· ${(audit.websiteStatus ?? "unverified").replace("_", " ")}`}</span></a>
           : <span style={{ border: `1px solid ${C.line}`, borderRadius: 999, padding: "4px 11px", color: "var(--u-ember-ink)" }}>No website found</span>}
       </div>
       {verdict && <p style={{ margin: 0, padding: "12px 14px", background: C.inset, borderLeft: `3px solid ${fit?.fg ?? C.accent}`, borderRadius: 8, fontSize: 14.5, lineHeight: 1.6, color: C.text }}>{inline(verdict.replace(/\*\*/g, ""), "verdict")}</p>}
-      {audit.incomplete && <p style={{ margin: 0, fontSize: 12.5, color: "#fca5a5" }}>Research stopped early. Treat this report as partial.</p>}
+      {audit.incomplete && <p style={{ margin: 0, fontSize: 12.5, color: "#a31414" }}>Research stopped early. Treat this report as partial.</p>}
     </header>
 
-    {sections.next && <div style={{ display: "flex", gap: 12, alignItems: "baseline", background: "#1b1714", border: "1px solid #3a3a3a", borderRadius: 12, padding: "13px 18px" }}>
+    {sections.next && <div style={{ display: "flex", gap: 12, alignItems: "baseline", background: "#ffffff", border: "1px solid #dcddda", borderRadius: 12, padding: "13px 18px" }}>
       <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 1.4, color: C.accent, whiteSpace: "nowrap" }}>Next step</span>
       <div style={{ fontSize: 13.5, lineHeight: 1.6, color: C.text }}>{inline(sections.next, "next")}</div>
     </div>}
@@ -140,7 +140,7 @@ export function AuditReport({ audit }: { audit: AuditView }) {
       {sections.scorecard && <Card title="Scorecard"><Blocks text={sections.scorecard} /></Card>}
       {sections.opportunities && <Card title="Top opportunities"><Blocks text={sections.opportunities} /></Card>}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 14 }}>
-        {sections.flags && <Card title="Red flags" tone="#fca5a5"><Blocks text={sections.flags} /></Card>}
+        {sections.flags && <Card title="Red flags" tone="#a31414"><Blocks text={sections.flags} /></Card>}
         {sections.upsells && <Card title="Future upsells" tag="LATER — NOT THE FIRST PITCH" tone="var(--u-soft)"><Blocks text={sections.upsells} /></Card>}
       </div>
     </> : <Card title="Report"><Blocks text={audit.content.replace(/^#+\s*/gm, "")} /></Card>}

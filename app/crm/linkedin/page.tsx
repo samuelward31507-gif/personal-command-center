@@ -115,7 +115,7 @@ export default function LinkedInPage() {
       {current && <div className="em-read">
         <div className="em-to"><span>To</span><b>{current.name || current.company}</b><Link href={`/crm?contact=${current.id}`} className="u-note" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Contact</Link></div>
         {tab === "connect" && <label className="u-note" style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}><input type="checkbox" checked={useNote} onChange={e => setUseNote(e.target.checked)} /> Add a note (free accounts get only a few a month)</label>}
-        {text ? <div className="em-paper"><pre className="em-body">{text}</pre>{tab === "connect" && <p className="u-note" style={{ marginTop: 12, color: text.length > CONNECT_NOTE_LIMIT ? "#c0392b" : "#8a8178" }}>{text.length} / {CONNECT_NOTE_LIMIT} characters</p>}</div>
+        {text ? <div className="em-paper"><pre className="em-body">{text}</pre>{tab === "connect" && <p className="u-note" style={{ marginTop: 12, color: text.length > CONNECT_NOTE_LIMIT ? "#b73629" : "#717b8b" }}>{text.length} / {CONNECT_NOTE_LIMIT} characters</p>}</div>
           : tab === "waiting" ? <p className="u-note">Request sent. Check LinkedIn, then mark accepted when they connect.</p>
           : <p className="u-note">Send the request without a note. The pitch goes in your first message once they accept.</p>}
         <div className="em-acts">

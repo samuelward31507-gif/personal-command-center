@@ -19,11 +19,11 @@ export default function PlanPanel({ refresh }: { refresh: number }) {
   const [failed, setFailed] = useState(false);
   const [period, setPeriod] = useState<"month" | "year">("month");
   useEffect(() => { fetch("/api/money-plan", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(j => { setP(j); setFailed(false); }).catch(() => setFailed(true)); }, [refresh]);
-  if (!p) return failed ? <p role="alert" style={{ color: "#f28b82", fontSize: 13.5, margin: "0 0 12px" }}>Couldn&apos;t load profit and taxes. Refresh to try again.</p> : null;
+  if (!p) return failed ? <p role="alert" style={{ color: "#a32014", fontSize: 13.5, margin: "0 0 12px" }}>Couldn&apos;t load profit and taxes. Refresh to try again.</p> : null;
   const s = p[period], f = p.forecast;
   return <section className="mp-card">
     <div className="mp-head"><h2>Profit and taxes</h2>
-      <div className="mp-seg" role="group" aria-label="Period">{(["month", "year"] as const).map(k => <button key={k} type="button" aria-pressed={period === k} style={{ background: period === k ? "#2c2c2c" : "transparent" }} onClick={() => setPeriod(k)}>{k === "month" ? "This month" : "This year"}</button>)}</div></div>
+      <div className="mp-seg" role="group" aria-label="Period">{(["month", "year"] as const).map(k => <button key={k} type="button" aria-pressed={period === k} style={{ background: period === k ? "#e7e7e4" : "transparent" }} onClick={() => setPeriod(k)}>{k === "month" ? "This month" : "This year"}</button>)}</div></div>
     <div className="mp-flow">
       <div><small>Collected</small><b>{usd(s.collected)}</b></div><i>−</i>
       <div><small>Expenses</small><b>{usd(s.spent)}</b></div><i>=</i>

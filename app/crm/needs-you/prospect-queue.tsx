@@ -28,7 +28,7 @@ export default function ProspectQueue() {
     setBusy("");
   }
   async function copy(link: string) { try { await navigator.clipboard.writeText(link); setCopied(link); setTimeout(() => setCopied(""), 1500); } catch { window.prompt("Copy this link", link); } }
-  if (err && !q) return <section className="td-pq" aria-label="Prospects to message"><div className="td-label">Prospects to message</div><p role="alert" style={{ color: "#f28b82", fontSize: 13.5, margin: "8px 0 0" }}>{err}</p></section>;
+  if (err && !q) return <section className="td-pq" aria-label="Prospects to message"><div className="td-label">Prospects to message</div><p role="alert" style={{ color: "#a32014", fontSize: 13.5, margin: "8px 0 0" }}>{err}</p></section>;
   if (!q || (!q.newToday.length && !q.followUps.length)) return null;
   const channel = (p: { instagram: string; facebook: string }) => (p.instagram ? "instagram" : p.facebook ? "facebook" : "other");
   const shown = open ? q.newToday : q.newToday.slice(0, 5);

@@ -17,12 +17,12 @@ function LeadFormLink() {
   useEffect(() => { setUrl(window.location.origin + "/start"); }, []);
   return <section style={CARD}>
     <h2 style={{ fontSize: 18, margin: 0 }}>Your lead form</h2>
-    <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 14px" }}>Anyone who fills this out lands in Contacts as a lead, with a follow-up for today and an urgent task to call them. Nothing is sent to them automatically.</p>
+    <p style={{ color: "#4c525c", fontSize: 13, margin: "6px 0 14px" }}>Anyone who fills this out lands in Contacts as a lead, with a follow-up for today and an urgent task to call them. Nothing is sent to them automatically.</p>
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-      <code style={{ flex: "1 1 260px", padding: "9px 12px", borderRadius: 9, border: "1px solid #3a3a3a", background: "#1a1a1a", color: "#efefef", fontSize: 13 }}>{url || "/start"}</code>
+      <code style={{ flex: "1 1 260px", padding: "9px 12px", borderRadius: 9, border: "1px solid #dcddda", background: "#ffffff", color: "#121417", fontSize: 13 }}>{url || "/start"}</code>
       <button data-variant="primary" onClick={() => { void navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); }); }}
-        style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #efefef", background: "#efefef", color: "#1a1a1a", fontWeight: 600, cursor: "pointer" }}>{copied ? "Copied" : "Copy link"}</button>
-      <Link href="/start" target="_blank" rel="noreferrer" style={{ color: "#cfcfcf", fontSize: 13 }}>Open ↗</Link>
+        style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #121417", background: "#121417", color: "#ffffff", fontWeight: 600, cursor: "pointer" }}>{copied ? "Copied" : "Copy link"}</button>
+      <Link href="/start" target="_blank" rel="noreferrer" style={{ color: "#2b2f35", fontSize: 13 }}>Open ↗</Link>
     </div>
   </section>;
 }
@@ -51,14 +51,14 @@ function OvernightAudits() {
   return <section style={CARD}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
       <div><h2 style={{ fontSize: 18, margin: 0 }}>Overnight audits</h2>
-        <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 0" }}>Every night around 3 AM Cinder audits up to 6 prospects in the day&apos;s call list. Research only; nobody is contacted. Capped at 20 audits a day.</p></div>
-      <button data-variant="primary" disabled={busy} onClick={() => void runNow()} style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #3a3a3a", background: "#262626", color: "#e6e6e6", cursor: "pointer" }}>{busy ? "Running…" : "Run now"}</button>
+        <p style={{ color: "#4c525c", fontSize: 13, margin: "6px 0 0" }}>Every night around 3 AM Cinder audits up to 6 prospects in the day&apos;s call list. Research only; nobody is contacted. Capped at 20 audits a day.</p></div>
+      <button data-variant="primary" disabled={busy} onClick={() => void runNow()} style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #dcddda", background: "#f1f1ef", color: "#121417", cursor: "pointer" }}>{busy ? "Running…" : "Run now"}</button>
     </div>
-    <p style={{ fontSize: 13, margin: "12px 0 0", color: lastCron ? (lastCron.status === "ok" || lastCron.status === "skipped" ? "#e9a383" : "#f2a5a5") : "#f0c38a" }}>
+    <p style={{ fontSize: 13, margin: "12px 0 0", color: lastCron ? (lastCron.status === "ok" || lastCron.status === "skipped" ? "#2a2d32" : "#a01717") : "#a36415" }}>
       {runs === null ? "Loading…" : lastCron ? `Last overnight run: ${when(lastCron.startedAt)} · ${lastCron.status}${lastCron.summary.reason ? ` (${lastCron.summary.reason})` : ""}${typeof lastCron.summary.audited === "number" ? ` · ${lastCron.summary.audited} audited` : ""}` : "No overnight run recorded yet."}
     </p>
-    {note && <p style={{ fontSize: 13, margin: "6px 0 0", color: "#cfcfcf" }}>{note}</p>}
-    {!!runs?.length && <div style={{ marginTop: 10, display: "grid", gap: 4 }}>{runs.slice(0, 5).map((r, i) => <div key={i} style={{ fontSize: 12.5, color: "#8f8f8f" }}>{when(r.startedAt)} · {r.trigger} · {r.status}{typeof r.summary.audited === "number" ? ` · ${r.summary.audited}/${r.summary.attempted ?? 0}` : ""}{r.summary.reason ? ` · ${r.summary.reason}` : ""}</div>)}</div>}
+    {note && <p style={{ fontSize: 13, margin: "6px 0 0", color: "#2b2f35" }}>{note}</p>}
+    {!!runs?.length && <div style={{ marginTop: 10, display: "grid", gap: 4 }}>{runs.slice(0, 5).map((r, i) => <div key={i} style={{ fontSize: 12.5, color: "#656e7b" }}>{when(r.startedAt)} · {r.trigger} · {r.status}{typeof r.summary.audited === "number" ? ` · ${r.summary.audited}/${r.summary.attempted ?? 0}` : ""}{r.summary.reason ? ` · ${r.summary.reason}` : ""}</div>)}</div>}
   </section>;
 }
 
@@ -80,20 +80,20 @@ function SundayReview() {
     } catch (e) { setNote(e instanceof Error ? e.message : "Couldn't send it."); }
     finally { setBusy(false); void load(); }
   }
-  const btn = { height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #3a3a3a", background: "#262626", color: "#e6e6e6", cursor: "pointer" } as const;
+  const btn = { height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #dcddda", background: "#f1f1ef", color: "#121417", cursor: "pointer" } as const;
   const last = data?.runs[0];
   return <section style={CARD}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
       <div><h2 style={{ fontSize: 18, margin: 0 }}>Sunday review</h2>
-        <p style={{ color: "#ababab", fontSize: 13, margin: "6px 0 0" }}>Every Sunday around 8 AM you get one email: the week&apos;s numbers, what slipped, and your 5 moves for the week.</p></div>
+        <p style={{ color: "#4c525c", fontSize: 13, margin: "6px 0 0" }}>Every Sunday around 8 AM you get one email: the week&apos;s numbers, what slipped, and your 5 moves for the week.</p></div>
       <div style={{ display: "flex", gap: 8 }}>
         <button data-variant="primary" onClick={() => setOpen(o => !o)} style={btn}>{open ? "Hide preview" : "Preview"}</button>
         <button data-variant="primary" disabled={busy || !data?.email} onClick={() => void sendNow()} style={btn}>{busy ? "Sending…" : "Send now"}</button>
       </div>
     </div>
-    <p style={{ fontSize: 13, margin: "12px 0 0", color: "#8f8f8f" }}>{data === null ? "Loading…" : !data.email ? "Email alerts aren't set up yet." : last ? `Last sent: ${new Date(last.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${last.status}` : "Not sent yet. The first one goes out this Sunday."}</p>
-    {note && <p style={{ fontSize: 13, margin: "6px 0 0", color: "#cfcfcf" }}>{note}</p>}
-    {open && data && <div style={{ marginTop: 14, padding: 16, borderRadius: 10, border: "1px solid #2e2e2e", background: "#141414", fontSize: 13.5, lineHeight: 1.6, color: "#d6d6d6", whiteSpace: "pre-wrap" }}><b style={{ display: "block", marginBottom: 8, color: "#f0f0f0" }}>{data.review.subject}</b>{data.review.lines.join("\n")}</div>}
+    <p style={{ fontSize: 13, margin: "12px 0 0", color: "#656e7b" }}>{data === null ? "Loading…" : !data.email ? "Email alerts aren't set up yet." : last ? `Last sent: ${new Date(last.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · ${last.status}` : "Not sent yet. The first one goes out this Sunday."}</p>
+    {note && <p style={{ fontSize: 13, margin: "6px 0 0", color: "#2b2f35" }}>{note}</p>}
+    {open && data && <div style={{ marginTop: 14, padding: 16, borderRadius: 10, border: "1px solid #e7e7e4", background: "#f6f6f4", fontSize: 13.5, lineHeight: 1.6, color: "#25282d", whiteSpace: "pre-wrap" }}><b style={{ display: "block", marginBottom: 8, color: "#121417" }}>{data.review.subject}</b>{data.review.lines.join("\n")}</div>}
   </section>;
 }
 
@@ -156,10 +156,10 @@ export default function SettingsPage() {
 
       <section style={{ marginTop: 20, maxWidth: 720 }}>
         <h1 className="set-title">Settings</h1>
-        <p style={{ color:"#ababab", lineHeight: 1.65, fontSize: 14 }}>Your business details, prices and goal, plus the jobs Cinder runs for you.</p>
+        <p style={{ color:"#4c525c", lineHeight: 1.65, fontSize: 14 }}>Your business details, prices and goal, plus the jobs Cinder runs for you.</p>
       </section>
 
-      {error && <p role="alert" style={{ marginTop: 20, padding: 12, borderRadius: 8, background:"#2a1414", color:"#fca5a5", fontSize: 13 }}>{error}</p>}
+      {error && <p role="alert" style={{ marginTop: 20, padding: 12, borderRadius: 8, background:"#f6ecec", color:"#a31414", fontSize: 13 }}>{error}</p>}
 
       <nav className="set-tabs" aria-label="Settings sections">
         {TABS.map(t => <button key={t.key} type="button" aria-pressed={tab === t.key} aria-selected={tab === t.key} onClick={() => pick(t.key)}>{t.label}</button>)}
@@ -172,17 +172,17 @@ export default function SettingsPage() {
       {tab === "account" && <>
       <section style={CARD}>
         <h2 style={{ fontSize: 18, margin: 0 }}>Connections</h2>
-        <p style={{ color:"#ababab", fontSize: 13, margin: "6px 0 18px" }}>What&apos;s connected right now.</p>
+        <p style={{ color:"#4c525c", fontSize: 13, margin: "6px 0 18px" }}>What&apos;s connected right now.</p>
         <div style={{ display: "grid", gap: 0 }}>
           {integrations.map((item) => (
-            <article key={item.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, padding: "16px 0", borderTop: "1px solid #2a2a2a" }}>
+            <article key={item.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, padding: "16px 0", borderTop: "1px solid #e7e7e4" }}>
               <div>
                 <h3 style={{ fontSize: 14, margin: 0 }}>{item.name}</h3>
-                <p style={{ color:"#9e9e9e", fontSize: 12.5, lineHeight: 1.5, margin: "5px 0 0" }}>{item.detail}</p>
+                <p style={{ color:"#575f6b", fontSize: 12.5, lineHeight: 1.5, margin: "5px 0 0" }}>{item.detail}</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                {item.name === "Cal.ai scheduling" && <Link href="/crm/settings/cal-ai" style={{ fontSize: 12.5, color:"#e6e6e6", textDecoration: "none", fontWeight: 600 }}>Set up</Link>}
-                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color:item.status === "Connected" || item.status === "Configured" ? "#e4e4e4" : "#ababab", background:item.status === "Connected" || item.status === "Configured" ? "#1c2a20" : "#232323", borderRadius: 20, padding: "5px 10px" }}>{item.status}</span>
+                {item.name === "Cal.ai scheduling" && <Link href="/crm/settings/cal-ai" style={{ fontSize: 12.5, color:"#121417", textDecoration: "none", fontWeight: 600 }}>Set up</Link>}
+                <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color:item.status === "Connected" || item.status === "Configured" ? "#181a1e" : "#4c525c", background:item.status === "Connected" || item.status === "Configured" ? "#f1f1ef" : "#f1f1ef", borderRadius: 20, padding: "5px 10px" }}>{item.status}</span>
               </div>
             </article>
           ))}
@@ -192,15 +192,15 @@ export default function SettingsPage() {
       <section style={{ ...CARD, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
         <div>
           <h2 style={{ fontSize: 18, margin: 0 }}>Sign out</h2>
-          <p style={{ color:"#ababab", fontSize: 13, lineHeight: 1.5, margin: "6px 0 0" }}>Sign out of Cinder on this browser.</p>
+          <p style={{ color:"#4c525c", fontSize: 13, lineHeight: 1.5, margin: "6px 0 0" }}>Sign out of Cinder on this browser.</p>
         </div>
-        <button type="button" onClick={() => void signOut()} disabled={signingOut} style={{ border:"1px solid #3a3a3a", borderRadius: 9, padding: "9px 14px", background:"transparent", color:"#e6e6e6", fontWeight: 600, fontSize: 13, cursor: signingOut ? "wait" : "pointer" }}>{signingOut ? "Signing out…" : "Sign out"}</button>
+        <button type="button" onClick={() => void signOut()} disabled={signingOut} style={{ border:"1px solid #dcddda", borderRadius: 9, padding: "9px 14px", background:"transparent", color:"#121417", fontWeight: 600, fontSize: 13, cursor: signingOut ? "wait" : "pointer" }}>{signingOut ? "Signing out…" : "Sign out"}</button>
       </section>
       </>}
     </main>
   );
 }
 
-const CARD: React.CSSProperties = { marginTop: 18, border: "1px solid #2a2a2a", borderRadius: 16, background: "#1a1a1a", padding: 22 };
+const CARD: React.CSSProperties = { marginTop: 18, border: "1px solid #e7e7e4", borderRadius: 16, background: "#ffffff", padding: 22 };
 type Tab = "business" | "automations" | "account";
 const TABS: { key: Tab; label: string }[] = [{ key: "business", label: "Business" }, { key: "automations", label: "Automations" }, { key: "account", label: "Account" }];

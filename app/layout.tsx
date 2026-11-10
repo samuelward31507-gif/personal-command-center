@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Archivo, Geist, Geist_Mono, Newsreader } from "next/font/google";
+import { Geist_Mono, Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
 import "./cinder-minimal.css";
 import "./stealth.css";
@@ -9,13 +9,14 @@ import "./claude.css";
 import "./design.css";
 import "./mission.css";
 import "./ui.css";
+import "./light.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+// Same faces as cinderrevenue.com: Inter for interface text, Inter Tight for titles and figures.
+// The variable names stay as they were so every older stylesheet picks the new faces up.
+const geistSans = Inter({ variable: "--font-geist-sans", subsets: ["latin"], display: "swap" });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-// Display face for titles and key figures: Archivo at an expanded width reads like an instrument readout.
-const display = Archivo({ variable: "--font-display", subsets: ["latin"], axes: ["wdth"], display: "swap" });
-// Serif for the Home greeting only.
-const greetingSerif = Newsreader({ variable: "--font-greeting", subsets: ["latin"], axes: ["opsz"], display: "swap" });
+const display = Inter_Tight({ variable: "--font-display", subsets: ["latin"], display: "swap" });
+const greetingSerif = Inter_Tight({ variable: "--font-greeting", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "Cinder",

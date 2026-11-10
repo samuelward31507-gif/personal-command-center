@@ -1,17 +1,17 @@
 .pt-page .pt-h { font-size: 1.05rem; margin: 28px 0 10px; }
 .pt-city { max-width: 260px; margin-bottom: 12px; }
 .pt-kinds { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-.pt-kind { border: 1px solid var(--u-line, #e3ded6); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.pt-kind { border: 1px solid var(--u-line, #1f2226); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
 .pt-kind h3 { margin: 0; font-size: 1rem; }
 .pt-kind p { margin: 0; line-height: 1.45; }
 .pt-kind summary { cursor: pointer; font-weight: 600; }
-.pt-pitch { margin-top: 6px !important; padding: 10px; border-radius: 8px; background: var(--u-soft, rgba(0,0,0,.04)); }
+.pt-pitch { margin-top: 6px !important; padding: 10px; border-radius: 8px; background: var(--u-soft, rgba(18,20,23,.016)); }
 .pt-acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: auto; }
-.pt-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 18px 0; padding: 16px; border: 1px solid var(--u-line, #e3ded6); border-radius: 12px; }
+.pt-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 18px 0; padding: 16px; border: 1px solid var(--u-line, #1f2226); border-radius: 12px; }
 .pt-form .pt-wide { grid-column: 1 / -1; }
 .pt-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
-.pt-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--u-line, #e3ded6); }
+.pt-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--u-line, #1f2226); }
 .pt-list li.is-off { opacity: .55; }
 .pt-who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.pt-who span { color: var(--u-muted, #6b645c); font-size: .9rem; }
+.pt-who span { color: var(--u-muted, #969aa1); font-size: .9rem; }
 .pt-notes { font-size: .85rem !important; }

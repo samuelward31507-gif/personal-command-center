@@ -11,10 +11,10 @@ export type TextContext = {
   tasks?: { title: string; due: string }[]; closed?: boolean;
 };
 
-const box: CSSProperties = { marginTop: 12, padding: 16, border: "1px solid var(--u-line, #2c2a27)", borderRadius: 14, background: "var(--u-sheet, #1a1918)" };
-const field: CSSProperties = { width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--u-line, #2c2a27)", background: "var(--u-bg, #131211)", color: "var(--u-text, #f3efe9)", font: "inherit", fontSize: 14, lineHeight: 1.45, resize: "vertical" };
+const box: CSSProperties = { marginTop: 12, padding: 16, border: "1px solid var(--u-line, #e7e7e4)", borderRadius: 14, background: "var(--u-sheet, #ffffff)" };
+const field: CSSProperties = { width: "100%", boxSizing: "border-box", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--u-line, #e7e7e4)", background: "var(--u-bg, #f6f6f4)", color: "var(--u-text, #121417)", font: "inherit", fontSize: 14, lineHeight: 1.45, resize: "vertical" };
 const btn: CSSProperties = { justifyContent: "center", fontSize: 13, padding: "9px 12px" };
-const warn: CSSProperties = { margin: "8px 0 0", fontSize: 12.5, color: "#fbbf24" };
+const warn: CSSProperties = { margin: "8px 0 0", fontSize: 12.5, color: "#c69619" };
 
 function dueLabel(iso: string, tz: string | null) {
   return new Date(iso).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: tz ?? "America/Denver", timeZoneName: "short" });
@@ -40,11 +40,11 @@ export default function TextDraft({ ctx, contactId, who, onDone, primaryClass = 
   const [error, setError] = useState<string | null>(null);
 
   const tasks = ctx.tasks ?? [];
-  const taskLine = tasks.length ? <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "#a1a1aa" }}>Added to Tasks: {tasks.map(t => `${t.title} · ${dueLabel(t.due, ctx.timeZone)}`).join("; ")}</p>
-    : ctx.closed ? <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "#a1a1aa" }}>No answer after both redials. Closed out, no more reminders.</p> : null;
+  const taskLine = tasks.length ? <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "#515862" }}>Added to Tasks: {tasks.map(t => `${t.title} · ${dueLabel(t.due, ctx.timeZone)}`).join("; ")}</p>
+    : ctx.closed ? <p style={{ margin: "8px 0 0", fontSize: 12.5, color: "#515862" }}>No answer after both redials. Closed out, no more reminders.</p> : null;
 
-  if (state === "sent" || state === "skipped") return <div style={box} role="status"><p style={{ margin: 0, fontSize: 13.5, color: "#d4d4d8" }}>{state === "sent" ? `Logged: text sent to ${who}.` : "Skipped. Nothing was logged."}</p>{taskLine}</div>;
-  if (!ctx.template) return ctx.notice || taskLine ? <div style={box}>{ctx.notice && <p style={{ margin: 0, fontSize: 13.5, color: ctx.notice.startsWith("No texts") ? "#fca5a5" : "#fbbf24" }}>{ctx.notice}</p>}{taskLine}</div> : null;
+  if (state === "sent" || state === "skipped") return <div style={box} role="status"><p style={{ margin: 0, fontSize: 13.5, color: "#25282d" }}>{state === "sent" ? `Logged: text sent to ${who}.` : "Skipped. Nothing was logged."}</p>{taskLine}</div>;
+  if (!ctx.template) return ctx.notice || taskLine ? <div style={box}>{ctx.notice && <p style={{ margin: 0, fontSize: 13.5, color: ctx.notice.startsWith("No texts") ? "#a31414" : "#c69619" }}>{ctx.notice}</p>}{taskLine}</div> : null;
 
   const quiet = quietHoursWarning(new Date(), ctx.timeZone);
   const needsName = ctx.template === "T-INFO" && !ctx.firstName.trim();
@@ -66,20 +66,20 @@ export default function TextDraft({ ctx, contactId, who, onDone, primaryClass = 
     <div style={box}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
         <b style={{ fontSize: 14 }}>{TEMPLATE_LABEL[ctx.template]} for {who}</b>
-        <span style={{ fontSize: 12, color: "#a1a1aa" }}>Nothing sends from Cinder. You send it from your phone.</span>
+        <span style={{ fontSize: 12, color: "#515862" }}>Nothing sends from Cinder. You send it from your phone.</span>
       </div>
       {needsName && <p style={warn}>No first name on this contact. Add one, or edit the greeting before you send.</p>}
       {quiet && <p style={warn}>{quiet}</p>}
       {ctx.template === "T-INFO" && (
-        <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center", fontSize: 12.5, color: "#a1a1aa" }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center", fontSize: 12.5, color: "#515862" }}>
           Times (their time):
           <input value={slot1} onChange={e => setSlot1(e.target.value.slice(0, 20))} aria-label="First time option" style={{ ...field, width: 90, padding: "6px 8px", fontSize: 13 }} />
           <input value={slot2} onChange={e => setSlot2(e.target.value.slice(0, 20))} aria-label="Second time option" style={{ ...field, width: 90, padding: "6px 8px", fontSize: 13 }} />
         </div>
       )}
       <textarea rows={7} value={body} onChange={e => { setBody(e.target.value); setEdited(true); }} aria-label="Text draft" style={{ ...field, marginTop: 10 }} />
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: body.length > 320 ? "#fbbf24" : "#71717a", marginTop: 4 }}>
-        <span>{edited ? <button type="button" onClick={() => { setEdited(false); setBody(generated); }} style={{ background: "none", border: 0, color: "#a1a1aa", padding: 0, cursor: "pointer", fontSize: 12 }}>Reset to template</button> : "Edit anything before you send."}</span>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: body.length > 320 ? "#c69619" : "#828891", marginTop: 4 }}>
+        <span>{edited ? <button type="button" onClick={() => { setEdited(false); setBody(generated); }} style={{ background: "none", border: 0, color: "#515862", padding: 0, cursor: "pointer", fontSize: 12 }}>Reset to template</button> : "Edit anything before you send."}</span>
         <span>{body.length} characters{body.length > 160 ? ` · ${Math.ceil(body.length / 153)} SMS segments` : ""}</span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(120px,1fr))", gap: 6, marginTop: 10 }}>
@@ -89,7 +89,7 @@ export default function TextDraft({ ctx, contactId, who, onDone, primaryClass = 
         <button type="button" className={quietClass} data-variant="primary" style={btn} disabled={state === "saving" || !body.trim()} onClick={() => void markSent()}>{state === "saving" ? "Logging…" : "Mark sent"}</button>
         <button type="button" className={quietClass} data-variant="primary" style={btn} onClick={() => setState("skipped")}>Skip</button>
       </div>
-      {error && <p style={{ ...warn, color: "#fca5a5" }} role="alert">{error}</p>}
+      {error && <p style={{ ...warn, color: "#a31414" }} role="alert">{error}</p>}
       {taskLine}
     </div>
   );

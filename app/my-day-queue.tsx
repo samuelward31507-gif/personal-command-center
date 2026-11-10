@@ -7,10 +7,10 @@ import SuggestedDeal, { type SuggestedDealData } from "./suggested-deal";
 import { quickActions } from "@/lib/crm-ux";
 
 const STATUS: Record<QueueStatus, { label: string; color: string }> = {
-  overdue: { label: "Overdue", color: "#f0a3a3" },
-  blocked: { label: "Blocked", color: "#e8b08a" },
-  today: { label: "Today", color: "#c4c4c4" },
-  upcoming: { label: "Upcoming", color: "#8a8a8a" },
+  overdue: { label: "Overdue", color: "#9e1a1a" },
+  blocked: { label: "Blocked", color: "#2a2d32" },
+  today: { label: "Today", color: "#353a41" },
+  upcoming: { label: "Upcoming", color: "#697381" },
 };
 
 function localKey(d: Date) {
@@ -22,12 +22,12 @@ function tomorrowAt9(): { iso: string; day: string } {
   return { iso: d.toISOString(), day: localKey(d) };
 }
 
-const ROW: React.CSSProperties = { background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12, padding: "14px 16px" };
+const ROW: React.CSSProperties = { background: "#ffffff", border: "1px solid #e7e7e4", borderRadius: 12, padding: "14px 16px" };
 const PILL: React.CSSProperties = { flex: "0 0 auto", minWidth: 74, textAlign: "center", fontSize: 11, fontWeight: 700, letterSpacing: .4, border: "1px solid", borderRadius: 999, padding: "4px 10px", marginTop: 1 };
-const BTN: React.CSSProperties = { display: "inline-flex", alignItems: "center", border: "1px solid #3a3a3a", background: "#303030", color: "#ddd", borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", lineHeight: 1.2 };
-const BTN_PRIMARY: React.CSSProperties = { ...BTN, background: "#efefef", color: "#1a1a1a", borderColor: "#efefef" };
+const BTN: React.CSSProperties = { display: "inline-flex", alignItems: "center", border: "1px solid #dcddda", background: "#dcddda", color: "#1f2125", borderRadius: 8, padding: "7px 12px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", lineHeight: 1.2 };
+const BTN_PRIMARY: React.CSSProperties = { ...BTN, background: "#121417", color: "#ffffff", borderColor: "#121417" };
 const SALES: QueueGroup[] = ["revenue", "prospects", "meetings", "deals"];
-const chip = (on: boolean): React.CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid " + (on ? "#efefef" : "#3a3a3a"), background: on ? "#efefef" : "#1a1a1a", color: on ? "#1a1a1a" : "#cfcfcf", borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" });
+const chip = (on: boolean): React.CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid " + (on ? "#121417" : "#dcddda"), background: on ? "#121417" : "#ffffff", color: on ? "#ffffff" : "#2b2f35", borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" });
 
 export default function MyDayQueue({ showFilters = false, title = "Today’s queue" }: { showFilters?: boolean; title?: string }) {
   const [items, setItems] = useState<QueueItem[]>([]);
@@ -121,18 +121,18 @@ export default function MyDayQueue({ showFilters = false, title = "Today’s que
         <button key={key} type="button" role="tab" aria-selected={focus === key} style={chip(focus === key)} onClick={() => setFocus(key)}>{label} <span style={{ opacity: .6 }}>{count}</span></button>)}
     </div>}
     {error && <p className="local-note" role="alert">{error}</p>}
-    {notice && <p className="local-note" role="status" style={{ color: notice.ok ? "#e4e4e4" : "#fca5a5" }}>{notice.text}</p>}
+    {notice && <p className="local-note" role="status" style={{ color: notice.ok ? "#181a1e" : "#a31414" }}>{notice.text}</p>}
     {notice?.deal && <SuggestedDeal key={notice.text} deal={notice.deal} />}
     {order.filter(g => byGroup[g]?.length).map(g => <div key={g} style={{ marginTop: 14 }}>
-      <div style={{ fontSize: 12.5, fontWeight: 600, color: "#9e9e9e", margin: "0 0 6px" }}>{groups[g] || g} · {byGroup[g].length}</div>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: "#575f6b", margin: "0 0 6px" }}>{groups[g] || g} · {byGroup[g].length}</div>
       <div style={{ display: "grid", gap: 8 }}>
         {byGroup[g].map(item => <div key={item.id} style={ROW}>
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
             <span style={{ ...PILL, color: STATUS[item.status].color, borderColor: STATUS[item.status].color + "55" }}>{STATUS[item.status].label}</span>
             <div style={{ flex: "1 1 320px", minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 650, color: "#f3f3f3", lineHeight: 1.35 }}>{item.title}</div>
-              <div style={{ fontSize: 12.5, color: "#ababab", lineHeight: 1.55, marginTop: 3 }}>{item.why}</div>
-              {item.lastActivity && <div style={{ fontSize: 12, color: "#7c7c86", marginTop: 2 }}>Last touch: {item.lastActivity}</div>}
+              <div style={{ fontSize: 14, fontWeight: 650, color: "#121417", lineHeight: 1.35 }}>{item.title}</div>
+              <div style={{ fontSize: 12.5, color: "#4c525c", lineHeight: 1.55, marginTop: 3 }}>{item.why}</div>
+              {item.lastActivity && <div style={{ fontSize: 12, color: "#717b8b", marginTop: 2 }}>Last touch: {item.lastActivity}</div>}
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginLeft: "auto" }}>
               {item.callable && <button type="button" style={BTN_PRIMARY} onClick={() => call(item)}>Call</button>}
@@ -142,9 +142,9 @@ export default function MyDayQueue({ showFilters = false, title = "Today’s que
               <a style={{ ...BTN, textDecoration: "none" }} href={item.href}>Open</a>
             </div>
           </div>
-          {open === item.id && item.contact && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 6, marginTop: 12, paddingTop: 12, borderTop: "1px solid #2e2e2e" }}>
+          {open === item.id && item.contact && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))", gap: 6, marginTop: 12, paddingTop: 12, borderTop: "1px solid #e7e7e4" }}>
             {CALL_OUTCOMES.map(o => <button key={o} type="button" disabled={busy !== null} onClick={() => void logOutcome(item, o)}
-              style={{ ...BTN, justifyContent: "center", color: o === "do_not_contact" ? "#fca5a5" : o === "meeting_booked" || o === "interested" ? "#e4e4e4" : "#ddd" }}>
+              style={{ ...BTN, justifyContent: "center", color: o === "do_not_contact" ? "#a31414" : o === "meeting_booked" || o === "interested" ? "#181a1e" : "#1f2125" }}>
               {busy === item.id + o ? "Saving…" : OUTCOME_LABELS[o]}
             </button>)}
           </div>}

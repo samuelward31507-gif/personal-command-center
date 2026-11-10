@@ -6,7 +6,7 @@ body .dv-page .dv-proj { padding-left: 12px !important; padding-right: 12px !imp
 body .dv-page .dv-proj.is-on { background: var(--u-sheet) !important; box-shadow: inset 2px 0 0 var(--u-text); }
 body .dv-page .dv-proj-end { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
 body .dv-page .dv-prog { width: 70px; height: 5px; border-radius: 3px; background: var(--u-line); overflow: hidden; }
-body .dv-page .dv-prog i { display: block; height: 100%; background: #d9d3cb; border-radius: 3px; }
+body .dv-page .dv-prog i { display: block; height: 100%; background: #292c32; border-radius: 3px; }
 body .dv-page .dv-prog-lg { flex: 1; width: auto; height: 6px; }
 body .dv-page .dv-plan { position: sticky; top: 24px; padding: 24px 26px; border-radius: 16px; background: var(--u-sheet) !important; border: 1px solid var(--u-line); }
 body .dv-page .dv-plan-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
@@ -19,9 +19,9 @@ body .dv-page .dv-pct b { font-family: var(--u-display); font-stretch: 125%; fon
 body .dv-page .dv-pct .u-note { flex-basis: 100%; }
 body .dv-page .dv-steps { list-style: none; margin: 18px 0 0; padding: 0; border-top: 1px solid var(--u-line); }
 body .dv-page .dv-step { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--u-line-soft); }
-body .dv-page .dv-check { flex: 0 0 auto; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border-radius: 6px !important; border: 1.5px solid #4a4540 !important; background: transparent !important; color: #141210 !important; cursor: pointer; }
+body .dv-page .dv-check { flex: 0 0 auto; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border-radius: 6px !important; border: 1.5px solid #b6b9be !important; background: transparent !important; color: #f6f6f4 !important; cursor: pointer; }
 body .dv-page .dv-check:hover { border-color: var(--u-text) !important; }
-body .dv-page .dv-check[aria-pressed="true"] { background: #d9d3cb !important; border-color: #d9d3cb !important; }
+body .dv-page .dv-check[aria-pressed="true"] { background: #292c32 !important; border-color: #292c32 !important; }
 body .dv-page .dv-step-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 body .dv-page .dv-step-t { font-size: 14px; color: var(--u-text); }
 body .dv-page .dv-step.is-done .dv-step-t, body .dv-page .dv-step.is-cancelled .dv-step-t { color: var(--u-faint); text-decoration: line-through; text-decoration-color: var(--u-line); }

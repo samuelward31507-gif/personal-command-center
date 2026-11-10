@@ -60,7 +60,7 @@ export default function OpsPanel({ projectId }: { projectId: string }) {
 
     <div className="op-tabs" role="group" aria-label="Build operations">
       {([["setup", "Setup sheet", ops.gaps.length ? `${ops.gaps.length} missing` : "Complete"], ["messages", "Messages", msgSummary], ["launch", "Launch test", `${ops.launchState.passed} of ${ops.launchState.total}`], ["share", "Client portal", ops.portal.link ? "On" : "Off"]] as const).map(([k, label, sub]) =>
-        <button key={k} type="button" aria-pressed={tab === k} style={{ background: tab === k ? "#2c2c2c" : "transparent" }} onClick={() => setTab(k)}><b>{label}</b><small>{sub}</small></button>)}
+        <button key={k} type="button" aria-pressed={tab === k} style={{ background: tab === k ? "#e7e7e4" : "transparent" }} onClick={() => setTab(k)}><b>{label}</b><small>{sub}</small></button>)}
     </div>
     {note && <p className={"op-note " + (note.ok ? "ok" : "bad")} role="status">{note.text}</p>}
 

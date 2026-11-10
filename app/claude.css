@@ -6,22 +6,22 @@
 
 :root {
   --st-bg: var(--mc-bg); --st-bg-2: var(--mc-panel); --st-surface: var(--mc-panel); --st-raised: var(--mc-raised); --st-hover: var(--mc-hover);
-  --st-line: var(--mc-hover); --st-line-2: var(--mc-line-2); --st-text: #efefef; --st-soft: #c4c4c4; --st-muted: #9e9e9e; --st-faint: #797979;
-  --st-accent: #e6e6e6; --st-radius: 14px;
-  --pl-text: #efefef; --pl-title: #efefef; --pl-soft: #c4c4c4; --pl-muted: #9e9e9e; --pl-line: var(--mc-hover); --pl-surface: var(--mc-panel); --pl-raised: var(--mc-raised);
+  --st-line: var(--mc-hover); --st-line-2: var(--mc-line-2); --st-text: #121417; --st-soft: #353a41; --st-muted: #575f6b; --st-faint: #7f858d;
+  --st-accent: #121417; --st-radius: 14px;
+  --pl-text: #121417; --pl-title: #121417; --pl-soft: #353a41; --pl-muted: #575f6b; --pl-line: var(--mc-hover); --pl-surface: var(--mc-panel); --pl-raised: var(--mc-raised);
 }
 
 /* Canvas: the main area is the warm charcoal; the sidebar sits a step darker, like Claude. */
 html body .app-shell, html body .main-panel, html body .crm-shell-main, html body .main-panel main, html body .page-content { background-color: var(--st-bg) !important; }
 html body .cx-side { background: var(--mc-panel) !important; border-right: 1px solid var(--mc-raised) !important; }
-html body .cx-item.is-active, html body .cx-new.is-active { background: var(--mc-raised) !important; color: #efefef !important; }
+html body .cx-item.is-active, html body .cx-new.is-active { background: var(--mc-raised) !important; color: #121417 !important; }
 html body .cx-item:hover, html body .cx-new:hover { background: var(--mc-raised) !important; }
-html body .cx-new-icon { background: var(--mc-hover) !important; color: #efefef !important; }
+html body .cx-new-icon { background: var(--mc-hover) !important; color: #121417 !important; }
 
 /* Top bar: no hard line, just the breadcrumb. */
-html body .topbar, html body .crm-shell-main > .topbar { background: rgba(25, 25, 25, .9) !important; border-bottom: 1px solid transparent !important; }
-html body .breadcrumbs, html body .breadcrumbs a { color: #9e9e9e !important; }
-html body .breadcrumbs strong { color: #e6e6e6 !important; font-weight: 500 !important; }
+html body .topbar, html body .crm-shell-main > .topbar { background: rgba(18,20,23,.36) !important; border-bottom: 1px solid transparent !important; }
+html body .breadcrumbs, html body .breadcrumbs a { color: #575f6b !important; }
+html body .breadcrumbs strong { color: #121417 !important; font-weight: 500 !important; }
 
 /* No labels stacked above page titles; the title says it. */
 html body .main-panel main [class$="-eyebrow"], html body .main-panel main .eyebrow, html body .main-panel main .section-kicker,
@@ -31,7 +31,7 @@ html body .main-panel main p:has(+ h1), html body .main-panel main div:has(+ h1)
 html body .main-panel main h1, html body .main-panel main h1.td-title, html body .main-panel main h1.sb-title, html body .main-panel main .cm-title {
   font-size: clamp(30px, 2.8vw, 38px) !important; font-weight: 400 !important; letter-spacing: -0.02em !important; margin: 4px 0 10px !important;
 }
-html body .page-subtitle, html body .main-panel main h1 + p { color: #ababab !important; font-size: 15px !important; }
+html body .page-subtitle, html body .main-panel main h1 + p { color: #4c525c !important; font-size: 15px !important; }
 
 /* Cards and panels: soft, rounded, barely-there borders. */
 html body .main-panel main :is([class*="card"], [class*="panel"], [class*="Panel"], article, .c):not(.calendar-page *) {
@@ -39,13 +39,13 @@ html body .main-panel main :is([class*="card"], [class*="panel"], [class*="Panel
 }
 /* Stat tiles read as numbers, not boxes full of labels. */
 html body .main-panel main :is(.stat-label, [class*="stat"] > span:first-child, [class*="metric"] > span:first-child, .fin-metrics small, .fin-secondary small) {
-  text-transform: none !important; letter-spacing: 0 !important; font-size: 12.5px !important; font-weight: 500 !important; color: #9e9e9e !important;
+  text-transform: none !important; letter-spacing: 0 !important; font-size: 12.5px !important; font-weight: 500 !important; color: #575f6b !important;
 }
 
 /* Buttons: rounded, quiet; primary is the light pill. */
 html body .main-panel main button:not(.calendar-page *), html body .main-panel main .btn, html body .main-panel main a[data-variant] { border-radius: 10px !important; }
-html body .main-panel main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) { background: var(--mc-panel) !important; border-color: var(--mc-hover) !important; color: #efefef !important; }
-html body .main-panel main :is(input, select, textarea):focus { border-color: #797979 !important; box-shadow: 0 0 0 3px rgba(240, 238, 230, .06) !important; }
+html body .main-panel main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) { background: var(--mc-panel) !important; border-color: var(--mc-hover) !important; color: #121417 !important; }
+html body .main-panel main :is(input, select, textarea):focus { border-color: #7f858d !important; box-shadow: 0 0 0 3px rgba(255,255,255,.06) !important; }
 
 /* Breathing room. */
 html body .crm-shell-main > main:not(.calendar-page):not(:has(.calendar-page)):not(.pipeline-page):not(.cm-page):not(.ask-root) { max-width: 1040px !important; padding-top: 36px !important; }
@@ -55,7 +55,7 @@ html body ::-webkit-scrollbar { width: 10px; height: 10px; }
 html body ::-webkit-scrollbar-thumb { background: var(--mc-hover); border-radius: 10px; border: 2px solid var(--mc-bg); }
 
 /* Sidebar buttons (Search, More) look like plain nav items, not filled buttons. */
-html body .cx-side button.cx-search, html body .cx-side button.cx-more { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #c4c4c4 !important; }
+html body .cx-side button.cx-search, html body .cx-side button.cx-more { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #353a41 !important; }
 html body .cx-side button.cx-search:hover, html body .cx-side button.cx-more:hover { background: var(--mc-raised) !important; }
 html body .topbar, html body .crm-shell-main > .topbar { box-shadow: none !important; border: 0 !important; }
 
@@ -72,23 +72,23 @@ html body main h1, html body main:not(.calendar-page):not(:has(.calendar-page)) 
 html body .main-panel main h1, html body main h1.td-title, html body main h1.sb-title, html body main .cm-title,
 html body .main-panel main h1.td-title, html body .main-panel main h1.sb-title, html body .main-panel main .cm-title {
   font-family: var(--st-font) !important; font-size: clamp(24px, 2.1vw, 28px) !important; font-weight: 600 !important;
-  letter-spacing: -0.028em !important; line-height: 1.2 !important; color: #efefef !important; font-optical-sizing: auto;
+  letter-spacing: -0.028em !important; line-height: 1.2 !important; color: #121417 !important; font-optical-sizing: auto;
 }
 html body .ask-root .ask-hello {
   font-family: var(--st-font) !important; font-size: clamp(26px, 2.6vw, 32px) !important; font-weight: 600 !important; letter-spacing: -0.03em !important;
 }
 /* Subtitles */
-html body .page-subtitle, html body main h1 + p, html body .main-panel main h1 + p { font-size: 14.5px !important; line-height: 1.55 !important; color: #ababab !important; letter-spacing: -0.004em; }
+html body .page-subtitle, html body main h1 + p, html body .main-panel main h1 + p { font-size: 14.5px !important; line-height: 1.55 !important; color: #4c525c !important; letter-spacing: -0.004em; }
 /* Section and card headings */
-html body main:not(.calendar-page):not(:has(.calendar-page)) h2, html body .main-panel main h2 { font-family: var(--st-font) !important; font-size: 15px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: #efefef !important; }
-html body main:not(.calendar-page):not(:has(.calendar-page)) h3, html body .main-panel main h3 { font-family: var(--st-font) !important; font-size: 13.5px !important; font-weight: 600 !important; letter-spacing: -0.006em !important; color: #e6e6e6 !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h2, html body .main-panel main h2 { font-family: var(--st-font) !important; font-size: 15px !important; font-weight: 600 !important; letter-spacing: -0.012em !important; color: #121417 !important; }
+html body main:not(.calendar-page):not(:has(.calendar-page)) h3, html body .main-panel main h3 { font-family: var(--st-font) !important; font-size: 13.5px !important; font-weight: 600 !important; letter-spacing: -0.006em !important; color: #121417 !important; }
 /* Big numbers: tabular figures so columns line up */
 html body main :is(strong, b, td, .sb-num, .sb-goal-num, .ow-amt, [class*="amount"], [class*="money"], [class*="metric"] strong, .fin-metrics strong) { font-variant-numeric: tabular-nums; }
 html body .fin-metrics strong, html body .sb-num, html body .hb-tile strong { letter-spacing: -0.02em; font-weight: 600; }
 /* Small labels: sentence case, quiet; no shouting uppercase */
-html body .main-panel main :is(.fin-metrics small, .fin-secondary small) { text-transform: none !important; letter-spacing: 0 !important; font-size: 12.5px !important; font-weight: 500 !important; color: #9e9e9e !important; }
+html body .main-panel main :is(.fin-metrics small, .fin-secondary small) { text-transform: none !important; letter-spacing: 0 !important; font-size: 12.5px !important; font-weight: 500 !important; color: #575f6b !important; }
 
 /* Pipeline cards: the stage picker gets its own full-width row so it never truncates. */
 html body .pipeline-deal footer { flex-wrap: wrap !important; }
 html body .pipeline-deal footer select { flex: 1 1 100% !important; max-width: none !important; order: 3; font-size: 12.5px !important; padding: 6px 8px !important; }
-html body .pipeline-deal-monthly { color: #e4e4e4 !important; }
+html body .pipeline-deal-monthly { color: #181a1e !important; }

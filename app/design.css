@@ -9,18 +9,18 @@
   --d-side: var(--mc-panel);        /* sidebar */
   --d-raise: var(--mc-raised);       /* composer */
   --d-card: var(--mc-panel);        /* cards and tiles */
-  --d-thumb: #212121;       /* previews inside cards */
+  --d-thumb: #ffffff;       /* previews inside cards */
   --d-hover: var(--mc-raised);
   --d-active: var(--mc-raised);
   --d-selected: var(--mc-hover);
   --d-line: var(--mc-raised);
   --d-line-2: var(--mc-hover);
-  --d-text: #ededed;
-  --d-soft: #c2c2c2;
-  --d-muted: #969696;
-  --d-faint: #737373;
-  --d-ember: #d97757;
-  --d-late: #e8a598;
+  --d-text: #121417;
+  --d-soft: #373c43;
+  --d-muted: #5e6774;
+  --d-faint: #858b93;
+  --d-ember: #121417;
+  --d-late: #963422;
 }
 
 /* ---------- Canvas ---------- */
@@ -71,17 +71,17 @@ html body .ask-hello-mark { width: 30px; height: 30px; flex-basis: 30px; filter:
 html body .ask-root .ask-composer {
   min-height: 112px; padding: 17px 12px 11px 19px; gap: 10px; justify-content: space-between;
   border-radius: 20px; background: var(--d-raise) !important; border: 1px solid var(--mc-hover) !important;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .025) inset, 0 16px 40px -28px rgba(0, 0, 0, .9);
+  box-shadow: 0 1px 0 rgba(255,255,255,.025) inset, 0 16px 40px -28px rgba(18,20,23,.288);
 }
 html body .ask-root .ask-composer:focus-within { border-color: var(--mc-line-2) !important; }
 html body .ask-root .ask-composer textarea { font-size: 16px !important; line-height: 1.5; color: var(--d-text) !important; }
-html body .ask-root .ask-composer textarea::placeholder { color: #808080 !important; }
+html body .ask-root .ask-composer textarea::placeholder { color: #727c8c !important; }
 html body .ask-root .ask-tool { width: 32px; height: 32px; padding: 0; justify-content: center; border: 0 !important; border-radius: 9px; color: var(--d-soft) !important; background: transparent !important; }
 html body .ask-root .ask-tool:hover { background: var(--mc-hover) !important; color: var(--d-text) !important; }
 html body .ask-root .ask-tool.is-on { color: var(--d-text) !important; background: var(--mc-hover) !important; }
 html body .ask-root .ask-send { width: 32px; height: 32px; flex-basis: 32px; border-radius: 9px; background: var(--d-ember) !important; color: var(--mc-panel) !important; }
-html body .ask-root .ask-send:hover:not(:disabled) { background: #e2876a !important; }
-html body .ask-root .ask-send:disabled { background: #343434 !important; color: #7a7a7a !important; }
+html body .ask-root .ask-send:hover:not(:disabled) { background: #2a2d32 !important; }
+html body .ask-root .ask-send:disabled { background: #dcddda !important; color: #7e848c !important; }
 html body .ask-suggest { gap: 8px; margin-top: 14px; flex-wrap: nowrap; }
 html body .ask-root .ask-pill {
   height: 34px; padding: 0 12px; border-radius: 9px; gap: 8px; font-size: 13.5px; font-weight: 400;
@@ -102,16 +102,16 @@ a.hn-card {
   background: var(--d-card); border: 1px solid var(--d-line); color: var(--d-text) !important; text-decoration: none;
   transition: background .15s ease, border-color .15s ease, transform .15s ease;
 }
-a.hn-card:hover { background: #1d1d1d; border-color: var(--d-line-2); transform: translateY(-1px); }
+a.hn-card:hover { background: #ffffff; border-color: var(--d-line-2); transform: translateY(-1px); }
 .hn-thumb { height: 104px; border-radius: 10px; background: var(--d-thumb); padding: 12px 13px; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
 .hn-thumb b { font-size: 11.5px; font-weight: 600; color: var(--d-text); margin-bottom: 2px; }
-.hn-thumb span { font-size: 11px; color: #8c8c8c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hn-thumb span.late { color: #c98b7f; }
+.hn-thumb span { font-size: 11px; color: #67717e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hn-thumb span.late { color: #814336; }
 .hn-thumb .hn-money { display: flex; justify-content: space-between; gap: 8px; }
 .hn-thumb .hn-money em { font-style: normal; overflow: hidden; text-overflow: ellipsis; }
 .hn-thumb .hn-money i { font-style: normal; color: var(--d-soft); font-variant-numeric: tabular-nums; }
 .hn-thumb .hn-bar { display: block; height: 5px; border-radius: 5px; background: var(--mc-hover); overflow: hidden; margin: 4px 0 2px; }
-.hn-thumb .hn-bar i { display: block; height: 100%; border-radius: 5px; background: #bdbdbd; min-width: 4px; }
+.hn-thumb .hn-bar i { display: block; height: 100%; border-radius: 5px; background: #3b4149; min-width: 4px; }
 .hn-t { font-size: 13.5px; font-weight: 500; margin: 11px 8px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hn-s { font-size: 12.5px; color: var(--d-faint); margin: 3px 8px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hn-s.late { color: var(--d-late); }
@@ -120,7 +120,7 @@ a.hn-card:hover { background: #1d1d1d; border-color: var(--d-line-2); transform:
 /* ---------- Every page: cards, lines, inputs, notices in the same greys ---------- */
 html body .main-panel main :is([class*="card"], [class*="panel"], [class*="Panel"], article):not(.calendar-page *):not(.ask-root *) { background-color: var(--d-card) !important; border-color: var(--d-line) !important; }
 html body .main-panel main :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(.ask-root *) { background: var(--mc-raised) !important; border-color: var(--mc-hover) !important; color: var(--d-text) !important; }
-html body .main-panel main :is(input, select, textarea):focus:not(.ask-root *) { border-color: #4a4a4a !important; box-shadow: none !important; }
+html body .main-panel main :is(input, select, textarea):focus:not(.ask-root *) { border-color: #b1b4b9 !important; box-shadow: none !important; }
 html body main h1 + p, html body .main-panel main h1 + p { margin-bottom: 26px !important; }
 html body .main-panel main .fin-metrics, html body main .fin-metrics { background: transparent !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; gap: 12px !important; }
 html body .fin-metrics article { background: var(--d-card) !important; border: 1px solid var(--d-line) !important; border-radius: 14px !important; }
