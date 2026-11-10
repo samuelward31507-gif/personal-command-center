@@ -327,3 +327,16 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 .notif time { font-weight: 400; color: var(--text-3); font-size: 12px; }
 .notif p { font-size: 13px; line-height: 1.4; color: var(--text); margin-top: 2px; }
 @media (max-width: 860px) { .vs { grid-template-columns: 1fr; } .vs-col { padding: 24px; } }
+
+/* Light iMessage screen */
+.screen { background: #fff; }
+.sb { color: #000; }
+.sb i { background: #000; }
+.thread-head { border-bottom-color: #ececee; background: #f9f9fb; }
+.thread-head b { color: #000; }
+.thread-head span { color: #8e8e93; }
+.msg.in { background: #e9e9eb; color: #000; }
+.chip { color: var(--ok); }
+.booked { background: var(--ok-bg); border-color: rgba(23, 144, 90, .3); }
+.booked b { color: var(--ok); }
+.booked span { color: #3c3c43; }
