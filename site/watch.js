@@ -49,7 +49,7 @@
     at(P + 2500, scene("s2")); at(P + 2500, count("s2", 1000));
   }
   at(P + Q - 2000, scene("s3")); at(P + Q - 2000, source(""));
-  at(P + Q, scene("s4")); at(P + Q, function () { if (filmEl.film) { filmEl.film.play(); log("film:start"); } });
+  at(P + Q, scene("s4")); at(P + Q, function () { if (filmEl.film) { filmEl.film.play(); log("film:start"); if (window.cinderTrack) window.cinderTrack("play", { label: "watch film" + (location.search.match(/story=(\w+)/) ? ": " + RegExp.$1 : "") }); } });
   at(P + Q + DEMO, function () { if (filmEl.film) filmEl.film.pause(); scene("s6")(); });
   at(P + Q + DEMO + 3500, function () { log("end"); window.__watchDone = true; body.classList.add("done"); });
   filmEl.addEventListener("film:chapter", function (e) { log("chapter:" + e.detail); });

@@ -32,7 +32,13 @@ export async function GET(req: Request) {
   const signing = await sql`SELECT s.id, s.viewed_at, s.signed_at, s.signer_name, s.deal_id, coalesce(c.company, d.title) AS who
     FROM public.signing_requests s JOIN public.deals d ON d.id = s.deal_id AND d.owner_id = s.owner_id LEFT JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id
     WHERE s.owner_id = ${o} AND (s.viewed_at > ${since}::timestamptz OR s.signed_at > ${since}::timestamptz) ORDER BY coalesce(s.signed_at, s.viewed_at) DESC LIMIT 5`.catch(() => []);
+  // A prospect opened the personal demo link you texted or emailed (watch?n=…&b=…): call while they're looking.
+  const watching = await sql`SELECT DISTINCT ON (lower(e.who_company)) e.who_company, e.who_name, e.at, e.type, c.id AS contact_id, c.phone
+    FROM public.site_events e LEFT JOIN public.contacts c ON c.owner_id = e.owner_id AND lower(c.company) = lower(e.who_company)
+    WHERE e.owner_id = ${o} AND e.who_company <> '' AND e.at > ${since}::timestamptz AND e.type IN ('view', 'play')
+    ORDER BY lower(e.who_company), e.at DESC LIMIT 5`.catch(() => []);
   return Response.json({
+    watching: watching.map(x => ({ id: "w:" + String(x.who_company).toLowerCase() + ":" + new Date(x.at as string).toISOString().slice(0, 13), who: String(x.who_company), name: String(x.who_name ?? ""), played: x.type === "play", contactId: x.contact_id ? String(x.contact_id) : null, phone: String(x.phone ?? "") })),
     signing: signing.map(x => ({ id: String(x.id) + (x.signed_at ? ":s" : ":v"), dealId: String(x.deal_id), who: String(x.who ?? ""), signed: !!x.signed_at })),
     pending: pending.map(x => ({ id: String(x.id), title: String(x.title ?? ""), startsAt: new Date(x.starts_at as string).toISOString(), who: String(x.company || x.name || x.title || "").trim() })),
     replies: replies.map(x => ({ id: String(x.id), who: String(x.from_name || x.from_addr), summary: String(x.summary ?? ""), category: String(x.category) })),

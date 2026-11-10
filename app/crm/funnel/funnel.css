@@ -12,3 +12,14 @@
 .fn-facts span { font-size: 13px; color: var(--c-soft, #a49d94); }
 .fn-facts b { font-size: 22px; font-variant-numeric: tabular-nums; }
 @media (max-width: 560px) { .fn-steps li { grid-template-columns: 1fr 60px; } .fn-bar { grid-column: 1 / -1; grid-row: 2; } }
+.fn-web { margin-top: 36px; }
+.fn-web .fn-facts span + span { font-size: 12px; }
+.fn-days { display: flex; align-items: flex-end; gap: 4px; height: 90px; margin: 6px 0 22px; }
+.fn-days div { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.fn-days i { display: block; width: 100%; min-height: 2px; background: #c9c2b8; border-radius: 3px 3px 0 0; }
+.fn-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.fn-two h3, .fn-h3 { font-size: 15px; margin: 0 0 8px; }
+.fn-h3 { margin-top: 24px; }
+.fn-two ul, .fn-watch { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fn-two li { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; border-bottom: 1px solid var(--c-line, #2f2c29); padding: 4px 0; }
+.fn-watch li { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 14px; }

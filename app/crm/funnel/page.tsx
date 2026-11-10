@@ -3,6 +3,7 @@
 // Funnel: dials to clients, with the rate between each step and the one step to fix next.
 import { useEffect, useState } from "react";
 import "./funnel.css";
+import WebsitePanel from "./website-panel";
 
 type Step = { key: string; label: string; n: number; rate: number | null; rateLabel: string };
 type Data = { days: number; counts: { noShow: number; cash: number; held: number }; unmarked: number; steps: Step[]; leak: string };
@@ -36,5 +37,6 @@ export default function FunnelPage() {
       </div>
       {d.unmarked > 0 && <p className="u-note">Mark each past meeting as Showed or No-show from the card that pops up after it, so the show rate is real.</p>}
     </>}
+    <WebsitePanel days={days} />
   </div>;
 }

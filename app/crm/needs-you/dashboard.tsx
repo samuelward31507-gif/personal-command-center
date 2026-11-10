@@ -143,7 +143,7 @@ export default function Dashboard() {
       const key = "info:" + w.id;
       if (doneKeys[key]) return [];
       return [{ key, title: `Send info to ${who}`, why: `Said ${w.outcome === "interested" ? "they're interested" : "send info"} on ${short(w.at)}. No text sent yet.`, overdue: true, href: `/crm?contact=${w.id}`, action: "Text",
-        onClick: () => log(infoText({ firstName: first, demoLink: pickDemoLink(niche, ws.demoLink), niche }), undefined, key), alt: { label: "Loom", onClick: () => setLoom({ w, key, url: "" }) } }];
+        onClick: () => log(infoText({ firstName: first, demoLink: pickDemoLink(niche, ws.demoLink), niche, company: w.company }), undefined, key), alt: { label: "Loom", onClick: () => setLoom({ w, key, url: "" }) } }];
     }
     const next = w.tasks[0];
     if (!next || !next.due) return [];

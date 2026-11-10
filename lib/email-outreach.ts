@@ -179,11 +179,22 @@ export function mergeFor(c: { name: string; company: string; location?: string }
     business: ws.businessName,
     booking_link: ws.bookingLink,
     website: (ws.websiteUrl || "").replace(/^https?:\/\//, "").replace(/\/$/, ""),
-    demo_link: ws.demoLink || ws.websiteUrl || "",
+    demo_link: personalLink(ws.demoLink || ws.websiteUrl || "", greetName(c.name, c.company) === "there" ? "" : greetName(c.name, c.company), (c.company || "").trim()),
   };
 }
 
 /** Replace {fill_ins}. Unknown ones are left as typed so a typo is visible in the preview, not silently dropped. */
 export function fillTemplate(text: string, m: Merge): string {
   return text.replace(/\{(\w+)\}/g, (all, k: string) => (k in m ? String(m[k as keyof Merge]) : all)).replace(/\n{3,}/g, "\n\n").trim();
+}
+
+// Personal links: a cinderrevenue.com link carries ?n=&b= so Cinder alerts you when they open it (same as lib/sms-templates).
+export function personalLink(link: string, firstName?: string, company?: string): string {
+  if (!/^https:\/\/(www\.)?cinderrevenue\.com(\/|$|\?)/i.test(link || "")) return link;
+  try {
+    const u = new URL(link);
+    if (firstName?.trim()) u.searchParams.set("n", firstName.trim());
+    if (company?.trim()) u.searchParams.set("b", company.trim());
+    return u.toString();
+  } catch { return link; }
 }

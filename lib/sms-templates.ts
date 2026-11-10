@@ -94,8 +94,9 @@ export function voicemailText(i: { firstName?: string; callTime: string; demoLin
   if (i.niche === "detailing") return `Hey${name ? " " + name : ""}, Sam with Cinder. Tried you at ${i.callTime}, probably caught you mid-detail. Quick one: how many past customers haven't rebooked in 3+ months? I set it up so they get a text when they're due and book themselves back in. Here's how: ${i.demoLink}\n\nWorth a quick call tomorrow, morning or afternoon?`;
   return `Hey${name ? " " + name : ""}, Sam with Cinder. Tried you at ${i.callTime}, probably caught you on a job. When that happens with a homeowner, most don't leave a voicemail, they call the next company. Here's what they'd get from you instead: ${i.demoLink}\n\nWorth a quick call tomorrow, morning or afternoon?`;
 }
-export function infoText(i: { firstName?: string; demoLink: string; slot1?: string; slot2?: string; niche?: string }): string {
+export function infoText(i: { firstName?: string; demoLink: string; slot1?: string; slot2?: string; niche?: string; company?: string }): string {
   const name = (i.firstName ?? "").trim();
+  i = { ...i, demoLink: personalLink(i.demoLink, name, i.company) };
   const hi = `Hey${name ? " " + name : ""}, Sam with Cinder, good talking with you.`;
   const ask = `Easiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow? Or pick any time here: ${BOOKING_LINK}`;
   if (i.niche === "detailing") return `${hi} Here's how it works: ${i.demoLink}\n\nYour past customers get a text when they're due and book themselves back in, anyone who calls while you're mid-detail gets a text back in seconds, and happy customers get asked for a review. I build it and run it, you don't touch the tech.\n\nWe start with one campaign to your past customers. If it doesn't book at least 3x what you pay, it's free.\n\n${ask}`;
@@ -268,4 +269,15 @@ export function loomPoints(i: { company: string; city?: string; niche?: string; 
     "The guarantee: 5 booked appointments in 30 days or the next month is free.",
     "The ask: \"Reply with a time this week and I'll set it up with you.\" Keep it under 2 minutes.",
   ];
+}
+
+// Personal links: a cinderrevenue.com link carries ?n=&b= so Cinder alerts you when they open it.
+export function personalLink(link: string, firstName?: string, company?: string): string {
+  if (!/^https:\/\/(www\.)?cinderrevenue\.com(\/|$|\?)/i.test(link || "")) return link;
+  try {
+    const u = new URL(link);
+    if (firstName?.trim()) u.searchParams.set("n", firstName.trim());
+    if (company?.trim()) u.searchParams.set("b", company.trim());
+    return u.toString();
+  } catch { return link; }
 }

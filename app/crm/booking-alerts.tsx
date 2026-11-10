@@ -8,6 +8,7 @@ import Link from "next/link";
 type Booking = { id: string; title: string; startsAt: string; createdAt: string; contactId: string | null; who: string };
 type Pending = { id: string; title: string; startsAt: string; who: string };
 type Reply = { id: string; who: string; summary: string; category: string };
+type Watch = { id: string; who: string; name: string; played: boolean; contactId: string | null; phone: string };
 type Sign = { id: string; dealId: string; who: string; signed: boolean };
 type Done = { id: string; who: string; text: string; sms?: { href: string; body: string } };
 const KEY = "cinder.bookings.seen";
@@ -36,6 +37,8 @@ export default function BookingAlerts() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [done, setDone] = useState<Done[]>([]);
   const [signs, setSigns] = useState<Sign[]>([]);
+  const [watch, setWatch] = useState<Watch[]>([]);
+  const seenWatch = useRef<Set<string>>(new Set());
   const seenSigns = useRef<Set<string>>(new Set());
   const [busy, setBusy] = useState<string>("");
   const skipped = useRef<Set<string>>(new Set());
@@ -55,7 +58,10 @@ export default function BookingAlerts() {
     try {
       const r = await fetch(`/api/alerts/bookings?since=${encodeURIComponent(since.current)}`, { cache: "no-store" });
       if (!r.ok) return;
-      const j = await r.json() as { now?: string; bookings?: Booking[]; pending?: Pending[]; replies?: Reply[]; signing?: Sign[] };
+      const j = await r.json() as { now?: string; bookings?: Booking[]; pending?: Pending[]; replies?: Reply[]; signing?: Sign[]; watching?: Watch[] };
+      const newWatch = (j.watching ?? []).filter(x => !seenWatch.current.has(x.id));
+      if (newWatch.length) { newWatch.forEach(x => seenWatch.current.add(x.id)); setWatch(cur => [...newWatch, ...cur.filter(c => !newWatch.some(n => n.who === c.who))].slice(0, 3)); chime();
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") for (const x of newWatch) { try { new Notification(`${x.who} is watching your demo`, { body: "Call them now", tag: x.id }); } catch { /* fine */ } } }
       const newSigns = (j.signing ?? []).filter(x => !seenSigns.current.has(x.id));
       if (newSigns.length) { newSigns.forEach(x => seenSigns.current.add(x.id)); setSigns(cur => [...newSigns, ...cur].slice(0, 3)); chime(); }
       setPending((j.pending ?? []).filter(p => !skipped.current.has(p.id)));
@@ -101,7 +107,7 @@ export default function BookingAlerts() {
     } catch (e) { setDone(cur => [{ id: p.id, who: p.who, text: e instanceof Error ? e.message : "Couldn't save that." }, ...cur]); }
     setBusy("");
   }
-  if (!items.length && !pending.length && !replies.length && !done.length && !signs.length) return null;
+  if (!items.length && !pending.length && !replies.length && !done.length && !signs.length && !watch.length) return null;
   return <div className="ba-stack" role="status" aria-live="polite">
     {pending.map(p => <div key={"p" + p.id} className="ba-card">
       <div className="ba-top"><b className="ba-ask">Did they show?</b><button type="button" className="ba-x" aria-label="Ask later" onClick={() => { skipped.current.add(p.id); setPending(cur => cur.filter(x => x.id !== p.id)); }}>×</button></div>
@@ -117,6 +123,15 @@ export default function BookingAlerts() {
       <div className="ba-top"><b>{d.who}</b><button type="button" className="ba-x" aria-label="Dismiss" onClick={() => setDone(cur => cur.filter(x => x.id !== d.id))}>×</button></div>
       <p className="ba-when">{d.text}</p>
       {d.sms && <div className="ba-actions"><a className="u-btn u-btn-light" href={d.sms.href}>Text them a new time</a></div>}
+    </div>)}
+    {watch.map(x => <div key={x.id} className="ba-card">
+      <div className="ba-top"><b className="ba-ask">{x.played ? "Watching your demo now" : "Opened your demo"}</b><button type="button" className="ba-x" aria-label="Dismiss" onClick={() => setWatch(cur => cur.filter(y => y.id !== x.id))}>×</button></div>
+      <p className="ba-who">{x.who}</p>
+      <p className="ba-when">They're looking at it right now. Best time to call.</p>
+      <div className="ba-actions">
+        {x.phone && <a className="u-btn u-btn-light" href={"tel:" + x.phone.replace(/[^+\d]/g, "")}>Call now</a>}
+        {x.contactId && <Link className="u-btn u-btn-bare" href={`/crm?contact=${x.contactId}`}>Open contact</Link>}
+      </div>
     </div>)}
     {signs.map(x => <div key={"s" + x.id} className="ba-card">
       <div className="ba-top"><b>{x.signed ? "Agreement signed" : "Agreement opened"}</b><button type="button" className="ba-x" aria-label="Dismiss" onClick={() => setSigns(cur => cur.filter(y => y.id !== x.id))}>×</button></div>
