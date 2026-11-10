@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cinder Revenue Company · Every missed call texted back in 10 seconds</title>
 <meta name="description" content="When you're on a job, every missed call, web form and Facebook lead gets a text back in about 10 seconds, gets your price range and books the estimate. Then every quote gets followed up until it's a yes or a no. No contract.">
-<meta name="theme-color" content="#f4f5f1">
+<meta name="theme-color" content="#0e0f11">
 <meta property="og:title" content="You missed the call. They still got an answer. · Cinder">
 <meta property="og:description" content="Every missed call texted back in about 10 seconds, the estimate booked on your calendar, and every quote followed up. Done for you, no contract.">
 <meta property="og:type" content="website">
@@ -19,7 +19,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/home.css">
 <script>document.documentElement.classList.add("js");if(matchMedia("(prefers-reduced-motion: no-preference)").matches)document.documentElement.classList.add("motion")</script>
 </head>
@@ -47,7 +47,17 @@
       <p class="hero-terms">No contract. Keep your number. You don't pay monthly until your first appointment books.</p>
     </div>
 
-    <figure class="ticket" aria-label="Example: a missed call answered by text and booked within four minutes">
+    <div class="hero-phone"><div class="phone"><video data-src="/media/demo.mp4" poster="/media/demo-poster.jpg" autoplay muted loop playsinline preload="none" aria-label="28-second demo: a new lead gets an instant text reply and the estimate gets booked"></video></div><p class="phone-cap">A real setup, start to finish. 28 seconds.</p></div>
+  </div>
+</section>
+
+<section class="sec" id="problem">
+  <div class="wrap">
+    <div class="head">
+      <h2>The job goes to whoever answers first.</h2>
+      <p class="lede">Here's one missed call on a Tuesday afternoon, handled while the owner was still up on a job.</p>
+    </div>
+      <figure class="ticket" aria-label="Example: a missed call answered by text and booked within four minutes">
       <div class="ticket-head"><span>Ridgeline Fence Co. <em>Example</em></span><span>Tue, 2:14 PM</span></div>
       <ol class="log">
         <li class="log-miss"><time>2:14:02</time><div><b>Missed call</b><span>(720) 555-0148 · you're on a job</span></div></li>
@@ -58,12 +68,6 @@
       </ol>
       <figcaption>3 minutes 29 seconds. You were still on the ladder.</figcaption>
     </figure>
-  </div>
-</section>
-
-<section class="sec" id="problem">
-  <div class="wrap">
-    <h2>The job goes to whoever answers first.</h2>
     <div class="facts">
       <div class="fact"><b class="fig">2%</b><p>of callers who don't get through leave a voicemail. The rest call the next company.</p><a href="https://www.prnewswire.com/news-releases/invoca-launches-new-solution-to-recover-revenue-from-missed-sales-and-appointment-setting-calls-301419335.html" rel="noopener">Invoca, 2021</a></div>
       <div class="fact"><b class="fig">66%</b><p>of calls actually answered, when owners guessed 97%. Recordings told the truth.</p><a href="https://blog.servicedirect.com/home-service-call-performance-report" rel="noopener">Service Direct, 2019</a></div>
@@ -133,14 +137,8 @@
       <li><span class="step-n">3</span><h3>Go live</h3><p>Every new lead answered in about 10 seconds, in English or Spanish, and booked on your calendar.</p></li>
       <li><span class="step-n">4</span><h3>Every week after</h3><p>Quote follow-ups, review requests, a Monday text report, and we tune what's working.</p></li>
     </ol>
-    <div class="see">
-      <div class="see-copy">
-        <h3>See what your customer sees.</h3>
-        <p>A 28-second clip of a real setup: a lead comes in, gets a reply in seconds, gets their questions answered and picks a time.</p>
-        <a class="btn btn-line btn-sm" href="/try">Try it on your own phone</a>
-      </div>
-      <div class="see-phone"><video data-src="/media/demo.mp4" poster="/media/demo-poster.jpg" muted loop playsinline preload="none" controls aria-label="28-second demo: a new lead gets an instant text reply and the estimate gets booked"></video></div>
-    </div>
+    <p class="try-line">Want to see it on your own phone? <a href="/try">Text the demo line</a> and you'll get the same replies a homeowner would.</p>
+</div>
   </div>
 </section>
 
@@ -245,7 +243,7 @@
       <p class="book-alt">Rather write? <a href="mailto:sam.cinderrevenue@gmail.com">sam.cinderrevenue@gmail.com</a></p>
     </div>
     <div class="book-cal">
-      <div id="cal-inline" class="cal-inline" data-theme="light"><p class="cal-loading">Loading the calendar…</p><a class="btn btn-go cal-fallback" href="https://cal.com/samuel-ward-saqpvb/15min">Open the booking calendar</a></div>
+      <div id="cal-inline" class="cal-inline" data-theme="dark"><p class="cal-loading">Loading the calendar…</p><a class="btn btn-go cal-fallback" href="https://cal.com/samuel-ward-saqpvb/15min">Open the booking calendar</a></div>
     </div>
   </div>
 </section>
@@ -263,8 +261,8 @@
 
 <script>
 (function(){var n=document.getElementById("nav");var f=function(){n.classList.toggle("is-scrolled",scrollY>8)};f();addEventListener("scroll",f,{passive:true});})();
-// Demo clip: loads only when it nears the screen, plays while visible.
-(function(){var v=document.querySelector(".see-phone video");if(!v||!("IntersectionObserver" in window))return;var loaded=false;
+// Hero demo: the poster paints first; the video loads after the page, and plays only while on screen.
+(function(){var v=document.querySelector(".hero-phone video");if(!v||!("IntersectionObserver" in window))return;var loaded=false;
 new IntersectionObserver(function(es){var on=es[0].isIntersecting;if(on&&!loaded){loaded=true;v.src=v.getAttribute("data-src");}
 if(on){var p=v.play();if(p&&p.catch)p.catch(function(){});}else v.pause();},{rootMargin:"200px 0px",threshold:.2}).observe(v);})();
 // Founding prices: full price once the founding spots are gone.
