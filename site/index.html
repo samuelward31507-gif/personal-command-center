@@ -35,72 +35,125 @@
 <main id="main">
 
 <section class="hero">
-  <div class="wrap hero-grid">
-    <div class="hero-copy">
-      <p class="hero-for">For fence companies, contractors and home-service shops</p>
-      <h1>You missed the call. <span>They still got an answer.</span></h1>
-      <p class="lede">Every missed call and web form gets a text back from you in about 10 seconds, with your price range and a time on your calendar. Then every quote gets followed up until it's a yes or a no.</p>
-      <div class="hero-ctas">
-        <a class="btn btn-go" href="#book">Book a 15-minute call</a>
-        <a class="btn btn-line" href="/demo">Watch the demo</a>
-      </div>
-      <p class="hero-terms">No contract. Keep your number. You don't pay monthly until your first appointment books.</p>
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="wrap hero-in">
+    <p class="hero-for">For fence companies, contractors and home-service shops</p>
+    <h1>Every lead answered. <span>Every quote chased.</span></h1>
+    <p class="lede">You're on the job. Cinder texts back every missed call and web form in about 10 seconds, books the estimate on your calendar, and follows up every quote until it's a yes or a no.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-go" href="#book">Book a 15-minute call</a>
+      <a class="btn btn-line" href="/demo">Watch the demo</a>
     </div>
+    <p class="hero-terms">No contract. Keep your number. Monthly starts after your first booked appointment.</p>
+  </div>
 
-    <div class="hero-phone" role="img" aria-label="Example conversation: a web form lead gets a text back in 9 seconds and books an estimate">
-      <div class="phone"><div class="screen">
-        <div class="sb"><span>9:41</span><i></i><span class="sb-r">5G</span></div>
-        <div class="thread-head"><div class="av">D</div><b>Dana Ruiz</b><span>New lead · website form · 8:47 PM</span></div>
-        <div class="thread">
-          <div class="msg in" style="--i:0">Hi, looking for a quote on about 120 ft of cedar privacy fence. Backyard, flat lot.</div>
-          <div class="chip" style="--i:1">Replied in 9 sec</div>
-          <div class="msg out" style="--i:2">Hi Dana, it's Mike with Ridgeline Fence. Happy to help. Is the old fence coming out, or is this new?</div>
-          <div class="msg in" style="--i:3">Old one's coming out. It's leaning pretty bad</div>
-          <div class="msg out" style="--i:4">Got it. Cedar privacy with tear-out usually runs $42–56 a foot. I can measure Thursday at 8 or Friday at 3. Which works?</div>
-          <div class="msg in" style="--i:5">Thursday works</div>
-          <div class="booked" style="--i:6"><b>Estimate booked</b><span>Thu, 8:00 AM · on Mike's calendar</span></div>
+  <div class="wrap">
+    <div class="app" role="img" aria-label="Example of the Cinder dashboard for a fence company: a missed call answered in 9 seconds and booked for Thursday">
+      <div class="app-bar"><i></i><i></i><i></i><span>Ridgeline Fence · Leads</span><em class="live">Live</em></div>
+      <div class="app-body">
+        <aside class="app-side">
+          <p class="app-h">Today</p>
+          <div class="lead is-on"><span class="av">DR</span><div><b>Dana Ruiz</b><small>Missed call · 2:14 PM</small></div><time>now</time></div>
+          <div class="lead"><span class="av">MH</span><div><b>Marcus Hill</b><small>Web form · booked Fri</small></div><time>11:02</time></div>
+          <div class="lead"><span class="av">PS</span><div><b>Priya Shah</b><small>Quote $6,840 · follow-up 2</small></div><time>9:40</time></div>
+          <div class="lead"><span class="av">TB</span><div><b>Tom Becker</b><small>Facebook · booked Mon</small></div><time>Tue</time></div>
+          <div class="lead"><span class="av">LM</span><div><b>Lisa Moreno</b><small>Quote $4,200 · signed</small></div><time>Mon</time></div>
+        </aside>
+        <div class="app-main">
+          <div class="feed">
+            <div class="ev ev-sys" style="--i:0"><span class="dot miss"></span><b>Missed call from Dana Ruiz</b><time>2:14:02 PM</time></div>
+            <div class="ev ev-out" style="--i:1"><p>Hey Dana, it's Mike with Ridgeline Fence. Sorry I missed you, I'm on a job. What can I help with?</p><time>Sent in 9 sec</time></div>
+            <div class="ev ev-in" style="--i:2"><p>Need a quote on about 120 ft of cedar privacy fence. The old one's leaning bad</p></div>
+            <div class="ev ev-out" style="--i:3"><p>Cedar privacy with tear-out usually runs $42–56 a foot. I can measure Thursday at 8 or Friday at 3. Which works?</p></div>
+            <div class="ev ev-in" style="--i:4"><p>Thursday works</p></div>
+            <div class="ev ev-book" style="--i:5"><span class="dot ok"></span><div><b>Estimate booked · Thu 8:00 AM</b><small>Added to Mike's calendar · reminder set · Mike texted</small></div></div>
+          </div>
         </div>
-      </div></div>
-      <p class="phone-cap">Example: Ridgeline Fence, a web form at 8:47 PM.</p>
+        <aside class="app-stats">
+          <p class="app-h">This week</p>
+          <div class="st"><span>New leads</span><b>38</b></div>
+          <div class="st"><span>Answered under 60 sec</span><b>38</b></div>
+          <div class="st"><span>Estimates booked</span><b>14</b></div>
+          <div class="st"><span>Quotes being chased</span><b>9</b></div>
+        </aside>
+      </div>
     </div>
+    <p class="app-note">Example dashboard. Names and numbers are illustrative.</p>
   </div>
 </section>
+
+<div class="works" aria-label="Works alongside the tools you already use">
+  <p>Works alongside what you already use</p>
+  <div class="marquee"><div class="track">
+    <span>Jobber</span><span>Housecall Pro</span><span>Google Calendar</span><span>Facebook Leads</span><span>Angi</span><span>Thumbtack</span><span>Your website forms</span><span>Your phone number</span>
+    <span aria-hidden="true">Jobber</span><span aria-hidden="true">Housecall Pro</span><span aria-hidden="true">Google Calendar</span><span aria-hidden="true">Facebook Leads</span><span aria-hidden="true">Angi</span><span aria-hidden="true">Thumbtack</span><span aria-hidden="true">Your website forms</span><span aria-hidden="true">Your phone number</span>
+  </div></div>
+</div>
 
 <section class="sec" id="problem">
   <div class="wrap">
-    <div class="head">
-      <h2>The job goes to whoever answers first.</h2>
-      <p class="lede">Here's one missed call on a Tuesday afternoon, handled while the owner was still up on a job.</p>
+    <div class="center-head">
+      <h2>The job goes to <span>whoever answers first.</span></h2>
+      <p class="lede">Most owners don't have a lead problem. They have a follow-through problem.</p>
     </div>
-      <figure class="ticket" aria-label="Example: a missed call answered by text and booked within four minutes">
-      <div class="ticket-head"><span>Ridgeline Fence Co. <em>Example</em></span><span>Tue, 2:14 PM</span></div>
-      <ol class="log">
-        <li class="log-miss"><time>2:14:02</time><div><b>Missed call</b><span>(720) 555-0148 · you're on a job</span></div></li>
-        <li class="log-out"><time>2:14:12</time><div><b>Text sent</b><p>Hey, it's Mike with Ridgeline Fence. Sorry I missed you, I'm on a job. What can I help with?</p></div></li>
-        <li class="log-in"><time>2:15:40</time><div><b>They reply</b><p>Need a quote on about 120 ft of cedar privacy fence</p></div></li>
-        <li class="log-out"><time>2:15:49</time><div><b>Price range + times</b><p>Cedar privacy usually runs $38–52 a foot installed. I can come measure Thursday at 8 or Friday at 3. Which works?</p></div></li>
-        <li class="log-book"><time>2:17:31</time><div><b>Estimate booked</b><span>Thursday, 8:00 AM · on your calendar</span></div></li>
-      </ol>
-      <figcaption>3 minutes 29 seconds. You were still on the ladder.</figcaption>
-    </figure>
     <div class="facts">
       <div class="fact"><b class="fig">2%</b><p>of callers who don't get through leave a voicemail. The rest call the next company.</p><a href="https://www.prnewswire.com/news-releases/invoca-launches-new-solution-to-recover-revenue-from-missed-sales-and-appointment-setting-calls-301419335.html" rel="noopener">Invoca, 2021</a></div>
-      <div class="fact"><b class="fig">66%</b><p>of calls actually answered, when owners guessed 97%. Recordings told the truth.</p><a href="https://blog.servicedirect.com/home-service-call-performance-report" rel="noopener">Service Direct, 2019</a></div>
-      <div class="fact"><b class="fig">~½</b><p>of calls to home-service businesses reach a person. The other half hit voicemail or ring out.</p><a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca, 2026</a></div>
-    </div>
-    <div class="leaks">
-      <p class="leaks-lead">You don't lose jobs all at once. You lose them in small gaps:</p>
-      <ul>
-        <li><b>The call you couldn't take</b> on a job site.</li>
-        <li><b>The web form</b> nobody opened until the next morning.</li>
-        <li><b>The quote</b> you sent once and never chased.</li>
-        <li><b>The happy customer</b> nobody asked for a review.</li>
-      </ul>
+      <div class="fact"><b class="fig">66%</b><p>of calls actually answered, when owners guessed 97%. Call recordings told the truth.</p><a href="https://blog.servicedirect.com/home-service-call-performance-report" rel="noopener">Service Direct, 2019</a></div>
+      <div class="fact"><b class="fig">~½</b><p>of calls to home-service businesses reach a person. The other half ring out or hit voicemail.</p><a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca, 2026</a></div>
     </div>
   </div>
 </section>
 
-<section class="sec sec-tint" id="calculator">
+<section class="sec" id="how">
+  <div class="wrap">
+    <div class="center-head">
+      <h2>How Cinder books <span>your estimates.</span></h2>
+      <p class="lede">Set up for your trade in about 30 minutes of your time. You approve every message, then you show up to the appointments.</p>
+    </div>
+
+    <div class="flow">
+      <div class="flow-copy"><p class="flow-k">Within 10 seconds</p><h3>Answer</h3><p>Every missed call, web form and Facebook lead gets a text from your business, in your words, while you're still on the ladder. English or Spanish.</p></div>
+      <div class="card">
+        <div class="card-h"><span>Inbox</span><em>4 new</em></div>
+        <div class="mini"><b>Missed call · (720) 555-0148</b><span class="ok">Texted in 9 sec</span></div>
+        <div class="mini"><b>Web form · deck railing</b><span class="ok">Texted in 7 sec</span></div>
+        <div class="mini"><b>Facebook lead · 9:52 PM</b><span class="ok">Texted in 8 sec</span></div>
+        <div class="mini"><b>Angi · chain link, 200 ft</b><span class="ok">Texted in 11 sec</span></div>
+      </div>
+    </div>
+
+    <div class="flow">
+      <div class="flow-copy"><p class="flow-k">Before anything books</p><h3>Qualify</h3><p>It asks the questions you'd ask on every job and sends your price range, so you only drive out to people who are serious and in your area.</p></div>
+      <div class="card">
+        <div class="card-h"><span>Dana Ruiz</span><em>Qualified</em></div>
+        <dl class="kv"><dt>Job</dt><dd>Cedar privacy, ~120 ft</dd><dt>Tear-out</dt><dd>Yes, old fence leaning</dd><dt>Address</dt><dd>In your service area</dd><dt>Price range sent</dt><dd>$42–56 a foot</dd></dl>
+      </div>
+    </div>
+
+    <div class="flow">
+      <div class="flow-copy"><p class="flow-k">On your calendar</p><h3>Book</h3><p>They pick from your real open times. You get one text with the job, and they get a reminder the day before. No-shows get a rebooking text.</p></div>
+      <div class="card">
+        <div class="card-h"><span>Thursday</span><em>3 estimates</em></div>
+        <div class="slot"><time>8:00</time><div><b>Dana Ruiz · cedar privacy</b><small>Booked by Cinder · reminder set</small></div></div>
+        <div class="slot muted"><time>10:30</time><div><b>Open</b><small>Offered to new leads</small></div></div>
+        <div class="slot"><time>1:00</time><div><b>Marcus Hill · vinyl, 80 ft</b><small>Booked by Cinder</small></div></div>
+        <div class="slot"><time>3:30</time><div><b>Ana Torres · gate repair</b><small>Booked by you</small></div></div>
+      </div>
+    </div>
+
+    <div class="flow">
+      <div class="flow-copy"><p class="flow-k">Until it's a yes or a no</p><h3>Follow up</h3><p>Send a quote with one text and the follow-up starts on its own: days 2, 5, 10 and 21. "Too expensive" gets your financing or a smaller option. Real price talk comes to you.</p></div>
+      <div class="card">
+        <div class="card-h"><span>Quote · Priya Shah · $6,840</span><em>Day 5</em></div>
+        <ol class="chase"><li class="done"><b>Day 2</b><span>Checking in on the quote</span></li><li class="done"><b>Day 5</b><span>Answered a question about posts</span></li><li><b>Day 10</b><span>Scheduled</span></li><li><b>Day 21</b><span>Scheduled</span></li></ol>
+      </div>
+    </div>
+
+    <p class="try-line">Want to see it with your own job? <a href="/try">Type in a real quote request</a> and see the reply your customer would get.</p>
+  </div>
+</section>
+
+<section class="sec" id="calculator">
   <div class="wrap">
     <div class="head">
       <h2>What the missed ones cost you.</h2>
@@ -137,23 +190,6 @@
         </details>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="sec" id="how">
-  <div class="wrap">
-    <div class="head">
-      <h2>Done for you in four steps.</h2>
-      <p class="lede">About 30 minutes of your time. You approve every message before it goes live.</p>
-    </div>
-    <ol class="steps">
-      <li><span class="step-n">1</span><h3>Intake call</h3><p>Your service area, the questions you always ask, your price sheet, your calendar and who never gets a text.</p></li>
-      <li><span class="step-n">2</span><h3>We build it</h3><p>Set up for your trade and written in your voice. We register your texting number the day you sign.</p></li>
-      <li><span class="step-n">3</span><h3>Go live</h3><p>Every new lead answered in about 10 seconds, in English or Spanish, and booked on your calendar.</p></li>
-      <li><span class="step-n">4</span><h3>Every week after</h3><p>Quote follow-ups, review requests, a Monday text report, and we tune what's working.</p></li>
-    </ol>
-    <p class="try-line">Want to see it with your own job? <a href="/try">Type in a real quote request</a> and see the reply your customer would get.</p>
-</div>
   </div>
 </section>
 
