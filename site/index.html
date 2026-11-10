@@ -39,15 +39,30 @@
     <div class="hero-copy">
       <p class="hero-for">For fence companies, contractors and home-service shops</p>
       <h1>You missed the call. <span>They still got an answer.</span></h1>
-      <p class="lede">When you're up on a job, every missed call, web form and Facebook lead gets a text back from you in about 10 seconds. It answers their questions, gives your price range and books the estimate on your calendar. Then every quote gets followed up until it's a yes or a no.</p>
+      <p class="lede">Every missed call and web form gets a text back from you in about 10 seconds, with your price range and a time on your calendar. Then every quote gets followed up until it's a yes or a no.</p>
       <div class="hero-ctas">
         <a class="btn btn-go" href="#book">Book a 15-minute call</a>
-        <a class="btn btn-line" href="/demo">Watch the 30-second demo</a>
+        <a class="btn btn-line" href="/demo">Watch the demo</a>
       </div>
       <p class="hero-terms">No contract. Keep your number. You don't pay monthly until your first appointment books.</p>
     </div>
 
-    <div class="hero-phone"><div class="phone"><video data-src="/media/demo.mp4" poster="/media/demo-poster.jpg" autoplay muted loop playsinline preload="none" aria-label="28-second demo: a new lead gets an instant text reply and the estimate gets booked"></video></div><p class="phone-cap">A real setup, start to finish. 28 seconds.</p></div>
+    <div class="hero-phone" role="img" aria-label="Example conversation: a web form lead gets a text back in 9 seconds and books an estimate">
+      <div class="phone"><div class="screen">
+        <div class="sb"><span>9:41</span><i></i><span class="sb-r">5G</span></div>
+        <div class="thread-head"><div class="av">D</div><b>Dana Ruiz</b><span>New lead · website form · 8:47 PM</span></div>
+        <div class="thread">
+          <div class="msg in" style="--i:0">Hi, looking for a quote on about 120 ft of cedar privacy fence. Backyard, flat lot.</div>
+          <div class="chip" style="--i:1">Replied in 9 sec</div>
+          <div class="msg out" style="--i:2">Hi Dana, it's Mike with Ridgeline Fence. Happy to help. Is the old fence coming out, or is this new?</div>
+          <div class="msg in" style="--i:3">Old one's coming out. It's leaning pretty bad</div>
+          <div class="msg out" style="--i:4">Got it. Cedar privacy with tear-out usually runs $42–56 a foot. I can measure Thursday at 8 or Friday at 3. Which works?</div>
+          <div class="msg in" style="--i:5">Thursday works</div>
+          <div class="booked" style="--i:6"><b>Estimate booked</b><span>Thu, 8:00 AM · on Mike's calendar</span></div>
+        </div>
+      </div></div>
+      <p class="phone-cap">Example: Ridgeline Fence, a web form at 8:47 PM.</p>
+    </div>
   </div>
 </section>
 
@@ -261,10 +276,6 @@
 
 <script>
 (function(){var n=document.getElementById("nav");var f=function(){n.classList.toggle("is-scrolled",scrollY>8)};f();addEventListener("scroll",f,{passive:true});})();
-// Hero demo: the poster paints first; the video loads after the page, and plays only while on screen.
-(function(){var v=document.querySelector(".hero-phone video");if(!v||!("IntersectionObserver" in window))return;var loaded=false;
-new IntersectionObserver(function(es){var on=es[0].isIntersecting;if(on&&!loaded){loaded=true;v.src=v.getAttribute("data-src");}
-if(on){var p=v.play();if(p&&p.catch)p.catch(function(){});}else v.pause();},{rootMargin:"200px 0px",threshold:.2}).observe(v);})();
 // Founding prices: full price once the founding spots are gone.
 (function(){var n=window.CINDER_OFFER?Number(window.CINDER_OFFER.spotsLeft):3;if(n>0)return;
 document.querySelectorAll("[data-founding]").forEach(function(b){b.remove()});document.querySelectorAll("[data-founding-old]").forEach(function(s){var b=document.createElement("b");b.textContent=s.textContent;s.replaceWith(b)});})();
