@@ -942,7 +942,7 @@ h2 { font-size: clamp(29px, 3.15vw, 44px); }
   --night: #f6f6f4; --night-2: #ffffff; --night-3: #eeeeeb;
   --line: rgba(18,20,23,.08); --line-2: rgba(18,20,23,.15);
   --concrete: #80858d; --fog: #4a4f57; --paper: #121417;
-  --ember: #e2571f; --ember-hi: #c94a15;
+  --ember: #121417; --ember-hi: #2c3038;
   --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --wide: "Inter Tight", "Inter Display", "Inter", system-ui, sans-serif;
 }
@@ -959,3 +959,9 @@ body { background: var(--night); color: var(--fog); }
 .msg.out small { color: rgba(255,255,255,.75); }
 .msg.in { background: #ecece9; color: #121417; }
 .btn-primary, .btn-primary:visited { color: #fff !important; }
+.stickybook { color: #fff !important; }
+.watch .brand svg path[fill="#ededed"] { fill: #ededed; }
+/* The demo clip already shows a phone, so no second frame around it. */
+.demo-phone { border: 0 !important; border-radius: 20px !important; box-shadow: none !important; background: #f6f6f4 !important; aspect-ratio: 9 / 16; width: min(380px, 100%); }
+/* /watch is a dark full-screen film: keep its original dark tokens. */
+body.watch { --night: #131211; --night-2: #1a1917; --night-3: #221f1d; --line: #262321; --line-2: #33302c; --concrete: #8f8881; --fog: #b2aba3; --paper: #f3efe9; background: #131211; color: #b2aba3; }

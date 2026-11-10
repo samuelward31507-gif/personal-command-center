@@ -1,5 +1,5 @@
 /* Cinder homepage. Light, quiet and precise: soft white, near-black type, hairlines,
-   real-looking product UI, and ember only on the booking buttons. The phone in the hero is the one dark object. */
+   real-looking product UI, and near-black booking buttons; the only color is the ember dot in the logo. The phone in the hero is the one dark object. */
 :root {
   --bg: #f6f6f4;
   --bg-2: #eeeeeb;
@@ -9,8 +9,8 @@
   --text-3: #80858d;
   --line: rgba(18, 20, 23, .08);
   --line-2: rgba(18, 20, 23, .15);
-  --ember: #e2571f;
-  --ember-hi: #c94a15;
+  --ember: #121417;
+  --ember-hi: #2c3038;
   --miss: #d23b2a;
   --ok: #17905a;
   --ok-bg: rgba(23, 144, 90, .08);
