@@ -16,6 +16,7 @@ ok(() => assert.match(notify, /catch \(e\)/, "an alert failure never throws"));
 for (const f of ["app/api/inbound-lead/route.ts", "app/api/webhooks/cal-ai/route.ts", "app/api/sign/route.ts"]) {
   const src = readFileSync(f, "utf8");
   ok(() => assert.match(src, /sendAlert\(/, f + " alerts the founder"));
-  ok(() => assert.doesNotMatch(src, /to:\s*\[?\s*(lead|person|v\.ok)\b/, f + " never emails the prospect"));
+  // Alerts go to the founder only. The one email a client gets is the setup payment link after they sign (sendDirectEmail).
+  ok(() => assert.doesNotMatch(src.replace(/sendDirectEmail\([^)]*\{[^}]*kind: "setup payment"/g, ""), /to:\s*\[?\s*(lead|person|v\.ok)\b/, f + " never sends alerts to the prospect"));
 }
 console.log(`Alert email regression checks passed (${n} assertions).`);
