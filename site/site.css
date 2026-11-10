@@ -936,3 +936,17 @@ h2 { font-size: clamp(29px, 3.15vw, 44px); }
   .rv, .phone [data-step], .notif[data-step] { opacity: 1 !important; transform: none !important; }
   .hero-copy > *, .hero-grid > * { animation: none !important; }
 }
+
+/* ---------- 2026-11 refresh: match the homepage (home.css) ---------- */
+:root {
+  --night: #0e0f11; --night-2: #17191c; --night-3: #1d2024;
+  --line: rgba(237,235,230,.09); --line-2: rgba(237,235,230,.18);
+  --concrete: #75736f; --fog: #a5a39e; --paper: #edebe6;
+  --ember: #e8622a; --ember-hi: #f2763f;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --wide: "Inter Tight", "Inter Display", "Inter", system-ui, sans-serif;
+}
+.display, h1, h2 { font-family: var(--wide); font-weight: 600; letter-spacing: -.04em; }
+.btn { border-radius: 999px; font-weight: 500; }
+.btn-primary { background: var(--ember); color: #fff; }
+.btn-primary:hover { background: var(--ember-hi); }
