@@ -4,6 +4,7 @@ import { sendAlert } from "@/lib/notify";
 import { sanitizeForLog } from "@/lib/business-audit";
 import { runPreAudit, logRun } from "@/lib/pre-audit";
 import { bearerMatches } from "@/lib/bearer";
+import { findEmails } from "@/lib/find-emails-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +37,9 @@ export async function GET(request: Request) {
   }
   try {
     const result = await runPreAudit({ sql, owner, apiKey, tz: (await loadWorkspace(owner)).timezone });
+    // Then find emails for new contacts, so tomorrow's calls and Autopilot have someone to email.
+    const emails = await findEmails(sql, owner, { limit: 80, budgetMs: 60_000 }).catch(e => ({ error: e instanceof Error ? e.message : "failed" }));
+    console.info("Overnight email finder", emails);
     console.info("Pre-audit run", result);
     await logRun(sql, "pre-audit", "cron", result.status, result, started);
     return Response.json({ ok: true, ...result });

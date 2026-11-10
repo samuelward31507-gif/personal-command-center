@@ -7,6 +7,7 @@ import { sortNewMail } from "@/lib/gmail-inbox";
 import { sendColdEmail } from "@/lib/gmail-send";
 import { fillTemplate, mergeFor, TEMPLATE_SETS, trackOf } from "@/lib/email-outreach";
 import { fetchPage, htmlToText } from "@/lib/website-text";
+import { findEmails } from "@/lib/find-emails-run";
 import { insertLine, parseLines, personalPrompt, PERSONAL_SYSTEM, runAllowance } from "@/lib/autopilot";
 import type { WorkspaceSettings } from "@/lib/workspace";
 
@@ -37,6 +38,9 @@ export async function runAutopilot(sql: Sql, o: string, ws: WorkspaceSettings, o
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM public.contact_activities WHERE owner_id = ${o} AND notes LIKE 'Email sent: intro%' AND occurred_at > now() - interval '24 hours'` as { n: number }[];
   let allowance = runAllowance(s.perDay, n);
   if (!allowance) { out.note = `Today's goal of ${s.perDay} intros is already met.`; return save(); }
+
+  // 2b. Find emails for contacts that only have a website, so there is always someone new to email.
+  await findEmails(sql, o, { limit: 20, budgetMs: opts.budgetMs * 0.15 }).catch(() => null);
 
   // 3. Who: a valid email, never emailed, never spoken to (anyone you've talked to is yours to follow up), not parked or suppressed.
   const rows = await sql`SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company, c.location, c.niche, c.email, c.website

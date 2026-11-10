@@ -257,3 +257,5 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
   .foot span { margin-left: 0; }
   .stickybook { display: flex; }
 }
+.plans-terms { margin-top: 22px; font-weight: 600; }
+.plans-terms + .founding { margin-top: 6px; }
