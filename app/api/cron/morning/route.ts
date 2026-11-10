@@ -65,7 +65,8 @@ export async function GET(request: Request) {
       const t = TEMPLATE_SETS[trackOf(c.niche)][d.step], m = mergeFor(c, ws);
       const r = await sendColdEmail(sql, o, ws, { contactId: c.id, step: d.step, subject: fillTemplate(t.subject, m), body: fillTemplate(t.body, m) });
       if (r.ok) sentTo.push(`${c.company || c.name} (${d.step === "breakup" ? "last try" : "follow-up"})`);
-      else if (r.status === 429 || r.status === 401 || r.status === 500 || /mailing address/i.test(r.error)) { problems.push(r.error); break; }
+      else if (r.status === 401) { problems.push(r.error); continue; } // one inbox lost access: the others keep sending
+      else if (r.status === 429 || r.status === 500 || /mailing address|Connect Gmail first/i.test(r.error)) { problems.push(r.error); break; }
       else continue;
       await new Promise(res => setTimeout(res, 1200));
     }

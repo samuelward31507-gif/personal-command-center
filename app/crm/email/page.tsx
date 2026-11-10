@@ -187,23 +187,31 @@ export default function EmailPage() {
   }
   const room = gmail?.connected ? Math.max(0, gmail.cap - gmail.sentLast24h) : 0;
   const chosen = list.filter(c => selected.has(c.id));
-  const allOn = list.length > 0 && list.slice(0, gmail?.connected ? room : list.length).every(c => selected.has(c.id));
+  // Select all takes the whole queue. Sending rotates through every inbox and stops by itself when they're all full.
+  const allOn = list.length > 0 && list.every(c => selected.has(c.id));
   function toggle(id: string) { setSelected(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
-  function toggleAll() { setSelected(allOn ? new Set() : new Set(list.slice(0, gmail?.connected ? room : list.length).map(c => c.id))); }
+  function toggleAll() { setSelected(allOn ? new Set() : new Set(list.map(c => c.id))); }
 
   /** Send the selected emails one at a time from Gmail, with a short random pause between each. */
   async function sendBulk() {
     const runStep = step;
     const batch = chosen.map(c => { const m = mergeFor(c, ws), tplNow = templates[trackOf(c.niche)][runStep]; return { c, subject: fillTemplate(tplNow.subject, m), body: fillTemplate(tplNow.body, m) }; });
-    if (!batch.length || !confirm(`Send ${batch.length} email${batch.length === 1 ? "" : "s"} from ${(gmail?.inboxes?.length ?? 1) > 1 ? `your ${gmail?.inboxes?.length} inboxes (they rotate)` : gmail?.email}? They go out one at a time over about ${Math.ceil((batch.length * (GAP[0] + GAP[1])) / 2 / 60)} min. Keep this tab open.`)) return;
+    const today = Math.min(batch.length, room);
+    if (batch.length && today === 0) { setError("All your inboxes are at today's limit. Press Send tomorrow, or connect another inbox."); return; }
+    if (!batch.length || !confirm(`Send ${today} email${today === 1 ? "" : "s"} now from ${(gmail?.inboxes?.length ?? 1) > 1 ? `your ${gmail?.inboxes?.length} inboxes (they rotate)` : gmail?.email}?${batch.length > today ? ` That's everything your inboxes have room for today. The other ${batch.length - today} stay selected for tomorrow.` : ""} They go out one at a time over about ${Math.ceil((today * (GAP[0] + GAP[1])) / 2 / 60)} min. Keep this tab open.`)) return;
     stopRef.current = false; setError(""); setNotice("");
     const failed: string[] = []; let done = 0;
     setRun({ done, total: batch.length, failed, wait: 0 });
+    let full = false;
     for (let i = 0; i < batch.length; i++) {
       if (stopRef.current) break;
       const { c, subject, body } = batch[i];
-      const r = await fetch("/api/gmail/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: c.id, step: runStep, subject, body }) }).catch(() => null);
-      const j = r ? await r.json().catch(() => ({})) : {};
+      const post = () => fetch("/api/gmail/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: c.id, step: runStep, subject, body }) }).catch(() => null);
+      let r = await post();
+      let j = r ? await r.json().catch(() => ({})) : {};
+      // One inbox lost its Google access: Cinder drops it, so try the same email once more from the next inbox.
+      if (r?.status === 401) { void loadGmail(); r = await post(); j = r ? await r.json().catch(() => ({})) : {}; }
+      if (r?.status === 429) { full = true; stopRef.current = true; break; }
       if (r?.ok) {
         done++;
         setSent(s => [{ contactId: c.id, step: runStep, at: new Date().toISOString() }, ...s]);
@@ -211,8 +219,8 @@ export default function EmailPage() {
         setSelected(s => { const n = new Set(s); n.delete(c.id); return n; });
       } else {
         failed.push(`${c.company || c.name}: ${j.error || "couldn't send"}`);
-        // Stop the whole run on problems that will hit every email: the daily cap, a lost Gmail connection, a missing address.
-        if (!r || r.status === 429 || r.status === 401 || r.status >= 500 || /mailing address|Connect Gmail|reconnect/i.test(j.error || "")) stopRef.current = true;
+        // Stop the whole run only on problems that will hit every email: no inbox left, a missing address, Gmail down.
+        if (!r || r.status === 401 || r.status >= 500 || /mailing address|Connect Gmail first/i.test(j.error || "")) stopRef.current = true;
       }
       setRun({ done, total: batch.length, failed: [...failed], wait: 0 });
       if (i < batch.length - 1 && !stopRef.current) {
@@ -222,7 +230,8 @@ export default function EmailPage() {
     setRun(null);
     void loadGmail();
     if (failed.length) void load(); // replies/bounces found at send time drop those contacts from the queue
-    setNotice(`Sent ${done} of ${batch.length}.${stopRef.current && done + failed.length < batch.length ? " Stopped early." : ""}`);
+    setNotice(full ? `Sent ${done}. All your inboxes hit today's limit, so the run stopped by itself. The other ${batch.length - done - failed.length} are still selected: press Send tomorrow.`
+      : `Sent ${done} of ${batch.length}.${stopRef.current && done + failed.length < batch.length ? " Stopped early." : ""}`);
     if (failed.length) setError(`Didn't send: ${failed.join("; ")}`);
   }
 
@@ -337,12 +346,12 @@ export default function EmailPage() {
           {chosen.length > 0 && !run && <>
             <button type="button" className="u-btn u-btn-bare" onClick={() => setSelected(new Set())}>Clear</button>
             {gmail?.connected
-              ? <button type="button" className="u-btn u-btn-light" disabled={busy || !ws.address || chosen.length > room} onClick={() => void sendBulk()}>Send {chosen.length}</button>
+              ? <button type="button" className="u-btn u-btn-light" disabled={busy || !ws.address || room === 0} onClick={() => void sendBulk()}>Send {Math.min(chosen.length, room)}</button>
               : <span className="u-note">Connect Gmail to send these in one go.</span>}
           </>}
         </div>
         {chosen.length > 0 && gmail?.connected && !ws.address && !run && <p className="u-note" style={{ marginBottom: 10 }}>Add your mailing address in <Link href="/crm/settings" style={{ textDecoration: "underline" }}>Settings</Link> to send.</p>}
-        {chosen.length > room && gmail?.connected && !run && <p className="u-note" style={{ marginBottom: 10 }}>Gmail allows {room} more today. Unselect {chosen.length - room}.</p>}
+        {chosen.length > room && gmail?.connected && !run && <p className="u-note" style={{ marginBottom: 10 }}>{room === 0 ? "All your inboxes are at today's limit. Send tomorrow, or connect another inbox." : `Your inboxes have room for ${room} more today. Send goes out to the first ${room}, then stops by itself. The other ${chosen.length - room} stay selected for tomorrow.`}</p>}
         {run && <div className="em-run" role="status">
           <div className="em-run-top"><b>Sending {Math.min(run.done + run.failed.length + 1, run.total)} of {run.total}</b><span>{run.wait ? `next in ${run.wait}s` : "sending…"}</span><button type="button" className="u-btn u-btn-bare" onClick={() => { stopRef.current = true; }}>Stop</button></div>
           <div className="u-meter"><i style={{ width: ((run.done + run.failed.length) / run.total) * 100 + "%" }} /></div>

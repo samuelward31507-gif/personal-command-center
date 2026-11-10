@@ -61,7 +61,7 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
     const from = senderOf(prev.notes) ?? mainOf(inboxes)?.email.toLowerCase();
     acc = inboxes.find(i => i.email.toLowerCase() === from);
     if (!acc) return fail(`This thread started from ${from}, which isn't connected anymore. Connect it again on the Email page to send the follow-up.`, 409);
-    if ((sent.get(acc.email.toLowerCase()) ?? 0) >= inboxCap(acc)) return fail(`${acc.email} hit today's limit of ${inboxCap(acc)}. This follow-up goes tomorrow.`, 429);
+    if ((sent.get(acc.email.toLowerCase()) ?? 0) >= inboxCap(acc)) return fail(`${acc.email} hit today's limit of ${inboxCap(acc)}. This follow-up goes tomorrow from the same inbox.`, 409);
   } else {
     acc = pickInbox(inboxes, sent);
     if (!acc) return fail(`All ${inboxes.length} inbox${inboxes.length === 1 ? "" : "es"} hit today's limit. The rest can go tomorrow.`, 429);
