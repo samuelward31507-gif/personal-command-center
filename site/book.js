@@ -3,6 +3,7 @@
   var CAL = "samuel-ward-saqpvb/15min";
   var box = document.getElementById("cal-inline");
   var loaded = false;
+  var theme = (box && box.getAttribute("data-theme")) || "dark";
   function loadCal() {
     if (loaded || !box) return;
     loaded = true;
@@ -22,9 +23,9 @@
       };
     })(window, "https://app.cal.com/embed/embed.js", "init");
     window.Cal("init", "book", { origin: "https://cal.com" });
-    window.Cal.ns.book("inline", { elementOrSelector: "#cal-inline", calLink: CAL, config: { layout: "month_view", theme: "dark" } });
+    window.Cal.ns.book("inline", { elementOrSelector: "#cal-inline", calLink: CAL, config: { layout: "month_view", theme: theme } });
     window.Cal.ns.book("on", { action: "bookingSuccessful", callback: function () { if (window.cinderTrack) window.cinderTrack("click", { label: "Book: booked on site" }); } });
-    window.Cal.ns.book("ui", { theme: "dark", hideEventTypeDetails: false, layout: "month_view", cssVarsPerTheme: { dark: { "cal-brand": "#d97757" } } });
+    window.Cal.ns.book("ui", { theme: theme, hideEventTypeDetails: false, layout: "month_view", cssVarsPerTheme: { dark: { "cal-brand": "#d97757" }, light: { "cal-brand": "#e2571f" } } });
     // If the calendar hasn't drawn after 8s (blocked script, slow network), show the plain link prominently.
     setTimeout(function () { if (!box.querySelector("iframe")) box.classList.add("is-fallback"); }, 8000);
   }
