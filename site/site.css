@@ -937,16 +937,25 @@ h2 { font-size: clamp(29px, 3.15vw, 44px); }
   .hero-copy > *, .hero-grid > * { animation: none !important; }
 }
 
-/* ---------- 2026-11 refresh: match the homepage (home.css) ---------- */
+/* ---------- 2026-11 refresh: light, to match the homepage (home.css) ---------- */
 :root {
-  --night: #0e0f11; --night-2: #17191c; --night-3: #1d2024;
-  --line: rgba(237,235,230,.09); --line-2: rgba(237,235,230,.18);
-  --concrete: #75736f; --fog: #a5a39e; --paper: #edebe6;
-  --ember: #e8622a; --ember-hi: #f2763f;
+  --night: #f6f6f4; --night-2: #ffffff; --night-3: #eeeeeb;
+  --line: rgba(18,20,23,.08); --line-2: rgba(18,20,23,.15);
+  --concrete: #80858d; --fog: #4a4f57; --paper: #121417;
+  --ember: #e2571f; --ember-hi: #c94a15;
   --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --wide: "Inter Tight", "Inter Display", "Inter", system-ui, sans-serif;
 }
-.display, h1, h2 { font-family: var(--wide); font-weight: 600; letter-spacing: -.04em; }
+body { background: var(--night); color: var(--fog); }
+::selection { background: #dcdcd8; color: #121417; }
+.display, h1, h2 { font-family: var(--wide); font-weight: 600; letter-spacing: -.04em; color: var(--paper); }
 .btn { border-radius: 999px; font-weight: 500; }
 .btn-primary { background: var(--ember); color: #fff; }
 .btn-primary:hover { background: var(--ember-hi); }
+.btn-ghost { background: #fff; }
+.nav { background: color-mix(in srgb, #f6f6f4 85%, transparent) !important; }
+.brand svg path[fill="#ededed"] { fill: #121417; }
+.msg.out, .peek-out { background: #0a84ff; color: #fff; }
+.msg.out small { color: rgba(255,255,255,.75); }
+.msg.in { background: #ecece9; color: #121417; }
+.btn-primary, .btn-primary:visited { color: #fff !important; }
