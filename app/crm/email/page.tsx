@@ -7,6 +7,7 @@ import { mailtoLink } from "@/lib/deal-workspace";
 import { fillTemplate, mergeFor, TEMPLATE_SETS, TRACK_LABEL, trackOf, STEP_GAP_DAYS, type EmailStep, type EmailTemplate, type Track } from "@/lib/email-outreach";
 import "./email.css";
 import InfoSend from "./info-send";
+import FindEmails from "./find-emails";
 
 type Contact = { id: string; name: string; company: string; email: string; location?: string; status?: string; lastTouchOutcome?: string; nextFollowUp?: string; source?: string; niche?: string };
 type Sent = { contactId: string; step: string; at: string };
@@ -249,6 +250,7 @@ export default function EmailPage() {
       <a className="u-btn u-btn-light" href="/api/gmail/connect">Reconnect Gmail</a>
     </div>}
 
+    <FindEmails onDone={() => void load()} />
     {contacts && <InfoSend contacts={contacts} connected={!!gmail?.connected} onSent={(id, email) => setContacts(cs => cs && cs.map(c => c.id === id ? { ...c, email } : c))} />}
     {gmail?.connected && !reconnect && <section className="u-sheet em-replies em-inbox" aria-label="Inbox">
       <div className="u-h2-row"><h2 className="u-h2">Inbox: needs you <span className="u-quiet">{inbox.mail.length}</span></h2>
