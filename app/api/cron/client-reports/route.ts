@@ -3,6 +3,7 @@ import { lastMonth, periodLabel } from "@/lib/client-report";
 import { monthlyFigures, monthlyReport, readDiscovery, readReviews, type Booking } from "@/lib/founding-offer";
 import { logRun } from "@/lib/pre-audit";
 import { bearerMatches } from "@/lib/bearer";
+import { replyLine, replySecs, replySummary } from "@/lib/reply-times";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,8 +40,13 @@ export async function GET(request: Request) {
       const f = monthlyFigures({ bookings, avgJobValue: disc.avgJobValue, closeRatePct: disc.closeRate, reviewRequests: rev.requestsSent || undefined });
       const name = String(c.company || c.client_name || c.name || "Client");
       const r = monthlyReport(name, periodLabel(period), f);
+      // What the live system did this month: estimates it put on their calendar, and the 60-second guarantee, measured.
+      const from = `${period}-01T00:00:00Z`, to = new Date(Date.UTC(Number(period.slice(0, 4)), Number(period.slice(5, 7)), 1)).toISOString();
+      const reply = replySummary(await replySecs(sql, String(c.id), from, to).catch(() => []));
+      const [ap] = await sql`SELECT count(*)::int AS n FROM public.client_appointments WHERE project_id = ${c.id}::uuid AND created_at >= ${from}::timestamptz AND created_at < ${to}::timestamptz`.catch(() => [{ n: 0 }]) as { n: number }[];
+      const text = [r.text, `Estimates Cinder booked on your calendar: ${ap?.n ?? 0}.`, replyLine(reply)].join("\n\n");
       const ins = await sql`INSERT INTO public.client_reports (owner_id, project_id, period, figures, content, status)
-        VALUES (${owner}, ${c.id}::uuid, ${period}, ${JSON.stringify({ estimates: f.booked, sprint: f })}::jsonb, ${r.text}, 'draft')
+        VALUES (${owner}, ${c.id}::uuid, ${period}, ${JSON.stringify({ estimates: f.booked, sprint: f, runtimeBooked: ap?.n ?? 0, reply })}::jsonb, ${text}, 'draft')
         ON CONFLICT (owner_id, project_id, period) DO NOTHING RETURNING id`;
       drafted += ins.length;
     }

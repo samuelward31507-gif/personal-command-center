@@ -1,0 +1,11 @@
+import assert from "node:assert/strict";
+import { replySummary, replyLine } from "./lib/reply-times.ts";
+const ok = replySummary([8, 9, 12, 10]);
+assert.equal(ok.medianSec, 10); assert.equal(ok.slowestSec, 12); assert.equal(ok.over, 0); assert.ok(ok.met);
+assert.match(replyLine(ok), /Every one under 60 seconds/);
+const hundred = Array.from({ length: 100 }, () => 9); hundred[3] = 75;
+assert.ok(replySummary(hundred).met, "1 in 100 over is still met");
+hundred[4] = null;
+const two = replySummary(hundred); assert.equal(two.over, 2); assert.ok(!two.met); assert.match(replyLine(two), /month is free/);
+assert.ok(replySummary([]).met); assert.match(replyLine(replySummary([])), /no new leads/);
+console.log("reply times ok");
