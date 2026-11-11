@@ -55,3 +55,73 @@ html body :is(input, textarea, select):not([type="checkbox"]):not([type="radio"]
 html body :is(input, textarea)::placeholder { color: #a0a4ab !important; }
 
 ::selection { background: rgba(10, 132, 255, .18); }
+
+/* ==========================================================================
+   The frame: sidebar on a quiet tinted field, the work on one white sheet
+   inset beside it (the layout Linear, Attio and Vercel use). Desktop only.
+   ========================================================================== */
+:root { --frame: #f1f1ee; --sheet: #fdfdfc; --ring: rgba(18, 20, 23, .07); }
+@media (min-width: 761px) {
+  html body:not(#u), html body:not(#u) .crm-app-shell { background: var(--frame) !important; }
+  html body:not(#u) .cx-side { background: transparent !important; border-right: 0 !important; padding: 10px 10px 12px 12px; }
+  html body:not(#u) .crm-app-shell .crm-shell-main {
+    margin: 8px 8px 8px 0; min-height: calc(100vh - 16px); border-radius: 14px; overflow: clip;
+    background: var(--sheet) !important; box-shadow: 0 0 0 1px var(--ring), 0 1px 2px rgba(18, 20, 23, .04), 0 8px 24px -16px rgba(18, 20, 23, .12);
+  }
+  html body:not(#u) .crm-shell-main .u-page { background: transparent !important; }
+}
+
+/* Sidebar: calmer type, a lifted white chip for the page you're on. */
+html body:not(#u) .cx-side .cx-item { height: 30px; font-size: 13.25px; color: #3d434b !important; border-radius: 8px; }
+html body:not(#u) .cx-side .cx-item .cx-icon { width: 16px; height: 16px; flex-basis: 16px; color: #7b818a; stroke-width: 1.75; }
+html body:not(#u) .cx-side .cx-item:hover { background: rgba(18, 20, 23, .045) !important; }
+html body:not(#u) .cx-side .cx-item.is-active { background: #fff !important; color: #121417 !important; font-weight: 550; box-shadow: 0 0 0 1px var(--ring), 0 1px 2px rgba(18, 20, 23, .06); }
+html body:not(#u) .cx-side .cx-item.is-active::before { display: none !important; }
+html body:not(#u) .cx-side .cx-group { font-size: 11.5px; color: #8b9098; padding-top: 16px; }
+html body:not(#u) .cx-side .cx-kbd { background: #fff; border-color: var(--ring); box-shadow: 0 1px 0 rgba(18, 20, 23, .06); }
+html body:not(#u) .cx-side .cx-foot { border-top-color: rgba(18, 20, 23, .07); }
+html body:not(#u) .cx-side .cx-avatar { background: #121417; color: #fff; }
+
+/* Type: numbers line up, headings sit tight, body text reads a touch crisper. */
+html body { font-feature-settings: "cv11", "ss01"; letter-spacing: -0.003em; }
+html body :is(.u-fig-v, .u-fig-v *, td, .tabular, time, .cw-day em) { font-variant-numeric: tabular-nums; }
+html body .u-page h1.u-title { font-size: clamp(28px, 2.3vw, 34px) !important; letter-spacing: -0.03em !important; }
+html body .u-page .u-title-sub { font-size: 14px; color: #6f747c !important; margin-top: 6px; }
+html body .u-page h2.u-h2 { font-size: 14.5px !important; letter-spacing: -0.012em !important; }
+html body .u-fig-k { font-size: 12.5px !important; color: #6f747c !important; }
+html body .u-fig-v { font-size: clamp(30px, 2.5vw, 40px) !important; }
+html body .u-meter { height: 4px !important; background: rgba(18, 20, 23, .07) !important; }
+html body .u-meter > i { background: #121417 !important; }
+
+/* Tables: quiet headers, roomy rows, a soft hover. */
+html body .u-page table { border-collapse: separate; border-spacing: 0; }
+html body .u-page th { font-size: 12px !important; font-weight: 500 !important; color: #7b818a !important; letter-spacing: 0 !important; text-transform: none !important; background: transparent !important; border-bottom: 1px solid var(--ring) !important; }
+html body .u-page tbody tr { transition: background .12s; }
+html body .u-page tbody tr:hover { background: rgba(18, 20, 23, .025) !important; }
+html body .u-page td { border-bottom: 1px solid rgba(18, 20, 23, .055) !important; }
+
+/* Buttons: one height, a crisp edge, primary with a little depth. */
+html body .u-page .u-btn { height: 34px; border-radius: 9px !important; box-shadow: 0 1px 1px rgba(18, 20, 23, .04); }
+html body .u-page :is(.u-btn-go, .u-btn-light) { box-shadow: 0 1px 2px rgba(18, 20, 23, .2), inset 0 1px 0 rgba(255, 255, 255, .08); }
+html body .u-page .u-btn-bare { box-shadow: none; }
+
+/* Scrollbars that don't shout. */
+html body * { scrollbar-width: thin; scrollbar-color: rgba(18, 20, 23, .18) transparent; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html body .u-page { animation: u-in .28s cubic-bezier(.2, .8, .2, 1) both; }
+  @keyframes u-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+}
+
+/* Avatars: initials on a soft tone picked from the name. */
+html body .u-av { display: inline-grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; border-radius: 9px; font: 600 11.5px/1 var(--u-text-font); letter-spacing: .02em; color: #3d434b; background: #eef0f2; box-shadow: inset 0 0 0 1px rgba(18, 20, 23, .05); }
+html body .u-av[data-tone="1"] { background: #e9f1ec; color: #2c6a49; } html body .u-av[data-tone="2"] { background: #eaf0f8; color: #2f5b8f; }
+html body .u-av[data-tone="3"] { background: #f5efe6; color: #8a5a1f; } html body .u-av[data-tone="4"] { background: #f1ecf6; color: #5f4a86; }
+html body .u-av[data-tone="5"] { background: #f6ecec; color: #8f3f3a; }
+html body .ct-who-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+/* Status marks: a dot and a word, the way good trackers show state. */
+html body .u-page .u-mark { display: inline-flex !important; align-items: center; gap: 6px; padding: 3px 9px 3px 8px !important; border-radius: 999px !important; border: 1px solid rgba(18, 20, 23, .09) !important; background: #fff !important; color: #4a4f57 !important; font-size: 12px !important; font-weight: 500 !important; }
+html body .u-page .u-mark::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #a0a5ad; }
+html body .u-page .u-mark.is-good { border-color: rgba(23, 144, 90, .2) !important; background: rgba(23, 144, 90, .06) !important; color: #17905a !important; }
+html body .u-page .u-mark.is-good::before { background: #17905a; }

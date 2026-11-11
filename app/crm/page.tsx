@@ -94,7 +94,7 @@ export default function ContactsPage(){
   :<div className="u-tablewrap"><table className="u-table ct-table">
    <thead><tr><th>Business</th><th>Phone</th><th>Location</th><th>Status</th><th>Last touch</th><th>Follow-up</th><th/></tr></thead>
    <tbody>{rows.map(c=>{const isDue=!!c.nextFollowUp&&c.nextFollowUp<=today();return <tr key={c.id} className={"is-link"+(selected===c.id&&sheet?" is-on":"")} onClick={()=>open(c)} tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();open(c)}}}>
-    <td><div className="ct-who"><strong>{c.company||c.name}</strong><span>{c.company?[c.name,c.role].filter(Boolean).join(", "):c.role||""}</span></div></td>
+    <td><div className="ct-who-row"><span className="u-av" data-tone={((c.company||c.name||"?").charCodeAt(0)+(c.company||c.name||"?").length)%6} aria-hidden="true">{(c.company||c.name||"?").replace(/[^A-Za-z0-9 ]/g,"").split(" ").filter(Boolean).slice(0,2).map((w:string)=>w[0]).join("").toUpperCase()||"?"}</span><div className="ct-who"><strong>{c.company||c.name}</strong><span>{c.company?[c.name,c.role].filter(Boolean).join(", "):c.role||""}</span></div></div></td>
     <td className="u-num ct-phone">{c.phone||<span className="u-quiet">No phone</span>}</td>
     <td>{c.location||<span className="u-quiet">—</span>}</td>
     <td><span className={"u-mark"+(c.status==="Customer"?" is-good":"")}>{c.status}</span></td>
