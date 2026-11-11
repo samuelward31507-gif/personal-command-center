@@ -17,14 +17,14 @@ export async function contentContext(sql: Sql, o: string): Promise<Context> {
       count(*) FILTER (WHERE outcome = 'meeting_booked')::int AS meetings,
       count(*) FILTER (WHERE notes LIKE 'Email sent:%')::int AS emails,
       count(DISTINCT date_trunc('day', occurred_at)) FILTER (WHERE channel = 'call')::int AS days
-    FROM public.contact_activities WHERE owner_id = ${o} AND occurred_at > now() - interval '7 days'` as Promise<Record<string, unknown>[]>, [{}]);
+    FROM public.contact_activities WHERE owner_id = ${o} AND occurred_at > now() - interval '7 days'` as unknown as Promise<Record<string, unknown>[]>, [{}]);
   const notes = await safe(sql`SELECT notes FROM public.contact_activities WHERE owner_id = ${o} AND channel = 'call'
       AND occurred_at > now() - interval '7 days' AND length(notes) > 12 AND notes NOT LIKE 'Email sent:%'
-      ORDER BY occurred_at DESC LIMIT 30` as Promise<{ notes: string }[]>, []);
-  const [clients] = await safe(sql`SELECT count(*)::int AS live FROM public.client_ops WHERE owner_id = ${o} AND coalesce(setup->>'texting_number','') <> ''` as Promise<Record<string, unknown>[]>, [{}]);
-  const [runtime] = await safe(sql`SELECT count(DISTINCT thread_id) FILTER (WHERE direction = 'out')::int AS answered FROM public.client_texts WHERE owner_id = ${o} AND at > now() - interval '7 days'` as Promise<Record<string, unknown>[]>, [{}]);
-  const [booked] = await safe(sql`SELECT count(*)::int AS n FROM public.client_threads WHERE owner_id = ${o} AND status = 'booked' AND updated_at > now() - interval '7 days'` as Promise<Record<string, unknown>[]>, [{}]);
-  const recent = await safe(sql`SELECT hook FROM public.content_drafts WHERE owner_id = ${o} AND created_at > now() - interval '56 days' ORDER BY created_at DESC LIMIT 60` as Promise<{ hook: string }[]>, []);
+      ORDER BY occurred_at DESC LIMIT 30` as unknown as Promise<{ notes: string }[]>, []);
+  const [clients] = await safe(sql`SELECT count(*)::int AS live FROM public.client_ops WHERE owner_id = ${o} AND coalesce(setup->>'texting_number','') <> ''` as unknown as Promise<Record<string, unknown>[]>, [{}]);
+  const [runtime] = await safe(sql`SELECT count(DISTINCT thread_id) FILTER (WHERE direction = 'out')::int AS answered FROM public.client_texts WHERE owner_id = ${o} AND at > now() - interval '7 days'` as unknown as Promise<Record<string, unknown>[]>, [{}]);
+  const [booked] = await safe(sql`SELECT count(*)::int AS n FROM public.client_threads WHERE owner_id = ${o} AND status = 'booked' AND updated_at > now() - interval '7 days'` as unknown as Promise<Record<string, unknown>[]>, [{}]);
+  const recent = await safe(sql`SELECT hook FROM public.content_drafts WHERE owner_id = ${o} AND created_at > now() - interval '56 days' ORDER BY created_at DESC LIMIT 60` as unknown as Promise<{ hook: string }[]>, []);
   // Notes can hold names and numbers: strip phone numbers and emails, keep it short. The prompt also forbids names.
   const heard = notes.map(r => r.notes.replace(/\S+@\S+/g, "").replace(/\+?\d[\d\s().-]{7,}\d/g, "").replace(/\s+/g, " ").trim().slice(0, 160)).filter(s => s.length > 12).slice(0, 20);
   return {
@@ -35,7 +35,7 @@ export async function contentContext(sql: Sql, o: string): Promise<Context> {
 }
 
 export async function postedHistory(sql: Sql, o: string): Promise<Posted[]> {
-  return safe(sql`SELECT pillar, platform, views, comments, leads FROM public.content_drafts WHERE owner_id = ${o} AND status = 'posted' AND posted_at > now() - interval '120 days'` as Promise<Posted[]>, []);
+  return safe(sql`SELECT pillar, platform, views, comments, leads FROM public.content_drafts WHERE owner_id = ${o} AND status = 'posted' AND posted_at > now() - interval '120 days'` as unknown as Promise<Posted[]>, []);
 }
 
 async function write(ctx: Context, slots: Slot[], week: string): Promise<Draft[]> {
