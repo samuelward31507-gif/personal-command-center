@@ -18,6 +18,7 @@ type Doc = {
   invoices: { number: string; title: string; amount: number; status: string; dueDate: string | null; paidAt: string | null; link: string | null }[];
   reports: { period: string; figures: Figures }[];
   live?: Live;
+  messages?: { from: string; body: string; at: string | null }[];
 };
 type Text = { direction: string; author: string; body: string; at: string | null };
 const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
@@ -34,6 +35,24 @@ export default function PortalPage() {
   const [error, setError] = useState("");
   const [open, setOpen] = useState<string | null>(null);
   const [texts, setTexts] = useState<Text[]>([]);
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendNote, setSendNote] = useState("");
+  async function send() {
+    const body = draft.trim(); if (!body || !doc) return;
+    setSending(true); setSendNote("");
+    try {
+      if (doc.demo) setDoc({ ...doc, messages: [...(doc.messages ?? []), { from: "client", body, at: new Date().toISOString() }] });
+      else {
+        const r = await fetch("/api/portal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, body }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || "Couldn't send that.");
+        setDoc({ ...doc, messages: [...(doc.messages ?? []), { from: "client", body, at: new Date().toISOString() }] });
+      }
+      setDraft(""); setSendNote(`Sent. ${doc.from.owner || "We"} usually replies the same day.`);
+    } catch (e) { setSendNote(e instanceof Error ? e.message : "Couldn't send that."); }
+    finally { setSending(false); }
+  }
   useEffect(() => {
     fetch("/api/portal?token=" + encodeURIComponent(token), { cache: "no-store" })
       .then(async r => { const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || "This link isn't valid."); setDoc(d); })
@@ -103,6 +122,16 @@ export default function PortalPage() {
 
       {doc.milestones.length > 0 && doc.stage.key !== "live" && <section className="pt-sec"><h2>Build plan <small>{done} of {doc.milestones.length} done</small></h2>
         <ol className="pt-plan">{doc.milestones.map((m, i) => <li key={i} className={m.done ? "done" : ""}><i aria-hidden="true" /><span>{m.title}</span><small>{m.done ? "Done" : m.dueAt ? fmt(m.dueAt) : ""}</small></li>)}</ol></section>}
+
+      <section className="pt-sec pt-talk" aria-label={`Messages with ${doc.from.owner}`}>
+        <h2>Talk to {doc.from.owner || "us"} <small>Questions, changes, anything about your build</small></h2>
+        {(doc.messages ?? []).length > 0 && <ol className="pt-msgs">{(doc.messages ?? []).map((m, i) => <li key={i} className={m.from === "client" ? "me" : "them"}>
+          <p>{m.body}</p><small>{m.from === "client" ? "You" : doc.from.owner} · {ago(m.at)}</small></li>)}</ol>}
+        <form className="pt-compose" onSubmit={e => { e.preventDefault(); void send(); }}>
+          <textarea value={draft} onChange={e => setDraft(e.target.value)} rows={3} placeholder={`Message ${doc.from.owner || "us"}: a change to your texts, new hours, a question…`} aria-label="Message" />
+          <div><span>{sendNote}</span><button type="submit" disabled={sending || !draft.trim()}>{sending ? "Sending…" : "Send"}</button></div>
+        </form>
+      </section>
 
       {doc.reports.length > 0 && <section className="pt-sec"><h2>Monthly reports</h2>
         {doc.reports.map(r => <div key={r.period} className="pt-report"><h3>{r.period}</h3>

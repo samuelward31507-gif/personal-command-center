@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import "./hub.css";
 import OpsPanel from "./ops-panel";
 import LivePanel from "./live-panel";
+import MessagesPanel from "./messages-panel";
 import DeliveryPanel from "./delivery-panel";
 
 type Hub = {
@@ -77,6 +78,7 @@ export default function ClientHubPage() {
       {s.attention.map((a, i) => <div key={i} className={"hb-attn-row " + a.level}><i />{a.href ? <Link href={a.href}>{a.text}</Link> : <span>{a.text}</span>}</div>)}
     </section>}
 
+    <MessagesPanel projectId={c.id} />
     <DeliveryPanel projectId={c.id} />
     <LivePanel projectId={c.id} />
     <OpsPanel projectId={c.id} />

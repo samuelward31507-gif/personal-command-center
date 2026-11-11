@@ -44,3 +44,13 @@
 .lv-appts li.is-no_show em { color: #a8322a; } .lv-appts li.is-done em { color: #17905a; }
 .lv-appts li.lv-empty { display: block; color: var(--u-muted, #6f747c); }
 .lv code { font-size: 12px; padding: 1px 5px; border-radius: 5px; background: rgba(18,20,23,.06); overflow-wrap: anywhere; }
+.mp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.mp-head h2 { margin: 0; font-size: 16px; } .mp-head span { font-size: 13px; color: var(--u-muted, #6f747c); } .mp-head a { color: var(--u-text, #121417); text-decoration: underline; }
+.mp-list { list-style: none; margin: 0 0 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; border-radius: 12px; background: var(--u-bg, #f6f6f4); max-height: 360px; overflow: auto; }
+.mp-list li { max-width: 78%; display: flex; flex-direction: column; gap: 3px; }
+.mp-list li p { margin: 0; padding: 9px 13px; border-radius: 15px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; }
+.mp-list li.them { align-self: flex-start; } .mp-list li.them p { background: #fff; border: 1px solid rgba(18,20,23,.08); border-bottom-left-radius: 5px; }
+.mp-list li.me { align-self: flex-end; align-items: flex-end; } .mp-list li.me p { background: #121417; color: #fff; border-bottom-right-radius: 5px; }
+.mp-list li small { font-size: 11px; color: var(--u-muted, #6f747c); }
+.mp-form { display: flex; gap: 8px; align-items: flex-end; }
+.mp-form textarea { flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(18,20,23,.14); font: inherit; font-size: 14px; resize: vertical; }

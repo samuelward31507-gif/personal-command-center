@@ -6,6 +6,8 @@ import { stageOf } from "@/lib/client-hub";
 import { periodLabel } from "@/lib/client-report";
 import { todayIn } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
+import { sendAlert } from "@/lib/notify";
+import { allowEvent, clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,6 +51,8 @@ export async function GET(request: Request) {
       sql`SELECT period, figures FROM public.client_reports WHERE project_id = ${pid}::uuid AND owner_id = ${owner} AND status = 'sent' ORDER BY period DESC LIMIT 12` as Promise<Record<string, unknown>[]>,
     ]);
     const live = await liveFor(sql, pid);
+    const msgs = await sql`SELECT author, body, created_at FROM public.client_messages WHERE project_id = ${pid}::uuid ORDER BY created_at DESC LIMIT 100`.catch(() => []) as Record<string, unknown>[];
+    await sql`UPDATE public.client_messages SET read_at = now() WHERE project_id = ${pid}::uuid AND author = 'owner' AND read_at IS NULL`.catch(() => null);
     const ws = await loadWorkspace(owner);
     const today = todayIn(ws.timezone);
     const d = deal[0], k = kick[0];
@@ -74,6 +78,7 @@ export async function GET(request: Request) {
       invoices: money.map(m => ({ number: `INV-${m.invoice_number}`, title: String(m.title).split(" — ").slice(1).join(" — ") || String(m.title), amount: Number(m.amount), status: String(m.status), dueDate: day(m.due_date), paidAt: day(m.paid_at), link: m.invoice_token ? `${base}/invoice/${m.invoice_token}` : null })),
       reports: reports.map(r => ({ period: periodLabel(String(r.period)), figures: r.figures && typeof r.figures === "object" ? r.figures : {} })),
       live,
+      messages: msgs.reverse().map(m => ({ from: String(m.author), body: String(m.body), at: iso(m.created_at) })),
     });
   } catch (error) {
     console.error("Portal fetch failed", { name: error instanceof Error ? error.name : typeof error });
@@ -115,6 +120,10 @@ async function liveFor(sql: Sql, pid: string) {
 /** /portal/demo: what an owner's app looks like, with made-up numbers for an example fence company. */
 function demoPortal(thread: string | null) {
   const ago = (h: number) => new Date(Date.now() - h * 3600000).toISOString();
+  const messages = [
+    { from: "client", body: "Can we add the Saturday hours to the texts? We do estimates Saturday mornings now.", at: ago(30) },
+    { from: "owner", body: "Done. Saturday 8 to noon is live, and Cinder offers those times now. Anything else?", at: ago(27) },
+  ];
   if (thread) {
     const t: Record<string, { direction: string; author: string; body: string; at: string }[]> = {
       d1: [
@@ -129,7 +138,7 @@ function demoPortal(thread: string | null) {
     return { texts: t[thread] ?? t.d1 };
   }
   return {
-    demo: true, client: "Ridgeline Fence Co.", from: { name: "Cinder Revenue Company", owner: "Sam", email: "sam.cinderrevenue@gmail.com" },
+    demo: true, messages, client: "Ridgeline Fence Co.", from: { name: "Cinder Revenue Company", owner: "Sam", email: "sam.cinderrevenue@gmail.com" },
     stage: { key: "live", label: "Live" }, clock: { state: "live", label: "Live in 9 business days", deadline: null },
     milestones: [], waiting: [], invoices: [], reports: [],
     live: {
@@ -144,4 +153,30 @@ function demoPortal(thread: string | null) {
       ],
     },
   };
+}
+
+/**
+ * POST /api/portal { token, body } — public: the client sends Sam a message from their portal.
+ * Rate-limited; Sam gets an email alert with a link to reply from the CRM.
+ */
+export async function POST(request: Request) {
+  const b = await request.json().catch(() => null) as { token?: string; body?: string; website?: string } | null;
+  if (!b || !isTokenShape(b.token ?? null)) return reply({ error: "This link isn't valid." }, 404);
+  if (b.website) return reply({ ok: true }); // honeypot
+  const body = String(b.body ?? "").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "").trim().slice(0, 4000);
+  if (!body) return reply({ error: "Write a message first." }, 400);
+  if (!process.env.DATABASE_URL) return reply({ error: "Unavailable right now." }, 503);
+  if (!(await allowEvent("portal-msg", clientIp(request), 20, 60))) return reply({ error: "Too many messages in an hour. Try again soon." }, 429);
+  try {
+    const sql = neon(process.env.DATABASE_URL);
+    const [o] = await sql`SELECT o.project_id, o.owner_id, o.setup, p.client_name, p.name FROM public.client_ops o JOIN public.projects p ON p.id = o.project_id WHERE o.portal_token = ${b.token} LIMIT 1` as Record<string, unknown>[];
+    if (!o) return reply({ error: "This link is no longer active." }, 404);
+    await sql`INSERT INTO public.client_messages (owner_id, project_id, author, body) VALUES (${String(o.owner_id)}, ${String(o.project_id)}::uuid, 'client', ${body})`;
+    const who = ((o.setup ?? {}) as Record<string, string>).display_name || String(o.client_name || o.name);
+    await sendAlert({ subject: `Message from ${who}`, lines: [`${who} wrote from their portal:`, body.slice(0, 1200)], link: { label: "Reply in the CRM", path: `/crm/client-success/${String(o.project_id)}` } }).catch(() => false);
+    return reply({ ok: true });
+  } catch (e) {
+    console.error("Portal message failed", { name: e instanceof Error ? e.name : typeof e });
+    return reply({ error: "Couldn't send that. Try again." }, 500);
+  }
 }
