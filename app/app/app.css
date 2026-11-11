@@ -348,3 +348,39 @@ html body:not(#u) .ca-money { margin: 6px 0 18px; padding: 20px 18px; border-rad
 html body:not(#u) .ca-money p { font-size: 13px; color: rgba(255, 255, 255, .62); }
 html body:not(#u) .ca-money b { display: block; margin-top: 6px; font: 600 44px/1 var(--ca-head); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
 html body:not(#u) .ca-money small { display: block; margin-top: 10px; font-size: 13px; color: rgba(255, 255, 255, .72); }
+
+/* Sign-in, final layer: no card, just the mark, one question and one button on the open page (Linear / Vercel style).
+   One entrance on load; everything else is still. */
+html body:not(#u):not(#v) .ca-sign { gap: 0; padding: calc(56px + env(safe-area-inset-top)) 24px calc(28px + env(safe-area-inset-bottom)); background: var(--ca-bg) !important; }
+html body:not(#u):not(#v) .ca-sign-card { max-width: 340px; padding: 0; margin: auto 0 0; background: none !important; border: 0; border-radius: 0; box-shadow: none; animation: ca-rise .5s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes ca-rise { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { html body:not(#u):not(#v) .ca-sign-card { animation: none; } }
+html body:not(#u):not(#v) .ca-sign .ca-mark { width: 52px; height: 52px; border-radius: 13px; }
+html body:not(#u):not(#v) .ca-sign-card h1 { margin-top: 28px; font-size: 26px; line-height: 1.15; letter-spacing: -0.022em; font-weight: 600; }
+html body:not(#u):not(#v) .ca-sign-card > p { margin-top: 8px; color: var(--ca-3); font-size: 15px; }
+html body:not(#u):not(#v) .ca-sign-card > p b { color: var(--ca-text); font-weight: 500; }
+html body:not(#u):not(#v) .ca-sign form { margin-top: 32px; gap: 10px; }
+html body:not(#u):not(#v) .ca-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html body:not(#u):not(#v) .ca-phone { position: relative; }
+html body:not(#u):not(#v) .ca-phone > i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-style: normal; font-size: 17px; font-weight: 500; color: var(--ca-4); pointer-events: none; }
+html body:not(#u):not(#v) .ca-sign .ca-field input { height: 52px !important; padding: 0 16px 0 44px !important; border-radius: 12px !important; border-color: rgba(18, 20, 23, .12) !important; font-size: 17px !important; font-variant-numeric: tabular-nums; letter-spacing: 0; transition: border-color .15s, box-shadow .15s; }
+html body:not(#u):not(#v) .ca-sign .ca-field input::placeholder { color: #b4b8be; }
+html body:not(#u):not(#v) .ca-sign .ca-field input:hover { border-color: rgba(18, 20, 23, .2) !important; }
+html body:not(#u):not(#v) .ca-sign :is(.ca-field input, .ca-otp input):focus-visible { outline: none !important; }
+html body:not(#u):not(#v) .ca-sign .ca-field input:focus { border-color: rgba(18, 20, 23, .55) !important; box-shadow: 0 0 0 4px rgba(18, 20, 23, .06) !important; }
+html body:not(#u):not(#v) .ca-otp { gap: 7px; }
+html body:not(#u):not(#v) .ca-otp-box { height: 54px; border-radius: 12px; border-color: rgba(18, 20, 23, .12); font-size: 24px; font-weight: 550; }
+html body:not(#u):not(#v) .ca-otp-box.full { border-color: rgba(18, 20, 23, .2); }
+html body:not(#u):not(#v) .ca-otp-box.on { border-color: rgba(18, 20, 23, .55); box-shadow: 0 0 0 4px rgba(18, 20, 23, .06); }
+html body:not(#u):not(#v) .ca-caret { height: 22px; width: 1.5px; }
+html body:not(#u):not(#v) .ca-sign .ca-primary { height: 50px; border-radius: 12px !important; font-size: 15.5px !important; font-weight: 550; letter-spacing: -0.005em; transition: transform .12s ease-out, background-color .15s, color .15s; }
+html body:not(#u):not(#v) .ca-sign .ca-primary:hover:not(:disabled) { background: #000 !important; }
+html body:not(#u):not(#v) .ca-sign .ca-primary:active:not(:disabled) { transform: scale(.97); }
+html body:not(#u):not(#v) .ca-sign .ca-primary:disabled { opacity: 1; background: #e6e6e3 !important; color: #a3a7ad !important; }
+html body:not(#u):not(#v) .ca-sign .ca-err { padding: 0; background: none; color: #b3261e; font-size: 13.5px; text-align: left; }
+html body:not(#u):not(#v) .ca-sign-alt { margin-top: 20px; font-size: 13.5px; }
+html body:not(#u):not(#v) .ca-sign .ca-text-btn { font-size: 13.5px !important; }
+html body:not(#u):not(#v) .ca-sign-foot { margin: auto 0 0; padding-top: 48px; gap: 6px; font-size: 13px; color: var(--ca-4); }
+html body:not(#u):not(#v) .ca-sign-foot .ca-demo-link { font-size: 13.5px !important; color: var(--ca-2) !important; text-decoration-color: rgba(18, 20, 23, .2); }
+html body:not(#u):not(#v) .ca-sign-word { height: 15px; margin-top: 22px; opacity: .55; }
+html body:not(#u):not(#v) .ca-sign-foot p { text-wrap: balance; }

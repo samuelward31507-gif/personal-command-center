@@ -134,13 +134,13 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
     <div className="ca-sign-card">
       <Mark />
       <h1>{sent ? "Check your texts" : "Sign in to Cinder"}</h1>
-      <p>{sent ? <>Enter the 6-digit code we sent to <b>{fmtPhone(phone)}</b>.</> : "Every lead, every conversation and every booked estimate, in one place."}</p>
+      <p>{sent ? <>We texted a code to <b>{fmtPhone(phone)}</b>.</> : "Use the cell number you gave Sam."}</p>
       <form onSubmit={e => { e.preventDefault(); if (!sent) void send(); else if (code.length === 6) void verify(code); }}>
-        {!sent ? <label className="ca-field"><span>Your cell number</span>
-          <input inputMode="tel" autoComplete="tel" placeholder="(720) 555-0148" value={phone} onChange={e => setPhone(typePhone(e.target.value))} autoFocus /></label>
+        {!sent ? <label className="ca-field ca-phone"><span className="ca-sr">Cell number</span><i aria-hidden="true">+1</i>
+          <input inputMode="tel" autoComplete="tel-national" placeholder="(720) 555-0148" value={phone} onChange={e => { setPhone(typePhone(e.target.value)); setErr(""); }} autoFocus /></label>
           : <CodeBoxes value={code} disabled={busy} onChange={v => { setCode(v); setErr(""); if (v.length === 6) void verify(v); }} />}
         {err && <p className="ca-err" role="alert">{err}</p>}
-        <button type="submit" className="ca-primary" disabled={busy || (!sent ? digits < 10 : code.length !== 6)}>{busy ? <span className="ca-spin" /> : sent ? "Sign in" : "Text me a code"}</button>
+        <button type="submit" className="ca-primary" disabled={busy || (!sent ? digits < 10 : code.length !== 6)}>{busy ? <span className="ca-spin" /> : sent ? "Sign in" : "Continue"}</button>
       </form>
       {sent && <div className="ca-sign-alt">
         <button type="button" className="ca-text-btn" disabled={wait > 0 || busy} onClick={() => void send()}>{wait > 0 ? <>Resend in <span className="ca-num">{wait}s</span></> : "Resend code"}</button>
@@ -149,8 +149,8 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
       </div>}
     </div>
     <div className="ca-sign-foot">
-      <p>No code? The portal link Sam sent you signs you in too.</p>
       <button type="button" className="ca-text-btn ca-demo-link" onClick={onDemo}>See an example business</button>
+      <p>Have a portal link from Sam? It signs you in too.</p>
       <CinderLogo className="ca-sign-word" ink="#121417" title="Cinder Revenue Company" />
     </div>
   </div>;
