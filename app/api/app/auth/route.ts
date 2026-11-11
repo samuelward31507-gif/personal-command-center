@@ -14,7 +14,7 @@ async function businessesFor(phone: string) {
 }
 
 /**
- * POST { action: "send", phone } — text a 6-digit code to the owner's cell (always answers the same, so it doesn't reveal who's a client).
+ * POST { action: "send", phone } — text a 6-digit code to the owner's cell, or say why it can't.
  * POST { action: "verify", phone, code } — sign in for 90 days.
  * POST { action: "link", token } — sign in from the portal link they already have.
  * POST { action: "logout" }
@@ -35,13 +35,16 @@ export async function POST(req: Request) {
     if (phone.length !== 10) return json({ error: "Enter the 10-digit cell number you gave us." }, 400);
     if (b.action === "send") {
       if (!(await allowEvent("app-code-ip", clientIp(req), 10, 60)) || !(await allowEvent("app-code-phone", phone, 5, 60))) return json({ error: "Too many codes. Try again in an hour." }, 429);
+      // Say plainly what went wrong. Telling an owner "we sent a code" when nothing went out is worse than
+      // revealing that a number isn't set up (sends are rate-limited per IP and per number).
       const biz = await businessesFor(phone);
+      if (!biz.length) return json({ error: "That number isn't set up with Cinder yet. Use the cell you gave Sam, or open the portal link he sent you." }, 404);
       const from = biz.find(x => x.from_number)?.from_number || process.env.CINDER_TEXT_FROM?.trim() || "";
-      if (biz.length && from) {
-        const code = newCode();
-        await db()`INSERT INTO public.app_codes (phone, code_hash, expires_at) VALUES (${phone}, ${hashCode(phone, code)}, now() + make_interval(mins => ${CODE_MINUTES}))`;
-        await sendSms("+1" + phone, from, `${code} is your Cinder sign-in code. It expires in ${CODE_MINUTES} minutes. Don't share it.`);
-      }
+      if (!from) return json({ error: "Text sign-in isn't switched on for your business yet. Open the portal link Sam sent you." }, 503);
+      const code = newCode();
+      await db()`INSERT INTO public.app_codes (phone, code_hash, expires_at) VALUES (${phone}, ${hashCode(phone, code)}, now() + make_interval(mins => ${CODE_MINUTES}))`;
+      const ok = await sendSms("+1" + phone, from, `${code} is your Cinder sign-in code. It expires in ${CODE_MINUTES} minutes. Don't share it.`);
+      if (!ok) return json({ error: "We couldn't text that number just now. Try again in a minute, or open your portal link." }, 502);
       return json({ ok: true, sent: true });
     }
     if (b.action === "verify") {

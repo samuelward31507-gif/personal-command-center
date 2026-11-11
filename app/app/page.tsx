@@ -5,6 +5,8 @@
 // Installs to the home screen like an app (manifest in /app.webmanifest). Same look as cinderrevenue.com.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./app.css";
+import { CinderLogo, CinderMark } from "../cinder-brand";
+import { demoApi } from "./demo";
 import { agenda, googleCalendarUrl, onMyWayText, splitAppointments, type CalEvent } from "@/lib/client-schedule";
 
 type Conv = { id: string; name: string; source: string; status: string; at: string | null; last: string; ask?: string };
@@ -34,7 +36,14 @@ const typePhone = (v: string) => { const d = v.replace(/\D/g, "").replace(/^1(?=
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; };
 const secs = (n: number | null) => (n == null ? "–" : n < 60 ? `${n} sec` : `${Math.round(n / 60)} min`);
 
+// The example business (/app?demo=1) answers every call in the browser; nothing reaches the server.
+const DEMO_KEY = "cinder-demo";
+let demoOn = false;
+const demoStart = () => { demoOn = true; try { sessionStorage.setItem(DEMO_KEY, "1"); } catch { /* private mode */ } };
+const demoStop = () => { demoOn = false; try { sessionStorage.removeItem(DEMO_KEY); } catch { /* private mode */ } };
+
 async function api<T>(path: string, body?: unknown): Promise<T> {
+  if (demoOn && !path.startsWith("/api/app/auth") && !path.startsWith("/api/app/push")) return await demoApi(path, (body ?? {}) as Record<string, unknown>) as T;
   const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : { cache: "no-store" });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) { const e = new Error(j.error || "Something went wrong.") as Error & { status?: number }; e.status = r.status; throw e; }
@@ -84,7 +93,7 @@ async function turnOnPush(project: string): Promise<string | null> {
   } catch (e) { return e instanceof Error ? e.message : "Couldn't turn on notifications."; }
 }
 
-function Mark({ small }: { small?: boolean }) { return <span className={"ca-mark" + (small ? " sm" : "")} aria-hidden="true">c<i /></span>; }
+function Mark({ small }: { small?: boolean }) { return <span className={"ca-mark" + (small ? " sm" : "")} aria-hidden="true"><CinderMark ring="#ededed" /></span>; }
 
 function useToast() {
   const [t, setT] = useState<{ text: string; bad?: boolean } | null>(null);
@@ -95,7 +104,18 @@ function useToast() {
 }
 
 // ---------- Sign in ----------
-function SignIn({ onIn }: { onIn: () => void }) {
+/** Six boxes over one real input, so paste, iOS code autofill and the number pad all still work. */
+function CodeBoxes({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled?: boolean }) {
+  const [focus, setFocus] = useState(true);
+  return <div className={"ca-otp" + (focus ? " focus" : "")}>
+    {Array.from({ length: 6 }, (_, i) => <span key={i} className={"ca-otp-box" + (value[i] ? " full" : "") + (focus && i === Math.min(value.length, 5) ? " on" : "")} aria-hidden="true">
+      {value[i] ?? (focus && i === value.length ? <i className="ca-caret" /> : null)}</span>)}
+    <input aria-label="6-digit code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={value} autoFocus disabled={disabled}
+      onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} onChange={e => onChange(e.target.value.replace(/\D/g, "").slice(0, 6))} />
+  </div>;
+}
+
+function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
   const [phone, setPhone] = useState(""), [code, setCode] = useState(""), [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false), [err, setErr] = useState(""), [wait, setWait] = useState(0);
   useEffect(() => { if (!wait) return; const t = setTimeout(() => setWait(w => w - 1), 1000); return () => clearTimeout(t); }, [wait]);
@@ -111,27 +131,28 @@ function SignIn({ onIn }: { onIn: () => void }) {
   }, [phone, onIn]);
   const digits = phone.replace(/\D/g, "").length;
   return <div className="ca-sign" role="main">
-    <div className="ca-sign-top"><span className="ca-word">cinder</span></div>
     <div className="ca-sign-card">
       <Mark />
       <h1>{sent ? "Check your texts" : "Sign in to Cinder"}</h1>
-      <p>{sent ? <>We sent a 6-digit code to <b>{fmtPhone(phone)}</b>.</> : "Every lead, every conversation, every booked estimate, in one place."}</p>
+      <p>{sent ? <>Enter the 6-digit code we sent to <b>{fmtPhone(phone)}</b>.</> : "Every lead, every conversation and every booked estimate, in one place."}</p>
       <form onSubmit={e => { e.preventDefault(); if (!sent) void send(); else if (code.length === 6) void verify(code); }}>
         {!sent ? <label className="ca-field"><span>Your cell number</span>
           <input inputMode="tel" autoComplete="tel" placeholder="(720) 555-0148" value={phone} onChange={e => setPhone(typePhone(e.target.value))} autoFocus /></label>
-          : <label className="ca-field"><span>Code</span>
-            <input className="ca-code" inputMode="numeric" autoComplete="one-time-code" placeholder="••••••" maxLength={6} value={code} autoFocus
-              onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0, 6); setCode(v); if (v.length === 6) void verify(v); }} /></label>}
+          : <CodeBoxes value={code} disabled={busy} onChange={v => { setCode(v); setErr(""); if (v.length === 6) void verify(v); }} />}
+        {err && <p className="ca-err" role="alert">{err}</p>}
         <button type="submit" className="ca-primary" disabled={busy || (!sent ? digits < 10 : code.length !== 6)}>{busy ? <span className="ca-spin" /> : sent ? "Sign in" : "Text me a code"}</button>
       </form>
-      {err && <p className="ca-err" role="alert">{err}</p>}
       {sent && <div className="ca-sign-alt">
-        <button type="button" className="ca-text-btn" disabled={wait > 0 || busy} onClick={() => void send()}>{wait > 0 ? `Resend in ${wait}s` : "Resend code"}</button>
-        <span>·</span>
+        <button type="button" className="ca-text-btn" disabled={wait > 0 || busy} onClick={() => void send()}>{wait > 0 ? <>Resend in <span className="ca-num">{wait}s</span></> : "Resend code"}</button>
+        <span aria-hidden="true">·</span>
         <button type="button" className="ca-text-btn" onClick={() => { setSent(false); setCode(""); setErr(""); }}>Change number</button>
       </div>}
     </div>
-    <p className="ca-sign-foot">No code? The portal link Sam sent you signs you in too.</p>
+    <div className="ca-sign-foot">
+      <p>No code? The portal link Sam sent you signs you in too.</p>
+      <button type="button" className="ca-text-btn ca-demo-link" onClick={onDemo}>See an example business</button>
+      <CinderLogo className="ca-sign-word" ink="#121417" title="Cinder Revenue Company" />
+    </div>
   </div>;
 }
 
@@ -296,6 +317,8 @@ export default function CinderApp() {
   const { show: toast, node: toastNode } = useToast();
   const [push, setPush] = useState<PushState>("unsupported");
   const [hidePushCard, setHidePushCard] = useState(false);
+  const [demo, setDemo] = useState(false);
+  const exitDemo = () => { demoStop(); setDemo(false); setD(null); setOpen(null); setProject(""); setState("out"); };
   useEffect(() => {
     setPush(pushState());
     try { setHidePushCard(localStorage.getItem("cinder-push-card") === "hide"); } catch { /* private mode */ }
@@ -316,6 +339,9 @@ export default function CinderApp() {
     const t = new URLSearchParams(location.search).get("t");
     (async () => {
       const q = new URLSearchParams(location.search);
+      let wasDemo = false; try { wasDemo = sessionStorage.getItem(DEMO_KEY) === "1"; } catch { /* private mode */ }
+      if (q.get("demo") === "1" || (wasDemo && !t)) { demoStart(); setDemo(true); setHidePushCard(true); }
+      else if (t) demoStop();
       if (t) await api("/api/app/auth", { action: "link", token: t }).catch(() => null);
       // Opened from a notification: go straight to that conversation or tab.
       const th = q.get("thread"), tb = q.get("tab");
@@ -334,7 +360,7 @@ export default function CinderApp() {
   const dueCount = due.length;
 
   if (state === "loading") return <div className="ca-load" role="main"><Mark /></div>;
-  if (state === "out") return <SignIn onIn={() => void load("")} />;
+  if (state === "out") return <SignIn onIn={() => void load("")} onDemo={() => { demoStart(); setDemo(true); setHidePushCard(true); setTab("leads"); void load("", "leads"); }} />;
   if (!d) return null;
   const L = d.live;
   const today = L.conversations.filter(c => c.at && dayKey(c.at) === new Date().toDateString()).length;
@@ -342,9 +368,10 @@ export default function CinderApp() {
   const maxW = Math.max(1, ...L.weeks.map(w => w.leads));
   const bizName = d.business || d.businesses.find(b => b.project_id === project)?.name || "";
 
-  if (open) return <div className="ca"><ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} />{toastNode}</div>;
+  if (open) return <div className="ca">{demo && <div className="ca-demo"><span>Example business. This is what your clients see.</span><button type="button" onClick={exitDemo}>Exit</button></div>}<ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} />{toastNode}</div>;
 
   return <div className="ca">
+    {demo && <div className="ca-demo"><span>Example business. This is what your clients see.</span><button type="button" onClick={exitDemo}>Exit</button></div>}
     <header className="ca-top">
       <Mark small />
       {d.businesses.length > 1
@@ -427,7 +454,7 @@ export default function CinderApp() {
           <li><span>Business</span><b>{bizName}</b></li>
           {d.number && <li><span>Your Cinder number</span><b>{fmtPhone(d.number)}</b></li>}
           <li><span>Notifications</span>{push === "on" ? <b className="ca-on">On</b> : push === "off" ? <button type="button" className="ca-set-btn" onClick={() => void enablePush()}>Turn on</button> : <b>{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</b>}</li>
-          <li><button type="button" onClick={async () => { await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); }}><Icon name="out" size={16} />Sign out</button></li>
+          <li><button type="button" onClick={async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); }}><Icon name="out" size={16} />{demo ? "Leave the example" : "Sign out"}</button></li>
         </ul>
       </>}
     </div>
