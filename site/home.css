@@ -93,12 +93,14 @@ p { margin: 0; }
 /* Works-with strip */
 .works { padding: 36px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: center; }
 .works > p { font-size: 13px; color: var(--text-3); margin-bottom: 18px; }
-.marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent); mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent); }
-.track { display: flex; gap: 56px; width: max-content; animation: slide 40s linear infinite; }
-.track span { font-family: var(--head); font-weight: 600; letter-spacing: -.03em; font-size: 18px; color: var(--text-3); white-space: nowrap; }
+.marquee { width: 100%; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+/* padding-right = gap, so the second copy lines up exactly at -50% and the loop has no jump */
+.track { display: flex; gap: 64px; padding-right: 64px; width: max-content; animation: slide 45s linear infinite; }
+.marquee:hover .track { animation-play-state: paused; }
+.track span { font-family: var(--head); font-weight: 600; letter-spacing: -.03em; font-size: clamp(18px, 1.4vw, 22px); color: var(--text-3); white-space: nowrap; }
 @keyframes slide { to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .track { animation: none; flex-wrap: wrap; justify-content: center; width: auto; } .track span[aria-hidden] { display: none; } }
-
+/* Reduced motion: still moves (it's slow, sideways and decorative), at half speed, and pauses on hover. */
+@media (prefers-reduced-motion: reduce) { .track { animation-duration: 90s; } }
 /* Sections */
 .sec { padding: 120px 0; border-top: 1px solid var(--line); }
 .sec-tint { background: var(--bg-2); }

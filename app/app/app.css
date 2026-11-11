@@ -307,3 +307,21 @@ html body:not(#u) .ca-nudge small { display: block; margin-top: 1px; font-size: 
 html body:not(#u) .ca-nudge > svg { transform: rotate(180deg); color: var(--ca-4); }
 @media (max-width: 380px) { html body:not(#u) .ca-est-acts { padding-left: 16px; } }
 html body:not(#u) :is(.ca-out-btns, .ca-q-btns, .ca-est-acts, .ca-calbar-go) svg { flex: 0 0 auto; }
+
+/* Home: one list of what needs the owner, replies first, then estimates to update */
+html body:not(#u) .ca-todo { margin-bottom: 18px; border: 1px solid rgba(181, 101, 29, .2); border-radius: 18px; background: var(--ca-warn-bg); overflow: hidden; }
+html body:not(#u) .ca-todo h2 { display: flex; align-items: center; gap: 7px; padding: 12px 16px 4px; font-size: 12.5px !important; font-weight: 600; color: #8a4b12 !important; letter-spacing: 0 !important; }
+html body:not(#u) .ca-todo h2 i { width: 7px; height: 7px; border-radius: 50%; background: var(--ca-warn); }
+html body:not(#u) .ca-todo li + li { border-top: 1px solid rgba(181, 101, 29, .14); }
+html body:not(#u) .ca-todo button { width: 100%; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 11px; align-items: center; padding: 11px 16px !important; border: 0 !important; background: none !important; color: var(--ca-text) !important; text-align: left; }
+html body:not(#u) .ca-todo .ca-av { background: #fff; }
+html body:not(#u) .ca-todo-m { min-width: 0; }
+html body:not(#u) .ca-todo-m b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body:not(#u) .ca-todo-m em { display: block; margin-top: 1px; font-style: normal; font-size: 13.5px; color: #6b4a2a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body:not(#u) .ca-todo-go { padding: 8px 13px; border-radius: 10px; background: var(--ca-text); color: #fff; font-size: 13px; font-weight: 600; }
+
+/* Numbers: the money first */
+html body:not(#u) .ca-money { margin: 6px 0 18px; padding: 20px 18px; border-radius: 20px; background: var(--ca-text); color: #fff; }
+html body:not(#u) .ca-money p { font-size: 13px; color: rgba(255, 255, 255, .62); }
+html body:not(#u) .ca-money b { display: block; margin-top: 6px; font: 600 44px/1 var(--ca-head); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+html body:not(#u) .ca-money small { display: block; margin-top: 10px; font-size: 13px; color: rgba(255, 255, 255, .72); }

@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./app.css";
 import { agenda, googleCalendarUrl, onMyWayText, splitAppointments, type CalEvent } from "@/lib/client-schedule";
 
-type Conv = { id: string; name: string; source: string; status: string; at: string | null; last: string };
+type Conv = { id: string; name: string; source: string; status: string; at: string | null; last: string; ask?: string };
 type Live = { leads: number; needs: number; answered: number; booked: number; replySec: number | null; chasing: number; chasingValue: number; won: number; wonValue: number; revived: number; reviews: number; weeks: { week: string; leads: number; booked: number }[]; conversations: Conv[] };
 type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string; event_id?: string; link?: string };
 type Quote = { id: string; customer_name: string; customer_phone: string; amount: number | null; sent_on: string; steps_sent: number; status: string };
@@ -330,14 +330,15 @@ export default function CinderApp() {
 
   const convs = useMemo(() => { const all = d?.live.conversations ?? []; return filter === "needs" ? all.filter(c => c.status === "paused") : filter === "booked" ? all.filter(c => c.status === "booked") : all; }, [d, filter]);
   const groups = useMemo(() => { const g: { day: string; items: Conv[] }[] = []; for (const c of convs) { const k = c.at ? dayName(c.at) : "Earlier"; const last = g.at(-1); if (last && last.day === k) last.items.push(c); else g.push({ day: k, items: [c] }); } return g; }, [convs]);
-  const dueCount = useMemo(() => splitAppointments(d?.appointments ?? []).due.length, [d]);
+  const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
+  const dueCount = due.length;
 
   if (state === "loading") return <div className="ca-load" role="main"><Mark /></div>;
   if (state === "out") return <SignIn onIn={() => void load("")} />;
   if (!d) return null;
   const L = d.live;
   const today = L.conversations.filter(c => c.at && dayKey(c.at) === new Date().toDateString()).length;
-  const firstNeeds = L.conversations.find(c => c.status === "paused");
+  const needsList = L.conversations.filter(c => c.status === "paused");
   const maxW = Math.max(1, ...L.weeks.map(w => w.leads));
   const bizName = d.business || d.businesses.find(b => b.project_id === project)?.name || "";
 
@@ -358,6 +359,17 @@ export default function CinderApp() {
           <p>{greeting()}</p>
           <h1>{today ? <>{today} new {today === 1 ? "lead" : "leads"} today.<span> All answered.</span></> : <>Every lead answered.<span> {secs(L.replySec)} typical reply.</span></>}</h1>
         </div>
+        {(needsList.length > 0 || due.length > 0) && <section className="ca-todo" aria-label="Things that need you">
+          <h2><i />{needsList.length + due.length} {needsList.length + due.length === 1 ? "thing needs" : "things need"} you</h2>
+          <ul>
+            {needsList.slice(0, 3).map(c => <li key={c.id}><button type="button" onClick={() => setOpen(c.id)}>
+              <span className="ca-av sm" aria-hidden="true">{initials(c.name)}</span>
+              <span className="ca-todo-m"><b>Reply to {c.name.split(" ")[0]}</b><em>&ldquo;{c.ask || c.last}&rdquo;</em></span><span className="ca-todo-go">Reply</span></button></li>)}
+            {due.slice(0, 3).map(a => { const n = a.customer_name || fmtPhone(a.customer_phone); return <li key={a.id}><button type="button" onClick={() => { setTab("estimates"); window.scrollTo(0, 0); void load(project, "estimates"); }}>
+              <span className="ca-av sm" aria-hidden="true">{initials(n)}</span>
+              <span className="ca-todo-m"><b>{n.split(" ")[0]}&rsquo;s estimate</b><em>How did it go? Tap to update.</em></span><span className="ca-todo-go">Update</span></button></li>; })}
+          </ul>
+        </section>}
         {!hidePushCard && (push === "off" || push === "ios-install") && <div className="ca-pushcard">
           <span className="ca-pushcard-ic"><Icon name="bolt" size={18} /></span>
           <div><b>Know the second a lead needs you</b>
@@ -365,13 +377,6 @@ export default function CinderApp() {
             <div className="ca-pushcard-row">{push === "off" && <button type="button" className="ca-pushcard-go" onClick={() => void enablePush()}>Turn on</button>}
               <button type="button" className="ca-pushcard-no" onClick={() => { setHidePushCard(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>
         </div>}
-        {firstNeeds && <button type="button" className="ca-needs" onClick={() => setOpen(firstNeeds.id)}>
-          <span className="ca-needs-k">{L.needs > 1 ? `${L.needs} need you` : "Needs you"}</span>
-          <b>{firstNeeds.name}</b><em>&ldquo;{firstNeeds.last}&rdquo;</em><span className="ca-needs-go">Reply</span>
-        </button>}
-        {dueCount > 0 && <button type="button" className="ca-nudge" onClick={() => { setTab("estimates"); window.scrollTo(0, 0); void load(project, "estimates"); }}>
-          <span className="ca-nudge-ic"><Icon name="quote" size={16} /></span><span><b>{dueCount} {dueCount === 1 ? "estimate needs" : "estimates need"} an update</b><small>Sent a quote? Tell Cinder and it follows up for you.</small></span><Icon name="back" size={16} />
-        </button>}
         <div className="ca-seg wide" role="tablist" aria-label="Filter leads">{([["all", "All"], ["needs", `Needs you${L.needs ? ` · ${L.needs}` : ""}`], ["booked", "Booked"]] as const).map(([k, l]) =>
           <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}</button>)}</div>
         {groups.length ? groups.map(g => <section key={g.day} className="ca-group"><h2>{g.day}</h2>
@@ -387,7 +392,9 @@ export default function CinderApp() {
       </>}
 
       {tab === "numbers" && <>
-        <div className="ca-hello"><p>Last 30 days</p><h1>Cinder answered {L.answered} {L.answered === 1 ? "lead" : "leads"} and booked {L.booked} {L.booked === 1 ? "estimate" : "estimates"}.</h1></div>
+        {L.wonValue > 0 ? <div className="ca-money"><p>Jobs won from leads Cinder handled</p><b>{usd(L.wonValue)}</b>
+          <small>{L.won} {L.won === 1 ? "job" : "jobs"}{L.chasingValue ? ` · ${usd(L.chasingValue)} more in quotes Cinder is chasing` : ""}</small></div>
+          : <div className="ca-hello"><p>Last 30 days</p><h1>Cinder answered {L.answered} {L.answered === 1 ? "lead" : "leads"} and booked {L.booked} {L.booked === 1 ? "estimate" : "estimates"}.</h1></div>}
         <div className="ca-kpis">
           <div><span>Leads answered</span><b>{L.answered}<small>/{L.leads}</small></b><em>{L.leads ? `${Math.round((L.answered / L.leads) * 100)}% answered` : " "}</em></div>
           <div><span>Typical first reply</span><b>{L.replySec == null ? "–" : L.replySec < 60 ? <>{L.replySec}<small>sec</small></> : <>{Math.round(L.replySec / 60)}<small>min</small></>}</b><em>Day or night</em></div>
