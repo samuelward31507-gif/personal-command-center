@@ -5,11 +5,14 @@
 // Installs to the home screen like an app (manifest in /app.webmanifest). Same look as cinderrevenue.com.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./app.css";
+import { agenda, googleCalendarUrl, onMyWayText, splitAppointments, type CalEvent } from "@/lib/client-schedule";
 
 type Conv = { id: string; name: string; source: string; status: string; at: string | null; last: string };
 type Live = { leads: number; needs: number; answered: number; booked: number; replySec: number | null; chasing: number; chasingValue: number; won: number; wonValue: number; revived: number; reviews: number; weeks: { week: string; leads: number; booked: number }[]; conversations: Conv[] };
-type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string };
-type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; appointments: Appt[]; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number };
+type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string; event_id?: string; link?: string };
+type Quote = { id: string; customer_name: string; customer_phone: string; amount: number | null; sent_on: string; steps_sent: number; status: string };
+type Cal = { connected: boolean; email: string; events: CalEvent[]; error: string; connectUrl: string };
+type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number };
 type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
 type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 type Tab = "leads" | "numbers" | "estimates" | "sam";
@@ -51,6 +54,9 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
     bolt: <path d="M13 3 5 13.5h6L10 21l8-10.5h-6z" />,
     cal: <><rect x="3.5" y="5" width="17" height="15" rx="2.5" /><path d="M3.5 10h17M8 3v4M16 3v4" /></>,
     out: <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" />,
+    ext: <path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />,
+    car: <><path d="M5 16V11l2-4.5h10L19 11v5" /><path d="M3.5 16h17v2.5h-17zM5 11h14" /><circle cx="8" cy="13.5" r=".6" /><circle cx="16" cy="13.5" r=".6" /></>,
+    x: <path d="M6 6l12 12M18 6 6 18" />,
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p[name]}</svg>;
 }
@@ -187,6 +193,97 @@ function ThreadView({ id, project, canCall, onBack, onChange, toast }: { id: str
   </section>;
 }
 
+// ---------- Calendar: the real week, how each estimate went, quotes being chased ----------
+function GoogleCalMark() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" fill="#fff" stroke="#dadce0" /><path d="M3 8h18" stroke="#4285f4" strokeWidth="2.4" /><text x="12" y="17.6" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="#1a73e8" fontFamily="Arial, sans-serif">{new Date().getDate()}</text></svg>;
+}
+type Sheet = { kind: "quoted" | "won" | "quote-won"; id: string };
+function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: string; onOpen: (id: string) => void; reload: () => Promise<void>; toast: (t: string, bad?: boolean) => void }) {
+  const { due, upcoming } = useMemo(() => splitAppointments(d.appointments), [d.appointments]);
+  const days = useMemo(() => agenda(upcoming, d.calendar.events), [upcoming, d.calendar.events]);
+  const [sheet, setSheet] = useState<Sheet | null>(null);
+  const [amt, setAmt] = useState(""), [review, setReview] = useState(true), [busy, setBusy] = useState(""), [arm, setArm] = useState("");
+  useEffect(() => { if (!arm) return; const i = setTimeout(() => setArm(""), 4000); return () => clearTimeout(i); }, [arm]);
+  const cal = d.calendar;
+  const week = upcoming.filter(a => Date.parse(a.starts_at) < Date.now() + 7 * 86400000).length;
+  async function act(key: string, body: Record<string, unknown>, done: (r: { review?: string }) => string) {
+    setBusy(key);
+    try { const r = await api<{ review?: string }>("/api/app/act", { p: project, ...body }); toast(done(r)); setSheet(null); setAmt(""); await reload(); }
+    catch (e) { toast(e instanceof Error ? e.message : "That didn't work.", true); }
+    finally { setBusy(""); }
+  }
+  const open = (kind: Sheet["kind"], id: string) => { setSheet({ kind, id }); setAmt(""); setReview(true); };
+  const amountSheet = (onSave: () => void) => <form className="ca-amt" onSubmit={e => { e.preventDefault(); onSave(); }}>
+    <label htmlFor={"amt-" + sheet?.id}>{sheet?.kind === "quoted" ? "Quote amount" : "Job amount"}<small>{sheet?.kind === "quoted" ? "Optional. Shows in your numbers." : "Counts toward what Cinder brought in."}</small></label>
+    <div className="ca-amt-in"><span>$</span><input id={"amt-" + sheet?.id} inputMode="decimal" autoFocus placeholder="9,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></div>
+    {sheet?.kind === "won" && <label className="ca-amt-check"><input type="checkbox" checked={review} onChange={e => setReview(e.target.checked)} /><span>Job&rsquo;s done? Text them for a Google review</span></label>}
+    <div className="ca-amt-row"><button type="button" className="ca-amt-no" onClick={() => setSheet(null)}>Cancel</button>
+      <button type="submit" className="ca-amt-go" disabled={!!busy}>{sheet?.kind === "quoted" ? "Start follow-up" : "Mark won"}</button></div>
+  </form>;
+
+  return <>
+    <div className="ca-hello"><p>Your week</p><h1>{week ? <>{week} {week === 1 ? "estimate" : "estimates"} booked.</> : "No estimates this week yet."}<span>{due.length ? ` ${due.length} ${due.length === 1 ? "needs" : "need"} an update.` : cal.connected ? " Synced with your calendar." : ""}</span></h1></div>
+
+    {cal.connected ? <div className="ca-calbar">
+      <span className="ca-calbar-ic"><GoogleCalMark /></span>
+      <div><b>Google Calendar</b><small>{cal.email ? `${cal.email} · ` : ""}Cinder only books when you&rsquo;re free</small></div>
+      <a className="ca-calbar-go" href={googleCalendarUrl(cal.email)} target="_blank" rel="noreferrer">Open<Icon name="ext" size={14} /></a>
+    </div> : <div className="ca-pushcard">
+      <span className="ca-pushcard-ic"><Icon name="cal" size={18} /></span>
+      <div><b>Connect your Google Calendar</b>
+        <p>Cinder books estimates only when you&rsquo;re free, puts them on your calendar, and shows your whole week here.</p>
+        <div className="ca-pushcard-row"><a className="ca-pushcard-go" href={cal.connectUrl} target="_blank" rel="noreferrer">Connect calendar</a></div></div>
+    </div>}
+    {cal.error && <p className="ca-calerr">{cal.error} <a href={cal.connectUrl} target="_blank" rel="noreferrer">Reconnect</a></p>}
+
+    {due.length > 0 && <section className="ca-group"><h2>How did it go?</h2>
+      <ul className="ca-cards">{due.map(a => { const name = a.customer_name || fmtPhone(a.customer_phone); return <li key={a.id} className="ca-out">
+        <button type="button" className="ca-out-h" onClick={() => onOpen(a.thread_id)}><span className="ca-av sm" aria-hidden="true">{initials(name)}</span>
+          <span><b>{name}</b><small>Estimate · {dayName(a.starts_at)}, {clock(a.starts_at)}</small></span></button>
+        {sheet?.id === a.id ? amountSheet(() => void act(a.id, { action: "outcome", appt: a.id, result: sheet.kind, amount: amt, review: sheet.kind === "won" && review },
+            r => sheet.kind === "quoted" ? "Cinder will follow up on the quote until they answer." : r.review === "sent" ? "Marked won. Review request sent." : r.review === "no_link" ? "Marked won. Ask Sam to add your review link." : "Marked won."))
+          : <div className="ca-out-btns">
+            <button type="button" onClick={() => open("quoted", a.id)}><Icon name="quote" size={15} />Quoted</button>
+            <button type="button" className="win" onClick={() => open("won", a.id)}><Icon name="check" size={15} />Won it</button>
+            <button type="button" disabled={busy === a.id} onClick={() => arm === "ns" + a.id ? void act(a.id, { action: "outcome", appt: a.id, result: "no_show" }, () => "Texted them to pick a new time.") : setArm("ns" + a.id)}>
+              {arm === "ns" + a.id ? "Text to rebook?" : <><Icon name="x" size={15} />No-show</>}</button>
+          </div>}
+      </li>; })}</ul></section>}
+
+    {days.length ? days.map(g => <section key={g.day} className="ca-group"><h2>{dayName(g.at)}</h2>
+      <ul className="ca-cards ca-agenda">{g.items.map(it => {
+        if (it.kind === "event") { const e = it.event; return <li key={"e" + e.id} className="ca-ev">
+          <span className="ca-ev-t">{e.allDay ? "All day" : clock(e.start)}</span>
+          <span className="ca-ev-m"><b>{e.title}</b><small>{e.allDay ? "Your calendar" : `Until ${clock(e.end)} · your calendar`}</small></span>
+          {e.link && <a href={e.link} target="_blank" rel="noreferrer" aria-label={`Open ${e.title} in Google Calendar`}><Icon name="ext" size={15} /></a>}
+        </li>; }
+        const a = it.appt, name = a.customer_name || fmtPhone(a.customer_phone);
+        return <li key={"a" + a.id} className="ca-est">
+          <button type="button" className="ca-est-main" onClick={() => onOpen(a.thread_id)}>
+            <span className="ca-time"><b>{clock(a.starts_at).replace(/ (AM|PM)/, "")}</b><small>{clock(a.starts_at).slice(-2)}</small></span>
+            <span className="ca-mid"><span className="ca-row1"><b>{name}</b></span><em>Estimate · booked by Cinder</em></span>
+          </button>
+          <div className="ca-est-acts">
+            <button type="button" disabled={busy === "omw" + a.id} className={arm === "omw" + a.id ? "armed" : ""} onClick={() => arm === "omw" + a.id
+              ? void act("omw" + a.id, { action: "reply", thread: a.thread_id, body: onMyWayText(a.customer_name, d.owner, d.business) }, () => `Texted ${a.customer_name.split(" ")[0] || "them"} you're on the way.`)
+              : setArm("omw" + a.id)}><Icon name="car" size={15} />{arm === "omw" + a.id ? "Tap to send" : "On my way"}</button>
+            {a.link ? <a href={a.link} target="_blank" rel="noreferrer"><Icon name="cal" size={15} />Calendar</a>
+              : cal.connected ? null : <span className="ca-est-note">Not on a calendar yet</span>}
+          </div>
+        </li>; })}</ul></section>)
+      : <div className="ca-empty"><span className="ca-empty-ic"><Icon name="cal" size={22} /></span><b>Nothing on the calendar this week</b><p>When Cinder books an estimate, it lands here and on your Google Calendar, and the customer gets a reminder the day before.</p></div>}
+
+    {d.quotes.length > 0 && <section className="ca-group"><h2>Quotes Cinder is following up</h2>
+      <ul className="ca-cards">{d.quotes.map(q => { const name = q.customer_name || fmtPhone(q.customer_phone); return <li key={q.id} className="ca-q">
+        <div className="ca-q-h"><b>{name}</b><span>{q.amount ? usd(q.amount) : "No amount"}</span></div>
+        <small>Sent {new Date(q.sent_on + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {q.status === "replied" ? "They replied. Check the conversation." : q.steps_sent ? `Follow-up ${q.steps_sent} of ${d.quoteSteps} sent` : "First follow-up goes out in 2 days"}</small>
+        {sheet?.id === q.id ? amountSheet(() => void act(q.id, { action: "quote", quote: q.id, status: "won", amount: amt }, () => "Marked won. Follow-ups stopped."))
+          : <div className="ca-q-btns"><button type="button" className="win" onClick={() => { open("quote-won", q.id); setAmt(q.amount ? String(q.amount) : ""); }}>Won</button>
+            <button type="button" disabled={busy === q.id} onClick={() => arm === "lost" + q.id ? void act(q.id, { action: "quote", quote: q.id, status: "lost" }, () => "Marked lost. Follow-ups stopped.") : setArm("lost" + q.id)}>{arm === "lost" + q.id ? "Tap again: lost" : "Lost"}</button></div>}
+      </li>; })}</ul></section>}
+  </>;
+}
+
 // ---------- The app ----------
 export default function CinderApp() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
@@ -211,7 +308,7 @@ export default function CinderApp() {
   }
 
   const load = useCallback(async (p = project, t = tab) => {
-    try { const j = await api<Data>(`/api/app/data?p=${p}${t === "sam" ? "&tab=sam" : ""}`); setD(j); setProject(j.project); setState("in"); }
+    try { const j = await api<Data>(`/api/app/data?p=${p}${t === "sam" ? "&tab=sam" : t === "estimates" ? "&tab=cal" : ""}`); setD(j); setProject(j.project); setState("in"); }
     catch (e) { if ((e as { status?: number }).status === 401) setState("out"); }
   }, [project, tab]);
 
@@ -225,7 +322,7 @@ export default function CinderApp() {
       if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen(th);
       if (tb === "sam" || tb === "estimates" || tb === "numbers") setTab(tb);
       if (location.search) try { history.replaceState(null, "", "/app"); } catch { /* keep the URL */ }
-      await load("", tb === "sam" ? "sam" : "leads");
+      await load("", tb === "sam" || tb === "estimates" ? tb : "leads");
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -233,7 +330,7 @@ export default function CinderApp() {
 
   const convs = useMemo(() => { const all = d?.live.conversations ?? []; return filter === "needs" ? all.filter(c => c.status === "paused") : filter === "booked" ? all.filter(c => c.status === "booked") : all; }, [d, filter]);
   const groups = useMemo(() => { const g: { day: string; items: Conv[] }[] = []; for (const c of convs) { const k = c.at ? dayName(c.at) : "Earlier"; const last = g.at(-1); if (last && last.day === k) last.items.push(c); else g.push({ day: k, items: [c] }); } return g; }, [convs]);
-  const apptGroups = useMemo(() => { const g: { day: string; items: Appt[] }[] = []; for (const a of d?.appointments ?? []) { const k = dayName(a.starts_at); const last = g.at(-1); if (last && last.day === k) last.items.push(a); else g.push({ day: k, items: [a] }); } return g; }, [d]);
+  const dueCount = useMemo(() => splitAppointments(d?.appointments ?? []).due.length, [d]);
 
   if (state === "loading") return <div className="ca-load" role="main"><Mark /></div>;
   if (state === "out") return <SignIn onIn={() => void load("")} />;
@@ -272,6 +369,9 @@ export default function CinderApp() {
           <span className="ca-needs-k">{L.needs > 1 ? `${L.needs} need you` : "Needs you"}</span>
           <b>{firstNeeds.name}</b><em>&ldquo;{firstNeeds.last}&rdquo;</em><span className="ca-needs-go">Reply</span>
         </button>}
+        {dueCount > 0 && <button type="button" className="ca-nudge" onClick={() => { setTab("estimates"); window.scrollTo(0, 0); void load(project, "estimates"); }}>
+          <span className="ca-nudge-ic"><Icon name="quote" size={16} /></span><span><b>{dueCount} {dueCount === 1 ? "estimate needs" : "estimates need"} an update</b><small>Sent a quote? Tell Cinder and it follows up for you.</small></span><Icon name="back" size={16} />
+        </button>}
         <div className="ca-seg wide" role="tablist" aria-label="Filter leads">{([["all", "All"], ["needs", `Needs you${L.needs ? ` · ${L.needs}` : ""}`], ["booked", "Booked"]] as const).map(([k, l]) =>
           <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}</button>)}</div>
         {groups.length ? groups.map(g => <section key={g.day} className="ca-group"><h2>{g.day}</h2>
@@ -303,15 +403,7 @@ export default function CinderApp() {
         </ul>
       </>}
 
-      {tab === "estimates" && <>
-        <div className="ca-hello"><p>Estimates</p><h1>{d.appointments.length ? <>{d.appointments.length} coming up.<span> All on your calendar.</span></> : "Nothing booked yet."}</h1></div>
-        {apptGroups.length ? apptGroups.map(g => <section key={g.day} className="ca-group"><h2>{g.day}</h2>
-          <ul className="ca-list">{g.items.map(a => <li key={a.id}><button type="button" onClick={() => setOpen(a.thread_id)} className="ca-appt">
-            <span className="ca-time"><b>{clock(a.starts_at).replace(/ (AM|PM)/, "")}</b><small>{clock(a.starts_at).slice(-2)}</small></span>
-            <span className="ca-mid"><span className="ca-row1"><b>{a.customer_name || fmtPhone(a.customer_phone)}</b></span><em>Estimate · booked by Cinder</em></span>
-          </button></li>)}</ul></section>)
-          : <div className="ca-empty"><span className="ca-empty-ic"><Icon name="cal" size={22} /></span><b>No estimates booked yet</b><p>When Cinder books one, it lands here and on your Google Calendar, and the customer gets a reminder the day before.</p></div>}
-      </>}
+      {tab === "estimates" && <CalendarTab d={d} project={project} onOpen={setOpen} reload={() => load(project, "estimates")} toast={toast} />}
 
       {tab === "sam" && <>
         <div className="ca-sam">
@@ -334,8 +426,8 @@ export default function CinderApp() {
     </div>
 
     <nav className="ca-nav" aria-label="Sections">
-      {([["leads", "Leads", L.needs, "chat"], ["numbers", "Numbers", 0, "bolt"], ["estimates", "Estimates", 0, "cal"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const).map(([k, l, n, ic]) =>
-        <button key={k} type="button" aria-current={tab === k ? "page" : undefined} className={tab === k ? "on" : ""} onClick={() => { setTab(k); window.scrollTo(0, 0); if (k === "sam") void load(project, "sam"); }}>
+      {([["leads", "Leads", L.needs, "chat"], ["numbers", "Numbers", 0, "bolt"], ["estimates", "Calendar", dueCount, "cal"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const).map(([k, l, n, ic]) =>
+        <button key={k} type="button" aria-current={tab === k ? "page" : undefined} className={tab === k ? "on" : ""} onClick={() => { setTab(k); window.scrollTo(0, 0); if (k === "sam" || k === "estimates") void load(project, k); }}>
           <span className="ca-nav-ic">{ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span>{l}</button>)}
     </nav>
     {toastNode}

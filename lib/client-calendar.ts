@@ -51,3 +51,18 @@ export async function createEvent(cal: ClientCal, e: { start: string; end: strin
   if (!r.ok) throw new Error("Couldn't add the estimate to the calendar.");
   return String(j.id ?? "");
 }
+
+export type CalEvent = { id: string; title: string; start: string; end: string; allDay: boolean; link: string };
+/** The owner's own events (their jobs, personal blocks) between two times, so the app can show the real week. */
+export async function listEvents(cal: ClientCal, from: Date, to: Date): Promise<CalEvent[]> {
+  const q = new URLSearchParams({ timeMin: from.toISOString(), timeMax: to.toISOString(), singleEvents: "true", orderBy: "startTime", maxResults: "120",
+    fields: "items(id,summary,start,end,htmlLink,status,transparency)" });
+  const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.calendarId)}/events?${q}`, { headers: { Authorization: `Bearer ${cal.token}` }, signal: AbortSignal.timeout(8000) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error("Couldn't read the calendar.");
+  type G = { id?: string; summary?: string; start?: { dateTime?: string; date?: string }; end?: { dateTime?: string; date?: string }; htmlLink?: string; status?: string; transparency?: string };
+  return ((j.items ?? []) as G[]).filter(e => e.status !== "cancelled" && e.start).map(e => ({
+    id: String(e.id ?? ""), title: String(e.summary ?? "Busy").slice(0, 120), allDay: !e.start?.dateTime,
+    start: e.start?.dateTime ?? `${e.start?.date}T00:00:00`, end: e.end?.dateTime ?? `${e.end?.date ?? e.start?.date}T00:00:00`, link: String(e.htmlLink ?? ""),
+  }));
+}
