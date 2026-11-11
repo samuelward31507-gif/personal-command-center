@@ -1,29 +1,71 @@
 "use client";
 
-// This week's posts, written by Cinder from your real week: one tab per day, every platform's post with its image,
-// copy and download buttons, a rewrite with a note, and the numbers once it's up so next week leans on what worked.
+// The week's content: 5 Facebook + Instagram posts and 5 reels a day, plus LinkedIn and groups, written by Cinder
+// from your real week. Per day: prepare every image and reel in one click, then queue the day so it posts itself
+// to Facebook and Instagram at five times through the day. TikTok and LinkedIn: download and post.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import PostCard, { downloadCanvas } from "./post-card";
+import PostCard, { cardPng, downloadCanvas } from "./post-card";
+import { renderReel, scenesFor, reelExt, downloadBlob } from "./reel";
 import { dayDate, weekStart, type Card } from "@/lib/content-engine";
 
 type Draft = {
-  id: string; day: number; platform: "feed" | "video" | "linkedin" | "group"; pillar: string; pillarName: string; format: string;
+  id: string; day: number; n: number; platform: "feed" | "video" | "linkedin" | "group"; pillar: string; pillarName: string; format: string; angle: string;
   hook: string; body: string; caption: string; card: Card; slides: Card[]; shoot: string; status: string; postedAt: string | null; url: string;
   views: number | null; comments: number | null; leads: number | null; issues: string[];
+  scheduledAt: string | null; publishStatus: string; publishError: string; media: number;
 };
-type Data = { week: string; drafts: Draft[]; topics: { key: string; name: string; score: number; posts: number; leads: number }[]; totals: { posts: number; views: number; comments: number; leads: number }; canWrite: boolean };
+type Data = {
+  week: string; drafts: Draft[]; topics: { key: string; name: string; score: number; posts: number; leads: number }[];
+  totals: { posts: number; views: number; comments: number; leads: number }; canWrite: boolean; meta: { connected: boolean; instagram: boolean };
+};
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const PLAT: Record<string, { name: string; open?: string }> = {
-  feed: { name: "Facebook + Instagram", open: "https://business.facebook.com/latest/composer" },
-  video: { name: "TikTok + Reels + Shorts", open: "https://www.tiktok.com/upload" },
-  linkedin: { name: "LinkedIn", open: "https://www.linkedin.com/feed/?shareActive=true" },
-  group: { name: "Facebook group" },
-};
+const GROUPS: { id: Draft["platform"]; title: string; note: string }[] = [
+  { id: "feed", title: "Facebook + Instagram", note: "Posts itself when queued" },
+  { id: "video", title: "Reels", note: "Instagram and Facebook post themselves; download for TikTok" },
+  { id: "linkedin", title: "LinkedIn", note: "Copy and post" },
+  { id: "group", title: "Facebook groups", note: "Copy and post in 2–3 groups" },
+];
 const localYmd = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const nice = (ymd: string) => new Date(ymd + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const clock = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+const cardsOf = (d: Draft) => (d.platform === "video" ? scenesFor(d) : d.slides.length ? d.slides : [d.card]);
+const fileBase = (d: Draft) => `cinder-${DAYS[d.day].toLowerCase()}-${d.platform === "video" ? "reel" : d.platform}-${d.n + 1}`;
 
-function DraftCard({ d, busy, act }: { d: Draft; busy: boolean; act: (action: string, extra?: Record<string, unknown>) => Promise<boolean> }) {
+async function upload(draftId: string, idx: number, blob: Blob) {
+  const r = await fetch(`/api/content/media?draft=${draftId}&idx=${idx}`, { method: "POST", headers: { "Content-Type": blob.type }, body: blob });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "Couldn't save the file.");
+}
+
+/** Render and save a post's image(s) or reel. Returns the files so they can be downloaded too. */
+async function prepare(d: Draft, onProgress?: (p: number) => void): Promise<{ name: string; blob: Blob }[]> {
+  if (d.platform === "video") {
+    const blob = await renderReel(scenesFor(d), onProgress);
+    await upload(d.id, 0, blob);
+    return [{ name: `${fileBase(d)}.${reelExt(blob)}`, blob }];
+  }
+  const cards = cardsOf(d), out: { name: string; blob: Blob }[] = [];
+  for (let i = 0; i < cards.length; i++) {
+    const blob = await cardPng(cards[i], { page: cards.length > 1 ? `${i + 1}/${cards.length}` : undefined });
+    if (d.platform === "feed") await upload(d.id, i, blob);
+    out.push({ name: `${fileBase(d)}${cards.length > 1 ? "-" + (i + 1) : ""}.png`, blob });
+    onProgress?.((i + 1) / cards.length);
+  }
+  return out;
+}
+
+function Status({ d }: { d: Draft }) {
+  if (d.status === "posted") return <span className="cw-pill is-ok">Posted{d.postedAt ? " " + clock(d.postedAt) : ""}</span>;
+  if (d.status === "skipped") return <span className="cw-pill">Skipped</span>;
+  if (d.publishStatus === "queued" && d.scheduledAt) return <span className="cw-pill is-q">Queued · {clock(d.scheduledAt)}</span>;
+  if (d.publishStatus === "publishing") return <span className="cw-pill is-q">Posting…</span>;
+  if (d.publishStatus === "failed") return <span className="cw-pill is-bad" title={d.publishError}>Didn&rsquo;t post</span>;
+  if (d.media && (d.platform === "feed" || d.platform === "video")) return <span className="cw-pill">Ready</span>;
+  return null;
+}
+
+function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (action: string, extra?: Record<string, unknown>) => Promise<boolean>; meta: Data["meta"] }) {
   const canvases = useRef<Record<number, HTMLCanvasElement>>({});
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -31,63 +73,79 @@ function DraftCard({ d, busy, act }: { d: Draft; busy: boolean; act: (action: st
   const [note, setNote] = useState(""), [noting, setNoting] = useState(false);
   const [url, setUrl] = useState(d.url);
   const [m, setM] = useState({ views: d.views ?? "", comments: d.comments ?? "", leads: d.leads ?? "" });
+  const [reel, setReel] = useState<{ src: string; blob: Blob } | null>(null);
+  const [work, setWork] = useState<number | null>(null);
+  const [err, setErr] = useState("");
+  const [open, setOpen] = useState(false);
   useEffect(() => { setHook(d.hook); setBody(d.body); setUrl(d.url); setM({ views: d.views ?? "", comments: d.comments ?? "", leads: d.leads ?? "" }); }, [d]);
-  const cards = d.slides.length ? d.slides : [d.card];
+  useEffect(() => () => { if (reel) URL.revokeObjectURL(reel.src); }, [reel]);
+  const cards = cardsOf(d);
   const posted = d.status === "posted";
-  const name = (i: number) => `cinder-${DAYS[d.day].toLowerCase()}-${d.platform}${cards.length > 1 ? "-" + (i + 1) : ""}.png`;
+  const isReel = d.platform === "video";
   const copy = () => navigator.clipboard?.writeText(d.caption).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); });
 
-  return <article className={"cw-post" + (posted ? " is-posted" : "") + (d.status === "skipped" ? " is-skipped" : "")}>
-    <header className="cw-post-h">
-      <span className="cw-plat">{PLAT[d.platform].name}</span>
-      <span className="cw-topic">{d.pillarName}{d.format === "carousel" ? ` · carousel, ${cards.length} slides` : ""}</span>
-      {posted && <span className="cw-done">Posted</span>}
-      {d.status === "skipped" && <span className="cw-skip">Skipped</span>}
-    </header>
-    <div className="cw-post-b">
-      <div className="cw-media">
-        <div className={"cw-strip" + (cards.length > 1 ? " is-multi" : "")}>
-          {cards.map((c, i) => <PostCard key={i} card={c} page={cards.length > 1 ? `${i + 1}/${cards.length}` : undefined} label={`Image ${i + 1} for: ${d.hook}`} onCanvas={el => { canvases.current[i] = el; }} />)}
-        </div>
-        <button type="button" className="u-btn" onClick={() => cards.forEach((_, i) => canvases.current[i] && setTimeout(() => downloadCanvas(canvases.current[i], name(i)), i * 250))}>
-          Download {cards.length > 1 ? `${cards.length} images` : "image"}
-        </button>
-      </div>
-      <div className="cw-copy">
-        {editing ? <>
-          <input className="cw-in" value={hook} onChange={e => setHook(e.target.value)} aria-label="First line" />
-          <textarea className="cw-ta" value={body} onChange={e => setBody(e.target.value)} rows={10} aria-label="Post text" />
-          <div className="cw-row"><button type="button" className="u-btn u-btn-go" disabled={busy} onClick={async () => { if (await act("edit", { hook, body })) setEditing(false); }}>Save</button><button type="button" className="u-btn u-btn-bare" onClick={() => { setEditing(false); setHook(d.hook); setBody(d.body); }}>Cancel</button></div>
+  async function makeReel(save: boolean) {
+    setErr(""); setWork(0);
+    try {
+      const [f] = await prepare(d, p => setWork(p));
+      setReel(r => { if (r) URL.revokeObjectURL(r.src); return { src: URL.createObjectURL(f.blob), blob: f.blob }; });
+      if (save) downloadBlob(f.blob, f.name);
+      await act("refresh");
+    } catch (e) { setErr(e instanceof Error ? e.message : "Couldn't make the reel."); }
+    finally { setWork(null); }
+  }
+
+  return <article className={"cw-post" + (posted ? " is-posted" : "") + (d.status === "skipped" ? " is-skipped" : "") + (isReel ? " is-reel" : "")}>
+    <div className="cw-media">
+      {isReel && reel ? <video src={reel.src} className="cw-canvas is-tall" controls playsInline loop muted autoPlay /> :
+        <div className={"cw-strip" + (cards.length > 1 && !isReel ? " is-multi" : "")}>
+          {(isReel ? cards.slice(0, 1) : cards).map((c, i) => <PostCard key={i} card={c} tall={isReel} page={!isReel && cards.length > 1 ? `${i + 1}/${cards.length}` : undefined} label={`Image ${i + 1} for: ${d.hook}`} onCanvas={el => { canvases.current[i] = el; }} />)}
+        </div>}
+      {work !== null && <div className="cw-bar" role="progressbar" aria-valuenow={Math.round(work * 100)}><i style={{ width: work * 100 + "%" }} /></div>}
+    </div>
+    <div className="cw-copy">
+      <header className="cw-post-h">
+        <span className="cw-topic">{d.pillarName}{d.format === "carousel" ? ` · ${cards.length} slides` : isReel ? ` · ${cards.length} scenes` : ""}</span>
+        <Status d={d} />
+      </header>
+      {editing ? <>
+        <input className="cw-in" value={hook} onChange={e => setHook(e.target.value)} aria-label="First line" />
+        <textarea className="cw-ta" value={body} onChange={e => setBody(e.target.value)} rows={8} aria-label="Post text" />
+        <div className="cw-row"><button type="button" className="u-btn u-btn-go" disabled={busy} onClick={async () => { if (await act("edit", { hook, body })) setEditing(false); }}>Save</button><button type="button" className="u-btn u-btn-bare" onClick={() => { setEditing(false); setHook(d.hook); setBody(d.body); }}>Cancel</button></div>
+      </> : <>
+        <h3 className="cw-hook">{d.hook}</h3>
+        <p className={"cw-body" + (open ? " is-open" : "")}>{d.body}</p>
+        {d.body.length > 220 && <button type="button" className="cw-more" onClick={() => setOpen(o => !o)}>{open ? "Less" : "More"}</button>}
+        {isReel && <ol className="cw-scenes">{cards.map((c, i) => <li key={i}>{c.type === "hook" ? c.text : c.type === "stat" ? `${c.figure} ${c.line}` : c.type === "list" ? c.title : c.title}</li>)}</ol>}
+        {d.issues.length > 0 && <ul className="cw-issues">{d.issues.map(i => <li key={i}>{i}</li>)}</ul>}
+        {d.publishStatus === "failed" && d.publishError && <p className="cw-err">{d.publishError}</p>}
+        {err && <p className="cw-err">{err}</p>}
+      </>}
+      {!editing && <div className="cw-row">
+        <button type="button" className="u-btn u-btn-go" onClick={copy}>{copied ? "Copied" : "Copy caption"}</button>
+        {isReel ? <button type="button" className="u-btn" disabled={work !== null} onClick={() => void makeReel(true)}>{work !== null ? `Recording ${Math.round(work * 100)}%` : reel ? "Download reel" : "Make reel"}</button>
+          : <button type="button" className="u-btn" onClick={() => cards.forEach((_, i) => canvases.current[i] && setTimeout(() => downloadCanvas(canvases.current[i], `${fileBase(d)}${cards.length > 1 ? "-" + (i + 1) : ""}.png`), i * 250))}>Download{cards.length > 1 ? ` ${cards.length}` : ""}</button>}
+        {meta.connected && (d.platform === "feed" || isReel) && !posted && d.media > 0 && <button type="button" className="u-btn" disabled={busy} onClick={() => void act("publish_now")}>Post now</button>}
+        <button type="button" className="u-btn u-btn-bare" onClick={() => setEditing(true)}>Edit</button>
+        <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => setNoting(n => !n)}>Rewrite</button>
+        {!posted && d.status !== "skipped" && <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => void act("skip")}>Skip</button>}
+      </div>}
+      {noting && <div className="cw-row">
+        <input className="cw-in" placeholder="Optional: what to change (shorter, about roofers, use Tuesday's call)" value={note} onChange={e => setNote(e.target.value)} />
+        <button type="button" className="u-btn" disabled={busy} onClick={async () => { if (await act("rewrite", { note })) { setNoting(false); setNote(""); } }}>{busy ? "Writing…" : "Rewrite it"}</button>
+      </div>}
+      <div className="cw-track">
+        {!posted ? <>
+          <input className="cw-in" placeholder="Posted it yourself? Paste the link (optional)" value={url} onChange={e => setUrl(e.target.value)} />
+          <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => void act("posted", { url })}>Mark posted</button>
         </> : <>
-          <h3 className="cw-hook">{d.hook}</h3>
-          <p className="cw-body">{d.body}</p>
-          {d.shoot && <div className="cw-shoot"><b>What to film</b><p>{d.shoot}</p></div>}
-          {d.issues.length > 0 && <ul className="cw-issues">{d.issues.map(i => <li key={i}>{i}</li>)}</ul>}
+          <label>Views <input inputMode="numeric" value={m.views} onChange={e => setM({ ...m, views: e.target.value })} /></label>
+          <label>Comments <input inputMode="numeric" value={m.comments} onChange={e => setM({ ...m, comments: e.target.value })} /></label>
+          <label>Leads <input inputMode="numeric" value={m.leads} onChange={e => setM({ ...m, leads: e.target.value })} /></label>
+          <button type="button" className="u-btn" disabled={busy} onClick={() => void act("metrics", m)}>Save</button>
+          {d.url && <a className="u-btn u-btn-bare" href={d.url} target="_blank" rel="noreferrer">View</a>}
+          <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => void act("unpost")}>Undo</button>
         </>}
-        {!editing && <div className="cw-row">
-          <button type="button" className="u-btn u-btn-go" onClick={copy}>{copied ? "Copied" : d.platform === "video" ? "Copy caption" : "Copy text"}</button>
-          {PLAT[d.platform].open && <a className="u-btn" href={PLAT[d.platform].open} target="_blank" rel="noreferrer">Open {d.platform === "feed" ? "Meta" : d.platform === "video" ? "TikTok" : "LinkedIn"}</a>}
-          <button type="button" className="u-btn u-btn-bare" onClick={() => setEditing(true)}>Edit</button>
-          <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => setNoting(n => !n)}>Rewrite</button>
-          {!posted && d.status !== "skipped" && <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => void act("skip")}>Skip</button>}
-        </div>}
-        {noting && <div className="cw-row">
-          <input className="cw-in" placeholder="Optional: what to change (e.g. about roofers, shorter, use Tuesday's call)" value={note} onChange={e => setNote(e.target.value)} />
-          <button type="button" className="u-btn" disabled={busy} onClick={async () => { if (await act("rewrite", { note })) { setNoting(false); setNote(""); } }}>{busy ? "Writing…" : "Rewrite it"}</button>
-        </div>}
-        <div className="cw-track">
-          {!posted ? <>
-            <input className="cw-in" placeholder="Link to the post (optional)" value={url} onChange={e => setUrl(e.target.value)} />
-            <button type="button" className="u-btn" disabled={busy} onClick={() => void act("posted", { url })}>Mark posted</button>
-          </> : <>
-            <label>Views <input inputMode="numeric" value={m.views} onChange={e => setM({ ...m, views: e.target.value })} /></label>
-            <label>Comments <input inputMode="numeric" value={m.comments} onChange={e => setM({ ...m, comments: e.target.value })} /></label>
-            <label>Leads <input inputMode="numeric" value={m.leads} onChange={e => setM({ ...m, leads: e.target.value })} /></label>
-            <button type="button" className="u-btn" disabled={busy} onClick={() => void act("metrics", m)}>Save numbers</button>
-            {d.url && <a className="u-btn u-btn-bare" href={d.url} target="_blank" rel="noreferrer">View post</a>}
-            <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => void act("unpost")}>Undo</button>
-          </>}
-        </div>
       </div>
     </div>
   </article>;
@@ -97,7 +155,9 @@ export default function WeekPlanner() {
   const [week, setWeek] = useState(() => weekStart(localYmd()));
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
+  const [note, setNote] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [prep, setPrep] = useState<{ done: number; total: number; label: string } | null>(null);
   const todayIdx = (new Date().getDay() + 6) % 7;
   const [day, setDay] = useState(todayIdx);
 
@@ -112,53 +172,128 @@ export default function WeekPlanner() {
   useEffect(() => { void load(); }, [load]);
 
   async function post(body: Record<string, unknown>, key: string) {
+    if (body.action === "refresh") { await load(); return true; }
     setBusy(key); setError("");
     try {
       const r = await fetch("/api/content/engine", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "Couldn't save that.");
       if (j.error) setError(j.error);
-      await load(); return true;
+      await load(); return j;
     } catch (e) { setError(e instanceof Error ? e.message : "Couldn't save that."); return false; }
     finally { setBusy(null); }
   }
 
-  const shift = (n: number) => { const w = dayDate(week, n * 7); setWeek(w); setData(null); };
+  /** Writes the week in rounds until every slot has a post (each round fills what the last one didn't). */
+  async function writeWeek() {
+    setBusy("gen"); setError(""); setNote("");
+    try {
+      for (let round = 0; round < 4; round++) {
+        const r = await fetch("/api/content/engine", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "generate", week }) });
+        const j = await r.json().catch(() => ({}));
+        await load();
+        if (!r.ok) throw new Error(j.error || "Couldn't write the week.");
+        if (!j.missing || !j.written) { if (j.missing) setNote(`${j.missing} posts still missing. Press it again to fill them.`); break; }
+        setNote(`Written ${j.written} more. Filling the rest…`);
+      }
+    } catch (e) { setError(e instanceof Error ? e.message : "Couldn't write the week."); }
+    finally { setBusy(null); }
+  }
+
+  /** Render and save every image and reel for the day; optionally download them all and queue the day. */
+  async function prepareDay(opts: { download: boolean; queue: boolean }) {
+    const list = (data?.drafts ?? []).filter(d => d.day === day && d.status === "draft" && (opts.download ? true : d.platform === "feed" || d.platform === "video"));
+    if (!list.length) return;
+    setError(""); setPrep({ done: 0, total: list.length, label: "" });
+    const files: { name: string; blob: Blob }[] = [];
+    try {
+      for (let i = 0; i < list.length; i++) {
+        const d = list[i];
+        setPrep({ done: i, total: list.length, label: d.platform === "video" ? `Recording reel ${d.n + 1}` : `Drawing ${d.platform === "feed" ? "post" : d.platform} ${d.n + 1}` });
+        if (d.platform === "linkedin" || d.platform === "group") { if (opts.download) files.push(...await prepare(d)); continue; }
+        if (d.media && !opts.download) continue; // already prepared
+        files.push(...await prepare(d));
+      }
+      if (opts.download) files.forEach((f, i) => setTimeout(() => downloadBlob(f.blob, f.name), i * 350));
+      await load();
+      if (opts.queue) {
+        const ids = list.filter(d => d.platform === "feed" || d.platform === "video").map(d => d.id);
+        const j = await post({ action: "schedule", ids }, "queue");
+        if (j && typeof j === "object" && "queued" in j) setNote(`${(j as { queued: number }).queued} posts queued for ${DAYS[day]}. They go out at 7:30, 10:30, 1:30, 4:30 and 7:30.`);
+      }
+    } catch (e) { setError(e instanceof Error ? e.message : "Couldn't prepare the day."); }
+    finally { setPrep(null); }
+  }
+
+  const shift = (n: number) => { setWeek(dayDate(week, n * 7)); setData(null); };
   const drafts = useMemo(() => data?.drafts ?? [], [data]);
   const ofDay = drafts.filter(d => d.day === day);
-  const counts = DAYS.map((_, i) => ({ all: drafts.filter(d => d.day === i && d.status !== "skipped").length, done: drafts.filter(d => d.day === i && d.status === "posted").length }));
+  const counts = DAYS.map((_, i) => { const l = drafts.filter(d => d.day === i && d.status !== "skipped"); return { all: l.length, done: l.filter(d => d.status === "posted").length, queued: l.filter(d => d.publishStatus === "queued").length }; });
   const isThisWeek = week === weekStart(localYmd());
-  const postedCount = drafts.filter(d => d.status === "posted").length;
   const live = drafts.filter(d => d.status !== "skipped").length;
+  const postedCount = drafts.filter(d => d.status === "posted").length;
+  const dayQueued = ofDay.filter(d => d.publishStatus === "queued");
 
   return <section className="cw" aria-label="This week's posts">
-    <div className="u-h2-row cw-head">
-      <h2 className="u-h2">{isThisWeek ? "This week" : `Week of ${nice(week)}`} <span className="u-quiet">{live ? `${postedCount} of ${live} posted` : ""}</span></h2>
+    <div className="cw-head">
+      <div>
+        <h2 className="cw-title">{isThisWeek ? "This week" : `Week of ${nice(week)}`}</h2>
+        <p className="cw-sub">{live ? `${live} posts · ${postedCount} posted` : "5 posts and 5 reels a day, written from your week"}</p>
+      </div>
       <div className="cw-nav">
         <button type="button" className="u-btn u-btn-bare" onClick={() => shift(-1)} aria-label="Previous week">‹</button>
-        <button type="button" className="u-btn u-btn-bare" onClick={() => { setWeek(weekStart(localYmd())); setDay(todayIdx); }} disabled={isThisWeek}>This week</button>
+        <button type="button" className="u-btn u-btn-bare" onClick={() => { setWeek(weekStart(localYmd())); setDay(todayIdx); }} disabled={isThisWeek}>Today</button>
         <button type="button" className="u-btn u-btn-bare" onClick={() => shift(1)} aria-label="Next week">›</button>
-        <button type="button" className="u-btn u-btn-go" disabled={!!busy || data?.canWrite === false} onClick={() => void post({ action: "generate", week }, "gen")}>
-          {busy === "gen" ? "Writing the week… about a minute" : drafts.length ? "Fill in missing platforms" : "Write this week"}
+        <button type="button" className="u-btn u-btn-go" disabled={!!busy || data?.canWrite === false} onClick={() => void writeWeek()}>
+          {busy === "gen" ? "Writing… about 2 minutes" : live ? "Fill in missing posts" : "Write this week"}
         </button>
       </div>
     </div>
+
+    {data && <div className={"cw-connect" + (data.meta.connected ? " is-on" : "")}>
+      <span className="cw-dot" aria-hidden="true" />
+      {data.meta.connected
+        ? <span>Facebook{data.meta.instagram ? " and Instagram" : ""} connected. Queued posts go out on their own, five times a day.{!data.meta.instagram ? " Add META_IG_USER_ID to post to Instagram too." : ""}</span>
+        : <span>Facebook and Instagram aren&rsquo;t connected, so posts don&rsquo;t go out on their own yet. Add <code>META_PAGE_ID</code>, <code>META_PAGE_TOKEN</code> and <code>META_IG_USER_ID</code> in Vercel. Until then, download and post.</span>}
+    </div>}
     {error && <p className="cw-error" role="alert">{error}</p>}
-    {data?.canWrite === false && <p className="u-note">Cinder needs the Anthropic key in Vercel to write posts. Until then, the post library below still works.</p>}
+    {note && <p className="cw-note" role="status">{note}</p>}
+    {data?.canWrite === false && <p className="u-note">Cinder needs the Anthropic key in Vercel to write posts.</p>}
 
     <div className="cw-days" role="tablist" aria-label="Day">
       {DAYS.map((d, i) => <button key={d} type="button" role="tab" aria-selected={day === i} className={"cw-day" + (day === i ? " is-on" : "") + (isThisWeek && i === todayIdx ? " is-today" : "")} onClick={() => setDay(i)}>
-        <b>{d}</b><small>{nice(dayDate(week, i))}</small><em>{counts[i].all ? `${counts[i].done}/${counts[i].all}` : "–"}</em>
+        <span className="cw-day-top"><b>{d}</b>{isThisWeek && i === todayIdx && <i>Today</i>}</span>
+        <small>{nice(dayDate(week, i))}</small>
+        <span className="cw-meter"><i style={{ width: counts[i].all ? (counts[i].done / counts[i].all) * 100 + "%" : 0 }} /><i className="q" style={{ width: counts[i].all ? (counts[i].queued / counts[i].all) * 100 + "%" : 0 }} /></span>
+        <em>{counts[i].all ? `${counts[i].done} of ${counts[i].all} posted` : "Nothing yet"}</em>
       </button>)}
     </div>
 
+    {ofDay.length > 0 && <div className="cw-daybar">
+      <div className="cw-daybar-l">
+        <b>{DAYS[day]}, {nice(dayDate(week, day))}</b>
+        <span>{prep ? `${prep.label} · ${prep.done + 1} of ${prep.total}` : dayQueued.length ? `${dayQueued.length} queued` : "Prepare the images and reels, then queue them."}</span>
+        {prep && <span className="cw-bar"><i style={{ width: (prep.done / prep.total) * 100 + "%" }} /></span>}
+      </div>
+      <div className="cw-row">
+        <button type="button" className="u-btn" disabled={!!prep} onClick={() => void prepareDay({ download: true, queue: false })}>Download all</button>
+        {data?.meta.connected && <button type="button" className="u-btn u-btn-go" disabled={!!prep || !!busy} onClick={() => void prepareDay({ download: false, queue: true })}>{prep ? "Preparing…" : "Prepare and queue the day"}</button>}
+        {dayQueued.length > 0 && <button type="button" className="u-btn u-btn-bare" disabled={!!busy} onClick={() => void post({ action: "unschedule", ids: dayQueued.map(d => d.id) }, "unq")}>Unqueue</button>}
+      </div>
+    </div>}
+    {prep && <p className="u-note">Keep this tab open and in front while reels record. Each one records in real time, about 15 seconds.</p>}
+
     {!data ? <p className="u-note">Loading…</p> : !drafts.length ? <div className="cw-empty">
-      <p><b>Nothing written for this week yet.</b> Cinder writes 21 posts from your real week: what you heard on calls, your dial numbers, and the topics that brought leads before. Every Sunday morning it writes the next week on its own.</p>
+      <b>Nothing written for this week yet.</b>
+      <p>Cinder writes 77 posts from your real week: 5 Facebook + Instagram posts and 5 reels a day, LinkedIn on weekdays and two group posts. They come from what owners said on your calls, your numbers, and the topics that brought leads before. It writes next week every Sunday on its own.</p>
     </div> : !ofDay.length ? <p className="u-note">Nothing planned for {DAYS[day]}.</p> :
-      <div className="cw-list">{ofDay.map(d => <DraftCard key={d.id} d={d} busy={busy === d.id} act={(action, extra) => post({ action, id: d.id, ...extra }, d.id)} />)}</div>}
+      GROUPS.map(g => { const list = ofDay.filter(d => d.platform === g.id); return list.length ? <div key={g.id} className="cw-group">
+        <div className="cw-group-h"><h3>{g.title} <span>{list.length}</span></h3><small>{g.note}</small></div>
+        <div className="cw-list">{list.map(d => <DraftCard key={d.id} d={d} meta={data.meta} busy={busy === d.id} act={(action, extra) => post({ action, id: d.id, ...extra }, d.id) as Promise<boolean>} />)}</div>
+      </div> : null; })}
 
     {data && data.totals.posts > 0 && <div className="cw-topics">
-      <h3 className="u-h2">What&rsquo;s working <span className="u-quiet">last 120 days: {data.totals.posts} posts, {data.totals.views.toLocaleString()} views, {data.totals.leads} leads</span></h3>
+      <h3 className="cw-group-h">What&rsquo;s working <small>Last 120 days: {data.totals.posts} posts, {data.totals.views.toLocaleString()} views, {data.totals.leads} leads</small></h3>
       <ol>{data.topics.filter(t => t.posts).map(t => <li key={t.key}><span>{t.name}</span><small>{t.posts} posts · {t.leads} leads</small><i style={{ width: Math.max(4, (t.score / Math.max(1, data.topics[0].score)) * 100) + "%" }} /></li>)}</ol>
       <p className="u-note">Next week gets more of the topics at the top. Log leads on a post when someone mentions it or DMs from it.</p>
     </div>}

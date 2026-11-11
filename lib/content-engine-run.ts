@@ -1,7 +1,7 @@
 // Content engine, I/O: reads the week's real numbers and call notes, has Claude write the week, saves the drafts.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { claudeText } from "@/lib/ai-text";
-import { contentSystem, contentUser, parseDrafts, planWeek, PLATFORMS, type Context, type Draft, type Platform, type Posted, type Slot } from "@/lib/content-engine";
+import { contentSystem, contentUser, parseDrafts, planWeek, type Context, type Draft, type Platform, type Posted, type Slot } from "@/lib/content-engine";
 
 type Sql = NeonQueryFunction<false, false>;
 const OFFER = "First 3 founding clients get half-price setup. Book & Close guarantees 5 booked appointments in the first 30 days or the next month is free, and the monthly doesn't start until the first booked appointment. No contract.";
@@ -41,45 +41,65 @@ export async function postedHistory(sql: Sql, o: string): Promise<Posted[]> {
 async function write(ctx: Context, slots: Slot[], week: string): Promise<Draft[]> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key || !slots.length) return [];
-  const text = await claudeText({ apiKey: key, system: contentSystem(), user: contentUser(ctx, slots, week), label: "Content week", model: process.env.CINDER_CONTENT_MODEL?.trim() || undefined, maxTokens: 9000, timeoutMs: 120_000 });
+  const text = await claudeText({ apiKey: key, system: contentSystem(), user: contentUser(ctx, slots, week), label: "Content week", model: process.env.CINDER_CONTENT_MODEL?.trim() || undefined, maxTokens: 7000, timeoutMs: 95_000 });
   return parseDrafts(text, slots, ctx);
 }
 
 async function save(sql: Sql, o: string, week: string, drafts: Draft[]) {
   for (const d of drafts) {
-    await sql`INSERT INTO public.content_drafts (owner_id, week, day, platform, pillar, format, hook, body, card, slides, shoot)
-      VALUES (${o}, ${week}::date, ${d.day}, ${d.platform}, ${d.pillar}, ${d.format}, ${d.hook}, ${d.body}, ${JSON.stringify(d.card)}::jsonb, ${JSON.stringify(d.slides)}::jsonb, ${d.shoot})`;
+    await sql`INSERT INTO public.content_drafts (owner_id, week, day, n, platform, pillar, angle, format, hook, body, card, slides, shoot)
+      VALUES (${o}, ${week}::date, ${d.day}, ${d.n ?? 0}, ${d.platform}, ${d.pillar}, ${d.angle ?? ""}, ${d.format}, ${d.hook}, ${d.body}, ${JSON.stringify(d.card)}::jsonb, ${JSON.stringify(d.slides)}::jsonb, ${d.shoot})`;
   }
 }
 
+/** Run jobs a few at a time. */
+async function pool<T>(jobs: (() => Promise<T>)[], size: number): Promise<PromiseSettledResult<T>[]> {
+  const out: PromiseSettledResult<T>[] = new Array(jobs.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(size, jobs.length) }, async () => {
+    while (next < jobs.length) { const i = next++; try { out[i] = { status: "fulfilled", value: await jobs[i]() }; } catch (e) { out[i] = { status: "rejected", reason: e }; } }
+  }));
+  return out;
+}
+
 /**
- * Write the week. Platforms that already have drafts that week are left alone, so it's safe to run twice.
- * The three platform groups are written in parallel to stay inside the time limit.
+ * Write the week: 5 feed posts and 5 reels a day, LinkedIn, groups. Only slots that don't have a post yet are written,
+ * so running it again fills whatever a timeout or an error left out. Each call writes one platform-day (5 posts),
+ * several calls at once, and stops starting new ones before the function's time runs out.
  */
-export async function generateWeek(sql: Sql, o: string, week: string, only?: Platform[]): Promise<{ written: number; skipped: string[]; error?: string }> {
-  const have = await sql`SELECT DISTINCT platform FROM public.content_drafts WHERE owner_id = ${o} AND week = ${week}::date AND status <> 'skipped'` as { platform: string }[];
-  const done = new Set(have.map(r => r.platform));
-  const want = PLATFORMS.map(p => p.id).filter(p => (!only || only.includes(p)) && !done.has(p));
-  if (!want.length) return { written: 0, skipped: [...done] };
+export async function generateWeek(sql: Sql, o: string, week: string, only?: Platform[], budgetMs = 240_000): Promise<{ written: number; missing: number; error?: string }> {
+  const started = Date.now();
+  const have = await sql`SELECT day, platform, n FROM public.content_drafts WHERE owner_id = ${o} AND week = ${week}::date AND status <> 'skipped'` as { day: number; platform: string; n: number }[];
+  const taken = new Set(have.map(r => `${r.day}:${r.platform}:${r.n}`));
   const [ctx, history] = await Promise.all([contentContext(sql, o), postedHistory(sql, o)]);
-  const slots = planWeek(history).filter(s => want.includes(s.platform));
-  const groups: Slot[][] = [slots.filter(s => s.platform === "feed"), slots.filter(s => s.platform === "video"), slots.filter(s => s.platform === "linkedin" || s.platform === "group")];
-  const results = await Promise.allSettled(groups.map(g => write(ctx, g, week)));
-  const drafts = results.flatMap(r => (r.status === "fulfilled" ? r.value : []));
+  const slots = planWeek(history).filter(s => (!only || only.includes(s.platform)) && !taken.has(`${s.day}:${s.platform}:${s.n ?? 0}`));
+  if (!slots.length) return { written: 0, missing: 0 };
+  const groups = new Map<string, Slot[]>();
+  for (const s of slots) { const k = s.platform === "linkedin" || s.platform === "group" ? "li" : `${s.platform}:${s.day}`; groups.set(k, [...(groups.get(k) ?? []), s]); }
+  let written = 0, error = "";
+  const jobs = [...groups.values()].map(g => async () => {
+    if (Date.now() - started > budgetMs - 100_000) return 0; // not enough time left for a full call
+    const drafts = await write(ctx, g, week);
+    await save(sql, o, week, drafts);
+    ctx.recent = [...drafts.map(d => d.hook), ...ctx.recent];
+    written += drafts.length;
+    return drafts.length;
+  });
+  const results = await pool(jobs, 6);
   const failed = results.find(r => r.status === "rejected") as PromiseRejectedResult | undefined;
-  await save(sql, o, week, drafts);
-  return { written: drafts.length, skipped: [...done], ...(failed ? { error: failed.reason instanceof Error ? failed.reason.message : "Part of the week didn't write. Run it again." } : {}) };
+  if (failed) error = failed.reason instanceof Error ? failed.reason.message : "Part of the week didn't write.";
+  return { written, missing: slots.length - written, ...(error ? { error } : {}) };
 }
 
 /** Rewrite one draft in place: same day, platform and topic, a fresh angle. */
 export async function rewriteDraft(sql: Sql, o: string, id: string, note = ""): Promise<Draft | null> {
-  const [row] = await sql`SELECT week, day, platform, pillar, hook FROM public.content_drafts WHERE id = ${id}::uuid AND owner_id = ${o}` as { week: string; day: number; platform: Platform; pillar: string; hook: string }[];
+  const [row] = await sql`SELECT week, day, n, platform, pillar, angle, hook FROM public.content_drafts WHERE id = ${id}::uuid AND owner_id = ${o}` as { week: string; day: number; n: number; platform: Platform; pillar: string; angle: string; hook: string }[];
   if (!row) return null;
   const ctx = await contentContext(sql, o);
   ctx.recent = [row.hook, ...ctx.recent];
   if (note) ctx.heard = [`(Sam's note for this post: ${note.slice(0, 300)})`, ...ctx.heard];
   const week = String(row.week).slice(0, 10);
-  const [d] = await write(ctx, [{ day: row.day, platform: row.platform, pillar: row.pillar }], week);
+  const [d] = await write(ctx, [{ day: row.day, n: row.n, platform: row.platform, pillar: row.pillar, angle: row.angle }], week);
   if (!d) return null;
   await sql`UPDATE public.content_drafts SET format = ${d.format}, hook = ${d.hook}, body = ${d.body}, card = ${JSON.stringify(d.card)}::jsonb, slides = ${JSON.stringify(d.slides)}::jsonb, shoot = ${d.shoot} WHERE id = ${id}::uuid AND owner_id = ${o}`;
   return d;

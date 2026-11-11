@@ -9,7 +9,7 @@ export type Card =
   | { type: "stat"; figure: string; line: string; source: string }
   | { type: "thread"; title: string; messages: { from: "in" | "out"; text: string }[] }
   | { type: "list"; title: string; items: string[] };
-export type Slot = { day: number; platform: Platform; pillar: string };
+export type Slot = { day: number; platform: Platform; pillar: string; n?: number; angle?: string };
 export type Draft = Slot & { format: Format; hook: string; body: string; card: Card; slides: Card[]; shoot: string };
 export type Posted = { pillar: string; platform: string; views: number | null; comments: number | null; leads: number | null };
 export type Context = {
@@ -21,11 +21,20 @@ export type Context = {
   offer: string;        // the current offer in one line
 };
 
-export const PLATFORMS: { id: Platform; name: string; where: string; days: number[] }[] = [
-  { id: "feed", name: "Facebook + Instagram", where: "Facebook page and Instagram feed, same post and image", days: [0, 1, 2, 3, 4, 5, 6] },
-  { id: "video", name: "TikTok + Reels + Shorts", where: "Short vertical video, 15–35 seconds", days: [0, 1, 2, 3, 4, 5, 6] },
-  { id: "linkedin", name: "LinkedIn", where: "Sam's personal LinkedIn", days: [0, 1, 2, 3, 4] },
-  { id: "group", name: "Facebook groups", where: "Contractor and detailer groups: help only, no pitch, no link", days: [1, 3] },
+/** Per day: 5 Facebook + Instagram posts and 5 reels (Instagram, Facebook, TikTok), LinkedIn on weekdays, groups twice a week. */
+export const PLATFORMS: { id: Platform; name: string; where: string; days: number[]; perDay: number }[] = [
+  { id: "feed", name: "Facebook + Instagram", where: "Facebook page and Instagram feed, same post and image", days: [0, 1, 2, 3, 4, 5, 6], perDay: 5 },
+  { id: "video", name: "Reels: Instagram, Facebook, TikTok", where: "Vertical video, 12–20 seconds, text on screen", days: [0, 1, 2, 3, 4, 5, 6], perDay: 5 },
+  { id: "linkedin", name: "LinkedIn", where: "Sam's personal LinkedIn", days: [0, 1, 2, 3, 4], perDay: 1 },
+  { id: "group", name: "Facebook groups", where: "Contractor and detailer groups: help only, no pitch, no link", days: [1, 3], perDay: 1 },
+];
+export const POSTS_PER_WEEK = PLATFORMS.reduce((t, p) => t + p.days.length * p.perDay, 0);
+
+/** The shape of each post, rotated so five posts a day on one topic pool never read the same. */
+export const ANGLES = [
+  "a short true story from a job site or a call", "a how-to with exact steps", "a myth and the truth", "a question that starts comments",
+  "one number and what it means", "before and after", "the most common mistake", "a checklist", "point of view: the homeowner's side",
+  "a hot take owners will argue with", "what I'd do if I ran a fence company", "a tiny script they can copy",
 ];
 
 export const PILLARS: Record<string, { name: string; brief: string; weight: number; platforms: Platform[] }> = {
@@ -87,27 +96,34 @@ export function planWeek(posted: Posted[] = []): Slot[] {
   const score = pillarScores(posted);
   const top = Math.max(1, ...Object.values(score));
   const slots: Slot[] = [];
+  let angle = 0;
   // Fewest topics first (groups), so the platforms with the most choice fit around them.
   const order = [...PLATFORMS].sort((a, b) => Object.values(PILLARS).filter(v => v.platforms.includes(a.id)).length - Object.values(PILLARS).filter(v => v.platforms.includes(b.id)).length);
   for (const pl of order) {
     const pool = Object.entries(PILLARS).filter(([, v]) => v.platforms.includes(pl.id))
       .map(([k, v]) => ({ k, w: v.weight * (1 + score[k] / top) }));
     const used: Record<string, number> = {};
-    let prev = "";
+    let prevDay = new Set<string>();
     for (const day of pl.days) {
-      const today = new Set(slots.filter(s => s.day === day).map(s => s.pillar));
-      const pick = [...pool].sort((a, b) => (b.w / (1 + (used[b.k] ?? 0) * 1.6)) - (a.w / (1 + (used[a.k] ?? 0) * 1.6)) || a.k.localeCompare(b.k))
-        .find(c => c.k !== prev && !today.has(c.k) && !(pl.id === "group" && c.k === "offer")) ?? pool[0];
-      used[pick.k] = (used[pick.k] ?? 0) + 1; prev = pick.k;
-      slots.push({ day, platform: pl.id, pillar: pick.k });
+      const today = new Set<string>();
+      for (let n = 0; n < pl.perDay; n++) {
+        const others = new Set(slots.filter(s => s.day === day && s.platform !== pl.id).map(s => s.pillar));
+        const rank = [...pool].sort((a, b) => (b.w / (1 + (used[b.k] ?? 0) * 1.6)) - (a.w / (1 + (used[a.k] ?? 0) * 1.6)) || a.k.localeCompare(b.k));
+        const ok = (c: { k: string }) => !today.has(c.k) && !(pl.id === "group" && c.k === "offer");
+        // Prefer a topic not used on this platform yesterday and, for one-a-day platforms, not used elsewhere today.
+        const pick = rank.find(c => ok(c) && !prevDay.has(c.k) && (pl.perDay > 1 || !others.has(c.k))) ?? rank.find(ok) ?? pool[0];
+        used[pick.k] = (used[pick.k] ?? 0) + 1; today.add(pick.k);
+        slots.push({ day, platform: pl.id, pillar: pick.k, n, angle: ANGLES[angle++ % ANGLES.length] });
+      }
+      prevDay = today;
     }
   }
-  // One plain call to action a week, on Thursday's feed post, unless the plan already has one.
-  if (!slots.some(s => s.pillar === "offer")) {
-    const thu = slots.find(s => s.platform === "feed" && s.day === 3);
-    if (thu && !slots.some(s => s.day === 3 && s.pillar === "offer")) thu.pillar = "offer";
+  // A plain call to action at least once a day in the feed: the last feed post of the day.
+  for (let day = 0; day < 7; day++) {
+    const feed = slots.filter(s => s.platform === "feed" && s.day === day);
+    if (feed.length && !feed.some(s => s.pillar === "offer")) feed[feed.length - 1].pillar = "offer";
   }
-  return slots.sort((a, b) => a.day - b.day || PLATFORMS.findIndex(p => p.id === a.platform) - PLATFORMS.findIndex(p => p.id === b.platform));
+  return slots.sort((a, b) => a.day - b.day || PLATFORMS.findIndex(p => p.id === a.platform) - PLATFORMS.findIndex(p => p.id === b.platform) || (a.n ?? 0) - (b.n ?? 0));
 }
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -125,7 +141,7 @@ Hard rules:
 - Examples of conversations must be clearly labeled as an example.
 - Facebook group posts give real help and ask a question. No pitch, no link, no mention of Cinder.
 - LinkedIn posts: first line is the hook on its own, then short paragraphs, 80–180 words, end with a question or a plain next step.
-- Feed posts: 50–130 words. Video: hook in the first 2 seconds, 15–35 seconds total.
+- Feed posts: 40–120 words. Reels are text-on-screen videos, 12–20 seconds: the hook is the first scene, then one idea per scene, the last scene is the takeaway or the next step.
 - Every post is different from the others this week and from the hooks already used.
 
 Return only a JSON array, nothing else.`;
@@ -150,9 +166,9 @@ Hooks already used, don't repeat them:
 ${ctx.recent.length ? ctx.recent.slice(0, 40).map(h => "- " + h).join("\n") : "- (none yet)"}
 
 Write one post for each slot, in this order:
-${slots.map((s, i) => `${i + 1}. ${DAYS[s.day]} · ${PLATFORMS.find(p => p.id === s.platform)!.name} · ${PILLARS[s.pillar].name}: ${PILLARS[s.pillar].brief}`).join("\n")}
+${slots.map((s, i) => `${i + 1}. ${DAYS[s.day]} · ${PLATFORMS.find(p => p.id === s.platform)!.name} · ${PILLARS[s.pillar].name}: ${PILLARS[s.pillar].brief}${s.angle ? ` Shape: ${s.angle}.` : ""}`).join("\n")}
 
-Each item: {"slot": n, "format": "post" | "carousel" | "video", "hook": "the first line, under 12 words", "body": "the full post text (for video: the caption)", "card": CARD, "slides": [CARD, ...] (carousel only, 4–7 slides, first slide is the hook, last slide is the takeaway), "shoot": "video only: what to film and the on-screen text beat by beat, 3–6 short lines"}.
+Each item: {"slot": n, "format": "post" | "carousel" | "video", "hook": "the first line, under 12 words", "body": "the full post text (for video: the caption)", "card": CARD, "slides": [CARD, ...] (carousel only, 4–7 slides, first slide is the hook, last slide is the takeaway), "scenes": ["video only: 4–7 lines of on-screen text, each under 12 words, one per scene"], "shoot": "video only: optional, if Sam wants to film it himself instead, what to film in 2–4 short lines"}.
 CARD is the image for the post, one of:
 {"type":"hook","text":"the line on the image, under 14 words","sub":"optional short second line"}
 {"type":"stat","figure":"2%","line":"what it means, under 14 words","source":"Invoca, 2021"} (only the allowed stats or this week's numbers with source "Cinder, this week")
@@ -196,11 +212,12 @@ export function parseDrafts(text: string, slots: Slot[], ctx?: Context): Draft[]
     const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
     const n = Number(r.slot);
     const slot = slots[Number.isInteger(n) && n >= 1 && n <= slots.length ? n - 1 : i];
-    if (!slot || out.some(d => d.day === slot.day && d.platform === slot.platform)) return;
+    if (!slot || out.some(d => d.day === slot.day && d.platform === slot.platform && (d.n ?? 0) === (slot.n ?? 0))) return;
     const hook = clip(r.hook, 140), body = clip(r.body, 2200);
     if (!hook || !body) return;
     const format: Format = slot.platform === "video" ? "video" : r.format === "carousel" && slot.platform === "feed" ? "carousel" : "post";
-    const slides = format === "carousel" && Array.isArray(r.slides) ? r.slides.slice(0, 7).map(s => cleanCard(s, hook, ctx)) : [];
+    const slides = format === "carousel" && Array.isArray(r.slides) ? r.slides.slice(0, 7).map(s => cleanCard(s, hook, ctx))
+      : format === "video" && Array.isArray(r.scenes) ? r.scenes.slice(0, 7).map(t => clip(t, 110)).filter(Boolean).map(text => ({ type: "hook" as const, text })) : [];
     out.push({ ...slot, format: format === "carousel" && slides.length < 3 ? "post" : format, hook, body, card: cleanCard(r.card, hook, ctx), slides: slides.length >= 3 ? slides : [], shoot: slot.platform === "video" ? clip(r.shoot, 900) : "" });
   });
   return out;

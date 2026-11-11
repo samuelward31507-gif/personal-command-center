@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     const week = dayDate(weekStart(today), 7); // the coming Monday
     const r = await generateWeek(sql, o, week);
     if (r.written && alertsConfigured()) {
-      await sendAlert({ subject: `Next week's posts are written (${r.written})`, lines: [`Cinder wrote ${r.written} posts for the week of ${week}: Facebook and Instagram, TikTok and Reels, LinkedIn and groups, each with its image.`, "Read them, tweak anything, and post each one on its day."], link: { label: "Open Content", path: "/crm/content" } }).catch(() => false);
+      await sendAlert({ subject: `Next week's posts are written (${r.written})`, lines: [`Cinder wrote ${r.written} posts for the week of ${week}: 5 Facebook + Instagram posts and 5 reels a day, plus LinkedIn and groups, each with its image or video.`, "Read them, tweak anything, and post each one on its day."], link: { label: "Open Content", path: "/crm/content" } }).catch(() => false);
     }
     await logRun(sql, "content", "cron", r.error && !r.written ? "error" : "ok", { week, written: r.written, error: r.error ?? null }, started);
     return Response.json({ ok: true, week, ...r });

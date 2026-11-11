@@ -36,6 +36,30 @@
     {
       "path": "/api/cron/content",
       "schedule": "41 14 * * 0"
+    },
+    {
+      "path": "/api/cron/publish",
+      "schedule": "50 14 * * *"
+    },
+    {
+      "path": "/api/cron/publish",
+      "schedule": "50 17 * * *"
+    },
+    {
+      "path": "/api/cron/publish",
+      "schedule": "50 20 * * *"
+    },
+    {
+      "path": "/api/cron/publish",
+      "schedule": "50 23 * * *"
+    },
+    {
+      "path": "/api/cron/publish",
+      "schedule": "50 2 * * *"
+    },
+    {
+      "path": "/api/cron/content",
+      "schedule": "21 15 * * 0"
     }
   ]
 }
