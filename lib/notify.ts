@@ -38,11 +38,34 @@ export async function sendAlert(a: Alert): Promise<boolean> {
       const detail = (await res.text().catch(() => "")).slice(0, 200);
       lastAlertError = `Resend ${res.status}: ${detail}`;
       console.error("Alert email failed", { status: res.status, detail });
+      return viaGmail(to, a.subject, text);
     }
-    return res.ok;
+    return true;
   } catch (e) {
     lastAlertError = `Resend request failed: ${e instanceof Error ? e.name : typeof e}`;
     console.error("Alert email failed", { name: e instanceof Error ? e.name : typeof e });
-    return false;
+    return viaGmail(to, a.subject, text);
   }
+}
+
+/**
+ * Backup route for founder alerts: when Resend refuses (unverified domain, outage), send it from Sam's own connected
+ * Gmail to his alert address, so the morning brief and client alerts still arrive.
+ */
+async function viaGmail(to: string, subject: string, text: string): Promise<boolean> {
+  const o = process.env.CINDER_OWNER_ID?.trim();
+  if (!o || !process.env.DATABASE_URL) return false;
+  try {
+    const { neon } = await import("@neondatabase/serverless");
+    const { accessToken, buildRaw, decryptToken } = await import("@/lib/gmail");
+    const sql = neon(process.env.DATABASE_URL);
+    const [acc] = await sql`SELECT email, refresh_token_enc FROM public.gmail_accounts WHERE owner_id = ${o} ORDER BY is_main DESC, connected_at LIMIT 1` as { email: string; refresh_token_enc: string }[];
+    if (!acc) return false;
+    const token = await accessToken(decryptToken(acc.refresh_token_enc));
+    const raw = buildRaw({ from: acc.email, fromName: "Cinder alerts", to, subject: `[Cinder] ${subject}`.slice(0, 150), body: text });
+    const r = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ raw }), signal: AbortSignal.timeout(6000) });
+    if (r.ok) { lastAlertError = `${lastAlertError} (sent through Gmail instead)`; return true; }
+    lastAlertError = `${lastAlertError}; Gmail backup ${r.status}`;
+    return false;
+  } catch (e) { lastAlertError = `${lastAlertError}; Gmail backup failed: ${e instanceof Error ? e.message.slice(0, 80) : "error"}`; return false; }
 }

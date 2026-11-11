@@ -22,6 +22,6 @@ export async function GET(request: Request) {
   // Clients' quote follow-ups and revive texts go first, in daytime hours (these runs are 8:27am to 2:27pm Denver).
   const clients = await runQuoteFollowUps(sql, started.toISOString().slice(0, 10)).catch(e => { console.error("Client follow-ups failed", e); return null; });
   const r = await runAutopilot(sql, o, ws, { budgetMs: 240_000 });
-  await logRun(sql, "autopilot", "cron", r.stopped && !r.sent.length ? "error" : "ok", r as unknown as Record<string, unknown>, started).catch(() => {});
+  await logRun(sql, "autopilot", "cron", r.stopped === "Autopilot is off." ? "off" : r.stopped && !r.sent.length ? "error" : "ok", r as unknown as Record<string, unknown>, started).catch(() => {});
   return Response.json({ ...r, clients });
 }

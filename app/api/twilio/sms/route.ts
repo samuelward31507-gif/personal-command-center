@@ -2,10 +2,13 @@ import { e164, forwardText, EMPTY_TWIML } from "@/lib/missed-call";
 import { readTwilioRequest, sendSms, twilioConfigured, twiml } from "@/lib/twilio";
 import { sendAlert } from "@/lib/notify";
 import { neon } from "@neondatabase/serverless";
+import { after } from "next/server";
 import { clientByNumber, clientInboundText } from "@/lib/client-runtime-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// The reply runs after Twilio gets its answer (Twilio waits 15 seconds at most); a calendar lookup plus the reply engine can take longer.
+export const maxDuration = 60;
 
 /** POST /api/twilio/sms — Twilio "A message comes in" webhook. Forwards the text to the founder's cell + email. */
 export async function POST(request: Request) {
@@ -20,7 +23,7 @@ export async function POST(request: Request) {
     // Photos the customer texted (MMS): Twilio sends MediaUrl0..N with their types; keep the images.
     const media = Array.from({ length: Math.min(10, Number(p.NumMedia) || 0) }, (_, i) => ({ url: p[`MediaUrl${i}`] ?? "", type: p[`MediaContentType${i}`] ?? "" }))
       .filter(m => /^https:\/\/api\.twilio\.com\//.test(m.url) && m.type.startsWith("image/"));
-    if (fromC) await clientInboundText(sql, client, fromC, p.Body ?? "", media).catch(e => console.error("Client text failed", e));
+    if (fromC) after(() => clientInboundText(sql, client, fromC, p.Body ?? "", media).catch(e => console.error("Client text failed", e)));
     return twiml(EMPTY_TWIML);
   }
   const from = e164(p.From ?? "") || "unknown";
