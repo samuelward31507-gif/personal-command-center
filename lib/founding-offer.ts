@@ -139,7 +139,7 @@ export function priceScript(o: OfferSettings = DEFAULT_OFFER): string {
   const setup = o.setupFee < o.standardSetup
     ? `It's normally ${usd(o.standardSetup)} to set up. For our first ${o.spotsTotal} clients it's ${usd(o.setupFee)}`
     : `It's ${usd(o.setupFee)} to set up`;
-  return `${setup}, then ${usd(o.monthly)} a month, month to month, no contract, and the monthly starts after your first booked appointment. If you don't get at least 5 booked appointments in your first 30 days live, your next monthly payment is waived and we keep working.`;
+  return `${setup}, then ${usd(o.monthly)} a month${o.setupFee < o.standardSetup ? ", with your first month half off" : ""}, month to month, no contract, and the monthly starts after your first booked appointment. If you don't get at least 5 booked appointments in your first 30 days live, your next monthly payment is waived and we keep working.`;
 }
 
 // ---------- Delivery tracker (B5) ----------

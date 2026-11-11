@@ -216,6 +216,7 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 .price b { font-family: var(--head); font-weight: 600; font-size: 44px; letter-spacing: -.03em; color: var(--text); }
 .price .setup { font-size: 15px; }
 .price .setup b { font-family: var(--sans); font-size: 15px; letter-spacing: 0; }
+.price .first-month { flex-basis: 100%; margin-top: -2px; }
 .price s { color: var(--text-3); }
 .guar { font-size: 14px; color: var(--text); padding: 14px 16px; background: var(--bg); border-radius: 10px; }
 .plan .btn { align-self: flex-start; }

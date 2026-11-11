@@ -28,7 +28,7 @@ The fix isn't answering more. It's making sure nobody who calls goes unanswered.
 I build and watch every client's system myself. That means I only take on a few companies at a time, and if something breaks you hear from me before you notice.
 
 What we do: every lead answered in 10 seconds, every quote chased to a yes or a no, past customers brought back. Done for you. No contract.` },
-  { key: "p-founding", channel: "page", label: "Founding offer", body: `We're taking our first 3 clients at half-price setup.
+  { key: "p-founding", channel: "page", label: "Founding offer", body: `We're taking our first 3 clients at half-price setup and 50% off the first month.
 
 Book & Close guarantees 5 booked appointments in your first 30 days, or your next month is free. And your monthly doesn't start until your first booked appointment lands.
 

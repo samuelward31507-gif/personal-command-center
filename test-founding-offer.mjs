@@ -45,7 +45,7 @@ ok(() => assert.equal(guaranteeCalc({ oldLeads: 160, newLeadsPerMonth: 0 }).offe
 ok(() => assert.equal(guaranteeCalc({ oldLeads: 300, newLeadsPerMonth: 30 }, mergeOffer({ rates: { oldReply: 0.2 } })).safe, 8), "rates come from settings");
 
 // B4 price script
-ok(() => assert.equal(priceScript(), "It's normally $2,500 to set up. For our first 3 clients it's $1,250, then $1,997 a month, month to month, no contract, and the monthly starts after your first booked appointment. If you don't get at least 5 booked appointments in your first 30 days live, your next monthly payment is waived and we keep working."));
+ok(() => assert.equal(priceScript(), "It's normally $2,500 to set up. For our first 3 clients it's $1,250, then $1,997 a month, with your first month half off, month to month, no contract, and the monthly starts after your first booked appointment. If you don't get at least 5 booked appointments in your first 30 days live, your next monthly payment is waived and we keep working."));
 ok(() => assert.match(priceScript({ ...DEFAULT_OFFER, setupFee: 2500 }), /^It's \$2,500 to set up, then/), "no discount line once the founding spots are gone");
 
 // B5 delivery tracker (acceptance)

@@ -7,7 +7,7 @@ export type Objection = { id: string; label: string; key: string; say: string; t
 /** The soft ask: assume the meeting, ask about logistics. Never "are you interested" or "would you be open to". */
 export const CLOSE = "Easiest thing is if I just show you what it'd look like for your shop. Are you more of a morning or afternoon guy? ... Cool, tomorrow at 10 or Wednesday at 2?";
 
-export const FOUNDING = "We're taking our first 3 clients at half-price setup, so if it's a fit you'd get in at half off.";
+export const FOUNDING = "We're taking our first 3 clients at half-price setup and half off the first month, so if it's a fit you'd get in at half off.";
 
 export const VOICEMAIL: Record<Track, string> = {
   trades: "Hey {first}, Sam with Cinder. Quick one about the calls and quotes that slip through when you're on a job. I'll shoot you a text. Talk soon.",
@@ -49,7 +49,7 @@ export const SCRIPTS: Record<Track, Script> = {
     ],
     pitch: "Reason I'm calling: I work with fence companies on the calls they miss while they're out on jobs. Quick question: when you're up on a job and the phone rings, what happens to that call? ... (let them talk, then) Yeah, and most of those people don't leave a voicemail, they just call the next fence company. So I set it up so every missed call gets a text back from you in about 10 seconds. It answers their questions, gives your price range and books the estimate on your calendar. Then every quote you send gets followed up until it's a yes or a no. I guarantee 5 booked estimates in your first 30 days, or your next month is free.",
     guarantee: "We guarantee 5 booked appointments in your first 30 days, or your next month is free. And monthly doesn't start until your first appointment lands.",
-    price: "Most shops start on Book & Close: $2,500 setup and $1,997 a month. Our first 3 clients get half off setup, so $1,250.",
+    price: "Most shops start on Book & Close: $2,500 setup and $1,997 a month. Our first 3 clients get half off setup, so $1,250, and half off the first month.",
     objections: [...SHARED, ...TRADES_ONLY],
   },
   detailing: {
