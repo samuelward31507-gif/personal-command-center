@@ -74,7 +74,7 @@ export default function SignPage() {
   }
 
   return <div className="sg-page">
-    <header className="sg-top"><BrandLogo className="sg-logo" title={brand.businessName} /></header>
+    <header className="sg-top"><BrandLogo mono className="sg-logo" title={brand.businessName} /></header>
     <main className="sg-main">
       {error ? <div className="sg-msg"><h1>Link not available</h1><p>{error}</p></div>
         : !doc ? <p className="sg-muted">Loading the agreement…</p>

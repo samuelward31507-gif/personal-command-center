@@ -18,12 +18,12 @@ export const KICKOFF_FIELDS: readonly KickoffField[] = [
   { group: "How leads are handled", key: "questions", label: "Questions to ask every lead", help: "e.g. footage, material, timeline, budget, photos.", long: true, required: true },
   { group: "How leads are handled", key: "prices", label: "Ballpark price ranges and minimum job size", long: true, required: true },
   { group: "How leads are handled", key: "rules", label: "Jobs you don't take, small jobs and repairs", long: true, required: true },
-  { group: "Revenue System", key: "quotes", label: "Open quotes from the last 6 months", help: "How you'll get us the list (name, phone, job, amount, date). A spreadsheet is perfect.", long: true, tier2: true },
-  { group: "Revenue System", key: "past_customers", label: "Past customer list", help: "For seasonal check-ins and reviews. Only people you're allowed to contact.", long: true, tier2: true },
-  { group: "Revenue System", key: "review_link", label: "Google review link", tier2: true },
-  { group: "Revenue System", key: "financing", label: "Financing options and budget ranges to share", long: true, tier2: true },
-  { group: "Revenue System", key: "estimators", label: "Estimators, zones and schedules", long: true, tier2: true },
-  { group: "Revenue System", key: "crm", label: "CRM you use (if any)", tier2: true },
+  { group: "Book & Close", key: "quotes", label: "Open quotes from the last 6 months", help: "How you'll get us the list (name, phone, job, amount, date). A spreadsheet is perfect.", long: true, tier2: true },
+  { group: "Book & Close", key: "past_customers", label: "Past customer list", help: "For seasonal check-ins and reviews. Only people you're allowed to contact.", long: true, tier2: true },
+  { group: "Book & Close", key: "review_link", label: "Google review link", tier2: true },
+  { group: "Book & Close", key: "financing", label: "Financing options and budget ranges to share", long: true, tier2: true },
+  { group: "Book & Close", key: "estimators", label: "Estimators, zones and schedules", long: true, tier2: true },
+  { group: "Book & Close", key: "crm", label: "CRM you use (if any)", tier2: true },
   { group: "Anything else", key: "notes", label: "Anything else we should know?", long: true },
 ] as const;
 

@@ -88,9 +88,9 @@ export default function ReportPage() {
 
           <section className="prp-cta">
             <h2>Want the exact number?</h2>
-            <p>A free 20-minute call. We go through how your inquiries are handled today, replace these estimates with your real numbers, and tell you honestly whether it&apos;s worth fixing.</p>
+            <p>A free 15-minute call. We go through how your inquiries are handled today, replace these estimates with your real numbers, and tell you honestly whether it&apos;s worth fixing.</p>
             <div className="prp-ctas">
-              {doc.from.booking && <a className="prp-btn" href={doc.from.booking} target="_blank" rel="noopener noreferrer">Book a 20-minute call</a>}
+              {doc.from.booking && <a className="prp-btn" href={doc.from.booking} target="_blank" rel="noopener noreferrer">Book a 15-minute call</a>}
               {doc.from.email && <a className="prp-btn ghost" href={`mailto:${doc.from.email}?subject=${encodeURIComponent("Report for " + doc.company)}`}>Reply by email</a>}
             </div>
           </section>

@@ -23,3 +23,6 @@ button.ko-submit:hover:not(:disabled) { background: #121417 !important; }
 button.ko-submit:disabled { opacity: .6; }
 .ko-fine { margin: 0; font-size: 13px; color: #828890 !important; text-align: center; }
 @media (max-width: 600px) { .ko-form fieldset { padding: 18px; } }
+
+/* Logo lines up with the form column. */
+html body .ko-top { max-width: 720px; padding: 26px 20px 0; }

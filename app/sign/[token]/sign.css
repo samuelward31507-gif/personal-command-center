@@ -45,3 +45,8 @@ html body button.sg-btn:disabled { opacity: .55; cursor: default; }
 .sg-next p { margin: 0; color: #3a7e4f !important; }
 html body a.sg-btn { display: inline-flex; align-items: center; margin-top: 12px; height: 44px; padding: 0 18px; border-radius: 12px; background: #121417; color: #f6f6f4 !important; font-size: 15px; font-weight: 600; text-decoration: none; }
 @media print { .sg-next { display: none !important; } }
+
+/* Logo sits on the document's own column; labels in the site's sentence case, not tracked caps or mono. */
+html body .sg-top { max-width: 760px; margin: 0 auto; padding: 26px 20px 8px; }
+html body:not(#u):not(#v) .sg-eyebrow { font-family: var(--font-geist-sans), Inter, sans-serif !important; font-size: 13px !important; font-weight: 600 !important; letter-spacing: 0 !important; text-transform: none !important; color: #4a4f57 !important; }
+html body:not(#u):not(#v) .sg-k { font-family: var(--font-geist-sans), Inter, sans-serif !important; font-size: 12px !important; font-weight: 600 !important; letter-spacing: 0 !important; text-transform: none !important; color: #80858d !important; }
