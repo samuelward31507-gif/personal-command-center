@@ -72,7 +72,7 @@ export default function PortalPage() {
   const hasLive = !!L && (L.leads > 0 || L.conversations.length > 0);
 
   return <div className="pt-page">
-    <header className="pt-top"><BrandLogo mono className="pt-logo" title={doc.from.name} /><span>{doc.client}{doc.demo ? " · Example" : ""}</span></header>
+    <header className="pt-top"><BrandLogo mono className="pt-logo" title={doc.from.name} /><span>{doc.client}{doc.demo ? " · Example" : ""}</span>{!doc.demo && <a className="pt-app" href={`/app?t=${encodeURIComponent(token)}`}>Open the Cinder app</a>}</header>
     <div className="pt-main">
       {hasLive && L ? <>
         <p className="pt-k">Last 30 days</p>
