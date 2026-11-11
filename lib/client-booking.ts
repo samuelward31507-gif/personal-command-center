@@ -90,7 +90,7 @@ export const ES: Record<string, string> = {
   quote_2: "Hola {first}, {owner} aquí. Con gusto le explico la cotización o vemos una opción más económica.",
   quote_3: "Hola {first}, ¿todavía lo está pensando? Le puedo apartar un lugar en la agenda mientras decide.",
   quote_4: "Hola {first}, voy a cerrar su cotización para no molestarle. Si quiere seguir adelante después, solo responda aquí.",
-  review: "Hola {first}, gracias por elegir a {business}. Si quedó contento con el trabajo, ¿nos deja una reseña rápida en Google? Nos ayuda mucho: {review_link}",
+  review: "Hola {first}, gracias por elegir a {business}. ¿Nos deja una reseña rápida en Google? Nos ayuda mucho: {review_link}",
 };
 export const EN: Record<string, string> = {
   reminder: "Hi {first}, a reminder that {business} is coming out {time} for your estimate. If you need to change it, just reply here.",

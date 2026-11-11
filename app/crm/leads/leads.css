@@ -1,0 +1,21 @@
+body .lf-page .lf-setup { margin-bottom: 20px; padding: 16px 18px; border-radius: 14px; background: #fdf6ec; border: 1px solid rgba(181,101,29,.18); color: #7a4a17; font-size: 14px; line-height: 1.55; }
+body .lf-page .lf-setup b { display: block; margin-bottom: 4px; color: #5c370f; }
+body .lf-page .lf-setup p { margin: 0; max-width: 80ch; }
+body .lf-page .lf-setup code { font-size: 12.5px; padding: 1px 6px; border-radius: 6px; background: rgba(18,20,23,.06); }
+body .lf-page .lf-add { margin-bottom: 36px; }
+body .lf-page .lf-add h2 { margin-bottom: 16px; }
+body .lf-page .lf-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px; }
+body .lf-page .lf-label { margin: 0 0 10px; font-size: 12.5px; color: var(--u-muted); }
+body .lf-page .lf-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+body .lf-page .lf-chip { height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(18,20,23,.12) !important; background: #fff !important; color: var(--u-soft) !important; font: inherit; font-size: 13px; cursor: pointer; }
+body .lf-page .lf-chip.is-on { background: var(--u-text) !important; border-color: var(--u-text) !important; color: #fff !important; }
+body .lf-page .lf-more { height: 34px; padding: 0 10px; border-radius: 9px; font: inherit; font-size: 13px; }
+body .lf-page .lf-cities { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(18,20,23,.14); font: inherit; font-size: 14px; line-height: 1.6; resize: vertical; }
+body .lf-page .lf-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--u-line-soft); }
+body .lf-page .lf-empty { padding: 20px; border-radius: 12px; border: 1px dashed rgba(18,20,23,.16); color: var(--u-muted); }
+body .lf-page .lf-table { width: 100%; font-size: 13.5px; }
+body .lf-page .lf-table th, body .lf-page .lf-table td { padding: 12px 10px; text-align: left; }
+body .lf-page .lf-table td b { display: block; font-weight: 550; text-transform: capitalize; }
+body .lf-page .lf-table td small { color: var(--u-muted); font-size: 12.5px; }
+body .lf-page .lf-acts { display: flex; gap: 6px; justify-content: flex-end; }
+@media (max-width: 900px) { body .lf-page .lf-grid { grid-template-columns: 1fr; } body .lf-page .lf-table th:nth-child(2), body .lf-page .lf-table td:nth-child(2) { display: none; } }

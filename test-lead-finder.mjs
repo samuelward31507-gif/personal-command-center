@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";
+const L = await import("./lib/lead-finder.ts");
+assert.equal(L.cityState("1234 E Main St, Aurora, CO 80012, USA"), "Aurora, CO");
+assert.equal(L.cityState("Fort Collins, CO, USA"), "Fort Collins, CO");
+const good = { id: "a", displayName: { text: "Ridge Fence Co" }, formattedAddress: "1 A St, Denver, CO 80202, USA", nationalPhoneNumber: "(303) 555-0101", rating: 4.8, userRatingCount: 87, businessStatus: "OPERATIONAL" };
+assert.ok(L.scorePlace(good).score >= 80);
+assert.match(L.scorePlace(good).why, /87 reviews, no website/);
+assert.equal(L.scorePlace({ ...good, nationalPhoneNumber: "" }).score, 0);
+assert.equal(L.scorePlace({ ...good, businessStatus: "CLOSED_PERMANENTLY" }).score, 0);
+assert.equal(L.scorePlace({ ...good, displayName: { text: "The Home Depot" } }).score, 0);
+assert.ok(L.scorePlace({ ...good, websiteUri: "https://ridgefence.com" }).score < L.scorePlace(good).score);
+assert.match(L.scorePlace({ ...good, websiteUri: "https://facebook.com/ridge" }).why, /no real website/);
+const leads = L.pickLeads([good, { ...good, id: "b" }, { ...good, id: "c", nationalPhoneNumber: "303-555-0199", userRatingCount: 2, rating: 3.1, websiteUri: "https://x.com" }, { ...good, id: "d", nationalPhoneNumber: "720 555 0100", displayName: { text: "Peak Pro Fence" } }], new Set(["7205550100"]));
+assert.equal(leads.length, 1, "dedupes by phone, drops existing and weak");
+assert.equal(leads[0].phone, "(303) 555-0101"); assert.equal(leads[0].location, "Denver, CO");
+assert.match(L.noteFor(leads[0], "fence company"), /Google Maps \(fence company\) · 4.8★ from 87 reviews/);
+console.log("lead finder ok");

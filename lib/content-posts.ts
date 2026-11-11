@@ -129,7 +129,7 @@ Link in bio.
 Link in bio.
 
 #autodetailing #ceramiccoating #detailingbusiness #mobiledetailing` },
-  { key: "c-reviews", channel: "video", label: "Demo: review requests", file: "/content/demo-reviews.mp4", body: `The best time to ask for a review is an hour after the job, while they're still looking at the work. Happy customers get your Google link. Unhappy ones come straight to you.
+  { key: "c-reviews", channel: "video", label: "Demo: review requests", file: "/content/demo-reviews.mp4", body: `The best time to ask for a review is an hour after the job, while they're still looking at the work. Every customer gets your Google link, and any problem they mention comes straight to you.
 
 Link in bio.
 

@@ -23,6 +23,7 @@ const primary = [
   ["groups", "Groups", "groups", "/crm/groups"],
   ["content", "Content", "megaphone", "/crm/content"],
   ["contacts", "Contacts", "users", "/crm"],
+  ["leads", "Lead finder", "search", "/crm/leads"],
   ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
   ["funnel", "Funnel", "chart", "/crm/funnel"],
   ["partners", "Partners", "users", "/crm/partners"],
@@ -130,7 +131,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     if (key === "preparation") return pathname.startsWith("/crm/preparation") || pathname.startsWith("/crm/audit");
     const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
       "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", email: "/crm/email", practice: "/crm/practice", outreach: "/crm/outreach", reports: "/crm/reports", scoreboard: "/crm/scoreboard", operations: "/crm/operations", calendar: "/crm/calendar", funnel: "/crm/funnel", tasks: "/crm/tasks", audit: "/crm/audit",
-      intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings", content: "/crm/content" };
+      intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings", content: "/crm/content", leads: "/crm/leads", partners: "/crm/partners" };
     return map[key] ? pathname.startsWith(map[key]) : activeKey === key;
   };
   const item = ([key, label, icon, href]: readonly [string, string, string, string]) =>

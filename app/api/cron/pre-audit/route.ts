@@ -3,6 +3,7 @@ import { loadWorkspace } from "@/lib/workspace-data";
 import { sendAlert } from "@/lib/notify";
 import { sanitizeForLog } from "@/lib/business-audit";
 import { runPreAudit, logRun } from "@/lib/pre-audit";
+import { refillLeads } from "@/lib/lead-finder-run";
 import { bearerMatches } from "@/lib/bearer";
 import { findEmails } from "@/lib/find-emails-run";
 
@@ -36,6 +37,9 @@ export async function GET(request: Request) {
     return Response.json({ error: "Not configured" }, { status: 503 });
   }
   try {
+    // First top up the call list from saved Google Maps searches, so the new leads get audited tonight too.
+    const refill = await refillLeads(sql, owner).catch(e => ({ error: e instanceof Error ? e.message : "failed" }));
+    console.info("Lead refill", refill);
     const result = await runPreAudit({ sql, owner, apiKey, tz: (await loadWorkspace(owner)).timezone });
     // Then find emails for new contacts, so tomorrow's calls and Autopilot have someone to email.
     const emails = await findEmails(sql, owner, { limit: 80, budgetMs: 60_000 }).catch(e => ({ error: e instanceof Error ? e.message : "failed" }));

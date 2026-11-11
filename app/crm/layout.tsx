@@ -8,6 +8,7 @@ import CinderSidebar from "../cinder-sidebar";
 import BookingAlerts from "./booking-alerts";
 
 function pageTitle(pathname: string, view: string) {
+  if (pathname.startsWith("/crm/leads")) return "Lead finder";
   if (pathname.startsWith("/crm/audits")) return "Audit report";
   if (pathname.startsWith("/crm/audit")) return "Business audit";
   if (pathname.startsWith("/crm/calendar")) return "Calendar";

@@ -127,8 +127,8 @@ export function downloadCanvas(c: HTMLCanvasElement, name: string) {
 }
 
 /** Draw a card off screen and return it as a PNG. */
-export function cardPng(card: Card, opts: { page?: string; tall?: boolean } = {}): Promise<Blob> {
+export function cardPng(card: Card, opts: { page?: string; tall?: boolean; jpeg?: boolean } = {}): Promise<Blob> {
   const c = document.createElement("canvas"); c.width = W; c.height = opts.tall ? RH : H;
   drawCard(c.getContext("2d")!, card, { page: opts.page });
-  return new Promise((res, rej) => c.toBlob(b => (b ? res(b) : rej(new Error("Couldn't draw the image."))), "image/png"));
+  return new Promise((res, rej) => c.toBlob(b => (b ? res(b) : rej(new Error("Couldn't draw the image."))), opts.jpeg ? "image/jpeg" : "image/png", 0.93));
 }

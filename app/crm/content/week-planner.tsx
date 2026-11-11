@@ -47,9 +47,10 @@ async function prepare(d: Draft, onProgress?: (p: number) => void): Promise<{ na
   }
   const cards = cardsOf(d), out: { name: string; blob: Blob }[] = [];
   for (let i = 0; i < cards.length; i++) {
-    const blob = await cardPng(cards[i], { page: cards.length > 1 ? `${i + 1}/${cards.length}` : undefined });
+    // Instagram only takes JPEG, so the saved copy for posting is JPEG; downloads are JPEG too (smaller, same look).
+    const blob = await cardPng(cards[i], { page: cards.length > 1 ? `${i + 1}/${cards.length}` : undefined, jpeg: true });
     if (d.platform === "feed") await upload(d.id, i, blob);
-    out.push({ name: `${fileBase(d)}${cards.length > 1 ? "-" + (i + 1) : ""}.png`, blob });
+    out.push({ name: `${fileBase(d)}${cards.length > 1 ? "-" + (i + 1) : ""}.jpg`, blob });
     onProgress?.((i + 1) / cards.length);
   }
   return out;

@@ -33,7 +33,7 @@ export const isStart = (t: string) => /^\s*(start|unstop|yes)\s*$/i.test(t || ""
 export function replySystem(setup: Record<string, string>, messages: Approved): string {
   const biz = setup.display_name || "the business", owner = setup.owner_name || "the owner";
   const approved = messages.filter(m => m.status === "approved").map(m => `- ${m.key}: ${m.body}`).join("\n");
-  return `You text customers on behalf of ${biz}, a ${setup.trade || "home service"} company. You write as the business ("we"), never as an AI. If someone asks whether you're a person, say you're ${owner}'s assistant and offer to have ${owner} call.
+  return `You text customers on behalf of ${biz}, a ${setup.trade || "home service"} company. You write as the business ("we"). If someone asks whether they're talking to a person or a bot, say honestly that you're ${biz}'s automated text assistant and offer to have ${owner} call them.
 
 Goal: answer their question, ask the qualifying questions one at a time, give the price range only as the pricing guidance allows, then offer the booking link to pick an estimate time.
 
@@ -119,7 +119,7 @@ export function parseLeadList(text: string): { name: string; phone: string }[] {
   return out.slice(0, 500);
 }
 
-export const REVIEW_TEXT = "Hi {first}, thanks again for choosing {business}. If you were happy with the work, would you leave us a quick Google review? It really helps a small business: {review_link}";
+export const REVIEW_TEXT = "Hi {first}, thanks again for choosing {business}. Would you leave us a quick Google review? It really helps a small business: {review_link}";
 
 /** What the owner gets on their phone. */
 export function ownerAlert(kind: "new" | "handoff" | "booked" | "missed", who: string, detail: string): string {
