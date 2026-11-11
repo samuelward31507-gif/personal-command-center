@@ -158,3 +158,12 @@ html body .dl-call .dl-dial .dl-demo-text { height: 48px !important; padding: 0 
 html body .dl-call .dl-dial .dl-demo-text:hover { background: #fafaf9 !important; border-color: #c9cbc8 !important; }
 html body .dl-call .dl-dial .dl-demo-text kbd { background: #f1f1ef !important; border: 1px solid #e3e4e1 !important; color: #6c7583 !important; }
 html body .dl-call .dl-dial .dl-phone { margin-right: 6px; }
+
+/* Script: every row is label + one text column; multi-part lines stack inside that column, never under the label. */
+html body .dl-call .dl-play > div { grid-template-columns: 92px minmax(0, 1fr) !important; gap: 14px !important; align-items: baseline; }
+html body .dl-call .dl-play > div > span:first-child { white-space: normal; line-height: 1.3; }
+html body .dl-call .dl-play :is(p, .dl-parts) { max-width: 118ch; }
+html body .dl-call .dl-play .dl-parts { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+html body .dl-call .dl-play .dl-pause { display: block; margin-bottom: 2px; font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--u-faint, #9ea2a9); }
+/* Room above the outcome panel, so the end of the script never sits under it. */
+html body .dl-call .dl-play { margin-bottom: 8px; }
