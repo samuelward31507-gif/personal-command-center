@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ALL_POSTS, nextPost, type Channel, type ContentPost } from "@/lib/content-posts";
+import WeekPlanner from "./week-planner";
 import "./content.css";
+import "./week-planner.css";
 
 type Posted = { key: string; channel: string; at: string };
 
@@ -69,11 +71,14 @@ export default function ContentPage() {
     <div className="u-head">
       <div>
         <h1 className="u-title">Content</h1>
-        <p className="u-title-sub">5 page posts and 5 videos a day. Download it, paste the caption, post, mark it posted, and the next one comes up.</p>
+        <p className="u-title-sub">Cinder writes every post from your real week, with its image. Copy, download, post, mark it posted, and log what it brought in.</p>
       </div>
     </div>
     {error && <p className="u-flash is-bad" role="alert" style={{ marginBottom: 16 }}>{error}</p>}
 
+    <WeekPlanner />
+
+    <div className="u-h2-row ct-lib-h"><h2 className="u-h2">Evergreen library</h2><span className="u-note">Ready-made posts with images and videos, for extra posts or days without a written one.</span></div>
     {posted === null ? <p className="u-note" role="status">Loading…</p> : <>
       <div className="ct-today">
         {CHANNELS.map(ch => {
@@ -111,7 +116,7 @@ export default function ContentPage() {
       </div>
 
       <section className="u-block ct-week">
-        <div className="u-h2-row"><h2 className="u-h2">This week</h2><span className="u-note">Last 7 days. Target is 35 page posts and 35 videos (5 a day each). Page posts share to Facebook and Instagram; videos go to TikTok.</span></div>
+        <div className="u-h2-row"><h2 className="u-h2">Library posts, last 7 days</h2><span className="u-note">Target is 35 page posts and 35 videos (5 a day each). Page posts share to Facebook and Instagram; videos go to TikTok.</span></div>
         <div className="u-figs">
           {CHANNELS.map(ch => {
             const n = list.filter(p => p.channel === ch.id && Date.parse(p.at) > weekAgo).length;
