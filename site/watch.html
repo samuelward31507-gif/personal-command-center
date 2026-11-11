@@ -11,7 +11,7 @@
 <meta property="og:description" content="A 30-second look at AI lead response for service businesses.">
 <meta property="og:image" content="https://cinderrevenue.com/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#131211">
+<meta name="theme-color" content="#f6f6f4">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -104,6 +104,53 @@ body.watch { font-family: var(--sans); -webkit-font-smoothing: antialiased; colo
 .w-replay { position: fixed; right: 18px; bottom: 18px; z-index: 5; display: none; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 999px; border: 1px solid #333; background: #141414; color: #ddd; font: 500 14px var(--sans); cursor: pointer; }
 .done .w-replay { display: inline-flex; }
 .render .w-replay { display: none !important; }
+
+/* ---------- 2026-11: the new look, same as the homepage ----------
+   Off-white page, near-black type, Inter Tight headlines with a grey second voice, a near-black pill button.
+   The phone stays the one dark object; inside it, Messages is light, like a real iPhone. */
+html, body { background: #f6f6f4; }
+body.watch { --night: #f6f6f4; --night-2: #fff; --night-3: #eeeeeb; --line: rgba(18,20,23,.08); --line-2: rgba(18,20,23,.15);
+  --concrete: #80858d; --fog: #4a4f57; --paper: #121417; --spark: #121417; background: #f6f6f4; color: #4a4f57; }
+.wstage { background: #f6f6f4; }
+.w-top { color: #80858d; }
+.w-top .logo svg path { fill: #121417; }
+.lbl { gap: 12px; color: #666c76; font-weight: 500; text-transform: none; letter-spacing: -.005em; }
+.lbl i { width: 9px; height: 9px; background: #121417; }
+.num b { font-family: "Inter Tight", "Inter Display", Inter, sans-serif; font-stretch: normal; font-weight: 600; letter-spacing: -.05em; color: #121417; }
+.num span { color: #80858d; letter-spacing: -.03em; }
+.txt { color: #121417; font-weight: 500; letter-spacing: -.028em; }
+.big { font-family: "Inter Tight", "Inter Display", Inter, sans-serif; font-stretch: normal; font-weight: 600; letter-spacing: -.035em; line-height: 1.04; color: #121417; }
+.big .two { color: #80858d; }
+.sub { color: #4a4f57; font-weight: 400; }
+.w-cta { border-radius: 999px; background: #121417; color: #fff; font-weight: 500; }
+.w-social { border-color: rgba(18,20,23,.12); background: #fff; color: #121417; box-shadow: 0 1px 2px rgba(18,20,23,.04), 0 20px 40px -28px rgba(18,20,23,.25); }
+.w-social b { color: #121417; }
+.w-url2, .w-src { color: #666c76; }
+.w-replay { border-color: rgba(18,20,23,.14); background: #fff; color: #121417; box-shadow: 0 1px 2px rgba(18,20,23,.06); }
+
+/* Captions beside the phone */
+.watch .film-cap { color: #121417; font-family: "Inter Tight", "Inter Display", Inter, sans-serif; font-weight: 600; letter-spacing: -.032em; }
+.watch .film-kick { color: #80858d; font-family: Inter, sans-serif; font-weight: 500; text-transform: none; letter-spacing: 0; }
+.watch .film-seg::before { background: #dcdcd9; }
+.watch .film-seg i { background: #121417; }
+
+/* The phone: dark hardware with a soft shadow on the light page; its lock and call screens keep their dark palette */
+.watch .film-phone { --paper: #f3efe9; --fog: #b2aba3; --concrete: #8f8881; --line: #262321; --line-2: #33302c;
+  box-shadow: 0 0 0 1px #2b2d31, 0 0 0 9px #1b1c1f, 0 0 0 10px #2b2d31, 0 50px 90px -40px rgba(18,20,23,.5), 0 18px 36px -24px rgba(18,20,23,.35); }
+/* Messages, light mode */
+.watch .fs-thread { background: #fff; }
+.watch .film-phone[data-screen="thread"] .fs-status { color: #000; }
+.watch .film-phone[data-screen="thread"] .fs-home { background: rgba(0,0,0,.8); }
+.watch .fs-head { background: rgba(249,249,249,.94); border-bottom: 1px solid rgba(0,0,0,.08); }
+.watch .fs-head b { color: #000; }
+.watch .fs-head small { color: #8a8a8e; }
+.watch .fs-head .fs-ava { background: linear-gradient(180deg, #a5abb5, #858b95); color: #fff; }
+.watch .fs-chip { background: #e8f5ee; border-color: rgba(23,144,90,.25); color: #137a4c; }
+.watch .fb-out { background: #0a84ff; color: #fff; }
+.watch .fb-in { background: #e9e9eb; color: #000; }
+.watch .fb-in.fb-typing { color: #8a8a8e; }
+.watch .fs-compose { border-color: #d1d1d6; background: #fff; color: #8a8a8e; }
+.watch .fs-notif-cinder { border-color: rgba(255,255,255,.12); box-shadow: none; }
 </style>
 </head>
 <body class="watch">
@@ -115,7 +162,7 @@ body.watch { font-family: var(--sans); -webkit-font-smoothing: antialiased; colo
   <section class="sc" id="s2"><p class="lbl"><i></i>Same study</p><p class="num"><b data-count="23">0</b><span>%</span></p><p class="txt">never respond at all.</p></section>
   <section class="sc" id="s3"><p class="big">Your customers won’t wait 42&nbsp;hours.</p></section>
   <section class="sc sc-film" id="s4"><div class="demo-phone film" id="film" data-film="general" data-film-manual data-film-durs="2500,2000,2500,4500,4000,2500"></div></section>
-  <section class="sc" id="s6"><p class="big">Every call, form and message answered in seconds.</p><p class="sub">We build it, run it and book the jobs on your calendar. You don’t touch the tech.</p><a class="w-cta" href="/#book">Book a free 15-minute call</a><p class="w-social">Comment <b>DEMO</b> and I’ll send you one for your business.</p><p class="w-url2">cinderrevenue.com</p></section>
+  <section class="sc" id="s6"><p class="big">Every call, form and message, <span class="two">answered in seconds.</span></p><p class="sub">We build it, run it and book the jobs on your calendar. You don’t touch the tech.</p><a class="w-cta" href="/#book">Book a free 15-minute call</a><p class="w-social">Comment <b>DEMO</b> and I’ll send you one for your business.</p><p class="w-url2">cinderrevenue.com</p></section>
 
   <p class="w-src" id="src"></p>
 </div>
