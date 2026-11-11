@@ -368,10 +368,10 @@ export default function CinderApp() {
   const maxW = Math.max(1, ...L.weeks.map(w => w.leads));
   const bizName = d.business || d.businesses.find(b => b.project_id === project)?.name || "";
 
-  if (open) return <div className="ca">{demo && <div className="ca-demo"><span>Example business. This is what your clients see.</span><button type="button" onClick={exitDemo}>Exit</button></div>}<ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} />{toastNode}</div>;
+  if (open) return <div className="ca">{demo && <div className="ca-demo"><span>Example business with sample data. This is the app you’d get.</span><button type="button" onClick={exitDemo}>Exit</button></div>}<ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} />{toastNode}</div>;
 
   return <div className="ca">
-    {demo && <div className="ca-demo"><span>Example business. This is what your clients see.</span><button type="button" onClick={exitDemo}>Exit</button></div>}
+    {demo && <div className="ca-demo"><span>Example business with sample data. This is the app you’d get.</span><button type="button" onClick={exitDemo}>Exit</button></div>}
     <header className="ca-top">
       <Mark small />
       {d.businesses.length > 1
