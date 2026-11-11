@@ -351,3 +351,13 @@ p, li, dd { text-wrap: pretty; }
 .btn, .nav-cta, button { transition: transform .12s cubic-bezier(.2, .8, .2, 1), background .2s, border-color .2s, color .2s; }
 .btn:active, .nav-cta:active, button:active:not(:disabled) { transform: scale(.97); }
 @media (prefers-reduced-motion: reduce) { .btn:active, .nav-cta:active, button:active { transform: none; } }
+
+/* /book: the booking page people get by text and email */
+.bookpage .book-only { padding-top: 120px; min-height: calc(100dvh - 120px); background: var(--bg); }
+.book-k { margin: 0 0 16px; color: var(--text-3); font-size: 14px; font-weight: 500; }
+.bookpage h1 { margin: 0; font-family: var(--head, "Inter Tight", Inter, sans-serif); font-size: clamp(36px, 5vw, 54px); font-weight: 600; line-height: 1.04; letter-spacing: -.032em; color: var(--text); text-wrap: balance; }
+.book-me { display: flex; align-items: center; gap: 12px; margin-top: 36px; }
+.book-me p { margin: 0; display: grid; gap: 2px; font-size: 14px; color: var(--text-3); }
+.book-me b { color: var(--text); font-weight: 600; font-size: 15px; }
+.book-ava { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--text); color: #fff; font-weight: 600; }
+@media (max-width: 900px) { .bookpage .book-only { padding-top: 96px; } }

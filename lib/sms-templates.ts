@@ -27,7 +27,7 @@ export function demoLinkFor(niche: string): string {
 
 /** The site's general demo page, which is also the Settings default. A different link in Settings (an overview Loom)
     replaces the trade defaults everywhere; leaving the default keeps the fence cut for fence leads. */
-export const BOOKING_LINK = "https://cal.com/samuel-ward-saqpvb/15min";
+export const BOOKING_LINK = "https://cinderrevenue.com/book";
 export const DEFAULT_DEMO_LINK = "https://cinderrevenue.com/demo";
 export function pickDemoLink(niche: string, settingsLink?: string | null): string {
   const s = (settingsLink ?? "").trim();

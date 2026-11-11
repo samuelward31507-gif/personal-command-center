@@ -163,7 +163,7 @@ export default function CallModePage() {
   async function sendInfoMail() {
     if (!contact || mail.busy) return;
     const to = mail.to.trim();
-    const d = buildDraft(mail.style, { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, pain: info.pain, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cal.com/samuel-ward-saqpvb/15min" });
+    const d = buildDraft(mail.style, { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, pain: info.pain, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cinderrevenue.com/book" });
     setMail(m => ({ ...m, busy: true, msg: null }));
     try {
       const r = await fetch("/api/gmail/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: contact.id, step: "info", subject: d.subject, body: d.body, email: to }) });
@@ -201,7 +201,7 @@ export default function CallModePage() {
       setStats(st => st && { dials: st.dials + 1, conversations: st.conversations + (CONVERSATIONS.includes(outcome) ? 1 : 0), meetings: st.meetings + (outcome === "meeting_booked" ? 1 : 0) });
       setCopied(false);
       setMailAfter(outcome === "voicemail" && contact.email ? { id: contact.id, name: contact.name, company: contact.company, email: contact.email, location: contact.location, niche: contact.niche } : null);
-      const draftInput = { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, pain: info.pain, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cal.com/samuel-ward-saqpvb/15min" };
+      const draftInput = { firstName: firstName(contact.name, contact.company), company: contact.company || contact.name, pain: info.pain, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cinderrevenue.com/book" };
       const t: TextContext | undefined = data.text;
       setTextCtx(t && (t.template || t.notice || t.tasks?.length || t.closed) ? { ctx: t, contactId: contact.id, who: contact.company || contact.name } : null);
       if (outcome === "not_a_fit") {

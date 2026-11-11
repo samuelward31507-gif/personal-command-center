@@ -26,7 +26,7 @@ export default function InfoKit({ id, name, company, notes, onReply }: { id: str
   const first = contactFirstName(name, company || "");
   const co = company || name;
   const link = watchLink(first, co);
-  const input = { firstName: first, company: co, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cal.com/samuel-ward-saqpvb/15min" };
+  const input = { firstName: first, company: co, me: wsp.ownerFirstName || "Samuel", bookingLink: wsp.bookingLink || "https://cinderrevenue.com/book" };
 
   async function copy(kind: Kind) {
     let text = link;

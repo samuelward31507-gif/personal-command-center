@@ -22,7 +22,7 @@ export default function InfoSend({ contacts, connected, onSent }: { contacts: C[
     if (t.length < 2 || pick) return [];
     return contacts.filter(c => `${c.company} ${c.name}`.toLowerCase().includes(t)).slice(0, 6);
   }, [q, pick, contacts]);
-  const draft = pick ? buildDraft(style, { firstName: contactFirstName(pick.name, pick.company), company: pick.company || pick.name, me: ws.ownerFirstName || "Samuel", bookingLink: ws.bookingLink || "https://cal.com/samuel-ward-saqpvb/15min" }) : null;
+  const draft = pick ? buildDraft(style, { firstName: contactFirstName(pick.name, pick.company), company: pick.company || pick.name, me: ws.ownerFirstName || "Samuel", bookingLink: ws.bookingLink || "https://cinderrevenue.com/book" }) : null;
 
   async function send() {
     if (!pick || !draft || busy) return;

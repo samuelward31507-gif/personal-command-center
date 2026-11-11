@@ -39,7 +39,7 @@ export const DEFAULT_WORKSPACE: WorkspaceSettings = {
   niche: "contractors and home-service companies",
   paymentLink: "",
   paymentInstructions: "",
-  bookingLink: "https://cal.com/samuel-ward-saqpvb/15min",
+  bookingLink: "https://cinderrevenue.com/book",
   websiteUrl: "https://cinderrevenue.com",
   demoLink: "https://cinderrevenue.com/demo",
   logoUrl: "",
