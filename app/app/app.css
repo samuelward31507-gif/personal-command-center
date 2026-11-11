@@ -4,7 +4,7 @@
    Every rule is scoped under `html body:not(#u)` because the CRM's global sheets style bare buttons,
    inputs, lists and headings with ID-level selectors; this keeps the app's own look. */
 
-:root { --ca-bg: #f6f6f4; --ca-card: #fff; --ca-text: #121417; --ca-2: #4a4f57; --ca-3: #80858d; --ca-4: #a7abb2;
+:root { --ca-bg: #f6f6f4; --ca-card: #fff; --ca-text: #121417; --ca-2: #4a4f57; --ca-3: #666c76; --ca-4: #8a9098;
   --ca-line: rgba(18, 20, 23, .08); --ca-line2: rgba(18, 20, 23, .14); --ca-ok: #17905a; --ca-ok-bg: rgba(23, 144, 90, .09);
   --ca-blue: #0a84ff; --ca-blue-bg: rgba(10, 132, 255, .09); --ca-warn: #b5651d; --ca-warn-bg: #fdf3e7;
   --ca-head: var(--font-display), "Inter Tight", "Inter", system-ui, sans-serif; --ca-sans: var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
@@ -67,7 +67,7 @@ html body:not(#u) .ca-main { flex: 1; padding: 22px 18px calc(110px + env(safe-a
 html body:not(#u) .ca-hello { margin-bottom: 18px; }
 html body:not(#u) .ca-hello p { color: var(--ca-3); font-size: 14px; font-weight: 500; }
 html body:not(#u) .ca-hello h1 { margin-top: 6px; font: 600 29px/1.1 var(--ca-head); letter-spacing: -0.04em; color: var(--ca-text); text-wrap: balance; }
-html body:not(#u) .ca-hello h1 span { color: var(--ca-3); }
+html body:not(#u) .ca-hello h1 span { color: #80858d; } /* large two-tone headline: lighter on purpose */
 html body:not(#u) .ca-sub { color: var(--ca-2); font-size: 14.5px; line-height: 1.55; margin-bottom: 16px; }
 
 /* Needs-you card */

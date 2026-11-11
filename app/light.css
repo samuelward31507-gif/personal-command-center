@@ -7,23 +7,23 @@
 
 :root {
   color-scheme: light;
-  --site-bg: #f6f6f4; --site-card: #fff; --site-text: #121417; --site-text-2: #4a4f57; --site-text-3: #80858d;
+  --site-bg: #f6f6f4; --site-card: #fff; --site-text: #121417; --site-text-2: #4a4f57; --site-text-3: #666c76;
   --site-line: rgba(18, 20, 23, .08); --site-line-2: rgba(18, 20, 23, .15); --site-ok: #17905a; --site-blue: #0a84ff;
   --site-shadow: 0 1px 2px rgba(18, 20, 23, .04), 0 12px 32px -14px rgba(18, 20, 23, .16);
 
   --u-bg: var(--site-bg); --u-sheet: var(--site-card); --u-raise: #fbfbfa; --u-hover: #efefec;
   --u-line: #e6e6e2; --u-line-soft: #eeeeeb;
-  --u-text: var(--site-text); --u-soft: var(--site-text-2); --u-muted: #6f747c; --u-faint: #9a9ea5;
+  --u-text: var(--site-text); --u-soft: var(--site-text-2); --u-muted: #666c76; --u-faint: #737983;
   --u-ember: var(--site-text); --u-ember-ink: var(--site-text); --u-ember-wash: rgba(18, 20, 23, .05);
   --u-good: var(--site-ok); --u-bad: #c0392b;
   --u-display: var(--font-display), "Inter Tight", "Inter", system-ui, sans-serif;
   --u-text-font: var(--font-geist-sans), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --mc-bg: var(--site-bg); --mc-panel: var(--site-card); --mc-raised: #fbfbfa; --mc-hover: #efefec; --mc-line: #e6e6e2; --mc-line-2: #dadad5;
-  --mc-text: var(--site-text); --mc-soft: var(--site-text-2); --mc-muted: #6f747c; --mc-faint: #9a9ea5;
+  --mc-text: var(--site-text); --mc-soft: var(--site-text-2); --mc-muted: #666c76; --mc-faint: #737983;
   --mc-accent: var(--site-text);
 
-  --background: var(--site-bg); --foreground: var(--site-text); --panel: var(--site-card); --muted: #6f747c; --line: #e6e6e2; --accent: var(--site-text);
+  --background: var(--site-bg); --foreground: var(--site-text); --panel: var(--site-card); --muted: #666c76; --line: #e6e6e2; --accent: var(--site-text);
 }
 
 html, body { background: var(--site-bg) !important; color: var(--site-text) !important; }
@@ -83,7 +83,7 @@ html body:not(#u) .cx-side .cx-foot { border-top-color: rgba(18, 20, 23, .07); }
 html body:not(#u) .cx-side .cx-avatar { background: #121417; color: #fff; }
 
 /* Type: numbers line up, headings sit tight, body text reads a touch crisper. */
-html body { font-feature-settings: "cv11", "ss01"; letter-spacing: -0.003em; }
+html body { font-feature-settings: "calt", "kern"; letter-spacing: -0.003em; } /* same letterforms as the website */
 html body :is(.u-fig-v, .u-fig-v *, td, .tabular, time, .cw-day em) { font-variant-numeric: tabular-nums; }
 html body .u-page h1.u-title { font-size: clamp(28px, 2.3vw, 34px) !important; letter-spacing: -0.03em !important; }
 html body .u-page .u-title-sub { font-size: 14px; color: #6f747c !important; margin-top: 6px; }
@@ -151,3 +151,11 @@ html body .crm-shell-main .em-auto-toggle input:checked { background: #17905a !i
 html body .crm-shell-main .em-auto-toggle input:checked::after { transform: translateX(16px); }
 html body .crm-shell-main .em-auto-row label { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; color: #4a4f57; }
 html body .crm-shell-main .em-auto-row input[type="number"] { width: 84px !important; height: 34px !important; padding: 0 10px !important; border-radius: 9px !important; font-size: 13.5px !important; font-variant-numeric: tabular-nums; }
+
+/* Paragraphs: no single orphan word on the last line. */
+html body :is(p, li) { text-wrap: pretty; }
+/* Press feedback: buttons give a little under the finger (CRM, client app, portal). */
+html body button:not(:disabled), html body a.u-btn, html body .u-btn { transition-property: transform, background-color, border-color, color, box-shadow, opacity; transition-duration: .12s, .15s, .15s, .15s, .15s, .15s; transition-timing-function: cubic-bezier(.2, .8, .2, 1); }
+html body button:active:not(:disabled), html body .u-btn:active { transform: scale(.97); }
+html body :is(.ca-list, .ca-cards, .ca-todo, .ca-nav, .cal-tg, .cal-month, .pb-rail) button:active:not(:disabled) { transform: none; } /* rows and tiles don't shrink */
+@media (prefers-reduced-motion: reduce) { html body button:active, html body .u-btn:active { transform: none !important; } }
