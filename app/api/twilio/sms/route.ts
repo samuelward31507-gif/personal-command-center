@@ -17,7 +17,10 @@ export async function POST(request: Request) {
   const client = sql ? await clientByNumber(sql, p.To ?? "").catch(() => null) : null;
   if (client && sql) {
     const fromC = e164(p.From ?? "");
-    if (fromC) await clientInboundText(sql, client, fromC, p.Body ?? "").catch(e => console.error("Client text failed", e));
+    // Photos the customer texted (MMS): Twilio sends MediaUrl0..N with their types; keep the images.
+    const media = Array.from({ length: Math.min(10, Number(p.NumMedia) || 0) }, (_, i) => ({ url: p[`MediaUrl${i}`] ?? "", type: p[`MediaContentType${i}`] ?? "" }))
+      .filter(m => /^https:\/\/api\.twilio\.com\//.test(m.url) && m.type.startsWith("image/"));
+    if (fromC) await clientInboundText(sql, client, fromC, p.Body ?? "", media).catch(e => console.error("Client text failed", e));
     return twiml(EMPTY_TWIML);
   }
   const from = e164(p.From ?? "") || "unknown";

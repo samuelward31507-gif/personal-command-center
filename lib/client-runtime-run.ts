@@ -7,6 +7,7 @@ import { cleanMessages } from "@/lib/client-ops";
 import { digits10, fill, wording, FALLBACK, isStop, isStart, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, REVIEW_TEXT, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, freeSlots, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent } from "@/lib/client-calendar";
+import { pushFromAlert, pushToProject } from "@/lib/client-push";
 
 type Sql = NeonQueryFunction<false, false>;
 export type Client = { projectId: string; owner: string; setup: Record<string, string>; messages: ReturnType<typeof cleanMessages> };
@@ -40,8 +41,9 @@ export async function thread(sql: Sql, c: Client, phone: string, source: string)
     RETURNING id, status, customer_name, lang, (xmax = 0) AS fresh` as { id: string; status: string; customer_name: string; lang: Lang; fresh: boolean }[];
   return t;
 }
-async function log(sql: Sql, c: Client, threadId: string, direction: "in" | "out", author: string, body: string, ok = true) {
-  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body, ok) VALUES (${c.owner}, ${threadId}::uuid, ${direction}, ${author}, ${body}, ${ok})`;
+export type Media = { url: string; type: string };
+async function log(sql: Sql, c: Client, threadId: string, direction: "in" | "out", author: string, body: string, ok = true, media: Media[] = []) {
+  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body, ok, media) VALUES (${c.owner}, ${threadId}::uuid, ${direction}, ${author}, ${body}, ${ok}, ${JSON.stringify(media)}::jsonb)`;
   if (direction === "in") await sql`UPDATE public.client_threads SET last_in_at = now(), updated_at = now() WHERE id = ${threadId}::uuid`;
   else await sql`UPDATE public.client_threads SET last_out_at = now(), updated_at = now() WHERE id = ${threadId}::uuid`;
 }
@@ -51,9 +53,13 @@ export async function sendToCustomer(sql: Sql, c: Client, threadId: string, phon
   await log(sql, c, threadId, "out", author, body, ok);
   return ok;
 }
-async function alertOwner(c: Client, text: string) {
+/** Tell the owner: a text to their cell, and a push to the Cinder app on every device they turned it on for. */
+async function alertOwner(c: Client, text: string, threadId?: string) {
   const cell = e164(c.setup.owner_cell || "");
-  if (cell) await sendSms(cell, c.setup.texting_number || "", text);
+  await Promise.all([
+    cell ? sendSms(cell, c.setup.texting_number || "", text) : Promise.resolve(false),
+    pushToProject(c.projectId, { ...pushFromAlert(text), url: threadId ? `/app?thread=${threadId}` : "/app", tag: threadId }),
+  ]);
 }
 
 /** A call to the client's number went unanswered: text the caller back right away and tell the owner. */
@@ -63,7 +69,7 @@ export async function clientMissedCall(sql: Sql, c: Client, caller: string): Pro
   const body = fill(say(c, "missed_call", FALLBACK.missed_call, t.lang === "es" ? "es" : "en"), varsFor(c));
   await log(sql, c, t.id, "in", "system", "Missed call");
   await sendToCustomer(sql, c, t.id, caller, body, "template");
-  await alertOwner(c, ownerAlert("missed", e164(caller), "They got your text back. Replies are handled for you."));
+  await alertOwner(c, ownerAlert("missed", e164(caller), "They got your text back. Replies are handled for you."), t.id);
 }
 
 /** Open estimate times on the client's calendar, or null when it isn't connected (then the booking link is used). */
@@ -101,9 +107,11 @@ async function book(sql: Sql, c: Client, threadId: string, phone: string, who: s
 }
 
 /** A customer texted the client's number. */
-export async function clientInboundText(sql: Sql, c: Client, from: string, body: string): Promise<void> {
+export async function clientInboundText(sql: Sql, c: Client, from: string, body: string, media: Media[] = []): Promise<void> {
   const t = await thread(sql, c, from, "text");
-  await log(sql, c, t.id, "in", "customer", body);
+  // A photo with no words still reads as something the reply engine and the owner can follow.
+  if (!body.trim() && media.length) body = media.length === 1 ? "(sent a photo)" : `(sent ${media.length} photos)`;
+  await log(sql, c, t.id, "in", "customer", body, true, media);
   let lang: Lang = t.lang === "es" ? "es" : "en";
   if (lang === "en" && detectLang(body) === "es") { lang = "es"; await sql`UPDATE public.client_threads SET lang = 'es' WHERE id = ${t.id}::uuid`; }
   const [{ n: inbound }] = await sql`SELECT count(*)::int AS n FROM public.client_texts WHERE thread_id = ${t.id}::uuid AND direction = 'in' AND author = 'customer'` as { n: number }[];
@@ -116,7 +124,7 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
     return; // The carrier sends the opt-out confirmation.
   }
   if (t.status === "opted_out") { if (isStart(body)) await sql`UPDATE public.client_threads SET status = 'auto' WHERE id = ${t.id}::uuid`; else return; }
-  if (t.status === "paused" || t.status === "closed") { await alertOwner(c, ownerAlert("handoff", t.customer_name || e164(from), `They texted: "${body.slice(0, 160)}"`)); return; }
+  if (t.status === "paused" || t.status === "closed") { await alertOwner(c, ownerAlert("handoff", t.customer_name || e164(from), `They texted: "${body.slice(0, 160)}"`), t.id); return; }
   const slots = await openSlots(sql, c, lang);
   const d = await draftReply(sql, c, t.id, t.customer_name, slots);
   const who = t.customer_name || e164(from);
@@ -124,7 +132,7 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
     if (d?.reply) await sendToCustomer(sql, c, t.id, from, d.reply, "ai");
     await sendToCustomer(sql, c, t.id, from, fill(say(c, "handoff", FALLBACK.handoff, lang), varsFor(c)), "template");
     await sql`UPDATE public.client_threads SET status = 'paused', updated_at = now() WHERE id = ${t.id}::uuid`;
-    await alertOwner(c, ownerAlert("handoff", who, d?.summary || `They texted: "${body.slice(0, 160)}"`));
+    await alertOwner(c, ownerAlert("handoff", who, d?.summary || `They texted: "${body.slice(0, 160)}"`), t.id);
     return;
   }
   await sendToCustomer(sql, c, t.id, from, d.reply, "ai");
@@ -132,11 +140,11 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
   if (picked) {
     const ok = await book(sql, c, t.id, e164(from), who, picked, d.summary);
     await sql`UPDATE public.client_threads SET status = 'booked', updated_at = now() WHERE id = ${t.id}::uuid`;
-    await alertOwner(c, ownerAlert("booked", who, `${slotLabel(picked.start, tzOf(c))}${ok ? ", on your calendar" : " (add it to your calendar, it didn't save)"}. ${d.summary}`));
+    await alertOwner(c, ownerAlert("booked", who, `${slotLabel(picked.start, tzOf(c))}${ok ? ", on your calendar" : " (add it to your calendar, it didn't save)"}. ${d.summary}`), t.id);
   } else if (d.stage === "booked") {
     await sql`UPDATE public.client_threads SET status = 'booked', updated_at = now() WHERE id = ${t.id}::uuid`;
-    await alertOwner(c, ownerAlert("booked", who, d.summary));
-  } else if (firstText) await alertOwner(c, ownerAlert("new", who, d.summary));
+    await alertOwner(c, ownerAlert("booked", who, d.summary), t.id);
+  } else if (firstText) await alertOwner(c, ownerAlert("new", who, d.summary), t.id);
 }
 
 /** Morning job: send every quote follow-up that's due today, across all clients. */
@@ -217,7 +225,7 @@ export async function webLead(sql: Sql, c: Client, lead: { name: string; phone: 
   await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${lead.name} ELSE customer_name END, lang = ${lang}, source = ${lead.source} WHERE id = ${t.id}::uuid`;
   await log(sql, c, t.id, "in", "system", `New ${lead.source} lead${lead.message ? `: "${lead.message.slice(0, 300)}"` : ""}${lead.email ? ` · ${lead.email}` : ""}`);
   const ok = await sendToCustomer(sql, c, t.id, lead.phone, fill(say(c, "web_lead", EN.web_lead, lang), varsFor(c, lead.name.split(" ")[0])), "template");
-  await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${lead.source}${lead.message ? `: ${lead.message.slice(0, 120)}` : ""}. Texted back.`));
+  await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${lead.source}${lead.message ? `: ${lead.message.slice(0, 120)}` : ""}. Texted back.`), t.id);
   return { ok, threadId: t.id };
 }
 

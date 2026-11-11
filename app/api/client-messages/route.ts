@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
+import { pushToProject } from "@/lib/client-push";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
     const [p] = await sql`SELECT 1 FROM public.projects WHERE id = ${b.project}::uuid AND owner_id = ${o}`;
     if (!p) return bad("Unknown client.", 404);
     await sql`INSERT INTO public.client_messages (owner_id, project_id, author, body) VALUES (${o}, ${b.project}::uuid, 'owner', ${body})`;
+    await pushToProject(b.project, { title: "Sam replied", body: body.slice(0, 180), url: "/app?tab=sam", tag: "sam" });
     return Response.json({ ok: true }, { status: 201 });
   } catch (e) { console.error("Client messages POST failed", e); return bad("Couldn't send that.", 500); }
 }

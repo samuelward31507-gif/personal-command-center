@@ -10,7 +10,7 @@ type Conv = { id: string; name: string; source: string; status: string; at: stri
 type Live = { leads: number; needs: number; answered: number; booked: number; replySec: number | null; chasing: number; chasingValue: number; won: number; wonValue: number; revived: number; reviews: number; weeks: { week: string; leads: number; booked: number }[]; conversations: Conv[] };
 type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string };
 type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; appointments: Appt[]; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number };
-type Text = { direction: string; author: string; body: string; at: string };
+type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
 type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 type Tab = "leads" | "numbers" | "estimates" | "sam";
 
@@ -53,6 +53,29 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
     out: <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" />,
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p[name]}</svg>;
+}
+
+// ---------- Notifications ----------
+type PushState = "unsupported" | "ios-install" | "off" | "on" | "blocked";
+const urlKey = (k: string) => { const p = "=".repeat((4 - (k.length % 4)) % 4); const b = atob((k + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...b].map(c => c.charCodeAt(0))); };
+function pushState(): PushState {
+  if (typeof window === "undefined") return "unsupported";
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return ios && !standalone ? "ios-install" : "unsupported";
+  return Notification.permission === "granted" ? "on" : Notification.permission === "denied" ? "blocked" : "off";
+}
+async function turnOnPush(project: string): Promise<string | null> {
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") return "Notifications are blocked. Turn them on for Cinder in your phone's settings.";
+    const reg = await navigator.serviceWorker.register("/app-sw.js", { scope: "/app" });
+    await navigator.serviceWorker.ready;
+    const { publicKey } = await api<{ publicKey: string }>("/api/app/push");
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlKey(publicKey) });
+    await api("/api/app/push", { p: project, action: "subscribe", sub: sub.toJSON() });
+    return null;
+  } catch (e) { return e instanceof Error ? e.message : "Couldn't turn on notifications."; }
 }
 
 function Mark({ small }: { small?: boolean }) { return <span className={"ca-mark" + (small ? " sm" : "")} aria-hidden="true">c<i /></span>; }
@@ -145,7 +168,11 @@ function ThreadView({ id, project, canCall, onBack, onChange, toast }: { id: str
       {texts === null ? <div className="ca-skel-thread"><i /><i /><i /></div> : texts.map((x, i) => {
         const sep = dayKey(x.at) !== lastDay ? <p className="ca-day" key={"d" + i}>{dayName(x.at)}</p> : null; lastDay = dayKey(x.at);
         if (x.author === "system") return <div key={i}>{sep}<p className="ca-event">{x.body}<span>{clock(x.at)}</span></p></div>;
-        return <div key={i} className="ca-bwrap">{sep}<div className={"ca-b " + (x.direction === "in" ? "in" : "out")}><p>{x.body}</p><small>{x.direction === "in" ? clock(x.at) : `${x.author === "owner" ? "You" : "Cinder"} · ${clock(x.at)}`}</small></div></div>;
+        const photos = (x.media ?? []).map((_, k) => `/api/app/media?id=${x.id}&i=${k}`);
+        const words = photos.length && /^\(sent (a photo|\d+ photos)\)$/.test(x.body) ? "" : x.body;
+        return <div key={i} className="ca-bwrap">{sep}<div className={"ca-b " + (x.direction === "in" ? "in" : "out")}>
+          {photos.length > 0 && <div className="ca-photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
+          {words && <p>{words}</p>}<small>{x.direction === "in" ? clock(x.at) : `${x.author === "owner" ? "You" : "Cinder"} · ${clock(x.at)}`}</small></div></div>;
       })}
       <div ref={end} />
     </div>
@@ -170,6 +197,18 @@ export default function CinderApp() {
   const [open, setOpen] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
   const { show: toast, node: toastNode } = useToast();
+  const [push, setPush] = useState<PushState>("unsupported");
+  const [hidePushCard, setHidePushCard] = useState(false);
+  useEffect(() => {
+    setPush(pushState());
+    try { setHidePushCard(localStorage.getItem("cinder-push-card") === "hide"); } catch { /* private mode */ }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/app-sw.js", { scope: "/app" }).catch(() => {});
+  }, []);
+  async function enablePush() {
+    const err = await turnOnPush(project);
+    setPush(pushState());
+    toast(err ?? "Notifications are on.", !!err);
+  }
 
   const load = useCallback(async (p = project, t = tab) => {
     try { const j = await api<Data>(`/api/app/data?p=${p}${t === "sam" ? "&tab=sam" : ""}`); setD(j); setProject(j.project); setState("in"); }
@@ -179,8 +218,14 @@ export default function CinderApp() {
   useEffect(() => {
     const t = new URLSearchParams(location.search).get("t");
     (async () => {
-      if (t) { await api("/api/app/auth", { action: "link", token: t }).catch(() => null); history.replaceState(null, "", "/app"); }
-      await load("");
+      const q = new URLSearchParams(location.search);
+      if (t) await api("/api/app/auth", { action: "link", token: t }).catch(() => null);
+      // Opened from a notification: go straight to that conversation or tab.
+      const th = q.get("thread"), tb = q.get("tab");
+      if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen(th);
+      if (tb === "sam" || tb === "estimates" || tb === "numbers") setTab(tb);
+      if (location.search) try { history.replaceState(null, "", "/app"); } catch { /* keep the URL */ }
+      await load("", tb === "sam" ? "sam" : "leads");
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -216,6 +261,13 @@ export default function CinderApp() {
           <p>{greeting()}</p>
           <h1>{today ? <>{today} new {today === 1 ? "lead" : "leads"} today.<span> All answered.</span></> : <>Every lead answered.<span> {secs(L.replySec)} typical reply.</span></>}</h1>
         </div>
+        {!hidePushCard && (push === "off" || push === "ios-install") && <div className="ca-pushcard">
+          <span className="ca-pushcard-ic"><Icon name="bolt" size={18} /></span>
+          <div><b>Know the second a lead needs you</b>
+            <p>{push === "off" ? "Turn on notifications for new leads, bookings and anything Cinder hands you." : "Tap the Share button, then \u201cAdd to Home Screen\u201d. Open Cinder from there to turn on notifications."}</p>
+            <div className="ca-pushcard-row">{push === "off" && <button type="button" className="ca-pushcard-go" onClick={() => void enablePush()}>Turn on</button>}
+              <button type="button" className="ca-pushcard-no" onClick={() => { setHidePushCard(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>
+        </div>}
         {firstNeeds && <button type="button" className="ca-needs" onClick={() => setOpen(firstNeeds.id)}>
           <span className="ca-needs-k">{L.needs > 1 ? `${L.needs} need you` : "Needs you"}</span>
           <b>{firstNeeds.name}</b><em>&ldquo;{firstNeeds.last}&rdquo;</em><span className="ca-needs-go">Reply</span>
@@ -275,6 +327,7 @@ export default function CinderApp() {
         <ul className="ca-settings">
           <li><span>Business</span><b>{bizName}</b></li>
           {d.number && <li><span>Your Cinder number</span><b>{fmtPhone(d.number)}</b></li>}
+          <li><span>Notifications</span>{push === "on" ? <b className="ca-on">On</b> : push === "off" ? <button type="button" className="ca-set-btn" onClick={() => void enablePush()}>Turn on</button> : <b>{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</b>}</li>
           <li><button type="button" onClick={async () => { await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); }}><Icon name="out" size={16} />Sign out</button></li>
         </ul>
       </>}

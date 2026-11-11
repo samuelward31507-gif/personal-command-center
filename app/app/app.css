@@ -227,3 +227,20 @@ html body:not(#u) .ca-thread ~ .ca-toast { bottom: calc(86px + env(safe-area-ins
 
 @media (prefers-reduced-motion: reduce) { html body:not(#u) :is(.ca, .ca-load) * { animation: none !important; transition: none !important; } }
 html body:not(#u) :is(.ca, .ca-sign) :is(button, a, input, textarea):focus-visible { outline: 2px solid var(--ca-blue) !important; outline-offset: 2px; }
+
+/* Photos in a conversation */
+html body:not(#u) .ca-photos { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+html body:not(#u) .ca-b.out .ca-photos { justify-content: flex-end; }
+html body:not(#u) .ca-photos a { display: block; border-radius: 16px; overflow: hidden; background: #e9e9eb; }
+html body:not(#u) .ca-photos img { display: block; width: 200px; max-width: 64vw; height: auto; max-height: 260px; object-fit: cover; }
+
+/* Notifications prompt */
+html body:not(#u) .ca-pushcard { display: grid; grid-template-columns: 38px 1fr; gap: 12px; margin-bottom: 14px; padding: 15px 16px; background: #fff; border: 1px solid var(--ca-line); border-radius: 18px; box-shadow: var(--ca-shadow); }
+html body:not(#u) .ca-pushcard-ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: var(--ca-blue-bg); color: var(--ca-blue); }
+html body:not(#u) .ca-pushcard b { display: block; font-size: 15px; font-weight: 600; }
+html body:not(#u) .ca-pushcard p { margin-top: 3px; color: var(--ca-2); font-size: 13.5px; line-height: 1.45; }
+html body:not(#u) .ca-pushcard-row { display: flex; gap: 8px; margin-top: 11px; }
+html body:not(#u) .ca-pushcard-go { height: 34px; padding: 0 16px; border: 0 !important; border-radius: 10px !important; background: var(--ca-text) !important; color: #fff !important; font-size: 13.5px !important; font-weight: 600; }
+html body:not(#u) .ca-pushcard-no { height: 34px; padding: 0 12px; border: 0 !important; background: none !important; color: var(--ca-3) !important; font-size: 13.5px !important; }
+html body:not(#u) .ca-set-btn { height: 30px; padding: 0 12px; border: 1px solid var(--ca-line2) !important; border-radius: 999px !important; background: #fff !important; color: var(--ca-text) !important; font-size: 13px !important; font-weight: 500; }
+html body:not(#u) .ca-settings .ca-on { color: var(--ca-ok); font-weight: 600; }
