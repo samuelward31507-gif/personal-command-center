@@ -1,3 +1,4 @@
+import { recordConsent } from "@/lib/client-consent";
 import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
 import { claudeText } from "@/lib/ai-text";
@@ -128,6 +129,7 @@ export async function POST(req: Request) {
         WHERE NOT EXISTS (SELECT 1 FROM public.client_quotes q WHERE q.project_id = ${project}::uuid AND q.customer_phone = ${l.phone} AND q.kind = 'rehash')
           AND NOT EXISTS (SELECT 1 FROM public.client_threads t WHERE t.project_id = ${project}::uuid AND t.customer_phone = ${l.phone} AND t.status = 'opted_out')
         RETURNING id`;
+      if (r.length) await recordConsent(sql, c, l.phone, "owner_import", "revive list", `Owner confirmed ${l.name || "this person"} contacted the business before`);
       added += r.length;
     }
     return reply({ ok: true, added, skipped: leads.length - added });

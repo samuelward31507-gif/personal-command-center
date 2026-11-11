@@ -1,3 +1,4 @@
+import { sendSms } from "@/lib/twilio";
 import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
 import { pushToProject } from "@/lib/client-push";
@@ -40,6 +41,15 @@ export async function POST(req: Request) {
     if (!p) return bad("Unknown client.", 404);
     await sql`INSERT INTO public.client_messages (owner_id, project_id, author, body) VALUES (${o}, ${b.project}::uuid, 'owner', ${body})`;
     await pushToProject(b.project, { title: "Sam replied", body: body.slice(0, 180), url: "/app?tab=sam", tag: "sam" });
+    // And a text to the owner's cell from their own Cinder number, in the daytime, so a reply never sits unseen.
+    const [ops] = await sql`SELECT setup FROM public.client_ops WHERE project_id = ${b.project}::uuid` as { setup: Record<string, string> | null }[];
+    const st = ops?.setup ?? {};
+    const hour = Number(new Date().toLocaleString("en-US", { timeZone: st.timezone || "America/Denver", hour: "numeric", hourCycle: "h23" }));
+    const cell = (st.owner_cell || "").replace(/\D/g, "").slice(-10);
+    if (cell.length === 10 && st.texting_number && hour >= 8 && hour < 21) {
+      const origin = process.env.CINDER_APP_URL?.trim().replace(/\/$/, "") || new URL(req.url).origin;
+      await sendSms("+1" + cell, st.texting_number, `Sam from Cinder replied: "${body.slice(0, 140)}${body.length > 140 ? "…" : ""}" Read and reply: ${origin}/app?tab=sam`).catch(() => false);
+    }
     return Response.json({ ok: true }, { status: 201 });
   } catch (e) { console.error("Client messages POST failed", e); return bad("Couldn't send that.", 500); }
 }

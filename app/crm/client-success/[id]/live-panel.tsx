@@ -152,7 +152,14 @@ export default function LivePanel({ projectId }: { projectId: string }) {
           <button type="button" style={NB} disabled={!!busy} onClick={() => void act("cancel", { appointment: a.id }, "Canceled.")}>Cancel</button>
         </span>}
       </li>) : <li className="lv-empty">No estimates booked by Cinder yet.</li>}</ul>
-      <p className="op-hint"><b>Their web forms:</b> point any form or form tool at this address and every submission gets a text back in seconds: <code>{typeof location !== "undefined" ? location.origin : ""}/api/intake?key={d?.chatKey ?? ""}</code>. A plain HTML form can add <code>&amp;next=https://their-thank-you-page</code>.</p>
+      <p className="op-hint"><b>Their web forms:</b> point any form or form tool at this address and every submission gets a text back in seconds: <code>{`${typeof location !== "undefined" ? location.origin : ""}/api/intake?key=${d?.chatKey ?? ""}`}</code>. A plain HTML form can add <code>&amp;next=https://their-thank-you-page</code>.</p>
+      <p className="op-hint"><b>Paid leads</b> (the lead gets &ldquo;Got your request on Angi&hellip;&rdquo; from their number in seconds):</p>
+      <ul className="op-hint" style={{ margin: "4px 0 0 18px", listStyle: "disc" }}>
+        <li><b>Angi / HomeAdvisor:</b> in Angi Leads, Lead delivery &rarr; add a webhook (HTTP POST, JSON) to <code>{`${typeof location !== "undefined" ? location.origin : ""}/api/intake?key=${d?.chatKey ?? ""}`}&amp;source=angi</code>. No webhook on their plan? Use Zapier&rsquo;s Angi trigger with a Webhooks POST to the same address.</li>
+        <li><b>Thumbtack:</b> Zapier &rarr; Thumbtack &ldquo;New lead&rdquo; &rarr; Webhooks POST to <code>&hellip;&amp;source=thumbtack</code>.</li>
+        <li><b>Facebook Lead Ads:</b> Zapier or Make &rarr; Facebook Lead Ads &ldquo;New lead&rdquo; &rarr; Webhooks POST to <code>&hellip;&amp;source=facebook</code>. Send all fields; the form&rsquo;s questions come through as the job details.</li>
+      </ul>
+      <p className="op-hint"><b>Texting consent:</b> every caller, texter, form and lead is logged with what they sent, plus every opt-out. <a href={`/api/client-consent?project=${projectId}`}>Download the consent log (CSV)</a> for carrier registration or a complaint.</p>
     </div>}
 
     {tab === "chat" && <div>

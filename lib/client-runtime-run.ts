@@ -3,8 +3,10 @@
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { claudeText } from "@/lib/ai-text";
 import { sendSms } from "@/lib/twilio";
+import { recordConsent } from "@/lib/client-consent";
+import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
-import { digits10, fill, wording, FALLBACK, isStop, isStart, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, REVIEW_TEXT, type Vars } from "@/lib/client-runtime";
+import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, REVIEW_TEXT, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, freeSlots, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent } from "@/lib/client-calendar";
 import { pushFromAlert, pushToProject } from "@/lib/client-push";
@@ -65,6 +67,7 @@ async function alertOwner(c: Client, text: string, threadId?: string) {
 /** A call to the client's number went unanswered: text the caller back right away and tell the owner. */
 export async function clientMissedCall(sql: Sql, c: Client, caller: string): Promise<void> {
   const t = await thread(sql, c, caller, "missed_call");
+  if (t.fresh) await recordConsent(sql, c, e164(caller), "inbound_call", "phone", `Called ${c.setup.texting_number || "the business number"}`);
   if (t.status === "opted_out") return;
   const body = fill(say(c, "missed_call", FALLBACK.missed_call, t.lang === "es" ? "es" : "en"), varsFor(c));
   await log(sql, c, t.id, "in", "system", "Missed call");
@@ -109,6 +112,7 @@ async function book(sql: Sql, c: Client, threadId: string, phone: string, who: s
 /** A customer texted the client's number. */
 export async function clientInboundText(sql: Sql, c: Client, from: string, body: string, media: Media[] = []): Promise<void> {
   const t = await thread(sql, c, from, "text");
+  if (t.fresh) await recordConsent(sql, c, e164(from), "inbound_text", "text", `First text: "${body.slice(0, 200)}"`);
   // A photo with no words still reads as something the reply engine and the owner can follow.
   if (!body.trim() && media.length) body = media.length === 1 ? "(sent a photo)" : `(sent ${media.length} photos)`;
   await log(sql, c, t.id, "in", "customer", body, true, media);
@@ -119,11 +123,21 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
   // Any reply stops the quote follow-ups for that number: a person is talking now.
   await sql`UPDATE public.client_quotes SET status = 'replied' WHERE project_id = ${c.projectId}::uuid AND status = 'open' AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(from)}`;
   if (isStop(body)) {
+    const was = t.status;
     await sql`UPDATE public.client_threads SET status = 'opted_out', updated_at = now() WHERE id = ${t.id}::uuid`;
+    await recordConsent(sql, c, e164(from), "opt_out", isPlainOptOut(body) ? "plain words" : "keyword", body.slice(0, 200));
     await sql`UPDATE public.client_quotes SET status = 'stopped' WHERE project_id = ${c.projectId}::uuid AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(from)} AND status IN ('open','replied')`;
-    return; // The carrier sends the opt-out confirmation.
+    // STOP and the other keywords: the carrier confirms. Plain words ("stop texting me"): we confirm, once.
+    if (isPlainOptOut(body) && was !== "opted_out") await sendToCustomer(sql, c, t.id, from, fill(OPTOUT_TEXT, varsFor(c)), "template");
+    return;
   }
-  if (t.status === "opted_out") { if (isStart(body)) await sql`UPDATE public.client_threads SET status = 'auto' WHERE id = ${t.id}::uuid`; else return; }
+  if (isHelp(body)) { await recordConsent(sql, c, e164(from), "help", "keyword", body); return; } // the carrier sends the HELP reply
+  if (t.status === "opted_out") {
+    if (!isStart(body)) return;
+    await sql`UPDATE public.client_threads SET status = 'auto' WHERE id = ${t.id}::uuid`;
+    await recordConsent(sql, c, e164(from), "opt_in", "keyword", body.slice(0, 60));
+    return;
+  }
   if (t.status === "paused" || t.status === "closed") { await alertOwner(c, ownerAlert("handoff", t.customer_name || e164(from), `They texted: "${body.slice(0, 160)}"`), t.id); return; }
   const slots = await openSlots(sql, c, lang);
   const d = await draftReply(sql, c, t.id, t.customer_name, slots);
@@ -218,14 +232,19 @@ export async function markNoShow(sql: Sql, c: Client, appointmentId: string): Pr
 }
 
 /** A new lead from a web form: text them right away from the client's number, the reply engine takes the replies. */
-export async function webLead(sql: Sql, c: Client, lead: { name: string; phone: string; email: string; message: string; source: string }): Promise<{ ok: boolean; threadId: string }> {
-  const t = await thread(sql, c, lead.phone, "web form");
+export async function webLead(sql: Sql, c: Client, lead: Lead | { name: string; phone: string; email: string; message: string; source: string; via?: string }, ip = ""): Promise<{ ok: boolean; threadId: string }> {
+  const paid = (PAID as string[]).includes(lead.source);
+  const t = await thread(sql, c, lead.phone, lead.source || "web form");
+  await recordConsent(sql, c, lead.phone, paid ? "paid_lead" : "web_form", lead.source,
+    `${paid ? `Requested a quote on ${lead.via || lead.source}` : "Submitted a form asking to be contacted"}${lead.name ? ` as ${lead.name}` : ""}${lead.email ? ` <${lead.email}>` : ""}${lead.message ? `: "${lead.message.slice(0, 200)}"` : ""}`, ip);
   if (t.status === "opted_out") return { ok: false, threadId: t.id };
   const lang: Lang = detectLang(lead.message) === "es" ? "es" : "en";
   await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${lead.name} ELSE customer_name END, lang = ${lang}, source = ${lead.source} WHERE id = ${t.id}::uuid`;
   await log(sql, c, t.id, "in", "system", `New ${lead.source} lead${lead.message ? `: "${lead.message.slice(0, 300)}"` : ""}${lead.email ? ` · ${lead.email}` : ""}`);
-  const ok = await sendToCustomer(sql, c, t.id, lead.phone, fill(say(c, "web_lead", EN.web_lead, lang), varsFor(c, lead.name.split(" ")[0])), "template");
-  await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${lead.source}${lead.message ? `: ${lead.message.slice(0, 120)}` : ""}. Texted back.`), t.id);
+  const via = lead.via || "";
+  const text = paid ? say(c, "paid_lead", EN.paid_lead, lang).split("{via}").join(via) : say(c, "web_lead", EN.web_lead, lang);
+  const ok = await sendToCustomer(sql, c, t.id, lead.phone, fill(text, varsFor(c, lead.name.split(" ")[0])), "template");
+  await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${paid ? via : lead.source}${lead.message ? `: ${lead.message.slice(0, 120)}` : ""}. Texted back.`), t.id);
   return { ok, threadId: t.id };
 }
 

@@ -26,8 +26,20 @@ export const FALLBACK = {
   busy: "Thanks! {owner} will get back to you shortly.",
 } as const;
 
-export const isStop = (t: string) => /^\s*(stop|stopall|unsubscribe|cancel|end|quit)\s*[.!]?\s*$/i.test(t || "");
+/** The carrier keywords, sent alone. Twilio confirms these itself. */
+export const isStopKeyword = (t: string) => /^\s*(stop|stopall|unsubscribe|cancel|end|quit|optout|opt out|revoke)\s*[.!]?\s*$/i.test(t || "");
+/** Opt-outs in plain words: "stop texting me", "take me off your list", "wrong number". We must honor these too. */
+export function isPlainOptOut(t: string): boolean {
+  const s = (t || "").toLowerCase().replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
+  if (!s || s.length > 200) return false;
+  if (/\b(don'?t|do not|never) stop\b/.test(s)) return false;
+  return /\b(stop (texting|messaging|contacting|sending)|(don'?t|do not|please don'?t) (text|message|contact|call) me|remove me|take me off|unsubscribe|opt(-| )?out|no more (texts|messages)|leave me alone|wrong number|lose (this|my) number|not interested,? stop)\b/.test(s);
+}
+export const isStop = (t: string) => isStopKeyword(t) || isPlainOptOut(t);
 export const isStart = (t: string) => /^\s*(start|unstop|yes)\s*$/i.test(t || "");
+export const isHelp = (t: string) => /^\s*(help|info)\s*[.?!]?\s*$/i.test(t || "");
+export const OPTOUT_TEXT = "You won't get any more texts from {business}. Reply START if you change your mind.";
+export const HELP_TEXT = "{business}: texts about your estimate and quote. Reply STOP to opt out. Msg & data rates may apply.";
 
 /** Instructions for the reply engine, built only from what the client approved in setup. */
 export function replySystem(setup: Record<string, string>, messages: Approved): string {

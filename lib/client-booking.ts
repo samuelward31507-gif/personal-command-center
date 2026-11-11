@@ -86,6 +86,7 @@ export const ES: Record<string, string> = {
   reminder: "Hola {first}, le recordamos que {business} va a ir {time} para su presupuesto. Si necesita cambiar la hora, responda aquí.",
   noshow: "Hola {first}, parece que no coincidimos hoy. ¿Quiere escoger otra hora para el presupuesto? Responda con el día que le quede mejor.",
   web_lead: "Hola {first}, le escribe {business}. Gracias por contactarnos. ¿Me cuenta un poco más del trabajo y la dirección para darle un precio aproximado?",
+  paid_lead: "Hola {first}, le escribe {business}. Recibimos su solicitud en {via}. ¿Me cuenta un poco más del trabajo y la dirección para darle un precio aproximado?",
   quote_1: "Hola {first}, le escribe {owner} de {business}. ¿Le llegó bien la cotización? ¿Tiene alguna pregunta?",
   quote_2: "Hola {first}, {owner} aquí. Con gusto le explico la cotización o vemos una opción más económica.",
   quote_3: "Hola {first}, ¿todavía lo está pensando? Le puedo apartar un lugar en la agenda mientras decide.",
@@ -96,6 +97,7 @@ export const EN: Record<string, string> = {
   reminder: "Hi {first}, a reminder that {business} is coming out {time} for your estimate. If you need to change it, just reply here.",
   noshow: "Hi {first}, looks like we missed each other today. Want to pick another time for the estimate? Reply with a day that works.",
   web_lead: "Hi {first}, this is {business}. Thanks for reaching out. Can you tell me a bit more about the job and the address so I can give you a price range?",
+  paid_lead: "Hi {first}, this is {business}. Got your request on {via}. Can you tell me a bit more about the job and the address so I can give you a price range?",
   booked: "You're booked: {time}. {owner} will see you then. Reply here if anything changes.",
 };
 

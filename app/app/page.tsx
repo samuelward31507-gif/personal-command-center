@@ -17,8 +17,8 @@ type Text = { id: string; direction: string; author: string; body: string; at: s
 type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 type Tab = "leads" | "numbers" | "estimates" | "sam";
 
-const SOURCE: Record<string, string> = { missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote follow-up", review: "Review request", rehash: "Old lead" };
-const SRC_ICON: Record<string, string> = { missed_call: "phone", "web chat": "chat", "web form": "form", text: "chat", quote: "quote", review: "star", rehash: "quote" };
+const SOURCE: Record<string, string> = { missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote follow-up", review: "Review request", rehash: "Old lead", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook ad", zapier: "Form" };
+const SRC_ICON: Record<string, string> = { missed_call: "phone", "web chat": "chat", "web form": "form", text: "chat", quote: "quote", review: "star", rehash: "quote", angi: "form", thumbtack: "form", facebook: "form", zapier: "form" };
 const STATUS: Record<string, [string, string]> = { auto: ["Cinder's on it", "auto"], paused: ["Needs you", "needs"], booked: ["Booked", "booked"], closed: ["Done", "done"], opted_out: ["Opted out", "done"] };
 const QUICK = ["On my way", "I'll call you in 10 minutes", "Sending your quote now", "Can you send a photo?"];
 
