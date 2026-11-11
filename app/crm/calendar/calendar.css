@@ -299,3 +299,57 @@ html body .calendar-page .tone-gray:is(.cal-block, .cal-bar, .cal-chip, .cal-dot
 html body .calendar-page .cal-block.is-cancelled { opacity: .45; text-decoration: line-through; }
 .calendar-page .cr-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--c-soft); }
 .calendar-page .cr-legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ── Week / day grid, final ──
+   One continuous sheet like Google Calendar: hairline hours and days, no gaps or boxed columns.
+   Routine (trading, dial blocks, lunch) = quiet grey bands. Real events = light tint, a solid left edge, dark text. */
+html body .calendar-page .cal-tg { background: #fff; border: 1px solid #e7e7e4; border-radius: 14px; overflow: hidden; }
+html body .calendar-page :is(.cal-tg-head, .cal-tg-allday, .cal-tg-body) { column-gap: 0 !important; padding: 0 !important; }
+html body .calendar-page .cal-tg-head { border-bottom: 1px solid #e7e7e4 !important; padding: 0 !important; background: #fff; }
+html body .calendar-page .cal-tg-dayhead { border: 0 !important; border-left: 1px solid #efefed !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; padding: 12px 0 10px !important; }
+html body .calendar-page .cal-tg-dayhead:hover { background: #fafaf9 !important; }
+html body .calendar-page .cal-tg-dayhead.is-today { background: transparent !important; box-shadow: none !important; }
+html body .calendar-page .cal-tg-dow { font-size: 12px !important; font-weight: 500; color: #80858d !important; }
+html body .calendar-page .cal-tg-dayhead.is-today .cal-tg-dow { color: #121417 !important; font-weight: 600; }
+html body .calendar-page .cal-tg-num { width: 34px; height: 34px; font-size: 18px; font-weight: 500; letter-spacing: -.02em; }
+html body .calendar-page .cal-tg-allday { border-bottom: 1px solid #e7e7e4 !important; padding: 0 !important; }
+html body .calendar-page .cal-tg-allday-col { border: 0 !important; border-left: 1px solid #efefed !important; border-radius: 0 !important; background: transparent !important; min-height: 28px; }
+html body .calendar-page .cal-tg-scroll { padding: 0 !important; height: min(68vh, 720px); }
+html body .calendar-page .cal-tg-col { border: 0 !important; border-left: 1px solid #efefed !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; overflow: visible; }
+html body .calendar-page .cal-tg-col.is-weekend { background: #fbfbfa !important; }
+html body .calendar-page .cal-tg-col.is-today { background: rgba(10, 132, 255, .025) !important; box-shadow: none !important; }
+html body .calendar-page .cal-tg-line { border-top: 1px solid #f0f0ee !important; }
+html body .calendar-page .cal-tg-hour { right: 12px; font-size: 11px; color: #9ea2a9; }
+
+/* Routine bands: inset, flat, label + time on one line, never louder than a meeting */
+html body .calendar-page .cal-band { left: 3px !important; right: 3px !important; border-radius: 6px !important; padding: 5px 8px !important; background: #f7f7f5 !important; border: 0 !important; box-shadow: inset 0 0 0 1px #efefed !important; }
+html body .calendar-page .cal-band .cal-band-label { font-size: 11px; font-weight: 600; color: #6c7583 !important; }
+html body .calendar-page .cal-band .cal-band-time { font-size: 10.5px; color: #a7abb2; }
+
+/* Events */
+html body .calendar-page .cal-block:not(.is-routine) { left: 4px; right: 4px; padding: 4px 8px 4px 10px !important; border-radius: 6px !important; background: var(--t-bg-l, #eef4ff) !important; color: var(--t-ink-l, #0b3d91) !important;
+  box-shadow: inset 3px 0 0 var(--t-edge, #2f6fe0), 0 1px 2px rgba(18,20,23,.06) !important; filter: none !important; }
+html body .calendar-page .cal-block:not(.is-routine):hover { box-shadow: inset 3px 0 0 var(--t-edge, #2f6fe0), 0 4px 12px rgba(18,20,23,.12) !important; z-index: 3; }
+html body .calendar-page .cal-block:not(.is-routine) .cal-block-title { font-size: 12px; font-weight: 600; }
+html body .calendar-page .cal-block:not(.is-routine) .cal-block-time { font-size: 11px; opacity: .8; }
+html body .calendar-page .tone-meet     { --t-bg-l: #e8f6ee; --t-ink-l: #0d5a33; --t-edge: #17905a; --t-dot: #17905a; }
+html body .calendar-page .tone-call     { --t-bg-l: #eaf2ff; --t-ink-l: #0b3d91; --t-edge: #2f6fe0; --t-dot: #2f6fe0; }
+html body .calendar-page .tone-focus    { --t-bg-l: #f1edff; --t-ink-l: #3b2196; --t-edge: #6a4fd6; --t-dot: #6a4fd6; }
+html body .calendar-page .tone-personal { --t-bg-l: #fdf3e5; --t-ink-l: #7a4a0d; --t-edge: #d08a2a; --t-dot: #d08a2a; }
+html body .calendar-page .tone-red      { --t-bg-l: #fdeceb; --t-ink-l: #8f1d12; --t-edge: #d4473a; --t-dot: #d4473a; }
+html body .calendar-page .tone-gray:is(.cal-block, .cal-bar, .cal-chip) { --t-bg-l: #f1f1ef; --t-ink-l: #3c424a; --t-edge: #a7abb2; --t-dot: #8a9098; }
+html body .calendar-page .cal-bar { background: var(--t-bg-l, #f1f1ef) !important; color: var(--t-ink-l, #3c424a) !important; box-shadow: inset 3px 0 0 var(--t-edge, #a7abb2) !important; }
+html body .calendar-page .cal-now { background: #d4473a !important; height: 2px; }
+html body .calendar-page .cal-now::before { background: #d4473a !important; }
+
+/* Month: one sheet with hairlines, not tiles */
+html body .calendar-page .cal-month { background: #fff; border: 1px solid #e7e7e4; border-radius: 14px; overflow: hidden; }
+html body .calendar-page .cal-month-head { column-gap: 0 !important; padding: 0 !important; border-bottom: 1px solid #e7e7e4 !important; }
+html body .calendar-page .cal-month-body { gap: 0 !important; padding: 0 !important; }
+html body .calendar-page .cal-cell { border: 0 !important; border-right: 1px solid #efefed !important; border-bottom: 1px solid #efefed !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
+html body .calendar-page .cal-cell.is-outside { background: #fbfbfa !important; }
+html body .calendar-page .cal-cell.is-today { background: rgba(10, 132, 255, .025) !important; }
+
+/* Rail legend dots match the event edges */
+html body .calendar-page .cr-legend .cal-dot { background: var(--t-dot) !important; }
+html body .calendar-page .cr-today li.is-event::before { background: #2f6fe0; }

@@ -149,3 +149,12 @@ body .dl-call .dl-if-sep { width: 1px; height: 16px; margin: 4px 2px 0; backgrou
 .dl-mail .dl-mail-row > select.u-field { flex: 0 0 130px; width: 130px; }
 .dl-mail .dl-mail-row > .u-btn { flex: 0 0 auto; }
 @media (max-width: 640px) { .dl-mail .dl-mail-row { flex-wrap: wrap; } }
+
+/* Dial row: one height. Call is the primary action; texting the demo is the clear second choice. */
+html body .dl-call .dl-dial { gap: 12px; }
+html body .dl-call .dl-dial .u-btn-lg { height: 48px !important; padding: 0 24px !important; font-size: 15.5px !important; border-radius: 12px !important; }
+html body .dl-call .dl-dial .dl-demo-text { height: 48px !important; padding: 0 18px !important; border-radius: 12px !important; font-size: 14.5px !important; font-weight: 600 !important;
+  background: #fff !important; color: #121417 !important; border: 1px solid #dcddda !important; box-shadow: 0 1px 2px rgba(18,20,23,.05) !important; }
+html body .dl-call .dl-dial .dl-demo-text:hover { background: #fafaf9 !important; border-color: #c9cbc8 !important; }
+html body .dl-call .dl-dial .dl-demo-text kbd { background: #f1f1ef !important; border: 1px solid #e3e4e1 !important; color: #6c7583 !important; }
+html body .dl-call .dl-dial .dl-phone { margin-right: 6px; }
