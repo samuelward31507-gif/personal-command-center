@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     const hour = Number(new Date().toLocaleString("en-US", { timeZone: st.timezone || "America/Denver", hour: "numeric", hourCycle: "h23" }));
     const cell = (st.owner_cell || "").replace(/\D/g, "").slice(-10);
     if (cell.length === 10 && st.texting_number && hour >= 8 && hour < 21) {
-      const origin = process.env.CINDER_APP_URL?.trim().replace(/\/$/, "") || new URL(req.url).origin;
+      const origin = process.env.CINDER_PUBLIC_ORIGIN?.trim().replace(/\/$/, "") || process.env.CINDER_APP_URL?.trim().replace(/\/$/, "") || new URL(req.url).origin;
       await sendSms("+1" + cell, st.texting_number, `Sam from Cinder replied: "${body.slice(0, 140)}${body.length > 140 ? "…" : ""}" Read and reply: ${origin}/app?tab=sam`).catch(() => false);
     }
     return Response.json({ ok: true }, { status: 201 });

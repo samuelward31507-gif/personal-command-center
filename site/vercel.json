@@ -82,6 +82,46 @@
     {
       "source": "/_next/:path*",
       "destination": "https://personal-command-center-ten-ruby.vercel.app/_next/:path*"
+    },
+    {
+      "source": "/app",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/app"
+    },
+    {
+      "source": "/app/:path*",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/app/:path*"
+    },
+    {
+      "source": "/api/app/:path*",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/app/:path*"
+    },
+    {
+      "source": "/app-sw.js",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/app-sw.js"
+    },
+    {
+      "source": "/app.webmanifest",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/app.webmanifest"
+    },
+    {
+      "source": "/app-icon-180.png",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/app-icon-180.png"
+    },
+    {
+      "source": "/app-icon-192.png",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/app-icon-192.png"
+    },
+    {
+      "source": "/app-icon-512.png",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/app-icon-512.png"
+    },
+    {
+      "source": "/api/intake",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/intake"
+    },
+    {
+      "source": "/api/client-calendar",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/client-calendar"
     }
   ],
   "headers": [
