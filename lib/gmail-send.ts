@@ -3,6 +3,7 @@ import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { accessToken, buildRaw, classifyThread, complianceFooter, decryptToken, isEmail, type ThreadMessage } from "@/lib/gmail";
 import { inboxCap, inboxHealth, loadInboxes, mainOf, pickInbox, resting, senderOf, sendsToday, type Inbox } from "@/lib/gmail-accounts";
 import { recordVerdict } from "@/lib/gmail-sync";
+import { domainTakesMail } from "@/lib/mx-check";
 import type { WorkspaceSettings } from "@/lib/workspace";
 
 type Sql = NeonQueryFunction<false, false>;
@@ -44,8 +45,8 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
   if (c.wrote_in) return fail("They already emailed you. Answer them from the inbox instead.", 409);
   const [dup] = await sql`SELECT 1 FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND notes LIKE ${`Email sent: ${m.step}%`} LIMIT 1`;
   if (dup) return fail("This email already went to them.", 409);
-  const [heard] = await sql`SELECT notes FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND (notes LIKE 'Email reply:%' OR notes LIKE 'Email bounced:%') LIMIT 1` as { notes: string }[];
-  if (heard) return fail(heard.notes.startsWith("Email bounced") ? "Their address bounced. Nothing was sent." : "They already replied. Answer them from Gmail instead.", 409);
+  const [heard] = await sql`SELECT notes FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND (notes LIKE 'Email reply:%' OR notes LIKE 'Email bounced:%' OR notes LIKE 'Email undeliverable:%') LIMIT 1` as { notes: string }[];
+  if (heard) return fail(heard.notes.startsWith("Email reply") ? "They already replied. Answer them from Gmail instead." : "Their address bounced. Nothing was sent.", 409);
 
   // Follow-ups reply in the same thread as the first email.
   const [prev] = await sql`SELECT notes FROM public.contact_activities WHERE owner_id = ${o} AND contact_id = ${c.id}::uuid AND notes LIKE 'Email sent: %via Gmail%' ORDER BY occurred_at ASC LIMIT 1` as { notes: string }[];
@@ -63,9 +64,16 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
     if (!acc) return fail(`This thread started from ${from}, which isn't connected anymore. Connect it again on the Email page to send the follow-up.`, 409);
     if ((sent.get(acc.email.toLowerCase()) ?? 0) >= inboxCap(acc)) return fail(`${acc.email} hit today's limit of ${inboxCap(acc)}. This follow-up goes tomorrow from the same inbox.`, 409);
   } else {
-    // New threads skip any inbox whose bounces are climbing, so one bad list can't burn a domain.
+    // A domain with no mail server is a certain bounce: never send, and note it so it isn't picked again.
+    if (!(await domainTakesMail(c.email))) {
+      await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes, occurred_at)
+        VALUES (${o}, ${c.id}::uuid, 'note', 'note', 'other', ${`Email undeliverable: ${c.email.split("@")[1]} has no mail server, so nothing was sent.`}, now())`.catch(() => {});
+      return fail("That email's domain doesn't accept mail. Nothing was sent. Check the address.", 422);
+    }
+    // New cold threads skip any inbox whose bounces are climbing, so one bad list can't burn the inbox.
+    // An info email is different: they asked for it on the phone, so it always goes.
     const health = await inboxHealth(sql, o, inboxes).catch(() => new Map());
-    const healthy = inboxes.filter(i => !resting(health.get(i.email.toLowerCase())));
+    const healthy = m.step === "info" ? inboxes : inboxes.filter(i => !resting(health.get(i.email.toLowerCase())));
     if (!healthy.length) return fail("Every inbox is resting: too many bounces in the last 14 days. Clean the list (Find emails, drop bad addresses) before sending more.", 429);
     acc = pickInbox(healthy, sent);
     if (!acc) return fail(`All ${healthy.length} inbox${healthy.length === 1 ? "" : "es"} hit today's limit${healthy.length < inboxes.length ? " (some are resting after bounces)" : ""}. The rest can go tomorrow.`, 429);

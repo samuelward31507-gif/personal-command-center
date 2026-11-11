@@ -25,6 +25,6 @@ export async function claudeText(opts: { apiKey: string; system: string; user: s
     throw new AiTextError(f.clientMessage.replace(/research provider/g, "AI provider").replace(/audit request/g, "request"), f.status);
   }
   const text = (Array.isArray(payload.content) ? payload.content : []).filter((b: { type: string }) => b.type === "text").map((b: { text: string }) => b.text).join("").trim();
-  if (!text) throw new AiTextError("The draft came back empty. Try again.", 502);
+  if (!text) { console.error(`${opts.label} came back empty`, { model: payload?.model, stop: payload?.stop_reason, blocks: (payload?.content ?? []).map((b: { type: string }) => b.type) }); throw new AiTextError("The draft came back empty. Try again.", 502); }
   return text;
 }
