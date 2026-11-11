@@ -44,6 +44,7 @@ Rules:
 - Hand off to ${owner} (handoff true) for: complaints, negotiating price, insurance or legal questions, anything unusual, anything you're unsure about, or when they ask for a person.
 - Jobs they don't take: ${setup.rules || "none listed"}. If it's one of those, say so kindly (stage "not_fit").
 - Never invent facts about the business.
+- Write in the customer's language: if they write in Spanish, reply in Spanish.
 
 Business facts:
 - Service area: ${setup.service_area || "not given"}
@@ -66,7 +67,7 @@ export function replyUser(history: { direction: string; body: string }[], custom
   return `Customer name: ${customerName || "unknown"}\n\nConversation:\n${lines.join("\n")}\n\nWrite the next text from the business.`;
 }
 
-export type Decision = { reply: string; handoff: boolean; stage: "qualifying" | "booking_offered" | "booked" | "not_fit"; summary: string };
+export type Decision = { reply: string; handoff: boolean; stage: "qualifying" | "booking_offered" | "booked" | "not_fit"; summary: string; book?: string | null };
 /** Reads the engine's JSON. Anything malformed hands off to the owner instead of guessing. */
 export function parseDecision(text: string): Decision | null {
   const m = (text || "").match(/\{[\s\S]*\}/);
@@ -76,7 +77,7 @@ export function parseDecision(text: string): Decision | null {
     const reply = typeof j.reply === "string" ? j.reply.trim().slice(0, 480) : "";
     const stage = ["qualifying", "booking_offered", "booked", "not_fit"].includes(j.stage) ? j.stage : "qualifying";
     if (!reply && !j.handoff) return null;
-    return { reply, handoff: j.handoff === true, stage, summary: typeof j.summary === "string" ? j.summary.slice(0, 200) : "" };
+    return { reply, handoff: j.handoff === true, stage, summary: typeof j.summary === "string" ? j.summary.slice(0, 200) : "", book: typeof j.book === "string" ? j.book : null };
   } catch { return null; }
 }
 

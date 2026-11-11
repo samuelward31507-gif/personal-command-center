@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
 import { claudeText } from "@/lib/ai-text";
-import { clientById, sendToCustomer, sendReviewRequest } from "@/lib/client-runtime-run";
+import { markNoShow, clientById, sendToCustomer, sendReviewRequest } from "@/lib/client-runtime-run";
 import { digits10, parseDecision, parseLeadList, replySystem, replyUser } from "@/lib/client-runtime";
 import { randomBytes } from "node:crypto";
 
@@ -42,9 +42,15 @@ export async function GET(req: Request) {
     chatKey = k?.chat_key || randomBytes(18).toString("base64url");
     if (!k?.chat_key) await sql`UPDATE public.client_ops SET chat_key = ${chatKey} WHERE project_id = ${project}::uuid AND owner_id = ${o} AND chat_key IS NULL`;
   }
-  const missing = [!s.texting_number && "Texting number", !s.owner_cell && "Owner's cell", !s.booking_link && "Booking link", !s.review_link && "Google review link",
+  const [appts, cal] = await Promise.all([
+    sql`SELECT a.id, a.starts_at, a.status, a.reminded_at, t.customer_name, t.customer_phone FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id
+      WHERE a.owner_id = ${o} AND a.project_id = ${project}::uuid AND a.starts_at > now() - interval '14 days' ORDER BY a.starts_at LIMIT 60`.catch(() => []),
+    sql`SELECT google_email FROM public.client_calendars WHERE project_id = ${project}::uuid`.catch(() => []),
+  ]);
+  const calendar = (cal as { google_email: string }[])[0] ? { connected: true, email: (cal as { google_email: string }[])[0].google_email } : { connected: false, email: "" };
+  const missing = [!s.texting_number && "Texting number", !s.owner_cell && "Owner's cell", !s.booking_link && !calendar.connected && "Calendar or booking link", !s.review_link && "Google review link",
     !(c?.messages ?? []).some(m => m.status === "approved") && "Approved messages"].filter(Boolean);
-  return reply({ threads, quotes, reviews: rv[0]?.n ?? 0, chatKey, ready: { live: missing.length === 0, missing, number: s.texting_number || "" } });
+  return reply({ threads, quotes, reviews: rv[0]?.n ?? 0, chatKey, appointments: appts, calendar, ready: { live: missing.length === 0, missing, number: s.texting_number || "" } });
 }
 
 /** POST {project, action, ...}: reply as the owner, change a thread's status, add or close a quote, send a review request, or test the reply engine. */
@@ -60,6 +66,13 @@ export async function POST(req: Request) {
   if (!c) return reply({ error: "Open the setup sheet for this client first." }, 404);
   const action = str(b.action, 20);
 
+  if (action === "no_show" || action === "done" || action === "cancel") {
+    const id = str(b.appointment, 40);
+    if (!UUID.test(id)) return reply({ error: "Which appointment?" }, 400);
+    if (action === "no_show") { const r = await markNoShow(sql, c, id); return r.ok ? reply({ ok: true }) : reply({ error: r.error }, 400); }
+    await sql`UPDATE public.client_appointments SET status = ${action === "done" ? "done" : "canceled"} WHERE id = ${id}::uuid AND project_id = ${project}::uuid AND owner_id = ${o} AND status = 'booked'`;
+    return reply({ ok: true });
+  }
   if (action === "simulate") {
     if (!process.env.ANTHROPIC_API_KEY) return reply({ error: "The AI key isn't set." }, 503);
     const hist = Array.isArray(b.history) ? (b.history as { direction?: string; body?: string }[]).slice(-20).map(h => ({ direction: h.direction === "out" ? "out" : "in", body: str(h.body, 600) })).filter(h => h.body) : [];

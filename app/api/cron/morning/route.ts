@@ -9,6 +9,7 @@ import { sendColdEmail } from "@/lib/gmail-send";
 import { dueContacts, fillTemplate, mergeFor, TEMPLATE_SETS, trackOf } from "@/lib/email-outreach";
 import { USEFUL } from "@/lib/inbox-sort";
 import { auditLinkFor, withAuditLine } from "@/lib/auto-audit";
+import { sendMondayReports, sendReminders } from "@/lib/client-runtime-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -82,6 +83,14 @@ export async function GET(request: Request) {
   // Skip it when the sends ran long, so the brief still goes out inside the 60 second limit (the Email page sorts on open).
   const sort = acc && Date.now() - started.getTime() < 15_000 ? await sortNewMail(sql, o).catch(() => null) : null;
   result.sort = sort;
+
+  // 3b. Clients: day-before estimate reminders every day; the owner's numbers by text on Mondays.
+  result.reminders = await sendReminders(sql).catch(e => { problems.push("Estimate reminders failed."); console.error("Reminders failed", e); return null; });
+  if (weekday === "Mon") {
+    const monday = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(started);
+    const origin = process.env.CINDER_APP_URL?.trim().replace(/\/$/, "") || new URL(request.url).origin;
+    result.mondayReports = await sendMondayReports(sql, origin, monday).catch(e => { problems.push("Monday client reports failed."); console.error("Monday reports failed", e); return null; });
+  }
 
   // 4. The brief.
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(started);

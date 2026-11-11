@@ -9,8 +9,9 @@ import "./live-panel.css";
 type Thread = { id: string; customer_phone: string; customer_name: string; source: string; status: string; updated_at: string; last: { body: string; direction: string; at: string } | null };
 type Text = { direction: string; author: string; body: string; ok: boolean; at: string };
 type Quote = { id: string; customer_phone: string; customer_name: string; amount: string | null; sent_on: string; steps_sent: number; status: string; kind: string };
-type Data = { threads: Thread[]; quotes: Quote[]; reviews: number; chatKey: string; ready: { live: boolean; missing: string[]; number: string } };
-type Tab = "inbox" | "quotes" | "revive" | "reviews" | "chat" | "test";
+type Appt = { id: string; starts_at: string; status: string; reminded_at: string | null; customer_name: string; customer_phone: string };
+type Data = { threads: Thread[]; quotes: Quote[]; reviews: number; chatKey: string; appointments?: Appt[]; calendar?: { connected: boolean; email: string }; ready: { live: boolean; missing: string[]; number: string } };
+type Tab = "inbox" | "estimates" | "quotes" | "revive" | "reviews" | "chat" | "test";
 const NB = { background: "transparent" };
 const when = (d: string) => new Date(d).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const STATUS: Record<string, string> = { auto: "Handled for them", paused: "Needs a person", opted_out: "Opted out", booked: "Booked", closed: "Closed" };
@@ -30,6 +31,16 @@ export default function LivePanel({ projectId }: { projectId: string }) {
   const [simIn, setSimIn] = useState("");
   const [list, setList] = useState("");
   const [consent, setConsent] = useState(false);
+  const [calLink, setCalLink] = useState("");
+  async function getCalLink() {
+    setNote(null);
+    const r = await fetch("/api/client-calendar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projectId }) });
+    const x = await r.json().catch(() => ({}));
+    if (!r.ok) { setNote({ ok: false, text: x.error || "Couldn't make the link." }); return; }
+    if (!x.configured) { setNote({ ok: false, text: "Google sign-in isn't set up in Vercel yet (the same keys Gmail uses)." }); return; }
+    setCalLink(x.link); void navigator.clipboard?.writeText(x.link);
+    setNote({ ok: true, text: "Link copied. Text it to the owner: one tap, sign in with Google, Allow. It works for 7 days." });
+  }
 
   const load = useCallback(() => fetch("/api/client-threads?project=" + projectId, { cache: "no-store" }).then(r => r.json()).then(x => { if (!x.error) setD(x); }).catch(() => {}), [projectId]);
   useEffect(() => { load(); const t = setInterval(load, 20000); return () => clearInterval(t); }, [load]);
@@ -64,7 +75,7 @@ export default function LivePanel({ projectId }: { projectId: string }) {
       {d?.ready.live && <span className="lv-on">Live</span>}
     </div>
     <div className="op-tabs" role="group" aria-label="Live system">
-      {([["inbox", "Conversations", needs ? `${needs} need you` : `${d?.threads.length ?? 0} total`], ["quotes", "Quotes", `${openQ} being chased`], ["revive", "Revive old leads", revive.length ? `${revive.filter(x => x.status === "replied").length} replied of ${revive.length}` : "Week-1 win"], ["reviews", "Reviews", `${d?.reviews ?? 0} asked`], ["chat", "Website chat", "Bubble for their site"], ["test", "Test replies", "Before go-live"]] as const).map(([k, label, sub]) =>
+      {([["inbox", "Conversations", needs ? `${needs} need you` : `${d?.threads.length ?? 0} total`], ["estimates", "Estimates", d?.calendar?.connected ? `${(d.appointments ?? []).filter(a => a.status === "booked" && Date.parse(a.starts_at) > Date.now()).length} coming up` : "Connect calendar"], ["quotes", "Quotes", `${openQ} being chased`], ["revive", "Revive old leads", revive.length ? `${revive.filter(x => x.status === "replied").length} replied of ${revive.length}` : "Week-1 win"], ["reviews", "Reviews", `${d?.reviews ?? 0} asked`], ["chat", "Website chat", "Bubble for their site"], ["test", "Test replies", "Before go-live"]] as const).map(([k, label, sub]) =>
         <button key={k} type="button" aria-pressed={tab === k} style={{ background: tab === k ? "#e7e7e4" : "transparent" }} onClick={() => setTab(k)}><b>{label}</b><small>{sub}</small></button>)}
     </div>
     {note && <p className={"op-note " + (note.ok ? "ok" : "bad")} role="status">{note.text}</p>}
@@ -123,6 +134,25 @@ export default function LivePanel({ projectId }: { projectId: string }) {
         <label><span>Cell</span><input value={rv.phone} onChange={e => setRv({ ...rv, phone: e.target.value })} required /></label>
         <div className="op-acts"><button type="submit" className="op-primary" style={NB} disabled={!!busy}>Send review request</button></div>
       </form>
+    </div>}
+
+    {tab === "estimates" && <div>
+      <div className="lv-cal">
+        <div><b>{d?.calendar?.connected ? "Calendar connected" : "Calendar not connected"}</b>
+          <p className="op-hint">{d?.calendar?.connected ? `Cinder offers open times from ${d.calendar.email || "their Google Calendar"} and puts every booked estimate on it. Customers get a reminder the day before.` : "Connect the owner's Google Calendar so Cinder offers real open times and books estimates straight onto it. Until then it sends their booking link."}</p></div>
+        <button type="button" className="op-primary" style={NB} onClick={() => void getCalLink()}>{d?.calendar?.connected ? "New connect link" : "Get the connect link"}</button>
+      </div>
+      {calLink && <pre className="lv-code">{calLink}</pre>}
+      <ul className="lv-appts">{(d?.appointments ?? []).length ? (d?.appointments ?? []).map(a => <li key={a.id} className={"is-" + a.status}>
+        <span><b>{when(a.starts_at)}</b><small>{a.customer_name || a.customer_phone}{a.reminded_at ? " · reminded" : ""}</small></span>
+        <em>{a.status === "booked" ? (Date.parse(a.starts_at) > Date.now() ? "Booked" : "Did they show?") : a.status === "no_show" ? "No-show, rebooking" : a.status === "done" ? "Done" : "Canceled"}</em>
+        {a.status === "booked" && <span className="op-acts">
+          {Date.parse(a.starts_at) < Date.now() && <button type="button" style={NB} disabled={!!busy} onClick={() => void act("done", { appointment: a.id }, "Marked done.")}>Showed</button>}
+          <button type="button" style={NB} disabled={!!busy} onClick={() => void act("no_show", { appointment: a.id }, "Rebooking text sent.")}>No-show</button>
+          <button type="button" style={NB} disabled={!!busy} onClick={() => void act("cancel", { appointment: a.id }, "Canceled.")}>Cancel</button>
+        </span>}
+      </li>) : <li className="lv-empty">No estimates booked by Cinder yet.</li>}</ul>
+      <p className="op-hint"><b>Their web forms:</b> point any form or form tool at this address and every submission gets a text back in seconds: <code>{typeof location !== "undefined" ? location.origin : ""}/api/intake?key={d?.chatKey ?? ""}</code>. A plain HTML form can add <code>&amp;next=https://their-thank-you-page</code>.</p>
     </div>}
 
     {tab === "chat" && <div>
