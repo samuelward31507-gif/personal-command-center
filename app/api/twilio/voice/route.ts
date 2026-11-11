@@ -1,4 +1,4 @@
-import { e164, voiceTwiml, afterDialTwiml, missedCallText, EMPTY_TWIML } from "@/lib/missed-call";
+import { e164, voiceTwiml, afterDialTwiml, missedCallText, skipRing, EMPTY_TWIML } from "@/lib/missed-call";
 import { readTwilioRequest, sendSms, twilioConfigured, twiml } from "@/lib/twilio";
 import { sendAlert } from "@/lib/notify";
 import { neon } from "@neondatabase/serverless";
@@ -18,7 +18,8 @@ export async function POST(request: Request) {
   if (client) {
     const business = client.setup.display_name || "us";
     const ownerCell = e164(client.setup.owner_cell ?? "");
-    if (!ownerCell) { const caller = e164(p.From ?? ""); if (caller && sql) await clientMissedCall(sql, client, caller).catch(e => console.error("Client missed call failed", e)); return twiml(afterDialTwiml(true, business)); }
+    // Forwarded from their own number (or no cell on file): it already rang, so text back now.
+    if (skipRing(client.setup, p)) { const caller = e164(p.From ?? ""); if (caller && sql) await clientMissedCall(sql, client, caller).catch(e => console.error("Client missed call failed", e)); return twiml(afterDialTwiml(true, business)); }
     const key = new URL(request.url).searchParams.get("key");
     const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || new URL(request.url).host;
     const base = process.env.CINDER_APP_URL?.trim().replace(/\/$/, "") || `https://${host}`;

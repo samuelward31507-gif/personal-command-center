@@ -73,3 +73,16 @@ export function validTwilioSignature(authToken: string, signature: string | null
     return want.length === got.length && timingSafeEqual(want, got);
   });
 }
+
+/**
+ * Should a call to a client's Cinder number skip ringing the owner and go straight to the text-back?
+ * Yes when the call was forwarded from their own number on no-answer/busy: their phone already rang, and ringing
+ * the owner's cell again could forward right back here (a loop). Twilio sets ForwardedFrom when the carrier says so.
+ */
+export function skipRing(setup: Record<string, string>, params: Record<string, string>): boolean {
+  const d = (v: string | undefined) => (v || "").replace(/\D/g, "").slice(-10);
+  if (!d(setup.owner_cell)) return true;
+  if (/forward/i.test(setup.forwarding || "")) return true;
+  const fwd = d(params.ForwardedFrom);
+  return fwd.length === 10;
+}

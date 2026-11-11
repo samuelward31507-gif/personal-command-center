@@ -20,3 +20,9 @@ for (const t of ["STOP", "stop.", "Unsubscribe", "please stop texting me", "Don'
 for (const t of ["Can you stop by Thursday?", "Don't stop, I'm interested", "When will the crew stop for lunch", "Cancel my Thursday appointment please", "yes"]) assert.ok(!isStop(t), t);
 assert.ok(isStopKeyword("cancel")); assert.ok(!isPlainOptOut("STOP")); assert.ok(isHelp("help")); assert.ok(!isHelp("can you help me with a fence"));
 console.log("lead sources + opt-outs ok");
+import { skipRing } from "./lib/missed-call.ts";
+assert.equal(skipRing({ owner_cell: "+17205550100" }, {}), false, "direct call to the Cinder number rings the owner");
+assert.equal(skipRing({ owner_cell: "+17205550100" }, { ForwardedFrom: "+17205550100" }), true, "forwarded: no loop");
+assert.equal(skipRing({ owner_cell: "+17205550100", forwarding: "Their number forwards missed calls here" }, {}), true);
+assert.equal(skipRing({}, {}), true);
+console.log("forwarding ok");

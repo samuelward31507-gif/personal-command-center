@@ -159,6 +159,13 @@ export default function LivePanel({ projectId }: { projectId: string }) {
         <li><b>Thumbtack:</b> Zapier &rarr; Thumbtack &ldquo;New lead&rdquo; &rarr; Webhooks POST to <code>&hellip;&amp;source=thumbtack</code>.</li>
         <li><b>Facebook Lead Ads:</b> Zapier or Make &rarr; Facebook Lead Ads &ldquo;New lead&rdquo; &rarr; Webhooks POST to <code>&hellip;&amp;source=facebook</code>. Send all fields; the form&rsquo;s questions come through as the job details.</li>
       </ul>
+      <p className="op-hint"><b>Call forwarding</b> (they keep their number; only calls they miss come to Cinder). On the kickoff call, have them dial from their business phone, using their Cinder number <code>{d?.ready?.number || "+1…"}</code> without the +1:</p>
+      <ul className="op-hint" style={{ margin: "4px 0 0 18px", listStyle: "disc" }}>
+        <li><b>Verizon:</b> <code>*71</code> + the 10-digit Cinder number, then Call. Turn off: <code>*73</code>.</li>
+        <li><b>AT&amp;T, T-Mobile and most others:</b> <code>**004*</code> + the 10-digit number + <code>#</code>, then Call. Turn off: <code>##004#</code>.</li>
+        <li><b>Office lines (RingCentral, Google Voice, Grasshopper, Spectrum):</b> in the app&rsquo;s call settings, set &ldquo;forward when unanswered&rdquo; to the Cinder number after 4&ndash;5 rings.</li>
+        <li>Then test it with them: call their number from another phone and don&rsquo;t answer. The caller gets the text in about 10 seconds. Set &ldquo;How calls reach Cinder&rdquo; in setup to the forwarding option.</li>
+      </ul>
       <p className="op-hint"><b>Texting consent:</b> every caller, texter, form and lead is logged with what they sent, plus every opt-out. <a href={`/api/client-consent?project=${projectId}`}>Download the consent log (CSV)</a> for carrier registration or a complaint.</p>
     </div>}
 

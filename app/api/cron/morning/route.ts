@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { clientHealth, healthLines, type Health } from "@/lib/client-health";
 import { loadWorkspace } from "@/lib/workspace-data";
 import { sendAlert, lastAlertError } from "@/lib/notify";
 import { logRun } from "@/lib/pre-audit";
@@ -116,6 +117,10 @@ export async function GET(request: Request) {
   if (counts.dms) lines.push(`${counts.dms} unread Instagram/Facebook DM${counts.dms === 1 ? "" : "s"}.`);
   if (sentTo.length) lines.push(`Sent for you this morning: ${sentTo.length} email follow-up${sentTo.length === 1 ? "" : "s"} (${sentTo.slice(0, 8).join(", ")}${sentTo.length > 8 ? "…" : ""}).`);
   if (sync && sync.replies) lines.push(`New email replies found: ${sync.replies}. Their follow-ups stopped.`);
+  // Every live client's system: failed texts, unanswered customers, silence (usually broken call forwarding).
+  const health = await clientHealth(sql, o).catch(e => { console.error("Client health failed", e); return [] as Health[]; });
+  result.clientHealth = health.length;
+  if (health.length) lines.unshift(`CLIENT SYSTEMS NEED YOU: ${healthLines(health).join(" ")}`);
   for (const p of problems) lines.push(`Heads up: ${p}`);
   const sentBrief = await sendAlert({ subject: `Today: ${counts.calls_due} callbacks, ${warm.length + (counts.texts_due || 0)} texts, ${mail.length} emails`, lines, link: { label: "Open Today", path: "/crm/needs-you" } });
   result.brief = sentBrief;
