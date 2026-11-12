@@ -3,7 +3,7 @@ import { logRun } from "@/lib/pre-audit";
 import { bearerMatches } from "@/lib/bearer";
 import { publishDue } from "@/lib/content-publish-run";
 import { metaConfig } from "@/lib/meta-publish";
-import { sendMondayReports, sendReminders } from "@/lib/client-runtime-run";
+import { runLeadNudges, sendMondayReports, sendReminders } from "@/lib/client-runtime-run";
 import { loadWorkspace } from "@/lib/workspace-data";
 
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ export const maxDuration = 300;
 /**
  * GET /api/cron/publish — Vercel Cron, five times a day. Posts whatever is queued to Facebook and Instagram.
  * The same runs send clients' day-before estimate reminders and, on Mondays, each owner's weekly text, but only
- * between 9 AM and 7 PM local time, inside texting quiet-hour rules.
+ * between 9 AM and 7 PM local time, inside texting quiet-hour rules. Every run also nudges new leads that went quiet.
  */
 export async function GET(request: Request) {
   const started = new Date();
@@ -30,6 +30,8 @@ export async function GET(request: Request) {
     const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hourCycle: "h23" }).format(started));
     const weekday = new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short" }).format(started);
     const texts: Record<string, unknown> = {};
+    // Lead nudges check each client's own texting hours (8 AM to 8 PM their time), so they run on every pass.
+    texts.nudges = await runLeadNudges(sql, started).catch(e => { console.error("Lead nudges failed", e); return null; });
     if (hour >= 9 && hour < 19) {
       texts.reminders = await sendReminders(sql).catch(e => { console.error("Reminders failed", e); return null; });
       if (weekday === "Mon") texts.mondayReports = await sendMondayReports(sql, origin, new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(started)).catch(e => { console.error("Monday reports failed", e); return null; });

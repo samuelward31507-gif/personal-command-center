@@ -118,6 +118,9 @@ const TEMPLATES: Record<"fence" | "pool", { key: string; label: string; body: st
     { key: "booking", label: "Booking link", body: "Thanks, that helps. Here's a link to pick a time for a free on-site estimate: {link}" },
     { key: "reminder", label: "Reminder the day before", body: "Reminder: {owner} from {business} is coming out tomorrow at {time} to measure. Need to change it? {link}" },
     { key: "not_fit", label: "Not a fit", body: "Thanks for thinking of {business}, {first}. That one's outside what we take on, but we appreciate you reaching out." },
+    { key: "nudge_1", label: "No reply yet: follow-up after about 2 hours", body: "Hi {first}, {business} again. Just making sure you saw this. Still want a price on your project? A quick reply here works." },
+    { key: "nudge_2", label: "No reply yet: follow-up the next day", body: "Hi {first}, {owner} at {business} here. Happy to get you a price range or set up a free estimate. Reply with a good day and we'll hold a time." },
+    { key: "nudge_3", label: "No reply yet: last check-in on day 3", body: "Last check-in from {business}: should we keep you on the list for an estimate? Reply anytime, no pressure." },
     { key: "handoff", label: "Handing off to the owner", body: "Good question. I'll have {owner} reach out to you directly about that today." },
   ],
   pool: [
@@ -127,6 +130,9 @@ const TEMPLATES: Record<"fence" | "pool", { key: string; label: string; body: st
     { key: "booking", label: "Booking link", body: "Great. The next step is a free backyard design consultation. Pick a time that works here: {link}" },
     { key: "reminder", label: "Reminder the day before", body: "Reminder: your design consultation with {business} is tomorrow at {time}. Need to reschedule? {link}" },
     { key: "quote_follow_up", label: "Proposal follow-up", body: "Hi {first}, just checking in on the pool proposal. Happy to walk through options or financing whenever works for you." },
+    { key: "nudge_1", label: "No reply yet: follow-up after about 2 hours", body: "Hi {first}, {business} again. Just making sure you saw this. Still thinking about a pool? A quick reply here works." },
+    { key: "nudge_2", label: "No reply yet: follow-up the next day", body: "Hi {first}, {owner} at {business} here. Happy to answer questions or set up a free design consultation. Reply with a good day." },
+    { key: "nudge_3", label: "No reply yet: last check-in on day 3", body: "Last check-in from {business}: should we keep you on the list for a consultation? Reply anytime, no pressure." },
     { key: "handoff", label: "Handing off to the owner", body: "Good question. I'll have {owner} reach out to you directly about that today." },
   ],
 };

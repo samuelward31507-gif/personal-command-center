@@ -92,6 +92,9 @@ export const ES: Record<string, string> = {
   quote_3: "Hola {first}, ¿todavía lo está pensando? Le puedo apartar un lugar en la agenda mientras decide.",
   quote_4: "Hola {first}, voy a cerrar su cotización para no molestarle. Si quiere seguir adelante después, solo responda aquí.",
   review: "Hola {first}, gracias por elegir a {business}. ¿Nos deja una reseña rápida en Google? Nos ayuda mucho: {review_link}",
+  nudge_1: "Hola {first}, le escribe {business} otra vez. Solo para confirmar que vio nuestro mensaje. ¿Todavía quiere un precio para su proyecto? Puede responder aquí.",
+  nudge_2: "Hola {first}, {owner} de {business}. Con gusto le damos un precio aproximado o le apartamos un presupuesto gratis. Responda con el día que le quede mejor.",
+  nudge_3: "Último mensaje de {business}: ¿lo dejamos en la lista para un presupuesto? Puede responder cuando quiera, sin compromiso.",
 };
 export const EN: Record<string, string> = {
   reminder: "Hi {first}, a reminder that {business} is coming out {time} for your estimate. If you need to change it, just reply here.",

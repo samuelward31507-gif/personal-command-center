@@ -55,6 +55,7 @@ Rules:
 - Booking: when you know the job, the location is in the service area and they want an estimate, send the booking link: ${setup.booking_link || "(none: ask for a good time and say the owner will confirm)"}.
 - Hand off to ${owner} (handoff true) for: complaints, negotiating price, insurance or legal questions, anything unusual, anything you're unsure about, or when they ask for a person.
 - Jobs they don't take: ${setup.rules || "none listed"}. If it's one of those, say so kindly (stage "not_fit").
+- If they say they don't need it anymore, went with someone else, or aren't interested: thank them kindly, don't push (stage "done").
 - Never invent facts about the business.
 - Write in the customer's language: if they write in Spanish, reply in Spanish.
 
@@ -69,7 +70,7 @@ Business facts:
 Approved wording to match in tone:
 ${approved || "(none yet)"}
 
-Reply with JSON only: {"reply": "the text to send", "handoff": false, "stage": "qualifying" | "booking_offered" | "booked" | "not_fit", "summary": "one line for the owner: name, job, where it stands"}.
+Reply with JSON only: {"reply": "the text to send", "handoff": false, "stage": "qualifying" | "booking_offered" | "booked" | "not_fit" | "done", "summary": "one line for the owner: name, job, where it stands"}.
 Use "booked" only when they confirm they picked a time.`;
 }
 
@@ -79,7 +80,7 @@ export function replyUser(history: { direction: string; body: string }[], custom
   return `Customer name: ${customerName || "unknown"}\n\nConversation:\n${lines.join("\n")}\n\nWrite the next text from the business.`;
 }
 
-export type Decision = { reply: string; handoff: boolean; stage: "qualifying" | "booking_offered" | "booked" | "not_fit"; summary: string; book?: string | null };
+export type Decision = { reply: string; handoff: boolean; stage: "qualifying" | "booking_offered" | "booked" | "not_fit" | "done"; summary: string; book?: string | null };
 /** Reads the engine's JSON. Anything malformed hands off to the owner instead of guessing. */
 export function parseDecision(text: string): Decision | null {
   const m = (text || "").match(/\{[\s\S]*\}/);
@@ -87,7 +88,7 @@ export function parseDecision(text: string): Decision | null {
   try {
     const j = JSON.parse(m[0]);
     const reply = typeof j.reply === "string" ? j.reply.trim().slice(0, 480) : "";
-    const stage = ["qualifying", "booking_offered", "booked", "not_fit"].includes(j.stage) ? j.stage : "qualifying";
+    const stage = ["qualifying", "booking_offered", "booked", "not_fit", "done"].includes(j.stage) ? j.stage : "qualifying";
     if (!reply && !j.handoff) return null;
     return { reply, handoff: j.handoff === true, stage, summary: typeof j.summary === "string" ? j.summary.slice(0, 200) : "", book: typeof j.book === "string" ? j.book : null };
   } catch { return null; }
@@ -137,4 +138,35 @@ export const REVIEW_TEXT = "Hi {first}, thanks again for choosing {business}. Wo
 export function ownerAlert(kind: "new" | "handoff" | "booked" | "missed", who: string, detail: string): string {
   const head = { new: "New lead", handoff: "Needs you", booked: "Estimate booked", missed: "Missed call, texted back" }[kind];
   return `Cinder · ${head}: ${who}${detail ? `. ${detail}` : ""}`.slice(0, 320);
+}
+
+// ---------- Lead follow-up (no reply yet) ----------
+// A new lead got our first text but went quiet, or stopped replying mid-conversation. Three friendly nudges:
+// about 2 hours later, the next day, and day 3. Any reply, a booking, a handoff or an opt-out stops them.
+export const NUDGE_HOURS = [2, 20, 68] as const;
+export const NUDGE_TEXTS = [
+  "Hi {first}, {business} again. Just making sure you saw this. Still want a price on your project? A quick reply here works.",
+  "Hi {first}, {owner} at {business} here. Happy to get you a price range or set up a free estimate. Reply with a good day and we'll hold a time.",
+  "Last check-in from {business}: should we keep you on the list for an estimate? Reply anytime, no pressure.",
+] as const;
+
+/**
+ * Which nudge is due now (0, 1 or 2), or null. `anchor` is when the lead last did something: came in, or their
+ * latest text. Nudges are counted per anchor, so a reply that goes quiet again starts a fresh, shorter-lived round.
+ */
+export function nudgeStep(o: { anchor: number | null; lastOut: number | null; nudgeAnchor: number | null; nudgesSent: number; now: number }): number | null {
+  const { anchor, lastOut, now } = o;
+  if (!anchor || !lastOut || lastOut < anchor) return null;          // we never answered this lead: a different problem
+  const sent = o.nudgeAnchor === anchor ? o.nudgesSent : 0;
+  if (sent >= NUDGE_HOURS.length) return null;
+  if (now - anchor > 7 * 86400000) return null;                       // a week old: let it go
+  if (now - anchor < NUDGE_HOURS[sent] * 3600000) return null;
+  if (now - lastOut < 90 * 60000) return null;                        // never two texts close together
+  return sent;
+}
+
+/** Texting hours for nudges in the client's time zone: 8 AM to 8 PM. */
+export function inTextingHours(tz: string, now = new Date()): boolean {
+  const h = Number(new Intl.DateTimeFormat("en-US", { timeZone: tz || "America/Denver", hour: "numeric", hourCycle: "h23" }).format(now));
+  return h >= 8 && h < 20;
 }

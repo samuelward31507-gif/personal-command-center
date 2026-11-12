@@ -6,7 +6,7 @@ import { sendSms } from "@/lib/twilio";
 import { recordConsent } from "@/lib/client-consent";
 import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
-import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, REVIEW_TEXT, type Vars } from "@/lib/client-runtime";
+import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, freeSlots, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent } from "@/lib/client-calendar";
 import { pushFromAlert, pushToProject } from "@/lib/client-push";
@@ -71,6 +71,7 @@ export async function clientMissedCall(sql: Sql, c: Client, caller: string): Pro
   if (t.status === "opted_out") return;
   const body = fill(say(c, "missed_call", FALLBACK.missed_call, t.lang === "es" ? "es" : "en"), varsFor(c));
   await log(sql, c, t.id, "in", "system", "Missed call");
+  await sql`UPDATE public.client_threads SET contact_at = now() WHERE id = ${t.id}::uuid`;
   await sendToCustomer(sql, c, t.id, caller, body, "template");
   await alertOwner(c, ownerAlert("missed", e164(caller), "They got your text back. Replies are handled for you."), t.id);
 }
@@ -158,7 +159,48 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
   } else if (d.stage === "booked") {
     await sql`UPDATE public.client_threads SET status = 'booked', updated_at = now() WHERE id = ${t.id}::uuid`;
     await alertOwner(c, ownerAlert("booked", who, d.summary), t.id);
+  } else if (d.stage === "not_fit" || d.stage === "done") {
+    // Not a job they take, or the customer is done: close it so nothing else (like a follow-up nudge) goes out.
+    await sql`UPDATE public.client_threads SET status = 'closed', updated_at = now() WHERE id = ${t.id}::uuid`;
+    if (firstText) await alertOwner(c, ownerAlert("new", who, d.summary), t.id);
   } else if (firstText) await alertOwner(c, ownerAlert("new", who, d.summary), t.id);
+}
+
+/**
+ * Leads that went quiet: up to three friendly nudges (about 2 hours, next day, day 3) inside 8 AM to 8 PM in the
+ * client's time zone. Only threads still on autopilot: a reply, booking, handoff, close or opt-out stops them.
+ */
+export async function runLeadNudges(sql: Sql, now = new Date(), limit = 80): Promise<{ sent: number; skipped: number }> {
+  const rows = await sql`SELECT t.id, t.owner_id, t.project_id, t.customer_phone, t.customer_name, t.lang, t.nudges_sent, t.nudge_anchor,
+      coalesce(t.contact_at, t.created_at) AS contact_at,
+      (SELECT max(x.at) FROM public.client_texts x WHERE x.thread_id = t.id AND x.direction = 'in' AND x.author = 'customer') AS last_customer,
+      (SELECT max(x.at) FROM public.client_texts x WHERE x.thread_id = t.id AND x.direction = 'out' AND x.ok) AS last_out
+    FROM public.client_threads t
+    WHERE t.status = 'auto' AND t.source NOT IN ('quote', 'review') AND t.updated_at > now() - interval '8 days'
+    ORDER BY t.updated_at LIMIT 1000` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; lang: Lang; nudges_sent: number; nudge_anchor: string | null; contact_at: string; last_customer: string | null; last_out: string | null }[];
+  const ms = (v: string | null) => (v ? new Date(v).getTime() : null);
+  const clients = new Map<string, Client | null>();
+  let sent = 0, skipped = 0;
+  for (const r of rows) {
+    if (sent >= limit) break;
+    const anchorMs = Math.max(ms(r.contact_at) ?? 0, ms(r.last_customer) ?? 0) || null;
+    const step = nudgeStep({ anchor: anchorMs, lastOut: ms(r.last_out), nudgeAnchor: ms(r.nudge_anchor), nudgesSent: r.nudges_sent, now: now.getTime() });
+    if (step === null) continue;
+    const key = r.owner_id + r.project_id;
+    if (!clients.has(key)) clients.set(key, await clientById(sql, r.owner_id, r.project_id));
+    const c = clients.get(key);
+    if (!c?.setup.texting_number || !inTextingHours(tzOf(c), now)) { skipped++; continue; }
+    // Claim the step first, so two overlapping runs can never send the same nudge twice.
+    const anchorIso = new Date(anchorMs!).toISOString();
+    const [claimed] = await sql`UPDATE public.client_threads SET nudges_sent = ${step + 1}, nudge_anchor = ${anchorIso}::timestamptz
+      WHERE id = ${r.id}::uuid AND status = 'auto' AND (CASE WHEN nudge_anchor = ${anchorIso}::timestamptz THEN nudges_sent ELSE 0 END) = ${step} RETURNING id`;
+    if (!claimed) continue;
+    const lang: Lang = r.lang === "es" ? "es" : "en";
+    const body = fill(say(c, `nudge_${step + 1}`, NUDGE_TEXTS[step], lang), varsFor(c, (r.customer_name || "").split(" ")[0]));
+    const ok = await sendToCustomer(sql, c, r.id, r.customer_phone, body, "template");
+    if (ok) sent++; else skipped++;
+  }
+  return { sent, skipped };
 }
 
 /** Morning job: send every quote follow-up that's due today, across all clients. */
@@ -239,7 +281,7 @@ export async function webLead(sql: Sql, c: Client, lead: Lead | { name: string; 
     `${paid ? `Requested a quote on ${lead.via || lead.source}` : "Submitted a form asking to be contacted"}${lead.name ? ` as ${lead.name}` : ""}${lead.email ? ` <${lead.email}>` : ""}${lead.message ? `: "${lead.message.slice(0, 200)}"` : ""}`, ip);
   if (t.status === "opted_out") return { ok: false, threadId: t.id };
   const lang: Lang = detectLang(lead.message) === "es" ? "es" : "en";
-  await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${lead.name} ELSE customer_name END, lang = ${lang}, source = ${lead.source} WHERE id = ${t.id}::uuid`;
+  await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${lead.name} ELSE customer_name END, lang = ${lang}, source = ${lead.source}, contact_at = now() WHERE id = ${t.id}::uuid`;
   await log(sql, c, t.id, "in", "system", `New ${lead.source} lead${lead.message ? `: "${lead.message.slice(0, 300)}"` : ""}${lead.email ? ` · ${lead.email}` : ""}`);
   const via = lead.via || "";
   const text = paid ? say(c, "paid_lead", EN.paid_lead, lang).split("{via}").join(via) : say(c, "web_lead", EN.web_lead, lang);
