@@ -70,7 +70,7 @@ Business facts:
 Approved wording to match in tone:
 ${approved || "(none yet)"}
 
-Reply with JSON only: {"reply": "the text to send", "handoff": false, "stage": "qualifying" | "booking_offered" | "booked" | "not_fit" | "done", "summary": "one line for the owner: name, job, where it stands"}.
+Reply with JSON only: {"reply": "the text to send", "handoff": false, "stage": "qualifying" | "booking_offered" | "booked" | "not_fit" | "done" | "canceled", "summary": "one line for the owner: name, job, where it stands"}.
 Use "booked" only when they confirm they picked a time.`;
 }
 
@@ -80,7 +80,7 @@ export function replyUser(history: { direction: string; body: string }[], custom
   return `Customer name: ${customerName || "unknown"}\n\nConversation:\n${lines.join("\n")}\n\nWrite the next text from the business.`;
 }
 
-export type Decision = { reply: string; handoff: boolean; stage: "qualifying" | "booking_offered" | "booked" | "not_fit" | "done"; summary: string; book?: string | null };
+export type Decision = { reply: string; handoff: boolean; stage: "qualifying" | "booking_offered" | "booked" | "not_fit" | "done" | "canceled"; summary: string; book?: string | null };
 /** Reads the engine's JSON. Anything malformed hands off to the owner instead of guessing. */
 export function parseDecision(text: string): Decision | null {
   const m = (text || "").match(/\{[\s\S]*\}/);
@@ -88,7 +88,7 @@ export function parseDecision(text: string): Decision | null {
   try {
     const j = JSON.parse(m[0]);
     const reply = typeof j.reply === "string" ? j.reply.trim().slice(0, 480) : "";
-    const stage = ["qualifying", "booking_offered", "booked", "not_fit", "done"].includes(j.stage) ? j.stage : "qualifying";
+    const stage = ["qualifying", "booking_offered", "booked", "not_fit", "done", "canceled"].includes(j.stage) ? j.stage : "qualifying";
     if (!reply && !j.handoff) return null;
     return { reply, handoff: j.handoff === true, stage, summary: typeof j.summary === "string" ? j.summary.slice(0, 200) : "", book: typeof j.book === "string" ? j.book : null };
   } catch { return null; }
@@ -135,8 +135,8 @@ export function parseLeadList(text: string): { name: string; phone: string }[] {
 export const REVIEW_TEXT = "Hi {first}, thanks again for choosing {business}. Would you leave us a quick Google review? It really helps a small business: {review_link}";
 
 /** What the owner gets on their phone. */
-export function ownerAlert(kind: "new" | "handoff" | "booked" | "missed", who: string, detail: string): string {
-  const head = { new: "New lead", handoff: "Needs you", booked: "Estimate booked", missed: "Missed call, texted back" }[kind];
+export function ownerAlert(kind: "new" | "handoff" | "booked" | "missed" | "waiting" | "moved" | "canceled", who: string, detail: string): string {
+  const head = { new: "New lead", handoff: "Needs you", booked: "Estimate booked", missed: "Missed call, texted back", waiting: "Still waiting on you", moved: "Estimate moved", canceled: "Estimate canceled" }[kind];
   return `Cinder · ${head}: ${who}${detail ? `. ${detail}` : ""}`.slice(0, 320);
 }
 
@@ -169,4 +169,17 @@ export function nudgeStep(o: { anchor: number | null; lastOut: number | null; nu
 export function inTextingHours(tz: string, now = new Date()): boolean {
   const h = Number(new Intl.DateTimeFormat("en-US", { timeZone: tz || "America/Denver", hour: "numeric", hourCycle: "h23" }).format(now));
   return h >= 8 && h < 20;
+}
+
+// ---------- Handoffs the owner hasn't answered ----------
+/**
+ * What to do about a customer handed to the owner who hasn't replied yet: remind the owner after 45 minutes
+ * (owner hours, 7 AM to 9 PM), and after 3 hours tell the customer they haven't been forgotten (texting hours).
+ */
+export function handoffAction(o: { handoffAt: number; nudgedAt: number | null; heldAt: number | null; now: number; ownerHours: boolean; textingHours: boolean }): "remind" | "hold" | null {
+  const waited = o.now - o.handoffAt;
+  if (waited > 3 * 86400000) return null;
+  if (!o.heldAt && waited >= 3 * 3600000 && o.textingHours) return "hold";
+  if (!o.nudgedAt && waited >= 45 * 60000 && o.ownerHours) return "remind";
+  return null;
 }

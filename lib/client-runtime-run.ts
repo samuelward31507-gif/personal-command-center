@@ -6,9 +6,9 @@ import { sendSms } from "@/lib/twilio";
 import { recordConsent } from "@/lib/client-consent";
 import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
-import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, type Vars } from "@/lib/client-runtime";
-import { bookingRules, detectLang, ES, EN, freeSlots, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
-import { busyTimes, clientCalendar, createEvent } from "@/lib/client-calendar";
+import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, type Vars } from "@/lib/client-runtime";
+import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
+import { busyTimes, clientCalendar, createEvent, deleteEvent } from "@/lib/client-calendar";
 import { pushFromAlert, pushToProject } from "@/lib/client-push";
 
 type Sql = NeonQueryFunction<false, false>;
@@ -69,8 +69,11 @@ export async function clientMissedCall(sql: Sql, c: Client, caller: string): Pro
   const t = await thread(sql, c, caller, "missed_call");
   if (t.fresh) await recordConsent(sql, c, e164(caller), "inbound_call", "phone", `Called ${c.setup.texting_number || "the business number"}`);
   if (t.status === "opted_out") return;
-  const body = fill(say(c, "missed_call", FALLBACK.missed_call, t.lang === "es" ? "es" : "en"), varsFor(c));
-  await log(sql, c, t.id, "in", "system", "Missed call");
+  const lang: Lang = t.lang === "es" ? "es" : "en";
+  // After hours: the client's approved after-hours wording, else a reply that still starts the conversation now.
+  const open = isOpen(parseHours(c.setup.hours, tzOf(c)));
+  const body = fill(open ? say(c, "missed_call", FALLBACK.missed_call, lang) : lang === "es" ? ES.after_hours_call : wording(c.messages, "after_hours", EN.after_hours_call), varsFor(c));
+  await log(sql, c, t.id, "in", "system", open ? "Missed call" : "Missed call (after hours)");
   await sql`UPDATE public.client_threads SET contact_at = now() WHERE id = ${t.id}::uuid`;
   await sendToCustomer(sql, c, t.id, caller, body, "template");
   await alertOwner(c, ownerAlert("missed", e164(caller), "They got your text back. Replies are handled for you."), t.id);
@@ -88,12 +91,12 @@ async function openSlots(sql: Sql, c: Client, lang: Lang): Promise<Slot[] | null
 }
 
 /** The reply engine's next text, or null when it should hand off. Never throws. */
-export async function draftReply(sql: Sql, c: Client, threadId: string, customerName: string, slots: Slot[] | null = null) {
+export async function draftReply(sql: Sql, c: Client, threadId: string, customerName: string, slots: Slot[] | null = null, extra = "") {
   const history = await sql`SELECT direction, body FROM public.client_texts WHERE thread_id = ${threadId}::uuid ORDER BY at DESC LIMIT 20` as { direction: string; body: string }[];
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return null;
   try {
-    const system = replySystem(c.setup, c.messages) + (slots ? bookingRules(slots) : "");
+    const system = replySystem(c.setup, c.messages) + (slots ? bookingRules(slots) : "") + extra;
     const text = await claudeText({ apiKey: key, system, user: replyUser(history.reverse(), customerName), label: "Client reply", model: process.env.CINDER_REPLY_MODEL?.trim() || "claude-haiku-5-5", maxTokens: 500, timeoutMs: 9000 });
     return parseDecision(text);
   } catch (e) { console.error("Client reply failed", e instanceof Error ? e.message : e); return null; }
@@ -108,6 +111,14 @@ async function book(sql: Sql, c: Client, threadId: string, phone: string, who: s
     await sql`INSERT INTO public.client_appointments (owner_id, project_id, thread_id, starts_at, ends_at, event_id) VALUES (${c.owner}, ${c.projectId}::uuid, ${threadId}::uuid, ${slot.start}::timestamptz, ${slot.end}::timestamptz, ${eventId})`;
     return true;
   } catch (e) { console.error("Booking failed", e instanceof Error ? e.message : e); return false; }
+}
+
+/** Marks an estimate canceled and removes it from the owner's Google Calendar. True when the calendar is clean. */
+async function cancelAppointment(sql: Sql, c: Client, appointmentId: string, eventId: string): Promise<boolean> {
+  await sql`UPDATE public.client_appointments SET status = 'canceled' WHERE id = ${appointmentId}::uuid AND status = 'booked'`;
+  const cal = await clientCalendar(sql, c.projectId).catch(() => null);
+  if (!cal) return false;
+  try { await deleteEvent(cal, eventId); return true; } catch (e) { console.error("Calendar delete failed", e instanceof Error ? e.message : e); return false; }
 }
 
 /** A customer texted the client's number. */
@@ -141,12 +152,14 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
   }
   if (t.status === "paused" || t.status === "closed") { await alertOwner(c, ownerAlert("handoff", t.customer_name || e164(from), `They texted: "${body.slice(0, 160)}"`), t.id); return; }
   const slots = await openSlots(sql, c, lang);
-  const d = await draftReply(sql, c, t.id, t.customer_name, slots);
+  // Already booked? The reply engine needs to know, so "can we do Friday instead?" moves the estimate, not doubles it.
+  const [current] = await sql`SELECT id, starts_at, event_id FROM public.client_appointments WHERE thread_id = ${t.id}::uuid AND status = 'booked' AND starts_at > now() ORDER BY starts_at LIMIT 1` as { id: string; starts_at: string; event_id: string }[];
+  const d = await draftReply(sql, c, t.id, t.customer_name, slots, current ? existingBookingRules(slotLabel(new Date(current.starts_at).toISOString(), tzOf(c), lang)) : "");
   const who = t.customer_name || e164(from);
   if (!d || d.handoff) {
     if (d?.reply) await sendToCustomer(sql, c, t.id, from, d.reply, "ai");
     await sendToCustomer(sql, c, t.id, from, fill(say(c, "handoff", FALLBACK.handoff, lang), varsFor(c)), "template");
-    await sql`UPDATE public.client_threads SET status = 'paused', updated_at = now() WHERE id = ${t.id}::uuid`;
+    await sql`UPDATE public.client_threads SET status = 'paused', handoff_at = now(), handoff_nudged_at = NULL, handoff_held_at = NULL, updated_at = now() WHERE id = ${t.id}::uuid`;
     await alertOwner(c, ownerAlert("handoff", who, d?.summary || `They texted: "${body.slice(0, 160)}"`), t.id);
     return;
   }
@@ -155,7 +168,15 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
   if (picked) {
     const ok = await book(sql, c, t.id, e164(from), who, picked, d.summary);
     await sql`UPDATE public.client_threads SET status = 'booked', updated_at = now() WHERE id = ${t.id}::uuid`;
-    await alertOwner(c, ownerAlert("booked", who, `${slotLabel(picked.start, tzOf(c))}${ok ? ", on your calendar" : " (add it to your calendar, it didn't save)"}. ${d.summary}`), t.id);
+    if (current && ok) {
+      // They moved it: take the old estimate off the calendar so there's one appointment, not two.
+      const removed = await cancelAppointment(sql, c, current.id, current.event_id);
+      await alertOwner(c, ownerAlert("moved", who, `from ${slotLabel(new Date(current.starts_at).toISOString(), tzOf(c))} to ${slotLabel(picked.start, tzOf(c))}${removed ? "" : ". Delete the old one from your calendar, it didn't come off"}.`), t.id);
+    } else await alertOwner(c, ownerAlert("booked", who, `${slotLabel(picked.start, tzOf(c))}${ok ? ", on your calendar" : " (add it to your calendar, it didn't save)"}. ${d.summary}`), t.id);
+  } else if (d.stage === "canceled" && current) {
+    const removed = await cancelAppointment(sql, c, current.id, current.event_id);
+    await sql`UPDATE public.client_threads SET status = 'auto', updated_at = now() WHERE id = ${t.id}::uuid`;
+    await alertOwner(c, ownerAlert("canceled", who, `${slotLabel(new Date(current.starts_at).toISOString(), tzOf(c))}${removed ? ", taken off your calendar" : ". Delete it from your calendar, it didn't come off"}.`), t.id);
   } else if (d.stage === "booked") {
     await sql`UPDATE public.client_threads SET status = 'booked', updated_at = now() WHERE id = ${t.id}::uuid`;
     await alertOwner(c, ownerAlert("booked", who, d.summary), t.id);
@@ -284,7 +305,8 @@ export async function webLead(sql: Sql, c: Client, lead: Lead | { name: string; 
   await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${lead.name} ELSE customer_name END, lang = ${lang}, source = ${lead.source}, contact_at = now() WHERE id = ${t.id}::uuid`;
   await log(sql, c, t.id, "in", "system", `New ${lead.source} lead${lead.message ? `: "${lead.message.slice(0, 300)}"` : ""}${lead.email ? ` · ${lead.email}` : ""}`);
   const via = lead.via || "";
-  const text = paid ? say(c, "paid_lead", EN.paid_lead, lang).split("{via}").join(via) : say(c, "web_lead", EN.web_lead, lang);
+  const afterHours = lang === "en" && !isOpen(parseHours(c.setup.hours, tzOf(c))) && c.messages.some(m => m.key === "after_hours" && m.status === "approved");
+  const text = afterHours ? wording(c.messages, "after_hours", EN.web_lead) : paid ? say(c, "paid_lead", EN.paid_lead, lang).split("{via}").join(via) : say(c, "web_lead", EN.web_lead, lang);
   const ok = await sendToCustomer(sql, c, t.id, lead.phone, fill(text, varsFor(c, lead.name.split(" ")[0])), "template");
   await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${paid ? via : lead.source}${lead.message ? `: ${lead.message.slice(0, 120)}` : ""}. Texted back.`), t.id);
   return { ok, threadId: t.id };
@@ -320,4 +342,46 @@ export async function sendMondayReports(sql: Sql, origin: string, week: string):
     if (ok) { sent++; await sql`INSERT INTO public.client_weekly (project_id, week) VALUES (${r.project_id}::uuid, ${week}::date) ON CONFLICT DO NOTHING`; }
   }
   return { sent };
+}
+
+/**
+ * Customers handed to the owner who haven't heard back. The owner gets one reminder after 45 minutes (7 AM to
+ * 9 PM their time); after 3 hours the customer gets one "sorry for the wait" so they don't think they were dropped.
+ * Any reply or call-back from the owner, or the owner turning the automation back on, ends it.
+ */
+export async function runHandoffChecks(sql: Sql, now = new Date(), limit = 80): Promise<{ reminded: number; held: number }> {
+  const rows = await sql`SELECT t.id, t.owner_id, t.project_id, t.customer_phone, t.customer_name, t.lang, t.handoff_at, t.handoff_nudged_at, t.handoff_held_at
+    FROM public.client_threads t
+    WHERE t.status = 'paused' AND t.handoff_at > now() - interval '3 days' AND (t.handoff_nudged_at IS NULL OR t.handoff_held_at IS NULL)
+      AND NOT EXISTS (SELECT 1 FROM public.client_texts x WHERE x.thread_id = t.id AND x.direction = 'out' AND x.at > t.handoff_at
+        AND (x.author = 'owner' OR (x.author = 'system' AND x.body = 'You called them back')))
+    ORDER BY t.handoff_at LIMIT 300` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; lang: Lang; handoff_at: string; handoff_nudged_at: string | null; handoff_held_at: string | null }[];
+  const clients = new Map<string, Client | null>();
+  let reminded = 0, held = 0;
+  for (const r of rows) {
+    if (reminded + held >= limit) break;
+    const key = r.owner_id + r.project_id;
+    if (!clients.has(key)) clients.set(key, await clientById(sql, r.owner_id, r.project_id));
+    const c = clients.get(key);
+    if (!c?.setup.texting_number) continue;
+    const tz = tzOf(c);
+    const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", hourCycle: "h23" }).format(now));
+    const act = handoffAction({ handoffAt: new Date(r.handoff_at).getTime(), nudgedAt: r.handoff_nudged_at ? new Date(r.handoff_nudged_at).getTime() : null,
+      heldAt: r.handoff_held_at ? new Date(r.handoff_held_at).getTime() : null, now: now.getTime(), ownerHours: hour >= 7 && hour < 21, textingHours: inTextingHours(tz, now) });
+    const who = r.customer_name || e164(r.customer_phone);
+    if (act === "remind") {
+      const [claimed] = await sql`UPDATE public.client_threads SET handoff_nudged_at = now() WHERE id = ${r.id}::uuid AND handoff_nudged_at IS NULL RETURNING id`;
+      if (!claimed) continue;
+      await alertOwner(c, ownerAlert("waiting", who, "They're still waiting for you. Reply or call them back from the Cinder app."), r.id);
+      reminded++;
+    } else if (act === "hold") {
+      const [claimed] = await sql`UPDATE public.client_threads SET handoff_held_at = now(), handoff_nudged_at = coalesce(handoff_nudged_at, now()) WHERE id = ${r.id}::uuid AND handoff_held_at IS NULL RETURNING id`;
+      if (!claimed) continue;
+      const lang: Lang = r.lang === "es" ? "es" : "en";
+      const ok = await sendToCustomer(sql, c, r.id, r.customer_phone, fill(say(c, "handoff_hold", lang === "es" ? ES.handoff_hold : EN.handoff_hold, lang), varsFor(c, (r.customer_name || "").split(" ")[0])), "template");
+      await alertOwner(c, ownerAlert("waiting", who, "We told them you'll reach out soon. Call them back from the Cinder app."), r.id);
+      if (ok) held++;
+    }
+  }
+  return { reminded, held };
 }

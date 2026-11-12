@@ -52,6 +52,14 @@ export async function createEvent(cal: ClientCal, e: { start: string; end: strin
   return String(j.id ?? "");
 }
 
+/** Removes an event Cinder booked (the customer moved or canceled). A missing event counts as done. */
+export async function deleteEvent(cal: ClientCal, eventId: string): Promise<void> {
+  if (!eventId) return;
+  const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.calendarId)}/events/${encodeURIComponent(eventId)}`, { method: "DELETE",
+    headers: { Authorization: `Bearer ${cal.token}` }, signal: AbortSignal.timeout(8000) });
+  if (!r.ok && r.status !== 404 && r.status !== 410) throw new Error("Couldn't remove the old estimate from the calendar.");
+}
+
 export type CalEvent = { id: string; title: string; start: string; end: string; allDay: boolean; link: string };
 /** The owner's own events (their jobs, personal blocks) between two times, so the app can show the real week. */
 export async function listEvents(cal: ClientCal, from: Date, to: Date): Promise<CalEvent[]> {

@@ -30,3 +30,26 @@ assert.match(fill(NUDGE_TEXTS[1], { business: "Ridgeline Fence", owner: "Mike" }
 // The reply engine can close a lead that's done.
 assert.equal(parseDecision('{"reply":"No problem, thanks for letting us know.","handoff":false,"stage":"done","summary":"Went with someone else"}').stage, "done");
 console.log("lead nudges ok");
+
+// ---------- Handoffs, after hours, rescheduling ----------
+import { handoffAction } from "./lib/client-runtime.ts";
+import { isOpen, parseHours, existingBookingRules, EN, ES } from "./lib/client-booking.ts";
+const M = 60000;
+const ho = (o) => handoffAction({ handoffAt: t0, nudgedAt: null, heldAt: null, ownerHours: true, textingHours: true, ...o });
+assert.equal(ho({ now: t0 + 30 * M }), null);
+assert.equal(ho({ now: t0 + 50 * M }), "remind");
+assert.equal(ho({ now: t0 + 50 * M, ownerHours: false }), null, "no 2 AM reminders to the owner");
+assert.equal(ho({ now: t0 + 60 * M, nudgedAt: t0 + 50 * M }), null);
+assert.equal(ho({ now: t0 + 3.1 * H, nudgedAt: t0 + 50 * M }), "hold");
+assert.equal(ho({ now: t0 + 3.1 * H, nudgedAt: t0 + 50 * M, textingHours: false }), null, "the customer text waits for texting hours");
+assert.equal(ho({ now: t0 + 4 * H, nudgedAt: t0 + 50 * M, heldAt: t0 + 3.1 * H }), null);
+assert.equal(ho({ now: t0 + 4 * 86400000 }), null);
+// Open hours: Mon-Fri 8-5 Denver. 2026-11-12 is a Thursday.
+const h = parseHours("Mon-Fri 8-5", "America/Denver");
+assert.equal(isOpen(h, new Date(Date.UTC(2026, 10, 12, 17))), true);   // 10 AM
+assert.equal(isOpen(h, new Date(Date.UTC(2026, 10, 13, 2))), false);   // 7 PM
+assert.equal(isOpen(h, new Date(Date.UTC(2026, 10, 14, 17))), false);  // Saturday 10 AM
+assert.match(existingBookingRules("Fri, Nov 13, 10:00 AM"), /already has an estimate booked: Fri, Nov 13, 10:00 AM/);
+assert.equal(parseDecision('{"reply":"No problem, canceled.","handoff":false,"stage":"canceled","summary":"Canceled"}').stage, "canceled");
+assert.ok(EN.after_hours_call && ES.after_hours_call && EN.handoff_hold && ES.handoff_hold);
+console.log("handoffs, after hours, rescheduling ok");

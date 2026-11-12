@@ -2,7 +2,7 @@
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 
 type Sql = NeonQueryFunction<false, false>;
-export type Health = { name: string; failed: number; unanswered: number; quiet: boolean; slow: number };
+export type Health = { name: string; failed: number; unanswered: number; quiet: boolean; slow: number; waiting: number };
 
 /** Failed texts, customer texts Cinder never answered (15 min+), and live clients with no activity in 7 days. */
 export async function clientHealth(sql: Sql, owner: string): Promise<Health[]> {
@@ -18,10 +18,14 @@ export async function clientHealth(sql: Sql, owner: string): Promise<Health[]> {
       (SELECT count(*)::int FROM public.client_threads t
         CROSS JOIN LATERAL (SELECT min(i.at) AS at FROM public.client_texts i WHERE i.thread_id = t.id AND i.direction = 'in') f
         WHERE t.project_id = o.project_id AND t.source NOT IN ('quote','rehash','review') AND f.at > now() - interval '24 hours' AND f.at < now() - interval '2 minutes'
-          AND coalesce((SELECT min(r.at) FROM public.client_texts r WHERE r.thread_id = t.id AND r.direction = 'out' AND r.ok AND r.at >= f.at), now()) > f.at + interval '60 seconds') AS slow
+          AND coalesce((SELECT min(r.at) FROM public.client_texts r WHERE r.thread_id = t.id AND r.direction = 'out' AND r.ok AND r.at >= f.at), now()) > f.at + interval '60 seconds') AS slow,
+      (SELECT count(*)::int FROM public.client_threads t WHERE t.project_id = o.project_id AND t.status = 'paused'
+        AND t.handoff_at > now() - interval '3 days' AND t.handoff_at < now() - interval '2 hours'
+        AND NOT EXISTS (SELECT 1 FROM public.client_texts x WHERE x.thread_id = t.id AND x.direction = 'out' AND x.at > t.handoff_at
+          AND (x.author = 'owner' OR (x.author = 'system' AND x.body = 'You called them back')))) AS waiting
     FROM public.client_ops o JOIN public.projects p ON p.id = o.project_id
     WHERE o.owner_id = ${owner} AND coalesce(o.setup->>'texting_number', '') <> ''` as unknown as Health[];
-  return rows.filter(r => r.failed || r.unanswered || r.quiet || r.slow);
+  return rows.filter(r => r.failed || r.unanswered || r.quiet || r.slow || r.waiting);
 }
 
 export function healthLines(h: Health[]): string[] {
@@ -29,6 +33,7 @@ export function healthLines(h: Health[]): string[] {
     r.failed ? `${r.failed} text${r.failed === 1 ? "" : "s"} failed to send` : "",
     r.unanswered ? `${r.unanswered} customer text${r.unanswered === 1 ? "" : "s"} never got a reply` : "",
     r.slow ? `${r.slow} new lead${r.slow === 1 ? "" : "s"} waited over 60 seconds for the first reply (the guarantee)` : "",
+    r.waiting ? `${r.waiting} customer${r.waiting === 1 ? " is" : "s are"} waiting on the owner for over 2 hours (nudge the owner)` : "",
     r.quiet ? "no calls or texts in 7 days (check their call forwarding)" : "",
   ].filter(Boolean).join(", ")).map((t, i) => `${h[i].name}: ${t}. Open their Live tab.`);
 }

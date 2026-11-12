@@ -43,7 +43,7 @@ export async function GET(request: Request) {
       // What the live system did this month: estimates it put on their calendar, and the 60-second guarantee, measured.
       const from = `${period}-01T00:00:00Z`, to = new Date(Date.UTC(Number(period.slice(0, 4)), Number(period.slice(5, 7)), 1)).toISOString();
       const reply = replySummary(await replySecs(sql, String(c.id), from, to).catch(() => []));
-      const [ap] = await sql`SELECT count(*)::int AS n FROM public.client_appointments WHERE project_id = ${c.id}::uuid AND created_at >= ${from}::timestamptz AND created_at < ${to}::timestamptz`.catch(() => [{ n: 0 }]) as { n: number }[];
+      const [ap] = await sql`SELECT count(*)::int AS n FROM public.client_appointments WHERE project_id = ${c.id}::uuid AND status <> 'canceled' AND created_at >= ${from}::timestamptz AND created_at < ${to}::timestamptz`.catch(() => [{ n: 0 }]) as { n: number }[];
       const text = [r.text, `Estimates Cinder booked on your calendar: ${ap?.n ?? 0}.`, replyLine(reply)].join("\n\n");
       const ins = await sql`INSERT INTO public.client_reports (owner_id, project_id, period, figures, content, status)
         VALUES (${owner}, ${c.id}::uuid, ${period}, ${JSON.stringify({ estimates: f.booked, sprint: f, runtimeBooked: ap?.n ?? 0, reply })}::jsonb, ${text}, 'draft')

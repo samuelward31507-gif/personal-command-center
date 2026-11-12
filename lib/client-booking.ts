@@ -57,6 +57,20 @@ export function freeSlots(busy: Busy[], h: Hours, now: Date, opts: { days?: numb
   return out;
 }
 
+/** Is the business open right now by its setup hours (their time zone)? Used to pick the after-hours wording. */
+export function isOpen(h: Hours, now = new Date()): boolean {
+  const ymd = localYmd(now, h.tz);
+  if (!h.days.includes(localDow(ymd))) return false;
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: h.tz, hourCycle: "h23", hour: "2-digit", minute: "2-digit" }).formatToParts(now).map(x => [x.type, x.value]));
+  const m = +p.hour * 60 + +p.minute;
+  return m >= h.start * 60 && m < h.end * 60;
+}
+
+/** What the reply engine should know when this customer already has an estimate on the calendar. */
+export function existingBookingRules(label: string): string {
+  return `\nThis customer already has an estimate booked: ${label}. If they want a different time, offer two open times and, when they pick one, set "book" to it (the old one is removed for you) and confirm the new time. If they want to cancel, confirm kindly, set "stage" to "canceled" and "book" to null. Don't offer a new time unless they ask to change.`;
+}
+
 /** Instructions added to the reply engine when the owner's calendar is connected. */
 export function bookingRules(slots: Slot[]): string {
   if (!slots.length) return "\nCalendar: no open estimate times in the next two weeks. Ask what days work and hand off to the owner to schedule.";
@@ -92,6 +106,8 @@ export const ES: Record<string, string> = {
   quote_3: "Hola {first}, ¿todavía lo está pensando? Le puedo apartar un lugar en la agenda mientras decide.",
   quote_4: "Hola {first}, voy a cerrar su cotización para no molestarle. Si quiere seguir adelante después, solo responda aquí.",
   review: "Hola {first}, gracias por elegir a {business}. ¿Nos deja una reseña rápida en Google? Nos ayuda mucho: {review_link}",
+  after_hours_call: "Perdón que no contestamos, le escribe {business}. Ya cerramos por hoy, pero podemos empezar por aquí. ¿En qué le podemos ayudar?",
+  handoff_hold: "Hola {first}, perdón por la espera. {owner} está en un trabajo y le va a contactar lo antes posible. Puede responder aquí cuando quiera.",
   nudge_1: "Hola {first}, le escribe {business} otra vez. Solo para confirmar que vio nuestro mensaje. ¿Todavía quiere un precio para su proyecto? Puede responder aquí.",
   nudge_2: "Hola {first}, {owner} de {business}. Con gusto le damos un precio aproximado o le apartamos un presupuesto gratis. Responda con el día que le quede mejor.",
   nudge_3: "Último mensaje de {business}: ¿lo dejamos en la lista para un presupuesto? Puede responder cuando quiera, sin compromiso.",
@@ -102,6 +118,8 @@ export const EN: Record<string, string> = {
   web_lead: "Hi {first}, this is {business}. Thanks for reaching out. Can you tell me a bit more about the job and the address so I can give you a price range?",
   paid_lead: "Hi {first}, this is {business}. Got your request on {via}. Can you tell me a bit more about the job and the address so I can give you a price range?",
   booked: "You're booked: {time}. {owner} will see you then. Reply here if anything changes.",
+  after_hours_call: "Sorry we missed your call, this is {business}. We're closed for the night, but we can get you started right here. What can we help with?",
+  handoff_hold: "Hi {first}, sorry for the wait. {owner} is out on a job and will reach out as soon as possible. Reply here anytime.",
 };
 
 // ---------- Owner's Monday text ----------
