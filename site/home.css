@@ -370,3 +370,35 @@ p, li, dd { text-wrap: pretty; }
 .book-me b { color: var(--text); font-weight: 600; font-size: 15px; }
 .book-ava { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--text); color: #fff; font-weight: 600; }
 @media (max-width: 900px) { .bookpage .book-only { padding-top: 96px; } }
+
+/* Big screens: the first screen fills the window, and the layout grows with wide monitors instead of floating in the middle. */
+@media (min-width: 1024px) and (min-height: 640px) {
+  .hero { min-height: calc(100svh - 72px); display: flex; align-items: center; padding: 32px 0 72px; }
+}
+@media (min-width: 1500px) {
+  .wrap { width: min(1320px, 100% - 120px); }
+  h1 { font-size: clamp(82px, 5.2vw, 104px); }
+  h2 { font-size: clamp(56px, 3.6vw, 66px); }
+  .lede { font-size: 21px; }
+  .hero-grid { gap: 96px; }
+  .hero-phone { zoom: 1.12; }
+}
+@media (min-width: 1900px) {
+  .wrap { width: min(1480px, 100% - 160px); }
+  .hero-phone { zoom: 1.22; }
+}
+@media (min-width: 2200px) {
+  .wrap { width: min(1760px, 100% - 240px); }
+  h1 { font-size: 124px; }
+  h2 { font-size: 76px; }
+  .lede { font-size: 24px; }
+  body { font-size: 18px; }
+  .hero-phone { zoom: 1.45; }
+}
+/* Short laptop screens: keep the headline, the buttons and the phone on the first screen. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .hero h1 { font-size: clamp(46px, 4.6vw, 66px); }
+  .hero .lede { margin-top: 20px; font-size: 18px; }
+  .hero-ctas { margin-top: 26px; }
+  .hero-phone { zoom: .86; }
+}
