@@ -103,10 +103,32 @@ function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (acti
   const isReel = d.platform === "video";
   const copy = () => navigator.clipboard?.writeText(d.caption).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); });
   const [pending, setPending] = useState<FileOut[] | null>(null);
-  const downloadSlides = async () => {
+  // Phones only open the share sheet straight from a tap, with nothing awaited first, so the slide images are
+  // drawn ahead of time and the tap hands them over immediately.
+  const [ready, setReady] = useState<File[] | null>(null);
+  const cardKey = JSON.stringify(cards);
+  useEffect(() => {
+    if (isReel) return;
+    let live = true;
+    const t = setTimeout(() => {
+      Promise.all(cards.map((c, i) => cardPng(c, { page: cards.length > 1 ? `${i + 1}/${cards.length}` : undefined })))
+        .then(blobs => { if (live) setReady(asFiles(blobs.map((blob, i) => ({ blob, name: `${fileBase(d)}${cards.length > 1 ? "-" + (i + 1) : ""}.png` })))); })
+        .catch(() => {});
+    }, 400);
+    return () => { live = false; clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardKey, isReel]);
+  const downloadSlides = () => {
+    if (ready && navigator.canShare?.({ files: ready })) {
+      navigator.share({ files: ready }).catch((e: Error) => { if (e?.name !== "AbortError") files().then(f => setPending(f)); });
+      return;
+    }
+    void files().then(f => saveFiles(f, setPending));
+  };
+  const files = async (): Promise<FileOut[]> => {
     const name = (i: number) => `${fileBase(d)}${cards.length > 1 ? "-" + (i + 1) : ""}.png`;
     const blobs = await Promise.all(cards.map((_, i) => new Promise<Blob | null>(res => canvases.current[i] ? canvases.current[i].toBlob(res, "image/png") : res(null))));
-    await saveFiles(blobs.flatMap((b, i) => (b ? [{ name: name(i), blob: b }] : [])), setPending);
+    return blobs.flatMap((b, i) => (b ? [{ name: name(i), blob: b }] : []));
   };
 
   async function makeReel(save: boolean) {
@@ -150,7 +172,7 @@ function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (acti
         <button type="button" className="u-btn u-btn-go" onClick={copy}>{copied ? "Copied" : "Copy caption"}</button>
         {isReel ? <button type="button" className="u-btn" disabled={work !== null} onClick={() => void makeReel(true)}>{work !== null ? `Recording ${Math.round(work * 100)}%` : reel ? "Download reel" : "Make reel"}</button>
           : pending ? <button type="button" className="u-btn u-btn-go" onClick={async () => { if (await shareNow(pending)) setPending(null); }}>Save {pending.length} to Photos</button>
-          : <button type="button" className="u-btn" onClick={() => void downloadSlides()}>Download{cards.length > 1 ? ` ${cards.length}` : ""}</button>}
+          : <button type="button" className="u-btn" onClick={downloadSlides}>{ready && typeof navigator !== "undefined" && navigator.canShare?.({ files: ready }) ? `Save ${cards.length > 1 ? cards.length + " " : ""}to Photos` : `Download${cards.length > 1 ? ` ${cards.length}` : ""}`}</button>}
         {meta.connected && (d.platform === "feed" || isReel) && !posted && d.media > 0 && <button type="button" className="u-btn" disabled={busy} onClick={() => void act("publish_now")}>Post now</button>}
         <button type="button" className="u-btn u-btn-bare" onClick={() => setEditing(true)}>Edit</button>
         <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => setNoting(n => !n)}>Rewrite</button>
