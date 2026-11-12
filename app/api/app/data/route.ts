@@ -1,7 +1,7 @@
 import { appSession, clientFor, db, json } from "@/lib/client-app-run";
 import { liveFor } from "@/lib/client-live";
 import { calState, clientCalendar, listEvents, type CalEvent } from "@/lib/client-calendar";
-import { SEQUENCES } from "@/lib/client-runtime";
+import { isRepeatTrade, SEQUENCES } from "@/lib/client-runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
     return json({
       project: c.projectId, business: c.setup.display_name || "", number: c.setup.texting_number || "", canCall: !!(c.setup.owner_cell && c.setup.texting_number),
       owner: c.setup.owner_name || "", businesses: biz, live,
-      appointments: (appts as { event_id?: string }[]).map(a => ({ ...a, link: (a.event_id && links.get(a.event_id)) || "" })), quotes, quoteSteps: SEQUENCES.quote.days.length, wonJobs, hasReviewLink: !!c.setup.review_link, calendar, messages: (msgs as Record<string, unknown>[]).reverse(), unreadFromSam: (unread as { n: number }[])[0]?.n ?? 0,
+      appointments: (appts as { event_id?: string }[]).map(a => ({ ...a, link: (a.event_id && links.get(a.event_id)) || "" })), quotes, quoteSteps: SEQUENCES.quote.days.length, wonJobs, hasReviewLink: !!c.setup.review_link, repeat: isRepeatTrade(c.setup.trade), calendar, messages: (msgs as Record<string, unknown>[]).reverse(), unreadFromSam: (unread as { n: number }[])[0]?.n ?? 0,
     });
   } catch (e) { console.error("App data failed", e instanceof Error ? e.message : e); return json({ error: "Couldn't load." }, 500); }
 }

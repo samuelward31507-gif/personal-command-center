@@ -3,7 +3,7 @@ import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
 import { claudeText } from "@/lib/ai-text";
 import { markNoShow, clientById, sendToCustomer, sendReviewRequest } from "@/lib/client-runtime-run";
-import { digits10, parseDecision, parseLeadList, replySystem, replyUser } from "@/lib/client-runtime";
+import { digits10, nextDue, parseCustomerList, parseDecision, parseLeadList, replySystem, replyUser } from "@/lib/client-runtime";
 import { randomBytes } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -43,15 +43,17 @@ export async function GET(req: Request) {
     chatKey = k?.chat_key || randomBytes(18).toString("base64url");
     if (!k?.chat_key) await sql`UPDATE public.client_ops SET chat_key = ${chatKey} WHERE project_id = ${project}::uuid AND owner_id = ${o} AND chat_key IS NULL`;
   }
-  const [appts, cal] = await Promise.all([
+  const [appts, cal, customers] = await Promise.all([
     sql`SELECT a.id, a.starts_at, a.status, a.reminded_at, t.customer_name, t.customer_phone FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id
       WHERE a.owner_id = ${o} AND a.project_id = ${project}::uuid AND a.starts_at > now() - interval '14 days' ORDER BY a.starts_at LIMIT 60`.catch(() => []),
     sql`SELECT google_email FROM public.client_calendars WHERE project_id = ${project}::uuid`.catch(() => []),
+    sql`SELECT id, customer_name, customer_phone, service, last_service::text AS last_service, interval_days, next_due::text AS next_due, due_steps, status
+      FROM public.client_customers WHERE owner_id = ${o} AND project_id = ${project}::uuid ORDER BY next_due LIMIT 300`.catch(() => []),
   ]);
   const calendar = (cal as { google_email: string }[])[0] ? { connected: true, email: (cal as { google_email: string }[])[0].google_email } : { connected: false, email: "" };
   const missing = [!s.texting_number && "Texting number", !s.owner_cell && "Owner's cell", !s.booking_link && !calendar.connected && "Calendar or booking link", !s.review_link && "Google review link",
     !(c?.messages ?? []).some(m => m.status === "approved") && "Approved messages"].filter(Boolean);
-  return reply({ threads, quotes, reviews: rv[0]?.n ?? 0, chatKey, appointments: appts, calendar, ready: { live: missing.length === 0, missing, number: s.texting_number || "" } });
+  return reply({ threads, quotes, reviews: rv[0]?.n ?? 0, chatKey, appointments: appts, customers, calendar, ready: { live: missing.length === 0, missing, number: s.texting_number || "" } });
 }
 
 /** POST {project, action, ...}: reply as the owner, change a thread's status, add or close a quote, send a review request, or test the reply engine. */
@@ -133,6 +135,35 @@ export async function POST(req: Request) {
       added += r.length;
     }
     return reply({ ok: true, added, skipped: leads.length - added });
+  }
+  if (action === "customers") {
+    // Repeat Revenue: the client's own past customers (they bought before), with when they were last serviced.
+    if (b.consent !== true) return reply({ error: "Confirm these are the business's own past customers." }, 400);
+    const rows = parseCustomerList(str(b.list, 80000));
+    if (!rows.length) return reply({ error: "Paste one customer per line: name, cell, last service date." }, 400);
+    const interval = Math.min(730, Math.max(7, Math.round(Number(b.interval) || Number(c?.setup.repeat_days) || 90)));
+    const today = new Date().toISOString().slice(0, 10);
+    let added = 0, updated = 0;
+    for (const r of rows) {
+      const due = nextDue(r.last, interval, today);
+      const [x] = await sql`INSERT INTO public.client_customers (owner_id, project_id, customer_phone, customer_name, service, last_service, interval_days, next_due)
+        VALUES (${o}, ${project}::uuid, ${r.phone}, ${r.name}, ${r.service}, ${r.last}::date, ${interval}, ${due}::date)
+        ON CONFLICT (project_id, customer_phone) DO UPDATE SET customer_name = coalesce(nullif(EXCLUDED.customer_name, ''), client_customers.customer_name),
+          service = coalesce(nullif(EXCLUDED.service, ''), client_customers.service), last_service = coalesce(EXCLUDED.last_service, client_customers.last_service),
+          interval_days = EXCLUDED.interval_days, next_due = EXCLUDED.next_due, due_steps = 0, due_texted_at = NULL
+        WHERE client_customers.status <> 'opted_out'
+        RETURNING (xmax = 0) AS fresh` as { fresh: boolean }[];
+      if (!x) continue;
+      if (x.fresh) { added++; await recordConsent(sql, c, r.phone, "owner_import", "repeat customers", `Owner confirmed ${r.name || "this person"} is a past customer`); }
+      else updated++;
+    }
+    return reply({ ok: true, added, updated, skipped: rows.length - added - updated });
+  }
+  if (action === "customer_status") {
+    const id = str(b.customer, 40), st = str(b.status, 10);
+    if (!UUID.test(id) || !["active", "paused"].includes(st)) return reply({ error: "Unknown customer or status." }, 400);
+    await sql`UPDATE public.client_customers SET status = ${st} WHERE id = ${id}::uuid AND owner_id = ${o} AND status <> 'opted_out'`;
+    return reply({ ok: true });
   }
   if (action === "quote_status") {
     const st = str(b.status, 10), id = str(b.quote, 40);

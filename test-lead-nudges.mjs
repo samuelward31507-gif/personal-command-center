@@ -72,3 +72,20 @@ assert.equal(behind({ guarantee_days: 15, guarantee_booked: 1 }), true);
 assert.equal(behind({ guarantee_days: 15, guarantee_booked: 2 }), false);
 assert.equal(behind({ guarantee_days: null, guarantee_booked: 0 }), false);
 console.log("owner texts, repeat trades, financing, guarantee ok");
+
+// ---------- Repeat Revenue ----------
+import { parseCustomerList, parseDay, nextDue, DUE_TEXTS } from "./lib/client-runtime.ts";
+assert.equal(parseDay("8/14/2026"), "2026-08-14");
+assert.equal(parseDay("2026-07-02"), "2026-07-02");
+assert.equal(parseDay("8/14/26"), "2026-08-14");
+assert.equal(parseDay("2/30/2026"), null);
+const cl = parseCustomerList("Dana Ruiz, 720-555-0148, 8/14/2026, maintenance detail\nMarcus Hill\t(303) 555-0192\t2026-07-02\nno phone here\nDana again, 720.555.0148, 1/1/2026");
+assert.equal(cl.length, 2);
+assert.deepEqual(cl[0], { name: "Dana Ruiz", phone: "+17205550148", last: "2026-08-14", service: "maintenance detail" });
+assert.deepEqual(cl[1], { name: "Marcus Hill", phone: "+13035550192", last: "2026-07-02", service: "" });
+assert.equal(nextDue("2026-08-14", 90, "2026-11-12"), "2026-11-12", "overdue customers are due today");
+assert.equal(nextDue("2026-10-01", 90, "2026-11-12"), "2026-12-30");
+assert.equal(nextDue(null, 90, "2026-11-12"), "2026-11-12");
+assert.equal(fill(DUE_TEXTS[0].split("{slots}").join(" I have Thu 10:00 AM or Fri 2:00 PM open.").split("{service}").join("maintenance detail"), { first: "Dana", owner: "Mike", business: "Shine Co" }),
+  "Hi Dana, it's Mike with Shine Co. You're about due for your next maintenance detail. Want me to get you on the schedule? I have Thu 10:00 AM or Fri 2:00 PM open.");
+console.log("repeat revenue ok");

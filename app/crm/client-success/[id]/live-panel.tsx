@@ -10,8 +10,9 @@ type Thread = { id: string; customer_phone: string; customer_name: string; sourc
 type Text = { direction: string; author: string; body: string; ok: boolean; at: string };
 type Quote = { id: string; customer_phone: string; customer_name: string; amount: string | null; sent_on: string; steps_sent: number; status: string; kind: string };
 type Appt = { id: string; starts_at: string; status: string; reminded_at: string | null; customer_name: string; customer_phone: string };
-type Data = { threads: Thread[]; quotes: Quote[]; reviews: number; chatKey: string; appointments?: Appt[]; calendar?: { connected: boolean; email: string }; ready: { live: boolean; missing: string[]; number: string } };
-type Tab = "inbox" | "estimates" | "quotes" | "revive" | "reviews" | "chat" | "test";
+type Data = { threads: Thread[]; quotes: Quote[]; reviews: number; chatKey: string; appointments?: Appt[]; customers?: Customer[]; calendar?: { connected: boolean; email: string }; ready: { live: boolean; missing: string[]; number: string } };
+type Tab = "inbox" | "estimates" | "quotes" | "revive" | "repeat" | "reviews" | "chat" | "test";
+type Customer = { id: string; customer_name: string; customer_phone: string; service: string; last_service: string | null; interval_days: number; next_due: string; due_steps: number; status: string };
 const NB = { background: "transparent" };
 const when = (d: string) => new Date(d).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 const STATUS: Record<string, string> = { auto: "Handled for them", paused: "Needs a person", opted_out: "Opted out", booked: "Booked", closed: "Closed" };
@@ -31,6 +32,7 @@ export default function LivePanel({ projectId }: { projectId: string }) {
   const [simIn, setSimIn] = useState("");
   const [list, setList] = useState("");
   const [consent, setConsent] = useState(false);
+  const [custList, setCustList] = useState(""), [custDays, setCustDays] = useState(""), [custOk, setCustOk] = useState(false);
   const [calLink, setCalLink] = useState("");
   async function getCalLink() {
     setNote(null);
@@ -75,7 +77,7 @@ export default function LivePanel({ projectId }: { projectId: string }) {
       {d?.ready.live && <span className="lv-on">Live</span>}
     </div>
     <div className="op-tabs" role="group" aria-label="Live system">
-      {([["inbox", "Conversations", needs ? `${needs} need you` : `${d?.threads.length ?? 0} total`], ["estimates", "Estimates", d?.calendar?.connected ? `${(d.appointments ?? []).filter(a => a.status === "booked" && Date.parse(a.starts_at) > Date.now()).length} coming up` : "Connect calendar"], ["quotes", "Quotes", `${openQ} being chased`], ["revive", "Revive old leads", revive.length ? `${revive.filter(x => x.status === "replied").length} replied of ${revive.length}` : "Week-1 win"], ["reviews", "Reviews", `${d?.reviews ?? 0} asked`], ["chat", "Website chat", "Bubble for their site"], ["test", "Test replies", "Before go-live"]] as const).map(([k, label, sub]) =>
+      {([["inbox", "Conversations", needs ? `${needs} need you` : `${d?.threads.length ?? 0} total`], ["estimates", "Estimates", d?.calendar?.connected ? `${(d.appointments ?? []).filter(a => a.status === "booked" && Date.parse(a.starts_at) > Date.now()).length} coming up` : "Connect calendar"], ["quotes", "Quotes", `${openQ} being chased`], ["revive", "Revive old leads", revive.length ? `${revive.filter(x => x.status === "replied").length} replied of ${revive.length}` : "Week-1 win"], ["repeat", "Repeat customers", d?.customers?.length ? `${d.customers.filter(x => x.status === "active" && x.next_due <= new Date().toISOString().slice(0, 10)).length} due now` : "Repeat Revenue"], ["reviews", "Reviews", `${d?.reviews ?? 0} asked`], ["chat", "Website chat", "Bubble for their site"], ["test", "Test replies", "Before go-live"]] as const).map(([k, label, sub]) =>
         <button key={k} type="button" aria-pressed={tab === k} style={{ background: tab === k ? "#e7e7e4" : "transparent" }} onClick={() => setTab(k)}><b>{label}</b><small>{sub}</small></button>)}
     </div>
     {note && <p className={"op-note " + (note.ok ? "ok" : "bad")} role="status">{note.text}</p>}
@@ -125,6 +127,19 @@ export default function LivePanel({ projectId }: { projectId: string }) {
       <label className="lv-check"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} /> These people contacted {d?.ready.number ? "this business" : "the business"} themselves (old inquiries or past quotes), not a bought list.</label>
       <div className="op-acts"><button type="button" className="op-primary" style={NB} disabled={!!busy || !list.trim() || !consent} onClick={async () => { const x = await act("rehash", { list, consent }, ""); if (x) { setNote({ ok: true, text: `${x.added} added${x.skipped ? `, ${x.skipped} skipped (already in a revive or opted out)` : ""}. The first texts go out in the next daytime run.` }); setList(""); } }}>Start the revive</button></div>
       <ul className="lv-quotes">{revive.map(x => <li key={x.id}><b>{x.customer_name || x.customer_phone}</b><span>{x.steps_sent} of 3 texts</span><span className={"lv-st is-" + x.status}>{x.status === "replied" ? "Replied" : x.status === "lost" ? "No reply" : x.status}</span></li>)}</ul>
+    </div>}
+
+    {tab === "repeat" && <div>
+      <p className="op-hint">Repeat Revenue. The business&apos;s past customers and when they were last serviced. When each one is due, Cinder texts them from the business&apos;s number with two open times (if the calendar is connected), sends one reminder 4 days later if they don&apos;t answer, and books whoever replies. A booking resets their next due date. Texts go out 8 AM to 8 PM their time.</p>
+      <label className="op-owner"><span>One per line: name, cell, last service date, and optionally the service. Paste from their booking app or a spreadsheet.</span><textarea rows={6} value={custList} onChange={e => setCustList(e.target.value)} placeholder={"Dana Ruiz, 720-555-0148, 8/14/2026, maintenance detail\nMarcus Hill\t(303) 555-0192\t2026-07-02"} /></label>
+      <label className="op-owner" style={{ maxWidth: 260 }}><span>Days between visits</span><input inputMode="numeric" value={custDays} onChange={e => setCustDays(e.target.value.replace(/\D/g, "").slice(0, 3))} placeholder="90" /></label>
+      <label className="lv-check"><input type="checkbox" checked={custOk} onChange={e => setCustOk(e.target.checked)} /> These are the business&apos;s own past customers, not a bought list.</label>
+      <div className="op-acts"><button type="button" className="op-primary" style={NB} disabled={!!busy || !custList.trim() || !custOk} onClick={async () => { const x = await act("customers", { list: custList, interval: custDays, consent: custOk }, ""); if (x) { setNote({ ok: true, text: `${x.added} added${x.updated ? `, ${x.updated} updated` : ""}${x.skipped ? `, ${x.skipped} skipped (opted out)` : ""}. Anyone already due gets a text in the next daytime run.` }); setCustList(""); } }}>Add customers</button></div>
+      <ul className="lv-quotes">{(d?.customers ?? []).map(x => <li key={x.id}><b>{x.customer_name || x.customer_phone}</b>
+        <span>{x.service ? x.service + " · " : ""}every {x.interval_days} days · due {new Date(x.next_due + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}{x.due_steps ? ` · ${x.due_steps} of 2 texts sent` : ""}</span>
+        <span className={"lv-st is-" + (x.status === "active" ? "open" : x.status)}>{x.status === "opted_out" ? "Opted out" : x.status === "paused" ? "Paused" : "Active"}</span>
+        {x.status !== "opted_out" && <span className="op-acts"><button type="button" style={NB} onClick={() => act("customer_status", { customer: x.id, status: x.status === "paused" ? "active" : "paused" }, x.status === "paused" ? "Resumed." : "Paused.")}>{x.status === "paused" ? "Resume" : "Pause"}</button></span>}
+      </li>)}</ul>
     </div>}
 
     {tab === "reviews" && <div>

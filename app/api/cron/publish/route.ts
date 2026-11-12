@@ -3,7 +3,7 @@ import { logRun } from "@/lib/pre-audit";
 import { bearerMatches } from "@/lib/bearer";
 import { publishDue } from "@/lib/content-publish-run";
 import { metaConfig } from "@/lib/meta-publish";
-import { runHandoffChecks, runLeadNudges, sendMondayReports, sendReminders } from "@/lib/client-runtime-run";
+import { runDueTexts, runHandoffChecks, runLeadNudges, sendMondayReports, sendReminders } from "@/lib/client-runtime-run";
 import { loadWorkspace } from "@/lib/workspace-data";
 
 export const runtime = "nodejs";
@@ -32,6 +32,7 @@ export async function GET(request: Request) {
     const texts: Record<string, unknown> = {};
     // Lead nudges check each client's own texting hours (8 AM to 8 PM their time), so they run on every pass.
     texts.nudges = await runLeadNudges(sql, started).catch(e => { console.error("Lead nudges failed", e); return null; });
+    texts.due = await runDueTexts(sql, started).catch(e => { console.error("Due texts failed", e); return null; });
     texts.handoffs = await runHandoffChecks(sql, started).catch(e => { console.error("Handoff checks failed", e); return null; });
     if (hour >= 9 && hour < 19) {
       texts.reminders = await sendReminders(sql).catch(e => { console.error("Reminders failed", e); return null; });

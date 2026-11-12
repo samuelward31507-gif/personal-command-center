@@ -14,7 +14,7 @@ type Live = { leads: number; needs: number; answered: number; booked: number; re
 type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string; event_id?: string; link?: string };
 type Quote = { id: string; customer_name: string; customer_phone: string; amount: number | null; sent_on: string; steps_sent: number; status: string };
 type Cal = { connected: boolean; email: string; events: CalEvent[]; error: string; connectUrl: string };
-type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number };
+type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number };
 type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
 type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 type Tab = "leads" | "numbers" | "estimates" | "sam";
@@ -233,7 +233,8 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
     catch (e) { toast(e instanceof Error ? e.message : "That didn't work.", true); }
     finally { setBusy(""); }
   }
-  const open = (kind: Sheet["kind"], id: string) => { setSheet({ kind, id }); setAmt(""); setReview(true); };
+  // Repeat-service visits are the whole job, so a review fits right away; a won estimate waits for "Job done".
+  const open = (kind: Sheet["kind"], id: string) => { setSheet({ kind, id }); setAmt(""); setReview(!!d.repeat); };
   const amountSheet = (onSave: () => void) => <form className="ca-amt" onSubmit={e => { e.preventDefault(); onSave(); }}>
     <label htmlFor={"amt-" + sheet?.id}>{sheet?.kind === "quoted" ? "Quote amount" : "Job amount"}<small>{sheet?.kind === "quoted" ? "Optional. Shows in your numbers." : "Counts toward what Cinder brought in."}</small></label>
     <div className="ca-amt-in"><span>$</span><input id={"amt-" + sheet?.id} inputMode="decimal" autoFocus placeholder="9,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></div>

@@ -213,3 +213,53 @@ export function parseOwnerQuote(text: string): { amount: number | null; name: st
   return { amount, name };
 }
 export const OWNER_HELP = "This is your Cinder number. To answer a customer, open the Cinder app: {app}. To start quote follow-up for the customer we last texted you about, reply QUOTE and the amount, like QUOTE 4200.";
+
+// ---------- Repeat Revenue: past customers who are due again ----------
+/** Two texts per due date: on the day, then 4 days later if they haven't answered. */
+export const DUE_TEXTS = [
+  "Hi {first}, it's {owner} with {business}. You're about due for your next {service}. Want me to get you on the schedule?{slots}",
+  "Hi {first}, {owner} again. Still want to get your {service} on the calendar? Reply with a day that works and I'll set it up.",
+] as const;
+export const DUE_GAP_DAYS = 4;
+
+/** Accepts 2026-08-14, 8/14/2026, 8/14/26, 08-14-2026. Returns YYYY-MM-DD or null. */
+export function parseDay(v: string): string | null {
+  const t = (v || "").trim();
+  let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  let y: number, mo: number, d: number;
+  if (m) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+  else if ((m = t.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/))) { mo = +m[1]; d = +m[2]; y = +m[3] < 100 ? 2000 + +m[3] : +m[3]; }
+  else return null;
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return null;
+  return dt.toISOString().slice(0, 10);
+}
+export function addDays(ymd: string, n: number): string {
+  const d = new Date(ymd + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10);
+}
+
+/** One per line: name, cell, last service date, optional service ("Full detail"). Commas or tabs. */
+export function parseCustomerList(text: string): { name: string; phone: string; last: string | null; service: string }[] {
+  const seen = new Set<string>(), out: { name: string; phone: string; last: string | null; service: string }[] = [];
+  for (const line of (text || "").split(/\r?\n/)) {
+    const parts = line.split(/\t|,(?![^(]*\))/).map(x => x.trim()).filter(Boolean);
+    const pi = parts.findIndex(p => digits10(p).length === 10 && /\d{3}[^\d]*\d{3}[^\d]*\d{4}/.test(p));
+    if (pi < 0) continue;
+    const phone = digits10(parts[pi]);
+    if (seen.has(phone)) continue;
+    seen.add(phone);
+    const rest = parts.filter((_, i) => i !== pi);
+    const di = rest.findIndex(p => parseDay(p));
+    const last = di >= 0 ? parseDay(rest[di]) : null;
+    const others = rest.filter((_, i) => i !== di);
+    out.push({ name: (others[0] || "").slice(0, 80), phone: "+1" + phone, last, service: (others[1] || "").slice(0, 60) });
+  }
+  return out.slice(0, 1000);
+}
+
+/** When a customer is next due: last service + interval, never in the past (overdue customers are due today). */
+export function nextDue(last: string | null, intervalDays: number, today: string): string {
+  if (!last) return today;
+  const d = addDays(last, intervalDays);
+  return d < today ? today : d;
+}

@@ -112,6 +112,8 @@ export const ES: Record<string, string> = {
   reactivate_2: "Hola {first}, {owner} otra vez. Le puedo acomodar esta semana o la próxima. ¿Le mando un par de horarios?",
   reactivate_3: "Último mensaje, {first}. Si quiere volver a la agenda, solo responda y lo programo.",
   review: "Hola {first}, gracias por elegir a {business}. ¿Nos deja una reseña rápida en Google? Nos ayuda mucho: {review_link}",
+  due_1: "Hola {first}, le escribe {owner} de {business}. Ya casi le toca su próximo {service}. ¿Lo agendamos?{slots}",
+  due_2: "Hola {first}, {owner} otra vez. ¿Todavía quiere agendar su {service}? Responda con el día que le quede mejor y lo programo.",
   after_hours_call: "Perdón que no contestamos, le escribe {business}. Ya cerramos por hoy, pero podemos empezar por aquí. ¿En qué le podemos ayudar?",
   handoff_hold: "Hola {first}, perdón por la espera. {owner} está en un trabajo y le va a contactar lo antes posible. Puede responder aquí cuando quiera.",
   nudge_1: "Hola {first}, le escribe {business} otra vez. Solo para confirmar que vio nuestro mensaje. ¿Todavía quiere un precio para su proyecto? Puede responder aquí.",

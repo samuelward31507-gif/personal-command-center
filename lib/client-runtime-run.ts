@@ -6,7 +6,7 @@ import { sendSms } from "@/lib/twilio";
 import { recordConsent } from "@/lib/client-consent";
 import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
-import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, type Vars } from "@/lib/client-runtime";
+import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent, deleteEvent } from "@/lib/client-calendar";
 import { pushFromAlert, pushToProject } from "@/lib/client-push";
@@ -195,6 +195,10 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
   if (picked) {
     const ok = await book(sql, c, t.id, e164(from), who, picked, d.summary);
     await sql`UPDATE public.client_threads SET status = 'booked', updated_at = now() WHERE id = ${t.id}::uuid`;
+    // A repeat customer booked: their next "you're due" counts from this visit.
+    const day = new Date(picked.start).toLocaleDateString("en-CA", { timeZone: tzOf(c) });
+    await sql`UPDATE public.client_customers SET last_service = ${day}::date, next_due = ${day}::date + interval_days, due_steps = 0, due_texted_at = NULL
+      WHERE project_id = ${c.projectId}::uuid AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(from)}`.catch(() => {});
     if (current && ok) {
       // They moved it: take the old estimate off the calendar so there's one appointment, not two.
       const removed = await cancelAppointment(sql, c, current.id, current.event_id);
@@ -224,7 +228,7 @@ export async function runLeadNudges(sql: Sql, now = new Date(), limit = 80): Pro
       (SELECT max(x.at) FROM public.client_texts x WHERE x.thread_id = t.id AND x.direction = 'in' AND x.author = 'customer') AS last_customer,
       (SELECT max(x.at) FROM public.client_texts x WHERE x.thread_id = t.id AND x.direction = 'out' AND x.ok) AS last_out
     FROM public.client_threads t
-    WHERE t.status = 'auto' AND t.source NOT IN ('quote', 'review') AND t.updated_at > now() - interval '8 days'
+    WHERE t.status = 'auto' AND t.source NOT IN ('quote', 'review', 'due') AND t.updated_at > now() - interval '8 days'
     ORDER BY t.updated_at LIMIT 1000` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; lang: Lang; nudges_sent: number; nudge_anchor: string | null; contact_at: string; last_customer: string | null; last_out: string | null }[];
   const ms = (v: string | null) => (v ? new Date(v).getTime() : null);
   const clients = new Map<string, Client | null>();
@@ -416,4 +420,52 @@ export async function runHandoffChecks(sql: Sql, now = new Date(), limit = 80): 
     }
   }
   return { reminded, held };
+}
+
+/**
+ * Repeat Revenue: past customers whose next visit is due get a text from the business's number, with two open times
+ * when the calendar is connected; 4 days later one reminder if they haven't answered. Replies go to the reply engine,
+ * which books them. Inside texting hours in the client's time zone; opted-out numbers are never texted.
+ */
+export async function runDueTexts(sql: Sql, now = new Date(), limit = 120): Promise<{ sent: number; skipped: number }> {
+  const rows = await sql`SELECT cu.id, cu.owner_id, cu.project_id, cu.customer_phone, cu.customer_name, cu.service, cu.due_steps, cu.due_texted_at, cu.next_due::text AS next_due
+    FROM public.client_customers cu
+    WHERE cu.status = 'active' AND cu.next_due <= current_date + 1 AND cu.due_steps < ${DUE_TEXTS.length}
+      AND (cu.due_steps = 0 OR cu.due_texted_at < now() - make_interval(days => ${DUE_GAP_DAYS}))
+    ORDER BY cu.next_due LIMIT 600` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; service: string; due_steps: number; due_texted_at: string | null; next_due: string }[];
+  const clients = new Map<string, Client | null>(), slotsFor = new Map<string, Slot[] | null>();
+  let sent = 0, skipped = 0;
+  for (const r of rows) {
+    if (sent >= limit) break;
+    const key = r.owner_id + r.project_id;
+    if (!clients.has(key)) clients.set(key, await clientById(sql, r.owner_id, r.project_id));
+    const c = clients.get(key);
+    if (!c?.setup.texting_number || !inTextingHours(tzOf(c), now)) { skipped++; continue; }
+    if (r.next_due > now.toLocaleDateString("en-CA", { timeZone: tzOf(c) })) continue;   // due tomorrow in their zone, not yet
+    const [t0] = await sql`SELECT id, status FROM public.client_threads WHERE project_id = ${c.projectId}::uuid AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(r.customer_phone)} LIMIT 1` as { id: string; status: string }[];
+    if (t0?.status === "opted_out") { await sql`UPDATE public.client_customers SET status = 'opted_out' WHERE id = ${r.id}::uuid`; continue; }
+    if (r.due_steps > 0 && t0) {
+      // They answered the first text, or already booked: no reminder.
+      const [answered] = await sql`SELECT 1 FROM public.client_texts WHERE thread_id = ${t0.id}::uuid AND direction = 'in' AND author = 'customer' AND at > ${r.due_texted_at}::timestamptz LIMIT 1`;
+      if (answered || t0.status === "booked" || t0.status === "paused") { await sql`UPDATE public.client_customers SET due_steps = ${DUE_TEXTS.length} WHERE id = ${r.id}::uuid`; continue; }
+    }
+    const [claimed] = await sql`UPDATE public.client_customers SET due_steps = due_steps + 1, due_texted_at = now()
+      WHERE id = ${r.id}::uuid AND due_steps = ${r.due_steps} RETURNING id`;
+    if (!claimed) continue;
+    const t = await thread(sql, c, r.customer_phone, "due");
+    await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${r.customer_name} ELSE customer_name END,
+      status = CASE WHEN status IN ('closed', 'booked') THEN 'auto' ELSE status END, updated_at = now() WHERE id = ${t.id}::uuid`;
+    const lang: Lang = t.lang === "es" ? "es" : "en";
+    let slots = "";
+    if (r.due_steps === 0) {
+      if (!slotsFor.has(key)) slotsFor.set(key, await openSlots(sql, c, lang));
+      const open = (slotsFor.get(key) ?? []).slice(0, 2);
+      if (open.length === 2) slots = lang === "es" ? ` Tengo ${open[0].label} o ${open[1].label}.` : ` I have ${open[0].label} or ${open[1].label} open.`;
+    }
+    const service = r.service || c.setup.repeat_service || (lang === "es" ? "servicio" : "service");
+    const body = fill(say(c, `due_${r.due_steps + 1}`, DUE_TEXTS[r.due_steps], lang).split("{slots}").join(slots).split("{service}").join(service), varsFor(c, (r.customer_name || "").split(" ")[0]));
+    const ok = await sendToCustomer(sql, c, t.id, r.customer_phone, body, "template");
+    if (ok) sent++; else skipped++;
+  }
+  return { sent, skipped };
 }

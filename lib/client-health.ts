@@ -17,7 +17,7 @@ export async function clientHealth(sql: Sql, owner: string): Promise<Health[]> {
         WHERE t.project_id = o.project_id AND x.at > now() - interval '7 days') AS quiet,
       (SELECT count(*)::int FROM public.client_threads t
         CROSS JOIN LATERAL (SELECT min(i.at) AS at FROM public.client_texts i WHERE i.thread_id = t.id AND i.direction = 'in') f
-        WHERE t.project_id = o.project_id AND t.source NOT IN ('quote','rehash','review') AND f.at > now() - interval '24 hours' AND f.at < now() - interval '2 minutes'
+        WHERE t.project_id = o.project_id AND t.source NOT IN ('quote','rehash','review','due') AND f.at > now() - interval '24 hours' AND f.at < now() - interval '2 minutes'
           AND coalesce((SELECT min(r.at) FROM public.client_texts r WHERE r.thread_id = t.id AND r.direction = 'out' AND r.ok AND r.at >= f.at), now()) > f.at + interval '60 seconds') AS slow,
       (SELECT count(*)::int FROM public.client_threads t WHERE t.project_id = o.project_id AND t.status = 'paused'
         AND t.handoff_at > now() - interval '3 days' AND t.handoff_at < now() - interval '2 hours'

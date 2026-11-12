@@ -61,6 +61,8 @@ export const SETUP_FIELDS: readonly SetupField[] = [
   { group: "Leads", key: "lead_sources", label: "Where leads come in", long: true },
   { group: "Leads", key: "questions", label: "Qualifying questions", long: true },
   { group: "Leads", key: "rules", label: "Jobs they don't take", long: true },
+  { group: "Leads", key: "repeat_service", label: "Repeat service (Repeat Revenue)", help: "What past customers come back for, e.g. \"maintenance detail\". Used in the \"you're due\" text." },
+  { group: "Leads", key: "repeat_days", label: "Days between visits", help: "Default for imported customers, e.g. 60 for a maintenance detail. A customer's own interval can differ." },
   { group: "Leads", key: "prices", label: "Pricing guidance", long: true, help: "What the system may say about price. Usually: depends on the project." },
   { group: "Leads", key: "financing", label: "When they say \"too expensive\"", long: true, help: "Financing (provider, terms) or a smaller option they're happy to offer. Real price negotiation always goes to the owner." },
   { group: "Booking", key: "calendar", label: "Calendar" },
