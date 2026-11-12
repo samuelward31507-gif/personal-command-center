@@ -142,10 +142,11 @@ export default function DealWorkspacePage() {
     finally { setSaving(null); }
   }
 
+  const [addon, setAddon] = useState(false);
   async function draftAgreement() {
     setSaving("agreement"); setFlash(null);
     try {
-      const r = await fetch("/api/agreements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id }) });
+      const r = await fetch("/api/agreements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id, addon }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Could not draft the agreement.");
       setFlash({ ok: true, text: "Agreement created from your template. Fill in every [bracketed] blank before you send it." });
@@ -357,7 +358,8 @@ export default function DealWorkspacePage() {
         {tab === "agreement" && <section className="u-sheet dw-box" id="agreement">
           <div className="u-sheet dw-boxhead"><h2>Agreement</h2><span className={"dw-pill dw-pill-c-" + deal.contractStatus}>{CONTRACT_COPY[deal.contractStatus]}{deal.contractSentAt && deal.contractStatus === "sent" ? ` · ${dateLabel(deal.contractSentAt)}` : ""}{deal.signedAt && deal.contractStatus === "signed" ? ` · ${dateLabel(deal.signedAt)}` : ""}</span></div>
           {!agreement ? <>
-            <p className="dw-hint">Your service agreement, filled in with this deal's plan, price and client. Anything Cinder doesn't know stays as a [bracketed] blank for you.</p>
+            <p className="dw-hint">Your service agreement, filled in with this deal's plan, price and client, with an itemized Statement of Work in Schedule A. Anything Cinder doesn't know stays as a [bracketed] blank for you.</p>
+            <label className="dw-hint" style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={addon} onChange={e => setAddon(e.target.checked)} /> Include the Reactivation add-on ($497/month)</label>
             <button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Creating…" : "Create agreement"}</button>
           </> : agEdit?.id === agreement.id ? <>
             <textarea className="dw-editor" rows={22} value={agEdit.content} onChange={e => setAgEdit({ ...agEdit, content: e.target.value })} />

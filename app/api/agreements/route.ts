@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       tier, date: today,
       providerName: ws.legalName, providerAddress: ws.address, providerEmail: ws.contactEmail, signerName: ws.ownerFullName,
       company, ownerName: [d.first_name, d.last_name].filter(Boolean).join(" "), email: d.email ? String(d.email) : "", phone: d.phone ? String(d.phone) : "",
-      location: d.location ? String(d.location) : "", setupFee: Number(d.setup_fee), monthlyFee: Number(d.monthly_fee),
+      location: d.location ? String(d.location) : "", setupFee: Number(d.setup_fee), monthlyFee: Number(d.monthly_fee), addon: body.addon === true,
     });
     const saved = await sql`
       INSERT INTO public.research_artifacts (owner_id, contact_id, deal_id, artifact_type, title, content, confidence, status, researched_at)

@@ -11,19 +11,35 @@ type Doc = {
   content: string; signerName: string | null; signerTitle: string | null; signedAt: string | null; consent: string;
 };
 
-/** Minimal, safe Markdown → React for the agreement text (headings, bold, bullets, paragraphs). No HTML is injected. */
+/** Minimal, safe Markdown → React for the agreement text (headings, bold, bullets, paragraphs, two-column tables). No HTML is injected. */
 function inline(s: string, key: string): ReactNode[] {
   return s.split(/(\*\*[^*]+\*\*)/g).map((part, i) => part.startsWith("**") && part.endsWith("**") ? <strong key={key + i}>{part.slice(2, -2)}</strong> : <span key={key + i}>{part}</span>);
 }
 function DocBody({ text }: { text: string }) {
-  const out: ReactNode[] = []; let list: string[] = []; let para: string[] = [];
+  const out: ReactNode[] = []; let list: string[] = []; let para: string[] = []; let table: string[][] = [];
   const flush = (k: string) => {
     if (para.length) { out.push(<p key={"p" + k}>{inline(para.join(" "), "p" + k)}</p>); para = []; }
     if (list.length) { out.push(<ul key={"u" + k}>{list.map((l, i) => <li key={i}>{inline(l, "l" + k + i)}</li>)}</ul>); list = []; }
+    if (table.length) {
+      // The Statement of Work: a bold row starts a section (or is the total); the rest are its line items.
+      const [head, ...rows] = table;
+      out.push(<div className="sg-sow" key={"t" + k}><table>
+        <thead><tr><th scope="col">{head[0]}</th><th scope="col">{head[1]}</th></tr></thead>
+        <tbody>{rows.map((r, i) => { const bold = /^\*\*.*\*\*$/.test(r[0]); const last = i === rows.length - 1 && bold;
+          return <tr key={i} className={last ? "sow-total" : bold ? "sow-sec" : "sow-item"}><td>{inline(r[0], "t" + k + i)}</td><td>{inline(r[1] ?? "", "a" + k + i)}</td></tr>; })}</tbody>
+      </table></div>);
+      table = [];
+    }
   };
   text.replace(/\r/g, "").split("\n").forEach((line, i) => {
     const t = line.trim(); const k = String(i);
     if (!t) { flush(k); return; }
+    if (/^\|.*\|$/.test(t)) {
+      if (para.length || list.length) flush(k);
+      if (!/^\|[\s|:-]+\|$/.test(t)) table.push(t.slice(1, -1).split("|").map(c => c.trim()));
+      return;
+    }
+    if (table.length) flush(k);
     const h = t.match(/^(#{1,3})\s+(.*)$/);
     if (h) { flush(k); out.push(h[1].length === 1 ? <h1 key={k}>{inline(h[2], k)}</h1> : h[1].length === 2 ? <h2 key={k}>{inline(h[2], k)}</h2> : <h3 key={k}>{inline(h[2], k)}</h3>); return; }
     const b = t.match(/^[-*•]\s+(.*)$/) || t.match(/^\d+[.)]\s+(.*)$/);
