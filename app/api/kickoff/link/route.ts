@@ -23,15 +23,29 @@ export async function GET(request: Request) {
     const url = new URL(request.url); const dealId = url.searchParams.get("dealId") ?? "";
     if (!UUID.test(dealId)) return fail("Valid deal id is required.", 400);
     const sql = neon(process.env.DATABASE_URL);
-    const rows = await sql`SELECT tier, status, answers, created_at, submitted_at FROM public.kickoff_requests
+    const rows = await sql`SELECT id, tier, status, answers, created_at, submitted_at FROM public.kickoff_requests
       WHERE owner_id = ${user.id} AND deal_id = ${dealId}::uuid AND status <> 'void' ORDER BY created_at DESC LIMIT 1`;
     const r = rows[0];
     if (!r) return Response.json({ request: null }, { headers: { "Cache-Control": "no-store" } });
     const tier = String(r.tier) as KickoffTier;
     const answers = (r.answers ?? {}) as Record<string, string>;
+    // ?file=<field>: download what the client uploaded (EIN letter, quote or customer list).
+    const want = url.searchParams.get("file");
+    if (want) {
+      const f = await sql`SELECT filename, mime, data FROM public.kickoff_files WHERE kickoff_id = ${String(r.id)}::uuid AND owner_id = ${user.id} AND field = ${want}
+        ORDER BY created_at DESC LIMIT 1`;
+      if (!f.length) return fail("No file uploaded for that item.", 404);
+      const raw = f[0].data as unknown;
+      const bytes = typeof raw === "string" ? Buffer.from(raw.replace(/^\\x/, ""), "hex") : Buffer.from(raw as Uint8Array);
+      const name = String(f[0].filename).replace(/["\r\n]/g, "");
+      return new Response(bytes, { headers: { "Content-Type": String(f[0].mime), "Content-Disposition": `inline; filename="${name}"`, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
+    }
+    const files = await sql`SELECT DISTINCT ON (field) field, filename, size FROM public.kickoff_files WHERE kickoff_id = ${String(r.id)}::uuid AND owner_id = ${user.id}
+      ORDER BY field, created_at DESC`;
     const reveal = url.searchParams.get("reveal") === "ein";
-    const items = fieldsFor(tier).filter(f => answers[f.key]).map(f => ({ label: f.label, value: f.key === "ein" && !reveal ? maskEin(answers[f.key]) : answers[f.key] }));
-    return Response.json({ request: { tier, status: r.status, createdAt: new Date(String(r.created_at)).toISOString(), submittedAt: r.submitted_at ? new Date(String(r.submitted_at)).toISOString() : null, items } }, { headers: { "Cache-Control": "no-store" } });
+    const items = fieldsFor(tier).filter(f => answers[f.key] && f.kind !== "file").map(f => ({ label: f.label, value: f.key === "ein" && !reveal ? maskEin(answers[f.key]) : answers[f.key] }));
+    const labelOf = (k: string) => fieldsFor(tier).find(f => f.key === k)?.label ?? k;
+    return Response.json({ request: { tier, status: r.status, files: files.map(f => ({ field: String(f.field), label: labelOf(String(f.field)), name: String(f.filename), size: Number(f.size) })), createdAt: new Date(String(r.created_at)).toISOString(), submittedAt: r.submitted_at ? new Date(String(r.submitted_at)).toISOString() : null, items } }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Kickoff link GET failed", { name: error instanceof Error ? error.name : typeof error, message: sanitizeForLog(error instanceof Error ? error.message : "") });
     return fail("Could not load the kickoff checklist.", 500);

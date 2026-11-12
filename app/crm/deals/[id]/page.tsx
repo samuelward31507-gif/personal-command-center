@@ -66,7 +66,7 @@ export default function DealWorkspacePage() {
   const [mail, setMail] = useState<{ subject: string; body: string; to: string } | null>(null);
   const [signReq, setSignReq] = useState<{ status: string; createdAt: string; signedAt: string | null; signerName: string | null; signerTitle: string | null } | null>(null);
   const [signUrl, setSignUrl] = useState("");
-  const [kick, setKick] = useState<{ tier: string; status: string; createdAt: string; submittedAt: string | null; items: { label: string; value: string }[] } | null>(null);
+  const [kick, setKick] = useState<{ tier: string; status: string; createdAt: string; submittedAt: string | null; items: { label: string; value: string }[]; files?: { field: string; label: string; name: string; size: number }[] } | null>(null);
   const [kickUrl, setKickUrl] = useState("");
   const [dtab, setDtab] = useState<DealTab | null>(null);
   // Links like /crm/deals/<id>#agreement open that step.
@@ -398,7 +398,8 @@ export default function DealWorkspacePage() {
           <div className="u-sheet dw-boxhead"><h2>Kickoff checklist</h2><span className={"dw-pill " + (kick?.status === "submitted" ? "dw-pill-c-signed" : "dw-pill-c-sent")}>{kick?.status === "submitted" ? "Received" : kick ? "Waiting on client" : "Not sent"}</span></div>
           {kick?.status === "submitted" ? <>
             <p className="dw-hint">Received {new Date(kick.submittedAt ?? kick.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}. The 21-business-day go-live clock started then. It's also saved in the project notes.</p>
-            <dl className="dw-kick">{kick.items.map(it => <div key={it.label}><dt>{it.label}</dt><dd>{it.value}</dd></div>)}</dl>
+            <dl className="dw-kick">{kick.items.map(it => <div key={it.label}><dt>{it.label}</dt><dd>{it.value}</dd></div>)}
+              {(kick.files ?? []).map(f => <div key={f.field}><dt>{f.label}</dt><dd><a href={`/api/kickoff/link?dealId=${id}&file=${f.field}`} target="_blank" rel="noopener noreferrer">{f.name}</a> ({Math.max(1, Math.round(f.size / 1024))} KB)</dd></div>)}</dl>
             <div className="dw-row"><button data-variant="primary" className="dw-btn" onClick={() => copy("kickoff", kick.items.map(it => `${it.label}: ${it.value}`).join("\n"))}>{copied === "kickoff" ? "Copied" : "Copy answers"}</button>
               {kick.items.some(it => it.value.startsWith("••")) && <button data-variant="primary" className="dw-btn" onClick={() => void revealEin()}>Show EIN</button>}</div>
           </> : <>

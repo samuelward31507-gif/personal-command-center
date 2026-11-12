@@ -76,7 +76,7 @@ export async function GET(request: Request) {
       agreement: d ? { status: String(d.contract_status), signedAt: iso(d.signed_at), agreementStatus: String(d.agreement_status) } : null,
       kickoff: k ? { status: String(k.status), submittedAt: iso(k.submitted_at), highlights: [
         ["Business phone", answers.business_phone], ["Owner cell", answers.owner_cell], ["Calendar", answers.calendar], ["Service area", answers.service_area],
-        ["Lead sources", answers.lead_sources], ["EIN", answers.ein ? maskEin(answers.ein) : ""],
+        ["Lead sources", answers.lead_sources], ["EIN", answers.ein ? maskEin(answers.ein) : ""], ["EIN letter", answers.ein_letter ? "Uploaded" : answers.ein_status],
       ].filter(([, v]) => v).map(([label, value]) => ({ label, value: String(value).slice(0, 240) })) } : null,
       milestones: milestones.map(m => ({ id: String(m.id), title: String(m.title), status: String(m.status), dueAt: day(m.due_at), completedAt: day(m.completed_at) })),
       money: money.map(m => ({ id: String(m.id), title: String(m.title), type: String(m.revenue_type), amount: Number(m.amount), status: String(m.status), dueDate: day(m.due_date), paidAt: day(m.paid_at), invoiceNumber: m.invoice_number == null ? null : Number(m.invoice_number) })),
