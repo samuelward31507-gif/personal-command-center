@@ -257,6 +257,12 @@ export async function runLeadNudges(sql: Sql, now = new Date(), limit = 80): Pro
 
 /** Morning job: send every quote follow-up that's due today, across all clients. */
 export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Promise<{ sent: number; skipped: number }> {
+  // Reactivation runs continuously: an old lead who never answered gets another 3-text round each quarter, up to 4
+  // rounds a year. Anyone who replied, booked or opted out is never re-queued.
+  await sql`UPDATE public.client_quotes q SET status = 'open', steps_sent = 0, sent_on = ${today}::date, rounds = q.rounds + 1
+    WHERE q.kind = 'rehash' AND q.status = 'lost' AND q.rounds < 4 AND q.last_step_at < now() - interval '90 days'
+      AND NOT EXISTS (SELECT 1 FROM public.client_threads t WHERE t.project_id = q.project_id AND t.status IN ('opted_out', 'booked')
+        AND right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10))`.catch(e => console.error("Reactivation re-queue failed", e));
   const quotes = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.sent_on, q.steps_sent, q.kind
     FROM public.client_quotes q WHERE q.status = 'open' ORDER BY q.sent_on LIMIT 1000` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; sent_on: string; steps_sent: number; kind: string }[];
   let sent = 0, skipped = 0;

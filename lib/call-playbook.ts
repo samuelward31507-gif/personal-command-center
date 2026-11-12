@@ -34,7 +34,7 @@ const TRADES_ONLY: Objection[] = [
 
 const DETAILING_ONLY: Objection[] = [
   { id: "regulars", label: "Customers come back anyway", key: "a", say: "The good ones do. How many from last year haven't been back in 6 months? Those are the ones we bring in, and we only text people who gave you their number.", then: "Then the close." },
-  { id: "slammed", label: "No, we're booked out", key: "w", say: "Good spot to be in. Then it's not more cars, it's steadier money with less chasing. How many of your customers are on a maintenance plan? ... We offer a plan after every job, fill slow weeks from your own customer list, and get a review from every happy customer, without you texting anyone.", then: "Then the close. Lead with Repeat Revenue here, not the sprint." },
+  { id: "slammed", label: "No, we're booked out", key: "w", say: "Good spot to be in. Then it's not more cars, it's steadier money with less chasing. How many of your customers are on a maintenance plan? ... We offer a plan after every job, fill slow weeks from your own customer list, and get a review from every happy customer, without you texting anyone.", then: "Then the close. Lead with the Reactivation add-on here." },
 ];
 
 export type Script = { open: string; dig: string[]; pitch: string; guarantee: string; price: string; objections: Objection[] };
@@ -60,8 +60,8 @@ export const SCRIPTS: Record<Track, Script> = {
       "\"Anyone else who should be on that call?\" Then text the invite while you're still on the phone.",
     ],
     pitch: "Reason I'm calling: I work with detailers on getting past customers back in. Quick question: when's the last time you reached out to customers you haven't seen in a few months? ... (let them talk, then) Yeah, most shops never do, and those are the easiest bookings you'll get, because they already like your work. So I set it up so every past customer gets a text from you when they're due, and they book themselves back in. Anyone who calls while you're mid-detail gets a text back in seconds, and every happy customer gets asked for a review. I guarantee 5 booked appointments in your first 30 days, or your next month is free.",
-    guarantee: "Our Reactivation Sprint is a one-time $997: we text your past customers with a real offer and book every reply. If it doesn't book at least 3 times the fee in jobs, it's free.",
-    price: "The Reactivation Sprint is a one-time $997. To keep it running every month, Repeat Revenue is $750 setup and $497 a month, half off setup for our first 3 clients.",
+    guarantee: "Every new lead gets a reply in under 60 seconds, or that month is free. And we keep texting your past customers when they're due, booking every reply.",
+    price: "Never Miss a Lead is $997 a month, and the Reactivation add-on that texts your past customers when they're due is $497 a month on top. Our first 3 clients get half-price setup and half off the first month.",
     objections: [...SHARED, ...DETAILING_ONLY],
   },
 };

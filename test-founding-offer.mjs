@@ -97,7 +97,8 @@ ok(() => assert.match(home, /Never Miss a Lead[\s\S]*\$997<\/b>\/month/), "tier 
 ok(() => assert.match(home, /Book &amp; Close[\s\S]*\$1,997<\/b>\/month/), "tier 2 price");
 ok(() => assert.doesNotMatch(home, /Full Front Office/), "no plan that depends on voice answering until it ships");
 ok(() => assert.match(home, /Voice answering is rolling out/), "honest about voice");
-ok(() => assert.match(home, /Reactivation Sprint[\s\S]*\$997<\/b>/), "repeat-service sprint");
+ok(() => assert.match(home, /Add-on: Reactivation[\s\S]*\$497<\/b>\/month/), "reactivation add-on");
+ok(() => assert.doesNotMatch(home, /Detailers|Reactivation Sprint|Repeat Revenue/), "one add-on, no detailer packages");
 ok(() => assert.match(home, /at least 5 booked appointments in your first 30 days live/));
 ok(() => assert.match(home, /No contract\. Cancel by text\. You keep your number\. You own your data\./));
 const walk = d => readdirSync(d).flatMap(f => { const p = d + "/" + f; return statSync(p).isDirectory() ? walk(p) : [p]; });

@@ -233,6 +233,14 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 .repeat-plans p { color: var(--text-2); font-size: 15px; }
 .repeat-plans .plan-name { color: var(--text); font-weight: 600; }
 .repeat-plans .price b { font-size: 34px; }
+.addon-card { display: flex; flex-direction: column; gap: 24px; padding: 28px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r); }
+.addon-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.addon-list li { position: relative; padding-left: 22px; color: var(--text-2); font-size: 15px; line-height: 1.55; }
+.addon-list li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 7px; height: 7px; border-radius: 50%; background: var(--text); }
+.addon-list b { color: var(--text); font-weight: 600; }
+.addon-price { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; padding-top: 20px; border-top: 1px solid var(--line); }
+.addon-price .price b { font-size: 34px; }
+.addon-price .guar { margin: 0; padding: 0; background: none; color: var(--text-3); font-size: 14px; }
 
 /* Founder */
 .founder { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }

@@ -42,7 +42,7 @@ We built a 20-second calculator on our site. Put in your own numbers, nothing ge
 
 Ceramic maintenance, seasonal details, interior refreshes. Most of that work doesn't get booked because nobody asks at the right time.
 
-We text your past customers when they're due and book them back in. One-time Reactivation Sprint: if it doesn't book at least 3x the fee in jobs, it's free.` },
+We text your past customers when they're due and book them back in, every month. It's an add-on to any plan.` },
   { key: "p-reviews", channel: "page", label: "Reviews", body: `The best time to ask for a review is the hour after the job, while they're still looking at the work.
 
 Most owners mean to ask. Then the next job starts.
@@ -165,7 +165,7 @@ Close: "The thing every owner told me: [the most common thing you heard that day
   { key: "v-detail", channel: "video", label: "Detailers: past customers", shoot: "Screen-record a sample reactivation text and a reply booking a slot (mock it up; label it as an example).", body: `Hook: "Detailers, you're sitting on money"
 
 VO: Every customer who got a ceramic coating last year should be back for maintenance. Most never get asked.
-VO: One text when they're due, a slot on your calendar, done. That's a Reactivation Sprint.` },
+VO: One text when they're due, a slot on your calendar, done. That's the Reactivation add-on.` },
   { key: "v-math", channel: "video", label: "The missed-call math", shoot: "Screen-record the calculator on cinderrevenue.com with real-looking inputs.", body: `Hook: "What missed calls actually cost a fence company"
 
 VO: Plug in your own numbers. 40 missed calls, a $6,000 average job, close 1 in 4 estimates.
