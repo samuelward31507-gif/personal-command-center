@@ -4,7 +4,7 @@
 // from your real week. Per day: prepare every image and reel in one click, then queue the day so it posts itself
 // to Facebook and Instagram at five times through the day. TikTok and LinkedIn: download and post.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import PostCard, { cardPng, downloadCanvas } from "./post-card";
+import PostCard, { cardPng } from "./post-card";
 import { renderReel, scenesFor, reelExt, downloadBlob } from "./reel";
 import { dayDate, weekStart, type Card } from "@/lib/content-engine";
 
@@ -56,6 +56,24 @@ async function prepare(d: Draft, onProgress?: (p: number) => void): Promise<{ na
   return out;
 }
 
+type FileOut = { name: string; blob: Blob };
+const asFiles = (files: FileOut[]) => files.map(f => new File([f.blob], f.name, { type: f.blob.type || "image/png" }));
+/** Phones block a burst of downloads and keep only the last one. There, hand every file to the share sheet at once
+ *  ("Save 6 Images" puts them all in Photos). The share sheet needs a fresh tap, so if the files took a while to
+ *  make, `ask` is called and the caller shows a "Save to Photos" button. Desktops just download each file. */
+async function saveFiles(files: FileOut[], ask: (files: FileOut[]) => void): Promise<void> {
+  if (!files.length) return;
+  const list = asFiles(files);
+  if (typeof navigator !== "undefined" && navigator.canShare?.({ files: list })) {
+    try { await navigator.share({ files: list }); return; }
+    catch (e) { if ((e as Error)?.name === "AbortError") return; ask(files); return; }
+  }
+  files.forEach((f, i) => setTimeout(() => downloadBlob(f.blob, f.name), i * 350));
+}
+async function shareNow(files: FileOut[]): Promise<boolean> {
+  try { await navigator.share({ files: asFiles(files) }); return true; } catch (e) { return (e as Error)?.name === "AbortError"; }
+}
+
 function Status({ d }: { d: Draft }) {
   if (d.status === "posted") return <span className="cw-pill is-ok">Posted{d.postedAt ? " " + clock(d.postedAt) : ""}</span>;
   if (d.status === "skipped") return <span className="cw-pill">Skipped</span>;
@@ -84,6 +102,12 @@ function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (acti
   const posted = d.status === "posted";
   const isReel = d.platform === "video";
   const copy = () => navigator.clipboard?.writeText(d.caption).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); });
+  const [pending, setPending] = useState<FileOut[] | null>(null);
+  const downloadSlides = async () => {
+    const name = (i: number) => `${fileBase(d)}${cards.length > 1 ? "-" + (i + 1) : ""}.png`;
+    const blobs = await Promise.all(cards.map((_, i) => new Promise<Blob | null>(res => canvases.current[i] ? canvases.current[i].toBlob(res, "image/png") : res(null))));
+    await saveFiles(blobs.flatMap((b, i) => (b ? [{ name: name(i), blob: b }] : [])), setPending);
+  };
 
   async function makeReel(save: boolean) {
     setErr(""); setWork(0);
@@ -125,7 +149,8 @@ function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (acti
       {!editing && <div className="cw-row">
         <button type="button" className="u-btn u-btn-go" onClick={copy}>{copied ? "Copied" : "Copy caption"}</button>
         {isReel ? <button type="button" className="u-btn" disabled={work !== null} onClick={() => void makeReel(true)}>{work !== null ? `Recording ${Math.round(work * 100)}%` : reel ? "Download reel" : "Make reel"}</button>
-          : <button type="button" className="u-btn" onClick={() => cards.forEach((_, i) => canvases.current[i] && setTimeout(() => downloadCanvas(canvases.current[i], `${fileBase(d)}${cards.length > 1 ? "-" + (i + 1) : ""}.png`), i * 250))}>Download{cards.length > 1 ? ` ${cards.length}` : ""}</button>}
+          : pending ? <button type="button" className="u-btn u-btn-go" onClick={async () => { if (await shareNow(pending)) setPending(null); }}>Save {pending.length} to Photos</button>
+          : <button type="button" className="u-btn" onClick={() => void downloadSlides()}>Download{cards.length > 1 ? ` ${cards.length}` : ""}</button>}
         {meta.connected && (d.platform === "feed" || isReel) && !posted && d.media > 0 && <button type="button" className="u-btn" disabled={busy} onClick={() => void act("publish_now")}>Post now</button>}
         <button type="button" className="u-btn u-btn-bare" onClick={() => setEditing(true)}>Edit</button>
         <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => setNoting(n => !n)}>Rewrite</button>
@@ -159,6 +184,7 @@ export default function WeekPlanner() {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [prep, setPrep] = useState<{ done: number; total: number; label: string } | null>(null);
+  const [dayFiles, setDayFiles] = useState<FileOut[] | null>(null);
   const todayIdx = (new Date().getDay() + 6) % 7;
   const [day, setDay] = useState(todayIdx);
 
@@ -215,7 +241,7 @@ export default function WeekPlanner() {
         if (d.media && !opts.download) continue; // already prepared
         files.push(...await prepare(d));
       }
-      if (opts.download) files.forEach((f, i) => setTimeout(() => downloadBlob(f.blob, f.name), i * 350));
+      if (opts.download) await saveFiles(files, setDayFiles);
       await load();
       if (opts.queue) {
         const ids = list.filter(d => d.platform === "feed" || d.platform === "video").map(d => d.id);
@@ -277,7 +303,8 @@ export default function WeekPlanner() {
         {prep && <span className="cw-bar"><i style={{ width: (prep.done / prep.total) * 100 + "%" }} /></span>}
       </div>
       <div className="cw-row">
-        <button type="button" className="u-btn" disabled={!!prep} onClick={() => void prepareDay({ download: true, queue: false })}>Download all</button>
+        {dayFiles ? <button type="button" className="u-btn u-btn-go" onClick={async () => { if (await shareNow(dayFiles)) setDayFiles(null); }}>Save {dayFiles.length} files to Photos</button>
+          : <button type="button" className="u-btn" disabled={!!prep} onClick={() => void prepareDay({ download: true, queue: false })}>Download all</button>}
         {data?.meta.connected && <button type="button" className="u-btn u-btn-go" disabled={!!prep || !!busy} onClick={() => void prepareDay({ download: false, queue: true })}>{prep ? "Preparing…" : "Prepare and queue the day"}</button>}
         {dayQueued.length > 0 && <button type="button" className="u-btn u-btn-bare" disabled={!!busy} onClick={() => void post({ action: "unschedule", ids: dayQueued.map(d => d.id) }, "unq")}>Unqueue</button>}
       </div>
