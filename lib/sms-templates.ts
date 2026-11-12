@@ -98,7 +98,7 @@ export function infoText(i: { firstName?: string; demoLink: string; slot1?: stri
   const name = (i.firstName ?? "").trim();
   i = { ...i, demoLink: personalLink(i.demoLink, name, i.company) };
   const hi = `Hey${name ? " " + name : ""}, Sam with Cinder, good talking with you.`;
-  const ask = `Easiest is I show you in 15 min. ${(i.slot1 || DEFAULT_SLOTS[0]).trim()} or ${(i.slot2 || DEFAULT_SLOTS[1]).trim()} tomorrow? Or pick any time here: ${BOOKING_LINK}`;
+  const ask = `Easiest is I show you in 15 min. Grab any time that works here: ${BOOKING_LINK}`;
   if (i.niche === "detailing") return `${hi} Here's how it works: ${i.demoLink}\n\nYour past customers get a text when they're due and book themselves back in, anyone who calls while you're mid-detail gets a text back in seconds, and happy customers get asked for a review. I build it and run it, you don't touch the tech.\n\nWe start with one campaign to your past customers. If it doesn't book at least 3x what you pay, it's free.\n\n${ask}`;
   return `${hi} Here's the 30-second demo of what your customers get when you can't pick up: ${i.demoLink}\n\nEvery missed call and form gets a text back in about 10 seconds and the estimate lands on your calendar. Every quote gets followed up until it's a yes or a no. I build it and run it, you don't touch the tech.\n\nNo contract, monthly starts after your first booked appointment, and 5 booked in 30 days or your next month is free. Our first 3 clients get half-price setup and 50% off the first month.\n\n${ask}`;
 }
@@ -238,11 +238,10 @@ export function meetingNudge(startsAt: Date, now: Date, tz: string | null): "con
 /** The follow-up text for each info follow-up day (1, 2, 3, 7). Short, one question, easy to answer. */
 export function infoFollowUpText(i: { firstName?: string; company?: string; day: number; slot1?: string; slot2?: string; niche?: string }): string {
   const hi = `Hey${(i.firstName ?? "").trim() ? " " + i.firstName!.trim() : ""}`;
-  const s1 = (i.slot1 || DEFAULT_SLOTS[0]).trim(), s2 = (i.slot2 || DEFAULT_SLOTS[1]).trim();
   if (i.day <= 1) return i.niche === "detailing"
     ? `${hi}, Sam with Cinder. Did you get a chance to look at the demo I sent yesterday? Happy to answer anything by text.`
     : `${hi}, Sam with Cinder. Here's a quick 35-second video on why the first call back matters so much: ${FIRST_CALL_VIDEO}\n\nHappy to answer anything by text.`;
-  if (i.day === 2) return `${hi}, Sam again. Easiest way to see if it fits ${i.company || "you"} is a quick 15 min call. ${s1} or ${s2}?`;
+  if (i.day === 2) return `${hi}, Sam again. Easiest way to see if it fits ${i.company || "you"} is a quick 15 min call. Grab any time here: ${BOOKING_LINK}`;
   if (i.day === 3) return i.niche === "detailing"
     ? `${hi}, quick one: how many past customers haven't rebooked in the last 3 months? That's usually where the first month's bookings come from. Want me to show you?`
     : `${hi}, quick one: how many calls go to voicemail on a busy week? That's usually where the first month's jobs come from. Want me to show you?`;

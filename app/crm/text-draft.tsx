@@ -26,13 +26,11 @@ export default function TextDraft({ ctx, contactId, who, onDone, primaryClass = 
   const ws = useWorkspace();
   // A demo link set in Settings (an overview Loom) wins; otherwise the trade's default the server picked.
   const demo = pickDemoLink("", ws.demoLink) === pickDemoLink("", "") ? ctx.demoLink : pickDemoLink("", ws.demoLink);
-  const [slot1, setSlot1] = useState(ctx.slots[0] ?? "10am");
-  const [slot2, setSlot2] = useState(ctx.slots[1] ?? "2pm");
   const generated = useMemo(() => {
     if (ctx.template === "T-VM") return voicemailText({ firstName: ctx.firstName, callTime: callTimeText(new Date(ctx.callAt), ctx.timeZone), demoLink: demo, niche: ctx.niche });
-    if (ctx.template === "T-INFO") return infoText({ firstName: ctx.firstName, demoLink: demo, slot1, slot2, niche: ctx.niche });
+    if (ctx.template === "T-INFO") return infoText({ firstName: ctx.firstName, demoLink: demo, niche: ctx.niche });
     return "";
-  }, [ctx, slot1, slot2, demo]);
+  }, [ctx, demo]);
   const [body, setBody] = useState(generated);
   const [edited, setEdited] = useState(false);
   useEffect(() => { if (!edited) setBody(generated); }, [generated, edited]);
@@ -70,13 +68,6 @@ export default function TextDraft({ ctx, contactId, who, onDone, primaryClass = 
       </div>
       {needsName && <p style={warn}>No first name on this contact. Add one, or edit the greeting before you send.</p>}
       {quiet && <p style={warn}>{quiet}</p>}
-      {ctx.template === "T-INFO" && (
-        <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center", fontSize: 12.5, color: "#515862" }}>
-          Times (their time):
-          <input value={slot1} onChange={e => setSlot1(e.target.value.slice(0, 20))} aria-label="First time option" style={{ ...field, width: 90, padding: "6px 8px", fontSize: 13 }} />
-          <input value={slot2} onChange={e => setSlot2(e.target.value.slice(0, 20))} aria-label="Second time option" style={{ ...field, width: 90, padding: "6px 8px", fontSize: 13 }} />
-        </div>
-      )}
       <textarea rows={7} value={body} onChange={e => { setBody(e.target.value); setEdited(true); }} aria-label="Text draft" style={{ ...field, marginTop: 10 }} />
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: body.length > 320 ? "#c69619" : "#828891", marginTop: 4 }}>
         <span>{edited ? <button type="button" onClick={() => { setEdited(false); setBody(generated); }} style={{ background: "none", border: 0, color: "#515862", padding: 0, cursor: "pointer", fontSize: 12 }}>Reset to template</button> : "Edit anything before you send."}</span>

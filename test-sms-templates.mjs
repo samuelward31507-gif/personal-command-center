@@ -65,8 +65,8 @@ for (const o of ["meeting_booked", "not_interested", "callback_requested"]) ok((
 // T-INFO
 const info = infoText({ firstName: "Mike", demoLink: link });
 ok(() => assert.match(info, /^Hey Mike, Sam with Cinder, good talking with you\. Here's the 30-second demo/));
-ok(() => assert.match(info, /half-price setup and 50% off the first month\.\n\nEasiest is I show you in 15 min\. 10am or 2pm tomorrow\? Or pick any time here: https:\/\/cinderrevenue\.com\/book$/));
-ok(() => assert.match(infoText({ firstName: "Mike", demoLink: link, slot1: "9am", slot2: "1pm" }), /9am or 1pm tomorrow\? Or pick any time here: https:\/\/cinderrevenue\.com\/book$/));
+ok(() => assert.match(info, /half-price setup and 50% off the first month\.\n\nEasiest is I show you in 15 min\. Grab any time that works here: https:\/\/cinderrevenue\.com\/book$/));
+ok(() => assert.match(infoText({ firstName: "Mike", demoLink: link, slot1: "9am", slot2: "1pm" }), /Grab any time that works here: https:\/\/cinderrevenue\.com\/book$/));
 ok(() => assert.equal((info.match(/https:\/\//g) || []).length, 2, "two links max: demo + booking"));
 const ip = planFor("send_info", { now: calledAt, tz: gaTz });
 ok(() => assert.equal(ip.template, "T-INFO"));
@@ -114,7 +114,7 @@ ok(() => assert.match(reminderText({ when: "today at 1:00 PM" }), /^Hey, Sam her
 ok(() => assert.match(infoT({ firstName: "", demoLink: "https://x" }), /^Hey, Sam with Cinder,/, "no name: no 'Hey , Sam'"));
 ok(() => assert.match(infoT({ firstName: "Mark", demoLink: "https://x" }), /^Hey Mark, Sam/));
 for (const d of [1, 2, 3, 7]) ok(() => assert.ok(infoFollowUpText({ firstName: "", company: "Pinnacle Fence", day: d }).length < 240 && !/Hey ,/.test(infoFollowUpText({ day: d })), "day " + d));
-ok(() => assert.match(infoFollowUpText({ firstName: "Mark", company: "Pinnacle Fence", day: 2 }), /Pinnacle Fence.*10am or 2pm\?$/));
+ok(() => assert.match(infoFollowUpText({ firstName: "Mark", company: "Pinnacle Fence", day: 2 }), /Pinnacle Fence.*Grab any time here: https:\/\/cinderrevenue\.com\/book$/));
 ok(() => assert.match(loomText({ firstName: "", company: "Pinnacle Fence", loomUrl: " https://www.loom.com/share/abc " }), /^Hey, Sam with Cinder\. .*Pinnacle Fence.*https:\/\/www\.loom\.com\/share\/abc\n/));
 ok(() => assert.match(referralText({ firstName: "Dave" }), /Quick favor:/, "the marker the follow-up list uses to know it was sent"));
 ok(() => assert.equal(loomPoints({ company: "Elite Fence", callNote: "says they answer every call" })[1], "Their problem, in their words: says they answer every call"));
