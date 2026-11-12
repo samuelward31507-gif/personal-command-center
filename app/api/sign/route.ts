@@ -118,7 +118,7 @@ export async function POST(request: Request) {
         ].filter(Boolean).map((t, i, a) => (a.length > 1 ? `${i + 1}. ` : "") + t);
         const intro = steps.length > 1 ? "Two quick things and we start building:" : "One quick thing and we start building:";
         const payNote = payUrl ? "" : `\n${fee ? `I'll send the setup invoice ($${fee.toLocaleString("en-US")}) separately.\n` : ""}`;
-        await sendDirectEmail(sql, owner, ws, { to: v.ok.email, contactId: moved[0]?.contact_id ? String(moved[0].contact_id) : null, kind: payUrl ? "setup payment" : "kickoff",
+        await sendDirectEmail(sql, owner, ws, { to: v.ok.email, contactId: moved[0]?.contact_id ? String(moved[0].contact_id) : null, kind: "setup payment",
           subject: `Next steps for ${String(row.company || "your setup")}`,
           body: `Hi ${v.ok.name.split(" ")[0]},\n\nThanks for signing. ${intro}\n\n${steps.join("\n")}\n${payNote}\nYour monthly plan doesn't start until your first booked appointment.\n\n${ws.ownerFirstName || "Sam"}\n${ws.businessName || "Cinder Revenue Company"}` });
       }
