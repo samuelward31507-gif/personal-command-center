@@ -6,7 +6,7 @@ import { sendSms } from "@/lib/twilio";
 import { recordConsent } from "@/lib/client-consent";
 import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
-import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, type Vars } from "@/lib/client-runtime";
+import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent, deleteEvent } from "@/lib/client-calendar";
 import { pushFromAlert, pushToProject } from "@/lib/client-push";
@@ -56,8 +56,10 @@ export async function sendToCustomer(sql: Sql, c: Client, threadId: string, phon
   return ok;
 }
 /** Tell the owner: a text to their cell, and a push to the Cinder app on every device they turned it on for. */
-async function alertOwner(c: Client, text: string, threadId?: string) {
+async function alertOwner(c: Client, text: string, threadId?: string, sql?: Sql) {
   const cell = e164(c.setup.owner_cell || "");
+  // Remember who this alert was about, so the owner can answer it by text ("QUOTE 4200").
+  if (sql && threadId) await sql`UPDATE public.client_threads SET owner_alerted_at = now() WHERE id = ${threadId}::uuid`.catch(() => {});
   await Promise.all([
     cell ? sendSms(cell, c.setup.texting_number || "", text) : Promise.resolve(false),
     pushToProject(c.projectId, { ...pushFromAlert(text), url: threadId ? `/app?thread=${threadId}` : "/app", tag: threadId }),
@@ -76,7 +78,7 @@ export async function clientMissedCall(sql: Sql, c: Client, caller: string): Pro
   await log(sql, c, t.id, "in", "system", open ? "Missed call" : "Missed call (after hours)");
   await sql`UPDATE public.client_threads SET contact_at = now() WHERE id = ${t.id}::uuid`;
   await sendToCustomer(sql, c, t.id, caller, body, "template");
-  await alertOwner(c, ownerAlert("missed", e164(caller), "They got your text back. Replies are handled for you."), t.id);
+  await alertOwner(c, ownerAlert("missed", e164(caller), "They got your text back. Replies are handled for you."), t.id, sql);
 }
 
 /** Open estimate times on the client's calendar, or null when it isn't connected (then the booking link is used). */
@@ -113,6 +115,29 @@ async function book(sql: Sql, c: Client, threadId: string, phone: string, who: s
   } catch (e) { console.error("Booking failed", e instanceof Error ? e.message : e); return false; }
 }
 
+/** The owner texted their Cinder number: "QUOTE 4200 [name]" starts quote follow-up; anything else gets a pointer to the app. */
+async function ownerText(sql: Sql, c: Client, body: string): Promise<void> {
+  const cell = e164(c.setup.owner_cell || ""), from = c.setup.texting_number || "";
+  const app = (process.env.CINDER_PUBLIC_ORIGIN?.trim().replace(/\/$/, "") || "https://cinderrevenue.com") + "/app";
+  const q = parseOwnerQuote(body);
+  if (!q) { await sendSms(cell, from, OWNER_HELP.replace("{app}", app)); return; }
+  const [t] = q.name
+    ? await sql`SELECT id, customer_phone, customer_name FROM public.client_threads WHERE project_id = ${c.projectId}::uuid AND status <> 'opted_out'
+        AND customer_name ILIKE ${q.name.split(" ")[0] + "%"} ORDER BY coalesce(owner_alerted_at, updated_at) DESC LIMIT 1` as { id: string; customer_phone: string; customer_name: string }[]
+    : await sql`SELECT id, customer_phone, customer_name FROM public.client_threads WHERE project_id = ${c.projectId}::uuid AND status <> 'opted_out'
+        AND owner_alerted_at > now() - interval '30 days' ORDER BY owner_alerted_at DESC LIMIT 1` as { id: string; customer_phone: string; customer_name: string }[];
+  if (!t) { await sendSms(cell, from, q.name ? `I couldn't find a customer named ${q.name}. Start the follow-up from the Cinder app: ${app}` : `I'm not sure which customer that's for. Add their name, like QUOTE 4200 Dana, or use the app: ${app}`); return; }
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: tzOf(c) });
+  const [open] = await sql`SELECT id FROM public.client_quotes WHERE project_id = ${c.projectId}::uuid AND kind = 'quote' AND status IN ('open','replied')
+    AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(t.customer_phone)} ORDER BY created_at DESC LIMIT 1` as { id: string }[];
+  if (open) await sql`UPDATE public.client_quotes SET amount = coalesce(${q.amount}, amount), sent_on = ${today}::date, status = 'open', steps_sent = 0 WHERE id = ${open.id}::uuid`;
+  else await sql`INSERT INTO public.client_quotes (owner_id, project_id, customer_phone, customer_name, amount, sent_on) VALUES (${c.owner}, ${c.projectId}::uuid, ${t.customer_phone}, ${t.customer_name}, ${q.amount}, ${today}::date)`;
+  await sql`UPDATE public.client_appointments SET status = 'done' WHERE thread_id = ${t.id}::uuid AND status = 'booked' AND starts_at < now()`;
+  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${t.id}::uuid, 'out', 'system', ${`Quote sent${q.amount ? `: $${q.amount.toLocaleString("en-US")}` : ""}. Cinder follows up until they answer.`})`;
+  const who = t.customer_name || e164(t.customer_phone);
+  await sendSms(cell, from, `Got it. Following up with ${who} on the ${q.amount ? "$" + q.amount.toLocaleString("en-US") + " " : ""}quote: days 2, 5, 10 and 21, until they answer.`);
+}
+
 /** Marks an estimate canceled and removes it from the owner's Google Calendar. True when the calendar is clean. */
 async function cancelAppointment(sql: Sql, c: Client, appointmentId: string, eventId: string): Promise<boolean> {
   await sql`UPDATE public.client_appointments SET status = 'canceled' WHERE id = ${appointmentId}::uuid AND status = 'booked'`;
@@ -123,6 +148,8 @@ async function cancelAppointment(sql: Sql, c: Client, appointmentId: string, eve
 
 /** A customer texted the client's number. */
 export async function clientInboundText(sql: Sql, c: Client, from: string, body: string, media: Media[] = []): Promise<void> {
+  // The owner texting their own Cinder number (often replying to an alert) is never treated as a customer.
+  if (c.setup.owner_cell && sameNumber(from, c.setup.owner_cell)) { await ownerText(sql, c, body); return; }
   const t = await thread(sql, c, from, "text");
   if (t.fresh) await recordConsent(sql, c, e164(from), "inbound_text", "text", `First text: "${body.slice(0, 200)}"`);
   // A photo with no words still reads as something the reply engine and the owner can follow.
@@ -150,7 +177,7 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
     await recordConsent(sql, c, e164(from), "opt_in", "keyword", body.slice(0, 60));
     return;
   }
-  if (t.status === "paused" || t.status === "closed") { await alertOwner(c, ownerAlert("handoff", t.customer_name || e164(from), `They texted: "${body.slice(0, 160)}"`), t.id); return; }
+  if (t.status === "paused" || t.status === "closed") { await alertOwner(c, ownerAlert("handoff", t.customer_name || e164(from), `They texted: "${body.slice(0, 160)}"`), t.id, sql); return; }
   const slots = await openSlots(sql, c, lang);
   // Already booked? The reply engine needs to know, so "can we do Friday instead?" moves the estimate, not doubles it.
   const [current] = await sql`SELECT id, starts_at, event_id FROM public.client_appointments WHERE thread_id = ${t.id}::uuid AND status = 'booked' AND starts_at > now() ORDER BY starts_at LIMIT 1` as { id: string; starts_at: string; event_id: string }[];
@@ -160,7 +187,7 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
     if (d?.reply) await sendToCustomer(sql, c, t.id, from, d.reply, "ai");
     await sendToCustomer(sql, c, t.id, from, fill(say(c, "handoff", FALLBACK.handoff, lang), varsFor(c)), "template");
     await sql`UPDATE public.client_threads SET status = 'paused', handoff_at = now(), handoff_nudged_at = NULL, handoff_held_at = NULL, updated_at = now() WHERE id = ${t.id}::uuid`;
-    await alertOwner(c, ownerAlert("handoff", who, d?.summary || `They texted: "${body.slice(0, 160)}"`), t.id);
+    await alertOwner(c, ownerAlert("handoff", who, d?.summary || `They texted: "${body.slice(0, 160)}"`), t.id, sql);
     return;
   }
   await sendToCustomer(sql, c, t.id, from, d.reply, "ai");
@@ -171,20 +198,20 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
     if (current && ok) {
       // They moved it: take the old estimate off the calendar so there's one appointment, not two.
       const removed = await cancelAppointment(sql, c, current.id, current.event_id);
-      await alertOwner(c, ownerAlert("moved", who, `from ${slotLabel(new Date(current.starts_at).toISOString(), tzOf(c))} to ${slotLabel(picked.start, tzOf(c))}${removed ? "" : ". Delete the old one from your calendar, it didn't come off"}.`), t.id);
-    } else await alertOwner(c, ownerAlert("booked", who, `${slotLabel(picked.start, tzOf(c))}${ok ? ", on your calendar" : " (add it to your calendar, it didn't save)"}. ${d.summary}`), t.id);
+      await alertOwner(c, ownerAlert("moved", who, `from ${slotLabel(new Date(current.starts_at).toISOString(), tzOf(c))} to ${slotLabel(picked.start, tzOf(c))}${removed ? "" : ". Delete the old one from your calendar, it didn't come off"}.`), t.id, sql);
+    } else await alertOwner(c, ownerAlert("booked", who, `${slotLabel(picked.start, tzOf(c))}${ok ? ", on your calendar" : " (add it to your calendar, it didn't save)"}. ${d.summary}`), t.id, sql);
   } else if (d.stage === "canceled" && current) {
     const removed = await cancelAppointment(sql, c, current.id, current.event_id);
     await sql`UPDATE public.client_threads SET status = 'auto', updated_at = now() WHERE id = ${t.id}::uuid`;
-    await alertOwner(c, ownerAlert("canceled", who, `${slotLabel(new Date(current.starts_at).toISOString(), tzOf(c))}${removed ? ", taken off your calendar" : ". Delete it from your calendar, it didn't come off"}.`), t.id);
+    await alertOwner(c, ownerAlert("canceled", who, `${slotLabel(new Date(current.starts_at).toISOString(), tzOf(c))}${removed ? ", taken off your calendar" : ". Delete it from your calendar, it didn't come off"}.`), t.id, sql);
   } else if (d.stage === "booked") {
     await sql`UPDATE public.client_threads SET status = 'booked', updated_at = now() WHERE id = ${t.id}::uuid`;
-    await alertOwner(c, ownerAlert("booked", who, d.summary), t.id);
+    await alertOwner(c, ownerAlert("booked", who, d.summary), t.id, sql);
   } else if (d.stage === "not_fit" || d.stage === "done") {
     // Not a job they take, or the customer is done: close it so nothing else (like a follow-up nudge) goes out.
     await sql`UPDATE public.client_threads SET status = 'closed', updated_at = now() WHERE id = ${t.id}::uuid`;
-    if (firstText) await alertOwner(c, ownerAlert("new", who, d.summary), t.id);
-  } else if (firstText) await alertOwner(c, ownerAlert("new", who, d.summary), t.id);
+    if (firstText) await alertOwner(c, ownerAlert("new", who, d.summary), t.id, sql);
+  } else if (firstText) await alertOwner(c, ownerAlert("new", who, d.summary), t.id, sql);
 }
 
 /**
@@ -229,16 +256,21 @@ export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Pr
   const quotes = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.sent_on, q.steps_sent, q.kind
     FROM public.client_quotes q WHERE q.status = 'open' ORDER BY q.sent_on LIMIT 1000` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; sent_on: string; steps_sent: number; kind: string }[];
   let sent = 0, skipped = 0;
+  const clients = new Map<string, Client | null>();
   for (const q of quotes) {
     if (sent >= limit) break;
-    const seq = q.kind === "rehash" ? SEQUENCES.rehash : SEQUENCES.quote;
+    const key = q.owner_id + q.project_id;
+    if (!clients.has(key)) clients.set(key, await clientById(sql, q.owner_id, q.project_id));
+    const c = clients.get(key);
+    // Old leads for contractors; past customers for repeat-service trades (they bought before, so the wording differs).
+    const seqKey = q.kind === "rehash" ? (isRepeatTrade(c?.setup.trade) ? "reactivate" : "rehash") : "quote";
+    const seq = SEQUENCES[seqKey];
     const step = quoteStepDue(String(q.sent_on).slice(0, 10), q.steps_sent, today, seq.days);
     if (step === null) continue;
-    const c = await clientById(sql, q.owner_id, q.project_id);
     if (!c?.setup.texting_number) { skipped++; continue; }
     const t = await thread(sql, c, q.customer_phone, "quote");
     if (t.status === "opted_out" || t.status === "paused") { skipped++; continue; }
-    const k = `${q.kind === "rehash" ? "rehash" : "quote"}_${step + 1}`;
+    const k = `${seqKey}_${step + 1}`;
     const body = fill(say(c, k, seq.texts[step], t.lang === "es" ? "es" : "en"), varsFor(c, q.customer_name.split(" ")[0]));
     const ok = await sendToCustomer(sql, c, t.id, q.customer_phone, body, "template");
     await sql`UPDATE public.client_quotes SET steps_sent = steps_sent + 1, last_step_at = now(),
@@ -308,7 +340,7 @@ export async function webLead(sql: Sql, c: Client, lead: Lead | { name: string; 
   const afterHours = lang === "en" && !isOpen(parseHours(c.setup.hours, tzOf(c))) && c.messages.some(m => m.key === "after_hours" && m.status === "approved");
   const text = afterHours ? wording(c.messages, "after_hours", EN.web_lead) : paid ? say(c, "paid_lead", EN.paid_lead, lang).split("{via}").join(via) : say(c, "web_lead", EN.web_lead, lang);
   const ok = await sendToCustomer(sql, c, t.id, lead.phone, fill(text, varsFor(c, lead.name.split(" ")[0])), "template");
-  await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${paid ? via : lead.source}${lead.message ? `: ${lead.message.slice(0, 120)}` : ""}. Texted back.`), t.id);
+  await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${paid ? via : lead.source}${lead.message ? `: ${lead.message.slice(0, 120)}` : ""}. Texted back.`), t.id, sql);
   return { ok, threadId: t.id };
 }
 
@@ -372,14 +404,14 @@ export async function runHandoffChecks(sql: Sql, now = new Date(), limit = 80): 
     if (act === "remind") {
       const [claimed] = await sql`UPDATE public.client_threads SET handoff_nudged_at = now() WHERE id = ${r.id}::uuid AND handoff_nudged_at IS NULL RETURNING id`;
       if (!claimed) continue;
-      await alertOwner(c, ownerAlert("waiting", who, "They're still waiting for you. Reply or call them back from the Cinder app."), r.id);
+      await alertOwner(c, ownerAlert("waiting", who, "They're still waiting for you. Reply or call them back from the Cinder app."), r.id, sql);
       reminded++;
     } else if (act === "hold") {
       const [claimed] = await sql`UPDATE public.client_threads SET handoff_held_at = now(), handoff_nudged_at = coalesce(handoff_nudged_at, now()) WHERE id = ${r.id}::uuid AND handoff_held_at IS NULL RETURNING id`;
       if (!claimed) continue;
       const lang: Lang = r.lang === "es" ? "es" : "en";
       const ok = await sendToCustomer(sql, c, r.id, r.customer_phone, fill(say(c, "handoff_hold", lang === "es" ? ES.handoff_hold : EN.handoff_hold, lang), varsFor(c, (r.customer_name || "").split(" ")[0])), "template");
-      await alertOwner(c, ownerAlert("waiting", who, "We told them you'll reach out soon. Call them back from the Cinder app."), r.id);
+      await alertOwner(c, ownerAlert("waiting", who, "We told them you'll reach out soon. Call them back from the Cinder app."), r.id, sql);
       if (ok) held++;
     }
   }

@@ -53,6 +53,7 @@ Rules:
 - One short text, under 300 characters. Plain words. One question at a time. No emoji, no exclamation spam.
 - Price: say only what the pricing guidance allows. Never quote an exact price, discount, or date the guidance doesn't give.
 - Booking: when you know the job, the location is in the service area and they want an estimate, send the booking link: ${setup.booking_link || "(none: ask for a good time and say the owner will confirm)"}.
+- "Too expensive" or price worries: once, offer ${setup.financing ? `this: ${setup.financing}` : "to walk through the quote or look at a smaller option"}. If they still want a lower price or want to negotiate, hand off.
 - Hand off to ${owner} (handoff true) for: complaints, negotiating price, insurance or legal questions, anything unusual, anything you're unsure about, or when they ask for a person.
 - Jobs they don't take: ${setup.rules || "none listed"}. If it's one of those, say so kindly (stage "not_fit").
 - If they say they don't need it anymore, went with someone else, or aren't interested: thank them kindly, don't push (stage "done").
@@ -110,7 +111,15 @@ export const REHASH_TEXTS = [
   "Hi {first}, {owner} again. We have free estimate openings in the next couple of weeks if you'd like one. Want me to send a few times?",
   "Last one from me, {first}. If the project's still happening, just reply and I'll get you on the schedule.",
 ] as const;
-export const SEQUENCES = { quote: { days: QUOTE_DAYS, texts: QUOTE_TEXTS }, rehash: { days: REHASH_DAYS, texts: REHASH_TEXTS } } as const;
+/** Repeat-service trades (detailing, carpet, exterior cleaning): past customers, not old leads. 3 texts over about 10 days. */
+export const REACTIVATE_DAYS = [0, 4, 9] as const;
+export const REACTIVATE_TEXTS = [
+  "Hi {first}, it's {owner} with {business}. It's been a while since your last visit. Want me to get you back on the schedule? I have openings this week. Reply STOP to opt out.",
+  "Hi {first}, {owner} again. I can fit you in this week or next. Want me to send a couple of times?",
+  "Last one from me, {first}. If you'd like to get back on the schedule, just reply and I'll set it up.",
+] as const;
+export const isRepeatTrade = (trade = "") => /detail|carpet|exterior|clean|wash/i.test(trade);
+export const SEQUENCES = { quote: { days: QUOTE_DAYS, texts: QUOTE_TEXTS }, rehash: { days: REHASH_DAYS, texts: REHASH_TEXTS }, reactivate: { days: REACTIVATE_DAYS, texts: REACTIVATE_TEXTS } } as const;
 
 const dayNum = (ymd: string) => Math.floor(Date.parse(ymd.slice(0, 10) + "T12:00:00Z") / 86400000);
 /** Which follow-up is due today, or null. One step per run at most, and never a step out of order. */
@@ -183,3 +192,24 @@ export function handoffAction(o: { handoffAt: number; nudgedAt: number | null; h
   if (!o.nudgedAt && waited >= 45 * 60000 && o.ownerHours) return "remind";
   return null;
 }
+
+// ---------- The owner texting their own Cinder number ----------
+/**
+ * "QUOTE 4200", "quote $4,200 Dana", "Quote Dana 9.4k": start quote follow-up. Returns null for anything else
+ * (the owner then gets a short note pointing to the app, never a reply meant for a customer).
+ */
+export function parseOwnerQuote(text: string): { amount: number | null; name: string } | null {
+  const t = (text || "").trim();
+  const m = t.match(/^\s*quote(?:d)?\b[:\s-]*(.*)$/i);
+  if (!m) return null;
+  let rest = m[1].trim(), amount: number | null = null;
+  const num = rest.match(/\$?\s*(\d[\d,]*(?:\.\d+)?)\s*(k)?\b/i);
+  if (num) {
+    const v = Number(num[1].replace(/,/g, "")) * (num[2] ? 1000 : 1);
+    if (Number.isFinite(v) && v > 0 && v < 10_000_000) amount = Math.round(v);
+    rest = (rest.slice(0, num.index) + " " + rest.slice((num.index ?? 0) + num[0].length)).trim();
+  }
+  const name = rest.replace(/^(for|to)\s+/i, "").replace(/[^\p{L}\p{N}' .-]/gu, "").trim().slice(0, 60);
+  return { amount, name };
+}
+export const OWNER_HELP = "This is your Cinder number. To answer a customer, open the Cinder app: {app}. To start quote follow-up for the customer we last texted you about, reply QUOTE and the amount, like QUOTE 4200.";

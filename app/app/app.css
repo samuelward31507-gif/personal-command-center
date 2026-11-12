@@ -384,3 +384,4 @@ html body:not(#u):not(#v) .ca-sign-foot { margin: auto 0 0; padding-top: 48px; g
 html body:not(#u):not(#v) .ca-sign-foot .ca-demo-link { font-size: 13.5px !important; color: var(--ca-2) !important; text-decoration-color: rgba(18, 20, 23, .2); }
 html body:not(#u):not(#v) .ca-sign-word { height: 15px; margin-top: 22px; opacity: .55; }
 html body:not(#u):not(#v) .ca-sign-foot p { text-wrap: balance; }
+html body:not(#u) .ca-group > .ca-sub { margin: -2px 4px 10px; font-size: 13.5px; }

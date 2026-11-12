@@ -63,6 +63,14 @@ export async function POST(req: Request) {
       if (b.review) { const r = await sendReviewRequest(sql, c, a.customer_phone, a.customer_name); review = r.ok ? "sent" : r.error?.includes("already") ? "already" : "no_link"; }
       return json({ ok: true, review });
     }
+    if (b.action === "review") {
+      // The job is finished: now is the right moment to ask for a Google review.
+      if (!b.quote || !UUID.test(b.quote)) return json({ error: "Which job?" }, 400);
+      const [q] = await sql`SELECT customer_phone, customer_name FROM public.client_quotes WHERE id = ${b.quote}::uuid AND project_id = ${c.projectId}::uuid AND status = 'won'` as { customer_phone: string; customer_name: string }[];
+      if (!q) return json({ error: "That job isn't marked won." }, 404);
+      const r = await sendReviewRequest(sql, c, q.customer_phone, q.customer_name);
+      return r.ok ? json({ ok: true }) : json({ error: r.error?.includes("already") ? "They already got a review request." : r.error || "The text didn't send." }, 409);
+    }
     if (b.action === "quote") {
       if (!b.quote || !UUID.test(b.quote) || (b.status !== "won" && b.status !== "lost")) return json({ error: "Which quote?" }, 400);
       const amount = b.amount ? parseAmount(b.amount) : null;

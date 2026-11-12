@@ -14,7 +14,7 @@ type Live = { leads: number; needs: number; answered: number; booked: number; re
 type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string; event_id?: string; link?: string };
 type Quote = { id: string; customer_name: string; customer_phone: string; amount: number | null; sent_on: string; steps_sent: number; status: string };
 type Cal = { connected: boolean; email: string; events: CalEvent[]; error: string; connectUrl: string };
-type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number };
+type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number };
 type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
 type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 type Tab = "leads" | "numbers" | "estimates" | "sam";
@@ -223,7 +223,7 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
   const { due, upcoming } = useMemo(() => splitAppointments(d.appointments), [d.appointments]);
   const days = useMemo(() => agenda(upcoming, d.calendar.events), [upcoming, d.calendar.events]);
   const [sheet, setSheet] = useState<Sheet | null>(null);
-  const [amt, setAmt] = useState(""), [review, setReview] = useState(true), [busy, setBusy] = useState(""), [arm, setArm] = useState("");
+  const [amt, setAmt] = useState(""), [review, setReview] = useState(false), [busy, setBusy] = useState(""), [arm, setArm] = useState("");
   useEffect(() => { if (!arm) return; const i = setTimeout(() => setArm(""), 4000); return () => clearTimeout(i); }, [arm]);
   const cal = d.calendar;
   const week = upcoming.filter(a => Date.parse(a.starts_at) < Date.now() + 7 * 86400000).length;
@@ -237,7 +237,7 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
   const amountSheet = (onSave: () => void) => <form className="ca-amt" onSubmit={e => { e.preventDefault(); onSave(); }}>
     <label htmlFor={"amt-" + sheet?.id}>{sheet?.kind === "quoted" ? "Quote amount" : "Job amount"}<small>{sheet?.kind === "quoted" ? "Optional. Shows in your numbers." : "Counts toward what Cinder brought in."}</small></label>
     <div className="ca-amt-in"><span>$</span><input id={"amt-" + sheet?.id} inputMode="decimal" autoFocus placeholder="9,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></div>
-    {sheet?.kind === "won" && <label className="ca-amt-check"><input type="checkbox" checked={review} onChange={e => setReview(e.target.checked)} /><span>Job&rsquo;s done? Text them for a Google review</span></label>}
+    {sheet?.kind === "won" && <label className="ca-amt-check"><input type="checkbox" checked={review} onChange={e => setReview(e.target.checked)} /><span>Job&rsquo;s already finished? Text them for a Google review now</span></label>}
     <div className="ca-amt-row"><button type="button" className="ca-amt-no" onClick={() => setSheet(null)}>Cancel</button>
       <button type="submit" className="ca-amt-go" disabled={!!busy}>{sheet?.kind === "quoted" ? "Start follow-up" : "Mark won"}</button></div>
   </form>;
@@ -301,6 +301,16 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
         {sheet?.id === q.id ? amountSheet(() => void act(q.id, { action: "quote", quote: q.id, status: "won", amount: amt }, () => "Marked won. Follow-ups stopped."))
           : <div className="ca-q-btns"><button type="button" className="win" onClick={() => { open("quote-won", q.id); setAmt(q.amount ? String(q.amount) : ""); }}>Won</button>
             <button type="button" disabled={busy === q.id} onClick={() => arm === "lost" + q.id ? void act(q.id, { action: "quote", quote: q.id, status: "lost" }, () => "Marked lost. Follow-ups stopped.") : setArm("lost" + q.id)}>{arm === "lost" + q.id ? "Tap again: lost" : "Lost"}</button></div>}
+      </li>; })}</ul></section>}
+
+    {(d.wonJobs?.length ?? 0) > 0 && d.hasReviewLink && <section className="ca-group"><h2>Jobs you won</h2>
+      <p className="ca-sub">When the job&rsquo;s finished, tap Job done and Cinder texts them for a Google review.</p>
+      <ul className="ca-cards">{d.wonJobs!.map(j => { const name = j.customer_name || fmtPhone(j.customer_phone); return <li key={j.id} className="ca-q">
+        <div className="ca-q-h"><b>{name}</b><span>{j.amount ? usd(j.amount) : ""}</span></div>
+        <small>Won {new Date(j.won_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</small>
+        <div className="ca-q-btns"><button type="button" className="win" disabled={busy === "rv" + j.id} onClick={() => arm === "rv" + j.id
+          ? void act("rv" + j.id, { action: "review", quote: j.id }, () => `Review request sent to ${name.split(" ")[0]}.`)
+          : setArm("rv" + j.id)}>{arm === "rv" + j.id ? "Tap to send review request" : "Job done"}</button></div>
       </li>; })}</ul></section>}
   </>;
 }

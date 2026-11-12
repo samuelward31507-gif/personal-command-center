@@ -53,3 +53,22 @@ assert.match(existingBookingRules("Fri, Nov 13, 10:00 AM"), /already has an esti
 assert.equal(parseDecision('{"reply":"No problem, canceled.","handoff":false,"stage":"canceled","summary":"Canceled"}').stage, "canceled");
 assert.ok(EN.after_hours_call && ES.after_hours_call && EN.handoff_hold && ES.handoff_hold);
 console.log("handoffs, after hours, rescheduling ok");
+
+// ---------- Owner texts, repeat trades, financing, guarantee pace ----------
+import { parseOwnerQuote, isRepeatTrade, SEQUENCES as SEQ, replySystem } from "./lib/client-runtime.ts";
+import { behind } from "./lib/client-health.ts";
+assert.deepEqual(parseOwnerQuote("QUOTE 4200"), { amount: 4200, name: "" });
+assert.deepEqual(parseOwnerQuote("quote $4,200 Dana"), { amount: 4200, name: "Dana" });
+assert.deepEqual(parseOwnerQuote("Quote Dana Ruiz 9.4k"), { amount: 9400, name: "Dana Ruiz" });
+assert.deepEqual(parseOwnerQuote("quoted for Tom"), { amount: null, name: "Tom" });
+assert.equal(parseOwnerQuote("ok got it"), null);
+assert.equal(parseOwnerQuote("Quotes are slow this week"), null);
+assert.ok(isRepeatTrade("Auto detailing") && isRepeatTrade("Carpet cleaning") && !isRepeatTrade("Fence"));
+assert.deepEqual([...SEQ.reactivate.days], [0, 4, 9]);
+assert.match(replySystem({ financing: "Hearth financing, as low as $99/month" }, []), /Hearth financing, as low as \$99\/month/);
+assert.match(replySystem({}, []), /smaller option/);
+assert.equal(behind({ guarantee_days: 5, guarantee_booked: 0 }), false, "too early to call");
+assert.equal(behind({ guarantee_days: 15, guarantee_booked: 1 }), true);
+assert.equal(behind({ guarantee_days: 15, guarantee_booked: 2 }), false);
+assert.equal(behind({ guarantee_days: null, guarantee_booked: 0 }), false);
+console.log("owner texts, repeat trades, financing, guarantee ok");
