@@ -91,15 +91,16 @@ export async function POST(request: Request) {
         await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
           VALUES (${owner}, ${String(moved[0].contact_id)}::uuid, 'note', 'note', 'other', ${`Signed the service agreement electronically (${v.ok.name}${v.ok.title ? ", " + v.ok.title : ""}).`})`;
       }
-      await sendAlert({ subject: `Signed: ${String(row.company || "your client")} signed the agreement`, lines: [
-        `${v.ok.name}${v.ok.title ? `, ${v.ok.title}` : ""} signed the service agreement for ${String(row.company || "the client")}.`,
-        "The deal is Won and onboarding has started. Payments stay expected until you record them on Money.",
-      ], link: { label: "Open the deal", path: `/crm/deals/${dealId}` } });
       try { await runDealHandoff(sql, owner, dealId); }
       catch (e) { console.error("Handoff after signature failed", { name: e instanceof HandoffNotReady ? "HandoffNotReady" : e instanceof Error ? e.name : typeof e }); }
       // Hand the client straight to their kickoff checklist, so the go-live clock can start today.
       try { kickoffUrl = await createKickoffLink(sql, owner, dealId, publicOrigin(request.url)); }
       catch (e) { console.error("Kickoff link after signature failed", { name: e instanceof Error ? e.name : typeof e }); }
+      await sendAlert({ subject: `Signed: ${String(row.company || "your client")} signed the agreement`, lines: [
+        `${v.ok.name}${v.ok.title ? `, ${v.ok.title}` : ""} signed the service agreement for ${String(row.company || "the client")}.`,
+        "The deal is Won and onboarding has started. Payments stay expected until you record them on Money.",
+        ...(kickoffUrl ? [`Kickoff checklist (text it to them too): ${kickoffUrl}`] : []),
+      ], link: { label: "Open the deal", path: `/crm/deals/${dealId}` } });
     }
     // Send the setup payment link straight away (and show it on the page): collect while they're ready.
     let payUrl: string | null = null;
@@ -108,10 +109,18 @@ export async function POST(request: Request) {
       const [d] = await sql`SELECT service_type, setup_fee FROM public.deals WHERE id = ${dealId}::uuid AND owner_id = ${owner}` as { service_type: string | null; setup_fee: number | null }[];
       const fee = Number(d?.setup_fee ?? 0);
       payUrl = paymentLinkFor(ws, d?.service_type ?? null, "setup_fee", fee).link || null;
-      if (payUrl && v.ok.email) {
-        await sendDirectEmail(sql, owner, ws, { to: v.ok.email, contactId: moved[0]?.contact_id ? String(moved[0].contact_id) : null, kind: "setup payment",
+      // The next-steps email goes out whenever there's something to send, with or without a payment link,
+      // so the kickoff checklist never lives only on the signing screen.
+      if ((payUrl || kickoffUrl) && v.ok.email) {
+        const steps = [
+          payUrl ? `Setup payment${fee ? ` ($${fee.toLocaleString("en-US")})` : ""}: ${payUrl}` : "",
+          kickoffUrl ? `Kickoff checklist (about 10 minutes): ${kickoffUrl}` : "",
+        ].filter(Boolean).map((t, i, a) => (a.length > 1 ? `${i + 1}. ` : "") + t);
+        const intro = steps.length > 1 ? "Two quick things and we start building:" : "One quick thing and we start building:";
+        const payNote = payUrl ? "" : `\n${fee ? `I'll send the setup invoice ($${fee.toLocaleString("en-US")}) separately.\n` : ""}`;
+        await sendDirectEmail(sql, owner, ws, { to: v.ok.email, contactId: moved[0]?.contact_id ? String(moved[0].contact_id) : null, kind: payUrl ? "setup payment" : "kickoff",
           subject: `Next steps for ${String(row.company || "your setup")}`,
-          body: `Hi ${v.ok.name.split(" ")[0]},\n\nThanks for signing. Two quick things and we start building:\n\n1. Setup payment${fee ? ` ($${fee.toLocaleString("en-US")})` : ""}: ${payUrl}\n${kickoffUrl ? `2. Kickoff checklist (about 10 minutes): ${kickoffUrl}\n` : ""}\nYour monthly plan doesn't start until your first booked appointment.\n\n${ws.ownerFirstName || "Sam"}\n${ws.businessName || "Cinder Revenue Company"}` });
+          body: `Hi ${v.ok.name.split(" ")[0]},\n\nThanks for signing. ${intro}\n\n${steps.join("\n")}\n${payNote}\nYour monthly plan doesn't start until your first booked appointment.\n\n${ws.ownerFirstName || "Sam"}\n${ws.businessName || "Cinder Revenue Company"}` });
       }
     } catch (e) { console.error("Payment link after signature failed", { name: e instanceof Error ? e.name : typeof e }); }
     return reply({ ok: true, signedAt: iso(signedRows[0].signed_at), kickoffUrl, payUrl });
