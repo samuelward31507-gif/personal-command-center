@@ -2,6 +2,8 @@ import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
 import { cleanDiscovery, PROPOSAL_STATUSES, stageForProposal, CONTRACT_STATUSES, stageForContract, type ProposalStatus, type ContractStatus } from "@/lib/deal-workspace";
 import { DEAL_STAGES } from "@/lib/offers";
+
+const SERVICE_TYPES = new Set(["tier1_speed_to_lead", "tier2_revenue_system", "ai_voice_agent", "speed_to_lead", "lead_follow_up", "appointment_booking", "workflow_automation", "custom_ai_implementation"]);
 import { runDealHandoff, HandoffNotReady } from "@/lib/deal-handoff";
 import { reportSection, sanitizeForLog } from "@/lib/business-audit";
 
@@ -107,6 +109,12 @@ export async function PATCH(request: Request) {
     } else if (contractStatus) stage = stageForContract(contractStatus, stageNow);
     else if (proposalStatus) stage = stageForProposal(proposalStatus, stageNow);
     const lostReason = typeof body.lostReason === "string" ? body.lostReason.trim().slice(0, 1000) : "";
+    // Price and plan, editable from the deal page header. Only sent fields change.
+    const fee = (v: unknown) => v === undefined ? null : typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 1000000 ? Math.round(v * 100) / 100 : NaN;
+    const setupFee = fee(body.setupFee), monthlyFee = fee(body.monthlyFee);
+    if (Number.isNaN(setupFee) || Number.isNaN(monthlyFee)) return fail("Prices must be numbers from 0 to 1,000,000.", 400);
+    const serviceType = typeof body.serviceType === "string" ? body.serviceType : null;
+    if (serviceType !== null && !SERVICE_TYPES.has(serviceType)) return fail("Unknown plan.", 400);
     if (stage === "lost" && stageNow !== "lost" && !lostReason) return fail("Say why it was lost — it's how the pipeline gets better.", 400);
 
     await sql`
@@ -120,6 +128,9 @@ export async function PATCH(request: Request) {
         contract_status = COALESCE(${contractStatus}, contract_status),
         contract_sent_at = CASE WHEN ${contractStatus} = 'sent' THEN COALESCE(contract_sent_at, now()) ELSE contract_sent_at END,
         stage = COALESCE(${stage}, stage),
+        setup_fee = COALESCE(${setupFee}::numeric, setup_fee),
+        monthly_fee = COALESCE(${monthlyFee}::numeric, monthly_fee),
+        service_type = COALESCE(${serviceType}, service_type),
         lost_reason = CASE WHEN ${stage} = 'lost' AND ${lostReason} <> '' THEN ${lostReason} ELSE lost_reason END,
         agreement_status = CASE WHEN COALESCE(${stage}, stage) = 'won' AND agreement_status <> 'ended'
           AND (signed_at IS NOT NULL OR ${contractStatus} = 'signed') THEN 'active' ELSE agreement_status END,

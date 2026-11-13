@@ -57,6 +57,7 @@ export default function DealWorkspacePage() {
   const [next, setNext] = useState({ step: "", at: "" });
   const [saving, setSaving] = useState<string | null>(null);
   const [flash, setFlash] = useState<{ ok: boolean; text: string } | null>(null);
+  const [priceEdit, setPriceEdit] = useState<{ svc: string; setup: string; monthly: string } | null>(null);
   const [draftNotes, setDraftNotes] = useState("");
   const [editing, setEditing] = useState<{ id: string; content: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
@@ -246,7 +247,8 @@ export default function DealWorkspacePage() {
   const proposal = ws.proposals[0];
   const closed = deal.stage === "won" || deal.stage === "lost";
   const agreement = ws.agreements[0];
-  const showAgreement = deal.proposalStatus === "accepted" || deal.contractStatus !== "none" || !!agreement;
+  // The agreement is one click from every open deal: on a call, you go straight from "yes" to the signing link.
+  const showAgreement = !closed || deal.contractStatus !== "none" || !!agreement;
   const showKickoff = deal.stage === "won" && (deal.serviceType === "tier1_speed_to_lead" || deal.serviceType === "tier2_revenue_system");
   const showEmail = !closed || deal.stage === "won";
   const tabs: { key: DealTab; label: string }[] = [
@@ -273,7 +275,21 @@ export default function DealWorkspacePage() {
           {contact && <Link href={`/crm?contact=${contact.id}`}>Contact record</Link>}
         </div>
       </div>
-      <div className="dw-value"><strong>{money(deal.setupFee)}</strong><span>setup</span><strong>{money(deal.monthlyFee)}</strong><span>/ month</span></div>
+      {priceEdit ? <form className="dw-price-edit" onSubmit={e => { e.preventDefault();
+          const setup = Number(priceEdit.setup), monthly = Number(priceEdit.monthly);
+          if (!Number.isFinite(setup) || !Number.isFinite(monthly) || setup < 0 || monthly < 0) { setFlash({ ok: false, text: "Prices must be numbers." }); return; }
+          void patch({ serviceType: priceEdit.svc, setupFee: setup, monthlyFee: monthly }, "price", agreement && deal.contractStatus !== "signed" ? "Price saved. Click Recreate from template on the Agreement tab so the contract shows it." : "Price saved.").then(() => setPriceEdit(null)); }}>
+        <label>Plan<select value={priceEdit.svc} onChange={e => { const o = Object.values(offersFrom(wsp)).find(x => x.serviceType === e.target.value);
+          setPriceEdit({ svc: e.target.value, setup: o ? String(o.setupFee) : priceEdit.setup, monthly: o ? String(o.monthlyFee) : priceEdit.monthly }); }}>
+          {Object.values(offersFrom(wsp)).map(o => <option key={o.serviceType} value={o.serviceType}>{o.label}</option>)}
+          {!Object.values(offersFrom(wsp)).some(o => o.serviceType === priceEdit.svc) && <option value={priceEdit.svc}>Custom</option>}
+        </select></label>
+        <label>Setup<input inputMode="decimal" value={priceEdit.setup} onChange={e => setPriceEdit({ ...priceEdit, setup: e.target.value.replace(/[^0-9.]/g, "") })} /></label>
+        <label>Monthly<input inputMode="decimal" value={priceEdit.monthly} onChange={e => setPriceEdit({ ...priceEdit, monthly: e.target.value.replace(/[^0-9.]/g, "") })} /></label>
+        <span className="dw-price-acts"><button type="submit" data-variant="primary" disabled={!!saving}>{saving === "price" ? "Saving…" : "Save"}</button><button type="button" onClick={() => setPriceEdit(null)}>Cancel</button></span>
+      </form>
+      : <div className="dw-value"><strong>{money(deal.setupFee)}</strong><span>setup</span><strong>{money(deal.monthlyFee)}</strong><span>/ month</span>
+        {!closed && deal.contractStatus !== "signed" && <button type="button" className="dw-price-btn" onClick={() => setPriceEdit({ svc: deal.serviceType, setup: String(deal.setupFee), monthly: String(deal.monthlyFee) })}>Edit price</button>}</div>}
     </header>
 
     <div className="dw-stages" aria-label="Stage">

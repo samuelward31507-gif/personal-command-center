@@ -8,8 +8,13 @@ export async function loadOffer(ownerId: string): Promise<{ offer: OfferSettings
   const sql = neon(process.env.DATABASE_URL);
   let offer = fallback, used = 0;
   try {
-    const rows = await sql`SELECT settings->'offer' AS offer FROM public.workspace_settings WHERE owner_id = ${ownerId}`;
+    const rows = await sql`SELECT settings->'offer' AS offer, settings->'tier2' AS tier2 FROM public.workspace_settings WHERE owner_id = ${ownerId}`;
     offer = mergeOffer(rows[0]?.offer);
+    // Prices have one home: the Book & Close plan in Settings → Workspace. The call scripts always quote that.
+    const t2 = rows[0]?.tier2 as { label?: string; setupFee?: number; monthlyFee?: number } | null;
+    if (t2 && Number(t2.setupFee) > 0 && Number(t2.monthlyFee) > 0) {
+      offer = { ...offer, offerName: t2.label || offer.offerName, setupFee: Number(t2.setupFee), standardSetup: Number(t2.setupFee), monthly: Number(t2.monthlyFee), spotsTotal: 0 };
+    }
   } catch { /* keep defaults */ }
   try {
     const r = await sql`SELECT count(*)::int AS n FROM public.projects WHERE owner_id = ${ownerId} AND offer = 'founding' AND status = ANY(${[...FOUNDING_ACTIVE_STATUSES]})`;

@@ -110,3 +110,12 @@ body .dw-page .dw-kick dd { margin: 0; color: var(--u-text); overflow-wrap: anyw
 }
 html body:not(#u) .dw-page .dw-eyebrow { font-family: var(--u-text-font) !important; font-size: 13px !important; font-weight: 400 !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--u-muted) !important; }
 html body:not(#u) .dw-page .dw-boxhead { border: 0 !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; }
+
+/* price: editable from the header until the agreement is signed */
+body .dw-page .dw-price-btn { grid-column: 1 / -1; justify-self: end; margin-top: 4px; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 500; color: var(--u-text); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+body .dw-page .dw-price-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; min-width: 260px; }
+body .dw-page .dw-price-edit label { display: grid; gap: 3px; font-size: 12px; color: var(--u-faint); }
+body .dw-page .dw-price-edit label:first-child { grid-column: 1 / -1; }
+body .dw-page .dw-price-edit :is(input, select) { font: inherit; font-size: 14px; padding: 7px 9px; border: 1px solid var(--u-line, #dcdbd7); border-radius: 8px; background: var(--u-bg, #fff); color: var(--u-text); }
+body .dw-page .dw-price-acts { grid-column: 1 / -1; display: flex; gap: 8px; justify-content: flex-end; }
+body .dw-page .dw-price-acts button { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 8px; cursor: pointer; }

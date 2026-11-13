@@ -1,5 +1,5 @@
 "use client";
-// Founding offer settings (one record): name, prices, founding spots and the guarantee calculator rates.
+// Guarantee calculator settings: the rates behind the booked-appointment estimate. Prices live in Workspace (tier1/tier2).
 import { useEffect, useState } from "react";
 import type { OfferSettings } from "@/lib/founding-offer";
 import "./workspace-card.css";
@@ -20,7 +20,7 @@ export function OfferCard() {
       if (!x) throw new Error(); setD(x); const f = toForm(x.offer); setForm(f); setSaved(JSON.stringify(f));
     }).catch(() => setNote({ ok: false, text: "Couldn't load the offer settings." }));
   }, []);
-  if (!d || !form) return <section className="ws-card"><h2>Founding offer</h2><p className="ws-sub">{note?.text ?? "Loading…"}</p></section>;
+  if (!d || !form) return <section className="ws-card"><h2>Guarantee calculator</h2><p className="ws-sub">{note?.text ?? "Loading…"}</p></section>;
   const dirty = JSON.stringify(form) !== saved;
   const set = (k: string, v: string) => { setForm({ ...form, [k]: v }); setNote(null); };
 
@@ -44,20 +44,14 @@ export function OfferCard() {
 
   return <section className="ws-card">
     <div className="ws-head">
-      <div><h2>Founding offer</h2><p className="ws-sub">{d.used} of {d.offer.spotsTotal} founding spots used · {d.left} left. Used counts founding clients that are signed and not cancelled.</p></div>
+      <div><h2>Guarantee calculator</h2><p className="ws-sub">How Cinder estimates booked appointments for the guarantee. Prices live in Workspace below (Tier 1 and Tier 2).</p></div>
       <button className="ws-save" disabled={!dirty || busy} onClick={() => void save()}>{busy ? "Saving…" : dirty ? "Save changes" : "Saved"}</button>
     </div>
     {note && <p className={"ws-note " + (note.ok ? "ok" : "bad")} role="status">{note.text}</p>}
-    <h3>Offer</h3>
     <div className="ws-grid three">
-      <label className="ws-field wide"><span>Offer name</span><input value={form.offerName} onChange={e => set("offerName", e.target.value)} /></label>
-      {f("setupFee", "Founding setup fee", undefined, "$")}
-      {f("standardSetup", "Standard setup (shown struck through)", undefined, "$")}
-      {f("monthly", "Monthly", "Starts after the first booked appointment.", "$")}
-      {f("spotsTotal", "Founding spots total")}
       {f("minOldLeads", "Old leads needed for the guarantee")}
     </div>
-    <h3>Guarantee calculator rates</h3>
+    <h3>Rates</h3>
     <p className="ws-sub">Expected booked estimates = old leads × reply % × book % + new leads × reply % × book %. Safe to guarantee is half of that. Update these after client #1.</p>
     <div className="ws-grid">
       {f("oldReply", "Old leads: reply rate (%)")}

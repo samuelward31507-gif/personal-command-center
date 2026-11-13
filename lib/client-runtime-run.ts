@@ -100,7 +100,7 @@ export async function draftReply(sql: Sql, c: Client, threadId: string, customer
   if (!key) return null;
   try {
     const system = replySystem(c.setup, c.messages) + (slots ? bookingRules(slots) : "") + extra;
-    const text = await claudeText({ apiKey: key, system, user: replyUser(history.reverse(), customerName), label: "Client reply", model: process.env.CINDER_REPLY_MODEL?.trim() || "claude-haiku-5-5", maxTokens: 500, timeoutMs: 9000 });
+    const text = await claudeText({ apiKey: key, system, user: replyUser(history.reverse(), customerName), label: "Client reply", model: process.env.CINDER_REPLY_MODEL?.trim() || "claude-haiku-5-5", maxTokens: 500, timeoutMs: 20000 });
     return parseDecision(text);
   } catch (e) { console.error("Client reply failed", e instanceof Error ? e.message : e); return null; }
 }

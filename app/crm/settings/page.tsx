@@ -165,7 +165,7 @@ export default function SettingsPage() {
         {TABS.map(t => <button key={t.key} type="button" aria-pressed={tab === t.key} aria-selected={tab === t.key} onClick={() => pick(t.key)}>{t.label}</button>)}
       </nav>
 
-      {tab === "business" && <><OfferCard /><WorkspaceCard /></>}
+      {tab === "business" && <><WorkspaceCard /><OfferCard /></>}
 
       {tab === "automations" && <><LeadFormLink /><OvernightAudits /><SundayReview /></>}
 
