@@ -1,0 +1,24 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+process.env.CINDER_TOKEN_KEY = "x".repeat(40);
+const { splitName, clientInput, requestTitle, jobberState, readJobberState, jobberRedirect } = await import("./lib/jobber-core.ts");
+let n = 0; const ok = f => { f(); n++; };
+
+ok(() => assert.deepEqual(splitName("Dana Ruiz"), { firstName: "Dana", lastName: "Ruiz" }));
+ok(() => assert.deepEqual(splitName("Mary Ann  Lee"), { firstName: "Mary Ann", lastName: "Lee" }));
+ok(() => assert.deepEqual(splitName("Dana"), { firstName: "Dana", lastName: "" }));
+ok(() => assert.deepEqual(splitName("  "), { firstName: "New", lastName: "Lead" }, "a lead with no name still gets a Jobber client"));
+ok(() => assert.deepEqual(clientInput("Dana Ruiz", "+13525551234"), { firstName: "Dana", lastName: "Ruiz", phones: [{ number: "+13525551234", primary: true, description: "MAIN" }] }));
+ok(() => assert.equal("lastName" in clientInput("Dana", "+1"), false, "no empty last name sent"));
+ok(() => assert.match(requestTitle("2026-11-20T15:00:00Z", "America/New_York", "Cedar privacy, ~120 ft\nTear-out"), /^Estimate Fri, Nov 20, 10:00 AM · Cedar privacy, ~120 ft \(booked by Cinder\)$/));
+ok(() => assert.ok(requestTitle("2026-11-20T15:00:00Z", "America/New_York", "x".repeat(400)).length <= 140));
+const id = "87395d0d-ff4d-4dbe-a716-bd57201eca0a";
+ok(() => assert.equal(readJobberState(jobberState(id)), id));
+ok(() => assert.equal(readJobberState(jobberState(id).replace(/.$/, c => c === "a" ? "b" : "a")), null, "tampered state refused"));
+ok(() => assert.equal(readJobberState(jobberState(id, Date.now() - 8 * 86400000)), null, "expires after 7 days"));
+ok(() => assert.equal(jobberRedirect("https://x.app/"), "https://x.app/api/client-jobber/callback"));
+const run = readFileSync("lib/client-runtime-run.ts", "utf8");
+ok(() => assert.match(run, /syncBookingToJobber\(sql, c\.projectId, ap\.id/, "every booking is pushed to Jobber"));
+const mig = readFileSync("db/migrations/0063_client_jobber.sql", "utf8");
+ok(() => assert.doesNotMatch(mig, /^\s*(DROP|DELETE|TRUNCATE)\b/im, "additive migration only"));
+console.log(`Jobber checks passed (${n} assertions).`);

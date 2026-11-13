@@ -9,6 +9,7 @@ import { cleanMessages } from "@/lib/client-ops";
 import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent, deleteEvent } from "@/lib/client-calendar";
+import { syncBookingToJobber } from "@/lib/jobber";
 import { pushFromAlert, pushToProject } from "@/lib/client-push";
 
 type Sql = NeonQueryFunction<false, false>;
@@ -110,7 +111,9 @@ async function book(sql: Sql, c: Client, threadId: string, phone: string, who: s
   if (!cal) return false;
   try {
     const eventId = await createEvent(cal, { start: slot.start, end: slot.end, tz: tzOf(c), title: `Estimate: ${who}`, details: `${summary}\nPhone: ${phone}\nBooked by Cinder by text.` });
-    await sql`INSERT INTO public.client_appointments (owner_id, project_id, thread_id, starts_at, ends_at, event_id) VALUES (${c.owner}, ${c.projectId}::uuid, ${threadId}::uuid, ${slot.start}::timestamptz, ${slot.end}::timestamptz, ${eventId})`;
+    const [ap] = await sql`INSERT INTO public.client_appointments (owner_id, project_id, thread_id, starts_at, ends_at, event_id) VALUES (${c.owner}, ${c.projectId}::uuid, ${threadId}::uuid, ${slot.start}::timestamptz, ${slot.end}::timestamptz, ${eventId}) RETURNING id` as { id: string }[];
+    // Shops on Jobber get the estimate there too, on the customer's record. Never undoes the booking if Jobber fails.
+    if (ap) await syncBookingToJobber(sql, c.projectId, ap.id, { name: who, phone: e164(phone), start: slot.start, end: slot.end, tz: tzOf(c), summary });
     return true;
   } catch (e) { console.error("Booking failed", e instanceof Error ? e.message : e); return false; }
 }

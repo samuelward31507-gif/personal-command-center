@@ -34,6 +34,22 @@ export default function LivePanel({ projectId }: { projectId: string }) {
   const [consent, setConsent] = useState(false);
   const [custList, setCustList] = useState(""), [custDays, setCustDays] = useState(""), [custOk, setCustOk] = useState(false);
   const [calLink, setCalLink] = useState("");
+  const [jb, setJb] = useState<{ connected: boolean; account: string; lastError: string; lastPush: string | null; configured: boolean; link: string } | null>(null);
+  const [jbShow, setJbShow] = useState(false);
+  const loadJobber = useCallback(async () => {
+    const r = await fetch("/api/client-jobber", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projectId }) });
+    const x = await r.json().catch(() => null);
+    if (r.ok && x) setJb(x);
+    return r.ok ? x : null;
+  }, [projectId]);
+  async function getJobberLink() {
+    setNote(null);
+    const x = await loadJobber();
+    if (!x) { setNote({ ok: false, text: "Couldn't make the Jobber link." }); return; }
+    if (!x.configured) { setNote({ ok: false, text: "Jobber isn't switched on yet: add JOBBER_CLIENT_ID and JOBBER_CLIENT_SECRET in Vercel (from the Jobber Developer Center app)." }); return; }
+    setJbShow(true); void navigator.clipboard?.writeText(x.link);
+    setNote({ ok: true, text: "Jobber link copied. Text it to the owner: they sign in to Jobber and press Allow. It works for 7 days." });
+  }
   async function getCalLink() {
     setNote(null);
     const r = await fetch("/api/client-calendar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projectId }) });
@@ -46,6 +62,7 @@ export default function LivePanel({ projectId }: { projectId: string }) {
 
   const load = useCallback(() => fetch("/api/client-threads?project=" + projectId, { cache: "no-store" }).then(r => r.json()).then(x => { if (!x.error) setD(x); }).catch(() => {}), [projectId]);
   useEffect(() => { load(); const t = setInterval(load, 20000); return () => clearInterval(t); }, [load]);
+  useEffect(() => { if (tab === "estimates") void loadJobber(); }, [tab, loadJobber]);
   useEffect(() => { if (!open) return; fetch("/api/client-threads?thread=" + open, { cache: "no-store" }).then(r => r.json()).then(x => setTexts(x.texts ?? [])); }, [open, d]);
 
   async function act(action: string, extra: Record<string, unknown>, okText: string) {
@@ -158,6 +175,14 @@ export default function LivePanel({ projectId }: { projectId: string }) {
         <button type="button" className="op-primary" style={NB} onClick={() => void getCalLink()}>{d?.calendar?.connected ? "New connect link" : "Get the connect link"}</button>
       </div>
       {calLink && <pre className="lv-code">{calLink}</pre>}
+      <div className="lv-cal">
+        <div><b>{jb?.connected ? `Jobber connected${jb.account ? `: ${jb.account}` : ""}` : "Jobber not connected"}</b>
+          <p className="op-hint">{jb?.connected
+            ? (jb.lastError ? `Last push to Jobber failed: ${jb.lastError}` : `Every booked estimate also lands in Jobber as a request on the customer's record${jb.lastPush ? ` (last one ${when(jb.lastPush)})` : ""}.`)
+            : "For shops on Jobber: connect it and every estimate Cinder books shows up in Jobber too, so the owner never copies bookings over."}</p></div>
+        <button type="button" className="op-primary" style={NB} onClick={() => void getJobberLink()}>{jb?.connected ? "New Jobber link" : "Get the Jobber link"}</button>
+      </div>
+      {jbShow && jb?.link && <pre className="lv-code">{jb.link}</pre>}
       <ul className="lv-appts">{(d?.appointments ?? []).length ? (d?.appointments ?? []).map(a => <li key={a.id} className={"is-" + a.status}>
         <span><b>{when(a.starts_at)}</b><small>{a.customer_name || a.customer_phone}{a.reminded_at ? " · reminded" : ""}</small></span>
         <em>{a.status === "booked" ? (Date.parse(a.starts_at) > Date.now() ? "Booked" : "Did they show?") : a.status === "no_show" ? "No-show, rebooking" : a.status === "done" ? "Done" : "Canceled"}</em>
