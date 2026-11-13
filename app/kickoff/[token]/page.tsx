@@ -172,7 +172,7 @@ export default function KickoffPage() {
           <div className="ko-progress" aria-hidden="true"><span style={{ width: pct + "%" }} /></div>
           <p className="ko-step">{review ? "Last step" : `Step ${step + 1} of ${steps.length}`}</p>
           {step === 0 && <div className="ko-intro"><h1>Let’s set up {doc.client || "your shop"}</h1>
-            <p>About 10 minutes. Your answers save on this device as you go, so you can stop and come back.</p></div>}
+            <p>About 10 minutes. Your answers save on this device as you go, so you can stop and come back.</p><p className="ko-need">Have these handy: your IRS EIN letter (CP 575 or 147C), your ballpark prices, and the hours you take estimates.</p></div>}
           {!review ? <section className="ko-card" aria-labelledby="ko-group">
             <h2 id="ko-group">{steps[step]}</h2>
             {shown(steps[step]).map(f => <div className="ko-field" key={f.key}>

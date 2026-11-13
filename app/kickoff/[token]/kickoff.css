@@ -97,3 +97,5 @@ html body:not(#u):not(#v) .ko-card h2 { font-size: 22px !important; letter-spaci
 html body:not(#u):not(#v) .ko-card :is(button, input, select, textarea) { font-family: inherit !important; letter-spacing: 0 !important; text-transform: none !important; }
 html body:not(#u):not(#v) .ko-l { color: #121417 !important; }
 .ko-note { margin: 4px 0 0; padding: 12px 14px; border-radius: 10px; background: #f6f6f4; font-size: 14px; line-height: 1.5; color: #4a5059 !important; }
+@media (min-width: 700px) { .ko-opts { grid-template-columns: 1fr 1fr; } .ko-opts .ko-note { grid-column: 1 / -1; } }
+.ko-intro p.ko-need { margin-top: 4px; padding: 12px 14px; border-radius: 12px; background: #fff; border: 1px solid #e6e5e1; font-size: 15px; color: #4a5059 !important; }

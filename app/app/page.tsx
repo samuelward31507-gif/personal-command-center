@@ -221,11 +221,12 @@ function GoogleCalMark() {
 type Sheet = { kind: "quoted" | "won" | "quote-won"; id: string };
 function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: string; onOpen: (id: string) => void; reload: () => Promise<void>; toast: (t: string, bad?: boolean) => void }) {
   const { due, upcoming } = useMemo(() => splitAppointments(d.appointments), [d.appointments]);
-  const days = useMemo(() => agenda(upcoming, d.calendar.events), [upcoming, d.calendar.events]);
+  // The calendar arrives with the Calendar tab's own fetch; until then (or if it fails) show the estimates alone.
+  const cal: Data["calendar"] = d.calendar ?? { connected: false, email: "", events: [], error: "", connectUrl: "" };
+  const days = useMemo(() => agenda(upcoming, cal.events ?? []), [upcoming, cal.events]);
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [amt, setAmt] = useState(""), [review, setReview] = useState(false), [busy, setBusy] = useState(""), [arm, setArm] = useState("");
   useEffect(() => { if (!arm) return; const i = setTimeout(() => setArm(""), 4000); return () => clearTimeout(i); }, [arm]);
-  const cal = d.calendar;
   const week = upcoming.filter(a => Date.parse(a.starts_at) < Date.now() + 7 * 86400000).length;
   async function act(key: string, body: Record<string, unknown>, done: (r: { review?: string }) => string) {
     setBusy(key);

@@ -78,7 +78,7 @@ html body:not(#u) .ca-demo button { padding: 4px 11px; border: 0 !important; bor
 html body:not(#u) .ca-demo + .ca-top { padding-top: 10px; }
 
 /* Top bar */
-html body:not(#u) .ca-top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top)) 18px 10px; background: rgba(246, 246, 244, .86); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px); border-bottom: 1px solid var(--ca-line); }
+html body:not(#u) .ca-top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top)) 18px 10px; background: rgba(246, 246, 244, .95); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px); border-bottom: 1px solid var(--ca-line); }
 html body:not(#u) .ca-top-name, html body:not(#u) .ca-top select { flex: 1; min-width: 0; font-size: 15.5px !important; font-weight: 600; letter-spacing: -0.012em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ca-text) !important; }
 html body:not(#u) .ca-top select { height: auto !important; padding: 0 !important; border: 0 !important; background: none !important; appearance: auto; }
 html body:not(#u) .ca-live { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 9px; border-radius: 999px; background: var(--ca-ok-bg); color: var(--ca-ok); font-size: 12px; font-weight: 600; }
@@ -171,7 +171,7 @@ html body:not(#u) .ca-stats small { font-size: 13px; color: var(--ca-3); }
 
 /* Conversation */
 html body:not(#u) .ca-thread { display: flex; flex-direction: column; min-height: 100dvh; }
-html body:not(#u) .ca-stick { position: sticky; top: 0; z-index: 5; background: rgba(246, 246, 244, .88); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px); border-bottom: 1px solid var(--ca-line); }
+html body:not(#u) .ca-stick { position: sticky; top: 0; z-index: 5; background: rgba(246, 246, 244, .96); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px); border-bottom: 1px solid var(--ca-line); }
 html body:not(#u) .ca-thead { display: flex; align-items: center; gap: 10px; padding: calc(8px + env(safe-area-inset-top)) 14px 8px 6px; }
 html body:not(#u) .ca-icon-btn { display: grid; place-items: center; width: 38px; height: 38px; border: 0 !important; border-radius: 12px !important; background: none !important; color: var(--ca-text) !important; }
 html body:not(#u) .ca-thead-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
