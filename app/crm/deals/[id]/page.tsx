@@ -152,7 +152,10 @@ export default function DealWorkspacePage() {
     const o = Object.values(offersFrom(wsp)).find(x => x.serviceType === svc);
     if (!o || !ws) return;
     if (!(await patch({ serviceType: svc, setupFee: o.setupFee, monthlyFee: o.monthlyFee }, "plan", `Switched to ${o.label}.`))) return;
-    if (ws.agreements[0]) await draftAgreement(`Switched to ${o.label}. The agreement was rewritten with the new plan and price: fill in his address and company type again${deal_sent() ? ", then send a new signing link (the old one shows the old plan)" : ""}.`);
+    // The proposal carries the plan's own Stripe setup link, so it is rebuilt with the plan.
+    if (ws.proposals[0]) await fetch("/api/proposals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id, addon: propAddon }) }).catch(() => null);
+    if (ws.agreements[0]) await draftAgreement(`Switched to ${o.label}. The agreement and proposal were rewritten with the new plan, price and Stripe link: fill in his address and company type again${deal_sent() ? ", then send a new signing link (the old one shows the old plan)" : ""}.`);
+    else await load();
   }
   async function switchAddon(on: boolean) {
     setAddon(on);
