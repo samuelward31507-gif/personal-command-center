@@ -12,8 +12,8 @@ body .rx-page .rx-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 1
 body .rx-page .rx-fields .rx-wide { grid-column: 1 / -1; }
 body .rx-page .rx-preview { position: sticky; top: 24px; }
 /* The report as the client sees it: a sheet of paper on the desk. */
-body .rx-page .rx-paper { padding: 34px 36px 38px; border-radius: 6px; background: #121417 !important; color: #ffffff !important; box-shadow: 0 1px 0 rgba(255,255,255,.04), 0 30px 60px -30px rgba(18,20,23,.256); }
-body .rx-page .rx-paper-from { font-size: 12px; letter-spacing: .02em; color: #717b8b; }
-body .rx-page .rx-paper-subj { margin: 10px 0 18px; padding-bottom: 16px; border-bottom: 1px solid #705f48; font-family: var(--u-display); font-stretch: 112%; font-variation-settings: "wdth" 112; font-size: 21px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; color: #ffffff; }
-body .rx-page pre.rx-paper-body { margin: 0; white-space: pre-wrap; font: 400 14.5px/1.65 var(--u-text-font); color: #dcddda !important; background: transparent !important; border: 0 !important; padding: 0 !important; }
+body .rx-page .rx-paper { padding: 34px 36px 38px; border: 1px solid #e3e2de; border-radius: 10px; background: #ffffff !important; color: #2b2f35 !important; box-shadow: 0 1px 2px rgba(18,20,23,.04), 0 8px 24px rgba(18,20,23,.04); }
+body .rx-page .rx-paper-from { font-size: 12px; letter-spacing: .02em; color: #80858d; }
+body .rx-page .rx-paper-subj { margin: 10px 0 18px; padding-bottom: 16px; border-bottom: 1px solid #e6e5e1; font-family: var(--u-display); font-size: 21px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; color: #121417; }
+body .rx-page pre.rx-paper-body { margin: 0; white-space: pre-wrap; font: 400 14.5px/1.65 var(--u-text-font); color: #2b2f35 !important; background: transparent !important; border: 0 !important; padding: 0 !important; }
 @media (max-width: 700px) { body .rx-page .rx-fields { grid-template-columns: 1fr; } body .rx-page .rx-paper { padding: 22px 20px; } body .rx-page .rx-preview { position: static; } }

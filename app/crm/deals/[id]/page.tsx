@@ -115,7 +115,8 @@ export default function DealWorkspacePage() {
       if (!r.ok) throw new Error(d.error || "Could not save.");
       setFlash({ ok: true, text: [okText, d.handoff].filter(Boolean).join(" ") });
       await load();
-    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not save." }); }
+      return true;
+    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not save." }); return false; }
     finally { setSaving(null); }
   }
 
@@ -144,13 +145,25 @@ export default function DealWorkspacePage() {
   }
 
   const [addon, setAddon] = useState(false);
-  async function draftAgreement() {
+  // Changing the plan or add-on rewrites the draft right away, so what he signs always matches what you agreed on the call.
+  async function switchPlan(svc: string) {
+    const o = Object.values(offersFrom(wsp)).find(x => x.serviceType === svc);
+    if (!o || !ws) return;
+    if (!(await patch({ serviceType: svc, setupFee: o.setupFee, monthlyFee: o.monthlyFee }, "plan", `Switched to ${o.label}.`))) return;
+    if (ws.agreements[0]) await draftAgreement(`Switched to ${o.label}. The agreement was rewritten with the new plan and price: fill in his address and company type again${deal_sent() ? ", then send a new signing link (the old one shows the old plan)" : ""}.`);
+  }
+  async function switchAddon(on: boolean) {
+    setAddon(on);
+    if (ws?.agreements[0]) await draftAgreement(`Reactivation add-on ${on ? "added" : "removed"}. The agreement was rewritten: fill in his address and company type again${deal_sent() ? ", then send a new signing link" : ""}.`, on);
+  }
+  const deal_sent = () => ws?.deal.contractStatus === "sent";
+  async function draftAgreement(done?: string, withAddon?: boolean) {
     setSaving("agreement"); setFlash(null);
     try {
-      const r = await fetch("/api/agreements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id, addon }) });
+      const r = await fetch("/api/agreements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id, addon: withAddon ?? addon }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Could not draft the agreement.");
-      setFlash({ ok: true, text: "Agreement created from your template. Fill in every [bracketed] blank before you send it." });
+      setFlash({ ok: true, text: done ?? "Agreement created from your template. Fill in every [bracketed] blank before you send it." });
       await load();
     } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not draft the agreement." }); }
     finally { setSaving(null); }
@@ -373,6 +386,15 @@ export default function DealWorkspacePage() {
 
         {tab === "agreement" && <section className="u-sheet dw-box" id="agreement">
           <div className="u-sheet dw-boxhead"><h2>Agreement</h2><span className={"dw-pill dw-pill-c-" + deal.contractStatus}>{CONTRACT_COPY[deal.contractStatus]}{deal.contractSentAt && deal.contractStatus === "sent" ? ` · ${dateLabel(deal.contractSentAt)}` : ""}{deal.signedAt && deal.contractStatus === "signed" ? ` · ${dateLabel(deal.signedAt)}` : ""}</span></div>
+          {deal.contractStatus !== "signed" && !closed && <div className="dw-signfor">
+            <label><span>Signing for</span>
+              <select value={deal.serviceType} disabled={!!saving} onChange={e => void switchPlan(e.target.value)}>
+                {Object.values(offersFrom(wsp)).map(o => <option key={o.serviceType} value={o.serviceType}>{o.label}: ${o.setupFee.toLocaleString("en-US")} setup + ${o.monthlyFee.toLocaleString("en-US")}/mo</option>)}
+                {!Object.values(offersFrom(wsp)).some(o => o.serviceType === deal.serviceType) && <option value={deal.serviceType}>Custom plan</option>}
+              </select></label>
+            <label className="dw-signfor-add"><input type="checkbox" checked={addon} disabled={!!saving} onChange={e => void switchAddon(e.target.checked)} /> Reactivation add-on (+$497/mo)</label>
+            <span className="dw-signfor-price">{money(deal.setupFee)} setup · {money(deal.monthlyFee + (addon ? 497 : 0))}/mo <button type="button" className="dw-price-btn" onClick={() => setPriceEdit({ svc: deal.serviceType, setup: String(deal.setupFee), monthly: String(deal.monthlyFee) })}>Custom price</button></span>
+          </div>}
           {!agreement ? <>
             <p className="dw-hint">Your service agreement, filled in with this deal's plan, price and client, with an itemized Statement of Work in Schedule A. Anything Cinder doesn't know stays as a [bracketed] blank for you.</p>
             <label className="dw-hint" style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={addon} onChange={e => setAddon(e.target.checked)} /> Include the Reactivation add-on ($497/month)</label>
@@ -449,7 +471,7 @@ export default function DealWorkspacePage() {
 
       <div className="dw-col dw-side">
         {ws.project && <section className="u-sheet dw-box dw-win"><h2>Onboarding</h2><p><Link href="/crm/projects">{ws.project.name}</Link> · {ws.project.status.replace(/_/g, " ")}{ws.project.targetDate ? ` · launch ${dateLabel(ws.project.targetDate)}` : ""}</p></section>}
-        {ws.audit && <section className="u-sheet dw-box"><div className="u-sheet dw-boxhead"><h2>Audit</h2><Link href={`/crm/audits/${ws.audit.id}`} className="dw-mini-link">Full report</Link></div><p className="dw-small">{ws.audit.verdict.replace(/\*\*/g, "")}</p>{ws.audit.upsells && deal.stage !== "won" && <><div className="dw-label">Later upsells</div><p className="dw-small">{ws.audit.upsells.replace(/\*\*/g, "").split("\n").slice(0, 3).join(" · ")}</p></>}</section>}
+        {ws.audit && <section className="u-sheet dw-box"><div className="u-sheet dw-boxhead"><h2>Audit</h2><Link href={`/crm/audits/${ws.audit.id}`} className="dw-mini-link">Full report</Link></div><div className="dw-small dw-md"><Markdown text={ws.audit.verdict.replace(/^HYPOTHESIS:\s*/gim, "").slice(0, 700)} /></div>{ws.audit.upsells && deal.stage !== "won" && <><div className="dw-label">Later upsells</div><p className="dw-small">{ws.audit.upsells.replace(/\*\*/g, "").split("\n").slice(0, 3).join(" · ")}</p></>}</section>}
         {deal.stage === "won" && <section className="u-sheet dw-box"><h2>Grow this client</h2>
           <p className="dw-small">Upsells and referrals come from clients who are getting results. Start one as its own deal.</p>
           {upsellIdeas(ws.audit?.upsells ?? "").map(idea => <div key={idea} className="dw-upsell"><span>{idea}</span>
