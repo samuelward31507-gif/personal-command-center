@@ -28,5 +28,10 @@ console.log(`Inbox rotation checks passed (${n} assertions).`);
   assert.equal(resting({ sent: 100, bounced: 2 }), false);
   assert.equal(resting({ sent: 100, bounced: 3 }), true);
   assert.equal(BOUNCE_LIMIT, 0.03);
+  assert.equal(resting({ sent: 126, bounced: 6, cleanSince: 47 }), false, "40+ clean sends after the last bounce lift the rest");
+  assert.equal(resting({ sent: 126, bounced: 6, cleanSince: 12 }), true, "still resting until the list proves clean");
+  const { tally } = await import("./lib/gmail-accounts.ts");
+  const t = tally([{ notes: "Email sent: intro via Gmail", sent_by: null }, { notes: "Email bounced: x", sent_by: "Email sent: intro via Gmail" }, { notes: "Email sent: intro via Gmail", sent_by: null }], "a@x.com", [{ email: "a@x.com" }]).get("a@x.com");
+  assert.deepEqual(t, { sent: 2, bounced: 1, cleanSince: 1 }, "a bounce resets the clean run");
   console.log("Sending health checks passed (5 assertions).");
 }

@@ -53,21 +53,31 @@ export async function sendsToday(sql: Sql, o: string, inboxes: Inbox[]): Promise
 /** Bounces at or above this share of the last 14 days' sends (with at least 25 sent) rest the inbox. Vendors advise under 2%. */
 export const BOUNCE_LIMIT = 0.03;
 export const HEALTH_MIN_SENDS = 25;
-export function resting(stat: { sent: number; bounced: number } | undefined): boolean {
-  return !!stat && stat.sent >= HEALTH_MIN_SENDS && stat.bounced / stat.sent >= BOUNCE_LIMIT;
+/** Clean sends in a row, after the last bounce, that prove a list was fixed and lift the rest early. */
+export const RECOVERY_SENDS = 40;
+export type Health = { sent: number; bounced: number; cleanSince?: number };
+export function resting(stat: Health | undefined): boolean {
+  if (!stat || stat.sent < HEALTH_MIN_SENDS || stat.bounced / stat.sent < BOUNCE_LIMIT) return false;
+  // A bad list that was cleaned up shouldn't lock the inbox for two weeks: 40 straight clean sends lift it.
+  return (stat.cleanSince ?? 0) < RECOVERY_SENDS;
 }
-/** Per inbox over 14 days: cold sends, and bounces traced to the inbox that sent the contact's last email. */
-export async function inboxHealth(sql: Sql, o: string, inboxes: Inbox[]): Promise<Map<string, { sent: number; bounced: number }>> {
+/** Per inbox over 14 days: cold sends, bounces traced to the inbox that sent the contact's last email,
+ *  and how many sends have gone out since that inbox's most recent bounce. */
+export async function inboxHealth(sql: Sql, o: string, inboxes: Inbox[]): Promise<Map<string, Health>> {
   const main = mainOf(inboxes)?.email.toLowerCase() ?? "";
   const rows = await sql`SELECT a.notes,
       (SELECT s.notes FROM public.contact_activities s WHERE s.owner_id = a.owner_id AND s.contact_id = a.contact_id AND s.notes LIKE 'Email sent: %' AND s.occurred_at <= a.occurred_at ORDER BY s.occurred_at DESC LIMIT 1) AS sent_by
-    FROM public.contact_activities a WHERE a.owner_id = ${o} AND a.occurred_at > now() - interval '14 days' AND (a.notes LIKE 'Email sent: %via Gmail%' OR a.notes LIKE 'Email bounced:%')` as { notes: string; sent_by: string | null }[];
-  const m = new Map(inboxes.map(i => [i.email.toLowerCase(), { sent: 0, bounced: 0 }]));
+    FROM public.contact_activities a WHERE a.owner_id = ${o} AND a.occurred_at > now() - interval '14 days' AND (a.notes LIKE 'Email sent: %via Gmail%' OR a.notes LIKE 'Email bounced:%')
+    ORDER BY a.occurred_at` as { notes: string; sent_by: string | null }[];
+  return tally(rows, main, inboxes);
+}
+export function tally(rows: { notes: string; sent_by: string | null }[], main: string, inboxes: { email: string }[]): Map<string, Health> {
+  const m = new Map<string, Health>(inboxes.map(i => [i.email.toLowerCase(), { sent: 0, bounced: 0, cleanSince: 0 }]));
   for (const r of rows) {
     const bounced = r.notes.startsWith("Email bounced");
     const e = (bounced ? (r.sent_by ? senderOf(r.sent_by) : null) : senderOf(r.notes)) ?? main;
     const s = m.get(e); if (!s) continue;
-    if (bounced) s.bounced++; else s.sent++;
+    if (bounced) { s.bounced++; s.cleanSince = 0; } else { s.sent++; s.cleanSince = (s.cleanSince ?? 0) + 1; }
   }
   return m;
 }

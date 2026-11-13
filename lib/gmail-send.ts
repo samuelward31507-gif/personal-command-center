@@ -74,7 +74,7 @@ export async function sendColdEmail(sql: Sql, o: string, ws: WorkspaceSettings, 
     // An info email is different: they asked for it on the phone, so it always goes.
     const health = await inboxHealth(sql, o, inboxes).catch(() => new Map());
     const healthy = m.step === "info" ? inboxes : inboxes.filter(i => !resting(health.get(i.email.toLowerCase())));
-    if (!healthy.length) return fail("Every inbox is resting: too many bounces in the last 14 days. Clean the list (Find emails, drop bad addresses) before sending more.", 429);
+    if (!healthy.length) return fail("New cold emails are paused: too many bounces in the last 14 days. Follow-ups and info emails still send. It lifts after 40 clean sends in a row, or drop bad addresses with Find emails.", 429);
     acc = pickInbox(healthy, sent);
     if (!acc) return fail(`All ${healthy.length} inbox${healthy.length === 1 ? "" : "es"} hit today's limit${healthy.length < inboxes.length ? " (some are resting after bounces)" : ""}. The rest can go tomorrow.`, 429);
   }
