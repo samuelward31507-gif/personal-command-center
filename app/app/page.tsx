@@ -394,6 +394,7 @@ export default function CinderApp() {
       {d.businesses.length > 1
         ? <select value={project} onChange={e => { setProject(e.target.value); void load(e.target.value); }} aria-label="Business">{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>
         : <b className="ca-top-name">{bizName}</b>}
+      <h1 className="ca-top-title">{tab === "leads" ? "Leads" : tab === "numbers" ? "Numbers" : tab === "estimates" ? "Calendar" : "Sam"}</h1>
       <span className="ca-live"><i />Live</span>
     </header>
 
@@ -480,10 +481,11 @@ export default function CinderApp() {
       ? <div key={open} className="ca-pane-in"><ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} /></div>
       : <div className="ca-pane-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>Pick a conversation</b><p>Every text Cinder sent and every reply, with the customer&rsquo;s number one click away.</p></div>}</aside>}
     <nav className="ca-nav" aria-label="Sections">
-      <div className="ca-nav-brand"><Mark small /><b>{bizName}</b></div>
+      <div className="ca-nav-brand"><CinderLogo className="ca-nav-word" ink="#121417" title="Cinder" /><b>{bizName}</b></div>
       {([["leads", "Leads", L.needs, "chat"], ["numbers", "Numbers", 0, "bolt"], ["estimates", "Calendar", dueCount, "cal"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const).map(([k, l, n, ic]) =>
         <button key={k} type="button" aria-current={tab === k ? "page" : undefined} className={tab === k ? "on" : ""} onClick={() => { setTab(k); window.scrollTo(0, 0); if (k === "sam" || k === "estimates") void load(project, k); }}>
           <span className="ca-nav-ic">{ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span>{l}</button>)}
+      <p className="ca-nav-foot"><b>Questions? Text Sam.</b>(205) 837-0211</p>
     </nav>
     {toastNode}
   </div>;
