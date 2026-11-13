@@ -40,17 +40,17 @@ async function upload(draftId: string, idx: number, blob: Blob) {
 }
 
 /** Render and save a post's image(s) or reel. Returns the files so they can be downloaded too. */
-async function prepare(d: Draft, onProgress?: (p: number) => void): Promise<{ name: string; blob: Blob }[]> {
+async function prepare(d: Draft, onProgress?: (p: number) => void, store = true): Promise<{ name: string; blob: Blob }[]> {
   if (d.platform === "video") {
     const blob = await renderReel(scenesFor(d), onProgress);
-    await upload(d.id, 0, blob);
+    if (store) await upload(d.id, 0, blob);
     return [{ name: `${fileBase(d)}.${reelExt(blob)}`, blob }];
   }
   const cards = cardsOf(d), out: { name: string; blob: Blob }[] = [];
   for (let i = 0; i < cards.length; i++) {
     // Instagram only takes JPEG, so the saved copy for posting is JPEG; downloads are JPEG too (smaller, same look).
     const blob = await cardPng(cards[i], { page: cards.length > 1 ? `${i + 1}/${cards.length}` : undefined, jpeg: true });
-    if (d.platform === "feed") await upload(d.id, i, blob);
+    if (store && d.platform === "feed") await upload(d.id, i, blob);
     out.push({ name: `${fileBase(d)}${cards.length > 1 ? "-" + (i + 1) : ""}.jpg`, blob });
     onProgress?.((i + 1) / cards.length);
   }
@@ -62,10 +62,15 @@ const asFiles = (files: FileOut[]) => files.map(f => new File([f.blob], f.name, 
 /** Phones block a burst of downloads and keep only the last one. There, hand every file to the share sheet at once
  *  ("Save 6 Images" puts them all in Photos). The share sheet needs a fresh tap, so if the files took a while to
  *  make, `ask` is called and the caller shows a "Save to Photos" button. Desktops just download each file. */
+/** Phones and tablets only. Windows and Mac browsers also say they can share files, but there the share panel
+ *  doesn't save anything, so computers always download. */
+const isPhone = () => typeof navigator !== "undefined"
+  && (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+const canShareFiles = (files: File[]) => isPhone() && !!navigator.canShare?.({ files });
 async function saveFiles(files: FileOut[], ask: (files: FileOut[]) => void): Promise<void> {
   if (!files.length) return;
   const list = asFiles(files);
-  if (typeof navigator !== "undefined" && navigator.canShare?.({ files: list })) {
+  if (canShareFiles(list)) {
     try { await navigator.share({ files: list }); return; }
     catch (e) { if ((e as Error)?.name === "AbortError") return; ask(files); return; }
   }
@@ -120,7 +125,7 @@ function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (acti
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardKey, isReel]);
   const downloadSlides = () => {
-    if (ready && navigator.canShare?.({ files: ready })) {
+    if (ready && canShareFiles(ready)) {
       navigator.share({ files: ready }).catch((e: Error) => { if (e?.name !== "AbortError") files().then(f => setPending(f)); });
       return;
     }
@@ -173,7 +178,7 @@ function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (acti
         <button type="button" className="u-btn u-btn-go" onClick={copy}>{copied ? "Copied" : "Copy caption"}</button>
         {isReel ? <button type="button" className="u-btn" disabled={work !== null} onClick={() => void makeReel(true)}>{work !== null ? `Recording ${Math.round(work * 100)}%` : reel ? "Download reel" : "Make reel"}</button>
           : pending ? <button type="button" className="u-btn u-btn-go" onClick={async () => { if (await shareNow(pending)) setPending(null); }}>Save {pending.length} to Photos</button>
-          : <button type="button" className="u-btn" onClick={downloadSlides}>{ready && typeof navigator !== "undefined" && navigator.canShare?.({ files: ready }) ? `Save ${cards.length > 1 ? cards.length + " " : ""}to Photos` : `Download${cards.length > 1 ? ` ${cards.length}` : ""}`}</button>}
+          : <button type="button" className="u-btn" onClick={downloadSlides}>{ready && canShareFiles(ready) ? `Save ${cards.length > 1 ? cards.length + " " : ""}to Photos` : `Download${cards.length > 1 ? ` ${cards.length}` : ""}`}</button>}
         {meta.connected && (d.platform === "feed" || isReel) && !posted && d.media > 0 && <button type="button" className="u-btn" disabled={busy} onClick={() => void act("publish_now")}>Post now</button>}
         <button type="button" className="u-btn u-btn-bare" onClick={() => setEditing(true)}>Edit</button>
         <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => setNoting(n => !n)}>Rewrite</button>
@@ -260,9 +265,9 @@ export default function WeekPlanner() {
       for (let i = 0; i < list.length; i++) {
         const d = list[i];
         setPrep({ done: i, total: list.length, label: d.platform === "video" ? `Recording reel ${d.n + 1}` : `Drawing ${d.platform === "feed" ? "post" : d.platform} ${d.n + 1}` });
-        if (d.platform === "linkedin" || d.platform === "group") { if (opts.download) files.push(...await prepare(d)); continue; }
+        if (d.platform === "linkedin" || d.platform === "group") { if (opts.download) files.push(...await prepare(d, undefined, false)); continue; }
         if (d.media && !opts.download) continue; // already prepared
-        files.push(...await prepare(d));
+        files.push(...await prepare(d, undefined, opts.queue));
       }
       if (opts.download) await saveFiles(files, setDayFiles);
       await load();
