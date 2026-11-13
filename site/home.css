@@ -262,7 +262,9 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 .qa details { border-bottom: 1px solid var(--line); }
 .qa summary { list-style: none; cursor: pointer; padding: 22px 44px 22px 0; font-size: 17px; font-weight: 500; position: relative; }
 .qa summary::-webkit-details-marker { display: none; }
-.qa summary::after { content: "+"; position: absolute; right: 6px; top: 17px; font-size: 26px; font-weight: 300; color: var(--text-3); transition: transform .25s; }
+.qa summary::after { content: "+"; position: absolute; right: 6px; top: 17px; font-size: 26px; font-weight: 300; color: var(--text-3); transition: transform .35s cubic-bezier(.2,.7,.2,1); }
+.qa details.closing summary::after { transform: rotate(0deg); }
+.qa p { overflow: hidden; }
 .qa details[open] summary::after { transform: rotate(45deg); }
 .qa p { padding: 0 44px 24px 0; color: var(--text-2); }
 

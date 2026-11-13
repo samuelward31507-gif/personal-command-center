@@ -346,6 +346,29 @@ if(n){set(".p-intro","it's "+n+" with");set(".p-owner-s",n+"'s");}else if(b){set
 <script src="/calc.js" defer></script>
 <script>
 (function () {
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches, D = 350, E = "cubic-bezier(.2,.7,.2,1)";
+  document.querySelectorAll(".qa details").forEach(function (d) {
+    var s = d.querySelector("summary"), body = d.querySelector("p"), anim = null;
+    s.addEventListener("click", function (e) {
+      if (reduce || !body || !body.animate) return;
+      e.preventDefault();
+      if (anim) anim.cancel();
+      if (!d.open) {
+        d.open = true;
+        var h = body.offsetHeight;
+        anim = body.animate([{ height: "0px", paddingBottom: "0px", opacity: 0, transform: "translateY(-4px)" }, { height: h + "px", paddingBottom: getComputedStyle(body).paddingBottom, opacity: 1, transform: "none" }], { duration: D, easing: E });
+        anim.onfinish = function () { anim = null; };
+      } else {
+        d.classList.add("closing");
+        anim = body.animate([{ height: body.offsetHeight + "px", paddingBottom: getComputedStyle(body).paddingBottom, opacity: 1 }, { height: "0px", paddingBottom: "0px", opacity: 0 }], { duration: D, easing: E });
+        anim.onfinish = function () { d.open = false; d.classList.remove("closing"); anim = null; };
+      }
+    });
+  });
+})();
+</script>
+<script>
+(function () {
   var opts = document.querySelectorAll(".bill-opt");
   function set(mode) {
     opts.forEach(function (o) { var on = o.dataset.bill === mode; o.classList.toggle("on", on); o.setAttribute("aria-pressed", on ? "true" : "false"); });
