@@ -203,6 +203,14 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 .calc-how p { font-size: 13px; color: var(--text-3); margin-top: 10px; }
 
 /* Plans */
+.bill { display: inline-flex; align-items: center; gap: 4px; padding: 5px; margin: 0 0 28px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow); }
+.bill-opt { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px; background: transparent; color: var(--text-2); font: 500 16px/1 var(--sans); cursor: pointer; transition: background .2s, color .2s; }
+.bill-opt:hover { color: var(--text); }
+.bill-opt.on { background: var(--text); color: #fff; }
+.bill-tag { font-size: 12.5px; font-weight: 600; padding: 5px 9px; border-radius: 999px; background: var(--line); color: var(--text); }
+.bill-opt.on .bill-tag { background: rgba(255,255,255,.18); color: #fff; }
+.price .billed { flex-basis: 100%; margin-top: -4px; font-size: 14px; color: var(--text-3); }
+.price .billed:empty { display: none; }
 .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .plan { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 40px; display: flex; flex-direction: column; gap: 18px; box-shadow: var(--shadow); }
 .plan-main { border: 1.5px solid var(--text); }

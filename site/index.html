@@ -210,7 +210,11 @@
       <h2>Two plans for contractors.</h2>
       <p class="lede">Quotes going quiet after you send them? Book &amp; Close. Quotes fine, but calls slip past you on the job? Never Miss a Lead. No lead caps, no contract.</p>
     </div>
-    <div class="plans">
+    <div class="bill" role="group" aria-label="Billing period">
+      <button type="button" class="bill-opt on" data-bill="m" aria-pressed="true">Monthly</button>
+      <button type="button" class="bill-opt" data-bill="y" aria-pressed="false">Yearly <span class="bill-tag">2 months free</span></button>
+    </div>
+    <div class="plans" data-bill-scope>
       <article class="plan">
         <p class="plan-name">Never Miss a Lead</p>
         <h3>Every lead answered in about 10 seconds.</h3>
@@ -224,7 +228,7 @@
           <li>English and Spanish, plus a Monday text report</li>
           <li>Voice answering for missed calls, included when it releases</li>
         </ul>
-        <p class="price"><span><b>$697</b>/month</span><span class="setup"><b>$997</b> setup</span></p>
+        <p class="price"><span><b data-m="$697" data-y="$581">$697</b>/month</span><span class="setup"><b>$997</b> setup</span><span class="billed" data-y-text="Billed $6,970 a year"></span></p>
         <p class="guar">Guarantee: every lead replied to in under 60 seconds, or that month is free.</p>
         <a class="btn btn-line btn-sm" href="#book">Book a call</a>
       </article>
@@ -239,7 +243,7 @@
           <li>Launch revival: your open quotes from the last 90 days and unbooked leads from the last 12 months, texted the week you go live</li>
           <li>A review request after every finished job</li>
         </ul>
-        <p class="price"><span><b>$1,497</b>/month</span><span class="setup"><b>$1,997</b> setup</span></p>
+        <p class="price"><span><b data-m="$1,497" data-y="$1,248">$1,497</b>/month</span><span class="setup"><b>$1,997</b> setup</span><span class="billed" data-y-text="Billed $14,970 a year"></span></p>
         <p class="guar">Guarantee: 5 booked appointments in your first 30 days (3 if you get 10–29 leads a month), or your next month is free. Plus the 60-second reply guarantee.</p>
         <a class="btn btn-go btn-sm" href="#book">Book a call</a>
       </article>
@@ -265,7 +269,7 @@
           <li><b>Past customers</b> get a text when they’re due for their next job or service, with open times from your calendar.</li>
           <li><b>Every reply is answered and booked</b> for you, the same way as a new lead.</li>
         </ul>
-        <div class="addon-price"><p class="price"><span><b>$497</b>/month</span></p><p class="guar">Add it to either plan. No setup fee. Cancel anytime.</p></div>
+        <div class="addon-price"><p class="price"><span><b data-m="$497" data-y="$414">$497</b>/month</span><span class="billed" data-y-text="Billed $4,970 a year"></span></p><p class="guar">Add it to either plan. No setup fee. Cancel anytime.</p></div>
       </div>
     </div>
   </div>
@@ -340,6 +344,17 @@ if(n){set(".p-intro","it's "+n+" with");set(".p-owner-s",n+"'s");}else if(b){set
 
 </script>
 <script src="/calc.js" defer></script>
+<script>
+(function () {
+  var opts = document.querySelectorAll(".bill-opt");
+  function set(mode) {
+    opts.forEach(function (o) { var on = o.dataset.bill === mode; o.classList.toggle("on", on); o.setAttribute("aria-pressed", on ? "true" : "false"); });
+    document.querySelectorAll("#plans [data-m]").forEach(function (b) { b.textContent = mode === "y" ? b.dataset.y : b.dataset.m; });
+    document.querySelectorAll("#plans .billed").forEach(function (b) { b.textContent = mode === "y" ? b.dataset.yText : ""; });
+  }
+  opts.forEach(function (o) { o.addEventListener("click", function () { set(o.dataset.bill); }); });
+})();
+</script>
 <script src="/book.js" defer></script>
 <script src="/t.js" defer></script>
 </body>
