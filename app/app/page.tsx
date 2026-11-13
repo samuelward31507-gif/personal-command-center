@@ -430,7 +430,7 @@ export default function CinderApp() {
           : <div className="ca-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>{filter === "all" ? "No leads yet" : filter === "needs" ? "You're all caught up" : "No bookings yet"}</b><p>{filter === "all" ? "When someone calls, texts or fills out your form, it shows up here with Cinder's reply." : filter === "needs" ? "Cinder hands you anything it shouldn't answer. Nothing's waiting." : "Booked estimates show up here and on your calendar."}</p></div>}
       </>}
 
-      {tab === "numbers" && <>
+      {tab === "numbers" && (L.leads === 0 ? <div className="ca-empty"><span className="ca-empty-ic"><Icon name="bolt" size={22} /></span><b>Your numbers start with your first lead</b><p>Every lead Cinder answers shows up here: how fast it replied, what it booked, and the quotes it won back for you.</p></div> : <>
         {L.wonValue > 0 ? <div className="ca-money"><p>Jobs won from leads Cinder handled</p><b>{usd(L.wonValue)}</b>
           <small>{L.won} {L.won === 1 ? "job" : "jobs"}{L.chasingValue ? ` · ${usd(L.chasingValue)} more in quotes Cinder is chasing` : ""}</small></div>
           : <div className="ca-hello"><p>Last 30 days</p><h1>Cinder answered {L.answered} {L.answered === 1 ? "lead" : "leads"} and booked {L.booked} {L.booked === 1 ? "estimate" : "estimates"}.</h1></div>}
@@ -442,12 +442,12 @@ export default function CinderApp() {
         </div>
         {L.weeks.length > 1 && <section className="ca-card"><div className="ca-card-h"><h2>Every week</h2><span><i className="k l" />Leads<i className="k b" />Booked</span></div>
           <div className="ca-bars">{L.weeks.map(w => <div key={w.week} className="ca-bar" title={`${w.leads} leads, ${w.booked} booked`}><span><i className="l" style={{ height: (w.leads / maxW) * 100 + "%" }} /><i className="b" style={{ height: (w.booked / maxW) * 100 + "%" }} /></span><small>{w.leads}</small></div>)}</div></section>}
-        <ul className="ca-stats">
-          <li><span className="ca-stat-ic"><Icon name="quote" /></span><span><b>{L.won} {L.won === 1 ? "quote" : "quotes"} won</b><small>after follow-up{L.wonValue ? ` · ${usd(L.wonValue)}` : ""}</small></span></li>
-          <li><span className="ca-stat-ic"><Icon name="bolt" /></span><span><b>{L.revived} old {L.revived === 1 ? "lead" : "leads"} replied</b><small>from the revive campaign</small></span></li>
-          <li><span className="ca-stat-ic"><Icon name="star" /></span><span><b>{L.reviews} review {L.reviews === 1 ? "request" : "requests"}</b><small>sent after finished jobs</small></span></li>
-        </ul>
-      </>}
+        {(L.won > 0 || L.revived > 0 || L.reviews > 0) && <ul className="ca-stats">
+          {L.won > 0 && <li><span className="ca-stat-ic"><Icon name="quote" /></span><span><b>{L.won} {L.won === 1 ? "quote" : "quotes"} won</b><small>after follow-up{L.wonValue ? ` · ${usd(L.wonValue)}` : ""}</small></span></li>}
+          {L.revived > 0 && <li><span className="ca-stat-ic"><Icon name="bolt" /></span><span><b>{L.revived} old {L.revived === 1 ? "lead" : "leads"} replied</b><small>from the revive campaign</small></span></li>}
+          {L.reviews > 0 && <li><span className="ca-stat-ic"><Icon name="star" /></span><span><b>{L.reviews} review {L.reviews === 1 ? "request" : "requests"}</b><small>sent after finished jobs</small></span></li>}
+        </ul>}
+      </>)}
 
       {tab === "estimates" && <CalendarTab d={d} project={project} onOpen={setOpen} reload={() => load(project, "estimates")} toast={toast} />}
 
