@@ -38,16 +38,16 @@ export const TIER1_PLAYBOOK: readonly PlaybookStep[] = [
   { title: "Set up owner alerts and takeover", description: "Lead summary to the owner's cell, owner takeover at any time, 'talk to a person' booked as a call, one follow-up nudge.", dueInDays: 13 },
   { title: "Send the message wording for approval", description: "Every message the system sends, in the client's voice. Nothing goes live without their written approval.", dueInDays: 15 },
   { title: "Test every path end to end", description: "Form, missed call, Facebook, after hours, booking, reschedule, STOP opt-out and owner takeover. Fix what fails.", dueInDays: 21 },
-  { title: GO_LIVE_STEP, description: "System answers real leads. Record the Go-Live Date: the monthly fee and the 3-month minimum start today.", dueInDays: 28 },
+  { title: GO_LIVE_STEP, description: "System answers real leads. Record the Go-Live Date. The monthly fee starts the day the first appointment books (agreement 2.2): send the monthly Stripe link then. No minimum term.", dueInDays: 28 },
   { title: "7-day post-launch review", description: "Read every conversation from week one, tighten wording and rules, and check the client is responding to handoffs.", dueInDays: 35 },
   { title: "Send the first monthly report", description: "Inquiries answered, response time, estimates booked, what we'll improve next. Build it from Clients → Monthly report.", dueInDays: 58 },
 ] as const;
 
 export const TIER2_EXTRAS: readonly PlaybookStep[] = [
-  { title: "Import the last 6 months of quotes", description: "Name, phone, job, amount and date for every open quote (Schedule B item 11).", dueInDays: 10 },
+  { title: "Import the last 6 months of quotes", description: "Name, phone, job, amount and date for every open quote (Schedule B item 11). Launch revival texts open quotes from the last 90 days.", dueInDays: 10 },
   { title: "Add budget, financing and feasibility questions", description: "Budget ranges, financing details, and site questions like access, HOA, slope and permits.", dueInDays: 11 },
   { title: "Set up two-step booking, zones and estimator rotation", description: "Video call first, then site visit; service zones by day; estimator schedules.", dueInDays: 14 },
-  { title: "Build quote follow-up (days 1, 3, 7) and long-term nurture", description: "Proposal follow-up sequence plus monthly nurture for 'not yet' leads, within quiet hours.", dueInDays: 16 },
+  { title: "Build quote follow-up (days 2, 5, 10, 21)", description: "Every quote followed up on days 2, 5, 10 and 21 until it's a yes or a no; 'too expensive' gets financing or a smaller option. Within quiet hours.", dueInDays: 16 },
   { title: "Set up the daily owner summary and quiet hours", description: "One morning summary to the owner; no follow-ups outside 8 am–8 pm.", dueInDays: 17 },
   { title: "Connect the client's CRM", description: "Sync leads, bookings and outcomes with their CRM (Schedule B item 16).", dueInDays: 18 },
   { title: "Launch-week reactivation of old quotes", description: "One respectful message to the last 6 months of quotes, only contacts the client has permission to reach.", dueInDays: 30 },

@@ -101,7 +101,7 @@ export function sowMarkdown(i: SowInput): string {
 export type ProposalInput = {
   tier: AgreementTier; company: string; ownerName?: string; date: string;
   setupFee: number; monthlyFee: number; addon?: boolean;
-  payLink?: string; senderName?: string; senderPhone?: string; senderEmail?: string;
+  payLink?: string; bookedGuarantee?: 3 | 5; senderName?: string; senderPhone?: string; senderEmail?: string;
 };
 
 
@@ -131,7 +131,9 @@ export function buildProposal(p: ProposalInput): string {
   const items = planItems(p.tier);
   const guarantees = [
     "**Every lead answered in under 60 seconds.** If more than 1 in 100 leads in a month gets a slower first reply, that month is free.",
-    ...(p.tier === "tier2" ? ["**5 booked appointments in your first 30 days** (3 if you get 10 to 29 new leads a month), or your next month is free."] : []),
+    ...(p.tier === "tier2" ? [p.bookedGuarantee === 3
+      ? "**3 booked appointments in your first 30 days**, or your next month is free."
+      : "**5 booked appointments in your first 30 days** (3 if you get 10 to 29 new leads a month), or your next month is free."] : []),
     "**Live within 21 business days** of your kickoff checklist, or your setup fee is refunded.",
   ];
   const lines = [
@@ -145,7 +147,9 @@ export function buildProposal(p: ProposalInput): string {
       ? "Every lead answered in seconds and booked on your calendar, then every quote followed up until it's a yes or a no. Built and run for you."
       : "Every missed call, form and ad lead answered in seconds, qualified with your price range and booked on your calendar. Built and run for you.",
     "",
-    ...items.map(x => `- ${x}`),
+    ...(p.tier === "tier2"
+      ? ["### Every lead, answered and booked", "", ...items.slice(0, 6).map(x => `- ${x}`), "", "### Every quote, chased to a yes or no", "", ...items.slice(6).map(x => `- ${x}`)]
+      : items.map(x => `- ${x}`)),
     ...(p.addon ? [`- Reactivation: old leads and past customers worked every quarter (${money(ADDON_MONTHLY)}/month)`] : []),
     "",
     "## Your investment",

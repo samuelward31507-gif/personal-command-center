@@ -1,5 +1,7 @@
 import { neon } from "@neondatabase/serverless";
-import { sendAlert } from "@/lib/notify";
+import { sendAlert, lastAlertError } from "@/lib/notify";
+import { sendDirectEmail } from "@/lib/gmail-send";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { hashToken, isTokenShape } from "@/lib/esign";
 import { fieldsFor, validateKickoff, kickoffSummary, FILE_KEYS, type KickoffTier } from "@/lib/kickoff";
 import { sanitizeForLog } from "@/lib/business-audit";
@@ -12,7 +14,7 @@ const reply = (body: Record<string, unknown>, status = 200) => Response.json(bod
 async function load(token: string) {
   const sql = neon(process.env.DATABASE_URL!);
   const rows = await sql`
-    SELECT k.id, k.owner_id, k.deal_id, k.project_id, k.tier, k.status, k.submitted_at, c.company, c.id AS contact_id, d.title AS deal_title
+    SELECT k.id, k.owner_id, k.deal_id, k.project_id, k.tier, k.status, k.submitted_at, c.company, c.id AS contact_id, c.email AS contact_email, c.first_name, d.title AS deal_title
     FROM public.kickoff_requests k
     JOIN public.deals d ON d.id = k.deal_id AND d.owner_id = k.owner_id
     LEFT JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id
@@ -81,10 +83,29 @@ export async function POST(request: Request) {
       await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
         VALUES (${owner}, ${String(row.contact_id)}::uuid, 'note', 'note', 'other', 'Sent the kickoff checklist. The 21-business-day go-live clock starts now.')`;
     }
-    await sendAlert({ subject: `Kickoff checklist in: ${company}`, lines: [
+    const alerted = await sendAlert({ subject: `Kickoff checklist in: ${company}`, lines: [
       `${company} sent their kickoff checklist. The 21-business-day go-live clock starts now.`,
       "Next: book the kickoff call and submit the SMS registration (the EIN letter is on the deal's Kickoff tab, not in this email).",
     ], link: { label: "Open the deal", path: `/crm/deals/${String(row.deal_id)}` } });
+    console.info("Kickoff submitted", { deal: String(row.deal_id), alerted, alertError: alerted ? "" : lastAlertError });
+    // The client hears back right away, from Sam's own inbox, so they know it landed and what happens next.
+    const to = row.contact_email ? String(row.contact_email) : "";
+    if (to) {
+      const ws = await loadWorkspace(owner);
+      const hi = row.first_name ? `Hi ${String(row.first_name)},` : "Hi,";
+      const sent = await sendDirectEmail(sql, owner, ws, { to, contactId: row.contact_id ? String(row.contact_id) : null, kind: "kickoff received",
+        subject: `Got your kickoff checklist, ${company}`,
+        body: [hi, "",
+          "Your kickoff checklist came through. Thank you, that's the biggest step on your side.", "",
+          "What happens next:",
+          "1. I'll text you to book a 20-minute kickoff call, where we set up call forwarding and connect your forms.",
+          "2. I submit your texting registration to the carriers. Approval usually takes a few business days.",
+          "3. I build your messages and send them to you to read and approve. Nothing goes out until you say yes.",
+          "4. You go live, usually within 14 days. Your 21-business-day guarantee started today.", "",
+          "If anything changes (prices, hours, service area), just reply here or text me.", "",
+          `${ws.ownerFirstName || "Sam"}`, `${ws.businessName}`, process.env.CINDER_OWNER_PHONE?.trim() || "(205) 837-0211"].join("\n") });
+      if (!sent.ok) console.error("Kickoff confirmation email failed", { error: sent.error });
+    }
     return reply({ ok: true });
   } catch (error) {
     console.error("Kickoff POST failed", { name: error instanceof Error ? error.name : typeof error, message: sanitizeForLog(error instanceof Error ? error.message : "") });
