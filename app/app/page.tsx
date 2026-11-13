@@ -142,6 +142,8 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
         {err && <p className="ca-err" role="alert">{err}</p>}
         <button type="submit" className="ca-primary" disabled={busy || (!sent ? digits < 10 : code.length !== 6)}>{busy ? <span className="ca-spin" /> : sent ? "Sign in" : "Continue"}</button>
       </form>
+      {!sent && <><p className="ca-sign-or">or</p>
+        <button type="button" className="ca-sign-demo" onClick={onDemo}>See an example business</button></>}
       {sent && <div className="ca-sign-alt">
         <button type="button" className="ca-text-btn" disabled={wait > 0 || busy} onClick={() => void send()}>{wait > 0 ? <>Resend in <span className="ca-num">{wait}s</span></> : "Resend code"}</button>
         <span aria-hidden="true">·</span>
@@ -149,7 +151,6 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
       </div>}
     </div>
     <div className="ca-sign-foot">
-      <button type="button" className="ca-text-btn ca-demo-link" onClick={onDemo}>See an example business</button>
       <p>Have a portal link from Sam? It signs you in too.</p>
       <CinderLogo className="ca-sign-word" ink="#121417" title="Cinder Revenue Company" />
     </div>

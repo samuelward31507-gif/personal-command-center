@@ -89,9 +89,9 @@ ok(() => assert.equal(estimatesToPayFor(997, 0, 30), null));
 // Website copy (site alignment SOW)
 import { readFileSync, readdirSync, statSync } from "node:fs";
 const home = readFileSync("site/index.html", "utf8");
-ok(() => assert.match(home, /\$202,500/), "calculator default: (40×0.5×0.45 + 10×0.45×0.5) × 25% × $6,000 × 12");
+ok(() => assert.match(home, /\$126,263/), "calculator default: 6 a week × 4.33 × 0.5 × 0.45 × 30% × $6,000 × 12");
 ok(() => assert.doesNotMatch(home, /calc-half/), "no inflated every-call-is-a-job figure");
-ok(() => assert.match(home, /Cinder pays for itself with <b data-o="onejob">1<\/b>/), "one-job line default: 6000 / 25% → 1");
+ok(() => assert.match(home, /covers Never Miss a Lead <b data-o="cover">8 times<\/b>/), "cover line default: floor(6000 / 697) = 8");
 ok(() => assert.match(home, /or your next month is free/));
 ok(() => assert.match(home, /Never Miss a Lead[\s\S]*\$697<\/b>\/month/), "tier 1 price");
 ok(() => assert.match(home, /Book &amp; Close[\s\S]*\$1,497<\/b>\/month/), "tier 2 price");
