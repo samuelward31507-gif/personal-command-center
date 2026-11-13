@@ -40,7 +40,7 @@ export function markdownToHtml(md: string): string {
       while (i < lines.length && re.test(lines[i])) { items.push(`<li>${inline(lines[i].replace(re, ""))}</li>`); i++; }
       // A list straight under a heading whose every item opens in bold reads as cards (the guarantees).
       const cards = tag === "ul" && items.length >= 2 && items.length <= 4 && /^<h2[^>]*>Our guarantees|^<h2[^>]*>[^<]*guarantee/i.test(out[out.length - 1] ?? "") && items.every(x => x.startsWith("<li><strong>"));
-      out.push(cards ? `<div class="cards">${items.map(x => x.replace(/^<li><strong>(.*?):?<\/strong>\s*(.)/, (_m, t, c) => `<div class="cd"><b>${t}</b><span>${c.toUpperCase()}`).replace(/<\/li>$/, "</span></div>")).join("")}</div>` : `<${tag}>${items.join("")}</${tag}>`);
+      out.push(cards ? `<div class="cards">${items.map(x => x.replace(/^<li><strong>(.*?):?<\/strong>\s*(.)/, (_m, t, c) => `<div class="cd"><b>${t.replace(/\.$/, "")}</b><span>${c.toUpperCase()}`).replace(/<\/li>$/, "</span></div>")).join("")}</div>` : `<${tag}>${items.join("")}</${tag}>`);
       continue;
     }
     const para: string[] = [];
@@ -380,11 +380,12 @@ body{font:10.4pt/1.62 Inter,-apple-system,"Segoe UI",sans-serif;color:#2a2e34}
 .cover h1{font:600 34pt/1.06 "Inter Tight","Inter Display",Inter,sans-serif;letter-spacing:-.03em;color:#fff;max-width:6.2in}
 .cover .plan{margin-top:16px;font-size:12pt;color:#b9bcc2}
 .cover .plan b{color:#fff;font-weight:600}
-.cover dl{margin-top:auto;display:grid;grid-template-columns:1.4fr 1.4fr 1fr 1fr;gap:6px 26px;border-top:1px solid #34373d;padding-top:18px}
+.cover dl{margin-top:auto;display:grid;grid-template-columns:1.2fr 1.3fr 1.3fr .9fr;gap:6px 26px;border-top:1px solid #34373d;padding-top:18px}
 .cover dt{font-size:7.4pt;font-weight:600;color:#8d9198;letter-spacing:.05em;margin-bottom:3px}
 .cover dd{font-size:9.6pt;color:#f3f1ec;line-height:1.45}
-h2{font:600 17pt/1.2 "Inter Tight","Inter Display",Inter,sans-serif;letter-spacing:-.015em;color:#121417;margin:34px 0 12px;break-after:avoid;padding-top:14px;border-top:1px solid #e4e2dd}
+h2{font:600 17pt/1.2 "Inter Tight","Inter Display",Inter,sans-serif;letter-spacing:-.015em;color:#121417;margin:24px 0 10px;break-after:avoid;padding-top:14px;border-top:1px solid #e4e2dd}
 .body>h2:first-child{margin-top:0;border-top:0;padding-top:0}
+
 h3{font:600 11.4pt/1.3 "Inter Tight","Inter Display",Inter,sans-serif;color:#121417;margin:18px 0 6px;break-after:avoid}
 p{margin:0 0 10px}
 ul,ol{margin:0 0 14px;padding-left:20px}li{margin:4px 0;padding-left:3px}
@@ -394,7 +395,7 @@ a{display:inline-block;background:#121417;color:#fff;font-weight:600;text-decora
 a::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#d97757;margin-left:8px;vertical-align:middle}
 table{width:100%;border-collapse:collapse;margin:8px 0 14px;break-inside:avoid;font-size:9.8pt}
 th{text-align:left;font-weight:600;color:#80858d;font-size:8pt;border-bottom:1.5px solid #121417;padding:6px 14px 6px 0}
-td{border-bottom:1px solid #e8e6e2;padding:10px 14px 10px 0;vertical-align:top}
+td{border-bottom:1px solid #e8e6e2;padding:7px 14px 7px 0;vertical-align:top}
 td strong{font:600 14pt "Inter Tight",Inter,sans-serif;letter-spacing:-.01em}
 .cards{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;margin:8px 0 16px;break-inside:avoid}
 .cd{border:1px solid #e4e2dd;border-top:3px solid #d97757;border-radius:10px;padding:14px;background:#fcfcfa}
@@ -426,7 +427,7 @@ export function proposalDoc(md: string, o: { no: string; business?: string; prep
 <style>:root{--run:"${esc(business)} · Proposal No. ${esc(o.no)}${co.length ? " · " + esc(co.join(", ")) : ""}"}${PROPOSAL_CSS}</style></head><body>
 <section class="sheet cover">${wordmark("#f3f1ec", 30)}<div class="rule"></div><p class="kind">Proposal</p><h1>${inline(title)}</h1>${plan ? `<p class="plan">Recommended plan: <b>${inline(plan)}</b></p>` : ""}
 <dl><div><dt>PREPARED FOR</dt><dd>${inline(person || "")}${co.length ? "<br>" + inline(co.join(", ")) : ""}</dd></div><div><dt>PREPARED BY</dt><dd>${esc(o.preparedBy || "Samuel Ward")}<br>${esc(business)}</dd></div><div><dt>DATE</dt><dd>${inline(date)}${valid ? `<br><span style="color:#8d9198">Valid until ${esc(valid)}</span>` : ""}</dd></div><div><dt>PROPOSAL NO.</dt><dd>${esc(o.no)}</dd></div></dl></section>
-<section class="sheet"><div class="body">${markdownToHtml(rest)}</div>
+<section class="sheet"><div class="body">${markdownToHtml(rest).replace("<h2>Your investment</h2>", '<h2 class="pb">Your investment</h2>')}</div>
 <div class="accept"><h3>Acceptance</h3><p>Accepting this proposal means you'd like to start. Your service agreement follows, and the agreement's terms govern the work.</p>
 <div class="grid"><div><div class="ln"></div><p class="lb">Signature</p></div><div><div class="ln"></div><p class="lb">Printed name</p></div><div><div class="ln"></div><p class="lb">Date</p></div></div></div></section>
 ${o.autoPrint ? `<script>document.fonts.ready.then(()=>setTimeout(()=>print(),200))</script>` : ""}</body></html>`;
