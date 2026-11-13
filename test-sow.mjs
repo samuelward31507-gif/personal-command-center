@@ -12,7 +12,7 @@ for (const [tier, setupFee, monthlyFee, addon] of [["tier1", 997, 697, false], [
 }
 // A hand-discounted setup still shows the discount plainly.
 const d = buildSow({ tier: "tier2", setupFee: 1000, monthlyFee: 1497 });
-assert.equal(d.founding, true); assert.equal(d.rows.length, 3); assert.equal(d.firstMonth, 748.5);
+assert.equal(d.founding, true); assert.equal(d.rows.length, 2); assert.equal(d.firstMonth, 1497, "a setup discount never halves the first month"); assert.match(d.rows[0].label, /discounted from \$1,997\.00/);
 const md = sowMarkdown({ tier: "tier1", setupFee: 997, monthlyFee: 697 });
 assert.match(md, /\| Setup\. Once, when you sign\. \| \$997\.00 \|/);
 assert.match(md, /\| Monthly\. Starts the day your first appointment books\. Month to month, cancel with 30 days’ notice\. \| \$697\.00 \|/);

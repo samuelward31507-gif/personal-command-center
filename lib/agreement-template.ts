@@ -54,7 +54,6 @@ export function fillAgreement(f: AgreementFill): string {
     special_terms: val(f.specialTerms, "None"),
     fee_extras: [
       f.addon ? `\n- Reactivation add-on: **${money(ADDON_MONTHLY)}** a month, starting with the monthly fee` : "",
-      buildSow({ tier: f.tier, setupFee: f.setupFee, monthlyFee: f.monthlyFee }).founding ? "\n- Introductory discount: the first month's fee is 50% off" : "",
     ].join(""),
   };
   const fill = (s: string) => s.replace(/\{\{(\w+)\}\}/g, (m, k: string) => (k in fields ? fields[k] : m));
@@ -78,14 +77,11 @@ export function buildSow(i: SowInput): { rows: SowRow[]; setupDue: number; first
   const list = LIST[i.tier];
   const founding = i.setupFee > 0 && i.setupFee < list.setup;
   const monthly = i.monthlyFee + (i.addon ? ADDON_MONTHLY : 0);
-  const firstMonth = founding ? Math.round(monthly * 50) / 100 : monthly;
+  // A hand-discounted setup lowers the setup only; the first month is the plan's monthly fee.
+  const firstMonth = monthly;
   const plan = i.addon ? `Monthly (plan ${usd(i.monthlyFee)} + Reactivation ${usd(ADDON_MONTHLY)})` : "Monthly";
-  const rows: SowRow[] = founding ? [
-    { label: `Setup (discounted from ${usd(list.setup)})`, amount: i.setupFee, when: "Once, when you sign" },
-    { label: "First month (50% off)", amount: firstMonth, when: "Starts the day your first appointment books" },
-    { label: plan.replace("Monthly", "Every month after"), amount: monthly, when: "Month to month. Cancel with 30 days’ notice" },
-  ] : [
-    { label: "Setup", amount: i.setupFee, when: "Once, when you sign" },
+  const rows: SowRow[] = [
+    { label: founding ? `Setup (discounted from ${usd(list.setup)})` : "Setup", amount: i.setupFee, when: "Once, when you sign" },
     { label: plan, amount: monthly, when: "Starts the day your first appointment books. Month to month, cancel with 30 days’ notice" },
   ];
   return { rows, setupDue: i.setupFee, firstMonth, monthly, founding };
