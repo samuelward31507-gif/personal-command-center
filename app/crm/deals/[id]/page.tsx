@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { printPage } from "@/lib/print-doc";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { DISCOVERY_FIELDS, discoveryCompleteness, EMAIL_PURPOSES, mailtoLink, type Discovery, type ProposalStatus, type ContractStatus, type EmailPurpose } from "@/lib/deal-workspace";
@@ -58,7 +59,7 @@ export default function DealWorkspacePage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [flash, setFlash] = useState<{ ok: boolean; text: string } | null>(null);
   const [priceEdit, setPriceEdit] = useState<{ svc: string; setup: string; monthly: string } | null>(null);
-  const [draftNotes, setDraftNotes] = useState("");
+  const [propAddon, setPropAddon] = useState(false);
   const [editing, setEditing] = useState<{ id: string; content: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [agEdit, setAgEdit] = useState<{ id: string; content: string } | null>(null);
@@ -123,12 +124,12 @@ export default function DealWorkspacePage() {
   async function draftProposal() {
     setSaving("proposal"); setFlash(null);
     try {
-      const r = await fetch("/api/proposals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id, notes: draftNotes }) });
+      const r = await fetch("/api/proposals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id, addon: propAddon }) });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.error || "Could not draft the proposal.");
+      if (!r.ok) throw new Error(d.error || "Could not create the proposal.");
       setFlash({ ok: true, text: "Proposal drafted. Read it, edit anything that's off, then copy it into your email." });
       await load();
-    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not draft the proposal." }); }
+    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not create the proposal." }); }
     finally { setSaving(null); }
   }
 
@@ -247,12 +248,10 @@ export default function DealWorkspacePage() {
     } else void patch({ proposalStatus: status }, "status", "Saved.");
   }
 
-  function printDoc(content: string, heading: string) {
+  function printDoc(content: string, heading: string, kind = "Proposal") {
     const w = window.open("", "_blank");
     if (!w) return;
-    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const html = esc(content).replace(/^# (.*)$/gm, "").replace(/^### (.*)$/gm, "<h3>$1</h3>").replace(/^## (.*)$/gm, "<h2>$1</h2>").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/^[-*] (.*)$/gm, "<li>$1</li>").replace(/\n{2,}/g, "</p><p>");
-    w.document.write(`<!doctype html><title>${esc(heading)}</title><style>body{font:15px/1.65 -apple-system,Segoe UI,Inter,sans-serif;color:rgba(18,20,23,.32);max-width:720px;margin:48px auto;padding:0 24px}h1{font-size:24px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px}h3{font-size:15px;margin:20px 0 6px}li{margin:4px 0 4px 18px}.m{color:rgba(147,152,159,1);font-size:13px;margin-bottom:28px}</style><h1>${esc(heading)}</h1><div class="m">${esc(wsp.businessName)} · ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div><p>${html}</p><script>setTimeout(()=>print(),300)</script>`);
+    w.document.write(printPage({ title: heading, kind, business: wsp.businessName, md: content, autoPrint: true }));
     w.document.close();
   }
 
@@ -379,9 +378,9 @@ export default function DealWorkspacePage() {
         {tab === "proposal" && <section className="u-sheet dw-box">
           <div className="u-sheet dw-boxhead"><h2>Proposal</h2><span className={"dw-pill dw-pill-" + deal.proposalStatus}>{PROPOSAL_COPY[deal.proposalStatus]}{deal.proposalSentAt && deal.proposalStatus === "sent" ? ` · ${dateLabel(deal.proposalSentAt)}` : ""}</span></div>
           {!proposal ? <>
-            <p className="dw-hint">{pct < 50 ? "Capture discovery first — a proposal written without it will be generic." : "Cinder drafts it from your discovery notes, the audit and this deal's price. You review before anything goes out."}</p>
-            <textarea className="dw-notes" rows={2} value={draftNotes} onChange={e => setDraftNotes(e.target.value)} placeholder="Anything to emphasise? (optional)" />
-            <button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "proposal"} onClick={() => void draftProposal()}>{saving === "proposal" ? "Drafting… (about 20s)" : "Draft proposal"}</button>
+            <p className="dw-hint">Built from this deal's plan and price, with your Stripe setup link. Instant. You can edit it before it goes out.</p>
+            <label className="dw-check"><input type="checkbox" checked={propAddon} onChange={e => setPropAddon(e.target.checked)} /> Include the Reactivation add-on</label>
+            <button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "proposal"} onClick={() => void draftProposal()}>{saving === "proposal" ? "Creating…" : "Create proposal"}</button>
           </> : editing?.id === proposal.id ? <>
             <textarea className="dw-editor" rows={18} value={editing.content} onChange={e => setEditing({ ...editing, content: e.target.value })} />
             <div className="dw-row"><button data-variant="primary" className="dw-btn" onClick={() => setEditing(null)}>Cancel</button><button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "edit"} onClick={() => void saveProposal()}>{saving === "edit" ? "Saving…" : "Save edits"}</button></div>
@@ -391,7 +390,7 @@ export default function DealWorkspacePage() {
               <button data-variant="primary" className="dw-btn" onClick={() => setEditing({ id: proposal.id, content: proposal.content })}>Edit</button>
               <button data-variant="primary" className="dw-btn" onClick={() => copy("proposal", proposal.content)}>{copied === "proposal" ? "Copied" : "Copy text"}</button>
               <button data-variant="primary" className="dw-btn" onClick={() => printDoc(proposal.content, `Proposal for ${contact?.company || deal.title}`)}>Print / PDF</button>
-              <button data-variant="primary" className="dw-btn" disabled={saving === "proposal"} onClick={() => void draftProposal()}>{saving === "proposal" ? "Redrafting…" : "Redraft"}</button>
+              <button data-variant="primary" className="dw-btn" disabled={saving === "proposal"} onClick={() => void draftProposal()}>{saving === "proposal" ? "Rebuilding…" : "Rebuild from price"}</button>
             </div>
             {!closed && <div className="dw-row dw-decide">
               <span className="dw-muted">After you send it yourself:</span>
@@ -432,7 +431,7 @@ export default function DealWorkspacePage() {
             <div className="dw-row">
               <button data-variant="primary" className="dw-btn" onClick={() => setAgEdit({ id: agreement.id, content: agreement.content })}>Edit</button>
               <button data-variant="primary" className="dw-btn" onClick={() => copy("agreement", agreement.content)}>{copied === "agreement" ? "Copied" : "Copy text"}</button>
-              <button data-variant="primary" className="dw-btn" onClick={() => printDoc(agreement.content, `Service Agreement — ${contact?.company || deal.title}`)}>Print / PDF</button>
+              <button data-variant="primary" className="dw-btn" onClick={() => printDoc(agreement.content, `Service Agreement — ${contact?.company || deal.title}`, "Service Agreement")}>Print / PDF</button>
               {deal.contractStatus !== "signed" && <button data-variant="primary" className="dw-btn" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Recreating…" : "Recreate from template"}</button>}
             </div>
             {signReq?.status === "signed" && <p className="dw-signed">Signed electronically by {signReq.signerName}{signReq.signerTitle ? `, ${signReq.signerTitle}` : ""} · {signReq.signedAt ? new Date(signReq.signedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}</p>}

@@ -44,7 +44,7 @@ ok(() => assert.match(cal, /Follow up after the call/));
 ok(() => assert.match(read("app/api/inbound-lead/route.ts"), /allowEvent\("inbound-ip"/));
 ok(() => assert.match(read("app/api/testimonial/route.ts"), /AND status = 'requested' RETURNING id/));
 ok(() => assert.match(read("app/api/approve/route.ts"), /if \(row\.approved_at\) return reply/));
-for (const f of ["ask", "business-audit", "proposals", "follow-up-email", "pre-audit"]) ok(() => assert.match(read(`app/api/${f}/route.ts`), /aiAllowed\(user\.id\)/, f));
+for (const f of ["ask", "business-audit", "follow-up-email", "pre-audit"]) ok(() => assert.match(read(`app/api/${f}/route.ts`), /aiAllowed\(user\.id\)/, f));
 ok(() => assert.match(read("app/api/contacts/route.ts"), /duplicateId/));
 
 // Cron secret: constant-time compare.

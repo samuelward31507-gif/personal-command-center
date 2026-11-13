@@ -145,3 +145,5 @@ body .dw-page .dw-fills-h { margin: 0; font-size: 14px; font-weight: 600; color:
 body .dw-page .dw-fills label { display: grid; gap: 4px; font-size: 12.5px; color: #6b5a2e; }
 body .dw-page .dw-fills input { font: inherit; font-size: 14px; padding: 9px 11px; border: 1px solid #e3d3a6; border-radius: 8px; background: #fff; color: var(--u-text); }
 body .dw-page .dw-fills button { justify-self: start; }
+.dw-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--u-text-2,#4a5059);margin:4px 0 12px;cursor:pointer}
+.dw-check input{width:16px;height:16px;accent-color:#121417}
