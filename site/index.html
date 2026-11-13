@@ -176,28 +176,21 @@
     <div class="calc2" data-calc>
       <div class="calc2-l">
         <h2>What missed calls cost you.</h2>
-        <p class="lede">Three numbers from your own shop. It all runs on this page. Nothing is sent anywhere.</p>
+        <p class="lede">Move the two sliders. That's it.</p>
         <form class="calc2-in" onsubmit="return false">
           <label class="calc-f"><span>Calls you miss in a week <output data-o="missed">6</output></span>
             <input type="range" name="missed" min="1" max="40" step="1" value="6" style="--p:12.8%"></label>
           <label class="calc-f"><span>Average job <output data-o="job">$6,000</output></span>
             <input type="range" name="job" min="1000" max="40000" step="500" value="6000" style="--p:12.8%"></label>
-          <label class="calc-f"><span>Estimates you close <output data-o="close">30%</output></span>
-            <input type="range" name="close" min="10" max="70" step="5" value="30" style="--p:33.3%"></label>
         </form>
       </div>
       <div class="calc2-r" aria-live="polite">
-        <p class="calc2-k">Going to whoever answers first</p>
+        <p class="calc2-k">Walking to your competitors every month</p>
         <b class="calc2-big" data-o="month">$10,522</b>
-        <p class="calc2-per">a month, about <strong data-o="year">$126,263</strong> a year</p>
-        <ol class="calc2-steps">
-          <li><span>Missed calls a month</span><b data-o="mcalls">26</b></li>
-          <li><span>New customers who would have booked an estimate</span><b data-o="est">about 6</b></li>
-          <li><span>Jobs you would have won</span><b data-o="jobs">about 2</b></li>
-        </ol>
-        <p class="calc2-pays">One saved <span data-o="job2">$6,000</span> job covers Never Miss a Lead <b data-o="cover">8 times</b> over.</p>
+        <p class="calc2-per">That's <strong data-o="jobs">about 2 jobs</strong> that called you first.</p>
+        <a class="btn btn-go calc2-cta" href="#book">Stop losing them</a>
         <details class="calc-how"><summary>How this is worked out</summary>
-          <p>Calls missed a week × 4.33 weeks. Half of missed callers are new customers (the rest are existing customers, suppliers and spam). 45% of new callers book an estimate when someone answers (<a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca 2026 home-services benchmarks</a>). Then your close rate and your average job. These are estimates, not promises.</p>
+          <p>Calls missed a week × 4.33 weeks. Half of missed callers are new customers (the rest are existing customers, suppliers and spam). 45% of new callers book an estimate when someone answers (<a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca 2026 home-services benchmarks</a>). Then a typical 30% close rate and your average job. These are estimates, not promises.</p>
         </details>
       </div>
     </div>

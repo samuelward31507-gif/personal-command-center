@@ -417,6 +417,8 @@ p, li, dd { text-wrap: pretty; }
 .calc2-steps { list-style: none; margin: 32px 0 0; padding: 0; border-top: 1px solid #2c2f35; }
 .calc2-steps li { display: flex; justify-content: space-between; align-items: baseline; gap: 18px; padding: 14px 0; border-bottom: 1px solid #2c2f35; font-size: 14.5px; color: #c6c9ce; }
 .calc2-steps b { color: #fff; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.calc2-cta { margin-top: 32px; align-self: flex-start; background: #fff; color: #121417; }
+.calc2-cta:hover { background: #e9e7e2; }
 .calc2-pays { margin-top: 24px; font-size: 16px; line-height: 1.5; color: #c6c9ce; }
 .calc2-pays b, .calc2-pays span { color: #fff; font-weight: 600; }
 .calc2-r .calc-how { margin-top: auto; padding-top: 22px; }
