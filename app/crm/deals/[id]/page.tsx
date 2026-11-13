@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { printPage } from "@/lib/print-doc";
+import { agreementDoc, docNumber, proposalDoc } from "@/lib/print-doc";
+import { DocFrame } from "../../../doc-frame";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { DISCOVERY_FIELDS, discoveryCompleteness, EMAIL_PURPOSES, mailtoLink, type Discovery, type ProposalStatus, type ContractStatus, type EmailPurpose } from "@/lib/deal-workspace";
@@ -248,10 +249,10 @@ export default function DealWorkspacePage() {
     } else void patch({ proposalStatus: status }, "status", "Saved.");
   }
 
-  function printDoc(content: string, heading: string, kind = "Proposal") {
+  function printDoc(html: string) {
     const w = window.open("", "_blank");
     if (!w) return;
-    w.document.write(printPage({ title: heading, kind, business: wsp.businessName, md: content, autoPrint: true }));
+    w.document.write(html.replace("</body>", "<script>document.fonts.ready.then(()=>setTimeout(()=>print(),250))</script></body>"));
     w.document.close();
   }
 
@@ -277,6 +278,9 @@ export default function DealWorkspacePage() {
   const proposal = ws.proposals[0];
   const closed = deal.stage === "won" || deal.stage === "lost";
   const agreement = ws.agreements[0];
+  const agHtml = (a: { id: string; content: string; createdAt: string }) => agreementDoc(a.content, { no: docNumber("SA", a.id, a.createdAt), business: wsp.businessName,
+    signed: signReq?.status === "signed" && signReq.signerName ? { client: { name: signReq.signerName, title: signReq.signerTitle ?? undefined, at: signReq.signedAt } } : undefined });
+  const propHtml = (p: { id: string; content: string; createdAt: string }) => proposalDoc(p.content, { no: docNumber("P", p.id, p.createdAt), business: wsp.businessName, preparedBy: wsp.ownerFullName });
   // The agreement is one click from every open deal: on a call, you go straight from "yes" to the signing link.
   const showAgreement = !closed || deal.contractStatus !== "none" || !!agreement;
   const showKickoff = deal.stage === "won" && (deal.serviceType === "tier1_speed_to_lead" || deal.serviceType === "tier2_revenue_system");
@@ -385,11 +389,11 @@ export default function DealWorkspacePage() {
             <textarea className="dw-editor" rows={18} value={editing.content} onChange={e => setEditing({ ...editing, content: e.target.value })} />
             <div className="dw-row"><button data-variant="primary" className="dw-btn" onClick={() => setEditing(null)}>Cancel</button><button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "edit"} onClick={() => void saveProposal()}>{saving === "edit" ? "Saving…" : "Save edits"}</button></div>
           </> : <>
-            <div className="dw-proposal ask-root"><Markdown text={proposal.content} /></div>
+            <DocFrame title="Proposal" html={propHtml(proposal)} />
             <div className="dw-row">
               <button data-variant="primary" className="dw-btn" onClick={() => setEditing({ id: proposal.id, content: proposal.content })}>Edit</button>
               <button data-variant="primary" className="dw-btn" onClick={() => copy("proposal", proposal.content)}>{copied === "proposal" ? "Copied" : "Copy text"}</button>
-              <button data-variant="primary" className="dw-btn" onClick={() => printDoc(proposal.content, `Proposal for ${contact?.company || deal.title}`)}>Print / PDF</button>
+              <button data-variant="primary" className="dw-btn" onClick={() => printDoc(propHtml(proposal))}>Print / PDF</button>
               <button data-variant="primary" className="dw-btn" disabled={saving === "proposal"} onClick={() => void draftProposal()}>{saving === "proposal" ? "Rebuilding…" : "Rebuild from price"}</button>
             </div>
             {!closed && <div className="dw-row dw-decide">
@@ -427,11 +431,11 @@ export default function DealWorkspacePage() {
               <button type="submit" data-variant="primary" className="dw-btn dw-primary" disabled={saving === "fills"}>{saving === "fills" ? "Saving…" : "Save answers"}</button>
             </form>}
             <p className="dw-warn">A draft for your review, not legal advice. Fill in every [bracketed] blank{blanks ? ` (${blanks} left)` : ""} and have it checked before you rely on it.</p>
-            <div className="dw-proposal ask-root"><Markdown text={agreement.content} /></div>
+            <DocFrame title="Service agreement" html={agHtml(agreement)} />
             <div className="dw-row">
               <button data-variant="primary" className="dw-btn" onClick={() => setAgEdit({ id: agreement.id, content: agreement.content })}>Edit</button>
               <button data-variant="primary" className="dw-btn" onClick={() => copy("agreement", agreement.content)}>{copied === "agreement" ? "Copied" : "Copy text"}</button>
-              <button data-variant="primary" className="dw-btn" onClick={() => printDoc(agreement.content, `Service Agreement — ${contact?.company || deal.title}`, "Service Agreement")}>Print / PDF</button>
+              <button data-variant="primary" className="dw-btn" onClick={() => printDoc(agHtml(agreement))}>Print / PDF</button>
               {deal.contractStatus !== "signed" && <button data-variant="primary" className="dw-btn" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Recreating…" : "Recreate from template"}</button>}
             </div>
             {signReq?.status === "signed" && <p className="dw-signed">Signed electronically by {signReq.signerName}{signReq.signerTitle ? `, ${signReq.signerTitle}` : ""} · {signReq.signedAt ? new Date(signReq.signedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}</p>}

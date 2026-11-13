@@ -6,6 +6,7 @@ import { createKickoffLink, publicOrigin } from "@/lib/kickoff-link";
 import { sanitizeForLog } from "@/lib/business-audit";
 import { loadWorkspace } from "@/lib/workspace-data";
 import { paymentLinkFor } from "@/lib/workspace";
+import { docNumber } from "@/lib/print-doc";
 import { sendDirectEmail } from "@/lib/gmail-send";
 
 export const runtime = "nodejs";
@@ -18,7 +19,7 @@ async function load(token: string) {
   const sql = neon(process.env.DATABASE_URL!);
   const rows = await sql`
     SELECT s.id, s.owner_id, s.deal_id, s.status, s.content_hash, s.expires_at, s.created_at, s.signed_at, s.signer_name, s.signer_title,
-      s.signed_content, s.provider_name, s.provider_signer, a.content, c.company, d.title AS deal_title
+      s.signed_content, s.provider_name, s.provider_signer, a.content, a.id AS artifact_id, a.created_at AS artifact_created, c.company, d.title AS deal_title
     FROM public.signing_requests s
     JOIN public.research_artifacts a ON a.id = s.artifact_id AND a.owner_id = s.owner_id
     JOIN public.deals d ON d.id = s.deal_id AND d.owner_id = s.owner_id
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
       provider: String(row.provider_name || ""), providerSigner: String(row.provider_signer || ""), sentAt: iso(row.created_at),
       content: signed ? String(row.signed_content) : expired || changed ? "" : String(row.content),
       signerName: signed ? row.signer_name : null, signerTitle: signed ? row.signer_title : null, signedAt: iso(row.signed_at),
-      consent: CONSENT_TEXT,
+      consent: CONSENT_TEXT, docNo: docNumber("SA", String(row.artifact_id), iso(row.artifact_created)),
     });
   } catch (error) {
     console.error("Sign GET failed", { name: error instanceof Error ? error.name : typeof error });

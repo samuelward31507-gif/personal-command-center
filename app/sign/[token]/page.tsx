@@ -1,55 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useParams } from "next/navigation";
 import { BrandLogo } from "../../cinder-brand";
 import "./sign.css";
+import { DocFrame } from "../../doc-frame";
+import { agreementDoc } from "@/lib/print-doc";
 import { usePublicBrand } from "../../use-workspace";
 
 type Doc = {
   status: "open" | "signed" | "expired" | "changed"; client: string; provider: string; providerSigner: string; sentAt: string | null;
-  content: string; signerName: string | null; signerTitle: string | null; signedAt: string | null; consent: string;
+  content: string; signerName: string | null; signerTitle: string | null; signedAt: string | null; consent: string; docNo?: string;
 };
-
-/** Minimal, safe Markdown → React for the agreement text (headings, bold, bullets, paragraphs, two-column tables). No HTML is injected. */
-function inline(s: string, key: string): ReactNode[] {
-  return s.split(/(\*\*[^*]+\*\*)/g).map((part, i) => part.startsWith("**") && part.endsWith("**") ? <strong key={key + i}>{part.slice(2, -2)}</strong> : <span key={key + i}>{part}</span>);
-}
-function DocBody({ text }: { text: string }) {
-  const out: ReactNode[] = []; let list: string[] = []; let para: string[] = []; let table: string[][] = [];
-  const flush = (k: string) => {
-    if (para.length) { out.push(<p key={"p" + k}>{inline(para.join(" "), "p" + k)}</p>); para = []; }
-    if (list.length) { out.push(<ul key={"u" + k}>{list.map((l, i) => <li key={i}>{inline(l, "l" + k + i)}</li>)}</ul>); list = []; }
-    if (table.length) {
-      // The Statement of Work: a bold row starts a section (or is the total); the rest are its line items.
-      const [head, ...rows] = table;
-      out.push(<div className="sg-sow" key={"t" + k}><table>
-        <thead><tr><th scope="col">{head[0]}</th><th scope="col">{head[1]}</th></tr></thead>
-        <tbody>{rows.map((r, i) => { const bold = /^\*\*.*\*\*$/.test(r[0]); const last = i === rows.length - 1 && bold;
-          return <tr key={i} className={last ? "sow-total" : bold ? "sow-sec" : "sow-item"}><td>{inline(r[0], "t" + k + i)}</td><td>{inline(r[1] ?? "", "a" + k + i)}</td></tr>; })}</tbody>
-      </table></div>);
-      table = [];
-    }
-  };
-  text.replace(/\r/g, "").split("\n").forEach((line, i) => {
-    const t = line.trim(); const k = String(i);
-    if (!t) { flush(k); return; }
-    if (/^\|.*\|$/.test(t)) {
-      if (para.length || list.length) flush(k);
-      if (!/^\|[\s|:-]+\|$/.test(t)) table.push(t.slice(1, -1).split("|").map(c => c.trim()));
-      return;
-    }
-    if (table.length) flush(k);
-    const h = t.match(/^(#{1,3})\s+(.*)$/);
-    if (h) { flush(k); out.push(h[1].length === 1 ? <h1 key={k}>{inline(h[2], k)}</h1> : h[1].length === 2 ? <h2 key={k}>{inline(h[2], k)}</h2> : <h3 key={k}>{inline(h[2], k)}</h3>); return; }
-    const b = t.match(/^[-*•]\s+(.*)$/) || t.match(/^\d+[.)]\s+(.*)$/);
-    if (b) { if (para.length) flush(k); list.push(b[1]); return; }
-    if (list.length) flush(k);
-    para.push(t);
-  });
-  flush("end");
-  return <div className="sg-doc">{out}</div>;
-}
 
 const fmt = (v: string | null) => (v ? new Date(v).toLocaleString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }) : "");
 
@@ -102,15 +64,13 @@ export default function SignPage() {
                 {payUrl && <div className="sg-next"><p><b>Setup payment:</b> pay the setup fee to lock in your start date. We also emailed you this link.</p><a className="sg-btn" href={payUrl} target="_blank" rel="noopener noreferrer">Pay the setup fee</a></div>}
                 {kickoffUrl && <div className="sg-next"><p><b>Next step:</b> a 10-minute kickoff checklist (your hours, service area, prices and the details carriers need to register your texting number). Most shops are live within 14 days of sending it, and never later than 21 business days.</p><a className="sg-btn" href={kickoffUrl}>Start the kickoff checklist</a></div>}</div>
             : <div className="sg-intro"><div className="sg-eyebrow">Service agreement · {doc.client}</div><p>Please read the agreement below. To sign, type your name at the bottom.</p></div>}
-          <DocBody text={doc.content} />
-          <section className="sg-sigs" aria-label="Signatures">
-            <div><div className="sg-k">Provider</div><div className="sg-sig">{doc.providerSigner}</div><div className="sg-sm">{doc.provider}{doc.sentAt ? ` · signed when sent, ${fmt(doc.sentAt)}` : ""}</div></div>
-            <div><div className="sg-k">Client</div>{doc.status === "signed"
-              ? <><div className="sg-sig">{doc.signerName}</div><div className="sg-sm">{[doc.signerTitle, doc.client].filter(Boolean).join(", ")} · signed electronically, {fmt(doc.signedAt)}</div></>
-              : <div className="sg-sm">Not signed yet</div>}</div>
-          </section>
+          <DocFrame title="Service agreement" className="sg-doc" html={agreementDoc(doc.content, { no: doc.docNo || "", business: brand.businessName || "Cinder Revenue Company",
+            signed: { provider: doc.providerSigner ? { name: doc.providerSigner, title: "Owner", at: doc.sentAt } : null,
+              client: doc.status === "signed" && doc.signerName ? { name: doc.signerName, title: doc.signerTitle ?? undefined, at: doc.signedAt } : null } })} />
+          
           {doc.status === "signed"
-            ? <button type="button" className="sg-btn" onClick={() => window.print()}>Print or save as PDF</button>
+            ? <button type="button" className="sg-btn" onClick={() => { const w = window.open("", "_blank"); if (!w) return; w.document.write(agreementDoc(doc.content, { no: doc.docNo || "", business: brand.businessName || "Cinder Revenue Company", autoPrint: true,
+              signed: { provider: doc.providerSigner ? { name: doc.providerSigner, title: "Owner", at: doc.sentAt } : null, client: doc.signerName ? { name: doc.signerName, title: doc.signerTitle ?? undefined, at: doc.signedAt } : null } })); w.document.close(); }}>Print or save as PDF</button>
             : <form className="sg-form" onSubmit={sign}>
               <h2>Sign</h2>
               <div className="sg-grid">

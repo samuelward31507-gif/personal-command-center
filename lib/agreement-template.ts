@@ -129,50 +129,71 @@ export function buildProposal(p: ProposalInput): string {
   const monthly = p.monthlyFee + (p.addon ? ADDON_MONTHLY : 0);
   const who = p.ownerName?.trim() ? `${p.ownerName.trim()}, ${p.company}` : p.company;
   const items = planItems(p.tier);
+  const booked = p.bookedGuarantee === 3
+    ? "**3 booked appointments.** At least 3 booked estimates in your first 30 days live, or your next month is free."
+    : "**Booked appointments.** 5 booked estimates in your first 30 days live (3 if you get 10 to 29 leads a month), or your next month is free.";
   const guarantees = [
-    "**Every lead answered in under 60 seconds.** If more than 1 in 100 leads in a month gets a slower first reply, that month is free.",
-    ...(p.tier === "tier2" ? [p.bookedGuarantee === 3
-      ? "**3 booked appointments in your first 30 days**, or your next month is free."
-      : "**5 booked appointments in your first 30 days** (3 if you get 10 to 29 new leads a month), or your next month is free."] : []),
-    "**Live within 21 business days** of your kickoff checklist, or your setup fee is refunded.",
+    "**Under 60 seconds.** Every lead gets a first reply in under 60 seconds. If more than 1 in 100 don't, that month is free.",
+    ...(p.tier === "tier2" ? [booked] : []),
+    "**Live in 21 business days.** Live within 21 business days of your kickoff checklist, or your setup fee is refunded.",
   ];
   const lines = [
-    `# ${plan}`,
+    `# ${p.tier === "tier2" ? `Book more of the leads ${p.company} already gets, and close more of the quotes` : `Answer and book every lead ${p.company} already gets`}`,
     "",
-    `Prepared for **${who}** · ${p.date} · Valid for 14 days`,
+    `Prepared for **${who}** · ${p.date} · Valid for 14 days · Plan: **${plan}**`,
     "",
-    "## The plan",
+    "## Where jobs slip away today",
+    "",
+    "Most fence and outdoor contractors don't have a lead problem. They have a follow-up problem. The jobs are already coming in; they leak out in three places:",
+    "",
+    "- **The call you can't take.** You're on a job, it rings out, and most homeowners don't leave a voicemail. They call the next company.",
+    "- **The form that waits.** A request comes in at lunch and gets answered tonight. By then they've booked someone else.",
+    ...(p.tier === "tier2" ? ["- **The quote that goes quiet.** You drove out, measured and priced it. One follow-up, maybe two, and it dies."] : []),
+    "",
+    "Speed decides most of it. Replying in 5 minutes instead of 30 makes a lead 21 times more likely to qualify (MIT and InsideSales, 15,000 leads). Replying within the hour makes it about 7 times more likely, yet the average business took 42 hours (Harvard Business Review, 2011).",
+    "",
+    "## What we'll do",
     "",
     p.tier === "tier2"
-      ? "Every lead answered in seconds and booked on your calendar, then every quote followed up until it's a yes or a no. Built and run for you."
-      : "Every missed call, form and ad lead answered in seconds, qualified with your price range and booked on your calendar. Built and run for you.",
+      ? "We build, run and maintain a system that answers every lead in seconds, books the estimate on your calendar, then follows every quote until it's a yes or a no. You keep your number, your software and your data."
+      : "We build, run and maintain a system that answers every lead in seconds, qualifies it with your price range and books the estimate on your calendar. You keep your number, your software and your data.",
     "",
     ...(p.tier === "tier2"
-      ? ["### Every lead, answered and booked", "", ...items.slice(0, 6).map(x => `- ${x}`), "", "### Every quote, chased to a yes or no", "", ...items.slice(6).map(x => `- ${x}`)]
+      ? ["### Every lead, answered and booked", "", ...items.slice(0, 6).map(x => `- ${x}`), "", "### Every quote, chased to a yes or a no", "", ...items.slice(6).map(x => `- ${x}`)]
       : items.map(x => `- ${x}`)),
-    ...(p.addon ? [`- Reactivation: old leads and past customers worked every quarter (${money(ADDON_MONTHLY)}/month)`] : []),
+    ...(p.addon ? ["", `- Reactivation: old leads and past customers worked every quarter (${money(ADDON_MONTHLY)}/month)`] : []),
+    "",
+    "### What we need from you",
+    "",
+    "- A 10-minute kickoff checklist and a 20-minute setup call",
+    "- Forward your missed calls and give us access to your forms",
+    "- Read and approve every message before anything goes live",
     "",
     "## Your investment",
     "",
     "| | Amount | When |",
     "| --- | --- | --- |",
-    `| Setup | **${money(p.setupFee)}** | Once, to start |`,
+    `| Setup | **${money(p.setupFee)}** | Once, when you sign |`,
     `| Monthly | **${money(monthly)}** | Starts the day we book your first appointment |`,
     "",
-    "No contract: month to month, cancel with 30 days' notice. No per-minute, per-lead or per-appointment fees.",
+    "No contract: month to month, cancel with 30 days' notice. No per-minute, per-lead or per-appointment fees. Texting costs are included.",
     "",
     "## Our guarantees",
     "",
     ...guarantees.map(g => `- ${g}`),
     "",
-    "## How we get you live",
+    "## Timeline",
     "",
-    "1. **Today:** sign the agreement and pay setup.",
-    "2. **First 3 business days:** a 10-minute kickoff checklist; forward missed calls and connect your forms.",
-    "3. **Usually within 14 days:** you read and approve every message, then you go live.",
-    "4. **30 days in:** we review your results together and tune the messages.",
+    "| Step | What happens | When |",
+    "| --- | --- | --- |",
+    "| Sign | Agreement signed and setup paid | Day 0 |",
+    "| Kickoff | Checklist and setup call; missed calls forwarded, forms connected | First 3 business days |",
+    "| Build | Your questions, prices and rules; carrier registration for your texting number | 1 to 2 weeks |",
+    "| Approve | You read and approve every message; we test every path | Before go-live |",
+    "| Go live | Your leads are answered and booked | Usually within 14 days |",
+    "| Review | Results reviewed together; messages tuned | 30 days after go-live |",
     "",
-    "## To get started",
+    "## Next steps",
     "",
     "1. Sign the service agreement. It comes to your phone and email and takes about five minutes.",
     p.payLink ? `2. Pay setup: [Pay ${money(p.setupFee)} securely with Stripe](${p.payLink})` : `2. Pay setup: ${money(p.setupFee)} (the invoice comes with your agreement).`,
