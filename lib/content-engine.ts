@@ -151,7 +151,7 @@ export function contentUser(ctx: Context, slots: Slot[], week: string): string {
   const facts = [
     `Dials: ${ctx.dials}`, `Conversations: ${ctx.conversations}`, `Meetings booked: ${ctx.meetings}`, `Emails sent: ${ctx.emailsSent}`,
     ctx.streakDays ? `Calling streak: ${ctx.streakDays} days` : "",
-    ctx.clientsLive ? `Clients live: ${ctx.clientsLive}` : "Clients live: 0 (still signing the first founding clients; never imply otherwise)",
+    ctx.clientsLive ? `Clients live: ${ctx.clientsLive}` : "Clients live: 0 (still signing the first clients; never imply otherwise)",
     ctx.leadsAnswered ? `Leads answered for clients this week: ${ctx.leadsAnswered}` : "", ctx.estimatesBooked ? `Estimates booked for clients this week: ${ctx.estimatesBooked}` : "",
   ].filter(Boolean).join("\n");
   return `Week of ${week}. Sells to: ${ctx.trades.join(", ")}. Current offer: ${ctx.offer}

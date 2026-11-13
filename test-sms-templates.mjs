@@ -65,7 +65,7 @@ for (const o of ["meeting_booked", "not_interested", "callback_requested"]) ok((
 // T-INFO
 const info = infoText({ firstName: "Mike", demoLink: link });
 ok(() => assert.match(info, /^Hey Mike, Sam with Cinder, good talking with you\. Here's the 30-second demo/));
-ok(() => assert.match(info, /half-price setup and 50% off the first month\.\n\nEasiest is I show you in 15 min\. Grab any time that works here: https:\/\/cinderrevenue\.com\/book$/));
+ok(() => assert.match(info, /your next month is free\.\n\nEasiest is I show you in 15 min\. Grab any time that works here: https:\/\/cinderrevenue\.com\/book$/));
 ok(() => assert.match(infoText({ firstName: "Mike", demoLink: link, slot1: "9am", slot2: "1pm" }), /Grab any time that works here: https:\/\/cinderrevenue\.com\/book$/));
 ok(() => assert.equal((info.match(/https:\/\//g) || []).length, 2, "two links max: demo + booking"));
 const ip = planFor("send_info", { now: calledAt, tz: gaTz });

@@ -1,5 +1,5 @@
 // Cold-call playbook by track (trades vs detailing), built on the current offer: open, dig, pitch, guarantee, price, objections. Pure: no I/O.
-// Offer source of truth: site/index.html (plans) and site/offer-config.js (founding spots).
+// Offer source of truth: site/index.html (plans).
 
 export type Track = "trades" | "detailing";
 export type Objection = { id: string; label: string; key: string; say: string; then?: string };
@@ -7,7 +7,7 @@ export type Objection = { id: string; label: string; key: string; say: string; t
 /** The soft ask: assume the meeting, ask about logistics. Never "are you interested" or "would you be open to". */
 export const CLOSE = "Easiest thing is if I just show you what it'd look like for your shop. Are you more of a morning or afternoon guy? ... Cool, tomorrow at 10 or Wednesday at 2?";
 
-export const FOUNDING = "We're taking our first 3 clients at half-price setup and half off the first month, so if it's a fit you'd get in at half off.";
+export const RISK = "And the monthly doesn't start until your first appointment actually books. No contract.";
 
 export const VOICEMAIL: Record<Track, string> = {
   trades: "Hey {first}, Sam with Cinder. Quick one about the calls and quotes that slip through when you're on a job. I'll shoot you a text. Talk soon.",
@@ -48,8 +48,8 @@ export const SCRIPTS: Record<Track, Script> = {
       "\"Anyone else, like a partner, who should be on that call?\" Then text the invite while you're still on the phone.",
     ],
     pitch: "Reason I'm calling: I work with fence companies on the calls they miss while they're out on jobs. Quick question: when you're up on a job and the phone rings, what happens to that call? ... (let them talk, then) Yeah, and most of those people don't leave a voicemail, they just call the next fence company. So I set it up so every missed call gets a text back from you in about 10 seconds. It answers their questions, gives your price range and books the estimate on your calendar. Then every quote you send gets followed up until it's a yes or a no. I guarantee 5 booked estimates in your first 30 days, or your next month is free.",
-    guarantee: "We guarantee 5 booked appointments in your first 30 days, or your next month is free. And monthly doesn't start until your first appointment lands.",
-    price: "Most shops start on Book & Close: $2,500 setup and $1,997 a month. Our first 3 clients get half off setup, so $1,250, and half off the first month.",
+    guarantee: "We guarantee 5 booked appointments in your first 30 days, or your next month is free (3 if you get under 30 leads a month). And the monthly doesn't start until we book your first appointment.",
+    price: "Most shops start on Book & Close: $1,997 to set up and $1,497 a month. If it's just the missed calls, Never Miss a Lead is $997 to set up and $697 a month.",
     objections: [...SHARED, ...TRADES_ONLY],
   },
   detailing: {
@@ -61,7 +61,7 @@ export const SCRIPTS: Record<Track, Script> = {
     ],
     pitch: "Reason I'm calling: I work with detailers on getting past customers back in. Quick question: when's the last time you reached out to customers you haven't seen in a few months? ... (let them talk, then) Yeah, most shops never do, and those are the easiest bookings you'll get, because they already like your work. So I set it up so every past customer gets a text from you when they're due, and they book themselves back in. Anyone who calls while you're mid-detail gets a text back in seconds, and every happy customer gets asked for a review. I guarantee 5 booked appointments in your first 30 days, or your next month is free.",
     guarantee: "Every new lead gets a reply in under 60 seconds, or that month is free. And we keep texting your past customers when they're due, booking every reply.",
-    price: "Never Miss a Lead is $997 a month, and the Reactivation add-on that texts your past customers when they're due is $497 a month on top. Our first 3 clients get half-price setup and half off the first month.",
+    price: "Never Miss a Lead is $997 to set up and $697 a month, and the Reactivation add-on that texts your past customers when they're due is $497 a month on top.",
     objections: [...SHARED, ...DETAILING_ONLY],
   },
 };

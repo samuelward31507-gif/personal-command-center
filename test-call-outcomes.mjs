@@ -89,7 +89,7 @@ ok(() => assert.equal(suggestOffer("Random Co", "Tier 3 front office"), OFFERS.t
 ok(() => {
   const d = suggestDeal({ name: "Sabrina", company: "Sabrina Layne Pools" }, "Conditional fit. Tier 2", "meeting_booked");
   assert.equal(d.title, "Sabrina Layne Pools — Book & Close");
-  assert.equal(d.setupFee, 2500); assert.equal(d.monthlyFee, 1997); assert.equal(d.stage, "meeting_booked");
+  assert.equal(d.setupFee, 1997); assert.equal(d.monthlyFee, 1497); assert.equal(d.stage, "meeting_booked");
 });
 ok(() => assert.equal(suggestDeal({ name: "Bob", company: "" }, null, "interested").stage, "interested"));
 ok(() => assert.match(route, /outcome === "interested" \|\| outcome === "meeting_booked"\) && openDeals\.length === 0/, "deal suggested only when no open deal exists"));

@@ -8,10 +8,10 @@ import {
 let n = 0; const ok = (fn, msg) => { try { fn(); n++; } catch (e) { e.message = (msg ? msg + ": " : "") + e.message; throw e; } };
 
 // B1 offer settings
-ok(() => assert.equal(DEFAULT_OFFER.setupFee, 1250));
-ok(() => assert.equal(DEFAULT_OFFER.standardSetup, 2500));
-ok(() => assert.equal(DEFAULT_OFFER.monthly, 1997));
-ok(() => assert.equal(DEFAULT_OFFER.spotsTotal, 3));
+ok(() => assert.equal(DEFAULT_OFFER.setupFee, 1997));
+ok(() => assert.equal(DEFAULT_OFFER.standardSetup, 1997, "no founding discount: the setup is the price"));
+ok(() => assert.equal(DEFAULT_OFFER.monthly, 1497));
+ok(() => assert.equal(DEFAULT_OFFER.spotsTotal, 0, "no founding spots"));
 ok(() => assert.deepEqual(mergeOffer({ spotsTotal: "7", rates: { oldReply: 2 } }).rates, DEFAULT_OFFER.rates), "bad rate falls back");
 ok(() => assert.equal(mergeOffer({ spotsTotal: "7" }).spotsTotal, 7));
 const v = validateOffer({ offerName: "Sprint", setupFee: "1,000", standardSetup: 1500, monthly: 997, spotsTotal: 5, rates: { oldReply: 12, oldBook: 25, newReply: 30, newBook: 0.3 } });
@@ -19,8 +19,8 @@ ok(() => assert.ok("ok" in v)); ok(() => assert.equal(v.ok.rates.oldReply, 0.12)
 ok(() => assert.match(validateOffer({ offerName: "", setupFee: 1, standardSetup: 1, monthly: 1, spotsTotal: 1 }).error, /name/));
 ok(() => assert.match(validateOffer({ offerName: "x", setupFee: 1, standardSetup: 1, monthly: 1, spotsTotal: 2.5, rates: {} }).error, /whole number/));
 // Spots: signing a founding client lowers spots left
-ok(() => assert.equal(spotsLeft(DEFAULT_OFFER, 0), 3));
-ok(() => assert.equal(spotsLeft(DEFAULT_OFFER, 1), 2), "one founding client signed");
+ok(() => assert.equal(spotsLeft({ ...DEFAULT_OFFER, spotsTotal: 3 }, 0), 3));
+ok(() => assert.equal(spotsLeft({ ...DEFAULT_OFFER, spotsTotal: 3 }, 1), 2), "one founding client signed");
 ok(() => assert.equal(spotsLeft(DEFAULT_OFFER, 9), 0));
 
 // B2 discovery
@@ -45,8 +45,8 @@ ok(() => assert.equal(guaranteeCalc({ oldLeads: 160, newLeadsPerMonth: 0 }).offe
 ok(() => assert.equal(guaranteeCalc({ oldLeads: 300, newLeadsPerMonth: 30 }, mergeOffer({ rates: { oldReply: 0.2 } })).safe, 8), "rates come from settings");
 
 // B4 price script
-ok(() => assert.equal(priceScript(), "It's normally $2,500 to set up. For our first 3 clients it's $1,250, then $1,997 a month, with your first month half off, month to month, no contract, and the monthly starts after your first booked appointment. If you don't get at least 5 booked appointments in your first 30 days live, your next monthly payment is waived and we keep working."));
-ok(() => assert.match(priceScript({ ...DEFAULT_OFFER, setupFee: 2500 }), /^It's \$2,500 to set up, then/), "no discount line once the founding spots are gone");
+ok(() => assert.equal(priceScript(), "It's $1,997 to set up, then $1,497 a month, month to month, no contract, and the monthly starts after your first booked appointment. If you don't get at least 5 booked appointments in your first 30 days live, your next monthly payment is waived and we keep working."));
+ok(() => assert.match(priceScript({ ...DEFAULT_OFFER, setupFee: 1250, standardSetup: 2500, spotsTotal: 3 }), /^It's normally \$2,500 to set up\. For our first 3 clients it's \$1,250/), "a discount can still be set in Settings");
 
 // B5 delivery tracker (acceptance)
 ok(() => assert.match(cleanDelivery({ goLiveDate: "2026-02-30" }).error, /Go-live/));
@@ -93,13 +93,14 @@ ok(() => assert.match(home, /\$202,500/), "calculator default: (40×0.5×0.45 + 
 ok(() => assert.doesNotMatch(home, /calc-half/), "no inflated every-call-is-a-job figure");
 ok(() => assert.match(home, /Cinder pays for itself with <b data-o="onejob">1<\/b>/), "one-job line default: 6000 / 25% → 1");
 ok(() => assert.match(home, /or your next month is free/));
-ok(() => assert.match(home, /Never Miss a Lead[\s\S]*\$997<\/b>\/month/), "tier 1 price");
-ok(() => assert.match(home, /Book &amp; Close[\s\S]*\$1,997<\/b>\/month/), "tier 2 price");
+ok(() => assert.match(home, /Never Miss a Lead[\s\S]*\$697<\/b>\/month/), "tier 1 price");
+ok(() => assert.match(home, /Book &amp; Close[\s\S]*\$1,497<\/b>\/month/), "tier 2 price");
 ok(() => assert.doesNotMatch(home, /Full Front Office/), "no plan that depends on voice answering until it ships");
 ok(() => assert.match(home, /Voice answering is rolling out/), "honest about voice");
 ok(() => assert.match(home, /Add-on: Reactivation[\s\S]*\$497<\/b>\/month/), "reactivation add-on");
 ok(() => assert.doesNotMatch(home, /Detailers|Reactivation Sprint|Repeat Revenue/), "one add-on, no detailer packages");
-ok(() => assert.match(home, /at least 5 booked appointments in your first 30 days live/));
+ok(() => assert.match(home, /at least 5 booked appointments in your first 30 days live, or at least 3 if you get 10 to 29 new leads a month/));
+ok(() => assert.doesNotMatch(home, /[Ff]ounding|half-price|50% off|Spots left/), "no founding offer on the site");
 ok(() => assert.match(home, /No contract\. Cancel by text\. You keep your number\. You own your data\./));
 const walk = d => readdirSync(d).flatMap(f => { const p = d + "/" + f; return statSync(p).isDirectory() ? walk(p) : [p]; });
 const text = walk("site").filter(f => /\.(html|js|xml|txt|md)$/.test(f)).map(f => readFileSync(f, "utf8")).join("\n");

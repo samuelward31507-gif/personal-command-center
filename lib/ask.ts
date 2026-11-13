@@ -6,8 +6,8 @@
 
 export const ASK_STAGES = ["new", "qualified", "contacted", "interested", "meeting_booked", "meeting_held", "proposal", "negotiation", "won", "lost", "nurture"] as const;
 export const ASK_TIERS = {
-  tier1: { serviceType: "tier1_speed_to_lead", label: "Never Miss a Lead", setupFee: 1500, monthlyFee: 997 },
-  tier2: { serviceType: "tier2_revenue_system", label: "Book & Close", setupFee: 2500, monthlyFee: 1997 },
+  tier1: { serviceType: "tier1_speed_to_lead", label: "Never Miss a Lead", setupFee: 997, monthlyFee: 697 },
+  tier2: { serviceType: "tier2_revenue_system", label: "Book & Close", setupFee: 1997, monthlyFee: 1497 },
 } as const;
 export const ACTION_KINDS = ["create_contact", "set_follow_up", "add_note", "create_task", "create_deal", "move_deal", "schedule_event"] as const;
 export type ActionKind = typeof ACTION_KINDS[number];
@@ -203,7 +203,7 @@ export type AskContext = { today: string; now: string; timeZone: string; weekday
 export type AskBusiness = { owner: string; name: string; niche: string; offers: { label: string; setupFee: number; monthlyFee: number }[] };
 
 const DEFAULT_BUSINESS: AskBusiness = { owner: "Sam", name: "Cinder Revenue Company", niche: "contractors and home-service companies", offers: [
-  { label: "Never Miss a Lead", setupFee: 1500, monthlyFee: 997 }, { label: "Book & Close", setupFee: 2500, monthlyFee: 1997 }, { label: "Full Front Office", setupFee: 3500, monthlyFee: 2997 }] };
+  { label: "Never Miss a Lead", setupFee: 997, monthlyFee: 697 }, { label: "Book & Close", setupFee: 1997, monthlyFee: 1497 }, { label: "Full Front Office", setupFee: 3500, monthlyFee: 2997 }] };
 const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
 
 export function buildSystemPrompt(ctx: AskContext, b: AskBusiness = DEFAULT_BUSINESS) {

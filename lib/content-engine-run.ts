@@ -4,7 +4,7 @@ import { claudeText } from "@/lib/ai-text";
 import { contentSystem, contentUser, parseDrafts, planWeek, type Context, type Draft, type Platform, type Posted, type Slot } from "@/lib/content-engine";
 
 type Sql = NeonQueryFunction<false, false>;
-const OFFER = "First 3 founding clients get half-price setup and 50% off the first month. Book & Close guarantees 5 booked appointments in the first 30 days or the next month is free, and the monthly doesn't start until the first booked appointment. No contract.";
+const OFFER = "Book & Close guarantees 5 booked appointments in the first 30 days or the next month is free, and the monthly doesn't start until the first booked appointment. No contract.";
 const n = (v: unknown) => Number(v) || 0;
 
 async function safe<T>(p: Promise<T>, fallback: T): Promise<T> { try { return await p; } catch (e) { console.error("Content context query failed", e instanceof Error ? e.message : e); return fallback; } }

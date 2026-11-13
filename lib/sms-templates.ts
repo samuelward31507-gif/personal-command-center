@@ -100,7 +100,7 @@ export function infoText(i: { firstName?: string; demoLink: string; slot1?: stri
   const hi = `Hey${name ? " " + name : ""}, Sam with Cinder, good talking with you.`;
   const ask = `Easiest is I show you in 15 min. Grab any time that works here: ${BOOKING_LINK}`;
   if (i.niche === "detailing") return `${hi} Here's how it works: ${i.demoLink}\n\nYour past customers get a text when they're due and book themselves back in, anyone who calls while you're mid-detail gets a text back in seconds, and happy customers get asked for a review. I build it and run it, you don't touch the tech.\n\nWe start with one campaign to your past customers. If it doesn't book at least 3x what you pay, it's free.\n\n${ask}`;
-  return `${hi} Here's the 30-second demo of what your customers get when you can't pick up: ${i.demoLink}\n\nEvery missed call and form gets a text back in about 10 seconds and the estimate lands on your calendar. Every quote gets followed up until it's a yes or a no. I build it and run it, you don't touch the tech.\n\nNo contract, monthly starts after your first booked appointment, and 5 booked in 30 days or your next month is free. Our first 3 clients get half-price setup and 50% off the first month.\n\n${ask}`;
+  return `${hi} Here's the 30-second demo of what your customers get when you can't pick up: ${i.demoLink}\n\nEvery missed call and form gets a text back in about 10 seconds and the estimate lands on your calendar. Every quote gets followed up until it's a yes or a no. I build it and run it, you don't touch the tech.\n\nNo contract, monthly starts after your first booked appointment, and 5 booked in 30 days or your next month is free.\n\n${ask}`;
 }
 
 // ---- sending helpers ----
@@ -256,7 +256,7 @@ export function loomText(i: { firstName?: string; company?: string; loomUrl: str
 /** Referral ask, 14+ days after a client goes live. "Quick favor:" marks it as sent (don't reword that part). */
 export function referralText(i: { firstName?: string }): string {
   const hi = `Hey${(i.firstName ?? "").trim() ? " " + i.firstName!.trim() : ""}`;
-  return `${hi}, Sam here. Quick favor: know any other owners who'd want more booked jobs the same way? If you send them my way and they sign, your next month's on me, and they get half off setup.`;
+  return `${hi}, Sam here. Quick favor: know any other owners who'd want more booked jobs the same way? If you send them my way and they sign, your next month's on me.`;
 }
 /** Talking points for a Loom: who, their problem in their words, what to show, the ask. */
 export function loomPoints(i: { company: string; city?: string; niche?: string; callNote?: string }): string[] {

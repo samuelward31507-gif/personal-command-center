@@ -28,7 +28,7 @@ ok(() => assert.deepEqual(mergeWorkspace("garbage"), DEFAULT_WORKSPACE));
 const m = mergeWorkspace({ businessName: "  Acme Growth  ", tier1: { setupFee: "$2,000", monthlyFee: -5 }, timezone: "Mars/Base", goalAmount: 0, goalBy: "2027-02-30x", dailyCallTarget: 9999 });
 ok(() => assert.equal(m.businessName, "Acme Growth"));
 ok(() => assert.equal(m.tier1.setupFee, 2000, "money strings are parsed"));
-ok(() => assert.equal(m.tier1.monthlyFee, 997, "negative fee ignored"));
+ok(() => assert.equal(m.tier1.monthlyFee, 697, "negative fee ignored"));
 ok(() => assert.equal(m.timezone, "America/Denver"));
 ok(() => assert.equal(m.goalAmount, 50_000));
 ok(() => assert.equal(m.goalBy, "2026-12-31"));
@@ -60,7 +60,7 @@ ok(() => assert.equal(goalLabel({ ...DEFAULT_WORKSPACE, goalAmount: 12500, goalB
 // Consumers use settings when given, old values when not.
 const custom = offersFrom(v.ok);
 ok(() => assert.equal(suggestOffer("Ridgeline Fence", null, custom).setupFee, custom.tier2.setupFee, "Book & Close is the default plan"));
-ok(() => assert.equal(suggestOffer("Ridgeline Fence", null).setupFee, 2500));
+ok(() => assert.equal(suggestOffer("Ridgeline Fence", null).setupFee, 1997));
 ok(() => assert.equal(suggestDeal({ name: "", company: "Blue Pools" }, null, "interested", custom).monthlyFee, custom.tier2.monthlyFee));
 const g = goalMath({ today: "2026-11-01", collected: 30000, expectedByGoal: 0, offers: Object.values(custom), goal: { amount: 120000, by: "2027-06-30" } });
 ok(() => assert.equal(g.goal, 120000));
@@ -79,7 +79,7 @@ ok(() => assert.ok(buildObjections({ ...si, me: "Jordan", brand: "Acme" }).every
 
 const ctx = { today: "2026-11-01", now: "Sun, 7:00 AM", timeZone: "America/Denver", weekday: "Sun" };
 ok(() => assert.match(buildSystemPrompt(ctx), /Sam runs Cinder Revenue Company/));
-ok(() => assert.match(buildSystemPrompt(ctx), /Never Miss a Lead \$1,500 setup \+ \$997\/mo; Book & Close \$2,500 setup \+ \$1,997\/mo/));
+ok(() => assert.match(buildSystemPrompt(ctx), /Never Miss a Lead \$997 setup \+ \$697\/mo; Book & Close \$1,997 setup \+ \$1,497\/mo/));
 const p2 = buildSystemPrompt(ctx, { owner: "Jordan", name: "Acme", niche: "roofers", offers: [{ label: "Starter", setupFee: 2000, monthlyFee: 1200 }] });
 ok(() => assert.match(p2, /Jordan runs Acme, helping roofers book more jobs .*\. Offers: Starter \$2,000 setup \+ \$1,200\/mo\./));
 ok(() => assert.ok(!p2.includes("Samuel")));
@@ -96,13 +96,13 @@ console.log(`workspace: ${n} checks passed`);
   const { paymentLinkFor, validateWorkspace: vw, mergeWorkspace: mw, DEFAULT_WORKSPACE: D } = await import("./lib/workspace.ts");
   let m = 0; const ok2 = f => { f(); m++; };
   const w = mw({ paymentLink: "https://pay.example.com/any", tier1: { setupLink: "https://buy.stripe.com/t1s", monthlyLink: "https://buy.stripe.com/t1m" }, tier2: { setupLink: "https://buy.stripe.com/t2s", monthlyLink: "https://buy.stripe.com/t2m" } });
-  ok2(() => assert.deepEqual(paymentLinkFor(w, "tier1_speed_to_lead", "setup_fee", 1500), { link: "https://buy.stripe.com/t1s", kind: "setup" }));
-  ok2(() => assert.equal(paymentLinkFor(w, "tier1_speed_to_lead", "monthly_retainer", 997).link, "https://buy.stripe.com/t1m"));
-  ok2(() => assert.equal(paymentLinkFor(w, "tier2_revenue_system", "setup_fee", 2500).link, "https://buy.stripe.com/t2s"));
-  ok2(() => assert.equal(paymentLinkFor(w, "tier2_revenue_system", "monthly_retainer", 1997).link, "https://buy.stripe.com/t2m"));
+  ok2(() => assert.deepEqual(paymentLinkFor(w, "tier1_speed_to_lead", "setup_fee", 997), { link: "https://buy.stripe.com/t1s", kind: "setup" }));
+  ok2(() => assert.equal(paymentLinkFor(w, "tier1_speed_to_lead", "monthly_retainer", 697).link, "https://buy.stripe.com/t1m"));
+  ok2(() => assert.equal(paymentLinkFor(w, "tier2_revenue_system", "setup_fee", 1997).link, "https://buy.stripe.com/t2s"));
+  ok2(() => assert.equal(paymentLinkFor(w, "tier2_revenue_system", "monthly_retainer", 1497).link, "https://buy.stripe.com/t2m"));
   ok2(() => assert.equal(paymentLinkFor(w, "tier1_speed_to_lead", "setup_fee", 1200).kind, "general", "discounted price never gets the fixed-price link"));
   ok2(() => assert.equal(paymentLinkFor(w, "ai_voice_agent", "one_time", 500).kind, "general"));
-  ok2(() => assert.equal(paymentLinkFor(D, "tier1_speed_to_lead", "setup_fee", 1500).kind, "none"));
+  ok2(() => assert.equal(paymentLinkFor(D, "tier1_speed_to_lead", "setup_fee", 997).kind, "none"));
   ok2(() => assert.equal(mw({ tier1: { setupLink: "http://insecure.com" } }).tier1.setupLink, "", "http links are ignored"));
   ok2(() => assert.match(vw({ ...D, tier2: { ...D.tier2, monthlyLink: "not a url" } }).error, /Tier 2 monthly payment link/));
   ok2(() => assert.equal(vw({ ...D, tier1: { ...D.tier1, setupLink: "https://buy.stripe.com/x" } }).ok.tier1.setupLink, "https://buy.stripe.com/x"));

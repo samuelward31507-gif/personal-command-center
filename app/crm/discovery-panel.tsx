@@ -67,7 +67,7 @@ export default function DiscoveryPanel({ contactId, compact = false }: { contact
     </div>
     <div className="fo-chip">
       <p>&ldquo;{priceScript(data.offer)}&rdquo;</p>
-      <small>Spots left: {data.left} of {data.offer.spotsTotal}{data.left === 0 ? " — founding offer is full, quote the standard plan" : ""}</small>
+      {data.offer.spotsTotal > 0 && <small>Spots left: {data.left} of {data.offer.spotsTotal}{data.left === 0 ? " — founding offer is full, quote the standard plan" : ""}</small>}
     </div>
     <div className="fo-row">
       <button type="button" className="fo-btn primary" disabled={!dirty || busy} onClick={() => void save()}>{busy ? "Saving…" : dirty ? "Save discovery" : "Saved"}</button>

@@ -1,4 +1,4 @@
-// The founding offer (Book & Close, half-price setup for the first 3 clients): settings, discovery fields, the guarantee
+// The offer (Book & Close at its standard price; the founding discount was retired Nov 2026): settings, discovery fields, the guarantee
 // calculator, the price script, client delivery tracking, Review Builder setup and the monthly report.
 // Pure: no I/O. Safe to unit test.
 
@@ -18,11 +18,11 @@ export type OfferSettings = {
 };
 
 export const DEFAULT_OFFER: OfferSettings = {
-  offerName: "Book & Close (founding)",
-  setupFee: 1250,
-  standardSetup: 2500,
-  monthly: 1997,
-  spotsTotal: 3,
+  offerName: "Book & Close",
+  setupFee: 1997,
+  standardSetup: 1997,
+  monthly: 1497,
+  spotsTotal: 0,
   rates: { oldReply: 0.10, oldBook: 0.25, newReply: 0.30, newBook: 0.30 },
   minOldLeads: 150,
 };

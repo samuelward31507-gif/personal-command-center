@@ -4,9 +4,9 @@
 // over an hour × 45% × 50% lost to a faster company (working assumption); then × close rate × job size.
 // The page ships with the default results already filled in (40 missed calls, $6,000 job, 5 of 10 new, 10 slow form leads, 25% close),
 // so it never shows $0, even before this script runs. Plain text updates, no animation.
-// Pays-for-itself line: estimates = ceil(997 / (job value × close rate)).
+// Pays-for-itself line: estimates = ceil(697 / (job value × close rate)).
 (function () {
-  var MONTHLY = 997, BOOK = 0.45, SLOW_LOST = 0.5;
+  var MONTHLY = 697, BOOK = 0.45, SLOW_LOST = 0.5;
   var usd = function (n) { return "$" + Math.round(n).toLocaleString("en-US"); };
   var per = function (n) { if (n < 0.05) return "none"; if (n < 0.75) return "about 1 every " + Math.max(2, Math.round(1 / n)) + " months"; return "about " + Math.round(n) + " a month"; };
   document.querySelectorAll("[data-calc]").forEach(function (el) {

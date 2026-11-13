@@ -221,8 +221,8 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 .guar { font-size: 14px; color: var(--text); padding: 14px 16px; background: var(--bg); border-radius: 10px; }
 .plan .btn { align-self: flex-start; }
 .plans-terms { margin-top: 28px; font-weight: 500; }
-.founding { margin-top: 6px; color: var(--text-2); }
-.founding b { color: var(--text); font-weight: 600; }
+.risk-line { margin-top: 6px; color: var(--text-2); }
+.risk-line b { color: var(--text); font-weight: 600; }
 .g-detail { margin-top: 20px; max-width: 80ch; }
 .g-detail p { margin-top: 10px; font-size: 14px; color: var(--text-2); }
 .repeat { margin-top: 96px; padding-top: 40px; border-top: 1px solid var(--line-2); display: grid; grid-template-columns: .8fr 1.2fr; gap: 48px; }

@@ -28,9 +28,9 @@ The fix isn't answering more. It's making sure nobody who calls goes unanswered.
 I build and watch every client's system myself. That means I only take on a few companies at a time, and if something breaks you hear from me before you notice.
 
 What we do: every lead answered in 10 seconds, every quote chased to a yes or a no, past customers brought back. Done for you. No contract.` },
-  { key: "p-founding", channel: "page", label: "Founding offer", body: `We're taking our first 3 clients at half-price setup and 50% off the first month.
+  { key: "p-founding", channel: "page", label: "The offer", body: `You don't pay a monthly fee until we book your first appointment.
 
-Book & Close guarantees 5 booked appointments in your first 30 days, or your next month is free. And your monthly doesn't start until your first booked appointment lands.
+Book & Close guarantees 5 booked appointments in your first 30 days, or your next month is free. And every lead gets a reply in under 60 seconds.
 
 No contract. You keep your number. If you're a contractor doing 20+ leads a month, book a 15-minute call. Link in bio.` },
   { key: "p-calc", channel: "page", label: "What it costs you", body: `Quick math for contractors:
@@ -156,7 +156,7 @@ VO: The jobs you already quoted are the easiest ones to close.` },
   { key: "v-19", channel: "video", label: "19 and building this", shoot: "Desk, laptop, the CRM on screen. Voiceover or just captions.", body: `Hook: "I'm 19 and I cold call contractors every day"
 
 VO: Most of them say the same thing: they're not short on leads, they lose them. Missed calls on job sites. Quotes nobody chased.
-VO: So I built a system that fixes that, and I'm setting it up for my first 3 founding clients at half-price setup.
+VO: So I built a system that fixes that, and I'm setting it up for a few contractors right now.
 VO: Follow along if you want to see how it goes.` },
   { key: "v-day", channel: "video", label: "A day of cold calling", shoot: "Time-lapse of your desk during a call block, dial counter on screen. Captions only.", body: `Hook: "150 cold calls to contractors in one day. Here's what happened."
 
@@ -189,7 +189,7 @@ Every missed call gets a text back in seconds and the estimate booked. Link in b
 Day 2, day 5, day 10, day 21: every quote chased until it's a yes or a no, without you lifting a finger. Link in bio.`,
   "v-19": `I'm 19 and I cold call contractors every day. They all say the same thing: they're not short on leads, they lose them.
 
-So I built the fix. First 3 founding clients get half-price setup. Follow along.`,
+So I built the fix. Follow along.`,
   "v-detail": `Detailers, you're sitting on money. Every ceramic customer from last year should be back for maintenance, and most never get asked.
 
 One text when they're due, a slot on your calendar, done. Link in bio.`,

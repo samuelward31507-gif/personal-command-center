@@ -33,8 +33,8 @@ export function weightedPipeline(deals: { stage: string; setupFee: number; month
 
 export type Offer = { serviceType: string; label: string; setupFee: number; monthlyFee: number };
 export const OFFERS = {
-  tier1: { serviceType: "tier1_speed_to_lead", label: "Never Miss a Lead", setupFee: 1500, monthlyFee: 997 },
-  tier2: { serviceType: "tier2_revenue_system", label: "Book & Close", setupFee: 2500, monthlyFee: 1997 },
+  tier1: { serviceType: "tier1_speed_to_lead", label: "Never Miss a Lead", setupFee: 997, monthlyFee: 697 },
+  tier2: { serviceType: "tier2_revenue_system", label: "Book & Close", setupFee: 1997, monthlyFee: 1497 },
 } satisfies Record<string, Offer>;
 
 /**
