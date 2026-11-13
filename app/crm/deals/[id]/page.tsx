@@ -285,6 +285,16 @@ export default function DealWorkspacePage() {
   const agHtml = (a: { id: string; content: string; createdAt: string }) => agreementDoc(a.content, { no: docNumber("SA", a.id, a.createdAt), business: wsp.businessName,
     signed: signReq?.status === "signed" && signReq.signerName ? { client: { name: signReq.signerName, title: signReq.signerTitle ?? undefined, at: signReq.signedAt } } : undefined });
   const propHtml = (p: { id: string; content: string; createdAt: string }) => proposalDoc(p.content, { no: docNumber("P", p.id, p.createdAt), business: wsp.businessName, preparedBy: wsp.ownerFullName });
+  // One plan picker on both document tabs: switching rewrites the proposal and the agreement with that plan's price and Stripe link.
+  const planPicker = (deal.contractStatus !== "signed" && !closed && <div className="dw-signfor">
+            <label><span>Plan</span>
+              <select value={deal.serviceType} disabled={!!saving} onChange={e => void switchPlan(e.target.value)}>
+                {Object.values(offersFrom(wsp)).map(o => <option key={o.serviceType} value={o.serviceType}>{o.label}: ${o.setupFee.toLocaleString("en-US")} setup + ${o.monthlyFee.toLocaleString("en-US")}/mo</option>)}
+                {!Object.values(offersFrom(wsp)).some(o => o.serviceType === deal.serviceType) && <option value={deal.serviceType}>Custom plan</option>}
+              </select></label>
+            <label className="dw-signfor-add"><input type="checkbox" checked={addon} disabled={!!saving} onChange={e => void switchAddon(e.target.checked)} /> Reactivation add-on (+$497/mo)</label>
+            <span className="dw-signfor-price">{money(deal.setupFee)} setup · {money(deal.monthlyFee + (addon ? 497 : 0))}/mo <button type="button" className="dw-price-btn" onClick={() => setPriceEdit({ svc: deal.serviceType, setup: String(deal.setupFee), monthly: String(deal.monthlyFee) })}>Custom price</button></span>
+          </div>);
   // The agreement is one click from every open deal: on a call, you go straight from "yes" to the signing link.
   const showAgreement = !closed || deal.contractStatus !== "none" || !!agreement;
   const showKickoff = deal.stage === "won" && (deal.serviceType === "tier1_speed_to_lead" || deal.serviceType === "tier2_revenue_system");
@@ -385,6 +395,8 @@ export default function DealWorkspacePage() {
 
         {tab === "proposal" && <section className="u-sheet dw-box">
           <div className="u-sheet dw-boxhead"><h2>Proposal</h2><span className={"dw-pill dw-pill-" + deal.proposalStatus}>{PROPOSAL_COPY[deal.proposalStatus]}{deal.proposalSentAt && deal.proposalStatus === "sent" ? ` · ${dateLabel(deal.proposalSentAt)}` : ""}</span></div>
+          {planPicker}
+          <p className="dw-when"><b>When to send:</b> only if he doesn't sign on the call. Send it the same day with a follow-up time booked. If he says yes on the call, skip it and send the agreement.</p>
           {!proposal ? <>
             <p className="dw-hint">Built from this deal's plan and price, with your Stripe setup link. Instant. You can edit it before it goes out.</p>
             <label className="dw-check"><input type="checkbox" checked={propAddon} onChange={e => setPropAddon(e.target.checked)} /> Include the Reactivation add-on</label>
@@ -411,15 +423,8 @@ export default function DealWorkspacePage() {
 
         {tab === "agreement" && <section className="u-sheet dw-box" id="agreement">
           <div className="u-sheet dw-boxhead"><h2>Agreement</h2><span className={"dw-pill dw-pill-c-" + deal.contractStatus}>{CONTRACT_COPY[deal.contractStatus]}{deal.contractSentAt && deal.contractStatus === "sent" ? ` · ${dateLabel(deal.contractSentAt)}` : ""}{deal.signedAt && deal.contractStatus === "signed" ? ` · ${dateLabel(deal.signedAt)}` : ""}</span></div>
-          {deal.contractStatus !== "signed" && !closed && <div className="dw-signfor">
-            <label><span>Signing for</span>
-              <select value={deal.serviceType} disabled={!!saving} onChange={e => void switchPlan(e.target.value)}>
-                {Object.values(offersFrom(wsp)).map(o => <option key={o.serviceType} value={o.serviceType}>{o.label}: ${o.setupFee.toLocaleString("en-US")} setup + ${o.monthlyFee.toLocaleString("en-US")}/mo</option>)}
-                {!Object.values(offersFrom(wsp)).some(o => o.serviceType === deal.serviceType) && <option value={deal.serviceType}>Custom plan</option>}
-              </select></label>
-            <label className="dw-signfor-add"><input type="checkbox" checked={addon} disabled={!!saving} onChange={e => void switchAddon(e.target.checked)} /> Reactivation add-on (+$497/mo)</label>
-            <span className="dw-signfor-price">{money(deal.setupFee)} setup · {money(deal.monthlyFee + (addon ? 497 : 0))}/mo <button type="button" className="dw-price-btn" onClick={() => setPriceEdit({ svc: deal.serviceType, setup: String(deal.setupFee), monthly: String(deal.monthlyFee) })}>Custom price</button></span>
-          </div>}
+          {planPicker}
+          <p className="dw-when"><b>When to send:</b> on the call, the moment he says yes. Send the signing link and stay on until he signs. The setup payment link emails him automatically when he does.</p>
           {!agreement ? <>
             <p className="dw-hint">Your service agreement, filled in with this deal's plan, price and client, with an itemized Statement of Work in Schedule A. Anything Cinder doesn't know stays as a [bracketed] blank for you.</p>
             <label className="dw-hint" style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={addon} onChange={e => setAddon(e.target.checked)} /> Include the Reactivation add-on ($497/month)</label>

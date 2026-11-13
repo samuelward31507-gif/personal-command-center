@@ -147,3 +147,5 @@ body .dw-page .dw-fills input { font: inherit; font-size: 14px; padding: 9px 11p
 body .dw-page .dw-fills button { justify-self: start; }
 .dw-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--u-text-2,#4a5059);margin:4px 0 12px;cursor:pointer}
 .dw-check input{width:16px;height:16px;accent-color:#121417}
+.dw-when{font-size:13px;line-height:1.5;color:#4a5059;margin:2px 0 14px;padding:10px 12px;background:#f6f6f4;border-radius:10px}
+.dw-when b{color:#121417;font-weight:600}
