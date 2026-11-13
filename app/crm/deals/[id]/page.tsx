@@ -169,6 +169,24 @@ export default function DealWorkspacePage() {
     finally { setSaving(null); }
   }
 
+  // The [bracketed] blanks as fill-in boxes: type his answers on the call, Save, send. No editing contract text.
+  const [fills, setFills] = useState<Record<string, string>>({});
+  async function saveFills(ag: { id: string; content: string }) {
+    let content = ag.content;
+    for (const [blank, v] of Object.entries(fills) as [string, string][]) if (v.trim()) content = content.split(blank).join(v.trim());
+    if (content === ag.content) { setFlash({ ok: false, text: "Type at least one answer first." }); return; }
+    setSaving("fills");
+    try {
+      const r = await fetch("/api/agreements", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: ag.id, content }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Could not save.");
+      setFills({}); await load();
+      const left = (content.match(/\[[^\]\n]{1,80}\]/g) ?? []).length;
+      setFlash({ ok: true, text: left ? `Saved. ${left} blank${left === 1 ? "" : "s"} left.` : "All blanks filled. Send it to sign below." });
+    } catch (e) { setFlash({ ok: false, text: e instanceof Error ? e.message : "Could not save." }); }
+    finally { setSaving(null); }
+  }
+
   async function saveAgreement() {
     if (!agEdit) return;
     setSaving("agedit");
@@ -403,6 +421,12 @@ export default function DealWorkspacePage() {
             <textarea className="dw-editor" rows={22} value={agEdit.content} onChange={e => setAgEdit({ ...agEdit, content: e.target.value })} />
             <div className="dw-row"><button data-variant="primary" className="dw-btn" onClick={() => setAgEdit(null)}>Cancel</button><button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "agedit"} onClick={() => void saveAgreement()}>{saving === "agedit" ? "Saving…" : "Save edits"}</button></div>
           </> : <>
+            {blanks > 0 && deal.contractStatus !== "signed" && <form className="dw-fills" onSubmit={e => { e.preventDefault(); void saveFills(agreement); }}>
+              <p className="dw-fills-h">Fill in {blanks === 1 ? "the last blank" : `${blanks} blanks`} before you send it</p>
+              {Array.from(new Set<string>(agreement.content.match(/\[[^\]\n]{1,80}\]/g) ?? [])).map((b: string) => <label key={b}><span>{b.slice(1, -1)}</span>
+                <input value={fills[b] ?? ""} placeholder={/entity/i.test(b) ? "e.g. a Florida corporation" : /address/i.test(b) ? "e.g. 123 Main St" : ""} onChange={e => setFills({ ...fills, [b]: e.target.value })} /></label>)}
+              <button type="submit" data-variant="primary" className="dw-btn dw-primary" disabled={saving === "fills"}>{saving === "fills" ? "Saving…" : "Save answers"}</button>
+            </form>}
             <p className="dw-warn">A draft for your review, not legal advice. Fill in every [bracketed] blank{blanks ? ` (${blanks} left)` : ""} and have it checked before you rely on it.</p>
             <div className="dw-proposal ask-root"><Markdown text={agreement.content} /></div>
             <div className="dw-row">
