@@ -10,6 +10,9 @@ import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptO
 import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent, deleteEvent } from "@/lib/client-calendar";
 import { syncBookingToJobber } from "@/lib/jobber";
+import { sendAlert } from "@/lib/notify";
+import { paymentLinkFor } from "@/lib/workspace";
+import { loadWorkspace } from "@/lib/workspace-data";
 import { pushFromAlert, pushToProject } from "@/lib/client-push";
 
 type Sql = NeonQueryFunction<false, false>;
@@ -114,8 +117,26 @@ async function book(sql: Sql, c: Client, threadId: string, phone: string, who: s
     const [ap] = await sql`INSERT INTO public.client_appointments (owner_id, project_id, thread_id, starts_at, ends_at, event_id) VALUES (${c.owner}, ${c.projectId}::uuid, ${threadId}::uuid, ${slot.start}::timestamptz, ${slot.end}::timestamptz, ${eventId}) RETURNING id` as { id: string }[];
     // Shops on Jobber get the estimate there too, on the customer's record. Never undoes the booking if Jobber fails.
     if (ap) await syncBookingToJobber(sql, c.projectId, ap.id, { name: who, phone: e164(phone), start: slot.start, end: slot.end, tz: tzOf(c), summary });
+    if (ap) await firstBookingBilling(sql, c).catch(e => console.error("First-booking alert failed", e instanceof Error ? e.message : e));
     return true;
   } catch (e) { console.error("Booking failed", e instanceof Error ? e.message : e); return false; }
+}
+
+/** The agreement starts the monthly fee on the first booked appointment, so the first booking tells Sam to send the monthly link. */
+async function firstBookingBilling(sql: Sql, c: Client): Promise<void> {
+  const [n] = await sql`SELECT count(*)::int AS n FROM public.client_appointments WHERE project_id = ${c.projectId}::uuid` as { n: number }[];
+  if (!n || n.n !== 1) return;
+  const [d] = await sql`SELECT coalesce(nullif(p.client_name, ''), p.name) AS name, d.service_type, d.monthly_fee, c.email, c.first_name FROM public.projects p
+    LEFT JOIN public.deals d ON d.id = p.deal_id AND d.owner_id = p.owner_id
+    LEFT JOIN public.contacts c ON c.id = d.contact_id AND c.owner_id = d.owner_id
+    WHERE p.id = ${c.projectId}::uuid` as { name: string; service_type: string | null; monthly_fee: number | null; email: string | null; first_name: string | null }[];
+  const ws = await loadWorkspace(c.owner);
+  const fee = Number(d?.monthly_fee ?? 0);
+  const link = paymentLinkFor(ws, d?.service_type ?? null, "monthly_retainer", fee).link;
+  await sendAlert({ subject: `First booking: start ${d?.name ?? "the client"}'s monthly`, lines: [
+    `${d?.name ?? "A client"} just got their first booked appointment. Under the agreement, the monthly fee${fee ? ` ($${fee.toLocaleString("en-US")})` : ""} starts today.`,
+    link ? `Send ${d?.first_name || "them"} the monthly link${d?.email ? ` at ${d.email}` : ""}: ${link}` : "No monthly payment link is set for this plan. Add one in Settings, then send it.",
+  ], link: { label: "Open Money", path: "/crm/finance" } });
 }
 
 /** The owner texted their Cinder number: "QUOTE 4200 [name]" starts quote follow-up; anything else gets a pointer to the app. */

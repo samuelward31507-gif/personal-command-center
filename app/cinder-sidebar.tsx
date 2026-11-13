@@ -26,19 +26,18 @@ const primary = [
 ] as const;
 // Everything else, one click away. Outreach, Operations, AI team and Signals stay reachable by URL and ⌘K.
 const secondary = [
-  ["email", "Email", "send", "/crm/email"],
-  ["leads", "Lead finder", "search", "/crm/leads"],
-  ["practice", "Practice", "mic", "/crm/practice"],
-  ["preparation", "Research", "search", "/crm/preparation"],
-  ["linkedin", "LinkedIn", "link", "/crm/linkedin"],
-  ["groups", "Groups", "groups", "/crm/groups"],
-  ["content", "Content", "megaphone", "/crm/content"],
-  ["partners", "Partners", "users", "/crm/partners"],
-  ["funnel", "Funnel", "chart", "/crm/funnel"],
   ["finance", "Money", "money", "/crm/finance"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
   ["reports", "Client reports", "doc", "/crm/reports"],
+  ["email", "Email", "send", "/crm/email"],
+  ["leads", "Lead finder", "search", "/crm/leads"],
+  ["content", "Content", "megaphone", "/crm/content"],
+  ["groups", "Groups", "groups", "/crm/groups"],
+  ["preparation", "Research", "search", "/crm/preparation"],
+  ["practice", "Practice", "mic", "/crm/practice"],
+  ["funnel", "Funnel", "chart", "/crm/funnel"],
 ] as const;
+// LinkedIn and Partners stay reachable by URL and ⌘K; they aren't in use yet, so they don't take a row.
 const SECONDARY_PATHS = ["/crm/email", "/crm/leads", "/crm/linkedin", "/crm/groups", "/crm/content", "/crm/partners", "/crm/funnel", "/crm/finance", "/crm/tasks", "/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function Icon({ name }: { name: string }) {

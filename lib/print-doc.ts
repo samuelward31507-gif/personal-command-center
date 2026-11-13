@@ -335,7 +335,7 @@ ${wordmark("#121417", 30)}
 <p class="between">Between <b>${esc(business)}</b> and <b>${legalInline(f.company || "Client")}</b></p>
 <dl><div><dt>AGREEMENT NO.</dt><dd>${esc(o.no)}</dd></div><div><dt>EFFECTIVE DATE</dt><dd>${legalInline(f.date)}</dd></div><div><dt>TERM</dt><dd>Month to month</dd></div><div><dt>GOVERNING LAW</dt><dd>Colorado</dd></div></dl>
 <div class="toc">${sections.map(([n, t]) => `<p><span>${n}</span><span>${esc(t)}</span></p>`).join("")}<p><span>—</span><span>Signatures</span></p>${schedules.map(([l, t]) => `<p><span>${l}</span><span>Schedule ${l}: ${esc(t)}</span></p>`).join("")}</div>
-<div class="cover-foot"><span>${esc(business)} · cinderrevenue.com</span><span>Confidential. Prepared for ${legalInline(f.company || "the Client")}.</span></div>
+<div class="cover-foot"><span>${esc(business)} · cinderrevenue.com</span><span>Confidential. Prepared for ${legalInline((f.company || "the Client").replace(/\.$/, ""))}.</span></div>
 </section>`;
   const summary = `<section class="sheet"><p class="k">ORDER SUMMARY</p><h2 class="pg">The parties and key terms</h2>
 <div class="parties"><div class="party"><p class="k">PROVIDER (“CINDER”)</p>${partyHtml(f.provider)}</div><div class="party"><p class="k">CLIENT</p>${partyHtml(f.client)}</div></div>

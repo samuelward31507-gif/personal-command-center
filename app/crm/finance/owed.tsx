@@ -1,5 +1,6 @@
 "use client";
 
+import { copyText } from "@/lib/copy";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
@@ -36,7 +37,7 @@ export default function Owed({ onChange, onData }: { onChange?: () => void; onDa
     setBusy(it.id); setNote(null);
     try {
       const j = await post({ action: "invoice", id: it.id });
-      await navigator.clipboard?.writeText(j.url).catch(() => {});
+      await copyText(j.url).catch(() => {});
       if (j.draft) window.location.href = `mailto:${encodeURIComponent(j.email || "")}?subject=${encodeURIComponent(j.draft.subject)}&body=${encodeURIComponent(j.draft.body)}`;
       await post({ action: kind, id: it.id });
       setNote({ ok: true, text: `Invoice link copied and an email opened${j.email ? ` to ${j.email}` : " (no email on file, add the recipient)"}. Nothing was sent by Cinder.` });
@@ -46,7 +47,7 @@ export default function Owed({ onChange, onData }: { onChange?: () => void; onDa
   }
   async function copyLink(it: Item) {
     setBusy(it.id);
-    try { const j = await post({ action: "invoice", id: it.id }); await navigator.clipboard?.writeText(j.url); setNote({ ok: true, text: "Invoice link copied." }); await load(); }
+    try { const j = await post({ action: "invoice", id: it.id }); await copyText(j.url); setNote({ ok: true, text: "Invoice link copied." }); await load(); }
     catch (e) { setNote({ ok: false, text: e instanceof Error ? e.message : "Couldn't copy the link." }); }
     finally { setBusy(null); }
   }

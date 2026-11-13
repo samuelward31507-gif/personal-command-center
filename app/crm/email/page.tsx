@@ -1,5 +1,6 @@
 "use client";
 
+import { copyText } from "@/lib/copy";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useWorkspace } from "../../use-workspace";
@@ -380,7 +381,7 @@ export default function EmailPage() {
             ? <button className="u-btn u-btn-light u-btn-lg" disabled={busy || !!run || !ws.address || gmail.sentLast24h >= gmail.cap} onClick={() => void sendNow()}>{busy ? "Sending…" : "Send"}</button>
             : <button className="u-btn u-btn-light u-btn-lg" disabled={busy} onClick={() => open("gmail")}>Open in Gmail</button>}
           {!gmail?.connected && <button className="u-btn" disabled={busy} onClick={() => open("mail")}>Mail app</button>}
-          <button className="u-btn u-btn-bare" disabled={busy} onClick={() => void navigator.clipboard?.writeText(`${filled.subject}\n\n${filled.body}`)}>Copy</button>
+          <button className="u-btn u-btn-bare" disabled={busy} onClick={() => void copyText(`${filled.subject}\n\n${filled.body}`)}>Copy</button>
           <span style={{ flex: 1 }} />
           <button className="u-btn u-btn-bare" disabled={busy || !!run} onClick={() => void markSent(current, filled.subject)}>Already sent</button>
           <button className="u-btn u-btn-bare" onClick={() => { setSkipped(s => new Set(s).add(current.id)); setPicked(null); }}>Skip</button>

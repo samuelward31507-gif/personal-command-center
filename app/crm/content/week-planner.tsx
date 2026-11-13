@@ -3,6 +3,7 @@
 // The week's content: 5 Facebook + Instagram posts and 5 reels a day, plus LinkedIn and groups, written by Cinder
 // from your real week. Per day: prepare every image and reel in one click, then queue the day so it posts itself
 // to Facebook and Instagram at five times through the day. TikTok and LinkedIn: download and post.
+import { copyText } from "@/lib/copy";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PostCard, { cardPng } from "./post-card";
 import { renderReel, scenesFor, reelExt, downloadBlob } from "./reel";
@@ -101,7 +102,7 @@ function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (acti
   const cards = cardsOf(d);
   const posted = d.status === "posted";
   const isReel = d.platform === "video";
-  const copy = () => navigator.clipboard?.writeText(d.caption).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); });
+  const copy = () => copyText(d.caption).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); });
   const [pending, setPending] = useState<FileOut[] | null>(null);
   // Phones only open the share sheet straight from a tap, with nothing awaited first, so the slide images are
   // drawn ahead of time and the tap hands them over immediately.

@@ -26,3 +26,5 @@ ok(() => assert.doesNotMatch(page, /rgba\(18,20,23,\.32\)/, "body text is dark, 
 ok(() => assert.match(fillAgreement({ tier: "tier2", date: "d", company: "X", ownerName: "Y", email: "", phone: "", location: "", setupFee: 1997, monthlyFee: 1497 }), /1,997/));
 ok(() => assert.doesNotMatch(readFileSync("app/api/proposals/route.ts", "utf8"), /api\.anthropic\.com/, "proposal is a template, not an AI draft"));
 console.log(`Proposal checks passed (${n} assertions).`);
+ok(() => assert.match(readFileSync("lib/client-runtime-run.ts", "utf8"), /firstBookingBilling\(sql, c\)/, "the first booking reminds Sam to start the monthly"));
+console.log("First-booking billing check passed.");

@@ -29,7 +29,7 @@ export default function HomeNext() {
   }, []);
 
   const top = queue?.[0];
-  const firstOwed = owed?.items[0];
+  const firstOwed = owed?.items?.[0];
   const client = proj?.[0];
   const clientName = client ? client.clientName || client.contactName || client.name : "";
 

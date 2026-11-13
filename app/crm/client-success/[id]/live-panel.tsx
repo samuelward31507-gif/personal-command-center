@@ -2,6 +2,7 @@
 
 // The client's live system: customer conversations (watch, step in, pause), quotes being chased,
 // review requests, and a test box for the reply engine before go-live.
+import { copyText } from "@/lib/copy";
 import { useCallback, useEffect, useState } from "react";
 import "./ops-panel.css";
 import "./live-panel.css";
@@ -47,7 +48,7 @@ export default function LivePanel({ projectId }: { projectId: string }) {
     const x = await loadJobber();
     if (!x) { setNote({ ok: false, text: "Couldn't make the Jobber link." }); return; }
     if (!x.configured) { setNote({ ok: false, text: "Jobber isn't switched on yet: add JOBBER_CLIENT_ID and JOBBER_CLIENT_SECRET in Vercel (from the Jobber Developer Center app)." }); return; }
-    setJbShow(true); void navigator.clipboard?.writeText(x.link);
+    setJbShow(true); void copyText(x.link);
     setNote({ ok: true, text: "Jobber link copied. Text it to the owner: they sign in to Jobber and press Allow. It works for 7 days." });
   }
   async function getCalLink() {
@@ -56,7 +57,7 @@ export default function LivePanel({ projectId }: { projectId: string }) {
     const x = await r.json().catch(() => ({}));
     if (!r.ok) { setNote({ ok: false, text: x.error || "Couldn't make the link." }); return; }
     if (!x.configured) { setNote({ ok: false, text: "Google sign-in isn't set up in Vercel yet (the same keys Gmail uses)." }); return; }
-    setCalLink(x.link); void navigator.clipboard?.writeText(x.link);
+    setCalLink(x.link); void copyText(x.link);
     setNote({ ok: true, text: "Link copied. Text it to the owner: one tap, sign in with Google, Allow. It works for 7 days." });
   }
 
@@ -212,7 +213,7 @@ export default function LivePanel({ projectId }: { projectId: string }) {
     {tab === "chat" && <div>
       <p className="op-hint">Paste this one line into the client&apos;s website, just before the closing body tag (on Wix, Squarespace or WordPress it goes in &quot;custom code&quot;). Visitors leave a name, cell and question, and get a text back in seconds from the client&apos;s number. The conversation shows up in Conversations like any other lead.</p>
       <pre className="lv-code">{`<script src="${typeof location !== "undefined" ? location.origin : ""}/chat.js" data-key="${d?.chatKey ?? ""}" async></script>`}</pre>
-      <div className="op-acts"><button type="button" style={NB} onClick={() => { void navigator.clipboard.writeText(`<script src="${location.origin}/chat.js" data-key="${d?.chatKey ?? ""}" async></script>`); setNote({ ok: true, text: "Copied. Send it to whoever manages their site." }); }}>Copy the code</button></div>
+      <div className="op-acts"><button type="button" style={NB} onClick={() => { void copyText(`<script src="${location.origin}/chat.js" data-key="${d?.chatKey ?? ""}" async></script>`); setNote({ ok: true, text: "Copied. Send it to whoever manages their site." }); }}>Copy the code</button></div>
       <p className="op-hint">Add data-color=&quot;#1a5c3a&quot; to match their brand. The bubble hides itself until the texting number is set.</p>
     </div>}
 

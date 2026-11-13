@@ -1,5 +1,6 @@
 "use client";
 
+import { copyText } from "@/lib/copy";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useWorkspace } from "../../use-workspace";
@@ -73,7 +74,7 @@ export default function LinkedInPage() {
   }
   function openProfile() {
     if (!current?.linkedin) return;
-    if (text) { void navigator.clipboard?.writeText(text); setCopied(true); }
+    if (text) { void copyText(text); setCopied(true); }
     window.open(url(current.linkedin), "_blank", "noopener");
   }
 

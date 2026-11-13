@@ -232,11 +232,12 @@ export default function Dashboard() {
         { k: "Meetings", href: "/crm/calendar", n: b.today.meetings, wk: `${b.week.meetings} this week` },
         { k: "Emails", href: "/crm/email", n: t?.emails ?? 0, of: DAILY_EMAIL_TARGET, wk: `${w?.emails ?? 0} this week${w?.bounces ? `, ${w.bounces} bounced` : ""}` },
         { k: "Replies", href: "/crm/email", n: (t?.replies ?? 0) + (t?.textReplies ?? 0), wk: ((t?.replies ?? 0) + (t?.textReplies ?? 0)) > 0 ? "Answer them first" : `${(w?.replies ?? 0) + (w?.textReplies ?? 0)} this week`, hot: ((t?.replies ?? 0) + (t?.textReplies ?? 0)) > 0 },
-        { k: "LinkedIn", href: "/crm/linkedin", n: t?.liRequests ?? 0, of: DAILY_LINKEDIN_TARGET, wk: `${w?.liRequests ?? 0} sent, ${w?.liAccepted ?? 0} accepted` },
+        // LinkedIn only shows once you've actually used it this week.
+        ...((w?.liRequests ?? 0) > 0 ? [{ k: "LinkedIn", href: "/crm/linkedin", n: t?.liRequests ?? 0, of: DAILY_LINKEDIN_TARGET, wk: `${w?.liRequests ?? 0} sent, ${w?.liAccepted ?? 0} accepted` }] : []),
         { k: "Texts", href: "/crm/call", n: t?.texts ?? 0, wk: `${w?.texts ?? 0} this week` },
       ];
       return <section className="u-block">
-        <div className="u-h2-row"><h2 className="u-h2">Outreach today</h2><span className="u-note">Counts itself as you work. LinkedIn counts what you mark on the LinkedIn page.</span></div>
+        <div className="u-h2-row"><h2 className="u-h2">Outreach today</h2><span className="u-note">Counts itself as you work.</span></div>
         <div className="db-out">{cells.map(c => <Link key={c.k} href={c.href} className={"db-out-c" + (c.hot ? " is-hot" : "")}>
           <span className="u-fig-k">{c.k}</span>
           <b className="db-step-n">{c.n}{c.of ? <small> / {c.of}</small> : null}</b>

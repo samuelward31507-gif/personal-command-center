@@ -1,5 +1,6 @@
 "use client";
 
+import { copyText } from "@/lib/copy";
 import { useEffect, useMemo, useState } from "react";
 import { REPORT_FIELDS, renderReport, cleanFigures, lastMonth, periodLabel, type ReportFigures } from "@/lib/client-report";
 import { useWorkspace } from "../../use-workspace";
@@ -64,7 +65,7 @@ export default function ReportsPage() {
   }
   function copyReport() {
     if (!preview) return;
-    void navigator.clipboard?.writeText(`${preview.subject}\n\n${preview.body}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); });
+    void copyText(`${preview.subject}\n\n${preview.body}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); });
   }
 
   const months = Array.from({ length: 12 }, (_, i) => { const d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - 1 - i); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`; });

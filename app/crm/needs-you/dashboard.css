@@ -25,7 +25,7 @@ body .db-page .db-goal-need b { color: var(--u-text); font-weight: 550; }
 }
 
 /* Outreach today: every channel in one row */
-body .db-page .db-out { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line); }
+body .db-page .db-out { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); border-top: 1px solid var(--u-line); border-bottom: 1px solid var(--u-line); }
 body .db-page a.db-out-c { display: flex; flex-direction: column; padding: 18px 16px 16px 0; min-width: 0; color: inherit; }
 body .db-page a.db-out-c + a.db-out-c { padding-left: 16px; border-left: 1px solid var(--u-line-soft, #ffffff); }
 body .db-page a.db-out-c:hover .u-fig-k { color: var(--u-text) !important; }

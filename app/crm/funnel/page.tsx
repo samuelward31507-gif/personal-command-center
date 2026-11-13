@@ -16,7 +16,7 @@ export default function FunnelPage() {
     setErr("");
     fetch(`/api/funnel?days=${days}`, { cache: "no-store" }).then(r => r.ok ? r.json() : Promise.reject(new Error("Couldn't load the funnel."))).then(setD).catch(e => setErr(e.message));
   }, [days]);
-  const top = Math.max(1, d?.steps[0]?.n ?? 1);
+  const top = Math.max(1, d?.steps?.[0]?.n ?? 1);
   return <div className="u-page fn-page" role="region" aria-label="Funnel">
     <div className="u-head">
       <h1 className="u-title">Funnel</h1>

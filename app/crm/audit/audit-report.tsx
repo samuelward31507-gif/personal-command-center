@@ -1,5 +1,6 @@
 "use client";
 
+import { copyText } from "@/lib/copy";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { reportSection } from "@/lib/business-audit";
@@ -112,7 +113,7 @@ export function AuditReport({ audit }: { audit: AuditView }) {
           <h2 style={{ margin: 0, fontSize: 24, letterSpacing: "-0.5px", color: C.text }}>{audit.companyName}</h2>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button type="button" style={btn} onClick={() => navigator.clipboard.writeText(audit.content)}>Copy</button>
+          <button type="button" style={btn} onClick={() => copyText(audit.content)}>Copy</button>
           <Link href="/crm/preparation" style={btn}>Open in Preparation</Link>
         </div>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { copyText } from "@/lib/copy";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { AskAction } from "@/lib/ask";
 import { ActionCard, Markdown } from "./ask-answer";
@@ -145,7 +146,7 @@ export default function HomeSearch() {
     if (i >= 0) void ask(turns[i].query, turns.slice(0, i));
   }
   function copy(t: Turn) {
-    navigator.clipboard?.writeText(t.answer ?? "").then(() => { setCopied(t.id); setTimeout(() => setCopied(null), 1400); }).catch(() => {});
+    copyText(t.answer ?? "").then(() => { setCopied(t.id); setTimeout(() => setCopied(null), 1400); }).catch(() => {});
   }
   function reset() { abort.current?.abort(); setTurns([]); setInput(""); setTimeout(() => box.current?.focus(), 0); }
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {

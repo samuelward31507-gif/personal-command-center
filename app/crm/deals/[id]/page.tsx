@@ -1,5 +1,6 @@
 "use client";
 
+import { copyText } from "@/lib/copy";
 import { useCallback, useEffect, useState } from "react";
 import { agreementDoc, docNumber, proposalDoc } from "@/lib/print-doc";
 import { DocFrame } from "../../../doc-frame";
@@ -80,7 +81,7 @@ export default function DealWorkspacePage() {
       const r = await fetch("/api/kickoff/link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Could not create the kickoff link.");
-      setKickUrl(d.url); void navigator.clipboard?.writeText(d.url);
+      setKickUrl(d.url); void copyText(d.url);
       setFlash({ ok: true, text: "Kickoff link created and copied. Send it to your client. Older links stop working." });
       const k = await fetch(`/api/kickoff/link?dealId=${id}`, { cache: "no-store" }).then(x => x.ok ? x.json() : null).catch(() => null);
       setKick(k?.request ?? null);
@@ -91,7 +92,7 @@ export default function DealWorkspacePage() {
     const k = await fetch(`/api/kickoff/link?dealId=${id}&reveal=ein`, { cache: "no-store" }).then(x => x.ok ? x.json() : null).catch(() => null);
     if (k?.request) setKick(k.request);
   }
-  const copy = (key: string, text: string) => { void navigator.clipboard?.writeText(text).then(() => { setCopied(key); setTimeout(() => setCopied(null), 1400); }); };
+  const copy = (key: string, text: string) => { void copyText(text).then(() => { setCopied(key); setTimeout(() => setCopied(null), 1400); }); };
 
   const load = useCallback(async () => {
     try {

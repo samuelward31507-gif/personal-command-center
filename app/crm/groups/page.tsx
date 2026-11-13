@@ -1,5 +1,6 @@
 "use client";
 
+import { copyText } from "@/lib/copy";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { DEFAULT_GROUP_SCRIPTS, daysUntilDue, nextScript, type GroupScript } from "@/lib/group-posts";
@@ -52,7 +53,7 @@ export default function GroupsPage() {
   function startPost(g: Group) { const s = nextScript(scripts, posts.filter(p => p.groupId === g.id)); setPosting({ g, script: s, body: s.body, copied: false }); }
   function copyOpen() {
     if (!posting) return;
-    void navigator.clipboard?.writeText(posting.body);
+    void copyText(posting.body);
     if (posting.g.url) window.open(posting.g.url, "_blank", "noopener");
     setPosting({ ...posting, copied: true });
   }

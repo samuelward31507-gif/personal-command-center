@@ -1,5 +1,6 @@
 "use client";
 
+import { copyText } from "@/lib/copy";
 import Link from "next/link";
 
 import { useEffect, useState } from "react";
@@ -20,7 +21,7 @@ function LeadFormLink() {
     <p style={{ color: "#4c525c", fontSize: 13, margin: "6px 0 14px" }}>Anyone who fills this out lands in Contacts as a lead, with a follow-up for today and an urgent task to call them. Nothing is sent to them automatically.</p>
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
       <code style={{ flex: "1 1 260px", padding: "9px 12px", borderRadius: 9, border: "1px solid #dcddda", background: "#ffffff", color: "#121417", fontSize: 13 }}>{url || "/start"}</code>
-      <button data-variant="primary" onClick={() => { void navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); }); }}
+      <button data-variant="primary" onClick={() => { void copyText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); }); }}
         style={{ height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #121417", background: "#121417", color: "#ffffff", fontWeight: 600, cursor: "pointer" }}>{copied ? "Copied" : "Copy link"}</button>
       <Link href="/start" target="_blank" rel="noreferrer" style={{ color: "#2b2f35", fontSize: 13 }}>Open ↗</Link>
     </div>
@@ -81,7 +82,7 @@ function SundayReview() {
     finally { setBusy(false); void load(); }
   }
   const btn = { height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #dcddda", background: "#f1f1ef", color: "#121417", cursor: "pointer" } as const;
-  const last = data?.runs[0];
+  const last = data?.runs?.[0];
   return <section style={CARD}>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
       <div><h2 style={{ fontSize: 18, margin: 0 }}>Sunday review</h2>

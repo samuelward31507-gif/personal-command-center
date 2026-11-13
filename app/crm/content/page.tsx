@@ -1,5 +1,6 @@
 "use client";
 
+import { copyText } from "@/lib/copy";
 import { useCallback, useEffect, useState } from "react";
 import { ALL_POSTS, nextPost, type Channel, type ContentPost } from "@/lib/content-posts";
 import WeekPlanner from "./week-planner";
@@ -36,7 +37,7 @@ export default function ContentPage() {
   function copy(p: ContentPost) {
     const fail = () => setError("Couldn't copy. Select the text and copy it by hand.");
     if (!navigator.clipboard?.writeText) { fail(); return; }
-    navigator.clipboard.writeText(p.caption ?? p.body).then(() => {
+    copyText(p.caption ?? p.body).then(() => {
       setCopied(p.key);
       setTimeout(() => setCopied(c => (c === p.key ? null : c)), 1800);
     }, fail);
