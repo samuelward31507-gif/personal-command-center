@@ -7,13 +7,13 @@ export const publicOrigin = (requestUrl: string) => process.env.CINDER_PUBLIC_OR
  * New kickoff-checklist link for a won Tier 1 / Tier 2 deal. Voids older open links; stores only the token's hash.
  * Returns null when the deal isn't on a plan with a checklist.
  */
-export async function createKickoffLink(sql: NeonQueryFunction<false, false>, ownerId: string, dealId: string, origin: string): Promise<string | null> {
+export async function createKickoffLink(sql: NeonQueryFunction<false, false>, ownerId: string, dealId: string, origin: string, form: "plan" | "web" = "plan"): Promise<string | null> {
   const rows = await sql`SELECT d.service_type, p.id AS project_id FROM public.deals d
     LEFT JOIN public.projects p ON p.deal_id = d.id AND p.owner_id = d.owner_id
     WHERE d.id = ${dealId}::uuid AND d.owner_id = ${ownerId} LIMIT 1`;
   if (!rows.length) return null;
   const st = String(rows[0].service_type ?? "");
-  const tier = st === "tier1_speed_to_lead" ? "tier1" : st === "tier2_revenue_system" ? "tier2" : null;
+  const tier = form === "web" ? "web" : st === "tier1_speed_to_lead" ? "tier1" : st === "tier2_revenue_system" ? "tier2" : null;
   if (!tier) return null;
   const token = newSigningToken();
   await sql`UPDATE public.kickoff_requests SET status = 'void', updated_at = now() WHERE owner_id = ${ownerId} AND deal_id = ${dealId}::uuid AND status = 'open'`;

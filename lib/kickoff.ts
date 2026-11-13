@@ -1,7 +1,7 @@
 // Client kickoff checklist (agreement Schedule B). Pure: safe to unit test.
 // The client fills this in after signing; answers land on their project. Passwords are never collected.
 
-export type KickoffTier = "tier1" | "tier2";
+export type KickoffTier = "tier1" | "tier2" | "web";
 export type KickoffKind = "text" | "long" | "phone" | "url" | "choices" | "select" | "days" | "hours" | "file";
 export type KickoffField = {
   key: string; label: string; help?: string; kind: KickoffKind; required?: boolean; tier2?: boolean;
@@ -25,7 +25,8 @@ export const EIN_NONE = "I’m a sole proprietor without an EIN";
 export const FINANCING_YES = "Yes";
 export const DOC_ACCEPT = ".pdf,.jpg,.jpeg,.png,.heic,.heif,application/pdf,image/*";
 export const LIST_ACCEPT = ".csv,.xlsx,.xls,.pdf,.jpg,.jpeg,.png,.heic,text/csv,application/pdf,image/*,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel";
-export const FILE_KEYS = ["ein_letter", "quotes_file", "customers_file"] as const;
+export const PHOTO_ACCEPT = ".jpg,.jpeg,.png,.heic,.heif,image/*";
+export const FILE_KEYS = ["ein_letter", "quotes_file", "customers_file", "logo", "hero_photo", "owner_photo"] as const;
 
 export const KICKOFF_FIELDS: readonly KickoffField[] = [
   // 1. Your business: what the phone carriers need to approve your texting number.
@@ -61,7 +62,48 @@ export const KICKOFF_FIELDS: readonly KickoffField[] = [
   { group: "Anything else", key: "notes", kind: "long", label: "Anything else we should know?", placeholder: "Busy seasons, crew size, things customers always ask…" },
 ] as const;
 
-export const fieldsFor = (tier: KickoffTier) => KICKOFF_FIELDS.filter(f => tier === "tier2" || !f.tier2);
+
+export const PRICES_CHANGED = "Some have changed";
+export const OWN_COLOURS = "Use my own colours";
+
+/** Website and chat assistant clients (any trade, any country): what we need to build the site and connect the chat. */
+export const WEB_FIELDS: readonly KickoffField[] = [
+  // 1. Your business.
+  { group: "Your business", key: "business_name", kind: "text", label: "Business name", help: "Exactly as it should appear on your website.", required: true },
+  { group: "Your business", key: "business_phone", kind: "phone", label: "The number customers call", required: true },
+  { group: "Your business", key: "lead_phone", kind: "phone", label: "Your mobile for new leads", help: "Where new website and chat leads reach you, by WhatsApp or text.", required: true },
+  { group: "Your business", key: "open_days", kind: "days", label: "Which days do you work?", options: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], required: true },
+  { group: "Your business", key: "open_hours", kind: "hours", label: "Between what times?", required: true },
+  { group: "Your business", key: "service_area", kind: "long", label: "Where do you work?", help: "Areas, towns or postcodes. Add or remove anything from your current list.", placeholder: "e.g. All of Edinburgh, Livingston, Musselburgh, Dalkeith", required: true },
+  // 2. Services and prices.
+  { group: "Services and prices", key: "prices_ok", kind: "select", label: "Are the prices on your current website still right?", options: ["Yes, all correct", PRICES_CHANGED], required: true },
+  { group: "Services and prices", key: "price_changes", kind: "long", label: "What's changed?", placeholder: "New prices, new services, anything you've dropped", showIf: { key: "prices_ok", is: [PRICES_CHANGED] }, required: true },
+  { group: "Services and prices", key: "extras", kind: "long", label: "Prices for extras", placeholder: "e.g. Glass coating £60, wheel face coating £80, pet hair removal £30" },
+  { group: "Services and prices", key: "sizes", kind: "long", label: "Which vehicles fit each size?", help: "Only if your prices change by size.", placeholder: "e.g. Small: Fiesta, Golf. Large: X5, Range Rover" },
+  { group: "Services and prices", key: "payments", kind: "long", label: "Deposits and how customers pay", placeholder: "e.g. £50 deposit for coatings, card or bank transfer on the day" },
+  { group: "Services and prices", key: "rules", kind: "long", label: "Jobs you don’t take", placeholder: "e.g. commercial fleets, mould" },
+  // 3. Photos and brand.
+  { group: "Photos and brand", key: "hero_photo", kind: "file", label: "Your best photo of a finished job", help: "This goes at the top of your homepage. Whole vehicle, freshly done, good light, shot wide.", accept: PHOTO_ACCEPT, required: true },
+  { group: "Photos and brand", key: "logo", kind: "file", label: "Your logo", help: "The best version you have. A PNG with a see-through background is ideal.", accept: PHOTO_ACCEPT + ",.pdf,application/pdf" },
+  { group: "Photos and brand", key: "owner_photo", kind: "file", label: "A photo of you", help: "Customers trust a face. You next to a job you've done is perfect.", accept: PHOTO_ACCEPT },
+  { group: "Photos and brand", key: "photos_link", kind: "url", label: "A link to your best before and after photos", help: "Put 3 to 6 pairs in a Google Drive, Dropbox or WeTransfer folder and paste the link. Same vehicle, same angle in both shots, not close-ups.", placeholder: "https://", required: true },
+  { group: "Photos and brand", key: "video_links", kind: "long", label: "Links to your best TikTok or Instagram videos", placeholder: "One link per line" },
+  { group: "Photos and brand", key: "brand", kind: "select", label: "Your website's colours", options: ["Keep the black, gold and white look", OWN_COLOURS], required: true },
+  { group: "Photos and brand", key: "brand_colours", kind: "text", label: "Your colours", placeholder: "e.g. navy and silver, or #0B0B0B and #C9A227", showIf: { key: "brand", is: [OWN_COLOURS] } },
+  // 4. Leads and bookings.
+  { group: "Leads and bookings", key: "lead_dest", kind: "choices", label: "Where should new leads go?", help: "Pick all that apply.", options: ["WhatsApp", "Text message", "Email", "GoHighLevel"], required: true },
+  { group: "Leads and bookings", key: "crm", kind: "select", label: "What do you run your bookings in?", options: ["GoHighLevel", "Jobber", "Another app", "Just my phone"], required: true },
+  { group: "Leads and bookings", key: "calendar", kind: "select", label: "Which calendar should bookings go into?", options: ["iPhone calendar (iCloud)", "Google Calendar", "GoHighLevel calendar", "Other"], required: true },
+  { group: "Leads and bookings", key: "booking_rules", kind: "long", label: "How bookings work for you", help: "Jobs a day, notice you need, earliest and latest start.", placeholder: "e.g. Max 2 jobs a day, 48 hours' notice, start between 8am and 1pm", required: true },
+  { group: "Leads and bookings", key: "faq", kind: "long", label: "What do customers always ask you?", help: "The chat assistant will answer these for you.", placeholder: "e.g. Do you need water? How long does a coating take?" },
+  // 5. Access.
+  { group: "Access", key: "domain_host", kind: "select", label: "Who is your current website with?", help: "We'll send simple steps to add us. You never share a password.", options: ["Jimdo", "Wix", "Squarespace", "GoDaddy", "123 Reg", "Not sure"], required: true },
+  { group: "Access", key: "gbp_manager", kind: "select", label: "Can we be added as a manager on your Google Business Profile?", help: "So we can link the new site and add photos. You stay the owner.", options: ["Yes", "Not yet"], required: true },
+  // Last.
+  { group: "Anything else", key: "notes", kind: "long", label: "Anything else we should know?", placeholder: "Anything to add to the new site, or anything to leave out" },
+] as const;
+
+export const fieldsFor = (tier: KickoffTier) => tier === "web" ? WEB_FIELDS : KICKOFF_FIELDS.filter(f => tier === "tier2" || !f.tier2);
 
 const looksLikePassword = (s: string) => /\b(password|passcode|pwd|pw)\s*[:=]/i.test(s);
 

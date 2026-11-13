@@ -75,10 +75,10 @@ export default function DealWorkspacePage() {
   const [dtab, setDtab] = useState<DealTab | null>(null);
   // Links like /crm/deals/<id>#agreement open that step.
   useEffect(() => { const h = window.location.hash.slice(1); if (["discovery", "proposal", "agreement", "kickoff", "email"].includes(h)) setDtab(h as DealTab); }, []);
-  async function newKickoffLink() {
+  async function newKickoffLink(form: "plan" | "web" = "plan") {
     setSaving("kickoff"); setFlash(null);
     try {
-      const r = await fetch("/api/kickoff/link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id }) });
+      const r = await fetch("/api/kickoff/link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dealId: id, form }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "Could not create the kickoff link.");
       setKickUrl(d.url); void copyText(d.url);
@@ -297,7 +297,8 @@ export default function DealWorkspacePage() {
           </div>);
   // The agreement is one click from every open deal: on a call, you go straight from "yes" to the signing link.
   const showAgreement = !closed || deal.contractStatus !== "none" || !!agreement;
-  const showKickoff = deal.stage === "won" && (deal.serviceType === "tier1_speed_to_lead" || deal.serviceType === "tier2_revenue_system");
+  const planDeal = deal.serviceType === "tier1_speed_to_lead" || deal.serviceType === "tier2_revenue_system";
+  const showKickoff = deal.stage === "won";
   const showEmail = !closed || deal.stage === "won";
   const tabs: { key: DealTab; label: string }[] = [
     { key: "discovery", label: "Discovery" }, { key: "proposal", label: "Proposal" },
@@ -471,15 +472,15 @@ export default function DealWorkspacePage() {
         {tab === "kickoff" && <section className="u-sheet dw-box" id="kickoff">
           <div className="u-sheet dw-boxhead"><h2>Kickoff checklist</h2><span className={"dw-pill " + (kick?.status === "submitted" ? "dw-pill-c-signed" : "dw-pill-c-sent")}>{kick?.status === "submitted" ? "Received" : kick ? "Waiting on client" : "Not sent"}</span></div>
           {kick?.status === "submitted" ? <>
-            <p className="dw-hint">Received {new Date(kick.submittedAt ?? kick.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}. The 21-business-day go-live clock started then. It's also saved in the project notes.</p>
+            <p className="dw-hint">Received {new Date(kick.submittedAt ?? kick.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}.{planDeal ? " The 21-business-day go-live clock started then." : ""} It's also saved in the project notes.</p>
             <dl className="dw-kick">{kick.items.map(it => <div key={it.label}><dt>{it.label}</dt><dd>{it.value}</dd></div>)}
               {(kick.files ?? []).map(f => <div key={f.field}><dt>{f.label}</dt><dd><a href={`/api/kickoff/link?dealId=${id}&file=${f.field}`} target="_blank" rel="noopener noreferrer">{f.name}</a> ({Math.max(1, Math.round(f.size / 1024))} KB)</dd></div>)}</dl>
             <div className="dw-row"><button data-variant="primary" className="dw-btn" onClick={() => copy("kickoff", kick.items.map(it => `${it.label}: ${it.value}`).join("\n"))}>{copied === "kickoff" ? "Copied" : "Copy answers"}</button>
               {kick.items.some(it => it.value.startsWith("••")) && <button data-variant="primary" className="dw-btn" onClick={() => void revealEin()}>Show EIN</button>}</div>
           </> : <>
-            <p className="dw-hint">Your client gets this link right after signing: hours, service area, prices, rules and the details carriers need to register their texting number. Answers land here and check off the kickoff steps in Delivery.</p>
+            <p className="dw-hint">{planDeal ? "Your client gets this link right after signing: hours, service area, prices, rules and the details carriers need to register their texting number. Answers land here and check off the kickoff steps in Delivery." : "Website and chat clients: send this after the deposit. It collects their photos, logo, prices, booking rules and access. Answers land here."}</p>
             {kickUrl && <div className="dw-row"><input className="dw-mail-subject dw-sign-url" readOnly value={kickUrl} onFocus={e => e.currentTarget.select()} aria-label="Kickoff link" /><button data-variant="primary" className="dw-btn" onClick={() => copy("kickurl", kickUrl)}>{copied === "kickurl" ? "Copied" : "Copy"}</button></div>}
-            <div className="dw-row"><button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "kickoff"} onClick={() => void newKickoffLink()}>{saving === "kickoff" ? "Creating…" : kick ? "Create a new link" : "Create kickoff link"}</button>
+            <div className="dw-row"><button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "kickoff"} onClick={() => void newKickoffLink(planDeal ? "plan" : "web")}>{saving === "kickoff" ? "Creating…" : kick ? "Create a new link" : planDeal ? "Create kickoff link" : "Create website checklist link"}</button>
               {kick && !kickUrl && <span className="dw-muted dw-small">A link was sent{signReq?.status === "signed" ? " on the signing page" : ""}. Lost it? Create a new one; the old one stops working.</span>}</div>
           </>}
         </section>}

@@ -79,11 +79,15 @@ export async function POST(request: Request) {
         WHERE owner_id = ${owner} AND project_id = ${String(project)}::uuid AND status <> 'done'
           AND lower(title) IN ('send the kickoff checklist link', 'collect the kickoff checklist')`;
     }
+    const web = tier === "web";
     if (row.contact_id) {
       await sql`INSERT INTO public.contact_activities (owner_id, contact_id, channel, action, outcome, notes)
-        VALUES (${owner}, ${String(row.contact_id)}::uuid, 'note', 'note', 'other', 'Sent the kickoff checklist. The 21-business-day go-live clock starts now.')`;
+        VALUES (${owner}, ${String(row.contact_id)}::uuid, 'note', 'note', 'other', ${web ? "Sent the website setup checklist." : "Sent the kickoff checklist. The 21-business-day go-live clock starts now."})`;
     }
-    const alerted = await sendAlert({ subject: `Kickoff checklist in: ${company}`, lines: [
+    const alerted = await sendAlert({ subject: `${web ? "Website checklist" : "Kickoff checklist"} in: ${company}`, lines: web ? [
+      `${company} sent their website setup checklist.`,
+      "Next: pull their photos, update prices and send the review link (files are on the deal's Kickoff tab).",
+    ] : [
       `${company} sent their kickoff checklist. The 21-business-day go-live clock starts now.`,
       "Next: book the kickoff call and submit the SMS registration (the EIN letter is on the deal's Kickoff tab, not in this email).",
     ], link: { label: "Open the deal", path: `/crm/deals/${String(row.deal_id)}` } });
@@ -94,8 +98,16 @@ export async function POST(request: Request) {
       const ws = await loadWorkspace(owner);
       const hi = row.first_name ? `Hi ${String(row.first_name)},` : "Hi,";
       const sent = await sendDirectEmail(sql, owner, ws, { to, contactId: row.contact_id ? String(row.contact_id) : null, kind: "kickoff received",
-        subject: `Got your kickoff checklist, ${company}`,
-        body: [hi, "",
+        subject: `Got your ${web ? "website checklist" : "kickoff checklist"}, ${company}`,
+        body: web ? [hi, "",
+          "Your website checklist came through. Thank you, that's the biggest step on your side.", "",
+          "What happens next:",
+          "1. I build your new site with your photos, prices and details.",
+          "2. I send you a private link to review it, and make your changes.",
+          "3. I connect the chat assistant to your calendar and test it with you.",
+          "4. Your new site goes live on your domain.", "",
+          "If anything changes (prices, hours, areas), just reply here or message me.", "",
+          `${ws.ownerFirstName || "Sam"}`, `${ws.businessName}`, process.env.CINDER_OWNER_PHONE?.trim() || "(205) 837-0211"].join("\n") : [hi, "",
           "Your kickoff checklist came through. Thank you, that's the biggest step on your side.", "",
           "What happens next:",
           "1. I'll text you to book a 20-minute kickoff call, where we set up call forwarding and connect your forms.",
@@ -158,8 +170,9 @@ async function upload(request: Request) {
     if (!bytes.length) return reply({ error: "That file is empty." }, 400);
     if (bytes.length > MAX_BYTES) return reply({ error: "That file is over 4 MB. Try a PDF, or a photo of just the page." }, 413);
     const mime = sniff(bytes);
-    if (!mime || (field === "ein_letter" && !DOC_TYPES.has(mime))) {
-      return reply({ error: field === "ein_letter" ? "Upload a PDF or a photo (JPG, PNG or HEIC) of the letter." : "Upload a spreadsheet (CSV or Excel), a PDF or a photo." }, 415);
+    const photoField = field === "hero_photo" || field === "owner_photo" || field === "logo";
+    if (!mime || (field === "ein_letter" && !DOC_TYPES.has(mime)) || (photoField && !DOC_TYPES.has(mime))) {
+      return reply({ error: field === "ein_letter" ? "Upload a PDF or a photo (JPG, PNG or HEIC) of the letter." : photoField ? "Upload a photo (JPG, PNG or HEIC)." : "Upload a spreadsheet (CSV or Excel), a PDF or a photo." }, 415);
     }
     let name = "upload";
     try { name = decodeURIComponent(request.headers.get("x-file-name") ?? "upload"); } catch { /* keep the default */ }

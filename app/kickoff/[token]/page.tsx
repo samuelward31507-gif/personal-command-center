@@ -9,7 +9,7 @@ import { usePublicBrand } from "../../use-workspace";
 type Kind = "text" | "long" | "phone" | "url" | "choices" | "select" | "days" | "hours" | "file";
 type Field = { key: string; label: string; help?: string; kind?: Kind; long?: boolean; required?: boolean; group: string; options?: string[]; placeholder?: string; showIf?: { key: string; is: string[] }; accept?: string; notes?: Record<string, string> };
 type Upload = { field: string; name: string; size: number };
-type Doc = { status: "open" | "submitted"; client: string; tier: "tier1" | "tier2"; fields: Field[]; files?: Upload[]; submittedAt: string | null };
+type Doc = { status: "open" | "submitted"; client: string; tier: "tier1" | "tier2" | "web"; fields: Field[]; files?: Upload[]; submittedAt: string | null };
 
 const SEP = "; ";
 const kindOf = (f: Field): Kind => f.kind ?? (f.long ? "long" : "text");
@@ -165,14 +165,15 @@ export default function KickoffPage() {
         : !doc ? <p className="ko-muted">Loading your checklist…</p>
         : done || doc.status === "submitted" ? <div className="ko-msg">
             <h1>Got it. Thank you.</h1>
-            <p>{brand.ownerFirstName} will text you within one business day to book a short setup call. On that call we forward your missed calls and connect your forms together.</p>
-            <p>Most shops are live within 14 days. You read and approve every message before anything goes out.</p>
+            {doc.tier === "web" ? <><p>{brand.ownerFirstName} will be in touch within one business day with your access steps and a timeline.</p>
+            <p>You'll get a private link to review your new site before anything goes live.</p></> : <><p>{brand.ownerFirstName} will text you within one business day to book a short setup call. On that call we forward your missed calls and connect your forms together.</p>
+            <p>Most shops are live within 14 days. You read and approve every message before anything goes out.</p></>}
           </div>
         : <>
           <div className="ko-progress" aria-hidden="true"><span style={{ width: pct + "%" }} /></div>
           <p className="ko-step">{review ? "Last step" : `Step ${step + 1} of ${steps.length}`}</p>
           {step === 0 && <div className="ko-intro"><h1>Let’s set up {doc.client || "your shop"}</h1>
-            <p>About 10 minutes. Your answers save on this device as you go, so you can stop and come back.</p><p className="ko-need">Have these handy: your IRS EIN letter (CP 575 or 147C), your ballpark prices, and the hours you take estimates.</p></div>}
+            <p>About 10 minutes. Your answers save on this device as you go, so you can stop and come back.</p><p className="ko-need">{doc.tier === "web" ? "Have these handy: your best photo of a finished job, your logo, and a folder of your best before and after photos." : "Have these handy: your IRS EIN letter (CP 575 or 147C), your ballpark prices, and the hours you take estimates."}</p></div>}
           {!review ? <section className="ko-card" aria-labelledby="ko-group">
             <h2 id="ko-group">{steps[step]}</h2>
             {shown(steps[step]).map(f => <div className="ko-field" key={f.key}>

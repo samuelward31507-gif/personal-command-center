@@ -38,3 +38,20 @@ ok(() => assert.match(sign, /kickoffUrl = await createKickoffLink/, "signing han
 const site = JSON.parse(readFileSync("site/vercel.json", "utf8"));
 ok(() => assert.ok(site.rewrites.some(r => r.source === "/kickoff/:token") && site.rewrites.some(r => r.source === "/api/kickoff"), "the public site proxies the checklist"));
 console.log(`Kickoff checks passed (${n} assertions).`);
+
+// Website and chat assistant clients: their own checklist (tier "web").
+{
+  const k = await import("./lib/kickoff.ts");
+  const web = k.fieldsFor("web");
+  assert.ok(web.some(f => f.key === "hero_photo" && f.kind === "file" && f.required), "web form asks for the hero photo");
+  assert.ok(!web.some(f => f.key === "ein_letter" || f.key === "ein_status"), "web form never asks for an EIN");
+  for (const key of web.filter(f => f.kind === "file").map(f => f.key)) assert.ok(k.FILE_KEYS.includes(key), `upload allowed: ${key}`);
+  const base = { business_name: "A2 Auto Care", business_phone: "07851 786280", lead_phone: "07851 786280", open_days: "Mon; Tue", open_hours: "8:00 AM to 5:00 PM", service_area: "Edinburgh",
+    prices_ok: "Yes, all correct", photos_link: "https://drive.google.com/x", brand: "Keep the black, gold and white look", lead_dest: "WhatsApp", crm: "GoHighLevel", calendar: "Google Calendar",
+    booking_rules: "2 a day", domain_host: "Jimdo", gbp_manager: "Yes" };
+  assert.match(k.validateKickoff(base, "web", []).error ?? "", /best photo/, "hero photo required");
+  assert.ok("ok" in k.validateKickoff(base, "web", ["hero_photo"]), "complete web checklist validates");
+  assert.match(k.validateKickoff({ ...base, prices_ok: k.PRICES_CHANGED }, "web", ["hero_photo"]).error ?? "", /changed/, "changed prices must be listed");
+  assert.equal(k.fieldsFor("tier1").some(f => f.key === "hero_photo"), false, "plan checklists unchanged");
+  console.log("Website kickoff checks passed.");
+}

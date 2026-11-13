@@ -64,7 +64,8 @@ export async function POST(request: Request) {
     const won = await sql`SELECT stage FROM public.deals WHERE id = ${body.dealId}::uuid AND owner_id = ${user.id}`;
     if (!won.length) return fail("Deal not found.", 404);
     if (won[0].stage !== "won") return fail("The kickoff checklist is for signed clients. Get the agreement signed first.", 400);
-    const url = await createKickoffLink(sql, user.id, body.dealId, publicOrigin(request.url));
+    const form = body.form === "web" ? "web" : "plan";
+    const url = await createKickoffLink(sql, user.id, body.dealId, publicOrigin(request.url), form);
     if (!url) return fail("The kickoff checklist covers Tier 1 and Tier 2 deals. Set the deal's service first.", 400);
     return Response.json({ url }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
