@@ -15,30 +15,31 @@ type Props = {
 };
 
 // The places you use every day; the rest lives under "More" so the sidebar stays calm.
+// The daily loop only: see what needs you, dial, work deals, show up to meetings, run clients.
 const primary = [
   ["needs-you", "Dashboard", "chart", "/crm/needs-you"],
   ["call", "Call mode", "phone", "/crm/call"],
+  ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
+  ["calendar", "Calendar", "calendar", "/crm/calendar"],
+  ["contacts", "Contacts", "users", "/crm"],
+  ["client-success", "Clients", "briefcase", "/crm/client-success"],
+] as const;
+// Everything else, one click away. Outreach, Operations, AI team and Signals stay reachable by URL and ⌘K.
+const secondary = [
   ["email", "Email", "send", "/crm/email"],
+  ["leads", "Lead finder", "search", "/crm/leads"],
+  ["practice", "Practice", "mic", "/crm/practice"],
+  ["preparation", "Research", "search", "/crm/preparation"],
   ["linkedin", "LinkedIn", "link", "/crm/linkedin"],
   ["groups", "Groups", "groups", "/crm/groups"],
   ["content", "Content", "megaphone", "/crm/content"],
-  ["contacts", "Contacts", "users", "/crm"],
-  ["leads", "Lead finder", "search", "/crm/leads"],
-  ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
-  ["funnel", "Funnel", "chart", "/crm/funnel"],
   ["partners", "Partners", "users", "/crm/partners"],
-  ["calendar", "Calendar", "calendar", "/crm/calendar"],
+  ["funnel", "Funnel", "chart", "/crm/funnel"],
   ["finance", "Money", "money", "/crm/finance"],
-] as const;
-// Useful, not daily. Outreach, Operations, AI team and Signals stay reachable by URL but are off the sidebar.
-const secondary = [
-  ["client-success", "Clients", "briefcase", "/crm/client-success"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
   ["reports", "Client reports", "doc", "/crm/reports"],
-  ["preparation", "Research", "search", "/crm/preparation"],
-  ["practice", "Practice", "mic", "/crm/practice"],
 ] as const;
-const SECONDARY_PATHS = ["/crm/tasks", "/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/client-success", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
+const SECONDARY_PATHS = ["/crm/email", "/crm/leads", "/crm/linkedin", "/crm/groups", "/crm/content", "/crm/partners", "/crm/funnel", "/crm/finance", "/crm/tasks", "/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
@@ -131,7 +132,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     if (key === "preparation") return pathname.startsWith("/crm/preparation") || pathname.startsWith("/crm/audit");
     const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
       "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", email: "/crm/email", practice: "/crm/practice", outreach: "/crm/outreach", reports: "/crm/reports", scoreboard: "/crm/scoreboard", operations: "/crm/operations", calendar: "/crm/calendar", funnel: "/crm/funnel", tasks: "/crm/tasks", audit: "/crm/audit",
-      intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings", content: "/crm/content", leads: "/crm/leads", partners: "/crm/partners" };
+      intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings", content: "/crm/content", leads: "/crm/leads", partners: "/crm/partners", linkedin: "/crm/linkedin", groups: "/crm/groups" };
     return map[key] ? pathname.startsWith(map[key]) : activeKey === key;
   };
   const item = ([key, label, icon, href]: readonly [string, string, string, string]) =>
