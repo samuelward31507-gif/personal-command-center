@@ -326,6 +326,9 @@ export default function CinderApp() {
   const [tab, setTab] = useState<Tab>("leads");
   const [filter, setFilter] = useState<"all" | "needs" | "booked">("all");
   const [open, setOpen] = useState<string | null>(null);
+  // On a computer the app becomes a three-column workspace: sidebar, leads, and the open conversation.
+  const [wide, setWide] = useState(false);
+  useEffect(() => { const m = matchMedia("(min-width: 1100px)"); const f = () => setWide(m.matches); f(); m.addEventListener("change", f); return () => m.removeEventListener("change", f); }, []);
   const [msg, setMsg] = useState("");
   const { show: toast, node: toastNode } = useToast();
   const [push, setPush] = useState<PushState>("unsupported");
@@ -381,9 +384,10 @@ export default function CinderApp() {
   const maxW = Math.max(1, ...L.weeks.map(w => w.leads));
   const bizName = d.business || d.businesses.find(b => b.project_id === project)?.name || "";
 
-  if (open) return <div className="ca">{demo && <div className="ca-demo"><span>Example business with sample data. This is the app you’d get.</span><button type="button" onClick={exitDemo}>Exit</button></div>}<ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} />{toastNode}</div>;
+  if (open && !wide) return <div className="ca">{demo && <div className="ca-demo"><span>Example business with sample data. This is the app you’d get.</span><button type="button" onClick={exitDemo}>Exit</button></div>}<ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} />{toastNode}</div>;
 
-  return <div className="ca">
+  const pane = wide && tab === "leads";
+  return <div className={"ca" + (wide ? (pane ? " ca-wide" : " ca-wide solo") : "")}>
     {demo && <div className="ca-demo"><span>Example business with sample data. This is the app you’d get.</span><button type="button" onClick={exitDemo}>Exit</button></div>}
     <header className="ca-top">
       <Mark small />
@@ -420,7 +424,7 @@ export default function CinderApp() {
         <div className="ca-seg wide" role="tablist" aria-label="Filter leads">{([["all", "All"], ["needs", `Needs you${L.needs ? ` · ${L.needs}` : ""}`], ["booked", "Booked"]] as const).map(([k, l]) =>
           <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}</button>)}</div>
         {groups.length ? groups.map(g => <section key={g.day} className="ca-group"><h2>{g.day}</h2>
-          <ul className="ca-list">{g.items.map(c => { const st = STATUS[c.status] ?? STATUS.auto; return <li key={c.id}><button type="button" onClick={() => setOpen(c.id)}>
+          <ul className="ca-list">{g.items.map(c => { const st = STATUS[c.status] ?? STATUS.auto; return <li key={c.id}><button type="button" className={pane && open === c.id ? "sel" : undefined} aria-current={pane && open === c.id ? "true" : undefined} onClick={() => setOpen(c.id)}>
             <span className="ca-av">{initials(c.name)}<i className="ca-src"><Icon name={SRC_ICON[c.source] ?? "chat"} size={11} /></i></span>
             <span className="ca-mid">
               <span className="ca-row1"><b>{c.name}</b><time>{ago(c.at)}</time></span>
@@ -472,7 +476,11 @@ export default function CinderApp() {
       </>}
     </div>
 
+    {pane && <aside className="ca-pane" aria-label="Conversation">{open
+      ? <div key={open} className="ca-pane-in"><ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} /></div>
+      : <div className="ca-pane-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>Pick a conversation</b><p>Every text Cinder sent and every reply, with the customer&rsquo;s number one click away.</p></div>}</aside>}
     <nav className="ca-nav" aria-label="Sections">
+      <div className="ca-nav-brand"><Mark small /><b>{bizName}</b></div>
       {([["leads", "Leads", L.needs, "chat"], ["numbers", "Numbers", 0, "bolt"], ["estimates", "Calendar", dueCount, "cal"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const).map(([k, l, n, ic]) =>
         <button key={k} type="button" aria-current={tab === k ? "page" : undefined} className={tab === k ? "on" : ""} onClick={() => { setTab(k); window.scrollTo(0, 0); if (k === "sam" || k === "estimates") void load(project, k); }}>
           <span className="ca-nav-ic">{ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span>{l}</button>)}
