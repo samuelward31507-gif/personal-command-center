@@ -703,3 +703,178 @@ html body:not(#u) ul + .ca-srcs-quiet { margin-top: 16px; }
 html body:not(#u) .ca-srcs > .ca-srcs-quiet:nth-child(2) { margin-top: 0; padding-top: 0; border-top: 0; }
 html body:not(#u) .ca-srcs-quiet span { color: var(--ca-2); white-space: nowrap; }
 html body:not(#u) .ca-srcs-quiet i { font-style: normal; color: var(--ca-4); font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   CRM finish: the client app in the same light look as the Cinder CRM and cinderrevenue.com.
+   Work sits on one white sheet inset beside a quiet sidebar; the current page is a lifted white chip;
+   state is a dot and a word; avatars are soft squares toned by name; one button height, one radius.
+   Restraint over decoration: color only where it means something.
+   ========================================================================== */
+:root { --ca-frame: #f1f1ee; --ca-sheet: #fdfdfc; --ca-ring: rgba(18, 20, 23, .07); --ca-focus: #0a84ff;
+  --ca-lift: 0 0 0 1px rgba(18, 20, 23, .07), 0 1px 2px rgba(18, 20, 23, .05); --ca-soft: 0 1px 2px rgba(18, 20, 23, .04), 0 12px 32px -14px rgba(18, 20, 23, .16); }
+
+/* Avatars: initials on a soft tone picked from the name. */
+html body:not(#u) .ca-av { border-radius: 12px !important; background: #eef0f2 !important; color: #3d434b !important; box-shadow: inset 0 0 0 1px rgba(18, 20, 23, .05); font-weight: 600; letter-spacing: .02em; }
+html body:not(#u) .ca-av.sm { border-radius: 10px !important; }
+html body:not(#u) .ca-av[data-tone="1"] { background: #e9f1ec !important; color: #2c6a49 !important; }
+html body:not(#u) .ca-av[data-tone="2"] { background: #eaf0f8 !important; color: #2f5b8f !important; }
+html body:not(#u) .ca-av[data-tone="3"] { background: #f5efe6 !important; color: #8a5a1f !important; }
+html body:not(#u) .ca-av[data-tone="4"] { background: #f1ecf6 !important; color: #5f4a86 !important; }
+html body:not(#u) .ca-av[data-tone="5"] { background: #f6ecec !important; color: #8f3f3a !important; }
+html body:not(#u) .ca-av.lg { border-radius: 14px !important; background: #121417 !important; color: #fff !important; }
+html body:not(#u) .ca-src { border-radius: 6px !important; box-shadow: 0 0 0 2px var(--ca-sheet) !important; }
+
+/* State: a dot and a word on a white mark, never a block of color. */
+html body:not(#u) :is(.ca-chip, .jb-tag, .jb-pill) { display: inline-flex !important; align-items: center; gap: 6px; padding: 3px 9px 3px 8px !important; border-radius: 999px !important;
+  border: 1px solid rgba(18, 20, 23, .09) !important; background: #fff !important; color: #4a4f57 !important; font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0; }
+html body:not(#u) :is(.ca-chip, .jb-tag)::before { content: ""; flex: 0 0 auto; width: 6px; height: 6px; border-radius: 50%; background: #a0a5ad; }
+html body:not(#u) :is(.ca-chip.is-booked, .jb-tag.green, .jb-pill.green) { border-color: rgba(23, 144, 90, .2) !important; background: rgba(23, 144, 90, .05) !important; color: #127a4c !important; }
+html body:not(#u) :is(.ca-chip.is-booked, .jb-tag.green)::before { background: #17905a; }
+html body:not(#u) :is(.ca-chip.is-auto, .jb-tag.blue, .jb-pill.blue) { color: #1f5fa8 !important; }
+html body:not(#u) :is(.ca-chip.is-auto, .jb-tag.blue)::before { background: #0a84ff; }
+html body:not(#u) :is(.ca-chip.is-needs, .jb-tag.warn) { border-color: rgba(181, 101, 29, .22) !important; background: rgba(181, 101, 29, .05) !important; color: #8a4b12 !important; }
+html body:not(#u) :is(.ca-chip.is-needs, .jb-tag.warn)::before { background: #d07a2a; }
+html body:not(#u) .ca-chip svg { display: none; }
+
+/* Segmented controls: a quiet track, the choice lifted in white. */
+html body:not(#u) :is(.ca-seg, .jb-stages) { background: #efefed !important; border-radius: 11px !important; padding: 3px !important; }
+html body:not(#u) :is(.ca-seg button, .jb-stages button) { border-radius: 8px !important; color: #6c7583 !important; font-weight: 500 !important; }
+html body:not(#u) :is(.ca-seg button, .jb-stages button):hover:not(.on):not(.ask) { color: #121417 !important; }
+html body:not(#u) :is(.ca-seg button.on, .jb-stages button.on) { background: #fff !important; color: #121417 !important; font-weight: 600 !important; box-shadow: 0 1px 2px rgba(18, 20, 23, .08), 0 0 0 1px rgba(18, 20, 23, .04) !important; }
+html body:not(#u) .jb-stages button.ask { background: #121417 !important; color: #fff !important; }
+
+/* Surfaces: white, a hairline, a soft lift. */
+html body:not(#u) :is(.ca-kpis > div, .ca-card, .ca-stats, .ca-cards, .ca-sam, .ca-pushcard, .ca-calbar) { border-radius: 14px !important; border-color: var(--ca-ring) !important; box-shadow: var(--ca-soft) !important; }
+html body:not(#u) .ca-kpis span { font-size: 12.5px !important; color: #6f747c !important; font-weight: 500; }
+html body:not(#u) .ca-kpis b { font-weight: 600 !important; letter-spacing: -0.04em !important; }
+html body:not(#u) .ca-money { border-radius: 16px !important; background: #121417 !important; background-image: radial-gradient(120% 160% at 100% 0%, rgba(255, 255, 255, .08), transparent 55%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 18px 40px -22px rgba(18, 20, 23, .55) !important; }
+html body:not(#u) .ca-money b { letter-spacing: -0.045em !important; }
+html body:not(#u) .ca-hello p { color: #6f747c !important; font-size: 13.5px !important; font-weight: 500 !important; }
+html body:not(#u) .ca-hello h1 { font-weight: 600 !important; letter-spacing: -0.035em !important; }
+html body:not(#u) .ca-hello h1 span { color: #8a9098 !important; }
+html body:not(#u) .ca-group h2 { font-size: 12.5px !important; font-weight: 500 !important; color: #7b818a !important; }
+html body:not(#u) .ca-todo { border-radius: 14px !important; }
+
+/* Buttons: one height, a crisp edge; primary near-black with a little depth. */
+html body:not(#u) :is(.jb-add, .jb-ghost, .ca-call, .ca-chip-btn, .ca-calbar-go, .ca-pushcard-go) { border-radius: 10px !important; }
+html body:not(#u) :is(.jb-add, .ca-call, .ca-calbar-go, .ca-pushcard-go, .ca-todo-go, .ca-needs-go) { background: #121417 !important; color: #fff !important; box-shadow: 0 1px 2px rgba(18, 20, 23, .2), inset 0 1px 0 rgba(255, 255, 255, .08) !important; }
+html body:not(#u) :is(.jb-add, .ca-call):hover { background: #2a2d32 !important; }
+html body:not(#u) :is(.jb-ghost, .ca-chip-btn) { box-shadow: 0 1px 1px rgba(18, 20, 23, .04) !important; }
+html body:not(#u) :is(.jb-amt-row, .jb-save, .jb-box-acts) button, html body:not(#u) .jb-acts :is(button, a) { border-radius: 10px !important; box-shadow: 0 1px 1px rgba(18, 20, 23, .04); }
+html body:not(#u) :is(.jb-amt-row, .jb-save, .jb-box-acts) button.go { box-shadow: 0 1px 2px rgba(18, 20, 23, .2), inset 0 1px 0 rgba(255, 255, 255, .08); }
+html body:not(#u) .ca-toast { border-radius: 12px !important; }
+
+/* Fields: white, a hairline, the CRM's blue focus. One custom chevron on every dropdown. */
+html body:not(#u) :is(.jb-f, .jb-amt) :is(input, select, textarea) { border-radius: 10px !important; border-color: rgba(18, 20, 23, .14) !important; box-shadow: 0 1px 1px rgba(18, 20, 23, .03); }
+html body:not(#u) :is(.jb-f, .jb-amt, .ob-f, .ca-field) :is(input, select, textarea):focus, html body:not(#u) .ca-compose textarea:focus { border-color: var(--ca-focus) !important; box-shadow: 0 0 0 3px rgba(10, 132, 255, .14) !important; outline: none; }
+html body:not(#u) :is(.ca, .ob) select:not([multiple]) { -webkit-appearance: none !important; appearance: none !important; padding-right: 32px !important; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2380858d' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important; background-position: right 12px center !important; background-size: 12px 12px !important; }
+html body:not(#u) .jb-toggle input:checked + i { background: #17905a; }
+
+/* The board: columns as quiet lanes on the sheet, cards lifted in white. */
+html body:not(#u) .jb-col { background: rgba(18, 20, 23, .028) !important; border: 1px solid rgba(18, 20, 23, .04) !important; border-radius: 14px !important; padding: 10px !important; }
+html body:not(#u) .jb-col h2 { margin: 4px 6px 10px !important; font-size: 13px !important; }
+html body:not(#u) .jb-col h2 small { font-weight: 500 !important; color: #8a9098 !important; }
+html body:not(#u) .jb-card { border-radius: 11px !important; border: 0 !important; box-shadow: 0 0 0 1px rgba(18, 20, 23, .07), 0 1px 2px rgba(18, 20, 23, .05) !important; padding: 12px 13px !important; }
+html body:not(#u) .jb-card:hover { box-shadow: 0 0 0 1px rgba(18, 20, 23, .12), 0 6px 16px -8px rgba(18, 20, 23, .2) !important; }
+html body:not(#u) .jb-name { font-size: 14.5px !important; }
+html body:not(#u) .jb-line { font-size: 13px !important; color: #5b616a !important; }
+html body:not(#u) .jb-foot em { font-weight: 600 !important; letter-spacing: -0.02em; }
+html body:not(#u) .jb-empty { border-color: rgba(18, 20, 23, .1) !important; border-radius: 10px !important; background: transparent; }
+html body:not(#u) .jb-col.over { background: rgba(10, 132, 255, .05) !important; border-color: rgba(10, 132, 255, .35) !important; }
+
+/* Sheets: a white panel with a ring, over a soft dim. */
+html body:not(#u) .jb-scrim { background: rgba(18, 20, 23, .32) !important; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+html body:not(#u) .jb-sheet { box-shadow: 0 0 0 1px rgba(18, 20, 23, .08), 0 30px 80px -20px rgba(18, 20, 23, .35) !important; }
+@media (min-width: 700px) { html body:not(#u) .jb-sheet { border-radius: 16px !important; } }
+html body:not(#u) :is(.jb-amt, .jb-box) { border-radius: 14px !important; border-color: rgba(18, 20, 23, .1) !important; }
+html body:not(#u) .jb-bp { border-radius: 10px !important; border: 1px solid rgba(23, 144, 90, .14); background: rgba(23, 144, 90, .05) !important; }
+html body:not(#u) .jb-x { border-radius: 9px !important; background: #f2f2ef !important; }
+
+/* Phone: the bottom bar on frosted white with a lifted current tab. */
+html body:not(#u) .ca-nav { border-top: 1px solid rgba(18, 20, 23, .07) !important; }
+html body:not(#u) .ca-nav button.on .ca-nav-ic { background: #fff !important; box-shadow: var(--ca-lift); border-radius: 10px; }
+html body:not(#u) .ca-nav em { background: #121417 !important; color: #fff !important; }
+
+/* ---------- Computer: the CRM's frame ---------- */
+@media (min-width: 1100px) {
+  html:has(.ca-wide), html body:not(#u):has(.ca-wide) { background: var(--ca-frame) !important; }
+  html body:not(#u) .ca.ca-wide { margin: 0 !important; height: 100dvh !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: var(--ca-frame) !important;
+    grid-template-columns: 228px minmax(380px, 440px) minmax(0, 1fr) !important; padding: 8px 8px 8px 0; column-gap: 0; }
+  html body:not(#u) .ca.ca-wide.solo { grid-template-columns: 228px minmax(0, 1fr) !important; }
+  /* the white sheet behind everything right of the sidebar */
+  html body:not(#u) .ca.ca-wide::before { content: ""; grid-column: 2 / -1; grid-row: 2 / -1; border-radius: 14px; background: var(--ca-sheet);
+    box-shadow: 0 0 0 1px var(--ca-ring), 0 1px 2px rgba(18, 20, 23, .04), 0 8px 24px -16px rgba(18, 20, 23, .12); z-index: 0; }
+  html body:not(#u) .ca.ca-wide > * { z-index: 1; }
+  html body:not(#u) .ca-wide .ca-demo { grid-column: 2 / -1 !important; margin: 0 0 8px; border-radius: 10px; }
+  html body:not(#u) .ca-wide .ca-nav { background: transparent !important; border: 0 !important; padding: 14px 10px 12px 12px !important; gap: 1px !important; }
+  html body:not(#u) .ca-wide .ca-nav-brand { padding: 4px 10px 22px !important; gap: 8px !important; }
+  html body:not(#u) .ca-wide .ca-nav-word { height: 20px !important; }
+  html body:not(#u) .ca-wide .ca-nav-brand b { font-size: 12.5px !important; color: #7b818a !important; }
+  html body:not(#u) .ca-wide .ca-nav button { height: 32px; padding: 0 10px !important; gap: 10px !important; border-radius: 8px !important; font-size: 13.5px !important; font-weight: 500 !important; color: #3d434b !important; }
+  html body:not(#u) .ca-wide .ca-nav button:hover { background: rgba(18, 20, 23, .045) !important; }
+  html body:not(#u) .ca-wide .ca-nav button.on { background: #fff !important; color: #121417 !important; font-weight: 550 !important; box-shadow: var(--ca-lift) !important; }
+  html body:not(#u) .ca-wide .ca-nav button.on .ca-nav-ic { box-shadow: none !important; background: none !important; }
+  html body:not(#u) .ca-wide .ca-nav-ic svg { width: 16px !important; height: 16px !important; color: #7b818a; }
+  html body:not(#u) .ca-wide .ca-nav button.on .ca-nav-ic svg { color: #121417; }
+  html body:not(#u) .ca-wide .ca-nav em { top: -5px !important; right: -8px !important; box-shadow: 0 0 0 2px var(--ca-frame) !important; }
+  html body:not(#u) .ca-wide .ca-nav-foot { border-top: 1px solid rgba(18, 20, 23, .07) !important; font-size: 12px !important; color: #7b818a !important; }
+  html body:not(#u) .ca-wide :is(.ca-top, .ca-main, .ca-pane) { background: transparent !important; }
+  html body:not(#u) .ca-wide .ca-top { padding: 24px 32px 14px !important; }
+  html body:not(#u) .ca-wide .ca-main { padding: 0 32px 40px !important; }
+  html body:not(#u) .ca-wide .ca-top-title { font-size: 26px !important; letter-spacing: -0.03em !important; }
+  html body:not(#u) .ca-wide .ca-live { background: #fff !important; border: 1px solid rgba(18, 20, 23, .09) !important; color: #127a4c !important; box-shadow: 0 1px 1px rgba(18, 20, 23, .04); }
+  html body:not(#u) .ca-wide .ca-pane { border-left: 1px solid rgba(18, 20, 23, .06) !important; }
+  html body:not(#u) .ca-wide .ca-pane .ca-stick, html body:not(#u) .ca-wide .ca-pane .ca-composer { background: rgba(253, 253, 252, .94) !important; border-color: rgba(18, 20, 23, .06) !important; }
+  html body:not(#u) .ca-wide .ca-list .ca-av { width: 38px !important; height: 38px !important; font-size: 12.5px !important; }
+  html body:not(#u) .ca-wide .ca-list button { grid-template-columns: 38px minmax(0, 1fr) !important; border-radius: 10px !important; }
+  html body:not(#u) .ca-wide .ca-list button:hover { background: rgba(18, 20, 23, .03) !important; }
+  html body:not(#u) .ca-wide .ca-list button.sel { background: #fff !important; box-shadow: var(--ca-lift) !important; }
+  html body:not(#u) .ca-wide :is(.jb-add, .jb-ghost) { height: 34px !important; font-size: 13.5px !important; }
+  html body:not(#u) .ca-wide .jb-col { background: rgba(18, 20, 23, .025) !important; }
+}
+html body:not(#u) .ca-src { width: 16px !important; height: 16px !important; right: -5px !important; bottom: -5px !important; display: grid !important; place-items: center; background: #fff !important; color: #6f747c !important; box-shadow: 0 0 0 1px rgba(18, 20, 23, .1), 0 0 0 2px var(--ca-sheet) !important; }
+html body:not(#u) .ca-src svg { width: 10px !important; height: 10px !important; }
+html body:not(#u) .ca-srcs-bar { height: 6px !important; background: rgba(18, 20, 23, .06) !important; }
+html body:not(#u) .ca-srcs-bar i { background: #121417 !important; }
+@media (min-width: 1100px) {
+  html body:not(#u) .ca-wide .ca-nav button { position: relative; }
+  html body:not(#u) .ca-wide .ca-nav-ic { position: static !important; }
+  html body:not(#u) .ca-wide .ca-nav em { top: 50% !important; right: 8px !important; transform: translateY(-50%); min-width: 20px !important; height: 20px !important; padding: 0 6px !important; border-radius: 6px !important;
+    background: rgba(18, 20, 23, .06) !important; color: #3d434b !important; font: 600 11.5px/20px var(--ca-sans) !important; text-align: center; box-shadow: none !important; }
+  html body:not(#u) .ca-wide .ca-nav button.on em { background: #121417 !important; color: #fff !important; }
+}
+
+/* ---- Match the live site and CRM exactly (from Sam's screenshots) ----
+   Website: black pill buttons, white pill with a hairline for the second choice, dot pills, bold two-tone headlines.
+   CRM: one flat off-white page, a quiet sidebar, the current page a soft grey fill, lots of air. */
+html body:not(#u) :is(.jb-add, .jb-ghost, .ca-call, .ca-chip-btn, .ca-calbar-go, .ca-pushcard-go, .ca-todo-go, .ca-needs-go) { border-radius: 999px !important; }
+html body:not(#u) :is(.jb-amt-row, .jb-save, .jb-box-acts) button, html body:not(#u) .jb-acts :is(button, a) { border-radius: 999px !important; }
+html body:not(#u) :is(.ca-primary, .ob-next, .ob-go, .ob-back, .ob-skip) { border-radius: 999px !important; }
+html body:not(#u) :is(.jb-ghost, .ca-chip-btn, .jb-acts :is(button, a)) { background: #fff !important; border: 1px solid rgba(18, 20, 23, .12) !important; box-shadow: 0 1px 2px rgba(18, 20, 23, .04) !important; }
+html body:not(#u) .ca-hello h1 { font-weight: 650 !important; letter-spacing: -0.04em !important; }
+html body:not(#u) .ca-live { background: #fff !important; border: 1px solid rgba(18, 20, 23, .08) !important; color: #121417 !important; box-shadow: 0 1px 2px rgba(18, 20, 23, .04), 0 8px 20px -14px rgba(18, 20, 23, .2); }
+html body:not(#u) .ca-live i { background: #17905a !important; }
+@media (min-width: 1100px) {
+  html:has(.ca-wide), html body:not(#u):has(.ca-wide) { background: #f6f6f4 !important; }
+  html body:not(#u) .ca.ca-wide { background: #f6f6f4 !important; padding: 0 !important; grid-template-columns: 236px minmax(380px, 440px) minmax(0, 1fr) !important; }
+  html body:not(#u) .ca.ca-wide.solo { grid-template-columns: 236px minmax(0, 1fr) !important; }
+  html body:not(#u) .ca.ca-wide::before { content: none !important; }
+  html body:not(#u) .ca-wide .ca-demo { grid-column: 1 / -1 !important; margin: 0 !important; border-radius: 0 !important; }
+  html body:not(#u) .ca-wide .ca-nav { background: #f3f3f1 !important; border-right: 1px solid rgba(18, 20, 23, .05) !important; padding: 18px 10px 14px !important; }
+  html body:not(#u) .ca-wide .ca-nav-word { height: 22px !important; }
+  html body:not(#u) .ca-wide .ca-nav button { height: 30px; font-size: 13px !important; color: #3d434b !important; font-weight: 450 !important; }
+  html body:not(#u) .ca-wide .ca-nav button.on { background: rgba(18, 20, 23, .06) !important; box-shadow: none !important; color: #121417 !important; font-weight: 500 !important; }
+  html body:not(#u) .ca-wide .ca-nav-ic svg { width: 15px !important; height: 15px !important; stroke-width: 1.6; }
+  html body:not(#u) .ca-wide .ca-nav em, html body:not(#u) .ca-wide .ca-nav button.on em { background: transparent !important; color: #7b818a !important; }
+  html body:not(#u) .ca-wide :is(.ca-top, .ca-main, .ca-pane) { background: #f6f6f4 !important; }
+  html body:not(#u) .ca-wide .ca-top { padding: 30px 40px 16px !important; }
+  html body:not(#u) .ca-wide .ca-main { padding: 0 40px 48px !important; }
+  html body:not(#u) .ca-wide .ca-top-title { font-weight: 650 !important; font-size: 28px !important; letter-spacing: -0.04em !important; }
+  html body:not(#u) .ca-wide .ca-pane { border-left: 1px solid rgba(18, 20, 23, .06) !important; background: #fbfbfa !important; }
+  html body:not(#u) .ca-wide .ca-pane .ca-stick, html body:not(#u) .ca-wide .ca-pane .ca-composer { background: rgba(251, 251, 250, .94) !important; }
+  html body:not(#u) .ca-wide .ca-list button.sel { background: #fff !important; box-shadow: 0 0 0 1px rgba(18, 20, 23, .06), 0 1px 2px rgba(18, 20, 23, .04) !important; }
+  html body:not(#u) .ca-wide .jb-col { background: rgba(18, 20, 23, .03) !important; border-color: transparent !important; }
+}

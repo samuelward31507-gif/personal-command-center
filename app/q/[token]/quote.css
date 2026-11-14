@@ -47,3 +47,6 @@ html body:not(#u) .qp-load i:nth-child(3) { width: 80%; }
 html body:not(#u) .qp-foot { margin: 18px 0 0; color: #8a9098 !important; font-size: 12.5px; }
 @keyframes qp-pop { from { transform: scale(.5); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { html body:not(#u) .qp-done > span { animation: none; } }
+/* The website's buttons: black pill first, white pill with a hairline second. */
+html body:not(#u) :is(button.qp-go, a.qp-ask, .qp-row button) { border-radius: 999px !important; }
+html body:not(#u) .qp-mono { border-radius: 10px; }

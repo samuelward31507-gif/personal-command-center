@@ -15,6 +15,8 @@ type Api = <T>(path: string, body?: unknown) => Promise<T>;
 type Toast = (t: string, bad?: boolean) => void;
 
 const fmtPhone = (p: string) => { const d = p.replace(/\D/g, "").slice(-10); return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : p; };
+/** A soft avatar tone picked from the name, the way the CRM does it: same person, same color. */
+const tone = (s: string) => [...(s || "#")].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 6;
 const initials = (s: string) => s.replace(/[^A-Za-z ]/g, "").split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "#";
 const short = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, "")}k` : money(n);
 const when = (iso: string) => new Date(iso).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" }).replace(":00", "");
@@ -288,7 +290,7 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
   }
   const pick = (s: Stage) => { if (s === card.stage) return; if (s === "quoted" || s === "won") { setAsk(s); return; } if (s === "lost" && !arm) { setArm(true); return; } void act("stage", { action: "stage", stage: s }, `Moved to ${STAGE_LABEL[s]}.`); };
   const q = card.quote;
-  return <Sheet onClose={onClose} title={<div className="jb-who"><span className="ca-av sm" aria-hidden="true">{initials(name)}</span><span><b>{name}</b><small><a href={`tel:${card.phone}`}>{fmtPhone(card.phone)}</a> · {SRC[card.source] ?? card.source}</small></span></div>}>
+  return <Sheet onClose={onClose} title={<div className="jb-who"><span className="ca-av sm" data-tone={tone(name)} aria-hidden="true">{initials(name)}</span><span><b>{name}</b><small><a href={`tel:${card.phone}`}>{fmtPhone(card.phone)}</a> · {SRC[card.source] ?? card.source}</small></span></div>}>
     <div className="jb-acts">
       <button type="button" onClick={() => { onClose(); onOpen(card.id); }}><Svg d={I.chat} size={16} />Conversation</button>
       {canCall ? <button type="button" disabled={!!busy} onClick={() => void act("call", { action: "call" }, "Calling your cell. Pick up and we'll connect them.")}><Svg d={I.phone} size={16} />Call</button>

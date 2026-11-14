@@ -32,6 +32,8 @@ const clock = (d: string) => new Date(d).toLocaleTimeString("en-US", { hour: "nu
 const dayKey = (d: string) => new Date(d).toDateString();
 const dayName = (d: string) => { const x = new Date(d), t = new Date(); const y = new Date(Date.now() - 86400000); const tm = new Date(Date.now() + 86400000);
   return x.toDateString() === t.toDateString() ? "Today" : x.toDateString() === y.toDateString() ? "Yesterday" : x.toDateString() === tm.toDateString() ? "Tomorrow" : x.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }); };
+/** A soft avatar tone picked from the name, the way the CRM does it: same person, same color. */
+const tone = (s: string) => [...(s || "#")].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 6;
 const initials = (s: string) => s.replace(/[^A-Za-z ]/g, "").split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "#";
 const fmtPhone = (p: string) => { const d = p.replace(/\D/g, "").slice(-10); return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : p; };
 const typePhone = (v: string) => { const d = v.replace(/\D/g, "").replace(/^1(?=\d{10})/, "").slice(0, 10); return d.length > 6 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : d.length > 3 ? `(${d.slice(0, 3)}) ${d.slice(3)}` : d; };
@@ -181,7 +183,7 @@ function ThreadView({ id, project, canCall, onBack, onChange, toast }: { id: str
     <div className="ca-stick">
       <header className="ca-thead">
         <button type="button" className="ca-icon-btn" onClick={onBack} aria-label="Back to leads"><Icon name="back" size={22} /></button>
-        <span className="ca-av sm" aria-hidden="true">{t ? initials(name) : ""}</span>
+        <span className="ca-av sm" data-tone={tone(name)} aria-hidden="true">{t ? initials(name) : ""}</span>
         <div className="ca-thead-who"><b>{name || "Loading…"}</b><small>{t ? <><a href={`tel:${t.customer_phone}`}>{fmtPhone(t.customer_phone)}</a> · {SOURCE[t.source] ?? t.source}</> : " "}</small></div>
         {canCall && <button type="button" className="ca-call" disabled={!!busy} onClick={() => void act("call", {}, "Calling your cell. Pick up and we'll connect them.")}><Icon name="phone" size={16} />Call</button>}
       </header>
@@ -264,7 +266,7 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
 
     {due.length > 0 && <section className="ca-group"><h2>How did it go?</h2>
       <ul className="ca-cards">{due.map(a => { const name = a.customer_name || fmtPhone(a.customer_phone); return <li key={a.id} className="ca-out">
-        <button type="button" className="ca-out-h" onClick={() => onOpen(a.thread_id)}><span className="ca-av sm" aria-hidden="true">{initials(name)}</span>
+        <button type="button" className="ca-out-h" onClick={() => onOpen(a.thread_id)}><span className="ca-av sm" data-tone={tone(name)} aria-hidden="true">{initials(name)}</span>
           <span><b>{name}</b><small>Estimate · {dayName(a.starts_at)}, {clock(a.starts_at)}</small></span></button>
         {sheet?.id === a.id ? amountSheet(() => void act(a.id, { action: "outcome", appt: a.id, result: sheet.kind, amount: amt, review: sheet.kind === "won" && review },
             r => sheet.kind === "quoted" ? "Cinder will follow up on the quote until they answer." : r.review === "sent" ? "Marked won. Review request sent." : r.review === "no_link" ? "Marked won. Ask Sam to add your review link." : r.review === "later" ? "Marked won. It's after texting hours, so send the review request in the morning." : "Marked won."))
@@ -418,10 +420,10 @@ export default function CinderApp() {
           <h2><i />{needsList.length + due.length} {needsList.length + due.length === 1 ? "thing needs" : "things need"} you</h2>
           <ul>
             {needsList.slice(0, 3).map(c => <li key={c.id}><button type="button" onClick={() => setOpen(c.id)}>
-              <span className="ca-av sm" aria-hidden="true">{initials(c.name)}</span>
+              <span className="ca-av sm" data-tone={tone(c.name)} aria-hidden="true">{initials(c.name)}</span>
               <span className="ca-todo-m"><b>Reply to {c.name.split(" ")[0]}</b><em>&ldquo;{c.ask || c.last}&rdquo;</em></span><span className="ca-todo-go">Reply</span></button></li>)}
             {due.slice(0, 3).map(a => { const n = a.customer_name || fmtPhone(a.customer_phone); return <li key={a.id}><button type="button" onClick={() => { setTab("estimates"); window.scrollTo(0, 0); void load(project, "estimates"); }}>
-              <span className="ca-av sm" aria-hidden="true">{initials(n)}</span>
+              <span className="ca-av sm" data-tone={tone(n)} aria-hidden="true">{initials(n)}</span>
               <span className="ca-todo-m"><b>{n.split(" ")[0]}&rsquo;s estimate</b><em>How did it go? Tap to update.</em></span><span className="ca-todo-go">Update</span></button></li>; })}
           </ul>
         </section>}
@@ -436,7 +438,7 @@ export default function CinderApp() {
           <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}</button>)}</div>
         {groups.length ? groups.map(g => <section key={g.day} className="ca-group"><h2>{g.day}</h2>
           <ul className="ca-list">{g.items.map(c => { const st = STATUS[c.status] ?? STATUS.auto; return <li key={c.id}><button type="button" className={pane && open === c.id ? "sel" : undefined} aria-current={pane && open === c.id ? "true" : undefined} onClick={() => setOpen(c.id)}>
-            <span className="ca-av">{initials(c.name)}<i className="ca-src"><Icon name={SRC_ICON[c.source] ?? "chat"} size={11} /></i></span>
+            <span className="ca-av" data-tone={tone(c.name)}>{initials(c.name)}<i className="ca-src"><Icon name={SRC_ICON[c.source] ?? "chat"} size={11} /></i></span>
             <span className="ca-mid">
               <span className="ca-row1"><b>{c.name}</b><time>{ago(c.at)}</time></span>
               <em>{c.last}</em>
