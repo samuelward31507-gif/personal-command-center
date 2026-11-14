@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./app.css";
 import { CinderLogo, CinderMark } from "../cinder-brand";
 import { demoApi } from "./demo";
+import { JobsTab, Onboarding, type Card } from "./crm-ui";
 import { agenda, googleCalendarUrl, onMyWayText, splitAppointments, type CalEvent } from "@/lib/client-schedule";
 
 type Conv = { id: string; name: string; source: string; status: string; at: string | null; last: string; ask?: string };
@@ -14,10 +15,10 @@ type Live = { leads: number; needs: number; answered: number; booked: number; re
 type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string; event_id?: string; link?: string };
 type Quote = { id: string; customer_name: string; customer_phone: string; amount: number | null; sent_on: string; steps_sent: number; status: string };
 type Cal = { connected: boolean; email: string; events: CalEvent[]; error: string; connectUrl: string };
-type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number };
+type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number ; board?: Card[]; setup?: Record<string, string>};
 type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
 type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
-type Tab = "leads" | "numbers" | "estimates" | "sam";
+type Tab = "leads" | "jobs" | "numbers" | "estimates" | "sam";
 
 const SOURCE: Record<string, string> = { missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote follow-up", review: "Review request", rehash: "Old lead", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook ad", zapier: "Form" };
 const SRC_ICON: Record<string, string> = { missed_call: "phone", "web chat": "chat", "web form": "form", text: "chat", quote: "quote", review: "star", rehash: "quote", angi: "form", thumbtack: "form", facebook: "form", zapier: "form" };
@@ -334,6 +335,8 @@ export default function CinderApp() {
   const [push, setPush] = useState<PushState>("unsupported");
   const [hidePushCard, setHidePushCard] = useState(false);
   const [demo, setDemo] = useState(false);
+  // The setup flow: shown until the owner finishes it once; reopened from settings to change prices or details.
+  const [setupOpen, setSetupOpen] = useState(false), [setupDone, setSetupDone] = useState(false);
   const exitDemo = () => { demoStop(); setDemo(false); setD(null); setOpen(null); setProject(""); setState("out"); };
   useEffect(() => {
     setPush(pushState());
@@ -362,7 +365,7 @@ export default function CinderApp() {
       // Opened from a notification: go straight to that conversation or tab.
       const th = q.get("thread"), tb = q.get("tab");
       if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen(th);
-      if (tb === "sam" || tb === "estimates" || tb === "numbers") setTab(tb);
+      if (tb === "sam" || tb === "estimates" || tb === "numbers" || tb === "jobs") setTab(tb);
       if (location.search) try { history.replaceState(null, "", "/app"); } catch { /* keep the URL */ }
       await load("", tb === "sam" || tb === "estimates" ? tb : "leads");
     })();
@@ -384,6 +387,9 @@ export default function CinderApp() {
   const maxW = Math.max(1, ...L.weeks.map(w => w.leads));
   const bizName = d.business || d.businesses.find(b => b.project_id === project)?.name || "";
 
+  if ((setupOpen || (!demo && !setupDone && d.setup && !d.setup.onboarded_at)) && !open) return <Onboarding project={project} initial={d.setup ?? {}} api={api}
+    onDone={() => setSetupDone(true)} onClose={() => { setSetupOpen(false); setSetupDone(true); setTab("jobs"); window.scrollTo(0, 0); void load(project, "jobs"); }} />;
+
   if (open && !wide) return <div className="ca">{demo && <div className="ca-demo"><span>Example business with sample data. This is the app you’d get.</span><button type="button" onClick={exitDemo}>Exit</button></div>}<ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} />{toastNode}</div>;
 
   const pane = wide && tab === "leads";
@@ -394,7 +400,7 @@ export default function CinderApp() {
       {d.businesses.length > 1
         ? <select value={project} onChange={e => { setProject(e.target.value); void load(e.target.value); }} aria-label="Business">{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>
         : <b className="ca-top-name">{bizName}</b>}
-      <h1 className="ca-top-title">{tab === "leads" ? "Leads" : tab === "numbers" ? "Numbers" : tab === "estimates" ? "Calendar" : "Sam"}</h1>
+      <h1 className="ca-top-title">{tab === "leads" ? "Leads" : tab === "jobs" ? "Jobs" : tab === "numbers" ? "Numbers" : tab === "estimates" ? "Calendar" : "Sam"}</h1>
       <span className="ca-live"><i />Live</span>
     </header>
 
@@ -455,6 +461,8 @@ export default function CinderApp() {
         </ul>}
       </>)}
 
+      {tab === "jobs" && <JobsTab cards={d.board ?? []} trade={d.setup?.trade || ""} project={project} api={api} toast={toast} reload={() => load(project, "jobs")} onOpen={setOpen} canCall={d.canCall} wide={wide} />}
+
       {tab === "estimates" && <CalendarTab d={d} project={project} onOpen={setOpen} reload={() => load(project, "estimates")} toast={toast} />}
 
       {tab === "sam" && <>
@@ -470,6 +478,7 @@ export default function CinderApp() {
         </form>
         <ul className="ca-settings">
           <li><span>Business</span><b>{bizName}</b></li>
+          <li><span>Prices and business details</span><button type="button" className="ca-set-btn" onClick={() => { setSetupOpen(true); window.scrollTo(0, 0); }}>Edit setup</button></li>
           {d.number && <li><span>Your Cinder number</span><b>{fmtPhone(d.number)}</b></li>}
           <li><span>Notifications</span>{push === "on" ? <b className="ca-on">On</b> : push === "off" ? <button type="button" className="ca-set-btn" onClick={() => void enablePush()}>Turn on</button> : <b>{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</b>}</li>
           <li><button type="button" onClick={async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); }}><Icon name="out" size={16} />{demo ? "Leave the example" : "Sign out"}</button></li>
@@ -482,9 +491,9 @@ export default function CinderApp() {
       : <div className="ca-pane-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>Pick a conversation</b><p>Every text Cinder sent and every reply, with the customer&rsquo;s number one click away.</p></div>}</aside>}
     <nav className="ca-nav" aria-label="Sections">
       <div className="ca-nav-brand"><CinderLogo className="ca-nav-word" ink="#121417" title="Cinder" /><b>{bizName}</b></div>
-      {([["leads", "Leads", L.needs, "chat"], ["numbers", "Numbers", 0, "bolt"], ["estimates", "Calendar", dueCount, "cal"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const).map(([k, l, n, ic]) =>
+      {([["leads", "Leads", L.needs, "chat"], ["jobs", "Jobs", 0, "jobs"], ["estimates", "Calendar", dueCount, "cal"], ["numbers", "Numbers", 0, "bolt"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const).map(([k, l, n, ic]) =>
         <button key={k} type="button" aria-current={tab === k ? "page" : undefined} className={tab === k ? "on" : ""} onClick={() => { setTab(k); window.scrollTo(0, 0); if (k === "sam" || k === "estimates") void load(project, k); }}>
-          <span className="ca-nav-ic">{ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span>{l}</button>)}
+          <span className="ca-nav-ic">{ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "jobs" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="5" height="16" rx="1.5" /><rect x="9.5" y="4" width="5" height="11" rx="1.5" /><rect x="15.5" y="4" width="5" height="7" rx="1.5" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span>{l}</button>)}
       <p className="ca-nav-foot"><b>Questions? Text Sam.</b>(205) 837-0211</p>
     </nav>
     {toastNode}

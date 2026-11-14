@@ -173,7 +173,7 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
 
 /** The first text a new lead gets, for the preview while the owner sets up. Mirrors the missed-call text. */
 export function previewFirstText(name: string, trade: string): string {
-  const biz = name.trim() || "your business";
+  const biz = name.trim().replace(/\.+$/, "") || "your business";
   const ask = (trade || "").toLowerCase() === "fence" ? "What kind of fence are you thinking about?" : "What can we help you with?";
   return `Hi! This is ${biz}. Sorry we missed your call, we're out on a job. ${ask} Reply STOP to opt out.`;
 }
