@@ -6,6 +6,8 @@ import { sendSms } from "@/lib/twilio";
 import { recordConsent } from "@/lib/client-consent";
 import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
+import { ballpark, cleanDetails, detailLine, intakeRules, parsePriceBook, rangeText } from "@/lib/crm";
+import { emitEvent } from "@/lib/client-webhook";
 import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, withOptOut, automatedRoom, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent, deleteEvent } from "@/lib/client-calendar";
@@ -98,6 +100,7 @@ export async function clientMissedCall(sql: Sql, c: Client, caller: string): Pro
   await sql`UPDATE public.client_threads SET contact_at = now() WHERE id = ${t.id}::uuid`;
   await sendToCustomer(sql, c, t.id, caller, body, "template");
   await alertOwner(c, ownerAlert("missed", e164(caller), "They got your text back. Replies are handled for you."), t.id, sql);
+  void emitEvent(c.setup, c.projectId, "lead.new", { customer: { id: t.id, name: "", phone: e164(caller) }, source: "missed_call" });
 }
 
 /** Open estimate times on the client's calendar, or null when it isn't connected (then the booking link is used). */
@@ -117,10 +120,28 @@ export async function draftReply(sql: Sql, c: Client, threadId: string, customer
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return null;
   try {
-    const system = replySystem(c.setup, c.messages) + (slots ? bookingRules(slots) : "") + extra;
-    const text = await claudeText({ apiKey: key, system, user: replyUser(history.reverse(), customerName), label: "Client reply", model: process.env.CINDER_REPLY_MODEL?.trim() || "claude-haiku-5-5", maxTokens: 500, timeoutMs: 20000 });
-    return parseDecision(text);
+    // Estimate-ready intake: what's known about the job, what to ask next, and a ballpark from the owner's own prices.
+    const [row] = await sql`SELECT details FROM public.client_threads WHERE id = ${threadId}::uuid`.catch(() => []) as { details?: unknown }[];
+    const known = cleanDetails(c.setup.trade, row?.details);
+    const bp = c.setup.share_ballpark === "no" ? null : ballpark(parsePriceBook(c.setup.price_book), known);
+    const system = replySystem(c.setup, c.messages) + intakeRules(c.setup.trade, known, bp) + (slots ? bookingRules(slots) : "") + extra;
+    const text = await claudeText({ apiKey: key, system, user: replyUser(history.reverse(), customerName), label: "Client reply", model: process.env.CINDER_REPLY_MODEL?.trim() || "claude-haiku-5-5", maxTokens: 600, timeoutMs: 20000 });
+    const d = parseDecision(text);
+    if (d?.job) {
+      const learned = cleanDetails(c.setup.trade, d.job);
+      if (Object.keys(learned).length) await sql`UPDATE public.client_threads SET details = details || ${JSON.stringify(learned)}::jsonb WHERE id = ${threadId}::uuid`.catch(e => console.error("Saving job details failed", e instanceof Error ? e.message : e));
+    }
+    return d;
   } catch (e) { console.error("Client reply failed", e instanceof Error ? e.message : e); return null; }
+}
+
+/** "150 ft · 6 ft cedar · 2 gates · HOA · ballpark $6,600–$8,500" for the owner's alerts, or "" when nothing's known yet. */
+async function jobNote(sql: Sql, c: Client, threadId: string): Promise<string> {
+  const [row] = await sql`SELECT details FROM public.client_threads WHERE id = ${threadId}::uuid`.catch(() => []) as { details?: unknown }[];
+  const d = cleanDetails(c.setup.trade, row?.details);
+  const line = detailLine(c.setup.trade, d);
+  const bp = ballpark(parsePriceBook(c.setup.price_book), d);
+  return [line, bp ? `ballpark ${rangeText(bp)}` : "", d.address ? String(d.address) : ""].filter(Boolean).join(" · ");
 }
 
 /** They picked an offered time: put it on the owner's calendar and keep a record for the reminder. */
@@ -198,6 +219,7 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
   if (lang === "en" && detectLang(body) === "es") { lang = "es"; await sql`UPDATE public.client_threads SET lang = 'es' WHERE id = ${t.id}::uuid`; }
   const [{ n: inbound }] = await sql`SELECT count(*)::int AS n FROM public.client_texts WHERE thread_id = ${t.id}::uuid AND direction = 'in' AND author = 'customer'` as { n: number }[];
   const firstText = inbound <= 1;
+  if (firstText && t.status === "auto") void emitEvent(c.setup, c.projectId, "lead.new", { customer: { id: t.id, name: t.customer_name, phone: e164(from) }, source: "text", message: body.slice(0, 500) });
   // Any reply stops the quote follow-ups for that number: a person is talking now.
   await sql`UPDATE public.client_quotes SET status = 'replied' WHERE project_id = ${c.projectId}::uuid AND status = 'open' AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(from)}`;
   if (isStop(body)) {
@@ -242,14 +264,17 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
       // They moved it: take the old estimate off the calendar so there's one appointment, not two.
       const removed = await cancelAppointment(sql, c, current.id, current.event_id);
       await alertOwner(c, ownerAlert("moved", who, `from ${slotLabel(new Date(current.starts_at).toISOString(), tzOf(c))} to ${slotLabel(picked.start, tzOf(c))}${removed ? "" : ". Delete the old one from your calendar, it didn't come off"}.`), t.id, sql);
-    } else await alertOwner(c, ownerAlert("booked", who, `${slotLabel(picked.start, tzOf(c))}${ok ? ", on your calendar" : " (add it to your calendar, it didn't save)"}. ${d.summary}`), t.id, sql);
+    } else { const job = await jobNote(sql, c, t.id); await alertOwner(c, ownerAlert("booked", who, `${slotLabel(picked.start, tzOf(c))}${ok ? ", on your calendar" : " (add it to your calendar, it didn't save)"}. ${job ? job + ". " : ""}${d.summary}`), t.id, sql); }
+    void emitEvent(c.setup, c.projectId, "estimate.booked", { customer: { id: t.id, name: t.customer_name, phone: e164(from) }, start: picked.start, summary: d.summary });
   } else if (d.stage === "canceled" && current) {
     const removed = await cancelAppointment(sql, c, current.id, current.event_id);
     await sql`UPDATE public.client_threads SET status = 'auto', updated_at = now() WHERE id = ${t.id}::uuid`;
     await alertOwner(c, ownerAlert("canceled", who, `${slotLabel(new Date(current.starts_at).toISOString(), tzOf(c))}${removed ? ", taken off your calendar" : ". Delete it from your calendar, it didn't come off"}.`), t.id, sql);
   } else if (d.stage === "booked") {
     await sql`UPDATE public.client_threads SET status = 'booked', updated_at = now() WHERE id = ${t.id}::uuid`;
-    await alertOwner(c, ownerAlert("booked", who, d.summary), t.id, sql);
+    const job = await jobNote(sql, c, t.id);
+    await alertOwner(c, ownerAlert("booked", who, `${job ? job + ". " : ""}${d.summary}`), t.id, sql);
+    void emitEvent(c.setup, c.projectId, "estimate.booked", { customer: { id: t.id, name: t.customer_name, phone: e164(from) }, summary: d.summary });
   } else if (d.stage === "not_fit" || d.stage === "done") {
     // Not a job they take, or the customer is done: close it so nothing else (like a follow-up nudge) goes out.
     await sql`UPDATE public.client_threads SET status = 'closed', updated_at = now() WHERE id = ${t.id}::uuid`;
@@ -396,6 +421,7 @@ export async function webLead(sql: Sql, c: Client, lead: Lead | { name: string; 
   const text = afterHours ? wording(c.messages, "after_hours", EN.web_lead) : paid ? say(c, "paid_lead", EN.paid_lead, lang).split("{via}").join(via) : say(c, "web_lead", EN.web_lead, lang);
   const ok = await sendToCustomer(sql, c, t.id, lead.phone, fill(text, varsFor(c, lead.name.split(" ")[0])), "template");
   await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${paid ? via : lead.source}${lead.message ? `: ${lead.message.slice(0, 120)}` : ""}. Texted back.`), t.id, sql);
+  void emitEvent(c.setup, c.projectId, "lead.new", { customer: { id: t.id, name: lead.name, phone: e164(lead.phone), email: lead.email }, source: lead.source, message: lead.message.slice(0, 1000) });
   return { ok, threadId: t.id };
 }
 

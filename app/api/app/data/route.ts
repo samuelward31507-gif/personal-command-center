@@ -2,6 +2,7 @@ import { appSession, clientFor, db, json } from "@/lib/client-app-run";
 import { liveFor } from "@/lib/client-live";
 import { calState, clientCalendar, listEvents, type CalEvent } from "@/lib/client-calendar";
 import { isRepeatTrade, SEQUENCES } from "@/lib/client-runtime";
+import { loadBoard, ownerSetupView } from "@/lib/client-crm-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
       const texts = await sql`SELECT id, direction, author, body, at, media FROM public.client_texts WHERE thread_id = ${th}::uuid ORDER BY at LIMIT 400`;
       return json({ thread: t, texts });
     }
-    const [live, biz, appts, unread, msgs, quotes, calRow, wonJobs] = await Promise.all([
+    const [live, biz, appts, unread, msgs, quotes, calRow, wonJobs, board] = await Promise.all([
       liveFor(sql, c.projectId, 80),
       sql`SELECT o.project_id, coalesce(o.setup->>'display_name', p.client_name, p.name) AS name, o.portal_token FROM public.client_ops o JOIN public.projects p ON p.id = o.project_id WHERE o.project_id = ANY(${s.projects}::uuid[])`,
       // Booked estimates still waiting on an outcome (up to two weeks back) and everything coming up.
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
         WHERE q.project_id = ${c.projectId}::uuid AND q.status = 'won' AND q.last_step_at > now() - interval '90 days'
           AND NOT EXISTS (SELECT 1 FROM public.client_reviews r WHERE r.project_id = q.project_id AND right(regexp_replace(r.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10))
         ORDER BY q.last_step_at DESC LIMIT 20`.catch(() => []),
+      loadBoard(sql, c).catch(e => { console.error("Board failed", e instanceof Error ? e.message : e); return []; }),
     ]);
     // Their real calendar, read only on the Calendar tab (it's a Google call).
     let events: CalEvent[] = [], calError = "";
@@ -56,6 +58,7 @@ export async function GET(req: Request) {
       project: c.projectId, business: c.setup.display_name || "", number: c.setup.texting_number || "", canCall: !!(c.setup.owner_cell && c.setup.texting_number),
       owner: c.setup.owner_name || "", businesses: biz, live,
       appointments: (appts as { event_id?: string }[]).map(a => ({ ...a, link: (a.event_id && links.get(a.event_id)) || "" })), quotes, quoteSteps: SEQUENCES.quote.days.length, wonJobs, hasReviewLink: !!c.setup.review_link, repeat: isRepeatTrade(c.setup.trade), calendar, messages: (msgs as Record<string, unknown>[]).reverse(), unreadFromSam: (unread as { n: number }[])[0]?.n ?? 0,
+      board, setup: ownerSetupView(c.setup),
     });
   } catch (e) { console.error("App data failed", e instanceof Error ? e.message : e); return json({ error: "Couldn't load." }, 500); }
 }

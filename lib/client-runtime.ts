@@ -101,7 +101,7 @@ export function replyUser(history: { direction: string; body: string }[], custom
   return `Customer name: ${customerName || "unknown"}\n\nConversation:\n${lines.join("\n")}\n\nWrite the next text from the business.`;
 }
 
-export type Decision = { reply: string; handoff: boolean; stage: "qualifying" | "booking_offered" | "booked" | "not_fit" | "done" | "canceled"; summary: string; book?: string | null };
+export type Decision = { reply: string; handoff: boolean; stage: "qualifying" | "booking_offered" | "booked" | "not_fit" | "done" | "canceled"; summary: string; book?: string | null; job?: Record<string, unknown> | null };
 /** Reads the engine's JSON. Anything malformed hands off to the owner instead of guessing. */
 export function parseDecision(text: string): Decision | null {
   const m = (text || "").match(/\{[\s\S]*\}/);
@@ -111,7 +111,8 @@ export function parseDecision(text: string): Decision | null {
     const reply = typeof j.reply === "string" ? j.reply.trim().slice(0, 480) : "";
     const stage = ["qualifying", "booking_offered", "booked", "not_fit", "done", "canceled"].includes(j.stage) ? j.stage : "qualifying";
     if (!reply && !j.handoff) return null;
-    return { reply, handoff: j.handoff === true, stage, summary: typeof j.summary === "string" ? j.summary.slice(0, 200) : "", book: typeof j.book === "string" ? j.book : null };
+    return { reply, handoff: j.handoff === true, stage, summary: typeof j.summary === "string" ? j.summary.slice(0, 200) : "", book: typeof j.book === "string" ? j.book : null,
+      job: j.job && typeof j.job === "object" && !Array.isArray(j.job) ? j.job as Record<string, unknown> : null };
   } catch { return null; }
 }
 

@@ -3,6 +3,7 @@ import { markNoShow, sendReviewRequest, sendToCustomer } from "@/lib/client-runt
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
+import { addLead, moveStage, saveCard, saveOwnerSetup } from "@/lib/client-crm-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,11 +24,28 @@ const UUID = /^[0-9a-f-]{36}$/i;
 export async function POST(req: Request) {
   const s = appSession(req);
   if (!s) return json({ error: "Sign in" }, 401);
-  const b = await req.json().catch(() => ({})) as { p?: string; action?: string; thread?: string; body?: string; status?: string; appt?: string; result?: string; amount?: string; review?: boolean; quote?: string };
+  const b = await req.json().catch(() => ({})) as { p?: string; action?: string; thread?: string; body?: string; status?: string; appt?: string; result?: string; amount?: string; review?: boolean; quote?: string;
+    setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
     if (!c) return json({ error: "Sign in" }, 401);
+    // The CRM: the owner's own setup, moving a customer between stages, editing a card, adding a lead by hand.
+    if (b.action === "setup") { const saved = await saveOwnerSetup(sql, c, b.setup); return json({ ok: true, setup: saved }); }
+    if (b.action === "lead") {
+      const r = await addLead(sql, c, { name: b.name, phone: b.phone, details: b.details, notes: b.notes, stage: b.stage });
+      return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "stage" || b.action === "card") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const amount = b.amount ? parseAmount(b.amount) : null;
+      if (b.amount && amount == null) return json({ error: "Type the amount as a number, like 9400." }, 400);
+      if (b.action === "stage") { const r = await moveStage(sql, c, b.thread, String(b.stage), amount); return r.ok ? json({ ok: true }) : json({ error: r.error }, 409); }
+      let value: number | null | undefined;
+      if (b.value !== undefined) { value = b.value === null || b.value === "" ? null : parseAmount(String(b.value)); if (b.value && value == null) return json({ error: "Type the job value as a number, like 9400." }, 400); }
+      const r = await saveCard(sql, c, b.thread, { details: b.details, value, notes: b.notes, name: b.name });
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
+    }
     if (b.action === "message") {
       const body = String(b.body ?? "").trim().slice(0, 4000);
       if (!body) return json({ error: "Write a message first." }, 400);
