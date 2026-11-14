@@ -48,8 +48,9 @@ export function sourceOf(v: string | null | undefined): LeadSource {
 
 /** Any of the supported payloads → one lead, or null when there's no 10-digit phone to text. */
 /**
- * A form's texting checkbox. Forms that have one also send sms_consent_field=1, because an unticked box sends
- * nothing at all. true: ticked. false: the form has the box and it wasn't ticked, so don't text. null: no box.
+ * The optional promo-texts checkbox on a form (deals, reminders to rebook). It never stops the reply to their own
+ * request; that's covered by the disclosure line by the submit button. Forms with the box also send
+ * sms_consent_field=1, because an unticked box sends nothing. true: ticked. false: left unticked. null: no box.
  */
 export function smsConsentFrom(f: Record<string, string>): boolean | null {
   const yes = (v?: string) => !!v && /^(1|true|yes|on|checked|y|agreed?|i agree)$/i.test(v.trim());

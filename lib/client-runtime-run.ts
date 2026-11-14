@@ -386,15 +386,8 @@ export async function webLead(sql: Sql, c: Client, lead: Lead | { name: string; 
   const paid = (PAID as string[]).includes(lead.source);
   const t = await thread(sql, c, lead.phone, lead.source || "web form");
   await recordConsent(sql, c, lead.phone, paid ? "paid_lead" : "web_form", lead.source,
-    `${paid ? `Requested a quote on ${lead.via || lead.source}` : "Submitted a form asking to be contacted"}${"smsConsent" in lead && lead.smsConsent === true ? ", ticked the texting checkbox" : "smsConsent" in lead && lead.smsConsent === false ? ", left the texting checkbox unticked" : ""}${lead.name ? ` as ${lead.name}` : ""}${lead.email ? ` <${lead.email}>` : ""}${lead.message ? `: "${lead.message.slice(0, 200)}"` : ""}`, ip);
+    `${paid ? `Requested a quote on ${lead.via || lead.source}` : "Submitted a form asking to be contacted"}${"smsConsent" in lead && lead.smsConsent === true ? ", opted in to promo texts" : "smsConsent" in lead && lead.smsConsent === false ? ", did not opt in to promo texts" : ""}${lead.name ? ` as ${lead.name}` : ""}${lead.email ? ` <${lead.email}>` : ""}${lead.message ? `: "${lead.message.slice(0, 200)}"` : ""}`, ip);
   if (t.status === "opted_out") return { ok: false, threadId: t.id };
-  if ("smsConsent" in lead && lead.smsConsent === false) {
-    // The form has a texting checkbox and they left it unticked: no text. The owner calls or emails instead.
-    await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${lead.name} ELSE customer_name END, status = 'paused', updated_at = now() WHERE id = ${t.id}::uuid`;
-    await log(sql, c, t.id, "in", "system", `New ${lead.source} lead (didn't agree to texts)${lead.message ? `: "${lead.message.slice(0, 300)}"` : ""}${lead.email ? ` · ${lead.email}` : ""}`);
-    await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${lead.message ? lead.message.slice(0, 120) + ". " : ""}They didn't tick the texting box, so call${lead.email ? " or email" : ""} them: ${lead.phone}${lead.email ? `, ${lead.email}` : ""}.`), t.id, sql);
-    return { ok: false, threadId: t.id };
-  }
   const lang: Lang = detectLang(lead.message) === "es" ? "es" : "en";
   await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${lead.name} ELSE customer_name END, lang = ${lang}, source = ${lead.source}, contact_at = now() WHERE id = ${t.id}::uuid`;
   await log(sql, c, t.id, "in", "system", `New ${lead.source} lead${lead.message ? `: "${lead.message.slice(0, 300)}"` : ""}${lead.email ? ` · ${lead.email}` : ""}`);

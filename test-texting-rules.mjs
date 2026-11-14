@@ -43,13 +43,14 @@ ok(() => assert.ok(isShortener("https://bit.ly/abc")));
 ok(() => assert.ok(isShortener("tinyurl.com/x")));
 ok(() => assert.ok(!isShortener("https://acmefence.com/book")));
 
-// Every scheduled sender checks the hours and the daily cap; the first text gets the line; unticked boxes don't get texted.
+// Every scheduled sender checks the hours and the daily cap; the first text gets the line; every form lead gets the reply.
 const run = readFileSync("lib/client-runtime-run.ts", "utf8");
 const fn = name => { const i = run.indexOf(`export async function ${name}(`); assert.ok(i >= 0, name); const j = run.indexOf("\nexport async function ", i + 10); return run.slice(i, j < 0 ? undefined : j); };
 for (const f of ["runLeadNudges", "runQuoteFollowUps", "runDueTexts", "sendReminders", "sendReviewRequest"]) ok(() => assert.match(fn(f), /inTextingHours\(/, `${f} checks texting hours`));
 for (const f of ["runLeadNudges", "runQuoteFollowUps", "runDueTexts", "runHandoffChecks"]) ok(() => assert.match(fn(f), /roomFor\(/, `${f} checks the daily cap`));
 ok(() => assert.match(fn("sendToCustomer"), /withOptOut\(/));
-ok(() => assert.match(fn("webLead"), /smsConsent === false/));
+ok(() => assert.doesNotMatch(fn("webLead"), /return \{ ok: false, threadId: t\.id \};\n  \}\n  const lang/), "every form lead gets the reply (only opted-out numbers are skipped)");
+ok(() => assert.match(fn("webLead"), /opted in to promo texts/));
 // Nothing else in the client runtime texts a customer without going through sendToCustomer.
 ok(() => assert.equal((run.match(/sendSms\(/g) || []).length, (run.match(/sendSms\((cell|e164\(c\.setup\.owner_cell\)|e164\(phone\))/g) || []).length, "raw sendSms only to the owner or inside sendToCustomer"));
 
