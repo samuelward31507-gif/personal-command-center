@@ -3,11 +3,12 @@
 // The Cinder app for client owners. Sign in with a text code (or straight from the portal link), then:
 // every lead in one inbox, reply or call back from the business number, numbers, estimates, and a line to Sam.
 // Installs to the home screen like an app (manifest in /app.webmanifest). Same look as cinderrevenue.com.
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./app.css";
 import { CinderLogo, CinderMark } from "../cinder-brand";
 import { demoApi } from "./demo";
-import { JobsTab, Onboarding, type Card } from "./crm-ui";
+import { JobsTab, Onboarding, type Card, type Winback } from "./crm-ui";
+import { money, sourceReport } from "@/lib/crm";
 import { agenda, googleCalendarUrl, onMyWayText, splitAppointments, type CalEvent } from "@/lib/client-schedule";
 
 type Conv = { id: string; name: string; source: string; status: string; at: string | null; last: string; ask?: string };
@@ -15,7 +16,7 @@ type Live = { leads: number; needs: number; answered: number; booked: number; re
 type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string; event_id?: string; link?: string };
 type Quote = { id: string; customer_name: string; customer_phone: string; amount: number | null; sent_on: string; steps_sent: number; status: string };
 type Cal = { connected: boolean; email: string; events: CalEvent[]; error: string; connectUrl: string };
-type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number ; board?: Card[]; setup?: Record<string, string>};
+type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number; board?: Card[]; setup?: Record<string, string>; winback?: Winback };
 type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
 type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 type Tab = "leads" | "jobs" | "numbers" | "estimates" | "sam";
@@ -386,6 +387,9 @@ export default function CinderApp() {
   const needsList = L.conversations.filter(c => c.status === "paused");
   const maxW = Math.max(1, ...L.weeks.map(w => w.leads));
   const bizName = d.business || d.businesses.find(b => b.project_id === project)?.name || "";
+  const sources = sourceReport((d.board ?? []).filter(c => c.source !== "owner" || c.stage !== "new")).filter(r => r.source !== "other" || r.won > 0);
+  const earners = sources.filter(r => r.won > 0), quiet = sources.filter(r => r.won === 0);
+  const srcMax = Math.max(1, ...earners.map(r => r.wonValue));
 
   if ((setupOpen || (!demo && !setupDone && d.setup && !d.setup.onboarded_at)) && !open) return <Onboarding project={project} initial={d.setup ?? {}} api={api}
     onDone={() => setSetupDone(true)} onClose={() => { setSetupOpen(false); setSetupDone(true); setTab("jobs"); window.scrollTo(0, 0); void load(project, "jobs"); }} />;
@@ -452,6 +456,14 @@ export default function CinderApp() {
           <div><span>Estimates booked</span><b>{L.booked}</b><em>On your calendar</em></div>
           <div><span>Quotes being chased</span><b>{L.chasing}</b><em>{L.chasingValue ? `${usd(L.chasingValue)} open` : " "}</em></div>
         </div>
+        {sources.length > 0 && <section className="ca-card ca-srcs"><div className="ca-card-h"><h2>Where your jobs come from</h2><span>Last 4 months</span></div>
+          {earners.length > 0 && <ul>{earners.map(r => <li key={r.source}>
+            <div className="ca-srcs-h"><b>{r.label}</b><em>{r.wonValue ? money(r.wonValue) : `${r.won} won`}</em></div>
+            <span className="ca-srcs-bar" aria-hidden="true"><i style={{ width: `${Math.max(4, (r.wonValue / srcMax) * 100)}%` }} /></span>
+            <small>{r.leads} {r.leads === 1 ? "lead" : "leads"} · {r.booked} {r.booked === 1 ? "estimate" : "estimates"} · {r.won} won{r.leads >= 3 ? ` · ${Math.round((r.won / r.leads) * 100)}% close rate` : ""}</small>
+          </li>)}</ul>}
+          {quiet.length > 0 && <p className="ca-srcs-quiet">{earners.length ? "No wins yet from " : "No jobs won yet. Leads from "}{quiet.map((r, k) => <React.Fragment key={r.source}>{k ? ", " : ""}<span>{r.label} <i>({r.leads})</i></span></React.Fragment>)}{earners.length ? "." : ". Once a job's won, this shows which source paid for it."}</p>}
+        </section>}
         {L.weeks.length > 1 && <section className="ca-card"><div className="ca-card-h"><h2>Every week</h2><span><i className="k l" />Leads<i className="k b" />Booked</span></div>
           <div className="ca-bars">{L.weeks.map(w => <div key={w.week} className="ca-bar" title={`${w.leads} leads, ${w.booked} booked`}><span><i className="l" style={{ height: (w.leads / maxW) * 100 + "%" }} /><i className="b" style={{ height: (w.booked / maxW) * 100 + "%" }} /></span><small>{w.leads}</small></div>)}</div></section>}
         {(L.won > 0 || L.revived > 0 || L.reviews > 0) && <ul className="ca-stats">
@@ -461,7 +473,8 @@ export default function CinderApp() {
         </ul>}
       </>)}
 
-      {tab === "jobs" && <JobsTab cards={d.board ?? []} trade={d.setup?.trade || ""} project={project} api={api} toast={toast} reload={() => load(project, "jobs")} onOpen={setOpen} canCall={d.canCall} wide={wide} />}
+      {tab === "jobs" && <JobsTab cards={d.board ?? []} trade={d.setup?.trade || ""} project={project} api={api} toast={toast} reload={() => load(project, "jobs")} onOpen={setOpen} canCall={d.canCall} wide={wide}
+        biz={{ reviewLink: d.setup?.has_review_link === "yes" || !!d.hasReviewLink, number: d.setup?.has_number === "yes" || !!d.number, owner: d.owner, business: d.business }} winback={d.winback} />}
 
       {tab === "estimates" && <CalendarTab d={d} project={project} onOpen={setOpen} reload={() => load(project, "estimates")} toast={toast} />}
 

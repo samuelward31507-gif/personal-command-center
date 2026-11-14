@@ -4,6 +4,7 @@ import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
 import { addLead, moveStage, saveCard, saveOwnerSetup } from "@/lib/client-crm-run";
+import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,12 +21,17 @@ const UUID = /^[0-9a-f-]{36}$/i;
  *  outcome { appt, result, amount?, review? } — how an estimate went: quoted (Cinder follows up on the quote), won (counts the job,
  *    optionally asks for a Google review), no_show (texts them to rebook).
  *  quote { quote, status, amount? } — a quote Cinder is chasing was won or lost.
+ *  stage { thread, stage, amount?, link?, note?, install?, review? } — move a card. Quoted with link texts the customer a quote they
+ *    can approve; won with install and review asks for a Google review the day after the install.
+ *  quotelink { thread, note? } — text (or re-text) the quote link. reviewnow { thread } — the job's done: ask for the review now.
+ *  winback { body } — the owner's text to past customers who agreed to offers.
  */
 export async function POST(req: Request) {
   const s = appSession(req);
   if (!s) return json({ error: "Sign in" }, 401);
   const b = await req.json().catch(() => ({})) as { p?: string; action?: string; thread?: string; body?: string; status?: string; appt?: string; result?: string; amount?: string; review?: boolean; quote?: string;
-    setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string };
+    setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
+    link?: boolean; note?: string; install?: string | null; send?: boolean };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -40,12 +46,26 @@ export async function POST(req: Request) {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
       const amount = b.amount ? parseAmount(b.amount) : null;
       if (b.amount && amount == null) return json({ error: "Type the amount as a number, like 9400." }, 400);
-      if (b.action === "stage") { const r = await moveStage(sql, c, b.thread, String(b.stage), amount); return r.ok ? json({ ok: true }) : json({ error: r.error }, 409); }
+      if (b.action === "stage") {
+        const r = await moveStage(sql, c, b.thread, String(b.stage), amount, { install: b.install, review: b.review });
+        if (!r.ok) return json({ error: r.error }, 409);
+        if (b.stage !== "quoted" || !b.link) return json({ ok: true });
+        // Quoted, and the owner wants the customer to have it: text the link they approve from.
+        const l = await sendQuoteLink(sql, c, b.thread, b.note);
+        return json({ ok: true, link: l.url ?? "", sent: l.sent, warn: l.sent ? "" : l.error ?? "" });
+      }
       let value: number | null | undefined;
       if (b.value !== undefined) { value = b.value === null || b.value === "" ? null : parseAmount(String(b.value)); if (b.value && value == null) return json({ error: "Type the job value as a number, like 9400." }, 400); }
-      const r = await saveCard(sql, c, b.thread, { details: b.details, value, notes: b.notes, name: b.name });
+      const r = await saveCard(sql, c, b.thread, { details: b.details, value, notes: b.notes, name: b.name, install: b.install, review: b.review });
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
     }
+    if (b.action === "quotelink" || b.action === "reviewnow") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      if (b.action === "reviewnow") { const r = await reviewNow(sql, c, b.thread); return r.ok ? json({ ok: true }) : json({ error: r.error }, 409); }
+      const l = await sendQuoteLink(sql, c, b.thread, b.note, b.send !== false);
+      return l.ok ? json({ ok: true, link: l.url ?? "", sent: l.sent, warn: l.sent ? "" : l.error ?? "" }) : json({ error: l.error }, 409);
+    }
+    if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
     if (b.action === "message") {
       const body = String(b.body ?? "").trim().slice(0, 4000);
       if (!body) return json({ error: "Write a message first." }, 400);

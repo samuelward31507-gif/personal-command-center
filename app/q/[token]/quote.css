@@ -1,0 +1,49 @@
+/* The customer's quote page: the owner's business front and center, one obvious button, made for a phone. */
+html:has(.qp) { background: #f4f4f1 !important; }
+html body:not(#u) .qp { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: max(28px, env(safe-area-inset-top)) 18px 40px;
+  background: #f4f4f1 !important; color: #121417 !important; font-family: var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif !important; -webkit-font-smoothing: antialiased; }
+html body:not(#u) .qp * { box-sizing: border-box; }
+html body:not(#u) .qp :is(button, textarea) { font-family: inherit !important; text-transform: none !important; letter-spacing: normal; box-shadow: none; margin: 0; }
+html body:not(#u) .qp-biz { width: 100%; max-width: 440px; display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+html body:not(#u) .qp-biz b { font: 600 17px/1.2 var(--font-display), "Inter Tight", "Inter", sans-serif; letter-spacing: -0.015em; }
+html body:not(#u) .qp-mono { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: #121417; color: #fff; font: 700 16px/1 var(--font-display), "Inter", sans-serif; }
+html body:not(#u) .qp-card { width: 100%; max-width: 440px; background: #fff !important; border: 1px solid rgba(18, 20, 23, .08); border-radius: 22px; padding: 26px 22px 22px;
+  box-shadow: 0 1px 2px rgba(18, 20, 23, .04), 0 18px 40px -24px rgba(18, 20, 23, .25); }
+html body:not(#u) .qp-k { margin: 0; color: #666c76 !important; font-size: 14px; }
+html body:not(#u) .qp-amt { margin: 6px 0 0; font: 650 46px/1.05 var(--font-display), "Inter Tight", "Inter", sans-serif; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; color: #121417 !important; }
+html body:not(#u) .qp-line { margin: 10px 0 0; color: #3d424a !important; font-size: 16px; line-height: 1.45; }
+html body:not(#u) .qp-note { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(18, 20, 23, .08); }
+html body:not(#u) .qp-note h2 { margin: 0 0 6px !important; font-family: inherit !important; font-size: 14px !important; font-weight: 600 !important; line-height: 1.3 !important; letter-spacing: 0 !important; color: #121417 !important; text-transform: none !important; }
+html body:not(#u) .qp-note p { margin: 0; color: #3d424a !important; font-size: 15px; line-height: 1.55; white-space: pre-line; }
+html body:not(#u) .qp-acts { margin-top: 24px; display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+html body:not(#u) button.qp-go { height: 56px; border: 0 !important; border-radius: 15px !important; background: #121417 !important; color: #fff !important; font-size: 17px !important; font-weight: 600; cursor: pointer; transition: transform .12s, opacity .15s; }
+html body:not(#u) button.qp-go:active { transform: scale(.985); }
+html body:not(#u) button.qp-go:disabled { opacity: .6; }
+html body:not(#u) .qp-fine { margin: 0 0 6px; text-align: center; color: #8a9098 !important; font-size: 13px; }
+html body:not(#u) a.qp-ask { height: 50px; display: grid; place-items: center; border-radius: 15px; border: 1px solid rgba(18, 20, 23, .14); color: #121417 !important; font-size: 16px; font-weight: 550; text-decoration: none; }
+html body:not(#u) button.qp-link { align-self: center; margin-top: 4px; padding: 8px 10px; border: 0 !important; background: none !important; color: #666c76 !important; font-size: 14.5px !important; text-decoration: underline; text-decoration-color: rgba(18, 20, 23, .2); text-underline-offset: 3px; cursor: pointer; }
+html body:not(#u) .qp-no { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; }
+html body:not(#u) .qp-no label { font-size: 15px; font-weight: 550; color: #121417; }
+html body:not(#u) .qp-no label em { font-style: normal; font-weight: 400; color: #8a9098; }
+html body:not(#u) .qp-no textarea { width: 100%; padding: 12px 14px !important; border-radius: 13px !important; border: 1px solid rgba(18, 20, 23, .14) !important; background: #fff !important; color: #121417 !important; font-size: 16px !important; line-height: 1.45; resize: vertical; }
+html body:not(#u) .qp-no textarea:focus { outline: none; border-color: #121417 !important; box-shadow: 0 0 0 4px rgba(18, 20, 23, .07) !important; }
+html body:not(#u) .qp-row { display: flex; gap: 10px; margin-top: 6px; }
+html body:not(#u) .qp-row button { flex: 1; height: 50px; border-radius: 14px !important; font-size: 15.5px !important; font-weight: 600; cursor: pointer; }
+html body:not(#u) button.qp-ghost { border: 1px solid rgba(18, 20, 23, .14) !important; background: #fff !important; color: #121417 !important; }
+html body:not(#u) button.qp-dark { border: 0 !important; background: #121417 !important; color: #fff !important; }
+html body:not(#u) .qp-done { margin-top: 24px; display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: 16px; background: #f6f6f4; }
+html body:not(#u) .qp-done.ok { background: rgba(23, 144, 90, .08); }
+html body:not(#u) .qp-done > span { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: #17905a; color: #fff; animation: qp-pop .35s cubic-bezier(.2, 1.4, .4, 1); }
+html body:not(#u) .qp-done b { display: block; font-size: 16.5px; color: #121417; }
+html body:not(#u) .qp-done p { margin: 4px 0 0; color: #3d424a !important; font-size: 15px; line-height: 1.5; }
+html body:not(#u) .qp-done a { color: #121417 !important; }
+html body:not(#u) .qp-err { margin: 14px 0 0; color: #b42318 !important; font-size: 14px; text-align: center; }
+html body:not(#u) .qp-msg h1 { margin: 0 0 8px; font: 600 24px/1.2 var(--font-display), "Inter", sans-serif !important; letter-spacing: -0.02em !important; color: #121417 !important; }
+html body:not(#u) .qp-msg p { margin: 0; color: #4a4f57 !important; font-size: 15.5px; line-height: 1.5; }
+html body:not(#u) .qp-load { display: flex; flex-direction: column; gap: 12px; }
+html body:not(#u) .qp-load i { display: block; height: 16px; border-radius: 8px; background: #efefec; }
+html body:not(#u) .qp-load i:nth-child(2) { height: 44px; width: 60%; }
+html body:not(#u) .qp-load i:nth-child(3) { width: 80%; }
+html body:not(#u) .qp-foot { margin: 18px 0 0; color: #8a9098 !important; font-size: 12.5px; }
+@keyframes qp-pop { from { transform: scale(.5); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { html body:not(#u) .qp-done > span { animation: none; } }

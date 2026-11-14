@@ -36,6 +36,10 @@ export async function clientById(sql: Sql, owner: string, projectId: string): Pr
   return { projectId: String(r.project_id), owner: String(r.owner_id), setup: (r.setup && typeof r.setup === "object" ? r.setup : {}) as Record<string, string>, messages: cleanMessages(r.messages) };
 }
 
+/** Where customer-facing links point: the app's own domain. */
+export const appOrigin = () => (process.env.CINDER_APP_URL?.trim() || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? "https://" + process.env.VERCEL_PROJECT_PRODUCTION_URL : "https://personal-command-center-ten-ruby.vercel.app")).replace(/\/$/, "");
+export const quoteUrl = (token: string) => `${appOrigin()}/q/${token}`;
+
 const varsFor = (c: Client, first = ""): Vars => ({ first, business: c.setup.display_name, owner: c.setup.owner_name, link: c.setup.booking_link, review_link: c.setup.review_link });
 const e164 = (p: string) => { const d = digits10(p); return d.length === 10 ? "+1" + d : ""; };
 const tzOf = (c: Client) => c.setup.timezone || "America/Denver";
@@ -77,7 +81,7 @@ async function roomFor(sql: Sql, threadId: string): Promise<boolean> {
   return automatedRoom({ outLast24h: r?.out24 ?? 0, inLast24h: r?.in24 ?? 0 });
 }
 /** Tell the owner: a text to their cell, and a push to the Cinder app on every device they turned it on for. */
-async function alertOwner(c: Client, text: string, threadId?: string, sql?: Sql) {
+export async function alertOwner(c: Client, text: string, threadId?: string, sql?: Sql) {
   const cell = e164(c.setup.owner_cell || "");
   // Remember who this alert was about, so the owner can answer it by text ("QUOTE 4200").
   if (sql && threadId) await sql`UPDATE public.client_threads SET owner_alerted_at = now() WHERE id = ${threadId}::uuid`.catch(() => {});
@@ -330,8 +334,8 @@ export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Pr
       AND EXISTS (SELECT 1 FROM public.client_ops o WHERE o.project_id = q.project_id AND coalesce(o.setup->>'repeat_service', '') <> '')
       AND NOT EXISTS (SELECT 1 FROM public.client_threads t WHERE t.project_id = q.project_id AND t.status IN ('opted_out', 'booked')
         AND right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10))`.catch(e => console.error("Reactivation re-queue failed", e));
-  const quotes = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.sent_on, q.steps_sent, q.kind
-    FROM public.client_quotes q WHERE q.status = 'open' ORDER BY q.sent_on LIMIT 1000` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; sent_on: string; steps_sent: number; kind: string }[];
+  const quotes = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.sent_on, q.steps_sent, q.kind, q.token
+    FROM public.client_quotes q WHERE q.status = 'open' ORDER BY q.sent_on LIMIT 1000` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; sent_on: string; steps_sent: number; kind: string; token: string | null }[];
   let sent = 0, skipped = 0;
   const clients = new Map<string, Client | null>();
   for (const q of quotes) {
@@ -350,7 +354,9 @@ export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Pr
     if (t.status === "opted_out" || t.status === "paused") { skipped++; continue; }
     if (!(await roomFor(sql, t.id))) { skipped++; continue; }
     const k = `${seqKey}_${step + 1}`;
-    const body = fill(say(c, k, seq.texts[step], t.lang === "es" ? "es" : "en"), varsFor(c, q.customer_name.split(" ")[0]));
+    // A quote the customer can approve from a link: every follow-up carries it, so each one is a tap away from a yes.
+    const link = q.kind === "quote" && q.token ? (t.lang === "es" ? ` Su cotización: ${quoteUrl(q.token)}` : ` Your quote: ${quoteUrl(q.token)}`) : "";
+    const body = fill(say(c, k, seq.texts[step], t.lang === "es" ? "es" : "en"), varsFor(c, q.customer_name.split(" ")[0])) + link;
     const ok = await sendToCustomer(sql, c, t.id, q.customer_phone, body, "template");
     await sql`UPDATE public.client_quotes SET steps_sent = steps_sent + 1, last_step_at = now(),
       status = CASE WHEN steps_sent + 1 >= ${seq.days.length} THEN 'lost' ELSE status END WHERE id = ${q.id}::uuid`;

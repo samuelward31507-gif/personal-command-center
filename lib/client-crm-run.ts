@@ -1,25 +1,29 @@
 // The client CRM on the server: the board, moving a customer between stages, editing a card, adding a lead by hand,
 // and the owner's own setup. Every write is scoped to the signed-in owner's business.
 import type { neon } from "@neondatabase/serverless";
-import { ballpark, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, type Details, type Stage } from "@/lib/crm";
+import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, type Card, type Stage } from "@/lib/crm";
 import { digits10 } from "@/lib/client-runtime";
 import { emitEvent } from "@/lib/client-webhook";
-import type { Client } from "@/lib/client-runtime-run";
+import { quoteUrl, type Client } from "@/lib/client-runtime-run";
 
 type Sql = ReturnType<typeof neon>;
-export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
-  ballpark: { low: number; high: number } | null; notes: string; quote: { id: string; amount: number | null; status: string; steps: number } | null; next: string | null; at: string };
+export type { Card };
 
 const today = (c: Client) => new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" });
 
 /** Every customer worth a card: active in the last 120 days, or still booked or quoted. Review and "you're due" texts aren't leads. */
 export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
   const rows = await sql`SELECT t.id, t.customer_name, t.customer_phone, t.source, t.status, t.stage, t.details, t.value::float AS value, t.notes,
-      coalesce(t.last_in_at, t.updated_at) AS at, q.id AS quote_id, q.amount::float AS quote_amount, q.status AS quote_status, q.steps_sent AS quote_steps, a.starts_at AS next_appt
+      coalesce(t.last_in_at, t.updated_at) AS at, q.id AS quote_id, q.amount::float AS quote_amount, q.status AS quote_status, q.steps_sent AS quote_steps,
+      q.token AS quote_token, q.link_sent_at IS NOT NULL AS quote_linked, q.viewed_at AS quote_viewed, q.note AS quote_note, a.starts_at AS next_appt,
+      t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent,
+      (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied
     FROM public.client_threads t
-    LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
+    LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
       AND right(regexp_replace(x.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
       ORDER BY x.created_at DESC LIMIT 1) q ON true
+    LEFT JOIN LATERAL (SELECT sent_at FROM public.client_reviews r WHERE r.project_id = t.project_id
+      AND right(regexp_replace(r.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10) ORDER BY sent_at DESC LIMIT 1) rv ON true
     LEFT JOIN LATERAL (SELECT starts_at FROM public.client_appointments y WHERE y.thread_id = t.id AND y.status = 'booked' AND y.starts_at > now() - interval '12 hours'
       ORDER BY y.starts_at LIMIT 1) a ON true
     WHERE t.project_id = ${c.projectId}::uuid AND t.source NOT IN ('review', 'due')
@@ -30,13 +34,17 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
   return rows.map(r => {
     const details = cleanDetails(c.setup.trade, r.details);
     const bp = share ? ballpark(book, details) : null;
-    const quote = r.quote_id ? { id: String(r.quote_id), amount: r.quote_amount == null ? null : Number(r.quote_amount), status: String(r.quote_status), steps: Number(r.quote_steps ?? 0) } : null;
+    const quote = r.quote_id ? { id: String(r.quote_id), amount: r.quote_amount == null ? null : Number(r.quote_amount), status: String(r.quote_status), steps: Number(r.quote_steps ?? 0),
+      linked: !!r.quote_linked, url: r.quote_token ? quoteUrl(String(r.quote_token)) : null, viewed: r.quote_viewed ? new Date(String(r.quote_viewed)).toISOString() : null, note: String(r.quote_note ?? "") } : null;
+    const next = r.next_appt ? new Date(String(r.next_appt)).toISOString() : null;
+    // A past customer answered a win-back text: a new job, so it starts over in New (or Booked once Cinder books it).
+    const again = !!r.winback_replied;
     return {
       id: String(r.id), name: String(r.customer_name || ""), phone: String(r.customer_phone), source: String(r.source), status: String(r.status),
-      stage: stageFor({ stage: r.stage as string | null, status: String(r.status), quote_status: quote?.status ?? null, next_appt: r.next_appt ? String(r.next_appt) : null }),
-      details, line: detailLine(c.setup.trade, details), value: r.value != null ? Number(r.value) : quote?.amount ?? null,
-      ballpark: bp ? { low: bp.low, high: bp.high } : null, notes: String(r.notes ?? ""), quote, next: r.next_appt ? new Date(String(r.next_appt)).toISOString() : null,
-      at: new Date(String(r.at)).toISOString(),
+      stage: again ? (r.status === "booked" || next ? "booked" : "new") : stageFor({ stage: r.stage as string | null, status: String(r.status), quote_status: quote?.status ?? null, next_appt: next }),
+      details, line: detailLine(c.setup.trade, details), value: again ? null : r.value != null ? Number(r.value) : quote?.amount ?? null,
+      ballpark: bp ? { low: bp.low, high: bp.high } : null, notes: String(r.notes ?? ""), quote: again ? null : quote, next, at: new Date(String(r.at)).toISOString(),
+      install: r.install_on ? String(r.install_on) : null, reviewAuto: !!r.review_auto, reviewSent: r.review_sent ? new Date(String(r.review_sent)).toISOString() : null, pastCustomer: again,
     };
   });
 }
@@ -59,7 +67,7 @@ const event = (c: Client, t: { id: string; customer_name: string; customer_phone
  * Move a customer to a stage. Quoted starts (or restarts) the quote follow-up; won and lost close the quote and stop
  * the follow-ups; booked and new only change the card. Amount is the quote or job value.
  */
-export async function moveStage(sql: Sql, c: Client, threadId: string, stage: string, amount: number | null): Promise<{ ok: boolean; error?: string }> {
+export async function moveStage(sql: Sql, c: Client, threadId: string, stage: string, amount: number | null, opts: { install?: unknown; review?: boolean } = {}): Promise<{ ok: boolean; error?: string }> {
   if (!(STAGES as readonly string[]).includes(stage)) return { ok: false, error: "Unknown stage." };
   const t = await threadOf(sql, c, threadId);
   if (!t) return { ok: false, error: "Not found." };
@@ -78,6 +86,8 @@ export async function moveStage(sql: Sql, c: Client, threadId: string, stage: st
     if (open) await sql`UPDATE public.client_quotes SET status = ${stage}, amount = coalesce(${amount}, amount), last_step_at = now() WHERE id = ${open.id}::uuid`;
     else if (stage === "won") await sql`INSERT INTO public.client_quotes (owner_id, project_id, customer_phone, customer_name, amount, sent_on, status, last_step_at) VALUES (${c.owner}, ${c.projectId}::uuid, ${t.customer_phone}, ${t.customer_name}, ${amount}, ${today(c)}::date, 'won', now())`;
     await sql`UPDATE public.client_threads SET status = 'closed', updated_at = now() WHERE id = ${t.id}::uuid AND status <> 'opted_out'`;
+    // Won: when the install is, and whether Cinder asks for the Google review the day after it.
+    if (stage === "won") await sql`UPDATE public.client_threads SET install_on = ${cleanDate(opts.install)}::date, review_auto = ${!!opts.review && !!c.setup.review_link} WHERE id = ${t.id}::uuid`;
     await note(stage === "won" ? `Job won${usd}` : "Marked lost. Follow-ups stopped.");
     void emitEvent(c.setup, c.projectId, stage === "won" ? "job.won" : "job.lost", event(c, t, { amount }));
   } else {
@@ -90,7 +100,7 @@ export async function moveStage(sql: Sql, c: Client, threadId: string, stage: st
 }
 
 /** Edit what the owner knows about the job: details in the trade's words, the job value, notes, the name. */
-export async function saveCard(sql: Sql, c: Client, threadId: string, input: { details?: unknown; value?: number | null; notes?: string; name?: string }): Promise<{ ok: boolean; error?: string }> {
+export async function saveCard(sql: Sql, c: Client, threadId: string, input: { details?: unknown; value?: number | null; notes?: string; name?: string; install?: unknown; review?: boolean }): Promise<{ ok: boolean; error?: string }> {
   const t = await threadOf(sql, c, threadId);
   if (!t) return { ok: false, error: "Not found." };
   const details = input.details === undefined ? null : cleanDetails(c.setup.trade, input.details);
@@ -102,6 +112,8 @@ export async function saveCard(sql: Sql, c: Client, threadId: string, input: { d
       notes = coalesce(${notes}, notes), customer_name = coalesce(${name}, customer_name),
       value = CASE WHEN ${value === undefined}::boolean THEN value ELSE ${value ?? null}::numeric END, updated_at = now()
     WHERE id = ${t.id}::uuid`;
+  if (input.install !== undefined) await sql`UPDATE public.client_threads SET install_on = ${cleanDate(input.install)}::date WHERE id = ${t.id}::uuid`;
+  if (input.review !== undefined) await sql`UPDATE public.client_threads SET review_auto = ${!!input.review && !!c.setup.review_link} WHERE id = ${t.id}::uuid`;
   void emitEvent(c.setup, c.projectId, "lead.updated", event(c, { ...t, customer_name: name ?? t.customer_name }, { details: details ?? undefined, notes: notes ?? undefined, value }));
   return { ok: true };
 }
@@ -130,5 +142,5 @@ export async function addLead(sql: Sql, c: Client, input: { name?: string; phone
 /** For the setup flow: what the owner already told us (or Sam filled in), so nothing is asked twice. */
 export function ownerSetupView(setup: Record<string, string>) {
   const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at"];
-  return Object.fromEntries(k.map(x => [x, setup[x] ?? ""]));
+  return { ...Object.fromEntries(k.map(x => [x, setup[x] ?? ""])), has_review_link: setup.review_link ? "yes" : "", has_number: setup.texting_number ? "yes" : "" };
 }

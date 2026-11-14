@@ -196,3 +196,67 @@ Job details (so the owner gets an estimate-ready lead):
 - Add "job" to your JSON with anything the customer told you, using these keys: ${keys}. Numbers as numbers (feet, gates). Only what they said; never guess.
 ${bp ? `- Ballpark from the owner's own prices for ${bp.basis}: ${rangeText(bp)}. You may share this once, as a range, and say the final price comes after measuring. Never give any other number.` : "- No ballpark yet: don't give a price number unless the pricing guidance gives one."}`;
 }
+
+// ---------- The board's card (shared by the server, the app and the example business) ----------
+export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
+  ballpark: { low: number; high: number } | null; notes: string; next: string | null; at: string;
+  quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string } | null;
+  install: string | null; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean };
+
+// ---------- Where the jobs come from ----------
+export const SOURCE_LABEL: Record<string, string> = { missed_call: "Missed calls", text: "Texts", "web form": "Website form", "web chat": "Website chat", angi: "Angi", thumbtack: "Thumbtack",
+  facebook: "Facebook", google: "Google", yelp: "Yelp", nextdoor: "Nextdoor", owner: "Added by you", rehash: "Old leads", zapier: "Forms", referral: "Referrals" };
+export type SourceRow = { source: string; label: string; leads: number; booked: number; won: number; wonValue: number };
+/** Leads, estimates and won jobs per lead source, from the board itself: no setup, nothing to tag. Best earner first. */
+export function sourceReport(cards: Pick<Card, "source" | "stage" | "value" | "quote">[]): SourceRow[] {
+  const rows = new Map<string, SourceRow>();
+  for (const c of cards) {
+    const key = SOURCE_LABEL[c.source] ? c.source : "other";
+    const r = rows.get(key) ?? { source: key, label: SOURCE_LABEL[key] ?? "Other", leads: 0, booked: 0, won: 0, wonValue: 0 };
+    r.leads++;
+    if (c.stage === "booked" || c.stage === "quoted" || c.stage === "won") r.booked++;
+    if (c.stage === "won") { r.won++; r.wonValue += c.value ?? c.quote?.amount ?? 0; }
+    rows.set(key, r);
+  }
+  return [...rows.values()].sort((a, b) => b.wonValue - a.wonValue || b.won - a.won || b.leads - a.leads);
+}
+
+// ---------- Quotes the customer approves with one tap ----------
+export const QUOTE_TOKEN = /^[A-Za-z0-9_-]{24}$/;
+/** The text that carries the quote link. Short enough for one or two SMS segments. */
+export function quoteText(v: { first: string; business: string; amount: number | null; line: string; url: string }): string {
+  const biz = v.business.trim().replace(/\.+$/, "") || "us";
+  const what = [v.amount ? money(v.amount) : "", v.line ? `for ${v.line}` : ""].filter(Boolean).join(" ");
+  return `Hi${v.first ? " " + v.first : ""}, here's your quote from ${biz}${what ? `: ${what}` : ""}. You can look it over and approve it here: ${v.url}`;
+}
+
+// ---------- After the job: the review ask ----------
+/** The review goes out the day after the install, not the day of: the crew's gone and the yard's cleaned up. */
+export function reviewDue(install: string | null, today: string): boolean {
+  return !!install && /^\d{4}-\d{2}-\d{2}$/.test(install) && install < today;
+}
+export const cleanDate = (v: unknown): string | null => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v + "T12:00:00Z")) ? v : null;
+
+// ---------- Win back past customers ----------
+/** A ready-to-send check-in for past customers, by trade and season. The owner can rewrite it before it goes. */
+export function winbackDraft(trade: string | undefined, owner: string, business: string, month = new Date().getMonth()): string {
+  const first = owner.trim().split(" ")[0], biz = business.trim().replace(/\.+$/, "") || "us";
+  const intro = first ? `it's ${first} with ${biz}` : `it's ${biz}`;
+  const spring = month >= 1 && month <= 5;
+  const t = (trade || "").toLowerCase();
+  const ask = t === "fence" ? (spring ? "Spring's a good time to stain, seal or fix any boards that moved over the winter." : "Before winter is a good time to fix loose boards and leaning posts.")
+    : t === "pool" ? (spring ? "Opening season is coming up." : "Closing season is coming up.")
+    : t.includes("clean") || t === "auto detailing" ? "It's been a while since your last visit."
+    : "Checking in on the work we did for you.";
+  return `Hi {first}, ${intro}. ${ask} Want us to come take a look? Just reply YES.`;
+}
+/** Owner-edited win-back wording: plain text, the business named, a real ask, one message long. */
+export function cleanWinback(body: unknown, business: string): { ok: true; text: string } | { ok: false; error: string } {
+  const s = String(body ?? "").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, " ").replace(/[ \t]+/g, " ").trim();
+  if (s.length < 20) return { ok: false, error: "Write a little more so they know what you're offering." };
+  if (s.length > 320) return { ok: false, error: "Keep it under 320 characters so it arrives as one text." };
+  if (/https?:\/\/|www\./i.test(s)) return { ok: false, error: "Leave links out. Carriers often block texts like this with links." };
+  const biz = business.trim().replace(/\.+$/, "");
+  if (biz && !s.toLowerCase().includes(biz.toLowerCase().split(" ")[0])) return { ok: false, error: `Say it's from ${biz} so they know who's texting.` };
+  return { ok: true, text: s };
+}

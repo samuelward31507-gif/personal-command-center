@@ -1,6 +1,6 @@
 // CRM checks: trade fields, the owner's price book, the ballpark, stages and the owner's own setup.
 import assert from "node:assert/strict";
-import { jobFields, cleanDetails, detailLine, parsePriceBook, ballpark, matchRate, stageFor, cleanOwnerSetup, rangeText, previewFirstText } from "./lib/crm.ts";
+import { jobFields, cleanDetails, detailLine, parsePriceBook, ballpark, matchRate, stageFor, cleanOwnerSetup, rangeText, previewFirstText, sourceReport, quoteText, reviewDue, cleanDate, winbackDraft, cleanWinback, QUOTE_TOKEN } from "./lib/crm.ts";
 
 let n = 0; const ok = fn => { fn(); n++; };
 
@@ -49,5 +49,35 @@ ok(() => assert.equal(s.website, "https://frontrangefence.com"));
 ok(() => assert.equal(JSON.parse(s.price_book).rates[0].name, "Vinyl"));
 ok(() => assert.equal(cleanOwnerSetup({ trade: "Plumbing" }).trade, undefined));
 ok(() => assert.match(previewFirstText("Front Range Fence", "Fence"), /Front Range Fence.*fence.*Reply STOP to opt out\.$/));
+
+
+// Where jobs come from
+const rep = sourceReport([
+  { source: "angi", stage: "won", value: 9000, quote: null }, { source: "angi", stage: "quoted", value: null, quote: null }, { source: "angi", stage: "lost", value: null, quote: null },
+  { source: "facebook", stage: "won", value: null, quote: { amount: 3000 } }, { source: "facebook", stage: "new", value: null, quote: null },
+  { source: "missed_call", stage: "booked", value: null, quote: null }, { source: "weird", stage: "new", value: null, quote: null }]);
+ok(() => assert.deepEqual(rep.map(r => [r.label, r.leads, r.booked, r.won, r.wonValue]), [["Angi", 3, 2, 1, 9000], ["Facebook", 2, 1, 1, 3000], ["Missed calls", 1, 1, 0, 0], ["Other", 1, 0, 0, 0]]));
+
+// Quote link text
+ok(() => assert.equal(quoteText({ first: "Dana", business: "Ridgeline Fence Co.", amount: 4200, line: "80 ft · 6 ft cedar", url: "https://x.co/q/abc" }),
+  "Hi Dana, here's your quote from Ridgeline Fence Co: $4,200 for 80 ft · 6 ft cedar. You can look it over and approve it here: https://x.co/q/abc"));
+ok(() => assert.equal(quoteText({ first: "", business: "Acme", amount: null, line: "", url: "u" }), "Hi, here's your quote from Acme. You can look it over and approve it here: u"));
+ok(() => assert.ok(QUOTE_TOKEN.test("abcdefghijklmnopqrstuvwx") && !QUOTE_TOKEN.test("short") && !QUOTE_TOKEN.test("abcdefghijklmnopqrstuv'x")));
+
+// Review timing
+ok(() => assert.equal(reviewDue("2026-11-13", "2026-11-14"), true));
+ok(() => assert.equal(reviewDue("2026-11-14", "2026-11-14"), false, "not the day of the install"));
+ok(() => assert.equal(reviewDue(null, "2026-11-14"), false));
+ok(() => assert.equal(cleanDate("2026-11-18"), "2026-11-18"));
+ok(() => assert.equal(cleanDate("2026-13-40"), null));
+ok(() => assert.equal(cleanDate("tomorrow"), null));
+
+// Win back
+ok(() => assert.equal(winbackDraft("Fence", "Mike Ross", "Ridgeline Fence Co.", 3), "Hi {first}, it's Mike with Ridgeline Fence Co. Spring's a good time to stain, seal or fix any boards that moved over the winter. Want us to come take a look? Just reply YES."));
+ok(() => assert.match(winbackDraft("Fence", "", "Acme", 9), /^Hi \{first\}, it's Acme\. Before winter/));
+ok(() => assert.equal(cleanWinback("Hi {first}, Ridgeline here. Want a stain this spring? Reply YES.", "Ridgeline Fence Co.").ok, true));
+ok(() => assert.equal(cleanWinback("Hi {first}, want a stain this spring? Reply YES.", "Ridgeline Fence Co.").ok, false, "must name the business"));
+ok(() => assert.equal(cleanWinback("Hi Ridgeline here, see https://x.co for a deal now", "Ridgeline").ok, false, "no links"));
+ok(() => assert.equal(cleanWinback("short", "R").ok, false));
 
 console.log(`CRM checks passed (${n} assertions).`);

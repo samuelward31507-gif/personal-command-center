@@ -5,6 +5,7 @@ import { publishDue } from "@/lib/content-publish-run";
 import { metaConfig } from "@/lib/meta-publish";
 import { runDueTexts, runHandoffChecks, runLeadNudges, sendMondayReports, sendReminders } from "@/lib/client-runtime-run";
 import { loadWorkspace } from "@/lib/workspace-data";
+import { runAutoReviews } from "@/lib/client-close-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +37,8 @@ export async function GET(request: Request) {
     texts.handoffs = await runHandoffChecks(sql, started).catch(e => { console.error("Handoff checks failed", e); return null; });
     if (hour >= 9 && hour < 19) {
       texts.reminders = await sendReminders(sql).catch(e => { console.error("Reminders failed", e); return null; });
+      // The day after an install the owner marked won: the Google review ask (each client's own hours are checked too).
+      texts.reviews = await runAutoReviews(sql).catch(e => { console.error("Review asks failed", e); return null; });
       if (weekday === "Mon") texts.mondayReports = await sendMondayReports(sql, origin, new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(started)).catch(e => { console.error("Monday reports failed", e); return null; });
     }
     const r = metaConfig() ? await publishDue(sql, o, origin, 6) : { posted: 0, failed: 0, skipped: "Meta not connected" };

@@ -6,11 +6,11 @@ import { useEffect, useMemo, useState } from "react";
 import { CinderLogo } from "../cinder-brand";
 import {
   ballpark, jobFields, LEAD_SOURCES, LEADS_MONTH, money, parsePriceBook, previewFirstText, PRIORITIES, rangeText, SOFTWARE, STAGE_LABEL, STAGES, TEAM_SIZES, TRADES, YEARS,
-  type Details, type PriceBook, type Rate, type Stage,
+  type Card, type Details, type PriceBook, type Rate, type Stage,
 } from "@/lib/crm";
 
-export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
-  ballpark: { low: number; high: number } | null; notes: string; quote: { id: string; amount: number | null; status: string; steps: number } | null; next: string | null; at: string };
+export type { Card };
+export type Winback = { past: number; eligible: number; names: string[]; draft: string };
 type Api = <T>(path: string, body?: unknown) => Promise<T>;
 type Toast = (t: string, bad?: boolean) => void;
 
@@ -24,7 +24,9 @@ function Svg({ d, size = 18 }: { d: React.ReactNode; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>;
 }
 const I = {
-  plus: <path d="M12 5v14M5 12h14" />, x: <path d="M6 6l12 12M18 6 6 18" />, back: <path d="M15 5l-7 7 7 7" />, check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  plus: <path d="M12 5v14M5 12h14" />, link: <><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1.2 1.2" /><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1.2-1.2" /></>,
+  star: <path d="m12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.4l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z" />, send: <path d="M4 12 20 4l-4 16-4-7z M12 13l8-9" />, eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="2.6" /></>,
+  users: <><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 5.6a3.2 3.2 0 0 1 0 5.8M17.5 13.6A5.5 5.5 0 0 1 20.5 19" /></>, x: <path d="M6 6l12 12M18 6 6 18" />, back: <path d="M15 5l-7 7 7 7" />, check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   chat: <path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 20 12z" />, phone: <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />,
 };
 
@@ -172,18 +174,30 @@ export function Onboarding({ project, initial, api, onDone, onClose }: { project
 }
 
 // ---------- Jobs board ----------
+const dateLabel = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const todayIso = () => new Date().toLocaleDateString("en-CA");
 function cardTag(c: Card): { text: string; tone?: "blue" | "green" | "warn" } {
-  if (c.stage === "won") return { text: "Won", tone: "green" };
+  if (c.pastCustomer) return { text: "Past customer", tone: "warn" };
+  if (c.stage === "won") {
+    if (c.reviewSent) return { text: "Review asked", tone: "green" };
+    if (c.install && c.install >= todayIso()) return { text: `Install ${dateLabel(c.install)}`, tone: "blue" };
+    return { text: "Won", tone: "green" };
+  }
   if (c.stage === "lost") return { text: c.status === "opted_out" ? "Opted out" : "Lost" };
-  if (c.quote && c.stage === "quoted") return c.quote.status === "replied" ? { text: "They replied", tone: "warn" } : { text: c.quote.steps ? `Follow-up ${c.quote.steps} of 4` : "Follow-up in 2 days" };
+  if (c.quote && c.stage === "quoted") {
+    if (c.quote.status === "replied") return { text: "They replied", tone: "warn" };
+    if (c.quote.viewed) return { text: "Opened the quote", tone: "blue" };
+    return { text: c.quote.steps ? `Follow-up ${c.quote.steps} of 4` : c.quote.linked ? "Quote texted" : "Follow-up in 2 days" };
+  }
   if (c.next) return { text: when(c.next), tone: "blue" };
   if (c.status === "paused") return { text: "Needs you", tone: "warn" };
   return { text: SRC[c.source] ?? c.source };
 }
 const priceOf = (c: Card) => c.value ? short(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "";
+type Biz = { reviewLink: boolean; number: boolean; owner: string; business: string };
 
-export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, canCall, wide }: { cards: Card[]; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; canCall: boolean; wide: boolean }) {
-  const [sel, setSel] = useState<string | null>(null), [adding, setAdding] = useState(false), [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Stage | null>(null);
+export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, canCall, wide, biz, winback }: { cards: Card[]; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; canCall: boolean; wide: boolean; biz: Biz; winback?: Winback }) {
+  const [sel, setSel] = useState<string | null>(null), [adding, setAdding] = useState(false), [wb, setWb] = useState(false), [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Stage | null>(null);
   const [pending, setPending] = useState<{ id: string; stage: Stage } | null>(null);
   const by = useMemo(() => Object.fromEntries(STAGES.map(s => [s, cards.filter(c => c.stage === s)])) as Record<Stage, Card[]>, [cards]);
   const open = cards.filter(c => c.stage === "new" || c.stage === "booked" || c.stage === "quoted");
@@ -201,7 +215,10 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
   return <>
     <div className="ca-hello jb-hello">
       <div><p>Your jobs</p><h1>{open.length ? <>{open.length} open {open.length === 1 ? "job" : "jobs"}{openValue ? <span> worth about {money(openValue)}</span> : null}.</> : "No open jobs yet."}</h1></div>
-      <button type="button" className="jb-add" onClick={() => setAdding(true)}><Svg d={I.plus} size={16} />Add lead</button>
+      <div className="jb-hello-acts">
+        {winback && winback.past > 0 && <button type="button" className="jb-ghost" onClick={() => setWb(true)}><Svg d={I.users} size={16} />Past customers</button>}
+        <button type="button" className="jb-add" onClick={() => setAdding(true)}><Svg d={I.plus} size={16} />Add lead</button>
+      </div>
     </div>
     <div className={"jb-board" + (wide ? " wide" : "")}>
       {STAGES.map(stage => { const list = by[stage]; const total = list.reduce((a, c) => a + (c.value ?? 0), 0); return <section key={stage} className={"jb-col" + (over === stage ? " over" : "")} aria-label={STAGE_LABEL[stage]}
@@ -217,9 +234,10 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
           : <p className="jb-empty">{stage === "new" ? "New leads land here." : stage === "booked" ? "Booked estimates." : stage === "quoted" ? "Quotes Cinder is chasing." : stage === "won" ? "Jobs you won." : "Lost or not a fit."}</p>}
       </section>; })}
     </div>
-    {card && <CardSheet key={card.id} card={card} trade={trade} project={project} api={api} toast={toast} reload={reload} onOpen={onOpen} canCall={canCall}
+    {card && <CardSheet key={card.id} card={card} trade={trade} project={project} api={api} toast={toast} reload={reload} onOpen={onOpen} canCall={canCall} biz={biz}
       pending={pending?.id === card.id ? pending.stage : null} onClose={() => { setSel(null); setPending(null); }} />}
     {adding && <AddLead trade={trade} project={project} api={api} toast={toast} reload={reload} onClose={() => setAdding(false)} />}
+    {wb && winback && <WinbackSheet w={winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setWb(false)} />}
   </>;
 }
 
@@ -237,38 +255,125 @@ function DetailFields({ trade, d, set }: { trade: string; d: Record<string, stri
   </label>)}</div>;
 }
 const asStrings = (d: Details) => Object.fromEntries(Object.entries(d).map(([k, v]) => [k, String(v)]));
+const ago = (iso: string) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 60 ? `${Math.max(1, m)} min ago` : m < 1440 ? `${Math.round(m / 60)} hr ago` : new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
 
-function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, canCall, pending }: { card: Card; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; onClose: () => void; canCall: boolean; pending: Stage | null }) {
+function Toggle({ on, set, title, sub, disabled }: { on: boolean; set: (v: boolean) => void; title: string; sub?: React.ReactNode; disabled?: boolean }) {
+  return <label className={"jb-toggle" + (disabled ? " off" : "")}><input type="checkbox" checked={on && !disabled} disabled={disabled} onChange={e => set(e.target.checked)} />
+    <i aria-hidden="true" /><span><b>{title}</b>{sub && <small>{sub}</small>}</span></label>;
+}
+
+function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, canCall, pending, biz }: { card: Card; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; onClose: () => void; canCall: boolean; pending: Stage | null; biz: Biz }) {
   const [d, setD] = useState<Record<string, string>>(() => asStrings(card.details));
   const [value, setValue] = useState(card.value ? String(card.value) : ""), [notes, setNotes] = useState(card.notes);
-  const [ask, setAsk] = useState<Stage | null>(pending), [amt, setAmt] = useState(card.value ? String(card.value) : card.quote?.amount ? String(card.quote.amount) : ""), [busy, setBusy] = useState(false), [arm, setArm] = useState(false);
-  const dirty = JSON.stringify(d) !== JSON.stringify(asStrings(card.details)) || value !== (card.value ? String(card.value) : "") || notes !== card.notes;
-  const name = card.name || fmtPhone(card.phone);
-  async function act(body: Record<string, unknown>, done: string, close = false) {
-    setBusy(true);
-    try { await api("/api/app/act", { p: project, thread: card.id, ...body }); toast(done); await reload(); if (close) onClose(); setAsk(null); return true; }
-    catch (e) { toast(e instanceof Error ? e.message : "That didn't work.", true); return false; }
-    finally { setBusy(false); setArm(false); }
+  const [ask, setAsk] = useState<Stage | null>(pending), [amt, setAmt] = useState(card.value ? String(card.value) : card.quote?.amount ? String(card.quote.amount) : ""), [busy, setBusy] = useState(""), [arm, setArm] = useState(false);
+  const canText = biz.number && card.status !== "opted_out";
+  const [incl, setIncl] = useState(card.quote?.note ?? ""), [link, setLink] = useState(canText);
+  const [install, setInstall] = useState(card.install ?? ""), [review, setReview] = useState(card.stage === "won" ? card.reviewAuto : biz.reviewLink);
+  const dirty = JSON.stringify(d) !== JSON.stringify(asStrings(card.details)) || value !== (card.value ? String(card.value) : "") || notes !== card.notes
+    || (card.stage === "won" && (install !== (card.install ?? "") || review !== card.reviewAuto));
+  const name = card.name || fmtPhone(card.phone), firstName = (card.name || "").split(" ")[0] || "them";
+  async function act(key: string, body: Record<string, unknown>, done: string | ((r: { sent?: boolean; warn?: string; link?: string }) => string), close = false) {
+    setBusy(key);
+    try {
+      const r = await api<{ sent?: boolean; warn?: string; link?: string }>("/api/app/act", { p: project, thread: card.id, ...body });
+      const msg = typeof done === "string" ? done : done(r);
+      toast(msg, !!r.warn && !r.sent); await reload(); if (close) onClose(); setAsk(null); return r;
+    } catch (e) { toast(e instanceof Error ? e.message : "That didn't work.", true); return null; }
+    finally { setBusy(""); setArm(false); }
   }
-  const pick = (s: Stage) => { if (s === card.stage) return; if (s === "quoted" || s === "won") { setAsk(s); return; } if (s === "lost" && !arm) { setArm(true); return; } void act({ action: "stage", stage: s }, `Moved to ${STAGE_LABEL[s]}.`); };
+  async function copy() {
+    const r = card.quote?.url ? { link: card.quote.url } : await act("copy", { action: "quotelink", send: false, note: incl }, "Link ready.");
+    if (!r?.link) return;
+    try { await navigator.clipboard.writeText(r.link); toast("Quote link copied."); } catch { prompt("Copy the quote link:", r.link); }
+  }
+  const pick = (s: Stage) => { if (s === card.stage) return; if (s === "quoted" || s === "won") { setAsk(s); return; } if (s === "lost" && !arm) { setArm(true); return; } void act("stage", { action: "stage", stage: s }, `Moved to ${STAGE_LABEL[s]}.`); };
+  const q = card.quote;
   return <Sheet onClose={onClose} title={<div className="jb-who"><span className="ca-av sm" aria-hidden="true">{initials(name)}</span><span><b>{name}</b><small><a href={`tel:${card.phone}`}>{fmtPhone(card.phone)}</a> · {SRC[card.source] ?? card.source}</small></span></div>}>
     <div className="jb-acts">
       <button type="button" onClick={() => { onClose(); onOpen(card.id); }}><Svg d={I.chat} size={16} />Conversation</button>
-      {canCall ? <button type="button" disabled={busy} onClick={() => void act({ action: "call" }, "Calling your cell. Pick up and we'll connect them.")}><Svg d={I.phone} size={16} />Call</button>
+      {canCall ? <button type="button" disabled={!!busy} onClick={() => void act("call", { action: "call" }, "Calling your cell. Pick up and we'll connect them.")}><Svg d={I.phone} size={16} />Call</button>
         : <a href={`tel:${card.phone}`}><Svg d={I.phone} size={16} />Call</a>}
     </div>
-    <div className="jb-stages" role="radiogroup" aria-label="Stage">{STAGES.map(s => <button key={s} type="button" role="radio" aria-checked={card.stage === s} className={(card.stage === s ? "on " : "") + (ask === s ? "ask" : "")} disabled={busy} onClick={() => pick(s)}>{s === "lost" && arm ? "Tap again" : STAGE_LABEL[s]}</button>)}</div>
-    {ask && <form className="jb-amt" onSubmit={e => { e.preventDefault(); void act({ action: "stage", stage: ask, amount: amt }, ask === "quoted" ? "Cinder will follow up on the quote until they answer." : "Marked won. Follow-ups stopped."); }}>
-      <label><span>{ask === "quoted" ? "Quote amount" : "Job amount"}</span><span className="jb-in"><i>$</i><input inputMode="decimal" autoFocus placeholder="7,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></span></label>
-      <p>{ask === "quoted" ? "Cinder texts them on day 2, 5, 10 and 21 until it's a yes or a no. Any reply stops it and comes to you." : "Stops any follow-ups and counts the job in your numbers."}</p>
-      <div className="jb-amt-row"><button type="button" onClick={() => setAsk(null)}>Cancel</button><button type="submit" className="go" disabled={busy}>{ask === "quoted" ? "Start follow-up" : "Mark won"}</button></div>
+    <div className="jb-stages" role="radiogroup" aria-label="Stage">{STAGES.map(s => <button key={s} type="button" role="radio" aria-checked={card.stage === s} className={(card.stage === s ? "on " : "") + (ask === s ? "ask" : "")} disabled={!!busy} onClick={() => pick(s)}>{s === "lost" && arm ? "Tap again" : STAGE_LABEL[s]}</button>)}</div>
+
+    {ask === "quoted" && <form className="jb-amt" onSubmit={e => { e.preventDefault(); void act("stage", { action: "stage", stage: "quoted", amount: amt, link, note: incl },
+      r => r.sent ? `Quote texted to ${firstName}. Cinder follows up until they answer.` : r.warn ? r.warn : "Cinder will follow up on the quote until they answer."); }}>
+      <label><span>Quote amount</span><span className="jb-in"><i>$</i><input inputMode="decimal" autoFocus placeholder="7,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></span></label>
+      <label><span>What&rsquo;s included <em>optional, they&rsquo;ll see it</em></span><textarea rows={2} value={incl} maxLength={600} onChange={e => setIncl(e.target.value)} placeholder="Tear-out and haul-away, steel posts in concrete, 2-year warranty" /></label>
+      <Toggle on={link} set={setLink} disabled={!canText} title={`Text ${firstName} the quote to approve`}
+        sub={!canText ? (card.status === "opted_out" ? "They opted out of texts." : "Once your number is connected.") : "One tap to approve. You hear the second they do."} />
+      <p>Cinder follows up on day 2, 5, 10 and 21{link && canText ? ", with the link each time," : ""} until it&rsquo;s a yes or a no. Any reply stops it and comes to you.</p>
+      <div className="jb-amt-row"><button type="button" onClick={() => setAsk(null)}>Cancel</button><button type="submit" className="go" disabled={!!busy}>{busy ? <span className="ca-spin" /> : link && canText ? "Send quote" : "Start follow-up"}</button></div>
     </form>}
-    {card.ballpark && <p className="jb-bp">Ballpark from your prices: <b>{rangeText(card.ballpark)}</b></p>}
+    {ask === "won" && <form className="jb-amt" onSubmit={e => { e.preventDefault(); void act("stage", { action: "stage", stage: "won", amount: amt, install: install || null, review: review && biz.reviewLink },
+      review && biz.reviewLink ? (install ? `Marked won. Cinder asks for a review on ${dateLabel(new Date(Date.parse(install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Marked won. Tap Job done when it's finished.") : "Marked won. Follow-ups stopped."); }}>
+      <div className="jb-two">
+        <label><span>Job amount</span><span className="jb-in"><i>$</i><input inputMode="decimal" autoFocus placeholder="7,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></span></label>
+        <label><span>Install date <em>optional</em></span><span className="jb-in"><input type="date" value={install} onChange={e => setInstall(e.target.value)} /></span></label>
+      </div>
+      <Toggle on={review} set={setReview} disabled={!biz.reviewLink} title="Ask for a Google review after the install"
+        sub={!biz.reviewLink ? "Send Sam your Google review link to turn this on." : install ? "Texted the morning after the install." : "Add the install date, or tap Job done when it's finished."} />
+      <div className="jb-amt-row"><button type="button" onClick={() => setAsk(null)}>Cancel</button><button type="submit" className="go" disabled={!!busy}>{busy ? <span className="ca-spin" /> : "Mark won"}</button></div>
+    </form>}
+
+    {!ask && card.stage === "quoted" && q && <section className="jb-box">
+      <div className="jb-box-h"><b>The quote{q.amount ? ` · ${money(q.amount)}` : ""}</b>
+        <span className={"jb-pill" + (q.viewed ? " blue" : "")}>{q.status === "replied" ? "They replied" : q.viewed ? <><Svg d={I.eye} size={13} />Opened {ago(q.viewed)}</> : q.linked ? "Texted, not opened yet" : "Not texted yet"}</span></div>
+      {q.note && <p className="jb-box-p">{q.note}</p>}
+      <p className="jb-box-s">{q.steps ? `Follow-up ${q.steps} of 4 sent.` : "First follow-up in 2 days."} When they approve, the card moves to Won and you get a text.</p>
+      <div className="jb-box-acts">
+        <button type="button" className="go" disabled={!!busy || !canText} onClick={() => void act("send", { action: "quotelink", note: incl }, r => r.sent ? `Quote texted to ${firstName}.` : r.warn || "Saved.")}>
+          {busy === "send" ? <span className="ca-spin" /> : <><Svg d={I.send} size={15} />{q.linked ? "Text it again" : `Text ${firstName} the quote`}</>}</button>
+        <button type="button" disabled={!!busy} onClick={() => void copy()}><Svg d={I.link} size={15} />Copy link</button>
+      </div>
+    </section>}
+
+    {!ask && card.stage === "won" && !card.pastCustomer && <section className="jb-box">
+      <div className="jb-box-h"><b>After the job</b>{card.reviewSent ? <span className="jb-pill green"><Svg d={I.star} size={13} />Review asked {ago(card.reviewSent)}</span> : null}</div>
+      <div className="jb-two">
+        <label className="jb-f"><span>Install date</span><span className="jb-in"><input type="date" value={install} onChange={e => setInstall(e.target.value)} /></span></label>
+      </div>
+      {!card.reviewSent && <Toggle on={review} set={setReview} disabled={!biz.reviewLink} title="Ask for a Google review the morning after"
+        sub={!biz.reviewLink ? "Send Sam your Google review link to turn this on." : install ? `Goes out ${dateLabel(new Date(Date.parse(install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Add the install date above."} />}
+      {!card.reviewSent && biz.reviewLink && <div className="jb-box-acts">
+        <button type="button" disabled={!!busy || !canText} onClick={() => arm ? void act("review", { action: "reviewnow" }, `Review request sent to ${firstName}.`) : setArm(true)}>
+          {busy === "review" ? <span className="ca-spin" /> : <><Svg d={I.star} size={15} />{arm ? "Tap to send it now" : "Job done, ask now"}</>}</button>
+      </div>}
+    </section>}
+
+    {card.ballpark && card.stage !== "won" && <p className="jb-bp">Ballpark from your prices: <b>{rangeText(card.ballpark)}</b></p>}
     <h3 className="jb-h3">The job</h3>
     <DetailFields trade={trade} d={d} set={(k, v) => setD(x => ({ ...x, [k]: v }))} />
     <label className="jb-f full"><span>Job value</span><span className="jb-in"><i>$</i><input inputMode="decimal" value={value} onChange={e => setValue(e.target.value.replace(/[^\d.,kK]/g, ""))} placeholder="What it's worth to you" /></span></label>
     <label className="jb-f full"><span>Notes</span><textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Gate on the left side, dog in the yard, HOA needs drawings…" /></label>
-    <div className="jb-save"><button type="button" className="go" disabled={!dirty || busy} onClick={() => void act({ action: "card", details: d, value: value || null, notes }, "Saved.")}>Save</button></div>
+    <div className="jb-save"><button type="button" className="go" disabled={!dirty || !!busy} onClick={() => void act("save", { action: "card", details: d, value: value || null, notes, ...(card.stage === "won" ? { install: install || null, review } : {}) }, "Saved.")}>Save</button></div>
+  </Sheet>;
+}
+
+function WinbackSheet({ w, biz, project, api, toast, reload, onClose }: { w: Winback; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onClose: () => void }) {
+  const [body, setBody] = useState(w.draft), [busy, setBusy] = useState(false), [arm, setArm] = useState(false), [err, setErr] = useState("");
+  useEffect(() => { if (!arm) return; const t = setTimeout(() => setArm(false), 5000); return () => clearTimeout(t); }, [arm]);
+  const sample = w.names[0] || "Dana";
+  const preview = body.replace(/\s*\{first\}(?=[,!.?])/g, " " + sample).replace(/\{first\}/g, sample).replace(/\{business\}/g, biz.business).replace(/\{owner\}/g, biz.owner);
+  const many = w.eligible === 1 ? "1 customer" : `${w.eligible} customers`;
+  return <Sheet onClose={onClose} title={<div className="jb-who"><span><b>Text past customers</b><small>Jobs you won more than a month ago</small></span></div>}>
+    <div className="wb-count">
+      <div><b>{w.past}</b><span>past {w.past === 1 ? "customer" : "customers"}</span></div>
+      <div className="on"><b>{w.eligible}</b><span>can get this text</span></div>
+    </div>
+    <p className="jb-fine wb-why">Only customers who checked &ldquo;send me offers&rdquo; on your website form can get a text like this. Everyone else only hears from you about their own job. Each customer gets one at most every 90 days.</p>
+    {w.eligible > 0 ? <>
+      <label className="jb-f full"><span>Your text <em>{body.length}/320</em></span><textarea rows={4} value={body} maxLength={320} onChange={e => { setBody(e.target.value); setErr(""); setArm(false); }} /></label>
+      <p className="wb-tip">{"{first}"} becomes each customer&rsquo;s first name. Replies go to Cinder like any lead, and land in New.</p>
+      <div className="wb-prev" aria-label="Preview"><span>{sample}&rsquo;s phone</span><div className="ob-b out">{preview}{"\n\n"}Reply STOP to opt out.</div></div>
+      {err && <p className="ca-err" role="alert">{err}</p>}
+      <div className="jb-save"><button type="button" className="go" disabled={busy || body.trim().length < 20} onClick={async () => {
+        if (!arm) { setArm(true); return; }
+        setBusy(true); setErr("");
+        try { const r = await api<{ sent: number; left: number }>("/api/app/act", { p: project, action: "winback", body }); toast(`Sent to ${r.sent} ${r.sent === 1 ? "customer" : "customers"}.${r.left ? ` ${r.left} more tomorrow.` : ""}`); await reload(); onClose(); }
+        catch (e) { setErr(e instanceof Error ? e.message : "Didn't send."); } finally { setBusy(false); setArm(false); }
+      }}>{busy ? <span className="ca-spin" /> : arm ? `Tap again to text ${many}` : `Send to ${many}`}</button></div>
+    </> : <div className="wb-none"><b>No one to text yet</b><p>Add the &ldquo;send me offers&rdquo; box to your website form (Sam can do it) and past customers who check it show up here.</p></div>}
   </Sheet>;
 }
 
