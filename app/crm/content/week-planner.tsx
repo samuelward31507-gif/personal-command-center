@@ -6,7 +6,7 @@
 import { copyText } from "@/lib/copy";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PostCard, { cardPng } from "./post-card";
-import { renderReel, scenesFor, reelExt, downloadBlob } from "./reel";
+import { getReel, reelKey, scenesFor, reelExt, downloadBlob } from "./reel";
 import { dayDate, weekStart, type Card } from "@/lib/content-engine";
 
 type Draft = {
@@ -23,7 +23,7 @@ type Data = {
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const GROUPS: { id: Draft["platform"]; title: string; note: string }[] = [
   { id: "feed", title: "Facebook + Instagram", note: "Posts itself when queued" },
-  { id: "video", title: "Reels", note: "Instagram and Facebook post themselves; download for TikTok" },
+  { id: "video", title: "Reels", note: "Made for you when you open the day. Download for TikTok" },
   { id: "linkedin", title: "LinkedIn", note: "Copy and post" },
   { id: "group", title: "Facebook groups", note: "Copy and post in 2–3 groups" },
 ];
@@ -33,6 +33,7 @@ const clock = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { hour:
 const cardsOf = (d: Draft) => (d.platform === "video" ? scenesFor(d) : d.slides.length ? d.slides : [d.card]);
 const fileBase = (d: Draft) => `cinder-${DAYS[d.day].toLowerCase()}-${d.platform === "video" ? "reel" : d.platform}-${d.n + 1}`;
 
+const MAX_UPLOAD = 4_300_000; // matches /api/content/media
 async function upload(draftId: string, idx: number, blob: Blob) {
   const r = await fetch(`/api/content/media?draft=${draftId}&idx=${idx}`, { method: "POST", headers: { "Content-Type": blob.type }, body: blob });
   const j = await r.json().catch(() => ({}));
@@ -42,8 +43,11 @@ async function upload(draftId: string, idx: number, blob: Blob) {
 /** Render and save a post's image(s) or reel. Returns the files so they can be downloaded too. */
 async function prepare(d: Draft, onProgress?: (p: number) => void, store = true): Promise<{ name: string; blob: Blob }[]> {
   if (d.platform === "video") {
-    const blob = await renderReel(scenesFor(d), onProgress);
-    if (store) await upload(d.id, 0, blob);
+    const { blob } = await getReel(d.id, scenesFor(d), onProgress);
+    if (store) {
+      if (blob.size > MAX_UPLOAD) throw new Error(`Reel ${d.n + 1} is ${(blob.size / 1e6).toFixed(1)} MB, too big to queue. Download it and post it yourself.`);
+      await upload(d.id, 0, blob);
+    }
     return [{ name: `${fileBase(d)}.${reelExt(blob)}`, blob }];
   }
   const cards = cardsOf(d), out: { name: string; blob: Blob }[] = [];
@@ -90,7 +94,7 @@ function Status({ d }: { d: Draft }) {
   return null;
 }
 
-function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (action: string, extra?: Record<string, unknown>) => Promise<boolean>; meta: Data["meta"] }) {
+function DraftCard({ d, busy, act, meta, auto, making }: { d: Draft; busy: boolean; act: (action: string, extra?: Record<string, unknown>) => Promise<boolean>; meta: Data["meta"]; auto?: Blob; making?: number }) {
   const canvases = useRef<Record<number, HTMLCanvasElement>>({});
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -137,16 +141,23 @@ function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (acti
     return blobs.flatMap((b, i) => (b ? [{ name: name(i), blob: b }] : []));
   };
 
-  async function makeReel(save: boolean) {
+  // Reels the page made on its own arrive as `auto`.
+  useEffect(() => {
+    if (!auto) return;
+    setReel(r => { if (r?.blob === auto) return r; if (r) URL.revokeObjectURL(r.src); return { src: URL.createObjectURL(auto), blob: auto }; });
+  }, [auto]);
+  const reelName = (b: Blob) => `${fileBase(d)}.${reelExt(b)}`;
+  async function makeReel() {
+    if (reel) { downloadBlob(reel.blob, reelName(reel.blob)); return; }
     setErr(""); setWork(0);
     try {
-      const [f] = await prepare(d, p => setWork(p));
-      setReel(r => { if (r) URL.revokeObjectURL(r.src); return { src: URL.createObjectURL(f.blob), blob: f.blob }; });
-      if (save) downloadBlob(f.blob, f.name);
-      await act("refresh");
+      const { blob } = await getReel(d.id, scenesFor(d), p => setWork(p));
+      setReel(r => { if (r) URL.revokeObjectURL(r.src); return { src: URL.createObjectURL(blob), blob }; });
+      downloadBlob(blob, reelName(blob));
     } catch (e) { setErr(e instanceof Error ? e.message : "Couldn't make the reel."); }
     finally { setWork(null); }
   }
+  const progress = work ?? (making !== undefined && making >= 0 ? making : null), waiting = making === -1 && work === null;
 
   return <article className={"cw-post" + (posted ? " is-posted" : "") + (d.status === "skipped" ? " is-skipped" : "") + (isReel ? " is-reel" : "")}>
     <div className="cw-media">
@@ -154,7 +165,7 @@ function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (acti
         <div className={"cw-strip" + (cards.length > 1 && !isReel ? " is-multi" : "")}>
           {(isReel ? cards.slice(0, 1) : cards).map((c, i) => <PostCard key={i} card={c} tall={isReel} page={!isReel && cards.length > 1 ? `${i + 1}/${cards.length}` : undefined} label={`Image ${i + 1} for: ${d.hook}`} onCanvas={el => { canvases.current[i] = el; }} />)}
         </div>}
-      {work !== null && <div className="cw-bar" role="progressbar" aria-valuenow={Math.round(work * 100)}><i style={{ width: work * 100 + "%" }} /></div>}
+      {progress !== null && !reel && <div className="cw-bar" role="progressbar" aria-valuenow={Math.round(progress * 100)}><i style={{ width: progress * 100 + "%" }} /></div>}
     </div>
     <div className="cw-copy">
       <header className="cw-post-h">
@@ -176,7 +187,7 @@ function DraftCard({ d, busy, act, meta }: { d: Draft; busy: boolean; act: (acti
       </>}
       {!editing && <div className="cw-row">
         <button type="button" className="u-btn u-btn-go" onClick={copy}>{copied ? "Copied" : "Copy caption"}</button>
-        {isReel ? <button type="button" className="u-btn" disabled={work !== null} onClick={() => void makeReel(true)}>{work !== null ? `Recording ${Math.round(work * 100)}%` : reel ? "Download reel" : "Make reel"}</button>
+        {isReel ? <button type="button" className={"u-btn" + (reel ? " u-btn-go" : "")} disabled={!reel && (progress !== null || waiting)} onClick={() => void makeReel()}>{reel ? "Download reel" : progress !== null ? `Making reel ${Math.round(progress * 100)}%` : waiting ? "Up next…" : "Make reel"}</button>
           : pending ? <button type="button" className="u-btn u-btn-go" onClick={async () => { if (await shareNow(pending)) setPending(null); }}>Save {pending.length} to Photos</button>
           : <button type="button" className="u-btn" onClick={downloadSlides}>{ready && canShareFiles(ready) ? `Save ${cards.length > 1 ? cards.length + " " : ""}to Photos` : `Download${cards.length > 1 ? ` ${cards.length}` : ""}`}</button>}
         {meta.connected && (d.platform === "feed" || isReel) && !posted && d.media > 0 && <button type="button" className="u-btn" disabled={busy} onClick={() => void act("publish_now")}>Post now</button>}
@@ -289,6 +300,35 @@ export default function WeekPlanner() {
   const postedCount = drafts.filter(d => d.status === "posted").length;
   const dayQueued = ofDay.filter(d => d.publishStatus === "queued");
 
+  // Reels make themselves: every reel for the open day, one at a time, kept in this browser after the first time.
+  const [reels, setReels] = useState<Record<string, Blob>>({});
+  const [making, setMaking] = useState<{ id: string; p: number } | null>(null);
+  const reelJobs = ofDay.filter(d => d.platform === "video" && d.status !== "skipped").map(d => ({ d, key: reelKey(d.id, scenesFor(d)) }));
+  const jobKey = reelJobs.map(j => j.key).join("|");
+  const jobs = useRef(reelJobs); jobs.current = reelJobs;
+  const done = useRef<Record<string, Blob>>({}), failed = useRef(new Set<string>()), working = useRef(false);
+  useEffect(() => {
+    if (!jobKey || working.current) return;
+    working.current = true;
+    (async () => {
+      for (;;) {
+        const next = jobs.current.find(j => !done.current[j.key] && !failed.current.has(j.key));
+        if (!next) break;
+        const { d, key } = next;
+        setMaking({ id: d.id, p: 0 });
+        try {
+          const { blob, fresh } = await getReel(d.id, scenesFor(d), p => setMaking({ id: d.id, p }));
+          done.current[key] = blob; setReels(r => ({ ...r, [key]: blob }));
+          // Kept on the server too when it fits, so it can post itself once Facebook and Instagram are connected.
+          if (fresh && !d.media && blob.size <= MAX_UPLOAD) upload(d.id, 0, blob).catch(() => {});
+        } catch (e) { failed.current.add(key); console.warn("Couldn't make reel", e); }
+      }
+      working.current = false; setMaking(null);
+    })();
+  }, [jobKey]);
+  const reelFor = (d: Draft) => { const j = reelJobs.find(x => x.d.id === d.id); return j ? reels[j.key] : undefined; };
+  const reelState = (d: Draft) => making?.id === d.id ? making.p : making && reelJobs.some(j => j.d.id === d.id && !reels[j.key] && !failed.current.has(j.key)) ? -1 : undefined;
+
   return <section className="cw" aria-label="This week's posts">
     <div className="cw-head">
       <div>
@@ -337,7 +377,7 @@ export default function WeekPlanner() {
         {dayQueued.length > 0 && <button type="button" className="u-btn u-btn-bare" disabled={!!busy} onClick={() => void post({ action: "unschedule", ids: dayQueued.map(d => d.id) }, "unq")}>Unqueue</button>}
       </div>
     </div>}
-    {prep && <p className="u-note">Keep this tab open and in front while reels record. Each one records in real time, about 15 seconds.</p>}
+    {(prep || making) && <p className="u-note">Making the day&rsquo;s reels. Keep this tab open; it takes a few seconds each and they&rsquo;re saved in this browser after that.</p>}
 
     {!data ? <p className="u-note">Loading…</p> : !drafts.length ? <div className="cw-empty">
       <b>Nothing written for this week yet.</b>
@@ -345,7 +385,7 @@ export default function WeekPlanner() {
     </div> : !ofDay.length ? <p className="u-note">Nothing planned for {DAYS[day]}.</p> :
       GROUPS.map(g => { const list = ofDay.filter(d => d.platform === g.id); return list.length ? <div key={g.id} className="cw-group">
         <div className="cw-group-h"><h3>{g.title} <span>{list.length}</span></h3><small>{g.note}</small></div>
-        <div className="cw-list">{list.map(d => <DraftCard key={d.id} d={d} meta={data.meta} busy={busy === d.id} act={(action, extra) => post({ action, id: d.id, ...extra }, d.id) as Promise<boolean>} />)}</div>
+        <div className="cw-list">{list.map(d => <DraftCard key={d.id} d={d} meta={data.meta} auto={reelFor(d)} making={reelState(d)} busy={busy === d.id} act={(action, extra) => post({ action, id: d.id, ...extra }, d.id) as Promise<boolean>} />)}</div>
       </div> : null; })}
 
     {data && data.totals.posts > 0 && <div className="cw-topics">

@@ -29,14 +29,30 @@ function fit(ctx: CanvasRenderingContext2D, text: string, weight: number, family
   return { size: s, lines: wrap(text, maxW, t => ctx.measureText(t).width).slice(0, maxLines) };
 }
 
-export function drawCard(ctx: CanvasRenderingContext2D, card: Card, meta: { page?: string; noFoot?: boolean } = {}) {
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+const outCubic = (x: number) => 1 - Math.pow(1 - clamp01(x), 3);
+
+/** The wordmark and site along the bottom. Reels draw it once, outside the moving scene. */
+export function drawFooter(ctx: CanvasRenderingContext2D, page?: string) {
+  const W = ctx.canvas.width, H = ctx.canvas.height, tall = H > 1500, P = 96;
+  const fy = tall ? H - 520 + 90 : H - 92;
+  const head = fam("--font-display", "Inter Tight, Inter, system-ui, sans-serif"), sans = fam("--font-geist-sans", "Inter, system-ui, sans-serif");
+  ctx.fillStyle = C.text; ctx.font = `600 40px ${head}`; ctx.fillText("cinder", P, fy);
+  ctx.fillStyle = C.text3; ctx.font = `500 28px ${sans}`;
+  const site = "cinderrevenue.com"; ctx.fillText(site, W - P - ctx.measureText(site).width, fy - 2);
+  if (page) ctx.fillText(page, W / 2 - ctx.measureText(page).width / 2, fy - 2);
+}
+
+/** Draw a card. For reels, `t` (seconds into the scene) animates a hook's words in one by one, and `noBg`
+ *  leaves the background alone so the scene before it can show through while it fades. */
+export function drawCard(ctx: CanvasRenderingContext2D, card: Card, meta: { page?: string; noFoot?: boolean; noBg?: boolean; t?: number } = {}) {
   const W = ctx.canvas.width, H = ctx.canvas.height, tall = H > 1500;
   // Reels: keep text out of the top bar and the bottom quarter, where Instagram and TikTok put their buttons and caption.
   const top = tall ? 360 : 0, bottom = tall ? 520 : 0;
   const head = fam("--font-display", "Inter Tight, Inter, system-ui, sans-serif");
   const sans = fam("--font-geist-sans", "Inter, system-ui, sans-serif");
   const P = 96;
-  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  if (!meta.noBg) { ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H); }
   ctx.textBaseline = "alphabetic";
 
   // Footer on every card: wordmark left, site right.
@@ -56,8 +72,23 @@ export function drawCard(ctx: CanvasRenderingContext2D, card: Card, meta: { page
     const block = t.lines.length * lh + (subLines.length ? 40 + subLines.length * 58 : 0);
     let y = Math.max(220 + top, top + (H - top - bottom - block) / 2) + t.size * .8;
     ctx.fillStyle = C.text; ctx.font = `600 ${t.size}px ${head}`;
-    for (const l of t.lines) { ctx.fillText(l, P, y); y += lh; }
-    if (subLines.length) { y += 24; ctx.fillStyle = C.text2; ctx.font = `400 42px ${sans}`; for (const l of subLines) { ctx.fillText(l, P, y); y += 58; } }
+    if (meta.t === undefined) for (const l of t.lines) { ctx.fillText(l, P, y); y += lh; }
+    else {
+      // Word by word: each rises and fades in, 70 ms apart.
+      let k = 0;
+      for (const l of t.lines) {
+        let x = P;
+        for (const w of l.split(" ")) {
+          const p = outCubic((meta.t - k * 0.07) / 0.38);
+          if (p > 0) { ctx.globalAlpha = p; ctx.fillText(w, x, y + 34 * (1 - p)); }
+          x += ctx.measureText(w + " ").width; k++;
+        }
+        y += lh;
+      }
+      ctx.globalAlpha = 1;
+    }
+    const subIn = meta.t === undefined ? 1 : outCubic((meta.t - (t.lines.join(" ").split(" ").length * 0.07 + 0.15)) / 0.4);
+    if (subLines.length && subIn > 0) { y += 24; ctx.globalAlpha = subIn; ctx.fillStyle = C.text2; ctx.font = `400 42px ${sans}`; for (const l of subLines) { ctx.fillText(l, P, y + 20 * (1 - subIn)); y += 58; } ctx.globalAlpha = 1; }
   } else if (card.type === "stat") {
     const f = fit(ctx, card.figure, 600, head, [320, 280, 240, 200], W - P * 2, 1);
     const sy = tall ? top + 220 : 300;
