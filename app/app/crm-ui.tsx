@@ -4,6 +4,7 @@
 // Kept deliberately small: five stages, one card per customer, the job in the trade's own words.
 import { useEffect, useMemo, useState } from "react";
 import { CinderLogo } from "../cinder-brand";
+import { Trajectory } from "./sx";
 import {
   ballpark, jobFields, LEAD_SOURCES, LEADS_MONTH, money, parsePriceBook, previewFirstText, PRIORITIES, rangeText, SOFTWARE, STAGE_LABEL, STAGES, TEAM_SIZES, TRADES, YEARS,
   type Card, type Details, type PriceBook, type Rate, type Stage,
@@ -222,8 +223,11 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
         <button type="button" className="jb-add" onClick={() => setAdding(true)}><Svg d={I.plus} size={16} />Add lead</button>
       </div>
     </div>
+    <Trajectory lost={by.lost.length} stages={(["new", "booked", "quoted", "won"] as const).map(k => ({ key: k, label: k === "booked" ? "Estimate" : STAGE_LABEL[k],
+      count: by[k].length, value: by[k].reduce((a, c) => a + (c.value ?? (k === "won" ? 0 : c.ballpark ? (c.ballpark.low + c.ballpark.high) / 2 : 0)), 0) }))}
+      onPick={k => document.getElementById("jb-col-" + k)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" })} />
     <div className={"jb-board" + (wide ? " wide" : "")}>
-      {STAGES.map(stage => { const list = by[stage]; const total = list.reduce((a, c) => a + (c.value ?? 0), 0); return <section key={stage} className={"jb-col" + (over === stage ? " over" : "")} aria-label={STAGE_LABEL[stage]}
+      {STAGES.map(stage => { const list = by[stage]; const total = list.reduce((a, c) => a + (c.value ?? 0), 0); return <section key={stage} id={"jb-col-" + stage} className={"jb-col" + (over === stage ? " over" : "")} aria-label={STAGE_LABEL[stage]}
         onDragOver={e => { if (drag) { e.preventDefault(); setOver(stage); } }} onDragLeave={() => setOver(o => o === stage ? null : o)}
         onDrop={e => { e.preventDefault(); setOver(null); if (drag) void move(drag, stage); setDrag(null); }}>
         <h2><span>{STAGE_LABEL[stage]}</span><small>{list.length}{total ? ` · ${short(total)}` : ""}</small></h2>

@@ -8,6 +8,7 @@ import "./app.css";
 import { CinderLogo, CinderMark } from "../cinder-brand";
 import { demoApi } from "./demo";
 import { JobsTab, Onboarding, type Card, type Winback } from "./crm-ui";
+import { Mission, Telemetry } from "./sx";
 import { money, sourceReport } from "@/lib/crm";
 import { agenda, googleCalendarUrl, onMyWayText, splitAppointments, type CalEvent } from "@/lib/client-schedule";
 
@@ -137,6 +138,7 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
   return <div className="ca-sign" role="main">
     <div className="ca-sign-card">
       <Mark />
+      <p className="sx-k ca-sign-k">Cinder · Client console</p>
       <h1>{sent ? "Check your texts" : "Sign in to Cinder"}</h1>
       <p>{sent ? <>We texted a code to <b>{fmtPhone(phone)}</b>.</> : "Use the cell number you gave Sam."}</p>
       <form onSubmit={e => { e.preventDefault(); if (!sent) void send(); else if (code.length === 6) void verify(code); }}>
@@ -251,6 +253,12 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
 
   return <>
     <div className="ca-hello"><p>Your week</p><h1>{week ? <>{week} {week === 1 ? "estimate" : "estimates"} booked.</> : "No estimates this week yet."}<span>{due.length ? ` ${due.length} ${due.length === 1 ? "needs" : "need"} an update.` : cal.connected ? " Synced with your calendar." : ""}</span></h1></div>
+    <Telemetry label="This week" items={[
+      { k: "Calendar", v: cal.connected ? "Synced" : "Not linked", live: cal.connected },
+      { k: "This week", v: week },
+      { k: "Needs update", v: due.length },
+      { k: "Quotes out", v: d.quotes.length },
+    ]} />
 
     {cal.connected ? <div className="ca-calbar">
       <span className="ca-calbar-ic"><GoogleCalMark /></span>
@@ -416,6 +424,13 @@ export default function CinderApp() {
           <p>{greeting()}</p>
           <h1>{today ? <>{today} new {today === 1 ? "lead" : "leads"} today.<span> All answered.</span></> : <>Every lead answered.<span> {secs(L.replySec)} typical reply.</span></>}</h1>
         </div>
+        <Telemetry items={[
+          { k: "Status", v: "Live", live: true },
+          { k: "First reply", v: L.replySec == null ? "–" : L.replySec < 60 ? `${L.replySec}s` : `${Math.round(L.replySec / 60)}m` },
+          { k: "Answered", v: <>{L.answered}<small>/{L.leads}</small></> },
+          { k: "Booked", v: L.booked },
+          { k: "Quotes out", v: L.chasingValue ? (L.chasingValue >= 1000 ? `$${(L.chasingValue / 1000).toFixed(1).replace(/\.0$/, "")}K` : usd(L.chasingValue)) : L.chasing },
+        ]} />
         {(needsList.length > 0 || due.length > 0) && <section className="ca-todo" aria-label="Things that need you">
           <h2><i />{needsList.length + due.length} {needsList.length + due.length === 1 ? "thing needs" : "things need"} you</h2>
           <ul>
@@ -449,15 +464,14 @@ export default function CinderApp() {
       </>}
 
       {tab === "numbers" && (L.leads === 0 ? <div className="ca-empty"><span className="ca-empty-ic"><Icon name="bolt" size={22} /></span><b>Your numbers start with your first lead</b><p>Every lead Cinder answers shows up here: how fast it replied, what it booked, and the quotes it won back for you.</p></div> : <>
-        {L.wonValue > 0 ? <div className="ca-money"><p>Jobs won from leads Cinder handled</p><b>{usd(L.wonValue)}</b>
-          <small>{L.won} {L.won === 1 ? "job" : "jobs"}{L.chasingValue ? ` · ${usd(L.chasingValue)} more in quotes Cinder is chasing` : ""}</small></div>
-          : <div className="ca-hello"><p>Last 30 days</p><h1>Cinder answered {L.answered} {L.answered === 1 ? "lead" : "leads"} and booked {L.booked} {L.booked === 1 ? "estimate" : "estimates"}.</h1></div>}
+        {L.wonValue > 0 ? <Mission wonValue={L.wonValue} won={L.won} chasingValue={L.chasingValue} weeks={L.weeks} replySec={L.replySec} answered={L.answered} leads={L.leads} booked={L.booked} />
+          : <><div className="ca-hello"><p>Last 30 days</p><h1>Cinder answered {L.answered} {L.answered === 1 ? "lead" : "leads"} and booked {L.booked} {L.booked === 1 ? "estimate" : "estimates"}.</h1></div>
         <div className="ca-kpis">
           <div><span>Leads answered</span><b>{L.answered}<small>/{L.leads}</small></b><em>{L.leads ? `${Math.round((L.answered / L.leads) * 100)}% answered` : " "}</em></div>
           <div><span>Typical first reply</span><b>{L.replySec == null ? "–" : L.replySec < 60 ? <>{L.replySec}<small>sec</small></> : <>{Math.round(L.replySec / 60)}<small>min</small></>}</b><em>Day or night</em></div>
           <div><span>Estimates booked</span><b>{L.booked}</b><em>On your calendar</em></div>
           <div><span>Quotes being chased</span><b>{L.chasing}</b><em>{L.chasingValue ? `${usd(L.chasingValue)} open` : " "}</em></div>
-        </div>
+        </div></>}
         {sources.length > 0 && <section className="ca-card ca-srcs"><div className="ca-card-h"><h2>Where your jobs come from</h2><span>Last 4 months</span></div>
           {earners.length > 0 && <ul>{earners.map(r => <li key={r.source}>
             <div className="ca-srcs-h"><b>{r.label}</b><em>{r.wonValue ? money(r.wonValue) : `${r.won} won`}</em></div>
@@ -466,7 +480,7 @@ export default function CinderApp() {
           </li>)}</ul>}
           {quiet.length > 0 && <p className="ca-srcs-quiet">{earners.length ? "No wins yet from " : "No jobs won yet. Leads from "}{quiet.map((r, k) => <React.Fragment key={r.source}>{k ? ", " : ""}<span>{r.label} <i>({r.leads})</i></span></React.Fragment>)}{earners.length ? "." : ". Once a job's won, this shows which source paid for it."}</p>}
         </section>}
-        {L.weeks.length > 1 && <section className="ca-card"><div className="ca-card-h"><h2>Every week</h2><span><i className="k l" />Leads<i className="k b" />Booked</span></div>
+        {L.wonValue === 0 && L.weeks.length > 1 && <section className="ca-card"><div className="ca-card-h"><h2>Every week</h2><span><i className="k l" />Leads<i className="k b" />Booked</span></div>
           <div className="ca-bars">{L.weeks.map(w => <div key={w.week} className="ca-bar" title={`${w.leads} leads, ${w.booked} booked`}><span><i className="l" style={{ height: (w.leads / maxW) * 100 + "%" }} /><i className="b" style={{ height: (w.booked / maxW) * 100 + "%" }} /></span><small>{w.leads}</small></div>)}</div></section>}
         {(L.won > 0 || L.revived > 0 || L.reviews > 0) && <ul className="ca-stats">
           {L.won > 0 && <li><span className="ca-stat-ic"><Icon name="quote" /></span><span><b>{L.won} {L.won === 1 ? "quote" : "quotes"} won</b><small>after follow-up{L.wonValue ? ` · ${usd(L.wonValue)}` : ""}</small></span></li>}
