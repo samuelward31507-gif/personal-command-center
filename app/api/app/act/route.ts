@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       await sql`UPDATE public.client_threads SET status = 'closed', updated_at = now() WHERE id = ${a.thread_id}::uuid AND status <> 'opted_out'`;
       await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${a.thread_id}::uuid, 'out', 'system', ${`Job won${amount ? `: $${amount.toLocaleString("en-US")}` : ""}`})`;
       let review = "";
-      if (b.review) { const r = await sendReviewRequest(sql, c, a.customer_phone, a.customer_name); review = r.ok ? "sent" : r.error?.includes("already") ? "already" : "no_link"; }
+      if (b.review) { const r = await sendReviewRequest(sql, c, a.customer_phone, a.customer_name); review = r.ok ? "sent" : r.error?.includes("already") ? "already" : r.error?.includes("texting hours") ? "later" : "no_link"; }
       return json({ ok: true, review });
     }
     if (b.action === "review") {

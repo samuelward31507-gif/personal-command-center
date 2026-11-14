@@ -3,7 +3,7 @@
 // The payloads differ, so they're flattened first and then matched by field name.
 
 export type LeadSource = "web form" | "angi" | "thumbtack" | "facebook" | "zapier";
-export type Lead = { name: string; phone: string; email: string; message: string; source: LeadSource; via: string };
+export type Lead = { name: string; phone: string; email: string; message: string; source: LeadSource; via: string; smsConsent?: boolean | null };
 export const SOURCE_LABEL: Record<LeadSource, string> = { "web form": "your website", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook", zapier: "your form" };
 export const PAID: LeadSource[] = ["angi", "thumbtack", "facebook"];
 
@@ -47,6 +47,17 @@ export function sourceOf(v: string | null | undefined): LeadSource {
 }
 
 /** Any of the supported payloads → one lead, or null when there's no 10-digit phone to text. */
+/**
+ * A form's texting checkbox. Forms that have one also send sms_consent_field=1, because an unticked box sends
+ * nothing at all. true: ticked. false: the form has the box and it wasn't ticked, so don't text. null: no box.
+ */
+export function smsConsentFrom(f: Record<string, string>): boolean | null {
+  const yes = (v?: string) => !!v && /^(1|true|yes|on|checked|y|agreed?|i agree)$/i.test(v.trim());
+  const ticked = ["smsconsent", "textconsent", "smsoptin", "textoptin", "consenttotext", "agreetotext", "smsok"].some(k => yes(f[k]));
+  if (ticked) return true;
+  return f.smsconsentfield ? false : null;
+}
+
 export function parseLead(body: unknown, sourceHint?: string | null): Lead | null {
   const f = flatten(body);
   const source = sourceOf(sourceHint || f.source || f.leadsource || f.platform || "");
@@ -61,5 +72,5 @@ export function parseLead(body: unknown, sourceHint?: string | null): Lead | nul
   const addr = [pick(f, "address", "streetaddress", "address1", "street"), pick(f, "city"), pick(f, "state", "statecode"), pick(f, "zip", "zipcode", "postalcode", "postcode")].filter(Boolean).join(", ");
   const when = pick(f, "timeframe", "timeline", "when", "requestedtimeframe", "whendoyouneedit");
   const message = [job, details && details !== job ? details : "", addr ? `Address: ${addr}` : "", when ? `Timing: ${when}` : ""].filter(Boolean).join(" · ").slice(0, 1000);
-  return { name, phone: "+1" + d, email: pick(f, "email", "emailaddress", "customeremail", "contactemail").slice(0, 120), message, source, via: SOURCE_LABEL[source] };
+  return { name, phone: "+1" + d, email: pick(f, "email", "emailaddress", "customeremail", "contactemail").slice(0, 120), message, source, via: SOURCE_LABEL[source], smsConsent: smsConsentFrom(f) };
 }

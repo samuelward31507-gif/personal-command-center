@@ -26,7 +26,10 @@ export function e164(raw: unknown): string {
 export function missedCallText(business: string, template?: string): string {
   const name = business.trim() || "us";
   const t = template?.trim() || "Hey, it's {business}. Sorry we missed your call! What can we help you with? Reply here and we'll get right back to you.";
-  return t.replace(/\{business\}/g, name).slice(0, 320);
+  const body = t.replace(/\{business\}/g, name).trim();
+  // First text to someone new: carriers want the opt-out line on it.
+  const line = " Reply STOP to opt out.";
+  return /\bSTOP\b/.test(body) ? body.slice(0, 320) : body.slice(0, 320 - line.length).replace(/\s+$/, "") + line;
 }
 
 /** TwiML for an incoming call: ring the forward number for `timeout` seconds, else go straight to the missed path. */

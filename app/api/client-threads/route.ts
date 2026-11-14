@@ -3,7 +3,7 @@ import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
 import { claudeText } from "@/lib/ai-text";
 import { markNoShow, clientById, sendToCustomer, sendReviewRequest } from "@/lib/client-runtime-run";
-import { digits10, nextDue, parseCustomerList, parseDecision, parseLeadList, replySystem, replyUser } from "@/lib/client-runtime";
+import { digits10, isShortener, nextDue, parseCustomerList, parseDecision, parseLeadList, replySystem, replyUser } from "@/lib/client-runtime";
 import { randomBytes } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -52,6 +52,7 @@ export async function GET(req: Request) {
   ]);
   const calendar = (cal as { google_email: string }[])[0] ? { connected: true, email: (cal as { google_email: string }[])[0].google_email } : { connected: false, email: "" };
   const missing = [!s.texting_number && "Texting number", !s.owner_cell && "Owner's cell", !s.booking_link && !calendar.connected && "Calendar or booking link", !s.review_link && "Google review link",
+    (isShortener(s.booking_link) || isShortener(s.review_link)) && "Booking and review links on their own domain (carriers filter bit.ly and other shorteners)",
     !(c?.messages ?? []).some(m => m.status === "approved") && "Approved messages"].filter(Boolean);
   return reply({ threads, quotes, reviews: rv[0]?.n ?? 0, chatKey, appointments: appts, customers, calendar, ready: { live: missing.length === 0, missing, number: s.texting_number || "" } });
 }

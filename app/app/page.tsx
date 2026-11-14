@@ -265,7 +265,7 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
         <button type="button" className="ca-out-h" onClick={() => onOpen(a.thread_id)}><span className="ca-av sm" aria-hidden="true">{initials(name)}</span>
           <span><b>{name}</b><small>Estimate · {dayName(a.starts_at)}, {clock(a.starts_at)}</small></span></button>
         {sheet?.id === a.id ? amountSheet(() => void act(a.id, { action: "outcome", appt: a.id, result: sheet.kind, amount: amt, review: sheet.kind === "won" && review },
-            r => sheet.kind === "quoted" ? "Cinder will follow up on the quote until they answer." : r.review === "sent" ? "Marked won. Review request sent." : r.review === "no_link" ? "Marked won. Ask Sam to add your review link." : "Marked won."))
+            r => sheet.kind === "quoted" ? "Cinder will follow up on the quote until they answer." : r.review === "sent" ? "Marked won. Review request sent." : r.review === "no_link" ? "Marked won. Ask Sam to add your review link." : r.review === "later" ? "Marked won. It's after texting hours, so send the review request in the morning." : "Marked won."))
           : <div className="ca-out-btns">
             <button type="button" onClick={() => open("quoted", a.id)}><Icon name="quote" size={15} />Quoted</button>
             <button type="button" className="win" onClick={() => open("won", a.id)}><Icon name="check" size={15} />Won it</button>

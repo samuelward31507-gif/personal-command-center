@@ -6,7 +6,7 @@ import { sendSms } from "@/lib/twilio";
 import { recordConsent } from "@/lib/client-consent";
 import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
-import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, type Vars } from "@/lib/client-runtime";
+import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, withOptOut, automatedRoom, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent, deleteEvent } from "@/lib/client-calendar";
 import { syncBookingToJobber } from "@/lib/jobber";
@@ -53,11 +53,26 @@ async function log(sql: Sql, c: Client, threadId: string, direction: "in" | "out
   if (direction === "in") await sql`UPDATE public.client_threads SET last_in_at = now(), updated_at = now() WHERE id = ${threadId}::uuid`;
   else await sql`UPDATE public.client_threads SET last_out_at = now(), updated_at = now() WHERE id = ${threadId}::uuid`;
 }
-/** Text the customer from the client's number and log it. */
+/**
+ * Text the customer from the client's number and log it. The first text in a conversation, or the first after a
+ * quiet month (a follow-up round or campaign starting), carries "Reply STOP to opt out." Carriers check for it.
+ */
 export async function sendToCustomer(sql: Sql, c: Client, threadId: string, phone: string, body: string, author: string): Promise<boolean> {
+  const [p] = await sql`SELECT t.lang, EXISTS (SELECT 1 FROM public.client_texts x WHERE x.thread_id = t.id AND x.direction = 'out' AND x.ok
+      AND x.author <> 'system' AND x.at > now() - interval '30 days') AS recent
+    FROM public.client_threads t WHERE t.id = ${threadId}::uuid` as { lang: string; recent: boolean }[];
+  if (!p?.recent) body = withOptOut(body, p?.lang === "es" ? "es" : "en");
   const ok = await sendSms(e164(phone), c.setup.texting_number || "", body);
   await log(sql, c, threadId, "out", author, body, ok);
   return ok;
+}
+/** Room for one more automated text to this conversation (at most 3 a day unless they're texting back). */
+async function roomFor(sql: Sql, threadId: string): Promise<boolean> {
+  const [r] = await sql`SELECT
+      count(*) FILTER (WHERE direction = 'out' AND ok AND author <> 'system')::int AS out24,
+      count(*) FILTER (WHERE direction = 'in' AND author = 'customer')::int AS in24
+    FROM public.client_texts WHERE thread_id = ${threadId}::uuid AND at > now() - interval '24 hours'` as { out24: number; in24: number }[];
+  return automatedRoom({ outLast24h: r?.out24 ?? 0, inLast24h: r?.in24 ?? 0 });
 }
 /** Tell the owner: a text to their cell, and a push to the Cinder app on every device they turned it on for. */
 async function alertOwner(c: Client, text: string, threadId?: string, sql?: Sql) {
@@ -266,6 +281,7 @@ export async function runLeadNudges(sql: Sql, now = new Date(), limit = 80): Pro
     if (!clients.has(key)) clients.set(key, await clientById(sql, r.owner_id, r.project_id));
     const c = clients.get(key);
     if (!c?.setup.texting_number || !inTextingHours(tzOf(c), now)) { skipped++; continue; }
+    if (!(await roomFor(sql, r.id))) { skipped++; continue; }
     // Claim the step first, so two overlapping runs can never send the same nudge twice.
     const anchorIso = new Date(anchorMs!).toISOString();
     const [claimed] = await sql`UPDATE public.client_threads SET nudges_sent = ${step + 1}, nudge_anchor = ${anchorIso}::timestamptz
@@ -303,9 +319,11 @@ export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Pr
     const seq = SEQUENCES[seqKey];
     const step = quoteStepDue(String(q.sent_on).slice(0, 10), q.steps_sent, today, seq.days);
     if (step === null) continue;
-    if (!c?.setup.texting_number) { skipped++; continue; }
+    // Daytime only in the client's time zone; a step that's due stays due for the next run.
+    if (!c?.setup.texting_number || !inTextingHours(tzOf(c))) { skipped++; continue; }
     const t = await thread(sql, c, q.customer_phone, "quote");
     if (t.status === "opted_out" || t.status === "paused") { skipped++; continue; }
+    if (!(await roomFor(sql, t.id))) { skipped++; continue; }
     const k = `${seqKey}_${step + 1}`;
     const body = fill(say(c, k, seq.texts[step], t.lang === "es" ? "es" : "en"), varsFor(c, q.customer_name.split(" ")[0]));
     const ok = await sendToCustomer(sql, c, t.id, q.customer_phone, body, "template");
@@ -320,6 +338,7 @@ export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Pr
 export async function sendReviewRequest(sql: Sql, c: Client, phone: string, name: string): Promise<{ ok: boolean; error?: string }> {
   if (!c.setup.review_link) return { ok: false, error: "Add the client's Google review link in the setup sheet first." };
   if (!c.setup.texting_number) return { ok: false, error: "Add the client's texting number in the setup sheet first." };
+  if (!inTextingHours(tzOf(c))) return { ok: false, error: "It's outside texting hours (8 AM to 8 PM). Send the review request in the morning." };
   const [dup] = await sql`SELECT 1 FROM public.client_reviews WHERE project_id = ${c.projectId}::uuid AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(phone)} LIMIT 1`;
   if (dup) return { ok: false, error: "That customer already got a review request." };
   const t = await thread(sql, c, phone, "review");
@@ -339,7 +358,7 @@ export async function sendReminders(sql: Sql, limit = 80): Promise<{ sent: numbe
   for (const r of rows) {
     if (r.status === "opted_out") continue;
     const c = await clientById(sql, r.owner_id, r.project_id);
-    if (!c?.setup.texting_number) continue;
+    if (!c?.setup.texting_number || !inTextingHours(tzOf(c))) continue; // a later run the same day sends it
     const tz = tzOf(c), start = new Date(r.starts_at);
     const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date(Date.now() + 86400000));
     if (new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(start) !== tomorrow) continue;
@@ -367,8 +386,15 @@ export async function webLead(sql: Sql, c: Client, lead: Lead | { name: string; 
   const paid = (PAID as string[]).includes(lead.source);
   const t = await thread(sql, c, lead.phone, lead.source || "web form");
   await recordConsent(sql, c, lead.phone, paid ? "paid_lead" : "web_form", lead.source,
-    `${paid ? `Requested a quote on ${lead.via || lead.source}` : "Submitted a form asking to be contacted"}${lead.name ? ` as ${lead.name}` : ""}${lead.email ? ` <${lead.email}>` : ""}${lead.message ? `: "${lead.message.slice(0, 200)}"` : ""}`, ip);
+    `${paid ? `Requested a quote on ${lead.via || lead.source}` : "Submitted a form asking to be contacted"}${"smsConsent" in lead && lead.smsConsent === true ? ", ticked the texting checkbox" : "smsConsent" in lead && lead.smsConsent === false ? ", left the texting checkbox unticked" : ""}${lead.name ? ` as ${lead.name}` : ""}${lead.email ? ` <${lead.email}>` : ""}${lead.message ? `: "${lead.message.slice(0, 200)}"` : ""}`, ip);
   if (t.status === "opted_out") return { ok: false, threadId: t.id };
+  if ("smsConsent" in lead && lead.smsConsent === false) {
+    // The form has a texting checkbox and they left it unticked: no text. The owner calls or emails instead.
+    await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${lead.name} ELSE customer_name END, status = 'paused', updated_at = now() WHERE id = ${t.id}::uuid`;
+    await log(sql, c, t.id, "in", "system", `New ${lead.source} lead (didn't agree to texts)${lead.message ? `: "${lead.message.slice(0, 300)}"` : ""}${lead.email ? ` · ${lead.email}` : ""}`);
+    await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${lead.message ? lead.message.slice(0, 120) + ". " : ""}They didn't tick the texting box, so call${lead.email ? " or email" : ""} them: ${lead.phone}${lead.email ? `, ${lead.email}` : ""}.`), t.id, sql);
+    return { ok: false, threadId: t.id };
+  }
   const lang: Lang = detectLang(lead.message) === "es" ? "es" : "en";
   await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${lead.name} ELSE customer_name END, lang = ${lang}, source = ${lead.source}, contact_at = now() WHERE id = ${t.id}::uuid`;
   await log(sql, c, t.id, "in", "system", `New ${lead.source} lead${lead.message ? `: "${lead.message.slice(0, 300)}"` : ""}${lead.email ? ` · ${lead.email}` : ""}`);
@@ -445,6 +471,7 @@ export async function runHandoffChecks(sql: Sql, now = new Date(), limit = 80): 
     } else if (act === "hold") {
       const [claimed] = await sql`UPDATE public.client_threads SET handoff_held_at = now(), handoff_nudged_at = coalesce(handoff_nudged_at, now()) WHERE id = ${r.id}::uuid AND handoff_held_at IS NULL RETURNING id`;
       if (!claimed) continue;
+      if (!(await roomFor(sql, r.id))) continue;
       const lang: Lang = r.lang === "es" ? "es" : "en";
       const ok = await sendToCustomer(sql, c, r.id, r.customer_phone, fill(say(c, "handoff_hold", lang === "es" ? ES.handoff_hold : EN.handoff_hold, lang), varsFor(c, (r.customer_name || "").split(" ")[0])), "template");
       await alertOwner(c, ownerAlert("waiting", who, "We told them you'll reach out soon. Call them back from the Cinder app."), r.id, sql);
@@ -481,6 +508,7 @@ export async function runDueTexts(sql: Sql, now = new Date(), limit = 120): Prom
       const [answered] = await sql`SELECT 1 FROM public.client_texts WHERE thread_id = ${t0.id}::uuid AND direction = 'in' AND author = 'customer' AND at > ${r.due_texted_at}::timestamptz LIMIT 1`;
       if (answered || t0.status === "booked" || t0.status === "paused") { await sql`UPDATE public.client_customers SET due_steps = ${DUE_TEXTS.length} WHERE id = ${r.id}::uuid`; continue; }
     }
+    if (t0 && !(await roomFor(sql, t0.id))) { skipped++; continue; }
     const [claimed] = await sql`UPDATE public.client_customers SET due_steps = due_steps + 1, due_texted_at = now()
       WHERE id = ${r.id}::uuid AND due_steps = ${r.due_steps} RETURNING id`;
     if (!claimed) continue;

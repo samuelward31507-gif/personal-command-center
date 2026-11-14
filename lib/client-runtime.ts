@@ -27,17 +27,37 @@ export const FALLBACK = {
 } as const;
 
 /** The carrier keywords, sent alone. Twilio confirms these itself. */
-export const isStopKeyword = (t: string) => /^\s*(stop|stopall|unsubscribe|cancel|end|quit|optout|opt out|revoke)\s*[.!]?\s*$/i.test(t || "");
+export const isStopKeyword = (t: string) => /^\s*(stop|stopall|unsubscribe|cancel|end|quit|optout|opt out|revoke|parar|para|alto|basta|cancelar|baja)\s*[.!]?\s*$/i.test(t || "");
 /** Opt-outs in plain words: "stop texting me", "take me off your list", "wrong number". We must honor these too. */
 export function isPlainOptOut(t: string): boolean {
   const s = (t || "").toLowerCase().replace(/[’']/g, "'").replace(/\s+/g, " ").trim();
   if (!s || s.length > 200) return false;
   if (/\b(don'?t|do not|never) stop\b/.test(s)) return false;
-  return /\b(stop (texting|messaging|contacting|sending)|(don'?t|do not|please don'?t) (text|message|contact|call) me|remove me|take me off|unsubscribe|opt(-| )?out|no more (texts|messages)|leave me alone|wrong number|lose (this|my) number|not interested,? stop)\b/.test(s);
+  if (/\b(stop (texting|messaging|contacting|sending)|(don'?t|do not|please don'?t) (text|message|contact|call) me|remove me|take me off|unsubscribe|opt(-| )?out|no more (texts|messages)|leave me alone|wrong number|lose (this|my) number|not interested,? stop)\b/.test(s)) return true;
+  // Spanish: "no me escribas", "ya no me mandes mensajes", "número equivocado", "déjame en paz".
+  return /(no me (escribas|escriban|mandes|manden|env[ií]es|contactes|llames)|ya no (me )?(escribas|mandes|env[ií]es)|no quiero (m[aá]s )?mensajes|n[uú]mero equivocado|d[eé]jame en paz|b[oó]rrame|s[aá]quenme de la lista)/.test(s);
 }
 export const isStop = (t: string) => isStopKeyword(t) || isPlainOptOut(t);
 export const isStart = (t: string) => /^\s*(start|unstop|yes)\s*$/i.test(t || "");
 export const isHelp = (t: string) => /^\s*(help|info)\s*[.?!]?\s*$/i.test(t || "");
+/** The opt-out line. Every conversation's first text carries it (carriers check), and any campaign's first text after a quiet month. */
+export const OPTOUT_LINE = { en: "Reply STOP to opt out.", es: "Responde STOP para no recibir más mensajes." } as const;
+export function withOptOut(body: string, lang: "en" | "es" = "en"): string {
+  const b = (body || "").trim();
+  if (/\b(STOP|START)\b/.test(b)) return b; // already says it, or it is the opt-out confirmation
+  return `${b}${/[.!?]$/.test(b) ? "" : "."} ${OPTOUT_LINE[lang]}`;
+}
+
+/**
+ * Automated texts (nudges, follow-ups, reminders, campaigns) per number: at most 3 in any 24 hours unless the
+ * customer texted in that time (then it's a conversation they're in). Matches Florida's limit, the strictest.
+ */
+export const AUTO_PER_DAY = 3;
+export const automatedRoom = (o: { outLast24h: number; inLast24h: number }) => o.inLast24h > 0 || o.outLast24h < AUTO_PER_DAY;
+
+/** Public link shorteners get texts filtered by carriers. Use the business's own domain or a branded link. */
+export const isShortener = (url: string) => /^(https?:\/\/)?(www\.)?(bit\.ly|tinyurl\.com|t\.co|goo\.gl|ow\.ly|is\.gd|buff\.ly|rebrand\.ly|cutt\.ly|shorturl\.at|tiny\.cc|rb\.gy)\//i.test((url || "").trim());
+
 export const OPTOUT_TEXT = "You won't get any more texts from {business}. Reply START if you change your mind.";
 export const HELP_TEXT = "{business}: texts about your estimate and quote. Reply STOP to opt out. Msg & data rates may apply.";
 

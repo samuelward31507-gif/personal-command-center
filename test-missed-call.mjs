@@ -14,7 +14,10 @@ ok(() => assert.equal(e164("anonymous"), ""));
 ok(() => assert.equal(e164(undefined), ""));
 
 ok(() => assert.match(missedCallText("Scooter World"), /^Hey, it's Scooter World\. Sorry we missed your call!/));
-ok(() => assert.equal(missedCallText("Acme", "Hi from {business}!"), "Hi from Acme!"));
+ok(() => assert.equal(missedCallText("Acme", "Hi from {business}!"), "Hi from Acme! Reply STOP to opt out."));
+ok(() => assert.equal(missedCallText("Acme", "Hi from {business}. Text STOP to end."), "Hi from Acme. Text STOP to end."));
+ok(() => assert.match(missedCallText("Acme"), /Reply STOP to opt out\.$/));
+ok(() => assert.match(missedCallText("X", "a".repeat(999)), /Reply STOP to opt out\.$/));
 ok(() => assert.ok(missedCallText("X", "a".repeat(999)).length <= 320));
 
 const v = voiceTwiml("+12058370211", "+13035550100", "/api/twilio/dial-status", 20);
