@@ -632,3 +632,18 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 @media (max-width: 900px) { .clock { bottom: -62px; } .show-steps { margin-top: 104px; } }
 @media (prefers-reduced-motion: reduce) { .bx:hover .ui { transform: none; } }
 .motion .rv { transition: opacity .8s var(--ease), transform .9s var(--ease), box-shadow .3s ease, background .3s ease, border-color .3s ease; }
+
+/* ---------- Founder note and FAQ side ---------- */
+.founder { align-items: center; }
+.note { margin: 0; padding: 36px 40px 30px; border-radius: 22px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.note blockquote { margin: 0; }
+.note blockquote p { font: 400 21px/1.5 var(--head); letter-spacing: -.018em; color: var(--text); }
+.note blockquote p + p { margin-top: 14px; }
+.note figcaption { display: flex; align-items: center; gap: 12px; margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line); }
+.note figcaption > span:nth-child(2) { display: flex; flex-direction: column; line-height: 1.3; margin-right: auto; }
+.note figcaption b { font-weight: 600; font-size: 15px; } .note figcaption small { font-size: 13.5px; color: var(--text-3); }
+.note-av { width: 40px; height: 40px; border-radius: 50%; background: var(--text); color: #fff; display: grid; place-items: center; font: 600 16px var(--head); }
+.faq-side { position: sticky; top: 104px; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+.faq-side p { color: var(--text-3); font-size: 15.5px; max-width: 30ch; }
+.faq-side a:not(.btn) { color: var(--text); text-underline-offset: 3px; text-decoration-color: var(--line-2); }
+@media (max-width: 900px) { .faq-side { position: static; } .note { padding: 28px 24px 24px; } .note blockquote p { font-size: 19px; } }
