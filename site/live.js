@@ -257,3 +257,42 @@
     n.addEventListener("pointermove", function (e) { var r = n.getBoundingClientRect(); n.style.setProperty("--mx", (e.clientX - r.left) + "px"); n.style.setProperty("--my", (e.clientY - r.top) + "px"); });
   });
 })();
+
+// ---------- Try it on your business: a real reply from /api/demo-reply, shown on the homeowner's phone ----------
+(function () {
+  var f = document.getElementById("demo"); if (!f) return;
+  var t = document.getElementById("demo-thread"), clk = document.getElementById("demo-clock"), note = document.getElementById("demo-note"), go = document.getElementById("demo-go");
+  var biz = document.getElementById("demo-biz"), av = document.getElementById("demo-av");
+  var ex = { Fence: ["Summit Fence Co.", "Need a quote for about 150 ft of cedar privacy fence in the backyard. We have a dog so need a gate too."],
+    Roofing: ["Summit Roofing", "Our roof is leaking in two spots after the storm. Two-story house, about 15 years old. Can someone come look?"],
+    Pool: ["Blue Ridge Pools", "Thinking about putting in an inground pool next spring. Backyard is about 40x60. What's the process?"],
+    Other: ["Your Business", "Hi, I saw your website and I'd like to get a quote. When could someone come out?"] };
+  var initials = function (n) { return (n.replace(/[^A-Za-z ]/g, "").split(" ").filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join("") || "C").toUpperCase(); };
+  var setName = function () { var n = f.business.value.trim() || f.business.placeholder; biz.textContent = n; av.textContent = initials(n); };
+  f.addEventListener("change", function (e) { if (e.target.name !== "trade") return; var v = ex[e.target.value] || ex.Other; if (!f.request.dataset.edited) f.request.value = v[1]; f.business.placeholder = v[0]; setName(); });
+  f.request.addEventListener("input", function () { f.request.dataset.edited = "1"; });
+  f.business.addEventListener("input", setName);
+  var add = function (cls, text) {
+    var prev = t.lastElementChild; if (prev && prev.classList.contains(cls.split(" ")[0] === "im" ? cls.split(" ")[1] : "")) prev.classList.remove("tail");
+    var d = document.createElement(cls === "meta" ? "p" : "div"); d.className = cls === "meta" ? "im-meta" : "im " + cls + " tail"; d.textContent = text;
+    if (cls !== "meta" && prev && prev.classList.contains(cls)) prev.classList.remove("tail");
+    t.appendChild(d); while (t.scrollHeight > t.clientHeight + 2 && t.children.length > 2) t.removeChild(t.firstElementChild); return d;
+  };
+  f.addEventListener("submit", function (e) {
+    e.preventDefault(); setName();
+    t.innerHTML = ""; add("meta", "Website form · " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
+    add("out", f.request.value.trim());
+    var ty = document.createElement("div"); ty.className = "im in typing"; ty.innerHTML = "<i></i><i></i><i></i>"; t.appendChild(ty);
+    go.disabled = true; go.textContent = "Replying…"; note.textContent = "Writing the reply…";
+    var t0 = performance.now(), tick = setInterval(function () { var s = Math.floor((performance.now() - t0) / 1000); clk.textContent = "0:" + (s < 10 ? "0" : "") + s; }, 200);
+    fetch("/api/demo-reply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trade: f.trade.value, business: f.business.value.trim() || f.business.placeholder, customer: "Dana", request: f.request.value, website: f.website.value }) })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "That didn't go through. Try again."); return d; }); })
+      .then(function (d) {
+        clearInterval(tick); var s = Math.max(1, Math.round((performance.now() - t0) / 1000)); clk.textContent = "0:" + (s < 10 ? "0" : "") + s; ty.remove();
+        add("in", d.reply);
+        note.textContent = "That's what your customer gets, in " + s + " second" + (s === 1 ? "" : "s") + ". Nothing was texted or saved.";
+      })
+      .catch(function (err) { clearInterval(tick); ty.remove(); note.textContent = err.message; })
+      .finally(function () { go.disabled = false; go.textContent = "See the reply"; });
+  });
+})();
