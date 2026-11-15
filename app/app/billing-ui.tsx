@@ -152,11 +152,16 @@ export function CustomersView({ list, onOpen }: { list: Customer[]; onOpen: (c: 
       <div className="ca-seg" role="tablist" aria-label="Show">{([["all", "Everyone"], ["customers", "Paying"], ["owes", "Owes you"]] as const).map(([k, l]) =>
         <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}</button>)}</div>
     </div>
-    {shown.length ? <ul className="cu-list">{shown.map(c => { const name = c.name || fmtPhone(c.phone); return <li key={c.id}><button type="button" onClick={() => onOpen(c)}>
+    {shown.length ? <ul className="cu-list cu-table">
+      <li className="cu-th" aria-hidden="true"><span /><span>Name</span><span>Phone</span><span>Stage</span><span>Last contact</span><span>Value</span></li>
+      {shown.map(c => { const name = c.name || fmtPhone(c.phone); return <li key={c.id}><button type="button" onClick={() => onOpen(c)}>
       <span className="ca-av sm" data-tone={tone(name)} aria-hidden="true">{initials(name)}</span>
       <span className="cu-mid"><b>{name}</b><small>{c.address || c.line || fmtPhone(c.phone)}</small></span>
+      <span className="cu-c">{fmtPhone(c.phone)}</span>
+      <span className="cu-c">{c.owed > 0 ? <span className="jb-tag red">Owes you</span> : c.jobs > 0 ? <span className="jb-tag green">Customer</span> : c.open_quote ? <span className="jb-tag blue">Quoted</span> : <span className="jb-tag">Lead</span>}</span>
+      <span className="cu-c">{day(c.last)}</span>
       <span className="cu-num">{c.owed > 0 ? <><b className="owe">{short(c.owed)}</b><small>owed</small></> : c.spent > 0 ? <><b>{short(c.spent)}</b><small>{c.jobs} {c.jobs === 1 ? "job" : "jobs"}</small></>
-        : c.open_quote ? <><b className="q">{short(c.open_quote)}</b><small>quoted</small></> : <small>{day(c.last)}</small>}</span>
+        : c.open_quote ? <><b className="q">{short(c.open_quote)}</b><small>quoted</small></> : <small className="cu-ph">{day(c.last)}</small>}</span>
     </button></li>; })}</ul>
       : <div className="ca-empty"><b>{q ? "No one matches that" : "No customers yet"}</b><p>{q ? "Try a name, street or the last 4 digits." : ""}</p></div>}
   </>;
@@ -173,9 +178,14 @@ export function InvoicesView({ list, onOpen }: { list: InvoiceRow[]; onOpen: (i:
     <Telemetry label="Invoices" items={[{ k: "Outstanding", v: short(out.reduce((a, i) => a + i.total, 0)) }, { k: "Past due", v: short(late.reduce((a, i) => a + i.total, 0)) }, { k: "Paid · 30 days", v: short(paid30) }]} />
     <div className="cu-bar"><div className="ca-seg" role="tablist" aria-label="Show">{([["open", "Open"], ["all", "All"]] as const).map(([k, l]) =>
       <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}</button>)}</div></div>
-    {shown.length ? <ul className="cu-list">{shown.map(i => { const st = invoiceState(i); const name = i.customer || fmtPhone(i.phone); return <li key={i.id}><button type="button" onClick={() => onOpen(i)}>
+    {shown.length ? <ul className="cu-list cu-table iv-table">
+      <li className="cu-th" aria-hidden="true"><span>Invoice</span><span>Customer</span><span>Sent</span><span>Status</span><span>Due</span><span>Amount</span></li>
+      {shown.map(i => { const st = invoiceState(i); const name = i.customer || fmtPhone(i.phone); return <li key={i.id}><button type="button" onClick={() => onOpen(i)}>
       <span className="iv-no">#{i.number}</span>
       <span className="cu-mid"><b>{name}</b><small>{i.status === "paid" ? `Paid ${i.paid_at ? day(i.paid_at) : ""}` : i.due_on ? `Due ${day(i.due_on)}` : "Draft"}</small></span>
+      <span className="cu-c">{i.sent_at ? day(i.sent_at) : "Not sent"}</span>
+      <span className="cu-c"><span className={"jb-tag " + st.tone}>{st.text}</span></span>
+      <span className="cu-c">{i.due_on ? day(i.due_on) : "–"}</span>
       <span className="cu-num"><b>{dollars(i.total)}</b><span className={"jb-tag " + st.tone}>{st.text}</span></span>
     </button></li>; })}</ul>
       : <div className="ca-empty"><b>{f === "open" ? "Nothing outstanding" : "No invoices yet"}</b><p>Create one from a won job.</p></div>}

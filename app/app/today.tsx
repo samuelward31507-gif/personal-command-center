@@ -9,7 +9,7 @@ import { useCountUp } from "./sx";
 type Ask = { id: string; name: string; ask?: string; last: string; at: string | null };
 type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string };
 type Inv = CardInvoice & { thread_id: string; customer: string; phone: string };
-export type TodayGo = { thread: (id: string) => void; card: (id: string, stage?: "quoted" | "won") => void; invoice: (id: string) => void; calendar: () => void; sam: () => void; numbers: () => void };
+export type TodayGo = { thread: (id: string) => void; card: (id: string, stage?: "quoted" | "won") => void; invoice: (id: string) => void; calendar: () => void; sam: () => void; numbers: () => void; jobs: () => void; invoices: () => void };
 type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "sam";
 type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string };
 
@@ -78,43 +78,61 @@ export function TodayTab({ owner, business, trade, cards, invoices, asks, due, a
       .map(c => ({ key: "i" + c.id, at: c.installTime ? Date.parse(`${today}T${c.installTime}`) : 0, time: c.installTime ? hhmm(c.installTime) : "All day", what: c.installDays > 1 ? `Install · ${c.installDays} days` : "Install", who: c.name, where: String(c.details.address ?? ""), go: () => go.card(c.id), past: false })),
   ].sort((a, b) => a.at - b.at);
 
+  // The week ahead: so a quiet today still shows what's coming.
+  const end = Date.now() + 7 * 86400000, tomorrow = new Date(Date.parse(today + "T12:00:00") + 86400000).toLocaleDateString("en-CA");
+  const dayOf = (iso: string) => { const d = iso.slice(0, 10); return d === tomorrow ? "Tomorrow" : new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); };
+  const ahead = [
+    ...appts.filter(a => { const t = Date.parse(a.starts_at); return new Date(a.starts_at).toLocaleDateString("en-CA") > today && t < end; })
+      .map(a => ({ key: "na" + a.id, at: Date.parse(a.starts_at), day: dayOf(new Date(a.starts_at).toLocaleDateString("en-CA")), time: clock(a.starts_at), what: "Estimate", who: a.customer_name || a.customer_phone, go: () => go.thread(a.thread_id) })),
+    ...cards.filter(c => c.stage === "won" && c.install && c.install > today && Date.parse(c.install + "T12:00:00") < end)
+      .map(c => ({ key: "ni" + c.id, at: Date.parse(`${c.install}T${c.installTime || "07:00"}`), day: dayOf(c.install!), time: c.installTime ? hhmm(c.installTime) : "All day", what: c.installDays > 1 ? `Install, ${c.installDays} days` : "Install", who: c.name, go: () => go.card(c.id) })),
+  ].sort((a, b) => a.at - b.at).slice(0, 6);
+
   const open = cards.filter(c => c.stage === "new" || c.stage === "booked" || c.stage === "quoted");
   const inPlay = open.reduce((a, c) => a + (c.value ?? (c.ballpark ? (c.ballpark.low + c.ballpark.high) / 2 : 0)), 0);
   const shown = useCountUp(inPlay, 900);
 
+  const sent = invoices.filter(i => i.status === "sent");
+  const owed = sent.reduce((a, i) => a + i.total, 0), late = sent.filter(i => overdue(i.status, i.due_on, today)).length;
+  const hour = new Date().getHours();
+  const hello = `${hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"}${owner ? `, ${first(owner)}` : ""}`;
+  const quiet = live.leads > 0 && live.answered >= live.leads;
+
   return <div className="td">
-    <header className="td-hero">
-      <p className="td-date">{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
-      <p className="td-big" aria-label={`${usd(inPlay)} in open jobs`}>{usd(shown)}</p>
-      <p className="td-cap">{open.length} open {open.length === 1 ? "job" : "jobs"}{actions.length ? <> · <b>{actions.length} to do</b></> : null}</p>
+    <header className="td-head">
+      <h1>{hello}</h1>
+      <p>{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}<span>{quiet ? "Cinder answered every lead this month" : actions.length ? `${actions.length} ${actions.length === 1 ? "thing needs" : "things need"} you` : "Nothing needs you"}</span></p>
     </header>
 
+    <dl className="td-figs">
+      <button type="button" onClick={go.jobs}><dt>Open jobs</dt><dd aria-label={usd(inPlay)}>{usd(shown)}</dd><small>{open.length} {open.length === 1 ? "job" : "jobs"} in the pipeline</small></button>
+      <button type="button" onClick={go.invoices}><dt>Owed to you</dt><dd className={late ? "late" : ""}>{usd(owed)}</dd><small>{sent.length ? `${sent.length} ${sent.length === 1 ? "invoice" : "invoices"}${late ? `, ${late} late` : ""}` : "All paid up"}</small></button>
+      <button type="button" onClick={go.numbers}><dt>Won, last 30 days</dt><dd>{short(live.wonValue)}</dd><small>{live.won} {live.won === 1 ? "job" : "jobs"}</small></button>
+      <button type="button" onClick={go.numbers}><dt>First reply</dt><dd>{live.replySec == null ? "–" : live.replySec < 60 ? <>{live.replySec}<i>s</i></> : <>{Math.round(live.replySec / 60)}<i>m</i></>}</dd><small>{live.answered} of {live.leads} leads answered</small></button>
+    </dl>
+
     <div className="td-cols"><section className="td-sec" aria-label="To do">
-      <h2>To do</h2>
+      <h2>To do{actions.length ? <span>{actions.length}</span> : null}</h2>
       {actions.length ? <ul className="td-acts">{actions.slice(0, 8).map(a => <li key={a.key}><button type="button" onClick={a.go}>
-        <span className={"td-g " + a.kind} aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{GLYPH[a.kind]}</svg></span>
+        <span className={"td-g " + a.kind} aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{GLYPH[a.kind]}</svg></span>
         <span className="td-t"><b>{a.title}</b><small>{a.sub}</small></span>
         <span className="td-cta">{a.cta}</span>
       </button></li>)}</ul>
-        : <div className="td-clear"><b>Nothing to do.</b></div>}
+        : <div className="td-clear"><b>You&rsquo;re clear.</b> Cinder&rsquo;s handling the rest.</div>}
       {actions.length > 8 && <p className="td-more">+{actions.length - 8} more</p>}
     </section>
-    <div className="td-side"><section className="td-sec" aria-label="Today's schedule">
-      <h2>Today</h2>
+    <section className="td-sec" aria-label="Today's schedule">
+      <h2>Schedule</h2>
       {sched.length ? <ul className="td-sched">{sched.map(s => <li key={s.key} className={s.past ? "past" : ""}><button type="button" onClick={s.go}>
         <span className="td-time">{s.time}</span>
         <span className="td-t"><b>{s.who}</b><small>{s.what}{s.where ? ` · ${s.where}` : ""}</small></span>
       </button></li>)}</ul>
-        : <p className="td-none">Nothing scheduled.</p>}
-    </section>
-
-    <section className="td-sec" aria-label="This month">
-      <h2>Last 30 days <button type="button" className="td-link" onClick={go.numbers}>All numbers</button></h2>
-      <dl className="td-month">
-        <div><dt>Won</dt><dd>{short(live.wonValue)}</dd></div>
-        <div><dt>Answered</dt><dd>{live.answered}<small>/{live.leads}</small></dd></div>
-        <div><dt>First reply</dt><dd>{live.replySec == null ? "–" : live.replySec < 60 ? <>{live.replySec}<small>s</small></> : <>{Math.round(live.replySec / 60)}<small>m</small></>}</dd></div>
-      </dl>
-    </section></div></div>
+        : <div className="td-none"><b>Nothing on today.</b><button type="button" onClick={go.calendar}>Open calendar</button></div>}
+      {ahead.length > 0 && <><h3 className="td-h3">Next 7 days</h3>
+        <ul className="td-sched td-ahead">{ahead.map(s => <li key={s.key}><button type="button" onClick={s.go}>
+          <span className="td-time">{s.day}<small>{s.time}</small></span>
+          <span className="td-t"><b>{s.who}</b><small>{s.what}</small></span>
+        </button></li>)}</ul></>}
+    </section></div>
   </div>;
 }

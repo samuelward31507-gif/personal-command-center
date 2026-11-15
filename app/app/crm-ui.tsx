@@ -201,7 +201,7 @@ function cardTag(c: Card): { text: string; tone?: "blue" | "green" | "warn" } {
 const priceOf = (c: Card) => c.value ? short(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "";
 type Biz = { reviewLink: boolean; number: boolean; owner: string; business: string; priceBook: string; taxRate: string; payLink: boolean; calendar: boolean };
 
-export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, canCall, wide, biz, winback, customers = [], invoices = [], setup = {}, focus = null }: { focus?: { card?: string; stage?: "quoted" | "won"; invoice?: string; n: number } | null; cards: Card[]; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; canCall: boolean; wide: boolean; biz: Biz; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[]; setup?: Record<string, string> }) {
+export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, canCall, wide, biz, winback, customers = [], invoices = [], setup = {}, focus = null }: { focus?: { card?: string; stage?: "quoted" | "won"; invoice?: string; view?: "pipeline" | "customers" | "invoices"; n: number } | null; cards: Card[]; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; canCall: boolean; wide: boolean; biz: Biz; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[]; setup?: Record<string, string> }) {
   const [sel, setSel] = useState<string | null>(null), [adding, setAdding] = useState(false), [wb, setWb] = useState(false), [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Stage | null>(null);
   const [view, setView] = useState<"pipeline" | "customers" | "invoices">("pipeline");
   const [inv, setInv] = useState<{ id: string; customer: string } | null>(null), [billing, setBilling] = useState(false);
@@ -211,6 +211,7 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
   // Opened from Today: jump straight to the card (and the quote or won form) or the invoice.
   useEffect(() => {
     if (!focus) return;
+    if (focus.view) setView(focus.view);
     if (focus.card) { setView("pipeline"); setSel(focus.card); setPending(focus.stage ? { id: focus.card, stage: focus.stage } : null); }
     if (focus.invoice) { const i = invoices.find(x => x.id === focus.invoice); setInv({ id: focus.invoice, customer: i ? i.customer || fmtPhone(i.phone) : "" }); }
   }, [focus?.n]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -219,7 +220,6 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
   const custNow = cust ? customers.find(c => c.id === cust) ?? null : null;
   const by = useMemo(() => Object.fromEntries(STAGES.map(s => [s, cards.filter(c => c.stage === s)])) as Record<Stage, Card[]>, [cards]);
   const open = cards.filter(c => c.stage === "new" || c.stage === "booked" || c.stage === "quoted");
-  const openValue = open.reduce((a, c) => a + (c.value ?? (c.ballpark ? (c.ballpark.low + c.ballpark.high) / 2 : 0)), 0);
   const card = cards.find(c => c.id === sel) ?? null;
 
   async function move(id: string, stage: Stage) {
@@ -232,15 +232,14 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
 
   return <>
     <div className="ca-hello jb-hello">
-      <div className="jb-hello-sum">{open.length ? <><b>{open.length}</b> open {open.length === 1 ? "job" : "jobs"}{openValue ? <> · <b>{money(openValue)}</b></> : null}</> : "No open jobs yet"}</div>
+      <div className="ca-seg jb-views" role="tablist" aria-label="View">{([["pipeline", "Pipeline"], ["customers", "Customers"], ["invoices", `Invoices${owed ? ` · ${owed}` : ""}`]] as const).map(([k, l]) =>
+        <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>
       <div className="jb-hello-acts">
         {view === "pipeline" && winback && winback.past > 0 && <button type="button" className="jb-ghost" onClick={() => setWb(true)}><Svg d={I.users} size={16} />Past customers</button>}
         {view === "invoices" && <button type="button" className="jb-ghost" onClick={() => setBilling(true)}>Pay link and tax</button>}
         {view !== "invoices" && <button type="button" className="jb-add" onClick={() => setAdding(true)}><Svg d={I.plus} size={16} />Add lead</button>}
       </div>
     </div>
-    <div className="ca-seg wide jb-views" role="tablist" aria-label="View">{([["pipeline", "Pipeline"], ["customers", "Customers"], ["invoices", `Invoices${owed ? ` · ${owed}` : ""}`]] as const).map(([k, l]) =>
-      <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>
     {view === "customers" && <CustomersView list={customers} onOpen={c => setCust(c.id)} />}
     {view === "invoices" && <InvoicesView list={invoices} onOpen={i => setInv({ id: i.id, customer: i.customer || fmtPhone(i.phone) })} />}
     {view === "pipeline" && <>
@@ -248,7 +247,7 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
       {STAGES.map(stage => { const list = by[stage]; const total = list.reduce((a, c) => a + (c.value ?? 0), 0); return <section key={stage} id={"jb-col-" + stage} className={"jb-col" + (over === stage ? " over" : "")} aria-label={STAGE_LABEL[stage]}
         onDragOver={e => { if (drag) { e.preventDefault(); setOver(stage); } }} onDragLeave={() => setOver(o => o === stage ? null : o)}
         onDrop={e => { e.preventDefault(); setOver(null); if (drag) void move(drag, stage); setDrag(null); }}>
-        <h2><span>{STAGE_LABEL[stage]}</span><small>{list.length}{total ? ` · ${short(total)}` : ""}</small></h2>
+        <h2><span>{STAGE_LABEL[stage]}<em>{list.length}</em></span><b>{total ? short(total) : "–"}</b></h2>
         {list.length ? <ul>{list.map(c => { const tag = cardTag(c); return <li key={c.id}>
           <button type="button" className="jb-card" draggable={wide} onDragStart={() => setDrag(c.id)} onDragEnd={() => { setDrag(null); setOver(null); }} onClick={() => { setPending(null); setSel(c.id); }}>
             <span className="jb-name">{c.name || fmtPhone(c.phone)}</span>

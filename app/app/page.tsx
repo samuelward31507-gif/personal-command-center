@@ -341,7 +341,7 @@ export default function CinderApp() {
   const [d, setD] = useState<Data | null>(null);
   const [project, setProject] = useState<string>("");
   const [tab, setTab] = useState<Tab>("today");
-  const [focus, setFocus] = useState<{ card?: string; stage?: "quoted" | "won"; invoice?: string; n: number } | null>(null);
+  const [focus, setFocus] = useState<{ card?: string; stage?: "quoted" | "won"; invoice?: string; view?: "pipeline" | "customers" | "invoices"; n: number } | null>(null);
   const [filter, setFilter] = useState<"all" | "needs" | "booked">("all");
   const [open, setOpen] = useState<string | null>(null);
   // On a computer the app becomes a three-column workspace: sidebar, leads, and the open conversation.
@@ -433,7 +433,7 @@ export default function CinderApp() {
         live={{ wonValue: L.wonValue, won: L.won, answered: L.answered, leads: L.leads, replySec: L.replySec, booked: L.booked }}
         go={{ thread: id => setOpen(id), card: (id, stage) => { setTab("jobs"); setFocus({ card: id, stage, n: Date.now() }); window.scrollTo(0, 0); },
           invoice: id => { setTab("jobs"); setFocus({ invoice: id, n: Date.now() }); window.scrollTo(0, 0); },
-          calendar: () => { setTab("estimates"); window.scrollTo(0, 0); void load(project, "estimates"); }, sam: () => { setTab("sam"); void load(project, "sam"); }, numbers: () => { setTab("numbers"); window.scrollTo(0, 0); } }} />}
+          calendar: () => { setTab("estimates"); window.scrollTo(0, 0); void load(project, "estimates"); }, sam: () => { setTab("sam"); void load(project, "sam"); }, numbers: () => { setTab("numbers"); window.scrollTo(0, 0); }, jobs: () => { setTab("jobs"); setFocus({ view: "pipeline", n: Date.now() }); window.scrollTo(0, 0); }, invoices: () => { setTab("jobs"); setFocus({ view: "invoices", n: Date.now() }); window.scrollTo(0, 0); } }} />}
 
       {tab === "leads" && <>
         {!hidePushCard && (push === "off" || push === "ios-install") && <div className="ca-pushcard">
