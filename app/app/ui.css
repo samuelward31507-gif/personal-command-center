@@ -869,3 +869,92 @@ html body:not(#u) .ca-slim { display: none; }
   html body:not(#u) .ca-wide.slim .ca-nav > button:not(.ca-nav-foot) { width: 40px; justify-content: center; padding: 0 !important; }
   html body:not(#u) .ca-wide.slim .ca-nav-foot { width: 40px; justify-content: center; padding: 0 !important; }
 }
+
+/* ======================================================================
+   The pattern language of the best-built CRMs, applied to Cinder:
+   a tinted sidebar with the work on one white sheet inset beside it; edge-to-edge tables with 12px muted headings
+   and 40px rows; flat kanban cards (avatar, name, attribute lines with small icons); 600px record drawer;
+   14px body text; 6 to 8px corners. Our colours and type stay the website's.
+   ====================================================================== */
+@media (min-width: 1100px) {
+  html body:not(#u) .ca.ca-wide { background: #f3f3f1 !important; }
+  html body:not(#u) .ca.ca-wide::before { content: ""; grid-column: 2 / -1; grid-row: 2 / -1; margin: 8px 8px 8px 0; border-radius: 12px; background: #fff; border: 1px solid #e8e8e5; box-shadow: 0 1px 2px rgba(18, 20, 23, .04); }
+  html body:not(#u) .ca-wide :is(.ca-top, .ca-main, .ca-pane) { position: relative; z-index: 1; top: 0 !important; }
+  html body:not(#u) .ca-wide .ca-nav { background: transparent !important; }
+  html body:not(#u) .ca-wide .ca-top { background: transparent !important; margin: 8px 8px 0 0; padding: 26px 36px 0 !important; }
+  html body:not(#u) .ca-wide .ca-main { margin: 0 8px 8px 0; padding: 18px 36px 40px; }
+  html body:not(#u) .ca-wide .ca-pane { margin: 8px 8px 8px 0; border-radius: 0 12px 12px 0; background: #fff !important; border-left: 1px solid #ececea !important; }
+  html body:not(#u) .ca-wide .ca-pane .ca-thread, html body:not(#u) .ca-wide .ca-pane .ca-stick { background: #fff !important; }
+  html body:not(#u) .ca-wide .ca-pane .ca-composer { background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 22px); }
+  html body:not(#u) .ca-wide .ca-nav > button.on { background: #fff !important; box-shadow: 0 0 0 1px #e6e6e2, 0 1px 2px rgba(18, 20, 23, .04) !important; }
+  html body:not(#u) .ca-wide .ca-nav > button:not(.ca-nav-foot):hover { background: #ebebe8 !important; }
+  html body:not(#u) .ca-wide .ca-top-title { font: 600 24px/1.2 var(--head) !important; letter-spacing: -0.024em !important; }
+  html body:not(#u) .ca-wide .ca-msg.out p { background: #f1f1ef; }
+  html body:not(#u) .ca-wide .ca-box { background: #fff; border-color: #e6e6e2; }
+  html body:not(#u) .ca-wide .ca-list > li > button:hover { background: #f6f6f4 !important; }
+  html body:not(#u) .ca-wide .ca-list > li > button.sel { background: #f1f1ef !important; }
+  html body:not(#u) .ca-wide.slim::before { grid-column: 2 / -1; }
+}
+
+/* Kanban: columns are just a heading and a stack. Cards are flat. */
+html body:not(#u) .jb-col { background: transparent !important; padding: 0 !important; }
+html body:not(#u) .jb-col.over { background: rgba(18, 20, 23, .03) !important; box-shadow: none; border-radius: 10px; }
+html body:not(#u) .jb-col h2 { flex-direction: row !important; align-items: baseline !important; justify-content: space-between; margin: 0 2px 10px !important; padding-bottom: 10px; border-bottom: 1px solid #ececea; }
+html body:not(#u) .jb-col h2 span { font: 500 13px/1.2 var(--sans) !important; color: var(--text) !important; gap: 8px; justify-content: flex-start !important; }
+html body:not(#u) .jb-col h2 span em { font-size: 12px; color: #9aa0a7; }
+html body:not(#u) .jb-col h2 b { font: 500 12.5px/1 var(--sans) !important; color: #6b7280; letter-spacing: 0 !important; }
+html body:not(#u) .jb-board.wide { gap: 16px; }
+html body:not(#u) .jb-card { gap: 7px !important; padding: 11px 12px !important; border-radius: 8px !important; border: 1px solid #e8e8e5 !important; box-shadow: none !important; background: #fff !important; }
+html body:not(#u) .jb-card:hover { border-color: #d6d6d2 !important; box-shadow: 0 2px 8px -2px rgba(18, 20, 23, .08) !important; }
+html body:not(#u) .jb-name { display: flex; align-items: center; gap: 8px; font-size: 13.5px !important; font-weight: 500 !important; margin-bottom: 2px; }
+html body:not(#u) .ca-av.xs { width: 20px; height: 20px; font-size: 9px; letter-spacing: 0; }
+html body:not(#u) .jb-attr { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12.5px; color: #5e6774; }
+html body:not(#u) .jb-attr svg { flex: 0 0 auto; color: #9aa0a7; }
+html body:not(#u) .jb-attr > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body:not(#u) .jb-attr.blue { color: #1f5fa8; } html body:not(#u) .jb-attr.blue svg { color: #4a86c8; }
+html body:not(#u) .jb-attr.green { color: #17905a; } html body:not(#u) .jb-attr.green svg { color: #17905a; }
+html body:not(#u) .jb-attr.warn { color: #b5651d; } html body:not(#u) .jb-attr.warn svg { color: var(--ember); }
+html body:not(#u) .jb-attr.red { color: var(--miss); } html body:not(#u) .jb-attr.red svg { color: var(--miss); }
+html body:not(#u) .jb-attr .v { color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; }
+html body:not(#u) .jb-attr .est { color: #6b7280; font-variant-numeric: tabular-nums; }
+html body:not(#u) .jb-empty { border: 1px dashed #e2e2df !important; border-radius: 8px !important; background: transparent; font-size: 12.5px; }
+
+/* Tables: edge to edge, no card, 12px muted headings, 44px rows. */
+@media (min-width: 900px) {
+  html body:not(#u) .cu-list.cu-table { background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; border-top: 1px solid #ececea !important; }
+  html body:not(#u) .cu-table .cu-th { background: transparent !important; padding: 10px 8px !important; font-size: 12px !important; color: #6b7280 !important; border-bottom: 1px solid #ececea !important; }
+  html body:not(#u) .cu-table > li:not(.cu-th) > button { padding: 9px 8px !important; border-radius: 0 !important; }
+  html body:not(#u) .cu-list.cu-table > li:not(.cu-th) + li { border-top: 1px solid #f1f1ef !important; }
+  html body:not(#u) .cu-table > li:not(.cu-th) > button:hover { background: #fafaf9 !important; }
+  html body:not(#u) .cu-table .cu-mid b { font-size: 13.5px; font-weight: 500; }
+  html body:not(#u) .cu-table .cu-mid small { font-size: 12.5px; }
+  html body:not(#u) .cu-table .cu-c { font-size: 13px; }
+}
+html body:not(#u) .sx-tel { border-top: 1px solid #ececea !important; border-bottom: 1px solid #ececea !important; }
+html body:not(#u) .sx-tel dd { font-size: 22px !important; font-weight: 600; letter-spacing: -0.025em; }
+html body:not(#u) .sx-tel dt { font-size: 12px !important; }
+html body:not(#u) .cu-search input { border-radius: 8px !important; height: 36px !important; font-size: 14px !important; }
+html body:not(#u) .cu-bar .ca-seg, html body:not(#u) .jb-hello .ca-seg { border-radius: 9px !important; padding: 2px !important; }
+html body:not(#u) .cu-bar .ca-seg button, html body:not(#u) .jb-hello .ca-seg button { height: 30px !important; border-radius: 7px !important; font-size: 13px !important; }
+html body:not(#u) .ca :is(.jb-add, .jb-ghost) { height: 32px !important; padding: 0 12px !important; border-radius: 8px !important; font-size: 13px !important; }
+
+/* The record: 600px drawer; details as a label column with values beside it. */
+@media (min-width: 1100px) { html body:not(#u) .jb-sheet { max-width: 600px !important; } }
+html body:not(#u) .jb-box { border-radius: 10px !important; border: 1px solid #ececea !important; padding: 14px 16px !important; }
+html body:not(#u) .jb-box-h b { font: 500 14px/1.2 var(--sans) !important; letter-spacing: -0.005em !important; }
+html body:not(#u) .jb-h3 { font: 500 14px/1.2 var(--sans) !important; margin: 26px 0 8px !important; padding-bottom: 10px; border-bottom: 1px solid #ececea; letter-spacing: 0 !important; }
+html body:not(#u) .jb-fields { display: block !important; }
+html body:not(#u) .jb-fields > .jb-f, html body:not(#u) .jb-sheet-b > .jb-f.full { display: grid !important; grid-template-columns: 130px minmax(0, 1fr); align-items: center; gap: 12px !important; margin: 0 !important; padding: 4px 0; }
+html body:not(#u) .jb-fields > .jb-f > span:first-child, html body:not(#u) .jb-sheet-b > .jb-f.full > span:first-child { font-size: 12.5px !important; color: #6b7280 !important; font-weight: 500 !important; }
+html body:not(#u) .jb-fields > .jb-f :is(input, select), html body:not(#u) .jb-sheet-b > .jb-f.full :is(input, select) { height: 34px !important; border-color: transparent !important; background-color: transparent !important; padding-left: 8px !important; font-size: 14px !important; }
+html body:not(#u) .jb-fields > .jb-f :is(input, select):hover, html body:not(#u) .jb-sheet-b > .jb-f.full :is(input, select):hover { background-color: #f6f6f4 !important; }
+html body:not(#u) .jb-fields > .jb-f :is(input, select):focus, html body:not(#u) .jb-sheet-b > .jb-f.full :is(input, select):focus { background-color: #fff !important; border-color: #d6d6d2 !important; }
+html body:not(#u) .jb-fields input::placeholder, html body:not(#u) .jb-sheet-b > .jb-f.full input::placeholder { color: #a2a7ad; font-style: italic; }
+html body:not(#u) .jb-sheet-b > .jb-f.full:has(textarea) { align-items: start; }
+html body:not(#u) .jb-sheet-b > .jb-f.full textarea { border-color: #ececea !important; font-size: 14px !important; }
+html body:not(#u) .jb-stages { border-radius: 9px !important; padding: 2px !important; }
+html body:not(#u) .jb-stages button { min-height: 32px !important; border-radius: 7px !important; font-size: 12.5px !important; }
+html body:not(#u) .jb-acts :is(button, a) { height: 34px !important; border-radius: 8px !important; font-size: 13px !important; }
+html body:not(#u) .jb-sheet-h { border-bottom: 1px solid #ececea !important; }
+html body:not(#u) .jb-who b { font: 600 18px/1.2 var(--head) !important; letter-spacing: -0.02em !important; }
+@media (min-width: 1100px) { html body:not(#u) .ca:has(.ca-demo) .jb-scrim { top: 42px; } html body:not(#u) .ca:has(.ca-demo) .jb-sheet { height: calc(100dvh - 42px); } }

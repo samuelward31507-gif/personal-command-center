@@ -31,6 +31,8 @@ const I = {
   plus: <path d="M12 5v14M5 12h14" />, link: <><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1.2 1.2" /><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1.2-1.2" /></>,
   star: <path d="m12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.4l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z" />, send: <path d="M4 12 20 4l-4 16-4-7z M12 13l8-9" />, eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="2.6" /></>,
   users: <><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 5.6a3.2 3.2 0 0 1 0 5.8M17.5 13.6A5.5 5.5 0 0 1 20.5 19" /></>, x: <path d="M6 6l12 12M18 6 6 18" />, back: <path d="M15 5l-7 7 7 7" />, check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  ruler: <><rect x="3" y="8" width="18" height="8" rx="1.5" /><path d="M7 8v3M11 8v4M15 8v3M19 8v2" /></>, cal: <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></>,
+  dot: <circle cx="12" cy="12" r="3.5" />, dollar: <path d="M12 3v18M16.5 7.5c-.8-1.2-2.4-2-4.5-2-2.5 0-4 1.3-4 3s1.5 2.6 4 3 4 1.4 4 3.2-1.6 3.1-4.2 3.1c-2.2 0-3.8-.9-4.6-2.2" />,
   pin: <><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.4" /></>,
   chat: <path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 20 12z" />, phone: <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />,
 };
@@ -250,9 +252,10 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
         <h2><span>{STAGE_LABEL[stage]}<em>{list.length}</em></span><b>{total ? short(total) : "–"}</b></h2>
         {list.length ? <ul>{list.map(c => { const tag = cardTag(c); return <li key={c.id}>
           <button type="button" className="jb-card" draggable={wide} onDragStart={() => setDrag(c.id)} onDragEnd={() => { setDrag(null); setOver(null); }} onClick={() => { setPending(null); setSel(c.id); }}>
-            <span className="jb-name">{c.name || fmtPhone(c.phone)}</span>
-            <span className="jb-line">{c.line || (c.notes ? c.notes.slice(0, 60) : "No job details yet")}</span>
-            <span className="jb-foot"><span className={"jb-tag" + (tag.tone ? " " + tag.tone : "")}>{tag.text}</span>{priceOf(c) && <em className={c.value ? "" : "est"} title={c.value ? "Job value" : "Ballpark from your prices"}>{priceOf(c)}</em>}</span>
+            <span className="jb-name"><span className="ca-av xs" data-tone={tone(c.name || c.phone)} aria-hidden="true">{initials(c.name || "#")}</span>{c.name || fmtPhone(c.phone)}</span>
+            <span className="jb-attr"><Svg d={I.ruler} size={14} /><span>{c.line || (c.notes ? c.notes.slice(0, 60) : "No job details yet")}</span></span>
+            <span className={"jb-attr" + (tag.tone ? " " + tag.tone : "")}><Svg d={tag.tone === "blue" ? I.cal : tag.tone === "green" ? I.check : I.dot} size={14} /><span>{tag.text}</span></span>
+            {priceOf(c) && <span className="jb-attr"><Svg d={I.dollar} size={14} /><span className={c.value ? "v" : "est"}>{priceOf(c)}{c.value ? "" : " ballpark"}</span></span>}
           </button></li>; })}</ul>
           : <p className="jb-empty">{stage === "new" ? "New leads land here." : stage === "booked" ? "Booked estimates." : stage === "quoted" ? "Quotes Cinder is chasing." : stage === "won" ? "Jobs you won." : "Lost or not a fit."}</p>}
       </section>; })}
@@ -282,7 +285,7 @@ function Sheet({ title, onClose, children }: { title: React.ReactNode; onClose: 
 function DetailFields({ trade, d, set }: { trade: string; d: Record<string, string>; set: (k: string, v: string) => void }) {
   return <div className="jb-fields">{jobFields(trade).map(f => <label key={f.key} className={"jb-f" + (f.key === "address" ? " full" : "")}><span>{f.label}</span>
     {f.kind === "choice" ? <select value={d[f.key] ?? ""} onChange={e => set(f.key, e.target.value)}><option value="">–</option>{f.options!.map(o => <option key={o}>{o}</option>)}</select>
-      : <span className="jb-in"><input inputMode={f.kind === "number" ? "decimal" : undefined} value={d[f.key] ?? ""} onChange={e => set(f.key, e.target.value)} placeholder={f.key === "length_ft" ? "150" : f.key === "gates" ? "1" : ""} />{f.unit && <em>{f.unit}</em>}</span>}
+      : <span className="jb-in"><input inputMode={f.kind === "number" ? "decimal" : undefined} value={d[f.key] ?? ""} onChange={e => set(f.key, e.target.value)} placeholder="Not set" />{f.unit && <em>{f.unit}</em>}</span>}
   </label>)}</div>;
 }
 const asStrings = (d: Details) => Object.fromEntries(Object.entries(d).map(([k, v]) => [k, String(v)]));
