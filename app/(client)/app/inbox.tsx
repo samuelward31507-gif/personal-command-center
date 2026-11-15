@@ -90,6 +90,8 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
   const sug = suggestReply(name, texts, { stage: t?.status === "booked" ? "booked" : undefined });
   const st = t ? (STATUS[t.status] ?? STATUS.auto) : null;
   let lastDay = "", lastWho = "";
+  const lastOut = texts ? [...texts].reverse().find(x => x.direction === "out" && x.author !== "system")?.id : undefined;
+  const dlv = (x: Text) => x.status === "undelivered" || x.status === "failed" ? "Not delivered" : x.id === lastOut ? (x.status === "delivered" ? "Delivered" : x.status === "sent" || x.status === "queued" ? "Sent" : "") : "";
   return <section className="thread">
     <header className="th">
       {onBack && <button type="button" className="btn ghost ic" onClick={onBack} aria-label="Back"><Icon name="back" size={16} /></button>}
@@ -121,6 +123,7 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
             {photos.length > 0 && <div className="photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
             {words && <span className={"bubble" + (who === "them" ? "" : " out")}>{words}</span>}
             {tail && <small className="when">{clock(x.at)}</small>}
+            {who !== "them" && dlv(x) && <small className={"dlv" + (dlv(x) === "Not delivered" ? " bad" : "")}>{dlv(x)}</small>}
           </article></div>;
         })}
       <div ref={end} />

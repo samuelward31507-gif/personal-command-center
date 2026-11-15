@@ -27,14 +27,18 @@ async function threadOf(sql: Sql, c: Client, id: string) {
 
 // ---------- Quote lines ----------
 /** The owner's lines and tax on the customer's open quote; the quote amount becomes their total. Sending is separate. */
-export async function saveQuoteLines(sql: Sql, c: Client, threadId: string, input: { items: unknown; tax?: unknown; note?: string }): Promise<{ ok: boolean; total?: number; error?: string }> {
+export async function saveQuoteLines(sql: Sql, c: Client, threadId: string, input: { items: unknown; tax?: unknown; note?: string; deposit?: unknown }): Promise<{ ok: boolean; total?: number; error?: string }> {
   const t = await threadOf(sql, c, threadId);
   if (!t) return { ok: false, error: "Not found." };
   const items = cleanItems(input.items);
   if (!items.length) return { ok: false, error: "Add at least one line with a price." };
   const tax = cleanTax(input.tax ?? c.setup.tax_rate ?? 0);
   const { total } = totals(items, tax);
+  // A deposit the customer pays through the owner's own pay link once they approve. Never more than the quote.
+  const depN = input.deposit === undefined ? undefined : Math.round(Number(String(input.deposit ?? "").replace(/[$,\s]/g, "")) || 0);
+  const deposit = depN === undefined ? undefined : depN > 0 && depN <= total ? depN : null;
   const [q] = await sql`UPDATE public.client_quotes SET items = ${JSON.stringify(items)}::jsonb, tax_rate = ${tax}, amount = ${total},
+      deposit = CASE WHEN ${deposit === undefined}::boolean THEN deposit ELSE ${deposit ?? null}::numeric END,
       note = CASE WHEN ${typeof input.note === "string"}::boolean THEN ${String(input.note ?? "").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, " ").trim().slice(0, 600)} ELSE note END
     WHERE id = (SELECT id FROM public.client_quotes WHERE project_id = ${c.projectId}::uuid AND kind = 'quote' AND status IN ('open', 'replied')
       AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${phoneMatch(t.customer_phone)} ORDER BY created_at DESC LIMIT 1) RETURNING id`;

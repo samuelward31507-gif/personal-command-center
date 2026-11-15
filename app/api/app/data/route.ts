@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     if (th && /^[0-9a-f-]{36}$/i.test(th)) {
       const [t] = await sql`SELECT id, customer_name, customer_phone, source, status, lang FROM public.client_threads WHERE id = ${th}::uuid AND project_id = ${c.projectId}::uuid` as Record<string, unknown>[];
       if (!t) return json({ error: "Not found" }, 404);
-      const texts = await sql`SELECT id, direction, author, body, at, media FROM public.client_texts WHERE thread_id = ${th}::uuid ORDER BY at LIMIT 400`;
+      const texts = await sql`SELECT id, direction, author, body, at, media, status FROM public.client_texts WHERE thread_id = ${th}::uuid ORDER BY at LIMIT 400`;
       return json({ thread: t, texts });
     }
     const [live, biz, appts, unread, msgs, quotes, calRow, keyRow, wonJobs, board, past, customers, invoices, wires] = await Promise.all([

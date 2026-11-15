@@ -23,7 +23,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       t.install_time, t.install_days, t.install_event_id IS NOT NULL AS on_calendar, q.viewed_at AS quote_viewed, q.note AS quote_note, a.starts_at AS next_appt,
       t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent, t.job_steps, t.job_costs,
       (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied,
-      t.stage_at, lr.body AS lost_note
+      t.stage_at, lr.body AS lost_note, t.crew_notes, q.deposit::float AS quote_deposit
     FROM public.client_threads t
     LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
       AND right(regexp_replace(x.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
@@ -45,7 +45,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
     const bp = share ? ballpark(book, details) : null;
     const quote = r.quote_id ? { id: String(r.quote_id), amount: r.quote_amount == null ? null : Number(r.quote_amount), status: String(r.quote_status), steps: Number(r.quote_steps ?? 0),
       linked: !!r.quote_linked, url: r.quote_token ? quoteUrl(String(r.quote_token)) : null, viewed: r.quote_viewed ? new Date(String(r.quote_viewed)).toISOString() : null, note: String(r.quote_note ?? ""),
-      items: cleanItems(r.quote_items), tax: Number(r.quote_tax ?? 0) } : null;
+      items: cleanItems(r.quote_items), tax: Number(r.quote_tax ?? 0), deposit: r.quote_deposit == null ? null : Number(r.quote_deposit) } : null;
     const next = r.next_appt ? new Date(String(r.next_appt)).toISOString() : null;
     // A past customer answered a win-back text: a new job, so it starts over in New (or Booked once Cinder books it).
     const again = !!r.winback_replied;
@@ -57,7 +57,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       install: r.install_on ? String(r.install_on) : null, installTime: r.install_time ? String(r.install_time) : null, installDays: Number(r.install_days ?? 1) || 1, onCalendar: !!r.on_calendar,
       invoice: invoices[String(r.id)] ?? null, reviewAuto: !!r.review_auto, reviewSent: r.review_sent ? new Date(String(r.review_sent)).toISOString() : null, pastCustomer: again,
       job: again ? {} : cleanJob(r.job_steps), costs: again ? cleanCosts({}) : cleanCosts(r.job_costs),
-      stageAt: r.stage_at ? new Date(String(r.stage_at)).toISOString() : null,
+      stageAt: r.stage_at ? new Date(String(r.stage_at)).toISOString() : null, crew: String(r.crew_notes ?? ""),
       lostReason: typeof r.lost_note === "string" ? (r.lost_note.match(/^Marked lost: (.+?)\. Follow-ups stopped\.$/)?.[1] ?? "") : "",
     };
   });
@@ -115,16 +115,17 @@ export async function moveStage(sql: Sql, c: Client, threadId: string, stage: st
 }
 
 /** Edit what the owner knows about the job: details in the trade's words, the job value, notes, the name. */
-export async function saveCard(sql: Sql, c: Client, threadId: string, input: { details?: unknown; value?: number | null; notes?: string; name?: string; install?: unknown; review?: boolean }): Promise<{ ok: boolean; error?: string }> {
+export async function saveCard(sql: Sql, c: Client, threadId: string, input: { details?: unknown; value?: number | null; notes?: string; crew?: string; name?: string; install?: unknown; review?: boolean }): Promise<{ ok: boolean; error?: string }> {
   const t = await threadOf(sql, c, threadId);
   if (!t) return { ok: false, error: "Not found." };
   const details = input.details === undefined ? null : cleanDetails(c.setup.trade, input.details);
   const notes = typeof input.notes === "string" ? input.notes.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, 2000) : null;
+  const crew = typeof input.crew === "string" ? input.crew.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, 2000) : null;
   const name = typeof input.name === "string" ? input.name.trim().slice(0, 80) : null;
   const value = input.value === undefined ? undefined : input.value;
   await sql`UPDATE public.client_threads SET
       details = CASE WHEN ${details === null}::boolean THEN details ELSE ${JSON.stringify(details ?? {})}::jsonb END,
-      notes = coalesce(${notes}, notes), customer_name = coalesce(${name}, customer_name),
+      notes = coalesce(${notes}, notes), crew_notes = coalesce(${crew}, crew_notes), customer_name = coalesce(${name}, customer_name),
       value = CASE WHEN ${value === undefined}::boolean THEN value ELSE ${value ?? null}::numeric END, updated_at = now()
     WHERE id = ${t.id}::uuid`;
   if (input.review !== undefined) await sql`UPDATE public.client_threads SET review_auto = ${!!input.review && !!c.setup.review_link} WHERE id = ${t.id}::uuid`;

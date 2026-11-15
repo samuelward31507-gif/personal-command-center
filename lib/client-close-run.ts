@@ -46,13 +46,15 @@ export async function sendQuoteLink(sql: Sql, c: Client, threadId: string, note?
 
 export type PublicQuote = { business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
   items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number;
-  state: "open" | "approved" | "declined" | "closed"; answeredAt: string | null };
+  state: "open" | "approved" | "declined" | "closed"; answeredAt: string | null;
+  /** A deposit to hold the date, paid on the owner's own pay page. Cinder never takes the money. */
+  deposit: number | null; payLink: string };
 
 /** What the customer sees behind the link. Nothing else about the business or other customers. Marks it viewed. */
 export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote | null> {
   if (!QUOTE_TOKEN.test(token)) return null;
   const [q] = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.amount::float AS amount, q.note, q.sent_on::text AS sent_on, q.status,
-      q.approved_at, q.declined_at, q.viewed_at, q.items, q.tax_rate::float AS tax_rate
+      q.approved_at, q.declined_at, q.viewed_at, q.items, q.tax_rate::float AS tax_rate, q.deposit::float AS deposit
     FROM public.client_quotes q WHERE q.token = ${token} LIMIT 1` as Record<string, unknown>[];
   if (!q) return null;
   const c = await clientById(sql, String(q.owner_id), String(q.project_id));
@@ -68,6 +70,7 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
     items: cleanItems(q.items), tax_rate: Number(q.tax_rate ?? 0),
     state: q.approved_at ? "approved" : q.declined_at ? "declined" : status === "won" ? "closed" : "open",
     answeredAt: q.approved_at ? new Date(String(q.approved_at)).toISOString() : q.declined_at ? new Date(String(q.declined_at)).toISOString() : null,
+    deposit: q.deposit == null ? null : Number(q.deposit), payLink: c.setup.pay_link || "",
   };
 }
 

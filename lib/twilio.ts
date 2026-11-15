@@ -56,24 +56,33 @@ export async function readTwilioRequest(request: Request): Promise<Record<string
 
 /** Send one SMS. Returns false (and logs) instead of throwing. */
 export async function sendSms(to: string, from: string, body: string): Promise<boolean> {
+  return (await sendSmsDetailed(to, from, body)).ok;
+}
+
+/** Where Twilio reports delivery for texts Cinder sent, when the app's address is known. */
+export const statusCallbackUrl = () => { const app = process.env.CINDER_APP_URL?.trim().replace(/\/$/, ""); return app ? `${app}/api/twilio/status` : ""; };
+
+/** Send one SMS and get its SID back, so delivery can be tracked. `track` asks Twilio to call back with the status. */
+export async function sendSmsDetailed(to: string, from: string, body: string, track = false): Promise<{ ok: boolean; sid: string }> {
   const sid = process.env.TWILIO_ACCOUNT_SID?.trim();
   const token = process.env.TWILIO_AUTH_TOKEN?.trim();
-  if (!sid || !token || !to || !from) return false;
+  if (!sid || !token || !to || !from) return { ok: false, sid: "" };
   try {
+    const form = new URLSearchParams({ To: to, From: from, Body: body });
+    const cb = track ? statusCallbackUrl() : "";
+    if (cb) form.set("StatusCallback", cb);
     const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`, {
       method: "POST",
       headers: { authorization: "Basic " + Buffer.from(`${sid}:${token}`).toString("base64"), "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ To: to, From: from, Body: body }),
+      body: form,
       signal: AbortSignal.timeout(6000),
     });
-    if (!res.ok) {
-      const p = await res.json().catch(() => ({}));
-      console.error("Twilio SMS failed", { status: res.status, code: p?.code, message: typeof p?.message === "string" ? p.message.slice(0, 200) : undefined });
-    }
-    return res.ok;
+    const p = await res.json().catch(() => ({}));
+    if (!res.ok) console.error("Twilio SMS failed", { status: res.status, code: p?.code, message: typeof p?.message === "string" ? p.message.slice(0, 200) : undefined });
+    return { ok: res.ok, sid: res.ok && typeof p?.sid === "string" ? p.sid : "" };
   } catch (e) {
     console.error("Twilio SMS failed", { name: e instanceof Error ? e.name : typeof e });
-    return false;
+    return { ok: false, sid: "" };
   }
 }
 

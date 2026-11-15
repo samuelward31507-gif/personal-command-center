@@ -1,5 +1,5 @@
 import { appSession, bridgeCall, clientFor, db, json } from "@/lib/client-app-run";
-import { markNoShow, previewReply, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
+import { markNoShow, previewReply, rescheduleAppointment, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
 import { sendSms } from "@/lib/twilio";
 import { cleanOwnerSetup } from "@/lib/crm";
 import { parseAmount } from "@/lib/client-schedule";
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
-    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string };
+    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       }
       let value: number | null | undefined;
       if (b.value !== undefined) { value = b.value === null || b.value === "" ? null : parseAmount(String(b.value)); if (b.value && value == null) return json({ error: "Type the job value as a number, like 9400." }, 400); }
-      const r = await saveCard(sql, c, b.thread, { details: b.details, value, notes: b.notes, name: b.name, install: b.install, review: b.review });
+      const r = await saveCard(sql, c, b.thread, { details: b.details, value, notes: b.notes, crew: b.crew, name: b.name, install: b.install, review: b.review });
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
     }
     if (b.action === "quotelink" || b.action === "reviewnow") {
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
     if (b.action === "quotelines" || b.action === "install" || b.action === "invoice") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
       if (b.action === "quotelines") {
-        const l = await saveQuoteLines(sql, c, b.thread, { items: b.items, tax: b.tax, note: b.note });
+        const l = await saveQuoteLines(sql, c, b.thread, { items: b.items, tax: b.tax, note: b.note, deposit: b.deposit });
         if (!l.ok) return json({ error: l.error }, 400);
         if (!b.send) return json({ ok: true, total: l.total });
         const q = await sendQuoteLink(sql, c, b.thread);
@@ -110,6 +110,11 @@ export async function POST(req: Request) {
       return r.ok ? json({ ok: true, job: r.job }) : json({ error: r.error }, 400);
     }
     if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
+    if (b.action === "reschedule") {
+      if (!b.appt || !UUID.test(b.appt)) return json({ error: "Which estimate?" }, 400);
+      const r = await rescheduleAppointment(sql, c, b.appt, String(b.start ?? ""));
+      return r.ok ? json({ ok: true, texted: r.texted, when: r.when }) : json({ error: r.error }, 409);
+    }
     if (b.action === "preview") {
       // The owner tries the agent with unsaved settings. Nothing is stored and nobody is texted.
       const message = String(b.message ?? "").trim().slice(0, 500);

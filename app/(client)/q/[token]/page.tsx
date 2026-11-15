@@ -9,7 +9,7 @@ import { DocLines } from "../../doc-lines";
 
 type Q = { business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
   items?: { name: string; qty: number; unit: string; price: number }[]; tax_rate?: number;
-  state: "open" | "approved" | "declined" | "closed"; answeredAt: string | null };
+  state: "open" | "approved" | "declined" | "closed"; answeredAt: string | null; deposit?: number | null; payLink?: string };
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 });
 const day = (d: string) => new Date(d.length === 10 ? d + "T12:00:00" : d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -50,7 +50,9 @@ export default function QuotePage() {
           {q.note && <div className="doc-note"><h2>What&rsquo;s included</h2><p>{q.note}</p></div>}
 
           {q.state === "approved" ? <div className="doc-done ok"><span><Check /></span><div><b>Approved. Thank you{q.customer ? `, ${q.customer}` : ""}!</b>
-            <p>{who} has it and will text you to pick the install date.</p></div></div>
+            <p>{who} has it and will text you to pick the install date.</p>
+            {q.deposit ? <p style={{ marginTop: 8 }}>A deposit of <strong>{usd(q.deposit)}</strong> holds your date.{q.payLink ? "" : ` ${who} will text you how to pay it.`}</p> : null}
+            {q.deposit && q.payLink ? <a className="btn ink lg" style={{ marginTop: 10, display: "inline-flex" }} href={q.payLink} target="_blank" rel="noreferrer">Pay the {usd(q.deposit)} deposit</a> : null}</div></div>
           : q.state === "declined" ? <div className="doc-done"><div><b>Got it. No hard feelings.</b><p>{who} has your answer. If anything changes, just text {sms ? <a href={sms}>this number</a> : "us"}.</p></div></div>
           : q.state === "closed" ? <div className="doc-done"><div><b>This quote is closed.</b><p>Text {sms ? <a href={sms}>{biz}</a> : biz} if you have questions.</p></div></div>
           : no ? <form className="doc-no" onSubmit={e => { e.preventDefault(); void answer("decline"); }}>
@@ -61,7 +63,7 @@ export default function QuotePage() {
             </form>
           : <div className="doc-acts">
               <button type="button" className="btn ink lg" disabled={busy} onClick={() => void answer("approve")}>{busy ? "Approving…" : `Approve${q.amount ? ` ${usd(q.amount)}` : " quote"}`}</button>
-              <p className="doc-fine">Approving tells {who} you&rsquo;re ready. Nothing is charged here.</p>
+              <p className="doc-fine">Approving tells {who} you&rsquo;re ready. Nothing is charged here.{q.deposit ? ` A ${usd(q.deposit)} deposit holds your install date, paid on ${biz}'s own payment page after you approve.` : ""}</p>
               {sms && <a className="btn lg" href={sms}>Text a question</a>}
               <button type="button" className="link" style={{ alignSelf: "center", fontSize: 14 }} onClick={() => setNo(true)}>No thanks</button>
             </div>}

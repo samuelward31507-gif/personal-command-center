@@ -63,6 +63,18 @@ export async function createAllDayEvent(cal: ClientCal, e: { date: string; days:
   return String(j.id ?? "");
 }
 
+/** Moves an event Cinder booked to a new time. A missing event is created again. Returns the event id. */
+export async function moveEvent(cal: ClientCal, eventId: string, e: { start: string; end: string; tz: string; title: string; details: string }): Promise<string> {
+  if (eventId) {
+    const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.calendarId)}/events/${encodeURIComponent(eventId)}`, { method: "PATCH",
+      headers: { Authorization: `Bearer ${cal.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ start: { dateTime: e.start, timeZone: e.tz }, end: { dateTime: e.end, timeZone: e.tz } }), signal: AbortSignal.timeout(8000) });
+    if (r.ok) return eventId;
+    if (r.status !== 404 && r.status !== 410) throw new Error("Couldn't move it on the calendar.");
+  }
+  return createEvent(cal, e);
+}
+
 /** Removes an event Cinder booked (the customer moved or canceled). A missing event counts as done. */
 export async function deleteEvent(cal: ClientCal, eventId: string): Promise<void> {
   if (!eventId) return;

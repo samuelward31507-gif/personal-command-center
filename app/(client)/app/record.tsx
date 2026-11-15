@@ -188,6 +188,8 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
           {card.ballpark && (card.stage === "new" || card.stage === "booked") && <p className="fine" style={{ marginTop: 6 }}>Ballpark from your prices: <b className="t-em">{rangeText(card.ballpark)}</b></p>}
         </section>}
         {card && card.stage === "won" && !card.pastCustomer && <Steps card={card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
+        {card && (card.stage === "new" || card.stage === "booked") && <Brief card={card} name={name} phone={phone} address={address} texts={r.texts} trade={biz.trade} toast={toast} />}
+        {card?.crew && <section><p className="sec">Crew notes</p><p style={{ lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{card.crew}</p></section>}
         {(card?.notes || cust?.line) && <section><p className="sec">Notes</p><p style={{ lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{card?.notes || cust?.line}</p></section>}
         {!wide && <div className="rail-mobile">{rail}</div>}
       </aside>
@@ -202,6 +204,18 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
     </div>
     {lostSheet}
   </div>;
+}
+
+/** What the owner reads in the truck: who, where, the job as the customer described it, and what they said. One tap copies it. */
+function Brief({ card, name, phone, address, texts, trade, toast }: { card: Card; name: string; phone: string; address: string; texts: Text[] | null; trade: string; toast: Toast }) {
+  const said = (texts ?? []).filter(t => t.direction === "in" && t.author !== "system").map(t => t.body.trim()).filter(Boolean);
+  const facts = jobFields(trade).filter(f => f.key !== "address" && card.details[f.key] != null && card.details[f.key] !== "").map(f => `${f.label}: ${String(card.details[f.key])}${f.unit ? " " + f.unit : ""}`);
+  const lines = [name, fmtPhone(phone), address, ...facts, card.ballpark ? `Ballpark ${rangeText(card.ballpark)}` : "", card.next ? `Estimate ${new Date(card.next).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "", said.length ? `They said: "${said.slice(0, 3).join(" / ").slice(0, 300)}"` : "", card.crew ? `Crew: ${card.crew}` : ""].filter(Boolean);
+  const copy = async () => { try { await navigator.clipboard.writeText(lines.join("\n")); toast("Brief copied."); } catch { prompt("Copy:", lines.join("\n")); } };
+  return <section className="brief"><p className="sec">Estimate brief<button type="button" className="link" onClick={() => void copy()}>Copy</button></p>
+    {said.length ? <p className="said">&ldquo;{said.slice(0, 2).join(" / ").slice(0, 220)}&rdquo;</p> : <p className="fine">Nothing from {first(name)} in their own words yet.</p>}
+    {address && <a className="btn sm" href={`https://maps.google.com/?q=${encodeURIComponent(address)}`} target="_blank" rel="noreferrer"><Icon name="pin" size={13} />Directions</a>}
+  </section>;
 }
 
 // ---------- Activity: texts and events in one timeline, composer under it ----------
@@ -272,7 +286,8 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
 function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask: Stage | null; setAsk: (s: Stage | null) => void; go: Go; canText: boolean }) {
   const { card, busy, act, name, arm, setArm } = r;
   const [d, setD] = useState<Record<string, string>>(() => asStrings(card?.details ?? {}));
-  const [value, setValue] = useState(card?.value ? String(card.value) : ""), [notes, setNotes] = useState(card?.notes ?? "");
+  const [value, setValue] = useState(card?.value ? String(card.value) : ""), [notes, setNotes] = useState(card?.notes ?? ""), [crew, setCrew] = useState(card?.crew ?? "");
+  const [deposit, setDeposit] = useState(card?.quote?.deposit ? String(card.quote.deposit) : "");
   const [amt, setAmt] = useState(card?.value ? String(card.value) : card?.quote?.amount ? String(card.quote.amount) : "");
   const q = card?.quote ?? null;
   const [items, setItems] = useState<Item[]>(() => q?.items?.length ? q.items : draftItems(biz.trade, card?.details ?? {}, biz.priceBook));
@@ -283,7 +298,8 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
   if (!card) return <Empty title="No job on the board" text={`Start a job to track ${first(name)} from estimate to paid.`} />;
   const firstName = first(card.name);
   const installDirty = install !== (card.install ?? "") || itime !== (card.installTime ?? "") || idays !== String(card.installDays || 1);
-  const dirty = JSON.stringify(d) !== JSON.stringify(asStrings(card.details)) || value !== (card.value ? String(card.value) : "") || notes !== card.notes || (card.stage === "won" && review !== card.reviewAuto);
+  const dirty = JSON.stringify(d) !== JSON.stringify(asStrings(card.details)) || value !== (card.value ? String(card.value) : "") || notes !== card.notes || crew !== (card.crew ?? "") || (card.stage === "won" && review !== card.reviewAuto);
+  const depN = Math.round(Number(deposit.replace(/[^\d.]/g, "")) || 0);
   const quoteTotal = totals(items.filter(i => i.name.trim()), tax).total;
   const calMsg = (c?: string) => c === "added" ? " On your Google Calendar." : c === "removed" ? " Taken off your calendar." : c === "not_connected" ? " Connect Google Calendar to put it there." : c === "failed" ? " It didn't save to your calendar; try again." : "";
   async function copy() {
@@ -302,10 +318,12 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
     {ask === "quoted" && sec("The quote", <button type="button" className="link" onClick={() => setAsk(null)}>Cancel</button>, <>
       <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} />
       <label className="field"><span>What&rsquo;s included <em>optional, they&rsquo;ll see it</em></span><textarea rows={2} value={incl} maxLength={600} onChange={e => setIncl(e.target.value)} placeholder="Tear-out and haul-away, steel posts in concrete, 2-year warranty" /></label>
+      <label className="field" style={{ maxWidth: 240 }}><span>Deposit to hold the date <em>optional</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={deposit} onChange={e => setDeposit(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="None" /></span></label>
+      {depN > 0 && <p className="fine">{biz.payLink ? "After they approve, the quote page shows the deposit with your pay link. Cinder never touches the money." : "Add your pay link in Money so they can pay the deposit from the quote page."}</p>}
       <p className="fine">Cinder follows up on day 2, 5, 10 and 21 after you send, and stops the moment they reply.</p>
       <div className="acts-row end">
-        <button type="button" className="btn" disabled={!!busy || quoteTotal <= 0} onClick={() => void act("save", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl }, `Quote saved: ${dollars(quoteTotal)}. Not sent yet.`)}>Save, don&rsquo;t send</button>
-        <button type="button" className="btn ink" disabled={!!busy || !canText || quoteTotal <= 0} onClick={() => void act("stage", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl, link: true }, res => res.sent ? `Quote texted to ${firstName}: ${dollars(quoteTotal)}.` : res.warn || "Saved.")}>{busy === "stage" ? <Spinner /> : `Text ${firstName} ${dollars(quoteTotal)}`}</button>
+        <button type="button" className="btn" disabled={!!busy || quoteTotal <= 0} onClick={() => void act("save", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl, deposit: depN || null }, `Quote saved: ${dollars(quoteTotal)}. Not sent yet.`)}>Save, don&rsquo;t send</button>
+        <button type="button" className="btn ink" disabled={!!busy || !canText || quoteTotal <= 0} onClick={() => void act("stage", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl, deposit: depN || null, link: true }, res => res.sent ? `Quote texted to ${firstName}: ${dollars(quoteTotal)}.` : res.warn || "Saved.")}>{busy === "stage" ? <Spinner /> : `Text ${firstName} ${dollars(quoteTotal)}`}</button>
       </div>
     </>)}
     {ask === "won" && sec("Mark won", <button type="button" className="link" onClick={() => setAsk(null)}>Cancel</button>, <form style={{ display: "flex", flexDirection: "column", gap: 10 }} onSubmit={e => { e.preventDefault(); void act("stage", { action: "stage", stage: "won", amount: amt, install: install || null, time: itime || null, days: Number(idays), review: review && biz.reviewLink }, res => `Marked won.${calMsg(res.calendar)}${review && biz.reviewLink && install ? " Review ask goes out the morning after." : ""}`); }}>
@@ -319,12 +337,14 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
     {!ask && card.stage === "quoted" && q && sec(`The quote${q.amount ? `, ${dollars(q.amount)}` : ""}`, <span className={"dot" + (q.status === "replied" ? " bad" : q.viewed ? " ink" : "")} style={{ marginLeft: "auto" }}>{q.status === "replied" ? "They replied" : q.viewed ? `Opened ${ago(q.viewed)}` : q.linked ? "Texted, not opened yet" : "Not sent yet"}</span>, <>
       {editLines ? <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} />
         : q.items.length > 0 ? <ul className="lines">{q.items.map((i, k) => <li key={k}><span>{i.name}<small>{i.qty !== 1 || i.unit ? `${i.qty}${i.unit ? " " + i.unit : ""} × ${dollars(i.price)}` : ""}</small></span><b>{dollars(i.qty * i.price)}</b></li>)}</ul> : null}
+      {editLines && <label className="field" style={{ maxWidth: 240 }}><span>Deposit to hold the date <em>optional</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={deposit} onChange={e => setDeposit(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="None" /></span></label>}
       {q.note && !editLines && <p className="fine">{q.note}</p>}
+      {q.deposit && !editLines ? <p className="fine">Deposit {dollars(q.deposit)} to hold the date{biz.payLink ? ", paid through your pay link once they approve." : ". Add your pay link in Money so they can pay it from the quote page."}</p> : null}
       <p className="fine">{!q.linked ? "Not sent." : q.steps ? `Follow-up ${q.steps} of 4 sent.` : "First follow-up in 2 days."}</p>
       <div className="acts-row end">
         {editLines ? <>
           <button type="button" className="btn" disabled={!!busy} onClick={() => setEditLines(false)}>Cancel</button>
-          <button type="button" className="btn ink" disabled={!!busy || quoteTotal <= 0} onClick={async () => { if (await act("lines", { action: "quotelines", items, tax, note: incl }, `Quote updated: ${dollars(quoteTotal)}.`)) setEditLines(false); }}>Save lines</button>
+          <button type="button" className="btn ink" disabled={!!busy || quoteTotal <= 0} onClick={async () => { if (await act("lines", { action: "quotelines", items, tax, note: incl, deposit: depN || null }, `Quote updated: ${dollars(quoteTotal)}.`)) setEditLines(false); }}>Save lines</button>
         </> : <>
           <button type="button" className="btn" disabled={!!busy} onClick={() => void copy()}>Copy link</button>
           <button type="button" className="btn" disabled={!!busy} onClick={() => setEditLines(true)}>Edit lines</button>
@@ -357,9 +377,10 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
         {f.kind === "choice" ? <select value={d[f.key] ?? ""} onChange={e => setD(x => ({ ...x, [f.key]: e.target.value }))}><option value="">–</option>{f.options!.map(o => <option key={o}>{o}</option>)}</select>
           : <span className="inwrap"><input inputMode={f.kind === "number" ? "decimal" : undefined} value={d[f.key] ?? ""} onChange={e => setD(x => ({ ...x, [f.key]: e.target.value }))} placeholder="Not set" />{f.unit && <em>{f.unit}</em>}</span>}</label>)}
         <label className="field"><span>Job value</span><span className="inwrap"><i>$</i><input inputMode="decimal" value={value} onChange={e => setValue(e.target.value.replace(/[^\d.,kK]/g, ""))} placeholder="What it's worth to you" /></span></label>
-        <label className="field full"><span>Notes</span><textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Gate on the left side, dog in the yard, HOA needs drawings" /></label>
+        <label className="field full"><span>Notes <em>for you</em></span><textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="HOA needs drawings, wants it done before the party on the 20th" /></label>
+        <label className="field full"><span>Crew notes <em>what they need on site</em></span><textarea rows={2} value={crew} onChange={e => setCrew(e.target.value)} placeholder="Gate on the left side, dog in the yard, park on the street" /></label>
       </div>
-      <div className="acts-row end"><button type="button" className="btn ink" disabled={!dirty || !!busy} onClick={() => void act("save", { action: "card", details: d, value: value || null, notes, ...(card.stage === "won" ? { review } : {}) }, "Saved.")}>{busy === "save" ? <Spinner /> : "Save"}</button></div>
+      <div className="acts-row end"><button type="button" className="btn ink" disabled={!dirty || !!busy} onClick={() => void act("save", { action: "card", details: d, value: value || null, notes, crew, ...(card.stage === "won" ? { review } : {}) }, "Saved.")}>{busy === "save" ? <Spinner /> : "Save"}</button></div>
     </>)}
   </>;
 }

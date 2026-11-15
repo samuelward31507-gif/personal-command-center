@@ -17,7 +17,9 @@ export type Data = { project: string; business: string; number: string; canCall:
   key?: string; origin?: string;
   /** Connections: each lead source's activity, texts that didn't send, the consent log. */
   wires?: { sources: { source: string; leads: number; last: string | null; last30: number }[]; failures: { id: string; at: string; body: string; name: string; phone: string; thread: string; source: string }[]; log: { at: string; event: string; source: string; phone: string; evidence: string }[] } };
-export type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
+export type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[];
+  /** Twilio's word on an outgoing text: sent, delivered, undelivered, failed, or "" before the carrier answered. */
+  status?: string };
 export type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 export type { Card, CardInvoice, Stage };
 

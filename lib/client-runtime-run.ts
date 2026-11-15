@@ -2,7 +2,7 @@
 // plus quote follow-ups and review requests. Every send is logged on the customer's thread.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { claudeText } from "@/lib/ai-text";
-import { sendSms } from "@/lib/twilio";
+import { sendSms, sendSmsDetailed } from "@/lib/twilio";
 import { recordConsent } from "@/lib/client-consent";
 import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
@@ -10,7 +10,7 @@ import { ballpark, cleanDetails, detailLine, intakeRules, parsePriceBook, rangeT
 import { emitEvent } from "@/lib/client-webhook";
 import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, withOptOut, automatedRoom, quoteDaysFor, nudgeHoursFor, isDoNotText, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, withBookingPrefs, type Lang, type Slot } from "@/lib/client-booking";
-import { busyTimes, clientCalendar, createEvent, deleteEvent } from "@/lib/client-calendar";
+import { busyTimes, clientCalendar, createEvent, deleteEvent, moveEvent } from "@/lib/client-calendar";
 import { syncBookingToJobber } from "@/lib/jobber";
 import { sendAlert } from "@/lib/notify";
 import { paymentLinkFor } from "@/lib/workspace";
@@ -54,8 +54,8 @@ export async function thread(sql: Sql, c: Client, phone: string, source: string)
   return t;
 }
 export type Media = { url: string; type: string };
-async function log(sql: Sql, c: Client, threadId: string, direction: "in" | "out", author: string, body: string, ok = true, media: Media[] = []) {
-  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body, ok, media) VALUES (${c.owner}, ${threadId}::uuid, ${direction}, ${author}, ${body}, ${ok}, ${JSON.stringify(media)}::jsonb)`;
+async function log(sql: Sql, c: Client, threadId: string, direction: "in" | "out", author: string, body: string, ok = true, media: Media[] = [], sid = "") {
+  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body, ok, media, sid, status) VALUES (${c.owner}, ${threadId}::uuid, ${direction}, ${author}, ${body}, ${ok}, ${JSON.stringify(media)}::jsonb, ${sid || null}, ${sid ? "sent" : ""})`;
   if (direction === "in") await sql`UPDATE public.client_threads SET last_in_at = now(), updated_at = now() WHERE id = ${threadId}::uuid`;
   else await sql`UPDATE public.client_threads SET last_out_at = now(), updated_at = now() WHERE id = ${threadId}::uuid`;
 }
@@ -70,9 +70,39 @@ export async function sendToCustomer(sql: Sql, c: Client, threadId: string, phon
   if (!p?.recent) body = withOptOut(body, p?.lang === "es" ? "es" : "en");
   // The owner's do-not-text list wins over everything, including the owner's own replies.
   if (isDoNotText(c.setup, phone)) { await log(sql, c, threadId, "out", "system", "Not sent: this number is on your do-not-text list.", false); return false; }
-  const ok = await sendSms(e164(phone), c.setup.texting_number || "", body);
-  await log(sql, c, threadId, "out", author, body, ok);
-  return ok;
+  const sent = await sendSmsDetailed(e164(phone), c.setup.texting_number || "", body, true);
+  await log(sql, c, threadId, "out", author, body, sent.ok, [], sent.sid);
+  return sent.ok;
+}
+
+/**
+ * The owner moved an estimate (dragged it on the calendar). The appointment and the Google event move, and the
+ * customer gets one text with the new time. The old time's reminder is forgotten so the new one goes out.
+ */
+const fname = (s: string) => (s || "").trim().split(" ")[0] || "there";
+export async function rescheduleAppointment(sql: Sql, c: Client, appointmentId: string, startIso: string): Promise<{ ok: boolean; error?: string; texted?: boolean; when?: string }> {
+  const start = new Date(startIso);
+  if (!Number.isFinite(start.getTime())) return { ok: false, error: "Pick a time." };
+  if (start.getTime() < Date.now() - 3600000) return { ok: false, error: "That time has passed." };
+  const [a] = await sql`SELECT a.id, a.thread_id, a.starts_at, a.ends_at, a.event_id, t.customer_name, t.customer_phone, t.status, t.lang, t.details FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id
+    WHERE a.id = ${appointmentId}::uuid AND a.project_id = ${c.projectId}::uuid AND a.status = 'booked'` as { id: string; thread_id: string; starts_at: string; ends_at: string; event_id: string; customer_name: string; customer_phone: string; status: string; lang: Lang; details: unknown }[];
+  if (!a) return { ok: false, error: "That estimate isn't open." };
+  const len = Math.max(1800000, Date.parse(a.ends_at) - Date.parse(a.starts_at));
+  const end = new Date(start.getTime() + len);
+  const who = a.customer_name || a.customer_phone;
+  let eventId = a.event_id;
+  const cal = await clientCalendar(sql, c.projectId).catch(() => null);
+  if (cal) { try { eventId = await moveEvent(cal, a.event_id, { start: start.toISOString(), end: end.toISOString(), tz: tzOf(c), title: `Estimate: ${who}`, details: `${detailLine(c.setup.trade, cleanDetails(c.setup.trade, a.details))}\nPhone: ${a.customer_phone}\nMoved by ${c.setup.owner_name || "the owner"} in the Cinder app.` }); } catch (e) { console.error("Move failed", e instanceof Error ? e.message : e); } }
+  await sql`UPDATE public.client_appointments SET starts_at = ${start.toISOString()}::timestamptz, ends_at = ${end.toISOString()}::timestamptz, event_id = ${eventId}, reminded_at = NULL WHERE id = ${a.id}::uuid`;
+  const label = slotLabel(start.toISOString(), tzOf(c), a.lang === "es" ? "es" : "en");
+  await log(sql, c, a.thread_id, "out", "system", `Estimate moved to ${label}.`);
+  let texted = false;
+  if (a.status !== "opted_out") {
+    const body = a.lang === "es" ? `Hola ${fname(a.customer_name)}, ${c.setup.display_name} aquí. Movimos su presupuesto a ${label}. Si no le funciona, responda y buscamos otra hora.`
+      : `Hi ${fname(a.customer_name)}, ${c.setup.display_name} here. We've moved your estimate to ${label}. If that doesn't work, reply and we'll find another time.`;
+    texted = await sendToCustomer(sql, c, a.thread_id, a.customer_phone, body, "owner");
+  }
+  return { ok: true, texted, when: label };
 }
 /** Room for one more automated text to this conversation (at most 3 a day unless they're texting back). */
 async function roomFor(sql: Sql, threadId: string): Promise<boolean> {

@@ -514,3 +514,10 @@ details.skipped summary { cursor: pointer; font-size: 12.5px; color: var(--g1); 
 .prev-thread .msg { max-width: 88%; }
 @media (max-width: 900px) { .agent { grid-template-columns: 1fr; } .prev { position: static; } .agent-form .three { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .tb .sub { display: none; } }
+
+/* ---------- Delivery, the brief, moving an estimate ---------- */
+.msg .dlv { font-size: 11px; color: var(--g2); padding: 0 10px; margin-top: -1px; } .msg .dlv.bad { color: var(--bad); }
+.brief .said { font-size: 13.5px; line-height: 1.5; color: var(--ink); margin: 0 0 6px; } .brief .btn { margin-top: 6px; } .brief .fine { margin-bottom: 4px; }
+.cal-ev.grab { cursor: grab; touch-action: none; } .cal-ev.lift { opacity: .35; cursor: grabbing; }
+.cal-ev.ghost { pointer-events: none; z-index: 4; box-shadow: var(--float); border-style: dashed; background: var(--page); }
+.dayrow .acts-row { gap: 4px; }
