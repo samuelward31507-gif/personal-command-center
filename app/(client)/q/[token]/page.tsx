@@ -43,9 +43,9 @@ export default function QuotePage() {
       : <>
         <header className="doc-biz"><span className="doc-mono" aria-hidden="true">{biz.charAt(0)}</span><b>{q.business || "Your quote"}</b></header>
         <section className="doc-card">
-          <p className="doc-k">Quote{q.customer ? ` for ${q.customer}` : ""} · {day(q.sent)}</p>
+          <p className="doc-k">Quote{q.customer ? ` for ${q.customer}` : ""}, {day(q.sent)}</p>
           <p className="doc-amt">{q.amount ? usd(q.amount) : "Your quote"}</p>
-          {q.line && <p className="doc-line">{q.line}</p>}
+          {q.line && <p className="doc-line">{q.line.replace(/s·s/g, ", ")}</p>}
           {q.items && q.items.length > 0 && <DocLines items={q.items} taxRate={q.tax_rate ?? 0} total={q.amount ?? 0} />}
           {q.note && <div className="doc-note"><h2>What&rsquo;s included</h2><p>{q.note}</p></div>}
 

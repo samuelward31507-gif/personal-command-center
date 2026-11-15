@@ -74,6 +74,8 @@ const P: Record<string, React.ReactNode> = {
   edit: <path d="M4 20h4l10.5-10.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16z" />,
   panel: <><rect x="3.5" y="4.5" width="17" height="15" rx="3" /><path d="M9.5 4.5v15" /></>,
   sort: <path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3" />,
+  expand: <path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7" />,
+  updown: <path d="m7 9 5-5 5 5M7 15l5 5 5-5" />,
 };
 export function Icon({ name, size = 16, className }: { name: string; size?: number; className?: string }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>{P[name]}</svg>;
@@ -132,7 +134,7 @@ export function Menu<T extends string>({ label, value, options, onPick, icon }: 
 }
 
 export function Empty({ icon, title, text, action }: { icon?: string; title: string; text?: string; action?: React.ReactNode }) {
-  return <div className="empty">{icon && <span className="ic"><Icon name={icon} size={18} /></span>}<b>{title}</b>{text && <p>{text}</p>}{action && <div style={{ marginTop: 10 }}>{action}</div>}</div>;
+  return <div className="empty" style={{ paddingLeft: 16, paddingRight: 16 }}>{icon && <span className="ic"><Icon name={icon} size={18} /></span>}<b>{title}</b>{text && <p>{text}</p>}{action && <div style={{ marginTop: 10 }}>{action}</div>}</div>;
 }
 
 /** A button that asks once: first tap arms it, second tap does it. Disarms after four seconds. */

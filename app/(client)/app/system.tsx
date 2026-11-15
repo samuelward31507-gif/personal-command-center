@@ -37,12 +37,12 @@ export function SystemScreen({ d, biz, go, push, onPush, toast }: { d: Data; biz
   const wired = [d.number, s.has_cell, biz.calendar, biz.reviewLink, biz.payLink, push === "on"].filter(Boolean).length;
 
   return <>
-    <header className="ph"><h1>System</h1><span className="sub">How leads reach Cinder and what happens next · {wired} of 6 wires live</span>
-      <div className="acts"><button type="button" className="btn" onClick={() => go.tab("sam")}><Icon name="user" size={14} />Ask Sam to change something</button></div></header>
+    <header className="tb"><h1 className="h1">Settings</h1><span className="sub">How leads reach Cinder and what happens next, {wired} of 6 wires live</span>
+      <div className="acts"><button type="button" className="btn" onClick={() => go.tab("sam")}>Ask Sam</button></div></header>
     <div className="pad wires">
       <section>
         <p className="sec">Leads in</p>
-        <Wire state={d.number ? "on" : "todo"} title="Your Cinder number" st={number ? `Live · ${number}` : "Sam is connecting it"}>
+        <Wire state={d.number ? "on" : "todo"} title="Your Cinder number" st={number ? `Live, ${number}` : "Sam is connecting it"}>
           Calls and texts to this number reach Cinder. Every text a lead gets comes from it, in your business&rsquo;s name.
         </Wire>
         <Wire state={d.number ? "on" : "off"} title="Missed-call text-back" st={d.number ? "Live" : "Needs your number"}>
@@ -64,7 +64,7 @@ export function SystemScreen({ d, biz, go, push, onPush, toast }: { d: Data; biz
 
       <section>
         <p className="sec">Booking</p>
-        <Wire state={cal?.connected ? "on" : "todo"} title="Google Calendar" st={cal?.connected ? `Connected · ${cal.email || "your calendar"}` : "Not connected"}
+        <Wire state={cal?.connected ? "on" : "todo"} title="Google Calendar" st={cal?.connected ? `Connected, ${cal.email || "your calendar"}` : "Not connected"}
           acts={cal?.connected ? <button type="button" className="btn sm" onClick={() => go.tab("calendar")}>Open calendar</button> : <a className="btn sm ink" href={cal?.connectUrl || "#"} target="_blank" rel="noreferrer">Connect Google Calendar</a>}>
           Cinder offers estimate times only where you&rsquo;re free, and puts each booking and install on your calendar.
         </Wire>
@@ -95,7 +95,7 @@ export function SystemScreen({ d, biz, go, push, onPush, toast }: { d: Data; biz
           acts={push === "off" ? <button type="button" className="btn sm ink" onClick={onPush}>Turn on</button> : null}>
           New leads, bookings, replies that need you and payments, on this device.
         </Wire>
-        <Wire state="on" title="Prices and business details" st={s.trade ? `${s.trade} · ${s.price_book ? "prices on file" : "no prices yet"}` : "Not set"} acts={<button type="button" className="btn sm" onClick={go.setup}>Edit setup</button>}>
+        <Wire state="on" title="Prices and business details" st={s.trade ? `${s.trade}, ${s.price_book ? "prices on file" : "no prices yet"}` : "Not set"} acts={<button type="button" className="btn sm" onClick={go.setup}>Edit setup</button>}>
           What Cinder knows about your work: the questions it asks, the ballpark it can give, the name it texts as.
         </Wire>
         <Wire state="on" title="Your customers" st={`${d.customers?.length ?? 0} people`} acts={<button type="button" className="btn sm" onClick={go.importCustomers}>Import from Jobber or CSV</button>}>

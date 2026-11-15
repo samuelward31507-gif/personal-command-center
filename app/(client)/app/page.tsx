@@ -1,8 +1,8 @@
 "use client";
 
 // The Cinder app for client owners. Sign in with a text code (or straight from the portal link), then one shell:
-// a sidebar on a desk, a tab bar on a phone, and the same screens on both. Today, Inbox, Jobs, Calendar,
-// Customers, Invoices, Numbers, and a line to Sam. Installs to the home screen like an app (/app.webmanifest).
+// a rail on a desk, a tab bar on a phone, the same screens on both. Home, Inbox, Jobs, Calendar, Money, Settings.
+// ⌘K finds anyone. Installs to the home screen like an app (/app.webmanifest).
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import "./app.css";
 import { Wordmark } from "../brand";
@@ -11,16 +11,15 @@ import { Avatar, Icon, Spinner, fmtPhone, initials, typePhone, useToast } from "
 import type { Biz, Data, Go, Tab } from "./types";
 import { splitAppointments } from "@/lib/client-schedule";
 import { TodayScreen } from "./today";
-import { JobsScreen } from "./jobs";
+import { JobsScreen, type JobsView } from "./jobs";
 import { RecordPage } from "./record";
 import { InboxScreen, ThreadView } from "./inbox";
 import { CalendarScreen } from "./calendar";
-import { CustomersScreen, InvoicesScreen, InvoiceSheet, BillingSettings } from "./money";
-import { NumbersScreen } from "./numbers";
+import { MoneyScreen, InvoiceSheet, BillingSettings } from "./money";
 import { SystemScreen } from "./system";
 import { Onboarding } from "./setup";
-import { CommandBar, useCommandKey } from "./command";
 import { AddLeadSheet, ImportSheet, WinbackSheet } from "./sheets";
+import { CommandBar } from "./command";
 
 // The example business (/app?demo=1) answers every call in the browser; nothing reaches the server.
 const DEMO_KEY = "cinder-demo";
@@ -102,13 +101,14 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
           <button type="button" className="link" onClick={() => { setSent(false); setCode(""); setErr(""); }}>Change number</button>
         </div>}
     </div>
-    <div className="foot"><p>Have a portal link from Sam? It signs you in too.</p></div>
+    <p className="foot">Have a portal link from Sam? It signs you in too.</p>
   </main>;
 }
 
 // ---------- The app ----------
-type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | null;
+type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job" } | { kind: "thread"; id: string } | null;
 const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam"];
+const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Home", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "calendar", l: "Calendar", ic: "cal", n: "4" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }];
 
 export default function CinderApp() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
@@ -116,17 +116,15 @@ export default function CinderApp() {
   const [project, setProject] = useState("");
   const [tab, setTab] = useState<Tab>("today");
   const [open, setOpen] = useState<Open>(null);
+  const [jobsView, setJobsView] = useState<JobsView>("open");
   const [wide, setWide] = useState(false);
   useEffect(() => { const m = matchMedia("(min-width: 900px)"); const f = () => setWide(m.matches); f(); m.addEventListener("change", f); return () => m.removeEventListener("change", f); }, []);
   const { show: toast, node: toastNode } = useToast();
   const [push, setPush] = useState<PushState>("unsupported");
   const [demo, setDemo] = useState(false);
-  const [sheet, setSheet] = useState<"add" | "import" | "billing" | "winback" | null>(null);
+  const [sheet, setSheet] = useState<"add" | "import" | "billing" | "winback" | "cmd" | null>(null);
   const [inv, setInv] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false), [setupDone, setSetupDone] = useState(false);
-  const [cmd, setCmd] = useState(false);
-  const openCmd = useCallback(() => setCmd(true), []);
-  useCommandKey(openCmd);
   const exitDemo = () => { demoStop(); setDemo(false); setD(null); setOpen(null); setProject(""); setState("out"); };
 
   useEffect(() => {
@@ -146,10 +144,9 @@ export default function CinderApp() {
       let wasDemo = false; try { wasDemo = sessionStorage.getItem(DEMO_KEY) === "1"; } catch { /* private mode */ }
       if (q.get("demo") === "1" || (wasDemo && !t)) { demoStart(); setDemo(true); } else if (t) demoStop();
       if (t) await api("/api/app/auth", { action: "link", token: t }).catch(() => null);
-      // Opened from a notification: go straight to that conversation or tab.
       const th = q.get("thread"), tb = q.get("tab");
       if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen({ kind: "thread", id: th });
-      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", invoices: "invoices", customers: "customers" };
+      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", home: "today", invoices: "invoices", money: "invoices", customers: "customers", system: "system" };
       if (tb && map[tb]) setTab(map[tb]);
       if (location.search) try { history.replaceState(null, "", "/app"); } catch { /* keep the URL */ }
       await load("", tb && map[tb] ? map[tb] : "today");
@@ -161,13 +158,23 @@ export default function CinderApp() {
   const goTab = useCallback((t: Tab) => { setTab(t); setOpen(null); window.scrollTo(0, 0); if (t === "sam" || t === "calendar") void load(project, t); }, [load, project]);
   const go: Go = useMemo(() => ({
     tab: goTab,
-    record: (id, opts) => { setOpen({ kind: "record", id, ask: opts?.ask, view: opts?.view, draft: opts?.draft }); window.scrollTo(0, 0); },
+    record: (id, opts) => { setOpen({ kind: "record", id, ask: opts?.ask, view: opts?.view }); window.scrollTo(0, 0); },
     thread: id => { setOpen(wide ? { kind: "record", id, view: "activity" } : { kind: "thread", id }); window.scrollTo(0, 0); },
     invoice: id => setInv(id),
     addLead: () => setSheet("add"), importCustomers: () => setSheet("import"), billing: () => setSheet("billing"),
     setup: () => { setSetupOpen(true); window.scrollTo(0, 0); },
-    find: () => setCmd(true),
   }), [goTab, wide]);
+
+  // Global keys: ⌘K for the command bar, ⌘1 to ⌘6 for sections, Esc to leave a record.
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSheet(s => s === "cmd" ? null : "cmd"); return; }
+      if ((e.metaKey || e.ctrlKey) && /^[1-6]$/.test(e.key)) { e.preventDefault(); const t = ([...SECTIONS.map(s => s.k), "system"] as Tab[])[Number(e.key) - 1]; if (t) goTab(t); return; }
+      const el = e.target as HTMLElement | null;
+      if (e.key === "Escape" && open && !sheet && !inv && !(el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA"))) setOpen(null);
+    };
+    addEventListener("keydown", h); return () => removeEventListener("keydown", h);
+  }, [goTab, open, sheet, inv]);
 
   const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
   if (state === "loading") return <div className="load"><Wordmark /></div>;
@@ -181,61 +188,64 @@ export default function CinderApp() {
   const owed = (d.invoices ?? []).filter(i => i.status === "sent").length;
   const reload = () => load(project, tab);
   const invNow = inv ? ((d.invoices ?? []).find(i => i.id === inv) ?? null) : null;
+  const cards = d.board ?? [];
+  const jobCounts = { open: cards.filter(c => c.stage === "new" || c.stage === "booked" || c.stage === "quoted").length, won: (d.customers ?? []).filter(c => c.stage === "won" || c.jobs > 0).length, all: d.customers?.length ?? cards.length };
 
   if ((setupOpen || (!demo && !setupDone && d.setup && !d.setup.onboarded_at)) && !open) return <Onboarding project={project} initial={d.setup ?? {}} api={api}
     onDone={() => setSetupDone(true)} onClose={() => { setSetupOpen(false); setSetupDone(true); setTab("jobs"); window.scrollTo(0, 0); void load(project, "jobs"); }} />;
 
-  const demoBar = demo && <div className="demo"><span>Example business · sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>;
-  const navItems: { k: Tab; l: string; ic: string; n?: number; hot?: boolean }[] = [
-    { k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs, hot: true }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length },
-    { k: "customers", l: "Customers", ic: "users" }, { k: "invoices", l: "Invoices", ic: "invoice", n: owed }, { k: "numbers", l: "Numbers", ic: "bars" }, { k: "system", l: "System", ic: "gear" },
-  ];
-  const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
+  const counts: Partial<Record<Tab, number>> = { inbox: L.needs, calendar: due.length, invoices: owed };
+  const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = [{ k: "today", l: "Home", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
   const phoneTab: Tab = MORE.includes(tab) ? "more" : tab;
+  const active = (k: Tab) => (tab === k || (k === "jobs" && tab === "customers") || (k === "invoices" && tab === "numbers")) && !open;
 
   let page: React.ReactNode;
   if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
-  else if (open?.kind === "record") page = <RecordPage key={open.id + (open.draft ? ":d" : "")} id={open.id} ask={open.ask} view={open.view} draft={open.draft} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
-  else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} />;
+  else if (open?.kind === "record") page = <RecordPage key={open.id} id={open.id} ask={open.ask} view={open.view} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
+  else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
-  else if (tab === "jobs") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} onWinback={() => setSheet("winback")} />;
-  else if (tab === "calendar") page = <CalendarScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
-  else if (tab === "customers") page = <CustomersScreen d={d} go={go} />;
-  else if (tab === "invoices") page = <InvoicesScreen d={d} go={go} />;
-  else if (tab === "numbers") page = <NumbersScreen d={d} />;
+  else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
+  else if (tab === "calendar") page = <CalendarScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} />;
+  else if (tab === "invoices" || tab === "numbers") page = <MoneyScreen d={d} go={go} wide={wide} />;
   else if (tab === "system") page = <SystemScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} toast={toast} />;
   else if (tab === "more") page = <MoreScreen d={d} go={go} owed={owed} />;
   else page = <SamScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} push={push} onPush={() => void enablePush()} demo={demo} onSignOut={async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); }} />;
 
   return <div className="shell">
-    <nav className="side" aria-label="Sections">
-      <div className="brand"><Wordmark className="word" /><button type="button" className="btn ghost sm ic" aria-label="Find or do anything (⌘K)" title="Find or do anything (⌘K)" onClick={openCmd}><Icon name="search" size={15} /></button></div>
-      <div className="biz" style={{ position: "relative" }}>
-        <span><span className="av sm ink">{initials(bizName || "C").charAt(0)}</span>{bizName || "Your business"}</span>
-        {d.businesses.length > 1 ? <><Icon name="sort" size={14} className="mut" /><select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select></> : null}
+    <nav className="rail" aria-label="Sections">
+      <button type="button" className="ws" title={bizName}>
+        <span className="av sm ink">{initials(bizName || "C").charAt(0)}</span><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
+        {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
+      </button>
+      <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} />Search<kbd>⌘K</kbd></button>
+      <div className="rail-grp">
+        {SECTIONS.map(s => <button key={s.k} type="button" className={"ri" + (active(s.k) ? " on" : "")} aria-current={active(s.k) ? "page" : undefined} onClick={() => goTab(s.k)}>
+          <Icon name={s.ic} size={15} />{s.l}{counts[s.k] ? <em className={s.k === "inbox" ? "hot" : ""}>{counts[s.k]}</em> : null}<kbd>⌘{s.n}</kbd></button>)}
       </div>
-      <div className="lbl">Workspace</div>
-      {navItems.map(it => <button key={it.k} type="button" className={"nav" + (tab === it.k && !open ? " on" : "")} aria-current={tab === it.k && !open ? "page" : undefined} onClick={() => goTab(it.k)}>
-        <Icon name={it.ic} size={16} />{it.l}{it.n ? <em className={it.hot ? "hot" : ""}>{it.n}</em> : null}</button>)}
-      <div className="foot">
-        <button type="button" className={"nav" + (tab === "sam" && !open ? " on" : "")} onClick={() => goTab("sam")}><span className="av sm ink">S</span>Sam Ward{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : <em>rep</em>}</button>
-        <button type="button" className="me" onClick={() => goTab("sam")}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{d.owner || "You"}</b><small>Owner · settings</small></span></button>
+      {tab === "jobs" && !open && <div className="rail-grp views">
+        <div className="rail-lbl">Views</div>
+        {([["open", "Open", jobCounts.open], ["won", "Won", jobCounts.won], ["all", "Everyone", jobCounts.all]] as const).map(([k, l, n]) =>
+          <button key={k} type="button" className={"ri" + (jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); }}>{l}<em>{n}</em></button>)}
+      </div>}
+      <div className="rail-foot">
+        <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}<kbd>⌘6</kbd></button>
+        <button type="button" className="me" onClick={() => goTab("sam")}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{d.owner || "You"}</b><small>Owner</small></span></button>
       </div>
     </nav>
     <div className="main">
-      {demoBar}
-      <div className="page" role="main">{page}</div>
+      {demo && <div className="demo"><span>Example business, sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>}
+      <div className={"page" + (open ? " has-open" : "")} role="main">{page}</div>
     </div>
     <nav className="tabs" aria-label="Sections">
       {phoneTabs.map(t => <button key={t.k} type="button" className={phoneTab === t.k && !open ? "on" : ""} aria-current={phoneTab === t.k && !open ? "page" : undefined} onClick={() => goTab(t.k)}>
-        <Icon name={t.ic} size={23} />{t.l}{t.n ? <em>{t.n}</em> : null}</button>)}
+        <Icon name={t.ic} size={21} />{t.l}{t.n ? <em>{t.n}</em> : null}</button>)}
     </nav>
+    {sheet === "cmd" && <CommandBar d={d} go={go} onClose={() => setSheet(null)} onWinback={() => setSheet("winback")} />}
     {sheet === "add" && <AddLeadSheet trade={biz.trade} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "import" && <ImportSheet project={project} api={api} toast={toast} reload={reload} customers={d.customers ?? []} business={bizName} onClose={() => setSheet(null)} />}
     {sheet === "billing" && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {invNow && <InvoiceSheet key={invNow.id + invNow.status} inv={invNow} customer={invNow.customer || fmtPhone(invNow.phone)} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
-    {cmd && state === "in" && <CommandBar d={d} go={go} onClose={() => setCmd(false)} />}
     {toastNode}
   </div>;
 }
@@ -243,16 +253,15 @@ export default function CinderApp() {
 // ---------- More (phone) ----------
 function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
   const items: { k: Tab; l: string; s: string; ic: string; n?: number }[] = [
-    { k: "customers", l: "Customers", s: `${d.customers?.length ?? 0} people`, ic: "users" },
-    { k: "invoices", l: "Invoices", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
-    { k: "numbers", l: "Numbers", s: "What Cinder brought in", ic: "bars" },
-    { k: "system", l: "System", s: "How leads reach Cinder", ic: "gear" },
-    { k: "sam", l: "Sam and settings", s: d.unreadFromSam ? `${d.unreadFromSam} new from Sam` : "Your rep, prices, notifications", ic: "user", n: d.unreadFromSam },
+    { k: "invoices", l: "Money", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
+    { k: "customers", l: "Everyone", s: `${d.customers?.length ?? 0} people`, ic: "users" },
+    { k: "system", l: "Settings", s: "How leads reach Cinder, prices, notifications", ic: "gear" },
+    { k: "sam", l: "Sam", s: d.unreadFromSam ? `${d.unreadFromSam} new` : "Your Cinder rep", ic: "user", n: d.unreadFromSam },
   ];
   return <>
-    <header className="ph"><h1>More</h1></header>
-    <div className="pad"><div className="card">{items.map(it => <button key={it.k} type="button" className="row" onClick={() => go.tab(it.k)}>
-      <span className="ic"><Icon name={it.ic} size={15} /></span><span><b>{it.l}</b><small>{it.s}</small></span>{it.n ? <span className="tag count">{it.n}</span> : <Icon name="fwd" size={16} className="mut" />}</button>)}</div></div>
+    <header className="tb"><h1 className="h1">More</h1></header>
+    <div className="pad">{items.map(it => <button key={it.k} type="button" className="row tall" style={{ gridTemplateColumns: "16px minmax(0,1fr) auto" }} onClick={() => go.tab(it.k)}>
+      <span className="ic"><Icon name={it.ic} size={15} /></span><span><b>{it.l}</b><small>{it.s}</small></span>{it.n ? <span className="tag count">{it.n}</span> : <Icon name="fwd" size={14} className="faint" />}</button>)}</div>
   </>;
 }
 
@@ -261,32 +270,31 @@ function SamScreen({ d, biz, project, api: call, toast, reload, go, push, onPush
   const [msg, setMsg] = useState("");
   const agoText = (iso: string) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 60 ? `${Math.max(1, m)}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
   return <>
-    <header className="ph"><h1>Sam</h1><span className="sub">Your Cinder rep · hours, prices, wording, questions</span></header>
-    <div className="pad" style={{ display: "grid", gap: 16, gridTemplateColumns: "minmax(0, 1fr)", maxWidth: 1100 }}>
-      <section className="card">
-        <div className="hd"><span className="av ink">S</span><h2>Sam Ward</h2><small>Your Cinder rep</small></div>
+    <header className="tb"><h1 className="h1">Sam</h1><span className="sub">Your Cinder rep</span><div className="acts"><button type="button" className="btn ghost" onClick={() => go.tab("system")}><Icon name="gear" size={14} />Settings</button></div></header>
+    <div className="pad" style={{ maxWidth: 760 }}>
+      <section className="card" style={{ paddingTop: 0 }}>
         {d.messages.length > 0 ? <div className="sam-msgs">{d.messages.map((m, i) => <article key={i} className="sam-msg">
           {m.author === "client" ? <Avatar name={d.owner || "You"} /> : <span className="av ink">S</span>}
           <div><header><b>{m.author === "client" ? "You" : "Sam Ward"}</b><time>{agoText(m.created_at)}</time></header><p>{m.body}</p></div></article>)}</div>
-          : <div className="bd"><p className="fine">Write Sam about anything: texting hours, prices, how Cinder answers a question, a number to add.</p></div>}
-        <form className="bd" style={{ paddingTop: 0 }} onSubmit={async e => { e.preventDefault(); if (!msg.trim()) return; try { await call("/api/app/act", { p: project, action: "message", body: msg }); setMsg(""); toast("Sent to Sam."); void reload(); } catch (er) { toast(er instanceof Error ? er.message : "Didn't send.", true); } }}>
+          : <p className="fine" style={{ padding: "8px 0" }}>Write Sam about anything: texting hours, prices, how Cinder answers a question, a number to add.</p>}
+        <form onSubmit={async e => { e.preventDefault(); if (!msg.trim()) return; try { await call("/api/app/act", { p: project, action: "message", body: msg }); setMsg(""); toast("Sent to Sam."); void reload(); } catch (er) { toast(er instanceof Error ? er.message : "Didn't send.", true); } }}>
           <div className="compose" style={{ position: "static", padding: 0 }}><div className="box">
             <textarea rows={2} value={msg} onChange={e => setMsg(e.target.value)} placeholder="Message Sam" aria-label="Message to Sam" />
-            <div className="tools"><button type="submit" className="btn ink sm send" disabled={!msg.trim()}><Icon name="send" size={14} />Send</button></div>
+            <div className="tools"><button type="submit" className="btn ink sm send" disabled={!msg.trim()}>Send</button></div>
           </div></div>
         </form>
       </section>
       <section className="card">
-        <div className="hd"><h2>Settings</h2></div>
+        <div className="hd"><h2>Account</h2></div>
         <ul className="settings">
           <li><span>Business</span><b>{biz.business}</b></li>
           <li><span>Prices and business details</span><button type="button" className="btn sm" onClick={go.setup}>Edit setup</button></li>
           <li><span>Invoices and payments</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
           {d.number && <li><span>Your Cinder number</span><b>{fmtPhone(d.number)}</b></li>}
-          <li><span>Notifications</span>{push === "on" ? <span className="tag green">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <b className="mut" style={{ fontWeight: 400 }}>{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</b>}</li>
-          <li><span>How leads reach Cinder</span><button type="button" className="btn sm" onClick={() => go.tab("system")}>Open System</button></li>
+          <li><span>Notifications</span>{push === "on" ? <span className="dot good">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <span className="mut">{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</span>}</li>
+          <li><span>How leads reach Cinder</span><button type="button" className="btn sm" onClick={() => go.tab("system")}>Open Settings</button></li>
           <li><span>Import customers</span><button type="button" className="btn sm" onClick={go.importCustomers}>Import</button></li>
-          <li><span /><button type="button" className="btn sm" onClick={onSignOut}><Icon name="out" size={14} />{demo ? "Leave the example" : "Sign out"}</button></li>
+          <li><span /><button type="button" className="btn sm" onClick={onSignOut}><Icon name="out" size={13} />{demo ? "Leave the example" : "Sign out"}</button></li>
         </ul>
       </section>
     </div>
