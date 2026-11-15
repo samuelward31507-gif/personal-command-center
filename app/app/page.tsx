@@ -418,6 +418,7 @@ export default function CinderApp() {
     </header>
 
     <div className="ca-main" role="main">
+      {tab !== "today" && <h1 className="ca-ptitle">{tab === "leads" ? "Inbox" : tab === "jobs" ? "Jobs" : tab === "numbers" ? "Numbers" : tab === "estimates" ? "Calendar" : "Sam"}</h1>}
       {tab === "today" && <TodayTab owner={d.owner} cards={d.board ?? []} invoices={d.invoices ?? []} due={due} appts={d.appointments} unreadSam={d.unreadFromSam}
         asks={needsList.map(c => ({ id: c.id, name: c.name, ask: c.ask, last: c.last, at: c.at }))}
         live={{ wonValue: L.wonValue, won: L.won, answered: L.answered, leads: L.leads, replySec: L.replySec, booked: L.booked }}

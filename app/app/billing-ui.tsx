@@ -170,7 +170,7 @@ export function InvoicesView({ list, onOpen }: { list: InvoiceRow[]; onOpen: (i:
   const [f, setF] = useState<"open" | "all">("open");
   const shown = f === "open" ? list.filter(i => i.status === "sent" || i.status === "draft") : list;
   return <>
-    <Telemetry label="Invoices" items={[{ k: "Outstanding", v: short(out.reduce((a, i) => a + i.total, 0)) }, { k: "Past due", v: short(late.reduce((a, i) => a + i.total, 0)) }, { k: "Paid · 30 days", v: short(paid30), live: paid30 > 0 }]} />
+    <Telemetry label="Invoices" items={[{ k: "Outstanding", v: short(out.reduce((a, i) => a + i.total, 0)) }, { k: "Past due", v: short(late.reduce((a, i) => a + i.total, 0)) }, { k: "Paid · 30 days", v: short(paid30) }]} />
     <div className="cu-bar"><div className="ca-seg" role="tablist" aria-label="Show">{([["open", "Open"], ["all", "All"]] as const).map(([k, l]) =>
       <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}</button>)}</div></div>
     {shown.length ? <ul className="cu-list">{shown.map(i => { const st = invoiceState(i); const name = i.customer || fmtPhone(i.phone); return <li key={i.id}><button type="button" onClick={() => onOpen(i)}>

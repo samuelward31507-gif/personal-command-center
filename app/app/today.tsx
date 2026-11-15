@@ -43,7 +43,7 @@ export function TodayTab({ owner, cards, invoices, asks, due, appts, unreadSam, 
   // 2. Money.
   for (const i of invoices) {
     if (i.status === "sent" && i.paid_claimed_at) actions.push({ key: "pc" + i.id, kind: "money", title: `${first(i.customer)} says they paid`, sub: `Invoice #${i.number} · ${usd(i.total)}. Check your account.`, go: () => go.invoice(i.id), cta: "Check" });
-    else if (overdue(i.status, i.due_on, today)) actions.push({ key: "od" + i.id, kind: "money", title: `${first(i.customer)} is ${daysPast(i.due_on!)} ${daysPast(i.due_on!) === 1 ? "day" : "days"} past due`, sub: `Invoice #${i.number} · ${usd(i.total)}${i.reminders ? ` · ${i.reminders} reminder${i.reminders === 1 ? "" : "s"} sent` : ""}`, go: () => go.invoice(i.id), cta: "Open" });
+    else if (overdue(i.status, i.due_on, today)) actions.push({ key: "od" + i.id, kind: "money", title: `${first(i.customer)}: ${daysPast(i.due_on!)} ${daysPast(i.due_on!) === 1 ? "day" : "days"} late`, sub: `${usd(i.total)} · invoice #${i.number}${i.reminders ? ` · ${i.reminders} reminder${i.reminders === 1 ? "" : "s"} sent` : ""}`, go: () => go.invoice(i.id), cta: "Open" });
     else if (i.status === "draft") actions.push({ key: "dr" + i.id, kind: "invoice", title: `Send ${first(i.customer)}'s invoice`, sub: `#${i.number} · ${usd(i.total)}, not sent yet`, go: () => go.invoice(i.id), cta: "Send" });
   }
   // 3. Quotes to write: the estimate happened and there's no quote yet.

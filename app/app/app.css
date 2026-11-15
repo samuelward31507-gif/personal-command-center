@@ -1235,3 +1235,24 @@ html body:not(#u) .ca-main:has(> .td) ~ * .ca-top-title { display: none; }
 html body:not(#u) .ca-top-title.ca-hide { display: none !important; }
 html body:not(#u) .jb-hello { text-align: left; }
 @media (max-width: 520px) { html body:not(#u) .jb-hello-sum { align-self: flex-start; } html body:not(#u) .jb-hello-acts { justify-content: flex-start !important; } }
+
+/* Refinements */
+html body:not(#u) .ca-ptitle { margin: 4px 0 18px !important; font: 600 32px/1.05 var(--ca-head) !important; letter-spacing: -0.035em !important; color: var(--t-ink) !important; }
+html body:not(#u) .ca-wide .ca-ptitle { display: none; }
+html body:not(#u):not(#v) .ca-settings .ca-set-btn { height: auto; padding: 0 !important; border: 0 !important; background: none !important; color: var(--t-ink) !important; font-weight: 600; text-decoration: none; }
+html body:not(#u):not(#v) .ca-settings .ca-set-btn:hover { text-decoration: underline; }
+/* The quote box: the main action across, the two lesser ones side by side. */
+html body:not(#u) .jb-box-acts button.go { flex: 1 1 100%; }
+html body:not(#u) .jb-box-acts button:not(.go) { flex: 1 1 0; }
+/* Readouts as one grey well with dividers, like Today's numbers. */
+html body:not(#u) .sx-tel { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin: 0 0 18px; border: 0 !important; border-radius: 18px; background: var(--t-fill); -webkit-mask-image: none !important; mask-image: none !important; overflow: hidden; }
+html body:not(#u) .sx-tel > div { padding: 14px 14px 14px !important; min-width: 0; }
+html body:not(#u) .sx-tel > div + div { border-left: 1px solid var(--t-line) !important; }
+html body:not(#u) .sx-tel dt { font: 500 12.5px var(--ca-sans) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--t-2) !important; }
+html body:not(#u) .sx-tel dd { margin-top: 6px !important; font: 500 24px/1 var(--ca-head) !important; letter-spacing: -0.035em !important; overflow: hidden; text-overflow: ellipsis; }
+html body:not(#u) .sx-tel .live dd { color: #127a4c !important; }
+@media (max-width: 520px) { html body:not(#u) .sx-tel > div { padding: 12px 10px !important; } html body:not(#u) .sx-tel dd { font-size: 20px !important; } }
+/* Calm the calendar headline to match the other page heads. */
+html body:not(#u) .ca-hello h1 { font-size: 26px !important; font-weight: 600 !important; }
+html body:not(#u) .ca-hello > p { display: none; }
+@media (max-width: 520px) { html body:not(#u) .jb-hello { align-items: flex-start !important; gap: 12px !important; } html body:not(#u) .jb-hello-acts { width: 100%; } html body:not(#u) .jb-hello-acts > button { flex: 1 1 0; justify-content: center; } }

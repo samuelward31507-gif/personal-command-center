@@ -405,7 +405,7 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
       </section>
     </>}
 
-    {card.ballpark && card.stage !== "won" && <p className="jb-bp">Ballpark from your prices: <b>{rangeText(card.ballpark)}</b></p>}
+    {card.ballpark && (card.stage === "new" || card.stage === "booked") && !ask && <p className="jb-bp">Ballpark from your prices: <b>{rangeText(card.ballpark)}</b></p>}
     <h3 className="jb-h3">The job</h3>
     <DetailFields trade={trade} d={d} set={(k, v) => setD(x => ({ ...x, [k]: v }))} />
     <label className="jb-f full"><span>Job value</span><span className="jb-in"><i>$</i><input inputMode="decimal" value={value} onChange={e => setValue(e.target.value.replace(/[^\d.,kK]/g, ""))} placeholder="What it's worth to you" /></span></label>
