@@ -20,10 +20,10 @@
   --msg-in: #e9e9eb;
   --good: #1a8f55;
   --bad: #c93a2a;
-  --ff: var(--font-ui), Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --ff-tight: var(--font-tight), "Inter Tight", var(--ff);
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --fs: 13px;
+  --ff: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-ui), Inter, system-ui, "Segoe UI", sans-serif;
+  --ff-tight: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-tight), "Inter Tight", var(--font-ui), Inter, system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --fs: 14px;
   --r1: 6px; --r2: 8px; --r3: 10px; --r4: 12px;
   --float: 0 8px 24px -8px rgba(18, 20, 23, .25), 0 0 0 1px var(--hair);
   --ring: 0 0 0 2px var(--page), 0 0 0 4px var(--ember);
@@ -31,6 +31,8 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
 }
+
+@media (max-width: 899px) { :root { --fs: 15px; } }
 
 /* ---------- Reset ---------- */
 *, *::before, *::after { box-sizing: border-box; }
@@ -136,10 +138,10 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
 /* ---------- Inputs: 28px, label above ---------- */
 .field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--g1); font-weight: 500; min-width: 0; }
 .field > span:first-child em { font-style: normal; font-weight: 400; color: var(--g2); }
-.field input, .field select, .field textarea, .in { width: 100%; height: 28px; padding: 0 8px; border: 1px solid var(--hair-2); border-radius: var(--r1); font: 400 13px/1.4 var(--ff); color: var(--ink); background: var(--page); transition: border-color var(--t), box-shadow var(--t); }
+.field input, .field select, .field textarea, .input { width: 100%; height: 28px; padding: 0 8px; border: 1px solid var(--hair-2); border-radius: var(--r1); font: 400 13px/1.4 var(--ff); color: var(--ink); background: var(--page); transition: border-color var(--t), box-shadow var(--t); }
 .field textarea { height: auto; padding: 6px 8px; resize: vertical; min-height: 56px; line-height: 1.5; }
 .field select { padding-right: 24px; appearance: none; background: var(--page) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8f98' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 6px center / 13px; }
-.field input:focus, .field select:focus, .field textarea:focus, .in:focus, .inwrap:focus-within { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.field input:focus, .field select:focus, .field textarea:focus, .input:focus, .inwrap:focus-within { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
 .field input:disabled, .field select:disabled { background: var(--paper); color: var(--g2); }
 .inwrap { display: flex; align-items: center; height: 28px; border: 1px solid var(--hair-2); border-radius: var(--r1); background: var(--page); padding: 0 8px; gap: 6px; min-width: 0; transition: border-color var(--t), box-shadow var(--t); }
 .inwrap input { flex: 1; min-width: 0; height: 100%; border: 0; padding: 0; background: transparent; font: 400 13px var(--ff); color: var(--ink); }
@@ -233,9 +235,9 @@ button.row:hover { background: var(--hover); }
 @keyframes up { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 .cmd { width: 100%; max-width: 560px; background: var(--page); border-radius: var(--r4); box-shadow: var(--float); overflow: hidden; animation: pop 160ms ease-out; }
-.cmd .in { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-bottom: 1px solid var(--hair); }
-.cmd .in svg { width: 16px; height: 16px; color: var(--g2); }
-.cmd .in input { flex: 1; border: 0; background: transparent; font: 400 15px var(--ff); color: var(--ink); height: 100%; } .cmd .in input:focus { box-shadow: none; }
+.cmd .q { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-bottom: 1px solid var(--hair); }
+.cmd .q svg { width: 16px; height: 16px; color: var(--g2); }
+.cmd .q input { flex: 1; border: 0; background: transparent; font: 400 15px var(--ff); color: var(--ink); height: 100%; } .cmd .q input:focus { box-shadow: none; }
 .cmd .list { max-height: 60vh; overflow-y: auto; padding: 6px; }
 .cmd .lbl { padding: 8px 10px 4px; font-size: 11.5px; color: var(--g2); font-weight: 500; }
 .cmd .it { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; align-items: center; height: 36px; padding: 0 10px; border-radius: var(--r1); width: 100%; font-size: 13px; }

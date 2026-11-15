@@ -55,7 +55,7 @@ export default function QuotePage() {
           : q.state === "closed" ? <div className="doc-done"><div><b>This quote is closed.</b><p>Text {sms ? <a href={sms}>{biz}</a> : biz} if you have questions.</p></div></div>
           : no ? <form className="doc-no" onSubmit={e => { e.preventDefault(); void answer("decline"); }}>
               <label htmlFor="why">Anything that would change your mind? <em>Optional</em></label>
-              <textarea id="why" className="in" style={{ height: "auto", padding: 10 }} rows={3} value={why} onChange={e => setWhy(e.target.value)} placeholder="Price, timing, went with someone else…" maxLength={300} autoFocus />
+              <textarea id="why" className="input" style={{ height: "auto", padding: 10 }} rows={3} value={why} onChange={e => setWhy(e.target.value)} placeholder="Price, timing, went with someone else…" maxLength={300} autoFocus />
               <div className="acts-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}><button type="button" className="btn lg" onClick={() => setNo(false)}>Back</button>
                 <button type="submit" className="btn ink lg" disabled={busy}>{busy ? "Sending…" : "Send my answer"}</button></div>
             </form>

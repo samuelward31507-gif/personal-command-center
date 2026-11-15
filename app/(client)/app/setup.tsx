@@ -107,7 +107,7 @@ export function Onboarding({ project, initial, api, onDone, onClose }: { project
         <div className="rates">
           <div className="rh"><span>{fence ? "Fence type" : "Service"}</span><span>Low</span><span>High</span><span /></div>
           {rows.map((r, i) => <div key={i} className="rr">
-            <input className="in" aria-label="Name" value={r.name} onChange={e => setRows(rs => rs.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
+            <input className="input" aria-label="Name" value={r.name} onChange={e => setRows(rs => rs.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
             <label className="inwrap"><i>$</i><input aria-label={`${r.name} low`} inputMode="decimal" placeholder={fence ? "32" : "900"} value={r.low || ""} onChange={e => setRows(rs => rs.map((x, j) => j === i ? { ...x, low: Number(e.target.value.replace(/[^\d.]/g, "")) || 0 } : x))} />{fence && <em>/ft</em>}</label>
             <label className="inwrap"><i>$</i><input aria-label={`${r.name} high`} inputMode="decimal" placeholder={fence ? "45" : "2,400"} value={r.high || ""} onChange={e => setRows(rs => rs.map((x, j) => j === i ? { ...x, high: Number(e.target.value.replace(/[^\d.]/g, "")) || 0 } : x))} />{fence && <em>/ft</em>}</label>
             <button type="button" className="btn ghost ic" aria-label={`Remove ${r.name}`} onClick={() => setRows(rs => rs.filter((_, j) => j !== i))}><Icon name="x" size={15} /></button>

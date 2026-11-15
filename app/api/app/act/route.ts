@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
-    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown };
+    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       const amount = b.amount ? parseAmount(b.amount) : null;
       if (b.amount && amount == null) return json({ error: "Type the amount as a number, like 9400." }, 400);
       if (b.action === "stage") {
-        const r = await moveStage(sql, c, b.thread, String(b.stage), amount, { install: b.install, review: b.review });
+        const r = await moveStage(sql, c, b.thread, String(b.stage), amount, { install: b.install, review: b.review, reason: b.reason });
         if (!r.ok) return json({ error: r.error }, 409);
         // Won with an install date: it goes on the owner's Google Calendar.
         if (b.stage === "won" && b.install !== undefined) { const s2 = await scheduleInstall(sql, c, b.thread, { date: b.install, time: b.time, days: b.days }); return json({ ok: true, calendar: s2.calendar }); }

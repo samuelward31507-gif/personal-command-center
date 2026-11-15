@@ -225,7 +225,7 @@ export default function CinderApp() {
       <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} />Search<kbd>⌘K</kbd></button>
       <div className="rail-grp">
         {SECTIONS.map(s => <button key={s.k} type="button" className={"ri" + (active(s.k) ? " on" : "")} aria-current={active(s.k) ? "page" : undefined} onClick={() => goTab(s.k)}>
-          <Icon name={s.ic} size={15} />{s.l}{counts[s.k] ? <em className={s.k === "inbox" ? "hot" : ""}>{counts[s.k]}</em> : null}<kbd>⌘{s.n}</kbd></button>)}
+          <Icon name={s.ic} size={15} />{s.l}{counts[s.k] ? <em className={s.k === "inbox" ? "hot" : ""}>{counts[s.k]}</em> : null}</button>)}
       </div>
       {tab === "jobs" && !open && <div className="rail-grp views">
         <div className="rail-lbl">Views</div>
@@ -233,7 +233,7 @@ export default function CinderApp() {
           <button key={k} type="button" className={"ri" + (jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); }}>{l}<em>{n}</em></button>)}
       </div>}
       <div className="rail-foot">
-        <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}<kbd>⌘7</kbd></button>
+        <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>
         <button type="button" className="me" onClick={() => goTab("sam")}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{d.owner || "You"}</b><small>Owner</small></span></button>
       </div>
     </nav>

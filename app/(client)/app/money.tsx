@@ -16,7 +16,7 @@ export function LineEditor({ items, setItems, tax, setTax }: { items: Item[]; se
   const n = (v: string) => { const x = Number(v.replace(/[^\d.]/g, "")); return Number.isFinite(x) ? x : 0; };
   return <div className="le">
     <ul>{items.map((i, k) => <li key={k} className="lrow">
-      <input className="in" aria-label="What" value={i.name} placeholder="What it is" onChange={e => set(k, { name: e.target.value })} />
+      <input className="input" aria-label="What" value={i.name} placeholder="What it is" onChange={e => set(k, { name: e.target.value })} />
       <span className="nums">
         <label className="inwrap"><input aria-label="Quantity" inputMode="decimal" value={i.qty || ""} placeholder="1" onChange={e => set(k, { qty: n(e.target.value) })} />{i.unit && <em>{i.unit}</em>}</label>
         <span className="x" aria-hidden="true">×</span>

@@ -8,7 +8,7 @@ import { draftItems, jobFields, jobProfit, jobProgress, jobSteps, rangeText, STA
 import { dollars, totals, type Item } from "@/lib/billing";
 import { Avatar, Empty, Icon, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast } from "./parts";
 import { LineEditor, invoiceState } from "./money";
-import { nextUp } from "./jobs";
+import { nextUp, LostPicker } from "./jobs";
 import { sourceLabel, type Biz, type Data, type Go, type Text, type Thread } from "./types";
 
 type R = { sent?: boolean; warn?: string; link?: string; calendar?: string; invoice?: CardInvoice; review?: string };
@@ -52,15 +52,17 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
   const r = useRecord(id, d, project, api, toast, reload);
   const [tab, setTab] = useState<"activity" | "job">(ask0 ? "job" : "activity");
   const [ask, setAsk] = useState<Stage | null>(ask0 ?? null);
+  const [losing, setLosing] = useState(false);
   const ta = useRef<HTMLTextAreaElement>(null);
   const canText = biz.number && r.status !== "opted_out";
   const next = r.card ? nextUp(r.card) : null;
   const pick = (s: Stage) => {
     if (r.card && s === r.card.stage) return;
     if (s === "quoted" || s === "won") { setAsk(s); setTab("job"); return; }
-    if (s === "lost" && r.arm !== "lost") { r.setArm("lost"); return; }
+    if (s === "lost") { setLosing(true); return; }
     void r.act("stage", { action: "stage", stage: s }, `Moved to ${STAGE_LABEL[s]}.`);
   };
+  const lostSheet = losing && <LostPicker name={r.name} busy={!!r.busy} onClose={() => setLosing(false)} onPick={why => { void r.act("stage", { action: "stage", stage: "lost", reason: why }, `Marked lost, ${why.toLowerCase()}. Follow-ups stopped.`); setLosing(false); }} />;
   return <>
     <div className="insp-h">
       <div className="t"><b>{r.name}</b><span>{fmtPhone(r.phone)}</span></div>
@@ -89,12 +91,13 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
             <div><span>Owed</span><b className={r.owed ? "bad" : "mut"}>{dollars(r.owed)}</b></div>
           </div>
           {r.card && <section className="card"><div className="hd"><h2>Stage</h2></div>
-            <div className="stages" role="radiogroup" aria-label="Stage">{STAGES.map(s => <button key={s} type="button" role="radio" aria-checked={r.card!.stage === s} className={r.card!.stage === s ? "on" : ""} disabled={!!r.busy} onClick={() => pick(s)}>{s === "lost" && r.arm === "lost" ? "Tap again" : STAGE_LABEL[s]}</button>)}</div></section>}
+            <div className="stages" role="radiogroup" aria-label="Stage">{STAGES.map(s => <button key={s} type="button" role="radio" aria-checked={r.card!.stage === s} className={r.card!.stage === s ? "on" : ""} disabled={!!r.busy} onClick={() => pick(s)}>{STAGE_LABEL[s]}</button>)}</div></section>}
           <JobPanel r={r} biz={biz} ask={ask} setAsk={setAsk} go={go} canText={!!canText} />
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <Steps card={r.card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <CostBox card={r.card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
         </div>}
     </div>
+    {lostSheet}
   </>;
 }
 
@@ -103,6 +106,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
   const r = useRecord(id, d, project, api, toast, reload);
   const [tab, setTab] = useState<"activity" | "job">(view0 ?? (ask0 ? "job" : "activity"));
   const [ask, setAsk] = useState<Stage | null>(ask0 ?? null);
+  const [losing, setLosing] = useState(false);
   const [wide, setWide] = useState(false);
   useEffect(() => { const m = matchMedia("(min-width: 900px)"); const h = () => setWide(m.matches); h(); m.addEventListener("change", h); return () => m.removeEventListener("change", h); }, []);
   const ta = useRef<HTMLTextAreaElement>(null);
@@ -112,9 +116,10 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
   const pick = (s: Stage) => {
     if (card && s === card.stage) return;
     if (s === "quoted" || s === "won") { setAsk(s); setTab("job"); return; }
-    if (s === "lost" && r.arm !== "lost") { r.setArm("lost"); return; }
+    if (s === "lost") { setLosing(true); return; }
     void r.act("stage", { action: "stage", stage: s }, `Moved to ${STAGE_LABEL[s]}.`);
   };
+  const lostSheet = losing && <LostPicker name={r.name} busy={!!r.busy} onClose={() => setLosing(false)} onPick={why => { void r.act("stage", { action: "stage", stage: "lost", reason: why }, `Marked lost, ${why.toLowerCase()}. Follow-ups stopped.`); setLosing(false); }} />;
   const primary = (() => {
     if (!card) return null;
     if (card.stage === "won" && inv) return <button type="button" className="btn ink" onClick={() => go.invoice(inv.id)}>Open invoice</button>;
@@ -179,7 +184,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
           </>}
         </section>
         {card && <section><p className="sec">Stage</p>
-          <div className="stages" role="radiogroup" aria-label="Stage">{STAGES.map(s => <button key={s} type="button" role="radio" aria-checked={card.stage === s} className={card.stage === s ? "on" : ""} disabled={!!r.busy} onClick={() => pick(s)}>{s === "lost" && r.arm === "lost" ? "Tap again" : STAGE_LABEL[s]}</button>)}</div>
+          <div className="stages" role="radiogroup" aria-label="Stage">{STAGES.map(s => <button key={s} type="button" role="radio" aria-checked={card.stage === s} className={card.stage === s ? "on" : ""} disabled={!!r.busy} onClick={() => pick(s)}>{STAGE_LABEL[s]}</button>)}</div>
           {card.ballpark && (card.stage === "new" || card.stage === "booked") && <p className="fine" style={{ marginTop: 6 }}>Ballpark from your prices: <b className="t-em">{rangeText(card.ballpark)}</b></p>}
         </section>}
         {card && card.stage === "won" && !card.pastCustomer && <Steps card={card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
@@ -195,6 +200,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       </section>
       {wide && <aside className="rec-rail" aria-label="Money and next steps">{rail}</aside>}
     </div>
+    {lostSheet}
   </div>;
 }
 

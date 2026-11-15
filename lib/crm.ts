@@ -126,6 +126,9 @@ export const rangeText = (b: { low: number; high: number }) => `${money(b.low)}â
 export const STAGES = ["new", "booked", "quoted", "won", "lost"] as const;
 export type Stage = typeof STAGES[number];
 export const STAGE_LABEL: Record<Stage, string> = { new: "New", booked: "Estimate booked", quoted: "Quoted", won: "Won", lost: "Lost" };
+/** Why a job was lost, for the owner to pick when he moves it. */
+export const LOST_REASONS = ["Price", "Went with someone else", "Timing", "Not a fit", "Never answered", "Other"] as const;
+export const cleanLostReason = (v: unknown): string => { const s = typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 80) : ""; return s; };
 /** Where a customer stands. The owner's own move wins; otherwise it follows what happened (quote, booking, close). */
 export function stageFor(r: { stage?: string | null; status: string; quote_status?: string | null; next_appt?: string | null }): Stage {
   if (r.stage && (STAGES as readonly string[]).includes(r.stage)) return r.stage as Stage;
@@ -207,7 +210,9 @@ export type Card = { id: string; name: string; phone: string; source: string; st
   quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
     items: { name: string; qty: number; unit: string; price: number }[]; tax: number } | null;
   install: string | null; installTime: string | null; installDays: number; onCalendar: boolean; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean;
-  invoice: CardInvoice | null; job: Record<string, string>; costs: Costs };
+  invoice: CardInvoice | null; job: Record<string, string>; costs: Costs;
+  /** When the job entered its current stage, and the owner's reason when it was lost. */
+  stageAt?: string | null; lostReason?: string };
 export type CardInvoice = { id: string; number: number; status: string; items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number; total: number; note: string;
   due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null };
 

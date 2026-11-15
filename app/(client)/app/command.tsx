@@ -90,7 +90,7 @@ export function CommandBar({ d, go, onClose, onWinback }: { d: Data; go: Go; onC
   let lastGroup = "";
   return <div className="scrim top" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
     <div className="cmd" role="dialog" aria-label="Find or do anything" onKeyDown={onKey}>
-      <div className="in"><Icon name="search" size={16} /><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Find anyone, or type text, call, quote, nudge, directions" aria-label="Find or do anything" autoComplete="off" spellCheck={false} /><kbd>esc</kbd></div>
+      <div className="q"><Icon name="search" size={16} /><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Find anyone, or type text, call, quote, nudge, directions" aria-label="Find or do anything" autoComplete="off" spellCheck={false} /><kbd>esc</kbd></div>
       <div className="list" ref={list} role="listbox">
         {hits.length ? hits.map((h, k) => { const lbl = h.group !== lastGroup ? <div key={"g" + h.group} className="lbl">{h.group}</div> : null; lastGroup = h.group;
           return <div key={h.key}>{lbl}<div role="option" aria-selected={k === sel} className={"it" + (k === sel ? " hl" : "")} onMouseMove={() => setSel(k)} onClick={() => fire(h)}>

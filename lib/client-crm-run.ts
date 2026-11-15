@@ -1,7 +1,7 @@
 // The client CRM on the server: the board, moving a customer between stages, editing a card, adding a lead by hand,
 // and the owner's own setup. Every write is scoped to the signed-in owner's business.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { ballpark, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, cleanJob, cleanCosts, jobSteps, type Card, type Stage } from "@/lib/crm";
+import { ballpark, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, cleanJob, cleanCosts, cleanLostReason, jobSteps, type Card, type Stage } from "@/lib/crm";
 import { digits10 } from "@/lib/client-runtime";
 import { cleanImportRows, importAs, type ImportAs } from "@/lib/customer-import";
 import { emitEvent } from "@/lib/client-webhook";
@@ -22,7 +22,8 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       q.token AS quote_token, q.link_sent_at IS NOT NULL AS quote_linked, q.items AS quote_items, q.tax_rate::float AS quote_tax,
       t.install_time, t.install_days, t.install_event_id IS NOT NULL AS on_calendar, q.viewed_at AS quote_viewed, q.note AS quote_note, a.starts_at AS next_appt,
       t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent, t.job_steps, t.job_costs,
-      (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied
+      (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied,
+      t.stage_at, lr.body AS lost_note
     FROM public.client_threads t
     LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
       AND right(regexp_replace(x.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
@@ -31,6 +32,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       AND right(regexp_replace(r.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10) ORDER BY sent_at DESC LIMIT 1) rv ON true
     LEFT JOIN LATERAL (SELECT starts_at FROM public.client_appointments y WHERE y.thread_id = t.id AND y.status = 'booked' AND y.starts_at > now() - interval '12 hours'
       ORDER BY y.starts_at LIMIT 1) a ON true
+    LEFT JOIN LATERAL (SELECT body FROM public.client_texts z WHERE z.thread_id = t.id AND z.author = 'system' AND z.body LIKE 'Marked lost%' ORDER BY z.at DESC LIMIT 1) lr ON t.stage = 'lost'
     WHERE t.project_id = ${c.projectId}::uuid AND t.source NOT IN ('review', 'due')
       AND (t.updated_at > now() - interval '120 days' OR t.stage IN ('booked', 'quoted') OR q.status IN ('open', 'replied'))
       -- Imported past customers live in Customers, not on the board, until they text in or the owner moves them (a move stamps stage_at after created_at).
@@ -55,6 +57,8 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       install: r.install_on ? String(r.install_on) : null, installTime: r.install_time ? String(r.install_time) : null, installDays: Number(r.install_days ?? 1) || 1, onCalendar: !!r.on_calendar,
       invoice: invoices[String(r.id)] ?? null, reviewAuto: !!r.review_auto, reviewSent: r.review_sent ? new Date(String(r.review_sent)).toISOString() : null, pastCustomer: again,
       job: again ? {} : cleanJob(r.job_steps), costs: again ? cleanCosts({}) : cleanCosts(r.job_costs),
+      stageAt: r.stage_at ? new Date(String(r.stage_at)).toISOString() : null,
+      lostReason: typeof r.lost_note === "string" ? (r.lost_note.match(/^Marked lost: (.+?)\. Follow-ups stopped\.$/)?.[1] ?? "") : "",
     };
   });
 }
@@ -77,7 +81,7 @@ const event = (c: Client, t: { id: string; customer_name: string; customer_phone
  * Move a customer to a stage. Quoted starts (or restarts) the quote follow-up; won and lost close the quote and stop
  * the follow-ups; booked and new only change the card. Amount is the quote or job value.
  */
-export async function moveStage(sql: Sql, c: Client, threadId: string, stage: string, amount: number | null, opts: { install?: unknown; review?: boolean } = {}): Promise<{ ok: boolean; error?: string }> {
+export async function moveStage(sql: Sql, c: Client, threadId: string, stage: string, amount: number | null, opts: { install?: unknown; review?: boolean; reason?: unknown } = {}): Promise<{ ok: boolean; error?: string }> {
   if (!(STAGES as readonly string[]).includes(stage)) return { ok: false, error: "Unknown stage." };
   const t = await threadOf(sql, c, threadId);
   if (!t) return { ok: false, error: "Not found." };
@@ -98,7 +102,8 @@ export async function moveStage(sql: Sql, c: Client, threadId: string, stage: st
     await sql`UPDATE public.client_threads SET status = 'closed', updated_at = now() WHERE id = ${t.id}::uuid AND status <> 'opted_out'`;
     // Won: when the install is, and whether Cinder asks for the Google review the day after it.
     if (stage === "won") await sql`UPDATE public.client_threads SET review_auto = ${!!opts.review && !!c.setup.review_link} WHERE id = ${t.id}::uuid`;
-    await note(stage === "won" ? `Job won${usd}` : "Marked lost. Follow-ups stopped.");
+    const why = cleanLostReason(opts.reason);
+    await note(stage === "won" ? `Job won${usd}` : why ? `Marked lost: ${why}. Follow-ups stopped.` : "Marked lost. Follow-ups stopped.");
     void emitEvent(c.setup, c.projectId, stage === "won" ? "job.won" : "job.lost", event(c, t, { amount }));
   } else {
     // Back to new or booked: an open quote stays open (follow-ups keep going); Cinder takes replies again on "new".

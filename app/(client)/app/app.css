@@ -467,3 +467,15 @@ details.skipped summary { cursor: pointer; font-size: 12.5px; color: var(--g1); 
 .cmd .it-acts { display: flex; align-items: center; gap: 2px; }
 .cmd .it-acts .ic { opacity: 0; transition: opacity var(--t); } .cmd .it.hl .it-acts .ic { opacity: 1; }
 @media (max-width: 899px) { .cmd .it-acts .ic { opacity: 1; } .cmd .ft { display: none; } }
+
+/* ---------- Jobs: lanes, days in stage, lost reasons ---------- */
+.col-b > h2 .stage { margin-right: 2px; }
+.jcard .f { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.jcard .f .stale { color: var(--ember); font-weight: 600; } .jcard .f .faint { font-size: 11.5px; }
+.jrow small.jr-next { color: var(--g2); font-size: 12px; } .jrow small.jr-next.red { color: var(--bad); } .jrow small.jr-next.amber { color: var(--ember); } .jrow small.jr-next.green { color: var(--good); }
+.jrow { height: auto; min-height: 60px; padding: 8px 16px; }
+.reasons { display: flex; flex-wrap: wrap; gap: 6px; }
+.tbl td { height: 36px; } .tbl th { height: 34px; }
+
+.row.needs { grid-template-columns: 16px minmax(0, 1fr) auto auto; }
+.row.needs > b.num { white-space: nowrap; min-width: 56px; text-align: right; }
