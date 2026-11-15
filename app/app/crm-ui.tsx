@@ -329,7 +329,7 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
   return <Sheet onClose={onClose} title={<div className="jb-who"><span className="ca-av sm" data-tone={tone(name)} aria-hidden="true">{initials(name)}</span><span><b>{name}</b><small><a href={`tel:${card.phone}`}>{fmtPhone(card.phone)}</a> · {SRC[card.source] ?? card.source}</small></span></div>}>
     <div className="jb-acts">
       <button type="button" onClick={() => { onClose(); onOpen(card.id); }}><Svg d={I.chat} size={16} />Conversation</button>
-      {canCall ? <button type="button" disabled={!!busy} onClick={() => void act("call", { action: "call" }, "Calling your cell. Pick up and we'll connect them.")}><Svg d={I.phone} size={16} />Call</button>
+      {canCall ? <button type="button" disabled={!!busy} onClick={() => void act("call", { action: "call" }, "Calling your cell now.")}><Svg d={I.phone} size={16} />Call</button>
         : <a href={`tel:${card.phone}`}><Svg d={I.phone} size={16} />Call</a>}
     </div>
     <div className="jb-stages" role="radiogroup" aria-label="Stage">{STAGES.map(s => <button key={s} type="button" role="radio" aria-checked={card.stage === s} className={(card.stage === s ? "on " : "") + (ask === s ? "ask" : "")} disabled={!!busy} onClick={() => pick(s)}>{s === "lost" && arm ? "Tap again" : STAGE_LABEL[s]}</button>)}</div>
@@ -338,7 +338,7 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
       <p className="jb-amt-k">The quote</p>
       {lines}
       <label style={{ marginTop: 12 }}><span>What&rsquo;s included <em>optional, they&rsquo;ll see it</em></span><textarea rows={2} value={incl} maxLength={600} onChange={e => setIncl(e.target.value)} placeholder="Tear-out and haul-away, steel posts in concrete, 2-year warranty" /></label>
-      <p>Drafted from your prices; check every line. Nothing goes to {firstName} until you tap Send. After that, Cinder follows up on day 2, 5, 10 and 21 with the link until it&rsquo;s a yes or a no.</p>
+      <p>Follow-ups on day 2, 5, 10 and 21 after you send.</p>
       <div className="jb-amt-row">
         <button type="button" onClick={() => setAsk(null)}>Cancel</button>
         <button type="button" disabled={!!busy || quoteTotal <= 0} onClick={() => void act("save", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl }, `Quote saved: ${dollars(quoteTotal)}. Not sent yet.`)}>Save</button>
@@ -350,9 +350,9 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
       r => `Marked won.${calMsg(r.calendar)}${review && biz.reviewLink && install ? " Review ask goes out the morning after." : ""}`); }}>
       <label><span>Job amount</span><span className="jb-in"><i>$</i><input inputMode="decimal" autoFocus placeholder="7,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></span></label>
       <div style={{ marginTop: 12 }}>{installFields}</div>
-      <p>{biz.calendar ? "The install goes on your Google Calendar." : "Connect Google Calendar (Calendar tab) and installs go straight on it."}</p>
-      <Toggle on={review} set={setReview} disabled={!biz.reviewLink} title="Ask for a Google review after the install"
-        sub={!biz.reviewLink ? "Send Sam your Google review link to turn this on." : install ? "Texted the morning after the install." : "Add the install day, or tap Job done when it's finished."} />
+      {!biz.calendar && <p>Connect Google Calendar to add installs to it.</p>}
+      <Toggle on={review} set={setReview} disabled={!biz.reviewLink} title="Ask for a Google review"
+        sub={!biz.reviewLink ? "Needs your Google review link." : install ? "Morning after the install." : "Set an install day."} />
       <div className="jb-amt-row"><button type="button" onClick={() => setAsk(null)}>Cancel</button><button type="submit" className="go" disabled={!!busy}>{busy ? <span className="ca-spin" /> : "Mark won"}</button></div>
     </form>}
 
@@ -362,7 +362,7 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
       {editLines ? <div style={{ marginTop: 12 }}>{lines}</div>
         : q.items.length > 0 && <ul className="jb-lines">{q.items.map((i, k) => <li key={k}><span>{i.name}<small>{i.qty !== 1 || i.unit ? `${i.qty}${i.unit ? " " + i.unit : ""} × ${dollars(i.price)}` : ""}</small></span><b>{dollars(i.qty * i.price)}</b></li>)}</ul>}
       {q.note && !editLines && <p className="jb-box-p">{q.note}</p>}
-      <p className="jb-box-s">{!q.linked ? `Saved, not sent. ${firstName} sees nothing until you send it.` : q.steps ? `Follow-up ${q.steps} of 4 sent.` : "First follow-up in 2 days."}{q.linked ? " When they approve, the card moves to Won and you get a text." : ""}</p>
+      <p className="jb-box-s">{!q.linked ? "Not sent." : q.steps ? `Follow-up ${q.steps} of 4 sent.` : "First follow-up in 2 days."}</p>
       <div className="jb-box-acts">
         {editLines ? <>
           <button type="button" disabled={!!busy} onClick={() => setEditLines(false)}>Cancel</button>
@@ -389,15 +389,15 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
           <p className="jb-box-s">#{card.invoice.number} · {dollars(card.invoice.total)}{card.invoice.status === "sent" && card.invoice.due_on ? ` · due ${dateLabel(card.invoice.due_on)}` : ""}</p>
           <div className="jb-box-acts"><button type="button" className="go" onClick={() => onInvoice(card.invoice!)}>Open invoice</button></div>
         </> : <>
-          <p className="jb-box-s">Made from the quote&rsquo;s lines. They pay through your own pay link; Cinder never touches the money.</p>
-          <div className="jb-box-acts"><button type="button" className="go" disabled={!!busy} onClick={async () => { const r = await act("invoice", { action: "invoice" }, "Invoice ready to check and send."); if (r?.invoice) onInvoice(r.invoice); }}>
+          <p className="jb-box-s">Pulls the lines from the quote.</p>
+          <div className="jb-box-acts"><button type="button" className="go" disabled={!!busy} onClick={async () => { const r = await act("invoice", { action: "invoice" }, "Invoice drafted."); if (r?.invoice) onInvoice(r.invoice); }}>
             {busy === "invoice" ? <span className="ca-spin" /> : "Create invoice"}</button></div>
         </>}
       </section>
       <section className="jb-box">
         <div className="jb-box-h"><b>Review</b>{card.reviewSent ? <span className="jb-pill green"><Svg d={I.star} size={13} />Asked {ago(card.reviewSent)}</span> : null}</div>
-        {!card.reviewSent && <Toggle on={review} set={setReview} disabled={!biz.reviewLink} title="Ask for a Google review the morning after"
-          sub={!biz.reviewLink ? "Send Sam your Google review link to turn this on." : card.install ? `Goes out ${dateLabel(new Date(Date.parse(card.install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Set the install day above."} />}
+        {!card.reviewSent && <Toggle on={review} set={setReview} disabled={!biz.reviewLink} title="Ask for a Google review"
+          sub={!biz.reviewLink ? "Needs your Google review link." : card.install ? `Goes out ${dateLabel(new Date(Date.parse(card.install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Set an install day."} />}
         {!card.reviewSent && biz.reviewLink && <div className="jb-box-acts">
           <button type="button" disabled={!!busy || !canText} onClick={() => arm ? void act("review", { action: "reviewnow" }, `Review request sent to ${firstName}.`) : setArm(true)}>
             {busy === "review" ? <span className="ca-spin" /> : <><Svg d={I.star} size={15} />{arm ? "Tap to send it now" : "Job done, ask now"}</>}</button>
@@ -420,15 +420,15 @@ function WinbackSheet({ w, biz, project, api, toast, reload, onClose }: { w: Win
   const sample = w.names[0] || "Dana";
   const preview = body.replace(/\s*\{first\}(?=[,!.?])/g, " " + sample).replace(/\{first\}/g, sample).replace(/\{business\}/g, biz.business).replace(/\{owner\}/g, biz.owner);
   const many = w.eligible === 1 ? "1 customer" : `${w.eligible} customers`;
-  return <Sheet onClose={onClose} title={<div className="jb-who"><span><b>Text past customers</b><small>Jobs you won more than a month ago</small></span></div>}>
+  return <Sheet onClose={onClose} title={<div className="jb-who"><span><b>Text past customers</b><small>Won jobs, 30+ days old</small></span></div>}>
     <div className="wb-count">
       <div><b>{w.past}</b><span>past {w.past === 1 ? "customer" : "customers"}</span></div>
       <div className="on"><b>{w.eligible}</b><span>can get this text</span></div>
     </div>
-    <p className="jb-fine wb-why">Only customers who checked &ldquo;send me offers&rdquo; on your website form can get a text like this. Everyone else only hears from you about their own job. Each customer gets one at most every 90 days.</p>
+    <p className="jb-fine wb-why">Only customers who opted in to offers on your form. Max one text every 90 days.</p>
     {w.eligible > 0 ? <>
       <label className="jb-f full"><span>Your text <em>{body.length}/320</em></span><textarea rows={4} value={body} maxLength={320} onChange={e => { setBody(e.target.value); setErr(""); setArm(false); }} /></label>
-      <p className="wb-tip">{"{first}"} becomes each customer&rsquo;s first name. Replies go to Cinder like any lead, and land in New.</p>
+      <p className="wb-tip">{"{first}"} = their first name.</p>
       <div className="wb-prev" aria-label="Preview"><span>{sample}&rsquo;s phone</span><div className="ob-b out">{preview}{"\n\n"}Reply STOP to opt out.</div></div>
       {err && <p className="ca-err" role="alert">{err}</p>}
       <div className="jb-save"><button type="button" className="go" disabled={busy || body.trim().length < 20} onClick={async () => {
@@ -437,14 +437,14 @@ function WinbackSheet({ w, biz, project, api, toast, reload, onClose }: { w: Win
         try { const r = await api<{ sent: number; left: number }>("/api/app/act", { p: project, action: "winback", body }); toast(`Sent to ${r.sent} ${r.sent === 1 ? "customer" : "customers"}.${r.left ? ` ${r.left} more tomorrow.` : ""}`); await reload(); onClose(); }
         catch (e) { setErr(e instanceof Error ? e.message : "Didn't send."); } finally { setBusy(false); setArm(false); }
       }}>{busy ? <span className="ca-spin" /> : arm ? `Tap again to text ${many}` : `Send to ${many}`}</button></div>
-    </> : <div className="wb-none"><b>No one to text yet</b><p>Add the &ldquo;send me offers&rdquo; box to your website form (Sam can do it) and past customers who check it show up here.</p></div>}
+    </> : <div className="wb-none"><b>No one to text yet</b><p>Customers who opt in on your website form show up here.</p></div>}
   </Sheet>;
 }
 
 function AddLead({ trade, project, api, toast, reload, onClose }: { trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onClose: () => void }) {
   const [name, setName] = useState(""), [phone, setPhone] = useState(""), [d, setD] = useState<Record<string, string>>({}), [notes, setNotes] = useState(""), [busy, setBusy] = useState(false), [err, setErr] = useState("");
   const digits = phone.replace(/\D/g, "").replace(/^1(?=\d{10})/, "");
-  return <Sheet onClose={onClose} title={<div className="jb-who"><span><b>Add a lead</b><small>A call you took, a referral, a walk-in</small></span></div>}>
+  return <Sheet onClose={onClose} title={<div className="jb-who"><span><b>Add a lead</b><small>Calls, referrals, walk-ins</small></span></div>}>
     <form onSubmit={async e => { e.preventDefault(); setBusy(true); setErr("");
       try { await api("/api/app/act", { p: project, action: "lead", name, phone: digits, details: d, notes }); toast("Added to New."); await reload(); onClose(); }
       catch (er) { setErr(er instanceof Error ? er.message : "Couldn't add it."); } finally { setBusy(false); } }}>
@@ -455,7 +455,7 @@ function AddLead({ trade, project, api, toast, reload, onClose }: { trade: strin
       <h3 className="jb-h3">The job</h3>
       <DetailFields trade={trade} d={d} set={(k, v) => setD(x => ({ ...x, [k]: v }))} />
       <label className="jb-f full"><span>Notes</span><textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} /></label>
-      <p className="jb-fine">Cinder won&rsquo;t text a lead you add yourself. Reply from the conversation when you&rsquo;re ready.</p>
+      <p className="jb-fine">Cinder won&rsquo;t text leads you add.</p>
       {err && <p className="ca-err" role="alert">{err}</p>}
       <div className="jb-save"><button type="submit" className="go" disabled={busy || digits.length !== 10}>Add lead</button></div>
     </form>

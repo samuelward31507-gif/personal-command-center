@@ -1256,3 +1256,22 @@ html body:not(#u) .sx-tel .live dd { color: #127a4c !important; }
 html body:not(#u) .ca-hello h1 { font-size: 26px !important; font-weight: 600 !important; }
 html body:not(#u) .ca-hello > p { display: none; }
 @media (max-width: 520px) { html body:not(#u) .jb-hello { align-items: flex-start !important; gap: 12px !important; } html body:not(#u) .jb-hello-acts { width: 100%; } html body:not(#u) .jb-hello-acts > button { flex: 1 1 0; justify-content: center; } }
+
+/* The Cinder wordmark, where the generic "C" tile was. */
+html body:not(#u) .ca-top-word { flex: 0 0 auto; height: 21px; width: auto; display: block; }
+html body:not(#u) .ca-top .ca-top-name { position: relative; padding-left: 13px; margin-left: 2px; font-size: 14.5px !important; font-weight: 500 !important; color: var(--t-2) !important; }
+html body:not(#u) .ca-top .ca-top-name::before { content: ""; position: absolute; left: 0; top: 50%; width: 1px; height: 15px; transform: translateY(-50%); background: rgba(23, 26, 32, .16); }
+html body:not(#u) .ca-wide .ca-top-word { display: none; }
+html body:not(#u) .ca-sign-word { height: 34px; width: auto; display: block; margin: 0 auto 4px 0; }
+html body:not(#u) .ca-sign-k { display: none !important; }
+/* Today's head: business and date on one quiet line, then the number. */
+html body:not(#u) .td-date { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--t-2); }
+html body:not(#u) .td-date span:first-child { font-weight: 600; color: var(--t-ink); }
+html body:not(#u) .td-big { margin-top: 18px !important; }
+/* Brand colour for what wants attention: the ember, not stock red. */
+html body:not(#u) .ca-nav em, html body:not(#u) .ca-me em { background: #d0663f !important; }
+html body:not(#u) .td-g.money { background: #fbeee8 !important; color: #b4532e !important; }
+html body:not(#u):not(#v) .ca-sign .ca-sign-word { height: 40px !important; width: auto !important; margin: 0 auto 26px !important; display: block; }
+html body:not(#u):not(#v) .ca-load .ca-sign-word { height: 40px !important; width: auto !important; }
+html body:not(#u) .td-date { display: block; font-weight: 500; }
+html body:not(#u):not(#v) .ca-sign .ca-sign-word { opacity: 1 !important; filter: none !important; }

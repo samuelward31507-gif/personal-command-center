@@ -89,9 +89,9 @@ export function InvoiceSheet({ inv, customer, project, api, toast, reload, payLi
     try { await navigator.clipboard.writeText(url); toast("Invoice link copied."); } catch { prompt("Copy the invoice link:", url); }
   }
   return <Sheet onClose={onClose} title={<>Invoice #{inv.number}</>} sub={<>{customer} · <span className={"bl-st " + st.tone}>{st.text}</span></>}>
-    {!payLink && !locked && <div className="bl-warn"><b>Add your pay link</b><p>The invoice gets a Pay button that opens your Square, Stripe or PayPal page. Cinder never touches the money.</p>
+    {!payLink && !locked && <div className="bl-warn"><b>No pay link yet</b><p>Add your Square, Stripe or PayPal link so customers can pay from the invoice.</p>
       <button type="button" onClick={onSetup}>Add pay link</button></div>}
-    {inv.paid_claimed_at && inv.status === "sent" && <div className="bl-warn"><b>{first} says they paid</b><p>Check your account, then mark it paid. Reminders are paused.</p></div>}
+    {inv.paid_claimed_at && inv.status === "sent" && <div className="bl-warn"><b>{first} says they paid</b><p>Check your account. Reminders are paused.</p></div>}
     {locked ? <div className="bl-read"><ul>{inv.items.map((i, k) => <li key={k}><span>{i.name}<small>{i.qty} {i.unit} × {dollars(i.price)}</small></span><b>{dollars(lineTotal(i))}</b></li>)}</ul>
       <p className="bl-read-t"><span>Total</span><b>{dollars(inv.total)}</b></p></div>
       : <>
@@ -102,7 +102,7 @@ export function InvoiceSheet({ inv, customer, project, api, toast, reload, payLi
         </div>
         <label className="jb-f full"><span>Note <em>they&rsquo;ll see it</em></span><textarea rows={2} value={note} maxLength={600} onChange={e => setNote(e.target.value)} placeholder="Thanks for your business. Two-year warranty on the install." /></label>
       </>}
-    {inv.status === "sent" && <p className="jb-fine">{inv.reminders_paused ? "Payment reminders are paused." : inv.reminders ? `${inv.reminders} of 3 payment reminders sent.` : "If it goes past due, Cinder sends up to 3 friendly reminders. A reply pauses them."}</p>}
+    {inv.status === "sent" && <p className="jb-fine">{inv.reminders_paused ? "Payment reminders are paused." : inv.reminders ? `${inv.reminders} of 3 payment reminders sent.` : "Up to 3 reminders after the due date."}</p>}
     <div className="jb-box-acts" style={{ marginTop: 16 }}>
       {!locked && <button type="button" className="go" disabled={!!busy} onClick={() => void send()}>{busy === "send" ? <span className="ca-spin" /> : inv.status === "sent" ? "Text it again" : `Text ${first} the invoice`}</button>}
       {!locked && <button type="button" disabled={!!busy} onClick={() => void copy()}>Copy link</button>}
@@ -122,7 +122,7 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
   const [link, setLink] = useState(setup.pay_link || ""), [tax, setTax] = useState(setup.tax_rate || ""), [daysDue, setDays] = useState(setup.invoice_days || "7"), [busy, setBusy] = useState(false);
   return <Sheet onClose={onClose} title="Invoices and payments" sub="Used on every quote and invoice">
     <label className="jb-f full"><span>Your pay link</span><span className="jb-in"><input inputMode="url" value={link} onChange={e => setLink(e.target.value)} placeholder="square.link/u/yourbusiness" /></span></label>
-    <p className="jb-fine">The link you already use to get paid: Square, Stripe, PayPal or your own site. The invoice&rsquo;s Pay button opens it. Cinder never holds the money.</p>
+    <p className="jb-fine">Square, Stripe, PayPal or your own site. The invoice&rsquo;s Pay button opens it.</p>
     <div className="jb-two" style={{ marginTop: 14 }}>
       <label className="jb-f"><span>Sales tax</span><span className="jb-in"><input inputMode="decimal" value={tax} onChange={e => setTax(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0" /><em>%</em></span></label>
       <label className="jb-f"><span>Invoices are due</span><select value={daysDue} onChange={e => setDays(e.target.value)}><option value="0">On receipt</option><option value="7">In 7 days</option><option value="14">In 14 days</option><option value="30">In 30 days</option></select></label>
@@ -158,7 +158,7 @@ export function CustomersView({ list, onOpen }: { list: Customer[]; onOpen: (c: 
       <span className="cu-num">{c.owed > 0 ? <><b className="owe">{short(c.owed)}</b><small>owed</small></> : c.spent > 0 ? <><b>{short(c.spent)}</b><small>{c.jobs} {c.jobs === 1 ? "job" : "jobs"}</small></>
         : c.open_quote ? <><b className="q">{short(c.open_quote)}</b><small>quoted</small></> : <small>{day(c.last)}</small>}</span>
     </button></li>; })}</ul>
-      : <div className="ca-empty"><b>{q ? "No one matches that" : "No customers yet"}</b><p>{q ? "Try part of a name, a street, or the last 4 digits of their number." : "Everyone who calls, texts or fills out your form lands here."}</p></div>}
+      : <div className="ca-empty"><b>{q ? "No one matches that" : "No customers yet"}</b><p>{q ? "Try a name, street or the last 4 digits." : ""}</p></div>}
   </>;
 }
 
@@ -178,6 +178,6 @@ export function InvoicesView({ list, onOpen }: { list: InvoiceRow[]; onOpen: (i:
       <span className="cu-mid"><b>{name}</b><small>{i.status === "paid" ? `Paid ${i.paid_at ? day(i.paid_at) : ""}` : i.due_on ? `Due ${day(i.due_on)}` : "Draft"}</small></span>
       <span className="cu-num"><b>{dollars(i.total)}</b><span className={"jb-tag " + st.tone}>{st.text}</span></span>
     </button></li>; })}</ul>
-      : <div className="ca-empty"><b>{f === "open" ? "Nothing outstanding" : "No invoices yet"}</b><p>Open a won job and tap Create invoice. It comes from the quote&rsquo;s lines, and they pay through your own pay link.</p></div>}
+      : <div className="ca-empty"><b>{f === "open" ? "Nothing outstanding" : "No invoices yet"}</b><p>Create one from a won job.</p></div>}
   </>;
 }

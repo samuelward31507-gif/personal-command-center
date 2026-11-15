@@ -30,8 +30,8 @@ const GLYPH: Record<Kind, React.ReactNode> = {
   sam: <><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></>,
 };
 
-export function TodayTab({ owner, cards, invoices, asks, due, appts, unreadSam, live, go }: {
-  owner: string; cards: Card[]; invoices: Inv[]; asks: Ask[]; due: Appt[]; appts: Appt[]; unreadSam: number;
+export function TodayTab({ owner, business, cards, invoices, asks, due, appts, unreadSam, live, go }: {
+  owner: string; business: string; cards: Card[]; invoices: Inv[]; asks: Ask[]; due: Appt[]; appts: Appt[]; unreadSam: number;
   live: { wonValue: number; won: number; answered: number; leads: number; replySec: number | null; booked: number }; go: TodayGo;
 }) {
   const today = new Date().toLocaleDateString("en-CA");
@@ -39,12 +39,12 @@ export function TodayTab({ owner, cards, invoices, asks, due, appts, unreadSam, 
   const actions: Action[] = [];
   // 1. People waiting on him.
   for (const a of asks) actions.push({ key: "r" + a.id, kind: "reply", title: `Reply to ${first(a.name)}`, sub: a.ask || a.last, go: () => go.thread(a.id), cta: "Reply" });
-  for (const c of cards) if (c.stage === "quoted" && c.quote?.status === "replied") actions.push({ key: "qr" + c.id, kind: "reply", title: `${first(c.name)} answered your quote`, sub: c.quote.amount ? `${usd(c.quote.amount)} quote` : "Read what they said", go: () => go.thread(c.id), cta: "Read" });
+  for (const c of cards) if (c.stage === "quoted" && c.quote?.status === "replied") actions.push({ key: "qr" + c.id, kind: "reply", title: `${first(c.name)} answered your quote`, sub: c.quote.amount ? `${usd(c.quote.amount)} quote` : "", go: () => go.thread(c.id), cta: "Read" });
   // 2. Money.
   for (const i of invoices) {
-    if (i.status === "sent" && i.paid_claimed_at) actions.push({ key: "pc" + i.id, kind: "money", title: `${first(i.customer)} says they paid`, sub: `Invoice #${i.number} · ${usd(i.total)}. Check your account.`, go: () => go.invoice(i.id), cta: "Check" });
+    if (i.status === "sent" && i.paid_claimed_at) actions.push({ key: "pc" + i.id, kind: "money", title: `${first(i.customer)} says they paid`, sub: `${usd(i.total)} · invoice #${i.number}`, go: () => go.invoice(i.id), cta: "Check" });
     else if (overdue(i.status, i.due_on, today)) actions.push({ key: "od" + i.id, kind: "money", title: `${first(i.customer)}: ${daysPast(i.due_on!)} ${daysPast(i.due_on!) === 1 ? "day" : "days"} late`, sub: `${usd(i.total)} · invoice #${i.number}${i.reminders ? ` · ${i.reminders} reminder${i.reminders === 1 ? "" : "s"} sent` : ""}`, go: () => go.invoice(i.id), cta: "Open" });
-    else if (i.status === "draft") actions.push({ key: "dr" + i.id, kind: "invoice", title: `Send ${first(i.customer)}'s invoice`, sub: `#${i.number} · ${usd(i.total)}, not sent yet`, go: () => go.invoice(i.id), cta: "Send" });
+    else if (i.status === "draft") actions.push({ key: "dr" + i.id, kind: "invoice", title: `Send ${first(i.customer)}'s invoice`, sub: `${usd(i.total)} · invoice #${i.number}`, go: () => go.invoice(i.id), cta: "Send" });
   }
   // 3. Quotes to write: the estimate happened and there's no quote yet.
   const quoted = new Set<string>();
@@ -52,16 +52,16 @@ export function TodayTab({ owner, cards, invoices, asks, due, appts, unreadSam, 
     const c = byThread.get(a.thread_id);
     if (c && (c.stage === "quoted" || c.stage === "won" || c.stage === "lost")) continue;
     quoted.add(a.thread_id);
-    actions.push({ key: "q" + a.id, kind: "quote", title: `Quote ${first(a.customer_name)}`, sub: `Estimate was ${new Date(a.starts_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}`, go: () => c ? go.card(c.id, "quoted") : go.calendar(), cta: "Quote" });
+    actions.push({ key: "q" + a.id, kind: "quote", title: `Quote ${first(a.customer_name)}`, sub: `Estimate ${new Date(a.starts_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}`, go: () => c ? go.card(c.id, "quoted") : go.calendar(), cta: "Quote" });
   }
-  for (const c of cards) if (!quoted.has(c.id) && c.stage === "quoted" && c.quote && !c.quote.linked && c.quote.amount) actions.push({ key: "qs" + c.id, kind: "quote", title: `Send ${first(c.name)} the quote`, sub: `${usd(c.quote.amount)}, saved but not sent`, go: () => go.card(c.id), cta: "Send" });
+  for (const c of cards) if (!quoted.has(c.id) && c.stage === "quoted" && c.quote && !c.quote.linked && c.quote.amount) actions.push({ key: "qs" + c.id, kind: "quote", title: `Send ${first(c.name)} the quote`, sub: `${usd(c.quote.amount)} · not sent`, go: () => go.card(c.id), cta: "Send" });
   // 4. Won jobs: get them on the calendar, then invoiced.
   for (const c of cards) {
     if (c.stage !== "won" || c.pastCustomer) continue;
     if (!c.install && !c.invoice) actions.push({ key: "in" + c.id, kind: "install", title: `Schedule ${first(c.name)}'s install`, sub: `${c.value ? usd(c.value) + " job" : "Won"}${c.line ? ` · ${c.line}` : ""}`, go: () => go.card(c.id), cta: "Schedule" });
     else if (c.install && c.install < today && !c.invoice) actions.push({ key: "iv" + c.id, kind: "invoice", title: `Invoice ${first(c.name)}`, sub: `Installed ${new Date(c.install + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}${c.value ? ` · ${usd(c.value)}` : ""}`, go: () => go.card(c.id), cta: "Invoice" });
   }
-  if (unreadSam) actions.push({ key: "sam", kind: "sam", title: "Sam sent you a message", sub: "Your Cinder contact", go: go.sam, cta: "Open" });
+  if (unreadSam) actions.push({ key: "sam", kind: "sam", title: "Message from Sam", sub: "Your Cinder rep", go: go.sam, cta: "Open" });
 
   // What's on today: estimates Cinder booked and installs he set.
   const now = Date.now();
@@ -74,26 +74,23 @@ export function TodayTab({ owner, cards, invoices, asks, due, appts, unreadSam, 
   const open = cards.filter(c => c.stage === "new" || c.stage === "booked" || c.stage === "quoted");
   const inPlay = open.reduce((a, c) => a + (c.value ?? (c.ballpark ? (c.ballpark.low + c.ballpark.high) / 2 : 0)), 0);
   const shown = useCountUp(inPlay, 900);
-  const hour = new Date().getHours();
-  const hello = `${hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"}${owner ? `, ${first(owner)}` : ""}.`;
 
   return <div className="td">
     <header className="td-hero">
       <p className="td-date">{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
-      <h1 className="td-hello">{hello}</h1>
       <p className="td-big" aria-label={`${usd(inPlay)} in open jobs`}>{usd(shown)}</p>
-      <p className="td-cap">in {open.length} open {open.length === 1 ? "job" : "jobs"}{actions.length ? <> · <b>{actions.length} {actions.length === 1 ? "thing needs" : "things need"} you</b></> : " · nothing needs you"}</p>
+      <p className="td-cap">{open.length} open {open.length === 1 ? "job" : "jobs"}{actions.length ? <> · <b>{actions.length} to do</b></> : null}</p>
     </header>
 
-    <div className="td-cols"><section className="td-sec" aria-label="Needs you">
-      <h2>Needs you</h2>
+    <div className="td-cols"><section className="td-sec" aria-label="To do">
+      <h2>To do</h2>
       {actions.length ? <ul className="td-acts">{actions.slice(0, 8).map(a => <li key={a.key}><button type="button" onClick={a.go}>
         <span className={"td-g " + a.kind} aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{GLYPH[a.kind]}</svg></span>
         <span className="td-t"><b>{a.title}</b><small>{a.sub}</small></span>
         <span className="td-cta">{a.cta}</span>
       </button></li>)}</ul>
-        : <div className="td-clear"><b>You&rsquo;re all caught up.</b><p>Cinder is answering every lead. Anything that needs you shows up here.</p></div>}
-      {actions.length > 8 && <p className="td-more">and {actions.length - 8} more in Inbox and Jobs</p>}
+        : <div className="td-clear"><b>Nothing to do.</b></div>}
+      {actions.length > 8 && <p className="td-more">+{actions.length - 8} more</p>}
     </section>
     <div className="td-side"><section className="td-sec" aria-label="Today's schedule">
       <h2>Today</h2>
@@ -101,7 +98,7 @@ export function TodayTab({ owner, cards, invoices, asks, due, appts, unreadSam, 
         <span className="td-time">{s.time}</span>
         <span className="td-t"><b>{s.who}</b><small>{s.what}{s.where ? ` · ${s.where}` : ""}</small></span>
       </button></li>)}</ul>
-        : <p className="td-none">Nothing on the calendar today.</p>}
+        : <p className="td-none">Nothing scheduled.</p>}
     </section>
 
     <section className="td-sec" aria-label="This month">

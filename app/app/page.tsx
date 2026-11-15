@@ -26,7 +26,7 @@ type Tab = "today" | "leads" | "jobs" | "numbers" | "estimates" | "sam";
 
 const SOURCE: Record<string, string> = { missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote follow-up", review: "Review request", rehash: "Old lead", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook ad", zapier: "Form" };
 const SRC_ICON: Record<string, string> = { missed_call: "phone", "web chat": "chat", "web form": "form", text: "chat", quote: "quote", review: "star", rehash: "quote", angi: "form", thumbtack: "form", facebook: "form", zapier: "form" };
-const STATUS: Record<string, [string, string]> = { auto: ["Cinder's on it", "auto"], paused: ["Needs you", "needs"], booked: ["Booked", "booked"], closed: ["Done", "done"], opted_out: ["Opted out", "done"] };
+const STATUS: Record<string, [string, string]> = { auto: ["Cinder replying", "auto"], paused: ["Your turn", "needs"], booked: ["Booked", "booked"], closed: ["Closed", "done"], opted_out: ["Opted out", "done"] };
 const QUICK = ["On my way", "I'll call you in 10 minutes", "Sending your quote now", "Can you send a photo?"];
 
 const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
@@ -139,8 +139,7 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
   const digits = phone.replace(/\D/g, "").length;
   return <div className="ca-sign" role="main">
     <div className="ca-sign-card">
-      <Mark />
-      <p className="sx-k ca-sign-k">Cinder · Client console</p>
+      <CinderLogo className="ca-sign-word" ink="#121417" title="Cinder" />
       <h1>{sent ? "Check your texts" : "Sign in to Cinder"}</h1>
       <p>{sent ? <>We texted a code to <b>{fmtPhone(phone)}</b>.</> : "Use the cell number you gave Sam."}</p>
       <form onSubmit={e => { e.preventDefault(); if (!sent) void send(); else if (code.length === 6) void verify(code); }}>
@@ -218,7 +217,7 @@ function ThreadView({ id, project, canCall, onBack, onChange, toast }: { id: str
         <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} placeholder="Text from your business number" aria-label="Reply" />
         <button type="submit" disabled={!!busy || !draft.trim()} aria-label="Send"><Icon name="send" size={18} /></button>
       </form>
-      {!mine && t?.status !== "booked" && <p className="ca-hint">Replying hands this conversation to you; Cinder steps back.</p>}
+      {!mine && t?.status !== "booked" && <p className="ca-hint">Cinder stops replying once you do.</p>}
     </div>
   </section>;
 }
@@ -248,7 +247,7 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
   const amountSheet = (onSave: () => void) => <form className="ca-amt" onSubmit={e => { e.preventDefault(); onSave(); }}>
     <label htmlFor={"amt-" + sheet?.id}>{sheet?.kind === "quoted" ? "Quote amount" : "Job amount"}<small>{sheet?.kind === "quoted" ? "Optional. Shows in your numbers." : "Counts toward what Cinder brought in."}</small></label>
     <div className="ca-amt-in"><span>$</span><input id={"amt-" + sheet?.id} inputMode="decimal" autoFocus placeholder="9,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></div>
-    {sheet?.kind === "won" && <label className="ca-amt-check"><input type="checkbox" checked={review} onChange={e => setReview(e.target.checked)} /><span>Job&rsquo;s already finished? Text them for a Google review now</span></label>}
+    {sheet?.kind === "won" && <label className="ca-amt-check"><input type="checkbox" checked={review} onChange={e => setReview(e.target.checked)} /><span>Job done? Ask for a Google review</span></label>}
     <div className="ca-amt-row"><button type="button" className="ca-amt-no" onClick={() => setSheet(null)}>Cancel</button>
       <button type="submit" className="ca-amt-go" disabled={!!busy}>{sheet?.kind === "quoted" ? "Start follow-up" : "Mark won"}</button></div>
   </form>;
@@ -263,7 +262,7 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
     </div> : <div className="ca-pushcard">
       <span className="ca-pushcard-ic"><Icon name="cal" size={18} /></span>
       <div><b>Connect your Google Calendar</b>
-        <p>Cinder books estimates only when you&rsquo;re free, puts them on your calendar, and shows your whole week here.</p>
+        <p>Estimates only go where you&rsquo;re free.</p>
         <div className="ca-pushcard-row"><a className="ca-pushcard-go" href={cal.connectUrl} target="_blank" rel="noreferrer">Connect calendar</a></div></div>
     </div>}
     {cal.error && <p className="ca-calerr">{cal.error} <a href={cal.connectUrl} target="_blank" rel="noreferrer">Reconnect</a></p>}
@@ -303,9 +302,9 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
               : cal.connected ? null : <span className="ca-est-note">Not on a calendar yet</span>}
           </div>
         </li>; })}</ul></section>)
-      : <div className="ca-empty"><span className="ca-empty-ic"><Icon name="cal" size={22} /></span><b>Nothing on the calendar this week</b><p>When Cinder books an estimate, it lands here and on your Google Calendar, and the customer gets a reminder the day before.</p></div>}
+      : <div className="ca-empty"><span className="ca-empty-ic"><Icon name="cal" size={22} /></span><b>Nothing on the calendar this week</b><p>Booked estimates show up here.</p></div>}
 
-    {d.quotes.length > 0 && <section className="ca-group"><h2>Quotes Cinder is following up</h2>
+    {d.quotes.length > 0 && <section className="ca-group"><h2>Open quotes</h2>
       <ul className="ca-cards">{d.quotes.map(q => { const name = q.customer_name || fmtPhone(q.customer_phone); return <li key={q.id} className="ca-q">
         <div className="ca-q-h"><b>{name}</b><span>{q.amount ? usd(q.amount) : "No amount"}</span></div>
         <small>Sent {new Date(q.sent_on + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {q.status === "replied" ? "They replied. Check the conversation." : q.steps_sent ? `Follow-up ${q.steps_sent} of ${d.quoteSteps} sent` : "First follow-up goes out in 2 days"}</small>
@@ -315,7 +314,7 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
       </li>; })}</ul></section>}
 
     {(d.wonJobs?.length ?? 0) > 0 && d.hasReviewLink && <section className="ca-group"><h2>Jobs you won</h2>
-      <p className="ca-sub">When the job&rsquo;s finished, tap Job done and Cinder texts them for a Google review.</p>
+      <p className="ca-sub">Tap Job done to ask for a review.</p>
       <ul className="ca-cards">{d.wonJobs!.map(j => { const name = j.customer_name || fmtPhone(j.customer_phone); return <li key={j.id} className="ca-q">
         <div className="ca-q-h"><b>{name}</b><span>{j.amount ? usd(j.amount) : ""}</span></div>
         <small>Won {new Date(j.won_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</small>
@@ -386,7 +385,7 @@ export default function CinderApp() {
   const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
   const dueCount = due.length;
 
-  if (state === "loading") return <div className="ca-load" role="main"><Mark /></div>;
+  if (state === "loading") return <div className="ca-load" role="main"><CinderLogo className="ca-sign-word" ink="#121417" title="Cinder" /></div>;
   if (state === "out") return <SignIn onIn={() => void load("")} onDemo={() => { demoStart(); setDemo(true); setHidePushCard(true); setTab("today"); void load("", "leads"); }} />;
   if (!d) return null;
   const L = d.live;
@@ -401,13 +400,13 @@ export default function CinderApp() {
   if ((setupOpen || (!demo && !setupDone && d.setup && !d.setup.onboarded_at)) && !open) return <Onboarding project={project} initial={d.setup ?? {}} api={api}
     onDone={() => setSetupDone(true)} onClose={() => { setSetupOpen(false); setSetupDone(true); setTab("jobs"); window.scrollTo(0, 0); void load(project, "jobs"); }} />;
 
-  if (open && !wide) return <div className="ca">{demo && <div className="ca-demo"><span>Example business with sample data. This is the app you’d get.</span><button type="button" onClick={exitDemo}>Exit</button></div>}<ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} />{toastNode}</div>;
+  if (open && !wide) return <div className="ca">{demo && <div className="ca-demo"><span>Example account · sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>}<ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} />{toastNode}</div>;
 
   const pane = wide && tab === "leads";
   return <div className={"ca" + (wide ? (pane ? " ca-wide" : " ca-wide solo") : "")}>
-    {demo && <div className="ca-demo"><span>Example business with sample data. This is the app you’d get.</span><button type="button" onClick={exitDemo}>Exit</button></div>}
+    {demo && <div className="ca-demo"><span>Example account · sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>}
     <header className="ca-top">
-      <Mark small />
+      <CinderLogo className="ca-top-word" ink="#121417" title="Cinder" />
       {d.businesses.length > 1
         ? <select value={project} onChange={e => { setProject(e.target.value); void load(e.target.value); }} aria-label="Business">{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>
         : <b className="ca-top-name">{bizName}</b>}
@@ -419,7 +418,7 @@ export default function CinderApp() {
 
     <div className="ca-main" role="main">
       {tab !== "today" && <h1 className="ca-ptitle">{tab === "leads" ? "Inbox" : tab === "jobs" ? "Jobs" : tab === "numbers" ? "Numbers" : tab === "estimates" ? "Calendar" : "Sam"}</h1>}
-      {tab === "today" && <TodayTab owner={d.owner} cards={d.board ?? []} invoices={d.invoices ?? []} due={due} appts={d.appointments} unreadSam={d.unreadFromSam}
+      {tab === "today" && <TodayTab owner={d.owner} business={bizName} cards={d.board ?? []} invoices={d.invoices ?? []} due={due} appts={d.appointments} unreadSam={d.unreadFromSam}
         asks={needsList.map(c => ({ id: c.id, name: c.name, ask: c.ask, last: c.last, at: c.at }))}
         live={{ wonValue: L.wonValue, won: L.won, answered: L.answered, leads: L.leads, replySec: L.replySec, booked: L.booked }}
         go={{ thread: id => setOpen(id), card: (id, stage) => { setTab("jobs"); setFocus({ card: id, stage, n: Date.now() }); window.scrollTo(0, 0); },
@@ -429,12 +428,12 @@ export default function CinderApp() {
       {tab === "leads" && <>
         {!hidePushCard && (push === "off" || push === "ios-install") && <div className="ca-pushcard">
           <span className="ca-pushcard-ic"><Icon name="bolt" size={18} /></span>
-          <div><b>Know the second a lead needs you</b>
-            <p>{push === "off" ? "Turn on notifications for new leads, bookings and anything Cinder hands you." : "Tap the Share button, then \u201cAdd to Home Screen\u201d. Open Cinder from there to turn on notifications."}</p>
+          <div><b>Turn on notifications</b>
+            <p>{push === "off" ? "New leads, bookings and replies that need you." : "Tap the Share button, then \u201cAdd to Home Screen\u201d. Open Cinder from there to turn on notifications."}</p>
             <div className="ca-pushcard-row">{push === "off" && <button type="button" className="ca-pushcard-go" onClick={() => void enablePush()}>Turn on</button>}
               <button type="button" className="ca-pushcard-no" onClick={() => { setHidePushCard(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>
         </div>}
-        <div className="ca-seg wide" role="tablist" aria-label="Filter leads">{([["all", "All"], ["needs", `Needs you${L.needs ? ` · ${L.needs}` : ""}`], ["booked", "Booked"]] as const).map(([k, l]) =>
+        <div className="ca-seg wide" role="tablist" aria-label="Filter leads">{([["all", "All"], ["needs", `Your turn${L.needs ? ` · ${L.needs}` : ""}`], ["booked", "Booked"]] as const).map(([k, l]) =>
           <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}</button>)}</div>
         {groups.length ? groups.map(g => <section key={g.day} className="ca-group"><h2>{g.day}</h2>
           <ul className="ca-list">{g.items.map(c => { const st = STATUS[c.status] ?? STATUS.auto; return <li key={c.id}><button type="button" className={pane && open === c.id ? "sel" : undefined} aria-current={pane && open === c.id ? "true" : undefined} onClick={() => setOpen(c.id)}>
@@ -445,10 +444,10 @@ export default function CinderApp() {
               <span className="ca-row3"><small>{SOURCE[c.source] ?? c.source}</small><span className={"ca-chip is-" + st[1]}>{st[0]}</span></span>
             </span>
           </button></li>; })}</ul></section>)
-          : <div className="ca-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>{filter === "all" ? "No leads yet" : filter === "needs" ? "You're all caught up" : "No bookings yet"}</b><p>{filter === "all" ? "When someone calls, texts or fills out your form, it shows up here with Cinder's reply." : filter === "needs" ? "Cinder hands you anything it shouldn't answer. Nothing's waiting." : "Booked estimates show up here and on your calendar."}</p></div>}
+          : <div className="ca-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>{filter === "all" ? "No leads yet" : filter === "needs" ? "Nothing waiting on you" : "No bookings yet"}</b><p>{filter === "all" ? "Calls, texts and form leads show up here." : filter === "needs" ? "" : ""}</p></div>}
       </>}
 
-      {tab === "numbers" && (L.leads === 0 ? <div className="ca-empty"><span className="ca-empty-ic"><Icon name="bolt" size={22} /></span><b>Your numbers start with your first lead</b><p>Every lead Cinder answers shows up here: how fast it replied, what it booked, and the quotes it won back for you.</p></div> : <>
+      {tab === "numbers" && (L.leads === 0 ? <div className="ca-empty"><span className="ca-empty-ic"><Icon name="bolt" size={22} /></span><b>No numbers yet</b><p>They start with your first lead.</p></div> : <>
         {L.wonValue > 0 ? <Mission wonValue={L.wonValue} won={L.won} chasingValue={L.chasingValue} weeks={L.weeks} replySec={L.replySec} answered={L.answered} leads={L.leads} booked={L.booked} />
           : <><div className="ca-hello"><p>Last 30 days</p><h1>Cinder answered {L.answered} {L.answered === 1 ? "lead" : "leads"} and booked {L.booked} {L.booked === 1 ? "estimate" : "estimates"}.</h1></div>
         <div className="ca-kpis">
@@ -484,10 +483,10 @@ export default function CinderApp() {
       {tab === "sam" && <>
         <div className="ca-sam">
           <span className="ca-av lg">S</span>
-          <div><b>Sam Ward</b><small>Your Cinder contact · usually replies the same day</small></div>
+          <div><b>Sam Ward</b><small>Your Cinder rep</small></div>
         </div>
         {d.messages.length > 0 ? <ol className="ca-msgs">{d.messages.map((m, i) => <li key={i} className={m.author === "client" ? "me" : "them"}><p>{m.body}</p><small>{m.author === "client" ? "You" : "Sam"} · {ago(m.created_at)}</small></li>)}</ol>
-          : <p className="ca-sub">Changes to your texts, new hours, a question about your setup. Write it here.</p>}
+          : <p className="ca-sub">Hours, prices, wording changes, questions.</p>}
         <form className="ca-compose inline" onSubmit={async e => { e.preventDefault(); if (!msg.trim()) return; try { await api("/api/app/act", { p: project, action: "message", body: msg }); setMsg(""); toast("Sent to Sam."); void load(project, "sam"); } catch (er) { toast(er instanceof Error ? er.message : "Didn't send.", true); } }}>
           <textarea rows={2} value={msg} onChange={e => setMsg(e.target.value)} placeholder="Message Sam" aria-label="Message to Sam" />
           <button type="submit" disabled={!msg.trim()} aria-label="Send"><Icon name="send" size={18} /></button>
@@ -505,7 +504,7 @@ export default function CinderApp() {
 
     {pane && <aside className="ca-pane" aria-label="Conversation">{open
       ? <div key={open} className="ca-pane-in"><ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} /></div>
-      : <div className="ca-pane-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>Pick a conversation</b><p>Every text Cinder sent and every reply, with the customer&rsquo;s number one click away.</p></div>}</aside>}
+      : <div className="ca-pane-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>No conversation open</b><p>Pick a lead on the left.</p></div>}</aside>}
     <nav className="ca-nav" aria-label="Sections">
       <div className="ca-nav-brand"><CinderLogo className="ca-nav-word" ink="#121417" title="Cinder" /><b>{bizName}</b></div>
       {([["today", "Today", 0, "today"], ["leads", "Inbox", L.needs, "chat"], ["jobs", "Jobs", 0, "jobs"], ["estimates", "Calendar", dueCount, "cal"], ...(wide ? [["numbers", "Numbers", 0, "bolt"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const : [])] as const).map(([k, l, n, ic]) =>
