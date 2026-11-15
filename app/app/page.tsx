@@ -4,7 +4,7 @@
 // every lead in one inbox, reply or call back from the business number, numbers, estimates, and a line to Sam.
 // Installs to the home screen like an app (manifest in /app.webmanifest). Same look as cinderrevenue.com.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import "./app.css";
+import "./ui.css";
 import { CinderLogo, CinderMark } from "../cinder-brand";
 import { demoApi } from "./demo";
 import { JobsTab, Onboarding, type Card, type Winback } from "./crm-ui";
@@ -201,20 +201,30 @@ function ThreadView({ id, project, canCall, onBack, onChange, toast }: { id: str
     </div>
     <div className="ca-texts">
       {texts === null ? <div className="ca-skel-thread"><i /><i /><i /></div> : texts.map((x, i) => {
-        const sep = dayKey(x.at) !== lastDay ? <p className="ca-day" key={"d" + i}>{dayName(x.at)}</p> : null; lastDay = dayKey(x.at);
-        if (x.author === "system") return <div key={i}>{sep}<p className="ca-event">{x.body}<span>{clock(x.at)}</span></p></div>;
+        const sep = dayKey(x.at) !== lastDay ? <p className="ca-day" key={"d" + i}><span>{dayName(x.at)}</span></p> : null; lastDay = dayKey(x.at);
+        if (x.author === "system") return <div key={i}>{sep}<p className="ca-event"><span>{x.body}</span><time>{clock(x.at)}</time></p></div>;
+        const who = x.direction === "in" ? "them" : x.author === "owner" ? "you" : "cinder";
+        // Messages from the same sender within 5 minutes share one header, like a real inbox.
+        const prev = texts[i - 1];
+        const prevWho = prev && prev.author !== "system" ? (prev.direction === "in" ? "them" : prev.author === "owner" ? "you" : "cinder") : "";
+        const cont = !sep && prevWho === who && Date.parse(x.at) - Date.parse(prev!.at) < 5 * 60000;
         const photos = (x.media ?? []).map((_, k) => `/api/app/media?id=${x.id}&i=${k}`);
         const words = photos.length && /^\(sent (a photo|\d+ photos)\)$/.test(x.body) ? "" : x.body;
-        return <div key={i} className="ca-bwrap">{sep}<div className={"ca-b " + (x.direction === "in" ? "in" : "out")}>
-          {photos.length > 0 && <div className="ca-photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
-          {words && <p>{words}</p>}<small>{x.direction === "in" ? clock(x.at) : `${x.author === "owner" ? "You" : "Cinder"} · ${clock(x.at)}`}</small></div></div>;
+        return <div key={i}>{sep}<article className={"ca-msg " + who + (cont ? " cont" : "")}>
+          <span className="ca-msg-av" aria-hidden="true">{cont ? null : who === "them" ? <span className="ca-av sm" data-tone={tone(name)}>{initials(name)}</span> : who === "cinder" ? <span className="ca-msg-cinder"><CinderMark ring="#121417" /></span> : <span className="ca-msg-you">You</span>}</span>
+          <div className="ca-msg-body">
+            {!cont && <header><b>{who === "them" ? name : who === "cinder" ? "Cinder" : "You"}</b>{who === "cinder" && <em>Auto-reply</em>}<time>{clock(x.at)}</time></header>}
+            {photos.length > 0 && <div className="ca-photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
+            {words && <p>{words}</p>}
+          </div>
+        </article></div>;
       })}
       <div ref={end} />
     </div>
     <div className="ca-composer">
       {mine && !draft && <div className="ca-quick">{QUICK.map(q => <button key={q} type="button" onClick={() => setDraft(q)}>{q}</button>)}</div>}
       <form className="ca-compose" onSubmit={async e => { e.preventDefault(); if (draft.trim() && await act("reply", { body: draft }, "Sent from your business number.")) setDraft(""); }}>
-        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} placeholder="Text from your business number" aria-label="Reply" />
+        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${name.split(" ")[0] || "them"}`} aria-label="Reply" />
         <button type="submit" disabled={!!busy || !draft.trim()} aria-label="Send"><Icon name="send" size={18} /></button>
       </form>
       {!mine && t?.status !== "booked" && <p className="ca-hint">Cinder stops replying once you do.</p>}
@@ -485,7 +495,9 @@ export default function CinderApp() {
           <span className="ca-av lg">S</span>
           <div><b>Sam Ward</b><small>Your Cinder rep</small></div>
         </div>
-        {d.messages.length > 0 ? <ol className="ca-msgs">{d.messages.map((m, i) => <li key={i} className={m.author === "client" ? "me" : "them"}><p>{m.body}</p><small>{m.author === "client" ? "You" : "Sam"} · {ago(m.created_at)}</small></li>)}</ol>
+        {d.messages.length > 0 ? <div className="ca-msgs">{d.messages.map((m, i) => <article key={i} className={"ca-msg " + (m.author === "client" ? "you" : "sam")}>
+          <span className="ca-msg-av" aria-hidden="true">{m.author === "client" ? <span className="ca-msg-you">You</span> : <span className="ca-av sm sam">S</span>}</span>
+          <div className="ca-msg-body"><header><b>{m.author === "client" ? "You" : "Sam Ward"}</b><time>{ago(m.created_at)}</time></header><p>{m.body}</p></div></article>)}</div>
           : <p className="ca-sub">Hours, prices, wording changes, questions.</p>}
         <form className="ca-compose inline" onSubmit={async e => { e.preventDefault(); if (!msg.trim()) return; try { await api("/api/app/act", { p: project, action: "message", body: msg }); setMsg(""); toast("Sent to Sam."); void load(project, "sam"); } catch (er) { toast(er instanceof Error ? er.message : "Didn't send.", true); } }}>
           <textarea rows={2} value={msg} onChange={e => setMsg(e.target.value)} placeholder="Message Sam" aria-label="Message to Sam" />
