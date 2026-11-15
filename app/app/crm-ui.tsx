@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CinderLogo } from "../cinder-brand";
 import {
   ballpark, jobFields, LEAD_SOURCES, LEADS_MONTH, money, parsePriceBook, previewFirstText, PRIORITIES, rangeText, SOFTWARE, STAGE_LABEL, STAGES, TEAM_SIZES, TRADES, YEARS,
-  draftItems, type Card, type CardInvoice, type Details, type PriceBook, type Rate, type Stage,
+  draftItems, jobSteps, jobProgress, jobProfit, type Costs, type Card, type CardInvoice, type Details, type PriceBook, type Rate, type Stage,
 } from "@/lib/crm";
 import { dollars, totals, type Item } from "@/lib/billing";
 import { BillingSettings, CustomersView, InvoiceSheet, InvoicesView, LineEditor, invoiceState, type Customer, type InvoiceRow } from "./billing-ui";
@@ -31,6 +31,7 @@ const I = {
   plus: <path d="M12 5v14M5 12h14" />, link: <><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1.2 1.2" /><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1.2-1.2" /></>,
   star: <path d="m12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.4l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z" />, send: <path d="M4 12 20 4l-4 16-4-7z M12 13l8-9" />, eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="2.6" /></>,
   users: <><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 5.6a3.2 3.2 0 0 1 0 5.8M17.5 13.6A5.5 5.5 0 0 1 20.5 19" /></>, x: <path d="M6 6l12 12M18 6 6 18" />, back: <path d="M15 5l-7 7 7 7" />, check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  pin: <><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.4" /></>,
   chat: <path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 20 12z" />, phone: <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />,
 };
 
@@ -214,6 +215,8 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
     if (focus.invoice) { const i = invoices.find(x => x.id === focus.invoice); setInv({ id: focus.invoice, customer: i ? i.customer || fmtPhone(i.phone) : "" }); }
   }, [focus?.n]); // eslint-disable-line react-hooks/exhaustive-deps
   const [pending, setPending] = useState<{ id: string; stage: Stage } | null>(null);
+  const [cust, setCust] = useState<string | null>(null);
+  const custNow = cust ? customers.find(c => c.id === cust) ?? null : null;
   const by = useMemo(() => Object.fromEntries(STAGES.map(s => [s, cards.filter(c => c.stage === s)])) as Record<Stage, Card[]>, [cards]);
   const open = cards.filter(c => c.stage === "new" || c.stage === "booked" || c.stage === "quoted");
   const openValue = open.reduce((a, c) => a + (c.value ?? (c.ballpark ? (c.ballpark.low + c.ballpark.high) / 2 : 0)), 0);
@@ -238,7 +241,7 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
     </div>
     <div className="ca-seg wide jb-views" role="tablist" aria-label="View">{([["pipeline", "Pipeline"], ["customers", "Customers"], ["invoices", `Invoices${owed ? ` · ${owed}` : ""}`]] as const).map(([k, l]) =>
       <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>
-    {view === "customers" && <CustomersView list={customers} onOpen={c => { if (cards.some(x => x.id === c.id)) { setPending(null); setSel(c.id); } else onOpen(c.id); }} />}
+    {view === "customers" && <CustomersView list={customers} onOpen={c => setCust(c.id)} />}
     {view === "invoices" && <InvoicesView list={invoices} onOpen={i => setInv({ id: i.id, customer: i.customer || fmtPhone(i.phone) })} />}
     {view === "pipeline" && <>
     <div className={"jb-board" + (wide ? " wide" : "")}>
@@ -259,6 +262,10 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
     {card && <CardSheet key={card.id} card={card} trade={trade} project={project} api={api} toast={toast} reload={reload} onOpen={onOpen} canCall={canCall} biz={biz}
       onInvoice={i => { setSel(null); setPending(null); setInv({ id: i.id, customer: card.name || fmtPhone(card.phone) }); }}
       pending={pending?.id === card.id ? pending.stage : null} onClose={() => { setSel(null); setPending(null); }} />}
+    {custNow && <CustomerSheet c={custNow} card={cards.find(x => x.id === custNow.id) ?? null} trade={trade} invoices={invoices.filter(i => i.thread_id === custNow.id)} canCall={canCall}
+      onClose={() => setCust(null)} onText={() => { setCust(null); onOpen(custNow.id); }} onJob={() => { setCust(null); setPending(null); setSel(custNow.id); }}
+      onInvoice={i => { setCust(null); setInv({ id: i.id, customer: custNow.name || fmtPhone(custNow.phone) }); }}
+      call={() => void api("/api/app/act", { p: project, action: "call", thread: custNow.id }).then(() => toast("Calling your cell now."), e => toast(e instanceof Error ? e.message : "That didn't work.", true))} />}
     {adding && <AddLead trade={trade} project={project} api={api} toast={toast} reload={reload} onClose={() => setAdding(false)} />}
     {inv && invNow && <InvoiceSheet key={invNow.id + invNow.status} inv={invNow} customer={inv.customer} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => setBilling(true)} />}
     {billing && <BillingSettings setup={setup} project={project} api={api} toast={toast} reload={reload} onClose={() => setBilling(false)} />}
@@ -377,6 +384,7 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
     </section>}
 
     {!ask && card.stage === "won" && !card.pastCustomer && <>
+      <JobTracker card={card} trade={trade} busy={busy} tick={(step, done) => void act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />
       <section className="jb-box">
         <div className="jb-box-h"><b>Install</b>{card.install ? <span className={"jb-pill" + (card.onCalendar ? " green" : "")}>{card.onCalendar ? "On Google Calendar" : "Not on a calendar"}</span> : null}</div>
         <div style={{ marginTop: 12 }}>{installFields}</div>
@@ -403,6 +411,7 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
             {busy === "review" ? <span className="ca-spin" /> : <><Svg d={I.star} size={15} />{arm ? "Tap to send it now" : "Job done, ask now"}</>}</button>
         </div>}
       </section>
+      <CostBox card={card} busy={busy} save={c => void act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />
     </>}
 
     {card.ballpark && (card.stage === "new" || card.stage === "booked") && !ask && <p className="jb-bp">Ballpark from your prices: <b>{rangeText(card.ballpark)}</b></p>}
@@ -412,6 +421,82 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
     <label className="jb-f full"><span>Notes</span><textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Gate on the left side, dog in the yard, HOA needs drawings…" /></label>
     <div className="jb-save"><button type="button" className="go" disabled={!dirty || !!busy} onClick={() => void act("save", { action: "card", details: d, value: value || null, notes, ...(card.stage === "won" ? { review } : {}) }, "Saved.")}>Save</button></div>
   </Sheet>;
+}
+
+/** One customer, everything about them: how to reach them, where they live, what they've bought, what they owe. */
+function CustomerSheet({ c, card, trade, invoices, canCall, onClose, onText, onJob, onInvoice, call }: { c: Customer; card: Card | null; trade: string; invoices: InvoiceRow[]; canCall: boolean;
+  onClose: () => void; onText: () => void; onJob: () => void; onInvoice: (i: InvoiceRow) => void; call: () => void }) {
+  const name = c.name || fmtPhone(c.phone);
+  const since = new Date(c.since).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  const p = card && card.stage === "won" && !card.pastCustomer ? jobProgress(trade, card) : null;
+  const stageText = card ? (card.pastCustomer ? "Came back" : STAGE_LABEL[card.stage]) : null;
+  const price = card ? card.invoice?.total || card.value || card.quote?.amount || null : null;
+  return <Sheet onClose={onClose} title={<div className="jb-who"><span className="ca-av sm" data-tone={tone(name)} aria-hidden="true">{initials(name)}</span><span><b>{name}</b><small>{SRC[c.source] ?? c.source} · since {since}</small></span></div>}>
+    <div className="cs-acts">
+      <button type="button" onClick={onText}><Svg d={I.chat} size={17} />Text</button>
+      {canCall ? <button type="button" onClick={call}><Svg d={I.phone} size={17} />Call</button> : <a href={`tel:${c.phone}`}><Svg d={I.phone} size={17} />Call</a>}
+      {c.address ? <a href={`https://maps.google.com/?q=${encodeURIComponent(c.address)}`} target="_blank" rel="noreferrer"><Svg d={I.pin} size={17} />Directions</a>
+        : <button type="button" disabled><Svg d={I.pin} size={17} />No address</button>}
+    </div>
+    <dl className="cs-facts">
+      <div><dt>Phone</dt><dd><a href={`tel:${c.phone}`}>{fmtPhone(c.phone)}</a></dd></div>
+      {c.address && <div><dt>Address</dt><dd>{c.address}</dd></div>}
+      {card?.notes && <div><dt>Notes</dt><dd>{card.notes}</dd></div>}
+    </dl>
+    <dl className="jt-profit cs-money"><div><dt>Billed</dt><dd>{dollars(c.spent)}</dd></div><div><dt>Jobs</dt><dd>{c.jobs}</dd></div><div className={c.owed > 0 ? "down" : ""}><dt>Owes you</dt><dd>{dollars(c.owed)}</dd></div></dl>
+
+    <h3 className="jb-h3">Jobs</h3>
+    {card ? <button type="button" className="cs-row" onClick={onJob}>
+      <span className="cs-row-t"><b>{card.line || "Job details not filled in"}</b><small>{stageText}{p ? ` · ${p.next ? `next: ${p.next}` : "paid in full"}` : card.install ? ` · install ${dateLabel(card.install)}` : ""}</small>
+        {p && <span className="jt-bar" aria-hidden="true"><i style={{ width: `${(p.done / p.total) * 100}%` }} /></span>}</span>
+      <span className="cs-row-n">{price ? dollars(price) : ""}</span></button>
+      : <p className="jb-box-s">No job on the board for {name.split(" ")[0]} right now.</p>}
+
+    {invoices.length > 0 && <><h3 className="jb-h3">Invoices</h3>
+      {invoices.map(i => { const st = invoiceState(i); return <button key={i.id} type="button" className="cs-row" onClick={() => onInvoice(i)}>
+        <span className="cs-row-t"><b>Invoice #{i.number}</b><small className={"bl-st " + st.tone}>{st.text}</small></span><span className="cs-row-n">{dollars(i.total)}</span></button>; })}</>}
+  </Sheet>;
+}
+
+/** Won to paid, one step at a time. The owner ticks steps; the invoice steps tick themselves. */
+function JobTracker({ card, trade, busy, tick }: { card: Card; trade: string; busy: string; tick: (step: string, done: boolean) => void }) {
+  const steps = jobSteps(trade, card.details);
+  const p = jobProgress(trade, card);
+  const inv = card.invoice, sent = !!inv && inv.status !== "draft" && inv.status !== "void", paid = inv?.status === "paid";
+  const nextKey = steps.find(s => !card.job[s.key])?.key;
+  return <section className="jb-box jt">
+    <div className="jb-box-h"><b>The job</b><span className={"jb-pill" + (p.next ? "" : " green")}>{p.next ? `${p.done} of ${p.total} done` : "Paid in full"}</span></div>
+    <div className="jt-bar" aria-hidden="true"><i style={{ width: `${(p.done / p.total) * 100}%` }} /></div>
+    <ol className="jt-steps">
+      {steps.map(s => { const on = card.job[s.key]; return <li key={s.key} className={on ? "done" : s.key === nextKey ? "next" : ""}>
+        <button type="button" role="checkbox" aria-checked={!!on} disabled={!!busy} onClick={() => tick(s.key, !on)}>
+          <span className="jt-check" aria-hidden="true">{busy === "step:" + s.key ? <span className="ca-spin" /> : on ? <Svg d={I.check} size={13} /> : null}</span>
+          <span className="jt-t"><b>{s.label}</b>{on ? <small>{dateLabel(on)}</small> : s.key === nextKey && s.hint ? <small>{s.hint}</small> : null}</span>
+        </button></li>; })}
+      <li className={"auto " + (sent ? "done" : steps.every(s => card.job[s.key]) ? "next" : "")}><div><span className="jt-check" aria-hidden="true">{sent ? <Svg d={I.check} size={13} /> : null}</span>
+        <span className="jt-t"><b>Invoice sent</b><small>{sent && inv?.sent_at ? dateLabel(inv.sent_at.slice(0, 10)) : "Ticks itself when you send the invoice."}</small></span></div></li>
+      <li className={"auto " + (paid ? "done" : sent ? "next" : "")}><div><span className="jt-check" aria-hidden="true">{paid ? <Svg d={I.check} size={13} /> : null}</span>
+        <span className="jt-t"><b>Paid</b><small>{paid && inv?.paid_at ? dateLabel(inv.paid_at.slice(0, 10)) : "Ticks itself when you mark the invoice paid."}</small></span></div></li>
+    </ol>
+  </section>;
+}
+
+/** What the job cost, and what it made. Three numbers, no spreadsheet. */
+function CostBox({ card, busy, save }: { card: Card; busy: string; save: (c: Costs) => void }) {
+  const [c, setC] = useState({ materials: card.costs.materials ? String(card.costs.materials) : "", labor: card.costs.labor ? String(card.costs.labor) : "", other: card.costs.other ? String(card.costs.other) : "" });
+  const num = (v: string) => Number(v.replace(/[^\d.]/g, "")) || 0;
+  const now = { materials: num(c.materials), labor: num(c.labor), other: num(c.other) };
+  const dirty = now.materials !== card.costs.materials || now.labor !== card.costs.labor || now.other !== card.costs.other;
+  const price = card.invoice?.total || card.value || card.quote?.amount || null;
+  const pr = jobProfit(price, now);
+  const f = (k: keyof typeof c, label: string) => <label className="jb-f"><span>{label}</span><span className="jb-in"><i>$</i><input inputMode="decimal" placeholder="0" value={c[k]} onChange={e => setC(x => ({ ...x, [k]: e.target.value.replace(/[^\d.,]/g, "") }))} /></span></label>;
+  return <section className="jb-box">
+    <div className="jb-box-h"><b>Costs and profit</b>{pr && <span className={"jb-pill " + (pr.profit >= 0 ? "green" : "red")}>{pr.margin}% margin</span>}</div>
+    <div className="jb-three" style={{ marginTop: 12 }}>{f("materials", "Materials")}{f("labor", "Labor")}{f("other", "Other")}</div>
+    {pr ? <dl className="jt-profit"><div><dt>Price</dt><dd>{dollars(price!)}</dd></div><div><dt>Cost</dt><dd>{dollars(pr.cost)}</dd></div><div className={pr.profit >= 0 ? "up" : "down"}><dt>Profit</dt><dd>{dollars(pr.profit)}</dd></div></dl>
+      : <p className="jb-box-s">Add what you spent and you&rsquo;ll see what this job made.</p>}
+    {dirty && <div className="jb-box-acts"><button type="button" className="go" disabled={!!busy} onClick={() => save(now)}>{busy === "costs" ? <span className="ca-spin" /> : "Save costs"}</button></div>}
+  </section>;
 }
 
 function WinbackSheet({ w, biz, project, api, toast, reload, onClose }: { w: Winback; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onClose: () => void }) {

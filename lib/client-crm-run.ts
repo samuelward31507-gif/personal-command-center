@@ -1,7 +1,7 @@
 // The client CRM on the server: the board, moving a customer between stages, editing a card, adding a lead by hand,
 // and the owner's own setup. Every write is scoped to the signed-in owner's business.
 import type { neon } from "@neondatabase/serverless";
-import { ballpark, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, type Card, type Stage } from "@/lib/crm";
+import { ballpark, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, cleanJob, cleanCosts, jobSteps, type Card, type Stage } from "@/lib/crm";
 import { digits10 } from "@/lib/client-runtime";
 import { emitEvent } from "@/lib/client-webhook";
 import { quoteUrl, type Client } from "@/lib/client-runtime-run";
@@ -20,7 +20,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       coalesce(t.last_in_at, t.updated_at) AS at, q.id AS quote_id, q.amount::float AS quote_amount, q.status AS quote_status, q.steps_sent AS quote_steps,
       q.token AS quote_token, q.link_sent_at IS NOT NULL AS quote_linked, q.items AS quote_items, q.tax_rate::float AS quote_tax,
       t.install_time, t.install_days, t.install_event_id IS NOT NULL AS on_calendar, q.viewed_at AS quote_viewed, q.note AS quote_note, a.starts_at AS next_appt,
-      t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent,
+      t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent, t.job_steps, t.job_costs,
       (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied
     FROM public.client_threads t
     LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
@@ -51,6 +51,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       ballpark: bp ? { low: bp.low, high: bp.high } : null, notes: String(r.notes ?? ""), quote: again ? null : quote, next, at: new Date(String(r.at)).toISOString(),
       install: r.install_on ? String(r.install_on) : null, installTime: r.install_time ? String(r.install_time) : null, installDays: Number(r.install_days ?? 1) || 1, onCalendar: !!r.on_calendar,
       invoice: invoices[String(r.id)] ?? null, reviewAuto: !!r.review_auto, reviewSent: r.review_sent ? new Date(String(r.review_sent)).toISOString() : null, pastCustomer: again,
+      job: again ? {} : cleanJob(r.job_steps), costs: again ? cleanCosts({}) : cleanCosts(r.job_costs),
     };
   });
 }
@@ -148,4 +149,23 @@ export async function addLead(sql: Sql, c: Client, input: { name?: string; phone
 export function ownerSetupView(setup: Record<string, string>) {
   const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at"];
   return { ...Object.fromEntries([...k, "pay_link", "tax_rate", "invoice_days"].map(x => [x, setup[x] ?? ""])), has_calendar: "", has_review_link: setup.review_link ? "yes" : "", has_number: setup.texting_number ? "yes" : "" };
+}
+
+/** Tick or untick one step of a won job. The day is the owner's today unless they give one. */
+export async function setJobStep(sql: Sql, c: Client, threadId: string, step: unknown, done: unknown, on?: unknown): Promise<{ ok: boolean; error?: string; job?: Record<string, string> }> {
+  const key = String(step ?? "");
+  if (!jobSteps(c.setup.trade, { hoa: "Yes" }).some(s => s.key === key)) return { ok: false, error: "Unknown step." };
+  const day = typeof on === "string" && /^\d{4}-\d{2}-\d{2}$/.test(on) ? on : today(c);
+  const rows = (done ? await sql`UPDATE public.client_threads SET job_steps = job_steps || jsonb_build_object(${key}::text, ${day}::text), updated_at = now()
+      WHERE id = ${threadId}::uuid AND project_id = ${c.projectId}::uuid RETURNING job_steps`
+    : await sql`UPDATE public.client_threads SET job_steps = job_steps - ${key}::text, updated_at = now()
+      WHERE id = ${threadId}::uuid AND project_id = ${c.projectId}::uuid RETURNING job_steps`) as { job_steps: unknown }[];
+  return rows[0] ? { ok: true, job: cleanJob(rows[0].job_steps) } : { ok: false, error: "That customer isn't on your board." };
+}
+/** What the job cost: materials, labor, anything else. */
+export async function setJobCosts(sql: Sql, c: Client, threadId: string, input: unknown): Promise<{ ok: boolean; error?: string }> {
+  const costs = cleanCosts(input);
+  const rows = await sql`UPDATE public.client_threads SET job_costs = ${JSON.stringify(costs)}::jsonb, updated_at = now()
+    WHERE id = ${threadId}::uuid AND project_id = ${c.projectId}::uuid RETURNING id` as unknown[];
+  return rows[0] ? { ok: true } : { ok: false, error: "That customer isn't on your board." };
 }

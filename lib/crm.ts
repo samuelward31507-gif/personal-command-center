@@ -207,7 +207,7 @@ export type Card = { id: string; name: string; phone: string; source: string; st
   quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
     items: { name: string; qty: number; unit: string; price: number }[]; tax: number } | null;
   install: string | null; installTime: string | null; installDays: number; onCalendar: boolean; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean;
-  invoice: CardInvoice | null };
+  invoice: CardInvoice | null; job: Record<string, string>; costs: Costs };
 export type CardInvoice = { id: string; number: number; status: string; items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number; total: number; note: string;
   due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null };
 
@@ -292,3 +292,55 @@ export function draftItems(trade: string | undefined, d: Details, priceBook: str
   return out;
 }
 
+
+// ---------- After the yes: the job, step by step ----------
+export type JobStep = { key: string; label: string; hint: string };
+export type Costs = { materials: number; labor: number; other: number };
+const FENCE_STEPS: JobStep[] = [
+  { key: "deposit", label: "Deposit in", hint: "Most fence jobs take a third up front." },
+  { key: "hoa", label: "HOA approved", hint: "Send the HOA the plan and the material before ordering." },
+  { key: "permit", label: "Permit sorted", hint: "Pulled, or checked that this job doesn't need one." },
+  { key: "locate", label: "811 locate called", hint: "Call 811 at least 3 business days before digging." },
+  { key: "materials", label: "Materials ordered", hint: "" },
+  { key: "installed", label: "Installed", hint: "" },
+  { key: "walk", label: "Walk-through with the customer", hint: "Walk the line together before you invoice." },
+];
+const BASIC_STEPS: JobStep[] = [
+  { key: "deposit", label: "Deposit in", hint: "" },
+  { key: "materials", label: "Materials ordered", hint: "" },
+  { key: "installed", label: "Job done", hint: "" },
+  { key: "walk", label: "Walk-through with the customer", hint: "" },
+];
+/** The steps between "won" and "paid" for this trade and this job. HOA only shows when the customer is in one. */
+export function jobSteps(trade: string | undefined, d: Details): JobStep[] {
+  if (!/fenc/i.test(trade ?? "")) return BASIC_STEPS;
+  return FENCE_STEPS.filter(s => s.key !== "hoa" || d.hoa === "Yes");
+}
+/** Saved steps: known keys only, each with the day it was done. */
+export function cleanJob(v: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!v || typeof v !== "object") return out;
+  const keys = new Set([...FENCE_STEPS, ...BASIC_STEPS].map(s => s.key));
+  for (const [k, raw] of Object.entries(v as Record<string, unknown>)) if (keys.has(k) && typeof raw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw)) out[k] = raw;
+  return out;
+}
+/** Where the job stands, counting the invoice: the last two steps are always "Invoice sent" and "Paid". */
+export function jobProgress(trade: string | undefined, c: Pick<Card, "details" | "job" | "invoice">): { done: number; total: number; next: string | null } {
+  const steps = jobSteps(trade, c.details);
+  const marks = [...steps.map(s => !!c.job[s.key]), !!c.invoice && c.invoice.status !== "draft" && c.invoice.status !== "void", c.invoice?.status === "paid"];
+  const labels = [...steps.map(s => s.label), "Invoice sent", "Paid"];
+  const i = marks.indexOf(false);
+  return { done: marks.filter(Boolean).length, total: marks.length, next: i < 0 ? null : labels[i] };
+}
+/** What the job cost, from what the owner typed: whole dollars, nothing negative. */
+export function cleanCosts(v: unknown): Costs {
+  const o = (v && typeof v === "object" ? v : {}) as Record<string, unknown>;
+  const n = (x: unknown) => { const m = Number(String(x ?? "").replace(/[$,\s]/g, "")); return Number.isFinite(m) && m > 0 ? Math.min(Math.round(m), 10_000_000) : 0; };
+  return { materials: n(o.materials), labor: n(o.labor), other: n(o.other) };
+}
+/** Profit on a job: the price minus what it cost. Null until there is a price and at least one cost. */
+export function jobProfit(price: number | null, costs: Costs): { cost: number; profit: number; margin: number } | null {
+  const cost = costs.materials + costs.labor + costs.other;
+  if (!price || !cost) return null;
+  return { cost, profit: price - cost, margin: Math.round(((price - cost) / price) * 100) };
+}

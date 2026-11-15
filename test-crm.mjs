@@ -1,6 +1,6 @@
 // CRM checks: trade fields, the owner's price book, the ballpark, stages and the owner's own setup.
 import assert from "node:assert/strict";
-import { jobFields, cleanDetails, detailLine, parsePriceBook, ballpark, matchRate, stageFor, cleanOwnerSetup, rangeText, previewFirstText, sourceReport, quoteText, reviewDue, cleanDate, winbackDraft, cleanWinback, QUOTE_TOKEN } from "./lib/crm.ts";
+import { jobFields, cleanDetails, detailLine, parsePriceBook, ballpark, matchRate, stageFor, cleanOwnerSetup, rangeText, previewFirstText, sourceReport, quoteText, reviewDue, cleanDate, winbackDraft, cleanWinback, QUOTE_TOKEN, jobSteps, cleanJob, jobProgress, cleanCosts, jobProfit } from "./lib/crm.ts";
 
 let n = 0; const ok = fn => { fn(); n++; };
 
@@ -79,5 +79,17 @@ ok(() => assert.equal(cleanWinback("Hi {first}, Ridgeline here. Want a stain thi
 ok(() => assert.equal(cleanWinback("Hi {first}, want a stain this spring? Reply YES.", "Ridgeline Fence Co.").ok, false, "must name the business"));
 ok(() => assert.equal(cleanWinback("Hi Ridgeline here, see https://x.co for a deal now", "Ridgeline").ok, false, "no links"));
 ok(() => assert.equal(cleanWinback("short", "R").ok, false));
+
+// The job after the yes
+ok(() => assert.deepEqual(jobSteps("fence", { hoa: "No" }).map(s => s.key), ["deposit", "permit", "locate", "materials", "installed", "walk"]));
+ok(() => assert.ok(jobSteps("fence", { hoa: "Yes" }).some(s => s.key === "hoa")));
+ok(() => assert.deepEqual(jobSteps("roofing", {}).map(s => s.key), ["deposit", "materials", "installed", "walk"]));
+ok(() => assert.deepEqual(cleanJob({ deposit: "2026-11-10", bogus: "2026-11-10", permit: "soon" }), { deposit: "2026-11-10" }));
+ok(() => assert.deepEqual(jobProgress("fence", { details: {}, job: { deposit: "2026-11-10" }, invoice: null }), { done: 1, total: 8, next: "Permit sorted" }));
+ok(() => assert.equal(jobProgress("fence", { details: {}, job: { deposit: "a", permit: "a", locate: "a", materials: "a", installed: "a", walk: "a" }, invoice: { status: "sent" } }).next, "Paid"));
+ok(() => assert.equal(jobProgress("x", { details: {}, job: { deposit: "a", materials: "a", installed: "a", walk: "a" }, invoice: { status: "paid" } }).next, null));
+ok(() => assert.deepEqual(cleanCosts({ materials: "$3,100", labor: "1800", other: "-5" }), { materials: 3100, labor: 1800, other: 0 }));
+ok(() => assert.deepEqual(jobProfit(8600, { materials: 3100, labor: 1800, other: 0 }), { cost: 4900, profit: 3700, margin: 43 }));
+ok(() => assert.equal(jobProfit(8600, { materials: 0, labor: 0, other: 0 }), null));
 
 console.log(`CRM checks passed (${n} assertions).`);

@@ -2,7 +2,7 @@
 
 // Today: the one screen an owner opens between jobs. What's in play, what needs him right now (each a single tap),
 // and what's on the calendar today. Everything else lives a tab away.
-import type { Card, CardInvoice } from "@/lib/crm";
+import { jobSteps, type Card, type CardInvoice } from "@/lib/crm";
 import { overdue } from "@/lib/billing";
 import { useCountUp } from "./sx";
 
@@ -30,8 +30,8 @@ const GLYPH: Record<Kind, React.ReactNode> = {
   sam: <><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></>,
 };
 
-export function TodayTab({ owner, business, cards, invoices, asks, due, appts, unreadSam, live, go }: {
-  owner: string; business: string; cards: Card[]; invoices: Inv[]; asks: Ask[]; due: Appt[]; appts: Appt[]; unreadSam: number;
+export function TodayTab({ owner, business, trade, cards, invoices, asks, due, appts, unreadSam, live, go }: {
+  owner: string; trade?: string; business: string; cards: Card[]; invoices: Inv[]; asks: Ask[]; due: Appt[]; appts: Appt[]; unreadSam: number;
   live: { wonValue: number; won: number; answered: number; leads: number; replySec: number | null; booked: number }; go: TodayGo;
 }) {
   const today = new Date().toLocaleDateString("en-CA");
@@ -59,6 +59,13 @@ export function TodayTab({ owner, business, cards, invoices, asks, due, appts, u
   for (const c of cards) {
     if (c.stage !== "won" || c.pastCustomer) continue;
     if (!c.install && !c.invoice) actions.push({ key: "in" + c.id, kind: "install", title: `Schedule ${first(c.name)}'s install`, sub: `${c.value ? usd(c.value) + " job" : "Won"}${c.line ? ` · ${c.line}` : ""}`, go: () => go.card(c.id), cta: "Schedule" });
+    else if (c.install && c.install >= today && trade !== undefined) {
+      // Before the install: whatever has to happen first (deposit, HOA, permit, 811, materials) shows up a week out.
+      const days = Math.round((Date.parse(c.install + "T12:00:00") - Date.parse(today + "T12:00:00")) / 86400000);
+      const step = jobSteps(trade, c.details).find(s => !c.job[s.key]);
+      if (days <= 7 && step && step.key !== "installed" && step.key !== "walk") actions.push({ key: "js" + c.id, kind: "install", title: `${first(c.name)}: ${step.label.toLowerCase()}?`,
+        sub: `Install ${days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}${step.hint ? ` · ${step.hint}` : ""}`, go: () => go.card(c.id), cta: "Open" });
+    }
     else if (c.install && c.install < today && !c.invoice) actions.push({ key: "iv" + c.id, kind: "invoice", title: `Invoice ${first(c.name)}`, sub: `Installed ${new Date(c.install + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}${c.value ? ` · ${usd(c.value)}` : ""}`, go: () => go.card(c.id), cta: "Invoice" });
   }
   if (unreadSam) actions.push({ key: "sam", kind: "sam", title: "Message from Sam", sub: "Your Cinder rep", go: go.sam, cta: "Open" });

@@ -3,7 +3,7 @@ import { markNoShow, sendReviewRequest, sendToCustomer } from "@/lib/client-runt
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
-import { addLead, moveStage, saveCard, saveOwnerSetup } from "@/lib/client-crm-run";
+import { addLead, moveStage, saveCard, saveOwnerSetup, setJobCosts, setJobStep } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({})) as { p?: string; action?: string; thread?: string; body?: string; status?: string; appt?: string; result?: string; amount?: string; review?: boolean; quote?: string;
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
     link?: boolean; note?: string; install?: string | null; send?: boolean;
-    items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null };
+    items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -94,6 +94,12 @@ export async function POST(req: Request) {
       if (!["paid", "unpaid", "void", "pause", "resume"].includes(what)) return json({ error: "Unknown change." }, 400);
       const r = await setInvoice(sql, c, b.invoice, what as "paid");
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 409);
+    }
+    if (b.action === "jobstep" || b.action === "jobcosts") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      if (b.action === "jobcosts") { const r = await setJobCosts(sql, c, b.thread, b.costs); return r.ok ? json({ ok: true }) : json({ error: r.error }, 404); }
+      const r = await setJobStep(sql, c, b.thread, b.step, !!b.done, b.on);
+      return r.ok ? json({ ok: true, job: r.job }) : json({ error: r.error }, 400);
     }
     if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
     if (b.action === "message") {

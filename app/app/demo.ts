@@ -57,7 +57,7 @@ function seed() {
     l2: { thread: { id: "l2", customer_name: "Ashley Kim", customer_phone: "+13035550141", source: "thumbtack", status: "closed" }, texts: [
       tx("in", "system", "Passed on the quote online: \u201cWent with a cheaper bid\u201d", 60 * 24 * 7)] },
   };
-  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null }> = {
+  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number> }> = {
     t1: { details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" }, notes: "Asked about financing. Call him." },
     t2: { details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No" }, notes: "Replacing chain link." },
     t3: { details: { material: "Vinyl" }, notes: "" },
@@ -66,8 +66,8 @@ function seed() {
     q1: { details: { length_ft: 160, material: "Vinyl", height: "6 ft", gates: 1, hoa: "Yes" }, notes: "", value: 7800 },
     q2: { details: { length_ft: 900, material: "Ranch rail", gates: 2 }, notes: "Horses. Needs it before spring.", value: 12400 },
     q3: { details: { length_ft: 110, material: "Chain link", height: "5 ft", gates: 1 }, notes: "", value: 4650 },
-    w1: { details: { length_ft: 220, material: "cedar", height: "6 ft", gates: 2 }, notes: "Install done. Ask for a review.", value: 8600 },
-    w2: { stage: "won", details: { length_ft: 150, material: "Vinyl", height: "6 ft", gates: 1 }, notes: "Approved from the link.", value: 6900, install: at(4, 8).slice(0, 10), installTime: "08:00", installDays: 1, onCalendar: true, reviewAuto: true },
+    w1: { details: { length_ft: 220, material: "cedar", height: "6 ft", gates: 2, address: "418 Willow Ln, Littleton" }, notes: "Install done. Ask for a review.", value: 8600, job: { deposit: at(-26, 9).slice(0, 10), permit: at(-21, 9).slice(0, 10), locate: at(-18, 9).slice(0, 10), materials: at(-16, 9).slice(0, 10), installed: at(-11, 9).slice(0, 10), walk: at(-10, 9).slice(0, 10) }, costs: { materials: 3150, labor: 1900, other: 120 } },
+    w2: { stage: "won", details: { length_ft: 150, material: "Vinyl", height: "6 ft", gates: 1 }, notes: "Approved from the link.", value: 6900, job: { deposit: at(-1, 9).slice(0, 10) }, install: at(4, 8).slice(0, 10), installTime: "08:00", installDays: 1, onCalendar: true, reviewAuto: true },
     w3: { stage: "won", details: { length_ft: 260, material: "Wood privacy", height: "6 ft", gates: 2 }, notes: "", value: 11200, install: at(-12, 8).slice(0, 10), installDays: 2, onCalendar: true, reviewSent: at(-11, 9) },
     l2: { stage: "lost", details: { length_ft: 90, material: "Chain link", height: "4 ft" }, notes: "Went with a cheaper bid." },
   };
@@ -152,7 +152,7 @@ function board(): Card[] {
       value: c.value ?? q?.amount ?? null, ballpark: bp ? { low: bp.low, high: bp.high } : null, notes: c.notes,
       quote: q ? { id: q.id, amount: q.amount, status: q.status, steps: q.steps_sent, linked: q.linked, url: q.linked ? EXAMPLE_LINK : null, viewed: q.viewed, note: q.note, items: q.items, tax: q.tax_rate } : null,
       next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, installTime: c.installTime ?? null, installDays: c.installDays ?? 1, onCalendar: !!c.onCalendar,
-      reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void").at(-1) ?? null };
+      reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, job: { ...(c.job ?? {}) }, costs: { materials: 0, labor: 0, other: 0, ...(c.costs ?? {}) }, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void").at(-1) ?? null };
   }).sort((a, b) => b.at.localeCompare(a.at));
 }
 
@@ -253,6 +253,11 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       if (typeof b.note === "string" && b.note) q.note = b.note.trim().slice(0, 600);
       q.linked = true; th!.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: quoteSms(th!.thread.customer_name, q.amount, th!.thread.id), at: now });
       return { ok: true, link: EXAMPLE_LINK, sent: true };
+    }
+    if (b.action === "jobstep" || b.action === "jobcosts") {
+      const c = (s.crm[String(b.thread)] ??= { details: {}, notes: "" });
+      if (b.action === "jobcosts") { const o = (b.costs ?? {}) as Record<string, unknown>; const v = (x: unknown) => Math.max(0, Math.round(Number(String(x ?? "").replace(/[$,]/g, "")) || 0)); c.costs = { materials: v(o.materials), labor: v(o.labor), other: v(o.other) }; return { ok: true }; }
+      const job = (c.job ??= {}); if (b.done) job[String(b.step)] = now.slice(0, 10); else delete job[String(b.step)]; return { ok: true, job };
     }
     if (b.action === "quotelines" || b.action === "install" || b.action === "invoice") {
       const th = typeof b.thread === "string" ? s.threads[b.thread] : undefined;

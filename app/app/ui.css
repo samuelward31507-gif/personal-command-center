@@ -670,7 +670,7 @@ html body:not(#u) .ob-side { display: none; }
   html body:not(#u) .ca-wide .ca-top-title.ca-hide { display: none; }
   html body:not(#u) .ca-wide .ca-main { grid-column: 2; grid-row: 3; overflow-y: auto; padding: 20px 40px 48px; }
   html body:not(#u) .ca-wide.solo .ca-main { grid-column: 2; }
-  html body:not(#u) .ca-wide.solo .ca-main > * { max-width: 920px; }
+  html body:not(#u) .ca-wide.solo .ca-main > :not(.jb-scrim, .ca-toast) { max-width: 920px; }
   html body:not(#u) .ca-wide.solo .ca-top { grid-column: 2 / -1; }
   html body:not(#u) .ca-wide .jb-views { max-width: 420px !important; }
   html body:not(#u) .ca-wide.solo .ca-main > :is(.td, .jb-board, .jb-hello, .jb-views, .cu-list, .cu-bar, .sx-tel) { max-width: none; }
@@ -693,3 +693,50 @@ html body:not(#u) .ob-side { display: none; }
   html body:not(#u) .td-cols .td-sec:first-child, html body:not(#u) .td-side > .td-sec:first-child { margin-top: 0; }
   html body:not(#u) .ca-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* ---------- The job after the yes ---------- */
+html body:not(#u) .jt-bar { height: 4px; margin-top: 14px; border-radius: 999px; background: var(--bg-2); overflow: hidden; }
+html body:not(#u) .jt-bar i { display: block; height: 100%; border-radius: 999px; background: var(--ok); transition: width .4s cubic-bezier(.2, .8, .2, 1); }
+html body:not(#u) .jt-steps { margin-top: 8px; }
+html body:not(#u) .jt-steps > li { position: relative; }
+html body:not(#u) .jt-steps > li + li::before { content: ""; position: absolute; left: 11px; top: -9px; height: 18px; width: 2px; background: var(--line); }
+html body:not(#u) .jt-steps > li.done + li::before { background: rgba(23, 144, 90, .35); }
+html body:not(#u) .jt-steps > li > :is(button, div) { width: 100%; display: flex; align-items: flex-start; gap: 12px; padding: 9px 0 !important; text-align: left; }
+html body:not(#u) .jt-check { position: relative; z-index: 1; flex: 0 0 auto; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--card); border: 1.5px solid var(--line-2); color: #fff; transition: background .15s, border-color .15s; }
+html body:not(#u) .jt-check .ca-spin { width: 12px; height: 12px; color: var(--text-3); }
+html body:not(#u) .jt-steps li.done .jt-check { background: var(--ok); border-color: var(--ok); }
+html body:not(#u) .jt-steps li.next .jt-check { border-color: var(--ink); box-shadow: var(--ring); }
+html body:not(#u) .jt-steps li.auto .jt-check { border-style: dashed; }
+html body:not(#u) .jt-steps li.auto.done .jt-check { border-style: solid; }
+html body:not(#u) .jt-steps button:hover:not(:disabled) .jt-check { border-color: var(--ink); }
+html body:not(#u) .jt-t { min-width: 0; display: flex; flex-direction: column; padding-top: 2px; }
+html body:not(#u) .jt-t b { font-size: 15px; font-weight: 500; color: var(--text-2); }
+html body:not(#u) .jt-steps li.next .jt-t b { color: var(--text); font-weight: 600; }
+html body:not(#u) .jt-steps li.done .jt-t b { color: var(--text); }
+html body:not(#u) .jt-t small { margin-top: 2px; font-size: 13px; color: var(--text-3); }
+html body:not(#u) .jt-profit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+html body:not(#u) .jt-profit > div + div { padding-left: 14px; border-left: 1px solid var(--line); }
+html body:not(#u) .jt-profit dt { font-size: 12.5px; color: var(--text-3); }
+html body:not(#u) .jt-profit dd { margin: 4px 0 0; font: 600 22px/1 var(--head); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+html body:not(#u) .jt-profit .up dd { color: var(--ok); } html body:not(#u) .jt-profit .down dd { color: var(--miss); }
+
+/* ---------- One customer ---------- */
+html body:not(#u) .cs-acts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+html body:not(#u) .cs-acts :is(button, a) { height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border-radius: 14px !important; background: var(--bg) !important;
+  color: var(--text) !important; font-size: 13.5px !important; font-weight: 500; text-decoration: none; transition: background .15s; }
+html body:not(#u) .cs-acts :is(button, a):hover:not(:disabled) { background: var(--bg-2) !important; }
+html body:not(#u) .cs-acts button:disabled { color: var(--text-4) !important; }
+html body:not(#u) .cs-facts { margin-top: 16px; }
+html body:not(#u) .cs-facts > div { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+html body:not(#u) .cs-facts dt { color: var(--text-3); font-size: 14px; }
+html body:not(#u) .cs-facts dd { margin: 0; color: var(--text); white-space: pre-line; }
+html body:not(#u) .cs-facts a { text-decoration: none; }
+html body:not(#u) .cs-money { border-top: 0; padding-top: 8px; }
+html body:not(#u) .cs-row { width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 16px !important; margin-top: 8px; text-align: left; border-radius: 14px !important; background: var(--card) !important;
+  border: 1px solid var(--line) !important; box-shadow: var(--shadow-sm); transition: border-color .15s; }
+html body:not(#u) .cs-row:hover { border-color: var(--line-2) !important; }
+html body:not(#u) .cs-row-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+html body:not(#u) .cs-row-t b { font-size: 15px; font-weight: 600; }
+html body:not(#u) .cs-row-t small { font-size: 13px; color: var(--text-3); }
+html body:not(#u) .cs-row-t .jt-bar { margin-top: 8px; }
+html body:not(#u) .cs-row-n { font: 600 16px var(--head); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
