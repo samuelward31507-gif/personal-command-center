@@ -185,49 +185,46 @@ function ThreadView({ id, project, canCall, onBack, onChange, toast }: { id: str
   return <section className="ca-thread">
     <div className="ca-stick">
       <header className="ca-thead">
-        <button type="button" className="ca-icon-btn" onClick={onBack} aria-label="Back to leads"><Icon name="back" size={22} /></button>
-        <span className="ca-av sm" data-tone={tone(name)} aria-hidden="true">{t ? initials(name) : ""}</span>
-        <div className="ca-thead-who"><b>{name || "Loading…"}</b><small>{t ? <><a href={`tel:${t.customer_phone}`}>{fmtPhone(t.customer_phone)}</a> · {SOURCE[t.source] ?? t.source}</> : " "}</small></div>
-        {canCall && <button type="button" className="ca-call" disabled={!!busy} onClick={() => void act("call", {}, "Calling your cell. Pick up and we'll connect them.")}><Icon name="phone" size={16} />Call</button>}
+        <button type="button" className="ca-icon-btn ca-back" onClick={onBack} aria-label="Back to leads"><Icon name="back" size={20} /></button>
+        <div className="ca-thead-who"><b>{name || "Loading…"}</b><small>{t ? <><a href={`tel:${t.customer_phone}`}>{fmtPhone(t.customer_phone)}</a> · {SOURCE[t.source] ?? t.source}{t.status === "booked" ? " · Booked" : ""}</> : " "}</small></div>
+        {t && t.status !== "opted_out" && <div className="ca-thead-acts">
+          {t.status !== "booked" && <button type="button" className="ca-ghost" disabled={!!busy} onClick={() => void act("status", { status: "booked" }, "Marked booked.")}>Mark booked</button>}
+          {canCall ? <button type="button" className="ca-ghost ic" title="Call" aria-label="Call" disabled={!!busy} onClick={() => void act("call", {}, "Calling your cell. Pick up and we'll connect them.")}><Icon name="phone" size={17} /></button>
+            : t && <a className="ca-ghost ic" title="Call" aria-label="Call" href={`tel:${t.customer_phone}`}><Icon name="phone" size={17} /></a>}
+        </div>}
       </header>
-      {t && t.status !== "opted_out" && <div className="ca-who-handles">
-        <div className="ca-seg" role="group" aria-label="Who handles replies">
-          <button type="button" aria-pressed={!mine} className={!mine ? "on" : ""} disabled={!!busy || t.status === "booked"} onClick={() => mine && void act("status", { status: "auto" }, "Cinder will handle replies again.")}><Icon name="bolt" size={14} />Cinder replies</button>
-          <button type="button" aria-pressed={mine} className={mine ? "on" : ""} disabled={!!busy} onClick={() => !mine && void act("status", { status: "paused" }, "Cinder stepped back. You've got this one.")}>I&rsquo;ll reply</button>
-        </div>
-        {t.status === "booked" ? <span className="ca-chip is-booked"><Icon name="check" size={13} />Booked</span>
-          : <button type="button" className="ca-chip-btn" disabled={!!busy} onClick={() => void act("status", { status: "booked" }, "Marked booked.")}>Mark booked</button>}
-      </div>}
     </div>
     <div className="ca-texts">
       {texts === null ? <div className="ca-skel-thread"><i /><i /><i /></div> : texts.map((x, i) => {
         const sep = dayKey(x.at) !== lastDay ? <p className="ca-day" key={"d" + i}><span>{dayName(x.at)}</span></p> : null; lastDay = dayKey(x.at);
         if (x.author === "system") return <div key={i}>{sep}<p className="ca-event"><span>{x.body}</span><time>{clock(x.at)}</time></p></div>;
         const who = x.direction === "in" ? "them" : x.author === "owner" ? "you" : "cinder";
-        // Messages from the same sender within 5 minutes share one header, like a real inbox.
         const prev = texts[i - 1];
         const prevWho = prev && prev.author !== "system" ? (prev.direction === "in" ? "them" : prev.author === "owner" ? "you" : "cinder") : "";
         const cont = !sep && prevWho === who && Date.parse(x.at) - Date.parse(prev!.at) < 5 * 60000;
         const photos = (x.media ?? []).map((_, k) => `/api/app/media?id=${x.id}&i=${k}`);
         const words = photos.length && /^\(sent (a photo|\d+ photos)\)$/.test(x.body) ? "" : x.body;
-        return <div key={i}>{sep}<article className={"ca-msg " + who + (cont ? " cont" : "")}>
-          <span className="ca-msg-av" aria-hidden="true">{cont ? null : who === "them" ? <span className="ca-av sm" data-tone={tone(name)}>{initials(name)}</span> : who === "cinder" ? <span className="ca-msg-cinder"><CinderMark ring="#121417" /></span> : <span className="ca-msg-you">You</span>}</span>
-          <div className="ca-msg-body">
-            {!cont && <header><b>{who === "them" ? name : who === "cinder" ? "Cinder" : "You"}</b>{who === "cinder" && <em>Auto-reply</em>}<time>{clock(x.at)}</time></header>}
-            {photos.length > 0 && <div className="ca-photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
-            {words && <p>{words}</p>}
-          </div>
+        return <div key={i}>{sep}<article className={"ca-msg " + (who === "them" ? "in" : "out") + (cont ? " cont" : "")}>
+          {photos.length > 0 && <div className="ca-photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
+          {words && <p>{words}</p>}
+          <small>{who === "them" ? (name.split(" ")[0] || "Them") : who === "cinder" ? "Cinder" : "You"} · {clock(x.at)}</small>
         </article></div>;
       })}
       <div ref={end} />
     </div>
     <div className="ca-composer">
-      {mine && !draft && <div className="ca-quick">{QUICK.map(q => <button key={q} type="button" onClick={() => setDraft(q)}>{q}</button>)}</div>}
-      <form className="ca-compose" onSubmit={async e => { e.preventDefault(); if (draft.trim() && await act("reply", { body: draft }, "Sent from your business number.")) setDraft(""); }}>
-        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${name.split(" ")[0] || "them"}`} aria-label="Reply" />
-        <button type="submit" disabled={!!busy || !draft.trim()} aria-label="Send"><Icon name="send" size={18} /></button>
+      <form className="ca-box" onSubmit={async e => { e.preventDefault(); if (draft.trim() && await act("reply", { body: draft }, "Sent from your business number.")) setDraft(""); }} onClick={() => ta.current?.focus()}>
+        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${name.split(" ")[0] || "them"} from your business number`} aria-label="Reply" />
+        <div className="ca-box-row">
+          <div className="ca-box-tools">
+            {t && t.status !== "opted_out" && <button type="button" className={"ca-handoff" + (mine ? " on" : "")} disabled={!!busy || (!mine && t.status === "booked")} onClick={e => { e.stopPropagation(); void (mine ? act("status", { status: "auto" }, "Cinder will handle replies again.") : act("status", { status: "paused" }, "Cinder stepped back. You've got this one.")); }}>
+              <i aria-hidden="true" />{mine ? "You're replying" : "Cinder is replying"}</button>}
+            <select aria-label="Quick reply" value="" onClick={e => e.stopPropagation()} onChange={e => { if (e.target.value) setDraft(e.target.value); }}>
+              <option value="">Quick reply</option>{QUICK.map(q => <option key={q} value={q}>{q}</option>)}</select>
+          </div>
+          <button type="submit" className="ca-send" disabled={!!busy || !draft.trim()} aria-label="Send"><Icon name="send" size={16} /></button>
+        </div>
       </form>
-      {!mine && t?.status !== "booked" && <p className="ca-hint">Cinder stops replying once you do.</p>}
     </div>
   </section>;
 }
@@ -341,6 +338,8 @@ export default function CinderApp() {
   const [d, setD] = useState<Data | null>(null);
   const [project, setProject] = useState<string>("");
   const [tab, setTab] = useState<Tab>("today");
+  const [slim, setSlim] = useState(false);
+  useEffect(() => { try { setSlim(localStorage.getItem("cinder-slim") === "1"); } catch { /* private mode */ } }, []);
   const [focus, setFocus] = useState<{ card?: string; stage?: "quoted" | "won"; invoice?: string; view?: "pipeline" | "customers" | "invoices"; n: number } | null>(null);
   const [filter, setFilter] = useState<"all" | "needs" | "booked">("all");
   const [open, setOpen] = useState<string | null>(null);
@@ -413,7 +412,7 @@ export default function CinderApp() {
   if (open && !wide) return <div className="ca">{demo && <div className="ca-demo"><span>Example account · sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>}<ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} />{toastNode}</div>;
 
   const pane = wide && tab === "leads";
-  return <div className={"ca" + (wide ? (pane ? " ca-wide" : " ca-wide solo") : "")}>
+  return <div className={"ca" + (wide ? (pane ? " ca-wide" : " ca-wide solo") : "") + (wide && slim ? " slim" : "")}>
     {demo && <div className="ca-demo"><span>Example account · sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>}
     <header className="ca-top">
       <CinderLogo className="ca-top-word" ink="#121417" title="Cinder" />
@@ -443,15 +442,14 @@ export default function CinderApp() {
             <div className="ca-pushcard-row">{push === "off" && <button type="button" className="ca-pushcard-go" onClick={() => void enablePush()}>Turn on</button>}
               <button type="button" className="ca-pushcard-no" onClick={() => { setHidePushCard(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>
         </div>}
-        <div className="ca-seg wide" role="tablist" aria-label="Filter leads">{([["all", "All"], ["needs", `Your turn${L.needs ? ` · ${L.needs}` : ""}`], ["booked", "Booked"]] as const).map(([k, l]) =>
-          <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}</button>)}</div>
+        <div className="ca-tabs" role="tablist" aria-label="Filter leads">{([["all", "All", 0], ["needs", "Your turn", L.needs], ["booked", "Booked", 0]] as const).map(([k, l, n]) =>
+          <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}{n ? <span>{n}</span> : null}</button>)}</div>
         {groups.length ? groups.map(g => <section key={g.day} className="ca-group"><h2>{g.day}</h2>
           <ul className="ca-list">{g.items.map(c => { const st = STATUS[c.status] ?? STATUS.auto; return <li key={c.id}><button type="button" className={pane && open === c.id ? "sel" : undefined} aria-current={pane && open === c.id ? "true" : undefined} onClick={() => setOpen(c.id)}>
-            <span className="ca-av" data-tone={tone(c.name)}>{initials(c.name)}<i className="ca-src"><Icon name={SRC_ICON[c.source] ?? "chat"} size={11} /></i></span>
             <span className="ca-mid">
-              <span className="ca-row1"><b>{c.name}</b><time>{ago(c.at)}</time></span>
+              <span className="ca-row1"><b>{c.status === "paused" && <i className="ca-dot" aria-label="Your turn" />}{c.name}</b><time>{ago(c.at)}</time></span>
               <em>{c.last}</em>
-              <span className="ca-row3"><small>{SOURCE[c.source] ?? c.source}</small><span className={"ca-chip is-" + st[1]}>{st[0]}</span></span>
+              <small className={"ca-st is-" + st[1]}>{st[0]} · {SOURCE[c.source] ?? c.source}</small>
             </span>
           </button></li>; })}</ul></section>)
           : <div className="ca-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>{filter === "all" ? "No leads yet" : filter === "needs" ? "Nothing waiting on you" : "No bookings yet"}</b><p>{filter === "all" ? "Calls, texts and form leads show up here." : filter === "needs" ? "" : ""}</p></div>}
@@ -518,10 +516,12 @@ export default function CinderApp() {
       ? <div key={open} className="ca-pane-in"><ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} /></div>
       : <div className="ca-pane-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>No conversation open</b><p>Pick a lead on the left.</p></div>}</aside>}
     <nav className="ca-nav" aria-label="Sections">
-      <div className="ca-nav-brand"><CinderLogo className="ca-nav-word" ink="#121417" title="Cinder" /></div>
+      <div className="ca-nav-brand"><CinderLogo className="ca-nav-word" ink="#121417" title="Cinder" />
+        <button type="button" className="ca-slim" onClick={() => setSlim(v => { try { localStorage.setItem("cinder-slim", v ? "" : "1"); } catch { /* private mode */ } return !v; })} aria-label={slim ? "Expand sidebar" : "Collapse sidebar"} title={slim ? "Expand sidebar" : "Collapse sidebar"}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3" /><path d="M9.5 4.5v15" /></svg></button></div>
       {([["today", "Today", 0, "today"], ["leads", "Inbox", L.needs, "chat"], ["jobs", "Jobs", 0, "jobs"], ["estimates", "Calendar", dueCount, "cal"], ...(wide ? [["numbers", "Numbers", 0, "bolt"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const : [])] as const).map(([k, l, n, ic]) =>
-        <button key={k} type="button" aria-current={tab === k ? "page" : undefined} className={tab === k ? "on" : ""} onClick={() => { setTab(k); window.scrollTo(0, 0); if (k === "sam" || k === "estimates") void load(project, k); }}>
-          <span className="ca-nav-ic">{ic === "today" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" /></svg> : ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "jobs" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="5" height="16" rx="1.5" /><rect x="9.5" y="4" width="5" height="11" rx="1.5" /><rect x="15.5" y="4" width="5" height="7" rx="1.5" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span>{l}</button>)}
+        <button key={k} type="button" title={l} aria-current={tab === k ? "page" : undefined} className={tab === k ? "on" : ""} onClick={() => { setTab(k); window.scrollTo(0, 0); if (k === "sam" || k === "estimates") void load(project, k); }}>
+          <span className="ca-nav-ic">{ic === "today" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" /></svg> : ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "jobs" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="5" height="16" rx="1.5" /><rect x="9.5" y="4" width="5" height="11" rx="1.5" /><rect x="15.5" y="4" width="5" height="7" rx="1.5" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span><span className="ca-nav-l">{l}</span></button>)}
       <button type="button" className="ca-nav-foot" onClick={() => { setTab("sam"); void load(project, "sam"); }}><span aria-hidden="true">{(d.owner || bizName || "?").trim().charAt(0).toUpperCase()}</span><span><b>{d.owner || "You"}</b><small>{bizName}</small></span></button>
     </nav>
     {billingOpen && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={() => load(project, "sam")} onClose={() => setBillingOpen(false)} />}
