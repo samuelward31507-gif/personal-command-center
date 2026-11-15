@@ -1,10 +1,12 @@
 // The client CRM on the server: the board, moving a customer between stages, editing a card, adding a lead by hand,
 // and the owner's own setup. Every write is scoped to the signed-in owner's business.
 import type { neon } from "@neondatabase/serverless";
-import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, type Card, type Stage } from "@/lib/crm";
+import { ballpark, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, type Card, type Stage } from "@/lib/crm";
 import { digits10 } from "@/lib/client-runtime";
 import { emitEvent } from "@/lib/client-webhook";
 import { quoteUrl, type Client } from "@/lib/client-runtime-run";
+import { invoicesByThread } from "@/lib/client-billing-run";
+import { cleanItems } from "@/lib/billing";
 
 type Sql = ReturnType<typeof neon>;
 export type { Card };
@@ -13,13 +15,15 @@ const today = (c: Client) => new Date().toLocaleDateString("en-CA", { timeZone: 
 
 /** Every customer worth a card: active in the last 120 days, or still booked or quoted. Review and "you're due" texts aren't leads. */
 export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
+  const invoices = await invoicesByThread(sql as never, c).catch(() => ({} as Record<string, Card["invoice"]>));
   const rows = await sql`SELECT t.id, t.customer_name, t.customer_phone, t.source, t.status, t.stage, t.details, t.value::float AS value, t.notes,
       coalesce(t.last_in_at, t.updated_at) AS at, q.id AS quote_id, q.amount::float AS quote_amount, q.status AS quote_status, q.steps_sent AS quote_steps,
-      q.token AS quote_token, q.link_sent_at IS NOT NULL AS quote_linked, q.viewed_at AS quote_viewed, q.note AS quote_note, a.starts_at AS next_appt,
+      q.token AS quote_token, q.link_sent_at IS NOT NULL AS quote_linked, q.items AS quote_items, q.tax_rate::float AS quote_tax,
+      t.install_time, t.install_days, t.install_event_id IS NOT NULL AS on_calendar, q.viewed_at AS quote_viewed, q.note AS quote_note, a.starts_at AS next_appt,
       t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent,
       (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied
     FROM public.client_threads t
-    LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
+    LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
       AND right(regexp_replace(x.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
       ORDER BY x.created_at DESC LIMIT 1) q ON true
     LEFT JOIN LATERAL (SELECT sent_at FROM public.client_reviews r WHERE r.project_id = t.project_id
@@ -35,7 +39,8 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
     const details = cleanDetails(c.setup.trade, r.details);
     const bp = share ? ballpark(book, details) : null;
     const quote = r.quote_id ? { id: String(r.quote_id), amount: r.quote_amount == null ? null : Number(r.quote_amount), status: String(r.quote_status), steps: Number(r.quote_steps ?? 0),
-      linked: !!r.quote_linked, url: r.quote_token ? quoteUrl(String(r.quote_token)) : null, viewed: r.quote_viewed ? new Date(String(r.quote_viewed)).toISOString() : null, note: String(r.quote_note ?? "") } : null;
+      linked: !!r.quote_linked, url: r.quote_token ? quoteUrl(String(r.quote_token)) : null, viewed: r.quote_viewed ? new Date(String(r.quote_viewed)).toISOString() : null, note: String(r.quote_note ?? ""),
+      items: cleanItems(r.quote_items), tax: Number(r.quote_tax ?? 0) } : null;
     const next = r.next_appt ? new Date(String(r.next_appt)).toISOString() : null;
     // A past customer answered a win-back text: a new job, so it starts over in New (or Booked once Cinder books it).
     const again = !!r.winback_replied;
@@ -44,7 +49,8 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       stage: again ? (r.status === "booked" || next ? "booked" : "new") : stageFor({ stage: r.stage as string | null, status: String(r.status), quote_status: quote?.status ?? null, next_appt: next }),
       details, line: detailLine(c.setup.trade, details), value: again ? null : r.value != null ? Number(r.value) : quote?.amount ?? null,
       ballpark: bp ? { low: bp.low, high: bp.high } : null, notes: String(r.notes ?? ""), quote: again ? null : quote, next, at: new Date(String(r.at)).toISOString(),
-      install: r.install_on ? String(r.install_on) : null, reviewAuto: !!r.review_auto, reviewSent: r.review_sent ? new Date(String(r.review_sent)).toISOString() : null, pastCustomer: again,
+      install: r.install_on ? String(r.install_on) : null, installTime: r.install_time ? String(r.install_time) : null, installDays: Number(r.install_days ?? 1) || 1, onCalendar: !!r.on_calendar,
+      invoice: invoices[String(r.id)] ?? null, reviewAuto: !!r.review_auto, reviewSent: r.review_sent ? new Date(String(r.review_sent)).toISOString() : null, pastCustomer: again,
     };
   });
 }
@@ -87,7 +93,7 @@ export async function moveStage(sql: Sql, c: Client, threadId: string, stage: st
     else if (stage === "won") await sql`INSERT INTO public.client_quotes (owner_id, project_id, customer_phone, customer_name, amount, sent_on, status, last_step_at) VALUES (${c.owner}, ${c.projectId}::uuid, ${t.customer_phone}, ${t.customer_name}, ${amount}, ${today(c)}::date, 'won', now())`;
     await sql`UPDATE public.client_threads SET status = 'closed', updated_at = now() WHERE id = ${t.id}::uuid AND status <> 'opted_out'`;
     // Won: when the install is, and whether Cinder asks for the Google review the day after it.
-    if (stage === "won") await sql`UPDATE public.client_threads SET install_on = ${cleanDate(opts.install)}::date, review_auto = ${!!opts.review && !!c.setup.review_link} WHERE id = ${t.id}::uuid`;
+    if (stage === "won") await sql`UPDATE public.client_threads SET review_auto = ${!!opts.review && !!c.setup.review_link} WHERE id = ${t.id}::uuid`;
     await note(stage === "won" ? `Job won${usd}` : "Marked lost. Follow-ups stopped.");
     void emitEvent(c.setup, c.projectId, stage === "won" ? "job.won" : "job.lost", event(c, t, { amount }));
   } else {
@@ -112,7 +118,6 @@ export async function saveCard(sql: Sql, c: Client, threadId: string, input: { d
       notes = coalesce(${notes}, notes), customer_name = coalesce(${name}, customer_name),
       value = CASE WHEN ${value === undefined}::boolean THEN value ELSE ${value ?? null}::numeric END, updated_at = now()
     WHERE id = ${t.id}::uuid`;
-  if (input.install !== undefined) await sql`UPDATE public.client_threads SET install_on = ${cleanDate(input.install)}::date WHERE id = ${t.id}::uuid`;
   if (input.review !== undefined) await sql`UPDATE public.client_threads SET review_auto = ${!!input.review && !!c.setup.review_link} WHERE id = ${t.id}::uuid`;
   void emitEvent(c.setup, c.projectId, "lead.updated", event(c, { ...t, customer_name: name ?? t.customer_name }, { details: details ?? undefined, notes: notes ?? undefined, value }));
   return { ok: true };
@@ -142,5 +147,5 @@ export async function addLead(sql: Sql, c: Client, input: { name?: string; phone
 /** For the setup flow: what the owner already told us (or Sam filled in), so nothing is asked twice. */
 export function ownerSetupView(setup: Record<string, string>) {
   const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at"];
-  return { ...Object.fromEntries(k.map(x => [x, setup[x] ?? ""])), has_review_link: setup.review_link ? "yes" : "", has_number: setup.texting_number ? "yes" : "" };
+  return { ...Object.fromEntries([...k, "pay_link", "tax_rate", "invoice_days"].map(x => [x, setup[x] ?? ""])), has_calendar: "", has_review_link: setup.review_link ? "yes" : "", has_number: setup.texting_number ? "yes" : "" };
 }

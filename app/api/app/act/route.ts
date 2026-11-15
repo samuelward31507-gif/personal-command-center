@@ -5,6 +5,7 @@ import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
 import { addLead, moveStage, saveCard, saveOwnerSetup } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
+import { createInvoice, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,13 +26,16 @@ const UUID = /^[0-9a-f-]{36}$/i;
  *    can approve; won with install and review asks for a Google review the day after the install.
  *  quotelink { thread, note? } — text (or re-text) the quote link. reviewnow { thread } — the job's done: ask for the review now.
  *  winback { body } — the owner's text to past customers who agreed to offers.
+ *  quotelines { thread, items, tax?, note?, send? } — the quote's lines (the owner sends it himself). install { thread, install, time?, days? } — on Google Calendar.
+ *  invoice { thread } — a draft invoice for the job. invoicesave / invoicesend / invoiceset { invoice, ... } — edit, text it, paid | unpaid | void | pause | resume.
  */
 export async function POST(req: Request) {
   const s = appSession(req);
   if (!s) return json({ error: "Sign in" }, 401);
   const b = await req.json().catch(() => ({})) as { p?: string; action?: string; thread?: string; body?: string; status?: string; appt?: string; result?: string; amount?: string; review?: boolean; quote?: string;
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
-    link?: boolean; note?: string; install?: string | null; send?: boolean };
+    link?: boolean; note?: string; install?: string | null; send?: boolean;
+    items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -49,6 +53,10 @@ export async function POST(req: Request) {
       if (b.action === "stage") {
         const r = await moveStage(sql, c, b.thread, String(b.stage), amount, { install: b.install, review: b.review });
         if (!r.ok) return json({ error: r.error }, 409);
+        // Won with an install date: it goes on the owner's Google Calendar.
+        if (b.stage === "won" && b.install !== undefined) { const s2 = await scheduleInstall(sql, c, b.thread, { date: b.install, time: b.time, days: b.days }); return json({ ok: true, calendar: s2.calendar }); }
+        // Quoted with lines: the owner's lines and tax set the total. Nothing goes to the customer unless he asked.
+        if (b.stage === "quoted" && b.items !== undefined) { const l = await saveQuoteLines(sql, c, b.thread, { items: b.items, tax: b.tax, note: b.note }); if (!l.ok) return json({ error: l.error }, 400); }
         if (b.stage !== "quoted" || !b.link) return json({ ok: true });
         // Quoted, and the owner wants the customer to have it: text the link they approve from.
         const l = await sendQuoteLink(sql, c, b.thread, b.note);
@@ -64,6 +72,28 @@ export async function POST(req: Request) {
       if (b.action === "reviewnow") { const r = await reviewNow(sql, c, b.thread); return r.ok ? json({ ok: true }) : json({ error: r.error }, 409); }
       const l = await sendQuoteLink(sql, c, b.thread, b.note, b.send !== false);
       return l.ok ? json({ ok: true, link: l.url ?? "", sent: l.sent, warn: l.sent ? "" : l.error ?? "" }) : json({ error: l.error }, 409);
+    }
+    if (b.action === "quotelines" || b.action === "install" || b.action === "invoice") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      if (b.action === "quotelines") {
+        const l = await saveQuoteLines(sql, c, b.thread, { items: b.items, tax: b.tax, note: b.note });
+        if (!l.ok) return json({ error: l.error }, 400);
+        if (!b.send) return json({ ok: true, total: l.total });
+        const q = await sendQuoteLink(sql, c, b.thread);
+        return json({ ok: true, total: l.total, link: q.url ?? "", sent: q.sent, warn: q.sent ? "" : q.error ?? "" });
+      }
+      if (b.action === "install") { const r = await scheduleInstall(sql, c, b.thread, { date: b.install, time: b.time, days: b.days }); return r.ok ? json({ ok: true, calendar: r.calendar }) : json({ error: r.error }, 404); }
+      const r = await createInvoice(sql, c, b.thread);
+      return r.ok ? json({ ok: true, invoice: r.invoice }) : json({ error: r.error }, 409);
+    }
+    if (b.action === "invoicesave" || b.action === "invoicesend" || b.action === "invoiceset") {
+      if (!b.invoice || !UUID.test(b.invoice)) return json({ error: "Which invoice?" }, 400);
+      if (b.action === "invoicesave") { const r = await saveInvoice(sql, c, b.invoice, { items: b.items, tax: b.tax, note: b.note, due: b.due }); return r.ok ? json({ ok: true }) : json({ error: r.error }, 409); }
+      if (b.action === "invoicesend") { const r = await sendInvoice(sql, c, b.invoice); return r.ok ? json({ ok: true, sent: r.sent, link: r.url ?? "", warn: r.warn ?? "" }) : json({ error: r.error }, 409); }
+      const what = String(b.what);
+      if (!["paid", "unpaid", "void", "pause", "resume"].includes(what)) return json({ error: "Unknown change." }, 400);
+      const r = await setInvoice(sql, c, b.invoice, what as "paid");
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 409);
     }
     if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
     if (b.action === "message") {

@@ -7,8 +7,10 @@ import { CinderLogo } from "../cinder-brand";
 import { Trajectory } from "./sx";
 import {
   ballpark, jobFields, LEAD_SOURCES, LEADS_MONTH, money, parsePriceBook, previewFirstText, PRIORITIES, rangeText, SOFTWARE, STAGE_LABEL, STAGES, TEAM_SIZES, TRADES, YEARS,
-  type Card, type Details, type PriceBook, type Rate, type Stage,
+  draftItems, type Card, type CardInvoice, type Details, type PriceBook, type Rate, type Stage,
 } from "@/lib/crm";
+import { dollars, totals, type Item } from "@/lib/billing";
+import { BillingSettings, CustomersView, InvoiceSheet, InvoicesView, LineEditor, invoiceState, type Customer, type InvoiceRow } from "./billing-ui";
 
 export type { Card };
 export type Winback = { past: number; eligible: number; names: string[]; draft: string };
@@ -197,10 +199,15 @@ function cardTag(c: Card): { text: string; tone?: "blue" | "green" | "warn" } {
   return { text: SRC[c.source] ?? c.source };
 }
 const priceOf = (c: Card) => c.value ? short(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "";
-type Biz = { reviewLink: boolean; number: boolean; owner: string; business: string };
+type Biz = { reviewLink: boolean; number: boolean; owner: string; business: string; priceBook: string; taxRate: string; payLink: boolean; calendar: boolean };
 
-export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, canCall, wide, biz, winback }: { cards: Card[]; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; canCall: boolean; wide: boolean; biz: Biz; winback?: Winback }) {
+export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, canCall, wide, biz, winback, customers = [], invoices = [], setup = {} }: { cards: Card[]; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; canCall: boolean; wide: boolean; biz: Biz; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[]; setup?: Record<string, string> }) {
   const [sel, setSel] = useState<string | null>(null), [adding, setAdding] = useState(false), [wb, setWb] = useState(false), [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Stage | null>(null);
+  const [view, setView] = useState<"pipeline" | "customers" | "invoices">("pipeline");
+  const [inv, setInv] = useState<{ id: string; customer: string } | null>(null), [billing, setBilling] = useState(false);
+  // The open invoice is read fresh from the latest data, so a save or a send shows straight away.
+  const invNow = inv ? (invoices.find(i => i.id === inv.id) ?? cards.map(c => c.invoice).find(i => i?.id === inv.id) ?? null) : null;
+  const owed = invoices.filter(i => i.status === "sent").length;
   const [pending, setPending] = useState<{ id: string; stage: Stage } | null>(null);
   const by = useMemo(() => Object.fromEntries(STAGES.map(s => [s, cards.filter(c => c.stage === s)])) as Record<Stage, Card[]>, [cards]);
   const open = cards.filter(c => c.stage === "new" || c.stage === "booked" || c.stage === "quoted");
@@ -219,10 +226,16 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
     <div className="ca-hello jb-hello">
       <div><p>Your jobs</p><h1>{open.length ? <>{open.length} open {open.length === 1 ? "job" : "jobs"}{openValue ? <span> worth about {money(openValue)}</span> : null}.</> : "No open jobs yet."}</h1></div>
       <div className="jb-hello-acts">
-        {winback && winback.past > 0 && <button type="button" className="jb-ghost" onClick={() => setWb(true)}><Svg d={I.users} size={16} />Past customers</button>}
-        <button type="button" className="jb-add" onClick={() => setAdding(true)}><Svg d={I.plus} size={16} />Add lead</button>
+        {view === "pipeline" && winback && winback.past > 0 && <button type="button" className="jb-ghost" onClick={() => setWb(true)}><Svg d={I.users} size={16} />Past customers</button>}
+        {view === "invoices" && <button type="button" className="jb-ghost" onClick={() => setBilling(true)}>Pay link and tax</button>}
+        {view !== "invoices" && <button type="button" className="jb-add" onClick={() => setAdding(true)}><Svg d={I.plus} size={16} />Add lead</button>}
       </div>
     </div>
+    <div className="ca-seg wide jb-views" role="tablist" aria-label="View">{([["pipeline", "Pipeline"], ["customers", "Customers"], ["invoices", `Invoices${owed ? ` · ${owed}` : ""}`]] as const).map(([k, l]) =>
+      <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => setView(k)}>{l}</button>)}</div>
+    {view === "customers" && <CustomersView list={customers} onOpen={c => { if (cards.some(x => x.id === c.id)) { setPending(null); setSel(c.id); } else onOpen(c.id); }} />}
+    {view === "invoices" && <InvoicesView list={invoices} onOpen={i => setInv({ id: i.id, customer: i.customer || fmtPhone(i.phone) })} />}
+    {view === "pipeline" && <>
     <Trajectory lost={by.lost.length} stages={(["new", "booked", "quoted", "won"] as const).map(k => ({ key: k, label: k === "booked" ? "Estimate" : STAGE_LABEL[k],
       count: by[k].length, value: by[k].reduce((a, c) => a + (c.value ?? (k === "won" ? 0 : c.ballpark ? (c.ballpark.low + c.ballpark.high) / 2 : 0)), 0) }))}
       onPick={k => document.getElementById("jb-col-" + k)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" })} />
@@ -240,9 +253,13 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
           : <p className="jb-empty">{stage === "new" ? "New leads land here." : stage === "booked" ? "Booked estimates." : stage === "quoted" ? "Quotes Cinder is chasing." : stage === "won" ? "Jobs you won." : "Lost or not a fit."}</p>}
       </section>; })}
     </div>
+    </>}
     {card && <CardSheet key={card.id} card={card} trade={trade} project={project} api={api} toast={toast} reload={reload} onOpen={onOpen} canCall={canCall} biz={biz}
+      onInvoice={i => { setSel(null); setPending(null); setInv({ id: i.id, customer: card.name || fmtPhone(card.phone) }); }}
       pending={pending?.id === card.id ? pending.stage : null} onClose={() => { setSel(null); setPending(null); }} />}
     {adding && <AddLead trade={trade} project={project} api={api} toast={toast} reload={reload} onClose={() => setAdding(false)} />}
+    {inv && invNow && <InvoiceSheet key={invNow.id + invNow.status} inv={invNow} customer={inv.customer} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => setBilling(true)} />}
+    {billing && <BillingSettings setup={setup} project={project} api={api} toast={toast} reload={reload} onClose={() => setBilling(false)} />}
     {wb && winback && <WinbackSheet w={winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setWb(false)} />}
   </>;
 }
@@ -268,22 +285,29 @@ function Toggle({ on, set, title, sub, disabled }: { on: boolean; set: (v: boole
     <i aria-hidden="true" /><span><b>{title}</b>{sub && <small>{sub}</small>}</span></label>;
 }
 
-function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, canCall, pending, biz }: { card: Card; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; onClose: () => void; canCall: boolean; pending: Stage | null; biz: Biz }) {
+function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, canCall, pending, biz, onInvoice }: { card: Card; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; onClose: () => void; canCall: boolean; pending: Stage | null; biz: Biz; onInvoice: (inv: CardInvoice) => void }) {
   const [d, setD] = useState<Record<string, string>>(() => asStrings(card.details));
   const [value, setValue] = useState(card.value ? String(card.value) : ""), [notes, setNotes] = useState(card.notes);
   const [ask, setAsk] = useState<Stage | null>(pending), [amt, setAmt] = useState(card.value ? String(card.value) : card.quote?.amount ? String(card.quote.amount) : ""), [busy, setBusy] = useState(""), [arm, setArm] = useState(false);
   const canText = biz.number && card.status !== "opted_out";
-  const [incl, setIncl] = useState(card.quote?.note ?? ""), [link, setLink] = useState(canText);
-  const [install, setInstall] = useState(card.install ?? ""), [review, setReview] = useState(card.stage === "won" ? card.reviewAuto : biz.reviewLink);
-  const dirty = JSON.stringify(d) !== JSON.stringify(asStrings(card.details)) || value !== (card.value ? String(card.value) : "") || notes !== card.notes
-    || (card.stage === "won" && (install !== (card.install ?? "") || review !== card.reviewAuto));
+  const q = card.quote;
+  // The quote's lines: what he saved, else a first draft from what Cinder learned and his own prices. He checks every line.
+  const [items, setItems] = useState<Item[]>(() => q?.items?.length ? q.items : draftItems(trade, card.details, biz.priceBook));
+  const [tax, setTax] = useState<number>(() => q?.items?.length ? q.tax : Number(biz.taxRate) || 0);
+  const [editLines, setEditLines] = useState(false);
+  const [incl, setIncl] = useState(q?.note ?? "");
+  const [install, setInstall] = useState(card.install ?? ""), [itime, setItime] = useState(card.installTime ?? ""), [idays, setIdays] = useState(String(card.installDays || 1));
+  const [review, setReview] = useState(card.stage === "won" ? card.reviewAuto : biz.reviewLink);
+  const installDirty = install !== (card.install ?? "") || itime !== (card.installTime ?? "") || idays !== String(card.installDays || 1);
+  const dirty = JSON.stringify(d) !== JSON.stringify(asStrings(card.details)) || value !== (card.value ? String(card.value) : "") || notes !== card.notes || (card.stage === "won" && review !== card.reviewAuto);
   const name = card.name || fmtPhone(card.phone), firstName = (card.name || "").split(" ")[0] || "them";
-  async function act(key: string, body: Record<string, unknown>, done: string | ((r: { sent?: boolean; warn?: string; link?: string }) => string), close = false) {
+  const quoteTotal = totals(items.filter(i => i.name.trim()), tax).total;
+  async function act(key: string, body: Record<string, unknown>, done: string | ((r: { sent?: boolean; warn?: string; link?: string; calendar?: string; invoice?: CardInvoice }) => string), close = false) {
     setBusy(key);
     try {
-      const r = await api<{ sent?: boolean; warn?: string; link?: string }>("/api/app/act", { p: project, thread: card.id, ...body });
+      const r = await api<{ sent?: boolean; warn?: string; link?: string; calendar?: string; invoice?: CardInvoice }>("/api/app/act", { p: project, thread: card.id, ...body });
       const msg = typeof done === "string" ? done : done(r);
-      toast(msg, !!r.warn && !r.sent); await reload(); if (close) onClose(); setAsk(null); return r;
+      toast(msg, (!!r.warn && !r.sent) || r.calendar === "failed"); await reload(); if (close) onClose(); setAsk(null); return r;
     } catch (e) { toast(e instanceof Error ? e.message : "That didn't work.", true); return null; }
     finally { setBusy(""); setArm(false); }
   }
@@ -292,8 +316,14 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
     if (!r?.link) return;
     try { await navigator.clipboard.writeText(r.link); toast("Quote link copied."); } catch { prompt("Copy the quote link:", r.link); }
   }
-  const pick = (s: Stage) => { if (s === card.stage) return; if (s === "quoted" || s === "won") { setAsk(s); return; } if (s === "lost" && !arm) { setArm(true); return; } void act("stage", { action: "stage", stage: s }, `Moved to ${STAGE_LABEL[s]}.`); };
-  const q = card.quote;
+  const calMsg = (c?: string) => c === "added" ? " On your Google Calendar." : c === "removed" ? " Taken off your calendar." : c === "not_connected" ? " Connect Google Calendar to put it there." : c === "failed" ? " It didn't save to your calendar; try again." : "";
+  const pick = (s: Stage) => { if (s === card.stage) return; if (s === "quoted" || s === "won") { setAsk(s); if (s === "won" && !amt && q?.amount) setAmt(String(q.amount)); return; } if (s === "lost" && !arm) { setArm(true); return; } void act("stage", { action: "stage", stage: s }, `Moved to ${STAGE_LABEL[s]}.`); };
+  const lines = <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} />;
+  const installFields = <div className="jb-three">
+    <label className="jb-f"><span>Install day</span><span className="jb-in"><input type="date" value={install} onChange={e => setInstall(e.target.value)} /></span></label>
+    <label className="jb-f"><span>Start</span><span className="jb-in"><input type="time" value={itime} onChange={e => setItime(e.target.value)} disabled={!install || idays !== "1"} /></span></label>
+    <label className="jb-f"><span>Days</span><select value={idays} onChange={e => setIdays(e.target.value)} disabled={!install}>{[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}</select></label>
+  </div>;
   return <Sheet onClose={onClose} title={<div className="jb-who"><span className="ca-av sm" data-tone={tone(name)} aria-hidden="true">{initials(name)}</span><span><b>{name}</b><small><a href={`tel:${card.phone}`}>{fmtPhone(card.phone)}</a> · {SRC[card.source] ?? card.source}</small></span></div>}>
     <div className="jb-acts">
       <button type="button" onClick={() => { onClose(); onOpen(card.id); }}><Svg d={I.chat} size={16} />Conversation</button>
@@ -302,57 +332,83 @@ function CardSheet({ card, trade, project, api, toast, reload, onOpen, onClose, 
     </div>
     <div className="jb-stages" role="radiogroup" aria-label="Stage">{STAGES.map(s => <button key={s} type="button" role="radio" aria-checked={card.stage === s} className={(card.stage === s ? "on " : "") + (ask === s ? "ask" : "")} disabled={!!busy} onClick={() => pick(s)}>{s === "lost" && arm ? "Tap again" : STAGE_LABEL[s]}</button>)}</div>
 
-    {ask === "quoted" && <form className="jb-amt" onSubmit={e => { e.preventDefault(); void act("stage", { action: "stage", stage: "quoted", amount: amt, link, note: incl },
-      r => r.sent ? `Quote texted to ${firstName}. Cinder follows up until they answer.` : r.warn ? r.warn : "Cinder will follow up on the quote until they answer."); }}>
-      <label><span>Quote amount</span><span className="jb-in"><i>$</i><input inputMode="decimal" autoFocus placeholder="7,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></span></label>
-      <label><span>What&rsquo;s included <em>optional, they&rsquo;ll see it</em></span><textarea rows={2} value={incl} maxLength={600} onChange={e => setIncl(e.target.value)} placeholder="Tear-out and haul-away, steel posts in concrete, 2-year warranty" /></label>
-      <Toggle on={link} set={setLink} disabled={!canText} title={`Text ${firstName} the quote to approve`}
-        sub={!canText ? (card.status === "opted_out" ? "They opted out of texts." : "Once your number is connected.") : "One tap to approve. You hear the second they do."} />
-      <p>Cinder follows up on day 2, 5, 10 and 21{link && canText ? ", with the link each time," : ""} until it&rsquo;s a yes or a no. Any reply stops it and comes to you.</p>
-      <div className="jb-amt-row"><button type="button" onClick={() => setAsk(null)}>Cancel</button><button type="submit" className="go" disabled={!!busy}>{busy ? <span className="ca-spin" /> : link && canText ? "Send quote" : "Start follow-up"}</button></div>
-    </form>}
-    {ask === "won" && <form className="jb-amt" onSubmit={e => { e.preventDefault(); void act("stage", { action: "stage", stage: "won", amount: amt, install: install || null, review: review && biz.reviewLink },
-      review && biz.reviewLink ? (install ? `Marked won. Cinder asks for a review on ${dateLabel(new Date(Date.parse(install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Marked won. Tap Job done when it's finished.") : "Marked won. Follow-ups stopped."); }}>
-      <div className="jb-two">
-        <label><span>Job amount</span><span className="jb-in"><i>$</i><input inputMode="decimal" autoFocus placeholder="7,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></span></label>
-        <label><span>Install date <em>optional</em></span><span className="jb-in"><input type="date" value={install} onChange={e => setInstall(e.target.value)} /></span></label>
+    {ask === "quoted" && <form className="jb-amt" onSubmit={e => e.preventDefault()}>
+      <p className="jb-amt-k">The quote</p>
+      {lines}
+      <label style={{ marginTop: 12 }}><span>What&rsquo;s included <em>optional, they&rsquo;ll see it</em></span><textarea rows={2} value={incl} maxLength={600} onChange={e => setIncl(e.target.value)} placeholder="Tear-out and haul-away, steel posts in concrete, 2-year warranty" /></label>
+      <p>Drafted from your prices; check every line. Nothing goes to {firstName} until you tap Send. After that, Cinder follows up on day 2, 5, 10 and 21 with the link until it&rsquo;s a yes or a no.</p>
+      <div className="jb-amt-row">
+        <button type="button" onClick={() => setAsk(null)}>Cancel</button>
+        <button type="button" disabled={!!busy || quoteTotal <= 0} onClick={() => void act("save", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl }, `Quote saved: ${dollars(quoteTotal)}. Not sent yet.`)}>Save</button>
+        <button type="button" className="go" disabled={!!busy || !canText || quoteTotal <= 0} onClick={() => void act("stage", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl, link: true },
+          r => r.sent ? `Quote texted to ${firstName}: ${dollars(quoteTotal)}.` : r.warn || "Saved.")}>{busy === "stage" ? <span className="ca-spin" /> : `Send ${dollars(quoteTotal)}`}</button>
       </div>
+    </form>}
+    {ask === "won" && <form className="jb-amt" onSubmit={e => { e.preventDefault(); void act("stage", { action: "stage", stage: "won", amount: amt, install: install || null, time: itime || null, days: Number(idays), review: review && biz.reviewLink },
+      r => `Marked won.${calMsg(r.calendar)}${review && biz.reviewLink && install ? " Review ask goes out the morning after." : ""}`); }}>
+      <label><span>Job amount</span><span className="jb-in"><i>$</i><input inputMode="decimal" autoFocus placeholder="7,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></span></label>
+      <div style={{ marginTop: 12 }}>{installFields}</div>
+      <p>{biz.calendar ? "The install goes on your Google Calendar." : "Connect Google Calendar (Calendar tab) and installs go straight on it."}</p>
       <Toggle on={review} set={setReview} disabled={!biz.reviewLink} title="Ask for a Google review after the install"
-        sub={!biz.reviewLink ? "Send Sam your Google review link to turn this on." : install ? "Texted the morning after the install." : "Add the install date, or tap Job done when it's finished."} />
+        sub={!biz.reviewLink ? "Send Sam your Google review link to turn this on." : install ? "Texted the morning after the install." : "Add the install day, or tap Job done when it's finished."} />
       <div className="jb-amt-row"><button type="button" onClick={() => setAsk(null)}>Cancel</button><button type="submit" className="go" disabled={!!busy}>{busy ? <span className="ca-spin" /> : "Mark won"}</button></div>
     </form>}
 
     {!ask && card.stage === "quoted" && q && <section className="jb-box">
-      <div className="jb-box-h"><b>The quote{q.amount ? ` · ${money(q.amount)}` : ""}</b>
-        <span className={"jb-pill" + (q.viewed ? " blue" : "")}>{q.status === "replied" ? "They replied" : q.viewed ? <><Svg d={I.eye} size={13} />Opened {ago(q.viewed)}</> : q.linked ? "Texted, not opened yet" : "Not texted yet"}</span></div>
-      {q.note && <p className="jb-box-p">{q.note}</p>}
-      <p className="jb-box-s">{q.steps ? `Follow-up ${q.steps} of 4 sent.` : "First follow-up in 2 days."} When they approve, the card moves to Won and you get a text.</p>
+      <div className="jb-box-h"><b>The quote{q.amount ? ` · ${dollars(q.amount)}` : ""}</b>
+        <span className={"jb-pill" + (q.viewed ? " blue" : "")}>{q.status === "replied" ? "They replied" : q.viewed ? <><Svg d={I.eye} size={13} />Opened {ago(q.viewed)}</> : q.linked ? "Texted, not opened yet" : "Not sent yet"}</span></div>
+      {editLines ? <div style={{ marginTop: 12 }}>{lines}</div>
+        : q.items.length > 0 && <ul className="jb-lines">{q.items.map((i, k) => <li key={k}><span>{i.name}<small>{i.qty !== 1 || i.unit ? `${i.qty}${i.unit ? " " + i.unit : ""} × ${dollars(i.price)}` : ""}</small></span><b>{dollars(i.qty * i.price)}</b></li>)}</ul>}
+      {q.note && !editLines && <p className="jb-box-p">{q.note}</p>}
+      <p className="jb-box-s">{!q.linked ? `Saved, not sent. ${firstName} sees nothing until you send it.` : q.steps ? `Follow-up ${q.steps} of 4 sent.` : "First follow-up in 2 days."}{q.linked ? " When they approve, the card moves to Won and you get a text." : ""}</p>
       <div className="jb-box-acts">
-        <button type="button" className="go" disabled={!!busy || !canText} onClick={() => void act("send", { action: "quotelink", note: incl }, r => r.sent ? `Quote texted to ${firstName}.` : r.warn || "Saved.")}>
-          {busy === "send" ? <span className="ca-spin" /> : <><Svg d={I.send} size={15} />{q.linked ? "Text it again" : `Text ${firstName} the quote`}</>}</button>
-        <button type="button" disabled={!!busy} onClick={() => void copy()}><Svg d={I.link} size={15} />Copy link</button>
+        {editLines ? <>
+          <button type="button" disabled={!!busy} onClick={() => setEditLines(false)}>Cancel</button>
+          <button type="button" className="go" disabled={!!busy || quoteTotal <= 0} onClick={async () => { if (await act("lines", { action: "quotelines", items, tax, note: incl }, `Quote updated: ${dollars(quoteTotal)}.`)) setEditLines(false); }}>Save lines</button>
+        </> : <>
+          <button type="button" className="go" disabled={!!busy || !canText} onClick={() => void act("send", { action: "quotelink", note: incl }, r => r.sent ? `Quote texted to ${firstName}.` : r.warn || "Saved.")}>
+            {busy === "send" ? <span className="ca-spin" /> : <><Svg d={I.send} size={15} />{q.linked ? "Text it again" : `Send to ${firstName}`}</>}</button>
+          <button type="button" disabled={!!busy} onClick={() => setEditLines(true)}>Edit lines</button>
+          <button type="button" disabled={!!busy} onClick={() => void copy()}><Svg d={I.link} size={15} />Copy link</button>
+        </>}
       </div>
     </section>}
 
-    {!ask && card.stage === "won" && !card.pastCustomer && <section className="jb-box">
-      <div className="jb-box-h"><b>After the job</b>{card.reviewSent ? <span className="jb-pill green"><Svg d={I.star} size={13} />Review asked {ago(card.reviewSent)}</span> : null}</div>
-      <div className="jb-two">
-        <label className="jb-f"><span>Install date</span><span className="jb-in"><input type="date" value={install} onChange={e => setInstall(e.target.value)} /></span></label>
-      </div>
-      {!card.reviewSent && <Toggle on={review} set={setReview} disabled={!biz.reviewLink} title="Ask for a Google review the morning after"
-        sub={!biz.reviewLink ? "Send Sam your Google review link to turn this on." : install ? `Goes out ${dateLabel(new Date(Date.parse(install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Add the install date above."} />}
-      {!card.reviewSent && biz.reviewLink && <div className="jb-box-acts">
-        <button type="button" disabled={!!busy || !canText} onClick={() => arm ? void act("review", { action: "reviewnow" }, `Review request sent to ${firstName}.`) : setArm(true)}>
-          {busy === "review" ? <span className="ca-spin" /> : <><Svg d={I.star} size={15} />{arm ? "Tap to send it now" : "Job done, ask now"}</>}</button>
-      </div>}
-    </section>}
+    {!ask && card.stage === "won" && !card.pastCustomer && <>
+      <section className="jb-box">
+        <div className="jb-box-h"><b>Install</b>{card.install ? <span className={"jb-pill" + (card.onCalendar ? " green" : "")}>{card.onCalendar ? "On Google Calendar" : "Not on a calendar"}</span> : null}</div>
+        <div style={{ marginTop: 12 }}>{installFields}</div>
+        {installDirty && <div className="jb-box-acts"><button type="button" className="go" disabled={!!busy} onClick={() => void act("install", { action: "install", install: install || null, time: itime || null, days: Number(idays) },
+          r => (install ? `Install set for ${dateLabel(install)}.` : "Install date cleared.") + calMsg(r.calendar))}>{busy === "install" ? <span className="ca-spin" /> : install ? "Save install" : "Clear install"}</button></div>}
+      </section>
+      <section className="jb-box">
+        <div className="jb-box-h"><b>Invoice</b>{card.invoice && <span className={"jb-pill " + invoiceState(card.invoice).tone}>{invoiceState(card.invoice).text}</span>}</div>
+        {card.invoice ? <>
+          <p className="jb-box-s">#{card.invoice.number} · {dollars(card.invoice.total)}{card.invoice.status === "sent" && card.invoice.due_on ? ` · due ${dateLabel(card.invoice.due_on)}` : ""}</p>
+          <div className="jb-box-acts"><button type="button" className="go" onClick={() => onInvoice(card.invoice!)}>Open invoice</button></div>
+        </> : <>
+          <p className="jb-box-s">Made from the quote&rsquo;s lines. They pay through your own pay link; Cinder never touches the money.</p>
+          <div className="jb-box-acts"><button type="button" className="go" disabled={!!busy} onClick={async () => { const r = await act("invoice", { action: "invoice" }, "Invoice ready to check and send."); if (r?.invoice) onInvoice(r.invoice); }}>
+            {busy === "invoice" ? <span className="ca-spin" /> : "Create invoice"}</button></div>
+        </>}
+      </section>
+      <section className="jb-box">
+        <div className="jb-box-h"><b>Review</b>{card.reviewSent ? <span className="jb-pill green"><Svg d={I.star} size={13} />Asked {ago(card.reviewSent)}</span> : null}</div>
+        {!card.reviewSent && <Toggle on={review} set={setReview} disabled={!biz.reviewLink} title="Ask for a Google review the morning after"
+          sub={!biz.reviewLink ? "Send Sam your Google review link to turn this on." : card.install ? `Goes out ${dateLabel(new Date(Date.parse(card.install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Set the install day above."} />}
+        {!card.reviewSent && biz.reviewLink && <div className="jb-box-acts">
+          <button type="button" disabled={!!busy || !canText} onClick={() => arm ? void act("review", { action: "reviewnow" }, `Review request sent to ${firstName}.`) : setArm(true)}>
+            {busy === "review" ? <span className="ca-spin" /> : <><Svg d={I.star} size={15} />{arm ? "Tap to send it now" : "Job done, ask now"}</>}</button>
+        </div>}
+      </section>
+    </>}
 
     {card.ballpark && card.stage !== "won" && <p className="jb-bp">Ballpark from your prices: <b>{rangeText(card.ballpark)}</b></p>}
     <h3 className="jb-h3">The job</h3>
     <DetailFields trade={trade} d={d} set={(k, v) => setD(x => ({ ...x, [k]: v }))} />
     <label className="jb-f full"><span>Job value</span><span className="jb-in"><i>$</i><input inputMode="decimal" value={value} onChange={e => setValue(e.target.value.replace(/[^\d.,kK]/g, ""))} placeholder="What it's worth to you" /></span></label>
     <label className="jb-f full"><span>Notes</span><textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Gate on the left side, dog in the yard, HOA needs drawings…" /></label>
-    <div className="jb-save"><button type="button" className="go" disabled={!dirty || !!busy} onClick={() => void act("save", { action: "card", details: d, value: value || null, notes, ...(card.stage === "won" ? { install: install || null, review } : {}) }, "Saved.")}>Save</button></div>
+    <div className="jb-save"><button type="button" className="go" disabled={!dirty || !!busy} onClick={() => void act("save", { action: "card", details: d, value: value || null, notes, ...(card.stage === "won" ? { review } : {}) }, "Saved.")}>Save</button></div>
   </Sheet>;
 }
 

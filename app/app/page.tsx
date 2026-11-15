@@ -9,6 +9,7 @@ import { CinderLogo, CinderMark } from "../cinder-brand";
 import { demoApi } from "./demo";
 import { JobsTab, Onboarding, type Card, type Winback } from "./crm-ui";
 import { Mission, Telemetry } from "./sx";
+import { BillingSettings, type Customer, type InvoiceRow } from "./billing-ui";
 import { money, sourceReport } from "@/lib/crm";
 import { agenda, googleCalendarUrl, onMyWayText, splitAppointments, type CalEvent } from "@/lib/client-schedule";
 
@@ -17,7 +18,7 @@ type Live = { leads: number; needs: number; answered: number; booked: number; re
 type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string; event_id?: string; link?: string };
 type Quote = { id: string; customer_name: string; customer_phone: string; amount: number | null; sent_on: string; steps_sent: number; status: string };
 type Cal = { connected: boolean; email: string; events: CalEvent[]; error: string; connectUrl: string };
-type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number; board?: Card[]; setup?: Record<string, string>; winback?: Winback };
+type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number; board?: Card[]; setup?: Record<string, string>; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[] };
 type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
 type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 type Tab = "leads" | "jobs" | "numbers" | "estimates" | "sam";
@@ -347,7 +348,7 @@ export default function CinderApp() {
   const [hidePushCard, setHidePushCard] = useState(false);
   const [demo, setDemo] = useState(false);
   // The setup flow: shown until the owner finishes it once; reopened from settings to change prices or details.
-  const [setupOpen, setSetupOpen] = useState(false), [setupDone, setSetupDone] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false), [setupDone, setSetupDone] = useState(false), [billingOpen, setBillingOpen] = useState(false);
   const exitDemo = () => { demoStop(); setDemo(false); setD(null); setOpen(null); setProject(""); setState("out"); };
   useEffect(() => {
     setPush(pushState());
@@ -490,7 +491,9 @@ export default function CinderApp() {
       </>)}
 
       {tab === "jobs" && <JobsTab cards={d.board ?? []} trade={d.setup?.trade || ""} project={project} api={api} toast={toast} reload={() => load(project, "jobs")} onOpen={setOpen} canCall={d.canCall} wide={wide}
-        biz={{ reviewLink: d.setup?.has_review_link === "yes" || !!d.hasReviewLink, number: d.setup?.has_number === "yes" || !!d.number, owner: d.owner, business: d.business }} winback={d.winback} />}
+        biz={{ reviewLink: d.setup?.has_review_link === "yes" || !!d.hasReviewLink, number: d.setup?.has_number === "yes" || !!d.number, owner: d.owner, business: d.business,
+          priceBook: d.setup?.price_book || "", taxRate: d.setup?.tax_rate || "", payLink: !!d.setup?.pay_link, calendar: d.setup?.has_calendar === "yes" || !!d.calendar?.connected }}
+        winback={d.winback} customers={d.customers} invoices={d.invoices} setup={d.setup} />}
 
       {tab === "estimates" && <CalendarTab d={d} project={project} onOpen={setOpen} reload={() => load(project, "estimates")} toast={toast} />}
 
@@ -508,6 +511,7 @@ export default function CinderApp() {
         <ul className="ca-settings">
           <li><span>Business</span><b>{bizName}</b></li>
           <li><span>Prices and business details</span><button type="button" className="ca-set-btn" onClick={() => { setSetupOpen(true); window.scrollTo(0, 0); }}>Edit setup</button></li>
+          <li><span>Invoices and payments</span><button type="button" className="ca-set-btn" onClick={() => setBillingOpen(true)}>{d.setup?.pay_link ? "Edit" : "Add pay link"}</button></li>
           {d.number && <li><span>Your Cinder number</span><b>{fmtPhone(d.number)}</b></li>}
           <li><span>Notifications</span>{push === "on" ? <b className="ca-on">On</b> : push === "off" ? <button type="button" className="ca-set-btn" onClick={() => void enablePush()}>Turn on</button> : <b>{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</b>}</li>
           <li><button type="button" onClick={async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); }}><Icon name="out" size={16} />{demo ? "Leave the example" : "Sign out"}</button></li>
@@ -525,6 +529,7 @@ export default function CinderApp() {
           <span className="ca-nav-ic">{ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "jobs" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="5" height="16" rx="1.5" /><rect x="9.5" y="4" width="5" height="11" rx="1.5" /><rect x="15.5" y="4" width="5" height="7" rx="1.5" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span>{l}</button>)}
       <p className="ca-nav-foot"><b>Questions? Text Sam.</b>(205) 837-0211</p>
     </nav>
+    {billingOpen && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={() => load(project, "sam")} onClose={() => setBillingOpen(false)} />}
     {toastNode}
   </div>;
 }

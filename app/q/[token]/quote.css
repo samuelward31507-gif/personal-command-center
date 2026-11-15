@@ -50,3 +50,24 @@ html body:not(#u) .qp-foot { margin: 18px 0 0; color: #8a9098 !important; font-s
 /* The website's buttons: black pill first, white pill with a hairline second. */
 html body:not(#u) :is(button.qp-go, a.qp-ask, .qp-row button) { border-radius: 999px !important; }
 html body:not(#u) .qp-mono { border-radius: 10px; }
+/* Line items: one row per line, the amount on the right, totals underneath. */
+html body:not(#u) .qp-lines { margin-top: 20px; padding-top: 6px; border-top: 1px solid rgba(18, 20, 23, .08); }
+html body:not(#u) .qp-lines ul { list-style: none; margin: 0; padding: 0; }
+html body:not(#u) .qp-lines li { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 12px 0; border-bottom: 1px solid rgba(18, 20, 23, .06); }
+html body:not(#u) .qp-lines li b { display: block; font-size: 15px; font-weight: 550; color: #121417; line-height: 1.35; }
+html body:not(#u) .qp-lines li small { display: block; margin-top: 3px; font: 500 12.5px var(--font-geist-mono), ui-monospace, monospace; color: #6f747c; font-variant-numeric: tabular-nums; }
+html body:not(#u) .qp-lines li em { flex: none; font-style: normal; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: #121417; }
+html body:not(#u) .qp-lines dl { margin: 10px 0 0; }
+html body:not(#u) .qp-lines dl > div { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; color: #4a4f57; font-variant-numeric: tabular-nums; }
+html body:not(#u) .qp-lines dt, html body:not(#u) .qp-lines dd { margin: 0; }
+html body:not(#u) .qp-lines .sum { margin-top: 6px; padding-top: 10px; border-top: 1px solid rgba(18, 20, 23, .12); font-size: 17px; font-weight: 650; color: #121417; }
+/* Invoice extras. */
+html body:not(#u) .qp-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; font: 500 12px var(--font-geist-mono), ui-monospace, monospace; letter-spacing: .04em; color: #6f747c; text-transform: uppercase; }
+html body:not(#u) .qp-meta b { color: #121417; font-weight: 600; }
+html body:not(#u) .qp-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(18, 20, 23, .1); font-size: 12.5px; font-weight: 600; color: #4a4f57; background: #fff; }
+html body:not(#u) .qp-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #a0a5ad; }
+html body:not(#u) .qp-badge.ok { color: #127a4c; border-color: rgba(23, 144, 90, .25); background: rgba(23, 144, 90, .06); }
+html body:not(#u) .qp-badge.ok::before { background: #17905a; }
+html body:not(#u) .qp-badge.late { color: #a8322a; border-color: rgba(168, 50, 42, .25); background: rgba(168, 50, 42, .05); }
+html body:not(#u) .qp-badge.late::before { background: #c0392b; }
+html body:not(#u) a.qp-go { height: 56px; display: grid; place-items: center; border-radius: 999px; background: #121417; color: #fff !important; font-size: 17px; font-weight: 600; text-decoration: none; }

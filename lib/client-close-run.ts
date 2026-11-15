@@ -3,6 +3,7 @@
 // the rest of Cinder: the client's number, texting hours, opt-outs, and everything logged on the conversation.
 import { randomBytes } from "node:crypto";
 import type { NeonQueryFunction } from "@neondatabase/serverless";
+import { cleanItems } from "@/lib/billing";
 import { cleanWinback, detailLine, cleanDetails, money, quoteText, reviewDue, QUOTE_TOKEN } from "@/lib/crm";
 import { digits10, fill, inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, clientById, quoteUrl, sendReviewRequest, sendToCustomer, type Client } from "@/lib/client-runtime-run";
@@ -44,13 +45,14 @@ export async function sendQuoteLink(sql: Sql, c: Client, threadId: string, note?
 }
 
 export type PublicQuote = { business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
+  items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number;
   state: "open" | "approved" | "declined" | "closed"; answeredAt: string | null };
 
 /** What the customer sees behind the link. Nothing else about the business or other customers. Marks it viewed. */
 export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote | null> {
   if (!QUOTE_TOKEN.test(token)) return null;
   const [q] = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.amount::float AS amount, q.note, q.sent_on::text AS sent_on, q.status,
-      q.approved_at, q.declined_at, q.viewed_at
+      q.approved_at, q.declined_at, q.viewed_at, q.items, q.tax_rate::float AS tax_rate
     FROM public.client_quotes q WHERE q.token = ${token} LIMIT 1` as Record<string, unknown>[];
   if (!q) return null;
   const c = await clientById(sql, String(q.owner_id), String(q.project_id));
@@ -63,6 +65,7 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
     business: c.setup.display_name || "", owner: first(c.setup.owner_name || ""), phone: c.setup.texting_number || "",
     customer: first(t?.customer_name || String(q.customer_name || "")), amount: q.amount == null ? null : Number(q.amount),
     line: t ? detailLine(c.setup.trade, cleanDetails(c.setup.trade, t.details)) : "", note: String(q.note ?? ""), sent: String(q.sent_on),
+    items: cleanItems(q.items), tax_rate: Number(q.tax_rate ?? 0),
     state: q.approved_at ? "approved" : q.declined_at ? "declined" : status === "won" ? "closed" : "open",
     answeredAt: q.approved_at ? new Date(String(q.approved_at)).toISOString() : q.declined_at ? new Date(String(q.declined_at)).toISOString() : null,
   };

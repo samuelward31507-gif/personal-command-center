@@ -1,6 +1,7 @@
 // The example business behind /app?demo=1: the real app over an in-memory copy of its API,
 // so Sam (and prospects on a call) can click through exactly what a client sees. Nothing leaves the browser.
-import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, cleanWinback, detailLine, parsePriceBook, stageFor, STAGES, winbackDraft, type Card, type Details } from "@/lib/crm";
+import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, cleanWinback, detailLine, parsePriceBook, stageFor, STAGES, winbackDraft, type Card, type CardInvoice, type Details } from "@/lib/crm";
+import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 const at = (days: number, hour: number, min = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(hour, min, 0, 0); return d.toISOString(); };
 const GC = "https://calendar.google.com/calendar/r/week";
@@ -56,7 +57,7 @@ function seed() {
     l2: { thread: { id: "l2", customer_name: "Ashley Kim", customer_phone: "+13035550141", source: "thumbtack", status: "closed" }, texts: [
       tx("in", "system", "Passed on the quote online: \u201cWent with a cheaper bid\u201d", 60 * 24 * 7)] },
   };
-  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; reviewAuto?: boolean; reviewSent?: string | null }> = {
+  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null }> = {
     t1: { details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" }, notes: "Asked about financing. Call him." },
     t2: { details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No" }, notes: "Replacing chain link." },
     t3: { details: { material: "Vinyl" }, notes: "" },
@@ -66,12 +67,12 @@ function seed() {
     q2: { details: { length_ft: 900, material: "Ranch rail", gates: 2 }, notes: "Horses. Needs it before spring.", value: 12400 },
     q3: { details: { length_ft: 110, material: "Chain link", height: "5 ft", gates: 1 }, notes: "", value: 4650 },
     w1: { details: { length_ft: 220, material: "cedar", height: "6 ft", gates: 2 }, notes: "Install done. Ask for a review.", value: 8600 },
-    w2: { stage: "won", details: { length_ft: 150, material: "Vinyl", height: "6 ft", gates: 1 }, notes: "Approved from the link.", value: 6900, install: at(4, 8).slice(0, 10), reviewAuto: true },
-    w3: { stage: "won", details: { length_ft: 260, material: "Wood privacy", height: "6 ft", gates: 2 }, notes: "", value: 11200, install: at(-12, 8).slice(0, 10), reviewSent: at(-11, 9) },
+    w2: { stage: "won", details: { length_ft: 150, material: "Vinyl", height: "6 ft", gates: 1 }, notes: "Approved from the link.", value: 6900, install: at(4, 8).slice(0, 10), installTime: "08:00", installDays: 1, onCalendar: true, reviewAuto: true },
+    w3: { stage: "won", details: { length_ft: 260, material: "Wood privacy", height: "6 ft", gates: 2 }, notes: "", value: 11200, install: at(-12, 8).slice(0, 10), installDays: 2, onCalendar: true, reviewSent: at(-11, 9) },
     l2: { stage: "lost", details: { length_ft: 90, material: "Chain link", height: "4 ft" }, notes: "Went with a cheaper bid." },
   };
   const setup: Record<string, string> = { display_name: "Ridgeline Fence Co.", owner_name: "Mike", trade: "Fence", website: "https://ridgelinefence.example", team_size: "2-5 people", years: "6-10 years",
-    leads_month: "10-30", lead_sources: "Phone calls, Website form, Google, Angi", software: "None, just my phone", share_ballpark: "yes", priority: "quotes", onboarded_at: "2026-11-01T15:00:00.000Z",
+    leads_month: "10-30", lead_sources: "Phone calls, Website form, Google, Angi", software: "None, just my phone", share_ballpark: "yes", priority: "quotes", onboarded_at: "2026-11-01T15:00:00.000Z", pay_link: "https://square.link/u/example", tax_rate: "0", invoice_days: "7",
     price_book: JSON.stringify({ unit: "ft", rates: [{ name: "Wood privacy (cedar)", low: 38, high: 48 }, { name: "Vinyl", low: 40, high: 55 }, { name: "Chain link", low: 18, high: 26 }, { name: "Ranch rail", low: 12, high: 18 }], gate: [450, 650] }) };
   return {
     threads, crm, setup,
@@ -86,16 +87,24 @@ function seed() {
       { id: "e2", title: "Material pickup", start: at(2, 7), end: at(2, 8), allDay: false, link: GC },
       { id: "e4", title: "Crew off", start: at(3, 0), end: at(4, 0), allDay: true, link: GC }],
     quotes: [
-      { id: "q1", customer_name: "Lena Ortiz", customer_phone: "+17205550191", amount: 7800 as number | null, sent_on: at(-6, 12).slice(0, 10), steps_sent: 2, status: "open", linked: true, viewed: ago(60 * 3) as string | null, note: "Remove old wood fence, 6 ft white vinyl privacy, one 4 ft gate." },
-      { id: "q2", customer_name: "Kyle Brandt", customer_phone: "+13035550133", amount: 12400 as number | null, sent_on: at(-3, 12).slice(0, 10), steps_sent: 1, status: "open", linked: true, viewed: null as string | null, note: "" },
-      { id: "q3", customer_name: "Jen Park", customer_phone: "+17205550120", amount: 4650 as number | null, sent_on: at(-1, 12).slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null as string | null, note: "" }],
+      { id: "q1", customer_name: "Lena Ortiz", customer_phone: "+17205550191", amount: 7800 as number | null, sent_on: at(-6, 12).slice(0, 10), steps_sent: 2, status: "open", linked: true, viewed: ago(60 * 3) as string | null, note: "Remove old wood fence, 6 ft white vinyl privacy, one 4 ft gate.",
+        items: [{ name: "6 ft Vinyl privacy fence, installed", qty: 160, unit: "ft", price: 44 }, { name: "Walk gate", qty: 1, unit: "", price: 760 }, { name: "Tear-out and haul-away", qty: 160, unit: "ft", price: 2 }] as Item[], tax_rate: 0 },
+      { id: "q2", customer_name: "Kyle Brandt", customer_phone: "+13035550133", amount: 12400 as number | null, sent_on: at(-3, 12).slice(0, 10), steps_sent: 1, status: "open", linked: true, viewed: null as string | null, note: "", items: [] as Item[], tax_rate: 0 },
+      { id: "q3", customer_name: "Jen Park", customer_phone: "+17205550120", amount: 4650 as number | null, sent_on: at(-1, 12).slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null as string | null, note: "", items: [] as Item[], tax_rate: 0 }],
     winbackSent: false,
+    invoices: [
+      { id: "iv1", thread_id: "w3", number: 1041, status: "paid", items: [{ name: "6 ft Wood privacy fence, installed", qty: 260, unit: "ft", price: 39 }, { name: "Walk gate", qty: 2, unit: "", price: 530 }], tax_rate: 0, total: 11200, note: "", due_on: at(-6, 12).slice(0, 10),
+        sent_at: at(-10, 12), viewed_at: at(-10, 15), paid_at: at(-8, 12), paid_claimed_at: null, reminders: 0, reminders_paused: false, url: "/i/example" },
+      { id: "iv2", thread_id: "w1", number: 1042, status: "sent", items: [{ name: "6 ft cedar privacy fence, installed", qty: 220, unit: "ft", price: 35 }, { name: "Walk gate", qty: 2, unit: "", price: 450 }], tax_rate: 0, total: 8600, note: "", due_on: at(-2, 12).slice(0, 10),
+        sent_at: at(-9, 12), viewed_at: at(-9, 18), paid_at: null, paid_claimed_at: null, reminders: 1, reminders_paused: false, url: "/i/example" },
+    ] as (CardInvoice & { thread_id: string })[],
     won: 5, wonValue: 37500,
     wonJobs: [{ id: "w1", customer_name: "Henderson family", customer_phone: "+17205550110", amount: 8600 as number | null, won_at: at(-9, 12) }],
   };
 }
 
 const EXAMPLE_LINK = (typeof location !== "undefined" ? location.origin : "") + "/q/example";
+const EXAMPLE_INVOICE = (typeof location !== "undefined" ? location.origin : "") + "/i/example";
 const quoteSms = (name: string, amount: number | null, id: string) => {
   const d = st().crm[id]; const line = d ? detailLine("Fence", cleanDetails("Fence", d.details)) : "";
   return `Hi ${name.split(" ")[0] || "there"}, here's your quote from Ridgeline Fence Co${amount ? `: $${amount.toLocaleString("en-US")}${line ? ` for ${line}` : ""}` : ""}. You can look it over and approve it here: https://app.cinderrevenue.com/q/example`;
@@ -120,7 +129,8 @@ function data() {
       weeks: [{ week: "a", leads: 8, booked: 3 }, { week: "b", leads: 11, booked: 4 }, { week: "c", leads: 9, booked: 3 }, { week: "d", leads: 13, booked: 4 }], conversations },
     owner: "Mike", appointments: s.appts, quotes: s.quotes, quoteSteps: 4, wonJobs: s.wonJobs, hasReviewLink: true,
     calendar: { connected: true, email: "mike@ridgelinefence.com", events: s.events, error: "", connectUrl: "#" },
-    messages: s.messages, board: board(), setup: { ...s.setup, has_review_link: "yes", has_number: "yes" },
+    messages: s.messages, board: board(), setup: { ...s.setup, has_review_link: "yes", has_number: "yes", has_calendar: "yes" },
+    customers: customers(), invoices: s.invoices.map(i => { const th = s.threads[i.thread_id]?.thread; return { ...i, customer: th?.customer_name ?? "", phone: th?.customer_phone ?? "" }; }),
     winback: { past: 23, eligible: s.winbackSent ? 0 : 4, names: ["Rob", "Megan", "Luis", "Kara"], draft: winbackDraft(s.setup.trade, s.setup.owner_name, s.setup.display_name) },
   };
 }
@@ -140,9 +150,19 @@ function board(): Card[] {
     return { id: thread.id, name: thread.customer_name, phone: thread.customer_phone, source: thread.source, status: thread.status,
       stage: stageFor({ stage: c.stage ?? null, status: thread.status, quote_status: quoteStatus, next_appt: next }), details, line: detailLine(s.setup.trade, details),
       value: c.value ?? q?.amount ?? null, ballpark: bp ? { low: bp.low, high: bp.high } : null, notes: c.notes,
-      quote: q ? { id: q.id, amount: q.amount, status: q.status, steps: q.steps_sent, linked: q.linked, url: q.linked ? EXAMPLE_LINK : null, viewed: q.viewed, note: q.note } : null,
-      next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false };
+      quote: q ? { id: q.id, amount: q.amount, status: q.status, steps: q.steps_sent, linked: q.linked, url: q.linked ? EXAMPLE_LINK : null, viewed: q.viewed, note: q.note, items: q.items, tax: q.tax_rate } : null,
+      next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, installTime: c.installTime ?? null, installDays: c.installDays ?? 1, onCalendar: !!c.onCalendar,
+      reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void").at(-1) ?? null };
   }).sort((a, b) => b.at.localeCompare(a.at));
+}
+
+/** Every customer of the example business, the way the server lists them. */
+function customers() {
+  const s = st(), b = board();
+  return b.map(c => { const inv = s.invoices.filter(i => i.thread_id === c.id && i.status !== "void");
+    const won = c.stage === "won" ? (c.value ?? 0) : 0;
+    return { id: c.id, name: c.name, phone: c.phone, address: String(c.details.address ?? ""), source: c.source, status: c.status, stage: c.stage, since: c.at, last: c.at,
+      jobs: c.stage === "won" ? 1 : 0, spent: won, owed: inv.filter(i => i.status === "sent").reduce((a, i) => a + i.total, 0), open_quote: c.stage === "quoted" ? c.quote?.amount ?? null : null, line: c.line }; });
 }
 
 /** Answers the app's API calls for the example business. Throws like the real API on errors. */
@@ -162,7 +182,7 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       s.appts = s.appts.filter(x => x !== a);
       const amt = money(b.amount), th = s.threads[a.thread_id];
       if (b.result === "quoted") {
-        s.quotes.unshift({ id: "q" + Date.now(), customer_name: a.customer_name, customer_phone: a.customer_phone, amount: amt, sent_on: now.slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null, note: "" });
+        s.quotes.unshift({ id: "q" + Date.now(), customer_name: a.customer_name, customer_phone: a.customer_phone, amount: amt, sent_on: now.slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null, note: "", items: [], tax_rate: 0 });
         th?.texts.push({ id: "d" + ++n, direction: "out", author: "system", body: `Quote sent${amt ? `: $${amt.toLocaleString()}` : ""}. Cinder follows up until they answer.`, at: now });
       }
       if (b.result === "won") { s.won++; s.wonValue += amt || 0; if (th) th.thread.status = "closed"; return { ok: true, review: b.review ? "sent" : "" }; }
@@ -204,8 +224,10 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       if (stage === "quoted") {
         if (q) Object.assign(q, { amount: amt ?? q.amount, steps_sent: 0, sent_on: now.slice(0, 10), status: "open" });
         if (q && typeof b.note === "string") q.note = b.note.trim().slice(0, 600);
+        const qq = s.quotes.find(x => x.customer_phone.replace(/\D/g, "").slice(-10) === d10);
+        if (qq && b.items !== undefined) { qq.items = cleanItems(b.items); qq.tax_rate = cleanTax(b.tax); qq.amount = totals(qq.items, qq.tax_rate).total; c.value = qq.amount; }
         if (q && b.link) { q.linked = true; th!.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: quoteSms(th!.thread.customer_name, q.amount, th!.thread.id), at: now }); }
-        else s.quotes.unshift({ id: "q" + Date.now(), customer_name: th!.thread.customer_name, customer_phone: th!.thread.customer_phone, amount: amt, sent_on: now.slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null, note: "" });
+        else s.quotes.unshift({ id: "q" + Date.now(), customer_name: th!.thread.customer_name, customer_phone: th!.thread.customer_phone, amount: amt, sent_on: now.slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null, note: "", items: [], tax_rate: 0 });
         const nq = s.quotes.find(x => x.customer_phone.replace(/\D/g, "").slice(-10) === d10)!;
         if (typeof b.note === "string") nq.note = b.note.trim().slice(0, 600);
         if (b.link) { nq.linked = true; th!.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: quoteSms(th!.thread.customer_name, nq.amount, th!.thread.id), at: now }); }
@@ -217,9 +239,9 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
         th!.thread.status = "closed";
         th!.texts.push({ id: "d" + ++n, direction: "out", author: "system", body: stage === "won" ? `Job won${amt ? `: $${amt.toLocaleString()}` : ""}` : "Marked lost. Follow-ups stopped.", at: now });
       }
-      if (stage === "won") { c.install = cleanDate(b.install); c.reviewAuto = !!b.review; }
+      if (stage === "won") { c.install = cleanDate(b.install); c.installTime = typeof b.time === "string" ? b.time : null; c.installDays = Number(b.days) || 1; c.onCalendar = !!c.install; c.reviewAuto = !!b.review; }
       c.stage = stage; if (amt) c.value = amt;
-      return stage === "quoted" && b.link ? { ok: true, sent: true, link: EXAMPLE_LINK } : { ok: true };
+      return stage === "quoted" && b.link ? { ok: true, sent: true, link: EXAMPLE_LINK } : stage === "won" && c.install ? { ok: true, calendar: "added" } : { ok: true };
     }
     if (b.action === "quotelink" || b.action === "reviewnow") {
       const th = typeof b.thread === "string" ? s.threads[b.thread] : undefined;
@@ -231,6 +253,40 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       if (typeof b.note === "string" && b.note) q.note = b.note.trim().slice(0, 600);
       q.linked = true; th!.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: quoteSms(th!.thread.customer_name, q.amount, th!.thread.id), at: now });
       return { ok: true, link: EXAMPLE_LINK, sent: true };
+    }
+    if (b.action === "quotelines" || b.action === "install" || b.action === "invoice") {
+      const th = typeof b.thread === "string" ? s.threads[b.thread] : undefined;
+      if (!th) fail("Not found", 404);
+      const c = (s.crm[th!.thread.id] ??= { details: {}, notes: "" });
+      const d10 = th!.thread.customer_phone.replace(/\D/g, "").slice(-10);
+      const q = s.quotes.find(x => x.customer_phone.replace(/\D/g, "").slice(-10) === d10);
+      if (b.action === "quotelines") {
+        if (!q) fail("Move them to Quoted first.", 409);
+        const items = cleanItems(b.items); if (!items.length) fail("Add at least one line with a price.");
+        q!.items = items; q!.tax_rate = cleanTax(b.tax); q!.amount = totals(items, q!.tax_rate).total; c.value = q!.amount;
+        if (typeof b.note === "string") q!.note = b.note;
+        if (b.send) { q!.linked = true; th!.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: quoteSms(th!.thread.customer_name, q!.amount, th!.thread.id), at: now }); return { ok: true, sent: true, link: EXAMPLE_LINK }; }
+        return { ok: true, total: q!.amount };
+      }
+      if (b.action === "install") { c.install = cleanDate(b.install); c.installTime = typeof b.time === "string" ? b.time : null; c.installDays = Number(b.days) || 1; c.onCalendar = !!c.install; return { ok: true, calendar: c.install ? "added" : "removed" }; }
+      const open = s.invoices.find(i => i.thread_id === th!.thread.id && (i.status === "draft" || i.status === "sent"));
+      if (open) return { ok: true, invoice: open };
+      const items: Item[] = q?.items?.length ? q.items : [{ name: `${detailLine("Fence", cleanDetails("Fence", c.details)) || "Job"}, installed`, qty: 1, unit: "", price: c.value ?? q?.amount ?? 0 }];
+      const inv = { id: "iv" + Date.now(), thread_id: th!.thread.id, number: 1001 + s.invoices.length + 41, status: "draft", items, tax_rate: q?.tax_rate ?? 0, total: totals(items, q?.tax_rate ?? 0).total, note: "",
+        due_on: at(7, 12).slice(0, 10), sent_at: null, viewed_at: null, paid_at: null, paid_claimed_at: null, reminders: 0, reminders_paused: false, url: null } as CardInvoice & { thread_id: string };
+      s.invoices.push(inv);
+      return { ok: true, invoice: inv };
+    }
+    if (b.action === "invoicesave" || b.action === "invoicesend" || b.action === "invoiceset") {
+      const inv = s.invoices.find(i => i.id === b.invoice) ?? fail("Which invoice?", 404);
+      if (b.action === "invoicesave") { if (b.items !== undefined) inv.items = cleanItems(b.items); if (b.tax !== undefined) inv.tax_rate = cleanTax(b.tax); if (typeof b.note === "string") inv.note = b.note; if (b.due !== undefined) inv.due_on = cleanDate(b.due); inv.total = totals(inv.items, inv.tax_rate).total; return { ok: true }; }
+      if (b.action === "invoicesend") { inv.status = "sent"; inv.sent_at ??= now; inv.url = EXAMPLE_INVOICE; const th = s.threads[inv.thread_id];
+        th?.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: `Hi ${(th.thread.customer_name || "").split(" ")[0]}, here's invoice #${inv.number} from Ridgeline Fence Co for $${inv.total.toLocaleString("en-US")}. You can see it and pay here: https://app.cinderrevenue.com/i/example`, at: now });
+        return { ok: true, sent: true, link: EXAMPLE_INVOICE }; }
+      const what = String(b.what);
+      if (what === "paid") { inv.status = "paid"; inv.paid_at = now; } else if (what === "unpaid") { inv.status = inv.sent_at ? "sent" : "draft"; inv.paid_at = null; }
+      else if (what === "void") inv.status = "void"; else if (what === "pause" || what === "resume") inv.reminders_paused = what === "pause";
+      return { ok: true };
     }
     if (b.action === "winback") {
       const w = cleanWinback(b.body, s.setup.display_name);

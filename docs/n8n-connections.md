@@ -17,6 +17,7 @@ direct connection; anything else goes through n8n, both ways.
 | `quote.sent` | The owner moved a card to Quoted (follow-ups start) |
 | `job.won` / `job.lost` | The owner marked the job won or lost (follow-ups stop) |
 | `stage.changed` | Moved back to New or Estimate booked |
+| `invoice.sent` / `invoice.paid` | An invoice was texted, or the owner marked it paid |
 
 Body:
 

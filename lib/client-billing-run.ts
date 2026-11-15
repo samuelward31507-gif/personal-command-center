@@ -1,0 +1,256 @@
+// Jobber's core, on the server, without the bloat: quote lines the owner checks and sends himself, installs on his
+// Google Calendar, invoices paid through his own pay link (Cinder never holds money), payment reminders, and one
+// list of every customer. Every write is scoped to the signed-in owner's business; every text is logged.
+import { randomBytes } from "node:crypto";
+import type { NeonQueryFunction } from "@neondatabase/serverless";
+import { cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, type Item } from "@/lib/billing";
+import { cleanDate, cleanDetails, detailLine } from "@/lib/crm";
+import { digits10, inTextingHours } from "@/lib/client-runtime";
+import { alertOwner, appOrigin, clientById, sendToCustomer, type Client } from "@/lib/client-runtime-run";
+import { clientCalendar, createAllDayEvent, createEvent, deleteEvent } from "@/lib/client-calendar";
+import { emitEvent } from "@/lib/client-webhook";
+
+type Sql = NeonQueryFunction<false, false>;
+const tz = (c: Client) => c.setup.timezone || "America/Denver";
+const todayIn = (c: Client) => new Date().toLocaleDateString("en-CA", { timeZone: tz(c) });
+const first = (s: string) => (s || "").trim().split(" ")[0] || "";
+const phoneMatch = (a: string) => digits10(a);
+export const invoiceUrl = (token: string) => `${appOrigin()}/i/${token}`;
+const prettyDay = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+
+async function threadOf(sql: Sql, c: Client, id: string) {
+  const [t] = await sql`SELECT id, customer_name, customer_phone, status, details, value::float AS value, install_on::text AS install_on, install_time, install_days, install_event_id
+    FROM public.client_threads WHERE id = ${id}::uuid AND project_id = ${c.projectId}::uuid` as { id: string; customer_name: string; customer_phone: string; status: string; details: unknown; value: number | null;
+      install_on: string | null; install_time: string | null; install_days: number; install_event_id: string | null }[];
+  return t ?? null;
+}
+
+// ---------- Quote lines ----------
+/** The owner's lines and tax on the customer's open quote; the quote amount becomes their total. Sending is separate. */
+export async function saveQuoteLines(sql: Sql, c: Client, threadId: string, input: { items: unknown; tax?: unknown; note?: string }): Promise<{ ok: boolean; total?: number; error?: string }> {
+  const t = await threadOf(sql, c, threadId);
+  if (!t) return { ok: false, error: "Not found." };
+  const items = cleanItems(input.items);
+  if (!items.length) return { ok: false, error: "Add at least one line with a price." };
+  const tax = cleanTax(input.tax ?? c.setup.tax_rate ?? 0);
+  const { total } = totals(items, tax);
+  const [q] = await sql`UPDATE public.client_quotes SET items = ${JSON.stringify(items)}::jsonb, tax_rate = ${tax}, amount = ${total},
+      note = CASE WHEN ${typeof input.note === "string"}::boolean THEN ${String(input.note ?? "").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, " ").trim().slice(0, 600)} ELSE note END
+    WHERE id = (SELECT id FROM public.client_quotes WHERE project_id = ${c.projectId}::uuid AND kind = 'quote' AND status IN ('open', 'replied')
+      AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${phoneMatch(t.customer_phone)} ORDER BY created_at DESC LIMIT 1) RETURNING id`;
+  if (!q) return { ok: false, error: "Move them to Quoted first." };
+  await sql`UPDATE public.client_threads SET value = ${total}, updated_at = now() WHERE id = ${t.id}::uuid`;
+  return { ok: true, total };
+}
+
+// ---------- The install on Google Calendar ----------
+/**
+ * When the install is: a day (and a start time, or all day) and how many days it runs. Put on the owner's Google
+ * Calendar when it's connected; a change replaces the old event, clearing the date removes it.
+ */
+export async function scheduleInstall(sql: Sql, c: Client, threadId: string, input: { date?: unknown; time?: unknown; days?: unknown }): Promise<{ ok: boolean; calendar: "added" | "removed" | "not_connected" | "failed" | "none"; error?: string }> {
+  const t = await threadOf(sql, c, threadId);
+  if (!t) return { ok: false, calendar: "none", error: "Not found." };
+  const date = cleanDate(input.date);
+  const time = typeof input.time === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(input.time) ? input.time : null;
+  const days = Math.min(14, Math.max(1, Math.round(Number(input.days) || 1)));
+  const same = date === t.install_on && time === (t.install_time ?? null) && days === (t.install_days || 1);
+  await sql`UPDATE public.client_threads SET install_on = ${date}::date, install_time = ${time}, install_days = ${days}, updated_at = now() WHERE id = ${t.id}::uuid`;
+  if (same && (t.install_event_id || !date)) return { ok: true, calendar: "none" };
+  const cal = await clientCalendar(sql, c.projectId).catch(() => null);
+  if (!cal) return { ok: true, calendar: date ? "not_connected" : "none" };
+  try {
+    if (t.install_event_id) { await deleteEvent(cal, t.install_event_id); await sql`UPDATE public.client_threads SET install_event_id = NULL WHERE id = ${t.id}::uuid`; }
+    if (!date) return { ok: true, calendar: t.install_event_id ? "removed" : "none" };
+    const d = cleanDetails(c.setup.trade, t.details);
+    const who = t.customer_name || t.customer_phone;
+    const details = [detailLine(c.setup.trade, d), d.address ? `Address: ${d.address}` : "", `Phone: ${t.customer_phone}`, t.value ? `Job: ${dollars(t.value)}` : "", "Scheduled in Cinder."].filter(Boolean).join("\n");
+    let id: string;
+    if (time && days === 1) {
+      const start = new Date(`${date}T${time}:00`); // wall time; Google applies the time zone below
+      const end = new Date(start.getTime() + 8 * 3600000);
+      const fmt = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}T${String(x.getHours()).padStart(2, "0")}:${String(x.getMinutes()).padStart(2, "0")}:00`;
+      id = await createEvent(cal, { start: fmt(start), end: fmt(end), tz: tz(c), title: `Install: ${who}`, details });
+    } else id = await createAllDayEvent(cal, { date, days, title: `Install: ${who}${days > 1 ? ` (${days} days)` : ""}`, details });
+    await sql`UPDATE public.client_threads SET install_event_id = ${id} WHERE id = ${t.id}::uuid`;
+    return { ok: true, calendar: "added" };
+  } catch (e) { console.error("Install calendar failed", e instanceof Error ? e.message : e); return { ok: true, calendar: "failed" }; }
+}
+
+// ---------- Invoices ----------
+export type Invoice = { id: string; number: number; status: string; items: Item[]; tax_rate: number; total: number; note: string; due_on: string | null;
+  sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null };
+const asInvoice = (r: Record<string, unknown>): Invoice => ({
+  id: String(r.id), number: Number(r.number), status: String(r.status), items: cleanItems(r.items), tax_rate: Number(r.tax_rate ?? 0), total: Number(r.total ?? 0), note: String(r.note ?? ""),
+  due_on: r.due_on ? String(r.due_on).slice(0, 10) : null, sent_at: r.sent_at ? new Date(String(r.sent_at)).toISOString() : null, viewed_at: r.viewed_at ? new Date(String(r.viewed_at)).toISOString() : null,
+  paid_at: r.paid_at ? new Date(String(r.paid_at)).toISOString() : null, paid_claimed_at: r.paid_claimed_at ? new Date(String(r.paid_claimed_at)).toISOString() : null,
+  reminders: Number(r.reminders ?? 0), reminders_paused: !!r.reminders_paused, url: r.token ? invoiceUrl(String(r.token)) : null,
+});
+
+/** A draft invoice for a won job: the quote's lines when there are some, else one line for the job value. */
+export async function createInvoice(sql: Sql, c: Client, threadId: string): Promise<{ ok: boolean; invoice?: Invoice; error?: string }> {
+  const t = await threadOf(sql, c, threadId);
+  if (!t) return { ok: false, error: "Not found." };
+  const [open] = await sql`SELECT * FROM public.client_invoices WHERE thread_id = ${t.id}::uuid AND status IN ('draft', 'sent') ORDER BY created_at DESC LIMIT 1` as Record<string, unknown>[];
+  if (open) return { ok: true, invoice: asInvoice(open) };
+  const [q] = await sql`SELECT items, tax_rate::float AS tax_rate, amount::float AS amount FROM public.client_quotes WHERE project_id = ${c.projectId}::uuid AND kind = 'quote'
+    AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${phoneMatch(t.customer_phone)} ORDER BY (status = 'won') DESC, created_at DESC LIMIT 1` as { items: unknown; tax_rate: number; amount: number | null }[];
+  let items = cleanItems(q?.items);
+  const taxRate = items.length ? Number(q?.tax_rate ?? 0) : 0;
+  if (!items.length) {
+    const amount = t.value ?? q?.amount ?? 0;
+    const line = detailLine(c.setup.trade, cleanDetails(c.setup.trade, t.details));
+    items = [{ name: line ? `${line}, installed` : "Job", qty: 1, unit: "", price: amount }];
+  }
+  const days = Number(c.setup.invoice_days ?? 7) || 0;
+  const due = new Date(Date.parse(todayIn(c) + "T12:00:00Z") + days * 86400000).toISOString().slice(0, 10);
+  const { total } = totals(items, taxRate);
+  // Numbers start at 1001 per business; a clash (two taps at once) retries once with the next number.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const [r] = await sql`INSERT INTO public.client_invoices (owner_id, project_id, thread_id, number, items, tax_rate, total, due_on)
+        VALUES (${c.owner}, ${c.projectId}::uuid, ${t.id}::uuid, (SELECT coalesce(max(number), 1000) + 1 FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid),
+          ${JSON.stringify(items)}::jsonb, ${taxRate}, ${total}, ${due}::date) RETURNING *` as Record<string, unknown>[];
+      return { ok: true, invoice: asInvoice(r) };
+    } catch (e) { if (attempt) { console.error("Invoice create failed", e instanceof Error ? e.message : e); return { ok: false, error: "Couldn't make the invoice. Try again." }; } }
+  }
+  return { ok: false, error: "Couldn't make the invoice." };
+}
+
+/** Change the lines, tax, note or due date. A paid or voided invoice is final. */
+export async function saveInvoice(sql: Sql, c: Client, invoiceId: string, input: { items?: unknown; tax?: unknown; note?: unknown; due?: unknown }): Promise<{ ok: boolean; error?: string }> {
+  const items = input.items === undefined ? null : cleanItems(input.items);
+  if (items && !items.length) return { ok: false, error: "Add at least one line with a price." };
+  const [cur] = await sql`SELECT items, tax_rate::float AS tax_rate FROM public.client_invoices WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status IN ('draft', 'sent')` as { items: unknown; tax_rate: number }[];
+  if (!cur) return { ok: false, error: "That invoice can't be changed." };
+  const nextItems = items ?? cleanItems(cur.items), tax = input.tax === undefined ? Number(cur.tax_rate) : cleanTax(input.tax);
+  const due = input.due === undefined ? undefined : cleanDate(input.due);
+  await sql`UPDATE public.client_invoices SET items = ${JSON.stringify(nextItems)}::jsonb, tax_rate = ${tax}, total = ${totals(nextItems, tax).total},
+      note = CASE WHEN ${typeof input.note === "string"}::boolean THEN ${String(input.note ?? "").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, " ").trim().slice(0, 600)} ELSE note END,
+      due_on = CASE WHEN ${due === undefined}::boolean THEN due_on ELSE ${due ?? null}::date END
+    WHERE id = ${invoiceId}::uuid`;
+  return { ok: true };
+}
+
+/** Text the customer the invoice. Owner-initiated, inside texting hours; outside them it's saved for the morning. */
+export async function sendInvoice(sql: Sql, c: Client, invoiceId: string): Promise<{ ok: boolean; sent: boolean; url?: string; warn?: string; error?: string }> {
+  const [r] = await sql`SELECT i.*, t.customer_phone, t.customer_name, t.status AS thread_status FROM public.client_invoices i JOIN public.client_threads t ON t.id = i.thread_id
+    WHERE i.id = ${invoiceId}::uuid AND i.project_id = ${c.projectId}::uuid AND i.status IN ('draft', 'sent')` as Record<string, unknown>[];
+  if (!r) return { ok: false, sent: false, error: "That invoice can't be sent." };
+  if (!(Number(r.total) > 0)) return { ok: false, sent: false, error: "The invoice total is $0. Add a price first." };
+  let token = r.token ? String(r.token) : "";
+  if (!token) { token = randomBytes(18).toString("base64url"); await sql`UPDATE public.client_invoices SET token = ${token} WHERE id = ${invoiceId}::uuid AND token IS NULL`; }
+  const url = invoiceUrl(token);
+  await sql`UPDATE public.client_invoices SET status = 'sent', sent_at = coalesce(sent_at, now()) WHERE id = ${invoiceId}::uuid`;
+  if (r.thread_status === "opted_out") return { ok: true, sent: false, url, warn: "They opted out of texts. Copy the link and email it instead." };
+  if (!c.setup.texting_number) return { ok: true, sent: false, url, warn: "Your texting number isn't connected yet. Copy the link and send it yourself." };
+  if (!inTextingHours(tz(c))) return { ok: true, sent: false, url, warn: "It's outside texting hours (8 AM to 8 PM). It's ready: text it in the morning." };
+  const ok = await sendToCustomer(sql, c, String(r.thread_id), String(r.customer_phone), invoiceText({ first: first(String(r.customer_name ?? "")), business: c.setup.display_name || "",
+    number: Number(r.number), total: Number(r.total), due: r.due_on ? prettyDay(String(r.due_on).slice(0, 10)) : null, url }), "owner");
+  if (ok) void emitEvent(c.setup, c.projectId, "invoice.sent", { customer: { id: String(r.thread_id), name: String(r.customer_name ?? ""), phone: String(r.customer_phone) }, number: Number(r.number), total: Number(r.total) });
+  return ok ? { ok: true, sent: true, url } : { ok: false, sent: false, url, error: "The text didn't send. Copy the link and send it yourself." };
+}
+
+/** Paid (the owner saw the money), back to unpaid, voided, or reminders paused / resumed. */
+export async function setInvoice(sql: Sql, c: Client, invoiceId: string, what: "paid" | "unpaid" | "void" | "pause" | "resume"): Promise<{ ok: boolean; error?: string }> {
+  const r = what === "paid" ? await sql`UPDATE public.client_invoices SET status = 'paid', paid_at = now() WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status IN ('draft', 'sent') RETURNING thread_id, number, total`
+    : what === "unpaid" ? await sql`UPDATE public.client_invoices SET status = CASE WHEN sent_at IS NULL THEN 'draft' ELSE 'sent' END, paid_at = NULL WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status = 'paid' RETURNING thread_id, number, total`
+    : what === "void" ? await sql`UPDATE public.client_invoices SET status = 'void' WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status IN ('draft', 'sent') RETURNING thread_id, number, total`
+    : await sql`UPDATE public.client_invoices SET reminders_paused = ${what === "pause"} WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid RETURNING thread_id, number, total`;
+  if (!r.length) return { ok: false, error: "That invoice was already updated." };
+  const row = r[0] as { thread_id: string; number: number; total: number };
+  if (what === "paid" || what === "void") await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${row.thread_id}::uuid, 'out', 'system',
+    ${what === "paid" ? `Invoice #${row.number} paid: ${dollars(Number(row.total))}` : `Invoice #${row.number} voided`})`;
+  if (what === "paid") void emitEvent(c.setup, c.projectId, "invoice.paid", { customer: { id: row.thread_id }, number: row.number, total: Number(row.total) });
+  return { ok: true };
+}
+
+export type PublicInvoice = { business: string; owner: string; phone: string; customer: string; number: number; items: Item[]; tax_rate: number; total: number; note: string;
+  due_on: string | null; issued: string; status: "open" | "paid" | "void"; pay_link: string; claimed: boolean; address: string };
+/** What the customer sees behind the invoice link. Marks it viewed. */
+export async function publicInvoice(sql: Sql, token: string): Promise<PublicInvoice | null> {
+  if (!INVOICE_TOKEN.test(token)) return null;
+  const [r] = await sql`SELECT i.*, t.customer_name, t.details FROM public.client_invoices i JOIN public.client_threads t ON t.id = i.thread_id WHERE i.token = ${token} LIMIT 1` as Record<string, unknown>[];
+  if (!r || r.status === "draft") return null;
+  const c = await clientById(sql, String(r.owner_id), String(r.project_id));
+  if (!c) return null;
+  if (!r.viewed_at) await sql`UPDATE public.client_invoices SET viewed_at = now() WHERE id = ${String(r.id)}::uuid AND viewed_at IS NULL`;
+  const d = cleanDetails(c.setup.trade, r.details);
+  return { business: c.setup.display_name || "", owner: first(c.setup.owner_name || ""), phone: c.setup.texting_number || "", customer: String(r.customer_name || ""),
+    number: Number(r.number), items: cleanItems(r.items), tax_rate: Number(r.tax_rate ?? 0), total: Number(r.total ?? 0), note: String(r.note ?? ""),
+    due_on: r.due_on ? String(r.due_on).slice(0, 10) : null, issued: new Date(String(r.sent_at ?? r.created_at)).toISOString().slice(0, 10),
+    status: r.status === "paid" ? "paid" : r.status === "void" ? "void" : "open", pay_link: c.setup.pay_link || "", claimed: !!r.paid_claimed_at, address: String(d.address ?? "") };
+}
+/** The customer says they paid. Cinder can't see the money, so the owner checks and marks it paid. */
+export async function claimPaid(sql: Sql, token: string): Promise<{ ok: boolean; error?: string }> {
+  if (!INVOICE_TOKEN.test(token)) return { ok: false, error: "This invoice link isn't valid." };
+  const [r] = await sql`UPDATE public.client_invoices SET paid_claimed_at = now(), reminders_paused = true WHERE token = ${token} AND status = 'sent' AND paid_claimed_at IS NULL
+    RETURNING owner_id, project_id, thread_id, number, total` as { owner_id: string; project_id: string; thread_id: string; number: number; total: number }[];
+  if (!r) return { ok: true };
+  const c = await clientById(sql, r.owner_id, r.project_id);
+  const [t] = await sql`SELECT customer_name, customer_phone FROM public.client_threads WHERE id = ${r.thread_id}::uuid` as { customer_name: string; customer_phone: string }[];
+  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${r.owner_id}, ${r.thread_id}::uuid, 'in', 'system', ${`Said they paid invoice #${r.number}`})`;
+  if (c) await alertOwner(c, `Cinder · ${t?.customer_name || t?.customer_phone || "A customer"} says they paid invoice #${r.number} (${dollars(Number(r.total))}). Check your account, then mark it paid in Cinder.`, r.thread_id, sql);
+  return { ok: true };
+}
+
+/** Daily: the payment reminders that are due, in each owner's texting hours. A reply from the customer pauses them. */
+export async function runInvoiceReminders(sql: Sql, limit = 60): Promise<{ sent: number; skipped: number }> {
+  const rows = await sql`SELECT i.id, i.owner_id, i.project_id, i.thread_id, i.number, i.total::float AS total, i.due_on::text AS due_on, i.reminders, i.reminders_paused, i.token, i.last_reminder_at,
+      t.customer_phone, t.customer_name, t.status AS thread_status, t.last_in_at
+    FROM public.client_invoices i JOIN public.client_threads t ON t.id = i.thread_id
+    WHERE i.status = 'sent' AND NOT i.reminders_paused AND i.reminders < 3 AND i.due_on < current_date + 1 ORDER BY i.due_on LIMIT 500` as Record<string, unknown>[];
+  const clients = new Map<string, Client | null>();
+  let sent = 0, skipped = 0;
+  for (const r of rows) {
+    if (sent >= limit) break;
+    const key = String(r.owner_id) + r.project_id;
+    if (!clients.has(key)) clients.set(key, await clientById(sql, String(r.owner_id), String(r.project_id)));
+    const c = clients.get(key);
+    if (!c?.setup.texting_number || r.thread_status === "opted_out" || !r.token) { skipped++; continue; }
+    // They texted back since the last reminder: a person should answer, so reminders wait for the owner.
+    if (r.last_in_at && r.last_reminder_at && new Date(String(r.last_in_at)) > new Date(String(r.last_reminder_at))) { await sql`UPDATE public.client_invoices SET reminders_paused = true WHERE id = ${String(r.id)}::uuid`; skipped++; continue; }
+    const step = reminderDue({ status: "sent", dueOn: String(r.due_on), reminders: Number(r.reminders), paused: false }, todayIn(c));
+    if (step === null) continue;
+    if (!inTextingHours(tz(c))) { skipped++; continue; }
+    const [claimed] = await sql`UPDATE public.client_invoices SET reminders = reminders + 1, last_reminder_at = now() WHERE id = ${String(r.id)}::uuid AND reminders = ${step} AND status = 'sent' RETURNING id`;
+    if (!claimed) continue;
+    const ok = await sendToCustomer(sql, c, String(r.thread_id), String(r.customer_phone), fillInvoice(REMINDER_TEXTS[step], { first: first(String(r.customer_name ?? "")), business: c.setup.display_name || "",
+      owner: first(c.setup.owner_name || ""), number: Number(r.number), total: Number(r.total), url: invoiceUrl(String(r.token)) }), "template");
+    if (ok) sent++; else skipped++;
+  }
+  return { sent, skipped };
+}
+
+// ---------- Customers ----------
+export type Customer = { id: string; name: string; phone: string; address: string; source: string; status: string; stage: string | null; since: string; last: string;
+  jobs: number; spent: number; owed: number; open_quote: number | null; line: string };
+/** Everyone who ever got in touch, newest activity first, with what they've bought and what they owe. */
+export async function loadCustomers(sql: Sql, c: Client): Promise<Customer[]> {
+  const rows = await sql`SELECT t.id, t.customer_name, t.customer_phone, t.source, t.status, t.stage, t.details, t.created_at, coalesce(t.last_in_at, t.updated_at) AS last,
+      coalesce(w.jobs, 0)::int AS jobs, coalesce(w.spent, 0)::float AS spent, coalesce(o.owed, 0)::float AS owed, oq.amount::float AS open_quote
+    FROM public.client_threads t
+    LEFT JOIN LATERAL (SELECT count(*) AS jobs, sum(coalesce(amount, 0)) AS spent FROM public.client_quotes q WHERE q.project_id = t.project_id AND q.status = 'won'
+      AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)) w ON true
+    LEFT JOIN LATERAL (SELECT sum(total) AS owed FROM public.client_invoices i WHERE i.thread_id = t.id AND i.status = 'sent') o ON true
+    LEFT JOIN LATERAL (SELECT amount FROM public.client_quotes q WHERE q.project_id = t.project_id AND q.kind = 'quote' AND q.status IN ('open', 'replied')
+      AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10) ORDER BY q.created_at DESC LIMIT 1) oq ON true
+    WHERE t.project_id = ${c.projectId}::uuid AND t.source NOT IN ('review', 'due')
+    ORDER BY coalesce(t.last_in_at, t.updated_at) DESC LIMIT 1000` as Record<string, unknown>[];
+  return rows.map(r => { const d = cleanDetails(c.setup.trade, r.details); return {
+    id: String(r.id), name: String(r.customer_name || ""), phone: String(r.customer_phone), address: String(d.address ?? ""), source: String(r.source), status: String(r.status),
+    stage: r.stage ? String(r.stage) : null, since: new Date(String(r.created_at)).toISOString(), last: new Date(String(r.last)).toISOString(),
+    jobs: Number(r.jobs), spent: Number(r.spent), owed: Number(r.owed), open_quote: r.open_quote == null ? null : Number(r.open_quote), line: detailLine(c.setup.trade, d) }; });
+}
+
+/** Every invoice, newest first, for the Invoices view. */
+export async function loadInvoices(sql: Sql, c: Client): Promise<(Invoice & { thread_id: string; customer: string; phone: string })[]> {
+  const rows = await sql`SELECT i.*, t.customer_name, t.customer_phone FROM public.client_invoices i JOIN public.client_threads t ON t.id = i.thread_id
+    WHERE i.project_id = ${c.projectId}::uuid AND i.status <> 'void' ORDER BY i.created_at DESC LIMIT 300` as Record<string, unknown>[];
+  return rows.map(r => ({ ...asInvoice(r), thread_id: String(r.thread_id), customer: String(r.customer_name || ""), phone: String(r.customer_phone) }));
+}
+/** The latest invoice on each won card. */
+export async function invoicesByThread(sql: Sql, c: Client): Promise<Record<string, Invoice>> {
+  const rows = await sql`SELECT DISTINCT ON (thread_id) * FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid AND status <> 'void' ORDER BY thread_id, created_at DESC` as Record<string, unknown>[];
+  return Object.fromEntries(rows.map(r => [String(r.thread_id), asInvoice(r)]));
+}

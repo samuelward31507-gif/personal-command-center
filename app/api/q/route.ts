@@ -8,8 +8,9 @@ export const dynamic = "force-dynamic";
 const reply = (body: Record<string, unknown>, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
 
 // /q/example: what a customer sees, for the example business and sales calls. Nothing is stored.
-const EXAMPLE: PublicQuote = { business: "Ridgeline Fence Co.", owner: "Mike", phone: "+17205550100", customer: "Dana", amount: 4200, line: "80 ft · 6 ft Wood privacy · 1 gate",
-  note: "Tear out and haul away the old chain link. Cedar pickets, steel posts set in concrete, one 4 ft walk gate. Two-year workmanship warranty.", sent: new Date().toISOString().slice(0, 10), state: "open", answeredAt: null };
+const EXAMPLE: PublicQuote = { business: "Ridgeline Fence Co.", owner: "Mike", phone: "+17205550100", customer: "Dana", amount: 4310, line: "80 ft · 6 ft Wood privacy · 1 gate",
+  note: "Tear out and haul away the old chain link. Cedar pickets, steel posts set in concrete, one 4 ft walk gate. Two-year workmanship warranty.", sent: new Date().toISOString().slice(0, 10), state: "open", answeredAt: null,
+  items: [{ name: "6 ft Wood privacy fence, installed", qty: 80, unit: "ft", price: 43 }, { name: "Walk gate", qty: 1, unit: "", price: 550 }, { name: "Tear-out and haul-away", qty: 80, unit: "ft", price: 4 }], tax_rate: 0 };
 
 /** GET /api/q?token=… — public: one quote behind its private link. */
 export async function GET(req: Request) {

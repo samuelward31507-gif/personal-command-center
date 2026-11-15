@@ -5,8 +5,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import "./quote.css";
+import { DocLines } from "../../doc-lines";
 
 type Q = { business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
+  items?: { name: string; qty: number; unit: string; price: number }[]; tax_rate?: number;
   state: "open" | "approved" | "declined" | "closed"; answeredAt: string | null };
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 });
@@ -44,6 +46,7 @@ export default function QuotePage() {
           <p className="qp-k">Quote{q.customer ? ` for ${q.customer}` : ""} · {day(q.sent)}</p>
           <p className="qp-amt">{q.amount ? usd(q.amount) : "Your quote"}</p>
           {q.line && <p className="qp-line">{q.line}</p>}
+          {q.items && q.items.length > 0 && <DocLines items={q.items} taxRate={q.tax_rate ?? 0} total={q.amount ?? 0} />}
           {q.note && <div className="qp-note"><h2>What&rsquo;s included</h2><p>{q.note}</p></div>}
 
           {q.state === "approved" ? <div className="qp-done ok"><span><Check /></span><div><b>Approved. Thank you{q.customer ? `, ${q.customer}` : ""}!</b>

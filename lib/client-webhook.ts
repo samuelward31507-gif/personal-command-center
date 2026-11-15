@@ -2,7 +2,7 @@
 // (usually an n8n workflow that writes to Jobber, HubSpot, a spreadsheet, any CRM). Never blocks or breaks the caller.
 import { createHmac } from "node:crypto";
 
-export type CrmEvent = "lead.new" | "lead.updated" | "estimate.booked" | "quote.sent" | "job.won" | "job.lost" | "stage.changed";
+export type CrmEvent = "lead.new" | "lead.updated" | "estimate.booked" | "quote.sent" | "job.won" | "job.lost" | "stage.changed" | "invoice.sent" | "invoice.paid";
 
 /** Only public https URLs: nothing on the local network, no credentials in the URL. */
 export function safeHookUrl(raw: string | undefined): string | null {

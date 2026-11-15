@@ -151,7 +151,7 @@ export const PRIORITIES = [
 ] as const;
 
 /** The setup keys an owner may change from the app. Everything else (texting number, alerts, links) stays Sam's. */
-export const OWNER_KEYS = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at"] as const;
+export const OWNER_KEYS = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at", "pay_link", "tax_rate", "invoice_days"] as const;
 export function cleanOwnerSetup(input: unknown): Record<string, string> {
   const r = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
   const out: Record<string, string> = {};
@@ -168,6 +168,10 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   if (typeof r.price_book === "string") { const b = parsePriceBook(r.price_book); out.price_book = b ? serializePriceBook(b) : ""; }
   if (typeof r.onboarded_at === "string" && /^\d{4}-\d{2}-\d{2}T/.test(r.onboarded_at)) out.onboarded_at = r.onboarded_at.slice(0, 30);
   if (out.website && !/^https?:\/\//i.test(out.website)) out.website = "https://" + out.website.replace(/^\/+/, "");
+  // Billing: the owner's own pay link (https only), sales tax as a percent, and how many days an invoice gives.
+  if (typeof r.pay_link === "string") { const v = r.pay_link.trim(); let ok = ""; try { const u = new URL(/^https?:\/\//i.test(v) ? v : "https://" + v); ok = v && u.protocol === "https:" && !u.username && !u.password && u.hostname.includes(".") ? u.toString().slice(0, 400) : ""; } catch { ok = ""; } out.pay_link = ok; }
+  if (r.tax_rate !== undefined) { const n = Number(String(r.tax_rate).replace(/[%\s]/g, "")); out.tax_rate = n >= 0 && n <= 20 ? String(Math.round(n * 100) / 100) : "0"; }
+  if (r.invoice_days !== undefined) out.invoice_days = ["0", "7", "14", "30"].includes(String(r.invoice_days)) ? String(r.invoice_days) : "7";
   return out;
 }
 
@@ -200,8 +204,12 @@ ${bp ? `- Ballpark from the owner's own prices for ${bp.basis}: ${rangeText(bp)}
 // ---------- The board's card (shared by the server, the app and the example business) ----------
 export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
   ballpark: { low: number; high: number } | null; notes: string; next: string | null; at: string;
-  quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string } | null;
-  install: string | null; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean };
+  quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
+    items: { name: string; qty: number; unit: string; price: number }[]; tax: number } | null;
+  install: string | null; installTime: string | null; installDays: number; onCalendar: boolean; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean;
+  invoice: CardInvoice | null };
+export type CardInvoice = { id: string; number: number; status: string; items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number; total: number; note: string;
+  due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null };
 
 // ---------- Where the jobs come from ----------
 export const SOURCE_LABEL: Record<string, string> = { missed_call: "Missed calls", text: "Texts", "web form": "Website form", "web chat": "Website chat", angi: "Angi", thumbtack: "Thumbtack",
@@ -260,3 +268,27 @@ export function cleanWinback(body: unknown, business: string): { ok: true; text:
   if (biz && !s.toLowerCase().includes(biz.toLowerCase().split(" ")[0])) return { ok: false, error: `Say it's from ${biz} so they know who's texting.` };
   return { ok: true, text: s };
 }
+
+// ---------- A first draft of a quote ----------
+const mid = (a: number, b: number) => Math.round((a + b) / 2);
+/**
+ * A first draft of the quote from what Cinder learned and the owner's own prices. Never sent as is: the owner
+ * checks every line and taps Send. Fence: the run of fence by the foot, each gate. Per-job trades: the matching service.
+ */
+export function draftItems(trade: string | undefined, d: Details, priceBook: string | undefined): { name: string; qty: number; unit: string; price: number }[] {
+  const book = parsePriceBook(priceBook);
+  const out: { name: string; qty: number; unit: string; price: number }[] = [];
+  if (book?.unit === "ft") {
+    const ft = Number(d.length_ft) || 0;
+    const r = matchRate(book, [d.height, d.material].filter(Boolean).join(" ")) ?? (d.material ? null : book.rates[0]);
+    if (r) out.push({ name: `${[d.height, r.name].filter(Boolean).join(" ")} fence, installed`, qty: ft || 1, unit: ft ? "ft" : "", price: mid(r.low, r.high) });
+    const gates = Number(d.gates) || 0;
+    if (gates && book.gate) out.push({ name: "Walk gate", qty: gates, unit: "", price: mid(book.gate[0], book.gate[1]) });
+  } else if (book?.unit === "job") {
+    const r = matchRate(book, String(d.service ?? d.job ?? "")) ?? book.rates[0];
+    if (r) out.push({ name: r.name, qty: 1, unit: "", price: mid(r.low, r.high) });
+  }
+  if (!out.length) out.push({ name: (trade || "").toLowerCase() === "fence" ? "Fence, installed" : "Job", qty: 1, unit: "", price: 0 });
+  return out;
+}
+
