@@ -5,7 +5,16 @@ import type { NeonQueryFunction } from "@neondatabase/serverless";
 type Sql = NeonQueryFunction<false, false>;
 const iso = (v: unknown) => (v == null ? null : v instanceof Date ? v.toISOString() : String(v));
 
-export async function liveFor(sql: Sql, pid: string, limit = 15) {
+export async function liveFor(sql: Sql, pid: string, limit = 15, tz = "America/Denver") {
+  // Leads that arrived outside 8 to 6 on a weekday, in the owner's time zone: the ones a phone that's off would have missed.
+  const [ah] = await sql`WITH t AS (SELECT t.id, t.customer_phone, t.created_at AT TIME ZONE ${tz} AS local FROM public.client_threads t
+      WHERE t.project_id = ${pid}::uuid AND t.source NOT IN ('import', 'owner', 'quote', 'rehash', 'review') AND t.created_at > now() - interval '30 days'),
+    a AS (SELECT * FROM t WHERE extract(hour FROM local) < 8 OR extract(hour FROM local) >= 18 OR extract(isodow FROM local) >= 6)
+    SELECT (SELECT count(*)::int FROM a) AS leads,
+      (SELECT count(*)::int FROM a WHERE EXISTS (SELECT 1 FROM public.client_quotes q WHERE q.project_id = ${pid}::uuid AND q.status = 'won'
+        AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(a.customer_phone, '[^0-9]', '', 'g'), 10))) AS won,
+      (SELECT coalesce(sum(q.amount), 0)::float FROM public.client_quotes q WHERE q.project_id = ${pid}::uuid AND q.status = 'won' AND q.last_step_at > now() - interval '30 days'
+        AND EXISTS (SELECT 1 FROM a WHERE right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(a.customer_phone, '[^0-9]', '', 'g'), 10))) AS won_value`.catch(() => [{ leads: 0, won: 0, won_value: 0 }]) as Record<string, unknown>[];
   const [k] = await sql`WITH t AS (
       SELECT t.id, t.created_at, t.last_out_at, t.status, t.updated_at,
         (SELECT extract(epoch FROM (min(o.at) - t.created_at)) FROM public.client_texts o WHERE o.thread_id = t.id AND o.direction = 'out') AS first_sec
@@ -32,6 +41,7 @@ export async function liveFor(sql: Sql, pid: string, limit = 15) {
   return {
     leads: Number(k?.leads ?? 0), needs: Number(k?.needs ?? 0), answered: Number(k?.answered ?? 0), booked: Number(k?.booked ?? 0), replySec: k?.reply_sec == null ? null : Math.round(Number(k.reply_sec)),
     chasing: Number(q?.chasing ?? 0), chasingValue: Number(q?.chasing_value ?? 0), won: Number(q?.won ?? 0), wonValue: Number(q?.won_value ?? 0), revived: Number(q?.revived ?? 0), reviews: Number(rv?.n ?? 0),
+    afterHours: { leads: Number(ah?.leads ?? 0), won: Number(ah?.won ?? 0), wonValue: Number(ah?.won_value ?? 0) },
     weeks: weeks.map(w => ({ week: String(w.wk), leads: Number(w.leads), booked: Number(w.booked) })),
     conversations: convs.map(c => ({ id: String(c.id), name: String(c.customer_name || "") || String(c.customer_phone), source: String(c.source), status: String(c.status), at: iso(c.updated_at), last: String(c.last ?? ""), ask: String(c.ask ?? "") })),
   };

@@ -15,7 +15,7 @@ const VERBS = ["text", "call", "open", "quote", "invoice", "nudge", "directions"
 type Verb = (typeof VERBS)[number];
 const maps = (addr: string) => `https://maps.google.com/?daddr=${encodeURIComponent(addr)}`;
 
-export function CommandBar({ d, go, onClose, onWinback }: { d: Data; go: Go; onClose: () => void; onWinback?: () => void }) {
+export function CommandBar({ d, go, onClose, onWinback, onAsk }: { d: Data; go: Go; onClose: () => void; onWinback?: () => void; onAsk?: (q: string) => void }) {
   const [q, setQ] = useState(""), [sel, setSel] = useState(0);
   const list = useRef<HTMLDivElement>(null);
   const hits = useMemo<Hit[]>(() => {
@@ -75,8 +75,11 @@ export function CommandBar({ d, go, onClose, onWinback }: { d: Data; go: Go; onC
       for (const [k, l, ic, kb, words] of sections) if (words.includes(t) || l.toLowerCase().includes(t)) out.push({ key: "s" + k, group: "Go to", icon: ic, title: l, cta: "Go", kbd: kb, run: run(() => go.tab(k)) });
       for (const a of actions) if (a.title.toLowerCase().includes(t) || (a.sub ?? "").toLowerCase().includes(t) || (t.startsWith("lead") && a.key === "add")) out.push(a);
     }
+    // A question, or "ask ...": Cinder answers it from the board on Home.
+    const asked = word === "ask" ? q.trim().slice(3).trim() : /\?\s*$/.test(q) || /^(who|what|which|how|when|where|did|is|are|do|does|any)\b/.test(raw) ? q.trim() : "";
+    if (onAsk && (asked || word === "ask")) out.unshift({ key: "ask", group: "Ask Cinder", icon: "bolt", title: asked ? `Ask: ${asked}` : "Ask Cinder anything about your jobs", sub: asked ? "Answered from your board, calendar and money" : "Try: who hasn't answered their quote?", cta: "Ask", run: run(() => asked && onAsk(asked)) });
     return out.slice(0, 12);
-  }, [q, d, go, onClose, onWinback]);
+  }, [q, d, go, onClose, onWinback, onAsk]);
 
   useEffect(() => { setSel(0); }, [q]);
   useEffect(() => { list.current?.querySelector(".hl")?.scrollIntoView({ block: "nearest" }); }, [sel]);
@@ -90,7 +93,7 @@ export function CommandBar({ d, go, onClose, onWinback }: { d: Data; go: Go; onC
   let lastGroup = "";
   return <div className="scrim top" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
     <div className="cmd" role="dialog" aria-label="Find or do anything" onKeyDown={onKey}>
-      <div className="q"><Icon name="search" size={16} /><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Find anyone, or type text, call, quote, nudge, directions" aria-label="Find or do anything" autoComplete="off" spellCheck={false} /><kbd>esc</kbd></div>
+      <div className="q"><Icon name="search" size={16} /><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Find anyone, type text, call, quote, nudge, or ask a question" aria-label="Find or do anything" autoComplete="off" spellCheck={false} /><kbd>esc</kbd></div>
       <div className="list" ref={list} role="listbox">
         {hits.length ? hits.map((h, k) => { const lbl = h.group !== lastGroup ? <div key={"g" + h.group} className="lbl">{h.group}</div> : null; lastGroup = h.group;
           return <div key={h.key}>{lbl}<div role="option" aria-selected={k === sel} className={"it" + (k === sel ? " hl" : "")} onMouseMove={() => setSel(k)} onClick={() => fire(h)}>

@@ -4,7 +4,8 @@
 // strip of days, what Cinder did, and the latest activity. Everything is a tap from here.
 import { jobSteps, STAGE_LABEL, STAGES, type Stage } from "@/lib/crm";
 import { overdue } from "@/lib/billing";
-import { Avatar, Icon, ago, clock, dateLabel, first, fmtPhone, secs, short, todayIso, usd } from "./parts";
+import { useEffect, useState } from "react";
+import { Avatar, Icon, Spinner, ago, clock, dateLabel, first, fmtPhone, secs, short, todayIso, usd, type Api } from "./parts";
 import { line } from "./jobs";
 import { suggestReply } from "./replies";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
@@ -18,7 +19,29 @@ const hhmm = (t: string) => { const [h, m] = t.split(":").map(Number); return ne
 const daysPast = (d: string) => Math.max(1, Math.round((Date.now() - Date.parse(d + "T23:59:00")) / 86400000));
 const iso = (d: Date) => d.toLocaleDateString("en-CA");
 
-export function TodayScreen({ d, biz, go, wide }: { d: Data; biz: Biz; go: Go; wide: boolean }) {
+/** One question about the business, answered from its own data. Nothing is saved. */
+function AskBox({ api, project, ask }: { api: Api; project: string; ask?: { q: string; n: number } }) {
+  const [q, setQ] = useState(ask?.q ?? ""), [a, setA] = useState<{ q: string; text: string } | null>(null), [busy, setBusy] = useState(false), [err, setErr] = useState("");
+  const run = async (text: string) => {
+    const question = text.trim(); if (!question || busy) return;
+    setBusy(true); setErr(""); setA(null);
+    try { const r = await api<{ answer: string }>("/api/app/act", { p: project, action: "ask", question }); setA({ q: question, text: r.answer }); }
+    catch (e) { setErr(e instanceof Error ? e.message : "No answer just now."); } finally { setBusy(false); }
+  };
+  useEffect(() => { if (ask?.q) { setQ(ask.q); void run(ask.q); } /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ask?.n]);
+  const tries = ["Who hasn't answered their quote?", "What's booked this week?", "Who owes me money?"];
+  return <section className="card ask">
+    <form className="ask-q" onSubmit={e => { e.preventDefault(); void run(q); }}>
+      <Icon name="bolt" size={15} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Ask Cinder about your jobs, money or week" aria-label="Ask Cinder" />
+      <button type="submit" className="btn ink sm" disabled={busy || !q.trim()}>{busy ? <Spinner /> : "Ask"}</button>
+    </form>
+    {a ? <div className="ask-a"><p>{a.text}</p><button type="button" className="link" onClick={() => { setA(null); setQ(""); }}>Clear</button></div>
+      : err ? <p className="fine" style={{ color: "var(--bad)" }}>{err}</p>
+      : <div className="chips">{tries.map(t => <button key={t} type="button" onClick={() => { setQ(t); void run(t); }}>{t}</button>)}</div>}
+  </section>;
+}
+
+export function TodayScreen({ d, biz, go, wide, api, project, ask }: { d: Data; biz: Biz; go: Go; wide: boolean; api: Api; project: string; ask?: { q: string; n: number } }) {
   const today = todayIso(), L = d.live, cards = d.board ?? [], invoices = d.invoices ?? [];
   const byThread = new Map(cards.map(c => [c.id, c]));
   const asks = L.conversations.filter(c => c.status === "paused");
@@ -94,6 +117,7 @@ export function TodayScreen({ d, biz, go, wide }: { d: Data; biz: Biz; go: Go; w
       </div>
 
       <div className="col">
+        <AskBox api={api} project={project} ask={ask} />
         <section className="card">
           <div className="hd"><h2>Needs you</h2><small>{actions.length ? `${actions.length} ${actions.length === 1 ? "thing" : "things"}${atStake ? `, ${usd(atStake)} at stake` : ""}` : "Clear"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>All jobs</button></div>
           {actions.length ? actions.slice(0, 8).map(a => <div key={a.key} className="row tall needs">

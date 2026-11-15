@@ -4,7 +4,7 @@
 // button and the log of what happened. Agent: what Cinder says and does, in plain words, with a preview that
 // answers a made-up lead using the unsaved form. Account: the business, this device, sign out.
 import { useState } from "react";
-import { Icon, Spinner, ago, fmtPhone, type Api, type Toast } from "./parts";
+import { Icon, Spinner, ago, fmtPhone, typePhone, type Api, type Toast } from "./parts";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 
 type View = "connections" | "agent" | "account";
@@ -238,9 +238,25 @@ function Agent({ d, go, toast, api, project, reload }: { d: Data; go: Go; toast:
 }
 
 // ---------- Account ----------
-function Account({ d, biz, go, push, onPush, demo, onSignOut }: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; demo: boolean; onSignOut: () => void }) {
+type Member = { name: string; cell: string; role: "crew" | "owner" };
+function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, reload, toast }: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; demo: boolean; onSignOut: () => void; api: Api; project: string; reload: () => Promise<void>; toast: Toast }) {
   const s = d.setup ?? {};
+  const team: Member[] = (() => { try { const v = JSON.parse(s.team || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } })();
+  const [adding, setAdding] = useState(false), [name, setName] = useState(""), [cell, setCell] = useState(""), [role, setRole] = useState<"crew" | "owner">("crew"), [busy, setBusy] = useState(false);
+  const saveTeam = async (next: Member[]) => { setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: { team: next } }); toast("Saved."); setAdding(false); setName(""); setCell(""); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } };
+  const monthly = s.monthly_report !== "no";
   return <div className="pad" style={{ maxWidth: 640 }}>
+    <p className="sec">Team<small>{team.length ? `${team.length} of 2` : "just you"}</small></p>
+    <ul className="settings">
+      {team.map(m => <li key={m.cell}><span><b style={{ color: "var(--ink)" }}>{m.name || fmtPhone(m.cell)}</b> {m.name ? <span className="mut">{fmtPhone(m.cell)}</span> : null}</span><span className="acts-row"><span className="mut">{m.role === "owner" ? "Owner, sees everything" : "Crew, schedule and jobs only"}</span><button type="button" className="btn sm" disabled={busy} onClick={() => void saveTeam(team.filter(x => x.cell !== m.cell))}>Remove</button></span></li>)}
+      {adding ? <li style={{ height: "auto", padding: "8px 0" }}><form className="acts-row" style={{ width: "100%" }} onSubmit={e => { e.preventDefault(); if (cell.replace(/\D/g, "").length < 10) return toast("Enter a 10-digit cell.", true); void saveTeam([...team, { name: name.trim(), cell, role }]); }}>
+        <input className="input" style={{ width: 140 }} placeholder="Name" value={name} onChange={e => setName(e.target.value)} autoFocus />
+        <input className="input" style={{ width: 150 }} placeholder="Cell" inputMode="tel" value={cell} onChange={e => setCell(typePhone(e.target.value))} />
+        <select className="input" style={{ width: 110 }} value={role} onChange={e => setRole(e.target.value as "crew" | "owner")}><option value="crew">Crew</option><option value="owner">Owner</option></select>
+        <button type="submit" className="btn ink sm" disabled={busy}>{busy ? <Spinner /> : "Add"}</button><button type="button" className="btn ghost sm" onClick={() => setAdding(false)}>Cancel</button></form></li>
+      : team.length < 2 ? <li><span className="mut">They sign in with their own cell. Crew sees the calendar, the jobs and the texts, never the money or these settings.</span><button type="button" className="btn sm" onClick={() => setAdding(true)}>Add someone</button></li> : null}
+    </ul>
+    <p className="sec" style={{ marginTop: 20 }}>Account</p>
     <ul className="settings">
       <li><span>Business</span><b>{biz.business}</b></li>
       <li><span>Owner</span><b>{d.owner || "–"}</b></li>
@@ -249,7 +265,8 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut }: { d: Data; biz: 
       <li><span>Business details and price book</span><button type="button" className="btn sm" onClick={go.setup}>Edit</button></li>
       <li><span>Invoices, tax and pay link</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
       <li><span>Notifications on this device</span>{push === "on" ? <span className="dot good">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <span className="mut">{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</span>}</li>
-      <li><span>Customers</span><span><b>{d.customers?.length ?? 0}</b> <button type="button" className="btn sm" style={{ marginLeft: 8 }} onClick={go.importCustomers}>Import</button></span></li>
+      <li><span>Customers</span><span className="acts-row"><b>{d.customers?.length ?? 0}</b><button type="button" className="btn sm" onClick={go.importCustomers}>Import</button>{demo ? <button type="button" className="btn sm" onClick={() => toast("The example can't be exported. Your real customers download as a CSV.")}>Export CSV</button> : <a className="btn sm" href={`/api/app/export?p=${encodeURIComponent(project)}`}>Export CSV</a>}</span></li>
+      <li><span>Monthly report by text</span><label className="toggle"><input type="checkbox" checked={monthly} onChange={e => void (async () => { try { await api("/api/app/act", { p: project, action: "setup", setup: { monthly_report: e.target.checked ? "yes" : "no" } }); await reload(); } catch { toast("Didn't save.", true); } })()} /><i /><span><small>On the first, last month's leads, after-hours leads, bookings and wins</small></span></label></li>
       <li><span>Your Cinder rep</span><button type="button" className="btn sm" onClick={() => go.tab("sam")}>Message Sam</button></li>
       <li><span /><button type="button" className="btn sm" onClick={onSignOut}><Icon name="out" size={13} />{demo ? "Leave the example" : "Sign out"}</button></li>
     </ul>

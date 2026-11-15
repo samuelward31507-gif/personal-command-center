@@ -1,5 +1,5 @@
 import { appSession, bridgeCall, clientFor, db, json } from "@/lib/client-app-run";
-import { markNoShow, previewReply, rescheduleAppointment, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
+import { askCinder, markNoShow, previewReply, rescheduleAppointment, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
 import { sendSms } from "@/lib/twilio";
 import { cleanOwnerSetup } from "@/lib/crm";
 import { parseAmount } from "@/lib/client-schedule";
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
-    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string };
+    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -110,6 +110,15 @@ export async function POST(req: Request) {
       return r.ok ? json({ ok: true, job: r.job }) : json({ error: r.error }, 400);
     }
     if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
+    // The crew sees the schedule and the jobs and can text, call, tick steps and leave notes. Money and settings stay with the owner.
+    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
+    if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; }
+    if (b.action === "ask") {
+      const q = String(b.question ?? "").trim().slice(0, 500);
+      if (!q) return json({ error: "Ask something." }, 400);
+      const a = await askCinder(sql, c, q);
+      return a ? json({ ok: true, answer: a }) : json({ error: "Cinder couldn't answer just now." }, 503);
+    }
     if (b.action === "reschedule") {
       if (!b.appt || !UUID.test(b.appt)) return json({ error: "Which estimate?" }, 400);
       const r = await rescheduleAppointment(sql, c, b.appt, String(b.start ?? ""));

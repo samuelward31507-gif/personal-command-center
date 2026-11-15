@@ -27,7 +27,7 @@ export async function GET(req: Request) {
       return json({ thread: t, texts });
     }
     const [live, biz, appts, unread, msgs, quotes, calRow, keyRow, wonJobs, board, past, customers, invoices, wires] = await Promise.all([
-      liveFor(sql, c.projectId, 80),
+      liveFor(sql, c.projectId, 80, c.setup.timezone || "America/Denver"),
       sql`SELECT o.project_id, coalesce(o.setup->>'display_name', p.client_name, p.name) AS name, o.portal_token FROM public.client_ops o JOIN public.projects p ON p.id = o.project_id WHERE o.project_id = ANY(${s.projects}::uuid[])`,
       // Booked estimates still waiting on an outcome (up to two weeks back) and everything coming up.
       sql`SELECT a.id, a.starts_at, a.status, a.event_id, t.id AS thread_id, t.customer_name, t.customer_phone FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id
@@ -63,11 +63,14 @@ export async function GET(req: Request) {
     const calendar = { connected, email: String((calRow as { google_email?: string }[])[0]?.google_email ?? ""), events, error: calError,
       connectUrl: `${origin}/api/client-calendar?state=${encodeURIComponent(calState(c.projectId))}` };
     if (q.get("tab") === "sam") await sql`UPDATE public.client_messages SET read_at = now() WHERE project_id = ${c.projectId}::uuid AND author = 'owner' AND read_at IS NULL`.catch(() => null);
+    const crew = s.role === "crew";
     return json({
-      project: c.projectId, business: c.setup.display_name || "", number: c.setup.texting_number || "", canCall: !!(c.setup.owner_cell && c.setup.texting_number),
+      role: crew ? "crew" : "owner", project: c.projectId, business: c.setup.display_name || "", number: c.setup.texting_number || "", canCall: !!(c.setup.owner_cell && c.setup.texting_number),
       owner: c.setup.owner_name || "", businesses: biz, live,
       appointments: (appts as { event_id?: string }[]).map(a => ({ ...a, link: (a.event_id && links.get(a.event_id)) || "" })), quotes, quoteSteps: SEQUENCES.quote.days.length, wonJobs, hasReviewLink: !!c.setup.review_link, repeat: isRepeatTrade(c.setup.trade), calendar, messages: (msgs as Record<string, unknown>[]).reverse(), unreadFromSam: (unread as { n: number }[])[0]?.n ?? 0,
-      board, setup: { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "" }, customers, invoices,
+      board: crew ? board.map(b => ({ ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 } })) : board,
+      setup: crew ? { display_name: c.setup.display_name || "", owner_name: c.setup.owner_name || "", trade: c.setup.trade || "" } : { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "", team: c.setup.team || "[]", monthly_report: c.setup.monthly_report || "" },
+      customers: crew ? [] : customers, invoices: crew ? [] : invoices,
       key: String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? ""), origin, wires,
       winback: { past: past.past, eligible: past.eligible.length, names: past.eligible.slice(0, 6).map(e => e.name.split(" ")[0] || "").filter(Boolean),
         draft: winbackDraft(c.setup.trade, c.setup.owner_name || "", c.setup.display_name || "") },

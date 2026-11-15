@@ -521,3 +521,13 @@ details.skipped summary { cursor: pointer; font-size: 12.5px; color: var(--g1); 
 .cal-ev.grab { cursor: grab; touch-action: none; } .cal-ev.lift { opacity: .35; cursor: grabbing; }
 .cal-ev.ghost { pointer-events: none; z-index: 4; box-shadow: var(--float); border-style: dashed; background: var(--page); }
 .dayrow .acts-row { gap: 4px; }
+
+/* ---------- Ask Cinder ---------- */
+.ask { padding: 10px 12px; }
+.ask-q { display: flex; align-items: center; gap: 8px; }
+.ask-q > svg { color: var(--ember); flex: 0 0 auto; }
+.ask-q input { flex: 1; min-width: 0; height: 30px; border: 0; background: transparent; font: 400 14px var(--ff); color: var(--ink); }
+.ask-q input:focus { outline: none; }
+.ask .chips { margin-top: 8px; }
+.ask-a { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--hair); }
+.ask-a p { font-size: 13.5px; line-height: 1.55; margin: 0 0 4px; }

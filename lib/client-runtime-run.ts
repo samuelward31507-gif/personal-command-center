@@ -16,6 +16,7 @@ import { sendAlert } from "@/lib/notify";
 import { paymentLinkFor } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
 import { pushFromAlert, pushToProject } from "@/lib/client-push";
+import { liveFor } from "@/lib/client-live";
 
 type Sql = NeonQueryFunction<false, false>;
 export type Client = { projectId: string; owner: string; setup: Record<string, string>; messages: ReturnType<typeof cleanMessages> };
@@ -209,6 +210,80 @@ async function book(sql: Sql, c: Client, threadId: string, phone: string, who: s
     if (ap) await firstBookingBilling(sql, c).catch(e => console.error("First-booking alert failed", e instanceof Error ? e.message : e));
     return true;
   } catch (e) { console.error("Booking failed", e instanceof Error ? e.message : e); return false; }
+}
+
+/**
+ * On the first of the month: last month in one text to the owner, with what came in after hours and what it won.
+ * Once per business per month, skipped when the owner turned it off or nothing happened.
+ */
+export async function sendMonthlyReports(sql: Sql, origin: string, today: string): Promise<{ sent: number }> {
+  const month = today.slice(0, 7) + "-01"; // the month that just started; the report covers the one before
+  const clients = await sql`SELECT o.project_id, o.owner_id, o.portal_token FROM public.client_ops o
+    WHERE coalesce(o.setup->>'texting_number','') <> '' AND coalesce(o.setup->>'owner_cell','') <> '' AND coalesce(o.setup->>'monthly_report', '') <> 'no'
+      AND NOT EXISTS (SELECT 1 FROM public.client_monthly m WHERE m.project_id = o.project_id AND m.month = ${month}::date)` as { project_id: string; owner_id: string; portal_token: string | null }[];
+  let sent = 0;
+  for (const r of clients) {
+    const c = await clientById(sql, r.owner_id, r.project_id);
+    if (!c) continue;
+    const tz = tzOf(c);
+    const [k] = await sql`WITH t AS (SELECT t.id, t.customer_phone, t.status, t.updated_at, t.created_at AT TIME ZONE ${tz} AS local FROM public.client_threads t
+        WHERE t.project_id = ${r.project_id}::uuid AND t.source NOT IN ('import', 'owner', 'quote', 'rehash', 'review')
+          AND t.created_at >= date_trunc('month', ${month}::date - interval '1 day') AND t.created_at < ${month}::date)
+      SELECT count(*)::int AS leads, count(*) FILTER (WHERE status = 'booked')::int AS booked,
+        count(*) FILTER (WHERE extract(hour FROM local) < 8 OR extract(hour FROM local) >= 18 OR extract(isodow FROM local) >= 6)::int AS after_hours FROM t` as Record<string, unknown>[];
+    const [q] = await sql`SELECT count(*) FILTER (WHERE status = 'won')::int AS won, coalesce(sum(amount) FILTER (WHERE status = 'won'), 0)::float AS won_value,
+        count(*) FILTER (WHERE kind = 'rehash' AND status = 'replied')::int AS revived
+      FROM public.client_quotes WHERE project_id = ${r.project_id}::uuid AND last_step_at >= date_trunc('month', ${month}::date - interval '1 day') AND last_step_at < ${month}::date` as Record<string, unknown>[];
+    const [rv] = await sql`SELECT count(*)::int AS n FROM public.client_reviews WHERE project_id = ${r.project_id}::uuid AND sent_at >= date_trunc('month', ${month}::date - interval '1 day') AND sent_at < ${month}::date` as { n: number }[];
+    const n = (v: unknown) => Number(v) || 0;
+    const w = { leads: n(k?.leads), booked: n(k?.booked), afterHours: n(k?.after_hours), won: n(q?.won), wonValue: n(q?.won_value), revived: n(q?.revived), reviews: n(rv?.n) };
+    if (!w.leads && !w.won && !w.reviews) { await sql`INSERT INTO public.client_monthly (project_id, month) VALUES (${r.project_id}::uuid, ${month}::date) ON CONFLICT DO NOTHING`; continue; }
+    const name = new Date(month + "T12:00:00Z"); name.setUTCMonth(name.getUTCMonth() - 1);
+    const label = name.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" });
+    const usd = (v: number) => "$" + Math.round(v).toLocaleString("en-US");
+    const parts = [`${w.leads} lead${w.leads === 1 ? "" : "s"}${w.afterHours ? `, ${w.afterHours} after hours` : ""}`, `${w.booked} estimate${w.booked === 1 ? "" : "s"} booked`,
+      w.won ? `${w.won} won, ${usd(w.wonValue)}` : "", w.revived ? `${w.revived} old lead${w.revived === 1 ? "" : "s"} revived` : "", w.reviews ? `${w.reviews} review request${w.reviews === 1 ? "" : "s"}` : ""].filter(Boolean);
+    const link = r.portal_token ? `${origin}/portal/${r.portal_token}` : `${origin}/app`;
+    const ok = await sendSms(e164(c.setup.owner_cell), c.setup.texting_number, `Cinder for ${c.setup.display_name || "your business"}, ${label}: ${parts.join(", ")}. The full report: ${link}`.slice(0, 600));
+    if (ok) { sent++; await sql`INSERT INTO public.client_monthly (project_id, month) VALUES (${r.project_id}::uuid, ${month}::date) ON CONFLICT DO NOTHING`; }
+  }
+  return { sent };
+}
+
+/**
+ * Ask Cinder: the owner's question answered from his own board, calendar and numbers. Short, names people, says
+ * which screen to open when there's something to do. Nothing is stored and nobody is texted.
+ */
+export async function askCinder(sql: Sql, c: Client, question: string): Promise<string | null> {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  const tz = tzOf(c);
+  const [cards, appts, inv, live] = await Promise.all([
+    sql`SELECT t.customer_name AS name, t.source, t.status, t.stage, t.value::float AS value, t.details, t.notes, t.stage_at, t.last_in_at, t.created_at,
+        (SELECT x.body FROM public.client_texts x WHERE x.thread_id = t.id AND x.direction = 'in' AND x.author <> 'system' ORDER BY x.at DESC LIMIT 1) AS last_in,
+        q.amount::float AS quote, q.status AS quote_status, q.steps_sent, q.viewed_at IS NOT NULL AS quote_opened
+      FROM public.client_threads t LEFT JOIN LATERAL (SELECT * FROM public.client_quotes q WHERE q.project_id = t.project_id AND q.kind = 'quote'
+        AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10) ORDER BY q.created_at DESC LIMIT 1) q ON true
+      WHERE t.project_id = ${c.projectId}::uuid AND t.source <> 'import' AND t.updated_at > now() - interval '60 days' ORDER BY t.updated_at DESC LIMIT 40`.catch(() => []) as Promise<Record<string, unknown>[]>,
+    sql`SELECT a.starts_at, a.status, t.customer_name AS name FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id
+      WHERE a.project_id = ${c.projectId}::uuid AND a.starts_at > now() - interval '7 days' AND a.starts_at < now() + interval '14 days' ORDER BY a.starts_at LIMIT 30`.catch(() => []) as Promise<Record<string, unknown>[]>,
+    sql`SELECT i.number, i.status, i.total::float AS total, i.due_on::text AS due_on, t.customer_name AS name FROM public.client_invoices i JOIN public.client_threads t ON t.id = i.thread_id
+      WHERE i.project_id = ${c.projectId}::uuid AND i.status IN ('sent', 'draft') ORDER BY i.created_at DESC LIMIT 30`.catch(() => []) as Promise<Record<string, unknown>[]>,
+    liveFor(sql, c.projectId, 1, tz).catch(() => null),
+  ]);
+  const when = (v: unknown) => v ? new Date(String(v)).toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+  const lines = [
+    `Business: ${c.setup.display_name || ""} (${c.setup.trade || "contractor"}), owner ${c.setup.owner_name || ""}. Now: ${new Date().toLocaleString("en-US", { timeZone: tz, weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.`,
+    live ? `Last 30 days: ${live.leads} leads, ${live.answered} answered, ${live.booked} estimates booked, ${live.won} won worth ${Math.round(live.wonValue)}, ${live.chasing} quotes open worth ${Math.round(live.chasingValue)}, ${live.afterHours.leads} leads after hours (${live.afterHours.won} won, ${Math.round(live.afterHours.wonValue)}), ${live.needs} conversations waiting on the owner.` : "",
+    "Jobs (newest first):",
+    ...cards.map(r => `- ${r.name || "Unknown"}: ${r.stage || "lead"}, source ${r.source}, texting ${r.status === "paused" ? "waiting on owner" : String(r.status)}${r.value ? `, value ${Math.round(Number(r.value))}` : ""}${r.quote ? `, quote ${Math.round(Number(r.quote))} ${r.quote_status}${r.quote_opened ? " (opened)" : ""}, ${r.steps_sent} follow-ups` : ""}${r.stage_at ? `, in stage since ${when(r.stage_at)}` : ""}${r.last_in ? `, last said: "${String(r.last_in).slice(0, 120)}"` : ""}${r.notes ? `, notes: ${String(r.notes).slice(0, 100)}` : ""}`),
+    "Estimates:", ...appts.map(a => `- ${a.name}: ${when(a.starts_at)}, ${a.status}`),
+    "Invoices:", ...inv.map(i => `- #${i.number} ${i.name}: ${Math.round(Number(i.total))}, ${i.status}${i.due_on ? `, due ${i.due_on}` : ""}`),
+  ].filter(Boolean).join("\n").slice(0, 12000);
+  const system = `You are Cinder, the assistant inside a contractor's CRM. Answer the owner's question from the data below only. Two to four short sentences, plain words, name the people and the dollar amounts. If the data can't answer, say what isn't tracked. When something should be done, say which screen (Inbox, Jobs, Calendar, Money, Reports, Settings). Never invent a customer or a number.\n\n${lines}`;
+  try {
+    return (await claudeText({ apiKey: key, system, user: question.slice(0, 500), label: "Ask Cinder", model: process.env.CINDER_ASK_MODEL?.trim() || "claude-sonnet-5-5", maxTokens: 400, timeoutMs: 25000 })).trim().slice(0, 1200);
+  } catch (e) { console.error("Ask failed", e instanceof Error ? e.message : e); return null; }
 }
 
 /** The agreement starts the monthly fee on the first booked appointment, so the first booking tells Sam to send the monthly link. */

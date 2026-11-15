@@ -76,7 +76,7 @@ function seed() {
     leads_month: "10-30", lead_sources: "Phone calls, Website form, Google, Angi", software: "None, just my phone", share_ballpark: "yes", priority: "quotes", onboarded_at: "2026-11-01T15:00:00.000Z", pay_link: "https://square.link/u/example", tax_rate: "0", invoice_days: "7",
     hours: "Mon-Fri 7:00-18:00, Sat 8:00-12:00", timezone: "America/Denver", service_area: "Littleton, Highlands Ranch, Castle Rock and 25 miles around", rules: "No repairs under $500. No commercial bids.", questions: "Rough length in feet, material, and the address.",
     prices: "Cedar privacy runs $38–48 a foot installed. Vinyl $40–55. Chain link $18–26.", financing: "We offer 12 months no interest through Wisetack on jobs over $3,000.", tone: "Hey Mark, Mike here with Ridgeline. We can swing by Thursday at 4 to measure, that work?\nSounds good, see you then. Gate's on the left side of the house.", avoid: "Never quote a firm price. Don't promise a date for the install.",
-    handoff: "The job is over $20,000, or they mention a neighbor dispute over the property line.", book_lead_hours: "3", book_per_day: "2", book_buffer_min: "30", quote_days: "2,5,10,21", nudge_hours: "2,20,68", dnt: "+17205550177", a2p_status: "Approved", forwarding: "Their number forwards missed calls here",
+    handoff: "The job is over $20,000, or they mention a neighbor dispute over the property line.", book_lead_hours: "3", book_per_day: "2", book_buffer_min: "30", quote_days: "2,5,10,21", nudge_hours: "2,20,68", dnt: "+17205550177", a2p_status: "Approved", forwarding: "Their number forwards missed calls here", team: JSON.stringify([{ name: "Luis", cell: "+17205550188", role: "crew" }]), monthly_report: "yes",
     price_book: JSON.stringify({ unit: "ft", rates: [{ name: "Wood privacy (cedar)", low: 38, high: 48 }, { name: "Vinyl", low: 40, high: 55 }, { name: "Chain link", low: 18, high: 26 }, { name: "Ranch rail", low: 12, high: 18 }], gate: [450, 650] }) };
   return {
     threads, crm, setup,
@@ -129,7 +129,7 @@ function data() {
     project: "demo", business: "Ridgeline Fence Co. (example)", number: "+17205550100", canCall: true,
     businesses: [{ project_id: "demo", name: "Ridgeline Fence Co. (example)" }], unreadFromSam: 0,
     live: { leads: 41, needs: conversations.filter(c => c.status === "paused").length, answered: 41, booked: 14, replySec: 9,
-      chasing: s.quotes.length, chasingValue: s.quotes.reduce((t, q) => t + (q.amount || 0), 0), won: s.won, wonValue: s.wonValue, revived: 4, reviews: 11,
+      afterHours: { leads: 14, won: 5, wonValue: 31400 }, chasing: s.quotes.length, chasingValue: s.quotes.reduce((t, q) => t + (q.amount || 0), 0), won: s.won, wonValue: s.wonValue, revived: 4, reviews: 11,
       weeks: [{ week: "a", leads: 8, booked: 3 }, { week: "b", leads: 11, booked: 4 }, { week: "c", leads: 9, booked: 3 }, { week: "d", leads: 13, booked: 4 }], conversations },
     owner: "Mike", appointments: s.appts, quotes: s.quotes, quoteSteps: 4, wonJobs: s.wonJobs, hasReviewLink: true,
     calendar: { connected: true, email: "mike@ridgelinefence.com", events: s.events, error: "", connectUrl: "#" },
@@ -211,6 +211,16 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
     if (b.action === "review") { s.wonJobs = s.wonJobs.filter(j => j.id !== b.quote); return { ok: true }; }
     if (b.action === "setup") { Object.assign(s.setup, cleanOwnerSetup(b.setup)); return { ok: true }; }
     if (b.action === "testtext") return { ok: true };
+    if (b.action === "ask") {
+      await new Promise(r => setTimeout(r, 700));
+      const q = String(b.question ?? "").toLowerCase(), bd = board();
+      const quoted = bd.filter(c => c.stage === "quoted"), paused = Object.values(s.threads).filter(t => t.thread.status === "paused");
+      if (/quote/.test(q)) return { ok: true, answer: `${quoted.length} quotes are out: ${quoted.map(c => `${c.name.split(" ")[0]} (${c.quote?.amount ? "$" + c.quote.amount.toLocaleString("en-US") : "no amount"}${c.quote?.viewed ? ", opened" : ", not opened"})`).join(", ")}. Cinder follows up on its own; open Jobs to nudge one yourself.` };
+      if (/owe|money|paid|invoice/.test(q)) { const owed = s.invoices.filter(i => i.status === "sent"); return { ok: true, answer: owed.length ? `${owed.length} invoices are out for ${owed.reduce((a, i) => a + i.total, 0).toLocaleString("en-US")}: ${owed.map(i => `${s.threads[i.thread_id]?.thread.customer_name.split(" ")[0]} ${i.total.toLocaleString("en-US")}`).join(", ")}. Reminders go out on their own; Money has the details.` : "Nothing is owed right now." }; }
+      if (/book|week|calendar|estimate|schedule/.test(q)) return { ok: true, answer: `${s.appts.length} estimates are on the calendar: ${s.appts.map(a => `${a.customer_name.split(" ")[0]} ${new Date(a.starts_at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })}`).join(", ")}. Carla Mendez's install is Thursday.` };
+      if (/reply|waiting|answer|needs/.test(q)) return { ok: true, answer: paused.length ? `${paused.length} waiting on you: ${paused.map(t => t.thread.customer_name).join(", ")}. Open Inbox to reply.` : "Nothing is waiting on you." };
+      return { ok: true, answer: `Last 30 days: 41 leads, all answered, 14 estimates booked, ${s.wonValue.toLocaleString("en-US")} won. ${paused.length} conversation${paused.length === 1 ? "" : "s"} waiting on you and ${quoted.length} quotes out. Ask about quotes, money, the week, or who's waiting.` };
+    }
     if (b.action === "reschedule") {
       const a = s.appts.find(x => x.id === b.appt); if (!a) fail("That estimate isn't open.", 409);
       const when = new Date(String(b.start)); if (!Number.isFinite(when.getTime())) fail("Pick a time.");

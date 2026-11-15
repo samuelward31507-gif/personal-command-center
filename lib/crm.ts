@@ -169,6 +169,24 @@ export function parseDnt(v: unknown): string[] {
   for (const p of String(v ?? "").split(/[,\n;]+/)) { const d = p.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, ""); if (d.length === 10) seen.add("+1" + d); if (seen.size >= 500) break; }
   return [...seen];
 }
+export type TeamMember = { name: string; cell: string; role: "crew" | "owner" };
+/** The owner's team from setup.team: at most two people, each a name, a +1 cell and a role. */
+export function parseTeam(v: unknown): TeamMember[] {
+  let arr: unknown = v;
+  if (typeof v === "string") { try { arr = JSON.parse(v); } catch { arr = []; } }
+  if (!Array.isArray(arr)) return [];
+  const out: TeamMember[] = [], seen = new Set<string>();
+  for (const m of arr) {
+    if (!m || typeof m !== "object") continue;
+    const r = m as Record<string, unknown>;
+    const d = String(r.cell ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+    if (d.length !== 10 || seen.has(d)) continue;
+    seen.add(d);
+    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : "crew" });
+    if (out.length >= 2) break;
+  }
+  return out;
+}
 export function cleanOwnerSetup(input: unknown): Record<string, string> {
   const r = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
   const out: Record<string, string> = {};
@@ -197,6 +215,8 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   if (r.quote_days !== undefined) out.quote_days = parseDayList(r.quote_days, 6, 60).join(",");
   if (r.nudge_hours !== undefined) out.nudge_hours = parseDayList(r.nudge_hours, 3, 168).join(",");
   if (r.dnt !== undefined) out.dnt = parseDnt(r.dnt).join(",");
+  if (r.team !== undefined) out.team = JSON.stringify(parseTeam(r.team));
+  pick("monthly_report", ["", "yes", "no"]);
   return out;
 }
 
