@@ -958,3 +958,4 @@ html body:not(#u) .jb-acts :is(button, a) { height: 34px !important; border-radi
 html body:not(#u) .jb-sheet-h { border-bottom: 1px solid #ececea !important; }
 html body:not(#u) .jb-who b { font: 600 18px/1.2 var(--head) !important; letter-spacing: -0.02em !important; }
 @media (min-width: 1100px) { html body:not(#u) .ca:has(.ca-demo) .jb-scrim { top: 42px; } html body:not(#u) .ca:has(.ca-demo) .jb-sheet { height: calc(100dvh - 42px); } }
+html body:not(#u) .jb-sheet-b > .jb-f.full .jb-in > i + input { padding-left: 22px !important; } html body:not(#u) .jb-sheet-b > .jb-f.full .jb-in > i { left: 8px; }
