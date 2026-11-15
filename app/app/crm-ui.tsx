@@ -4,7 +4,6 @@
 // Kept deliberately small: five stages, one card per customer, the job in the trade's own words.
 import { useEffect, useMemo, useState } from "react";
 import { CinderLogo } from "../cinder-brand";
-import { Trajectory } from "./sx";
 import {
   ballpark, jobFields, LEAD_SOURCES, LEADS_MONTH, money, parsePriceBook, previewFirstText, PRIORITIES, rangeText, SOFTWARE, STAGE_LABEL, STAGES, TEAM_SIZES, TRADES, YEARS,
   draftItems, type Card, type CardInvoice, type Details, type PriceBook, type Rate, type Stage,
@@ -201,13 +200,19 @@ function cardTag(c: Card): { text: string; tone?: "blue" | "green" | "warn" } {
 const priceOf = (c: Card) => c.value ? short(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "";
 type Biz = { reviewLink: boolean; number: boolean; owner: string; business: string; priceBook: string; taxRate: string; payLink: boolean; calendar: boolean };
 
-export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, canCall, wide, biz, winback, customers = [], invoices = [], setup = {} }: { cards: Card[]; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; canCall: boolean; wide: boolean; biz: Biz; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[]; setup?: Record<string, string> }) {
+export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, canCall, wide, biz, winback, customers = [], invoices = [], setup = {}, focus = null }: { focus?: { card?: string; stage?: "quoted" | "won"; invoice?: string; n: number } | null; cards: Card[]; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; canCall: boolean; wide: boolean; biz: Biz; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[]; setup?: Record<string, string> }) {
   const [sel, setSel] = useState<string | null>(null), [adding, setAdding] = useState(false), [wb, setWb] = useState(false), [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Stage | null>(null);
   const [view, setView] = useState<"pipeline" | "customers" | "invoices">("pipeline");
   const [inv, setInv] = useState<{ id: string; customer: string } | null>(null), [billing, setBilling] = useState(false);
   // The open invoice is read fresh from the latest data, so a save or a send shows straight away.
   const invNow = inv ? (invoices.find(i => i.id === inv.id) ?? cards.map(c => c.invoice).find(i => i?.id === inv.id) ?? null) : null;
   const owed = invoices.filter(i => i.status === "sent").length;
+  // Opened from Today: jump straight to the card (and the quote or won form) or the invoice.
+  useEffect(() => {
+    if (!focus) return;
+    if (focus.card) { setView("pipeline"); setSel(focus.card); setPending(focus.stage ? { id: focus.card, stage: focus.stage } : null); }
+    if (focus.invoice) { const i = invoices.find(x => x.id === focus.invoice); setInv({ id: focus.invoice, customer: i ? i.customer || fmtPhone(i.phone) : "" }); }
+  }, [focus?.n]); // eslint-disable-line react-hooks/exhaustive-deps
   const [pending, setPending] = useState<{ id: string; stage: Stage } | null>(null);
   const by = useMemo(() => Object.fromEntries(STAGES.map(s => [s, cards.filter(c => c.stage === s)])) as Record<Stage, Card[]>, [cards]);
   const open = cards.filter(c => c.stage === "new" || c.stage === "booked" || c.stage === "quoted");
@@ -224,7 +229,7 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
 
   return <>
     <div className="ca-hello jb-hello">
-      <div><p>Your jobs</p><h1>{open.length ? <>{open.length} open {open.length === 1 ? "job" : "jobs"}{openValue ? <span> worth about {money(openValue)}</span> : null}.</> : "No open jobs yet."}</h1></div>
+      <div className="jb-hello-sum">{open.length ? <><b>{open.length}</b> open {open.length === 1 ? "job" : "jobs"}{openValue ? <> · <b>{money(openValue)}</b></> : null}</> : "No open jobs yet"}</div>
       <div className="jb-hello-acts">
         {view === "pipeline" && winback && winback.past > 0 && <button type="button" className="jb-ghost" onClick={() => setWb(true)}><Svg d={I.users} size={16} />Past customers</button>}
         {view === "invoices" && <button type="button" className="jb-ghost" onClick={() => setBilling(true)}>Pay link and tax</button>}
@@ -236,9 +241,6 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
     {view === "customers" && <CustomersView list={customers} onOpen={c => { if (cards.some(x => x.id === c.id)) { setPending(null); setSel(c.id); } else onOpen(c.id); }} />}
     {view === "invoices" && <InvoicesView list={invoices} onOpen={i => setInv({ id: i.id, customer: i.customer || fmtPhone(i.phone) })} />}
     {view === "pipeline" && <>
-    <Trajectory lost={by.lost.length} stages={(["new", "booked", "quoted", "won"] as const).map(k => ({ key: k, label: k === "booked" ? "Estimate" : STAGE_LABEL[k],
-      count: by[k].length, value: by[k].reduce((a, c) => a + (c.value ?? (k === "won" ? 0 : c.ballpark ? (c.ballpark.low + c.ballpark.high) / 2 : 0)), 0) }))}
-      onPick={k => document.getElementById("jb-col-" + k)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" })} />
     <div className={"jb-board" + (wide ? " wide" : "")}>
       {STAGES.map(stage => { const list = by[stage]; const total = list.reduce((a, c) => a + (c.value ?? 0), 0); return <section key={stage} id={"jb-col-" + stage} className={"jb-col" + (over === stage ? " over" : "")} aria-label={STAGE_LABEL[stage]}
         onDragOver={e => { if (drag) { e.preventDefault(); setOver(stage); } }} onDragLeave={() => setOver(o => o === stage ? null : o)}

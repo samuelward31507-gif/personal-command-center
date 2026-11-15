@@ -1097,3 +1097,141 @@ html body:not(#u) .cu-num b { font: 600 15px var(--ca-head); letter-spacing: -0.
 html body:not(#u) .cu-num b.owe { color: #a8322a; } html body:not(#u) .cu-num b.q { color: #1f5fa8; }
 html body:not(#u) .cu-num small { font: 500 11px var(--sx-mono); color: #8a9098; letter-spacing: .02em; }
 html body:not(#u) .iv-no { width: 52px; font: 600 12.5px var(--sx-mono); color: #6f747c; letter-spacing: .02em; }
+
+/* ==========================================================================
+   Tesla: white space, flat grey surfaces instead of outlined boxes, no shadows, no capitals, big confident numbers.
+   One idea per screen. Black is the only button color. This layer wins over everything above it.
+   ========================================================================== */
+:root { --t-bg: #ffffff; --t-fill: #f4f4f4; --t-fill2: #ebebeb; --t-ink: #171a20; --t-2: #5c5e62; --t-3: #8e8e93; --t-line: rgba(23, 26, 32, .08); }
+html:has(.ca), html body:not(#u):has(.ca) { background: var(--t-bg) !important; }
+html body:not(#u) .ca, html body:not(#u) .ca-main, html body:not(#u) .ca-top { background: var(--t-bg) !important; color: var(--t-ink); }
+html body:not(#u) .ca-live { display: none !important; }
+
+/* Labels: sentence case, quiet. */
+html body:not(#u) :is(.ca-hello > p, .ca-hello > div > p, .ca-group h2, .ca-card-h h2, .ca-card-h > span, .jb-col h2 > span, .jb-h3, .ca-kpis span, .ca-todo h2, .wb-count span, .jb-f > span:first-child, .jb-amt label > span, .jb-box-h b, .jb-amt-k, .sx-k, .sx-tel dt) {
+  font-family: var(--ca-sans) !important; font-size: 13px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--t-2) !important; }
+html body:not(#u) :is(.jb-box-h b, .jb-col h2 > span, .ca-card-h h2) { font-size: 15px !important; font-weight: 600 !important; color: var(--t-ink) !important; }
+html body:not(#u) .jb-h3 { font-size: 17px !important; font-weight: 600 !important; color: var(--t-ink) !important; margin-top: 28px !important; }
+html body:not(#u) .jb-col h2 small, html body:not(#u) .ca-row1 time, html body:not(#u) .jb-foot em.est, html body:not(#u) :is(.bl-read, .jb-lines) li small, html body:not(#u) .cu-num small, html body:not(#u) .iv-no { font-family: var(--ca-sans) !important; letter-spacing: 0 !important; }
+
+/* Surfaces: flat grey, no rings, no shadows. */
+html body:not(#u) :is(.cu-list, .ca-card, .ca-kpis > div, .ca-stats, .ca-cards, .ca-sam, .ca-calbar, .ca-pushcard, .jb-box, .jb-amt, .ca-settings, .ca-todo) { background: var(--t-fill) !important; border: 0 !important; box-shadow: none !important; border-radius: 18px !important; }
+html body:not(#u) .cu-list li + li, html body:not(#u) .ca-settings li + li { border-top: 1px solid var(--t-line) !important; }
+html body:not(#u) .cu-list button:hover { background: rgba(23, 26, 32, .03) !important; }
+html body:not(#u) .jb-col { background: transparent !important; border: 0 !important; padding: 0 !important; }
+html body:not(#u) .jb-card { background: var(--t-fill) !important; box-shadow: none !important; border-radius: 14px !important; }
+html body:not(#u) .jb-card:hover { background: var(--t-fill2) !important; box-shadow: none !important; }
+html body:not(#u) .jb-empty { border: 1px dashed rgba(23, 26, 32, .12) !important; }
+html body:not(#u) :is(.ca-chip, .jb-tag, .jb-pill) { background: rgba(255, 255, 255, .7) !important; border-color: transparent !important; }
+html body:not(#u) .jb-card :is(.jb-tag) { background: #fff !important; }
+html body:not(#u) .ca-list button { border-radius: 14px !important; }
+html body:not(#u) .ca-list button:hover, html body:not(#u) .ca-wide .ca-list button.sel { background: var(--t-fill) !important; box-shadow: none !important; }
+html body:not(#u) .ca-av { box-shadow: none !important; }
+
+/* Fields: grey wells, no outlines until you type. */
+html body:not(#u) :is(.jb-f, .jb-amt, .ob-f, .ca-field, .bl) :is(input, select, textarea), html body:not(#u) .cu-search input { background: #fff !important; border: 1px solid transparent !important; box-shadow: none !important; }
+html body:not(#u) :is(.jb-sheet-b > .jb-f, .jb-sheet-b > .jb-fields .jb-f, .jb-sheet-b > .jb-two .jb-f) :is(input, select, textarea), html body:not(#u) .jb-sheet-b > label.jb-f textarea, html body:not(#u) .cu-search input { background: var(--t-fill) !important; }
+html body:not(#u) :is(.jb-f, .jb-amt, .bl, .ca-field) :is(input, select, textarea):focus, html body:not(#u) .cu-search input:focus { border-color: var(--t-ink) !important; box-shadow: none !important; }
+html body:not(#u) .bl-row { background: #fff !important; box-shadow: none !important; }
+html body:not(#u) .jb-toggle { background: #fff !important; }
+html body:not(#u) .jb-sheet-b > .jb-toggle { background: var(--t-fill) !important; }
+
+/* Segmented controls: Tesla's grey track. */
+html body:not(#u) :is(.ca-seg, .jb-stages) { background: var(--t-fill) !important; }
+html body:not(#u) :is(.ca-seg button.on, .jb-stages button.on) { box-shadow: 0 1px 3px rgba(23, 26, 32, .12) !important; }
+
+/* Sheets: white, generous, no ring. */
+html body:not(#u) .jb-sheet { box-shadow: 0 -10px 40px rgba(23, 26, 32, .12) !important; }
+html body:not(#u) .jb-scrim { background: rgba(23, 26, 32, .28) !important; backdrop-filter: none; }
+html body:not(#u) .jb-x { background: var(--t-fill) !important; border-radius: 50% !important; }
+html body:not(#u) :is(.jb-acts :is(button, a), .jb-ghost, .ca-chip-btn) { background: var(--t-fill) !important; border: 0 !important; box-shadow: none !important; }
+
+/* Header: the page title big, nothing else but you. */
+html body:not(#u) .ca-top { border: 0 !important; }
+html body:not(#u) .ca-me { position: relative; flex: 0 0 auto; width: 34px; height: 34px; margin-left: auto; display: grid; place-items: center; border: 0 !important; border-radius: 50% !important; background: var(--t-fill) !important;
+  color: var(--t-ink) !important; font: 600 12px var(--ca-sans) !important; letter-spacing: .02em; cursor: pointer; }
+html body:not(#u) .ca-me.on { background: var(--t-ink) !important; color: #fff !important; }
+html body:not(#u) .ca-me em { position: absolute; top: 0; right: 0; width: 9px; height: 9px; border-radius: 50%; background: #e82127; box-shadow: 0 0 0 2px #fff; }
+html body:not(#u) .ca-wide .ca-me { display: none; }
+
+/* Phone nav: white, thin icons, no rule. */
+html body:not(#u) .ca-nav { background: rgba(255, 255, 255, .94) !important; border-top: 1px solid var(--t-line) !important; }
+html body:not(#u) .ca-nav button { color: var(--t-3) !important; }
+html body:not(#u) .ca-nav button.on { color: var(--t-ink) !important; }
+html body:not(#u) .ca-nav button.on .ca-nav-ic { background: transparent !important; box-shadow: none !important; }
+html body:not(#u) .ca-nav em { background: #e82127 !important; }
+@media (max-width: 1099px) { html body:not(#u) .ca-nav { grid-template-columns: repeat(4, 1fr) !important; } }
+
+/* Computer: white everywhere, a light rail. */
+@media (min-width: 1100px) {
+  html:has(.ca-wide), html body:not(#u):has(.ca-wide), html body:not(#u) .ca.ca-wide { background: #fff !important; }
+  html body:not(#u) .ca-wide .ca-nav { background: #fafafa !important; border-right: 1px solid var(--t-line) !important; }
+  html body:not(#u) .ca-wide :is(.ca-top, .ca-main) { background: #fff !important; }
+  html body:not(#u) .ca-wide .ca-pane { background: #fafafa !important; }
+  html body:not(#u) .ca-wide .ca-nav button.on { background: var(--t-fill2) !important; }
+  html body:not(#u) .ca-wide .ca-top-title { font-size: 30px !important; font-weight: 600 !important; letter-spacing: -0.03em !important; }
+}
+
+/* ---------- Today ---------- */
+html body:not(#u) .td { max-width: 640px; }
+html body:not(#u) .td-hero { padding: 6px 0 30px; }
+html body:not(#u) .td-date { margin: 0; font-size: 14px; font-weight: 500; color: var(--t-2); }
+html body:not(#u) .td-hello { margin: 4px 0 0 !important; font: 600 30px/1.1 var(--ca-head) !important; letter-spacing: -0.03em !important; color: var(--t-ink) !important; }
+html body:not(#u) .td-big { margin: 28px 0 0; font: 500 clamp(64px, 19vw, 92px)/.9 var(--ca-head); letter-spacing: -0.055em; color: var(--t-ink); font-variant-numeric: tabular-nums; }
+html body:not(#u) .td-cap { margin: 12px 0 0; font-size: 16px; color: var(--t-2); }
+html body:not(#u) .td-cap b { color: var(--t-ink); font-weight: 600; }
+html body:not(#u) .td-sec { margin-top: 30px; }
+html body:not(#u) .td-sec h2 { display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 12px !important; font: 600 20px/1.2 var(--ca-head) !important; letter-spacing: -0.02em !important; color: var(--t-ink) !important; text-transform: none !important; }
+html body:not(#u) .td-link { border: 0 !important; background: none !important; padding: 0 !important; font: 500 14px var(--ca-sans) !important; color: var(--t-2) !important; cursor: pointer; }
+html body:not(#u) .td-link:hover { color: var(--t-ink) !important; }
+html body:not(#u) :is(.td-acts, .td-sched) { list-style: none; margin: 0; padding: 0; border-radius: 18px; background: var(--t-fill); overflow: hidden; }
+html body:not(#u) :is(.td-acts, .td-sched) li + li { border-top: 1px solid var(--t-line); }
+html body:not(#u) :is(.td-acts, .td-sched) button { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 15px 16px !important; border: 0 !important;
+  background: transparent !important; text-align: left; color: var(--t-ink) !important; cursor: pointer; border-radius: 0 !important; }
+html body:not(#u) :is(.td-acts, .td-sched) button:hover { background: rgba(23, 26, 32, .03) !important; }
+html body:not(#u) .td-g { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: #fff; color: var(--t-ink); }
+html body:not(#u) .td-g.reply { background: #171a20; color: #fff; }
+html body:not(#u) .td-g.money { background: #fff0ee; color: #c2271f; }
+html body:not(#u) .td-t { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+html body:not(#u) .td-t b { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+html body:not(#u) .td-t small { font-size: 14px; color: var(--t-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body:not(#u) .td-cta { height: 32px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 999px; background: #fff; font-size: 13.5px; font-weight: 600; color: var(--t-ink); }
+html body:not(#u) .td-acts li:first-child .td-cta { background: var(--t-ink); color: #fff; }
+html body:not(#u) .td-sched button { grid-template-columns: 76px minmax(0, 1fr); }
+html body:not(#u) .td-time { font: 600 15px var(--ca-head); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+html body:not(#u) .td-sched li.past { opacity: .5; }
+html body:not(#u) .td-none, html body:not(#u) .td-more { margin: 0; padding: 16px; border-radius: 18px; background: var(--t-fill); font-size: 15px; color: var(--t-2); }
+html body:not(#u) .td-more { background: none; padding: 10px 4px 0; font-size: 13.5px; }
+html body:not(#u) .td-clear { padding: 22px 18px; border-radius: 18px; background: var(--t-fill); }
+html body:not(#u) .td-clear b { display: block; font-size: 17px; font-weight: 600; }
+html body:not(#u) .td-clear p { margin: 4px 0 0; font-size: 14.5px; color: var(--t-2); }
+html body:not(#u) .td-month { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 0; padding: 18px 4px 4px; border-radius: 18px; background: var(--t-fill); }
+html body:not(#u) .td-month > div { margin: 0; padding: 0 14px 14px; }
+html body:not(#u) .td-month > div + div { border-left: 1px solid var(--t-line); }
+html body:not(#u) .td-month dt { font-size: 13px; color: var(--t-2); }
+html body:not(#u) .td-month dd { margin: 6px 0 0; font: 500 30px/1 var(--ca-head); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+html body:not(#u) .td-month dd small { font-size: 16px; color: var(--t-3); letter-spacing: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  html body:not(#u) .td-acts li { animation: td-in .35s cubic-bezier(.2, .7, .2, 1) both; }
+  html body:not(#u) .td-acts li:nth-child(2) { animation-delay: .04s; } html body:not(#u) .td-acts li:nth-child(3) { animation-delay: .08s; } html body:not(#u) .td-acts li:nth-child(4) { animation-delay: .12s; } html body:not(#u) .td-acts li:nth-child(n+5) { animation-delay: .16s; }
+}
+@keyframes td-in { from { opacity: 0; transform: translateY(6px); } }
+/* Inbox rows on a grey well, like the rest. */
+html body:not(#u) .ca-list { background: var(--t-fill) !important; border: 0 !important; box-shadow: none !important; border-radius: 18px !important; }
+html body:not(#u) .ca-list li + li { border-top: 1px solid var(--t-line) !important; }
+html body:not(#u) .ca-list .ca-chip { background: #fff !important; }
+html body:not(#u) .ca-list .ca-av { background: #fff !important; }
+html body:not(#u) .jb-hello-sum { font-size: 15px; color: var(--t-2); align-self: center; }
+html body:not(#u) .jb-hello-sum b { color: var(--t-ink); font-weight: 600; }
+html body:not(#u) .jb-hello { align-items: center !important; }
+/* Today on a computer: hero across, what needs you on the left, the day and the month on the right. */
+@media (min-width: 1100px) {
+  html body:not(#u) .td { max-width: 1060px; }
+  html body:not(#u) .td-cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+  html body:not(#u) .td-cols .td-sec:first-child, html body:not(#u) .td-side > .td-sec:first-child { margin-top: 0; }
+  html body:not(#u) .ca-wide.solo .ca-main > .td { max-width: 1060px; }
+}
+html body:not(#u) .ca-main:has(> .td) ~ * .ca-top-title { display: none; }
+html body:not(#u) .ca-top-title.ca-hide { display: none !important; }
+html body:not(#u) .jb-hello { text-align: left; }
+@media (max-width: 520px) { html body:not(#u) .jb-hello-sum { align-self: flex-start; } html body:not(#u) .jb-hello-acts { justify-content: flex-start !important; } }

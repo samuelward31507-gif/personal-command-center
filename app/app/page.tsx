@@ -8,7 +8,8 @@ import "./app.css";
 import { CinderLogo, CinderMark } from "../cinder-brand";
 import { demoApi } from "./demo";
 import { JobsTab, Onboarding, type Card, type Winback } from "./crm-ui";
-import { Mission, Telemetry } from "./sx";
+import { Mission } from "./sx";
+import { TodayTab } from "./today";
 import { BillingSettings, type Customer, type InvoiceRow } from "./billing-ui";
 import { money, sourceReport } from "@/lib/crm";
 import { agenda, googleCalendarUrl, onMyWayText, splitAppointments, type CalEvent } from "@/lib/client-schedule";
@@ -21,7 +22,7 @@ type Cal = { connected: boolean; email: string; events: CalEvent[]; error: strin
 type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number; wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal; messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number; board?: Card[]; setup?: Record<string, string>; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[] };
 type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
 type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
-type Tab = "leads" | "jobs" | "numbers" | "estimates" | "sam";
+type Tab = "today" | "leads" | "jobs" | "numbers" | "estimates" | "sam";
 
 const SOURCE: Record<string, string> = { missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote follow-up", review: "Review request", rehash: "Old lead", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook ad", zapier: "Form" };
 const SRC_ICON: Record<string, string> = { missed_call: "phone", "web chat": "chat", "web form": "form", text: "chat", quote: "quote", review: "star", rehash: "quote", angi: "form", thumbtack: "form", facebook: "form", zapier: "form" };
@@ -254,12 +255,6 @@ function CalendarTab({ d, project, onOpen, reload, toast }: { d: Data; project: 
 
   return <>
     <div className="ca-hello"><p>Your week</p><h1>{week ? <>{week} {week === 1 ? "estimate" : "estimates"} booked.</> : "No estimates this week yet."}<span>{due.length ? ` ${due.length} ${due.length === 1 ? "needs" : "need"} an update.` : cal.connected ? " Synced with your calendar." : ""}</span></h1></div>
-    <Telemetry label="This week" items={[
-      { k: "Calendar", v: cal.connected ? "Synced" : "Not linked", live: cal.connected },
-      { k: "This week", v: week },
-      { k: "Needs update", v: due.length },
-      { k: "Quotes out", v: d.quotes.length },
-    ]} />
 
     {cal.connected ? <div className="ca-calbar">
       <span className="ca-calbar-ic"><GoogleCalMark /></span>
@@ -336,7 +331,8 @@ export default function CinderApp() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
   const [d, setD] = useState<Data | null>(null);
   const [project, setProject] = useState<string>("");
-  const [tab, setTab] = useState<Tab>("leads");
+  const [tab, setTab] = useState<Tab>("today");
+  const [focus, setFocus] = useState<{ card?: string; stage?: "quoted" | "won"; invoice?: string; n: number } | null>(null);
   const [filter, setFilter] = useState<"all" | "needs" | "booked">("all");
   const [open, setOpen] = useState<string | null>(null);
   // On a computer the app becomes a three-column workspace: sidebar, leads, and the open conversation.
@@ -377,7 +373,7 @@ export default function CinderApp() {
       // Opened from a notification: go straight to that conversation or tab.
       const th = q.get("thread"), tb = q.get("tab");
       if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen(th);
-      if (tb === "sam" || tb === "estimates" || tb === "numbers" || tb === "jobs") setTab(tb);
+      if (tb === "sam" || tb === "estimates" || tb === "numbers" || tb === "jobs" || tb === "leads" || tb === "today") setTab(tb);
       if (location.search) try { history.replaceState(null, "", "/app"); } catch { /* keep the URL */ }
       await load("", tb === "sam" || tb === "estimates" ? tb : "leads");
     })();
@@ -391,7 +387,7 @@ export default function CinderApp() {
   const dueCount = due.length;
 
   if (state === "loading") return <div className="ca-load" role="main"><Mark /></div>;
-  if (state === "out") return <SignIn onIn={() => void load("")} onDemo={() => { demoStart(); setDemo(true); setHidePushCard(true); setTab("leads"); void load("", "leads"); }} />;
+  if (state === "out") return <SignIn onIn={() => void load("")} onDemo={() => { demoStart(); setDemo(true); setHidePushCard(true); setTab("today"); void load("", "leads"); }} />;
   if (!d) return null;
   const L = d.live;
   const today = L.conversations.filter(c => c.at && dayKey(c.at) === new Date().toDateString()).length;
@@ -415,34 +411,21 @@ export default function CinderApp() {
       {d.businesses.length > 1
         ? <select value={project} onChange={e => { setProject(e.target.value); void load(e.target.value); }} aria-label="Business">{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>
         : <b className="ca-top-name">{bizName}</b>}
-      <h1 className="ca-top-title">{tab === "leads" ? "Leads" : tab === "jobs" ? "Jobs" : tab === "numbers" ? "Numbers" : tab === "estimates" ? "Calendar" : "Sam"}</h1>
+      <h1 className={"ca-top-title" + (tab === "today" ? " ca-hide" : "")}>{tab === "today" ? "Today" : tab === "leads" ? "Inbox" : tab === "jobs" ? "Jobs" : tab === "numbers" ? "Numbers" : tab === "estimates" ? "Calendar" : "Sam"}</h1>
       <span className="ca-live"><i />Live</span>
+      <button type="button" className={"ca-me" + (tab === "sam" ? " on" : "")} aria-label={`Sam and settings${d.unreadFromSam ? `, ${d.unreadFromSam} new` : ""}`} onClick={() => { setTab("sam"); window.scrollTo(0, 0); void load(project, "sam"); }}>
+        {initials(d.owner || bizName || "Me")}{d.unreadFromSam ? <em /> : null}</button>
     </header>
 
     <div className="ca-main" role="main">
+      {tab === "today" && <TodayTab owner={d.owner} cards={d.board ?? []} invoices={d.invoices ?? []} due={due} appts={d.appointments} unreadSam={d.unreadFromSam}
+        asks={needsList.map(c => ({ id: c.id, name: c.name, ask: c.ask, last: c.last, at: c.at }))}
+        live={{ wonValue: L.wonValue, won: L.won, answered: L.answered, leads: L.leads, replySec: L.replySec, booked: L.booked }}
+        go={{ thread: id => setOpen(id), card: (id, stage) => { setTab("jobs"); setFocus({ card: id, stage, n: Date.now() }); window.scrollTo(0, 0); },
+          invoice: id => { setTab("jobs"); setFocus({ invoice: id, n: Date.now() }); window.scrollTo(0, 0); },
+          calendar: () => { setTab("estimates"); window.scrollTo(0, 0); void load(project, "estimates"); }, sam: () => { setTab("sam"); void load(project, "sam"); }, numbers: () => { setTab("numbers"); window.scrollTo(0, 0); } }} />}
+
       {tab === "leads" && <>
-        <div className="ca-hello">
-          <p>{greeting()}</p>
-          <h1>{today ? <>{today} new {today === 1 ? "lead" : "leads"} today.<span> All answered.</span></> : <>Every lead answered.<span> {secs(L.replySec)} typical reply.</span></>}</h1>
-        </div>
-        <Telemetry items={[
-          { k: "Status", v: "Live", live: true },
-          { k: "First reply", v: L.replySec == null ? "–" : L.replySec < 60 ? `${L.replySec}s` : `${Math.round(L.replySec / 60)}m` },
-          { k: "Answered", v: <>{L.answered}<small>/{L.leads}</small></> },
-          { k: "Booked", v: L.booked },
-          { k: "Quotes out", v: L.chasingValue ? (L.chasingValue >= 1000 ? `$${(L.chasingValue / 1000).toFixed(1).replace(/\.0$/, "")}K` : usd(L.chasingValue)) : L.chasing },
-        ]} />
-        {(needsList.length > 0 || due.length > 0) && <section className="ca-todo" aria-label="Things that need you">
-          <h2><i />{needsList.length + due.length} {needsList.length + due.length === 1 ? "thing needs" : "things need"} you</h2>
-          <ul>
-            {needsList.slice(0, 3).map(c => <li key={c.id}><button type="button" onClick={() => setOpen(c.id)}>
-              <span className="ca-av sm" data-tone={tone(c.name)} aria-hidden="true">{initials(c.name)}</span>
-              <span className="ca-todo-m"><b>Reply to {c.name.split(" ")[0]}</b><em>&ldquo;{c.ask || c.last}&rdquo;</em></span><span className="ca-todo-go">Reply</span></button></li>)}
-            {due.slice(0, 3).map(a => { const n = a.customer_name || fmtPhone(a.customer_phone); return <li key={a.id}><button type="button" onClick={() => { setTab("estimates"); window.scrollTo(0, 0); void load(project, "estimates"); }}>
-              <span className="ca-av sm" data-tone={tone(n)} aria-hidden="true">{initials(n)}</span>
-              <span className="ca-todo-m"><b>{n.split(" ")[0]}&rsquo;s estimate</b><em>How did it go? Tap to update.</em></span><span className="ca-todo-go">Update</span></button></li>; })}
-          </ul>
-        </section>}
         {!hidePushCard && (push === "off" || push === "ios-install") && <div className="ca-pushcard">
           <span className="ca-pushcard-ic"><Icon name="bolt" size={18} /></span>
           <div><b>Know the second a lead needs you</b>
@@ -493,7 +476,7 @@ export default function CinderApp() {
       {tab === "jobs" && <JobsTab cards={d.board ?? []} trade={d.setup?.trade || ""} project={project} api={api} toast={toast} reload={() => load(project, "jobs")} onOpen={setOpen} canCall={d.canCall} wide={wide}
         biz={{ reviewLink: d.setup?.has_review_link === "yes" || !!d.hasReviewLink, number: d.setup?.has_number === "yes" || !!d.number, owner: d.owner, business: d.business,
           priceBook: d.setup?.price_book || "", taxRate: d.setup?.tax_rate || "", payLink: !!d.setup?.pay_link, calendar: d.setup?.has_calendar === "yes" || !!d.calendar?.connected }}
-        winback={d.winback} customers={d.customers} invoices={d.invoices} setup={d.setup} />}
+        winback={d.winback} customers={d.customers} invoices={d.invoices} setup={d.setup} focus={focus} />}
 
       {tab === "estimates" && <CalendarTab d={d} project={project} onOpen={setOpen} reload={() => load(project, "estimates")} toast={toast} />}
 
@@ -524,9 +507,9 @@ export default function CinderApp() {
       : <div className="ca-pane-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>Pick a conversation</b><p>Every text Cinder sent and every reply, with the customer&rsquo;s number one click away.</p></div>}</aside>}
     <nav className="ca-nav" aria-label="Sections">
       <div className="ca-nav-brand"><CinderLogo className="ca-nav-word" ink="#121417" title="Cinder" /><b>{bizName}</b></div>
-      {([["leads", "Leads", L.needs, "chat"], ["jobs", "Jobs", 0, "jobs"], ["estimates", "Calendar", dueCount, "cal"], ["numbers", "Numbers", 0, "bolt"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const).map(([k, l, n, ic]) =>
+      {([["today", "Today", 0, "today"], ["leads", "Inbox", L.needs, "chat"], ["jobs", "Jobs", 0, "jobs"], ["estimates", "Calendar", dueCount, "cal"], ...(wide ? [["numbers", "Numbers", 0, "bolt"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const : [])] as const).map(([k, l, n, ic]) =>
         <button key={k} type="button" aria-current={tab === k ? "page" : undefined} className={tab === k ? "on" : ""} onClick={() => { setTab(k); window.scrollTo(0, 0); if (k === "sam" || k === "estimates") void load(project, k); }}>
-          <span className="ca-nav-ic">{ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "jobs" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="5" height="16" rx="1.5" /><rect x="9.5" y="4" width="5" height="11" rx="1.5" /><rect x="15.5" y="4" width="5" height="7" rx="1.5" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span>{l}</button>)}
+          <span className="ca-nav-ic">{ic === "today" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" /></svg> : ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "jobs" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="5" height="16" rx="1.5" /><rect x="9.5" y="4" width="5" height="11" rx="1.5" /><rect x="15.5" y="4" width="5" height="7" rx="1.5" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span>{l}</button>)}
       <p className="ca-nav-foot"><b>Questions? Text Sam.</b>(205) 837-0211</p>
     </nav>
     {billingOpen && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={() => load(project, "sam")} onClose={() => setBillingOpen(false)} />}
