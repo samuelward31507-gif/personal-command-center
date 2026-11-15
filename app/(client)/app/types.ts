@@ -15,6 +15,8 @@ export type Data = { /** The owner, or a crew member who sees the schedule and t
   messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number; board?: Card[]; setup?: Record<string, string>; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[];
   /** The website key (chat bubble and intake webhook) and the app's public origin, for the System screen. */
   key?: string; origin?: string;
+  /** Jobber: whether it's wired up for this business, and the link that connects it. */
+  jobber?: { available: boolean; connected: boolean; account: string; error: string; lastPush: string | null; connectUrl: string };
   /** Connections: each lead source's activity, texts that didn't send, the consent log. */
   wires?: { sources: { source: string; leads: number; last: string | null; last30: number }[]; failures: { id: string; at: string; body: string; name: string; phone: string; thread: string; source: string }[]; log: { at: string; event: string; source: string; phone: string; evidence: string }[] } };
 export type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[];

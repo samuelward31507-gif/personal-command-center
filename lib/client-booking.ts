@@ -147,7 +147,7 @@ export function mondayText(business: string, w: WeekNumbers, link: string): stri
     w.won ? `${w.won} won${w.wonValue ? `, ${usd(w.wonValue)}` : ""}` : "",
     w.reviews ? `${w.reviews} review request${w.reviews === 1 ? "" : "s"} sent` : "",
   ].filter(Boolean);
-  return `Cinder for ${business}, last week: ${parts.join(" · ")}. Every conversation: ${link}`.slice(0, 600);
+  return `Cinder for ${business}, last week: ${parts.join(", ")}. Every conversation: ${link}`.slice(0, 600);
 }
 
 /** Inbound web lead: pull a usable name, phone and job out of whatever a form sends. */

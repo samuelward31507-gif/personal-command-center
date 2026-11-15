@@ -72,9 +72,9 @@ export function ImportSheet({ project, api, toast, reload, onClose, customers, b
       <label className="drop">
         <input type="file" accept=".csv,text/csv,text/plain" onChange={e => onFile(e.target.files?.[0])} aria-label="Choose a CSV file" />
         <Icon name="upload" size={22} /><b>Choose a CSV file</b>
-        <small>In Jobber: Clients, then More actions, then Export. Any spreadsheet saved as CSV works too.</small>
+        <small>Any spreadsheet saved as CSV works. Each row needs a phone number.</small>
       </label>
-      <p className="fine">Each row needs a phone number. Names, addresses, emails, tags and notes come along when they&rsquo;re there. Nobody gets a text.</p>
+      <div className="howto"><b>From Jobber, three steps</b><ol><li>In Jobber, open Clients and choose More actions, then Export.</li><li>Jobber emails you a CSV. Save it to this phone or computer.</li><li>Choose it above. Names, addresses, emails, tags and notes come along. Nobody gets a text.</li></ol></div>
       {paste ? <>
         <label className="field"><span>Rows</span><textarea rows={6} value={text} onChange={e => setText(e.target.value)} placeholder={"Name, Phone, Address\nDana Ruiz, (720) 555-0177, 2210 Oak Dr"} /></label>
         <div className="acts-row end"><button type="button" className="btn ink" disabled={!text.trim()} onClick={() => load("Pasted rows", text)}>Read rows</button></div>
@@ -89,7 +89,7 @@ export function ImportSheet({ project, api, toast, reload, onClose, customers, b
           {read.duplicates > 0 && <div><dt>Repeats</dt><dd>{read.duplicates}</dd></div>}
         </dl></div>
       <ul className="rows" aria-label="First rows">{read.rows.slice(0, 6).map(r => <li key={r.phone}>
-        <Avatar name={r.name || r.phone} /><span style={{ minWidth: 0 }}><b>{r.name || fmtPhone(r.phone)}</b><small>{[fmtPhone(r.phone), r.address].filter(Boolean).join(" · ")}</small></span>
+        <Avatar name={r.name || r.phone} /><span style={{ minWidth: 0 }}><b>{r.name || fmtPhone(r.phone)}</b><small>{[fmtPhone(r.phone), r.address].filter(Boolean).join(", ")}</small></span>
         {here.has(r.phone.slice(-10)) && <span className="tag">Already here</span>}</li>)}
         {read.rows.length > 6 && <li className="fine" style={{ minHeight: 32 }}>and {read.rows.length - 6} more</li>}</ul>
       {read.skipped.length > 0 && <details className="skipped"><summary>{read.skipped.length} skipped with no phone number</summary>
@@ -126,7 +126,7 @@ export function WinbackSheet({ w, biz, project, api, toast, reload, onClose }: {
     </div>
     <p className="fine">Only customers who opted in to offers on your form or on import. Max one text every 90 days.</p>
     {w.eligible > 0 ? <>
-      <label className="field"><span>Your text <em>{body.length}/320 · {"{first}"} is their first name</em></span><textarea rows={4} value={body} maxLength={320} onChange={e => { setBody(e.target.value); setErr(""); setArm(""); }} /></label>
+      <label className="field"><span>Your text <em>{body.length}/320, {"{first}"} is their first name</em></span><textarea rows={4} value={body} maxLength={320} onChange={e => { setBody(e.target.value); setErr(""); setArm(""); }} /></label>
       <div><p className="sec">{sample}&rsquo;s phone</p><span className="bubble out" style={{ fontSize: 13.5 }}>{preview}{"\n\n"}Reply STOP to opt out.</span></div>
       {err && <p className="err" role="alert">{err}</p>}
     </> : <p className="fine">No one to text yet. Customers who opt in on your website form, or whose consent you confirm on import, show up here.</p>}

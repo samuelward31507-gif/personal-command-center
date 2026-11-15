@@ -182,7 +182,7 @@ export const REVIEW_TEXT = "Hi {first}, thanks again for choosing {business}. Wo
 /** What the owner gets on their phone. */
 export function ownerAlert(kind: "new" | "handoff" | "booked" | "missed" | "waiting" | "moved" | "canceled", who: string, detail: string): string {
   const head = { new: "New lead", handoff: "Needs you", booked: "Estimate booked", missed: "Missed call, texted back", waiting: "Still waiting on you", moved: "Estimate moved", canceled: "Estimate canceled" }[kind];
-  return `Cinder · ${head}: ${who}${detail ? `. ${detail}` : ""}`.slice(0, 320);
+  return `Cinder, ${head.charAt(0).toLowerCase() + head.slice(1)}: ${who}${detail ? `. ${detail}` : ""}`.slice(0, 320);
 }
 
 // ---------- Lead follow-up (no reply yet) ----------
@@ -248,7 +248,17 @@ export function parseOwnerQuote(text: string): { amount: number | null; name: st
   const name = rest.replace(/^(for|to)\s+/i, "").replace(/[^\p{L}\p{N}' .-]/gu, "").trim().slice(0, 60);
   return { amount, name };
 }
-export const OWNER_HELP = "This is your Cinder number. To answer a customer, open the Cinder app: {app}. To start quote follow-up for the customer we last texted you about, reply QUOTE and the amount, like QUOTE 4200.";
+export const OWNER_HELP = "This is your Cinder number. To answer a customer, open the Cinder app: {app}. Reply QUOTE and the amount (like QUOTE 4200) to start quote follow-up for the customer we last texted you about, or OMW to tell your next estimate you're on the way.";
+export const CREW_HELP = "This is {business}'s Cinder number. Reply OMW to text your next estimate that you're on the way, or OMW and a first name. Everything else is in the Cinder app: {app}";
+/** "OMW", "on my way", "OMW Dana", "omw 20" (minutes): the name and minutes when given. */
+export function parseOnMyWay(text: string): { name: string; minutes: number } | null {
+  const m = (text || "").trim().match(/^\s*(?:omw|on my way|otw|on the way)\b[:\s-]*(.*)$/i);
+  if (!m) return null;
+  let rest = m[1].trim(), minutes = 15;
+  const n = rest.match(/\b(\d{1,3})\s*(?:min|mins|minutes|m)?\b/i);
+  if (n) { const v = Number(n[1]); if (v >= 1 && v <= 180) minutes = v; rest = (rest.slice(0, n.index) + " " + rest.slice((n.index ?? 0) + n[0].length)).trim(); }
+  return { name: rest.replace(/[^\p{L}' .-]/gu, "").trim().slice(0, 40), minutes };
+}
 
 // ---------- Repeat Revenue: past customers who are due again ----------
 /** Two texts per due date: on the day, then 4 days later if they haven't answered. */

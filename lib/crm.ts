@@ -61,7 +61,7 @@ export function cleanDetails(trade: string | undefined, input: unknown): Details
   return out;
 }
 
-/** One line for a card or an alert: "150 ft · 6 ft cedar · 2 gates · HOA". */
+/** One line for a card, a text or an alert: "150 ft, 6 ft cedar, 2 gates, HOA". */
 export function detailLine(trade: string | undefined, d: Details): string {
   if ((trade || "").toLowerCase() === "fence") {
     const parts: string[] = [];
@@ -70,9 +70,9 @@ export function detailLine(trade: string | undefined, d: Details): string {
     if (mat) parts.push(String(mat));
     if (d.gates != null && d.gates !== "") parts.push(`${d.gates} ${Number(d.gates) === 1 ? "gate" : "gates"}`);
     if (d.hoa === "Yes") parts.push("HOA");
-    return parts.join(" · ");
+    return parts.join(", ");
   }
-  return jobFields(trade).filter(f => f.key !== "address" && d[f.key] != null).map(f => f.unit ? `${d[f.key]} ${f.unit}` : String(d[f.key])).join(" · ");
+  return jobFields(trade).filter(f => f.key !== "address" && d[f.key] != null).map(f => f.unit ? `${d[f.key]} ${f.unit}` : String(d[f.key])).join(", ");
 }
 
 // ---------- The owner's prices ----------

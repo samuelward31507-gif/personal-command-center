@@ -3,6 +3,7 @@ import { liveFor } from "@/lib/client-live";
 import { calState, clientCalendar, listEvents, type CalEvent } from "@/lib/client-calendar";
 import { isRepeatTrade, SEQUENCES } from "@/lib/client-runtime";
 import { connectionsReport, loadBoard, ownerSetupView } from "@/lib/client-crm-run";
+import { jobberConfigured, jobberState } from "@/lib/jobber-core";
 import { winbackAudience } from "@/lib/client-close-run";
 import { loadCustomers, loadInvoices } from "@/lib/client-billing-run";
 import { winbackDraft } from "@/lib/crm";
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
       const texts = await sql`SELECT id, direction, author, body, at, media, status FROM public.client_texts WHERE thread_id = ${th}::uuid ORDER BY at LIMIT 400`;
       return json({ thread: t, texts });
     }
-    const [live, biz, appts, unread, msgs, quotes, calRow, keyRow, wonJobs, board, past, customers, invoices, wires] = await Promise.all([
+    const [live, biz, appts, unread, msgs, quotes, calRow, jobberRow, keyRow, wonJobs, board, past, customers, invoices, wires] = await Promise.all([
       liveFor(sql, c.projectId, 80, c.setup.timezone || "America/Denver"),
       sql`SELECT o.project_id, coalesce(o.setup->>'display_name', p.client_name, p.name) AS name, o.portal_token FROM public.client_ops o JOIN public.projects p ON p.id = o.project_id WHERE o.project_id = ANY(${s.projects}::uuid[])`,
       // Booked estimates still waiting on an outcome (up to two weeks back) and everything coming up.
@@ -37,6 +38,7 @@ export async function GET(req: Request) {
       sql`SELECT id, customer_name, customer_phone, amount::float AS amount, sent_on::text AS sent_on, steps_sent, status FROM public.client_quotes
         WHERE project_id = ${c.projectId}::uuid AND kind = 'quote' AND status IN ('open','replied') ORDER BY sent_on DESC LIMIT 40`.catch(() => []),
       sql`SELECT google_email FROM public.client_calendars WHERE project_id = ${c.projectId}::uuid`.catch(() => []),
+      sql`SELECT account_name, last_error, last_push_at, connected_at FROM public.client_jobber WHERE project_id = ${c.projectId}::uuid`.catch(() => []),
       // The website key: the chat bubble and the intake webhook both name the client with it.
       sql`SELECT chat_key FROM public.client_ops WHERE project_id = ${c.projectId}::uuid`.catch(() => []),
       // Won jobs from the last 90 days that haven't had a review request: "Job done" sends it at the right time.
@@ -72,6 +74,9 @@ export async function GET(req: Request) {
       setup: crew ? { display_name: c.setup.display_name || "", owner_name: c.setup.owner_name || "", trade: c.setup.trade || "" } : { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "", team: c.setup.team || "[]", monthly_report: c.setup.monthly_report || "" },
       customers: crew ? [] : customers, invoices: crew ? [] : invoices,
       key: String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? ""), origin, wires,
+      jobber: (() => { const j = (jobberRow as { account_name?: string; last_error?: string; last_push_at?: unknown; connected_at?: unknown }[])[0];
+        return { available: jobberConfigured(), connected: !!j, account: String(j?.account_name ?? ""), error: String(j?.last_error ?? ""), lastPush: j?.last_push_at ? new Date(String(j.last_push_at)).toISOString() : null,
+          connectUrl: jobberConfigured() ? `${origin}/api/client-jobber?state=${encodeURIComponent(jobberState(c.projectId))}` : "" }; })(),
       winback: { past: past.past, eligible: past.eligible.length, names: past.eligible.slice(0, 6).map(e => e.name.split(" ")[0] || "").filter(Boolean),
         draft: winbackDraft(c.setup.trade, c.setup.owner_name || "", c.setup.display_name || "") },
     });

@@ -10,9 +10,9 @@ ok(() => assert.deepEqual(jobFields("Pool").map(f => f.key), ["job", "size", "ad
 ok(() => assert.deepEqual(cleanDetails("Fence", { length_ft: "150 ft", material: " cedar ", height: "6", gates: "2", hoa: "yes", junk: "x" }),
   { length_ft: 150, material: "cedar", height: "6 ft", gates: 2, hoa: "Yes" }));
 ok(() => assert.deepEqual(cleanDetails("Fence", { length_ft: "-4", hoa: "maybe" }), {}));
-ok(() => assert.equal(detailLine("Fence", { length_ft: 150, height: "6 ft", material: "cedar", gates: 2, hoa: "Yes" }), "150 ft · 6 ft cedar · 2 gates · HOA"));
-ok(() => assert.equal(detailLine("Fence", { length_ft: 80, gates: 1 }), "80 ft · 1 gate"));
-ok(() => assert.equal(detailLine("Pool", { job: "Pool fence", size: "40x20" }), "Pool fence · 40x20"));
+ok(() => assert.equal(detailLine("Fence", { length_ft: 150, height: "6 ft", material: "cedar", gates: 2, hoa: "Yes" }), "150 ft, 6 ft cedar, 2 gates, HOA"));
+ok(() => assert.equal(detailLine("Fence", { length_ft: 80, gates: 1 }), "80 ft, 1 gate"));
+ok(() => assert.equal(detailLine("Pool", { job: "Pool fence", size: "40x20" }), "Pool fence, 40x20"));
 
 // Price book and ballpark
 const book = parsePriceBook(JSON.stringify({ unit: "ft", rates: [{ name: "Wood privacy (cedar)", low: 38, high: 48 }, { name: "Vinyl", low: 40, high: 55 }, { name: "Chain link", low: 18, high: 26 }, { name: "bad", low: 0, high: 5 }], gate: [450, 650] }));

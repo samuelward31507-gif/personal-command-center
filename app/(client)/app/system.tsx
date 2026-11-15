@@ -121,6 +121,12 @@ function Connections({ d, biz, go, push, onPush, toast, api, project, demo }: { 
         acts={push === "off" ? <button type="button" className="btn sm ink" onClick={onPush}>Turn on</button> : undefined} />
       <Row state={s.has_cell ? "on" : "todo"} name="Alerts to your cell" st={s.has_cell ? `On file${s.alert_email ? ", and email" : ""}` : "No cell on file"} />
       <Row state={biz.payLink ? "on" : "todo"} name="Pay link on invoices" st={biz.payLink ? "On file" : "Not added"} acts={<button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button>} />
+      {d.jobber?.available && <Row state={d.jobber.connected ? (d.jobber.error ? "bad" : "on") : "off"} name="Jobber" st={d.jobber.connected ? (d.jobber.error ? `Connected, last push failed: ${d.jobber.error}` : `Connected${d.jobber.account ? `, ${d.jobber.account}` : ""}${d.jobber.lastPush ? `, last estimate sent ${ago(d.jobber.lastPush)}` : ""}`) : "Not connected"}
+        open={open === "jobber"} onToggle={() => setOpen(open === "jobber" ? null : "jobber")}
+        acts={<a className={"btn sm" + (d.jobber.connected ? "" : " ink")} href={d.jobber.connectUrl} target="_blank" rel="noreferrer">{d.jobber.connected ? "Reconnect" : "Connect Jobber"}</a>}>
+        <p>Every estimate Cinder books also lands in Jobber as a request on the customer&rsquo;s record, so your schedule there stays whole. Your past customers come in the other way with Import.</p>
+        <ol><li>Tap Connect Jobber and sign in to Jobber.</li><li>Tap Allow.</li><li>You land back here. The next booked estimate shows up in Jobber within a minute.</li></ol>
+      </Row>}
       {s.has_webhook === "yes" && <Row state="on" name="Events to your own tools" st="Live, every lead, booking, quote and job posts to your webhook" />}
     </section>
 

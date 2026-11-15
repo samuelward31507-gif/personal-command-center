@@ -26,7 +26,7 @@ ok(() => assert.equal(R.quoteStepDue("2026-11-01", 1, "2026-11-05"), null));
 ok(() => assert.equal(R.quoteStepDue("2026-11-01", 1, "2026-11-06"), 1));
 ok(() => assert.equal(R.quoteStepDue("2026-11-01", 4, "2026-12-30"), null));
 ok(() => assert.equal(R.QUOTE_TEXTS.length, R.QUOTE_DAYS.length));
-ok(() => assert.ok(R.ownerAlert("booked", "Dana Ruiz", "Thu 8:00").startsWith("Cinder · Estimate booked: Dana Ruiz")));
+ok(() => assert.ok(R.ownerAlert("booked", "Dana Ruiz", "Thu 8:00").startsWith("Cinder, estimate booked: Dana Ruiz")));
 ok(() => assert.match(R.replyUser([{ direction: "in", body: "need a fence" }], "Dana"), /Customer: need a fence/));
 console.log(`Client runtime checks passed (${n} assertions).`);
 {

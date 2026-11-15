@@ -37,7 +37,7 @@ export default function InvoicePage() {
         <header className="doc-biz"><span className="doc-mono" aria-hidden="true">{(v.business || "I").charAt(0)}</span><b>{v.business || "Invoice"}</b></header>
         <section className="doc-card">
           <div className="doc-top">
-            <p className="doc-k">Invoice #{v.number}{v.customer ? ` · ${v.customer}` : ""}</p>
+            <p className="doc-k">Invoice #{v.number}{v.customer ? ` for ${v.customer}` : ""}</p>
             <span className={"stage " + (v.status === "paid" ? "won" : late ? "late" : v.status === "void" ? "lost" : "booked")}><i />{v.status === "paid" ? "Paid" : v.status === "void" ? "Canceled" : late ? "Past due" : "Open"}</span>
           </div>
           <p className="doc-amt">{usd(v.total)}</p>

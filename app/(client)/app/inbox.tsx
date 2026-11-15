@@ -96,7 +96,7 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
     <header className="th">
       {onBack && <button type="button" className="btn ghost ic" onClick={onBack} aria-label="Back"><Icon name="back" size={16} /></button>}
       {t && <Avatar name={name} size="lg" />}
-      <div className="who"><b>{name || "Loading"}</b><small>{t ? <>{fmtPhone(t.customer_phone)} · {sourceLabel(t.source)}{st ? <> · <span className={st[1] === "needs" ? "ember-t" : ""}>{st[0]}</span></> : null}</> : " "}</small></div>
+      <div className="who"><b>{name || "Loading"}</b><small>{t ? <>{fmtPhone(t.customer_phone)}, {sourceLabel(t.source)}{st ? <>, <span className={st[1] === "needs" ? "ember-t" : ""}>{st[0]}</span></> : null}</> : " "}</small></div>
       {t && <div className="acts-row" style={{ flexWrap: "nowrap" }}>
         {t.status !== "opted_out" && t.status !== "booked" && <button type="button" className="btn sm" disabled={!!busy} onClick={() => void act("status", { status: "booked" }, "Marked booked.")}>Mark booked</button>}
         {canCall ? <button type="button" className="btn sm" disabled={!!busy} onClick={() => void act("call", {}, "Calling your cell. Pick up and we'll connect them.")}><Icon name="phone" size={13} />Call</button>
@@ -108,7 +108,7 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
       {texts === null ? <div className="skel-rows" style={{ padding: "12px 0" }}><i className="skel" /><i className="skel" /><i className="skel" /></div>
         : texts.length === 0 ? <Empty title="No texts yet" text="Anything you send goes from your business number." />
         : texts.map((x, i) => {
-          const sep = dayKey(x.at) !== lastDay ? <p className="day" key={"d" + i}><span>{dayName(x.at)} · {clock(x.at)}</span></p> : null; lastDay = dayKey(x.at);
+          const sep = dayKey(x.at) !== lastDay ? <p className="day" key={"d" + i}><span>{dayName(x.at)} {clock(x.at)}</span></p> : null; lastDay = dayKey(x.at);
           if (x.author === "system") { lastWho = ""; return <div key={i}>{sep}<p className="event"><span>{x.body}</span></p></div>; }
           const who = x.direction === "in" ? "them" : x.author === "owner" ? "you" : "cinder";
           const prev = texts[i - 1], next = texts[i + 1];

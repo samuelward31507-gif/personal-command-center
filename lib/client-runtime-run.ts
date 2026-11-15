@@ -8,7 +8,7 @@ import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
 import { ballpark, cleanDetails, detailLine, intakeRules, parsePriceBook, rangeText } from "@/lib/crm";
 import { emitEvent } from "@/lib/client-webhook";
-import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, withOptOut, automatedRoom, quoteDaysFor, nudgeHoursFor, isDoNotText, type Vars } from "@/lib/client-runtime";
+import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, parseOnMyWay, OWNER_HELP, CREW_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, withOptOut, automatedRoom, quoteDaysFor, nudgeHoursFor, isDoNotText, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, withBookingPrefs, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent, deleteEvent, moveEvent } from "@/lib/client-calendar";
 import { syncBookingToJobber } from "@/lib/jobber";
@@ -17,6 +17,8 @@ import { paymentLinkFor } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
 import { pushFromAlert, pushToProject } from "@/lib/client-push";
 import { liveFor } from "@/lib/client-live";
+import { onMyWayText } from "@/lib/client-schedule";
+import { parseTeam } from "@/lib/crm";
 
 type Sql = NeonQueryFunction<false, false>;
 export type Client = { projectId: string; owner: string; setup: Record<string, string>; messages: ReturnType<typeof cleanMessages> };
@@ -303,10 +305,37 @@ async function firstBookingBilling(sql: Sql, c: Client): Promise<void> {
   ], link: { label: "Open Money", path: "/crm/finance" } });
 }
 
-/** The owner texted their Cinder number: "QUOTE 4200 [name]" starts quote follow-up; anything else gets a pointer to the app. */
+/**
+ * "OMW" from the owner's or a crew member's cell: the next booked estimate (or the named customer's) gets the
+ * on-my-way text from the business number, and the sender hears who was told. Nothing else moves.
+ */
+async function onMyWay(sql: Sql, c: Client, cell: string, who: string, o: { name: string; minutes: number }): Promise<void> {
+  const from = c.setup.texting_number || "";
+  const [a] = o.name
+    ? await sql`SELECT a.id, t.id AS thread_id, t.customer_name, t.customer_phone, t.status, a.starts_at FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id
+        WHERE a.project_id = ${c.projectId}::uuid AND a.status = 'booked' AND t.customer_name ILIKE ${o.name.split(" ")[0] + "%"} ORDER BY abs(extract(epoch FROM (a.starts_at - now()))) LIMIT 1` as { id: string; thread_id: string; customer_name: string; customer_phone: string; status: string; starts_at: string }[]
+    : await sql`SELECT a.id, t.id AS thread_id, t.customer_name, t.customer_phone, t.status, a.starts_at FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id
+        WHERE a.project_id = ${c.projectId}::uuid AND a.status = 'booked' AND a.starts_at > now() - interval '2 hours' ORDER BY a.starts_at LIMIT 1` as { id: string; thread_id: string; customer_name: string; customer_phone: string; status: string; starts_at: string }[];
+  if (!a) { await sendSms(cell, from, o.name ? `No booked estimate for ${o.name}.` : "Nothing is booked next. Open the Cinder app to see the calendar."); return; }
+  if (a.status === "opted_out") { await sendSms(cell, from, `${a.customer_name || "They"} opted out of texts. Call them instead.`); return; }
+  const ok = await sendToCustomer(sql, c, a.thread_id, a.customer_phone, onMyWayText(a.customer_name, who, c.setup.display_name || "", o.minutes), "owner");
+  await sendSms(cell, from, ok ? `Told ${a.customer_name || e164(a.customer_phone)} you're on the way, about ${o.minutes} minutes.` : `The text to ${a.customer_name || "them"} didn't send.`);
+}
+
+/** A crew member texted the business number: OMW works, everything else points at the app. */
+async function crewText(sql: Sql, c: Client, cell: string, name: string, body: string): Promise<void> {
+  const app = (process.env.CINDER_PUBLIC_ORIGIN?.trim().replace(/\/$/, "") || "https://cinderrevenue.com") + "/app";
+  const o = parseOnMyWay(body);
+  if (o) await onMyWay(sql, c, cell, name, o);
+  else await sendSms(cell, c.setup.texting_number || "", CREW_HELP.replace("{business}", c.setup.display_name || "the business").replace("{app}", app));
+}
+
+/** The owner texted their Cinder number: "QUOTE 4200 [name]" starts quote follow-up, "OMW" texts the next estimate; anything else gets a pointer to the app. */
 async function ownerText(sql: Sql, c: Client, body: string): Promise<void> {
   const cell = e164(c.setup.owner_cell || ""), from = c.setup.texting_number || "";
   const app = (process.env.CINDER_PUBLIC_ORIGIN?.trim().replace(/\/$/, "") || "https://cinderrevenue.com") + "/app";
+  const omw = parseOnMyWay(body);
+  if (omw) { await onMyWay(sql, c, cell, c.setup.owner_name || "", omw); return; }
   const q = parseOwnerQuote(body);
   if (!q) { await sendSms(cell, from, OWNER_HELP.replace("{app}", app)); return; }
   const [t] = q.name
@@ -338,6 +367,9 @@ async function cancelAppointment(sql: Sql, c: Client, appointmentId: string, eve
 export async function clientInboundText(sql: Sql, c: Client, from: string, body: string, media: Media[] = []): Promise<void> {
   // The owner texting their own Cinder number (often replying to an alert) is never treated as a customer.
   if (c.setup.owner_cell && sameNumber(from, c.setup.owner_cell)) { await ownerText(sql, c, body); return; }
+  // A team member's cell is never a customer either: crew can say OMW, an extra owner gets the owner's commands.
+  const member = parseTeam(c.setup.team).find(m => sameNumber(from, m.cell));
+  if (member) { if (member.role === "owner") await ownerText(sql, c, body); else await crewText(sql, c, e164(from), member.name, body); return; }
   const t = await thread(sql, c, from, "text");
   if (t.fresh) await recordConsent(sql, c, e164(from), "inbound_text", "text", `First text: "${body.slice(0, 200)}"`);
   // A photo with no words still reads as something the reply engine and the owner can follow.
