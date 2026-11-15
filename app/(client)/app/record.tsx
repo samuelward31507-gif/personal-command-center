@@ -3,6 +3,7 @@
 // One customer, everything about them. Inspector: the record beside the list (header, Activity | Job, composer).
 // RecordPage: the same record taking the whole page, with details on the left and money on the right.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { draftItems, jobFields, jobProfit, jobProgress, jobSteps, rangeText, STAGE_LABEL, STAGES, type Card, type CardInvoice, type Costs, type Details, type Stage } from "@/lib/crm";
 import { dollars, totals, type Item } from "@/lib/billing";
 import { Avatar, Empty, Icon, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast } from "./parts";
@@ -13,7 +14,6 @@ import { sourceLabel, type Biz, type Data, type Go, type Text, type Thread } fro
 type R = { sent?: boolean; warn?: string; link?: string; calendar?: string; invoice?: CardInvoice; review?: string };
 type Act = (k: string, b: Record<string, unknown>, done: string | ((r: R) => string)) => Promise<R | null>;
 const asStrings = (d: Details) => Object.fromEntries(Object.entries(d).map(([k, v]) => [k, String(v)]));
-const QUICK = ["On my way", "I'll call you in 10 minutes", "Sending your quote now", "Can you send a photo?"];
 
 /** Everything both views need: the card, the person, the texts (polled), and one way to act on the thread. */
 function useRecord(id: string, d: Data, project: string, api: Api, toast: Toast, reload: () => Promise<void>) {
@@ -43,7 +43,7 @@ function useRecord(id: string, d: Data, project: string, api: Api, toast: Toast,
   const inv = card?.invoice ?? invoices.find(i => i.status !== "void") ?? null;
   const paid = invoices.filter(i => i.status === "paid").reduce((a, i) => a + i.total, 0);
   const owed = invoices.filter(i => i.status === "sent").reduce((a, i) => a + i.total, 0);
-  return { card, cust, invoices, texts, busy, arm, setArm, act, name, phone, address, source, status, since, price, inv, paid, owed };
+  return { card, cust, invoices, texts, busy, arm, setArm, act, name, phone, address, source, status, since, price, inv, paid, owed, project, owner: d.owner };
 }
 type Rec = ReturnType<typeof useRecord>;
 
@@ -99,7 +99,7 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
 }
 
 /** The record as the whole page: details left, activity centre, money right. */
-export function RecordPage({ id, ask: ask0, view: view0, d, biz, project, api, toast, reload, go, onBack }: { id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; d: Data; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void>; go: Go; onBack: () => void }) {
+export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, project, api, toast, reload, go, onBack }: { id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string; d: Data; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void>; go: Go; onBack: () => void }) {
   const r = useRecord(id, d, project, api, toast, reload);
   const [tab, setTab] = useState<"activity" | "job">(view0 ?? (ask0 ? "job" : "activity"));
   const [ask, setAsk] = useState<Stage | null>(ask0 ?? null);
@@ -191,7 +191,7 @@ export function RecordPage({ id, ask: ask0, view: view0, d, biz, project, api, t
           <button type="button" role="tab" aria-selected={tab === "activity"} className={tab === "activity" ? "on" : ""} onClick={() => setTab("activity")}>Activity</button>
           <button type="button" role="tab" aria-selected={tab === "job"} className={tab === "job" ? "on" : ""} onClick={() => setTab("job")}>{card ? (card.stage === "won" ? "Job, invoice, review" : card.stage === "quoted" ? "The quote" : "Job details") : "Details"}</button>
         </div>
-        {tab === "activity" ? <Activity r={r} canText={!!canText} ta={ta} /> : <div className="job" style={{ display: "flex", flexDirection: "column", paddingTop: 8 }}><JobPanel r={r} biz={biz} ask={ask} setAsk={setAsk} go={go} canText={!!canText} /></div>}
+        {tab === "activity" ? <Activity r={r} canText={!!canText} ta={ta} draft0={draft0} /> : <div className="job" style={{ display: "flex", flexDirection: "column", paddingTop: 8 }}><JobPanel r={r} biz={biz} ask={ask} setAsk={setAsk} go={go} canText={!!canText} /></div>}
       </section>
       {wide && <aside className="rec-rail" aria-label="Money and next steps">{rail}</aside>}
     </div>
@@ -200,11 +200,14 @@ export function RecordPage({ id, ask: ask0, view: view0, d, biz, project, api, t
 
 // ---------- Activity: texts and events in one timeline, composer under it ----------
 type Ev = { at: string; kind: "text" | "event"; text?: Text; title?: string; sub?: string; icon?: string; tone?: string };
-function Activity({ r, canText, ta, compact }: { r: Rec; canText: boolean; ta: React.RefObject<HTMLTextAreaElement | null>; compact?: boolean }) {
+function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolean; ta: React.RefObject<HTMLTextAreaElement | null>; compact?: boolean; draft0?: string }) {
   // The inspector scrolls inside its own pane, so it may start at the newest text; the page must not pull the window down.
   const autoscroll = !!compact;
   const { card, texts, name, status, busy, act } = r;
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState(draft0 ?? "");
+  // Help in the reply box: a reply that fits where the conversation stands, and the owner's saved replies.
+  const snips = useSnippets(r.project), [editSnips, setEditSnips] = useState(false);
+  const sug = useMemo(() => suggestReply(name, texts, { stage: card?.stage, owner: r.owner, quoteAmount: card?.quote?.amount }), [name, texts, card?.stage, r.owner, card?.quote?.amount]);
   const end = useRef<HTMLDivElement>(null);
   const items = useMemo<Ev[]>(() => {
     const out: Ev[] = (texts ?? []).map(t => ({ at: t.at, kind: "text", text: t }));
@@ -244,12 +247,13 @@ function Activity({ r, canText, ta, compact }: { r: Rec; canText: boolean; ta: R
       <div ref={end} />
     </div>
     {canText && <div className="compose">
+      {editSnips && <SnippetEditor list={snips.list} onSave={snips.save} onClose={() => setEditSnips(false)} />}
       <form className="box" onSubmit={async e => { e.preventDefault(); if (draft.trim() && await act("reply", { action: "reply", body: draft }, "Sent from your business number.")) setDraft(""); }}>
-        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${first(name)}`} aria-label="Reply" />
+        <ReplyKit hidden={!!draft.trim()} suggestion={sug} snippets={snips.list} onUse={x => { setDraft(x); ta.current?.focus(); }} onEdit={() => setEditSnips(true)} />
+        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (tabTakes(e, draft, sug, setDraft)) return; if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${first(name)}`} aria-label="Reply" />
         <div className="tools">
           <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && status === "booked")} title={mine ? "Hand back to Cinder" : "Take over this conversation"} onClick={() => void (mine ? act("status", { action: "status", status: "auto" }, "Cinder will handle replies again.") : act("status", { action: "status", status: "paused" }, "Cinder stepped back. You've got this one."))}>
             <i aria-hidden="true" />{mine ? "You're replying" : "Cinder is replying"}</button>
-          <select aria-label="Quick reply" value="" onChange={e => { if (e.target.value) setDraft(e.target.value); }}><option value="">Quick reply</option>{QUICK.map(q => <option key={q} value={q}>{q}</option>)}</select>
           <button type="submit" className="btn ink sm send" disabled={!!busy || !draft.trim()} title="Send (⌘↵)">{busy === "reply" ? <Spinner /> : "Send"}</button>
         </div>
       </form>

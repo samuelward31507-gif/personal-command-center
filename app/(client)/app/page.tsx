@@ -107,7 +107,7 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
 }
 
 // ---------- The app ----------
-type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job" } | { kind: "thread"; id: string } | null;
+type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | null;
 const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam"];
 const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Home", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "calendar", l: "Calendar", ic: "cal", n: "4" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Reports", ic: "bars", n: "6" }];
 
@@ -159,17 +159,20 @@ export default function CinderApp() {
   const goTab = useCallback((t: Tab) => { setTab(t); setOpen(null); window.scrollTo(0, 0); if (t === "sam" || t === "calendar") void load(project, t); }, [load, project]);
   const go: Go = useMemo(() => ({
     tab: goTab,
-    record: (id, opts) => { setOpen({ kind: "record", id, ask: opts?.ask, view: opts?.view }); window.scrollTo(0, 0); },
+    record: (id, opts) => { setOpen({ kind: "record", id, ask: opts?.ask, view: opts?.view, draft: opts?.draft }); window.scrollTo(0, 0); },
     thread: id => { setOpen(wide ? { kind: "record", id, view: "activity" } : { kind: "thread", id }); window.scrollTo(0, 0); },
     invoice: id => setInv(id),
     addLead: () => setSheet("add"), importCustomers: () => setSheet("import"), billing: () => setSheet("billing"),
     setup: () => { setSetupOpen(true); window.scrollTo(0, 0); },
+    find: () => setSheet("cmd"),
   }), [goTab, wide]);
 
   // Global keys: ⌘K for the command bar, ⌘1 to ⌘6 for sections, Esc to leave a record.
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSheet(s => s === "cmd" ? null : "cmd"); return; }
+      const typingNow = e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName));
+      if (e.key === "/" && !typingNow && !e.metaKey && !e.ctrlKey && !sheet) { e.preventDefault(); setSheet("cmd"); return; }
       if ((e.metaKey || e.ctrlKey) && /^[1-7]$/.test(e.key)) { e.preventDefault(); const t = ([...SECTIONS.map(s => s.k), "system"] as Tab[])[Number(e.key) - 1]; if (t) goTab(t); return; }
       const el = e.target as HTMLElement | null;
       if (e.key === "Escape" && open && !sheet && !inv && !(el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA"))) setOpen(null);
@@ -202,7 +205,7 @@ export default function CinderApp() {
 
   let page: React.ReactNode;
   if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
-  else if (open?.kind === "record") page = <RecordPage key={open.id} id={open.id} ask={open.ask} view={open.view} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
+  else if (open?.kind === "record") page = <RecordPage key={open.id + (open.draft ? ":d" : "")} id={open.id} ask={open.ask} view={open.view} draft={open.draft} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
   else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;

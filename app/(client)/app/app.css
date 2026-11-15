@@ -434,3 +434,36 @@ details.skipped summary { cursor: pointer; font-size: 12.5px; color: var(--g1); 
 .rep-cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px 40px; align-items: start; }
 @media (min-width: 1100px) { .rep-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .tbl .name .av { flex: 0 0 auto; }
+
+/* ---------- Reply help: the suggested reply and saved replies above the box ---------- */
+.kit { display: flex; flex-direction: column; gap: 6px; padding: 8px 8px 0; }
+.kit-sug { display: flex; align-items: flex-start; gap: 8px; width: 100%; text-align: left; padding: 7px 9px; border-radius: var(--r1); background: var(--paper); border: 1px dashed var(--hair-2); color: var(--g1); font: 400 13px/1.45 var(--ff); transition: background var(--t), color var(--t); }
+.kit-sug:hover { background: var(--hover); color: var(--ink); border-style: solid; }
+.kit-sug svg { flex: 0 0 auto; margin-top: 3px; color: var(--ember); }
+.kit-sug span { flex: 1; }
+.kit-snips { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.kit-snips::-webkit-scrollbar { display: none; }
+.kit-snips button { flex: 0 0 auto; max-width: 220px; height: 24px; padding: 0 8px; border-radius: var(--r1); border: 1px solid var(--hair-2); background: var(--page); font: 400 12px var(--ff); color: var(--g1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kit-snips button:hover { background: var(--hover); color: var(--ink); }
+.kit-snips .kit-edit { display: inline-flex; align-items: center; gap: 4px; border-style: dashed; color: var(--g2); }
+@media (max-width: 899px) { .kit-sug kbd { display: none; } }
+.snip-ed { margin-bottom: 8px; border-radius: var(--r3); background: var(--page); padding: 12px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--float); }
+.snip-ed header { display: flex; flex-direction: column; gap: 2px; } .snip-ed header small { color: var(--g1); font-size: 12px; }
+.snip-ed textarea { width: 100%; border: 1px solid var(--hair-2); border-radius: var(--r1); padding: 7px 9px; font: 400 13px/1.5 var(--ff); color: var(--ink); resize: vertical; }
+.snip-ed textarea:focus { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.snip-ed footer { display: flex; justify-content: flex-end; gap: 6px; }
+.thread .compose .box .kit { padding: 8px 10px 0; }
+
+/* ---------- Home: drafted nudges, quick actions on visits ---------- */
+.row q.nudge { display: block; margin-top: 5px; padding: 5px 8px; border-left: 2px solid var(--ember); background: var(--paper); border-radius: 0 4px 4px 0; font-size: 12.5px; color: var(--g1); quotes: none; white-space: normal; }
+.row:has(q.nudge) { height: auto; padding: 8px 0; }
+.home .t.wk { grid-template-columns: minmax(0, 1fr) auto; }
+.home .wk-main { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 10px; align-items: center; text-align: left; min-width: 0; color: inherit; }
+.home .wk-main:hover b { text-decoration: underline; text-decoration-color: var(--hair-2); text-underline-offset: 3px; }
+.home .wk-acts { display: flex; align-items: center; gap: 2px; }
+
+/* ---------- Command bar row actions ---------- */
+.cmd .it { grid-template-columns: 16px minmax(0, 1fr) auto; height: 40px; }
+.cmd .it-acts { display: flex; align-items: center; gap: 2px; }
+.cmd .it-acts .ic { opacity: 0; transition: opacity var(--t); } .cmd .it.hl .it-acts .ic { opacity: 1; }
+@media (max-width: 899px) { .cmd .it-acts .ic { opacity: 1; } .cmd .ft { display: none; } }

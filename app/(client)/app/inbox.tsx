@@ -3,11 +3,11 @@
 // Inbox: every conversation, the ones waiting on the owner first, with the thread beside the list on a desk.
 // The thread reads like Messages: the customer in grey on the left, Cinder and the owner in blue on the right.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { Avatar, Empty, Icon, Spinner, ago, clock, dayKey, dayName, first, fmtPhone, type Api, type Toast } from "./parts";
 import { sourceLabel, type Conv, type Data, type Go, type Text, type Thread } from "./types";
 
 const STATUS: Record<string, [string, string]> = { auto: ["Cinder replying", ""], paused: ["Your turn", "needs"], booked: ["Booked", "booked"], closed: ["Closed", ""], opted_out: ["Opted out", ""] };
-const QUICK = ["On my way", "I'll call you in 10 minutes", "Sending your quote now", "Can you send a photo?"];
 const typing = (e: KeyboardEvent) => { const t = e.target as HTMLElement | null; return !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable); };
 
 export function InboxScreen({ d, project, api, toast, reload, go, wide, push, onPush }: { d: Data; project: string; api: Api; toast: Toast; reload: () => Promise<void>; go: Go; wide: boolean; push: string; onPush: () => void }) {
@@ -86,6 +86,8 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
   }
   const mine = t?.status === "paused";
   const name = t?.customer_name || conv?.name || (t ? fmtPhone(t.customer_phone) : "");
+  const snips = useSnippets(project), [editSnips, setEditSnips] = useState(false);
+  const sug = suggestReply(name, texts, { stage: t?.status === "booked" ? "booked" : undefined });
   const st = t ? (STATUS[t.status] ?? STATUS.auto) : null;
   let lastDay = "", lastWho = "";
   return <section className="thread">
@@ -124,13 +126,14 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
       <div ref={end} />
     </div>
     {t && t.status !== "opted_out" && <div className="compose">
+      {editSnips && <SnippetEditor list={snips.list} onSave={snips.save} onClose={() => setEditSnips(false)} />}
       <form className="box" onSubmit={async e => { e.preventDefault(); if (draft.trim() && await act("reply", { body: draft }, "Sent from your business number.")) setDraft(""); }}>
-        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); } }} placeholder={`Text ${first(name)}`} aria-label="Reply" />
+        <ReplyKit hidden={!!draft.trim()} suggestion={sug} snippets={snips.list} onUse={x => { setDraft(x); ta.current?.focus(); }} onEdit={() => setEditSnips(true)} />
+        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (tabTakes(e, draft, sug, setDraft)) return; if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); } }} placeholder={`Text ${first(name)}`} aria-label="Reply" />
         <div className="tools">
           <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && t.status === "booked")} title={mine ? "Hand back to Cinder" : "Take over this conversation"} onClick={() => void (mine ? act("status", { status: "auto" }, "Cinder will handle replies again.") : act("status", { status: "paused" }, "Cinder stepped back. You've got this one."))}>
             <i aria-hidden="true" />{mine ? "You're replying" : "Cinder is replying"}</button>
-          <select aria-label="Quick reply" value="" onChange={e => { if (e.target.value) setDraft(e.target.value); }}><option value="">Quick reply</option>{QUICK.map(q => <option key={q} value={q}>{q}</option>)}</select>
-          <button type="submit" className="btn send msg-send" disabled={!!busy || !draft.trim()} title="Send (Enter)">{busy === "reply" ? <Spinner /> : <Icon name="send" size={14} />}</button>
+                    <button type="submit" className="btn send msg-send" disabled={!!busy || !draft.trim()} title="Send (Enter)">{busy === "reply" ? <Spinner /> : <Icon name="send" size={14} />}</button>
         </div>
       </form>
     </div>}
