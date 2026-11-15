@@ -36,6 +36,7 @@
 <main id="main">
 
 <section class="hero">
+  <div class="amb" aria-hidden="true" data-amb></div>
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <p class="hero-for">For fence companies, contractors and home-service shops</p>
@@ -54,7 +55,7 @@
         <div class="thread-head"><div class="av">D</div><b>Dana Ruiz</b><span>Missed call · 2:14 PM</span></div>
         <div class="thread">
           <div class="msg out" style="--i:0">Hey Dana, <span class="p-intro">it’s Mike with</span> <span class="p-biz">Ridgeline Fence</span>. Sorry I missed you, I’m on a job. What can I help with?</div>
-          <div class="chip" style="--i:1">Sent in 9 sec</div>
+          <div class="chip" style="--i:1" data-clock>Sent in 9 sec</div>
           <div class="msg in" style="--i:2">Need a quote on about 120 ft of cedar privacy fence. The old one’s leaning bad</div>
           <div class="msg out" style="--i:3">Cedar privacy with tear-out usually runs $42–56 a foot. I can measure Thursday at 8 or Friday at 3. Which works?</div>
           <div class="msg in" style="--i:4">Thursday works</div>
@@ -73,6 +74,59 @@
     <span aria-hidden="true">Jobber</span><span aria-hidden="true">Housecall Pro</span><span aria-hidden="true">Google Calendar</span><span aria-hidden="true">Facebook Lead Ads</span><span aria-hidden="true">Angi</span><span aria-hidden="true">Thumbtack</span><span aria-hidden="true">Google Business Profile</span><span aria-hidden="true">Zapier</span><span aria-hidden="true">Your website forms</span><span aria-hidden="true">Your phone number</span>
   </div></div>
 </div>
+
+<section class="show" id="product" aria-labelledby="show-h">
+  <div class="show-glow" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="show-head">
+      <h2 id="show-h">Your whole day, handled. <span>While you’re on the job.</span></h2>
+      <p class="lede">This is what Cinder is doing on an ordinary Tuesday: answering, booking, chasing quotes and getting you paid. You only step in when you want to.</p>
+    </div>
+    <div class="win" data-show role="img" aria-label="The Cinder app running a day: new leads texted back in seconds, a quote sent from the command bar, estimates added to the calendar and money coming in">
+      <div class="win-bar"><i></i><i></i><i></i><span>Cinder · Ridgeline Fence</span></div>
+      <div class="win-body">
+        <aside class="win-side">
+          <b class="win-logo">cinder<em></em></b>
+          <span class="on">Today</span><span>Inbox <small data-k="inbox">3</small></span><span>Jobs</span><span>Calendar</span><span>Money</span>
+        </aside>
+        <div class="win-main">
+          <div class="win-h"><b>Tuesday</b><span class="win-kbd"><kbd>⌘</kbd><kbd>K</kbd> Find or do anything</span></div>
+          <div class="win-figs">
+            <div><dt>Leads today</dt><dd data-k="leads">5</dd></div>
+            <div><dt>Answered</dt><dd data-k="ans">5 of 5</dd></div>
+            <div><dt>Booked this week</dt><dd data-k="booked">$32,450</dd></div>
+            <div><dt>First reply</dt><dd>9<i>s</i></dd></div>
+          </div>
+          <div class="win-k">Live</div>
+          <ul class="win-feed" data-feed></ul>
+        </div>
+        <div class="win-cal">
+          <div class="win-h"><b>This week</b></div>
+          <div class="cal-days" data-cal>
+            <div class="cal-day"><b>Wed</b><p class="ev">8:00 · Dana Ruiz<span>Cedar privacy</span></p></div>
+            <div class="cal-day"><b>Thu</b><p class="ev inst">7:30 · Henderson install<span>220 ft cedar</span></p></div>
+            <div class="cal-day" data-slot><b>Fri</b></div>
+          </div>
+        </div>
+        <div class="win-cmd" data-cmd aria-hidden="true">
+          <div class="cmd-in"><span class="cmd-q" data-q></span><i class="cmd-caret"></i></div>
+          <ul class="cmd-res">
+            <li class="sel"><b>Send quote to Priya Shah</b><span>$6,840 · cedar privacy, 150 ft</span><kbd>↵</kbd></li>
+            <li><b>Open Priya Shah</b><span>Quoted · Web form</span></li>
+            <li><b>Text Priya Shah</b><span>(720) 555-0193</span></li>
+          </ul>
+        </div>
+        <div class="win-toast" data-toast>Quote sent to Priya · follow-up starts on day 2</div>
+      </div>
+    </div>
+    <ol class="show-steps" data-steps>
+      <li class="on"><b>Answer</b><span>Every lead texted back in seconds</span></li>
+      <li><b>Book</b><span>Estimates land on your calendar</span></li>
+      <li><b>Quote</b><span>One command sends it and starts the chase</span></li>
+      <li><b>Get paid</b><span>Invoices and reminders go out on their own</span></li>
+    </ol>
+  </div>
+</section>
 
 <section class="sec" id="problem">
   <div class="wrap">
@@ -344,6 +398,7 @@ if(n){set(".p-intro","it's "+n+" with");set(".p-owner-s",n+"'s");}else if(b){set
 
 </script>
 <script src="/calc.js" defer></script>
+<script src="/live.js" defer></script>
 <script>
 (function () {
   var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches, D = 350, E = "cubic-bezier(.2,.7,.2,1)";
