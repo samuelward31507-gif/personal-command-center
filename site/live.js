@@ -258,41 +258,61 @@
   });
 })();
 
-// ---------- Try it on your business: a real reply from /api/demo-reply, shown on the homeowner's phone ----------
+// ---------- Try it on your business: a real conversation with /api/demo-reply, on the homeowner's phone ----------
 (function () {
   var f = document.getElementById("demo"); if (!f) return;
   var t = document.getElementById("demo-thread"), clk = document.getElementById("demo-clock"), note = document.getElementById("demo-note"), go = document.getElementById("demo-go");
-  var biz = document.getElementById("demo-biz"), av = document.getElementById("demo-av");
+  var biz = document.getElementById("demo-biz"), av = document.getElementById("demo-av"), chat = document.getElementById("demo-chat"), say = document.getElementById("demo-say"), send = document.getElementById("demo-send");
   var ex = { Fence: ["Summit Fence Co.", "Need a quote for about 150 ft of cedar privacy fence in the backyard. We have a dog so need a gate too."],
     Roofing: ["Summit Roofing", "Our roof is leaking in two spots after the storm. Two-story house, about 15 years old. Can someone come look?"],
     Pool: ["Blue Ridge Pools", "Thinking about putting in an inground pool next spring. Backyard is about 40x60. What's the process?"],
     Other: ["Your Business", "Hi, I saw your website and I'd like to get a quote. When could someone come out?"] };
+  var history = [], busy = false, done = false, MAX = 6, mine = 0;
   var initials = function (n) { return (n.replace(/[^A-Za-z ]/g, "").split(" ").filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join("") || "C").toUpperCase(); };
-  var setName = function () { var n = f.business.value.trim() || f.business.placeholder; biz.textContent = n; av.textContent = initials(n); };
+  var name = function () { return f.business.value.trim() || f.business.placeholder; };
+  var setName = function () { biz.textContent = name(); av.textContent = initials(name()); };
   f.addEventListener("change", function (e) { if (e.target.name !== "trade") return; var v = ex[e.target.value] || ex.Other; if (!f.request.dataset.edited) f.request.value = v[1]; f.business.placeholder = v[0]; setName(); });
   f.request.addEventListener("input", function () { f.request.dataset.edited = "1"; });
   f.business.addEventListener("input", setName);
+  var trim = function () { while (t.scrollHeight > t.clientHeight + 2 && t.children.length > 2) t.removeChild(t.firstElementChild); };
   var add = function (cls, text) {
-    var prev = t.lastElementChild; if (prev && prev.classList.contains(cls.split(" ")[0] === "im" ? cls.split(" ")[1] : "")) prev.classList.remove("tail");
-    var d = document.createElement(cls === "meta" ? "p" : "div"); d.className = cls === "meta" ? "im-meta" : "im " + cls + " tail"; d.textContent = text;
-    if (cls !== "meta" && prev && prev.classList.contains(cls)) prev.classList.remove("tail");
-    t.appendChild(d); while (t.scrollHeight > t.clientHeight + 2 && t.children.length > 2) t.removeChild(t.firstElementChild); return d;
+    var prev = t.lastElementChild; if (prev && prev.classList.contains("im") && prev.classList.contains(cls)) prev.classList.remove("tail");
+    var d = document.createElement("div"); d.className = "im " + cls + " tail"; d.textContent = text; t.appendChild(d); trim(); return d;
   };
-  f.addEventListener("submit", function (e) {
-    e.preventDefault(); setName();
-    t.innerHTML = ""; add("meta", "Website form · " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
-    add("out", f.request.value.trim());
-    var ty = document.createElement("div"); ty.className = "im in typing"; ty.innerHTML = "<i></i><i></i><i></i>"; t.appendChild(ty);
-    go.disabled = true; go.textContent = "Replying…"; note.textContent = "Writing the reply…";
-    var t0 = performance.now(), tick = setInterval(function () { var s = Math.floor((performance.now() - t0) / 1000); clk.textContent = "0:" + (s < 10 ? "0" : "") + s; }, 200);
-    fetch("/api/demo-reply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ trade: f.trade.value, business: f.business.value.trim() || f.business.placeholder, customer: "Dana", request: f.request.value, website: f.website.value }) })
+  var meta = function (text, cls) { var p = document.createElement("p"); p.className = cls || "im-meta"; p.textContent = text; t.appendChild(p); trim(); };
+  var live = function (on) { say.disabled = !on; send.disabled = !on; chat.classList.toggle("on", on); if (on) say.focus({ preventScroll: true }); };
+  var finish = function (alert) {
+    done = true; live(false); say.placeholder = "Conversation finished";
+    var c = document.createElement("div"); c.className = "im-card"; var b = document.createElement("b"); b.textContent = alert ? "Estimate booked" : "That’s the flow"; var sp = document.createElement("span"); sp.textContent = alert || "On a real lead it keeps going until the estimate is booked."; c.appendChild(b); c.appendChild(sp); t.appendChild(c); trim();
+    note.textContent = "That’s what your customers get, in your wording. Nothing was texted or saved.";
+  };
+  // The homeowner's side is blue (they are holding the phone); the business replies in grey.
+  function turn(text, first) {
+    if (busy || done) return; busy = true; mine++;
+    add("out", text);
+    var ty = document.createElement("div"); ty.className = "im in typing"; ty.innerHTML = "<i></i><i></i><i></i>"; t.appendChild(ty); trim();
+    live(false); go.disabled = true; if (first) { go.textContent = "Replying…"; note.textContent = "Writing the reply…"; }
+    var t0 = performance.now(), tick = first ? setInterval(function () { var s = Math.floor((performance.now() - t0) / 1000); clk.textContent = "0:" + (s < 10 ? "0" : "") + s; }, 200) : 0;
+    var body = { trade: f.trade.value, business: name(), customer: "Dana", request: text, website: f.website.value };
+    if (!first) body.history = history.slice();
+    fetch("/api/demo-reply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
       .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "That didn't go through. Try again."); return d; }); })
       .then(function (d) {
-        clearInterval(tick); var s = Math.max(1, Math.round((performance.now() - t0) / 1000)); clk.textContent = "0:" + (s < 10 ? "0" : "") + s; ty.remove();
-        add("in", d.reply);
-        note.textContent = "That's what your customer gets, in " + s + " second" + (s === 1 ? "" : "s") + ". Nothing was texted or saved.";
+        ty.remove(); add("in", d.reply);
+        history.push({ from: "them", text: text }, { from: "us", text: d.reply });
+        if (first) { var s = Math.max(1, Math.round((performance.now() - t0) / 1000)); clk.textContent = "0:" + (s < 10 ? "0" : "") + s; note.textContent = "First reply in " + s + " second" + (s === 1 ? "" : "s") + ". Now answer it on the phone, like the homeowner would."; }
+        if (d.booked) finish(d.ownerAlert || "On the owner’s calendar, with the job details texted to them.");
+        else if (mine >= MAX) finish("");
+        else live(true);
       })
-      .catch(function (err) { clearInterval(tick); ty.remove(); note.textContent = err.message; })
-      .finally(function () { go.disabled = false; go.textContent = "See the reply"; });
+      .catch(function (err) { ty.remove(); mine--; meta(err.message, "im-dl"); if (!first && !done) live(true); if (first) note.textContent = err.message; })
+      .finally(function () { clearInterval(tick); busy = false; go.disabled = false; go.textContent = history.length ? "Start over" : "Start the conversation"; });
+  }
+  f.addEventListener("submit", function (e) {
+    e.preventDefault(); if (busy) return; setName();
+    history = []; done = false; mine = 0; t.innerHTML = ""; say.placeholder = "Reply as the homeowner"; say.value = "";
+    meta("Website form · " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
+    turn(f.request.value.trim(), true);
   });
+  chat.addEventListener("submit", function (e) { e.preventDefault(); var v = say.value.trim(); if (!v) return; say.value = ""; turn(v, false); });
 })();
