@@ -1,7 +1,7 @@
 // The client CRM on the server: the board, moving a customer between stages, editing a card, adding a lead by hand,
 // and the owner's own setup. Every write is scoped to the signed-in owner's business.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { AGENT_KEYS, ballpark, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, cleanJob, cleanCosts, cleanLostReason, jobSteps, type Card, type Stage } from "@/lib/crm";
+import { AGENT_KEYS, ballpark, cleanDetails, cleanEmail, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, cleanJob, cleanCosts, cleanLostReason, jobSteps, type Card, type Stage } from "@/lib/crm";
 import { digits10 } from "@/lib/client-runtime";
 import { cleanImportRows, importAs, type ImportAs } from "@/lib/customer-import";
 import { emitEvent } from "@/lib/client-webhook";
@@ -23,7 +23,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       t.install_time, t.install_days, t.install_event_id IS NOT NULL AS on_calendar, q.viewed_at AS quote_viewed, q.note AS quote_note, a.starts_at AS next_appt,
       t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent, t.job_steps, t.job_costs,
       (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied,
-      t.stage_at, lr.body AS lost_note, t.crew_notes, q.deposit::float AS quote_deposit
+      t.stage_at, lr.body AS lost_note, t.crew_notes, q.deposit::float AS quote_deposit, t.customer_email, t.remind_at, t.remind_note, t.remind_sent_at
     FROM public.client_threads t
     LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
       AND right(regexp_replace(x.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
@@ -57,7 +57,8 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       install: r.install_on ? String(r.install_on) : null, installTime: r.install_time ? String(r.install_time) : null, installDays: Number(r.install_days ?? 1) || 1, onCalendar: !!r.on_calendar,
       invoice: invoices[String(r.id)] ?? null, reviewAuto: !!r.review_auto, reviewSent: r.review_sent ? new Date(String(r.review_sent)).toISOString() : null, pastCustomer: again,
       job: again ? {} : cleanJob(r.job_steps), costs: again ? cleanCosts({}) : cleanCosts(r.job_costs),
-      stageAt: r.stage_at ? new Date(String(r.stage_at)).toISOString() : null, crew: String(r.crew_notes ?? ""),
+      stageAt: r.stage_at ? new Date(String(r.stage_at)).toISOString() : null, crew: String(r.crew_notes ?? ""), email: String(r.customer_email ?? ""),
+      remind: r.remind_at ? { at: new Date(String(r.remind_at)).toISOString(), note: String(r.remind_note ?? ""), sent: !!r.remind_sent_at } : null,
       lostReason: typeof r.lost_note === "string" ? (r.lost_note.match(/^Marked lost: (.+?)\. Follow-ups stopped\.$/)?.[1] ?? "") : "",
     };
   });
@@ -115,17 +116,19 @@ export async function moveStage(sql: Sql, c: Client, threadId: string, stage: st
 }
 
 /** Edit what the owner knows about the job: details in the trade's words, the job value, notes, the name. */
-export async function saveCard(sql: Sql, c: Client, threadId: string, input: { details?: unknown; value?: number | null; notes?: string; crew?: string; name?: string; install?: unknown; review?: boolean }): Promise<{ ok: boolean; error?: string }> {
+export async function saveCard(sql: Sql, c: Client, threadId: string, input: { details?: unknown; value?: number | null; notes?: string; crew?: string; name?: string; email?: string; install?: unknown; review?: boolean }): Promise<{ ok: boolean; error?: string }> {
   const t = await threadOf(sql, c, threadId);
   if (!t) return { ok: false, error: "Not found." };
   const details = input.details === undefined ? null : cleanDetails(c.setup.trade, input.details);
   const notes = typeof input.notes === "string" ? input.notes.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, 2000) : null;
   const crew = typeof input.crew === "string" ? input.crew.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, 2000) : null;
   const name = typeof input.name === "string" ? input.name.trim().slice(0, 80) : null;
+  const email = typeof input.email === "string" ? (input.email.trim() ? cleanEmail(input.email) : "") : null;
+  if (typeof input.email === "string" && input.email.trim() && !email) return { ok: false, error: "That email doesn't look right." };
   const value = input.value === undefined ? undefined : input.value;
   await sql`UPDATE public.client_threads SET
       details = CASE WHEN ${details === null}::boolean THEN details ELSE ${JSON.stringify(details ?? {})}::jsonb END,
-      notes = coalesce(${notes}, notes), crew_notes = coalesce(${crew}, crew_notes), customer_name = coalesce(${name}, customer_name),
+      notes = coalesce(${notes}, notes), crew_notes = coalesce(${crew}, crew_notes), customer_name = coalesce(${name}, customer_name), customer_email = coalesce(${email}, customer_email),
       value = CASE WHEN ${value === undefined}::boolean THEN value ELSE ${value ?? null}::numeric END, updated_at = now()
     WHERE id = ${t.id}::uuid`;
   if (input.review !== undefined) await sql`UPDATE public.client_threads SET review_auto = ${!!input.review && !!c.setup.review_link} WHERE id = ${t.id}::uuid`;
@@ -182,6 +185,19 @@ export async function connectionsReport(sql: Sql, c: Client): Promise<{ sources:
   };
 }
 
+/** "Remind me": a time and a note on a job. The owner gets a text and a push when it's due. Null clears it. */
+export async function setReminder(sql: Sql, c: Client, threadId: string, at: unknown, note: unknown): Promise<{ ok: boolean; error?: string }> {
+  const t = await threadOf(sql, c, threadId);
+  if (!t) return { ok: false, error: "Not found." };
+  if (at === null || at === "") { await sql`UPDATE public.client_threads SET remind_at = NULL, remind_note = '', remind_sent_at = NULL, updated_at = now() WHERE id = ${t.id}::uuid`; return { ok: true }; }
+  const when = new Date(String(at));
+  if (!Number.isFinite(when.getTime())) return { ok: false, error: "Pick a time." };
+  if (when.getTime() < Date.now() - 60000) return { ok: false, error: "That time has passed." };
+  const text = String(note ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 200);
+  await sql`UPDATE public.client_threads SET remind_at = ${when.toISOString()}::timestamptz, remind_note = ${text}, remind_sent_at = NULL, updated_at = now() WHERE id = ${t.id}::uuid`;
+  return { ok: true };
+}
+
 /** Tick or untick one step of a won job. The day is the owner's today unless they give one. */
 export async function setJobStep(sql: Sql, c: Client, threadId: string, step: unknown, done: unknown, on?: unknown): Promise<{ ok: boolean; error?: string; job?: Record<string, string> }> {
   const key = String(step ?? "");
@@ -229,6 +245,10 @@ export async function importCustomers(sql: Sql, c: Client, input: unknown, opts:
       notes = CASE WHEN client_threads.notes = '' THEN EXCLUDED.notes ELSE client_threads.notes END
     RETURNING (xmax = 0) AS inserted` as { inserted: boolean }[];
   const added = out.filter(r => r.inserted).length;
+  // Emails from the file go on the record when the record has none.
+  const withEmail = rows.filter(r => r.email);
+  if (withEmail.length) await sql`UPDATE public.client_threads t SET customer_email = e.email FROM unnest(${withEmail.map(r => r.phone)}::text[], ${withEmail.map(r => r.email)}::text[]) AS e(phone, email)
+    WHERE t.project_id = ${c.projectId}::uuid AND t.customer_phone = e.phone AND t.customer_email = ''`.catch(e => console.error("Import emails failed", e instanceof Error ? e.message : e));
   if (opts.consent === true) {
     const evidence = `Owner confirmed on import from ${from}: existing customer, opted in to promo texts`;
     await sql`INSERT INTO public.client_consent (owner_id, project_id, phone, event, source, evidence)

@@ -288,6 +288,22 @@ export async function askCinder(sql: Sql, c: Client, question: string): Promise<
   } catch (e) { console.error("Ask failed", e instanceof Error ? e.message : e); return null; }
 }
 
+/** "Remind me" reminders that are due: one text and one push to the owner, each once. */
+export async function runOwnerReminders(sql: Sql, limit = 60): Promise<{ sent: number }> {
+  const rows = await sql`SELECT t.id, t.owner_id, t.project_id, t.customer_name, t.customer_phone, t.remind_note FROM public.client_threads t
+    WHERE t.remind_at IS NOT NULL AND t.remind_sent_at IS NULL AND t.remind_at <= now() ORDER BY t.remind_at LIMIT ${limit}` as { id: string; owner_id: string; project_id: string; customer_name: string; customer_phone: string; remind_note: string }[];
+  let sent = 0;
+  for (const r of rows) {
+    const c = await clientById(sql, r.owner_id, r.project_id);
+    await sql`UPDATE public.client_threads SET remind_sent_at = now() WHERE id = ${r.id}::uuid`;
+    if (!c) continue;
+    const who = r.customer_name || e164(r.customer_phone);
+    await alertOwner(c, `Reminder: ${r.remind_note || "check in"}. ${who}.`, r.id, sql).catch(e => console.error("Reminder alert failed", e instanceof Error ? e.message : e));
+    sent++;
+  }
+  return { sent };
+}
+
 /** The agreement starts the monthly fee on the first booked appointment, so the first booking tells Sam to send the monthly link. */
 async function firstBookingBilling(sql: Sql, c: Client): Promise<void> {
   const [n] = await sql`SELECT count(*)::int AS n FROM public.client_appointments WHERE project_id = ${c.projectId}::uuid` as { n: number }[];

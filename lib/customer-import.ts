@@ -3,7 +3,7 @@
 // before it writes. Nothing here texts anyone: imported people are the owner's, and Cinder never messages them unasked.
 // No imports: the tests run this file on its own in Node, like the other pure CRM modules.
 
-export type ImportRow = { name: string; phone: string; address: string; notes: string; since: string | null };
+export type ImportRow = { name: string; phone: string; address: string; notes: string; since: string | null; email?: string };
 export type Skipped = { line: number; name: string; reason: string };
 export type ImportRead = { rows: ImportRow[]; skipped: Skipped[]; duplicates: number; total: number; jobber: boolean; columns: string[] };
 
@@ -130,14 +130,14 @@ export function readImportCsv(text: string, today = new Date().toLocaleDateStrin
     const address = clean([street, town].filter(Boolean).join(", "), 120);
     const extras: string[] = [];
     if (person && company && company !== person) extras.push(company);
-    const email = get(cells, "email"); if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) extras.push(email);
+    const email = get(cells, "email").trim().toLowerCase(); const emailOk = !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     const tags = get(cells, "tags"); if (tags) extras.push(`Tags: ${tags}`);
     const source = get(cells, "source"); if (source) extras.push(`Found you through: ${source}`);
     const last = importDate(get(cells, "lastjob"), today); if (last) extras.push(`Last job ${last}`);
     const spent = dollars(get(cells, "spent")); if (spent) extras.push(`${spent} lifetime`);
     const own = clean(get(cells, "notes"), 1200);
-    const notes = [own, extras.join(" · ")].filter(Boolean).join("\n").slice(0, 2000);
-    rows.push({ name, phone, address, notes, since: importDate(get(cells, "since"), today) ?? last });
+    const notes = [own, ...extras].filter(Boolean).join("\n").slice(0, 2000);
+    rows.push({ name, phone, address, notes, since: importDate(get(cells, "since"), today) ?? last, email: emailOk ? email : "" });
   });
   const used = Object.entries(col).filter(([, v]) => v.length).map(([f]) => f);
   return { rows, skipped, duplicates, total: body.filter(c => c.some(x => x.trim())).length, jobber, columns: used };
@@ -153,7 +153,7 @@ export function cleanImportRows(input: unknown, today = new Date().toLocaleDateS
     const phone = importPhone(o.phone);
     if (!phone || seen.has(phone)) continue;
     seen.add(phone);
-    out.push({ name: clean(o.name, 80), phone, address: clean(o.address, 120), notes: String(o.notes ?? "").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").trim().slice(0, 2000), since: importDate(o.since, today) });
+    out.push({ email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(o.email ?? "")) ? String(o.email).trim().toLowerCase().slice(0, 120) : "", name: clean(o.name, 80), phone, address: clean(o.address, 120), notes: String(o.notes ?? "").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").trim().slice(0, 2000), since: importDate(o.since, today) });
   }
   return out;
 }

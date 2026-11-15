@@ -50,7 +50,8 @@ ok(() => assert.equal(dana.name, "Dana Ruiz"));
 ok(() => assert.equal(dana.phone, "+17205550177", "the mobile column fills in when Phone is blank"));
 ok(() => assert.equal(dana.address, "2210 Oak Dr, Littleton, CO 80120"));
 ok(() => assert.equal(dana.since, "2023-04-12"));
-ok(() => assert.equal(dana.notes, "Gate sticks, check in spring\ndana@example.com · Tags: VIP, Referral · Found you through: Google · Last job 2025-06-01"));
+ok(() => assert.equal(dana.notes, "Gate sticks, check in spring\nTags: VIP, Referral\nFound you through: Google\nLast job 2025-06-01"));
+ok(() => assert.equal(dana.email, "dana@example.com"), "the email rides on its own field, not in the notes");
 const marcus = r.rows[1];
 ok(() => assert.equal(marcus.name, "Marcus Hill"));
 ok(() => assert.equal(marcus.address, "88 Pine St Unit B, Denver, CO 80203"));
@@ -62,7 +63,7 @@ const plain = "Customer Name;Phone Number;Address;Notes\n".replace(/;/g, ",") + 
 const p = readImportCsv(plain, TODAY);
 ok(() => assert.equal(p.jobber, false));
 ok(() => assert.equal(p.rows.length, 2));
-ok(() => assert.deepEqual(p.rows[0], { name: "Henderson family", phone: "+13035550110", address: "19 Birch Ct, Golden CO", notes: "", since: null }));
+ok(() => assert.deepEqual(p.rows[0], { name: "Henderson family", phone: "+13035550110", address: "19 Birch Ct, Golden CO", notes: "", since: null, email: "" }));
 ok(() => assert.equal(p.rows[1].name, "Company Only Inc", "a company name is a name"));
 ok(() => assert.equal(p.rows[1].notes, "Paid cash"));
 ok(() => assert.equal(p.skipped.length, 1));
@@ -84,7 +85,7 @@ const batch = cleanImportRows([
   { name: "Long".repeat(40), phone: "3035550101", address: "A".repeat(200), since: "someday" },
 ], TODAY);
 ok(() => assert.equal(batch.length, 2));
-ok(() => assert.deepEqual(batch[0], { name: "Dana Ruiz", phone: "+17205550177", address: "2210 Oak Dr", notes: "x y", since: "2023-04-12" }));
+ok(() => assert.deepEqual(batch[0], { email: "", name: "Dana Ruiz", phone: "+17205550177", address: "2210 Oak Dr", notes: "x y", since: "2023-04-12" }));
 ok(() => assert.equal(batch[1].name.length, 80));
 ok(() => assert.equal(batch[1].address.length, 120));
 ok(() => assert.equal(batch[1].since, null));

@@ -3,7 +3,7 @@ import { logRun } from "@/lib/pre-audit";
 import { bearerMatches } from "@/lib/bearer";
 import { publishDue } from "@/lib/content-publish-run";
 import { metaConfig } from "@/lib/meta-publish";
-import { runDueTexts, runHandoffChecks, runLeadNudges, sendMondayReports, sendMonthlyReports, sendReminders } from "@/lib/client-runtime-run";
+import { runDueTexts, runHandoffChecks, runLeadNudges, runOwnerReminders, sendMondayReports, sendMonthlyReports, sendReminders } from "@/lib/client-runtime-run";
 import { loadWorkspace } from "@/lib/workspace-data";
 import { runAutoReviews } from "@/lib/client-close-run";
 import { runInvoiceReminders } from "@/lib/client-billing-run";
@@ -36,6 +36,7 @@ export async function GET(request: Request) {
     texts.nudges = await runLeadNudges(sql, started).catch(e => { console.error("Lead nudges failed", e); return null; });
     texts.due = await runDueTexts(sql, started).catch(e => { console.error("Due texts failed", e); return null; });
     texts.handoffs = await runHandoffChecks(sql, started).catch(e => { console.error("Handoff checks failed", e); return null; });
+    texts.ownerReminders = await runOwnerReminders(sql).catch(e => { console.error("Owner reminders failed", e); return null; });
     if (hour >= 9 && hour < 19) {
       texts.reminders = await sendReminders(sql).catch(e => { console.error("Reminders failed", e); return null; });
       // The day after an install the owner marked won: the Google review ask (each client's own hours are checked too).
