@@ -7,10 +7,17 @@ import { isTokenShape } from "@/lib/esign";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Every business whose owner cell is this number. */
+/** Every business whose owner cell, or a team member's cell, is this number. The owner's cell wins when both match. */
 async function businessesFor(phone: string) {
-  return await db()`SELECT project_id, setup->>'texting_number' AS from_number FROM public.client_ops
-    WHERE right(regexp_replace(coalesce(setup->>'owner_cell',''), '[^0-9]', '', 'g'), 10) = ${phone}` as { project_id: string; from_number: string | null }[];
+  const rows = await db()`SELECT project_id, setup->>'texting_number' AS from_number,
+      right(regexp_replace(coalesce(setup->>'owner_cell',''), '[^0-9]', '', 'g'), 10) = ${phone} AS is_owner,
+      (SELECT m->>'role' FROM jsonb_array_elements(CASE WHEN coalesce(setup->>'team', '') LIKE '[%' THEN (setup->>'team')::jsonb ELSE '[]'::jsonb END) m
+        WHERE right(regexp_replace(coalesce(m->>'cell',''), '[^0-9]', '', 'g'), 10) = ${phone} LIMIT 1) AS team_role
+    FROM public.client_ops
+    WHERE right(regexp_replace(coalesce(setup->>'owner_cell',''), '[^0-9]', '', 'g'), 10) = ${phone}
+      OR EXISTS (SELECT 1 FROM jsonb_array_elements(CASE WHEN coalesce(setup->>'team', '') LIKE '[%' THEN (setup->>'team')::jsonb ELSE '[]'::jsonb END) m
+        WHERE right(regexp_replace(coalesce(m->>'cell',''), '[^0-9]', '', 'g'), 10) = ${phone})` as { project_id: string; from_number: string | null; is_owner: boolean; team_role: string | null }[];
+  return rows.map(r => ({ ...r, role: (r.is_owner || r.team_role === "owner" ? "owner" : "crew") as "owner" | "crew" }));
 }
 
 /**
@@ -60,7 +67,9 @@ export async function POST(req: Request) {
       await sql`UPDATE public.app_codes SET used_at = now() WHERE id = ${c.id}::uuid`;
       const biz = await businessesFor(phone);
       if (!biz.length) return json({ error: "No business is set up with that number." }, 404);
-      return json({ ok: true }, 200, { "Set-Cookie": sessionCookie(makeSession(biz.map(x => x.project_id), phone), secure) });
+      // One session, one role: crew only when this number is nobody's owner cell.
+      const role = biz.some(x => x.role === "owner") ? "owner" : "crew";
+      return json({ ok: true }, 200, { "Set-Cookie": sessionCookie(makeSession(biz.map(x => x.project_id), phone, Date.now(), role), secure) });
     }
     return json({ error: "Unknown action." }, 400);
   } catch (e) { console.error("App auth failed", e instanceof Error ? e.message : e); return json({ error: "Something went wrong. Try again." }, 500); }

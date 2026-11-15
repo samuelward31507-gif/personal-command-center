@@ -1,8 +1,13 @@
 import { appSession, bridgeCall, clientFor, db, json } from "@/lib/client-app-run";
-import { markNoShow, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
+import { askCinder, markNoShow, previewReply, rescheduleAppointment, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
+import { sendSms } from "@/lib/twilio";
+import { cleanOwnerSetup } from "@/lib/crm";
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
+import { addLead, importCustomers, moveStage, saveCard, saveOwnerSetup, setJobCosts, setJobStep } from "@/lib/client-crm-run";
+import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
+import { createInvoice, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,15 +24,120 @@ const UUID = /^[0-9a-f-]{36}$/i;
  *  outcome { appt, result, amount?, review? } — how an estimate went: quoted (Cinder follows up on the quote), won (counts the job,
  *    optionally asks for a Google review), no_show (texts them to rebook).
  *  quote { quote, status, amount? } — a quote Cinder is chasing was won or lost.
+ *  stage { thread, stage, amount?, link?, note?, install?, review? } — move a card. Quoted with link texts the customer a quote they
+ *    can approve; won with install and review asks for a Google review the day after the install.
+ *  quotelink { thread, note? } — text (or re-text) the quote link. reviewnow { thread } — the job's done: ask for the review now.
+ *  winback { body } — the owner's text to past customers who agreed to offers.
+ *  import { rows, as?, consent?, from? } — the owner's existing customers from a Jobber export or a spreadsheet, up to 250 a call; nobody gets texted.
+ *  quotelines { thread, items, tax?, note?, send? } — the quote's lines (the owner sends it himself). install { thread, install, time?, days? } — on Google Calendar.
+ *  invoice { thread } — a draft invoice for the job. invoicesave / invoicesend / invoiceset { invoice, ... } — edit, text it, paid | unpaid | void | pause | resume.
  */
 export async function POST(req: Request) {
   const s = appSession(req);
   if (!s) return json({ error: "Sign in" }, 401);
-  const b = await req.json().catch(() => ({})) as { p?: string; action?: string; thread?: string; body?: string; status?: string; appt?: string; result?: string; amount?: string; review?: boolean; quote?: string };
+  const b = await req.json().catch(() => ({})) as { p?: string; action?: string; thread?: string; body?: string; status?: string; appt?: string; result?: string; amount?: string; review?: boolean; quote?: string;
+    setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
+    link?: boolean; note?: string; install?: string | null; send?: boolean;
+    items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
+    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
     if (!c) return json({ error: "Sign in" }, 401);
+    // The CRM: the owner's own setup, moving a customer between stages, editing a card, adding a lead by hand.
+    if (b.action === "setup") { const saved = await saveOwnerSetup(sql, c, b.setup); return json({ ok: true, setup: saved }); }
+    if (b.action === "lead") {
+      const r = await addLead(sql, c, { name: b.name, phone: b.phone, details: b.details, notes: b.notes, stage: b.stage });
+      return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "import") {
+      const r = await importCustomers(sql, c, b.rows, { as: b.as, consent: b.consent, from: b.from });
+      return r.ok ? json({ ok: true, added: r.added, existing: r.existing, as: r.as }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "stage" || b.action === "card") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const amount = b.amount ? parseAmount(b.amount) : null;
+      if (b.amount && amount == null) return json({ error: "Type the amount as a number, like 9400." }, 400);
+      if (b.action === "stage") {
+        const r = await moveStage(sql, c, b.thread, String(b.stage), amount, { install: b.install, review: b.review, reason: b.reason });
+        if (!r.ok) return json({ error: r.error }, 409);
+        // Won with an install date: it goes on the owner's Google Calendar.
+        if (b.stage === "won" && b.install !== undefined) { const s2 = await scheduleInstall(sql, c, b.thread, { date: b.install, time: b.time, days: b.days }); return json({ ok: true, calendar: s2.calendar }); }
+        // Quoted with lines: the owner's lines and tax set the total. Nothing goes to the customer unless he asked.
+        if (b.stage === "quoted" && b.items !== undefined) { const l = await saveQuoteLines(sql, c, b.thread, { items: b.items, tax: b.tax, note: b.note }); if (!l.ok) return json({ error: l.error }, 400); }
+        if (b.stage !== "quoted" || !b.link) return json({ ok: true });
+        // Quoted, and the owner wants the customer to have it: text the link they approve from.
+        const l = await sendQuoteLink(sql, c, b.thread, b.note);
+        return json({ ok: true, link: l.url ?? "", sent: l.sent, warn: l.sent ? "" : l.error ?? "" });
+      }
+      let value: number | null | undefined;
+      if (b.value !== undefined) { value = b.value === null || b.value === "" ? null : parseAmount(String(b.value)); if (b.value && value == null) return json({ error: "Type the job value as a number, like 9400." }, 400); }
+      const r = await saveCard(sql, c, b.thread, { details: b.details, value, notes: b.notes, crew: b.crew, name: b.name, install: b.install, review: b.review });
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
+    }
+    if (b.action === "quotelink" || b.action === "reviewnow") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      if (b.action === "reviewnow") { const r = await reviewNow(sql, c, b.thread); return r.ok ? json({ ok: true }) : json({ error: r.error }, 409); }
+      const l = await sendQuoteLink(sql, c, b.thread, b.note, b.send !== false);
+      return l.ok ? json({ ok: true, link: l.url ?? "", sent: l.sent, warn: l.sent ? "" : l.error ?? "" }) : json({ error: l.error }, 409);
+    }
+    if (b.action === "quotelines" || b.action === "install" || b.action === "invoice") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      if (b.action === "quotelines") {
+        const l = await saveQuoteLines(sql, c, b.thread, { items: b.items, tax: b.tax, note: b.note, deposit: b.deposit });
+        if (!l.ok) return json({ error: l.error }, 400);
+        if (!b.send) return json({ ok: true, total: l.total });
+        const q = await sendQuoteLink(sql, c, b.thread);
+        return json({ ok: true, total: l.total, link: q.url ?? "", sent: q.sent, warn: q.sent ? "" : q.error ?? "" });
+      }
+      if (b.action === "install") { const r = await scheduleInstall(sql, c, b.thread, { date: b.install, time: b.time, days: b.days }); return r.ok ? json({ ok: true, calendar: r.calendar }) : json({ error: r.error }, 404); }
+      const r = await createInvoice(sql, c, b.thread);
+      return r.ok ? json({ ok: true, invoice: r.invoice }) : json({ error: r.error }, 409);
+    }
+    if (b.action === "invoicesave" || b.action === "invoicesend" || b.action === "invoiceset") {
+      if (!b.invoice || !UUID.test(b.invoice)) return json({ error: "Which invoice?" }, 400);
+      if (b.action === "invoicesave") { const r = await saveInvoice(sql, c, b.invoice, { items: b.items, tax: b.tax, note: b.note, due: b.due }); return r.ok ? json({ ok: true }) : json({ error: r.error }, 409); }
+      if (b.action === "invoicesend") { const r = await sendInvoice(sql, c, b.invoice); return r.ok ? json({ ok: true, sent: r.sent, link: r.url ?? "", warn: r.warn ?? "" }) : json({ error: r.error }, 409); }
+      const what = String(b.what);
+      if (!["paid", "unpaid", "void", "pause", "resume"].includes(what)) return json({ error: "Unknown change." }, 400);
+      const r = await setInvoice(sql, c, b.invoice, what as "paid");
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 409);
+    }
+    if (b.action === "jobstep" || b.action === "jobcosts") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      if (b.action === "jobcosts") { const r = await setJobCosts(sql, c, b.thread, b.costs); return r.ok ? json({ ok: true }) : json({ error: r.error }, 404); }
+      const r = await setJobStep(sql, c, b.thread, b.step, !!b.done, b.on);
+      return r.ok ? json({ ok: true, job: r.job }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
+    // The crew sees the schedule and the jobs and can text, call, tick steps and leave notes. Money and settings stay with the owner.
+    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
+    if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; }
+    if (b.action === "ask") {
+      const q = String(b.question ?? "").trim().slice(0, 500);
+      if (!q) return json({ error: "Ask something." }, 400);
+      const a = await askCinder(sql, c, q);
+      return a ? json({ ok: true, answer: a }) : json({ error: "Cinder couldn't answer just now." }, 503);
+    }
+    if (b.action === "reschedule") {
+      if (!b.appt || !UUID.test(b.appt)) return json({ error: "Which estimate?" }, 400);
+      const r = await rescheduleAppointment(sql, c, b.appt, String(b.start ?? ""));
+      return r.ok ? json({ ok: true, texted: r.texted, when: r.when }) : json({ error: r.error }, 409);
+    }
+    if (b.action === "preview") {
+      // The owner tries the agent with unsaved settings. Nothing is stored and nobody is texted.
+      const message = String(b.message ?? "").trim().slice(0, 500);
+      if (!message) return json({ error: "Type what a lead might say." }, 400);
+      const r = await previewReply(c, message, b.setup ? cleanOwnerSetup(b.setup) : {});
+      return r ? json({ ok: true, ...r }) : json({ error: "The agent couldn't answer just now." }, 503);
+    }
+    if (b.action === "testtext") {
+      // A real text from the business number to the owner's own cell, so he knows the number works.
+      if (!c.setup.texting_number) return json({ error: "No texting number yet." }, 409);
+      if (!c.setup.owner_cell) return json({ error: "No cell on file for you." }, 409);
+      const ok = await sendSms(c.setup.owner_cell, c.setup.texting_number, `Test from Cinder: this is ${c.setup.display_name || "your"} texting number. Customers get replies from here.`);
+      return ok ? json({ ok: true }) : json({ error: "The text didn't go out. Check the connection log." }, 502);
+    }
     if (b.action === "message") {
       const body = String(b.body ?? "").trim().slice(0, 4000);
       if (!body) return json({ error: "Write a message first." }, 400);

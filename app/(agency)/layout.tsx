@@ -10,6 +10,7 @@ import "./design.css";
 import "./mission.css";
 import "./ui.css";
 import "./light.css";
+import "./finish.css";
 
 // Same faces as cinderrevenue.com: Inter for interface text, Inter Tight for titles and figures.
 // The variable names stay as they were so every older stylesheet picks the new faces up.

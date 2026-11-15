@@ -52,6 +52,29 @@ export async function createEvent(cal: ClientCal, e: { start: string; end: strin
   return String(j.id ?? "");
 }
 
+/** An all-day event across one or more days (a multi-day install). Returns the event id. */
+export async function createAllDayEvent(cal: ClientCal, e: { date: string; days: number; title: string; details: string }): Promise<string> {
+  const end = new Date(Date.parse(e.date + "T12:00:00Z") + Math.max(1, e.days) * 86400000).toISOString().slice(0, 10);
+  const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.calendarId)}/events`, { method: "POST",
+    headers: { Authorization: `Bearer ${cal.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ summary: e.title, description: e.details, start: { date: e.date }, end: { date: end }, transparency: "opaque" }), signal: AbortSignal.timeout(8000) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error("Couldn't add the install to the calendar.");
+  return String(j.id ?? "");
+}
+
+/** Moves an event Cinder booked to a new time. A missing event is created again. Returns the event id. */
+export async function moveEvent(cal: ClientCal, eventId: string, e: { start: string; end: string; tz: string; title: string; details: string }): Promise<string> {
+  if (eventId) {
+    const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.calendarId)}/events/${encodeURIComponent(eventId)}`, { method: "PATCH",
+      headers: { Authorization: `Bearer ${cal.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ start: { dateTime: e.start, timeZone: e.tz }, end: { dateTime: e.end, timeZone: e.tz } }), signal: AbortSignal.timeout(8000) });
+    if (r.ok) return eventId;
+    if (r.status !== 404 && r.status !== 410) throw new Error("Couldn't move it on the calendar.");
+  }
+  return createEvent(cal, e);
+}
+
 /** Removes an event Cinder booked (the customer moved or canceled). A missing event counts as done. */
 export async function deleteEvent(cal: ClientCal, eventId: string): Promise<void> {
   if (!eventId) return;

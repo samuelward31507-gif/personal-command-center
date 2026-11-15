@@ -2,7 +2,7 @@ import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
 import { newSigningToken } from "@/lib/esign";
 import { GO_LIVE_STEP } from "@/lib/deal-handoff";
-import { cleanLaunch, cleanMessages, cleanSetup, draftMessages, guaranteeClock, launchState, prefillSetup, setupGaps, allApproved } from "@/lib/client-ops";
+import { cleanLaunch, cleanMessages, cleanSetup, SETUP_FIELDS, draftMessages, guaranteeClock, launchState, prefillSetup, setupGaps, allApproved } from "@/lib/client-ops";
 import { todayIn } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
 
@@ -88,7 +88,11 @@ export async function POST(request: Request) {
   try {
     switch (body?.action) {
       case "setup": {
-        const setup = cleanSetup(body.setup);
+        // The sheet owns its own fields only. Keys the owner set in the app (prices, team, onboarding) and system keys are kept.
+        const sheetKeys = new Set(SETUP_FIELDS.map(f => f.key));
+        const [cur] = await sql`SELECT setup FROM public.client_ops WHERE project_id = ${id}::uuid AND owner_id = ${owner}` as { setup: Record<string, string> | null }[];
+        const keep = Object.fromEntries(Object.entries(cur?.setup ?? {}).filter(([k]) => !sheetKeys.has(k)));
+        const setup = { ...keep, ...cleanSetup(body.setup) };
         await sql`UPDATE public.client_ops SET setup = ${JSON.stringify(setup)}::jsonb, updated_at = now() WHERE project_id = ${id}::uuid AND owner_id = ${owner}`;
         break;
       }

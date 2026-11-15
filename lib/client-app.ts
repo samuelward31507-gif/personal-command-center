@@ -4,7 +4,8 @@ import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto"
 
 export const APP_COOKIE = "cinder_app";
 export const SESSION_DAYS = 90;
-export type AppSession = { projects: string[]; phone: string; exp: number };
+export type Role = "owner" | "crew";
+export type AppSession = { projects: string[]; phone: string; exp: number; role?: Role };
 
 const key = () => process.env.CINDER_TOKEN_KEY?.trim() || "";
 const b64 = (s: string) => Buffer.from(s).toString("base64url");
@@ -12,8 +13,8 @@ const sign = (body: string) => createHmac("sha256", key()).update("app." + body)
 
 export const phone10 = (p: string) => (p || "").replace(/\D/g, "").slice(-10);
 
-export function makeSession(projects: string[], phone: string, now = Date.now()): string {
-  const body = b64(JSON.stringify({ projects: [...new Set(projects)].slice(0, 20), phone, exp: now + SESSION_DAYS * 86400000 }));
+export function makeSession(projects: string[], phone: string, now = Date.now(), role: Role = "owner"): string {
+  const body = b64(JSON.stringify({ projects: [...new Set(projects)].slice(0, 20), phone, exp: now + SESSION_DAYS * 86400000, role }));
   return `${body}.${sign(body)}`;
 }
 

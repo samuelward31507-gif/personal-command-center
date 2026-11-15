@@ -150,7 +150,8 @@
       if (clock) clockDone();
     } else loop($(".iph"), async function (alive) {
       while (alive()) {
-        thread.innerHTML = "";
+        if (thread.children.length) { thread.classList.add("fading"); await sleep(420); }
+        thread.innerHTML = ""; thread.classList.remove("fading");
         for (var i = 0; i < SCRIPT.length && alive(); i++) {
           var s = SCRIPT[i];
           if (s[0] === "meta") { thread.appendChild(el("p", "im-meta", s[1])); await sleep(500); }
@@ -240,7 +241,7 @@
   var Q = bx("qual");
   if (Q && motion) loop(Q, async function (alive) { var rows = $$(".q-list > div", Q); while (alive()) { rows.forEach(function (r) { r.classList.remove("lit"); }); await sleep(600); for (var i = 0; i < rows.length && alive(); i++) { rows[i].classList.add("lit"); await sleep(750); } await sleep(2600); } });
   var C = bx("cal");
-  if (C && motion) loop(C, async function (alive) { var n = $("[data-bn]", C), note = $("[data-bnote]", C); note.style.transition = "opacity .4s"; while (alive()) { n.classList.remove("on"); note.style.opacity = "0"; await sleep(1400); n.classList.add("on"); note.style.opacity = "1"; await sleep(3600); } });
+  if (C && motion) loop(C, async function (alive) { var n = $("[data-bn]", C), note = $("[data-bnote]", C); while (alive()) { n.classList.remove("on"); note.textContent = "2 estimates"; await sleep(1600); n.classList.add("on"); note.textContent = "3 estimates"; await sleep(4200); } });
   var H = bx("chase");
   if (H) { var cds = $$("[data-cd]", H); if (!motion) cds.forEach(function (d) { d.classList.add("lit"); }); else loop(H, async function (alive) { while (alive()) { cds.forEach(function (d) { d.classList.remove("lit"); }); await sleep(500); for (var i = 0; i < cds.length && alive(); i++) { cds[i].classList.add("lit"); await sleep(900); } await sleep(2800); } }); }
   var S = bx("es");
@@ -310,7 +311,7 @@
   }
   f.addEventListener("submit", function (e) {
     e.preventDefault(); if (busy) return; setName();
-    history = []; done = false; mine = 0; t.innerHTML = ""; say.placeholder = "Reply as the homeowner"; say.value = "";
+    history = []; done = false; mine = 0; t.innerHTML = ""; say.placeholder = "Type a reply"; say.value = "";
     meta("Website form · " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
     turn(f.request.value.trim(), true);
   });

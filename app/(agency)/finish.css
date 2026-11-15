@@ -1,0 +1,25 @@
+/* Finish pass, loaded last. Evens out what the older stylesheets left uneven between screens:
+   one typeface, one page surface, one title size, and a call screen whose outcome dock never covers the script. */
+
+/* Type: the Apple system face on Mac and iPhone, Inter everywhere else. Older sheets read these variables. */
+html body {
+  --font-geist-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter";
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Tight", "Inter";
+  --font-greeting: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Tight", "Inter";
+}
+
+/* One page surface: Settings, Calendar and any other screen that paints its own grey sit on the same panel as the rest. */
+html body:not(#u):not(#v):not(#w) .crm-shell-main > main,
+html body:not(#u):not(#v):not(#w) .crm-shell-main > [class$="-page"],
+html body:not(#u):not(#v):not(#w) .crm-shell-main > [class*="-page "] { background: transparent !important; }
+html body:not(#u):not(#v):not(#w) .crm-shell-main > main.set-page,
+html body:not(#u):not(#v):not(#w) .crm-shell-main > main.calendar-page { padding: 36px 43px 72px !important; max-width: none !important; margin: 0 !important; min-height: calc(100vh - 16px); }
+html body:not(#u):not(#v):not(#w) .crm-shell-main > main.set-page > * { max-width: 1040px; }
+
+/* Settings: same title size as the other screens, and no grey band behind it. */
+html body:not(#u):not(#v):not(#w) .crm-shell-main > main.set-page h1 { font-size: 33px !important; line-height: 1.1 !important; letter-spacing: -.035em !important; margin: 0 0 6px !important; }
+html body:not(#u):not(#v):not(#w) .crm-shell-main > main.set-page > header, html body:not(#u):not(#v):not(#w) .crm-shell-main > main.set-page > :first-child { background: transparent !important; }
+
+/* Calendar: a routine block's time sits under its label instead of running off the edge. */
+html body .calendar-page .cal-band { display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 1px !important; overflow: hidden; }
+html body .calendar-page .cal-band-label, html body .calendar-page .cal-band-time { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -77,6 +77,7 @@ export const SETUP_FIELDS: readonly SetupField[] = [
   { group: "Reviews", key: "review_link", label: "Google review link", help: "Sent in the review request after a finished job." },
   { group: "Texting", key: "a2p_status", label: "Texting registration", options: A2P_STATUSES },
   { group: "Texting", key: "a2p_submitted", label: "Registration submitted on", help: "YYYY-MM-DD" },
+  { group: "Connections", key: "webhook_url", label: "Send events to (n8n webhook)", help: "Optional. Cinder posts every new lead, booking, quote and won or lost job here, signed with CINDER_WEBHOOK_SECRET. Use it to sync any CRM through n8n." },
   { group: "Access", key: "access_notes", label: "Access notes", long: true, help: "Who granted what. Never paste passwords here: keep them in your password manager." },
 ];
 

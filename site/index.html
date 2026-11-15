@@ -40,7 +40,7 @@
   <div class="wrap hero-in">
     <a class="pill" href="#try"><span class="pill-dot"></span>New<span class="pl-long"> · Try it on a real quote request from your business</span><span class="pl-short"> · Try it on your business</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <h1 class="split">You missed the call. Someone else booked the job.</h1>
-    <p class="lede">While you’re on a job, Cinder texts back every missed call and web form in about 9 seconds, books the estimate on your calendar, and follows up every quote until it’s a yes or a no. Built around your trade, your prices and your calendar.</p>
+    <p class="lede">While you’re on a job, Cinder texts back every missed call and web form in about 10 seconds, books the estimate on your calendar, and follows up every quote until it’s a yes or a no. Built around your trade, your prices and your calendar.</p>
     <div class="hero-ctas">
       <a class="btn btn-go" href="#book">Book a free 15-minute call</a>
       <a class="btn btn-ghost" href="#try">Try it on your business</a>
@@ -196,7 +196,7 @@
           <div class="im in tail">Hi Dana, thanks for reaching out. A cedar privacy fence with a gate is a great fit with a dog. Is the 150 ft along the back and both sides, and do you know roughly where you’d want the gate?</div>
           <p class="im-dl">Sample · start your own</p>
         </div>
-        <form class="ios-input ios-live" id="demo-chat" autocomplete="off"><span class="ios-plus">+</span><input class="ios-field" id="demo-say" maxlength="300" placeholder="Reply as the homeowner" aria-label="Reply as the homeowner" disabled><button type="submit" class="ios-send" id="demo-send" aria-label="Send" disabled><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>
+        <form class="ios-input ios-live" id="demo-chat" autocomplete="off"><span class="ios-plus">+</span><input class="ios-field" id="demo-say" maxlength="300" placeholder="Type a reply" aria-label="Reply as the homeowner" disabled><button type="submit" class="ios-send" id="demo-send" aria-label="Send" disabled><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></form>
       </div></div></div>
       <p class="try-note" id="demo-clock-note">First reply sent in <b id="demo-clock">0:09</b></p>
     </div>
@@ -211,28 +211,51 @@
       <p class="lede">Set up for your trade in about 30 minutes of your time. You approve the wording, then you just show up to appointments.</p>
     </div>
     <div class="bento">
-      <article class="bx bx-wide" data-bx="timer">
-        <div class="bx-vis"><div class="big-clock"><b data-bt>0:00</b><div class="bc-bar"><i data-bb></i></div><span data-bs>Missed call · 2:14 PM</span></div></div>
+      <article class="bx" data-bx="timer">
+        <div class="bx-vis"><div class="ui">
+          <div class="ui-h"><span>Missed call</span><em>2:14 PM</em></div>
+          <div class="ui-row"><span class="ui-ic ui-miss"></span><div><b>(720) 555-0148</b><small>Rang out while you were on a job</small></div></div>
+          <div class="big-clock"><b data-bt>0:00</b><div class="bc-bar"><i data-bb></i></div><span data-bs>Missed call · 2:14 PM</span></div>
+        </div></div>
         <div class="bx-copy"><h3>Answered in seconds, not hours</h3><p>Missed calls, web forms, Facebook, Angi and Thumbtack leads all get a text from your business while you’re still on the ladder.</p></div>
       </article>
       <article class="bx" data-bx="qual">
-        <div class="bx-vis"><dl class="q-list"><div><dt>Job</dt><dd>Cedar privacy, ~120 ft</dd></div><div><dt>Tear-out</dt><dd>Yes, old fence leaning</dd></div><div><dt>Address</dt><dd>In your service area</dd></div><div><dt>Price range sent</dt><dd>$42–56 a foot</dd></div></dl></div>
+        <div class="bx-vis"><div class="ui">
+          <div class="ui-h"><span>Dana Ruiz</span><em class="ok">Qualified</em></div>
+          <dl class="q-list"><div><dt>Job</dt><dd>Cedar privacy, ~120 ft</dd></div><div><dt>Tear-out</dt><dd>Yes, old fence leaning</dd></div><div><dt>Address</dt><dd>In your service area</dd></div><div><dt>Price range sent</dt><dd>$42–56 a foot</dd></div></dl>
+        </div></div>
         <div class="bx-copy"><h3>Qualified before you drive out</h3><p>Your questions and your price range, so you only meet people who are serious.</p></div>
       </article>
       <article class="bx" data-bx="cal">
-        <div class="bx-vis"><div class="mini-week"><div><b>Mon</b><i></i></div><div><b>Tue</b><i class="f"></i></div><div><b>Wed</b><i></i><i class="new" data-bn></i></div><div><b>Thu</b><i class="f"></i><i></i></div><div><b>Fri</b><i></i></div></div><p class="mw-note" data-bnote>Estimate booked · Wed 8:00 AM</p></div>
-        <div class="bx-copy"><h3>Booked on your real calendar</h3><p>They pick from your open times. Reminders go out, no-shows get a rebooking text.</p></div>
+        <div class="bx-vis"><div class="ui">
+          <div class="ui-h"><span>Thursday</span><em data-bnote>3 estimates</em></div>
+          <div class="ag new" data-bn><time>8:00</time><div><b>Dana Ruiz · cedar privacy</b><small>Booked by Cinder · reminder set</small></div></div>
+          <div class="ag open"><time>10:30</time><div><b>Open</b><small>Offered to new leads</small></div></div>
+          <div class="ag"><time>1:00</time><div><b>Marcus Hill · vinyl, 80 ft</b><small>Booked by Cinder</small></div></div>
+          <div class="ag"><time>3:30</time><div><b>Ana Torres · gate repair</b><small>Booked by you</small></div></div>
+        </div></div>
+        <div class="bx-copy"><h3>Booked on your real calendar</h3><p>They pick from your open times. Reminders go out, and no-shows get a rebooking text.</p></div>
       </article>
       <article class="bx" data-bx="chase">
-        <div class="bx-vis"><ol class="chase-line"><li data-cd><b>Day 2</b><span>Checking in</span></li><li data-cd><b>Day 5</b><span>Answered a question</span></li><li data-cd><b>Day 10</b><span>Financing offered</span></li><li data-cd class="win"><b>Day 12</b><span>“Let’s do it” · $6,840</span></li></ol></div>
+        <div class="bx-vis"><div class="ui">
+          <div class="ui-h"><span>Quote · Priya Shah</span><em>$6,840</em></div>
+          <ol class="chase-line"><li data-cd><b>Day 2</b><span>Checked in on the quote</span></li><li data-cd><b>Day 5</b><span>Answered a question about posts</span></li><li data-cd><b>Day 10</b><span>Offered your financing</span></li><li data-cd class="is-won"><b>Day 12</b><span>“Let’s do it.” Quote approved</span></li></ol>
+        </div></div>
         <div class="bx-copy"><h3>Every quote chased to a yes or a no</h3><p>Days 2, 5, 10 and 21, in your words. Real price talk comes straight to you.</p></div>
       </article>
       <article class="bx" data-bx="es">
-        <div class="bx-vis"><div class="lang"><p class="b-in" data-li>¿Cuánto cuesta una cerca de madera de 30 metros?</p><p class="b-out" data-lo>Normalmente entre $4,200 y $5,400. ¿Le queda bien el jueves a las 8 para medir?</p></div></div>
+        <div class="bx-vis"><div class="ui">
+          <div class="ui-h"><span>New lead · web form</span><em>Replied in 8 sec</em></div>
+          <div class="lang"><p class="b-in" data-li>¿Cuánto cuesta una cerca de madera de 30 metros?</p><p class="b-out" data-lo>Normalmente entre $4,200 y $5,400. ¿Le queda bien el jueves a las 8 para medir?</p></div>
+        </div></div>
         <div class="bx-copy"><h3>English and Spanish</h3><p>It answers in the language they texted in.</p></div>
       </article>
       <article class="bx" data-bx="stars">
-        <div class="bx-vis"><div class="stars" data-stars><i></i><i></i><i></i><i></i><i></i></div><p class="mw-note">Henderson · left a 5-star review</p></div>
+        <div class="bx-vis"><div class="ui">
+          <div class="ui-h"><span>Henderson · job finished</span><em class="ok">Paid</em></div>
+          <div class="ui-row"><span class="ui-ic ui-sent"></span><div><b>Review request sent</b><small>The morning after, by text, with your Google link</small></div></div>
+          <div class="ui-row rv-row"><div class="stars" data-stars><i></i><i></i><i></i><i></i><i></i></div><small>New review on your Google profile</small></div>
+        </div></div>
         <div class="bx-copy"><h3>Reviews on autopilot</h3><p>The morning after the job’s done and paid, it asks for the Google review.</p></div>
       </article>
     </div>
@@ -329,18 +352,25 @@
 
 <section class="sec sec-tint" id="founder">
   <div class="wrap founder">
-    <h2>You work with the person who builds it.</h2>
-    <div>
-      <p>I’m Sam, founder of Cinder Revenue Company. I build and watch every client’s system myself, and I only take on a few shops at a time so each one gets that attention. If something breaks, you hear it from me before you notice.</p>
-      <p class="sig"><b>Samuel Ward</b>, founder · Colorado · <a href="mailto:sam.cinderrevenue@gmail.com">sam.cinderrevenue@gmail.com</a></p>
-    </div>
+    <h2 class="split">You work with the person who builds it.</h2>
+    <figure class="note">
+      <blockquote>
+        <p>I’m Sam, founder of Cinder Revenue Company. I build and watch every client’s system myself, and I only take on a few shops at a time so each one gets that attention.</p>
+        <p>If something breaks, you hear it from me before you notice.</p>
+      </blockquote>
+      <figcaption><span class="note-av" aria-hidden="true">S</span><span><b>Samuel Ward</b><small>Founder · Colorado</small></span><a class="btn btn-line btn-sm" href="#book">Talk to Sam</a></figcaption>
+    </figure>
   </div>
 </section>
 
 
 <section class="sec" id="faq">
   <div class="wrap faq">
-    <h2>What owners ask.</h2>
+    <div class="faq-side">
+      <h2>What owners ask.</h2>
+      <p>Something else on your mind? Ask it on the call, or write to <a href="mailto:sam.cinderrevenue@gmail.com">sam.cinderrevenue@gmail.com</a>.</p>
+      <a class="btn btn-go btn-sm" href="#book">Book a free 15-minute call</a>
+    </div>
     <div class="qa">
       <details><summary>Do I sign a contract?</summary><p>No. Month to month, cancel by text with 30 days’ notice.</p></details>
       <details><summary>When do I start paying monthly?</summary><p>Setup is paid when you sign. Monthly starts the day your first booked appointment lands, so you never pay monthly for a system that hasn’t booked you anything. The Reactivation add-on starts the month you add it.</p></details>
@@ -359,20 +389,23 @@
 
 
 <section class="sec book" id="book">
-  <div class="wrap book-in">
-    <div class="book-copy">
-      <h2>Find out how many jobs you’re missing.</h2>
-      <p class="lede">15 minutes, free. Bring your rough numbers: calls a week, average job, how many estimates you close.</p>
-      <ol class="book-steps">
-        <li><b>How leads reach you today,</b> including after hours.</li>
-        <li><b>A real number on the gap,</b> using your job size and close rate.</li>
-        <li><b>Whether the guarantee applies,</b> what it costs and when it’d be live.</li>
-      </ol>
-      <p class="book-alt">Rather write? <a href="mailto:sam.cinderrevenue@gmail.com">sam.cinderrevenue@gmail.com</a></p>
+  <div class="wrap">
+    <div class="head-c book-head">
+      <h2 class="split">Find out how many jobs you’re missing.</h2>
+      <p class="lede">Pick a day, pick a time, done. 15 minutes, free. Bring your rough numbers: calls a week, average job, how many estimates you close.</p>
     </div>
     <div class="book-cal">
-      <div id="cal-inline" class="cal-inline" data-theme="light"><p class="cal-loading">Loading the calendar…</p><a class="btn btn-go cal-fallback" href="https://cal.com/samuel-ward-saqpvb/15min">Open the booking calendar</a></div>
+      <div id="cal-inline" class="cal-inline" data-theme="light">
+        <div class="cal-loading" aria-label="Loading the calendar"><div class="sk sk-cal"><i class="sk-h"></i><div class="sk-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="sk sk-times"><i class="sk-h"></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <a class="btn btn-go cal-fallback" href="https://cal.com/samuel-ward-saqpvb/15min">Open the booking calendar</a>
+      </div>
     </div>
+    <ol class="book-steps book-row">
+      <li><b>How leads reach you today,</b> including after hours.</li>
+      <li><b>A real number on the gap,</b> using your job size and close rate.</li>
+      <li><b>Whether the guarantee applies,</b> what it costs and when it’d be live.</li>
+    </ol>
+    <p class="book-alt">Rather write? <a href="mailto:sam.cinderrevenue@gmail.com">sam.cinderrevenue@gmail.com</a></p>
   </div>
 </section>
 

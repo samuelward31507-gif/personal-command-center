@@ -1,0 +1,37 @@
+/* The pages a customer opens from a text: the owner's quote, the owner's invoice. The business front and centre,
+   one obvious button, made for a phone. Same tokens as the app. */
+.doc { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: max(24px, var(--safe-t)) 16px calc(40px + var(--safe-b)); background: var(--paper); color: var(--ink); font-size: 14px; }
+.doc-biz { width: 100%; max-width: 440px; display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.doc-biz b { font: 600 15px/1.2 var(--ff-tight); letter-spacing: -.01em; }
+.doc-mono { width: 30px; height: 30px; display: grid; place-items: center; border-radius: var(--r2); background: var(--ink); color: #fff; font: 600 14px/1 var(--ff-tight); }
+.doc-card { width: 100%; max-width: 440px; background: var(--page); border: 1px solid var(--hair); border-radius: var(--r4); padding: 20px 20px 18px; display: flex; flex-direction: column; gap: 12px; }
+.doc-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.doc-k { color: var(--g1); font-size: 13px; }
+.doc-amt { font: 600 36px/1.05 var(--ff-tight); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.doc-line { color: var(--ink); font-size: 14px; line-height: 1.45; }
+.doc-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; color: var(--g1); }
+.doc-meta b { color: var(--ink); font-weight: 500; }
+.doc-note { padding-top: 12px; border-top: 1px solid var(--hair); }
+.doc-note h2 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.doc-note p { color: var(--ink); line-height: 1.55; white-space: pre-line; }
+.doc-lines { padding-top: 4px; border-top: 1px solid var(--hair); }
+.doc-lines li { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--hair); }
+.doc-lines li b { display: block; font-size: 14px; font-weight: 500; line-height: 1.35; }
+.doc-lines li small { display: block; margin-top: 1px; font-size: 12px; color: var(--g1); font-variant-numeric: tabular-nums; }
+.doc-lines li em { flex: none; font-style: normal; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.doc-lines dl { margin-top: 6px; }
+.doc-lines dl > div { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; color: var(--g1); }
+.doc-lines .sum { margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--hair-2); font-size: 15px; font-weight: 600; color: var(--ink); }
+.doc-acts { margin-top: 6px; display: flex; flex-direction: column; gap: 8px; }
+.doc-acts .btn.lg { height: 44px; font-size: 15px; border-radius: var(--r2); }
+.doc-fine { text-align: center; color: var(--g2); font-size: 12px; }
+.doc-no { display: flex; flex-direction: column; gap: 8px; padding-top: 6px; }
+.doc-no label { font-size: 13px; font-weight: 500; } .doc-no label em { font-style: normal; font-weight: 400; color: var(--g2); }
+.doc-no textarea { font-size: 15px; }
+.doc-done { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: var(--r2); background: var(--paper); }
+.doc-done > span { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: #fff; }
+.doc-done b { display: block; font-size: 14px; font-weight: 600; } .doc-done p { margin-top: 2px; color: var(--g1); line-height: 1.5; font-size: 13px; }
+.doc-done a { text-decoration: underline; text-underline-offset: 3px; color: var(--ink); }
+.doc-msg h1 { font: 600 18px/1.2 var(--ff-tight); letter-spacing: -.015em; } .doc-msg p { color: var(--g1); line-height: 1.5; }
+.doc-foot { margin-top: 14px; color: var(--g2); font-size: 12px; }
+.doc-load { gap: 10px; } .doc-load i { display: block; height: 12px; width: 40%; } .doc-load i:nth-child(2) { height: 36px; width: 60%; } .doc-load i:nth-child(3) { width: 80%; }

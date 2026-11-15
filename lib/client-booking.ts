@@ -3,7 +3,12 @@
 // after a no-show, English or Spanish, and a Monday text report. This is the logic behind each.
 
 export type Busy = { start: string; end: string };
-export type Hours = { tz: string; days: number[]; start: number; end: number; slotMin: number; leadHours: number };
+export type Hours = { tz: string; days: number[]; start: number; end: number; slotMin: number; leadHours: number; perDay?: number; bufferMin?: number };
+/** The owner's booking preferences from setup, applied to parsed hours: lead time, times offered per day, buffer around other events. */
+export function withBookingPrefs(h: Hours, setup: Record<string, string> | undefined): Hours {
+  const n = (k: string, lo: number, hi: number) => { const v = Number(setup?.[k]); return Number.isFinite(v) && v >= lo && v <= hi ? v : undefined; };
+  return { ...h, leadHours: n("book_lead_hours", 1, 72) ?? h.leadHours, perDay: n("book_per_day", 1, 8) ?? 2, bufferMin: n("book_buffer_min", 0, 120) ?? 0 };
+}
 export type Slot = { start: string; end: string; label: string };
 
 /** "Mon-Fri 8-5" style hours from the setup sheet, with safe defaults. Days: 0 = Sunday … 6 = Saturday. */
@@ -41,17 +46,18 @@ export function slotLabel(iso: string, tz: string, lang: Lang = "en"): string {
  */
 export function freeSlots(busy: Busy[], h: Hours, now: Date, opts: { days?: number; max?: number; lang?: Lang } = {}): Slot[] {
   const out: Slot[] = [];
-  const b = busy.map(x => [Date.parse(x.start), Date.parse(x.end)] as const).filter(([s, e]) => e > s);
+  const pad = (h.bufferMin ?? 0) * 60000, cap = h.perDay ?? 2;
+  const b = busy.map(x => [Date.parse(x.start) - pad, Date.parse(x.end) + pad] as const).filter(([s, e]) => e > s);
   const earliest = now.getTime() + h.leadHours * 3600000;
   for (let i = 0; i < (opts.days ?? 10) && out.length < (opts.max ?? 6); i++) {
     const ymd = localYmd(new Date(now.getTime() + i * 86400000), h.tz);
     if (!h.days.includes(localDow(ymd))) continue;
     let perDay = 0;
-    for (let m = h.start * 60; m + h.slotMin <= h.end * 60 && perDay < 2 && out.length < (opts.max ?? 6); m += h.slotMin) {
+    for (let m = h.start * 60; m + h.slotMin <= h.end * 60 && perDay < cap && out.length < (opts.max ?? 6); m += h.slotMin) {
       const s = zoned(ymd, Math.floor(m / 60), m % 60, h.tz).getTime(), e = s + h.slotMin * 60000;
       if (s < earliest || b.some(([bs, be]) => s < be && e > bs)) continue;
       out.push({ start: new Date(s).toISOString(), end: new Date(e).toISOString(), label: slotLabel(new Date(s).toISOString(), h.tz, opts.lang) });
-      perDay++; m += h.slotMin * 2; // space the two times in a day apart
+      perDay++; if (cap <= 2) m += h.slotMin * 2; // with two a day, space them apart
     }
   }
   return out;
@@ -141,7 +147,7 @@ export function mondayText(business: string, w: WeekNumbers, link: string): stri
     w.won ? `${w.won} won${w.wonValue ? `, ${usd(w.wonValue)}` : ""}` : "",
     w.reviews ? `${w.reviews} review request${w.reviews === 1 ? "" : "s"} sent` : "",
   ].filter(Boolean);
-  return `Cinder for ${business}, last week: ${parts.join(" · ")}. Every conversation: ${link}`.slice(0, 600);
+  return `Cinder for ${business}, last week: ${parts.join(", ")}. Every conversation: ${link}`.slice(0, 600);
 }
 
 /** Inbound web lead: pull a usable name, phone and job out of whatever a form sends. */

@@ -74,11 +74,11 @@ Rules:
 - Price: say only what the pricing guidance allows. Never quote an exact price, discount, or date the guidance doesn't give.
 - Booking: when you know the job, the location is in the service area and they want an estimate, send the booking link: ${setup.booking_link || "(none: ask for a good time and say the owner will confirm)"}.
 - "Too expensive" or price worries: once, offer ${setup.financing ? `this: ${setup.financing}` : "to walk through the quote or look at a smaller option"}. If they still want a lower price or want to negotiate, hand off.
-- Hand off to ${owner} (handoff true) for: complaints, negotiating price, insurance or legal questions, anything unusual, anything you're unsure about, or when they ask for a person.
+- Hand off to ${owner} (handoff true) for: complaints, negotiating price, insurance or legal questions, anything unusual, anything you're unsure about, or when they ask for a person.${setup.handoff ? ` Also hand off for: ${setup.handoff}.` : ""}
 - Jobs they don't take: ${setup.rules || "none listed"}. If it's one of those, say so kindly (stage "not_fit").
 - If they say they don't need it anymore, went with someone else, or aren't interested: thank them kindly, don't push (stage "done").
 - Never invent facts about the business.
-- Write in the customer's language: if they write in Spanish, reply in Spanish.
+- ${setup.lang === "es" ? "Write in Spanish unless the customer writes in English." : setup.lang === "en" ? "Write in English. If they write in Spanish, reply in Spanish anyway, simply." : "Write in the customer's language: if they write in Spanish, reply in Spanish."}
 
 Business facts:
 - Service area: ${setup.service_area || "not given"}
@@ -101,7 +101,7 @@ export function replyUser(history: { direction: string; body: string }[], custom
   return `Customer name: ${customerName || "unknown"}\n\nConversation:\n${lines.join("\n")}\n\nWrite the next text from the business.`;
 }
 
-export type Decision = { reply: string; handoff: boolean; stage: "qualifying" | "booking_offered" | "booked" | "not_fit" | "done" | "canceled"; summary: string; book?: string | null };
+export type Decision = { reply: string; handoff: boolean; stage: "qualifying" | "booking_offered" | "booked" | "not_fit" | "done" | "canceled"; summary: string; book?: string | null; job?: Record<string, unknown> | null };
 /** Reads the engine's JSON. Anything malformed hands off to the owner instead of guessing. */
 export function parseDecision(text: string): Decision | null {
   const m = (text || "").match(/\{[\s\S]*\}/);
@@ -111,7 +111,8 @@ export function parseDecision(text: string): Decision | null {
     const reply = typeof j.reply === "string" ? j.reply.trim().slice(0, 480) : "";
     const stage = ["qualifying", "booking_offered", "booked", "not_fit", "done", "canceled"].includes(j.stage) ? j.stage : "qualifying";
     if (!reply && !j.handoff) return null;
-    return { reply, handoff: j.handoff === true, stage, summary: typeof j.summary === "string" ? j.summary.slice(0, 200) : "", book: typeof j.book === "string" ? j.book : null };
+    return { reply, handoff: j.handoff === true, stage, summary: typeof j.summary === "string" ? j.summary.slice(0, 200) : "", book: typeof j.book === "string" ? j.book : null,
+      job: j.job && typeof j.job === "object" && !Array.isArray(j.job) ? j.job as Record<string, unknown> : null };
   } catch { return null; }
 }
 
@@ -141,6 +142,21 @@ export const REACTIVATE_TEXTS = [
 export const isRepeatTrade = (trade = "") => /detail|carpet|exterior|clean|wash/i.test(trade);
 export const SEQUENCES = { quote: { days: QUOTE_DAYS, texts: QUOTE_TEXTS }, rehash: { days: REHASH_DAYS, texts: REHASH_TEXTS }, reactivate: { days: REACTIVATE_DAYS, texts: REACTIVATE_TEXTS } } as const;
 
+/** Quote follow-up days from the owner's settings, or the defaults. */
+export function quoteDaysFor(setup: Record<string, string> | undefined): readonly number[] {
+  const d = (setup?.quote_days || "").split(",").map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 60);
+  return d.length && d.every((n, i) => i === 0 || n > d[i - 1]) ? d : QUOTE_DAYS;
+}
+/** Hours after a lead goes quiet before each nudge, from the owner's settings, or the defaults. */
+export function nudgeHoursFor(setup: Record<string, string> | undefined): readonly number[] {
+  const h = (setup?.nudge_hours || "").split(",").map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= 168);
+  return h.length && h.every((n, i) => i === 0 || n > h[i - 1]) ? h : NUDGE_HOURS;
+}
+/** Numbers the owner said never to text, from setup.dnt. */
+export function isDoNotText(setup: Record<string, string> | undefined, phone: string): boolean {
+  const d = digits10(phone); if (!d) return false;
+  return (setup?.dnt || "").split(",").some(p => digits10(p) === d);
+}
 const dayNum = (ymd: string) => Math.floor(Date.parse(ymd.slice(0, 10) + "T12:00:00Z") / 86400000);
 /** Which follow-up is due today, or null. One step per run at most, and never a step out of order. */
 export function quoteStepDue(sentOn: string, stepsSent: number, today: string, days: readonly number[] = QUOTE_DAYS): number | null {
@@ -166,7 +182,7 @@ export const REVIEW_TEXT = "Hi {first}, thanks again for choosing {business}. Wo
 /** What the owner gets on their phone. */
 export function ownerAlert(kind: "new" | "handoff" | "booked" | "missed" | "waiting" | "moved" | "canceled", who: string, detail: string): string {
   const head = { new: "New lead", handoff: "Needs you", booked: "Estimate booked", missed: "Missed call, texted back", waiting: "Still waiting on you", moved: "Estimate moved", canceled: "Estimate canceled" }[kind];
-  return `Cinder · ${head}: ${who}${detail ? `. ${detail}` : ""}`.slice(0, 320);
+  return `Cinder, ${head.charAt(0).toLowerCase() + head.slice(1)}: ${who}${detail ? `. ${detail}` : ""}`.slice(0, 320);
 }
 
 // ---------- Lead follow-up (no reply yet) ----------
@@ -183,13 +199,13 @@ export const NUDGE_TEXTS = [
  * Which nudge is due now (0, 1 or 2), or null. `anchor` is when the lead last did something: came in, or their
  * latest text. Nudges are counted per anchor, so a reply that goes quiet again starts a fresh, shorter-lived round.
  */
-export function nudgeStep(o: { anchor: number | null; lastOut: number | null; nudgeAnchor: number | null; nudgesSent: number; now: number }): number | null {
-  const { anchor, lastOut, now } = o;
+export function nudgeStep(o: { anchor: number | null; lastOut: number | null; nudgeAnchor: number | null; nudgesSent: number; now: number; hours?: readonly number[] }): number | null {
+  const { anchor, lastOut, now } = o; const H = o.hours ?? NUDGE_HOURS;
   if (!anchor || !lastOut || lastOut < anchor) return null;          // we never answered this lead: a different problem
   const sent = o.nudgeAnchor === anchor ? o.nudgesSent : 0;
-  if (sent >= NUDGE_HOURS.length) return null;
+  if (sent >= H.length) return null;
   if (now - anchor > 7 * 86400000) return null;                       // a week old: let it go
-  if (now - anchor < NUDGE_HOURS[sent] * 3600000) return null;
+  if (now - anchor < H[sent] * 3600000) return null;
   if (now - lastOut < 90 * 60000) return null;                        // never two texts close together
   return sent;
 }
@@ -232,7 +248,17 @@ export function parseOwnerQuote(text: string): { amount: number | null; name: st
   const name = rest.replace(/^(for|to)\s+/i, "").replace(/[^\p{L}\p{N}' .-]/gu, "").trim().slice(0, 60);
   return { amount, name };
 }
-export const OWNER_HELP = "This is your Cinder number. To answer a customer, open the Cinder app: {app}. To start quote follow-up for the customer we last texted you about, reply QUOTE and the amount, like QUOTE 4200.";
+export const OWNER_HELP = "This is your Cinder number. To answer a customer, open the Cinder app: {app}. Reply QUOTE and the amount (like QUOTE 4200) to start quote follow-up for the customer we last texted you about, or OMW to tell your next estimate you're on the way.";
+export const CREW_HELP = "This is {business}'s Cinder number. Reply OMW to text your next estimate that you're on the way, or OMW and a first name. Everything else is in the Cinder app: {app}";
+/** "OMW", "on my way", "OMW Dana", "omw 20" (minutes): the name and minutes when given. */
+export function parseOnMyWay(text: string): { name: string; minutes: number } | null {
+  const m = (text || "").trim().match(/^\s*(?:omw|on my way|otw|on the way)\b[:\s-]*(.*)$/i);
+  if (!m) return null;
+  let rest = m[1].trim(), minutes = 15;
+  const n = rest.match(/\b(\d{1,3})\s*(?:min|mins|minutes|m)?\b/i);
+  if (n) { const v = Number(n[1]); if (v >= 1 && v <= 180) minutes = v; rest = (rest.slice(0, n.index) + " " + rest.slice((n.index ?? 0) + n[0].length)).trim(); }
+  return { name: rest.replace(/[^\p{L}' .-]/gu, "").trim().slice(0, 40), minutes };
+}
 
 // ---------- Repeat Revenue: past customers who are due again ----------
 /** Two texts per due date: on the day, then 4 days later if they haven't answered. */

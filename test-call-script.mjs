@@ -27,7 +27,7 @@ ok(() => assert.match(buildScript(base).find(x => x.key === "bridge").say, /text
 ok(() => assert.doesNotMatch(buildScript(base).map(x => x.say).join(" "), /minute,/), "no 'within a minute' promise");
 ok(() => assert.doesNotMatch(buildScript(base).map(x => x.say).join(" "), /\bAI\b|web form|Facebook lead/), "only claims the missed-call text-back, no AI talk in the opener");
 ok(() => assert.doesNotMatch(JSON.stringify([s, o]), /\d+%|guarantee/i, "no invented stats or guarantees"));
-const page = readFileSync("app/crm/call/page.tsx", "utf8");
+const page = readFileSync("app/(agency)/crm/call/page.tsx", "utf8");
 ok(() => assert.match(page, /tel:/, "the founder dials via tel:"));
 ok(() => assert.doesNotMatch(page, /twilio|sendText/i, "call mode never sends texts itself"));
 ok(() => assert.match(page, /smsHref\(contact\.phone, demoText\(/, "Text the demo opens your own Messages app"));

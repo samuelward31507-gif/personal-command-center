@@ -190,7 +190,7 @@ test("MAX_IMPORT_ROWS is still 500", () => {
 // the exact same bare-domain value. This static check can't run a browser,
 // but it catches the regression at the source level. ---
 test("contact form's Website input is not type=url (blocks bare domains)", () => {
-  const src = readFileSync("app/crm/page.tsx", "utf8");
+  const src = readFileSync("app/(agency)/crm/page.tsx", "utf8");
   const idx = src.indexOf("Website<input");
   assert.ok(idx >= 0, "Could not find the Website input in app/crm/page.tsx");
   const fieldSrc = src.slice(idx, idx + 300);
@@ -212,7 +212,7 @@ test("outreach API rejects malformed UUIDs before database casts", () => {
 });
 
 test("Meeting booked quick action uses the outcome/activity workflow", () => {
-  const page = readFileSync("app/crm/outreach/page.tsx", "utf8");
+  const page = readFileSync("app/(agency)/crm/outreach/page.tsx", "utf8");
   assert.ok(page.includes('setOutcomeFor(p);setOutcome("meeting_booked")'));
   assert.ok(page.includes('setOutcomeFor(p);setOutcome("do_not_contact")'));
   assert.ok(page.includes('body:JSON.stringify({id:outcomeFor.id,outcome,notes:outcomeNotes})'));
@@ -229,10 +229,10 @@ test("Meeting booked quick action uses the outcome/activity workflow", () => {
 // regressions. End-to-end authenticated browser testing is still required.
 test("Call mode works the unified server-built queue", () => {
   // Home redirects to the dashboard; Call mode works through the same server-built queue.
-  assert.ok(readFileSync("app/page.tsx", "utf8").includes('"/crm/needs-you"'));
-  assert.ok(readFileSync("app/crm/needs-you/page.tsx", "utf8").includes("<Dashboard"));
-  assert.ok(readFileSync("app/crm/call/page.tsx", "utf8").includes('fetch("/api/my-day?"'));
-  const queue = readFileSync("app/my-day-queue.tsx", "utf8");
+  assert.ok(readFileSync("app/(agency)/page.tsx", "utf8").includes('"/crm/needs-you"'));
+  assert.ok(readFileSync("app/(agency)/crm/needs-you/page.tsx", "utf8").includes("<Dashboard"));
+  assert.ok(readFileSync("app/(agency)/crm/call/page.tsx", "utf8").includes('fetch("/api/my-day?"'));
+  const queue = readFileSync("app/(agency)/my-day-queue.tsx", "utf8");
   assert.ok(queue.includes('fetch("/api/my-day?"'));
 });
 
@@ -242,7 +242,7 @@ test("My Day avoids duplicating contact follow-ups already handled by active out
 });
 
 test("Unconsented prospects cannot receive a copied SMS draft", () => {
-  const outreach = readFileSync("app/crm/outreach/page.tsx", "utf8");
+  const outreach = readFileSync("app/(agency)/crm/outreach/page.tsx", "utf8");
   assert.ok(outreach.includes('if(!p.smsConsent){setMessage("No SMS draft available: record explicit SMS consent first.'));
   assert.ok(outreach.includes("SMS unavailable · no consent"));
   assert.ok(outreach.includes("Only check this if consent was actually given."));
@@ -284,8 +284,8 @@ test("Cal.ai booking sync handles nested payloads and reschedules without leavin
 
 test("The shared server queue keeps sales focus and meeting prep", () => {
   // The dashboard replaced the queue page; Call mode reads the same server-built queue.
-  assert.ok(readFileSync("app/crm/call/page.tsx", "utf8").includes("/api/my-day?"), "Call mode uses the shared queue, not a parallel one");
-  const queue = readFileSync("app/my-day-queue.tsx", "utf8");
+  assert.ok(readFileSync("app/(agency)/crm/call/page.tsx", "utf8").includes("/api/my-day?"), "Call mode uses the shared queue, not a parallel one");
+  const queue = readFileSync("app/(agency)/my-day-queue.tsx", "utf8");
   assert.ok(queue.includes('["sales", "Sales focus"'), "Sales focus filter is preserved");
   const lib = readFileSync("lib/my-day.ts", "utf8");
   assert.ok(lib.includes('"/crm/preparation?event=" + encodeURIComponent(m.id) + "&type=meeting_brief"'), "Unprepared meetings link to a prefilled brief");

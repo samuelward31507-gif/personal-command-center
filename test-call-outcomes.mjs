@@ -70,7 +70,7 @@ ok(() => assert.match(route, /AND stage = \$\{d\.from\}/, "deal update guarded a
 ok(() => assert.match(route, /contact_suppressions[\s\S]*'call_outcome'/, "do-not-contact suppresses"));
 ok(() => assert.match(route, /status <> 'do_not_contact'/, "do-not-contact stops every sequence"));
 ok(() => assert.doesNotMatch(route, /\bfetch\(|twilio|sendSms|\bdial\(/i, "logging an outcome never sends or dials"));
-const ui = readFileSync("app/crm/page.tsx", "utf8");
+const ui = readFileSync("app/(agency)/crm/page.tsx", "utf8");
 ok(() => assert.match(ui, /\/api\/contacts\/outcome/, "contact detail logs outcomes"));
 ok(() => assert.match(ui, /confirm\("Mark "\+contact\.name\+" do not contact\?/, "do-not-contact asks for confirmation"));
 ok(() => assert.match(ui, /setCallFor\(contact\.id\)/, "placing a call prompts for its outcome"));
@@ -99,7 +99,7 @@ ok(() => assert.match(deals, /"tier1_speed_to_lead", "tier2_revenue_system"/));
 const mig18 = readFileSync("db/migrations/0018_pipeline_stages.sql", "utf8");
 ok(() => assert.match(mig18, /WHEN 'qualified' THEN 'contacted'[\s\S]*WHEN 'discovery' THEN 'meeting_booked'[\s\S]*WHEN 'negotiation' THEN 'proposal'/, "existing deals are remapped, not deleted"));
 ok(() => assert.doesNotMatch(mig18, /DELETE\s+FROM|DROP\s+TABLE/i, "no data is deleted"));
-const sd = readFileSync("app/suggested-deal.tsx", "utf8");
+const sd = readFileSync("app/(agency)/suggested-deal.tsx", "utf8");
 ok(() => assert.match(sd, /fetch\("\/api\/deals"/, "Create deal goes through the owner-checked deals API"));
 
 console.log(`Call outcome regression checks passed (${n} assertions).`);

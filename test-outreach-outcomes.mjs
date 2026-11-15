@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const api = readFileSync("app/api/outreach/route.ts", "utf8");
-const ui = readFileSync("app/crm/outreach/page.tsx", "utf8");
+const ui = readFileSync("app/(agency)/crm/outreach/page.tsx", "utf8");
 
 assert.match(api, /"not_a_fit", "wrong_contact"/, "API accepts not-a-fit and wrong-contact outcomes");
 assert.match(api, /const callbackRequested = outcome === "callback_requested"/, "callback requests have dedicated scheduling behavior");
