@@ -190,6 +190,7 @@ export default function CinderApp() {
   const biz: Biz = { reviewLink: d.setup?.has_review_link === "yes" || !!d.hasReviewLink, number: d.setup?.has_number === "yes" || !!d.number, owner: d.owner, business: bizName,
     priceBook: d.setup?.price_book || "", taxRate: d.setup?.tax_rate || "", payLink: !!d.setup?.pay_link, calendar: d.setup?.has_calendar === "yes" || !!d.calendar?.connected, trade: d.setup?.trade || "", canCall: d.canCall };
   const owed = (d.invoices ?? []).filter(i => i.status === "sent").length;
+  const signOut = async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); };
   const reload = () => load(project, tab);
   const invNow = inv ? ((d.invoices ?? []).find(i => i.id === inv) ?? null) : null;
   const cards = d.board ?? [];
@@ -212,9 +213,9 @@ export default function CinderApp() {
   else if (tab === "calendar") page = <CalendarScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} />;
   else if (tab === "invoices") page = <MoneyScreen d={d} go={go} wide={wide} />;
   else if (tab === "numbers") page = <ReportsScreen d={d} go={go} />;
-  else if (tab === "system") page = <SystemScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} toast={toast} />;
+  else if (tab === "system") page = <SystemScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} toast={toast} api={api} project={project} reload={reload} demo={demo} onSignOut={signOut} />;
   else if (tab === "more") page = <MoreScreen d={d} go={go} owed={owed} />;
-  else page = <SamScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} push={push} onPush={() => void enablePush()} demo={demo} onSignOut={async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); }} />;
+  else page = <SamScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
 
   return <div className="shell">
     <nav className="rail" aria-label="Sections">
@@ -272,7 +273,7 @@ function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
 }
 
 // ---------- Sam and settings ----------
-function SamScreen({ d, biz, project, api: call, toast, reload, go, push, onPush, demo, onSignOut }: { d: Data; biz: Biz; project: string; api: typeof api; toast: (t: string, bad?: boolean) => void; reload: () => Promise<void>; go: Go; push: PushState; onPush: () => void; demo: boolean; onSignOut: () => void }) {
+function SamScreen({ d, project, api: call, toast, reload, go }: { d: Data; project: string; api: typeof api; toast: (t: string, bad?: boolean) => void; reload: () => Promise<void>; go: Go }) {
   const [msg, setMsg] = useState("");
   const agoText = (iso: string) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 60 ? `${Math.max(1, m)}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
   return <>
@@ -289,19 +290,6 @@ function SamScreen({ d, biz, project, api: call, toast, reload, go, push, onPush
             <div className="tools"><button type="submit" className="btn ink sm send" disabled={!msg.trim()}>Send</button></div>
           </div></div>
         </form>
-      </section>
-      <section className="card">
-        <div className="hd"><h2>Account</h2></div>
-        <ul className="settings">
-          <li><span>Business</span><b>{biz.business}</b></li>
-          <li><span>Prices and business details</span><button type="button" className="btn sm" onClick={go.setup}>Edit setup</button></li>
-          <li><span>Invoices and payments</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
-          {d.number && <li><span>Your Cinder number</span><b>{fmtPhone(d.number)}</b></li>}
-          <li><span>Notifications</span>{push === "on" ? <span className="dot good">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <span className="mut">{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</span>}</li>
-          <li><span>How leads reach Cinder</span><button type="button" className="btn sm" onClick={() => go.tab("system")}>Open Settings</button></li>
-          <li><span>Import customers</span><button type="button" className="btn sm" onClick={go.importCustomers}>Import</button></li>
-          <li><span /><button type="button" className="btn sm" onClick={onSignOut}><Icon name="out" size={13} />{demo ? "Leave the example" : "Sign out"}</button></li>
-        </ul>
       </section>
     </div>
   </>;

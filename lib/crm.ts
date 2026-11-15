@@ -155,6 +155,20 @@ export const PRIORITIES = [
 
 /** The setup keys an owner may change from the app. Everything else (texting number, alerts, links) stays Sam's. */
 export const OWNER_KEYS = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at", "pay_link", "tax_rate", "invoice_days"] as const;
+/** The agent's own settings, in plain words, that the owner may change from the app. Each one changes what the texts say or do. */
+export const AGENT_KEYS = ["hours", "service_area", "rules", "questions", "prices", "tone", "avoid", "financing", "handoff", "lang", "book_lead_hours", "book_per_day", "book_buffer_min", "quote_days", "nudge_hours", "dnt"] as const;
+/** "2, 5, 10, 21" to [2, 5, 10, 21]: whole numbers, ascending, at most `max` of them, each at most `top`. */
+export function parseDayList(v: unknown, max: number, top: number): number[] {
+  const out: number[] = [];
+  for (const p of String(v ?? "").split(/[,\s]+/)) { const n = Number(p); if (!Number.isInteger(n) || n < 0 || n > top) continue; if (out.length && n <= out[out.length - 1]) continue; out.push(n); if (out.length >= max) break; }
+  return out;
+}
+/** A do-not-text list: one phone per line or comma, kept as +1 numbers. */
+export function parseDnt(v: unknown): string[] {
+  const seen = new Set<string>();
+  for (const p of String(v ?? "").split(/[,\n;]+/)) { const d = p.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, ""); if (d.length === 10) seen.add("+1" + d); if (seen.size >= 500) break; }
+  return [...seen];
+}
 export function cleanOwnerSetup(input: unknown): Record<string, string> {
   const r = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
   const out: Record<string, string> = {};
@@ -175,6 +189,14 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   if (typeof r.pay_link === "string") { const v = r.pay_link.trim(); let ok = ""; try { const u = new URL(/^https?:\/\//i.test(v) ? v : "https://" + v); ok = v && u.protocol === "https:" && !u.username && !u.password && u.hostname.includes(".") ? u.toString().slice(0, 400) : ""; } catch { ok = ""; } out.pay_link = ok; }
   if (r.tax_rate !== undefined) { const n = Number(String(r.tax_rate).replace(/[%\s]/g, "")); out.tax_rate = n >= 0 && n <= 20 ? String(Math.round(n * 100) / 100) : "0"; }
   if (r.invoice_days !== undefined) out.invoice_days = ["0", "7", "14", "30"].includes(String(r.invoice_days)) ? String(r.invoice_days) : "7";
+  // The agent's settings. Free text stays short; numbers stay in the ranges the engine can honour.
+  pick("hours", undefined, 120); pick("rules", undefined, 400); pick("questions", undefined, 400); pick("prices", undefined, 400); pick("tone", undefined, 300); pick("avoid", undefined, 300); pick("financing", undefined, 200); pick("handoff", undefined, 300);
+  pick("lang", ["", "en", "es", "both"]);
+  const int = (k: string, lo: number, hi: number) => { if (r[k] === undefined) return; const n = Math.round(Number(String(r[k]).replace(/[^\d.]/g, ""))); out[k] = Number.isFinite(n) && n >= lo && n <= hi ? String(n) : ""; };
+  int("book_lead_hours", 1, 72); int("book_per_day", 1, 8); int("book_buffer_min", 0, 120);
+  if (r.quote_days !== undefined) out.quote_days = parseDayList(r.quote_days, 6, 60).join(",");
+  if (r.nudge_hours !== undefined) out.nudge_hours = parseDayList(r.nudge_hours, 3, 168).join(",");
+  if (r.dnt !== undefined) out.dnt = parseDnt(r.dnt).join(",");
   return out;
 }
 

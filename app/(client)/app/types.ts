@@ -14,7 +14,9 @@ export type Data = { project: string; business: string; number: string; canCall:
   wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal;
   messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number; board?: Card[]; setup?: Record<string, string>; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[];
   /** The website key (chat bubble and intake webhook) and the app's public origin, for the System screen. */
-  key?: string; origin?: string };
+  key?: string; origin?: string;
+  /** Connections: each lead source's activity, texts that didn't send, the consent log. */
+  wires?: { sources: { source: string; leads: number; last: string | null; last30: number }[]; failures: { id: string; at: string; body: string; name: string; phone: string; thread: string; source: string }[]; log: { at: string; event: string; source: string; phone: string; evidence: string }[] } };
 export type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
 export type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 export type { Card, CardInvoice, Stage };

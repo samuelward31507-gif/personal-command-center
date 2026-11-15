@@ -8,8 +8,8 @@ import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
 import { ballpark, cleanDetails, detailLine, intakeRules, parsePriceBook, rangeText } from "@/lib/crm";
 import { emitEvent } from "@/lib/client-webhook";
-import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, withOptOut, automatedRoom, type Vars } from "@/lib/client-runtime";
-import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, type Lang, type Slot } from "@/lib/client-booking";
+import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, OWNER_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, withOptOut, automatedRoom, quoteDaysFor, nudgeHoursFor, isDoNotText, type Vars } from "@/lib/client-runtime";
+import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, withBookingPrefs, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent, deleteEvent } from "@/lib/client-calendar";
 import { syncBookingToJobber } from "@/lib/jobber";
 import { sendAlert } from "@/lib/notify";
@@ -68,6 +68,8 @@ export async function sendToCustomer(sql: Sql, c: Client, threadId: string, phon
       AND x.author <> 'system' AND x.at > now() - interval '30 days') AS recent
     FROM public.client_threads t WHERE t.id = ${threadId}::uuid` as { lang: string; recent: boolean }[];
   if (!p?.recent) body = withOptOut(body, p?.lang === "es" ? "es" : "en");
+  // The owner's do-not-text list wins over everything, including the owner's own replies.
+  if (isDoNotText(c.setup, phone)) { await log(sql, c, threadId, "out", "system", "Not sent: this number is on your do-not-text list.", false); return false; }
   const ok = await sendSms(e164(phone), c.setup.texting_number || "", body);
   await log(sql, c, threadId, "out", author, body, ok);
   return ok;
@@ -114,7 +116,7 @@ async function openSlots(sql: Sql, c: Client, lang: Lang): Promise<Slot[] | null
   const now = new Date();
   try {
     const busy = await busyTimes(cal, now, new Date(now.getTime() + 14 * 86400000));
-    return freeSlots(busy, parseHours(c.setup.hours, tzOf(c), cal.slotMin), now, { max: 6, lang });
+    return freeSlots(busy, withBookingPrefs(parseHours(c.setup.hours, tzOf(c), cal.slotMin), c.setup), now, { max: 6, lang });
   } catch (e) { console.error("Client calendar read failed", e instanceof Error ? e.message : e); return null; }
 }
 
@@ -137,6 +139,23 @@ export async function draftReply(sql: Sql, c: Client, threadId: string, customer
     }
     return d;
   } catch (e) { console.error("Client reply failed", e instanceof Error ? e.message : e); return null; }
+}
+
+/**
+ * The owner tries the agent: one message from a made-up lead, the reply the agent would send. Nothing is saved and
+ * nobody is texted. `overrides` are unsaved settings from the form, already cleaned, so he can preview before saving.
+ */
+export async function previewReply(c: Client, message: string, overrides: Record<string, string> = {}): Promise<{ reply: string; handoff: boolean } | null> {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  const setup = { ...c.setup, ...overrides };
+  const bp = setup.share_ballpark === "no" ? null : ballpark(parsePriceBook(setup.price_book), {});
+  const system = replySystem(setup, c.messages) + intakeRules(setup.trade, {}, bp);
+  try {
+    const text = await claudeText({ apiKey: key, system, user: replyUser([{ direction: "in", body: message.slice(0, 500) }], "Lead"), label: "Client reply preview", model: process.env.CINDER_REPLY_MODEL?.trim() || "claude-haiku-5-5", maxTokens: 400, timeoutMs: 20000 });
+    const d = parseDecision(text);
+    return d ? { reply: d.reply ?? "", handoff: !!d.handoff } : null;
+  } catch (e) { console.error("Preview failed", e instanceof Error ? e.message : e); return null; }
 }
 
 /** "150 ft · 6 ft cedar · 2 gates · HOA · ballpark $6,600–$8,500" for the owner's alerts, or "" when nothing's known yet. */
@@ -304,10 +323,10 @@ export async function runLeadNudges(sql: Sql, now = new Date(), limit = 80): Pro
   for (const r of rows) {
     if (sent >= limit) break;
     const anchorMs = Math.max(ms(r.contact_at) ?? 0, ms(r.last_customer) ?? 0) || null;
-    const step = nudgeStep({ anchor: anchorMs, lastOut: ms(r.last_out), nudgeAnchor: ms(r.nudge_anchor), nudgesSent: r.nudges_sent, now: now.getTime() });
-    if (step === null) continue;
     const key = r.owner_id + r.project_id;
     if (!clients.has(key)) clients.set(key, await clientById(sql, r.owner_id, r.project_id));
+    const step = nudgeStep({ anchor: anchorMs, lastOut: ms(r.last_out), nudgeAnchor: ms(r.nudge_anchor), nudgesSent: r.nudges_sent, now: now.getTime(), hours: nudgeHoursFor(clients.get(key)?.setup) });
+    if (step === null) continue;
     const c = clients.get(key);
     if (!c?.setup.texting_number || !inTextingHours(tzOf(c), now)) { skipped++; continue; }
     if (!(await roomFor(sql, r.id))) { skipped++; continue; }
@@ -346,7 +365,7 @@ export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Pr
     // Old leads for contractors; past customers for repeat-service trades (they bought before, so the wording differs).
     const seqKey = q.kind === "rehash" ? (isRepeatTrade(c?.setup.trade) ? "reactivate" : "rehash") : "quote";
     const seq = SEQUENCES[seqKey];
-    const step = quoteStepDue(String(q.sent_on).slice(0, 10), q.steps_sent, today, seq.days);
+    const step = quoteStepDue(String(q.sent_on).slice(0, 10), q.steps_sent, today, seqKey === "quote" ? quoteDaysFor(c?.setup) : seq.days);
     if (step === null) continue;
     // Daytime only in the client's time zone; a step that's due stays due for the next run.
     if (!c?.setup.texting_number || !inTextingHours(tzOf(c))) { skipped++; continue; }

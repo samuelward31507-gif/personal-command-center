@@ -1,5 +1,7 @@
 import { appSession, bridgeCall, clientFor, db, json } from "@/lib/client-app-run";
-import { markNoShow, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
+import { markNoShow, previewReply, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
+import { sendSms } from "@/lib/twilio";
+import { cleanOwnerSetup } from "@/lib/crm";
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
-    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string };
+    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -108,6 +110,20 @@ export async function POST(req: Request) {
       return r.ok ? json({ ok: true, job: r.job }) : json({ error: r.error }, 400);
     }
     if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
+    if (b.action === "preview") {
+      // The owner tries the agent with unsaved settings. Nothing is stored and nobody is texted.
+      const message = String(b.message ?? "").trim().slice(0, 500);
+      if (!message) return json({ error: "Type what a lead might say." }, 400);
+      const r = await previewReply(c, message, b.setup ? cleanOwnerSetup(b.setup) : {});
+      return r ? json({ ok: true, ...r }) : json({ error: "The agent couldn't answer just now." }, 503);
+    }
+    if (b.action === "testtext") {
+      // A real text from the business number to the owner's own cell, so he knows the number works.
+      if (!c.setup.texting_number) return json({ error: "No texting number yet." }, 409);
+      if (!c.setup.owner_cell) return json({ error: "No cell on file for you." }, 409);
+      const ok = await sendSms(c.setup.owner_cell, c.setup.texting_number, `Test from Cinder: this is ${c.setup.display_name || "your"} texting number. Customers get replies from here.`);
+      return ok ? json({ ok: true }) : json({ error: "The text didn't go out. Check the connection log." }, 502);
+    }
     if (b.action === "message") {
       const body = String(b.body ?? "").trim().slice(0, 4000);
       if (!body) return json({ error: "Write a message first." }, 400);

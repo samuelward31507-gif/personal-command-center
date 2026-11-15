@@ -36,6 +36,8 @@ export async function POST(req: Request) {
   const done = (status: number, payload: Record<string, unknown>) =>
     back && /^https:\/\//.test(back) && !type.includes("json") ? Response.redirect(back, 303) : Response.json(payload, { status, headers: CORS });
   if (!lead) return done(400, { error: "A 10-digit phone number is needed." });
+  // A dry run from the Connections screen: the lead is parsed and answered but nothing is saved and nobody is texted.
+  if (url.searchParams.get("test") === "1") return done(200, { ok: true, test: true, lead: { name: lead.name, phone: lead.phone, source: lead.source || "web form", message: lead.message.slice(0, 200) } });
   if (!(await allowEvent("intake", clientIp(req), 20, 60))) return done(429, { error: "Too many submissions." });
   if (!c.setup.texting_number) return done(202, { ok: true, texted: false });
   const r = await webLead(neon(process.env.DATABASE_URL!), c, lead, url.searchParams.get("source") ? "" : clientIp(req)).catch(e => { console.error("Intake failed", e); return { ok: false, threadId: "" }; });

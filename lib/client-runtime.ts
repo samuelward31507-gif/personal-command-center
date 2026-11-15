@@ -74,11 +74,11 @@ Rules:
 - Price: say only what the pricing guidance allows. Never quote an exact price, discount, or date the guidance doesn't give.
 - Booking: when you know the job, the location is in the service area and they want an estimate, send the booking link: ${setup.booking_link || "(none: ask for a good time and say the owner will confirm)"}.
 - "Too expensive" or price worries: once, offer ${setup.financing ? `this: ${setup.financing}` : "to walk through the quote or look at a smaller option"}. If they still want a lower price or want to negotiate, hand off.
-- Hand off to ${owner} (handoff true) for: complaints, negotiating price, insurance or legal questions, anything unusual, anything you're unsure about, or when they ask for a person.
+- Hand off to ${owner} (handoff true) for: complaints, negotiating price, insurance or legal questions, anything unusual, anything you're unsure about, or when they ask for a person.${setup.handoff ? ` Also hand off for: ${setup.handoff}.` : ""}
 - Jobs they don't take: ${setup.rules || "none listed"}. If it's one of those, say so kindly (stage "not_fit").
 - If they say they don't need it anymore, went with someone else, or aren't interested: thank them kindly, don't push (stage "done").
 - Never invent facts about the business.
-- Write in the customer's language: if they write in Spanish, reply in Spanish.
+- ${setup.lang === "es" ? "Write in Spanish unless the customer writes in English." : setup.lang === "en" ? "Write in English. If they write in Spanish, reply in Spanish anyway, simply." : "Write in the customer's language: if they write in Spanish, reply in Spanish."}
 
 Business facts:
 - Service area: ${setup.service_area || "not given"}
@@ -142,6 +142,21 @@ export const REACTIVATE_TEXTS = [
 export const isRepeatTrade = (trade = "") => /detail|carpet|exterior|clean|wash/i.test(trade);
 export const SEQUENCES = { quote: { days: QUOTE_DAYS, texts: QUOTE_TEXTS }, rehash: { days: REHASH_DAYS, texts: REHASH_TEXTS }, reactivate: { days: REACTIVATE_DAYS, texts: REACTIVATE_TEXTS } } as const;
 
+/** Quote follow-up days from the owner's settings, or the defaults. */
+export function quoteDaysFor(setup: Record<string, string> | undefined): readonly number[] {
+  const d = (setup?.quote_days || "").split(",").map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 60);
+  return d.length && d.every((n, i) => i === 0 || n > d[i - 1]) ? d : QUOTE_DAYS;
+}
+/** Hours after a lead goes quiet before each nudge, from the owner's settings, or the defaults. */
+export function nudgeHoursFor(setup: Record<string, string> | undefined): readonly number[] {
+  const h = (setup?.nudge_hours || "").split(",").map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= 168);
+  return h.length && h.every((n, i) => i === 0 || n > h[i - 1]) ? h : NUDGE_HOURS;
+}
+/** Numbers the owner said never to text, from setup.dnt. */
+export function isDoNotText(setup: Record<string, string> | undefined, phone: string): boolean {
+  const d = digits10(phone); if (!d) return false;
+  return (setup?.dnt || "").split(",").some(p => digits10(p) === d);
+}
 const dayNum = (ymd: string) => Math.floor(Date.parse(ymd.slice(0, 10) + "T12:00:00Z") / 86400000);
 /** Which follow-up is due today, or null. One step per run at most, and never a step out of order. */
 export function quoteStepDue(sentOn: string, stepsSent: number, today: string, days: readonly number[] = QUOTE_DAYS): number | null {
@@ -184,13 +199,13 @@ export const NUDGE_TEXTS = [
  * Which nudge is due now (0, 1 or 2), or null. `anchor` is when the lead last did something: came in, or their
  * latest text. Nudges are counted per anchor, so a reply that goes quiet again starts a fresh, shorter-lived round.
  */
-export function nudgeStep(o: { anchor: number | null; lastOut: number | null; nudgeAnchor: number | null; nudgesSent: number; now: number }): number | null {
-  const { anchor, lastOut, now } = o;
+export function nudgeStep(o: { anchor: number | null; lastOut: number | null; nudgeAnchor: number | null; nudgesSent: number; now: number; hours?: readonly number[] }): number | null {
+  const { anchor, lastOut, now } = o; const H = o.hours ?? NUDGE_HOURS;
   if (!anchor || !lastOut || lastOut < anchor) return null;          // we never answered this lead: a different problem
   const sent = o.nudgeAnchor === anchor ? o.nudgesSent : 0;
-  if (sent >= NUDGE_HOURS.length) return null;
+  if (sent >= H.length) return null;
   if (now - anchor > 7 * 86400000) return null;                       // a week old: let it go
-  if (now - anchor < NUDGE_HOURS[sent] * 3600000) return null;
+  if (now - anchor < H[sent] * 3600000) return null;
   if (now - lastOut < 90 * 60000) return null;                        // never two texts close together
   return sent;
 }

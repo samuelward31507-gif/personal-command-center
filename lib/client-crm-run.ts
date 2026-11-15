@@ -1,7 +1,7 @@
 // The client CRM on the server: the board, moving a customer between stages, editing a card, adding a lead by hand,
 // and the owner's own setup. Every write is scoped to the signed-in owner's business.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { ballpark, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, cleanJob, cleanCosts, cleanLostReason, jobSteps, type Card, type Stage } from "@/lib/crm";
+import { AGENT_KEYS, ballpark, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, cleanJob, cleanCosts, cleanLostReason, jobSteps, type Card, type Stage } from "@/lib/crm";
 import { digits10 } from "@/lib/client-runtime";
 import { cleanImportRows, importAs, type ImportAs } from "@/lib/customer-import";
 import { emitEvent } from "@/lib/client-webhook";
@@ -158,7 +158,27 @@ export function ownerSetupView(setup: Record<string, string>) {
   const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at"];
   return { ...Object.fromEntries([...k, "pay_link", "tax_rate", "invoice_days"].map(x => [x, setup[x] ?? ""])), has_calendar: "", has_review_link: setup.review_link ? "yes" : "", has_number: setup.texting_number ? "yes" : "",
     // Read-only for the System screen: what Sam has wired. Values that could identify a person stay out.
-    has_cell: setup.owner_cell ? "yes" : "", has_booking_link: setup.booking_link ? "yes" : "", hours: setup.hours ?? "" };
+    has_cell: setup.owner_cell ? "yes" : "", has_booking_link: setup.booking_link ? "yes" : "", hours: setup.hours ?? "",
+    // The agent's own settings, all of them the owner's to change.
+    ...Object.fromEntries(AGENT_KEYS.map(x => [x, setup[x] ?? ""])),
+    timezone: setup.timezone ?? "", a2p_status: setup.a2p_status ?? "", a2p_submitted: setup.a2p_submitted ?? "", forwarding: setup.forwarding ?? "", has_webhook: setup.webhook_url ? "yes" : "", alert_email: setup.alert_email ? "yes" : "" };
+}
+
+/** Each place leads come from, what it did lately, and the last time it failed. Plus the last texts that didn't go out and the consent log. */
+export async function connectionsReport(sql: Sql, c: Client): Promise<{ sources: { source: string; leads: number; last: string | null; last30: number }[]; failures: { id: string; at: string; body: string; name: string; phone: string; thread: string; source: string }[]; log: { at: string; event: string; source: string; phone: string; evidence: string }[] }> {
+  const [src, fails, log] = await Promise.all([
+    sql`SELECT source, count(*)::int AS leads, count(*) FILTER (WHERE created_at > now() - interval '30 days')::int AS last30, max(created_at) AS last
+      FROM public.client_threads WHERE project_id = ${c.projectId}::uuid AND source <> 'import' GROUP BY 1 ORDER BY 4 DESC`.catch(() => []) as Promise<Record<string, unknown>[]>,
+    sql`SELECT x.id, x.at, x.body, t.customer_name, t.customer_phone, t.source, t.id AS thread FROM public.client_texts x JOIN public.client_threads t ON t.id = x.thread_id
+      WHERE t.project_id = ${c.projectId}::uuid AND x.direction = 'out' AND NOT x.ok ORDER BY x.at DESC LIMIT 30`.catch(() => []) as Promise<Record<string, unknown>[]>,
+    sql`SELECT at, event, source, phone, evidence FROM public.client_consent WHERE project_id = ${c.projectId}::uuid ORDER BY at DESC LIMIT 60`.catch(() => []) as Promise<Record<string, unknown>[]>,
+  ]);
+  const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : v ? String(v) : null);
+  return {
+    sources: src.map(r => ({ source: String(r.source), leads: Number(r.leads) || 0, last30: Number(r.last30) || 0, last: iso(r.last) })),
+    failures: fails.map(r => ({ id: String(r.id), at: iso(r.at) || "", body: String(r.body ?? "").slice(0, 160), name: String(r.customer_name ?? ""), phone: String(r.customer_phone ?? ""), thread: String(r.thread), source: String(r.source ?? "") })),
+    log: log.map(r => ({ at: iso(r.at) || "", event: String(r.event), source: String(r.source ?? ""), phone: String(r.phone ?? ""), evidence: String(r.evidence ?? "").slice(0, 200) })),
+  };
 }
 
 /** Tick or untick one step of a won job. The day is the owner's today unless they give one. */
