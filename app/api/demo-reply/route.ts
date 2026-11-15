@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { claudeText, AiTextError } from "@/lib/ai-text";
-import { demoPrompt, parseDemo, rateDecision, validateDemo } from "@/lib/demo";
+import { demoPrompt, parseDemo, parseDemoTurn, rateDecision, validateDemo } from "@/lib/demo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +29,10 @@ export async function POST(request: Request) {
   try {
     const p = demoPrompt(input);
     const text = await claudeText({ apiKey: key, system: p.system, user: p.user, maxTokens: 500, timeoutMs: 20_000, label: "Demo reply", model: process.env.CINDER_DEMO_MODEL?.trim() || "claude-haiku-5-5" });
+    if (input.history?.length) {
+      const turn = parseDemoTurn(text);
+      return turn ? reply({ ...turn, business: input.business, ms: Date.now() - started }) : reply({ error: "The demo hiccuped. Try again." }, 502);
+    }
     const out = parseDemo(text);
     if (!out) return reply({ error: "The demo hiccuped. Try again." }, 502);
     return reply({ ...out, business: input.business, ms: Date.now() - started });
