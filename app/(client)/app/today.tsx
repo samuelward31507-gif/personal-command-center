@@ -1,11 +1,11 @@
 "use client";
 
-// Today: the dashboard an owner opens between jobs. Four figures, what needs him (one button each), the week
-// ahead, where the money stands and where the jobs came from. Everything is a tap from here.
+// Today: the page an owner opens between jobs. Four figures, what needs him (one action each), the week ahead,
+// where the money stands and where the jobs came from. Everything is a tap from here.
 import { useState } from "react";
 import { jobSteps, sourceReport, STAGE_LABEL } from "@/lib/crm";
 import { overdue } from "@/lib/billing";
-import { Icon, clock, dateLabel, first, fmtPhone, secs, short, todayIso, usd } from "./parts";
+import { Icon, clock, dateLabel, first, fmtPhone, secs, todayIso, usd } from "./parts";
 import type { Biz, Data, Go } from "./types";
 
 type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "review" | "sam";
@@ -63,9 +63,8 @@ export function TodayScreen({ d, biz, go }: { d: Data; biz: Biz; go: Go; push: s
   // Money and sources.
   const sent = invoices.filter(i => i.status === "sent"), owed = sent.reduce((a, i) => a + i.total, 0), late = sent.filter(i => overdue(i.status, i.due_on, today));
   const paid30 = invoices.filter(i => i.status === "paid" && i.paid_at && Date.parse(i.paid_at) > Date.now() - 30 * 86400000).reduce((a, i) => a + i.total, 0);
-  const moneyMax = Math.max(1, L.wonValue, owed, L.chasingValue, paid30);
   const sources = sourceReport(cards.filter(c => c.source !== "owner" || c.stage !== "new")).filter(r => r.won > 0 || r.leads > 0).slice(0, 5);
-  const srcMax = Math.max(1, ...sources.map(r => r.wonValue || r.leads));
+  const totalWon = sources.reduce((a, r) => a + r.wonValue, 0);
   const lastWeek = L.weeks.at(-1);
 
   // Find anyone: a name, a street, a phone number or an invoice number.
@@ -83,30 +82,29 @@ export function TodayScreen({ d, biz, go }: { d: Data; biz: Biz; go: Go; push: s
   const hour = new Date().getHours();
   const hello = `${hour < 12 ? "Good morning" : hour >= 17 ? "Good evening" : "Good afternoon"}${d.owner ? `, ${first(d.owner)}` : ""}`;
   const dateLine = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
-  const answeredLine = lastWeek && lastWeek.leads ? ` · Cinder answered ${lastWeek.leads} ${lastWeek.leads === 1 ? "lead" : "leads"} this week` : "";
 
   return <>
-    <header className="ph"><h1>{hello}</h1><span className="sub">{dateLine}{answeredLine}</span>
+    <header className="ph"><h1>{hello}</h1><span className="sub">{dateLine}{lastWeek?.leads ? ` · ${lastWeek.leads} ${lastWeek.leads === 1 ? "lead" : "leads"} answered this week` : ""}</span>
       <div className="acts">
-        <div className="find"><label className="inwrap"><Icon name="search" size={15} /><span className="sr">Find a customer, job or invoice</span>
+        <div className="find"><label className="inwrap"><Icon name="search" size={14} /><span className="sr">Find a customer, job or invoice</span>
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="Find anyone" autoComplete="off" /></label>
           {q.trim().length >= 2 && <div className="hits"><div className="menu" role="listbox">{hits.length ? hits.map(h => <button key={h.key} type="button" onClick={() => { h.go(); setQ(""); }}><span className="t-em">{h.title}</span><small>{h.sub}</small></button>)
             : <button type="button" disabled><small>No one matches “{q.trim()}”.</small></button>}</div></div>}</div>
-        <button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={15} />Add lead</button>
+        <button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={14} />Add lead</button>
       </div></header>
     <div className="pad today">
       <div className="stats">
-        <button type="button" className="stat" onClick={() => go.tab("numbers")}><span>Won · last 30 days</span><b>{usd(L.wonValue)}</b><small className={L.won ? "up" : ""}>{L.won ? `${L.won} ${L.won === 1 ? "job" : "jobs"} from Cinder leads` : "Your first win shows here"}</small></button>
-        <button type="button" className="stat" onClick={() => go.tab("invoices")}><span>Owed to you</span><b>{usd(owed)}</b><small className={late.length ? "down" : ""}>{late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"} past due` : sent.length ? `${sent.length} ${sent.length === 1 ? "invoice" : "invoices"} out` : "All paid up"}</small></button>
-        <button type="button" className="stat" onClick={() => go.tab("jobs")}><span>Quotes out</span><b>{usd(L.chasingValue)}</b><small>{L.chasing ? `${L.chasing} waiting · Cinder following up` : "Nothing waiting on an answer"}</small></button>
-        <button type="button" className="stat" onClick={() => go.tab("numbers")}><span>Leads answered</span><b>{L.answered}<small> / {L.leads}</small></b><small>{L.replySec != null ? `first reply in ${secs(L.replySec)}` : "Last 30 days"}</small></button>
+        <button type="button" className="stat" onClick={() => go.tab("numbers")}><span>Won · 30 days</span><b>{usd(L.wonValue)}</b><small className={L.won ? "up" : ""}>{L.won ? `${L.won} ${L.won === 1 ? "job" : "jobs"} from Cinder leads` : "No wins yet"}</small></button>
+        <button type="button" className="stat" onClick={() => go.tab("invoices")}><span>Owed to you</span><b>{usd(owed)}</b><small className={late.length ? "down" : ""}>{late.length ? `${late.length} past due` : sent.length ? `${sent.length} ${sent.length === 1 ? "invoice" : "invoices"} out` : "All paid up"}</small></button>
+        <button type="button" className="stat" onClick={() => go.tab("jobs")}><span>Quotes out</span><b>{usd(L.chasingValue)}</b><small>{L.chasing ? `${L.chasing} waiting on an answer` : "Nothing waiting"}</small></button>
+        <button type="button" className="stat" onClick={() => go.tab("numbers")}><span>Leads answered</span><b>{L.answered}<small> / {L.leads}</small></b><small>{L.replySec != null ? `First reply in ${secs(L.replySec)}` : "Last 30 days"}</small></button>
       </div>
       <div className="cols">
         <div className="col">
           <section className="card">
-            <div className="hd"><h2>Needs you</h2><small>{actions.length ? `${actions.length} ${actions.length === 1 ? "thing" : "things"} · one tap each` : "Cinder is handling the rest"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>All jobs</button></div>
+            <div className="hd"><h2>Needs you</h2><small>{actions.length ? `${actions.length}` : "Clear"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>All jobs</button></div>
             {actions.length ? actions.slice(0, 8).map(a => <div key={a.key} className="row">
-              <span className={"ic " + ICON[a.kind][1]}><Icon name={ICON[a.kind][0]} size={14} /></span>
+              <span className={"ic " + ICON[a.kind][1]}><Icon name={ICON[a.kind][0]} size={15} /></span>
               <span style={{ minWidth: 0 }}><b>{a.title}</b><small>{a.sub}</small></span>
               <button type="button" className={"btn sm" + (a.primary ? " ink" : "")} onClick={a.go}>{a.cta}</button>
             </div>) : <div className="bd fine">Nothing waiting on you. New leads, late invoices and quotes to write land here.</div>}
@@ -120,24 +118,22 @@ export function TodayScreen({ d, biz, go }: { d: Data; biz: Biz; go: Go; push: s
         </div>
         <div className="col">
           <section className="card">
-            <div className="hd"><h2>Money</h2><button type="button" className="link" onClick={() => go.tab("invoices")}>Invoices</button></div>
-            <div style={{ padding: "6px 0 8px" }}>
-              <div className="bar"><span>Won · 30 days</span><i><b style={{ width: `${(L.wonValue / moneyMax) * 100}%` }} /></i><em>{short(L.wonValue)}</em></div>
-              <div className="bar"><span>Collected</span><i><b style={{ width: `${(paid30 / moneyMax) * 100}%`, background: "var(--green)" }} /></i><em>{short(paid30)}</em></div>
-              <div className="bar"><span>Owed</span><i><b style={{ width: `${(owed / moneyMax) * 100}%`, background: late.length ? "var(--red)" : "var(--g400)" }} /></i><em>{short(owed)}</em></div>
-              <div className="bar"><span>Quoted</span><i><b style={{ width: `${(L.chasingValue / moneyMax) * 100}%`, background: "#c6c9ce" }} /></i><em>{short(L.chasingValue)}</em></div>
-            </div>
+            <div className="hd"><h2>Money</h2><small>last 30 days</small><button type="button" className="link" onClick={() => go.tab("invoices")}>Invoices</button></div>
+            <div className="money"><span>Won</span><b>{usd(L.wonValue)}</b></div>
+            <div className="money"><span>Collected</span><b>{usd(paid30)}</b></div>
+            <div className="money"><span>Owed{late.length ? <small> · {late.length} late</small> : null}</span><b style={late.length ? { color: "var(--red-text)" } : undefined}>{usd(owed)}</b></div>
+            <div className="money"><span>Quoted, waiting</span><b>{usd(L.chasingValue)}</b></div>
           </section>
           <section className="card">
-            <div className="hd"><h2>Where jobs came from</h2><small>last 4 months</small></div>
-            {sources.length ? <div style={{ padding: "6px 0 8px" }}>{sources.map(r => <div key={r.source} className="bar"><span>{r.label}</span><i><b style={{ width: `${((r.wonValue || r.leads) / srcMax) * 100}%`, background: r.wonValue ? "var(--ink)" : "#c6c9ce" }} /></i><em>{r.wonValue ? short(r.wonValue) : `${r.leads} ${r.leads === 1 ? "lead" : "leads"}`}</em></div>)}</div>
+            <div className="hd"><h2>Where jobs came from</h2><small>last 4 months</small><button type="button" className="link" onClick={() => go.tab("numbers")}>Numbers</button></div>
+            {sources.length ? sources.map(r => <div key={r.source} className="money"><span>{r.label}<small> · {r.leads} {r.leads === 1 ? "lead" : "leads"}{r.won ? `, ${r.won} won` : ""}</small></span><b className={r.wonValue ? "" : "mut"}>{r.wonValue ? `${usd(r.wonValue)}${totalWon ? ` · ${Math.round((r.wonValue / totalWon) * 100)}%` : ""}` : "–"}</b></div>)
               : <div className="bd fine">Once leads come in, this shows which source pays.</div>}
           </section>
           <section className="card">
-            <div className="hd"><h2>Cinder this week</h2></div>
-            <div className="row"><span className="ic"><Icon name="bolt" size={14} /></span><span><b>{lastWeek ? `${lastWeek.leads} ${lastWeek.leads === 1 ? "lead" : "leads"} answered, ${lastWeek.booked} ${lastWeek.booked === 1 ? "estimate" : "estimates"} booked` : "Waiting for the first lead"}</b><small>{L.replySec != null ? `Typical first reply in ${secs(L.replySec)}, day or night` : "Day or night"}</small></span></div>
-            <div className="row"><span className="ic"><Icon name="clock" size={14} /></span><span><b>{L.chasing ? `${L.chasing} ${L.chasing === 1 ? "quote" : "quotes"} being followed up` : "No quotes waiting"}</b><small>{L.chasing ? `${usd(L.chasingValue)} open · stops the moment they reply` : "Quoted jobs get four follow-ups"}</small></span></div>
-            <div className="row"><span className="ic"><Icon name="user" size={14} /></span><span><b>{d.unreadFromSam ? `Sam wrote to you` : "Sam Ward, your rep"}</b><small>{d.unreadFromSam ? `${d.unreadFromSam} new` : "Hours, prices, wording changes"}</small></span><button type="button" className="btn sm" onClick={() => go.tab("sam")}>Open</button></div>
+            <div className="hd"><h2>Cinder this week</h2><button type="button" className="link" onClick={() => go.tab("system")}>System</button></div>
+            <div className="row"><span className="ic"><Icon name="bolt" size={15} /></span><span><b>{lastWeek ? `${lastWeek.leads} ${lastWeek.leads === 1 ? "lead" : "leads"} answered, ${lastWeek.booked} ${lastWeek.booked === 1 ? "estimate" : "estimates"} booked` : "Waiting for the first lead"}</b><small>{L.replySec != null ? `Typical first reply in ${secs(L.replySec)}, day or night` : "Day or night"}</small></span></div>
+            <div className="row"><span className="ic"><Icon name="clock" size={15} /></span><span><b>{L.chasing ? `${L.chasing} ${L.chasing === 1 ? "quote" : "quotes"} being followed up` : "No quotes waiting"}</b><small>{L.chasing ? `${usd(L.chasingValue)} open · stops the moment they reply` : "Quoted jobs get four follow-ups"}</small></span></div>
+            <div className="row"><span className="ic"><Icon name="user" size={15} /></span><span><b>{d.unreadFromSam ? "Sam wrote to you" : "Sam Ward, your rep"}</b><small>{d.unreadFromSam ? `${d.unreadFromSam} new` : "Hours, prices, wording changes"}</small></span><button type="button" className="btn sm" onClick={() => go.tab("sam")}>Open</button></div>
           </section>
         </div>
       </div>

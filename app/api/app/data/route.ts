@@ -26,7 +26,7 @@ export async function GET(req: Request) {
       const texts = await sql`SELECT id, direction, author, body, at, media FROM public.client_texts WHERE thread_id = ${th}::uuid ORDER BY at LIMIT 400`;
       return json({ thread: t, texts });
     }
-    const [live, biz, appts, unread, msgs, quotes, calRow, wonJobs, board, past, customers, invoices] = await Promise.all([
+    const [live, biz, appts, unread, msgs, quotes, calRow, keyRow, wonJobs, board, past, customers, invoices] = await Promise.all([
       liveFor(sql, c.projectId, 80),
       sql`SELECT o.project_id, coalesce(o.setup->>'display_name', p.client_name, p.name) AS name, o.portal_token FROM public.client_ops o JOIN public.projects p ON p.id = o.project_id WHERE o.project_id = ANY(${s.projects}::uuid[])`,
       // Booked estimates still waiting on an outcome (up to two weeks back) and everything coming up.
@@ -37,6 +37,8 @@ export async function GET(req: Request) {
       sql`SELECT id, customer_name, customer_phone, amount::float AS amount, sent_on::text AS sent_on, steps_sent, status FROM public.client_quotes
         WHERE project_id = ${c.projectId}::uuid AND kind = 'quote' AND status IN ('open','replied') ORDER BY sent_on DESC LIMIT 40`.catch(() => []),
       sql`SELECT google_email FROM public.client_calendars WHERE project_id = ${c.projectId}::uuid`.catch(() => []),
+      // The website key: the chat bubble and the intake webhook both name the client with it.
+      sql`SELECT chat_key FROM public.client_ops WHERE project_id = ${c.projectId}::uuid`.catch(() => []),
       // Won jobs from the last 90 days that haven't had a review request: "Job done" sends it at the right time.
       sql`SELECT q.id, q.customer_name, q.customer_phone, q.amount::float AS amount, q.last_step_at AS won_at FROM public.client_quotes q
         WHERE q.project_id = ${c.projectId}::uuid AND q.status = 'won' AND q.last_step_at > now() - interval '90 days'
@@ -65,6 +67,7 @@ export async function GET(req: Request) {
       owner: c.setup.owner_name || "", businesses: biz, live,
       appointments: (appts as { event_id?: string }[]).map(a => ({ ...a, link: (a.event_id && links.get(a.event_id)) || "" })), quotes, quoteSteps: SEQUENCES.quote.days.length, wonJobs, hasReviewLink: !!c.setup.review_link, repeat: isRepeatTrade(c.setup.trade), calendar, messages: (msgs as Record<string, unknown>[]).reverse(), unreadFromSam: (unread as { n: number }[])[0]?.n ?? 0,
       board, setup: { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "" }, customers, invoices,
+      key: String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? ""), origin,
       winback: { past: past.past, eligible: past.eligible.length, names: past.eligible.slice(0, 6).map(e => e.name.split(" ")[0] || "").filter(Boolean),
         draft: winbackDraft(c.setup.trade, c.setup.owner_name || "", c.setup.display_name || "") },
     });

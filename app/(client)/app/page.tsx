@@ -17,6 +17,7 @@ import { InboxScreen, ThreadView } from "./inbox";
 import { CalendarScreen } from "./calendar";
 import { CustomersScreen, InvoicesScreen, InvoiceSheet, BillingSettings } from "./money";
 import { NumbersScreen } from "./numbers";
+import { SystemScreen } from "./system";
 import { Onboarding } from "./setup";
 import { AddLeadSheet, ImportSheet, WinbackSheet } from "./sheets";
 
@@ -106,7 +107,7 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
 
 // ---------- The app ----------
 type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job" } | { kind: "thread"; id: string } | null;
-const MORE: Tab[] = ["customers", "invoices", "numbers", "sam"];
+const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam"];
 
 export default function CinderApp() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
@@ -182,7 +183,7 @@ export default function CinderApp() {
   const demoBar = demo && <div className="demo"><span>Example business · sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>;
   const navItems: { k: Tab; l: string; ic: string; n?: number; hot?: boolean }[] = [
     { k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs, hot: true }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length },
-    { k: "customers", l: "Customers", ic: "users" }, { k: "invoices", l: "Invoices", ic: "invoice", n: owed }, { k: "numbers", l: "Numbers", ic: "bars" },
+    { k: "customers", l: "Customers", ic: "users" }, { k: "invoices", l: "Invoices", ic: "invoice", n: owed }, { k: "numbers", l: "Numbers", ic: "bars" }, { k: "system", l: "System", ic: "gear" },
   ];
   const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
   const phoneTab: Tab = MORE.includes(tab) ? "more" : tab;
@@ -197,6 +198,7 @@ export default function CinderApp() {
   else if (tab === "customers") page = <CustomersScreen d={d} go={go} />;
   else if (tab === "invoices") page = <InvoicesScreen d={d} go={go} />;
   else if (tab === "numbers") page = <NumbersScreen d={d} />;
+  else if (tab === "system") page = <SystemScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} toast={toast} />;
   else if (tab === "more") page = <MoreScreen d={d} go={go} owed={owed} />;
   else page = <SamScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} push={push} onPush={() => void enablePush()} demo={demo} onSignOut={async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); }} />;
 
@@ -207,6 +209,7 @@ export default function CinderApp() {
         <span><span className="av sm ink">{initials(bizName || "C").charAt(0)}</span>{bizName || "Your business"}</span>
         {d.businesses.length > 1 ? <><Icon name="sort" size={14} className="mut" /><select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select></> : null}
       </div>
+      <div className="lbl">Workspace</div>
       {navItems.map(it => <button key={it.k} type="button" className={"nav" + (tab === it.k && !open ? " on" : "")} aria-current={tab === it.k && !open ? "page" : undefined} onClick={() => goTab(it.k)}>
         <Icon name={it.ic} size={16} />{it.l}{it.n ? <em className={it.hot ? "hot" : ""}>{it.n}</em> : null}</button>)}
       <div className="foot">
@@ -237,12 +240,13 @@ function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
     { k: "customers", l: "Customers", s: `${d.customers?.length ?? 0} people`, ic: "users" },
     { k: "invoices", l: "Invoices", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
     { k: "numbers", l: "Numbers", s: "What Cinder brought in", ic: "bars" },
+    { k: "system", l: "System", s: "How leads reach Cinder", ic: "gear" },
     { k: "sam", l: "Sam and settings", s: d.unreadFromSam ? `${d.unreadFromSam} new from Sam` : "Your rep, prices, notifications", ic: "user", n: d.unreadFromSam },
   ];
   return <>
     <header className="ph"><h1>More</h1></header>
     <div className="pad"><div className="card">{items.map(it => <button key={it.k} type="button" className="row" onClick={() => go.tab(it.k)}>
-      <span className="ic"><Icon name={it.ic} size={14} /></span><span><b>{it.l}</b><small>{it.s}</small></span>{it.n ? <span className="tag ember">{it.n}</span> : <Icon name="fwd" size={16} className="mut" />}</button>)}</div></div>
+      <span className="ic"><Icon name={it.ic} size={15} /></span><span><b>{it.l}</b><small>{it.s}</small></span>{it.n ? <span className="tag count">{it.n}</span> : <Icon name="fwd" size={16} className="mut" />}</button>)}</div></div>
   </>;
 }
 
@@ -274,6 +278,7 @@ function SamScreen({ d, biz, project, api: call, toast, reload, go, push, onPush
           <li><span>Invoices and payments</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
           {d.number && <li><span>Your Cinder number</span><b>{fmtPhone(d.number)}</b></li>}
           <li><span>Notifications</span>{push === "on" ? <span className="tag green">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <b className="mut" style={{ fontWeight: 400 }}>{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</b>}</li>
+          <li><span>How leads reach Cinder</span><button type="button" className="btn sm" onClick={() => go.tab("system")}>Open System</button></li>
           <li><span>Import customers</span><button type="button" className="btn sm" onClick={go.importCustomers}>Import</button></li>
           <li><span /><button type="button" className="btn sm" onClick={onSignOut}><Icon name="out" size={14} />{demo ? "Leave the example" : "Sign out"}</button></li>
         </ul>

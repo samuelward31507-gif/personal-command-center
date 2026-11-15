@@ -14,7 +14,6 @@ export const typePhone = (v: string) => { const d = v.replace(/\D/g, "").replace
 export const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
 export const short = (n: number) => Math.abs(n) >= 1000 ? `$${(n / 1000).toFixed(Math.abs(n) >= 10000 ? 0 : 1).replace(/\.0$/, "")}k` : usd(n);
 export const first = (s: string) => (s || "").trim().split(" ")[0] || "them";
-export const tone = (s: string) => [...(s || "#")].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 6;
 export const initials = (s: string) => (s || "").replace(/[^A-Za-z ]/g, "").split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "#";
 export const todayIso = () => new Date().toLocaleDateString("en-CA");
 export const clock = (d: string) => new Date(d).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
@@ -82,7 +81,7 @@ export function Icon({ name, size = 16, className }: { name: string; size?: numb
 
 // ---------- Avatar, stage chip ----------
 export function Avatar({ name, size }: { name: string; size?: "sm" | "lg" | "xl" }) {
-  return <span className={"av" + (size ? " " + size : "")} data-tone={tone(name)} aria-hidden="true">{initials(name)}</span>;
+  return <span className={"av" + (size ? " " + size : "")} aria-hidden="true">{initials(name)}</span>;
 }
 export function StageChip({ stage, small, text }: { stage: Stage | "late"; small?: boolean; text?: string }) {
   return <span className={`stage ${stage}${small ? " sm" : ""}`}><i />{text ?? (stage === "late" ? "Late" : STAGE_LABEL[stage])}</span>;

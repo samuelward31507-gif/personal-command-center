@@ -97,7 +97,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, onWi
         <div className="tbl-wrap"><table className="tbl jobs-tbl">
           <thead><tr><th>Customer</th><th>Job</th><th>Stage</th><th className="right">Value</th><th>Next</th><th>Source</th><th className="right">Last activity</th></tr></thead>
           <tbody>{shown.map(c => { const n = nextUp(c, today), name = c.name || fmtPhone(c.phone); return <tr key={c.id} tabIndex={0} onClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
-            <td><span className="name"><Avatar name={name} /><span><b>{name}</b><small>{[fmtPhone(c.phone), city(c)].filter(Boolean).join(" · ")}</small></span></span></td>
+            <td><span className="name"><span><b>{name}</b><small>{[fmtPhone(c.phone), city(c)].filter(Boolean).join(" · ")}</small></span></span></td>
             <td className={c.line ? "" : "mut"}>{c.line || (c.notes ? c.notes.slice(0, 48) : "No details yet")}</td>
             <td><StageChip stage={c.stage} /></td>
             <td className={"num" + (c.value ? "" : " mut")}>{c.value ? usd(c.value) : c.ballpark ? <><span className="mut">~</span>{short(c.ballpark.low)}–{short(c.ballpark.high).replace("$", "")}</> : "–"}</td>

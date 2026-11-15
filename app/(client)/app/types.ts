@@ -12,12 +12,14 @@ export type InvoiceRow = CardInvoice & { thread_id: string; customer: string; ph
 export type Winback = { past: number; eligible: number; names: string[]; draft: string };
 export type Data = { project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number;
   wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal;
-  messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number; board?: Card[]; setup?: Record<string, string>; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[] };
+  messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number; board?: Card[]; setup?: Record<string, string>; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[];
+  /** The website key (chat bubble and intake webhook) and the app's public origin, for the System screen. */
+  key?: string; origin?: string };
 export type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[] };
 export type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 export type { Card, CardInvoice, Stage };
 
-export type Tab = "today" | "inbox" | "jobs" | "calendar" | "customers" | "invoices" | "numbers" | "sam" | "more";
+export type Tab = "today" | "inbox" | "jobs" | "calendar" | "customers" | "invoices" | "numbers" | "system" | "sam" | "more";
 /** Where a screen can send the owner. The shell owns the state; screens just ask. */
 export type Go = {
   tab: (t: Tab) => void;

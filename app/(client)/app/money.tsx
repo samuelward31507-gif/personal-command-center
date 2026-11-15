@@ -144,7 +144,7 @@ export function CustomersScreen({ d, go }: { d: Data; go: Go }) {
       : wide ? <div className="tbl-wrap"><table className="tbl" style={{ minWidth: 820 }}>
         <thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Source</th><th>Last contact</th><th className="right">Value</th></tr></thead>
         <tbody>{shown.map(c => { const name = c.name || fmtPhone(c.phone), st = status(c); return <tr key={c.id} tabIndex={0} onClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
-          <td><span className="name"><Avatar name={name} /><span><b>{name}</b><small>{c.address || c.line || " "}</small></span></span></td>
+          <td><span className="name"><span><b>{name}</b><small>{c.address || c.line || " "}</small></span></span></td>
           <td className="mut">{fmtPhone(c.phone)}</td>
           <td><span className={"tag " + st[1]}>{st[0]}</span></td>
           <td className="mut">{sourceLabel(c.source)}</td>
@@ -170,7 +170,7 @@ export function InvoicesScreen({ d, go }: { d: Data; go: Go }) {
   const shown = f === "open" ? list.filter(i => i.status === "sent" || i.status === "draft") : f === "paid" ? list.filter(i => i.status === "paid") : list;
   const Row = ({ i }: { i: InvoiceRow }) => { const st = invoiceState(i), name = i.customer || fmtPhone(i.phone); return <tr tabIndex={0} onClick={() => go.invoice(i.id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(i.id); }}>
     <td className="mut">#{i.number}</td>
-    <td><span className="name"><Avatar name={name} /><span><b>{name}</b><small>{i.items[0]?.name || " "}</small></span></span></td>
+    <td><span className="name"><span><b>{name}</b><small>{i.items[0]?.name || " "}</small></span></span></td>
     <td className="mut">{i.sent_at ? dateLabel(i.sent_at) : "Not sent"}</td>
     <td><span className={"tag " + st.tone}>{st.text}</span></td>
     <td className={st.tone === "red" ? "" : "mut"} style={st.tone === "red" ? { color: "var(--red-text)" } : undefined}>{i.due_on ? dateLabel(i.due_on) : "–"}</td>
