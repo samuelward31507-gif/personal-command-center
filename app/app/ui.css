@@ -984,3 +984,44 @@ html body:not(#u) .im-check { display: flex; align-items: flex-start; gap: 12px;
 html body:not(#u) .im-check input { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 2px; accent-color: var(--ink); }
 html body:not(#u) .im-check b { display: block; font-size: 14.5px; font-weight: 500; }
 html body:not(#u) .im-check small { display: block; margin-top: 3px; color: var(--text-3); font-size: 13px; line-height: 1.45; }
+
+/* ======================================================================
+   Repairs. The app shares the agency CRM's root layout and its twelve global sheets, so a few things leaked through:
+   the body is a flex column (auto margins shrink the shell to its content), every <p> and <small> is forced grey, and
+   any panel-ish element gets a raised background. These pin the app's own choices back in place.
+   ====================================================================== */
+/* The shell always fills the viewport. On a phone the auto margins used to pull a 600px shell past both edges. */
+html body:not(#u) .ca { width: 100%; align-self: stretch; }
+html body:not(#u) :is(.ca-sign, .ca-load, .ob) { width: 100%; }
+/* Between a phone and a desktop the shell is 600px wide; the tab bar lines up with it instead of spanning the window. */
+@media (min-width: 601px) and (max-width: 1099px) {
+  html body:not(#u) .ca-nav { left: 50%; right: auto; width: 100%; max-width: 600px; transform: translateX(-50%); border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+}
+
+/* Sam: messages with an avatar column, like a thread; the composer is a real box with a send button. */
+html body:not(#u) .ca-msgs .ca-msg { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; align-items: start; margin-top: 18px; }
+html body:not(#u) .ca-msg-av { width: 36px; }
+html body:not(#u) .ca-msg-you { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: #fff; font: 600 11.5px var(--sans); }
+html body:not(#u) .ca-msg-body { min-width: 0; }
+html body:not(#u) .ca-msg-body header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+html body:not(#u) .ca-msg-body header b { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; }
+html body:not(#u) .ca-msg-body header time { font-size: 12px; color: var(--text-4); font-variant-numeric: tabular-nums; }
+html body:not(#u) .ca-msgs .ca-msg p { max-width: none; padding: 0; border-radius: 0; background: transparent; font-size: 15.5px; line-height: 1.55; color: var(--text) !important; }
+html body:not(#u) .ca-msgs .ca-msg.you p { color: var(--text-2) !important; }
+html body:not(#u) .ca-compose { display: flex; align-items: flex-end; gap: 8px; }
+html body:not(#u) .ca-compose textarea { flex: 1; min-height: 48px; max-height: 160px; padding: 13px 16px !important; border-radius: 16px !important; border: 1px solid var(--line-2) !important; background: var(--card) !important;
+  font-size: 15.5px !important; line-height: 1.4; color: var(--text) !important; resize: none; }
+html body:not(#u) .ca-compose textarea:focus { outline: none; border-color: var(--ink) !important; box-shadow: var(--ring) !important; }
+html body:not(#u) .ca-compose button { flex: 0 0 auto; width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50% !important; background: var(--ink) !important; color: #fff !important; }
+html body:not(#u) .ca-compose button:disabled { background: #d9d9d6 !important; }
+
+/* Numbers: the dark panel keeps its own type and no borrowed panel background. */
+html body:not(#u) .sx-mission :is(p, small, dt, dd) { color: inherit !important; }
+html body:not(#u) .sx-big { color: #fff !important; }
+html body:not(#u) .sx-mission .sx-k, html body:not(#u) .sx-mission-stats dt { color: rgba(244, 244, 242, .6) !important; }
+html body:not(#u) .sx-mission-stats dd { color: #fff !important; }
+html body:not(#u) .sx-mission-stats dd small { color: rgba(244, 244, 242, .45) !important; }
+html body:not(#u) .sx-mission-stats { background: transparent !important; border: 0 !important; border-top: 1px solid rgba(255, 255, 255, .1) !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; }
+html body:not(#u) .sx-mission-stats > div { background: transparent !important; box-shadow: none !important; border-radius: 0 !important; }
+html body:not(#u) .sx-live { color: #7fe0b0 !important; }
+html body:not(#u) .sx-flight figcaption, html body:not(#u) .sx-readout { color: rgba(244, 244, 242, .7) !important; }
