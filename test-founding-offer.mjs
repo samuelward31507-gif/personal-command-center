@@ -88,14 +88,15 @@ ok(() => assert.equal(estimatesToPayFor(997, 0, 30), null));
 
 // Website copy (site alignment SOW)
 import { readFileSync, readdirSync, statSync } from "node:fs";
-const home = readFileSync("site/index.html", "utf8");
+// The site is several pages generated from one source: the offer lives on Pricing, the product truth on Product.
+const home = ["site/index.html", "site/product.html", "site/pricing.html"].map(f => readFileSync(f, "utf8")).join("\n");
 ok(() => assert.match(home, /or your next month is free/));
 ok(() => assert.match(home, /Never Miss a Lead[\s\S]*\$697<\/b>\/month/), "tier 1 price");
 ok(() => assert.match(home, /Book &amp; Close[\s\S]*\$1,497<\/b>\/month/), "tier 2 price");
 ok(() => assert.doesNotMatch(home, /Full Front Office/), "no plan that depends on voice answering until it ships");
 ok(() => assert.match(home, /Voice answering is rolling out/), "honest about voice");
-ok(() => assert.match(home, /Add-on: Reactivation[\s\S]*\$497<\/b>\/month/), "reactivation add-on");
-ok(() => assert.doesNotMatch(home, /Detailers|Reactivation Sprint|Repeat Revenue/), "one add-on, no detailer packages");
+ok(() => assert.doesNotMatch(home, /Add-on: Reactivation|\$497<\/b>\/month/), "reactivation is included in the plans, not sold as an add-on");
+ok(() => assert.doesNotMatch(home, /Detailers|Reactivation Sprint|Repeat Revenue/), "no detailer packages");
 ok(() => assert.match(home, /at least 5 booked appointments in your first 30 days live, or at least 3 if you get 10 to 29 new leads a month/));
 ok(() => assert.doesNotMatch(home, /[Ff]ounding|half-price|50% off|Spots left/), "no founding offer on the site");
 ok(() => assert.match(home, /No contract\. Cancel by text\. You keep your number\. You own your data\./));
