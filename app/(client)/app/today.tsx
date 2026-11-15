@@ -1,0 +1,146 @@
+"use client";
+
+// Today: the dashboard an owner opens between jobs. Four figures, what needs him (one button each), the week
+// ahead, where the money stands and where the jobs came from. Everything is a tap from here.
+import { useState } from "react";
+import { jobSteps, sourceReport, STAGE_LABEL } from "@/lib/crm";
+import { overdue } from "@/lib/billing";
+import { Icon, clock, dateLabel, first, fmtPhone, secs, short, todayIso, usd } from "./parts";
+import type { Biz, Data, Go } from "./types";
+
+type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "review" | "sam";
+type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string; primary?: boolean };
+const ICON: Record<Kind, [string, string]> = { reply: ["chat", "ember"], money: ["invoice", "red"], quote: ["quote", "blue"], install: ["cal", "blue"], invoice: ["invoice", "amber"], review: ["star", "ok"], sam: ["user", ""] };
+const hhmm = (t: string) => { const [h, m] = t.split(":").map(Number); return new Date(2000, 0, 1, h, m).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }); };
+const daysPast = (d: string) => Math.max(1, Math.round((Date.now() - Date.parse(d + "T23:59:00")) / 86400000));
+
+export function TodayScreen({ d, biz, go }: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void }) {
+  const today = todayIso(), L = d.live, cards = d.board ?? [], invoices = d.invoices ?? [];
+  const byThread = new Map(cards.map(c => [c.id, c]));
+  const asks = L.conversations.filter(c => c.status === "paused");
+
+  // What needs him, in the order it costs him money.
+  const actions: Action[] = [];
+  for (const a of asks) actions.push({ key: "r" + a.id, kind: "reply", title: `Reply to ${first(a.name)}`, sub: a.ask || a.last, go: () => go.thread(a.id), cta: "Reply", primary: true });
+  for (const c of cards) if (c.stage === "quoted" && c.quote?.status === "replied") actions.push({ key: "qr" + c.id, kind: "reply", title: `${first(c.name)} answered your quote`, sub: c.quote.amount ? `${usd(c.quote.amount)} quote` : "", go: () => go.thread(c.id), cta: "Read" });
+  for (const i of invoices) {
+    if (i.status === "sent" && i.paid_claimed_at) actions.push({ key: "pc" + i.id, kind: "money", title: `${first(i.customer)} says they paid`, sub: `${usd(i.total)} · invoice #${i.number}`, go: () => go.invoice(i.id), cta: "Check" });
+    else if (overdue(i.status, i.due_on, today)) actions.push({ key: "od" + i.id, kind: "money", title: `${first(i.customer)}: invoice ${daysPast(i.due_on!)} ${daysPast(i.due_on!) === 1 ? "day" : "days"} late`, sub: `${usd(i.total)} · #${i.number}${i.reminders ? ` · ${i.reminders} reminder${i.reminders === 1 ? "" : "s"} sent` : ""}`, go: () => go.invoice(i.id), cta: "Open" });
+    else if (i.status === "draft") actions.push({ key: "dr" + i.id, kind: "invoice", title: `Send ${first(i.customer)}'s invoice`, sub: `${usd(i.total)} · #${i.number} · draft`, go: () => go.invoice(i.id), cta: "Send" });
+  }
+  const due = d.appointments.filter(a => Date.parse(a.starts_at) < Date.now() - 3600000);
+  const quoted = new Set<string>();
+  for (const a of due) {
+    const c = byThread.get(a.thread_id);
+    if (c && (c.stage === "quoted" || c.stage === "won" || c.stage === "lost")) continue;
+    quoted.add(a.thread_id);
+    actions.push({ key: "q" + a.id, kind: "quote", title: `Quote ${first(a.customer_name)}`, sub: `Estimate ${new Date(a.starts_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}${c?.line ? ` · ${c.line}` : ""}`, go: () => c ? go.record(c.id, { ask: "quoted" }) : go.tab("calendar"), cta: "Write quote" });
+  }
+  for (const c of cards) if (!quoted.has(c.id) && c.stage === "quoted" && c.quote && !c.quote.linked && c.quote.amount) actions.push({ key: "qs" + c.id, kind: "quote", title: `Send ${first(c.name)} the quote`, sub: `${usd(c.quote.amount)} · not sent yet`, go: () => go.record(c.id), cta: "Send" });
+  for (const c of cards) {
+    if (c.stage !== "won" || c.pastCustomer) continue;
+    if (!c.install && !c.invoice) actions.push({ key: "in" + c.id, kind: "install", title: `Schedule ${first(c.name)}'s install`, sub: `${c.value ? usd(c.value) + " job" : "Won"}${c.line ? ` · ${c.line}` : ""}`, go: () => go.record(c.id, { view: "job" }), cta: "Schedule" });
+    else if (c.install && c.install >= today) {
+      const days = Math.round((Date.parse(c.install + "T12:00:00") - Date.parse(today + "T12:00:00")) / 86400000);
+      const step = jobSteps(biz.trade, c.details).find(s => !c.job[s.key]);
+      if (days <= 7 && step && step.key !== "installed" && step.key !== "walk") actions.push({ key: "js" + c.id, kind: "install", title: `${first(c.name)}: ${step.label.toLowerCase()}?`, sub: `Install ${days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}${c.line ? ` · ${c.line}` : ""}`, go: () => go.record(c.id, { view: "job" }), cta: "Open job" });
+    }
+    else if (c.install && c.install < today && !c.invoice) actions.push({ key: "iv" + c.id, kind: "invoice", title: `Invoice ${first(c.name)}`, sub: `Installed ${dateLabel(c.install)}${c.value ? ` · ${usd(c.value)}` : ""}`, go: () => go.record(c.id, { view: "job" }), cta: "Invoice" });
+    else if (c.install && c.install < today && c.invoice?.status === "paid" && !c.reviewSent && biz.reviewLink) actions.push({ key: "rv" + c.id, kind: "review", title: `${first(c.name)}: ask for the review`, sub: `Installed ${dateLabel(c.install)} · paid in full`, go: () => go.record(c.id, { view: "job" }), cta: "Open" });
+  }
+  if (d.unreadFromSam) actions.push({ key: "sam", kind: "sam", title: "Message from Sam", sub: "Your Cinder rep", go: () => go.tab("sam"), cta: "Open" });
+
+  // The week: estimates Cinder booked and installs he set.
+  const end = Date.now() + 7 * 86400000;
+  const dayOf = (iso: string) => { const dd = iso.slice(0, 10); return dd === today ? "Today" : new Date(dd + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); };
+  const week = [
+    ...d.appointments.filter(a => { const t = Date.parse(a.starts_at); return t > Date.now() - 3600000 && t < end; })
+      .map(a => { const c = byThread.get(a.thread_id); return { key: "a" + a.id, at: Date.parse(a.starts_at), day: dayOf(new Date(a.starts_at).toLocaleDateString("en-CA")), time: clock(a.starts_at), who: a.customer_name || fmtPhone(a.customer_phone), what: "estimate", sub: [c?.line, String(c?.details.address ?? "")].filter(Boolean).join(" · ") || "Booked by Cinder", tag: ["Estimate", "blue"], go: () => c ? go.record(c.id) : go.thread(a.thread_id) }; }),
+    ...cards.filter(c => c.stage === "won" && c.install && c.install >= today && Date.parse(c.install + "T12:00:00") < end)
+      .map(c => ({ key: "i" + c.id, at: Date.parse(`${c.install}T${c.installTime || "07:00"}`), day: dayOf(c.install!), time: c.installTime ? hhmm(c.installTime) : "All day", who: c.name, what: c.installDays > 1 ? `install, ${c.installDays} days` : "install", sub: [c.line, String(c.details.address ?? "")].filter(Boolean).join(" · "), tag: ["Install", "ok"], go: () => go.record(c.id, { view: "job" }) })),
+  ].sort((a, b) => a.at - b.at).slice(0, 6);
+
+  // Money and sources.
+  const sent = invoices.filter(i => i.status === "sent"), owed = sent.reduce((a, i) => a + i.total, 0), late = sent.filter(i => overdue(i.status, i.due_on, today));
+  const paid30 = invoices.filter(i => i.status === "paid" && i.paid_at && Date.parse(i.paid_at) > Date.now() - 30 * 86400000).reduce((a, i) => a + i.total, 0);
+  const moneyMax = Math.max(1, L.wonValue, owed, L.chasingValue, paid30);
+  const sources = sourceReport(cards.filter(c => c.source !== "owner" || c.stage !== "new")).filter(r => r.won > 0 || r.leads > 0).slice(0, 5);
+  const srcMax = Math.max(1, ...sources.map(r => r.wonValue || r.leads));
+  const lastWeek = L.weeks.at(-1);
+
+  // Find anyone: a name, a street, a phone number or an invoice number.
+  const [q, setQ] = useState("");
+  const hits = (() => {
+    const t = q.trim().toLowerCase(), digits = t.replace(/\D/g, "");
+    if (t.length < 2) return [];
+    const people = (d.customers ?? []).filter(c => c.name.toLowerCase().includes(t) || c.address.toLowerCase().includes(t) || (digits.length >= 3 && c.phone.replace(/\D/g, "").includes(digits)))
+      .slice(0, 5).map(c => ({ key: "c" + c.id, title: c.name || fmtPhone(c.phone), sub: [c.stage ? STAGE_LABEL[c.stage as keyof typeof STAGE_LABEL] : "", c.line || c.address].filter(Boolean).join(" · "), go: () => go.record(c.id) }));
+    const bills = invoices.filter(i => `#${i.number}`.includes(t) || String(i.number) === digits || (i.customer || "").toLowerCase().includes(t))
+      .slice(0, 3).map(i => ({ key: "i" + i.id, title: `Invoice #${i.number}`, sub: `${i.customer || i.phone} · ${usd(i.total)}`, go: () => go.invoice(i.id) }));
+    return [...people, ...bills];
+  })();
+
+  const hour = new Date().getHours();
+  const hello = `${hour < 12 ? "Good morning" : hour >= 17 ? "Good evening" : "Good afternoon"}${d.owner ? `, ${first(d.owner)}` : ""}`;
+  const dateLine = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+  const answeredLine = lastWeek && lastWeek.leads ? ` · Cinder answered ${lastWeek.leads} ${lastWeek.leads === 1 ? "lead" : "leads"} this week` : "";
+
+  return <>
+    <header className="ph"><h1>{hello}</h1><span className="sub">{dateLine}{answeredLine}</span>
+      <div className="acts">
+        <div className="find"><label className="inwrap"><Icon name="search" size={15} /><span className="sr">Find a customer, job or invoice</span>
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Find anyone" autoComplete="off" /></label>
+          {q.trim().length >= 2 && <div className="hits"><div className="menu" role="listbox">{hits.length ? hits.map(h => <button key={h.key} type="button" onClick={() => { h.go(); setQ(""); }}><span className="t-em">{h.title}</span><small>{h.sub}</small></button>)
+            : <button type="button" disabled><small>No one matches “{q.trim()}”.</small></button>}</div></div>}</div>
+        <button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={15} />Add lead</button>
+      </div></header>
+    <div className="pad today">
+      <div className="stats">
+        <button type="button" className="stat" onClick={() => go.tab("numbers")}><span>Won · last 30 days</span><b>{usd(L.wonValue)}</b><small className={L.won ? "up" : ""}>{L.won ? `${L.won} ${L.won === 1 ? "job" : "jobs"} from Cinder leads` : "Your first win shows here"}</small></button>
+        <button type="button" className="stat" onClick={() => go.tab("invoices")}><span>Owed to you</span><b>{usd(owed)}</b><small className={late.length ? "down" : ""}>{late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"} past due` : sent.length ? `${sent.length} ${sent.length === 1 ? "invoice" : "invoices"} out` : "All paid up"}</small></button>
+        <button type="button" className="stat" onClick={() => go.tab("jobs")}><span>Quotes out</span><b>{usd(L.chasingValue)}</b><small>{L.chasing ? `${L.chasing} waiting · Cinder following up` : "Nothing waiting on an answer"}</small></button>
+        <button type="button" className="stat" onClick={() => go.tab("numbers")}><span>Leads answered</span><b>{L.answered}<small> / {L.leads}</small></b><small>{L.replySec != null ? `first reply in ${secs(L.replySec)}` : "Last 30 days"}</small></button>
+      </div>
+      <div className="cols">
+        <div className="col">
+          <section className="card">
+            <div className="hd"><h2>Needs you</h2><small>{actions.length ? `${actions.length} ${actions.length === 1 ? "thing" : "things"} · one tap each` : "Cinder is handling the rest"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>All jobs</button></div>
+            {actions.length ? actions.slice(0, 8).map(a => <div key={a.key} className="row">
+              <span className={"ic " + ICON[a.kind][1]}><Icon name={ICON[a.kind][0]} size={14} /></span>
+              <span style={{ minWidth: 0 }}><b>{a.title}</b><small>{a.sub}</small></span>
+              <button type="button" className={"btn sm" + (a.primary ? " ink" : "")} onClick={a.go}>{a.cta}</button>
+            </div>) : <div className="bd fine">Nothing waiting on you. New leads, late invoices and quotes to write land here.</div>}
+          </section>
+          <section className="card">
+            <div className="hd"><h2>This week</h2><small>{week.length ? `${week.filter(w => w.what === "estimate").length} estimates · ${week.filter(w => w.what !== "estimate").length} installs` : "Nothing booked"}</small><button type="button" className="link" onClick={() => go.tab("calendar")}>Calendar</button></div>
+            {week.length ? week.map(w => <button key={w.key} type="button" className="t" onClick={w.go}>
+              <time>{w.day}<br />{w.time}</time><span style={{ minWidth: 0 }}><b>{w.who} · {w.what}</b><small>{w.sub}</small></span><span className={"tag " + w.tag[1]}>{w.tag[0]}</span></button>)
+              : <div className="bd fine">Cinder books estimates where you&rsquo;re free as leads come in.</div>}
+          </section>
+        </div>
+        <div className="col">
+          <section className="card">
+            <div className="hd"><h2>Money</h2><button type="button" className="link" onClick={() => go.tab("invoices")}>Invoices</button></div>
+            <div style={{ padding: "6px 0 8px" }}>
+              <div className="bar"><span>Won · 30 days</span><i><b style={{ width: `${(L.wonValue / moneyMax) * 100}%` }} /></i><em>{short(L.wonValue)}</em></div>
+              <div className="bar"><span>Collected</span><i><b style={{ width: `${(paid30 / moneyMax) * 100}%`, background: "var(--green)" }} /></i><em>{short(paid30)}</em></div>
+              <div className="bar"><span>Owed</span><i><b style={{ width: `${(owed / moneyMax) * 100}%`, background: late.length ? "var(--red)" : "var(--g400)" }} /></i><em>{short(owed)}</em></div>
+              <div className="bar"><span>Quoted</span><i><b style={{ width: `${(L.chasingValue / moneyMax) * 100}%`, background: "#c6c9ce" }} /></i><em>{short(L.chasingValue)}</em></div>
+            </div>
+          </section>
+          <section className="card">
+            <div className="hd"><h2>Where jobs came from</h2><small>last 4 months</small></div>
+            {sources.length ? <div style={{ padding: "6px 0 8px" }}>{sources.map(r => <div key={r.source} className="bar"><span>{r.label}</span><i><b style={{ width: `${((r.wonValue || r.leads) / srcMax) * 100}%`, background: r.wonValue ? "var(--ink)" : "#c6c9ce" }} /></i><em>{r.wonValue ? short(r.wonValue) : `${r.leads} ${r.leads === 1 ? "lead" : "leads"}`}</em></div>)}</div>
+              : <div className="bd fine">Once leads come in, this shows which source pays.</div>}
+          </section>
+          <section className="card">
+            <div className="hd"><h2>Cinder this week</h2></div>
+            <div className="row"><span className="ic"><Icon name="bolt" size={14} /></span><span><b>{lastWeek ? `${lastWeek.leads} ${lastWeek.leads === 1 ? "lead" : "leads"} answered, ${lastWeek.booked} ${lastWeek.booked === 1 ? "estimate" : "estimates"} booked` : "Waiting for the first lead"}</b><small>{L.replySec != null ? `Typical first reply in ${secs(L.replySec)}, day or night` : "Day or night"}</small></span></div>
+            <div className="row"><span className="ic"><Icon name="clock" size={14} /></span><span><b>{L.chasing ? `${L.chasing} ${L.chasing === 1 ? "quote" : "quotes"} being followed up` : "No quotes waiting"}</b><small>{L.chasing ? `${usd(L.chasingValue)} open · stops the moment they reply` : "Quoted jobs get four follow-ups"}</small></span></div>
+            <div className="row"><span className="ic"><Icon name="user" size={14} /></span><span><b>{d.unreadFromSam ? `Sam wrote to you` : "Sam Ward, your rep"}</b><small>{d.unreadFromSam ? `${d.unreadFromSam} new` : "Hours, prices, wording changes"}</small></span><button type="button" className="btn sm" onClick={() => go.tab("sam")}>Open</button></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </>;
+}

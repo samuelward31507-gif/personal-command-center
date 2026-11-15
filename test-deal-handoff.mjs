@@ -49,7 +49,7 @@ const deals = readFileSync("app/api/deals/route.ts", "utf8");
 ok(() => assert.match(deals, /stage === "won" \? await autoHandoff\(/, "creating a won deal starts delivery"));
 ok(() => assert.match(deals, /body\.stage === "won" \? await autoHandoff\(/, "moving a deal to won starts delivery"));
 ok(() => assert.match(deals, /error instanceof HandoffNotReady \? error\.message : "Delivery setup failed/, "raw database errors never reach the client"));
-const pipeline = readFileSync("app/crm/pipeline/page.tsx", "utf8");
+const pipeline = readFileSync("app/(agency)/crm/pipeline/page.tsx", "utf8");
 ok(() => assert.doesNotMatch(pipeline, /\/api\/project-milestones/, "pipeline no longer seeds a second, duplicate checklist"));
 ok(() => assert.match(pipeline, /No payment was recorded/));
 
@@ -57,7 +57,7 @@ ok(() => assert.match(pipeline, /No payment was recorded/));
 const fin = readFileSync("app/api/finance/route.ts", "utf8");
 ok(() => assert.match(fin, /stage NOT IN \('won','lost','nurture'\)/, "open pipeline excludes won, lost and nurture"));
 ok(() => assert.match(fin, /dueNext30/));
-const finUi = readFileSync("app/crm/finance/page.tsx", "utf8");
+const finUi = readFileSync("app/(agency)/crm/finance/page.tsx", "utf8");
 ok(() => assert.match(finUi, /Mark paid/, "payments are recorded manually, never verified automatically"));
 ok(() => assert.match(finUi, /Coming from the pipeline/));
 

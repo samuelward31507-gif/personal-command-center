@@ -1,0 +1,283 @@
+"use client";
+
+// The Cinder app for client owners. Sign in with a text code (or straight from the portal link), then one shell:
+// a sidebar on a desk, a tab bar on a phone, and the same screens on both. Today, Inbox, Jobs, Calendar,
+// Customers, Invoices, Numbers, and a line to Sam. Installs to the home screen like an app (/app.webmanifest).
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import "./app.css";
+import { Wordmark } from "../brand";
+import { demoApi } from "./demo";
+import { Avatar, Icon, Spinner, fmtPhone, initials, typePhone, useToast } from "./parts";
+import type { Biz, Data, Go, Tab } from "./types";
+import { splitAppointments } from "@/lib/client-schedule";
+import { TodayScreen } from "./today";
+import { JobsScreen } from "./jobs";
+import { RecordPage } from "./record";
+import { InboxScreen, ThreadView } from "./inbox";
+import { CalendarScreen } from "./calendar";
+import { CustomersScreen, InvoicesScreen, InvoiceSheet, BillingSettings } from "./money";
+import { NumbersScreen } from "./numbers";
+import { Onboarding } from "./setup";
+import { AddLeadSheet, ImportSheet, WinbackSheet } from "./sheets";
+
+// The example business (/app?demo=1) answers every call in the browser; nothing reaches the server.
+const DEMO_KEY = "cinder-demo";
+let demoOn = false;
+const demoStart = () => { demoOn = true; try { sessionStorage.setItem(DEMO_KEY, "1"); } catch { /* private mode */ } };
+const demoStop = () => { demoOn = false; try { sessionStorage.removeItem(DEMO_KEY); } catch { /* private mode */ } };
+
+async function api<T>(path: string, body?: unknown): Promise<T> {
+  if (demoOn && !path.startsWith("/api/app/auth") && !path.startsWith("/api/app/push")) return await demoApi(path, (body ?? {}) as Record<string, unknown>) as T;
+  const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : { cache: "no-store" });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(j.error || "Something went wrong.") as Error & { status?: number }; e.status = r.status; throw e; }
+  return j as T;
+}
+
+// ---------- Notifications ----------
+type PushState = "unsupported" | "ios-install" | "off" | "on" | "blocked";
+const urlKey = (k: string) => { const p = "=".repeat((4 - (k.length % 4)) % 4); const b = atob((k + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...b].map(c => c.charCodeAt(0))); };
+function pushState(): PushState {
+  if (typeof window === "undefined") return "unsupported";
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return ios && !standalone ? "ios-install" : "unsupported";
+  return Notification.permission === "granted" ? "on" : Notification.permission === "denied" ? "blocked" : "off";
+}
+async function turnOnPush(project: string): Promise<string | null> {
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") return "Notifications are blocked. Turn them on for Cinder in your phone's settings.";
+    const reg = await navigator.serviceWorker.register("/app-sw.js", { scope: "/app" });
+    await navigator.serviceWorker.ready;
+    const { publicKey } = await api<{ publicKey: string }>("/api/app/push");
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlKey(publicKey) });
+    await api("/api/app/push", { p: project, action: "subscribe", sub: sub.toJSON() });
+    return null;
+  } catch (e) { return e instanceof Error ? e.message : "Couldn't turn on notifications."; }
+}
+
+// ---------- Sign in ----------
+function CodeBoxes({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled?: boolean }) {
+  const [focus, setFocus] = useState(true);
+  return <div className="otp">
+    {Array.from({ length: 6 }, (_, i) => <span key={i} className={focus && i === Math.min(value.length, 5) ? "on" : ""} aria-hidden="true">{value[i] ?? ""}</span>)}
+    <input aria-label="6-digit code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={value} autoFocus disabled={disabled}
+      onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} onChange={e => onChange(e.target.value.replace(/\D/g, "").slice(0, 6))} />
+  </div>;
+}
+
+function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
+  const [phone, setPhone] = useState(""), [code, setCode] = useState(""), [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false), [err, setErr] = useState(""), [wait, setWait] = useState(0);
+  useEffect(() => { if (!wait) return; const t = setTimeout(() => setWait(w => w - 1), 1000); return () => clearTimeout(t); }, [wait]);
+  const send = useCallback(async () => {
+    setBusy(true); setErr("");
+    try { await api("/api/app/auth", { action: "send", phone }); setSent(true); setWait(30); }
+    catch (e) { setErr(e instanceof Error ? e.message : "Something went wrong."); } finally { setBusy(false); }
+  }, [phone]);
+  const verify = useCallback(async (c: string) => {
+    setBusy(true); setErr("");
+    try { await api("/api/app/auth", { action: "verify", phone, code: c }); onIn(); }
+    catch (e) { setErr(e instanceof Error ? e.message : "Something went wrong."); setCode(""); } finally { setBusy(false); }
+  }, [phone, onIn]);
+  const digits = phone.replace(/\D/g, "").length;
+  return <main className="gate">
+    <Wordmark className="word" />
+    <div className="box">
+      <h1>{sent ? "Check your texts" : "Sign in"}</h1>
+      <p>{sent ? <>We texted a code to <b className="t-em">{fmtPhone(phone)}</b>.</> : "Use the cell number you gave Sam."}</p>
+      <form onSubmit={e => { e.preventDefault(); if (!sent) void send(); else if (code.length === 6) void verify(code); }}>
+        {!sent ? <label className="inwrap"><span className="sr">Cell number</span><i>+1</i>
+          <input inputMode="tel" autoComplete="tel-national" placeholder="(720) 555-0148" value={phone} onChange={e => { setPhone(typePhone(e.target.value)); setErr(""); }} autoFocus /></label>
+          : <CodeBoxes value={code} disabled={busy} onChange={v => { setCode(v); setErr(""); if (v.length === 6) void verify(v); }} />}
+        {err && <p className="err" role="alert">{err}</p>}
+        <button type="submit" className="btn ink lg full" disabled={busy || (!sent ? digits < 10 : code.length !== 6)}>{busy ? <Spinner /> : sent ? "Sign in" : "Continue"}</button>
+      </form>
+      {!sent ? <div className="alt"><button type="button" className="link" onClick={onDemo}>See an example business</button></div>
+        : <div className="alt">
+          <button type="button" className="link" disabled={wait > 0 || busy} onClick={() => void send()}>{wait > 0 ? `Resend in ${wait}s` : "Resend code"}</button><span>·</span>
+          <button type="button" className="link" onClick={() => { setSent(false); setCode(""); setErr(""); }}>Change number</button>
+        </div>}
+    </div>
+    <div className="foot"><p>Have a portal link from Sam? It signs you in too.</p></div>
+  </main>;
+}
+
+// ---------- The app ----------
+type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job" } | { kind: "thread"; id: string } | null;
+const MORE: Tab[] = ["customers", "invoices", "numbers", "sam"];
+
+export default function CinderApp() {
+  const [state, setState] = useState<"loading" | "out" | "in">("loading");
+  const [d, setD] = useState<Data | null>(null);
+  const [project, setProject] = useState("");
+  const [tab, setTab] = useState<Tab>("today");
+  const [open, setOpen] = useState<Open>(null);
+  const [wide, setWide] = useState(false);
+  useEffect(() => { const m = matchMedia("(min-width: 900px)"); const f = () => setWide(m.matches); f(); m.addEventListener("change", f); return () => m.removeEventListener("change", f); }, []);
+  const { show: toast, node: toastNode } = useToast();
+  const [push, setPush] = useState<PushState>("unsupported");
+  const [demo, setDemo] = useState(false);
+  const [sheet, setSheet] = useState<"add" | "import" | "billing" | "winback" | null>(null);
+  const [inv, setInv] = useState<string | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false), [setupDone, setSetupDone] = useState(false);
+  const exitDemo = () => { demoStop(); setDemo(false); setD(null); setOpen(null); setProject(""); setState("out"); };
+
+  useEffect(() => {
+    setPush(pushState());
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/app-sw.js", { scope: "/app" }).catch(() => {});
+  }, []);
+  async function enablePush() { const err = await turnOnPush(project); setPush(pushState()); toast(err ?? "Notifications are on.", !!err); }
+
+  const load = useCallback(async (p = project, t = tab) => {
+    try { const j = await api<Data>(`/api/app/data?p=${p}${t === "sam" ? "&tab=sam" : t === "calendar" ? "&tab=cal" : ""}`); setD(j); setProject(j.project); setState("in"); }
+    catch (e) { if ((e as { status?: number }).status === 401) setState("out"); }
+  }, [project, tab]);
+
+  useEffect(() => {
+    const q = new URLSearchParams(location.search), t = q.get("t");
+    (async () => {
+      let wasDemo = false; try { wasDemo = sessionStorage.getItem(DEMO_KEY) === "1"; } catch { /* private mode */ }
+      if (q.get("demo") === "1" || (wasDemo && !t)) { demoStart(); setDemo(true); } else if (t) demoStop();
+      if (t) await api("/api/app/auth", { action: "link", token: t }).catch(() => null);
+      // Opened from a notification: go straight to that conversation or tab.
+      const th = q.get("thread"), tb = q.get("tab");
+      if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen({ kind: "thread", id: th });
+      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", invoices: "invoices", customers: "customers" };
+      if (tb && map[tb]) setTab(map[tb]);
+      if (location.search) try { history.replaceState(null, "", "/app"); } catch { /* keep the URL */ }
+      await load("", tb && map[tb] ? map[tb] : "today");
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => { if (state !== "in") return; const i = setInterval(() => void load(), 20000); return () => clearInterval(i); }, [state, load]);
+
+  const goTab = useCallback((t: Tab) => { setTab(t); setOpen(null); window.scrollTo(0, 0); if (t === "sam" || t === "calendar") void load(project, t); }, [load, project]);
+  const go: Go = useMemo(() => ({
+    tab: goTab,
+    record: (id, opts) => { setOpen({ kind: "record", id, ask: opts?.ask, view: opts?.view }); window.scrollTo(0, 0); },
+    thread: id => { setOpen(wide ? { kind: "record", id, view: "activity" } : { kind: "thread", id }); window.scrollTo(0, 0); },
+    invoice: id => setInv(id),
+    addLead: () => setSheet("add"), importCustomers: () => setSheet("import"), billing: () => setSheet("billing"),
+    setup: () => { setSetupOpen(true); window.scrollTo(0, 0); },
+  }), [goTab, wide]);
+
+  const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
+  if (state === "loading") return <div className="load"><Wordmark /></div>;
+  if (state === "out") return <SignIn onIn={() => void load("")} onDemo={() => { demoStart(); setDemo(true); setTab("today"); void load("", "today"); }} />;
+  if (!d) return null;
+
+  const L = d.live;
+  const bizName = d.business || d.businesses.find(b => b.project_id === project)?.name || "";
+  const biz: Biz = { reviewLink: d.setup?.has_review_link === "yes" || !!d.hasReviewLink, number: d.setup?.has_number === "yes" || !!d.number, owner: d.owner, business: bizName,
+    priceBook: d.setup?.price_book || "", taxRate: d.setup?.tax_rate || "", payLink: !!d.setup?.pay_link, calendar: d.setup?.has_calendar === "yes" || !!d.calendar?.connected, trade: d.setup?.trade || "", canCall: d.canCall };
+  const owed = (d.invoices ?? []).filter(i => i.status === "sent").length;
+  const reload = () => load(project, tab);
+  const invNow = inv ? ((d.invoices ?? []).find(i => i.id === inv) ?? null) : null;
+
+  if ((setupOpen || (!demo && !setupDone && d.setup && !d.setup.onboarded_at)) && !open) return <Onboarding project={project} initial={d.setup ?? {}} api={api}
+    onDone={() => setSetupDone(true)} onClose={() => { setSetupOpen(false); setSetupDone(true); setTab("jobs"); window.scrollTo(0, 0); void load(project, "jobs"); }} />;
+
+  const demoBar = demo && <div className="demo"><span>Example business · sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>;
+  const navItems: { k: Tab; l: string; ic: string; n?: number; hot?: boolean }[] = [
+    { k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs, hot: true }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length },
+    { k: "customers", l: "Customers", ic: "users" }, { k: "invoices", l: "Invoices", ic: "invoice", n: owed }, { k: "numbers", l: "Numbers", ic: "bars" },
+  ];
+  const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
+  const phoneTab: Tab = MORE.includes(tab) ? "more" : tab;
+
+  let page: React.ReactNode;
+  if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
+  else if (open?.kind === "record") page = <RecordPage key={open.id} id={open.id} ask={open.ask} view={open.view} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
+  else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} />;
+  else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
+  else if (tab === "jobs") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} onWinback={() => setSheet("winback")} />;
+  else if (tab === "calendar") page = <CalendarScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
+  else if (tab === "customers") page = <CustomersScreen d={d} go={go} />;
+  else if (tab === "invoices") page = <InvoicesScreen d={d} go={go} />;
+  else if (tab === "numbers") page = <NumbersScreen d={d} />;
+  else if (tab === "more") page = <MoreScreen d={d} go={go} owed={owed} />;
+  else page = <SamScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} push={push} onPush={() => void enablePush()} demo={demo} onSignOut={async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); }} />;
+
+  return <div className="shell">
+    <nav className="side" aria-label="Sections">
+      <div className="brand"><Wordmark className="word" /><button type="button" className="btn ghost sm ic" aria-label="Find anyone" title="Find anyone" onClick={() => goTab("today")}><Icon name="search" size={15} /></button></div>
+      <div className="biz" style={{ position: "relative" }}>
+        <span><span className="av sm ink">{initials(bizName || "C").charAt(0)}</span>{bizName || "Your business"}</span>
+        {d.businesses.length > 1 ? <><Icon name="sort" size={14} className="mut" /><select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select></> : null}
+      </div>
+      {navItems.map(it => <button key={it.k} type="button" className={"nav" + (tab === it.k && !open ? " on" : "")} aria-current={tab === it.k && !open ? "page" : undefined} onClick={() => goTab(it.k)}>
+        <Icon name={it.ic} size={16} />{it.l}{it.n ? <em className={it.hot ? "hot" : ""}>{it.n}</em> : null}</button>)}
+      <div className="foot">
+        <button type="button" className={"nav" + (tab === "sam" && !open ? " on" : "")} onClick={() => goTab("sam")}><span className="av sm ink">S</span>Sam Ward{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : <em>rep</em>}</button>
+        <button type="button" className="me" onClick={() => goTab("sam")}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{d.owner || "You"}</b><small>Owner · settings</small></span></button>
+      </div>
+    </nav>
+    <div className="main">
+      {demoBar}
+      <div className="page" role="main">{page}</div>
+    </div>
+    <nav className="tabs" aria-label="Sections">
+      {phoneTabs.map(t => <button key={t.k} type="button" className={phoneTab === t.k && !open ? "on" : ""} aria-current={phoneTab === t.k && !open ? "page" : undefined} onClick={() => goTab(t.k)}>
+        <Icon name={t.ic} size={23} />{t.l}{t.n ? <em>{t.n}</em> : null}</button>)}
+    </nav>
+    {sheet === "add" && <AddLeadSheet trade={biz.trade} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
+    {sheet === "import" && <ImportSheet project={project} api={api} toast={toast} reload={reload} customers={d.customers ?? []} business={bizName} onClose={() => setSheet(null)} />}
+    {sheet === "billing" && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
+    {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
+    {invNow && <InvoiceSheet key={invNow.id + invNow.status} inv={invNow} customer={invNow.customer || fmtPhone(invNow.phone)} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
+    {toastNode}
+  </div>;
+}
+
+// ---------- More (phone) ----------
+function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
+  const items: { k: Tab; l: string; s: string; ic: string; n?: number }[] = [
+    { k: "customers", l: "Customers", s: `${d.customers?.length ?? 0} people`, ic: "users" },
+    { k: "invoices", l: "Invoices", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
+    { k: "numbers", l: "Numbers", s: "What Cinder brought in", ic: "bars" },
+    { k: "sam", l: "Sam and settings", s: d.unreadFromSam ? `${d.unreadFromSam} new from Sam` : "Your rep, prices, notifications", ic: "user", n: d.unreadFromSam },
+  ];
+  return <>
+    <header className="ph"><h1>More</h1></header>
+    <div className="pad"><div className="card">{items.map(it => <button key={it.k} type="button" className="row" onClick={() => go.tab(it.k)}>
+      <span className="ic"><Icon name={it.ic} size={14} /></span><span><b>{it.l}</b><small>{it.s}</small></span>{it.n ? <span className="tag ember">{it.n}</span> : <Icon name="fwd" size={16} className="mut" />}</button>)}</div></div>
+  </>;
+}
+
+// ---------- Sam and settings ----------
+function SamScreen({ d, biz, project, api: call, toast, reload, go, push, onPush, demo, onSignOut }: { d: Data; biz: Biz; project: string; api: typeof api; toast: (t: string, bad?: boolean) => void; reload: () => Promise<void>; go: Go; push: PushState; onPush: () => void; demo: boolean; onSignOut: () => void }) {
+  const [msg, setMsg] = useState("");
+  const agoText = (iso: string) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 60 ? `${Math.max(1, m)}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+  return <>
+    <header className="ph"><h1>Sam</h1><span className="sub">Your Cinder rep · hours, prices, wording, questions</span></header>
+    <div className="pad" style={{ display: "grid", gap: 16, gridTemplateColumns: "minmax(0, 1fr)", maxWidth: 1100 }}>
+      <section className="card">
+        <div className="hd"><span className="av ink">S</span><h2>Sam Ward</h2><small>Your Cinder rep</small></div>
+        {d.messages.length > 0 ? <div className="sam-msgs">{d.messages.map((m, i) => <article key={i} className="sam-msg">
+          {m.author === "client" ? <Avatar name={d.owner || "You"} /> : <span className="av ink">S</span>}
+          <div><header><b>{m.author === "client" ? "You" : "Sam Ward"}</b><time>{agoText(m.created_at)}</time></header><p>{m.body}</p></div></article>)}</div>
+          : <div className="bd"><p className="fine">Write Sam about anything: texting hours, prices, how Cinder answers a question, a number to add.</p></div>}
+        <form className="bd" style={{ paddingTop: 0 }} onSubmit={async e => { e.preventDefault(); if (!msg.trim()) return; try { await call("/api/app/act", { p: project, action: "message", body: msg }); setMsg(""); toast("Sent to Sam."); void reload(); } catch (er) { toast(er instanceof Error ? er.message : "Didn't send.", true); } }}>
+          <div className="compose" style={{ position: "static", padding: 0 }}><div className="box">
+            <textarea rows={2} value={msg} onChange={e => setMsg(e.target.value)} placeholder="Message Sam" aria-label="Message to Sam" />
+            <div className="tools"><button type="submit" className="btn ink sm send" disabled={!msg.trim()}><Icon name="send" size={14} />Send</button></div>
+          </div></div>
+        </form>
+      </section>
+      <section className="card">
+        <div className="hd"><h2>Settings</h2></div>
+        <ul className="settings">
+          <li><span>Business</span><b>{biz.business}</b></li>
+          <li><span>Prices and business details</span><button type="button" className="btn sm" onClick={go.setup}>Edit setup</button></li>
+          <li><span>Invoices and payments</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
+          {d.number && <li><span>Your Cinder number</span><b>{fmtPhone(d.number)}</b></li>}
+          <li><span>Notifications</span>{push === "on" ? <span className="tag green">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <b className="mut" style={{ fontWeight: 400 }}>{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</b>}</li>
+          <li><span>Import customers</span><button type="button" className="btn sm" onClick={go.importCustomers}>Import</button></li>
+          <li><span /><button type="button" className="btn sm" onClick={onSignOut}><Icon name="out" size={14} />{demo ? "Leave the example" : "Sign out"}</button></li>
+        </ul>
+      </section>
+    </div>
+  </>;
+}

@@ -47,7 +47,7 @@ ok(() => assert.doesNotMatch(api, /status\s*=\s*'paid'|DELETE FROM/i, "never mar
 ok(() => assert.ok((api.match(/owner_id = \$\{user\.id\}/g) || []).length >= 10, "owner-scoped"));
 ok(() => assert.match(api, /if \(!user\) return fail\("Unauthorized", 401\)/));
 ok(() => assert.match(api, /runDealHandoff/, "won runs the onboarding handoff"));
-const page = readFileSync("app/crm/deals/[id]/page.tsx", "utf8");
+const page = readFileSync("app/(agency)/crm/deals/[id]/page.tsx", "utf8");
 ok(() => assert.match(page, /confirm\("Mark accepted\?/, "accepted asks first"));
 ok(() => assert.match(page, /confirm\("Mark the agreement signed\?/, "signed asks first"));
 ok(() => assert.match(page, /not legal advice/));

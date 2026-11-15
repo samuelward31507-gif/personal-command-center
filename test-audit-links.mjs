@@ -20,7 +20,7 @@ const vercel = JSON.parse(readFileSync("vercel.json", "utf8"));
 ok(() => assert.equal(vercel.crons[0].path, "/api/cron/pre-audit"));
 ok(() => assert.match(cronRoute, /logRun\(sql, "pre-audit", "cron", "unauthorized"/, "refused cron calls are recorded, so a silent night is visible"));
 ok(() => assert.match(readFileSync("app/api/pre-audit/route.ts", "utf8"), /if \(!user\) return fail\("Unauthorized", 401\)/, "manual run requires sign-in"));
-const prep = readFileSync("app/crm/preparation/page.tsx", "utf8");
+const prep = readFileSync("app/(agency)/crm/preparation/page.tsx", "utf8");
 ok(() => assert.match(prep, /proposal:"Proposal"/, "proposal artifacts have a label (no crash)"));
 ok(() => assert.match(prep, /types\[a\.type\]\?\?a\.type/, "unknown types never crash the list"));
 console.log(`Audit link + pre-audit regression checks passed (${n} assertions).`);

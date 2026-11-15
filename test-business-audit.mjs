@@ -108,7 +108,7 @@ ok(() => assert.match(route, /siteCheckLines\(check\)/, "the homepage is checked
 ok(() => assert.match(route, /## Future upsells/, "report includes future upsells"));
 ok(() => assert.doesNotMatch(route, /Full business audit:/, "ten-area audit section removed"));
 ok(() => assert.match(route, /futureUpsells: meta\?\.futureUpsells/, "upsells returned to the UI"));
-const ui = readFileSync("app/crm/audit/page.tsx", "utf8");
+const ui = readFileSync("app/(agency)/crm/audit/page.tsx", "utf8");
 ok(() => assert.doesNotMatch(ui, /type="url"/, "browser URL validation no longer blocks bare domains"));
 
 // --- Contact panel: section extraction from saved reports ---
@@ -121,21 +121,21 @@ ok(() => assert.equal(reportSection("## 1. Executive verdict\nx", "Verdict"), ""
 const artifactsApi = readFileSync("app/api/research-artifacts/route.ts", "utf8");
 ok(() => assert.match(artifactsApi, /r\.contact_id = \$\{contactFilter/, "artifacts can be filtered by contact"));
 ok(() => assert.match(artifactsApi, /WHERE r\.owner_id = \$\{user\.id\}/, "contact filter stays owner-scoped"));
-const contactsUi = readFileSync("app/crm/page.tsx", "utf8");
+const contactsUi = readFileSync("app/(agency)/crm/page.tsx", "utf8");
 ok(() => assert.match(contactsUi, /type=audit_prep&contactId=/, "contact detail loads its audits"));
 ok(() => assert.match(contactsUi, /reportSection\(latestAudit\.content,"Verdict"\)/, "contact detail shows the latest audit verdict"));
 
-const reportUi = readFileSync("app/crm/audit/audit-report.tsx", "utf8");
-ok(() => assert.match(readFileSync("app/crm/audit/page.tsx", "utf8"), /<AuditReport audit=\{audit\} \/>/, "results use the structured report view"));
-ok(() => assert.doesNotMatch(readFileSync("app/crm/audit/page.tsx", "utf8"), /whiteSpace: "pre-wrap"[^\n]*\{audit\.content\}/, "raw markdown dump removed"));
+const reportUi = readFileSync("app/(agency)/crm/audit/audit-report.tsx", "utf8");
+ok(() => assert.match(readFileSync("app/(agency)/crm/audit/page.tsx", "utf8"), /<AuditReport audit=\{audit\} \/>/, "results use the structured report view"));
+ok(() => assert.doesNotMatch(readFileSync("app/(agency)/crm/audit/page.tsx", "utf8"), /whiteSpace: "pre-wrap"[^\n]*\{audit\.content\}/, "raw markdown dump removed"));
 ok(() => assert.doesNotMatch(reportUi, /dangerouslySetInnerHTML/, "report renderer never injects HTML"));
 ok(() => assert.match(reportUi, /<details/, "sources are collapsed by default"));
 ok(() => assert.match(reportUi, /LATER — NOT THE FIRST PITCH/, "upsells clearly marked as later"));
 
-const sidebar = readFileSync("app/cinder-sidebar.tsx", "utf8");
+const sidebar = readFileSync("app/(agency)/cinder-sidebar.tsx", "utf8");
 ok(() => assert.match(sidebar, /onNavigate && \(key === "home" \|\| key === "schedule"\)\) \{ e\.preventDefault\(\); onNavigate\(key\); \}/, "sidebar only uses in-page views for Home and My day"));
 ok(() => assert.match(sidebar, /\["preparation", "Research", "search", "\/crm\/preparation"\]/, "Research is in the sidebar"));
-ok(() => assert.match(readFileSync("app/crm/preparation/page.tsx", "utf8"), /href="\/crm\/audit"/, "Business audit opens from Research"));
-ok(() => assert.match(readFileSync("app/command-bar.tsx", "utf8"), /\["Business audit", "\/crm\/audit"/, "Business audit is in search"));
+ok(() => assert.match(readFileSync("app/(agency)/crm/preparation/page.tsx", "utf8"), /href="\/crm\/audit"/, "Business audit opens from Research"));
+ok(() => assert.match(readFileSync("app/(agency)/command-bar.tsx", "utf8"), /\["Business audit", "\/crm\/audit"/, "Business audit is in search"));
 
 console.log(`Business audit regression checks passed (${n} assertions).`);

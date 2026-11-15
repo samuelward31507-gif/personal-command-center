@@ -148,7 +148,7 @@ ok(() => assert.match(route, /if \(!user\) return fail\("Unauthorized", 401\)/))
 ok(() => assert.equal((route.match(/owner_id = \$\{owner\}/g) || []).length >= 10, true, "every query is owner-scoped"));
 ok(() => assert.match(route, /NOT EXISTS \(SELECT 1 FROM public\.contact_suppressions/, "suppressed contacts never appear as follow-ups"));
 ok(() => assert.doesNotMatch(route, /provider_event_id|provider\b,/, "no dependency on Cal.ai columns missing in production"));
-const ui = readFileSync("app/my-day-queue.tsx", "utf8");
+const ui = readFileSync("app/(agency)/my-day-queue.tsx", "utf8");
 ok(() => assert.match(ui, /\/api\/contacts\/outcome/, "outcomes logged from the queue"));
 ok(() => assert.match(ui, /confirm\(`Mark \$\{item\.contact\.name\} do not contact\?/, "do-not-contact confirmed"));
 ok(() => assert.doesNotMatch(ui, /sms|text message/i, "queue never drafts or sends texts"));

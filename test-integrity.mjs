@@ -22,7 +22,7 @@ ok(() => assert.equal(isAllowedUser({ id: "owner-1" }, env), true, "the owner ne
 const walk = d => readdirSync(d).flatMap(f => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
 const routes = walk("app/api").filter(p => p.endsWith(".ts"));
 ok(() => assert.deepEqual(routes.filter(p => read(p).includes("auth.getSession()")), [], "routes must use getAllowedSession()"));
-ok(() => assert.doesNotMatch(read("app/sign-in/page.tsx"), /signUp/, "no public sign-up"));
+ok(() => assert.doesNotMatch(read("app/(agency)/sign-in/page.tsx"), /signUp/, "no public sign-up"));
 
 // Won never invents a signature: only e-sign or the explicit "Signed" action set signed_at.
 for (const f of ["app/api/deals/route.ts", "app/api/deal-workspace/route.ts", "app/api/ask/execute/route.ts"]) {
