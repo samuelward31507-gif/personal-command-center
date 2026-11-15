@@ -140,10 +140,10 @@ export function CustomersView({ list, onOpen }: { list: Customer[]; onOpen: (c: 
   const [q, setQ] = useState(""), [f, setF] = useState<"all" | "customers" | "owes">("all");
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase(), d = s.replace(/\D/g, "");
-    return list.filter(c => (f === "customers" ? c.jobs > 0 : f === "owes" ? c.owed > 0 : true))
+    return list.filter(c => (f === "customers" ? c.jobs > 0 || c.stage === "won" : f === "owes" ? c.owed > 0 : true))
       .filter(c => !s || c.name.toLowerCase().includes(s) || c.address.toLowerCase().includes(s) || (d.length >= 3 && c.phone.replace(/\D/g, "").includes(d)));
   }, [list, q, f]);
-  const spent = list.reduce((a, c) => a + c.spent, 0), owed = list.reduce((a, c) => a + c.owed, 0), paying = list.filter(c => c.jobs > 0).length;
+  const spent = list.reduce((a, c) => a + c.spent, 0), owed = list.reduce((a, c) => a + c.owed, 0), paying = list.filter(c => c.jobs > 0 || c.stage === "won").length;
   return <>
     <Telemetry label="Customers" items={[{ k: "People", v: list.length }, { k: "Customers", v: paying }, { k: "Lifetime", v: short(spent) }, { k: "Owed", v: short(owed) }]} />
     <div className="cu-bar">
@@ -158,7 +158,7 @@ export function CustomersView({ list, onOpen }: { list: Customer[]; onOpen: (c: 
       <span className="ca-av sm" data-tone={tone(name)} aria-hidden="true">{initials(name)}</span>
       <span className="cu-mid"><b>{name}</b><small>{c.address || c.line || fmtPhone(c.phone)}</small></span>
       <span className="cu-c">{fmtPhone(c.phone)}</span>
-      <span className="cu-c">{c.owed > 0 ? <span className="jb-tag red">Owes you</span> : c.jobs > 0 ? <span className="jb-tag green">Customer</span> : c.open_quote ? <span className="jb-tag blue">Quoted</span> : <span className="jb-tag">Lead</span>}</span>
+      <span className="cu-c">{c.owed > 0 ? <span className="jb-tag red">Owes you</span> : c.jobs > 0 || c.stage === "won" ? <span className="jb-tag green">Customer</span> : c.open_quote ? <span className="jb-tag blue">Quoted</span> : <span className="jb-tag">Lead</span>}</span>
       <span className="cu-c">{day(c.last)}</span>
       <span className="cu-num">{c.owed > 0 ? <><b className="owe">{short(c.owed)}</b><small>owed</small></> : c.spent > 0 ? <><b>{short(c.spent)}</b><small>{c.jobs} {c.jobs === 1 ? "job" : "jobs"}</small></>
         : c.open_quote ? <><b className="q">{short(c.open_quote)}</b><small>quoted</small></> : <small className="cu-ph">{day(c.last)}</small>}</span>

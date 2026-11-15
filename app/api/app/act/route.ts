@@ -3,7 +3,7 @@ import { markNoShow, sendReviewRequest, sendToCustomer } from "@/lib/client-runt
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
-import { addLead, moveStage, saveCard, saveOwnerSetup, setJobCosts, setJobStep } from "@/lib/client-crm-run";
+import { addLead, importCustomers, moveStage, saveCard, saveOwnerSetup, setJobCosts, setJobStep } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 
@@ -26,6 +26,7 @@ const UUID = /^[0-9a-f-]{36}$/i;
  *    can approve; won with install and review asks for a Google review the day after the install.
  *  quotelink { thread, note? } — text (or re-text) the quote link. reviewnow { thread } — the job's done: ask for the review now.
  *  winback { body } — the owner's text to past customers who agreed to offers.
+ *  import { rows, as?, consent?, from? } — the owner's existing customers from a Jobber export or a spreadsheet, up to 250 a call; nobody gets texted.
  *  quotelines { thread, items, tax?, note?, send? } — the quote's lines (the owner sends it himself). install { thread, install, time?, days? } — on Google Calendar.
  *  invoice { thread } — a draft invoice for the job. invoicesave / invoicesend / invoiceset { invoice, ... } — edit, text it, paid | unpaid | void | pause | resume.
  */
@@ -35,7 +36,8 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({})) as { p?: string; action?: string; thread?: string; body?: string; status?: string; appt?: string; result?: string; amount?: string; review?: boolean; quote?: string;
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
     link?: boolean; note?: string; install?: string | null; send?: boolean;
-    items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown };
+    items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
+    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -45,6 +47,10 @@ export async function POST(req: Request) {
     if (b.action === "lead") {
       const r = await addLead(sql, c, { name: b.name, phone: b.phone, details: b.details, notes: b.notes, stage: b.stage });
       return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "import") {
+      const r = await importCustomers(sql, c, b.rows, { as: b.as, consent: b.consent, from: b.from });
+      return r.ok ? json({ ok: true, added: r.added, existing: r.existing, as: r.as }) : json({ error: r.error }, 400);
     }
     if (b.action === "stage" || b.action === "card") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);

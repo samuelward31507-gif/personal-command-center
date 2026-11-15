@@ -959,3 +959,28 @@ html body:not(#u) .jb-sheet-h { border-bottom: 1px solid #ececea !important; }
 html body:not(#u) .jb-who b { font: 600 18px/1.2 var(--head) !important; letter-spacing: -0.02em !important; }
 @media (min-width: 1100px) { html body:not(#u) .ca:has(.ca-demo) .jb-scrim { top: 42px; } html body:not(#u) .ca:has(.ca-demo) .jb-sheet { height: calc(100dvh - 42px); } }
 html body:not(#u) .jb-sheet-b > .jb-f.full .jb-in > i + input { padding-left: 22px !important; } html body:not(#u) .jb-sheet-b > .jb-f.full .jb-in > i { left: 8px; }
+
+/* ---------- Import customers: a file picker, what's in it, how they land ---------- */
+html body:not(#u) .im-drop { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 32px 20px; text-align: center; border: 1px dashed var(--line-2); border-radius: 14px; background: var(--bg); cursor: pointer; transition: border-color .15s, background .15s; }
+html body:not(#u) .im-drop:hover, html body:not(#u) .im-drop:focus-within { border-color: var(--ink); background: var(--card); }
+html body:not(#u) .im-drop input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+html body:not(#u) .im-drop svg { margin-bottom: 4px; color: var(--text-3); }
+html body:not(#u) .im-drop b { font-size: 15.5px; font-weight: 600; }
+html body:not(#u) .im-drop small { max-width: 38ch; color: var(--text-3); font-size: 13px; line-height: 1.45; }
+html body:not(#u) .im-paste { margin-top: 14px; color: var(--text-2) !important; font-size: 14px !important; }
+html body:not(#u) .im-counts { display: flex; flex-wrap: wrap; gap: 8px 26px; margin-top: 10px; }
+html body:not(#u) .im-counts dt { font-size: 12.5px; color: var(--text-3); }
+html body:not(#u) .im-counts dd { margin: 2px 0 0; font: 600 22px/1 var(--head); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+html body:not(#u) .im-rows { margin-top: 14px; border-top: 1px solid var(--line); }
+html body:not(#u) .im-rows > li { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+html body:not(#u) .im-row-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+html body:not(#u) .im-row-t b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body:not(#u) .im-row-t small { color: var(--text-3); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body:not(#u) .im-rows > li.im-more { justify-content: center; border-bottom: 0; color: var(--text-3); font-size: 13px; }
+html body:not(#u) .im-skipped { margin-top: 10px; color: var(--text-3); font-size: 13.5px; }
+html body:not(#u) .im-skipped summary { cursor: pointer; }
+html body:not(#u) .im-skipped li { padding: 4px 0 0 12px; }
+html body:not(#u) .im-check { display: flex; align-items: flex-start; gap: 12px; margin-top: 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
+html body:not(#u) .im-check input { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 2px; accent-color: var(--ink); }
+html body:not(#u) .im-check b { display: block; font-size: 14.5px; font-weight: 500; }
+html body:not(#u) .im-check small { display: block; margin-top: 3px; color: var(--text-3); font-size: 13px; line-height: 1.45; }

@@ -213,7 +213,7 @@ export type CardInvoice = { id: string; number: number; status: string; items: {
 
 // ---------- Where the jobs come from ----------
 export const SOURCE_LABEL: Record<string, string> = { missed_call: "Missed calls", text: "Texts", "web form": "Website form", "web chat": "Website chat", angi: "Angi", thumbtack: "Thumbtack",
-  facebook: "Facebook", google: "Google", yelp: "Yelp", nextdoor: "Nextdoor", owner: "Added by you", rehash: "Old leads", zapier: "Forms", referral: "Referrals" };
+  facebook: "Facebook", google: "Google", yelp: "Yelp", nextdoor: "Nextdoor", owner: "Added by you", import: "Imported", rehash: "Old leads", zapier: "Forms", referral: "Referrals" };
 export type SourceRow = { source: string; label: string; leads: number; booked: number; won: number; wonValue: number };
 /** Leads, estimates and won jobs per lead source, from the board itself: no setup, nothing to tag. Best earner first. */
 export function sourceReport(cards: Pick<Card, "source" | "stage" | "value" | "quote">[]): SourceRow[] {

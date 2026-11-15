@@ -9,6 +9,7 @@ import {
   draftItems, jobSteps, jobProgress, jobProfit, type Costs, type Card, type CardInvoice, type Details, type PriceBook, type Rate, type Stage,
 } from "@/lib/crm";
 import { dollars, totals, type Item } from "@/lib/billing";
+import { IMPORT_BATCH, importSummary, readImportCsv, type ImportAs, type ImportRead } from "@/lib/customer-import";
 import { BillingSettings, CustomersView, InvoiceSheet, InvoicesView, LineEditor, invoiceState, type Customer, type InvoiceRow } from "./billing-ui";
 
 export type { Card };
@@ -22,13 +23,13 @@ const tone = (s: string) => [...(s || "#")].reduce((a, ch) => a + ch.charCodeAt(
 const initials = (s: string) => s.replace(/[^A-Za-z ]/g, "").split(" ").filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "#";
 const short = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, "")}k` : money(n);
 const when = (iso: string) => new Date(iso).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" }).replace(":00", "");
-const SRC: Record<string, string> = { missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote", owner: "Added by you", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook", google: "Google", yelp: "Yelp", rehash: "Old lead" };
+const SRC: Record<string, string> = { missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote", owner: "Added by you", import: "Imported", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook", google: "Google", yelp: "Yelp", rehash: "Old lead" };
 
 function Svg({ d, size = 18 }: { d: React.ReactNode; size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{d}</svg>;
 }
 const I = {
-  plus: <path d="M12 5v14M5 12h14" />, link: <><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1.2 1.2" /><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1.2-1.2" /></>,
+  plus: <path d="M12 5v14M5 12h14" />, upload: <><path d="M12 16V4M6 10l6-6 6 6" /><path d="M4 20h16" /></>, link: <><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1.2 1.2" /><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1.2-1.2" /></>,
   star: <path d="m12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.4l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z" />, send: <path d="M4 12 20 4l-4 16-4-7z M12 13l8-9" />, eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="2.6" /></>,
   users: <><circle cx="9" cy="8.5" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 5.6a3.2 3.2 0 0 1 0 5.8M17.5 13.6A5.5 5.5 0 0 1 20.5 19" /></>, x: <path d="M6 6l12 12M18 6 6 18" />, back: <path d="M15 5l-7 7 7 7" />, check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
   ruler: <><rect x="3" y="8" width="18" height="8" rx="1.5" /><path d="M7 8v3M11 8v4M15 8v3M19 8v2" /></>, cal: <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></>,
@@ -204,7 +205,7 @@ const priceOf = (c: Card) => c.value ? short(c.value) : c.ballpark ? `~${short(c
 type Biz = { reviewLink: boolean; number: boolean; owner: string; business: string; priceBook: string; taxRate: string; payLink: boolean; calendar: boolean };
 
 export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, canCall, wide, biz, winback, customers = [], invoices = [], setup = {}, focus = null }: { focus?: { card?: string; stage?: "quoted" | "won"; invoice?: string; view?: "pipeline" | "customers" | "invoices"; n: number } | null; cards: Card[]; trade: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onOpen: (id: string) => void; canCall: boolean; wide: boolean; biz: Biz; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[]; setup?: Record<string, string> }) {
-  const [sel, setSel] = useState<string | null>(null), [adding, setAdding] = useState(false), [wb, setWb] = useState(false), [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Stage | null>(null);
+  const [sel, setSel] = useState<string | null>(null), [adding, setAdding] = useState(false), [importing, setImporting] = useState(false), [wb, setWb] = useState(false), [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Stage | null>(null);
   const [view, setView] = useState<"pipeline" | "customers" | "invoices">("pipeline");
   const [inv, setInv] = useState<{ id: string; customer: string } | null>(null), [billing, setBilling] = useState(false);
   // The open invoice is read fresh from the latest data, so a save or a send shows straight away.
@@ -239,6 +240,7 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
       <div className="jb-hello-acts">
         {view === "pipeline" && winback && winback.past > 0 && <button type="button" className="jb-ghost" onClick={() => setWb(true)}><Svg d={I.users} size={16} />Past customers</button>}
         {view === "invoices" && <button type="button" className="jb-ghost" onClick={() => setBilling(true)}>Pay link and tax</button>}
+        {view !== "invoices" && <button type="button" className="jb-ghost" onClick={() => setImporting(true)}><Svg d={I.upload} size={16} />Import</button>}
         {view !== "invoices" && <button type="button" className="jb-add" onClick={() => setAdding(true)}><Svg d={I.plus} size={16} />Add lead</button>}
       </div>
     </div>
@@ -269,6 +271,7 @@ export function JobsTab({ cards, trade, project, api, toast, reload, onOpen, can
       onInvoice={i => { setCust(null); setInv({ id: i.id, customer: custNow.name || fmtPhone(custNow.phone) }); }}
       call={() => void api("/api/app/act", { p: project, action: "call", thread: custNow.id }).then(() => toast("Calling your cell now."), e => toast(e instanceof Error ? e.message : "That didn't work.", true))} />}
     {adding && <AddLead trade={trade} project={project} api={api} toast={toast} reload={reload} onClose={() => setAdding(false)} />}
+    {importing && <ImportSheet project={project} api={api} toast={toast} reload={reload} customers={customers} business={biz.business} onClose={() => setImporting(false)} />}
     {inv && invNow && <InvoiceSheet key={invNow.id + invNow.status} inv={invNow} customer={inv.customer} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => setBilling(true)} />}
     {billing && <BillingSettings setup={setup} project={project} api={api} toast={toast} reload={reload} onClose={() => setBilling(false)} />}
     {wb && winback && <WinbackSheet w={winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setWb(false)} />}
@@ -525,6 +528,86 @@ function WinbackSheet({ w, biz, project, api, toast, reload, onClose }: { w: Win
         catch (e) { setErr(e instanceof Error ? e.message : "Didn't send."); } finally { setBusy(false); setArm(false); }
       }}>{busy ? <span className="ca-spin" /> : arm ? `Tap again to text ${many}` : `Send to ${many}`}</button></div>
     </> : <div className="wb-none"><b>No one to text yet</b><p>Customers who opt in on your website form show up here.</p></div>}
+  </Sheet>;
+}
+
+// ---------- Import customers ----------
+/**
+ * The owner's existing customers, from a Jobber export or any spreadsheet saved as CSV. The file is read right here
+ * in the browser so they see what's in it before anything is saved: who's ready, who's already on the board, who has
+ * no phone. Then it goes up in batches. Nobody gets a text.
+ */
+function ImportSheet({ project, api, toast, reload, onClose, customers, business }: { project: string; api: Api; toast: Toast; reload: () => Promise<void>; onClose: () => void; customers: Customer[]; business: string }) {
+  const [read, setRead] = useState<ImportRead | null>(null), [fileName, setFileName] = useState(""), [err, setErr] = useState("");
+  const [as, setAs] = useState<ImportAs>("customers"), [consent, setConsent] = useState(false), [busy, setBusy] = useState(false), [done, setDone] = useState(0);
+  const [paste, setPaste] = useState(false), [text, setText] = useState("");
+  const here = useMemo(() => new Set(customers.map(c => c.phone.replace(/\D/g, "").slice(-10))), [customers]);
+  const load = (name: string, body: string) => { const r = readImportCsv(body); if ("error" in r) { setRead(null); setErr(r.error); } else { setRead(r); setErr(""); setFileName(name); } };
+  const onFile = (f: File | undefined) => {
+    if (!f) return;
+    if (f.size > 5_000_000) { setErr("That file is over 5 MB. Export a smaller list, or just the tags you need."); return; }
+    f.text().then(t => load(f.name, t), () => setErr("Couldn't read that file."));
+  };
+  const already = read ? read.rows.filter(r => here.has(r.phone.slice(-10))).length : 0;
+  async function go() {
+    if (!read) return;
+    setBusy(true); setErr(""); setDone(0);
+    let added = 0, existing = 0;
+    try {
+      for (let i = 0; i < read.rows.length; i += IMPORT_BATCH) {
+        const r = await api<{ added: number; existing: number }>("/api/app/act", { p: project, action: "import", rows: read.rows.slice(i, i + IMPORT_BATCH), as, consent: as === "customers" && consent, from: read.jobber ? "jobber" : "csv" });
+        added += r.added; existing += r.existing; setDone(Math.min(read.rows.length, i + IMPORT_BATCH));
+      }
+      toast(importSummary({ added, existing, skipped: read.skipped.length, as }));
+      await reload(); onClose();
+    } catch (e) {
+      setErr((e instanceof Error ? e.message : "That didn't work.") + (added ? ` ${added} went in before it stopped. Running the same file again is safe: nobody is added twice.` : ""));
+    } finally { setBusy(false); }
+  }
+  return <Sheet onClose={onClose} title={<div className="jb-who"><span><b>Import customers</b><small>From Jobber or any spreadsheet</small></span></div>}>
+    {!read ? <>
+      <label className="im-drop">
+        <input type="file" accept=".csv,text/csv,text/plain" onChange={e => onFile(e.target.files?.[0])} aria-label="Choose a CSV file" />
+        <Svg d={I.upload} size={24} /><b>Choose a CSV file</b>
+        <small>In Jobber: Clients, then More actions, then Export. Any spreadsheet saved as CSV works too.</small>
+      </label>
+      <p className="jb-fine">Each row needs a phone number. Names, addresses, emails, tags and notes come along when they&rsquo;re there. Nobody gets a text.</p>
+      {paste ? <>
+        <label className="jb-f full"><span>Rows</span><textarea rows={6} value={text} onChange={e => setText(e.target.value)} placeholder={"Name, Phone, Address\nDana Ruiz, (720) 555-0177, 2210 Oak Dr"} /></label>
+        <div className="jb-save"><button type="button" className="go" disabled={!text.trim()} onClick={() => load("Pasted rows", text)}>Read rows</button></div>
+      </> : <button type="button" className="ca-text-btn im-paste" onClick={() => setPaste(true)}>Or paste rows from a spreadsheet</button>}
+      {err && <p className="ca-err" role="alert">{err}</p>}
+    </> : <>
+      <div className="jb-box im-sum">
+        <div className="jb-box-h"><b>{fileName}</b><button type="button" className="ca-text-btn" onClick={() => { setRead(null); setErr(""); }}>Change file</button></div>
+        <dl className="im-counts">
+          <div><dt>Ready</dt><dd>{read.rows.length - already}</dd></div>
+          {already > 0 && <div><dt>Already here</dt><dd>{already}</dd></div>}
+          {read.skipped.length > 0 && <div><dt>No phone</dt><dd>{read.skipped.length}</dd></div>}
+          {read.duplicates > 0 && <div><dt>Repeats</dt><dd>{read.duplicates}</dd></div>}
+        </dl>
+        {read.jobber && <p className="jb-fine">Looks like a Jobber export.</p>}
+      </div>
+      <ul className="im-rows" aria-label="First rows">{read.rows.slice(0, 6).map(r => <li key={r.phone}>
+        <span className="ca-av xs" data-tone={tone(r.name || r.phone)} aria-hidden="true">{initials(r.name || "#")}</span>
+        <span className="im-row-t"><b>{r.name || fmtPhone(r.phone)}</b><small>{[fmtPhone(r.phone), r.address].filter(Boolean).join(" · ")}</small></span>
+        {here.has(r.phone.slice(-10)) && <span className="jb-tag">Already here</span>}
+      </li>)}
+        {read.rows.length > 6 && <li className="im-more">and {read.rows.length - 6} more</li>}</ul>
+      {read.skipped.length > 0 && <details className="im-skipped"><summary>{read.skipped.length} skipped with no phone number</summary>
+        <ul>{read.skipped.slice(0, 25).map(s => <li key={s.line}>Row {s.line}: {s.name}</li>)}{read.skipped.length > 25 && <li>and {read.skipped.length - 25} more</li>}</ul></details>}
+      <h3 className="jb-h3">They are</h3>
+      <div className="ca-seg wide" role="radiogroup" aria-label="Import as">
+        <button type="button" role="radio" aria-checked={as === "customers"} className={as === "customers" ? "on" : ""} onClick={() => setAs("customers")}>Past customers</button>
+        <button type="button" role="radio" aria-checked={as === "leads"} className={as === "leads" ? "on" : ""} onClick={() => setAs("leads")}>Open leads</button>
+      </div>
+      <p className="jb-fine">{as === "customers" ? "They go in Customers as past customers. They stay off the Jobs board until they text in or you move them." : "They land in New on the Jobs board as yours. Cinder won\u2019t text them."}</p>
+      {as === "customers" && <label className="im-check"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} />
+        <span><b>They agreed to get texts from {business || "you"}</b><small>Tick this only if they opted in. It goes on each number&rsquo;s consent record and lets your win-back texts reach them.</small></span></label>}
+      {err && <p className="ca-err" role="alert">{err}</p>}
+      <div className="jb-save"><button type="button" className="go" disabled={busy || !read.rows.length} onClick={() => void go()}>
+        {busy ? `Importing ${done} of ${read.rows.length}\u2026` : `Import ${read.rows.length} ${as === "leads" ? (read.rows.length === 1 ? "lead" : "leads") : (read.rows.length === 1 ? "customer" : "customers")}`}</button></div>
+    </>}
   </Sheet>;
 }
 

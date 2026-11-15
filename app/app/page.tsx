@@ -24,7 +24,7 @@ type Text = { id: string; direction: string; author: string; body: string; at: s
 type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 type Tab = "today" | "leads" | "jobs" | "numbers" | "estimates" | "sam";
 
-const SOURCE: Record<string, string> = { missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote follow-up", review: "Review request", rehash: "Old lead", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook ad", zapier: "Form" };
+const SOURCE: Record<string, string> = { missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote follow-up", review: "Review request", rehash: "Old lead", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook ad", zapier: "Form", owner: "Added by you", import: "Imported" };
 const SRC_ICON: Record<string, string> = { missed_call: "phone", "web chat": "chat", "web form": "form", text: "chat", quote: "quote", review: "star", rehash: "quote", angi: "form", thumbtack: "form", facebook: "form", zapier: "form" };
 const STATUS: Record<string, [string, string]> = { auto: ["Cinder replying", "auto"], paused: ["Your turn", "needs"], booked: ["Booked", "booked"], closed: ["Closed", "done"], opted_out: ["Opted out", "done"] };
 const QUICK = ["On my way", "I'll call you in 10 minutes", "Sending your quote now", "Can you send a photo?"];

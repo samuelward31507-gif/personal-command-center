@@ -1,14 +1,15 @@
 // The client CRM on the server: the board, moving a customer between stages, editing a card, adding a lead by hand,
 // and the owner's own setup. Every write is scoped to the signed-in owner's business.
-import type { neon } from "@neondatabase/serverless";
+import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { ballpark, cleanDetails, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, cleanJob, cleanCosts, jobSteps, type Card, type Stage } from "@/lib/crm";
 import { digits10 } from "@/lib/client-runtime";
+import { cleanImportRows, importAs, type ImportAs } from "@/lib/customer-import";
 import { emitEvent } from "@/lib/client-webhook";
 import { quoteUrl, type Client } from "@/lib/client-runtime-run";
 import { invoicesByThread } from "@/lib/client-billing-run";
 import { cleanItems } from "@/lib/billing";
 
-type Sql = ReturnType<typeof neon>;
+type Sql = NeonQueryFunction<false, false>;
 export type { Card };
 
 const today = (c: Client) => new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" });
@@ -32,6 +33,8 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       ORDER BY y.starts_at LIMIT 1) a ON true
     WHERE t.project_id = ${c.projectId}::uuid AND t.source NOT IN ('review', 'due')
       AND (t.updated_at > now() - interval '120 days' OR t.stage IN ('booked', 'quoted') OR q.status IN ('open', 'replied'))
+      -- Imported past customers live in Customers, not on the board, until they text in or the owner moves them (a move stamps stage_at after created_at).
+      AND NOT (t.source = 'import' AND t.stage IN ('won', 'lost') AND t.last_in_at IS NULL AND t.last_out_at IS NULL AND t.stage_at < t.created_at)
     ORDER BY coalesce(t.last_in_at, t.updated_at) DESC LIMIT 300` as Record<string, unknown>[];
   const book = parsePriceBook(c.setup.price_book);
   const share = c.setup.share_ballpark !== "no";
@@ -168,4 +171,40 @@ export async function setJobCosts(sql: Sql, c: Client, threadId: string, input: 
   const rows = await sql`UPDATE public.client_threads SET job_costs = ${JSON.stringify(costs)}::jsonb, updated_at = now()
     WHERE id = ${threadId}::uuid AND project_id = ${c.projectId}::uuid RETURNING id` as unknown[];
   return rows[0] ? { ok: true } : { ok: false, error: "That customer isn't on your board." };
+}
+
+/**
+ * The owner's existing customers, from a Jobber export or a spreadsheet. One upsert per batch, keyed on the phone, so
+ * running the same file twice changes nothing and never overwrites a name or notes already here. Past customers land
+ * as Won with a stage date in the past (their "since" date, or a month ago when the file has none): they show in
+ * Customers and count for win-back, but stay off the board. Open leads land in New as the owner's, like Add lead.
+ * Cinder texts nobody here. With the owner's say-so the opt-in for promo texts goes on each number's consent record.
+ */
+export async function importCustomers(sql: Sql, c: Client, input: unknown, opts: { as?: unknown; consent?: unknown; from?: unknown } = {}): Promise<{ ok: true; added: number; existing: number; as: ImportAs } | { ok: false; error: string }> {
+  const rows = cleanImportRows(input, today(c));
+  if (!rows.length) return { ok: false, error: "No rows with a phone number to import." };
+  const as = importAs(opts.as);
+  const from = opts.from === "jobber" ? "Jobber" : "a spreadsheet";
+  const stamp = today(c);
+  const stage = as === "leads" ? "new" : "won", status = as === "leads" ? "paused" : "closed";
+  const phones = rows.map(r => r.phone), names = rows.map(r => r.name), details = rows.map(r => JSON.stringify(r.address ? { address: r.address } : {}));
+  const notes = rows.map(r => [r.notes, `Imported from ${from} on ${stamp}`].filter(Boolean).join("\n").slice(0, 2000));
+  // Won needs a stage date before today: the customer's own since date, else a month back so win-back can reach them.
+  const since = rows.map(r => (as === "leads" ? null : r.since));
+  const out = await sql`INSERT INTO public.client_threads (owner_id, project_id, customer_phone, customer_name, source, status, details, notes, stage, stage_at)
+    SELECT ${c.owner}, ${c.projectId}::uuid, p, n, 'import', ${status}, d::jsonb, x, ${stage},
+      CASE WHEN ${as === "leads"}::boolean THEN now() ELSE coalesce(s::date::timestamptz, now() - interval '31 days') END
+    FROM unnest(${phones}::text[], ${names}::text[], ${details}::text[], ${notes}::text[], ${since}::text[]) AS t(p, n, d, x, s)
+    ON CONFLICT (project_id, customer_phone) DO UPDATE SET
+      customer_name = CASE WHEN client_threads.customer_name = '' THEN EXCLUDED.customer_name ELSE client_threads.customer_name END,
+      details = EXCLUDED.details || client_threads.details,
+      notes = CASE WHEN client_threads.notes = '' THEN EXCLUDED.notes ELSE client_threads.notes END
+    RETURNING (xmax = 0) AS inserted` as { inserted: boolean }[];
+  const added = out.filter(r => r.inserted).length;
+  if (opts.consent === true) {
+    const evidence = `Owner confirmed on import from ${from}: existing customer, opted in to promo texts`;
+    await sql`INSERT INTO public.client_consent (owner_id, project_id, phone, event, source, evidence)
+      SELECT ${c.owner}, ${c.projectId}::uuid, p, 'owner_import', 'import', ${evidence} FROM unnest(${phones}::text[]) AS t(p)`.catch(e => console.error("Consent log failed", e instanceof Error ? e.message : e));
+  }
+  return { ok: true, added, existing: out.length - added, as };
 }

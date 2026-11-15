@@ -2,6 +2,7 @@
 // so Sam (and prospects on a call) can click through exactly what a client sees. Nothing leaves the browser.
 import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, cleanWinback, detailLine, parsePriceBook, stageFor, STAGES, winbackDraft, type Card, type CardInvoice, type Details } from "@/lib/crm";
 import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
+import { cleanImportRows, importAs } from "@/lib/customer-import";
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 const at = (days: number, hour: number, min = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(hour, min, 0, 0); return d.toISOString(); };
 const GC = "https://calendar.google.com/calendar/r/week";
@@ -116,7 +117,7 @@ const money = (v: unknown) => Number(String(v ?? "").replace(/[$,\s]/g, "").repl
 
 function data() {
   const s = st();
-  const conversations = Object.values(s.threads).map(({ thread, texts }) => {
+  const conversations = Object.values(s.threads).filter(t => t.texts.length).map(({ thread, texts }) => {
     const last = texts.filter(x => x.author !== "system").at(-1) ?? texts.at(-1)!;
     const ask = texts.filter(x => x.direction === "in" && x.author !== "system").at(-1)?.body ?? "";
     return { id: thread.id, name: thread.customer_name || "(303) 555-0199", source: thread.source, status: thread.status, at: last.at, last: last.body, ask };
@@ -136,10 +137,12 @@ function data() {
 }
 
 /** The Jobs board for the example business, worked out the same way the server does. */
-function board(): Card[] {
+function board(all = false): Card[] {
   const s = st(), book = parsePriceBook(s.setup.price_book);
   const d10 = (p: string) => p.replace(/\D/g, "").slice(-10);
-  return Object.values(s.threads).map(({ thread, texts }) => {
+  // Imported past customers stay off the board until they text or the owner moves them, like the server.
+  const quiet = (t: { thread: Th; texts: T[] }) => t.thread.source === "import" && !t.texts.length && ["won", "lost"].includes(s.crm[t.thread.id]?.stage ?? "");
+  return Object.values(s.threads).filter(t => all || !quiet(t)).map(({ thread, texts }) => {
     const c = s.crm[thread.id] ?? { details: {}, notes: "" };
     const q = s.quotes.find(x => d10(x.customer_phone) === d10(thread.customer_phone));
     const won = thread.id === "w1" || c.stage === "won";
@@ -158,7 +161,7 @@ function board(): Card[] {
 
 /** Every customer of the example business, the way the server lists them. */
 function customers() {
-  const s = st(), b = board();
+  const s = st(), b = board(true);
   return b.map(c => { const inv = s.invoices.filter(i => i.thread_id === c.id && i.status !== "void");
     const won = c.stage === "won" ? (c.value ?? 0) : 0;
     return { id: c.id, name: c.name, phone: c.phone, address: String(c.details.address ?? ""), source: c.source, status: c.status, stage: c.stage, since: c.at, last: c.at,
@@ -204,6 +207,20 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       s.threads[id] = { thread: { id, customer_name: String(b.name ?? ""), customer_phone: "+1" + digits, source: "owner", status: "paused" }, texts: [{ id: "d" + ++n, direction: "in", author: "system", body: "Added by you", at: now }] };
       s.crm[id] = { details: cleanDetails(s.setup.trade, b.details), notes: String(b.notes ?? ""), stage: "new" };
       return { ok: true, id };
+    }
+    if (b.action === "import") {
+      const rows = cleanImportRows(b.rows);
+      if (!rows.length) fail("No rows with a phone number to import.");
+      const as = importAs(b.as);
+      let added = 0, existing = 0;
+      for (const r of rows) {
+        if (Object.values(s.threads).some(t => t.thread.customer_phone.slice(-10) === r.phone.slice(-10))) { existing++; continue; }
+        const id = "im" + ++n;
+        s.threads[id] = { thread: { id, customer_name: r.name, customer_phone: r.phone, source: "import", status: as === "leads" ? "paused" : "closed" }, texts: [] };
+        s.crm[id] = { details: r.address ? { address: r.address } : {}, notes: r.notes, stage: as === "leads" ? "new" : "won" };
+        added++;
+      }
+      return { ok: true, added, existing, as };
     }
     if (b.action === "stage" || b.action === "card") {
       const th = typeof b.thread === "string" ? s.threads[b.thread] : undefined;
