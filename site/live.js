@@ -150,7 +150,8 @@
       if (clock) clockDone();
     } else loop($(".iph"), async function (alive) {
       while (alive()) {
-        thread.innerHTML = "";
+        if (thread.children.length) { thread.classList.add("fading"); await sleep(420); }
+        thread.innerHTML = ""; thread.classList.remove("fading");
         for (var i = 0; i < SCRIPT.length && alive(); i++) {
           var s = SCRIPT[i];
           if (s[0] === "meta") { thread.appendChild(el("p", "im-meta", s[1])); await sleep(500); }
@@ -310,7 +311,7 @@
   }
   f.addEventListener("submit", function (e) {
     e.preventDefault(); if (busy) return; setName();
-    history = []; done = false; mine = 0; t.innerHTML = ""; say.placeholder = "Reply as the homeowner"; say.value = "";
+    history = []; done = false; mine = 0; t.innerHTML = ""; say.placeholder = "Type a reply"; say.value = "";
     meta("Website form · " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
     turn(f.request.value.trim(), true);
   });
