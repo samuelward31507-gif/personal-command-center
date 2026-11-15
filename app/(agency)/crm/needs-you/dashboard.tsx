@@ -227,7 +227,6 @@ export default function Dashboard() {
     {b && (() => {
       const t = b.channels?.today, w = b.channels?.week;
       const cells: { k: string; href: string; n: number; of?: number; wk: string; hot?: boolean }[] = [
-        { k: "Dials", href: "/crm/call", n: b.today.calls, of: target, wk: `${b.week.calls} this week` },
         { k: "Conversations", href: "/crm/call", n: b.today.connects, wk: `${b.week.connects} this week` },
         { k: "Meetings", href: "/crm/calendar", n: b.today.meetings, wk: `${b.week.meetings} this week` },
         { k: "Emails", href: "/crm/email", n: t?.emails ?? 0, of: DAILY_EMAIL_TARGET, wk: `${w?.emails ?? 0} this week${w?.bounces ? `, ${w.bounces} bounced` : ""}` },
