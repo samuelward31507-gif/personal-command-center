@@ -25,7 +25,9 @@
     window.Cal("init", "book", { origin: "https://cal.com" });
     window.Cal.ns.book("inline", { elementOrSelector: "#cal-inline", calLink: CAL, config: { layout: "month_view", theme: theme } });
     window.Cal.ns.book("on", { action: "bookingSuccessful", callback: function () { if (window.cinderTrack) window.cinderTrack("click", { label: "Book: booked on site" }); } });
-    window.Cal.ns.book("ui", { theme: theme, hideEventTypeDetails: false, layout: "month_view", cssVarsPerTheme: { dark: { "cal-brand": "#ededed" }, light: { "cal-brand": "#121417" } } });
+    window.Cal.ns.book("ui", { theme: theme, hideEventTypeDetails: true, layout: "month_view", cssVarsPerTheme: { dark: { "cal-brand": "#ededed" }, light: { "cal-brand": "#121417" } } });
+    // The moment the calendar's frame arrives, the placeholder goes away.
+    if ("MutationObserver" in window) { var mo = new MutationObserver(function () { if (box.querySelector("iframe")) { box.classList.add("is-ready"); var l = box.querySelector(".cal-loading"), f = box.querySelector(".cal-fallback"); if (l) l.remove(); if (f) f.remove(); mo.disconnect(); } }); mo.observe(box, { childList: true, subtree: true }); }
     // If the calendar hasn't drawn after 8s (blocked script, slow network), show the plain link prominently.
     setTimeout(function () { if (!box.querySelector("iframe")) box.classList.add("is-fallback"); }, 8000);
   }

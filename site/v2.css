@@ -647,3 +647,24 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 .faq-side p { color: var(--text-3); font-size: 15.5px; max-width: 30ch; }
 .faq-side a:not(.btn) { color: var(--text); text-underline-offset: 3px; text-decoration-color: var(--line-2); }
 @media (max-width: 900px) { .faq-side { position: static; } .note { padding: 28px 24px 24px; } .note blockquote p { font-size: 19px; } }
+
+/* ---------- Booking: one wide calendar (day and times side by side), no scrolling to find the times ---------- */
+.book-head { margin-bottom: 36px; }
+.book .book-cal { max-width: 980px; margin: 0 auto; }
+.cal-inline { min-height: 520px; position: relative; }
+.cal-inline.is-ready { display: block; padding: 0; }
+.cal-loading { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; width: 100%; padding: 36px 40px; align-self: stretch; }
+.sk { display: flex; flex-direction: column; gap: 14px; }
+.sk i { display: block; border-radius: 8px; background: linear-gradient(90deg, #f1f1ef 25%, #f8f8f7 50%, #f1f1ef 75%); background-size: 200% 100%; }
+.motion .sk i { animation: sk 1.4s linear infinite; }
+@keyframes sk { to { background-position: -200% 0; } }
+.sk-h { height: 22px; width: 40%; }
+.sk-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.sk-grid i { aspect-ratio: 1; border-radius: 10px; }
+.sk-times i:not(.sk-h) { height: 44px; border-radius: 10px; }
+.cal-inline.is-fallback .cal-loading { display: none; }
+.cal-inline.is-fallback { min-height: 220px; }
+.book-row { flex-direction: row; justify-content: center; gap: 36px; margin: 36px auto 0; max-width: 980px; }
+.book-row li { flex: 1; font-size: 15px; }
+.book .book-alt { text-align: center; margin-top: 28px; }
+@media (max-width: 900px) { .book-row { flex-direction: column; gap: 14px; } .cal-loading { grid-template-columns: 1fr; padding: 24px; } .sk-times { display: none; } }
