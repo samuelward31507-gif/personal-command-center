@@ -3,12 +3,12 @@
 // Inbox: every conversation, newest first, with the ones waiting on the owner marked. On a desk the list sits
 // beside the open conversation; on a phone a tap opens it full screen. One conversation = ThreadView, also used
 // inside a customer's record.
+import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, Empty, Icon, Spinner, ago, clock, dayKey, dayName, first, fmtPhone, type Api, type Toast } from "./parts";
 import { sourceLabel, type Conv, type Data, type Go, type Text, type Thread } from "./types";
 
 const STATUS: Record<string, [string, string]> = { auto: ["Cinder replying", "auto"], paused: ["Your turn", "needs"], booked: ["Booked", "booked"], closed: ["Closed", "done"], opted_out: ["Opted out", "done"] };
-const QUICK = ["On my way", "I'll call you in 10 minutes", "Sending your quote now", "Can you send a photo?"];
 
 export function InboxScreen({ d, project, api, toast, reload, go, wide, push, onPush }: { d: Data; project: string; api: Api; toast: Toast; reload: () => Promise<void>; go: Go; wide: boolean; push: string; onPush: () => void }) {
   const [filter, setFilter] = useState<"all" | "needs" | "booked">("all");
@@ -51,6 +51,7 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
   const [t, setT] = useState<Thread | null>(null), [texts, setTexts] = useState<Text[] | null>(null);
   const [draft, setDraft] = useState(""), [busy, setBusy] = useState("");
   const end = useRef<HTMLDivElement>(null), ta = useRef<HTMLTextAreaElement>(null);
+  const snips = useSnippets(project), [editSnips, setEditSnips] = useState(false);
   const load = useCallback(() => api<{ thread: Thread; texts: Text[] }>(`/api/app/data?p=${project}&thread=${id}`).then(j => { setT(j.thread); setTexts(j.texts); }).catch(() => {}), [api, id, project]);
   useEffect(() => { void load(); const i = setInterval(load, 8000); return () => clearInterval(i); }, [load]);
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [texts?.length]);
@@ -63,6 +64,7 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
   }
   const mine = t?.status === "paused";
   const name = t?.customer_name || (t ? fmtPhone(t.customer_phone) : "");
+  const sug = suggestReply(name, texts, { stage: t?.status === "booked" ? "booked" : undefined });
   let lastDay = "";
   return <section className="thread">
     <header className="th">
@@ -97,12 +99,13 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
       <div ref={end} />
     </div>
     {t && t.status !== "opted_out" && <div className="compose">
+      {editSnips && <SnippetEditor list={snips.list} onSave={snips.save} onClose={() => setEditSnips(false)} />}
       <form className="box" onSubmit={async e => { e.preventDefault(); if (draft.trim() && await act("reply", { body: draft }, "Sent from your business number.")) setDraft(""); }}>
-        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${first(name)} from your business number`} aria-label="Reply" />
+        <ReplyKit hidden={!!draft.trim()} suggestion={sug} snippets={snips.list} onUse={x => { setDraft(x); ta.current?.focus(); }} onEdit={() => setEditSnips(true)} />
+        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (tabTakes(e, draft, sug, setDraft)) return; if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${first(name)} from your business number`} aria-label="Reply" />
         <div className="tools">
           <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && t.status === "booked")} onClick={() => void (mine ? act("status", { status: "auto" }, "Cinder will handle replies again.") : act("status", { status: "paused" }, "Cinder stepped back. You've got this one."))}>
             <i aria-hidden="true" />{mine ? "You're replying" : "Cinder is replying"}</button>
-          <select aria-label="Quick reply" value="" onChange={e => { if (e.target.value) setDraft(e.target.value); }}><option value="">Quick reply</option>{QUICK.map(q => <option key={q} value={q}>{q}</option>)}</select>
           <button type="submit" className="btn ink sm send" disabled={!!busy || !draft.trim()} aria-label="Send">{busy === "reply" ? <Spinner /> : <><Icon name="send" size={14} />Send</>}</button>
         </div>
       </form>

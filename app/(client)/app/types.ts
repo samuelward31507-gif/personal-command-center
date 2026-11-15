@@ -23,7 +23,9 @@ export type Tab = "today" | "inbox" | "jobs" | "calendar" | "customers" | "invoi
 /** Where a screen can send the owner. The shell owns the state; screens just ask. */
 export type Go = {
   tab: (t: Tab) => void;
-  record: (id: string, opts?: { ask?: "quoted" | "won"; view?: "activity" | "job" }) => void;
+  record: (id: string, opts?: { ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string }) => void;
+  /** Open the command bar (⌘K). */
+  find: () => void;
   thread: (id: string) => void;
   invoice: (id: string) => void;
   addLead: () => void;

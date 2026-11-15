@@ -2,14 +2,15 @@
 
 // Today: the page an owner opens between jobs. Four figures, what needs him (one action each), the week ahead,
 // where the money stands and where the jobs came from. Everything is a tap from here.
-import { useState } from "react";
-import { jobSteps, sourceReport, STAGE_LABEL } from "@/lib/crm";
+import { jobSteps, sourceReport } from "@/lib/crm";
 import { overdue } from "@/lib/billing";
 import { Icon, clock, dateLabel, first, fmtPhone, secs, todayIso, usd } from "./parts";
+import { FindButton } from "./command";
+import { suggestReply } from "./replies";
 import type { Biz, Data, Go } from "./types";
 
 type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "review" | "sam";
-type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string; primary?: boolean };
+type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string; primary?: boolean; draft?: string };
 const ICON: Record<Kind, [string, string]> = { reply: ["chat", "ember"], money: ["invoice", "red"], quote: ["quote", "blue"], install: ["cal", "blue"], invoice: ["invoice", "amber"], review: ["star", "ok"], sam: ["user", ""] };
 const hhmm = (t: string) => { const [h, m] = t.split(":").map(Number); return new Date(2000, 0, 1, h, m).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }); };
 const daysPast = (d: string) => Math.max(1, Math.round((Date.now() - Date.parse(d + "T23:59:00")) / 86400000));
@@ -37,6 +38,11 @@ export function TodayScreen({ d, biz, go }: { d: Data; biz: Biz; go: Go; push: s
     actions.push({ key: "q" + a.id, kind: "quote", title: `Quote ${first(a.customer_name)}`, sub: `Estimate ${new Date(a.starts_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}${c?.line ? ` · ${c.line}` : ""}`, go: () => c ? go.record(c.id, { ask: "quoted" }) : go.tab("calendar"), cta: "Write quote" });
   }
   for (const c of cards) if (!quoted.has(c.id) && c.stage === "quoted" && c.quote && !c.quote.linked && c.quote.amount) actions.push({ key: "qs" + c.id, kind: "quote", title: `Send ${first(c.name)} the quote`, sub: `${usd(c.quote.amount)} · not sent yet`, go: () => go.record(c.id), cta: "Send" });
+  // Quotes that went quiet after every follow-up: a nudge in his own words, written and waiting. One tap opens it in the reply box.
+  for (const c of cards) if (c.stage === "quoted" && c.quote?.linked && c.quote.status !== "replied" && c.quote.steps >= (d.quoteSteps || 4)) {
+    const draft = suggestReply(c.name, null, { stage: "quoted", owner: d.owner, quoteAmount: c.quote.amount });
+    actions.push({ key: "nq" + c.id, kind: "quote", title: `${first(c.name)} went quiet`, sub: `${c.quote.amount ? usd(c.quote.amount) + " quote · " : ""}follow-ups done, no answer`, draft, go: () => go.record(c.id, { view: "activity", draft }), cta: "Nudge" });
+  }
   for (const c of cards) {
     if (c.stage !== "won" || c.pastCustomer) continue;
     if (!c.install && !c.invoice) actions.push({ key: "in" + c.id, kind: "install", title: `Schedule ${first(c.name)}'s install`, sub: `${c.value ? usd(c.value) + " job" : "Won"}${c.line ? ` · ${c.line}` : ""}`, go: () => go.record(c.id, { view: "job" }), cta: "Schedule" });
@@ -55,9 +61,9 @@ export function TodayScreen({ d, biz, go }: { d: Data; biz: Biz; go: Go; push: s
   const dayOf = (iso: string) => { const dd = iso.slice(0, 10); return dd === today ? "Today" : new Date(dd + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }); };
   const week = [
     ...d.appointments.filter(a => { const t = Date.parse(a.starts_at); return t > Date.now() - 3600000 && t < end; })
-      .map(a => { const c = byThread.get(a.thread_id); return { key: "a" + a.id, at: Date.parse(a.starts_at), day: dayOf(new Date(a.starts_at).toLocaleDateString("en-CA")), time: clock(a.starts_at), who: a.customer_name || fmtPhone(a.customer_phone), what: "estimate", sub: [c?.line, String(c?.details.address ?? "")].filter(Boolean).join(" · ") || "Booked by Cinder", tag: ["Estimate", "blue"], go: () => c ? go.record(c.id) : go.thread(a.thread_id) }; }),
+      .map(a => { const c = byThread.get(a.thread_id); return { key: "a" + a.id, at: Date.parse(a.starts_at), day: dayOf(new Date(a.starts_at).toLocaleDateString("en-CA")), time: clock(a.starts_at), who: a.customer_name || fmtPhone(a.customer_phone), what: "estimate", sub: [c?.line, String(c?.details.address ?? "")].filter(Boolean).join(" · ") || "Booked by Cinder", tag: ["Estimate", "blue"], phone: a.customer_phone || c?.phone || "", addr: String(c?.details.address ?? ""), id: c?.id ?? a.thread_id, go: () => c ? go.record(c.id) : go.thread(a.thread_id) }; }),
     ...cards.filter(c => c.stage === "won" && c.install && c.install >= today && Date.parse(c.install + "T12:00:00") < end)
-      .map(c => ({ key: "i" + c.id, at: Date.parse(`${c.install}T${c.installTime || "07:00"}`), day: dayOf(c.install!), time: c.installTime ? hhmm(c.installTime) : "All day", who: c.name, what: c.installDays > 1 ? `install, ${c.installDays} days` : "install", sub: [c.line, String(c.details.address ?? "")].filter(Boolean).join(" · "), tag: ["Install", "ok"], go: () => go.record(c.id, { view: "job" }) })),
+      .map(c => ({ key: "i" + c.id, at: Date.parse(`${c.install}T${c.installTime || "07:00"}`), day: dayOf(c.install!), time: c.installTime ? hhmm(c.installTime) : "All day", who: c.name, what: c.installDays > 1 ? `install, ${c.installDays} days` : "install", sub: [c.line, String(c.details.address ?? "")].filter(Boolean).join(" · "), tag: ["Install", "ok"], phone: c.phone, addr: String(c.details.address ?? ""), id: c.id, go: () => go.record(c.id, { view: "job" }) })),
   ].sort((a, b) => a.at - b.at).slice(0, 6);
 
   // Money and sources.
@@ -67,18 +73,6 @@ export function TodayScreen({ d, biz, go }: { d: Data; biz: Biz; go: Go; push: s
   const totalWon = sources.reduce((a, r) => a + r.wonValue, 0);
   const lastWeek = L.weeks.at(-1);
 
-  // Find anyone: a name, a street, a phone number or an invoice number.
-  const [q, setQ] = useState("");
-  const hits = (() => {
-    const t = q.trim().toLowerCase(), digits = t.replace(/\D/g, "");
-    if (t.length < 2) return [];
-    const people = (d.customers ?? []).filter(c => c.name.toLowerCase().includes(t) || c.address.toLowerCase().includes(t) || (digits.length >= 3 && c.phone.replace(/\D/g, "").includes(digits)))
-      .slice(0, 5).map(c => ({ key: "c" + c.id, title: c.name || fmtPhone(c.phone), sub: [c.stage ? STAGE_LABEL[c.stage as keyof typeof STAGE_LABEL] : "", c.line || c.address].filter(Boolean).join(" · "), go: () => go.record(c.id) }));
-    const bills = invoices.filter(i => `#${i.number}`.includes(t) || String(i.number) === digits || (i.customer || "").toLowerCase().includes(t))
-      .slice(0, 3).map(i => ({ key: "i" + i.id, title: `Invoice #${i.number}`, sub: `${i.customer || i.phone} · ${usd(i.total)}`, go: () => go.invoice(i.id) }));
-    return [...people, ...bills];
-  })();
-
   const hour = new Date().getHours();
   const hello = `${hour < 12 ? "Good morning" : hour >= 17 ? "Good evening" : "Good afternoon"}${d.owner ? `, ${first(d.owner)}` : ""}`;
   const dateLine = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
@@ -86,10 +80,7 @@ export function TodayScreen({ d, biz, go }: { d: Data; biz: Biz; go: Go; push: s
   return <>
     <header className="ph"><h1>{hello}</h1><span className="sub">{dateLine}{lastWeek?.leads ? ` · ${lastWeek.leads} ${lastWeek.leads === 1 ? "lead" : "leads"} answered this week` : ""}</span>
       <div className="acts">
-        <div className="find"><label className="inwrap"><Icon name="search" size={14} /><span className="sr">Find a customer, job or invoice</span>
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Find anyone" autoComplete="off" /></label>
-          {q.trim().length >= 2 && <div className="hits"><div className="menu" role="listbox">{hits.length ? hits.map(h => <button key={h.key} type="button" onClick={() => { h.go(); setQ(""); }}><span className="t-em">{h.title}</span><small>{h.sub}</small></button>)
-            : <button type="button" disabled><small>No one matches “{q.trim()}”.</small></button>}</div></div>}</div>
+        <div className="find"><FindButton onOpen={go.find} /></div>
         <button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={14} />Add lead</button>
       </div></header>
     <div className="pad today">
@@ -105,14 +96,19 @@ export function TodayScreen({ d, biz, go }: { d: Data; biz: Biz; go: Go; push: s
             <div className="hd"><h2>Needs you</h2><small>{actions.length ? `${actions.length}` : "Clear"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>All jobs</button></div>
             {actions.length ? actions.slice(0, 8).map(a => <div key={a.key} className="row">
               <span className={"ic " + ICON[a.kind][1]}><Icon name={ICON[a.kind][0]} size={15} /></span>
-              <span style={{ minWidth: 0 }}><b>{a.title}</b><small>{a.sub}</small></span>
+              <span style={{ minWidth: 0 }}><b>{a.title}</b><small>{a.sub}</small>{a.draft && <q className="nudge">{a.draft}</q>}</span>
               <button type="button" className={"btn sm" + (a.primary ? " ink" : "")} onClick={a.go}>{a.cta}</button>
             </div>) : <div className="bd fine">Nothing waiting on you. New leads, late invoices and quotes to write land here.</div>}
           </section>
           <section className="card">
             <div className="hd"><h2>This week</h2><small>{week.length ? `${week.filter(w => w.what === "estimate").length} estimates · ${week.filter(w => w.what !== "estimate").length} installs` : "Nothing booked"}</small><button type="button" className="link" onClick={() => go.tab("calendar")}>Calendar</button></div>
-            {week.length ? week.map(w => <button key={w.key} type="button" className="t" onClick={w.go}>
-              <time>{w.day}<br />{w.time}</time><span style={{ minWidth: 0 }}><b>{w.who} · {w.what}</b><small>{w.sub}</small></span><span className={"tag " + w.tag[1]}>{w.tag[0]}</span></button>)
+            {week.length ? week.map(w => <div key={w.key} className="t wk">
+              <button type="button" className="wk-main" onClick={w.go}><time>{w.day}<br />{w.time}</time><span style={{ minWidth: 0 }}><b>{w.who} · {w.what}</b><small>{w.sub}</small></span></button>
+              <span className="wk-acts">
+                {w.addr && <a className="btn ghost sm ic" href={`https://maps.google.com/?daddr=${encodeURIComponent(w.addr)}`} target="_blank" rel="noreferrer" title="Directions" aria-label={`Directions to ${w.who}`}><Icon name="pin" size={14} /></a>}
+                {w.phone && <a className="btn ghost sm ic" href={`tel:${w.phone}`} title="Call" aria-label={`Call ${w.who}`}><Icon name="phone" size={14} /></a>}
+                <button type="button" className="btn ghost sm ic" title="Text" aria-label={`Text ${w.who}`} onClick={() => go.thread(w.id)}><Icon name="chat" size={14} /></button>
+                <span className={"tag " + w.tag[1]}>{w.tag[0]}</span></span></div>)
               : <div className="bd fine">Cinder books estimates where you&rsquo;re free as leads come in.</div>}
           </section>
         </div>

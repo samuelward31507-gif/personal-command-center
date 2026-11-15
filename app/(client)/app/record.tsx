@@ -3,6 +3,7 @@
 // One customer, everything about them, on one page: the job's details on the left, every text and event in the
 // middle with the composer under it, money and the next step on the right. Replaces the old card and customer sheets.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { draftItems, jobFields, jobProfit, jobProgress, jobSteps, rangeText, STAGE_LABEL, STAGES, type Card, type CardInvoice, type Costs, type Details, type Stage } from "@/lib/crm";
 import { dollars, totals, type Item } from "@/lib/billing";
 import { Avatar, Empty, Icon, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, useArm, type Api, type Toast } from "./parts";
@@ -12,9 +13,8 @@ import { sourceLabel, type Biz, type Data, type Go, type Text, type Thread } fro
 
 type R = { sent?: boolean; warn?: string; link?: string; calendar?: string; invoice?: CardInvoice; review?: string };
 const asStrings = (d: Details) => Object.fromEntries(Object.entries(d).map(([k, v]) => [k, String(v)]));
-const QUICK = ["On my way", "I'll call you in 10 minutes", "Sending your quote now", "Can you send a photo?"];
 
-export function RecordPage({ id, ask: ask0, view: view0, d, biz, project, api, toast, reload, go, onBack }: { id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; d: Data; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void>; go: Go; onBack: () => void }) {
+export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, project, api, toast, reload, go, onBack }: { id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string; d: Data; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void>; go: Go; onBack: () => void }) {
   const card = (d.board ?? []).find(c => c.id === id) ?? null;
   const cust = (d.customers ?? []).find(c => c.id === id) ?? null;
   const invoices = (d.invoices ?? []).filter(i => i.thread_id === id);
@@ -138,7 +138,7 @@ export function RecordPage({ id, ask: ask0, view: view0, d, biz, project, api, t
           <button type="button" role="tab" aria-selected={tab === "activity"} className={tab === "activity" ? "on" : ""} onClick={() => setTab("activity")}>Activity</button>
           <button type="button" role="tab" aria-selected={tab === "job"} className={tab === "job" ? "on" : ""} onClick={() => setTab("job")}>{card ? (card.stage === "won" ? "Job, invoice, review" : card.stage === "quoted" ? "The quote" : "Job details") : "Details"}</button>
         </div>
-        {tab === "activity" ? <Activity card={card} texts={texts} name={name} canText={!!canText} status={status} busy={busy} act={act} ta={ta} />
+        {tab === "activity" ? <Activity card={card} texts={texts} name={name} canText={!!canText} status={status} busy={busy} act={act} ta={ta} project={project} owner={d.owner} draft0={draft0} />
           : <JobPanel card={card} biz={biz} ask={ask} setAsk={setAsk} busy={busy} act={act} go={go} canText={!!canText} name={name} />}
       </section>
 
@@ -149,8 +149,10 @@ export function RecordPage({ id, ask: ask0, view: view0, d, biz, project, api, t
 
 // ---------- Activity: texts and events in one timeline, composer under it ----------
 type Ev = { at: string; kind: "text" | "event"; text?: Text; title?: string; sub?: string; icon?: string; tone?: string };
-function Activity({ card, texts, name, canText, status, busy, act, ta }: { card: Card | null; texts: Text[] | null; name: string; canText: boolean; status: string; busy: string; act: (k: string, b: Record<string, unknown>, done: string | ((r: R) => string)) => Promise<R | null>; ta: React.RefObject<HTMLTextAreaElement | null> }) {
-  const [draft, setDraft] = useState("");
+function Activity({ card, texts, name, canText, status, busy, act, ta, project, owner, draft0 }: { project: string; owner: string; draft0?: string; card: Card | null; texts: Text[] | null; name: string; canText: boolean; status: string; busy: string; act: (k: string, b: Record<string, unknown>, done: string | ((r: R) => string)) => Promise<R | null>; ta: React.RefObject<HTMLTextAreaElement | null> }) {
+  const [draft, setDraft] = useState(draft0 ?? "");
+  const snips = useSnippets(project), [editSnips, setEditSnips] = useState(false);
+  const sug = useMemo(() => suggestReply(name, texts, { stage: card?.stage, owner, quoteAmount: card?.quote?.amount }), [name, texts, card?.stage, owner, card?.quote?.amount]);
   const end = useRef<HTMLDivElement>(null);
   const items = useMemo<Ev[]>(() => {
     const out: Ev[] = (texts ?? []).map(t => ({ at: t.at, kind: "text", text: t }));
@@ -191,12 +193,13 @@ function Activity({ card, texts, name, canText, status, busy, act, ta }: { card:
       <div ref={end} />
     </div>
     {canText && <div className="compose">
+      {editSnips && <SnippetEditor list={snips.list} onSave={snips.save} onClose={() => setEditSnips(false)} />}
       <form className="box" onSubmit={async e => { e.preventDefault(); if (draft.trim() && await act("reply", { action: "reply", body: draft }, "Sent from your business number.")) setDraft(""); }}>
-        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${first(name)} from your business number`} aria-label="Reply" />
+        <ReplyKit hidden={!!draft.trim()} suggestion={sug} snippets={snips.list} onUse={t => { setDraft(t); ta.current?.focus(); }} onEdit={() => setEditSnips(true)} />
+        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (tabTakes(e, draft, sug, setDraft)) return; if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${first(name)} from your business number`} aria-label="Reply" />
         <div className="tools">
           <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && status === "booked")} onClick={() => void (mine ? act("status", { action: "status", status: "auto" }, "Cinder will handle replies again.") : act("status", { action: "status", status: "paused" }, "Cinder stepped back. You've got this one."))}>
             <i aria-hidden="true" />{mine ? "You're replying" : "Cinder is replying"}</button>
-          <select aria-label="Quick reply" value="" onChange={e => { if (e.target.value) setDraft(e.target.value); }}><option value="">Quick reply</option>{QUICK.map(q => <option key={q} value={q}>{q}</option>)}</select>
           <button type="submit" className="btn ink sm send" disabled={!!busy || !draft.trim()}>{busy === "reply" ? <Spinner /> : <><Icon name="send" size={14} />Send</>}</button>
         </div>
       </form>

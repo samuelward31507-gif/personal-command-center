@@ -19,6 +19,7 @@ import { CustomersScreen, InvoicesScreen, InvoiceSheet, BillingSettings } from "
 import { NumbersScreen } from "./numbers";
 import { SystemScreen } from "./system";
 import { Onboarding } from "./setup";
+import { CommandBar, useCommandKey } from "./command";
 import { AddLeadSheet, ImportSheet, WinbackSheet } from "./sheets";
 
 // The example business (/app?demo=1) answers every call in the browser; nothing reaches the server.
@@ -106,7 +107,7 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
 }
 
 // ---------- The app ----------
-type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job" } | { kind: "thread"; id: string } | null;
+type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | null;
 const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam"];
 
 export default function CinderApp() {
@@ -123,6 +124,9 @@ export default function CinderApp() {
   const [sheet, setSheet] = useState<"add" | "import" | "billing" | "winback" | null>(null);
   const [inv, setInv] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false), [setupDone, setSetupDone] = useState(false);
+  const [cmd, setCmd] = useState(false);
+  const openCmd = useCallback(() => setCmd(true), []);
+  useCommandKey(openCmd);
   const exitDemo = () => { demoStop(); setDemo(false); setD(null); setOpen(null); setProject(""); setState("out"); };
 
   useEffect(() => {
@@ -157,11 +161,12 @@ export default function CinderApp() {
   const goTab = useCallback((t: Tab) => { setTab(t); setOpen(null); window.scrollTo(0, 0); if (t === "sam" || t === "calendar") void load(project, t); }, [load, project]);
   const go: Go = useMemo(() => ({
     tab: goTab,
-    record: (id, opts) => { setOpen({ kind: "record", id, ask: opts?.ask, view: opts?.view }); window.scrollTo(0, 0); },
+    record: (id, opts) => { setOpen({ kind: "record", id, ask: opts?.ask, view: opts?.view, draft: opts?.draft }); window.scrollTo(0, 0); },
     thread: id => { setOpen(wide ? { kind: "record", id, view: "activity" } : { kind: "thread", id }); window.scrollTo(0, 0); },
     invoice: id => setInv(id),
     addLead: () => setSheet("add"), importCustomers: () => setSheet("import"), billing: () => setSheet("billing"),
     setup: () => { setSetupOpen(true); window.scrollTo(0, 0); },
+    find: () => setCmd(true),
   }), [goTab, wide]);
 
   const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
@@ -190,7 +195,7 @@ export default function CinderApp() {
 
   let page: React.ReactNode;
   if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
-  else if (open?.kind === "record") page = <RecordPage key={open.id} id={open.id} ask={open.ask} view={open.view} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
+  else if (open?.kind === "record") page = <RecordPage key={open.id + (open.draft ? ":d" : "")} id={open.id} ask={open.ask} view={open.view} draft={open.draft} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
   else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} onWinback={() => setSheet("winback")} />;
@@ -204,7 +209,7 @@ export default function CinderApp() {
 
   return <div className="shell">
     <nav className="side" aria-label="Sections">
-      <div className="brand"><Wordmark className="word" /><button type="button" className="btn ghost sm ic" aria-label="Find anyone" title="Find anyone" onClick={() => goTab("today")}><Icon name="search" size={15} /></button></div>
+      <div className="brand"><Wordmark className="word" /><button type="button" className="btn ghost sm ic" aria-label="Find or do anything (⌘K)" title="Find or do anything (⌘K)" onClick={openCmd}><Icon name="search" size={15} /></button></div>
       <div className="biz" style={{ position: "relative" }}>
         <span><span className="av sm ink">{initials(bizName || "C").charAt(0)}</span>{bizName || "Your business"}</span>
         {d.businesses.length > 1 ? <><Icon name="sort" size={14} className="mut" /><select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select></> : null}
@@ -230,6 +235,7 @@ export default function CinderApp() {
     {sheet === "billing" && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {invNow && <InvoiceSheet key={invNow.id + invNow.status} inv={invNow} customer={invNow.customer || fmtPhone(invNow.phone)} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
+    {cmd && state === "in" && <CommandBar d={d} go={go} onClose={() => setCmd(false)} />}
     {toastNode}
   </div>;
 }
