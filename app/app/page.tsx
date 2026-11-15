@@ -433,7 +433,7 @@ export default function CinderApp() {
         live={{ wonValue: L.wonValue, won: L.won, answered: L.answered, leads: L.leads, replySec: L.replySec, booked: L.booked }}
         go={{ thread: id => setOpen(id), card: (id, stage) => { setTab("jobs"); setFocus({ card: id, stage, n: Date.now() }); window.scrollTo(0, 0); },
           invoice: id => { setTab("jobs"); setFocus({ invoice: id, n: Date.now() }); window.scrollTo(0, 0); },
-          calendar: () => { setTab("estimates"); window.scrollTo(0, 0); void load(project, "estimates"); }, sam: () => { setTab("sam"); void load(project, "sam"); }, numbers: () => { setTab("numbers"); window.scrollTo(0, 0); }, jobs: () => { setTab("jobs"); setFocus({ view: "pipeline", n: Date.now() }); window.scrollTo(0, 0); }, invoices: () => { setTab("jobs"); setFocus({ view: "invoices", n: Date.now() }); window.scrollTo(0, 0); } }} />}
+          calendar: () => { setTab("estimates"); window.scrollTo(0, 0); void load(project, "estimates"); }, sam: () => { setTab("sam"); void load(project, "sam"); }, numbers: () => { setTab("numbers"); window.scrollTo(0, 0); }, jobs: () => { setTab("jobs"); setFocus({ view: "pipeline", n: Date.now() }); window.scrollTo(0, 0); }, invoices: () => { setTab("jobs"); setFocus({ view: "invoices", n: Date.now() }); window.scrollTo(0, 0); }, inbox: () => { setTab("leads"); window.scrollTo(0, 0); } }} />}
 
       {tab === "leads" && <>
         {!hidePushCard && (push === "off" || push === "ios-install") && <div className="ca-pushcard">
@@ -518,11 +518,11 @@ export default function CinderApp() {
       ? <div key={open} className="ca-pane-in"><ThreadView id={open} project={project} canCall={d.canCall} onBack={() => { setOpen(null); void load(); }} onChange={() => void load()} toast={toast} /></div>
       : <div className="ca-pane-empty"><span className="ca-empty-ic"><Icon name="chat" size={22} /></span><b>No conversation open</b><p>Pick a lead on the left.</p></div>}</aside>}
     <nav className="ca-nav" aria-label="Sections">
-      <div className="ca-nav-brand"><CinderLogo className="ca-nav-word" ink="#121417" title="Cinder" /><b>{bizName}</b></div>
+      <div className="ca-nav-brand"><CinderLogo className="ca-nav-word" ink="#121417" title="Cinder" /></div>
       {([["today", "Today", 0, "today"], ["leads", "Inbox", L.needs, "chat"], ["jobs", "Jobs", 0, "jobs"], ["estimates", "Calendar", dueCount, "cal"], ...(wide ? [["numbers", "Numbers", 0, "bolt"], ["sam", "Sam", d.unreadFromSam, "sam"]] as const : [])] as const).map(([k, l, n, ic]) =>
         <button key={k} type="button" aria-current={tab === k ? "page" : undefined} className={tab === k ? "on" : ""} onClick={() => { setTab(k); window.scrollTo(0, 0); if (k === "sam" || k === "estimates") void load(project, k); }}>
           <span className="ca-nav-ic">{ic === "today" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" /></svg> : ic === "sam" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg> : ic === "jobs" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="5" height="16" rx="1.5" /><rect x="9.5" y="4" width="5" height="11" rx="1.5" /><rect x="15.5" y="4" width="5" height="7" rx="1.5" /></svg> : ic === "bolt" ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-7" /></svg> : <Icon name={ic} size={22} />}{n ? <em>{n}</em> : null}</span>{l}</button>)}
-      <p className="ca-nav-foot"><b>Questions? Text Sam.</b>(205) 837-0211</p>
+      <button type="button" className="ca-nav-foot" onClick={() => { setTab("sam"); void load(project, "sam"); }}><span aria-hidden="true">{(d.owner || bizName || "?").trim().charAt(0).toUpperCase()}</span><span><b>{d.owner || "You"}</b><small>{bizName}</small></span></button>
     </nav>
     {billingOpen && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={() => load(project, "sam")} onClose={() => setBillingOpen(false)} />}
     {toastNode}

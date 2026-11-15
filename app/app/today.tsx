@@ -4,15 +4,17 @@
 // and what's on the calendar today. Everything else lives a tab away.
 import { jobSteps, type Card, type CardInvoice } from "@/lib/crm";
 import { overdue } from "@/lib/billing";
-import { useCountUp } from "./sx";
+import { useMemo, useState } from "react";
+import { CinderEmber } from "../cinder-brand";
 
 type Ask = { id: string; name: string; ask?: string; last: string; at: string | null };
 type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string };
 type Inv = CardInvoice & { thread_id: string; customer: string; phone: string };
-export type TodayGo = { thread: (id: string) => void; card: (id: string, stage?: "quoted" | "won") => void; invoice: (id: string) => void; calendar: () => void; sam: () => void; numbers: () => void; jobs: () => void; invoices: () => void };
+export type TodayGo = { thread: (id: string) => void; card: (id: string, stage?: "quoted" | "won") => void; invoice: (id: string) => void; calendar: () => void; sam: () => void; numbers: () => void; jobs: () => void; invoices: () => void; inbox: () => void };
 type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "sam";
 type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string };
 
+const STAGE_WORD: Record<string, string> = { new: "New", booked: "Estimate booked", quoted: "Quoted", won: "Won", lost: "Lost" };
 const first = (s: string) => (s || "").trim().split(" ")[0] || "them";
 const short = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, "")}k` : "$" + Math.round(n).toLocaleString("en-US");
 const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
@@ -88,51 +90,70 @@ export function TodayTab({ owner, business, trade, cards, invoices, asks, due, a
       .map(c => ({ key: "ni" + c.id, at: Date.parse(`${c.install}T${c.installTime || "07:00"}`), day: dayOf(c.install!), time: c.installTime ? hhmm(c.installTime) : "All day", what: c.installDays > 1 ? `Install, ${c.installDays} days` : "Install", who: c.name, go: () => go.card(c.id) })),
   ].sort((a, b) => a.at - b.at).slice(0, 6);
 
-  const open = cards.filter(c => c.stage === "new" || c.stage === "booked" || c.stage === "quoted");
-  const inPlay = open.reduce((a, c) => a + (c.value ?? (c.ballpark ? (c.ballpark.low + c.ballpark.high) / 2 : 0)), 0);
-  const shown = useCountUp(inPlay, 900);
 
   const sent = invoices.filter(i => i.status === "sent");
-  const owed = sent.reduce((a, i) => a + i.total, 0), late = sent.filter(i => overdue(i.status, i.due_on, today)).length;
+  const owed = sent.reduce((a, i) => a + i.total, 0), late = sent.filter(i => overdue(i.status, i.due_on, today));
+  const lateTotal = late.reduce((a, i) => a + i.total, 0);
   const hour = new Date().getHours();
-  const hello = `${hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"}${owner ? `, ${first(owner)}` : ""}`;
-  const quiet = live.leads > 0 && live.answered >= live.leads;
+  const day = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  const hello = `${hour < 12 ? "Good morning" : hour >= 17 ? "Good evening" : `Happy ${day}`}${owner ? `, ${first(owner)}` : ""}`;
 
-  return <div className="td">
-    <header className="td-head">
-      <h1>{hello}</h1>
-      <p>{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}<span>{quiet ? "Cinder answered every lead this month" : actions.length ? `${actions.length} ${actions.length === 1 ? "thing needs" : "things need"} you` : "Nothing needs you"}</span></p>
-    </header>
+  // The box finds anyone: a name, a street, a phone number or an invoice number.
+  const [q, setQ] = useState("");
+  const hits = useMemo(() => {
+    const t = q.trim().toLowerCase(), digits = t.replace(/\D/g, "");
+    if (t.length < 2) return [];
+    const people = cards.filter(c => c.name.toLowerCase().includes(t) || String(c.details.address ?? "").toLowerCase().includes(t) || (digits.length >= 3 && c.phone.replace(/\D/g, "").includes(digits)))
+      .slice(0, 5).map(c => ({ key: "c" + c.id, title: c.name || c.phone, sub: [STAGE_WORD[c.stage], c.line].filter(Boolean).join(" · "), go: () => go.card(c.id) }));
+    const bills = invoices.filter(i => `#${i.number}`.includes(t) || String(i.number) === digits || (i.customer || "").toLowerCase().includes(t))
+      .slice(0, 3).map(i => ({ key: "i" + i.id, title: `Invoice #${i.number}`, sub: `${i.customer || i.phone} · ${usd(i.total)}`, go: () => go.invoice(i.id) }));
+    return [...people, ...bills];
+  }, [q, cards, invoices, go]);
+  const next = [...sched.filter(s => !s.past).map(s => ({ ...s, day: "Today" })), ...ahead][0];
 
-    <dl className="td-figs">
-      <button type="button" onClick={go.jobs}><dt>Open jobs</dt><dd aria-label={usd(inPlay)}>{usd(shown)}</dd><small>{open.length} {open.length === 1 ? "job" : "jobs"} in the pipeline</small></button>
-      <button type="button" onClick={go.invoices}><dt>Owed to you</dt><dd className={late ? "late" : ""}>{usd(owed)}</dd><small>{sent.length ? `${sent.length} ${sent.length === 1 ? "invoice" : "invoices"}${late ? `, ${late} late` : ""}` : "All paid up"}</small></button>
-      <button type="button" onClick={go.numbers}><dt>Won, last 30 days</dt><dd>{short(live.wonValue)}</dd><small>{live.won} {live.won === 1 ? "job" : "jobs"}</small></button>
-      <button type="button" onClick={go.numbers}><dt>First reply</dt><dd>{live.replySec == null ? "–" : live.replySec < 60 ? <>{live.replySec}<i>s</i></> : <>{Math.round(live.replySec / 60)}<i>m</i></>}</dd><small>{live.answered} of {live.leads} leads answered</small></button>
-    </dl>
+  return <div className="hm">
+    <div className="hm-hero">
+      <h1 className="hm-hello"><CinderEmber className="hm-mark" />{hello}</h1>
+      <form className="hm-box" role="search" onSubmit={e => { e.preventDefault(); hits[0]?.go(); }}>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4-4" /></svg>
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Find a customer, job or invoice" aria-label="Find a customer, job or invoice" autoComplete="off" />
+        {q && <button type="button" className="hm-clear" onClick={() => setQ("")} aria-label="Clear">×</button>}
+      </form>
+      {q.trim().length >= 2 ? <ul className="hm-hits">{hits.length ? hits.map(h => <li key={h.key}><button type="button" onClick={h.go}><b>{h.title}</b><small>{h.sub}</small></button></li>)
+        : <li className="hm-none">No one matches &ldquo;{q.trim()}&rdquo;.</li>}</ul>
+      : <div className="hm-chips">
+        <button type="button" onClick={go.inbox}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{GLYPH.reply}</svg>Who needs a reply?</button>
+        <button type="button" onClick={go.invoices}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{GLYPH.money}</svg>What&rsquo;s owed?</button>
+        <button type="button" onClick={go.calendar}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{GLYPH.install}</svg>My week</button>
+      </div>}
+    </div>
 
-    <div className="td-cols"><section className="td-sec" aria-label="To do">
-      <h2>To do{actions.length ? <span>{actions.length}</span> : null}</h2>
-      {actions.length ? <ul className="td-acts">{actions.slice(0, 8).map(a => <li key={a.key}><button type="button" onClick={a.go}>
-        <span className={"td-g " + a.kind} aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{GLYPH[a.kind]}</svg></span>
-        <span className="td-t"><b>{a.title}</b><small>{a.sub}</small></span>
-        <span className="td-cta">{a.cta}</span>
-      </button></li>)}</ul>
-        : <div className="td-clear"><b>You&rsquo;re clear.</b> Cinder&rsquo;s handling the rest.</div>}
-      {actions.length > 8 && <p className="td-more">+{actions.length - 8} more</p>}
+    <section className="hm-next" aria-label="Pick up where you left off">
+      <div className="hm-next-h"><span>Pick up where you left off</span><button type="button" onClick={go.jobs}>View all</button></div>
+      <div className="hm-grid">
+        <button type="button" className="hm-card" onClick={actions[0]?.go ?? go.jobs}>
+          <div className="hm-thumb"><b>Today · {actions.length} to do</b>
+            {actions.slice(0, 3).map(a => <span key={a.key} className={a.kind === "money" ? "late" : ""}>{a.title}</span>)}
+            {!actions.length && <span>Nothing waiting on you</span>}</div>
+          <div className="hm-t">{actions[0]?.title ?? "You're clear"}</div>
+          <div className="hm-s">{actions[0]?.sub ?? "Cinder is handling the rest"}</div>
+        </button>
+        <button type="button" className="hm-card" onClick={go.invoices}>
+          <div className="hm-thumb"><b>Owed · {usd(owed)}</b>
+            {sent.slice(0, 3).map(i => <span key={i.id} className="hm-money"><em>{i.customer || i.phone}</em><i>{usd(i.total)}</i></span>)}
+            {!sent.length && <span>All paid up</span>}</div>
+          <div className="hm-t">{sent[0] ? `${first(sent[0].customer)} owes ${usd(sent[0].total)}` : "Nobody owes you"}</div>
+          <div className={"hm-s" + (late.length ? " late" : "")}>{late.length ? `${usd(lateTotal)} overdue` : "Nothing overdue"}</div>
+        </button>
+        <button type="button" className="hm-card" onClick={next ? next.go : go.calendar}>
+          <div className="hm-thumb"><b>Next 7 days · {sched.length + ahead.length}</b>
+            {[...sched.map(s => ({ key: s.key, t: `Today ${s.time}`, w: s.who })), ...ahead.map(a => ({ key: a.key, t: a.day, w: a.who }))].slice(0, 3).map(r => <span key={r.key} className="hm-money"><em>{r.w}</em><i>{r.t}</i></span>)}
+            {!sched.length && !ahead.length && <span>Nothing booked yet</span>}</div>
+          <div className="hm-t">{next ? `${next.who}, ${next.what.toLowerCase()}` : "A clear week"}</div>
+          <div className="hm-s">{next ? `${next.day} at ${next.time}` : "Cinder books estimates as leads come in"}</div>
+        </button>
+      </div>
+      <p className="hm-foot"><button type="button" onClick={go.numbers}><b>{short(live.wonValue)}</b> won in the last 30 days</button><span>·</span><button type="button" onClick={go.numbers}><b>{live.answered} of {live.leads}</b> leads answered</button><span>·</span><button type="button" onClick={go.numbers}>first reply in <b>{live.replySec == null ? "–" : live.replySec < 60 ? `${live.replySec}s` : `${Math.round(live.replySec / 60)}m`}</b></button></p>
     </section>
-    <section className="td-sec" aria-label="Today's schedule">
-      <h2>Schedule</h2>
-      {sched.length ? <ul className="td-sched">{sched.map(s => <li key={s.key} className={s.past ? "past" : ""}><button type="button" onClick={s.go}>
-        <span className="td-time">{s.time}</span>
-        <span className="td-t"><b>{s.who}</b><small>{s.what}{s.where ? ` · ${s.where}` : ""}</small></span>
-      </button></li>)}</ul>
-        : <div className="td-none"><b>Nothing on today.</b><button type="button" onClick={go.calendar}>Open calendar</button></div>}
-      {ahead.length > 0 && <><h3 className="td-h3">Next 7 days</h3>
-        <ul className="td-sched td-ahead">{ahead.map(s => <li key={s.key}><button type="button" onClick={s.go}>
-          <span className="td-time">{s.day}<small>{s.time}</small></span>
-          <span className="td-t"><b>{s.who}</b><small>{s.what}</small></span>
-        </button></li>)}</ul></>}
-    </section></div>
   </div>;
 }
