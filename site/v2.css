@@ -582,3 +582,20 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 .rv-row .stars { gap: 5px; } .rv-row .stars i { width: 22px; height: 22px; }
 @media (max-width: 980px) { .bento { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .bento { grid-template-columns: 1fr; } .bx-vis { height: auto; min-height: 250px; } }
+
+/* ---------- Feature cards, third pass: one seamless panel divided by hairlines, no card-inside-card ---------- */
+.bento { gap: 1px; background: var(--line-2); border: 1px solid var(--line-2); border-radius: 24px; overflow: hidden; box-shadow: var(--shadow); }
+.bx { border: 0; border-radius: 0; box-shadow: none; background: #fff; }
+.bx:hover { box-shadow: none; }
+.bx-vis { height: 300px; padding: 36px 32px 8px; margin-bottom: 0; background: #fff; border-bottom: 0; align-items: flex-end; }
+.bx-vis .ui { max-width: 360px; border-color: var(--line-2); border-bottom: 0; border-radius: 14px 14px 0 0; box-shadow: 0 -1px 0 rgba(18,20,23,.02), 0 18px 40px -18px rgba(18,20,23,.22); align-self: flex-end; -webkit-mask-image: linear-gradient(#000 78%, transparent); mask-image: linear-gradient(#000 78%, transparent); max-height: 256px; }
+.bx-copy { padding: 22px 32px 36px; border-top: 1px solid var(--line); }
+.bx-copy h3 { font-size: 20px; letter-spacing: -.025em; }
+.bx-copy p { font-size: 15px; margin-top: 6px; }
+.ui .big-clock { padding-bottom: 30px; }
+@media (max-width: 640px) { .bx-vis { height: 280px; min-height: 0; padding: 28px 22px 0; } .bx-copy { padding: 20px 22px 30px; } }
+.bx-vis { height: 316px; padding-top: 32px; }
+.bx-vis .ui { -webkit-mask-image: none; mask-image: none; max-height: none; }
+.bento { border-color: var(--line); background: var(--line); }
+.ui .big-clock { padding-bottom: 18px; }
+.bx-vis { padding-bottom: 0; height: 304px; }
