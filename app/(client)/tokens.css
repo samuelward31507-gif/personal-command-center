@@ -16,6 +16,8 @@
   --sel: rgba(18, 20, 23, .05);
   --ember: #d0663f;
   --ember-soft: rgba(208, 102, 63, .12);
+  --msg: #1b8cff;          /* sent messages, the one place blue lives */
+  --msg-in: #e9e9eb;
   --good: #1a8f55;
   --bad: #c93a2a;
   --ff: var(--font-ui), Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -246,9 +248,8 @@ button.row:hover { background: var(--hover); }
 @media (min-width: 900px) { .toast { bottom: 20px; left: auto; right: 20px; transform: none; } }
 .day { display: flex; align-items: center; gap: 10px; margin: 16px 0 6px; font-size: 12px; font-weight: 500; color: var(--g2); }
 .day::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
-.bubble { display: inline-block; max-width: min(520px, 100%); padding: 6px 10px; border-radius: var(--r2); background: var(--paper); color: var(--ink); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
-.bubble.out { background: var(--ink); color: #fff; }
-.bubble.cinder { background: var(--page); border: 1px solid var(--hair-2); }
+.bubble { display: inline-block; max-width: 100%; padding: 7px 11px; border-radius: 16px; background: var(--msg-in); color: var(--ink); line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13.5px; }
+.bubble.out, .bubble.cinder { background: var(--msg); color: #fff; }
 .skel { border-radius: 4px; background: linear-gradient(90deg, var(--paper) 25%, #ebebe8 50%, var(--paper) 75%); background-size: 200% 100%; animation: shim 1.2s linear infinite; }
 @keyframes shim { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001s !important; transition-duration: .001s !important; } }

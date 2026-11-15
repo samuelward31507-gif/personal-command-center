@@ -20,7 +20,7 @@ export function CommandBar({ d, go, onClose, onWinback }: { d: Data; go: Go; onC
       for (const inv of (d.invoices ?? []).filter(x => `#${x.number}`.includes(t) || String(x.number) === digits || (x.customer || "").toLowerCase().includes(t)).slice(0, 3))
         out.push({ key: "i" + inv.id, group: "Invoices", title: `Invoice #${inv.number}`, sub: `${inv.customer || fmtPhone(inv.phone)}, ${usd(inv.total)}`, icon: "invoice", run: () => go.invoice(inv.id) });
     }
-    const sections: [Tab, string, string, string][] = [["today", "Home", "home", "1"], ["inbox", "Inbox", "chat", "2"], ["jobs", "Jobs", "jobs", "3"], ["calendar", "Calendar", "cal", "4"], ["invoices", "Money", "invoice", "5"], ["system", "Settings", "gear", "6"]];
+    const sections: [Tab, string, string, string][] = [["today", "Home", "home", "1"], ["inbox", "Inbox", "chat", "2"], ["jobs", "Jobs", "jobs", "3"], ["calendar", "Calendar", "cal", "4"], ["invoices", "Money", "invoice", "5"], ["numbers", "Reports", "bars", "6"], ["system", "Settings", "gear", "7"]];
     for (const [k, l, ic, n] of sections) if (!t || l.toLowerCase().includes(t)) out.push({ key: "s" + k, group: "Go to", title: l, icon: ic, kbd: "⌘" + n, run: () => go.tab(k) });
     const acts: Item[] = [
       { key: "add", group: "Actions", title: "Add lead", icon: "plus", kbd: "c", run: go.addLead },

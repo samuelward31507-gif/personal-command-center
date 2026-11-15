@@ -5,8 +5,8 @@
 import { useState } from "react";
 import { dollars, lineTotal, overdue, totals, type Item } from "@/lib/billing";
 import type { CardInvoice } from "@/lib/crm";
-import { Empty, Icon, Sheet, Spinner, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast } from "./parts";
-import { NumbersPanel } from "./numbers";
+import { Icon, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast } from "./parts";
+import { line } from "./jobs";
 import type { Data, Go, InvoiceRow } from "./types";
 
 /** Editable quote or invoice lines: what, how many, the unit price. Totals are worked out, never typed. */
@@ -109,53 +109,56 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
   </Sheet>;
 }
 
-/** Money: invoices, quotes out, and the numbers pane. */
+/** Money: what is owed, collected, quoted and won, then the invoices and the quotes as tables. */
 export function MoneyScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean }) {
   const list = d.invoices ?? [], today = todayIso(), L = d.live;
   const [f, setF] = useState<"open" | "paid" | "all">("open");
   const out = list.filter(i => i.status === "sent"), late = out.filter(i => overdue(i.status, i.due_on, today));
   const paid30 = list.filter(i => i.status === "paid" && i.paid_at && Date.parse(i.paid_at) > Date.now() - 30 * 86400000).reduce((a, i) => a + i.total, 0);
   const shown = f === "open" ? list.filter(i => i.status === "sent" || i.status === "draft") : f === "paid" ? list.filter(i => i.status === "paid") : list;
-  const quotes = (d.board ?? []).filter(c => c.stage === "quoted" && (c.quote?.amount || c.value));
+  const quotes = (d.board ?? []).filter(c => c.stage === "quoted" && (c.quote?.amount || c.value)).sort((a, b) => b.at.localeCompare(a.at));
   const owed = out.reduce((a, i) => a + i.total, 0);
+  const quoteState = (c: typeof quotes[number]) => c.quote?.status === "replied" ? ["They replied", "bad"] : c.quote?.viewed ? [`Opened ${ago(c.quote.viewed)}`, "ink"] : c.quote?.linked ? [c.quote.steps ? `Follow-up ${c.quote.steps} of 4 sent` : "Sent, follow-up in 2 days", ""] : ["Not sent yet", "ember"];
   const views = <div className="views" role="tablist" aria-label="Show">{([["open", "Open", list.filter(i => i.status === "sent" || i.status === "draft").length], ["paid", "Paid", list.filter(i => i.status === "paid").length], ["all", "All", list.length]] as const).map(([k, l, n]) =>
     <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}<em>{n}</em></button>)}</div>;
-  const row = (i: InvoiceRow) => { const st = invoiceState(i), name = i.customer || fmtPhone(i.phone); return <tr key={i.id} tabIndex={0} onClick={() => go.invoice(i.id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(i.id); }}>
-    <td className="mut">#{i.number}</td>
-    <td><b>{name}</b></td>
-    <td className="mut">{i.items[0]?.name || ""}</td>
-    <td className="mut">{i.sent_at ? dateLabel(i.sent_at) : "Not sent"}</td>
-    <td><span className={"dot " + dotFor(st.tone)}>{st.text}</span></td>
-    <td className={st.tone === "red" ? "" : "mut"} style={st.tone === "red" ? { color: "var(--bad)" } : undefined}>{i.due_on ? dateLabel(i.due_on) : "–"}</td>
-    <td className="num">{dollars(i.total)}</td>
-  </tr>; };
   return <>
-    <header className="tb"><h1 className="h1">Money</h1>
-      {wide && <div className="figs">
-        <span className="fig"><b style={late.length ? { color: "var(--bad)" } : undefined}>{usd(owed)}</b><span>owed{late.length ? `, ${late.length} late` : ""}</span></span>
-        <span className="fig"><b>{usd(paid30)}</b><span>collected, 30 days</span></span>
-        <span className="fig"><b>{usd(L.chasingValue)}</b><span>quoted, waiting</span></span>
-        <span className="fig"><b>{usd(L.wonValue)}</b><span>won, 30 days</span></span>
-      </div>}
-      <div className="acts"><button type="button" className="btn" onClick={go.billing}>Pay link and tax</button></div></header>
-    <div className="split">
-      <div className="pane list">
-        <div className="jobs-tools">{views}<span className="sort">{shown.length} {shown.length === 1 ? "invoice" : "invoices"}</span></div>
-        {!shown.length ? <Empty title={f === "open" ? "Nothing outstanding" : "No invoices yet"} text="Create one from a won job. It pulls the lines from the quote." />
-        : wide ? <div className="tbl-wrap" style={{ flex: "0 0 auto" }}><table className="tbl" style={{ tableLayout: "fixed" }}>
-          <colgroup><col style={{ width: 70 }} /><col style={{ width: 180 }} /><col /><col style={{ width: 90 }} /><col style={{ width: 130 }} /><col style={{ width: 90 }} /><col style={{ width: 100 }} /></colgroup>
-          <thead><tr><th>Invoice</th><th>Customer</th><th>For</th><th>Sent</th><th>Status</th><th>Due</th><th className="right">Amount</th></tr></thead>
-          <tbody>{shown.map(row)}</tbody></table></div>
-        : <div>{shown.map(i => { const st = invoiceState(i), name = i.customer || fmtPhone(i.phone); return <button key={i.id} type="button" className="jrow" onClick={() => go.invoice(i.id)}>
-          <span style={{ minWidth: 0 }}><b>{name}</b><small>#{i.number}{i.due_on ? `, due ${dateLabel(i.due_on)}` : ""}</small></span>
-          <span className="r"><b>{dollars(i.total)}</b><em className={st.tone === "red" ? "red" : st.tone === "green" ? "green" : ""}>{st.text}</em></span></button>; })}</div>}
-        {quotes.length > 0 && <div className="pad"><section className="card" style={{ paddingTop: 0 }}>
-          <div className="hd"><h2>Quotes out</h2><small>{quotes.length}, {short(L.chasingValue)} waiting on an answer</small><button type="button" className="link" onClick={() => go.tab("jobs")}>Jobs</button></div>
-          {quotes.map(c => <button key={c.id} type="button" className="row" onClick={() => go.record(c.id)}><span className="ic"><Icon name="quote" size={14} /></span><span style={{ minWidth: 0 }}><b>{c.name}<span className="faint" style={{ fontWeight: 400 }}>, {c.quote?.status === "replied" ? "they replied" : c.quote?.viewed ? "opened" : c.quote?.linked ? `follow-up ${c.quote.steps} of 4` : "not sent yet"}</span></b></span><b className="num">{dollars(c.quote?.amount ?? c.value ?? 0)}</b></button>)}
-        </section></div>}
-        {!wide && <div className="pad" style={{ paddingTop: 0 }}><NumbersPanel d={d} /></div>}
+    <header className="tb"><h1 className="h1">Money</h1><span className="sub">Invoices and quotes</span>
+      <div className="acts"><button type="button" className="btn ghost" onClick={() => go.tab("numbers")}>Reports</button><button type="button" className="btn" onClick={go.billing}>Pay link and tax</button></div></header>
+    <div className="pad money-page">
+      <div className="stats">
+        <div className="stat"><span>Owed to you</span><b style={late.length ? { color: "var(--bad)" } : undefined}>{usd(owed)}</b><small className={late.length ? "down" : ""}>{late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"} past due` : out.length ? `${out.length} out, none late` : "All paid up"}</small></div>
+        <div className="stat"><span>Collected, 30 days</span><b>{usd(paid30)}</b><small>through your pay link</small></div>
+        <div className="stat"><span>Quoted, waiting</span><b>{usd(L.chasingValue)}</b><small>{L.chasing ? `${L.chasing} ${L.chasing === 1 ? "quote" : "quotes"}, Cinder following up` : "No quotes out"}</small></div>
+        <div className="stat"><span>Won, 30 days</span><b>{usd(L.wonValue)}</b><small>{L.won ? `${L.won} ${L.won === 1 ? "job" : "jobs"} from Cinder leads` : "No wins yet"}</small></div>
       </div>
-      {wide && <aside className="pane insp" style={{ flex: "0 0 340px", overflowY: "auto" }} aria-label="Numbers"><div className="pad"><NumbersPanel d={d} /></div></aside>}
+
+      <section className="card">
+        <div className="hd"><h2>Invoices</h2>{views}<small style={{ marginLeft: "auto" }}>{shown.length} {shown.length === 1 ? "invoice" : "invoices"}</small></div>
+        {!shown.length ? <p className="fine" style={{ padding: "6px 0" }}>{f === "open" ? "Nothing outstanding. Invoices are created from a won job and pull the lines from the quote." : "No invoices yet."}</p>
+        : wide ? <table className="tbl flush" style={{ tableLayout: "fixed" }}>
+          <colgroup><col style={{ width: 70 }} /><col style={{ width: 180 }} /><col /><col style={{ width: 90 }} /><col style={{ width: 140 }} /><col style={{ width: 90 }} /><col style={{ width: 100 }} /></colgroup>
+          <thead><tr><th>Invoice</th><th>Customer</th><th>For</th><th>Sent</th><th>Status</th><th>Due</th><th className="right">Amount</th></tr></thead>
+          <tbody>{shown.map(i => { const st = invoiceState(i), name = i.customer || fmtPhone(i.phone); return <tr key={i.id} tabIndex={0} onClick={() => go.invoice(i.id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(i.id); }}>
+            <td className="mut">#{i.number}</td><td><b>{name}</b></td><td className="mut">{i.items[0]?.name || ""}</td><td className="mut">{i.sent_at ? dateLabel(i.sent_at) : "Not sent"}</td>
+            <td><span className={"dot " + dotFor(st.tone)}>{st.text}</span></td><td className={st.tone === "red" ? "" : "mut"} style={st.tone === "red" ? { color: "var(--bad)" } : undefined}>{i.due_on ? dateLabel(i.due_on) : "–"}</td><td className="num">{dollars(i.total)}</td>
+          </tr>; })}</tbody></table>
+        : shown.map(i => { const st = invoiceState(i), name = i.customer || fmtPhone(i.phone); return <button key={i.id} type="button" className="jrow" style={{ padding: 0 }} onClick={() => go.invoice(i.id)}>
+          <span style={{ minWidth: 0 }}><b>{name}</b><small>#{i.number}{i.due_on ? `, due ${dateLabel(i.due_on)}` : ""}</small></span>
+          <span className="r"><b>{dollars(i.total)}</b><em className={st.tone === "red" ? "red" : st.tone === "green" ? "green" : ""}>{st.text}</em></span></button>; })}
+      </section>
+
+      <section className="card">
+        <div className="hd"><h2>Quotes</h2><small>{quotes.length ? `${quotes.length} out, ${short(L.chasingValue)} waiting on an answer` : "none out"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>Jobs</button></div>
+        {!quotes.length ? <p className="fine" style={{ padding: "6px 0" }}>Quotes you send from a job show here until they are won or lost.</p>
+        : wide ? <table className="tbl flush" style={{ tableLayout: "fixed" }}>
+          <colgroup><col style={{ width: 180 }} /><col /><col style={{ width: 90 }} /><col style={{ width: 200 }} /><col style={{ width: 100 }} /></colgroup>
+          <thead><tr><th>Customer</th><th>Job</th><th>Sent</th><th>Status</th><th className="right">Amount</th></tr></thead>
+          <tbody>{quotes.map(c => { const [t, tone] = quoteState(c); return <tr key={c.id} tabIndex={0} onClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
+            <td><b>{c.name}</b></td><td className="mut">{line(c)}</td><td className="mut">{ago(c.at)}</td><td><span className={"dot " + tone}>{t}</span></td><td className="num">{dollars(c.quote?.amount ?? c.value ?? 0)}</td>
+          </tr>; })}</tbody></table>
+        : quotes.map(c => { const [t, tone] = quoteState(c); return <button key={c.id} type="button" className="jrow" style={{ padding: 0 }} onClick={() => go.record(c.id)}>
+          <span style={{ minWidth: 0 }}><b>{c.name}</b><small>{line(c)}</small></span><span className="r"><b>{dollars(c.quote?.amount ?? c.value ?? 0)}</b><em className={tone === "bad" ? "red" : ""}>{t}</em></span></button>; })}
+      </section>
     </div>
   </>;
 }

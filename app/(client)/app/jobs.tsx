@@ -4,7 +4,7 @@
 // Views: Open, Won, Everyone (so Customers lives here). j/k move, Enter opens, Esc closes, c adds a lead.
 import { useEffect, useMemo, useState } from "react";
 import { STAGE_LABEL, STAGES, type Card, type Stage } from "@/lib/crm";
-import { Empty, Icon, Menu, StageChip, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
+import { Avatar, Empty, Icon, Menu, StageChip, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
 import { Inspector } from "./record";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 
@@ -54,7 +54,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
   const [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Stage | null>(null);
   const today = todayIso();
   const base = view === "open" ? cards.filter(isOpen) : view === "won" ? everyone.filter(c => c.stage === "won") : everyone;
-  const sources = useMemo(() => { const m = new Map<string, number>(); for (const c of base) m.set(c.source, (m.get(c.source) ?? 0) + 1); return [{ key: "any", label: "Any" }, ...[...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ key: k, label: sourceLabel(k), count: n }))]; }, [base]);
+  const sources = useMemo(() => { const m = new Map<string, number>(); for (const c of base) m.set(c.source, (m.get(c.source) ?? 0) + 1); return [{ key: "any", label: "All" }, ...[...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ key: k, label: sourceLabel(k), count: n }))]; }, [base]);
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase(), digits = t.replace(/\D/g, "");
     return base.filter(c => stage === "all" || c.stage === stage).filter(c => src === "any" || c.source === src)
@@ -89,7 +89,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
     catch (e) { toast(e instanceof Error ? e.message : "That didn't work.", true); }
   }
   const open = (id: string) => { if (wide) setSel(s => s === id ? null : id); else go.record(id); };
-  const stageOptions: { key: "all" | Stage; label: string; count?: number }[] = [{ key: "all", label: "Any", count: base.length }, ...STAGES.map(s => ({ key: s as "all" | Stage, label: STAGE_LABEL[s], count: base.filter(c => c.stage === s).length }))];
+  const stageOptions: { key: "all" | Stage; label: string; count?: number }[] = [{ key: "all", label: "All", count: base.length }, ...STAGES.map(s => ({ key: s as "all" | Stage, label: STAGE_LABEL[s], count: base.filter(c => c.stage === s).length }))];
 
   return <>
     <header className="tb">
@@ -123,9 +123,9 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
         : wide ? <>
           <div className="tbl-wrap"><table className={"tbl jobs-tbl" + (sel ? " compact" : "")}>
             <colgroup><col style={{ width: 190 }} /><col className="c2" style={{ width: 130 }} /><col /><col style={{ width: 140 }} /><col style={{ width: 104 }} /><col style={{ width: 200 }} /><col className="c2" style={{ width: 110 }} /><col className="c2" style={{ width: 100 }} /></colgroup>
-            <thead><tr><th>Customer</th><th className="c2">Phone</th><th>Job</th><th>Stage</th><th className="right">Value</th><th>Next</th><th className="c2">Source</th><th className="c2 right">Last activity</th></tr></thead>
+            <thead><tr><th>Customer</th><th className="c2">Phone</th><th>Job</th><th>Stage</th><th className="right">Value</th><th>Next step</th><th className="c2">Came from</th><th className="c2 right">Last activity</th></tr></thead>
             <tbody>{shown.map(c => { const n = nextUp(c, today), name = c.name || fmtPhone(c.phone), town = city(c); return <tr key={c.id} data-row={c.id} tabIndex={0} className={sel === c.id ? "sel" : ""} aria-selected={sel === c.id} onClick={() => open(c.id)} onDoubleClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
-              <td><b>{name}</b>{town && <span className="faint">, {town}</span>}</td>
+              <td><span className="name"><Avatar name={name} size="sm" /><span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}><b>{name}</b>{town && <span className="faint">, {town}</span>}</span></span></td>
               <td className="mut c2">{fmtPhone(c.phone)}</td>
               <td className={c.line ? "" : "faint"}>{line(c) || (c.notes ? c.notes.slice(0, 48) : "No details yet")}</td>
               <td><StageChip stage={c.stage} /></td>
