@@ -599,3 +599,4 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 .bento { border-color: var(--line); background: var(--line); }
 .ui .big-clock { padding-bottom: 18px; }
 .bx-vis { padding-bottom: 0; height: 304px; }
+@media (max-width: 640px) { .bx-vis { height: auto; min-height: 0; padding: 28px 22px 0; } }
