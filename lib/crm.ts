@@ -256,7 +256,11 @@ export type Card = { id: string; name: string; phone: string; source: string; st
   /** When the job entered its current stage, and the owner's reason when it was lost. */
   stageAt?: string | null; lostReason?: string;
   /** What the crew needs on site: gate code, the dog, where to park. */
-  crew?: string };
+  crew?: string;
+  email?: string;
+  /** "Remind me": when, and what about. Cleared once it's sent or the owner clears it. */
+  remind?: { at: string; note: string; sent: boolean } | null };
+export const cleanEmail = (v: unknown) => { const s = String(v ?? "").trim().toLowerCase().slice(0, 120); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : ""; };
 export type CardInvoice = { id: string; number: number; status: string; items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number; total: number; note: string;
   due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null };
 

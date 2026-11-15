@@ -5,7 +5,7 @@ import { cleanOwnerSetup } from "@/lib/crm";
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
-import { addLead, importCustomers, moveStage, saveCard, saveOwnerSetup, setJobCosts, setJobStep } from "@/lib/client-crm-run";
+import { addLead, importCustomers, moveStage, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
-    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string };
+    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string; email?: string; at?: string | null };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       }
       let value: number | null | undefined;
       if (b.value !== undefined) { value = b.value === null || b.value === "" ? null : parseAmount(String(b.value)); if (b.value && value == null) return json({ error: "Type the job value as a number, like 9400." }, 400); }
-      const r = await saveCard(sql, c, b.thread, { details: b.details, value, notes: b.notes, crew: b.crew, name: b.name, install: b.install, review: b.review });
+      const r = await saveCard(sql, c, b.thread, { details: b.details, value, notes: b.notes, crew: b.crew, name: b.name, email: b.email, install: b.install, review: b.review });
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
     }
     if (b.action === "quotelink" || b.action === "reviewnow") {
@@ -112,12 +112,17 @@ export async function POST(req: Request) {
     if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
     // The crew sees the schedule and the jobs and can text, call, tick steps and leave notes. Money and settings stay with the owner.
     if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
-    if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; }
+    if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; b.email = undefined; }
     if (b.action === "ask") {
       const q = String(b.question ?? "").trim().slice(0, 500);
       if (!q) return json({ error: "Ask something." }, 400);
       const a = await askCinder(sql, c, q);
       return a ? json({ ok: true, answer: a }) : json({ error: "Cinder couldn't answer just now." }, 503);
+    }
+    if (b.action === "remind") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const r = await setReminder(sql, c, b.thread, b.at ?? null, b.note);
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     if (b.action === "reschedule") {
       if (!b.appt || !UUID.test(b.appt)) return json({ error: "Which estimate?" }, 400);

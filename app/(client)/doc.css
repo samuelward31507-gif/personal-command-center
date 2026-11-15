@@ -35,3 +35,12 @@
 .doc-msg h1 { font: 600 18px/1.2 var(--ff-tight); letter-spacing: -.015em; } .doc-msg p { color: var(--g1); line-height: 1.5; }
 .doc-foot { margin-top: 14px; color: var(--g2); font-size: 12px; }
 .doc-load { gap: 10px; } .doc-load i { display: block; height: 12px; width: 40%; } .doc-load i:nth-child(2) { height: 36px; width: 60%; } .doc-load i:nth-child(3) { width: 80%; }
+
+.doc-sign { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--g1); }
+.doc-sign .input { height: 44px; font-size: 16px; padding: 0 12px; border-radius: var(--r2); }
+.doc-print { display: block; margin: 8px auto 0; font-size: 12px; }
+@media print {
+  .doc { background: #fff; padding: 0; min-height: 0; }
+  .doc-card { border: 0; box-shadow: none; max-width: none; padding: 0; }
+  .doc-acts, .doc-print, .doc-no, .btn, .link { display: none !important; }
+}

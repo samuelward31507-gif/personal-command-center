@@ -227,11 +227,11 @@ export async function runInvoiceReminders(sql: Sql, limit = 60): Promise<{ sent:
 }
 
 // ---------- Customers ----------
-export type Customer = { id: string; name: string; phone: string; address: string; source: string; status: string; stage: string | null; since: string; last: string;
+export type Customer = { id: string; name: string; phone: string; email: string; address: string; source: string; status: string; stage: string | null; since: string; last: string;
   jobs: number; spent: number; owed: number; open_quote: number | null; line: string };
 /** Everyone who ever got in touch, newest activity first, with what they've bought and what they owe. */
 export async function loadCustomers(sql: Sql, c: Client): Promise<Customer[]> {
-  const rows = await sql`SELECT t.id, t.customer_name, t.customer_phone, t.source, t.status, t.stage, t.details, t.created_at, coalesce(t.last_in_at, t.updated_at) AS last,
+  const rows = await sql`SELECT t.id, t.customer_name, t.customer_phone, t.customer_email, t.source, t.status, t.stage, t.details, t.created_at, coalesce(t.last_in_at, t.updated_at) AS last,
       coalesce(w.jobs, 0)::int AS jobs, coalesce(w.spent, 0)::float AS spent, coalesce(o.owed, 0)::float AS owed, oq.amount::float AS open_quote
     FROM public.client_threads t
     LEFT JOIN LATERAL (SELECT count(*) AS jobs, sum(coalesce(amount, 0)) AS spent FROM public.client_quotes q WHERE q.project_id = t.project_id AND q.status = 'won'
@@ -242,7 +242,7 @@ export async function loadCustomers(sql: Sql, c: Client): Promise<Customer[]> {
     WHERE t.project_id = ${c.projectId}::uuid AND t.source NOT IN ('review', 'due')
     ORDER BY coalesce(t.last_in_at, t.updated_at) DESC LIMIT 1000` as Record<string, unknown>[];
   return rows.map(r => { const d = cleanDetails(c.setup.trade, r.details); return {
-    id: String(r.id), name: String(r.customer_name || ""), phone: String(r.customer_phone), address: String(d.address ?? ""), source: String(r.source), status: String(r.status),
+    id: String(r.id), name: String(r.customer_name || ""), phone: String(r.customer_phone), email: String(r.customer_email ?? ""), address: String(d.address ?? ""), source: String(r.source), status: String(r.status),
     stage: r.stage ? String(r.stage) : null, since: new Date(String(r.created_at)).toISOString(), last: new Date(String(r.last)).toISOString(),
     jobs: Number(r.jobs), spent: Number(r.spent), owed: Number(r.owed), open_quote: r.open_quote == null ? null : Number(r.open_quote), line: detailLine(c.setup.trade, d) }; });
 }

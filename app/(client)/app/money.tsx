@@ -45,7 +45,7 @@ export function invoiceState(i: CardInvoice): { text: string; tone: "" | "green"
 const dotFor = (tone: string) => tone === "green" ? "good" : tone === "red" ? "bad" : tone === "amber" ? "ember" : tone === "blue" ? "ink" : "";
 
 /** One invoice: lines, due date, note; send it, copy the link, mark it paid. */
-export function InvoiceSheet({ inv, customer, project, api, toast, reload, payLink, onClose, onSetup }: { inv: CardInvoice; customer: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; payLink: boolean; onClose: () => void; onSetup: () => void }) {
+export function InvoiceSheet({ inv, customer, email, project, api, toast, reload, payLink, onClose, onSetup }: { inv: CardInvoice; customer: string; email?: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; payLink: boolean; onClose: () => void; onSetup: () => void }) {
   const [items, setItems] = useState<Item[]>(inv.items), [tax, setTax] = useState(inv.tax_rate), [note, setNote] = useState(inv.note), [due, setDue] = useState(inv.due_on ?? "");
   const [busy, setBusy] = useState(""), [arm, setArm] = useArm();
   const locked = inv.status === "paid" || inv.status === "void";
@@ -75,6 +75,7 @@ export function InvoiceSheet({ inv, customer, project, api, toast, reload, payLi
       <span style={{ flex: 1 }} />
       {!locked && dirty && <button type="button" className="btn" disabled={!!busy} onClick={() => void save()}>Save</button>}
       {!locked && <button type="button" className="btn" disabled={!!busy} onClick={() => void copy()}>Copy link</button>}
+      {!locked && email && inv.url && <a className="btn" href={`mailto:${email}?subject=${encodeURIComponent(`Invoice #${inv.number}`)}&body=${encodeURIComponent(`Hi ${first}, here's your invoice for ${dollars(inv.total)}${inv.due_on ? `, due ${dateLabel(inv.due_on)}` : ""}. You can see it and pay here: ${inv.url}`)}`}>Email it</a>}
       {!locked && <button type="button" className="btn ink" disabled={!!busy} onClick={() => void send()}>{busy === "send" ? <Spinner /> : inv.status === "sent" ? "Text it again" : `Text ${first}`}</button>}
     </>}>
     {!payLink && !locked && <div className="card box"><b className="t-em">No pay link yet</b><p className="fine" style={{ marginTop: 2 }}>Add your Square, Stripe or PayPal link so customers can pay from the invoice.</p>

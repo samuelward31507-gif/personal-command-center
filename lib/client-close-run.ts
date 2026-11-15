@@ -78,7 +78,7 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
  * The customer approved (or passed on) the quote. Approve: the job is won, follow-ups stop, the owner hears right away.
  * Pass: follow-ups stop and the owner hears why, if they said. Answering twice changes nothing.
  */
-export async function answerQuote(sql: Sql, token: string, answer: "approve" | "decline", reason = ""): Promise<{ ok: boolean; state?: PublicQuote["state"]; error?: string }> {
+export async function answerQuote(sql: Sql, token: string, answer: "approve" | "decline", reason = "", signedBy = ""): Promise<{ ok: boolean; state?: PublicQuote["state"]; error?: string }> {
   if (!QUOTE_TOKEN.test(token)) return { ok: false, error: "This quote link isn't valid." };
   const approve = answer === "approve";
   const [q] = await sql`UPDATE public.client_quotes SET status = ${approve ? "won" : "lost"}, last_step_at = now(),
@@ -94,8 +94,9 @@ export async function answerQuote(sql: Sql, token: string, answer: "approve" | "
     RETURNING id, customer_name` as { id: string; customer_name: string }[];
   const name = t?.customer_name || q.customer_name || q.customer_phone;
   const why = reason.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 300);
+  const by = signedBy.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 80);
   if (t) await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${t.id}::uuid, 'in', 'system',
-    ${approve ? `Approved the quote online${q.amount ? `: ${money(q.amount)}` : ""}` : `Passed on the quote online${why ? `: "${why}"` : ""}`})`;
+    ${approve ? `Approved the quote online${by ? ` as "${by}"` : ""}${q.amount ? `: ${money(q.amount)}` : ""}` : `Passed on the quote online${why ? `: "${why}"` : ""}`})`;
   await alertOwner(c, approve
     ? `Cinder · Quote approved: ${name}${q.amount ? `, ${money(q.amount)}` : ""}. Text them to set the install date.`
     : `Cinder · Quote declined: ${name}${why ? `. They said: "${why}"` : ". They didn't say why"}. Follow-ups stopped.`, t?.id, sql);

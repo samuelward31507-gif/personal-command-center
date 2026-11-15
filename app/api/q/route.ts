@@ -26,14 +26,14 @@ export async function GET(req: Request) {
 
 /** POST { token, answer: approve | decline, reason? } — the customer's answer. */
 export async function POST(req: Request) {
-  const b = await req.json().catch(() => ({})) as { token?: string; answer?: string; reason?: string };
+  const b = await req.json().catch(() => ({})) as { token?: string; answer?: string; reason?: string; name?: string };
   const token = String(b.token ?? "");
   if (b.answer !== "approve" && b.answer !== "decline") return reply({ error: "Pick approve or no thanks." }, 400);
   if (token === "example") return reply({ ok: true, state: b.answer === "approve" ? "approved" : "declined" });
   if (!(await allowEvent("quote-answer", clientIp(req), 12, 60))) return reply({ error: "Too many tries. Text the business instead." }, 429);
   if (!process.env.DATABASE_URL) return reply({ error: "This quote is unavailable right now." }, 503);
   try {
-    const r = await answerQuote(neon(process.env.DATABASE_URL), token, b.answer, String(b.reason ?? ""));
+    const r = await answerQuote(neon(process.env.DATABASE_URL), token, b.answer, String(b.reason ?? ""), String(b.name ?? ""));
     return r.ok ? reply({ ok: true, state: r.state }) : reply({ error: r.error }, 404);
   } catch (e) { console.error("Quote answer failed", e instanceof Error ? e.message : e); return reply({ error: "That didn't go through. Try again, or text the business." }, 500); }
 }

@@ -6,7 +6,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { draftItems, jobFields, jobProfit, jobProgress, jobSteps, rangeText, STAGE_LABEL, STAGES, type Card, type CardInvoice, type Costs, type Details, type Stage } from "@/lib/crm";
 import { dollars, totals, type Item } from "@/lib/billing";
-import { Avatar, Empty, Icon, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast } from "./parts";
+import { Avatar, Empty, Icon, Sheet, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast } from "./parts";
+import { quoteText } from "@/lib/crm";
+
+/** "Remind me": a time and a note on this customer. The owner gets a text and a push when it's due. */
+export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: { name: string; current: { at: string; note: string } | null; busy: boolean; onClose: () => void; onSave: (at: string, note: string) => void; onClear: () => void }) {
+  const local = (t: number) => { const x = new Date(t); const p = (n: number) => String(n).padStart(2, "0"); return `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}T${p(x.getHours())}:${p(x.getMinutes())}`; };
+  const tomorrow9 = () => { const x = new Date(); x.setDate(x.getDate() + 1); x.setHours(9, 0, 0, 0); return x.getTime(); };
+  const [at, setAt] = useState(current ? local(Date.parse(current.at)) : local(tomorrow9())), [note, setNote] = useState(current?.note ?? "");
+  const quick: [string, () => number][] = [["Tomorrow 9 AM", tomorrow9], ["In 3 days", () => { const x = new Date(tomorrow9()); x.setDate(x.getDate() + 2); return x.getTime(); }], ["Next week", () => { const x = new Date(tomorrow9()); x.setDate(x.getDate() + 6); return x.getTime(); }]];
+  return <Sheet title={`Remind me about ${first(name)}`} sub="A text and a notification when it's due" onClose={onClose}
+    foot={<>{current && <button type="button" className="btn ghost" disabled={busy} onClick={onClear}>Clear</button>}<span style={{ flex: 1 }} /><button type="button" className="btn" onClick={onClose}>Cancel</button><button type="button" className="btn ink" disabled={busy || !at} onClick={() => onSave(new Date(at).toISOString(), note)}>{busy ? <Spinner /> : "Set reminder"}</button></>}>
+    <div className="chips">{quick.map(([l, f]) => <button key={l} type="button" onClick={() => setAt(local(f()))}>{l}</button>)}</div>
+    <label className="field"><span>When</span><input type="datetime-local" value={at} step={900} onChange={e => setAt(e.target.value)} /></label>
+    <label className="field"><span>What about <em>optional</em></span><input value={note} maxLength={200} onChange={e => setNote(e.target.value)} placeholder="Call back about the gate, check if the permit came" /></label>
+  </Sheet>;
+}
 import { LineEditor, invoiceState } from "./money";
 import { nextUp, LostPicker } from "./jobs";
 import { sourceLabel, type Biz, type Data, type Go, type Text, type Thread } from "./types";
@@ -106,7 +121,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
   const r = useRecord(id, d, project, api, toast, reload);
   const [tab, setTab] = useState<"activity" | "job">(view0 ?? (ask0 ? "job" : "activity"));
   const [ask, setAsk] = useState<Stage | null>(ask0 ?? null);
-  const [losing, setLosing] = useState(false);
+  const [losing, setLosing] = useState(false), [reminding, setReminding] = useState(false);
   const [wide, setWide] = useState(false);
   useEffect(() => { const m = matchMedia("(min-width: 900px)"); const h = () => setWide(m.matches); h(); m.addEventListener("change", h); return () => m.removeEventListener("change", h); }, []);
   const ta = useRef<HTMLTextAreaElement>(null);
@@ -119,6 +134,9 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
     if (s === "lost") { setLosing(true); return; }
     void r.act("stage", { action: "stage", stage: s }, `Moved to ${STAGE_LABEL[s]}.`);
   };
+  const remindSheet = reminding && <RemindSheet name={r.name} current={card?.remind && !card.remind.sent ? card.remind : null} busy={!!r.busy} onClose={() => setReminding(false)}
+    onSave={(at, note) => { void r.act("remind", { action: "remind", at, note }, `Reminder set for ${new Date(at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}.`); setReminding(false); }}
+    onClear={() => { void r.act("remind", { action: "remind", at: null }, "Reminder cleared."); setReminding(false); }} />;
   const lostSheet = losing && <LostPicker name={r.name} busy={!!r.busy} onClose={() => setLosing(false)} onPick={why => { void r.act("stage", { action: "stage", stage: "lost", reason: why }, `Marked lost, ${why.toLowerCase()}. Follow-ups stopped.`); setLosing(false); }} />;
   const primary = (() => {
     if (!card) return null;
@@ -149,6 +167,8 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       <div className="money"><span>Source</span><b>{sourceLabel(source)}</b></div>
       {since && <div className="money"><span>Since</span><b>{since}</b></div>}
       <div className="money"><span>Texting</span>{status === "opted_out" ? <span className="dot bad">Opted out</span> : status === "paused" ? <span className="dot ember">You&rsquo;re replying</span> : <span className="dot">Cinder replying</span>}</div>
+      {card?.email && <div className="money"><span>Email</span><b><a className="link" href={`mailto:${card.email}`} style={{ fontWeight: 500 }}>{card.email}</a></b></div>}
+      {card?.remind && !card.remind.sent && <div className="money"><span>Reminder</span><b>{new Date(card.remind.at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}{card.remind.note ? `, ${card.remind.note}` : ""}</b></div>}
       {card?.reviewSent && <div className="money"><span>Review</span><b>Asked {dateLabel(card.reviewSent)}</b></div>}
       {card?.install && <div className="money"><span>Install</span><b>{dateLabel(card.install)}{card.installDays > 1 ? `, ${card.installDays} days` : ""}{card.onCalendar ? ", on calendar" : ""}</b></div>}
     </section></>;
@@ -162,6 +182,8 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
         {biz.canCall ? <button type="button" className="btn" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} />Call</button> : <a className="btn" href={`tel:${phone}`}><Icon name="phone" size={14} />Call</a>}
         <button type="button" className="btn" onClick={() => { setTab("activity"); setTimeout(() => ta.current?.focus(), 50); }}><Icon name="chat" size={14} />Text</button>
         {address && <a className="btn ic" href={`https://maps.google.com/?q=${encodeURIComponent(address)}`} target="_blank" rel="noreferrer" aria-label="Directions" title="Directions"><Icon name="pin" size={14} /></a>}
+        {card?.email && <a className="btn ic" href={`mailto:${card.email}`} aria-label="Email" title={card.email}><Icon name="send" size={14} /></a>}
+        {card && !biz.crew && <button type="button" className={"btn ic" + (card.remind && !card.remind.sent ? " on" : "")} onClick={() => setReminding(true)} aria-label="Remind me" title={card.remind && !card.remind.sent ? `Reminder ${dateLabel(card.remind.at)}` : "Remind me"}><Icon name="clock" size={14} /></button>}
         {!biz.crew && primary}
       </div>
     </header>
@@ -203,6 +225,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       {wide && <aside className="rec-rail" aria-label="Money and next steps">{rail}</aside>}
     </div>
     {lostSheet}
+    {remindSheet}
   </div>;
 }
 
@@ -286,7 +309,7 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
 function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask: Stage | null; setAsk: (s: Stage | null) => void; go: Go; canText: boolean }) {
   const { card, busy, act, name, arm, setArm } = r;
   const [d, setD] = useState<Record<string, string>>(() => asStrings(card?.details ?? {}));
-  const [value, setValue] = useState(card?.value ? String(card.value) : ""), [notes, setNotes] = useState(card?.notes ?? ""), [crew, setCrew] = useState(card?.crew ?? "");
+  const [value, setValue] = useState(card?.value ? String(card.value) : ""), [notes, setNotes] = useState(card?.notes ?? ""), [crew, setCrew] = useState(card?.crew ?? ""), [email, setEmail] = useState(card?.email ?? "");
   const [deposit, setDeposit] = useState(card?.quote?.deposit ? String(card.quote.deposit) : "");
   const [amt, setAmt] = useState(card?.value ? String(card.value) : card?.quote?.amount ? String(card.quote.amount) : "");
   const q = card?.quote ?? null;
@@ -298,7 +321,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
   if (!card) return <Empty title="No job on the board" text={`Start a job to track ${first(name)} from estimate to paid.`} />;
   const firstName = first(card.name);
   const installDirty = install !== (card.install ?? "") || itime !== (card.installTime ?? "") || idays !== String(card.installDays || 1);
-  const dirty = JSON.stringify(d) !== JSON.stringify(asStrings(card.details)) || value !== (card.value ? String(card.value) : "") || notes !== card.notes || crew !== (card.crew ?? "") || (card.stage === "won" && review !== card.reviewAuto);
+  const dirty = JSON.stringify(d) !== JSON.stringify(asStrings(card.details)) || value !== (card.value ? String(card.value) : "") || notes !== card.notes || crew !== (card.crew ?? "") || email !== (card.email ?? "") || (card.stage === "won" && review !== card.reviewAuto);
   const depN = Math.round(Number(deposit.replace(/[^\d.]/g, "")) || 0);
   const quoteTotal = totals(items.filter(i => i.name.trim()), tax).total;
   const calMsg = (c?: string) => c === "added" ? " On your Google Calendar." : c === "removed" ? " Taken off your calendar." : c === "not_connected" ? " Connect Google Calendar to put it there." : c === "failed" ? " It didn't save to your calendar; try again." : "";
@@ -347,6 +370,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
           <button type="button" className="btn ink" disabled={!!busy || quoteTotal <= 0} onClick={async () => { if (await act("lines", { action: "quotelines", items, tax, note: incl, deposit: depN || null }, `Quote updated: ${dollars(quoteTotal)}.`)) setEditLines(false); }}>Save lines</button>
         </> : <>
           <button type="button" className="btn" disabled={!!busy} onClick={() => void copy()}>Copy link</button>
+          {card.email && q.url && <a className="btn" href={`mailto:${card.email}?subject=${encodeURIComponent(`Your quote from ${biz.business}`)}&body=${encodeURIComponent(quoteText({ first: firstName, business: biz.business, amount: q.amount, line: card.line.replace(/ · /g, ", "), url: q.url }))}`}>Email it</a>}
           <button type="button" className="btn" disabled={!!busy} onClick={() => setEditLines(true)}>Edit lines</button>
           <button type="button" className="btn ink" disabled={!!busy || !canText} onClick={() => void act("send", { action: "quotelink", note: incl }, res => res.sent ? `Quote texted to ${firstName}.` : res.warn || "Saved.")}>{busy === "send" ? <Spinner /> : q.linked ? "Text it again" : `Text ${firstName}`}</button>
         </>}
@@ -376,11 +400,12 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
       <div className="fields">{jobFields(biz.trade).map(f => <label key={f.key} className={"field" + (f.key === "address" ? " full" : "")}><span>{f.label}</span>
         {f.kind === "choice" ? <select value={d[f.key] ?? ""} onChange={e => setD(x => ({ ...x, [f.key]: e.target.value }))}><option value="">–</option>{f.options!.map(o => <option key={o}>{o}</option>)}</select>
           : <span className="inwrap"><input inputMode={f.kind === "number" ? "decimal" : undefined} value={d[f.key] ?? ""} onChange={e => setD(x => ({ ...x, [f.key]: e.target.value }))} placeholder="Not set" />{f.unit && <em>{f.unit}</em>}</span>}</label>)}
+        <label className="field"><span>Email <em>for quotes and invoices</em></span><input type="email" inputMode="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" /></label>
         <label className="field"><span>Job value</span><span className="inwrap"><i>$</i><input inputMode="decimal" value={value} onChange={e => setValue(e.target.value.replace(/[^\d.,kK]/g, ""))} placeholder="What it's worth to you" /></span></label>
         <label className="field full"><span>Notes <em>for you</em></span><textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} placeholder="HOA needs drawings, wants it done before the party on the 20th" /></label>
         <label className="field full"><span>Crew notes <em>what they need on site</em></span><textarea rows={2} value={crew} onChange={e => setCrew(e.target.value)} placeholder="Gate on the left side, dog in the yard, park on the street" /></label>
       </div>
-      <div className="acts-row end"><button type="button" className="btn ink" disabled={!dirty || !!busy} onClick={() => void act("save", { action: "card", details: d, value: value || null, notes, crew, ...(card.stage === "won" ? { review } : {}) }, "Saved.")}>{busy === "save" ? <Spinner /> : "Save"}</button></div>
+      <div className="acts-row end"><button type="button" className="btn ink" disabled={!dirty || !!busy} onClick={() => void act("save", { action: "card", details: d, value: value || null, notes, crew, email, ...(card.stage === "won" ? { review } : {}) }, "Saved.")}>{busy === "save" ? <Spinner /> : "Save"}</button></div>
     </>)}
   </>;
 }

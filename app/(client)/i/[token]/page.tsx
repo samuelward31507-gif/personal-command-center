@@ -54,6 +54,7 @@ export default function InvoicePage() {
                 : <p className="doc-fine">{who} will tell you how to pay. Reply to the text with any questions.</p>}
               {v.pay_link && <p className="doc-fine">Opens {v.business || "the business"}&rsquo;s secure payment page.</p>}
               {sms && <a className="btn lg" href={sms}>Text a question</a>}
+              <button type="button" className="link" style={{ alignSelf: "center", fontSize: 14 }} onClick={() => window.print()}>Print or save as PDF</button>
               {said ? <p className="doc-fine" role="status">Thanks. {who} will confirm your payment.</p>
                 : <button type="button" className="link" style={{ alignSelf: "center", fontSize: 14 }} disabled={busy} onClick={() => void claim()}>I&rsquo;ve already paid</button>}
             </div>}

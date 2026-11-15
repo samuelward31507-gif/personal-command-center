@@ -18,7 +18,7 @@ const Check = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" 
 export default function QuotePage() {
   const { token } = useParams<{ token: string }>();
   const [q, setQ] = useState<Q | null>(null), [err, setErr] = useState("");
-  const [busy, setBusy] = useState(false), [no, setNo] = useState(false), [why, setWhy] = useState(""), [fail, setFail] = useState("");
+  const [busy, setBusy] = useState(false), [no, setNo] = useState(false), [why, setWhy] = useState(""), [fail, setFail] = useState(""), [signer, setSigner] = useState("");
   useEffect(() => {
     fetch("/api/q?token=" + encodeURIComponent(token), { cache: "no-store" })
       .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "This quote link isn't valid."); setQ(j); })
@@ -27,7 +27,7 @@ export default function QuotePage() {
   async function answer(a: "approve" | "decline") {
     setBusy(true); setFail("");
     try {
-      const r = await fetch("/api/q", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, answer: a, reason: why }) });
+      const r = await fetch("/api/q", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, answer: a, reason: why, name: signer }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "That didn't go through.");
       setQ(x => x && { ...x, state: j.state, answeredAt: new Date().toISOString() });
@@ -62,14 +62,15 @@ export default function QuotePage() {
                 <button type="submit" className="btn ink lg" disabled={busy}>{busy ? "Sending…" : "Send my answer"}</button></div>
             </form>
           : <div className="doc-acts">
-              <button type="button" className="btn ink lg" disabled={busy} onClick={() => void answer("approve")}>{busy ? "Approving…" : `Approve${q.amount ? ` ${usd(q.amount)}` : " quote"}`}</button>
+              <label className="doc-sign"><span>Your name, to approve</span><input className="input" value={signer} onChange={e => setSigner(e.target.value)} placeholder="Dana Ruiz" maxLength={80} autoComplete="name" /></label>
+              <button type="button" className="btn ink lg" disabled={busy || signer.trim().length < 2} onClick={() => void answer("approve")}>{busy ? "Approving…" : `Approve${q.amount ? ` ${usd(q.amount)}` : " quote"}`}</button>
               <p className="doc-fine">Approving tells {who} you&rsquo;re ready. Nothing is charged here.{q.deposit ? ` A ${usd(q.deposit)} deposit holds your install date, paid on ${biz}'s own payment page after you approve.` : ""}</p>
               {sms && <a className="btn lg" href={sms}>Text a question</a>}
               <button type="button" className="link" style={{ alignSelf: "center", fontSize: 14 }} onClick={() => setNo(true)}>No thanks</button>
             </div>}
           {fail && <p className="err" role="alert" style={{ textAlign: "center" }}>{fail}</p>}
         </section>
-        <p className="doc-foot">{q.business ? `Sent by ${q.business} with Cinder` : "Sent with Cinder"}</p>
+        <p className="doc-foot">{q.business ? `Sent by ${q.business} with Cinder` : "Sent with Cinder"}<button type="button" className="link doc-print" onClick={() => window.print()}>Print or save as PDF</button></p>
       </>}
   </main>;
 }
