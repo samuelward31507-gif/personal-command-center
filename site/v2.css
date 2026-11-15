@@ -745,3 +745,10 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
   .tline::before { left: 4px; } .tline li { grid-template-columns: 1fr; gap: 4px; padding-left: 28px; } .tline li::after { left: 0; top: 28px; } .tl-when { text-align: left; }
 }
 @media (max-width: 640px) { .start.four { grid-template-columns: 1fr; } }
+
+/* ---------- Demo page video ---------- */
+.pvid { padding-top: 8px; }
+.vid { max-width: 1120px; margin: 0 auto; border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--card); box-shadow: 0 40px 90px -40px rgba(18,20,23,.35), 0 10px 30px -18px rgba(18,20,23,.18); }
+.vid video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: var(--bg); }
+.vid-note { text-align: center; margin-top: 16px; font-size: 14px; color: var(--text-4, var(--text-3)); }
+@media (max-width: 640px) { .vid { border-radius: 14px; } }
