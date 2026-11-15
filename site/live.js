@@ -317,3 +317,12 @@
   });
   chat.addEventListener("submit", function (e) { e.preventDefault(); var v = say.value.trim(); if (!v) return; say.value = ""; turn(v, false); });
 })();
+
+// ---------- Phone menu ----------
+(function () {
+  var b = document.querySelector(".nav-menu"), sheet = document.getElementById("nav-sheet"); if (!b || !sheet) return;
+  var set = function (open) { sheet.hidden = !open; b.setAttribute("aria-expanded", open ? "true" : "false"); document.getElementById("nav").classList.toggle("is-open", open); };
+  b.addEventListener("click", function () { set(sheet.hidden); });
+  sheet.addEventListener("click", function (e) { if (e.target.closest("a")) set(false); });
+  addEventListener("keydown", function (e) { if (e.key === "Escape") set(false); });
+})();
