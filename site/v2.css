@@ -600,3 +600,17 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 .ui .big-clock { padding-bottom: 18px; }
 .bx-vis { padding-bottom: 0; height: 304px; }
 @media (max-width: 640px) { .bx-vis { height: auto; min-height: 0; padding: 28px 22px 0; } }
+
+/* ---------- Final pass ---------- */
+/* Two-tone headlines: the first sentence is always ink, only the second goes grey. */
+.center-head h2 .w:not(.dim), .head h2 .w:not(.dim) { color: var(--text); }
+/* Stage: the phone and the 0:09 clock clear the step captions. */
+.stage { padding-bottom: 214px; }
+.show-steps { margin-top: 8px; }
+.clock { top: 596px; left: -250px; }
+@media (max-width: 1100px) { .clock { left: -130px; top: 600px; } }
+@media (max-width: 900px) { .stage { padding-bottom: 0; } .show-steps { margin-top: 64px; } .clock { left: 50%; top: auto; bottom: -28px; } }
+/* Compare: both endings line up at the bottom of their cards. */
+.vs-col { display: flex; flex-direction: column; }
+.vs-end, .lock { margin-top: auto; }
+.vs-col .tl { margin-bottom: 22px; }
