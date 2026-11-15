@@ -80,10 +80,10 @@
     var ticking = false;
     var tilt = function () {
       ticking = false;
-      var max = innerWidth < 900 ? 10 : 18, r = stage.getBoundingClientRect(), p = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight * .8)));
+      var max = innerWidth < 900 ? 6 : 10, r = stage.getBoundingClientRect(), p = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight * .8)));
       p = 1 - Math.pow(1 - p, 2);
       stage.style.setProperty("--tilt", (max * (1 - p)).toFixed(2) + "deg");
-      stage.style.setProperty("--sc", (0.94 + 0.06 * p).toFixed(4));
+      stage.style.setProperty("--sc", (0.97 + 0.03 * p).toFixed(4));
     };
     addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(tilt); } }, { passive: true });
     addEventListener("resize", tilt); tilt();
@@ -253,7 +253,7 @@
   if (R) { var stars = $$(".stars i", R); if (!motion) stars.forEach(function (s) { s.classList.add("on"); }); else loop(R, async function (alive) { while (alive()) { stars.forEach(function (s) { s.classList.remove("on"); }); await sleep(700); for (var i = 0; i < 5 && alive(); i++) { stars[i].classList.add("on"); await sleep(220); } await sleep(3000); } }); }
 
   // ---------- Cursor light on cards ----------
-  $$(".bx, .plan, .vs-col").forEach(function (n) {
+  $$(".bx").forEach(function (n) {
     n.addEventListener("pointermove", function (e) { var r = n.getBoundingClientRect(); n.style.setProperty("--mx", (e.clientX - r.left) + "px"); n.style.setProperty("--my", (e.clientY - r.top) + "px"); });
   });
 })();
