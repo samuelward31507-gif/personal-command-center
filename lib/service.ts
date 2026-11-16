@@ -169,3 +169,31 @@ export function lateFeeOn(setting: unknown, balance: number): number {
   const fee = /%/.test(s) ? balance * Math.min(n, 25) / 100 : n;
   return Math.round(Math.min(fee, balance * 0.25, 500) * 100) / 100;
 }
+
+/**
+ * Timesheets for payroll: one line per clocked stretch (in the business's time zone), and per person per week
+ * (Monday to Sunday) the regular and overtime hours (over 40 in the week) and the pay at their rate, overtime at 1.5x.
+ * Open entries (still clocked in) are left out: payroll pays finished time.
+ */
+export type SheetLine = { person: string; date: string; job: string; start: string; end: string; hours: number; rate: number };
+export type SheetWeek = { person: string; week: string; hours: number; regular: number; overtime: number; rate: number; pay: number };
+export function timesheet(entries: Pick<TimeEntry, "member" | "started_at" | "ended_at" | "customer">[], names: Record<string, string>, rates: Record<string, number>, ownerRate: number, tz: string): { lines: SheetLine[]; weeks: SheetWeek[] } {
+  const day = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: tz });
+  const hm = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" });
+  const monday = (ymd: string) => { const d = new Date(ymd + "T12:00:00Z"); const k = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - k); return d.toISOString().slice(0, 10); };
+  const who = (m: string) => (m ? names[d10(m)] || m : names[""] || "Owner");
+  const rateOf = (m: string) => (m ? rates[d10(m)] || 0 : ownerRate);
+  const lines: SheetLine[] = entries.filter(e => e.ended_at).sort((a, b) => a.started_at.localeCompare(b.started_at))
+    .map(e => ({ person: who(e.member), date: day(e.started_at), job: e.customer || "General", start: hm(e.started_at), end: hm(e.ended_at!), hours: Math.round(minutesOf(e) / 60 * 100) / 100, rate: rateOf(e.member), member: e.member }))
+    .map(({ member, ...l }) => { void member; return l; });
+  const byKey = new Map<string, SheetWeek>();
+  for (const l of lines) {
+    const key = l.person + "|" + monday(l.date);
+    const w = byKey.get(key) ?? { person: l.person, week: monday(l.date), hours: 0, regular: 0, overtime: 0, rate: l.rate, pay: 0 };
+    w.hours = Math.round((w.hours + l.hours) * 100) / 100; byKey.set(key, w);
+  }
+  const weeks = [...byKey.values()].map(w => { const regular = Math.min(40, w.hours), overtime = Math.round(Math.max(0, w.hours - 40) * 100) / 100;
+    return { ...w, regular: Math.round(regular * 100) / 100, overtime, pay: Math.round((regular * w.rate + overtime * w.rate * 1.5) * 100) / 100 }; })
+    .sort((a, b) => a.week.localeCompare(b.week) || a.person.localeCompare(b.person));
+  return { lines, weeks };
+}

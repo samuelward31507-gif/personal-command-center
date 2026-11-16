@@ -54,4 +54,16 @@ ok(() => { const id = "0b9a5c7e-1111-4222-8333-444455556666", s = qboState(id); 
   ok(() => assert.equal(S3.lateFeeOn("90%", 1000), 250, "a percentage is capped at 25%"));
   ok(() => assert.equal(S3.lateFeeOn("2000", 50000), 500, "and at $500"));
   ok(() => { assert.equal(S3.lateFeeOn("", 1000), 0); assert.equal(S3.lateFeeOn("abc", 1000), 0); assert.equal(S3.lateFeeOn("5%", 0), 0); }); }
+// Timesheets for payroll: lines in local time, weeks from Monday, overtime past 40 hours at 1.5x, open entries left out.
+{ const S4 = await import("./lib/service.ts");
+  const e = (m, s, en, customer) => ({ member: m, started_at: s, ended_at: en, customer });
+  // Luis: five 9-hour days (Mon Nov 9 to Fri Nov 13, 2026, Denver), 45 hours; the owner one 2-hour stretch; one still open.
+  const days = ["09", "10", "11", "12", "13"].map(d => e("+17205550188", `2026-11-${d}T14:00:00Z`, `2026-11-${d}T23:00:00Z`, "Tom Becker"));
+  const all = [...days, e("", "2026-11-12T16:00:00Z", "2026-11-12T18:00:00Z"), e("+17205550188", "2026-11-16T14:00:00Z", null)];
+  const t = S4.timesheet(all, { "": "Mike", "7205550188": "Luis" }, { "7205550188": 28 }, 40, "America/Denver");
+  ok(() => assert.equal(t.lines.length, 6, "the open entry is left out"));
+  ok(() => assert.deepEqual(t.lines[0], { person: "Luis", date: "2026-11-09", job: "Tom Becker", start: "7:00 AM", end: "4:00 PM", hours: 9, rate: 28 }));
+  ok(() => { const w = t.weeks.find(x => x.person === "Luis"); assert.deepEqual(w, { person: "Luis", week: "2026-11-09", hours: 45, regular: 40, overtime: 5, rate: 28, pay: 1330 }); });
+  ok(() => { const w = t.weeks.find(x => x.person === "Mike"); assert.equal(w.hours, 2); assert.equal(w.pay, 80); assert.equal(t.lines.find(l => l.person === "Mike").job, "General"); });
+  ok(() => { const s = S4.timesheet([e("+17205550188", "2026-11-15T15:00:00Z", "2026-11-15T19:00:00Z")], {}, {}, 0, "America/Denver"); assert.equal(s.weeks[0].week, "2026-11-09", "Sunday belongs to the week that started Monday"); assert.equal(s.lines[0].person, "+17205550188"); }); }
 console.log(`service 2: ${n} checks passed`);
