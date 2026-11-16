@@ -184,6 +184,8 @@ export default function CinderApp() {
     addEventListener("keydown", h); return () => removeEventListener("keydown", h);
   }, [goTab, open, sheet, inv]);
 
+  // The workspace scrolls inside its window: every move starts at the top.
+  useEffect(() => { document.querySelector(".main > .page")?.scrollTo(0, 0); }, [tab, open]);
   const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
   if (state === "loading") return <div className="load"><Wordmark /></div>;
   if (state === "out") return <SignIn onIn={() => void load("")} onDemo={() => { demoStart(); setDemo(true); setTab("today"); void load("", "today"); }} />;

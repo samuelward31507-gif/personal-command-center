@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { Icon, Spinner, ago, fmtPhone, typePhone, type Api, type Toast } from "./parts";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
+import { PageHead } from "./charts";
 
 type View = "connections" | "agent" | "account";
 type State = "on" | "todo" | "off" | "bad";
@@ -287,10 +288,10 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
 
 export function SystemScreen(p: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; toast: Toast; api: Api; project: string; reload: () => Promise<void>; demo: boolean; onSignOut: () => void; view?: View }) {
   const [view, setView] = useState<View>(p.view ?? "connections");
-  const sub = view === "connections" ? "Where leads come from, where they go, and what happened" : view === "agent" ? "What Cinder says and does, in your words" : "The business and this device";
+  const sub = view === "connections" ? "Where leads come from, where they go, and what happened." : view === "agent" ? "What Cinder says and does, in your words." : "The business, your team and this device.";
   return <>
-    <header className="tb"><h1 className="h1">Settings</h1><span className="sub">{sub}</span>
-      <div className="acts"><div className="seg" role="tablist">{(["connections", "agent", "account"] as View[]).map(v => <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? "on" : ""} onClick={() => setView(v)}>{v === "connections" ? "Connections" : v === "agent" ? "Agent" : "Account"}</button>)}</div></div></header>
-    {view === "connections" ? <Connections {...p} /> : view === "agent" ? <Agent {...p} /> : <Account {...p} />}
+    <PageHead title="Settings" sub={sub}
+      actions={<div className="seg" role="tablist">{(["connections", "agent", "account"] as View[]).map(v => <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? "on" : ""} onClick={() => setView(v)}>{v === "connections" ? "Connections" : v === "agent" ? "Agent" : "Account"}</button>)}</div>} />
+    <div className="set-body">{view === "connections" ? <Connections {...p} /> : view === "agent" ? <Agent {...p} /> : <Account {...p} />}</div>
   </>;
 }

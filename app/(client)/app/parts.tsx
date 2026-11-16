@@ -82,9 +82,13 @@ export function Icon({ name, size = 16, className }: { name: string; size?: numb
 }
 
 // ---------- Avatar, stage chip ----------
+/** Initials on a soft tint picked from the name, so the same person always looks the same. */
 export function Avatar({ name, size }: { name: string; size?: "sm" | "lg" | "xl" }) {
-  return <span className={"av" + (size ? " " + size : "")} aria-hidden="true">{initials(name)}</span>;
+  let h = 0; for (const ch of name || "?") h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const t = AV_TINTS[h % AV_TINTS.length];
+  return <span className={"av" + (size ? " " + size : "")} aria-hidden="true" style={{ background: t[0], color: t[1], borderColor: "transparent" }}>{initials(name)}</span>;
 }
+const AV_TINTS = [["#f3e3dc", "#9a4a2c"], ["#e1ecf6", "#2d5f8a"], ["#e4f1e8", "#2f7350"], ["#efe6f4", "#6b3f86"], ["#f6efd9", "#86651c"], ["#e3eef0", "#2f6b72"], ["#f4e2e6", "#8c3a4f"], ["#e8e8ee", "#4b4f63"]];
 export function StageChip({ stage, small, text }: { stage: Stage | "late"; small?: boolean; text?: string }) {
   return <span className={`stage ${stage}${small ? " sm" : ""}`}><i />{text ?? (stage === "late" ? "Late" : STAGE_LABEL[stage])}</span>;
 }
