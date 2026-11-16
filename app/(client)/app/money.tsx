@@ -2,13 +2,14 @@
 
 // Money: every invoice, what's owed and late, the quotes still out, and what Cinder brought in. Numbers lives
 // here as the right-hand pane. The invoice sheet is where lines are edited, texted and marked paid.
-import { useState } from "react";
+import { useId, useState } from "react";
 import { chosen, dollars, lineTotal, overdue, tiersOf, totals, type Item } from "@/lib/billing";
 import { PAY_METHODS, type CardInvoice, type Payment } from "@/lib/crm";
 import { Avatar, Icon, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast } from "./parts";
 import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
 import type { Biz, Data, Go, InvoiceRow } from "./types";
 import { emailDoc } from "./crew";
+import { CatalogPicker, asLine, useCatalog } from "./catalog";
 
 /**
  * Editable quote or invoice lines: what, how many, the unit price. Totals are worked out, never typed. On a quote (options)
@@ -18,6 +19,9 @@ const TIER_NAMES = ["Good", "Better", "Best"];
 export function LineEditor({ items, setItems, tax, setTax, options }: { items: Item[]; setItems: (f: (x: Item[]) => Item[]) => void; tax: number; setTax: (n: number) => void; options?: boolean }) {
   const valid = items.filter(i => i.name.trim() && i.qty > 0);
   const tiers = tiersOf(items), addons = valid.filter(i => i.opt);
+  // The price list: typing a saved name fills its unit and price; "From price list" adds a saved line.
+  const { items: cat } = useCatalog(), listId = useId();
+  const named = (k: number, name: string) => { const hit = cat.find(c => c.name.toLowerCase() === name.trim().toLowerCase()); set(k, hit && !items[k].price ? { name: hit.name, unit: hit.unit, price: hit.price } : { name }); };
   const t = totals(tiers.length || addons.length ? chosen(valid, null) : valid, tax);
   const set = (k: number, patch: Partial<Item>) => setItems(xs => xs.map((x, j) => (j === k ? { ...x, ...patch } : x)));
   const n = (v: string) => { const x = Number(v.replace(/[^\d.]/g, "")); return Number.isFinite(x) ? x : 0; };
@@ -34,7 +38,7 @@ export function LineEditor({ items, setItems, tax, setTax, options }: { items: I
   return <div className={"le" + (options ? " opts" : "")}>
     {options && tiers.length > 0 && <div className="le-tiers"><span>Options they pick from</span>{tiers.map(tr => <input key={tr} className="input" aria-label={`Rename ${tr}`} defaultValue={tr} onBlur={e => { if (e.target.value !== tr) rename(tr, e.target.value); }} onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} />)}</div>}
     <ul>{items.map((i, k) => <li key={k} className={"lrow" + (i.opt ? " is-opt" : i.tier ? " is-tier" : "")}>
-      <input className="input" aria-label="What" value={i.name} placeholder="What it is" onChange={e => set(k, { name: e.target.value })} />
+      <input className="input" aria-label="What" value={i.name} placeholder={cat.length ? "What it is, or pick from your price list" : "What it is"} list={cat.length ? listId : undefined} onChange={e => named(k, e.target.value)} />
       <span className="nums">
         {options && (tiers.length > 0 || i.opt || addons.length > 0) && <select className="lmode" aria-label="Which option" value={mode(i)} onChange={e => setMode(k, e.target.value)}>
           <option value="inc">{tiers.length ? "In every option" : "Included"}</option>
@@ -49,7 +53,9 @@ export function LineEditor({ items, setItems, tax, setTax, options }: { items: I
         <button type="button" className="btn ghost sm ic" aria-label={`Remove ${i.name || "line"}`} onClick={() => setItems(xs => xs.filter((_, j) => j !== k))}><Icon name="x" size={13} /></button>
       </span>
     </li>)}</ul>
+    {cat.length > 0 && <datalist id={listId}>{cat.map(c => <option key={c.name} value={c.name}>{dollars(c.price)}{c.unit ? ` per ${c.unit}` : ""}</option>)}</datalist>}
     <div className="acts-row">
+      <CatalogPicker onPick={c => setItems(xs => [...xs.filter(x => x.name.trim() || x.price), { ...asLine(c), ...(tiersOf(xs).length ? { tier: tiersOf(xs)[0] } : {}) }])} />
       <button type="button" className="btn sm add" onClick={() => setItems(xs => [...xs, { name: "", qty: 1, unit: "", price: 0, ...(tiersOf(xs).length ? { tier: tiersOf(xs)[0] } : {}) }])}><Icon name="plus" size={13} />Add a line</button>
       {options && <button type="button" className="btn sm ghost" onClick={offer} title="Let them pick between versions of the job">{tiers.length ? "Add an option" : "Offer good, better, best"}</button>}
       {options && <button type="button" className="btn sm ghost" onClick={() => setItems(xs => [...xs, { name: "", qty: 1, unit: "", price: 0, opt: true }])} title="Extras they can tick, like a gate or stain">Add an add-on</button>}
@@ -215,6 +221,7 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
             <a role="menuitem" href={`/api/app/export?p=${encodeURIComponent(project)}&what=payments`}>Payments, as CSV</a>
             <a role="menuitem" href={`/api/app/export?p=${encodeURIComponent(project)}`}>Customers, as CSV</a>
             <small>Opens in Excel, Google Sheets or QuickBooks.</small></div>}</div>
+        <PriceListButton />
         <button type="button" className="btn" onClick={go.billing}>Pay link and tax</button>
         <button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New invoice</button>
       </>} />
@@ -288,3 +295,5 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
     </Sheet>}
   </>;
 }
+
+function PriceListButton() { const { items, edit } = useCatalog(); return <button type="button" className="btn" onClick={edit}>Price list{items.length ? <em className="cnt">{items.length}</em> : null}</button>; }

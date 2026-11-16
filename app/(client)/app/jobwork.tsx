@@ -65,7 +65,7 @@ function ChangeOrderSheet({ card, co, taxRate, act, busy, canText, onClose }: { 
 export function HoursBox({ d, card, act, busy }: { d: Data; card: Card; act: Act; busy: string }) {
   const entries = (d.time ?? []).filter(e => e.thread_id === card.id);
   const rates = ratesOf(parseTeam(d.setup?.team ?? "[]")), ownerRate = Number(d.setup?.labor_rate) || 0;
-  const mine = (d.time ?? []).find(e => !e.ended_at && e.member === (d.role === "crew" ? d.me : ""));
+  const mine = (d.time ?? []).find(e => !e.ended_at && e.member === (d.role && d.role !== "owner" ? d.me : ""));
   const here = mine?.thread_id === card.id;
   const l = laborOf(entries, rates, ownerRate);
   const byWho = new Map<string, number>(); for (const e of entries) byWho.set(e.member, (byWho.get(e.member) ?? 0) + minutesOf(e));
@@ -84,7 +84,7 @@ export function HoursBox({ d, card, act, busy }: { d: Data; card: Card; act: Act
 
 /** The running clock in Your day: where you're clocked in and for how long, and one tap to stop it. */
 export function ClockBar({ d, onOut, busy }: { d: Data; onOut: () => void; busy: boolean }) {
-  const mine = (d.time ?? []).find(e => !e.ended_at && e.member === (d.role === "crew" ? d.me : ""));
+  const mine = (d.time ?? []).find(e => !e.ended_at && e.member === (d.role && d.role !== "owner" ? d.me : ""));
   const [, tick] = useState(0);
   useEffect(() => { if (!mine) return; const i = setInterval(() => tick(x => x + 1), 30000); return () => clearInterval(i); }, [mine]);
   if (!mine) return null;
@@ -92,7 +92,7 @@ export function ClockBar({ d, onOut, busy }: { d: Data; onOut: () => void; busy:
   return <div className="clockbar" role="status"><i aria-hidden="true" /><span><b>On the clock, {hoursText(minutesOf(mine))}</b><small>Since {clock(mine.started_at)}, {where}</small></span>
     <button type="button" className="btn sm ink" disabled={busy} onClick={onOut}>{busy ? <Spinner /> : "Clock out"}</button></div>;
 }
-export const myClock = (d: Data): TimeEntry | undefined => (d.time ?? []).find(e => !e.ended_at && e.member === (d.role === "crew" ? d.me : ""));
+export const myClock = (d: Data): TimeEntry | undefined => (d.time ?? []).find(e => !e.ended_at && e.member === (d.role && d.role !== "owner" ? d.me : ""));
 
 /** Reports: hours by person over the last two weeks, and what they cost. */
 export function HoursPanel({ d, go }: { d: Data; go: Go }) {

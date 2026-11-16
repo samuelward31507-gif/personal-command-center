@@ -10,6 +10,7 @@ import { reportFor, type Period } from "@/lib/client-reports";
 import { customerEmailReady } from "@/lib/client-email";
 import { winbackDraft } from "@/lib/crm";
 import { loadPlans, loadTime, loadVisits } from "@/lib/client-service-run";
+import { qboConfigured, qboState } from "@/lib/qbo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export async function GET(req: Request) {
       return json({ thread: t, texts });
     }
     const me = s.phone ? "+1" + s.phone.replace(/\D/g, "").slice(-10) : "", crewMe = s.role === "crew" ? me : "";
-    const [live, biz, appts, unread, msgs, quotes, calRow, jobberRow, keyRow, wonJobs, board, past, customers, invoices, wires, payments, plans, visits, time] = await Promise.all([
+    const [live, biz, appts, unread, msgs, quotes, calRow, jobberRow, keyRow, wonJobs, board, past, customers, invoices, wires, payments, plans, visits, time, qboRow] = await Promise.all([
       liveFor(sql, c.projectId, 80, c.setup.timezone || "America/Denver"),
       sql`SELECT o.project_id, coalesce(o.setup->>'display_name', p.client_name, p.name) AS name, o.portal_token FROM public.client_ops o JOIN public.projects p ON p.id = o.project_id WHERE o.project_id = ANY(${s.projects}::uuid[])`,
       // Booked estimates still waiting on an outcome (up to two weeks back) and everything coming up.
@@ -66,6 +67,7 @@ export async function GET(req: Request) {
       loadVisits(sql, c).catch(() => []),
       // The owner sees everyone's hours; a crew member sees their own.
       loadTime(sql, c, s.role === "crew" ? crewMe : null).catch(e => { console.error("Time failed", e instanceof Error ? e.message : e); return []; }),
+      sql`SELECT company_name, last_error, last_push_at FROM public.client_qbo WHERE project_id = ${c.projectId}::uuid`.catch(() => []),
     ]);
     // Their real calendar, read only on the Calendar tab (it's a Google call).
     let events: CalEvent[] = [], calError = "";
@@ -82,7 +84,7 @@ export async function GET(req: Request) {
     if (q.get("tab") === "sam") await sql`UPDATE public.client_messages SET read_at = now() WHERE project_id = ${c.projectId}::uuid AND author = 'owner' AND read_at IS NULL`.catch(() => null);
     const crew = s.role === "crew";
     return json({
-      role: crew ? "crew" : "owner", me, project: c.projectId,
+      role: s.role === "crew" ? "crew" : s.role === "office" ? "office" : "owner", me, project: c.projectId,
       plans: crew ? plans.map(p => ({ ...p, items: [], total: 0, tax_rate: 0 })) : plans, visits, time,
       emailReady: customerEmailReady(), business: c.setup.display_name || "", number: c.setup.texting_number || "", canCall: !!(c.setup.owner_cell && c.setup.texting_number),
       owner: c.setup.owner_name || "", businesses: biz, live,
@@ -94,6 +96,9 @@ export async function GET(req: Request) {
       jobber: (() => { const j = (jobberRow as { account_name?: string; last_error?: string; last_push_at?: unknown; connected_at?: unknown }[])[0];
         return { available: jobberConfigured(), connected: !!j, account: String(j?.account_name ?? ""), error: String(j?.last_error ?? ""), lastPush: j?.last_push_at ? new Date(String(j.last_push_at)).toISOString() : null,
           connectUrl: jobberConfigured() ? `${origin}/api/client-jobber?state=${encodeURIComponent(jobberState(c.projectId))}` : "" }; })(),
+      quickbooks: crew ? undefined : (() => { const j = (qboRow as { company_name?: string; last_error?: string; last_push_at?: unknown }[])[0];
+        return { available: qboConfigured(), connected: !!j, company: String(j?.company_name ?? ""), error: String(j?.last_error ?? ""), lastPush: j?.last_push_at ? new Date(String(j.last_push_at)).toISOString() : null,
+          connectUrl: qboConfigured() ? `${origin}/api/client-qbo?state=${encodeURIComponent(qboState(c.projectId))}` : "" }; })(),
       winback: { past: past.past, eligible: past.eligible.length, names: past.eligible.slice(0, 6).map(e => e.name.split(" ")[0] || "").filter(Boolean),
         draft: winbackDraft(c.setup.trade, c.setup.owner_name || "", c.setup.display_name || "") },
     });

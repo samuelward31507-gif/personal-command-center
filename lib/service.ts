@@ -109,3 +109,44 @@ export function laborOf(entries: Pick<TimeEntry, "member" | "started_at" | "ende
 export const cleanRate = (v: unknown) => { const n = Number(String(v ?? "").replace(/[$,\s]/g, "")); return Number.isFinite(n) && n > 0 && n <= 500 ? Math.round(n * 100) / 100 : 0; };
 /** Rates by the last ten digits of each team member's cell. */
 export const ratesOf = (team: { cell: string; rate?: number }[]) => Object.fromEntries(team.filter(m => m.rate).map(m => [d10(m.cell), m.rate!]));
+
+// ---------- The price list: the owner's saved lines, picked while writing a quote or invoice ----------
+export type CatalogItem = { name: string; unit: string; price: number; cost?: number };
+/** Up to 300 saved lines, each with a name and a price of zero or more; the first of any duplicate name wins. */
+export function cleanCatalog(v: unknown): CatalogItem[] {
+  let arr: unknown = v;
+  if (typeof v === "string") { try { arr = JSON.parse(v); } catch { arr = []; } }
+  if (!Array.isArray(arr)) return [];
+  const out: CatalogItem[] = [], seen = new Set<string>();
+  for (const r of arr) {
+    if (!r || typeof r !== "object") continue;
+    const o = r as Record<string, unknown>;
+    const name = ctl(o.name, 120), key = name.toLowerCase();
+    const price = Number(String(o.price ?? "").replace(/[$,\s]/g, "")), cost = Number(String(o.cost ?? "").replace(/[$,\s]/g, ""));
+    if (!name || seen.has(key) || !Number.isFinite(price) || price < 0 || price > 10_000_000) continue;
+    seen.add(key);
+    out.push({ name, unit: ctl(o.unit, 12), price: Math.round(price * 100) / 100, ...(Number.isFinite(cost) && cost > 0 ? { cost: Math.round(cost * 100) / 100 } : {}) });
+    if (out.length >= 300) break;
+  }
+  return out;
+}
+/** Saved lines that match what's being typed: names starting with it first, then names containing it. */
+export function searchCatalog(list: CatalogItem[], q: string, max = 8): CatalogItem[] {
+  const t = q.trim().toLowerCase();
+  if (!t) return list.slice(0, max);
+  const starts = list.filter(i => i.name.toLowerCase().startsWith(t)), has = list.filter(i => !i.name.toLowerCase().startsWith(t) && i.name.toLowerCase().includes(t));
+  return [...starts, ...has].slice(0, max);
+}
+
+// ---------- Job sign-off: the customer signs on the crew's phone ----------
+export type Signoff = { id: string; thread_id: string; signed_by: string; at: string; note: string; checklist: { label: string; done: boolean }[]; member: string };
+export const SIG_MAX = 120_000;
+export function cleanSignoff(v: unknown): { ok: true; signedBy: string; signature: string; note: string; checklist: { label: string; done: boolean }[] } | { ok: false; error: string } {
+  const o = (v && typeof v === "object" ? v : {}) as Record<string, unknown>;
+  const signedBy = ctl(o.signedBy, 80);
+  if (signedBy.length < 2) return { ok: false, error: "Type the customer's name." };
+  const signature = String(o.signature ?? "");
+  if (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signature) || signature.length > SIG_MAX) return { ok: false, error: "Have them sign in the box." };
+  const checklist = (Array.isArray(o.checklist) ? o.checklist : []).slice(0, 20).map(x => { const r = (x && typeof x === "object" ? x : {}) as Record<string, unknown>; return { label: ctl(r.label, 80), done: r.done === true }; }).filter(x => x.label);
+  return { ok: true, signedBy, signature, note: ctl(o.note, 600), checklist };
+}

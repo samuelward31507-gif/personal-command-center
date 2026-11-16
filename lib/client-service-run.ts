@@ -6,6 +6,7 @@ import { cleanItems, totals, dollars, type Item } from "@/lib/billing";
 import { inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, appOrigin, clientById, sendToCustomer, type Client } from "@/lib/client-runtime-run";
 import { sendInvoice } from "@/lib/client-billing-run";
+import { qboSyncInvoice } from "@/lib/qbo";
 import { addInterval, changeOrderLines, changeOrderText, cleanChangeOrder, cleanPlan, CO_TOKEN, visitReminderText, type ChangeOrder, type Plan, type TimeEntry } from "@/lib/service";
 
 type Sql = NeonQueryFunction<false, false>;
@@ -183,6 +184,7 @@ async function applyApproved(sql: Sql, c: Client, co: Record<string, unknown>) {
     const items = [...cleanItems(inv.items), ...lines].slice(0, 30);
     await sql`UPDATE public.client_invoices SET items = ${JSON.stringify(items)}::jsonb, total = ${totals(items, Number(inv.tax_rate)).total}, paid_amount = paid_amount WHERE id = ${inv.id}::uuid`;
     await sql`UPDATE public.client_change_orders SET invoice_id = ${inv.id}::uuid WHERE id = ${String(co.id)}::uuid`;
+    await qboSyncInvoice(sql, c.projectId, inv.id);
   }
   await sql`UPDATE public.client_threads SET updated_at = now() WHERE id = ${String(co.thread_id)}::uuid`;
 }

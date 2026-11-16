@@ -11,7 +11,7 @@ export type Cal = { connected: boolean; email: string; events: CalEvent[]; error
 export type Customer = { id: string; name: string; phone: string; email?: string; address: string; source: string; status: string; stage: string | null; since: string; last: string; jobs: number; spent: number; owed: number; open_quote: number | null; line: string };
 export type InvoiceRow = CardInvoice & { thread_id: string; customer: string; phone: string };
 export type Winback = { past: number; eligible: number; names: string[]; draft: string };
-export type Data = { /** The owner, or a crew member who sees the schedule and the jobs but no money or settings. */ role?: "owner" | "crew"; /** The signed-in phone, +1, so a crew member sees their own jobs. */ me?: string; /** Whether Cinder can email customers itself (a verified sending domain). */ emailReady?: boolean; project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number;
+export type Data = { /** The owner, or a crew member who sees the schedule and the jobs but no money or settings. */ role?: "owner" | "office" | "crew"; /** The signed-in phone, +1, so a crew member sees their own jobs. */ me?: string; /** Whether Cinder can email customers itself (a verified sending domain). */ emailReady?: boolean; project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number;
   wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal;
   messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number; board?: Card[]; setup?: Record<string, string>; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[];
   /** The website key (chat bubble and intake webhook) and the app's public origin, for the System screen. */
@@ -21,6 +21,8 @@ export type Data = { /** The owner, or a crew member who sees the schedule and t
   /** Service plans, the visits logged on them lately, and clocked hours (the owner sees everyone's, crew their own). */
   plans?: Plan[]; visits?: { id: string; plan_id: string; thread_id: string; on_date: string; status: string; invoice_id: string | null }[]; time?: TimeEntry[];
   jobber?: { available: boolean; connected: boolean; account: string; error: string; lastPush: string | null; connectUrl: string };
+  /** QuickBooks Online: invoices and payments pushed to the owner's books. */
+  quickbooks?: { available: boolean; connected: boolean; company: string; error: string; lastPush: string | null; connectUrl: string };
   /** Connections: each lead source's activity, texts that didn't send, the consent log. */
   wires?: { sources: { source: string; leads: number; last: string | null; last30: number }[]; failures: { id: string; at: string; body: string; name: string; phone: string; thread: string; source: string }[]; log: { at: string; event: string; source: string; phone: string; evidence: string }[] } };
 export type Text = { id: string; direction: string; author: string; body: string; at: string; media?: { url: string; type: string }[];

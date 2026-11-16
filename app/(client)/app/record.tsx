@@ -12,6 +12,7 @@ import { CrewPick, crewName, emailDoc } from "./crew";
 import { PlanBox } from "./plans";
 import { jobPrice } from "@/lib/service";
 import { ChangeOrders, HoursBox } from "./jobwork";
+import { PortalSheet, SignoffBox } from "./finish";
 
 /** "Remind me": a time and a note on this customer. The owner gets a text and a push when it's due. */
 export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: { name: string; current: { at: string; note: string } | null; busy: boolean; onClose: () => void; onSave: (at: string, note: string) => void; onClear: () => void }) {
@@ -116,6 +117,7 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
           <JobPanel r={r} biz={biz} ask={ask} setAsk={setAsk} go={go} canText={!!canText} />
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <Steps card={r.card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <CostBox card={r.card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
+          {r.card && r.card.stage === "won" && !r.card.pastCustomer && <SignoffBox d={d} card={r.card} trade={biz.trade} save={async input => !!(await r.act("signoff", { action: "signoff", input }, "Signed off. Install and walk-through ticked."))} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && !biz.crew && <HoursBox d={d} card={r.card} act={r.act} busy={r.busy} />}
         </div>}
     </div>
@@ -128,7 +130,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
   const r = useRecord(id, d, project, api, toast, reload);
   const [tab, setTab] = useState<"activity" | "job">(view0 ?? (ask0 ? "job" : "activity"));
   const [ask, setAsk] = useState<Stage | null>(ask0 ?? null);
-  const [losing, setLosing] = useState(false), [reminding, setReminding] = useState(false);
+  const [losing, setLosing] = useState(false), [reminding, setReminding] = useState(false), [portal, setPortal] = useState(false);
   const [wide, setWide] = useState(false);
   useEffect(() => { const m = matchMedia("(min-width: 900px)"); const h = () => setWide(m.matches); h(); m.addEventListener("change", h); return () => m.removeEventListener("change", h); }, []);
   const ta = useRef<HTMLTextAreaElement>(null);
@@ -171,6 +173,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       {biz.canCall ? <button type="button" className="btn sm" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}>Call {first(name)}</button> : <a className="btn sm" href={`tel:${phone}`}>Call {first(name)}</a>}
     </div></section> : null;
   const rail = <>{!biz.crew && needs}{!biz.crew && money}{!biz.crew && card && card.stage === "won" && !card.pastCustomer && <CostBox card={card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
+    {card && card.stage === "won" && !card.pastCustomer && <SignoffBox d={d} card={card} trade={biz.trade} save={async input => !!(await r.act("signoff", { action: "signoff", input }, "Signed off. Install and walk-through ticked."))} />}
     {!biz.crew && card && card.stage === "won" && !card.pastCustomer && <HoursBox d={d} card={card} act={r.act} busy={r.busy} />}
     {!biz.crew && (card ? card.stage === "won" || card.pastCustomer : !!cust) && <PlanBox d={d} thread={id} project={project} api={api} toast={toast} reload={reload} />}
     <section className="card"><div className="hd"><h2>On file</h2></div>
@@ -195,6 +198,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
         <button type="button" className="btn" onClick={() => { setTab("activity"); setTimeout(() => ta.current?.focus(), 50); }}><Icon name="chat" size={14} />Text</button>
         {address && <a className="btn ic" href={`https://maps.google.com/?q=${encodeURIComponent(address)}`} target="_blank" rel="noreferrer" aria-label="Directions" title="Directions"><Icon name="pin" size={14} /></a>}
         {card?.email && <a className="btn ic" href={`mailto:${card.email}`} aria-label="Email" title={card.email}><Icon name="send" size={14} /></a>}
+        {!biz.crew && (card || cust) && <button type="button" className="btn ic" onClick={() => setPortal(true)} aria-label="Customer page" title={`${first(name)}'s page: quotes, invoices, visits`}><Icon name="user" size={14} /></button>}
         {card && !biz.crew && <button type="button" className={"btn ic" + (card.remind && !card.remind.sent ? " on" : "")} onClick={() => setReminding(true)} aria-label="Remind me" title={card.remind && !card.remind.sent ? `Reminder ${dateLabel(card.remind.at)}` : "Remind me"}><Icon name="clock" size={14} /></button>}
         {!biz.crew && primary}
       </div>
@@ -239,6 +243,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
     </div>
     {lostSheet}
     {remindSheet}
+    {portal && <PortalSheet name={name} thread={id} project={project} api={api} toast={toast} canText={!!canText} onClose={() => setPortal(false)} />}
   </div>;
 }
 

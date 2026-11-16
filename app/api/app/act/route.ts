@@ -12,6 +12,9 @@ import { addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto,
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 import { clockIn, clockOut, editTime, planVisit, saveChangeOrder, savePlan, sendChangeOrder, setChangeOrder, setPlan } from "@/lib/client-service-run";
+import { portalLink, saveSignoff } from "@/lib/client-portal-run";
+import { qboSyncAll } from "@/lib/qbo";
+import { cleanCatalog } from "@/lib/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,16 +53,24 @@ export async function POST(req: Request) {
     const c = await clientFor(sql, s, b.p);
     if (!c) return json({ error: "Sign in" }, 401);
     // The crew sees the schedule and the jobs and can text, call, tick steps, leave notes and clock hours. Money and settings stay with the owner.
-    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
+    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit", "signoff"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
     if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; b.email = undefined; }
     // Crew hours: the person signed in clocks in on a job (or general time) and out again. The owner is "".
-    const member = s.role === "crew" && s.phone ? "+1" + s.phone.replace(/\D/g, "").slice(-10) : "";
+    // Office staff run the business day to day; settings and the team stay with the owner.
+    if (s.role === "office" && b.action === "setup") return json({ error: "Only the owner can change settings." }, 403);
+    const member = s.role !== "owner" && s.phone ? "+1" + s.phone.replace(/\D/g, "").slice(-10) : "";
     if (b.action === "clockin") {
       if (b.thread && !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
       const r = await clockIn(sql, c, member, b.thread || null);
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     if (b.action === "clockout") { const r = await clockOut(sql, c, member, b.note); return r.ok ? json({ ok: true, minutes: r.minutes }) : json({ error: r.error }, 409); }
+    // The end of the job: the customer signs on the phone, the install and walk-through steps tick.
+    if (b.action === "signoff") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
+      const r = await saveSignoff(sql, c, b.thread, b.input, member);
+      return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400);
+    }
     if (b.action === "visit") {
       if (!b.plan || !UUID.test(b.plan)) return json({ error: "Which plan?" }, 400);
       const r = await planVisit(sql, c, b.plan, { skip: !!b.skip, member });
@@ -162,6 +173,26 @@ export async function POST(req: Request) {
       const r = await editTime(sql, c, b.entry, { remove: b.remove, start: b.start, end: b.end });
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
+    // The price list: lines saved once, picked on every quote and invoice. Office staff keep it too.
+    if (b.action === "catalog") {
+      const list = cleanCatalog(b.items);
+      await sql`UPDATE public.client_ops SET setup = setup || jsonb_build_object('catalog', ${JSON.stringify(list)}::text), updated_at = now() WHERE project_id = ${c.projectId}::uuid AND owner_id = ${c.owner}`;
+      return json({ ok: true, count: list.length });
+    }
+    // The customer's own page: copy the link, or text it to them.
+    if (b.action === "portallink") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const r = await portalLink(sql, c, b.thread);
+      if (!r.ok) return json({ error: r.error }, 404);
+      if (!b.send) return json({ ok: true, link: r.url });
+      const [t] = await sql`SELECT customer_phone, customer_name, status FROM public.client_threads WHERE id = ${b.thread}::uuid` as { customer_phone: string; customer_name: string; status: string }[];
+      if (t.status === "opted_out") return json({ ok: true, link: r.url, sent: false, warn: "They opted out of texts. Copy the link and email it instead." });
+      if (!c.setup.texting_number) return json({ ok: true, link: r.url, sent: false, warn: "Your texting number isn't connected yet. Copy the link instead." });
+      const firstName = (t.customer_name || "").split(" ")[0];
+      const ok = await sendToCustomer(sql, c, b.thread, t.customer_phone, `Hi${firstName ? " " + firstName : ""}, it's ${(c.setup.display_name || "us").replace(/\.+$/, "")}. Here's your page with your quotes, invoices and upcoming visits, any time: ${r.url}`, "owner");
+      return json({ ok: true, link: r.url, sent: ok, warn: ok ? "" : "The text didn't send. Copy the link instead." });
+    }
+    if (b.action === "qbosync") { const r = await qboSyncAll(sql, c.projectId); return r.error ? json({ error: r.error }, 502) : json({ ok: true, invoices: r.invoices, payments: r.payments }); }
     if (b.action === "reviewcancel") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
       await sql`UPDATE public.client_threads SET review_after = NULL WHERE id = ${b.thread}::uuid AND project_id = ${c.projectId}::uuid`;

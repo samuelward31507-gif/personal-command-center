@@ -14,6 +14,7 @@ import { splitAppointments } from "@/lib/client-schedule";
 import { TodayScreen } from "./today";
 import { JobsScreen, type JobsView } from "./jobs";
 import { PlansScreen } from "./plans";
+import { CatalogContext, PriceListSheet, catalogFrom } from "./catalog";
 import { RecordPage } from "./record";
 import { InboxScreen, ThreadView } from "./inbox";
 import { CalendarScreen } from "./calendar";
@@ -126,7 +127,7 @@ export default function CinderApp() {
   const { show: toast, node: toastNode } = useToast();
   const [push, setPush] = useState<PushState>("unsupported");
   const [demo, setDemo] = useState(false);
-  const [sheet, setSheet] = useState<"add" | "import" | "billing" | "winback" | "cmd" | null>(null);
+  const [sheet, setSheet] = useState<"add" | "import" | "billing" | "winback" | "cmd" | "pricelist" | null>(null);
   const [askQ, setAskQ] = useState<{ q: string; n: number } | undefined>(undefined);
   const [inv, setInv] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false), [setupDone, setSetupDone] = useState(false);
@@ -233,7 +234,8 @@ export default function CinderApp() {
   else if (tab === "more") page = <MoreScreen d={d} go={go} owed={owed} />;
   else page = <SamScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
 
-  return <div className="shell">
+  const catalog = { items: catalogFrom(d.setup), edit: () => setSheet("pricelist") };
+  return <CatalogContext.Provider value={catalog}><div className="shell">
     <nav className="rail" aria-label="Sections">
       <div className="brand-row"><Wordmark className="rail-mark" /></div>
       <button type="button" className="ws" title={bizName}>
@@ -252,7 +254,7 @@ export default function CinderApp() {
         {!crew && <button type="button" className={"ri" + (tab === "plans" ? " on" : "")} onClick={() => goTab("plans")}>Service plans<em>{(d.plans ?? []).filter(p => p.status === "active").length || ""}</em></button>}
       </div>}
       <div className="rail-foot">
-        {!crew && <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>}
+        {d.role !== "crew" && d.role !== "office" && <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>}
         {crew ? <button type="button" className="me" onClick={() => void signOut()}><Avatar name="Crew" /><span className="t"><b>Crew</b><small>Sign out</small></span></button>
           : <button type="button" className="me" onClick={() => goTab("sam")}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{d.owner || "You"}</b><small>Owner</small></span></button>}
       </div>
@@ -268,11 +270,12 @@ export default function CinderApp() {
     {sheet === "cmd" && <CommandBar d={d} go={go} onClose={() => setSheet(null)} onWinback={() => setSheet("winback")} onAsk={crew ? undefined : q => { setAskQ({ q, n: Date.now() }); goTab("today"); }} />}
     {sheet === "add" && <AddLeadSheet trade={biz.trade} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "import" && <ImportSheet project={project} api={api} toast={toast} reload={reload} customers={d.customers ?? []} business={bizName} onClose={() => setSheet(null)} />}
+    {sheet === "pricelist" && <PriceListSheet items={catalog.items} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "billing" && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {invNow && <InvoiceSheet key={invNow.id + invNow.status + (invNow.paid_amount ?? 0)} inv={invNow} payments={d.payments} customer={invNow.customer || fmtPhone(invNow.phone)} email={(d.board ?? []).find(b => b.id === invNow.thread_id)?.email} emailReady={d.emailReady} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
     {toastNode}
-  </div>;
+  </div></CatalogContext.Provider>;
 }
 
 // ---------- More (phone) ----------

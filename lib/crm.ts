@@ -169,8 +169,9 @@ export function parseDnt(v: unknown): string[] {
   for (const p of String(v ?? "").split(/[,\n;]+/)) { const d = p.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, ""); if (d.length === 10) seen.add("+1" + d); if (seen.size >= 500) break; }
   return [...seen];
 }
-export type TeamMember = { name: string; cell: string; role: "crew" | "owner"; /** What an hour of their time costs, for job labor from clocked hours. */ rate?: number };
-/** The owner's team from setup.team: at most two people, each a name, a +1 cell and a role. */
+export const TEAM_MAX = 10;
+export type TeamMember = { name: string; cell: string; role: "crew" | "office" | "owner"; /** What an hour of their time costs, for job labor from clocked hours. */ rate?: number };
+/** The owner's team from setup.team: up to ten people, each a name, a +1 cell, a role (owner, office, crew) and an hourly rate. */
 export function parseTeam(v: unknown): TeamMember[] {
   let arr: unknown = v;
   if (typeof v === "string") { try { arr = JSON.parse(v); } catch { arr = []; } }
@@ -183,8 +184,8 @@ export function parseTeam(v: unknown): TeamMember[] {
     if (d.length !== 10 || seen.has(d)) continue;
     seen.add(d);
     const rate = Number(String(r.rate ?? "").replace(/[$,\s]/g, ""));
-    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : "crew", ...(Number.isFinite(rate) && rate > 0 && rate <= 500 ? { rate: Math.round(rate * 100) / 100 } : {}) });
-    if (out.length >= 2) break;
+    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : r.role === "office" ? "office" : "crew", ...(Number.isFinite(rate) && rate > 0 && rate <= 500 ? { rate: Math.round(rate * 100) / 100 } : {}) });
+    if (out.length >= TEAM_MAX) break;
   }
   return out;
 }
@@ -270,7 +271,9 @@ export type Card = { id: string; name: string; phone: string; source: string; st
   /** Extra work agreed mid-job, each one approved by the customer (or in person). */
   changeOrders?: import("@/lib/service").ChangeOrder[];
   /** When the Google review ask goes out after the invoice was paid in full, if it's queued. */
-  reviewAfter?: string | null };
+  reviewAfter?: string | null;
+  /** The customer's sign-off at the end of the job, the latest one. */
+  signoff?: import("@/lib/service").Signoff | null };
 export const cleanEmail = (v: unknown) => { const s = String(v ?? "").trim().toLowerCase().slice(0, 120); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : ""; };
 export type CardInvoice = { id: string; number: number; status: string; items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number; total: number; note: string;
   due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null;

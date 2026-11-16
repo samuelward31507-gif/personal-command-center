@@ -4,7 +4,7 @@ import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, cleanWinback, detai
 import type { Report, ReportNumbers } from "@/lib/client-reports";
 import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
 import { cleanImportRows, importAs } from "@/lib/customer-import";
-import { addInterval, changeOrderLines, cleanChangeOrder, cleanPlan, type ChangeOrder, type Plan, type TimeEntry } from "@/lib/service";
+import { addInterval, changeOrderLines, cleanCatalog, cleanChangeOrder, cleanPlan, cleanSignoff, type ChangeOrder, type Plan, type Signoff, type TimeEntry } from "@/lib/service";
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 const at = (days: number, hour: number, min = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(hour, min, 0, 0); return d.toISOString(); };
 const GC = "https://calendar.google.com/calendar/r/week";
@@ -78,7 +78,7 @@ function seed() {
     leads_month: "10-30", lead_sources: "Phone calls, Website form, Google, Angi", software: "None, just my phone", share_ballpark: "yes", priority: "quotes", onboarded_at: "2026-11-01T15:00:00.000Z", pay_link: "https://square.link/u/example", tax_rate: "0", invoice_days: "7",
     hours: "Mon-Fri 7:00-18:00, Sat 8:00-12:00", timezone: "America/Denver", service_area: "Littleton, Highlands Ranch, Castle Rock and 25 miles around", rules: "No repairs under $500. No commercial bids.", questions: "Rough length in feet, material, and the address.",
     prices: "Cedar privacy runs $38–48 a foot installed. Vinyl $40–55. Chain link $18–26.", financing: "We offer 12 months no interest through Wisetack on jobs over $3,000.", tone: "Hey Mark, Mike here with Ridgeline. We can swing by Thursday at 4 to measure, that work?\nSounds good, see you then. Gate's on the left side of the house.", avoid: "Never quote a firm price. Don't promise a date for the install.",
-    handoff: "The job is over $20,000, or they mention a neighbor dispute over the property line.", book_lead_hours: "3", book_per_day: "2", book_buffer_min: "30", quote_days: "2,5,10,21", nudge_hours: "2,20,68", dnt: "+17205550177", a2p_status: "Approved", forwarding: "Their number forwards missed calls here", team: JSON.stringify([{ name: "Luis", cell: "+17205550188", role: "crew", rate: 28 }]), monthly_report: "yes", labor_rate: "45", review_on_paid: "yes",
+    handoff: "The job is over $20,000, or they mention a neighbor dispute over the property line.", book_lead_hours: "3", book_per_day: "2", book_buffer_min: "30", quote_days: "2,5,10,21", nudge_hours: "2,20,68", dnt: "+17205550177", a2p_status: "Approved", forwarding: "Their number forwards missed calls here", team: JSON.stringify([{ name: "Luis", cell: "+17205550188", role: "crew", rate: 28 }, { name: "Jess", cell: "+17205550166", role: "office", rate: 24 }, { name: "Tony", cell: "+17205550155", role: "crew", rate: 26 }]), monthly_report: "yes", labor_rate: "45", review_on_paid: "yes", catalog: JSON.stringify([{"name":"6 ft cedar privacy, installed","unit":"ft","price":43,"cost":24},{"name":"6 ft vinyl privacy, installed","unit":"ft","price":48,"cost":27},{"name":"5 ft chain link, installed","unit":"ft","price":22,"cost":11},{"name":"Ranch rail, 3 rail","unit":"ft","price":15,"cost":7},{"name":"Walk gate, 4 ft","unit":"","price":550,"cost":240},{"name":"Double drive gate, 12 ft","unit":"","price":1450,"cost":720},{"name":"Tear-out and haul-away","unit":"ft","price":4,"cost":1.5},{"name":"Stain and seal","unit":"ft","price":5.25,"cost":1.8},{"name":"Post replacement, in concrete","unit":"","price":140,"cost":45},{"name":"Soft wash, both sides","unit":"ft","price":1.1,"cost":0.3}]),
     warranty: "Two years on workmanship. Materials carry the maker's warranty.", financing_link: "https://example.com/financing", financing_note: "Pay over time, as low as $120 a month",
     quote_terms: "Prices hold for 30 days. The deposit holds the install date and comes off the final invoice. The balance is due when the job is done.",
     price_book: JSON.stringify({ unit: "ft", rates: [{ name: "Wood privacy (cedar)", low: 38, high: 48 }, { name: "Vinyl", low: 40, high: 55 }, { name: "Chain link", low: 18, high: 26 }, { name: "Ranch rail", low: 12, high: 18 }], gate: [450, 650] }) };
@@ -134,6 +134,7 @@ function seed() {
       { id: "tm6", thread_id: "w1", member: "+17205550188", started_at: at(-11, 7, 30), ended_at: at(-11, 15, 50), note: "" },
       { id: "tm7", thread_id: null, member: "", started_at: at(-3, 13, 0), ended_at: at(-3, 14, 30), note: "Material pickup" },
     ] as TimeEntry[],
+    signoffs: {} as Record<string, Signoff>,
     won: 5, wonValue: 37500,
     wonJobs: [{ id: "w1", customer_name: "Henderson family", customer_phone: "+17205550110", amount: 8600 as number | null, won_at: at(-9, 12) }],
   };
@@ -213,6 +214,7 @@ function data() {
     messages: s.messages, board: board(), setup: { ...s.setup, has_review_link: "yes", has_number: "yes", has_calendar: "yes", has_cell: "yes", has_booking_link: "yes" },
     key: "example-key-ridgeline-0000", origin: typeof location !== "undefined" ? location.origin : "",
     jobber: { available: true, connected: true, account: "Ridgeline Fence Co.", error: "", lastPush: ago(2880), connectUrl: "#" },
+    quickbooks: { available: true, connected: true, company: "Ridgeline Fence Co. LLC", error: "", lastPush: ago(95), connectUrl: "#" },
     wires: { sources: [{ source: "missed_call", leads: 19, last30: 7, last: ago(40) }, { source: "web form", leads: 12, last30: 5, last: ago(300) }, { source: "angi", leads: 8, last30: 3, last: ago(2880) }, { source: "web chat", leads: 2, last30: 1, last: ago(8640) }],
       failures: [{ id: "f1", at: ago(12), body: "Good question. Mike will get back to you on that directly today.", name: "Tom Becker", phone: "+17205550177", thread: "t1", source: "web form" }],
       log: [{ at: ago(40), event: "inbound_call", source: "missed_call", phone: "+17205550161", evidence: "Missed call, texted back in 6s" }, { at: ago(300), event: "web_form", source: "web form", phone: "+17205550123", evidence: "Submitted a form asking to be contacted" }, { at: ago(540), event: "inbound_text", source: "text", phone: "+17205550139", evidence: "Texted the business number" },
@@ -245,7 +247,7 @@ function board(all = false): Card[] {
       next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, installTime: c.installTime ?? null, installDays: c.installDays ?? 1, onCalendar: !!c.onCalendar,
       reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, job: { ...(c.job ?? {}) }, costs: { materials: 0, labor: 0, other: 0, ...(c.costs ?? {}) }, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void" && !(i as { plan_id?: string }).plan_id).at(-1) ?? null,
       stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crewMember: c.crewMember ?? "", crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [],
-      changeOrders: s.cos.filter(x => x.thread_id === thread.id && x.status !== "void").map(x => ({ ...x, url: x.url ? EXAMPLE_CO : null })), reviewAfter: c.reviewSent ? null : c.reviewAfter ?? null };
+      changeOrders: s.cos.filter(x => x.thread_id === thread.id && x.status !== "void").map(x => ({ ...x, url: x.url ? EXAMPLE_CO : null })), reviewAfter: c.reviewSent ? null : c.reviewAfter ?? null, signoff: s.signoffs[thread.id] ?? null };
   }).sort((a, b) => b.at.localeCompare(a.at));
 }
 
@@ -510,6 +512,17 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       return { ok: true };
     }
     if (b.action === "timeedit") { if (b.remove) s.time = s.time.filter(e => e.id !== b.entry); return { ok: true }; }
+    if (b.action === "catalog") { s.setup.catalog = JSON.stringify(cleanCatalog(b.items)); return { ok: true }; }
+    if (b.action === "portallink") { const link = (typeof location !== "undefined" ? location.origin : "") + "/p/example"; if (b.send) s.threads[String(b.thread)]?.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: `Here's your page with your quotes, invoices and upcoming visits, any time: https://app.cinderrevenue.com/p/example`, at: now }); return { ok: true, link, sent: !!b.send }; }
+    if (b.action === "qbosync") return { ok: true, invoices: 1, payments: 2 };
+    if (b.action === "signoff") {
+      const v = cleanSignoff(b.input); if (!v.ok) fail(v.error);
+      const x = v as Extract<ReturnType<typeof cleanSignoff>, { ok: true }>, id = String(b.thread);
+      s.signoffs[id] = { id: x.signature, thread_id: id, signed_by: x.signedBy, at: now, note: x.note, checklist: x.checklist, member: crewDemo() ? "+17205550188" : "" };
+      const c = (s.crm[id] ??= { details: {}, notes: "" }), job = (c.job ??= {}); job.installed ??= now.slice(0, 10); job.walk ??= now.slice(0, 10);
+      s.threads[id]?.texts.push({ id: "d" + ++n, direction: "in", author: "system", body: `Job signed off by ${x.signedBy}`, at: now });
+      return { ok: true };
+    }
     if (b.action === "reviewcancel") { const c = s.crm[String(b.thread)]; if (c) c.reviewAfter = null; return { ok: true }; }
     if (b.action === "winback") {
       const w = cleanWinback(b.body, s.setup.display_name);

@@ -46,7 +46,7 @@ function Row({ state, name, st, last, acts, open, onToggle, children }: { state:
   </div>;
 }
 
-function Connections({ d, biz, go, push, onPush, toast, api, project, demo }: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; toast: Toast; api: Api; project: string; demo: boolean }) {
+function Connections({ d, biz, go, push, onPush, toast, api, project, demo, reload }: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; toast: Toast; api: Api; project: string; demo: boolean; reload: () => Promise<void> }) {
   const s = d.setup ?? {}, w = d.wires ?? { sources: [], failures: [], log: [] };
   const origin = d.origin || (typeof location !== "undefined" ? location.origin : "");
   const key = d.key || "";
@@ -134,6 +134,7 @@ function Connections({ d, biz, go, push, onPush, toast, api, project, demo }: { 
         <p>Every estimate Cinder books also lands in Jobber as a request on the customer&rsquo;s record, so your schedule there stays whole. Your past customers come in the other way with Import.</p>
         <ol><li>Tap Connect Jobber and sign in to Jobber.</li><li>Tap Allow.</li><li>You land back here. The next booked estimate shows up in Jobber within a minute.</li></ol>
       </Row>}
+      {(d.quickbooks?.available || d.quickbooks?.connected) && <QboRow d={d} open={open === "qbo"} onToggle={() => setOpen(open === "qbo" ? null : "qbo")} api={api} project={project} toast={toast} reload={reload} />}
       {s.has_webhook === "yes" && <Row state="on" name="Events to your own tools" st="Live, every lead, booking, quote and job posts to your webhook" />}
     </section>
 
@@ -251,25 +252,25 @@ function Agent({ d, go, toast, api, project, reload }: { d: Data; go: Go; toast:
 }
 
 // ---------- Account ----------
-type Member = { name: string; cell: string; role: "crew" | "owner"; rate?: number };
+type Member = { name: string; cell: string; role: "crew" | "office" | "owner"; rate?: number };
 function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, reload, toast }: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; demo: boolean; onSignOut: () => void; api: Api; project: string; reload: () => Promise<void>; toast: Toast }) {
   const s = d.setup ?? {};
   const team: Member[] = (() => { try { const v = JSON.parse(s.team || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } })();
-  const [adding, setAdding] = useState(false), [name, setName] = useState(""), [cell, setCell] = useState(""), [role, setRole] = useState<"crew" | "owner">("crew"), [rate, setRate] = useState(""), [busy, setBusy] = useState(false);
+  const [adding, setAdding] = useState(false), [name, setName] = useState(""), [cell, setCell] = useState(""), [role, setRole] = useState<"crew" | "office" | "owner">("crew"), [rate, setRate] = useState(""), [busy, setBusy] = useState(false);
   const saveTeam = async (next: Member[]) => { setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: { team: next } }); toast("Saved."); setAdding(false); setName(""); setCell(""); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } };
   const monthly = s.monthly_report !== "no";
   return <div className="pad" style={{ maxWidth: 640 }}>
-    <p className="sec">Team<small>{team.length ? `${team.length} of 2` : "just you"}</small></p>
+    <p className="sec">Team<small>{team.length ? `${team.length} of 10` : "just you"}</small></p>
     <ul className="settings">
-      {team.map(m => <li key={m.cell}><span><b style={{ color: "var(--ink)" }}>{m.name || fmtPhone(m.cell)}</b> {m.name ? <span className="mut">{fmtPhone(m.cell)}</span> : null}</span><span className="acts-row"><span className="mut">{m.role === "owner" ? "Owner, sees everything" : "Crew, schedule and jobs only"}</span>
+      {team.map(m => <li key={m.cell}><span><b style={{ color: "var(--ink)" }}>{m.name || fmtPhone(m.cell)}</b> {m.name ? <span className="mut">{fmtPhone(m.cell)}</span> : null}</span><span className="acts-row"><span className="mut">{m.role === "owner" ? "Owner, sees everything" : m.role === "office" ? "Office, everything but settings" : "Crew, schedule and jobs only"}</span>
         <label className="inwrap rate" title="What an hour of their time costs you"><i>$</i><input inputMode="decimal" aria-label={`${m.name || "Their"} hourly rate`} defaultValue={m.rate ? String(m.rate) : ""} placeholder="rate" onBlur={e => { const v = Number(e.target.value.replace(/[^\d.]/g, "")) || 0; if (v !== (m.rate ?? 0)) void saveTeam(team.map(x => x.cell === m.cell ? { ...x, rate: v || undefined } : x)); }} /><em>/hr</em></label><button type="button" className="btn sm" disabled={busy} onClick={() => void saveTeam(team.filter(x => x.cell !== m.cell))}>Remove</button></span></li>)}
       {adding ? <li style={{ height: "auto", padding: "8px 0" }}><form className="acts-row" style={{ width: "100%" }} onSubmit={e => { e.preventDefault(); if (cell.replace(/\D/g, "").length < 10) return toast("Enter a 10-digit cell.", true); void saveTeam([...team, { name: name.trim(), cell, role, ...(Number(rate) > 0 ? { rate: Number(rate) } : {}) }]); setRate(""); }}>
         <input className="input" style={{ width: 140 }} placeholder="Name" value={name} onChange={e => setName(e.target.value)} autoFocus />
         <input className="input" style={{ width: 150 }} placeholder="Cell" inputMode="tel" value={cell} onChange={e => setCell(typePhone(e.target.value))} />
-        <select className="input" style={{ width: 110 }} value={role} onChange={e => setRole(e.target.value as "crew" | "owner")}><option value="crew">Crew</option><option value="owner">Owner</option></select>
+        <select className="input" style={{ width: 110 }} value={role} onChange={e => setRole(e.target.value as "crew" | "office" | "owner")}><option value="crew">Crew</option><option value="office">Office</option><option value="owner">Owner</option></select>
         <span className="inwrap" style={{ width: 96 }}><i>$</i><input inputMode="decimal" aria-label="Hourly rate" placeholder="rate" value={rate} onChange={e => setRate(e.target.value.replace(/[^\d.]/g, ""))} /><em>/hr</em></span>
         <button type="submit" className="btn ink sm" disabled={busy}>{busy ? <Spinner /> : "Add"}</button><button type="button" className="btn ghost sm" onClick={() => setAdding(false)}>Cancel</button></form></li>
-      : team.length < 2 ? <li><span className="mut">They sign in with their own cell. Crew sees the calendar, the jobs and the texts, never the money or these settings.</span><button type="button" className="btn sm" onClick={() => setAdding(true)}>Add someone</button></li> : null}
+      : team.length < 10 ? <li><span className="mut">They sign in with their own cell. Crew sees the calendar, the jobs and the texts, never the money. Office sees everything but these settings.</span><button type="button" className="btn sm" onClick={() => setAdding(true)}>Add someone</button></li> : null}
     </ul>
     <p className="sec" style={{ marginTop: 20 }}>Account</p>
     <ul className="settings">
@@ -296,4 +297,16 @@ export function SystemScreen(p: { d: Data; biz: Biz; go: Go; push: string; onPus
       actions={<div className="seg" role="tablist">{(["connections", "agent", "account"] as View[]).map(v => <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? "on" : ""} onClick={() => setView(v)}>{v === "connections" ? "Connections" : v === "agent" ? "Agent" : "Account"}</button>)}</div>} />
     <div className="set-body">{view === "connections" ? <Connections {...p} /> : view === "agent" ? <Agent {...p} /> : <Account {...p} />}</div>
   </>;
+}
+
+/** QuickBooks Online: connect once, then invoices and payments land in the books. Sync now catches up anything missed. */
+function QboRow({ d, open, onToggle, api, project, toast, reload }: { d: Data; open: boolean; onToggle: () => void; api: Api; project: string; toast: Toast; reload: () => Promise<void> }) {
+  const q = d.quickbooks!, [busy, setBusy] = useState(false);
+  const sync = async () => { setBusy(true); try { const r = await api<{ invoices: number; payments: number }>("/api/app/act", { p: project, action: "qbosync" }); toast(r.invoices || r.payments ? `Sent ${r.invoices} ${r.invoices === 1 ? "invoice" : "invoices"} and ${r.payments} ${r.payments === 1 ? "payment" : "payments"} to QuickBooks.` : "QuickBooks is up to date."); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Sync didn't finish.", true); } finally { setBusy(false); } };
+  return <Row state={q.connected ? (q.error ? "bad" : "on") : "off"} name="QuickBooks Online" st={q.connected ? (q.error ? `Connected, last sync failed: ${q.error}` : `Connected${q.company ? `, ${q.company}` : ""}${q.lastPush ? `, last sync ${ago(q.lastPush)}` : ""}`) : "Not connected"}
+    open={open} onToggle={onToggle}
+    acts={<>{q.connected && <button type="button" className="btn sm" disabled={busy} onClick={() => void sync()}>{busy ? <Spinner /> : "Sync now"}</button>}{q.connectUrl && <a className={"btn sm" + (q.connected ? "" : " ink")} href={q.connectUrl} target="_blank" rel="noreferrer">{q.connected ? "Reconnect" : "Connect QuickBooks"}</a>}</>}>
+    <p>Every invoice you send and every payment you record lands in QuickBooks on the right customer, so your books match without typing anything twice. Lines book to your Services item; sales tax rides as its own line so totals match.</p>
+    <ol><li>Tap Connect QuickBooks and sign in to Intuit.</li><li>Pick your company and tap Connect.</li><li>You land back here. Tap Sync now to send the last 120 days.</li></ol>
+  </Row>;
 }

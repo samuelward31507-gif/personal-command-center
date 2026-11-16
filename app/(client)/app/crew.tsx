@@ -11,6 +11,7 @@ import { Avatar, Empty, Icon, Spinner, clock, dateLabel, dayName, first, fmtPhon
 import { Steps } from "./record";
 import { line } from "./jobs";
 import { ClockBar, myClock } from "./jobwork";
+import { SignoffSheet } from "./finish";
 import { visitDays, type Plan } from "@/lib/service";
 import type { Biz, Data, Go } from "./types";
 
@@ -80,7 +81,7 @@ export function MyDay({ d, biz, project, api, toast, reload, go }: { d: Data; bi
     stops.push({ key: `v${p.id}${day}`, kind: "visit", at: p.time ? Date.parse(`${day}T${p.time}`) : Date.parse(day + "T08:00:00"), allDay: !p.time, day, card: c, thread: p.thread_id, name: p.customer || fmtPhone(p.phone), phone: p.phone,
       addr: String(c?.details.address ?? (d.customers ?? []).find(x => x.id === p.thread_id)?.address ?? ""), mine: !!me && d10(p.crew_member) === me, plan: p }); }
   const anyMine = stops.some(s => s.mine);
-  const [all, setAll] = useState(!anyMine), [busy, setBusy] = useState(""), [arm, setArm] = useArm();
+  const [all, setAll] = useState(!anyMine), [busy, setBusy] = useState(""), [arm, setArm] = useArm(), [signing, setSigning] = useState<Card | null>(null);
   for (const p of d.plans ?? []) if (p.status === "active" && p.next_on && p.next_on < today) { const c = byId.get(p.thread_id) ?? null;
     stops.push({ key: `v${p.id}late`, kind: "visit", at: Date.parse(today + "T06:00:00"), allDay: true, day: today, card: c, thread: p.thread_id, name: p.customer || fmtPhone(p.phone), phone: p.phone, addr: String(c?.details.address ?? ""), mine: !!me && d10(p.crew_member) === me, plan: p }); }
   const shown = stops.filter(s => (all || s.mine) && s.day >= today && s.day <= weekEnd).sort((a, b) => a.at - b.at);
@@ -108,6 +109,7 @@ export function MyDay({ d, biz, project, api, toast, reload, go }: { d: Data; bi
       <button type="button" className={"btn sm" + (arm === "omw" + s.key ? " ink" : "")} disabled={busy === "omw" + s.key} onClick={() => { if (arm === "omw" + s.key) void act("omw" + s.key, { action: "reply", thread: s.thread, body: onMyWayText(s.name, "", d.business) }, `Texted ${first(s.name)} you're on the way.`); else setArm("omw" + s.key); }}>{busy === "omw" + s.key ? <Spinner /> : <Icon name="car" size={13} />}{arm === "omw" + s.key ? "Tap to send" : "On my way"}</button>
       {s.kind !== "estimate" && <button type="button" className={"btn sm" + (clockOn?.thread_id === s.thread ? " ink" : "")} disabled={busy === "clk" + s.key} onClick={() => void act("clk" + s.key, clockOn?.thread_id === s.thread ? { action: "clockout" } : { action: "clockin", thread: s.thread }, clockOn?.thread_id === s.thread ? "Clocked out." : `Clocked in at ${first(s.name)}'s.`)}>{busy === "clk" + s.key ? <Spinner /> : <Icon name="clock" size={13} />}{clockOn?.thread_id === s.thread ? "Clock out" : "Clock in"}</button>}
       {s.kind === "visit" && s.plan && s.plan.next_on && s.plan.next_on <= s.day && <button type="button" className={"btn sm" + (arm === "vd" + s.key ? " ink" : "")} disabled={busy === "vd" + s.key} onClick={() => { if (arm === "vd" + s.key) void act("vd" + s.key, { action: "visit", plan: s.plan!.id }, `${first(s.name)}'s visit is done.${d.role === "crew" ? "" : s.plan!.invoice ? " Invoice texted." : ""}`); else setArm("vd" + s.key); }}>{busy === "vd" + s.key ? <Spinner /> : <Icon name="check" size={13} />}{arm === "vd" + s.key ? "Tap: visit done" : "Visit done"}</button>}
+      {s.kind === "install" && s.card && (s.card.signoff ? <span className="chip good"><Icon name="check" size={11} />Signed off</span> : <button type="button" className="btn sm" onClick={() => setSigning(s.card)}><Icon name="check" size={13} />Sign-off</button>)}
       <button type="button" className="btn sm" onClick={() => go.record(s.thread)}><Icon name="upload" size={13} />Photos and notes</button>
     </div>}
     {big && s.kind === "install" && s.card && <Steps card={s.card} trade={biz.trade} busy={busy} tick={(step, done) => void act("step:" + step, { action: "jobstep", thread: s.thread, step, done }, done ? "Ticked." : "Unticked.")} />}
@@ -127,5 +129,8 @@ export function MyDay({ d, biz, project, api, toast, reload, go }: { d: Data; bi
     </section>
     {later.length > 0 && <section className="panel"><div className="panel-h"><h2>This week</h2></div><div className="panel-b"><div className="stops">{later.map(s => stop(s, false))}</div></div></section>}
     </div>
+    {signing && <SignoffSheet card={signing} trade={biz.trade} onClose={() => setSigning(null)} save={async input => {
+      try { await api("/api/app/act", { p: project, action: "signoff", thread: signing.id, input }); toast(`${first(signing.name)} signed off the job.`); await reload(); return true; }
+      catch (e) { toast(e instanceof Error ? e.message : "That didn't save.", true); return false; } }} />}
   </>;
 }

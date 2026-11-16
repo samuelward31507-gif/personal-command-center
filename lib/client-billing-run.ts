@@ -6,6 +6,7 @@ import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { chosen, cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, type Item } from "@/lib/billing";
 import { cleanDate, cleanDetails, cleanPayMethod, detailLine, type Payment } from "@/lib/crm";
 import { changeOrderLines } from "@/lib/service";
+import { qboDeletePayment, qboSyncInvoice, qboSyncPayment } from "@/lib/qbo";
 import { digits10, inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, appOrigin, clientById, sendToCustomer, type Client } from "@/lib/client-runtime-run";
 import { clientCalendar, createAllDayEvent, createEvent, deleteEvent } from "@/lib/client-calendar";
@@ -130,8 +131,9 @@ export async function recordPayment(sql: Sql, c: Client, invoiceId: string, inpu
   const on = cleanDate(input.on) ?? new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" });
   const method = cleanPayMethod(input.method);
   const note = String(input.note ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 200);
-  await sql`INSERT INTO public.client_payments (owner_id, project_id, invoice_id, thread_id, amount, method, paid_on, note) VALUES (${c.owner}, ${c.projectId}::uuid, ${inv.id}::uuid, ${inv.thread_id}::uuid, ${amount}, ${method}, ${on}::date, ${note})`;
+  const [ins] = await sql`INSERT INTO public.client_payments (owner_id, project_id, invoice_id, thread_id, amount, method, paid_on, note) VALUES (${c.owner}, ${c.projectId}::uuid, ${inv.id}::uuid, ${inv.thread_id}::uuid, ${amount}, ${method}, ${on}::date, ${note}) RETURNING id` as { id: string }[];
   const s = await settle(sql, c, inv.id);
+  await qboSyncPayment(sql, c.projectId, ins.id);
   const left = s ? round2(s.total - s.paid) : 0;
   await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${inv.thread_id}::uuid, 'out', 'system',
     ${left > 0 ? `Payment of ${dollars(amount)} recorded on invoice #${inv.number}. ${dollars(left)} still owed.` : `Invoice #${inv.number} paid in full: ${dollars(amount)} came in.`})`;
@@ -141,9 +143,10 @@ export async function recordPayment(sql: Sql, c: Client, invoiceId: string, inpu
 
 /** Takes a recorded payment back off (typed wrong). The invoice goes back to owing that amount. */
 export async function deletePayment(sql: Sql, c: Client, paymentId: string): Promise<{ ok: boolean; error?: string }> {
-  const [p] = await sql`DELETE FROM public.client_payments WHERE id = ${paymentId}::uuid AND project_id = ${c.projectId}::uuid RETURNING invoice_id` as { invoice_id: string }[];
+  const [p] = await sql`DELETE FROM public.client_payments WHERE id = ${paymentId}::uuid AND project_id = ${c.projectId}::uuid RETURNING invoice_id, qbo_id` as { invoice_id: string; qbo_id: string }[];
   if (!p) return { ok: false, error: "That payment was already removed." };
   await settle(sql, c, p.invoice_id);
+  await qboDeletePayment(sql, c.projectId, p.qbo_id);
   return { ok: true };
 }
 
@@ -200,6 +203,7 @@ export async function saveInvoice(sql: Sql, c: Client, invoiceId: string, input:
       note = CASE WHEN ${typeof input.note === "string"}::boolean THEN ${String(input.note ?? "").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, " ").trim().slice(0, 600)} ELSE note END,
       due_on = CASE WHEN ${due === undefined}::boolean THEN due_on ELSE ${due ?? null}::date END
     WHERE id = ${invoiceId}::uuid`;
+  await qboSyncInvoice(sql, c.projectId, invoiceId);
   return { ok: true };
 }
 
@@ -213,6 +217,7 @@ export async function sendInvoice(sql: Sql, c: Client, invoiceId: string): Promi
   if (!token) { token = randomBytes(18).toString("base64url"); await sql`UPDATE public.client_invoices SET token = ${token} WHERE id = ${invoiceId}::uuid AND token IS NULL`; }
   const url = invoiceUrl(token);
   await sql`UPDATE public.client_invoices SET status = 'sent', sent_at = coalesce(sent_at, now()) WHERE id = ${invoiceId}::uuid`;
+  await qboSyncInvoice(sql, c.projectId, invoiceId);
   if (r.thread_status === "opted_out") return { ok: true, sent: false, url, warn: "They opted out of texts. Copy the link and email it instead." };
   if (!c.setup.texting_number) return { ok: true, sent: false, url, warn: "Your texting number isn't connected yet. Copy the link and send it yourself." };
   if (!inTextingHours(tz(c))) return { ok: true, sent: false, url, warn: "It's outside texting hours (8 AM to 8 PM). It's ready: text it in the morning." };
@@ -228,13 +233,14 @@ export async function setInvoice(sql: Sql, c: Client, invoiceId: string, what: "
     const [i] = await sql`SELECT total::float AS total, paid_amount::float AS paid, status FROM public.client_invoices WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid` as { total: number; paid: number; status: string }[];
     if (i && (i.status === "draft" || i.status === "sent") && i.total - i.paid > 0.005) return recordPayment(sql, c, invoiceId, { amount: round2(i.total - i.paid), method: "other", note: "Marked paid in full" });
   }
-  if (what === "unpaid") await sql`DELETE FROM public.client_payments WHERE invoice_id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid`;
+  if (what === "unpaid") { const gone = await sql`DELETE FROM public.client_payments WHERE invoice_id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid RETURNING qbo_id` as { qbo_id: string }[]; for (const g of gone) await qboDeletePayment(sql, c.projectId, g.qbo_id); }
   const r = what === "paid" ? await sql`UPDATE public.client_invoices SET status = 'paid', paid_at = now() WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status IN ('draft', 'sent') RETURNING thread_id, number, total`
     : what === "unpaid" ? await sql`UPDATE public.client_invoices SET status = CASE WHEN sent_at IS NULL THEN 'draft' ELSE 'sent' END, paid_at = NULL, paid_amount = 0 WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status = 'paid' RETURNING thread_id, number, total`
     : what === "void" ? await sql`UPDATE public.client_invoices SET status = 'void' WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status IN ('draft', 'sent') RETURNING thread_id, number, total`
     : await sql`UPDATE public.client_invoices SET reminders_paused = ${what === "pause"} WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid RETURNING thread_id, number, total`;
   if (!r.length) return { ok: false, error: "That invoice was already updated." };
   const row = r[0] as { thread_id: string; number: number; total: number };
+  if (what === "void") await qboSyncInvoice(sql, c.projectId, invoiceId);
   if (what === "paid" || what === "void") await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${row.thread_id}::uuid, 'out', 'system',
     ${what === "paid" ? `Invoice #${row.number} paid: ${dollars(Number(row.total))}` : `Invoice #${row.number} voided`})`;
   if (what === "paid") { void emitEvent(c.setup, c.projectId, "invoice.paid", { customer: { id: row.thread_id }, number: row.number, total: Number(row.total) }); await queueReview(sql, c, row.thread_id); }
