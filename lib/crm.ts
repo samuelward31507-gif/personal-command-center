@@ -228,6 +228,7 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   pick("crew_scope", ["", "assigned"]);
   if (r.late_fee !== undefined) { const v = String(r.late_fee ?? "").trim(); const n = Number(v.replace(/[^\d.]/g, "")); out.late_fee = n > 0 ? (/%/.test(v) ? `${Math.min(25, Math.round(n * 10) / 10)}%` : String(Math.min(500, Math.round(n * 100) / 100))) : ""; }
   int("late_fee_days", 1, 90);
+  int("monthly_goal", 0, 10000000);
   if (r.mileage_rate !== undefined) { const n = Number(String(r.mileage_rate ?? "").replace(/[^\d.]/g, "")); out.mileage_rate = n > 0 && n <= 5 ? String(Math.round(n * 1000) / 1000) : ""; }
   if (r.review_link !== undefined) { const u = String(r.review_link ?? "").trim().slice(0, 300); out.review_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   if (r.financing_link !== undefined) { const u = String(r.financing_link ?? "").trim().slice(0, 300); out.financing_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }

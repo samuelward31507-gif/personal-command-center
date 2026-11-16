@@ -13,6 +13,8 @@ import { askLocal, type AskRow } from "@/lib/ask-local";
 import { line } from "./jobs";
 import { suggestReply } from "./replies";
 import { mailWaiting, sourceLabel, type Biz, type Data, type Go } from "./types";
+import { jobPrice } from "@/lib/service";
+import { jobProfit } from "@/lib/crm";
 import { TasksSection } from "./records";
 import { taskOrder, warrantyEndingSoon } from "@/lib/records";
 
@@ -52,6 +54,20 @@ function AskBox({ api, project, ask, d, go }: { api: Api; project: string; ask?:
   </section>;
 }
 
+/** The month's goal: won so far against what the owner aims for. Set it once; it stays. */
+function GoalBox({ d, cards, api, project, toast, reload }: { d: Data; cards: NonNullable<Data["board"]>; api: Api; project: string; toast?: (t: string, bad?: boolean) => void; reload?: () => Promise<void> }) {
+  const goal = Number(d.setup?.monthly_goal) || 0, month = new Date().toLocaleDateString("en-CA").slice(0, 7);
+  const won = cards.filter(c => c.stage === "won" && !c.pastCustomer && (c.stageAt ?? "").slice(0, 7) === month).reduce((a, c) => a + (jobPrice(c) ?? 0), 0);
+  const setGoal = async () => { const v = prompt("Your goal for won work each month, in dollars", goal ? String(goal) : "50000"); if (v === null) return;
+    try { await api("/api/app/act", { p: project, action: "setup", setup: { monthly_goal: v.replace(/[^\d]/g, "") || "0" } }); await reload?.(); } catch (e) { toast?.(e instanceof Error ? e.message : "Didn't save.", true); } };
+  const day = new Date().getDate(), daysIn = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(), pace = goal ? Math.round(goal * day / daysIn) : 0;
+  return <section><h3>This month<small><button type="button" className="link" onClick={() => void setGoal()}>{goal ? "Change goal" : "Set a goal"}</button></small></h3>
+    {goal ? <><div className="goal-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, Math.round(won / goal * 100))}%` }} /><b style={{ left: `${Math.min(100, Math.round(day / daysIn * 100))}%` }} /></div>
+      <p className="fine" style={{ margin: "6px 0 0" }}><b style={{ color: "var(--ink)" }}>{usd(won)}</b> won of {usd(goal)}. {won >= goal ? "Goal reached." : won >= pace ? "Ahead of pace." : `${usd(pace - won)} behind pace.`}</p></>
+      : <p className="fine" style={{ margin: 0 }}>{usd(won)} won so far this month.</p>}
+  </section>;
+}
+
 export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload }: { d: Data; biz: Biz; go: Go; wide: boolean; api: Api; project: string; ask?: { q: string; n: number }; toast?: (t: string, bad?: boolean) => void; reload?: () => Promise<void> }) {
   const today = todayIso(), L = d.live, cards = d.board ?? [], invoices = d.invoices ?? [];
   const byThread = new Map(cards.map(c => [c.id, c]));
@@ -60,6 +76,11 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
   const actions: Action[] = [];
   for (const t of taskOrder(d.tasks ?? [], today).filter(t => t.due_on && t.due_on <= today)) actions.push({ key: "k" + t.id, kind: "remind", title: t.title, sub: t.due_on! < today ? `To-do, was due ${dateLabel(t.due_on!)}` : "To-do, due today", go: () => { if (t.thread) go.record(t.thread); }, cta: t.thread ? "Open" : "See below", money: 0 });
   for (const e of warrantyEndingSoon(d.equipment ?? [], today, 30)) actions.push({ key: "w" + e.id, kind: "remind", title: `${e.customer ?? "A customer"}'s ${(e.kind || "equipment").toLowerCase()} warranty ends ${dateLabel(e.warranty_until!)}`, sub: "A good time to offer a service visit or a plan", go: () => go.record(e.thread_id), cta: "Open", money: 0 });
+  // Jobs whose logged costs leave a thin margin (under 15%): worth a look before the next one is priced the same way.
+  for (const c of cards) if (c.stage === "won" && !c.pastCustomer && (c.costs.materials + c.costs.labor + c.costs.other) > 0) {
+    const pf = jobProfit(jobPrice(c), c.costs);
+    if (pf && pf.margin < 15) actions.push({ key: "pm" + c.id, kind: "money", title: `${c.name}'s job is at a ${pf.margin}% margin`, sub: `${usd(pf.cost)} in costs on ${usd(jobPrice(c) ?? 0)}${pf.profit < 0 ? ", a loss" : ""}`, go: () => go.record(c.id, { view: "job" }), cta: "Look", money: 0 });
+  }
   for (const m of mailWaiting(d)) actions.push({ key: "m" + m.id, kind: "reply", title: `${m.name || m.email || sourceLabel(m.source)} emailed, no phone`, sub: `${sourceLabel(m.source || "email")} by email${m.message ? `: ${m.message.slice(0, 90)}` : ""}`, go: () => go.tab("inbox"), cta: "Add phone", money: 0, urgent: true });
   for (const a of asks) actions.push({ key: "r" + a.id, kind: "reply", title: `Reply to ${a.name}`, sub: a.ask || a.last, go: () => go.thread(a.id), cta: "Reply", primary: true, money: worth(byThread.get(a.id)) });
   for (const c of cards) if (c.stage === "quoted" && c.quote?.status === "replied") actions.push({ key: "qr" + c.id, kind: "reply", title: `${c.name} answered the quote`, sub: c.quote.amount ? `${usd(c.quote.amount)} quote` : "", go: () => go.thread(c.id), cta: "Read", money: c.quote.amount ?? 0 });
@@ -198,6 +219,7 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
         </section>
       </div>
       <aside className="t5-rail">
+        {isOwner && <GoalBox d={d} cards={cards} api={api} project={project} toast={toast} reload={reload} />}
         <section><h3>Last 30 days</h3>
           {nums.map(n => <button key={n.label} type="button" className="t5-num" onClick={n.go} disabled={!n.go}><span>{n.label}<small>{n.sub}</small></span><b className={n.tone || ""}>{n.value}</b></button>)}
         </section>

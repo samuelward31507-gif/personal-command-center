@@ -204,6 +204,18 @@ export async function POST(req: Request) {
       await sql`UPDATE public.client_ops SET setup = setup || jsonb_build_object('catalog', ${JSON.stringify(list)}::text), updated_at = now() WHERE project_id = ${c.projectId}::uuid AND owner_id = ${c.owner}`;
       return json({ ok: true, count: list.length });
     }
+    // The photo report: the finished job's After photos, on the customer's page, in one text.
+    if (b.action === "photoreport") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
+      const [n] = await sql`SELECT count(*)::int AS n FROM public.client_photos WHERE thread_id = ${b.thread}::uuid AND project_id = ${c.projectId}::uuid AND (kind = 'after' OR shared)` as { n: number }[];
+      if (!n?.n) return json({ error: "Take a few After photos on the job first." }, 409);
+      const r = await portalLink(sql, c, b.thread);
+      if (!r.ok) return json({ error: r.error }, 404);
+      const [t] = await sql`SELECT customer_phone, customer_name FROM public.client_threads WHERE id = ${b.thread}::uuid` as { customer_phone: string; customer_name: string }[];
+      const firstName = (t.customer_name || "").split(" ")[0];
+      const ok = await sendToCustomer(sql, c, b.thread, t.customer_phone, `Hi${firstName ? " " + firstName : ""}, it's ${(c.setup.display_name || "us").replace(/\.+$/, "")}. Here are the photos of your finished job (${n.n}): ${r.url}`, "owner");
+      return ok ? json({ ok: true }) : json({ error: "That text didn't go. Check the number, or copy the customer page link instead." }, 502);
+    }
     // The customer's own page: copy the link, or text it to them.
     if (b.action === "portallink") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);

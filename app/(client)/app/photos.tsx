@@ -46,6 +46,7 @@ export function Photos({ thread, photos, stage, project, api, toast, reload }: {
     <div className="acts-row">
       <div className="seg" role="radiogroup" aria-label="Tag new photos as">{(["before", "after"] as const).map(k => <button key={k} type="button" role="radio" aria-checked={kind === k} className={kind === k ? "on" : ""} onClick={() => setKind(k)}>{KIND[k]}</button>)}</div>
       <label className="btn sm"><input type="file" accept="image/*" multiple hidden onChange={e => { void add(e.target.files); e.target.value = ""; }} />{busy ? <><Spinner />{busy} left</> : <><Icon name="upload" size={13} />Add photos</>}</label>
+      {photos.some(p => p.kind === "after") && <button type="button" className="btn sm ghost" title="Text the customer their finished-job photos" onClick={async () => { try { await api("/api/app/act", { p: project, action: "photoreport", thread }); toast("Photo report sent."); } catch (e) { toast(e instanceof Error ? e.message : "Didn't send.", true); } }}>Send photo report</button>}
     </div>
     {big && <div className="scrim" onMouseDown={e => { if (e.target === e.currentTarget) { setBig(null); setArm(false); } }}>
       <div className="lightbox" role="dialog" aria-label="Photo">

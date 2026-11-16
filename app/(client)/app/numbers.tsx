@@ -10,7 +10,9 @@ import { Avatar, Spinner, ago, secs, short, usd, type Api, type Toast } from "./
 import { Bars, Donut, Guide, Kpis, PageHead, type Kpi } from "./charts";
 import { HoursPanel, RecurringPanel } from "./jobwork";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
-import { jobProfit } from "@/lib/crm";
+import { jobProfit, parseTeam } from "@/lib/crm";
+import { totals } from "@/lib/billing";
+import { minutesOf } from "@/lib/service";
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : null);
 const PERIOD: Record<Period, string> = { 30: "the last 30 days", 90: "the last 90 days", 365: "the last 12 months" };
@@ -138,6 +140,8 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
           </section>
           <RecurringPanel d={d} go={go} onPlans={() => go.tab("plans")} />
           <HoursPanel d={d} go={go} />
+          <CrewPanel d={d} days={days} />
+          <TaxPanel d={d} days={days} />
           <section className="panel s6">
             <div className="panel-h"><h2>Reviews</h2><small>{n!.reviews} asked {days === 365 ? "this year" : `in ${days} days`}</small></div>
             <div className="panel-b">
@@ -160,4 +164,36 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
       </>}
     </div>
   </>;
+}
+
+/** Who on the crew did what in the period: jobs won with them on it, their value, and hours clocked. */
+function CrewPanel({ d, days }: { d: Data; days: number }) {
+  const team = parseTeam(d.setup?.team ?? "[]"), since = Date.now() - days * 86400000, d10 = (p: string) => p.replace(/\D/g, "").slice(-10);
+  if (!team.length) return null;
+  const rows = [{ cell: "", name: d.owner ? d.owner.split(" ")[0] + " (you)" : "You" }, ...team.map(m => ({ cell: m.cell, name: m.name || m.cell }))].map(p => {
+    const jobs = (d.board ?? []).filter(c => c.stage === "won" && !c.pastCustomer && Date.parse(c.stageAt ?? c.at) > since && d10(c.crewMember ?? "") === d10(p.cell));
+    const mins = (d.time ?? []).filter(e => Date.parse(e.started_at) > since && d10(e.member) === d10(p.cell)).reduce((a, e) => a + minutesOf(e), 0);
+    return { ...p, jobs: jobs.length, value: jobs.reduce((a, c) => a + (jobPrice(c) ?? 0), 0), hours: Math.round(mins / 6) / 10 };
+  }).filter(r => r.jobs || r.hours);
+  return <section className="panel s6">
+    <div className="panel-h"><h2>Crew</h2><small>won jobs they were on, and hours, last {days} days</small></div>
+    <div className="panel-b">{rows.length ? <table className="tbl flush"><thead><tr><th>Who</th><th className="right">Jobs</th><th className="right">Value</th><th className="right">Hours</th></tr></thead>
+      <tbody>{rows.map(r => <tr key={r.cell || "me"} style={{ cursor: "default" }}><td><b>{r.name}</b></td><td className="num">{r.jobs}</td><td className="num">{r.value ? usd(r.value) : "–"}</td><td className="num mut">{r.hours || "–"}</td></tr>)}</tbody></table>
+      : <p className="fine" style={{ padding: "8px 0" }}>Assign jobs to your crew and have them clock in, and this shows who did what.</p>}</div>
+  </section>;
+}
+
+/** Sales tax on what was paid in the period, by month: what to send the state. */
+function TaxPanel({ d, days }: { d: Data; days: number }) {
+  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const paid = (d.invoices ?? []).filter(i => i.status === "paid" && (i.paid_at ?? "").slice(0, 10) >= since && i.tax_rate > 0);
+  const months = new Map<string, { taxable: number; tax: number; n: number }>();
+  for (const i of paid) { const t = totals(i.items, i.tax_rate), k = (i.paid_at ?? "").slice(0, 7); const m = months.get(k) ?? { taxable: 0, tax: 0, n: 0 }; m.taxable += t.subtotal; m.tax += t.tax; m.n++; months.set(k, m); }
+  const list = [...months.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  return <section className="panel s6">
+    <div className="panel-h"><h2>Sales tax</h2><small>on invoices paid, last {days} days</small></div>
+    <div className="panel-b">{list.length ? <table className="tbl flush"><thead><tr><th>Month</th><th className="right">Invoices</th><th className="right">Taxable</th><th className="right">Tax collected</th></tr></thead>
+      <tbody>{list.map(([k, m]) => <tr key={k} style={{ cursor: "default" }}><td><b>{new Date(k + "-15T12:00:00").toLocaleDateString("en-US", { month: "long", year: "numeric" })}</b></td><td className="num">{m.n}</td><td className="num">{usd(m.taxable)}</td><td className="num"><b>{usd(m.tax)}</b></td></tr>)}</tbody></table>
+      : <p className="fine" style={{ padding: "8px 0" }}>Invoices with sales tax on them show here once they&rsquo;re paid. Set your rate in Invoices and payments.</p>}</div>
+  </section>;
 }
