@@ -4,13 +4,13 @@ import type { CalEvent } from "@/lib/client-schedule";
 
 export type Conv = { id: string; name: string; source: string; status: string; at: string | null; last: string; ask?: string };
 export type Live = { afterHours?: { leads: number; won: number; wonValue: number }; leads: number; needs: number; answered: number; booked: number; replySec: number | null; chasing: number; chasingValue: number; won: number; wonValue: number; revived: number; reviews: number; weeks: { week: string; leads: number; booked: number }[]; conversations: Conv[] };
-export type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string; event_id?: string; link?: string };
+export type Appt = { id: string; starts_at: string; thread_id: string; customer_name: string; customer_phone: string; event_id?: string; link?: string; crew_member?: string };
 export type Quote = { id: string; customer_name: string; customer_phone: string; amount: number | null; sent_on: string; steps_sent: number; status: string };
 export type Cal = { connected: boolean; email: string; events: CalEvent[]; error: string; connectUrl: string };
 export type Customer = { id: string; name: string; phone: string; email?: string; address: string; source: string; status: string; stage: string | null; since: string; last: string; jobs: number; spent: number; owed: number; open_quote: number | null; line: string };
 export type InvoiceRow = CardInvoice & { thread_id: string; customer: string; phone: string };
 export type Winback = { past: number; eligible: number; names: string[]; draft: string };
-export type Data = { /** The owner, or a crew member who sees the schedule and the jobs but no money or settings. */ role?: "owner" | "crew"; project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number;
+export type Data = { /** The owner, or a crew member who sees the schedule and the jobs but no money or settings. */ role?: "owner" | "crew"; /** The signed-in phone, +1, so a crew member sees their own jobs. */ me?: string; /** Whether Cinder can email customers itself (a verified sending domain). */ emailReady?: boolean; project: string; business: string; number: string; canCall: boolean; businesses: { project_id: string; name: string }[]; live: Live; owner: string; appointments: Appt[]; quotes: Quote[]; quoteSteps: number;
   wonJobs?: { id: string; customer_name: string; customer_phone: string; amount: number | null; won_at: string }[]; hasReviewLink?: boolean; repeat?: boolean; calendar: Cal;
   messages: { author: string; body: string; created_at: string }[]; unreadFromSam: number; board?: Card[]; setup?: Record<string, string>; winback?: Winback; customers?: Customer[]; invoices?: InvoiceRow[];
   /** The website key (chat bubble and intake webhook) and the app's public origin, for the System screen. */

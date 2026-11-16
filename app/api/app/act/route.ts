@@ -1,11 +1,14 @@
 import { appSession, bridgeCall, clientFor, db, json } from "@/lib/client-app-run";
 import { askCinder, markNoShow, previewReply, rescheduleAppointment, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
 import { sendSms } from "@/lib/twilio";
+import { sendCustomerEmail } from "@/lib/client-email";
+import { quoteUrl } from "@/lib/client-runtime-run";
+import { invoiceUrl } from "@/lib/client-billing-run";
 import { cleanOwnerSetup } from "@/lib/crm";
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
-import { addLead, addPhoto, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
+import { addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 
@@ -39,7 +42,7 @@ export async function POST(req: Request) {
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
-    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string; email?: string; at?: string | null; method?: string; payment?: string; data?: string; kind?: string; caption?: string; photo?: string };
+    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string; email?: string; at?: string | null; method?: string; payment?: string; data?: string; kind?: string; caption?: string; photo?: string; member?: string };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -118,6 +121,36 @@ export async function POST(req: Request) {
       if (!q) return json({ error: "Ask something." }, 400);
       const a = await askCinder(sql, c, q);
       return a ? json({ ok: true, answer: a }) : json({ error: "Cinder couldn't answer just now." }, 503);
+    }
+    if (b.action === "assign") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
+      const r = await assignCrew(sql, c, b.thread, b.member ?? "", (to, body) => sendSms(to, c.setup.texting_number || "", body));
+      return r.ok ? json({ ok: true, texted: r.texted }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "emailquote" || b.action === "emailinvoice") {
+      const quote = b.action === "emailquote";
+      const [row] = quote
+        ? await sql`SELECT q.id, q.token, q.amount::float AS amount, t.customer_name, t.customer_email, t.id AS thread FROM public.client_threads t JOIN public.client_quotes q ON q.project_id = t.project_id AND q.kind = 'quote' AND q.status IN ('open', 'replied')
+            AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
+            WHERE t.id = ${b.thread ?? "00000000-0000-0000-0000-000000000000"}::uuid AND t.project_id = ${c.projectId}::uuid ORDER BY q.created_at DESC LIMIT 1` as Record<string, unknown>[]
+        : await sql`SELECT i.id, i.token, i.number, (i.total - i.paid_amount)::float AS amount, i.due_on::text AS due_on, t.customer_name, t.customer_email, t.id AS thread FROM public.client_invoices i JOIN public.client_threads t ON t.id = i.thread_id
+            WHERE i.id = ${b.invoice ?? "00000000-0000-0000-0000-000000000000"}::uuid AND i.project_id = ${c.projectId}::uuid AND i.status IN ('sent', 'draft')` as Record<string, unknown>[];
+      if (!row) return json({ error: quote ? "Save the quote first." : "That invoice isn't open." }, 404);
+      if (!row.token) return json({ error: quote ? "Text or copy the quote link once first, then email it." : "Send the invoice once first, then email it." }, 409);
+      const to = String(row.customer_email ?? "");
+      if (!to) return json({ error: "Add their email on the customer first." }, 409);
+      const firstName = String(row.customer_name ?? "").split(" ")[0], biz = c.setup.display_name || "", amt = Number(row.amount) || 0;
+      const money = amt.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: amt % 1 ? 2 : 0 });
+      const r = await sendCustomerEmail({ to, business: biz, replyTo: c.setup.alert_email || undefined,
+        subject: quote ? `Your quote from ${biz}` : `Invoice #${row.number} from ${biz}`,
+        lines: quote ? [`Hi${firstName ? " " + firstName : ""},`, `Here's your quote${amt ? ` for ${money}` : ""}. You can look it over and approve it from your phone in a minute.`, "Questions? Just reply to this email or text us."]
+          : [`Hi${firstName ? " " + firstName : ""},`, `Here's invoice #${row.number}${amt ? ` for ${money}` : ""}${row.due_on ? `, due ${new Date(String(row.due_on) + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric" })}` : ""}.`, "You can see it and pay online. Thank you for your business."],
+        button: quote ? { label: `See your quote${amt ? ", " + money : ""}`, url: quoteUrl(String(row.token)) } : { label: `Pay ${money}`, url: invoiceUrl(String(row.token)) } });
+      if (!r.ok) return json({ error: r.error, fallback: true }, 503);
+      if (quote) await sql`UPDATE public.client_quotes SET emailed_at = now(), link_sent_at = coalesce(link_sent_at, now()) WHERE id = ${String(row.id)}::uuid`;
+      else await sql`UPDATE public.client_invoices SET emailed_at = now() WHERE id = ${String(row.id)}::uuid`;
+      await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${String(row.thread)}::uuid, 'out', 'system', ${`${quote ? "Quote" : `Invoice #${row.number}`} emailed to ${to}.`})`;
+      return json({ ok: true });
     }
     if (b.action === "payment") {
       if (!b.invoice || !UUID.test(b.invoice)) return json({ error: "Which invoice?" }, 400);

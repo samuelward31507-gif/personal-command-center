@@ -1,7 +1,7 @@
 // Billing checks: quote lines, totals, the draft from the owner's prices, pay links, invoice texts and reminders.
 import assert from "node:assert/strict";
 import { draftItems } from "./lib/crm.ts";
-import { cleanItems, cleanTax, totals, cleanPayLink, invoiceText, reminderDue, fillInvoice, REMINDER_TEXTS, INVOICE_TOKEN, overdue } from "./lib/billing.ts";
+import { chosen, cleanChoice, tiersOf, cleanItems, cleanTax, totals, cleanPayLink, invoiceText, reminderDue, fillInvoice, REMINDER_TEXTS, INVOICE_TOKEN, overdue } from "./lib/billing.ts";
 
 let n = 0; const ok = fn => { fn(); n++; };
 ok(() => assert.deepEqual(cleanItems([{ name: " Cedar fence ", qty: "150", unit: "ft", price: "$43" }, { name: "", qty: 1, price: 5 }, { name: "x", qty: 0, price: 5 }, { name: "y", qty: 1, price: -2 }, "junk"]),
@@ -33,4 +33,12 @@ ok(() => assert.equal(fillInvoice(REMINDER_TEXTS[0], { first: "", business: "Acm
 ok(() => assert.ok(INVOICE_TOKEN.test("abcdefghijklmnopqrstuvwx")));
 ok(() => assert.equal(overdue("sent", "2026-11-01", "2026-11-14"), true));
 ok(() => assert.equal(overdue("paid", "2026-11-01", "2026-11-14"), false));
+// Quotes with options: one tier is picked (the first by default), add-ons only when ticked, the rest always included.
+const offered = cleanItems([{ name: "Wood", qty: 80, unit: "ft", price: 43, tier: "Good" }, { name: "Cedar", qty: 80, unit: "ft", price: 52, tier: "Better" }, { name: "Gate", qty: 1, unit: "", price: 550 }, { name: "Stain", qty: 80, unit: "ft", price: 6, opt: true }]);
+ok(() => assert.deepEqual(tiersOf(offered), ["Good", "Better"]));
+ok(() => assert.equal(totals(chosen(offered, null)).total, 3990));
+ok(() => assert.equal(totals(chosen(offered, { tier: "Better", addons: [3] })).total, 5190));
+ok(() => assert.ok(chosen(offered, { tier: "Better", addons: [3] }).every(i => !("tier" in i) && !("opt" in i))));
+ok(() => assert.deepEqual(cleanChoice({ tier: "Nope", addons: [0, 3, 3, 9] }, offered), { tier: "Good", addons: [3] }));
+ok(() => assert.equal(totals(chosen(cleanItems([{ name: "a", qty: 1, unit: "", price: 10 }]), null)).total, 10));
 console.log(`Billing checks passed (${n} assertions).`);

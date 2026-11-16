@@ -8,6 +8,7 @@ import type { Period, Report, ReportNumbers } from "@/lib/client-reports";
 import { Avatar, Spinner, ago, secs, short, usd, type Api, type Toast } from "./parts";
 import { Bars, Donut, Guide, Kpis, PageHead, type Kpi } from "./charts";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
+import { jobProfit } from "@/lib/crm";
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : null);
 const PERIOD: Record<Period, string> = { 30: "the last 30 days", 90: "the last 90 days", 365: "the last 12 months" };
@@ -100,6 +101,27 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
                 : <p className="fine">Mark a job lost with a reason and the pattern shows here.</p>}
             </div>
           </section>
+          {(() => {
+            const profit = n!.costedValue - n!.costs, margin = n!.costedValue ? Math.round((profit / n!.costedValue) * 100) : null;
+            const jobs = (d.board ?? []).filter(c => c.stage === "won").map(c => ({ c, p: jobProfit(c.invoice?.total || c.value || c.quote?.amount || null, c.costs) })).filter(x => x.p).sort((a, b) => a.p!.margin - b.p!.margin);
+            const uncosted = Math.max(0, n!.won - n!.costed);
+            return <section className="panel s12">
+              <div className="panel-h"><h2>Profit on won jobs</h2><small>{n!.costed ? `${n!.costed} of ${n!.won} won ${n!.won === 1 ? "job" : "jobs"} with costs logged` : PERIOD[days]}</small></div>
+              <div className="panel-b profit2">{n!.costed ? <>
+                <div className="profit-fig">
+                  <Donut size={124} total={margin == null ? "–" : `${margin}%`} label="margin" parts={[{ label: "Profit", value: Math.max(0, profit), color: "var(--good)" }, { label: "Costs", value: n!.costs, color: "var(--g3)" }]} />
+                  <div>
+                    <div className="money"><span>Sold, on costed jobs</span><b>{usd(n!.costedValue)}</b></div>
+                    <div className="money"><span>Materials, labor and other</span><b>{usd(n!.costs)}</b></div>
+                    <div className="money sum"><span>Profit</span><b style={profit < 0 ? { color: "var(--bad)" } : { color: "var(--good)" }}>{usd(profit)}</b></div>
+                    {uncosted > 0 && <p className="fine">{uncosted} won {uncosted === 1 ? "job has" : "jobs have"} no costs yet. Log them on the job to count them here.</p>}
+                  </div>
+                </div>
+                {jobs.length > 0 && <div className="profit-jobs"><p className="sec">Thinnest margins first<small>every won job with costs</small></p>
+                  <ul className="bars">{jobs.slice(0, 6).map(({ c, p }) => <li key={c.id}><span><button type="button" className="link" onClick={() => go.record(c.id)}>{c.name}</button></span><i className={p!.margin < 20 ? "warn" : ""} style={{ width: `${Math.max(2, Math.min(100, p!.margin))}%` }} /><b>{p!.margin}%<small> {usd(p!.profit)}</small></b></li>)}</ul></div>}
+              </> : <p className="fine" style={{ padding: "6px 0" }}>Log materials, labor and other costs on a won job (the Costs box on the job) and Cinder shows what each job really made, and your margin across all of them.</p>}</div>
+            </section>;
+          })()}
           <section className="panel s12">
             <div className="panel-h"><h2>Where the work came from</h2><small>{PERIOD[days]}</small></div>
             <div className="panel-b src2">

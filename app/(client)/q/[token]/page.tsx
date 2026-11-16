@@ -5,10 +5,12 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import "../../doc.css";
-import { DocLines } from "../../doc-lines";
+import { DocLines, QuoteOptions, hasOptions } from "../../doc-lines";
+import { chosen, totals, type Choice } from "@/lib/billing";
 
 type Q = { business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
-  items?: { name: string; qty: number; unit: string; price: number }[]; tax_rate?: number;
+  items?: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax_rate?: number;
+  financing?: { link: string; note: string } | null; terms?: string; warranty?: string; choice?: Choice | null;
   state: "open" | "approved" | "declined" | "closed"; answeredAt: string | null; deposit?: number | null; payLink?: string };
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 });
@@ -18,22 +20,25 @@ const Check = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" 
 export default function QuotePage() {
   const { token } = useParams<{ token: string }>();
   const [q, setQ] = useState<Q | null>(null), [err, setErr] = useState("");
-  const [busy, setBusy] = useState(false), [no, setNo] = useState(false), [why, setWhy] = useState(""), [fail, setFail] = useState(""), [signer, setSigner] = useState("");
+  const [busy, setBusy] = useState(false), [no, setNo] = useState(false), [why, setWhy] = useState(""), [fail, setFail] = useState(""), [signer, setSigner] = useState(""), [pick, setPick] = useState<Choice>({ tier: null, addons: [] });
   useEffect(() => {
     fetch("/api/q?token=" + encodeURIComponent(token), { cache: "no-store" })
-      .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "This quote link isn't valid."); setQ(j); })
+      .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "This quote link isn't valid."); setQ(j); if (j.choice) setPick(j.choice); })
       .catch(e => setErr(e instanceof Error ? e.message : "This quote link isn't valid."));
   }, [token]);
   async function answer(a: "approve" | "decline") {
     setBusy(true); setFail("");
     try {
-      const r = await fetch("/api/q", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, answer: a, reason: why, name: signer }) });
+      const r = await fetch("/api/q", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, answer: a, reason: why, name: signer, ...(opts ? { choice: pick } : {}) }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "That didn't go through.");
       setQ(x => x && { ...x, state: j.state, answeredAt: new Date().toISOString() });
     } catch (e) { setFail(e instanceof Error ? e.message : "That didn't go through."); } finally { setBusy(false); }
   }
   const biz = q?.business.replace(/\.+$/, "") || "";
+  const opts = !!q?.items && hasOptions(q.items);
+  const amount = q && opts ? totals(chosen(q.items ?? [], pick), q.tax_rate ?? 0).total : q?.amount ?? null;
+  const live = q?.state === "open" && !no;
   const sms = q?.phone ? `sms:${q.phone}` : "";
   const who = q?.owner || biz;
 
@@ -44,10 +49,12 @@ export default function QuotePage() {
         <header className="doc-biz"><span className="doc-mono" aria-hidden="true">{biz.charAt(0)}</span><b>{q.business || "Your quote"}</b></header>
         <section className="doc-card">
           <p className="doc-k">Quote{q.customer ? ` for ${q.customer}` : ""}, {day(q.sent)}</p>
-          <p className="doc-amt">{q.amount ? usd(q.amount) : "Your quote"}</p>
-          {q.line && <p className="doc-line">{q.line.replace(/s·s/g, ", ")}</p>}
-          {q.items && q.items.length > 0 && <DocLines items={q.items} taxRate={q.tax_rate ?? 0} total={q.amount ?? 0} />}
+          <p className="doc-amt">{amount ? usd(amount) : "Your quote"}{opts && live ? <small className="doc-amt-sub"> for what you picked</small> : null}</p>
+          {q.line && <p className="doc-line">{q.line.replace(/\s·\s/g, ", ")}</p>}
+          {q.items && q.items.length > 0 && (opts ? <QuoteOptions items={q.items} taxRate={q.tax_rate ?? 0} choice={pick} onChoice={live ? setPick : undefined} /> : <DocLines items={q.items} taxRate={q.tax_rate ?? 0} total={q.amount ?? 0} />)}
           {q.note && <div className="doc-note"><h2>What&rsquo;s included</h2><p>{q.note}</p></div>}
+          {q.warranty && <div className="doc-note"><h2>Warranty</h2><p>{q.warranty}</p></div>}
+          {q.financing?.link && q.state === "open" && <a className="doc-fin" href={q.financing.link} target="_blank" rel="noreferrer"><b>{q.financing.note || "Pay over time"}</b><span>See if you qualify. Opens the lender&rsquo;s page.</span></a>}
 
           {q.state === "approved" ? <div className="doc-done ok"><span><Check /></span><div><b>Approved. Thank you{q.customer ? `, ${q.customer}` : ""}!</b>
             <p>{who} has it and will text you to pick the install date.</p>
@@ -63,13 +70,14 @@ export default function QuotePage() {
             </form>
           : <div className="doc-acts">
               <label className="doc-sign"><span>Your name, to approve</span><input className="input" value={signer} onChange={e => setSigner(e.target.value)} placeholder="Dana Ruiz" maxLength={80} autoComplete="name" /></label>
-              <button type="button" className="btn ink lg" disabled={busy || signer.trim().length < 2} onClick={() => void answer("approve")}>{busy ? "Approving…" : `Approve${q.amount ? ` ${usd(q.amount)}` : " quote"}`}</button>
-              <p className="doc-fine">Approving tells {who} you&rsquo;re ready. Nothing is charged here.{q.deposit ? ` A ${usd(q.deposit)} deposit holds your install date, paid on ${biz}'s own payment page after you approve.` : ""}</p>
+              <button type="button" className="btn ink lg" disabled={busy || signer.trim().length < 2} onClick={() => void answer("approve")}>{busy ? "Approving…" : `Approve${amount ? ` ${usd(amount)}` : " quote"}`}</button>
+              <p className="doc-fine">Approving tells {who} you&rsquo;re ready{q.terms ? " and that you agree to the terms below" : ""}. Nothing is charged here.{q.deposit ? ` A ${usd(q.deposit)} deposit holds your install date, paid on ${biz}'s own payment page after you approve.` : ""}</p>
               {sms && <a className="btn lg" href={sms}>Text a question</a>}
               <button type="button" className="link" style={{ alignSelf: "center", fontSize: 14 }} onClick={() => setNo(true)}>No thanks</button>
             </div>}
           {fail && <p className="err" role="alert" style={{ textAlign: "center" }}>{fail}</p>}
         </section>
+        {q.terms && <details className="doc-terms"><summary>Terms</summary><p>{q.terms}</p></details>}
         <p className="doc-foot">{q.business ? `Sent by ${q.business} with Cinder` : "Sent with Cinder"}<button type="button" className="link doc-print" onClick={() => window.print()}>Print or save as PDF</button></p>
       </>}
   </main>;

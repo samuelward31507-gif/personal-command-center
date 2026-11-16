@@ -5,10 +5,12 @@
 import { useMemo, useState } from "react";
 import "../doc.css";
 import { DocLines } from "../doc-lines";
-import { dollars, totals, type Item } from "@/lib/billing";
+import { chosen, dollars, totals, type Item } from "@/lib/billing";
+import { QuoteOptions, hasOptions } from "../doc-lines";
 import { draftItems, quoteText, type Card } from "@/lib/crm";
 import { Avatar, Empty, Icon, Sheet, Spinner, ago, dateLabel, first, fmtPhone, usd, type Api, type Toast } from "./parts";
 import { LineEditor } from "./money";
+import { emailDoc } from "./crew";
 import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
 import { line, LostPicker } from "./jobs";
 import type { Biz, Data, Go } from "./types";
@@ -103,7 +105,7 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
   const [busy, setBusy] = useState(""), [losing, setLosing] = useState(false);
   if (!card) return <div className="pad"><button type="button" className="btn ghost" onClick={onBack}><Icon name="back" size={14} />Back</button><Empty title="That quote isn't here" text="It may have been moved. Open the customer from Jobs." /></div>;
   const clean = items.filter(i => i.name.trim() && i.qty > 0);
-  const t = totals(clean, tax), dep = Math.round(Number(deposit.replace(/[^\d.]/g, "")) || 0);
+  const opts = hasOptions(clean), t = totals(opts ? chosen(clean, null) : clean, tax), dep = Math.round(Number(deposit.replace(/[^\d.]/g, "")) || 0);
   const s = quoteStatus(card) ?? "draft";
   const saved = JSON.stringify({ items: q?.items ?? [], tax: q?.tax ?? 0, note: q?.note ?? "", dep: q?.deposit ?? 0 });
   const dirty = !q || JSON.stringify({ items: clean, tax, note, dep }) !== saved;
@@ -132,7 +134,7 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
     try { await api("/api/app/act", { p: project, thread: card!.id, action: "stage", stage: "lost", reason }); toast(`Marked lost, ${reason.toLowerCase()}.`); setLosing(false); await reload(); }
     catch (e) { toast(e instanceof Error ? e.message : "That didn't work.", true); } finally { setBusy(""); }
   }
-  const mail = card.email && q?.url ? `mailto:${card.email}?subject=${encodeURIComponent(`Your quote from ${biz.business}`)}&body=${encodeURIComponent(quoteText({ first: firstName, business: biz.business, amount: t.total, line: line(card), url: q.url }))}` : "";
+  const mail = q?.url ? `mailto:${card.email ?? ""}?subject=${encodeURIComponent(`Your quote from ${biz.business}`)}&body=${encodeURIComponent(quoteText({ first: firstName, business: biz.business, amount: t.total, line: line(card), url: q.url }))}` : "";
 
   return <div className="qe">
     <header className="qe-h">
@@ -141,7 +143,7 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
       <div className="acts">
         <button type="button" className="btn" onClick={() => go.record(card.id)}>Customer</button>
         {!locked && <button type="button" className="btn" disabled={!!busy} onClick={() => void copy()}><Icon name="link" size={13} />Copy link</button>}
-        {!locked && mail && <a className="btn" href={mail}><Icon name="send" size={13} />Email</a>}
+        {!locked && mail && <button type="button" className="btn" disabled={!!busy} title={card.email ? `Email it to ${card.email}` : "Add their email on the customer first"} onClick={async () => { setBusy("email"); await emailDoc({ ready: d.emailReady, api, project, toast, reload, kind: "quote", thread: card.id, to: card.email, name: card.name, mailto: mail }); setBusy(""); }}>{busy === "email" ? <Spinner /> : <Icon name="send" size={13} />}Email</button>}
         {!locked && <button type="button" className="btn" disabled={!!busy || !dirty} onClick={() => void save(false)}>{busy === "save" ? <Spinner /> : "Save draft"}</button>}
         {!locked && <button type="button" className="btn ink" disabled={!!busy || t.total <= 0} onClick={() => void save(true)}>{busy === "send" ? <Spinner /> : q?.linked && !dirty ? `Text it again` : `Text ${firstName} ${dollars(t.total)}`}</button>}
         {s === "approved" && <button type="button" className="btn ink" onClick={() => go.record(card.id, { view: "job" })}>Open the job</button>}
@@ -150,7 +152,7 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
     <div className="qe-body">
       <div className="qe-form">
         {locked ? <p className="fine">{s === "approved" ? `${firstName} approved this quote. It's now a won job.` : `${firstName} passed on this quote${card.lostReason ? `: ${card.lostReason}` : ""}.`}</p> : null}
-        <section><p className="sec">Line items</p>{locked ? <DocLines items={clean} taxRate={tax} total={t.total} /> : <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} />}</section>
+        <section><p className="sec">Line items</p>{locked ? <DocLines items={clean} taxRate={tax} total={t.total} /> : <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} options />}</section>
         {!locked && <>
           <section><p className="sec">What&rsquo;s included<small>they&rsquo;ll see it</small></p>
             <textarea className="input" rows={3} style={{ height: "auto", padding: "6px 8px" }} value={note} maxLength={600} onChange={e => setNote(e.target.value)} placeholder="Tear-out and haul-away, steel posts set in concrete, two-year workmanship warranty" /></section>
@@ -158,6 +160,8 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
             <div className="acts-row"><span className="inwrap" style={{ width: 160 }}><i>$</i><input inputMode="decimal" value={deposit} onChange={e => setDeposit(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="None" aria-label="Deposit" /></span>
               {[25, 33, 50].map(p => <button key={p} type="button" className="btn sm" disabled={t.total <= 0} onClick={() => setDeposit(String(Math.round(t.total * p / 100)))}>{p}%</button>)}</div>
             {dep > 0 && !biz.payLink && <p className="fine">Add your pay link in Money so they can pay it from the quote page.</p>}</section>
+          {opts && <p className="fine">{firstName} picks one option and any add-ons on the quote page, and the total updates as they tap. The first option is the price on file until they choose.</p>}
+          {!d.setup?.quote_terms && !d.setup?.warranty && <p className="fine"><button type="button" className="link" onClick={go.billing}>Add your warranty, terms and a financing link</button> once, and every quote shows them.</p>}
           <p className="fine">After you text it, Cinder follows up on day 2, 5, 10 and 21, and stops the moment they reply or approve.</p>
           {card.stage === "quoted" && <div className="acts-row"><button type="button" className="btn ghost sm" onClick={() => go.record(card.id, { ask: "won" })}>Mark won</button><button type="button" className="btn ghost sm" onClick={() => setLosing(true)}>Mark lost</button></div>}
         </>}
@@ -170,8 +174,10 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
             <p className="doc-k">Quote for {firstName}, {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
             <p className="doc-amt">{t.total ? dollars(t.total) : "$0"}</p>
             {card.line && <p className="doc-line">{line(card)}</p>}
-            {clean.length > 0 && <DocLines items={clean} taxRate={tax} total={t.total} />}
+            {clean.length > 0 && (opts ? <QuoteOptions items={clean} taxRate={tax} choice={{ tier: null, addons: [] }} /> : <DocLines items={clean} taxRate={tax} total={t.total} />)}
             {note.trim() && <div className="doc-note"><h2>What&rsquo;s included</h2><p>{note}</p></div>}
+            {d.setup?.warranty && <div className="doc-note"><h2>Warranty</h2><p>{d.setup.warranty}</p></div>}
+            {d.setup?.financing_link && <span className="doc-fin"><b>{d.setup.financing_note || "Pay over time"}</b><span>Your financing link</span></span>}
             <div className="doc-acts">
               <span className="btn ink lg" aria-disabled="true">Approve {t.total ? dollars(t.total) : ""}</span>
               {dep > 0 && <p className="doc-fine">A {dollars(dep)} deposit holds the install date, paid on {biz.business}&rsquo;s own payment page.</p>}

@@ -217,6 +217,8 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   if (r.dnt !== undefined) out.dnt = parseDnt(r.dnt).join(",");
   if (r.team !== undefined) out.team = JSON.stringify(parseTeam(r.team));
   pick("monthly_report", ["", "yes", "no"]); pick("booking_page", ["", "yes", "no"]);
+  pick("quote_terms", undefined, 1200); pick("warranty", undefined, 300); pick("financing_note", undefined, 160);
+  if (r.financing_link !== undefined) { const u = String(r.financing_link ?? "").trim().slice(0, 300); out.financing_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   return out;
 }
 
@@ -250,7 +252,7 @@ ${bp ? `- Ballpark from the owner's own prices for ${bp.basis}: ${rangeText(bp)}
 export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
   ballpark: { low: number; high: number } | null; notes: string; next: string | null; at: string;
   quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
-    items: { name: string; qty: number; unit: string; price: number }[]; tax: number; deposit?: number | null } | null;
+    items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax: number; deposit?: number | null } | null;
   install: string | null; installTime: string | null; installDays: number; onCalendar: boolean; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean;
   invoice: CardInvoice | null; job: Record<string, string>; costs: Costs;
   /** When the job entered its current stage, and the owner's reason when it was lost. */
@@ -260,7 +262,9 @@ export type Card = { id: string; name: string; phone: string; source: string; st
   email?: string;
   /** "Remind me": when, and what about. Cleared once it's sent or the owner clears it. */
   remind?: { at: string; note: string; sent: boolean } | null;
-  photos?: Photo[] };
+  photos?: Photo[];
+  /** The team member on this job (their +1 cell), or "" when it's the owner's. */
+  crewMember?: string };
 export const cleanEmail = (v: unknown) => { const s = String(v ?? "").trim().toLowerCase().slice(0, 120); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : ""; };
 export type CardInvoice = { id: string; number: number; status: string; items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number; total: number; note: string;
   due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null;

@@ -4,7 +4,8 @@
 // open beside the list. Every job shows its value, its next step and how long it has sat in its stage.
 // Done is a won job that's been paid. Lost asks why. j/k move, Enter opens, Esc closes, c adds a lead.
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { LOST_REASONS, STAGE_LABEL, type Card, type Stage } from "@/lib/crm";
+import { LOST_REASONS, STAGE_LABEL, jobProfit, type Card, type Stage } from "@/lib/crm";
+import { crewName, crewTag } from "./crew";
 import { Avatar, Empty, Icon, Menu, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
 import { Inspector } from "./record";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
@@ -199,15 +200,16 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
         : wide && mode === "board" ? <Board cards={view === "open" ? everyone.filter(c => src === "any" || c.source === src) : shown} sel={sel} drag={drag} over={over} setDrag={setDrag} setOver={setOver} move={move} open={open} />
         : wide ? <>
           <div className="tbl-wrap"><table className={"tbl jobs-tbl" + (sel ? " compact" : "")}>
-            <colgroup><col style={{ width: 210 }} /><col style={{ width: 300 }} /><col /><col style={{ width: 104 }} /><col style={{ width: 84 }} /><col style={{ width: 150 }} /><col className="c2" style={{ width: 110 }} /></colgroup>
-            <thead><tr><th>Customer</th><th>Next step</th><th>Job</th><th className="right">Value</th><th className="right">Waiting</th><th>Stage</th><th className="c2">Came from</th></tr></thead>
+            <colgroup><col style={{ width: 200 }} /><col style={{ width: 262 }} /><col /><col style={{ width: 96 }} /><col className="c2" style={{ width: 104 }} /><col style={{ width: 76 }} /><col style={{ width: 140 }} /><col className="c2" style={{ width: 104 }} /></colgroup>
+            <thead><tr><th>Customer</th><th>Next step</th><th>Job</th><th className="right">Value</th><th className="right c2" title="Price minus the costs you logged on the job">Profit</th><th className="right">Waiting</th><th>Stage</th><th className="c2">Came from</th></tr></thead>
             <tbody>{groups.map(g => <Fragment key={g.who}>
-              {grouped && <tr className="grp-row"><td colSpan={7}><b>{WHO_LABEL[g.who]}</b><span>{g.cards.length} {g.cards.length === 1 ? "job" : "jobs"}{g.value ? `, ${usd(g.value)}` : ""}</span></td></tr>}
+              {grouped && <tr className="grp-row"><td colSpan={8}><b>{WHO_LABEL[g.who]}</b><span>{g.cards.length} {g.cards.length === 1 ? "job" : "jobs"}{g.value ? `, ${usd(g.value)}` : ""}</span></td></tr>}
               {g.cards.map(c => { const n = nextUp(c, today), m = moveOf(c, today), name = c.name || fmtPhone(c.phone), town = city(c), l = laneOf(c), days = daysIn(c); return <tr key={c.id} data-row={c.id} tabIndex={0} className={(sel === c.id ? "sel" : "") + (m.who === "you" ? " mine" : "")} aria-selected={sel === c.id} onClick={() => open(c.id)} onDoubleClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
-                <td><span className="name"><Avatar name={name} size="sm" /><span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}><b>{name}</b>{town && <span className="faint">, {town}</span>}</span></span></td>
+                <td><span className="name"><Avatar name={name} size="sm" /><span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}><b>{name}</b>{town && <span className="faint">, {town}</span>}</span>{c.crewMember && <span className="ctag" title={`${crewName(d, c.crewMember)} is on this job`}>{crewTag(d, c.crewMember)}</span>}</span></td>
                 <td><span className="nxt"><span className={"next " + n.tone}>{n.text}</span>{m.verb && <button type="button" className="btn sm" onClick={e => { e.stopPropagation(); m.run(go); }}>{m.verb}</button>}</span></td>
                 <td className={c.line ? "mut" : "faint"}>{line(c) || (c.notes ? c.notes.slice(0, 48) : "No details yet")}</td>
                 <td className={"num" + (c.value ? "" : " mut")}>{c.value ? usd(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "–"}</td>
+                {(() => { const pf = c.stage === "won" ? jobProfit(c.invoice?.total || c.value || c.quote?.amount || null, c.costs) : null; return <td className={"num c2" + (pf ? "" : " faint")} title={pf ? `${usd(pf.cost)} in costs` : c.stage === "won" ? "Log costs on the job to see profit" : undefined}>{pf ? <><span style={pf.profit < 0 ? { color: "var(--bad)" } : undefined}>{usd(pf.profit)}</span> <small className="mut">{pf.margin}%</small></> : "–"}</td>; })()}
                 <td className={"num" + (stale(c, days) ? "" : " mut")} style={stale(c, days) ? { color: "var(--ember)" } : undefined}>{l === "done" || l === "lost" ? "–" : daysLabel(days)}</td>
                 <td><span className={"stage " + (l === "done" ? "won" : l)}><i />{LANE_LABEL[l]}</span></td>
                 <td className="mut c2">{sourceLabel(c.source)}</td>

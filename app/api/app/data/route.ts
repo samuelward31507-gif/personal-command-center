@@ -7,6 +7,7 @@ import { jobberConfigured, jobberState } from "@/lib/jobber-core";
 import { winbackAudience } from "@/lib/client-close-run";
 import { loadCustomers, loadInvoices, loadPayments } from "@/lib/client-billing-run";
 import { reportFor, type Period } from "@/lib/client-reports";
+import { customerEmailReady } from "@/lib/client-email";
 import { winbackDraft } from "@/lib/crm";
 
 export const runtime = "nodejs";
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
       liveFor(sql, c.projectId, 80, c.setup.timezone || "America/Denver"),
       sql`SELECT o.project_id, coalesce(o.setup->>'display_name', p.client_name, p.name) AS name, o.portal_token FROM public.client_ops o JOIN public.projects p ON p.id = o.project_id WHERE o.project_id = ANY(${s.projects}::uuid[])`,
       // Booked estimates still waiting on an outcome (up to two weeks back) and everything coming up.
-      sql`SELECT a.id, a.starts_at, a.status, a.event_id, t.id AS thread_id, t.customer_name, t.customer_phone FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id
+      sql`SELECT a.id, a.starts_at, a.status, a.event_id, a.crew_member, t.id AS thread_id, t.customer_name, t.customer_phone FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id
         WHERE a.project_id = ${c.projectId}::uuid AND a.status = 'booked' AND a.starts_at > now() - interval '14 days' ORDER BY a.starts_at LIMIT 60`.catch(() => []),
       sql`SELECT count(*)::int AS n FROM public.client_messages WHERE project_id = ${c.projectId}::uuid AND author = 'owner' AND read_at IS NULL`.catch(() => [{ n: 0 }]),
       sql`SELECT author, body, created_at FROM public.client_messages WHERE project_id = ${c.projectId}::uuid ORDER BY created_at DESC LIMIT 60`.catch(() => []),
@@ -75,7 +76,8 @@ export async function GET(req: Request) {
     if (q.get("tab") === "sam") await sql`UPDATE public.client_messages SET read_at = now() WHERE project_id = ${c.projectId}::uuid AND author = 'owner' AND read_at IS NULL`.catch(() => null);
     const crew = s.role === "crew";
     return json({
-      role: crew ? "crew" : "owner", project: c.projectId, business: c.setup.display_name || "", number: c.setup.texting_number || "", canCall: !!(c.setup.owner_cell && c.setup.texting_number),
+      role: crew ? "crew" : "owner", me: s.phone ? "+1" + s.phone.replace(/\D/g, "").slice(-10) : "", project: c.projectId,
+      emailReady: customerEmailReady(), business: c.setup.display_name || "", number: c.setup.texting_number || "", canCall: !!(c.setup.owner_cell && c.setup.texting_number),
       owner: c.setup.owner_name || "", businesses: biz, live,
       appointments: (appts as { event_id?: string }[]).map(a => ({ ...a, link: (a.event_id && links.get(a.event_id)) || "" })), quotes, quoteSteps: SEQUENCES.quote.days.length, wonJobs, hasReviewLink: !!c.setup.review_link, repeat: isRepeatTrade(c.setup.trade), calendar, messages: (msgs as Record<string, unknown>[]).reverse(), unreadFromSam: (unread as { n: number }[])[0]?.n ?? 0,
       board: crew ? board.map(b => ({ ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 } })) : board,

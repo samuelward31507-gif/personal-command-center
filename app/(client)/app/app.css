@@ -958,3 +958,51 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 .guide.compact li { padding: 9px 0; }
 .guide.compact .setup-side b { font-size: 30px; }
 .jobs-panel > .guide, .jobs-panel .guide { border: 0; box-shadow: none; border-radius: 12px; }
+
+/* ---------- v4: crew dispatch, quote options, profit ---------- */
+.crewpick { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.crewpick select { height: 26px; padding: 0 22px 0 8px; border: 1px solid var(--hair-2); border-radius: 6px; background: var(--win, #fff); font: inherit; font-size: 12.5px; font-weight: 500; color: var(--ink); max-width: 150px; }
+.ctag { display: inline-grid; place-items: center; flex: none; margin-left: 6px; min-width: 20px; height: 18px; padding: 0 4px; border-radius: 5px; background: var(--wash, #f3f2ee); color: var(--g1); font-size: 10px; font-weight: 600; letter-spacing: .02em; }
+.jobs-tbl td .num small, .jobs-tbl td small.mut { font-size: 11px; }
+
+.myday .stops { display: flex; flex-direction: column; }
+.stop { padding: 14px 0; border-top: 1px solid var(--hair); display: flex; flex-direction: column; gap: 10px; }
+.stop:first-child { border-top: 0; padding-top: 4px; }
+.stop-h { display: grid; grid-template-columns: 76px auto minmax(0, 1fr) auto; align-items: center; gap: 10px; cursor: pointer; border-radius: 8px; }
+.stop-h:hover .t b { text-decoration: underline; text-underline-offset: 3px; }
+.stop-h time { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
+.stop:not(.big) .stop-h time { font-weight: 500; color: var(--g1); font-size: 12.5px; }
+.stop-h .t { min-width: 0; display: flex; flex-direction: column; }
+.stop-h .t b { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stop-h .t small { color: var(--g1); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stop.install .stop-h time { color: var(--good); }
+.stop-note { display: flex; gap: 8px; align-items: flex-start; margin-left: 86px; padding: 8px 10px; border-radius: 8px; background: var(--wash, #f6f5f1); font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.stop .acts-row { margin-left: 86px; }
+.stop > .card { margin-left: 86px; }
+@media (max-width: 720px) { .stop-h { grid-template-columns: 58px auto minmax(0, 1fr) auto; } .stop-note, .stop .acts-row, .stop > .card { margin-left: 0; } }
+
+
+.le.opts .lrow .nums:not(:has(.lmode)) { grid-template-columns: 64px 14px 84px minmax(0, 1fr) 24px; }
+.le .lmode { height: 28px; padding: 0 20px 0 7px; border: 1px solid var(--hair-2); border-radius: 6px; background: var(--win, #fff); font: inherit; font-size: 12px; color: var(--ink); min-width: 0; }
+.le .lrow.is-tier { border-left: 3px solid var(--ink); }
+.le .lrow.is-opt { border-style: dashed; }
+.le .lrow.is-opt .t { color: var(--g1); }
+.le .acts-row { margin-top: 6px; gap: 6px; } .le .acts-row .add { margin-top: 0; }
+.le-tiers { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; color: var(--g1); }
+.le-tiers span { margin-right: 4px; }
+.le-tiers .input { width: 104px; height: 26px; font-size: 12.5px; font-weight: 600; }
+.le dl > div small { font-weight: 400; color: var(--g2); font-size: 11.5px; }
+
+.profit2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.profit-fig { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; align-items: center; }
+.profit-jobs .bars li { grid-template-columns: 140px minmax(0, 1fr) 92px; }
+.profit-jobs .bars li i { background: var(--good); }
+.profit-jobs .bars li i.warn { background: var(--ember); }
+.profit-jobs .bars li b small { color: var(--g1); font-weight: 400; }
+.profit-jobs .bars li .link { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block; text-align: left; }
+@media (max-width: 900px) { .profit2 { grid-template-columns: minmax(0, 1fr); } }
+.jobs-tbl td .name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.jobs-tbl td .name > span:not(.ctag):not(.av) { flex: 1 1 auto; min-width: 0; white-space: nowrap; }
+.jobs-tbl td .name .ctag { margin-left: 0; }
+.le.opts .lrow .nums:has(.lmode) { grid-template-columns: 116px 58px 12px 80px minmax(64px, 1fr) 24px; }
+@container (min-width: 620px) { .le.opts .lrow:has(.lmode) { grid-template-columns: minmax(0, 1fr) 420px; } }
