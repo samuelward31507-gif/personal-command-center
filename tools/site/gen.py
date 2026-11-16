@@ -89,6 +89,21 @@ def prow(n, key, k, h, p, bullets, vis, flip=False, tag=""):
     </div>
 ''' % (" flip" if flip else "", n, k, (' <em>%s</em>' % tag) if tag else "", h, p, "".join("<li>%s</li>" % b for b in bullets), (' data-bx="%s"' % key) if key else "", vis)
 react_ui='''<div class="ui"><div class="ui-h"><span>Old lead · quoted in March</span><em>Reactivation</em></div><div class="lang"><p class="b-out">Hi Carla, it’s Mike with Ridgeline Fence. Still thinking about that backyard fence? I’ve got openings next week if you want a fresh number.</p><p class="b-in">Actually yes. Can you come Thursday?</p></div></div>'''
+beyond='''<section class="sec" id="beyond">
+  <div class="wrap">
+    <div class="head-c"><h2 class="split">Most shops start with the lead. Then we fix what’s next.</h2><p class="lede">The call is a diagnosis of your whole business, not a pitch for one tool. Once the first fix is running and paying for itself, these are the leaks we close next.</p></div>
+    <ul class="start">
+      <li><h3>A website that books</h3><p>A fast site with an instant quote form, so visitors become leads instead of tabs they close.</p></li>
+      <li><h3>Google reviews and profile</h3><p>Your profile cleaned up and a steady flow of new reviews, so more people call you first.</p></li>
+      <li><h3>Repeat work</h3><p>Staining, sealing, openings, tune-ups: customers hear from you when they’re due, not when they remember.</p></li>
+      <li><h3>Getting paid</h3><p>Friendly reminders on unpaid invoices, so you stop chasing money by hand.</p></li>
+      <li><h3>Your CRM, set up right</h3><p>Connected to Jobber or Housecall Pro, or set up from scratch, so every job lives in one place.</p></li>
+      <li><h3>Anything else that eats your week</h3><p>If you do it by hand every week, we look at whether it can run on its own.</p></li>
+    </ul>
+    <div class="start-cta"><a class="btn btn-go" href="#book">Book a free 15-minute diagnosis</a><span>We tell you what to fix first, even if it isn’t us.</span></div>
+  </div>
+</section>
+'''
 ctrl='''<section class="sec sec-tint" id="control">
   <div class="wrap">
     <div class="head-c"><h2 class="split">It works for you. You stay in charge.</h2><p class="lede">Cinder handles the first five minutes of every lead. Anything that needs a person comes to you.</p></div>
@@ -105,7 +120,7 @@ product=phead("Everything between the call and the check.", "Six jobs your busin
   <div class="wrap">
 '''+prow(1,"timer","Answer","Every lead gets a text in about 10 seconds.","Most callers who hit voicemail call the next company. Cinder texts them back from your business before they do.",["Missed calls, web forms, Facebook, Angi and Thumbtack leads","Sent from your business number, in your words","Day, night and weekends","English and Spanish"],ui("timer"))+prow(2,"qual","Qualify","Your questions, asked before you drive out.","It asks what you’d ask on every job and sends your price range, so the people you meet are serious and in your area.",["The questions you choose for your trade","Your price range sent up front","Out-of-area and wrong-fit jobs filtered out","Real price talk comes straight to you"],ui("qual"),True)+prow(3,"cal","Book","The estimate lands on your calendar.","They pick from your real open times. You get one text with the job, and they get a reminder.",["Reads your Google Calendar so it never double-books","Reminder the day before","No-shows get a rebooking text","One text to you with the job details"],ui("cal"))+prow(4,"chase","Follow up","Every quote chased to a yes or a no.","Send a quote with one text and the follow-up starts on its own. It stops the moment they reply.",["Follow-ups on days 2, 5, 10 and 21","“Too expensive” gets your financing or a smaller option","Launch revival of your open quotes from the last 90 days","Review request after every finished job"],ui("chase"),True,"Book &amp; Close")+prow(5,"","Reactivate","Old leads and past customers, worked every month.","The people who already know you are the easiest jobs to win.",["Leads that never booked get three friendly texts, then another round each quarter","Past customers hear from you when they’re due","Every reply is answered and booked like a new lead"],react_ui,False,"Book &amp; Close")+prow(6,"stars","Reviews","Five-star reviews without asking in person.","The morning after a job is done and paid, the customer gets a text with your Google review link.",["Sent automatically after finished jobs","Your Google link, one tap","More reviews means more calls from Google"],ui("stars"),True)+'''  </div>
 </section>
-'''+ctrl+faqsec("Product questions.",["Will customers know it’s automated?","Can I jump into a conversation?","What about family and suppliers?","Do I have to change my software?","Does it answer calls by voice?","Does my number change?"])+tint(book,True)
+'''+ctrl+tint(beyond,False)+faqsec("Product questions.",["Will customers know it’s automated?","Can I jump into a conversation?","What about family and suppliers?","Do I have to change my software?","Does it answer calls by voice?","Does my number change?"])+tint(book,True)
 page("product.html","/product","Product · Cinder Revenue Company","What Cinder does on every lead: answers in about 10 seconds, qualifies with your questions, books the estimate on your calendar, follows up every quote, and asks for the review.", product, "/product")
 
 # ---------- How it works ----------
