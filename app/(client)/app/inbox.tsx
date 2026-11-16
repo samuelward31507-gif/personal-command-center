@@ -2,10 +2,11 @@
 
 // Inbox: every conversation, the ones waiting on the owner first, with the thread beside the list on a desk.
 // The thread reads like Messages: the customer in grey on the left, Cinder and the owner in blue on the right.
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { Avatar, Empty, Icon, Spinner, ago, clock, dayKey, dayName, first, fmtPhone, type Api, type Toast } from "./parts";
-import { sourceLabel, type Conv, type Data, type Go, type Text, type Thread } from "./types";
+import { mailWaiting, sourceLabel, type Conv, type Data, type Go, type Text, type Thread } from "./types";
+import { MailWaiting } from "./system";
 import { Chip, SourceMark, secText, type Tone } from "./sources";
 
 /** What a lead's row says about where it stands, in the fixed colors: green booked or won, amber waiting on them, red your turn, grey new. */
@@ -41,7 +42,13 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
     for (const c of convs) { const k = c.status === "paused" && filter === "all" ? "Your turn" : c.at ? dayName(c.at) : "Earlier"; const last = g.at(-1); if (last && last.day === k) last.items.push(c); else g.push({ day: k, items: [c] }); }
     return g;
   }, [convs, filter]);
-  useEffect(() => { if (wide && !sel && convs.length) setSel(convs[0].id); }, [wide, sel, convs]);
+  const mails = useMemo(() => mailWaiting(d), [d]);
+  const [openMail, setOpenMail] = useState<string | null>(null);
+  const selMail = sel?.startsWith("mail:") ? mails.find(m => "mail:" + m.id === sel) : undefined;
+  // An email that was just added or dismissed leaves the list: move on to the next thing.
+  useEffect(() => { if (sel?.startsWith("mail:") && !selMail) setSel(null); }, [sel, selMail]);
+  useEffect(() => { if (wide && !sel && (mails.length || convs.length)) setSel(mails.length && filter !== "booked" && filter !== "waiting" ? "mail:" + mails[0].id : convs[0]?.id ?? null); }, [wide, sel, convs, mails, filter]);
+  const showMails = (filter === "all" || filter === "needs") && mails.length > 0;
   const pick = useCallback((id: string) => { if (wide) setSel(id); else go.thread(id); }, [wide, go]);
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -56,7 +63,7 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
     };
     addEventListener("keydown", h); return () => removeEventListener("keydown", h);
   }, [convs, sel, go, wide]);
-  const views = <div className="views" role="tablist" aria-label="Filter">{([["all", "All", L.conversations.length], ["new", "New", L.conversations.filter(c => c.created && Date.parse(c.created) > Date.now() - 86400000).length], ["needs", "Your turn", L.needs],
+  const views = <div className="views" role="tablist" aria-label="Filter">{([["all", "All", L.conversations.length], ["new", "New", L.conversations.filter(c => c.created && Date.parse(c.created) > Date.now() - 86400000).length], ["needs", "Your turn", L.needs + mails.length],
       ["waiting", "Waiting", L.conversations.filter(c => leadState(c).text === "Waiting").length], ["booked", "Booked", L.conversations.filter(c => leadState(c).tone === "green").length]] as const).map(([k, l, n]) =>
     <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}{n ? <em>{n}</em> : null}</button>)}</div>;
   const current = convs.find(c => c.id === sel) ?? L.conversations.find(c => c.id === sel);
@@ -70,6 +77,17 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
           <b className="t-em">Turn on notifications</b><p className="fine" style={{ marginTop: 2 }}>{push === "off" ? "New leads, bookings and replies that need you." : "Tap Share, then “Add to Home Screen”, and open the app from there."}</p>
           <div className="acts-row" style={{ marginTop: 8 }}>{push === "off" && <button type="button" className="btn ink sm" onClick={onPush}>Turn on</button>}
             <button type="button" className="btn ghost sm" onClick={() => { setHidePush(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>}
+        {showMails && <section><div className="grp hot"><b>Lead emails, no phone</b><span>{mails.length}</span></div>
+          {mails.map(m => { const key = "mail:" + m.id, who = m.name || m.email || sourceLabel(m.source); return <Fragment key={m.id}>
+            <button type="button" className={"cv lead" + (sel === key || openMail === m.id ? " sel" : "")} aria-current={sel === key ? "true" : undefined} aria-expanded={wide ? undefined : openMail === m.id}
+              onClick={() => (wide ? setSel(key) : setOpenMail(o => (o === m.id ? null : m.id)))}>
+              <span className="cv-av"><Avatar name={who} size="lg" /><SourceMark source={m.source || "email"} size={18} /></span>
+              <span style={{ minWidth: 0 }}><span className="cv-top"><b><i aria-label="Your turn" />{who}</b><time>{ago(m.at)}</time></span>
+                <small className="cv-meta"><Chip tone="orange">No phone</Chip><span className="mut">{sourceLabel(m.source || "email")} by email</span></small>
+                <small>{m.message || m.subject}</small></span>
+            </button>
+            {!wide && openMail === m.id && <div className="mail-inline"><MailWaiting r={m} go={go} toast={toast} api={api} project={project} reload={reload} /></div>}
+          </Fragment>; })}</section>}
         {groups.length ? groups.map(g => <section key={g.day}><div className={"grp" + (g.day === "Your turn" ? " hot" : "")}><b>{g.day}</b><span>{g.items.length}</span></div>
           {g.items.map(c => { const ls = leadState(c); return <button key={c.id} type="button" data-cv={c.id} className={"cv lead" + (sel === c.id ? " sel" : "")} aria-current={sel === c.id ? "true" : undefined} onClick={() => pick(c.id)}>
             <span className="cv-av"><Avatar name={c.name} size="lg" /><SourceMark source={c.source} size={18} /></span>
@@ -77,9 +95,16 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
               <small className="cv-meta">{c.replySec != null ? <span className="rt">{c.source === "missed_call" ? "texted back" : "replied"} in {secText(c.replySec)}</span> : <span className="rt mut">no reply yet</span>}<Chip tone={ls.tone}>{ls.text}</Chip><span className="mut">{sourceLabel(c.source)}</span></small>
               <small>{c.last}</small></span>
           </button>; })}</section>)
-          : <Empty title={filter === "all" ? "No leads yet" : filter === "needs" ? "Nothing waiting on you" : "No bookings yet"} text={filter === "all" ? "Calls, texts and form leads show up here the moment they come in." : undefined} />}
+          : showMails ? null : <Empty title={filter === "all" ? "No leads yet" : filter === "needs" ? "Nothing waiting on you" : "No bookings yet"} text={filter === "all" ? "Calls, texts and form leads show up here the moment they come in." : undefined} />}
       </div>
-      {wide && <aside className="conv" aria-label="Conversation">{sel
+      {wide && <aside className="conv" aria-label="Conversation">{selMail
+        ? <div className="mail-pane">
+            <header><b>{selMail.name || selMail.email || sourceLabel(selMail.source)}</b><small>{sourceLabel(selMail.source || "email")} by email, {ago(selMail.at)}</small></header>
+            <dl><dt>From</dt><dd>{selMail.from}</dd><dt>Subject</dt><dd>{selMail.subject}</dd>{selMail.email && <><dt>Email</dt><dd>{selMail.email}</dd></>}</dl>
+            <p className="fine">This lead came in by email without a phone number. Find it on the lead site or reply by email, then add the number to put them on the board. Nobody is texted until you do.</p>
+            <MailWaiting bare r={selMail} go={go} toast={toast} api={api} project={project} reload={reload} />
+          </div>
+        : sel && !sel.startsWith("mail:")
         ? <ThreadView key={sel} id={sel} project={project} canCall={d.canCall} api={api} toast={toast} onChange={() => void reload()} onRecord={() => go.record(sel)} embedded conv={current} />
         : <Empty title="No conversation open" text="Pick one on the left, or press j." />}</aside>}
     </div>

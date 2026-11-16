@@ -259,12 +259,12 @@ export default function Dashboard() {
   // The written brief picks the order and the reasons; anyone it doesn't mention keeps the queue's order after them.
   const ranked = (() => {
     const q = queue ?? [];
-    if (!dbrief?.calls?.length) return q;
+    if (!dbrief?.calls?.length) return [...q];
     const byId = new Map(q.map(i => [i.contact!.id, i]));
     const first = dbrief.calls.map(c => { const i = byId.get(c.contactId); return i ? { ...i, why: c.reason || i.why } : null; }).filter(Boolean) as QueueItem[];
     const seen = new Set(first.map(i => i.contact!.id));
     return [...first, ...q.filter(i => !seen.has(i.contact!.id))];
-  })();
+  })().sort((x, y) => Number(/Audit:\s*No fit/i.test(x.why)) - Number(/Audit:\s*No fit/i.test(y.why)));
   const calls = ranked.slice(0, 6);
   firstDraft.current = drafts[0]?.onClick ?? null;
   const skip = (k: string) => { if (k.startsWith("radar:")) skipRadar(k); setDoneKeys(d => ({ ...d, [k]: true })); };
@@ -311,6 +311,7 @@ export default function Dashboard() {
     </div>
 
     <div className="td-shell">
+      <div className="td-main">
       <h2 className="td-hello">{hello}, {ws.ownerFirstName}</h2>
       <p className="td-brief" aria-live="polite">{written ?? (loadingBrief || dbrief === undefined ? "\u00a0" : brief.length ? brief : "Nothing new overnight. Make the first call and the day starts moving.")}</p>
       <p className="td-brief-meta">{dbrief ? <>Written by Cinder at {new Date(dbrief.generatedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} from your calls, meetings and deals.</> : dbrief === null ? <>Cinder writes this every morning at 5.</> : null}
@@ -340,28 +341,6 @@ export default function Dashboard() {
         {drafts.length > 5 && <button type="button" className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${drafts.length}`}</button>}
       </section>
 
-      {waiting.length > 0 && <section className="td-sec">
-        <div className="td-sh">Waiting on you<span className="ct">{waiting.length}</span></div>
-        <div className="td-card">{waiting.map(t => <Link key={t.key} className="td-mt" href={t.href} target={t.href.startsWith("http") ? "_blank" : undefined}>
-          <span className="dot" style={{ background: t.overdue ? "#e0602f" : "#b5bdc9" }} /><b>{t.title}</b>{t.why && <span className="what">{t.why}</span>}<span className="t">{t.action}</span>
-        </Link>)}</div>
-      </section>}
-
-      <section className="td-sec">
-        <div className="td-sh">Meetings{upcoming.length > 0 && <span className="ct">{upcoming.length}</span>}<span className="r"><Link href="/crm/calendar" style={{ color: "inherit" }}>Calendar</Link></span></div>
-        <div className="td-card">
-          {events === null ? <p className="td-empty">Loading…</p> : upcoming.length === 0 ? <p className="td-empty">Nothing booked today or tomorrow. Meetings come from dials.</p>
-            : upcoming.slice(0, 5).map((e, i) => { const k = e.contactPhone ? meetingNudge(new Date(e.startsAt), new Date(), null) : null; const done = k && nudged[e.id + ":" + k]; const who = e.contactCompany || e.contactName || e.title;
-              return <div key={e.id} className="td-mt">
-                <span className="dot" style={{ background: i === 0 ? "#16a34a" : "#e3a008" }} />
-                <Logo name={who} size={20} />
-                <Link href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"} style={{ minWidth: 0, display: "flex", gap: 10, color: "inherit" }}><b>{who}</b><span className="what">{e.title !== who ? e.title : ""}</span></Link>
-                <span className="t">{when(e).day ? "Tomorrow, " : i === 0 && until(e.startsAt) ? until(e.startsAt) + " · " : ""}{when(e).t}</span>
-                {k && <button type="button" className={"u-btn" + (done ? " u-btn-bare" : "")} onClick={() => nudge(e, k)}>{done ? "Sent" : k === "confirm" ? "Confirm" : "Remind"}</button>}
-              </div>; })}
-        </div>
-      </section>
-
       <section className="td-sec">
         <div className="td-sh">Call first{queue && queue.length > 0 && <span className="ct">{queue.length}</span>}<span className="r">In the order Cinder would call them</span></div>
         <div className="td-card">
@@ -377,6 +356,43 @@ export default function Dashboard() {
               </table>}
         </div>
       </section>
+      </div>
+      <aside className="td-side" aria-label="Today at a glance">
+      <section className="td-sec td-side-sec">
+        <div className="td-sh">Today</div>
+        <div className="td-card td-stats-card">
+          <dl className="td-kpis">
+            <div><dt>Dials</dt><dd className="u-num">{b ? b.today.calls : "—"}<small> / {target}</small></dd></div>
+            <div><dt>Conversations</dt><dd className="u-num">{b ? b.today.connects : "—"}</dd></div>
+            <div><dt>Meetings this week</dt><dd className="u-num">{b ? b.week.meetings : "—"}<small> / {WEEKLY_MEETING_TARGET}</small></dd></div>
+            <div><dt>Streak</dt><dd className="u-num">{b ? b.streak : "—"}<small> days</small></dd></div>
+          </dl>
+          <div className="u-meter" style={{ margin: "0 14px 14px" }}><i style={{ width: Math.min(100, ((b?.today.calls ?? 0) / Math.max(1, target)) * 100) + "%" }} /></div>
+        </div>
+      </section>
+      {waiting.length > 0 && <section className="td-sec td-side-sec">
+        <div className="td-sh">Waiting on you<span className="ct">{waiting.length}</span></div>
+        <div className="td-card">{waiting.map(t => <Link key={t.key} className="td-mt" href={t.href} target={t.href.startsWith("http") ? "_blank" : undefined}>
+          <span className="dot" style={{ background: t.overdue ? "#e0602f" : "#b5bdc9" }} /><b>{t.title}</b>{t.why && <span className="what">{t.why}</span>}<span className="t">{t.action}</span>
+        </Link>)}</div>
+      </section>}
+
+      <section className="td-sec td-side-sec">
+        <div className="td-sh">Meetings{upcoming.length > 0 && <span className="ct">{upcoming.length}</span>}<span className="r"><Link href="/crm/calendar" style={{ color: "inherit" }}>Calendar</Link></span></div>
+        <div className="td-card">
+          {events === null ? <p className="td-empty">Loading…</p> : upcoming.length === 0 ? <p className="td-empty">Nothing booked today or tomorrow. Meetings come from dials.</p>
+            : upcoming.slice(0, 5).map((e, i) => { const k = e.contactPhone ? meetingNudge(new Date(e.startsAt), new Date(), null) : null; const done = k && nudged[e.id + ":" + k]; const who = e.contactCompany || e.contactName || e.title;
+              return <div key={e.id} className="td-mt">
+                <span className="dot" style={{ background: i === 0 ? "#16a34a" : "#e3a008" }} />
+                <Logo name={who} size={20} />
+                <Link href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"} style={{ minWidth: 0, display: "flex", gap: 10, color: "inherit" }}><b>{who}</b><span className="what">{e.title !== who ? e.title : ""}</span></Link>
+                <span className="t">{when(e).day ? "Tomorrow, " : i === 0 && until(e.startsAt) ? until(e.startsAt) + " · " : ""}{when(e).t}</span>
+                {k && <button type="button" className={"u-btn" + (done ? " u-btn-bare" : "")} onClick={() => nudge(e, k)}>{done ? "Sent" : k === "confirm" ? "Confirm" : "Remind"}</button>}
+              </div>; })}
+        </div>
+      </section>
+
+      </aside>
     </div>
 
     <div className="td-numbers">

@@ -12,10 +12,10 @@ import { TodayTop } from "./evening";
 import { askLocal, type AskRow } from "@/lib/ask-local";
 import { line } from "./jobs";
 import { suggestReply } from "./replies";
-import { sourceLabel, type Biz, type Data, type Go } from "./types";
+import { mailWaiting, sourceLabel, type Biz, type Data, type Go } from "./types";
 
 type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "review" | "sam" | "remind";
-type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string; primary?: boolean; draft?: string; money: number };
+type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string; primary?: boolean; draft?: string; money: number; urgent?: boolean };
 /** What a job is worth right now: the invoice, the value, the quote, or the top of the ballpark. */
 const worth = (c: { value: number | null; quote: { amount: number | null } | null; ballpark: { high: number } | null; invoice: { total: number } | null } | undefined) => c ? c.invoice?.total || c.value || c.quote?.amount || c.ballpark?.high || 0 : 0;
 const ICON: Record<Kind, [string, string]> = { reply: ["chat", "ember"], money: ["invoice", "red"], quote: ["quote", ""], install: ["cal", ""], invoice: ["invoice", ""], review: ["star", "ok"], sam: ["user", ""], remind: ["clock", "ember"] };
@@ -56,6 +56,7 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast }: { d:
   const asks = L.conversations.filter(c => c.status === "paused");
 
   const actions: Action[] = [];
+  for (const m of mailWaiting(d)) actions.push({ key: "m" + m.id, kind: "reply", title: `${m.name || m.email || sourceLabel(m.source)} emailed, no phone`, sub: `${sourceLabel(m.source || "email")} by email${m.message ? `: ${m.message.slice(0, 90)}` : ""}`, go: () => go.tab("inbox"), cta: "Add phone", money: 0, urgent: true });
   for (const a of asks) actions.push({ key: "r" + a.id, kind: "reply", title: `Reply to ${a.name}`, sub: a.ask || a.last, go: () => go.thread(a.id), cta: "Reply", primary: true, money: worth(byThread.get(a.id)) });
   for (const c of cards) if (c.stage === "quoted" && c.quote?.status === "replied") actions.push({ key: "qr" + c.id, kind: "reply", title: `${c.name} answered the quote`, sub: c.quote.amount ? `${usd(c.quote.amount)} quote` : "", go: () => go.thread(c.id), cta: "Read", money: c.quote.amount ?? 0 });
   for (const i of invoices) {
@@ -91,7 +92,8 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast }: { d:
   for (const c of cards) if (c.remind && Date.parse(c.remind.at) <= Date.now() + 3600000) actions.push({ key: "rm" + c.id, kind: "remind", title: c.remind.note ? `${first(c.name)}: ${c.remind.note}` : `Check in with ${c.name}`, sub: `Reminder${Date.parse(c.remind.at) < Date.now() - 3600000 ? ` from ${ago(c.remind.at)}` : ""}${c.line ? `, ${line(c)}` : ""}`, go: () => go.record(c.id), cta: "Open", primary: true, money: worth(c) });
   if (d.unreadFromSam) actions.push({ key: "sam", kind: "sam", title: "Message from Sam", sub: "Your account rep", go: () => go.tab("sam"), cta: "Open", money: 0 });
   // Most money at stake first. A waiting reply with nothing priced yet still beats a zero.
-  actions.sort((a, b) => (b.money || (b.kind === "reply" ? 1 : 0)) - (a.money || (a.kind === "reply" ? 1 : 0)));
+  // A brand-new lead nobody has answered yet goes first: speed wins the job. Then the most money.
+  actions.sort((a, b) => Number(!!b.urgent) - Number(!!a.urgent) || (b.money || (b.kind === "reply" ? 1 : 0)) - (a.money || (a.kind === "reply" ? 1 : 0)));
   const atStake = actions.reduce((a, x) => a + x.money, 0);
 
   // Visits: estimates Cinder booked and installs the owner set, for today and the week strip.

@@ -1257,3 +1257,10 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 .mail-wait .mw-t { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; } .mail-wait .mw-t b { font-weight: 600; font-size: 13.5px; } .mail-wait .mw-t span { color: var(--g2); font-size: 12.5px; }
 .mail-wait p { margin: 0; font-size: 13px; color: var(--ink2); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .mail-wait .mw-a { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; } .mail-wait .mw-a .input { width: 150px; }
+
+/* Lead emails in the Inbox: the right pane on a desktop, in place under the row on a phone. */
+.mail-pane { padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; overflow: auto; }
+.mail-pane header { display: flex; flex-direction: column; gap: 2px; } .mail-pane header b { font: 600 18px/24px var(--ff-tight); letter-spacing: -.35px; } .mail-pane header small { color: var(--g2); font-size: 13px; }
+.mail-pane dl { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 13px; } .mail-pane dt { color: var(--g2); } .mail-pane dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+.mail-pane .mail-wait, .mail-inline .mail-wait { margin: 0; }
+.mail-inline { padding: 0 12px 10px; }

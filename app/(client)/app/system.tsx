@@ -188,7 +188,7 @@ function MailConn({ d, go, toast, api, project, reload, open, onToggle }: { d: D
   </>;
 }
 
-function MailWaiting({ r, go, toast, api, project, reload }: { r: LeadMail; go: Go; toast: Toast; api: Api; project: string; reload: () => Promise<void> }) {
+export function MailWaiting({ r, go, toast, api, project, reload, bare }: { r: LeadMail; go: Go; toast: Toast; api: Api; project: string; reload: () => Promise<void>; bare?: boolean }) {
   const [phone, setPhone] = useState(""), [busy, setBusy] = useState(false);
   const who = r.name || r.email || sourceLabel(r.source);
   const add = async () => {
@@ -199,7 +199,7 @@ function MailWaiting({ r, go, toast, api, project, reload }: { r: LeadMail; go: 
   const dismiss = async () => { try { await api("/api/app/act", { p: project, action: "maildismiss", thread: r.id }); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Couldn't dismiss it.", true); } };
   const reply = r.email ? `mailto:${r.email}?subject=${encodeURIComponent("Re: " + (r.subject || "your request"))}` : "";
   return <div className="mail-wait">
-    <div className="mw-t"><b>{who}</b><span>{sourceLabel(r.source)} by email, {ago(r.at)}{r.status === "new" ? ", couldn't be added on its own" : ", no phone in it"}</span></div>
+    {!bare && <div className="mw-t"><b>{who}</b><span>{sourceLabel(r.source)} by email, {ago(r.at)}{r.status === "new" ? ", couldn't be added on its own" : ", no phone in it"}</span></div>}
     {r.message && <p>{r.message}</p>}
     <div className="mw-a">
       <input className="input sm" inputMode="tel" placeholder="(720) 555-0100" aria-label={`Phone for ${who}`} value={phone} onChange={e => setPhone(typePhone(e.target.value))} onKeyDown={e => { if (e.key === "Enter" && phone) void add(); }} />
