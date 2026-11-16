@@ -38,7 +38,7 @@ const noUrls = (s: string) => s.replace(/\(?https?:\/\/\S+\)?/g, "").replace(/\s
 
 function gradeOf(raw: string): Grade {
   const g = raw.trim().toUpperCase().replace(/[+-]$/, "");
-  return (["A", "B", "C", "D", "F"] as const).includes(g as Grade) ? (g as Grade) : "?";
+  return ["A", "B", "C", "D", "F"].includes(g) ? (g as Grade) : "?";
 }
 
 const weak = (g: Grade) => g === "D" || g === "F";
