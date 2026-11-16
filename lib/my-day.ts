@@ -13,7 +13,7 @@ export type QueueItem = {
   lastActivity: string | null;
   due: string | null;
   href: string;
-  contact: { id: string; name: string; company: string; phone: string } | null;
+  contact: { id: string; name: string; company: string; phone: string; /** Their site, for the logo on a prospect. */ website?: string } | null;
   callable: boolean; // shows Call + one-tap outcome logging
   rank: number;
 };
@@ -144,7 +144,7 @@ export function buildQueue(input: QueueInput): QueueItem[] {
       title: `Call ${p.contact.name}${p.contact.company && p.contact.company !== p.contact.name ? " · " + p.contact.company : ""}`,
       why: [niche, p.location || null, p.contact.verdict ?? "No audit yet — run one first"].filter(Boolean).join(" · "),
       lastActivity: null, due: null, href: p.contact.verdict ? "/crm" : "/crm/audit",
-      contact: p.contact, callable: true, rank: i,
+      contact: { ...p.contact, ...(p.website ? { website: p.website } : {}) }, callable: true, rank: i,
     });
   });
 
