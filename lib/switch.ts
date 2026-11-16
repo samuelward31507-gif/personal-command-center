@@ -26,8 +26,11 @@ export type NJob = { ref: string; customerRef: string; number?: string; title: s
 export type NInvoice = { ref: string; customerRef: string; number?: string; status: "draft" | "open" | "paid" | "void"; items: NLine[]; total: number; paid: number; issued?: string | null; due?: string | null };
 export type NPlan = { ref: string; customerRef: string; name: string; total: number; every: number; unit: "week" | "month"; next_on: string | null };
 export type NItem = { ref: string; name: string; unit: string; price: number; cost?: number };
-export type Staged = { customers: NCustomer[]; quotes: NQuote[]; jobs: NJob[]; invoices: NInvoice[]; plans: NPlan[]; items: NItem[]; notes: string[] };
-export const emptyStaged = (): Staged => ({ customers: [], quotes: [], jobs: [], invoices: [], plans: [], items: [], notes: [] });
+export type PayMethod = "card" | "cash" | "check" | "bank" | "other";
+/** A payment on an invoice: matched to the invoice by its number (or the source's invoice ID). */
+export type NPayment = { ref: string; customerRef: string; invoiceRef?: string; invoiceNumber?: string; amount: number; date: string | null; method: PayMethod; note?: string };
+export type Staged = { customers: NCustomer[]; quotes: NQuote[]; jobs: NJob[]; invoices: NInvoice[]; plans: NPlan[]; items: NItem[]; payments: NPayment[]; notes: string[] };
+export const emptyStaged = (): Staged => ({ customers: [], quotes: [], jobs: [], invoices: [], plans: [], items: [], payments: [], notes: [] });
 
 export const SOURCES = [
   { key: "jobber", name: "Jobber", how: "connect" },
@@ -92,6 +95,37 @@ export function invoiceStatus(v: unknown, balance?: number, total?: number): NIn
   if (/^paid|paid in full|closed/.test(s) || (balance === 0 && (total ?? 0) > 0 && !/due|open|awaiting|unpaid|partial/.test(s))) return "paid";
   return "open";
 }
+export function payMethod(v: unknown): PayMethod {
+  const s = String(v ?? "").toLowerCase();
+  if (/check|cheque|chk/.test(s)) return "check";
+  if (/cash/.test(s)) return "cash";
+  if (/ach|bank|transfer|wire|e-?check|eft|zelle|venmo|paypal|cash ?app/.test(s)) return "bank";
+  if (/card|visa|master|amex|american express|discover|credit|debit|stripe|square/.test(s)) return "card";
+  return "other";
+}
+/** "Monthly", "every 2 weeks", "Quarterly", "twice a year", "6 months" as every + unit. Null when it can't be read. */
+export function everyOf(v: unknown): { every: number; unit: "week" | "month" } | null {
+  const s = String(v ?? "").toLowerCase().replace(/[_-]/g, " ").trim();
+  if (!s) return null;
+  const n = Number(s.match(/(\d+)/)?.[1] ?? 0);
+  if (/bi ?weekly|every other week|fortnight/.test(s)) return { every: 2, unit: "week" };
+  if (/week/.test(s)) return { every: Math.min(52, n || 1), unit: "week" };
+  if (/semi ?annual|twice a year|bi ?annual|half ?year/.test(s)) return { every: 6, unit: "month" };
+  if (/quarter/.test(s)) return { every: 3, unit: "month" };
+  if (/annual|year/.test(s)) return { every: Math.min(24, (n || 1) * 12), unit: "month" };
+  if (/bi ?monthly|every other month/.test(s)) return { every: 2, unit: "month" };
+  if (/month/.test(s)) return { every: Math.min(24, n || 1), unit: "month" };
+  if (/day|daily/.test(s)) return n >= 7 ? { every: Math.max(1, Math.round(n / 7)), unit: "week" } : null;
+  return null;
+}
+/** Which staged invoice a payment belongs to: its own invoice ID, else the invoice number. */
+export function invoiceRefOf(s: Pick<Staged, "invoices">, pay: NPayment): string {
+  if (pay.invoiceRef && s.invoices.some(i => i.ref === pay.invoiceRef)) return pay.invoiceRef;
+  const num = (x: string | undefined) => String(x ?? "").replace(/^#/, "").replace(/^0+/, "").trim().toLowerCase();
+  const want = num(pay.invoiceNumber);
+  return want ? s.invoices.find(i => num(i.number) === want)?.ref ?? "" : "";
+}
+
 export function jobStatus(v: unknown, start?: string | null, today = new Date().toLocaleDateString("en-CA")): NJob["status"] {
   const s = String(v ?? "").toLowerCase().replace(/[_-]/g, " ");
   if (/complet|done|finish|closed|archiv|requires invoic|invoiced|paid/.test(s)) return "done";
@@ -100,8 +134,8 @@ export function jobStatus(v: unknown, start?: string | null, today = new Date().
 }
 
 // ---------- Spreadsheets: what each column is ----------
-export type Kind = "customers" | "quotes" | "jobs" | "invoices" | "items";
-export const KIND_LABEL: Record<Kind, string> = { customers: "Customers", quotes: "Quotes or estimates", jobs: "Jobs or visits", invoices: "Invoices", items: "Price list or items" };
+export type Kind = "customers" | "quotes" | "jobs" | "invoices" | "payments" | "plans" | "items";
+export const KIND_LABEL: Record<Kind, string> = { customers: "Customers", quotes: "Quotes or estimates", jobs: "Jobs or visits", invoices: "Invoices", payments: "Payments", plans: "Service plans or memberships", items: "Price list or items" };
 export type Field = { key: string; label: string; aliases: string[] };
 const F = (key: string, label: string, aliases: string[]): Field => ({ key, label, aliases });
 const PERSON = [
@@ -136,6 +170,14 @@ export const FIELDS: Record<Kind, Field[]> = {
     F("balance", "Balance owed", ["balance", "balancedue", "amountdue", "due", "outstanding", "openbalance", "remainingbalance", "invoicebalance"]), F("paid", "Amount paid", ["paid", "amountpaid", "totalpaid", "payments", "paidamount"]),
     F("date", "Issued", ["issueddate", "issued", "invoicedate", "date", "createddate", "created", "txndate", "createdat"]), F("due", "Due", ["duedate", "due", "dueon", "paymentdue"]),
     F("title", "What it's for", ["subject", "title", "description", "jobtitle", "summary", "memo"])],
+  payments: [F("ref", "Payment ID", ["id", "paymentid", "transactionid", "receiptid"]), F("invoice", "Invoice number", ["invoicenumber", "invoice", "invoiceno", "invoicenum", "docnumber", "appliedto", "invoiceid"]), ...PERSON.slice(1),
+    F("amount", "Amount", ["amount", "paymentamount", "amountpaid", "paid", "total", "totalamount"]), F("date", "Date paid", ["paymentdate", "datepaid", "paidon", "paiddate", "date", "receiveddate", "txndate", "createdat"]),
+    F("method", "How they paid", ["paymentmethod", "method", "paymenttype", "type", "tender", "paidwith"]), F("note", "Reference or memo", ["reference", "referencenumber", "checknumber", "memo", "note", "notes", "description"])],
+  plans: [F("ref", "Plan ID", ["id", "planid", "membershipid", "agreementid"]), ...PERSON.slice(1),
+    F("name", "Plan name", ["planname", "plan", "membership", "membershipname", "membershiptype", "agreement", "agreementname", "serviceplan", "service", "title", "name"]),
+    F("price", "Price per visit", ["pricepervisit", "visitprice", "price", "amount", "rate", "fee", "recurringprice", "recurringamount", "total"]),
+    F("every", "How often", ["frequency", "howoften", "every", "interval", "recurrence", "billingfrequency", "schedule", "visitfrequency", "period"]),
+    F("next", "Next visit", ["nextvisit", "nextservice", "nextservicedate", "nextdate", "nextappointment", "renewaldate", "nextbilling", "startdate", "start"]), ...ADDRESS],
   items: [F("name", "Name", ["name", "itemname", "productservice", "productname", "service", "servicename", "item", "title", "lineitem", "description"]), F("unit", "Unit", ["unit", "unitofmeasure", "uom", "per"]),
     F("price", "Price", ["price", "unitprice", "rate", "salesprice", "saleprice", "unitcost", "defaultprice", "pricerate", "amount"]), F("cost", "Your cost", ["cost", "purchasecost", "yourcost", "materialcost", "costprice"])],
 };
@@ -156,6 +198,8 @@ export function guessMapping(headers: string[], kind: Kind): Mapping {
 /** What a file most likely is, from its headers. */
 export function guessKind(headers: string[]): Kind {
   const hs = headers.map(normHeader).join(" ");
+  if (/paymentid|paymentdate|paymentmethod|paymentamount|datepaid|paidon|tender/.test(hs)) return "payments";
+  if (/membership|agreement|serviceplan|maintenanceplan|frequency|recurrence|nextvisit|nextservice/.test(hs)) return "plans";
   if (/invoice|balancedue|amountdue|amountpaid/.test(hs)) return "invoices";
   if (/quote|estimate/.test(hs)) return "quotes";
   if (/job|visit|workorder|scheduled|appointment/.test(hs)) return "jobs";
@@ -205,9 +249,20 @@ export function stageSheet(sheet: Sheet, kind: Kind, m: Mapping, prefix: string,
         since: anyDate(g("since")), properties: address ? [{ ref: ref + ":a", address, ...(g("gate") ? { gate: ctl(g("gate"), 120) } : {}) }] : [] });
       return;
     }
-    const cref = stub(into, p, kind === "jobs" ? address : "");
+    const cref = stub(into, p, kind === "jobs" || kind === "plans" ? address : "");
     if (!cref) { skipped.push({ line, why: "No customer name, phone or email" }); return; }
     const total = money(g("total")), title = ctl(g("title"), 120), number = ctl(g("number"), 30), ref = own || `${prefix}:${kind}:${number || line}`;
+    if (kind === "payments") {
+      const amount = money(g("amount")); if (!(amount > 0)) { skipped.push({ line, why: "No amount" }); return; }
+      const inv = ctl(g("invoice"), 30); if (!inv) { skipped.push({ line, why: "No invoice number" }); return; }
+      into.payments.push({ ref: own || `${prefix}:payment:${line}`, customerRef: cref, invoiceNumber: inv, amount, date: anyDate(g("date")), method: payMethod(g("method")), ...(g("note") ? { note: ctl(g("note"), 120) } : {}) });
+      return;
+    }
+    if (kind === "plans") {
+      const ev = everyOf(g("every")); if (!ev) { skipped.push({ line, why: "Couldn't read how often" }); return; }
+      into.plans.push({ ref: own || `${prefix}:plan:${line}`, customerRef: cref, name: ctl(g("name"), 80) || "Service plan", total: Math.max(0, money(g("price"))), every: ev.every, unit: ev.unit, next_on: anyDate(g("next")) });
+      return;
+    }
     if (kind === "quotes") into.quotes.push({ ref, customerRef: cref, number: number || undefined, status: quoteStatus(g("status")), items: linesFrom(title || (number ? `Quote ${number}` : "Quote"), total), total, sent: anyDate(g("date")), title: title || undefined });
     else if (kind === "jobs") { const start = anyDate(g("date")); into.jobs.push({ ref, customerRef: cref, number: number || undefined, title: title || "Job", status: jobStatus(g("status"), start, today), start, total: total || undefined, address: address || undefined }); }
     else {
@@ -286,7 +341,7 @@ export function dedupe(customers: NCustomer[], splits: string[] = []): { custome
 export type Decisions = { splits?: string[]; phones?: Record<string, string> };
 export type Preview = {
   customers: number; merged: number; properties: number; openQuotes: number; openQuotesValue: number; scheduledJobs: number; unpaidInvoices: number; unpaidValue: number;
-  plans: number; items: number; missingPhone: { ref: string; name: string; email: string }[]; merges: Merge[]; sourceCustomers: number;
+  plans: number; items: number; payments: number; paymentsUnmatched: number; missingPhone: { ref: string; name: string; email: string }[]; merges: Merge[]; sourceCustomers: number;
 };
 /**
  * The stand-in for a customer who has no phone (common for commercial and email-only customers). Records key on the
@@ -308,13 +363,13 @@ export function previewOf(s: Staged, d: Decisions = {}, today = new Date().toLoc
   return { sourceCustomers: s.customers.length, customers: customers.filter(comes).length, merged: merges.reduce((a, m) => a + m.merged.length, 0),
     properties: customers.filter(comes).reduce((a, c) => a + c.properties.length, 0), openQuotes: q.length, openQuotesValue: Math.round(q.reduce((a, x) => a + x.total, 0)),
     scheduledJobs: s.jobs.filter(j => j.status !== "done" && (!j.start || j.start >= today)).length, unpaidInvoices: open.length, unpaidValue: Math.round(open.reduce((a, i) => a + i.total - i.paid, 0) * 100) / 100,
-    plans: s.plans.length, items: s.items.length, missingPhone: customers.filter(c => !c.phone).map(c => ({ ref: c.ref, name: c.name, email: c.email })), merges };
+    plans: s.plans.length, items: s.items.length, payments: (s.payments ?? []).filter(x => invoiceRefOf(s, x)).length, paymentsUnmatched: (s.payments ?? []).filter(x => !invoiceRefOf(s, x)).length, missingPhone: customers.filter(c => !c.phone).map(c => ({ ref: c.ref, name: c.name, email: c.email })), merges };
 }
 
 /** Merge a fresh batch into what's already staged (a second file, the next API page). Same ref replaces. */
 export function mergeStaged(a: Staged, b: Staged): Staged {
   const by = <T extends { ref: string }>(x: T[], y: T[]) => { const m = new Map(x.map(r => [r.ref, r])); for (const r of y) m.set(r.ref, r); return [...m.values()]; };
-  return { customers: by(a.customers, b.customers), quotes: by(a.quotes, b.quotes), jobs: by(a.jobs, b.jobs), invoices: by(a.invoices, b.invoices), plans: by(a.plans, b.plans), items: by(a.items, b.items), notes: [...a.notes, ...b.notes].slice(-50) };
+  return { customers: by(a.customers, b.customers), quotes: by(a.quotes, b.quotes), jobs: by(a.jobs, b.jobs), invoices: by(a.invoices, b.invoices), plans: by(a.plans, b.plans), items: by(a.items, b.items), payments: by(a.payments ?? [], b.payments ?? []), notes: [...a.notes, ...b.notes].slice(-50) };
 }
 
 // ---------- Jobber's API, into the plain shape ----------
@@ -420,12 +475,14 @@ export function cleanStaged(v: unknown): Staged {
     jobs: arr(o.jobs, 20000).map(j => ({ ref: refOf(j.ref), customerRef: refOf(j.customerRef), number: ctl(j.number, 30) || undefined, title: ctl(j.title, 120) || "Job", status: (["scheduled", "active", "done"].includes(String(j.status)) ? j.status : "scheduled") as NJob["status"], start: anyDate(j.start), total: money(j.total) || undefined, address: ctl(j.address, 300) || undefined })).filter(j => j.ref && j.customerRef),
     invoices: arr(o.invoices, 20000).map(i => { const total = Math.max(0, money(i.total)); return { ref: refOf(i.ref), customerRef: refOf(i.customerRef), number: ctl(i.number, 30) || undefined, status: (["draft", "open", "paid", "void"].includes(String(i.status)) ? i.status : "open") as NInvoice["status"], items: lines(i.items), total, paid: Math.min(total, Math.max(0, money(i.paid))), issued: anyDate(i.issued), due: anyDate(i.due) }; }).filter(i => i.ref && i.customerRef),
     plans: arr(o.plans, 5000).map(p => ({ ref: refOf(p.ref), customerRef: refOf(p.customerRef), name: ctl(p.name, 80) || "Service plan", total: Math.max(0, money(p.total)), every: Math.max(1, Math.min(52, Math.round(Number(p.every) || 1))), unit: (p.unit === "week" ? "week" : "month") as "week" | "month", next_on: anyDate(p.next_on) })).filter(p => p.ref && p.customerRef),
+    payments: arr(o.payments, 20000).map(x => ({ ref: refOf(x.ref), customerRef: refOf(x.customerRef), invoiceRef: refOf(x.invoiceRef) || undefined, invoiceNumber: ctl(x.invoiceNumber, 30) || undefined,
+      amount: Math.max(0, Math.min(10_000_000, money(x.amount))), date: anyDate(x.date), method: payMethod(x.method), note: ctl(x.note, 120) || undefined })).filter(x => x.ref && x.amount > 0 && (x.invoiceRef || x.invoiceNumber)),
     items: arr(o.items, 2000).map(i => ({ ref: refOf(i.ref), name: ctl(i.name, 120), unit: ctl(i.unit, 12), price: Math.max(0, money(i.price)), ...(money(i.cost) > 0 ? { cost: money(i.cost) } : {}) })).filter(i => i.ref && i.name),
     notes: (Array.isArray(o.notes) ? o.notes : []).slice(0, 50).map(n => ctl(n, 300)).filter(Boolean),
   };
 }
 /** The import's order: the price list, then people, then what hangs off them. */
-export const PHASES = ["items", "customers", "quotes", "jobs", "invoices", "plans"] as const;
+export const PHASES = ["items", "customers", "quotes", "jobs", "invoices", "payments", "plans"] as const;
 export type Phase = (typeof PHASES)[number];
 /** Jobber's products and services, into the price list. */
 export const jobberItem = (n: J): NItem => ({ ref: "jobber:" + String(n.id), name: ctl(n.name, 120), unit: "", price: Math.max(0, money(n.defaultUnitCost ?? n.unitPrice)), ...(money(n.internalUnitCost) > 0 ? { cost: money(n.internalUnitCost) } : {}) });

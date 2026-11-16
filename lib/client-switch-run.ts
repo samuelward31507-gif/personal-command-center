@@ -9,7 +9,7 @@ import { gql, jobberToken } from "@/lib/jobber";
 import { qboRead } from "@/lib/qbo";
 import { cleanCatalog } from "@/lib/service";
 import { PHASES, cleanStaged, dedupe, emptyStaged, jobberClient, jobberItem, jobberPlan, jobberInvoice, jobberJob, jobberQuote, jobberRequest, mergeStaged, previewOf, qboCustomer, qboInvoice, qboItem,
-  type Decisions, type NCustomer, type Phase, type Preview, type Staged, noPhoneKey } from "@/lib/switch";
+  type Decisions, type NCustomer, type Phase, type Preview, type Staged, noPhoneKey, invoiceRefOf, type NPayment } from "@/lib/switch";
 
 type Sql = NeonQueryFunction<false, false>;
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -226,6 +226,8 @@ export async function runStep(sql: Sql, c: Client, id: string): Promise<{ ok: bo
   const started = Date.now();
   let progress = Number(r.progress ?? 0);
   try {
+    // Invoices that a payments file covers get their real payments, not one "paid before the move" lump.
+    const payInv = new Set((p.staged.payments ?? []).map(x => invoiceRefOf(p.staged, x)).filter(Boolean));
     while (cur.phase! < PHASES.length && Date.now() - started < 8000) {
       const phase = PHASES[cur.phase!], list = listFor(p, phase);
       if (cur.i! >= list.length) { cur.phase!++; cur.i = 0; continue; }
@@ -312,6 +314,21 @@ export async function runStep(sql: Sql, c: Client, id: string): Promise<{ ok: bo
           bump("jobs", j.status === "done" ? "updated" : "created");
           continue;
         }
+        if (phase === "payments") {
+          const x = row as NPayment, invRef = invoiceRefOf(p.staged, x);
+          const [inv] = invRef ? await sql`SELECT id, thread_id FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid AND source_system = ${sys} AND source_ref = ${invRef} AND import_id = ${id}::uuid AND status <> 'void'` as { id: string; thread_id: string }[] : [];
+          if (!inv) { bump("payments", "skipped"); continue; }
+          const on = x.date || today;
+          const [pm] = await sql`INSERT INTO public.client_payments (owner_id, project_id, invoice_id, thread_id, amount, method, paid_on, note, import_id)
+            VALUES (${c.owner}, ${c.projectId}::uuid, ${inv.id}::uuid, ${inv.thread_id}::uuid, ${x.amount}, ${x.method}, ${on}::date, ${(x.note ? x.note + ". " : "") + `Paid before the move to Cinder (${from})`}, ${id}::uuid) RETURNING id` as { id: string }[];
+          await record(sql, id, c, "payments", pm.id, "created");
+          await sql`UPDATE public.client_invoices i SET paid_amount = s.paid,
+              status = CASE WHEN i.status IN ('sent', 'draft') AND s.paid >= i.total - 0.005 THEN 'paid' ELSE i.status END,
+              paid_at = CASE WHEN s.paid >= i.total - 0.005 THEN coalesce(i.paid_at, ${on}::date::timestamptz) ELSE i.paid_at END
+            FROM (SELECT coalesce(sum(amount), 0)::numeric AS paid FROM public.client_payments WHERE invoice_id = ${inv.id}::uuid) s WHERE i.id = ${inv.id}::uuid`;
+          bump("payments", "created");
+          continue;
+        }
         if (phase === "invoices") {
           const v = row as Staged["invoices"][number];
           const [ex] = await sql`SELECT id FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid AND source_system = ${sys} AND source_ref = ${v.ref}` as { id: string }[];
@@ -332,7 +349,7 @@ export async function runStep(sql: Sql, c: Client, id: string): Promise<{ ok: bo
             invId = vj.id;
           }
           await record(sql, id, c, "invoices", invId, "created");
-          if (v.paid > 0.005 && status !== "void") {
+          if (v.paid > 0.005 && status !== "void" && !payInv.has(v.ref)) {
             const [pm] = await sql`INSERT INTO public.client_payments (owner_id, project_id, invoice_id, thread_id, amount, method, paid_on, note, import_id) VALUES (${c.owner}, ${c.projectId}::uuid, ${invId}::uuid, ${tid}::uuid, ${v.paid}, 'other', ${(v.issued || today)}::date, ${`Paid before the move, recorded in ${from}`}, ${id}::uuid) RETURNING id` as { id: string }[];
             await sql`UPDATE public.client_invoices SET paid_amount = ${v.paid} WHERE id = ${invId}::uuid`;
             await record(sql, id, c, "payments", pm.id, "created");
