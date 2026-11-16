@@ -38,7 +38,7 @@ export async function qboCompanyName(token: string, realm: string): Promise<stri
 }
 
 /** A live connection for a business: a fresh access token (refreshing and storing a rotated refresh token) and the item lines book to. */
-async function connection(sql: Sql, projectId: string): Promise<Conn | null> {
+async function connection(sql: Sql, projectId: string, needItem = true): Promise<Conn | null> {
   const [row] = await sql`SELECT realm_id, refresh_token_enc, access_token_enc, access_expires_at, item_id FROM public.client_qbo WHERE project_id = ${projectId}::uuid` as { realm_id: string; refresh_token_enc: string; access_token_enc: string; access_expires_at: string | null; item_id: string }[];
   if (!row) return null;
   let token = "";
@@ -50,7 +50,7 @@ async function connection(sql: Sql, projectId: string): Promise<Conn | null> {
     token = t.access_token;
   }
   const c: Conn = { token, realm: row.realm_id, itemId: row.item_id, projectId };
-  if (!c.itemId) {
+  if (!c.itemId && needItem) {
     // The item every line books to: their "Services" item, or one made against their first income account.
     const found = (await query<{ Id: string }>(c, `select Id from Item where Name = 'Services' and Active = true`)).Item?.[0]?.Id;
     let id = found ?? "";
@@ -138,4 +138,10 @@ export async function qboSyncAll(sql: Sql, projectId: string): Promise<{ invoice
   });
   if (!ok) { const [r] = await sql`SELECT last_error FROM public.client_qbo WHERE project_id = ${projectId}::uuid` as { last_error: string }[]; error = r?.last_error || "QuickBooks isn't connected."; }
   return { invoices, payments, ...(error ? { error } : {}) };
+}
+
+/** Read from the owner's books (the switch-over center): one query page, or null when QuickBooks isn't connected. */
+export async function qboRead<T = Record<string, unknown>>(sql: Sql, projectId: string, q: string): Promise<Record<string, T[]> | null> {
+  const c = await connection(sql, projectId, false);
+  return c ? query<T>(c, q) : null;
 }

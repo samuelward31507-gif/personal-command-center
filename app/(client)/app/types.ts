@@ -31,7 +31,7 @@ export type Text = { id: string; direction: string; author: string; body: string
 export type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 export type { Card, CardInvoice, Payment, Stage };
 
-export type Tab = "today" | "inbox" | "jobs" | "quotes" | "calendar" | "customers" | "invoices" | "numbers" | "system" | "sam" | "more" | "plans";
+export type Tab = "today" | "inbox" | "jobs" | "quotes" | "calendar" | "customers" | "invoices" | "numbers" | "system" | "sam" | "more" | "plans" | "switch";
 /** Where a screen can send the owner. The shell owns the state; screens just ask. */
 export type Go = {
   tab: (t: Tab) => void;

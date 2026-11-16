@@ -37,7 +37,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
     LEFT JOIN LATERAL (SELECT starts_at FROM public.client_appointments y WHERE y.thread_id = t.id AND y.status = 'booked' AND y.starts_at > now() - interval '12 hours'
       ORDER BY y.starts_at LIMIT 1) a ON true
     LEFT JOIN LATERAL (SELECT body FROM public.client_texts z WHERE z.thread_id = t.id AND z.author = 'system' AND z.body LIKE 'Marked lost%' ORDER BY z.at DESC LIMIT 1) lr ON t.stage = 'lost'
-    WHERE t.project_id = ${c.projectId}::uuid AND t.source NOT IN ('review', 'due')
+    WHERE t.project_id = ${c.projectId}::uuid AND t.source NOT IN ('review', 'due') AND t.hidden_at IS NULL
       AND (t.updated_at > now() - interval '120 days' OR t.stage IN ('booked', 'quoted') OR q.status IN ('open', 'replied'))
       -- Imported past customers live in Customers, not on the board, until they text in or the owner moves them (a move stamps stage_at after created_at).
       AND NOT (t.source = 'import' AND t.stage IN ('won', 'lost') AND t.last_in_at IS NULL AND t.last_out_at IS NULL AND t.stage_at < t.created_at)

@@ -319,7 +319,7 @@ export async function loadCustomers(sql: Sql, c: Client): Promise<Customer[]> {
     LEFT JOIN LATERAL (SELECT sum(total) AS owed FROM public.client_invoices i WHERE i.thread_id = t.id AND i.status = 'sent') o ON true
     LEFT JOIN LATERAL (SELECT amount FROM public.client_quotes q WHERE q.project_id = t.project_id AND q.kind = 'quote' AND q.status IN ('open', 'replied')
       AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10) ORDER BY q.created_at DESC LIMIT 1) oq ON true
-    WHERE t.project_id = ${c.projectId}::uuid AND t.source NOT IN ('review', 'due')
+    WHERE t.project_id = ${c.projectId}::uuid AND t.source NOT IN ('review', 'due') AND t.hidden_at IS NULL
     ORDER BY coalesce(t.last_in_at, t.updated_at) DESC LIMIT 1000` as Record<string, unknown>[];
   return rows.map(r => { const d = cleanDetails(c.setup.trade, r.details); return {
     id: String(r.id), name: String(r.customer_name || ""), phone: String(r.customer_phone), email: String(r.customer_email ?? ""), address: String(d.address ?? ""), source: String(r.source), status: String(r.status),

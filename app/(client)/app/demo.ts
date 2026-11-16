@@ -4,6 +4,7 @@ import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, cleanWinback, detai
 import type { Report, ReportNumbers } from "@/lib/client-reports";
 import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
 import { cleanImportRows, importAs } from "@/lib/customer-import";
+import { demoSwitch } from "./demo-switch";
 import { addInterval, changeOrderLines, cleanCatalog, cleanChangeOrder, cleanPlan, cleanSignoff, type ChangeOrder, type Plan, type Signoff, type TimeEntry } from "@/lib/service";
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 const at = (days: number, hour: number, min = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(hour, min, 0, 0); return d.toISOString(); };
@@ -275,6 +276,9 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
     if (th) { const t = s.threads[th] ?? fail("Not found", 404); return { thread: t!.thread, texts: t!.texts.map((x, i, all) => ({ ...x, status: x.direction === "out" && x.author !== "system" ? (th === "t1" && i === all.length - 1 ? "undelivered" : "delivered") : "" })) }; }
     return emptyDemo() ? blank(data()) : crewDemo() ? asCrew(data()) : data();
   }
+  if (path.startsWith("/api/app/switch")) return demoSwitch(path, b,
+    list => { for (const c of list) { const id = "mv:" + c.ref; s.threads[id] = { thread: { id, customer_name: c.name, customer_phone: c.phone, source: "import", status: "closed" }, texts: [] }; s.crm[id] = { stage: "won", details: c.address ? { address: c.address } : {}, notes: "Moved in from Jobber.", email: c.email, stageAt: c.since ? c.since + "T12:00:00Z" : undefined }; } },
+    () => { for (const k of Object.keys(s.threads)) if (k.startsWith("mv:")) { delete s.threads[k]; delete s.crm[k]; } });
   if (path.startsWith("/api/app/act")) {
     const t = typeof b.thread === "string" ? s.threads[b.thread] : undefined;
     if (b.action === "outcome") {

@@ -135,6 +135,7 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask }: { d: Data; 
       sub={actions.length ? `${actions.length} ${actions.length === 1 ? "thing needs" : "things need"} you, ${usd(atStake)} riding on them.` : "Nothing needs you right now."}
       actions={<><button type="button" className="find" onClick={go.find}><Icon name="search" size={14} />Find anyone or do anything<kbd>⌘K</kbd></button><button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={14} />New lead</button></>} />
     <div className="dash">
+      {!biz.crew && (d.customers ?? []).length < 5 && <section className="panel sw-cta"><div className="panel-b"><span><b>Bring your customers over.</b> It takes about 10 minutes.</span><button type="button" className="btn ink" onClick={() => go.tab("switch")}>Move them in</button></div></section>}
       {setupLeft > 0 && !hideSetup && <Guide title="Finish setting up" sub={`${setupLeft} ${setupLeft === 1 ? "thing" : "things"} left before Cinder runs your front office on its own. Each one takes a minute.`} compact count={{ done: setup.length - setupLeft, total: setup.length }} steps={setup.filter(x => !x.done)}
         side={<div className="setup-side"><b>{Math.round(((setup.length - setupLeft) / setup.length) * 100)}%</b><small>set up</small><button type="button" className="link" onClick={() => { setHideSetup(true); try { localStorage.setItem("cinder-setup-hide", "1"); } catch { /* private mode */ } }}>Hide for now</button></div>} />}
       <Kpis items={[

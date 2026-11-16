@@ -14,6 +14,7 @@ import { splitAppointments } from "@/lib/client-schedule";
 import { TodayScreen } from "./today";
 import { JobsScreen, type JobsView } from "./jobs";
 import { PlansScreen } from "./plans";
+import { SwitchScreen } from "./switch";
 import { CatalogContext, PriceListSheet, catalogFrom } from "./catalog";
 import { RecordPage } from "./record";
 import { InboxScreen, ThreadView } from "./inbox";
@@ -153,7 +154,7 @@ export default function CinderApp() {
       if (t) await api("/api/app/auth", { action: "link", token: t }).catch(() => null);
       const th = q.get("thread"), tb = q.get("tab");
       if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen({ kind: "thread", id: th });
-      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", home: "today", invoices: "invoices", money: "invoices", customers: "customers", system: "system", quotes: "quotes", plans: "plans" };
+      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", home: "today", invoices: "invoices", money: "invoices", customers: "customers", system: "system", quotes: "quotes", plans: "plans", switch: "switch", move: "switch" };
       if (tb && map[tb]) setTab(map[tb]);
       if (location.search) try { history.replaceState(null, "", "/app"); } catch { /* keep the URL */ }
       await load("", tb && map[tb] ? map[tb] : "today");
@@ -225,6 +226,7 @@ export default function CinderApp() {
   else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
+  else if (tab === "switch") page = <SwitchScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
   else if (tab === "plans") page = <PlansScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
   else if (tab === "quotes") page = <QuotesScreen d={d} go={go} wide={wide} biz={biz} />;
   else if (tab === "calendar") page = <CalendarScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} />;
@@ -284,6 +286,7 @@ function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
     { k: "invoices", l: "Money", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
     { k: "numbers", l: "Reports", s: "What Cinder brought in", ic: "bars" },
     { k: "customers", l: "Everyone", s: `${d.customers?.length ?? 0} people`, ic: "users" },
+    { k: "switch", l: "Move your business in", s: "From Jobber, QuickBooks, a spreadsheet or your phone", ic: "upload" },
     { k: "plans", l: "Service plans", s: (d.plans ?? []).some(p => p.status === "active") ? `${(d.plans ?? []).filter(p => p.status === "active").length} active` : "Repeat work on a schedule", ic: "cal" },
     { k: "system", l: "Settings", s: "How leads reach Cinder, prices, notifications", ic: "gear" },
     { k: "sam", l: "Sam", s: d.unreadFromSam ? `${d.unreadFromSam} new` : "Your Cinder rep", ic: "user", n: d.unreadFromSam },
