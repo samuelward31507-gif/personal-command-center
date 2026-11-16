@@ -6,12 +6,12 @@ import "./outreach.css";
 type Contact={id:string;name:string;company:string;phone:string;notes:string;status:string;smsConsent:boolean};
 type Outreach={id:string;contactId:string;status:string;currentStep:number;nextActionAt:string;niche:string;painPoint:string;researchNotes:string;name:string;company:string;role:string;phone:string;contactNotes:string;smsConsent:boolean};
 const steps=[
- {day:"DAY 1",label:"First call",channel:"call",goal:"Introduce yourself and find the owner"},
- {day:"DAY 2",label:"Second call",channel:"call",goal:"Try a different time of day"},
- {day:"DAY 3",label:"Follow-up text",channel:"text",goal:"Short, relevant follow-up"},
- {day:"DAY 5",label:"Third call",channel:"call",goal:"Ask one specific question"},
- {day:"DAY 7",label:"Final text",channel:"text",goal:"Give them an easy out"},
- {day:"DAY 8",label:"Final call",channel:"call",goal:"Close the loop, then park"},
+ {day:"Day 1",label:"First call",channel:"call",goal:"Introduce yourself and find the owner"},
+ {day:"Day 2",label:"Second call",channel:"call",goal:"Try a different time of day"},
+ {day:"Day 3",label:"Follow-up text",channel:"text",goal:"Short, relevant follow-up"},
+ {day:"Day 5",label:"Third call",channel:"call",goal:"Ask one specific question"},
+ {day:"Day 7",label:"Final text",channel:"text",goal:"Give them an easy out"},
+ {day:"Day 8",label:"Final call",channel:"call",goal:"Close the loop, then park"},
 ];
 function humanDate(v:string){return v?new Date(v).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"Today"}
 function textScript(p:Outreach,final=false){
@@ -80,8 +80,9 @@ export default function OutreachPage(){
  }
  function call(p:Outreach){if(!p.phone){setMessage("Add a phone number to this contact first.");return}void fetch("/api/call-logs",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({contactId:p.contactId,channel:"call",action:"outbound_call",outcome:"initiated",sequenceStep:p.currentStep,notes:"Outbound call launched from Cinder outreach."})}).catch(()=>{});window.location.href="tel:"+p.phone.replace(/[^+\d]/g,"")}
  function copy(p:Outreach){if(!p.smsConsent){setMessage("No SMS draft available: record explicit SMS consent first. Use the call step instead.");return}const s=textScript(p,p.currentStep===5);void navigator.clipboard.writeText(s).then(()=>setMessage("Text copied for "+p.name)).catch(()=>setMessage("Clipboard unavailable — open this page in Safari and allow clipboard access."))}
- return <main className="outreach-page">
-  <header className="outreach-header"><div><div className="outreach-eyebrow">Outreach</div><h1>Today's outreach</h1><p>Who to contact next, and how.</p></div><div className="outreach-head-actions"><Link href="/crm" className="outreach-link">← Contacts</Link><button className="outreach-primary" onClick={()=>setShowAdd(v=>!v)}>＋ Add prospect</button></div></header>
+ return <main className="u-page outreach-page">
+  <div className="u-head"><h1 className="u-title">Outreach</h1><div className="u-head-actions"><Link href="/crm" className="u-btn u-btn-bare">Prospects</Link><button type="button" className="u-btn u-btn-go" onClick={()=>setShowAdd(v=>!v)}>Add prospect</button></div></div>
+  <p className="u-note" style={{marginBottom:16}}>Who to contact next, and how.</p>
   <section className="outreach-stats"><article><span>Due now</span><strong>{dueCount}</strong><small>Ready for your next touch</small></article><article><span>Active sequences</span><strong>{active.length}</strong><small>Prospects being worked</small></article><article><span>Parked</span><strong>{items.filter(x=>x.status==="parked").length}</strong><small>Sequence finished, no response</small></article><article><span>Contacts</span><strong>{contacts.length}</strong><small>In your workspace</small></article></section>
   {message&&<div className="outreach-message" role="status">{message}<button onClick={()=>setMessage("")}>Dismiss</button></div>}
   {showAdd&&<section className="outreach-add"><div><h2>Add a prospect to outreach</h2><p>Choose an existing contact and personalize the sequence. No calls or texts are sent automatically.</p></div><div className="outreach-form"><label>Contact<select value={selected} onChange={e=>setSelected(e.target.value)}><option value="">Choose a contact…</option>{contacts.filter(c=>!items.some(i=>i.contactId===c.id&&(i.status==="active"||i.status==="do_not_contact"||i.status==="interested"||i.status==="meeting_booked"))).map(c=><option key={c.id} value={c.id}>{c.name}{c.company?" — "+c.company:""}</option>)}</select></label><label>Niche<input value={niche} onChange={e=>setNiche(e.target.value)} placeholder="HVAC, garage doors…"/></label><label className="outreach-wide">Pain point / reason to call<input value={pain} onChange={e=>setPain(e.target.value)} placeholder="e.g. missed calls and slow lead follow-up"/></label><label className="outreach-wide">Research notes (optional)<textarea rows={2} value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Website observations, current tools, likely bottleneck…"/></label><label className="outreach-wide"><input type="checkbox" checked={smsConsentConfirmed} onChange={e=>setSmsConsentConfirmed(e.target.checked)}/> I have explicit permission to send marketing text messages to this contact. Only check this if consent was actually given.</label></div><div className="outreach-add-actions"><button className="outreach-secondary" onClick={()=>setShowAdd(false)}>Cancel</button><button className="outreach-primary" disabled={!selected||busy==="add"} onClick={()=>void enroll()}>{busy==="add"?"Adding…":"Start sequence"}</button></div></section>}

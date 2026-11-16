@@ -47,3 +47,4 @@
 .pb-page .pb-form .pb-full { grid-column: 1 / -1; }
 @media (max-width: 700px) { .pb-page .pb-form { grid-template-columns: 1fr; } }
 @media (max-width: 1100px) { .pb-page .pb-rail { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .pb-page .pb-rail { display: flex; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; } .pb-page .pb-rail::-webkit-scrollbar { display: none; } .pb-page .pb-stop { flex: 0 0 auto; gap: 10px; } .pb-page .pb-stop-k { overflow: visible; } }

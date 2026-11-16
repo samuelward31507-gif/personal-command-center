@@ -163,3 +163,5 @@
   .dw-page h2.dw-title { font-size: 21px; line-height: 27px; }
   .dw-page .dw-crumb-name { max-width: 20ch; }
 }
+
+.dw-line small.dw-late { color: #c2410c; }
