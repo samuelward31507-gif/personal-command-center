@@ -8,7 +8,7 @@ import "../../doc.css";
 import { DocLines } from "../../doc-lines";
 
 type Inv = { business: string; owner: string; phone: string; customer: string; number: number; items: { name: string; qty: number; unit: string; price: number }[];
-  tax_rate: number; total: number; note: string; due_on: string | null; issued: string; status: "open" | "paid" | "void"; pay_link: string; claimed: boolean; address: string };
+  tax_rate: number; total: number; note: string; due_on: string | null; issued: string; status: "open" | "paid" | "void"; pay_link: string; claimed: boolean; address: string; paid_amount?: number; payments?: { amount: number; paid_on: string }[] };
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
 const day = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -40,17 +40,19 @@ export default function InvoicePage() {
             <p className="doc-k">Invoice #{v.number}{v.customer ? ` for ${v.customer}` : ""}</p>
             <span className={"stage " + (v.status === "paid" ? "won" : late ? "late" : v.status === "void" ? "lost" : "booked")}><i />{v.status === "paid" ? "Paid" : v.status === "void" ? "Canceled" : late ? "Past due" : "Open"}</span>
           </div>
-          <p className="doc-amt">{usd(v.total)}</p>
+          <p className="doc-amt">{usd(v.status === "open" && (v.paid_amount ?? 0) > 0 ? v.total - (v.paid_amount ?? 0) : v.total)}</p>
+          {v.status === "open" && (v.paid_amount ?? 0) > 0 && <p className="doc-meta"><span>Balance due. <b>{usd(v.paid_amount ?? 0)}</b> of {usd(v.total)} already paid, thank you.</span></p>}
           <p className="doc-meta"><span>Issued <b>{day(v.issued)}</b></span>{v.due_on && v.status === "open" && <span>Due <b>{day(v.due_on)}</b></span>}</p>
           {v.address && <p className="doc-line">{v.address}</p>}
           <DocLines items={v.items} taxRate={v.tax_rate} total={v.total} />
+          {(v.payments ?? []).length > 0 && <div className="doc-lines"><dl>{(v.payments ?? []).map((p, k) => <div key={k}><dt>Paid {day(p.paid_on)}</dt><dd>−{usd(p.amount)}</dd></div>)}<div className="sum"><dt>{v.status === "paid" ? "Balance" : "Balance due"}</dt><dd>{usd(Math.max(0, v.status === "paid" ? 0 : v.total - (v.paid_amount ?? 0)))}</dd></div></dl></div>}
           {v.note && <div className="doc-note"><h2>Note</h2><p>{v.note}</p></div>}
 
           {v.status === "paid" ? <div className="doc-done ok"><span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
               <div><b>Paid. Thank you!</b><p>This invoice is settled. Keep this page as your receipt.</p></div></div>
             : v.status === "void" ? <div className="doc-done"><div><b>This invoice was canceled.</b><p>Nothing is owed on it. Text {sms ? <a href={sms}>{v.business}</a> : v.business} with any questions.</p></div></div>
             : <div className="doc-acts">
-              {v.pay_link ? <a className="btn ink lg" href={v.pay_link} target="_blank" rel="noopener noreferrer">Pay {usd(v.total)}</a>
+              {v.pay_link ? <a className="btn ink lg" href={v.pay_link} target="_blank" rel="noopener noreferrer">Pay {usd(v.total - (v.paid_amount ?? 0))}</a>
                 : <p className="doc-fine">{who} will tell you how to pay. Reply to the text with any questions.</p>}
               {v.pay_link && <p className="doc-fine">Opens {v.business || "the business"}&rsquo;s secure payment page.</p>}
               {sms && <a className="btn lg" href={sms}>Text a question</a>}

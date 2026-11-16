@@ -4,7 +4,7 @@
 import { randomBytes } from "node:crypto";
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, type Item } from "@/lib/billing";
-import { cleanDate, cleanDetails, detailLine } from "@/lib/crm";
+import { cleanDate, cleanDetails, cleanPayMethod, detailLine, type Payment } from "@/lib/crm";
 import { digits10, inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, appOrigin, clientById, sendToCustomer, type Client } from "@/lib/client-runtime-run";
 import { clientCalendar, createAllDayEvent, createEvent, deleteEvent } from "@/lib/client-calendar";
@@ -83,13 +83,66 @@ export async function scheduleInstall(sql: Sql, c: Client, threadId: string, inp
 
 // ---------- Invoices ----------
 export type Invoice = { id: string; number: number; status: string; items: Item[]; tax_rate: number; total: number; note: string; due_on: string | null;
-  sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null };
+  sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null; paid_amount: number };
 const asInvoice = (r: Record<string, unknown>): Invoice => ({
   id: String(r.id), number: Number(r.number), status: String(r.status), items: cleanItems(r.items), tax_rate: Number(r.tax_rate ?? 0), total: Number(r.total ?? 0), note: String(r.note ?? ""),
   due_on: r.due_on ? String(r.due_on).slice(0, 10) : null, sent_at: r.sent_at ? new Date(String(r.sent_at)).toISOString() : null, viewed_at: r.viewed_at ? new Date(String(r.viewed_at)).toISOString() : null,
   paid_at: r.paid_at ? new Date(String(r.paid_at)).toISOString() : null, paid_claimed_at: r.paid_claimed_at ? new Date(String(r.paid_claimed_at)).toISOString() : null,
   reminders: Number(r.reminders ?? 0), reminders_paused: !!r.reminders_paused, url: r.token ? invoiceUrl(String(r.token)) : null,
+  paid_amount: Number(r.paid_amount ?? 0),
 });
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+/** Adds up what came in on an invoice and settles its status: paid in full, or back to sent when a payment is removed. */
+async function settle(sql: Sql, c: Client, invoiceId: string): Promise<{ total: number; paid: number; status: string; number: number; thread_id: string } | null> {
+  const [r] = await sql`UPDATE public.client_invoices i SET paid_amount = coalesce((SELECT sum(amount) FROM public.client_payments p WHERE p.invoice_id = i.id), 0)
+    WHERE i.id = ${invoiceId}::uuid AND i.project_id = ${c.projectId}::uuid RETURNING i.total::float AS total, i.paid_amount::float AS paid, i.status, i.number, i.thread_id, i.sent_at` as { total: number; paid: number; status: string; number: number; thread_id: string; sent_at: string | null }[];
+  if (!r) return null;
+  if (r.status !== "void") {
+    const full = r.paid >= r.total - 0.005 && r.total > 0;
+    if (full && r.status !== "paid") await sql`UPDATE public.client_invoices SET status = 'paid', paid_at = now(), reminders_paused = true WHERE id = ${invoiceId}::uuid`;
+    if (!full && r.status === "paid") await sql`UPDATE public.client_invoices SET status = CASE WHEN sent_at IS NULL THEN 'draft' ELSE 'sent' END, paid_at = NULL WHERE id = ${invoiceId}::uuid`;
+    r.status = full ? "paid" : r.status === "paid" ? (r.sent_at ? "sent" : "draft") : r.status;
+  }
+  return r;
+}
+
+/** Records money that came in on an invoice: all of it, or part (a deposit, a progress payment). Never more than the balance. */
+export async function recordPayment(sql: Sql, c: Client, invoiceId: string, input: { amount?: unknown; method?: unknown; on?: unknown; note?: unknown }): Promise<{ ok: boolean; error?: string; balance?: number }> {
+  const [inv] = await sql`SELECT id, thread_id, number, total::float AS total, paid_amount::float AS paid, status FROM public.client_invoices WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid` as { id: string; thread_id: string; number: number; total: number; paid: number; status: string }[];
+  if (!inv) return { ok: false, error: "That invoice isn't here." };
+  if (inv.status === "void") return { ok: false, error: "That invoice was voided." };
+  const balance = round2(inv.total - inv.paid);
+  const amount = round2(Number(String(input.amount ?? "").replace(/[$,\s]/g, "")));
+  if (!Number.isFinite(amount) || amount <= 0) return { ok: false, error: "Type the amount, like 1500." };
+  if (amount > balance + 0.005) return { ok: false, error: `That's more than the ${dollars(balance)} still owed.` };
+  const on = cleanDate(input.on) ?? new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" });
+  const method = cleanPayMethod(input.method);
+  const note = String(input.note ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 200);
+  await sql`INSERT INTO public.client_payments (owner_id, project_id, invoice_id, thread_id, amount, method, paid_on, note) VALUES (${c.owner}, ${c.projectId}::uuid, ${inv.id}::uuid, ${inv.thread_id}::uuid, ${amount}, ${method}, ${on}::date, ${note})`;
+  const s = await settle(sql, c, inv.id);
+  const left = s ? round2(s.total - s.paid) : 0;
+  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${inv.thread_id}::uuid, 'out', 'system',
+    ${left > 0 ? `Payment of ${dollars(amount)} recorded on invoice #${inv.number}. ${dollars(left)} still owed.` : `Invoice #${inv.number} paid in full: ${dollars(amount)} came in.`})`;
+  if (left <= 0) void emitEvent(c.setup, c.projectId, "invoice.paid", { customer: { id: inv.thread_id }, number: inv.number, total: inv.total });
+  return { ok: true, balance: left };
+}
+
+/** Takes a recorded payment back off (typed wrong). The invoice goes back to owing that amount. */
+export async function deletePayment(sql: Sql, c: Client, paymentId: string): Promise<{ ok: boolean; error?: string }> {
+  const [p] = await sql`DELETE FROM public.client_payments WHERE id = ${paymentId}::uuid AND project_id = ${c.projectId}::uuid RETURNING invoice_id` as { invoice_id: string }[];
+  if (!p) return { ok: false, error: "That payment was already removed." };
+  await settle(sql, c, p.invoice_id);
+  return { ok: true };
+}
+
+/** Every payment recorded, newest first: the Money screen's payments list and the invoice sheet's history. */
+export async function loadPayments(sql: Sql, c: Client, limit = 200): Promise<Payment[]> {
+  const rows = await sql`SELECT p.id, p.invoice_id, p.thread_id, p.amount::float AS amount, p.method, p.paid_on::text AS paid_on, p.note, i.number, t.customer_name
+    FROM public.client_payments p JOIN public.client_invoices i ON i.id = p.invoice_id JOIN public.client_threads t ON t.id = p.thread_id
+    WHERE p.project_id = ${c.projectId}::uuid ORDER BY p.paid_on DESC, p.created_at DESC LIMIT ${limit}` as Record<string, unknown>[];
+  return rows.map(r => ({ id: String(r.id), invoice_id: String(r.invoice_id), thread_id: String(r.thread_id), amount: Number(r.amount), method: cleanPayMethod(r.method), paid_on: String(r.paid_on).slice(0, 10), note: String(r.note ?? ""), number: Number(r.number), customer: String(r.customer_name ?? "") }));
+}
 
 /** A draft invoice for a won job: the quote's lines when there are some, else one line for the job value. */
 export async function createInvoice(sql: Sql, c: Client, threadId: string): Promise<{ ok: boolean; invoice?: Invoice; error?: string }> {
@@ -157,8 +210,13 @@ export async function sendInvoice(sql: Sql, c: Client, invoiceId: string): Promi
 
 /** Paid (the owner saw the money), back to unpaid, voided, or reminders paused / resumed. */
 export async function setInvoice(sql: Sql, c: Client, invoiceId: string, what: "paid" | "unpaid" | "void" | "pause" | "resume"): Promise<{ ok: boolean; error?: string }> {
+  if (what === "paid") {
+    const [i] = await sql`SELECT total::float AS total, paid_amount::float AS paid, status FROM public.client_invoices WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid` as { total: number; paid: number; status: string }[];
+    if (i && (i.status === "draft" || i.status === "sent") && i.total - i.paid > 0.005) return recordPayment(sql, c, invoiceId, { amount: round2(i.total - i.paid), method: "other", note: "Marked paid in full" });
+  }
+  if (what === "unpaid") await sql`DELETE FROM public.client_payments WHERE invoice_id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid`;
   const r = what === "paid" ? await sql`UPDATE public.client_invoices SET status = 'paid', paid_at = now() WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status IN ('draft', 'sent') RETURNING thread_id, number, total`
-    : what === "unpaid" ? await sql`UPDATE public.client_invoices SET status = CASE WHEN sent_at IS NULL THEN 'draft' ELSE 'sent' END, paid_at = NULL WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status = 'paid' RETURNING thread_id, number, total`
+    : what === "unpaid" ? await sql`UPDATE public.client_invoices SET status = CASE WHEN sent_at IS NULL THEN 'draft' ELSE 'sent' END, paid_at = NULL, paid_amount = 0 WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status = 'paid' RETURNING thread_id, number, total`
     : what === "void" ? await sql`UPDATE public.client_invoices SET status = 'void' WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status IN ('draft', 'sent') RETURNING thread_id, number, total`
     : await sql`UPDATE public.client_invoices SET reminders_paused = ${what === "pause"} WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid RETURNING thread_id, number, total`;
   if (!r.length) return { ok: false, error: "That invoice was already updated." };
@@ -170,7 +228,7 @@ export async function setInvoice(sql: Sql, c: Client, invoiceId: string, what: "
 }
 
 export type PublicInvoice = { business: string; owner: string; phone: string; customer: string; number: number; items: Item[]; tax_rate: number; total: number; note: string;
-  due_on: string | null; issued: string; status: "open" | "paid" | "void"; pay_link: string; claimed: boolean; address: string };
+  due_on: string | null; issued: string; status: "open" | "paid" | "void"; pay_link: string; claimed: boolean; address: string; paid_amount: number; payments: { amount: number; paid_on: string }[] };
 /** What the customer sees behind the invoice link. Marks it viewed. */
 export async function publicInvoice(sql: Sql, token: string): Promise<PublicInvoice | null> {
   if (!INVOICE_TOKEN.test(token)) return null;
@@ -183,7 +241,9 @@ export async function publicInvoice(sql: Sql, token: string): Promise<PublicInvo
   return { business: c.setup.display_name || "", owner: first(c.setup.owner_name || ""), phone: c.setup.texting_number || "", customer: String(r.customer_name || ""),
     number: Number(r.number), items: cleanItems(r.items), tax_rate: Number(r.tax_rate ?? 0), total: Number(r.total ?? 0), note: String(r.note ?? ""),
     due_on: r.due_on ? String(r.due_on).slice(0, 10) : null, issued: new Date(String(r.sent_at ?? r.created_at)).toISOString().slice(0, 10),
-    status: r.status === "paid" ? "paid" : r.status === "void" ? "void" : "open", pay_link: c.setup.pay_link || "", claimed: !!r.paid_claimed_at, address: String(d.address ?? "") };
+    status: r.status === "paid" ? "paid" : r.status === "void" ? "void" : "open", pay_link: c.setup.pay_link || "", claimed: !!r.paid_claimed_at, address: String(d.address ?? ""),
+    paid_amount: Number(r.paid_amount ?? 0),
+    payments: (await sql`SELECT amount::float AS amount, paid_on::text AS paid_on FROM public.client_payments WHERE invoice_id = ${String(r.id)}::uuid ORDER BY paid_on` as { amount: number; paid_on: string }[]).map(p => ({ amount: Number(p.amount), paid_on: String(p.paid_on).slice(0, 10) })) };
 }
 /** The customer says they paid. Cinder can't see the money, so the owner checks and marks it paid. */
 export async function claimPaid(sql: Sql, token: string): Promise<{ ok: boolean; error?: string }> {
@@ -200,7 +260,7 @@ export async function claimPaid(sql: Sql, token: string): Promise<{ ok: boolean;
 
 /** Daily: the payment reminders that are due, in each owner's texting hours. A reply from the customer pauses them. */
 export async function runInvoiceReminders(sql: Sql, limit = 60): Promise<{ sent: number; skipped: number }> {
-  const rows = await sql`SELECT i.id, i.owner_id, i.project_id, i.thread_id, i.number, i.total::float AS total, i.due_on::text AS due_on, i.reminders, i.reminders_paused, i.token, i.last_reminder_at,
+  const rows = await sql`SELECT i.id, i.owner_id, i.project_id, i.thread_id, i.number, (i.total - i.paid_amount)::float AS total, i.due_on::text AS due_on, i.reminders, i.reminders_paused, i.token, i.last_reminder_at,
       t.customer_phone, t.customer_name, t.status AS thread_status, t.last_in_at
     FROM public.client_invoices i JOIN public.client_threads t ON t.id = i.thread_id
     WHERE i.status = 'sent' AND NOT i.reminders_paused AND i.reminders < 3 AND i.due_on < current_date + 1 ORDER BY i.due_on LIMIT 500` as Record<string, unknown>[];

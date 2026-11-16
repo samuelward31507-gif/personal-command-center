@@ -23,6 +23,7 @@ export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: {
   </Sheet>;
 }
 import { LineEditor, invoiceState } from "./money";
+import { Photos } from "./photos";
 import { nextUp, LostPicker } from "./jobs";
 import { sourceLabel, type Biz, type Data, type Go, type Text, type Thread } from "./types";
 
@@ -73,7 +74,8 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
   const next = r.card ? nextUp(r.card) : null;
   const pick = (s: Stage) => {
     if (r.card && s === r.card.stage) return;
-    if (s === "quoted" || s === "won") { setAsk(s); setTab("job"); return; }
+    if (s === "quoted") { go.quote(id); return; }
+    if (s === "won") { setAsk(s); setTab("job"); return; }
     if (s === "lost") { setLosing(true); return; }
     void r.act("stage", { action: "stage", stage: s }, `Moved to ${STAGE_LABEL[s]}.`);
   };
@@ -130,7 +132,8 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
   const { card, cust, name, phone, address, source, since, price, inv, invoices, paid, owed, status } = r;
   const pick = (s: Stage) => {
     if (card && s === card.stage) return;
-    if (s === "quoted" || s === "won") { setAsk(s); setTab("job"); return; }
+    if (s === "quoted") { go.quote(id); return; }
+    if (s === "won") { setAsk(s); setTab("job"); return; }
     if (s === "lost") { setLosing(true); return; }
     void r.act("stage", { action: "stage", stage: s }, `Moved to ${STAGE_LABEL[s]}.`);
   };
@@ -142,7 +145,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
     if (!card) return null;
     if (card.stage === "won" && inv) return <button type="button" className="btn ink" onClick={() => go.invoice(inv.id)}>Open invoice</button>;
     if (card.stage === "won") return <button type="button" className="btn ink" onClick={() => setTab("job")}>Create invoice</button>;
-    if (card.stage === "quoted" && card.quote && !card.quote.linked) return <button type="button" className="btn ink" onClick={() => setTab("job")}>Send the quote</button>;
+    if (card.stage === "quoted" && card.quote && !card.quote.linked) return <button type="button" className="btn ink" onClick={() => go.quote(card.id)}>Send the quote</button>;
     if (card.stage === "quoted") return <button type="button" className="btn ink" onClick={() => pick("won")}>Mark won</button>;
     return <button type="button" className="btn ink" onClick={() => pick("quoted")}>Write quote</button>;
   })();
@@ -156,7 +159,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
     <p style={{ fontWeight: 500 }}>{next.text}</p>
     <div className="acts-row" style={{ marginTop: 8 }}>
       {next.icon === "chat" && <button type="button" className="btn ink sm" onClick={() => { setTab("activity"); ta.current?.focus(); }}>Reply</button>}
-      {next.icon === "quote" && <button type="button" className="btn ink sm" onClick={() => { if (card.quote && !card.quote.linked) setTab("job"); else pick("quoted"); }}>{card.quote && !card.quote.linked ? "Send the quote" : "Write the quote"}</button>}
+      {next.icon === "quote" && <button type="button" className="btn ink sm" onClick={() => go.quote(card.id)}>{card.quote && !card.quote.linked ? "Send the quote" : "Write the quote"}</button>}
       {next.icon === "invoice" && inv && <button type="button" className="btn ink sm" onClick={() => go.invoice(inv.id)}>Open invoice</button>}
       {next.icon === "invoice" && !inv && <button type="button" className="btn ink sm" onClick={() => setTab("job")}>Create invoice</button>}
       {next.icon === "cal" && <button type="button" className="btn ink sm" onClick={() => setTab("job")}>Open the job</button>}
@@ -211,6 +214,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
         </section>}
         {card && card.stage === "won" && !card.pastCustomer && <Steps card={card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
         {card && (card.stage === "new" || card.stage === "booked") && <Brief card={card} name={name} phone={phone} address={address} texts={r.texts} trade={biz.trade} toast={toast} />}
+        {card && <Photos thread={card.id} photos={card.photos ?? []} stage={card.stage} project={project} api={api} toast={toast} reload={reload} />}
         {card?.crew && <section><p className="sec">Crew notes</p><p style={{ lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{card.crew}</p></section>}
         {(card?.notes || cust?.line) && <section><p className="sec">Notes</p><p style={{ lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{card?.notes || cust?.line}</p></section>}
         {!wide && <div className="rail-mobile">{rail}</div>}
@@ -371,8 +375,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
         </> : <>
           <button type="button" className="btn" disabled={!!busy} onClick={() => void copy()}>Copy link</button>
           {card.email && q.url && <a className="btn" href={`mailto:${card.email}?subject=${encodeURIComponent(`Your quote from ${biz.business}`)}&body=${encodeURIComponent(quoteText({ first: firstName, business: biz.business, amount: q.amount, line: card.line.replace(/ · /g, ", "), url: q.url }))}`}>Email it</a>}
-          <button type="button" className="btn" disabled={!!busy} onClick={() => setEditLines(true)}>Edit lines</button>
-          <button type="button" className="btn ink" disabled={!!busy || !canText} onClick={() => void act("send", { action: "quotelink", note: incl }, res => res.sent ? `Quote texted to ${firstName}.` : res.warn || "Saved.")}>{busy === "send" ? <Spinner /> : q.linked ? "Text it again" : `Text ${firstName}`}</button>
+          <button type="button" className="btn ink" onClick={() => go.quote(card.id)}>Open the quote</button>
         </>}
       </div>
     </>)}

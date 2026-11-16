@@ -16,7 +16,7 @@ const today = (c: Client) => new Date().toLocaleDateString("en-CA", { timeZone: 
 
 /** Every customer worth a card: active in the last 120 days, or still booked or quoted. Review and "you're due" texts aren't leads. */
 export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
-  const invoices = await invoicesByThread(sql as never, c).catch(() => ({} as Record<string, Card["invoice"]>));
+  const [invoices, photos] = await Promise.all([invoicesByThread(sql as never, c).catch(() => ({} as Record<string, Card["invoice"]>)), photosByThread(sql, c).catch(() => ({} as Record<string, NonNullable<Card["photos"]>>))]);
   const rows = await sql`SELECT t.id, t.customer_name, t.customer_phone, t.source, t.status, t.stage, t.details, t.value::float AS value, t.notes,
       coalesce(t.last_in_at, t.updated_at) AS at, q.id AS quote_id, q.amount::float AS quote_amount, q.status AS quote_status, q.steps_sent AS quote_steps,
       q.token AS quote_token, q.link_sent_at IS NOT NULL AS quote_linked, q.items AS quote_items, q.tax_rate::float AS quote_tax,
@@ -58,6 +58,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       invoice: invoices[String(r.id)] ?? null, reviewAuto: !!r.review_auto, reviewSent: r.review_sent ? new Date(String(r.review_sent)).toISOString() : null, pastCustomer: again,
       job: again ? {} : cleanJob(r.job_steps), costs: again ? cleanCosts({}) : cleanCosts(r.job_costs),
       stageAt: r.stage_at ? new Date(String(r.stage_at)).toISOString() : null, crew: String(r.crew_notes ?? ""), email: String(r.customer_email ?? ""),
+      photos: photos[String(r.id)] ?? [],
       remind: r.remind_at ? { at: new Date(String(r.remind_at)).toISOString(), note: String(r.remind_note ?? ""), sent: !!r.remind_sent_at } : null,
       lostReason: typeof r.lost_note === "string" ? (r.lost_note.match(/^Marked lost: (.+?)\. Follow-ups stopped\.$/)?.[1] ?? "") : "",
     };
@@ -165,7 +166,7 @@ export function ownerSetupView(setup: Record<string, string>) {
     has_cell: setup.owner_cell ? "yes" : "", has_booking_link: setup.booking_link ? "yes" : "", hours: setup.hours ?? "",
     // The agent's own settings, all of them the owner's to change.
     ...Object.fromEntries(AGENT_KEYS.map(x => [x, setup[x] ?? ""])),
-    timezone: setup.timezone ?? "", a2p_status: setup.a2p_status ?? "", a2p_submitted: setup.a2p_submitted ?? "", forwarding: setup.forwarding ?? "", has_webhook: setup.webhook_url ? "yes" : "", alert_email: setup.alert_email ? "yes" : "" };
+    timezone: setup.timezone ?? "", a2p_status: setup.a2p_status ?? "", a2p_submitted: setup.a2p_submitted ?? "", forwarding: setup.forwarding ?? "", booking_page: setup.booking_page ?? "", has_webhook: setup.webhook_url ? "yes" : "", alert_email: setup.alert_email ? "yes" : "" };
 }
 
 /** Each place leads come from, what it did lately, and the last time it failed. Plus the last texts that didn't go out and the consent log. */
@@ -183,6 +184,33 @@ export async function connectionsReport(sql: Sql, c: Client): Promise<{ sources:
     failures: fails.map(r => ({ id: String(r.id), at: iso(r.at) || "", body: String(r.body ?? "").slice(0, 160), name: String(r.customer_name ?? ""), phone: String(r.customer_phone ?? ""), thread: String(r.thread), source: String(r.source ?? "") })),
     log: log.map(r => ({ at: iso(r.at) || "", event: String(r.event), source: String(r.source ?? ""), phone: String(r.phone ?? ""), evidence: String(r.evidence ?? "").slice(0, 200) })),
   };
+}
+
+/** A job photo the owner or crew took: resized on the phone first, kept with the record. At most 40 a customer. */
+export async function addPhoto(sql: Sql, c: Client, threadId: string, input: { data?: unknown; kind?: unknown; caption?: unknown }): Promise<{ ok: boolean; id?: string; error?: string }> {
+  const t = await threadOf(sql, c, threadId);
+  if (!t) return { ok: false, error: "Not found." };
+  const m = String(input.data ?? "").match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+  if (!m) return { ok: false, error: "That photo didn't come through. Try again." };
+  const bytes = Buffer.from(m[2], "base64");
+  if (bytes.length > 900_000) return { ok: false, error: "That photo is too large." };
+  const [n] = await sql`SELECT count(*)::int AS n FROM public.client_photos WHERE thread_id = ${t.id}::uuid` as { n: number }[];
+  if ((n?.n ?? 0) >= 40) return { ok: false, error: "40 photos is the most for one customer. Remove one first." };
+  const kind = ["before", "during", "after"].includes(String(input.kind)) ? String(input.kind) : "other";
+  const caption = String(input.caption ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 120);
+  const [p] = await sql`INSERT INTO public.client_photos (owner_id, project_id, thread_id, kind, caption, mime, bytes, size) VALUES (${c.owner}, ${c.projectId}::uuid, ${t.id}::uuid, ${kind}, ${caption}, ${m[1]}, ${bytes}, ${bytes.length}) RETURNING id` as { id: string }[];
+  return { ok: true, id: p.id };
+}
+export async function removePhoto(sql: Sql, c: Client, photoId: string): Promise<{ ok: boolean; error?: string }> {
+  const r = await sql`DELETE FROM public.client_photos WHERE id = ${photoId}::uuid AND project_id = ${c.projectId}::uuid RETURNING id`;
+  return r.length ? { ok: true } : { ok: false, error: "That photo was already removed." };
+}
+/** Photo ids by customer, for the board (the bytes load one at a time from /api/app/photo). */
+export async function photosByThread(sql: Sql, c: Client): Promise<Record<string, { id: string; kind: "before" | "during" | "after" | "other"; caption: string; at: string; shared: boolean }[]>> {
+  const rows = await sql`SELECT id, thread_id, kind, caption, shared, created_at FROM public.client_photos WHERE project_id = ${c.projectId}::uuid ORDER BY created_at` as Record<string, unknown>[];
+  const out: Record<string, { id: string; kind: "before" | "during" | "after" | "other"; caption: string; at: string; shared: boolean }[]> = {};
+  for (const r of rows) (out[String(r.thread_id)] ??= []).push({ id: String(r.id), kind: String(r.kind) as "before", caption: String(r.caption ?? ""), at: new Date(String(r.created_at)).toISOString(), shared: !!r.shared });
+  return out;
 }
 
 /** "Remind me": a time and a note on a job. The owner gets a text and a push when it's due. Null clears it. */

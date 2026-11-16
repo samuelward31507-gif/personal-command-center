@@ -34,7 +34,7 @@ def tint(s, on):
     s=re.sub(r'class="sec sec-tint( book)?"', r'class="sec\1"', s, count=1)
     return re.sub(r'class="sec( book)?"', r'class="sec sec-tint\1"', s, count=1) if on else s
 
-NAV=[("/product","Product"),("/how-it-works","How it works"),("/pricing","Pricing"),("/try","Try it")]
+NAV=[("/product","Product"),("/how-it-works","How it works"),("/pricing","Pricing"),("/demo","Demo"),("/try","Try it")]
 def nav(active):
     links="".join('<a href="%s"%s>%s</a>' % (h,' aria-current="page"' if h==active else "",l) for h,l in NAV)
     h=re.sub(r'<nav class="nav-links" aria-label="Main">.*?</nav>', '<nav class="nav-links" aria-label="Main">'+links+'</nav>', header)
@@ -154,4 +154,15 @@ page("try.html","/try","Try it · Cinder Revenue Company","Type what a homeowner
 # ---------- Book ----------
 bookp=book.replace('<h2 class="split">','<h1 class="split">').replace("</h2>","</h1>",1).replace('class="sec book"','class="sec book pbook"')
 page("book.html","/book","Book a call · Cinder Revenue Company","Pick a time for a free 15-minute call. We look at how leads reach you today and put a real number on what missed calls cost you.", bookp, "/book")
+
+# ---------- Demo ----------
+vid='''<section class="sec pvid" id="film">
+  <div class="wrap">
+    <div class="vid"><video src="/media/cinder-demo.mp4" poster="/media/cinder-demo-poster.jpg" controls autoplay muted playsinline preload="metadata" aria-label="A 66-second film: a missed call and an unanswered quote, then the same lead texted back, booked and the quote won with Cinder"></video></div>
+    <p class="vid-note">66 seconds. The business, names and numbers are examples.</p>
+  </div>
+</section>
+'''
+demop=phead("See it work in about a minute.", "A missed call, a lead that calls the next company, a quote nobody followed up. Then the same day with Cinder.", ("/try","Try it yourself"))+vid+tint(book,True)
+page("demo/index.html","/demo","Demo · Cinder Revenue Company","Watch a missed call get texted back in 6 seconds, qualified and booked on the calendar, and a quote followed up until it's won. 66 seconds.", demop, "/demo")
 print("ok")

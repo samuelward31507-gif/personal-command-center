@@ -153,6 +153,48 @@ async function openSlots(sql: Sql, c: Client, lang: Lang): Promise<Slot[] | null
   } catch (e) { console.error("Client calendar read failed", e instanceof Error ? e.message : e); return null; }
 }
 
+/** Times a customer can pick on the public booking page: the same rules as the texts, more of them. Null without a calendar. */
+export async function bookingSlots(sql: Sql, c: Client, max = 24): Promise<Slot[] | null> {
+  const cal = await clientCalendar(sql, c.projectId).catch(() => null);
+  if (!cal) return null;
+  const now = new Date();
+  try {
+    const busy = await busyTimes(cal, now, new Date(now.getTime() + 15 * 86400000));
+    return freeSlots(busy, withBookingPrefs(parseHours(c.setup.hours, tzOf(c), cal.slotMin), c.setup), now, { days: 14, max, lang: "en" });
+  } catch (e) { console.error("Booking page calendar read failed", e instanceof Error ? e.message : e); return null; }
+}
+
+/**
+ * A customer booked on the public booking page: their conversation, consent, the estimate on the calendar when they
+ * picked a time, a confirmation text, and the owner hears about it. Without a time it's a request the agent follows up.
+ */
+export async function bookingPageLead(sql: Sql, c: Client, b: { name: string; phone: string; address: string; message: string; start: string | null }, ip: string): Promise<{ ok: boolean; booked: boolean; when?: string; error?: string }> {
+  const t = await thread(sql, c, b.phone, "booking page");
+  await recordConsent(sql, c, b.phone, "web_form", "booking page", `Booked on the online booking page and agreed to texts${b.name ? ` as ${b.name}` : ""}`, ip);
+  if (t.status === "opted_out") return { ok: false, booked: false, error: "This number opted out of texts. Call the business instead." };
+  await sql`UPDATE public.client_threads SET customer_name = CASE WHEN customer_name = '' THEN ${b.name} ELSE customer_name END, source = 'booking page', contact_at = now(),
+      details = details || ${JSON.stringify(b.address ? { address: b.address } : {})}::jsonb WHERE id = ${t.id}::uuid`;
+  await log(sql, c, t.id, "in", "system", `Booked online${b.message ? `: "${b.message.slice(0, 300)}"` : ""}`);
+  let booked = false, when = "";
+  if (b.start) {
+    const slots = await bookingSlots(sql, c, 60);
+    const slot = slots?.find(s => s.start === b.start);
+    if (!slot) return { ok: false, booked: false, error: "That time was just taken. Pick another." };
+    booked = await book(sql, c, t.id, b.phone, b.name || b.phone, slot, [b.address, b.message].filter(Boolean).join("\n") || "Booked online");
+    if (!booked) return { ok: false, booked: false, error: "Couldn't hold that time. Pick another, or text us." };
+    when = slotLabel(slot.start, tzOf(c), "en");
+    await sql`UPDATE public.client_threads SET status = 'booked', stage = coalesce(stage, 'booked'), stage_at = now(), updated_at = now() WHERE id = ${t.id}::uuid`;
+  }
+  const first = (b.name || "").split(" ")[0];
+  const text = booked
+    ? `Hi${first ? " " + first : ""}, you're booked with ${c.setup.display_name || "us"}: ${when}${b.address ? ` at ${b.address}` : ""}. ${c.setup.owner_name ? c.setup.owner_name.split(" ")[0] + " will see you then." : "See you then."} Need to change it? Just reply here.`
+    : `Hi${first ? " " + first : ""}, thanks for reaching out to ${c.setup.display_name || "us"}. We got your request and will text you shortly to set a time.`;
+  await sendToCustomer(sql, c, t.id, b.phone, text, "template");
+  await alertOwner(c, ownerAlert(booked ? "booked" : "new", b.name || e164(b.phone), `${booked ? when + ", " : ""}from your booking page${b.message ? `: ${b.message.slice(0, 100)}` : ""}`), t.id, sql);
+  void emitEvent(c.setup, c.projectId, "lead.new", { customer: { id: t.id, name: b.name, phone: e164(b.phone) }, source: "booking page", message: b.message.slice(0, 1000) });
+  return { ok: true, booked, when };
+}
+
 /** The reply engine's next text, or null when it should hand off. Never throws. */
 export async function draftReply(sql: Sql, c: Client, threadId: string, customerName: string, slots: Slot[] | null = null, extra = "") {
   const history = await sql`SELECT direction, body FROM public.client_texts WHERE thread_id = ${threadId}::uuid ORDER BY at DESC LIMIT 20` as { direction: string; body: string }[];

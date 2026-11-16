@@ -5,7 +5,8 @@ import { isRepeatTrade, SEQUENCES } from "@/lib/client-runtime";
 import { connectionsReport, loadBoard, ownerSetupView } from "@/lib/client-crm-run";
 import { jobberConfigured, jobberState } from "@/lib/jobber-core";
 import { winbackAudience } from "@/lib/client-close-run";
-import { loadCustomers, loadInvoices } from "@/lib/client-billing-run";
+import { loadCustomers, loadInvoices, loadPayments } from "@/lib/client-billing-run";
+import { reportFor, type Period } from "@/lib/client-reports";
 import { winbackDraft } from "@/lib/crm";
 
 export const runtime = "nodejs";
@@ -20,6 +21,12 @@ export async function GET(req: Request) {
     const sql = db();
     const c = await clientFor(sql, s, q.get("p"));
     if (!c) return json({ error: "Sign in" }, 401);
+    // Reports for the period the owner picked: its own request, so the rest of the app stays quick.
+    if (q.get("report")) {
+      if (s.role === "crew") return json({ error: "Only the owner sees reports." }, 403);
+      const days = ([30, 90, 365].includes(Number(q.get("report"))) ? Number(q.get("report")) : 30) as Period;
+      return json({ report: await reportFor(sql, c.projectId, c.setup.timezone || "America/Denver", days) });
+    }
     const th = q.get("thread");
     if (th && /^[0-9a-f-]{36}$/i.test(th)) {
       const [t] = await sql`SELECT id, customer_name, customer_phone, source, status, lang FROM public.client_threads WHERE id = ${th}::uuid AND project_id = ${c.projectId}::uuid` as Record<string, unknown>[];
@@ -27,7 +34,7 @@ export async function GET(req: Request) {
       const texts = await sql`SELECT id, direction, author, body, at, media, status FROM public.client_texts WHERE thread_id = ${th}::uuid ORDER BY at LIMIT 400`;
       return json({ thread: t, texts });
     }
-    const [live, biz, appts, unread, msgs, quotes, calRow, jobberRow, keyRow, wonJobs, board, past, customers, invoices, wires] = await Promise.all([
+    const [live, biz, appts, unread, msgs, quotes, calRow, jobberRow, keyRow, wonJobs, board, past, customers, invoices, wires, payments] = await Promise.all([
       liveFor(sql, c.projectId, 80, c.setup.timezone || "America/Denver"),
       sql`SELECT o.project_id, coalesce(o.setup->>'display_name', p.client_name, p.name) AS name, o.portal_token FROM public.client_ops o JOIN public.projects p ON p.id = o.project_id WHERE o.project_id = ANY(${s.projects}::uuid[])`,
       // Booked estimates still waiting on an outcome (up to two weeks back) and everything coming up.
@@ -51,6 +58,7 @@ export async function GET(req: Request) {
       loadCustomers(sql, c).catch(e => { console.error("Customers failed", e instanceof Error ? e.message : e); return []; }),
       loadInvoices(sql, c).catch(e => { console.error("Invoices failed", e instanceof Error ? e.message : e); return []; }),
       connectionsReport(sql, c).catch(e => { console.error("Connections failed", e instanceof Error ? e.message : e); return { sources: [], failures: [], log: [] }; }),
+      loadPayments(sql, c).catch(() => []),
     ]);
     // Their real calendar, read only on the Calendar tab (it's a Google call).
     let events: CalEvent[] = [], calError = "";
@@ -72,7 +80,7 @@ export async function GET(req: Request) {
       appointments: (appts as { event_id?: string }[]).map(a => ({ ...a, link: (a.event_id && links.get(a.event_id)) || "" })), quotes, quoteSteps: SEQUENCES.quote.days.length, wonJobs, hasReviewLink: !!c.setup.review_link, repeat: isRepeatTrade(c.setup.trade), calendar, messages: (msgs as Record<string, unknown>[]).reverse(), unreadFromSam: (unread as { n: number }[])[0]?.n ?? 0,
       board: crew ? board.map(b => ({ ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 } })) : board,
       setup: crew ? { display_name: c.setup.display_name || "", owner_name: c.setup.owner_name || "", trade: c.setup.trade || "" } : { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "", team: c.setup.team || "[]", monthly_report: c.setup.monthly_report || "" },
-      customers: crew ? [] : customers, invoices: crew ? [] : invoices,
+      customers: crew ? [] : customers, invoices: crew ? [] : invoices, payments: crew ? [] : payments,
       key: String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? ""), origin, wires,
       jobber: (() => { const j = (jobberRow as { account_name?: string; last_error?: string; last_push_at?: unknown; connected_at?: unknown }[])[0];
         return { available: jobberConfigured(), connected: !!j, account: String(j?.account_name ?? ""), error: String(j?.last_error ?? ""), lastPush: j?.last_push_at ? new Date(String(j.last_push_at)).toISOString() : null,
