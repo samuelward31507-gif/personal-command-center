@@ -7,7 +7,7 @@ import { useState, useRef } from "react";
 import { Icon, Spinner, ago, fmtPhone, typePhone, type Api, type Toast } from "./parts";
 import { ChecklistsSheet } from "./parity";
 import { contrastOnWhite, dominantColor, readableAccent } from "@/lib/brand";
-import { sourceLabel, type Biz, type Data, type Go } from "./types";
+import { sourceLabel, type Biz, type Data, type Go, type LeadMail } from "./types";
 import { PageHead } from "./charts";
 
 type View = "connections" | "agent" | "account";
@@ -109,6 +109,7 @@ function Connections({ d, biz, go, push, onPush, toast, api, project, demo, relo
           {src.key === "web chat" && key && <Code text={snippet} block toast={toast} />}
           {src.key === "number" && !s.has_cell && <p>Your cell isn&rsquo;t on file, so calls can&rsquo;t ring you and tests have nowhere to go. Ask Sam to add it.</p>}
         </Row>; })}
+      <MailConn d={d} go={go} toast={toast} api={api} project={project} reload={reload} open={open === "mail"} onToggle={() => setOpen(open === "mail" ? null : "mail")} />
       {key && <Row state={s.booking_page === "no" ? "off" : "on"} name="Your booking page" st={s.booking_page === "no" ? "Off" : d.calendar?.connected ? "Live, times from your Google Calendar" : "Live, customers ask for a time"}
         open={open === "bookpage"} onToggle={() => setOpen(open === "bookpage" ? null : "bookpage")}
         acts={<><Code text={`${origin}/b/${key}`} toast={toast} /><a className="btn sm" href={`/b/${demo ? "example" : key}`} target="_blank" rel="noreferrer">Open</a></>}>
@@ -148,6 +149,64 @@ function Connections({ d, biz, go, push, onPush, toast, api, project, demo, relo
       </tbody></table>}
       {log.length > 12 && !more && <button type="button" className="link" style={{ padding: "8px 0" }} onClick={() => setMore(true)}>Show all {log.length}</button>}
     </section>
+  </div>;
+}
+
+// ---------- Leads by email ----------
+const MAIL_WORD: Record<string, string> = { lead: "Lead", added: "Added by you", no_phone: "No phone", confirm: "Forwarding code", ignored: "Not a lead", new: "Couldn't add" };
+function MailConn({ d, go, toast, api, project, reload, open, onToggle }: { d: Data; go: Go; toast: Toast; api: Api; project: string; reload: () => Promise<void>; open: boolean; onToggle: () => void }) {
+  const m = d.mail ?? { address: "", recent: [] };
+  const waiting = m.recent.filter(r => r.status === "no_phone" || r.status === "new");
+  const confirm = m.recent.find(r => r.status === "confirm" && Date.now() - Date.parse(r.at) < 3 * 86400000);
+  const leads = m.recent.filter(r => r.status === "lead" || r.status === "added");
+  const lastLead = leads[0]?.at;
+  const state: State = !m.address ? "todo" : leads.length || confirm || waiting.length ? "on" : "todo";
+  const st = !m.address ? "Sam is setting it up" : leads.length ? "Live" : confirm ? "Waiting on one click" : "Ready, nothing forwarded yet";
+  return <>
+    <Row state={state} name="Lead emails" st={st} last={lastLead ? `Last lead ${ago(lastLead)}${waiting.length ? `, ${waiting.length} need a phone` : ""}` : waiting.length ? `${waiting.length} need a phone` : ""}
+      open={open} onToggle={onToggle} acts={m.address ? <Code text={m.address} toast={toast} /> : undefined}>
+      <p>Forward lead emails here: Angi, Thumbtack, Google, Yelp, Houzz, your website form, or a customer writing in. Each one becomes a lead in seconds. Lead sites and website forms get the same instant text a webhook lead gets. A customer who emailed you directly is saved and you&rsquo;re alerted, and Cinder doesn&rsquo;t text them first.</p>
+      <ol>
+        <li>Best: in each lead site&rsquo;s settings, add this address as a lead notification email, next to yours.</li>
+        <li>Or in Gmail: Settings, Forwarding, Add a forwarding address, paste it. Gmail sends a code; it shows up right here. Then make a filter (from: angi.com OR thumbtack.com OR your form&rsquo;s sender) that forwards to it.</li>
+        <li>Outlook: Settings, Mail, Rules, a rule that forwards those senders to this address.</li>
+      </ol>
+      <p>An email without a phone number waits below so you can add it. Nothing is ever emailed back to anyone.</p>
+      {m.recent.length > 0 && <table className="tbl flush log"><tbody>
+        {m.recent.slice(0, 10).map(r => <tr key={r.id} className={r.status === "new" ? "bad" : ""} onClick={r.thread ? () => go.record(r.thread) : undefined} style={{ cursor: r.thread ? "pointer" : "default" }}>
+          <td className="mut nowrap">{ago(r.at)}</td><td className="nowrap"><span className="dot" />{MAIL_WORD[r.status] ?? r.status}</td>
+          <td className="nowrap">{r.name || (r.phone ? fmtPhone(r.phone) : "") || r.email || (r.source ? sourceLabel(r.source) : "")}</td><td className="mut ell">{r.subject || r.why}</td></tr>)}
+      </tbody></table>}
+    </Row>
+    {confirm && <div className="mail-note">
+      <Icon name="send" size={14} />
+      <div><b>Your email forwarding needs one click to finish.</b><span>{confirm.code ? <>Confirmation code <code>{confirm.code}</code>. </> : null}Open the link, or type the code where your email asked for it.</span></div>
+      {confirm.link && <a className="btn sm ink" href={confirm.link} target="_blank" rel="noreferrer">Confirm forwarding</a>}
+      <button type="button" className="btn sm" onClick={async () => { try { await api("/api/app/act", { p: project, action: "maildismiss", thread: confirm.id }); await reload(); } catch { /* stays */ } }}>Done</button>
+    </div>}
+    {waiting.map(r => <MailWaiting key={r.id} r={r} go={go} toast={toast} api={api} project={project} reload={reload} />)}
+  </>;
+}
+
+function MailWaiting({ r, go, toast, api, project, reload }: { r: LeadMail; go: Go; toast: Toast; api: Api; project: string; reload: () => Promise<void> }) {
+  const [phone, setPhone] = useState(""), [busy, setBusy] = useState(false);
+  const who = r.name || r.email || sourceLabel(r.source);
+  const add = async () => {
+    setBusy(true);
+    try { const j = await api<{ id?: string }>("/api/app/act", { p: project, action: "mailadd", thread: r.id, phone }); toast(`${who} is on the board.`); await reload(); if (j.id) go.record(j.id); }
+    catch (e) { toast(e instanceof Error ? e.message : "Couldn't add it.", true); } finally { setBusy(false); }
+  };
+  const dismiss = async () => { try { await api("/api/app/act", { p: project, action: "maildismiss", thread: r.id }); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Couldn't dismiss it.", true); } };
+  const reply = r.email ? `mailto:${r.email}?subject=${encodeURIComponent("Re: " + (r.subject || "your request"))}` : "";
+  return <div className="mail-wait">
+    <div className="mw-t"><b>{who}</b><span>{sourceLabel(r.source)} by email, {ago(r.at)}{r.status === "new" ? ", couldn't be added on its own" : ", no phone in it"}</span></div>
+    {r.message && <p>{r.message}</p>}
+    <div className="mw-a">
+      <input className="input sm" inputMode="tel" placeholder="(720) 555-0100" aria-label={`Phone for ${who}`} value={phone} onChange={e => setPhone(typePhone(e.target.value))} onKeyDown={e => { if (e.key === "Enter" && phone) void add(); }} />
+      <button type="button" className="btn sm ink" disabled={busy || phone.replace(/\D/g, "").length !== 10} onClick={() => void add()}>{busy ? <Spinner /> : null}Add lead</button>
+      {reply && <a className="btn sm" href={reply}>Reply</a>}
+      <button type="button" className="btn sm ghost" onClick={() => void dismiss()}>Dismiss</button>
+    </div>
   </div>;
 }
 

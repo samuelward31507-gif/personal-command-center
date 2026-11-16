@@ -16,6 +16,7 @@ import { portalLink, saveSignoff } from "@/lib/client-portal-run";
 import { saveProperty, setChecklist, tickChecklist } from "@/lib/client-parity-run";
 import { qboSyncAll } from "@/lib/qbo";
 import { cleanCatalog } from "@/lib/service";
+import { addMailLead, dismissMail } from "@/lib/client-lead-mail-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -209,6 +210,13 @@ export async function POST(req: Request) {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
       const r = await setChecklist(sql, c, b.thread, b.name ? String(b.name) : null);
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
+    }
+    // A lead email that came without a phone: the owner adds the number (nobody is texted), or dismisses it.
+    if (b.action === "mailadd" || b.action === "maildismiss") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which email?" }, 400);
+      if (b.action === "maildismiss") return json(await dismissMail(sql, c, b.thread));
+      const r = await addMailLead(sql, c, b.thread, String(b.phone ?? ""), b.name);
+      return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400);
     }
     if (b.action === "property") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);

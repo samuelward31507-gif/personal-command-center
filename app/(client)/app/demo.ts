@@ -5,6 +5,7 @@ import type { Report, ReportNumbers } from "@/lib/client-reports";
 import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
 import { cleanImportRows, importAs } from "@/lib/customer-import";
 import { demoSwitch } from "./demo-switch";
+import { sourceLabel, type LeadMail } from "./types";
 import { nextChaseDay } from "@/lib/client-runtime";
 import { cleanLogo, hexOk, readableAccent } from "@/lib/brand";
 import { addInterval, changeOrderLines, cleanCatalog, cleanChangeOrder, cleanPlan, cleanSignoff, type ChangeOrder, type Plan, type Signoff, type TimeEntry } from "@/lib/service";
@@ -139,6 +140,15 @@ function seed() {
     ] as TimeEntry[],
     signoffs: {} as Record<string, Signoff>,
     won: 5, wonValue: 37500,
+    // Leads by email: one Angi lead that went straight on the board, two that came without a phone, a Gmail forwarding code.
+    mail: [
+      { id: "m1", at: ago(25), from: "Thumbtack <no-reply@thumbtack.com>", subject: "Derek W. wants a quote for Fence Repair", source: "thumbtack", status: "no_phone", name: "Derek W.", phone: "", email: "", message: "Fence Repair · Gate sags and won't latch · Timing: Within a week", code: "", link: "", thread: "", why: "" },
+      { id: "m2", at: ago(140), from: "Google Local Services <noreply-localservices@google.com>", subject: "You have a new message lead", source: "google", status: "no_phone", name: "Pat Green", phone: "", email: "pat.green@example.com", message: "Fence repair · Two posts snapped in the wind · Address: Denver, CO 80205", code: "", link: "", thread: "", why: "" },
+      { id: "m3", at: ago(300), from: "WordPress <wordpress@ridgelinefence.com>", subject: "New submission from Contact Us", source: "web form", status: "lead", name: "Tom Becker", phone: "+17205550177", email: "tom.becker@example.com", message: "Cedar fence, 140 ft, side and back yard", code: "", link: "", thread: "t1", why: "" },
+      { id: "m4", at: ago(1500), from: "Gmail Team <forwarding-noreply@google.com>", subject: "(#482913075) Gmail Forwarding Confirmation", source: "", status: "confirm", name: "", phone: "", email: "", message: "", code: "482913075", link: "https://mail.google.com/", thread: "", why: "" },
+      { id: "m5", at: ago(2900), from: "Angi Leads <leads@angi.com>", subject: "New Lead: Fence Installation - Aurora, CO", source: "angi", status: "lead", name: "Maria Lopez", phone: "+17205550142", email: "maria.lopez@example.com", message: "Install a Wood Fence · About 120 feet, cedar if possible", code: "", link: "", thread: "", why: "" },
+      { id: "m6", at: ago(4300), from: "Home Depot <receipts@homedepot.com>", subject: "Your receipt from The Home Depot", source: "", status: "ignored", name: "", phone: "", email: "", message: "", code: "", link: "", thread: "", why: "Not a lead" },
+    ] as LeadMail[],
     wonJobs: [{ id: "w1", customer_name: "Henderson family", customer_phone: "+17205550110", amount: 8600 as number | null, won_at: at(-9, 12) }],
   };
 }
@@ -195,7 +205,7 @@ function asCrew<T extends Record<string, unknown>>(x: T): T {
 function blank<T extends Record<string, unknown>>(x: T): T {
   const live = { ...(x.live as Record<string, unknown>), leads: 0, needs: 0, answered: 0, booked: 0, replySec: null, chasing: 0, chasingValue: 0, won: 0, wonValue: 0, revived: 0, reviews: 0, weeks: [], conversations: [], afterHours: { leads: 0, won: 0, wonValue: 0 } };
   const setup = { ...(x.setup as Record<string, string>), price_book: "", pay_link: "", has_review_link: "", has_calendar: "" };
-  return { ...x, live, setup, board: [], invoices: [], payments: [], customers: [], appointments: [], quotes: [], wonJobs: [], plans: [], time: [], visits: [], hasReviewLink: false, calendar: { connected: false, email: "", events: [], error: "", connectUrl: "#" }, wires: { sources: [], failures: [], log: [] }, winback: { past: 0, eligible: 0, names: [], draft: "" } };
+  return { ...x, live, setup, board: [], invoices: [], payments: [], customers: [], appointments: [], quotes: [], wonJobs: [], plans: [], time: [], visits: [], hasReviewLink: false, calendar: { connected: false, email: "", events: [], error: "", connectUrl: "#" }, wires: { sources: [], failures: [], log: [] }, mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: [] }, winback: { past: 0, eligible: 0, names: [], draft: "" } };
 }
 const EXAMPLE_CO = (typeof location !== "undefined" ? location.origin : "") + "/c/example";
 function plansOut() { const s = st(); return s.plans.map(p => ({ ...p, customer: s.threads[p.thread_id]?.thread.customer_name ?? "", phone: s.threads[p.thread_id]?.thread.customer_phone ?? "" })); }
@@ -220,6 +230,7 @@ function data() {
     calendar: { connected: true, email: "mike@ridgelinefence.com", events: s.events, error: "", connectUrl: "#" },
     messages: s.messages, board: board(), setup: { ...s.setup, has_review_link: "yes", has_number: "yes", has_calendar: "yes", has_cell: "yes", has_booking_link: "yes" },
     key: "example-key-ridgeline-0000", origin: typeof location !== "undefined" ? location.origin : "",
+    mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: s.mail },
     jobber: { available: true, connected: true, account: "Ridgeline Fence Co.", error: "", lastPush: ago(2880), connectUrl: "#" },
     quickbooks: { available: true, connected: true, company: "Ridgeline Fence Co. LLC", error: "", lastPush: ago(95), connectUrl: "#" },
     wires: { sources: [{ source: "missed_call", leads: 19, last30: 7, last: ago(40) }, { source: "web form", leads: 12, last30: 5, last: ago(300) }, { source: "angi", leads: 8, last30: 3, last: ago(2880) }, { source: "web chat", leads: 2, last30: 1, last: ago(8640) }],
@@ -309,6 +320,18 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
     if (b.action === "review") { s.wonJobs = s.wonJobs.filter(j => j.id !== b.quote); return { ok: true }; }
     if (b.action === "setup") { Object.assign(s.setup, cleanOwnerSetup(b.setup)); const o = (b.setup ?? {}) as Record<string, unknown>; if (o.brand_color !== undefined) { const h = hexOk(o.brand_color); s.setup.brand_color = h ? readableAccent(h) : ""; } if (o.brand_logo !== undefined) s.setup.brand_logo = cleanLogo(o.brand_logo); if (o.show_powered !== undefined) s.setup.show_powered = o.show_powered === "yes" ? "yes" : "no"; return { ok: true }; }
     if (b.action === "testtext") return { ok: true };
+    if (b.action === "maildismiss") { const m = s.mail.find(x => x.id === b.thread); if (m && m.status !== "lead" && m.status !== "added") { m.status = "ignored"; m.why = "Dismissed"; } return { ok: true }; }
+    if (b.action === "mailadd") {
+      const m = s.mail.find(x => x.id === b.thread && (x.status === "no_phone" || x.status === "new"));
+      if (!m) fail("That email is already on the board.");
+      const digits = String(b.phone ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+      if (digits.length !== 10) fail("Add a 10-digit phone number.");
+      const id = "n" + Date.now();
+      s.threads[id] = { thread: { id, customer_name: m!.name, customer_phone: "+1" + digits, source: m!.source || "email", status: "paused" }, texts: [{ id: "d" + ++n, direction: "in", author: "system", body: `Lead email from ${sourceLabel(m!.source || "email")}: "${m!.message}"`, at: now }] };
+      s.crm[id] = { details: {}, notes: m!.message, stage: "new" };
+      m!.status = "added"; m!.phone = "+1" + digits; m!.thread = id;
+      return { ok: true, id };
+    }
     if (b.action === "assign") { const c = (s.crm[String(b.thread)] ??= { details: {}, notes: "" }); c.crewMember = String(b.member ?? ""); return { ok: true, texted: !!c.crewMember }; }
     if (b.action === "emailquote" || b.action === "emailinvoice") {
       const id = b.action === "emailquote" ? String(b.thread) : s.invoices.find(i => i.id === b.invoice)?.thread_id ?? "";

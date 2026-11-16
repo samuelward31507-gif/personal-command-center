@@ -66,6 +66,11 @@ export function parseLead(body: unknown, sourceHint?: string | null): Lead | nul
     "customerphone", "customerphonenumber", "contactphone", "homephone", "workphone");
   const d = raw.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "").slice(-10);
   if (d.length !== 10) return null;
+  return { ...leadFields(f), phone: "+1" + d, source, via: SOURCE_LABEL[source], smsConsent: smsConsentFrom(f) };
+}
+
+/** Name, email and what they asked for, from flattened fields. No phone needed (a lead email can come without one). */
+export function leadFields(f: Record<string, string>): { name: string; email: string; message: string } {
   const first = pick(f, "firstname", "first", "customerfirstname", "givenname"), last = pick(f, "lastname", "last", "customerlastname", "familyname");
   const name = (pick(f, "fullname", "name", "customername", "contactname", "yourname") || [first, last].filter(Boolean).join(" ")).replace(/\s+/g, " ").slice(0, 80);
   const job = pick(f, "taskname", "task", "service", "servicename", "category", "categoryname", "requesttitle", "title", "jobtype", "projecttype", "whatservicedoyouneed");
@@ -73,5 +78,5 @@ export function parseLead(body: unknown, sourceHint?: string | null): Lead | nul
   const addr = [pick(f, "address", "streetaddress", "address1", "street"), pick(f, "city"), pick(f, "state", "statecode"), pick(f, "zip", "zipcode", "postalcode", "postcode")].filter(Boolean).join(", ");
   const when = pick(f, "timeframe", "timeline", "when", "requestedtimeframe", "whendoyouneedit");
   const message = [job, details && details !== job ? details : "", addr ? `Address: ${addr}` : "", when ? `Timing: ${when}` : ""].filter(Boolean).join(" · ").slice(0, 1000);
-  return { name, phone: "+1" + d, email: pick(f, "email", "emailaddress", "customeremail", "contactemail").slice(0, 120), message, source, via: SOURCE_LABEL[source], smsConsent: smsConsentFrom(f) };
+  return { name, email: pick(f, "email", "emailaddress", "customeremail", "contactemail").slice(0, 120), message };
 }
