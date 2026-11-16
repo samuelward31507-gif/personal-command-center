@@ -1,8 +1,9 @@
 /* Pipeline: Attio's kanban. A thin stage strip for dropping into any stage, then columns with a colored stage name,
    a count and a total, and cards with icon rows and a status footer (Folk). */
-.pb-page .pb-rail { display: flex; gap: 4px; margin-bottom: 16px; padding: 3px; border-radius: 10px; background: var(--k-hover); box-shadow: inset 0 0 0 1px var(--k-line); overflow-x: auto; scrollbar-width: none; }
-.pb-page .pb-stop { flex: 1 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 32px; padding: 0 10px; border-radius: 7px; color: var(--k-g3); font-size: 13px; white-space: nowrap; }
-.pb-page .pb-stop-k { display: inline-flex; align-items: center; gap: 7px; }
+.pb-page .pb-rail { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; margin-bottom: 16px; padding: 3px; border-radius: 10px; background: var(--k-hover); box-shadow: inset 0 0 0 1px var(--k-line); }
+.pb-page .pb-stop { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 32px; padding: 0 8px; border-radius: 7px; color: var(--k-g3); font-size: 13px; white-space: nowrap; }
+.pb-page .pb-stop-k { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; }
+.pb-page .pb-stop-k i { flex: 0 0 7px; }
 .pb-page .pb-stop-k i { width: 7px; height: 7px; border-radius: 50%; opacity: .45; }
 .pb-page .pb-stop-n { font: 500 13px/1 var(--k-ff); color: var(--k-g4); font-variant-numeric: tabular-nums; }
 .pb-page .pb-stop.has { background: #fff; color: var(--k-ink2); box-shadow: 0 0 0 1px var(--k-line2), var(--k-sh-btn); }
@@ -45,3 +46,4 @@
 .pb-page .pb-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .pb-page .pb-form .pb-full { grid-column: 1 / -1; }
 @media (max-width: 700px) { .pb-page .pb-form { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { .pb-page .pb-rail { grid-template-columns: repeat(5, minmax(0, 1fr)); } }

@@ -76,7 +76,7 @@ export default function ContactsPage(){
  const href=(v:string,base="")=>v.startsWith("http")?v:"https://"+base+v.replace(/^@/,"");
  return <div className="u-page ct-page" role="region" aria-label="Contacts">
   <div className="u-head">
-   <h1 className="u-title">Prospects{contacts.length?<span className="u-dim"> {counts.todo} to call, {calledToday} called today.</span>:null}</h1>
+   <h1 className="u-title">Prospects{contacts.length?<span className="u-dim"> {counts.todo} to call, {calledToday} called today</span>:null}</h1>
    <div className="u-head-actions">
     <button className="u-btn u-btn-bare" onClick={exportCsv} disabled={!contacts.length}>Export</button>
     <button className="u-btn" onClick={()=>setShowImport(true)}>Import</button>

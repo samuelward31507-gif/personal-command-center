@@ -52,7 +52,7 @@ body .em-page .em-replybox { display: grid; gap: 10px; margin-top: 14px; padding
 .em-info-row select.u-field { flex: 0 0 auto; width: auto; }
 .em-info-search { position: relative; flex: 1 1 240px; min-width: 0; }
 .em-info-search .u-field { width: 100%; }
-.em-info-list { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; background: var(--u-panel, #ffffff); border: 1px solid var(--u-line, #e7e7e4); border-radius: 10px; }
+.em-info-list { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; background: var(--u-panel, #ffffff); border: 1px solid var(--u-line, #e6e7ea); border-radius: 10px; }
 .em-info-list button { all: unset; display: block; width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 7px; cursor: pointer; }
 .em-info-list button:hover, .em-info-list button:focus-visible { background: var(--u-panel2, #ffffff); }
 .em-info-list small { color: var(--u-mute, #59616d); }
@@ -66,7 +66,7 @@ body .em-page .em-replybox { display: grid; gap: 10px; margin-top: 14px; padding
 
 /* Sending inboxes list */
 .em-inbox-list { list-style: none; margin: 8px 0 10px; padding: 0; display: grid; gap: 8px; }
-.em-inbox-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; padding: 10px 12px; border: 1px solid var(--c-line, #e7e7e4); border-radius: 10px; }
+.em-inbox-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; padding: 10px 12px; border: 1px solid var(--c-line, #e6e7ea); border-radius: 10px; }
 .em-inbox-list li .u-note { margin-left: auto; }
 .em-auto-toggle { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; }
 .em-auto-toggle input { width: 18px; height: 18px; accent-color: #30b175; }

@@ -1,18 +1,18 @@
 .mr-page { max-width: 820px; margin: 0 auto; padding: 24px 18px 60px; color: #181a1e; }
 .mr-tools { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; font-size: 13.5px; }
 .mr-tools a { color: #353a41; }
-.mr-tools button { margin-left: 8px; min-height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid #dcddda; background: transparent; color: #121417; font: inherit; cursor: pointer; }
-.mr-tools button.primary { background: #121417; color: #f6f6f4; border-color: #121417; font-weight: 600; }
-.mr-sheet { background: #121417; color: #f6f6f4; border-radius: 12px; padding: 40px 44px; }
+.mr-tools button { margin-left: 8px; min-height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid #d3d8df; background: transparent; color: #121417; font: inherit; cursor: pointer; }
+.mr-tools button.primary { background: #121417; color: #fafafb; border-color: #121417; font-weight: 600; }
+.mr-sheet { background: #121417; color: #fafafb; border-radius: 12px; padding: 40px 44px; }
 .mr-sheet header small { color: #93989f; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
-.mr-sheet h1 { margin: 6px 0 2px; font-size: 28px; color: #f6f6f4; }
+.mr-sheet h1 { margin: 6px 0 2px; font-size: 28px; color: #fafafb; }
 .mr-sheet header p { margin: 0 0 24px; color: #b7babf; }
 .mr-sheet table { width: 100%; border-collapse: collapse; font-size: 15px; }
 .mr-sheet th, .mr-sheet td { text-align: left; padding: 12px 0; border-bottom: 1px solid #17191d; vertical-align: top; }
 .mr-sheet th { width: 42%; color: #b7babf; font-weight: 500; }
-.mr-sheet td { color: #f6f6f4; font-weight: 600; }
+.mr-sheet td { color: #fafafb; font-weight: 600; }
 .mr-note { margin: 20px 0 0; font-size: 12px; color: #93989f; }
-.mr-text { margin-top: 18px; padding: 16px; border: 1px solid #e7e7e4; border-radius: 12px; }
+.mr-text { margin-top: 18px; padding: 16px; border: 1px solid #e6e7ea; border-radius: 12px; }
 .mr-text h2 { margin: 0 0 6px; font-size: 14px; }
 .mr-text p { margin: 0; line-height: 1.5; }
 .mr-text small { display: block; margin-top: 8px; color: #575f6b; }

@@ -78,10 +78,11 @@ export default function PipelinePage(){
    <span className="pb-foot-v u-num">{Math.round(d.probability!=null?d.probability:(STAGE_PROBABILITY[d.stage]??0)*100)}%{d.updatedAt?<i title="Last updated"> · {ago(d.updatedAt)}</i>:null}</span>
   </div>
  </div>;
+ const STAGE_SHORT:Record<string,string>={new:"New",meeting_booked:"Booked",meeting_held:"Held",negotiation:"Negotiating"};
  const stageTone:Record<string,string>={new:"#9aa3b0",qualified:"#3b82f6",contacted:"#0ea5e9",interested:"#e3a008",meeting_booked:"#8b5cf6",meeting_held:"#d946ef",proposal:"#f2752b",negotiation:"#ec4899",won:"#16a34a",lost:"#9aa3b0",nurture:"#14b8a6"};
  return <div className="u-page pb-page" role="region" aria-label="Pipeline">
   <div className="u-head">
-   <h1 className="u-title">Pipeline{(()=>{const n=deals.filter(d=>!["won","lost","nurture"].includes(d.stage)).length;return deals.length?<span className="u-dim"> {n} open {n===1?"deal":"deals"}.</span>:null})()}</h1>
+   <h1 className="u-title">Pipeline{(()=>{const n=deals.filter(d=>!["won","lost","nurture"].includes(d.stage)).length;return deals.length?<span className="u-dim"> {n} open {n===1?"deal":"deals"}</span>:null})()}</h1>
    <div className="u-head-actions">
     <div className="u-seg" role="group" aria-label="Layout"><button type="button" aria-pressed={view==="board"} onClick={()=>{setView("board");setFilter("open")}}>Board</button><button type="button" aria-pressed={view==="list"} onClick={()=>setView("list")}>List</button></div>
     <button className="u-btn u-btn-light" onClick={startNew}>New deal</button>
@@ -101,7 +102,7 @@ export default function PipelinePage(){
   :deals.length===0?<div className="u-void"><h2>No deals yet</h2><p>A deal starts when a call goes well. Book a meeting in Call mode and it shows up here, or add one by hand.</p><button className="u-btn u-btn-light" onClick={startNew}>New deal</button></div>
   :view==="board"?<>
    <div className={"pb-rail"+(dragging?" is-dragging":"")} role="list" aria-label="Stages">{([...OPEN,"won","lost"] as Stage[]).map(st=>{const col=deals.filter(d=>d.stage===st);return <div key={st} role="listitem" className={"pb-stop"+(col.length?" has":"")+(over===st?" is-over":"")+(st==="won"||st==="lost"?" is-end":"")} onDragOver={e=>{if(dragging){e.preventDefault();setOver(st)}}} onDragLeave={()=>setOver(o=>o===st?null:o)} onDrop={e=>{e.preventDefault();const d=deals.find(x=>x.id===dragging);setDragging(null);setOver(null);if(d&&d.stage!==st){setDeals(ds=>ds.map(x=>x.id===d.id?{...x,stage:st}:x));void quickStage(d,st)}}}>
-    <span className="pb-stop-k"><i style={{background:stageTone[st]}} />{STAGE_LABELS[st]}</span>
+    <span className="pb-stop-k" title={STAGE_LABELS[st]}><i style={{background:stageTone[st]}} />{STAGE_SHORT[st]??STAGE_LABELS[st]}</span>
     <b className="pb-stop-n u-num">{col.length}</b>
    </div>})}</div>
    <div className="pb-board">{OPEN.filter(st=>deals.some(d=>d.stage===st)).map(st=>{const col=deals.filter(d=>d.stage===st);return <div key={st} className={"pb-col"+(over===st?" is-over":"")} onDragOver={e=>{if(dragging){e.preventDefault();setOver(st)}}} onDragLeave={()=>setOver(o=>o===st?null:o)} onDrop={e=>{e.preventDefault();const d=deals.find(x=>x.id===dragging);setDragging(null);setOver(null);if(d&&d.stage!==st){setDeals(ds=>ds.map(x=>x.id===d.id?{...x,stage:st}:x));void quickStage(d,st)}}}>

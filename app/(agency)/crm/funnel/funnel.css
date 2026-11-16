@@ -8,7 +8,7 @@
 .fn-steps li:last-child .fn-bar i { background: #30b175; }
 .fn-n { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .fn-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 12px; }
-.fn-facts div { border: 1px solid var(--c-line, #e7e7e4); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.fn-facts div { border: 1px solid var(--c-line, #e6e7ea); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
 .fn-facts span { font-size: 13px; color: var(--c-soft, #59616d); }
 .fn-facts b { font-size: 22px; font-variant-numeric: tabular-nums; }
 @media (max-width: 560px) { .fn-steps li { grid-template-columns: 1fr 60px; } .fn-bar { grid-column: 1 / -1; grid-row: 2; } }
@@ -21,5 +21,5 @@
 .fn-two h3, .fn-h3 { font-size: 15px; margin: 0 0 8px; }
 .fn-h3 { margin-top: 24px; }
 .fn-two ul, .fn-watch { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.fn-two li { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; border-bottom: 1px solid var(--c-line, #e7e7e4); padding: 4px 0; }
+.fn-two li { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; border-bottom: 1px solid var(--c-line, #e6e7ea); padding: 4px 0; }
 .fn-watch li { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 14px; }

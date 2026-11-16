@@ -7,8 +7,8 @@
 .ws-save { height: 36px; padding: 0 16px; border-radius: 9px; border: 1px solid #121417; background: #121417; color: var(--mc-panel); font-weight: 600; font-size: 13px; cursor: pointer; }
 .ws-save:disabled { background: transparent; color: #575f6b; border-color: var(--mc-hover); cursor: default; }
 .ws-note { font-size: 13px; margin: 12px 0 0; padding: 9px 12px; border-radius: 9px; }
-.ws-note.ok { background: #f1f1ef; color: #181a1e; }
-.ws-note.bad { background: #f1f1ef; color: #a02b17; }
+.ws-note.ok { background: #f4f5f6; color: #181a1e; }
+.ws-note.bad { background: #f4f5f6; color: #a02b17; }
 .ws-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
 .ws-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .ws-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }

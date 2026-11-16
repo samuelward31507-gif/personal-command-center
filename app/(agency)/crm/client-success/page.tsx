@@ -73,7 +73,7 @@ export default function ClientsPage() {
 
   return <div className="u-page cl-page" role="region" aria-label="Clients">
     <div className="u-head">
-      <h1 className="u-title">Clients{rows.length ? <span className="u-dim"> {live.length} live, {usd(mrr)}/mo.</span> : null}</h1>
+      <h1 className="u-title">Clients{rows.length ? <span className="u-dim"> {live.length} live, {usd(mrr)}/mo</span> : null}</h1>
       <div className="u-head-actions">
         <Link className="u-btn u-btn-bare" href="/crm/reports">Monthly reports</Link>
         <button className="u-btn" onClick={() => setTicketForm(true)}>Log a support issue</button>
