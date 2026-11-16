@@ -83,7 +83,7 @@ export function invoiceState(i: CardInvoice): { text: string; tone: "" | "green"
   if ((i.paid_amount ?? 0) > 0) return { text: "Part paid", tone: "blue" };
   return { text: "Awaiting payment", tone: "blue" };
 }
-const chipFor = (tone: string) => tone === "green" ? "good" : tone === "red" ? "bad" : tone === "amber" ? "ember" : tone === "blue" ? "blue" : "";
+const chipFor = (tone: string) => tone === "green" ? "good" : tone === "red" ? "bad" : "";
 const dotFor = (tone: string) => tone === "green" ? "good" : tone === "red" ? "bad" : tone === "amber" ? "ember" : tone === "blue" ? "ink" : "";
 
 /** One invoice: lines, due date, note; send it, copy the link, mark it paid. */
@@ -228,7 +228,7 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
         <button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New invoice</button>
       </>} />
     <div className="dash money2">
-      {!fresh && <Kpis items={[
+      {!fresh && <Kpis quiet items={[
         { label: "Outstanding", value: usd(outstanding), sub: `${open.length} ${open.length === 1 ? "invoice" : "invoices"} awaiting payment` },
         { label: "Past due", value: usd(lateAmt), sub: late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"}, reminders going out` : "None late", tone: late.length ? "down" : "" },
         { label: "Collected this month", value: usd(collected), sub: (() => { const k = pays.filter(p => p.paid_on >= monthStart).length; return `${k} ${k === 1 ? "payment" : "payments"} recorded`; })(), tone: collected ? "up" : "", spark: weeklyIn, sparkTone: "good" },
@@ -262,7 +262,7 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
       : wide ? <table className="tbl inv-tbl">
         <colgroup><col style={{ width: 40 }} /><col style={{ width: 76 }} /><col style={{ width: 190 }} /><col /><col style={{ width: 92 }} /><col style={{ width: 92 }} /><col style={{ width: 170 }} /><col style={{ width: 110 }} /><col style={{ width: 110 }} /></colgroup>
         <thead><tr><th className="ck-col"><input type="checkbox" aria-label="Select all" checked={!!shown.length && shown.every(i => ticked.has(i.id))} onChange={e => setTicked(e.target.checked ? new Set(shown.map(i => i.id)) : new Set())} /></th>
-          <th><FieldIcon name="invoice" />Invoice</th><th><FieldIcon name="user" />Customer</th><th><FieldIcon name="ruler" />For</th><th><FieldIcon name="cal" />Issued</th><th><FieldIcon name="clock" />Due</th><th><FieldIcon name="sort" />Status</th><th className="right"><FieldIcon name="dollar" />Total</th><th className="right"><FieldIcon name="dollar" />Balance</th></tr></thead>
+          <th>Invoice</th><th>Customer</th><th>For</th><th>Issued</th><th>Due</th><th>Status</th><th className="right">Total</th><th className="right">Balance</th></tr></thead>
         <tbody>{shown.map(i => { const st = invoiceState(i), bal = balanceOf(i); return <tr key={i.id} tabIndex={0} onClick={() => go.invoice(i.id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(i.id); }}>
           <td className="ck-col" onClick={e => e.stopPropagation()}><input type="checkbox" aria-label={`Select invoice ${i.number}`} checked={ticked.has(i.id)} onChange={() => setTicked(t => { const n = new Set(t); if (n.has(i.id)) n.delete(i.id); else n.add(i.id); return n; })} /></td>
           <td className="mut num-l">#{i.number}</td><td><b>{i.customer || fmtPhone(i.phone)}</b></td><td className="mut">{i.items[0]?.name || ""}</td>

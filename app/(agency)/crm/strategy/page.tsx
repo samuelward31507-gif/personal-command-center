@@ -25,9 +25,9 @@ export default function StrategyPage() {
     try {
       const response = await fetch("/api/workforce",{cache:"no-store"});
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || (response.status===401 ? "Sign in to view your business memory." : "Unable to load business memory."));
+      if (!response.ok) throw new Error(data.error || (response.status===401 ? "Sign in to see your notes." : "Couldn’t load your notes. Try Refresh."));
       setItems(Array.isArray(data.memory)?data.memory:[]);
-    } catch (e) { setError(e instanceof Error?e.message:"Unable to load business memory."); }
+    } catch (e) { setError(e instanceof Error?e.message:"Couldn’t load your notes. Try Refresh."); }
     finally { setLoading(false); }
   },[]);
   useEffect(()=>{void load()},[load]);
@@ -38,51 +38,62 @@ export default function StrategyPage() {
     try {
       const response = await fetch("/api/workforce",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"memory",title,content,category:kind,importance:Number(importance),source:"manual"})});
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unable to save memory.");
-      setTitle("");setContent("");setNotice("Saved to your private business memory.");await load();
-    } catch(e) {setError(e instanceof Error?e.message:"Unable to save memory.");}
+      if (!response.ok) throw new Error(data.error || "Couldn’t save the note. Try again.");
+      setTitle("");setContent("");setNotice("Note saved.");await load();
+    } catch(e) {setError(e instanceof Error?e.message:"Couldn’t save the note. Try again.");}
     finally {setSaving(false);}
   }
   async function archive(id:string) {
     setError("");setNotice("");
     try {
       const response=await fetch("/api/workforce",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"memory",id,archived:true})});
-      const data=await response.json();if(!response.ok)throw new Error(data.error||"Unable to archive memory.");
-      setItems(old=>old.filter(x=>x.id!==id));setNotice("Memory archived.");
-    } catch(e) {setError(e instanceof Error?e.message:"Unable to archive memory.");}
+      const data=await response.json();if(!response.ok)throw new Error(data.error||"Couldn’t archive the note. Try again.");
+      setItems(old=>old.filter(x=>x.id!==id));setNotice("Note archived.");
+    } catch(e) {setError(e instanceof Error?e.message:"Couldn’t archive the note. Try again.");}
   }
 
-  return <main style={{maxWidth:1080,margin:"0 auto",padding:"28px 22px 60px",color:"#121417"}}>
-    <header style={{display:"flex",justifyContent:"space-between",gap:16,alignItems:"center",flexWrap:"wrap"}}><span/><button onClick={()=>void load()} disabled={loading}>↻ Refresh</button></header>
-    <div style={{marginTop:36}}><p style={{fontSize:10,letterSpacing:2,color:"#575f6b",fontWeight:700}}>Business memory</p><h1 style={{fontSize:38,letterSpacing:-1.5,margin:"8px 0"}}>Strategy & memory</h1><p style={{color:"#4c525c",maxWidth:680}}>Keep durable context in one place: priorities, decisions, customer knowledge, lessons, and operating principles. These notes are saved to your workspace database.</p></div>
-    {error&&<p role="alert" style={{background:"#f6ecec",color:"#a31414",padding:12,borderRadius:8}}>{error}</p>}
-    {notice&&<p role="status" style={{color:"#181a1e",fontSize:13}}>{notice}</p>}
-    <div style={{display:"grid",gridTemplateColumns:"minmax(0,1.15fr) minmax(280px,.85fr)",gap:20,marginTop:24,alignItems:"start"}}>
-      <section style={{border:"1px solid #dcddda",borderRadius:14,padding:18,background:"#f1f1ef"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}><div><h2 style={{fontSize:19,margin:0}}>Business memory</h2><p style={{fontSize:13,color:"#4c525c",margin:"5px 0 0"}}>{items.length} active records</p></div><input aria-label="Search memory" placeholder="Search memory…" value={query} onChange={e=>setQuery(e.target.value)} style={field}/></div>
-        <div style={{display:"flex",gap:7,flexWrap:"wrap",margin:"16px 0"}}><button onClick={()=>setCategory("all")} style={chip(category==="all")}>All</button>{categories.map(c=><button key={c} onClick={()=>setCategory(c)} style={chip(category===c)}>{label(c)}</button>)}</div>
-        {loading?<p style={{padding:20,color:"#4c525c"}}>Loading saved memory…</p>:visible.length===0?<p style={{padding:24,color:"#4c525c"}}>No matching memory yet. Add a decision, priority, or lesson to start building durable context.</p>:visible.map(item=><article key={item.id} style={{borderTop:"1px solid #dcddda",padding:"16px 0"}}>
-          <div style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"start"}}><div><span style={{fontSize:10,letterSpacing:1,color:"#575f6b",fontWeight:700}}>{label(item.category)} · IMPORTANCE {item.importance}/5</span><h3 style={{fontSize:16,margin:"6px 0"}}>{item.title}</h3></div><button onClick={()=>void archive(item.id)} style={{...quietButton,flexShrink:0}}>Archive</button></div>
-          <p style={{whiteSpace:"pre-wrap",lineHeight:1.6,fontSize:14,color:"#4c525c",margin:"6px 0"}}>{item.content}</p><small style={{color:"#5c6470"}}>Source: {item.source||"manual"} · Updated {new Date(item.updated_at).toLocaleDateString()}</small>
-        </article>)}
+  const importanceLabel: Record<number,string> = {5:"Critical",4:"High",3:"Normal",2:"Low",1:"Reference"};
+  return <main className="u-page">
+    <div className="u-head">
+      <h1 className="u-title">Strategy<span className="u-dim">{loading?"":` ${items.length} ${items.length===1?"note":"notes"}`}</span></h1>
+      <div className="u-head-actions"><button type="button" className="u-btn" onClick={()=>void load()} disabled={loading}>{loading?"Refreshing…":"Refresh"}</button></div>
+    </div>
+    <p className="u-note" style={{marginTop:20}}>Priorities, decisions, lessons and what you know about your customers, kept in one place so they don’t get lost between weeks.</p>
+    {error&&<p role="alert" className="u-flash is-bad" style={{marginTop:16}}>{error}</p>}
+    {notice&&<p role="status" className="u-flash" style={{marginTop:16}}>{notice}</p>}
+    <div className="u-split u-split-2 u-block" style={{alignItems:"start"}}>
+      <section>
+        <div className="u-h2-row" style={{flexWrap:"wrap",gap:12}}>
+          <h2 className="u-h2">Notes<span className="u-quiet">{loading?"":visible.length}</span></h2>
+          <input className="u-field" aria-label="Search notes" placeholder="Search notes" value={query} onChange={e=>setQuery(e.target.value)} style={{maxWidth:240}}/>
+        </div>
+        <div className="u-seg" role="group" aria-label="Category" style={{marginBottom:12,flexWrap:"wrap"}}>
+          <button type="button" aria-pressed={category==="all"} onClick={()=>setCategory("all")}>All</button>
+          {categories.map(c=><button key={c} type="button" aria-pressed={category===c} onClick={()=>setCategory(c)}>{label(c)}</button>)}
+        </div>
+        {loading?<p className="u-note" role="status">Loading notes…</p>
+        :visible.length===0?<div className="u-void"><h2>{items.length?"Nothing matches":"No notes yet"}</h2><p>{items.length?"Try another category or search.":"Write down a decision, a priority or a lesson the first time it matters. It will be here the next time it does."}</p></div>
+        :<div className="u-rows">{visible.map(item=><div key={item.id} className="u-row" style={{alignItems:"flex-start",padding:"14px 14px 14px 16px"}}>
+          <div className="u-row-main" style={{gap:4}}>
+            <strong style={{whiteSpace:"normal"}}>{item.title}</strong>
+            <p style={{margin:0,whiteSpace:"pre-wrap",fontSize:13.5,lineHeight:"21px",color:"var(--k-g1)"}}>{item.content}</p>
+            <span>{label(item.category)} · {importanceLabel[item.importance]??item.importance} · Updated {new Date(item.updated_at).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</span>
+          </div>
+          <button type="button" className="u-btn u-btn-bare" onClick={()=>void archive(item.id)}>Archive</button>
+        </div>)}</div>}
       </section>
-      <section style={{border:"1px solid #dcddda",borderRadius:14,padding:20,background:"#f1f1ef"}}>
-        <h2 style={{fontSize:19,margin:"0 0 6px"}}>Capture important context</h2><p style={{fontSize:13,color:"#4c525c",lineHeight:1.5,margin:"0 0 18px"}}>Record decisions and principles you want to remember across work sessions.</p>
-        <form onSubmit={save} style={{display:"grid",gap:12}}>
-          <label style={labelStyle}>Title<input required maxLength={240} value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Revenue is the first priority" style={field}/></label>
-          <label style={labelStyle}>Category<select value={kind} onChange={e=>setKind(e.target.value)} style={field}>{categories.map(c=><option key={c} value={c}>{label(c)}</option>)}</select></label>
-          <label style={labelStyle}>Importance<select value={importance} onChange={e=>setImportance(e.target.value)} style={field}><option value="5">5 — Critical</option><option value="4">4 — High</option><option value="3">3 — Normal</option><option value="2">2 — Low</option><option value="1">1 — Reference</option></select></label>
-          <label style={labelStyle}>Context<textarea required maxLength={12000} rows={7} value={content} onChange={e=>setContent(e.target.value)} placeholder="What should Cinder remember, and why does it matter?" style={{...field,resize:"vertical"}}/></label>
-          <button disabled={saving} type="submit" style={primaryButton}>{saving?"Saving…":"Save to business memory"}</button>
+      <section>
+        <div className="u-h2-row"><h2 className="u-h2">Add a note</h2></div>
+        <form onSubmit={save} className="u-sheet u-sheet-pad" style={{display:"grid",gap:14}}>
+          <label className="u-lab">Title<input className="u-field" required maxLength={240} value={title} onChange={e=>setTitle(e.target.value)} placeholder="Fence is the first niche"/></label>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <label className="u-lab">Category<select className="u-field" value={kind} onChange={e=>setKind(e.target.value)}>{categories.map(c=><option key={c} value={c}>{label(c)}</option>)}</select></label>
+            <label className="u-lab">Importance<select className="u-field" value={importance} onChange={e=>setImportance(e.target.value)}>{[5,4,3,2,1].map(n=><option key={n} value={String(n)}>{importanceLabel[n]}</option>)}</select></label>
+          </div>
+          <label className="u-lab">Details<textarea className="u-field" required maxLength={12000} rows={6} value={content} onChange={e=>setContent(e.target.value)} placeholder="What you decided, and why"/></label>
+          <div><button disabled={saving} type="submit" className="u-btn u-btn-go">{saving?"Saving…":"Save note"}</button></div>
         </form>
-        <p style={{fontSize:11,color:"#5c6470",lineHeight:1.5,marginTop:16}}>This stores memory for your workspace. It does not yet automatically inject it into Hermes prompts or trigger agent actions.</p>
       </section>
     </div>
-    <style jsx>{`@media(max-width:760px){main>div:nth-of-type(2){grid-template-columns:1fr!important}}`}</style>
   </main>;
 }
-const field:React.CSSProperties={width:"100%",boxSizing:"border-box",border:"1px solid #dcddda",borderRadius:8,padding:"10px 11px",fontSize:13,background:"#f1f1ef",color:"#121417"};
-const labelStyle:React.CSSProperties={display:"grid",gap:6,fontSize:12,fontWeight:650};
-const primaryButton:React.CSSProperties={border:0,borderRadius:8,padding:"12px 14px",background:"#f1f1ef",color:"#121417",fontWeight:700,cursor:"pointer"};
-const quietButton:React.CSSProperties={border:"1px solid #dcddda",borderRadius:7,padding:"6px 9px",background:"#f1f1ef",color:"#4c525c",cursor:"pointer",fontSize:12};
-const chip=(active:boolean):React.CSSProperties=>({border:"1px solid "+(active?"#121417":"#dcddda"),borderRadius:20,padding:"6px 10px",background:active?"#121417":"#f1f1ef",color:active?"#f6f6f4":"#4c525c",fontSize:11,cursor:"pointer"});

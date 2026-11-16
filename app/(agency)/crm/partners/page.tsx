@@ -39,7 +39,7 @@ export default function PartnersPage() {
     <p className="u-note">They get ${PARTNER_FEE} for every shop they send that signs. One supply yard that likes you is worth a week of dials. Walk in, don&apos;t email.</p>
 
     <h2 className="pt-h">Who to go after</h2>
-    <label className="u-field pt-city"><span className="u-lab">Your city</span><input value={city} onChange={e => setCity(e.target.value)} /></label>
+    <label className="u-lab pt-city" style={{ maxWidth: 260 }}>Your city<input className="u-field" value={city} onChange={e => setCity(e.target.value)} placeholder="Denver" /></label>
     <div className="pt-kinds">{PARTNER_KINDS.map(k => <article key={k.key} className="pt-kind">
       <h3>{k.label}</h3>
       <p>{k.why}</p>

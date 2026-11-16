@@ -18,7 +18,7 @@ export type WorkspaceSettings = {
   websiteUrl: string;     // your site; signs cold emails
   demoLink: string;       // a demo page or video; linked in follow-ups
   logoUrl: string;        // white-label: https image shown in place of the Cinder wordmark ("" = Cinder)
-  accentColor: string;    // white-label: the one accent color, #rrggbb ("" = Cinder ember)
+  accentColor: string;    // white-label: the one accent color, #rrggbb ("" = default ink)
   tier1: TierSettings;
   tier2: TierSettings;
   goalAmount: number;

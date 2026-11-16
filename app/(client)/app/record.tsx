@@ -14,7 +14,7 @@ import { jobPrice } from "@/lib/service";
 import { ChangeOrders, HoursBox } from "./jobwork";
 import { PortalSheet, SignoffBox } from "./finish";
 import { ChecklistBox, PropertiesBox } from "./parity";
-import { FieldIcon, fieldIconFor } from "./sources";
+import { FieldIcon, fieldIconFor, Stg } from "./sources";
 
 /** "Remind me": a time and a note on this customer. The owner gets a text and a push when it's due. */
 export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: { name: string; current: { at: string; note: string } | null; busy: boolean; onClose: () => void; onSave: (at: string, note: string) => void; onClear: () => void }) {
@@ -200,7 +200,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
     <header className="rec-h">
       <button type="button" className="btn ghost ic" onClick={onBack} aria-label="Back" title="Back (esc)"><Icon name="back" size={16} /></button>
       <Avatar name={name} size="xl" /><div className="t"><h1>{name}</h1><span>{[fmtPhone(phone), address, since ? `Customer since ${since}` : sourceLabel(source)].filter(Boolean).join(", ")}</span></div>
-      {card && <StageChip stage={card.stage} text={`${card.pastCustomer ? "Past customer" : STAGE_LABEL[card.stage]}${price && !biz.crew ? `, ${dollars(price)}` : ""}`} />}
+      {card && <Stg stage={card.pastCustomer ? "won" : card.stage}>{`${card.pastCustomer ? "Past customer" : STAGE_LABEL[card.stage]}${price && !biz.crew ? `, ${dollars(price)}` : ""}`}</Stg>}
       <div className="acts">
         {biz.canCall ? <button type="button" className="btn" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} />Call</button> : <a className="btn" href={`tel:${phone}`}><Icon name="phone" size={14} />Call</a>}
         <button type="button" className="btn" onClick={() => { setTab("activity"); setTimeout(() => ta.current?.focus(), 50); }}><Icon name="chat" size={14} />Text</button>
@@ -312,7 +312,7 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
           const cont = !newDay && who === lastWho && Date.parse(t.at) - lastAt < 10 * 60000; lastWho = who; lastAt = Date.parse(t.at);
           const photos = (t.media ?? []).map((_, k) => `/api/app/media?id=${t.id}&i=${k}`);
           const words = photos.length && /^\(sent (a photo|\d+ photos)\)$/.test(t.body) ? "" : t.body;
-          return <div key={t.id}>{sep}<article className={"lg " + who + (cont ? " cont" : "")}>
+          return <div key={t.id}>{sep}<article className={"lgx " + who + (cont ? " cont" : "")}>
             {!cont && <header><b>{who === "them" ? (compact ? first(name) : name) : who === "you" ? "You" : "Cinder"}</b><time>{clock(t.at)}</time></header>}
             {photos.length > 0 && <div className="photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
             {words && <p title={cont ? clock(t.at) : undefined}>{words}</p>}

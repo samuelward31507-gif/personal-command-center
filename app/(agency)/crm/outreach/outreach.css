@@ -1,5 +1,6 @@
 /* Outreach, on the command center's light tokens (cinder.css). */
-.outreach-page { max-width: 1280px; margin: 0 auto; padding: 28px 32px 60px; color: var(--k-ink); }
+.outreach-page { color: var(--k-ink); padding-bottom: 60px; }
+.outreach-page > :not(.u-head):not(.outcome-backdrop) { max-width: 1232px; }
 .outreach-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 20px; }
 .outreach-eyebrow { display: none; }
 .outreach-header h1 { font: 600 24px/30px var(--k-display); letter-spacing: -.5px; margin: 0 0 4px; color: var(--k-ink); }
@@ -99,7 +100,7 @@
 .outcome-modal footer button:disabled { opacity: .55; cursor: wait; }
 
 @media (max-width: 950px) {
-  .outreach-page { padding: 22px 18px 40px; }
+  .outreach-page { padding-bottom: 40px; }
   .outreach-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .outreach-stats article:nth-child(n+3) { border-top: 1px solid var(--k-line); }
   .outreach-stats article:nth-child(3) { box-shadow: none; }
@@ -109,7 +110,7 @@
   .outreach-card-actions { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; min-width: 0; }
 }
 @media (max-width: 580px) {
-  .outreach-page { padding: 18px 12px 34px; }
+  .outreach-page { padding-bottom: 34px; }
   .outreach-header { flex-direction: column; align-items: flex-start; }
   .outreach-head-actions { width: 100%; justify-content: space-between; }
   .outreach-form { grid-template-columns: 1fr; }

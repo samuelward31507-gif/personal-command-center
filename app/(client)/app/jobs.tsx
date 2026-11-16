@@ -175,7 +175,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
   const laneOptions: { key: "all" | Lane; label: string; count?: number }[] = [{ key: "all", label: "All", count: base.length }, ...LANES.map(l => ({ key: l as "all" | Lane, label: LANE_LABEL[l], count: base.filter(c => laneOf(c) === l).length })).filter(o => o.count)];
 
   return <>
-    <PageHead title="Jobs" sub={view === "open" ? `${counts.open} open, ${usd(pipeline)} in play.` : view === "won" ? `${counts.won} won.` : `${counts.all} people.`}
+    <PageHead title={view === "all" ? "Customers" : "Jobs"} sub={view === "open" ? `${counts.open} open, ${usd(pipeline)} in play.` : view === "won" ? `${counts.won} won.` : `${counts.all} people.`}
       actions={<>
         {!wide && <div className="views" role="tablist" aria-label="View">
           {([["open", "Open", counts.open], ["won", "Won", counts.won], ["all", "Everyone", counts.all]] as const).map(([k, l, n]) =>
@@ -266,7 +266,7 @@ function Board({ cards, sel, drag, over, setDrag, setOver, move, open, who }: { 
     return <section key={l} className={"col-b" + (over === l ? " over" : "")} aria-label={LANE_LABEL[l]}
       onDragOver={e => { if (drag) { e.preventDefault(); setOver(l); } }} onDragLeave={() => setOver(o => o === l ? null : o)}
       onDrop={e => { e.preventDefault(); setOver(null); if (drag) move(drag, l); setDrag(null); }}>
-      <h2><span className={"stage " + (l === "done" ? "won" : l)}><i /></span>{LANE_LABEL[l]}<em>{list.length}</em><b>{total ? short(total) : ""}</b></h2>
+      <h2><Stg stage={l === "done" ? "won" : l}>{l === "booked" ? "Booked" : LANE_LABEL[l]}</Stg><em>{list.length}</em><b>{total ? short(total) : ""}</b></h2>
       <div className="cards">{list.length ? list.map(c => { const n = nextUp(c, today), name = c.name || fmtPhone(c.phone), days = daysIn(c); return <button key={c.id} type="button" className={"jcard" + (sel === c.id ? " sel" : "")} draggable onDragStart={() => setDrag(c.id)} onDragEnd={() => { setDrag(null); setOver(null); }} onClick={() => open(c.id)}>
         <span className="n"><Avatar name={name} size="sm" /><span>{name}</span></span>
         <span className="kv-r"><Icon name="dollar" size={12} /><b>{priceOf(c) || "–"}</b></span>

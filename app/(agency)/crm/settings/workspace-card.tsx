@@ -75,9 +75,9 @@ export function WorkspaceCard() {
         <span>Accent color</span>
         <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <input type="color" aria-label="Pick accent color" value={/^#[0-9a-f]{6}$/i.test(w.accentColor ?? "") ? w.accentColor : "#121417"} onChange={e => set("accentColor", e.target.value)} style={{ width: 42, height: 36, padding: 2, flex: "0 0 auto" }} />
-          <input type="text" value={w.accentColor ?? ""} placeholder="#121417 (Cinder)" onChange={e => set("accentColor", e.target.value.trim())} />
+          <input type="text" value={w.accentColor ?? ""} placeholder="#121417 (default)" onChange={e => set("accentColor", e.target.value.trim())} />
         </span>
-        <small>White-label: the one color used for the Call button and the main chart line. Empty keeps Cinder orange.</small>
+        <small>White-label: the one color used for the Call button and the main chart line. Leave empty for the default black.</small>
       </label>
       <label className="ws-field">
         <span>Time zone</span>

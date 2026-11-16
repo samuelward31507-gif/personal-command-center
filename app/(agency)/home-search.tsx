@@ -4,7 +4,8 @@ import { copyText } from "@/lib/copy";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { AskAction } from "@/lib/ask";
 import { ActionCard, Markdown } from "./ask-answer";
-import { CinderEmber, CinderMark, CINDER_MONO } from "./cinder-brand";
+import { CinderMark, CINDER_MONO } from "./cinder-brand";
+import { EMBER } from "@/lib/cinder-logo";
 import "./home-search.css";
 import { useWorkspace } from "./use-workspace";
 import HomeNext from "./home-next";
@@ -185,7 +186,7 @@ export default function HomeSearch() {
 
   if (!chat) return <div className="ask-root ask-root-empty">
     <div className="ask-hero">
-      <h1 className="ask-hello"><CinderEmber className="ask-hello-mark" />{hello}</h1>
+      <h1 className="ask-hello"><CinderMark className="ask-hello-mark" ring={EMBER} />{hello}</h1>
       {composer}
       <div className="ask-suggest">
         {SUGGESTIONS.map(s => <button key={s.label} type="button" className="ask-pill" onClick={() => void ask(s.prompt)}><Icon name={s.icon} />{s.label}</button>)}

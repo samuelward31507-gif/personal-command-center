@@ -1,5 +1,6 @@
 /* Tasks, on the command center's light tokens (cinder.css). */
-.tasks-page { max-width: 1280px; margin: 0 auto; padding: 28px 32px 56px; color: var(--k-ink); }
+.tasks-page { color: var(--k-ink); padding-bottom: 56px; }
+.tasks-page > :not(.u-head):not(.task-modal-backdrop) { max-width: 1232px; }
 .tasks-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 20px; }
 .tasks-eyebrow { display: none; }
 .tasks-header h1 { font: 600 24px/30px var(--k-display); letter-spacing: -.5px; margin: 0 0 4px; color: var(--k-ink); }
@@ -73,7 +74,7 @@
 
 @media (max-width: 1050px) { .tasks-page .task-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .task-metrics article:nth-child(n+3) { border-top: 1px solid var(--k-line); } .task-metrics article:nth-child(3) { box-shadow: none; } }
 @media (max-width: 760px) {
-  .tasks-page { padding: 20px 16px 40px; }
+  .tasks-page { padding-bottom: 40px; }
   .tasks-header { align-items: flex-start; flex-direction: column; }
   .tasks-head-actions { width: 100%; justify-content: space-between; }
   .task-toolbar { align-items: stretch; flex-direction: column; }

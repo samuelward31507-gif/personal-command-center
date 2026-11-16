@@ -1,4 +1,6 @@
-.pr-page { max-width: 760px; margin: 0 auto; padding: 34px 24px 80px; }
+.pr-page { padding-bottom: 80px; }
+.pr-page > :not(.u-head) { max-width: 760px; }
+.pr-intro { margin-bottom: 8px; }
 .pr-head h1 { margin: 0 0 6px; }
 .pr-head p { margin: 0; font-size: 14.5px; }
 .pr-reps { margin-top: 10px; font-size: 13px; color: #2a2d32; }

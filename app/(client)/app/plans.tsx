@@ -42,7 +42,7 @@ export function PlansScreen({ d, project, api, toast, reload, go }: { d: Data; p
       actions={!crew ? <button type="button" className="btn ink" onClick={() => setSheet({})}><Icon name="plus" size={14} />New plan</button> : undefined} />
     <div className="dash">
       {plans.length ? <>
-        <Kpis items={[
+        <Kpis quiet items={[
           { label: "Active plans", value: String(active.length), sub: plans.length > active.length ? `${plans.length - active.length} paused or ended` : "all running" },
           { label: "Recurring a month", value: usd(mrr), sub: `${usd(mrr * 12)} a year`, tone: mrr ? "up" : "" },
           { label: "Visits this week", value: String(week), sub: week ? "reminded the day before" : "none booked" },
