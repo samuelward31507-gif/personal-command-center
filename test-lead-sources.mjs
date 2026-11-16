@@ -4,10 +4,10 @@ import { isStop, isPlainOptOut, isHelp, isStopKeyword } from "./lib/client-runti
 // Angi / HomeAdvisor lead delivery
 const angi = parseLead({ firstName: "Dana", lastName: "Ruiz", phonePrimary: "(720) 555-0148", email: "d@x.com", address: "12 Elm St", city: "Littleton", state: "CO", postalCode: "80120", taskName: "Install a Wood Fence", comments: "About 80 ft, side yard", timeframe: "Within 1 week" }, "angi");
 assert.equal(angi.phone, "+17205550148"); assert.equal(angi.name, "Dana Ruiz"); assert.equal(angi.source, "angi"); assert.equal(angi.via, "Angi");
-assert.match(angi.message, /Install a Wood Fence · About 80 ft, side yard · Address: 12 Elm St, Littleton, CO, 80120 · Timing: Within 1 week/);
+assert.match(angi.message, /Install a Wood Fence. About 80 ft, side yard. Address: 12 Elm St, Littleton, CO, 80120. Timing: Within 1 week/);
 // Thumbtack-style nested payload
 const tt = parseLead({ request: { title: "Fence installation", description: "Cedar, 140 ft" }, customer: { name: "Tom Becker", phone: "+1 303 555 0177" } }, "thumbtack");
-assert.equal(tt.phone, "+13035550177"); assert.equal(tt.name, "Tom Becker"); assert.match(tt.message, /Fence installation · Cedar, 140 ft/);
+assert.equal(tt.phone, "+13035550177"); assert.equal(tt.name, "Tom Becker"); assert.match(tt.message, /Fence installation. Cedar, 140 ft/);
 // Facebook Lead Ads (field_data) without a hint, source in payload
 const fb = parseLead({ platform: "fb", field_data: [{ name: "full_name", values: ["Priya Shah"] }, { name: "phone_number", values: ["+17205550163"] }, { name: "what_service_do_you_need?", values: ["Vinyl fence"] }] });
 assert.equal(fb.source, "facebook"); assert.equal(fb.name, "Priya Shah"); assert.equal(fb.message, "Vinyl fence");

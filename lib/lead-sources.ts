@@ -77,6 +77,6 @@ export function leadFields(f: Record<string, string>): { name: string; email: st
   const details = pick(f, "message", "details", "description", "requestdescription", "comments", "projectdescription", "notes", "job", "project", "whatdoyouneed", "tellusaboutyourproject");
   const addr = [pick(f, "address", "streetaddress", "address1", "street"), pick(f, "city"), pick(f, "state", "statecode"), pick(f, "zip", "zipcode", "postalcode", "postcode")].filter(Boolean).join(", ");
   const when = pick(f, "timeframe", "timeline", "when", "requestedtimeframe", "whendoyouneedit");
-  const message = [job, details && details !== job ? details : "", addr ? `Address: ${addr}` : "", when ? `Timing: ${when}` : ""].filter(Boolean).join(" · ").slice(0, 1000);
+  const message = [job, details && details !== job ? details : "", addr ? `Address: ${addr}` : "", when ? `Timing: ${when}` : ""].filter(Boolean).join(". ").slice(0, 1000);
   return { name, email: pick(f, "email", "emailaddress", "customeremail", "contactemail").slice(0, 120), message };
 }
