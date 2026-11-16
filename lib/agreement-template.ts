@@ -54,7 +54,7 @@ export function fillAgreement(f: AgreementFill): string {
     setup_credit: (f.setupCredit ?? 0) > 0 ? ` (less upgrade credit of ${money(f.setupCredit ?? 0)})` : "",
     special_terms: val(f.specialTerms, "None"),
     fee_extras: [
-      f.addon ? `\n- Reactivation add-on: **${money(ADDON_MONTHLY)}** a month, starting with the monthly fee` : "",
+      f.addon ? `\n- Reactivation campaign: **${money(ADDON_ONCE)}** one time, due with the setup fee` : "",
     ].join(""),
   };
   const fill = (s: string) => s.replace(/\{\{(\w+)\}\}/g, (m, k: string) => (k in fields ? fields[k] : m));
@@ -71,7 +71,8 @@ export type SowInput = { tier: SowTier; setupFee: number; monthlyFee: number; ad
 export type SowRow = { label: string; amount: number; when: string };
 
 export const LIST = { tier1: { setup: 997, monthly: 697 }, tier2: { setup: 1997, monthly: 1497 } } as const;
-export const ADDON_MONTHLY = 497;
+/** Reactivation: one campaign to old leads and past customers, a one-time fee paid with the setup. */
+export const ADDON_ONCE = 497;
 
 export const usd = (n: number) => (n < 0 ? "−" : "") + "$" + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -79,15 +80,15 @@ export const usd = (n: number) => (n < 0 ? "−" : "") + "$" + Math.abs(n).toLoc
 export function buildSow(i: SowInput): { rows: SowRow[]; setupDue: number; firstMonth: number; monthly: number; founding: boolean } {
   const list = LIST[i.tier];
   const founding = i.setupFee > 0 && i.setupFee < list.setup;
-  const monthly = i.monthlyFee + (i.addon ? ADDON_MONTHLY : 0);
+  const monthly = i.monthlyFee;
   // A hand-discounted setup lowers the setup only; the first month is the plan's monthly fee.
   const firstMonth = monthly;
-  const plan = i.addon ? `Monthly (plan ${usd(i.monthlyFee)} + Reactivation ${usd(ADDON_MONTHLY)})` : "Monthly";
   const rows: SowRow[] = [
     { label: founding ? `Setup (discounted from ${usd(list.setup)})` : "Setup", amount: i.setupFee, when: "Once, when you sign" },
-    { label: plan, amount: monthly, when: "Starts the day your first appointment books. Month to month, cancel with 30 days’ notice" },
+    ...(i.addon ? [{ label: "Reactivation campaign", amount: ADDON_ONCE, when: "Once, with the setup" }] : []),
+    { label: "Monthly", amount: monthly, when: "Starts the day your first appointment books. Month to month, cancel with 30 days’ notice" },
   ];
-  return { rows, setupDue: i.setupFee, firstMonth, monthly, founding };
+  return { rows, setupDue: i.setupFee + (i.addon ? ADDON_ONCE : 0), firstMonth, monthly, founding };
 }
 
 /** The price table for the agreement (the signing page renders `|` rows as a table). */
@@ -126,7 +127,7 @@ export function planItems(tier: AgreementTier): string[] {
 
 export function buildProposal(p: ProposalInput): string {
   const plan = p.tier === "tier1" ? "Never Miss a Lead" : "Book & Close";
-  const monthly = p.monthlyFee + (p.addon ? ADDON_MONTHLY : 0);
+  const monthly = p.monthlyFee;
   const who = p.ownerName?.trim() ? `${p.ownerName.trim()}, ${p.company}` : p.company;
   const items = planItems(p.tier);
   const booked = p.bookedGuarantee === 3
@@ -161,13 +162,14 @@ export function buildProposal(p: ProposalInput): string {
     ...(p.tier === "tier2"
       ? ["### Every lead, answered and booked", "", ...items.slice(0, 6).map(x => `- ${x}`), "", "### Every quote, chased to a yes or a no", "", ...items.slice(6).map(x => `- ${x}`)]
       : items.map(x => `- ${x}`)),
-    ...(p.addon ? ["", `- Reactivation: old leads and past customers worked every quarter (${money(ADDON_MONTHLY)}/month)`] : []),
+    ...(p.addon ? ["", `- Reactivation campaign: your old leads and past customers texted, every reply answered and booked (${money(ADDON_ONCE)} one time)`] : []),
     "",
     "## Your investment",
     "",
     "| | Amount | When |",
     "| --- | --- | --- |",
     `| Setup | **${money(p.setupFee)}** | Once, when you sign |`,
+    ...(p.addon ? [`| Reactivation campaign | **${money(ADDON_ONCE)}** | Once, with the setup |`] : []),
     `| Monthly | **${money(monthly)}** | Starts the day we book your first appointment |`,
     "",
     "No contract: month to month, cancel with 30 days' notice. No per-minute, per-lead or per-appointment fees. Texting costs are included.",

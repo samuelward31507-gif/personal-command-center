@@ -769,3 +769,12 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 
 .notif .ic.ic-logo { background: none; padding: 0; overflow: hidden; }
 .notif .ic.ic-logo svg { display: block; }
+
+/* Announcement bar: the "New" line lives above the menu, out of the hero, and folds away once you scroll */
+.announce { display: flex; align-items: center; justify-content: center; gap: 10px; height: 36px; padding: 0 16px; background: #121417; color: rgba(255,255,255,.86); font-size: 13.5px; text-decoration: none; overflow: hidden; transition: height .3s var(--ease, ease), opacity .2s; }
+.announce:hover { color: #fff; }
+.announce-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 6px; background: #F2431D; color: #fff; font-size: 12px; font-weight: 600; }
+.announce svg { width: 13px; height: 13px; opacity: .7; }
+.announce .pl-short { display: none; }
+.nav.is-scrolled .announce { height: 0; opacity: 0; }
+@media (max-width: 760px) { .announce { font-size: 12.5px; } .announce .pl-long { display: none; } .announce .pl-short { display: inline; } }

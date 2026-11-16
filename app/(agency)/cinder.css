@@ -13,7 +13,7 @@
   --k-bg: #ffffff; --k-side: #fafafb; --k-hover: #f4f5f6; --k-sel: #eeeff1; --k-wash: #fbfbfc;
   --k-ink: #1c1d1f; --k-ink2: #2e3238; --k-g1: #505967; --k-g2: #6f7988; --k-g3: #9aa3b0; --k-g4: #b5bdc9;
   --k-line: #eeeff1; --k-line2: #e6e7ea; --k-line3: #d3d8df;
-  --k-blue: #266df0; --k-ember: #e0602f; --k-good: #16a34a; --k-bad: #dc2626;
+  --k-blue: #266df0; --k-ember: #F2431D; --k-good: #16a34a; --k-bad: #dc2626;
   --k-ff: "Inter", "Inter Variable", var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --k-display: "Inter Display", "Inter", var(--font-display), -apple-system, system-ui, sans-serif;
   --k-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -31,7 +31,7 @@
   --mc-bg: #fafafb; --mc-panel: #ffffff; --mc-raised: #ffffff; --mc-hover: #f4f5f6; --mc-line: #eeeff1; --mc-line-2: #e6e7ea;
   --mc-text: #1c1d1f; --mc-soft: #2e3238; --mc-muted: #6f7988; --mc-faint: #9aa3b0; --mc-accent: #266df0; --mc-mono: var(--k-mono); --mc-sans: var(--k-ff);
   --c-bg: #ffffff; --c-surface: #ffffff; --c-raised: #ffffff; --c-hover: #f4f5f6; --c-line: #e6e7ea; --c-line-soft: #eeeff1;
-  --c-text: #1c1d1f; --c-soft: #2e3238; --c-muted: #6f7988; --c-faint: #9aa3b0; --c-today: #e0602f; --c-now: #e0602f;
+  --c-text: #1c1d1f; --c-soft: #2e3238; --c-muted: #6f7988; --c-faint: #9aa3b0; --c-today: #F2431D; --c-now: #F2431D;
   --st-font: var(--k-ff); --st-text: #1c1d1f; --st-soft: #505967; --st-muted: #6f7988; --st-faint: #9aa3b0; --st-line: #eeeff1; --st-line-2: #e6e7ea;
   --st-surface: #ffffff; --st-raised: #f4f5f6; --st-raise: #ffffff; --st-bg-2: #ffffff; --st-accent: #266df0; --st-radius: 12px;
   --d-bg: #ffffff; --d-raise: #ffffff; --d-card: #ffffff; --d-thumb: #fafafb; --d-text: #1c1d1f; --d-soft: #505967; --d-muted: #6f7988; --d-faint: #9aa3b0;
@@ -284,7 +284,7 @@ label.u-lab { display: flex; flex-direction: column; gap: 6px; color: var(--k-g1
 .crm-btn:hover, .quiet-button:hover { box-shadow: 0 0 0 1px var(--k-line3), var(--k-sh-btn); }
 .text-action { background: transparent; box-shadow: none; color: var(--k-g1); }
 .text-action:hover { background: var(--k-hover); color: var(--k-ink); }
-:is(.crm-btn-primary, .pipeline-primary, .task-primary, .outreach-primary, [data-variant="primary"]):not(.cx-mobile-toggle):not(.cx-scrim):not(.cx-collapse):not(.cx-item) { background: #232529; color: #fff; box-shadow: var(--k-sh-pri); border: 0; }
+:is(.crm-btn-primary, .pipeline-primary, .task-primary, .outreach-primary, [data-variant="primary"]):not(.cx-mobile-toggle):not(.cx-scrim):not(.cx-collapse):not(.cx-item):not(.dw-stage):not(.dw-btn):not(.dw-tabs > button) { background: #232529; color: #fff; box-shadow: var(--k-sh-pri); border: 0; }
 .crm-import-pill, .date-chip, .schedule-category { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 6px; background: #f3f4f6; color: var(--k-g1); box-shadow: inset 0 0 0 1px var(--k-line2); font-size: 13px; }
 .surface-panel, .schedule-panel, .crm-detail-section, .hb-attn { background: #fff; border-radius: 12px; border: 0; box-shadow: 0 0 0 1px var(--k-line2), 0 1px 2px rgba(0, 22, 62, .04); }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--k-line); }

@@ -152,7 +152,8 @@ export function agreementFacts(md: string) {
     plan: pick(/the \*\*(.+?)\*\* system/),
     setup: pick(/- Setup fee: \*\*(.+?)\*\*/),
     monthly: pick(/- Monthly fee: \*\*(.+?)\*\*/),
-    addon: /Reactivation add-on: \*\*(.+?)\*\*/.exec(md)?.[1] ?? "",
+    addon: /Reactivation (?:add-on|campaign): \*\*(.+?)\*\*/.exec(md)?.[1] ?? "",
+    addonOnce: /Reactivation campaign: \*\*/.test(md),
     texts: pick(/up to \*\*([\d,]+) texts per month\*\*/),
     signer: pick(/## Signatures[\s\S]*?Name: (.+)/),
   };
@@ -320,8 +321,8 @@ ${sigSide("CLIENT", f.company || "Client", sc, f.owner && !/^\[/.test(f.owner) ?
 ${sp || sc ? `<p class="esign">Signed electronically. ${sp ? `${esc(sp.name)} for ${esc(business)}${sp.at ? `, ${esc(dateLong(sp.at))}` : ""}. ` : ""}${sc ? `${esc(sc.name)} for ${legalInline(f.company)}${sc.at ? `, ${esc(dateLong(sc.at))}` : ""}. ` : ""}The signer's name, time, IP address and browser are recorded with the exact text signed.</p>` : ""}</section>`;
   const terms = [
     ["Plan", `<b>${legalInline(f.plan)}</b>, as described in Schedule A`],
-    ["Setup fee", `<b>${legalInline(f.setup)}</b>, due on signing (Section 2.1)`],
-    ["Monthly fee", `<b>${legalInline(f.monthly)}</b> a month${f.addon ? `, plus the Reactivation add-on at ${legalInline(f.addon)}` : ""}, starting the day the first Booked Appointment lands (Section 2.2)`],
+    ["Setup fee", `<b>${legalInline(f.setup)}</b>${f.addon && f.addonOnce ? `, plus the Reactivation campaign at ${legalInline(f.addon)}, one time` : ""}, due on signing (Section 2.1)`],
+    ["Monthly fee", `<b>${legalInline(f.monthly)}</b> a month${f.addon && !f.addonOnce ? `, plus the Reactivation add-on at ${legalInline(f.addon)}` : ""}, starting the day the first Booked Appointment lands (Section 2.2)`],
     ["Term", "Month to month. No minimum term. Either party may cancel with 30 days’ notice (Section 4)"],
     ["Included usage", `${legalInline(f.texts || "")} texts a month; $30 per additional 1,000 (Section 7)`],
     ["Guarantees", /Booked-Appointment Guarantee/.test(md) && /Book & Close/.test(f.plan) ? "60-second first reply (8.1); Booked Appointments in the first 30 days (8.2); live within 21 business days or setup refunded (3)" : "60-second first reply (8.1); live within 21 business days or setup refunded (3)"],
