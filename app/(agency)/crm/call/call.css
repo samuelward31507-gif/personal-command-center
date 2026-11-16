@@ -174,20 +174,3 @@ html body .dl-call .dl-play { margin-bottom: 8px; }
   html body .dl-call .dl-dial .dl-phone { flex-basis: 100%; }
   html body .dl-call .dl-dial .u-btn-lg { flex: 1 1 0; justify-content: center; padding: 0 14px; }
 }
-
-/* Speed test + Loom script (under the research card) */
-.sl { margin: 10px 0 4px; padding: 12px 14px; border-radius: 12px; background: #fff; box-shadow: 0 0 0 1px var(--k-line2), 0 1px 2px rgba(0, 22, 62, .04); }
-.sl-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.sl-k { font: 600 12.5px/1 var(--k-ff); color: var(--k-g2); margin-right: 4px; }
-.sl-hint { font-size: 13px; color: var(--k-g3); }
-.sl-loom { margin-left: auto; }
-.sl-line { margin: 10px 0 0; font-size: 14px; line-height: 21px; color: var(--k-ink); }
-.sl-line b { font-weight: 600; color: var(--k-g2); margin-right: 4px; }
-.sl-loomp { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--k-line); }
-.sl-loomp ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.sl-loomp li { display: grid; grid-template-columns: 44px 1fr; gap: 10px; }
-.sl-at { font: 600 13px/20px var(--k-ff); color: var(--k-g2); }
-.sl-loomp p { margin: 0; font-size: 14px; line-height: 21px; color: var(--k-ink); }
-.sl-loomp p.sl-screen { font-size: 12.5px; line-height: 18px; color: var(--k-g3); margin-bottom: 2px; }
-.sl-loomf { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
-@media (max-width: 640px) { .sl-loom { margin-left: 0; } .sl-hint { flex-basis: 100%; } }

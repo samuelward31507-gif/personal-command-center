@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { parseAuditCard } from "@/lib/audit-card";
 import { cleanSpeedTest, loomScript, speedLine, summarize, type SpeedTest, type SpeedVia } from "@/lib/speed-test";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
+import "./speed-loom.css";
 
 type Props = {
   contact: { id: string; company: string; phone?: string; website?: string; location?: string };

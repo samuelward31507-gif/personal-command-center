@@ -15,6 +15,7 @@ import { Markdown } from "../../../ask-answer";
 import "../../../home-search.css";
 import "./deal.css";
 import { LogoOrAvatar } from "../../../ui/parts";
+import SpeedLoom from "../../call/speed-loom";
 
 type DealTab = "discovery" | "proposal" | "agreement" | "kickoff" | "email";
 type Workspace = {
@@ -522,6 +523,7 @@ export default function DealWorkspacePage() {
 
       <div className="dw-col dw-side">
         {ws.project && <section className="u-sheet dw-box dw-win"><h2>Onboarding</h2><p><Link href="/crm/projects">{ws.project.name}</Link> · {ws.project.status.replace(/_/g, " ")}{ws.project.targetDate ? ` · launch ${dateLabel(ws.project.targetDate)}` : ""}</p></section>}
+        {ws.contact && deal.stage !== "won" && <section className="u-sheet dw-box"><h2>Speed test &amp; Loom</h2><SpeedLoom contact={ws.contact} firstName={(ws.contact.name || "").trim().split(/\s+/)[0] || null} bookingLink={wsp.bookingLink || null} /></section>}
         {ws.audit && <section className="u-sheet dw-box"><div className="u-sheet dw-boxhead"><h2>Audit</h2><Link href={`/crm/audits/${ws.audit.id}`} className="dw-mini-link">Full report</Link></div><div className="dw-small dw-md"><Markdown text={ws.audit.verdict.replace(/^HYPOTHESIS:\s*/gim, "").slice(0, 700)} /></div>{ws.audit.upsells && deal.stage !== "won" && <><div className="dw-label">Later upsells</div><p className="dw-small">{ws.audit.upsells.replace(/\*\*/g, "").split("\n").slice(0, 3).join(" · ")}</p></>}</section>}
         {deal.stage === "won" && <section className="u-sheet dw-box"><h2>Grow this client</h2>
           <p className="dw-small">Upsells and referrals come from clients who are getting results. Start one as its own deal.</p>
