@@ -191,6 +191,23 @@ export function parseTeam(v: unknown): TeamMember[] {
   }
   return out;
 }
+/** Saved quotes to start from: up to 20, each a name and up to 30 lines (options and tiers kept). */
+export function quoteTemplates(v: unknown): { name: string; items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[] }[] {
+  let arr: unknown = v;
+  if (typeof v === "string") { try { arr = JSON.parse(v); } catch { arr = []; } }
+  const out: { name: string; items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[] }[] = [];
+  for (const t of Array.isArray(arr) ? arr : []) {
+    const o = (t && typeof t === "object" ? t : {}) as Record<string, unknown>;
+    const name = String(o.name ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 60);
+    const items = (Array.isArray(o.items) ? o.items : []).slice(0, 30).map(x => { const i = (x && typeof x === "object" ? x : {}) as Record<string, unknown>;
+      const price = Math.max(0, Math.min(10_000_000, Math.round(Number(i.price) * 100) / 100 || 0)), qty = Math.max(0.01, Math.min(100000, Number(i.qty) || 1));
+      return { name: String(i.name ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 120) || "Line", qty, unit: String(i.unit ?? "").trim().slice(0, 12), price,
+        ...(typeof i.tier === "string" && i.tier ? { tier: i.tier.slice(0, 20) } : {}), ...(i.opt === true ? { opt: true } : {}) }; });
+    if (name && items.length && !out.some(x => x.name.toLowerCase() === name.toLowerCase())) out.push({ name, items });
+    if (out.length >= 20) break;
+  }
+  return out;
+}
 /** The owner's custom field labels: up to 10, 40 characters, no repeats in any case. Mirrors cleanFieldLabels in lib/records.ts. */
 function fieldLabels(v: unknown): string[] {
   let arr: unknown = v;
@@ -241,6 +258,7 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   int("late_fee_days", 1, 90);
   int("monthly_goal", 0, 10000000);
   if (r.custom_fields !== undefined) out.custom_fields = JSON.stringify(fieldLabels(r.custom_fields));
+  if (r.quote_templates !== undefined) out.quote_templates = JSON.stringify(quoteTemplates(r.quote_templates));
   if (r.mileage_rate !== undefined) { const n = Number(String(r.mileage_rate ?? "").replace(/[^\d.]/g, "")); out.mileage_rate = n > 0 && n <= 5 ? String(Math.round(n * 1000) / 1000) : ""; }
   if (r.review_link !== undefined) { const u = String(r.review_link ?? "").trim().slice(0, 300); out.review_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   if (r.financing_link !== undefined) { const u = String(r.financing_link ?? "").trim().slice(0, 300); out.financing_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
