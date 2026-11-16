@@ -224,6 +224,8 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
       return { name: String(o.name ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 60), items: (Array.isArray(o.items) ? o.items : []).map(i => String(i ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 100)).filter(Boolean).slice(0, 30) }; }).filter(x => x.name && x.items.length)); }
   if (r.labor_rate !== undefined) { const n = Number(String(r.labor_rate ?? "").replace(/[$,\s]/g, "")); out.labor_rate = Number.isFinite(n) && n > 0 && n <= 500 ? String(Math.round(n * 100) / 100) : ""; }
   pick("quote_terms", undefined, 1200); pick("warranty", undefined, 300); pick("financing_note", undefined, 160);
+  pick("agent_paused", ["", "yes"]);
+  if (r.review_link !== undefined) { const u = String(r.review_link ?? "").trim().slice(0, 300); out.review_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   if (r.financing_link !== undefined) { const u = String(r.financing_link ?? "").trim().slice(0, 300); out.financing_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   return out;
 }

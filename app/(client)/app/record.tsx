@@ -90,16 +90,18 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
   return <>
     <div className="insp-h">
       <Avatar name={r.name} size="xl" />
-      <div className="t"><b>{r.name}</b><span>{fmtPhone(r.phone)}</span></div>
+      <div className="t"><b>{r.name}</b><span>{[fmtPhone(r.phone), r.address].filter(Boolean).join(", ")}</span></div>
       <div className="acts">
         {biz.canCall ? <button type="button" className="btn ghost ic" title="Call" aria-label="Call" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} /></button> : <a className="btn ghost ic" title="Call" aria-label="Call" href={`tel:${r.phone}`}><Icon name="phone" size={14} /></a>}
         <button type="button" className="btn ghost ic" title="Open full record (↵)" aria-label="Open full record" onClick={onExpand}><Icon name="expand" size={14} /></button>
         <button type="button" className="btn ghost ic" title="Close (esc)" aria-label="Close" onClick={onClose}><Icon name="x" size={14} /></button>
       </div>
     </div>
-    <div className="insp-sub">
-      {r.address ? <span title={r.address}>{r.address}</span> : <span>{sourceLabel(r.source)}</span>}
-      {r.card && <StageChip stage={r.card.stage} text={`${r.card.pastCustomer ? "Past customer" : STAGE_LABEL[r.card.stage]}${r.price ? `, ${dollars(r.price)}` : ""}`} />}
+    <div className="insp-sub path-row">
+      {r.card && !r.card.pastCustomer ? <div className="path" role="radiogroup" aria-label="Stage">{(["new", "booked", "quoted", "won"] as Stage[]).map(s => { const at = STAGES.indexOf(r.card!.stage), me = STAGES.indexOf(s);
+        return <button key={s} type="button" role="radio" aria-checked={r.card!.stage === s} className={(r.card!.stage === s ? "on" : me < at && r.card!.stage !== "lost" ? "past" : "")} disabled={!!r.busy} onClick={() => pick(s)}>{s === "booked" ? "Booked" : STAGE_LABEL[s]}</button>; })}</div>
+        : <span>{r.card?.pastCustomer ? "Past customer" : sourceLabel(r.source)}</span>}
+      {r.price ? <b className="amt">{dollars(r.price)}</b> : null}
     </div>
     {next && (next.tone === "red" || next.tone === "amber") && <div className="insp-sub" style={{ color: next.tone === "red" ? "var(--bad)" : "var(--ink)" }}><Icon name={next.icon} size={13} /><span>{next.text}</span></div>}
     <div className="insp-tabs" role="tablist">
@@ -293,24 +295,27 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
   useEffect(() => { if (texts === null) return; if ((seen.current === null && autoscroll) || (seen.current !== null && items.length > seen.current)) end.current?.scrollIntoView({ block: "nearest" }); seen.current = items.length; }, [items.length, texts, autoscroll]);
   useEffect(() => { const el = ta.current; if (el) { el.style.height = "auto"; el.style.height = Math.min(160, el.scrollHeight) + "px"; } }, [draft, ta]);
   const mine = status === "paused";
-  let lastDay = "";
+  const [snipOpen, setSnipOpen] = useState(false);
+  let lastDay = "", lastWho = "", lastAt = 0;
   return <>
     <div style={{ padding: "4px 0 8px", flex: 1 }}>
       {texts === null ? <div className="skel-rows" style={{ padding: "12px 0" }}><i className="skel" /><i className="skel" /><i className="skel" /></div>
         : items.length === 0 ? <Empty title="Nothing here yet" text={canText ? "Anything you send goes from your business number." : "No texts on this customer yet."} />
         : items.map((x, i) => {
-          const sep = dayKey(x.at) !== lastDay ? <p className="day" key={"d" + i}><span>{dayName(x.at)}</span></p> : null; lastDay = dayKey(x.at);
+          const newDay = dayKey(x.at) !== lastDay;
+          const sep = newDay ? <p className="day" key={"d" + i}><span>{dayName(x.at)}</span></p> : null; lastDay = dayKey(x.at);
+          if (x.kind === "event" || x.text?.author === "system") lastWho = "";
           if (x.kind === "event") return <div key={"e" + i}>{sep}<article className="ev"><span className={"ic " + (x.tone ?? "")}><Icon name={x.icon ?? "check"} size={13} /></span><div><header><b>{x.title}</b>{x.sub && <span>{x.sub}</span>}<time>{clock(x.at)}</time></header></div></article></div>;
           const t = x.text!;
           if (t.author === "system") return <div key={t.id}>{sep}<article className="ev"><span className="ic"><Icon name="bolt" size={13} /></span><div><header><b>{t.body}</b><time>{clock(t.at)}</time></header></div></article></div>;
           const who = t.direction === "in" ? "them" : t.author === "owner" ? "you" : "cinder";
+          const cont = !newDay && who === lastWho && Date.parse(t.at) - lastAt < 10 * 60000; lastWho = who; lastAt = Date.parse(t.at);
           const photos = (t.media ?? []).map((_, k) => `/api/app/media?id=${t.id}&i=${k}`);
           const words = photos.length && /^\(sent (a photo|\d+ photos)\)$/.test(t.body) ? "" : t.body;
-          return <div key={t.id}>{sep}<article className="ev">
-            {who === "them" ? <span className="ic"><Avatar name={name} size="sm" /></span> : who === "you" ? <span className="ic" style={{ color: "var(--ink)" }}><Icon name="user" size={13} /></span> : <span className="ic"><Icon name="bolt" size={13} /></span>}
-            <div><header><b>{who === "them" ? (compact ? first(name) : name) : who === "you" ? "You" : "Auto-reply"}</b><time>{clock(t.at)}</time></header>
-              {photos.length > 0 && <div className="photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
-              {words && <p><span className={"bubble" + (who === "you" ? " out" : who === "cinder" ? " cinder" : "")}>{words}</span></p>}</div>
+          return <div key={t.id}>{sep}<article className={"lg " + who + (cont ? " cont" : "")}>
+            {!cont && <header><b>{who === "them" ? (compact ? first(name) : name) : who === "you" ? "You" : "Cinder"}</b><time>{clock(t.at)}</time></header>}
+            {photos.length > 0 && <div className="photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
+            {words && <p title={cont ? clock(t.at) : undefined}>{words}</p>}
           </article></div>;
         })}
       <div ref={end} />
@@ -318,11 +323,12 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
     {canText && <div className="compose">
       {editSnips && <SnippetEditor list={snips.list} onSave={snips.save} onClose={() => setEditSnips(false)} />}
       <form className="box" onSubmit={async e => { e.preventDefault(); if (draft.trim() && await act("reply", { action: "reply", body: draft }, "Sent from your business number.")) setDraft(""); }}>
-        <ReplyKit hidden={!!draft.trim()} suggestion={sug} snippets={snips.list} onUse={x => { setDraft(x); ta.current?.focus(); }} onEdit={() => setEditSnips(true)} />
-        <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (tabTakes(e, draft, sug, setDraft)) return; if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${first(name)}`} aria-label="Reply" />
+        <ReplyKit hidden={!!draft.trim()} showSnips={snipOpen} suggestion={sug} snippets={snips.list} onUse={x => { setDraft(x); setSnipOpen(false); ta.current?.focus(); }} onEdit={() => setEditSnips(true)} />
+        <textarea ref={ta} rows={1} value={draft} onChange={e => { if (e.target.value === "/" && !draft) { setSnipOpen(true); return; } setDraft(e.target.value); }} onKeyDown={e => { if (tabTakes(e, draft, sug, setDraft)) return; if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${first(name)}, / for saved replies`} aria-label="Reply" />
         <div className="tools">
           <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && status === "booked")} title={mine ? "Turn auto-reply back on" : "Take over this conversation"} onClick={() => void (mine ? act("status", { action: "status", status: "auto" }, "Auto-reply is back on.") : act("status", { action: "status", status: "paused" }, "Auto-reply is off for this one. You've got it."))}>
-            <i aria-hidden="true" />{mine ? "You're replying" : "Replying for you"}</button>
+            <i aria-hidden="true" />{mine ? "You're replying" : "Cinder is replying"}</button>
+          <button type="button" className={"btn ghost sm snipb" + (snipOpen ? " on" : "")} aria-expanded={snipOpen} onClick={() => setSnipOpen(o => !o)}>Saved replies</button>
           <button type="submit" className="btn ink sm send" disabled={!!busy || !draft.trim()} title="Send (⌘↵)">{busy === "reply" ? <Spinner /> : "Send"}</button>
         </div>
       </form>
@@ -379,7 +385,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
       <label className="field"><span>Job amount</span><span className="inwrap"><i>$</i><input inputMode="decimal" autoFocus placeholder="7,400" value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></span></label>
       {installFields}
       {!biz.calendar && <p className="fine">Connect Google Calendar to add installs to it.</p>}
-      <label className={"toggle" + (biz.reviewLink ? "" : " off")}><input type="checkbox" checked={review && biz.reviewLink} disabled={!biz.reviewLink} onChange={e => setReview(e.target.checked)} /><i /><span><b>Ask for a Google review</b><small>{!biz.reviewLink ? "Needs your Google review link. Ask Sam." : install ? "The morning after the install." : "Set an install day first."}</small></span></label>
+      <label className={"toggle" + (biz.reviewLink ? "" : " off")}><input type="checkbox" checked={review && biz.reviewLink} disabled={!biz.reviewLink} onChange={e => setReview(e.target.checked)} /><i /><span><b>Ask for a Google review</b><small>{!biz.reviewLink ? "Needs your Google review link (Settings, Account)." : install ? "The morning after the install." : "Set an install day first."}</small></span></label>
       <div className="acts-row end"><button type="submit" className="btn ink" disabled={!!busy}>{busy ? <Spinner /> : "Mark won"}</button></div>
     </form>)}
 
@@ -425,7 +431,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
       </>)}
       {sec("Review", card.reviewSent ? <span className="dot good" style={{ marginLeft: "auto" }}>Asked {ago(card.reviewSent)}</span> : card.reviewAfter ? <span className="dot ink" style={{ marginLeft: "auto" }}>Queued</span> : null, <>
         {card.reviewAfter && !card.reviewSent && <div className="money"><span>Paid in full, so the ask goes out {Date.parse(card.reviewAfter) - Date.now() > 3600000 * 20 ? dateLabel(card.reviewAfter) : `about ${clock(card.reviewAfter)}`}</span><button type="button" className="link" disabled={!!busy} onClick={() => void act("rvc", { action: "reviewcancel" }, "Review ask cancelled.")}>Don&rsquo;t ask</button></div>}
-        {!card.reviewSent && <label className={"toggle" + (biz.reviewLink ? "" : " off")}><input type="checkbox" checked={review && biz.reviewLink} disabled={!biz.reviewLink} onChange={e => setReview(e.target.checked)} /><i /><span><b>Ask for a Google review</b><small>{!biz.reviewLink ? "Needs your Google review link. Ask Sam." : card.install ? `Goes out ${dateLabel(new Date(Date.parse(card.install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Set an install day."}</small></span></label>}
+        {!card.reviewSent && <label className={"toggle" + (biz.reviewLink ? "" : " off")}><input type="checkbox" checked={review && biz.reviewLink} disabled={!biz.reviewLink} onChange={e => setReview(e.target.checked)} /><i /><span><b>Ask for a Google review</b><small>{!biz.reviewLink ? "Needs your Google review link (Settings, Account)." : card.install ? `Goes out ${dateLabel(new Date(Date.parse(card.install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Set an install day."}</small></span></label>}
         {card.reviewSent ? <p className="fine">Sent by text with your Google review link.</p> : biz.reviewLink && <div className="acts-row end">
           <button type="button" className="btn" disabled={!!busy || !canText} onClick={() => arm === "rv" ? void act("review", { action: "reviewnow" }, `Review request sent to ${firstName}.`) : setArm("rv")}>{busy === "review" ? <Spinner /> : arm === "rv" ? "Tap again to send it now" : "Job done, ask now"}</button></div>}
       </>)}

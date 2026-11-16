@@ -8,7 +8,7 @@ import { jobPrice } from "@/lib/service";
 import { LOST_REASONS, STAGE_LABEL, jobProfit, type Card, type Stage } from "@/lib/crm";
 import { crewName, crewTag } from "./crew";
 import { Avatar, Empty, Icon, Menu, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
-import { Chip, FieldIcon } from "./sources";
+import { Chip, FieldIcon, Stg } from "./sources";
 import { Inspector } from "./record";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 import { Guide, Kpis, PageHead } from "./charts";
@@ -111,6 +111,13 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
   const [sel, setSel] = useState<string | null>(null);
   const [who, setWho] = useState<"all" | Who>("all");
   const [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Lane | null>(null);
+  const [cols, setColsRaw] = useState<"auto" | "more" | "core">(() => { try { const v = localStorage.getItem("cinder-job-cols"); return v === "more" || v === "core" ? v : "auto"; } catch { return "auto"; } });
+  const [vw, setVw] = useState(1440);
+  const extraCols = (open: boolean) => cols === "more" || (cols === "auto" && vw >= 1600 && !open);
+  const extra = extraCols(!!sel);
+  const slim = !!sel && vw >= 1280;
+  useEffect(() => { const h = () => setVw(innerWidth); h(); addEventListener("resize", h); return () => removeEventListener("resize", h); }, []);
+  const setCols = (v: "auto" | "more" | "core") => { setColsRaw(v); try { localStorage.setItem("cinder-job-cols", v); } catch { /* private mode */ } };
   const [losing, setLosing] = useState<Card | null>(null), [busy, setBusy] = useState(false), [ticked, setTicked] = useState<Set<string>>(new Set());
   const tick = (id: string) => setTicked(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const today = todayIso();
@@ -182,15 +189,14 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
         {wide && <button type="button" className="btn" onClick={go.importCustomers}>Import</button>}
         <button type="button" className="btn ink" onClick={go.addLead} title="Add lead (c)"><Icon name="plus" size={14} />{wide ? "New lead" : "New"}{wide && <kbd>c</kbd>}</button>
       </>} />
-    <div className={"split" + (sel && wide ? " has-insp" : "")}>
+    <div className={"split" + (sel && wide ? " has-insp" : "") + (slim ? " docked" : "")}>
       <div className="pane list"><div className="dash jobs-dash">
-        {view === "open" && everyone.length > 0 && <Kpis items={(["you", "customer", "scheduled", "cinder"] as Who[]).map(w => { const list = cards.filter(c => active(c) && moveOf(c, today).who === w); const v = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
-          return { label: WHO_LABEL[w], value: String(list.length), sub: v ? `${usd(v)} riding on it` : list.length ? "no value set yet" : "nothing here", tone: w === "you" && list.length ? "warn" as const : "" as const, active: who === w, onClick: () => setWho(x => x === w ? "all" : w) }; })} />}
         <section className="panel jobs-panel">
         <div className="jobs-tools" hidden={!everyone.length}>
           <label className="inwrap search"><Icon name="search" size={14} /><span className="sr">Search jobs</span><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, address, phone" /></label>
           {(wide || mode === "table") && <Menu label="Stage" value={lane} options={laneOptions} onPick={setLane} />}
           <Menu label="Source" value={src} options={sources} onPick={setSrc} />
+          {wide && mode === "table" && <Menu label="Columns" value={cols} options={[{ key: "auto", label: "Fit to width" }, { key: "more", label: "Show profit and source" }, { key: "core", label: "Core columns only" }] as const} onPick={setCols} />}
           {wide && <span className="sort">Sorted by <b>last activity</b></span>}
         </div>
         {!everyone.length ? <Guide title="Your jobs land here" sub="Every lead becomes a job the moment it's answered, and moves from New to Booked to Quoted to Won on its own as the conversation goes."
@@ -203,26 +209,27 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
         : !shown.length ? <Empty title="Nothing matches" text="Try another view, source or spelling." action={<button type="button" className="btn" onClick={() => { setQ(""); setSrc("any"); setLane("all"); }}>Clear filters</button>} />
         : wide && mode === "board" ? <Board cards={view === "open" ? everyone.filter(c => src === "any" || c.source === src) : shown} sel={sel} drag={drag} over={over} setDrag={setDrag} setOver={setOver} move={move} open={open} who={cell => crewName(d, cell)} />
         : wide ? <>
-          <div className="tbl-wrap"><table className={"tbl jobs-tbl" + (sel ? " compact" : "")}>
-            <colgroup><col style={{ width: 40 }} /><col style={{ width: 200 }} /><col style={{ width: 262 }} /><col /><col style={{ width: 96 }} /><col className="c2" style={{ width: 104 }} /><col style={{ width: 76 }} /><col style={{ width: 140 }} /><col className="c2" style={{ width: 104 }} /></colgroup>
-            <thead><tr><th className="ck-col"><input type="checkbox" aria-label="Select all" checked={!!shown.length && shown.every(c => ticked.has(c.id))} onChange={e => setTicked(e.target.checked ? new Set(shown.map(c => c.id)) : new Set())} /></th><th><FieldIcon name="user" />Customer</th><th><FieldIcon name="fwd" />Next step</th><th><FieldIcon name="ruler" />Job</th><th className="right"><FieldIcon name="dollar" />Value</th><th className="right c2" title="Price minus the costs you logged on the job"><FieldIcon name="bars" />Profit</th><th className="right"><FieldIcon name="clock" />Waiting</th><th><FieldIcon name="sort" />Stage</th><th className="c2"><FieldIcon name="link" />Came from</th></tr></thead>
+          <div className="tbl-wrap"><table className={"tbl jobs-tbl v5 cols-" + cols + (sel ? " compact" : "") + (slim ? " slim" : "")}>
+            <colgroup><col style={{ width: 40 }} /><col style={{ width: 210 }} /><col /><col style={{ width: 200 }} /><col style={{ width: 124 }} />{extra && <col style={{ width: 104 }} />}<col style={{ width: 132 }} /><col style={{ width: 76 }} />{extra && <col style={{ width: 116 }} />}<col style={{ width: 104 }} /></colgroup>
+            <thead><tr><th className="ck-col"><input type="checkbox" aria-label="Select all" checked={!!shown.length && shown.every(c => ticked.has(c.id))} onChange={e => setTicked(e.target.checked ? new Set(shown.map(c => c.id)) : new Set())} /></th><th>Customer</th><th>Next step</th><th>Job</th><th className="right">Value</th>{extra && <th className="right" title="Price minus the costs you logged on the job">Profit</th>}<th>Stage</th><th className="right" title="Days since the last change">Age</th>{extra && <th>Came from</th>}<th><span className="sr">Action</span></th></tr></thead>
             <tbody>{groups.map(g => <Fragment key={g.who}>
-              {grouped && <tr className="grp-row"><td colSpan={9}><b>{WHO_LABEL[g.who]}</b><span>{g.cards.length} {g.cards.length === 1 ? "job" : "jobs"}{g.value ? `, ${usd(g.value)}` : ""}</span></td></tr>}
+              {grouped && <tr className="grp-row"><td colSpan={extra ? 10 : 8}><b>{WHO_LABEL[g.who]}</b><span>{g.cards.length} {g.cards.length === 1 ? "job" : "jobs"}{g.value ? `, ${usd(g.value)}` : ""}</span></td></tr>}
               {g.cards.map(c => { const n = nextUp(c, today), m = moveOf(c, today), name = c.name || fmtPhone(c.phone), town = city(c), l = laneOf(c), days = daysIn(c); return <tr key={c.id} data-row={c.id} tabIndex={0} className={(sel === c.id ? "sel" : "") + (m.who === "you" ? " mine" : "")} aria-selected={sel === c.id} onClick={() => open(c.id)} onDoubleClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
                 <td className="ck-col" onClick={e => e.stopPropagation()}><input type="checkbox" aria-label={`Select ${name}`} checked={ticked.has(c.id)} onChange={() => tick(c.id)} /></td>
-                <td><span className="name"><Avatar name={name} size="sm" /><span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}><b>{name}</b>{town && <span className="faint">, {town}</span>}</span>{c.crewMember && <span className="ctag" title={`${crewName(d, c.crewMember)} is on this job`}>{crewTag(d, c.crewMember)}</span>}</span></td>
-                <td><span className="nxt"><span className={"next " + n.tone}>{n.text}</span>{m.verb && <button type="button" className="btn sm" onClick={e => { e.stopPropagation(); m.run(go); }}>{m.verb}</button>}</span></td>
+                <td title={town ? `${name}, ${town}` : name}><span className="name">{m.who === "you" ? <i className="turn" aria-label="Your turn" /> : <i className="turn off" aria-hidden="true" />}<Avatar name={name} size="sm" /><b>{name}</b>{c.crewMember && <span className="ctag" title={`${crewName(d, c.crewMember)} is on this job`}>{crewTag(d, c.crewMember)}</span>}</span></td>
+                <td><span className={"next " + n.tone}>{n.text}</span></td>
                 <td className={c.line ? "mut" : "faint"}>{line(c) || (c.notes ? c.notes.slice(0, 48) : "No details yet")}</td>
                 <td className={"num" + (c.value ? "" : " mut")}>{c.value ? usd(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "–"}</td>
-                {(() => { const pf = c.stage === "won" ? jobProfit(jobPrice(c), c.costs) : null; return <td className={"num c2" + (pf ? "" : " faint")} title={pf ? `${usd(pf.cost)} in costs` : c.stage === "won" ? "Log costs on the job to see profit" : undefined}>{pf ? <><span style={pf.profit < 0 ? { color: "var(--bad)" } : undefined}>{usd(pf.profit)}</span> <small className="mut">{pf.margin}%</small></> : "–"}</td>; })()}
-                <td className={"num" + (stale(c, days) ? "" : " mut")} style={stale(c, days) ? { color: "var(--ember)" } : undefined}>{l === "done" || l === "lost" ? "–" : daysLabel(days)}</td>
-                <td><Chip tone={l === "won" || l === "done" ? "green" : l === "lost" ? "red" : l === "quoted" ? "violet" : l === "booked" ? "blue" : "grey"}>{LANE_LABEL[l]}</Chip></td>
-                <td className="mut c2">{sourceLabel(c.source)}</td>
+                {(() => { const pf = c.stage === "won" ? jobProfit(jobPrice(c), c.costs) : null; return !extra ? null : <td className={"num" + (pf ? "" : " faint")} title={pf ? `${usd(pf.cost)} in costs` : c.stage === "won" ? "Log costs on the job to see profit" : undefined}>{pf ? <><span style={pf.profit < 0 ? { color: "var(--bad)" } : undefined}>{usd(pf.profit)}</span> <small className="mut">{pf.margin}%</small></> : "–"}</td>; })()}
+                <td><Stg stage={l === "done" ? "won" : l}>{l === "booked" ? "Booked" : LANE_LABEL[l]}</Stg></td>
+                <td className={"num" + (stale(c, days) ? " late" : " mut")}>{l === "done" || l === "lost" ? "–" : daysLabel(days)}</td>
+                {extra && <td className="mut">{sourceLabel(c.source)}</td>}
+                <td className="act">{m.verb && <button type="button" className={"btn sm" + (m.who === "you" ? "" : " ghost")} onClick={e => { e.stopPropagation(); m.run(go); }}>{m.verb}</button>}</td>
               </tr>; })}
             </Fragment>)}</tbody>
             {(() => { const list = ticked.size ? shown.filter(c => ticked.has(c.id)) : shown, sum = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
               const prof = list.reduce((a, c) => { const p = c.stage === "won" ? jobProfit(jobPrice(c), c.costs) : null; return a + (p?.profit ?? 0); }, 0);
-              return <tfoot><tr><td /><td><b>{list.length}</b>{ticked.size ? "selected" : "count"}</td><td /><td /><td className="num"><b>{usd(sum)}</b>sum</td><td className="num c2">{prof ? <><b>{usd(prof)}</b>sum</> : null}</td><td /><td /><td className="c2" /></tr></tfoot>; })()}
+              return <tfoot><tr><td /><td><b>{list.length}</b>{ticked.size ? "selected" : "count"}</td><td /><td /><td className="num"><b>{usd(sum)}</b>sum</td>{extra && <td className="num">{prof ? <><b>{usd(prof)}</b>sum</> : null}</td>}<td /><td />{extra && <td />}<td /></tr></tfoot>; })()}
           </table></div>
           <div className="pane-foot"><span>{shown.length} of {base.length}</span><span className="hint"><span><kbd>j</kbd><kbd>k</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>c</kbd> new lead</span></span></div>
         </>

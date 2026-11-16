@@ -83,12 +83,15 @@ export function Icon({ name, size = 16, className }: { name: string; size?: numb
 
 // ---------- Avatar, stage chip ----------
 /** Initials on a soft tint picked from the name, so the same person always looks the same. */
+/** The example business: links to real files have nothing behind them. */
+export const inDemo = () => { try { return sessionStorage.getItem("cinder-demo") === "1"; } catch { return false; } };
+
 export function Avatar({ name, size }: { name: string; size?: "sm" | "lg" | "xl" }) {
   let h = 0; for (const ch of name || "?") h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const t = AV_TINTS[h % AV_TINTS.length];
   return <span className={"av" + (size ? " " + size : "")} aria-hidden="true" style={{ background: t[0], color: t[1], borderColor: "transparent" }}>{initials(name)}</span>;
 }
-const AV_TINTS = [["#3b82f6", "#fff"], ["#22a06b", "#fff"], ["#f08c3a", "#fff"], ["#8b5cf6", "#fff"], ["#ef5a4c", "#fff"], ["#1aa3b8", "#fff"]];
+const AV_TINTS = [["#eef0f3", "#505967"]];
 export function StageChip({ stage, small, text }: { stage: Stage | "late"; small?: boolean; text?: string }) {
   return <span className={`stage ${stage}${small ? " sm" : ""}`}><i />{text ?? (stage === "late" ? "Late" : STAGE_LABEL[stage])}</span>;
 }

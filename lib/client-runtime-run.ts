@@ -456,7 +456,7 @@ export async function clientInboundText(sql: Sql, c: Client, from: string, body:
     await recordConsent(sql, c, e164(from), "opt_in", "keyword", body.slice(0, 60));
     return;
   }
-  if (t.status === "paused" || t.status === "closed") { await alertOwner(c, ownerAlert("handoff", t.customer_name || e164(from), `They texted: "${body.slice(0, 160)}"`), t.id, sql); return; }
+  if (t.status === "paused" || t.status === "closed" || c.setup.agent_paused === "yes") { await alertOwner(c, ownerAlert("handoff", t.customer_name || e164(from), `They texted: "${body.slice(0, 160)}"`), t.id, sql); return; }
   const slots = await openSlots(sql, c, lang);
   // Already booked? The reply engine needs to know, so "can we do Friday instead?" moves the estimate, not doubles it.
   const [current] = await sql`SELECT id, starts_at, event_id FROM public.client_appointments WHERE thread_id = ${t.id}::uuid AND status = 'booked' AND starts_at > now() ORDER BY starts_at LIMIT 1` as { id: string; starts_at: string; event_id: string }[];
@@ -523,7 +523,7 @@ export async function runLeadNudges(sql: Sql, now = new Date(), limit = 80): Pro
     const step = nudgeStep({ anchor: anchorMs, lastOut: ms(r.last_out), nudgeAnchor: ms(r.nudge_anchor), nudgesSent: r.nudges_sent, now: now.getTime(), hours: nudgeHoursFor(clients.get(key)?.setup) });
     if (step === null) continue;
     const c = clients.get(key);
-    if (!c?.setup.texting_number || !inTextingHours(tzOf(c), now)) { skipped++; continue; }
+    if (!c?.setup.texting_number || c.setup.agent_paused === "yes" || !inTextingHours(tzOf(c), now)) { skipped++; continue; }
     if (!(await roomFor(sql, r.id))) { skipped++; continue; }
     // Claim the step first, so two overlapping runs can never send the same nudge twice.
     const anchorIso = new Date(anchorMs!).toISOString();
@@ -582,8 +582,8 @@ export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Pr
 
 /** After a finished job: ask for a Google review, once per customer. */
 export async function sendReviewRequest(sql: Sql, c: Client, phone: string, name: string): Promise<{ ok: boolean; error?: string }> {
-  if (!c.setup.review_link) return { ok: false, error: "Add the client's Google review link in the setup sheet first." };
-  if (!c.setup.texting_number) return { ok: false, error: "Add the client's texting number in the setup sheet first." };
+  if (!c.setup.review_link) return { ok: false, error: "Add your Google review link in Settings, Account first." };
+  if (!c.setup.texting_number) return { ok: false, error: "The business texting number isn't live yet." };
   if (!inTextingHours(tzOf(c))) return { ok: false, error: "It's outside texting hours (8 AM to 8 PM). Send the review request in the morning." };
   const [dup] = await sql`SELECT 1 FROM public.client_reviews WHERE project_id = ${c.projectId}::uuid AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(phone)} LIMIT 1`;
   if (dup) return { ok: false, error: "That customer already got a review request." };
@@ -739,7 +739,7 @@ export async function runDueTexts(sql: Sql, now = new Date(), limit = 120): Prom
     const key = r.owner_id + r.project_id;
     if (!clients.has(key)) clients.set(key, await clientById(sql, r.owner_id, r.project_id));
     const c = clients.get(key);
-    if (!c?.setup.texting_number || !inTextingHours(tzOf(c), now)) { skipped++; continue; }
+    if (!c?.setup.texting_number || c.setup.agent_paused === "yes" || !inTextingHours(tzOf(c), now)) { skipped++; continue; }
     if (r.next_due > now.toLocaleDateString("en-CA", { timeZone: tzOf(c) })) continue;   // due tomorrow in their zone, not yet
     const [t0] = await sql`SELECT id, status FROM public.client_threads WHERE project_id = ${c.projectId}::uuid AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(r.customer_phone)} LIMIT 1` as { id: string; status: string }[];
     if (t0?.status === "opted_out") { await sql`UPDATE public.client_customers SET status = 'opted_out' WHERE id = ${r.id}::uuid`; continue; }

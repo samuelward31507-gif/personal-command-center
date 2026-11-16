@@ -141,7 +141,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
           <section className="panel s6">
             <div className="panel-h"><h2>Reviews</h2><small>{n!.reviews} asked {days === 365 ? "this year" : `in ${days} days`}</small></div>
             <div className="panel-b">
-              {!biz.reviewLink && <p className="fine" style={{ padding: "8px 0" }}>Add your Google review link (ask Sam) and the morning after each install the customer gets one text asking for a review.</p>}
+              {!biz.reviewLink && <p className="fine" style={{ padding: "8px 0" }}>Add your Google review link in Settings, Account, and the morning after each install the customer gets one text asking for a review.</p>}
               {pending.length ? pending.slice(0, 6).map(j => <div key={j.id} className="row"><Avatar name={j.customer_name} size="sm" /><span style={{ minWidth: 0 }}><b>{j.customer_name}</b><small>{j.amount ? `${usd(j.amount)}, ` : ""}won {ago(j.won_at)}, not asked yet</small></span>
                 <button type="button" className="btn sm" disabled={!biz.reviewLink || busy === j.id} onClick={() => void askReview(j.id, j.customer_name)}>{busy === j.id ? <Spinner /> : "Ask now"}</button></div>)
                 : biz.reviewLink ? <p className="fine" style={{ padding: "8px 0" }}>Every finished job has been asked.</p> : null}

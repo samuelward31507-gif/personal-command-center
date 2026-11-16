@@ -45,15 +45,16 @@ export function suggestReply(name: string, texts: Text[] | null, opts: { stage?:
 }
 
 /** Sits above the textarea: the suggested reply, then the saved ones. */
-export function ReplyKit({ suggestion, snippets, onUse, onEdit, hidden }: { suggestion: string; snippets: string[]; onUse: (s: string) => void; onEdit: () => void; hidden?: boolean }) {
+export function ReplyKit({ suggestion, snippets, onUse, onEdit, hidden, showSnips = true }: { suggestion: string; snippets: string[]; onUse: (s: string) => void; onEdit: () => void; hidden?: boolean; showSnips?: boolean }) {
   if (hidden) return null;
+  if (!suggestion && !showSnips) return null;
   return <div className="kit">
     {suggestion && <button type="button" className="kit-sug" onClick={() => onUse(suggestion)} title="Put this in the reply box">
       <Icon name="bolt" size={13} /><span>{suggestion}</span><kbd>Tab</kbd></button>}
-    <div className="kit-snips" role="list" aria-label="Saved replies">
+    {showSnips && <div className="kit-snips" role="list" aria-label="Saved replies">
       {snippets.map(s => <button key={s} type="button" role="listitem" onClick={() => onUse(s)} title={s}>{s}</button>)}
       <button type="button" className="kit-edit" onClick={onEdit} aria-label="Edit saved replies"><Icon name="edit" size={12} />Edit</button>
-    </div>
+    </div>}
   </div>;
 }
 

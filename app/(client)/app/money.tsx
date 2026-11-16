@@ -5,7 +5,7 @@
 import { useId, useState } from "react";
 import { chosen, dollars, lineTotal, overdue, tiersOf, totals, type Item } from "@/lib/billing";
 import { PAY_METHODS, type CardInvoice, type Payment } from "@/lib/crm";
-import { Avatar, Icon, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast } from "./parts";
+import { Avatar, Icon, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast, inDemo } from "./parts";
 import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
 import type { Biz, Data, Go, InvoiceRow } from "./types";
 import { emailDoc } from "./crew";
@@ -176,7 +176,7 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
     <label className="field"><span>Warranty <em>shown on the quote</em></span><input value={warranty} maxLength={300} onChange={e => setWarranty(e.target.value)} placeholder="Two years on workmanship. Materials carry the maker&rsquo;s warranty." /></label>
     <label className="field"><span>Terms <em>they agree to when they approve</em></span><textarea rows={4} value={terms} maxLength={1200} onChange={e => setTerms(e.target.value)} placeholder="Prices hold for 30 days. The deposit comes off the final invoice. The balance is due when the job is done." /></label>
     <p className="sec" style={{ marginTop: 10 }}>After the job</p>
-    <label className={"toggle" + (setup.has_review_link === "yes" ? "" : " off")}><input type="checkbox" checked={rop && setup.has_review_link === "yes"} disabled={setup.has_review_link !== "yes"} onChange={e => setRop(e.target.checked)} /><i /><span><b>Ask for a Google review once an invoice is paid in full</b><small>{setup.has_review_link === "yes" ? "One text, a couple of hours after the money comes in, inside texting hours. Once per customer, ever." : "Needs your Google review link. Ask Sam."}</small></span></label>
+    <label className={"toggle" + (setup.has_review_link === "yes" ? "" : " off")}><input type="checkbox" checked={rop && setup.has_review_link === "yes"} disabled={setup.has_review_link !== "yes"} onChange={e => setRop(e.target.checked)} /><i /><span><b>Ask for a Google review once an invoice is paid in full</b><small>{setup.has_review_link === "yes" ? "One text, a couple of hours after the money comes in, inside texting hours. Once per customer, ever." : "Needs your Google review link (Settings, Account)."}</small></span></label>
     <label className="field" style={{ maxWidth: 260 }}><span>Your own hourly labor cost <em>for clocked hours</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={rate} onChange={e => setRate(e.target.value.replace(/[^\d.]/g, ""))} placeholder="45" /><em>/hr</em></span></label>
     <p className="fine" style={{ marginTop: -6 }}>Crew rates are on each person in Settings, Account. Clocked hours times the rate becomes the job&rsquo;s labor cost when you tap Use as labor.</p>
   </Sheet>;
@@ -219,9 +219,9 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
       actions={<>
         <div className="menu-wrap"><button type="button" className="btn" aria-expanded={exp} onClick={() => setExp(x => !x)}><Icon name="upload" size={13} />Export</button>
           {exp && <div className="menu pop" role="menu" onMouseLeave={() => setExp(false)}>
-            <a role="menuitem" href={`/api/app/export?p=${encodeURIComponent(project)}&what=invoices`}>Invoices, as CSV</a>
-            <a role="menuitem" href={`/api/app/export?p=${encodeURIComponent(project)}&what=payments`}>Payments, as CSV</a>
-            <a role="menuitem" href={`/api/app/export?p=${encodeURIComponent(project)}`}>Customers, as CSV</a>
+            <a role="menuitem" onClick={e => { if (inDemo()) { e.preventDefault(); toast("The example business has nothing to export. Your own export downloads a real file."); } }} href={`/api/app/export?p=${encodeURIComponent(project)}&what=invoices`}>Invoices, as CSV</a>
+            <a role="menuitem" onClick={e => { if (inDemo()) { e.preventDefault(); toast("The example business has nothing to export. Your own export downloads a real file."); } }} href={`/api/app/export?p=${encodeURIComponent(project)}&what=payments`}>Payments, as CSV</a>
+            <a role="menuitem" onClick={e => { if (inDemo()) { e.preventDefault(); toast("The example business has nothing to export. Your own export downloads a real file."); } }} href={`/api/app/export?p=${encodeURIComponent(project)}`}>Customers, as CSV</a>
             <small>Opens in Excel, Google Sheets or QuickBooks.</small></div>}</div>
         <PriceListButton />
         <button type="button" className="btn" onClick={go.billing}>Pay link and tax</button>
