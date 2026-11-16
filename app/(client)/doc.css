@@ -66,7 +66,7 @@
 .doc-opts { display: flex; flex-direction: column; gap: 14px; }
 .doc-opts fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .doc-opts legend { font-size: 13px; font-weight: 600; margin-bottom: 8px; padding: 0; }
-.doc-tier, .doc-addon { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--hair-2, rgba(18,20,23,.14)); border-radius: 12px; cursor: pointer; background: #fff; transition: border-color .12s, box-shadow .12s; }
+.doc-tier, .doc-addon { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--hair-2, rgba(0, 22, 62,.14)); border-radius: 12px; cursor: pointer; background: #fff; transition: border-color .12s, box-shadow .12s; }
 .doc-tier.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
 .doc-addon.on { border-color: var(--ink); }
 .doc-opts fieldset:disabled .doc-tier, .doc-opts fieldset:disabled .doc-addon { cursor: default; }
@@ -94,7 +94,7 @@ a.doc-fin:hover b { text-decoration: underline; text-underline-offset: 3px; }
 .portal .doc-card + .doc-card { margin-top: 12px; }
 .doc-h { font-size: 13px; font-weight: 600; margin: 0 0 6px; }
 .doc-list { list-style: none; padding: 0; margin: 0; }
-.doc-list li { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--hair, rgba(18,20,23,.08)); }
+.doc-list li { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--hair, rgba(0, 22, 62,.08)); }
 .doc-list li:first-child { border-top: 0; padding-top: 4px; }
 .doc-list li > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .doc-list li b { font-size: 15px; font-weight: 600; } .doc-list li small { font-size: 13px; color: var(--g1); } .doc-list li small.warn { color: var(--ember, #c2410c); } .doc-list li small.bad { color: var(--bad, #b42318); }

@@ -9,6 +9,7 @@ import { chosen, dollars, totals, type Item } from "@/lib/billing";
 import { QuoteOptions, hasOptions } from "../doc-lines";
 import { draftItems, quoteText, type Card } from "@/lib/crm";
 import { Avatar, Empty, Icon, Sheet, Spinner, ago, dateLabel, first, fmtPhone, usd, type Api, type Toast } from "./parts";
+import { FieldIcon } from "./sources";
 import { LineEditor } from "./money";
 import { emailDoc } from "./crew";
 import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
@@ -32,6 +33,7 @@ const amountOf = (c: Card) => c.quote?.amount ?? c.value ?? 0;
 
 type Filter = "open" | "draft" | "approved" | "declined" | "all";
 export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: boolean; biz: Biz }) {
+  const [ticked, setTicked] = useState<Set<string>>(new Set());
   const [f, setF] = useState<Filter>("open"), [picking, setPicking] = useState(false), [q, setQ] = useState("");
   const rows = useMemo(() => (d.board ?? []).map(c => ({ c, s: quoteStatus(c) })).filter((r): r is { c: Card; s: QStatus } => !!r.s)
     .sort((a, b) => order(a.s) - order(b.s) || b.c.at.localeCompare(a.c.at)), [d.board]);
@@ -69,16 +71,20 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
       </div>
       {!shown.length ? <Empty title={f === "open" ? "No quotes out" : "Nothing here"} text={f === "open" ? "Write one from an estimate. It goes out by text and gets followed up until they answer." : undefined} action={f === "open" ? <button type="button" className="btn ink" onClick={() => setPicking(true)}>New quote</button> : undefined} />
       : wide ? <table className="tbl q-tbl">
-        <colgroup><col style={{ width: 210 }} /><col /><col style={{ width: 170 }} /><col style={{ width: 210 }} /><col style={{ width: 100 }} /><col style={{ width: 110 }} /></colgroup>
-        <thead><tr><th>Customer</th><th>Job</th><th>Status</th><th>Updated</th><th className="right">Deposit</th><th className="right">Amount</th></tr></thead>
+        <colgroup><col style={{ width: 40 }} /><col style={{ width: 210 }} /><col /><col style={{ width: 150 }} /><col style={{ width: 200 }} /><col style={{ width: 100 }} /><col style={{ width: 110 }} /></colgroup>
+        <thead><tr><th className="ck-col"><input type="checkbox" aria-label="Select all" checked={!!shown.length && shown.every(x => ticked.has(x.c.id))} onChange={e => setTicked(e.target.checked ? new Set(shown.map(x => x.c.id)) : new Set())} /></th>
+          <th><FieldIcon name="user" />Customer</th><th><FieldIcon name="ruler" />Job</th><th><FieldIcon name="sort" />Status</th><th><FieldIcon name="eye" />Viewed</th><th className="right"><FieldIcon name="dollar" />Deposit</th><th className="right"><FieldIcon name="dollar" />Total</th></tr></thead>
         <tbody>{shown.map(({ c, s }) => <tr key={c.id} tabIndex={0} onClick={() => go.quote(c.id)} onKeyDown={e => { if (e.key === "Enter") go.quote(c.id); }}>
+          <td className="ck-col" onClick={e => e.stopPropagation()}><input type="checkbox" aria-label={`Select ${c.name || c.phone}`} checked={ticked.has(c.id)} onChange={() => setTicked(t => { const n = new Set(t); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })} /></td>
           <td><span className="name"><Avatar name={c.name || c.phone} size="sm" /><b>{c.name || fmtPhone(c.phone)}</b></span></td>
           <td className={c.line ? "" : "faint"}>{line(c) || "No details yet"}</td>
           <td><span className={"chipx " + CHIP[s]}>{Q_LABEL[s]}</span></td>
-          <td className="mut">{s === "opened" && c.quote?.viewed ? `Opened ${ago(c.quote.viewed)}` : ago(c.stageAt ?? c.at)}{(s === "awaiting" || s === "opened") && c.quote?.steps ? `, ${c.quote.steps} of 4 follow-ups` : ""}</td>
+          <td className="mut">{c.quote?.views ? `${c.quote.views}x, ${ago(c.quote.lastViewed ?? c.quote.viewed)}` : c.quote?.viewed ? `Opened ${ago(c.quote.viewed)}` : c.quote?.linked ? "Not opened yet" : "Not sent"}{(s === "awaiting" || s === "opened") && c.quote?.steps ? `, ${c.quote.steps} follow-ups` : ""}</td>
           <td className="num mut">{c.quote?.deposit ? usd(c.quote.deposit) : "–"}</td>
           <td className="num"><b>{amountOf(c) ? dollars(amountOf(c)) : "–"}</b></td>
-        </tr>)}</tbody></table>
+        </tr>)}</tbody>
+        {(() => { const list = ticked.size ? shown.filter(x => ticked.has(x.c.id)) : shown, sum = list.reduce((a, x) => a + (amountOf(x.c) || 0), 0);
+          return <tfoot><tr><td /><td><b>{list.length}</b>{ticked.size ? "selected" : "count"}</td><td /><td /><td /><td /><td className="num"><b>{dollars(sum)}</b>sum</td></tr></tfoot>; })()}</table>
       : <div>{shown.map(({ c, s }) => <button key={c.id} type="button" className="jrow" onClick={() => go.quote(c.id)}>
           <span style={{ minWidth: 0 }}><b>{c.name || fmtPhone(c.phone)}</b><small>{line(c) || "No details yet"}</small></span>
           <span className="r"><b>{amountOf(c) ? usd(amountOf(c)) : "–"}</b><em className={s === "changes" ? "red" : s === "approved" ? "green" : ""}>{Q_LABEL[s]}</em></span></button>)}</div>}
