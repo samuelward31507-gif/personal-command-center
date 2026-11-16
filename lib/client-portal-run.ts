@@ -4,6 +4,7 @@
 // Sign-off: at the end of a job the customer signs on the crew's phone; the job's install and walk-through steps tick.
 import { randomBytes } from "node:crypto";
 import type { NeonQueryFunction } from "@neondatabase/serverless";
+import { changeRequest } from "@/lib/records";
 import { alertOwner, appOrigin, clientById, quoteUrl, type Client } from "@/lib/client-runtime-run";
 import { invoiceUrl } from "@/lib/client-billing-run";
 import { changeOrderUrl } from "@/lib/client-service-run";
@@ -118,6 +119,24 @@ async function byToken(sql: Sql, token: string) {
   return c ? { c, t: { id: String(t.id), name: String(t.customer_name ?? ""), phone: String(t.customer_phone ?? "") } } : null;
 }
 const words = (v: unknown, max: number) => String(v ?? "").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").trim().slice(0, max);
+/**
+ * The customer asks to move or cancel something coming up. It lands on their conversation, as a to-do for today, and
+ * as an alert to the owner. The calendar doesn't change on its own: the owner moves it and texts them back.
+ */
+export async function requestChange(sql: Sql, token: string, input: unknown): Promise<{ ok: boolean; error?: string }> {
+  const page = await publicPortal(sql, token);
+  const x = page ? await byToken(sql, token) : null;
+  if (!page || !x) return { ok: false, error: "This link isn't valid." };
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: x.c.setup.timezone || "America/Denver" });
+  const r = changeRequest(input, page.portal.coming, today);
+  if ("error" in r) return { ok: false, error: r.error };
+  const who = x.t.name || "A customer";
+  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${x.c.owner}, ${x.t.id}::uuid, 'in', 'customer', ${`From their page: ${r.text}`})`;
+  await sql`UPDATE public.client_threads SET last_in_at = now(), updated_at = now(), status = CASE WHEN status IN ('auto', 'closed') THEN 'paused' ELSE status END WHERE id = ${x.t.id}::uuid`;
+  await sql`INSERT INTO public.client_tasks (owner_id, project_id, title, due_on, thread_id, created_by) VALUES (${x.c.owner}, ${x.c.projectId}::uuid, ${`${who}: ${r.text}`.slice(0, 200)}, current_date, ${x.t.id}::uuid, 'customer')`.catch(() => null);
+  await alertOwner(x.c, `Cinder: ${who} ${r.text.replace(/^Asked/, "asked")}`.slice(0, 300), x.t.id, sql);
+  return { ok: true };
+}
 /** 1 to 5 and a comment; a rating of 3 or less goes straight to the owner. Rating again replaces the first. */
 export async function rateJob(sql: Sql, token: string, rating: unknown, comment: unknown): Promise<{ ok: boolean; error?: string }> {
   const r = Math.round(Number(rating));

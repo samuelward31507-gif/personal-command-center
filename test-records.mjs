@@ -29,4 +29,12 @@ ok(() => assert.equal(R.cleanFieldLabels(Array.from({ length: 15 }, (_, i) => "F
 ok(() => assert.deepEqual(R.cleanFieldValues({ "Gate code": " 4418 ", "Not a field": "x", HOA: "" }, ["Gate code", "HOA"]), { "Gate code": "4418" }));
 ok(() => { assert.equal(R.activityDetail("stage", { stage: "won" }), "won"); assert.equal(R.activityDetail("setup", { setup: { pay_link: "x", tax_rate: "8", owner_cell: "1", late_fee: "5%" } }), "tax_rate, late_fee", "no links or numbers in the log");
   assert.equal(R.activityDetail("reply", { body: "secret text" }), "", "never the message"); assert.ok(R.LOGGED.paymentdelete); assert.equal(R.LOGGED.checktick, undefined); });
+ok(() => { const coming = [{ kind: "install", date: "2026-12-01", time: "08:00", what: "Install day" }, { kind: "visit", date: "2027-02-15", time: null, what: "Seasonal fence wash" }];
+  const m = R.changeRequest({ kind: "install", date: "2026-12-01", what: "Install day", want: "move", note: " Thursday or Friday mornings " }, coming, "2026-11-16");
+  assert.equal(m.text, "Asked to move the install on Tue, Dec 1 at 8 AM. What works better: Thursday or Friday mornings");
+  const c = R.changeRequest({ kind: "visit", date: "2027-02-15", what: "Seasonal fence wash", want: "cancel" }, coming, "2026-11-16");
+  assert.equal(c.text, "Asked to cancel the Seasonal fence wash (service visit) on Mon, Feb 15.");
+  assert.match(R.changeRequest({ kind: "install", date: "2026-12-01", what: "Install day", want: "move", note: "" }, coming, "2026-11-16").error, /work better/, "moving says when");
+  assert.match(R.changeRequest({ kind: "install", date: "2026-12-02", what: "Install day", want: "cancel" }, coming, "2026-11-16").error, /isn't on your page/, "only what's really coming");
+  assert.match(R.changeRequest({ kind: "install", date: "2026-12-01", what: "Install day", want: "cancel" }, coming, "2026-12-02").error, /isn't on your page/, "not after it passed"); });
 console.log(`records: ${n} checks passed`);

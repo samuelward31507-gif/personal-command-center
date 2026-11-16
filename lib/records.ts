@@ -99,3 +99,23 @@ export function activityDetail(action: string, b: Record<string, unknown>): stri
   if (action === "winback") return b.tag ? `tag: ${String(b.tag).slice(0, 30)}` : "past customers";
   return "";
 }
+
+// ---------- A customer asks to move or cancel a visit ----------
+export type Coming = { kind: "estimate" | "install" | "visit"; date: string; time: string | null; what: string };
+const KIND_WORD: Record<Coming["kind"], string> = { estimate: "estimate", install: "install", visit: "service visit" };
+/**
+ * A customer's ask from their page, checked against what's actually coming up for them, as the line the owner reads.
+ * Moving needs a word on what works better; canceling may say why. Nothing on the calendar changes until the owner does it.
+ */
+export function changeRequest(input: unknown, coming: Coming[], todayIso: string): { item: Coming; want: "move" | "cancel"; text: string } | { error: string } {
+  const o = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const item = coming.find(c => c.kind === o.kind && c.date === o.date && c.what === o.what);
+  if (!item || item.date < todayIso) return { error: "That visit isn't on your page anymore. Text the business instead." };
+  const want = o.want === "cancel" ? "cancel" : "move";
+  const note = String(o.note ?? "").replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 300);
+  if (want === "move" && note.length < 3) return { error: "Say what days or times work better." };
+  const when = new Date(item.date + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+  const at = item.time ? (() => { const [h, m] = item.time.split(":").map(Number); return ` at ${h % 12 || 12}${m ? ":" + String(m).padStart(2, "0") : ""} ${h < 12 ? "AM" : "PM"}`; })() : "";
+  const label = item.kind === "visit" ? `${item.what} (${KIND_WORD.visit})` : KIND_WORD[item.kind];
+  return { item, want, text: want === "move" ? `Asked to move the ${label} on ${when}${at}. What works better: ${note}` : `Asked to cancel the ${label} on ${when}${at}.${note ? ` Why: ${note}` : ""}` };
+}

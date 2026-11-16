@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { portalPhoto, publicPortal, rateJob, requestWork, type PublicPortal } from "@/lib/client-portal-run";
+import { portalPhoto, publicPortal, rateJob, requestChange, requestWork, type PublicPortal } from "@/lib/client-portal-run";
 import { allowEvent } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -34,16 +34,16 @@ export async function GET(req: Request) {
   } catch (e) { console.error("Customer page failed", e instanceof Error ? e.message : e); return reply({ error: "This page is unavailable right now." }, 500); }
 }
 
-/** POST { token, action: "rate", rating, comment } or { token, action: "request", text }: from the customer's page. */
+/** POST { token, action: "rate", rating, comment }, { token, action: "request", text } or { token, action: "change", change }: from the customer's page. */
 export async function POST(req: Request) {
-  const b = await req.json().catch(() => ({})) as { token?: string; action?: string; rating?: unknown; comment?: unknown; text?: unknown };
+  const b = await req.json().catch(() => ({})) as { token?: string; action?: string; rating?: unknown; comment?: unknown; text?: unknown; change?: unknown };
   const token = String(b.token ?? "");
   if (token === "example") return reply({ ok: true });
   if (!process.env.DATABASE_URL) return reply({ error: "This page is unavailable right now." }, 503);
   if (!(await allowEvent("portal-post", token.slice(0, 40), 10, 60))) return reply({ error: "That's a lot at once. Try again in a bit, or text the business." }, 429);
   try {
     const sql = neon(process.env.DATABASE_URL);
-    const r = b.action === "rate" ? await rateJob(sql, token, b.rating, b.comment) : b.action === "request" ? await requestWork(sql, token, b.text) : { ok: false, error: "Unknown." };
+    const r = b.action === "rate" ? await rateJob(sql, token, b.rating, b.comment) : b.action === "request" ? await requestWork(sql, token, b.text) : b.action === "change" ? await requestChange(sql, token, b.change) : { ok: false, error: "Unknown." };
     return r.ok ? reply({ ok: true }) : reply({ error: r.error }, 400);
   } catch (e) { console.error("Customer page post failed", e instanceof Error ? e.message : e); return reply({ error: "That didn't go through. Text the business instead." }, 500); }
 }
