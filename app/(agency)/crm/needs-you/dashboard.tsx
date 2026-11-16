@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { STAGE_LABELS, type DealStage } from "@/lib/offers";
 import { MOVE_OUT_MRR, WEEKLY_MEETING_TARGET, DAILY_EMAIL_TARGET, DAILY_LINKEDIN_TARGET } from "@/lib/scoreboard";
-import { Columns } from "../../ui/charts";
+import { EmberGauge, WeekStrip } from "./cockpit";
 import { dueFollowUps } from "@/lib/email-outreach";
 import { INBOX_URL, CHANNEL_LABEL } from "@/lib/inbox-links";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
@@ -99,6 +99,18 @@ export default function Dashboard() {
     fetch("/api/ops-alerts", { cache: "no-store" }).then(r => (r.ok ? r.json() : { alerts: [] })).then(d => setAlerts(d.alerts ?? [])).catch(() => {});
     const t = setInterval(() => tick(x => x + 1), 60000);
     return () => clearInterval(t);
+  }, []);
+
+  // C starts calling from here, like the hint on the button says.
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key.toLowerCase() !== "c") return;
+      const el = e.target as HTMLElement | null;
+      if (el?.closest?.("input, textarea, select, [contenteditable='true']")) return;
+      window.location.href = "/crm/call";
+    };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
   }, []);
 
   const now = new Date();
@@ -208,62 +220,51 @@ export default function Dashboard() {
   const openMrr = b?.pipeline.reduce((s, p) => s + p.monthly, 0) ?? 0;
   const byLabel = g?.by ? new Date(g.by + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "";
 
-  return <div className="u-page db-page" role="region" aria-label="Dashboard">
-    <div className="u-head">
-      <div>
-        <p className="u-note" style={{ marginBottom: 8 }}>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
-        <h1 className="u-title">{greeting}, {ws.ownerFirstName}.{b ? <span className="u-dim"> {b.today.calls >= target ? "Target hit. Keep going." : `${target - b.today.calls} dials to go.`}</span> : null}</h1>
+  const left = Math.max(0, target - (b?.today.calls ?? 0));
+  const tc = b?.channels?.today;
+  const next = upcoming[0];
+  const todayStats: [string, number | undefined, string][] = [
+    ["Conversations", b?.today.connects, "/crm/call"],
+    ["Meetings", b?.today.meetings, "/crm/calendar"],
+    ["Emails", tc?.emails, "/crm/email"],
+    ["Replies", tc ? tc.replies + tc.textReplies : undefined, "/crm/email"],
+    ["Texts", tc?.texts, "/crm/call"],
+  ];
+  return <div className="u-page db-page cp-page" role="region" aria-label="Dashboard">
+    <section className="cp-hero">
+      <div className="cp-hero-l">
+        <p className="cp-date">{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}{b?.streak ? <span className="cp-streak"><i aria-hidden="true" />{b.streak}-day streak</span> : null}</p>
+        <h1 className="u-title cp-title">{greeting}, {ws.ownerFirstName}.{b ? <span className="u-dim"> {b.today.calls >= target ? "Target hit. Keep going." : `${left} dials to go.`}</span> : null}</h1>
+        <p className="cp-lede">{b ? (b.week.meetings >= WEEKLY_MEETING_TARGET ? `${b.week.meetings} meetings booked this week. The week's target is done.` : `${b.week.meetings} of ${WEEKLY_MEETING_TARGET} meetings booked this week, from ${b.week.connects} conversations.`) : "\u00a0"}</p>
+        <div className="cp-ctas">
+          <Link className="u-btn u-btn-light u-btn-lg cp-go" href="/crm/call">Start calling <kbd>C</kbd></Link>
+          {next && <Link className="cp-next" href={next.dealId ? `/crm/deals/${next.dealId}` : next.contactId ? `/crm?contact=${next.contactId}` : "/crm/calendar"}>
+            <span className="cp-next-k">{when(next).day ? `${when(next).day}, next meeting` : (until(next.startsAt) || "Next meeting")}</span>
+            <span className="cp-next-v">{when(next).t} · {next.contactName || next.title}</span>
+          </Link>}
+        </div>
+        <div className="cp-today">{todayStats.map(([k, n, href]) => <Link key={k} href={href} className="cp-stat"><b>{n ?? "—"}</b><span>{k}</span></Link>)}</div>
       </div>
-      <div className="u-head-actions"><Link className="u-btn u-btn-light u-btn-lg" href="/crm/call">Start calling</Link></div>
-    </div>
-
-    <div className="u-figs">
-      <Link href="/crm/call" className="u-fig"><span className="u-fig-k">Dials today</span><div className="u-fig-v">{b ? b.today.calls : "—"}<small>/ {target}</small></div><div className="u-meter"><i style={{ width: Math.min(100, ((b?.today.calls ?? 0) / target) * 100) + "%" }} /></div><div className="u-fig-sub">{b ? (b.today.calls >= target ? "Target hit" : <><b>{target - b.today.calls}</b> to go{b.streak ? `, ${b.streak}-day streak` : ""}</>) : ""}</div></Link>
-      <Link href="/crm/calendar" className="u-fig"><span className="u-fig-k">Meetings this week</span><div className="u-fig-v">{b ? b.week.meetings : "—"}<small>/ {WEEKLY_MEETING_TARGET}</small></div><div className="u-meter"><i style={{ width: Math.min(100, ((b?.week.meetings ?? 0) / WEEKLY_MEETING_TARGET) * 100) + "%" }} /></div><div className="u-fig-sub">{b ? <><b>{b.week.connects}</b> conversations from {b.week.calls} dials</> : ""}</div></Link>
-      <Link href="/crm/finance" className="u-fig"><span className="u-fig-k">Monthly recurring</span><div className="u-fig-v">{b ? usd(b.recurring.mrr) : "—"}<small>/mo</small></div><div className="u-meter"><i style={{ width: Math.min(100, ((b?.recurring.mrr ?? 0) / MOVE_OUT_MRR) * 100) + "%" }} /></div><div className="u-fig-sub">{b ? <><b>{usd(Math.max(0, MOVE_OUT_MRR - b.recurring.mrr))}</b> to {usd(MOVE_OUT_MRR)}, {b.recurring.clients} client{b.recurring.clients === 1 ? "" : "s"}</> : ""}</div></Link>
-      <Link href="/crm/finance" className="u-fig"><span className="u-fig-k">{b?.targets?.goalLabel ?? "Revenue goal"}</span><div className="u-fig-v">{g ? usd(g.collected) : "—"}</div><div className="u-meter"><i style={{ width: (g?.progressPct ?? 0) + "%" }} /></div><div className="u-fig-sub">{g ? <><b>{g.daysLeft}</b> days left, {usd(g.goal)} goal</> : ""}</div></Link>
-    </div>
-
-    {b && (() => {
-      const t = b.channels?.today, w = b.channels?.week;
-      const cells: { k: string; href: string; n: number; of?: number; wk: string; hot?: boolean }[] = [
-        { k: "Conversations", href: "/crm/call", n: b.today.connects, wk: `${b.week.connects} this week` },
-        { k: "Meetings", href: "/crm/calendar", n: b.today.meetings, wk: `${b.week.meetings} this week` },
-        { k: "Emails", href: "/crm/email", n: t?.emails ?? 0, of: DAILY_EMAIL_TARGET, wk: `${w?.emails ?? 0} this week${w?.bounces ? `, ${w.bounces} bounced` : ""}` },
-        { k: "Replies", href: "/crm/email", n: (t?.replies ?? 0) + (t?.textReplies ?? 0), wk: ((t?.replies ?? 0) + (t?.textReplies ?? 0)) > 0 ? "Answer them first" : `${(w?.replies ?? 0) + (w?.textReplies ?? 0)} this week`, hot: ((t?.replies ?? 0) + (t?.textReplies ?? 0)) > 0 },
-        // LinkedIn only shows once you've actually used it this week.
-        ...((w?.liRequests ?? 0) > 0 ? [{ k: "LinkedIn", href: "/crm/linkedin", n: t?.liRequests ?? 0, of: DAILY_LINKEDIN_TARGET, wk: `${w?.liRequests ?? 0} sent, ${w?.liAccepted ?? 0} accepted` }] : []),
-        { k: "Texts", href: "/crm/call", n: t?.texts ?? 0, wk: `${w?.texts ?? 0} this week` },
-      ];
-      return <section className="u-block">
-        <div className="u-h2-row"><h2 className="u-h2">Outreach today</h2><span className="u-note">Counts itself as you work.</span></div>
-        <div className="db-out">{cells.map(c => <Link key={c.k} href={c.href} className={"db-out-c" + (c.hot ? " is-hot" : "")}>
-          <span className="u-fig-k">{c.k}</span>
-          <b className="db-step-n">{c.n}{c.of ? <small> / {c.of}</small> : null}</b>
-          {c.of ? <div className="u-meter"><i style={{ width: Math.min(100, (c.n / c.of) * 100) + "%" }} /></div> : <div className="db-out-gap" />}
-          <span className="db-step-r">{c.wk}</span>
-        </Link>)}</div>
-      </section>;
-    })()}
-
-    <section className="u-block">
-      <div className="u-h2-row"><h2 className="u-h2">Your follow-ups today {list && <span className="u-quiet">{list.length}</span>}</h2><span className="u-note">DMs, texts, email and LinkedIn. Calls stay in Call mode.</span></div>
-      {list === null ? <p className="u-note" role="status">Loading…</p> : list.length === 0 ? <p className="u-note">{upcomingTexts ? `Nothing due right now. ${upcomingTexts} follow-up text${upcomingTexts === 1 ? "" : "s"} coming up in the next few days.` : "No follow-ups waiting. Go make calls."}</p>
-        : <div className="u-rows">{(allTodo ? list : list.slice(0, 8)).map(t => <div key={t.key} className="u-row db-todo">
-            <span className={"u-dot" + (t.overdue ? " is-bad" : "")} aria-label={t.overdue ? "Overdue" : "Due today"} />
-            <div className="u-row-main"><strong>{t.title}</strong>{t.why && <span>{t.why}</span>}</div>
-            {t.alt && <button type="button" className="u-btn u-btn-bare" title="Record a 2-minute Loom for them instead of the plain text" onClick={t.alt.onClick}>{t.alt.label}</button>}
-            {t.onClick ? <button type="button" className="u-btn u-btn-light" onClick={t.onClick}>{t.action}</button> : <Link className="u-btn u-btn-bare" href={t.href}>{t.action}</Link>}
-          </div>)}</div>}
-      {list && list.length > 0 && upcomingTexts > 0 && <p className="u-note" style={{ marginTop: 10 }}>{upcomingTexts} more follow-up text{upcomingTexts === 1 ? "" : "s"} coming up in the next few days.</p>}
-      {list && list.length > 8 && <button type="button" className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${list.length}`}</button>}
+      <div className="cp-hero-r">
+        <EmberGauge value={b?.today.calls ?? 0} target={target} loading={!b} />
+        {b && b.days.length > 0 && <WeekStrip days={b.days} target={target} />}
+      </div>
     </section>
 
-    <div className="u-split u-split-2 u-block">
+    <div className="u-split u-split-2 u-block cp-row">
       <section>
-        <div className="u-h2-row"><h2 className="u-h2">Dials, last 14 days</h2><span className="u-note">Dashed line is your {target}/day target. Dots are meetings booked.</span></div>
-        {b ? <Columns labels={b.days.map(d => new Date(d.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }))} values={b.days.map(d => d.calls)} target={target} marks={b.days.map(d => d.meetings > 0)} height={250} /> : <div style={{ height: 250 }} />}
+        <div className="u-h2-row"><h2 className="u-h2">Your follow-ups today {list && <span className="u-quiet">{list.length}</span>}</h2><span className="u-note">DMs, texts, email and LinkedIn. Calls stay in Call mode.</span></div>
+        {list === null ? <p className="u-note" role="status">Loading…</p> : list.length === 0 ? <p className="u-note">{upcomingTexts ? `Nothing due right now. ${upcomingTexts} follow-up text${upcomingTexts === 1 ? "" : "s"} coming up in the next few days.` : "No follow-ups waiting. Go make calls."}</p>
+          : <div className="u-rows">{(allTodo ? list : list.slice(0, 8)).map(t => <div key={t.key} className="u-row db-todo">
+              <span className={"u-dot" + (t.overdue ? " is-bad" : "")} aria-label={t.overdue ? "Overdue" : "Due today"} />
+              <div className="u-row-main"><strong>{t.title}</strong>{t.why && <span>{t.why}</span>}</div>
+              {t.alt && <button type="button" className="u-btn u-btn-bare" title="Record a 2-minute Loom for them instead of the plain text" onClick={t.alt.onClick}>{t.alt.label}</button>}
+              {t.onClick ? <button type="button" className="u-btn u-btn-light" onClick={t.onClick}>{t.action}</button> : <Link className="u-btn u-btn-bare" href={t.href}>{t.action}</Link>}
+            </div>)}</div>}
+        {list && list.length > 0 && upcomingTexts > 0 && <p className="u-note" style={{ marginTop: 10 }}>{upcomingTexts} more follow-up text{upcomingTexts === 1 ? "" : "s"} coming up in the next few days.</p>}
+        {list && list.length > 8 && <button type="button" className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${list.length}`}</button>}
       </section>
+
       <section>
         <div className="u-h2-row"><h2 className="u-h2">Next up</h2><Link className="u-note" href="/crm/calendar" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Calendar</Link></div>
         {events === null ? <p className="u-note">Loading…</p> : upcoming.length === 0
@@ -281,6 +282,16 @@ export default function Dashboard() {
         </div>}
       </section>
     </div>
+
+    <section className="u-block cp-month-wrap">
+      <div className="u-h2-row"><h2 className="u-h2">This month</h2></div>
+    <div className="u-figs cp-month">
+      <Link href="/crm/calendar" className="u-fig"><span className="u-fig-k">Meetings this week</span><div className="u-fig-v">{b ? b.week.meetings : "—"}<small>/ {WEEKLY_MEETING_TARGET}</small></div><div className="u-meter"><i style={{ width: Math.min(100, ((b?.week.meetings ?? 0) / WEEKLY_MEETING_TARGET) * 100) + "%" }} /></div><div className="u-fig-sub">{b ? <><b>{b.week.connects}</b> conversations from {b.week.calls} dials</> : ""}</div></Link>
+      <Link href="/crm/finance" className="u-fig"><span className="u-fig-k">Monthly recurring</span><div className="u-fig-v">{b ? usd(b.recurring.mrr) : "—"}<small>/mo</small></div><div className="u-meter"><i style={{ width: Math.min(100, ((b?.recurring.mrr ?? 0) / MOVE_OUT_MRR) * 100) + "%" }} /></div><div className="u-fig-sub">{b ? <><b>{usd(Math.max(0, MOVE_OUT_MRR - b.recurring.mrr))}</b> to {usd(MOVE_OUT_MRR)}, {b.recurring.clients} client{b.recurring.clients === 1 ? "" : "s"}</> : ""}</div></Link>
+      <Link href="/crm/finance" className="u-fig"><span className="u-fig-k">{b?.targets?.goalLabel ?? "Revenue goal"}</span><div className="u-fig-v">{g ? usd(g.collected) : "—"}</div><div className="u-meter"><i style={{ width: (g?.progressPct ?? 0) + "%" }} /></div><div className="u-fig-sub">{g ? <><b>{g.daysLeft}</b> days left, {usd(g.goal)} goal</> : ""}</div></Link>
+    </div>
+
+    </section>
 
     <section className="u-block">
       <div className="u-h2-row"><h2 className="u-h2">Funnel, last 30 days</h2><span className="u-note">All-time close rate {pct(b?.allTime.closeRate ?? null)}</span></div>
