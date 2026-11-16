@@ -80,6 +80,7 @@ export async function GET(req: Request) {
     ]);
     const mailRows = s.role === "crew" ? [] : await loadMail(sql, c).catch(() => []);
     const expenses = s.role === "crew" ? [] : await loadExpenses(sql, c).catch(e => { console.error("Expenses failed", e instanceof Error ? e.message : e); return []; });
+    const [rt] = s.role === "crew" ? [] : await sql`SELECT round(avg(rating)::numeric, 1)::float AS avg, count(*)::int AS n, count(*) FILTER (WHERE rating <= 3)::int AS low FROM public.client_feedback WHERE project_id = ${c.projectId}::uuid AND created_at > now() - interval '365 days'`.catch(() => []) as { avg: number | null; n: number; low: number }[];
     const [equipment0, files0, tasks] = await Promise.all([loadEquipment(sql, c).catch(() => []), loadFiles(sql, c).catch(() => []), s.role === "crew" ? Promise.resolve([]) : loadTasks(sql, c).catch(() => [])]);
     const evening = s.role === "crew" ? undefined : await eveningFor(sql, c.projectId, c.setup.timezone || "America/Denver").catch(() => undefined);
     // Their real calendar, read only on the Calendar tab (it's a Google call).
@@ -109,7 +110,7 @@ export async function GET(req: Request) {
       board: crewOnlyMine ? scoped(board, b => b.id).map(b => c.setup.crew_prices === "yes" ? { ...b, costs: { materials: 0, labor: 0, other: 0 } } : { ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 }, changeOrders: (b.changeOrders ?? []).map(x => ({ ...x, items: [], total: 0, url: null })) })
         : crew && c.setup.crew_prices === "yes" ? board.map(b => ({ ...b, costs: { materials: 0, labor: 0, other: 0 } })) : crew ? board.map(b => ({ ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 }, changeOrders: (b.changeOrders ?? []).map(x => ({ ...x, items: [], total: 0, url: null })) })) : board,
       setup: crew ? { display_name: c.setup.display_name || "", owner_name: c.setup.owner_name || "", trade: c.setup.trade || "", checklists: c.setup.checklists || "", crew_prices: c.setup.crew_prices || "", brand_color: c.setup.brand_color || "", brand_logo: c.setup.brand_logo || "" } : { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "", team: c.setup.team || "[]", monthly_report: c.setup.monthly_report || "" },
-      customers: crew ? [] : customers, invoices: crew ? [] : invoices, payments: crew ? [] : payments, expenses, tasks,
+      customers: crew ? [] : customers, invoices: crew ? [] : invoices, payments: crew ? [] : payments, expenses, tasks, ratings: rt ? { avg: rt.avg, n: rt.n, low: rt.low } : undefined,
       equipment: crewOnlyMine ? equipment0.filter(e => mine.has(e.thread_id)) : equipment0, files: crewOnlyMine ? files0.filter(f => mine.has(f.thread_id)) : files0,
       key: String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? ""), origin, wires,
       mail: crew ? undefined : { address: leadMailAddressFor(String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? "")), recent: mailRows },

@@ -144,6 +144,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
           <TaxPanel d={d} days={days} />
           <section className="panel s6">
             <div className="panel-h"><h2>Reviews</h2><small>{n!.reviews} asked {days === 365 ? "this year" : `in ${days} days`}</small></div>
+            {d.ratings && d.ratings.n > 0 && <p className="fine" style={{ padding: "8px 0 0" }}>Customers rated finished jobs <b style={{ color: "var(--ink)" }}>{d.ratings.avg} of 5</b> ({d.ratings.n} {d.ratings.n === 1 ? "rating" : "ratings"} this year{d.ratings.low ? `, ${d.ratings.low} at 3 or lower` : ""}).</p>}
             <div className="panel-b">
               {!biz.reviewLink && <p className="fine" style={{ padding: "8px 0" }}>Add your Google review link in Settings, Account, and the morning after each install the customer gets one text asking for a review.</p>}
               {pending.length ? pending.slice(0, 6).map(j => <div key={j.id} className="row"><Avatar name={j.customer_name} size="sm" /><span style={{ minWidth: 0 }}><b>{j.customer_name}</b><small>{j.amount ? `${usd(j.amount)}, ` : ""}won {ago(j.won_at)}, not asked yet</small></span>

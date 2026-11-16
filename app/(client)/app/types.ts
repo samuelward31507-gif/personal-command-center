@@ -27,6 +27,8 @@ export type Data = { /** The owner, or a crew member who sees the schedule and t
   jobber?: { available: boolean; connected: boolean; account: string; error: string; lastPush: string | null; connectUrl: string };
   /** QuickBooks Online: invoices and payments pushed to the owner's books. */
   quickbooks?: { available: boolean; connected: boolean; company: string; error: string; lastPush: string | null; connectUrl: string };
+  /** Customers' ratings of finished jobs from their page, the last year. */
+  ratings?: { avg: number | null; n: number; low: number };
   /** Equipment at customers' addresses, documents on jobs, and the office's to-dos. */
   equipment?: import("@/lib/records").Equipment[];
   files?: import("@/lib/client-records-run").FileRow[];
