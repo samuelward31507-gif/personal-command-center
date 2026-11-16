@@ -54,7 +54,7 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
         { label: "Approved, 30 days", value: usd(approved30.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${approved30.length} ${approved30.length === 1 ? "job" : "jobs"}`, tone: approved30.length ? "up" : "", onClick: () => setF("approved"), active: f === "approved" },
         { label: "Approval rate, 90 days", value: rate == null ? "–" : `${rate}%`, sub: "approved of sent" },
       ]} />}
-      {!rows.length && <Guide title="Quotes that close themselves" sub="Write the quote once. Cinder texts it as a link the customer approves on their phone, then follows up on day 2, 5, 10 and 21 until they answer."
+      {!rows.length && <Guide title="Quotes that close themselves" sub="Write the quote once. Cinder texts it as a link the customer approves on their phone, then follows up on day 2, 5 and 10, and once a month after that, until they answer."
         steps={[
           { title: "Add your prices", text: "With a price book, every quote starts drafted from the job details, and leads get a ballpark by text.", done: !!biz.priceBook, action: <button type="button" className="btn sm" onClick={go.setup}>Add prices</button> },
           { title: "Book an estimate", text: "Cinder books them on its own. You can add one by hand from Jobs too.", done: (d.board ?? []).some(c => c.stage !== "new"), action: <button type="button" className="btn sm" onClick={() => go.tab("calendar")}>Calendar</button> },
@@ -162,7 +162,7 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
             {dep > 0 && !biz.payLink && <p className="fine">Add your pay link in Money so they can pay it from the quote page.</p>}</section>
           {opts && <p className="fine">{firstName} picks one option and any add-ons on the quote page, and the total updates as they tap. The first option is the price on file until they choose.</p>}
           {!d.setup?.quote_terms && !d.setup?.warranty && <p className="fine"><button type="button" className="link" onClick={go.billing}>Add your warranty, terms and a financing link</button> once, and every quote shows them.</p>}
-          <p className="fine">After you text it, Cinder follows up on day 2, 5, 10 and 21, and stops the moment they reply or approve.</p>
+          <p className="fine">Follow-ups go out on day 2, 5 and 10, then once a month until they answer, and stop the moment they reply.</p>
           {card.stage === "quoted" && <div className="acts-row"><button type="button" className="btn ghost sm" onClick={() => go.record(card.id, { ask: "won" })}>Mark won</button><button type="button" className="btn ghost sm" onClick={() => setLosing(true)}>Mark lost</button></div>}
         </>}
       </div>

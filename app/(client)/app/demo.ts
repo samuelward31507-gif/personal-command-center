@@ -5,6 +5,7 @@ import type { Report, ReportNumbers } from "@/lib/client-reports";
 import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
 import { cleanImportRows, importAs } from "@/lib/customer-import";
 import { demoSwitch } from "./demo-switch";
+import { nextChaseDay } from "@/lib/client-runtime";
 import { addInterval, changeOrderLines, cleanCatalog, cleanChangeOrder, cleanPlan, cleanSignoff, type ChangeOrder, type Plan, type Signoff, type TimeEntry } from "@/lib/service";
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 const at = (days: number, hour: number, min = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(hour, min, 0, 0); return d.toISOString(); };
@@ -248,7 +249,8 @@ function board(all = false): Card[] {
     return { id: thread.id, name: thread.customer_name, phone: thread.customer_phone, source: thread.source, status: thread.status,
       stage: stageFor({ stage: c.stage ?? null, status: thread.status, quote_status: quoteStatus, next_appt: next }), details, line: detailLine(s.setup.trade, details),
       value: c.value ?? q?.amount ?? null, ballpark: bp ? { low: bp.low, high: bp.high } : null, notes: c.notes,
-      quote: q ? { id: q.id, amount: q.amount, status: q.status, steps: q.steps_sent, linked: q.linked, url: q.linked ? EXAMPLE_LINK : null, viewed: q.viewed, note: q.note, items: q.items, tax: q.tax_rate, deposit: q.deposit ?? null } : null,
+      quote: q ? { id: q.id, amount: q.amount, status: q.status, steps: q.steps_sent, linked: q.linked, url: q.linked ? EXAMPLE_LINK : null, viewed: q.viewed, note: q.note, items: q.items, tax: q.tax_rate, deposit: q.deposit ?? null,
+        views: q.id === "q1" ? 3 : q.viewed ? 1 : 0, lastViewed: q.viewed, chasePaused: false, nextChase: q.status === "open" ? nextChaseDay(q.sent_on, q.steps_sent) : null } : null,
       next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, installTime: c.installTime ?? null, installDays: c.installDays ?? 1, onCalendar: !!c.onCalendar,
       reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, job: { ...(c.job ?? {}) }, costs: { materials: 0, labor: 0, other: 0, ...(c.costs ?? {}) }, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void" && !(i as { plan_id?: string }).plan_id).at(-1) ?? null,
       stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crewMember: c.crewMember ?? "", crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [],
@@ -522,6 +524,8 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
     if (b.action === "timeedit") { if (b.remove) s.time = s.time.filter(e => e.id !== b.entry); return { ok: true }; }
     if (b.action === "catalog") { s.setup.catalog = JSON.stringify(cleanCatalog(b.items)); return { ok: true }; }
     if (b.action === "portallink") { const link = (typeof location !== "undefined" ? location.origin : "") + "/p/example"; if (b.send) s.threads[String(b.thread)]?.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: `Here's your page with your quotes, invoices and upcoming visits, any time: https://app.cinderrevenue.com/p/example`, at: now }); return { ok: true, link, sent: !!b.send }; }
+    if (b.action === "quotechase") { const d10 = (p: string) => p.replace(/D/g, "").slice(-10), th = s.threads[String(b.thread)], q = th && s.quotes.find(x => d10(x.customer_phone) === d10(th.thread.customer_phone)); if (q) q.status = b.on ? "open" : "stopped"; return { ok: true }; }
+    if (b.action === "quotenudge") { s.threads[String(b.thread)]?.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: "Hi, it's Mike. Checking in on your quote. Any questions I can answer? Here it is: https://app.cinderrevenue.com/q/example", at: now }); return { ok: true }; }
     if (b.action === "qbosync") return { ok: true, invoices: 1, payments: 2 };
     if (b.action === "signoff") {
       const v = cleanSignoff(b.input); if (!v.ok) fail(v.error);

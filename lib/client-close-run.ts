@@ -61,7 +61,7 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
   if (!c) return null;
   const [t] = await sql`SELECT customer_name, details FROM public.client_threads WHERE project_id = ${c.projectId}::uuid
     AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(String(q.customer_phone))} LIMIT 1` as { customer_name: string; details: unknown }[];
-  if (!q.viewed_at) await sql`UPDATE public.client_quotes SET viewed_at = now() WHERE id = ${String(q.id)}::uuid AND viewed_at IS NULL`;
+  await sql`UPDATE public.client_quotes SET viewed_at = coalesce(viewed_at, now()), view_count = view_count + 1, last_viewed_at = now() WHERE id = ${String(q.id)}::uuid`;
   const status = String(q.status);
   return {
     business: c.setup.display_name || "", owner: first(c.setup.owner_name || ""), phone: c.setup.texting_number || "",

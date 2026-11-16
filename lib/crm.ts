@@ -255,7 +255,9 @@ ${bp ? `- Ballpark from the owner's own prices for ${bp.basis}: ${rangeText(bp)}
 export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
   ballpark: { low: number; high: number } | null; notes: string; next: string | null; at: string;
   quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
-    items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax: number; deposit?: number | null } | null;
+    items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax: number; deposit?: number | null;
+    /** How many times they opened it, the last time, whether follow-ups are paused (imported quotes start paused), and when the next one goes. */
+    views?: number; lastViewed?: string | null; chasePaused?: boolean; nextChase?: string | null } | null;
   install: string | null; installTime: string | null; installDays: number; onCalendar: boolean; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean;
   invoice: CardInvoice | null; job: Record<string, string>; costs: Costs;
   /** When the job entered its current stage, and the owner's reason when it was lost. */

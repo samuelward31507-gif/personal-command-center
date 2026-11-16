@@ -213,7 +213,7 @@ function Agent({ d, go, toast, api, project, reload }: { d: Data; go: Go; toast:
       <section>
         <p className="sec">Follow-ups</p>
         <div className="three">
-          <Field f={f} set={set} k="quote_days" label="After a quote" help="days, 2, 5, 10, 21 if blank" />
+          <Field f={f} set={set} k="quote_days" label="After a quote" help="days, 2, 5, 10 if blank, then monthly" />
           <Field f={f} set={set} k="nudge_hours" label="When a lead goes quiet" help="hours, 2, 20, 68 if blank" />
         </div>
         <p className="fine">Every sequence stops the moment they reply, book, or you mark the job won or lost. STOP always stops everything.</p>

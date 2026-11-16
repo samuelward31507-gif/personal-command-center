@@ -116,14 +116,16 @@ export function parseDecision(text: string): Decision | null {
   } catch { return null; }
 }
 
-/** Quote follow-ups: days after the quote was sent. */
-export const QUOTE_DAYS = [2, 5, 10, 21] as const;
+/** Quote follow-ups: days after the quote was sent. After the last one, a check-in once a month (quoteChaseDue). */
+export const QUOTE_DAYS = [2, 5, 10] as const;
 export const QUOTE_TEXTS = [
   "Hi {first}, it's {owner} with {business}. Just making sure the quote came through. Any questions I can answer?",
   "Hi {first}, {owner} here. Happy to walk through the quote, or look at a smaller option if that would help.",
   "Hi {first}, still thinking it over? I can hold a spot on the schedule for you while you decide.",
-  "Hi {first}, I'll close out your quote for now so I'm not bugging you. If you want to move forward later, just reply here.",
 ] as const;
+/** The monthly check-in once the first follow-ups are done. Short, no pressure, the quote link added by the sender. */
+export const QUOTE_MONTHLY_TEXT = "Hi {first}, it's {owner} with {business}, checking in on your quote. Still on your list? Reply here and I'll get you on the schedule.";
+export const QUOTE_MONTHLY_MAX = 12;
 
 /** Reviving old leads (people who contacted the business before and never booked): 3 texts over 5 days. */
 export const REHASH_DAYS = [0, 2, 5] as const;
@@ -162,6 +164,22 @@ const dayNum = (ymd: string) => Math.floor(Date.parse(ymd.slice(0, 10) + "T12:00
 export function quoteStepDue(sentOn: string, stepsSent: number, today: string, days: readonly number[] = QUOTE_DAYS): number | null {
   if (stepsSent >= days.length) return null;
   return dayNum(today) - dayNum(sentOn) >= days[stepsSent] ? stepsSent : null;
+}
+
+/**
+ * Quote chasing that doesn't give up: the owner's days (2, 5, 10 by default), then every 30 days after the last one, up to a
+ * year of monthly check-ins. Returns the step that's due today, or null. Steps past the days are the monthly ones.
+ */
+export function quoteChaseDue(sentOn: string, stepsSent: number, today: string, days: readonly number[] = QUOTE_DAYS): number | null {
+  if (stepsSent < days.length) return quoteStepDue(sentOn, stepsSent, today, days);
+  const month = stepsSent - days.length + 1;
+  if (month > QUOTE_MONTHLY_MAX) return null;
+  return dayNum(today) - dayNum(sentOn) >= (days.at(-1) ?? 0) + 30 * month ? stepsSent : null;
+}
+/** The day the next follow-up goes out, or null when the chase is over. */
+export function nextChaseDay(sentOn: string, stepsSent: number, days: readonly number[] = QUOTE_DAYS): string | null {
+  const off = stepsSent < days.length ? days[stepsSent] : stepsSent - days.length + 1 > QUOTE_MONTHLY_MAX ? null : (days.at(-1) ?? 0) + 30 * (stepsSent - days.length + 1);
+  return off == null ? null : new Date((dayNum(sentOn) + off) * 86400000 + 43200000).toISOString().slice(0, 10);
 }
 
 /** "Dana Ruiz, 720-555-0148" per line (comma, tab or space before the number) → contacts; bad lines are skipped. */

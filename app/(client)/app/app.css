@@ -1143,3 +1143,9 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 .wyw-text:hover { background: var(--hover); color: var(--ink); }
 .tb .h1.two { display: block; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .inbox .filt .views { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .inbox .filt .views button { white-space: nowrap; flex: none; }
+
+/* Quote chasing */
+.chase { display: flex; flex-direction: column; gap: 6px; }
+.chase-v { margin: 0; font-size: 13.5px; } .chase-v b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.chase-banner { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; padding: 10px 14px; border: 1px solid var(--hair-2); border-left: 3px solid var(--ember); border-radius: 10px; background: #fff; font-size: 14px; }
+.chase-banner span { flex: 1; min-width: 0; } .chase-banner svg { color: var(--ember); flex: none; }

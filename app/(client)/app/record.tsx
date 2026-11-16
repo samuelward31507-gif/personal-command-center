@@ -203,6 +203,8 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
         {!biz.crew && primary}
       </div>
     </header>
+    {card?.stage === "quoted" && card.quote?.linked && (card.quote.views ?? 0) > 0 && !biz.crew && <div className="chase-banner"><Icon name="eye" size={14} /><span>Quote viewed {card.quote.views} {card.quote.views === 1 ? "time" : "times"}, not approved.</span>
+      <button type="button" className="btn sm" disabled={!!r.busy || !canText} onClick={() => void r.act("nudge", { action: "quotenudge" }, `Texted ${first(name)} about the quote.`)}>{r.busy === "nudge" ? <Spinner /> : "Nudge"}</button></div>}
     <div className="rec-body">
       <aside className="rec-side" aria-label="Details">
         <section>
@@ -361,7 +363,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
       <label className="field"><span>What&rsquo;s included <em>optional, they&rsquo;ll see it</em></span><textarea rows={2} value={incl} maxLength={600} onChange={e => setIncl(e.target.value)} placeholder="Tear-out and haul-away, steel posts in concrete, 2-year warranty" /></label>
       <label className="field" style={{ maxWidth: 240 }}><span>Deposit to hold the date <em>optional</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={deposit} onChange={e => setDeposit(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="None" /></span></label>
       {depN > 0 && <p className="fine">{biz.payLink ? "After they approve, the quote page shows the deposit with your pay link. Cinder never touches the money." : "Add your pay link in Money so they can pay the deposit from the quote page."}</p>}
-      <p className="fine">Cinder follows up on day 2, 5, 10 and 21 after you send, and stops the moment they reply.</p>
+      <p className="fine">Follow-ups go out on day 2, 5 and 10, then once a month until they answer, and stop the moment they reply.</p>
       <div className="acts-row end">
         <button type="button" className="btn" disabled={!!busy || quoteTotal <= 0} onClick={() => void act("save", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl, deposit: depN || null }, `Quote saved: ${dollars(quoteTotal)}. Not sent yet.`)}>Save, don&rsquo;t send</button>
         <button type="button" className="btn ink" disabled={!!busy || !canText || quoteTotal <= 0} onClick={() => void act("stage", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl, deposit: depN || null, link: true }, res => res.sent ? `Quote texted to ${firstName}: ${dollars(quoteTotal)}.` : res.warn || "Saved.")}>{busy === "stage" ? <Spinner /> : `Text ${firstName} ${dollars(quoteTotal)}`}</button>
@@ -381,7 +383,15 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
       {editLines && <label className="field" style={{ maxWidth: 240 }}><span>Deposit to hold the date <em>optional</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={deposit} onChange={e => setDeposit(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="None" /></span></label>}
       {q.note && !editLines && <p className="fine">{q.note}</p>}
       {q.deposit && !editLines ? <p className="fine">Deposit {dollars(q.deposit)} to hold the date{biz.payLink ? ", paid through your pay link once they approve." : ". Add your pay link in Money so they can pay it from the quote page."}</p> : null}
-      <p className="fine">{!q.linked ? "Not sent." : q.steps ? `Follow-up ${q.steps} of 4 sent.` : "First follow-up in 2 days."}</p>
+      <div className="chase">
+        {q.views ? <p className="chase-v"><b>Viewed {q.views} {q.views === 1 ? "time" : "times"}</b>{q.lastViewed ? `, last ${ago(q.lastViewed)}` : ""}, not approved.</p> : null}
+        <p className="fine">{!q.linked ? "Not sent yet." : q.status === "stopped" ? "Follow-ups stopped." : q.chasePaused ? "Follow-ups are off: this quote came in from your old app." : q.nextChase ? `Next follow-up ${dateLabel(q.nextChase)}${q.steps ? `, ${q.steps} sent so far` : ""}.` : "Every follow-up has gone out."}</p>
+        <div className="acts-row">
+          {q.linked && q.status !== "won" && q.status !== "lost" && <button type="button" className="btn sm" disabled={!!busy || !canText} onClick={() => void act("nudge", { action: "quotenudge" }, `Texted ${firstName} about the quote.`)}>{busy === "nudge" ? <Spinner /> : "Nudge now"}</button>}
+          {q.status === "stopped" || q.chasePaused ? <button type="button" className="btn sm" disabled={!!busy} onClick={() => void act("chase", { action: "quotechase", on: true }, "Following up again.")}>Start following up</button>
+            : q.linked && (q.status === "open" || q.status === "replied") ? <button type="button" className="btn sm ghost" disabled={!!busy} onClick={() => void act("chase", { action: "quotechase", on: false }, "Follow-ups stopped.")}>Stop following up</button> : null}
+        </div>
+      </div>
       <div className="acts-row end">
         {editLines ? <>
           <button type="button" className="btn" disabled={!!busy} onClick={() => setEditLines(false)}>Cancel</button>

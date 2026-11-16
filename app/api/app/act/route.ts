@@ -193,6 +193,23 @@ export async function POST(req: Request) {
       return json({ ok: true, link: r.url, sent: ok, warn: ok ? "" : "The text didn't send. Copy the link instead." });
     }
     if (b.action === "qbosync") { const r = await qboSyncAll(sql, c.projectId); return r.error ? json({ error: r.error }, 502) : json({ ok: true, invoices: r.invoices, payments: r.payments }); }
+    if (b.action === "quotechase" || b.action === "quotenudge") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const [q] = await sql`SELECT q.id, q.status, q.token, t.id AS thread_id, t.customer_phone, t.customer_name, t.status AS thread_status FROM public.client_threads t JOIN public.client_quotes q ON q.project_id = t.project_id AND q.kind = 'quote'
+          AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
+        WHERE t.id = ${b.thread}::uuid AND t.project_id = ${c.projectId}::uuid ORDER BY q.created_at DESC LIMIT 1` as { id: string; status: string; token: string | null; thread_id: string; customer_phone: string; customer_name: string; thread_status: string }[];
+      if (!q) return json({ error: "No quote on this customer." }, 404);
+      if (b.action === "quotechase") {
+        if (b.on) await sql`UPDATE public.client_quotes SET chase_paused = false, status = CASE WHEN status = 'stopped' THEN 'open' ELSE status END WHERE id = ${q.id}::uuid`;
+        else await sql`UPDATE public.client_quotes SET status = CASE WHEN status IN ('open', 'replied') THEN 'stopped' ELSE status END WHERE id = ${q.id}::uuid`;
+        return json({ ok: true });
+      }
+      if (q.thread_status === "opted_out") return json({ error: "They opted out of texts. Call instead." }, 409);
+      if (!c.setup.texting_number) return json({ error: "Your texting number isn't set up yet." }, 409);
+      const firstName = (q.customer_name || "").split(" ")[0];
+      const ok = await sendToCustomer(sql, c, q.thread_id, q.customer_phone, `Hi${firstName ? " " + firstName : ""}, it's ${(c.setup.owner_name || "").split(" ")[0] || (c.setup.display_name || "us")}. Checking in on your quote. Any questions I can answer?${q.token ? ` Here it is: ${quoteUrl(q.token)}` : ""}`, "owner");
+      return ok ? json({ ok: true }) : json({ error: "The text didn't send. Try again." }, 502);
+    }
     if (b.action === "reviewcancel") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
       await sql`UPDATE public.client_threads SET review_after = NULL WHERE id = ${b.thread}::uuid AND project_id = ${c.projectId}::uuid`;

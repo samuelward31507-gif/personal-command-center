@@ -7,6 +7,7 @@ import { cleanImportRows, importAs, type ImportAs } from "@/lib/customer-import"
 import { emitEvent } from "@/lib/client-webhook";
 import { quoteUrl, type Client } from "@/lib/client-runtime-run";
 import { invoicesByThread } from "@/lib/client-billing-run";
+import { nextChaseDay, quoteDaysFor } from "@/lib/client-runtime";
 import { changeOrdersByThread } from "@/lib/client-service-run";
 import { signoffsByThread } from "@/lib/client-portal-run";
 import { cleanItems } from "@/lib/billing";
@@ -24,12 +25,12 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
   const rows = await sql`SELECT t.id, t.customer_name, t.customer_phone, t.source, t.status, t.stage, t.details, t.value::float AS value, t.notes,
       coalesce(t.last_in_at, t.updated_at) AS at, q.id AS quote_id, q.amount::float AS quote_amount, q.status AS quote_status, q.steps_sent AS quote_steps,
       q.token AS quote_token, q.link_sent_at IS NOT NULL AS quote_linked, q.items AS quote_items, q.tax_rate::float AS quote_tax,
-      t.install_time, t.install_days, t.install_event_id IS NOT NULL AS on_calendar, q.viewed_at AS quote_viewed, q.note AS quote_note, a.starts_at AS next_appt,
+      t.install_time, t.install_days, t.install_event_id IS NOT NULL AS on_calendar, q.viewed_at AS quote_viewed, q.note AS quote_note, q.view_count AS quote_views, q.last_viewed_at AS quote_last_viewed, q.chase_paused AS quote_chase_paused, q.sent_on::text AS quote_sent_on, a.starts_at AS next_appt,
       t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent, t.job_steps, t.job_costs,
       (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied,
       t.stage_at, lr.body AS lost_note, t.crew_notes, t.crew_member, q.deposit::float AS quote_deposit, t.customer_email, t.remind_at, t.remind_note, t.remind_sent_at, t.review_after
     FROM public.client_threads t
-    LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
+    LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate, view_count, last_viewed_at, chase_paused, sent_on FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
       AND right(regexp_replace(x.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
       ORDER BY x.created_at DESC LIMIT 1) q ON true
     LEFT JOIN LATERAL (SELECT sent_at FROM public.client_reviews r WHERE r.project_id = t.project_id
@@ -49,6 +50,8 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
     const bp = share ? ballpark(book, details) : null;
     const quote = r.quote_id ? { id: String(r.quote_id), amount: r.quote_amount == null ? null : Number(r.quote_amount), status: String(r.quote_status), steps: Number(r.quote_steps ?? 0),
       linked: !!r.quote_linked, url: r.quote_token ? quoteUrl(String(r.quote_token)) : null, viewed: r.quote_viewed ? new Date(String(r.quote_viewed)).toISOString() : null, note: String(r.quote_note ?? ""),
+      views: Number(r.quote_views ?? 0), lastViewed: r.quote_last_viewed ? new Date(String(r.quote_last_viewed)).toISOString() : null, chasePaused: !!r.quote_chase_paused,
+      nextChase: r.quote_status === "open" && !r.quote_chase_paused && r.quote_sent_on ? nextChaseDay(String(r.quote_sent_on), Number(r.quote_steps ?? 0), quoteDaysFor(c.setup)) : null,
       items: cleanItems(r.quote_items), tax: Number(r.quote_tax ?? 0), deposit: r.quote_deposit == null ? null : Number(r.quote_deposit) } : null;
     const next = r.next_appt ? new Date(String(r.next_appt)).toISOString() : null;
     // A past customer answered a win-back text: a new job, so it starts over in New (or Booked once Cinder books it).

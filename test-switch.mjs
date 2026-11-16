@@ -131,4 +131,16 @@ ok(() => assert.equal(eveningText({ since: "", leads: 0, afterHours: 0, replySec
 ok(() => assert.equal(eveningText({ since: "", leads: 6, afterHours: 4, replySec: 8, booked: 2, quotesBack: 1, quotesBackValue: 3400, paid: 0, reviews: 0 }, "Byers Fence.", "https://x/app"),
   "Byers Fence: while you worked today, 4 leads answered after hours, 2 estimates booked, $3,400 in quotes back. https://x/app"));
 ok(() => assert.ok(eveningText({ since: "", leads: 1, afterHours: 0, replySec: 75, booked: 0, quotesBack: 0, quotesBackValue: 0, paid: 1500, reviews: 1 }, "", "u").startsWith("While you worked today, 1 lead answered in 1m, $1,500 paid, 1 review ask sent.")));
+// ---------- Quote chasing: day 2, 5, 10, then monthly for a year ----------
+const R = await import("./lib/client-runtime.ts");
+ok(() => assert.deepEqual([...R.QUOTE_DAYS], [2, 5, 10]));
+ok(() => assert.equal(R.quoteChaseDue("2026-01-01", 0, "2026-01-03"), 0));
+ok(() => assert.equal(R.quoteChaseDue("2026-01-01", 3, "2026-02-09"), null));
+ok(() => assert.equal(R.quoteChaseDue("2026-01-01", 3, "2026-02-10"), 3));
+ok(() => assert.equal(R.quoteChaseDue("2026-01-01", 4, "2026-03-12"), 4));
+ok(() => assert.equal(R.quoteChaseDue("2026-01-01", 3 + 12, "2027-06-01"), null, "a year of monthly check-ins, then it stops"));
+ok(() => assert.equal(R.quoteChaseDue("2026-01-01", 2, "2026-02-10", [3, 7]), 2, "the owner's own days, then monthly from the last one"));
+ok(() => assert.equal(R.nextChaseDay("2026-01-01", 0), "2026-01-03"));
+ok(() => assert.equal(R.nextChaseDay("2026-01-01", 3), "2026-02-10"));
+ok(() => assert.equal(R.nextChaseDay("2026-01-01", 15), null));
 console.log(`switch: ${n} checks passed`);
