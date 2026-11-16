@@ -3,33 +3,63 @@
 // Money: every invoice, what's owed and late, the quotes still out, and what Cinder brought in. Numbers lives
 // here as the right-hand pane. The invoice sheet is where lines are edited, texted and marked paid.
 import { useState } from "react";
-import { dollars, lineTotal, overdue, totals, type Item } from "@/lib/billing";
+import { chosen, dollars, lineTotal, overdue, tiersOf, totals, type Item } from "@/lib/billing";
 import { PAY_METHODS, type CardInvoice, type Payment } from "@/lib/crm";
 import { Avatar, Icon, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast } from "./parts";
 import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
 import type { Biz, Data, Go, InvoiceRow } from "./types";
+import { emailDoc } from "./crew";
 
-/** Editable quote or invoice lines: what, how many, the unit price. Totals are worked out, never typed. */
-export function LineEditor({ items, setItems, tax, setTax }: { items: Item[]; setItems: (f: (x: Item[]) => Item[]) => void; tax: number; setTax: (n: number) => void }) {
-  const t = totals(items.filter(i => i.name.trim() && i.qty > 0), tax);
+/**
+ * Editable quote or invoice lines: what, how many, the unit price. Totals are worked out, never typed. On a quote (options)
+ * a line can also be one of the options the customer picks from (Good, Better, Best) or an add-on they can tick.
+ */
+const TIER_NAMES = ["Good", "Better", "Best"];
+export function LineEditor({ items, setItems, tax, setTax, options }: { items: Item[]; setItems: (f: (x: Item[]) => Item[]) => void; tax: number; setTax: (n: number) => void; options?: boolean }) {
+  const valid = items.filter(i => i.name.trim() && i.qty > 0);
+  const tiers = tiersOf(items), addons = valid.filter(i => i.opt);
+  const t = totals(tiers.length || addons.length ? chosen(valid, null) : valid, tax);
   const set = (k: number, patch: Partial<Item>) => setItems(xs => xs.map((x, j) => (j === k ? { ...x, ...patch } : x)));
   const n = (v: string) => { const x = Number(v.replace(/[^\d.]/g, "")); return Number.isFinite(x) ? x : 0; };
-  return <div className="le">
-    <ul>{items.map((i, k) => <li key={k} className="lrow">
+  const nextName = () => [...TIER_NAMES, "Option 4", "Option 5"].find(x => !tiers.includes(x)) ?? "Another option";
+  const mode = (i: Item) => i.opt ? "opt" : i.tier ? "t:" + i.tier : "inc";
+  const setMode = (k: number, v: string) => set(k, v === "opt" ? { opt: true, tier: undefined } : v === "new" ? { tier: nextName(), opt: undefined } : v.startsWith("t:") ? { tier: v.slice(2), opt: undefined } : { tier: undefined, opt: undefined });
+  const rename = (from: string, to: string) => { const name = to.replace(/[\u0000-\u001f]/g, "").slice(0, 40); if (!name.trim() || (name !== from && tiers.includes(name))) return; setItems(xs => xs.map(x => (x.tier === from ? { ...x, tier: name } : x))); };
+  const offer = () => setItems(xs => {
+    if (tiersOf(xs).length) return [...xs, { name: "", qty: 1, unit: "", price: 0, tier: nextName() }];
+    const base = xs.filter(x => !x.opt), rest = xs.filter(x => x.opt);
+    if (!base.length) return [...xs, ...TIER_NAMES.map(tier => ({ name: "", qty: 1, unit: "", price: 0, tier }))];
+    return [...TIER_NAMES.flatMap(tier => base.map(x => ({ ...x, tier }))), ...rest];
+  });
+  return <div className={"le" + (options ? " opts" : "")}>
+    {options && tiers.length > 0 && <div className="le-tiers"><span>Options they pick from</span>{tiers.map(tr => <input key={tr} className="input" aria-label={`Rename ${tr}`} defaultValue={tr} onBlur={e => { if (e.target.value !== tr) rename(tr, e.target.value); }} onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} />)}</div>}
+    <ul>{items.map((i, k) => <li key={k} className={"lrow" + (i.opt ? " is-opt" : i.tier ? " is-tier" : "")}>
       <input className="input" aria-label="What" value={i.name} placeholder="What it is" onChange={e => set(k, { name: e.target.value })} />
       <span className="nums">
+        {options && (tiers.length > 0 || i.opt || addons.length > 0) && <select className="lmode" aria-label="Which option" value={mode(i)} onChange={e => setMode(k, e.target.value)}>
+          <option value="inc">{tiers.length ? "In every option" : "Included"}</option>
+          {tiers.map(tr => <option key={tr} value={"t:" + tr}>{tr}</option>)}
+          <option value="new">New option</option>
+          <option value="opt">Add-on they can tick</option>
+        </select>}
         <label className="inwrap"><input aria-label="Quantity" inputMode="decimal" value={i.qty || ""} placeholder="1" onChange={e => set(k, { qty: n(e.target.value) })} />{i.unit && <em>{i.unit}</em>}</label>
         <span className="x" aria-hidden="true">×</span>
         <label className="inwrap"><i>$</i><input aria-label="Price each" inputMode="decimal" value={i.price || ""} placeholder="0" onChange={e => set(k, { price: n(e.target.value) })} /></label>
-        <b className="t">{dollars(lineTotal(i))}</b>
+        <b className="t">{i.opt ? "+" : ""}{dollars(lineTotal(i))}</b>
         <button type="button" className="btn ghost sm ic" aria-label={`Remove ${i.name || "line"}`} onClick={() => setItems(xs => xs.filter((_, j) => j !== k))}><Icon name="x" size={13} /></button>
       </span>
     </li>)}</ul>
-    <button type="button" className="btn sm add" onClick={() => setItems(xs => [...xs, { name: "", qty: 1, unit: "", price: 0 }])}><Icon name="plus" size={13} />Add a line</button>
+    <div className="acts-row">
+      <button type="button" className="btn sm add" onClick={() => setItems(xs => [...xs, { name: "", qty: 1, unit: "", price: 0, ...(tiersOf(xs).length ? { tier: tiersOf(xs)[0] } : {}) }])}><Icon name="plus" size={13} />Add a line</button>
+      {options && <button type="button" className="btn sm ghost" onClick={offer} title="Let them pick between versions of the job">{tiers.length ? "Add an option" : "Offer good, better, best"}</button>}
+      {options && <button type="button" className="btn sm ghost" onClick={() => setItems(xs => [...xs, { name: "", qty: 1, unit: "", price: 0, opt: true }])} title="Extras they can tick, like a gate or stain">Add an add-on</button>}
+    </div>
     <dl>
-      <div><dt>Subtotal</dt><dd>{dollars(t.subtotal)}</dd></div>
+      {tiers.length > 0 ? tiers.map((tr, k) => { const x = totals(chosen(valid, { tier: tr, addons: [] }), tax); return <div key={tr} className={k === 0 ? "tot" : ""}><dt>{tr}{k === 0 ? <small> shown first</small> : null}</dt><dd>{dollars(x.total)}</dd></div>; })
+        : <div><dt>Subtotal</dt><dd>{dollars(t.subtotal)}</dd></div>}
+      {addons.length > 0 && <div><dt>Add-ons, if they tick them all</dt><dd>+{dollars(totals(addons, tax).total)}</dd></div>}
       <div><dt>Tax<label className="tax"><input aria-label="Tax percent" inputMode="decimal" value={tax || ""} placeholder="0" onChange={e => setTax(Math.min(20, n(e.target.value)))} />%</label></dt><dd>{dollars(t.tax)}</dd></div>
-      <div className="tot"><dt>Total</dt><dd>{dollars(t.total)}</dd></div>
+      {!tiers.length && <div className="tot"><dt>Total</dt><dd>{dollars(t.total)}</dd></div>}
     </dl>
   </div>;
 }
@@ -50,7 +80,7 @@ const chipFor = (tone: string) => tone === "green" ? "good" : tone === "red" ? "
 const dotFor = (tone: string) => tone === "green" ? "good" : tone === "red" ? "bad" : tone === "amber" ? "ember" : tone === "blue" ? "ink" : "";
 
 /** One invoice: lines, due date, note; send it, copy the link, mark it paid. */
-export function InvoiceSheet({ inv, customer, email, payments = [], project, api, toast, reload, payLink, onClose, onSetup }: { inv: CardInvoice; customer: string; email?: string; payments?: Payment[]; project: string; api: Api; toast: Toast; reload: () => Promise<void>; payLink: boolean; onClose: () => void; onSetup: () => void }) {
+export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], project, api, toast, reload, payLink, onClose, onSetup }: { inv: CardInvoice; customer: string; email?: string; emailReady?: boolean; payments?: Payment[]; project: string; api: Api; toast: Toast; reload: () => Promise<void>; payLink: boolean; onClose: () => void; onSetup: () => void }) {
   const [items, setItems] = useState<Item[]>(inv.items), [tax, setTax] = useState(inv.tax_rate), [note, setNote] = useState(inv.note), [due, setDue] = useState(inv.due_on ?? "");
   const [busy, setBusy] = useState(""), [arm, setArm] = useArm();
   const bal = balanceOf(inv), mine = payments.filter(p => p.invoice_id === inv.id);
@@ -82,7 +112,7 @@ export function InvoiceSheet({ inv, customer, email, payments = [], project, api
       <span style={{ flex: 1 }} />
       {!locked && dirty && <button type="button" className="btn" disabled={!!busy} onClick={() => void save()}>Save</button>}
       {!locked && <button type="button" className="btn" disabled={!!busy} onClick={() => void copy()}>Copy link</button>}
-      {!locked && email && inv.url && <a className="btn" href={`mailto:${email}?subject=${encodeURIComponent(`Invoice #${inv.number}`)}&body=${encodeURIComponent(`Hi ${first}, here's your invoice for ${dollars(inv.total)}${inv.due_on ? `, due ${dateLabel(inv.due_on)}` : ""}. You can see it and pay here: ${inv.url}`)}`}>Email it</a>}
+      {!locked && inv.url && <button type="button" className="btn" disabled={!!busy} title={email ? `Email it to ${email}` : "Add their email on the customer first"} onClick={async () => { setBusy("email"); await emailDoc({ ready: emailReady, api, project, toast, reload, kind: "invoice", invoice: inv.id, to: email, name: customer, mailto: `mailto:${email ?? ""}?subject=${encodeURIComponent(`Invoice #${inv.number}`)}&body=${encodeURIComponent(`Hi ${first}, here's your invoice for ${dollars(bal)}${inv.due_on ? `, due ${dateLabel(inv.due_on)}` : ""}. You can see it and pay here: ${inv.url}`)}` }); setBusy(""); }}>{busy === "email" ? <Spinner /> : "Email it"}</button>}
       {!locked && <button type="button" className="btn ink" disabled={!!busy} onClick={() => void send()}>{busy === "send" ? <Spinner /> : inv.status === "sent" ? "Text it again" : `Text ${first}`}</button>}
     </>}>
     {!payLink && !locked && <div className="card box"><b className="t-em">No pay link yet</b><p className="fine" style={{ marginTop: 2 }}>Add your Square, Stripe or PayPal link so customers can pay from the invoice.</p>
@@ -116,10 +146,11 @@ export function InvoiceSheet({ inv, customer, email, payments = [], project, api
 /** Payments settings: the owner's own pay link, sales tax and how long invoices give. */
 export function BillingSettings({ setup, project, api, toast, reload, onClose }: { setup: Record<string, string>; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onClose: () => void }) {
   const [link, setLink] = useState(setup.pay_link || ""), [tax, setTax] = useState(setup.tax_rate || ""), [daysDue, setDays] = useState(setup.invoice_days || "7"), [busy, setBusy] = useState(false);
-  return <Sheet onClose={onClose} title="Invoices and payments" sub="Used on every quote and invoice"
+  const [fin, setFin] = useState(setup.financing_link || ""), [finNote, setFinNote] = useState(setup.financing_note || ""), [warranty, setWarranty] = useState(setup.warranty || ""), [terms, setTerms] = useState(setup.quote_terms || "");
+  return <Sheet onClose={onClose} title="Invoices and payments" sub="Used on every quote and invoice" wide
     foot={<button type="button" className="btn ink" disabled={busy} onClick={async () => {
       setBusy(true);
-      try { await api("/api/app/act", { p: project, action: "setup", setup: { pay_link: link, tax_rate: tax || "0", invoice_days: daysDue } }); toast("Saved."); await reload(); onClose(); }
+      try { await api("/api/app/act", { p: project, action: "setup", setup: { pay_link: link, tax_rate: tax || "0", invoice_days: daysDue, financing_link: fin.trim() && !/^https?:\/\//.test(fin.trim()) ? "https://" + fin.trim() : fin.trim(), financing_note: finNote, warranty, quote_terms: terms } }); toast("Saved."); await reload(); onClose(); }
       catch (e) { toast(e instanceof Error ? e.message : "Couldn't save.", true); } finally { setBusy(false); }
     }}>{busy ? <Spinner /> : "Save"}</button>}>
     <label className="field"><span>Your pay link</span><input inputMode="url" value={link} onChange={e => setLink(e.target.value)} placeholder="square.link/u/yourbusiness" /></label>
@@ -128,6 +159,14 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
       <label className="field"><span>Sales tax</span><span className="inwrap"><input inputMode="decimal" value={tax} onChange={e => setTax(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0" /><em>%</em></span></label>
       <label className="field"><span>Invoices are due</span><select value={daysDue} onChange={e => setDays(e.target.value)}><option value="0">On receipt</option><option value="7">In 7 days</option><option value="14">In 14 days</option><option value="30">In 30 days</option></select></label>
     </div>
+    <p className="sec" style={{ marginTop: 10 }}>On every quote</p>
+    <div className="two">
+      <label className="field"><span>Financing link <em>optional</em></span><input inputMode="url" value={fin} onChange={e => setFin(e.target.value)} placeholder="Your Hearth, Wisetack or GreenSky page" /></label>
+      <label className="field"><span>What it says</span><input value={finNote} maxLength={160} onChange={e => setFinNote(e.target.value)} placeholder="Pay over time, as low as $120 a month" /></label>
+    </div>
+    <p className="fine" style={{ marginTop: -6 }}>Customers who can pay monthly say yes to the bigger option more often. The lender handles the application and pays you.</p>
+    <label className="field"><span>Warranty <em>shown on the quote</em></span><input value={warranty} maxLength={300} onChange={e => setWarranty(e.target.value)} placeholder="Two years on workmanship. Materials carry the maker&rsquo;s warranty." /></label>
+    <label className="field"><span>Terms <em>they agree to when they approve</em></span><textarea rows={4} value={terms} maxLength={1200} onChange={e => setTerms(e.target.value)} placeholder="Prices hold for 30 days. The deposit comes off the final invoice. The balance is due when the job is done." /></label>
   </Sheet>;
 }
 

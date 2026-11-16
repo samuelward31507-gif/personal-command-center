@@ -13,6 +13,8 @@ type Sql = NeonQueryFunction<false, false>;
 export type Period = 30 | 90 | 365;
 export type Funnel = { leads: number; booked: number; quoted: number; won: number; wonValue: number; lost: number };
 export type ReportNumbers = Funnel & {
+  /** Won jobs with costs logged: their value, their costs, and how many. Profit is value minus costs. */
+  costed: number; costedValue: number; costs: number;
   replySec: number | null; afterHoursLeads: number; afterHoursWon: number; afterHoursValue: number;
   cycleDays: number | null; payDays: number | null; collected: number; invoiced: number;
   appts: number; noShows: number; reviews: number;
@@ -26,6 +28,7 @@ const NOT_LEADS = ["import", "review", "due", "quote", "rehash"];
 async function numbers(sql: Sql, pid: string, tz: string, from: string, to: string): Promise<ReportNumbers> {
   const [f] = await sql`WITH l AS (
       SELECT t.id, t.customer_phone, t.stage, t.status, t.value, t.created_at, t.stage_at, (t.created_at AT TIME ZONE ${tz}) AS local,
+        coalesce((t.job_costs->>'materials')::numeric, 0) + coalesce((t.job_costs->>'labor')::numeric, 0) + coalesce((t.job_costs->>'other')::numeric, 0) AS cost,
         EXISTS (SELECT 1 FROM public.client_appointments a WHERE a.thread_id = t.id) AS has_appt,
         q.amount AS q_amount, q.status AS q_status, q.id IS NOT NULL AS has_quote,
         (SELECT extract(epoch FROM (min(o.at) - t.created_at)) FROM public.client_texts o WHERE o.thread_id = t.id AND o.direction = 'out' AND o.author <> 'system') AS first_sec
@@ -43,7 +46,9 @@ async function numbers(sql: Sql, pid: string, tz: string, from: string, to: stri
       percentile_cont(0.5) WITHIN GROUP (ORDER BY first_sec) FILTER (WHERE first_sec IS NOT NULL AND first_sec >= 0) AS reply_sec,
       count(*) FILTER (WHERE after_hours)::int AS ah_leads, count(*) FILTER (WHERE after_hours AND is_won)::int AS ah_won,
       coalesce(sum(coalesce(value, q_amount)) FILTER (WHERE after_hours AND is_won), 0)::float AS ah_value,
-      avg(extract(epoch FROM (stage_at - created_at)) / 86400) FILTER (WHERE is_won AND stage_at IS NOT NULL AND stage_at > created_at) AS cycle_days
+      avg(extract(epoch FROM (stage_at - created_at)) / 86400) FILTER (WHERE is_won AND stage_at IS NOT NULL AND stage_at > created_at) AS cycle_days,
+      count(*) FILTER (WHERE is_won AND cost > 0)::int AS costed, coalesce(sum(coalesce(value, q_amount)) FILTER (WHERE is_won AND cost > 0), 0)::float AS costed_value,
+      coalesce(sum(cost) FILTER (WHERE is_won AND cost > 0), 0)::float AS costs
     FROM m` as Record<string, unknown>[];
   const [m] = await sql`SELECT
       coalesce((SELECT sum(amount) FROM public.client_payments WHERE project_id = ${pid}::uuid AND paid_on >= ${from}::date AND paid_on < ${to}::date), 0)
@@ -55,7 +60,7 @@ async function numbers(sql: Sql, pid: string, tz: string, from: string, to: stri
       (SELECT count(*) FROM public.client_appointments WHERE project_id = ${pid}::uuid AND starts_at >= ${from}::timestamptz AND starts_at < ${to}::timestamptz AND status = 'no_show')::int AS no_shows,
       (SELECT count(*) FROM public.client_reviews WHERE project_id = ${pid}::uuid AND sent_at >= ${from}::timestamptz AND sent_at < ${to}::timestamptz)::int AS reviews` as Record<string, unknown>[];
   const n = (v: unknown) => Number(v) || 0, opt = (v: unknown) => (v == null ? null : Math.round(Number(v) * 10) / 10);
-  return { leads: n(f?.leads), booked: n(f?.booked), quoted: n(f?.quoted), won: n(f?.won), wonValue: n(f?.won_value), lost: n(f?.lost),
+  return { costed: n(f?.costed), costedValue: n(f?.costed_value), costs: n(f?.costs), leads: n(f?.leads), booked: n(f?.booked), quoted: n(f?.quoted), won: n(f?.won), wonValue: n(f?.won_value), lost: n(f?.lost),
     replySec: f?.reply_sec == null ? null : Math.round(Number(f.reply_sec)), afterHoursLeads: n(f?.ah_leads), afterHoursWon: n(f?.ah_won), afterHoursValue: n(f?.ah_value),
     cycleDays: opt(f?.cycle_days), payDays: opt(m?.pay_days), collected: n(m?.collected), invoiced: n(m?.invoiced), appts: n(m?.appts), noShows: n(m?.no_shows), reviews: n(m?.reviews) };
 }

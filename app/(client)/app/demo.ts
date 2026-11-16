@@ -59,18 +59,18 @@ function seed() {
     l2: { thread: { id: "l2", customer_name: "Ashley Kim", customer_phone: "+13035550141", source: "thumbtack", status: "closed" }, texts: [
       tx("in", "system", "Passed on the quote online: \u201cWent with a cheaper bid\u201d", 60 * 24 * 7)] },
   };
-  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null }> = {
+  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null; crewMember?: string }> = {
     t1: { details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" }, notes: "Asked about financing. Call him.", email: "tom.becker@example.com", remind: { at: ago(30), note: "Call Tom back about financing", sent: false } },
-    t2: { details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No" }, notes: "Replacing chain link." },
+    t2: { details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No", address: "77 Aspen Ct, Englewood" }, notes: "Replacing chain link.", crewMember: "+17205550188", crew: "Side gate is unlocked. Measure the back line from the shed." },
     t3: { details: { material: "Vinyl" }, notes: "" },
     t4: { details: { length_ft: 120, material: "Horizontal cedar", gates: 2, hoa: "Yes" }, notes: "HOA needs drawings before install.", value: 6200 },
     t5: { details: {}, notes: "Went with someone else." },
-    q1: { details: { length_ft: 160, material: "Vinyl", height: "6 ft", gates: 1, hoa: "Yes" }, notes: "", value: 7800 },
+    q1: { details: { length_ft: 160, material: "Vinyl", height: "6 ft", gates: 1, hoa: "Yes" }, notes: "", value: 7800, email: "lena.ortiz@example.com" },
     q2: { details: { length_ft: 900, material: "Ranch rail", gates: 2 }, notes: "Horses. Needs it before spring.", value: 12400 },
     q3: { details: { length_ft: 110, material: "Chain link", height: "5 ft", gates: 1 }, notes: "", value: 4650 },
     w1: { details: { length_ft: 220, material: "cedar", height: "6 ft", gates: 2, address: "418 Willow Ln, Littleton" }, notes: "Install done. Ask for a review.", crew: "Gate code 4418. Two dogs, keep the side gate shut. Park on Willow, not the driveway.", value: 8600, install: at(-11, 8).slice(0, 10), installTime: "07:30", installDays: 1, onCalendar: true, job: { deposit: at(-26, 9).slice(0, 10), permit: at(-21, 9).slice(0, 10), locate: at(-18, 9).slice(0, 10), materials: at(-16, 9).slice(0, 10), installed: at(-11, 9).slice(0, 10), walk: at(-10, 9).slice(0, 10) }, costs: { materials: 3150, labor: 1900, other: 120 } },
-    w2: { stage: "won", details: { length_ft: 150, material: "Vinyl", height: "6 ft", gates: 1 }, notes: "Approved from the link.", value: 6900, job: { deposit: at(-1, 9).slice(0, 10) }, install: at(4, 8).slice(0, 10), installTime: "08:00", installDays: 1, onCalendar: true, reviewAuto: true },
-    w3: { stage: "won", details: { length_ft: 260, material: "Wood privacy", height: "6 ft", gates: 2 }, notes: "", value: 11200, install: at(-12, 8).slice(0, 10), installDays: 2, onCalendar: true, reviewSent: at(-11, 9) },
+    w2: { stage: "won", crewMember: "+17205550188", crew: "Old fence is already down. Dumpster in the driveway, park on the street.", details: { length_ft: 150, material: "Vinyl", height: "6 ft", gates: 1, address: "905 Cherry St, Centennial" }, notes: "Approved from the link.", value: 6900, costs: { materials: 2950, labor: 1400, other: 90 }, job: { deposit: at(-1, 9).slice(0, 10), materials: at(-1, 9).slice(0, 10) }, install: at(0, 8).slice(0, 10), installTime: "08:00", installDays: 1, onCalendar: true, reviewAuto: true },
+    w3: { stage: "won", details: { length_ft: 260, material: "Wood privacy", height: "6 ft", gates: 2 }, notes: "", value: 11200, costs: { materials: 5400, labor: 3600, other: 350 }, install: at(-12, 8).slice(0, 10), installDays: 2, onCalendar: true, reviewSent: at(-11, 9) },
     l2: { stage: "lost", details: { length_ft: 90, material: "Chain link", height: "4 ft" }, notes: "Went with a cheaper bid.", lostReason: "Price" },
   };
   const setup: Record<string, string> = { display_name: "Ridgeline Fence Co.", owner_name: "Mike", trade: "Fence", website: "https://ridgelinefence.example", team_size: "2-5 people", years: "6-10 years",
@@ -78,6 +78,8 @@ function seed() {
     hours: "Mon-Fri 7:00-18:00, Sat 8:00-12:00", timezone: "America/Denver", service_area: "Littleton, Highlands Ranch, Castle Rock and 25 miles around", rules: "No repairs under $500. No commercial bids.", questions: "Rough length in feet, material, and the address.",
     prices: "Cedar privacy runs $38–48 a foot installed. Vinyl $40–55. Chain link $18–26.", financing: "We offer 12 months no interest through Wisetack on jobs over $3,000.", tone: "Hey Mark, Mike here with Ridgeline. We can swing by Thursday at 4 to measure, that work?\nSounds good, see you then. Gate's on the left side of the house.", avoid: "Never quote a firm price. Don't promise a date for the install.",
     handoff: "The job is over $20,000, or they mention a neighbor dispute over the property line.", book_lead_hours: "3", book_per_day: "2", book_buffer_min: "30", quote_days: "2,5,10,21", nudge_hours: "2,20,68", dnt: "+17205550177", a2p_status: "Approved", forwarding: "Their number forwards missed calls here", team: JSON.stringify([{ name: "Luis", cell: "+17205550188", role: "crew" }]), monthly_report: "yes",
+    warranty: "Two years on workmanship. Materials carry the maker's warranty.", financing_link: "https://example.com/financing", financing_note: "Pay over time, as low as $120 a month",
+    quote_terms: "Prices hold for 30 days. The deposit holds the install date and comes off the final invoice. The balance is due when the job is done.",
     price_book: JSON.stringify({ unit: "ft", rates: [{ name: "Wood privacy (cedar)", low: 38, high: 48 }, { name: "Vinyl", low: 40, high: 55 }, { name: "Chain link", low: 18, high: 26 }, { name: "Ranch rail", low: 12, high: 18 }], gate: [450, 650] }) };
   return {
     threads, crm, setup,
@@ -93,7 +95,8 @@ function seed() {
       { id: "e4", title: "Crew off", start: at(3, 0), end: at(4, 0), allDay: true, link: GC }],
     quotes: [
       { id: "q1", customer_name: "Lena Ortiz", customer_phone: "+17205550191", amount: 7800 as number | null, sent_on: at(-6, 12).slice(0, 10), steps_sent: 2, status: "open", linked: true, viewed: ago(60 * 3) as string | null, note: "Remove old wood fence, 6 ft white vinyl privacy, one 4 ft gate.", deposit: 1500 as number | null,
-        items: [{ name: "6 ft Vinyl privacy fence, installed", qty: 160, unit: "ft", price: 44 }, { name: "Walk gate", qty: 1, unit: "", price: 760 }, { name: "Tear-out and haul-away", qty: 160, unit: "ft", price: 2 }] as Item[], tax_rate: 0 },
+        items: [{ name: "6 ft White vinyl privacy", qty: 160, unit: "ft", price: 42, tier: "Good" }, { name: "6 ft Vinyl privacy with lattice top", qty: 160, unit: "ft", price: 49, tier: "Better" }, { name: "6 ft Tan vinyl, heavy-duty posts, lifetime warranty", qty: 160, unit: "ft", price: 56, tier: "Best" },
+          { name: "Walk gate", qty: 1, unit: "", price: 760 }, { name: "Tear-out and haul-away", qty: 160, unit: "ft", price: 2 }, { name: "Second walk gate", qty: 1, unit: "", price: 760, opt: true }, { name: "Post caps, solar lit", qty: 18, unit: "", price: 28, opt: true }] as Item[], tax_rate: 0 },
       { id: "q2", customer_name: "Kyle Brandt", customer_phone: "+13035550133", amount: 12400 as number | null, sent_on: at(-3, 12).slice(0, 10), steps_sent: 1, status: "open", linked: true, viewed: null as string | null, note: "", deposit: null as number | null, items: [] as Item[], tax_rate: 0 },
       { id: "q3", customer_name: "Jen Park", customer_phone: "+17205550120", amount: 4650 as number | null, sent_on: at(-1, 12).slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null as string | null, note: "", items: [] as Item[], tax_rate: 0 }],
     winbackSent: false,
@@ -130,7 +133,7 @@ function demoReport(days: 30 | 90 | 365): Report {
   const k = days === 30 ? 1 : days === 90 ? 3.1 : 12.4;
   const num = (leads: number, booked: number, quoted: number, won: number, wonValue: number, extra: Partial<ReportNumbers> = {}): ReportNumbers => ({ leads, booked, quoted, won, wonValue, lost: Math.round(quoted * 0.3),
     replySec: 9, afterHoursLeads: Math.round(leads * 0.34), afterHoursWon: Math.round(won * 0.4), afterHoursValue: Math.round(wonValue * 0.38), cycleDays: 11.4, payDays: 6.2,
-    collected: Math.round(wonValue * 0.82), invoiced: Math.round(wonValue * 0.9), appts: booked, noShows: Math.max(0, Math.round(booked * 0.07)), reviews: Math.round(won * 0.9), ...extra });
+    costed: Math.max(0, won - 1), costedValue: Math.round(wonValue * 0.8), costs: Math.round(wonValue * 0.8 * 0.58), collected: Math.round(wonValue * 0.82), invoiced: Math.round(wonValue * 0.9), appts: booked, noShows: Math.max(0, Math.round(booked * 0.07)), reviews: Math.round(won * 0.9), ...extra });
   const r = (x: number) => Math.round(x * k);
   return { days,
     now: num(r(41), r(14), r(9), r(5), r(37500)),
@@ -152,6 +155,12 @@ const money = (v: unknown) => Number(String(v ?? "").replace(/[$,\s]/g, "").repl
 
 /** /app?demo=empty: a business on day one, to see (and show) what a fresh account looks like. */
 const emptyDemo = () => { try { return sessionStorage.getItem("cinder-demo-empty") === "1"; } catch { return false; } };
+/** /app?demo=crew: the same business seen by Luis, a crew member: his day, the jobs, no money or settings. */
+const crewDemo = () => { try { return sessionStorage.getItem("cinder-demo-crew") === "1"; } catch { return false; } };
+function asCrew<T extends Record<string, unknown>>(x: T): T {
+  const setup = x.setup as Record<string, string>;
+  return { ...x, role: "crew", me: "+17205550188", invoices: [], payments: [], customers: [], quotes: [], wonJobs: [], winback: undefined, setup: { display_name: setup.display_name, owner_name: setup.owner_name, trade: setup.trade } };
+}
 function blank<T extends Record<string, unknown>>(x: T): T {
   const live = { ...(x.live as Record<string, unknown>), leads: 0, needs: 0, answered: 0, booked: 0, replySec: null, chasing: 0, chasingValue: 0, won: 0, wonValue: 0, revived: 0, reviews: 0, weeks: [], conversations: [], afterHours: { leads: 0, won: 0, wonValue: 0 } };
   const setup = { ...(x.setup as Record<string, string>), price_book: "", pay_link: "", has_review_link: "", has_calendar: "" };
@@ -165,7 +174,7 @@ function data() {
     return { id: thread.id, name: thread.customer_name || "(303) 555-0199", source: thread.source, status: thread.status, at: last.at, last: last.body, ask };
   }).sort((a, b) => b.at.localeCompare(a.at));
   return {
-    project: "demo", business: "Ridgeline Fence Co. (example)", number: "+17205550100", canCall: true,
+    project: "demo", business: "Ridgeline Fence Co. (example)", number: "+17205550100", canCall: true, role: "owner" as const, me: "", emailReady: true,
     businesses: [{ project_id: "demo", name: "Ridgeline Fence Co. (example)" }], unreadFromSam: 0,
     live: { leads: 41, needs: conversations.filter(c => c.status === "paused").length, answered: 41, booked: 14, replySec: 9,
       afterHours: { leads: 14, won: 5, wonValue: 31400 }, chasing: s.quotes.length, chasingValue: s.quotes.reduce((t, q) => t + (q.amount || 0), 0), won: s.won, wonValue: s.wonValue, revived: 4, reviews: 11,
@@ -205,7 +214,7 @@ function board(all = false): Card[] {
       quote: q ? { id: q.id, amount: q.amount, status: q.status, steps: q.steps_sent, linked: q.linked, url: q.linked ? EXAMPLE_LINK : null, viewed: q.viewed, note: q.note, items: q.items, tax: q.tax_rate, deposit: q.deposit ?? null } : null,
       next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, installTime: c.installTime ?? null, installDays: c.installDays ?? 1, onCalendar: !!c.onCalendar,
       reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, job: { ...(c.job ?? {}) }, costs: { materials: 0, labor: 0, other: 0, ...(c.costs ?? {}) }, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void").at(-1) ?? null,
-      stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [] };
+      stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crewMember: c.crewMember ?? "", crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [] };
   }).sort((a, b) => b.at.localeCompare(a.at));
 }
 
@@ -231,7 +240,7 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       return { report: { ...r, now: z, before: z, sources: [], lostReasons: [], openQuotes: { n: 0, value: 0 }, series: [] } }; }
     const th = new URL(path, "https://x").searchParams.get("thread");
     if (th) { const t = s.threads[th] ?? fail("Not found", 404); return { thread: t!.thread, texts: t!.texts.map((x, i, all) => ({ ...x, status: x.direction === "out" && x.author !== "system" ? (th === "t1" && i === all.length - 1 ? "undelivered" : "delivered") : "" })) }; }
-    return emptyDemo() ? blank(data()) : data();
+    return emptyDemo() ? blank(data()) : crewDemo() ? asCrew(data()) : data();
   }
   if (path.startsWith("/api/app/act")) {
     const t = typeof b.thread === "string" ? s.threads[b.thread] : undefined;
@@ -256,6 +265,12 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
     if (b.action === "review") { s.wonJobs = s.wonJobs.filter(j => j.id !== b.quote); return { ok: true }; }
     if (b.action === "setup") { Object.assign(s.setup, cleanOwnerSetup(b.setup)); return { ok: true }; }
     if (b.action === "testtext") return { ok: true };
+    if (b.action === "assign") { const c = (s.crm[String(b.thread)] ??= { details: {}, notes: "" }); c.crewMember = String(b.member ?? ""); return { ok: true, texted: !!c.crewMember }; }
+    if (b.action === "emailquote" || b.action === "emailinvoice") {
+      const id = b.action === "emailquote" ? String(b.thread) : s.invoices.find(i => i.id === b.invoice)?.thread_id ?? "";
+      if (!s.crm[id]?.email) fail("Add their email on the customer first.");
+      return { ok: true };
+    }
     if (b.action === "payment") {
       const inv = s.invoices.find(i => i.id === b.invoice) ?? fail("Which invoice?", 404);
       const bal = inv!.total - paidOn(inv!.id), amt = Math.round(Number(String(b.amount ?? "").replace(/[$,]/g, "")) * 100) / 100;

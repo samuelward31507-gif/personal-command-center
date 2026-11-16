@@ -3,7 +3,7 @@
 // list of every customer. Every write is scoped to the signed-in owner's business; every text is logged.
 import { randomBytes } from "node:crypto";
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, type Item } from "@/lib/billing";
+import { chosen, cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, type Item } from "@/lib/billing";
 import { cleanDate, cleanDetails, cleanPayMethod, detailLine, type Payment } from "@/lib/crm";
 import { digits10, inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, appOrigin, clientById, sendToCustomer, type Client } from "@/lib/client-runtime-run";
@@ -33,7 +33,8 @@ export async function saveQuoteLines(sql: Sql, c: Client, threadId: string, inpu
   const items = cleanItems(input.items);
   if (!items.length) return { ok: false, error: "Add at least one line with a price." };
   const tax = cleanTax(input.tax ?? c.setup.tax_rate ?? 0);
-  const { total } = totals(items, tax);
+  // With options the amount on file is the first option plus what's always included; the customer's pick replaces it.
+  const { total } = totals(chosen(items, null), tax);
   // A deposit the customer pays through the owner's own pay link once they approve. Never more than the quote.
   const depN = input.deposit === undefined ? undefined : Math.round(Number(String(input.deposit ?? "").replace(/[$,\s]/g, "")) || 0);
   const deposit = depN === undefined ? undefined : depN > 0 && depN <= total ? depN : null;
@@ -152,7 +153,7 @@ export async function createInvoice(sql: Sql, c: Client, threadId: string): Prom
   if (open) return { ok: true, invoice: asInvoice(open) };
   const [q] = await sql`SELECT items, tax_rate::float AS tax_rate, amount::float AS amount FROM public.client_quotes WHERE project_id = ${c.projectId}::uuid AND kind = 'quote'
     AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${phoneMatch(t.customer_phone)} ORDER BY (status = 'won') DESC, created_at DESC LIMIT 1` as { items: unknown; tax_rate: number; amount: number | null }[];
-  let items = cleanItems(q?.items);
+  let items = chosen(cleanItems(q?.items), null);
   const taxRate = items.length ? Number(q?.tax_rate ?? 0) : 0;
   if (!items.length) {
     const amount = t.value ?? q?.amount ?? 0;

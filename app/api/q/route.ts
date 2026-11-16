@@ -11,7 +11,11 @@ const reply = (body: Record<string, unknown>, status = 200) => Response.json(bod
 const EXAMPLE: PublicQuote = { business: "Ridgeline Fence Co.", owner: "Mike", phone: "+17205550100", customer: "Dana", amount: 4310, line: "80 ft, 6 ft Wood privacy, 1 gate",
   note: "Tear out and haul away the old chain link. Cedar pickets, steel posts set in concrete, one 4 ft walk gate. Two-year workmanship warranty.", sent: new Date().toISOString().slice(0, 10), state: "open", answeredAt: null,
   deposit: 1000, payLink: "https://square.link/u/example",
-  items: [{ name: "6 ft Wood privacy fence, installed", qty: 80, unit: "ft", price: 43 }, { name: "Walk gate", qty: 1, unit: "", price: 550 }, { name: "Tear-out and haul-away", qty: 80, unit: "ft", price: 4 }], tax_rate: 0 };
+  items: [{ name: "6 ft Wood privacy, pine pickets", qty: 80, unit: "ft", price: 43, tier: "Good" }, { name: "6 ft Cedar privacy with cap and trim", qty: 80, unit: "ft", price: 52, tier: "Better" }, { name: "6 ft White vinyl privacy, lifetime warranty", qty: 80, unit: "ft", price: 64, tier: "Best" },
+    { name: "Walk gate", qty: 1, unit: "", price: 550 }, { name: "Tear-out and haul-away", qty: 80, unit: "ft", price: 4 },
+    { name: "Stain and seal", qty: 80, unit: "ft", price: 6, opt: true }, { name: "12 ft double drive gate", qty: 1, unit: "", price: 1200, opt: true }], tax_rate: 0,
+  financing: { link: "https://example.com/financing", note: "As low as $120 a month" }, warranty: "Two years on workmanship. Materials carry the maker's warranty.",
+  terms: "Prices hold for 30 days. A deposit holds the install date and comes off the final invoice. The balance is due when the job is done. We call 811 before digging; the property line is the owner's to confirm." };
 
 /** GET /api/q?token=… — public: one quote behind its private link. */
 export async function GET(req: Request) {
@@ -26,14 +30,14 @@ export async function GET(req: Request) {
 
 /** POST { token, answer: approve | decline, reason? } — the customer's answer. */
 export async function POST(req: Request) {
-  const b = await req.json().catch(() => ({})) as { token?: string; answer?: string; reason?: string; name?: string };
+  const b = await req.json().catch(() => ({})) as { token?: string; answer?: string; reason?: string; name?: string; choice?: unknown };
   const token = String(b.token ?? "");
   if (b.answer !== "approve" && b.answer !== "decline") return reply({ error: "Pick approve or no thanks." }, 400);
   if (token === "example") return reply({ ok: true, state: b.answer === "approve" ? "approved" : "declined" });
   if (!(await allowEvent("quote-answer", clientIp(req), 12, 60))) return reply({ error: "Too many tries. Text the business instead." }, 429);
   if (!process.env.DATABASE_URL) return reply({ error: "This quote is unavailable right now." }, 503);
   try {
-    const r = await answerQuote(neon(process.env.DATABASE_URL), token, b.answer, String(b.reason ?? ""), String(b.name ?? ""));
+    const r = await answerQuote(neon(process.env.DATABASE_URL), token, b.answer, String(b.reason ?? ""), String(b.name ?? ""), b.choice ?? null);
     return r.ok ? reply({ ok: true, state: r.state }) : reply({ error: r.error }, 404);
   } catch (e) { console.error("Quote answer failed", e instanceof Error ? e.message : e); return reply({ error: "That didn't go through. Try again, or text the business." }, 500); }
 }

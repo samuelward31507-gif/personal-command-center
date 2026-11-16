@@ -1,7 +1,10 @@
 // Quotes with line items and invoices, without the money ever passing through Cinder. Pure functions shared by the
 // server, the app and the customer's pages. Amounts are dollars with cents; totals are worked out here, never typed.
 
-export type Item = { name: string; qty: number; unit: string; price: number };
+/** A quote or invoice line. `tier`: belongs to one option the customer picks between (Good, Better, Best).
+ *  `opt`: an add-on the customer can tick. Lines with neither are always included. */
+export type Item = { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean };
+export type Choice = { tier: string | null; addons: number[] };
 export type Totals = { subtotal: number; tax: number; total: number };
 
 const cents = (n: number) => Math.round(n * 100) / 100;
@@ -17,7 +20,8 @@ export function cleanItems(input: unknown): Item[] {
     const name = String(o.name ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 120);
     const qty = num(o.qty ?? 1), price = num(o.price);
     if (!name || !(qty > 0) || qty > 100000 || !(price >= 0) || price > 10_000_000) continue;
-    out.push({ name, qty: cents(qty), unit: String(o.unit ?? "").trim().slice(0, 12), price: cents(price) });
+    const tier = String(o.tier ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 40);
+    out.push({ name, qty: cents(qty), unit: String(o.unit ?? "").trim().slice(0, 12), price: cents(price), ...(tier ? { tier } : {}), ...(o.opt === true && !tier ? { opt: true } : {}) });
   }
   return out;
 }
@@ -29,6 +33,20 @@ export function totals(items: Item[], taxRate = 0): Totals {
   return { subtotal, tax, total: cents(subtotal + tax) };
 }
 export const lineTotal = (i: Item) => cents(i.qty * i.price);
+/** The options on a quote, in the order the owner added them. Empty when there's only one way to do the job. */
+export const tiersOf = (items: Item[]) => [...new Set(items.map(i => i.tier).filter((t): t is string => !!t))];
+/** What the customer is buying for a choice: the lines always included, the chosen option's lines, ticked add-ons. */
+export function chosen(items: Item[], c: Choice | null): Item[] {
+  const tiers = tiersOf(items), tier = c?.tier && tiers.includes(c.tier) ? c.tier : tiers[0] ?? null;
+  return items.filter((i, k) => i.opt ? !!c?.addons.includes(k) : !i.tier || i.tier === tier).map(({ tier: _t, opt: _o, ...rest }) => { void _t; void _o; return rest; });
+}
+/** Cleans a customer's choice against the quote's own lines. */
+export function cleanChoice(v: unknown, items: Item[]): Choice {
+  const o = (v && typeof v === "object" ? v : {}) as Record<string, unknown>;
+  const tiers = tiersOf(items), tier = typeof o.tier === "string" && tiers.includes(o.tier) ? o.tier : tiers[0] ?? null;
+  const addons = Array.isArray(o.addons) ? [...new Set(o.addons.map(Number).filter(k => Number.isInteger(k) && items[k]?.opt))] : [];
+  return { tier, addons };
+}
 export const dollars = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
 
 // ---------- Invoices ----------

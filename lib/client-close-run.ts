@@ -3,7 +3,7 @@
 // the rest of Cinder: the client's number, texting hours, opt-outs, and everything logged on the conversation.
 import { randomBytes } from "node:crypto";
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { cleanItems } from "@/lib/billing";
+import { chosen, cleanChoice, cleanItems, totals } from "@/lib/billing";
 import { cleanWinback, detailLine, cleanDetails, money, quoteText, reviewDue, QUOTE_TOKEN } from "@/lib/crm";
 import { digits10, fill, inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, clientById, quoteUrl, sendReviewRequest, sendToCustomer, type Client } from "@/lib/client-runtime-run";
@@ -44,8 +44,8 @@ export async function sendQuoteLink(sql: Sql, c: Client, threadId: string, note?
   return ok ? { ok: true, sent: true, url } : { ok: false, sent: false, url, error: "The text didn't send. Copy the link and send it yourself." };
 }
 
-export type PublicQuote = { business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
-  items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number;
+export type PublicQuote = { financing?: { link: string; note: string } | null; terms?: string; warranty?: string; choice?: { tier: string | null; addons: number[] } | null; business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
+  items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax_rate: number;
   state: "open" | "approved" | "declined" | "closed"; answeredAt: string | null;
   /** A deposit to hold the date, paid on the owner's own pay page. Cinder never takes the money. */
   deposit: number | null; payLink: string };
@@ -54,7 +54,7 @@ export type PublicQuote = { business: string; owner: string; phone: string; cust
 export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote | null> {
   if (!QUOTE_TOKEN.test(token)) return null;
   const [q] = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.amount::float AS amount, q.note, q.sent_on::text AS sent_on, q.status,
-      q.approved_at, q.declined_at, q.viewed_at, q.items, q.tax_rate::float AS tax_rate, q.deposit::float AS deposit
+      q.approved_at, q.declined_at, q.viewed_at, coalesce(q.items_offered, q.items) AS items, q.tax_rate::float AS tax_rate, q.deposit::float AS deposit, q.choice
     FROM public.client_quotes q WHERE q.token = ${token} LIMIT 1` as Record<string, unknown>[];
   if (!q) return null;
   const c = await clientById(sql, String(q.owner_id), String(q.project_id));
@@ -71,6 +71,9 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
     state: q.approved_at ? "approved" : q.declined_at ? "declined" : status === "won" ? "closed" : "open",
     answeredAt: q.approved_at ? new Date(String(q.approved_at)).toISOString() : q.declined_at ? new Date(String(q.declined_at)).toISOString() : null,
     deposit: q.deposit == null ? null : Number(q.deposit), payLink: c.setup.pay_link || "",
+    financing: c.setup.financing_link ? { link: c.setup.financing_link, note: c.setup.financing_note || "" } : null,
+    terms: c.setup.quote_terms || "", warranty: c.setup.warranty || "",
+    choice: q.choice && typeof q.choice === "object" ? q.choice as { tier: string | null; addons: number[] } : null,
   };
 }
 
@@ -78,7 +81,16 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
  * The customer approved (or passed on) the quote. Approve: the job is won, follow-ups stop, the owner hears right away.
  * Pass: follow-ups stop and the owner hears why, if they said. Answering twice changes nothing.
  */
-export async function answerQuote(sql: Sql, token: string, answer: "approve" | "decline", reason = "", signedBy = ""): Promise<{ ok: boolean; state?: PublicQuote["state"]; error?: string }> {
+export async function answerQuote(sql: Sql, token: string, answer: "approve" | "decline", reason = "", signedBy = "", choiceIn: unknown = null): Promise<{ ok: boolean; state?: PublicQuote["state"]; error?: string }> {
+  // With options, the customer's pick becomes the quote: the chosen lines and their total, the full offer kept aside.
+  if (answer === "approve" && QUOTE_TOKEN.test(token)) {
+    const [o] = await sql`SELECT id, items, tax_rate::float AS tax_rate FROM public.client_quotes WHERE token = ${token} AND approved_at IS NULL AND declined_at IS NULL` as { id: string; items: unknown; tax_rate: number }[];
+    const items = o ? cleanItems(o.items) : [];
+    if (o && items.some(i => i.tier || i.opt)) {
+      const ch = cleanChoice(choiceIn, items), pick = chosen(items, ch), t = totals(pick, Number(o.tax_rate) || 0).total;
+      await sql`UPDATE public.client_quotes SET items_offered = items, items = ${JSON.stringify(pick)}::jsonb, amount = ${t}, choice = ${JSON.stringify(ch)}::jsonb WHERE id = ${o.id}::uuid`;
+    }
+  }
   if (!QUOTE_TOKEN.test(token)) return { ok: false, error: "This quote link isn't valid." };
   const approve = answer === "approve";
   const [q] = await sql`UPDATE public.client_quotes SET status = ${approve ? "won" : "lost"}, last_step_at = now(),

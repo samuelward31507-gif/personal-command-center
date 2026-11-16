@@ -16,6 +16,7 @@ import { JobsScreen, type JobsView } from "./jobs";
 import { RecordPage } from "./record";
 import { InboxScreen, ThreadView } from "./inbox";
 import { CalendarScreen } from "./calendar";
+import { MyDay } from "./crew";
 import { MoneyScreen, InvoiceSheet, BillingSettings } from "./money";
 import { ReportsScreen } from "./numbers";
 import { SystemScreen } from "./system";
@@ -145,7 +146,7 @@ export default function CinderApp() {
     const q = new URLSearchParams(location.search), t = q.get("t");
     (async () => {
       let wasDemo = false; try { wasDemo = sessionStorage.getItem(DEMO_KEY) === "1"; } catch { /* private mode */ }
-      if (q.get("demo")) { try { if (q.get("demo") === "empty") sessionStorage.setItem("cinder-demo-empty", "1"); else sessionStorage.removeItem("cinder-demo-empty"); } catch { /* private mode */ } }
+      if (q.get("demo")) { try { if (q.get("demo") === "empty") sessionStorage.setItem("cinder-demo-empty", "1"); else sessionStorage.removeItem("cinder-demo-empty"); if (q.get("demo") === "crew") sessionStorage.setItem("cinder-demo-crew", "1"); else sessionStorage.removeItem("cinder-demo-crew"); } catch { /* private mode */ } }
       if (q.get("demo") === "1" || q.get("demo") === "empty" || (wasDemo && !t)) { demoStart(); setDemo(true); } else if (t) demoStop();
       if (t) await api("/api/app/auth", { action: "link", token: t }).catch(() => null);
       const th = q.get("thread"), tb = q.get("tab");
@@ -218,7 +219,7 @@ export default function CinderApp() {
   if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
   else if (open?.kind === "quote") page = <QuoteEditor key={open.id} id={open.id} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => setOpen(null)} />;
   else if (open?.kind === "record") page = <RecordPage key={open.id + (open.draft ? ":d" : "")} id={open.id} ask={open.ask} view={open.view} draft={open.draft} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
-  else if (tab === "today" && crew) page = <CalendarScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} />;
+  else if (tab === "today" && crew) page = <MyDay d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} />;
   else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
@@ -266,7 +267,7 @@ export default function CinderApp() {
     {sheet === "import" && <ImportSheet project={project} api={api} toast={toast} reload={reload} customers={d.customers ?? []} business={bizName} onClose={() => setSheet(null)} />}
     {sheet === "billing" && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
-    {invNow && <InvoiceSheet key={invNow.id + invNow.status + (invNow.paid_amount ?? 0)} inv={invNow} payments={d.payments} customer={invNow.customer || fmtPhone(invNow.phone)} email={(d.board ?? []).find(b => b.id === invNow.thread_id)?.email} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
+    {invNow && <InvoiceSheet key={invNow.id + invNow.status + (invNow.paid_amount ?? 0)} inv={invNow} payments={d.payments} customer={invNow.customer || fmtPhone(invNow.phone)} email={(d.board ?? []).find(b => b.id === invNow.thread_id)?.email} emailReady={d.emailReady} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
     {toastNode}
   </div>;
 }

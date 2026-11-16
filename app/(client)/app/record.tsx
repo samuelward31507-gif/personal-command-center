@@ -5,9 +5,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { draftItems, jobFields, jobProfit, jobProgress, jobSteps, rangeText, STAGE_LABEL, STAGES, type Card, type CardInvoice, type Costs, type Details, type Stage } from "@/lib/crm";
-import { dollars, totals, type Item } from "@/lib/billing";
+import { chosen, dollars, totals, type Item } from "@/lib/billing";
 import { Avatar, Empty, Icon, Sheet, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast } from "./parts";
 import { quoteText } from "@/lib/crm";
+import { CrewPick, crewName, emailDoc } from "./crew";
 
 /** "Remind me": a time and a note on this customer. The owner gets a text and a push when it's due. */
 export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: { name: string; current: { at: string; note: string } | null; busy: boolean; onClose: () => void; onSave: (at: string, note: string) => void; onClear: () => void }) {
@@ -59,7 +60,7 @@ function useRecord(id: string, d: Data, project: string, api: Api, toast: Toast,
   const inv = card?.invoice ?? invoices.find(i => i.status !== "void") ?? null;
   const paid = invoices.filter(i => i.status === "paid").reduce((a, i) => a + i.total, 0);
   const owed = invoices.filter(i => i.status === "sent").reduce((a, i) => a + i.total, 0);
-  return { card, cust, invoices, texts, busy, arm, setArm, act, name, phone, address, source, status, since, price, inv, paid, owed, project, owner: d.owner };
+  return { card, cust, invoices, texts, busy, arm, setArm, act, name, phone, address, source, status, since, price, inv, paid, owed, project, owner: d.owner, emailReady: d.emailReady, api, toast, reload };
 }
 type Rec = ReturnType<typeof useRecord>;
 
@@ -167,6 +168,8 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
     </div></section> : null;
   const rail = <>{!biz.crew && needs}{!biz.crew && money}{!biz.crew && card && card.stage === "won" && !card.pastCustomer && <CostBox card={card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
     <section className="card"><div className="hd"><h2>On file</h2></div>
+      {card && !biz.crew && card.stage !== "lost" && !card.pastCustomer && <CrewPick d={d} card={card} project={project} api={api} toast={toast} reload={reload} />}
+      {card && biz.crew && card.crewMember && <div className="money"><span>On the job</span><b>{crewName(d, card.crewMember)}</b></div>}
       <div className="money"><span>Source</span><b>{sourceLabel(source)}</b></div>
       {since && <div className="money"><span>Since</span><b>{since}</b></div>}
       <div className="money"><span>Texting</span>{status === "opted_out" ? <span className="dot bad">Opted out</span> : status === "paused" ? <span className="dot ember">You&rsquo;re replying</span> : <span className="dot">Cinder replying</span>}</div>
@@ -327,7 +330,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
   const installDirty = install !== (card.install ?? "") || itime !== (card.installTime ?? "") || idays !== String(card.installDays || 1);
   const dirty = JSON.stringify(d) !== JSON.stringify(asStrings(card.details)) || value !== (card.value ? String(card.value) : "") || notes !== card.notes || crew !== (card.crew ?? "") || email !== (card.email ?? "") || (card.stage === "won" && review !== card.reviewAuto);
   const depN = Math.round(Number(deposit.replace(/[^\d.]/g, "")) || 0);
-  const quoteTotal = totals(items.filter(i => i.name.trim()), tax).total;
+  const quoteTotal = totals(chosen(items.filter(i => i.name.trim() && i.qty > 0), null), tax).total;
   const calMsg = (c?: string) => c === "added" ? " On your Google Calendar." : c === "removed" ? " Taken off your calendar." : c === "not_connected" ? " Connect Google Calendar to put it there." : c === "failed" ? " It didn't save to your calendar; try again." : "";
   async function copy() {
     const res = q?.url ? { link: q.url } : await act("copy", { action: "quotelink", send: false, note: incl }, "Link ready.");
@@ -343,7 +346,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
 
   return <>
     {ask === "quoted" && sec("The quote", <button type="button" className="link" onClick={() => setAsk(null)}>Cancel</button>, <>
-      <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} />
+      <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} options />
       <label className="field"><span>What&rsquo;s included <em>optional, they&rsquo;ll see it</em></span><textarea rows={2} value={incl} maxLength={600} onChange={e => setIncl(e.target.value)} placeholder="Tear-out and haul-away, steel posts in concrete, 2-year warranty" /></label>
       <label className="field" style={{ maxWidth: 240 }}><span>Deposit to hold the date <em>optional</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={deposit} onChange={e => setDeposit(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="None" /></span></label>
       {depN > 0 && <p className="fine">{biz.payLink ? "After they approve, the quote page shows the deposit with your pay link. Cinder never touches the money." : "Add your pay link in Money so they can pay the deposit from the quote page."}</p>}
@@ -362,8 +365,8 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
     </form>)}
 
     {!ask && card.stage === "quoted" && q && sec(`The quote${q.amount ? `, ${dollars(q.amount)}` : ""}`, <span className={"dot" + (q.status === "replied" ? " bad" : q.viewed ? " ink" : "")} style={{ marginLeft: "auto" }}>{q.status === "replied" ? "They replied" : q.viewed ? `Opened ${ago(q.viewed)}` : q.linked ? "Texted, not opened yet" : "Not sent yet"}</span>, <>
-      {editLines ? <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} />
-        : q.items.length > 0 ? <ul className="lines">{q.items.map((i, k) => <li key={k}><span>{i.name}<small>{i.qty !== 1 || i.unit ? `${i.qty}${i.unit ? " " + i.unit : ""} × ${dollars(i.price)}` : ""}</small></span><b>{dollars(i.qty * i.price)}</b></li>)}</ul> : null}
+      {editLines ? <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} options />
+        : q.items.length > 0 ? <ul className="lines">{q.items.map((i, k) => <li key={k}><span>{i.name}{i.tier ? `, ${i.tier}` : i.opt ? ", add-on" : ""}<small>{i.qty !== 1 || i.unit ? `${i.qty}${i.unit ? " " + i.unit : ""} × ${dollars(i.price)}` : ""}</small></span><b>{dollars(i.qty * i.price)}</b></li>)}</ul> : null}
       {editLines && <label className="field" style={{ maxWidth: 240 }}><span>Deposit to hold the date <em>optional</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={deposit} onChange={e => setDeposit(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="None" /></span></label>}
       {q.note && !editLines && <p className="fine">{q.note}</p>}
       {q.deposit && !editLines ? <p className="fine">Deposit {dollars(q.deposit)} to hold the date{biz.payLink ? ", paid through your pay link once they approve." : ". Add your pay link in Money so they can pay it from the quote page."}</p> : null}
@@ -374,7 +377,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
           <button type="button" className="btn ink" disabled={!!busy || quoteTotal <= 0} onClick={async () => { if (await act("lines", { action: "quotelines", items, tax, note: incl, deposit: depN || null }, `Quote updated: ${dollars(quoteTotal)}.`)) setEditLines(false); }}>Save lines</button>
         </> : <>
           <button type="button" className="btn" disabled={!!busy} onClick={() => void copy()}>Copy link</button>
-          {card.email && q.url && <a className="btn" href={`mailto:${card.email}?subject=${encodeURIComponent(`Your quote from ${biz.business}`)}&body=${encodeURIComponent(quoteText({ first: firstName, business: biz.business, amount: q.amount, line: card.line.replace(/ · /g, ", "), url: q.url }))}`}>Email it</a>}
+          {q.url && <button type="button" className="btn" disabled={!!busy} title={card.email ? `Email it to ${card.email}` : "Add their email below first"} onClick={() => void emailDoc({ ready: r.emailReady, api: r.api, project: r.project, toast: r.toast, reload: r.reload, kind: "quote", thread: card.id, to: card.email, name: card.name, mailto: `mailto:${card.email ?? ""}?subject=${encodeURIComponent(`Your quote from ${biz.business}`)}&body=${encodeURIComponent(quoteText({ first: firstName, business: biz.business, amount: q.amount, line: card.line.replace(/ · /g, ", "), url: q.url! }))}` })}>Email it</button>}
           <button type="button" className="btn ink" onClick={() => go.quote(card.id)}>Open the quote</button>
         </>}
       </div>
@@ -414,7 +417,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
 }
 
 /** Won to paid, one step at a time. The owner ticks steps; the invoice steps tick themselves. */
-function Steps({ card, trade, busy, tick }: { card: Card; trade: string; busy: string; tick: (step: string, done: boolean) => void }) {
+export function Steps({ card, trade, busy, tick }: { card: Card; trade: string; busy: string; tick: (step: string, done: boolean) => void }) {
   const steps = jobSteps(trade, card.details), p = jobProgress(trade, card);
   const inv = card.invoice, sent = !!inv && inv.status !== "draft" && inv.status !== "void", paid = inv?.status === "paid";
   const nextKey = steps.find(s => !card.job[s.key])?.key;

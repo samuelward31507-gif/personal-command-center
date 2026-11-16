@@ -1,7 +1,7 @@
 // The client CRM on the server: the board, moving a customer between stages, editing a card, adding a lead by hand,
 // and the owner's own setup. Every write is scoped to the signed-in owner's business.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { AGENT_KEYS, ballpark, cleanDetails, cleanEmail, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, cleanJob, cleanCosts, cleanLostReason, jobSteps, type Card, type Stage } from "@/lib/crm";
+import { AGENT_KEYS, parseTeam, ballpark, cleanDetails, cleanEmail, cleanOwnerSetup, detailLine, parsePriceBook, stageFor, STAGES, cleanJob, cleanCosts, cleanLostReason, jobSteps, type Card, type Stage } from "@/lib/crm";
 import { digits10 } from "@/lib/client-runtime";
 import { cleanImportRows, importAs, type ImportAs } from "@/lib/customer-import";
 import { emitEvent } from "@/lib/client-webhook";
@@ -23,7 +23,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       t.install_time, t.install_days, t.install_event_id IS NOT NULL AS on_calendar, q.viewed_at AS quote_viewed, q.note AS quote_note, a.starts_at AS next_appt,
       t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent, t.job_steps, t.job_costs,
       (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied,
-      t.stage_at, lr.body AS lost_note, t.crew_notes, q.deposit::float AS quote_deposit, t.customer_email, t.remind_at, t.remind_note, t.remind_sent_at
+      t.stage_at, lr.body AS lost_note, t.crew_notes, t.crew_member, q.deposit::float AS quote_deposit, t.customer_email, t.remind_at, t.remind_note, t.remind_sent_at
     FROM public.client_threads t
     LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
       AND right(regexp_replace(x.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
@@ -58,7 +58,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       invoice: invoices[String(r.id)] ?? null, reviewAuto: !!r.review_auto, reviewSent: r.review_sent ? new Date(String(r.review_sent)).toISOString() : null, pastCustomer: again,
       job: again ? {} : cleanJob(r.job_steps), costs: again ? cleanCosts({}) : cleanCosts(r.job_costs),
       stageAt: r.stage_at ? new Date(String(r.stage_at)).toISOString() : null, crew: String(r.crew_notes ?? ""), email: String(r.customer_email ?? ""),
-      photos: photos[String(r.id)] ?? [],
+      photos: photos[String(r.id)] ?? [], crewMember: String(r.crew_member ?? ""),
       remind: r.remind_at ? { at: new Date(String(r.remind_at)).toISOString(), note: String(r.remind_note ?? ""), sent: !!r.remind_sent_at } : null,
       lostReason: typeof r.lost_note === "string" ? (r.lost_note.match(/^Marked lost: (.+?)\. Follow-ups stopped\.$/)?.[1] ?? "") : "",
     };
@@ -160,7 +160,7 @@ export async function addLead(sql: Sql, c: Client, input: { name?: string; phone
 
 /** For the setup flow: what the owner already told us (or Sam filled in), so nothing is asked twice. */
 export function ownerSetupView(setup: Record<string, string>) {
-  const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at"];
+  const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at", "quote_terms", "warranty", "financing_note", "financing_link"];
   return { ...Object.fromEntries([...k, "pay_link", "tax_rate", "invoice_days"].map(x => [x, setup[x] ?? ""])), has_calendar: "", has_review_link: setup.review_link ? "yes" : "", has_number: setup.texting_number ? "yes" : "",
     // Read-only for the System screen: what Sam has wired. Values that could identify a person stay out.
     has_cell: setup.owner_cell ? "yes" : "", has_booking_link: setup.booking_link ? "yes" : "", hours: setup.hours ?? "",
@@ -211,6 +211,29 @@ export async function photosByThread(sql: Sql, c: Client): Promise<Record<string
   const out: Record<string, { id: string; kind: "before" | "during" | "after" | "other"; caption: string; at: string; shared: boolean }[]> = {};
   for (const r of rows) (out[String(r.thread_id)] ??= []).push({ id: String(r.id), kind: String(r.kind) as "before", caption: String(r.caption ?? ""), at: new Date(String(r.created_at)).toISOString(), shared: !!r.shared });
   return out;
+}
+
+/**
+ * Put a team member on a job (its install) and on the job's upcoming estimate, or take them off ("" = the owner).
+ * They get one text with the day, the address and the link to their day in the app.
+ */
+export async function assignCrew(sql: Sql, c: Client, threadId: string, member: unknown, notify: (to: string, body: string) => Promise<boolean>): Promise<{ ok: boolean; error?: string; texted?: boolean }> {
+  const t = await threadOf(sql, c, threadId);
+  if (!t) return { ok: false, error: "Not found." };
+  const team = parseTeam(c.setup.team);
+  const m = typeof member === "string" && member ? team.find(x => digits10(x.cell) === digits10(member)) : null;
+  if (member && !m) return { ok: false, error: "That person isn't on your team. Add them in Settings, Account." };
+  const cell = m?.cell ?? "";
+  const [row] = await sql`UPDATE public.client_threads SET crew_member = ${cell}, updated_at = now() WHERE id = ${t.id}::uuid RETURNING customer_name, details, install_on::text AS install_on, install_time` as { customer_name: string; details: unknown; install_on: string | null; install_time: string | null }[];
+  const [ap] = await sql`UPDATE public.client_appointments SET crew_member = ${cell} WHERE thread_id = ${t.id}::uuid AND status = 'booked' AND starts_at > now() - interval '2 hours' RETURNING starts_at` as { starts_at: string }[];
+  if (!m || !c.setup.texting_number) return { ok: true, texted: false };
+  const addr = String((row?.details as Record<string, unknown> | null)?.address ?? "");
+  const when = row?.install_on ? `install ${new Date(row.install_on + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}${row.install_time ? " at " + row.install_time : ""}`
+    : ap ? `estimate ${new Date(ap.starts_at).toLocaleString("en-US", { timeZone: c.setup.timezone || "America/Denver", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}` : "the job";
+  const app = (process.env.CINDER_APP_URL?.trim() || "").replace(/\/$/, "");
+  const texted = await notify(m.cell, `${c.setup.display_name || "Cinder"}: you're on ${row?.customer_name || "a job"}, ${when}${addr ? `, ${addr}` : ""}.${app ? ` Your day: ${app}/app` : ""}`);
+  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${t.id}::uuid, 'out', 'system', ${`${m.name || "Crew"} put on this job${texted ? " and texted" : ""}.`})`;
+  return { ok: true, texted };
 }
 
 /** "Remind me": a time and a note on a job. The owner gets a text and a push when it's due. Null clears it. */
