@@ -155,11 +155,12 @@ export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], 
 export function BillingSettings({ setup, project, api, toast, reload, onClose }: { setup: Record<string, string>; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onClose: () => void }) {
   const [link, setLink] = useState(setup.pay_link || ""), [tax, setTax] = useState(setup.tax_rate || ""), [daysDue, setDays] = useState(setup.invoice_days || "7"), [busy, setBusy] = useState(false);
   const [rop, setRop] = useState(setup.review_on_paid !== "no"), [rate, setRate] = useState(setup.labor_rate || "");
+  const [lateFee, setLateFee] = useState(setup.late_fee || ""), [lateDays, setLateDays] = useState(setup.late_fee_days || "15");
   const [fin, setFin] = useState(setup.financing_link || ""), [finNote, setFinNote] = useState(setup.financing_note || ""), [warranty, setWarranty] = useState(setup.warranty || ""), [terms, setTerms] = useState(setup.quote_terms || "");
   return <Sheet onClose={onClose} title="Invoices and payments" sub="Used on every quote and invoice" wide
     foot={<button type="button" className="btn ink" disabled={busy} onClick={async () => {
       setBusy(true);
-      try { await api("/api/app/act", { p: project, action: "setup", setup: { pay_link: link, tax_rate: tax || "0", invoice_days: daysDue, financing_link: fin.trim() && !/^https?:\/\//.test(fin.trim()) ? "https://" + fin.trim() : fin.trim(), financing_note: finNote, warranty, quote_terms: terms, review_on_paid: rop ? "yes" : "no", labor_rate: rate } }); toast("Saved."); await reload(); onClose(); }
+      try { await api("/api/app/act", { p: project, action: "setup", setup: { late_fee: lateFee, late_fee_days: lateDays, pay_link: link, tax_rate: tax || "0", invoice_days: daysDue, financing_link: fin.trim() && !/^https?:\/\//.test(fin.trim()) ? "https://" + fin.trim() : fin.trim(), financing_note: finNote, warranty, quote_terms: terms, review_on_paid: rop ? "yes" : "no", labor_rate: rate } }); toast("Saved."); await reload(); onClose(); }
       catch (e) { toast(e instanceof Error ? e.message : "Couldn't save.", true); } finally { setBusy(false); }
     }}>{busy ? <Spinner /> : "Save"}</button>}>
     <label className="field"><span>Your pay link</span><input inputMode="url" value={link} onChange={e => setLink(e.target.value)} placeholder="square.link/u/yourbusiness" /></label>
@@ -168,6 +169,11 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
       <label className="field"><span>Sales tax</span><span className="inwrap"><input inputMode="decimal" value={tax} onChange={e => setTax(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0" /><em>%</em></span></label>
       <label className="field"><span>Invoices are due</span><select value={daysDue} onChange={e => setDays(e.target.value)}><option value="0">On receipt</option><option value="7">In 7 days</option><option value="14">In 14 days</option><option value="30">In 30 days</option></select></label>
     </div>
+    <div className="two">
+      <label className="field"><span>Late fee <em>optional</em></span><input value={lateFee} onChange={e => setLateFee(e.target.value.replace(/[^\d.%$]/g, ""))} placeholder="5% or 25" /></label>
+      <label className="field"><span>Added after</span><select value={lateDays} onChange={e => setLateDays(e.target.value)}>{["7", "15", "30", "45", "60"].map(n => <option key={n} value={n}>{n} days past due</option>)}</select></label>
+    </div>
+    <p className="fine" style={{ marginTop: -6 }}>Added once, as its own line, and the customer sees it on the invoice. Leave it blank for none. Some states cap late fees; check yours.</p>
     <p className="sec" style={{ marginTop: 10 }}>On every quote</p>
     <div className="two">
       <label className="field"><span>Financing link <em>optional</em></span><input inputMode="url" value={fin} onChange={e => setFin(e.target.value)} placeholder="Your Hearth, Wisetack or GreenSky page" /></label>
@@ -185,6 +191,22 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
 
 /** Money: what's owed and how late, what came in, every invoice with its balance, every payment. Quotes have their own tab. */
 export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: { d: Data; go: Go; wide: boolean; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void> }) {
+  // Batch: won jobs with a price and no invoice, and drafts waiting to go.
+  const [batch, setBatch] = useState<"" | "bill" | "send">("");
+  const toBill = (d.board ?? []).filter(c => c.stage === "won" && !c.pastCustomer && !c.invoice && (c.value ?? c.quote?.amount ?? 0) > 0);
+  const drafts = (d.invoices ?? []).filter(i => i.status === "draft" && i.total > 0);
+  const billAll = async () => {
+    if (!confirm(`Draft an invoice for each of ${toBill.length} won ${toBill.length === 1 ? "job" : "jobs"}? Nothing is sent yet; you check them first.`)) return;
+    setBatch("bill"); let made = 0;
+    for (const c of toBill) { try { await api("/api/app/act", { p: project, thread: c.id, action: "invoice" }); made++; } catch { /* the next one still goes */ } }
+    await reload(); setBatch(""); toast(`${made} ${made === 1 ? "invoice" : "invoices"} drafted. Check them under Drafts, then send.`);
+  };
+  const sendAll = async () => {
+    if (!confirm(`Text all ${drafts.length} draft invoices to their customers now?`)) return;
+    setBatch("send"); let sent = 0, held = 0;
+    for (const i of drafts) { try { const r = await api<{ sent?: boolean }>("/api/app/act", { p: project, invoice: i.id, action: "invoicesend" }); if (r.sent) sent++; else held++; } catch { held++; } }
+    await reload(); setBatch(""); toast(`${sent} sent.${held ? ` ${held} couldn't go by text (opted out, outside texting hours, or no number); they're marked sent, copy their links.` : ""}`, held > 0 && !sent);
+  };
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   const list = d.invoices ?? [], pays = d.payments ?? [], today = todayIso();
   const [f, setF] = useState<"open" | "draft" | "paid" | "all">("open"), [view, setView] = useState<"invoices" | "payments" | "expenses">("invoices");
@@ -226,6 +248,8 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
             <small>Opens in Excel, Google Sheets or QuickBooks.</small></div>}</div>
         <PriceListButton />
         <button type="button" className="btn" onClick={go.billing}>Pay link and tax</button>
+        {toBill.length > 0 && <button type="button" className="btn" disabled={!!batch} onClick={() => void billAll()} title="A draft for each won job that has a price and no invoice yet">{batch === "bill" ? <Spinner /> : null}Bill {toBill.length} finished {toBill.length === 1 ? "job" : "jobs"}</button>}
+        {drafts.length > 1 && <button type="button" className="btn" disabled={!!batch} onClick={() => void sendAll()}>{batch === "send" ? <Spinner /> : null}Send {drafts.length} drafts</button>}
         <button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New invoice</button>
       </>} />
     <div className="dash money2">

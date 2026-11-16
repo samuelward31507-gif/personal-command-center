@@ -5,7 +5,7 @@ import { randomBytes } from "node:crypto";
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { chosen, cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, type Item } from "@/lib/billing";
 import { cleanDate, cleanDetails, cleanPayMethod, detailLine, type Payment } from "@/lib/crm";
-import { changeOrderLines } from "@/lib/service";
+import { changeOrderLines, lateFeeOn } from "@/lib/service";
 import { qboDeletePayment, qboSyncInvoice, qboSyncPayment } from "@/lib/qbo";
 import { digits10, inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, appOrigin, clientById, sendToCustomer, type Client } from "@/lib/client-runtime-run";
@@ -159,10 +159,15 @@ export async function loadPayments(sql: Sql, c: Client, limit = 200): Promise<Pa
 }
 
 /** A draft invoice for a won job: the quote's lines when there are some, else one line for the job value. */
-export async function createInvoice(sql: Sql, c: Client, threadId: string): Promise<{ ok: boolean; invoice?: Invoice; error?: string }> {
+/**
+ * The job's invoice, pulled from the quote. With `part`, a progress invoice instead: a percentage of the job, or the rest
+ * of it, as one line against the job's total (change orders included), never more than what's left to bill.
+ */
+export async function createInvoice(sql: Sql, c: Client, threadId: string, part?: { percent?: unknown; rest?: unknown }): Promise<{ ok: boolean; invoice?: Invoice; error?: string }> {
   const t = await threadOf(sql, c, threadId);
   if (!t) return { ok: false, error: "Not found." };
-  const [open] = await sql`SELECT * FROM public.client_invoices WHERE thread_id = ${t.id}::uuid AND status IN ('draft', 'sent') AND plan_id IS NULL ORDER BY created_at DESC LIMIT 1` as Record<string, unknown>[];
+  const progress = !!part && (part.rest === true || Number(part.percent) > 0);
+  const [open] = progress ? [] : await sql`SELECT * FROM public.client_invoices WHERE thread_id = ${t.id}::uuid AND status IN ('draft', 'sent') AND plan_id IS NULL ORDER BY created_at DESC LIMIT 1` as Record<string, unknown>[];
   if (open) return { ok: true, invoice: asInvoice(open) };
   const [q] = await sql`SELECT items, tax_rate::float AS tax_rate, amount::float AS amount FROM public.client_quotes WHERE project_id = ${c.projectId}::uuid AND kind = 'quote'
     AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${phoneMatch(t.customer_phone)} ORDER BY (status = 'won') DESC, created_at DESC LIMIT 1` as { items: unknown; tax_rate: number; amount: number | null }[];
@@ -175,16 +180,30 @@ export async function createInvoice(sql: Sql, c: Client, threadId: string): Prom
   }
   const cos = await sql`SELECT id, number, items FROM public.client_change_orders WHERE thread_id = ${t.id}::uuid AND status = 'approved' AND invoice_id IS NULL ORDER BY number` as { id: string; number: number; items: unknown }[];
   for (const co of cos) items = [...items, ...changeOrderLines({ number: co.number, items: cleanItems(co.items) })].slice(0, 30);
+  let progressTax = taxRate;
+  if (progress) {
+    const full = totals(items, taxRate).total;
+    const [b] = await sql`SELECT coalesce(sum(total), 0)::float AS billed FROM public.client_invoices WHERE thread_id = ${t.id}::uuid AND plan_id IS NULL AND status <> 'void'` as { billed: number }[];
+    const left = Math.round((full - (b?.billed ?? 0)) * 100) / 100;
+    if (!(full > 0)) return { ok: false, error: "Set the job's price first (on the quote or the job)." };
+    if (left <= 0.005) return { ok: false, error: "Everything on this job is already billed." };
+    const pct = Math.min(100, Math.max(1, Math.round(Number(part!.percent) || 0)));
+    const amount = part!.rest === true ? left : Math.min(left, Math.round(full * pct) / 100);
+    const label = detailLine(c.setup.trade, cleanDetails(c.setup.trade, t.details)) || "the job";
+    const money = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+    items = [{ name: part!.rest === true ? `Balance for ${label} (job total ${money(full)}, ${money(full - left)} billed before)` : `${pct}% of ${label} (job total ${money(full)})`, qty: 1, unit: "", price: amount }];
+    progressTax = 0;
+  }
   const days = Number(c.setup.invoice_days ?? 7) || 0;
   const due = new Date(Date.parse(todayIn(c) + "T12:00:00Z") + days * 86400000).toISOString().slice(0, 10);
-  const { total } = totals(items, taxRate);
+  const { total } = totals(items, progressTax);
   // Numbers start at 1001 per business; a clash (two taps at once) retries once with the next number.
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const [r] = await sql`INSERT INTO public.client_invoices (owner_id, project_id, thread_id, number, items, tax_rate, total, due_on)
         VALUES (${c.owner}, ${c.projectId}::uuid, ${t.id}::uuid, (SELECT coalesce(max(number), 1000) + 1 FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid),
-          ${JSON.stringify(items)}::jsonb, ${taxRate}, ${total}, ${due}::date) RETURNING *` as Record<string, unknown>[];
-      if (cos.length) await sql`UPDATE public.client_change_orders SET invoice_id = ${String(r.id)}::uuid WHERE id = ANY(${cos.map(x => x.id)}::uuid[])`;
+          ${JSON.stringify(items)}::jsonb, ${progressTax}, ${total}, ${due}::date) RETURNING *` as Record<string, unknown>[];
+      if (cos.length && !progress) await sql`UPDATE public.client_change_orders SET invoice_id = ${String(r.id)}::uuid WHERE id = ANY(${cos.map(x => x.id)}::uuid[])`;
       return { ok: true, invoice: asInvoice(r) };
     } catch (e) { if (attempt) { console.error("Invoice create failed", e instanceof Error ? e.message : e); return { ok: false, error: "Couldn't make the invoice. Try again." }; } }
   }
@@ -276,6 +295,37 @@ export async function claimPaid(sql: Sql, token: string): Promise<{ ok: boolean;
   await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${r.owner_id}, ${r.thread_id}::uuid, 'in', 'system', ${`Said they paid invoice #${r.number}`})`;
   if (c) await alertOwner(c, `Cinder · ${t?.customer_name || t?.customer_phone || "A customer"} says they paid invoice #${r.number} (${dollars(Number(r.total))}). Check your account, then mark it paid in Cinder.`, r.thread_id, sql);
   return { ok: true };
+}
+
+/**
+ * Daily: for owners who turned late fees on, each sent invoice past due by their number of days gets one "Late fee"
+ * line (lateFeeOn), once, with a note on the customer's record. Paused reminders mean the owner is talking to them:
+ * those are left alone.
+ */
+export async function runLateFees(sql: Sql, limit = 200): Promise<{ added: number }> {
+  const rows = await sql`SELECT i.id, i.owner_id, i.project_id, i.thread_id, i.number, i.items, i.tax_rate::float AS tax_rate, (i.total - i.paid_amount)::float AS balance, i.due_on::text AS due_on, o.setup
+    FROM public.client_invoices i JOIN public.client_ops o ON o.project_id = i.project_id
+    WHERE i.status = 'sent' AND i.late_fee_at IS NULL AND NOT i.reminders_paused AND i.plan_id IS NULL AND coalesce(o.setup->>'late_fee', '') <> ''
+      AND i.due_on IS NOT NULL AND i.due_on < current_date ORDER BY i.due_on LIMIT ${limit}` as Record<string, unknown>[];
+  let added = 0;
+  for (const r of rows) {
+    const setup = (r.setup ?? {}) as Record<string, string>;
+    const days = Math.max(1, Math.min(90, Number(setup.late_fee_days) || 15));
+    if (Date.parse(String(r.due_on) + "T12:00:00Z") + days * 86400000 > Date.now()) continue;
+    const fee = lateFeeOn(setup.late_fee, Number(r.balance));
+    if (!(fee > 0)) continue;
+    const items = [...cleanItems(r.items), { name: `Late fee, ${days} days past due`, qty: 1, unit: "", price: fee }];
+    const { total } = totals(items, Number(r.tax_rate) || 0);
+    // The fee line isn't taxed: totals() taxes every line, so the fee is added after tax.
+    const untaxed = totals(items.slice(0, -1), Number(r.tax_rate) || 0).total + fee;
+    void total;
+    const [done] = await sql`UPDATE public.client_invoices SET items = ${JSON.stringify(items)}::jsonb, total = ${Math.round(untaxed * 100) / 100}, late_fee_at = now() WHERE id = ${String(r.id)}::uuid AND late_fee_at IS NULL RETURNING id`;
+    if (!done) continue;
+    await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${String(r.owner_id)}, ${String(r.thread_id)}::uuid, 'out', 'system', ${`Late fee of ${dollars(fee)} added to invoice #${r.number} (${days} days past due).`})`;
+    await qboSyncInvoice(sql, String(r.project_id), String(r.id)).catch(() => null);
+    added++;
+  }
+  return { added };
 }
 
 /** Daily: the payment reminders that are due, in each owner's texting hours. A reply from the customer pauses them. */

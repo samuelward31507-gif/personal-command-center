@@ -46,4 +46,12 @@ ok(() => { const id = "0b9a5c7e-1111-4222-8333-444455556666", s = qboState(id); 
   ok(() => assert.equal(S2.tappedAt("2026-11-17T09:00:00Z", now), "2026-11-16T15:00:00.000Z", "a phone clock ahead can't add hours"));
   ok(() => assert.equal(S2.tappedAt("2026-11-10T09:00:00Z", now), "2026-11-15T15:00:00.000Z", "at most a day back"));
   ok(() => assert.equal(S2.tappedAt(undefined, now), "2026-11-16T15:00:00.000Z")); }
+// Late fees: a percentage of the balance or a flat amount, kept within a quarter of the balance and $500.
+{ const S3 = await import("./lib/service.ts");
+  ok(() => assert.equal(S3.lateFeeOn("5%", 1000), 50));
+  ok(() => assert.equal(S3.lateFeeOn("25", 1000), 25));
+  ok(() => assert.equal(S3.lateFeeOn("$25", 60), 15, "never more than a quarter of the balance"));
+  ok(() => assert.equal(S3.lateFeeOn("90%", 1000), 250, "a percentage is capped at 25%"));
+  ok(() => assert.equal(S3.lateFeeOn("2000", 50000), 500, "and at $500"));
+  ok(() => { assert.equal(S3.lateFeeOn("", 1000), 0); assert.equal(S3.lateFeeOn("abc", 1000), 0); assert.equal(S3.lateFeeOn("5%", 0), 0); }); }
 console.log(`service 2: ${n} checks passed`);

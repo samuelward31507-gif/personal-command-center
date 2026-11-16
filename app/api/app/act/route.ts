@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
     rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string; email?: string; at?: string | null; method?: string; payment?: string; data?: string; kind?: string; caption?: string; photo?: string; member?: string;
-    plan?: string; input?: unknown; skip?: boolean; co?: string; entry?: string; end?: string | null; remove?: boolean };
+    plan?: string; input?: unknown; skip?: boolean; percent?: number; rest?: boolean; statement?: boolean; co?: string; entry?: string; end?: string | null; remove?: boolean };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -147,7 +147,7 @@ export async function POST(req: Request) {
         return json({ ok: true, total: l.total, link: q.url ?? "", sent: q.sent, warn: q.sent ? "" : q.error ?? "" });
       }
       if (b.action === "install") { const r = await scheduleInstall(sql, c, b.thread, { date: b.install, time: b.time, days: b.days }); return r.ok ? json({ ok: true, calendar: r.calendar }) : json({ error: r.error }, 404); }
-      const r = await createInvoice(sql, c, b.thread);
+      const r = await createInvoice(sql, c, b.thread, b.percent || b.rest ? { percent: b.percent, rest: b.rest } : undefined);
       return r.ok ? json({ ok: true, invoice: r.invoice }) : json({ error: r.error }, 409);
     }
     if (b.action === "invoicesave" || b.action === "invoicesend" || b.action === "invoiceset") {
@@ -213,7 +213,12 @@ export async function POST(req: Request) {
       if (t.status === "opted_out") return json({ ok: true, link: r.url, sent: false, warn: "They opted out of texts. Copy the link and email it instead." });
       if (!c.setup.texting_number) return json({ ok: true, link: r.url, sent: false, warn: "Your texting number isn't connected yet. Copy the link instead." });
       const firstName = (t.customer_name || "").split(" ")[0];
-      const ok = await sendToCustomer(sql, c, b.thread, t.customer_phone, `Hi${firstName ? " " + firstName : ""}, it's ${(c.setup.display_name || "us").replace(/\.+$/, "")}. Here's your page with your quotes, invoices and upcoming visits, any time: ${r.url}`, "owner");
+      const [owe] = b.statement ? await sql`SELECT count(*)::int AS n, coalesce(sum(total - paid_amount), 0)::float AS owed FROM public.client_invoices WHERE thread_id = ${b.thread}::uuid AND status = 'sent'` as { n: number; owed: number }[] : [];
+      if (b.statement && !owe?.n) return json({ error: "Nothing is owed on this customer." }, 409);
+      const biz = (c.setup.display_name || "us").replace(/\.+$/, "");
+      const ok = await sendToCustomer(sql, c, b.thread, t.customer_phone, b.statement
+        ? `Hi${firstName ? " " + firstName : ""}, it's ${biz}. Your statement: ${owe.n} open ${owe.n === 1 ? "invoice" : "invoices"}, $${owe.owed.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} in all. See each one and pay here: ${r.url}`
+        : `Hi${firstName ? " " + firstName : ""}, it's ${biz}. Here's your page with your quotes, invoices and upcoming visits, any time: ${r.url}`, "owner");
       return json({ ok: true, link: r.url, sent: ok, warn: ok ? "" : "The text didn't send. Copy the link instead." });
     }
     if (b.action === "checklist") {

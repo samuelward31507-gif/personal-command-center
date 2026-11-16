@@ -156,3 +156,16 @@ export function tappedAt(v: unknown, now = Date.now()): string {
   const t = Date.parse(String(v ?? ""));
   return new Date(Number.isFinite(t) ? Math.min(now, Math.max(now - 24 * 3600000, t)) : now).toISOString();
 }
+
+/**
+ * The owner's late fee ("5%" of the balance, or a flat "25"), on a balance. Kept within reason: at most a quarter of
+ * the balance and $500. 0 when it's off or unreadable. (Owners should check their state's limit; the copy says so.)
+ */
+export function lateFeeOn(setting: unknown, balance: number): number {
+  const s = String(setting ?? "").trim();
+  if (!s || !(balance > 0)) return 0;
+  const n = Number(s.replace(/[^\d.]/g, ""));
+  if (!(n > 0)) return 0;
+  const fee = /%/.test(s) ? balance * Math.min(n, 25) / 100 : n;
+  return Math.round(Math.min(fee, balance * 0.25, 500) * 100) / 100;
+}
