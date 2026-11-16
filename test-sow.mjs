@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { buildSow, sowMarkdown, fillAgreement } from "./lib/agreement-template.ts";
-// List price: setup, the one-time Reactivation campaign when chosen, then monthly. No first-month discount.
-for (const [tier, setupFee, monthlyFee, addon] of [["tier1", 997, 697, false], ["tier2", 1997, 1497, true], ["tier2", 1997, 1497, false]]) {
-  const s = buildSow({ tier, setupFee, monthlyFee, addon });
+// List price: setup, the one-time Reactivation campaign when chosen (Never Miss a Lead only; Book & Close includes it), then monthly.
+for (const [tier, setupFee, monthlyFee, asked] of [["tier1", 997, 697, false], ["tier1", 997, 697, true], ["tier2", 1997, 1497, true], ["tier2", 1997, 1497, false]]) {
+  const s = buildSow({ tier, setupFee, monthlyFee, addon: asked });
+  const addon = asked && tier === "tier1";
   assert.equal(s.founding, false);
   assert.equal(s.rows.length, addon ? 3 : 2);
   assert.equal(s.rows[0].amount, setupFee);
@@ -20,10 +21,11 @@ assert.match(md, /\| Monthly\. Starts the day your first appointment books\. Mon
 assert.doesNotMatch(md, /12 months|founding|50% off/, "no terms, no founding language");
 const doc = fillAgreement({ tier: "tier2", date: "November 12, 2026", company: "On The Fence Inc", setupFee: 1997, monthlyFee: 1497, addon: true });
 assert.match(doc, /Schedule A — Plan and Statement of Work/);
-assert.match(doc, /Reactivation campaign: \*\*\$497\*\* one time, due with the setup fee/);
+assert.doesNotMatch(doc, /\$497/, "Book & Close includes reactivation: never charged");
+assert.match(fillAgreement({ tier: "tier1", date: "November 12, 2026", company: "X", setupFee: 997, monthlyFee: 697, addon: true }), /Reactivation campaign: \*\*\$497\*\* one time, due with the setup fee/);
 assert.doesNotMatch(doc, /first month's fee is 50% off/);
 assert.match(doc, /or at least \*\*3\*\* if Client receives 10 to 29 new leads a month/);
-assert.match(doc, /Launch revival/);
+assert.match(doc, /Reactivation campaign \(included\)/);
 assert.match(doc, /CP 575 or 147C/);
 assert.doesNotMatch(doc, /why quotes didn't sign/);
 console.log("sow ok");
