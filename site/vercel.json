@@ -219,14 +219,8 @@
   ],
   "redirects": [
     {
-      "source": "/demo",
-      "has": [
-        {
-          "type": "query",
-          "key": "trade"
-        }
-      ],
-      "destination": "/try",
+      "source": "/try",
+      "destination": "/demo#try",
       "permanent": false
     },
     {
