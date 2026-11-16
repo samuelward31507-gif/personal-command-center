@@ -10,6 +10,7 @@ import { runPlanReminders } from "@/lib/client-service-run";
 import { runEveningTexts } from "@/lib/client-evening";
 import { runInstallReminders } from "@/lib/client-parity-run";
 import { runInvoiceReminders, runLateFees } from "@/lib/client-billing-run";
+import { runAutomations } from "@/lib/client-automations-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
     texts.handoffs = await runHandoffChecks(sql, started).catch(e => { console.error("Handoff checks failed", e); return null; });
     texts.ownerReminders = await runOwnerReminders(sql).catch(e => { console.error("Owner reminders failed", e); return null; });
     // "While you worked": each owner who asked for it, once, between 6 and 8 PM in their own time zone.
+    texts.automations = await runAutomations(sql).catch(e => { console.error("Follow-ups failed", e); return null; });
     texts.evening = await runEveningTexts(sql, started).catch(e => { console.error("Evening texts failed", e); return null; });
     if (hour >= 9 && hour < 19) {
       texts.reminders = await sendReminders(sql).catch(e => { console.error("Reminders failed", e); return null; });
