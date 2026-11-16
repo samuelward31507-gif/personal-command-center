@@ -483,6 +483,8 @@ export const GOLIVE = [
   { key: "google", title: "Put the booking link on your Google Business profile", how: "In your Google Business profile, edit Contact, then Appointment links, and paste your booking link." },
   { key: "leads", title: "Connect Angi, Thumbtack, HomeAdvisor and Facebook leads", how: "Settings, Connections shows each one's link. Paste it where that service sends new leads, then send yourself a test." },
   { key: "calls", title: "Forward missed calls to your texting number", how: "Ask your phone carrier to forward unanswered calls to your texting number. Settings, Connections shows the number and sends a test." },
+  { key: "links", title: "Send open quotes and invoices again from Cinder", how: "Your old app's quote and invoice links stop working when you cancel it. Each open one goes out again from here with a new link, and its follow-ups or reminders start." },
+  { key: "number", title: "Keep your business number", how: "Forwarding missed calls (above) works today. To move the number itself here, ask Sam to port it: it takes one to three weeks and your number keeps working the whole time. Never send your carrier PIN by text or email; Sam will set up the transfer with you." },
   { key: "pay", title: "Connect your payment link and your review link", how: "Money, Pay link and tax for the payment link. Your Google review link goes in Settings, Account." },
   { key: "books", title: "Keep QuickBooks syncing", how: "Settings, Connections, QuickBooks. Invoices and payments flow in from here on." },
   { key: "week", title: "Run both apps for 7 days, then cancel the old one", how: "Day 7 brings a summary of what came in here that week, so you can cancel with confidence." },

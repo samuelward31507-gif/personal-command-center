@@ -1,5 +1,6 @@
 import { appSession, clientFor, db, json } from "@/lib/client-app-run";
 import { clearImport, currentImport, decide, pullStep, runStep, setGoLive, stageRows, startImport, undoImport } from "@/lib/client-switch-run";
+import { openToResend, resendOpen } from "@/lib/client-golive-run";
 import { SOURCES } from "@/lib/switch";
 
 export const runtime = "nodejs";
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
     const sql = db(), c = await clientFor(sql, s, new URL(req.url).searchParams.get("p"));
     if (!c) return json({ error: "Sign in" }, 401);
     if (s.role === "crew") return json({ error: "Only the owner can move data in." }, 403);
-    return json({ import: await currentImport(sql, c), golive: (() => { try { return JSON.parse(c.setup.golive || "{}"); } catch { return {}; } })(), goliveStart: c.setup.golive_start || null });
+    return json({ import: await currentImport(sql, c), resend: await openToResend(sql, c).catch(() => ({ quotes: 0, invoices: 0 })), golive: (() => { try { return JSON.parse(c.setup.golive || "{}"); } catch { return {}; } })(), goliveStart: c.setup.golive_start || null });
   } catch (e) { console.error("Switch load failed", e instanceof Error ? e.message : e); return json({ error: "Couldn't load." }, 500); }
 }
 
@@ -40,6 +41,7 @@ export async function POST(req: Request) {
       return json({ ok: true, import: await startImport(sql, c, String(b.source)) });
     }
     if (b.action === "golive") { await setGoLive(sql, c, String(b.key ?? ""), !!b.done); return json({ ok: true }); }
+    if (b.action === "resend") return json(await resendOpen(sql, c));
     if (!b.id || !UUID.test(b.id)) return json({ error: "Which move?" }, 400);
     if (b.action === "clear") { await clearImport(sql, c, b.id); return json({ ok: true, import: await currentImport(sql, c) }); }
     const r = b.action === "stage" ? await stageRows(sql, c, b.id, b.rows)

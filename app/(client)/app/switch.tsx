@@ -12,7 +12,7 @@ import type { Data, Go } from "./types";
 
 type View = { id: string; source: SourceKey; status: string; preview: Preview | null; pull: { kind?: number; done?: boolean; counts?: Record<string, number>; warnings?: string[] }; progress: number; total: number;
   result: Record<string, { created: number; updated: number; skipped: number }>; error: string; created_at: string; finished_at: string | null; undone_at: string | null; canUndo: boolean; existing: number };
-type Got = { import: View | null; golive?: Record<string, string>; goliveStart?: string | null };
+type Got = { import: View | null; golive?: Record<string, string>; goliveStart?: string | null; resend?: { quotes: number; invoices: number } };
 const NAME: Record<string, string> = Object.fromEntries(SOURCES.map(s => [s.key, s.name]));
 const MARK: Record<string, string> = { jobber: "J", housecall: "H", servicetitan: "ST", quickbooks: "qb", contacts: "@", spreadsheet: "csv", none: "—" };
 
@@ -39,7 +39,7 @@ export function SwitchScreen({ d, project, api, toast, reload, go }: { d: Data; 
         : at === 3 && imp?.preview ? <Check imp={imp} busy={busy} act={act} onRun={async () => { setStep(4); await runAll(); }} />
         : at === 3 ? <section className="panel"><div className="panel-b"><p className="fine" style={{ padding: "12px 0" }}>Nothing read yet. Go back and connect or add a file.</p></div></section>
         : at === 4 ? <Running imp={imp} busy={busy} onContinue={() => void runAll()} />
-        : <GoLive d={d} imp={got.import} golive={got.golive ?? {}} start={got.goliveStart ?? null} appName={appName} busy={busy} project={project} api={api} toast={toast}
+        : <GoLive d={d} imp={got.import} golive={got.golive ?? {}} start={got.goliveStart ?? null} resend={got.resend ?? { quotes: 0, invoices: 0 }} onResent={left => setGot(g => g && ({ ...g, resend: left }))} appName={appName} busy={busy} project={project} api={api} toast={toast}
             onTick={async (k, v) => { await api("/api/app/switch", { p: project, action: "golive", key: k, done: v }); setGot(g => g && ({ ...g, golive: { ...(g.golive ?? {}), ...(v ? { [k]: new Date().toISOString().slice(0, 10) } : {}) }, ...(v ? {} : { golive: Object.fromEntries(Object.entries(g.golive ?? {}).filter(([x]) => x !== k)) }) })); }}
             onUndo={async () => { const r = await act("undo", { action: "undo", id: got.import!.id }, "Move undone. The customers it added are hidden, and everything it changed is back."); if (r) { await reload(); await load(); } }}
             onAgain={() => { setStep(1); setGot(g => g && ({ ...g, import: g.import && g.import.status === "done" ? { ...g.import, status: "undone" } : g.import })); }} go={go} />}
@@ -184,9 +184,24 @@ function Running({ imp, busy, onContinue }: { imp: View | null; busy: string; on
     </div></section>;
 }
 
-function GoLive({ d, imp, golive, start, appName, busy, project, api, toast, onTick, onUndo, onAgain, go }: { d: Data; imp: View | null; golive: Record<string, string>; start: string | null; appName: string; busy: string; project: string; api: Api; toast: Toast;
+function GoLive({ d, imp, golive, start, appName, busy, project, api, toast, onTick, onUndo, onAgain, go, resend, onResent }: { resend: { quotes: number; invoices: number }; onResent: (left: { quotes: number; invoices: number }) => void; d: Data; imp: View | null; golive: Record<string, string>; start: string | null; appName: string; busy: string; project: string; api: Api; toast: Toast;
   onTick: (k: string, v: boolean) => void; onUndo: () => void; onAgain: () => void; go: Go }) {
-  void api; void project;
+  const [sending, setSending] = useState(false);
+  const resendNow = async () => {
+    const n = resend.quotes + resend.invoices;
+    if (!confirm(`Text ${n} ${n === 1 ? "customer" : "customers"} a new link from your business number? Quotes get follow-ups again and invoices get reminders.`)) return;
+    setSending(true);
+    try {
+      const r = await api<{ sent: number; waiting: number; failed: number; left: { quotes: number; invoices: number } }>("/api/app/switch", { p: project, action: "resend" });
+      onResent(r.left);
+      toast([r.sent ? `Sent ${r.sent}.` : "", r.waiting ? `${r.waiting} wait for texting hours (8 AM to 8 PM) or a texting number; press again then.` : "", r.failed ? `${r.failed} couldn't go (opted out or nothing owed).` : ""].filter(Boolean).join(" ") || "Nothing to send.", !!r.failed && !r.sent);
+      if (!r.left.quotes && !r.left.invoices) onTick("links", true);
+    } catch (e) { toast(e instanceof Error ? e.message : "Couldn't send.", true); } finally { setSending(false); }
+  };
+  const askPort = async () => {
+    try { await api("/api/app/act", { p: project, action: "message", body: "I'd like to move (port) my business number to Cinder. Please set up the transfer with me." }); toast("Sent to Sam. You'll hear back about the transfer; keep forwarding until then."); }
+    catch (e) { toast(e instanceof Error ? e.message : "Couldn't send.", true); }
+  };
   const done = imp?.status === "done" ? imp : null, res = done?.result ?? {}, src = done ? NAME[done.source] : "";
   const origin = d.origin || (typeof location !== "undefined" ? location.origin : ""), booking = d.key ? `${origin}/b/${d.key}` : "";
   const day7 = start ? Math.floor((Date.now() - Date.parse(start + "T12:00:00")) / 86400000) : -1;
@@ -214,6 +229,10 @@ function GoLive({ d, imp, golive, start, appName, busy, project, api, toast, onT
           {g.key === "website" || g.key === "google" ? booking && <div className="acts-row" style={{ marginTop: 6 }}><code className="sw-link">{booking}</code><button type="button" className="btn sm" onClick={async () => { try { await navigator.clipboard.writeText(booking); toast("Booking link copied."); } catch { prompt("Copy:", booking); } }}>Copy</button></div>
             : g.key === "leads" || g.key === "calls" || g.key === "books" ? <div className="acts-row" style={{ marginTop: 6 }}><button type="button" className="btn sm" onClick={() => go.tab("system")}>Open Connections</button></div>
             : g.key === "pay" ? <div className="acts-row" style={{ marginTop: 6 }}><button type="button" className="btn sm" onClick={go.billing}>Pay link</button></div>
+            : g.key === "links" ? <div className="acts-row" style={{ marginTop: 6 }}>{resend.quotes + resend.invoices > 0
+                ? <><button type="button" className="btn sm ink" disabled={sending} onClick={() => void resendNow()}>{sending ? <Spinner /> : null}Send {resend.quotes ? `${resend.quotes} ${resend.quotes === 1 ? "quote" : "quotes"}` : ""}{resend.quotes && resend.invoices ? " and " : ""}{resend.invoices ? `${resend.invoices} ${resend.invoices === 1 ? "invoice" : "invoices"}` : ""}</button><small className="mut">by text, from your business number</small></>
+                : <small className="mut">Nothing open is waiting to go out again.</small>}</div>
+            : g.key === "number" ? <div className="acts-row" style={{ marginTop: 6 }}><button type="button" className="btn sm" onClick={() => void askPort()}>Ask Sam to port it</button></div>
             : g.key === "week" && start ? <small style={{ display: "block", marginTop: 4 }}>Started {dateLabel(start)}. {day7 >= 7 ? "Your week is up." : `Day ${Math.max(1, day7 + 1)} of 7.`}</small> : null}
         </div></li>)}</ul></div></section>
   </>;
