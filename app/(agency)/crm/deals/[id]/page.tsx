@@ -287,14 +287,16 @@ export default function DealWorkspacePage() {
     signed: signReq?.status === "signed" && signReq.signerName ? { client: { name: signReq.signerName, title: signReq.signerTitle ?? undefined, at: signReq.signedAt } } : undefined });
   const propHtml = (p: { id: string; content: string; createdAt: string }) => proposalDoc(p.content, { no: docNumber("P", p.id, p.createdAt), business: wsp.businessName, preparedBy: wsp.ownerFullName });
   // One plan picker on both document tabs: switching rewrites the proposal and the agreement with that plan's price and Stripe link.
+  // Reactivation is included in Book & Close; on Never Miss a Lead it is a $497 one-time add-on.
+  const isT1 = deal.serviceType === "tier1_speed_to_lead";
   const planPicker = (deal.contractStatus !== "signed" && !closed && <div className="dw-signfor">
             <label><span>Plan</span>
               <select value={deal.serviceType} disabled={!!saving} onChange={e => void switchPlan(e.target.value)}>
                 {Object.values(offersFrom(wsp)).map(o => <option key={o.serviceType} value={o.serviceType}>{o.label}: ${o.setupFee.toLocaleString("en-US")} setup + ${o.monthlyFee.toLocaleString("en-US")}/mo</option>)}
                 {!Object.values(offersFrom(wsp)).some(o => o.serviceType === deal.serviceType) && <option value={deal.serviceType}>Custom plan</option>}
               </select></label>
-            <label className="dw-signfor-add"><input type="checkbox" checked={addon} disabled={!!saving} onChange={e => void switchAddon(e.target.checked)} /> Reactivation campaign <span className="dw-muted-i">+$497 one time</span></label>
-            <span className="dw-signfor-price"><b className="u-num">{money(deal.setupFee + (addon ? 497 : 0))}</b> due at signing · <b className="u-num">{money(deal.monthlyFee)}</b>/mo <button type="button" className="dw-price-btn" onClick={() => setPriceEdit({ svc: deal.serviceType, setup: String(deal.setupFee), monthly: String(deal.monthlyFee) })}>Custom price</button></span>
+            {isT1 ? <label className="dw-signfor-add"><input type="checkbox" checked={addon} disabled={!!saving} onChange={e => void switchAddon(e.target.checked)} /> Reactivation campaign <span className="dw-muted-i">+$497 one time</span></label> : <span className="dw-signfor-add dw-muted-i">Reactivation campaign included</span>}
+            <span className="dw-signfor-price"><b className="u-num">{money(deal.setupFee + (isT1 && addon ? 497 : 0))}</b> due at signing · <b className="u-num">{money(deal.monthlyFee)}</b>/mo <button type="button" className="dw-price-btn" onClick={() => setPriceEdit({ svc: deal.serviceType, setup: String(deal.setupFee), monthly: String(deal.monthlyFee) })}>Custom price</button></span>
           </div>);
   // The agreement is one click from every open deal: on a call, you go straight from "yes" to the signing link.
   const showAgreement = !closed || deal.contractStatus !== "none" || !!agreement;
@@ -412,7 +414,7 @@ export default function DealWorkspacePage() {
           <p className="dw-when"><b>When to send:</b> only if he doesn't sign on the call. Send it the same day with a follow-up time booked. If he says yes on the call, skip it and send the agreement.</p>
           {!proposal ? <>
             <p className="dw-hint">Built from this deal's plan and price, with your Stripe setup link. Instant. You can edit it before it goes out.</p>
-            <label className="dw-check"><input type="checkbox" checked={propAddon} onChange={e => setPropAddon(e.target.checked)} /> Include the Reactivation campaign ($497 one time)</label>
+            {isT1 && <label className="dw-check"><input type="checkbox" checked={propAddon} onChange={e => setPropAddon(e.target.checked)} /> Include the Reactivation campaign ($497 one time)</label>}
             <button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "proposal"} onClick={() => void draftProposal()}>{saving === "proposal" ? "Creating…" : "Create proposal"}</button>
           </> : editing?.id === proposal.id ? <>
             <textarea className="dw-editor" rows={18} value={editing.content} onChange={e => setEditing({ ...editing, content: e.target.value })} />
@@ -440,7 +442,7 @@ export default function DealWorkspacePage() {
           <p className="dw-when"><b>When to send:</b> on the call, the moment he says yes. Send the signing link and stay on until he signs. The setup payment link emails him automatically when he does.</p>
           {!agreement ? <>
             <p className="dw-hint">Your service agreement, filled in with this deal's plan, price and client, with an itemized Statement of Work in Schedule A. Anything Cinder doesn't know stays as a [bracketed] blank for you.</p>
-            <label className="dw-hint" style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={addon} onChange={e => setAddon(e.target.checked)} /> Include the Reactivation campaign ($497 one time)</label>
+            {isT1 && <label className="dw-hint" style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={addon} onChange={e => setAddon(e.target.checked)} /> Include the Reactivation campaign ($497 one time)</label>}
             <button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Creating…" : "Create agreement"}</button>
           </> : agEdit?.id === agreement.id ? <>
             <textarea className="dw-editor" rows={22} value={agEdit.content} onChange={e => setAgEdit({ ...agEdit, content: e.target.value })} />
