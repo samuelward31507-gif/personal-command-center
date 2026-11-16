@@ -144,10 +144,12 @@ export function mondayText(business: string, w: WeekNumbers, link: string): stri
     `${w.answered} of ${w.leads} lead${w.leads === 1 ? "" : "s"} answered${w.replySec != null ? `, typically in ${w.replySec < 60 ? w.replySec + " sec" : Math.round(w.replySec / 60) + " min"}` : ""}`,
     `${w.booked} estimate${w.booked === 1 ? "" : "s"} booked`,
     w.quotesChased ? `${w.quotesChased} quote${w.quotesChased === 1 ? "" : "s"} followed up${w.openQuoteValue ? ` (${usd(w.openQuoteValue)} open)` : ""}` : "",
-    w.won ? `${w.won} won${w.wonValue ? `, ${usd(w.wonValue)}` : ""}` : "",
+    w.won ? `${w.won} job${w.won === 1 ? "" : "s"} won` : "",
     w.reviews ? `${w.reviews} review request${w.reviews === 1 ? "" : "s"} sent` : "",
   ].filter(Boolean);
-  return `Cinder for ${business}, last week: ${parts.join(", ")}. Every conversation: ${link}`.slice(0, 600);
+  // Money first when there is any: a won job is the line the owner remembers.
+  const lead = w.won && w.wonValue ? `${usd(w.wonValue)} in jobs won. ` : "";
+  return `Cinder for ${business}, last week: ${lead}${parts.join(", ")}. Every conversation: ${link}`.slice(0, 600);
 }
 
 /** Inbound web lead: pull a usable name, phone and job out of whatever a form sends. */

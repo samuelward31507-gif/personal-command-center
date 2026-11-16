@@ -33,7 +33,7 @@ assert.equal(B.detectLang("Para when can you come"), "en");
 assert.ok(B.ES.quote_1.includes("{first}") && B.ES.missed_call.includes("{business}"));
 
 const t = B.mondayText("Ridgeline Fence", { leads: 12, answered: 12, replySec: 9, booked: 4, quotesChased: 6, openQuoteValue: 31200, won: 1, wonValue: 6840, reviews: 3 }, "https://x/portal/abc");
-assert.match(t, /12 of 12 leads answered, typically in 9 sec, 4 estimates booked, 6 quotes followed up \(\$31,200 open\), 1 won, \$6,840, 3 review requests sent/);
+assert.match(t, /^Cinder for Ridgeline Fence, last week: \$6,840 in jobs won\. 12 of 12 leads answered, typically in 9 sec, 4 estimates booked, 6 quotes followed up \(\$31,200 open\), 1 job won, 3 review requests sent/);
 assert.match(B.mondayText("X", { leads: 1, answered: 1, replySec: null, booked: 1, quotesChased: 0, openQuoteValue: 0, won: 0, wonValue: 0, reviews: 0 }, "l"), /1 of 1 lead answered, 1 estimate booked\./);
 
 assert.deepEqual(B.parseIntake({ "First Name": "Dana", "Last Name": "Ruiz", Phone: "(720) 555-0148", Email: "d@x.com", Message: "120 ft cedar" }), { name: "Dana Ruiz", phone: "+17205550148", email: "d@x.com", message: "120 ft cedar", source: "web form" });
