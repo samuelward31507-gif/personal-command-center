@@ -6,7 +6,7 @@ import { useState } from "react";
 import { dollars, lineTotal, overdue, totals, type Item } from "@/lib/billing";
 import { PAY_METHODS, type CardInvoice, type Payment } from "@/lib/crm";
 import { Icon, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast } from "./parts";
-import { line } from "./jobs";
+import { Kpis, PageHead } from "./charts";
 import type { Data, Go, InvoiceRow } from "./types";
 
 /** Editable quote or invoice lines: what, how many, the unit price. Totals are worked out, never typed. */
@@ -46,6 +46,7 @@ export function invoiceState(i: CardInvoice): { text: string; tone: "" | "green"
   if ((i.paid_amount ?? 0) > 0) return { text: "Part paid", tone: "blue" };
   return { text: "Awaiting payment", tone: "blue" };
 }
+const chipFor = (tone: string) => tone === "green" ? "good" : tone === "red" ? "bad" : tone === "amber" ? "ember" : tone === "blue" ? "blue" : "";
 const dotFor = (tone: string) => tone === "green" ? "good" : tone === "red" ? "bad" : tone === "amber" ? "ember" : tone === "blue" ? "ink" : "";
 
 /** One invoice: lines, due date, note; send it, copy the link, mark it paid. */
@@ -141,26 +142,29 @@ export function MoneyScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean })
   const paidRecent = list.filter(i => i.status === "paid" && i.paid_at && i.sent_at && Date.parse(i.paid_at) > Date.now() - 90 * 86400000);
   const payDays = paidRecent.length ? Math.round(paidRecent.reduce((a, i) => a + (Date.parse(i.paid_at!) - Date.parse(i.sent_at!)) / 86400000, 0) / paidRecent.length) : null;
   // Aging: days past due, from the due date (QuickBooks' buckets).
+  // Money in by week, last 8 weeks, for the sparkline.
+  const weeklyIn = Array.from({ length: 8 }, (_, k) => { const end = Date.now() - (7 - k) * 7 * 86400000, start = end - 7 * 86400000; return pays.filter(p => { const t = Date.parse(p.paid_on + "T12:00:00"); return t > start && t <= end; }).reduce((a, p) => a + p.amount, 0); });
   const daysLate = (i: InvoiceRow) => i.due_on ? Math.floor((Date.parse(today + "T12:00:00") - Date.parse(i.due_on + "T12:00:00")) / 86400000) : 0;
   const buckets = [["Not yet due", (n: number) => n <= 0], ["1 to 30 days", (n: number) => n >= 1 && n <= 30], ["31 to 60", (n: number) => n > 30 && n <= 60], ["61 to 90", (n: number) => n > 60 && n <= 90], ["Over 90", (n: number) => n > 90]] as const;
   const aging = buckets.map(([l, t]) => ({ l, v: open.filter(i => t(daysLate(i))).reduce((a, i) => a + balanceOf(i), 0) }));
   const shown = f === "open" ? list.filter(i => i.status === "sent") : f === "draft" ? list.filter(i => i.status === "draft") : f === "paid" ? list.filter(i => i.status === "paid") : list;
   const counts = { open: open.length, draft: list.filter(i => i.status === "draft").length, paid: list.filter(i => i.status === "paid").length, all: list.length };
   return <>
-    <header className="tb"><h1 className="h1">Money</h1><span className="sub">{outstanding ? `${usd(outstanding)} owed to you${late.length ? `, ${usd(lateAmt)} past due` : ""}` : "Nothing owed"}</span>
-      <div className="acts"><button type="button" className="btn" onClick={go.billing}>Pay link and tax</button></div></header>
-    <div className="pad money2">
-      <div className="figs4">
-        <div><span>Outstanding</span><b>{usd(outstanding)}</b><small>{open.length} {open.length === 1 ? "invoice" : "invoices"} awaiting payment</small></div>
-        <div><span>Past due</span><b style={lateAmt ? { color: "var(--bad)" } : undefined}>{usd(lateAmt)}</b><small className={late.length ? "down" : ""}>{late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"}, reminders going out` : "None late"}</small></div>
-        <div><span>Collected this month</span><b>{usd(collected)}</b><small>{(() => { const k = pays.filter(p => p.paid_on >= monthStart).length; return `${k} ${k === 1 ? "payment" : "payments"} recorded`; })()}</small></div>
-        <div><span>Days to get paid</span><b>{payDays == null ? "–" : payDays}</b><small>average, last 90 days</small></div>
-      </div>
-      {outstanding > 0 && <div className="aging" aria-label="Owed, by how late">
+    <PageHead title="Money" sub={outstanding ? `${usd(outstanding)} owed to you${late.length ? `, ${usd(lateAmt)} of it past due.` : ", none of it late."}` : "Nothing owed. Everything is paid up."}
+      actions={<button type="button" className="btn" onClick={go.billing}>Pay link and tax</button>} />
+    <div className="dash money2">
+      <Kpis items={[
+        { label: "Outstanding", value: usd(outstanding), sub: `${open.length} ${open.length === 1 ? "invoice" : "invoices"} awaiting payment` },
+        { label: "Past due", value: usd(lateAmt), sub: late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"}, reminders going out` : "None late", tone: late.length ? "down" : "" },
+        { label: "Collected this month", value: usd(collected), sub: (() => { const k = pays.filter(p => p.paid_on >= monthStart).length; return `${k} ${k === 1 ? "payment" : "payments"} recorded`; })(), tone: collected ? "up" : "", spark: weeklyIn, sparkTone: "good" },
+        { label: "Days to get paid", value: payDays == null ? "–" : String(payDays), sub: "average, last 90 days" },
+      ]} />
+      <section className="panel">
+      {outstanding > 0 && <div className="aging panel-b" aria-label="Owed, by how late"><div className="aging-t"><b>Receivables</b><small>by days past due</small></div>
         <div className="aging-bar">{aging.map((a, k) => a.v > 0 ? <i key={a.l} className={"b" + k} style={{ flexGrow: a.v }} title={`${a.l}: ${usd(a.v)}`} /> : null)}</div>
         <dl>{aging.map((a, k) => <div key={a.l}><dt><i className={"b" + k} />{a.l}</dt><dd className={a.v ? "" : "faint"}>{usd(a.v)}</dd></div>)}</dl>
       </div>}
-      <div className="list-tools">
+      <div className="list-tools panel-tools">
         <div className="seg" role="tablist" aria-label="Show"><button type="button" role="tab" aria-selected={view === "invoices"} className={view === "invoices" ? "on" : ""} onClick={() => setView("invoices")}>Invoices</button><button type="button" role="tab" aria-selected={view === "payments"} className={view === "payments" ? "on" : ""} onClick={() => setView("payments")}>Payments</button></div>
         {view === "invoices" && <div className="views" role="tablist" aria-label="Filter">{([["open", "Awaiting payment"], ["draft", "Drafts"], ["paid", "Paid"], ["all", "All"]] as const).map(([k, l]) =>
           <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}{counts[k] ? <em>{counts[k]}</em> : null}</button>)}</div>}
@@ -177,11 +181,28 @@ export function MoneyScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean })
         <tbody>{shown.map(i => { const st = invoiceState(i), bal = balanceOf(i); return <tr key={i.id} tabIndex={0} onClick={() => go.invoice(i.id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(i.id); }}>
           <td className="mut num-l">#{i.number}</td><td><b>{i.customer || fmtPhone(i.phone)}</b></td><td className="mut">{i.items[0]?.name || ""}</td>
           <td className="mut">{i.sent_at ? dateLabel(i.sent_at) : "–"}</td><td className={st.tone === "red" ? "bad-t" : "mut"}>{i.due_on ? dateLabel(i.due_on) : "–"}</td>
-          <td><span className={"dot " + dotFor(st.tone)}>{st.text}</span></td><td className="num mut">{dollars(i.total)}</td><td className="num"><b>{i.status === "void" ? "–" : dollars(bal)}</b></td>
+          <td><span className={"chipx " + chipFor(st.tone)}>{st.text}</span></td><td className="num mut">{dollars(i.total)}</td><td className="num"><b>{i.status === "void" ? "–" : dollars(bal)}</b></td>
         </tr>; })}</tbody></table>
       : shown.map(i => { const st = invoiceState(i); return <button key={i.id} type="button" className="jrow" onClick={() => go.invoice(i.id)}>
           <span style={{ minWidth: 0 }}><b>{i.customer || fmtPhone(i.phone)}</b><small>#{i.number}{i.due_on ? `, due ${dateLabel(i.due_on)}` : ""}</small></span>
           <span className="r"><b>{dollars(balanceOf(i) || i.total)}</b><em className={st.tone === "red" ? "red" : st.tone === "green" ? "green" : ""}>{st.text}</em></span></button>; })}
+      </section>
+      <div className="grid12">
+        <section className="panel s7">
+          <div className="panel-h"><h2>Latest payments</h2><small>{pays.length ? `${usd(pays.slice(0, 6).reduce((a, p) => a + p.amount, 0))} across the last ${Math.min(6, pays.length)}` : ""}</small><div className="r"><button type="button" className="link" onClick={() => setView("payments")}>All payments</button></div></div>
+          <div className="panel-b flush">{pays.length ? pays.slice(0, 6).map(p => <button key={p.id} type="button" className="lv pay" onClick={() => go.invoice(p.invoice_id)}>
+            <span className="ti ok"><Icon name="check" size={14} /></span><span className="lv-n"><b>{p.customer}</b><small>Invoice #{p.number}</small></span>
+            <span className="lv-m">{PAY_METHODS.find(m => m[0] === p.method)?.[1].split(",")[0]}{p.note ? `, ${p.note}` : ""}</span><b className="num">{dollars(p.amount)}</b><time>{dateLabel(p.paid_on)}</time></button>)
+            : <p className="empty-line" style={{ margin: "0 18px" }}>Record a payment on any invoice and it lands here: card, cash, check or a deposit.</p>}</div>
+        </section>
+        <section className="panel s5">
+          <div className="panel-h"><h2>Who owes you</h2><small>by customer</small></div>
+          <div className="panel-b">{(() => { const by = new Map<string, { name: string; owed: number; late: boolean; id: string }>(); for (const i of open) { const k = i.customer || i.phone; const e = by.get(k) ?? { name: i.customer || fmtPhone(i.phone), owed: 0, late: false, id: i.id }; e.owed += balanceOf(i); e.late ||= overdue(i.status, i.due_on, today); by.set(k, e); }
+            const rows = [...by.values()].sort((a, b) => b.owed - a.owed), top = rows[0]?.owed || 1;
+            return rows.length ? rows.slice(0, 6).map(r => <button key={r.id} type="button" className="pr" onClick={() => go.invoice(r.id)}><span className="pl">{r.name}</span><span className="pn">{r.late ? <span className="say bad">Late</span> : ""}</span><b>{usd(r.owed)}</b><i className={"pbar " + (r.late ? "late" : "quoted")}><span style={{ width: `${(r.owed / top) * 100}%` }} /></i></button>)
+              : <div className="empty-art"><span><Icon name="check" size={18} /></span><b>Nobody owes you.</b><small>Every invoice is paid.</small></div>; })()}</div>
+        </section>
+      </div>
     </div>
   </>;
 }

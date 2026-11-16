@@ -139,7 +139,14 @@ function demoReport(days: 30 | 90 | 365): Report {
       { source: "web form", leads: r(8), booked: r(3), quoted: r(2), won: r(1), wonValue: r(6900) }, { source: "google", leads: r(6), booked: r(2), quoted: r(1), won: r(1), wonValue: r(3900) },
       { source: "booking page", leads: r(3), booked: r(1), quoted: 0, won: 0, wonValue: 0 }, { source: "thumbtack", leads: r(2), booked: 0, quoted: 0, won: 0, wonValue: 0 }],
     lostReasons: [{ reason: "Price", n: r(2) }, { reason: "Went with someone else", n: r(1) }, { reason: "Timing", n: Math.max(1, r(0.5)) }],
-    openQuotes: { n: 4, value: 32627 } };
+    openQuotes: { n: 4, value: 32627 },
+    // A believable trend: weeks for 30 and 90 days, months for a year, oldest first.
+    series: Array.from({ length: days === 30 ? 5 : days === 90 ? 13 : 12 }, (_, i) => {
+      const n = days === 30 ? 5 : days === 90 ? 13 : 12, back = n - 1 - i, d = new Date(); if (days === 365) d.setMonth(d.getMonth() - back, 1); else d.setDate(d.getDate() - back * 7);
+      const w = days === 365 ? 4.3 : 1, wave = 1 + 0.35 * Math.sin(i * 1.3) + i * 0.03;
+      const leads = Math.round(9 * w * wave), booked = Math.round(leads * (0.3 + 0.08 * Math.cos(i))), won = Math.max(0, Math.round(booked * 0.38));
+      return { label: d.toLocaleDateString("en-CA"), leads, booked, won, wonValue: won * 7300, collected: Math.round(won * 7300 * 0.85) };
+    }) };
 }
 const money = (v: unknown) => Number(String(v ?? "").replace(/[$,\s]/g, "").replace(/k$/i, "000")) || null;
 

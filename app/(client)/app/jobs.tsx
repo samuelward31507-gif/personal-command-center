@@ -8,6 +8,7 @@ import { LOST_REASONS, STAGE_LABEL, type Card, type Stage } from "@/lib/crm";
 import { Avatar, Empty, Icon, Menu, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
 import { Inspector } from "./record";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
+import { Kpis, PageHead } from "./charts";
 
 type Tone = "blue" | "red" | "green" | "amber" | "";
 export type JobsView = "open" | "won" | "all";
@@ -105,24 +106,26 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
   const [mode, setMode] = useState<"table" | "board">("table");
   const [q, setQ] = useState(""), [src, setSrc] = useState("any"), [lane, setLane] = useState<"all" | Lane>("all");
   const [sel, setSel] = useState<string | null>(null);
+  const [who, setWho] = useState<"all" | Who>("all");
   const [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Lane | null>(null);
   const [losing, setLosing] = useState<Card | null>(null), [busy, setBusy] = useState(false);
   const today = todayIso();
-  const base = view === "open" ? cards.filter(isOpen) : view === "won" ? everyone.filter(c => c.stage === "won") : everyone;
-  const sources = useMemo(() => { const m = new Map<string, number>(); for (const c of base) m.set(c.source, (m.get(c.source) ?? 0) + 1); return [{ key: "any", label: "All" }, ...[...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ key: k, label: sourceLabel(k), count: n }))]; }, [base]);
-  const shown = useMemo(() => {
-    const t = q.trim().toLowerCase(), digits = t.replace(/\D/g, "");
-    return base.filter(c => lane === "all" || laneOf(c) === lane).filter(c => src === "any" || c.source === src)
-      .filter(c => !t || c.name.toLowerCase().includes(t) || c.line.toLowerCase().includes(t) || String(c.details.address ?? "").toLowerCase().includes(t) || (digits.length >= 3 && c.phone.replace(/\D/g, "").includes(digits)));
-  }, [base, q, lane, src]);
+  // Open: every job still in motion, won jobs too until they are paid.
+  const active = (c: Card) => isOpen(c) || (c.stage === "won" && !c.pastCustomer && moveOf(c, today).who !== "closed");
+  // Small lists: worked out on every render, no memo to keep in sync.
+  const base = view === "open" ? cards.filter(active) : view === "won" ? everyone.filter(c => c.stage === "won") : everyone;
+  const sources = (() => { const m = new Map<string, number>(); for (const c of base) m.set(c.source, (m.get(c.source) ?? 0) + 1); return [{ key: "any", label: "All" }, ...[...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => ({ key: k, label: sourceLabel(k), count: n }))]; })();
+  const qt = q.trim().toLowerCase(), digits = qt.replace(/\D/g, "");
+  const shown = base.filter(c => lane === "all" || laneOf(c) === lane).filter(c => src === "any" || c.source === src).filter(c => who === "all" || moveOf(c, today).who === who)
+    .filter(c => !qt || c.name.toLowerCase().includes(qt) || c.line.toLowerCase().includes(qt) || String(c.details.address ?? "").toLowerCase().includes(qt) || (digits.length >= 3 && c.phone.replace(/\D/g, "").includes(digits)));
   // Grouped by who owes the next move when nothing narrows the list; the owner's move first, longest waiting first.
   const grouped = lane === "all" && !q.trim();
-  const groups = useMemo(() => {
+  const groups = (() => {
     if (!grouped) return [{ who: "you" as Who, cards: shown, value: 0 }];
     const m = new Map<Who, Card[]>();
     for (const c of shown) { const w = moveOf(c, today).who; m.set(w, [...(m.get(w) ?? []), c]); }
     return WHO_ORDER.filter(w => m.has(w)).map(w => { const list = m.get(w)!.sort((a, b) => daysIn(b) - daysIn(a)); return { who: w, cards: list, value: list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0) }; });
-  }, [shown, grouped, today]);
+  })();
   const counts = { open: cards.filter(isOpen).length, won: everyone.filter(c => c.stage === "won").length, all: everyone.length };
   const pipeline = cards.filter(isOpen).reduce((a, c) => a + (c.value ?? c.ballpark?.high ?? 0), 0);
 
@@ -161,25 +164,24 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
   const laneOptions: { key: "all" | Lane; label: string; count?: number }[] = [{ key: "all", label: "All", count: base.length }, ...LANES.map(l => ({ key: l as "all" | Lane, label: LANE_LABEL[l], count: base.filter(c => laneOf(c) === l).length })).filter(o => o.count)];
 
   return <>
-    <header className="tb">
-      <h1 className="h1">Jobs</h1>
-      {wide && <span className="sub">{view === "open" ? `${counts.open} open` : view === "won" ? `${counts.won} won` : `${counts.all} people`}</span>}
-      {!wide && <div className="views" role="tablist" aria-label="View">
-        {([["open", "Open", counts.open], ["won", "Won", counts.won], ["all", "Everyone", counts.all]] as const).map(([k, l, n]) =>
-          <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => { setView(k); setSel(null); }}>{l}<em>{n}</em></button>)}
-      </div>}
-      {wide && pipeline > 0 && view === "open" && <span className="fig" style={{ marginLeft: 8 }}><b>{usd(pipeline)}</b><span>in play</span></span>}
-      <div className="acts">
+    <PageHead title="Jobs" sub={view === "open" ? `${counts.open} open, ${usd(pipeline)} in play.` : view === "won" ? `${counts.won} won.` : `${counts.all} people.`}
+      actions={<>
+        {!wide && <div className="views" role="tablist" aria-label="View">
+          {([["open", "Open", counts.open], ["won", "Won", counts.won], ["all", "Everyone", counts.all]] as const).map(([k, l, n]) =>
+            <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => { setView(k); setSel(null); }}>{l}<em>{n}</em></button>)}
+        </div>}
         {wide && <div className="seg" role="tablist" aria-label="Layout">
           <button type="button" role="tab" aria-selected={mode === "table"} className={mode === "table" ? "on" : ""} onClick={() => setMode("table")} title="Table (t)"><Icon name="table" size={13} />Table</button>
           <button type="button" role="tab" aria-selected={mode === "board"} className={mode === "board" ? "on" : ""} onClick={() => setMode("board")} title="Board (b)"><Icon name="jobs" size={13} />Board</button></div>}
-        {wide && d.winback && d.winback.past > 0 && <button type="button" className="btn ghost" onClick={onWinback}>Text past customers</button>}
-        {wide && <button type="button" className="btn ghost" onClick={go.importCustomers}>Import</button>}
+        {wide && d.winback && d.winback.past > 0 && <button type="button" className="btn" onClick={onWinback}>Text past customers</button>}
+        {wide && <button type="button" className="btn" onClick={go.importCustomers}>Import</button>}
         <button type="button" className="btn ink" onClick={go.addLead} title="Add lead (c)"><Icon name="plus" size={14} />{wide ? "New lead" : "New"}{wide && <kbd>c</kbd>}</button>
-      </div>
-    </header>
+      </>} />
     <div className={"split" + (sel && wide ? " has-insp" : "")}>
-      <div className="pane list">
+      <div className="pane list"><div className="dash jobs-dash">
+        {view === "open" && <Kpis items={(["you", "customer", "scheduled", "cinder"] as Who[]).map(w => { const list = cards.filter(c => active(c) && moveOf(c, today).who === w); const v = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
+          return { label: WHO_LABEL[w], value: String(list.length), sub: v ? `${usd(v)} riding on it` : list.length ? "no value set yet" : "nothing here", tone: w === "you" && list.length ? "warn" as const : "" as const, active: who === w, onClick: () => setWho(x => x === w ? "all" : w) }; })} />}
+        <section className="panel jobs-panel">
         <div className="jobs-tools">
           <label className="inwrap search"><Icon name="search" size={14} /><span className="sr">Search jobs</span><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, address, phone" /></label>
           {(wide || mode === "table") && <Menu label="Stage" value={lane} options={laneOptions} onPick={setLane} />}
@@ -209,6 +211,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
           <div className="pane-foot"><span>{shown.length} of {base.length}</span><span className="hint"><span><kbd>j</kbd><kbd>k</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>c</kbd> new lead</span></span></div>
         </>
         : <PhoneList cards={shown} open={id => go.record(id)} />}
+        </section></div>
       </div>
       {wide && sel && <aside className="pane insp" aria-label="Record">
         <Inspector key={sel} id={sel} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onClose={() => setSel(null)} onExpand={() => go.record(sel)} />

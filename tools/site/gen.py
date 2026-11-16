@@ -2,6 +2,7 @@
 # Run: python3 tools/site/gen.py   Edit a section in source.html, then run this to update every page that uses it.
 import re, io
 S="/home/claude/personal-command-center/site/"
+T="/home/claude/personal-command-center/tools/site/"
 import os
 src=open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"source.html")).read()
 def sec(id_, tag="section"):
@@ -34,14 +35,14 @@ def tint(s, on):
     s=re.sub(r'class="sec sec-tint( book)?"', r'class="sec\1"', s, count=1)
     return re.sub(r'class="sec( book)?"', r'class="sec sec-tint\1"', s, count=1) if on else s
 
-NAV=[("/product","Product"),("/how-it-works","How it works"),("/pricing","Pricing"),("/demo","Demo"),("/try","Try it")]
+NAV=[("/product","Product"),("/how-it-works","How it works"),("/pricing","Pricing"),("/demo","Demo")]
 def nav(active):
     links="".join('<a href="%s"%s>%s</a>' % (h,' aria-current="page"' if h==active else "",l) for h,l in NAV)
     h=re.sub(r'<nav class="nav-links" aria-label="Main">.*?</nav>', '<nav class="nav-links" aria-label="Main">'+links+'</nav>', header)
     h=h.replace('<div class="nav-r">','<div class="nav-r"><button type="button" class="nav-menu" aria-expanded="false" aria-controls="nav-sheet" aria-label="Menu"><i></i><i></i></button>')
     h=h.replace('</div></header>','</div><div class="nav-sheet" id="nav-sheet" hidden>'+links+'<a href="/book">Book a call</a></div></header>')
     return h
-foot=re.sub(r'<nav aria-label="Footer">.*?</nav>', '<nav aria-label="Footer"><a href="/product">Product</a><a href="/how-it-works">How it works</a><a href="/pricing">Pricing</a><a href="/try">Try it</a><a href="/demo">Demo</a><a href="/book">Book a call</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav>', footer)
+foot=re.sub(r'<nav aria-label="Footer">.*?</nav>', '<nav aria-label="Footer"><a href="/product">Product</a><a href="/how-it-works">How it works</a><a href="/pricing">Pricing</a><a href="/demo">Demo</a><a href="/book">Book a call</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav>', footer)
 def page(path, active, title, desc, body, canonical):
     h=re.sub(r'<title>.*?</title>', '<title>%s</title>' % title, head)
     h=re.sub(r'<meta name="description" content="[^"]*">', '<meta name="description" content="%s">' % desc, h)
@@ -100,7 +101,7 @@ ctrl='''<section class="sec sec-tint" id="control">
   </div>
 </section>
 '''
-product=phead("Everything between the call and the check.", "Six jobs your business needs done on every lead, done in seconds, in your wording. Here is each one, and exactly what it does.", ("/try","Try it on your business"))+'''<section class="sec prows" id="product">
+product=phead("Everything between the call and the check.", "Six jobs your business needs done on every lead, done in seconds, in your wording. Here is each one, and exactly what it does.", ("/demo","Try it on your business"))+'''<section class="sec prows" id="product">
   <div class="wrap">
 '''+prow(1,"timer","Answer","Every lead gets a text in about 10 seconds.","Most callers who hit voicemail call the next company. Cinder texts them back from your business before they do.",["Missed calls, web forms, Facebook, Angi and Thumbtack leads","Sent from your business number, in your words","Day, night and weekends","English and Spanish"],ui("timer"))+prow(2,"qual","Qualify","Your questions, asked before you drive out.","It asks what you’d ask on every job and sends your price range, so the people you meet are serious and in your area.",["The questions you choose for your trade","Your price range sent up front","Out-of-area and wrong-fit jobs filtered out","Real price talk comes straight to you"],ui("qual"),True)+prow(3,"cal","Book","The estimate lands on your calendar.","They pick from your real open times. You get one text with the job, and they get a reminder.",["Reads your Google Calendar so it never double-books","Reminder the day before","No-shows get a rebooking text","One text to you with the job details"],ui("cal"))+prow(4,"chase","Follow up","Every quote chased to a yes or a no.","Send a quote with one text and the follow-up starts on its own. It stops the moment they reply.",["Follow-ups on days 2, 5, 10 and 21","“Too expensive” gets your financing or a smaller option","Launch revival of your open quotes from the last 90 days","Review request after every finished job"],ui("chase"),True,"Book &amp; Close")+prow(5,"","Reactivate","Old leads and past customers, worked every month.","The people who already know you are the easiest jobs to win.",["Leads that never booked get three friendly texts, then another round each quarter","Past customers hear from you when they’re due","Every reply is answered and booked like a new lead"],react_ui,False,"Book &amp; Close")+prow(6,"stars","Reviews","Five-star reviews without asking in person.","The morning after a job is done and paid, the customer gets a text with your Google review link.",["Sent automatically after finished jobs","Your Google link, one tap","More reviews means more calls from Google"],ui("stars"),True)+'''  </div>
 </section>
@@ -149,7 +150,7 @@ ideas='''<section class="sec" id="ideas">
 </section>
 '''
 tryp=re.sub(r'class="sec sec-tint" id="try"', 'class="sec ptry" id="try"', tryit).replace('<h2 class="split">Try it on your business. Text it like a customer would.</h2>','<h1 class="split">Try it on your business. Text it like a customer would.</h1>')
-page("try.html","/try","Try it · Cinder Revenue Company","Type what a homeowner would send your business and have the whole text conversation, through to a booked estimate. Nothing is texted or saved.", tryp+ideas+tint(book,True), "/try")
+page("try.html","/demo","Try it · Cinder Revenue Company","Type what a homeowner would send your business and have the whole text conversation, through to a booked estimate. Nothing is texted or saved.", tryp+ideas+tint(book,True), "/demo")
 
 # ---------- Book ----------
 bookp=book.replace('<h2 class="split">','<h1 class="split">').replace("</h2>","</h1>",1).replace('class="sec book"','class="sec book pbook"')
@@ -163,6 +164,23 @@ vid='''<section class="sec pvid" id="film">
   </div>
 </section>
 '''
-demop=phead("See it work in about a minute.", "A missed call, a lead that calls the next company, a quote nobody followed up. Then the same day with Cinder.", ("/try","Try it yourself"))+vid+tint(book,True)
-page("demo/index.html","/demo","Demo · Cinder Revenue Company","Watch a missed call get texted back in 6 seconds, qualified and booked on the calendar, and a quote followed up until it's won. 66 seconds.", demop, "/demo")
+tryd=tryp.replace('<h1 class="split">','<h2 class="split">').replace("</h1>","</h2>",1)
+demop=phead("See it work. Then try it yourself.", "A one-minute film of a missed call and a quote nobody chased, then the same day with Cinder. Below it, text the live demo like a customer would and watch it book the estimate.", ("#try","Try it yourself"))+vid+tint(tryd,True)+ideas+tint(book,True)
+page("demo/index.html","/demo","Demo · Cinder Revenue Company","Watch a missed call get texted back in seconds, qualified and booked, and a quote chased until it is won. Then text the live demo yourself. Nothing is texted or saved.", demop, "/demo")
+
+# ---------- Legal and 404 ----------
+for nm in ["privacy","terms"]:
+    b=open(T+nm+".body.html").read()
+    tt=re.search(r"<!--title:(.*?)-->",b).group(1); dd=re.search(r"<!--desc:(.*?)-->",b).group(1)
+    b=re.sub(r"<!--(title|desc):.*?-->\n","",b)
+    page(nm+".html","/"+nm,tt,dd,b+tint(book,True),"/"+nm)
+nf='''<section class="phero pnf">
+  <div class="wrap hero-in">
+    <h1 class="split">This page doesn’t exist.</h1>
+    <p class="lede">The link may be old or mistyped. Everything else is one click away.</p>
+    <div class="hero-ctas"><a class="btn btn-go" href="/">Go to the homepage</a><a class="btn btn-ghost" href="/demo">Watch the demo</a></div>
+  </div>
+</section>
+'''
+page("404.html","/404","Page not found · Cinder Revenue Company","This page doesn’t exist.",nf,"/")
 print("ok")

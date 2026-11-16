@@ -16,6 +16,17 @@
   --sel: rgba(18, 20, 23, .05);
   --ember: #d0663f;
   --ember-soft: rgba(208, 102, 63, .12);
+  /* The product window, from the site: warm canvas, white window, soft depth. */
+  --canvas: #f3f3f0;
+  --paper-2: #efefeb;
+  --wash: #fafaf8;
+  --shadow-sm: 0 1px 2px rgba(18, 20, 23, .04);
+  --shadow: 0 1px 2px rgba(18, 20, 23, .04), 0 12px 32px -14px rgba(18, 20, 23, .14);
+  --win: 0 0 0 1px rgba(18, 20, 23, .07), 0 2px 4px rgba(18, 20, 23, .03), 0 30px 80px -40px rgba(18, 20, 23, .28);
+  --good-bg: rgba(26, 143, 85, .09);
+  --ember-bg: rgba(208, 102, 63, .10);
+  --blue: #0a7cf0;
+  --blue-bg: rgba(10, 124, 240, .08);
   --msg: #1b8cff;          /* sent messages, the one place blue lives */
   --msg-in: #e9e9eb;
   --good: #1a8f55;

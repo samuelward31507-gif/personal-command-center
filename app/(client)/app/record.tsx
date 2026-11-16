@@ -179,7 +179,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
   return <div className="rec">
     <header className="rec-h">
       <button type="button" className="btn ghost ic" onClick={onBack} aria-label="Back" title="Back (esc)"><Icon name="back" size={16} /></button>
-      <div className="t"><h1>{name}</h1><span>{[fmtPhone(phone), address, since ? `Customer since ${since}` : sourceLabel(source)].filter(Boolean).join(", ")}</span></div>
+      <Avatar name={name} size="xl" /><div className="t"><h1>{name}</h1><span>{[fmtPhone(phone), address, since ? `Customer since ${since}` : sourceLabel(source)].filter(Boolean).join(", ")}</span></div>
       {card && <StageChip stage={card.stage} text={`${card.pastCustomer ? "Past customer" : STAGE_LABEL[card.stage]}${price && !biz.crew ? `, ${dollars(price)}` : ""}`} />}
       <div className="acts">
         {biz.canCall ? <button type="button" className="btn" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} />Call</button> : <a className="btn" href={`tel:${phone}`}><Icon name="phone" size={14} />Call</a>}

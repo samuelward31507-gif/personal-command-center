@@ -9,6 +9,7 @@ import { dollars, totals, type Item } from "@/lib/billing";
 import { draftItems, quoteText, type Card } from "@/lib/crm";
 import { Avatar, Empty, Icon, Sheet, Spinner, ago, dateLabel, first, fmtPhone, usd, type Api, type Toast } from "./parts";
 import { LineEditor } from "./money";
+import { Kpis, PageHead } from "./charts";
 import { line, LostPicker } from "./jobs";
 import type { Biz, Data, Go } from "./types";
 
@@ -24,6 +25,7 @@ export function quoteStatus(c: Card): QStatus | null {
   return c.quote.viewed ? "opened" : "awaiting";
 }
 const TONE: Record<QStatus, string> = { draft: "ember", awaiting: "", opened: "ink", changes: "bad", approved: "good", declined: "" };
+const CHIP: Record<QStatus, string> = { draft: "ember", awaiting: "", opened: "blue", changes: "bad", approved: "good", declined: "" };
 const amountOf = (c: Card) => c.quote?.amount ?? c.value ?? 0;
 
 type Filter = "open" | "draft" | "approved" | "declined" | "all";
@@ -41,16 +43,17 @@ export function QuotesScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean }
   const cand = (d.board ?? []).filter(c => (c.stage === "new" || c.stage === "booked") && !c.pastCustomer);
 
   return <>
-    <header className="tb"><h1 className="h1">Quotes</h1><span className="sub">{open.length ? `${open.length} open, ${usd(open.reduce((a, r) => a + amountOf(r.c), 0))}` : "Nothing out"}</span>
-      <div className="acts"><button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New quote</button></div></header>
-    <div className="pad quotes">
-      <div className="figs4">
-        <div><span>Open</span><b>{usd(open.reduce((a, r) => a + amountOf(r.c), 0))}</b><small>{open.length} {open.length === 1 ? "quote" : "quotes"}, Cinder follows up</small></div>
-        <div><span>Your move</span><b>{counts.draft + open.filter(r => r.s === "changes").length}</b><small>{counts.draft} to send, {open.filter(r => r.s === "changes").length} asked for changes</small></div>
-        <div><span>Approved, 30 days</span><b>{usd(approved30.reduce((a, r) => a + amountOf(r.c), 0))}</b><small>{approved30.length} {approved30.length === 1 ? "job" : "jobs"}</small></div>
-        <div><span>Approval rate, 90 days</span><b>{rate == null ? "–" : `${rate}%`}</b><small>approved of sent</small></div>
-      </div>
-      <div className="list-tools">
+    <PageHead title="Quotes" sub={open.length ? `${open.length} out, ${usd(open.reduce((a, r) => a + amountOf(r.c), 0))} waiting on a yes.` : "Nothing out right now."}
+      actions={<button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New quote</button>} />
+    <div className="dash quotes">
+      <Kpis items={[
+        { label: "Open", value: usd(open.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${open.length} ${open.length === 1 ? "quote" : "quotes"}, Cinder follows up`, onClick: () => setF("open"), active: f === "open" },
+        { label: "Your move", value: String(counts.draft + open.filter(r => r.s === "changes").length), sub: `${counts.draft} to send, ${open.filter(r => r.s === "changes").length} asked for changes`, tone: counts.draft ? "warn" : "", onClick: () => setF("draft"), active: f === "draft" },
+        { label: "Approved, 30 days", value: usd(approved30.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${approved30.length} ${approved30.length === 1 ? "job" : "jobs"}`, tone: approved30.length ? "up" : "", onClick: () => setF("approved"), active: f === "approved" },
+        { label: "Approval rate, 90 days", value: rate == null ? "–" : `${rate}%`, sub: "approved of sent" },
+      ]} />
+      <section className="panel">
+      <div className="list-tools panel-tools">
         <div className="views" role="tablist" aria-label="Show">{([["open", "Open"], ["draft", "Drafts"], ["approved", "Approved"], ["declined", "Declined"], ["all", "All"]] as const).map(([k, l]) =>
           <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}{counts[k] ? <em>{counts[k]}</em> : null}</button>)}</div>
         <label className="inwrap search" style={{ marginLeft: "auto", width: 220 }}><Icon name="search" size={14} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search quotes" aria-label="Search quotes" /></label>
@@ -62,7 +65,7 @@ export function QuotesScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean }
         <tbody>{shown.map(({ c, s }) => <tr key={c.id} tabIndex={0} onClick={() => go.quote(c.id)} onKeyDown={e => { if (e.key === "Enter") go.quote(c.id); }}>
           <td><span className="name"><Avatar name={c.name || c.phone} size="sm" /><b>{c.name || fmtPhone(c.phone)}</b></span></td>
           <td className={c.line ? "" : "faint"}>{line(c) || "No details yet"}</td>
-          <td><span className={"dot " + TONE[s]}>{Q_LABEL[s]}</span></td>
+          <td><span className={"chipx " + CHIP[s]}>{Q_LABEL[s]}</span></td>
           <td className="mut">{s === "opened" && c.quote?.viewed ? `Opened ${ago(c.quote.viewed)}` : ago(c.stageAt ?? c.at)}{(s === "awaiting" || s === "opened") && c.quote?.steps ? `, ${c.quote.steps} of 4 follow-ups` : ""}</td>
           <td className="num mut">{c.quote?.deposit ? usd(c.quote.deposit) : "–"}</td>
           <td className="num"><b>{amountOf(c) ? dollars(amountOf(c)) : "–"}</b></td>
@@ -70,6 +73,7 @@ export function QuotesScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean }
       : <div>{shown.map(({ c, s }) => <button key={c.id} type="button" className="jrow" onClick={() => go.quote(c.id)}>
           <span style={{ minWidth: 0 }}><b>{c.name || fmtPhone(c.phone)}</b><small>{line(c) || "No details yet"}</small></span>
           <span className="r"><b>{amountOf(c) ? usd(amountOf(c)) : "–"}</b><em className={s === "changes" ? "red" : s === "approved" ? "green" : ""}>{Q_LABEL[s]}</em></span></button>)}</div>}
+      </section>
     </div>
     {picking && <Sheet title="New quote" sub="Who is it for?" onClose={() => setPicking(false)}>
       {cand.length ? <div className="pick">{cand.map(c => <button key={c.id} type="button" className="row" onClick={() => { setPicking(false); go.quote(c.id); }}>

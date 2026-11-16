@@ -18,7 +18,8 @@ export type ReportNumbers = Funnel & {
   appts: number; noShows: number; reviews: number;
 };
 export type SourceRow = { source: string; leads: number; booked: number; quoted: number; won: number; wonValue: number };
-export type Report = { days: Period; now: ReportNumbers; before: ReportNumbers; sources: SourceRow[]; lostReasons: { reason: string; n: number }[]; openQuotes: { n: number; value: number } };
+export type Point = { label: string; leads: number; booked: number; won: number; wonValue: number; collected: number };
+export type Report = { days: Period; now: ReportNumbers; before: ReportNumbers; sources: SourceRow[]; lostReasons: { reason: string; n: number }[]; openQuotes: { n: number; value: number }; series: Point[] };
 
 const NOT_LEADS = ["import", "review", "due", "quote", "rehash"];
 
@@ -62,7 +63,8 @@ async function numbers(sql: Sql, pid: string, tz: string, from: string, to: stri
 /** The report for the last `days`, the same-length period before it, leads by source and why jobs were lost. */
 export async function reportFor(sql: Sql, pid: string, tz: string, days: Period): Promise<Report> {
   const now = new Date(), from = new Date(now.getTime() - days * 86400000), prev = new Date(from.getTime() - days * 86400000);
-  const [cur, before, src, lost, open] = await Promise.all([
+  const unit = days === 365 ? "month" : "week";
+  const [cur, before, src, lost, open, ser, pay] = await Promise.all([
     numbers(sql, pid, tz, from.toISOString(), new Date(now.getTime() + 60000).toISOString()),
     numbers(sql, pid, tz, prev.toISOString(), from.toISOString()),
     sql`SELECT t.source,
@@ -77,11 +79,20 @@ export async function reportFor(sql: Sql, pid: string, tz: string, days: Period)
       FROM public.client_texts z JOIN public.client_threads t ON t.id = z.thread_id
       WHERE t.project_id = ${pid}::uuid AND z.author = 'system' AND z.body LIKE 'Marked lost:%' AND z.at >= ${from.toISOString()}::timestamptz GROUP BY 1 ORDER BY 2 DESC` as Promise<Record<string, unknown>[]>,
     sql`SELECT count(*)::int AS n, coalesce(sum(amount), 0)::float AS value FROM public.client_quotes WHERE project_id = ${pid}::uuid AND kind = 'quote' AND status IN ('open', 'replied')` as Promise<Record<string, unknown>[]>,
+    // The trend: leads, booked and won by week (by month for a year), in the owner's time zone.
+    sql`SELECT to_char(date_trunc(${unit}, t.created_at AT TIME ZONE ${tz}), 'YYYY-MM-DD') AS k, count(*)::int AS leads,
+        count(*) FILTER (WHERE t.stage IN ('booked', 'quoted', 'won') OR t.status = 'booked' OR EXISTS (SELECT 1 FROM public.client_appointments a WHERE a.thread_id = t.id))::int AS booked,
+        count(*) FILTER (WHERE t.stage = 'won')::int AS won, coalesce(sum(t.value) FILTER (WHERE t.stage = 'won'), 0)::float AS won_value
+      FROM public.client_threads t WHERE t.project_id = ${pid}::uuid AND t.source <> ALL(${NOT_LEADS}::text[]) AND t.created_at >= ${from.toISOString()}::timestamptz GROUP BY 1 ORDER BY 1` as Promise<Record<string, unknown>[]>,
+    sql`SELECT to_char(date_trunc(${unit}, paid_on::timestamp), 'YYYY-MM-DD') AS k, sum(amount)::float AS collected FROM public.client_payments
+      WHERE project_id = ${pid}::uuid AND paid_on >= ${from.toISOString()}::date GROUP BY 1`.catch(() => []) as Promise<Record<string, unknown>[]>,
   ]);
+  const paid = new Map(pay.map(r => [String(r.k), Number(r.collected) || 0]));
   return {
     days, now: cur, before,
     sources: src.map(r => ({ source: String(r.source), leads: Number(r.leads) || 0, booked: Number(r.booked) || 0, quoted: Number(r.quoted) || 0, won: Number(r.won) || 0, wonValue: Number(r.won_value) || 0 })),
     lostReasons: lost.filter(r => r.reason).map(r => ({ reason: String(r.reason), n: Number(r.n) || 0 })),
     openQuotes: { n: Number(open[0]?.n) || 0, value: Number(open[0]?.value) || 0 },
+    series: ser.map(r => ({ label: String(r.k), leads: Number(r.leads) || 0, booked: Number(r.booked) || 0, won: Number(r.won) || 0, wonValue: Number(r.won_value) || 0, collected: paid.get(String(r.k)) ?? 0 })),
   };
 }
