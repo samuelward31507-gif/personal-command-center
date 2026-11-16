@@ -10,6 +10,7 @@ import { QuotesScreen, QuoteEditor } from "./quotes";
 import { demoApi } from "./demo";
 import { Avatar, Icon, Spinner, fmtPhone, initials, typePhone, useToast } from "./parts";
 import type { Biz, Data, Go, Tab } from "./types";
+import { mailWaiting } from "./types";
 import { splitAppointments } from "@/lib/client-schedule";
 import { TodayScreen } from "./today";
 import { JobsScreen, type JobsView } from "./jobs";
@@ -217,9 +218,10 @@ export default function CinderApp() {
   if ((setupOpen || (!demo && !setupDone && d.setup && !d.setup.onboarded_at)) && !open) return <Onboarding project={project} initial={d.setup ?? {}} api={api}
     onDone={() => setSetupDone(true)} onClose={() => { setSetupOpen(false); setSetupDone(true); setTab("jobs"); window.scrollTo(0, 0); void load(project, "jobs"); }} />;
 
-  const counts: Partial<Record<Tab, number>> = { inbox: L.needs, calendar: due.length, invoices: owed };
+  const mailN = crew ? 0 : mailWaiting(d).length;
+  const counts: Partial<Record<Tab, number>> = { inbox: L.needs + mailN, calendar: due.length, invoices: owed };
   const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = crew ? [{ k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }]
-    : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote" }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
+    : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs + mailN }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote" }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
   const phoneTab: Tab = MORE.includes(tab) ? "more" : tab;
   const active = (k: Tab) => tab === k && !open;
 
