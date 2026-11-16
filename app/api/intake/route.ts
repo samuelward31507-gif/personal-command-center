@@ -3,6 +3,7 @@ import { allowEvent, clientIp } from "@/lib/rate-limit";
 import { cleanMessages } from "@/lib/client-ops";
 import { parseLead } from "@/lib/lead-sources";
 import { webLead, type Client } from "@/lib/client-runtime-run";
+import { leadFromMail } from "@/lib/client-lead-mail-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +40,12 @@ export async function POST(req: Request) {
   // A dry run from the Connections screen: the lead is parsed and answered but nothing is saved and nobody is texted.
   if (url.searchParams.get("test") === "1") return done(200, { ok: true, test: true, lead: { name: lead.name, phone: lead.phone, source: lead.source || "web form", message: lead.message.slice(0, 200) } });
   if (!(await allowEvent("intake", clientIp(req), 20, 60))) return done(429, { error: "Too many submissions." });
-  if (!c.setup.texting_number) return done(202, { ok: true, texted: false });
+  // Before the business number is live the lead is still saved and the owner alerted; nobody is texted.
+  if (!c.setup.texting_number) {
+    await leadFromMail(neon(process.env.DATABASE_URL!), c, { name: lead.name, phone: lead.phone, email: lead.email, message: lead.message, source: lead.source, via: lead.via, smsConsent: lead.smsConsent ?? null }, false, "New lead")
+      .catch(e => console.error("Intake save failed", e instanceof Error ? e.message : e));
+    return done(200, { ok: true, texted: false });
+  }
   const r = await webLead(neon(process.env.DATABASE_URL!), c, lead, url.searchParams.get("source") ? "" : clientIp(req)).catch(e => { console.error("Intake failed", e); return { ok: false, threadId: "" }; });
   return done(200, { ok: true, texted: r.ok });
 }

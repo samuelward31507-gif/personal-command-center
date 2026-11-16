@@ -25,6 +25,7 @@ export async function GET(req: Request) {
   if (q0.get("what") === "all") {
     if (s.role !== "owner") return Response.json({ error: "Only the owner can export everything." }, { status: 403 });
     try { const sql = db(), c = await clientFor(sql, s, q0.get("p")); if (!c) return Response.json({ error: "Sign in" }, { status: 401 });
+      if (s.role !== "owner") return Response.json({ error: "Only the owner can export everything." }, { status: 403 });
       const body = await everything(sql, c), slug = (c.setup.display_name || "business").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "business";
       return new Response(new Uint8Array(body), { headers: { "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="${slug}-everything-${new Date().toISOString().slice(0, 10)}.zip"`, "Cache-Control": "no-store" } });
     } catch (e) { console.error("Export all failed", e instanceof Error ? e.message : e); return Response.json({ error: "Couldn't export." }, { status: 500 }); }
@@ -34,6 +35,7 @@ export async function GET(req: Request) {
     const sql = db();
     const c = await clientFor(sql, s, q.get("p"));
     if (!c) return Response.json({ error: "Sign in" }, { status: 401 });
+    if ((s as { role?: string }).role === "crew") return Response.json({ error: "Ask the owner for the export." }, { status: 403 });
     let body: string;
     if (what === "invoices") {
       const list = await loadInvoices(sql, c);
@@ -64,7 +66,7 @@ async function everything(sql: Sql, c: Client): Promise<Uint8Array> {
   const table = async (name: string, rows: Record<string, unknown>[]) => ({ name: name + ".csv", data: csv(rows.length ? [Object.keys(rows[0]), ...rows.map(r => Object.values(r).map(v => v instanceof Date ? v.toISOString() : v && typeof v === "object" ? JSON.stringify(v) : v))] : [["(none)"]]) });
   const q = (rows: Promise<unknown>) => rows.then(r => r as Record<string, unknown>[]).catch(() => [] as Record<string, unknown>[]);
   const files = await Promise.all([
-    table("customers", await q(sql`SELECT id, customer_name AS name, customer_phone AS phone, customer_email AS email, details->>address AS address, source, stage, status, value, notes, crew_notes, created_at, updated_at, hidden_at, source_system, source_ref FROM public.client_threads WHERE project_id = ${p}::uuid ORDER BY created_at`)),
+    table("customers", await q(sql`SELECT id, customer_name AS name, customer_phone AS phone, customer_email AS email, details->>'address' AS address, source, stage, status, value, notes, crew_notes, created_at, updated_at, hidden_at, source_system, source_ref FROM public.client_threads WHERE project_id = ${p}::uuid ORDER BY created_at`)),
     table("properties", await q(sql`SELECT id, thread_id AS customer_id, address, gate_code, notes, created_at FROM public.client_properties WHERE project_id = ${p}::uuid ORDER BY created_at`)),
     table("quotes", await q(sql`SELECT id, customer_name, customer_phone, amount, status, sent_on, items, tax_rate, deposit, note, viewed_at, approved_at, declined_at, created_at FROM public.client_quotes WHERE project_id = ${p}::uuid ORDER BY created_at`)),
     table("invoices", await q(sql`SELECT id, thread_id AS customer_id, number, status, items, tax_rate, total, paid_amount, due_on, sent_at, paid_at, note, created_at FROM public.client_invoices WHERE project_id = ${p}::uuid ORDER BY number`)),
@@ -79,8 +81,8 @@ async function everything(sql: Sql, c: Client): Promise<Uint8Array> {
   ]);
   const photos = await q(sql`SELECT id, thread_id, kind, mime, bytes, created_at FROM public.client_photos WHERE project_id = ${p}::uuid ORDER BY created_at LIMIT 2000`);
   for (const ph of photos) files.push({ name: `photos/${ph.thread_id}/${ph.kind}-${ph.id}.${String(ph.mime).includes("png") ? "png" : "jpg"}`, data: new Uint8Array(ph.bytes as Buffer) as unknown as string });
-  files.push({ name: "README.txt", data: `Everything from ${c.setup.display_name || "your business"}, exported ${new Date().toISOString().slice(0, 10)}.
-One CSV per kind of record; customer_id links them. Photos are in photos/<customer_id>/.
+  files.push({ name: "README.txt", data: `Everything from ${c.setup.display_name || "your business"}, exported ${new Date().toISOString().slice(0, 10)}.
+One CSV per kind of record; customer_id links them. Photos are in photos/<customer_id>/.
 ` });
   return zip(files as { name: string; data: string | Uint8Array }[]);
 }
