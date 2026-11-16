@@ -562,14 +562,17 @@ a.pt-draft-who:hover { text-decoration: underline !important; text-underline-off
 .td-rewrite:hover:not(:disabled) { color: var(--k-ink); box-shadow: inset 0 0 0 1px var(--k-line3); }
 .td-rewrite:disabled { opacity: .6; cursor: default; }
 
-/* Today, two columns: the work on the left, the day at a glance on the right. */
-.td-shell { max-width: 1280px; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; align-items: start; padding: 20px 40px 24px; }
-.td-main { min-width: 0; }
-.td-side { position: sticky; top: 72px; min-width: 0; }
+/* Today, two columns: the work on the left, the day at a glance on the right. One column below 1180px. */
+.td-shell { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; align-items: start; max-width: none; margin: 0; padding: 24px 32px; }
+.td-main, .td-side { min-width: 0; }
+.td-side { position: sticky; top: 72px; }
+.td-brief { max-width: 80ch; }
 .td-side .td-side-sec:first-child { margin-top: 6px; }
 .td-side .td-sec { margin-top: 28px; }
 .td-side .td-mt { height: auto; min-height: 44px; padding-top: 8px; padding-bottom: 8px; flex-wrap: wrap; row-gap: 2px; }
-.td-side .td-mt .what { flex-basis: 100%; padding-left: 17px; font-size: 12.5px; white-space: normal; }
+.td-side .td-mt > a { flex: 1 1 auto; flex-direction: column !important; gap: 1px !important; }
+.td-side .td-mt > a b { overflow: hidden; text-overflow: ellipsis; }
+.td-side .td-mt .what { flex-basis: auto; padding-left: 0; font-size: 12.5px; white-space: normal; }
 .td-side .td-mt .t { margin-left: auto; }
 .td-kpis { display: grid; grid-template-columns: 1fr 1fr; margin: 0; }
 .td-kpis > div { padding: 12px 14px; }
@@ -578,14 +581,31 @@ a.pt-draft-who:hover { text-decoration: underline !important; text-underline-off
 .td-kpis dt { font-size: 12.5px; color: var(--k-g2); margin-bottom: 4px; }
 .td-kpis dd { margin: 0; font: 600 22px/26px var(--k-display); letter-spacing: -.4px; color: var(--k-ink); }
 .td-kpis dd small { font: 500 12.5px/1 var(--k-ff); letter-spacing: 0; color: var(--k-g3); }
-.td-numbers { max-width: 1280px; padding: 0 40px; }
-.td-tbl .why { max-width: 460px; }
-@media (max-width: 1180px) { .td-shell { grid-template-columns: minmax(0, 1fr); max-width: 860px; } .td-side { position: static; } .td-numbers { max-width: 860px; } }
-.td-shell { max-width: none; margin: 0; padding: 24px 32px 24px; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; }
 .td-numbers { max-width: none; margin: 40px 0 0 !important; padding: 0 32px; }
-.td-brief { max-width: 80ch; }
-.td-side .td-mt > a { flex: 1 1 auto; }
-.td-side .td-mt > a b { overflow: hidden; text-overflow: ellipsis; }
-@media (max-width: 1180px) { .td-shell { max-width: 900px; } .td-numbers { max-width: 900px; } }
-.td-side .td-mt > a { flex-direction: column !important; gap: 1px !important; }
-.td-side .td-mt > a .what { flex-basis: auto; padding-left: 0; }
+.td-tbl .why { max-width: 460px; }
+@media (max-width: 1180px) {
+  .td-shell { grid-template-columns: minmax(0, 1fr); max-width: 900px; }
+  .td-side { position: static; }
+  .td-numbers { max-width: 900px; }
+}
+.td-kpi-meter { margin-top: 10px; }
+.td-why-sm { display: none; }
+@media (max-width: 720px) {
+  .td-shell { padding: 16px; gap: 24px; }
+  .td-tbl th:nth-child(2), .td-tbl td.why, .td-tbl tfoot td:nth-child(2) { display: none; }
+  .td-tbl td { height: auto; padding-top: 9px; padding-bottom: 9px; }
+  .td-why-sm { display: block; margin: 3px 0 0 29px; font-size: 13px; color: var(--k-g2); white-space: normal; }
+  .td-numbers { padding: 0 16px; }
+}
+
+/* Prospects on a phone: name, status and the call button; the rest lives in the record panel. */
+@media (max-width: 720px) {
+  .ct-bar .u-seg { overflow-x: auto; flex-wrap: nowrap; max-width: 100%; scrollbar-width: none; }
+  .ct-bar .u-seg button { white-space: nowrap; flex: 0 0 auto; }
+  .ct-table :is(th, td):nth-child(2), .ct-table :is(th, td):nth-child(3), .ct-table :is(th, td):nth-child(5), .ct-table :is(th, td):nth-child(6) { display: none; }
+}
+@media (max-width: 720px) {
+  .ct-page .u-tablewrap table.ct-table { min-width: 0; }
+  .ct-bar { flex-wrap: wrap; }
+  .ct-bar .u-seg { min-width: 0; flex: 1 1 100%; }
+}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import "./calendar.css";
 import CalendarViews, { isAllDay, EVENT_TONE, type CalendarEvent, type EventType, type EventStatus } from "./views";
 import { routineFor, blockTime } from "@/lib/routine";
+import { WEEKLY_MEETING_TARGET } from "@/lib/scoreboard";
 
 type Task = {id:string;title:string;status:string;priority:string;dueAt:string|null;contactName:string;dealTitle:string};
 type Contact = {id:string;name:string;company:string};
@@ -114,7 +115,7 @@ export default function CalendarPage(){
       <div className="cr-month">{["S","M","T","W","T","F","S"].map((d,k)=><span key={"h"+k} className="cr-dow">{d}</span>)}{cells.map(d=>{const inWk=view!=="month"&&d>=wkStart&&d<wkEnd&&view==="week";const isSel=view==="day"&&dateKey(d)===dateKey(anchor);return <button type="button" key={dateKey(d)} className={"cr-day"+(d.getMonth()!==anchor.getMonth()?" is-out":"")+(dateKey(d)===dateKey(today)?" is-today":"")+(inWk?" in-week":"")+(isSel?" is-sel":"")} onClick={()=>{setAnchor(d);if(view==="month")setView("day")}} aria-label={d.toDateString()}>{d.getDate()}{busyDay(d)&&<i/>}</button>})}</div>
      </div>
      <div className="cr-block cr-nums">
-      <div><span>Meetings this week</span><b>{meetings}<small> / 5</small></b></div>
+      <div><span>Meetings this week</span><b>{meetings}<small> / {WEEKLY_MEETING_TARGET}</small></b></div>
       <div><span>Dialing planned</span><b>{Math.round(dialMins/60*10)/10}<small> hrs</small></b></div>
       <div><span>Follow-ups due</span><b>{dueFollowUps}</b></div>
      </div>

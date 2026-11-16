@@ -89,50 +89,51 @@ export default function BusinessAuditPage() {
   const panelStyle: React.CSSProperties = { border: "1px solid #e7e7e4", borderRadius: 14, background: "var(--u-sheet)", color: "var(--u-text)" };
   const mutedStyle: React.CSSProperties = { color: "#515862", lineHeight: 1.65 };
 
-  return <main id="cinder-business-audit" style={{ maxWidth: 1080, margin: "0 auto", padding: "30px 22px 60px", color: "var(--u-text)", background: "var(--u-bg)", minHeight: "100vh" }}>
-    <header style={{ marginBottom: 30 }}>
-      <Link href="/crm/preparation" style={{ color: "#697381", fontSize: 13, display: "inline-block", marginBottom: 18, textDecoration: "none" }}>Back to Research</Link>
-      <p style={{ marginTop: 26, fontSize: 10, letterSpacing: 2, color: "#353a41" }}>Prospect research</p>
-      <h1 style={{ fontSize: "clamp(32px,5vw,46px)", letterSpacing: "-1.6px", margin: "8px 0", color: "var(--u-text)" }}>Business audit</h1>
-      <p style={{ maxWidth: 720, ...mutedStyle }}>Investigate the whole business before deciding whether we should sell anything. The audit ranks evidence-backed opportunities, calls out unknowns, and can recommend no sale.</p>
-    </header>
+  return <main id="cinder-business-audit" className="u-page">
+    <div className="u-head">
+      <h1 className="u-title"><Link href="/crm/preparation" className="u-dim" style={{ fontWeight: 500 }}>Research</Link><span className="u-dim">/</span>Business audit</h1>
+    </div>
+    <div style={{ maxWidth: 880, paddingTop: 20 }}>
+    <p className="u-note" style={{ maxWidth: 680, fontSize: 14, lineHeight: "21px" }}>Research the whole business before you pitch anything. The audit ranks what it can back up, lists what it can&apos;t know, and will say walk away when there&apos;s no fit.</p>
 
-    <form onSubmit={runAudit} style={{ display: "grid", gap: 18, ...panelStyle, padding: "24px clamp(16px, 3vw, 26px)" }}>
-      <section style={{ display: "grid", gap: 9, padding: 15, border: "1px solid #dcddda", borderRadius: 10, background: "var(--u-sheet)" }}>
-        <label htmlFor="audit-contact" style={{ fontSize: 12, fontWeight: 700, color: "#121417" }}>Import from your CRM</label>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 10, alignItems: "center" }}>
-          <select id="audit-contact" value={selectedContactId} onChange={e => importContact(e.target.value)} disabled={contactsLoading || contacts.length === 0} style={inputStyle}>
-            <option value="">{contactsLoading ? "Loading your contacts…" : contacts.length ? "Choose an existing contact…" : "No CRM contacts found"}</option>
-            {contacts.map(contact => <option key={contact.id} value={contact.id}>{contact.company ? `${contact.company} — ${contact.name}` : contact.name}</option>)}
+    <form onSubmit={runAudit} className="u-sheet u-sheet-pad" style={{ display: "grid", gap: 16, marginTop: 16 }}>
+      <label className="u-lab" htmlFor="audit-contact">Start from a prospect
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 8 }}>
+          <select id="audit-contact" className="u-field" value={selectedContactId} onChange={e => importContact(e.target.value)} disabled={contactsLoading || contacts.length === 0}>
+            <option value="">{contactsLoading ? "Loading prospects…" : contacts.length ? "Choose a prospect" : "No prospects yet"}</option>
+            {contacts.map(contact => <option key={contact.id} value={contact.id}>{contact.company ? `${contact.company}, ${contact.name}` : contact.name}</option>)}
           </select>
-          <button type="button" disabled={!selectedContactId} onClick={() => importContact(selectedContactId)} style={{ border: "1px solid #b4b8bd", borderRadius: 8, background: "#f1f1ef", color: "var(--u-text)", padding: "11px 13px", fontWeight: 600, cursor: selectedContactId ? "pointer" : "not-allowed", opacity: selectedContactId ? 1 : .55 }}>Import contact</button>
+          <button type="button" className="u-btn" disabled={!selectedContactId} onClick={() => importContact(selectedContactId)}>Fill in</button>
         </div>
-        <p style={{ margin: 0, fontSize: 12, ...mutedStyle }}>Pulls the contact’s company, website, location, and saved notes into the audit. You can review or edit them before researching.</p>
-      </section>
+        <span className="u-quiet" style={{ fontSize: 12.5, fontWeight: 400 }}>Brings in their company, website, location and notes. You can edit them before running.</span>
+      </label>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: 16 }}>
-        <label style={{ display: "grid", gap: 8, fontSize: 12, fontWeight: 600, color: "#121417" }}>Business name <span style={{ color: "#353a41" }}>*</span>
-          <input required value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="e.g. Horizon Pools" style={inputStyle}/>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: 12 }}>
+        <label className="u-lab">Business name
+          <input className="u-field" required value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Horizon Pools" />
         </label>
-        <label style={{ display: "grid", gap: 8, fontSize: 12, fontWeight: 600, color: "#121417" }}>Website
-          <input value={website} onChange={e => setWebsite(e.target.value)} placeholder="acme.com — leave blank to auto-discover" type="text" inputMode="url" autoComplete="url" style={inputStyle}/>
+        <label className="u-lab">Website
+          <input className="u-field" value={website} onChange={e => setWebsite(e.target.value)} placeholder="Leave blank to find it" type="text" inputMode="url" autoComplete="url" />
         </label>
-        <label style={{ display: "grid", gap: 8, fontSize: 12, fontWeight: 600, color: "#121417" }}>Location / service area
-          <input value={location} onChange={e => setLocation(e.target.value)} placeholder="City, state or service area" style={inputStyle}/>
+        <label className="u-lab">Location
+          <input className="u-field" value={location} onChange={e => setLocation(e.target.value)} placeholder="City and state" />
         </label>
       </div>
-      <label style={{ display: "grid", gap: 8, fontSize: 12, fontWeight: 600, color: "#121417" }}>Existing context <span style={{ color: "#646d7a", fontWeight: 400 }}>(optional)</span>
-        <textarea value={context} onChange={e => setContext(e.target.value)} placeholder="Imported CRM notes and contact details appear here…" rows={4} maxLength={4000} style={{ ...inputStyle, resize: "vertical", fontWeight: 400, minHeight: 112 }}/>
+      <label className="u-lab">Notes <span className="u-quiet" style={{ fontWeight: 400 }}>Optional</span>
+        <textarea className="u-field" value={context} onChange={e => setContext(e.target.value)} placeholder="What you already know about them" rows={4} maxLength={4000} />
       </label>
-      <p style={{ margin: 0, fontSize: 12, color: "#5e6672", lineHeight: 1.65 }}>Research uses public web sources. Private operating metrics remain unknown until verified with the owner. The report is saved against the imported contact when one is selected; no outreach is sent.</p>
-      {error && <p role="alert" style={{ margin: 0, padding: 12, borderRadius: 8, color: "#a32c14", background: "#f5edec", border: "1px solid #ecd6d2" }}>{error}</p>}
-      <div><button type="submit" disabled={busy || !companyName.trim()} style={{ border: "1px solid #353a41", borderRadius: 8, background: busy ? "#dcddda" : "#353a41", color: "#f6f6f4", padding: "12px 17px", fontWeight: 700, cursor: busy ? "wait" : "pointer" }}>{busy ? "Researching business…" : "Run independent audit →"}</button></div>
+      {error && <p role="alert" className="u-flash is-bad">{error}</p>}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <button type="submit" className="u-btn u-btn-light" disabled={busy || !companyName.trim()}>{busy ? "Researching…" : "Run audit"}</button>
+        <span className="u-quiet" style={{ fontSize: 12.5, fontWeight: 400 }}>Uses public sources only. Nothing is sent to the business.</span>
+      </div>
     </form>
+    </div>
 
-    {busy && <section aria-live="polite" style={{ marginTop: 18, ...panelStyle, padding: 20, color: "#515862" }}>Searching public sources and assessing opportunities across marketing, lead handling, sales, follow-up, customer experience, retention, operations, and competitive position. This may take up to a minute.</section>}
-    {audit?.reused && <p role="status" style={{ marginTop: 18, padding: "10px 14px", border: "1px solid #dcddda", borderRadius: 10, background: "var(--u-sheet)", color: "#25282d", fontSize: 13 }}>
-      This business was audited in the last 10 minutes, so this is the saved report (no new research was run or charged).{" "}
-      <button type="button" onClick={() => void runAudit(null, true)} disabled={busy} style={{ border: 0, background: "transparent", color: "#353a41", fontWeight: 700, cursor: "pointer", padding: 0 }}>Run a fresh audit</button>
+    {busy && <p aria-live="polite" className="u-flash" style={{ marginTop: 16, maxWidth: 880 }}>Searching their website, reviews and listings. This can take up to a minute.</p>}
+    {audit?.reused && <p role="status" className="u-flash" style={{ marginTop: 16, maxWidth: 880 }}>
+      This business was audited in the last 10 minutes, so this is the saved report.{" "}
+      <button type="button" className="u-btn u-btn-bare" onClick={() => void runAudit(null, true)} disabled={busy}>Run it again</button>
     </p>}
     {audit && <AuditReport audit={audit} />}
   </main>;

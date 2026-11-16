@@ -348,7 +348,7 @@ export default function Dashboard() {
             : <table className="td-tbl">
                 <thead><tr><th>Company</th><th>Why now</th><th className="num">Last touch</th></tr></thead>
                 <tbody>{calls.map(q => <tr key={q.id} onClick={() => { window.location.href = `/crm?contact=${q.contact!.id}`; }}>
-                  <td><span className="td-nm"><Logo name={nameOf(q.contact)} website={q.contact!.website} size={20} /><b>{nameOf(q.contact)}</b></span></td>
+                  <td><span className="td-nm"><Logo name={nameOf(q.contact)} website={q.contact!.website} size={20} /><b>{nameOf(q.contact)}</b></span><span className="td-why-sm">{q.why || q.title}</span></td>
                   <td className="why">{q.why || q.title}</td>
                   <td className={"num" + (q.status === "overdue" ? " td-due" : "")}>{q.status === "overdue" ? "Overdue" : shortAgo(q.lastActivity)}</td>
                 </tr>)}</tbody>
@@ -362,12 +362,11 @@ export default function Dashboard() {
         <div className="td-sh">Today</div>
         <div className="td-card td-stats-card">
           <dl className="td-kpis">
-            <div><dt>Dials</dt><dd className="u-num">{b ? b.today.calls : "—"}<small> / {target}</small></dd></div>
+            <div><dt>Dials</dt><dd className="u-num">{b ? b.today.calls : "—"}<small> / {target}</small></dd><div className="u-meter td-kpi-meter"><i style={{ width: Math.min(100, ((b?.today.calls ?? 0) / Math.max(1, target)) * 100) + "%" }} /></div></div>
             <div><dt>Conversations</dt><dd className="u-num">{b ? b.today.connects : "—"}</dd></div>
             <div><dt>Meetings this week</dt><dd className="u-num">{b ? b.week.meetings : "—"}<small> / {WEEKLY_MEETING_TARGET}</small></dd></div>
             <div><dt>Streak</dt><dd className="u-num">{b ? b.streak : "—"}<small> days</small></dd></div>
           </dl>
-          <div className="u-meter" style={{ margin: "0 14px 14px" }}><i style={{ width: Math.min(100, ((b?.today.calls ?? 0) / Math.max(1, target)) * 100) + "%" }} /></div>
         </div>
       </section>
       {waiting.length > 0 && <section className="td-sec td-side-sec">
@@ -399,8 +398,8 @@ export default function Dashboard() {
     <section className="u-block cp-month-wrap">
       <div className="u-h2-row"><h2 className="u-h2">This month</h2></div>
     <div className="u-figs cp-month">
-      <Link href="/crm/calendar" className="u-fig"><span className="u-fig-k">Meetings this week</span><div className="u-fig-v">{b ? b.week.meetings : "—"}<small>/ {WEEKLY_MEETING_TARGET}</small></div><div className="u-meter"><i style={{ width: Math.min(100, ((b?.week.meetings ?? 0) / WEEKLY_MEETING_TARGET) * 100) + "%" }} /></div><div className="u-fig-sub">{b ? <><b>{b.week.connects}</b> conversations from {b.week.calls} dials</> : ""}</div></Link>
-      <Link href="/crm/finance" className="u-fig"><span className="u-fig-k">Monthly recurring</span><div className="u-fig-v">{b ? usd(b.recurring.mrr) : "—"}<small>/mo</small></div><div className="u-meter"><i style={{ width: Math.min(100, ((b?.recurring.mrr ?? 0) / MOVE_OUT_MRR) * 100) + "%" }} /></div><div className="u-fig-sub">{b ? <><b>{usd(Math.max(0, MOVE_OUT_MRR - b.recurring.mrr))}</b> to {usd(MOVE_OUT_MRR)}, {b.recurring.clients} client{b.recurring.clients === 1 ? "" : "s"}</> : ""}</div></Link>
+      <Link href="/crm/scoreboard" className="u-fig"><span className="u-fig-k">Dials this week</span><div className="u-fig-v">{b ? b.week.calls : "—"}<small>/ {target * 5}</small></div><div className="u-meter"><i style={{ width: Math.min(100, ((b?.week.calls ?? 0) / Math.max(1, target * 5)) * 100) + "%" }} /></div><div className="u-fig-sub">{b ? <><b>{b.week.connects}</b> conversations, <b>{b.week.meetings}</b> meeting{b.week.meetings === 1 ? "" : "s"}</> : ""}</div></Link>
+      <Link href="/crm/finance" className="u-fig"><span className="u-fig-k">Monthly recurring</span><div className="u-fig-v">{b ? usd(b.recurring.mrr) : "—"}<small>/mo</small></div><div className="u-meter"><i style={{ width: Math.min(100, ((b?.recurring.mrr ?? 0) / MOVE_OUT_MRR) * 100) + "%" }} /></div><div className="u-fig-sub">{b ? <><b>{usd(Math.max(0, MOVE_OUT_MRR - b.recurring.mrr))}</b> short of {usd(MOVE_OUT_MRR)}, {b.recurring.clients} client{b.recurring.clients === 1 ? "" : "s"}</> : ""}</div></Link>
       <Link href="/crm/finance" className="u-fig"><span className="u-fig-k">{b?.targets?.goalLabel ?? "Revenue goal"}</span><div className="u-fig-v">{g ? usd(g.collected) : "—"}</div><div className="u-meter"><i style={{ width: (g?.progressPct ?? 0) + "%" }} /></div><div className="u-fig-sub">{g ? <><b>{g.daysLeft}</b> days left, {usd(g.goal)} goal</> : ""}</div></Link>
     </div>
 

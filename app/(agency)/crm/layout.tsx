@@ -23,7 +23,7 @@ function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/client-success")) return "Clients";
   if (pathname.startsWith("/crm/reports")) return "Client reports";
   if (pathname.startsWith("/crm/finance")) return "Money";
-  if (pathname.startsWith("/crm/pipeline")) return "Pipeline";
+  if (pathname.startsWith("/crm/pipeline")) return "Deals";
   if (pathname.startsWith("/crm/deals")) return "Deal";
   if (pathname.startsWith("/crm/outreach")) return "Outreach";
   if (pathname.startsWith("/crm/preparation")) return "Research";
