@@ -139,7 +139,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
         <Link href="/crm/needs-you" className="cx-ws" onClick={() => setMobileOpen(false)} title={wsName}>
           {collapsed
             ? (custom ? <span className="cx-ws-mark is-text">{wsName.trim().charAt(0).toUpperCase()}</span> : <span className="cx-ws-mark"><CinderMark ring={CINDER_MONO} ember={CINDER_MONO} /></span>)
-            : <BrandWordmark name={ws.businessName} logoUrl={ws.logoUrl} className="cx-logo" mono fallbackTitle="Cinder" />}
+            : <BrandWordmark name={ws.businessName} logoUrl={ws.logoUrl} className="cx-logo" mono small fallbackTitle="Cinder" />}
         </Link>
         <button type="button" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <Icon name="rail" />
