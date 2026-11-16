@@ -47,7 +47,7 @@ function ownNumbers(c: Client): string[] {
 }
 
 /** A lead from an email, onto the board. Returns the thread. `textBack` false: saved and the owner alerted, nobody texted. */
-async function leadFromMail(sql: Sql, c: Client, lead: MailLead, textBack: boolean): Promise<string> {
+export async function leadFromMail(sql: Sql, c: Client, lead: MailLead, textBack: boolean, how = "Lead email"): Promise<string> {
   let id: string;
   if (textBack && c.setup.texting_number) {
     id = (await webLead(sql, c, { name: lead.name, phone: lead.phone, email: lead.email, message: lead.message, source: lead.source, via: lead.via })).threadId;
@@ -61,7 +61,7 @@ async function leadFromMail(sql: Sql, c: Client, lead: MailLead, textBack: boole
         last_in_at = now(), updated_at = now()
       WHERE id = ${id}::uuid`;
     await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${id}::uuid, 'in', 'system',
-      ${`Lead email from ${lead.via}${lead.message ? `: "${lead.message.slice(0, 300)}"` : ""}${lead.email ? ` · ${lead.email}` : ""}`})`;
+      ${`${how} from ${lead.via}${lead.message ? `: "${lead.message.slice(0, 300)}"` : ""}${lead.email ? ` · ${lead.email}` : ""}`})`;
     await alertOwner(c, ownerAlert("new", lead.name || lead.phone, `${lead.via === "email" ? "Emailed you" : `${lead.via}, by email`}${lead.message ? `: ${lead.message.slice(0, 110)}` : ""}. Not texted yet, it's yours.`), id, sql);
     void emitEvent(c.setup, c.projectId, "lead.new", { customer: { id, name: lead.name, phone: lead.phone, email: lead.email }, source: lead.source, message: lead.message.slice(0, 1000) });
   }

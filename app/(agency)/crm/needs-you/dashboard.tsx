@@ -372,7 +372,7 @@ export default function Dashboard() {
       {waiting.length > 0 && <section className="td-sec td-side-sec">
         <div className="td-sh">Waiting on you<span className="ct">{waiting.length}</span></div>
         <div className="td-card">{waiting.map(t => <Link key={t.key} className="td-mt" href={t.href} target={t.href.startsWith("http") ? "_blank" : undefined}>
-          <span className="dot" style={{ background: t.overdue ? "#e0602f" : "#b5bdc9" }} /><b>{t.title}</b>{t.why && <span className="what">{t.why}</span>}<span className="t">{t.action}</span>
+          <span className="dot" style={{ background: t.overdue ? "#F2431D" : "#b5bdc9" }} /><b>{t.title}</b>{t.why && <span className="what">{t.why}</span>}<span className="t">{t.action}</span>
         </Link>)}</div>
       </section>}
 

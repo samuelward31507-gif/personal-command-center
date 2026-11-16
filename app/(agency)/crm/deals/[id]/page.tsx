@@ -14,6 +14,7 @@ import { OUTCOME_LABELS, type CallOutcome } from "@/lib/call-outcomes";
 import { Markdown } from "../../../ask-answer";
 import "../../../home-search.css";
 import "./deal.css";
+import { LogoOrAvatar } from "../../../ui/parts";
 
 type DealTab = "discovery" | "proposal" | "agreement" | "kickoff" | "email";
 type Workspace = {
@@ -160,7 +161,7 @@ export default function DealWorkspacePage() {
   }
   async function switchAddon(on: boolean) {
     setAddon(on);
-    if (ws?.agreements[0]) await draftAgreement(`Reactivation add-on ${on ? "added" : "removed"}. The agreement was rewritten: fill in his address and company type again${deal_sent() ? ", then send a new signing link" : ""}.`, on);
+    if (ws?.agreements[0]) await draftAgreement(`Reactivation campaign ${on ? "added" : "removed"}. The agreement was rewritten: fill in his address and company type again${deal_sent() ? ", then send a new signing link" : ""}.`, on);
   }
   const deal_sent = () => ws?.deal.contractStatus === "sent";
   async function draftAgreement(done?: string, withAddon?: boolean) {
@@ -292,8 +293,8 @@ export default function DealWorkspacePage() {
                 {Object.values(offersFrom(wsp)).map(o => <option key={o.serviceType} value={o.serviceType}>{o.label}: ${o.setupFee.toLocaleString("en-US")} setup + ${o.monthlyFee.toLocaleString("en-US")}/mo</option>)}
                 {!Object.values(offersFrom(wsp)).some(o => o.serviceType === deal.serviceType) && <option value={deal.serviceType}>Custom plan</option>}
               </select></label>
-            <label className="dw-signfor-add"><input type="checkbox" checked={addon} disabled={!!saving} onChange={e => void switchAddon(e.target.checked)} /> Reactivation add-on (+$497/mo)</label>
-            <span className="dw-signfor-price">{money(deal.setupFee)} setup · {money(deal.monthlyFee + (addon ? 497 : 0))}/mo <button type="button" className="dw-price-btn" onClick={() => setPriceEdit({ svc: deal.serviceType, setup: String(deal.setupFee), monthly: String(deal.monthlyFee) })}>Custom price</button></span>
+            <label className="dw-signfor-add"><input type="checkbox" checked={addon} disabled={!!saving} onChange={e => void switchAddon(e.target.checked)} /> Reactivation campaign <span className="dw-muted-i">+$497 one time</span></label>
+            <span className="dw-signfor-price"><b className="u-num">{money(deal.setupFee + (addon ? 497 : 0))}</b> due at signing · <b className="u-num">{money(deal.monthlyFee)}</b>/mo <button type="button" className="dw-price-btn" onClick={() => setPriceEdit({ svc: deal.serviceType, setup: String(deal.setupFee), monthly: String(deal.monthlyFee) })}>Custom price</button></span>
           </div>);
   // The agreement is one click from every open deal: on a call, you go straight from "yes" to the signing link.
   const showAgreement = !closed || deal.contractStatus !== "none" || !!agreement;
@@ -312,16 +313,24 @@ export default function DealWorkspacePage() {
   const blanks = agreement ? (agreement.content.match(/\[[^\]\n]{1,80}\]/g) ?? []).length : 0;
 
   return <div className="u-page dw-page" role="region" aria-label="Deal">
-    <Link className="dw-back" href="/crm/pipeline">Pipeline</Link>
+    <div className="u-head">
+      <h1 className="u-title"><Link href="/crm/pipeline" className="u-dim dw-crumb">Deals</Link><span className="u-dim">/</span><span className="dw-crumb-name">{contact?.company || deal.title}</span></h1>
+      <div className="u-head-actions">
+        {contact && <Link className="u-btn" href={`/crm?contact=${contact.id}`}>Open prospect</Link>}
+        {contact?.phone && <a className="u-btn u-btn-light" href={"tel:" + contact.phone.replace(/[^+\d]/g, "")}>Call</a>}
+      </div>
+    </div>
     <header className="dw-head">
-      <div>
-        <div className="dw-eyebrow">{offer?.label ?? "Deal"}</div>
-        <h1 className="dw-title">{contact?.company || deal.title}</h1>
-        <div className="dw-meta">
-          {contact?.name && <span>{contact.name}</span>}
-          {contact?.phone && <a href={"tel:" + contact.phone.replace(/[^+\d]/g, "")}>{contact.phone}</a>}
-          {contact?.email && <span>{contact.email}</span>}
-          {contact && <Link href={`/crm?contact=${contact.id}`}>Contact record</Link>}
+      <div className="dw-id">
+        <LogoOrAvatar name={contact?.company || deal.title} website={(contact as { website?: string | null } | null)?.website ?? null} size={44} />
+        <div className="dw-id-text">
+          <div className="dw-title-row"><h2 className="dw-title">{contact?.company || deal.title}</h2><span className="lg-pill" data-tone={deal.stage === "won" ? "green" : deal.stage === "lost" ? "red" : "blue"}>{STAGE_LABELS[deal.stage as keyof typeof STAGE_LABELS] ?? deal.stage}</span></div>
+          <div className="dw-meta">
+            <span className="dw-meta-plan">{offer?.label ?? "Custom plan"}</span>
+            {contact?.name && <span>{contact.name}</span>}
+            {contact?.phone && <a href={"tel:" + contact.phone.replace(/[^+\d]/g, "")}>{contact.phone}</a>}
+            {contact?.email && <a href={"mailto:" + contact.email}>{contact.email}</a>}
+          </div>
         </div>
       </div>
       {priceEdit ? <form className="dw-price-edit" onSubmit={e => { e.preventDefault();
@@ -337,16 +346,19 @@ export default function DealWorkspacePage() {
         <label>Monthly<input inputMode="decimal" value={priceEdit.monthly} onChange={e => setPriceEdit({ ...priceEdit, monthly: e.target.value.replace(/[^0-9.]/g, "") })} /></label>
         <span className="dw-price-acts"><button type="submit" data-variant="primary" disabled={!!saving}>{saving === "price" ? "Saving…" : "Save"}</button><button type="button" onClick={() => setPriceEdit(null)}>Cancel</button></span>
       </form>
-      : <div className="dw-value"><strong>{money(deal.setupFee)}</strong><span>setup</span><strong>{money(deal.monthlyFee)}</strong><span>/ month</span>
+      : <div className="dw-value">
+        <div><span>Setup</span><strong className="u-num">{money(deal.setupFee)}</strong></div>
+        <div><span>Monthly</span><strong className="u-num">{money(deal.monthlyFee)}</strong></div>
         {!closed && deal.contractStatus !== "signed" && <button type="button" className="dw-price-btn" onClick={() => setPriceEdit({ svc: deal.serviceType, setup: String(deal.setupFee), monthly: String(deal.monthlyFee) })}>Edit price</button>}</div>}
     </header>
 
     <div className="dw-stages" aria-label="Stage">
-      {DEAL_STAGES.map(s => {
+      {DEAL_STAGES.map((s, si) => {
         const order = DEAL_STAGES.indexOf(s as typeof DEAL_STAGES[number]);
         const cur = DEAL_STAGES.indexOf(deal.stage as typeof DEAL_STAGES[number]);
         const state = s === deal.stage ? "is-on" : deal.stage !== "lost" && order < cur && s !== "lost" ? "is-past" : "";
-        return <button data-variant="primary" key={s} className={"dw-stage " + state} disabled={!!saving || s === deal.stage}
+        const exit = s === "lost" || s === "nurture";
+        return <button data-variant="primary" key={s} className={"dw-stage " + state + (exit ? " is-exit" : "") + (s === "lost" && si > 0 ? " is-first-exit" : "")} disabled={!!saving || s === deal.stage}
           onClick={() => {
             if (s === "won" && !confirm("Mark Won? Onboarding starts and payments are booked as expected, not paid.")) return;
             if (s === "lost") { const reason = prompt("Why was it lost?"); if (!reason) return; void patch({ stage: s, lostReason: reason }, "stage", "Moved to Lost."); return; }
@@ -358,7 +370,7 @@ export default function DealWorkspacePage() {
               void patch({ stage: s, nextStep: "Check back in", nextStepAt: at }, "stage", `Parked in Nurture. It comes back to Today on ${dateLabel(at)}.`); return;
             }
             void patch({ stage: s }, "stage", `Moved to ${STAGE_LABELS[s]}.`);
-          }}>{STAGE_LABELS[s]}</button>;
+          }}>{state === "is-past" && <svg viewBox="0 0 16 16" aria-hidden="true" className="dw-tick"><path d="M3.5 8.5l3 3 6-7" /></svg>}{STAGE_LABELS[s]}</button>;
       })}
     </div>
     {deal.stage === "lost" && deal.lostReason && <p className="dw-muted">Lost: {deal.lostReason}</p>}
@@ -400,7 +412,7 @@ export default function DealWorkspacePage() {
           <p className="dw-when"><b>When to send:</b> only if he doesn't sign on the call. Send it the same day with a follow-up time booked. If he says yes on the call, skip it and send the agreement.</p>
           {!proposal ? <>
             <p className="dw-hint">Built from this deal's plan and price, with your Stripe setup link. Instant. You can edit it before it goes out.</p>
-            <label className="dw-check"><input type="checkbox" checked={propAddon} onChange={e => setPropAddon(e.target.checked)} /> Include the Reactivation add-on</label>
+            <label className="dw-check"><input type="checkbox" checked={propAddon} onChange={e => setPropAddon(e.target.checked)} /> Include the Reactivation campaign ($497 one time)</label>
             <button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "proposal"} onClick={() => void draftProposal()}>{saving === "proposal" ? "Creating…" : "Create proposal"}</button>
           </> : editing?.id === proposal.id ? <>
             <textarea className="dw-editor" rows={18} value={editing.content} onChange={e => setEditing({ ...editing, content: e.target.value })} />
@@ -428,7 +440,7 @@ export default function DealWorkspacePage() {
           <p className="dw-when"><b>When to send:</b> on the call, the moment he says yes. Send the signing link and stay on until he signs. The setup payment link emails him automatically when he does.</p>
           {!agreement ? <>
             <p className="dw-hint">Your service agreement, filled in with this deal's plan, price and client, with an itemized Statement of Work in Schedule A. Anything Cinder doesn't know stays as a [bracketed] blank for you.</p>
-            <label className="dw-hint" style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={addon} onChange={e => setAddon(e.target.checked)} /> Include the Reactivation add-on ($497/month)</label>
+            <label className="dw-hint" style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={addon} onChange={e => setAddon(e.target.checked)} /> Include the Reactivation campaign ($497 one time)</label>
             <button data-variant="primary" className="dw-btn dw-primary" disabled={saving === "agreement"} onClick={() => void draftAgreement()}>{saving === "agreement" ? "Creating…" : "Create agreement"}</button>
           </> : agEdit?.id === agreement.id ? <>
             <textarea className="dw-editor" rows={22} value={agEdit.content} onChange={e => setAgEdit({ ...agEdit, content: e.target.value })} />
@@ -517,8 +529,8 @@ export default function DealWorkspacePage() {
             <button data-variant="primary" className="dw-btn" disabled={!!saving} onClick={() => void patch({ nextStep: "Ask for a referral", nextStepAt: inDays(30) }, "next", "Referral ask scheduled for 30 days out — it'll show in Today.")}>Remind me to ask for a referral</button></div>
         </section>}
         <section className="u-sheet dw-box"><h2>Meetings</h2>{ws.events.length ? ws.events.map(e => <div key={e.id} className="dw-line"><span>{e.title}</span><small>{new Date(e.startsAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</small></div>) : <p className="dw-muted">None yet.</p>}</section>
-        <section className="u-sheet dw-box"><h2>Open tasks</h2>{ws.tasks.length ? ws.tasks.map(t => <div key={t.id} className="dw-line"><span>{t.title}</span><small>{t.due ? dateLabel(t.due) : t.priority}</small></div>) : <p className="dw-muted">None.</p>}</section>
-        <section className="u-sheet dw-box"><h2>Call history</h2>{ws.activity.length ? ws.activity.map((a, i) => <div key={i} className="dw-line"><span>{OUTCOME_LABELS[a.outcome as CallOutcome] ?? a.outcome.replace(/_/g, " ")}{a.notes ? ` — ${a.notes.slice(0, 80)}` : ""}</span><small>{dateLabel(a.at)}</small></div>) : <p className="dw-muted">No calls logged.</p>}</section>
+        <section className="u-sheet dw-box"><h2>Open tasks</h2>{ws.tasks.length ? ws.tasks.map(t => <div key={t.id} className="dw-line"><span title={t.title}>{t.title}</span><small>{t.due ? dateLabel(t.due) : t.priority}</small></div>) : <p className="dw-muted">None.</p>}</section>
+        <section className="u-sheet dw-box"><h2>Call history</h2>{ws.activity.length ? ws.activity.map((a, i) => <div key={i} className="dw-line dw-line-act"><span><b>{a.outcome === "other" ? "Note" : a.outcome === "completed" ? (a.channel === "text" ? "Text sent" : "Done") : OUTCOME_LABELS[a.outcome as CallOutcome] ?? (a.outcome.charAt(0).toUpperCase() + a.outcome.slice(1).replace(/_/g, " "))}</b>{a.notes ? <em title={a.notes}>{a.notes.slice(0, 220)}</em> : null}</span><small>{dateLabel(a.at)}</small></div>) : <p className="dw-muted">No calls logged.</p>}</section>
       </div>
     </div>
   </div>;

@@ -2,8 +2,8 @@
    hairlines, real product UI that is always quietly working, and near-black buttons. The only colour is the
    ember dot in the logo, iMessage blue inside the phone, and green where something got done. */
 :root {
-  --bg: #f6f6f4;
-  --bg-2: #efefec;
+  --bg: #f6f7f9;
+  --bg-2: #eef0f3;
   --card: #ffffff;
   --text: #121417;
   --text-2: #4a4f57;
@@ -57,7 +57,7 @@ h3 { font-family: var(--head); font-size: 19px; font-weight: 600; line-height: 1
 
 /* Nav */
 .nav { position: fixed; inset: 0 0 auto; z-index: 50; border-bottom: 1px solid transparent; transition: background .3s, border-color .3s; }
-.nav.is-scrolled { background: rgba(246, 246, 244, .82); -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px); border-bottom-color: var(--line); }
+.nav.is-scrolled { background: rgba(246, 247, 249, .82); -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px); border-bottom-color: var(--line); }
 .nav-in { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 66px; }
 .brand svg { height: 24px; width: auto; color: var(--text); }
 .nav-links { display: flex; gap: 2px; }
@@ -90,11 +90,11 @@ h3 { font-family: var(--head); font-size: 19px; font-weight: 600; line-height: 1
 .win { --w-line: rgba(18,20,23,.07); --w-2: #4a4f57; --w-3: #8b9098; position: relative; width: calc(100% - 140px); border-radius: 14px; background: #fff; overflow: hidden; font-size: 13px; line-height: 1.4; text-align: left; color: var(--text);
   box-shadow: 0 0 0 1px rgba(18,20,23,.08), 0 2px 4px rgba(18,20,23,.03), 0 40px 100px -40px rgba(18,20,23,.35); transition: opacity .45s; }
 .win.resetting { opacity: .5; }
-.win-bar { display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border-bottom: 1px solid var(--w-line); background: #fafaf9; }
-.win-bar i { width: 11px; height: 11px; border-radius: 50%; background: #e4e4e1; }
+.win-bar { display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border-bottom: 1px solid var(--w-line); background: #fafbfc; }
+.win-bar i { width: 11px; height: 11px; border-radius: 50%; background: #e3e5e9; }
 .win-bar > span { margin-left: 10px; color: var(--w-3); font-size: 12px; }
 .win-body { position: relative; display: grid; grid-template-columns: 176px 1fr 250px; min-height: 470px; }
-.win-side { border-right: 1px solid var(--w-line); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; color: var(--w-2); background: #fafaf9; }
+.win-side { border-right: 1px solid var(--w-line); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; color: var(--w-2); background: #fafbfc; }
 .win-logo { font: 600 16px/1 var(--head); letter-spacing: -.03em; color: var(--text); padding: 4px 10px 18px; display: flex; gap: 2px; }
 .win-logo em { width: 6px; height: 6px; border-radius: 50%; background: var(--ember); margin-top: -2px; }
 .win-side > span { padding: 7px 10px; border-radius: 7px; display: flex; align-items: center; gap: 9px; }
@@ -277,7 +277,7 @@ h3 { font-family: var(--head); font-size: 19px; font-weight: 600; line-height: 1
 .bx { position: relative; border-radius: 20px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; min-height: 380px; transition: box-shadow .3s, transform .4s var(--ease); }
 .bx:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
 .bx-wide { grid-column: span 2; }
-.bx-vis { flex: 1; display: grid; place-items: center; padding: 28px 28px 22px; position: relative; background: linear-gradient(180deg, #fafaf9, #fff); border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+.bx-vis { flex: 1; display: grid; place-items: center; padding: 28px 28px 22px; position: relative; background: linear-gradient(180deg, #fafbfc, #fff); border-bottom: 1px solid var(--line); margin-bottom: 22px; }
 .bx-copy { padding: 0 28px 28px; }
 .bx-copy p { margin-top: 8px; color: var(--text-3); font-size: 15px; line-height: 1.55; max-width: 44ch; }
 .big-clock { text-align: center; width: 100%; }
@@ -481,7 +481,7 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 /* ---------- Conversion pieces ---------- */
 .hero-terms b { color: var(--text-2); font-weight: 600; }
 .calc-cta { margin-top: 26px; align-self: flex-start; background: #fff; color: var(--text); min-height: 46px; font-size: 15px; }
-.calc-cta:hover { background: #ececea; }
+.calc-cta:hover { background: #eceef1; }
 
 /* Try it */
 .try { display: grid; grid-template-columns: 1.1fr .9fr; gap: 64px; align-items: center; }
@@ -675,7 +675,7 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 .nav-menu i { display: block; width: 16px; height: 1.5px; background: var(--text); transition: transform .25s var(--ease); }
 .nav.is-open .nav-menu i:first-child { transform: translateY(3.25px) rotate(45deg); } .nav.is-open .nav-menu i:last-child { transform: translateY(-3.25px) rotate(-45deg); }
 .nav-sheet { display: none; }
-.nav.is-open { background: rgba(246,246,244,.96); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); border-bottom-color: var(--line); }
+.nav.is-open { background: rgba(246,247,249,.96); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); border-bottom-color: var(--line); }
 @media (max-width: 760px) {
   .nav-menu { display: flex; order: 2; }
   .nav-sheet:not([hidden]) { display: flex; flex-direction: column; padding: 6px 20px 18px; animation: up .3s var(--ease) both; }
@@ -766,3 +766,15 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 .legal a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
 .legal a:hover { text-decoration-color: currentColor; }
 .pnf { min-height: 62vh; display: flex; align-items: center; }
+
+.notif .ic.ic-logo { background: none; padding: 0; overflow: hidden; }
+.notif .ic.ic-logo svg { display: block; }
+
+/* Announcement bar: the "New" line lives above the menu, out of the hero, and folds away once you scroll */
+.announce { display: flex; align-items: center; justify-content: center; gap: 10px; height: 36px; padding: 0 16px; background: #121417; color: rgba(255,255,255,.86); font-size: 13.5px; text-decoration: none; overflow: hidden; transition: height .3s var(--ease, ease), opacity .2s; }
+.announce:hover { color: #fff; }
+.announce-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 6px; background: #F2431D; color: #fff; font-size: 12px; font-weight: 600; }
+.announce svg { width: 13px; height: 13px; opacity: .7; }
+.announce .pl-short { display: none; }
+.nav.is-scrolled .announce { height: 0; opacity: 0; }
+@media (max-width: 760px) { .announce { font-size: 12.5px; } .announce .pl-long { display: none; } .announce .pl-short { display: inline; } }

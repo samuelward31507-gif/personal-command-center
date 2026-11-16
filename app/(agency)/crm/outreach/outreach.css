@@ -62,7 +62,7 @@
 .outreach-progress { display: flex; gap: 4px; margin-left: 42px; max-width: 320px; }
 .outreach-progress span { height: 4px; flex: 1; background: #eceef1; border-radius: 4px; }
 .outreach-progress span.done { background: #232529; }
-.outreach-progress span.current { background: #e0602f; }
+.outreach-progress span.current { background: #F2431D; }
 .outreach-card-actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; min-width: 150px; justify-content: center; }
 .outreach-empty { padding: 44px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
 .outreach-empty > div { font-size: 20px; color: var(--k-g3); }

@@ -17,12 +17,15 @@ export async function clientFor(sql: Sql, s: AppSession, projectId: string | nul
   const [r] = await sql`SELECT project_id, owner_id, setup, messages FROM public.client_ops WHERE project_id = ${pid}::uuid` as Record<string, unknown>[];
   if (!r) return null;
   const setup = (r.setup ?? {}) as Record<string, string>;
-  if (s.role && s.role !== "owner") {
-    const p = (s.phone || "").replace(/\D/g, "").slice(-10);
-    const m = parseTeam(setup.team).find(x => x.cell.slice(-10) === p);
-    if (!m && (setup.owner_cell || "").replace(/\D/g, "").slice(-10) !== p) return null;
-    s.role = !m ? "owner" : m.role;
-  }
+  // The role is this business's, checked on every request: owner of one business and crew in another is crew there,
+  // and a cell taken off the team (or a changed owner cell) stops working right away.
+  const p = (s.phone || "").replace(/\D/g, "").slice(-10), ownerCell = (setup.owner_cell || "").replace(/\D/g, "").slice(-10);
+  const m = p ? parseTeam(setup.team).find(x => x.cell.slice(-10) === p) : undefined;
+  if (p && p === ownerCell) s.role = "owner";
+  else if (m) s.role = m.role;
+  // Signed in from the portal link of a business with no cell on file yet: that link is the owner's.
+  else if (!p && !ownerCell && (!s.role || s.role === "owner") && s.projects.length === 1) s.role = "owner";
+  else return null;
   return { projectId: String(r.project_id), owner: String(r.owner_id), setup, messages: cleanMessages(r.messages) };
 }
 
