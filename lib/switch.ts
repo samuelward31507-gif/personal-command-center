@@ -6,7 +6,20 @@ import { parseCsv } from "@/lib/customer-import";
 
 // ---------- The plain shape ----------
 export type NProperty = { ref: string; address: string; gate?: string; notes?: string };
-export type NCustomer = { ref: string; name: string; company?: string; phone: string; email: string; notes: string; tags?: string; since?: string | null; properties: NProperty[]; lead?: boolean };
+export type NFile = { name: string; url: string };
+export type NCustomer = { ref: string; name: string; company?: string; phone: string; email: string; notes: string; tags?: string; since?: string | null; properties: NProperty[]; lead?: boolean; files?: NFile[] };
+/** A photo a browser can show. Other files (PDFs, HEIC) stay as a named mention in the notes. */
+export const isPhotoName = (n: string) => /\.(jpe?g|png|webp|gif)$/i.test(String(n || "").trim());
+/** Only plain https links on a public host: no credentials, no local or private addresses. */
+export function safeFileUrl(raw: unknown): string | null {
+  try {
+    const u = new URL(String(raw ?? "").trim());
+    if (u.protocol !== "https:" || u.username || u.password) return null;
+    const h = u.hostname.toLowerCase();
+    if (h === "localhost" || h.endsWith(".local") || h.endsWith(".internal") || /^(\d+\.){3}\d+$/.test(h) || h.includes(":")) return null;
+    return u.toString();
+  } catch { return null; }
+}
 export type NLine = { name: string; qty: number; unit: string; price: number };
 export type NQuote = { ref: string; customerRef: string; number?: string; status: "draft" | "open" | "approved" | "declined"; items: NLine[]; total: number; sent?: string | null; title?: string };
 export type NJob = { ref: string; customerRef: string; number?: string; title: string; status: "scheduled" | "active" | "done"; start?: string | null; total?: number; address?: string };
@@ -275,14 +288,25 @@ export type Preview = {
   customers: number; merged: number; properties: number; openQuotes: number; openQuotesValue: number; scheduledJobs: number; unpaidInvoices: number; unpaidValue: number;
   plans: number; items: number; missingPhone: { ref: string; name: string; email: string }[]; merges: Merge[]; sourceCustomers: number;
 };
-/** What will come in, by type, after merges and the owner's phone fixes. Customers with no phone can't come in (texts key on it). */
+/**
+ * The stand-in for a customer who has no phone (common for commercial and email-only customers). Records key on the
+ * phone, so this keeps each one unique. It has no digits at all, so no phone match (they compare the last 10 digits)
+ * can ever land on it, and nothing can text or call it. The owner can add the real number later.
+ */
+export function noPhoneKey(sys: string, ref: string): string {
+  return "nophone:" + [...(sys + ":" + ref)].map(ch => ch.charCodeAt(0).toString(16).replace(/[0-9]/g, d => "ghijklmnop"[Number(d)])).join("");
+}
+export const isNoPhone = (p: string | null | undefined) => !!p && p.startsWith("nophone:");
+
+/** What will come in, by type, after merges and the owner's phone fixes. A customer with no phone still comes in (as "No phone") if it has a name or an email. */
 export function previewOf(s: Staged, d: Decisions = {}, today = new Date().toLocaleDateString("en-CA")): Preview {
   const fixed = s.customers.map(c => d.phones?.[c.ref] ? { ...c, phone: e164(d.phones[c.ref]) || c.phone } : c);
   const { customers, merges } = dedupe(fixed, d.splits);
   const open = s.invoices.filter(i => i.status === "open" && i.total - i.paid > 0.005);
   const q = s.quotes.filter(x => x.status === "open");
-  return { sourceCustomers: s.customers.length, customers: customers.filter(c => c.phone).length, merged: merges.reduce((a, m) => a + m.merged.length, 0),
-    properties: customers.filter(c => c.phone).reduce((a, c) => a + c.properties.length, 0), openQuotes: q.length, openQuotesValue: Math.round(q.reduce((a, x) => a + x.total, 0)),
+  const comes = (c: NCustomer) => !!c.phone || !!c.name || !!c.email;
+  return { sourceCustomers: s.customers.length, customers: customers.filter(comes).length, merged: merges.reduce((a, m) => a + m.merged.length, 0),
+    properties: customers.filter(comes).reduce((a, c) => a + c.properties.length, 0), openQuotes: q.length, openQuotesValue: Math.round(q.reduce((a, x) => a + x.total, 0)),
     scheduledJobs: s.jobs.filter(j => j.status !== "done" && (!j.start || j.start >= today)).length, unpaidInvoices: open.length, unpaidValue: Math.round(open.reduce((a, i) => a + i.total - i.paid, 0) * 100) / 100,
     plans: s.plans.length, items: s.items.length, missingPhone: customers.filter(c => !c.phone).map(c => ({ ref: c.ref, name: c.name, email: c.email })), merges };
 }
@@ -303,8 +327,14 @@ export function jobberClient(n: J): NCustomer {
   const ref = "jobber:" + String(n.id);
   const props = nodes(n.clientProperties).map((p, i) => ({ ref: "jobber:" + String(p.id ?? `${n.id}:${i}`), address: jAddr((p as J).address) })).filter(p => p.address);
   if (!props.length && jAddr(n.billingAddress)) props.push({ ref: ref + ":billing", address: jAddr(n.billingAddress) });
-  const notes = nodes(n.notes).map(x => { const files = nodes(x.fileAttachments).map(f => `${f.fileName ?? "file"}: ${f.url}`).join(" "); return [ctl(x.message, 600), files].filter(Boolean).join(" "); }).filter(Boolean).join("\n");
-  return { ref, name: ctl(n.name || [n.firstName, n.lastName].filter(Boolean).join(" ") || n.companyName, 80), company: ctl(n.companyName, 80) || undefined, phone, email, notes: notes.slice(0, 4000), since: anyDate(n.createdAt), properties: props };
+  // Photos are downloaded during the pull (Jobber's links expire); other files are named in the note, without the dead link.
+  const files: NFile[] = [];
+  const notes = nodes(n.notes).map(x => {
+    const att = nodes(x.fileAttachments), other: string[] = [];
+    for (const f of att) { const name = ctl(f.fileName, 120) || "file", url = safeFileUrl(f.url); if (isPhotoName(name) && url) { if (files.length < 20) files.push({ name, url }); } else other.push(name); }
+    return [ctl(x.message, 600), other.length ? `Files in Jobber: ${other.join(", ")}` : ""].filter(Boolean).join(" ");
+  }).filter(Boolean).join("\n");
+  return { ref, name: ctl(n.name || [n.firstName, n.lastName].filter(Boolean).join(" ") || n.companyName, 80), company: ctl(n.companyName, 80) || undefined, phone, email, notes: notes.slice(0, 4000), since: anyDate(n.createdAt), properties: props, ...(files.length ? { files } : {}) };
 }
 const jLines = (n: J): NLine[] => nodes(n.lineItems).map(l => ({ name: ctl(l.name || l.description, 120) || "Line", qty: Math.max(0.01, Number(l.quantity) || 1), unit: "", price: Math.max(0, money(l.unitPrice)) }));
 const cRef = (n: J) => "jobber:" + String((n.client as J | undefined)?.id ?? "");

@@ -67,6 +67,8 @@ async function log(sql: Sql, c: Client, threadId: string, direction: "in" | "out
  * quiet month (a follow-up round or campaign starting), carries "Reply STOP to opt out." Carriers check for it.
  */
 export async function sendToCustomer(sql: Sql, c: Client, threadId: string, phone: string, body: string, author: string): Promise<boolean> {
+  // A customer imported without a phone: nothing to text. Say so on the record instead of trying.
+  if (!e164(phone)) { await log(sql, c, threadId, "out", "system", "Not sent: no phone number on file. Add one on the record, or email them.", false); return false; }
   const [p] = await sql`SELECT t.lang, EXISTS (SELECT 1 FROM public.client_texts x WHERE x.thread_id = t.id AND x.direction = 'out' AND x.ok
       AND x.author <> 'system' AND x.at > now() - interval '30 days') AS recent
     FROM public.client_threads t WHERE t.id = ${threadId}::uuid` as { lang: string; recent: boolean }[];

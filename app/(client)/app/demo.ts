@@ -385,6 +385,13 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       if (/how much|price|cost|\$|quote|estimate/.test(m)) return { ok: true, reply: `Thanks for reaching out to ${o.display_name}! Cedar privacy at 6 ft usually lands around $5,700–$7,200 for 150 ft with two gates, final after we measure. Want a free estimate, Thursday at 4 or Friday at 9?`, handoff: false };
       return { ok: true, reply: `Hi, this is ${o.display_name}. Happy to help. Roughly how many feet, and what's the address? Then I can get ${o.owner_name} out to measure.`, handoff: false };
     }
+    if (b.action === "setphone") {
+      const digits = String(b.phone ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+      if (digits.length !== 10) fail("Add a 10-digit phone number.");
+      const th = s.threads[String(b.thread)]?.thread; if (!th) fail("Not found.");
+      if (!String(th!.customer_phone).startsWith("nophone:")) fail("This customer already has a number.");
+      th!.customer_phone = "+1" + digits; return { ok: true };
+    }
     if (b.action === "lead") {
       const digits = String(b.phone ?? "").replace(/\D/g, "").slice(-10);
       if (digits.length !== 10) fail("Add a 10-digit phone number.");

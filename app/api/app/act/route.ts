@@ -8,7 +8,7 @@ import { cleanOwnerSetup } from "@/lib/crm";
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
-import { addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
+import { setPhone, addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 import { clockIn, clockOut, editTime, planVisit, saveChangeOrder, savePlan, sendChangeOrder, setChangeOrder, setPlan } from "@/lib/client-service-run";
@@ -212,6 +212,11 @@ export async function POST(req: Request) {
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     // A lead email that came without a phone: the owner adds the number (nobody is texted), or dismisses it.
+    if (b.action === "setphone") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const r = await setPhone(sql, c, b.thread, String(b.phone ?? ""));
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
+    }
     if (b.action === "mailadd" || b.action === "maildismiss") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which email?" }, 400);
       if (b.action === "maildismiss") return json(await dismissMail(sql, c, b.thread));

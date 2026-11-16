@@ -1447,3 +1447,7 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
   .ph:has(.ph-a:not(:has(.seg, .views))) .ph-t { padding-right: 120px; }
 }
 .jrow .jr-next { color: var(--g1); } .jrow .jr-next.red { color: var(--ember); }
+
+/* A customer with no phone on file. */
+.addph { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid var(--hair); background: #fafafb; font-size: 13px; color: var(--g1); }
+.addph span { flex: 1 1 240px; } .addph b { color: var(--ink); font-weight: 600; } .addph .input { width: 150px; }

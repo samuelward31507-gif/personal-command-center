@@ -9,7 +9,8 @@ export type Api = <T>(path: string, body?: unknown) => Promise<T>;
 export type Toast = (t: string, bad?: boolean) => void;
 
 // ---------- Formatting ----------
-export const fmtPhone = (p: string) => { const d = (p || "").replace(/\D/g, "").slice(-10); return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : p; };
+export const noPhone = (p: string | null | undefined) => !!p && p.startsWith("nophone:");
+export const fmtPhone = (p: string) => { if (noPhone(p)) return "No phone"; const d = (p || "").replace(/\D/g, "").slice(-10); return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : p; };
 export const typePhone = (v: string) => { const d = v.replace(/\D/g, "").replace(/^1(?=\d{10})/, "").slice(0, 10); return d.length > 6 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : d.length > 3 ? `(${d.slice(0, 3)}) ${d.slice(3)}` : d; };
 export const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
 export const short = (n: number) => Math.abs(n) >= 1000 ? `$${(n / 1000).toFixed(Math.abs(n) >= 10000 ? 0 : 1).replace(/\.0$/, "")}k` : usd(n);

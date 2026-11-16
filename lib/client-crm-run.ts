@@ -152,6 +152,19 @@ export async function saveCard(sql: Sql, c: Client, threadId: string, input: { d
   return { ok: true };
 }
 
+/** The real number for a customer who came in without one. It can't be a number another customer already has. */
+export async function setPhone(sql: Sql, c: Client, threadId: string, phone: string): Promise<{ ok: boolean; error?: string }> {
+  const d = digits10(String(phone ?? ""));
+  if (d.length !== 10) return { ok: false, error: "Add a 10-digit phone number." };
+  const [t] = await sql`SELECT id, customer_phone FROM public.client_threads WHERE id = ${threadId}::uuid AND project_id = ${c.projectId}::uuid` as { id: string; customer_phone: string }[];
+  if (!t) return { ok: false, error: "Not found." };
+  if (!String(t.customer_phone).startsWith("nophone:")) return { ok: false, error: "This customer already has a number." };
+  const [dup] = await sql`SELECT id, customer_name FROM public.client_threads WHERE project_id = ${c.projectId}::uuid AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${d} LIMIT 1` as { id: string; customer_name: string }[];
+  if (dup) return { ok: false, error: `That number is already on ${dup.customer_name || "another customer"}.` };
+  await sql`UPDATE public.client_threads SET customer_phone = ${"+1" + d}, updated_at = now() WHERE id = ${t.id}::uuid`;
+  return { ok: true };
+}
+
 /**
  * A lead the owner took themselves (a call they answered, a walk-in, a referral). It goes on the board as theirs:
  * Cinder doesn't text it, so nothing reaches someone who never asked to be texted.

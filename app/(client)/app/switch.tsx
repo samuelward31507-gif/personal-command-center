@@ -158,7 +158,7 @@ function Check({ imp, busy, act, onRun }: { imp: View; busy: string; act: Act; o
       {row("Service plans", p.plans)}
       {row("Price list", p.items, "items")}
       {p.missingPhone.length > 0 && <>
-        {row("Missing phone", p.missingPhone.length, "they can't come in without one", <button type="button" className="link" onClick={() => setOpen(open === "phones" ? "" : "phones")}>Fix</button>)}
+        {row("Missing phone", p.missingPhone.length, "they come in as No phone; add numbers now or later on each record", <button type="button" className="link" onClick={() => setOpen(open === "phones" ? "" : "phones")}>Fix</button>)}
         {open === "phones" && <form className="sw-phones" onSubmit={e => { e.preventDefault(); void act("decide", { action: "decide", id: imp.id, decisions: { splits: splits.current, phones } }, "Phones saved."); }}>
           {p.missingPhone.slice(0, 50).map(m => <label key={m.ref} className="field inline"><span>{m.name || m.email || "Unnamed"}</span><input inputMode="tel" placeholder="Phone" value={phones[m.ref] ?? ""} onChange={e => setPhones(x => ({ ...x, [m.ref]: e.target.value }))} /></label>)}
           {p.missingPhone.length > 50 && <p className="fine">And {p.missingPhone.length - 50} more. Fix them in the file and add it again, or bring them in later.</p>}
@@ -192,7 +192,7 @@ function GoLive({ d, imp, golive, start, appName, busy, project, api, toast, onT
   return <>
     {done && <section className="panel"><div className="panel-h"><h2>Everything from {src} is here</h2><small>{done.finished_at ? `moved ${dateLabel(done.finished_at)}` : ""}</small></div>
       <div className="panel-b">
-        {res.customers && <p className="sw-big">{src} had {(res.customers.created + res.customers.updated + res.customers.skipped + (res.merged?.skipped ?? 0)).toLocaleString("en-US")} customers; you now have {(res.customers.created + res.customers.updated).toLocaleString("en-US")}{res.merged?.skipped ? ` plus ${res.merged.skipped} merged` : ""}{res.customers.skipped ? `, and ${res.customers.skipped} without a phone left out` : ""}.</p>}
+        {res.customers && <p className="sw-big">{src} had {(res.customers.created + res.customers.updated + res.customers.skipped + (res.merged?.skipped ?? 0)).toLocaleString("en-US")} customers; you now have {(res.customers.created + res.customers.updated).toLocaleString("en-US")}{res.merged?.skipped ? ` plus ${res.merged.skipped} merged` : ""}{res.customers.skipped ? `, and ${res.customers.skipped} left out (no name, phone or email)` : ""}.</p>}
         {line("customers", "Customers")}{line("quotes", "Quotes")}{line("jobs", "Jobs")}{line("invoices", "Invoices")}{line("plans", "Service plans")}{line("items", "Price list")}
         <div className="acts-row" style={{ marginTop: 12 }}>
           <a className="btn" onClick={e => { if (inDemo()) { e.preventDefault(); toast("The example business has nothing to export. Your own export downloads a real file."); } }} href={`/api/app/export?p=${project}&what=all`}><Icon name="out" size={14} />Export everything</a>

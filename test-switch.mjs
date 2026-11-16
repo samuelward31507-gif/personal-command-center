@@ -64,7 +64,7 @@ ok(() => { const s = { ...S.emptyStaged(), customers: people,
   invoices: [{ ref: "i1", customerRef: "f", status: "open", items: [], total: 1480, paid: 1000 }, { ref: "i2", customerRef: "f", status: "paid", items: [], total: 500, paid: 500 }], items: [{ ref: "t", name: "Gate", unit: "", price: 550 }] };
   const p = S.previewOf(s, {}, today);
   assert.equal(p.sourceCustomers, 6); assert.equal(p.customers, 3); assert.equal(p.merged, 3); assert.equal(p.openQuotes, 1); assert.equal(p.openQuotesValue, 4000); assert.equal(p.scheduledJobs, 1); assert.equal(p.unpaidInvoices, 1); assert.equal(p.unpaidValue, 480); assert.equal(p.items, 1); assert.equal(p.missingPhone.length, 0);
-  const p2 = S.previewOf({ ...s, customers: [...people, { ref: "g", name: "No Phone", phone: "", email: "np@x.com", notes: "", properties: [] }] }, {}, today); assert.deepEqual(p2.missingPhone.map(m => m.ref), ["g"]);
+  const p2 = S.previewOf({ ...s, customers: [...people, { ref: "g", name: "No Phone", phone: "", email: "np@x.com", notes: "", properties: [] }] }, {}, today); assert.deepEqual(p2.missingPhone.map(m => m.ref), ["g"]); assert.equal(p2.customers, 4, "a customer with no phone still comes in");
   const p3 = S.previewOf({ ...s, customers: [...people, { ref: "g", name: "No Phone", phone: "", email: "np@x.com", notes: "", properties: [] }] }, { phones: { g: "720-555-0111" } }, today); assert.equal(p3.missingPhone.length, 0); assert.equal(p3.customers, 4); });
 
 // ---------- Status words from each tool ----------
@@ -76,7 +76,15 @@ ok(() => assert.deepEqual([["upcoming", "2026-12-01"], ["archived", "2026-01-01"
 ok(() => { const c = S.jobberClient({ id: "Z1", name: "Dana Ruiz", phones: [{ number: "720 555 0100" }, { number: "(720) 555-0148", primary: true }], emails: [{ address: "D@X.com", primary: true }], createdAt: "2024-03-01T10:00:00Z",
   billingAddress: { street1: "1 Bill St", city: "Denver", province: "CO", postalCode: "80202" }, clientProperties: { nodes: [{ id: "P1", address: { street1: "77 Aspen Ct", city: "Englewood", province: "CO", postalCode: "80110" } }] },
   notes: { nodes: [{ message: "Gate code 4418", fileAttachments: { nodes: [{ fileName: "a.jpg", url: "https://x/a.jpg" }] } }] } });
-  assert.equal(c.ref, "jobber:Z1"); assert.equal(c.phone, "+17205550148"); assert.equal(c.email, "d@x.com"); assert.equal(c.since, "2024-03-01"); assert.deepEqual(c.properties.map(p => p.ref), ["jobber:P1"]); assert.ok(c.notes.includes("a.jpg: https://x/a.jpg")); });
+  assert.equal(c.ref, "jobber:Z1"); assert.equal(c.phone, "+17205550148"); assert.equal(c.email, "d@x.com"); assert.equal(c.since, "2024-03-01"); assert.deepEqual(c.properties.map(p => p.ref), ["jobber:P1"]); assert.deepEqual(c.files, [{ name: "a.jpg", url: "https://x/a.jpg" }]); assert.ok(c.notes.includes("Gate code 4418")); assert.ok(!c.notes.includes("https://")); });
+// Attachments: photos to download, other files named in the note without their expiring link, unsafe links dropped.
+ok(() => { const c = S.jobberClient({ id: "Z9", name: "Lee", phones: [], emails: [], notes: { nodes: [{ message: "Survey", fileAttachments: { nodes: [
+  { fileName: "front.JPEG", url: "https://files.jobber.example/f.jpeg?sig=1" }, { fileName: "plan.pdf", url: "https://files.jobber.example/p.pdf" },
+  { fileName: "local.png", url: "http://169.254.169.254/latest" }, { fileName: "ip.png", url: "https://10.0.0.5/x.png" }] } }] } });
+  assert.deepEqual(c.files.map(x => x.name), ["front.JPEG"]); assert.match(c.notes, /Files in Jobber: plan\.pdf, local\.png, ip\.png/); assert.ok(!/https?:\/\//.test(c.notes)); });
+ok(() => { assert.equal(S.isPhotoName("a.webp"), true); assert.equal(S.isPhotoName("a.heic"), false); assert.equal(S.isPhotoName("scan.pdf"), false);
+  assert.equal(S.safeFileUrl("https://user:pw@x.com/a.jpg"), null); assert.equal(S.safeFileUrl("https://localhost/a.jpg"), null); assert.equal(S.safeFileUrl("ftp://x.com/a"), null); assert.ok(S.safeFileUrl("https://s3.amazonaws.com/b/a.jpg")); });
+ok(() => { const c = S.jobberClient({ id: "Z8", name: "No files", phones: [], emails: [] }); assert.equal(c.files, undefined); });
 ok(() => { const c = S.jobberClient({ id: "Z2", name: "Ann", phones: [], emails: [], billingAddress: { street1: "5 A St", city: "Denver" } }); assert.equal(c.properties[0].address, "5 A St, Denver"); });
 ok(() => { const q = S.jobberQuote({ id: "Q", quoteNumber: 1042, quoteStatus: "awaiting_response", client: { id: "Z1" }, amounts: { total: 7000 }, lineItems: { nodes: [{ name: "Fence", quantity: 150, unitPrice: 43 }] } });
   assert.equal(q.customerRef, "jobber:Z1"); assert.equal(q.status, "open"); assert.equal(q.items[0].qty, 150); assert.equal(q.total, 7000); });
@@ -183,4 +191,8 @@ ok(() => assert.equal(B.readableAccent("#1d4ed8"), "#1d4ed8"));
 ok(() => assert.ok(B.contrastOnWhite(B.readableAccent("#ffff00")) >= 4.5));
 ok(() => { const px = []; for (let i = 0; i < 100; i++) px.push(255, 255, 255, 255); for (let i = 0; i < 40; i++) px.push(30, 90, 200, 255); for (let i = 0; i < 10; i++) px.push(20, 20, 20, 255); assert.equal(B.dominantColor(px), "#1e5ac8"); });
 ok(() => assert.equal(B.cleanLogo("data:image/png;base64,AAAA"), "data:image/png;base64,AAAA")); ok(() => assert.equal(B.cleanLogo("javascript:alert(1)"), ""));
+// No phone: a stand-in key with no digits, unique per source record, stable across runs.
+ok(() => { const k = S.noPhoneKey("jobber", "Z2lkOi8vSm9iYmVyL0NsaWVudC8xMjM0NTY3ODkw"); assert.match(k, /^nophone:[a-z]+$/); assert.equal(/\d/.test(k), false);
+  assert.equal(k, S.noPhoneKey("jobber", "Z2lkOi8vSm9iYmVyL0NsaWVudC8xMjM0NTY3ODkw")); assert.notEqual(k, S.noPhoneKey("jobber", "Z2lkOi8vSm9iYmVyL0NsaWVudC8xMjM0NTY3ODkx"));
+  assert.notEqual(S.noPhoneKey("quickbooks", "1"), S.noPhoneKey("jobber", "1")); assert.equal(S.isNoPhone(k), true); assert.equal(S.isNoPhone("+17205550100"), false); });
 console.log(`switch: ${n} checks passed`);
