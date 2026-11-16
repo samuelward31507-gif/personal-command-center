@@ -1,4 +1,5 @@
 "use client";
+import { Logo } from "../../ui/logo";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { DEAL_STAGES, STAGE_LABELS, STAGE_PROBABILITY, weightedPipeline, type DealStage } from "@/lib/offers";
@@ -8,7 +9,7 @@ import { useWorkspace } from "../../use-workspace";
 import "./board.css";
 
 type Stage=DealStage;
-type Deal={id:string;contactId:string|null;title:string;serviceType:string;stage:Stage;setupFee:number;monthlyFee:number;expectedCloseDate:string;source:string;notes:string;lostReason:string;contactName:string;company:string;agreementStatus?:string;endedAt?:string|null;probability?:number|null};
+type Deal={id:string;contactId:string|null;title:string;serviceType:string;stage:Stage;setupFee:number;monthlyFee:number;expectedCloseDate:string;source:string;notes:string;lostReason:string;contactName:string;company:string;agreementStatus?:string;endedAt?:string|null;probability?:number|null;updatedAt?:string};
 type Contact={id:string;name:string;company:string};
 type ExistingProject={id:string;dealId:string|null};
 const stages:{id:Stage;label:string}[]=DEAL_STAGES.map(id=>({id,label:STAGE_LABELS[id]}));
@@ -63,15 +64,24 @@ export default function PipelinePage(){
  const closeLabel=(d:Deal)=>d.expectedCloseDate&&/^\d{4}-\d{2}-\d{2}$/.test(d.expectedCloseDate)?new Date(d.expectedCloseDate+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"}):"";
  const late=(d:Deal)=>!!d.expectedCloseDate&&d.expectedCloseDate<new Date().toISOString().slice(0,10)&&!["won","lost"].includes(d.stage);
  const listRows=filter==="open"?deals.filter(d=>!["won","lost","nurture"].includes(d.stage)):deals.filter(d=>d.stage===filter);
- const card=(d:Deal)=><div key={d.id} className={"pb-deal"+(dragging===d.id?" is-drag":"")} draggable onDragStart={e=>{setDragging(d.id);e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",d.id)}} onDragEnd={()=>{setDragging(null);setOver(null)}}>
-  <Link className="pb-deal-co" href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link>
-  <span className="pb-deal-sub">{svc(d.serviceType)}</span>
-  <div className="pb-deal-money"><b className="u-num">{money(d.monthlyFee)}</b><span>/mo</span><span className="pb-deal-setup">+ {money(d.setupFee)} setup</span></div>
-  {(d.expectedCloseDate||d.probability!=null)&&<div className="pb-deal-meta">{d.expectedCloseDate&&<span className={late(d)?"is-late":""}>{late(d)?"Was due ":"Close "}{closeLabel(d)}</span>}<span>{Math.round(d.probability!=null?d.probability:(STAGE_PROBABILITY[d.stage]??0)*100)}%</span></div>}
+ const ago=(iso?:string|null)=>{if(!iso)return "";const n=Math.max(0,Math.floor((Date.now()-Date.parse(iso))/86400000));return n===0?"today":n+"d"};
+ const card=(d:Deal)=><div key={d.id} className={"pb-deal"+(dragging===d.id?" is-drag":"")+(late(d)?" is-late":"")} draggable onDragStart={e=>{setDragging(d.id);e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",d.id)}} onDragEnd={()=>{setDragging(null);setOver(null)}}>
+  <div className="pb-deal-top"><Logo name={d.company||d.contactName||d.title} size={20} /><Link className="pb-deal-co" href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link></div>
+  <div className="pb-deal-rows">
+   <span className="pb-deal-row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M16.5 7.5c-.7-1.3-2.1-2-4.2-2C9.8 5.5 8 6.8 8 8.8s1.6 2.8 4.2 3.3 4.3 1.3 4.3 3.4-1.7 3.5-4.3 3.5c-2 0-3.7-.7-4.6-2.1"/></svg><b className="u-num">{money(d.monthlyFee)}</b><em>/mo</em>{d.setupFee>0&&<em>+ {money(d.setupFee)} setup</em>}</span>
+   <span className="pb-deal-row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4h8l9 9-8 8-9-9Z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg><span className="lg-pill" data-tone="grey">{svc(d.serviceType)}</span></span>
+   {d.contactName&&d.company&&<span className="pb-deal-row"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.6-3.8 3.2-5.8 7-5.8s6.4 2 7 5.8"/></svg>{d.contactName}</span>}
+  </div>
+  <div className="pb-deal-foot">
+   <span className="pb-dot" aria-hidden="true" />
+   <span className="pb-foot-k">{d.expectedCloseDate?<>{late(d)?"Overdue, was due ":"Closes "}{closeLabel(d)}</>:"No close date"}</span>
+   <span className="pb-foot-v u-num">{Math.round(d.probability!=null?d.probability:(STAGE_PROBABILITY[d.stage]??0)*100)}%{d.updatedAt?<i title="Last updated"> · {ago(d.updatedAt)}</i>:null}</span>
+  </div>
  </div>;
+ const stageTone:Record<string,string>={new:"#9aa3b0",qualified:"#3b82f6",contacted:"#0ea5e9",interested:"#e3a008",meeting_booked:"#8b5cf6",meeting_held:"#d946ef",proposal:"#f2752b",negotiation:"#ec4899",won:"#16a34a",lost:"#9aa3b0",nurture:"#14b8a6"};
  return <div className="u-page pb-page" role="region" aria-label="Pipeline">
   <div className="u-head">
-   <h1 className="u-title">Pipeline</h1>
+   <h1 className="u-title">Pipeline{(()=>{const n=deals.filter(d=>!["won","lost","nurture"].includes(d.stage)).length;return deals.length?<span className="u-dim"> {n} open {n===1?"deal":"deals"}.</span>:null})()}</h1>
    <div className="u-head-actions">
     <div className="u-seg" role="group" aria-label="Layout"><button type="button" aria-pressed={view==="board"} onClick={()=>{setView("board");setFilter("open")}}>Board</button><button type="button" aria-pressed={view==="list"} onClick={()=>setView("list")}>List</button></div>
     <button className="u-btn u-btn-light" onClick={startNew}>New deal</button>
@@ -91,11 +101,11 @@ export default function PipelinePage(){
   :deals.length===0?<div className="u-void"><h2>No deals yet</h2><p>A deal starts when a call goes well. Book a meeting in Call mode and it shows up here, or add one by hand.</p><button className="u-btn u-btn-light" onClick={startNew}>New deal</button></div>
   :view==="board"?<>
    <div className={"pb-rail"+(dragging?" is-dragging":"")} role="list" aria-label="Stages">{([...OPEN,"won","lost"] as Stage[]).map(st=>{const col=deals.filter(d=>d.stage===st);return <div key={st} role="listitem" className={"pb-stop"+(col.length?" has":"")+(over===st?" is-over":"")+(st==="won"||st==="lost"?" is-end":"")} onDragOver={e=>{if(dragging){e.preventDefault();setOver(st)}}} onDragLeave={()=>setOver(o=>o===st?null:o)} onDrop={e=>{e.preventDefault();const d=deals.find(x=>x.id===dragging);setDragging(null);setOver(null);if(d&&d.stage!==st){setDeals(ds=>ds.map(x=>x.id===d.id?{...x,stage:st}:x));void quickStage(d,st)}}}>
-    <span className="pb-stop-k">{STAGE_LABELS[st]}</span>
+    <span className="pb-stop-k"><i style={{background:stageTone[st]}} />{STAGE_LABELS[st]}</span>
     <b className="pb-stop-n u-num">{col.length}</b>
    </div>})}</div>
    <div className="pb-board">{OPEN.filter(st=>deals.some(d=>d.stage===st)).map(st=>{const col=deals.filter(d=>d.stage===st);return <div key={st} className={"pb-col"+(over===st?" is-over":"")} onDragOver={e=>{if(dragging){e.preventDefault();setOver(st)}}} onDragLeave={()=>setOver(o=>o===st?null:o)} onDrop={e=>{e.preventDefault();const d=deals.find(x=>x.id===dragging);setDragging(null);setOver(null);if(d&&d.stage!==st){setDeals(ds=>ds.map(x=>x.id===d.id?{...x,stage:st}:x));void quickStage(d,st)}}}>
-    <div className="pb-col-h"><span>{STAGE_LABELS[st]} <i>{col.length}</i></span><b className="u-num">{money(col.reduce((a,d)=>a+d.monthlyFee,0))}/mo</b></div>
+    <div className="pb-col-h"><span className="pb-col-name" style={{"--st":stageTone[st]} as React.CSSProperties}>{STAGE_LABELS[st]}</span><i>{col.length}</i><b className="u-num">{money(col.reduce((a,d)=>a+d.monthlyFee,0))}/mo</b></div>
     <div className="pb-col-body">{col.map(card)}</div>
    </div>})}{!OPEN.some(st=>deals.some(d=>d.stage===st))&&<p className="u-note">No open deals. Won and lost deals are in List.</p>}</div>
    <p className="u-note" style={{marginTop:14}}>Drag a deal onto any stage in the strip above to move it, including Won and Lost.</p>
@@ -103,7 +113,7 @@ export default function PipelinePage(){
    <div className="u-h2-row"><div className="u-seg" role="group" aria-label="Which deals">{([["open","Open"],["won","Won"],["lost","Lost"],["nurture","Nurture"]] as const).map(([k,l])=><button key={k} type="button" aria-pressed={filter===k} onClick={()=>setFilter(k)}>{l} <span className="u-quiet">{k==="open"?active.filter(d=>d.stage!=="nurture").length:deals.filter(d=>d.stage===k).length}</span></button>)}</div></div>
    {listRows.length===0?<p className="u-note">Nothing here.</p>:<div className="u-tablewrap"><table className="u-table"><thead><tr><th>Business</th><th>Stage</th><th>Service</th><th>Close</th><th className="is-num">Monthly</th><th className="is-num">Setup</th><th/></tr></thead><tbody>
     {listRows.map(d=><tr key={d.id}>
-     <td className="is-strong"><Link href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link></td>
+     <td className="is-strong"><span className="pb-who"><Logo name={d.company||d.contactName||d.title} size={24} /><Link href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link></span></td>
      <td><select className="u-field pb-stage" aria-label={"Stage for "+d.title} value={d.stage} onChange={e=>void quickStage(d,e.target.value as Stage)}>{stages.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></td>
      <td>{svc(d.serviceType)}</td>
      <td className={late(d)?"pb-late":""}>{closeLabel(d)||"—"}</td>

@@ -13,6 +13,9 @@ import type { Biz, Data, Go, Tab } from "./types";
 import { splitAppointments } from "@/lib/client-schedule";
 import { TodayScreen } from "./today";
 import { JobsScreen, type JobsView } from "./jobs";
+import { PlansScreen } from "./plans";
+import { SwitchScreen } from "./switch";
+import { CatalogContext, PriceListSheet, catalogFrom } from "./catalog";
 import { RecordPage } from "./record";
 import { InboxScreen, ThreadView } from "./inbox";
 import { CalendarScreen } from "./calendar";
@@ -51,7 +54,7 @@ function pushState(): PushState {
 async function turnOnPush(project: string): Promise<string | null> {
   try {
     const perm = await Notification.requestPermission();
-    if (perm !== "granted") return "Notifications are blocked. Turn them on for Cinder in your phone's settings.";
+    if (perm !== "granted") return "Notifications are blocked. Turn them on for this app in your phone's settings.";
     const reg = await navigator.serviceWorker.register("/app-sw.js", { scope: "/app" });
     await navigator.serviceWorker.ready;
     const { publicKey } = await api<{ publicKey: string }>("/api/app/push");
@@ -125,7 +128,7 @@ export default function CinderApp() {
   const { show: toast, node: toastNode } = useToast();
   const [push, setPush] = useState<PushState>("unsupported");
   const [demo, setDemo] = useState(false);
-  const [sheet, setSheet] = useState<"add" | "import" | "billing" | "winback" | "cmd" | null>(null);
+  const [sheet, setSheet] = useState<"add" | "import" | "billing" | "winback" | "cmd" | "pricelist" | null>(null);
   const [askQ, setAskQ] = useState<{ q: string; n: number } | undefined>(undefined);
   const [inv, setInv] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false), [setupDone, setSetupDone] = useState(false);
@@ -151,7 +154,7 @@ export default function CinderApp() {
       if (t) await api("/api/app/auth", { action: "link", token: t }).catch(() => null);
       const th = q.get("thread"), tb = q.get("tab");
       if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen({ kind: "thread", id: th });
-      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", home: "today", invoices: "invoices", money: "invoices", customers: "customers", system: "system", quotes: "quotes" };
+      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", home: "today", invoices: "invoices", money: "invoices", customers: "customers", system: "system", quotes: "quotes", plans: "plans", switch: "switch", move: "switch" };
       if (tb && map[tb]) setTab(map[tb]);
       if (location.search) try { history.replaceState(null, "", "/app"); } catch { /* keep the URL */ }
       await load("", tb && map[tb] ? map[tb] : "today");
@@ -189,7 +192,7 @@ export default function CinderApp() {
   // The workspace scrolls inside its window: every move starts at the top.
   useEffect(() => { document.querySelector(".main > .page")?.scrollTo(0, 0); }, [tab, open]);
   const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
-  if (state === "loading") return <div className="load"><Wordmark /></div>;
+  if (state === "loading") return <div className="load"><span className="spin" aria-label="Loading" /></div>;
   if (state === "out") return <SignIn onIn={() => void load("")} onDemo={() => { demoStart(); setDemo(true); setTab("today"); void load("", "today"); }} />;
   if (!d) return null;
 
@@ -213,16 +216,18 @@ export default function CinderApp() {
   const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = crew ? [{ k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }]
     : [{ k: "today", l: "Home", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
   const phoneTab: Tab = MORE.includes(tab) ? "more" : tab;
-  const active = (k: Tab) => (tab === k || (k === "jobs" && tab === "customers")) && !open;
+  const active = (k: Tab) => (tab === k || (k === "jobs" && (tab === "customers" || tab === "plans"))) && !open;
 
   let page: React.ReactNode;
   if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
   else if (open?.kind === "quote") page = <QuoteEditor key={open.id} id={open.id} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => setOpen(null)} />;
   else if (open?.kind === "record") page = <RecordPage key={open.id + (open.draft ? ":d" : "")} id={open.id} ask={open.ask} view={open.view} draft={open.draft} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
   else if (tab === "today" && crew) page = <MyDay d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} />;
-  else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} />;
+  else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} toast={toast} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
+  else if (tab === "switch") page = <SwitchScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
+  else if (tab === "plans") page = <PlansScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
   else if (tab === "quotes") page = <QuotesScreen d={d} go={go} wide={wide} biz={biz} />;
   else if (tab === "calendar") page = <CalendarScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} />;
   else if (tab === "invoices") page = <MoneyScreen d={d} go={go} wide={wide} biz={biz} project={project} api={api} toast={toast} reload={reload} />;
@@ -231,9 +236,14 @@ export default function CinderApp() {
   else if (tab === "more") page = <MoreScreen d={d} go={go} owed={owed} />;
   else page = <SamScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
 
-  return <div className="shell">
+  const catalog = { items: catalogFrom(d.setup), edit: () => setSheet("pricelist") };
+  // The business's own color is the one accent everywhere; its logo sits top left. "Cinder" shows only if they opt in.
+  const brand = d.setup?.brand_color && /^#[0-9a-f]{6}$/i.test(d.setup.brand_color) ? d.setup.brand_color : "";
+  const tint = (a: number) => brand ? `rgba(${parseInt(brand.slice(1, 3), 16)}, ${parseInt(brand.slice(3, 5), 16)}, ${parseInt(brand.slice(5, 7), 16)}, ${a})` : "";
+  const shellStyle = brand ? { "--ember": brand, "--ember-soft": tint(0.12), "--ember-bg": tint(0.1) } as React.CSSProperties : undefined;
+  return <CatalogContext.Provider value={catalog}><div className="shell" style={shellStyle}>
     <nav className="rail" aria-label="Sections">
-      <div className="brand-row"><Wordmark className="rail-mark" /></div>
+      <div className="brand-row">{d.setup?.brand_logo ? <img className="biz-logo" src={d.setup.brand_logo} alt={bizName || "Logo"} /> : <span className="biz-mark" style={brand ? { background: brand } : undefined} aria-hidden="true">{initials(bizName || "B").charAt(0)}</span>}</div>
       <button type="button" className="ws" title={bizName}>
         <span className="av sm">{initials(bizName || "C").charAt(0)}</span><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
         {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
@@ -243,13 +253,15 @@ export default function CinderApp() {
         {sections.map(s => <button key={s.k} type="button" className={"ri" + (active(s.k) ? " on" : "")} aria-current={active(s.k) ? "page" : undefined} onClick={() => goTab(s.k)}>
           <Icon name={s.ic} size={15} />{s.l}{counts[s.k] ? <em className={s.k === "inbox" ? "hot" : ""}>{counts[s.k]}</em> : null}</button>)}
       </div>
-      {tab === "jobs" && !open && <div className="rail-grp views">
+      {(tab === "jobs" || tab === "plans") && !open && <div className="rail-grp views">
         <div className="rail-lbl">Views</div>
         {([["open", "Open", jobCounts.open], ["won", "Won", jobCounts.won], ["all", "Everyone", jobCounts.all]] as const).map(([k, l, n]) =>
-          <button key={k} type="button" className={"ri" + (jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); }}>{l}<em>{n}</em></button>)}
+          <button key={k} type="button" className={"ri" + (tab === "jobs" && jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); if (tab !== "jobs") goTab("jobs"); }}>{l}<em>{n}</em></button>)}
+        {!crew && <button type="button" className={"ri" + (tab === "plans" ? " on" : "")} onClick={() => goTab("plans")}>Service plans<em>{(d.plans ?? []).filter(p => p.status === "active").length || ""}</em></button>}
       </div>}
       <div className="rail-foot">
-        {!crew && <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>}
+        {d.setup?.show_powered === "yes" && <a className="powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by <Wordmark className="pw-mark" /></a>}
+        {d.role !== "crew" && d.role !== "office" && <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>}
         {crew ? <button type="button" className="me" onClick={() => void signOut()}><Avatar name="Crew" /><span className="t"><b>Crew</b><small>Sign out</small></span></button>
           : <button type="button" className="me" onClick={() => goTab("sam")}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{d.owner || "You"}</b><small>Owner</small></span></button>}
       </div>
@@ -265,21 +277,24 @@ export default function CinderApp() {
     {sheet === "cmd" && <CommandBar d={d} go={go} onClose={() => setSheet(null)} onWinback={() => setSheet("winback")} onAsk={crew ? undefined : q => { setAskQ({ q, n: Date.now() }); goTab("today"); }} />}
     {sheet === "add" && <AddLeadSheet trade={biz.trade} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "import" && <ImportSheet project={project} api={api} toast={toast} reload={reload} customers={d.customers ?? []} business={bizName} onClose={() => setSheet(null)} />}
+    {sheet === "pricelist" && <PriceListSheet items={catalog.items} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "billing" && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {invNow && <InvoiceSheet key={invNow.id + invNow.status + (invNow.paid_amount ?? 0)} inv={invNow} payments={d.payments} customer={invNow.customer || fmtPhone(invNow.phone)} email={(d.board ?? []).find(b => b.id === invNow.thread_id)?.email} emailReady={d.emailReady} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
     {toastNode}
-  </div>;
+  </div></CatalogContext.Provider>;
 }
 
 // ---------- More (phone) ----------
 function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
   const items: { k: Tab; l: string; s: string; ic: string; n?: number }[] = [
     { k: "invoices", l: "Money", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
-    { k: "numbers", l: "Reports", s: "What Cinder brought in", ic: "bars" },
+    { k: "numbers", l: "Reports", s: "What came in and what it made", ic: "bars" },
     { k: "customers", l: "Everyone", s: `${d.customers?.length ?? 0} people`, ic: "users" },
-    { k: "system", l: "Settings", s: "How leads reach Cinder, prices, notifications", ic: "gear" },
-    { k: "sam", l: "Sam", s: d.unreadFromSam ? `${d.unreadFromSam} new` : "Your Cinder rep", ic: "user", n: d.unreadFromSam },
+    { k: "switch", l: "Move your business in", s: "From Jobber, QuickBooks, a spreadsheet or your phone", ic: "upload" },
+    { k: "plans", l: "Service plans", s: (d.plans ?? []).some(p => p.status === "active") ? `${(d.plans ?? []).filter(p => p.status === "active").length} active` : "Repeat work on a schedule", ic: "cal" },
+    { k: "system", l: "Settings", s: "How leads come in, prices, notifications", ic: "gear" },
+    { k: "sam", l: "Sam", s: d.unreadFromSam ? `${d.unreadFromSam} new` : "Your account rep", ic: "user", n: d.unreadFromSam },
   ];
   return <>
     <header className="tb"><h1 className="h1">More</h1></header>
@@ -293,13 +308,13 @@ function SamScreen({ d, project, api: call, toast, reload, go }: { d: Data; proj
   const [msg, setMsg] = useState("");
   const agoText = (iso: string) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 60 ? `${Math.max(1, m)}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
   return <>
-    <header className="tb"><h1 className="h1">Sam</h1><span className="sub">Your Cinder rep</span><div className="acts"><button type="button" className="btn ghost" onClick={() => go.tab("system")}><Icon name="gear" size={14} />Settings</button></div></header>
+    <header className="tb"><h1 className="h1">Sam</h1><span className="sub">Your account rep</span><div className="acts"><button type="button" className="btn ghost" onClick={() => go.tab("system")}><Icon name="gear" size={14} />Settings</button></div></header>
     <div className="pad" style={{ maxWidth: 760 }}>
       <section className="card" style={{ paddingTop: 0 }}>
         {d.messages.length > 0 ? <div className="sam-msgs">{d.messages.map((m, i) => <article key={i} className="sam-msg">
           {m.author === "client" ? <Avatar name={d.owner || "You"} /> : <span className="av ink">S</span>}
           <div><header><b>{m.author === "client" ? "You" : "Sam Ward"}</b><time>{agoText(m.created_at)}</time></header><p>{m.body}</p></div></article>)}</div>
-          : <p className="fine" style={{ padding: "8px 0" }}>Write Sam about anything: texting hours, prices, how Cinder answers a question, a number to add.</p>}
+          : <p className="fine" style={{ padding: "8px 0" }}>Write Sam about anything: texting hours, prices, how leads get answered, a number to add.</p>}
         <form onSubmit={async e => { e.preventDefault(); if (!msg.trim()) return; try { await call("/api/app/act", { p: project, action: "message", body: msg }); setMsg(""); toast("Sent to Sam."); void reload(); } catch (er) { toast(er instanceof Error ? er.message : "Didn't send.", true); } }}>
           <div className="compose" style={{ position: "static", padding: 0 }}><div className="box">
             <textarea rows={2} value={msg} onChange={e => setMsg(e.target.value)} placeholder="Message Sam" aria-label="Message to Sam" />

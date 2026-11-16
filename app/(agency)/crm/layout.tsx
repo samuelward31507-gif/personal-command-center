@@ -13,7 +13,7 @@ function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/audit")) return "Business audit";
   if (pathname.startsWith("/crm/calendar")) return "Calendar";
   if (pathname.startsWith("/crm/ask")) return "Ask Cinder";
-  if (pathname.startsWith("/crm/needs-you")) return "Dashboard";
+  if (pathname.startsWith("/crm/needs-you")) return "Today";
   if (pathname.startsWith("/crm/call")) return "Call mode";
   if (pathname.startsWith("/crm/email")) return "Email";
   if (pathname.startsWith("/crm/content")) return "Content";
@@ -34,7 +34,7 @@ function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/settings") || view === "settings") return "Settings";
   if (view === "schedule") return "My day";
   if (view === "needs-you") return "Today";
-  if (pathname === "/crm") return "Contacts";
+  if (pathname === "/crm") return "Prospects";
   return "Home";
 }
 

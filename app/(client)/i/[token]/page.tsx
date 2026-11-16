@@ -61,7 +61,7 @@ export default function InvoicePage() {
                 : <button type="button" className="link" style={{ alignSelf: "center", fontSize: 14 }} disabled={busy} onClick={() => void claim()}>I&rsquo;ve already paid</button>}
             </div>}
         </section>
-        <p className="doc-foot">{v.business ? `Sent by ${v.business} with Cinder` : "Sent with Cinder"}</p>
+        <p className="doc-foot">{v.business ? `Sent by ${v.business}` : ""}</p>
       </>}
   </main>;
 }

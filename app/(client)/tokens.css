@@ -235,14 +235,14 @@ button.row:hover { background: var(--hover); }
 @keyframes pop { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: none; } }
 .scrim { position: fixed; inset: 0; z-index: 60; background: rgba(18, 20, 23, .32); display: flex; align-items: flex-end; justify-content: center; animation: fade var(--t); }
 .scrim.top { align-items: flex-start; padding-top: 14vh; background: rgba(18, 20, 23, .24); }
-.sheet { width: 100%; max-width: 560px; max-height: calc(100dvh - 24px); background: var(--page); border-radius: var(--r4) var(--r4) 0 0; display: flex; flex-direction: column; box-shadow: var(--float); animation: up 180ms cubic-bezier(.2, .8, .2, 1); }
+.sheet { width: 100%; max-width: 560px; max-height: calc(100dvh - 24px); background: var(--page); border-radius: var(--r4) var(--r4) 0 0; display: flex; flex-direction: column; box-shadow: var(--float); animation: up 220ms cubic-bezier(.2, .8, .2, 1); }
 .sheet > .hd { display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 12px 0 16px; border-bottom: 1px solid var(--hair); }
 .sheet > .hd .who { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
 .sheet > .hd .who b { display: block; font: 600 14px/1.25 var(--ff-tight); letter-spacing: -.005em; }
 .sheet > .hd .who small { display: block; color: var(--g1); font-size: 12px; }
 .sheet > .bd { padding: 14px 16px calc(16px + var(--safe-b)); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
 .sheet > .ft { display: flex; gap: 8px; justify-content: flex-end; padding: 10px 16px calc(12px + var(--safe-b)); border-top: 1px solid var(--hair); }
-@media (min-width: 700px) { .scrim { align-items: center; padding: 20px; } .scrim.top { align-items: flex-start; } .sheet { border-radius: var(--r3); max-height: calc(100dvh - 48px); } }
+@media (min-width: 700px) { .scrim { align-items: center; padding: 20px; } .scrim.top { align-items: flex-start; } .sheet { border-radius: var(--r4); max-height: calc(100dvh - 48px); } }
 @keyframes up { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 .cmd { width: 100%; max-width: 560px; background: var(--page); border-radius: var(--r4); box-shadow: var(--float); overflow: hidden; animation: pop 160ms ease-out; }

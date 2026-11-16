@@ -54,6 +54,14 @@ export default function HomeSearch() {
   const ws = useWorkspace();
   const [hello, setHello] = useState("");
   useEffect(() => { setHello(greeting(ws.ownerFirstName)); }, [ws.ownerFirstName]);
+  // Asked from Today's box: /crm/ask?q=… starts the conversation straight away.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (!q) return;
+    window.history.replaceState(null, "", "/crm/ask");
+    void ask(q.slice(0, 500));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [copied, setCopied] = useState<number | null>(null);
   const box = useRef<HTMLTextAreaElement>(null);
   const abort = useRef<AbortController | null>(null);

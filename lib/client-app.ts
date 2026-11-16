@@ -4,7 +4,8 @@ import { createHash, createHmac, randomInt, timingSafeEqual } from "node:crypto"
 
 export const APP_COOKIE = "cinder_app";
 export const SESSION_DAYS = 90;
-export type Role = "owner" | "crew";
+/** owner: everything. office: everything but settings and the team. crew: the schedule, the jobs and the texts, no money. */
+export type Role = "owner" | "office" | "crew";
 export type AppSession = { projects: string[]; phone: string; exp: number; role?: Role };
 
 const key = () => process.env.CINDER_TOKEN_KEY?.trim() || "";

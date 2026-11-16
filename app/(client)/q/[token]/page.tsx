@@ -78,7 +78,7 @@ export default function QuotePage() {
           {fail && <p className="err" role="alert" style={{ textAlign: "center" }}>{fail}</p>}
         </section>
         {q.terms && <details className="doc-terms"><summary>Terms</summary><p>{q.terms}</p></details>}
-        <p className="doc-foot">{q.business ? `Sent by ${q.business} with Cinder` : "Sent with Cinder"}<button type="button" className="link doc-print" onClick={() => window.print()}>Print or save as PDF</button></p>
+        <p className="doc-foot">{q.business ? `Sent by ${q.business}` : ""}<button type="button" className="link doc-print" onClick={() => window.print()}>Print or save as PDF</button></p>
       </>}
   </main>;
 }

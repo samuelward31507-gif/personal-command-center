@@ -49,15 +49,15 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
       actions={<button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New quote</button>} />
     <div className="dash quotes">
       {rows.length > 0 && <Kpis items={[
-        { label: "Open", value: usd(open.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${open.length} ${open.length === 1 ? "quote" : "quotes"}, Cinder follows up`, onClick: () => setF("open"), active: f === "open" },
+        { label: "Open", value: usd(open.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${open.length} ${open.length === 1 ? "quote" : "quotes"}, follow-ups going out`, onClick: () => setF("open"), active: f === "open" },
         { label: "Your move", value: String(counts.draft + open.filter(r => r.s === "changes").length), sub: `${counts.draft} to send, ${open.filter(r => r.s === "changes").length} asked for changes`, tone: counts.draft ? "warn" : "", onClick: () => setF("draft"), active: f === "draft" },
         { label: "Approved, 30 days", value: usd(approved30.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${approved30.length} ${approved30.length === 1 ? "job" : "jobs"}`, tone: approved30.length ? "up" : "", onClick: () => setF("approved"), active: f === "approved" },
         { label: "Approval rate, 90 days", value: rate == null ? "–" : `${rate}%`, sub: "approved of sent" },
       ]} />}
-      {!rows.length && <Guide title="Quotes that close themselves" sub="Write the quote once. Cinder texts it as a link the customer approves on their phone, then follows up on day 2, 5, 10 and 21 until they answer."
+      {!rows.length && <Guide title="Quotes that close themselves" sub="Write the quote once. It goes out as a link the customer approves on their phone, then follows up on day 2, 5 and 10, and once a month after that, until they answer."
         steps={[
           { title: "Add your prices", text: "With a price book, every quote starts drafted from the job details, and leads get a ballpark by text.", done: !!biz.priceBook, action: <button type="button" className="btn sm" onClick={go.setup}>Add prices</button> },
-          { title: "Book an estimate", text: "Cinder books them on its own. You can add one by hand from Jobs too.", done: (d.board ?? []).some(c => c.stage !== "new"), action: <button type="button" className="btn sm" onClick={() => go.tab("calendar")}>Calendar</button> },
+          { title: "Book an estimate", text: "They get booked on their own. You can add one by hand from Jobs too.", done: (d.board ?? []).some(c => c.stage !== "new"), action: <button type="button" className="btn sm" onClick={() => go.tab("calendar")}>Calendar</button> },
           { title: "Write the first quote", text: "Lines, what's included and a deposit, with a live preview of what they'll see.", action: <button type="button" className="btn sm ink" onClick={() => setPicking(true)}>New quote</button> },
         ]}
         side={<MiniDoc kind="quote" business={biz.business} href="/q/example" />} />}
@@ -67,7 +67,7 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
           <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}{counts[k] ? <em>{counts[k]}</em> : null}</button>)}</div>
         <label className="inwrap search" style={{ marginLeft: "auto", width: 220 }}><Icon name="search" size={14} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search quotes" aria-label="Search quotes" /></label>
       </div>
-      {!shown.length ? <Empty title={f === "open" ? "No quotes out" : "Nothing here"} text={f === "open" ? "Write one from an estimate. Cinder texts it and follows up until they answer." : undefined} action={f === "open" ? <button type="button" className="btn ink" onClick={() => setPicking(true)}>New quote</button> : undefined} />
+      {!shown.length ? <Empty title={f === "open" ? "No quotes out" : "Nothing here"} text={f === "open" ? "Write one from an estimate. It goes out by text and gets followed up until they answer." : undefined} action={f === "open" ? <button type="button" className="btn ink" onClick={() => setPicking(true)}>New quote</button> : undefined} />
       : wide ? <table className="tbl q-tbl">
         <colgroup><col style={{ width: 210 }} /><col /><col style={{ width: 170 }} /><col style={{ width: 210 }} /><col style={{ width: 100 }} /><col style={{ width: 110 }} /></colgroup>
         <thead><tr><th>Customer</th><th>Job</th><th>Status</th><th>Updated</th><th className="right">Deposit</th><th className="right">Amount</th></tr></thead>
@@ -162,7 +162,7 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
             {dep > 0 && !biz.payLink && <p className="fine">Add your pay link in Money so they can pay it from the quote page.</p>}</section>
           {opts && <p className="fine">{firstName} picks one option and any add-ons on the quote page, and the total updates as they tap. The first option is the price on file until they choose.</p>}
           {!d.setup?.quote_terms && !d.setup?.warranty && <p className="fine"><button type="button" className="link" onClick={go.billing}>Add your warranty, terms and a financing link</button> once, and every quote shows them.</p>}
-          <p className="fine">After you text it, Cinder follows up on day 2, 5, 10 and 21, and stops the moment they reply or approve.</p>
+          <p className="fine">Follow-ups go out on day 2, 5 and 10, then once a month until they answer, and stop the moment they reply.</p>
           {card.stage === "quoted" && <div className="acts-row"><button type="button" className="btn ghost sm" onClick={() => go.record(card.id, { ask: "won" })}>Mark won</button><button type="button" className="btn ghost sm" onClick={() => setLosing(true)}>Mark lost</button></div>}
         </>}
       </div>

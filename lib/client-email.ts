@@ -11,7 +11,7 @@ export async function sendCustomerEmail(o: { to: string; business: string; reply
   if (!key || !fromAddr) return { ok: false, error: "Email sending isn't switched on yet." };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(o.to)) return { ok: false, error: "That email doesn't look right." };
   const name = (o.business || "Your contractor").replace(/["<>]/g, "").slice(0, 60);
-  const text = [...o.lines, "", `${o.button.label}: ${o.button.url}`, "", o.foot ?? `Sent by ${name} with Cinder`].join("\n");
+  const text = [...o.lines, "", `${o.button.label}: ${o.button.url}`, "", o.foot ?? `Sent by ${name}`].join("\n");
   const html = `<!doctype html><html><body style="margin:0;background:#f6f6f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Arial,sans-serif;color:#121417">
 <div style="max-width:480px;margin:0 auto;padding:28px 16px">
 <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="display:inline-block;width:28px;height:28px;border-radius:8px;background:#121417;color:#fff;font-weight:600;text-align:center;line-height:28px">${esc(name.charAt(0))}</span><b style="font-size:15px">${esc(name)}</b></div>
@@ -19,7 +19,7 @@ export async function sendCustomerEmail(o: { to: string; business: string; reply
 ${o.lines.map(l => `<p style="margin:0 0 12px;font-size:15px;line-height:1.5">${esc(l)}</p>`).join("")}
 <a href="${esc(o.button.url)}" style="display:block;margin-top:18px;text-align:center;background:#121417;color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 18px;border-radius:10px">${esc(o.button.label)}</a>
 </div>
-<p style="text-align:center;color:#8a8f98;font-size:12px;margin-top:14px">${esc(o.foot ?? `Sent by ${name} with Cinder`)}</p>
+<p style="text-align:center;color:#8a8f98;font-size:12px;margin-top:14px">${esc(o.foot ?? `Sent by ${name}`)}</p>
 </div></body></html>`;
   try {
     const res = await fetch("https://api.resend.com/emails", {

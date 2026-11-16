@@ -10,6 +10,10 @@ import { PageHead, Kpis } from "./charts";
 import { Avatar, Empty, Icon, Spinner, clock, dateLabel, dayName, first, fmtPhone, initials, useArm, type Api, type Toast } from "./parts";
 import { Steps } from "./record";
 import { line } from "./jobs";
+import { ClockBar, myClock } from "./jobwork";
+import { SignoffSheet } from "./finish";
+import { ChecklistBox, routeUrl } from "./parity";
+import { visitDays, type Plan } from "@/lib/service";
 import type { Biz, Data, Go } from "./types";
 
 const d10 = (p: string) => (p || "").replace(/\D/g, "").slice(-10);
@@ -58,7 +62,7 @@ export async function emailDoc(o: { ready?: boolean; api: Api; project: string; 
   }
 }
 
-type Stop = { key: string; kind: "estimate" | "install"; at: number; allDay: boolean; day: string; card: Card | null; thread: string; name: string; phone: string; addr: string; mine: boolean };
+type Stop = { key: string; kind: "estimate" | "install" | "visit"; at: number; allDay: boolean; day: string; card: Card | null; thread: string; name: string; phone: string; addr: string; mine: boolean; plan?: Plan };
 const iso = (t: number) => new Date(t).toLocaleDateString("en-CA");
 const maps = (a: string) => `https://maps.google.com/?daddr=${encodeURIComponent(a)}`;
 
@@ -73,9 +77,16 @@ export function MyDay({ d, biz, project, api, toast, reload, go }: { d: Data; bi
     const day = iso(Date.parse(c.install + "T12:00:00") + k * 86400000), timed = !!c.installTime && (c.installDays || 1) === 1;
     stops.push({ key: `i${c.id}${k}`, kind: "install", at: timed ? Date.parse(`${day}T${c.installTime}`) : Date.parse(day + "T07:00:00"), allDay: !timed, day, card: c, thread: c.id, name: c.name, phone: c.phone, addr: String(c.details.address ?? ""), mine: !!me && d10(c.crewMember ?? "") === me });
   }
+  // Service plan visits: every visit day this week, on the plan's own time (or first thing).
+  for (const p of d.plans ?? []) for (const day of visitDays(p, today, weekEnd)) { const c = byId.get(p.thread_id) ?? null;
+    stops.push({ key: `v${p.id}${day}`, kind: "visit", at: p.time ? Date.parse(`${day}T${p.time}`) : Date.parse(day + "T08:00:00"), allDay: !p.time, day, card: c, thread: p.thread_id, name: p.customer || fmtPhone(p.phone), phone: p.phone,
+      addr: String(c?.details.address ?? (d.customers ?? []).find(x => x.id === p.thread_id)?.address ?? ""), mine: !!me && d10(p.crew_member) === me, plan: p }); }
   const anyMine = stops.some(s => s.mine);
-  const [all, setAll] = useState(!anyMine), [busy, setBusy] = useState(""), [arm, setArm] = useArm();
+  const [all, setAll] = useState(!anyMine), [busy, setBusy] = useState(""), [arm, setArm] = useArm(), [signing, setSigning] = useState<Card | null>(null);
+  for (const p of d.plans ?? []) if (p.status === "active" && p.next_on && p.next_on < today) { const c = byId.get(p.thread_id) ?? null;
+    stops.push({ key: `v${p.id}late`, kind: "visit", at: Date.parse(today + "T06:00:00"), allDay: true, day: today, card: c, thread: p.thread_id, name: p.customer || fmtPhone(p.phone), phone: p.phone, addr: String(c?.details.address ?? ""), mine: !!me && d10(p.crew_member) === me, plan: p }); }
   const shown = stops.filter(s => (all || s.mine) && s.day >= today && s.day <= weekEnd).sort((a, b) => a.at - b.at);
+  const clockOn = myClock(d);
   const now = shown.filter(s => s.day === today), later = shown.filter(s => s.day > today);
   const openSteps = now.reduce((n, s) => n + (s.kind === "install" && s.card ? jobSteps(biz.trade, s.card.details).filter(x => !s.card!.job[x.key]).length : 0), 0);
   async function act(key: string, body: Record<string, unknown>, done: string) {
@@ -89,23 +100,30 @@ export function MyDay({ d, biz, project, api, toast, reload, go }: { d: Data; bi
     <div className="stop-h" role="button" tabIndex={0} onClick={() => go.record(s.thread)} onKeyDown={e => { if (e.key === "Enter") go.record(s.thread); }}>
       <time>{big ? (s.allDay ? "All day" : clock(new Date(s.at).toISOString())) : `${dayName(new Date(s.at).toISOString())}${s.allDay ? "" : " " + clock(new Date(s.at).toISOString())}`}</time>
       <Avatar name={s.name} />
-      <span className="t"><b>{s.name}</b><small>{[s.kind === "estimate" ? "Estimate" : "Install", s.card?.line ? line(s.card) : "", s.addr].filter(Boolean).join(", ")}</small></span>
-      {!s.mine && all && (s.card?.crewMember ? <span className="chip">{first(crewName(d, s.card.crewMember))}</span> : null)}
+      <span className="t"><b>{s.name}</b><small>{[s.kind === "estimate" ? "Estimate" : s.kind === "visit" ? (s.plan!.next_on && s.plan!.next_on < today ? `${s.plan!.name}, late since ${dateLabel(s.plan!.next_on)}` : s.plan!.name) : "Install", s.kind !== "visit" && s.card?.line ? line(s.card) : "", s.addr].filter(Boolean).join(", ")}</small></span>
+      {!s.mine && all && ((s.kind === "visit" ? s.plan?.crew_member : s.card?.crewMember) ? <span className="chip">{first(crewName(d, s.kind === "visit" ? s.plan!.crew_member : s.card!.crewMember))}</span> : null)}
     </div>
     {big && s.card?.crew && <p className="stop-note"><Icon name="alert" size={13} />{s.card.crew}</p>}
     {big && <div className="acts-row">
       {s.addr && <a className="btn sm" href={maps(s.addr)} target="_blank" rel="noreferrer"><Icon name="pin" size={13} />Directions</a>}
       <a className="btn sm" href={`tel:${s.phone}`}><Icon name="phone" size={13} />Call</a>
       <button type="button" className={"btn sm" + (arm === "omw" + s.key ? " ink" : "")} disabled={busy === "omw" + s.key} onClick={() => { if (arm === "omw" + s.key) void act("omw" + s.key, { action: "reply", thread: s.thread, body: onMyWayText(s.name, "", d.business) }, `Texted ${first(s.name)} you're on the way.`); else setArm("omw" + s.key); }}>{busy === "omw" + s.key ? <Spinner /> : <Icon name="car" size={13} />}{arm === "omw" + s.key ? "Tap to send" : "On my way"}</button>
+      {s.kind !== "estimate" && <button type="button" className={"btn sm" + (clockOn?.thread_id === s.thread ? " ink" : "")} disabled={busy === "clk" + s.key} onClick={() => void act("clk" + s.key, clockOn?.thread_id === s.thread ? { action: "clockout" } : { action: "clockin", thread: s.thread }, clockOn?.thread_id === s.thread ? "Clocked out." : `Clocked in at ${first(s.name)}'s.`)}>{busy === "clk" + s.key ? <Spinner /> : <Icon name="clock" size={13} />}{clockOn?.thread_id === s.thread ? "Clock out" : "Clock in"}</button>}
+      {s.kind === "visit" && s.plan && s.plan.next_on && s.plan.next_on <= s.day && <button type="button" className={"btn sm" + (arm === "vd" + s.key ? " ink" : "")} disabled={busy === "vd" + s.key} onClick={() => { if (arm === "vd" + s.key) void act("vd" + s.key, { action: "visit", plan: s.plan!.id }, `${first(s.name)}'s visit is done.${d.role === "crew" ? "" : s.plan!.invoice ? " Invoice texted." : ""}`); else setArm("vd" + s.key); }}>{busy === "vd" + s.key ? <Spinner /> : <Icon name="check" size={13} />}{arm === "vd" + s.key ? "Tap: visit done" : "Visit done"}</button>}
+      {s.kind === "install" && s.card && (s.card.signoff ? <span className="chip good"><Icon name="check" size={11} />Signed off</span> : <button type="button" className="btn sm" onClick={() => setSigning(s.card)}><Icon name="check" size={13} />Sign-off</button>)}
       <button type="button" className="btn sm" onClick={() => go.record(s.thread)}><Icon name="upload" size={13} />Photos and notes</button>
     </div>}
+    {big && s.kind !== "estimate" && s.card?.checklist && <ChecklistBox d={d} card={s.card} trade={biz.trade} busy={busy} canPick={false} act={(k, body, done) => act(k, { ...body, thread: s.thread }, done)} />}
     {big && s.kind === "install" && s.card && <Steps card={s.card} trade={biz.trade} busy={busy} tick={(step, done) => void act("step:" + step, { action: "jobstep", thread: s.thread, step, done }, done ? "Ticked." : "Unticked.")} />}
   </article>;
   return <>
-    <PageHead title="Your day" sub={day} actions={anyMine ? <div className="seg" role="radiogroup" aria-label="Whose jobs">
+    <PageHead title="Your day" sub={day} actions={<>{anyMine && <div className="seg" role="radiogroup" aria-label="Whose jobs">
       <button type="button" role="radio" aria-checked={!all} className={!all ? "on" : ""} onClick={() => setAll(false)}>Mine</button>
-      <button type="button" role="radio" aria-checked={all} className={all ? "on" : ""} onClick={() => setAll(true)}>Everyone</button></div> : undefined} />
+      <button type="button" role="radio" aria-checked={all} className={all ? "on" : ""} onClick={() => setAll(true)}>Everyone</button></div>}
+      {routeUrl(now.map(s => s.addr)) && <a className="btn" href={routeUrl(now.map(s => s.addr))!} target="_blank" rel="noreferrer"><Icon name="pin" size={14} />Today's route</a>}
+      {!clockOn && <button type="button" className="btn" disabled={busy === "clkgen"} onClick={() => void act("clkgen", { action: "clockin" }, "Clocked in. Clock out when you're done.")}><Icon name="clock" size={14} />Clock in</button>}</>} />
     <div className="dash myday">
+    <ClockBar d={d} busy={busy === "out"} onOut={() => void act("out", { action: "clockout" }, "Clocked out.")} />
     <Kpis items={[{ label: "Stops today", value: String(now.length), sub: now[0] ? `First at ${now[0].allDay ? "7 AM" : clock(new Date(now[0].at).toISOString())}` : "Nothing booked" },
       { label: "Rest of the week", value: String(later.length), sub: later[0] ? `Next ${dateLabel(later[0].day)}` : "Clear" },
       { label: "Steps left", value: String(openSteps), sub: openSteps ? "On today's installs" : "Nothing left to tick" }]} />
@@ -114,5 +132,8 @@ export function MyDay({ d, biz, project, api, toast, reload, go }: { d: Data; bi
     </section>
     {later.length > 0 && <section className="panel"><div className="panel-h"><h2>This week</h2></div><div className="panel-b"><div className="stops">{later.map(s => stop(s, false))}</div></div></section>}
     </div>
+    {signing && <SignoffSheet card={signing} trade={biz.trade} owner={d.role !== "crew"} onClose={() => setSigning(null)} save={async input => {
+      try { await api("/api/app/act", { p: project, action: "signoff", thread: signing.id, input }); toast(`${first(signing.name)} signed off the job.`); await reload(); return true; }
+      catch (e) { toast(e instanceof Error ? e.message : "That didn't save.", true); return false; } }} />}
   </>;
 }

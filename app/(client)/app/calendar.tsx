@@ -8,10 +8,12 @@ import { googleCalendarUrl, onMyWayText, splitAppointments } from "@/lib/client-
 import { Empty, Icon, Sheet, Spinner, clock, dayName, first, fmtPhone, useArm, type Api, type Toast } from "./parts";
 import { Inspector } from "./record";
 import { line } from "./jobs";
-import { crewName } from "./crew";
+import { crewName, teamOf } from "./crew";
+import { routeUrl } from "./parity";
+import { visitDays } from "@/lib/service";
 import type { Biz, Data, Go } from "./types";
 
-type Block = { key: string; kind: "estimate" | "install" | "event"; title: string; sub: string; start: number; end: number; allDay: boolean; day: string; thread?: string; link?: string; apptId?: string; name?: string; addr?: string };
+type Block = { key: string; kind: "estimate" | "install" | "event" | "visit"; title: string; sub: string; start: number; end: number; allDay: boolean; day: string; thread?: string; link?: string; apptId?: string; name?: string; addr?: string; crew?: string };
 const maps = (a: string) => `https://maps.google.com/?daddr=${encodeURIComponent(a)}`;
 const H0 = 6, H1 = 20, ROW = 44;
 const iso = (d: Date) => d.toLocaleDateString("en-CA");
@@ -37,21 +39,29 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
   const days = useMemo(() => Array.from({ length: 7 }, (_, k) => { const x = new Date(start); x.setDate(start.getDate() + k); return iso(x); }), [start]);
   const byThread = useMemo(() => new Map((d.board ?? []).map(c => [c.id, c])), [d.board]);
 
-  const blocks = useMemo<Block[]>(() => {
+  const [who, setWho] = useState("all");
+  const allBlocks = useMemo<Block[]>(() => {
     const out: Block[] = [];
     for (const a of d.appointments) { const t = Date.parse(a.starts_at), dd = iso(new Date(t)); const c = byThread.get(a.thread_id);
-      out.push({ key: "a" + a.id, kind: "estimate", title: a.customer_name || fmtPhone(a.customer_phone), sub: [c ? line(c) : "Estimate", crewName(d, a.crew_member || c?.crewMember)].filter(Boolean).join(", "), start: t, end: t + 3600000, allDay: false, day: dd, thread: a.thread_id, link: a.link, apptId: a.id, name: a.customer_name, addr: c ? String(c.details.address ?? "") : "" }); }
+      out.push({ key: "a" + a.id, kind: "estimate", title: a.customer_name || fmtPhone(a.customer_phone), sub: [c ? line(c) : "Estimate", crewName(d, a.crew_member || c?.crewMember)].filter(Boolean).join(", "), start: t, end: t + 3600000, allDay: false, day: dd, thread: a.thread_id, link: a.link, apptId: a.id, name: a.customer_name, addr: c ? String(c.details.address ?? "") : "", crew: a.crew_member || c?.crewMember || "" }); }
     for (const c of d.board ?? []) if (c.stage === "won" && c.install) for (let k = 0; k < (c.installDays || 1); k++) {
       const dd = iso(new Date(Date.parse(c.install + "T12:00:00") + k * 86400000));
       const timed = !!c.installTime && (c.installDays || 1) === 1;
       const st = timed ? Date.parse(`${dd}T${c.installTime}`) : Date.parse(dd + "T07:00:00");
-      out.push({ key: `i${c.id}${k}`, kind: "install", title: c.name, sub: `Install${(c.installDays || 1) > 1 ? `, day ${k + 1} of ${c.installDays}` : ""}${c.line ? `, ${line(c)}` : ""}${c.crewMember ? `, ${crewName(d, c.crewMember)}` : ""}`, start: st, end: st + (timed ? 4 : 9) * 3600000, allDay: !timed, day: dd, thread: c.id, addr: String(c.details.address ?? "") });
+      out.push({ key: `i${c.id}${k}`, kind: "install", title: c.name, sub: `Install${(c.installDays || 1) > 1 ? `, day ${k + 1} of ${c.installDays}` : ""}${c.line ? `, ${line(c)}` : ""}${c.crewMember ? `, ${crewName(d, c.crewMember)}` : ""}`, start: st, end: st + (timed ? 4 : 9) * 3600000, allDay: !timed, day: dd, thread: c.id, addr: String(c.details.address ?? ""), crew: c.crewMember || "" });
     }
+    // Service plan visits on their day, at the plan's time or as an all-day chip.
+    for (const p of d.plans ?? []) for (const dd of visitDays(p, days[0], days[6])) { const c = byThread.get(p.thread_id), st = p.time ? Date.parse(`${dd}T${p.time}`) : Date.parse(dd + "T08:00:00");
+      out.push({ key: `v${p.id}${dd}`, kind: "visit", title: p.customer || fmtPhone(p.phone), sub: [p.name, crewName(d, p.crew_member)].filter(Boolean).join(", "), start: st, end: st + 2 * 3600000, allDay: !p.time, day: dd, thread: p.thread_id, addr: c ? String(c.details.address ?? "") : "", crew: p.crew_member }); }
     for (const e of cal.events ?? []) { const st = Date.parse(e.start), en = Date.parse(e.end); const first = iso(new Date(st));
       if (e.allDay) { for (let t = st; t < en; t += 86400000) out.push({ key: "e" + e.id + t, kind: "event", title: e.title, sub: "Your calendar", start: t, end: t + 86400000, allDay: true, day: iso(new Date(t + 43200000)), link: e.link }); }
       else out.push({ key: "e" + e.id, kind: "event", title: e.title, sub: `Until ${clock(e.end)}, your calendar`, start: st, end: en, allDay: false, day: first, link: e.link }); }
     return out;
-  }, [d, cal.events, byThread]);
+  }, [d, cal.events, byThread, days]);
+  const blocks = who === "all" ? allBlocks : allBlocks.filter(b => b.kind === "event" || (b.crew ?? "") === who);
+  const team = teamOf(d);
+  const route = (dd: string) => routeUrl(blocks.filter(b => b.day === dd && b.kind !== "event" && b.addr).sort((a, b) => a.start - b.start).map(b => b.addr!));
+  const crewPick = team.length > 1 ? <select className="input sm" aria-label="Whose schedule" value={who} onChange={e => setWho(e.target.value)} style={{ width: "auto" }}><option value="all">Everyone</option>{team.map(t => <option key={t.cell} value={t.cell}>{t.name}</option>)}</select> : null;
 
   async function act(key: string, body: Record<string, unknown>, done: (r: { review?: string }) => string) {
     setBusy(key);
@@ -83,7 +93,7 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
   const outcomes = due.length > 0 && <section className="card outcomes"><div className="hd"><h2>How did it go?</h2><small>{due.length} {due.length === 1 ? "estimate" : "estimates"} waiting on an update</small></div>
     <div className="outc-row">{due.map(a => { const name = a.customer_name || fmtPhone(a.customer_phone), c = byThread.get(a.thread_id); return <div key={a.id} className="outc">
       <button type="button" className="who" onClick={() => open({ key: "", kind: "estimate", title: name, sub: "", start: 0, end: 0, allDay: false, day: "", thread: a.thread_id })}><b>{name}</b><small>{dayName(a.starts_at)} {clock(a.starts_at)}{c?.line ? `, ${line(c)}` : ""}</small></button>
-      {sheet?.id === a.id ? <form className="acts-row" onSubmit={e => { e.preventDefault(); void act(a.id, { action: "outcome", appt: a.id, result: sheet.kind, amount: amt, review: sheet.kind === "won" && review }, r => sheet.kind === "quoted" ? "Cinder will follow up on the quote until they answer." : r.review === "sent" ? "Marked won. Review request sent." : "Marked won."); }}>
+      {sheet?.id === a.id ? <form className="acts-row" onSubmit={e => { e.preventDefault(); void act(a.id, { action: "outcome", appt: a.id, result: sheet.kind, amount: amt, review: sheet.kind === "won" && review }, r => sheet.kind === "quoted" ? "Follow-ups go out on the quote until they answer." : r.review === "sent" ? "Marked won. Review request sent." : "Marked won."); }}>
           <span className="inwrap" style={{ width: 120 }}><i>$</i><input inputMode="decimal" autoFocus placeholder={sheet.kind === "won" ? "Job amount" : "Amount"} value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></span>
           {sheet.kind === "won" && <label className="check" style={{ fontSize: 12 }}><input type="checkbox" checked={review} onChange={e => setReview(e.target.checked)} /><span>Ask for a review</span></label>}
           <button type="submit" className="btn sm ink" disabled={!!busy}>{busy ? <Spinner /> : sheet.kind === "won" ? "Mark won" : "Start follow-up"}</button><button type="button" className="btn sm ghost" onClick={() => setSheet(null)}>Cancel</button></form>
@@ -100,12 +110,12 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
     const list = blocks.filter(b => b.day === day).sort((a, b) => Number(b.allDay) - Number(a.allDay) || a.start - b.start);
     const strip = Array.from({ length: 14 }, (_, k) => { const x = new Date(Date.parse(today + "T12:00:00") + k * 86400000); return iso(x); });
     return <>
-      <header className="tb"><h1 className="h1">Calendar</h1><span className="sub">{estWeek} estimates this week</span></header>
+      <header className="tb"><h1 className="h1">Calendar</h1><span className="sub">{estWeek} estimates this week</span><div className="acts">{crewPick}{route(day) && <a className="btn sm" href={route(day)!} target="_blank" rel="noreferrer"><Icon name="pin" size={13} />Route</a>}</div></header>
       <div className="daystrip">{strip.map(dd => { const x = new Date(dd + "T12:00:00"); const n = blocks.filter(b => b.day === dd).length; return <button key={dd} type="button" className={(dd === day ? "on" : "") + (dd === today ? " today" : "")} onClick={() => setDay(dd)}><small>{x.toLocaleDateString("en-US", { weekday: "short" })}</small><b>{x.getDate()}</b><i style={{ opacity: n ? 1 : 0 }} /></button>; })}</div>
       <div className="pad" style={{ paddingTop: 8 }}>
         {outcomes}
         {list.length ? list.map(b => <button key={b.key} type="button" className={"dayrow " + b.kind} onClick={() => open(b)}><time>{b.allDay ? "All day" : clock(new Date(b.start).toISOString())}</time><span style={{ minWidth: 0 }}><b>{b.title}</b><small>{b.sub}</small></span>{b.kind === "estimate" && b.apptId && Date.parse(b.day + "T23:59:00") > Date.now() && <span className="acts-row" style={{ flexWrap: "nowrap" }}>{omw(b)}<button type="button" className="btn sm ic" aria-label="Move" title="Move" onClick={e => { e.stopPropagation(); askMove(b); }}><Icon name="clock" size={13} /></button></span>}{b.kind === "install" && b.addr && <a className="btn sm ic" href={maps(b.addr)} target="_blank" rel="noreferrer" aria-label="Directions" title={b.addr} onClick={e => e.stopPropagation()}><Icon name="pin" size={13} /></a>}</button>)
-          : <Empty title={`Nothing on ${dayName(day + "T12:00:00")}`} text="Estimates Cinder books and installs you set show up here." />}
+          : <Empty title={`Nothing on ${dayName(day + "T12:00:00")}`} text="Booked estimates and the installs you set show up here." />}
         {!cal.connected && <p className="fine" style={{ marginTop: 12 }}>Connect Google Calendar and your own events show here too. <a className="link" href={cal.connectUrl} target="_blank" rel="noreferrer">Connect</a></p>}
       </div>
       {moveSheet}
@@ -116,13 +126,13 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
     <header className="tb"><h1 className="h1">Calendar</h1>
       <div className="acts-row" style={{ gap: 2 }}><button type="button" className="btn ghost sm ic" aria-label="Previous week" onClick={() => setWeek(w => w - 1)}><Icon name="back" size={14} /></button><button type="button" className="btn ghost sm" onClick={() => setWeek(0)}>Today</button><button type="button" className="btn ghost sm ic" aria-label="Next week" onClick={() => setWeek(w => w + 1)}><Icon name="fwd" size={14} /></button></div>
       <span className="sub">{range}{week === 0 ? `, ${estWeek} ${estWeek === 1 ? "estimate" : "estimates"}` : ""}</span>
-      <div className="acts">{cal.connected ? <a className="btn" href={googleCalendarUrl(cal.email)} target="_blank" rel="noreferrer"><Icon name="ext" size={13} />Google Calendar</a>
+      <div className="acts">{crewPick}{route(today) && <a className="btn" href={route(today)!} target="_blank" rel="noreferrer" title="Today's stops in order, on the map"><Icon name="pin" size={13} />Today's route</a>}{cal.connected ? <a className="btn" href={googleCalendarUrl(cal.email)} target="_blank" rel="noreferrer"><Icon name="ext" size={13} />Google Calendar</a>
         : <a className="btn ink" href={cal.connectUrl} target="_blank" rel="noreferrer">Connect Google Calendar</a>}</div></header>
     <div className={"split" + (sel ? " has-insp" : "")}>
       <div className="pane list">
         {(cal.error || !cal.connected || due.length > 0) && <div className="pad" style={{ paddingBottom: 0 }}>
           {cal.error && <div className="card box" style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}><span>{cal.error}</span><a className="btn sm" href={cal.connectUrl} target="_blank" rel="noreferrer">Reconnect</a></div>}
-          {!cal.connected && !cal.error && <p className="fine">Connect your Google Calendar and Cinder only books where you&rsquo;re free. Your own events show up here too.</p>}
+          {!cal.connected && !cal.error && <p className="fine">Connect your Google Calendar and estimates only get booked where you&rsquo;re free. Your own events show up here too.</p>}
           {outcomes}
         </div>}
         <div className="cal">

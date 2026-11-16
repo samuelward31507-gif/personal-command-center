@@ -1,4 +1,5 @@
 // Cinder app, I/O: who's signed in, the client they're looking at, and the click-to-call bridge.
+import { parseTeam } from "@/lib/crm";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { cookieFrom, readSession, type AppSession } from "@/lib/client-app";
 import { cleanMessages } from "@/lib/client-ops";
@@ -14,7 +15,15 @@ export async function clientFor(sql: Sql, s: AppSession, projectId: string | nul
   const pid = projectId && s.projects.includes(projectId) ? projectId : s.projects[0];
   if (!pid) return null;
   const [r] = await sql`SELECT project_id, owner_id, setup, messages FROM public.client_ops WHERE project_id = ${pid}::uuid` as Record<string, unknown>[];
-  return r ? { projectId: String(r.project_id), owner: String(r.owner_id), setup: (r.setup ?? {}) as Record<string, string>, messages: cleanMessages(r.messages) } : null;
+  if (!r) return null;
+  const setup = (r.setup ?? {}) as Record<string, string>;
+  if (s.role && s.role !== "owner") {
+    const p = (s.phone || "").replace(/\D/g, "").slice(-10);
+    const m = parseTeam(setup.team).find(x => x.cell.slice(-10) === p);
+    if (!m && (setup.owner_cell || "").replace(/\D/g, "").slice(-10) !== p) return null;
+    s.role = !m ? "owner" : m.role;
+  }
+  return { projectId: String(r.project_id), owner: String(r.owner_id), setup, messages: cleanMessages(r.messages) };
 }
 
 const xml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

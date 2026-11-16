@@ -169,8 +169,9 @@ export function parseDnt(v: unknown): string[] {
   for (const p of String(v ?? "").split(/[,\n;]+/)) { const d = p.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, ""); if (d.length === 10) seen.add("+1" + d); if (seen.size >= 500) break; }
   return [...seen];
 }
-export type TeamMember = { name: string; cell: string; role: "crew" | "owner" };
-/** The owner's team from setup.team: at most two people, each a name, a +1 cell and a role. */
+export const TEAM_MAX = 10;
+export type TeamMember = { name: string; cell: string; role: "crew" | "office" | "owner"; /** What an hour of their time costs, for job labor from clocked hours. */ rate?: number };
+/** The owner's team from setup.team: up to ten people, each a name, a +1 cell, a role (owner, office, crew) and an hourly rate. */
 export function parseTeam(v: unknown): TeamMember[] {
   let arr: unknown = v;
   if (typeof v === "string") { try { arr = JSON.parse(v); } catch { arr = []; } }
@@ -182,8 +183,9 @@ export function parseTeam(v: unknown): TeamMember[] {
     const d = String(r.cell ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
     if (d.length !== 10 || seen.has(d)) continue;
     seen.add(d);
-    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : "crew" });
-    if (out.length >= 2) break;
+    const rate = Number(String(r.rate ?? "").replace(/[$,\s]/g, ""));
+    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : r.role === "office" ? "office" : "crew", ...(Number.isFinite(rate) && rate > 0 && rate <= 500 ? { rate: Math.round(rate * 100) / 100 } : {}) });
+    if (out.length >= TEAM_MAX) break;
   }
   return out;
 }
@@ -216,7 +218,11 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   if (r.nudge_hours !== undefined) out.nudge_hours = parseDayList(r.nudge_hours, 3, 168).join(",");
   if (r.dnt !== undefined) out.dnt = parseDnt(r.dnt).join(",");
   if (r.team !== undefined) out.team = JSON.stringify(parseTeam(r.team));
-  pick("monthly_report", ["", "yes", "no"]); pick("booking_page", ["", "yes", "no"]);
+  pick("monthly_report", ["", "yes", "no"]); pick("booking_page", ["", "yes", "no"]); pick("review_on_paid", ["", "yes", "no"]); pick("evening_text", ["", "yes", "no"]); pick("crew_prices", ["", "yes", "no"]);
+  if (r.checklists !== undefined) { let arr: unknown = r.checklists; if (typeof arr === "string") { try { arr = JSON.parse(arr); } catch { arr = []; } }
+    out.checklists = JSON.stringify((Array.isArray(arr) ? arr : []).slice(0, 20).map(x => { const o = (x && typeof x === "object" ? x : {}) as Record<string, unknown>;
+      return { name: String(o.name ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 60), items: (Array.isArray(o.items) ? o.items : []).map(i => String(i ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 100)).filter(Boolean).slice(0, 30) }; }).filter(x => x.name && x.items.length)); }
+  if (r.labor_rate !== undefined) { const n = Number(String(r.labor_rate ?? "").replace(/[$,\s]/g, "")); out.labor_rate = Number.isFinite(n) && n > 0 && n <= 500 ? String(Math.round(n * 100) / 100) : ""; }
   pick("quote_terms", undefined, 1200); pick("warranty", undefined, 300); pick("financing_note", undefined, 160);
   if (r.financing_link !== undefined) { const u = String(r.financing_link ?? "").trim().slice(0, 300); out.financing_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   return out;
@@ -252,7 +258,9 @@ ${bp ? `- Ballpark from the owner's own prices for ${bp.basis}: ${rangeText(bp)}
 export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
   ballpark: { low: number; high: number } | null; notes: string; next: string | null; at: string;
   quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
-    items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax: number; deposit?: number | null } | null;
+    items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax: number; deposit?: number | null;
+    /** How many times they opened it, the last time, whether follow-ups are paused (imported quotes start paused), and when the next one goes. */
+    views?: number; lastViewed?: string | null; chasePaused?: boolean; nextChase?: string | null } | null;
   install: string | null; installTime: string | null; installDays: number; onCalendar: boolean; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean;
   invoice: CardInvoice | null; job: Record<string, string>; costs: Costs;
   /** When the job entered its current stage, and the owner's reason when it was lost. */
@@ -264,7 +272,17 @@ export type Card = { id: string; name: string; phone: string; source: string; st
   remind?: { at: string; note: string; sent: boolean } | null;
   photos?: Photo[];
   /** The team member on this job (their +1 cell), or "" when it's the owner's. */
-  crewMember?: string };
+  crewMember?: string;
+  /** Extra work agreed mid-job, each one approved by the customer (or in person). */
+  changeOrders?: import("@/lib/service").ChangeOrder[];
+  /** When the Google review ask goes out after the invoice was paid in full, if it's queued. */
+  reviewAfter?: string | null;
+  /** The customer's sign-off at the end of the job, the latest one. */
+  signoff?: import("@/lib/service").Signoff | null;
+  /** Every property this customer has (address, gate code, notes), when there's more than the main address. */
+  properties?: { id: string; address: string; gate_code: string; notes: string }[];
+  /** The job's checklist, filled in on the crew's phone. */
+  checklist?: { name: string; items: { label: string; done: boolean; at?: string; by?: string }[] } | null };
 export const cleanEmail = (v: unknown) => { const s = String(v ?? "").trim().toLowerCase().slice(0, 120); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : ""; };
 export type CardInvoice = { id: string; number: number; status: string; items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number; total: number; note: string;
   due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null;

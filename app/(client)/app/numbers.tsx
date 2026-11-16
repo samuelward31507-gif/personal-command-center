@@ -4,9 +4,11 @@
 // Stat boxes with trends, the funnel from lead to won, money over time, where the work came from, why jobs were
 // lost, then reviews and win-back. Definitions match Jobber and ServiceTitan.
 import { useCallback, useEffect, useState } from "react";
+import { jobPrice } from "@/lib/service";
 import type { Period, Report, ReportNumbers } from "@/lib/client-reports";
 import { Avatar, Spinner, ago, secs, short, usd, type Api, type Toast } from "./parts";
 import { Bars, Donut, Guide, Kpis, PageHead, type Kpi } from "./charts";
+import { HoursPanel, RecurringPanel } from "./jobwork";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 import { jobProfit } from "@/lib/crm";
 
@@ -52,7 +54,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
       : n!.leads === 0 && b!.leads === 0 && !ser.length ? <Guide title="Your numbers start with your first lead"
         sub="Book rate, close rate, average job, speed to lead, money collected and where the work comes from, all worked out for you and compared with the period before. Nothing to set up."
         steps={[
-          { title: "Get leads flowing to Cinder", text: "Your number, website chat, form or booking page. Settings shows what's connected.", action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Connections</button> },
+          { title: "Get leads flowing in", text: "Your number, website chat, form or booking page. Settings shows what's connected.", action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Connections</button> },
           { title: "Mark jobs won or lost", text: "With a reason when it's lost, so you see what's costing you jobs." },
           { title: "Record payments", text: "So collected money and days to get paid are real numbers.", action: <button type="button" className="btn sm" onClick={() => go.tab("invoices")}>Money</button> },
         ]} />
@@ -76,7 +78,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
             <div className="panel-b funnel2">{([["Leads", n!.leads, null, ""], ["Estimates booked", n!.booked, R!.book, "book rate"], ["Quoted", n!.quoted, R!.quote, "of booked"], ["Won", n!.won, R!.close, "close rate"]] as const).map(([k, v, of, l], i) =>
               <div key={k} className="fn"><div className="fn-t"><span>{k}</span><b>{v}</b>{of != null && <em>{of}% {l}</em>}</div>
                 <i className={"fn-bar s" + i} style={{ width: `${n!.leads ? Math.max(3, (v / n!.leads) * 100) : 0}%` }} /></div>)}
-              <p className="fine" style={{ marginTop: 10 }}>{n!.afterHoursLeads} of the {n!.leads} leads came in at night or on a weekend, and Cinder answered every one.</p>
+              <p className="fine" style={{ marginTop: 10 }}>{n!.afterHoursLeads} of the {n!.leads} leads came in at night or on a weekend, and every one was answered.</p>
             </div>
           </section>
           <section className="panel s7">
@@ -103,7 +105,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
           </section>
           {(() => {
             const profit = n!.costedValue - n!.costs, margin = n!.costedValue ? Math.round((profit / n!.costedValue) * 100) : null;
-            const jobs = (d.board ?? []).filter(c => c.stage === "won").map(c => ({ c, p: jobProfit(c.invoice?.total || c.value || c.quote?.amount || null, c.costs) })).filter(x => x.p).sort((a, b) => a.p!.margin - b.p!.margin);
+            const jobs = (d.board ?? []).filter(c => c.stage === "won").map(c => ({ c, p: jobProfit(jobPrice(c), c.costs) })).filter(x => x.p).sort((a, b) => a.p!.margin - b.p!.margin);
             const uncosted = Math.max(0, n!.won - n!.costed);
             return <section className="panel s12">
               <div className="panel-h"><h2>Profit on won jobs</h2><small>{n!.costed ? `${n!.costed} of ${n!.won} won ${n!.won === 1 ? "job" : "jobs"} with costs logged` : PERIOD[days]}</small></div>
@@ -119,7 +121,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
                 </div>
                 {jobs.length > 0 && <div className="profit-jobs"><p className="sec">Thinnest margins first<small>every won job with costs</small></p>
                   <ul className="bars">{jobs.slice(0, 6).map(({ c, p }) => <li key={c.id}><span><button type="button" className="link" onClick={() => go.record(c.id)}>{c.name}</button></span><i className={p!.margin < 20 ? "warn" : ""} style={{ width: `${Math.max(2, Math.min(100, p!.margin))}%` }} /><b>{p!.margin}%<small> {usd(p!.profit)}</small></b></li>)}</ul></div>}
-              </> : <p className="fine" style={{ padding: "6px 0" }}>Log materials, labor and other costs on a won job (the Costs box on the job) and Cinder shows what each job really made, and your margin across all of them.</p>}</div>
+              </> : <p className="fine" style={{ padding: "6px 0" }}>Log materials, labor and other costs on a won job (the Costs box on the job) and you see what each job really made, and your margin across all of them.</p>}</div>
             </section>;
           })()}
           <section className="panel s12">
@@ -134,6 +136,8 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
               </> : <p className="fine" style={{ padding: "18px 0" }}>Once leads come in, this shows which source pays.</p>}
             </div>
           </section>
+          <RecurringPanel d={d} go={go} onPlans={() => go.tab("plans")} />
+          <HoursPanel d={d} go={go} />
           <section className="panel s6">
             <div className="panel-h"><h2>Reviews</h2><small>{n!.reviews} asked {days === 365 ? "this year" : `in ${days} days`}</small></div>
             <div className="panel-b">

@@ -9,6 +9,12 @@ import { chosen, dollars, totals, type Item } from "@/lib/billing";
 import { Avatar, Empty, Icon, Sheet, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast } from "./parts";
 import { quoteText } from "@/lib/crm";
 import { CrewPick, crewName, emailDoc } from "./crew";
+import { PlanBox } from "./plans";
+import { jobPrice } from "@/lib/service";
+import { ChangeOrders, HoursBox } from "./jobwork";
+import { PortalSheet, SignoffBox } from "./finish";
+import { ChecklistBox, PropertiesBox } from "./parity";
+import { FieldIcon, fieldIconFor } from "./sources";
 
 /** "Remind me": a time and a note on this customer. The owner gets a text and a push when it's due. */
 export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: { name: string; current: { at: string; note: string } | null; busy: boolean; onClose: () => void; onSave: (at: string, note: string) => void; onClear: () => void }) {
@@ -24,7 +30,7 @@ export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: {
   </Sheet>;
 }
 import { LineEditor, invoiceState } from "./money";
-import { Photos } from "./photos";
+import { Photos, shrink } from "./photos";
 import { nextUp, LostPicker } from "./jobs";
 import { sourceLabel, type Biz, type Data, type Go, type Text, type Thread } from "./types";
 
@@ -56,7 +62,7 @@ function useRecord(id: string, d: Data, project: string, api: Api, toast: Toast,
   const source = card?.source || cust?.source || thread?.source || "";
   const status = card?.status || thread?.status || cust?.status || "auto";
   const since = cust?.since ? new Date(cust.since).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "";
-  const price = card ? card.invoice?.total || card.value || card.quote?.amount || null : null;
+  const price = card ? jobPrice(card) : null;
   const inv = card?.invoice ?? invoices.find(i => i.status !== "void") ?? null;
   const paid = invoices.filter(i => i.status === "paid").reduce((a, i) => a + i.total, 0);
   const owed = invoices.filter(i => i.status === "sent").reduce((a, i) => a + i.total, 0);
@@ -113,6 +119,9 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
           <JobPanel r={r} biz={biz} ask={ask} setAsk={setAsk} go={go} canText={!!canText} />
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <Steps card={r.card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <CostBox card={r.card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
+          {r.card && r.card.stage === "won" && !r.card.pastCustomer && <ChecklistBox d={d} card={r.card} trade={biz.trade} act={r.act} busy={r.busy} canPick={!biz.crew} onPhoto={async (label, f) => { try { await r.act("photo", { action: "photo", kind: "during", caption: label, data: await shrink(f) }, "Photo added."); } catch { r.toast("That photo didn't work.", true); } }} />}
+          {r.card && r.card.stage === "won" && !r.card.pastCustomer && <SignoffBox owner={!biz.crew} d={d} card={r.card} trade={biz.trade} save={async input => !!(await r.act("signoff", { action: "signoff", input }, "Signed off. Install and walk-through ticked."))} />}
+          {r.card && r.card.stage === "won" && !r.card.pastCustomer && !biz.crew && <HoursBox d={d} card={r.card} act={r.act} busy={r.busy} />}
         </div>}
     </div>
     {lostSheet}
@@ -124,7 +133,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
   const r = useRecord(id, d, project, api, toast, reload);
   const [tab, setTab] = useState<"activity" | "job">(view0 ?? (ask0 ? "job" : "activity"));
   const [ask, setAsk] = useState<Stage | null>(ask0 ?? null);
-  const [losing, setLosing] = useState(false), [reminding, setReminding] = useState(false);
+  const [losing, setLosing] = useState(false), [reminding, setReminding] = useState(false), [portal, setPortal] = useState(false);
   const [wide, setWide] = useState(false);
   useEffect(() => { const m = matchMedia("(min-width: 900px)"); const h = () => setWide(m.matches); h(); m.addEventListener("change", h); return () => m.removeEventListener("change", h); }, []);
   const ta = useRef<HTMLTextAreaElement>(null);
@@ -167,12 +176,17 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       {biz.canCall ? <button type="button" className="btn sm" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}>Call {first(name)}</button> : <a className="btn sm" href={`tel:${phone}`}>Call {first(name)}</a>}
     </div></section> : null;
   const rail = <>{!biz.crew && needs}{!biz.crew && money}{!biz.crew && card && card.stage === "won" && !card.pastCustomer && <CostBox card={card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
+    {card && card.stage === "won" && !card.pastCustomer && <ChecklistBox d={d} card={card} trade={biz.trade} act={r.act} busy={r.busy} canPick={!biz.crew} onPhoto={async (label, f) => { try { await r.act("photo", { action: "photo", kind: "during", caption: label, data: await shrink(f) }, "Photo added."); } catch { r.toast("That photo didn't work.", true); } }} />}
+    {card && card.stage === "won" && !card.pastCustomer && <SignoffBox owner={!biz.crew} d={d} card={card} trade={biz.trade} save={async input => !!(await r.act("signoff", { action: "signoff", input }, "Signed off. Install and walk-through ticked."))} />}
+    {!biz.crew && card && card.stage === "won" && !card.pastCustomer && <HoursBox d={d} card={card} act={r.act} busy={r.busy} />}
+    {!biz.crew && (card ? card.stage === "won" || card.pastCustomer : !!cust) && <PlanBox d={d} thread={id} project={project} api={api} toast={toast} reload={reload} />}
+    {card && <PropertiesBox card={card} act={r.act} busy={r.busy} canEdit={!biz.crew} />}
     <section className="card"><div className="hd"><h2>On file</h2></div>
       {card && !biz.crew && card.stage !== "lost" && !card.pastCustomer && <CrewPick d={d} card={card} project={project} api={api} toast={toast} reload={reload} />}
       {card && biz.crew && card.crewMember && <div className="money"><span>On the job</span><b>{crewName(d, card.crewMember)}</b></div>}
       <div className="money"><span>Source</span><b>{sourceLabel(source)}</b></div>
       {since && <div className="money"><span>Since</span><b>{since}</b></div>}
-      <div className="money"><span>Texting</span>{status === "opted_out" ? <span className="dot bad">Opted out</span> : status === "paused" ? <span className="dot ember">You&rsquo;re replying</span> : <span className="dot">Cinder replying</span>}</div>
+      <div className="money"><span>Texting</span>{status === "opted_out" ? <span className="dot bad">Opted out</span> : status === "paused" ? <span className="dot ember">You&rsquo;re replying</span> : <span className="dot">Replying for you</span>}</div>
       {card?.email && <div className="money"><span>Email</span><b><a className="link" href={`mailto:${card.email}`} style={{ fontWeight: 500 }}>{card.email}</a></b></div>}
       {card?.remind && !card.remind.sent && <div className="money"><span>Reminder</span><b>{new Date(card.remind.at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}{card.remind.note ? `, ${card.remind.note}` : ""}</b></div>}
       {card?.reviewSent && <div className="money"><span>Review</span><b>Asked {dateLabel(card.reviewSent)}</b></div>}
@@ -189,22 +203,25 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
         <button type="button" className="btn" onClick={() => { setTab("activity"); setTimeout(() => ta.current?.focus(), 50); }}><Icon name="chat" size={14} />Text</button>
         {address && <a className="btn ic" href={`https://maps.google.com/?q=${encodeURIComponent(address)}`} target="_blank" rel="noreferrer" aria-label="Directions" title="Directions"><Icon name="pin" size={14} /></a>}
         {card?.email && <a className="btn ic" href={`mailto:${card.email}`} aria-label="Email" title={card.email}><Icon name="send" size={14} /></a>}
+        {!biz.crew && (card || cust) && <button type="button" className="btn ic" onClick={() => setPortal(true)} aria-label="Customer page" title={`${first(name)}'s page: quotes, invoices, visits`}><Icon name="user" size={14} /></button>}
         {card && !biz.crew && <button type="button" className={"btn ic" + (card.remind && !card.remind.sent ? " on" : "")} onClick={() => setReminding(true)} aria-label="Remind me" title={card.remind && !card.remind.sent ? `Reminder ${dateLabel(card.remind.at)}` : "Remind me"}><Icon name="clock" size={14} /></button>}
         {!biz.crew && primary}
       </div>
     </header>
+    {card?.stage === "quoted" && card.quote?.linked && (card.quote.views ?? 0) > 0 && !biz.crew && <div className="chase-banner"><Icon name="eye" size={14} /><span>Quote viewed {card.quote.views} {card.quote.views === 1 ? "time" : "times"}, not approved.</span>
+      <button type="button" className="btn sm" disabled={!!r.busy || !canText} onClick={() => void r.act("nudge", { action: "quotenudge" }, `Texted ${first(name)} about the quote.`)}>{r.busy === "nudge" ? <Spinner /> : "Nudge"}</button></div>}
     <div className="rec-body">
       <aside className="rec-side" aria-label="Details">
         <section>
           <p className="sec">The job{card && <button type="button" className="link" onClick={() => setTab("job")}>Edit</button>}</p>
           {card ? <dl>
-            {jobFields(biz.trade).filter(f => f.key !== "address" && card.details[f.key] != null && card.details[f.key] !== "").map(f => <div key={f.key} className="kv"><dt>{f.label}</dt><dd>{String(card.details[f.key])}{f.unit ? ` ${f.unit}` : ""}</dd></div>)}
-            {address && <div className="kv"><dt>Address</dt><dd title={address}>{address}</dd></div>}
-            <div className="kv"><dt>Source</dt><dd>{sourceLabel(source)}</dd></div>
-            <div className="kv"><dt>Job value</dt><dd className={card.value ? "" : "mut"}>{card.value ? dollars(card.value) : card.ballpark ? `~${rangeText(card.ballpark)}` : "Not set"}</dd></div>
-            {card.next && <div className="kv"><dt>Estimate</dt><dd>{new Date(card.next).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</dd></div>}
-            {card.install && <div className="kv"><dt>Install</dt><dd>{dateLabel(card.install)}{card.installDays > 1 ? `, ${card.installDays} days` : ""}</dd></div>}
-            {!card.line && !address && <p className="fine">Nothing yet. Cinder fills these in as the customer answers.</p>}
+            {jobFields(biz.trade).filter(f => f.key !== "address" && card.details[f.key] != null && card.details[f.key] !== "").map(f => <div key={f.key} className="kv"><dt><FieldIcon name={fieldIconFor(f.label)} />{f.label}</dt><dd>{String(card.details[f.key])}{f.unit ? ` ${f.unit}` : ""}</dd></div>)}
+            {address && <div className="kv"><dt><FieldIcon name="pin" />Address</dt><dd title={address}>{address}</dd></div>}
+            <div className="kv"><dt><FieldIcon name="link" />Source</dt><dd>{sourceLabel(source)}</dd></div>
+            <div className="kv"><dt><FieldIcon name="dollar" />Job value</dt><dd className={card.value ? "" : "mut"}>{card.value ? dollars(card.value) : card.ballpark ? `~${rangeText(card.ballpark)}` : "Not set"}</dd></div>
+            {card.next && <div className="kv"><dt><FieldIcon name="cal" />Estimate</dt><dd>{new Date(card.next).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</dd></div>}
+            {card.install && <div className="kv"><dt><FieldIcon name="cal" />Install</dt><dd>{dateLabel(card.install)}{card.installDays > 1 ? `, ${card.installDays} days` : ""}</dd></div>}
+            {!card.line && !address && <p className="fine">Nothing yet. These fill in as the customer answers.</p>}
           </dl> : <>
             <dl>{address && <div className="kv"><dt>Address</dt><dd title={address}>{address}</dd></div>}<div className="kv"><dt>Source</dt><dd>{sourceLabel(source)}</dd></div>{cust && cust.spent > 0 && <div className="kv"><dt>Billed</dt><dd>{dollars(cust.spent)}, {cust.jobs} {cust.jobs === 1 ? "job" : "jobs"}</dd></div>}</dl>
             <p className="fine" style={{ marginTop: 8 }}>No job on the board for {first(name)} right now.</p>
@@ -233,6 +250,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
     </div>
     {lostSheet}
     {remindSheet}
+    {portal && <PortalSheet name={name} thread={id} project={project} api={api} toast={toast} canText={!!canText} onClose={() => setPortal(false)} />}
   </div>;
 }
 
@@ -289,7 +307,7 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
           const words = photos.length && /^\(sent (a photo|\d+ photos)\)$/.test(t.body) ? "" : t.body;
           return <div key={t.id}>{sep}<article className="ev">
             {who === "them" ? <span className="ic"><Avatar name={name} size="sm" /></span> : who === "you" ? <span className="ic" style={{ color: "var(--ink)" }}><Icon name="user" size={13} /></span> : <span className="ic"><Icon name="bolt" size={13} /></span>}
-            <div><header><b>{who === "them" ? (compact ? first(name) : name) : who === "you" ? "You" : "Cinder"}</b><time>{clock(t.at)}</time></header>
+            <div><header><b>{who === "them" ? (compact ? first(name) : name) : who === "you" ? "You" : "Auto-reply"}</b><time>{clock(t.at)}</time></header>
               {photos.length > 0 && <div className="photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
               {words && <p><span className={"bubble" + (who === "you" ? " out" : who === "cinder" ? " cinder" : "")}>{words}</span></p>}</div>
           </article></div>;
@@ -302,8 +320,8 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
         <ReplyKit hidden={!!draft.trim()} suggestion={sug} snippets={snips.list} onUse={x => { setDraft(x); ta.current?.focus(); }} onEdit={() => setEditSnips(true)} />
         <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (tabTakes(e, draft, sug, setDraft)) return; if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${first(name)}`} aria-label="Reply" />
         <div className="tools">
-          <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && status === "booked")} title={mine ? "Hand back to Cinder" : "Take over this conversation"} onClick={() => void (mine ? act("status", { action: "status", status: "auto" }, "Cinder will handle replies again.") : act("status", { action: "status", status: "paused" }, "Cinder stepped back. You've got this one."))}>
-            <i aria-hidden="true" />{mine ? "You're replying" : "Cinder is replying"}</button>
+          <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && status === "booked")} title={mine ? "Turn auto-reply back on" : "Take over this conversation"} onClick={() => void (mine ? act("status", { action: "status", status: "auto" }, "Auto-reply is back on.") : act("status", { action: "status", status: "paused" }, "Auto-reply is off for this one. You've got it."))}>
+            <i aria-hidden="true" />{mine ? "You're replying" : "Replying for you"}</button>
           <button type="submit" className="btn ink sm send" disabled={!!busy || !draft.trim()} title="Send (⌘↵)">{busy === "reply" ? <Spinner /> : "Send"}</button>
         </div>
       </form>
@@ -349,8 +367,8 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
       <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} options />
       <label className="field"><span>What&rsquo;s included <em>optional, they&rsquo;ll see it</em></span><textarea rows={2} value={incl} maxLength={600} onChange={e => setIncl(e.target.value)} placeholder="Tear-out and haul-away, steel posts in concrete, 2-year warranty" /></label>
       <label className="field" style={{ maxWidth: 240 }}><span>Deposit to hold the date <em>optional</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={deposit} onChange={e => setDeposit(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="None" /></span></label>
-      {depN > 0 && <p className="fine">{biz.payLink ? "After they approve, the quote page shows the deposit with your pay link. Cinder never touches the money." : "Add your pay link in Money so they can pay the deposit from the quote page."}</p>}
-      <p className="fine">Cinder follows up on day 2, 5, 10 and 21 after you send, and stops the moment they reply.</p>
+      {depN > 0 && <p className="fine">{biz.payLink ? "After they approve, the quote page shows the deposit with your pay link. The money never passes through this app." : "Add your pay link in Money so they can pay the deposit from the quote page."}</p>}
+      <p className="fine">Follow-ups go out on day 2, 5 and 10, then once a month until they answer, and stop the moment they reply.</p>
       <div className="acts-row end">
         <button type="button" className="btn" disabled={!!busy || quoteTotal <= 0} onClick={() => void act("save", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl, deposit: depN || null }, `Quote saved: ${dollars(quoteTotal)}. Not sent yet.`)}>Save, don&rsquo;t send</button>
         <button type="button" className="btn ink" disabled={!!busy || !canText || quoteTotal <= 0} onClick={() => void act("stage", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl, deposit: depN || null, link: true }, res => res.sent ? `Quote texted to ${firstName}: ${dollars(quoteTotal)}.` : res.warn || "Saved.")}>{busy === "stage" ? <Spinner /> : `Text ${firstName} ${dollars(quoteTotal)}`}</button>
@@ -370,7 +388,15 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
       {editLines && <label className="field" style={{ maxWidth: 240 }}><span>Deposit to hold the date <em>optional</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={deposit} onChange={e => setDeposit(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="None" /></span></label>}
       {q.note && !editLines && <p className="fine">{q.note}</p>}
       {q.deposit && !editLines ? <p className="fine">Deposit {dollars(q.deposit)} to hold the date{biz.payLink ? ", paid through your pay link once they approve." : ". Add your pay link in Money so they can pay it from the quote page."}</p> : null}
-      <p className="fine">{!q.linked ? "Not sent." : q.steps ? `Follow-up ${q.steps} of 4 sent.` : "First follow-up in 2 days."}</p>
+      <div className="chase">
+        {q.views ? <p className="chase-v"><b>Viewed {q.views} {q.views === 1 ? "time" : "times"}</b>{q.lastViewed ? `, last ${ago(q.lastViewed)}` : ""}, not approved.</p> : null}
+        <p className="fine">{!q.linked ? "Not sent yet." : q.status === "stopped" ? "Follow-ups stopped." : q.chasePaused ? "Follow-ups are off: this quote came in from your old app." : q.nextChase ? `Next follow-up ${dateLabel(q.nextChase)}${q.steps ? `, ${q.steps} sent so far` : ""}.` : "Every follow-up has gone out."}</p>
+        <div className="acts-row">
+          {q.linked && q.status !== "won" && q.status !== "lost" && <button type="button" className="btn sm" disabled={!!busy || !canText} onClick={() => void act("nudge", { action: "quotenudge" }, `Texted ${firstName} about the quote.`)}>{busy === "nudge" ? <Spinner /> : "Nudge now"}</button>}
+          {q.status === "stopped" || q.chasePaused ? <button type="button" className="btn sm" disabled={!!busy} onClick={() => void act("chase", { action: "quotechase", on: true }, "Following up again.")}>Start following up</button>
+            : q.linked && (q.status === "open" || q.status === "replied") ? <button type="button" className="btn sm ghost" disabled={!!busy} onClick={() => void act("chase", { action: "quotechase", on: false }, "Follow-ups stopped.")}>Stop following up</button> : null}
+        </div>
+      </div>
       <div className="acts-row end">
         {editLines ? <>
           <button type="button" className="btn" disabled={!!busy} onClick={() => setEditLines(false)}>Cancel</button>
@@ -388,6 +414,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
         {installFields}
         {installDirty && <div className="acts-row end"><button type="button" className="btn ink" disabled={!!busy} onClick={() => void act("install", { action: "install", install: install || null, time: itime || null, days: Number(idays) }, res => (install ? `Install set for ${dateLabel(install)}.` : "Install date cleared.") + calMsg(res.calendar))}>{busy === "install" ? <Spinner /> : install ? "Save install" : "Clear install"}</button></div>}
       </>)}
+      {!biz.crew && <ChangeOrders card={card} act={act} busy={busy} canText={canText} taxRate={Number(biz.taxRate) || 0} />}
       {sec("Invoice", card.invoice ? <span className={"dot " + (invoiceState(card.invoice).tone === "green" ? "good" : invoiceState(card.invoice).tone === "red" ? "bad" : "")} style={{ marginLeft: "auto" }}>{invoiceState(card.invoice).text}</span> : null, card.invoice ? <>
         <div className="money"><span>#{card.invoice.number}{card.invoice.status === "sent" && card.invoice.due_on ? `, due ${dateLabel(card.invoice.due_on)}` : ""}</span><b>{dollars(card.invoice.total)}</b></div>
         <div className="acts-row end"><button type="button" className="btn ink" onClick={() => go.invoice(card.invoice!.id)}>Open invoice</button></div>
@@ -395,7 +422,8 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
         <p className="fine">Pulls the lines from the quote. You check it before it goes.</p>
         <div className="acts-row end"><button type="button" className="btn ink" disabled={!!busy} onClick={async () => { const res = await act("invoice", { action: "invoice" }, "Invoice drafted."); if (res?.invoice) go.invoice(res.invoice.id); }}>{busy === "invoice" ? <Spinner /> : "Create invoice"}</button></div>
       </>)}
-      {sec("Review", card.reviewSent ? <span className="dot good" style={{ marginLeft: "auto" }}>Asked {ago(card.reviewSent)}</span> : null, <>
+      {sec("Review", card.reviewSent ? <span className="dot good" style={{ marginLeft: "auto" }}>Asked {ago(card.reviewSent)}</span> : card.reviewAfter ? <span className="dot ink" style={{ marginLeft: "auto" }}>Queued</span> : null, <>
+        {card.reviewAfter && !card.reviewSent && <div className="money"><span>Paid in full, so the ask goes out {Date.parse(card.reviewAfter) - Date.now() > 3600000 * 20 ? dateLabel(card.reviewAfter) : `about ${clock(card.reviewAfter)}`}</span><button type="button" className="link" disabled={!!busy} onClick={() => void act("rvc", { action: "reviewcancel" }, "Review ask cancelled.")}>Don&rsquo;t ask</button></div>}
         {!card.reviewSent && <label className={"toggle" + (biz.reviewLink ? "" : " off")}><input type="checkbox" checked={review && biz.reviewLink} disabled={!biz.reviewLink} onChange={e => setReview(e.target.checked)} /><i /><span><b>Ask for a Google review</b><small>{!biz.reviewLink ? "Needs your Google review link. Ask Sam." : card.install ? `Goes out ${dateLabel(new Date(Date.parse(card.install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Set an install day."}</small></span></label>}
         {card.reviewSent ? <p className="fine">Sent by text with your Google review link.</p> : biz.reviewLink && <div className="acts-row end">
           <button type="button" className="btn" disabled={!!busy || !canText} onClick={() => arm === "rv" ? void act("review", { action: "reviewnow" }, `Review request sent to ${firstName}.`) : setArm("rv")}>{busy === "review" ? <Spinner /> : arm === "rv" ? "Tap again to send it now" : "Job done, ask now"}</button></div>}
@@ -437,7 +465,7 @@ function CostBox({ card, busy, save }: { card: Card; busy: string; save: (c: Cos
   const num = (v: string) => Number(v.replace(/[^\d.]/g, "")) || 0;
   const now = { materials: num(c.materials), labor: num(c.labor), other: num(c.other) };
   const dirty = now.materials !== card.costs.materials || now.labor !== card.costs.labor || now.other !== card.costs.other;
-  const price = card.invoice?.total || card.value || card.quote?.amount || null;
+  const price = jobPrice(card);
   const pr = jobProfit(price, now);
   const f = (k: keyof typeof c, label: string) => <div className="money"><span>{label}</span><span className="inwrap" style={{ width: 104, height: 26 }}><i>$</i><input inputMode="decimal" placeholder="0" aria-label={label} value={c[k]} onChange={e => setC(x => ({ ...x, [k]: e.target.value.replace(/[^\d.,]/g, "") }))} style={{ textAlign: "right" }} /></span></div>;
   return <section className="card"><div className="hd"><h2>Costs and profit</h2>{pr && <small style={{ marginLeft: "auto", color: pr.profit >= 0 ? "var(--good)" : "var(--bad)" }}>{pr.margin}% margin</small>}</div>

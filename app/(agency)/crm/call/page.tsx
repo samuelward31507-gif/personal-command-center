@@ -1,5 +1,6 @@
 "use client";
 
+import { Logo } from "../../ui/logo";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CALL_MODE_GROUPS, CONVERSATIONS, OUTCOME_LABELS, ATTEMPT_LIMIT, type CallOutcome } from "@/lib/call-outcomes";
@@ -418,7 +419,7 @@ export default function CallModePage() {
         </div>
         <div className="dl-list">
           {queue.map((q, i) => <button type="button" key={q.id} className={"dl-q" + (i === index && !picked ? " is-on" : "")} onClick={() => { setPicked(null); setIndex(i); }}>
-            <span className="dl-q-n u-num">{String(i + 1).padStart(2, "0")}</span>
+            <Logo name={q.contact?.company || q.contact?.name || ""} website={q.contact?.website} size={26} />
             <span className="dl-q-main"><b>{q.contact?.company || q.contact?.name}</b><small>{q.group === "prospects" ? "New" : q.status === "overdue" ? "Overdue follow-up" : "Follow-up"}{/Audit:/.test(q.why) ? " · researched" : ""}</small></span>
           </button>)}
           {queue.length === 0 && <p className="u-note" style={{ padding: "8px 4px" }}>The list is empty.</p>}
@@ -434,7 +435,7 @@ export default function CallModePage() {
         <div className="dl-who">
           <div className="dl-who-l">
             <p className="dl-pos">{picked ? "Callback" : `${index + 1} of ${queue.length} · ${item?.group === "prospects" ? "New prospect" : item?.status === "overdue" ? "Overdue follow-up" : "Follow-up"}`}{picked && <button type="button" className="u-btn u-btn-bare" style={{ height: 24, marginLeft: 8 }} onClick={() => setPicked(null)}>Back to my list</button>}</p>
-            <h1 className="dl-name">{who}</h1>
+            <div className="dl-name-row"><Logo name={who} website={contact.website} size={46} /><h1 className="dl-name">{who}</h1></div>
             <div className="dl-meta">
               {contact.name && contact.name !== contact.company && <span>{contact.name}</span>}
               {contact.location && cityOf(contact.location) && <span>{contact.location}</span>}

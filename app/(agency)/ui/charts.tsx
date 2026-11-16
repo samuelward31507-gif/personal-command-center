@@ -21,7 +21,8 @@ function useWidth<T extends HTMLElement>(fallback = 640) {
 export function niceTicks(max: number, count = 4): number[] {
   if (!(max > 0)) return [0, 1];
   const raw = max / count, mag = Math.pow(10, Math.floor(Math.log10(raw)));
-  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw) ?? 10 * mag;
+  // Whole steps only: these charts count dollars, dials and meetings, so a 0.25 tick would print as $0, $0, $1.
+  const step = Math.max(1, [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw) ?? 10 * mag);
   const ticks: number[] = []; for (let v = 0; v <= max + step * 0.001; v += step) ticks.push(v);
   if (ticks[ticks.length - 1] < max) ticks.push(ticks[ticks.length - 1] + step);
   return ticks;
@@ -48,6 +49,8 @@ export function LineChart({ labels, series, height = 260, format = compactUsd, t
   const max = Math.max(1, target ?? 0, ...series.flatMap(s => s.values));
   const ticks = niceTicks(max);
   const top = ticks[ticks.length - 1];
+  // No data yet: draw only the zero line instead of a made-up scale.
+  const shownTicks = series.some(s => s.values.some(v => v > 0)) || target ? ticks : [0];
   const iw = w - padL - padR, ih = height - padT - padB;
   const x = (i: number) => padL + (n <= 1 ? iw / 2 : (i * iw) / (n - 1));
   const y = (v: number) => padT + ih - (Math.max(0, v) / top) * ih;
@@ -66,7 +69,7 @@ export function LineChart({ labels, series, height = 260, format = compactUsd, t
     <svg className="u-chart" width={w} height={height} onPointerMove={onMove} onPointerLeave={() => setHover(null)} role="img"
       aria-label={series.map(s => `${s.name}: ${s.values.map((v, i) => `${labels[i]} ${format(v)}`).join(", ")}`).join(". ")}>
       <defs><linearGradient id={`u-fade-${gid}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" style={{ stopColor: "var(--u-ember)", stopOpacity: .1 }} /><stop offset="1" style={{ stopColor: "var(--u-ember)", stopOpacity: 0 }} /></linearGradient></defs>
-      <g className="u-grid">{ticks.map(t => <g key={t}><line x1={padL} x2={w - padR} y1={y(t)} y2={y(t)} /><text x={padL - 10} y={y(t) + 4} textAnchor="end">{format(t)}</text></g>)}</g>
+      <g className="u-grid">{shownTicks.map(t => <g key={t}><line x1={padL} x2={w - padR} y1={y(t)} y2={y(t)} /><text x={padL - 10} y={y(t) + 4} textAnchor="end">{format(t)}</text></g>)}</g>
       {labels.map((l, i) => i % every === 0 || i === n - 1 ? <text key={i} x={x(i)} y={height - 8} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"}>{l}</text> : null)}
       {target != null && target > 0 && <g><line className="u-target" x1={padL} x2={w - padR} y1={y(target)} y2={y(target)} />{targetLabel && <text x={w - padR} y={y(target) - 6} textAnchor="end" style={{ fill: "#6c7583" }}>{targetLabel}</text>}</g>}
       {main && n > 1 && <path d={`${path(main.values)}L${x(n - 1)},${y(0)}L${x(0)},${y(0)}Z`} fill={`url(#u-fade-${gid})`} />}

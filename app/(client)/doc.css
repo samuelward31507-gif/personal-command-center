@@ -89,3 +89,20 @@ a.doc-fin:hover b { text-decoration: underline; text-underline-offset: 3px; }
 .doc-terms { max-width: 480px; margin: 14px auto 0; padding: 0 16px; font-size: 12.5px; color: var(--g1); }
 .doc-terms summary { cursor: pointer; font-weight: 500; color: var(--ink); }
 .doc-terms p { margin-top: 6px; line-height: 1.55; white-space: pre-line; }
+
+/* The customer's own page */
+.portal .doc-card + .doc-card { margin-top: 12px; }
+.doc-h { font-size: 13px; font-weight: 600; margin: 0 0 6px; }
+.doc-list { list-style: none; padding: 0; margin: 0; }
+.doc-list li { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--hair, rgba(18,20,23,.08)); }
+.doc-list li:first-child { border-top: 0; padding-top: 4px; }
+.doc-list li > span { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.doc-list li b { font-size: 15px; font-weight: 600; } .doc-list li small { font-size: 13px; color: var(--g1); } .doc-list li small.warn { color: var(--ember, #c2410c); } .doc-list li small.bad { color: var(--bad, #b42318); }
+.doc-list li em { font-style: normal; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.doc-list .btn.sm { height: 34px; padding: 0 14px; font-size: 14px; }
+.doc-photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.doc-photos img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block; }
+
+.bk-photos { display: flex; gap: 8px; flex-wrap: wrap; }
+.bk-ph { width: 72px; height: 72px; padding: 0; border: 0; border-radius: 10px; overflow: hidden; } .bk-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bk-add { display: grid; place-items: center; width: 72px; height: 72px; border: 1px dashed var(--g3, #c4c7cc); border-radius: 10px; font-size: 12px; color: var(--g1); cursor: pointer; text-align: center; padding: 4px; }

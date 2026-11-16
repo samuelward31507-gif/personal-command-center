@@ -8,7 +8,7 @@ import { PAID, type Lead } from "@/lib/lead-sources";
 import { cleanMessages } from "@/lib/client-ops";
 import { ballpark, cleanDetails, detailLine, intakeRules, parsePriceBook, rangeText } from "@/lib/crm";
 import { emitEvent } from "@/lib/client-webhook";
-import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, parseOnMyWay, OWNER_HELP, CREW_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, withOptOut, automatedRoom, quoteDaysFor, nudgeHoursFor, isDoNotText, type Vars } from "@/lib/client-runtime";
+import { digits10, fill, wording, FALLBACK, isStop, isStart, isHelp, isPlainOptOut, OPTOUT_TEXT, replySystem, replyUser, parseDecision, ownerAlert, quoteStepDue, quoteChaseDue, QUOTE_MONTHLY_TEXT, SEQUENCES, isRepeatTrade, REVIEW_TEXT, NUDGE_TEXTS, nudgeStep, inTextingHours, handoffAction, parseOwnerQuote, parseOnMyWay, OWNER_HELP, CREW_HELP, sameNumber, DUE_TEXTS, DUE_GAP_DAYS, withOptOut, automatedRoom, quoteDaysFor, nudgeHoursFor, isDoNotText, type Vars } from "@/lib/client-runtime";
 import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOpen, mondayText, parseHours, pickedSlot, slotLabel, withBookingPrefs, type Lang, type Slot } from "@/lib/client-booking";
 import { busyTimes, clientCalendar, createEvent, deleteEvent, moveEvent } from "@/lib/client-calendar";
 import { syncBookingToJobber } from "@/lib/jobber";
@@ -549,7 +549,7 @@ export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Pr
       AND NOT EXISTS (SELECT 1 FROM public.client_threads t WHERE t.project_id = q.project_id AND t.status IN ('opted_out', 'booked')
         AND right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10))`.catch(e => console.error("Reactivation re-queue failed", e));
   const quotes = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.sent_on, q.steps_sent, q.kind, q.token
-    FROM public.client_quotes q WHERE q.status = 'open' ORDER BY q.sent_on LIMIT 1000` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; sent_on: string; steps_sent: number; kind: string; token: string | null }[];
+    FROM public.client_quotes q WHERE q.status = 'open' AND NOT q.chase_paused ORDER BY q.sent_on LIMIT 1000` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; sent_on: string; steps_sent: number; kind: string; token: string | null }[];
   let sent = 0, skipped = 0;
   const clients = new Map<string, Client | null>();
   for (const q of quotes) {
@@ -560,20 +560,21 @@ export async function runQuoteFollowUps(sql: Sql, today: string, limit = 60): Pr
     // Old leads for contractors; past customers for repeat-service trades (they bought before, so the wording differs).
     const seqKey = q.kind === "rehash" ? (isRepeatTrade(c?.setup.trade) ? "reactivate" : "rehash") : "quote";
     const seq = SEQUENCES[seqKey];
-    const step = quoteStepDue(String(q.sent_on).slice(0, 10), q.steps_sent, today, seqKey === "quote" ? quoteDaysFor(c?.setup) : seq.days);
+    const step = seqKey === "quote" ? quoteChaseDue(String(q.sent_on).slice(0, 10), q.steps_sent, today, quoteDaysFor(c?.setup)) : quoteStepDue(String(q.sent_on).slice(0, 10), q.steps_sent, today, seq.days);
     if (step === null) continue;
     // Daytime only in the client's time zone; a step that's due stays due for the next run.
     if (!c?.setup.texting_number || !inTextingHours(tzOf(c))) { skipped++; continue; }
     const t = await thread(sql, c, q.customer_phone, "quote");
     if (t.status === "opted_out" || t.status === "paused") { skipped++; continue; }
     if (!(await roomFor(sql, t.id))) { skipped++; continue; }
-    const k = `${seqKey}_${step + 1}`;
+    const monthly = seqKey === "quote" && step >= seq.texts.length;
+    const k = monthly ? "quote_monthly" : `${seqKey}_${step + 1}`;
     // A quote the customer can approve from a link: every follow-up carries it, so each one is a tap away from a yes.
     const link = q.kind === "quote" && q.token ? (t.lang === "es" ? ` Su cotización: ${quoteUrl(q.token)}` : ` Your quote: ${quoteUrl(q.token)}`) : "";
-    const body = fill(say(c, k, seq.texts[step], t.lang === "es" ? "es" : "en"), varsFor(c, q.customer_name.split(" ")[0])) + link;
+    const body = fill(say(c, k, monthly ? QUOTE_MONTHLY_TEXT : seq.texts[step], t.lang === "es" ? "es" : "en"), varsFor(c, q.customer_name.split(" ")[0])) + link;
     const ok = await sendToCustomer(sql, c, t.id, q.customer_phone, body, "template");
     await sql`UPDATE public.client_quotes SET steps_sent = steps_sent + 1, last_step_at = now(),
-      status = CASE WHEN steps_sent + 1 >= ${seq.days.length} THEN 'lost' ELSE status END WHERE id = ${q.id}::uuid`;
+      status = CASE WHEN ${seqKey !== "quote"}::boolean AND steps_sent + 1 >= ${seq.days.length} THEN 'lost' ELSE status END WHERE id = ${q.id}::uuid`;
     if (ok) sent++; else skipped++;
   }
   return { sent, skipped };

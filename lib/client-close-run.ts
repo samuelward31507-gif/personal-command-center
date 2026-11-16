@@ -61,7 +61,7 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
   if (!c) return null;
   const [t] = await sql`SELECT customer_name, details FROM public.client_threads WHERE project_id = ${c.projectId}::uuid
     AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(String(q.customer_phone))} LIMIT 1` as { customer_name: string; details: unknown }[];
-  if (!q.viewed_at) await sql`UPDATE public.client_quotes SET viewed_at = now() WHERE id = ${String(q.id)}::uuid AND viewed_at IS NULL`;
+  await sql`UPDATE public.client_quotes SET viewed_at = coalesce(viewed_at, now()), view_count = view_count + 1, last_viewed_at = now() WHERE id = ${String(q.id)}::uuid`;
   const status = String(q.status);
   return {
     business: c.setup.display_name || "", owner: first(c.setup.owner_name || ""), phone: c.setup.texting_number || "",
@@ -135,6 +135,26 @@ export async function runAutoReviews(sql: Sql, limit = 60): Promise<{ sent: numb
     const res = await sendReviewRequest(sql, c, r.customer_phone, r.customer_name);
     // Sent, already asked, or no review link / opted out: either way this one is done. A failed send tries again next run.
     if (res.ok || !/didn't send/.test(res.error ?? "")) await sql`UPDATE public.client_threads SET review_auto = false WHERE id = ${r.id}::uuid`;
+    if (res.ok) sent++; else skipped++;
+  }
+  return { sent, skipped };
+}
+
+/** Invoices paid in full a couple of hours ago: the Google review ask (queued by queueReview). Once per customer, ever. */
+export async function runPaidReviews(sql: Sql, limit = 60): Promise<{ sent: number; skipped: number }> {
+  const rows = await sql`SELECT t.id, t.owner_id, t.project_id, t.customer_phone, t.customer_name FROM public.client_threads t
+    WHERE t.review_after IS NOT NULL AND t.review_after < now() AND t.status <> 'opted_out' ORDER BY t.review_after LIMIT 400` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string }[];
+  const clients = new Map<string, Client | null>();
+  let sent = 0, skipped = 0;
+  for (const r of rows) {
+    if (sent >= limit) break;
+    const key = r.owner_id + r.project_id;
+    if (!clients.has(key)) clients.set(key, await clientById(sql, r.owner_id, r.project_id));
+    const c = clients.get(key);
+    if (!c) continue;
+    if (!inTextingHours(tz(c))) { skipped++; continue; }
+    const res = await sendReviewRequest(sql, c, r.customer_phone, r.customer_name);
+    if (res.ok || !/didn't send/.test(res.error ?? "")) await sql`UPDATE public.client_threads SET review_after = NULL, review_auto = false WHERE id = ${r.id}::uuid`;
     if (res.ok) sent++; else skipped++;
   }
   return { sent, skipped };
