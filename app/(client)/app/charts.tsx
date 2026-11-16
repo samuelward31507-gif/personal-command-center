@@ -57,8 +57,8 @@ export function Kpis({ items }: { items: Kpi[] }) {
       <span className="klab">{k.label}</span>
       <b className="kfig">{k.value}</b>
       {k.sub && <small className={"ksub " + (k.tone || "")}>{k.sub}</small>}
-      {k.spark && k.spark.length > 1 && <span className="kspark"><Sparkline values={k.spark} tone={k.sparkTone ?? "ink"} /></span>}
-    </>; return k.onClick ? <button key={k.label} type="button" className={"kpi" + (k.active ? " on" : "") + (k.spark && k.spark.length > 1 ? " sp" : "")} onClick={k.onClick}>{inner}</button> : <div key={k.label} className={"kpi" + (k.spark && k.spark.length > 1 ? " sp" : "")}>{inner}</div>; })}
+      {k.spark && k.spark.length > 1 && k.spark.some(v => v) && <span className="kspark"><Sparkline values={k.spark} tone={k.sparkTone ?? "ink"} /></span>}
+    </>; return k.onClick ? <button key={k.label} type="button" className={"kpi" + (k.active ? " on" : "") + (k.spark && k.spark.length > 1 && k.spark.some(v => v) ? " sp" : "")} onClick={k.onClick}>{inner}</button> : <div key={k.label} className={"kpi" + (k.spark && k.spark.length > 1 && k.spark.some(v => v) ? " sp" : "")}>{inner}</div>; })}
   </div>;
 }
 
@@ -68,6 +68,41 @@ export function PageHead({ title, sub, actions, kicker }: { title: string; sub?:
     <div className="ph-t">{kicker && <div className="ph-k">{kicker}</div>}<h1><span>{title}</span>{sub && <> <em>{sub}</em></>}</h1></div>
     {actions && <div className="ph-a">{actions}</div>}
   </header>;
+}
+
+/** An empty screen that teaches: what this place is for, the steps to fill it, each with its button and a tick. */
+export type Step = { title: string; text: string; done?: boolean; action?: React.ReactNode };
+export function Guide({ title, sub, steps, side, count, compact }: { title: string; sub: string; steps: Step[]; side?: React.ReactNode; count?: { done: number; total: number }; compact?: boolean }) {
+  const done = count?.done ?? steps.filter(s => s.done).length, total = count?.total ?? steps.length;
+  return <section className={"panel guide" + (compact ? " compact" : "")}>
+    <div className="guide-main">
+      <div className="guide-t"><h2>{title}</h2>{total > 1 && <small>{done} of {total} done</small>}</div>
+      <p>{sub}</p>
+      {total > 1 && <i className="guide-prog"><span style={{ width: `${(done / total) * 100}%` }} /></i>}
+      <ol>{steps.map((s, i) => <li key={i} className={s.done ? "done" : ""}>
+        <span className="gn">{s.done ? <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> : i + 1}</span>
+        <div className="gt"><b>{s.title}</b><small>{s.text}</small></div>
+        {s.action && !s.done && <div className="ga">{s.action}</div>}
+      </li>)}</ol>
+    </div>
+    {side && <div className="guide-side">{side}</div>}
+  </section>;
+}
+
+/** A small picture of what the customer gets: the business's quote or invoice, the way it opens on their phone. */
+export function MiniDoc({ kind, business, href }: { kind: "invoice" | "quote"; business: string; href: string }) {
+  const lines = [["6 ft cedar privacy fence, installed", "120 ft × $42", "$5,040"], ["Walk gate", "1 × $550", "$550"], ["Tear-out and haul-away", "120 ft × $4", "$480"]];
+  return <a className="minidoc" href={href} target="_blank" rel="noreferrer" aria-label={`See an example ${kind}`}>
+    <div className="md-biz"><span>{(business || "C").charAt(0)}</span><b>{business || "Your business"}</b></div>
+    <div className="md-card">
+      <small>{kind === "invoice" ? "Invoice #1001 for Dana" : "Quote for Dana"}</small>
+      <b className="md-amt">$6,070</b>
+      <ul>{lines.map(([a, b, c]) => <li key={a}><span>{a}<em>{b}</em></span><i>{c}</i></li>)}</ul>
+      <div className="md-tot"><span>Total</span><i>$6,070</i></div>
+      <span className="md-btn">{kind === "invoice" ? "Pay $6,070" : "Approve $6,070"}</span>
+    </div>
+    <span className="md-cap">What your customer sees. Open the example</span>
+  </a>;
 }
 
 /** Soft, distinct tints for avatars, picked from the name so a person always gets the same one. */

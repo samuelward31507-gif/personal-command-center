@@ -145,7 +145,8 @@ export default function CinderApp() {
     const q = new URLSearchParams(location.search), t = q.get("t");
     (async () => {
       let wasDemo = false; try { wasDemo = sessionStorage.getItem(DEMO_KEY) === "1"; } catch { /* private mode */ }
-      if (q.get("demo") === "1" || (wasDemo && !t)) { demoStart(); setDemo(true); } else if (t) demoStop();
+      if (q.get("demo")) { try { if (q.get("demo") === "empty") sessionStorage.setItem("cinder-demo-empty", "1"); else sessionStorage.removeItem("cinder-demo-empty"); } catch { /* private mode */ } }
+      if (q.get("demo") === "1" || q.get("demo") === "empty" || (wasDemo && !t)) { demoStart(); setDemo(true); } else if (t) demoStop();
       if (t) await api("/api/app/auth", { action: "link", token: t }).catch(() => null);
       const th = q.get("thread"), tb = q.get("tab");
       if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen({ kind: "thread", id: th });
@@ -221,9 +222,9 @@ export default function CinderApp() {
   else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
-  else if (tab === "quotes") page = <QuotesScreen d={d} go={go} wide={wide} />;
+  else if (tab === "quotes") page = <QuotesScreen d={d} go={go} wide={wide} biz={biz} />;
   else if (tab === "calendar") page = <CalendarScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} />;
-  else if (tab === "invoices") page = <MoneyScreen d={d} go={go} wide={wide} />;
+  else if (tab === "invoices") page = <MoneyScreen d={d} go={go} wide={wide} biz={biz} project={project} api={api} toast={toast} reload={reload} />;
   else if (tab === "numbers") page = <ReportsScreen d={d} biz={biz} go={go} project={project} api={api} toast={toast} reload={reload} onWinback={() => setSheet("winback")} />;
   else if (tab === "system") page = <SystemScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} toast={toast} api={api} project={project} reload={reload} demo={demo} onSignOut={signOut} />;
   else if (tab === "more") page = <MoreScreen d={d} go={go} owed={owed} />;

@@ -150,6 +150,13 @@ function demoReport(days: 30 | 90 | 365): Report {
 }
 const money = (v: unknown) => Number(String(v ?? "").replace(/[$,\s]/g, "").replace(/k$/i, "000")) || null;
 
+/** /app?demo=empty: a business on day one, to see (and show) what a fresh account looks like. */
+const emptyDemo = () => { try { return sessionStorage.getItem("cinder-demo-empty") === "1"; } catch { return false; } };
+function blank<T extends Record<string, unknown>>(x: T): T {
+  const live = { ...(x.live as Record<string, unknown>), leads: 0, needs: 0, answered: 0, booked: 0, replySec: null, chasing: 0, chasingValue: 0, won: 0, wonValue: 0, revived: 0, reviews: 0, weeks: [], conversations: [], afterHours: { leads: 0, won: 0, wonValue: 0 } };
+  const setup = { ...(x.setup as Record<string, string>), price_book: "", pay_link: "", has_review_link: "", has_calendar: "" };
+  return { ...x, live, setup, board: [], invoices: [], payments: [], customers: [], appointments: [], quotes: [], wonJobs: [], hasReviewLink: false, calendar: { connected: false, email: "", events: [], error: "", connectUrl: "#" }, wires: { sources: [], failures: [], log: [] }, winback: { past: 0, eligible: 0, names: [], draft: "" } };
+}
 function data() {
   const s = st();
   const conversations = Object.values(s.threads).filter(t => t.texts.length).map(({ thread, texts }) => {
@@ -219,10 +226,12 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
   const now = new Date().toISOString();
   if (path.startsWith("/api/app/data")) {
     const rp = new URL(path, "https://x").searchParams.get("report");
-    if (rp) return { report: demoReport(Number(rp) === 90 ? 90 : Number(rp) === 365 ? 365 : 30) };
+    if (rp) { const r = demoReport(Number(rp) === 90 ? 90 : Number(rp) === 365 ? 365 : 30); if (!emptyDemo()) return { report: r };
+      const z = { ...r.now, leads: 0, booked: 0, quoted: 0, won: 0, wonValue: 0, lost: 0, replySec: null, afterHoursLeads: 0, afterHoursWon: 0, afterHoursValue: 0, cycleDays: null, payDays: null, collected: 0, invoiced: 0, appts: 0, noShows: 0, reviews: 0 };
+      return { report: { ...r, now: z, before: z, sources: [], lostReasons: [], openQuotes: { n: 0, value: 0 }, series: [] } }; }
     const th = new URL(path, "https://x").searchParams.get("thread");
     if (th) { const t = s.threads[th] ?? fail("Not found", 404); return { thread: t!.thread, texts: t!.texts.map((x, i, all) => ({ ...x, status: x.direction === "out" && x.author !== "system" ? (th === "t1" && i === all.length - 1 ? "undelivered" : "delivered") : "" })) }; }
-    return data();
+    return emptyDemo() ? blank(data()) : data();
   }
   if (path.startsWith("/api/app/act")) {
     const t = typeof b.thread === "string" ? s.threads[b.thread] : undefined;

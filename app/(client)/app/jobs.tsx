@@ -8,7 +8,7 @@ import { LOST_REASONS, STAGE_LABEL, type Card, type Stage } from "@/lib/crm";
 import { Avatar, Empty, Icon, Menu, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
 import { Inspector } from "./record";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
-import { Kpis, PageHead } from "./charts";
+import { Guide, Kpis, PageHead } from "./charts";
 
 type Tone = "blue" | "red" | "green" | "amber" | "";
 export type JobsView = "open" | "won" | "all";
@@ -179,16 +179,22 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
       </>} />
     <div className={"split" + (sel && wide ? " has-insp" : "")}>
       <div className="pane list"><div className="dash jobs-dash">
-        {view === "open" && <Kpis items={(["you", "customer", "scheduled", "cinder"] as Who[]).map(w => { const list = cards.filter(c => active(c) && moveOf(c, today).who === w); const v = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
+        {view === "open" && everyone.length > 0 && <Kpis items={(["you", "customer", "scheduled", "cinder"] as Who[]).map(w => { const list = cards.filter(c => active(c) && moveOf(c, today).who === w); const v = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
           return { label: WHO_LABEL[w], value: String(list.length), sub: v ? `${usd(v)} riding on it` : list.length ? "no value set yet" : "nothing here", tone: w === "you" && list.length ? "warn" as const : "" as const, active: who === w, onClick: () => setWho(x => x === w ? "all" : w) }; })} />}
         <section className="panel jobs-panel">
-        <div className="jobs-tools">
+        <div className="jobs-tools" hidden={!everyone.length}>
           <label className="inwrap search"><Icon name="search" size={14} /><span className="sr">Search jobs</span><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, address, phone" /></label>
           {(wide || mode === "table") && <Menu label="Stage" value={lane} options={laneOptions} onPick={setLane} />}
           <Menu label="Source" value={src} options={sources} onPick={setSrc} />
           {wide && <span className="sort">Sorted by <b>last activity</b></span>}
         </div>
-        {!everyone.length ? <Empty title="No jobs yet" text="New leads land here the moment Cinder answers them. You can add one, or import your customers." action={<div className="acts-row"><button type="button" className="btn ink" onClick={go.addLead}>Add lead</button><button type="button" className="btn" onClick={go.importCustomers}>Import customers</button></div>} />
+        {!everyone.length ? <Guide title="Your jobs land here" sub="Every lead becomes a job the moment Cinder answers it, and moves from New to Booked to Quoted to Won on its own as the conversation goes."
+          steps={[
+            { title: "Your Cinder number is live", text: "Missed calls and texts to it start a job with a reply in seconds.", done: !!d.number, action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Settings</button> },
+            { title: "Point your website at Cinder", text: "The chat bubble, your contact form or your booking page. Each one starts a job.", done: (d.wires?.sources ?? []).some(x => x.source !== "missed_call" && x.source !== "text"), action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Connections</button> },
+            { title: "Bring in past customers", text: "From Jobber or any spreadsheet. Nobody gets a text.", done: (d.customers ?? []).length > 0, action: <button type="button" className="btn sm" onClick={go.importCustomers}>Import</button> },
+            { title: "Add a lead by hand", text: "Someone who called your own cell or stopped you on a job.", action: <button type="button" className="btn sm ink" onClick={go.addLead}>New lead</button> },
+          ]} />
         : !shown.length ? <Empty title="Nothing matches" text="Try another view, source or spelling." action={<button type="button" className="btn" onClick={() => { setQ(""); setSrc("any"); setLane("all"); }}>Clear filters</button>} />
         : wide && mode === "board" ? <Board cards={view === "open" ? everyone.filter(c => src === "any" || c.source === src) : shown} sel={sel} drag={drag} over={over} setDrag={setDrag} setOver={setOver} move={move} open={open} />
         : wide ? <>

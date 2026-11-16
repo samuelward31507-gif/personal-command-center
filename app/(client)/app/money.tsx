@@ -5,9 +5,9 @@
 import { useState } from "react";
 import { dollars, lineTotal, overdue, totals, type Item } from "@/lib/billing";
 import { PAY_METHODS, type CardInvoice, type Payment } from "@/lib/crm";
-import { Icon, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast } from "./parts";
-import { Kpis, PageHead } from "./charts";
-import type { Data, Go, InvoiceRow } from "./types";
+import { Avatar, Icon, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast } from "./parts";
+import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
+import type { Biz, Data, Go, InvoiceRow } from "./types";
 
 /** Editable quote or invoice lines: what, how many, the unit price. Totals are worked out, never typed. */
 export function LineEditor({ items, setItems, tax, setTax }: { items: Item[]; setItems: (f: (x: Item[]) => Item[]) => void; tax: number; setTax: (n: number) => void }) {
@@ -132,9 +132,22 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
 }
 
 /** Money: what's owed and how late, what came in, every invoice with its balance, every payment. Quotes have their own tab. */
-export function MoneyScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean }) {
+export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: { d: Data; go: Go; wide: boolean; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void> }) {
   const list = d.invoices ?? [], pays = d.payments ?? [], today = todayIso();
   const [f, setF] = useState<"open" | "draft" | "paid" | "all">("open"), [view, setView] = useState<"invoices" | "payments">("invoices");
+  const [picking, setPicking] = useState(false), [making, setMaking] = useState(""), [pq, setPq] = useState(""), [exp, setExp] = useState(false);
+  // Who can be invoiced: won jobs without an invoice first, then everyone else on file.
+  const board = d.board ?? [];
+  const ready = board.filter(c => c.stage === "won" && !c.invoice && !c.pastCustomer);
+  const others = (d.customers ?? []).filter(c => !ready.some(r => r.id === c.id)).map(c => ({ id: c.id, name: c.name || fmtPhone(c.phone), sub: c.line || c.address || fmtPhone(c.phone) }));
+  const pickList = [...ready.map(c => ({ id: c.id, name: c.name || fmtPhone(c.phone), sub: `Won${c.value ? `, ${usd(c.value)}` : ""}${c.line ? `, ${c.line}` : ""}`, won: true })), ...others.map(o => ({ ...o, won: false }))]
+    .filter(o => !pq.trim() || o.name.toLowerCase().includes(pq.trim().toLowerCase()));
+  async function newInvoice(id: string) {
+    setMaking(id);
+    try { const r = await api<{ invoice?: { id: string } }>("/api/app/act", { p: project, thread: id, action: "invoice" }); await reload(); setPicking(false); if (r.invoice) go.invoice(r.invoice.id); toast("Invoice drafted. Check it, then text it."); }
+    catch (e) { toast(e instanceof Error ? e.message : "Couldn't start the invoice.", true); } finally { setMaking(""); }
+  }
+  const fresh = !list.length && !pays.length;
   const open = list.filter(i => i.status === "sent"), late = open.filter(i => overdue(i.status, i.due_on, today));
   const outstanding = open.reduce((a, i) => a + balanceOf(i), 0), lateAmt = late.reduce((a, i) => a + balanceOf(i), 0);
   const monthStart = today.slice(0, 8) + "01";
@@ -150,15 +163,33 @@ export function MoneyScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean })
   const shown = f === "open" ? list.filter(i => i.status === "sent") : f === "draft" ? list.filter(i => i.status === "draft") : f === "paid" ? list.filter(i => i.status === "paid") : list;
   const counts = { open: open.length, draft: list.filter(i => i.status === "draft").length, paid: list.filter(i => i.status === "paid").length, all: list.length };
   return <>
-    <PageHead title="Money" sub={outstanding ? `${usd(outstanding)} owed to you${late.length ? `, ${usd(lateAmt)} of it past due.` : ", none of it late."}` : "Nothing owed. Everything is paid up."}
-      actions={<button type="button" className="btn" onClick={go.billing}>Pay link and tax</button>} />
+    <PageHead title="Money" sub={fresh ? "No invoices yet. Here's how money flows." : outstanding ? `${usd(outstanding)} owed to you${late.length ? `, ${usd(lateAmt)} of it past due.` : ", none of it late."}` : "Nothing owed. Everything is paid up."}
+      actions={<>
+        <div className="menu-wrap"><button type="button" className="btn" aria-expanded={exp} onClick={() => setExp(x => !x)}><Icon name="upload" size={13} />Export</button>
+          {exp && <div className="menu pop" role="menu" onMouseLeave={() => setExp(false)}>
+            <a role="menuitem" href={`/api/app/export?p=${encodeURIComponent(project)}&what=invoices`}>Invoices, as CSV</a>
+            <a role="menuitem" href={`/api/app/export?p=${encodeURIComponent(project)}&what=payments`}>Payments, as CSV</a>
+            <a role="menuitem" href={`/api/app/export?p=${encodeURIComponent(project)}`}>Customers, as CSV</a>
+            <small>Opens in Excel, Google Sheets or QuickBooks.</small></div>}</div>
+        <button type="button" className="btn" onClick={go.billing}>Pay link and tax</button>
+        <button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New invoice</button>
+      </>} />
     <div className="dash money2">
-      <Kpis items={[
+      {!fresh && <Kpis items={[
         { label: "Outstanding", value: usd(outstanding), sub: `${open.length} ${open.length === 1 ? "invoice" : "invoices"} awaiting payment` },
         { label: "Past due", value: usd(lateAmt), sub: late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"}, reminders going out` : "None late", tone: late.length ? "down" : "" },
         { label: "Collected this month", value: usd(collected), sub: (() => { const k = pays.filter(p => p.paid_on >= monthStart).length; return `${k} ${k === 1 ? "payment" : "payments"} recorded`; })(), tone: collected ? "up" : "", spark: weeklyIn, sparkTone: "good" },
         { label: "Days to get paid", value: payDays == null ? "–" : String(payDays), sub: "average, last 90 days" },
-      ]} />
+      ]} />}
+      {fresh && <Guide title="Get paid faster" sub="Invoices go out by text with a Pay button that opens your own payment page. Reminders follow up on their own until the balance is zero. Cinder never touches the money."
+        steps={[
+          { title: "Add your pay link", text: "Square, Stripe, PayPal or your own checkout page. It sits behind every Pay button.", done: biz.payLink, action: <button type="button" className="btn sm" onClick={go.billing}>Add pay link</button> },
+          { title: "Win a job", text: "When a customer approves a quote, or you mark a job won, it's ready to bill.", done: board.some(c => c.stage === "won"), action: <button type="button" className="btn sm" onClick={() => go.tab("quotes")}>Open quotes</button> },
+          { title: "Send the first invoice", text: "It pulls the lines from the quote. Check it, then text it.", action: <button type="button" className="btn sm ink" onClick={() => setPicking(true)}>New invoice</button> },
+          { title: "Record what comes in", text: "Card, cash, check or a deposit. Part payments are fine; the balance updates everywhere." },
+        ]}
+        side={<MiniDoc kind="invoice" business={biz.business} href="/i/example" />} />}
+      {!fresh && <>
       <section className="panel">
       {outstanding > 0 && <div className="aging panel-b" aria-label="Owed, by how late"><div className="aging-t"><b>Receivables</b><small>by days past due</small></div>
         <div className="aging-bar">{aging.map((a, k) => a.v > 0 ? <i key={a.l} className={"b" + k} style={{ flexGrow: a.v }} title={`${a.l}: ${usd(a.v)}`} /> : null)}</div>
@@ -203,6 +234,13 @@ export function MoneyScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean })
               : <div className="empty-art"><span><Icon name="check" size={18} /></span><b>Nobody owes you.</b><small>Every invoice is paid.</small></div>; })()}</div>
         </section>
       </div>
+      </>}
     </div>
+    {picking && <Sheet title="New invoice" sub="Who is it for?" onClose={() => setPicking(false)}>
+      <label className="inwrap search" style={{ marginBottom: 8 }}><Icon name="search" size={14} /><input autoFocus value={pq} onChange={e => setPq(e.target.value)} placeholder="Search customers" aria-label="Search customers" /></label>
+      {pickList.length ? <div className="pick">{pickList.slice(0, 40).map(o => <button key={o.id} type="button" className="row" disabled={!!making} onClick={() => void newInvoice(o.id)}>
+        <Avatar name={o.name} size="sm" /><span style={{ minWidth: 0 }}><b>{o.name}</b><small>{o.sub}</small></span>{making === o.id ? <Spinner /> : o.won ? <span className="chipx good">Ready to bill</span> : <Icon name="fwd" size={13} className="faint" />}</button>)}</div>
+        : <p className="fine">No customers yet. Add one from Jobs, or import your list.</p>}
+    </Sheet>}
   </>;
 }
