@@ -13,6 +13,8 @@ import { askLocal, type AskRow } from "@/lib/ask-local";
 import { line } from "./jobs";
 import { suggestReply } from "./replies";
 import { mailWaiting, sourceLabel, type Biz, type Data, type Go } from "./types";
+import { TasksSection } from "./records";
+import { taskOrder, warrantyEndingSoon } from "@/lib/records";
 
 type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "review" | "sam" | "remind";
 type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string; primary?: boolean; draft?: string; money: number; urgent?: boolean };
@@ -50,12 +52,14 @@ function AskBox({ api, project, ask, d, go }: { api: Api; project: string; ask?:
   </section>;
 }
 
-export function TodayScreen({ d, biz, go, wide, api, project, ask, toast }: { d: Data; biz: Biz; go: Go; wide: boolean; api: Api; project: string; ask?: { q: string; n: number }; toast?: (t: string, bad?: boolean) => void }) {
+export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload }: { d: Data; biz: Biz; go: Go; wide: boolean; api: Api; project: string; ask?: { q: string; n: number }; toast?: (t: string, bad?: boolean) => void; reload?: () => Promise<void> }) {
   const today = todayIso(), L = d.live, cards = d.board ?? [], invoices = d.invoices ?? [];
   const byThread = new Map(cards.map(c => [c.id, c]));
   const asks = L.conversations.filter(c => c.status === "paused");
 
   const actions: Action[] = [];
+  for (const t of taskOrder(d.tasks ?? [], today).filter(t => t.due_on && t.due_on <= today)) actions.push({ key: "k" + t.id, kind: "remind", title: t.title, sub: t.due_on! < today ? `To-do, was due ${dateLabel(t.due_on!)}` : "To-do, due today", go: () => { if (t.thread) go.record(t.thread); }, cta: t.thread ? "Open" : "See below", money: 0 });
+  for (const e of warrantyEndingSoon(d.equipment ?? [], today, 30)) actions.push({ key: "w" + e.id, kind: "remind", title: `${e.customer ?? "A customer"}'s ${(e.kind || "equipment").toLowerCase()} warranty ends ${dateLabel(e.warranty_until!)}`, sub: "A good time to offer a service visit or a plan", go: () => go.record(e.thread_id), cta: "Open", money: 0 });
   for (const m of mailWaiting(d)) actions.push({ key: "m" + m.id, kind: "reply", title: `${m.name || m.email || sourceLabel(m.source)} emailed, no phone`, sub: `${sourceLabel(m.source || "email")} by email${m.message ? `: ${m.message.slice(0, 90)}` : ""}`, go: () => go.tab("inbox"), cta: "Add phone", money: 0, urgent: true });
   for (const a of asks) actions.push({ key: "r" + a.id, kind: "reply", title: `Reply to ${a.name}`, sub: a.ask || a.last, go: () => go.thread(a.id), cta: "Reply", primary: true, money: worth(byThread.get(a.id)) });
   for (const c of cards) if (c.stage === "quoted" && c.quote?.status === "replied") actions.push({ key: "qr" + c.id, kind: "reply", title: `${c.name} answered the quote`, sub: c.quote.amount ? `${usd(c.quote.amount)} quote` : "", go: () => go.thread(c.id), cta: "Read", money: c.quote.amount ?? 0 });
@@ -179,6 +183,7 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast }: { d:
             {actions.length > 7 && <button type="button" className="link more" onClick={() => setAll(x => !x)}>{all ? "Show fewer" : `Show all ${actions.length}`}</button>}</div>
           : <p className="t5-empty">You&rsquo;re clear. New leads, quotes to write and late invoices land here.</p>}
         </section>
+        {isOwner && <TasksSection ctx={{ d, project, api, toast: toast ?? (() => {}), reload: reload ?? (async () => {}) }} go={go} />}
         <section className="t5-sec">
           <header><h2>Today</h2><small>{todayList.length ? `${todayList.length} ${todayList.length === 1 ? "visit" : "visits"}` : "nothing booked"}</small><button type="button" className="link" onClick={() => go.tab("calendar")}>Calendar</button></header>
           {todayList.length ? <div className="t5-list">{todayList.map(v => <div key={v.key} className="t5-row visit">

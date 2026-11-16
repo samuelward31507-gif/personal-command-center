@@ -274,7 +274,7 @@ export default function CinderApp() {
   else if (open?.kind === "quote") page = <QuoteEditor key={open.id} id={open.id} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => setOpen(null)} />;
   else if (open?.kind === "record") page = <RecordPage key={open.id + (open.draft ? ":d" : "")} id={open.id} ask={open.ask} view={open.view} draft={open.draft} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
   else if (tab === "today" && crew) page = <MyDay d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} />;
-  else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} toast={toast} />;
+  else if (tab === "today") page = <TodayScreen reload={reload} d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} toast={toast} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
   else if (tab === "switch") page = <SwitchScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;

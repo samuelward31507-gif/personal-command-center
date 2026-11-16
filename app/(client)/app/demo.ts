@@ -7,6 +7,8 @@ import { cleanImportRows, importAs } from "@/lib/customer-import";
 import { demoSwitch } from "./demo-switch";
 import { sourceLabel, type LeadMail } from "./types";
 import { cleanExpense, mileageRate, type Expense } from "@/lib/expenses";
+import { cleanEquipment, cleanFile, cleanTask, type Equipment, type Task } from "@/lib/records";
+import type { FileRow } from "@/lib/client-records-run";
 import { nextChaseDay } from "@/lib/client-runtime";
 import { cleanLogo, hexOk, readableAccent } from "@/lib/brand";
 import { addInterval, changeOrderLines, cleanCatalog, cleanChangeOrder, cleanPlan, cleanSignoff, type ChangeOrder, type Plan, type Signoff, type TimeEntry } from "@/lib/service";
@@ -141,6 +143,14 @@ function seed() {
     ] as TimeEntry[],
     signoffs: {} as Record<string, Signoff>,
     won: 5, wonValue: 37500,
+    equipment: [
+      { id: "eq1", thread_id: "t2", kind: "Gate operator", make: "LiftMaster", model: "LA400", serial: "LA4-22-08812", location: "Driveway gate", installed_on: "2023-05-12", warranty_until: new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10), notes: "Solar panel on the post", history: [{ on: "2026-05-02", note: "Annual check, new battery", by: "" }], customer: "Dana Ruiz" },
+    ] as Equipment[],
+    files: [] as FileRow[],
+    tasks: [
+      { id: "k1", title: "Order 40 cedar posts for the Becker job", due_on: new Date().toLocaleDateString("en-CA"), assignee: "", thread: "t1", done_at: null, created_at: ago(600), customer: "Tom Becker" },
+      { id: "k2", title: "Call the city about the Mendez permit", due_on: null, assignee: "", thread: null, done_at: null, created_at: ago(1200) },
+    ] as Task[],
     expenses: [
       { id: "x1", kind: "expense", vendor: "Home Depot", category: "materials", amount: 1284.37, miles: null, spent_on: ago(1440).slice(0, 10), note: "Cedar pickets, 40 posts", member: "", thread_id: "t1", customer: "Tom Becker", receipt: false },
       { id: "x2", kind: "expense", vendor: "Denver Arapahoe Disposal", category: "dump", amount: 85, miles: null, spent_on: ago(2880).slice(0, 10), note: "Old fence tear-out", member: "+17205550188", thread_id: null, receipt: false },
@@ -237,7 +247,7 @@ function data() {
     calendar: { connected: true, email: "mike@ridgelinefence.com", events: s.events, error: "", connectUrl: "#" },
     messages: s.messages, board: board(), setup: { ...s.setup, has_review_link: "yes", has_number: "yes", has_calendar: "yes", has_cell: "yes", has_booking_link: "yes" },
     key: "example-key-ridgeline-0000", origin: typeof location !== "undefined" ? location.origin : "",
-    mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: s.mail }, expenses: s.expenses,
+    mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: s.mail }, expenses: s.expenses, equipment: s.equipment, files: s.files, tasks: s.tasks,
     jobber: { available: true, connected: true, account: "Ridgeline Fence Co.", error: "", lastPush: ago(2880), connectUrl: "#" },
     quickbooks: { available: true, connected: true, company: "Ridgeline Fence Co. LLC", error: "", lastPush: ago(95), connectUrl: "#" },
     wires: { sources: [{ source: "missed_call", leads: 19, last30: 7, last: ago(40) }, { source: "web form", leads: 12, last30: 5, last: ago(300) }, { source: "angi", leads: 8, last30: 3, last: ago(2880) }, { source: "web chat", leads: 2, last30: 1, last: ago(8640) }],
@@ -334,6 +344,19 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       s.expenses.unshift({ id, kind: x.kind, vendor: x.vendor, category: x.category, amount: x.amount, miles: x.miles, spent_on: x.spent_on, note: x.note, member: "", thread_id: x.thread, customer: x.thread ? s.threads[x.thread]?.thread.customer_name : undefined, receipt: !!(b.input as { receipt?: string })?.receipt });
       return { ok: true, id };
     }
+    if (b.action === "equipment") {
+      const e = cleanEquipment(b.input); if ("error" in e) fail(e.error);
+      const x = e as Exclude<typeof e, { error: string }>;
+      const cur = s.equipment.find(q => q.id === b.entry);
+      if (cur) Object.assign(cur, x); else s.equipment.push({ ...x, id: "eq" + Date.now(), thread_id: String(b.thread), history: [], customer: s.threads[String(b.thread)]?.thread.customer_name });
+      return { ok: true };
+    }
+    if (b.action === "equipservice") { const e = s.equipment.find(q => q.id === b.entry); if (e) e.history.unshift({ on: new Date().toLocaleDateString("en-CA"), note: String(b.note || "Serviced"), by: "" }); return { ok: true }; }
+    if (b.action === "equipremove") { s.equipment = s.equipment.filter(q => q.id !== b.entry); return { ok: true }; }
+    if (b.action === "fileadd") { const f = cleanFile(b.input); if ("error" in f) fail(f.error); const x = f as Exclude<typeof f, { error: string }>; s.files.unshift({ id: "f" + Date.now(), thread_id: String(b.thread), name: x.name, mime: x.mime, size: Math.floor(x.data.length * 3 / 4), created_at: now }); return { ok: true }; }
+    if (b.action === "fileremove") { s.files = s.files.filter(f => f.id !== b.entry); return { ok: true }; }
+    if (b.action === "task") { const t = cleanTask(b.input); if ("error" in t) fail(t.error); const x = t as Exclude<typeof t, { error: string }>; s.tasks.push({ ...x, id: "k" + Date.now(), done_at: null, created_at: now }); return { ok: true }; }
+    if (b.action === "taskdone") { const t = s.tasks.find(q => q.id === b.entry); if (t) t.done_at = b.done === false ? null : now; return { ok: true }; }
     if (b.action === "expensedelete") { s.expenses = s.expenses.filter(e => e.id !== b.entry); return { ok: true }; }
     if (b.action === "maildismiss") { const m = s.mail.find(x => x.id === b.thread); if (m && m.status !== "lead" && m.status !== "added") { m.status = "ignored"; m.why = "Dismissed"; } return { ok: true }; }
     if (b.action === "mailadd") {

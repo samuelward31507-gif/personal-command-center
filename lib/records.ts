@@ -1,0 +1,54 @@
+// Equipment at an address, documents on a job, and the office's to-dos: the pure part (what each may hold, which
+// warranties run out soon, which tasks are due), so the rules are tested on their own.
+
+const ctl = (v: unknown, max: number) => String(v ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+const ymd = (v: unknown) => { const s = String(v ?? "").trim(); return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s + "T12:00:00Z")) ? s : null; };
+
+// ---------- Equipment ----------
+export const EQUIPMENT_KINDS = ["Furnace", "Air conditioner", "Heat pump", "Mini-split", "Boiler", "Water heater", "Tankless water heater", "Water softener", "Sump pump",
+  "Electrical panel", "Generator", "EV charger", "Pool pump", "Pool heater", "Pool filter", "Irrigation controller", "Garage door opener", "Roof", "Fence", "Gate operator", "Other"] as const;
+export type EquipmentIn = { kind: string; make: string; model: string; serial: string; location: string; installed_on: string | null; warranty_until: string | null; notes: string };
+export function cleanEquipment(input: unknown): EquipmentIn | { error: string } {
+  const o = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const e = { kind: ctl(o.kind, 40), make: ctl(o.make, 60), model: ctl(o.model, 60), serial: ctl(o.serial, 60).toUpperCase(), location: ctl(o.location, 60),
+    installed_on: ymd(o.installed_on), warranty_until: ymd(o.warranty_until), notes: ctl(o.notes, 500) };
+  if (!e.kind && !e.make && !e.model) return { error: "Say what it is: the kind, or the make and model." };
+  if (e.installed_on && e.warranty_until && e.warranty_until < e.installed_on) return { error: "The warranty can't end before it was installed." };
+  return e;
+}
+export type Equipment = EquipmentIn & { id: string; thread_id: string; customer?: string; history: { on: string; note: string; by: string }[] };
+/** Warranties that end within `days` (and haven't ended yet): worth a call before they do. */
+export function warrantyEndingSoon<T extends { warranty_until: string | null }>(list: T[], today: string, days = 60): T[] {
+  const until = new Date(Date.parse(today + "T12:00:00Z") + days * 86400000).toISOString().slice(0, 10);
+  return list.filter(e => e.warranty_until && e.warranty_until >= today && e.warranty_until <= until).sort((a, b) => a.warranty_until!.localeCompare(b.warranty_until!));
+}
+/** Years since it went in, for "12 years old, due for replacement" talk. */
+export const ageYears = (installed: string | null, today: string) => (installed ? Math.max(0, Math.floor((Date.parse(today) - Date.parse(installed)) / (365.25 * 86400000))) : null);
+
+// ---------- Documents ----------
+export const FILE_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
+export const MAX_FILE_BYTES = 3_000_000;
+/** A document from the browser as a data URL: its name, type and bytes, or why not. */
+export function cleanFile(input: unknown): { name: string; mime: string; data: string } | { error: string } {
+  const o = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const m = String(o.data ?? "").match(/^data:([a-z]+\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/);
+  if (!m || !(FILE_TYPES as readonly string[]).includes(m[1])) return { error: "Add a PDF or a photo." };
+  if (Math.floor(m[2].length * 3 / 4) > MAX_FILE_BYTES) return { error: "That file is over 3 MB. Save a smaller copy and try again." };
+  const name = ctl(o.name, 120).replace(/[\\/:*?"<>|]/g, "-") || (m[1] === "application/pdf" ? "Document.pdf" : "Photo.jpg");
+  return { name, mime: m[1], data: m[2] };
+}
+
+// ---------- Office to-dos ----------
+export type TaskIn = { title: string; due_on: string | null; assignee: string; thread: string | null };
+export function cleanTask(input: unknown): TaskIn | { error: string } {
+  const o = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const title = ctl(o.title, 200);
+  if (!title) return { error: "Say what needs doing." };
+  return { title, due_on: ymd(o.due_on), assignee: String(o.assignee ?? "").replace(/[^\d+]/g, "").slice(0, 16), thread: typeof o.thread === "string" && /^[0-9a-f-]{36}$/i.test(o.thread) ? o.thread : null };
+}
+export type Task = TaskIn & { id: string; done_at: string | null; customer?: string; created_at: string };
+/** Open tasks in the order to do them: overdue, then due today, then dated, then undated, oldest first within each. */
+export function taskOrder<T extends { due_on: string | null; done_at: string | null; created_at: string }>(list: T[], today: string): T[] {
+  const rank = (t: T) => (!t.due_on ? 3 : t.due_on < today ? 0 : t.due_on === today ? 1 : 2);
+  return list.filter(t => !t.done_at).sort((a, b) => rank(a) - rank(b) || (a.due_on ?? "").localeCompare(b.due_on ?? "") || a.created_at.localeCompare(b.created_at));
+}
