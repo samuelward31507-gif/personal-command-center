@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
     rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string; email?: string; at?: string | null; method?: string; payment?: string; data?: string; kind?: string; caption?: string; photo?: string; member?: string;
-    plan?: string; input?: unknown; skip?: boolean; tags?: unknown; referredBy?: unknown; tag?: string; percent?: number; rest?: boolean; statement?: boolean; co?: string; entry?: string; end?: string | null; remove?: boolean };
+    plan?: string; input?: unknown; skip?: boolean; tags?: unknown; referredBy?: unknown; tag?: string; custom?: unknown; percent?: number; rest?: boolean; statement?: boolean; co?: string; entry?: string; end?: string | null; remove?: boolean };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -129,7 +129,7 @@ export async function POST(req: Request) {
       }
       let value: number | null | undefined;
       if (b.value !== undefined) { value = b.value === null || b.value === "" ? null : parseAmount(String(b.value)); if (b.value && value == null) return json({ error: "Type the job value as a number, like 9400." }, 400); }
-      const r = await saveCard(sql, c, b.thread, { tags: s.role === "crew" ? undefined : b.tags, referredBy: s.role === "crew" ? undefined : b.referredBy, details: b.details, value, notes: b.notes, crew: b.crew, name: b.name, email: b.email, install: b.install, review: b.review });
+      const r = await saveCard(sql, c, b.thread, { custom: b.custom, tags: s.role === "crew" ? undefined : b.tags, referredBy: s.role === "crew" ? undefined : b.referredBy, details: b.details, value, notes: b.notes, crew: b.crew, name: b.name, email: b.email, install: b.install, review: b.review });
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
     }
     if (b.action === "quotelink" || b.action === "reviewnow") {

@@ -121,3 +121,26 @@ export function TagsRow({ ctx, card, act }: { ctx: Ctx; card: { id: string; tags
     {referred.length > 0 && <p className="fine">Referred {referred.length}: {referred.slice(0, 4).map(c => c.name).join(", ")}{referred.length > 4 ? " and more" : ""}.</p>}
   </section>;
 }
+
+// ---------- The owner's own fields on a customer ----------
+export function CustomFieldsBox({ ctx, card, act }: { ctx: Ctx; card: { id: string; custom?: Record<string, string> }; act: (key: string, body: Record<string, unknown>, done: string) => Promise<unknown> }) {
+  const labels = (() => { try { const v = JSON.parse(ctx.d.setup?.custom_fields || "[]"); return Array.isArray(v) ? (v as string[]) : []; } catch { return []; } })();
+  if (!labels.length) return null;
+  const cur = card.custom ?? {};
+  const save = (label: string, value: string) => { if ((cur[label] ?? "") === value.trim()) return; void act("custom", { action: "card", custom: { ...cur, [label]: value } }, "Saved."); };
+  return <section className="card"><div className="hd"><h2>Details</h2></div>
+    {labels.map(l => <label key={l} className="money"><span>{l}</span><input className="input sm" style={{ width: 220 }} defaultValue={cur[l] ?? ""} onBlur={e => save(l, e.target.value)} placeholder="–" /></label>)}
+  </section>;
+}
+
+/** Settings: the fields every customer gets. */
+export function FieldLabelsEditor({ ctx }: { ctx: Ctx }) {
+  const labels = (() => { try { const v = JSON.parse(ctx.d.setup?.custom_fields || "[]"); return Array.isArray(v) ? (v as string[]) : []; } catch { return []; } })();
+  const [v, setV] = useState(""), [busy, setBusy] = useState(false);
+  const save = async (next: string[]) => { setBusy(true); try { await ctx.api("/api/app/act", { p: ctx.project, action: "setup", setup: { custom_fields: next } }); await ctx.reload(); } catch (e) { ctx.toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } };
+  return <li style={{ height: "auto", padding: "8px 0", flexDirection: "column", alignItems: "stretch", gap: 6 }}>
+    <span>Your own fields on every customer<small className="mut" style={{ display: "block" }}>Gate code, HOA, PO number, dog&rsquo;s name: up to 10. They show on each job.</small></span>
+    <span className="tag-row">{labels.map(l => <span key={l} className="tagx">{l}<button type="button" aria-label={`Remove ${l}`} disabled={busy} onClick={() => void save(labels.filter(x => x !== l))}>×</button></span>)}
+      {labels.length < 10 && <form onSubmit={e => { e.preventDefault(); if (v.trim()) { void save([...labels, v.trim()]); setV(""); } }}><input className="input sm" style={{ width: 160 }} value={v} onChange={e => setV(e.target.value)} placeholder="Add a field" disabled={busy} /></form>}</span>
+  </li>;
+}

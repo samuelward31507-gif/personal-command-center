@@ -191,6 +191,15 @@ export function parseTeam(v: unknown): TeamMember[] {
   }
   return out;
 }
+/** The owner's custom field labels: up to 10, 40 characters, no repeats in any case. Mirrors cleanFieldLabels in lib/records.ts. */
+function fieldLabels(v: unknown): string[] {
+  let arr: unknown = v;
+  if (typeof v === "string") { try { arr = JSON.parse(v); } catch { arr = v.split(","); } }
+  const out: string[] = [];
+  for (const x of Array.isArray(arr) ? arr : []) { const l = String(x ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 40); if (l && !out.some(o => o.toLowerCase() === l.toLowerCase())) out.push(l); if (out.length >= 10) break; }
+  return out;
+}
+
 export function cleanOwnerSetup(input: unknown): Record<string, string> {
   const r = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
   const out: Record<string, string> = {};
@@ -231,6 +240,7 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   if (r.late_fee !== undefined) { const v = String(r.late_fee ?? "").trim(); const n = Number(v.replace(/[^\d.]/g, "")); out.late_fee = n > 0 ? (/%/.test(v) ? `${Math.min(25, Math.round(n * 10) / 10)}%` : String(Math.min(500, Math.round(n * 100) / 100))) : ""; }
   int("late_fee_days", 1, 90);
   int("monthly_goal", 0, 10000000);
+  if (r.custom_fields !== undefined) out.custom_fields = JSON.stringify(fieldLabels(r.custom_fields));
   if (r.mileage_rate !== undefined) { const n = Number(String(r.mileage_rate ?? "").replace(/[^\d.]/g, "")); out.mileage_rate = n > 0 && n <= 5 ? String(Math.round(n * 1000) / 1000) : ""; }
   if (r.review_link !== undefined) { const u = String(r.review_link ?? "").trim().slice(0, 300); out.review_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   if (r.financing_link !== undefined) { const u = String(r.financing_link ?? "").trim().slice(0, 300); out.financing_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
@@ -266,7 +276,7 @@ ${bp ? `- Ballpark from the owner's own prices for ${bp.basis}: ${rangeText(bp)}
 // ---------- The board's card (shared by the server, the app and the example business) ----------
 export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
   /** The owner's tags, and the customer who referred them. */
-  tags?: string[]; referredBy?: string | null;
+  tags?: string[]; referredBy?: string | null; custom?: Record<string, string>;
   ballpark: { low: number; high: number } | null; notes: string; next: string | null; at: string;
   quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
     items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax: number; deposit?: number | null;

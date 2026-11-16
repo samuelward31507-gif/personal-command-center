@@ -8,7 +8,7 @@ import { draftItems, jobFields, jobProfit, jobProgress, jobSteps, rangeText, STA
 import { chosen, dollars, totals, type Item } from "@/lib/billing";
 import { Avatar, Empty, Icon, Sheet, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast, noPhone, typePhone } from "./parts";
 import { JobExpenses } from "./expenses";
-import { EquipmentBox, FilesBox, TagsRow } from "./records";
+import { CustomFieldsBox, EquipmentBox, FilesBox, TagsRow } from "./records";
 import { quoteText } from "@/lib/crm";
 import { CrewPick, crewName, emailDoc } from "./crew";
 import { PlanBox } from "./plans";
@@ -125,6 +125,7 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
           <JobPanel r={r} biz={biz} ask={ask} setAsk={setAsk} go={go} canText={!!canText} />
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <Steps card={r.card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <CostBox card={r.card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
+          {r.card && <CustomFieldsBox ctx={{ d, project, api, toast, reload }} card={r.card} act={r.act} />}
           {r.card && !biz.crew && <TagsRow ctx={{ d, project, api, toast, reload }} card={r.card} act={r.act} />}
           {r.card && <EquipmentBox ctx={{ d, project, api, toast, reload }} thread={r.card.id} />}
           {r.card && <FilesBox ctx={{ d, project, api, toast, reload }} thread={r.card.id} />}

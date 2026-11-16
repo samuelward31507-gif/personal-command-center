@@ -61,3 +61,19 @@ export function cleanTags(v: unknown): string[] {
   for (const x of list) { const t = String(x ?? "").toLowerCase().replace(/[^a-z0-9 -]/g, " ").replace(/\s+/g, " ").trim().slice(0, 30); if (t && !out.includes(t)) out.push(t); if (out.length >= 12) break; }
   return out;
 }
+
+// ---------- Custom fields ----------
+/** The owner's field labels: up to 10, 40 characters each, no repeats (any case). */
+export function cleanFieldLabels(v: unknown): string[] {
+  let arr: unknown = v;
+  if (typeof v === "string") { try { arr = JSON.parse(v); } catch { arr = v.split(","); } }
+  const out: string[] = [];
+  for (const x of Array.isArray(arr) ? arr : []) { const l = ctl(x, 40); if (l && !out.some(o => o.toLowerCase() === l.toLowerCase())) out.push(l); if (out.length >= 10) break; }
+  return out;
+}
+/** A customer's values: only for labels that exist, 200 characters each; blanks dropped. */
+export function cleanFieldValues(v: unknown, labels: string[]): Record<string, string> {
+  const o = (v && typeof v === "object" ? v : {}) as Record<string, unknown>, out: Record<string, string> = {};
+  for (const l of labels) { const x = ctl(o[l], 200); if (x) out[l] = x; }
+  return out;
+}

@@ -24,4 +24,7 @@ ok(() => { const list = [
 ok(() => assert.deepEqual(R.cleanTags([" Commercial ", "HOA", "hoa", "2025 Storm!!", ""]), ["commercial", "hoa", "2025 storm"]));
 ok(() => assert.deepEqual(R.cleanTags("vip, repeat ,vip"), ["vip", "repeat"]));
 ok(() => assert.equal(R.cleanTags(Array.from({ length: 20 }, (_, i) => "t" + i)).length, 12));
+ok(() => assert.deepEqual(R.cleanFieldLabels(["Gate code", "gate code", " HOA ", "", "PO number"]), ["Gate code", "HOA", "PO number"]));
+ok(() => assert.equal(R.cleanFieldLabels(Array.from({ length: 15 }, (_, i) => "F" + i)).length, 10));
+ok(() => assert.deepEqual(R.cleanFieldValues({ "Gate code": " 4418 ", "Not a field": "x", HOA: "" }, ["Gate code", "HOA"]), { "Gate code": "4418" }));
 console.log(`records: ${n} checks passed`);
