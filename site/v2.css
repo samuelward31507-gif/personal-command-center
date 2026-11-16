@@ -770,3 +770,23 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 
 .notif .ic.ic-logo { background: none; padding: 0; overflow: hidden; }
 .notif .ic.ic-logo svg { display: block; }
+
+/* Home pricing: two plan cards */
+.pp { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 920px; margin: 48px auto 0; }
+.pp-card { display: flex; flex-direction: column; gap: 6px; padding: 30px 30px 26px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); color: inherit; text-decoration: none; transition: border-color .2s var(--ease), box-shadow .2s var(--ease), transform .2s var(--ease); }
+.pp-card:hover { border-color: var(--line-2); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+.pp-card.is-main { border-color: rgba(18,20,23,.24); }
+.pp-name { font-weight: 600; font-size: 17px; letter-spacing: -.015em; }
+.pp-price { display: flex; align-items: baseline; gap: 4px; margin-top: 10px; }
+.pp-price b { font: 600 40px/1 var(--head); letter-spacing: -.035em; }
+.pp-price small { font-size: 15px; color: var(--text-3); }
+.pp-sub { color: var(--text-3); font-size: 15px; margin-top: 6px; }
+.pp-card ul { list-style: none; margin: 18px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); display: grid; gap: 10px; }
+.pp-card li { position: relative; padding-left: 24px; font-size: 15px; line-height: 1.45; color: var(--text-2); }
+.pp-card li::before { content: ""; position: absolute; left: 2px; top: 6px; width: 10px; height: 6px; border-left: 1.75px solid var(--text); border-bottom: 1.75px solid var(--text); transform: rotate(-45deg); }
+.pp-go { margin-top: auto; padding-top: 22px; font-weight: 500; font-size: 15px; }
+.pp-card:hover .pp-go { text-decoration: underline; text-underline-offset: 3px; }
+.pp-foot { margin: 24px auto 0; text-align: center; color: var(--text-3); font-size: 15px; }
+.pp-foot a { color: var(--text); font-weight: 500; margin-left: 6px; }
+@media (max-width: 760px) { .pp { grid-template-columns: 1fr; margin-top: 32px; } .pp-card { padding: 24px 22px 22px; } .pp-price b { font-size: 34px; } }
+@media (prefers-reduced-motion: reduce) { .pp-card, .pp-card:hover { transition: none; transform: none; } }
