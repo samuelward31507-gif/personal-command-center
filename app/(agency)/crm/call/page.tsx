@@ -19,6 +19,7 @@ import type { QueueItem } from "@/lib/my-day";
 import SuggestedDeal, { type SuggestedDealData } from "../../suggested-deal";
 import TextDraft, { type TextContext } from "../text-draft";
 import { CallEmail } from "./call-email";
+import SpeedLoom from "./speed-loom";
 
 /** Outcomes that roll straight into the next dial when auto-dial is on. */
 const AUTO_NEXT: string[] = ["no_answer", "voicemail", "gatekeeper", "wrong_number", "not_interested", "not_a_fit"];
@@ -453,6 +454,7 @@ export default function CallModePage() {
         </div>
 
         {audit !== undefined && <AuditCard content={audit?.content} auditId={audit?.id} contactId={contact.id} />}
+        <SpeedLoom contact={contact} firstName={playFirst} auditContent={audit?.content ?? null} bookingLink={wsp.bookingLink || null} />
 
         <div className="dl-history">
           <span><b>Last touch</b>{last}</span>
