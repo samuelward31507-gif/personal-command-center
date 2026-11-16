@@ -75,7 +75,7 @@ export default function ContactsPage(){
  const rows=filter==="Follow-ups due"?contacts.filter(c=>c.nextFollowUp&&c.nextFollowUp<=today()&&[c.name,c.company,c.role,c.email,c.phone,c.notes].join(" ").toLowerCase().includes(query.toLowerCase().trim())).sort((a,b)=>a.nextFollowUp.localeCompare(b.nextFollowUp)):visible;
  const open=(c:Contact)=>{setSelected(c.id);setSheet(true)};
  const href=(v:string,base="")=>v.startsWith("http")?v:"https://"+base+v.replace(/^@/,"");
- return <div className="u-page ct-page" role="region" aria-label="Contacts">
+ return <div className="u-page ct-page" role="region" aria-label="Prospects">
   <div className="u-head">
    <h1 className="u-title">Prospects{contacts.length?<span className="u-dim"> {counts.todo} to call, {calledToday} called today</span>:null}</h1>
    <div className="u-head-actions">
@@ -88,14 +88,14 @@ export default function ContactsPage(){
 
   <div className="ct-bar">
    <div className="u-seg" role="group" aria-label="Show">{FILTERS.map(([v,l,n])=><button key={v} type="button" aria-pressed={filter===v} onClick={()=>setFilter(v)}>{l}{n!=null&&<span className="ct-n">{n}</span>}</button>)}</div>
-   <input className="u-field ct-search" type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search name, company, phone, notes" aria-label="Search contacts"/>
+   <input className="u-field ct-search" type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search prospects" aria-label="Search prospects by name, company, phone or notes"/>
    <select className="u-field ct-sort" value={["Lead","Contact","Customer","Partner","Missing phone & email"].includes(filter)?filter:""} onChange={e=>setFilter(e.target.value||"All contacts")} aria-label="Status"><option value="">Any status</option><option>Lead</option><option>Contact</option><option>Customer</option><option>Partner</option><option value="Missing phone & email">No phone or email</option></select>
    <select className="u-field ct-sort" value={sortBy} onChange={e=>setSortBy(e.target.value as "list"|"followup"|"name")} aria-label="Sort"><option value="list">List order</option><option value="followup">Follow-up date</option><option value="name">Name A–Z</option></select>
   </div>
 
-  {!loaded?<p className="u-note" role="status">Loading contacts…</p>
-  :!saved&&!contacts.length?<div className="u-void"><h2>Couldn&apos;t load your contacts</h2><p>Check your connection and refresh the page.</p></div>
-  :!contacts.length?<div className="u-void"><h2>No contacts yet</h2><p>Import a list of prospects or add the first one by hand. Everyone you add shows up in Call mode.</p><div style={{display:"flex",gap:8}}><button className="u-btn u-btn-light" onClick={()=>setShowImport(true)}>Import a list</button><button className="u-btn" onClick={add}>Add contact</button></div></div>
+  {!loaded?<p className="u-note" role="status">Loading prospects…</p>
+  :!saved&&!contacts.length?<div className="u-void"><h2>Couldn&apos;t load your prospects</h2><p>Check your connection and refresh the page.</p></div>
+  :!contacts.length?<div className="u-void"><h2>No prospects yet</h2><p>Import a list of prospects or add the first one by hand. Everyone you add shows up in Call mode.</p><div style={{display:"flex",gap:8}}><button className="u-btn u-btn-light" onClick={()=>setShowImport(true)}>Import a list</button><button className="u-btn" onClick={add}>Add contact</button></div></div>
   :!rows.length?<div className="u-void"><h2>{filter==="Not called today"&&!query?"Everyone's been called today":"Nothing matches"}</h2><p>{query?"Try another search.":"Switch the view above to see more people."}</p></div>
   :<div className="u-tablewrap"><table className="u-table ct-table">
    <thead><tr><th><ThIcon name="company" />Business</th><th><ThIcon name="phone" />Phone</th><th><ThIcon name="pin" />Location</th><th><ThIcon name="status" />Status</th><th><ThIcon name="clock" />Last touch</th><th><ThIcon name="calendar" />Follow-up</th><th/></tr></thead>

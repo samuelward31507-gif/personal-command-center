@@ -60,7 +60,7 @@ export default function PipelinePage(){
  const weighted=weightedPipeline(active.filter(d=>d.stage!=="nurture").map(d=>({stage:d.stage,setupFee:d.setupFee,monthlyFee:d.monthlyFee,probability:d.probability??null})));
  const live=won.filter(d=>d.agreementStatus==="active");
  const liveMrr=live.reduce((s,d)=>s+d.monthlyFee,0);
- const svc=(id:string)=>services.find(s=>s.id===id)?.label||"Service";
+ const svc=(id:string)=>services.find(s=>s.id===id)?.label||"";
  const closeLabel=(d:Deal)=>d.expectedCloseDate&&/^\d{4}-\d{2}-\d{2}$/.test(d.expectedCloseDate)?new Date(d.expectedCloseDate+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"}):"";
  const late=(d:Deal)=>!!d.expectedCloseDate&&d.expectedCloseDate<new Date().toISOString().slice(0,10)&&!["won","lost"].includes(d.stage);
  const listRows=filter==="open"?deals.filter(d=>!["won","lost","nurture"].includes(d.stage)):deals.filter(d=>d.stage===filter);
@@ -69,7 +69,7 @@ export default function PipelinePage(){
   <div className="pb-deal-top"><Logo name={d.company||d.contactName||d.title} size={20} /><Link className="pb-deal-co" href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link></div>
   <div className="pb-deal-rows">
    <span className="pb-deal-row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M16.5 7.5c-.7-1.3-2.1-2-4.2-2C9.8 5.5 8 6.8 8 8.8s1.6 2.8 4.2 3.3 4.3 1.3 4.3 3.4-1.7 3.5-4.3 3.5c-2 0-3.7-.7-4.6-2.1"/></svg><b className="u-num">{money(d.monthlyFee)}</b><em>/mo</em>{d.setupFee>0&&<em>+ {money(d.setupFee)} setup</em>}</span>
-   <span className="pb-deal-row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4h8l9 9-8 8-9-9Z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg><span className="lg-pill" data-tone="grey">{svc(d.serviceType)}</span></span>
+   {svc(d.serviceType)&&<span className="pb-deal-row"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12V4h8l9 9-8 8-9-9Z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg><span className="lg-pill" data-tone="grey">{svc(d.serviceType)}</span></span>}
    {d.contactName&&d.company&&<span className="pb-deal-row"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.6-3.8 3.2-5.8 7-5.8s6.4 2 7 5.8"/></svg>{d.contactName}</span>}
   </div>
   <div className="pb-deal-foot">
@@ -78,11 +78,11 @@ export default function PipelinePage(){
    <span className="pb-foot-v u-num">{Math.round(d.probability!=null?d.probability:(STAGE_PROBABILITY[d.stage]??0)*100)}%{d.updatedAt?<i title="Last updated"> · {ago(d.updatedAt)}</i>:null}</span>
   </div>
  </div>;
- const STAGE_SHORT:Record<string,string>={new:"New",meeting_booked:"Booked",meeting_held:"Held",negotiation:"Negotiating"};
+ const STAGE_SHORT:Record<string,string>={new:"New",meeting_booked:"Booked",meeting_held:"Held",negotiation:"Negotiation"};
  const stageTone:Record<string,string>={new:"#9aa3b0",qualified:"#3b82f6",contacted:"#0ea5e9",interested:"#e3a008",meeting_booked:"#8b5cf6",meeting_held:"#d946ef",proposal:"#f2752b",negotiation:"#ec4899",won:"#16a34a",lost:"#9aa3b0",nurture:"#14b8a6"};
- return <div className="u-page pb-page" role="region" aria-label="Pipeline">
+ return <div className="u-page pb-page" role="region" aria-label="Deals">
   <div className="u-head">
-   <h1 className="u-title">Pipeline{(()=>{const n=deals.filter(d=>!["won","lost","nurture"].includes(d.stage)).length;return deals.length?<span className="u-dim"> {n} open {n===1?"deal":"deals"}</span>:null})()}</h1>
+   <h1 className="u-title">Deals{(()=>{const n=deals.filter(d=>!["won","lost","nurture"].includes(d.stage)).length;return deals.length?<span className="u-dim"> {n} open {n===1?"deal":"deals"}</span>:null})()}</h1>
    <div className="u-head-actions">
     <div className="u-seg" role="group" aria-label="Layout"><button type="button" aria-pressed={view==="board"} onClick={()=>{setView("board");setFilter("open")}}>Board</button><button type="button" aria-pressed={view==="list"} onClick={()=>setView("list")}>List</button></div>
     <button className="u-btn u-btn-light" onClick={startNew}>New deal</button>
@@ -116,7 +116,7 @@ export default function PipelinePage(){
     {listRows.map(d=><tr key={d.id}>
      <td className="is-strong"><span className="pb-who"><Logo name={d.company||d.contactName||d.title} size={24} /><Link href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link></span></td>
      <td><select className="u-field pb-stage" aria-label={"Stage for "+d.title} value={d.stage} onChange={e=>void quickStage(d,e.target.value as Stage)}>{stages.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></td>
-     <td>{svc(d.serviceType)}</td>
+     <td>{svc(d.serviceType)||"—"}</td>
      <td className={late(d)?"pb-late":""}>{closeLabel(d)||"—"}</td>
      <td className="is-num is-strong">{money(d.monthlyFee)}</td><td className="is-num">{money(d.setupFee)}</td>
      <td style={{textAlign:"right",whiteSpace:"nowrap"}}>

@@ -77,22 +77,22 @@ export default function ClientsPage() {
       <div className="u-head-actions">
         <Link className="u-btn u-btn-bare" href="/crm/reports">Monthly reports</Link>
         <button className="u-btn" onClick={() => setTicketForm(true)}>Log a support issue</button>
-        <button className="u-btn u-btn-light" onClick={() => setEditing("new")}>Add health record</button>
+        {rows.length > 0 && <button className="u-btn u-btn-light" onClick={() => setEditing("new")}>Add health record</button>}
       </div>
     </div>
     {error && <p className="u-flash is-bad" role="alert" style={{ marginBottom: 18 }}>{error}</p>}
 
     <div className="u-figs">
-      <div className="u-fig"><span className="u-fig-k">Active clients</span><div className="u-fig-v">{projects ? live.length : "—"}</div><div className="u-fig-sub">{rows.length - live.length ? `${rows.length - live.length} paused, churned or finished` : "Nobody has churned"}</div></div>
+      <div className="u-fig"><span className="u-fig-k">Active clients</span><div className="u-fig-v">{projects ? live.length : "—"}</div><div className="u-fig-sub">{rows.length - live.length ? `${rows.length - live.length} paused, churned or finished` : rows.length ? "Nobody has churned" : "Your first win shows up here"}</div></div>
       <div className="u-fig"><span className="u-fig-k">Recurring from clients</span><div className="u-fig-v">{usd(mrr)}<small>/mo</small></div><div className="u-fig-sub"><b>{usd(mrr * 12)}</b> a year at this rate</div></div>
-      <div className="u-fig"><span className="u-fig-k">At risk</span><div className="u-fig-v">{atRisk.length}</div><div className="u-fig-sub">{atRisk.length ? atRisk.slice(0, 2).map(r => r.name).join(", ") : "Health 3 or better across the board"}</div></div>
+      <div className="u-fig"><span className="u-fig-k">At risk</span><div className="u-fig-v">{atRisk.length}</div><div className="u-fig-sub">{atRisk.length ? atRisk.slice(0, 2).map(r => r.name).join(", ") : rows.length ? "Every client is healthy" : "No clients to watch yet"}</div></div>
       <div className="u-fig"><span className="u-fig-k">Next renewal</span><div className="u-fig-v" style={{ fontSize: 30 }}>{nextRenewal ? `${daysUntil(nextRenewal.renewal_date)} days` : "—"}</div><div className="u-fig-sub">{nextRenewal ? <><b>{nextRenewal.client_name}</b>, {day(nextRenewal.renewal_date)}</> : "No renewal dates set"}</div></div>
     </div>
 
     {projects === null ? <p className="u-note" role="status">Loading clients…</p> : rows.length === 0 ? <div className="u-void">
       <h2>No clients yet</h2>
       <p>When a deal is marked won, the client shows up here with an onboarding checklist, their own page, and a health record you can track to renewal.</p>
-      <Link className="u-btn u-btn-light" href="/crm/pipeline">Open pipeline</Link>
+      <Link className="u-btn u-btn-light" href="/crm/pipeline">Open deals</Link>
     </div> : <div className="u-tablewrap"><table className="u-table cl-table">
       <thead><tr><th>Client</th><th>Onboarding</th><th>Status</th><th>Health</th><th>Renewal</th><th className="is-num">Monthly</th><th /></tr></thead>
       <tbody>{rows.map(r => {

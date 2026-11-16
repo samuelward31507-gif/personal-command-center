@@ -411,7 +411,7 @@ export default function CallModePage() {
     <div className="dl-grid">
       <aside className="dl-rail" aria-label="Call list">
         <div className="dl-find">
-          <input className="u-field" type="search" inputMode="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Calling back? Name, company or number" aria-label="Find a contact by name, company or phone number" />
+          <input className="u-field" type="search" inputMode="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Find a name, company or number" aria-label="Find a contact by name, company or phone number" />
           {search.trim().length >= 2 && <div className="dl-find-list" role="listbox">
             {matches.length ? matches.map(c => <button type="button" key={c.id} className="u-row" onClick={() => pick(c.id)}>
               <div className="u-row-main"><strong>{c.company || c.name}</strong><span>{[c.company ? c.name : "", c.phone].filter(Boolean).join(" · ")}</span></div>
@@ -517,8 +517,8 @@ export default function CallModePage() {
               {brief.flags && <Block title="Watch out for" text={brief.flags} />}
             </div>
             <div className="dl-brief-foot">
-              <span>Pitch <b>{offer.label}</b>, ${offer.setupFee.toLocaleString()} setup + ${offer.monthlyFee.toLocaleString()}/mo{founding && founding.left > 0 ? ` · ${founding.left} founding spot${founding.left === 1 ? "" : "s"} left` : ""}</span>
-              <span title="Written by AI from public web research. Check anything important before you rely on it.">AI research, verify before quoting</span>
+              <span>Plan <b>{offer.label}</b>, ${offer.setupFee.toLocaleString()} setup + ${offer.monthlyFee.toLocaleString()}/mo{founding && founding.left > 0 ? ` · ${founding.left} founding spot${founding.left === 1 ? "" : "s"} left` : ""}</span>
+              <span title="Written by AI from public web research. Check anything important before you rely on it.">Research, check before quoting</span>
               <Link href={`/crm/audits/${audit!.id}`} style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Full report</Link>
             </div>
           </> : <div className="dl-noaudit">

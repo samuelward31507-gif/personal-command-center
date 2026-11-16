@@ -121,7 +121,7 @@ export default function MoneyPage() {
 
     <div className="u-figs">
       <div className="u-fig"><span className="u-fig-k">Collected in {monthName(thisMonth, true)}</span><div className="u-fig-v">{loading ? "—" : usd(collectedNow)}</div><div className="u-fig-sub"><Delta now={collectedNow} before={collectedBefore} /></div></div>
-      <div className="u-fig"><span className="u-fig-k">Monthly recurring</span><div className="u-fig-v">{loading ? "—" : usd(mrr)}<small>/mo</small></div><div className="u-meter"><i style={{ width: Math.min(100, (mrr / MOVE_OUT_MRR) * 100) + "%" }} /></div><div className="u-fig-sub"><b>{usd(Math.max(0, MOVE_OUT_MRR - mrr))}</b> to the {usd(MOVE_OUT_MRR)} move-out number</div></div>
+      <div className="u-fig"><span className="u-fig-k">Monthly recurring</span><div className="u-fig-v">{loading ? "—" : usd(mrr)}<small>/mo</small></div><div className="u-meter"><i style={{ width: Math.min(100, (mrr / MOVE_OUT_MRR) * 100) + "%" }} /></div><div className="u-fig-sub"><b>{usd(Math.max(0, MOVE_OUT_MRR - mrr))}</b> short of your {usd(MOVE_OUT_MRR)} move-out goal</div></div>
       <div className="u-fig"><span className="u-fig-k">Profit in {monthName(thisMonth, true)}</span><div className="u-fig-v">{loading ? "—" : usd(collectedNow - spentNow)}</div><div className="u-fig-sub">after <b>{usd(spentNow)}</b> in costs</div></div>
       <div className="u-fig"><span className="u-fig-k">Owed to you</span><div className="u-fig-v">{owed ? usd(owed.totalOpen) : "—"}</div><div className="u-fig-sub">{owed?.totalOverdue ? <span style={{ color: "var(--u-text)" }}>{usd(owed.totalOverdue)} overdue</span> : owed?.totalOpen ? "Nothing overdue" : "All paid up"}</div></div>
     </div>
@@ -194,7 +194,7 @@ export default function MoneyPage() {
           <button type="button" aria-pressed={ledger === "revenue"} onClick={() => setLedger("revenue")}>Revenue · {revenue.length}</button>
           <button type="button" aria-pressed={ledger === "expenses"} onClick={() => setLedger("expenses")}>Expenses · {expenses.length}</button>
         </div>
-        <button className="u-btn u-btn-bare" onClick={() => setAdding(ledger === "revenue" ? "revenue" : "expense")}>{ledger === "revenue" ? "Record revenue" : "Log expense"}</button>
+        {(ledger === "revenue" ? revenue.length : 1) > 0 && <button className="u-btn u-btn-bare" onClick={() => setAdding(ledger === "revenue" ? "revenue" : "expense")}>{ledger === "revenue" ? "Record revenue" : "Log expense"}</button>}
       </div>
       {loading ? <p className="u-note">Loading…</p> : ledger === "revenue"
         ? revenue.length === 0 ? <div className="u-void"><h2>No revenue yet</h2><p>Record a setup fee or retainer when a client signs. Paid records feed the charts above.</p><button className="u-btn u-btn-light" onClick={() => setAdding("revenue")}>Record revenue</button></div>
