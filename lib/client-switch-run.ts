@@ -19,7 +19,26 @@ const SOURCE_NAME: Record<string, string> = { jobber: "Jobber", quickbooks: "Qui
 
 export type ImportView = { id: string; source: string; status: string; preview: Preview | null; pull: PullState; progress: number; total: number; result: Result; error: string;
   created_at: string; finished_at: string | null; undone_at: string | null; canUndo: boolean; existing: number };
-type PullState = { kind?: number; after?: string | null; start?: number; done?: boolean; counts?: Record<string, number>; warnings?: string[] };
+type PullState = { kind?: number; after?: string | null; start?: number; done?: boolean; counts?: Record<string, number>; warnings?: string[]; files?: { ref: string; name: string; url: string }[]; photos?: { saved: number; failed: number } };
+const MAX_IMPORT_PHOTOS = 400;
+
+/** Download queued photos for a few seconds. Each one lands in client_import_files until the import places it. */
+async function downloadQueued(sql: Sql, c: Client, importId: string, p: PullState, ms = 6000): Promise<void> {
+  const started = Date.now(), tally = (p.photos ??= { saved: 0, failed: 0 });
+  while (p.files?.length && Date.now() - started < ms) {
+    const f = p.files.shift()!;
+    if (tally.saved >= MAX_IMPORT_PHOTOS) { tally.failed++; continue; }
+    try {
+      const r = await fetch(f.url, { signal: AbortSignal.timeout(6000), redirect: "follow" });
+      const mime = (r.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+      if (!r.ok || !/^image\/(jpeg|png|webp|gif)$/.test(mime)) { tally.failed++; continue; }
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (!buf.length || buf.length > 4_000_000) { tally.failed++; continue; }
+      await sql`INSERT INTO public.client_import_files (import_id, project_id, customer_ref, name, mime, bytes, size) VALUES (${importId}::uuid, ${c.projectId}::uuid, ${f.ref}, ${f.name.slice(0, 120)}, ${mime}, ${buf}, ${buf.length})`;
+      tally.saved++;
+    } catch { tally.failed++; }
+  }
+}
 type Result = Record<string, { created: number; updated: number; skipped: number }> & { merged?: { created: 0; updated: 0; skipped: number } };
 type Cursor = { phase?: number; i?: number; ids?: Record<string, string> };
 
@@ -117,6 +136,11 @@ export async function pullStep(sql: Sql, c: Client, id: string): Promise<{ ok: b
   const add = emptyStaged();
   const today = todayIn(c);
   if (r.source === "jobber") {
+    // Photos queued from the last page come first: their links won't last.
+    if (p.files?.length) {
+      await downloadQueued(sql, c, id, p);
+      if (p.files.length) { await sql`UPDATE public.client_imports SET pull = ${JSON.stringify(p)}::jsonb WHERE id = ${id}::uuid`; return { ok: true, view: await view(sql, c, (await load(sql, c, id))!) }; }
+    }
     const token = await jobberToken(sql, c.projectId).catch(() => null);
     if (!token) return { ok: false, error: "Connect Jobber first, then pull." };
     const kind = JOBBER_KINDS[p.kind!];
@@ -130,7 +154,7 @@ export async function pullStep(sql: Sql, c: Client, id: string): Promise<{ ok: b
     } else {
       const cur = staged(r);
       for (const n of page.nodes) {
-        if (kind === "clients") add.customers.push(jobberClient(n));
+        if (kind === "clients") { const x = jobberClient(n); for (const f of x.files ?? []) (p.files ??= []).push({ ref: x.ref, name: f.name, url: f.url }); delete x.files; add.customers.push(x); }
         else if (kind === "quotes") add.quotes.push(jobberQuote(n));
         else if (kind === "jobs") { const pl = jobberPlan(n); if (pl) add.plans.push(pl); else add.jobs.push(jobberJob(n, today)); }
         else if (kind === "productOrServices") { const it = jobberItem(n); if (it.name) add.items.push(it); }
@@ -140,7 +164,9 @@ export async function pullStep(sql: Sql, c: Client, id: string): Promise<{ ok: b
       p.counts![kind] = (p.counts![kind] ?? 0) + page.nodes.length;
       if (page.pageInfo?.hasNextPage && p.counts![kind] < MAX_PER_KIND) p.after = page.pageInfo.endCursor; else { p.kind!++; p.after = null; }
     }
-    p.done = p.kind! >= JOBBER_KINDS.length;
+    if (p.files?.length) await downloadQueued(sql, c, id, p, 4000);
+    p.done = p.kind! >= JOBBER_KINDS.length && !p.files?.length;
+    if (p.done && p.photos && (p.photos.saved || p.photos.failed)) p.warnings!.push(`${p.photos.saved} ${p.photos.saved === 1 ? "photo" : "photos"} downloaded from Jobber${p.photos.failed ? `; ${p.photos.failed} couldn't be (not a photo, too large, or the link expired)` : ""}.`);
   } else if (r.source === "quickbooks") {
     const kind = QBO_KINDS[p.kind!], start = p.start ?? 1;
     let page: Record<string, Record<string, unknown>[]> | null;
@@ -243,6 +269,14 @@ export async function runStep(sql: Sql, c: Client, id: string): Promise<{ ok: bo
             bump("customers", "created");
           }
           cur.ids![x.ref] = tid;
+          {
+            const refs = [x.ref, ...Object.keys(p.remap).filter(k => p.remap[k] === x.ref)];
+            const placed = await sql`INSERT INTO public.client_photos (owner_id, project_id, thread_id, kind, caption, mime, bytes, size)
+              SELECT ${c.owner}, ${c.projectId}::uuid, ${tid}::uuid, 'other', left('From Jobber: ' || name, 120), mime, bytes, size FROM public.client_import_files
+              WHERE import_id = ${id}::uuid AND customer_ref = ANY(${refs}::text[]) ORDER BY created_at LIMIT 40 RETURNING id`.catch(() => []) as { id: string }[];
+            for (const ph of placed) await record(sql, id, c, "photos", ph.id, "created");
+            if (placed.length) { bump("photos", "created", placed.length); await sql`DELETE FROM public.client_import_files WHERE import_id = ${id}::uuid AND customer_ref = ANY(${refs}::text[])`.catch(() => null); }
+          }
           if (sys === "quickbooks") await sql`UPDATE public.client_threads SET qbo_customer_id = ${x.ref.replace(/^qbo:/, "")} WHERE id = ${tid}::uuid AND qbo_customer_id = ''`;
           for (const pr of x.properties) {
             const [has] = await sql`SELECT 1 FROM public.client_properties WHERE thread_id = ${tid}::uuid AND (source_ref = ${pr.ref} OR lower(address) = lower(${pr.address})) LIMIT 1`;
@@ -360,6 +394,7 @@ export async function undoImport(sql: Sql, c: Client, id: string): Promise<{ ok:
     else if (it.target === "quotes") await sql`DELETE FROM public.client_quotes WHERE id = ${it.target_id}::uuid AND project_id = ${c.projectId}::uuid AND import_id = ${id}::uuid`;
     else if (it.target === "plans") await sql`DELETE FROM public.client_plans WHERE id = ${it.target_id}::uuid AND project_id = ${c.projectId}::uuid AND import_id = ${id}::uuid`;
     else if (it.target === "properties") await sql`DELETE FROM public.client_properties WHERE id = ${it.target_id}::uuid AND project_id = ${c.projectId}::uuid AND import_id = ${id}::uuid`;
+    else if (it.target === "photos") await sql`DELETE FROM public.client_photos WHERE id = ${it.target_id}::uuid AND project_id = ${c.projectId}::uuid`;
   }
   await sql`UPDATE public.client_imports SET status = 'undone', undone_at = now() WHERE id = ${id}::uuid`;
   return { ok: true };

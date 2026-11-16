@@ -76,7 +76,15 @@ ok(() => assert.deepEqual([["upcoming", "2026-12-01"], ["archived", "2026-01-01"
 ok(() => { const c = S.jobberClient({ id: "Z1", name: "Dana Ruiz", phones: [{ number: "720 555 0100" }, { number: "(720) 555-0148", primary: true }], emails: [{ address: "D@X.com", primary: true }], createdAt: "2024-03-01T10:00:00Z",
   billingAddress: { street1: "1 Bill St", city: "Denver", province: "CO", postalCode: "80202" }, clientProperties: { nodes: [{ id: "P1", address: { street1: "77 Aspen Ct", city: "Englewood", province: "CO", postalCode: "80110" } }] },
   notes: { nodes: [{ message: "Gate code 4418", fileAttachments: { nodes: [{ fileName: "a.jpg", url: "https://x/a.jpg" }] } }] } });
-  assert.equal(c.ref, "jobber:Z1"); assert.equal(c.phone, "+17205550148"); assert.equal(c.email, "d@x.com"); assert.equal(c.since, "2024-03-01"); assert.deepEqual(c.properties.map(p => p.ref), ["jobber:P1"]); assert.ok(c.notes.includes("a.jpg: https://x/a.jpg")); });
+  assert.equal(c.ref, "jobber:Z1"); assert.equal(c.phone, "+17205550148"); assert.equal(c.email, "d@x.com"); assert.equal(c.since, "2024-03-01"); assert.deepEqual(c.properties.map(p => p.ref), ["jobber:P1"]); assert.deepEqual(c.files, [{ name: "a.jpg", url: "https://x/a.jpg" }]); assert.ok(c.notes.includes("Gate code 4418")); assert.ok(!c.notes.includes("https://")); });
+// Attachments: photos to download, other files named in the note without their expiring link, unsafe links dropped.
+ok(() => { const c = S.jobberClient({ id: "Z9", name: "Lee", phones: [], emails: [], notes: { nodes: [{ message: "Survey", fileAttachments: { nodes: [
+  { fileName: "front.JPEG", url: "https://files.jobber.example/f.jpeg?sig=1" }, { fileName: "plan.pdf", url: "https://files.jobber.example/p.pdf" },
+  { fileName: "local.png", url: "http://169.254.169.254/latest" }, { fileName: "ip.png", url: "https://10.0.0.5/x.png" }] } }] } });
+  assert.deepEqual(c.files.map(x => x.name), ["front.JPEG"]); assert.match(c.notes, /Files in Jobber: plan\.pdf, local\.png, ip\.png/); assert.ok(!/https?:\/\//.test(c.notes)); });
+ok(() => { assert.equal(S.isPhotoName("a.webp"), true); assert.equal(S.isPhotoName("a.heic"), false); assert.equal(S.isPhotoName("scan.pdf"), false);
+  assert.equal(S.safeFileUrl("https://user:pw@x.com/a.jpg"), null); assert.equal(S.safeFileUrl("https://localhost/a.jpg"), null); assert.equal(S.safeFileUrl("ftp://x.com/a"), null); assert.ok(S.safeFileUrl("https://s3.amazonaws.com/b/a.jpg")); });
+ok(() => { const c = S.jobberClient({ id: "Z8", name: "No files", phones: [], emails: [] }); assert.equal(c.files, undefined); });
 ok(() => { const c = S.jobberClient({ id: "Z2", name: "Ann", phones: [], emails: [], billingAddress: { street1: "5 A St", city: "Denver" } }); assert.equal(c.properties[0].address, "5 A St, Denver"); });
 ok(() => { const q = S.jobberQuote({ id: "Q", quoteNumber: 1042, quoteStatus: "awaiting_response", client: { id: "Z1" }, amounts: { total: 7000 }, lineItems: { nodes: [{ name: "Fence", quantity: 150, unitPrice: 43 }] } });
   assert.equal(q.customerRef, "jobber:Z1"); assert.equal(q.status, "open"); assert.equal(q.items[0].qty, 150); assert.equal(q.total, 7000); });

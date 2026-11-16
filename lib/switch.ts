@@ -6,7 +6,20 @@ import { parseCsv } from "@/lib/customer-import";
 
 // ---------- The plain shape ----------
 export type NProperty = { ref: string; address: string; gate?: string; notes?: string };
-export type NCustomer = { ref: string; name: string; company?: string; phone: string; email: string; notes: string; tags?: string; since?: string | null; properties: NProperty[]; lead?: boolean };
+export type NFile = { name: string; url: string };
+export type NCustomer = { ref: string; name: string; company?: string; phone: string; email: string; notes: string; tags?: string; since?: string | null; properties: NProperty[]; lead?: boolean; files?: NFile[] };
+/** A photo a browser can show. Other files (PDFs, HEIC) stay as a named mention in the notes. */
+export const isPhotoName = (n: string) => /\.(jpe?g|png|webp|gif)$/i.test(String(n || "").trim());
+/** Only plain https links on a public host: no credentials, no local or private addresses. */
+export function safeFileUrl(raw: unknown): string | null {
+  try {
+    const u = new URL(String(raw ?? "").trim());
+    if (u.protocol !== "https:" || u.username || u.password) return null;
+    const h = u.hostname.toLowerCase();
+    if (h === "localhost" || h.endsWith(".local") || h.endsWith(".internal") || /^(\d+\.){3}\d+$/.test(h) || h.includes(":")) return null;
+    return u.toString();
+  } catch { return null; }
+}
 export type NLine = { name: string; qty: number; unit: string; price: number };
 export type NQuote = { ref: string; customerRef: string; number?: string; status: "draft" | "open" | "approved" | "declined"; items: NLine[]; total: number; sent?: string | null; title?: string };
 export type NJob = { ref: string; customerRef: string; number?: string; title: string; status: "scheduled" | "active" | "done"; start?: string | null; total?: number; address?: string };
@@ -314,8 +327,14 @@ export function jobberClient(n: J): NCustomer {
   const ref = "jobber:" + String(n.id);
   const props = nodes(n.clientProperties).map((p, i) => ({ ref: "jobber:" + String(p.id ?? `${n.id}:${i}`), address: jAddr((p as J).address) })).filter(p => p.address);
   if (!props.length && jAddr(n.billingAddress)) props.push({ ref: ref + ":billing", address: jAddr(n.billingAddress) });
-  const notes = nodes(n.notes).map(x => { const files = nodes(x.fileAttachments).map(f => `${f.fileName ?? "file"}: ${f.url}`).join(" "); return [ctl(x.message, 600), files].filter(Boolean).join(" "); }).filter(Boolean).join("\n");
-  return { ref, name: ctl(n.name || [n.firstName, n.lastName].filter(Boolean).join(" ") || n.companyName, 80), company: ctl(n.companyName, 80) || undefined, phone, email, notes: notes.slice(0, 4000), since: anyDate(n.createdAt), properties: props };
+  // Photos are downloaded during the pull (Jobber's links expire); other files are named in the note, without the dead link.
+  const files: NFile[] = [];
+  const notes = nodes(n.notes).map(x => {
+    const att = nodes(x.fileAttachments), other: string[] = [];
+    for (const f of att) { const name = ctl(f.fileName, 120) || "file", url = safeFileUrl(f.url); if (isPhotoName(name) && url) { if (files.length < 20) files.push({ name, url }); } else other.push(name); }
+    return [ctl(x.message, 600), other.length ? `Files in Jobber: ${other.join(", ")}` : ""].filter(Boolean).join(" ");
+  }).filter(Boolean).join("\n");
+  return { ref, name: ctl(n.name || [n.firstName, n.lastName].filter(Boolean).join(" ") || n.companyName, 80), company: ctl(n.companyName, 80) || undefined, phone, email, notes: notes.slice(0, 4000), since: anyDate(n.createdAt), properties: props, ...(files.length ? { files } : {}) };
 }
 const jLines = (n: J): NLine[] => nodes(n.lineItems).map(l => ({ name: ctl(l.name || l.description, 120) || "Line", qty: Math.max(0.01, Number(l.quantity) || 1), unit: "", price: Math.max(0, money(l.unitPrice)) }));
 const cRef = (n: J) => "jobber:" + String((n.client as J | undefined)?.id ?? "");
