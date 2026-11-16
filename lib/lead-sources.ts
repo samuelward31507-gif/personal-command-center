@@ -2,17 +2,22 @@
 // plus anything sent through Zapier or Make. Each one posts to the client's intake link with &source=…
 // The payloads differ, so they're flattened first and then matched by field name.
 
-export type LeadSource = "web form" | "angi" | "thumbtack" | "facebook" | "zapier";
+export type LeadSource = "web form" | "angi" | "thumbtack" | "facebook" | "google ads" | "zapier";
 export type Lead = { name: string; phone: string; email: string; message: string; source: LeadSource; via: string; smsConsent?: boolean | null };
-export const SOURCE_LABEL: Record<LeadSource, string> = { "web form": "your website", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook", zapier: "your form" };
-export const PAID: LeadSource[] = ["angi", "thumbtack", "facebook"];
+export const SOURCE_LABEL: Record<LeadSource, string> = { "web form": "your website", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook", "google ads": "Google", zapier: "your form" };
+export const PAID: LeadSource[] = ["angi", "thumbtack", "facebook", "google ads"];
 
 const norm = (k: string) => k.toLowerCase().replace(/[^a-z0-9]/g, "");
 /** {customer: {phone: "…"}} → {customerphone: "…", phone: "…"}; Facebook's field_data [{name, values}] → name: value. */
 export function flatten(v: unknown, prefix = "", out: Record<string, string> = {}): Record<string, string> {
   if (v == null) return out;
   if (Array.isArray(v)) {
-    if (v.every(x => x && typeof x === "object" && "name" in (x as object) && ("values" in (x as object) || "value" in (x as object)))) {
+    if (v.length && v.every(x => x && typeof x === "object" && "string_value" in (x as object) && ("column_id" in (x as object) || "column_name" in (x as object)))) {
+      for (const f of v as { column_id?: string; column_name?: string; string_value?: unknown }[]) {
+        const val = String(f.string_value ?? "").trim(); if (!val) continue;
+        for (const k of [norm(String(f.column_id ?? "")), norm(String(f.column_name ?? ""))]) if (k && !(k in out)) out[k] = val;
+      }
+    } else if (v.every(x => x && typeof x === "object" && "name" in (x as object) && ("values" in (x as object) || "value" in (x as object)))) {
       for (const f of v as { name: string; values?: unknown[]; value?: unknown }[]) {
         const val = Array.isArray(f.values) ? f.values.join(", ") : String(f.value ?? "");
         const k = norm(String(f.name)); if (k && val && !(k in out)) out[k] = val;
@@ -41,6 +46,7 @@ export function sourceOf(v: string | null | undefined): LeadSource {
   const s = norm(v || "");
   if (/angi|homeadvisor/.test(s)) return "angi";
   if (/thumbtack/.test(s)) return "thumbtack";
+  if (/googleads|adwords|gads|leadform/.test(s)) return "google ads";
   if (/facebook|fb|meta|instagram/.test(s)) return "facebook";
   if (/zapier|make|integromat/.test(s)) return "zapier";
   return "web form";

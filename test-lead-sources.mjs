@@ -26,3 +26,14 @@ assert.equal(skipRing({ owner_cell: "+17205550100" }, { ForwardedFrom: "+1720555
 assert.equal(skipRing({ owner_cell: "+17205550100", forwarding: "Their number forwards missed calls here" }, {}), true);
 assert.equal(skipRing({}, {}), true);
 console.log("forwarding ok");
+// Google Ads lead forms: user_column_data, the column IDs Google uses, and the source from the URL.
+const gads = parseLead({ lead_id: "L1", api_version: "1.0", form_id: 4, google_key: "k", is_test: true, user_column_data: [
+  { column_name: "Full Name", string_value: "Rosa Diaz", column_id: "FULL_NAME" }, { column_name: "User Phone", string_value: "+1 720-555-0133", column_id: "PHONE_NUMBER" },
+  { column_name: "User Email", string_value: "rosa@example.com", column_id: "EMAIL" }, { column_name: "Postal Code", string_value: "80211", column_id: "POSTAL_CODE" },
+  { column_name: "What do you need?", string_value: "New cedar fence", column_id: "SERVICE" }] }, "google ads");
+assert.equal(gads.phone, "+17205550133"); assert.equal(gads.name, "Rosa Diaz"); assert.equal(gads.email, "rosa@example.com"); assert.equal(gads.source, "google ads"); assert.equal(gads.via, "Google");
+assert.match(gads.message, /New cedar fence/); assert.match(gads.message, /80211/);
+assert.equal(sourceOf("google_ads"), "google ads"); assert.equal(sourceOf("Google Ads"), "google ads"); assert.equal(sourceOf("facebook"), "facebook");
+const gfirst = parseLead({ user_column_data: [{ column_id: "FIRST_NAME", string_value: "Al" }, { column_id: "LAST_NAME", string_value: "Bo" }, { column_id: "PHONE_NUMBER", string_value: "7205550111" }] }, "google ads");
+assert.equal(gfirst.name, "Al Bo");
+console.log("google ads lead forms ok");

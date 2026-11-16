@@ -312,7 +312,7 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
           const cont = !newDay && who === lastWho && Date.parse(t.at) - lastAt < 10 * 60000; lastWho = who; lastAt = Date.parse(t.at);
           const photos = (t.media ?? []).map((_, k) => `/api/app/media?id=${t.id}&i=${k}`);
           const words = photos.length && /^\(sent (a photo|\d+ photos)\)$/.test(t.body) ? "" : t.body;
-          return <div key={t.id}>{sep}<article className={"lg " + who + (cont ? " cont" : "")}>
+          return <div key={t.id}>{sep}<article className={"lgx " + who + (cont ? " cont" : "")}>
             {!cont && <header><b>{who === "them" ? (compact ? first(name) : name) : who === "you" ? "You" : "Cinder"}</b><time>{clock(t.at)}</time></header>}
             {photos.length > 0 && <div className="photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
             {words && <p title={cont ? clock(t.at) : undefined}>{words}</p>}

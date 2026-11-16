@@ -81,19 +81,17 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
           {mails.map(m => { const key = "mail:" + m.id, who = m.name || m.email || sourceLabel(m.source); return <Fragment key={m.id}>
             <button type="button" className={"cv lead" + (sel === key || openMail === m.id ? " sel" : "")} aria-current={sel === key ? "true" : undefined} aria-expanded={wide ? undefined : openMail === m.id}
               onClick={() => (wide ? setSel(key) : setOpenMail(o => (o === m.id ? null : m.id)))}>
-              <span className="cv-av"><Avatar name={who} size="lg" /><SourceMark source={m.source || "email"} size={18} /></span>
-              <span style={{ minWidth: 0 }}><span className="cv-top"><b><i aria-label="Your turn" />{who}</b><time>{ago(m.at)}</time></span>
-                <small className="cv-meta"><Chip tone="orange">No phone</Chip><span className="mut">{sourceLabel(m.source || "email")} by email</span></small>
-                <small>{m.message || m.subject}</small></span>
+              <span className="cv-dot on" aria-label="Your turn" />
+              <span style={{ minWidth: 0 }}><span className="cv-top"><b>{who}</b><time>{ago(m.at)}</time></span>
+                <small>No phone, {sourceLabel(m.source || "email")} by email. {m.message || m.subject}</small></span>
             </button>
             {!wide && openMail === m.id && <div className="mail-inline"><MailWaiting r={m} go={go} toast={toast} api={api} project={project} reload={reload} /></div>}
           </Fragment>; })}</section>}
         {groups.length ? groups.map(g => <section key={g.day}><div className={"grp" + (g.day === "Your turn" ? " hot" : "")}><b>{g.day}</b><span>{g.items.length}</span></div>
           {g.items.map(c => { const ls = leadState(c); return <button key={c.id} type="button" data-cv={c.id} className={"cv lead" + (sel === c.id ? " sel" : "")} aria-current={sel === c.id ? "true" : undefined} onClick={() => pick(c.id)}>
-            <span className="cv-av"><Avatar name={c.name} size="lg" /><SourceMark source={c.source} size={18} /></span>
-            <span style={{ minWidth: 0 }}><span className="cv-top"><b>{c.status === "paused" && <i aria-label="Your turn" />}{c.name}</b><time>{ago(c.at)}</time></span>
-              <small className="cv-meta">{c.replySec != null ? <span className="rt">{c.source === "missed_call" ? "texted back" : "replied"} in {secText(c.replySec)}</span> : <span className="rt mut">no reply yet</span>}<Chip tone={ls.tone}>{ls.text}</Chip><span className="mut">{sourceLabel(c.source)}</span></small>
-              <small>{c.last}</small></span>
+            <span className={"cv-dot" + (c.status === "paused" ? " on" : "")} aria-label={c.status === "paused" ? "Your turn" : undefined} />
+            <span style={{ minWidth: 0 }}><span className="cv-top"><b>{c.name}</b><time>{ago(c.at)}</time></span>
+              <small title={`${sourceLabel(c.source)}, ${ls.text}`}>{c.last}</small></span>
           </button>; })}</section>)
           : showMails ? null : <Empty title={filter === "all" ? "No leads yet" : filter === "needs" ? "Nothing waiting on you" : "No bookings yet"} text={filter === "all" ? "Calls, texts and form leads show up here the moment they come in." : undefined} />}
       </div>
@@ -111,7 +109,7 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
   </>;
 }
 
-/** One conversation: a Messages-style thread with the composer under it. */
+/** One conversation: a log of who said what, with the composer under it. */
 export function ThreadView({ id, project, canCall, api, toast, onBack, onChange, onRecord, embedded, conv }: { id: string; project: string; canCall: boolean; api: Api; toast: Toast; onBack?: () => void; onChange: () => void; onRecord?: () => void; embedded?: boolean; conv?: Conv }) {
   const [t, setT] = useState<Thread | null>(null), [texts, setTexts] = useState<Text[] | null>(null);
   const [draft, setDraft] = useState(""), [busy, setBusy] = useState("");
@@ -160,11 +158,11 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
           lastWho = who;
           const photos = (x.media ?? []).map((_, k) => `/api/app/media?id=${x.id}&i=${k}`);
           const words = photos.length && /^\(sent (a photo|\d+ photos)\)$/.test(x.body) ? "" : x.body;
-          return <div key={i} style={{ display: "flex", flexDirection: "column" }}>{sep}<article className={"msg " + (who === "them" ? "in" : "out") + (cont ? " cont" : "") + (tail ? " tail" : "")}>
-            {!cont && who !== "them" && <small className="from">{who === "cinder" ? "Auto-reply" : "You"}</small>}
+          void tail;
+          return <div key={i}>{sep}<article className={"lgx " + who + (cont ? " cont" : "")}>
+            {!cont && <header><b>{who === "them" ? first(name) : who === "cinder" ? "Cinder" : "You"}</b><time>{clock(x.at)}</time></header>}
             {photos.length > 0 && <div className="photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
-            {words && <span className={"bubble" + (who === "them" ? "" : " out")}>{words}</span>}
-            {tail && <small className="when">{clock(x.at)}</small>}
+            {words && <p title={cont ? clock(x.at) : undefined}>{words}</p>}
             {who !== "them" && dlv(x) && <small className={"dlv" + (dlv(x) === "Not delivered" ? " bad" : "")}>{dlv(x)}</small>}
           </article></div>;
         })}

@@ -32,6 +32,8 @@ export async function POST(req: Request) {
   if (type.includes("json")) body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   else { const f = await req.formData().catch(() => null); if (f) for (const [k, v] of f.entries()) if (typeof v === "string") body[k] = v; }
   if (typeof body.website === "string" && body.website) return Response.json({ ok: true }, { headers: CORS }); // honeypot
+  // Google Ads lead forms carry the key typed into the form's webhook settings: it has to be this business's key.
+  if (typeof body.google_key === "string" && body.google_key !== (url.searchParams.get("key") ?? "")) return Response.json({ error: "Wrong key." }, { status: 403, headers: CORS });
   const lead = parseLead(body, url.searchParams.get("source"));
   const back = url.searchParams.get("next");
   const done = (status: number, payload: Record<string, unknown>) =>

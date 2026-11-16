@@ -10,25 +10,32 @@ import { contrastOnWhite, dominantColor, readableAccent } from "@/lib/brand";
 import { sourceLabel, type Biz, type Data, type Go, type LeadMail } from "./types";
 import { PageHead } from "./charts";
 
-type View = "connections" | "agent" | "account";
+type View = "connections" | "tools" | "agent" | "account";
 type State = "on" | "todo" | "off" | "bad";
-const WORD: Record<State, string> = { on: "Live", todo: "Needs setup", off: "Not used", bad: "Error" };
 
 // ---------- Connections ----------
-type Source = { key: string; name: string; what: string; steps: string[]; match: string[] };
-const SOURCES: Source[] = [
-  { key: "number", name: "Calls and texts", what: "Your Cinder number. A missed call gets a text back in seconds, and every text a lead sends starts a conversation.", match: ["missed_call", "text"],
-    steps: ["Forward your main line to the Cinder number when busy or unanswered (your carrier's *72 or the setting in your phone app).", "Put the Cinder number on your site, Google profile and trucks, or keep your own and forward.", "Send a test from here and check your cell."] },
-  { key: "web chat", name: "Website chat", what: "A small chat bubble on your site. The visitor leaves a name, cell and question. The reply comes by text.", match: ["web chat"],
-    steps: ["Copy the snippet below.", "Paste it once on your site, before the closing body tag (or in your site builder's custom code box).", "Load your site and send a message through the bubble."] },
-  { key: "web form", name: "Website form", what: "Any contact form, landing page or form tool posts to this address. Each submission gets a text back right away.", match: ["web form", "zapier"],
-    steps: ["Copy the address below.", "In your form tool, add a webhook (sometimes called an integration or a notification URL) and paste it. JSON or a normal form post both work.", "Send a test here, then submit your real form once."] },
-  { key: "angi", name: "Angi", what: "Angi leads hear back from you in seconds, before the other three pros do.", match: ["angi"],
-    steps: ["In Angi Leads, open Lead delivery.", "Add a webhook: HTTP POST, JSON, to the address below.", "Send a test here, then wait for the next real lead."] },
-  { key: "thumbtack", name: "Thumbtack", what: "Through Zapier or Make: a new Thumbtack lead posts here.", match: ["thumbtack"],
-    steps: ["In Zapier or Make, start from New lead in Thumbtack.", "Add a Webhooks step, POST, to the address below, sending the lead as JSON.", "Turn it on and send a test here."] },
-  { key: "facebook", name: "Facebook Lead Ads", what: "Through Zapier or Make: a new lead from your ad posts here. Facebook's field_data is read as-is.", match: ["facebook"],
-    steps: ["In Zapier or Make, start from New lead in Facebook Lead Ads.", "Add a Webhooks step, POST, to the address below.", "Turn it on and send a test here."] },
+// One table that answers "is everything connected?". Status comes only from what happened: a lead arrived, a text
+// failed, a test passed. Each row opens in place with its steps, its address and a test.
+type Src = { key: string; name: string; what: string; steps: string[]; match: string[]; via: "number" | "intake" | "snippet" | "mail"; src?: string; showKey?: boolean };
+const SOURCES: Src[] = [
+  { key: "number", name: "Missed-call text-back", via: "number", match: ["missed_call"], what: "A call you can't take gets a text back from your business number in seconds, and the conversation starts there.",
+    steps: ["Forward your main line to the Cinder number when busy or unanswered (your carrier's *72, or the call-forwarding setting in your phone).", "Or put the Cinder number on your site, Google profile and trucks.", "To check it: call your business line from another phone, let it ring out and hang up. The text comes back in seconds and this row turns Connected."] },
+  { key: "web form", name: "Website form", via: "intake", match: ["web form", "zapier"], what: "Any contact form, landing page or form tool posts here. Each submission gets a text back right away. A form with only an email waits in your Inbox.",
+    steps: ["Copy the address.", "In your form tool, add a webhook (also called an integration or notification URL) and paste it. JSON or a normal form post both work.", "Send a test here, then submit your real form once."] },
+  { key: "web chat", name: "Website chat", via: "snippet", match: ["web chat"], what: "A small chat bubble on your site. The visitor leaves a name, cell and question, and the reply comes by text.",
+    steps: ["Copy the snippet.", "Paste it once on your site, before the closing body tag, or in your site builder's custom code box.", "Load your site and send a message through the bubble."] },
+  { key: "facebook", name: "Facebook and Instagram ads", via: "intake", src: "facebook", match: ["facebook"], what: "Leads from your Facebook and Instagram lead ads, texted back in seconds. Facebook's field data is read as is.",
+    steps: ["In Zapier or Make, start from New lead in Facebook Lead Ads (pick the instant trigger, not a scheduled one).", "Add a Webhooks step: POST, JSON, to the address.", "Turn it on and send a test here."] },
+  { key: "google ads", name: "Google Ads lead forms", via: "intake", src: "google_ads", showKey: true, match: ["google ads"], what: "Leads from the lead form on your Google search and YouTube ads, straight in with no Zapier and no delay.",
+    steps: ["In Google Ads, open your lead form asset, then Lead delivery, then Webhook integration.", "Paste the address as the Webhook URL, and your key as the Key.", "Click Send test data in Google Ads. This row turns Connected when it lands."] },
+  { key: "google", name: "Google Local Services", via: "mail", match: ["google"], what: "Message leads from Local Services Ads come in by email and land here like any lead. Call leads ring your own number, so an unanswered one shows up as a missed call.",
+    steps: ["In Local Services Ads, open Settings, then Notifications.", "Add your lead email address (in Lead emails, below) for new lead emails.", "The next message lead shows up here, labeled Google."] },
+  { key: "angi", name: "Angi", via: "intake", src: "angi", match: ["angi"], what: "Angi and HomeAdvisor leads hear back from you in seconds, before the other three pros do.",
+    steps: ["In Angi Leads, open Lead delivery.", "Add a webhook: HTTP POST, JSON, to the address.", "Send a test here, then wait for the next real lead."] },
+  { key: "thumbtack", name: "Thumbtack", via: "intake", src: "thumbtack", match: ["thumbtack"], what: "New Thumbtack leads, by Zapier or Make, or simply by forwarding Thumbtack's lead emails to your lead email address.",
+    steps: ["Quickest: forward Thumbtack's new-lead emails to your lead email address (Lead emails, below).", "Or in Zapier or Make, start from New lead in Thumbtack and add a Webhooks step, POST, to the address.", "Send a test here."] },
+  { key: "sites", name: "Yelp, Houzz and other sites", via: "mail", match: ["yelp", "houzz", "nextdoor", "bark", "porch", "networx"], what: "Any lead site that emails you a new lead: Yelp, Houzz, Nextdoor, Bark, Porch, Networx.",
+    steps: ["In each site's notification settings, add your lead email address next to yours.", "Or forward their lead emails to it with a filter in your email."] },
 ];
 const EVENT: Record<string, string> = { inbound_call: "Called", inbound_text: "Texted in", web_form: "Web form", paid_lead: "Lead", owner_import: "Imported", opt_out: "Opted out", opt_in: "Opted in", help: "Asked for help" };
 
@@ -37,119 +44,149 @@ function Code({ text, block, toast }: { text: string; block?: boolean; toast: To
   if (block) return <div className="code block">{text}<div style={{ marginTop: 6 }}><button type="button" className="btn sm" onClick={() => void copy()}>Copy</button></div></div>;
   return <span className="code"><span title={text}>{text}</span><button type="button" onClick={() => void copy()} aria-label="Copy"><Icon name="link" size={13} /></button></span>;
 }
+function CopyBtn({ text, label, toast }: { text: string; label: string; toast: Toast }) {
+  return <button type="button" className="btn sm ghost" onClick={async () => { try { await navigator.clipboard.writeText(text); toast("Copied."); } catch { prompt("Copy:", text); } }}>{label}</button>;
+}
 
-function Row({ state, name, st, last, acts, open, onToggle, children }: { state: State; name: string; st: string; last?: string; acts?: React.ReactNode; open?: boolean; onToggle?: () => void; children?: React.ReactNode }) {
-  return <div className={"conn " + state + (open ? " open" : "")}>
-    <button type="button" className="conn-h" onClick={onToggle} aria-expanded={open} disabled={!onToggle}>
-      <span className="dot" aria-hidden="true" /><b>{name}</b><span className="st">{st}</span><span className="last">{last}</span>{onToggle && <Icon name="fwd" size={13} className="chev" />}
-    </button>
-    {acts && <div className="conn-acts">{acts}</div>}
-    {open && children && <div className="conn-bd">{children}</div>}
+/** One row of the table: status dot, name, status, leads in 30 days, last lead, actions; opens in place. */
+function Row({ state, name, st, n30, last, acts, open, onToggle, children }: { state: State; name: string; st: string; n30?: string; last?: string; acts?: React.ReactNode; open?: boolean; onToggle?: () => void; children?: React.ReactNode }) {
+  return <div className={"cx " + state + (open ? " open" : "")}>
+    <div className="cx-h">
+      <button type="button" className="cx-t" onClick={onToggle} aria-expanded={onToggle ? !!open : undefined} disabled={!onToggle}>
+        <span className="cdot" aria-hidden="true" /><b>{name}</b><span className="st">{st}</span><span className="n30">{n30 ?? ""}</span><span className="last">{last ?? ""}</span>
+      </button>
+      <div className="cx-a">{acts}</div>
+    </div>
+    {open && children && <div className="cx-b">{children}</div>}
   </div>;
 }
 
-function Connections({ d, biz, go, push, onPush, toast, api, project, demo, reload }: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; toast: Toast; api: Api; project: string; demo: boolean; reload: () => Promise<void> }) {
+function Connections({ d, toast, api, project, demo, reload, go }: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; toast: Toast; api: Api; project: string; demo: boolean; reload: () => Promise<void> }) {
   const s = d.setup ?? {}, w = d.wires ?? { sources: [], failures: [], log: [] };
   const origin = d.origin || (typeof location !== "undefined" ? location.origin : "");
   const key = d.key || "";
-  const intake = (src?: string) => `${origin}/api/intake?key=${key || "<your key>"}${src ? `&source=${src}` : ""}`;
-  const snippet = `<script src="${origin}/chat.js" data-key="${key || "<your key>"}" async></script>`;
+  const intake = (src?: string) => origin + "/api/intake?key=" + (key || "<your key>") + (src ? "&source=" + src : "");
+  const snippet = '<script src="' + origin + '/chat.js" data-key="' + (key || "<your key>") + '" async></script>';
   const chosen = (s.lead_sources || "").toLowerCase();
+  const mailAddr = d.mail?.address || "";
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [all, setAll] = useState(false);
   const week = Date.now() - 7 * 86400000;
+  const toggle = (k: string) => setOpen(open === k ? null : k);
 
-  const stat = (src: Source) => {
+  const stat = (src: Src): { state: State; st: string; last: string; n30: number } => {
     const rows = w.sources.filter(r => src.match.includes(r.source));
     const last = rows.map(r => r.last || "").filter(Boolean).sort().pop() || "";
     const n30 = rows.reduce((a, r) => a + r.last30, 0);
     const failed = w.failures.some(f => src.match.includes(f.source) && Date.parse(f.at) > week);
-    let state: State = "off";
-    if (src.key === "number") state = d.number ? (failed ? "bad" : "on") : "todo";
-    else if (!key) state = "todo";
-    else if (rows.length) state = failed ? "bad" : "on";
-    else if (src.key === "web form" || src.key === "web chat" || chosen.includes(src.key)) state = "todo";
-    return { state, last, n30 };
+    if (src.via === "number") {
+      if (!d.number) return { state: "todo", st: "Waiting on your texting number", last, n30 };
+      if (failed) return { state: "bad", st: "A text back didn't send this week", last, n30 };
+      return rows.length ? { state: "on", st: "Connected, " + fmtPhone(d.number), last, n30 } : { state: "todo", st: "Number live, no missed call seen yet", last, n30 };
+    }
+    if (rows.length) return failed ? { state: "bad", st: "A text back didn't send this week", last, n30 } : { state: "on", st: "Connected", last, n30 };
+    if (src.via === "mail") return mailAddr ? { state: chosen.includes(src.key) ? "todo" : "off", st: chosen.includes(src.key) ? "Needs setup" : "Not connected", last, n30 } : { state: "todo", st: "Needs your lead email address", last, n30 };
+    if (!key) return { state: "todo", st: "Needs setup", last, n30 };
+    const wanted = src.key === "web form" || src.key === "web chat" || chosen.includes(src.key) || (src.key === "facebook" && chosen.includes("meta"));
+    return { state: wanted ? "todo" : "off", st: wanted ? "Needs setup" : "Not connected", last, n30 };
   };
-  const test = async (src: Source) => {
+  const test = async (src: Src) => {
     setBusy(src.key);
     try {
-      if (src.key === "number") { await api("/api/app/act", { p: project, action: "testtext" }); toast("Sent. Check your cell for a text from the business number."); return; }
-      if (demo) { await new Promise(r => setTimeout(r, 500)); toast(`Test lead received from ${src.name}: Test Lead, (720) 555-0199. Nothing was saved.`); return; }
-      const r = await fetch(`${intake(src.key === "web form" ? undefined : src.key)}&test=1`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Test Lead", phone: "7205550199", message: `Test from the Cinder app, ${src.name}` }) });
+      if (demo) { await new Promise(r => setTimeout(r, 500)); toast("Test lead received from " + src.name + ": Test Lead, (720) 555-0199. Nothing was saved."); return; }
+      const body = src.key === "google ads"
+        ? { google_key: key, is_test: true, user_column_data: [{ column_id: "FULL_NAME", string_value: "Test Lead" }, { column_id: "PHONE_NUMBER", string_value: "7205550199" }] }
+        : { name: "Test Lead", phone: "7205550199", message: "Test from the Cinder app, " + src.name };
+      const r = await fetch(intake(src.src) + "&test=1", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => ({})) as { ok?: boolean; error?: string; lead?: { name: string; phone: string; source: string } };
-      if (!r.ok || !j.ok) throw new Error(j.error || `The address answered ${r.status}.`);
-      toast(`Test lead received from ${sourceLabel(j.lead?.source || src.key)}: ${j.lead?.name}, ${fmtPhone(j.lead?.phone || "")}. Nothing was saved.`);
+      if (!r.ok || !j.ok) throw new Error(j.error || "The address answered " + r.status + ".");
+      toast("Test lead received from " + sourceLabel(j.lead?.source || src.key) + ": " + (j.lead?.name || "") + ", " + fmtPhone(j.lead?.phone || "") + ". Nothing was saved.");
     } catch (e) { toast(e instanceof Error ? e.message : "The test didn't go through.", true); } finally { setBusy(null); }
   };
-  const visible = SOURCES.filter(src => all || src.key === "number" || src.key === "web form" || src.key === "web chat" || chosen.includes(src.key) || stat(src).state === "on" || stat(src).state === "bad");
-  const a2p = s.a2p_status || "";
-  const a2pWord = a2p === "Approved" ? "Registered" : a2p === "Submitted" ? `Registration pending${s.a2p_submitted ? `, sent ${s.a2p_submitted}` : ""}` : a2p === "Rejected" ? "Registration rejected, Sam is on it" : "Registration not started";
-  const cal = d.calendar;
+  const lastText = (last: string) => last ? ago(last) : "";
+  const rowsState = SOURCES.map(src => ({ src, ...stat(src) }));
+  const agentOn = !!d.number && s.agent_paused !== "yes";
+  const mailOn = (d.mail?.recent ?? []).some(r => r.status === "lead" || r.status === "added");
+  const bookOn = !!key && s.booking_page !== "no";
+  const total = rowsState.length + 3, live = rowsState.filter(x => x.state === "on").length + (agentOn ? 1 : 0) + (mailOn ? 1 : 0) + (bookOn ? 1 : 0);
+  const sec = d.live?.replySecWeek;
   const log = [
-    ...w.failures.map(f => ({ at: f.at, bad: true, what: "Text didn't send", who: f.name || fmtPhone(f.phone), detail: f.body, thread: f.thread })),
-    ...w.log.map(l => ({ at: l.at, bad: l.event === "opt_out", what: l.event === "paid_lead" ? `Lead from ${sourceLabel(l.source)}` : EVENT[l.event] || l.event, who: fmtPhone(l.phone), detail: l.evidence, thread: "" })),
+    ...w.failures.map(x => ({ at: x.at, bad: true, what: "Text didn't send", who: x.name || fmtPhone(x.phone), detail: x.body, thread: x.thread })),
+    ...w.log.map(l => ({ at: l.at, bad: l.event === "opt_out", what: l.event === "paid_lead" ? "Lead from " + sourceLabel(l.source) : EVENT[l.event] || l.event, who: fmtPhone(l.phone), detail: l.evidence, thread: "" })),
   ];
   const [more, setMore] = useState(false);
   const shown = more ? log : log.slice(0, 12);
 
-  return <div className="pad wires">
-    <section>
-      <p className="sec">Leads in<small>{visible.filter(v => stat(v).state === "on").length} live</small></p>
-      <AgentRow d={d} api={api} project={project} toast={toast} reload={reload} open={open === "agent"} onToggle={() => setOpen(open === "agent" ? null : "agent")} />
-      {visible.map(src => { const { state, last, n30 } = stat(src); const addr = src.key === "web chat" ? snippet : intake(src.key === "web form" || src.key === "number" ? undefined : src.key);
-        return <Row key={src.key} state={state} name={src.name} st={state === "on" && src.key === "number" ? `Live, ${fmtPhone(d.number)}` : WORD[state]} last={last ? `Last lead ${ago(last)}${n30 ? `, ${n30} in 30 days` : ""}` : state === "on" ? "No leads yet" : ""}
-          open={open === src.key} onToggle={() => setOpen(open === src.key ? null : src.key)}
+  return <div className="pad cx-page">
+    <p className="cx-sum"><b>{live} of {total} connected.</b>{sec != null ? " Every connected source got a first reply in " + (sec < 60 ? sec + " seconds" : Math.round(sec / 60) + " minutes") + " this week, median." : ""}</p>
+    <div className="cx-table" role="table" aria-label="Lead sources">
+      <div className="cx-head" role="row"><span /><span>Source</span><span>Status</span><span className="n30">30 days</span><span className="last">Last lead</span><span /></div>
+      <AgentRow d={d} api={api} project={project} toast={toast} reload={reload} open={open === "agent"} onToggle={() => toggle("agent")} />
+      {rowsState.map(({ src, state, st, last, n30 }) => {
+        const addr = src.via === "snippet" ? snippet : src.via === "intake" ? intake(src.src) : "";
+        return <Row key={src.key} state={state} name={src.name} st={st} n30={n30 ? String(n30) : state === "on" ? "0" : ""} last={lastText(last)} open={open === src.key} onToggle={() => toggle(src.key)}
           acts={<>
-            {(state === "on" || state === "bad" || (state === "todo" && key && src.key !== "number")) && src.key !== "web chat" && <button type="button" className="btn sm" disabled={busy === src.key} onClick={() => void test(src)}>{busy === src.key ? <Spinner /> : null}Send a test</button>}
-            {src.key !== "number" && key && <Code text={addr} toast={toast} />}
+            {src.via === "intake" && key && <button type="button" className="btn sm ghost" disabled={busy === src.key} onClick={() => void test(src)}>{busy === src.key ? <Spinner /> : null}Test</button>}
+            {src.via === "intake" && key && <CopyBtn text={addr} label="Copy address" toast={toast} />}
+            {src.via === "snippet" && key && <CopyBtn text={snippet} label="Copy snippet" toast={toast} />}
+            {src.via === "mail" && mailAddr && <CopyBtn text={mailAddr} label="Copy email" toast={toast} />}
+            {src.via === "number" && d.number && <button type="button" className="btn sm ghost" disabled={busy === "number"} onClick={async () => { setBusy("number"); try { await api("/api/app/act", { p: project, action: "testtext" }); toast("Sent. Check your cell for a text from the business number."); } catch (e) { toast(e instanceof Error ? e.message : "Didn't send.", true); } finally { setBusy(null); } }}>Text me a test</button>}
           </>}>
           <p>{src.what}</p>
           <ol>{src.steps.map((t, i) => <li key={i}>{t}</li>)}</ol>
-          {src.key === "web chat" && key && <Code text={snippet} block toast={toast} />}
-          {src.key === "number" && !s.has_cell && <p>Your cell isn&rsquo;t on file, so calls can&rsquo;t ring you and tests have nowhere to go. Ask Sam to add it.</p>}
+          {src.via === "intake" && key && <Code text={addr} toast={toast} />}
+          {src.showKey && key && <p style={{ marginTop: 6 }}>Your key: <Code text={key} toast={toast} /></p>}
+          {src.via === "snippet" && key && <Code text={snippet} block toast={toast} />}
+          {src.via === "mail" && (mailAddr ? <Code text={mailAddr} toast={toast} /> : <p>Your lead email address isn&rsquo;t switched on yet. It shows in Lead emails once it is.</p>)}
+          {src.via === "number" && !s.has_cell && <p>Your cell isn&rsquo;t on file, so calls can&rsquo;t ring you and tests have nowhere to go. Ask Sam to add it.</p>}
         </Row>; })}
-      <MailConn d={d} go={go} toast={toast} api={api} project={project} reload={reload} open={open === "mail"} onToggle={() => setOpen(open === "mail" ? null : "mail")} />
-      {key && <Row state={s.booking_page === "no" ? "off" : "on"} name="Your booking page" st={s.booking_page === "no" ? "Off" : d.calendar?.connected ? "Live, times from your Google Calendar" : "Live, customers ask for a time"}
-        open={open === "bookpage"} onToggle={() => setOpen(open === "bookpage" ? null : "bookpage")}
-        acts={<><Code text={`${origin}/b/${key}`} toast={toast} /><a className="btn sm" href={`/b/${demo ? "example" : key}`} target="_blank" rel="noreferrer">Open</a></>}>
+      <MailConn d={d} go={go} toast={toast} api={api} project={project} reload={reload} open={open === "mail"} onToggle={() => toggle("mail")} />
+      <Row state={!key ? "todo" : s.booking_page === "no" ? "off" : "on"} name="Booking page" st={!key ? "Needs setup" : s.booking_page === "no" ? "Off" : d.calendar?.connected ? "Connected, times from your Google Calendar" : "Connected, customers ask for a time"}
+        open={open === "bookpage"} onToggle={() => toggle("bookpage")}
+        acts={key ? <><CopyBtn text={origin + "/b/" + key} label="Copy link" toast={toast} /><a className="btn sm ghost" href={"/b/" + (demo ? "example" : key)} target="_blank" rel="noreferrer">Open</a></> : undefined}>
         <p>Customers pick an estimate time from your real calendar, leave their address and what they need, and get a confirmation text. You get the alert. Put the link on your website, your Google profile and in your email signature.</p>
         <ol><li>Copy the link.</li><li>Add a &ldquo;Book an estimate&rdquo; button on your site that opens it.</li><li>Add it to your Google Business Profile as the booking link.</li></ol>
-      </Row>}
-      {!all && visible.length < SOURCES.length && <button type="button" className="link" style={{ padding: "8px 0" }} onClick={() => setAll(true)}>Show {SOURCES.length - visible.length} more lead sites</button>}
-    </section>
-
-    <section>
-      <p className="sec">Out</p>
-      <Row state={d.number ? (a2p === "Rejected" ? "bad" : a2p === "Approved" ? "on" : "todo") : "todo"} name="Texting number" st={d.number ? `${fmtPhone(d.number)}, ${a2pWord}` : "Sam is connecting it"}
-        acts={d.number && s.has_cell ? <button type="button" className="btn sm" disabled={busy === "number"} onClick={() => void test(SOURCES[0])}>Send me a test</button> : undefined}>
-        <p>Every text a customer gets comes from this number, in your business&rsquo;s name. Carriers require a one-time registration of the business behind it (A2P 10DLC); until it&rsquo;s approved, texts can be slowed or filtered. Sam files it for you.</p>
+        {key && <Code text={origin + "/b/" + key} toast={toast} />}
       </Row>
-      <Row state={cal?.connected ? "on" : "todo"} name="Google Calendar" st={cal?.connected ? `Connected, ${cal.email || "your calendar"}` : "Not connected"}
-        acts={cal?.connected ? <button type="button" className="btn sm" onClick={() => go.tab("calendar")}>Open calendar</button> : <a className="btn sm ink" href={cal?.connectUrl || "#"} target="_blank" rel="noreferrer">Connect Google Calendar</a>} />
-      <Row state={push === "on" ? "on" : push === "off" ? "todo" : "off"} name="Notifications on this device" st={push === "on" ? "On" : push === "off" ? "Off" : push === "blocked" ? "Blocked in your phone's settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}
-        acts={push === "off" ? <button type="button" className="btn sm ink" onClick={onPush}>Turn on</button> : undefined} />
-      <Row state={s.has_cell ? "on" : "todo"} name="Alerts to your cell" st={s.has_cell ? `On file${s.alert_email ? ", and email" : ""}` : "No cell on file"} />
-      <Row state={biz.payLink ? "on" : "todo"} name="Pay link on invoices" st={biz.payLink ? "On file" : "Not added"} acts={<button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button>} />
-      {d.jobber?.available && <Row state={d.jobber.connected ? (d.jobber.error ? "bad" : "on") : "off"} name="Jobber" st={d.jobber.connected ? (d.jobber.error ? `Connected, last push failed: ${d.jobber.error}` : `Connected${d.jobber.account ? `, ${d.jobber.account}` : ""}${d.jobber.lastPush ? `, last estimate sent ${ago(d.jobber.lastPush)}` : ""}`) : "Not connected"}
-        open={open === "jobber"} onToggle={() => setOpen(open === "jobber" ? null : "jobber")}
-        acts={<a className={"btn sm" + (d.jobber.connected ? "" : " ink")} href={d.jobber.connectUrl} target="_blank" rel="noreferrer">{d.jobber.connected ? "Reconnect" : "Connect Jobber"}</a>}>
-        <p>Every estimate Cinder books also lands in Jobber as a request on the customer&rsquo;s record, so your schedule there stays whole. Your past customers come in the other way with Import.</p>
-        <ol><li>Tap Connect Jobber and sign in to Jobber.</li><li>Tap Allow.</li><li>You land back here. The next booked estimate shows up in Jobber within a minute.</li></ol>
-      </Row>}
-      {(d.quickbooks?.available || d.quickbooks?.connected) && <QboRow d={d} open={open === "qbo"} onToggle={() => setOpen(open === "qbo" ? null : "qbo")} api={api} project={project} toast={toast} reload={reload} />}
-      {s.has_webhook === "yes" && <Row state="on" name="Events to your own tools" st="Live, every lead, booking, quote and job posts to your webhook" />}
-    </section>
+    </div>
 
-    <section>
-      <p className="sec">Connection log<small>{w.failures.length ? `${w.failures.length} failed` : "nothing failed"}</small></p>
+    <section className="cx-log">
+      <h2>Connection log<small>{w.failures.length ? w.failures.length + " failed" : "nothing failed"}</small></h2>
       {log.length === 0 ? <p className="fine">Calls, texts, forms and opt-outs show here as they happen.</p> : <table className="tbl flush log"><tbody>
         {shown.map((l, i) => <tr key={i} className={l.bad ? "bad" : ""} onClick={l.thread ? () => go.record(l.thread) : undefined} style={{ cursor: l.thread ? "pointer" : "default" }}>
           <td className="mut nowrap">{ago(l.at)}</td><td className="nowrap"><span className="dot" />{l.what}</td><td className="nowrap">{l.who}</td><td className="mut ell">{l.detail}</td></tr>)}
       </tbody></table>}
       {log.length > 12 && !more && <button type="button" className="link" style={{ padding: "8px 0" }} onClick={() => setMore(true)}>Show all {log.length}</button>}
     </section>
+  </div>;
+}
+
+// ---------- Tools: where things go out (texting, calendar, books, alerts, your own systems) ----------
+function Tools({ d, biz, go, push, onPush, toast, api, project, reload }: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; toast: Toast; api: Api; project: string; reload: () => Promise<void> }) {
+  const s = d.setup ?? {}, a2p = s.a2p_status || "", cal = d.calendar;
+  const [open, setOpen] = useState<string | null>(null), [busy, setBusy] = useState(false);
+  const a2pWord = a2p === "Approved" ? "Registered" : a2p === "Submitted" ? "Registration pending" + (s.a2p_submitted ? ", sent " + s.a2p_submitted : "") : a2p === "Rejected" ? "Registration rejected, Sam is on it" : "Registration not started";
+  return <div className="pad cx-page">
+    <div className="cx-table" role="table" aria-label="Tools">
+      <Row state={d.number ? (a2p === "Rejected" ? "bad" : a2p === "Approved" ? "on" : "todo") : "todo"} name="Texting number" st={d.number ? fmtPhone(d.number) + ", " + a2pWord : "Sam is connecting it"}
+        open={open === "num"} onToggle={() => setOpen(open === "num" ? null : "num")}
+        acts={d.number && s.has_cell ? <button type="button" className="btn sm ghost" disabled={busy} onClick={async () => { setBusy(true); try { await api("/api/app/act", { p: project, action: "testtext" }); toast("Sent. Check your cell."); } catch (e) { toast(e instanceof Error ? e.message : "Didn't send.", true); } finally { setBusy(false); } }}>Text me a test</button> : undefined}>
+        <p>Every text a customer gets comes from this number, in your business&rsquo;s name. Carriers require a one-time registration of the business behind it (A2P 10DLC); until it&rsquo;s approved, texts can be slowed or filtered. Sam files it for you.</p>
+      </Row>
+      <Row state={cal?.connected ? "on" : "todo"} name="Google Calendar" st={cal?.connected ? "Connected, " + (cal.email || "your calendar") : "Not connected"}
+        acts={cal?.connected ? <button type="button" className="btn sm ghost" onClick={() => go.tab("calendar")}>Open calendar</button> : <a className="btn sm ink" href={cal?.connectUrl || "#"} target="_blank" rel="noreferrer">Connect</a>} />
+      {d.jobber?.available && <Row state={d.jobber.connected ? (d.jobber.error ? "bad" : "on") : "off"} name="Jobber" st={d.jobber.connected ? (d.jobber.error ? "Connected, last push failed: " + d.jobber.error : "Connected" + (d.jobber.account ? ", " + d.jobber.account : "") + (d.jobber.lastPush ? ", last estimate sent " + ago(d.jobber.lastPush) : "")) : "Not connected"}
+        open={open === "jobber"} onToggle={() => setOpen(open === "jobber" ? null : "jobber")}
+        acts={<a className={"btn sm" + (d.jobber.connected ? " ghost" : " ink")} href={d.jobber.connectUrl} target="_blank" rel="noreferrer">{d.jobber.connected ? "Reconnect" : "Connect"}</a>}>
+        <p>Every estimate Cinder books also lands in Jobber as a request on the customer&rsquo;s record, so your schedule there stays whole. Your past customers come in the other way with Import.</p>
+      </Row>}
+      {(d.quickbooks?.available || d.quickbooks?.connected) && <QboRow d={d} open={open === "qbo"} onToggle={() => setOpen(open === "qbo" ? null : "qbo")} api={api} project={project} toast={toast} reload={reload} />}
+      <Row state={biz.payLink ? "on" : "todo"} name="Pay link on invoices" st={biz.payLink ? "Connected" : "Not added"} acts={<button type="button" className="btn sm ghost" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button>} />
+      <Row state={push === "on" ? "on" : push === "off" ? "todo" : "off"} name="Notifications on this device" st={push === "on" ? "On" : push === "off" ? "Off" : push === "blocked" ? "Blocked in your phone's settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}
+        acts={push === "off" ? <button type="button" className="btn sm ink" onClick={onPush}>Turn on</button> : undefined} />
+      <Row state={s.has_cell ? "on" : "todo"} name="Alerts to your cell" st={s.has_cell ? "On file" + (s.alert_email ? ", and email" : "") : "No cell on file"} />
+      {s.has_webhook === "yes" && <Row state="on" name="Events to your own tools" st="Connected, every lead, booking, quote and job posts to your webhook" />}
+    </div>
   </div>;
 }
 
@@ -162,9 +199,10 @@ function AgentRow({ d, api, project, toast, reload, open, onToggle }: { d: Data;
     try { await api("/api/app/act", { p: project, action: "setup", setup: { agent_paused: paused ? "yes" : "" } }); toast(paused ? "Paused. New leads still get the first text; every reply comes to you." : "Cinder is answering again."); await reload(); }
     catch (e) { toast(e instanceof Error ? e.message : "Couldn't change it.", true); } finally { setBusy(false); }
   };
-  return <Row state={!d.number ? "todo" : on ? "on" : "off"} name="Speed-to-lead agent" st={!d.number ? "Waiting on your texting number" : on ? `On${sec != null ? `, first reply in ${sec < 60 ? sec + "s" : Math.round(sec / 60) + "m"} this week` : ""}` : "Paused, replies go to you"}
+  const n30 = (d.wires?.sources ?? []).filter(x => x.source !== "import" && x.source !== "owner").reduce((a, x) => a + x.last30, 0);
+  return <Row state={!d.number ? "todo" : on ? "on" : "off"} name="Speed-to-lead agent" n30={n30 ? String(n30) : ""} st={!d.number ? "Waiting on your texting number" : on ? `Connected, replying and booking${sec != null ? `, first reply in ${sec < 60 ? sec + "s" : Math.round(sec / 60) + "m"}` : ""}` : "Paused, replies go to you"}
     open={open} onToggle={onToggle}
-    acts={d.number ? <button type="button" className={"btn sm" + (on ? "" : " ink")} disabled={busy} onClick={() => void set(on)}>{busy ? <Spinner /> : on ? "Pause" : "Turn on"}</button> : undefined}>
+    acts={d.number ? <button type="button" className={"btn sm" + (on ? " ghost" : " ink")} disabled={busy} onClick={() => void set(on)}>{busy ? <Spinner /> : on ? "Pause" : "Turn on"}</button> : undefined}>
     <p>Cinder texts every new lead in seconds, answers their questions in your words, gives a ballpark if you allow it, and books the estimate on your calendar. Anything it can&rsquo;t answer comes to you.</p>
     <p>Paused: new leads still get the first &ldquo;got your message&rdquo; text, so nobody waits. After that every reply comes to you, and no follow-up nudges go out. Use it on a day off or when you&rsquo;d rather talk to everyone yourself.</p>
   </Row>;
@@ -179,10 +217,11 @@ function MailConn({ d, go, toast, api, project, reload, open, onToggle }: { d: D
   const leads = m.recent.filter(r => r.status === "lead" || r.status === "added");
   const lastLead = leads[0]?.at;
   const state: State = !m.address ? "todo" : leads.length || confirm || waiting.length ? "on" : "todo";
-  const st = !m.address ? "Sam is setting it up" : leads.length ? "Live" : confirm ? "Waiting on one click" : "Ready, nothing forwarded yet";
+  const st = !m.address ? "Sam is setting it up" : leads.length ? "Connected" : confirm ? "Waiting on one click" : "Ready, nothing forwarded yet";
   return <>
-    <Row state={state} name="Lead emails" st={st} last={lastLead ? `Last lead ${ago(lastLead)}${waiting.length ? `, ${waiting.length} need a phone` : ""}` : waiting.length ? `${waiting.length} need a phone` : ""}
-      open={open} onToggle={onToggle} acts={m.address ? <Code text={m.address} toast={toast} /> : undefined}>
+    <Row state={state} name="Lead emails" st={waiting.length ? st + ", " + waiting.length + " need a phone" : st} n30={leads.length ? String(leads.length) : ""} last={lastLead ? ago(lastLead) : ""}
+      open={open} onToggle={onToggle} acts={m.address ? <CopyBtn text={m.address} label="Copy email" toast={toast} /> : undefined}>
+      {m.address && <Code text={m.address} toast={toast} />}
       <p>Forward lead emails here: Angi, Thumbtack, Google, Yelp, Houzz, your website form, or a customer writing in. Each one becomes a lead in seconds. Lead sites and website forms get the same instant text a webhook lead gets. A customer who emailed you directly is saved and you&rsquo;re alerted, and Cinder doesn&rsquo;t text them first.</p>
       <ol>
         <li>Best: in each lead site&rsquo;s settings, add this address as a lead notification email, next to yours.</li>
@@ -379,11 +418,11 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
 
 export function SystemScreen(p: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; toast: Toast; api: Api; project: string; reload: () => Promise<void>; demo: boolean; onSignOut: () => void; view?: View }) {
   const [view, setView] = useState<View>(p.view ?? "connections");
-  const sub = view === "connections" ? "Where leads come from, where they go, and what happened." : view === "agent" ? "What Cinder says and does, in your words." : "The business, your team and this device.";
+  const sub = view === "connections" ? "Every place leads come from, and whether it's working." : view === "tools" ? "Where things go out: your texting number, calendar, books and alerts." : view === "agent" ? "What Cinder says and does, in your words." : "The business, your team and this device.";
   return <>
     <PageHead title="Settings" sub={sub}
-      actions={<div className="seg" role="tablist">{(["connections", "agent", "account"] as View[]).map(v => <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? "on" : ""} onClick={() => setView(v)}>{v === "connections" ? "Connections" : v === "agent" ? "Agent" : "Account"}</button>)}</div>} />
-    <div className="set-body">{view === "connections" ? <Connections {...p} /> : view === "agent" ? <Agent {...p} /> : <Account {...p} />}</div>
+      actions={<div className="seg" role="tablist">{(["connections", "tools", "agent", "account"] as View[]).map(v => <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? "on" : ""} onClick={() => setView(v)}>{v === "connections" ? "Connections" : v === "tools" ? "Tools" : v === "agent" ? "Agent" : "Account"}</button>)}</div>} />
+    <div className="set-body">{view === "connections" ? <Connections {...p} /> : view === "tools" ? <Tools {...p} /> : view === "agent" ? <Agent {...p} /> : <Account {...p} />}</div>
   </>;
 }
 
