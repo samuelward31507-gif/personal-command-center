@@ -1,4 +1,5 @@
 "use client";
+import { Logo } from "../../ui/logo";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { DEAL_STAGES, STAGE_LABELS, STAGE_PROBABILITY, weightedPipeline, type DealStage } from "@/lib/offers";
@@ -64,7 +65,7 @@ export default function PipelinePage(){
  const late=(d:Deal)=>!!d.expectedCloseDate&&d.expectedCloseDate<new Date().toISOString().slice(0,10)&&!["won","lost"].includes(d.stage);
  const listRows=filter==="open"?deals.filter(d=>!["won","lost","nurture"].includes(d.stage)):deals.filter(d=>d.stage===filter);
  const card=(d:Deal)=><div key={d.id} className={"pb-deal"+(dragging===d.id?" is-drag":"")} draggable onDragStart={e=>{setDragging(d.id);e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain",d.id)}} onDragEnd={()=>{setDragging(null);setOver(null)}}>
-  <Link className="pb-deal-co" href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link>
+  <div className="pb-deal-top"><Logo name={d.company||d.contactName||d.title} size={24} /><Link className="pb-deal-co" href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link></div>
   <span className="pb-deal-sub">{svc(d.serviceType)}</span>
   <div className="pb-deal-money"><b className="u-num">{money(d.monthlyFee)}</b><span>/mo</span><span className="pb-deal-setup">+ {money(d.setupFee)} setup</span></div>
   {(d.expectedCloseDate||d.probability!=null)&&<div className="pb-deal-meta">{d.expectedCloseDate&&<span className={late(d)?"is-late":""}>{late(d)?"Was due ":"Close "}{closeLabel(d)}</span>}<span>{Math.round(d.probability!=null?d.probability:(STAGE_PROBABILITY[d.stage]??0)*100)}%</span></div>}
@@ -103,7 +104,7 @@ export default function PipelinePage(){
    <div className="u-h2-row"><div className="u-seg" role="group" aria-label="Which deals">{([["open","Open"],["won","Won"],["lost","Lost"],["nurture","Nurture"]] as const).map(([k,l])=><button key={k} type="button" aria-pressed={filter===k} onClick={()=>setFilter(k)}>{l} <span className="u-quiet">{k==="open"?active.filter(d=>d.stage!=="nurture").length:deals.filter(d=>d.stage===k).length}</span></button>)}</div></div>
    {listRows.length===0?<p className="u-note">Nothing here.</p>:<div className="u-tablewrap"><table className="u-table"><thead><tr><th>Business</th><th>Stage</th><th>Service</th><th>Close</th><th className="is-num">Monthly</th><th className="is-num">Setup</th><th/></tr></thead><tbody>
     {listRows.map(d=><tr key={d.id}>
-     <td className="is-strong"><Link href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link></td>
+     <td className="is-strong"><span className="pb-who"><Logo name={d.company||d.contactName||d.title} size={24} /><Link href={"/crm/deals/"+d.id}>{d.company||d.contactName||d.title}</Link></span></td>
      <td><select className="u-field pb-stage" aria-label={"Stage for "+d.title} value={d.stage} onChange={e=>void quickStage(d,e.target.value as Stage)}>{stages.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></td>
      <td>{svc(d.serviceType)}</td>
      <td className={late(d)?"pb-late":""}>{closeLabel(d)||"—"}</td>

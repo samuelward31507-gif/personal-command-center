@@ -1,4 +1,6 @@
 "use client";
+import { Logo, Pill, toneForStatus } from "../ui/logo";
+import { ThIcon } from "../ui/th-icons";
 import ContactDeals from "./contact-deals";
 import ProspectReportCard from "./prospect-report-card";
 import Link from "next/link";
@@ -92,12 +94,12 @@ export default function ContactsPage(){
   :!contacts.length?<div className="u-void"><h2>No contacts yet</h2><p>Import a list of prospects or add the first one by hand. Everyone you add shows up in Call mode.</p><div style={{display:"flex",gap:8}}><button className="u-btn u-btn-light" onClick={()=>setShowImport(true)}>Import a list</button><button className="u-btn" onClick={add}>Add contact</button></div></div>
   :!rows.length?<div className="u-void"><h2>{filter==="Not called today"&&!query?"Everyone's been called today":"Nothing matches"}</h2><p>{query?"Try another search.":"Switch the view above to see more people."}</p></div>
   :<div className="u-tablewrap"><table className="u-table ct-table">
-   <thead><tr><th>Business</th><th>Phone</th><th>Location</th><th>Status</th><th>Last touch</th><th>Follow-up</th><th/></tr></thead>
+   <thead><tr><th><ThIcon name="company" />Business</th><th><ThIcon name="phone" />Phone</th><th><ThIcon name="pin" />Location</th><th><ThIcon name="status" />Status</th><th><ThIcon name="clock" />Last touch</th><th><ThIcon name="calendar" />Follow-up</th><th/></tr></thead>
    <tbody>{rows.map(c=>{const isDue=!!c.nextFollowUp&&c.nextFollowUp<=today();return <tr key={c.id} className={"is-link"+(selected===c.id&&sheet?" is-on":"")} onClick={()=>open(c)} tabIndex={0} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();open(c)}}}>
-    <td><div className="ct-who-row"><span className="u-av" data-tone={((c.company||c.name||"?").charCodeAt(0)+(c.company||c.name||"?").length)%6} aria-hidden="true">{(c.company||c.name||"?").replace(/[^A-Za-z0-9 ]/g,"").split(" ").filter(Boolean).slice(0,2).map((w:string)=>w[0]).join("").toUpperCase()||"?"}</span><div className="ct-who"><strong>{c.company||c.name}</strong><span>{c.company?[c.name,c.role].filter(Boolean).join(", "):c.role||""}</span></div></div></td>
+    <td><div className="ct-who-row"><Logo name={c.company||c.name} website={c.website} size={30} /><div className="ct-who"><strong>{c.company||c.name}</strong><span>{c.company?[c.name,c.role].filter(Boolean).join(", "):c.role||""}</span></div></div></td>
     <td className="u-num ct-phone">{c.phone||<span className="u-quiet">No phone</span>}</td>
     <td>{c.location||<span className="u-quiet">—</span>}</td>
-    <td><span className={"u-mark"+(c.status==="Customer"?" is-good":"")}>{c.status}</span></td>
+    <td><Pill tone={toneForStatus(c.status)}>{c.status}</Pill></td>
     <td>{touchedToday(c)?<span style={{color:"var(--u-text)"}}>Today, {outcomeText(c.lastTouchOutcome).toLowerCase()}</span>:c.lastTouchAt?<>{dateLabel(localDay(c.lastTouchAt)).replace(/, \d{4}$/,"")}, {outcomeText(c.lastTouchOutcome).toLowerCase()}</>:<span className="u-quiet">Never</span>}</td>
     <td>{c.nextFollowUp?<span style={isDue?{color:"var(--u-text)"}:undefined}>{isDue&&<i className="u-dot is-ember" style={{display:"inline-block",marginRight:7,verticalAlign:"middle"}}/>}{dateLabel(c.nextFollowUp).replace(/, \d{4}$/,"")}</span>:<span className="u-quiet">—</span>}</td>
     <td style={{textAlign:"right"}}>{c.phone&&<button type="button" className="u-btn u-btn-bare" onClick={e=>{e.stopPropagation();callContact(c)}}>Call</button>}</td>
@@ -116,7 +118,7 @@ export default function ContactsPage(){
      </div>
     </div>
     <h2 className="ct-name">{current.company||current.name}</h2>
-    <p className="ct-sub">{[current.company?current.name:"",current.role].filter(Boolean).join(", ")||"No role on file"}<span className={"u-mark"+(current.status==="Customer"?" is-good":"")} style={{marginLeft:10}}>{current.status}</span>{current.source&&<span className="u-quiet" style={{marginLeft:10}}>from {current.source}</span>}</p>
+    <p className="ct-sub">{[current.company?current.name:"",current.role].filter(Boolean).join(", ")||"No role on file"}<span style={{marginLeft:10}}><Pill tone={toneForStatus(current.status)}>{current.status}</Pill></span>{current.source&&<span className="u-quiet" style={{marginLeft:10}}>from {current.source}</span>}</p>
     <div className="ct-actions">
      {current.phone&&<button type="button" className="u-btn u-btn-light" onClick={()=>callContact(current)}>Call {current.phone}</button>}
      {current.email&&<a className="u-btn" href={"mailto:"+current.email}>Email</a>}
