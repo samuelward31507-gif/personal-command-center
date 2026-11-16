@@ -70,7 +70,7 @@ ok(() => assert.equal(parseScore('noise {"score": 140, "verdict": "ok", "wins": 
 ok(() => assert.equal(parseScore("no json"), null));
 ok(() => assert.equal(parseScore('```json\n{"score": 62, "verdict": "v", "wins": ["a",], "fixes": [], "betterLine": "b",}\n```').score, 62));
 ok(() => assert.equal(cleanOwnerLine("*Sound of a truck idling.* Yeah, this is Mike."), "Yeah, this is Mike."));
-ok(() => assert.match(ownerPrompt("pool_skeptic", { company: "Cinder", repName: "Sam" }).system, /Never say you're an AI/));
+ok(() => assert.match(ownerPrompt("generator", { company: "Cinder", repName: "Sam" }).system, /Never say you're an AI/));
 ok(() => assert.match(read("app/api/practice/route.ts"), /aiAllowed\(user\.id\)/));
 
 console.log(`integrity: ${n} checks passed`);

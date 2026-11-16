@@ -53,7 +53,7 @@ export default function PracticePage() {
       <div className="pr-label">Who's picking up</div>
       <div className="pr-personas">{(Object.keys(PERSONAS) as Persona[]).map(k =>
         <button key={k} type="button" style={NB} className={"pr-persona" + (persona === k ? " is-on" : "")} aria-pressed={persona === k} onClick={() => setPersona(k)}>
-          <b>{PERSONAS[k].label}</b><span>{PERSONAS[k].brief}</span>
+          <b>{PERSONAS[k].label}</b><span>{PERSONAS[k].card}</span>
         </button>)}</div>
       <button type="button" data-variant="primary" className="pr-start" disabled={!!busy} onClick={start}>{busy === "reply" ? "Dialing…" : card ? "Call again" : "Start the call"}</button>
     </section>}
