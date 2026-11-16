@@ -12,6 +12,7 @@ import { winbackDraft } from "@/lib/crm";
 import { loadPlans, loadTime, loadVisits } from "@/lib/client-service-run";
 import { qboConfigured, qboState } from "@/lib/qbo";
 import { eveningFor } from "@/lib/client-evening";
+import { leadMailAddressFor, loadMail } from "@/lib/client-lead-mail-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,6 +71,7 @@ export async function GET(req: Request) {
       loadTime(sql, c, s.role === "crew" ? crewMe : null).catch(e => { console.error("Time failed", e instanceof Error ? e.message : e); return []; }),
       sql`SELECT company_name, last_error, last_push_at FROM public.client_qbo WHERE project_id = ${c.projectId}::uuid`.catch(() => []),
     ]);
+    const mailRows = s.role === "crew" ? [] : await loadMail(sql, c).catch(() => []);
     const evening = s.role === "crew" ? undefined : await eveningFor(sql, c.projectId, c.setup.timezone || "America/Denver").catch(() => undefined);
     // Their real calendar, read only on the Calendar tab (it's a Google call).
     let events: CalEvent[] = [], calError = "";
@@ -96,6 +98,7 @@ export async function GET(req: Request) {
       setup: crew ? { display_name: c.setup.display_name || "", owner_name: c.setup.owner_name || "", trade: c.setup.trade || "", checklists: c.setup.checklists || "", crew_prices: c.setup.crew_prices || "", brand_color: c.setup.brand_color || "", brand_logo: c.setup.brand_logo || "" } : { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "", team: c.setup.team || "[]", monthly_report: c.setup.monthly_report || "" },
       customers: crew ? [] : customers, invoices: crew ? [] : invoices, payments: crew ? [] : payments,
       key: String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? ""), origin, wires,
+      mail: crew ? undefined : { address: leadMailAddressFor(String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? "")), recent: mailRows },
       jobber: (() => { const j = (jobberRow as { account_name?: string; last_error?: string; last_push_at?: unknown; connected_at?: unknown }[])[0];
         return { available: jobberConfigured(), connected: !!j, account: String(j?.account_name ?? ""), error: String(j?.last_error ?? ""), lastPush: j?.last_push_at ? new Date(String(j.last_push_at)).toISOString() : null,
           connectUrl: jobberConfigured() ? `${origin}/api/client-jobber?state=${encodeURIComponent(jobberState(c.projectId))}` : "" }; })(),

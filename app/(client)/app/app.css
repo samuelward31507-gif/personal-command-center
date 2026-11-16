@@ -1248,3 +1248,12 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
   .ph { position: static; gap: 8px; } .ph-a .find { display: none; } .ph-a { width: auto; margin-left: auto; }
   .guide { grid-template-columns: minmax(0, 1fr) !important; } .guide-side { display: none !important; }
 }
+
+/* Leads by email: the forwarding confirmation, and emails that came without a phone. Inside Leads in, under its row. */
+.mail-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 8px 18px; padding: 10px 12px; border-radius: 8px; background: var(--ember-bg); box-shadow: 0 0 0 1px var(--hair-2); font-size: 13px; }
+.mail-note > svg { color: var(--ember); flex: none; } .mail-note > div { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px; }
+.mail-note b { font-weight: 600; } .mail-note span { color: var(--g1); font-size: 12.5px; } .mail-note code { font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: #fff; padding: 1px 5px; border-radius: 4px; box-shadow: 0 0 0 1px var(--hair-2); }
+.mail-wait { margin: 0 0 8px 18px; padding: 10px 12px; border-radius: 8px; box-shadow: 0 0 0 1px var(--hair-2); background: #fff; display: flex; flex-direction: column; gap: 6px; }
+.mail-wait .mw-t { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; } .mail-wait .mw-t b { font-weight: 600; font-size: 13.5px; } .mail-wait .mw-t span { color: var(--g2); font-size: 12.5px; }
+.mail-wait p { margin: 0; font-size: 13px; color: var(--ink2); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.mail-wait .mw-a { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; } .mail-wait .mw-a .input { width: 150px; }
