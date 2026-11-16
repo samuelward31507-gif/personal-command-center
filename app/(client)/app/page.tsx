@@ -336,7 +336,7 @@ export default function CinderApp() {
     {sheet === "import" && <ImportSheet project={project} api={api} toast={toast} reload={reload} customers={d.customers ?? []} business={bizName} onClose={() => setSheet(null)} />}
     {sheet === "pricelist" && <PriceListSheet items={catalog.items} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "billing" && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
-    {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
+    {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} tags={[...new Set((d.board ?? []).flatMap(c => c.tags ?? []))].sort()} />}
     {invNow && <InvoiceSheet key={invNow.id + invNow.status + (invNow.paid_amount ?? 0)} inv={invNow} payments={d.payments} customer={invNow.customer || fmtPhone(invNow.phone)} email={(d.board ?? []).find(b => b.id === invNow.thread_id)?.email} emailReady={d.emailReady} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
     {toastNode}
   </div></CatalogContext.Provider>;

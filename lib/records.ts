@@ -52,3 +52,12 @@ export function taskOrder<T extends { due_on: string | null; done_at: string | n
   const rank = (t: T) => (!t.due_on ? 3 : t.due_on < today ? 0 : t.due_on === today ? 1 : 2);
   return list.filter(t => !t.done_at).sort((a, b) => rank(a) - rank(b) || (a.due_on ?? "").localeCompare(b.due_on ?? "") || a.created_at.localeCompare(b.created_at));
 }
+
+// ---------- Tags ----------
+/** Tags as the owner types them: trimmed, lowercased, letters, numbers, spaces and dashes, 30 characters, 12 at most, no repeats. */
+export function cleanTags(v: unknown): string[] {
+  const list = Array.isArray(v) ? v : typeof v === "string" ? v.split(",") : [];
+  const out: string[] = [];
+  for (const x of list) { const t = String(x ?? "").toLowerCase().replace(/[^a-z0-9 -]/g, " ").replace(/\s+/g, " ").trim().slice(0, 30); if (t && !out.includes(t)) out.push(t); if (out.length >= 12) break; }
+  return out;
+}

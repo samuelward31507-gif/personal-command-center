@@ -107,25 +107,27 @@ export function ImportSheet({ project, api, toast, reload, onClose, customers, b
   </Sheet>;
 }
 
-export function WinbackSheet({ w, biz, project, api, toast, reload, onClose }: { w: Winback; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onClose: () => void }) {
+export function WinbackSheet({ w, biz, project, api, toast, reload, onClose, tags = [] }: { w: Winback; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onClose: () => void; tags?: string[] }) {
+  const [tag, setTag] = useState("");
   const [body, setBody] = useState(w.draft), [busy, setBusy] = useState(false), [arm, setArm] = useArm(), [err, setErr] = useState("");
   const sample = w.names[0] || "Dana";
   const preview = body.replace(/\s*\{first\}(?=[,!.?])/g, " " + sample).replace(/\{first\}/g, sample).replace(/\{business\}/g, biz.business).replace(/\{owner\}/g, biz.owner);
-  const many = w.eligible === 1 ? "1 customer" : `${w.eligible} customers`;
+  const many = tag ? `everyone tagged "${tag}" who opted in` : w.eligible === 1 ? "1 customer" : `${w.eligible} customers`;
   const send = async () => {
     if (arm !== "go") { setArm("go"); return; }
     setBusy(true); setErr("");
-    try { const r = await api<{ sent: number; left: number }>("/api/app/act", { p: project, action: "winback", body }); toast(`Sent to ${r.sent} ${r.sent === 1 ? "customer" : "customers"}.${r.left ? ` ${r.left} more tomorrow.` : ""}`); await reload(); onClose(); }
+    try { const r = await api<{ sent: number; left: number }>("/api/app/act", { p: project, action: "winback", body, tag: tag || undefined }); toast(`Sent to ${r.sent} ${r.sent === 1 ? "customer" : "customers"}.${r.left ? ` ${r.left} more tomorrow.` : ""}`); await reload(); onClose(); }
     catch (e) { setErr(e instanceof Error ? e.message : "Didn't send."); } finally { setBusy(false); setArm(""); }
   };
-  return <Sheet onClose={onClose} title="Text past customers" sub="Won jobs, 30+ days old, who opted in to offers"
-    foot={w.eligible > 0 ? <button type="button" className="btn ink" disabled={busy || body.trim().length < 20} onClick={() => void send()}>{busy ? <Spinner /> : arm === "go" ? `Tap again to text ${many}` : `Send to ${many}`}</button> : undefined}>
-    <div className="wb-count">
+  return <Sheet onClose={onClose} title={tag ? `Text everyone tagged "${tag}"` : "Text past customers"} sub={tag ? "Who opted in to offers" : "Won jobs, 30+ days old, who opted in to offers"}
+    foot={w.eligible > 0 || tag ? <button type="button" className="btn ink" disabled={busy || body.trim().length < 20} onClick={() => void send()}>{busy ? <Spinner /> : arm === "go" ? `Tap again to text ${many}` : `Send to ${many}`}</button> : undefined}>
+    {tags.length > 0 && <label className="field"><span>Who</span><select value={tag} onChange={e => { setTag(e.target.value); setArm(""); setErr(""); }}><option value="">Past customers</option>{tags.map(t => <option key={t} value={t}>Tagged &ldquo;{t}&rdquo;</option>)}</select></label>}
+    {!tag && <div className="wb-count">
       <div><b>{w.past}</b><span>past {w.past === 1 ? "customer" : "customers"}</span></div>
       <div className="on"><b>{w.eligible}</b><span>can get this text</span></div>
-    </div>
+    </div>}
     <p className="fine">Only customers who opted in to offers on your form or on import. Max one text every 90 days.</p>
-    {w.eligible > 0 ? <>
+    {w.eligible > 0 || tag ? <>
       <label className="field"><span>Your text <em>{body.length}/320, {"{first}"} is their first name</em></span><textarea rows={4} value={body} maxLength={320} onChange={e => { setBody(e.target.value); setErr(""); setArm(""); }} /></label>
       <div><p className="sec">{sample}&rsquo;s phone</p><span className="bubble out" style={{ fontSize: 13.5 }}>{preview}{"\n\n"}Reply STOP to opt out.</span></div>
       {err && <p className="err" role="alert">{err}</p>}

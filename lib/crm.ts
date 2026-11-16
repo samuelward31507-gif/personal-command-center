@@ -262,6 +262,8 @@ ${bp ? `- Ballpark from the owner's own prices for ${bp.basis}: ${rangeText(bp)}
 
 // ---------- The board's card (shared by the server, the app and the example business) ----------
 export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
+  /** The owner's tags, and the customer who referred them. */
+  tags?: string[]; referredBy?: string | null;
   ballpark: { low: number; high: number } | null; notes: string; next: string | null; at: string;
   quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
     items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax: number; deposit?: number | null;

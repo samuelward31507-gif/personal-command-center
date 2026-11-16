@@ -21,4 +21,7 @@ ok(() => { const list = [
   { id: "later", due_on: "2026-11-30", done_at: null, created_at: "1" }, { id: "none", due_on: null, done_at: null, created_at: "0" }, { id: "late", due_on: "2026-11-10", done_at: null, created_at: "3" },
   { id: "today", due_on: today, done_at: null, created_at: "2" }, { id: "done", due_on: "2026-11-01", done_at: "x", created_at: "0" }];
   assert.deepEqual(R.taskOrder(list, today).map(t => t.id), ["late", "today", "later", "none"]); });
+ok(() => assert.deepEqual(R.cleanTags([" Commercial ", "HOA", "hoa", "2025 Storm!!", ""]), ["commercial", "hoa", "2025 storm"]));
+ok(() => assert.deepEqual(R.cleanTags("vip, repeat ,vip"), ["vip", "repeat"]));
+ok(() => assert.equal(R.cleanTags(Array.from({ length: 20 }, (_, i) => "t" + i)).length, 12));
 console.log(`records: ${n} checks passed`);

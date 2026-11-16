@@ -7,7 +7,7 @@ import { cleanImportRows, importAs } from "@/lib/customer-import";
 import { demoSwitch } from "./demo-switch";
 import { sourceLabel, type LeadMail } from "./types";
 import { cleanExpense, mileageRate, type Expense } from "@/lib/expenses";
-import { cleanEquipment, cleanFile, cleanTask, type Equipment, type Task } from "@/lib/records";
+import { cleanEquipment, cleanFile, cleanTags, cleanTask, type Equipment, type Task } from "@/lib/records";
 import type { FileRow } from "@/lib/client-records-run";
 import { nextChaseDay } from "@/lib/client-runtime";
 import { cleanLogo, hexOk, readableAccent } from "@/lib/brand";
@@ -67,9 +67,9 @@ function seed() {
     l2: { thread: { id: "l2", customer_name: "Ashley Kim", customer_phone: "+13035550141", source: "thumbtack", status: "closed" }, texts: [
       tx("in", "system", "Passed on the quote online: \u201cWent with a cheaper bid\u201d", 60 * 24 * 7)] },
   };
-  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null; crewMember?: string; reviewAfter?: string | null; properties?: { id: string; address: string; gate_code: string; notes: string }[]; checklist?: { name: string; items: { label: string; done: boolean; at?: string; by?: string }[] } | null }> = {
+  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null; crewMember?: string; reviewAfter?: string | null; properties?: { id: string; address: string; gate_code: string; notes: string }[]; checklist?: { name: string; items: { label: string; done: boolean; at?: string; by?: string }[] } | null; tags?: string[]; referredBy?: string | null }> = {
     t1: { details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" }, notes: "Asked about financing. Call him.", email: "tom.becker@example.com", remind: { at: ago(30), note: "Call Tom back about financing", sent: false } },
-    t2: { details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No", address: "77 Aspen Ct, Englewood" }, notes: "Replacing chain link.", crewMember: "+17205550188", crew: "Side gate is unlocked. Measure the back line from the shed." },
+    t2: { tags: ["hoa"], details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No", address: "77 Aspen Ct, Englewood" }, notes: "Replacing chain link.", crewMember: "+17205550188", crew: "Side gate is unlocked. Measure the back line from the shed." },
     t3: { details: { material: "Vinyl" }, notes: "" },
     t4: { details: { length_ft: 120, material: "Horizontal cedar", gates: 2, hoa: "Yes" }, notes: "HOA needs drawings before install.", value: 6200 },
     t5: { details: {}, notes: "Went with someone else." },
@@ -282,7 +282,7 @@ function board(all = false): Card[] {
         views: q.id === "q1" ? 3 : q.viewed ? 1 : 0, lastViewed: q.viewed, chasePaused: false, nextChase: q.status === "open" ? nextChaseDay(q.sent_on, q.steps_sent) : null } : null,
       next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, installTime: c.installTime ?? null, installDays: c.installDays ?? 1, onCalendar: !!c.onCalendar,
       reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, job: { ...(c.job ?? {}) }, costs: { materials: 0, labor: 0, other: 0, ...(c.costs ?? {}) }, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void" && !(i as { plan_id?: string }).plan_id).at(-1) ?? null,
-      stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crewMember: c.crewMember ?? "", crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [],
+      stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crewMember: c.crewMember ?? "", tags: c.tags ?? [], referredBy: c.referredBy ?? null, crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [],
       changeOrders: s.cos.filter(x => x.thread_id === thread.id && x.status !== "void").map(x => ({ ...x, url: x.url ? EXAMPLE_CO : null })), reviewAfter: c.reviewSent ? null : c.reviewAfter ?? null, signoff: s.signoffs[thread.id] ?? null, properties: c.properties ?? [], checklist: c.checklist ?? null };
   }).sort((a, b) => b.at.localeCompare(a.at));
 }
@@ -464,6 +464,8 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
         if (b.value !== undefined) c.value = money(b.value);
         if (b.install !== undefined) c.install = cleanDate(b.install);
         if (b.review !== undefined) c.reviewAuto = !!b.review;
+        if (b.tags !== undefined) c.tags = cleanTags(b.tags);
+        if (b.referredBy !== undefined) c.referredBy = typeof b.referredBy === "string" && b.referredBy ? b.referredBy : null;
         return { ok: true };
       }
       const stage = String(b.stage);

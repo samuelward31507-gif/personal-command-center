@@ -173,28 +173,31 @@ export async function reviewNow(sql: Sql, c: Client, threadId: string): Promise<
  * Past customers: won jobs at least a month old. Only those who agreed to offers (the box on the website form) can get a
  * win-back text; everyone else only ever hears about their own job. Each customer gets one at most every 90 days.
  */
-export async function winbackAudience(sql: Sql, c: Client): Promise<{ past: number; eligible: { id: string; name: string; phone: string }[] }> {
+export async function winbackAudience(sql: Sql, c: Client, tag?: string): Promise<{ past: number; eligible: { id: string; name: string; phone: string }[] }> {
+  const tg = String(tag ?? "").trim().toLowerCase().slice(0, 30);
   const rows = await sql`SELECT t.id, t.customer_name, t.customer_phone,
       EXISTS (SELECT 1 FROM public.client_consent k WHERE k.project_id = t.project_id AND k.evidence ILIKE '%opted in to promo texts%'
         AND right(regexp_replace(k.phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)) AS agreed,
       (t.winback_at IS NOT NULL AND t.winback_at > now() - interval '90 days') AS recent
     FROM public.client_threads t
     WHERE t.project_id = ${c.projectId}::uuid AND t.status <> 'opted_out'
-      AND (t.stage = 'won' OR (t.stage IS NULL AND EXISTS (SELECT 1 FROM public.client_quotes q WHERE q.project_id = t.project_id AND q.status = 'won'
-        AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10))))
-      AND coalesce(t.stage_at, t.updated_at) < now() - interval '30 days'
+      AND t.hidden_at IS NULL AND t.customer_phone NOT LIKE 'nophone:%'
+      AND (CASE WHEN ${tg} <> '' THEN ${tg} = ANY(t.tags) ELSE
+        (t.stage = 'won' OR (t.stage IS NULL AND EXISTS (SELECT 1 FROM public.client_quotes q WHERE q.project_id = t.project_id AND q.status = 'won'
+          AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10))))
+        AND coalesce(t.stage_at, t.updated_at) < now() - interval '30 days' END)
     ORDER BY t.customer_name LIMIT 2000` as { id: string; customer_name: string; customer_phone: string; agreed: boolean; recent: boolean }[];
   return { past: rows.length, eligible: rows.filter(r => r.agreed && !r.recent).map(r => ({ id: r.id, name: r.customer_name, phone: r.customer_phone })) };
 }
 
 /** Send the owner's win-back text to every eligible past customer. Replies go to Cinder, like any lead. */
-export async function sendWinback(sql: Sql, c: Client, body: unknown, limit = 150): Promise<{ ok: boolean; sent?: number; left?: number; error?: string }> {
+export async function sendWinback(sql: Sql, c: Client, body: unknown, limit = 150, tag?: string): Promise<{ ok: boolean; sent?: number; left?: number; error?: string }> {
   const clean = cleanWinback(body, c.setup.display_name || "");
   if (!clean.ok) return { ok: false, error: clean.error };
   if (!c.setup.texting_number) return { ok: false, error: "Your texting number isn't connected yet." };
   if (!inTextingHours(tz(c))) return { ok: false, error: "It's outside texting hours (8 AM to 8 PM). Send it in the morning." };
-  const { eligible } = await winbackAudience(sql, c);
-  if (!eligible.length) return { ok: false, error: "No past customers can get this text right now." };
+  const { eligible } = await winbackAudience(sql, c, tag);
+  if (!eligible.length) return { ok: false, error: tag ? `Nobody tagged "${tag}" can get this text right now (they need to have agreed to offers, and not been texted in 90 days).` : "No past customers can get this text right now." };
   let sent = 0;
   for (const r of eligible.slice(0, limit)) {
     // Claim first, so a double tap never texts anyone twice.

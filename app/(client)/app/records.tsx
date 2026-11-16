@@ -101,3 +101,23 @@ export function TasksSection({ ctx, go }: { ctx: Ctx; go: Go }) {
       </div>; })}</div>}
   </section>;
 }
+
+// ---------- Tags and referrals, on the customer ----------
+export function TagsRow({ ctx, card, act }: { ctx: Ctx; card: { id: string; tags?: string[]; referredBy?: string | null }; act: (key: string, body: Record<string, unknown>, done: string) => Promise<unknown> }) {
+  const [adding, setAdding] = useState(false), [v, setV] = useState("");
+  const tags = card.tags ?? [];
+  const all = useMemo(() => [...new Set((ctx.d.board ?? []).flatMap(c => c.tags ?? []))].filter(t => !tags.includes(t)).sort(), [ctx.d.board, tags]);
+  const people = useMemo(() => (ctx.d.board ?? []).filter(c => c.id !== card.id).map(c => ({ id: c.id, name: c.name })).sort((a, b) => a.name.localeCompare(b.name)), [ctx.d.board, card.id]);
+  const referrer = people.find(p => p.id === card.referredBy);
+  const referred = (ctx.d.board ?? []).filter(c => c.referredBy === card.id);
+  const save = (next: string[]) => void act("tags", { action: "card", tags: next }, "Tags saved.");
+  return <section className="card"><div className="hd"><h2>Tags and referrals</h2></div>
+    <div className="tag-row">{tags.map(t => <span key={t} className="tagx">{t}<button type="button" aria-label={`Remove ${t}`} onClick={() => save(tags.filter(x => x !== t))}>×</button></span>)}
+      {adding ? <form onSubmit={e => { e.preventDefault(); const t = v.trim().toLowerCase(); if (t) save([...tags, t]); setV(""); setAdding(false); }}><input className="input sm" list="tag-list" autoFocus value={v} onChange={e => setV(e.target.value)} onBlur={() => { if (!v.trim()) setAdding(false); }} placeholder="commercial" style={{ width: 140 }} /><datalist id="tag-list">{all.map(t => <option key={t} value={t} />)}</datalist></form>
+        : <button type="button" className="btn ghost sm" onClick={() => setAdding(true)}>+ Tag</button>}</div>
+    <div className="money"><span>Referred by</span><select className="input sm" style={{ width: 200 }} value={card.referredBy ?? ""} onChange={e => void act("ref", { action: "card", referredBy: e.target.value || null }, e.target.value ? "Referral saved." : "Referral removed.")}>
+      <option value="">Nobody</option>{people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+    {referrer && <p className="fine">Thank {referrer.name.split(" ")[0]} when this one closes.</p>}
+    {referred.length > 0 && <p className="fine">Referred {referred.length}: {referred.slice(0, 4).map(c => c.name).join(", ")}{referred.length > 4 ? " and more" : ""}.</p>}
+  </section>;
+}

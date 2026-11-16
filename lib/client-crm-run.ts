@@ -5,6 +5,7 @@ import { AGENT_KEYS, parseTeam, ballpark, cleanDetails, cleanEmail, cleanOwnerSe
 import { digits10 } from "@/lib/client-runtime";
 import { cleanImportRows, importAs, type ImportAs } from "@/lib/customer-import";
 import { emitEvent } from "@/lib/client-webhook";
+import { cleanTags } from "@/lib/records";
 import { quoteUrl, type Client } from "@/lib/client-runtime-run";
 import { invoicesByThread } from "@/lib/client-billing-run";
 import { nextChaseDay, quoteDaysFor } from "@/lib/client-runtime";
@@ -30,7 +31,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       t.install_time, t.install_days, t.install_event_id IS NOT NULL AS on_calendar, q.viewed_at AS quote_viewed, q.note AS quote_note, q.view_count AS quote_views, q.last_viewed_at AS quote_last_viewed, q.chase_paused AS quote_chase_paused, q.sent_on::text AS quote_sent_on, a.starts_at AS next_appt,
       t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent, t.job_steps, t.job_costs,
       (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied,
-      t.stage_at, lr.body AS lost_note, t.crew_notes, t.crew_member, q.deposit::float AS quote_deposit, t.customer_email, t.remind_at, t.remind_note, t.remind_sent_at, t.review_after, t.checklist
+      t.stage_at, lr.body AS lost_note, t.crew_notes, t.crew_member, q.deposit::float AS quote_deposit, t.customer_email, t.remind_at, t.remind_note, t.remind_sent_at, t.review_after, t.checklist, t.tags, t.referred_by
     FROM public.client_threads t
     LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate, view_count, last_viewed_at, chase_paused, sent_on FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
       AND right(regexp_replace(x.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
@@ -67,7 +68,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       invoice: invoices[String(r.id)] ?? null, reviewAuto: !!r.review_auto, reviewSent: r.review_sent ? new Date(String(r.review_sent)).toISOString() : null, pastCustomer: again,
       job: again ? {} : cleanJob(r.job_steps), costs: again ? cleanCosts({}) : cleanCosts(r.job_costs),
       stageAt: r.stage_at ? new Date(String(r.stage_at)).toISOString() : null, crew: String(r.crew_notes ?? ""), email: String(r.customer_email ?? ""),
-      photos: photos[String(r.id)] ?? [], crewMember: String(r.crew_member ?? ""), changeOrders: again ? [] : cos[String(r.id)] ?? [],
+      photos: photos[String(r.id)] ?? [], crewMember: String(r.crew_member ?? ""), tags: Array.isArray(r.tags) ? (r.tags as string[]) : [], referredBy: r.referred_by ? String(r.referred_by) : null, changeOrders: again ? [] : cos[String(r.id)] ?? [],
       reviewAfter: r.review_after && !r.review_sent ? new Date(String(r.review_after)).toISOString() : null, signoff: signoffs[String(r.id)] ?? null, properties: props[String(r.id)] ?? [], checklist: r.checklist && typeof r.checklist === "object" ? r.checklist as Card["checklist"] : null,
       remind: r.remind_at ? { at: new Date(String(r.remind_at)).toISOString(), note: String(r.remind_note ?? ""), sent: !!r.remind_sent_at } : null,
       lostReason: typeof r.lost_note === "string" ? (r.lost_note.match(/^Marked lost: (.+?)\. Follow-ups stopped\.$/)?.[1] ?? "") : "",
@@ -132,7 +133,7 @@ export async function moveStage(sql: Sql, c: Client, threadId: string, stage: st
 }
 
 /** Edit what the owner knows about the job: details in the trade's words, the job value, notes, the name. */
-export async function saveCard(sql: Sql, c: Client, threadId: string, input: { details?: unknown; value?: number | null; notes?: string; crew?: string; name?: string; email?: string; install?: unknown; review?: boolean }): Promise<{ ok: boolean; error?: string }> {
+export async function saveCard(sql: Sql, c: Client, threadId: string, input: { tags?: unknown; referredBy?: unknown; details?: unknown; value?: number | null; notes?: string; crew?: string; name?: string; email?: string; install?: unknown; review?: boolean }): Promise<{ ok: boolean; error?: string }> {
   const t = await threadOf(sql, c, threadId);
   if (!t) return { ok: false, error: "Not found." };
   const details = input.details === undefined ? null : cleanDetails(c.setup.trade, input.details);
@@ -148,6 +149,12 @@ export async function saveCard(sql: Sql, c: Client, threadId: string, input: { d
       value = CASE WHEN ${value === undefined}::boolean THEN value ELSE ${value ?? null}::numeric END, updated_at = now()
     WHERE id = ${t.id}::uuid`;
   if (input.review !== undefined) await sql`UPDATE public.client_threads SET review_auto = ${!!input.review && !!c.setup.review_link} WHERE id = ${t.id}::uuid`;
+  if (input.tags !== undefined) await sql`UPDATE public.client_threads SET tags = ${cleanTags(input.tags)}::text[] WHERE id = ${t.id}::uuid`;
+  if (input.referredBy !== undefined) {
+    const ref = typeof input.referredBy === "string" && /^[0-9a-f-]{36}$/i.test(input.referredBy) && input.referredBy !== t.id ? input.referredBy : null;
+    if (ref) { const [ok] = await sql`SELECT id FROM public.client_threads WHERE id = ${ref}::uuid AND project_id = ${c.projectId}::uuid`; if (!ok) return { ok: false, error: "That customer isn't here." }; }
+    await sql`UPDATE public.client_threads SET referred_by = ${ref}::uuid WHERE id = ${t.id}::uuid`;
+  }
   void emitEvent(c.setup, c.projectId, "lead.updated", event(c, { ...t, customer_name: name ?? t.customer_name }, { details: details ?? undefined, notes: notes ?? undefined, value }));
   return { ok: true };
 }
