@@ -9,6 +9,9 @@ import { chosen, dollars, totals, type Item } from "@/lib/billing";
 import { Avatar, Empty, Icon, Sheet, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast } from "./parts";
 import { quoteText } from "@/lib/crm";
 import { CrewPick, crewName, emailDoc } from "./crew";
+import { PlanBox } from "./plans";
+import { jobPrice } from "@/lib/service";
+import { ChangeOrders, HoursBox } from "./jobwork";
 
 /** "Remind me": a time and a note on this customer. The owner gets a text and a push when it's due. */
 export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: { name: string; current: { at: string; note: string } | null; busy: boolean; onClose: () => void; onSave: (at: string, note: string) => void; onClear: () => void }) {
@@ -56,7 +59,7 @@ function useRecord(id: string, d: Data, project: string, api: Api, toast: Toast,
   const source = card?.source || cust?.source || thread?.source || "";
   const status = card?.status || thread?.status || cust?.status || "auto";
   const since = cust?.since ? new Date(cust.since).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "";
-  const price = card ? card.invoice?.total || card.value || card.quote?.amount || null : null;
+  const price = card ? jobPrice(card) : null;
   const inv = card?.invoice ?? invoices.find(i => i.status !== "void") ?? null;
   const paid = invoices.filter(i => i.status === "paid").reduce((a, i) => a + i.total, 0);
   const owed = invoices.filter(i => i.status === "sent").reduce((a, i) => a + i.total, 0);
@@ -113,6 +116,7 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
           <JobPanel r={r} biz={biz} ask={ask} setAsk={setAsk} go={go} canText={!!canText} />
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <Steps card={r.card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <CostBox card={r.card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
+          {r.card && r.card.stage === "won" && !r.card.pastCustomer && !biz.crew && <HoursBox d={d} card={r.card} act={r.act} busy={r.busy} />}
         </div>}
     </div>
     {lostSheet}
@@ -167,6 +171,8 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       {biz.canCall ? <button type="button" className="btn sm" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}>Call {first(name)}</button> : <a className="btn sm" href={`tel:${phone}`}>Call {first(name)}</a>}
     </div></section> : null;
   const rail = <>{!biz.crew && needs}{!biz.crew && money}{!biz.crew && card && card.stage === "won" && !card.pastCustomer && <CostBox card={card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
+    {!biz.crew && card && card.stage === "won" && !card.pastCustomer && <HoursBox d={d} card={card} act={r.act} busy={r.busy} />}
+    {!biz.crew && (card ? card.stage === "won" || card.pastCustomer : !!cust) && <PlanBox d={d} thread={id} project={project} api={api} toast={toast} reload={reload} />}
     <section className="card"><div className="hd"><h2>On file</h2></div>
       {card && !biz.crew && card.stage !== "lost" && !card.pastCustomer && <CrewPick d={d} card={card} project={project} api={api} toast={toast} reload={reload} />}
       {card && biz.crew && card.crewMember && <div className="money"><span>On the job</span><b>{crewName(d, card.crewMember)}</b></div>}
@@ -388,6 +394,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
         {installFields}
         {installDirty && <div className="acts-row end"><button type="button" className="btn ink" disabled={!!busy} onClick={() => void act("install", { action: "install", install: install || null, time: itime || null, days: Number(idays) }, res => (install ? `Install set for ${dateLabel(install)}.` : "Install date cleared.") + calMsg(res.calendar))}>{busy === "install" ? <Spinner /> : install ? "Save install" : "Clear install"}</button></div>}
       </>)}
+      {!biz.crew && <ChangeOrders card={card} act={act} busy={busy} canText={canText} taxRate={Number(biz.taxRate) || 0} />}
       {sec("Invoice", card.invoice ? <span className={"dot " + (invoiceState(card.invoice).tone === "green" ? "good" : invoiceState(card.invoice).tone === "red" ? "bad" : "")} style={{ marginLeft: "auto" }}>{invoiceState(card.invoice).text}</span> : null, card.invoice ? <>
         <div className="money"><span>#{card.invoice.number}{card.invoice.status === "sent" && card.invoice.due_on ? `, due ${dateLabel(card.invoice.due_on)}` : ""}</span><b>{dollars(card.invoice.total)}</b></div>
         <div className="acts-row end"><button type="button" className="btn ink" onClick={() => go.invoice(card.invoice!.id)}>Open invoice</button></div>
@@ -395,7 +402,8 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
         <p className="fine">Pulls the lines from the quote. You check it before it goes.</p>
         <div className="acts-row end"><button type="button" className="btn ink" disabled={!!busy} onClick={async () => { const res = await act("invoice", { action: "invoice" }, "Invoice drafted."); if (res?.invoice) go.invoice(res.invoice.id); }}>{busy === "invoice" ? <Spinner /> : "Create invoice"}</button></div>
       </>)}
-      {sec("Review", card.reviewSent ? <span className="dot good" style={{ marginLeft: "auto" }}>Asked {ago(card.reviewSent)}</span> : null, <>
+      {sec("Review", card.reviewSent ? <span className="dot good" style={{ marginLeft: "auto" }}>Asked {ago(card.reviewSent)}</span> : card.reviewAfter ? <span className="dot ink" style={{ marginLeft: "auto" }}>Queued</span> : null, <>
+        {card.reviewAfter && !card.reviewSent && <div className="money"><span>Paid in full, so the ask goes out {Date.parse(card.reviewAfter) - Date.now() > 3600000 * 20 ? dateLabel(card.reviewAfter) : `about ${clock(card.reviewAfter)}`}</span><button type="button" className="link" disabled={!!busy} onClick={() => void act("rvc", { action: "reviewcancel" }, "Review ask cancelled.")}>Don&rsquo;t ask</button></div>}
         {!card.reviewSent && <label className={"toggle" + (biz.reviewLink ? "" : " off")}><input type="checkbox" checked={review && biz.reviewLink} disabled={!biz.reviewLink} onChange={e => setReview(e.target.checked)} /><i /><span><b>Ask for a Google review</b><small>{!biz.reviewLink ? "Needs your Google review link. Ask Sam." : card.install ? `Goes out ${dateLabel(new Date(Date.parse(card.install + "T12:00:00") + 86400000).toLocaleDateString("en-CA"))}.` : "Set an install day."}</small></span></label>}
         {card.reviewSent ? <p className="fine">Sent by text with your Google review link.</p> : biz.reviewLink && <div className="acts-row end">
           <button type="button" className="btn" disabled={!!busy || !canText} onClick={() => arm === "rv" ? void act("review", { action: "reviewnow" }, `Review request sent to ${firstName}.`) : setArm("rv")}>{busy === "review" ? <Spinner /> : arm === "rv" ? "Tap again to send it now" : "Job done, ask now"}</button></div>}
@@ -437,7 +445,7 @@ function CostBox({ card, busy, save }: { card: Card; busy: string; save: (c: Cos
   const num = (v: string) => Number(v.replace(/[^\d.]/g, "")) || 0;
   const now = { materials: num(c.materials), labor: num(c.labor), other: num(c.other) };
   const dirty = now.materials !== card.costs.materials || now.labor !== card.costs.labor || now.other !== card.costs.other;
-  const price = card.invoice?.total || card.value || card.quote?.amount || null;
+  const price = jobPrice(card);
   const pr = jobProfit(price, now);
   const f = (k: keyof typeof c, label: string) => <div className="money"><span>{label}</span><span className="inwrap" style={{ width: 104, height: 26 }}><i>$</i><input inputMode="decimal" placeholder="0" aria-label={label} value={c[k]} onChange={e => setC(x => ({ ...x, [k]: e.target.value.replace(/[^\d.,]/g, "") }))} style={{ textAlign: "right" }} /></span></div>;
   return <section className="card"><div className="hd"><h2>Costs and profit</h2>{pr && <small style={{ marginLeft: "auto", color: pr.profit >= 0 ? "var(--good)" : "var(--bad)" }}>{pr.margin}% margin</small>}</div>

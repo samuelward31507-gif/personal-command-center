@@ -5,7 +5,8 @@ import { publishDue } from "@/lib/content-publish-run";
 import { metaConfig } from "@/lib/meta-publish";
 import { runDueTexts, runHandoffChecks, runLeadNudges, runOwnerReminders, sendMondayReports, sendMonthlyReports, sendReminders } from "@/lib/client-runtime-run";
 import { loadWorkspace } from "@/lib/workspace-data";
-import { runAutoReviews } from "@/lib/client-close-run";
+import { runAutoReviews, runPaidReviews } from "@/lib/client-close-run";
+import { runPlanReminders } from "@/lib/client-service-run";
 import { runInvoiceReminders } from "@/lib/client-billing-run";
 
 export const runtime = "nodejs";
@@ -41,6 +42,10 @@ export async function GET(request: Request) {
       texts.reminders = await sendReminders(sql).catch(e => { console.error("Reminders failed", e); return null; });
       // The day after an install the owner marked won: the Google review ask (each client's own hours are checked too).
       texts.reviews = await runAutoReviews(sql).catch(e => { console.error("Review asks failed", e); return null; });
+      // Paid in full a couple of hours ago: the review ask, once per customer.
+      texts.paidReviews = await runPaidReviews(sql).catch(e => { console.error("Paid review asks failed", e); return null; });
+      // Service plans: the day-before reminder for tomorrow's visits.
+      texts.planReminders = await runPlanReminders(sql).catch(e => { console.error("Plan reminders failed", e); return null; });
       // Invoices past due: up to three friendly reminders, paused as soon as the customer replies or says they paid.
       texts.invoices = await runInvoiceReminders(sql).catch(e => { console.error("Invoice reminders failed", e); return null; });
       const today = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(started);

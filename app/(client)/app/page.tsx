@@ -13,6 +13,7 @@ import type { Biz, Data, Go, Tab } from "./types";
 import { splitAppointments } from "@/lib/client-schedule";
 import { TodayScreen } from "./today";
 import { JobsScreen, type JobsView } from "./jobs";
+import { PlansScreen } from "./plans";
 import { RecordPage } from "./record";
 import { InboxScreen, ThreadView } from "./inbox";
 import { CalendarScreen } from "./calendar";
@@ -151,7 +152,7 @@ export default function CinderApp() {
       if (t) await api("/api/app/auth", { action: "link", token: t }).catch(() => null);
       const th = q.get("thread"), tb = q.get("tab");
       if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen({ kind: "thread", id: th });
-      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", home: "today", invoices: "invoices", money: "invoices", customers: "customers", system: "system", quotes: "quotes" };
+      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", home: "today", invoices: "invoices", money: "invoices", customers: "customers", system: "system", quotes: "quotes", plans: "plans" };
       if (tb && map[tb]) setTab(map[tb]);
       if (location.search) try { history.replaceState(null, "", "/app"); } catch { /* keep the URL */ }
       await load("", tb && map[tb] ? map[tb] : "today");
@@ -213,7 +214,7 @@ export default function CinderApp() {
   const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = crew ? [{ k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }]
     : [{ k: "today", l: "Home", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
   const phoneTab: Tab = MORE.includes(tab) ? "more" : tab;
-  const active = (k: Tab) => (tab === k || (k === "jobs" && tab === "customers")) && !open;
+  const active = (k: Tab) => (tab === k || (k === "jobs" && (tab === "customers" || tab === "plans"))) && !open;
 
   let page: React.ReactNode;
   if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
@@ -223,6 +224,7 @@ export default function CinderApp() {
   else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
+  else if (tab === "plans") page = <PlansScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
   else if (tab === "quotes") page = <QuotesScreen d={d} go={go} wide={wide} biz={biz} />;
   else if (tab === "calendar") page = <CalendarScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} />;
   else if (tab === "invoices") page = <MoneyScreen d={d} go={go} wide={wide} biz={biz} project={project} api={api} toast={toast} reload={reload} />;
@@ -243,10 +245,11 @@ export default function CinderApp() {
         {sections.map(s => <button key={s.k} type="button" className={"ri" + (active(s.k) ? " on" : "")} aria-current={active(s.k) ? "page" : undefined} onClick={() => goTab(s.k)}>
           <Icon name={s.ic} size={15} />{s.l}{counts[s.k] ? <em className={s.k === "inbox" ? "hot" : ""}>{counts[s.k]}</em> : null}</button>)}
       </div>
-      {tab === "jobs" && !open && <div className="rail-grp views">
+      {(tab === "jobs" || tab === "plans") && !open && <div className="rail-grp views">
         <div className="rail-lbl">Views</div>
         {([["open", "Open", jobCounts.open], ["won", "Won", jobCounts.won], ["all", "Everyone", jobCounts.all]] as const).map(([k, l, n]) =>
-          <button key={k} type="button" className={"ri" + (jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); }}>{l}<em>{n}</em></button>)}
+          <button key={k} type="button" className={"ri" + (tab === "jobs" && jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); if (tab !== "jobs") goTab("jobs"); }}>{l}<em>{n}</em></button>)}
+        {!crew && <button type="button" className={"ri" + (tab === "plans" ? " on" : "")} onClick={() => goTab("plans")}>Service plans<em>{(d.plans ?? []).filter(p => p.status === "active").length || ""}</em></button>}
       </div>}
       <div className="rail-foot">
         {!crew && <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>}
@@ -278,6 +281,7 @@ function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
     { k: "invoices", l: "Money", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
     { k: "numbers", l: "Reports", s: "What Cinder brought in", ic: "bars" },
     { k: "customers", l: "Everyone", s: `${d.customers?.length ?? 0} people`, ic: "users" },
+    { k: "plans", l: "Service plans", s: (d.plans ?? []).some(p => p.status === "active") ? `${(d.plans ?? []).filter(p => p.status === "active").length} active` : "Repeat work on a schedule", ic: "cal" },
     { k: "system", l: "Settings", s: "How leads reach Cinder, prices, notifications", ic: "gear" },
     { k: "sam", l: "Sam", s: d.unreadFromSam ? `${d.unreadFromSam} new` : "Your Cinder rep", ic: "user", n: d.unreadFromSam },
   ];

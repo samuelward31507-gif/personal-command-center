@@ -140,6 +140,26 @@ export async function runAutoReviews(sql: Sql, limit = 60): Promise<{ sent: numb
   return { sent, skipped };
 }
 
+/** Invoices paid in full a couple of hours ago: the Google review ask (queued by queueReview). Once per customer, ever. */
+export async function runPaidReviews(sql: Sql, limit = 60): Promise<{ sent: number; skipped: number }> {
+  const rows = await sql`SELECT t.id, t.owner_id, t.project_id, t.customer_phone, t.customer_name FROM public.client_threads t
+    WHERE t.review_after IS NOT NULL AND t.review_after < now() AND t.status <> 'opted_out' ORDER BY t.review_after LIMIT 400` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string }[];
+  const clients = new Map<string, Client | null>();
+  let sent = 0, skipped = 0;
+  for (const r of rows) {
+    if (sent >= limit) break;
+    const key = r.owner_id + r.project_id;
+    if (!clients.has(key)) clients.set(key, await clientById(sql, r.owner_id, r.project_id));
+    const c = clients.get(key);
+    if (!c) continue;
+    if (!inTextingHours(tz(c))) { skipped++; continue; }
+    const res = await sendReviewRequest(sql, c, r.customer_phone, r.customer_name);
+    if (res.ok || !/didn't send/.test(res.error ?? "")) await sql`UPDATE public.client_threads SET review_after = NULL, review_auto = false WHERE id = ${r.id}::uuid`;
+    if (res.ok) sent++; else skipped++;
+  }
+  return { sent, skipped };
+}
+
 /** Ask for the review now: the owner tapped "Job done". */
 export async function reviewNow(sql: Sql, c: Client, threadId: string): Promise<{ ok: boolean; error?: string }> {
   const [t] = await sql`SELECT customer_phone, customer_name FROM public.client_threads WHERE id = ${threadId}::uuid AND project_id = ${c.projectId}::uuid` as { customer_phone: string; customer_name: string }[];

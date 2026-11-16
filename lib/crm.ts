@@ -169,7 +169,7 @@ export function parseDnt(v: unknown): string[] {
   for (const p of String(v ?? "").split(/[,\n;]+/)) { const d = p.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, ""); if (d.length === 10) seen.add("+1" + d); if (seen.size >= 500) break; }
   return [...seen];
 }
-export type TeamMember = { name: string; cell: string; role: "crew" | "owner" };
+export type TeamMember = { name: string; cell: string; role: "crew" | "owner"; /** What an hour of their time costs, for job labor from clocked hours. */ rate?: number };
 /** The owner's team from setup.team: at most two people, each a name, a +1 cell and a role. */
 export function parseTeam(v: unknown): TeamMember[] {
   let arr: unknown = v;
@@ -182,7 +182,8 @@ export function parseTeam(v: unknown): TeamMember[] {
     const d = String(r.cell ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
     if (d.length !== 10 || seen.has(d)) continue;
     seen.add(d);
-    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : "crew" });
+    const rate = Number(String(r.rate ?? "").replace(/[$,\s]/g, ""));
+    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : "crew", ...(Number.isFinite(rate) && rate > 0 && rate <= 500 ? { rate: Math.round(rate * 100) / 100 } : {}) });
     if (out.length >= 2) break;
   }
   return out;
@@ -216,7 +217,8 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   if (r.nudge_hours !== undefined) out.nudge_hours = parseDayList(r.nudge_hours, 3, 168).join(",");
   if (r.dnt !== undefined) out.dnt = parseDnt(r.dnt).join(",");
   if (r.team !== undefined) out.team = JSON.stringify(parseTeam(r.team));
-  pick("monthly_report", ["", "yes", "no"]); pick("booking_page", ["", "yes", "no"]);
+  pick("monthly_report", ["", "yes", "no"]); pick("booking_page", ["", "yes", "no"]); pick("review_on_paid", ["", "yes", "no"]);
+  if (r.labor_rate !== undefined) { const n = Number(String(r.labor_rate ?? "").replace(/[$,\s]/g, "")); out.labor_rate = Number.isFinite(n) && n > 0 && n <= 500 ? String(Math.round(n * 100) / 100) : ""; }
   pick("quote_terms", undefined, 1200); pick("warranty", undefined, 300); pick("financing_note", undefined, 160);
   if (r.financing_link !== undefined) { const u = String(r.financing_link ?? "").trim().slice(0, 300); out.financing_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   return out;
@@ -264,7 +266,11 @@ export type Card = { id: string; name: string; phone: string; source: string; st
   remind?: { at: string; note: string; sent: boolean } | null;
   photos?: Photo[];
   /** The team member on this job (their +1 cell), or "" when it's the owner's. */
-  crewMember?: string };
+  crewMember?: string;
+  /** Extra work agreed mid-job, each one approved by the customer (or in person). */
+  changeOrders?: import("@/lib/service").ChangeOrder[];
+  /** When the Google review ask goes out after the invoice was paid in full, if it's queued. */
+  reviewAfter?: string | null };
 export const cleanEmail = (v: unknown) => { const s = String(v ?? "").trim().toLowerCase().slice(0, 120); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : ""; };
 export type CardInvoice = { id: string; number: number; status: string; items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number; total: number; note: string;
   due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null;

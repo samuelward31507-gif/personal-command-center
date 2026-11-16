@@ -5,6 +5,7 @@ import { randomBytes } from "node:crypto";
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { chosen, cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, type Item } from "@/lib/billing";
 import { cleanDate, cleanDetails, cleanPayMethod, detailLine, type Payment } from "@/lib/crm";
+import { changeOrderLines } from "@/lib/service";
 import { digits10, inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, appOrigin, clientById, sendToCustomer, type Client } from "@/lib/client-runtime-run";
 import { clientCalendar, createAllDayEvent, createEvent, deleteEvent } from "@/lib/client-calendar";
@@ -94,6 +95,15 @@ const asInvoice = (r: Record<string, unknown>): Invoice => ({
 });
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
+/**
+ * Paid in full: the right moment for the Google review ask. It goes out about two hours later, inside texting hours,
+ * once per customer ever. The owner can turn this off (review_on_paid = no) or cancel one from the record.
+ */
+export async function queueReview(sql: Sql, c: Client, threadId: string) {
+  if (!c.setup.review_link || c.setup.review_on_paid === "no") return;
+  await sql`UPDATE public.client_threads t SET review_after = now() + interval '2 hours' WHERE t.id = ${threadId}::uuid AND t.review_after IS NULL AND t.status <> 'opted_out'
+    AND NOT EXISTS (SELECT 1 FROM public.client_reviews r WHERE r.project_id = t.project_id AND right(regexp_replace(r.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10))`;
+}
 /** Adds up what came in on an invoice and settles its status: paid in full, or back to sent when a payment is removed. */
 async function settle(sql: Sql, c: Client, invoiceId: string): Promise<{ total: number; paid: number; status: string; number: number; thread_id: string } | null> {
   const [r] = await sql`UPDATE public.client_invoices i SET paid_amount = coalesce((SELECT sum(amount) FROM public.client_payments p WHERE p.invoice_id = i.id), 0)
@@ -101,7 +111,7 @@ async function settle(sql: Sql, c: Client, invoiceId: string): Promise<{ total: 
   if (!r) return null;
   if (r.status !== "void") {
     const full = r.paid >= r.total - 0.005 && r.total > 0;
-    if (full && r.status !== "paid") await sql`UPDATE public.client_invoices SET status = 'paid', paid_at = now(), reminders_paused = true WHERE id = ${invoiceId}::uuid`;
+    if (full && r.status !== "paid") { await sql`UPDATE public.client_invoices SET status = 'paid', paid_at = now(), reminders_paused = true WHERE id = ${invoiceId}::uuid`; await queueReview(sql, c, r.thread_id); }
     if (!full && r.status === "paid") await sql`UPDATE public.client_invoices SET status = CASE WHEN sent_at IS NULL THEN 'draft' ELSE 'sent' END, paid_at = NULL WHERE id = ${invoiceId}::uuid`;
     r.status = full ? "paid" : r.status === "paid" ? (r.sent_at ? "sent" : "draft") : r.status;
   }
@@ -149,7 +159,7 @@ export async function loadPayments(sql: Sql, c: Client, limit = 200): Promise<Pa
 export async function createInvoice(sql: Sql, c: Client, threadId: string): Promise<{ ok: boolean; invoice?: Invoice; error?: string }> {
   const t = await threadOf(sql, c, threadId);
   if (!t) return { ok: false, error: "Not found." };
-  const [open] = await sql`SELECT * FROM public.client_invoices WHERE thread_id = ${t.id}::uuid AND status IN ('draft', 'sent') ORDER BY created_at DESC LIMIT 1` as Record<string, unknown>[];
+  const [open] = await sql`SELECT * FROM public.client_invoices WHERE thread_id = ${t.id}::uuid AND status IN ('draft', 'sent') AND plan_id IS NULL ORDER BY created_at DESC LIMIT 1` as Record<string, unknown>[];
   if (open) return { ok: true, invoice: asInvoice(open) };
   const [q] = await sql`SELECT items, tax_rate::float AS tax_rate, amount::float AS amount FROM public.client_quotes WHERE project_id = ${c.projectId}::uuid AND kind = 'quote'
     AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${phoneMatch(t.customer_phone)} ORDER BY (status = 'won') DESC, created_at DESC LIMIT 1` as { items: unknown; tax_rate: number; amount: number | null }[];
@@ -160,6 +170,8 @@ export async function createInvoice(sql: Sql, c: Client, threadId: string): Prom
     const line = detailLine(c.setup.trade, cleanDetails(c.setup.trade, t.details));
     items = [{ name: line ? `${line}, installed` : "Job", qty: 1, unit: "", price: amount }];
   }
+  const cos = await sql`SELECT id, number, items FROM public.client_change_orders WHERE thread_id = ${t.id}::uuid AND status = 'approved' AND invoice_id IS NULL ORDER BY number` as { id: string; number: number; items: unknown }[];
+  for (const co of cos) items = [...items, ...changeOrderLines({ number: co.number, items: cleanItems(co.items) })].slice(0, 30);
   const days = Number(c.setup.invoice_days ?? 7) || 0;
   const due = new Date(Date.parse(todayIn(c) + "T12:00:00Z") + days * 86400000).toISOString().slice(0, 10);
   const { total } = totals(items, taxRate);
@@ -169,6 +181,7 @@ export async function createInvoice(sql: Sql, c: Client, threadId: string): Prom
       const [r] = await sql`INSERT INTO public.client_invoices (owner_id, project_id, thread_id, number, items, tax_rate, total, due_on)
         VALUES (${c.owner}, ${c.projectId}::uuid, ${t.id}::uuid, (SELECT coalesce(max(number), 1000) + 1 FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid),
           ${JSON.stringify(items)}::jsonb, ${taxRate}, ${total}, ${due}::date) RETURNING *` as Record<string, unknown>[];
+      if (cos.length) await sql`UPDATE public.client_change_orders SET invoice_id = ${String(r.id)}::uuid WHERE id = ANY(${cos.map(x => x.id)}::uuid[])`;
       return { ok: true, invoice: asInvoice(r) };
     } catch (e) { if (attempt) { console.error("Invoice create failed", e instanceof Error ? e.message : e); return { ok: false, error: "Couldn't make the invoice. Try again." }; } }
   }
@@ -224,7 +237,7 @@ export async function setInvoice(sql: Sql, c: Client, invoiceId: string, what: "
   const row = r[0] as { thread_id: string; number: number; total: number };
   if (what === "paid" || what === "void") await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${row.thread_id}::uuid, 'out', 'system',
     ${what === "paid" ? `Invoice #${row.number} paid: ${dollars(Number(row.total))}` : `Invoice #${row.number} voided`})`;
-  if (what === "paid") void emitEvent(c.setup, c.projectId, "invoice.paid", { customer: { id: row.thread_id }, number: row.number, total: Number(row.total) });
+  if (what === "paid") { void emitEvent(c.setup, c.projectId, "invoice.paid", { customer: { id: row.thread_id }, number: row.number, total: Number(row.total) }); await queueReview(sql, c, row.thread_id); }
   return { ok: true };
 }
 
@@ -316,6 +329,6 @@ export async function loadInvoices(sql: Sql, c: Client): Promise<(Invoice & { th
 }
 /** The latest invoice on each won card. */
 export async function invoicesByThread(sql: Sql, c: Client): Promise<Record<string, Invoice>> {
-  const rows = await sql`SELECT DISTINCT ON (thread_id) * FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid AND status <> 'void' ORDER BY thread_id, created_at DESC` as Record<string, unknown>[];
+  const rows = await sql`SELECT DISTINCT ON (thread_id) * FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid AND status <> 'void' AND plan_id IS NULL ORDER BY thread_id, created_at DESC` as Record<string, unknown>[];
   return Object.fromEntries(rows.map(r => [String(r.thread_id), asInvoice(r)]));
 }

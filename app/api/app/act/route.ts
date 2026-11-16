@@ -11,6 +11,7 @@ import { sendAlert } from "@/lib/notify";
 import { addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
+import { clockIn, clockOut, editTime, planVisit, saveChangeOrder, savePlan, sendChangeOrder, setChangeOrder, setPlan } from "@/lib/client-service-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,11 +43,28 @@ export async function POST(req: Request) {
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
-    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string; email?: string; at?: string | null; method?: string; payment?: string; data?: string; kind?: string; caption?: string; photo?: string; member?: string };
+    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string; email?: string; at?: string | null; method?: string; payment?: string; data?: string; kind?: string; caption?: string; photo?: string; member?: string;
+    plan?: string; input?: unknown; skip?: boolean; co?: string; entry?: string; end?: string | null; remove?: boolean };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
     if (!c) return json({ error: "Sign in" }, 401);
+    // The crew sees the schedule and the jobs and can text, call, tick steps, leave notes and clock hours. Money and settings stay with the owner.
+    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
+    if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; b.email = undefined; }
+    // Crew hours: the person signed in clocks in on a job (or general time) and out again. The owner is "".
+    const member = s.role === "crew" && s.phone ? "+1" + s.phone.replace(/\D/g, "").slice(-10) : "";
+    if (b.action === "clockin") {
+      if (b.thread && !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
+      const r = await clockIn(sql, c, member, b.thread || null);
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "clockout") { const r = await clockOut(sql, c, member, b.note); return r.ok ? json({ ok: true, minutes: r.minutes }) : json({ error: r.error }, 409); }
+    if (b.action === "visit") {
+      if (!b.plan || !UUID.test(b.plan)) return json({ error: "Which plan?" }, 400);
+      const r = await planVisit(sql, c, b.plan, { skip: !!b.skip, member });
+      return r.ok ? json({ ok: true, next: r.next, invoice: r.invoice, sent: r.sent, warn: r.warn }) : json({ error: r.error }, 409);
+    }
     // The CRM: the owner's own setup, moving a customer between stages, editing a card, adding a lead by hand.
     if (b.action === "setup") { const saved = await saveOwnerSetup(sql, c, b.setup); return json({ ok: true, setup: saved }); }
     if (b.action === "lead") {
@@ -112,10 +130,44 @@ export async function POST(req: Request) {
       const r = await setJobStep(sql, c, b.thread, b.step, !!b.done, b.on);
       return r.ok ? json({ ok: true, job: r.job }) : json({ error: r.error }, 400);
     }
+    // Service plans: a visit every N weeks or months, reminded the day before and invoiced after each visit.
+    if (b.action === "plan") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const r = await savePlan(sql, c, b.thread, b.plan, b.input);
+      return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "planset") {
+      if (!b.plan || !UUID.test(b.plan) || !["pause", "resume", "end"].includes(String(b.what))) return json({ error: "Which plan?" }, 400);
+      const r = await setPlan(sql, c, b.plan, b.what as "pause");
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 409);
+    }
+    // Change orders: extra work mid-job, approved by the customer from a link (or in person), added to the invoice.
+    if (b.action === "co") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
+      const r = await saveChangeOrder(sql, c, b.thread, b.co, b.input);
+      if (!r.ok) return json({ error: r.error }, 400);
+      if (!b.send) return json({ ok: true, id: r.id });
+      const s2 = await sendChangeOrder(sql, c, r.id!);
+      return json({ ok: true, id: r.id, sent: s2.sent, link: s2.url ?? "", warn: s2.sent ? "" : s2.warn ?? s2.error ?? "" });
+    }
+    if (b.action === "cosend" || b.action === "coset") {
+      if (!b.co || !UUID.test(b.co)) return json({ error: "Which change order?" }, 400);
+      if (b.action === "cosend") { const r = await sendChangeOrder(sql, c, b.co); return r.ok ? json({ ok: true, sent: r.sent, link: r.url ?? "", warn: r.warn ?? "" }) : json({ error: r.error }, 409); }
+      if (b.what !== "approved" && b.what !== "void") return json({ error: "Unknown change." }, 400);
+      const r = await setChangeOrder(sql, c, b.co, b.what);
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 409);
+    }
+    if (b.action === "timeedit") {
+      if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which entry?" }, 400);
+      const r = await editTime(sql, c, b.entry, { remove: b.remove, start: b.start, end: b.end });
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "reviewcancel") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      await sql`UPDATE public.client_threads SET review_after = NULL WHERE id = ${b.thread}::uuid AND project_id = ${c.projectId}::uuid`;
+      return json({ ok: true });
+    }
     if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
-    // The crew sees the schedule and the jobs and can text, call, tick steps and leave notes. Money and settings stay with the owner.
-    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
-    if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; b.email = undefined; }
     if (b.action === "ask") {
       const q = String(b.question ?? "").trim().slice(0, 500);
       if (!q) return json({ error: "Ask something." }, 400);

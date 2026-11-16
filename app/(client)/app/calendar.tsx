@@ -9,9 +9,10 @@ import { Empty, Icon, Sheet, Spinner, clock, dayName, first, fmtPhone, useArm, t
 import { Inspector } from "./record";
 import { line } from "./jobs";
 import { crewName } from "./crew";
+import { visitDays } from "@/lib/service";
 import type { Biz, Data, Go } from "./types";
 
-type Block = { key: string; kind: "estimate" | "install" | "event"; title: string; sub: string; start: number; end: number; allDay: boolean; day: string; thread?: string; link?: string; apptId?: string; name?: string; addr?: string };
+type Block = { key: string; kind: "estimate" | "install" | "event" | "visit"; title: string; sub: string; start: number; end: number; allDay: boolean; day: string; thread?: string; link?: string; apptId?: string; name?: string; addr?: string };
 const maps = (a: string) => `https://maps.google.com/?daddr=${encodeURIComponent(a)}`;
 const H0 = 6, H1 = 20, ROW = 44;
 const iso = (d: Date) => d.toLocaleDateString("en-CA");
@@ -47,11 +48,14 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
       const st = timed ? Date.parse(`${dd}T${c.installTime}`) : Date.parse(dd + "T07:00:00");
       out.push({ key: `i${c.id}${k}`, kind: "install", title: c.name, sub: `Install${(c.installDays || 1) > 1 ? `, day ${k + 1} of ${c.installDays}` : ""}${c.line ? `, ${line(c)}` : ""}${c.crewMember ? `, ${crewName(d, c.crewMember)}` : ""}`, start: st, end: st + (timed ? 4 : 9) * 3600000, allDay: !timed, day: dd, thread: c.id, addr: String(c.details.address ?? "") });
     }
+    // Service plan visits on their day, at the plan's time or as an all-day chip.
+    for (const p of d.plans ?? []) for (const dd of visitDays(p, days[0], days[6])) { const c = byThread.get(p.thread_id), st = p.time ? Date.parse(`${dd}T${p.time}`) : Date.parse(dd + "T08:00:00");
+      out.push({ key: `v${p.id}${dd}`, kind: "visit", title: p.customer || fmtPhone(p.phone), sub: [p.name, crewName(d, p.crew_member)].filter(Boolean).join(", "), start: st, end: st + 2 * 3600000, allDay: !p.time, day: dd, thread: p.thread_id, addr: c ? String(c.details.address ?? "") : "" }); }
     for (const e of cal.events ?? []) { const st = Date.parse(e.start), en = Date.parse(e.end); const first = iso(new Date(st));
       if (e.allDay) { for (let t = st; t < en; t += 86400000) out.push({ key: "e" + e.id + t, kind: "event", title: e.title, sub: "Your calendar", start: t, end: t + 86400000, allDay: true, day: iso(new Date(t + 43200000)), link: e.link }); }
       else out.push({ key: "e" + e.id, kind: "event", title: e.title, sub: `Until ${clock(e.end)}, your calendar`, start: st, end: en, allDay: false, day: first, link: e.link }); }
     return out;
-  }, [d, cal.events, byThread]);
+  }, [d, cal.events, byThread, days]);
 
   async function act(key: string, body: Record<string, unknown>, done: (r: { review?: string }) => string) {
     setBusy(key);

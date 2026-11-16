@@ -1,6 +1,7 @@
 // What the app gets from /api/app/data, and how screens ask the shell to move around.
 import type { Card, CardInvoice, Payment, Stage } from "@/lib/crm";
 import type { CalEvent } from "@/lib/client-schedule";
+import type { Plan, TimeEntry } from "@/lib/service";
 
 export type Conv = { id: string; name: string; source: string; status: string; at: string | null; last: string; ask?: string };
 export type Live = { afterHours?: { leads: number; won: number; wonValue: number }; leads: number; needs: number; answered: number; booked: number; replySec: number | null; chasing: number; chasingValue: number; won: number; wonValue: number; revived: number; reviews: number; weeks: { week: string; leads: number; booked: number }[]; conversations: Conv[] };
@@ -17,6 +18,8 @@ export type Data = { /** The owner, or a crew member who sees the schedule and t
   key?: string; origin?: string;
   /** Jobber: whether it's wired up for this business, and the link that connects it. */
   payments?: Payment[];
+  /** Service plans, the visits logged on them lately, and clocked hours (the owner sees everyone's, crew their own). */
+  plans?: Plan[]; visits?: { id: string; plan_id: string; thread_id: string; on_date: string; status: string; invoice_id: string | null }[]; time?: TimeEntry[];
   jobber?: { available: boolean; connected: boolean; account: string; error: string; lastPush: string | null; connectUrl: string };
   /** Connections: each lead source's activity, texts that didn't send, the consent log. */
   wires?: { sources: { source: string; leads: number; last: string | null; last30: number }[]; failures: { id: string; at: string; body: string; name: string; phone: string; thread: string; source: string }[]; log: { at: string; event: string; source: string; phone: string; evidence: string }[] } };
@@ -26,7 +29,7 @@ export type Text = { id: string; direction: string; author: string; body: string
 export type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
 export type { Card, CardInvoice, Payment, Stage };
 
-export type Tab = "today" | "inbox" | "jobs" | "quotes" | "calendar" | "customers" | "invoices" | "numbers" | "system" | "sam" | "more";
+export type Tab = "today" | "inbox" | "jobs" | "quotes" | "calendar" | "customers" | "invoices" | "numbers" | "system" | "sam" | "more" | "plans";
 /** Where a screen can send the owner. The shell owns the state; screens just ask. */
 export type Go = {
   tab: (t: Tab) => void;

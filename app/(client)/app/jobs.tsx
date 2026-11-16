@@ -4,6 +4,7 @@
 // open beside the list. Every job shows its value, its next step and how long it has sat in its stage.
 // Done is a won job that's been paid. Lost asks why. j/k move, Enter opens, Esc closes, c adds a lead.
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { jobPrice } from "@/lib/service";
 import { LOST_REASONS, STAGE_LABEL, jobProfit, type Card, type Stage } from "@/lib/crm";
 import { crewName, crewTag } from "./crew";
 import { Avatar, Empty, Icon, Menu, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
@@ -170,6 +171,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
         {!wide && <div className="views" role="tablist" aria-label="View">
           {([["open", "Open", counts.open], ["won", "Won", counts.won], ["all", "Everyone", counts.all]] as const).map(([k, l, n]) =>
             <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => { setView(k); setSel(null); }}>{l}<em>{n}</em></button>)}
+          {!biz.crew && <button type="button" role="tab" aria-selected={false} onClick={() => go.tab("plans")}>Plans<em>{(d.plans ?? []).filter(p => p.status === "active").length}</em></button>}
         </div>}
         {wide && <div className="seg" role="tablist" aria-label="Layout">
           <button type="button" role="tab" aria-selected={mode === "table"} className={mode === "table" ? "on" : ""} onClick={() => setMode("table")} title="Table (t)"><Icon name="table" size={13} />Table</button>
@@ -209,7 +211,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
                 <td><span className="nxt"><span className={"next " + n.tone}>{n.text}</span>{m.verb && <button type="button" className="btn sm" onClick={e => { e.stopPropagation(); m.run(go); }}>{m.verb}</button>}</span></td>
                 <td className={c.line ? "mut" : "faint"}>{line(c) || (c.notes ? c.notes.slice(0, 48) : "No details yet")}</td>
                 <td className={"num" + (c.value ? "" : " mut")}>{c.value ? usd(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "–"}</td>
-                {(() => { const pf = c.stage === "won" ? jobProfit(c.invoice?.total || c.value || c.quote?.amount || null, c.costs) : null; return <td className={"num c2" + (pf ? "" : " faint")} title={pf ? `${usd(pf.cost)} in costs` : c.stage === "won" ? "Log costs on the job to see profit" : undefined}>{pf ? <><span style={pf.profit < 0 ? { color: "var(--bad)" } : undefined}>{usd(pf.profit)}</span> <small className="mut">{pf.margin}%</small></> : "–"}</td>; })()}
+                {(() => { const pf = c.stage === "won" ? jobProfit(jobPrice(c), c.costs) : null; return <td className={"num c2" + (pf ? "" : " faint")} title={pf ? `${usd(pf.cost)} in costs` : c.stage === "won" ? "Log costs on the job to see profit" : undefined}>{pf ? <><span style={pf.profit < 0 ? { color: "var(--bad)" } : undefined}>{usd(pf.profit)}</span> <small className="mut">{pf.margin}%</small></> : "–"}</td>; })()}
                 <td className={"num" + (stale(c, days) ? "" : " mut")} style={stale(c, days) ? { color: "var(--ember)" } : undefined}>{l === "done" || l === "lost" ? "–" : daysLabel(days)}</td>
                 <td><span className={"stage " + (l === "done" ? "won" : l)}><i />{LANE_LABEL[l]}</span></td>
                 <td className="mut c2">{sourceLabel(c.source)}</td>

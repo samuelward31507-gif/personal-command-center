@@ -4,6 +4,7 @@ import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, cleanWinback, detai
 import type { Report, ReportNumbers } from "@/lib/client-reports";
 import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
 import { cleanImportRows, importAs } from "@/lib/customer-import";
+import { addInterval, changeOrderLines, cleanChangeOrder, cleanPlan, type ChangeOrder, type Plan, type TimeEntry } from "@/lib/service";
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 const at = (days: number, hour: number, min = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(hour, min, 0, 0); return d.toISOString(); };
 const GC = "https://calendar.google.com/calendar/r/week";
@@ -59,7 +60,7 @@ function seed() {
     l2: { thread: { id: "l2", customer_name: "Ashley Kim", customer_phone: "+13035550141", source: "thumbtack", status: "closed" }, texts: [
       tx("in", "system", "Passed on the quote online: \u201cWent with a cheaper bid\u201d", 60 * 24 * 7)] },
   };
-  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null; crewMember?: string }> = {
+  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null; crewMember?: string; reviewAfter?: string | null }> = {
     t1: { details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" }, notes: "Asked about financing. Call him.", email: "tom.becker@example.com", remind: { at: ago(30), note: "Call Tom back about financing", sent: false } },
     t2: { details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No", address: "77 Aspen Ct, Englewood" }, notes: "Replacing chain link.", crewMember: "+17205550188", crew: "Side gate is unlocked. Measure the back line from the shed." },
     t3: { details: { material: "Vinyl" }, notes: "" },
@@ -77,7 +78,7 @@ function seed() {
     leads_month: "10-30", lead_sources: "Phone calls, Website form, Google, Angi", software: "None, just my phone", share_ballpark: "yes", priority: "quotes", onboarded_at: "2026-11-01T15:00:00.000Z", pay_link: "https://square.link/u/example", tax_rate: "0", invoice_days: "7",
     hours: "Mon-Fri 7:00-18:00, Sat 8:00-12:00", timezone: "America/Denver", service_area: "Littleton, Highlands Ranch, Castle Rock and 25 miles around", rules: "No repairs under $500. No commercial bids.", questions: "Rough length in feet, material, and the address.",
     prices: "Cedar privacy runs $38–48 a foot installed. Vinyl $40–55. Chain link $18–26.", financing: "We offer 12 months no interest through Wisetack on jobs over $3,000.", tone: "Hey Mark, Mike here with Ridgeline. We can swing by Thursday at 4 to measure, that work?\nSounds good, see you then. Gate's on the left side of the house.", avoid: "Never quote a firm price. Don't promise a date for the install.",
-    handoff: "The job is over $20,000, or they mention a neighbor dispute over the property line.", book_lead_hours: "3", book_per_day: "2", book_buffer_min: "30", quote_days: "2,5,10,21", nudge_hours: "2,20,68", dnt: "+17205550177", a2p_status: "Approved", forwarding: "Their number forwards missed calls here", team: JSON.stringify([{ name: "Luis", cell: "+17205550188", role: "crew" }]), monthly_report: "yes",
+    handoff: "The job is over $20,000, or they mention a neighbor dispute over the property line.", book_lead_hours: "3", book_per_day: "2", book_buffer_min: "30", quote_days: "2,5,10,21", nudge_hours: "2,20,68", dnt: "+17205550177", a2p_status: "Approved", forwarding: "Their number forwards missed calls here", team: JSON.stringify([{ name: "Luis", cell: "+17205550188", role: "crew", rate: 28 }]), monthly_report: "yes", labor_rate: "45", review_on_paid: "yes",
     warranty: "Two years on workmanship. Materials carry the maker's warranty.", financing_link: "https://example.com/financing", financing_note: "Pay over time, as low as $120 a month",
     quote_terms: "Prices hold for 30 days. The deposit holds the install date and comes off the final invoice. The balance is due when the job is done.",
     price_book: JSON.stringify({ unit: "ft", rates: [{ name: "Wood privacy (cedar)", low: 38, high: 48 }, { name: "Vinyl", low: 40, high: 55 }, { name: "Chain link", low: 18, high: 26 }, { name: "Ranch rail", low: 12, high: 18 }], gate: [450, 650] }) };
@@ -112,6 +113,27 @@ function seed() {
       { id: "pm3", invoice_id: "iv2", thread_id: "w1", amount: 2500, method: "bank", paid_on: at(-24, 12).slice(0, 10), note: "Deposit by Zelle" },
     ] as Payment[],
     photos: {} as Record<string, Photo[]>,
+    // Service plans: the Henderson wash is due today (Luis goes), Bill Turner's yearly seal is next month.
+    plans: [
+      { id: "pl1", thread_id: "w1", name: "Seasonal fence wash", items: [{ name: "Soft wash, both sides, 220 ft", qty: 1, unit: "", price: 240 }], tax_rate: 0, total: 240, every: 3, unit: "month", next_on: at(0, 12).slice(0, 10), time: "09:00", ends_on: null, status: "active", remind: true, invoice: true, crew_member: "+17205550188", visits_done: 2, last_on: at(-92, 12).slice(0, 10), created_at: at(-200, 12) },
+      { id: "pl2", thread_id: "w3", name: "Stain and seal", items: [{ name: "Stain and seal, 260 ft", qty: 1, unit: "", price: 1350 }, { name: "Gate hardware check", qty: 2, unit: "", price: 50 }], tax_rate: 0, total: 1450, every: 12, unit: "month", next_on: at(24, 12).slice(0, 10), time: null, ends_on: null, status: "active", remind: true, invoice: true, crew_member: "", visits_done: 0, last_on: null, created_at: at(-10, 12) },
+      { id: "pl3", thread_id: "q2", name: "Ranch rail inspection", items: [{ name: "Walk the line, tighten and replace rails", qty: 1, unit: "", price: 180 }], tax_rate: 0, total: 180, every: 6, unit: "month", next_on: at(3, 12).slice(0, 10), time: "08:00", ends_on: null, status: "paused", remind: true, invoice: true, crew_member: "", visits_done: 1, last_on: at(-180, 12).slice(0, 10), created_at: at(-300, 12) },
+    ] as Omit<Plan, "customer" | "phone">[],
+    // Carla's job: a second gate, texted this morning and opened.
+    cos: [
+      { id: "co1", thread_id: "w2", number: 1, title: "Add a second walk gate on the east side", items: [{ name: "4 ft vinyl walk gate, installed", qty: 1, unit: "", price: 760 }, { name: "Gate post in concrete", qty: 1, unit: "", price: 140 }], tax_rate: 0, total: 900,
+        note: "Matches the new fence. Goes in the same day as the install.", status: "sent", url: "", sent_at: ago(180), viewed_at: ago(95), decided_at: null, signed_by: "", invoiced: false },
+    ] as ChangeOrder[],
+    // Clocked hours: Luis is on Carla's install now; the last two weeks on Bill Turner's and the Henderson job.
+    time: [
+      { id: "tm1", thread_id: "w2", member: "+17205550188", started_at: ago(172), ended_at: null, note: "" },
+      { id: "tm2", thread_id: "w3", member: "+17205550188", started_at: at(-12, 7, 30), ended_at: at(-12, 16, 15), note: "" },
+      { id: "tm3", thread_id: "w3", member: "", started_at: at(-12, 7, 30), ended_at: at(-12, 15, 0), note: "" },
+      { id: "tm4", thread_id: "w3", member: "+17205550188", started_at: at(-11, 7, 30), ended_at: at(-11, 14, 40), note: "" },
+      { id: "tm5", thread_id: "w3", member: "", started_at: at(-11, 8, 0), ended_at: at(-11, 13, 30), note: "" },
+      { id: "tm6", thread_id: "w1", member: "+17205550188", started_at: at(-11, 7, 30), ended_at: at(-11, 15, 50), note: "" },
+      { id: "tm7", thread_id: null, member: "", started_at: at(-3, 13, 0), ended_at: at(-3, 14, 30), note: "Material pickup" },
+    ] as TimeEntry[],
     won: 5, wonValue: 37500,
     wonJobs: [{ id: "w1", customer_name: "Henderson family", customer_phone: "+17205550110", amount: 8600 as number | null, won_at: at(-9, 12) }],
   };
@@ -125,6 +147,8 @@ const quoteSms = (name: string, amount: number | null, id: string) => {
 };
 
 let S: ReturnType<typeof seed> | null = null;
+/** Paid in full: the review ask is queued for a couple of hours later, unless they were already asked. */
+const queueReview = (thread: string) => { const c = (st().crm[thread] ??= { details: {}, notes: "" }); if (!c.reviewSent && !c.reviewAfter) c.reviewAfter = new Date(Date.now() + 2 * 3600000).toISOString(); };
 const st = () => (S ??= seed());
 const paidOn = (invoiceId: string) => st().payments.filter(p => p.invoice_id === invoiceId).reduce((a, p) => a + p.amount, 0);
 
@@ -159,13 +183,18 @@ const emptyDemo = () => { try { return sessionStorage.getItem("cinder-demo-empty
 const crewDemo = () => { try { return sessionStorage.getItem("cinder-demo-crew") === "1"; } catch { return false; } };
 function asCrew<T extends Record<string, unknown>>(x: T): T {
   const setup = x.setup as Record<string, string>;
-  return { ...x, role: "crew", me: "+17205550188", invoices: [], payments: [], customers: [], quotes: [], wonJobs: [], winback: undefined, setup: { display_name: setup.display_name, owner_name: setup.owner_name, trade: setup.trade } };
+  const me = "+17205550188";
+  return { ...x, role: "crew", me, invoices: [], payments: [], customers: [], quotes: [], wonJobs: [], winback: undefined, setup: { display_name: setup.display_name, owner_name: setup.owner_name, trade: setup.trade },
+    plans: ((x.plans ?? []) as Plan[]).map(p => ({ ...p, items: [], total: 0 })), time: ((x.time ?? []) as TimeEntry[]).filter(e => e.member === me),
+    board: ((x.board ?? []) as Card[]).map(b => ({ ...b, value: null, quote: null, invoice: null, changeOrders: (b.changeOrders ?? []).map(c => ({ ...c, items: [], total: 0, url: null })) })) };
 }
 function blank<T extends Record<string, unknown>>(x: T): T {
   const live = { ...(x.live as Record<string, unknown>), leads: 0, needs: 0, answered: 0, booked: 0, replySec: null, chasing: 0, chasingValue: 0, won: 0, wonValue: 0, revived: 0, reviews: 0, weeks: [], conversations: [], afterHours: { leads: 0, won: 0, wonValue: 0 } };
   const setup = { ...(x.setup as Record<string, string>), price_book: "", pay_link: "", has_review_link: "", has_calendar: "" };
-  return { ...x, live, setup, board: [], invoices: [], payments: [], customers: [], appointments: [], quotes: [], wonJobs: [], hasReviewLink: false, calendar: { connected: false, email: "", events: [], error: "", connectUrl: "#" }, wires: { sources: [], failures: [], log: [] }, winback: { past: 0, eligible: 0, names: [], draft: "" } };
+  return { ...x, live, setup, board: [], invoices: [], payments: [], customers: [], appointments: [], quotes: [], wonJobs: [], plans: [], time: [], visits: [], hasReviewLink: false, calendar: { connected: false, email: "", events: [], error: "", connectUrl: "#" }, wires: { sources: [], failures: [], log: [] }, winback: { past: 0, eligible: 0, names: [], draft: "" } };
 }
+const EXAMPLE_CO = (typeof location !== "undefined" ? location.origin : "") + "/c/example";
+function plansOut() { const s = st(); return s.plans.map(p => ({ ...p, customer: s.threads[p.thread_id]?.thread.customer_name ?? "", phone: s.threads[p.thread_id]?.thread.customer_phone ?? "" })); }
 function data() {
   const s = st();
   const conversations = Object.values(s.threads).filter(t => t.texts.length).map(({ thread, texts }) => {
@@ -188,6 +217,7 @@ function data() {
       failures: [{ id: "f1", at: ago(12), body: "Good question. Mike will get back to you on that directly today.", name: "Tom Becker", phone: "+17205550177", thread: "t1", source: "web form" }],
       log: [{ at: ago(40), event: "inbound_call", source: "missed_call", phone: "+17205550161", evidence: "Missed call, texted back in 6s" }, { at: ago(300), event: "web_form", source: "web form", phone: "+17205550123", evidence: "Submitted a form asking to be contacted" }, { at: ago(540), event: "inbound_text", source: "text", phone: "+17205550139", evidence: "Texted the business number" },
         { at: ago(2880), event: "paid_lead", source: "angi", phone: "+17205550177", evidence: "Requested a quote on Angi" }, { at: ago(2940), event: "opt_out", source: "", phone: "+17205550177", evidence: "Replied STOP" }, { at: ago(5760), event: "owner_import", source: "jobber", phone: "+17205550112", evidence: "Imported from Jobber, past customer" }, { at: ago(8640), event: "web_form", source: "web chat", phone: "+17205550150", evidence: "Asked through the website chat" }] },
+    plans: plansOut(), visits: [], time: s.time.map(e => ({ ...e, customer: e.thread_id ? s.threads[e.thread_id]?.thread.customer_name ?? "" : "" })),
     customers: customers(), invoices: s.invoices.map(i => { const th = s.threads[i.thread_id]?.thread; return { ...i, paid_amount: paidOn(i.id), customer: th?.customer_name ?? "", phone: th?.customer_phone ?? "" }; }),
     payments: s.payments.map(p => ({ ...p, number: s.invoices.find(i => i.id === p.invoice_id)?.number, customer: s.threads[p.thread_id]?.thread.customer_name ?? "" })),
     winback: { past: 23, eligible: s.winbackSent ? 0 : 4, names: ["Rob", "Megan", "Luis", "Kara"], draft: winbackDraft(s.setup.trade, s.setup.owner_name, s.setup.display_name) },
@@ -213,8 +243,9 @@ function board(all = false): Card[] {
       value: c.value ?? q?.amount ?? null, ballpark: bp ? { low: bp.low, high: bp.high } : null, notes: c.notes,
       quote: q ? { id: q.id, amount: q.amount, status: q.status, steps: q.steps_sent, linked: q.linked, url: q.linked ? EXAMPLE_LINK : null, viewed: q.viewed, note: q.note, items: q.items, tax: q.tax_rate, deposit: q.deposit ?? null } : null,
       next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, installTime: c.installTime ?? null, installDays: c.installDays ?? 1, onCalendar: !!c.onCalendar,
-      reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, job: { ...(c.job ?? {}) }, costs: { materials: 0, labor: 0, other: 0, ...(c.costs ?? {}) }, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void").at(-1) ?? null,
-      stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crewMember: c.crewMember ?? "", crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [] };
+      reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, job: { ...(c.job ?? {}) }, costs: { materials: 0, labor: 0, other: 0, ...(c.costs ?? {}) }, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void" && !(i as { plan_id?: string }).plan_id).at(-1) ?? null,
+      stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crewMember: c.crewMember ?? "", crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [],
+      changeOrders: s.cos.filter(x => x.thread_id === thread.id && x.status !== "void").map(x => ({ ...x, url: x.url ? EXAMPLE_CO : null })), reviewAfter: c.reviewSent ? null : c.reviewAfter ?? null };
   }).sort((a, b) => b.at.localeCompare(a.at));
 }
 
@@ -277,7 +308,7 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       if (!(amt > 0)) fail("Type the amount, like 1500.");
       if (amt > bal + 0.005) fail(`That's more than the ${bal.toLocaleString("en-US")} still owed.`);
       s.payments.unshift({ id: "pm" + ++n, invoice_id: inv!.id, thread_id: inv!.thread_id, amount: amt, method: cleanPayMethod(b.method), paid_on: cleanDate(b.on) ?? now.slice(0, 10), note: String(b.note ?? "") });
-      if (paidOn(inv!.id) >= inv!.total - 0.005) { inv!.status = "paid"; inv!.paid_at = now; }
+      if (paidOn(inv!.id) >= inv!.total - 0.005) { inv!.status = "paid"; inv!.paid_at = now; queueReview(inv!.thread_id); }
       return { ok: true, balance: Math.max(0, inv!.total - paidOn(inv!.id)) };
     }
     if (b.action === "paymentdelete") {
@@ -413,9 +444,10 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
         return { ok: true, total: q!.amount };
       }
       if (b.action === "install") { c.install = cleanDate(b.install); c.installTime = typeof b.time === "string" ? b.time : null; c.installDays = Number(b.days) || 1; c.onCalendar = !!c.install; return { ok: true, calendar: c.install ? "added" : "removed" }; }
-      const open = s.invoices.find(i => i.thread_id === th!.thread.id && (i.status === "draft" || i.status === "sent"));
+      const open = s.invoices.find(i => i.thread_id === th!.thread.id && (i.status === "draft" || i.status === "sent") && !(i as { plan_id?: string }).plan_id);
       if (open) return { ok: true, invoice: open };
       const items: Item[] = q?.items?.length ? q.items : [{ name: `${detailLine("Fence", cleanDetails("Fence", c.details)) || "Job"}, installed`, qty: 1, unit: "", price: c.value ?? q?.amount ?? 0 }];
+      for (const co of s.cos.filter(x => x.thread_id === th!.thread.id && x.status === "approved" && !x.invoiced)) { items.push(...changeOrderLines(co)); co.invoiced = true; }
       const inv = { id: "iv" + Date.now(), thread_id: th!.thread.id, number: 1001 + s.invoices.length + 41, status: "draft", items, tax_rate: q?.tax_rate ?? 0, total: totals(items, q?.tax_rate ?? 0).total, note: "",
         due_on: at(7, 12).slice(0, 10), sent_at: null, viewed_at: null, paid_at: null, paid_claimed_at: null, reminders: 0, reminders_paused: false, url: null } as CardInvoice & { thread_id: string };
       s.invoices.push(inv);
@@ -428,11 +460,57 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
         th?.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: `Hi ${(th.thread.customer_name || "").split(" ")[0]}, here's invoice #${inv.number} from Ridgeline Fence Co for $${inv.total.toLocaleString("en-US")}. You can see it and pay here: https://app.cinderrevenue.com/i/example`, at: now });
         return { ok: true, sent: true, link: EXAMPLE_INVOICE }; }
       const what = String(b.what);
-      if (what === "paid") { const left = inv.total - paidOn(inv.id); if (left > 0) s.payments.unshift({ id: "pm" + ++n, invoice_id: inv.id, thread_id: inv.thread_id, amount: left, method: "other", paid_on: now.slice(0, 10), note: "Marked paid in full" }); inv.status = "paid"; inv.paid_at = now; }
+      if (what === "paid") { const left = inv.total - paidOn(inv.id); if (left > 0) s.payments.unshift({ id: "pm" + ++n, invoice_id: inv.id, thread_id: inv.thread_id, amount: left, method: "other", paid_on: now.slice(0, 10), note: "Marked paid in full" }); inv.status = "paid"; inv.paid_at = now; queueReview(inv.thread_id); }
       else if (what === "unpaid") { s.payments = s.payments.filter(p => p.invoice_id !== inv.id); inv.status = inv.sent_at ? "sent" : "draft"; inv.paid_at = null; }
       else if (what === "void") inv.status = "void"; else if (what === "pause" || what === "resume") inv.reminders_paused = what === "pause";
       return { ok: true };
     }
+    // Service plans, change orders, crew hours, the review after payment: the same rules as the server, in memory.
+    if (b.action === "plan") {
+      const p = cleanPlan(b.input); if (!p.ok) fail(p.error);
+      const v = (p as Extract<ReturnType<typeof cleanPlan>, { ok: true }>).plan;
+      const ex = s.plans.find(x => x.id === b.plan);
+      if (ex) Object.assign(ex, v); else s.plans.push({ id: "pl" + ++n, thread_id: String(b.thread), ...v, status: "active", visits_done: 0, last_on: null, created_at: now });
+      return { ok: true };
+    }
+    if (b.action === "planset") { const p = s.plans.find(x => x.id === b.plan) ?? fail("Which plan?", 404); p!.status = b.what === "pause" ? "paused" : b.what === "resume" ? "active" : "ended"; return { ok: true }; }
+    if (b.action === "visit") {
+      const p = s.plans.find(x => x.id === b.plan && x.status === "active") ?? fail("That plan isn't active.", 409);
+      const on = p!.next_on!, next = addInterval(on, p!.every, p!.unit), done = !b.skip;
+      p!.next_on = p!.ends_on && next > p!.ends_on ? null : next; if (!p!.next_on) p!.status = "ended";
+      if (done) { p!.visits_done++; p!.last_on = on; }
+      let invoice: string | null = null;
+      if (done && p!.invoice) { const inv = { id: "iv" + Date.now(), thread_id: p!.thread_id, number: 1001 + s.invoices.length + 41, status: "sent", items: p!.items, tax_rate: p!.tax_rate, total: p!.total, note: `${p!.name}, visit on ${on}`,
+          due_on: at(7, 12).slice(0, 10), sent_at: now, viewed_at: null, paid_at: null, paid_claimed_at: null, reminders: 0, reminders_paused: false, url: EXAMPLE_INVOICE, plan_id: p!.id } as CardInvoice & { thread_id: string };
+        s.invoices.push(inv); invoice = inv.id; }
+      s.threads[p!.thread_id]?.texts.push({ id: "d" + ++n, direction: "out", author: "system", body: done ? `${p!.name}: visit on ${on} done.${invoice ? ` Invoice for ${p!.total.toLocaleString("en-US")} texted.` : ""}` : `${p!.name}: visit on ${on} skipped.`, at: now });
+      return { ok: true, next: p!.next_on, invoice, sent: !!invoice };
+    }
+    if (b.action === "co") {
+      const v = cleanChangeOrder(b.input); if (!v.ok) fail(v.error);
+      const x = v as Extract<ReturnType<typeof cleanChangeOrder>, { ok: true }>;
+      let co = s.cos.find(c => c.id === b.co);
+      if (co) Object.assign(co, { title: x.title, items: x.items, tax_rate: x.tax_rate, total: x.total, note: x.note });
+      else { co = { id: "co" + ++n, thread_id: String(b.thread), number: s.cos.filter(c => c.thread_id === b.thread).length + 1, title: x.title, items: x.items, tax_rate: x.tax_rate, total: x.total, note: x.note, status: "draft", url: null, sent_at: null, viewed_at: null, decided_at: null, signed_by: "", invoiced: false }; s.cos.push(co); }
+      if (b.send) { co.status = "sent"; co.sent_at ??= now; co.url = EXAMPLE_CO; s.threads[co.thread_id]?.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: `Here's change order #${co.number} (${co.title}) for ${co.total.toLocaleString("en-US")}. You can look it over and approve it here: https://app.cinderrevenue.com/c/example`, at: now }); return { ok: true, sent: true, link: EXAMPLE_CO }; }
+      return { ok: true, id: co.id };
+    }
+    if (b.action === "cosend") { const co = s.cos.find(c => c.id === b.co) ?? fail("Which change order?", 404); co!.status = "sent"; co!.sent_at ??= now; co!.url = EXAMPLE_CO; return { ok: true, sent: true, link: EXAMPLE_CO }; }
+    if (b.action === "coset") {
+      const co = s.cos.find(c => c.id === b.co && (c.status === "draft" || c.status === "sent")) ?? fail("That change order was already answered.", 409);
+      co!.status = b.what === "approved" ? "approved" : "void"; co!.decided_at = now;
+      if (co!.status === "approved") {
+        const open = s.invoices.find(i => i.thread_id === co!.thread_id && (i.status === "draft" || i.status === "sent") && !(i as { plan_id?: string }).plan_id); if (open) { open.items = [...open.items, ...changeOrderLines(co!)]; open.total = totals(open.items, open.tax_rate).total; co!.invoiced = true; } }
+      return { ok: true };
+    }
+    if (b.action === "clockin" || b.action === "clockout") {
+      const me = crewDemo() ? "+17205550188" : "";
+      for (const e of s.time) if (e.member === me && !e.ended_at) e.ended_at = now;
+      if (b.action === "clockin") s.time.unshift({ id: "tm" + ++n, thread_id: typeof b.thread === "string" ? b.thread : null, member: me, started_at: now, ended_at: null, note: "" });
+      return { ok: true };
+    }
+    if (b.action === "timeedit") { if (b.remove) s.time = s.time.filter(e => e.id !== b.entry); return { ok: true }; }
+    if (b.action === "reviewcancel") { const c = s.crm[String(b.thread)]; if (c) c.reviewAfter = null; return { ok: true }; }
     if (b.action === "winback") {
       const w = cleanWinback(b.body, s.setup.display_name);
       if (!w.ok) fail(w.error, 409);

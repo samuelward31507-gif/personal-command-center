@@ -9,6 +9,7 @@ import { loadCustomers, loadInvoices, loadPayments } from "@/lib/client-billing-
 import { reportFor, type Period } from "@/lib/client-reports";
 import { customerEmailReady } from "@/lib/client-email";
 import { winbackDraft } from "@/lib/crm";
+import { loadPlans, loadTime, loadVisits } from "@/lib/client-service-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +36,8 @@ export async function GET(req: Request) {
       const texts = await sql`SELECT id, direction, author, body, at, media, status FROM public.client_texts WHERE thread_id = ${th}::uuid ORDER BY at LIMIT 400`;
       return json({ thread: t, texts });
     }
-    const [live, biz, appts, unread, msgs, quotes, calRow, jobberRow, keyRow, wonJobs, board, past, customers, invoices, wires, payments] = await Promise.all([
+    const me = s.phone ? "+1" + s.phone.replace(/\D/g, "").slice(-10) : "", crewMe = s.role === "crew" ? me : "";
+    const [live, biz, appts, unread, msgs, quotes, calRow, jobberRow, keyRow, wonJobs, board, past, customers, invoices, wires, payments, plans, visits, time] = await Promise.all([
       liveFor(sql, c.projectId, 80, c.setup.timezone || "America/Denver"),
       sql`SELECT o.project_id, coalesce(o.setup->>'display_name', p.client_name, p.name) AS name, o.portal_token FROM public.client_ops o JOIN public.projects p ON p.id = o.project_id WHERE o.project_id = ANY(${s.projects}::uuid[])`,
       // Booked estimates still waiting on an outcome (up to two weeks back) and everything coming up.
@@ -60,6 +62,10 @@ export async function GET(req: Request) {
       loadInvoices(sql, c).catch(e => { console.error("Invoices failed", e instanceof Error ? e.message : e); return []; }),
       connectionsReport(sql, c).catch(e => { console.error("Connections failed", e instanceof Error ? e.message : e); return { sources: [], failures: [], log: [] }; }),
       loadPayments(sql, c).catch(() => []),
+      loadPlans(sql, c).catch(e => { console.error("Plans failed", e instanceof Error ? e.message : e); return []; }),
+      loadVisits(sql, c).catch(() => []),
+      // The owner sees everyone's hours; a crew member sees their own.
+      loadTime(sql, c, s.role === "crew" ? crewMe : null).catch(e => { console.error("Time failed", e instanceof Error ? e.message : e); return []; }),
     ]);
     // Their real calendar, read only on the Calendar tab (it's a Google call).
     let events: CalEvent[] = [], calError = "";
@@ -76,11 +82,12 @@ export async function GET(req: Request) {
     if (q.get("tab") === "sam") await sql`UPDATE public.client_messages SET read_at = now() WHERE project_id = ${c.projectId}::uuid AND author = 'owner' AND read_at IS NULL`.catch(() => null);
     const crew = s.role === "crew";
     return json({
-      role: crew ? "crew" : "owner", me: s.phone ? "+1" + s.phone.replace(/\D/g, "").slice(-10) : "", project: c.projectId,
+      role: crew ? "crew" : "owner", me, project: c.projectId,
+      plans: crew ? plans.map(p => ({ ...p, items: [], total: 0, tax_rate: 0 })) : plans, visits, time,
       emailReady: customerEmailReady(), business: c.setup.display_name || "", number: c.setup.texting_number || "", canCall: !!(c.setup.owner_cell && c.setup.texting_number),
       owner: c.setup.owner_name || "", businesses: biz, live,
       appointments: (appts as { event_id?: string }[]).map(a => ({ ...a, link: (a.event_id && links.get(a.event_id)) || "" })), quotes, quoteSteps: SEQUENCES.quote.days.length, wonJobs, hasReviewLink: !!c.setup.review_link, repeat: isRepeatTrade(c.setup.trade), calendar, messages: (msgs as Record<string, unknown>[]).reverse(), unreadFromSam: (unread as { n: number }[])[0]?.n ?? 0,
-      board: crew ? board.map(b => ({ ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 } })) : board,
+      board: crew ? board.map(b => ({ ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 }, changeOrders: (b.changeOrders ?? []).map(x => ({ ...x, items: [], total: 0, url: null })) })) : board,
       setup: crew ? { display_name: c.setup.display_name || "", owner_name: c.setup.owner_name || "", trade: c.setup.trade || "" } : { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "", team: c.setup.team || "[]", monthly_report: c.setup.monthly_report || "" },
       customers: crew ? [] : customers, invoices: crew ? [] : invoices, payments: crew ? [] : payments,
       key: String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? ""), origin, wires,

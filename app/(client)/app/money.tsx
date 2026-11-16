@@ -146,11 +146,12 @@ export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], 
 /** Payments settings: the owner's own pay link, sales tax and how long invoices give. */
 export function BillingSettings({ setup, project, api, toast, reload, onClose }: { setup: Record<string, string>; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onClose: () => void }) {
   const [link, setLink] = useState(setup.pay_link || ""), [tax, setTax] = useState(setup.tax_rate || ""), [daysDue, setDays] = useState(setup.invoice_days || "7"), [busy, setBusy] = useState(false);
+  const [rop, setRop] = useState(setup.review_on_paid !== "no"), [rate, setRate] = useState(setup.labor_rate || "");
   const [fin, setFin] = useState(setup.financing_link || ""), [finNote, setFinNote] = useState(setup.financing_note || ""), [warranty, setWarranty] = useState(setup.warranty || ""), [terms, setTerms] = useState(setup.quote_terms || "");
   return <Sheet onClose={onClose} title="Invoices and payments" sub="Used on every quote and invoice" wide
     foot={<button type="button" className="btn ink" disabled={busy} onClick={async () => {
       setBusy(true);
-      try { await api("/api/app/act", { p: project, action: "setup", setup: { pay_link: link, tax_rate: tax || "0", invoice_days: daysDue, financing_link: fin.trim() && !/^https?:\/\//.test(fin.trim()) ? "https://" + fin.trim() : fin.trim(), financing_note: finNote, warranty, quote_terms: terms } }); toast("Saved."); await reload(); onClose(); }
+      try { await api("/api/app/act", { p: project, action: "setup", setup: { pay_link: link, tax_rate: tax || "0", invoice_days: daysDue, financing_link: fin.trim() && !/^https?:\/\//.test(fin.trim()) ? "https://" + fin.trim() : fin.trim(), financing_note: finNote, warranty, quote_terms: terms, review_on_paid: rop ? "yes" : "no", labor_rate: rate } }); toast("Saved."); await reload(); onClose(); }
       catch (e) { toast(e instanceof Error ? e.message : "Couldn't save.", true); } finally { setBusy(false); }
     }}>{busy ? <Spinner /> : "Save"}</button>}>
     <label className="field"><span>Your pay link</span><input inputMode="url" value={link} onChange={e => setLink(e.target.value)} placeholder="square.link/u/yourbusiness" /></label>
@@ -167,6 +168,10 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
     <p className="fine" style={{ marginTop: -6 }}>Customers who can pay monthly say yes to the bigger option more often. The lender handles the application and pays you.</p>
     <label className="field"><span>Warranty <em>shown on the quote</em></span><input value={warranty} maxLength={300} onChange={e => setWarranty(e.target.value)} placeholder="Two years on workmanship. Materials carry the maker&rsquo;s warranty." /></label>
     <label className="field"><span>Terms <em>they agree to when they approve</em></span><textarea rows={4} value={terms} maxLength={1200} onChange={e => setTerms(e.target.value)} placeholder="Prices hold for 30 days. The deposit comes off the final invoice. The balance is due when the job is done." /></label>
+    <p className="sec" style={{ marginTop: 10 }}>After the job</p>
+    <label className={"toggle" + (setup.has_review_link === "yes" ? "" : " off")}><input type="checkbox" checked={rop && setup.has_review_link === "yes"} disabled={setup.has_review_link !== "yes"} onChange={e => setRop(e.target.checked)} /><i /><span><b>Ask for a Google review once an invoice is paid in full</b><small>{setup.has_review_link === "yes" ? "One text, a couple of hours after the money comes in, inside texting hours. Once per customer, ever." : "Needs your Google review link. Ask Sam."}</small></span></label>
+    <label className="field" style={{ maxWidth: 260 }}><span>Your own hourly labor cost <em>for clocked hours</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={rate} onChange={e => setRate(e.target.value.replace(/[^\d.]/g, ""))} placeholder="45" /><em>/hr</em></span></label>
+    <p className="fine" style={{ marginTop: -6 }}>Crew rates are on each person in Settings, Account. Clocked hours times the rate becomes the job&rsquo;s labor cost when you tap Use as labor.</p>
   </Sheet>;
 }
 
