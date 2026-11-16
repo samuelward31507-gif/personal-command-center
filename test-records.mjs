@@ -27,4 +27,6 @@ ok(() => assert.equal(R.cleanTags(Array.from({ length: 20 }, (_, i) => "t" + i))
 ok(() => assert.deepEqual(R.cleanFieldLabels(["Gate code", "gate code", " HOA ", "", "PO number"]), ["Gate code", "HOA", "PO number"]));
 ok(() => assert.equal(R.cleanFieldLabels(Array.from({ length: 15 }, (_, i) => "F" + i)).length, 10));
 ok(() => assert.deepEqual(R.cleanFieldValues({ "Gate code": " 4418 ", "Not a field": "x", HOA: "" }, ["Gate code", "HOA"]), { "Gate code": "4418" }));
+ok(() => { assert.equal(R.activityDetail("stage", { stage: "won" }), "won"); assert.equal(R.activityDetail("setup", { setup: { pay_link: "x", tax_rate: "8", owner_cell: "1", late_fee: "5%" } }), "tax_rate, late_fee", "no links or numbers in the log");
+  assert.equal(R.activityDetail("reply", { body: "secret text" }), "", "never the message"); assert.ok(R.LOGGED.paymentdelete); assert.equal(R.LOGGED.checktick, undefined); });
 console.log(`records: ${n} checks passed`);

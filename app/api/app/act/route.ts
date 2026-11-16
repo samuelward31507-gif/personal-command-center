@@ -10,6 +10,7 @@ import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
 import { replyToFor } from "@/lib/client-lead-mail-run";
 import { addExpense, deleteExpense } from "@/lib/client-expenses-run";
+import { LOGGED, activityDetail } from "@/lib/records";
 import { addFile, removeEquipment, removeFile, saveEquipment, saveTask, serviceEquipment, setTask } from "@/lib/client-records-run";
 import { setPhone, addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
@@ -44,7 +45,7 @@ const UUID = /^[0-9a-f-]{36}$/i;
  *  quotelines { thread, items, tax?, note?, send? } — the quote's lines (the owner sends it himself). install { thread, install, time?, days? } — on Google Calendar.
  *  invoice { thread } — a draft invoice for the job. invoicesave / invoicesend / invoiceset { invoice, ... } — edit, text it, paid | unpaid | void | pause | resume.
  */
-export async function POST(req: Request) {
+async function handle(req: Request) {
   const s = appSession(req);
   if (!s) return json({ error: "Sign in" }, 401);
   const b = await req.json().catch(() => ({})) as { p?: string; action?: string; thread?: string; body?: string; status?: string; appt?: string; result?: string; amount?: string; review?: boolean; quote?: string;
@@ -448,4 +449,22 @@ export async function POST(req: Request) {
     }
     return json({ error: "Unknown action." }, 400);
   } catch (e) { console.error("App action failed", e instanceof Error ? e.message : e); return json({ error: "Something went wrong." }, 500); }
+}
+
+/** Every change runs through handle(); the ones that succeed and matter get a line in the activity log. */
+export async function POST(req: Request) {
+  const body = await req.clone().json().catch(() => ({})) as Record<string, unknown>;
+  const res = await handle(req);
+  const action = String(body.action ?? "");
+  if (res.ok && LOGGED[action]) {
+    try {
+      const s = appSession(req);
+      if (s) {
+        const sql = db(), c = await clientFor(sql, s, typeof body.p === "string" ? body.p : undefined);
+        const thread = typeof body.thread === "string" && /^[0-9a-f-]{36}$/i.test(body.thread) ? body.thread : null;
+        if (c) await sql`INSERT INTO public.client_activity (project_id, who, role, action, thread_id, detail) VALUES (${c.projectId}::uuid, ${s.role === "owner" ? "" : "+1" + (s.phone || "").replace(/\D/g, "").slice(-10)}, ${s.role || "owner"}, ${action}, ${thread}::uuid, ${activityDetail(action, body)})`;
+      }
+    } catch (e) { console.error("Activity log failed", e instanceof Error ? e.message : e); }
+  }
+  return res;
 }

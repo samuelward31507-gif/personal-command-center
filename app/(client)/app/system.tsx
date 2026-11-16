@@ -9,7 +9,7 @@ import { ChecklistsSheet } from "./parity";
 import { contrastOnWhite, dominantColor, readableAccent } from "@/lib/brand";
 import { sourceLabel, type Biz, type Data, type Go, type LeadMail } from "./types";
 import { PageHead } from "./charts";
-import { FieldLabelsEditor } from "./records";
+import { ActivityLog, FieldLabelsEditor } from "./records";
 
 type View = "connections" | "tools" | "agent" | "account";
 type State = "on" | "todo" | "off" | "bad";
@@ -416,6 +416,7 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
       <li><span>Your Cinder rep</span><button type="button" className="btn sm" onClick={() => go.tab("sam")}>Message Sam</button></li>
       <li><span /><button type="button" className="btn sm" onClick={onSignOut}><Icon name="out" size={13} />{demo ? "Leave the example" : "Sign out"}</button></li>
     </ul>
+    {d.role !== "office" && d.role !== "crew" && <ActivityLog ctx={{ d, project, api, toast, reload }} go={go} />}
   </div>;
 }
 

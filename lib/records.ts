@@ -77,3 +77,24 @@ export function cleanFieldValues(v: unknown, labels: string[]): Record<string, s
   for (const l of labels) { const x = ctl(o[l], 200); if (x) out[l] = x; }
   return out;
 }
+
+// ---------- Activity log ----------
+/** The actions worth a line in the log, and how each one reads. Reading the screen or ticking a checklist isn't logged. */
+export const LOGGED: Record<string, string> = {
+  stage: "Moved a job", status: "Changed who's replying", reply: "Texted a customer", assign: "Assigned a job", lead: "Added a lead", card: "Edited a customer",
+  quotelines: "Edited a quote", quotelink: "Sent a quote", quote: "Marked a quote", invoice: "Drafted an invoice", invoicesend: "Sent an invoice", invoicesave: "Edited an invoice",
+  invoiceset: "Changed an invoice", payment: "Recorded a payment", paymentdelete: "Deleted a payment", expense: "Logged an expense", expensedelete: "Deleted an expense",
+  photodelete: "Deleted a photo", fileadd: "Added a document", fileremove: "Deleted a document", equipment: "Saved equipment", equipremove: "Removed equipment",
+  setup: "Changed settings", winback: "Sent a group text", import: "Imported customers", timeedit: "Fixed a time entry", outcome: "Logged an estimate's outcome",
+  reschedule: "Moved an estimate", setphone: "Added a phone number", mailadd: "Added a lead from email", portallink: "Sent a customer their page", photoreport: "Sent a photo report",
+  reviewnow: "Asked for a review", changeorder: "Saved a change order", plan: "Saved a service plan", task: "Added a to-do",
+};
+/** The short detail kept with a log line: the stage, the status, which settings changed. Never message text or money details. */
+export function activityDetail(action: string, b: Record<string, unknown>): string {
+  if (action === "stage") return String(b.stage ?? "");
+  if (action === "status") return String(b.status ?? "");
+  if (action === "invoiceset") return String(b.what ?? "");
+  if (action === "setup" && b.setup && typeof b.setup === "object") return Object.keys(b.setup as object).filter(k => !/link|token|cell|phone/i.test(k)).slice(0, 8).join(", ");
+  if (action === "winback") return b.tag ? `tag: ${String(b.tag).slice(0, 30)}` : "past customers";
+  return "";
+}

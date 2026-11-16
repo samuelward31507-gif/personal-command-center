@@ -3,7 +3,7 @@
 // Equipment at a customer's address, documents on their job, and the office's to-dos.
 import { useMemo, useState } from "react";
 import { Icon, Sheet, Spinner, dateLabel, type Api, type Toast } from "./parts";
-import { EQUIPMENT_KINDS, ageYears, taskOrder, type Equipment } from "@/lib/records";
+import { EQUIPMENT_KINDS, LOGGED, ageYears, taskOrder, type Equipment } from "@/lib/records";
 import type { Data, Go } from "./types";
 
 type Ctx = { d: Data; project: string; api: Api; toast: Toast; reload: () => Promise<void> };
@@ -143,4 +143,21 @@ export function FieldLabelsEditor({ ctx }: { ctx: Ctx }) {
     <span className="tag-row">{labels.map(l => <span key={l} className="tagx">{l}<button type="button" aria-label={`Remove ${l}`} disabled={busy} onClick={() => void save(labels.filter(x => x !== l))}>×</button></span>)}
       {labels.length < 10 && <form onSubmit={e => { e.preventDefault(); if (v.trim()) { void save([...labels, v.trim()]); setV(""); } }}><input className="input sm" style={{ width: 160 }} value={v} onChange={e => setV(e.target.value)} placeholder="Add a field" disabled={busy} /></form>}</span>
   </li>;
+}
+
+// ---------- Who did what ----------
+export function ActivityLog({ ctx, go }: { ctx: Ctx; go: Go }) {
+  const list = ctx.d.activity ?? [];
+  const [all, setAll] = useState(false);
+  const team = (() => { try { const v = JSON.parse(ctx.d.setup?.team || "[]"); return Array.isArray(v) ? (v as { cell: string; name: string }[]) : []; } catch { return []; } })();
+  const who = (cell: string) => !cell ? (ctx.d.owner ? ctx.d.owner.split(" ")[0] : "You") : team.find(m => m.cell.replace(/\D/g, "").slice(-10) === cell.replace(/\D/g, "").slice(-10))?.name || cell;
+  if (!list.length) return null;
+  const shown = all ? list : list.slice(0, 15);
+  return <>
+    <p className="sec" style={{ marginTop: 20 }}>Activity<small>who did what, newest first</small></p>
+    <table className="tbl flush log"><tbody>{shown.map((a, i) => <tr key={i} onClick={a.thread ? () => go.record(a.thread!) : undefined} style={{ cursor: a.thread ? "pointer" : "default" }}>
+      <td className="mut nowrap">{new Date(a.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</td>
+      <td className="nowrap"><b>{who(a.who)}</b></td><td>{LOGGED[a.action] ?? a.action}{a.detail ? <span className="mut">, {a.detail}</span> : null}</td><td className="mut ell">{a.customer}</td></tr>)}</tbody></table>
+    {list.length > 15 && !all && <button type="button" className="link" style={{ padding: "8px 0" }} onClick={() => setAll(true)}>Show all {list.length}</button>}
+  </>;
 }
