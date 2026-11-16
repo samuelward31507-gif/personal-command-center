@@ -40,7 +40,7 @@ export function demoText(i: { firstName?: string; company?: string; niche?: stri
   let link = /^https:\/\/\S+$/.test(custom) && custom.replace(/\/$/, "") !== DEFAULT_DEMO_LINK ? custom
     : i.niche === "detailing" || i.niche === "pool" ? "https://cinderrevenue.com/demo"
     : i.niche === "fence" ? "https://cinderrevenue.com/watch?story=fence" : "https://cinderrevenue.com/watch";
-  if (/^https:\/\/cinderrevenue\.com\/watch/.test(link)) {
+  if (/^https:\/\/cinderrevenue\.com\/(watch|demo)/.test(link)) {
     const u = new URL(link);
     if (i.firstName?.trim()) u.searchParams.set("n", i.firstName.trim());
     if (i.company?.trim()) u.searchParams.set("b", i.company.trim());
