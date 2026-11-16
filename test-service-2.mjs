@@ -75,3 +75,15 @@ ok(() => { const id = "0b9a5c7e-1111-4222-8333-444455556666", s = qboState(id); 
   ok(() => assert.deepEqual(r, [{ name: "Luis", pct: 5, collected: 5500.5, jobs: 2, owed: 275.03 }], "only people with a percentage; only the period; only their jobs"));
   ok(() => { const t = parseTeam(JSON.stringify([{ name: "Luis", cell: "7205550188", commission: "7.5%" }, { name: "Max", cell: "7205550199", commission: "90" }])); assert.equal(t[0].commission, 7.5); assert.equal(t[1].commission, undefined, "at most 50%"); }); }
 console.log(`service 2: ${n} checks passed`);
+
+// Refunds: never more than came in, less what already went back.
+{ const { refundProblem } = await import("./lib/service.ts");
+  assert.equal(refundProblem(1000, 0, 200), null);
+  assert.equal(refundProblem(1000, 800, 200), null, "exactly what's left");
+  assert.match(refundProblem(1000, 800, 250), /more than the \$200 paid/);
+  assert.match(refundProblem(1000, 1000, 1), /already refunded/);
+  assert.match(refundProblem(0, 0, 50), /Nothing has been paid/);
+  assert.match(refundProblem(1000, 0, 0), /Type the amount/);
+  assert.match(refundProblem(1000, 0, NaN), /Type the amount/);
+  assert.match(refundProblem(500.5, 0, 600), /\$500\.50/);
+  console.log("refunds ok"); }

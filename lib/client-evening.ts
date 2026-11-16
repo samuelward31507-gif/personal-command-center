@@ -17,7 +17,8 @@ export async function eveningFor(sql: Sql, pid: string, tz: string): Promise<Eve
       (SELECT count(*)::int FROM public.client_appointments a WHERE a.project_id = ${pid}::uuid AND a.created_at > now() - interval '24 hours') AS booked,
       (SELECT count(*)::int FROM public.client_quotes q WHERE q.project_id = ${pid}::uuid AND q.status = 'won' AND q.steps_sent > 0 AND q.last_step_at > now() - interval '24 hours') AS quotes_back,
       (SELECT coalesce(sum(q.amount), 0)::float FROM public.client_quotes q WHERE q.project_id = ${pid}::uuid AND q.status = 'won' AND q.steps_sent > 0 AND q.last_step_at > now() - interval '24 hours') AS quotes_back_value,
-      (SELECT coalesce(sum(p.amount), 0)::float FROM public.client_payments p WHERE p.project_id = ${pid}::uuid AND p.created_at > now() - interval '24 hours' AND p.import_id IS NULL) AS paid,
+      (SELECT coalesce(sum(p.amount), 0)::float FROM public.client_payments p WHERE p.project_id = ${pid}::uuid AND p.created_at > now() - interval '24 hours' AND p.import_id IS NULL)
+        - (SELECT coalesce(sum(r.amount), 0)::float FROM public.client_refunds r WHERE r.project_id = ${pid}::uuid AND r.created_at > now() - interval '24 hours') AS paid,
       (SELECT count(*)::int FROM public.client_reviews v WHERE v.project_id = ${pid}::uuid AND v.sent_at > now() - interval '24 hours') AS reviews` as Record<string, unknown>[];
   return { since: new Date(Date.now() - 86400000).toISOString(), leads: Number(r?.leads ?? 0), afterHours: Number(r?.after_hours ?? 0), replySec: r?.reply_sec == null ? null : Math.round(Number(r.reply_sec)),
     booked: Number(r?.booked ?? 0), quotesBack: Number(r?.quotes_back ?? 0), quotesBackValue: Number(r?.quotes_back_value ?? 0), paid: Number(r?.paid ?? 0), reviews: Number(r?.reviews ?? 0) };

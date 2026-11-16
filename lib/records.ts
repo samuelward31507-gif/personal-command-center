@@ -83,7 +83,7 @@ export function cleanFieldValues(v: unknown, labels: string[]): Record<string, s
 export const LOGGED: Record<string, string> = {
   stage: "Moved a job", status: "Changed who's replying", reply: "Texted a customer", assign: "Assigned a job", lead: "Added a lead", card: "Edited a customer",
   quotelines: "Edited a quote", quotelink: "Sent a quote", quote: "Marked a quote", invoice: "Drafted an invoice", invoicesend: "Sent an invoice", invoicesave: "Edited an invoice",
-  invoiceset: "Changed an invoice", payment: "Recorded a payment", paymentdelete: "Deleted a payment", expense: "Logged an expense", expensedelete: "Deleted an expense",
+  invoiceset: "Changed an invoice", payment: "Recorded a payment", paymentdelete: "Deleted a payment", refund: "Recorded a refund", refunddelete: "Deleted a refund", expense: "Logged an expense", expensedelete: "Deleted an expense",
   photodelete: "Deleted a photo", fileadd: "Added a document", fileremove: "Deleted a document", equipment: "Saved equipment", equipremove: "Removed equipment",
   setup: "Changed settings", winback: "Sent a group text", import: "Imported customers", timeedit: "Fixed a time entry", outcome: "Logged an estimate's outcome",
   reschedule: "Moved an estimate", setphone: "Added a phone number", mailadd: "Added a lead from email", portallink: "Sent a customer their page", photoreport: "Sent a photo report",

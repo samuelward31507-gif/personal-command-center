@@ -14,7 +14,7 @@ import { LOGGED, activityDetail } from "@/lib/records";
 import { addFile, removeEquipment, removeFile, saveEquipment, saveTask, serviceEquipment, setTask } from "@/lib/client-records-run";
 import { setPhone, addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
-import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
+import { createInvoice, deletePayment, deleteRefund, recordPayment, recordRefund, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 import { clockIn, clockOut, editTime, planVisit, saveChangeOrder, savePlan, sendChangeOrder, setChangeOrder, setPlan } from "@/lib/client-service-run";
 import { portalLink, saveSignoff } from "@/lib/client-portal-run";
 import { saveProperty, setChecklist, tickChecklist } from "@/lib/client-parity-run";
@@ -332,6 +332,17 @@ async function handle(req: Request) {
       if (!b.invoice || !UUID.test(b.invoice)) return json({ error: "Which invoice?" }, 400);
       const r = await recordPayment(sql, c, b.invoice, { amount: b.amount, method: b.method, on: b.on, note: b.note });
       return r.ok ? json({ ok: true, balance: r.balance }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "refund" || b.action === "refunddelete") {
+      if (s.role === "crew") return json({ error: "Only the office can refund." }, 403);
+      if (b.action === "refunddelete") {
+        if (!b.payment || !UUID.test(b.payment)) return json({ error: "Which refund?" }, 400);
+        const r = await deleteRefund(sql, c, b.payment);
+        return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
+      }
+      if (!b.invoice || !UUID.test(b.invoice)) return json({ error: "Which invoice?" }, 400);
+      const r = await recordRefund(sql, c, b.invoice, { amount: b.amount, method: b.method, on: b.on, note: b.note });
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     if (b.action === "paymentdelete") {
       if (!b.payment || !UUID.test(b.payment)) return json({ error: "Which payment?" }, 400);

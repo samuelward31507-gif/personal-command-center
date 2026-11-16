@@ -210,3 +210,13 @@ export function commissions(team: { cell: string; name: string; commission?: num
     return { name: m.name || m.cell, pct: m.commission!, collected, jobs: new Set(mine.map(p => p.thread_id)).size, owed: Math.round(collected * m.commission! ) / 100 };
   }).sort((a, b) => b.owed - a.owed);
 }
+
+/** Whether a refund can go out: never more than what came in on the invoice less what was already given back. */
+export function refundProblem(paid: number, refunded: number, amount: number): string | null {
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  if (!Number.isFinite(amount) || amount <= 0) return "Type the amount, like 200.";
+  const room = r2(paid - refunded);
+  if (room <= 0) return paid > 0 ? "Everything paid on this invoice was already refunded." : "Nothing has been paid on this invoice yet.";
+  if (r2(amount) > room + 0.005) return `That's more than the $${room.toLocaleString("en-US", { minimumFractionDigits: room % 1 ? 2 : 0, maximumFractionDigits: 2 })} paid.`;
+  return null;
+}

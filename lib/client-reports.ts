@@ -54,7 +54,8 @@ async function numbers(sql: Sql, pid: string, tz: string, from: string, to: stri
   const [m] = await sql`SELECT
       coalesce((SELECT sum(amount) FROM public.client_payments WHERE project_id = ${pid}::uuid AND paid_on >= ${from}::date AND paid_on < ${to}::date), 0)
         + coalesce((SELECT sum(total) FROM public.client_invoices i WHERE i.project_id = ${pid}::uuid AND i.status = 'paid' AND i.paid_at >= ${from}::timestamptz AND i.paid_at < ${to}::timestamptz
-          AND NOT EXISTS (SELECT 1 FROM public.client_payments p WHERE p.invoice_id = i.id)), 0) AS collected,
+          AND NOT EXISTS (SELECT 1 FROM public.client_payments p WHERE p.invoice_id = i.id)), 0)
+        - coalesce((SELECT sum(amount) FROM public.client_refunds WHERE project_id = ${pid}::uuid AND refunded_on >= ${from}::date AND refunded_on < ${to}::date), 0) AS collected,
       coalesce((SELECT sum(total) FROM public.client_invoices WHERE project_id = ${pid}::uuid AND status <> 'void' AND sent_at >= ${from}::timestamptz AND sent_at < ${to}::timestamptz), 0) AS invoiced,
       (SELECT avg(extract(epoch FROM (paid_at - sent_at)) / 86400) FROM public.client_invoices WHERE project_id = ${pid}::uuid AND status = 'paid' AND sent_at IS NOT NULL AND paid_at >= ${from}::timestamptz AND paid_at < ${to}::timestamptz) AS pay_days,
       (SELECT count(*) FROM public.client_appointments WHERE project_id = ${pid}::uuid AND starts_at >= ${from}::timestamptz AND starts_at < least(${to}::timestamptz, now()) AND status <> 'canceled')::int AS appts,
@@ -79,7 +80,8 @@ export async function reportFor(sql: Sql, pid: string, tz: string, days: Period)
         count(*) FILTER (WHERE t.stage IN ('quoted', 'won'))::int AS quoted,
         count(*) FILTER (WHERE t.stage = 'won')::int AS won,
         coalesce(sum(t.value) FILTER (WHERE t.stage = 'won'), 0)::float AS won_value,
-        coalesce(sum((SELECT sum(p.amount) FROM public.client_payments p WHERE p.thread_id = t.id)), 0)::float AS paid
+        coalesce(sum((SELECT sum(p.amount) FROM public.client_payments p WHERE p.thread_id = t.id)), 0)::float
+          - coalesce(sum((SELECT sum(r.amount) FROM public.client_refunds r WHERE r.thread_id = t.id)), 0)::float AS paid
       FROM public.client_threads t WHERE t.project_id = ${pid}::uuid AND t.source <> ALL(${NOT_LEADS}::text[]) AND t.created_at >= ${from.toISOString()}::timestamptz
       GROUP BY 1 ORDER BY 6 DESC, 2 DESC` as Promise<Record<string, unknown>[]>,
     sql`SELECT substring(z.body FROM '^Marked lost: (.+?)\\. Follow-ups stopped\\.$') AS reason, count(*)::int AS n
@@ -91,8 +93,9 @@ export async function reportFor(sql: Sql, pid: string, tz: string, days: Period)
         count(*) FILTER (WHERE t.stage IN ('booked', 'quoted', 'won') OR t.status = 'booked' OR EXISTS (SELECT 1 FROM public.client_appointments a WHERE a.thread_id = t.id))::int AS booked,
         count(*) FILTER (WHERE t.stage = 'won')::int AS won, coalesce(sum(t.value) FILTER (WHERE t.stage = 'won'), 0)::float AS won_value
       FROM public.client_threads t WHERE t.project_id = ${pid}::uuid AND t.source <> ALL(${NOT_LEADS}::text[]) AND t.created_at >= ${from.toISOString()}::timestamptz GROUP BY 1 ORDER BY 1` as Promise<Record<string, unknown>[]>,
-    sql`SELECT to_char(date_trunc(${unit}, paid_on::timestamp), 'YYYY-MM-DD') AS k, sum(amount)::float AS collected FROM public.client_payments
-      WHERE project_id = ${pid}::uuid AND paid_on >= ${from.toISOString()}::date GROUP BY 1`.catch(() => []) as Promise<Record<string, unknown>[]>,
+    sql`SELECT to_char(date_trunc(${unit}, d::timestamp), 'YYYY-MM-DD') AS k, sum(a)::float AS collected FROM (
+        SELECT paid_on AS d, amount AS a FROM public.client_payments WHERE project_id = ${pid}::uuid AND paid_on >= ${from.toISOString()}::date
+        UNION ALL SELECT refunded_on, -amount FROM public.client_refunds WHERE project_id = ${pid}::uuid AND refunded_on >= ${from.toISOString()}::date) m GROUP BY 1`.catch(() => []) as Promise<Record<string, unknown>[]>,
   ]);
   const paid = new Map(pay.map(r => [String(r.k), Number(r.collected) || 0]));
   return {

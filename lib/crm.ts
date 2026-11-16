@@ -327,7 +327,8 @@ export type CardInvoice = { id: string; number: number; status: string; items: {
   due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null;
   /** What has come in so far, from recorded payments. Balance is total minus this. */
   paid_amount?: number };
-export type Payment = { id: string; invoice_id: string; thread_id: string; amount: number; method: PayMethod; paid_on: string; note: string; number?: number; customer?: string };
+/** A payment, or a refund (refund: true, amount below zero) so every sum over the list nets out on its own. */
+export type Payment = { id: string; invoice_id: string; thread_id: string; amount: number; method: PayMethod; paid_on: string; note: string; number?: number; customer?: string; refund?: boolean };
 export const PAY_METHODS = [["card", "Card, through your pay link"], ["cash", "Cash"], ["check", "Check"], ["bank", "Bank transfer, Zelle or Venmo"], ["other", "Other"]] as const;
 export type PayMethod = (typeof PAY_METHODS)[number][0];
 export const cleanPayMethod = (v: unknown): PayMethod => (PAY_METHODS.some(m => m[0] === v) ? v as PayMethod : "other");

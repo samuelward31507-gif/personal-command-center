@@ -5,7 +5,7 @@ import { randomBytes } from "node:crypto";
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { chosen, cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, type Item } from "@/lib/billing";
 import { cleanDate, cleanDetails, cleanPayMethod, detailLine, type Payment } from "@/lib/crm";
-import { changeOrderLines, lateFeeOn } from "@/lib/service";
+import { changeOrderLines, lateFeeOn, refundProblem } from "@/lib/service";
 import { qboDeletePayment, qboSyncInvoice, qboSyncPayment } from "@/lib/qbo";
 import { digits10, inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, appOrigin, clientById, sendToCustomer, type Client } from "@/lib/client-runtime-run";
@@ -150,12 +150,44 @@ export async function deletePayment(sql: Sql, c: Client, paymentId: string): Pro
   return { ok: true };
 }
 
+/**
+ * Money given back on an invoice. It lowers what the invoice charged by the same amount, so the balance stays where it
+ * was (no reminders, no reopening) and collected money goes down. Typed wrong? Delete it. The money itself goes back
+ * through the owner's own account; this only records it.
+ */
+export async function recordRefund(sql: Sql, c: Client, invoiceId: string, input: { amount?: unknown; method?: unknown; on?: unknown; note?: unknown }): Promise<{ ok: boolean; error?: string }> {
+  const [inv] = await sql`SELECT i.id, i.thread_id, i.number, i.status,
+      coalesce((SELECT sum(amount) FROM public.client_payments p WHERE p.invoice_id = i.id), 0)::float AS paid,
+      coalesce((SELECT sum(amount) FROM public.client_refunds r WHERE r.invoice_id = i.id), 0)::float AS refunded
+    FROM public.client_invoices i WHERE i.id = ${invoiceId}::uuid AND i.project_id = ${c.projectId}::uuid` as { id: string; thread_id: string; number: number; status: string; paid: number; refunded: number }[];
+  if (!inv) return { ok: false, error: "That invoice isn't here." };
+  if (inv.status === "void") return { ok: false, error: "That invoice was voided." };
+  const amount = round2(Number(String(input.amount ?? "").replace(/[$,\s]/g, "")));
+  const problem = refundProblem(inv.paid, inv.refunded, amount);
+  if (problem) return { ok: false, error: problem };
+  const on = cleanDate(input.on) ?? new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" });
+  const note = String(input.note ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 200);
+  await sql`INSERT INTO public.client_refunds (owner_id, project_id, invoice_id, thread_id, amount, method, refunded_on, note) VALUES (${c.owner}, ${c.projectId}::uuid, ${inv.id}::uuid, ${inv.thread_id}::uuid, ${amount}, ${cleanPayMethod(input.method)}, ${on}::date, ${note})`;
+  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${inv.thread_id}::uuid, 'out', 'system', ${`Refund of ${dollars(amount)} recorded on invoice #${inv.number}${note ? `: ${note}` : ""}.`})`;
+  return { ok: true };
+}
+/** Takes a recorded refund back off (typed wrong). */
+export async function deleteRefund(sql: Sql, c: Client, refundId: string): Promise<{ ok: boolean; error?: string }> {
+  const [r] = await sql`DELETE FROM public.client_refunds WHERE id = ${refundId}::uuid AND project_id = ${c.projectId}::uuid RETURNING id` as { id: string }[];
+  return r ? { ok: true } : { ok: false, error: "That refund was already removed." };
+}
+
 /** Every payment recorded, newest first: the Money screen's payments list and the invoice sheet's history. */
 export async function loadPayments(sql: Sql, c: Client, limit = 200): Promise<Payment[]> {
   const rows = await sql`SELECT p.id, p.invoice_id, p.thread_id, p.amount::float AS amount, p.method, p.paid_on::text AS paid_on, p.note, i.number, t.customer_name
-    FROM public.client_payments p JOIN public.client_invoices i ON i.id = p.invoice_id JOIN public.client_threads t ON t.id = p.thread_id
-    WHERE p.project_id = ${c.projectId}::uuid ORDER BY p.paid_on DESC, p.created_at DESC LIMIT ${limit}` as Record<string, unknown>[];
-  return rows.map(r => ({ id: String(r.id), invoice_id: String(r.invoice_id), thread_id: String(r.thread_id), amount: Number(r.amount), method: cleanPayMethod(r.method), paid_on: String(r.paid_on).slice(0, 10), note: String(r.note ?? ""), number: Number(r.number), customer: String(r.customer_name ?? "") }));
+    , false AS refund, p.created_at FROM public.client_payments p JOIN public.client_invoices i ON i.id = p.invoice_id JOIN public.client_threads t ON t.id = p.thread_id
+    WHERE p.project_id = ${c.projectId}::uuid
+    UNION ALL
+    SELECT r.id, r.invoice_id, r.thread_id, -r.amount::float, r.method, r.refunded_on::text, r.note, i.number, t.customer_name, true, r.created_at
+    FROM public.client_refunds r JOIN public.client_invoices i ON i.id = r.invoice_id JOIN public.client_threads t ON t.id = r.thread_id
+    WHERE r.project_id = ${c.projectId}::uuid
+    ORDER BY 6 DESC, 11 DESC LIMIT ${limit}` as Record<string, unknown>[];
+  return rows.map(r => ({ id: String(r.id), invoice_id: String(r.invoice_id), thread_id: String(r.thread_id), amount: Number(r.amount), method: cleanPayMethod(r.method), paid_on: String(r.paid_on).slice(0, 10), note: String(r.note ?? ""), number: Number(r.number), customer: String(r.customer_name ?? "") , ...(r.refund === true ? { refund: true } : {}) }));
 }
 
 /** A draft invoice for a won job: the quote's lines when there are some, else one line for the job value. */
@@ -252,7 +284,7 @@ export async function setInvoice(sql: Sql, c: Client, invoiceId: string, what: "
     const [i] = await sql`SELECT total::float AS total, paid_amount::float AS paid, status FROM public.client_invoices WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid` as { total: number; paid: number; status: string }[];
     if (i && (i.status === "draft" || i.status === "sent") && i.total - i.paid > 0.005) return recordPayment(sql, c, invoiceId, { amount: round2(i.total - i.paid), method: "other", note: "Marked paid in full" });
   }
-  if (what === "unpaid") { const gone = await sql`DELETE FROM public.client_payments WHERE invoice_id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid RETURNING qbo_id` as { qbo_id: string }[]; for (const g of gone) await qboDeletePayment(sql, c.projectId, g.qbo_id); }
+  if (what === "unpaid") { await sql`DELETE FROM public.client_refunds WHERE invoice_id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid`; const gone = await sql`DELETE FROM public.client_payments WHERE invoice_id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid RETURNING qbo_id` as { qbo_id: string }[]; for (const g of gone) await qboDeletePayment(sql, c.projectId, g.qbo_id); }
   const r = what === "paid" ? await sql`UPDATE public.client_invoices SET status = 'paid', paid_at = now() WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status IN ('draft', 'sent') RETURNING thread_id, number, total`
     : what === "unpaid" ? await sql`UPDATE public.client_invoices SET status = CASE WHEN sent_at IS NULL THEN 'draft' ELSE 'sent' END, paid_at = NULL, paid_amount = 0 WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status = 'paid' RETURNING thread_id, number, total`
     : what === "void" ? await sql`UPDATE public.client_invoices SET status = 'void' WHERE id = ${invoiceId}::uuid AND project_id = ${c.projectId}::uuid AND status IN ('draft', 'sent') RETURNING thread_id, number, total`
@@ -267,7 +299,7 @@ export async function setInvoice(sql: Sql, c: Client, invoiceId: string, what: "
 }
 
 export type PublicInvoice = { business: string; owner: string; phone: string; customer: string; number: number; items: Item[]; tax_rate: number; total: number; note: string;
-  due_on: string | null; issued: string; status: "open" | "paid" | "void"; pay_link: string; claimed: boolean; address: string; paid_amount: number; payments: { amount: number; paid_on: string }[] };
+  due_on: string | null; issued: string; status: "open" | "paid" | "void"; pay_link: string; claimed: boolean; address: string; paid_amount: number; payments: { amount: number; paid_on: string }[]; refunds?: { amount: number; paid_on: string }[] };
 /** What the customer sees behind the invoice link. Marks it viewed. */
 export async function publicInvoice(sql: Sql, token: string): Promise<PublicInvoice | null> {
   if (!INVOICE_TOKEN.test(token)) return null;
@@ -282,7 +314,8 @@ export async function publicInvoice(sql: Sql, token: string): Promise<PublicInvo
     due_on: r.due_on ? String(r.due_on).slice(0, 10) : null, issued: new Date(String(r.sent_at ?? r.created_at)).toISOString().slice(0, 10),
     status: r.status === "paid" ? "paid" : r.status === "void" ? "void" : "open", pay_link: c.setup.pay_link || "", claimed: !!r.paid_claimed_at, address: String(d.address ?? ""),
     paid_amount: Number(r.paid_amount ?? 0),
-    payments: (await sql`SELECT amount::float AS amount, paid_on::text AS paid_on FROM public.client_payments WHERE invoice_id = ${String(r.id)}::uuid ORDER BY paid_on` as { amount: number; paid_on: string }[]).map(p => ({ amount: Number(p.amount), paid_on: String(p.paid_on).slice(0, 10) })) };
+    payments: (await sql`SELECT amount::float AS amount, paid_on::text AS paid_on FROM public.client_payments WHERE invoice_id = ${String(r.id)}::uuid ORDER BY paid_on` as { amount: number; paid_on: string }[]).map(p => ({ amount: Number(p.amount), paid_on: String(p.paid_on).slice(0, 10) })),
+    refunds: (await sql`SELECT amount::float AS amount, refunded_on::text AS paid_on FROM public.client_refunds WHERE invoice_id = ${String(r.id)}::uuid ORDER BY refunded_on`.catch(() => []) as { amount: number; paid_on: string }[]).map(p => ({ amount: Number(p.amount), paid_on: String(p.paid_on).slice(0, 10) })) };
 }
 /** The customer says they paid. Cinder can't see the money, so the owner checks and marks it paid. */
 export async function claimPaid(sql: Sql, token: string): Promise<{ ok: boolean; error?: string }> {
