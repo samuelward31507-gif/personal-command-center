@@ -36,7 +36,7 @@ const secondary = [
   ["leads", "Lead finder", "search", "/crm/leads"],
   ["content", "Content", "megaphone", "/crm/content"],
   ["groups", "Groups", "groups", "/crm/groups"],
-  ["preparation", "Research", "bulb", "/crm/preparation"],
+  ["preparation", "Research", "search", "/crm/preparation"],
   ["practice", "Practice", "mic", "/crm/practice"],
   ["funnel", "Funnel", "chart", "/crm/funnel"],
 ] as const;
