@@ -29,8 +29,14 @@ export type NItem = { ref: string; name: string; unit: string; price: number; co
 export type PayMethod = "card" | "cash" | "check" | "bank" | "other";
 /** A payment on an invoice: matched to the invoice by its number (or the source's invoice ID). */
 export type NPayment = { ref: string; customerRef: string; invoiceRef?: string; invoiceNumber?: string; amount: number; date: string | null; method: PayMethod; note?: string };
-export type Staged = { customers: NCustomer[]; quotes: NQuote[]; jobs: NJob[]; invoices: NInvoice[]; plans: NPlan[]; items: NItem[]; payments: NPayment[]; notes: string[] };
-export const emptyStaged = (): Staged => ({ customers: [], quotes: [], jobs: [], invoices: [], plans: [], items: [], payments: [], notes: [] });
+/** Someone on the team: they sign in with their cell, so a cell is required. Never "owner": that stays with the owner's own cell. */
+export type NMember = { ref: string; name: string; phone: string; role: "crew" | "office"; rate?: number };
+export type Staged = { customers: NCustomer[]; quotes: NQuote[]; jobs: NJob[]; invoices: NInvoice[]; plans: NPlan[]; items: NItem[]; payments: NPayment[]; team: NMember[]; notes: string[] };
+export const emptyStaged = (): Staged => ({ customers: [], quotes: [], jobs: [], invoices: [], plans: [], items: [], payments: [], team: [], notes: [] });
+/** Office for anyone who runs the business side (admins, managers, dispatch, CSRs, bookkeeping); crew for everyone else. */
+export function teamRole(v: unknown): "crew" | "office" {
+  return /owner|admin|manager|dispatch|office|csr|customer service|scheduler|bookkeep|account|sales|estimator/i.test(String(v ?? "")) ? "office" : "crew";
+}
 
 export const SOURCES = [
   { key: "jobber", name: "Jobber", how: "connect" },
@@ -134,8 +140,8 @@ export function jobStatus(v: unknown, start?: string | null, today = new Date().
 }
 
 // ---------- Spreadsheets: what each column is ----------
-export type Kind = "customers" | "quotes" | "jobs" | "invoices" | "payments" | "plans" | "items";
-export const KIND_LABEL: Record<Kind, string> = { customers: "Customers", quotes: "Quotes or estimates", jobs: "Jobs or visits", invoices: "Invoices", payments: "Payments", plans: "Service plans or memberships", items: "Price list or items" };
+export type Kind = "customers" | "quotes" | "jobs" | "invoices" | "payments" | "plans" | "items" | "team";
+export const KIND_LABEL: Record<Kind, string> = { customers: "Customers", quotes: "Quotes or estimates", jobs: "Jobs or visits", invoices: "Invoices", payments: "Payments", plans: "Service plans or memberships", items: "Price list or items", team: "Your team" };
 export type Field = { key: string; label: string; aliases: string[] };
 const F = (key: string, label: string, aliases: string[]): Field => ({ key, label, aliases });
 const PERSON = [
@@ -178,6 +184,9 @@ export const FIELDS: Record<Kind, Field[]> = {
     F("price", "Price per visit", ["pricepervisit", "visitprice", "price", "amount", "rate", "fee", "recurringprice", "recurringamount", "total"]),
     F("every", "How often", ["frequency", "howoften", "every", "interval", "recurrence", "billingfrequency", "schedule", "visitfrequency", "period"]),
     F("next", "Next visit", ["nextvisit", "nextservice", "nextservicedate", "nextdate", "nextappointment", "renewaldate", "nextbilling", "startdate", "start"]), ...ADDRESS],
+  team: [F("ref", "Employee ID", ["id", "employeeid", "userid", "technicianid", "staffid"]), F("name", "Full name", [...PERSON[1].aliases, "employee", "employeename", "technician", "technicianname", "techname", "staffname", "username", "user", "teammember"]), ...PERSON.slice(2),
+    F("role", "Role", ["role", "permissions", "permission", "accesslevel", "usertype", "position", "jobtitle", "title", "department"]),
+    F("rate", "Hourly rate", ["hourlyrate", "rate", "wage", "payrate", "hourlywage", "laborrate", "costperhour", "hourlycost"])],
   items: [F("name", "Name", ["name", "itemname", "productservice", "productname", "service", "servicename", "item", "title", "lineitem", "description"]), F("unit", "Unit", ["unit", "unitofmeasure", "uom", "per"]),
     F("price", "Price", ["price", "unitprice", "rate", "salesprice", "saleprice", "unitcost", "defaultprice", "pricerate", "amount"]), F("cost", "Your cost", ["cost", "purchasecost", "yourcost", "materialcost", "costprice"])],
 };
@@ -199,6 +208,7 @@ export function guessMapping(headers: string[], kind: Kind): Mapping {
 export function guessKind(headers: string[]): Kind {
   const hs = headers.map(normHeader).join(" ");
   if (/paymentid|paymentdate|paymentmethod|paymentamount|datepaid|paidon|tender/.test(hs)) return "payments";
+  if (/employee|technician|accesslevel|permission|hourlyrate|payrate|wage|staff/.test(hs)) return "team";
   if (/membership|agreement|serviceplan|maintenanceplan|frequency|recurrence|nextvisit|nextservice/.test(hs)) return "plans";
   if (/invoice|balancedue|amountdue|amountpaid/.test(hs)) return "invoices";
   if (/quote|estimate/.test(hs)) return "quotes";
@@ -235,6 +245,14 @@ export function stageSheet(sheet: Sheet, kind: Kind, m: Mapping, prefix: string,
   const skipped: { line: number; why: string }[] = [];
   sheet.rows.forEach((row, i) => {
     const g = (k: string) => cellOf(row, m, k), line = i + 2, own = g("ref") ? `${prefix}:${g("ref")}` : "";
+    if (kind === "team") {
+      const p = personOf(row, m);
+      if (!p.name && !p.phone) { skipped.push({ line, why: "No name or cell" }); return; }
+      if (!p.phone) { skipped.push({ line, why: "No cell phone (they sign in with it)" }); return; }
+      const rate = money(g("rate"));
+      into.team.push({ ref: own || `${prefix}:team:${p.phone.slice(-10)}`, name: p.name, phone: p.phone, role: teamRole(g("role")), ...(rate > 0 && rate <= 500 ? { rate } : {}) });
+      return;
+    }
     if (kind === "items") {
       const name = ctl(g("name"), 120); if (!name) { skipped.push({ line, why: "No name" }); return; }
       into.items.push({ ref: own || `${prefix}:item:${normName(name)}`, name, unit: ctl(g("unit"), 12), price: Math.max(0, money(g("price"))), ...(money(g("cost")) > 0 ? { cost: money(g("cost")) } : {}) });
@@ -341,7 +359,7 @@ export function dedupe(customers: NCustomer[], splits: string[] = []): { custome
 export type Decisions = { splits?: string[]; phones?: Record<string, string> };
 export type Preview = {
   customers: number; merged: number; properties: number; openQuotes: number; openQuotesValue: number; scheduledJobs: number; unpaidInvoices: number; unpaidValue: number;
-  plans: number; items: number; payments: number; paymentsUnmatched: number; missingPhone: { ref: string; name: string; email: string }[]; merges: Merge[]; sourceCustomers: number;
+  plans: number; items: number; team: number; payments: number; paymentsUnmatched: number; missingPhone: { ref: string; name: string; email: string }[]; merges: Merge[]; sourceCustomers: number;
 };
 /**
  * The stand-in for a customer who has no phone (common for commercial and email-only customers). Records key on the
@@ -363,19 +381,27 @@ export function previewOf(s: Staged, d: Decisions = {}, today = new Date().toLoc
   return { sourceCustomers: s.customers.length, customers: customers.filter(comes).length, merged: merges.reduce((a, m) => a + m.merged.length, 0),
     properties: customers.filter(comes).reduce((a, c) => a + c.properties.length, 0), openQuotes: q.length, openQuotesValue: Math.round(q.reduce((a, x) => a + x.total, 0)),
     scheduledJobs: s.jobs.filter(j => j.status !== "done" && (!j.start || j.start >= today)).length, unpaidInvoices: open.length, unpaidValue: Math.round(open.reduce((a, i) => a + i.total - i.paid, 0) * 100) / 100,
-    plans: s.plans.length, items: s.items.length, payments: (s.payments ?? []).filter(x => invoiceRefOf(s, x)).length, paymentsUnmatched: (s.payments ?? []).filter(x => !invoiceRefOf(s, x)).length, missingPhone: customers.filter(c => !c.phone).map(c => ({ ref: c.ref, name: c.name, email: c.email })), merges };
+    plans: s.plans.length, items: s.items.length, team: (s.team ?? []).length, payments: (s.payments ?? []).filter(x => invoiceRefOf(s, x)).length, paymentsUnmatched: (s.payments ?? []).filter(x => !invoiceRefOf(s, x)).length, missingPhone: customers.filter(c => !c.phone).map(c => ({ ref: c.ref, name: c.name, email: c.email })), merges };
 }
 
 /** Merge a fresh batch into what's already staged (a second file, the next API page). Same ref replaces. */
 export function mergeStaged(a: Staged, b: Staged): Staged {
   const by = <T extends { ref: string }>(x: T[], y: T[]) => { const m = new Map(x.map(r => [r.ref, r])); for (const r of y) m.set(r.ref, r); return [...m.values()]; };
-  return { customers: by(a.customers, b.customers), quotes: by(a.quotes, b.quotes), jobs: by(a.jobs, b.jobs), invoices: by(a.invoices, b.invoices), plans: by(a.plans, b.plans), items: by(a.items, b.items), payments: by(a.payments ?? [], b.payments ?? []), notes: [...a.notes, ...b.notes].slice(-50) };
+  return { customers: by(a.customers, b.customers), quotes: by(a.quotes, b.quotes), jobs: by(a.jobs, b.jobs), invoices: by(a.invoices, b.invoices), plans: by(a.plans, b.plans), items: by(a.items, b.items), payments: by(a.payments ?? [], b.payments ?? []), team: by(a.team ?? [], b.team ?? []), notes: [...a.notes, ...b.notes].slice(-50) };
 }
 
 // ---------- Jobber's API, into the plain shape ----------
 type J = Record<string, unknown>;
 const nodes = (v: unknown): J[] => { const o = v as { nodes?: J[] } | J[] | null; return Array.isArray(o) ? o : Array.isArray(o?.nodes) ? o!.nodes! : []; };
 const jAddr = (a: unknown) => { const x = (a ?? {}) as J; return joinAddr(x.street1 ?? x.street, x.street2, x.city, x.province ?? x.state, x.postalCode ?? x.zip); };
+export function jobberUser(n: J): NMember | null {
+  if (n.isAccountOwner === true) return null;
+  const nm = n.name as J | string | undefined, ph = n.phone as J | string | undefined, ro = n.role ?? n.permissionLevel ?? n.userType;
+  const name = ctl(typeof nm === "string" ? nm : nm?.full ?? [nm?.first, nm?.last].filter(Boolean).join(" "), 40);
+  const phone = e164(typeof ph === "string" ? ph : ph?.raw ?? ph?.friendly ?? ph?.number);
+  if (!phone) return null;
+  return { ref: "jobber:user:" + String(n.id ?? phone), name, phone, role: teamRole(typeof ro === "string" ? ro : (ro as J | undefined)?.name) };
+}
 export function jobberClient(n: J): NCustomer {
   const phones = nodes(n.phones), emails = nodes(n.emails);
   const phone = e164((phones.find(p => p.primary) ?? phones[0])?.number), email = cleanEmailAddr((emails.find(e => e.primary) ?? emails[0])?.address);
@@ -475,6 +501,7 @@ export function cleanStaged(v: unknown): Staged {
     jobs: arr(o.jobs, 20000).map(j => ({ ref: refOf(j.ref), customerRef: refOf(j.customerRef), number: ctl(j.number, 30) || undefined, title: ctl(j.title, 120) || "Job", status: (["scheduled", "active", "done"].includes(String(j.status)) ? j.status : "scheduled") as NJob["status"], start: anyDate(j.start), total: money(j.total) || undefined, address: ctl(j.address, 300) || undefined })).filter(j => j.ref && j.customerRef),
     invoices: arr(o.invoices, 20000).map(i => { const total = Math.max(0, money(i.total)); return { ref: refOf(i.ref), customerRef: refOf(i.customerRef), number: ctl(i.number, 30) || undefined, status: (["draft", "open", "paid", "void"].includes(String(i.status)) ? i.status : "open") as NInvoice["status"], items: lines(i.items), total, paid: Math.min(total, Math.max(0, money(i.paid))), issued: anyDate(i.issued), due: anyDate(i.due) }; }).filter(i => i.ref && i.customerRef),
     plans: arr(o.plans, 5000).map(p => ({ ref: refOf(p.ref), customerRef: refOf(p.customerRef), name: ctl(p.name, 80) || "Service plan", total: Math.max(0, money(p.total)), every: Math.max(1, Math.min(52, Math.round(Number(p.every) || 1))), unit: (p.unit === "week" ? "week" : "month") as "week" | "month", next_on: anyDate(p.next_on) })).filter(p => p.ref && p.customerRef),
+    team: arr(o.team, 50).map(x => { const rate = money(x.rate); return { ref: refOf(x.ref), name: ctl(x.name, 40), phone: e164(x.phone), role: teamRole(x.role === "office" ? "office" : ""), ...(rate > 0 && rate <= 500 ? { rate } : {}) }; }).filter(x => x.ref && x.phone),
     payments: arr(o.payments, 20000).map(x => ({ ref: refOf(x.ref), customerRef: refOf(x.customerRef), invoiceRef: refOf(x.invoiceRef) || undefined, invoiceNumber: ctl(x.invoiceNumber, 30) || undefined,
       amount: Math.max(0, Math.min(10_000_000, money(x.amount))), date: anyDate(x.date), method: payMethod(x.method), note: ctl(x.note, 120) || undefined })).filter(x => x.ref && x.amount > 0 && (x.invoiceRef || x.invoiceNumber)),
     items: arr(o.items, 2000).map(i => ({ ref: refOf(i.ref), name: ctl(i.name, 120), unit: ctl(i.unit, 12), price: Math.max(0, money(i.price)), ...(money(i.cost) > 0 ? { cost: money(i.cost) } : {}) })).filter(i => i.ref && i.name),
@@ -482,7 +509,7 @@ export function cleanStaged(v: unknown): Staged {
   };
 }
 /** The import's order: the price list, then people, then what hangs off them. */
-export const PHASES = ["items", "customers", "quotes", "jobs", "invoices", "payments", "plans"] as const;
+export const PHASES = ["items", "customers", "quotes", "jobs", "invoices", "payments", "plans", "team"] as const;
 export type Phase = (typeof PHASES)[number];
 /** Jobber's products and services, into the price list. */
 export const jobberItem = (n: J): NItem => ({ ref: "jobber:" + String(n.id), name: ctl(n.name, 120), unit: "", price: Math.max(0, money(n.defaultUnitCost ?? n.unitPrice)), ...(money(n.internalUnitCost) > 0 ? { cost: money(n.internalUnitCost) } : {}) });

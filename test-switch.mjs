@@ -228,4 +228,22 @@ ok(() => {
   assert.equal(r.staged.customers.find(c => c.ref === p0.customerRef).properties[0].address, "12 Elm St");
   assert.equal(r.staged.plans[1].every, 3); assert.equal(S.previewOf(r.staged, {}, today).plans, 2);
 });
+// ---------- The team: from a spreadsheet or Jobber's users ----------
+ok(() => { assert.equal(S.guessKind(["Employee", "Mobile", "Role", "Hourly Rate"]), "team"); assert.equal(S.teamRole("Dispatcher"), "office"); assert.equal(S.teamRole("Admin"), "office"); assert.equal(S.teamRole("Technician"), "crew"); assert.equal(S.teamRole(""), "crew"); assert.equal(S.teamRole("Owner"), "office", "never owner by import"); });
+ok(() => {
+  const t = { headers: ["Employee", "Mobile", "Role", "Hourly Rate"], rows: [["Luis Ortega", "720-555-0161", "Technician", "$32"], ["Ana Park", "(303) 555-0190", "Office manager", ""], ["No Cell", "", "Crew", "25"], ["", "", "", ""]] };
+  const r = S.stageSheet(t, "team", S.guessMapping(t.headers, "team"), "st");
+  assert.equal(r.staged.team.length, 2); assert.deepEqual(r.skipped.map(x => x.why), ["No cell phone (they sign in with it)", "No name or cell"]);
+  assert.deepEqual(r.staged.team[0], { ref: "st:team:7205550161", name: "Luis Ortega", phone: "+17205550161", role: "crew", rate: 32 });
+  assert.equal(r.staged.team[1].role, "office"); assert.equal(r.staged.team[1].rate, undefined);
+  assert.equal(S.previewOf(r.staged, {}, today).team, 2);
+  assert.equal(S.cleanStaged(JSON.parse(JSON.stringify(r.staged))).team.length, 2);
+  assert.equal(S.PHASES.at(-1), "team");
+});
+ok(() => {
+  assert.deepEqual(S.jobberUser({ id: "U1", name: { full: "Luis Ortega" }, phone: { raw: "+17205550161" } }), { ref: "jobber:user:U1", name: "Luis Ortega", phone: "+17205550161", role: "crew" });
+  assert.equal(S.jobberUser({ id: "U0", isAccountOwner: true, name: { full: "Mike" }, phone: { raw: "7205550100" } }), null, "the account owner stays the owner");
+  assert.equal(S.jobberUser({ id: "U2", name: { full: "No Phone" } }), null);
+  assert.equal(S.jobberUser({ id: "U3", name: "Plain", phone: "720 555 0177" }).phone, "+17205550177");
+});
 console.log(`switch: ${n} checks passed`);

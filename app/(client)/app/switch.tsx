@@ -138,9 +138,10 @@ function SamplePreview({ kind, s }: { kind: Kind; s: Staged }) {
     : kind === "quotes" ? s.quotes.map(q => [q.customerRef.replace(/^[pen]:/, ""), q.number || "–", q.status, usd(q.total)])
     : kind === "jobs" ? s.jobs.map(j => [j.customerRef.replace(/^[pen]:/, ""), j.title, j.status, j.start ? dateLabel(j.start) : "–"])
     : kind === "payments" ? (s.payments ?? []).map(x => [x.customerRef.replace(/^[pen]:/, ""), x.invoiceNumber || "–", x.method, `${usd(x.amount)}${x.date ? `, ${dateLabel(x.date)}` : ""}`])
+    : kind === "team" ? (s.team ?? []).map(x => [x.name || "–", x.phone.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, "($1) $2-$3"), x.role === "office" ? "Office" : "Crew", x.rate ? usd(x.rate) + "/hr" : "–"])
     : kind === "plans" ? s.plans.map(x => [x.customerRef.replace(/^[pen]:/, ""), x.name, `Every ${x.every === 1 ? "" : x.every + " "}${x.unit}${x.every === 1 ? "" : "s"}`, `${usd(x.total)}${x.next_on ? `, next ${dateLabel(x.next_on)}` : ""}`])
     : s.invoices.map(i => [i.customerRef.replace(/^[pen]:/, ""), i.number || "–", i.status, `${usd(i.total)}${i.paid ? `, ${usd(i.paid)} paid` : ""}`]);
-  const head = kind === "customers" ? ["Name", "Phone", "Email", "Address"] : kind === "items" ? ["Name", "Unit", "Price", "Your cost"] : kind === "quotes" ? ["Customer", "Number", "Status", "Total"] : kind === "jobs" ? ["Customer", "Job", "Status", "Date"] : kind === "payments" ? ["Customer", "Invoice", "Paid by", "Amount"] : kind === "plans" ? ["Customer", "Plan", "How often", "Per visit"] : ["Customer", "Number", "Status", "Total"];
+  const head = kind === "customers" ? ["Name", "Phone", "Email", "Address"] : kind === "items" ? ["Name", "Unit", "Price", "Your cost"] : kind === "quotes" ? ["Customer", "Number", "Status", "Total"] : kind === "jobs" ? ["Customer", "Job", "Status", "Date"] : kind === "payments" ? ["Customer", "Invoice", "Paid by", "Amount"] : kind === "plans" ? ["Customer", "Plan", "How often", "Per visit"] : kind === "team" ? ["Name", "Cell", "Role", "Rate"] : ["Customer", "Number", "Status", "Total"];
   return <div className="sw-sample"><table className="tbl flush"><thead><tr>{head.map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.length ? rows.map((r, i) => <tr key={i}>{r.map((v, k) => <td key={k} className={v === "No phone" ? "warn" : ""}>{v}</td>)}</tr>) : <tr><td colSpan={4} className="mut">Nothing readable in the first rows. Check the columns above.</td></tr>}</tbody></table></div>;
 }
 
@@ -160,6 +161,7 @@ function Check({ imp, busy, act, onRun }: { imp: View; busy: string; act: Act; o
       {row("Service plans", p.plans)}
       {(p.payments > 0 || p.paymentsUnmatched > 0) && row("Payments", p.payments, p.paymentsUnmatched ? `${p.paymentsUnmatched} don't match an invoice in this move and stay out` : "on their invoices")}
       {row("Price list", p.items, "items")}
+      {p.team > 0 && row("Team", p.team, "added to Settings, Account; they sign in with their cell, nobody gets a text")}
       {p.missingPhone.length > 0 && <>
         {row("Missing phone", p.missingPhone.length, "they come in as No phone; add numbers now or later on each record", <button type="button" className="link" onClick={() => setOpen(open === "phones" ? "" : "phones")}>Fix</button>)}
         {open === "phones" && <form className="sw-phones" onSubmit={e => { e.preventDefault(); void act("decide", { action: "decide", id: imp.id, decisions: { splits: splits.current, phones } }, "Phones saved."); }}>
@@ -168,7 +170,7 @@ function Check({ imp, busy, act, onRun }: { imp: View; busy: string; act: Act; o
           <div className="acts-row end"><button type="submit" className="btn sm ink" disabled={!!busy}>Save phones</button></div></form>}
       </>}
       <p className="fine" style={{ marginTop: 12 }}>Nobody gets a text from this. Open quotes come in with follow-ups off, unpaid invoices with reminders off, and plans paused. You turn each on when you&rsquo;re ready.</p>
-      <div className="acts-row end" style={{ marginTop: 12 }}><button type="button" className="btn ink lg" disabled={!!busy || p.customers + p.items === 0} onClick={onRun}>Import everything</button></div>
+      <div className="acts-row end" style={{ marginTop: 12 }}><button type="button" className="btn ink lg" disabled={!!busy || p.customers + p.items + p.team === 0} onClick={onRun}>Import everything</button></div>
     </div></section>;
 }
 
@@ -196,7 +198,7 @@ function GoLive({ d, imp, golive, start, appName, busy, project, api, toast, onT
     {done && <section className="panel"><div className="panel-h"><h2>Everything from {src} is here</h2><small>{done.finished_at ? `moved ${dateLabel(done.finished_at)}` : ""}</small></div>
       <div className="panel-b">
         {res.customers && <p className="sw-big">{src} had {(res.customers.created + res.customers.updated + res.customers.skipped + (res.merged?.skipped ?? 0)).toLocaleString("en-US")} customers; you now have {(res.customers.created + res.customers.updated).toLocaleString("en-US")}{res.merged?.skipped ? ` plus ${res.merged.skipped} merged` : ""}{res.customers.skipped ? `, and ${res.customers.skipped} left out (no name, phone or email)` : ""}.</p>}
-        {line("customers", "Customers")}{line("quotes", "Quotes")}{line("jobs", "Jobs")}{line("invoices", "Invoices")}{line("payments", "Payments")}{line("plans", "Service plans")}{line("items", "Price list")}
+        {line("customers", "Customers")}{line("quotes", "Quotes")}{line("jobs", "Jobs")}{line("invoices", "Invoices")}{line("payments", "Payments")}{line("plans", "Service plans")}{line("team", "Team")}{line("items", "Price list")}
         <div className="acts-row" style={{ marginTop: 12 }}>
           <a className="btn" onClick={e => { if (inDemo()) { e.preventDefault(); toast("The example business has nothing to export. Your own export downloads a real file."); } }} href={`/api/app/export?p=${project}&what=all`}><Icon name="out" size={14} />Export everything</a>
           <button type="button" className="btn ghost" onClick={onAgain}>Add more from another app</button>
