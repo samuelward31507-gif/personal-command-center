@@ -11,6 +11,7 @@ import { sendAlert } from "@/lib/notify";
 import { replyToFor } from "@/lib/client-lead-mail-run";
 import { addExpense, deleteExpense } from "@/lib/client-expenses-run";
 import { LOGGED, activityDetail } from "@/lib/records";
+import { quoteValidDays } from "@/lib/service";
 import { saveRules } from "@/lib/client-automations-run";
 import { deleteOrder, saveOrder, setOrderStatus } from "@/lib/client-orders-run";
 import { addFile, removeEquipment, removeFile, saveEquipment, saveTask, serviceEquipment, setTask } from "@/lib/client-records-run";
@@ -134,6 +135,18 @@ async function handle(req: Request) {
       if (b.value !== undefined) { value = b.value === null || b.value === "" ? null : parseAmount(String(b.value)); if (b.value && value == null) return json({ error: "Type the job value as a number, like 9400." }, 400); }
       const r = await saveCard(sql, c, b.thread, { custom: b.custom, tags: s.role === "crew" ? undefined : b.tags, referredBy: s.role === "crew" ? undefined : b.referredBy, details: b.details, value, notes: b.notes, crew: b.crew, name: b.name, email: b.email, install: b.install, review: b.review });
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
+    }
+    // Give a quote more time: from today (or its current last day, if later) plus the owner's usual length (30 if none).
+    if (b.action === "quoteextend") {
+      if (s.role === "crew") return json({ error: "Only the office can change quotes." }, 403);
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const days = quoteValidDays(c.setup.quote_valid_days) || 30, today = new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" });
+      const [q] = await sql`UPDATE public.client_quotes q SET valid_until = greatest(${today}::date, coalesce(q.valid_until, ${today}::date)) + ${days}::int
+        FROM public.client_threads t WHERE t.id = ${b.thread}::uuid AND t.project_id = ${c.projectId}::uuid AND q.project_id = t.project_id
+          AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
+          AND q.kind = 'quote' AND q.approved_at IS NULL AND q.declined_at IS NULL AND q.status IN ('open', 'replied')
+        RETURNING q.valid_until::text AS valid_until` as { valid_until: string }[];
+      return q ? json({ ok: true, validUntil: q.valid_until }) : json({ error: "There's no open quote to extend." }, 404);
     }
     if (b.action === "quotelink" || b.action === "reviewnow") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);

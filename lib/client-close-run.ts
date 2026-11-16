@@ -5,6 +5,7 @@ import { randomBytes } from "node:crypto";
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { chosen, cleanChoice, cleanItems, totals } from "@/lib/billing";
 import { cleanWinback, detailLine, cleanDetails, money, quoteText, reviewDue, QUOTE_TOKEN } from "@/lib/crm";
+import { quoteExpired, quoteGoodThrough, quoteValidDays } from "@/lib/service";
 import { digits10, fill, inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, clientById, quoteUrl, sendReviewRequest, sendToCustomer, type Client } from "@/lib/client-runtime-run";
 import { emitEvent } from "@/lib/client-webhook";
@@ -46,7 +47,9 @@ export async function sendQuoteLink(sql: Sql, c: Client, threadId: string, note?
 
 export type PublicQuote = { financing?: { link: string; note: string } | null; terms?: string; warranty?: string; choice?: { tier: string | null; addons: number[] } | null; business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
   items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax_rate: number;
-  state: "open" | "approved" | "declined" | "closed"; answeredAt: string | null;
+  state: "open" | "approved" | "declined" | "closed" | "expired"; answeredAt: string | null;
+  /** The last day it can be approved (null = no end date). */
+  validUntil?: string | null;
   /** A deposit to hold the date, paid on the owner's own pay page. Cinder never takes the money. */
   deposit: number | null; payLink: string };
 
@@ -54,7 +57,8 @@ export type PublicQuote = { financing?: { link: string; note: string } | null; t
 export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote | null> {
   if (!QUOTE_TOKEN.test(token)) return null;
   const [q] = await sql`SELECT q.id, q.owner_id, q.project_id, q.customer_phone, q.customer_name, q.amount::float AS amount, q.note, q.sent_on::text AS sent_on, q.status,
-      q.approved_at, q.declined_at, q.viewed_at, coalesce(q.items_offered, q.items) AS items, q.tax_rate::float AS tax_rate, q.deposit::float AS deposit, q.choice
+      q.approved_at, q.declined_at, q.viewed_at, coalesce(q.items_offered, q.items) AS items, q.tax_rate::float AS tax_rate, q.deposit::float AS deposit, q.choice,
+      q.valid_until::text AS valid_until, (q.link_sent_at AT TIME ZONE 'UTC')::date::text AS link_day
     FROM public.client_quotes q WHERE q.token = ${token} LIMIT 1` as Record<string, unknown>[];
   if (!q) return null;
   const c = await clientById(sql, String(q.owner_id), String(q.project_id));
@@ -63,12 +67,20 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
     AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(String(q.customer_phone))} LIMIT 1` as { customer_name: string; details: unknown }[];
   await sql`UPDATE public.client_quotes SET viewed_at = coalesce(viewed_at, now()), view_count = view_count + 1, last_viewed_at = now() WHERE id = ${String(q.id)}::uuid`;
   const status = String(q.status);
+  // The quote's last day: set the first time it's opened after going out, if the owner's quotes have an end date.
+  let validUntil = q.valid_until ? String(q.valid_until) : null;
+  if (!validUntil && q.link_day && !q.approved_at && !q.declined_at) {
+    validUntil = quoteGoodThrough(String(q.link_day), quoteValidDays(c.setup.quote_valid_days));
+    if (validUntil) await sql`UPDATE public.client_quotes SET valid_until = ${validUntil}::date WHERE id = ${String(q.id)}::uuid AND valid_until IS NULL`;
+  }
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: tz(c) });
   return {
+    validUntil,
     business: c.setup.display_name || "", owner: first(c.setup.owner_name || ""), phone: c.setup.texting_number || "",
     customer: first(t?.customer_name || String(q.customer_name || "")), amount: q.amount == null ? null : Number(q.amount),
     line: t ? detailLine(c.setup.trade, cleanDetails(c.setup.trade, t.details)) : "", note: String(q.note ?? ""), sent: String(q.sent_on),
     items: cleanItems(q.items), tax_rate: Number(q.tax_rate ?? 0),
-    state: q.approved_at ? "approved" : q.declined_at ? "declined" : status === "won" ? "closed" : "open",
+    state: q.approved_at ? "approved" : q.declined_at ? "declined" : status === "won" ? "closed" : quoteExpired(validUntil, today) ? "expired" : "open",
     answeredAt: q.approved_at ? new Date(String(q.approved_at)).toISOString() : q.declined_at ? new Date(String(q.declined_at)).toISOString() : null,
     deposit: q.deposit == null ? null : Number(q.deposit), payLink: c.setup.pay_link || "",
     financing: c.setup.financing_link ? { link: c.setup.financing_link, note: c.setup.financing_note || "" } : null,
@@ -82,6 +94,12 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
  * Pass: follow-ups stop and the owner hears why, if they said. Answering twice changes nothing.
  */
 export async function answerQuote(sql: Sql, token: string, answer: "approve" | "decline", reason = "", signedBy = "", choiceIn: unknown = null): Promise<{ ok: boolean; state?: PublicQuote["state"]; error?: string }> {
+  // Past its last day, old prices can't be approved; passing on it still works.
+  if (answer === "approve" && QUOTE_TOKEN.test(token)) {
+    const [e] = await sql`SELECT q.valid_until::text AS valid_until, o.setup->>'timezone' AS tz FROM public.client_quotes q LEFT JOIN public.client_ops o ON o.project_id = q.project_id
+      WHERE q.token = ${token} AND q.approved_at IS NULL AND q.declined_at IS NULL LIMIT 1` as { valid_until: string | null; tz: string | null }[];
+    if (e && quoteExpired(e.valid_until, new Date().toLocaleDateString("en-CA", { timeZone: e.tz || "America/Denver" }))) return { ok: false, state: "expired", error: "This quote's prices have expired. Text the business for an updated one." };
+  }
   // With options, the customer's pick becomes the quote: the chosen lines and their total, the full offer kept aside.
   if (answer === "approve" && QUOTE_TOKEN.test(token)) {
     const [o] = await sql`SELECT id, items, tax_rate::float AS tax_rate FROM public.client_quotes WHERE token = ${token} AND approved_at IS NULL AND declined_at IS NULL` as { id: string; items: unknown; tax_rate: number }[];

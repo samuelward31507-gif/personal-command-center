@@ -220,3 +220,13 @@ export function refundProblem(paid: number, refunded: number, amount: number): s
   if (r2(amount) > room + 0.005) return `That's more than the $${room.toLocaleString("en-US", { minimumFractionDigits: room % 1 ? 2 : 0, maximumFractionDigits: 2 })} paid.`;
   return null;
 }
+
+/** How long quotes hold, from the owner's setting: 0 (or nothing) is no end date, else 1 to 365 days. */
+export const quoteValidDays = (v: unknown) => { const n = Math.round(Number(v)); return n > 0 && n <= 365 ? n : 0; };
+/** The last day a quote can be approved, counted from the day its link went out. Null when quotes don't expire. */
+export function quoteGoodThrough(sentDay: string, days: number): string | null {
+  if (!days || !/^\d{4}-\d{2}-\d{2}$/.test(sentDay)) return null;
+  return new Date(Date.parse(sentDay + "T12:00:00Z") + days * 86400000).toISOString().slice(0, 10);
+}
+/** Past its last day (the whole last day still counts). */
+export const quoteExpired = (validUntil: string | null | undefined, today: string) => !!validUntil && validUntil < today;

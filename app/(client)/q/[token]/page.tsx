@@ -11,7 +11,7 @@ import { chosen, totals, type Choice } from "@/lib/billing";
 type Q = { business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
   items?: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax_rate?: number;
   financing?: { link: string; note: string } | null; terms?: string; warranty?: string; choice?: Choice | null;
-  state: "open" | "approved" | "declined" | "closed"; answeredAt: string | null; deposit?: number | null; payLink?: string };
+  state: "open" | "approved" | "declined" | "closed" | "expired"; answeredAt: string | null; validUntil?: string | null; deposit?: number | null; payLink?: string };
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 });
 const day = (d: string) => new Date(d.length === 10 ? d + "T12:00:00" : d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -48,7 +48,7 @@ export default function QuotePage() {
       : <>
         <header className="doc-biz"><span className="doc-mono" aria-hidden="true">{biz.charAt(0)}</span><b>{q.business || "Your quote"}</b></header>
         <section className="doc-card">
-          <p className="doc-k">Quote{q.customer ? ` for ${q.customer}` : ""}, {day(q.sent)}</p>
+          <p className="doc-k">Quote{q.customer ? ` for ${q.customer}` : ""}, {day(q.sent)}{q.state === "open" && q.validUntil ? `. Good through ${day(q.validUntil)}` : ""}</p>
           <p className="doc-amt">{amount ? usd(amount) : "Your quote"}{opts && live ? <small className="doc-amt-sub"> for what you picked</small> : null}</p>
           {q.line && <p className="doc-line">{q.line.replace(/\s·\s/g, ", ")}</p>}
           {q.items && q.items.length > 0 && (opts ? <QuoteOptions items={q.items} taxRate={q.tax_rate ?? 0} choice={pick} onChoice={live ? setPick : undefined} /> : <DocLines items={q.items} taxRate={q.tax_rate ?? 0} total={q.amount ?? 0} />)}
@@ -61,6 +61,7 @@ export default function QuotePage() {
             {q.deposit ? <p style={{ marginTop: 8 }}>A deposit of <strong>{usd(q.deposit)}</strong> holds your date.{q.payLink ? "" : ` ${who} will text you how to pay it.`}</p> : null}
             {q.deposit && q.payLink ? <a className="btn ink lg" style={{ marginTop: 10, display: "inline-flex" }} href={q.payLink} target="_blank" rel="noreferrer">Pay the {usd(q.deposit)} deposit</a> : null}</div></div>
           : q.state === "declined" ? <div className="doc-done"><div><b>Got it. No hard feelings.</b><p>{who} has your answer. If anything changes, just text {sms ? <a href={sms}>this number</a> : "us"}.</p></div></div>
+          : q.state === "expired" ? <div className="doc-done"><div><b>These prices expired {q.validUntil ? day(q.validUntil) : ""}.</b><p>Text {sms ? <a href={sms}>{who}</a> : who} for an updated quote. It only takes a minute.</p></div></div>
           : q.state === "closed" ? <div className="doc-done"><div><b>This quote is closed.</b><p>Text {sms ? <a href={sms}>{biz}</a> : biz} if you have questions.</p></div></div>
           : no ? <form className="doc-no" onSubmit={e => { e.preventDefault(); void answer("decline"); }}>
               <label htmlFor="why">Anything that would change your mind? <em>Optional</em></label>

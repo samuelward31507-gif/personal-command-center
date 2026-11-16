@@ -87,3 +87,12 @@ console.log(`service 2: ${n} checks passed`);
   assert.match(refundProblem(1000, 0, NaN), /Type the amount/);
   assert.match(refundProblem(500.5, 0, 600), /\$500\.50/);
   console.log("refunds ok"); }
+
+// Quotes that expire: the setting, the last day from the day it went out, and expiry after the whole last day.
+{ const S = await import("./lib/service.ts");
+  assert.equal(S.quoteValidDays("30"), 30); assert.equal(S.quoteValidDays(""), 0); assert.equal(S.quoteValidDays(400), 0); assert.equal(S.quoteValidDays(-5), 0);
+  assert.equal(S.quoteGoodThrough("2026-11-16", 30), "2026-12-16"); assert.equal(S.quoteGoodThrough("2026-12-20", 14), "2027-01-03");
+  assert.equal(S.quoteGoodThrough("2026-11-16", 0), null); assert.equal(S.quoteGoodThrough("soon", 30), null);
+  assert.equal(S.quoteExpired("2026-12-16", "2026-12-16"), false, "the last day still counts"); assert.equal(S.quoteExpired("2026-12-16", "2026-12-17"), true);
+  assert.equal(S.quoteExpired(null, "2030-01-01"), false, "no end date");
+  console.log("quote expiry ok"); }

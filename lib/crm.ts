@@ -257,6 +257,7 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   if (r.late_fee !== undefined) { const v = String(r.late_fee ?? "").trim(); const n = Number(v.replace(/[^\d.]/g, "")); out.late_fee = n > 0 ? (/%/.test(v) ? `${Math.min(25, Math.round(n * 10) / 10)}%` : String(Math.min(500, Math.round(n * 100) / 100))) : ""; }
   int("late_fee_days", 1, 90);
   int("monthly_goal", 0, 10000000);
+  int("quote_valid_days", 0, 365);
   if (r.custom_fields !== undefined) out.custom_fields = JSON.stringify(fieldLabels(r.custom_fields));
   if (r.quote_templates !== undefined) out.quote_templates = JSON.stringify(quoteTemplates(r.quote_templates));
   if (r.mileage_rate !== undefined) { const n = Number(String(r.mileage_rate ?? "").replace(/[^\d.]/g, "")); out.mileage_rate = n > 0 && n <= 5 ? String(Math.round(n * 1000) / 1000) : ""; }
@@ -299,7 +300,9 @@ export type Card = { id: string; name: string; phone: string; source: string; st
   quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
     items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax: number; deposit?: number | null;
     /** How many times they opened it, the last time, whether follow-ups are paused (imported quotes start paused), and when the next one goes. */
-    views?: number; lastViewed?: string | null; chasePaused?: boolean; nextChase?: string | null } | null;
+    views?: number; lastViewed?: string | null; chasePaused?: boolean; nextChase?: string | null;
+    /** The last day the customer can approve it; null = no end date. */
+    validUntil?: string | null } | null;
   install: string | null; installTime: string | null; installDays: number; onCalendar: boolean; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean;
   invoice: CardInvoice | null; job: Record<string, string>; costs: Costs;
   /** When the job entered its current stage, and the owner's reason when it was lost. */
