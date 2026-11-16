@@ -97,6 +97,7 @@ function Connections({ d, biz, go, push, onPush, toast, api, project, demo, relo
   return <div className="pad wires">
     <section>
       <p className="sec">Leads in<small>{visible.filter(v => stat(v).state === "on").length} live</small></p>
+      <AgentRow d={d} api={api} project={project} toast={toast} reload={reload} open={open === "agent"} onToggle={() => setOpen(open === "agent" ? null : "agent")} />
       {visible.map(src => { const { state, last, n30 } = stat(src); const addr = src.key === "web chat" ? snippet : intake(src.key === "web form" || src.key === "number" ? undefined : src.key);
         return <Row key={src.key} state={state} name={src.name} st={state === "on" && src.key === "number" ? `Live, ${fmtPhone(d.number)}` : WORD[state]} last={last ? `Last lead ${ago(last)}${n30 ? `, ${n30} in 30 days` : ""}` : state === "on" ? "No leads yet" : ""}
           open={open === src.key} onToggle={() => setOpen(open === src.key ? null : src.key)}
@@ -150,6 +151,23 @@ function Connections({ d, biz, go, push, onPush, toast, api, project, demo, relo
       {log.length > 12 && !more && <button type="button" className="link" style={{ padding: "8px 0" }} onClick={() => setMore(true)}>Show all {log.length}</button>}
     </section>
   </div>;
+}
+
+// ---------- The agent's switch ----------
+function AgentRow({ d, api, project, toast, reload, open, onToggle }: { d: Data; api: Api; project: string; toast: Toast; reload: () => Promise<void>; open: boolean; onToggle: () => void }) {
+  const s = d.setup ?? {}, on = s.agent_paused !== "yes", [busy, setBusy] = useState(false);
+  const sec = d.live?.replySecWeek;
+  const set = async (paused: boolean) => {
+    setBusy(true);
+    try { await api("/api/app/act", { p: project, action: "setup", setup: { agent_paused: paused ? "yes" : "" } }); toast(paused ? "Paused. New leads still get the first text; every reply comes to you." : "Cinder is answering again."); await reload(); }
+    catch (e) { toast(e instanceof Error ? e.message : "Couldn't change it.", true); } finally { setBusy(false); }
+  };
+  return <Row state={!d.number ? "todo" : on ? "on" : "off"} name="Speed-to-lead agent" st={!d.number ? "Waiting on your texting number" : on ? `On${sec != null ? `, first reply in ${sec < 60 ? sec + "s" : Math.round(sec / 60) + "m"} this week` : ""}` : "Paused, replies go to you"}
+    open={open} onToggle={onToggle}
+    acts={d.number ? <button type="button" className={"btn sm" + (on ? "" : " ink")} disabled={busy} onClick={() => void set(on)}>{busy ? <Spinner /> : on ? "Pause" : "Turn on"}</button> : undefined}>
+    <p>Cinder texts every new lead in seconds, answers their questions in your words, gives a ballpark if you allow it, and books the estimate on your calendar. Anything it can&rsquo;t answer comes to you.</p>
+    <p>Paused: new leads still get the first &ldquo;got your message&rdquo; text, so nobody waits. After that every reply comes to you, and no follow-up nudges go out. Use it on a day off or when you&rsquo;d rather talk to everyone yourself.</p>
+  </Row>;
 }
 
 // ---------- Leads by email ----------
@@ -342,6 +360,7 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
       {d.number && <li><span>Cinder number</span><b>{fmtPhone(d.number)}</b></li>}
       {s.timezone && <li><span>Time zone</span><b>{s.timezone.replace(/_/g, " ")}</b></li>}
       <li><span>Business details and price book</span><button type="button" className="btn sm" onClick={go.setup}>Edit</button></li>
+      <ReviewLink d={d} api={api} project={project} toast={toast} reload={reload} />
       <li><span>Invoices, tax and pay link</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
       <li><span>Notifications on this device</span>{push === "on" ? <span className="dot good">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <span className="mut">{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</span>}</li>
       <li className="brand-li"><span>Your logo and color</span><span className="acts-row"><BrandEdit d={d} api={api} project={project} toast={toast} reload={reload} /></span></li>
@@ -378,6 +397,19 @@ function QboRow({ d, open, onToggle, api, project, toast, reload }: { d: Data; o
     <p>Every invoice you send and every payment you record lands in QuickBooks on the right customer, so your books match without typing anything twice. Lines book to your Services item; sales tax rides as its own line so totals match.</p>
     <ol><li>Tap Connect QuickBooks and sign in to Intuit.</li><li>Pick your company and tap Connect.</li><li>You land back here. Tap Sync now to send the last 120 days.</li></ol>
   </Row>;
+}
+
+/** The owner's Google review link: where review requests send happy customers. */
+function ReviewLink({ d, api, project, toast, reload }: { d: Data; api: Api; project: string; toast: Toast; reload: () => Promise<void> }) {
+  const cur = d.setup?.review_link || "", [v, setV] = useState(cur), [busy, setBusy] = useState(false);
+  const save = async () => {
+    const u = v.trim(); if (u && !/^https:\/\/\S+$/.test(u)) { toast("Paste the full link, starting with https://", true); return; }
+    setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: { review_link: u } }); toast(u ? "Review link saved. Review requests use it now." : "Review link removed."); await reload(); }
+    catch (e) { toast(e instanceof Error ? e.message : "Couldn't save it.", true); } finally { setBusy(false); }
+  };
+  return <li className="rv-li"><span>Google review link<small className="mut" style={{ display: "block" }}>In Google Business Profile: Ask for reviews, then copy the link.</small></span>
+    <span className="acts-row"><input className="input" style={{ width: 260 }} placeholder="https://g.page/r/..." value={v} onChange={e => setV(e.target.value)} aria-label="Google review link" />
+      <button type="button" className="btn sm" disabled={busy || v.trim() === cur} onClick={() => void save()}>{busy ? <Spinner /> : "Save"}</button></span></li>;
 }
 
 /** The logo (resized to 256px; its main color picked for the accent) and the accent itself, kept readable on white. */

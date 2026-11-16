@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EXPORT_STEPS, FIELDS, GOLIVE, KIND_LABEL, SOURCES, guessKind, guessMapping, readSheet, sourceFromSoftware, stageSheet, stageVcards, emptyStaged,
   type Kind, type Mapping, type Preview, type Sheet, type SourceKey, type Staged } from "@/lib/switch";
 import { PageHead } from "./charts";
-import { Icon, Spinner, dateLabel, usd, type Api, type Toast } from "./parts";
+import { Icon, Spinner, dateLabel, usd, type Api, type Toast, inDemo } from "./parts";
 import type { Data, Go } from "./types";
 
 type View = { id: string; source: SourceKey; status: string; preview: Preview | null; pull: { kind?: number; done?: boolean; counts?: Record<string, number>; warnings?: string[] }; progress: number; total: number;
@@ -195,7 +195,7 @@ function GoLive({ d, imp, golive, start, appName, busy, project, api, toast, onT
         {res.customers && <p className="sw-big">{src} had {(res.customers.created + res.customers.updated + res.customers.skipped + (res.merged?.skipped ?? 0)).toLocaleString("en-US")} customers; you now have {(res.customers.created + res.customers.updated).toLocaleString("en-US")}{res.merged?.skipped ? ` plus ${res.merged.skipped} merged` : ""}{res.customers.skipped ? `, and ${res.customers.skipped} without a phone left out` : ""}.</p>}
         {line("customers", "Customers")}{line("quotes", "Quotes")}{line("jobs", "Jobs")}{line("invoices", "Invoices")}{line("plans", "Service plans")}{line("items", "Price list")}
         <div className="acts-row" style={{ marginTop: 12 }}>
-          <a className="btn" href={`/api/app/export?p=${project}&what=all`}><Icon name="out" size={14} />Export everything</a>
+          <a className="btn" onClick={e => { if (inDemo()) { e.preventDefault(); toast("The example business has nothing to export. Your own export downloads a real file."); } }} href={`/api/app/export?p=${project}&what=all`}><Icon name="out" size={14} />Export everything</a>
           <button type="button" className="btn ghost" onClick={onAgain}>Add more from another app</button>
           {done.canUndo && <button type="button" className="btn ghost bad" disabled={!!busy} onClick={onUndo} title="For 7 days after the move">{busy === "undo" ? <Spinner /> : "Undo this move"}</button>}
         </div>

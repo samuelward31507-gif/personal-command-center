@@ -75,11 +75,27 @@ export function HoursBox({ d, card, act, busy }: { d: Data; card: Card; act: Act
     {l.minutes > 0 && !noRates && <div className="money sum"><span className="t-em">Labor at your rates</span><b>{usd(l.cost)}</b></div>}
     {!entries.length && <p className="fine">Clock in from Your day or right here, and the hours land on this job.</p>}
     {l.minutes > 0 && noRates && <p className="fine">Add hourly rates in Settings, Account to turn hours into a labor cost.</p>}
+    {entries.length > 0 && d.role !== "crew" && <details className="time-ed"><summary>Fix a time{entries.some(e => !e.ended_at) ? ", someone is still clocked in" : ""}</summary>
+      {entries.map(e => <TimeRow key={e.id} e={e} who={e.member ? crewName(d, e.member) : first(d.owner || "You")} act={act} busy={busy} />)}</details>}
     <div className="acts-row end" style={{ marginTop: 6 }}>
       {l.cost > 0 && l.cost !== card.costs.labor && <button type="button" className="btn sm" disabled={!!busy} onClick={() => void act("costs", { action: "jobcosts", costs: { ...card.costs, labor: l.cost } as Costs }, `Labor set to ${usd(l.cost)}.`)}>Use {usd(l.cost)} as labor</button>}
       <button type="button" className={"btn sm" + (here ? " ink" : "")} disabled={!!busy} onClick={() => void act("clock", here ? { action: "clockout" } : { action: "clockin" }, here ? "Clocked out." : `Clocked in on ${first(card.name)}'s job.`)}>{busy === "clock" ? <Spinner /> : <><Icon name="clock" size={13} />{here ? "Clock out" : "Clock in here"}</>}</button>
     </div>
   </section>;
+}
+
+/** One clocked stretch, editable by the owner: a forgotten clock-out, a wrong start, or one to delete. */
+function TimeRow({ e, who, act, busy }: { e: { id: string; started_at: string; ended_at: string | null }; who: string; act: Act; busy: string }) {
+  const local = (iso: string | null) => { if (!iso) return ""; const dt = new Date(iso); const p = (n: number) => String(n).padStart(2, "0"); return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}T${p(dt.getHours())}:${p(dt.getMinutes())}`; };
+  const [st, setSt] = useState(local(e.started_at)), [en, setEn] = useState(local(e.ended_at));
+  const changed = st !== local(e.started_at) || en !== local(e.ended_at);
+  return <div className="time-row">
+    <b>{who}</b>
+    <input type="datetime-local" className="input sm" aria-label={`${who} started`} value={st} onChange={x => setSt(x.target.value)} />
+    <input type="datetime-local" className="input sm" aria-label={`${who} stopped`} value={en} onChange={x => setEn(x.target.value)} />
+    <button type="button" className="btn sm" disabled={!!busy || !changed || !st} onClick={() => void act("time:" + e.id, { action: "timeedit", entry: e.id, start: new Date(st).toISOString(), end: en ? new Date(en).toISOString() : null }, "Time fixed.")}>Save</button>
+    <button type="button" className="btn sm ghost" disabled={!!busy} onClick={() => { if (confirm("Delete this time entry?")) void act("time:" + e.id, { action: "timeedit", entry: e.id, remove: true }, "Time entry deleted."); }}>Delete</button>
+  </div>;
 }
 
 /** The running clock in Your day: where you're clocked in and for how long, and one tap to stop it. */

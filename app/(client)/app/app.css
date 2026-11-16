@@ -1264,3 +1264,68 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 .mail-pane dl { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 13px; } .mail-pane dt { color: var(--g2); } .mail-pane dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
 .mail-pane .mail-wait, .mail-inline .mail-wait { margin: 0; }
 .mail-inline { padding: 0 12px 10px; }
+
+/* ===================== Fifth pass (docs/design-spec.md) ===================== */
+/* Stage: a neutral dot and the word, darker toward paid. */
+.stg { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink2, #505967); white-space: nowrap; }
+.stg i { width: 6px; height: 6px; border-radius: 50%; background: #9aa3b0; flex: none; }
+.stg.booked i { background: #6f7988; } .stg.quoted i { background: #505967; } .stg.won i, .stg.done i { background: #1c1d1f; } .stg.lost i { background: #d3d8df; } .stg.lost { color: var(--g3); }
+
+/* Jobs table: core columns, nothing cut that matters, one fixed action column. */
+.tbl.jobs-tbl.v5 { min-width: 0; width: 100%; }
+.tbl.jobs-tbl.v5 .c2 { display: none; }
+@media (min-width: 1600px) { .tbl.jobs-tbl.v5.cols-auto .c2 { display: table-cell; } }
+.tbl.jobs-tbl.v5.cols-more .c2 { display: table-cell; }
+.tbl.jobs-tbl.v5.cols-more { min-width: 1180px; }
+.tbl.jobs-tbl.v5.compact .c2 { display: none; }
+.jobs-tbl.v5 td .name { gap: 8px; }
+.jobs-tbl.v5 td .name b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.jobs-tbl.v5 .turn { width: 6px; height: 6px; border-radius: 50%; background: var(--ember); flex: none; margin-left: -2px; }
+.jobs-tbl.v5 .turn.off { background: transparent; }
+.jobs-tbl.v5 td .next { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jobs-tbl.v5 tr.mine td .next { color: var(--ink); font-weight: 500; }
+.jobs-tbl.v5 td.act { text-align: right; padding-right: 14px; }
+.jobs-tbl.v5 td.act .btn { width: 88px; padding: 0 6px; justify-content: center; height: 26px; }
+.jobs-tbl.v5 td.act .btn.ghost { opacity: 0; transition: opacity var(--t, 140ms) ease-out; }
+.jobs-tbl.v5 tr:hover td.act .btn.ghost, .jobs-tbl.v5 tr:focus-within td.act .btn.ghost, .jobs-tbl.v5 tr.sel td.act .btn.ghost { opacity: 1; }
+.jobs-tbl.v5 td.num.late { color: var(--ember); }
+.jobs-tbl.v5 tbody tr:not(.grp-row) td { height: 40px; }
+.jobs-tbl.v5 th { font-weight: 500; color: var(--g2); font-size: 12.5px; }
+.jobs-tbl.v5 .grp-row td { padding-top: 16px; }
+
+/* Record: docked beside a slim list from 1280px (Linear's split), floating below that. */
+@media (min-width: 1280px) {
+  .split.docked .pane.insp { position: static; inset: auto; z-index: auto; width: auto; flex: 1 1 auto; min-width: 0; border-radius: 0; box-shadow: none !important; border-left: 1px solid var(--hair) !important; animation: none; }
+  .split.docked .pane.list { flex: 0 0 420px; max-width: 420px; }
+  .jobs-tbl.v5.slim colgroup col:nth-child(n+4), .jobs-tbl.v5.slim th:nth-child(n+4), .jobs-tbl.v5.slim td:nth-child(n+4) { display: none; }
+  .jobs-tbl.v5.slim .grp-row td { display: table-cell; }
+  .jobs-tbl.v5.slim colgroup col:nth-child(2) { width: 170px; }
+  .split.docked .jobs-tools .sort, .split.docked .jobs-tools .menu:nth-of-type(3) { display: none; }
+}
+/* Header: stage as a path. */
+.insp-sub.path-row { height: 40px; gap: 12px; }
+.path { display: inline-flex; align-items: center; gap: 2px; padding: 2px; border-radius: 8px; background: var(--wash); }
+.path button { height: 26px; padding: 0 10px; border-radius: 6px; font-size: 12.5px; color: var(--g2); font-weight: 500; }
+.path button.past { color: var(--ink2, #505967); }
+.path button.on { background: #fff; color: var(--ink); box-shadow: 0 0 0 1px var(--hair-2), var(--sh-btn); }
+.path button:hover:not(.on) { color: var(--ink); }
+.insp-sub .amt { margin-left: auto; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+/* Activity as a log. */
+.lg { padding: 6px 2px 2px; }
+.lg.cont { padding-top: 0; }
+.lg header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+.lg header b { font-size: 13px; font-weight: 600; color: var(--ink); } .lg header time { font-size: 12px; color: var(--g3); font-variant-numeric: tabular-nums; }
+.lg.cinder header b { color: var(--g1); font-weight: 500; }
+.lg p { margin: 0 0 4px; font-size: 13.5px; line-height: 1.5; color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.lg.you p, .lg.cinder p { background: #fafafb; box-shadow: inset 2px 0 var(--hair-3, #d3d8df); padding: 6px 10px; border-radius: 0 6px 6px 0; }
+.lg.cinder p { color: var(--ink2, #3a3f47); }
+.compose .tools .snipb { margin-left: auto; } .compose .tools .snipb + .send { margin-left: 6px; }
+.compose .tools .snipb.on { background: var(--wash); color: var(--ink); }
+@media (min-width: 1280px) { .tbl.jobs-tbl.v5.slim { table-layout: auto; } .jobs-tbl.v5.slim td:nth-child(2) { max-width: 180px; } .jobs-tbl.v5.slim td:nth-child(3) { max-width: 170px; } .split.docked .jobs-tools { flex-wrap: wrap; } }
+.split.docked .tbl-wrap { overflow-x: hidden; }
+
+/* Fixing a clocked time. */
+.time-ed { margin-top: 6px; font-size: 13px; } .time-ed summary { cursor: pointer; color: var(--g1); padding: 4px 0; }
+.time-row { display: grid; grid-template-columns: minmax(70px, 1fr) auto auto auto auto; gap: 6px; align-items: center; padding: 4px 0; }
+.time-row b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .time-row .input { width: 178px; }
+@media (max-width: 720px) { .time-row { grid-template-columns: 1fr 1fr; } .time-row b { grid-column: 1 / -1; } }

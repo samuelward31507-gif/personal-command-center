@@ -109,6 +109,16 @@ export async function takeMail(sql: Sql, mail: MailIn & { messageId: string }): 
   }
 }
 
+/**
+ * A form lead that left an email but no phone: it waits with the lead emails for the owner to add a number or reply.
+ * The ID is random, so two submissions are two rows.
+ */
+export async function queueWithoutPhone(sql: Sql, c: Client, lead: { name: string; email: string; message: string; source: string; via: string }): Promise<void> {
+  await sql`INSERT INTO public.client_lead_mail (owner_id, project_id, message_id, from_addr, subject, source, status, name, email, message)
+    VALUES (${c.owner}, ${c.projectId}::uuid, ${"form:" + crypto.randomUUID()}, ${lead.email}, ${`Form on ${lead.via}`}, ${lead.source}, 'no_phone', ${lead.name}, ${lead.email}, ${lead.message.slice(0, 1000)})`;
+  await alertOwner(c, ownerAlert("new", lead.name || lead.email, `Form on ${lead.via}, no phone in it. Reply to ${lead.email}. It's in your Inbox.`));
+}
+
 /** The owner found the number (a call, the lead site) for an email that came without one. Saved as theirs; nobody is texted. */
 export async function addMailLead(sql: Sql, c: Client, id: string, phone: string, name?: string): Promise<{ ok: boolean; id?: string; error?: string }> {
   const d = String(phone || "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");

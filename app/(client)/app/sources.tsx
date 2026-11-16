@@ -7,6 +7,8 @@ import { Icon } from "./parts";
 import { sourceLabel } from "./types";
 
 export type Tone = "grey" | "blue" | "sky" | "violet" | "pink" | "red" | "orange" | "amber" | "green" | "teal";
+/** A stage: a 6px dot in the grey ramp and the word. Darker as the job gets closer to paid. */
+export const Stg = ({ stage, children }: { stage: string; children: React.ReactNode }) => <span className={"stg " + stage}><i aria-hidden="true" />{children}</span>;
 export const Chip = ({ tone = "grey", children, title }: { tone?: Tone; children: React.ReactNode; title?: string }) => <span className={"vc " + tone} title={title}>{children}</span>;
 
 const MARKS: Record<string, { t: string; tone: Tone; icon?: string }> = {
