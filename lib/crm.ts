@@ -170,7 +170,8 @@ export function parseDnt(v: unknown): string[] {
   return [...seen];
 }
 export const TEAM_MAX = 10;
-export type TeamMember = { name: string; cell: string; role: "crew" | "office" | "owner"; /** What an hour of their time costs, for job labor from clocked hours. */ rate?: number };
+export type TeamMember = { name: string; cell: string; role: "crew" | "office" | "owner"; /** What an hour of their time costs, for job labor from clocked hours. */ rate?: number;
+  /** Their commission: a percentage of what's collected on the jobs they're on. */ commission?: number };
 /** The owner's team from setup.team: up to ten people, each a name, a +1 cell, a role (owner, office, crew) and an hourly rate. */
 export function parseTeam(v: unknown): TeamMember[] {
   let arr: unknown = v;
@@ -183,8 +184,9 @@ export function parseTeam(v: unknown): TeamMember[] {
     const d = String(r.cell ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
     if (d.length !== 10 || seen.has(d)) continue;
     seen.add(d);
-    const rate = Number(String(r.rate ?? "").replace(/[$,\s]/g, ""));
-    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : r.role === "office" ? "office" : "crew", ...(Number.isFinite(rate) && rate > 0 && rate <= 500 ? { rate: Math.round(rate * 100) / 100 } : {}) });
+    const rate = Number(String(r.rate ?? "").replace(/[$,\s]/g, "")), pct = Number(String(r.commission ?? "").replace(/[%\s]/g, ""));
+    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : r.role === "office" ? "office" : "crew", ...(Number.isFinite(rate) && rate > 0 && rate <= 500 ? { rate: Math.round(rate * 100) / 100 } : {}),
+      ...(Number.isFinite(pct) && pct > 0 && pct <= 50 ? { commission: Math.round(pct * 10) / 10 } : {}) });
     if (out.length >= TEAM_MAX) break;
   }
   return out;

@@ -66,4 +66,12 @@ ok(() => { const id = "0b9a5c7e-1111-4222-8333-444455556666", s = qboState(id); 
   ok(() => { const w = t.weeks.find(x => x.person === "Luis"); assert.deepEqual(w, { person: "Luis", week: "2026-11-09", hours: 45, regular: 40, overtime: 5, rate: 28, pay: 1330 }); });
   ok(() => { const w = t.weeks.find(x => x.person === "Mike"); assert.equal(w.hours, 2); assert.equal(w.pay, 80); assert.equal(t.lines.find(l => l.person === "Mike").job, "General"); });
   ok(() => { const s = S4.timesheet([e("+17205550188", "2026-11-15T15:00:00Z", "2026-11-15T19:00:00Z")], {}, {}, 0, "America/Denver"); assert.equal(s.weeks[0].week, "2026-11-09", "Sunday belongs to the week that started Monday"); assert.equal(s.lines[0].person, "+17205550188"); }); }
+// Commissions: a percentage of what was collected on the jobs each person was on, in the period.
+{ const S5 = await import("./lib/service.ts");
+  const team = [{ cell: "+17205550188", name: "Luis", commission: 5 }, { cell: "+17205550190", name: "Ana" }];
+  const jobs = [{ id: "a", crewMember: "+17205550188" }, { id: "b", crewMember: "+17205550188" }, { id: "c", crewMember: "" }];
+  const pays = [{ thread_id: "a", amount: 4000, paid_on: "2026-11-02" }, { thread_id: "b", amount: 1500.5, paid_on: "2026-11-10" }, { thread_id: "a", amount: 900, paid_on: "2026-09-01" }, { thread_id: "c", amount: 700, paid_on: "2026-11-03" }];
+  const r = S5.commissions(team, jobs, pays, "2026-10-17");
+  ok(() => assert.deepEqual(r, [{ name: "Luis", pct: 5, collected: 5500.5, jobs: 2, owed: 275.03 }], "only people with a percentage; only the period; only their jobs"));
+  ok(() => { const t = parseTeam(JSON.stringify([{ name: "Luis", cell: "7205550188", commission: "7.5%" }, { name: "Max", cell: "7205550199", commission: "90" }])); assert.equal(t[0].commission, 7.5); assert.equal(t[1].commission, undefined, "at most 50%"); }); }
 console.log(`service 2: ${n} checks passed`);

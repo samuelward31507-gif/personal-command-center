@@ -12,7 +12,7 @@ import { HoursPanel, RecurringPanel } from "./jobwork";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 import { jobProfit, parseTeam } from "@/lib/crm";
 import { totals } from "@/lib/billing";
-import { minutesOf } from "@/lib/service";
+import { commissions, minutesOf } from "@/lib/service";
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : null);
 const PERIOD: Record<Period, string> = { 30: "the last 30 days", 90: "the last 90 days", 365: "the last 12 months" };
@@ -141,6 +141,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
           <RecurringPanel d={d} go={go} onPlans={() => go.tab("plans")} />
           <HoursPanel d={d} go={go} />
           <CrewPanel d={d} days={days} />
+          <CommissionPanel d={d} days={days} />
           <TaxPanel d={d} days={days} />
           <section className="panel s6">
             <div className="panel-h"><h2>Reviews</h2><small>{n!.reviews} asked {days === 365 ? "this year" : `in ${days} days`}</small></div>
@@ -196,5 +197,19 @@ function TaxPanel({ d, days }: { d: Data; days: number }) {
     <div className="panel-b">{list.length ? <table className="tbl flush"><thead><tr><th>Month</th><th className="right">Invoices</th><th className="right">Taxable</th><th className="right">Tax collected</th></tr></thead>
       <tbody>{list.map(([k, m]) => <tr key={k} style={{ cursor: "default" }}><td><b>{new Date(k + "-15T12:00:00").toLocaleDateString("en-US", { month: "long", year: "numeric" })}</b></td><td className="num">{m.n}</td><td className="num">{usd(m.taxable)}</td><td className="num"><b>{usd(m.tax)}</b></td></tr>)}</tbody></table>
       : <p className="fine" style={{ padding: "8px 0" }}>Invoices with sales tax on them show here once they&rsquo;re paid. Set your rate in Invoices and payments.</p>}</div>
+  </section>;
+}
+
+/** Commissions owed for the period: each person's percentage of what was collected on their jobs. */
+function CommissionPanel({ d, days }: { d: Data; days: number }) {
+  const team = parseTeam(d.setup?.team ?? "[]");
+  if (!team.some(m => m.commission)) return null;
+  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const rows = commissions(team, d.board ?? [], d.payments ?? [], since);
+  return <section className="panel s6">
+    <div className="panel-h"><h2>Commissions</h2><small>on money collected, last {days} days</small></div>
+    <div className="panel-b"><table className="tbl flush"><thead><tr><th>Who</th><th className="right">Rate</th><th className="right">Collected</th><th className="right">Owed</th></tr></thead>
+      <tbody>{rows.map(r => <tr key={r.name} style={{ cursor: "default" }}><td><b>{r.name}</b><small className="mut">{r.jobs ? `, ${r.jobs} ${r.jobs === 1 ? "job" : "jobs"}` : ""}</small></td><td className="num mut">{r.pct}%</td><td className="num">{usd(r.collected)}</td><td className="num"><b>{usd(r.owed)}</b></td></tr>)}</tbody></table>
+      <p className="fine" style={{ marginTop: 6 }}>Set each person&rsquo;s percentage in Settings, Account, next to their hourly rate.</p></div>
   </section>;
 }

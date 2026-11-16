@@ -197,3 +197,16 @@ export function timesheet(entries: Pick<TimeEntry, "member" | "started_at" | "en
     .sort((a, b) => a.week.localeCompare(b.week) || a.person.localeCompare(b.person));
   return { lines, weeks };
 }
+
+/**
+ * Commissions: for each person with a percentage, what was collected in the period on the jobs they were on, and their
+ * share. Collected (not sold) is what most shops pay on, so nobody is paid on money that never comes in.
+ */
+export function commissions(team: { cell: string; name: string; commission?: number }[], jobs: { id: string; crewMember?: string }[], payments: { thread_id: string; amount: number; paid_on: string }[], since: string): { name: string; pct: number; collected: number; jobs: number; owed: number }[] {
+  const byJob = new Map(jobs.map(j => [j.id, d10(j.crewMember ?? "")]));
+  return team.filter(m => (m.commission ?? 0) > 0).map(m => {
+    const mine = payments.filter(p => p.paid_on >= since && byJob.get(p.thread_id) === d10(m.cell));
+    const collected = Math.round(mine.reduce((a, p) => a + p.amount, 0) * 100) / 100;
+    return { name: m.name || m.cell, pct: m.commission!, collected, jobs: new Set(mine.map(p => p.thread_id)).size, owed: Math.round(collected * m.commission! ) / 100 };
+  }).sort((a, b) => b.owed - a.owed);
+}
