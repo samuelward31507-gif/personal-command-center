@@ -8,6 +8,7 @@ import { cleanOwnerSetup } from "@/lib/crm";
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
+import { replyToFor } from "@/lib/client-lead-mail-run";
 import { setPhone, addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
@@ -277,7 +278,8 @@ export async function POST(req: Request) {
       if (!to) return json({ error: "Add their email on the customer first." }, 409);
       const firstName = String(row.customer_name ?? "").split(" ")[0], biz = c.setup.display_name || "", amt = Number(row.amount) || 0;
       const money = amt.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: amt % 1 ? 2 : 0 });
-      const r = await sendCustomerEmail({ to, business: biz, replyTo: c.setup.alert_email || undefined,
+      // Replies come back onto this customer's record when receiving is set up; until then, to the owner's own inbox.
+      const r = await sendCustomerEmail({ to, business: biz, replyTo: replyToFor(String(row.thread)) || c.setup.alert_email || undefined,
         subject: quote ? `Your quote from ${biz}` : `Invoice #${row.number} from ${biz}`,
         lines: quote ? [`Hi${firstName ? " " + firstName : ""},`, `Here's your quote${amt ? ` for ${money}` : ""}. You can look it over and approve it from your phone in a minute.`, "Questions? Just reply to this email or text us."]
           : [`Hi${firstName ? " " + firstName : ""},`, `Here's invoice #${row.number}${amt ? ` for ${money}` : ""}${row.due_on ? `, due ${new Date(String(row.due_on) + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric" })}` : ""}.`, "You can see it and pay online. Thank you for your business."],

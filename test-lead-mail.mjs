@@ -98,4 +98,18 @@ ok(() => assert.equal(M.verifySvix(secret, "msg_2", ts, `v1,${sig}`, body, now),
 ok(() => assert.equal(M.verifySvix(secret, "msg_1", ts, `v1,${sig}`, body, now + 10 * 60_000), false));
 ok(() => assert.equal(M.verifySvix("", "msg_1", ts, `v1,${sig}`, body, now), false));
 
+// ---------- Two-way email: the signed reply address, and the words without the quoted email ----------
+const TID = "3f2b9c1e-7a44-4d0b-9e21-55c0a1b2c3d4", SECRET = "token-key-for-tests";
+ok(() => { const a = M.replyAddress(TID, SECRET, D); assert.match(a, /^r-[0-9a-f]{32}-[0-9a-f]{12}@leads\.cinder\.test$/); assert.equal(M.replyThread([a], SECRET, D), TID); });
+ok(() => { const a = M.replyAddress(TID, SECRET, D); assert.equal(M.replyThread([`"Mike" <${a.toUpperCase()}>`], SECRET, D), TID, "case and display name don't matter"); });
+ok(() => { const a = M.replyAddress(TID, SECRET, D); const forged = a.replace(/-[0-9a-f]{12}@/, "-000000000000@"); assert.equal(M.replyThread([forged], SECRET, D), null); });
+ok(() => { const a = M.replyAddress(TID, SECRET, D); assert.equal(M.replyThread([a], "other-secret", D), null); assert.equal(M.replyThread([a], SECRET, "other.test"), null); });
+ok(() => { const other = M.replyAddress("11111111-2222-3333-4444-555555555555", SECRET, D); assert.notEqual(other, M.replyAddress(TID, SECRET, D)); assert.equal(M.replyThread([other], SECRET, D), "11111111-2222-3333-4444-555555555555"); });
+ok(() => { assert.equal(M.replyAddress("not-a-uuid", SECRET, D), ""); assert.equal(M.replyAddress(TID, "", D), ""); assert.equal(M.replyThread([`${KEY}@${D}`], SECRET, D), null, "a lead address isn't a reply"); });
+ok(() => assert.equal(M.replyText("Sounds good, Thursday works.\n\nOn Mon, Nov 16, 2026 at 9:00 AM Ridgeline Fence <quotes@cinder.test> wrote:\n> Here's your quote"), "Sounds good, Thursday works."));
+ok(() => assert.equal(M.replyText("Can we do cedar instead?\nThanks\nOn Mon, Nov 16, 2026 at 9:00 AM Ridgeline Fence\n<quotes@cinder.test> wrote:\n> quote"), "Can we do cedar instead?\nThanks"));
+ok(() => assert.equal(M.replyText("Paid it this morning.\r\n\r\nSent from my iPhone\r\n"), "Paid it this morning."));
+ok(() => assert.equal(M.replyText("Yes please.\n\n________________________________\nFrom: Ridgeline Fence <quotes@cinder.test>\nSent: Monday\n"), "Yes please."));
+ok(() => assert.equal(M.replyText("Approved!\n-----Original Message-----\nFrom: x"), "Approved!"));
+ok(() => assert.equal(M.replyText("> only quoted"), ""));
 console.log(`lead mail: ${n} checks passed`);

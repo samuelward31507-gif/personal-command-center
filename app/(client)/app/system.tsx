@@ -228,7 +228,7 @@ function MailConn({ d, go, toast, api, project, reload, open, onToggle }: { d: D
         <li>Or in Gmail: Settings, Forwarding, Add a forwarding address, paste it. Gmail sends a code; it shows up right here. Then make a filter (from: angi.com OR thumbtack.com OR your form&rsquo;s sender) that forwards to it.</li>
         <li>Outlook: Settings, Mail, Rules, a rule that forwards those senders to this address.</li>
       </ol>
-      <p>An email without a phone number waits below so you can add it. Nothing is ever emailed back to anyone.</p>
+      <p>An email without a phone number waits below so you can add it. The same address also brings customers' replies to the quotes and invoices you email onto their record. Nothing is ever emailed back automatically.</p>
       {m.recent.length > 0 && <table className="tbl flush log"><tbody>
         {m.recent.slice(0, 10).map(r => <tr key={r.id} className={r.status === "new" ? "bad" : ""} onClick={r.thread ? () => go.record(r.thread) : undefined} style={{ cursor: r.thread ? "pointer" : "default" }}>
           <td className="mut nowrap">{ago(r.at)}</td><td className="nowrap"><span className="dot" />{MAIL_WORD[r.status] ?? r.status}</td>
