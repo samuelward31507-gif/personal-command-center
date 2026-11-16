@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { draftItems, jobFields, jobProfit, jobProgress, jobSteps, rangeText, STAGE_LABEL, STAGES, type Card, type CardInvoice, type Costs, type Details, type Stage } from "@/lib/crm";
 import { chosen, dollars, totals, type Item } from "@/lib/billing";
-import { Avatar, Empty, Icon, Sheet, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast } from "./parts";
+import { Avatar, Empty, Icon, Sheet, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast, noPhone, typePhone } from "./parts";
 import { quoteText } from "@/lib/crm";
 import { CrewPick, crewName, emailDoc } from "./crew";
 import { PlanBox } from "./plans";
@@ -77,7 +77,7 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
   const [ask, setAsk] = useState<Stage | null>(ask0 ?? null);
   const [losing, setLosing] = useState(false);
   const ta = useRef<HTMLTextAreaElement>(null);
-  const canText = biz.number && r.status !== "opted_out";
+  const canText = biz.number && r.status !== "opted_out" && !noPhone(r.phone);
   const next = r.card ? nextUp(r.card) : null;
   const pick = (s: Stage) => {
     if (r.card && s === r.card.stage) return;
@@ -92,7 +92,7 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
       <Avatar name={r.name} size="xl" />
       <div className="t"><b>{r.name}</b><span>{[fmtPhone(r.phone), r.address].filter(Boolean).join(", ")}</span></div>
       <div className="acts">
-        {biz.canCall ? <button type="button" className="btn ghost ic" title="Call" aria-label="Call" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} /></button> : <a className="btn ghost ic" title="Call" aria-label="Call" href={`tel:${r.phone}`}><Icon name="phone" size={14} /></a>}
+        {noPhone(r.phone) ? null : biz.canCall ? <button type="button" className="btn ghost ic" title="Call" aria-label="Call" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} /></button> : <a className="btn ghost ic" title="Call" aria-label="Call" href={`tel:${r.phone}`}><Icon name="phone" size={14} /></a>}
         <button type="button" className="btn ghost ic" title="Open full record (↵)" aria-label="Open full record" onClick={onExpand}><Icon name="expand" size={14} /></button>
         <button type="button" className="btn ghost ic" title="Close (esc)" aria-label="Close" onClick={onClose}><Icon name="x" size={14} /></button>
       </div>
@@ -104,6 +104,7 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
       {r.price ? <b className="amt">{dollars(r.price)}</b> : null}
     </div>
     {next && (next.tone === "red" || next.tone === "amber") && <div className="insp-sub" style={{ color: next.tone === "red" ? "var(--bad)" : "var(--ink)" }}><Icon name={next.icon} size={13} /><span>{next.text}</span></div>}
+    {noPhone(r.phone) && <AddPhone r={r} />}
     <div className="insp-tabs" role="tablist">
       <button type="button" role="tab" aria-selected={tab === "activity"} className={tab === "activity" ? "on" : ""} onClick={() => setTab("activity")}>Activity{r.texts ? <em>{r.texts.length}</em> : null}</button>
       <button type="button" role="tab" aria-selected={tab === "job"} className={tab === "job" ? "on" : ""} onClick={() => setTab("job")}>Job</button>
@@ -140,7 +141,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
   const [wide, setWide] = useState(false);
   useEffect(() => { const m = matchMedia("(min-width: 900px)"); const h = () => setWide(m.matches); h(); m.addEventListener("change", h); return () => m.removeEventListener("change", h); }, []);
   const ta = useRef<HTMLTextAreaElement>(null);
-  const canText = biz.number && r.status !== "opted_out";
+  const canText = biz.number && r.status !== "opted_out" && !noPhone(r.phone);
   const next = r.card ? nextUp(r.card) : null;
   const { card, cust, name, phone, address, source, since, price, inv, invoices, paid, owed, status } = r;
   const pick = (s: Stage) => {
@@ -176,7 +177,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       {next.icon === "invoice" && inv && <button type="button" className="btn ink sm" onClick={() => go.invoice(inv.id)}>Open invoice</button>}
       {next.icon === "invoice" && !inv && <button type="button" className="btn ink sm" onClick={() => setTab("job")}>Create invoice</button>}
       {next.icon === "cal" && <button type="button" className="btn ink sm" onClick={() => setTab("job")}>Open the job</button>}
-      {biz.canCall ? <button type="button" className="btn sm" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}>Call {first(name)}</button> : <a className="btn sm" href={`tel:${phone}`}>Call {first(name)}</a>}
+      {noPhone(phone) ? null : biz.canCall ? <button type="button" className="btn sm" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}>Call {first(name)}</button> : <a className="btn sm" href={`tel:${phone}`}>Call {first(name)}</a>}
     </div></section> : null;
   const rail = <>{!biz.crew && needs}{!biz.crew && money}{!biz.crew && card && card.stage === "won" && !card.pastCustomer && <CostBox card={card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
     {card && card.stage === "won" && !card.pastCustomer && <ChecklistBox d={d} card={card} trade={biz.trade} act={r.act} busy={r.busy} canPick={!biz.crew} onPhoto={async (label, f) => { try { await r.act("photo", { action: "photo", kind: "during", caption: label, data: await shrink(f) }, "Photo added."); } catch { r.toast("That photo didn't work.", true); } }} />}
@@ -197,12 +198,13 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
     </section></>;
 
   return <div className="rec">
+    {noPhone(phone) && <AddPhone r={r} />}
     <header className="rec-h">
       <button type="button" className="btn ghost ic" onClick={onBack} aria-label="Back" title="Back (esc)"><Icon name="back" size={16} /></button>
       <Avatar name={name} size="xl" /><div className="t"><h1>{name}</h1><span>{[fmtPhone(phone), address, since ? `Customer since ${since}` : sourceLabel(source)].filter(Boolean).join(", ")}</span></div>
       {card && <Stg stage={card.pastCustomer ? "won" : card.stage}>{`${card.pastCustomer ? "Past customer" : STAGE_LABEL[card.stage]}${price && !biz.crew ? `, ${dollars(price)}` : ""}`}</Stg>}
       <div className="acts">
-        {biz.canCall ? <button type="button" className="btn" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} />Call</button> : <a className="btn" href={`tel:${phone}`}><Icon name="phone" size={14} />Call</a>}
+        {noPhone(phone) ? null : biz.canCall ? <button type="button" className="btn" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} />Call</button> : <a className="btn" href={`tel:${phone}`}><Icon name="phone" size={14} />Call</a>}
         <button type="button" className="btn" onClick={() => { setTab("activity"); setTimeout(() => ta.current?.focus(), 50); }}><Icon name="chat" size={14} />Text</button>
         {address && <a className="btn ic" href={`https://maps.google.com/?q=${encodeURIComponent(address)}`} target="_blank" rel="noreferrer" aria-label="Directions" title="Directions"><Icon name="pin" size={14} /></a>}
         {card?.email && <a className="btn ic" href={`mailto:${card.email}`} aria-label="Email" title={card.email}><Icon name="send" size={14} /></a>}
@@ -271,6 +273,16 @@ function Brief({ card, name, phone, address, texts, trade, toast }: { card: Card
 
 // ---------- Activity: texts and events in one timeline, composer under it ----------
 type Ev = { at: string; kind: "text" | "event"; text?: Text; title?: string; sub?: string; icon?: string; tone?: string };
+/** A customer who came in without a phone: add the number here and texting, calls and reminders work. */
+function AddPhone({ r }: { r: Rec }) {
+  const [v, setV] = useState("");
+  return <form className="addph" onSubmit={async e => { e.preventDefault(); if (await r.act("setphone", { action: "setphone", phone: v }, "Number added. Texts and calls work now.")) setV(""); }}>
+    <span><b>No phone on file.</b> Came in without one. Add it to text or call them; until then, email works.</span>
+    <input className="input sm" inputMode="tel" placeholder="(720) 555-0100" aria-label="Phone number" value={v} onChange={e => setV(typePhone(e.target.value))} />
+    <button type="submit" className="btn sm" disabled={!!r.busy || v.replace(/\D/g, "").length !== 10}>Add</button>
+  </form>;
+}
+
 function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolean; ta: React.RefObject<HTMLTextAreaElement | null>; compact?: boolean; draft0?: string }) {
   // The inspector scrolls inside its own pane, so it may start at the newest text; the page must not pull the window down.
   const autoscroll = !!compact;

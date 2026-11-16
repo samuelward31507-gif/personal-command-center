@@ -275,14 +275,25 @@ export type Preview = {
   customers: number; merged: number; properties: number; openQuotes: number; openQuotesValue: number; scheduledJobs: number; unpaidInvoices: number; unpaidValue: number;
   plans: number; items: number; missingPhone: { ref: string; name: string; email: string }[]; merges: Merge[]; sourceCustomers: number;
 };
-/** What will come in, by type, after merges and the owner's phone fixes. Customers with no phone can't come in (texts key on it). */
+/**
+ * The stand-in for a customer who has no phone (common for commercial and email-only customers). Records key on the
+ * phone, so this keeps each one unique. It has no digits at all, so no phone match (they compare the last 10 digits)
+ * can ever land on it, and nothing can text or call it. The owner can add the real number later.
+ */
+export function noPhoneKey(sys: string, ref: string): string {
+  return "nophone:" + [...(sys + ":" + ref)].map(ch => ch.charCodeAt(0).toString(16).replace(/[0-9]/g, d => "ghijklmnop"[Number(d)])).join("");
+}
+export const isNoPhone = (p: string | null | undefined) => !!p && p.startsWith("nophone:");
+
+/** What will come in, by type, after merges and the owner's phone fixes. A customer with no phone still comes in (as "No phone") if it has a name or an email. */
 export function previewOf(s: Staged, d: Decisions = {}, today = new Date().toLocaleDateString("en-CA")): Preview {
   const fixed = s.customers.map(c => d.phones?.[c.ref] ? { ...c, phone: e164(d.phones[c.ref]) || c.phone } : c);
   const { customers, merges } = dedupe(fixed, d.splits);
   const open = s.invoices.filter(i => i.status === "open" && i.total - i.paid > 0.005);
   const q = s.quotes.filter(x => x.status === "open");
-  return { sourceCustomers: s.customers.length, customers: customers.filter(c => c.phone).length, merged: merges.reduce((a, m) => a + m.merged.length, 0),
-    properties: customers.filter(c => c.phone).reduce((a, c) => a + c.properties.length, 0), openQuotes: q.length, openQuotesValue: Math.round(q.reduce((a, x) => a + x.total, 0)),
+  const comes = (c: NCustomer) => !!c.phone || !!c.name || !!c.email;
+  return { sourceCustomers: s.customers.length, customers: customers.filter(comes).length, merged: merges.reduce((a, m) => a + m.merged.length, 0),
+    properties: customers.filter(comes).reduce((a, c) => a + c.properties.length, 0), openQuotes: q.length, openQuotesValue: Math.round(q.reduce((a, x) => a + x.total, 0)),
     scheduledJobs: s.jobs.filter(j => j.status !== "done" && (!j.start || j.start >= today)).length, unpaidInvoices: open.length, unpaidValue: Math.round(open.reduce((a, i) => a + i.total - i.paid, 0) * 100) / 100,
     plans: s.plans.length, items: s.items.length, missingPhone: customers.filter(c => !c.phone).map(c => ({ ref: c.ref, name: c.name, email: c.email })), merges };
 }

@@ -64,7 +64,7 @@ ok(() => { const s = { ...S.emptyStaged(), customers: people,
   invoices: [{ ref: "i1", customerRef: "f", status: "open", items: [], total: 1480, paid: 1000 }, { ref: "i2", customerRef: "f", status: "paid", items: [], total: 500, paid: 500 }], items: [{ ref: "t", name: "Gate", unit: "", price: 550 }] };
   const p = S.previewOf(s, {}, today);
   assert.equal(p.sourceCustomers, 6); assert.equal(p.customers, 3); assert.equal(p.merged, 3); assert.equal(p.openQuotes, 1); assert.equal(p.openQuotesValue, 4000); assert.equal(p.scheduledJobs, 1); assert.equal(p.unpaidInvoices, 1); assert.equal(p.unpaidValue, 480); assert.equal(p.items, 1); assert.equal(p.missingPhone.length, 0);
-  const p2 = S.previewOf({ ...s, customers: [...people, { ref: "g", name: "No Phone", phone: "", email: "np@x.com", notes: "", properties: [] }] }, {}, today); assert.deepEqual(p2.missingPhone.map(m => m.ref), ["g"]);
+  const p2 = S.previewOf({ ...s, customers: [...people, { ref: "g", name: "No Phone", phone: "", email: "np@x.com", notes: "", properties: [] }] }, {}, today); assert.deepEqual(p2.missingPhone.map(m => m.ref), ["g"]); assert.equal(p2.customers, 4, "a customer with no phone still comes in");
   const p3 = S.previewOf({ ...s, customers: [...people, { ref: "g", name: "No Phone", phone: "", email: "np@x.com", notes: "", properties: [] }] }, { phones: { g: "720-555-0111" } }, today); assert.equal(p3.missingPhone.length, 0); assert.equal(p3.customers, 4); });
 
 // ---------- Status words from each tool ----------
@@ -183,4 +183,8 @@ ok(() => assert.equal(B.readableAccent("#1d4ed8"), "#1d4ed8"));
 ok(() => assert.ok(B.contrastOnWhite(B.readableAccent("#ffff00")) >= 4.5));
 ok(() => { const px = []; for (let i = 0; i < 100; i++) px.push(255, 255, 255, 255); for (let i = 0; i < 40; i++) px.push(30, 90, 200, 255); for (let i = 0; i < 10; i++) px.push(20, 20, 20, 255); assert.equal(B.dominantColor(px), "#1e5ac8"); });
 ok(() => assert.equal(B.cleanLogo("data:image/png;base64,AAAA"), "data:image/png;base64,AAAA")); ok(() => assert.equal(B.cleanLogo("javascript:alert(1)"), ""));
+// No phone: a stand-in key with no digits, unique per source record, stable across runs.
+ok(() => { const k = S.noPhoneKey("jobber", "Z2lkOi8vSm9iYmVyL0NsaWVudC8xMjM0NTY3ODkw"); assert.match(k, /^nophone:[a-z]+$/); assert.equal(/\d/.test(k), false);
+  assert.equal(k, S.noPhoneKey("jobber", "Z2lkOi8vSm9iYmVyL0NsaWVudC8xMjM0NTY3ODkw")); assert.notEqual(k, S.noPhoneKey("jobber", "Z2lkOi8vSm9iYmVyL0NsaWVudC8xMjM0NTY3ODkx"));
+  assert.notEqual(S.noPhoneKey("quickbooks", "1"), S.noPhoneKey("jobber", "1")); assert.equal(S.isNoPhone(k), true); assert.equal(S.isNoPhone("+17205550100"), false); });
 console.log(`switch: ${n} checks passed`);

@@ -9,7 +9,7 @@ import { gql, jobberToken } from "@/lib/jobber";
 import { qboRead } from "@/lib/qbo";
 import { cleanCatalog } from "@/lib/service";
 import { PHASES, cleanStaged, dedupe, emptyStaged, jobberClient, jobberItem, jobberPlan, jobberInvoice, jobberJob, jobberQuote, jobberRequest, mergeStaged, previewOf, qboCustomer, qboInvoice, qboItem,
-  type Decisions, type NCustomer, type Phase, type Preview, type Staged } from "@/lib/switch";
+  type Decisions, type NCustomer, type Phase, type Preview, type Staged, noPhoneKey } from "@/lib/switch";
 
 type Sql = NeonQueryFunction<false, false>;
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -215,12 +215,14 @@ export async function runStep(sql: Sql, c: Client, id: string): Promise<{ ok: bo
         }
         if (phase === "customers") {
           const x = row as NCustomer;
-          if (!x.phone) { bump("customers", "skipped"); continue; }
+          // No phone: still comes in, under a stand-in key, so its quotes, jobs and open invoices aren't lost.
+          if (!x.phone && !x.name && !x.email) { bump("customers", "skipped"); continue; }
+          const phoneKey = x.phone || noPhoneKey(sys, x.ref);
           const lead = !!x.lead && !p.worked.has(x.ref), stage = p.worked.has(x.ref) ? "won" : p.quoted.has(x.ref) ? "quoted" : lead ? "new" : "won";
           const address = x.properties[0]?.address ?? "";
           const note = [x.notes, x.company ? `Company: ${x.company}` : "", x.tags ? `Tags: ${x.tags}` : "", `Moved in from ${from} on ${today}.`].filter(Boolean).join("\n").slice(0, 4000);
           const [ex] = await sql`SELECT id, customer_name, customer_email, details, notes, hidden_at, source_system, source_ref, import_id, stage FROM public.client_threads WHERE project_id = ${c.projectId}::uuid
-            AND ((source_system = ${sys} AND source_ref = ${x.ref}) OR right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${x.phone.slice(-10)}) ORDER BY (source_ref = ${x.ref}) DESC LIMIT 1` as Record<string, unknown>[];
+            AND ((source_system = ${sys} AND source_ref = ${x.ref}) OR customer_phone = ${phoneKey} OR (${x.phone.length >= 10} AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${x.phone.slice(-10)})) ORDER BY (source_ref = ${x.ref}) DESC LIMIT 1` as Record<string, unknown>[];
           let tid: string;
           if (ex) {
             tid = String(ex.id);
@@ -234,7 +236,7 @@ export async function runStep(sql: Sql, c: Client, id: string): Promise<{ ok: bo
           } else {
             const stageAt = stage === "won" ? (x.since ? `${x.since}T12:00:00Z` : new Date(Date.now() - 31 * 86400000).toISOString()) : new Date().toISOString();
             const [ins] = await sql`INSERT INTO public.client_threads (owner_id, project_id, customer_phone, customer_name, customer_email, source, status, details, notes, stage, stage_at, source_system, source_ref, import_id, created_at)
-              VALUES (${c.owner}, ${c.projectId}::uuid, ${x.phone}, ${x.name}, ${x.email}, 'import', ${stage === "won" ? "closed" : "paused"}, ${JSON.stringify(address ? { address } : {})}::jsonb, ${note}, ${stage}, ${stageAt}::timestamptz,
+              VALUES (${c.owner}, ${c.projectId}::uuid, ${phoneKey}, ${x.name}, ${x.email}, 'import', ${stage === "won" ? "closed" : "paused"}, ${JSON.stringify(address ? { address } : {})}::jsonb, ${note}, ${stage}, ${stageAt}::timestamptz,
                 ${sys}, ${x.ref}, ${id}::uuid, ${x.since ? `${x.since}T12:00:00Z` : new Date().toISOString()}::timestamptz) RETURNING id` as { id: string }[];
             tid = ins.id;
             await record(sql, id, c, "threads", tid, "created");
