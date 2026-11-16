@@ -479,8 +479,8 @@ export default function CallModePage() {
           return <div className="dl-open dl-play" aria-label="What to say">
             {say === null ? <>
               <div><span>Open</span><p>{f(play.open)}</p></div>
-              <div><span>Pain</span><div className="dl-parts">{f(play.pitch).split(" ... (let them talk, then) ").map((part, i) => <p key={i}>{i > 0 && <em className="dl-pause">Let them talk.</em>}{part}</p>)}</div></div>
-              <div><span>Ask</span><p>{f(CLOSE)} <button type="button" className="dl-more" onClick={() => setSay("close")}>Guarantee</button></p></div>
+              <div><span>Script</span><div className="dl-parts">{f(play.pitch).split(" ... (let them talk, then) ").map((part, i) => <p key={i}>{i > 0 && <em className="dl-pause">Let them talk.</em>}{part}</p>)}</div></div>
+              <div><span>Ask</span><p>{f(play.close ?? CLOSE)} <button type="button" className="dl-more" onClick={() => setSay("close")}>Guarantee</button></p></div>
               <div><span>After they book</span><p className="dl-dig">{play.dig.map((q, i) => <span key={i}><i>{i + 1}</i>{f(q)} </span>)}</p></div>
             </> : <div className="dl-say" role="status">
               <span>{ob ? "Say" : say === "close" ? "Close" : say === "voicemail" ? "Voicemail" : "Gatekeeper"}</span>
@@ -489,10 +489,10 @@ export default function CallModePage() {
               {ob ? <>
                 <p>{f(ob.say)}</p>
                 {ob.then && !/^then the close\.?$/i.test(ob.then.trim()) && <p className="dl-then">{f(ob.then)}</p>}
-                {ob.then && /the close/i.test(ob.then) && <p className="dl-then"><b>Then close:</b> {f(CLOSE)}</p>}
+                {ob.then && /the close/i.test(ob.then) && <p className="dl-then"><b>Then close:</b> {f(play.close ?? CLOSE)}</p>}
               </> : say === "close" ? <>
                 <p className="dl-then"><b>Guarantee:</b> {f(play.guarantee)}</p>
-                <p>{f(CLOSE)}</p>
+                <p>{f(play.close ?? CLOSE)}</p>
               </> : say === "voicemail" ? <p>{f(VOICEMAIL[track])}</p> : say === "gatekeeper" ? <p>{f(GATEKEEPER)}</p> : null}
               <button type="button" className="dl-say-x" onClick={() => setSay(null)}>Back to script <kbd>Esc</kbd></button>
               </div>
