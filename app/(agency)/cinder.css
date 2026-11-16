@@ -561,3 +561,31 @@ a.pt-draft-who:hover { text-decoration: underline !important; text-underline-off
 .td-rewrite { height: 22px; padding: 0 7px; border: 0; border-radius: 6px; background: transparent; color: var(--k-g2); font: 500 12.5px/1 var(--k-ff); cursor: pointer; box-shadow: inset 0 0 0 1px var(--k-line2); }
 .td-rewrite:hover:not(:disabled) { color: var(--k-ink); box-shadow: inset 0 0 0 1px var(--k-line3); }
 .td-rewrite:disabled { opacity: .6; cursor: default; }
+
+/* Today, two columns: the work on the left, the day at a glance on the right. */
+.td-shell { max-width: 1280px; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; align-items: start; padding: 20px 40px 24px; }
+.td-main { min-width: 0; }
+.td-side { position: sticky; top: 72px; min-width: 0; }
+.td-side .td-side-sec:first-child { margin-top: 6px; }
+.td-side .td-sec { margin-top: 28px; }
+.td-side .td-mt { height: auto; min-height: 44px; padding-top: 8px; padding-bottom: 8px; flex-wrap: wrap; row-gap: 2px; }
+.td-side .td-mt .what { flex-basis: 100%; padding-left: 17px; font-size: 12.5px; white-space: normal; }
+.td-side .td-mt .t { margin-left: auto; }
+.td-kpis { display: grid; grid-template-columns: 1fr 1fr; margin: 0; }
+.td-kpis > div { padding: 12px 14px; }
+.td-kpis > div:nth-child(even) { box-shadow: inset 1px 0 0 var(--k-line); }
+.td-kpis > div:nth-child(n+3) { border-top: 1px solid var(--k-line); }
+.td-kpis dt { font-size: 12.5px; color: var(--k-g2); margin-bottom: 4px; }
+.td-kpis dd { margin: 0; font: 600 22px/26px var(--k-display); letter-spacing: -.4px; color: var(--k-ink); }
+.td-kpis dd small { font: 500 12.5px/1 var(--k-ff); letter-spacing: 0; color: var(--k-g3); }
+.td-numbers { max-width: 1280px; padding: 0 40px; }
+.td-tbl .why { max-width: 460px; }
+@media (max-width: 1180px) { .td-shell { grid-template-columns: minmax(0, 1fr); max-width: 860px; } .td-side { position: static; } .td-numbers { max-width: 860px; } }
+.td-shell { max-width: none; margin: 0; padding: 24px 32px 24px; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; }
+.td-numbers { max-width: none; margin: 40px 0 0 !important; padding: 0 32px; }
+.td-brief { max-width: 80ch; }
+.td-side .td-mt > a { flex: 1 1 auto; }
+.td-side .td-mt > a b { overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1180px) { .td-shell { max-width: 900px; } .td-numbers { max-width: 900px; } }
+.td-side .td-mt > a { flex-direction: column !important; gap: 1px !important; }
+.td-side .td-mt > a .what { flex-basis: auto; padding-left: 0; }
