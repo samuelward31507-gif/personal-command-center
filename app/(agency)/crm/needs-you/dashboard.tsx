@@ -33,7 +33,7 @@ type Board = {
 type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string; contactFirst?: string; contactCompany?: string; contactPhone?: string; contactTimeZone?: string; contactLocation?: string };
 type Referral = { dealId: string; title: string; id: string; firstName: string; company: string; phone: string; wonAt: string | null };
 type Warm = { id: string; firstName: string; company: string; phone: string; website?: string; niche: string; location?: string; callNote?: string; outcome: string; at: string | null; infoSentAt: string | null; repliedAt: string | null; tasks: { id: string; title: string; due: string | null; day: number }[] };
-type Todo = { key: string; title: string; why: string; overdue: boolean; href: string; action: string; onClick?: () => void; alt?: { label: string; onClick: () => void }; name?: string; website?: string; body?: string };
+type Todo = { key: string; title: string; why: string; overdue: boolean; href: string; action: string; onClick?: () => void; alt?: { label: string; onClick: () => void }; name?: string; website?: string; body?: string; contactId?: string };
 type Alert = { level: "urgent" | "soon" | "info"; kind: string; text: string; href: string };
 
 const usd = (n: number) => "$" + Math.round(n || 0).toLocaleString("en-US");
@@ -57,6 +57,9 @@ export default function Dashboard() {
   const [content, setContent] = useState<{ key: string; channel: string; at: string }[] | null>(null);
   const [queue, setQueue] = useState<QueueItem[] | null>(null);
   const [ask, setAsk] = useState("");
+  const [dbrief, setDbrief] = useState<{ text: string; calls: { contactId: string; reason: string }[]; generatedAt: string } | null | undefined>(undefined);
+  const [radar, setRadar] = useState<{ id: string; contactId: string; reason: string; body: string; company: string; firstName: string; phone: string; website: string }[]>([]);
+  const [writing, setWriting] = useState(false);
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -106,6 +109,8 @@ export default function Dashboard() {
       fetch(`/api/my-day?today=${localDay(d0)}&dayEnd=${encodeURIComponent(dayEnd.toISOString())}&windowEnd=${encodeURIComponent(windowEnd.toISOString())}`, { cache: "no-store" })
         .then(r => (r.ok ? r.json() : { items: [] })).then(d => setQueue(((d.items ?? []) as QueueItem[]).filter(i => i.callable && i.contact).sort((a, b) => a.rank - b.rank))).catch(() => setQueue([]));
     }
+    fetch("/api/daily-brief", { cache: "no-store" }).then(r => (r.ok ? r.json() : { brief: null })).then(d => setDbrief(d.brief ?? null)).catch(() => setDbrief(null));
+    fetch("/api/follow-up-drafts", { cache: "no-store" }).then(r => (r.ok ? r.json() : { drafts: [] })).then(d => setRadar(d.drafts ?? [])).catch(() => {});
     fetch("/api/ops-alerts", { cache: "no-store" }).then(r => (r.ok ? r.json() : { alerts: [] })).then(d => setAlerts(d.alerts ?? [])).catch(() => {});
     const t = setInterval(() => tick(x => x + 1), 60000);
     return () => clearInterval(t);
@@ -167,7 +172,7 @@ export default function Dashboard() {
       const key = "info:" + w.id;
       if (doneKeys[key]) return [];
       const body = infoText({ firstName: first, demoLink: pickDemoLink(niche, ws.demoLink), niche, company: w.company });
-      return [{ key, title: `Send info to ${who}`, why: `Asked for info ${short(w.at)}`, overdue: true, href: `/crm?contact=${w.id}`, action: "Text", name: who, website: w.website, body,
+      return [{ key, title: `Send info to ${who}`, why: `Asked for info ${short(w.at)}`, overdue: true, href: `/crm?contact=${w.id}`, action: "Text", name: who, website: w.website, body, contactId: w.id,
         onClick: () => log(body, undefined, key), alt: { label: "Loom", onClick: () => setLoom({ w, key, url: "" }) } }];
     }
     const next = w.tasks[0];
@@ -177,7 +182,7 @@ export default function Dashboard() {
     const key = "fu:" + next.id;
     if (doneKeys[key]) return [];
     const body = infoFollowUpText({ firstName: first, company: w.company, day: next.day, niche });
-    return [{ key, title: `Follow up with ${who}`, why: `${next.day === 7 ? "Last" : `Day ${next.day}`} follow-up, info sent ${short(w.infoSentAt)}`, overdue: Date.parse(next.due) < startToday.getTime(), href: `/crm?contact=${w.id}`, action: "Text", name: who, website: w.website, body,
+    return [{ key, title: `Follow up with ${who}`, why: `${next.day === 7 ? "Last" : `Day ${next.day}`} follow-up, info sent ${short(w.infoSentAt)}`, overdue: Date.parse(next.due) < startToday.getTime(), href: `/crm?contact=${w.id}`, action: "Text", name: who, website: w.website, body, contactId: w.id,
       onClick: () => log(body, next.id, key), alt: { label: "Loom", onClick: () => setLoom({ w, taskId: next.id, key, url: "" }) } }];
   });
   // Unread Instagram / Facebook DMs: one row per channel, newest message as the preview.
@@ -237,15 +242,53 @@ export default function Dashboard() {
   const left = Math.max(0, target - (b?.today.calls ?? 0));
   const next = upcoming[0];
 
-  const drafts = (list ?? []).filter(t => t.onClick && !doneKeys[t.key]);
+  const haveText = new Set((list ?? []).map(t => t.contactId).filter(Boolean));
+  const radarTodos: Todo[] = radar.filter(r => !haveText.has(r.contactId) && !doneKeys["radar:" + r.id]).map(r => ({
+    key: "radar:" + r.id, title: `Follow up with ${r.company || r.firstName}`, why: r.reason, overdue: true, href: `/crm?contact=${r.contactId}`, action: "Text",
+    name: r.company || r.firstName, website: r.website, body: r.body, contactId: r.contactId,
+    onClick: () => {
+      if (r.phone) window.location.href = smsHref(r.phone, r.body);
+      void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: r.contactId, direction: "outbound", body: r.body }) }).catch(() => {});
+      void fetch("/api/follow-up-drafts", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: r.id, status: "sent" }) }).catch(() => {});
+      setDoneKeys(k => ({ ...k, ["radar:" + r.id]: true }));
+    },
+  }));
+  const skipRadar = (key: string) => { const id = key.slice(6); void fetch("/api/follow-up-drafts", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "skipped" }) }).catch(() => {}); };
+  const drafts = [...radarTodos, ...(list ?? []).filter(t => t.onClick && !doneKeys[t.key])];
   const waiting = (list ?? []).filter(t => !t.onClick);
-  const calls = (queue ?? []).slice(0, 6);
+  // The written brief picks the order and the reasons; anyone it doesn't mention keeps the queue's order after them.
+  const ranked = (() => {
+    const q = queue ?? [];
+    if (!dbrief?.calls?.length) return q;
+    const byId = new Map(q.map(i => [i.contact!.id, i]));
+    const first = dbrief.calls.map(c => { const i = byId.get(c.contactId); return i ? { ...i, why: c.reason || i.why } : null; }).filter(Boolean) as QueueItem[];
+    const seen = new Set(first.map(i => i.contact!.id));
+    return [...first, ...q.filter(i => !seen.has(i.contact!.id))];
+  })();
+  const calls = ranked.slice(0, 6);
   firstDraft.current = drafts[0]?.onClick ?? null;
-  const skip = (k: string) => setDoneKeys(d => ({ ...d, [k]: true }));
+  const skip = (k: string) => { if (k.startsWith("radar:")) skipRadar(k); setDoneKeys(d => ({ ...d, [k]: true })); };
   const firstCall = calls[0];
+  const men = (name: string, href: string, website?: string) => <Link key={href + name} className="td-men" href={href}><Logo name={name} website={website} size={18} />{name}</Link>;
+  // [[contactId|Name]] in the written brief becomes a linked company chip.
+  const written = dbrief?.text ? dbrief.text.split(/(\[\[[^|\]]+\|[^\]]+\]\])/g).map((part, i) => {
+    const m = part.match(/^\[\[([^|\]]+)\|([^\]]+)\]\]$/);
+    if (!m) return <span key={i}>{part}</span>;
+    const q = (queue ?? []).find(x => x.contact?.id === m[1]);
+    return men(m[2], `/crm?contact=${m[1]}`, q?.contact?.website);
+  }) : null;
+  async function writeNow() {
+    setWriting(true);
+    try {
+      const r = await fetch("/api/daily-brief", { method: "POST" });
+      if (r.ok) {
+        const [b, f] = await Promise.all([fetch("/api/daily-brief", { cache: "no-store" }).then(x => x.json()), fetch("/api/follow-up-drafts", { cache: "no-store" }).then(x => x.json())]);
+        setDbrief(b.brief ?? null); setRadar(f.drafts ?? []);
+      }
+    } finally { setWriting(false); }
+  }
   const replies = waiting.filter(t => t.overdue).length;
   const nameOf = (c: QueueItem["contact"]) => c ? (c.company || c.name) : "";
-  const men = (name: string, href: string, website?: string) => <Link key={href + name} className="td-men" href={href}><Logo name={name} website={website} size={18} />{name}</Link>;
   const brief: React.ReactNode[] = [];
   if (b) brief.push(b.today.calls >= target ? <span key="d"><b>{target} dials</b> done today. </span> : <span key="d"><b>{b.today.calls} dial{b.today.calls === 1 ? "" : "s"}</b> in, {left} to go. </span>);
   if (next) brief.push(<span key="m">Next up is {men(next.contactCompany || next.contactName || next.title, next.dealId ? `/crm/deals/${next.dealId}` : next.contactId ? `/crm?contact=${next.contactId}` : "/crm/calendar")} {when(next).day ? "tomorrow" : "today"} at {when(next).t}. </span>);
@@ -269,7 +312,9 @@ export default function Dashboard() {
 
     <div className="td-shell">
       <h2 className="td-hello">{hello}, {ws.ownerFirstName}</h2>
-      <p className="td-brief" aria-live="polite">{loadingBrief ? "\u00a0" : brief.length ? brief : "Nothing new overnight. Make the first call and the day starts moving."}</p>
+      <p className="td-brief" aria-live="polite">{written ?? (loadingBrief || dbrief === undefined ? "\u00a0" : brief.length ? brief : "Nothing new overnight. Make the first call and the day starts moving.")}</p>
+      <p className="td-brief-meta">{dbrief ? <>Written by Cinder at {new Date(dbrief.generatedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} from your calls, meetings and deals.</> : dbrief === null ? <>Cinder writes this every morning at 5.</> : null}
+        {dbrief !== undefined && <button type="button" className="td-rewrite" onClick={writeNow} disabled={writing}>{writing ? "Writing…" : dbrief ? "Rewrite" : "Write it now"}</button>}</p>
 
       <form className="td-ask" onSubmit={e => { e.preventDefault(); if (ask.trim()) window.location.href = askHref(ask.trim()); }}>
         <input value={ask} onChange={e => setAsk(e.target.value)} placeholder="Ask Cinder or tell it what to do…" aria-label="Ask Cinder" maxLength={500} />
