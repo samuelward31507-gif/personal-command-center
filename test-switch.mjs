@@ -195,4 +195,55 @@ ok(() => assert.equal(B.cleanLogo("data:image/png;base64,AAAA"), "data:image/png
 ok(() => { const k = S.noPhoneKey("jobber", "Z2lkOi8vSm9iYmVyL0NsaWVudC8xMjM0NTY3ODkw"); assert.match(k, /^nophone:[a-z]+$/); assert.equal(/\d/.test(k), false);
   assert.equal(k, S.noPhoneKey("jobber", "Z2lkOi8vSm9iYmVyL0NsaWVudC8xMjM0NTY3ODkw")); assert.notEqual(k, S.noPhoneKey("jobber", "Z2lkOi8vSm9iYmVyL0NsaWVudC8xMjM0NTY3ODkx"));
   assert.notEqual(S.noPhoneKey("quickbooks", "1"), S.noPhoneKey("jobber", "1")); assert.equal(S.isNoPhone(k), true); assert.equal(S.isNoPhone("+17205550100"), false); });
+// ---------- Payments and service plans from a spreadsheet (Housecall Pro, ServiceTitan, anything) ----------
+ok(() => { assert.equal(S.guessKind(["Payment ID", "Invoice #", "Customer", "Amount", "Payment Method", "Payment Date"]), "payments"); assert.equal(S.guessKind(["Customer", "Membership", "Frequency", "Next Visit", "Price"]), "plans"); assert.equal(S.guessKind(["Invoice #", "Customer", "Balance Due"]), "invoices"); });
+ok(() => { assert.equal(S.payMethod("Visa ending 4242"), "card"); assert.equal(S.payMethod("Check #1102"), "check"); assert.equal(S.payMethod("Cash"), "cash"); assert.equal(S.payMethod("ACH"), "bank"); assert.equal(S.payMethod("Zelle"), "bank"); assert.equal(S.payMethod(""), "other"); });
+ok(() => { const e = S.everyOf;
+  assert.deepEqual(e("Monthly"), { every: 1, unit: "month" }); assert.deepEqual(e("Every 2 weeks"), { every: 2, unit: "week" }); assert.deepEqual(e("Bi-weekly"), { every: 2, unit: "week" });
+  assert.deepEqual(e("Quarterly"), { every: 3, unit: "month" }); assert.deepEqual(e("Twice a year"), { every: 6, unit: "month" }); assert.deepEqual(e("Annual"), { every: 12, unit: "month" });
+  assert.deepEqual(e("Every 6 months"), { every: 6, unit: "month" }); assert.deepEqual(e("weekly"), { every: 1, unit: "week" }); assert.deepEqual(e("every 14 days"), { every: 2, unit: "week" }); assert.equal(e("when needed"), null); assert.equal(e(""), null); });
+ok(() => {
+  const inv = { headers: ["Invoice #", "Customer", "Phone", "Total", "Balance Due", "Status"], rows: [["1001", "Dana Ruiz", "720-555-0148", "1000", "400", "Partially paid"], ["1002", "Tom Becker", "303-555-0177", "500", "500", "Open"]] };
+  let st = S.stageSheet(inv, "invoices", S.guessMapping(inv.headers, "invoices"), "hcp").staged;
+  const pay = { headers: ["Payment ID", "Invoice #", "Customer", "Phone", "Amount", "Payment Method", "Payment Date", "Reference"], rows: [
+    ["P1", "1001", "Dana Ruiz", "720-555-0148", "$350.00", "Visa", "10/02/2026", "auth 77"], ["P2", "#1001", "Dana Ruiz", "720-555-0148", "250", "Check", "10/20/2026", "chk 1102"],
+    ["P3", "9999", "Ghost", "", "75", "Cash", "10/21/2026", ""], ["P4", "1002", "Tom Becker", "", "0", "Cash", "", ""], ["P5", "", "Tom Becker", "", "20", "Cash", "", ""]] };
+  const r = S.stageSheet(pay, "payments", S.guessMapping(pay.headers, "payments"), "hcp", st);
+  st = r.staged;
+  assert.equal(st.payments.length, 3); assert.deepEqual(r.skipped.map(x => x.why), ["No amount", "No invoice number"]);
+  assert.equal(st.payments[0].method, "card"); assert.equal(st.payments[0].date, "2026-10-02"); assert.equal(st.payments[0].amount, 350); assert.equal(st.payments[0].note, "auth 77"); assert.equal(st.payments[0].ref, "hcp:P1");
+  const inv1 = st.invoices.find(i => i.number === "1001").ref;
+  assert.equal(S.invoiceRefOf(st, st.payments[0]), inv1); assert.equal(S.invoiceRefOf(st, st.payments[1]), inv1, "#1001 matches 1001"); assert.equal(S.invoiceRefOf(st, st.payments[2]), "");
+  const pv = S.previewOf(st, {}, today); assert.equal(pv.payments, 2); assert.equal(pv.paymentsUnmatched, 1);
+  const clean = S.cleanStaged(JSON.parse(JSON.stringify(st))); assert.equal(clean.payments.length, 3); assert.equal(clean.payments[1].method, "check");
+  assert.equal(S.mergeStaged(S.emptyStaged(), st).payments.length, 3);
+  assert.ok(S.PHASES.indexOf("payments") > S.PHASES.indexOf("invoices"), "payments come in after their invoices");
+});
+ok(() => {
+  const plans = { headers: ["Customer", "Phone", "Membership", "Frequency", "Price", "Next Visit", "Service Address"], rows: [
+    ["Bill Turner", "720-555-0110", "Stain and seal", "Annual", "$1,450", "2027-05-01", "12 Elm St"], ["Kara Lee", "720-555-0122", "Gate tune-up", "Quarterly", "120", "", ""], ["Rob Ng", "720-555-0133", "Whenever", "as needed", "90", "", ""]] };
+  const r = S.stageSheet(plans, "plans", S.guessMapping(plans.headers, "plans"), "st");
+  assert.equal(r.staged.plans.length, 2); assert.deepEqual(r.skipped.map(x => x.why), ["Couldn't read how often"]);
+  const p0 = r.staged.plans[0]; assert.equal(p0.name, "Stain and seal"); assert.equal(p0.total, 1450); assert.equal(p0.every, 12); assert.equal(p0.unit, "month"); assert.equal(p0.next_on, "2027-05-01");
+  assert.equal(r.staged.customers.find(c => c.ref === p0.customerRef).properties[0].address, "12 Elm St");
+  assert.equal(r.staged.plans[1].every, 3); assert.equal(S.previewOf(r.staged, {}, today).plans, 2);
+});
+// ---------- The team: from a spreadsheet or Jobber's users ----------
+ok(() => { assert.equal(S.guessKind(["Employee", "Mobile", "Role", "Hourly Rate"]), "team"); assert.equal(S.teamRole("Dispatcher"), "office"); assert.equal(S.teamRole("Admin"), "office"); assert.equal(S.teamRole("Technician"), "crew"); assert.equal(S.teamRole(""), "crew"); assert.equal(S.teamRole("Owner"), "office", "never owner by import"); });
+ok(() => {
+  const t = { headers: ["Employee", "Mobile", "Role", "Hourly Rate"], rows: [["Luis Ortega", "720-555-0161", "Technician", "$32"], ["Ana Park", "(303) 555-0190", "Office manager", ""], ["No Cell", "", "Crew", "25"], ["", "", "", ""]] };
+  const r = S.stageSheet(t, "team", S.guessMapping(t.headers, "team"), "st");
+  assert.equal(r.staged.team.length, 2); assert.deepEqual(r.skipped.map(x => x.why), ["No cell phone (they sign in with it)", "No name or cell"]);
+  assert.deepEqual(r.staged.team[0], { ref: "st:team:7205550161", name: "Luis Ortega", phone: "+17205550161", role: "crew", rate: 32 });
+  assert.equal(r.staged.team[1].role, "office"); assert.equal(r.staged.team[1].rate, undefined);
+  assert.equal(S.previewOf(r.staged, {}, today).team, 2);
+  assert.equal(S.cleanStaged(JSON.parse(JSON.stringify(r.staged))).team.length, 2);
+  assert.equal(S.PHASES.at(-1), "team");
+});
+ok(() => {
+  assert.deepEqual(S.jobberUser({ id: "U1", name: { full: "Luis Ortega" }, phone: { raw: "+17205550161" } }), { ref: "jobber:user:U1", name: "Luis Ortega", phone: "+17205550161", role: "crew" });
+  assert.equal(S.jobberUser({ id: "U0", isAccountOwner: true, name: { full: "Mike" }, phone: { raw: "7205550100" } }), null, "the account owner stays the owner");
+  assert.equal(S.jobberUser({ id: "U2", name: { full: "No Phone" } }), null);
+  assert.equal(S.jobberUser({ id: "U3", name: "Plain", phone: "720 555 0177" }).phone, "+17205550177");
+});
 console.log(`switch: ${n} checks passed`);

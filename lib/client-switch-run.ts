@@ -8,8 +8,9 @@ import type { Client } from "@/lib/client-runtime-run";
 import { gql, jobberToken } from "@/lib/jobber";
 import { qboRead } from "@/lib/qbo";
 import { cleanCatalog } from "@/lib/service";
+import { parseTeam } from "@/lib/crm";
 import { PHASES, cleanStaged, dedupe, emptyStaged, jobberClient, jobberItem, jobberPlan, jobberInvoice, jobberJob, jobberQuote, jobberRequest, mergeStaged, previewOf, qboCustomer, qboInvoice, qboItem,
-  type Decisions, type NCustomer, type Phase, type Preview, type Staged, noPhoneKey } from "@/lib/switch";
+  type Decisions, type NCustomer, type Phase, type Preview, type Staged, noPhoneKey, invoiceRefOf, type NPayment, jobberUser } from "@/lib/switch";
 
 type Sql = NeonQueryFunction<false, false>;
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -102,7 +103,7 @@ export async function decide(sql: Sql, c: Client, id: string, d: unknown): Promi
 }
 
 // ---------- Pulling from an API, one page per call ----------
-const JOBBER_KINDS = ["clients", "requests", "quotes", "jobs", "invoices", "productOrServices"] as const;
+const JOBBER_KINDS = ["clients", "requests", "quotes", "jobs", "invoices", "productOrServices", "users"] as const;
 const LINES = `lineItems(first: 50) { nodes { name description quantity unitPrice } }`;
 const JQ: Record<(typeof JOBBER_KINDS)[number], [string, string]> = {
   clients: [`query($after: String) { clients(first: 25, after: $after) { nodes { id name firstName lastName companyName createdAt emails { address primary } phones { number primary }
@@ -118,6 +119,8 @@ const JQ: Record<(typeof JOBBER_KINDS)[number], [string, string]> = {
     `query($after: String) { invoices(first: 50, after: $after) { nodes { id invoiceNumber invoiceStatus subject issuedDate dueDate createdAt client { id } amounts { total invoiceBalance } } pageInfo { hasNextPage endCursor } } }`],
   productOrServices: [`query($after: String) { productOrServices(first: 50, after: $after) { nodes { id name defaultUnitCost internalUnitCost } pageInfo { hasNextPage endCursor } } }`,
     `query($after: String) { productOrServices(first: 50, after: $after) { nodes { id name defaultUnitCost } pageInfo { hasNextPage endCursor } } }`],
+  users: [`query($after: String) { users(first: 50, after: $after) { nodes { id isAccountOwner name { full } phone { raw friendly } } pageInfo { hasNextPage endCursor } } }`,
+    `query($after: String) { users(first: 50, after: $after) { nodes { id name { full } } pageInfo { hasNextPage endCursor } } }`],
 };
 const QBO_KINDS = ["customers", "items", "invoices"] as const;
 const QQ: Record<(typeof QBO_KINDS)[number], (start: number) => string> = {
@@ -159,6 +162,7 @@ export async function pullStep(sql: Sql, c: Client, id: string): Promise<{ ok: b
         else if (kind === "jobs") { const pl = jobberPlan(n); if (pl) add.plans.push(pl); else add.jobs.push(jobberJob(n, today)); }
         else if (kind === "productOrServices") { const it = jobberItem(n); if (it.name) add.items.push(it); }
         else if (kind === "invoices") add.invoices.push(jobberInvoice(n));
+        else if (kind === "users") { const u = jobberUser(n); if (u) add.team.push(u); }
         else { const q = jobberRequest(n), who = cur.customers.find(x => x.ref === q.customerRef); if (who) add.customers.push({ ...who, lead: true, notes: [who.notes, q.note].filter(Boolean).join("\n").slice(0, 4000) }); }
       }
       p.counts![kind] = (p.counts![kind] ?? 0) + page.nodes.length;
@@ -203,7 +207,7 @@ function planOf(r: Record<string, unknown>, today: string): Plan {
   void today;
   return { customers, remap, staged: s, quoted, worked };
 }
-const listFor = (p: Plan, phase: Phase): { ref: string }[] => phase === "customers" ? p.customers : phase === "items" ? (p.staged.items.length ? [{ ref: "catalog" }] : []) : p.staged[phase];
+const listFor = (p: Plan, phase: Phase): { ref: string }[] => phase === "customers" ? p.customers : phase === "items" ? (p.staged.items.length ? [{ ref: "catalog" }] : []) : phase === "team" ? ((p.staged.team ?? []).length ? [{ ref: "team" }] : []) : p.staged[phase];
 const record = (sql: Sql, importId: string, c: Client, target: string, targetId: string, action: "created" | "updated", before: unknown = null) =>
   sql`INSERT INTO public.client_import_items (import_id, project_id, target, target_id, action, before) VALUES (${importId}::uuid, ${c.projectId}::uuid, ${target}, ${targetId}, ${action}, ${before == null ? null : JSON.stringify(before)}::jsonb)`;
 
@@ -226,6 +230,8 @@ export async function runStep(sql: Sql, c: Client, id: string): Promise<{ ok: bo
   const started = Date.now();
   let progress = Number(r.progress ?? 0);
   try {
+    // Invoices that a payments file covers get their real payments, not one "paid before the move" lump.
+    const payInv = new Set((p.staged.payments ?? []).map(x => invoiceRefOf(p.staged, x)).filter(Boolean));
     while (cur.phase! < PHASES.length && Date.now() - started < 8000) {
       const phase = PHASES[cur.phase!], list = listFor(p, phase);
       if (cur.i! >= list.length) { cur.phase!++; cur.i = 0; continue; }
@@ -312,6 +318,32 @@ export async function runStep(sql: Sql, c: Client, id: string): Promise<{ ok: bo
           bump("jobs", j.status === "done" ? "updated" : "created");
           continue;
         }
+        // The team joins the existing list once: new cells only, never the owner's, at most 10. Undo puts the old list back.
+        if (phase === "team") {
+          const before = c.setup.team ?? "[]", now = parseTeam(before), owner10 = (c.setup.owner_cell || "").replace(/\D/g, "").slice(-10);
+          const add = (p.staged.team ?? []).filter(x => x.phone.slice(-10) !== owner10 && !now.some(y => y.cell.slice(-10) === x.phone.slice(-10)));
+          const next = parseTeam([...now, ...add.map(x => ({ name: x.name, cell: x.phone, role: x.role, ...(x.rate ? { rate: x.rate } : {}) }))].slice(0, 10));
+          await sql`UPDATE public.client_ops SET setup = setup || jsonb_build_object('team', ${JSON.stringify(next)}::text) WHERE project_id = ${c.projectId}::uuid AND owner_id = ${c.owner}`;
+          await record(sql, id, c, "team", c.projectId, "updated", { team: before });
+          bump("team", "created", next.length - now.length);
+          if (add.length > next.length - now.length) bump("team", "skipped", add.length - (next.length - now.length));
+          continue;
+        }
+        if (phase === "payments") {
+          const x = row as NPayment, invRef = invoiceRefOf(p.staged, x);
+          const [inv] = invRef ? await sql`SELECT id, thread_id FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid AND source_system = ${sys} AND source_ref = ${invRef} AND import_id = ${id}::uuid AND status <> 'void'` as { id: string; thread_id: string }[] : [];
+          if (!inv) { bump("payments", "skipped"); continue; }
+          const on = x.date || today;
+          const [pm] = await sql`INSERT INTO public.client_payments (owner_id, project_id, invoice_id, thread_id, amount, method, paid_on, note, import_id)
+            VALUES (${c.owner}, ${c.projectId}::uuid, ${inv.id}::uuid, ${inv.thread_id}::uuid, ${x.amount}, ${x.method}, ${on}::date, ${(x.note ? x.note + ". " : "") + `Paid before the move to Cinder (${from})`}, ${id}::uuid) RETURNING id` as { id: string }[];
+          await record(sql, id, c, "payments", pm.id, "created");
+          await sql`UPDATE public.client_invoices i SET paid_amount = s.paid,
+              status = CASE WHEN i.status IN ('sent', 'draft') AND s.paid >= i.total - 0.005 THEN 'paid' ELSE i.status END,
+              paid_at = CASE WHEN s.paid >= i.total - 0.005 THEN coalesce(i.paid_at, ${on}::date::timestamptz) ELSE i.paid_at END
+            FROM (SELECT coalesce(sum(amount), 0)::numeric AS paid FROM public.client_payments WHERE invoice_id = ${inv.id}::uuid) s WHERE i.id = ${inv.id}::uuid`;
+          bump("payments", "created");
+          continue;
+        }
         if (phase === "invoices") {
           const v = row as Staged["invoices"][number];
           const [ex] = await sql`SELECT id FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid AND source_system = ${sys} AND source_ref = ${v.ref}` as { id: string }[];
@@ -332,7 +364,7 @@ export async function runStep(sql: Sql, c: Client, id: string): Promise<{ ok: bo
             invId = vj.id;
           }
           await record(sql, id, c, "invoices", invId, "created");
-          if (v.paid > 0.005 && status !== "void") {
+          if (v.paid > 0.005 && status !== "void" && !payInv.has(v.ref)) {
             const [pm] = await sql`INSERT INTO public.client_payments (owner_id, project_id, invoice_id, thread_id, amount, method, paid_on, note, import_id) VALUES (${c.owner}, ${c.projectId}::uuid, ${invId}::uuid, ${tid}::uuid, ${v.paid}, 'other', ${(v.issued || today)}::date, ${`Paid before the move, recorded in ${from}`}, ${id}::uuid) RETURNING id` as { id: string }[];
             await sql`UPDATE public.client_invoices SET paid_amount = ${v.paid} WHERE id = ${invId}::uuid`;
             await record(sql, id, c, "payments", pm.id, "created");
@@ -394,6 +426,7 @@ export async function undoImport(sql: Sql, c: Client, id: string): Promise<{ ok:
     else if (it.target === "quotes") await sql`DELETE FROM public.client_quotes WHERE id = ${it.target_id}::uuid AND project_id = ${c.projectId}::uuid AND import_id = ${id}::uuid`;
     else if (it.target === "plans") await sql`DELETE FROM public.client_plans WHERE id = ${it.target_id}::uuid AND project_id = ${c.projectId}::uuid AND import_id = ${id}::uuid`;
     else if (it.target === "properties") await sql`DELETE FROM public.client_properties WHERE id = ${it.target_id}::uuid AND project_id = ${c.projectId}::uuid AND import_id = ${id}::uuid`;
+    else if (it.target === "team") await sql`UPDATE public.client_ops SET setup = setup || jsonb_build_object('team', ${String(b.team ?? "[]")}::text) WHERE project_id = ${c.projectId}::uuid AND owner_id = ${c.owner}`;
     else if (it.target === "photos") await sql`DELETE FROM public.client_photos WHERE id = ${it.target_id}::uuid AND project_id = ${c.projectId}::uuid`;
   }
   await sql`UPDATE public.client_imports SET status = 'undone', undone_at = now() WHERE id = ${id}::uuid`;

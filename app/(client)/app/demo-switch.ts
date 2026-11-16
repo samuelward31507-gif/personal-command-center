@@ -40,13 +40,14 @@ function jobberAccount() {
 const KINDS = ["clients", "requests", "quotes", "jobs", "invoices", "productOrServices"] as const;
 type View = { id: string; source: string; status: string; preview: ReturnType<typeof previewOf> | null; pull: { kind: number; done: boolean; counts: Record<string, number>; warnings: string[] }; progress: number; total: number;
   result: Record<string, { created: number; updated: number; skipped: number }>; error: string; created_at: string; finished_at: string | null; undone_at: string | null; canUndo: boolean; existing: number };
-const S: { imp: (View & { staged: Staged; decisions: Decisions }) | null; golive: Record<string, string>; start: string | null } = { imp: null, golive: {}, start: null };
+const S: { imp: (View & { staged: Staged; decisions: Decisions }) | null; golive: Record<string, string>; start: string | null; resend: { quotes: number; invoices: number } } = { imp: null, golive: {}, start: null, resend: { quotes: 2, invoices: 1 } };
 const out = () => S.imp ? { import: (({ staged: _s, decisions: _d, ...v }) => { void _s; void _d; return v; })({ ...S.imp, preview: S.imp.staged.customers.length + S.imp.staged.items.length ? previewOf(S.imp.staged, S.imp.decisions) : null }) } : { import: null };
 
 /** Answers /api/app/switch for the example business. `land` adds the moved customers to the example's own list. */
 export function demoSwitch(path: string, b: Record<string, unknown>, land: (customers: { ref: string; name: string; phone: string; email: string; address: string; since: string | null }[]) => void, unland: () => void): unknown {
   const a = String(b.action ?? "");
-  if (!a) return { ...out(), golive: S.golive, goliveStart: S.start };
+  if (!a) return { ...out(), golive: S.golive, goliveStart: S.start, resend: S.imp?.status === "done" ? S.resend : { quotes: 0, invoices: 0 } };
+  if (a === "resend") { const sent = S.resend.quotes + S.resend.invoices; S.resend = { quotes: 0, invoices: 0 }; return { ok: true, sent, waiting: 0, failed: 0, left: S.resend }; }
   const now = new Date().toISOString();
   if (a === "golive") { if (b.done) S.golive[String(b.key)] = now.slice(0, 10); else delete S.golive[String(b.key)]; return { ok: true }; }
   if (a === "start") { if (!S.imp || S.imp.status !== "draft") S.imp = { id: "demo-import", source: String(b.source), status: "draft", staged: emptyStaged(), decisions: {}, preview: null, pull: { kind: 0, done: false, counts: {}, warnings: [] }, progress: 0, total: 0, result: {}, error: "", created_at: now, finished_at: null, undone_at: null, canUndo: false, existing: 3 }; else S.imp.source = String(b.source); return { ok: true, ...out() }; }
