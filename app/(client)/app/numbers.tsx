@@ -54,7 +54,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
       : n!.leads === 0 && b!.leads === 0 && !ser.length ? <Guide title="Your numbers start with your first lead"
         sub="Book rate, close rate, average job, speed to lead, money collected and where the work comes from, all worked out for you and compared with the period before. Nothing to set up."
         steps={[
-          { title: "Get leads flowing to Cinder", text: "Your number, website chat, form or booking page. Settings shows what's connected.", action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Connections</button> },
+          { title: "Get leads flowing in", text: "Your number, website chat, form or booking page. Settings shows what's connected.", action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Connections</button> },
           { title: "Mark jobs won or lost", text: "With a reason when it's lost, so you see what's costing you jobs." },
           { title: "Record payments", text: "So collected money and days to get paid are real numbers.", action: <button type="button" className="btn sm" onClick={() => go.tab("invoices")}>Money</button> },
         ]} />
@@ -78,7 +78,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
             <div className="panel-b funnel2">{([["Leads", n!.leads, null, ""], ["Estimates booked", n!.booked, R!.book, "book rate"], ["Quoted", n!.quoted, R!.quote, "of booked"], ["Won", n!.won, R!.close, "close rate"]] as const).map(([k, v, of, l], i) =>
               <div key={k} className="fn"><div className="fn-t"><span>{k}</span><b>{v}</b>{of != null && <em>{of}% {l}</em>}</div>
                 <i className={"fn-bar s" + i} style={{ width: `${n!.leads ? Math.max(3, (v / n!.leads) * 100) : 0}%` }} /></div>)}
-              <p className="fine" style={{ marginTop: 10 }}>{n!.afterHoursLeads} of the {n!.leads} leads came in at night or on a weekend, and Cinder answered every one.</p>
+              <p className="fine" style={{ marginTop: 10 }}>{n!.afterHoursLeads} of the {n!.leads} leads came in at night or on a weekend, and every one was answered.</p>
             </div>
           </section>
           <section className="panel s7">
@@ -121,7 +121,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
                 </div>
                 {jobs.length > 0 && <div className="profit-jobs"><p className="sec">Thinnest margins first<small>every won job with costs</small></p>
                   <ul className="bars">{jobs.slice(0, 6).map(({ c, p }) => <li key={c.id}><span><button type="button" className="link" onClick={() => go.record(c.id)}>{c.name}</button></span><i className={p!.margin < 20 ? "warn" : ""} style={{ width: `${Math.max(2, Math.min(100, p!.margin))}%` }} /><b>{p!.margin}%<small> {usd(p!.profit)}</small></b></li>)}</ul></div>}
-              </> : <p className="fine" style={{ padding: "6px 0" }}>Log materials, labor and other costs on a won job (the Costs box on the job) and Cinder shows what each job really made, and your margin across all of them.</p>}</div>
+              </> : <p className="fine" style={{ padding: "6px 0" }}>Log materials, labor and other costs on a won job (the Costs box on the job) and you see what each job really made, and your margin across all of them.</p>}</div>
             </section>;
           })()}
           <section className="panel s12">

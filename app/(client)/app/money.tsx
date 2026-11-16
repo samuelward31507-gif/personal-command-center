@@ -161,7 +161,7 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
       catch (e) { toast(e instanceof Error ? e.message : "Couldn't save.", true); } finally { setBusy(false); }
     }}>{busy ? <Spinner /> : "Save"}</button>}>
     <label className="field"><span>Your pay link</span><input inputMode="url" value={link} onChange={e => setLink(e.target.value)} placeholder="square.link/u/yourbusiness" /></label>
-    <p className="fine" style={{ marginTop: -6 }}>Square, Stripe, PayPal or your own site. The invoice&rsquo;s Pay button opens it. Cinder never touches the money.</p>
+    <p className="fine" style={{ marginTop: -6 }}>Square, Stripe, PayPal or your own site. The invoice&rsquo;s Pay button opens it. The money never passes through this app.</p>
     <div className="two">
       <label className="field"><span>Sales tax</span><span className="inwrap"><input inputMode="decimal" value={tax} onChange={e => setTax(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0" /><em>%</em></span></label>
       <label className="field"><span>Invoices are due</span><select value={daysDue} onChange={e => setDays(e.target.value)}><option value="0">On receipt</option><option value="7">In 7 days</option><option value="14">In 14 days</option><option value="30">In 30 days</option></select></label>
@@ -232,7 +232,7 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
         { label: "Collected this month", value: usd(collected), sub: (() => { const k = pays.filter(p => p.paid_on >= monthStart).length; return `${k} ${k === 1 ? "payment" : "payments"} recorded`; })(), tone: collected ? "up" : "", spark: weeklyIn, sparkTone: "good" },
         { label: "Days to get paid", value: payDays == null ? "–" : String(payDays), sub: "average, last 90 days" },
       ]} />}
-      {fresh && <Guide title="Get paid faster" sub="Invoices go out by text with a Pay button that opens your own payment page. Reminders follow up on their own until the balance is zero. Cinder never touches the money."
+      {fresh && <Guide title="Get paid faster" sub="Invoices go out by text with a Pay button that opens your own payment page. Reminders follow up on their own until the balance is zero. The money never passes through this app."
         steps={[
           { title: "Add your pay link", text: "Square, Stripe, PayPal or your own checkout page. It sits behind every Pay button.", done: biz.payLink, action: <button type="button" className="btn sm" onClick={go.billing}>Add pay link</button> },
           { title: "Win a job", text: "When a customer approves a quote, or you mark a job won, it's ready to bill.", done: board.some(c => c.stage === "won"), action: <button type="button" className="btn sm" onClick={() => go.tab("quotes")}>Open quotes</button> },

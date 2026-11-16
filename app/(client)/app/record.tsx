@@ -14,6 +14,7 @@ import { jobPrice } from "@/lib/service";
 import { ChangeOrders, HoursBox } from "./jobwork";
 import { PortalSheet, SignoffBox } from "./finish";
 import { ChecklistBox, PropertiesBox } from "./parity";
+import { FieldIcon, fieldIconFor } from "./sources";
 
 /** "Remind me": a time and a note on this customer. The owner gets a text and a push when it's due. */
 export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: { name: string; current: { at: string; note: string } | null; busy: boolean; onClose: () => void; onSave: (at: string, note: string) => void; onClear: () => void }) {
@@ -185,7 +186,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       {card && biz.crew && card.crewMember && <div className="money"><span>On the job</span><b>{crewName(d, card.crewMember)}</b></div>}
       <div className="money"><span>Source</span><b>{sourceLabel(source)}</b></div>
       {since && <div className="money"><span>Since</span><b>{since}</b></div>}
-      <div className="money"><span>Texting</span>{status === "opted_out" ? <span className="dot bad">Opted out</span> : status === "paused" ? <span className="dot ember">You&rsquo;re replying</span> : <span className="dot">Cinder replying</span>}</div>
+      <div className="money"><span>Texting</span>{status === "opted_out" ? <span className="dot bad">Opted out</span> : status === "paused" ? <span className="dot ember">You&rsquo;re replying</span> : <span className="dot">Replying for you</span>}</div>
       {card?.email && <div className="money"><span>Email</span><b><a className="link" href={`mailto:${card.email}`} style={{ fontWeight: 500 }}>{card.email}</a></b></div>}
       {card?.remind && !card.remind.sent && <div className="money"><span>Reminder</span><b>{new Date(card.remind.at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}{card.remind.note ? `, ${card.remind.note}` : ""}</b></div>}
       {card?.reviewSent && <div className="money"><span>Review</span><b>Asked {dateLabel(card.reviewSent)}</b></div>}
@@ -214,13 +215,13 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
         <section>
           <p className="sec">The job{card && <button type="button" className="link" onClick={() => setTab("job")}>Edit</button>}</p>
           {card ? <dl>
-            {jobFields(biz.trade).filter(f => f.key !== "address" && card.details[f.key] != null && card.details[f.key] !== "").map(f => <div key={f.key} className="kv"><dt>{f.label}</dt><dd>{String(card.details[f.key])}{f.unit ? ` ${f.unit}` : ""}</dd></div>)}
-            {address && <div className="kv"><dt>Address</dt><dd title={address}>{address}</dd></div>}
-            <div className="kv"><dt>Source</dt><dd>{sourceLabel(source)}</dd></div>
-            <div className="kv"><dt>Job value</dt><dd className={card.value ? "" : "mut"}>{card.value ? dollars(card.value) : card.ballpark ? `~${rangeText(card.ballpark)}` : "Not set"}</dd></div>
-            {card.next && <div className="kv"><dt>Estimate</dt><dd>{new Date(card.next).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</dd></div>}
-            {card.install && <div className="kv"><dt>Install</dt><dd>{dateLabel(card.install)}{card.installDays > 1 ? `, ${card.installDays} days` : ""}</dd></div>}
-            {!card.line && !address && <p className="fine">Nothing yet. Cinder fills these in as the customer answers.</p>}
+            {jobFields(biz.trade).filter(f => f.key !== "address" && card.details[f.key] != null && card.details[f.key] !== "").map(f => <div key={f.key} className="kv"><dt><FieldIcon name={fieldIconFor(f.label)} />{f.label}</dt><dd>{String(card.details[f.key])}{f.unit ? ` ${f.unit}` : ""}</dd></div>)}
+            {address && <div className="kv"><dt><FieldIcon name="pin" />Address</dt><dd title={address}>{address}</dd></div>}
+            <div className="kv"><dt><FieldIcon name="link" />Source</dt><dd>{sourceLabel(source)}</dd></div>
+            <div className="kv"><dt><FieldIcon name="dollar" />Job value</dt><dd className={card.value ? "" : "mut"}>{card.value ? dollars(card.value) : card.ballpark ? `~${rangeText(card.ballpark)}` : "Not set"}</dd></div>
+            {card.next && <div className="kv"><dt><FieldIcon name="cal" />Estimate</dt><dd>{new Date(card.next).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</dd></div>}
+            {card.install && <div className="kv"><dt><FieldIcon name="cal" />Install</dt><dd>{dateLabel(card.install)}{card.installDays > 1 ? `, ${card.installDays} days` : ""}</dd></div>}
+            {!card.line && !address && <p className="fine">Nothing yet. These fill in as the customer answers.</p>}
           </dl> : <>
             <dl>{address && <div className="kv"><dt>Address</dt><dd title={address}>{address}</dd></div>}<div className="kv"><dt>Source</dt><dd>{sourceLabel(source)}</dd></div>{cust && cust.spent > 0 && <div className="kv"><dt>Billed</dt><dd>{dollars(cust.spent)}, {cust.jobs} {cust.jobs === 1 ? "job" : "jobs"}</dd></div>}</dl>
             <p className="fine" style={{ marginTop: 8 }}>No job on the board for {first(name)} right now.</p>
@@ -306,7 +307,7 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
           const words = photos.length && /^\(sent (a photo|\d+ photos)\)$/.test(t.body) ? "" : t.body;
           return <div key={t.id}>{sep}<article className="ev">
             {who === "them" ? <span className="ic"><Avatar name={name} size="sm" /></span> : who === "you" ? <span className="ic" style={{ color: "var(--ink)" }}><Icon name="user" size={13} /></span> : <span className="ic"><Icon name="bolt" size={13} /></span>}
-            <div><header><b>{who === "them" ? (compact ? first(name) : name) : who === "you" ? "You" : "Cinder"}</b><time>{clock(t.at)}</time></header>
+            <div><header><b>{who === "them" ? (compact ? first(name) : name) : who === "you" ? "You" : "Auto-reply"}</b><time>{clock(t.at)}</time></header>
               {photos.length > 0 && <div className="photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
               {words && <p><span className={"bubble" + (who === "you" ? " out" : who === "cinder" ? " cinder" : "")}>{words}</span></p>}</div>
           </article></div>;
@@ -319,8 +320,8 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
         <ReplyKit hidden={!!draft.trim()} suggestion={sug} snippets={snips.list} onUse={x => { setDraft(x); ta.current?.focus(); }} onEdit={() => setEditSnips(true)} />
         <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (tabTakes(e, draft, sug, setDraft)) return; if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); }} placeholder={`Text ${first(name)}`} aria-label="Reply" />
         <div className="tools">
-          <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && status === "booked")} title={mine ? "Hand back to Cinder" : "Take over this conversation"} onClick={() => void (mine ? act("status", { action: "status", status: "auto" }, "Cinder will handle replies again.") : act("status", { action: "status", status: "paused" }, "Cinder stepped back. You've got this one."))}>
-            <i aria-hidden="true" />{mine ? "You're replying" : "Cinder is replying"}</button>
+          <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && status === "booked")} title={mine ? "Turn auto-reply back on" : "Take over this conversation"} onClick={() => void (mine ? act("status", { action: "status", status: "auto" }, "Auto-reply is back on.") : act("status", { action: "status", status: "paused" }, "Auto-reply is off for this one. You've got it."))}>
+            <i aria-hidden="true" />{mine ? "You're replying" : "Replying for you"}</button>
           <button type="submit" className="btn ink sm send" disabled={!!busy || !draft.trim()} title="Send (⌘↵)">{busy === "reply" ? <Spinner /> : "Send"}</button>
         </div>
       </form>
@@ -366,7 +367,7 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
       <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} options />
       <label className="field"><span>What&rsquo;s included <em>optional, they&rsquo;ll see it</em></span><textarea rows={2} value={incl} maxLength={600} onChange={e => setIncl(e.target.value)} placeholder="Tear-out and haul-away, steel posts in concrete, 2-year warranty" /></label>
       <label className="field" style={{ maxWidth: 240 }}><span>Deposit to hold the date <em>optional</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" value={deposit} onChange={e => setDeposit(e.target.value.replace(/[^\d.,]/g, ""))} placeholder="None" /></span></label>
-      {depN > 0 && <p className="fine">{biz.payLink ? "After they approve, the quote page shows the deposit with your pay link. Cinder never touches the money." : "Add your pay link in Money so they can pay the deposit from the quote page."}</p>}
+      {depN > 0 && <p className="fine">{biz.payLink ? "After they approve, the quote page shows the deposit with your pay link. The money never passes through this app." : "Add your pay link in Money so they can pay the deposit from the quote page."}</p>}
       <p className="fine">Follow-ups go out on day 2, 5 and 10, then once a month until they answer, and stop the moment they reply.</p>
       <div className="acts-row end">
         <button type="button" className="btn" disabled={!!busy || quoteTotal <= 0} onClick={() => void act("save", { action: "stage", stage: "quoted", amount: String(quoteTotal), items, tax, note: incl, deposit: depN || null }, `Quote saved: ${dollars(quoteTotal)}. Not sent yet.`)}>Save, don&rsquo;t send</button>

@@ -54,7 +54,7 @@ function pushState(): PushState {
 async function turnOnPush(project: string): Promise<string | null> {
   try {
     const perm = await Notification.requestPermission();
-    if (perm !== "granted") return "Notifications are blocked. Turn them on for Cinder in your phone's settings.";
+    if (perm !== "granted") return "Notifications are blocked. Turn them on for this app in your phone's settings.";
     const reg = await navigator.serviceWorker.register("/app-sw.js", { scope: "/app" });
     await navigator.serviceWorker.ready;
     const { publicKey } = await api<{ publicKey: string }>("/api/app/push");
@@ -192,7 +192,7 @@ export default function CinderApp() {
   // The workspace scrolls inside its window: every move starts at the top.
   useEffect(() => { document.querySelector(".main > .page")?.scrollTo(0, 0); }, [tab, open]);
   const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
-  if (state === "loading") return <div className="load"><Wordmark /></div>;
+  if (state === "loading") return <div className="load"><span className="spin" aria-label="Loading" /></div>;
   if (state === "out") return <SignIn onIn={() => void load("")} onDemo={() => { demoStart(); setDemo(true); setTab("today"); void load("", "today"); }} />;
   if (!d) return null;
 
@@ -237,9 +237,13 @@ export default function CinderApp() {
   else page = <SamScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
 
   const catalog = { items: catalogFrom(d.setup), edit: () => setSheet("pricelist") };
-  return <CatalogContext.Provider value={catalog}><div className="shell">
+  // The business's own color is the one accent everywhere; its logo sits top left. "Cinder" shows only if they opt in.
+  const brand = d.setup?.brand_color && /^#[0-9a-f]{6}$/i.test(d.setup.brand_color) ? d.setup.brand_color : "";
+  const tint = (a: number) => brand ? `rgba(${parseInt(brand.slice(1, 3), 16)}, ${parseInt(brand.slice(3, 5), 16)}, ${parseInt(brand.slice(5, 7), 16)}, ${a})` : "";
+  const shellStyle = brand ? { "--ember": brand, "--ember-soft": tint(0.12), "--ember-bg": tint(0.1) } as React.CSSProperties : undefined;
+  return <CatalogContext.Provider value={catalog}><div className="shell" style={shellStyle}>
     <nav className="rail" aria-label="Sections">
-      <div className="brand-row"><Wordmark className="rail-mark" /></div>
+      <div className="brand-row">{d.setup?.brand_logo ? <img className="biz-logo" src={d.setup.brand_logo} alt={bizName || "Logo"} /> : <span className="biz-mark" style={brand ? { background: brand } : undefined} aria-hidden="true">{initials(bizName || "B").charAt(0)}</span>}</div>
       <button type="button" className="ws" title={bizName}>
         <span className="av sm">{initials(bizName || "C").charAt(0)}</span><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
         {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
@@ -256,6 +260,7 @@ export default function CinderApp() {
         {!crew && <button type="button" className={"ri" + (tab === "plans" ? " on" : "")} onClick={() => goTab("plans")}>Service plans<em>{(d.plans ?? []).filter(p => p.status === "active").length || ""}</em></button>}
       </div>}
       <div className="rail-foot">
+        {d.setup?.show_powered === "yes" && <a className="powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by <Wordmark className="pw-mark" /></a>}
         {d.role !== "crew" && d.role !== "office" && <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>}
         {crew ? <button type="button" className="me" onClick={() => void signOut()}><Avatar name="Crew" /><span className="t"><b>Crew</b><small>Sign out</small></span></button>
           : <button type="button" className="me" onClick={() => goTab("sam")}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{d.owner || "You"}</b><small>Owner</small></span></button>}
@@ -284,12 +289,12 @@ export default function CinderApp() {
 function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
   const items: { k: Tab; l: string; s: string; ic: string; n?: number }[] = [
     { k: "invoices", l: "Money", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
-    { k: "numbers", l: "Reports", s: "What Cinder brought in", ic: "bars" },
+    { k: "numbers", l: "Reports", s: "What came in and what it made", ic: "bars" },
     { k: "customers", l: "Everyone", s: `${d.customers?.length ?? 0} people`, ic: "users" },
     { k: "switch", l: "Move your business in", s: "From Jobber, QuickBooks, a spreadsheet or your phone", ic: "upload" },
     { k: "plans", l: "Service plans", s: (d.plans ?? []).some(p => p.status === "active") ? `${(d.plans ?? []).filter(p => p.status === "active").length} active` : "Repeat work on a schedule", ic: "cal" },
-    { k: "system", l: "Settings", s: "How leads reach Cinder, prices, notifications", ic: "gear" },
-    { k: "sam", l: "Sam", s: d.unreadFromSam ? `${d.unreadFromSam} new` : "Your Cinder rep", ic: "user", n: d.unreadFromSam },
+    { k: "system", l: "Settings", s: "How leads come in, prices, notifications", ic: "gear" },
+    { k: "sam", l: "Sam", s: d.unreadFromSam ? `${d.unreadFromSam} new` : "Your account rep", ic: "user", n: d.unreadFromSam },
   ];
   return <>
     <header className="tb"><h1 className="h1">More</h1></header>
@@ -303,13 +308,13 @@ function SamScreen({ d, project, api: call, toast, reload, go }: { d: Data; proj
   const [msg, setMsg] = useState("");
   const agoText = (iso: string) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 60 ? `${Math.max(1, m)}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
   return <>
-    <header className="tb"><h1 className="h1">Sam</h1><span className="sub">Your Cinder rep</span><div className="acts"><button type="button" className="btn ghost" onClick={() => go.tab("system")}><Icon name="gear" size={14} />Settings</button></div></header>
+    <header className="tb"><h1 className="h1">Sam</h1><span className="sub">Your account rep</span><div className="acts"><button type="button" className="btn ghost" onClick={() => go.tab("system")}><Icon name="gear" size={14} />Settings</button></div></header>
     <div className="pad" style={{ maxWidth: 760 }}>
       <section className="card" style={{ paddingTop: 0 }}>
         {d.messages.length > 0 ? <div className="sam-msgs">{d.messages.map((m, i) => <article key={i} className="sam-msg">
           {m.author === "client" ? <Avatar name={d.owner || "You"} /> : <span className="av ink">S</span>}
           <div><header><b>{m.author === "client" ? "You" : "Sam Ward"}</b><time>{agoText(m.created_at)}</time></header><p>{m.body}</p></div></article>)}</div>
-          : <p className="fine" style={{ padding: "8px 0" }}>Write Sam about anything: texting hours, prices, how Cinder answers a question, a number to add.</p>}
+          : <p className="fine" style={{ padding: "8px 0" }}>Write Sam about anything: texting hours, prices, how leads get answered, a number to add.</p>}
         <form onSubmit={async e => { e.preventDefault(); if (!msg.trim()) return; try { await call("/api/app/act", { p: project, action: "message", body: msg }); setMsg(""); toast("Sent to Sam."); void reload(); } catch (er) { toast(er instanceof Error ? er.message : "Didn't send.", true); } }}>
           <div className="compose" style={{ position: "static", padding: 0 }}><div className="box">
             <textarea rows={2} value={msg} onChange={e => setMsg(e.target.value)} placeholder="Message Sam" aria-label="Message to Sam" />

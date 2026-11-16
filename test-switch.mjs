@@ -152,4 +152,35 @@ ok(() => assert.equal(P.DEFAULT_CHECKLISTS("Pool")[0].name, "Job"));
 const { installReminderText } = P;
 ok(() => assert.equal(installReminderText({ first: "Dana", business: "Byers Fence.", what: "fence install", time: "07:30" }), "Hi Dana, it's Byers Fence. Reminder: we start your fence install tomorrow at 7:30 AM. Reply here with anything we should know before we get there."));
 ok(() => assert.ok(installReminderText({ first: "", business: "", what: "", time: null }).startsWith("Hi, it's us. Reminder: we start your job tomorrow.")));
+// ---------- The Ask box: the number and the rows ----------
+const { askLocal, periodOf } = await import("./lib/ask-local.ts");
+ok(() => assert.deepEqual(periodOf("this month", "2026-11-15"), { from: "2026-11-01", to: "2026-11-16", label: "this month" }));
+ok(() => assert.deepEqual(periodOf("last month", "2026-01-10"), { from: "2025-12-01", to: "2026-01-01", label: "last month" }));
+ok(() => assert.equal(periodOf("this week", "2026-11-15").from, "2026-11-15"));
+const askData = { board: [
+    { id: "a", name: "Dana", source: "google", stage: "booked", stageAt: "2026-11-03T10:00:00Z", at: "", value: 4000 },
+    { id: "b", name: "Mike", source: "google", stage: "won", stageAt: "2026-11-10T10:00:00Z", at: "", value: 6900 },
+    { id: "c", name: "Ann", source: "angi", stage: "quoted", stageAt: "2026-10-20T10:00:00Z", at: "", value: 3000 },
+    { id: "d", name: "Old", source: "google", stage: "booked", stageAt: "2026-10-02T10:00:00Z", at: "", value: 100 }],
+  invoices: [{ id: "i", thread_id: "b", customer: "Mike", number: 1044, status: "sent", total: 6900, paid_amount: 1900, due_on: "2026-11-01", sent_at: null }, { id: "j", thread_id: "a", customer: "Dana", number: 1045, status: "paid", total: 500, paid_amount: 500, due_on: null, sent_at: null }],
+  payments: [{ id: "p", thread_id: "b", customer: "Mike", amount: 1900, paid_on: "2026-11-05", number: 1044 }, { id: "q", thread_id: "a", amount: 500, paid_on: "2026-10-05" }],
+  conversations: [{ id: "a", name: "Dana", source: "google", created: "2026-11-03T10:00:00Z", replySec: 6 }, { id: "c", name: "Ann", source: "angi", created: "2026-11-02T10:00:00Z", replySec: 9 }] };
+ok(() => { const a = askLocal("How many jobs did we book from Google this month?", askData, "2026-11-15"); assert.equal(a.number, "2"); assert.deepEqual(a.rows.map(r => r.id), ["a", "b"]); assert.equal(a.text, "2 jobs booked from Google this month."); });
+ok(() => { const a = askLocal("Who owes me money?", askData, "2026-11-15"); assert.equal(a.number, "$5,000"); assert.equal(a.rows[0].value, 5000); });
+ok(() => { const a = askLocal("what's overdue", askData, "2026-11-15"); assert.equal(a.rows.length, 1); });
+ok(() => { const a = askLocal("What came in last month?", askData, "2026-11-15"); assert.equal(a.number, "$500"); });
+ok(() => { const a = askLocal("Who hasn't answered their quote?", askData, "2026-11-15"); assert.deepEqual(a.rows.map(r => r.id), ["c"]); });
+ok(() => { const a = askLocal("How many leads from Angi this month?", askData, "2026-11-15"); assert.equal(a.number, "1"); assert.ok(a.text.includes("first reply in 9s")); });
+ok(() => { const a = askLocal("jobs won this month", askData, "2026-11-15"); assert.equal(a.number, "1"); assert.ok(a.text.includes("$6,900")); });
+ok(() => assert.equal(askLocal("What's the weather like?", askData, "2026-11-15"), null));
+
+// ---------- The brand color: readable on white ----------
+const B = await import("./lib/brand.ts");
+ok(() => assert.equal(B.hexOk("D0663F"), "#d0663f")); ok(() => assert.equal(B.hexOk("#abc"), "#aabbcc")); ok(() => assert.equal(B.hexOk("red"), null));
+ok(() => assert.ok(B.contrastOnWhite("#d0663f") < 4.5));
+ok(() => { const c = B.readableAccent("#d0663f"); assert.ok(B.contrastOnWhite(c) >= 4.5); assert.notEqual(c, "#d0663f"); });
+ok(() => assert.equal(B.readableAccent("#1d4ed8"), "#1d4ed8"));
+ok(() => assert.ok(B.contrastOnWhite(B.readableAccent("#ffff00")) >= 4.5));
+ok(() => { const px = []; for (let i = 0; i < 100; i++) px.push(255, 255, 255, 255); for (let i = 0; i < 40; i++) px.push(30, 90, 200, 255); for (let i = 0; i < 10; i++) px.push(20, 20, 20, 255); assert.equal(B.dominantColor(px), "#1e5ac8"); });
+ok(() => assert.equal(B.cleanLogo("data:image/png;base64,AAAA"), "data:image/png;base64,AAAA")); ok(() => assert.equal(B.cleanLogo("javascript:alert(1)"), ""));
 console.log(`switch: ${n} checks passed`);

@@ -1164,3 +1164,33 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 @media (pointer: coarse) { .ck > button[role=checkbox] { min-height: 44px; } .ck > button[role=checkbox] i { width: 24px; height: 24px; } }
 .cl-edit { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-top: 1px solid var(--hair); } .cl-edit:first-child { border-top: 0; } .cl-edit textarea { height: auto; padding: 8px 10px; line-height: 1.5; }
 .input.sm { height: 30px; font-size: 13px; padding: 0 8px; }
+
+/* ---------- v10: the business's own brand ---------- */
+.biz-logo { display: block; max-width: 132px; max-height: 36px; width: auto; height: auto; object-fit: contain; }
+.biz-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--ink); color: #fff; font: 700 15px/1 var(--ff-tight); }
+.powered { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--g2, #8a8f98); padding: 6px 10px; text-decoration: none; } .powered .pw-mark { height: 12px; width: auto; opacity: .7; }
+.brand-thumb { height: 28px; width: auto; max-width: 96px; object-fit: contain; border: 1px solid var(--hair); border-radius: 6px; padding: 2px; background: #fff; }
+.brand-color { display: inline-flex; align-items: center; gap: 6px; font: 12px/1 var(--mono, ui-monospace, monospace); color: var(--g1); }
+.brand-color input[type=color] { width: 28px; height: 28px; padding: 0; border: 1px solid var(--hair-2); border-radius: 6px; background: none; cursor: pointer; }
+
+.ask-n { display: block; font: 600 30px/1.1 var(--ff-tight); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ask-rows { list-style: none; margin: 10px 0 0; padding: 0; width: 100%; max-height: 320px; overflow: auto; }
+.ask-rows li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; padding: 7px 0; border-top: 1px solid var(--hair); font-size: 13px; }
+.ask-rows li small { grid-column: 1; color: var(--g1); font-size: 12px; } .ask-rows li b { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-variant-numeric: tabular-nums; }
+
+/* ---------- v11: the design-system pass (shared rules across every screen) ---------- */
+.shell, .doc { font-variant-numeric: tabular-nums; }
+/* Phone first: rows read at 15px, and anything you tap with gloves on is at least 44px. */
+@media (max-width: 899px) {
+  .tbl td, .cv-top b, .cv small, .dayrow b, .stop-h .t b, .money, .row b, .props li, .ck > button[role=checkbox] { font-size: 15px; }
+}
+@media (pointer: coarse) {
+  .shell .btn, .shell .views > button, .shell .seg > button, .shell .chips > button, .shell .tabs > button { min-height: 44px; }
+  .shell .btn.ic { min-width: 44px; }
+  .shell .field input, .shell .field select, .shell .input, .shell .inwrap { min-height: 44px; }
+}
+/* Motion: 140ms on hover and press, 220ms for sheets, nothing else unless it means something. Reduced motion: nothing at all. */
+@media (prefers-reduced-motion: reduce) {
+  .shell *, .shell *::before, .shell *::after, .doc *, .scrim, .sheet { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+.fi { display: inline-flex; vertical-align: -2px; margin-right: 6px; color: var(--g2, #8a8f98); } th .fi { vertical-align: -3px; } .kv dt { display: inline-flex; align-items: center; }

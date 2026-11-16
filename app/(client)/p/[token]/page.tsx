@@ -60,7 +60,7 @@ export default function CustomerPage() {
           {p.photos.length > 0 && <div className="doc-photos">{p.photos.map(id => <a key={id} href={`/api/p?token=${encodeURIComponent(token)}&photo=${id}`} target="_blank" rel="noreferrer"><img src={`/api/p?token=${encodeURIComponent(token)}&photo=${id}`} alt="After photo" loading="lazy" /></a>)}</div>}
           {p.signoff && <p className="doc-fine" style={{ marginTop: 10 }}>Signed off by {p.signoff.signed_by} on {day(p.signoff.at)}.</p>}</section>}
 
-        <p className="doc-foot">{p.business ? `${p.business}, with Cinder` : "Sent with Cinder"}. This page is private to you.</p>
+        <p className="doc-foot">{p.business ? `${p.business}. ` : ""}This page is private to you.</p>
       </>}
   </main>;
 }

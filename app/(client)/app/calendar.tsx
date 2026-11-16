@@ -93,7 +93,7 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
   const outcomes = due.length > 0 && <section className="card outcomes"><div className="hd"><h2>How did it go?</h2><small>{due.length} {due.length === 1 ? "estimate" : "estimates"} waiting on an update</small></div>
     <div className="outc-row">{due.map(a => { const name = a.customer_name || fmtPhone(a.customer_phone), c = byThread.get(a.thread_id); return <div key={a.id} className="outc">
       <button type="button" className="who" onClick={() => open({ key: "", kind: "estimate", title: name, sub: "", start: 0, end: 0, allDay: false, day: "", thread: a.thread_id })}><b>{name}</b><small>{dayName(a.starts_at)} {clock(a.starts_at)}{c?.line ? `, ${line(c)}` : ""}</small></button>
-      {sheet?.id === a.id ? <form className="acts-row" onSubmit={e => { e.preventDefault(); void act(a.id, { action: "outcome", appt: a.id, result: sheet.kind, amount: amt, review: sheet.kind === "won" && review }, r => sheet.kind === "quoted" ? "Cinder will follow up on the quote until they answer." : r.review === "sent" ? "Marked won. Review request sent." : "Marked won."); }}>
+      {sheet?.id === a.id ? <form className="acts-row" onSubmit={e => { e.preventDefault(); void act(a.id, { action: "outcome", appt: a.id, result: sheet.kind, amount: amt, review: sheet.kind === "won" && review }, r => sheet.kind === "quoted" ? "Follow-ups go out on the quote until they answer." : r.review === "sent" ? "Marked won. Review request sent." : "Marked won."); }}>
           <span className="inwrap" style={{ width: 120 }}><i>$</i><input inputMode="decimal" autoFocus placeholder={sheet.kind === "won" ? "Job amount" : "Amount"} value={amt} onChange={e => setAmt(e.target.value.replace(/[^\d.,kK]/g, ""))} /></span>
           {sheet.kind === "won" && <label className="check" style={{ fontSize: 12 }}><input type="checkbox" checked={review} onChange={e => setReview(e.target.checked)} /><span>Ask for a review</span></label>}
           <button type="submit" className="btn sm ink" disabled={!!busy}>{busy ? <Spinner /> : sheet.kind === "won" ? "Mark won" : "Start follow-up"}</button><button type="button" className="btn sm ghost" onClick={() => setSheet(null)}>Cancel</button></form>
@@ -115,7 +115,7 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
       <div className="pad" style={{ paddingTop: 8 }}>
         {outcomes}
         {list.length ? list.map(b => <button key={b.key} type="button" className={"dayrow " + b.kind} onClick={() => open(b)}><time>{b.allDay ? "All day" : clock(new Date(b.start).toISOString())}</time><span style={{ minWidth: 0 }}><b>{b.title}</b><small>{b.sub}</small></span>{b.kind === "estimate" && b.apptId && Date.parse(b.day + "T23:59:00") > Date.now() && <span className="acts-row" style={{ flexWrap: "nowrap" }}>{omw(b)}<button type="button" className="btn sm ic" aria-label="Move" title="Move" onClick={e => { e.stopPropagation(); askMove(b); }}><Icon name="clock" size={13} /></button></span>}{b.kind === "install" && b.addr && <a className="btn sm ic" href={maps(b.addr)} target="_blank" rel="noreferrer" aria-label="Directions" title={b.addr} onClick={e => e.stopPropagation()}><Icon name="pin" size={13} /></a>}</button>)
-          : <Empty title={`Nothing on ${dayName(day + "T12:00:00")}`} text="Estimates Cinder books and installs you set show up here." />}
+          : <Empty title={`Nothing on ${dayName(day + "T12:00:00")}`} text="Booked estimates and the installs you set show up here." />}
         {!cal.connected && <p className="fine" style={{ marginTop: 12 }}>Connect Google Calendar and your own events show here too. <a className="link" href={cal.connectUrl} target="_blank" rel="noreferrer">Connect</a></p>}
       </div>
       {moveSheet}
@@ -132,7 +132,7 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
       <div className="pane list">
         {(cal.error || !cal.connected || due.length > 0) && <div className="pad" style={{ paddingBottom: 0 }}>
           {cal.error && <div className="card box" style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}><span>{cal.error}</span><a className="btn sm" href={cal.connectUrl} target="_blank" rel="noreferrer">Reconnect</a></div>}
-          {!cal.connected && !cal.error && <p className="fine">Connect your Google Calendar and Cinder only books where you&rsquo;re free. Your own events show up here too.</p>}
+          {!cal.connected && !cal.error && <p className="fine">Connect your Google Calendar and estimates only get booked where you&rsquo;re free. Your own events show up here too.</p>}
           {outcomes}
         </div>}
         <div className="cal">

@@ -34,3 +34,8 @@ export function CountUp({ value, format = (n: number) => Math.round(n).toLocaleS
   }, [value, ms, done]);
   return <>{format(done ? value : shown)}</>;
 }
+
+/** The 14px grey line icon that sits before a column header or a record field. */
+export const FieldIcon = ({ name }: { name: string }) => <span className="fi" aria-hidden="true"><Icon name={name} size={14} /></span>;
+const FIELD_ICON: Record<string, string> = { Length: "ruler", Material: "jobs", Height: "ruler", Gates: "jobs", HOA: "users", Address: "pin", Source: "link", "Job value": "dollar", Estimate: "cal", Install: "cal", Vehicle: "car", Service: "jobs", Rooms: "home", Job: "jobs", Size: "ruler" };
+export const fieldIconFor = (label: string) => FIELD_ICON[label] ?? "edit";

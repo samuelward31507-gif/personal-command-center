@@ -3,9 +3,10 @@
 // Settings, three views. Connections: where leads come from and where they go, each with its real state, a test
 // button and the log of what happened. Agent: what Cinder says and does, in plain words, with a preview that
 // answers a made-up lead using the unsaved form. Account: the business, this device, sign out.
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Icon, Spinner, ago, fmtPhone, typePhone, type Api, type Toast } from "./parts";
 import { ChecklistsSheet } from "./parity";
+import { contrastOnWhite, dominantColor, readableAccent } from "@/lib/brand";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 import { PageHead } from "./charts";
 
@@ -284,6 +285,8 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
       <li><span>Business details and price book</span><button type="button" className="btn sm" onClick={go.setup}>Edit</button></li>
       <li><span>Invoices, tax and pay link</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
       <li><span>Notifications on this device</span>{push === "on" ? <span className="dot good">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <span className="mut">{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</span>}</li>
+      <li className="brand-li"><span>Your logo and color</span><span className="acts-row"><BrandEdit d={d} api={api} project={project} toast={toast} reload={reload} /></span></li>
+      <li><span>Show &ldquo;Powered by Cinder&rdquo;</span><span className="acts-row"><span className="mut">{s.show_powered === "yes" ? "Shown at the bottom of the menu" : "Hidden: the app shows only your business"}</span><button type="button" className="btn sm" disabled={busy} onClick={async () => { setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: { show_powered: s.show_powered === "yes" ? "no" : "yes" } }); toast("Saved."); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } }}>{s.show_powered === "yes" ? "Hide" : "Show"}</button></span></li>
       <li><span>Job checklists</span><span className="acts-row"><span className="mut">Fence install, repair, your own</span><button type="button" className="btn sm" onClick={() => setLists(true)}>Edit</button></span></li>
       <li><span>Crew sees prices</span><span className="acts-row"><span className="mut">{s.crew_prices === "yes" ? "Quotes and invoice totals, never your costs" : "No money at all"}</span><button type="button" className="btn sm" disabled={busy} onClick={async () => { setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: { crew_prices: s.crew_prices === "yes" ? "no" : "yes" } }); toast("Saved."); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } }}>{s.crew_prices === "yes" ? "Hide prices" : "Show prices"}</button></span></li>
       <li><span>Move your business in</span><span className="acts-row"><span className="mut">Jobber, QuickBooks, Housecall Pro, ServiceTitan, a spreadsheet</span><button type="button" className="btn sm" onClick={() => go.tab("switch")}>Open</button></span></li>
@@ -316,4 +319,27 @@ function QboRow({ d, open, onToggle, api, project, toast, reload }: { d: Data; o
     <p>Every invoice you send and every payment you record lands in QuickBooks on the right customer, so your books match without typing anything twice. Lines book to your Services item; sales tax rides as its own line so totals match.</p>
     <ol><li>Tap Connect QuickBooks and sign in to Intuit.</li><li>Pick your company and tap Connect.</li><li>You land back here. Tap Sync now to send the last 120 days.</li></ol>
   </Row>;
+}
+
+/** The logo (resized to 256px; its main color picked for the accent) and the accent itself, kept readable on white. */
+function BrandEdit({ d, api, project, toast, reload }: { d: Data; api: Api; project: string; toast: Toast; reload: () => Promise<void> }) {
+  const s = d.setup ?? {}, [busy, setBusy] = useState(false), [color, setColor] = useState(s.brand_color || "#d0663f");
+  const file = useRef<HTMLInputElement>(null);
+  const save = async (patch: Record<string, string>, done: string) => { setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: patch }); toast(done); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } };
+  async function pick(f: File) {
+    const bmp = await createImageBitmap(f), k = Math.min(1, 256 / Math.max(bmp.width, bmp.height)), cv = document.createElement("canvas");
+    cv.width = Math.max(1, Math.round(bmp.width * k)); cv.height = Math.max(1, Math.round(bmp.height * k));
+    const g = cv.getContext("2d")!; g.drawImage(bmp, 0, 0, cv.width, cv.height);
+    const found = dominantColor(g.getImageData(0, 0, cv.width, cv.height).data);
+    const accent = found ? readableAccent(found) : color;
+    setColor(accent);
+    await save({ brand_logo: cv.toDataURL("image/png"), ...(found ? { brand_color: accent } : {}) }, found ? `Logo saved. Accent set from it${accent !== found ? ", darkened a little so it reads on white" : ""}.` : "Logo saved.");
+  }
+  const ratio = contrastOnWhite(readableAccent(color));
+  return <>
+    {s.brand_logo ? <img src={s.brand_logo} alt="Your logo" className="brand-thumb" /> : null}
+    <input ref={file} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void pick(f); }} />
+    <button type="button" className="btn sm" disabled={busy} onClick={() => file.current?.click()}>{s.brand_logo ? "Change logo" : "Add logo"}</button>
+    <label className="brand-color" title={`${ratio.toFixed(1)}:1 on white`}><input type="color" value={color} onChange={e => setColor(e.target.value)} onBlur={() => { if (color !== s.brand_color) void save({ brand_color: color }, readableAccent(color) !== color.toLowerCase() ? "Color saved, darkened a little so it reads on white." : "Color saved."); }} aria-label="Accent color" /><span>{readableAccent(color)}</span></label>
+  </>;
 }

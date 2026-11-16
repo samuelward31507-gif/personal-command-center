@@ -59,7 +59,7 @@ export default function ChangeOrderPage() {
           {fail && <p className="err" role="alert" style={{ textAlign: "center" }}>{fail}</p>}
         </section>
         {v.terms && <details className="doc-terms"><summary>Terms</summary><p>{v.terms}</p></details>}
-        <p className="doc-foot">{v.business ? `Sent by ${v.business} with Cinder` : "Sent with Cinder"}<button type="button" className="link doc-print" onClick={() => window.print()}>Print or save as PDF</button></p>
+        <p className="doc-foot">{v.business ? `Sent by ${v.business}` : ""}<button type="button" className="link doc-print" onClick={() => window.print()}>Print or save as PDF</button></p>
       </>}
   </main>;
 }

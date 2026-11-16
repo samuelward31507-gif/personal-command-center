@@ -19,7 +19,7 @@ export function leadState(c: Conv): { text: string; tone: Tone } {
   return { text: "New", tone: "grey" };
 }
 
-const STATUS: Record<string, [string, string]> = { auto: ["Cinder replying", ""], paused: ["Your turn", "needs"], booked: ["Booked", "booked"], closed: ["Closed", ""], opted_out: ["Opted out", ""] };
+const STATUS: Record<string, [string, string]> = { auto: ["Replying for you", ""], paused: ["Your turn", "needs"], booked: ["Booked", "booked"], closed: ["Closed", ""], opted_out: ["Opted out", ""] };
 const typing = (e: KeyboardEvent) => { const t = e.target as HTMLElement | null; return !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable); };
 
 export function InboxScreen({ d, project, api, toast, reload, go, wide, push, onPush }: { d: Data; project: string; api: Api; toast: Toast; reload: () => Promise<void>; go: Go; wide: boolean; push: string; onPush: () => void }) {
@@ -67,7 +67,7 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
       <div className="list">
         <div className="filt">{views}</div>
         {!hidePush && (push === "off" || push === "ios-install") && <div className="card box" style={{ margin: 12 }}>
-          <b className="t-em">Turn on notifications</b><p className="fine" style={{ marginTop: 2 }}>{push === "off" ? "New leads, bookings and replies that need you." : "Tap Share, then “Add to Home Screen”, and open Cinder from there."}</p>
+          <b className="t-em">Turn on notifications</b><p className="fine" style={{ marginTop: 2 }}>{push === "off" ? "New leads, bookings and replies that need you." : "Tap Share, then “Add to Home Screen”, and open the app from there."}</p>
           <div className="acts-row" style={{ marginTop: 8 }}>{push === "off" && <button type="button" className="btn ink sm" onClick={onPush}>Turn on</button>}
             <button type="button" className="btn ghost sm" onClick={() => { setHidePush(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>}
         {groups.length ? groups.map(g => <section key={g.day}><div className={"grp" + (g.day === "Your turn" ? " hot" : "")}><b>{g.day}</b><span>{g.items.length}</span></div>
@@ -136,7 +136,7 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
           const photos = (x.media ?? []).map((_, k) => `/api/app/media?id=${x.id}&i=${k}`);
           const words = photos.length && /^\(sent (a photo|\d+ photos)\)$/.test(x.body) ? "" : x.body;
           return <div key={i} style={{ display: "flex", flexDirection: "column" }}>{sep}<article className={"msg " + (who === "them" ? "in" : "out") + (cont ? " cont" : "") + (tail ? " tail" : "")}>
-            {!cont && who !== "them" && <small className="from">{who === "cinder" ? "Cinder" : "You"}</small>}
+            {!cont && who !== "them" && <small className="from">{who === "cinder" ? "Auto-reply" : "You"}</small>}
             {photos.length > 0 && <div className="photos">{photos.map(src => <a key={src} href={src} target="_blank" rel="noreferrer"><img src={src} alt="Photo from the customer" loading="lazy" /></a>)}</div>}
             {words && <span className={"bubble" + (who === "them" ? "" : " out")}>{words}</span>}
             {tail && <small className="when">{clock(x.at)}</small>}
@@ -151,8 +151,8 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
         <ReplyKit hidden={!!draft.trim()} suggestion={sug} snippets={snips.list} onUse={x => { setDraft(x); ta.current?.focus(); }} onEdit={() => setEditSnips(true)} />
         <textarea ref={ta} rows={1} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (tabTakes(e, draft, sug, setDraft)) return; if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); } }} placeholder={`Text ${first(name)}`} aria-label="Reply" />
         <div className="tools">
-          <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && t.status === "booked")} title={mine ? "Hand back to Cinder" : "Take over this conversation"} onClick={() => void (mine ? act("status", { status: "auto" }, "Cinder will handle replies again.") : act("status", { status: "paused" }, "Cinder stepped back. You've got this one."))}>
-            <i aria-hidden="true" />{mine ? "You're replying" : "Cinder is replying"}</button>
+          <button type="button" className={"who" + (mine ? " on" : "")} disabled={!!busy || (!mine && t.status === "booked")} title={mine ? "Turn auto-reply back on" : "Take over this conversation"} onClick={() => void (mine ? act("status", { status: "auto" }, "Auto-reply is back on.") : act("status", { status: "paused" }, "Auto-reply is off for this one. You've got it."))}>
+            <i aria-hidden="true" />{mine ? "You're replying" : "Replying for you"}</button>
                     <button type="submit" className="btn send msg-send" disabled={!!busy || !draft.trim()} title="Send (Enter)">{busy === "reply" ? <Spinner /> : <Icon name="send" size={14} />}</button>
         </div>
       </form>

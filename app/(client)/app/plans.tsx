@@ -67,11 +67,11 @@ export function PlansScreen({ d, project, api, toast, reload, go }: { d: Data; p
                 </tr>; })}</tbody></table>
           </div>
         </section>
-      </> : <Guide title="Turn one-off jobs into repeat work" sub="Pool service every week, a fence seal every spring, gutters twice a year. Set it once and Cinder texts the customer the day before each visit, and when you tap Visit done it texts the invoice for that visit."
+      </> : <Guide title="Turn one-off jobs into repeat work" sub="Pool service every week, a fence seal every spring, gutters twice a year. Set it once and the customer gets a text the day before each visit, and when you tap Visit done it texts the invoice for that visit."
         steps={[
           { title: "Pick a customer and how often", text: "Weekly, monthly, every 3 months, once a year, or your own schedule." },
           { title: "Set what a visit costs", text: "One line or a few. Tax comes from your settings." },
-          { title: "Cinder does the rest", text: "Reminder the day before, the visit on your calendar, an invoice after.", action: !crew ? <button type="button" className="btn sm ink" onClick={() => setSheet({})}>New plan</button> : undefined },
+          { title: "The rest runs itself", text: "Reminder the day before, the visit on your calendar, an invoice after.", action: !crew ? <button type="button" className="btn sm ink" onClick={() => setSheet({})}>New plan</button> : undefined },
         ]} />}
     </div>
     {sheet && <PlanSheet d={d} thread={sheet.thread} plan={sheet.plan} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}

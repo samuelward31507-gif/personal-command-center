@@ -8,6 +8,7 @@ import { jobPrice } from "@/lib/service";
 import { LOST_REASONS, STAGE_LABEL, jobProfit, type Card, type Stage } from "@/lib/crm";
 import { crewName, crewTag } from "./crew";
 import { Avatar, Empty, Icon, Menu, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
+import { FieldIcon } from "./sources";
 import { Inspector } from "./record";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 import { Guide, Kpis, PageHead } from "./charts";
@@ -47,10 +48,10 @@ export function nextUp(c: Card, today = todayIso()): { text: string; tone: Tone;
   if (c.status === "paused") return { text: "Needs a reply", tone: "red", icon: "chat" };
   if (c.next) return { text: `Estimate ${when(c.next)}`, tone: "blue", icon: "cal" };
   if (c.stage === "booked") return { text: "Estimate done, write the quote", tone: "red", icon: "quote" };
-  return { text: "Cinder is replying", tone: "", icon: "bolt" };
+  return { text: "Replying for you", tone: "", icon: "bolt" };
 }
 export type Who = "you" | "customer" | "scheduled" | "cinder" | "closed";
-export const WHO_LABEL: Record<Who, string> = { you: "Your move", customer: "Waiting on the customer", scheduled: "Scheduled", cinder: "Cinder is on it", closed: "Done or lost" };
+export const WHO_LABEL: Record<Who, string> = { you: "Your move", customer: "Waiting on the customer", scheduled: "Scheduled", cinder: "Being handled", closed: "Done or lost" };
 const WHO_ORDER: Who[] = ["you", "customer", "scheduled", "cinder", "closed"];
 /** Who owes the next move on a job, and the verb that makes it when it's the owner's. */
 export function moveOf(c: Card, today = todayIso()): { who: Who; verb: string; run: (go: Go) => void } {
@@ -191,10 +192,10 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
           <Menu label="Source" value={src} options={sources} onPick={setSrc} />
           {wide && <span className="sort">Sorted by <b>last activity</b></span>}
         </div>
-        {!everyone.length ? <Guide title="Your jobs land here" sub="Every lead becomes a job the moment Cinder answers it, and moves from New to Booked to Quoted to Won on its own as the conversation goes."
+        {!everyone.length ? <Guide title="Your jobs land here" sub="Every lead becomes a job the moment it's answered, and moves from New to Booked to Quoted to Won on its own as the conversation goes."
           steps={[
-            { title: "Your Cinder number is live", text: "Missed calls and texts to it start a job with a reply in seconds.", done: !!d.number, action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Settings</button> },
-            { title: "Point your website at Cinder", text: "The chat bubble, your contact form or your booking page. Each one starts a job.", done: (d.wires?.sources ?? []).some(x => x.source !== "missed_call" && x.source !== "text"), action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Connections</button> },
+            { title: "Your texting number is live", text: "Missed calls and texts to it start a job with a reply in seconds.", done: !!d.number, action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Settings</button> },
+            { title: "Point your website here", text: "The chat bubble, your contact form or your booking page. Each one starts a job.", done: (d.wires?.sources ?? []).some(x => x.source !== "missed_call" && x.source !== "text"), action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Connections</button> },
             { title: "Bring in past customers", text: "From Jobber or any spreadsheet. Nobody gets a text.", done: (d.customers ?? []).length > 0, action: <button type="button" className="btn sm" onClick={go.importCustomers}>Import</button> },
             { title: "Add a lead by hand", text: "Someone who called your own cell or stopped you on a job.", action: <button type="button" className="btn sm ink" onClick={go.addLead}>New lead</button> },
           ]} />
@@ -203,7 +204,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
         : wide ? <>
           <div className="tbl-wrap"><table className={"tbl jobs-tbl" + (sel ? " compact" : "")}>
             <colgroup><col style={{ width: 200 }} /><col style={{ width: 262 }} /><col /><col style={{ width: 96 }} /><col className="c2" style={{ width: 104 }} /><col style={{ width: 76 }} /><col style={{ width: 140 }} /><col className="c2" style={{ width: 104 }} /></colgroup>
-            <thead><tr><th>Customer</th><th>Next step</th><th>Job</th><th className="right">Value</th><th className="right c2" title="Price minus the costs you logged on the job">Profit</th><th className="right">Waiting</th><th>Stage</th><th className="c2">Came from</th></tr></thead>
+            <thead><tr><th><FieldIcon name="user" />Customer</th><th><FieldIcon name="fwd" />Next step</th><th><FieldIcon name="ruler" />Job</th><th className="right"><FieldIcon name="dollar" />Value</th><th className="right c2" title="Price minus the costs you logged on the job"><FieldIcon name="bars" />Profit</th><th className="right"><FieldIcon name="clock" />Waiting</th><th><FieldIcon name="sort" />Stage</th><th className="c2"><FieldIcon name="link" />Came from</th></tr></thead>
             <tbody>{groups.map(g => <Fragment key={g.who}>
               {grouped && <tr className="grp-row"><td colSpan={8}><b>{WHO_LABEL[g.who]}</b><span>{g.cards.length} {g.cards.length === 1 ? "job" : "jobs"}{g.value ? `, ${usd(g.value)}` : ""}</span></td></tr>}
               {g.cards.map(c => { const n = nextUp(c, today), m = moveOf(c, today), name = c.name || fmtPhone(c.phone), town = city(c), l = laneOf(c), days = daysIn(c); return <tr key={c.id} data-row={c.id} tabIndex={0} className={(sel === c.id ? "sel" : "") + (m.who === "you" ? " mine" : "")} aria-selected={sel === c.id} onClick={() => open(c.id)} onDoubleClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>

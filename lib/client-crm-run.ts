@@ -11,6 +11,7 @@ import { nextChaseDay, quoteDaysFor } from "@/lib/client-runtime";
 import { changeOrdersByThread } from "@/lib/client-service-run";
 import { signoffsByThread } from "@/lib/client-portal-run";
 import { propertiesByThread } from "@/lib/client-parity-run";
+import { cleanLogo, hexOk, readableAccent } from "@/lib/brand";
 import { cleanItems } from "@/lib/billing";
 
 type Sql = NeonQueryFunction<false, false>;
@@ -77,6 +78,11 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
 /** The owner's answers from the setup flow, merged into their setup. Sam's fields are never touched. */
 export async function saveOwnerSetup(sql: Sql, c: Client, input: unknown): Promise<Record<string, string>> {
   const patch = cleanOwnerSetup(input);
+  // The business's own look: the logo, and its color made readable on white (4.5:1) before it's kept.
+  const o = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  if (o.brand_color !== undefined) { const h = hexOk(o.brand_color); patch.brand_color = h ? readableAccent(h) : ""; }
+  if (o.brand_logo !== undefined) patch.brand_logo = cleanLogo(o.brand_logo);
+  if (o.show_powered !== undefined) patch.show_powered = o.show_powered === "yes" ? "yes" : "no";
   await sql`UPDATE public.client_ops SET setup = setup || ${JSON.stringify(patch)}::jsonb, updated_at = now() WHERE project_id = ${c.projectId}::uuid AND owner_id = ${c.owner}`;
   return patch;
 }
@@ -169,7 +175,7 @@ export async function addLead(sql: Sql, c: Client, input: { name?: string; phone
 
 /** For the setup flow: what the owner already told us (or Sam filled in), so nothing is asked twice. */
 export function ownerSetupView(setup: Record<string, string>) {
-  const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at", "quote_terms", "warranty", "financing_note", "financing_link", "review_on_paid", "labor_rate", "catalog", "evening_text", "golive", "golive_start", "software", "checklists", "crew_prices"];
+  const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at", "quote_terms", "warranty", "financing_note", "financing_link", "review_on_paid", "labor_rate", "catalog", "evening_text", "golive", "golive_start", "software", "checklists", "crew_prices", "brand_color", "brand_logo", "show_powered"];
   return { ...Object.fromEntries([...k, "pay_link", "tax_rate", "invoice_days"].map(x => [x, setup[x] ?? ""])), has_calendar: "", has_review_link: setup.review_link ? "yes" : "", has_number: setup.texting_number ? "yes" : "",
     // Read-only for the System screen: what Sam has wired. Values that could identify a person stay out.
     has_cell: setup.owner_cell ? "yes" : "", has_booking_link: setup.booking_link ? "yes" : "", hours: setup.hours ?? "",
