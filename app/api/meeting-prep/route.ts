@@ -1,5 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
+import { cleanSpeedTest, speedLine } from "@/lib/speed-test";
+import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +31,7 @@ export async function GET(request: Request) {
         e.contact_id, e.deal_id, e.provider,
         c.first_name, c.last_name, c.company, c.role, c.email, c.phone, c.website,
         c.location, c.status AS contact_status, c.source, c.notes AS contact_notes,
-        c.follow_up_at,
+        c.follow_up_at, c.speed_test,
         d.id AS linked_deal_id, d.title AS deal_title, d.stage AS deal_stage,
         d.service_type, d.setup_fee, d.monthly_fee, d.expected_close_date, d.notes AS deal_notes
       FROM public.calendar_events e
@@ -85,6 +87,12 @@ export async function GET(request: Request) {
         priority: t.priority, dueAt: t.due_at,
       })),
       checklist: [
+        ...(() => {
+          const t = cleanSpeedTest(e.speed_test);
+          const tz = timeZoneFor(String(e.location ?? "")) ?? timeZoneForPhone(String(e.phone ?? "")) ?? "America/Denver";
+          const line = t ? speedLine(t, Date.now(), tz) : null;
+          return line ? [`Open with your speed test: "${line}"`] : [];
+        })(),
         "Review the prospect's business and likely lead-conversion bottleneck",
         "Confirm the current situation and quantify missed or delayed leads",
         "Agree on the next step before ending the call",
