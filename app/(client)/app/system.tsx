@@ -228,7 +228,7 @@ function MailConn({ d, go, toast, api, project, reload, open, onToggle }: { d: D
         <li>Or in Gmail: Settings, Forwarding, Add a forwarding address, paste it. Gmail sends a code; it shows up right here. Then make a filter (from: angi.com OR thumbtack.com OR your form&rsquo;s sender) that forwards to it.</li>
         <li>Outlook: Settings, Mail, Rules, a rule that forwards those senders to this address.</li>
       </ol>
-      <p>An email without a phone number waits below so you can add it. Nothing is ever emailed back to anyone.</p>
+      <p>An email without a phone number waits below so you can add it. The same address also brings customers' replies to the quotes and invoices you email onto their record. Nothing is ever emailed back automatically.</p>
       {m.recent.length > 0 && <table className="tbl flush log"><tbody>
         {m.recent.slice(0, 10).map(r => <tr key={r.id} className={r.status === "new" ? "bad" : ""} onClick={r.thread ? () => go.record(r.thread) : undefined} style={{ cursor: r.thread ? "pointer" : "default" }}>
           <td className="mut nowrap">{ago(r.at)}</td><td className="nowrap"><span className="dot" />{MAIL_WORD[r.status] ?? r.status}</td>
@@ -392,6 +392,7 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
         <button type="submit" className="btn ink sm" disabled={busy}>{busy ? <Spinner /> : "Add"}</button><button type="button" className="btn ghost sm" onClick={() => setAdding(false)}>Cancel</button></form></li>
       : team.length < 10 ? <li><span className="mut">They sign in with their own cell. Crew sees the calendar, the jobs and the texts, never the money. Office sees everything but these settings.</span><button type="button" className="btn sm" onClick={() => setAdding(true)}>Add someone</button></li> : null}
     </ul>
+    {team.some(m => m.role === "crew") && <CrewScope d={d} api={api} project={project} toast={toast} reload={reload} />}
     <p className="sec" style={{ marginTop: 20 }}>Account</p>
     <ul className="settings">
       <li><span>Business</span><b>{biz.business}</b></li>
@@ -436,6 +437,16 @@ function QboRow({ d, open, onToggle, api, project, toast, reload }: { d: Data; o
     <p>Every invoice you send and every payment you record lands in QuickBooks on the right customer, so your books match without typing anything twice. Lines book to your Services item; sales tax rides as its own line so totals match.</p>
     <ol><li>Tap Connect QuickBooks and sign in to Intuit.</li><li>Pick your company and tap Connect.</li><li>You land back here. Tap Sync now to send the last 120 days.</li></ol>
   </Row>;
+}
+
+/** What crew can see: every lead and job, or only the jobs assigned to them. Enforced on the server too. */
+function CrewScope({ d, api, project, toast, reload }: { d: Data; api: Api; project: string; toast: Toast; reload: () => Promise<void> }) {
+  const cur = d.setup?.crew_scope === "assigned" ? "assigned" : "all", [busy, setBusy] = useState(false);
+  const set = async (v: "all" | "assigned") => { if (v === cur) return; setBusy(true);
+    try { await api("/api/app/act", { p: project, action: "setup", setup: { crew_scope: v === "assigned" ? "assigned" : "" } }); toast(v === "assigned" ? "Crew now see only the jobs you assign them." : "Crew see every lead and job again."); await reload(); }
+    catch (e) { toast(e instanceof Error ? e.message : "Couldn't change it.", true); } finally { setBusy(false); } };
+  return <ul className="settings"><li><span>Crew see<small className="mut" style={{ display: "block" }}>Money stays hidden from crew either way.</small></span>
+    <div className="seg" role="radiogroup" aria-label="What crew see">{(["all", "assigned"] as const).map(v => <button key={v} type="button" role="radio" aria-checked={cur === v} className={cur === v ? "on" : ""} disabled={busy} onClick={() => void set(v)}>{v === "all" ? "Every lead and job" : "Only their jobs"}</button>)}</div></li></ul>;
 }
 
 /** The owner's Google review link: where review requests send happy customers. */

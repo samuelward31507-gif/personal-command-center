@@ -8,6 +8,7 @@ import { cleanOwnerSetup } from "@/lib/crm";
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
+import { replyToFor } from "@/lib/client-lead-mail-run";
 import { setPhone, addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
@@ -56,6 +57,14 @@ export async function POST(req: Request) {
     if (!c) return json({ error: "Sign in" }, 401);
     // The crew sees the schedule and the jobs and can text, call, tick steps, leave notes and clock hours. Money and settings stay with the owner.
     if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit", "signoff", "checktick"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
+    if (s.role === "crew" && c.setup.crew_scope === "assigned") {
+      const me10 = (s.phone || "").replace(/\D/g, "").slice(-10);
+      const tid = b.thread && UUID.test(b.thread) ? b.thread : null;
+      const [own] = tid ? await sql`SELECT crew_member FROM public.client_threads WHERE id = ${tid}::uuid AND project_id = ${c.projectId}::uuid` as { crew_member: string | null }[]
+        : b.appt && UUID.test(b.appt) ? await sql`SELECT coalesce(a.crew_member, t.crew_member) AS crew_member FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id WHERE a.id = ${b.appt}::uuid AND a.project_id = ${c.projectId}::uuid` as { crew_member: string | null }[]
+        : [{ crew_member: me10 }];
+      if ((tid || b.appt) && String(own?.crew_member ?? "").replace(/\D/g, "").slice(-10) !== me10) return json({ error: "That job isn't assigned to you." }, 403);
+    }
     if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; b.email = undefined; }
     // Crew hours: the person signed in clocks in on a job (or general time) and out again. The owner is "".
     // Office staff run the business day to day; settings and the team stay with the owner.
@@ -63,10 +72,10 @@ export async function POST(req: Request) {
     const member = s.role !== "owner" && s.phone ? "+1" + s.phone.replace(/\D/g, "").slice(-10) : "";
     if (b.action === "clockin") {
       if (b.thread && !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
-      const r = await clockIn(sql, c, member, b.thread || null);
+      const r = await clockIn(sql, c, member, b.thread || null, b.at);
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
-    if (b.action === "clockout") { const r = await clockOut(sql, c, member, b.note); return r.ok ? json({ ok: true, minutes: r.minutes }) : json({ error: r.error }, 409); }
+    if (b.action === "clockout") { const r = await clockOut(sql, c, member, b.note, b.at); return r.ok ? json({ ok: true, minutes: r.minutes }) : json({ error: r.error }, 409); }
     // The end of the job: the customer signs on the phone, the install and walk-through steps tick.
     if (b.action === "signoff") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
@@ -277,7 +286,8 @@ export async function POST(req: Request) {
       if (!to) return json({ error: "Add their email on the customer first." }, 409);
       const firstName = String(row.customer_name ?? "").split(" ")[0], biz = c.setup.display_name || "", amt = Number(row.amount) || 0;
       const money = amt.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: amt % 1 ? 2 : 0 });
-      const r = await sendCustomerEmail({ to, business: biz, replyTo: c.setup.alert_email || undefined,
+      // Replies come back onto this customer's record when receiving is set up; until then, to the owner's own inbox.
+      const r = await sendCustomerEmail({ to, business: biz, replyTo: replyToFor(String(row.thread)) || c.setup.alert_email || undefined,
         subject: quote ? `Your quote from ${biz}` : `Invoice #${row.number} from ${biz}`,
         lines: quote ? [`Hi${firstName ? " " + firstName : ""},`, `Here's your quote${amt ? ` for ${money}` : ""}. You can look it over and approve it from your phone in a minute.`, "Questions? Just reply to this email or text us."]
           : [`Hi${firstName ? " " + firstName : ""},`, `Here's invoice #${row.number}${amt ? ` for ${money}` : ""}${row.due_on ? `, due ${new Date(String(row.due_on) + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric" })}` : ""}.`, "You can see it and pay online. Thank you for your business."],

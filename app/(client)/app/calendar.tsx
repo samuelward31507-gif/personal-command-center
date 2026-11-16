@@ -17,6 +17,7 @@ type Block = { key: string; kind: "estimate" | "install" | "event" | "visit"; ti
 const maps = (a: string) => `https://maps.google.com/?daddr=${encodeURIComponent(a)}`;
 const H0 = 6, H1 = 20, ROW = 44;
 const iso = (d: Date) => d.toLocaleDateString("en-CA");
+const d10 = (p: string) => (p || "").replace(/\D/g, "").slice(-10);
 /** The week starts on Sunday, the way US calendars do. */
 const sunday = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - x.getDay()); return x; };
 const mins = (t: number, day: string) => (t - Date.parse(day + "T00:00:00")) / 60000;
@@ -24,6 +25,54 @@ const mins = (t: number, day: string) => (t - Date.parse(day + "T00:00:00")) / 6
 const localIso = (t: number) => { const x = new Date(t); const p = (n: number) => String(n).padStart(2, "0"); return `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}T${p(x.getHours())}:${p(x.getMinutes())}`; };
 type Move = { apptId: string; thread: string; name: string; from: number; start: string };
 type Drag = { apptId: string; x0: number; y0: number; moved: boolean; day: string; min: number };
+
+/**
+ * The day by crew member: one column each (you first), estimates, installs and plan visits where they fall. Drag a job
+ * to another column to hand it to them (they get a text with the details); each column has its own route in time order.
+ */
+function CrewDay({ day, setDay, today, team, blocks, busy, onOpen, onAssign }: { day: string; setDay: (d: string) => void; today: string; team: { cell: string; name: string }[]; blocks: Block[]; busy: string; onOpen: (b: Block) => void; onAssign: (b: Block, cell: string) => void }) {
+  const grid = useRef<HTMLDivElement>(null);
+  const [drag, setDrag] = useState<{ key: string; x0: number; col: number; moved: boolean } | null>(null);
+  const colOf = (b: Block) => Math.max(0, team.findIndex(t => d10(t.cell) === d10(b.crew ?? "")));
+  const colAt = (x: number) => { const el = grid.current; if (!el) return -1; const r = el.getBoundingClientRect(), w = (r.width - 56) / team.length; return Math.max(0, Math.min(team.length - 1, Math.floor((x - r.left - 56) / w))); };
+  const shift = (n: number) => { const x = new Date(day + "T12:00:00"); x.setDate(x.getDate() + n); setDay(iso(x)); };
+  const hours = Array.from({ length: H1 - H0 }, (_, k) => H0 + k);
+  const label = new Date(day + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+  const timed = blocks.filter(b => !b.allDay), allDay = blocks.filter(b => b.allDay);
+  const lanes = new Map<string, { i: number; n: number }>();
+  team.forEach((_, k) => {
+    const col = timed.filter(b => colOf(b) === k).sort((a, b) => a.start - b.start), ends: number[] = [], at = new Map<string, number>();
+    for (const b of col) { let i = ends.findIndex(e => e <= b.start); if (i < 0) { i = ends.length; ends.push(b.end); } else ends[i] = b.end; at.set(b.key, i); }
+    for (const b of col) lanes.set(b.key, { i: at.get(b.key)!, n: Math.max(1, ends.length) });
+  });
+  return <div className="crewday">
+    <div className="crewday-nav">
+      <button type="button" className="btn ghost sm ic" aria-label="Previous day" onClick={() => shift(-1)}><Icon name="back" size={14} /></button>
+      <button type="button" className="btn ghost sm" onClick={() => setDay(today)} disabled={day === today}>Today</button>
+      <button type="button" className="btn ghost sm ic" aria-label="Next day" onClick={() => shift(1)}><Icon name="fwd" size={14} /></button>
+      <b>{label}</b><small>{blocks.length ? `${blocks.length} ${blocks.length === 1 ? "stop" : "stops"}` : "Nothing booked"}. Drag a job onto someone to hand it to them.</small>
+    </div>
+    <div className="cal crew" style={{ ["--cols" as string]: team.length }}>
+      <div className="cal-head"><div className="cal-gutter" />{team.map(t => { const mine = blocks.filter(b => d10(b.crew ?? "") === d10(t.cell)).sort((a, b) => a.start - b.start); const url = routeUrl(mine.filter(b => b.addr).map(b => b.addr!));
+        return <div key={t.cell || "me"} className="cal-dh crew-h"><b>{t.name}</b><small>{mine.length ? `${mine.length} ${mine.length === 1 ? "stop" : "stops"}` : "Free"}</small>{url && <a className="btn ghost sm" href={url} target="_blank" rel="noreferrer" title="Their stops in order, on the map"><Icon name="pin" size={12} />Route</a>}</div>; })}</div>
+      {allDay.length > 0 && <div className="cal-allday"><div className="cal-gutter"><small>All day</small></div>{team.map((t, k) => <div key={t.cell || "me"} className="cal-ad">{allDay.filter(b => colOf(b) === k).map(b => <button key={b.key} type="button" className={"cal-chip " + b.kind} onClick={() => onOpen(b)}>{b.title}</button>)}</div>)}</div>}
+      <div className="cal-body" ref={grid} style={{ height: hours.length * ROW }}>
+        <div className="cal-gutter">{hours.map(h => <div key={h} className="cal-h" style={{ top: (h - H0) * ROW }}><small>{h === 12 ? "12 PM" : h > 12 ? `${h - 12} PM` : `${h} AM`}</small></div>)}</div>
+        {team.map((t, k) => <div key={t.cell || "me"} className={"cal-col" + (drag?.moved && drag.col === k ? " drop" : "")}>
+          {hours.map(h => <i key={h} className="cal-line" style={{ top: (h - H0) * ROW }} />)}
+          {timed.filter(b => colOf(b) === k).map(b => { const top = Math.max(0, (mins(b.start, day) - H0 * 60) / 60 * ROW), hgt = Math.max(ROW * 0.6, (b.end - b.start) / 3600000 * ROW), movable = !!b.thread && b.kind !== "visit";
+            const ln = lanes.get(b.key) ?? { i: 0, n: 1 };
+            return <button key={b.key} type="button" className={"cal-ev " + b.kind + (drag?.key === b.key && drag.moved ? " lifted" : "") + (busy === "assign" + b.key ? " busy" : "")} style={{ top, height: hgt, left: `calc(${(ln.i / ln.n) * 100}% + 3px)`, width: `calc(${100 / ln.n}% - 6px)`, right: "auto" }}
+              onPointerDown={e => { if (!movable || e.button !== 0) return; e.currentTarget.setPointerCapture(e.pointerId); setDrag({ key: b.key, x0: e.clientX, col: k, moved: false }); }}
+              onPointerMove={e => { if (!drag || drag.key !== b.key) return; const moved = drag.moved || Math.abs(e.clientX - drag.x0) > 6; if (moved) setDrag({ ...drag, moved, col: colAt(e.clientX) }); }}
+              onPointerUp={e => { if (!drag || drag.key !== b.key) { onOpen(b); return; } e.currentTarget.releasePointerCapture(e.pointerId); const dd = drag; setDrag(null); if (!dd.moved) { onOpen(b); return; } if (dd.col !== k) onAssign(b, team[dd.col].cell); }}>
+              <b>{b.title}</b><small>{clock(new Date(b.start).toISOString()).replace(":00", "")}, {b.kind}</small>{hgt >= ROW * 1.4 && b.addr && <small>{b.addr}</small>}
+            </button>; })}
+        </div>)}
+      </div>
+    </div>
+  </div>;
+}
 
 export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }: { d: Data; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void>; go: Go; wide: boolean }) {
   const today = iso(new Date());
@@ -40,6 +89,7 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
   const byThread = useMemo(() => new Map((d.board ?? []).map(c => [c.id, c])), [d.board]);
 
   const [who, setWho] = useState("all");
+  const [mode, setMode] = useState<"week" | "crew">("week");
   const allBlocks = useMemo<Block[]>(() => {
     const out: Block[] = [];
     for (const a of d.appointments) { const t = Date.parse(a.starts_at), dd = iso(new Date(t)); const c = byThread.get(a.thread_id);
@@ -126,7 +176,7 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
     <header className="tb"><h1 className="h1">Calendar</h1>
       <div className="acts-row" style={{ gap: 2 }}><button type="button" className="btn ghost sm ic" aria-label="Previous week" onClick={() => setWeek(w => w - 1)}><Icon name="back" size={14} /></button><button type="button" className="btn ghost sm" onClick={() => setWeek(0)}>Today</button><button type="button" className="btn ghost sm ic" aria-label="Next week" onClick={() => setWeek(w => w + 1)}><Icon name="fwd" size={14} /></button></div>
       <span className="sub">{range}{week === 0 ? `, ${estWeek} ${estWeek === 1 ? "estimate" : "estimates"}` : ""}</span>
-      <div className="acts">{crewPick}{route(today) && <a className="btn" href={route(today)!} target="_blank" rel="noreferrer" title="Today's stops in order, on the map"><Icon name="pin" size={13} />Today's route</a>}{cal.connected ? <a className="btn" href={googleCalendarUrl(cal.email)} target="_blank" rel="noreferrer"><Icon name="ext" size={13} />Google Calendar</a>
+      <div className="acts">{team.length > 1 && wide && <div className="seg" role="tablist" aria-label="View"><button type="button" role="tab" aria-selected={mode === "week"} className={mode === "week" ? "on" : ""} onClick={() => setMode("week")}>Week</button><button type="button" role="tab" aria-selected={mode === "crew"} className={mode === "crew" ? "on" : ""} onClick={() => setMode("crew")}>Crew</button></div>}{mode === "week" && crewPick}{route(today) && <a className="btn" href={route(today)!} target="_blank" rel="noreferrer" title="Today's stops in order, on the map"><Icon name="pin" size={13} />Today's route</a>}{cal.connected ? <a className="btn" href={googleCalendarUrl(cal.email)} target="_blank" rel="noreferrer"><Icon name="ext" size={13} />Google Calendar</a>
         : <a className="btn ink" href={cal.connectUrl} target="_blank" rel="noreferrer">Connect Google Calendar</a>}</div></header>
     <div className={"split" + (sel ? " has-insp" : "")}>
       <div className="pane list">
@@ -135,7 +185,9 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
           {!cal.connected && !cal.error && <p className="fine">Connect your Google Calendar and estimates only get booked where you&rsquo;re free. Your own events show up here too.</p>}
           {outcomes}
         </div>}
-        <div className="cal">
+        {mode === "crew" ? <CrewDay day={day} setDay={setDay} today={today} team={team} blocks={allBlocks.filter(b => b.day === day && b.kind !== "event")} busy={busy}
+            onOpen={open} onAssign={(b, cell) => void act("assign" + b.key, { action: "assign", thread: b.thread, member: cell }, r => `${cell ? `Assigned to ${crewName(d, cell)}` : "Taken back by you"}.${(r as { texted?: boolean }).texted ? " Texted them the details." : ""}`)} />
+        : <div className="cal">
           <div className="cal-head"><div className="cal-gutter" />{days.map(dd => { const x = new Date(dd + "T12:00:00"); return <div key={dd} className={"cal-dh" + (dd === today ? " today" : "")}><small>{x.toLocaleDateString("en-US", { weekday: "short" })}</small><b>{x.getDate()}</b></div>; })}</div>
           <div className="cal-allday"><div className="cal-gutter"><small>All day</small></div>{days.map(dd => <div key={dd} className="cal-ad">{blocks.filter(b => b.day === dd && b.allDay).map(b => <button key={b.key} type="button" className={"cal-chip " + b.kind + (sel && sel === b.thread ? " sel" : "")} onClick={() => open(b)} title={`${b.title}, ${b.sub}`}>{b.title}</button>)}</div>)}</div>
           <div className="cal-body" ref={body} style={{ height: hours.length * ROW }} onPointerMove={onMoveP}>
@@ -150,8 +202,8 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
               {drag?.moved && drag.day === dd && <div className="cal-ev estimate ghost" style={{ top: (drag.min - H0 * 60) / 60 * ROW, height: ROW }} aria-hidden="true"><b>{blocks.find(b => b.apptId === drag.apptId)?.title}</b><small>{clock(new Date(Date.parse(dd + "T00:00:00") + drag.min * 60000).toISOString()).replace(":00", "")}</small></div>}
             </div>)}
           </div>
-        </div>
-        {week === 0 && blocks.some(b => b.kind === "estimate" && b.day >= today && days.includes(b.day)) && <div className="pad" style={{ paddingTop: 8 }}><section className="card"><div className="hd"><h2>On the way</h2><small>one tap texts the customer you&rsquo;re coming</small></div>
+        </div>}
+        {mode === "week" && week === 0 && blocks.some(b => b.kind === "estimate" && b.day >= today && days.includes(b.day)) && <div className="pad" style={{ paddingTop: 8 }}><section className="card"><div className="hd"><h2>On the way</h2><small>one tap texts the customer you&rsquo;re coming</small></div>
           {blocks.filter(b => b.kind === "estimate" && b.day >= today && days.includes(b.day)).sort((a, b) => a.start - b.start).map(b => <div key={b.key} className="row"><span className="ic"><Icon name="cal" size={14} /></span><span style={{ minWidth: 0 }}><b>{b.title}<span className="faint" style={{ fontWeight: 400 }}>, {dayName(new Date(b.start).toISOString())} {clock(new Date(b.start).toISOString())}</span></b></span><span className="acts-row" style={{ flexWrap: "nowrap" }}>{omw(b)}<button type="button" className="btn sm" onClick={() => askMove(b)}>Move</button></span></div>)}
         </section></div>}
       </div>

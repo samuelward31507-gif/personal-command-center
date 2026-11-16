@@ -19,7 +19,8 @@ export type ReportNumbers = Funnel & {
   cycleDays: number | null; payDays: number | null; collected: number; invoiced: number;
   appts: number; noShows: number; reviews: number;
 };
-export type SourceRow = { source: string; leads: number; booked: number; quoted: number; won: number; wonValue: number };
+/** paid: money actually collected (payments recorded) on the jobs that came from this source. */
+export type SourceRow = { source: string; leads: number; booked: number; quoted: number; won: number; wonValue: number; paid: number };
 export type Point = { label: string; leads: number; booked: number; won: number; wonValue: number; collected: number };
 export type Report = { days: Period; now: ReportNumbers; before: ReportNumbers; sources: SourceRow[]; lostReasons: { reason: string; n: number }[]; openQuotes: { n: number; value: number }; series: Point[] };
 
@@ -77,7 +78,8 @@ export async function reportFor(sql: Sql, pid: string, tz: string, days: Period)
         count(*) FILTER (WHERE t.stage IN ('booked', 'quoted', 'won') OR t.status = 'booked' OR EXISTS (SELECT 1 FROM public.client_appointments a WHERE a.thread_id = t.id))::int AS booked,
         count(*) FILTER (WHERE t.stage IN ('quoted', 'won'))::int AS quoted,
         count(*) FILTER (WHERE t.stage = 'won')::int AS won,
-        coalesce(sum(t.value) FILTER (WHERE t.stage = 'won'), 0)::float AS won_value
+        coalesce(sum(t.value) FILTER (WHERE t.stage = 'won'), 0)::float AS won_value,
+        coalesce(sum((SELECT sum(p.amount) FROM public.client_payments p WHERE p.thread_id = t.id)), 0)::float AS paid
       FROM public.client_threads t WHERE t.project_id = ${pid}::uuid AND t.source <> ALL(${NOT_LEADS}::text[]) AND t.created_at >= ${from.toISOString()}::timestamptz
       GROUP BY 1 ORDER BY 6 DESC, 2 DESC` as Promise<Record<string, unknown>[]>,
     sql`SELECT substring(z.body FROM '^Marked lost: (.+?)\\. Follow-ups stopped\\.$') AS reason, count(*)::int AS n
@@ -95,7 +97,7 @@ export async function reportFor(sql: Sql, pid: string, tz: string, days: Period)
   const paid = new Map(pay.map(r => [String(r.k), Number(r.collected) || 0]));
   return {
     days, now: cur, before,
-    sources: src.map(r => ({ source: String(r.source), leads: Number(r.leads) || 0, booked: Number(r.booked) || 0, quoted: Number(r.quoted) || 0, won: Number(r.won) || 0, wonValue: Number(r.won_value) || 0 })),
+    sources: src.map(r => ({ source: String(r.source), leads: Number(r.leads) || 0, booked: Number(r.booked) || 0, quoted: Number(r.quoted) || 0, won: Number(r.won) || 0, wonValue: Number(r.won_value) || 0, paid: Number(r.paid) || 0 })),
     lostReasons: lost.filter(r => r.reason).map(r => ({ reason: String(r.reason), n: Number(r.n) || 0 })),
     openQuotes: { n: Number(open[0]?.n) || 0, value: Number(open[0]?.value) || 0 },
     series: ser.map(r => ({ label: String(r.k), leads: Number(r.leads) || 0, booked: Number(r.booked) || 0, won: Number(r.won) || 0, wonValue: Number(r.won_value) || 0, collected: paid.get(String(r.k)) ?? 0 })),

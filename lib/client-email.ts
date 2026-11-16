@@ -1,6 +1,6 @@
 // Email to a business's customers, sent through Resend in the business's name. The From address is Cinder's own
-// verified domain (CINDER_EMAIL_FROM, e.g. "quotes@cinderrevenue.com"); replies go to the owner when an email is on
-// file. Until the domain is verified the sender is not configured and the app falls back to the owner's mail app.
+// verified domain (CINDER_EMAIL_FROM, e.g. "quotes@cinderrevenue.com"). Replies go to a signed address per customer and
+// land on that customer's record (lib/client-lead-mail-run.ts takeReply), or to the owner's email until receiving is set up. Until the domain is verified the sender is not configured and the app falls back to the owner's mail app.
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 export const customerEmailReady = () => !!(process.env.RESEND_API_KEY?.trim() && process.env.CINDER_EMAIL_FROM?.trim());

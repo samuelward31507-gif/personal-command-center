@@ -3,7 +3,7 @@
 // path as their webhooks (saved, texted back from the business number, the owner alerted). A customer who wrote in
 // directly is saved and the owner is alerted, but Cinder doesn't text them first. Emails without a phone wait for the owner.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { mailAddress, mailKey, readMail, type MailIn, type MailLead } from "@/lib/lead-mail";
+import { htmlToText, mailAddress, mailKey, readMail, replyAddress, replyText, replyThread, type MailIn, type MailLead } from "@/lib/lead-mail";
 import { cleanMessages } from "@/lib/client-ops";
 import { alertOwner, thread, webLead, type Client } from "@/lib/client-runtime-run";
 import { ownerAlert } from "@/lib/client-runtime";
@@ -16,6 +16,34 @@ export const inboundDomain = () => (process.env.CINDER_INBOUND_DOMAIN || "").tri
 /** All three are needed: where mail arrives, the webhook's signing secret, and the key that reads the email. */
 export const leadMailReady = () => !!(inboundDomain() && process.env.RESEND_WEBHOOK_SECRET?.trim() && process.env.RESEND_API_KEY?.trim());
 export const leadMailAddressFor = (chatKey: string) => (leadMailReady() ? mailAddress(chatKey, inboundDomain()) : "");
+/** The reply-to for an email to this customer, so their answer lands on their record. "" until receiving is set up. */
+export const replyToFor = (threadId: string) => (leadMailReady() ? replyAddress(threadId, process.env.CINDER_TOKEN_KEY?.trim() ?? "", inboundDomain()) : "");
+
+/**
+ * A customer answered an email from the business: their words go on their record (in, from them), the conversation
+ * becomes the owner's turn and the owner is alerted. Cinder doesn't answer emails itself. Returns null when the email
+ * isn't a reply to one of ours.
+ */
+export async function takeReply(sql: Sql, mail: MailIn & { messageId: string }): Promise<{ status: "reply" | "duplicate" | "empty" } | null> {
+  const id = replyThread([...mail.to, ...(mail.receivedFor ?? [])], process.env.CINDER_TOKEN_KEY?.trim() ?? "", inboundDomain());
+  if (!id) return null;
+  const [t] = await sql`SELECT t.id, t.project_id, t.owner_id, t.customer_name, t.status FROM public.client_threads t WHERE t.id = ${id}::uuid` as { id: string; project_id: string; owner_id: string; customer_name: string; status: string }[];
+  if (!t) return null;
+  const [o] = await sql`SELECT project_id, owner_id, setup, messages FROM public.client_ops WHERE project_id = ${t.project_id}::uuid` as Record<string, unknown>[];
+  if (!o) return null;
+  const c: Client = { projectId: String(o.project_id), owner: String(o.owner_id), setup: (o.setup && typeof o.setup === "object" ? o.setup : {}) as Record<string, string>, messages: cleanMessages(o.messages) };
+  const [row] = await sql`INSERT INTO public.client_lead_mail (owner_id, project_id, message_id, from_addr, subject, source, status, thread_id)
+    VALUES (${c.owner}, ${c.projectId}::uuid, ${mail.messageId}, ${mail.from.slice(0, 300)}, ${mail.subject.slice(0, 300)}, 'email', 'reply', ${t.id}::uuid)
+    ON CONFLICT (project_id, message_id) DO NOTHING RETURNING id` as { id: string }[];
+  if (!row) return { status: "duplicate" };
+  const words = replyText(mail.text && mail.text.trim() ? mail.text : htmlToText(mail.html || ""));
+  if (!words) return { status: "empty" };
+  const subject = mail.subject.replace(/^((re|fw|fwd):\s*)+/i, "").trim();
+  await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${t.id}::uuid, 'in', 'customer', ${`By email${subject ? ` (${subject.slice(0, 80)})` : ""}: ${words}`})`;
+  await sql`UPDATE public.client_threads SET last_in_at = now(), updated_at = now(), status = CASE WHEN status IN ('auto', 'closed') THEN 'paused' ELSE status END WHERE id = ${t.id}::uuid`;
+  await alertOwner(c, ownerAlert("handoff", t.customer_name || "A customer", `Replied by email: "${words.slice(0, 140)}"`), t.id, sql);
+  return { status: "reply" };
+}
 
 /** Lead sites and website forms: the customer asked to be contacted there, so they get the instant text like a webhook lead. */
 const TEXT_BACK = new Set(["angi", "thumbtack", "facebook", "google", "yelp", "houzz", "nextdoor", "bark", "porch", "networx", "web form"]);

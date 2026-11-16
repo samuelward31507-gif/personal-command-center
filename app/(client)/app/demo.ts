@@ -176,9 +176,9 @@ function demoReport(days: 30 | 90 | 365): Report {
   return { days,
     now: num(r(41), r(14), r(9), r(5), r(37500)),
     before: num(r(33), r(10), r(8), r(4), r(29800), { replySec: 14, cycleDays: 13.8, payDays: 8.5 }),
-    sources: [{ source: "angi", leads: r(9), booked: r(4), quoted: r(3), won: r(2), wonValue: r(18100) }, { source: "missed_call", leads: r(13), booked: r(4), quoted: r(3), won: r(1), wonValue: r(8600) },
-      { source: "web form", leads: r(8), booked: r(3), quoted: r(2), won: r(1), wonValue: r(6900) }, { source: "google", leads: r(6), booked: r(2), quoted: r(1), won: r(1), wonValue: r(3900) },
-      { source: "booking page", leads: r(3), booked: r(1), quoted: 0, won: 0, wonValue: 0 }, { source: "thumbtack", leads: r(2), booked: 0, quoted: 0, won: 0, wonValue: 0 }],
+    sources: [{ source: "angi", leads: r(9), booked: r(4), quoted: r(3), won: r(2), wonValue: r(18100) , paid: Math.round((r(18100) ) * 0.8)}, { source: "missed_call", leads: r(13), booked: r(4), quoted: r(3), won: r(1), wonValue: r(8600) , paid: Math.round((r(8600) ) * 0.8)},
+      { source: "web form", leads: r(8), booked: r(3), quoted: r(2), won: r(1), wonValue: r(6900) , paid: Math.round((r(6900) ) * 0.8)}, { source: "google", leads: r(6), booked: r(2), quoted: r(1), won: r(1), wonValue: r(3900) , paid: Math.round((r(3900) ) * 0.8)},
+      { source: "booking page", leads: r(3), booked: r(1), quoted: 0, won: 0, wonValue: 0 , paid: Math.round((0 ) * 0.8)}, { source: "thumbtack", leads: r(2), booked: 0, quoted: 0, won: 0, wonValue: 0 , paid: Math.round((0 ) * 0.8)}],
     lostReasons: [{ reason: "Price", n: r(2) }, { reason: "Went with someone else", n: r(1) }, { reason: "Timing", n: Math.max(1, r(0.5)) }],
     openQuotes: { n: 4, value: 32627 },
     // A believable trend: weeks for 30 and 90 days, months for a year, oldest first.
@@ -203,7 +203,7 @@ function asCrew<T extends Record<string, unknown>>(x: T): T {
     board: ((x.board ?? []) as Card[]).map(b => ({ ...b, value: null, quote: null, invoice: null, changeOrders: (b.changeOrders ?? []).map(c => ({ ...c, items: [], total: 0, url: null })) })) };
 }
 function blank<T extends Record<string, unknown>>(x: T): T {
-  const live = { ...(x.live as Record<string, unknown>), leads: 0, needs: 0, answered: 0, booked: 0, replySec: null, chasing: 0, chasingValue: 0, won: 0, wonValue: 0, revived: 0, reviews: 0, weeks: [], conversations: [], afterHours: { leads: 0, won: 0, wonValue: 0 } };
+  const live = { ...(x.live as Record<string, unknown>), leads: 0, needs: 0, answered: 0, booked: 0, replySec: null, chasing: 0, chasingValue: 0, won: 0, wonValue: 0, revived: 0, reviews: 0, weeks: [], conversations: [], afterHours: { leads: 0, won: 0, wonValue: 0 , paid: Math.round((0 ) * 0.8)} };
   const setup = { ...(x.setup as Record<string, string>), price_book: "", pay_link: "", has_review_link: "", has_calendar: "" };
   return { ...x, live, setup, board: [], invoices: [], payments: [], customers: [], appointments: [], quotes: [], wonJobs: [], plans: [], time: [], visits: [], hasReviewLink: false, calendar: { connected: false, email: "", events: [], error: "", connectUrl: "#" }, wires: { sources: [], failures: [], log: [] }, mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: [] }, winback: { past: 0, eligible: 0, names: [], draft: "" } };
 }
@@ -224,7 +224,7 @@ function data() {
     businesses: [{ project_id: "demo", name: "Ridgeline Fence Co. (example)" }], unreadFromSam: 0,
     evening: { since: ago(1440), leads: 6, afterHours: 4, replySec: 8, booked: 2, quotesBack: 1, quotesBackValue: 3400, paid: 2500, reviews: 1 },
     live: { replySecWeek: 8, leadsWeek: 11, leadsToday: conversations.filter(c => Date.parse(c.created) > Date.now() - 86400000).length, leads: 41, needs: conversations.filter(c => c.status === "paused").length, answered: 41, booked: 14, replySec: 9,
-      afterHours: { leads: 14, won: 5, wonValue: 31400 }, chasing: s.quotes.length, chasingValue: s.quotes.reduce((t, q) => t + (q.amount || 0), 0), won: s.won, wonValue: s.wonValue, revived: 4, reviews: 11,
+      afterHours: { leads: 14, won: 5, wonValue: 31400 , paid: Math.round((31400 ) * 0.8)}, chasing: s.quotes.length, chasingValue: s.quotes.reduce((t, q) => t + (q.amount || 0), 0), won: s.won, wonValue: s.wonValue, revived: 4, reviews: 11,
       weeks: [{ week: "a", leads: 8, booked: 3 }, { week: "b", leads: 11, booked: 4 }, { week: "c", leads: 9, booked: 3 }, { week: "d", leads: 13, booked: 4 }], conversations },
     owner: "Mike", appointments: s.appts, quotes: s.quotes, quoteSteps: 4, wonJobs: s.wonJobs, hasReviewLink: true,
     calendar: { connected: true, email: "mike@ridgelinefence.com", events: s.events, error: "", connectUrl: "#" },

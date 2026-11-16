@@ -225,3 +225,39 @@ export function verifySvix(secret: string, id: string, timestamp: string, signat
     return got.length === want.length && timingSafeEqual(got, want);
   });
 }
+
+// ---------- Two-way email: replies to a customer email land on that customer's record ----------
+const replySig = (threadHex: string, secret: string) => createHmac("sha256", secret).update("reply:" + threadHex).digest("hex").slice(0, 12);
+/** The reply-to for an email to one customer: r-<thread>-<signature>@<inbound domain>. Signed, so it can't be guessed or forged. */
+export function replyAddress(threadId: string, secret: string, domain: string): string {
+  const hex = String(threadId).toLowerCase().replace(/-/g, "");
+  const d = domain.trim().toLowerCase().replace(/^@/, "");
+  if (!/^[0-9a-f]{32}$/.test(hex) || !secret || !d) return "";
+  return `r-${hex}-${replySig(hex, secret)}@${d}`;
+}
+/** The customer record a reply is for, or null when no address is a valid signed reply address at this domain. */
+export function replyThread(addresses: string[], secret: string, domain: string): string | null {
+  const d = domain.trim().toLowerCase().replace(/^@/, "");
+  if (!secret || !d) return null;
+  for (const raw of addresses) {
+    const { addr } = addrOf(raw);
+    const m = addr.match(/^r-([0-9a-f]{32})-([0-9a-f]{12})(?:\+[^@]*)?@(.+)$/);
+    if (!m || m[3] !== d) continue;
+    const want = Buffer.from(replySig(m[1], secret)), got = Buffer.from(m[2]);
+    if (want.length === got.length && timingSafeEqual(want, got)) return `${m[1].slice(0, 8)}-${m[1].slice(8, 12)}-${m[1].slice(12, 16)}-${m[1].slice(16, 20)}-${m[1].slice(20)}`;
+  }
+  return null;
+}
+/** What the customer wrote, without the quoted email under it, the signature or "Sent from my iPhone". */
+export function replyText(text: string): string {
+  const lines = String(text || "").replace(/\r\n?/g, "\n").split("\n"), out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i], t = l.trim();
+    if (/^>/.test(t) || /^--\s*$/.test(l) || /^_{8,}$/.test(t) || /^-{2,}\s*(Original|Forwarded) Message/i.test(t) || /^Sent from my /i.test(t) || /^Get Outlook for /i.test(t)) break;
+    if (/^On .{4,200}wrote:\s*$/i.test(t)) break;
+    if (/^On .{4,200}$/i.test(t) && /wrote:\s*$/i.test((lines[i + 1] ?? "").trim())) break;
+    if (/^From:\s.+/i.test(t) && /^(Sent|Date):\s/i.test((lines[i + 1] ?? "").trim())) break;
+    out.push(l);
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, 2000);
+}

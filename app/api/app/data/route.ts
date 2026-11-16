@@ -32,10 +32,15 @@ export async function GET(req: Request) {
       const days = ([30, 90, 365].includes(Number(q.get("report"))) ? Number(q.get("report")) : 30) as Period;
       return json({ report: await reportFor(sql, c.projectId, c.setup.timezone || "America/Denver", days) });
     }
+    // Crew limited to their own jobs (Settings, Account): only threads assigned to them, in every list and every conversation.
+    const crewOnlyMine = s.role === "crew" && c.setup.crew_scope === "assigned";
+    const me10 = (s.phone || "").replace(/\D/g, "").slice(-10);
     const th = q.get("thread");
     if (th && /^[0-9a-f-]{36}$/i.test(th)) {
-      const [t] = await sql`SELECT id, customer_name, customer_phone, source, status, lang FROM public.client_threads WHERE id = ${th}::uuid AND project_id = ${c.projectId}::uuid` as Record<string, unknown>[];
+      const [t] = await sql`SELECT id, customer_name, customer_phone, source, status, lang, crew_member FROM public.client_threads WHERE id = ${th}::uuid AND project_id = ${c.projectId}::uuid` as Record<string, unknown>[];
       if (!t) return json({ error: "Not found" }, 404);
+      if (crewOnlyMine && String(t.crew_member ?? "").replace(/\D/g, "").slice(-10) !== me10) return json({ error: "That job isn't assigned to you." }, 403);
+      delete t.crew_member;
       const texts = await sql`SELECT id, direction, author, body, at, media, status FROM public.client_texts WHERE thread_id = ${th}::uuid ORDER BY at LIMIT 400`;
       return json({ thread: t, texts });
     }
@@ -87,14 +92,18 @@ export async function GET(req: Request) {
       connectUrl: `${origin}/api/client-calendar?state=${encodeURIComponent(calState(c.projectId))}` };
     if (q.get("tab") === "sam") await sql`UPDATE public.client_messages SET read_at = now() WHERE project_id = ${c.projectId}::uuid AND author = 'owner' AND read_at IS NULL`.catch(() => null);
     const crew = s.role === "crew";
+    const mine = new Set(crewOnlyMine ? board.filter(b => (b.crewMember || "").replace(/\D/g, "").slice(-10) === me10).map(b => b.id) : []);
+    const scoped = <T,>(list: T[], idOf: (x: T) => string) => (crewOnlyMine ? list.filter(x => mine.has(idOf(x))) : list);
+    if (crewOnlyMine) live.conversations = scoped(live.conversations, x => x.id);
     return json({
       role: s.role === "crew" ? "crew" : s.role === "office" ? "office" : "owner", me, project: c.projectId,
       evening,
-      plans: crew ? plans.map(p => ({ ...p, items: [], total: 0, tax_rate: 0 })) : plans, visits, time,
+      plans: crew ? scoped(plans, p => p.thread_id).map(p => ({ ...p, items: [], total: 0, tax_rate: 0 })) : plans, visits, time,
       emailReady: customerEmailReady(), business: c.setup.display_name || "", number: c.setup.texting_number || "", canCall: !!(c.setup.owner_cell && c.setup.texting_number),
       owner: c.setup.owner_name || "", businesses: biz, live,
-      appointments: (appts as { event_id?: string }[]).map(a => ({ ...a, link: (a.event_id && links.get(a.event_id)) || "" })), quotes, quoteSteps: SEQUENCES.quote.days.length, wonJobs, hasReviewLink: !!c.setup.review_link, repeat: isRepeatTrade(c.setup.trade), calendar, messages: (msgs as Record<string, unknown>[]).reverse(), unreadFromSam: (unread as { n: number }[])[0]?.n ?? 0,
-      board: crew && c.setup.crew_prices === "yes" ? board.map(b => ({ ...b, costs: { materials: 0, labor: 0, other: 0 } })) : crew ? board.map(b => ({ ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 }, changeOrders: (b.changeOrders ?? []).map(x => ({ ...x, items: [], total: 0, url: null })) })) : board,
+      appointments: scoped(appts as { event_id?: string; thread_id: string }[], a => a.thread_id).map(a => ({ ...a, link: (a.event_id && links.get(a.event_id)) || "" })), quotes, quoteSteps: SEQUENCES.quote.days.length, wonJobs, hasReviewLink: !!c.setup.review_link, repeat: isRepeatTrade(c.setup.trade), calendar, messages: (msgs as Record<string, unknown>[]).reverse(), unreadFromSam: (unread as { n: number }[])[0]?.n ?? 0,
+      board: crewOnlyMine ? scoped(board, b => b.id).map(b => c.setup.crew_prices === "yes" ? { ...b, costs: { materials: 0, labor: 0, other: 0 } } : { ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 }, changeOrders: (b.changeOrders ?? []).map(x => ({ ...x, items: [], total: 0, url: null })) })
+        : crew && c.setup.crew_prices === "yes" ? board.map(b => ({ ...b, costs: { materials: 0, labor: 0, other: 0 } })) : crew ? board.map(b => ({ ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 }, changeOrders: (b.changeOrders ?? []).map(x => ({ ...x, items: [], total: 0, url: null })) })) : board,
       setup: crew ? { display_name: c.setup.display_name || "", owner_name: c.setup.owner_name || "", trade: c.setup.trade || "", checklists: c.setup.checklists || "", crew_prices: c.setup.crew_prices || "", brand_color: c.setup.brand_color || "", brand_logo: c.setup.brand_logo || "" } : { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "", team: c.setup.team || "[]", monthly_report: c.setup.monthly_report || "" },
       customers: crew ? [] : customers, invoices: crew ? [] : invoices, payments: crew ? [] : payments,
       key: String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? ""), origin, wires,

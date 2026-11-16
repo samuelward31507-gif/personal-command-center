@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { verifySvix } from "@/lib/lead-mail";
-import { fetchReceived, takeMail } from "@/lib/client-lead-mail-run";
+import { fetchReceived, takeMail, takeReply } from "@/lib/client-lead-mail-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +22,11 @@ export async function POST(req: Request) {
   let mail;
   try { mail = await fetchReceived(id); } catch (e) { console.error("Lead email read failed", e instanceof Error ? e.message : e); return Response.json({ error: "Couldn't read the email." }, { status: 502 }); }
   if (!mail) return Response.json({ ok: true, skipped: true });
-  const r = await takeMail(neon(process.env.DATABASE_URL), mail);
+  const sql = neon(process.env.DATABASE_URL);
+  // A customer answering one of the business's emails: onto their record. Anything else is a lead email.
+  const reply = await takeReply(sql, mail).catch(e => { console.error("Email reply failed", e instanceof Error ? e.message : e); return { status: "failed" as const }; });
+  if (reply) return Response.json({ ok: true, status: reply.status });
+  const r = await takeMail(sql, mail);
   // A failure after the email is read stays on its row (the owner can add it by hand), so a retry would only be a duplicate.
   return Response.json({ ok: true, status: r.status });
 }

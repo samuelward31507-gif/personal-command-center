@@ -40,4 +40,10 @@ ok(() => { const b = invoiceBody({ number: 1044, items: [{ name: "Fence", qty: 1
 ok(() => { const b = invoiceBody({ number: 1, items: [{ name: "x", qty: 1, price: 10 }], tax_rate: 0, due_on: null, note: "" }, "1", "2"); assert.equal(b.Line.length, 1); assert.equal(b.DueDate, undefined); });
 ok(() => { const p = paymentBody({ amount: 1500, paid_on: "2026-11-15", method: "check", note: "check 1182" }, "55", "201"); assert.equal(p.TotalAmt, 1500); assert.deepEqual(p.Line[0].LinkedTxn, [{ TxnId: "201", TxnType: "Invoice" }]); assert.equal(p.PrivateNote, "Check, check 1182"); });
 ok(() => { const id = "0b9a5c7e-1111-4222-8333-444455556666", s = qboState(id); assert.equal(readQboState(s), id); assert.equal(readQboState(s.slice(0, -2) + "xx"), null); assert.equal(readQboState(qboState(id, Date.now() - 8 * 86400000)), null); });
+// Clock taps sent later from an offline phone: the time it was tapped, never the future, never more than a day back.
+{ const now = Date.parse("2026-11-16T15:00:00Z"); const S2 = await import("./lib/service.ts");
+  ok(() => assert.equal(S2.tappedAt("2026-11-16T13:30:00Z", now), "2026-11-16T13:30:00.000Z"));
+  ok(() => assert.equal(S2.tappedAt("2026-11-17T09:00:00Z", now), "2026-11-16T15:00:00.000Z", "a phone clock ahead can't add hours"));
+  ok(() => assert.equal(S2.tappedAt("2026-11-10T09:00:00Z", now), "2026-11-15T15:00:00.000Z", "at most a day back"));
+  ok(() => assert.equal(S2.tappedAt(undefined, now), "2026-11-16T15:00:00.000Z")); }
 console.log(`service 2: ${n} checks passed`);

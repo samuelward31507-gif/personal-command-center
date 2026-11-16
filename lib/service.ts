@@ -150,3 +150,9 @@ export function cleanSignoff(v: unknown): { ok: true; signedBy: string; signatur
   const checklist = (Array.isArray(o.checklist) ? o.checklist : []).slice(0, 20).map(x => { const r = (x && typeof x === "object" ? x : {}) as Record<string, unknown>; return { label: ctl(r.label, 80), done: r.done === true }; }).filter(x => x.label);
   return { ok: true, signedBy, signature, note: ctl(o.note, 600), checklist };
 }
+
+/** When a tap happened, for a clock-in or out sent later from a phone that was offline: the last 24 hours, never the future. */
+export function tappedAt(v: unknown, now = Date.now()): string {
+  const t = Date.parse(String(v ?? ""));
+  return new Date(Number.isFinite(t) ? Math.min(now, Math.max(now - 24 * 3600000, t)) : now).toISOString();
+}
