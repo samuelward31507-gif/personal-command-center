@@ -11,7 +11,7 @@ const KIND: Record<Photo["kind"], string> = { before: "Before", during: "During"
 export const photoSrc = (id: string) => (id.startsWith("data:") ? id : `/api/app/photo?id=${id}`);
 
 /** Resize to at most 1600px on the long side and keep the file under ~850KB: a phone photo becomes ~300KB. */
-async function shrink(file: File): Promise<string> {
+export async function shrink(file: File): Promise<string> {
   const bmp = await createImageBitmap(file);
   const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
   const cv = document.createElement("canvas");

@@ -10,6 +10,7 @@ import { invoicesByThread } from "@/lib/client-billing-run";
 import { nextChaseDay, quoteDaysFor } from "@/lib/client-runtime";
 import { changeOrdersByThread } from "@/lib/client-service-run";
 import { signoffsByThread } from "@/lib/client-portal-run";
+import { propertiesByThread } from "@/lib/client-parity-run";
 import { cleanItems } from "@/lib/billing";
 
 type Sql = NeonQueryFunction<false, false>;
@@ -21,14 +22,14 @@ const today = (c: Client) => new Date().toLocaleDateString("en-CA", { timeZone: 
 export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
   const [invoices, photos, cos] = await Promise.all([invoicesByThread(sql as never, c).catch(() => ({} as Record<string, Card["invoice"]>)), photosByThread(sql, c).catch(() => ({} as Record<string, NonNullable<Card["photos"]>>)),
     changeOrdersByThread(sql, c).catch(() => ({} as Record<string, NonNullable<Card["changeOrders"]>>))]);
-  const signoffs = await signoffsByThread(sql, c).catch(() => ({} as Record<string, NonNullable<Card["signoff"]>>));
+  const [signoffs, props] = await Promise.all([signoffsByThread(sql, c).catch(() => ({} as Record<string, NonNullable<Card["signoff"]>>)), propertiesByThread(sql, c).catch(() => ({} as Record<string, NonNullable<Card["properties"]>>))]);
   const rows = await sql`SELECT t.id, t.customer_name, t.customer_phone, t.source, t.status, t.stage, t.details, t.value::float AS value, t.notes,
       coalesce(t.last_in_at, t.updated_at) AS at, q.id AS quote_id, q.amount::float AS quote_amount, q.status AS quote_status, q.steps_sent AS quote_steps,
       q.token AS quote_token, q.link_sent_at IS NOT NULL AS quote_linked, q.items AS quote_items, q.tax_rate::float AS quote_tax,
       t.install_time, t.install_days, t.install_event_id IS NOT NULL AS on_calendar, q.viewed_at AS quote_viewed, q.note AS quote_note, q.view_count AS quote_views, q.last_viewed_at AS quote_last_viewed, q.chase_paused AS quote_chase_paused, q.sent_on::text AS quote_sent_on, a.starts_at AS next_appt,
       t.install_on::text AS install_on, t.review_auto, rv.sent_at AS review_sent, t.job_steps, t.job_costs,
       (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied,
-      t.stage_at, lr.body AS lost_note, t.crew_notes, t.crew_member, q.deposit::float AS quote_deposit, t.customer_email, t.remind_at, t.remind_note, t.remind_sent_at, t.review_after
+      t.stage_at, lr.body AS lost_note, t.crew_notes, t.crew_member, q.deposit::float AS quote_deposit, t.customer_email, t.remind_at, t.remind_note, t.remind_sent_at, t.review_after, t.checklist
     FROM public.client_threads t
     LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate, view_count, last_viewed_at, chase_paused, sent_on FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
       AND right(regexp_replace(x.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
@@ -66,7 +67,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       job: again ? {} : cleanJob(r.job_steps), costs: again ? cleanCosts({}) : cleanCosts(r.job_costs),
       stageAt: r.stage_at ? new Date(String(r.stage_at)).toISOString() : null, crew: String(r.crew_notes ?? ""), email: String(r.customer_email ?? ""),
       photos: photos[String(r.id)] ?? [], crewMember: String(r.crew_member ?? ""), changeOrders: again ? [] : cos[String(r.id)] ?? [],
-      reviewAfter: r.review_after && !r.review_sent ? new Date(String(r.review_after)).toISOString() : null, signoff: signoffs[String(r.id)] ?? null,
+      reviewAfter: r.review_after && !r.review_sent ? new Date(String(r.review_after)).toISOString() : null, signoff: signoffs[String(r.id)] ?? null, properties: props[String(r.id)] ?? [], checklist: r.checklist && typeof r.checklist === "object" ? r.checklist as Card["checklist"] : null,
       remind: r.remind_at ? { at: new Date(String(r.remind_at)).toISOString(), note: String(r.remind_note ?? ""), sent: !!r.remind_sent_at } : null,
       lostReason: typeof r.lost_note === "string" ? (r.lost_note.match(/^Marked lost: (.+?)\. Follow-ups stopped\.$/)?.[1] ?? "") : "",
     };
@@ -168,7 +169,7 @@ export async function addLead(sql: Sql, c: Client, input: { name?: string; phone
 
 /** For the setup flow: what the owner already told us (or Sam filled in), so nothing is asked twice. */
 export function ownerSetupView(setup: Record<string, string>) {
-  const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at", "quote_terms", "warranty", "financing_note", "financing_link", "review_on_paid", "labor_rate", "catalog", "evening_text", "golive", "golive_start", "software"];
+  const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at", "quote_terms", "warranty", "financing_note", "financing_link", "review_on_paid", "labor_rate", "catalog", "evening_text", "golive", "golive_start", "software", "checklists", "crew_prices"];
   return { ...Object.fromEntries([...k, "pay_link", "tax_rate", "invoice_days"].map(x => [x, setup[x] ?? ""])), has_calendar: "", has_review_link: setup.review_link ? "yes" : "", has_number: setup.texting_number ? "yes" : "",
     // Read-only for the System screen: what Sam has wired. Values that could identify a person stay out.
     has_cell: setup.owner_cell ? "yes" : "", has_booking_link: setup.booking_link ? "yes" : "", hours: setup.hours ?? "",

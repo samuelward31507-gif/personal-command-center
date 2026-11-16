@@ -28,13 +28,14 @@ function SignaturePad({ onChange }: { onChange: (png: string) => void }) {
 }
 
 /** Hand the phone to the customer: they check the work, sign, and the job's install and walk-through steps tick. */
-export function SignoffSheet({ card, trade, onClose, save }: { card: Card; trade: string; onClose: () => void; save: (input: Record<string, unknown>) => Promise<boolean> }) {
+export function SignoffSheet({ card, trade, owner, onClose, save }: { card: Card; trade: string; owner?: boolean; onClose: () => void; save: (input: Record<string, unknown>) => Promise<boolean> }) {
+  const [review, setReview] = useState(!card.reviewSent), [invoice, setInvoice] = useState(!card.invoice || card.invoice.status === "draft");
   const [checks, setChecks] = useState(() => CHECKS(trade).map(label => ({ label, done: false })));
   const [name, setName] = useState(card.name), [note, setNote] = useState(""), [sig, setSig] = useState(""), [busy, setBusy] = useState(false), [extra, setExtra] = useState("");
   const ready = name.trim().length >= 2 && !!sig;
   return <Sheet onClose={onClose} title="Finish the job" sub={`${card.name}, signed on this phone`}
     foot={<><span className="fine" style={{ marginRight: "auto" }}>{checks.filter(c => c.done).length} of {checks.length} checked</span><button type="button" className="btn" onClick={onClose}>Cancel</button>
-      <button type="button" className="btn ink" disabled={busy || !ready} onClick={async () => { setBusy(true); if (await save({ signedBy: name, signature: sig, note, checklist: checks })) onClose(); setBusy(false); }}>{busy ? <Spinner /> : "Sign off the job"}</button></>}>
+      <button type="button" className="btn ink" disabled={busy || !ready} onClick={async () => { setBusy(true); if (await save({ signedBy: name, signature: sig, note, checklist: checks, ...(owner ? { review: review && !card.reviewSent, invoice } : {}) })) onClose(); setBusy(false); }}>{busy ? <Spinner /> : "Sign off the job"}</button></>}>
     <p className="sec">Walk it together</p>
     <div className="checks">{checks.map((c, k) => <label key={k} className="check"><input type="checkbox" checked={c.done} onChange={e => setChecks(xs => xs.map((x, j) => j === k ? { ...x, done: e.target.checked } : x))} /><span>{c.label}</span></label>)}
       <form className="acts-row" onSubmit={e => { e.preventDefault(); if (extra.trim()) { setChecks(xs => [...xs, { label: extra.trim().slice(0, 80), done: true }]); setExtra(""); } }}>
@@ -42,12 +43,16 @@ export function SignoffSheet({ card, trade, onClose, save }: { card: Card; trade
     <label className="field"><span>Anything to note <em>optional, it goes on their record</em></span><textarea rows={2} value={note} maxLength={600} onChange={e => setNote(e.target.value)} placeholder="Touch-up on the gate post next week. Left the extra pickets in the garage." /></label>
     <label className="field"><span>Customer name</span><input value={name} maxLength={80} onChange={e => setName(e.target.value)} autoComplete="name" /></label>
     <SignaturePad onChange={setSig} />
+    {owner && <>
+      <label className="toggle"><input type="checkbox" checked={invoice} onChange={e => setInvoice(e.target.checked)} /><i /><span><b>Text {first(card.name)} the invoice now</b><small>{card.invoice && card.invoice.status !== "draft" ? "It's already been sent." : "The job's done, so it goes out with your pay link."}</small></span></label>
+      {!card.reviewSent && <label className="toggle"><input type="checkbox" checked={review} onChange={e => setReview(e.target.checked)} /><i /><span><b>Ask for a Google review now</b><small>While they're happy with what they just saw. Once per customer.</small></span></label>}
+    </>}
     <p className="fine">By signing, {first(name || card.name)} confirms the job is done as described. The signature is kept with the job and shows on their customer page.</p>
   </Sheet>;
 }
 
 /** On the record: who signed and when, their signature, the checks and the note. Or the button that starts it. */
-export function SignoffBox({ d, card, trade, save }: { d: Data; card: Card; trade: string; save: (input: Record<string, unknown>) => Promise<boolean> }) {
+export function SignoffBox({ d, card, trade, save, owner }: { d: Data; card: Card; trade: string; save: (input: Record<string, unknown>) => Promise<boolean>; owner?: boolean }) {
   const [open, setOpen] = useState(false), s = card.signoff;
   return <section className="card"><div className="hd"><h2>Sign-off</h2>{s && <small style={{ marginLeft: "auto" }} className="dot good">Signed {dateLabel(s.at)}</small>}</div>
     {s ? <>
@@ -58,7 +63,7 @@ export function SignoffBox({ d, card, trade, save }: { d: Data; card: Card; trad
       {s.note && <p className="fine" style={{ marginTop: 6 }}>{s.note}</p>}
     </> : <><p className="fine">When the work&rsquo;s done, hand {first(card.name)} the phone: a quick walk-through checklist and their signature. Proof it was done right, and the job moves to invoice.</p>
       <div className="acts-row" style={{ marginTop: 8 }}><button type="button" className="btn sm ink" onClick={() => setOpen(true)}><Icon name="check" size={13} />Finish the job</button></div></>}
-    {open && <SignoffSheet card={card} trade={trade} onClose={() => setOpen(false)} save={save} />}
+    {open && <SignoffSheet card={card} trade={trade} owner={owner} onClose={() => setOpen(false)} save={save} />}
   </section>;
 }
 

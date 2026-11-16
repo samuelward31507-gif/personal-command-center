@@ -13,6 +13,7 @@ import { PlanBox } from "./plans";
 import { jobPrice } from "@/lib/service";
 import { ChangeOrders, HoursBox } from "./jobwork";
 import { PortalSheet, SignoffBox } from "./finish";
+import { ChecklistBox, PropertiesBox } from "./parity";
 
 /** "Remind me": a time and a note on this customer. The owner gets a text and a push when it's due. */
 export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: { name: string; current: { at: string; note: string } | null; busy: boolean; onClose: () => void; onSave: (at: string, note: string) => void; onClear: () => void }) {
@@ -28,7 +29,7 @@ export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: {
   </Sheet>;
 }
 import { LineEditor, invoiceState } from "./money";
-import { Photos } from "./photos";
+import { Photos, shrink } from "./photos";
 import { nextUp, LostPicker } from "./jobs";
 import { sourceLabel, type Biz, type Data, type Go, type Text, type Thread } from "./types";
 
@@ -117,7 +118,8 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
           <JobPanel r={r} biz={biz} ask={ask} setAsk={setAsk} go={go} canText={!!canText} />
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <Steps card={r.card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <CostBox card={r.card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
-          {r.card && r.card.stage === "won" && !r.card.pastCustomer && <SignoffBox d={d} card={r.card} trade={biz.trade} save={async input => !!(await r.act("signoff", { action: "signoff", input }, "Signed off. Install and walk-through ticked."))} />}
+          {r.card && r.card.stage === "won" && !r.card.pastCustomer && <ChecklistBox d={d} card={r.card} trade={biz.trade} act={r.act} busy={r.busy} canPick={!biz.crew} onPhoto={async (label, f) => { try { await r.act("photo", { action: "photo", kind: "during", caption: label, data: await shrink(f) }, "Photo added."); } catch { r.toast("That photo didn't work.", true); } }} />}
+          {r.card && r.card.stage === "won" && !r.card.pastCustomer && <SignoffBox owner={!biz.crew} d={d} card={r.card} trade={biz.trade} save={async input => !!(await r.act("signoff", { action: "signoff", input }, "Signed off. Install and walk-through ticked."))} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && !biz.crew && <HoursBox d={d} card={r.card} act={r.act} busy={r.busy} />}
         </div>}
     </div>
@@ -173,9 +175,11 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       {biz.canCall ? <button type="button" className="btn sm" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}>Call {first(name)}</button> : <a className="btn sm" href={`tel:${phone}`}>Call {first(name)}</a>}
     </div></section> : null;
   const rail = <>{!biz.crew && needs}{!biz.crew && money}{!biz.crew && card && card.stage === "won" && !card.pastCustomer && <CostBox card={card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
-    {card && card.stage === "won" && !card.pastCustomer && <SignoffBox d={d} card={card} trade={biz.trade} save={async input => !!(await r.act("signoff", { action: "signoff", input }, "Signed off. Install and walk-through ticked."))} />}
+    {card && card.stage === "won" && !card.pastCustomer && <ChecklistBox d={d} card={card} trade={biz.trade} act={r.act} busy={r.busy} canPick={!biz.crew} onPhoto={async (label, f) => { try { await r.act("photo", { action: "photo", kind: "during", caption: label, data: await shrink(f) }, "Photo added."); } catch { r.toast("That photo didn't work.", true); } }} />}
+    {card && card.stage === "won" && !card.pastCustomer && <SignoffBox owner={!biz.crew} d={d} card={card} trade={biz.trade} save={async input => !!(await r.act("signoff", { action: "signoff", input }, "Signed off. Install and walk-through ticked."))} />}
     {!biz.crew && card && card.stage === "won" && !card.pastCustomer && <HoursBox d={d} card={card} act={r.act} busy={r.busy} />}
     {!biz.crew && (card ? card.stage === "won" || card.pastCustomer : !!cust) && <PlanBox d={d} thread={id} project={project} api={api} toast={toast} reload={reload} />}
+    {card && <PropertiesBox card={card} act={r.act} busy={r.busy} canEdit={!biz.crew} />}
     <section className="card"><div className="hd"><h2>On file</h2></div>
       {card && !biz.crew && card.stage !== "lost" && !card.pastCustomer && <CrewPick d={d} card={card} project={project} api={api} toast={toast} reload={reload} />}
       {card && biz.crew && card.crewMember && <div className="money"><span>On the job</span><b>{crewName(d, card.crewMember)}</b></div>}

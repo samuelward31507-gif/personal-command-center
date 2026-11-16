@@ -143,4 +143,13 @@ ok(() => assert.equal(R.quoteChaseDue("2026-01-01", 2, "2026-02-10", [3, 7]), 2,
 ok(() => assert.equal(R.nextChaseDay("2026-01-01", 0), "2026-01-03"));
 ok(() => assert.equal(R.nextChaseDay("2026-01-01", 3), "2026-02-10"));
 ok(() => assert.equal(R.nextChaseDay("2026-01-01", 15), null));
+// ---------- Parity: checklists and the install reminder ----------
+const P = await import("./lib/client-parity-shared.ts");
+ok(() => assert.deepEqual(P.cleanChecklists('[{"name":" Fence install ","items":["Set posts"," ",""]},{"name":"","items":["x"]},{"name":"Empty","items":[]}]'), [{ name: "Fence install", items: ["Set posts"] }]));
+ok(() => assert.equal(P.cleanChecklists(Array.from({ length: 30 }, (_, i) => ({ name: "L" + i, items: ["a"] }))).length, 20));
+ok(() => assert.equal(P.DEFAULT_CHECKLISTS("Fence")[0].name, "Fence install"));
+ok(() => assert.equal(P.DEFAULT_CHECKLISTS("Pool")[0].name, "Job"));
+const { installReminderText } = P;
+ok(() => assert.equal(installReminderText({ first: "Dana", business: "Byers Fence.", what: "fence install", time: "07:30" }), "Hi Dana, it's Byers Fence. Reminder: we start your fence install tomorrow at 7:30 AM. Reply here with anything we should know before we get there."));
+ok(() => assert.ok(installReminderText({ first: "", business: "", what: "", time: null }).startsWith("Hi, it's us. Reminder: we start your job tomorrow.")));
 console.log(`switch: ${n} checks passed`);

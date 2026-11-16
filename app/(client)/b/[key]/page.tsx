@@ -18,7 +18,7 @@ export default function BookPage() {
   const { key } = useParams<{ key: string }>();
   const [p, setP] = useState<Page | null>(null), [err, setErr] = useState("");
   const [day, setDay] = useState(""), [slot, setSlot] = useState<string | null>(null), [step, setStep] = useState<"time" | "you" | "done">("time");
-  const [name, setName] = useState(""), [phone, setPhone] = useState(""), [address, setAddress] = useState(""), [message, setMessage] = useState(""), [consent, setConsent] = useState(false), [hp, setHp] = useState("");
+  const [name, setName] = useState(""), [phone, setPhone] = useState(""), [address, setAddress] = useState(""), [message, setMessage] = useState(""), [consent, setConsent] = useState(false), [hp, setHp] = useState(""), [photos, setPhotos] = useState<string[]>([]);
   const [busy, setBusy] = useState(false), [fail, setFail] = useState(""), [when, setWhen] = useState(""), [booked, setBooked] = useState(false);
   useEffect(() => {
     fetch("/api/book?key=" + encodeURIComponent(key), { cache: "no-store" })
@@ -32,7 +32,7 @@ export default function BookPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setFail("");
     try {
-      const r = await fetch("/api/book", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, start: slot, name, phone, address, message, consent, website: hp }) });
+      const r = await fetch("/api/book", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key, start: slot, name, phone, address, message, consent, website: hp, photos }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "That didn't go through.");
       setBooked(!!j.booked); setWhen(j.when || (slot ? longWhen(slot) : "")); setStep("done");
@@ -66,6 +66,9 @@ export default function BookPage() {
             <label className="doc-sign"><span>Cell</span><input className="input" required type="tel" inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" placeholder="(720) 555-0100" /></label>
             <label className="doc-sign"><span>Address of the job</span><input className="input" value={address} onChange={e => setAddress(e.target.value)} autoComplete="street-address" maxLength={160} /></label>
             <label className="doc-sign"><span>What do you need? <em>optional</em></span><textarea className="input" rows={3} style={{ height: "auto", padding: 10 }} value={message} onChange={e => setMessage(e.target.value)} maxLength={600} placeholder="About 120 ft of 6 ft cedar along the back, one gate" /></label>
+            <div className="doc-sign"><span>Photos of the job <em>optional, up to 3</em></span>
+              <div className="bk-photos">{photos.map((src, i) => <button key={i} type="button" className="bk-ph" onClick={() => setPhotos(x => x.filter((_, k) => k !== i))} aria-label="Remove this photo"><img src={src} alt="" /></button>)}
+                {photos.length < 3 && <label className="bk-add"><input type="file" accept="image/*" hidden onChange={async e => { const f = e.target.files?.[0]; e.target.value = ""; if (!f) return; try { const d = await shrink(f); setPhotos(x => [...x, d].slice(0, 3)); } catch { setFail("That photo didn't work. Try another."); } }} />+ Add a photo</label>}</div></div>
             <input type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={e => setHp(e.target.value)} aria-hidden="true" style={{ position: "absolute", left: -9999, width: 1, height: 1 }} />
             <label className="bk-consent"><input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} /><span>{biz || "The business"} can text me about this estimate. Msg and data rates may apply. Reply STOP to opt out.</span></label>
             <div className="doc-acts"><button type="submit" className="btn ink lg" disabled={busy || !name.trim() || !phone.trim() || !consent}>{busy ? "Booking…" : slot ? "Book it" : "Send my request"}</button></div>
@@ -75,4 +78,15 @@ export default function BookPage() {
         <p className="doc-foot">{p.phone ? <>Questions? Text <a href={`sms:${p.phone}`} style={{ color: "inherit" }}>{biz}</a>. </> : null}Booking by Cinder</p>
       </>}
   </main>;
+}
+
+/** A phone photo, resized to 1600px and under about 850KB before it's sent. */
+async function shrink(file: File): Promise<string> {
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement("canvas");
+  cv.width = Math.round(bmp.width * scale); cv.height = Math.round(bmp.height * scale);
+  cv.getContext("2d")!.drawImage(bmp, 0, 0, cv.width, cv.height);
+  for (const q of [0.8, 0.65, 0.5]) { const url = cv.toDataURL("image/jpeg", q); if (url.length * 0.75 < 850_000) return url; }
+  throw new Error("too large");
 }

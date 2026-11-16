@@ -5,6 +5,7 @@
 // answers a made-up lead using the unsaved form. Account: the business, this device, sign out.
 import { useState } from "react";
 import { Icon, Spinner, ago, fmtPhone, typePhone, type Api, type Toast } from "./parts";
+import { ChecklistsSheet } from "./parity";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 import { PageHead } from "./charts";
 
@@ -259,7 +260,9 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
   const [adding, setAdding] = useState(false), [name, setName] = useState(""), [cell, setCell] = useState(""), [role, setRole] = useState<"crew" | "office" | "owner">("crew"), [rate, setRate] = useState(""), [busy, setBusy] = useState(false);
   const saveTeam = async (next: Member[]) => { setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: { team: next } }); toast("Saved."); setAdding(false); setName(""); setCell(""); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } };
   const monthly = s.monthly_report !== "no";
+  const [lists, setLists] = useState(false);
   return <div className="pad" style={{ maxWidth: 640 }}>
+    {lists && <ChecklistsSheet d={d} project={project} api={api} toast={toast} reload={reload} onClose={() => setLists(false)} />}
     <p className="sec">Team<small>{team.length ? `${team.length} of 10` : "just you"}</small></p>
     <ul className="settings">
       {team.map(m => <li key={m.cell}><span><b style={{ color: "var(--ink)" }}>{m.name || fmtPhone(m.cell)}</b> {m.name ? <span className="mut">{fmtPhone(m.cell)}</span> : null}</span><span className="acts-row"><span className="mut">{m.role === "owner" ? "Owner, sees everything" : m.role === "office" ? "Office, everything but settings" : "Crew, schedule and jobs only"}</span>
@@ -281,6 +284,8 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
       <li><span>Business details and price book</span><button type="button" className="btn sm" onClick={go.setup}>Edit</button></li>
       <li><span>Invoices, tax and pay link</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
       <li><span>Notifications on this device</span>{push === "on" ? <span className="dot good">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <span className="mut">{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</span>}</li>
+      <li><span>Job checklists</span><span className="acts-row"><span className="mut">Fence install, repair, your own</span><button type="button" className="btn sm" onClick={() => setLists(true)}>Edit</button></span></li>
+      <li><span>Crew sees prices</span><span className="acts-row"><span className="mut">{s.crew_prices === "yes" ? "Quotes and invoice totals, never your costs" : "No money at all"}</span><button type="button" className="btn sm" disabled={busy} onClick={async () => { setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: { crew_prices: s.crew_prices === "yes" ? "no" : "yes" } }); toast("Saved."); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } }}>{s.crew_prices === "yes" ? "Hide prices" : "Show prices"}</button></span></li>
       <li><span>Move your business in</span><span className="acts-row"><span className="mut">Jobber, QuickBooks, Housecall Pro, ServiceTitan, a spreadsheet</span><button type="button" className="btn sm" onClick={() => go.tab("switch")}>Open</button></span></li>
       <li><span>Export everything</span><span className="acts-row"><span className="mut">Every record as a CSV, and your photos, in one zip</span>{demo ? <button type="button" className="btn sm" onClick={() => toast("The example can't be exported. Your real business downloads as one zip.")}>Download</button> : <a className="btn sm" href={`/api/app/export?p=${encodeURIComponent(project)}&what=all`}>Download</a>}</span></li>
       <li><span>Customers</span><span className="acts-row"><b>{d.customers?.length ?? 0}</b><button type="button" className="btn sm" onClick={go.importCustomers}>Import</button>{demo ? <button type="button" className="btn sm" onClick={() => toast("The example can't be exported. Your real customers download as a CSV.")}>Export CSV</button> : <a className="btn sm" href={`/api/app/export?p=${encodeURIComponent(project)}`}>Export CSV</a>}</span></li>

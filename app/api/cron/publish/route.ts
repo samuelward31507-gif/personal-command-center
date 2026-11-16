@@ -8,6 +8,7 @@ import { loadWorkspace } from "@/lib/workspace-data";
 import { runAutoReviews, runPaidReviews } from "@/lib/client-close-run";
 import { runPlanReminders } from "@/lib/client-service-run";
 import { runEveningTexts } from "@/lib/client-evening";
+import { runInstallReminders } from "@/lib/client-parity-run";
 import { runInvoiceReminders } from "@/lib/client-billing-run";
 
 export const runtime = "nodejs";
@@ -49,6 +50,8 @@ export async function GET(request: Request) {
       texts.paidReviews = await runPaidReviews(sql).catch(e => { console.error("Paid review asks failed", e); return null; });
       // Service plans: the day-before reminder for tomorrow's visits.
       texts.planReminders = await runPlanReminders(sql).catch(e => { console.error("Plan reminders failed", e); return null; });
+      // The day before an install: one reminder text.
+      texts.installReminders = await runInstallReminders(sql).catch(e => { console.error("Install reminders failed", e); return null; });
       // Invoices past due: up to three friendly reminders, paused as soon as the customer replies or says they paid.
       texts.invoices = await runInvoiceReminders(sql).catch(e => { console.error("Invoice reminders failed", e); return null; });
       const today = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(started);

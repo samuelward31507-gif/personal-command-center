@@ -13,6 +13,7 @@ import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 import { clockIn, clockOut, editTime, planVisit, saveChangeOrder, savePlan, sendChangeOrder, setChangeOrder, setPlan } from "@/lib/client-service-run";
 import { portalLink, saveSignoff } from "@/lib/client-portal-run";
+import { saveProperty, setChecklist, tickChecklist } from "@/lib/client-parity-run";
 import { qboSyncAll } from "@/lib/qbo";
 import { cleanCatalog } from "@/lib/service";
 
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
     const c = await clientFor(sql, s, b.p);
     if (!c) return json({ error: "Sign in" }, 401);
     // The crew sees the schedule and the jobs and can text, call, tick steps, leave notes and clock hours. Money and settings stay with the owner.
-    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit", "signoff"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
+    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit", "signoff", "checktick"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
     if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; b.email = undefined; }
     // Crew hours: the person signed in clocks in on a job (or general time) and out again. The owner is "".
     // Office staff run the business day to day; settings and the team stay with the owner.
@@ -69,7 +70,19 @@ export async function POST(req: Request) {
     if (b.action === "signoff") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
       const r = await saveSignoff(sql, c, b.thread, b.input, member);
-      return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400);
+      if (!r.ok) return json({ error: r.error }, 400);
+      // The owner's choice at sign-off: the Google review ask now, and the invoice texted now (the job's done).
+      const o = (b.input && typeof b.input === "object" ? b.input : {}) as { review?: boolean; invoice?: boolean };
+      let review = "", invoice = "";
+      if (o.review) { const rv = await reviewNow(sql, c, b.thread); review = rv.ok ? "sent" : rv.error ?? ""; }
+      if (o.invoice && s.role !== "crew") { const inv = await createInvoice(sql, c, b.thread); if (inv.ok && inv.invoice) { const sent = await sendInvoice(sql, c, inv.invoice.id); invoice = sent.sent ? "sent" : sent.warn ?? sent.error ?? ""; } else invoice = inv.error ?? ""; }
+      return json({ ok: true, id: r.id, review, invoice });
+    }
+    // The job's checklist: picked by the owner, ticked on the job by whoever's there.
+    if (b.action === "checktick") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
+      const r = await tickChecklist(sql, c, b.thread, Number(b.step), !!b.done, member || "owner");
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     if (b.action === "visit") {
       if (!b.plan || !UUID.test(b.plan)) return json({ error: "Which plan?" }, 400);
@@ -191,6 +204,16 @@ export async function POST(req: Request) {
       const firstName = (t.customer_name || "").split(" ")[0];
       const ok = await sendToCustomer(sql, c, b.thread, t.customer_phone, `Hi${firstName ? " " + firstName : ""}, it's ${(c.setup.display_name || "us").replace(/\.+$/, "")}. Here's your page with your quotes, invoices and upcoming visits, any time: ${r.url}`, "owner");
       return json({ ok: true, link: r.url, sent: ok, warn: ok ? "" : "The text didn't send. Copy the link instead." });
+    }
+    if (b.action === "checklist") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
+      const r = await setChecklist(sql, c, b.thread, b.name ? String(b.name) : null);
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "property") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const r = await saveProperty(sql, c, b.thread, (b.input ?? {}) as Record<string, unknown>);
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     if (b.action === "qbosync") { const r = await qboSyncAll(sql, c.projectId); return r.error ? json({ error: r.error }, 502) : json({ ok: true, invoices: r.invoices, payments: r.payments }); }
     if (b.action === "quotechase" || b.action === "quotenudge") {

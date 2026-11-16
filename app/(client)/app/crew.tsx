@@ -12,6 +12,7 @@ import { Steps } from "./record";
 import { line } from "./jobs";
 import { ClockBar, myClock } from "./jobwork";
 import { SignoffSheet } from "./finish";
+import { ChecklistBox, routeUrl } from "./parity";
 import { visitDays, type Plan } from "@/lib/service";
 import type { Biz, Data, Go } from "./types";
 
@@ -112,12 +113,14 @@ export function MyDay({ d, biz, project, api, toast, reload, go }: { d: Data; bi
       {s.kind === "install" && s.card && (s.card.signoff ? <span className="chip good"><Icon name="check" size={11} />Signed off</span> : <button type="button" className="btn sm" onClick={() => setSigning(s.card)}><Icon name="check" size={13} />Sign-off</button>)}
       <button type="button" className="btn sm" onClick={() => go.record(s.thread)}><Icon name="upload" size={13} />Photos and notes</button>
     </div>}
+    {big && s.kind !== "estimate" && s.card?.checklist && <ChecklistBox d={d} card={s.card} trade={biz.trade} busy={busy} canPick={false} act={(k, body, done) => act(k, { ...body, thread: s.thread }, done)} />}
     {big && s.kind === "install" && s.card && <Steps card={s.card} trade={biz.trade} busy={busy} tick={(step, done) => void act("step:" + step, { action: "jobstep", thread: s.thread, step, done }, done ? "Ticked." : "Unticked.")} />}
   </article>;
   return <>
     <PageHead title="Your day" sub={day} actions={<>{anyMine && <div className="seg" role="radiogroup" aria-label="Whose jobs">
       <button type="button" role="radio" aria-checked={!all} className={!all ? "on" : ""} onClick={() => setAll(false)}>Mine</button>
       <button type="button" role="radio" aria-checked={all} className={all ? "on" : ""} onClick={() => setAll(true)}>Everyone</button></div>}
+      {routeUrl(now.map(s => s.addr)) && <a className="btn" href={routeUrl(now.map(s => s.addr))!} target="_blank" rel="noreferrer"><Icon name="pin" size={14} />Today's route</a>}
       {!clockOn && <button type="button" className="btn" disabled={busy === "clkgen"} onClick={() => void act("clkgen", { action: "clockin" }, "Clocked in. Clock out when you're done.")}><Icon name="clock" size={14} />Clock in</button>}</>} />
     <div className="dash myday">
     <ClockBar d={d} busy={busy === "out"} onOut={() => void act("out", { action: "clockout" }, "Clocked out.")} />
@@ -129,7 +132,7 @@ export function MyDay({ d, biz, project, api, toast, reload, go }: { d: Data; bi
     </section>
     {later.length > 0 && <section className="panel"><div className="panel-h"><h2>This week</h2></div><div className="panel-b"><div className="stops">{later.map(s => stop(s, false))}</div></div></section>}
     </div>
-    {signing && <SignoffSheet card={signing} trade={biz.trade} onClose={() => setSigning(null)} save={async input => {
+    {signing && <SignoffSheet card={signing} trade={biz.trade} owner={d.role !== "crew"} onClose={() => setSigning(null)} save={async input => {
       try { await api("/api/app/act", { p: project, action: "signoff", thread: signing.id, input }); toast(`${first(signing.name)} signed off the job.`); await reload(); return true; }
       catch (e) { toast(e instanceof Error ? e.message : "That didn't save.", true); return false; } }} />}
   </>;

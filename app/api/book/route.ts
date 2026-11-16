@@ -4,6 +4,7 @@ import { cleanMessages } from "@/lib/client-ops";
 import { bookingPageLead, bookingSlots, type Client } from "@/lib/client-runtime-run";
 import { importPhone } from "@/lib/customer-import";
 
+import { addPhoto } from "@/lib/client-crm-run";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -35,7 +36,7 @@ export async function GET(req: Request) {
 
 /** POST { key, start?, name, phone, address, message, consent } — book it, or ask for a time when there's no calendar. */
 export async function POST(req: Request) {
-  const b = await req.json().catch(() => ({})) as { key?: string; start?: string | null; name?: string; phone?: string; address?: string; message?: string; consent?: boolean; website?: string };
+  const b = await req.json().catch(() => ({})) as { key?: string; start?: string | null; name?: string; phone?: string; address?: string; message?: string; consent?: boolean; website?: string; photos?: unknown };
   if (b.website) return reply({ ok: true, booked: false }); // honeypot
   const name = String(b.name ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 80);
   const phone = importPhone(b.phone);
@@ -55,7 +56,13 @@ export async function POST(req: Request) {
     // Slot ids compare as ISO strings: match the calendar's own format.
     const slots = start ? await bookingSlots(neon(process.env.DATABASE_URL!), c, 60) : null;
     const picked = start ? slots?.find(s => new Date(s.start).toISOString() === start)?.start ?? start : null;
-    const r = await bookingPageLead(neon(process.env.DATABASE_URL!), c, { name, phone, address, message, start: picked }, ip);
+    const sql = neon(process.env.DATABASE_URL!);
+    const r = await bookingPageLead(sql, c, { name, phone, address, message, start: picked }, ip);
+    const photos = (Array.isArray(b.photos) ? b.photos : []).slice(0, 3).filter((p): p is string => typeof p === "string");
+    if (r.ok && photos.length) {
+      const [t] = await sql`SELECT id FROM public.client_threads WHERE project_id = ${c.projectId}::uuid AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${phone.replace(/\D/g, "").slice(-10)} LIMIT 1` as { id: string }[];
+      if (t) for (const data of photos) await addPhoto(sql, c, t.id, { data, kind: "before", caption: "From the booking page" }).catch(() => null);
+    }
     return r.ok ? reply({ ok: true, booked: r.booked, when: r.when ?? "" }) : reply({ error: r.error }, 409);
   } catch (e) { console.error("Booking page failed", e instanceof Error ? e.message : e); return reply({ error: "That didn't go through. Text the business instead." }, 500); }
 }
