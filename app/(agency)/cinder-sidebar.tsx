@@ -1,9 +1,8 @@
 "use client";
-import "./cinder-sidebar.css";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { BrandWordmark, CinderMark, CINDER_MONO } from "./cinder-brand";
+import { CinderMark, CINDER_MONO } from "./cinder-brand";
 import CommandBar from "./command-bar";
 import { applyAccent, useWorkspace } from "./use-workspace";
 import { Logo } from "./ui/logo";
@@ -16,31 +15,42 @@ type Props = {
   onNavigate?: (key: string) => void;
 };
 
-// The places you use every day; the rest lives under "More" so the sidebar stays calm.
-// The daily loop only: see what needs you, dial, work deals, show up to meetings, run clients.
-const primary = [
+// Work you do every day: plain line icons.
+const daily = [
   ["needs-you", "Today", "sun", "/crm/needs-you"],
-  ["contacts", "Prospects", "users", "/crm"],
   ["call", "Call", "phone", "/crm/call"],
-  ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
-  ["client-success", "Clients", "briefcase", "/crm/client-success"],
-  ["finance", "Money", "money", "/crm/finance"],
+  ["ask", "Ask Cinder", "spark", "/crm/ask"],
 ] as const;
-// Everything else, one click away. Outreach, Operations, AI team and Signals stay reachable by URL and ⌘K.
+// Records: each kind of thing has its own colored square, so the eye finds it before reading.
+const records = [
+  ["contacts", "Prospects", "#2f7cf6", "person", "/crm"],
+  ["pipeline", "Deals", "#f2752b", "dollar", "/crm/pipeline"],
+  ["client-success", "Clients", "#17a55a", "check", "/crm/client-success"],
+  ["finance", "Money", "#e3a008", "cash", "/crm/finance"],
+] as const;
 const secondary = [
+  ["email", "Email", "send", "/crm/email"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
   ["reports", "Client reports", "doc", "/crm/reports"],
-  ["email", "Email", "send", "/crm/email"],
   ["leads", "Lead finder", "search", "/crm/leads"],
   ["content", "Content", "megaphone", "/crm/content"],
   ["groups", "Groups", "groups", "/crm/groups"],
-  ["preparation", "Research", "search", "/crm/preparation"],
+  ["preparation", "Research", "bulb", "/crm/preparation"],
   ["practice", "Practice", "mic", "/crm/practice"],
   ["funnel", "Funnel", "chart", "/crm/funnel"],
 ] as const;
-// LinkedIn and Partners stay reachable by URL and ⌘K; they aren't in use yet, so they don't take a row.
 const SECONDARY_PATHS = ["/crm/email", "/crm/leads", "/crm/linkedin", "/crm/groups", "/crm/content", "/crm/partners", "/crm/funnel", "/crm/tasks", "/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
+
+function ObjIcon({ name }: { name: string }) {
+  const p: Record<string, React.ReactNode> = {
+    person: <><circle cx="12" cy="9" r="3.4" fill="#fff" /><path d="M5.5 19c.6-3.4 3.1-5.2 6.5-5.2s5.9 1.8 6.5 5.2Z" fill="#fff" /></>,
+    dollar: <path d="M12 5v14M15.5 8.2c-.6-.9-1.8-1.5-3.4-1.5-2 0-3.4 1-3.4 2.5s1.3 2.1 3.4 2.6 3.5 1.1 3.5 2.7-1.4 2.7-3.5 2.7c-1.7 0-3-.6-3.7-1.6" fill="none" stroke="#fff" strokeWidth="2.3" strokeLinecap="round" />,
+    check: <path d="m6 12.5 4 4 8-9" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />,
+    cash: <><rect x="4" y="7" width="16" height="11" rx="2" fill="none" stroke="#fff" strokeWidth="2.2" /><circle cx="12" cy="12.5" r="2" fill="#fff" /></>,
+  };
+  return <svg viewBox="0 0 24 24" aria-hidden="true">{p[name]}</svg>;
+}
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
@@ -79,13 +89,13 @@ function Icon({ name }: { name: string }) {
 
 
 /**
- * Claude-style sidebar: always visible on desktop until collapsed with the toggle, then a slim
- * icon rail. The choice is remembered. On phones it is a drawer.
+ * The sidebar, after Attio and Linear: a workspace switcher, Quick actions with ⌘K, daily places with line icons,
+ * records with colored squares, your favorites with their logos, then settings and you. Collapses to an icon rail;
+ * on phones it is a drawer.
  */
 export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavigate }: Props) {
   const ws = useWorkspace();
   const custom = !!ws.logoUrl || !/^cinder\b/i.test(ws.businessName.trim());
-  // White-label: the workspace's accent replaces the ember, and the tab title carries their name.
   useEffect(() => { applyAccent(ws.accentColor); if (custom) document.title = ws.shortName || ws.businessName; }, [ws.accentColor, ws.shortName, ws.businessName, custom]);
   const { favs } = useFavorites();
   const [collapsed, setCollapsed] = useState(false);
@@ -96,82 +106,83 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     try { setMoreOpen(inSecondary || localStorage.getItem("cinder.sidebar.more") === "1"); } catch { setMoreOpen(inSecondary); }
   }, [inSecondary]);
   const toggleMore = () => setMoreOpen(o => { try { localStorage.setItem("cinder.sidebar.more", o ? "0" : "1"); } catch { /* ignore */ } return !o; });
-  useEffect(() => {
-    try { setCollapsed(localStorage.getItem("cinder.sidebar.collapsed") === "1"); } catch { /* storage unavailable */ }
-  }, []);
-  useEffect(() => {
-    document.documentElement.classList.toggle("cx-rail-mode", collapsed);
-  }, [collapsed]);
-  const toggle = () => setCollapsed(c => {
-    try { localStorage.setItem("cinder.sidebar.collapsed", c ? "0" : "1"); } catch { /* ignore */ }
-    return !c;
-  });
+  useEffect(() => { try { setCollapsed(localStorage.getItem("cinder.sidebar.collapsed") === "1"); } catch { /* storage unavailable */ } }, []);
+  useEffect(() => { document.documentElement.classList.toggle("cx-rail-mode", collapsed); }, [collapsed]);
+  const toggle = () => setCollapsed(c => { try { localStorage.setItem("cinder.sidebar.collapsed", c ? "0" : "1"); } catch { /* ignore */ } return !c; });
 
-  const go = (e: React.MouseEvent, key: string, href: string) => {
+  const go = (e: React.MouseEvent, key: string) => {
     setMobileOpen(false);
-    // Home and My day are in-page views on the Home route; everything else is a normal link.
     if (mode === "home" && onNavigate && (key === "home" || key === "schedule")) { e.preventDefault(); onNavigate(key); }
   };
-  const isActive = (key: string) => {
-    if (key === "home") return mode === "home" ? activeKey === "home" : false;
-    if (key === "schedule") return mode === "home" && activeKey === "schedule";
-    if (key === "ask") return pathname.startsWith("/crm/ask");
-    if (key === "client-success") return pathname.startsWith("/crm/client-success");
+  const isActive = (key: string, href: string) => {
     if (key === "contacts") return pathname === "/crm";
-    if (key === "workforce") return pathname.startsWith("/crm/workforce") || pathname.startsWith("/crm/strategy");
     if (key === "pipeline") return pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/deals");
     if (key === "preparation") return pathname.startsWith("/crm/preparation") || pathname.startsWith("/crm/audit");
-    const map: Record<string, string> = { preparation: "/crm/preparation", projects: "/crm/projects", finance: "/crm/finance", workforce: "/crm/workforce",
-      "client-success": "/crm/client-success", "needs-you": "/crm/needs-you", call: "/crm/call", email: "/crm/email", practice: "/crm/practice", outreach: "/crm/outreach", reports: "/crm/reports", scoreboard: "/crm/scoreboard", operations: "/crm/operations", calendar: "/crm/calendar", funnel: "/crm/funnel", tasks: "/crm/tasks", audit: "/crm/audit",
-      intelligence: "/crm/intelligence", strategy: "/crm/strategy", settings: "/crm/settings", content: "/crm/content", leads: "/crm/leads", partners: "/crm/partners", linkedin: "/crm/linkedin", groups: "/crm/groups" };
-    return map[key] ? pathname.startsWith(map[key]) : activeKey === key;
+    if (href === "/crm") return false;
+    return pathname.startsWith(href) || activeKey === key;
   };
-  const item = ([key, label, icon, href]: readonly [string, string, string, string]) =>
-    <Link key={key} href={href} className={"cx-item" + (isActive(key) ? " is-active" : "")} aria-current={isActive(key) ? "page" : undefined}
-      onClick={e => go(e, key, href)} title={collapsed ? label : undefined}>
-      <Icon name={icon} /><span className="cx-label">{label}</span>
+  const link = (key: string, label: string, href: string, glyph: React.ReactNode, extra?: React.ReactNode) =>
+    <Link key={key} href={href} className={"cx-item" + (isActive(key, href) ? " is-active" : "")} aria-current={isActive(key, href) ? "page" : undefined}
+      onClick={e => go(e, key)} title={collapsed ? label : undefined}>
+      {glyph}<span className="cx-label">{label}</span>{extra}
     </Link>;
+  const wsName = ws.shortName || ws.businessName || "Cinder";
 
   return <>
     <CommandBar />
-    <button type="button" data-variant="primary" className="cx-mobile-toggle" aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen} onClick={() => setMobileOpen(o => !o)}>
+    <button type="button" className="cx-mobile-toggle" aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen} onClick={() => setMobileOpen(o => !o)}>
       <Icon name="rail" />
     </button>
-    {mobileOpen && <button type="button" data-variant="primary" className="cx-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
-    <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Cinder navigation">
+    {mobileOpen && <button type="button" className="cx-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
+    <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Navigation">
       <div className="cx-top">
-        <Link href="/crm/needs-you" className="cx-brand" onClick={() => setMobileOpen(false)} title="Today">
-          {collapsed ? (custom ? <span className="cx-mark cx-mark-text" aria-label={ws.businessName}>{(ws.shortName || ws.businessName).trim().charAt(0).toUpperCase()}</span> : <CinderMark className="cx-mark" ring={CINDER_MONO} ember={CINDER_MONO} />) : <BrandWordmark name={ws.businessName} logoUrl={ws.logoUrl} className="cx-logo" mono fallbackTitle="Cinder" />}
+        <Link href="/crm/needs-you" className="cx-ws" onClick={() => setMobileOpen(false)} title={wsName}>
+          {ws.logoUrl
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={ws.logoUrl} alt="" className="cx-ws-mark is-img" />
+            : custom ? <span className="cx-ws-mark is-text">{wsName.trim().charAt(0).toUpperCase()}</span>
+            : <span className="cx-ws-mark"><CinderMark ring={CINDER_MONO} ember={CINDER_MONO} /></span>}
+          <span className="cx-label cx-ws-name">{wsName}</span>
         </Link>
-        <button type="button" data-variant="primary" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+        <button type="button" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <Icon name="rail" />
         </button>
       </div>
 
-      <Link href="/crm/ask" className={"cx-new" + (isActive("ask") ? " is-active" : "")} onClick={() => setMobileOpen(false)} title={collapsed ? "Ask Cinder" : undefined}>
-        <span className="cx-new-icon"><Icon name="chat" /></span><span className="cx-label">Ask Cinder</span>
-      </Link>
-      <button type="button" data-variant="primary" className="cx-item cx-search" onClick={() => { setMobileOpen(false); window.dispatchEvent(new Event("cinder:command")); }} title={collapsed ? "Search (⌘K)" : undefined}>
-        <Icon name="search" /><span className="cx-label">Search</span><kbd className="cx-kbd">⌘K</kbd>
-      </button>
-
-      <nav className="cx-nav" aria-label="Agency">
-        {primary.map(item)}
-        <button type="button" data-variant="primary" className="cx-item cx-more" aria-expanded={moreOpen} onClick={toggleMore} title={collapsed ? "More" : undefined}>
-          <Icon name="more" /><span className="cx-label">More</span><span className={"cx-chev" + (moreOpen ? " is-open" : "")} aria-hidden="true">›</span>
+      <div className="cx-qa">
+        <button type="button" className="cx-qa-btn" onClick={() => { setMobileOpen(false); window.dispatchEvent(new Event("cinder:command")); }} title={collapsed ? "Quick actions (⌘K)" : undefined}>
+          <Icon name="search" /><span className="cx-label">Quick actions</span><kbd className="cx-kbd">⌘K</kbd>
         </button>
-        {moreOpen && <div className="cx-sub">{secondary.map(item)}</div>}
-        {!collapsed && <>
-          <div className="cx-group">Favorites</div>
-          {favs.length === 0 ? <p className="cx-fav-hint">Star a prospect or deal to pin it here.</p>
-            : favs.map(f => <Link key={f.id} href={f.href} className="cx-item cx-client cx-fav" onClick={() => setMobileOpen(false)}>
+      </div>
+
+      <nav className="cx-nav" aria-label="Main">
+        {daily.map(([key, label, icon, href]) => link(key, label, href, <Icon name={icon} />, key === "call" ? <kbd className="cx-kbd cx-hint">C</kbd> : undefined))}
+      </nav>
+
+      <div className="cx-group">Records</div>
+      <nav className="cx-nav" aria-label="Records">
+        {records.map(([key, label, color, glyph, href]) => link(key, label, href, <span className="cx-obj" style={{ background: color }}><ObjIcon name={glyph} /></span>))}
+      </nav>
+
+      {!collapsed && <>
+        <div className="cx-group">Favorites</div>
+        <nav className="cx-nav" aria-label="Favorites">
+          {favs.length === 0 ? <p className="cx-fav-hint">Star a prospect to pin it here.</p>
+            : favs.map(f => <Link key={f.id} href={f.href} className="cx-item cx-fav" onClick={() => setMobileOpen(false)}>
               <Logo name={f.name} website={f.website} size={18} /><span className="cx-label">{f.name}</span>
             </Link>)}
-        </>}
+        </nav>
+      </>}
+
+      <nav className="cx-nav cx-more-nav" aria-label="More">
+        <button type="button" className="cx-item cx-more" aria-expanded={moreOpen} onClick={toggleMore} title={collapsed ? "More" : undefined}>
+          <Icon name="more" /><span className="cx-label">More</span><span className={"cx-chev" + (moreOpen ? " is-open" : "")} aria-hidden="true">›</span>
+        </button>
+        {moreOpen && <div className="cx-sub">{secondary.map(([key, label, icon, href]) => link(key, label, href, <Icon name={icon} />))}</div>}
       </nav>
 
       <div className="cx-foot">
-        {item(["settings", "Settings", "settings", "/crm/settings"])}
+        {link("settings", "Settings", "/crm/settings", <Icon name="settings" />)}
         <div className="cx-profile" title={collapsed ? `${ws.ownerFirstName} · ${ws.businessName}` : undefined}>
           <span className="cx-avatar">{ws.ownerFirstName.slice(0, 1).toUpperCase()}</span>
           <span className="cx-label cx-profile-copy"><strong>{ws.ownerFirstName}</strong><small>{ws.businessName}</small></span>

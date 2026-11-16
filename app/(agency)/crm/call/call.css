@@ -36,7 +36,7 @@ body .dl-call .dl-logged small { color: var(--u-faint); white-space: nowrap; }
 body .dl-call .dl-main { min-width: 0; }
 body .dl-call .dl-who { display: flex; justify-content: space-between; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
 body .dl-call .dl-pos { display: flex; align-items: center; font-size: 13px; color: var(--u-muted); margin-bottom: 10px !important; }
-body .dl-call h1.dl-name { font-family: var(--u-display) !important; font-stretch: 125%; font-variation-settings: "wdth" 125; font-size: clamp(34px, 3.6vw, 56px) !important; font-weight: 600 !important; letter-spacing: -0.018em !important; line-height: 1.02 !important; color: var(--u-text) !important; margin: 0 !important; overflow-wrap: anywhere; }
+body .dl-call h1.dl-name { font-family: var(--u-display) !important; font-stretch: 100%; font-variation-settings: normal; font-size: 30px !important; letter-spacing: -.6px !important; font-weight: 600 !important; letter-spacing: -0.018em !important; line-height: 1.02 !important; color: var(--u-text) !important; margin: 0 !important; overflow-wrap: anywhere; }
 body .dl-call .dl-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; font-size: 13.5px; color: var(--u-muted); }
 body .dl-call .dl-meta a { color: var(--u-soft); text-decoration: underline; text-decoration-color: var(--u-line); text-underline-offset: 3px; }
 body .dl-call .dl-meta a:hover { color: var(--u-text); text-decoration-color: var(--u-muted); }

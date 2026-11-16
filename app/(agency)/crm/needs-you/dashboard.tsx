@@ -56,6 +56,7 @@ export default function Dashboard() {
   const [dms, setDms] = useState<{ id: string; channel: "instagram" | "facebook"; from: string; body: string; at: string }[]>([]);
   const [content, setContent] = useState<{ key: string; channel: string; at: string }[] | null>(null);
   const [queue, setQueue] = useState<QueueItem[] | null>(null);
+  const [ask, setAsk] = useState("");
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -244,77 +245,96 @@ export default function Dashboard() {
   const firstCall = calls[0];
   const replies = waiting.filter(t => t.overdue).length;
   const nameOf = (c: QueueItem["contact"]) => c ? (c.company || c.name) : "";
+  const men = (name: string, href: string, website?: string) => <Link key={href + name} className="td-men" href={href}><Logo name={name} website={website} size={18} />{name}</Link>;
   const brief: React.ReactNode[] = [];
-  if (b) brief.push(b.today.calls >= target ? `You've hit today's ${target} dials. ` : b.today.calls > 0 ? `${b.today.calls} dials in, ${left} to go. ` : `${target} dials on the board today. `);
-  if (replies) brief.push(`${replies} conversation${replies === 1 ? " is" : "s are"} waiting on a reply. `);
-  if (next) brief.push(<span key="m">Your next meeting is <Link href={next.dealId ? `/crm/deals/${next.dealId}` : next.contactId ? `/crm?contact=${next.contactId}` : "/crm/calendar"}>{next.contactCompany || next.contactName || next.title}</Link> {when(next).day ? "tomorrow" : "today"} at {when(next).t}. </span>);
-  else if (events) brief.push("No meetings booked yet, so the calls are the day. ");
-  if (firstCall) brief.push(<span key="c">Start with <Link href={`/crm?contact=${firstCall.contact!.id}`}>{nameOf(firstCall.contact)}</Link>{firstCall.why ? `, who ${/^(said|asked|wants|wanted|told)/i.test(firstCall.why) ? firstCall.why.charAt(0).toLowerCase() + firstCall.why.slice(1).replace(/\.$/, "") : "is next in line (" + firstCall.why.replace(/\.$/, "") + ")"}` : ""}. </span>);
-  if (drafts.length) brief.push(`${drafts.length} text${drafts.length === 1 ? " is" : "s are"} written and ready below.`);
+  if (b) brief.push(b.today.calls >= target ? <span key="d"><b>{target} dials</b> done today. </span> : <span key="d"><b>{b.today.calls} dial{b.today.calls === 1 ? "" : "s"}</b> in, {left} to go. </span>);
+  if (next) brief.push(<span key="m">Next up is {men(next.contactCompany || next.contactName || next.title, next.dealId ? `/crm/deals/${next.dealId}` : next.contactId ? `/crm?contact=${next.contactId}` : "/crm/calendar")} {when(next).day ? "tomorrow" : "today"} at {when(next).t}. </span>);
+  else if (events) brief.push(<span key="m">No meetings on the books yet, so the calls are the day. </span>);
+  if (firstCall) brief.push(<span key="c">Start with {men(nameOf(firstCall.contact), `/crm?contact=${firstCall.contact!.id}`, firstCall.contact!.website)}{firstCall.why ? <>: {firstCall.why.replace(/\.$/, "").charAt(0).toLowerCase() + firstCall.why.replace(/\.$/, "").slice(1)}</> : null}. </span>);
+  if (replies) brief.push(<span key="r">{replies} conversation{replies === 1 ? " is" : "s are"} waiting on you. </span>);
+  if (drafts.length) brief.push(<span key="t">{drafts.length === 1 ? "One text is" : `${drafts.length} texts are`} written and ready below.</span>);
   const loadingBrief = !b && queue === null;
+  const hello = greeting === "Late night" ? "Late night" : `Good ${greeting.toLowerCase()}`;
+  const askHref = (q: string) => `/crm/ask?q=${encodeURIComponent(q)}`;
+  const shortAgo = (iso: string | null) => { if (!iso) return "—"; const d = Math.floor((Date.now() - Date.parse(iso)) / 86400000); return d <= 0 ? "Today" : d === 1 ? "1d" : d + "d"; };
 
-  return <div className="u-page db-page td-page" role="region" aria-label="Today">
-    <div className="td-grid">
-      <div className="td-main">
-        <p className="td-date">{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
-        <h1 className="u-title td-title">{greeting}, {ws.ownerFirstName}.</h1>
-        <p className="td-brief" aria-live="polite">{loadingBrief ? "\u00a0" : brief.length ? brief : "Nothing new overnight. Make the first call and the day starts moving."}</p>
-
-        <section className="td-sec">
-          <div className="u-h2-row"><h2 className="u-h2">Ready to send {drafts.length > 0 && <span className="u-quiet">{drafts.length}</span>}</h2>{upcomingTexts > 0 && <span className="u-note">{upcomingTexts} more coming this week</span>}</div>
-          {list === null ? <p className="u-note" role="status">Loading…</p> : drafts.length === 0 ? <p className="u-note">Nothing to send right now. New follow-ups show up here as soon as they&apos;re due.</p>
-            : <div className="td-drafts">{(allTodo ? drafts : drafts.slice(0, 5)).map((t, i) => <DraftCard key={t.key} active={i === 0} name={t.name || t.title} website={t.website} why={t.why} body={t.body} href={t.href.startsWith("/") ? t.href : undefined}
-                sendLabel={t.action === "Text" ? "Send text" : t.action} onSend={t.onClick!} onSkip={() => skip(t.key)} />)}</div>}
-          {drafts.length > 5 && <button type="button" className="u-btn u-btn-bare td-more" onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${drafts.length}`}</button>}
-          {waiting.length > 0 && <div className="u-rows td-waiting">{waiting.map(t => <Link key={t.key} className="u-row" href={t.href} target={t.href.startsWith("http") ? "_blank" : undefined}>
-            <span className={"u-dot" + (t.overdue ? " is-ember" : "")} aria-hidden="true" />
-            <div className="u-row-main"><strong>{t.title}</strong>{t.why && <span>{t.why}</span>}</div>
-            <span className="u-row-end">{t.action}</span>
-          </Link>)}</div>}
-        </section>
-
-        <section className="td-sec">
-          <div className="u-h2-row"><h2 className="u-h2">Call first {queue && queue.length > 0 && <span className="u-quiet">{queue.length}</span>}</h2><Link className="u-btn u-btn-light td-go" href="/crm/call">Start calling <kbd>C</kbd></Link></div>
-          {queue === null ? <p className="u-note" role="status">Loading…</p> : calls.length === 0 ? <p className="u-note">No one queued. Add prospects and they&apos;ll line up here in order.</p>
-            : <ol className="td-calls">{calls.map((q, i) => <li key={q.id}>
-                <Link href={`/crm?contact=${q.contact!.id}`} className="td-call">
-                  <span className="td-call-n u-num">{i + 1}</span>
-                  <Logo name={nameOf(q.contact)} website={q.contact!.website} size={24} />
-                  <span className="td-call-who"><b>{nameOf(q.contact)}</b>{q.contact!.company && q.contact!.name && q.contact!.name !== q.contact!.company ? <span>{q.contact!.name}</span> : null}</span>
-                  <span className="td-call-why">{q.why || q.title}</span>
-                  <span className={"td-call-when" + (q.status === "overdue" ? " is-due" : "")}>{q.status === "overdue" ? "Overdue" : q.status === "today" ? "Today" : ""}</span>
-                </Link>
-              </li>)}</ol>}
-        </section>
+  return <div className="u-page db-page" role="region" aria-label="Today">
+    <div className="u-head">
+      <h1 className="u-title">Today<span className="u-dim">{now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</span></h1>
+      <div className="u-head-actions">
+        {upcoming.length > 0 && <Link className="u-btn u-btn-bare" href="/crm/calendar">{upcoming.length} meeting{upcoming.length === 1 ? "" : "s"}</Link>}
+        <Link className="u-btn u-btn-light" href="/crm/call">Start calling <kbd>C</kbd></Link>
       </div>
-
-      <aside className="td-rail" aria-label="Today at a glance">
-        <div className="td-rail-sec">
-          <h2 className="td-rail-h">Meetings</h2>
-          {events === null ? <p className="u-note">Loading…</p> : upcoming.length === 0 ? <p className="u-note">Nothing booked today or tomorrow.</p>
-            : upcoming.slice(0, 4).map(e => <Link key={e.id} className="td-ev" href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"}>
-                <span className="td-ev-t u-num">{when(e).day ? "Tmrw " : ""}{when(e).t}</span>
-                <span className="td-ev-who"><Logo name={e.contactCompany || e.contactName || e.title} size={18} /><span>{e.contactCompany || e.contactName || e.title}</span></span>
-              </Link>)}
-        </div>
-        <div className="td-rail-sec">
-          <h2 className="td-rail-h">So far today</h2>
-          <dl className="td-stats">
-            <div><dt>Dials</dt><dd className="u-num">{b ? b.today.calls : "—"}<small> / {target}</small></dd></div>
-            <div><dt>Conversations</dt><dd className="u-num">{b ? b.today.connects : "—"}</dd></div>
-            <div><dt>Meetings this week</dt><dd className="u-num">{b ? b.week.meetings : "—"}<small> / {WEEKLY_MEETING_TARGET}</small></dd></div>
-            <div><dt>Streak</dt><dd className="u-num">{b ? b.streak : "—"}<small> days</small></dd></div>
-          </dl>
-          <div className="td-meter" aria-label={`${b?.today.calls ?? 0} of ${target} dials`}><i style={{ width: Math.min(100, ((b?.today.calls ?? 0) / Math.max(1, target)) * 100) + "%" }} /></div>
-        </div>
-        {alerts.length > 0 && <div className="td-rail-sec">
-          <h2 className="td-rail-h">Needs attention</h2>
-          {alerts.slice(0, 4).map((a, i) => <Link key={i} className="td-alert" href={a.href}><span className={"u-dot" + (a.level === "urgent" ? " is-bad" : "")} aria-hidden="true" />{a.text}</Link>)}
-        </div>}
-      </aside>
     </div>
 
-    <div className="td-below">
+    <div className="td-shell">
+      <h2 className="td-hello">{hello}, {ws.ownerFirstName}</h2>
+      <p className="td-brief" aria-live="polite">{loadingBrief ? "\u00a0" : brief.length ? brief : "Nothing new overnight. Make the first call and the day starts moving."}</p>
+
+      <form className="td-ask" onSubmit={e => { e.preventDefault(); if (ask.trim()) window.location.href = askHref(ask.trim()); }}>
+        <input value={ask} onChange={e => setAsk(e.target.value)} placeholder="Ask Cinder or tell it what to do…" aria-label="Ask Cinder" maxLength={500} />
+        <div className="td-ask-row">
+          <span className="lg-pill" data-tone="grey">Prospects</span><span className="lg-pill" data-tone="grey">Calls</span><span className="lg-pill" data-tone="grey">Deals</span>
+          <button type="submit" className="td-ask-send" disabled={!ask.trim()} aria-label="Ask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6" /></svg></button>
+        </div>
+      </form>
+      <div className="td-sugg">
+        <Link href={askHref("Who should I call first today, and why?")}><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.5 2 6 6 2-6 2-2 6.5-2-6.5-6-2 6-2 2-6Z" /></svg>Who should I call first?</Link>
+        {next ? <Link href={askHref(`Prep me for my meeting with ${next.contactCompany || next.contactName || next.title}.`)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M7.5 3v4M16.5 3v4M4 10h16" /></svg>Prep for {next.contactCompany || next.contactName || "my next meeting"}</Link>
+          : <Link href={askHref("Which deals are stuck and what should I do about them?")}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 16 10 10l4 4 6-8" /></svg>Which deals are stuck?</Link>}
+        <Link href={askHref("Recap my last call and tell me the next step.")}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z" /></svg>Recap my last call</Link>
+      </div>
+
+      <section className="td-sec">
+        <div className="td-sh">Ready to send{drafts.length > 0 && <span className="ct">{drafts.length}</span>}{upcomingTexts > 0 && <span className="r">{upcomingTexts} more due this week</span>}</div>
+        <div className="td-card">
+          {list === null ? <p className="td-empty" role="status">Loading…</p> : drafts.length === 0 ? <p className="td-empty">Nothing to send right now. Follow-ups land here, already written, the moment they&apos;re due.</p>
+            : (allTodo ? drafts : drafts.slice(0, 5)).map((t, i) => <DraftCard key={t.key} active={i === 0} name={t.name || t.title} website={t.website} why={t.why} body={t.body} href={t.href.startsWith("/") ? t.href : undefined}
+                sendLabel="Send" onSend={t.onClick!} onSkip={() => skip(t.key)} />)}
+        </div>
+        {drafts.length > 5 && <button type="button" className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${drafts.length}`}</button>}
+      </section>
+
+      {waiting.length > 0 && <section className="td-sec">
+        <div className="td-sh">Waiting on you<span className="ct">{waiting.length}</span></div>
+        <div className="td-card">{waiting.map(t => <Link key={t.key} className="td-mt" href={t.href} target={t.href.startsWith("http") ? "_blank" : undefined}>
+          <span className="dot" style={{ background: t.overdue ? "#e0602f" : "#b5bdc9" }} /><b>{t.title}</b>{t.why && <span className="what">{t.why}</span>}<span className="t">{t.action}</span>
+        </Link>)}</div>
+      </section>}
+
+      <section className="td-sec">
+        <div className="td-sh">Meetings{upcoming.length > 0 && <span className="ct">{upcoming.length}</span>}<span className="r"><Link href="/crm/calendar" style={{ color: "inherit" }}>Calendar</Link></span></div>
+        <div className="td-card">
+          {events === null ? <p className="td-empty">Loading…</p> : upcoming.length === 0 ? <p className="td-empty">Nothing booked today or tomorrow. Meetings come from dials.</p>
+            : upcoming.slice(0, 5).map((e, i) => { const k = e.contactPhone ? meetingNudge(new Date(e.startsAt), new Date(), null) : null; const done = k && nudged[e.id + ":" + k]; const who = e.contactCompany || e.contactName || e.title;
+              return <div key={e.id} className="td-mt">
+                <span className="dot" style={{ background: i === 0 ? "#16a34a" : "#e3a008" }} />
+                <Logo name={who} size={20} />
+                <Link href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"} style={{ minWidth: 0, display: "flex", gap: 10, color: "inherit" }}><b>{who}</b><span className="what">{e.title !== who ? e.title : ""}</span></Link>
+                <span className="t">{when(e).day ? "Tomorrow, " : i === 0 && until(e.startsAt) ? until(e.startsAt) + " · " : ""}{when(e).t}</span>
+                {k && <button type="button" className={"u-btn" + (done ? " u-btn-bare" : "")} onClick={() => nudge(e, k)}>{done ? "Sent" : k === "confirm" ? "Confirm" : "Remind"}</button>}
+              </div>; })}
+        </div>
+      </section>
+
+      <section className="td-sec">
+        <div className="td-sh">Call first{queue && queue.length > 0 && <span className="ct">{queue.length}</span>}<span className="r">In the order Cinder would call them</span></div>
+        <div className="td-card">
+          {queue === null ? <p className="td-empty" role="status">Loading…</p> : calls.length === 0 ? <p className="td-empty">No one queued. Add prospects and they line up here in order.</p>
+            : <table className="td-tbl">
+                <thead><tr><th>Company</th><th>Why now</th><th className="num">Last touch</th></tr></thead>
+                <tbody>{calls.map(q => <tr key={q.id} onClick={() => { window.location.href = `/crm?contact=${q.contact!.id}`; }}>
+                  <td><span className="td-nm"><Logo name={nameOf(q.contact)} website={q.contact!.website} size={20} /><b>{nameOf(q.contact)}</b></span></td>
+                  <td className="why">{q.why || q.title}</td>
+                  <td className={"num" + (q.status === "overdue" ? " td-due" : "")}>{q.status === "overdue" ? "Overdue" : shortAgo(q.lastActivity)}</td>
+                </tr>)}</tbody>
+                <tfoot><tr><td><b>{queue.length}</b>to call</td><td /><td className="num">{left > 0 ? `${left} dials left` : "Target hit"}</td></tr></tfoot>
+              </table>}
+        </div>
+      </section>
+    </div>
+
+    <div className="td-numbers">
     <section className="u-block cp-month-wrap">
       <div className="u-h2-row"><h2 className="u-h2">This month</h2></div>
     <div className="u-figs cp-month">

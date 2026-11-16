@@ -80,7 +80,7 @@ export default function ContactsPage(){
    <div className="u-head-actions">
     <button className="u-btn u-btn-bare" onClick={exportCsv} disabled={!contacts.length}>Export</button>
     <button className="u-btn" onClick={()=>setShowImport(true)}>Import</button>
-    <button className="u-btn u-btn-light" onClick={add}>Add contact</button>
+    <button className="u-btn u-btn-light" onClick={add}>New prospect</button>
    </div>
   </div>
   {loaded&&!saved&&<p className="u-flash is-bad" role="alert" style={{marginBottom:18}}>Couldn&apos;t reach your workspace. Changes may not save. Refresh to retry.</p>}
