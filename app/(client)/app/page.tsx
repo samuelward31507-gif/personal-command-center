@@ -3,7 +3,7 @@
 // The Cinder app for client owners. Sign in with a text code (or straight from the portal link), then one shell:
 // a rail on a desk, a tab bar on a phone, the same screens on both. Home, Inbox, Jobs, Calendar, Money, Settings.
 // ⌘K finds anyone. Installs to the home screen like an app (/app.webmanifest).
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./app.css";
 import { Wordmark } from "../brand";
 import { QuotesScreen, QuoteEditor } from "./quotes";
@@ -34,9 +34,35 @@ let demoOn = false;
 const demoStart = () => { demoOn = true; try { sessionStorage.setItem(DEMO_KEY, "1"); } catch { /* private mode */ } };
 const demoStop = () => { demoOn = false; try { sessionStorage.removeItem(DEMO_KEY); } catch { /* private mode */ } };
 
+// Work done on the job without signal: these actions wait on the phone and go out, in order, when it's back.
+const QUEUE_KEY = "cinder-queue", QUEUEABLE = new Set(["jobstep", "checktick", "clockin", "clockout", "card", "photo", "signoff"]);
+type Queued = { path: string; body: Record<string, unknown>; at: string };
+const readQueue = (): Queued[] => { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]"); } catch { return []; } };
+const writeQueue = (q: Queued[]): boolean => { let ok = true; try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q.slice(-200))); } catch { ok = false; } dispatchEvent(new Event("cinder-queue")); return ok; };
+/** Send what waited. Stops at the first network failure; a change the server refuses is dropped and reported. */
+async function flushQueue(): Promise<{ sent: number; dropped: string[] }> {
+  let q = readQueue(), sent = 0; const dropped: string[] = [];
+  while (q.length) {
+    const it = q[0];
+    let r: Response;
+    try { r = await fetch(it.path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(it.body) }); } catch { break; }
+    if (r.ok) sent++; else if (r.status >= 400 && r.status < 500) { const j = await r.json().catch(() => ({})) as { error?: string }; dropped.push(j.error || "A change couldn't be saved."); } else break;
+    q = q.slice(1); writeQueue(q);
+  }
+  return { sent, dropped };
+}
+
 async function api<T>(path: string, body?: unknown): Promise<T> {
   if (demoOn && !path.startsWith("/api/app/auth") && !path.startsWith("/api/app/push")) return await demoApi(path, (body ?? {}) as Record<string, unknown>) as T;
-  const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : { cache: "no-store" });
+  const b = body as Record<string, unknown> | undefined;
+  const queueable = !!b && path === "/api/app/act" && QUEUEABLE.has(String(b.action));
+  const queue = () => { const at = new Date().toISOString();
+    if (!writeQueue([...readQueue(), { path, body: { ...b!, at: b!.at ?? at }, at }])) throw new Error("No room on this phone to keep that until you have signal. Try again when you're back online.");
+    return { ok: true, queued: true } as T; };
+  if (queueable && typeof navigator !== "undefined" && navigator.onLine === false) return queue();
+  let r: Response;
+  try { r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : { cache: "no-store" }); }
+  catch (e) { if (queueable) return queue(); throw new Error(typeof navigator !== "undefined" && navigator.onLine === false ? "You're offline. Try again when you have signal." : (e instanceof Error ? e.message : "No connection.")); }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) { const e = new Error(j.error || "Something went wrong.") as Error & { status?: number }; e.status = r.status; throw e; }
   return j as T;
@@ -127,6 +153,20 @@ export default function CinderApp() {
   const [wide, setWide] = useState(false);
   useEffect(() => { const m = matchMedia("(min-width: 900px)"); const f = () => setWide(m.matches); f(); m.addEventListener("change", f); return () => m.removeEventListener("change", f); }, []);
   const { show: toast, node: toastNode } = useToast();
+  // Offline: whether there's signal, and how many changes are waiting on this phone.
+  const [online, setOnline] = useState(true), [pending, setPending] = useState(0);
+  const reloadRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    const count = () => setPending(readQueue().length);
+    const up = async () => { setOnline(true); count(); if (!readQueue().length) return; const r = await flushQueue(); count();
+      if (r.sent) toast(`Back online. ${r.sent} ${r.sent === 1 ? "change" : "changes"} from while you were offline saved.`);
+      if (r.dropped.length) toast(`${r.dropped.length} couldn't be saved: ${r.dropped[0]}`, true);
+      reloadRef.current(); };
+    const down = () => { setOnline(false); count(); };
+    setOnline(navigator.onLine); count(); if (navigator.onLine) void up();
+    addEventListener("online", up); addEventListener("offline", down); addEventListener("cinder-queue", count);
+    return () => { removeEventListener("online", up); removeEventListener("offline", down); removeEventListener("cinder-queue", count); };
+  }, [toast]);
   const [push, setPush] = useState<PushState>("unsupported");
   const [demo, setDemo] = useState(false);
   const [sheet, setSheet] = useState<"add" | "import" | "billing" | "winback" | "cmd" | "pricelist" | null>(null);
@@ -145,6 +185,7 @@ export default function CinderApp() {
     try { const j = await api<Data>(`/api/app/data?p=${p}${t === "sam" ? "&tab=sam" : t === "calendar" ? "&tab=cal" : ""}`); setD(j); setProject(j.project); setState("in"); }
     catch (e) { if ((e as { status?: number }).status === 401) setState("out"); }
   }, [project, tab]);
+  useEffect(() => { reloadRef.current = () => { if (project) void load(project, tab); }; }, [load, project, tab]);
 
   useEffect(() => {
     const q = new URLSearchParams(location.search), t = q.get("t");
@@ -209,7 +250,10 @@ export default function CinderApp() {
     : [{ k: "customers", l: "Customers", ic: "users", obj: "customers" }, { k: "jobs", l: "Jobs", ic: "jobs", obj: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote", obj: "quotes" },
        { k: "invoices", l: "Invoices", ic: "invoice", obj: "invoices" }, { k: "plans", l: "Plans", ic: "cal", obj: "plans" }];
   const isOn = (k: Tab) => tab === k && !open;
-  const signOut = async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); };
+  const signOut = async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null);
+    // A shared phone keeps nothing: the saved copy of the app's data and anything still waiting go with the sign-out.
+    try { localStorage.removeItem(QUEUE_KEY); navigator.serviceWorker?.controller?.postMessage("cinder-clear"); } catch { /* nothing saved */ }
+    setState("out"); };
   const reload = () => load(project, tab);
   const invNow = inv ? ((d.invoices ?? []).find(i => i.id === inv) ?? null) : null;
   const cards = d.board ?? [];
@@ -280,6 +324,7 @@ export default function CinderApp() {
     </nav>
     <div className="main">
       {demo && <div className="demo"><span>Example business, sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>}
+      {!demo && (!online || pending > 0) && <div className={"offline-bar" + (online ? " syncing" : "")} role="status"><span>{online ? `Saving ${pending} ${pending === 1 ? "change" : "changes"} from while you were offline` : `Offline. You're seeing what was saved on this phone${pending ? `; ${pending} ${pending === 1 ? "change waits" : "changes wait"} to send` : ""}. Checklists, photos, notes and the clock still work.`}</span></div>}
       <div className={"page" + (open ? " has-open" : "")} role="main">{page}</div>
     </div>
     <nav className="tabs" aria-label="Sections">

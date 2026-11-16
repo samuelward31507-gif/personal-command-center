@@ -1463,3 +1463,7 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 .cal.crew .cal-ev { touch-action: none; cursor: grab; } .cal.crew .cal-ev.lifted { opacity: .55; cursor: grabbing; } .cal.crew .cal-ev.busy { opacity: .6; }
 .cal.crew .cal-head .cal-dh.crew-h { height: auto; min-height: 58px; align-items: flex-start; }
 .cal.crew .cal-head .cal-gutter { min-height: 58px; }
+
+/* Offline: a quiet bar while there's no signal or changes are still on their way. */
+.offline-bar { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 30px; padding: 4px 16px; background: #1c1d1f; color: #fff; font-size: 12.5px; text-align: center; }
+.offline-bar.syncing { background: #505967; }

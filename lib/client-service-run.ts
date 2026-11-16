@@ -7,7 +7,7 @@ import { inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, appOrigin, clientById, sendToCustomer, type Client } from "@/lib/client-runtime-run";
 import { sendInvoice } from "@/lib/client-billing-run";
 import { qboSyncInvoice } from "@/lib/qbo";
-import { addInterval, changeOrderLines, changeOrderText, cleanChangeOrder, cleanPlan, CO_TOKEN, visitReminderText, type ChangeOrder, type Plan, type TimeEntry } from "@/lib/service";
+import { addInterval, changeOrderLines, changeOrderText, cleanChangeOrder, cleanPlan, CO_TOKEN, visitReminderText, type ChangeOrder, type Plan, type TimeEntry, tappedAt } from "@/lib/service";
 
 type Sql = NeonQueryFunction<false, false>;
 const tz = (c: Client) => c.setup.timezone || "America/Denver";
@@ -238,15 +238,17 @@ export async function loadTime(sql: Sql, c: Client, member: string | null, days 
   return rows.map(asTime);
 }
 /** Start the clock on a job (or general time with no job). Anything still running for this person stops first. */
-export async function clockIn(sql: Sql, c: Client, member: string, threadId: string | null): Promise<{ ok: boolean; error?: string }> {
+export async function clockIn(sql: Sql, c: Client, member: string, threadId: string | null, at?: unknown): Promise<{ ok: boolean; error?: string }> {
   if (threadId) { const [t] = await sql`SELECT id FROM public.client_threads WHERE id = ${threadId}::uuid AND project_id = ${c.projectId}::uuid`; if (!t) return { ok: false, error: "Not found." }; }
-  await sql`UPDATE public.client_time SET ended_at = least(now(), started_at + interval '16 hours') WHERE project_id = ${c.projectId}::uuid AND member = ${member} AND ended_at IS NULL`;
-  await sql`INSERT INTO public.client_time (owner_id, project_id, thread_id, member) VALUES (${c.owner}, ${c.projectId}::uuid, ${threadId}::uuid, ${member})`;
+  const when = tappedAt(at);
+  await sql`UPDATE public.client_time SET ended_at = greatest(started_at, least(${when}::timestamptz, started_at + interval '16 hours')) WHERE project_id = ${c.projectId}::uuid AND member = ${member} AND ended_at IS NULL`;
+  await sql`INSERT INTO public.client_time (owner_id, project_id, thread_id, member, started_at) VALUES (${c.owner}, ${c.projectId}::uuid, ${threadId}::uuid, ${member}, ${when}::timestamptz)`;
   return { ok: true };
 }
-export async function clockOut(sql: Sql, c: Client, member: string, noteText?: string): Promise<{ ok: boolean; minutes?: number; error?: string }> {
+export async function clockOut(sql: Sql, c: Client, member: string, noteText?: string, at?: unknown): Promise<{ ok: boolean; minutes?: number; error?: string }> {
   const n = String(noteText ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 200);
-  const [r] = await sql`UPDATE public.client_time SET ended_at = least(now(), started_at + interval '16 hours'), note = CASE WHEN ${n} = '' THEN note ELSE ${n} END
+  const when = tappedAt(at);
+  const [r] = await sql`UPDATE public.client_time SET ended_at = greatest(started_at, least(${when}::timestamptz, started_at + interval '16 hours')), note = CASE WHEN ${n} = '' THEN note ELSE ${n} END
     WHERE project_id = ${c.projectId}::uuid AND member = ${member} AND ended_at IS NULL RETURNING round(extract(epoch FROM ended_at - started_at) / 60)::int AS minutes` as { minutes: number }[];
   return r ? { ok: true, minutes: r.minutes } : { ok: false, error: "You're not clocked in." };
 }

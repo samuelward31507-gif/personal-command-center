@@ -64,10 +64,10 @@ export async function POST(req: Request) {
     const member = s.role !== "owner" && s.phone ? "+1" + s.phone.replace(/\D/g, "").slice(-10) : "";
     if (b.action === "clockin") {
       if (b.thread && !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
-      const r = await clockIn(sql, c, member, b.thread || null);
+      const r = await clockIn(sql, c, member, b.thread || null, b.at);
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
-    if (b.action === "clockout") { const r = await clockOut(sql, c, member, b.note); return r.ok ? json({ ok: true, minutes: r.minutes }) : json({ error: r.error }, 409); }
+    if (b.action === "clockout") { const r = await clockOut(sql, c, member, b.note, b.at); return r.ok ? json({ ok: true, minutes: r.minutes }) : json({ error: r.error }, 409); }
     // The end of the job: the customer signs on the phone, the install and walk-through steps tick.
     if (b.action === "signoff") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
