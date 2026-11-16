@@ -129,10 +129,10 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
             <div className="panel-b src2">
               {r!.sources.length ? <>
                 <Donut parts={r!.sources.map((s, i) => ({ label: s.source, value: s.wonValue || s.leads * 0.001, color: SRC_COLORS[i % SRC_COLORS.length] }))} total={short(srcTotal)} label="won" size={150} />
-                <table className="tbl flush"><thead><tr><th>Source</th><th className="right">Leads</th><th className="right">Book rate</th><th className="right">Close rate</th><th className="right">Won</th><th className="right">Share</th></tr></thead>
+                <table className="tbl flush"><thead><tr><th>Source</th><th className="right">Leads</th><th className="right">Book rate</th><th className="right">Close rate</th><th className="right">Won</th><th className="right" title="Money collected on these jobs so far">Paid</th><th className="right">Share</th></tr></thead>
                   <tbody>{r!.sources.map((s, i) => { const br = pct(s.booked, s.leads), cr = pct(s.won, s.quoted); return <tr key={s.source} style={{ cursor: "default" }}>
                     <td><span className="src-n"><i style={{ background: SRC_COLORS[i % SRC_COLORS.length] }} /><b>{sourceLabel(s.source)}</b></span></td><td className="num">{s.leads}</td><td className="num mut">{br == null ? "–" : `${br}%`}</td><td className="num mut">{cr == null ? "–" : `${cr}%`}</td>
-                    <td className="num"><b>{s.wonValue ? usd(s.wonValue) : <span className="faint">–</span>}</b></td><td className="num mut">{srcTotal && s.wonValue ? `${Math.round((s.wonValue / srcTotal) * 100)}%` : "–"}</td></tr>; })}</tbody></table>
+                    <td className="num"><b>{s.wonValue ? usd(s.wonValue) : <span className="faint">–</span>}</b></td><td className="num">{s.paid ? usd(s.paid) : <span className="faint">–</span>}</td><td className="num mut">{srcTotal && s.wonValue ? `${Math.round((s.wonValue / srcTotal) * 100)}%` : "–"}</td></tr>; })}</tbody></table>
               </> : <p className="fine" style={{ padding: "18px 0" }}>Once leads come in, this shows which source pays.</p>}
             </div>
           </section>

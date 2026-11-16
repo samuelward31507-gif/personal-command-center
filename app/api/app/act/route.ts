@@ -57,6 +57,14 @@ export async function POST(req: Request) {
     if (!c) return json({ error: "Sign in" }, 401);
     // The crew sees the schedule and the jobs and can text, call, tick steps, leave notes and clock hours. Money and settings stay with the owner.
     if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit", "signoff", "checktick"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
+    if (s.role === "crew" && c.setup.crew_scope === "assigned") {
+      const me10 = (s.phone || "").replace(/\D/g, "").slice(-10);
+      const tid = b.thread && UUID.test(b.thread) ? b.thread : null;
+      const [own] = tid ? await sql`SELECT crew_member FROM public.client_threads WHERE id = ${tid}::uuid AND project_id = ${c.projectId}::uuid` as { crew_member: string | null }[]
+        : b.appt && UUID.test(b.appt) ? await sql`SELECT coalesce(a.crew_member, t.crew_member) AS crew_member FROM public.client_appointments a JOIN public.client_threads t ON t.id = a.thread_id WHERE a.id = ${b.appt}::uuid AND a.project_id = ${c.projectId}::uuid` as { crew_member: string | null }[]
+        : [{ crew_member: me10 }];
+      if ((tid || b.appt) && String(own?.crew_member ?? "").replace(/\D/g, "").slice(-10) !== me10) return json({ error: "That job isn't assigned to you." }, 403);
+    }
     if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; b.email = undefined; }
     // Crew hours: the person signed in clocks in on a job (or general time) and out again. The owner is "".
     // Office staff run the business day to day; settings and the team stay with the owner.
