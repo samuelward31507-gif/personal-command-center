@@ -35,6 +35,8 @@ export type Data = { /** The owner, or a crew member who sees the schedule and t
   equipment?: import("@/lib/records").Equipment[];
   files?: import("@/lib/client-records-run").FileRow[];
   tasks?: import("@/lib/records").Task[];
+  /** Material orders on jobs: open ones, and the last 13 months (owner and office only). */
+  orders?: import("@/lib/orders").Order[];
   /** Expenses and mileage, the last 13 months (owner and office only). */
   expenses?: import("@/lib/expenses").Expense[];
   /** Leads by email: the forwarding address ("" until it's set up on Cinder's side) and the last emails it received. */

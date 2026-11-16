@@ -11,6 +11,7 @@ import { sendAlert } from "@/lib/notify";
 import { replyToFor } from "@/lib/client-lead-mail-run";
 import { addExpense, deleteExpense } from "@/lib/client-expenses-run";
 import { LOGGED, activityDetail } from "@/lib/records";
+import { deleteOrder, saveOrder, setOrderStatus } from "@/lib/client-orders-run";
 import { addFile, removeEquipment, removeFile, saveEquipment, saveTask, serviceEquipment, setTask } from "@/lib/client-records-run";
 import { setPhone, addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
@@ -241,6 +242,14 @@ async function handle(req: Request) {
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     // A lead email that came without a phone: the owner adds the number (nobody is texted), or dismisses it.
+    // Material orders on a job (owner and office).
+    if (b.action === "order" || b.action === "orderstatus" || b.action === "orderdelete") {
+      if (s.role === "crew") return json({ error: "Only the office can order materials." }, 403);
+      if (b.action === "order") { if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400); const r = await saveOrder(sql, c, b.thread, b.entry && UUID.test(b.entry) ? b.entry : null, b.input, member); return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400); }
+      if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which order?" }, 400);
+      const r = b.action === "orderstatus" ? await setOrderStatus(sql, c, b.entry, b.status, member) : await deleteOrder(sql, c, b.entry);
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
+    }
     if (b.action === "expense") { const r = await addExpense(sql, c, member, b.input); return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400); }
     if (b.action === "expensedelete") { if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which expense?" }, 400); const r = await deleteExpense(sql, c, b.entry); return r.ok ? json({ ok: true }) : json({ error: r.error }, 404); }
     // Equipment at the customer's address, documents on the job, the office's to-dos.

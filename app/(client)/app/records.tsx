@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 import { Icon, Sheet, Spinner, dateLabel, type Api, type Toast } from "./parts";
 import { EQUIPMENT_KINDS, LOGGED, ageYears, taskOrder, type Equipment } from "@/lib/records";
 import type { Data, Go } from "./types";
+import { ORDER_STATUS, linesFromQuote, orderText, orderTotal, type Order, type OrderLine } from "@/lib/orders";
+import { catalogFrom } from "./catalog";
 
 type Ctx = { d: Data; project: string; api: Api; toast: Toast; reload: () => Promise<void> };
 const todayIso = () => new Date().toLocaleDateString("en-CA");
@@ -160,4 +162,77 @@ export function ActivityLog({ ctx, go }: { ctx: Ctx; go: Go }) {
       <td className="nowrap"><b>{who(a.who)}</b></td><td>{LOGGED[a.action] ?? a.action}{a.detail ? <span className="mut">, {a.detail}</span> : null}</td><td className="mut ell">{a.customer}</td></tr>)}</tbody></table>
     {list.length > 15 && !all && <button type="button" className="link" style={{ padding: "8px 0" }} onClick={() => setAll(true)}>Show all {list.length}</button>}
   </>;
+}
+
+// ---------- Material orders ----------
+const ORDER_TONE: Record<string, string> = { draft: "", ordered: "warn", received: "ok", canceled: "mut" };
+export function OrdersBox({ ctx, card }: { ctx: Ctx; card: { id: string; name: string; details?: { address?: string }; quote?: { items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[] } | null; job?: Record<string, string> } }) {
+  const list = (ctx.d.orders ?? []).filter(o => o.thread_id === card.id);
+  const [edit, setEdit] = useState<Order | "new" | null>(null), [busy, setBusy] = useState("");
+  const status = async (o: Order, s: string, done: string) => { setBusy(o.id);
+    try { await ctx.api("/api/app/act", { p: ctx.project, action: "orderstatus", entry: o.id, status: s }); ctx.toast(done); await ctx.reload(); } catch (x) { ctx.toast(x instanceof Error ? x.message : "Couldn't save.", true); } finally { setBusy(""); } };
+  const open = list.filter(o => o.status === "draft" || o.status === "ordered");
+  return <section className="card"><div className="hd"><h2>Materials</h2>{open.length > 0 && <small style={{ marginLeft: "auto" }}>{open.length} open</small>}</div>
+    {list.length ? list.map(o => { const tot = orderTotal(o.items), late = o.status === "ordered" && o.needed_on && o.needed_on < todayIso();
+      return <div key={o.id} className="eq-row">
+        <div className="eq-t"><b>{o.supplier || "Supplier not set"}<span className={"mut"}>, {ORDER_STATUS.find(s => s[0] === o.status)?.[1]}{o.status === "received" && o.received_at ? ` ${dateLabel(o.received_at)}` : ""}</span></b>
+          <small>{o.items.length} {o.items.length === 1 ? "line" : "lines"}: {o.items.slice(0, 3).map(i => i.name).join(", ")}{o.items.length > 3 ? ", and more" : ""}</small>
+          <small>{tot > 0 ? dollarsOf(tot) : "Costs not set"}{o.needed_on ? <>, needed {late ? <span className="bad-t">{dateLabel(o.needed_on)}</span> : dateLabel(o.needed_on)}</> : null}{o.status === "received" && tot > 0 ? ", in this job's costs" : ""}</small></div>
+        <div className="eq-a">
+          {o.status === "draft" && <button type="button" className="btn sm" disabled={busy === o.id} onClick={() => void status(o, "ordered", "Marked ordered.")}>Mark ordered</button>}
+          {o.status === "ordered" && <button type="button" className="btn sm" disabled={busy === o.id} onClick={() => void status(o, "received", tot > 0 ? `Received. ${dollarsOf(tot)} added to this job's costs.` : "Marked received.")}>Received</button>}
+          {o.status === "received" && <button type="button" className="btn ghost sm" disabled={busy === o.id} onClick={() => void status(o, "ordered", "Back to ordered. The expense came off the job.")}>Undo</button>}
+          {o.status !== "received" && <button type="button" className="btn ghost sm" onClick={() => setEdit(o)}>Open</button>}
+        </div>
+      </div>; })
+      : <p className="fine">What to buy for this job and from whom. Pull the lines from the quote, send it to the supplier, and mark it received: the cost lands in this job&rsquo;s expenses.</p>}
+    <div className="acts-row end" style={{ marginTop: 6 }}><button type="button" className="btn sm" onClick={() => setEdit("new")}><Icon name="plus" size={13} />New order</button></div>
+    {edit && <OrderSheet ctx={ctx} card={card} order={edit === "new" ? undefined : edit} onClose={() => setEdit(null)} />}
+  </section>;
+}
+
+const dollarsOf = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+type LineRow = { name: string; qty: string; unit: string; cost: string };
+function OrderSheet({ ctx, card, order, onClose }: { ctx: Ctx; card: Parameters<typeof OrdersBox>[0]["card"]; order?: Order; onClose: () => void }) {
+  const toRows = (l: OrderLine[]): LineRow[] => l.map(i => ({ name: i.name, qty: String(i.qty), unit: i.unit, cost: i.cost ? String(i.cost) : "" }));
+  const past = (ctx.d.orders ?? []).map(o => o.supplier).filter(Boolean);
+  const [supplier, setSupplier] = useState(order?.supplier ?? past[0] ?? ""), [email, setEmail] = useState(order?.supplier_email ?? (ctx.d.orders ?? []).find(o => o.supplier === (order?.supplier ?? past[0]))?.supplier_email ?? "");
+  const [needed, setNeeded] = useState(order?.needed_on ?? ""), [note, setNote] = useState(order?.note ?? ""), [busy, setBusy] = useState(false);
+  const [rows, setRows] = useState<LineRow[]>(order ? toRows(order.items) : [{ name: "", qty: "1", unit: "", cost: "" }]);
+  const fromQuote = () => { const l = linesFromQuote(card.quote?.items ?? [], catalogFrom(ctx.d.setup)); if (!l.length) { ctx.toast("The quote has no lines to pull.", true); return; }
+    if (rows.some(r => r.name.trim()) && !confirm("Replace these lines with the quote's?")) return; setRows(toRows(l)); };
+  const lines = rows.map(r => ({ name: r.name, qty: Number(r.qty) || 0, unit: r.unit, cost: Number(r.cost) || 0 })).filter(r => r.name.trim() && r.qty > 0);
+  const input = { supplier, supplier_email: email, needed_on: needed || null, note, items: lines };
+  const save = async (then?: "ordered") => { setBusy(true);
+    try { const r = await ctx.api<{ id?: string }>("/api/app/act", { p: ctx.project, action: "order", thread: card.id, entry: order?.id, input });
+      if (then && (r.id || order?.id)) await ctx.api("/api/app/act", { p: ctx.project, action: "orderstatus", entry: r.id || order!.id, status: then });
+      ctx.toast(then ? "Saved and marked ordered." : "Order saved."); await ctx.reload(); onClose(); }
+    catch (e) { ctx.toast(e instanceof Error ? e.message : "Couldn't save.", true); } finally { setBusy(false); } };
+  const remove = async () => { if (!order || !confirm("Delete this order?")) return; setBusy(true);
+    try { await ctx.api("/api/app/act", { p: ctx.project, action: "orderdelete", entry: order.id }); await ctx.reload(); onClose(); } catch (e) { ctx.toast(e instanceof Error ? e.message : "Couldn't delete.", true); setBusy(false); } };
+  const text = orderText(input, { business: ctx.d.setup?.display_name || "", owner: (ctx.d.setup?.owner_name || "").split(" ")[0], phone: ctx.d.setup?.texting_number || "", address: card.details?.address });
+  const copy = async () => { try { await navigator.clipboard.writeText(text); ctx.toast("Order copied. Paste it into a text or email to the supplier."); } catch { prompt("Copy the order:", text); } };
+  const set = (k: number, p: Partial<LineRow>) => setRows(r => r.map((x, i) => i === k ? { ...x, ...p } : x));
+  return <Sheet onClose={onClose} title={order ? "Material order" : "New material order"} sub={card.name}
+    foot={<>{order && <button type="button" className="btn danger" disabled={busy} onClick={() => void remove()}>Delete</button>}<span style={{ flex: 1 }} />
+      <button type="button" className="btn" disabled={busy || !lines.length} onClick={() => void copy()}>Copy order</button>
+      {email && lines.length > 0 && <a className="btn" href={`mailto:${email}?subject=${encodeURIComponent(`Material order: ${card.details?.address || card.name}`)}&body=${encodeURIComponent(text)}`}>Email {supplier || "supplier"}</a>}
+      <button type="button" className="btn" disabled={busy || !lines.length} onClick={() => void save()}>Save</button>
+      {(!order || order.status === "draft") && <button type="button" className="btn ink" disabled={busy || !lines.length} onClick={() => void save("ordered")}>{busy ? <Spinner /> : "Save as ordered"}</button>}</>}>
+    <div className="two"><label className="field"><span>Supplier</span><input value={supplier} maxLength={80} list="cx-suppliers" onChange={e => { setSupplier(e.target.value); const m = (ctx.d.orders ?? []).find(o => o.supplier === e.target.value); if (m?.supplier_email && !email) setEmail(m.supplier_email); }} placeholder="ABC Supply, Ferguson" />
+      <datalist id="cx-suppliers">{[...new Set(past)].map(s => <option key={s} value={s} />)}</datalist></label>
+      <label className="field"><span>Their email <em>optional</em></span><input type="email" value={email} maxLength={120} onChange={e => setEmail(e.target.value)} /></label></div>
+    <div className="two"><label className="field"><span>Needed by</span><input type="date" value={needed} onChange={e => setNeeded(e.target.value)} /></label><span /></div>
+    <p className="sec">Lines{card.quote?.items?.length ? <button type="button" className="link" style={{ marginLeft: 12, fontWeight: 400 }} onClick={fromQuote}>Fill from the quote</button> : null}<small>your cost per unit, for job costing; it isn&rsquo;t sent</small></p>
+    <div className="cat-r h" role="row" style={{ gridTemplateColumns: "1fr 70px 70px 100px 28px" }}><span>What</span><span>Qty</span><span>Unit</span><span>Your cost</span><span /></div>
+    {rows.map((r, k) => <div key={k} className="cat-r" style={{ gridTemplateColumns: "1fr 70px 70px 100px 28px" }}>
+      <input className="input sm" aria-label="What" value={r.name} maxLength={120} onChange={e => set(k, { name: e.target.value })} />
+      <input className="input sm" aria-label="Quantity" inputMode="decimal" value={r.qty} onChange={e => set(k, { qty: e.target.value.replace(/[^\d.]/g, "") })} />
+      <input className="input sm" aria-label="Unit" value={r.unit} maxLength={12} onChange={e => set(k, { unit: e.target.value })} />
+      <span className="inwrap"><i>$</i><input aria-label="Your cost" inputMode="decimal" value={r.cost} placeholder="optional" onChange={e => set(k, { cost: e.target.value.replace(/[^\d.]/g, "") })} /></span>
+      <button type="button" className="btn ghost sm ic" aria-label="Remove line" onClick={() => setRows(x => x.length > 1 ? x.filter((_, i) => i !== k) : [{ name: "", qty: "1", unit: "", cost: "" }])}><Icon name="x" size={12} /></button></div>)}
+    <div className="acts-row" style={{ marginTop: 6 }}><button type="button" className="btn ghost sm" onClick={() => setRows(r => [...r, { name: "", qty: "1", unit: "", cost: "" }])}><Icon name="plus" size={13} />Add a line</button>
+      <span style={{ flex: 1 }} />{orderTotal(lines) > 0 && <b>{dollarsOf(orderTotal(lines))}</b>}</div>
+    <label className="field"><span>Note for the supplier</span><textarea rows={2} value={note} maxLength={500} onChange={e => setNote(e.target.value)} placeholder="Deliver to the driveway, call on arrival." /></label>
+  </Sheet>;
 }

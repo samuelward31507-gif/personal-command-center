@@ -14,6 +14,7 @@ import { qboConfigured, qboState } from "@/lib/qbo";
 import { eveningFor } from "@/lib/client-evening";
 import { leadMailAddressFor, loadMail } from "@/lib/client-lead-mail-run";
 import { loadExpenses } from "@/lib/client-expenses-run";
+import { loadOrders } from "@/lib/client-orders-run";
 import { loadEquipment, loadFiles, loadTasks } from "@/lib/client-records-run";
 
 export const runtime = "nodejs";
@@ -79,6 +80,7 @@ export async function GET(req: Request) {
       sql`SELECT company_name, last_error, last_push_at FROM public.client_qbo WHERE project_id = ${c.projectId}::uuid`.catch(() => []),
     ]);
     const mailRows = s.role === "crew" ? [] : await loadMail(sql, c).catch(() => []);
+    const orders = s.role === "crew" ? [] : await loadOrders(sql, c).catch(() => []);
     const expenses = s.role === "crew" ? [] : await loadExpenses(sql, c).catch(e => { console.error("Expenses failed", e instanceof Error ? e.message : e); return []; });
     const activity = s.role !== "owner" ? [] : await sql`SELECT a.at, a.who, a.role, a.action, a.detail, a.thread_id, t.customer_name FROM public.client_activity a LEFT JOIN public.client_threads t ON t.id = a.thread_id
       WHERE a.project_id = ${c.projectId}::uuid ORDER BY a.at DESC LIMIT 200`.catch(() => []) as Record<string, unknown>[];
@@ -112,7 +114,7 @@ export async function GET(req: Request) {
       board: crewOnlyMine ? scoped(board, b => b.id).map(b => c.setup.crew_prices === "yes" ? { ...b, costs: { materials: 0, labor: 0, other: 0 } } : { ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 }, changeOrders: (b.changeOrders ?? []).map(x => ({ ...x, items: [], total: 0, url: null })) })
         : crew && c.setup.crew_prices === "yes" ? board.map(b => ({ ...b, costs: { materials: 0, labor: 0, other: 0 } })) : crew ? board.map(b => ({ ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 }, changeOrders: (b.changeOrders ?? []).map(x => ({ ...x, items: [], total: 0, url: null })) })) : board,
       setup: crew ? { display_name: c.setup.display_name || "", owner_name: c.setup.owner_name || "", trade: c.setup.trade || "", checklists: c.setup.checklists || "", crew_prices: c.setup.crew_prices || "", brand_color: c.setup.brand_color || "", brand_logo: c.setup.brand_logo || "" } : { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "", team: c.setup.team || "[]", monthly_report: c.setup.monthly_report || "" },
-      customers: crew ? [] : customers, invoices: crew ? [] : invoices, payments: crew ? [] : payments, expenses, tasks, activity: activity.map(a => ({ at: a.at instanceof Date ? a.at.toISOString() : String(a.at), who: String(a.who ?? ""), role: String(a.role ?? ""), action: String(a.action), detail: String(a.detail ?? ""), thread: a.thread_id ? String(a.thread_id) : null, customer: a.customer_name ? String(a.customer_name) : "" })), ratings: rt ? { avg: rt.avg, n: rt.n, low: rt.low } : undefined,
+      customers: crew ? [] : customers, invoices: crew ? [] : invoices, payments: crew ? [] : payments, expenses, orders, tasks, activity: activity.map(a => ({ at: a.at instanceof Date ? a.at.toISOString() : String(a.at), who: String(a.who ?? ""), role: String(a.role ?? ""), action: String(a.action), detail: String(a.detail ?? ""), thread: a.thread_id ? String(a.thread_id) : null, customer: a.customer_name ? String(a.customer_name) : "" })), ratings: rt ? { avg: rt.avg, n: rt.n, low: rt.low } : undefined,
       equipment: crewOnlyMine ? equipment0.filter(e => mine.has(e.thread_id)) : equipment0, files: crewOnlyMine ? files0.filter(f => mine.has(f.thread_id)) : files0,
       key: String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? ""), origin, wires,
       mail: crew ? undefined : { address: leadMailAddressFor(String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? "")), recent: mailRows },

@@ -83,7 +83,7 @@ export function cleanFieldValues(v: unknown, labels: string[]): Record<string, s
 export const LOGGED: Record<string, string> = {
   stage: "Moved a job", status: "Changed who's replying", reply: "Texted a customer", assign: "Assigned a job", lead: "Added a lead", card: "Edited a customer",
   quotelines: "Edited a quote", quotelink: "Sent a quote", quote: "Marked a quote", invoice: "Drafted an invoice", invoicesend: "Sent an invoice", invoicesave: "Edited an invoice",
-  invoiceset: "Changed an invoice", payment: "Recorded a payment", paymentdelete: "Deleted a payment", refund: "Recorded a refund", refunddelete: "Deleted a refund", expense: "Logged an expense", expensedelete: "Deleted an expense",
+  invoiceset: "Changed an invoice", payment: "Recorded a payment", paymentdelete: "Deleted a payment", refund: "Recorded a refund", refunddelete: "Deleted a refund", order: "Saved a material order", orderstatus: "Changed a material order", orderdelete: "Deleted a material order", expense: "Logged an expense", expensedelete: "Deleted an expense",
   photodelete: "Deleted a photo", fileadd: "Added a document", fileremove: "Deleted a document", equipment: "Saved equipment", equipremove: "Removed equipment",
   setup: "Changed settings", winback: "Sent a group text", import: "Imported customers", timeedit: "Fixed a time entry", outcome: "Logged an estimate's outcome",
   reschedule: "Moved an estimate", setphone: "Added a phone number", mailadd: "Added a lead from email", portallink: "Sent a customer their page", photoreport: "Sent a photo report",
@@ -94,6 +94,7 @@ export function activityDetail(action: string, b: Record<string, unknown>): stri
   if (action === "stage") return String(b.stage ?? "");
   if (action === "status") return String(b.status ?? "");
   if (action === "invoiceset") return String(b.what ?? "");
+  if (action === "orderstatus") return String(b.status ?? "");
   if (action === "setup" && b.setup && typeof b.setup === "object") return Object.keys(b.setup as object).filter(k => !/link|token|cell|phone/i.test(k)).slice(0, 8).join(", ");
   if (action === "winback") return b.tag ? `tag: ${String(b.tag).slice(0, 30)}` : "past customers";
   return "";
