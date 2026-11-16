@@ -35,7 +35,7 @@ const demoStart = () => { demoOn = true; try { sessionStorage.setItem(DEMO_KEY, 
 const demoStop = () => { demoOn = false; try { sessionStorage.removeItem(DEMO_KEY); } catch { /* private mode */ } };
 
 // Work done on the job without signal: these actions wait on the phone and go out, in order, when it's back.
-const QUEUE_KEY = "cinder-queue", QUEUEABLE = new Set(["jobstep", "checktick", "clockin", "clockout", "card", "photo", "signoff"]);
+const QUEUE_KEY = "cinder-queue", QUEUEABLE = new Set(["jobstep", "checktick", "clockin", "clockout", "card", "photo", "signoff", "expense"]);
 type Queued = { path: string; body: Record<string, unknown>; at: string };
 const readQueue = (): Queued[] => { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]"); } catch { return []; } };
 const writeQueue = (q: Queued[]): boolean => { let ok = true; try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q.slice(-200))); } catch { ok = false; } dispatchEvent(new Event("cinder-queue")); return ok; };

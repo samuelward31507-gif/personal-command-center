@@ -6,6 +6,7 @@ import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
 import { cleanImportRows, importAs } from "@/lib/customer-import";
 import { demoSwitch } from "./demo-switch";
 import { sourceLabel, type LeadMail } from "./types";
+import { cleanExpense, mileageRate, type Expense } from "@/lib/expenses";
 import { nextChaseDay } from "@/lib/client-runtime";
 import { cleanLogo, hexOk, readableAccent } from "@/lib/brand";
 import { addInterval, changeOrderLines, cleanCatalog, cleanChangeOrder, cleanPlan, cleanSignoff, type ChangeOrder, type Plan, type Signoff, type TimeEntry } from "@/lib/service";
@@ -140,6 +141,12 @@ function seed() {
     ] as TimeEntry[],
     signoffs: {} as Record<string, Signoff>,
     won: 5, wonValue: 37500,
+    expenses: [
+      { id: "x1", kind: "expense", vendor: "Home Depot", category: "materials", amount: 1284.37, miles: null, spent_on: ago(1440).slice(0, 10), note: "Cedar pickets, 40 posts", member: "", thread_id: "t1", customer: "Tom Becker", receipt: false },
+      { id: "x2", kind: "expense", vendor: "Denver Arapahoe Disposal", category: "dump", amount: 85, miles: null, spent_on: ago(2880).slice(0, 10), note: "Old fence tear-out", member: "+17205550188", thread_id: null, receipt: false },
+      { id: "x3", kind: "mileage", vendor: "", category: "vehicle", amount: 16.8, miles: 24, spent_on: ago(4320).slice(0, 10), note: "Supply run", member: "", thread_id: null, receipt: false },
+      { id: "x4", kind: "expense", vendor: "Shell", category: "fuel", amount: 72.4, miles: null, spent_on: ago(300).slice(0, 10), note: "", member: "+17205550188", thread_id: null, receipt: false },
+    ] as Expense[],
     // Leads by email: one Angi lead that went straight on the board, two that came without a phone, a Gmail forwarding code.
     mail: [
       { id: "m1", at: ago(25), from: "Thumbtack <no-reply@thumbtack.com>", subject: "Derek W. wants a quote for Fence Repair", source: "thumbtack", status: "no_phone", name: "Derek W.", phone: "", email: "", message: "Fence Repair. Gate sags and won't latch. Timing: Within a week", code: "", link: "", thread: "", why: "" },
@@ -230,7 +237,7 @@ function data() {
     calendar: { connected: true, email: "mike@ridgelinefence.com", events: s.events, error: "", connectUrl: "#" },
     messages: s.messages, board: board(), setup: { ...s.setup, has_review_link: "yes", has_number: "yes", has_calendar: "yes", has_cell: "yes", has_booking_link: "yes" },
     key: "example-key-ridgeline-0000", origin: typeof location !== "undefined" ? location.origin : "",
-    mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: s.mail },
+    mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: s.mail }, expenses: s.expenses,
     jobber: { available: true, connected: true, account: "Ridgeline Fence Co.", error: "", lastPush: ago(2880), connectUrl: "#" },
     quickbooks: { available: true, connected: true, company: "Ridgeline Fence Co. LLC", error: "", lastPush: ago(95), connectUrl: "#" },
     wires: { sources: [{ source: "missed_call", leads: 19, last30: 7, last: ago(40) }, { source: "web form", leads: 12, last30: 5, last: ago(300) }, { source: "angi", leads: 8, last30: 3, last: ago(2880) }, { source: "web chat", leads: 2, last30: 1, last: ago(8640) }],
@@ -320,6 +327,14 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
     if (b.action === "review") { s.wonJobs = s.wonJobs.filter(j => j.id !== b.quote); return { ok: true }; }
     if (b.action === "setup") { Object.assign(s.setup, cleanOwnerSetup(b.setup)); const o = (b.setup ?? {}) as Record<string, unknown>; if (o.brand_color !== undefined) { const h = hexOk(o.brand_color); s.setup.brand_color = h ? readableAccent(h) : ""; } if (o.brand_logo !== undefined) s.setup.brand_logo = cleanLogo(o.brand_logo); if (o.show_powered !== undefined) s.setup.show_powered = o.show_powered === "yes" ? "yes" : "no"; return { ok: true }; }
     if (b.action === "testtext") return { ok: true };
+    if (b.action === "expense") {
+      const e = cleanExpense(b.input, mileageRate(s.setup.mileage_rate), new Date().toLocaleDateString("en-CA"));
+      if ("error" in e) fail(e.error);
+      const x = e as Exclude<typeof e, { error: string }>, id = "x" + Date.now();
+      s.expenses.unshift({ id, kind: x.kind, vendor: x.vendor, category: x.category, amount: x.amount, miles: x.miles, spent_on: x.spent_on, note: x.note, member: "", thread_id: x.thread, customer: x.thread ? s.threads[x.thread]?.thread.customer_name : undefined, receipt: !!(b.input as { receipt?: string })?.receipt });
+      return { ok: true, id };
+    }
+    if (b.action === "expensedelete") { s.expenses = s.expenses.filter(e => e.id !== b.entry); return { ok: true }; }
     if (b.action === "maildismiss") { const m = s.mail.find(x => x.id === b.thread); if (m && m.status !== "lead" && m.status !== "added") { m.status = "ignored"; m.why = "Dismissed"; } return { ok: true }; }
     if (b.action === "mailadd") {
       const m = s.mail.find(x => x.id === b.thread && (x.status === "no_phone" || x.status === "new"));

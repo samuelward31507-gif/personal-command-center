@@ -27,6 +27,8 @@ export type Data = { /** The owner, or a crew member who sees the schedule and t
   jobber?: { available: boolean; connected: boolean; account: string; error: string; lastPush: string | null; connectUrl: string };
   /** QuickBooks Online: invoices and payments pushed to the owner's books. */
   quickbooks?: { available: boolean; connected: boolean; company: string; error: string; lastPush: string | null; connectUrl: string };
+  /** Expenses and mileage, the last 13 months (owner and office only). */
+  expenses?: import("@/lib/expenses").Expense[];
   /** Leads by email: the forwarding address ("" until it's set up on Cinder's side) and the last emails it received. */
   mail?: { address: string; recent: LeadMail[] };
   /** Connections: each lead source's activity, texts that didn't send, the consent log. */

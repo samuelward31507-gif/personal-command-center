@@ -1467,3 +1467,6 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 /* Offline: a quiet bar while there's no signal or changes are still on their way. */
 .offline-bar { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 30px; padding: 4px 16px; background: #1c1d1f; color: #fff; font-size: 12.5px; text-align: center; }
 .offline-bar.syncing { background: #505967; }
+
+/* Expenses on the Money screen. */
+.ex-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 4px 0 10px; }

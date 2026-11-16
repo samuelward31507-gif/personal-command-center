@@ -10,6 +10,7 @@ import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
 import type { Biz, Data, Go, InvoiceRow } from "./types";
 import { emailDoc } from "./crew";
 import { CatalogPicker, asLine, useCatalog } from "./catalog";
+import { ExpensesView } from "./expenses";
 import { FieldIcon } from "./sources";
 
 /**
@@ -186,7 +187,7 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
 export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: { d: Data; go: Go; wide: boolean; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void> }) {
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   const list = d.invoices ?? [], pays = d.payments ?? [], today = todayIso();
-  const [f, setF] = useState<"open" | "draft" | "paid" | "all">("open"), [view, setView] = useState<"invoices" | "payments">("invoices");
+  const [f, setF] = useState<"open" | "draft" | "paid" | "all">("open"), [view, setView] = useState<"invoices" | "payments" | "expenses">("invoices");
   const [picking, setPicking] = useState(false), [making, setMaking] = useState(""), [pq, setPq] = useState(""), [exp, setExp] = useState(false);
   // Who can be invoiced: won jobs without an invoice first, then everyone else on file.
   const board = d.board ?? [];
@@ -249,11 +250,12 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
         <dl>{aging.map((a, k) => <div key={a.l}><dt><i className={"b" + k} />{a.l}</dt><dd className={a.v ? "" : "faint"}>{usd(a.v)}</dd></div>)}</dl>
       </div>}
       <div className="list-tools panel-tools">
-        <div className="seg" role="tablist" aria-label="Show"><button type="button" role="tab" aria-selected={view === "invoices"} className={view === "invoices" ? "on" : ""} onClick={() => setView("invoices")}>Invoices</button><button type="button" role="tab" aria-selected={view === "payments"} className={view === "payments" ? "on" : ""} onClick={() => setView("payments")}>Payments</button></div>
+        <div className="seg" role="tablist" aria-label="Show"><button type="button" role="tab" aria-selected={view === "invoices"} className={view === "invoices" ? "on" : ""} onClick={() => setView("invoices")}>Invoices</button><button type="button" role="tab" aria-selected={view === "payments"} className={view === "payments" ? "on" : ""} onClick={() => setView("payments")}>Payments</button><button type="button" role="tab" aria-selected={view === "expenses"} className={view === "expenses" ? "on" : ""} onClick={() => setView("expenses")}>Expenses</button></div>
         {view === "invoices" && <div className="views" role="tablist" aria-label="Filter">{([["open", "Awaiting payment"], ["draft", "Drafts"], ["paid", "Paid"], ["all", "All"]] as const).map(([k, l]) =>
           <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}{counts[k] ? <em>{counts[k]}</em> : null}</button>)}</div>}
       </div>
-      {view === "payments" ? (!pays.length ? <p className="fine" style={{ padding: "10px 0" }}>Payments you record on an invoice show here: card, cash, check, deposits.</p>
+      {view === "expenses" ? <ExpensesView d={d} project={project} api={api} toast={toast} reload={reload} go={go} />
+      : view === "payments" ? (!pays.length ? <p className="fine" style={{ padding: "10px 0" }}>Payments you record on an invoice show here: card, cash, check, deposits.</p>
         : <table className="tbl"><colgroup><col style={{ width: 110 }} /><col /><col style={{ width: 100 }} /><col style={{ width: 200 }} /><col style={{ width: 120 }} /></colgroup>
           <thead><tr><th>Date</th><th>Customer</th><th>Invoice</th><th>How</th><th className="right">Amount</th></tr></thead>
           <tbody>{pays.map(p => <tr key={p.id} tabIndex={0} onClick={() => go.invoice(p.invoice_id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(p.invoice_id); }}>

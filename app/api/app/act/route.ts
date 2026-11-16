@@ -9,6 +9,7 @@ import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
 import { replyToFor } from "@/lib/client-lead-mail-run";
+import { addExpense, deleteExpense } from "@/lib/client-expenses-run";
 import { setPhone, addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
 import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
     const c = await clientFor(sql, s, b.p);
     if (!c) return json({ error: "Sign in" }, 401);
     // The crew sees the schedule and the jobs and can text, call, tick steps, leave notes and clock hours. Money and settings stay with the owner.
-    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit", "signoff", "checktick"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
+    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit", "signoff", "checktick", "expense"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
     if (s.role === "crew" && c.setup.crew_scope === "assigned") {
       const me10 = (s.phone || "").replace(/\D/g, "").slice(-10);
       const tid = b.thread && UUID.test(b.thread) ? b.thread : null;
@@ -221,6 +222,8 @@ export async function POST(req: Request) {
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     // A lead email that came without a phone: the owner adds the number (nobody is texted), or dismisses it.
+    if (b.action === "expense") { const r = await addExpense(sql, c, member, b.input); return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400); }
+    if (b.action === "expensedelete") { if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which expense?" }, 400); const r = await deleteExpense(sql, c, b.entry); return r.ok ? json({ ok: true }) : json({ error: r.error }, 404); }
     if (b.action === "setphone") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
       const r = await setPhone(sql, c, b.thread, String(b.phone ?? ""));

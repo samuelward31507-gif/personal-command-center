@@ -226,6 +226,7 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   pick("quote_terms", undefined, 1200); pick("warranty", undefined, 300); pick("financing_note", undefined, 160);
   pick("agent_paused", ["", "yes"]);
   pick("crew_scope", ["", "assigned"]);
+  if (r.mileage_rate !== undefined) { const n = Number(String(r.mileage_rate ?? "").replace(/[^\d.]/g, "")); out.mileage_rate = n > 0 && n <= 5 ? String(Math.round(n * 1000) / 1000) : ""; }
   if (r.review_link !== undefined) { const u = String(r.review_link ?? "").trim().slice(0, 300); out.review_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   if (r.financing_link !== undefined) { const u = String(r.financing_link ?? "").trim().slice(0, 300); out.financing_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   return out;
