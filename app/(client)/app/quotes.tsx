@@ -9,7 +9,7 @@ import { chosen, dollars, totals, type Item } from "@/lib/billing";
 import { QuoteOptions, hasOptions } from "../doc-lines";
 import { draftItems, quoteText, type Card } from "@/lib/crm";
 import { Avatar, Empty, Icon, Sheet, Spinner, ago, dateLabel, first, fmtPhone, usd, type Api, type Toast } from "./parts";
-import { FieldIcon } from "./sources";
+import { FieldIcon, Stg } from "./sources";
 import { LineEditor } from "./money";
 import { emailDoc } from "./crew";
 import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
@@ -28,7 +28,7 @@ export function quoteStatus(c: Card): QStatus | null {
   return c.quote.viewed ? "opened" : "awaiting";
 }
 const TONE: Record<QStatus, string> = { draft: "ember", awaiting: "", opened: "ink", changes: "bad", approved: "good", declined: "" };
-const CHIP: Record<QStatus, string> = { draft: "ember", awaiting: "", opened: "blue", changes: "bad", approved: "good", declined: "" };
+const STG: Record<QStatus, string> = { draft: "turn", awaiting: "booked", opened: "quoted", changes: "turn", approved: "won", declined: "lost" };
 const amountOf = (c: Card) => c.quote?.amount ?? c.value ?? 0;
 
 type Filter = "open" | "draft" | "approved" | "declined" | "all";
@@ -50,7 +50,7 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
     <PageHead title="Quotes" sub={open.length ? `${open.length} out, ${usd(open.reduce((a, r) => a + amountOf(r.c), 0))} waiting on a yes.` : "Nothing out right now."}
       actions={<button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New quote</button>} />
     <div className="dash quotes">
-      {rows.length > 0 && <Kpis items={[
+      {rows.length > 0 && <Kpis quiet items={[
         { label: "Open", value: usd(open.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${open.length} ${open.length === 1 ? "quote" : "quotes"}, follow-ups going out`, onClick: () => setF("open"), active: f === "open" },
         { label: "Your move", value: String(counts.draft + open.filter(r => r.s === "changes").length), sub: `${counts.draft} to send, ${open.filter(r => r.s === "changes").length} asked for changes`, tone: counts.draft ? "warn" : "", onClick: () => setF("draft"), active: f === "draft" },
         { label: "Approved, 30 days", value: usd(approved30.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${approved30.length} ${approved30.length === 1 ? "job" : "jobs"}`, tone: approved30.length ? "up" : "", onClick: () => setF("approved"), active: f === "approved" },
@@ -73,12 +73,12 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
       : wide ? <table className="tbl q-tbl">
         <colgroup><col style={{ width: 40 }} /><col style={{ width: 210 }} /><col /><col style={{ width: 150 }} /><col style={{ width: 200 }} /><col style={{ width: 100 }} /><col style={{ width: 110 }} /></colgroup>
         <thead><tr><th className="ck-col"><input type="checkbox" aria-label="Select all" checked={!!shown.length && shown.every(x => ticked.has(x.c.id))} onChange={e => setTicked(e.target.checked ? new Set(shown.map(x => x.c.id)) : new Set())} /></th>
-          <th><FieldIcon name="user" />Customer</th><th><FieldIcon name="ruler" />Job</th><th><FieldIcon name="sort" />Status</th><th><FieldIcon name="eye" />Viewed</th><th className="right"><FieldIcon name="dollar" />Deposit</th><th className="right"><FieldIcon name="dollar" />Total</th></tr></thead>
+          <th>Customer</th><th>Job</th><th>Status</th><th>Viewed</th><th className="right">Deposit</th><th className="right">Total</th></tr></thead>
         <tbody>{shown.map(({ c, s }) => <tr key={c.id} tabIndex={0} onClick={() => go.quote(c.id)} onKeyDown={e => { if (e.key === "Enter") go.quote(c.id); }}>
           <td className="ck-col" onClick={e => e.stopPropagation()}><input type="checkbox" aria-label={`Select ${c.name || c.phone}`} checked={ticked.has(c.id)} onChange={() => setTicked(t => { const n = new Set(t); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })} /></td>
           <td><span className="name"><Avatar name={c.name || c.phone} size="sm" /><b>{c.name || fmtPhone(c.phone)}</b></span></td>
           <td className={c.line ? "" : "faint"}>{line(c) || "No details yet"}</td>
-          <td><span className={"chipx " + CHIP[s]}>{Q_LABEL[s]}</span></td>
+          <td><Stg stage={STG[s]}>{Q_LABEL[s]}</Stg></td>
           <td className="mut">{c.quote?.views ? `${c.quote.views}x, ${ago(c.quote.lastViewed ?? c.quote.viewed)}` : c.quote?.viewed ? `Opened ${ago(c.quote.viewed)}` : c.quote?.linked ? "Not opened yet" : "Not sent"}{(s === "awaiting" || s === "opened") && c.quote?.steps ? `, ${c.quote.steps} follow-ups` : ""}</td>
           <td className="num mut">{c.quote?.deposit ? usd(c.quote.deposit) : "–"}</td>
           <td className="num"><b>{amountOf(c) ? dollars(amountOf(c)) : "–"}</b></td>

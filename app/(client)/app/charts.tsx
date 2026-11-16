@@ -51,7 +51,10 @@ export function Donut({ parts, total, label, size = 132 }: { parts: { label: str
 
 /** The site's stat box: tiles in one bordered row, a big figure, a line under it, a sparkline if there's a trend. */
 export type Kpi = { label: string; value: string; sub?: string; tone?: "up" | "down" | "warn" | ""; spark?: number[]; sparkTone?: "ink" | "good" | "ember" | "bad"; onClick?: () => void; active?: boolean };
-export function Kpis({ items }: { items: Kpi[] }) {
+/** Stat boxes. "quiet": one line of figures with hairlines between, no boxes, no sparklines (list pages). */
+export function Kpis({ items, quiet }: { items: Kpi[]; quiet?: boolean }) {
+  if (quiet) return <div className="kq">{items.map(k => { const inner = <><span className="kq-l">{k.label}</span><b className={"kq-v" + (k.tone === "down" ? " bad" : "")}>{k.value}</b>{k.sub && <small className="kq-s">{k.sub}</small>}</>;
+    return k.onClick ? <button key={k.label} type="button" className={"kq-i" + (k.active ? " on" : "")} onClick={k.onClick} aria-pressed={!!k.active}>{inner}</button> : <div key={k.label} className="kq-i">{inner}</div>; })}</div>;
   return <div className="kpis" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
     {items.map(k => { const inner = <>
       <span className="klab">{k.label}</span>

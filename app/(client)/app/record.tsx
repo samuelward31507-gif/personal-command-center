@@ -14,7 +14,7 @@ import { jobPrice } from "@/lib/service";
 import { ChangeOrders, HoursBox } from "./jobwork";
 import { PortalSheet, SignoffBox } from "./finish";
 import { ChecklistBox, PropertiesBox } from "./parity";
-import { FieldIcon, fieldIconFor } from "./sources";
+import { FieldIcon, fieldIconFor, Stg } from "./sources";
 
 /** "Remind me": a time and a note on this customer. The owner gets a text and a push when it's due. */
 export function RemindSheet({ name, current, busy, onClose, onSave, onClear }: { name: string; current: { at: string; note: string } | null; busy: boolean; onClose: () => void; onSave: (at: string, note: string) => void; onClear: () => void }) {
@@ -200,7 +200,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
     <header className="rec-h">
       <button type="button" className="btn ghost ic" onClick={onBack} aria-label="Back" title="Back (esc)"><Icon name="back" size={16} /></button>
       <Avatar name={name} size="xl" /><div className="t"><h1>{name}</h1><span>{[fmtPhone(phone), address, since ? `Customer since ${since}` : sourceLabel(source)].filter(Boolean).join(", ")}</span></div>
-      {card && <StageChip stage={card.stage} text={`${card.pastCustomer ? "Past customer" : STAGE_LABEL[card.stage]}${price && !biz.crew ? `, ${dollars(price)}` : ""}`} />}
+      {card && <Stg stage={card.pastCustomer ? "won" : card.stage}>{`${card.pastCustomer ? "Past customer" : STAGE_LABEL[card.stage]}${price && !biz.crew ? `, ${dollars(price)}` : ""}`}</Stg>}
       <div className="acts">
         {biz.canCall ? <button type="button" className="btn" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} />Call</button> : <a className="btn" href={`tel:${phone}`}><Icon name="phone" size={14} />Call</a>}
         <button type="button" className="btn" onClick={() => { setTab("activity"); setTimeout(() => ta.current?.focus(), 50); }}><Icon name="chat" size={14} />Text</button>
