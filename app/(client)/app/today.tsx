@@ -7,7 +7,7 @@ import type { Report } from "@/lib/client-reports";
 import { overdue } from "@/lib/billing";
 import { useEffect, useState } from "react";
 import { Avatar, Icon, Spinner, ago, clock, dateLabel, first, fmtPhone, secs, todayIso, usd, type Api } from "./parts";
-import { Bars, Kpis, PageHead } from "./charts";
+import { Bars, Guide, Kpis, PageHead } from "./charts";
 import { line } from "./jobs";
 import { suggestReply } from "./replies";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
@@ -100,6 +100,19 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask }: { d: Data; 
   const sent = invoices.filter(i => i.status === "sent"), owed = sent.reduce((a, i) => a + i.total - (i.paid_amount ?? 0), 0), late = sent.filter(i => overdue(i.status, i.due_on, today));
   const dateLine = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
   const [all, setAll] = useState(false);
+  const [hideSetup, setHideSetup] = useState(true);
+  useEffect(() => { try { setHideSetup(localStorage.getItem("cinder-setup-hide") === "1"); } catch { setHideSetup(false); } }, []);
+  const s0 = d.setup ?? {};
+  const setup = [
+    { title: "Texting number", text: "Calls and texts reach Cinder, and every reply comes from your business.", done: !!d.number, action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Connections</button> },
+    { title: "Your cell for alerts", text: "So the jobs that need you reach you by text.", done: s0.has_cell === "yes", action: <button type="button" className="btn sm" onClick={() => go.tab("sam")}>Ask Sam</button> },
+    { title: "Google Calendar", text: "Cinder books estimates only where you're free.", done: biz.calendar, action: d.calendar?.connectUrl ? <a className="btn sm" href={d.calendar.connectUrl} target="_blank" rel="noreferrer">Connect</a> : undefined },
+    { title: "Your prices", text: "Ballparks by text and quotes that draft themselves.", done: !!biz.priceBook, action: <button type="button" className="btn sm" onClick={go.setup}>Add prices</button> },
+    { title: "Your pay link", text: "The Pay button on every invoice opens it.", done: biz.payLink, action: <button type="button" className="btn sm" onClick={go.billing}>Add pay link</button> },
+    { title: "Google review link", text: "One text the morning after each install asks for the review.", done: biz.reviewLink, action: <button type="button" className="btn sm" onClick={() => go.tab("sam")}>Ask Sam</button> },
+    { title: "Past customers", text: "Import from Jobber or a spreadsheet so they're all in one place.", done: (d.customers ?? []).some(c => c.source === "import"), action: <button type="button" className="btn sm" onClick={go.importCustomers}>Import</button> },
+  ];
+  const setupLeft = setup.filter(x => !x.done).length;
   // The last 30 days, with the rates that matter: from the same report as the Reports tab.
   const [rep, setRep] = useState<Report | null>(null);
   useEffect(() => { let on = true; api<{ report: Report }>(`/api/app/data?p=${project}&report=30`).then(r => { if (on) setRep(r.report); }).catch(() => {}); return () => { on = false; }; }, [api, project]);
@@ -122,6 +135,8 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask }: { d: Data; 
       sub={actions.length ? `${actions.length} ${actions.length === 1 ? "thing needs" : "things need"} you, ${usd(atStake)} riding on them.` : "Nothing needs you right now."}
       actions={<><button type="button" className="find" onClick={go.find}><Icon name="search" size={14} />Find anyone or do anything<kbd>⌘K</kbd></button><button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={14} />New lead</button></>} />
     <div className="dash">
+      {setupLeft > 0 && !hideSetup && <Guide title="Finish setting up" sub={`${setupLeft} ${setupLeft === 1 ? "thing" : "things"} left before Cinder runs your front office on its own. Each one takes a minute.`} compact count={{ done: setup.length - setupLeft, total: setup.length }} steps={setup.filter(x => !x.done)}
+        side={<div className="setup-side"><b>{Math.round(((setup.length - setupLeft) / setup.length) * 100)}%</b><small>set up</small><button type="button" className="link" onClick={() => { setHideSetup(true); try { localStorage.setItem("cinder-setup-hide", "1"); } catch { /* private mode */ } }}>Hide for now</button></div>} />}
       <Kpis items={[
         { label: "Won, last 30 days", value: usd(rep?.now.wonValue ?? L.wonValue), sub: rep ? `${rep.now.won} ${rep.now.won === 1 ? "job" : "jobs"} from Cinder leads` : `${L.won} jobs`, tone: rep && rep.now.wonValue > rep.before.wonValue ? "up" : "", onClick: () => go.tab("numbers") },
         { label: "Quotes out", value: usd(L.chasingValue), sub: L.chasing ? `${L.chasing} waiting, Cinder following up` : "Nothing waiting", onClick: () => go.tab("quotes") },

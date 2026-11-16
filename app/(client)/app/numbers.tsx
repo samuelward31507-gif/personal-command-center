@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Period, Report, ReportNumbers } from "@/lib/client-reports";
 import { Avatar, Spinner, ago, secs, short, usd, type Api, type Toast } from "./parts";
-import { Bars, Donut, Kpis, PageHead, type Kpi } from "./charts";
+import { Bars, Donut, Guide, Kpis, PageHead, type Kpi } from "./charts";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : null);
@@ -43,11 +43,18 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
   const ready = !!(r && n && b && R && B);
 
   return <>
-    <PageHead title="Reports" sub={ready ? `${usd(n!.wonValue)} won from ${n!.leads} leads in ${PERIOD[days]}.` : `How ${PERIOD[days]} went.`}
+    <PageHead title="Reports" sub={ready && n!.leads ? `${usd(n!.wonValue)} won from ${n!.leads} leads in ${PERIOD[days]}.` : ready ? "No leads yet in this period." : `How ${PERIOD[days]} went.`}
       actions={<div className="seg" role="tablist" aria-label="Period">{([30, 90, 365] as Period[]).map(p => <button key={p} type="button" role="tab" aria-selected={days === p} className={days === p ? "on" : ""} onClick={() => setDays(p)}>{p === 365 ? "12 months" : `${p} days`}</button>)}</div>} />
     <div className="dash rep2">
       {err ? <div className="panel"><div className="panel-b"><p className="fine" style={{ color: "var(--bad)", padding: "12px 0" }}>{err} <button type="button" className="link" onClick={() => void load(days)}>Try again</button></p></div></div>
       : !ready ? <div className="panel"><div className="panel-b skel-rows" style={{ padding: 18 }}><i className="skel" /><i className="skel" /><i className="skel" /></div></div>
+      : n!.leads === 0 && b!.leads === 0 && !ser.length ? <Guide title="Your numbers start with your first lead"
+        sub="Book rate, close rate, average job, speed to lead, money collected and where the work comes from, all worked out for you and compared with the period before. Nothing to set up."
+        steps={[
+          { title: "Get leads flowing to Cinder", text: "Your number, website chat, form or booking page. Settings shows what's connected.", action: <button type="button" className="btn sm" onClick={() => go.tab("system")}>Connections</button> },
+          { title: "Mark jobs won or lost", text: "With a reason when it's lost, so you see what's costing you jobs." },
+          { title: "Record payments", text: "So collected money and days to get paid are real numbers.", action: <button type="button" className="btn sm" onClick={() => go.tab("invoices")}>Money</button> },
+        ]} />
       : <>
         <Kpis items={[
           { label: "Won", value: usd(n!.wonValue), ...delta(n!.wonValue, b!.wonValue), spark: ser.map(p => p.wonValue), sparkTone: "good" },

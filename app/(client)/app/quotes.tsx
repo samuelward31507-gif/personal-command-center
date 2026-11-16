@@ -9,7 +9,7 @@ import { dollars, totals, type Item } from "@/lib/billing";
 import { draftItems, quoteText, type Card } from "@/lib/crm";
 import { Avatar, Empty, Icon, Sheet, Spinner, ago, dateLabel, first, fmtPhone, usd, type Api, type Toast } from "./parts";
 import { LineEditor } from "./money";
-import { Kpis, PageHead } from "./charts";
+import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
 import { line, LostPicker } from "./jobs";
 import type { Biz, Data, Go } from "./types";
 
@@ -29,7 +29,7 @@ const CHIP: Record<QStatus, string> = { draft: "ember", awaiting: "", opened: "b
 const amountOf = (c: Card) => c.quote?.amount ?? c.value ?? 0;
 
 type Filter = "open" | "draft" | "approved" | "declined" | "all";
-export function QuotesScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean }) {
+export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: boolean; biz: Biz }) {
   const [f, setF] = useState<Filter>("open"), [picking, setPicking] = useState(false), [q, setQ] = useState("");
   const rows = useMemo(() => (d.board ?? []).map(c => ({ c, s: quoteStatus(c) })).filter((r): r is { c: Card; s: QStatus } => !!r.s)
     .sort((a, b) => order(a.s) - order(b.s) || b.c.at.localeCompare(a.c.at)), [d.board]);
@@ -46,13 +46,20 @@ export function QuotesScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean }
     <PageHead title="Quotes" sub={open.length ? `${open.length} out, ${usd(open.reduce((a, r) => a + amountOf(r.c), 0))} waiting on a yes.` : "Nothing out right now."}
       actions={<button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New quote</button>} />
     <div className="dash quotes">
-      <Kpis items={[
+      {rows.length > 0 && <Kpis items={[
         { label: "Open", value: usd(open.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${open.length} ${open.length === 1 ? "quote" : "quotes"}, Cinder follows up`, onClick: () => setF("open"), active: f === "open" },
         { label: "Your move", value: String(counts.draft + open.filter(r => r.s === "changes").length), sub: `${counts.draft} to send, ${open.filter(r => r.s === "changes").length} asked for changes`, tone: counts.draft ? "warn" : "", onClick: () => setF("draft"), active: f === "draft" },
         { label: "Approved, 30 days", value: usd(approved30.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${approved30.length} ${approved30.length === 1 ? "job" : "jobs"}`, tone: approved30.length ? "up" : "", onClick: () => setF("approved"), active: f === "approved" },
         { label: "Approval rate, 90 days", value: rate == null ? "–" : `${rate}%`, sub: "approved of sent" },
-      ]} />
-      <section className="panel">
+      ]} />}
+      {!rows.length && <Guide title="Quotes that close themselves" sub="Write the quote once. Cinder texts it as a link the customer approves on their phone, then follows up on day 2, 5, 10 and 21 until they answer."
+        steps={[
+          { title: "Add your prices", text: "With a price book, every quote starts drafted from the job details, and leads get a ballpark by text.", done: !!biz.priceBook, action: <button type="button" className="btn sm" onClick={go.setup}>Add prices</button> },
+          { title: "Book an estimate", text: "Cinder books them on its own. You can add one by hand from Jobs too.", done: (d.board ?? []).some(c => c.stage !== "new"), action: <button type="button" className="btn sm" onClick={() => go.tab("calendar")}>Calendar</button> },
+          { title: "Write the first quote", text: "Lines, what's included and a deposit, with a live preview of what they'll see.", action: <button type="button" className="btn sm ink" onClick={() => setPicking(true)}>New quote</button> },
+        ]}
+        side={<MiniDoc kind="quote" business={biz.business} href="/q/example" />} />}
+      {rows.length > 0 && <section className="panel">
       <div className="list-tools panel-tools">
         <div className="views" role="tablist" aria-label="Show">{([["open", "Open"], ["draft", "Drafts"], ["approved", "Approved"], ["declined", "Declined"], ["all", "All"]] as const).map(([k, l]) =>
           <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}{counts[k] ? <em>{counts[k]}</em> : null}</button>)}</div>
@@ -73,7 +80,7 @@ export function QuotesScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean }
       : <div>{shown.map(({ c, s }) => <button key={c.id} type="button" className="jrow" onClick={() => go.quote(c.id)}>
           <span style={{ minWidth: 0 }}><b>{c.name || fmtPhone(c.phone)}</b><small>{line(c) || "No details yet"}</small></span>
           <span className="r"><b>{amountOf(c) ? usd(amountOf(c)) : "–"}</b><em className={s === "changes" ? "red" : s === "approved" ? "green" : ""}>{Q_LABEL[s]}</em></span></button>)}</div>}
-      </section>
+      </section>}
     </div>
     {picking && <Sheet title="New quote" sub="Who is it for?" onClose={() => setPicking(false)}>
       {cand.length ? <div className="pick">{cand.map(c => <button key={c.id} type="button" className="row" onClick={() => { setPicking(false); go.quote(c.id); }}>
