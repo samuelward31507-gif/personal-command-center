@@ -8,7 +8,7 @@ import { jobPrice } from "@/lib/service";
 import { LOST_REASONS, STAGE_LABEL, jobProfit, type Card, type Stage } from "@/lib/crm";
 import { crewName, crewTag } from "./crew";
 import { Avatar, Empty, Icon, Menu, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
-import { FieldIcon } from "./sources";
+import { Chip, FieldIcon } from "./sources";
 import { Inspector } from "./record";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 import { Guide, Kpis, PageHead } from "./charts";
@@ -111,7 +111,8 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
   const [sel, setSel] = useState<string | null>(null);
   const [who, setWho] = useState<"all" | Who>("all");
   const [drag, setDrag] = useState<string | null>(null), [over, setOver] = useState<Lane | null>(null);
-  const [losing, setLosing] = useState<Card | null>(null), [busy, setBusy] = useState(false);
+  const [losing, setLosing] = useState<Card | null>(null), [busy, setBusy] = useState(false), [ticked, setTicked] = useState<Set<string>>(new Set());
+  const tick = (id: string) => setTicked(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const today = todayIso();
   // Open: every job still in motion, won jobs too until they are paid.
   const active = (c: Card) => isOpen(c) || (c.stage === "won" && !c.pastCustomer && moveOf(c, today).who !== "closed");
@@ -200,24 +201,28 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
             { title: "Add a lead by hand", text: "Someone who called your own cell or stopped you on a job.", action: <button type="button" className="btn sm ink" onClick={go.addLead}>New lead</button> },
           ]} />
         : !shown.length ? <Empty title="Nothing matches" text="Try another view, source or spelling." action={<button type="button" className="btn" onClick={() => { setQ(""); setSrc("any"); setLane("all"); }}>Clear filters</button>} />
-        : wide && mode === "board" ? <Board cards={view === "open" ? everyone.filter(c => src === "any" || c.source === src) : shown} sel={sel} drag={drag} over={over} setDrag={setDrag} setOver={setOver} move={move} open={open} />
+        : wide && mode === "board" ? <Board cards={view === "open" ? everyone.filter(c => src === "any" || c.source === src) : shown} sel={sel} drag={drag} over={over} setDrag={setDrag} setOver={setOver} move={move} open={open} who={cell => crewName(d, cell)} />
         : wide ? <>
           <div className="tbl-wrap"><table className={"tbl jobs-tbl" + (sel ? " compact" : "")}>
-            <colgroup><col style={{ width: 200 }} /><col style={{ width: 262 }} /><col /><col style={{ width: 96 }} /><col className="c2" style={{ width: 104 }} /><col style={{ width: 76 }} /><col style={{ width: 140 }} /><col className="c2" style={{ width: 104 }} /></colgroup>
-            <thead><tr><th><FieldIcon name="user" />Customer</th><th><FieldIcon name="fwd" />Next step</th><th><FieldIcon name="ruler" />Job</th><th className="right"><FieldIcon name="dollar" />Value</th><th className="right c2" title="Price minus the costs you logged on the job"><FieldIcon name="bars" />Profit</th><th className="right"><FieldIcon name="clock" />Waiting</th><th><FieldIcon name="sort" />Stage</th><th className="c2"><FieldIcon name="link" />Came from</th></tr></thead>
+            <colgroup><col style={{ width: 40 }} /><col style={{ width: 200 }} /><col style={{ width: 262 }} /><col /><col style={{ width: 96 }} /><col className="c2" style={{ width: 104 }} /><col style={{ width: 76 }} /><col style={{ width: 140 }} /><col className="c2" style={{ width: 104 }} /></colgroup>
+            <thead><tr><th className="ck-col"><input type="checkbox" aria-label="Select all" checked={!!shown.length && shown.every(c => ticked.has(c.id))} onChange={e => setTicked(e.target.checked ? new Set(shown.map(c => c.id)) : new Set())} /></th><th><FieldIcon name="user" />Customer</th><th><FieldIcon name="fwd" />Next step</th><th><FieldIcon name="ruler" />Job</th><th className="right"><FieldIcon name="dollar" />Value</th><th className="right c2" title="Price minus the costs you logged on the job"><FieldIcon name="bars" />Profit</th><th className="right"><FieldIcon name="clock" />Waiting</th><th><FieldIcon name="sort" />Stage</th><th className="c2"><FieldIcon name="link" />Came from</th></tr></thead>
             <tbody>{groups.map(g => <Fragment key={g.who}>
-              {grouped && <tr className="grp-row"><td colSpan={8}><b>{WHO_LABEL[g.who]}</b><span>{g.cards.length} {g.cards.length === 1 ? "job" : "jobs"}{g.value ? `, ${usd(g.value)}` : ""}</span></td></tr>}
+              {grouped && <tr className="grp-row"><td colSpan={9}><b>{WHO_LABEL[g.who]}</b><span>{g.cards.length} {g.cards.length === 1 ? "job" : "jobs"}{g.value ? `, ${usd(g.value)}` : ""}</span></td></tr>}
               {g.cards.map(c => { const n = nextUp(c, today), m = moveOf(c, today), name = c.name || fmtPhone(c.phone), town = city(c), l = laneOf(c), days = daysIn(c); return <tr key={c.id} data-row={c.id} tabIndex={0} className={(sel === c.id ? "sel" : "") + (m.who === "you" ? " mine" : "")} aria-selected={sel === c.id} onClick={() => open(c.id)} onDoubleClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
+                <td className="ck-col" onClick={e => e.stopPropagation()}><input type="checkbox" aria-label={`Select ${name}`} checked={ticked.has(c.id)} onChange={() => tick(c.id)} /></td>
                 <td><span className="name"><Avatar name={name} size="sm" /><span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}><b>{name}</b>{town && <span className="faint">, {town}</span>}</span>{c.crewMember && <span className="ctag" title={`${crewName(d, c.crewMember)} is on this job`}>{crewTag(d, c.crewMember)}</span>}</span></td>
                 <td><span className="nxt"><span className={"next " + n.tone}>{n.text}</span>{m.verb && <button type="button" className="btn sm" onClick={e => { e.stopPropagation(); m.run(go); }}>{m.verb}</button>}</span></td>
                 <td className={c.line ? "mut" : "faint"}>{line(c) || (c.notes ? c.notes.slice(0, 48) : "No details yet")}</td>
                 <td className={"num" + (c.value ? "" : " mut")}>{c.value ? usd(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "–"}</td>
                 {(() => { const pf = c.stage === "won" ? jobProfit(jobPrice(c), c.costs) : null; return <td className={"num c2" + (pf ? "" : " faint")} title={pf ? `${usd(pf.cost)} in costs` : c.stage === "won" ? "Log costs on the job to see profit" : undefined}>{pf ? <><span style={pf.profit < 0 ? { color: "var(--bad)" } : undefined}>{usd(pf.profit)}</span> <small className="mut">{pf.margin}%</small></> : "–"}</td>; })()}
                 <td className={"num" + (stale(c, days) ? "" : " mut")} style={stale(c, days) ? { color: "var(--ember)" } : undefined}>{l === "done" || l === "lost" ? "–" : daysLabel(days)}</td>
-                <td><span className={"stage " + (l === "done" ? "won" : l)}><i />{LANE_LABEL[l]}</span></td>
+                <td><Chip tone={l === "won" || l === "done" ? "green" : l === "lost" ? "red" : l === "quoted" ? "violet" : l === "booked" ? "blue" : "grey"}>{LANE_LABEL[l]}</Chip></td>
                 <td className="mut c2">{sourceLabel(c.source)}</td>
               </tr>; })}
             </Fragment>)}</tbody>
+            {(() => { const list = ticked.size ? shown.filter(c => ticked.has(c.id)) : shown, sum = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
+              const prof = list.reduce((a, c) => { const p = c.stage === "won" ? jobProfit(jobPrice(c), c.costs) : null; return a + (p?.profit ?? 0); }, 0);
+              return <tfoot><tr><td /><td><b>{list.length}</b>{ticked.size ? "selected" : "count"}</td><td /><td /><td className="num"><b>{usd(sum)}</b>sum</td><td className="num c2">{prof ? <><b>{usd(prof)}</b>sum</> : null}</td><td /><td /><td className="c2" /></tr></tfoot>; })()}
           </table></div>
           <div className="pane-foot"><span>{shown.length} of {base.length}</span><span className="hint"><span><kbd>j</kbd><kbd>k</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>c</kbd> new lead</span></span></div>
         </>
@@ -248,7 +253,7 @@ function PhoneList({ cards, open }: { cards: Card[]; open: (id: string) => void 
   </section>)}</div>;
 }
 
-function Board({ cards, sel, drag, over, setDrag, setOver, move, open }: { cards: Card[]; sel: string | null; drag: string | null; over: Lane | null; setDrag: (v: string | null) => void; setOver: (f: Lane | null | ((o: Lane | null) => Lane | null)) => void; move: (id: string, s: Lane) => void; open: (id: string) => void }) {
+function Board({ cards, sel, drag, over, setDrag, setOver, move, open, who }: { who: (cell: string) => string; cards: Card[]; sel: string | null; drag: string | null; over: Lane | null; setDrag: (v: string | null) => void; setOver: (f: Lane | null | ((o: Lane | null) => Lane | null)) => void; move: (id: string, s: Lane) => void; open: (id: string) => void }) {
   const today = todayIso();
   return <div className="board">{LANES.map(l => { const list = cards.filter(c => laneOf(c) === l); const total = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
     return <section key={l} className={"col-b" + (over === l ? " over" : "")} aria-label={LANE_LABEL[l]}
@@ -256,8 +261,10 @@ function Board({ cards, sel, drag, over, setDrag, setOver, move, open }: { cards
       onDrop={e => { e.preventDefault(); setOver(null); if (drag) move(drag, l); setDrag(null); }}>
       <h2><span className={"stage " + (l === "done" ? "won" : l)}><i /></span>{LANE_LABEL[l]}<em>{list.length}</em><b>{total ? short(total) : ""}</b></h2>
       <div className="cards">{list.length ? list.map(c => { const n = nextUp(c, today), name = c.name || fmtPhone(c.phone), days = daysIn(c); return <button key={c.id} type="button" className={"jcard" + (sel === c.id ? " sel" : "")} draggable onDragStart={() => setDrag(c.id)} onDragEnd={() => { setDrag(null); setOver(null); }} onClick={() => open(c.id)}>
-        <span className="n"><span>{name}</span><b>{priceOf(c)}</b></span>
-        <span className="l">{line(c) || (c.notes ? c.notes.slice(0, 60) : "No job details yet")}</span>
+        <span className="n"><Avatar name={name} size="sm" /><span>{name}</span></span>
+        <span className="kv-r"><Icon name="dollar" size={12} /><b>{priceOf(c) || "–"}</b></span>
+        <span className="kv-r"><Icon name="ruler" size={12} /><span>{line(c) || (c.notes ? c.notes.slice(0, 60) : "No job details yet")}</span></span>
+        {(c.crewMember || c.invoice?.status === "paid") && <span className="kv-r"><Icon name={c.invoice?.status === "paid" ? "check" : "user"} size={12} /><span>{c.invoice?.status === "paid" ? "Paid" : `Crew: ${who(c.crewMember!)}`}</span></span>}
         <span className="f"><span className={"next " + n.tone}><Icon name={n.icon} size={12} />{n.text}</span>{l !== "done" && l !== "lost" && <span className={stale(c, days) ? "stale" : "faint"}>{days}d</span>}</span>
       </button>; }) : <p className="none">{l === "new" ? "New leads land here." : l === "booked" ? "Estimates on the calendar." : l === "quoted" ? "Quotes being chased." : l === "won" ? "Won, not paid yet." : l === "done" ? "Paid. Mark the invoice paid to land here." : "Lost, with the reason."}</p>}</div>
     </section>; })}</div>;

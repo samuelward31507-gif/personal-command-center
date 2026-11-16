@@ -113,7 +113,7 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
 
 // ---------- The app ----------
 type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | { kind: "quote"; id: string } | null;
-const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam"];
+const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam", "calendar"];
 const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Home", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "quotes", l: "Quotes", ic: "quote", n: "4" }, { k: "calendar", l: "Calendar", ic: "cal", n: "5" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Reports", ic: "bars", n: "6" }];
 
 export default function CinderApp() {
@@ -203,6 +203,11 @@ export default function CinderApp() {
   const owed = (d.invoices ?? []).filter(i => i.status === "sent").length;
   const crew = d.role === "crew";
   const sections = crew ? SECTIONS.filter(s => s.k === "inbox" || s.k === "jobs" || s.k === "calendar") : SECTIONS;
+  const top = sections.filter(s => s.k === "today" || s.k === "inbox" || s.k === "calendar");
+  const records: { k: Tab; l: string; ic: string; obj: string }[] = crew ? [{ k: "jobs", l: "Jobs", ic: "jobs", obj: "jobs" }]
+    : [{ k: "customers", l: "Customers", ic: "users", obj: "customers" }, { k: "jobs", l: "Jobs", ic: "jobs", obj: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote", obj: "quotes" },
+       { k: "invoices", l: "Invoices", ic: "invoice", obj: "invoices" }, { k: "plans", l: "Plans", ic: "cal", obj: "plans" }];
+  const isOn = (k: Tab) => tab === k && !open;
   const signOut = async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null); setState("out"); };
   const reload = () => load(project, tab);
   const invNow = inv ? ((d.invoices ?? []).find(i => i.id === inv) ?? null) : null;
@@ -214,9 +219,9 @@ export default function CinderApp() {
 
   const counts: Partial<Record<Tab, number>> = { inbox: L.needs, calendar: due.length, invoices: owed };
   const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = crew ? [{ k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }]
-    : [{ k: "today", l: "Home", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
+    : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote" }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
   const phoneTab: Tab = MORE.includes(tab) ? "more" : tab;
-  const active = (k: Tab) => (tab === k || (k === "jobs" && (tab === "customers" || tab === "plans"))) && !open;
+  const active = (k: Tab) => tab === k && !open;
 
   let page: React.ReactNode;
   if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
@@ -250,14 +255,19 @@ export default function CinderApp() {
       </button>
       <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} />Search<kbd>⌘K</kbd></button>
       <div className="rail-grp">
-        {sections.map(s => <button key={s.k} type="button" className={"ri" + (active(s.k) ? " on" : "")} aria-current={active(s.k) ? "page" : undefined} onClick={() => goTab(s.k)}>
-          <Icon name={s.ic} size={15} />{s.l}{counts[s.k] ? <em className={s.k === "inbox" ? "hot" : ""}>{counts[s.k]}</em> : null}</button>)}
+        {top.map(s => <button key={s.k} type="button" className={"ri" + (active(s.k) ? " on" : "")} aria-current={active(s.k) ? "page" : undefined} onClick={() => goTab(s.k)}>
+          <Icon name={s.ic} size={16} />{s.k === "today" ? "Today" : s.l}{counts[s.k] ? <em className={s.k === "inbox" ? "hot" : ""}>{counts[s.k]}</em> : null}</button>)}
       </div>
-      {(tab === "jobs" || tab === "plans") && !open && <div className="rail-grp views">
+      <div className="rail-lbl">Records</div>
+      <div className="rail-grp">
+        {records.map(r => <button key={r.k} type="button" className={"ri" + (isOn(r.k) ? " on" : "")} aria-current={isOn(r.k) ? "page" : undefined} onClick={() => goTab(r.k)}>
+          <span className={"obj " + r.obj}><Icon name={r.ic} size={12} /></span>{r.l}{counts[r.k] ? <em>{counts[r.k]}</em> : null}</button>)}
+        {!crew && <button type="button" className={"ri" + (active("numbers") ? " on" : "")} onClick={() => goTab("numbers")}><span className="obj reports"><Icon name="bars" size={12} /></span>Reports</button>}
+      </div>
+      {tab === "jobs" && !open && <div className="rail-grp views">
         <div className="rail-lbl">Views</div>
         {([["open", "Open", jobCounts.open], ["won", "Won", jobCounts.won], ["all", "Everyone", jobCounts.all]] as const).map(([k, l, n]) =>
           <button key={k} type="button" className={"ri" + (tab === "jobs" && jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); if (tab !== "jobs") goTab("jobs"); }}>{l}<em>{n}</em></button>)}
-        {!crew && <button type="button" className={"ri" + (tab === "plans" ? " on" : "")} onClick={() => goTab("plans")}>Service plans<em>{(d.plans ?? []).filter(p => p.status === "active").length || ""}</em></button>}
       </div>}
       <div className="rail-foot">
         {d.setup?.show_powered === "yes" && <a className="powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by <Wordmark className="pw-mark" /></a>}
@@ -288,6 +298,7 @@ export default function CinderApp() {
 // ---------- More (phone) ----------
 function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
   const items: { k: Tab; l: string; s: string; ic: string; n?: number }[] = [
+    { k: "calendar", l: "Calendar", s: "Estimates, installs and visits", ic: "cal" },
     { k: "invoices", l: "Money", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
     { k: "numbers", l: "Reports", s: "What came in and what it made", ic: "bars" },
     { k: "customers", l: "Everyone", s: `${d.customers?.length ?? 0} people`, ic: "users" },

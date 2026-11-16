@@ -7,8 +7,8 @@
 .pj-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .pj-top strong { font-size: 15.5px; font-weight: 600; color: #121417; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pj-top .project-status { font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 999px; background: var(--mc-raised) !important; color: #31353b !important; }
-.pj-top .status-blocked { background: #f1f1ef !important; color: #a02b17 !important; }
-.pj-top .status-completed { background: #f1f1ef !important; color: #181a1e !important; }
+.pj-top .status-blocked { background: #f4f5f6 !important; color: #a02b17 !important; }
+.pj-top .status-completed { background: #f4f5f6 !important; color: #181a1e !important; }
 .pj-client { font-size: 13.5px; color: #31353b; }
 .pj-service { font-size: 13px; color: #575f6b; }
 .pj-meta { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12.5px; color: #575f6b; font-variant-numeric: tabular-nums; }

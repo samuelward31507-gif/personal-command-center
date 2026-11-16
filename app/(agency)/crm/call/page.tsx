@@ -11,6 +11,7 @@ import { demoText, smsHref, nicheFor } from "@/lib/sms-templates";
 import { openerFor } from "@/lib/openers";
 import { SCRIPTS, CLOSE, VOICEMAIL, GATEKEEPER, fillLine, type Track } from "@/lib/call-playbook";
 import { reportSection } from "@/lib/business-audit";
+import AuditCard from "../../ui/audit-card";
 import { suggestOffer } from "@/lib/offers";
 import { offersFrom } from "@/lib/workspace";
 import { useWorkspace } from "../../use-workspace";
@@ -450,6 +451,8 @@ export default function CallModePage() {
             {contact.phone && <a className="u-btn u-btn-light dl-demo-text" href={smsHref(contact.phone, demoText({ firstName: playFirst, company: contact.company, niche: track === "detailing" ? "detailing" : nicheFor(contact.company, contact.notes, contact.niche), settingsLink: wsp.demoLink }).body)} title="Opens Messages with the demo clip filled in" onClick={e => { const body = decodeURIComponent((e.currentTarget.getAttribute("href") ?? "").split("body=")[1] ?? ""); void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: contact.id, direction: "outbound", body }) }).catch(() => {}); }}>Text the demo <kbd>D</kbd></a>}
           </div>
         </div>
+
+        {audit !== undefined && <AuditCard content={audit?.content} auditId={audit?.id} contactId={contact.id} />}
 
         <div className="dl-history">
           <span><b>Last touch</b>{last}</span>

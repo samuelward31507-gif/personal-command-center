@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { CinderMark, CINDER_MONO } from "./cinder-brand";
+import { BrandWordmark, CinderMark, CINDER_MONO } from "./cinder-brand";
 import CommandBar from "./command-bar";
 import { applyAccent, useWorkspace } from "./use-workspace";
 import { Logo } from "./ui/logo";
@@ -137,12 +137,9 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Navigation">
       <div className="cx-top">
         <Link href="/crm/needs-you" className="cx-ws" onClick={() => setMobileOpen(false)} title={wsName}>
-          {ws.logoUrl
-            // eslint-disable-next-line @next/next/no-img-element
-            ? <img src={ws.logoUrl} alt="" className="cx-ws-mark is-img" />
-            : custom ? <span className="cx-ws-mark is-text">{wsName.trim().charAt(0).toUpperCase()}</span>
-            : <span className="cx-ws-mark"><CinderMark ring={CINDER_MONO} ember={CINDER_MONO} /></span>}
-          <span className="cx-label cx-ws-name">{wsName}</span>
+          {collapsed
+            ? (custom ? <span className="cx-ws-mark is-text">{wsName.trim().charAt(0).toUpperCase()}</span> : <span className="cx-ws-mark"><CinderMark ring={CINDER_MONO} ember={CINDER_MONO} /></span>)
+            : <BrandWordmark name={ws.businessName} logoUrl={ws.logoUrl} className="cx-logo" mono fallbackTitle="Cinder" />}
         </Link>
         <button type="button" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
           <Icon name="rail" />

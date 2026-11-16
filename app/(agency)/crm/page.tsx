@@ -1,6 +1,7 @@
 "use client";
 import { Logo, Pill, toneForStatus } from "../ui/logo";
 import { DomainChip, FavButton, Nudge, daysSince } from "../ui/parts";
+import AuditCard from "../ui/audit-card";
 import { ThIcon } from "../ui/th-icons";
 import ContactDeals from "./contact-deals";
 import ProspectReportCard from "./prospect-report-card";
@@ -76,7 +77,7 @@ export default function ContactsPage(){
  const href=(v:string,base="")=>v.startsWith("http")?v:"https://"+base+v.replace(/^@/,"");
  return <div className="u-page ct-page" role="region" aria-label="Contacts">
   <div className="u-head">
-   <h1 className="u-title">Prospects{contacts.length?<span className="u-dim"> {counts.todo} to call, {calledToday} called today.</span>:null}</h1>
+   <h1 className="u-title">Prospects{contacts.length?<span className="u-dim"> {counts.todo} to call, {calledToday} called today</span>:null}</h1>
    <div className="u-head-actions">
     <button className="u-btn u-btn-bare" onClick={exportCsv} disabled={!contacts.length}>Export</button>
     <button className="u-btn" onClick={()=>setShowImport(true)}>Import</button>
@@ -137,6 +138,7 @@ export default function ContactsPage(){
     {touchedToday(current)?<p className="u-flash" role="status" style={{marginTop:16}}>Called today at {timeText(current.lastTouchAt||"")}, {outcomeText(current.lastTouchOutcome).toLowerCase()}. Don&apos;t call again unless they asked.</p>:null}
     {(()=>{const facts=[current.niche?current.niche+" business":"",current.location?"in "+current.location:""].filter(Boolean).join(" ");const last=current.lastNote||current.notes?.split("\n")[0]||"";const s=[facts?facts.charAt(0).toUpperCase()+facts.slice(1)+".":"",last?"Last note: "+last.slice(0,140)+(last.length>140?"…":""):""].filter(Boolean).join(" ");return s?<p className="rp-sum">{s}</p>:null})()}
     {!touchedToday(current)&&(()=>{const d=daysSince(current.lastTouchAt);if(d===null)return <Nudge action={current.phone?"Call":undefined} onAction={()=>callContact(current)}>You haven&apos;t talked yet.</Nudge>;if(current.nextFollowUp&&current.nextFollowUp<=today())return <Nudge tone="warn" action={current.phone?"Call":undefined} onAction={()=>callContact(current)}>Follow-up is due{current.nextFollowUp<today()?" since "+dateLabel(current.nextFollowUp).replace(/, \d{4}$/,""):" today"}.</Nudge>;return d>=7?<Nudge tone="warn" action={current.phone?"Call":undefined} onAction={()=>callContact(current)}>{d} days since you last talked.</Nudge>:null})()}
+    {!auditLoading&&<AuditCard content={latestAudit?.content} auditId={latestAudit?.id} contactId={current.id} compact/>}
     <div className="rp-tabs" role="tablist" aria-label="Record">
      {([["activity","Activity",activities.length],["fields","Details",null],["work","Deals & research",null]] as const).map(([k,l,n])=><button key={k} type="button" role="tab" aria-selected={tab===k} className={tab===k?"is-on":""} onClick={()=>setTab(k)}>{l}{n?<span>{n}</span>:null}</button>)}
     </div>

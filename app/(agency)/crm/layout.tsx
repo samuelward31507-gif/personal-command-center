@@ -3,7 +3,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import "./crm-shell.css";
 import CinderSidebar from "../cinder-sidebar";
 import BookingAlerts from "./booking-alerts";
 
@@ -48,7 +47,7 @@ function CrmLayoutContent({ children }: { children: React.ReactNode }) {
       <CinderSidebar activeKey={view} mode="crm" pathname={pathname} />
       <section className="main-panel crm-shell-main">
         <header className="topbar">
-          <div className="breadcrumbs"><Link href="/crm/needs-you">Cinder</Link><span className="breadcrumb-slash">/</span><strong>{title}</strong></div>
+          <div className="breadcrumbs"><strong>{title}</strong></div>
           
         </header>
         {children}

@@ -153,12 +153,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="set-page" style={{ maxWidth: 1040, margin: "0 auto", color: "var(--u-text)" }}>
-
-      <section style={{ marginTop: 20, maxWidth: 720 }}>
-        <h1 className="set-title">Settings</h1>
-        <p style={{ color:"#4c525c", lineHeight: 1.65, fontSize: 14 }}>Your business details, prices and goal, plus the jobs Cinder runs for you.</p>
-      </section>
+    <main className="u-page set-page">
+      <div className="u-head"><h1 className="u-title">Settings<span className="u-dim">Business details, prices, your goal and the jobs Cinder runs</span></h1></div>
 
       {error && <p role="alert" style={{ marginTop: 20, padding: 12, borderRadius: 8, background:"#f6ecec", color:"#a31414", fontSize: 13 }}>{error}</p>}
 

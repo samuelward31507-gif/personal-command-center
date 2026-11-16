@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   icons: { icon: "/app-icon-192.png", apple: "/app-icon-180.png" },
   robots: { index: false, follow: false },
 };
-export const viewport: Viewport = { themeColor: "#f6f6f4", width: "device-width", initialScale: 1, viewportFit: "cover" };
+export const viewport: Viewport = { themeColor: "#ffffff", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return children;

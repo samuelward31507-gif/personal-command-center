@@ -88,7 +88,7 @@ export function Avatar({ name, size }: { name: string; size?: "sm" | "lg" | "xl"
   const t = AV_TINTS[h % AV_TINTS.length];
   return <span className={"av" + (size ? " " + size : "")} aria-hidden="true" style={{ background: t[0], color: t[1], borderColor: "transparent" }}>{initials(name)}</span>;
 }
-const AV_TINTS = [["#f3e3dc", "#9a4a2c"], ["#e1ecf6", "#2d5f8a"], ["#e4f1e8", "#2f7350"], ["#efe6f4", "#6b3f86"], ["#f6efd9", "#86651c"], ["#e3eef0", "#2f6b72"], ["#f4e2e6", "#8c3a4f"], ["#e8e8ee", "#4b4f63"]];
+const AV_TINTS = [["#3b82f6", "#fff"], ["#22a06b", "#fff"], ["#f08c3a", "#fff"], ["#8b5cf6", "#fff"], ["#ef5a4c", "#fff"], ["#1aa3b8", "#fff"]];
 export function StageChip({ stage, small, text }: { stage: Stage | "late"; small?: boolean; text?: string }) {
   return <span className={`stage ${stage}${small ? " sm" : ""}`}><i />{text ?? (stage === "late" ? "Late" : STAGE_LABEL[stage])}</span>;
 }

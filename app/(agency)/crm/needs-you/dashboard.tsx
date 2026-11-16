@@ -262,7 +262,7 @@ export default function Dashboard() {
     <div className="u-head">
       <h1 className="u-title">Today<span className="u-dim">{now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</span></h1>
       <div className="u-head-actions">
-        {upcoming.length > 0 && <Link className="u-btn u-btn-bare" href="/crm/calendar">{upcoming.length} meeting{upcoming.length === 1 ? "" : "s"}</Link>}
+        {upcoming.length > 0 && <Link className="u-btn u-btn-bare td-hide-sm" href="/crm/calendar">{upcoming.length} meeting{upcoming.length === 1 ? "" : "s"}</Link>}
         <Link className="u-btn u-btn-light" href="/crm/call">Start calling <kbd>C</kbd></Link>
       </div>
     </div>

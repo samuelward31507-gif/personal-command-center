@@ -76,7 +76,7 @@ body .dl-call .dl-sep { width: 1px; height: 24px; align-self: center; margin: 0 
 body .dl-call .dl-out { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 9px !important; border: 1px solid var(--u-line) !important; background: var(--u-raise) !important; color: var(--u-text) !important; font: 500 13px/1 var(--u-text-font) !important; cursor: pointer; }
 body .dl-call .dl-out:hover:not(:disabled) { border-color: #bbbec2 !important; background: var(--u-hover) !important; }
 body .dl-call .dl-out:disabled { opacity: .5; }
-body .dl-call .dl-out.is-win { background: var(--u-text) !important; border-color: var(--u-text) !important; color: #f6f6f4 !important; font-weight: 600 !important; }
+body .dl-call .dl-out.is-win { background: var(--u-text) !important; border-color: var(--u-text) !important; color: #fafafb !important; font-weight: 600 !important; }
 body .dl-call .dl-out.is-win kbd { background: rgba(18,20,23,.064); border-color: rgba(18,20,23,.064); color: #fcf7f4; }
 body .dl-call .dl-out.is-stop { background: transparent !important; color: var(--u-muted) !important; border-style: dashed !important; }
 body .dl-call .dl-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 8px; border-top: 1px solid var(--u-line-soft); }
@@ -140,7 +140,7 @@ body .dl-call .dl-more:hover { text-decoration-color: var(--u-text); }
 body .dl-call .dl-if-sep { width: 1px; height: 16px; margin: 4px 2px 0; background: var(--u-line); }
 @media (max-width: 700px) { body .dl-call .dl-play > div { grid-template-columns: 1fr; gap: 4px; } }
 
-.dl-mail { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--u-line, #e7e7e4); }
+.dl-mail { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--u-line, #e6e7ea); }
 .dl-mail-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .dl-mail-row input { flex: 1 1 220px; min-width: 0; }
 .dl-mail-row select { flex: 0 0 auto; width: auto; }
@@ -154,9 +154,9 @@ body .dl-call .dl-if-sep { width: 1px; height: 16px; margin: 4px 2px 0; backgrou
 html body .dl-call .dl-dial { gap: 12px; }
 html body .dl-call .dl-dial .u-btn-lg { height: 48px !important; padding: 0 24px !important; font-size: 15.5px !important; border-radius: 12px !important; }
 html body .dl-call .dl-dial .dl-demo-text { height: 48px !important; padding: 0 18px !important; border-radius: 12px !important; font-size: 14.5px !important; font-weight: 600 !important;
-  background: #fff !important; color: #121417 !important; border: 1px solid #dcddda !important; box-shadow: 0 1px 2px rgba(18,20,23,.05) !important; }
+  background: #fff !important; color: #121417 !important; border: 1px solid #d3d8df !important; box-shadow: 0 1px 2px rgba(18,20,23,.05) !important; }
 html body .dl-call .dl-dial .dl-demo-text:hover { background: #fafaf9 !important; border-color: #c9cbc8 !important; }
-html body .dl-call .dl-dial .dl-demo-text kbd { background: #f1f1ef !important; border: 1px solid #e3e4e1 !important; color: #6c7583 !important; }
+html body .dl-call .dl-dial .dl-demo-text kbd { background: #f4f5f6 !important; border: 1px solid #e3e4e1 !important; color: #6f7988 !important; }
 html body .dl-call .dl-dial .dl-phone { margin-right: 6px; }
 
 /* Script: every row is label + one text column; multi-part lines stack inside that column, never under the label. */
@@ -164,7 +164,7 @@ html body .dl-call .dl-play > div { grid-template-columns: 92px minmax(0, 1fr) !
 html body .dl-call .dl-play > div > span:first-child { white-space: normal; line-height: 1.3; }
 html body .dl-call .dl-play :is(p, .dl-parts) { max-width: 118ch; }
 html body .dl-call .dl-play .dl-parts { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-html body .dl-call .dl-play .dl-pause { display: block; margin-bottom: 2px; font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--u-faint, #9ea2a9); }
+html body .dl-call .dl-play .dl-pause { display: block; margin-bottom: 2px; font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--u-faint, #9aa3b0); }
 /* Room above the outcome panel, so the end of the script never sits under it. */
 html body .dl-call .dl-play { margin-bottom: 8px; }
 

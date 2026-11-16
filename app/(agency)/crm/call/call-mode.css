@@ -16,10 +16,10 @@ html body main button.cm-btn {
 html body main button.cm-btn:hover:not(:disabled) { border-color: #a5a9af !important; background: var(--mc-hover) !important; color: #121417 !important; }
 html body main button.cm-btn:disabled { opacity: .45; cursor: default; }
 html body main button.cm-primary { background: #121417 !important; border-color: #121417 !important; color: var(--mc-panel) !important; font-weight: 600; }
-html body main button.cm-primary:hover:not(:disabled) { background: #121417 !important; color: #f6f6f4 !important; }
+html body main button.cm-primary:hover:not(:disabled) { background: #121417 !important; color: #fafafb !important; }
 
-.cm-flash { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid #e5f1ea; background: #f6f6f4; color: #2a2d32; font-size: 13px; }
-.cm-flash.is-bad { border-color: #f0e5e5; background: #f6f6f4; color: #a01717; }
+.cm-flash { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid #e5f1ea; background: #fafafb; color: #2a2d32; font-size: 13px; }
+.cm-flash.is-bad { border-color: #f0e5e5; background: #fafafb; color: #a01717; }
 .cm-deal-wrap { margin: -4px 0 14px; }
 
 .cm-grid { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 18px; align-items: start; }
@@ -60,7 +60,7 @@ html body main button.cm-tabbtn:hover { color: #121417 !important; }
 html body main button.cm-tabbtn.is-on { color: #121417 !important; border-bottom-color: #22252a !important; }
 .cm-body { min-height: 180px; }
 html body main .cm-muted { color: #575f6b !important; font-size: 13px; }
-.cm-verdict { padding: 12px 14px; border-radius: 10px; background: #ffffff; border: 1px solid #dcddda; color: #955223; font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
+.cm-verdict { padding: 12px 14px; border-radius: 10px; background: #ffffff; border: 1px solid #d3d8df; color: #955223; font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
 .cm-block { margin-bottom: 14px; }
 .cm-block ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; list-style: disc; }
 .cm-block li { font-size: 14px; line-height: 1.55; color: #22252a; }
@@ -73,7 +73,7 @@ html body main .cm-muted { color: #575f6b !important; font-size: 13px; }
 html body main p.cm-say { margin: 4px 0 4px; font-size: 15.5px !important; line-height: 1.6; color: #121417 !important; }
 html body main small.cm-tip { font-size: 12.5px; color: #575f6b !important; }
 .cm-objs { display: grid; gap: 6px; }
-.cm-obj { border: 1px solid var(--mc-raised); border-radius: 10px; background: #f6f6f4; }
+.cm-obj { border: 1px solid var(--mc-raised); border-radius: 10px; background: #fafafb; }
 .cm-obj.is-open { border-color: var(--mc-line-2); background: var(--mc-raised); }
 html body main button.cm-obj-head { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 11px 14px; border: 0 !important; background: transparent !important; color: #121417 !important; font: inherit; font-size: 14px; font-weight: 550; cursor: pointer; text-align: left; }
 .cm-obj-body { padding: 0 14px 12px; }
@@ -145,11 +145,11 @@ html body main .cm-dialog h3 { margin: 0 0 14px; font-size: 16px !important; }
 .cm-page .cm-local.is-late i { background: #a32014; }
 .cm-page p.cm-lastnote.cm-lastnote { flex-basis: 100%; margin: 2px 0 0; padding: 8px 10px; border-left: 2px solid #121417; background: var(--mc-bg) !important; color: #272a2f !important; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
 .cm-page .cm-outgroup { display: grid; gap: 6px; margin-top: 8px; }
-.cm-page .cm-draft { margin: 0 0 14px; padding: 14px; border: 1px solid rgba(18,20,23,.225); border-radius: 12px; background: #f6f6f4; display: grid; gap: 10px; }
+.cm-page .cm-draft { margin: 0 0 14px; padding: 14px; border: 1px solid rgba(18,20,23,.225); border-radius: 12px; background: #fafafb; display: grid; gap: 10px; }
 .cm-page .cm-draft-head { display: grid; gap: 2px; }
 .cm-page .cm-draft-head b { color: #121417; font-size: 14px; }
 .cm-page .cm-draft-head span, .cm-page .cm-draft-subject { color: #535a65; font-size: 12.5px; }
-.cm-page .cm-draft textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; line-height: 1.5; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--mc-hover) !important; background: #f6f6f4 !important; color: #121417 !important; resize: vertical; }
+.cm-page .cm-draft textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; line-height: 1.5; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--mc-hover) !important; background: #fafafb !important; color: #121417 !important; resize: vertical; }
 
 /* The outcome dock only sticks to the bottom on tall screens, where it can't cover the brief. */
 @media (min-width: 901px) and (min-height: 1000px) { .cm-dock { position: sticky; } }

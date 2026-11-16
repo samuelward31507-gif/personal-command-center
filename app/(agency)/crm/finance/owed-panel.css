@@ -6,8 +6,8 @@
 .ow-warn { margin: 14px 0 0; padding: 10px 12px; border-radius: 10px; background: #f4f0ea; color: #9e6e1a; font-size: 13px; }
 .ow-warn a { color: #a37114; }
 .ow-note { margin: 12px 0 0; padding: 9px 12px; border-radius: 9px; font-size: 13px; }
-.ow-note.ok { background: #f1f1ef; color: #181a1e; }
-.ow-note.bad { background: #f1f1ef; color: #a02b17; }
+.ow-note.ok { background: #f4f5f6; color: #181a1e; }
+.ow-note.bad { background: #f4f5f6; color: #a02b17; }
 .ow-group { margin-top: 18px; }
 .ow-group-h { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #575f6b; padding-bottom: 8px; border-bottom: 1px solid var(--mc-hover); }
 .ow-group[data-urgent] .ow-group-h { color: #953522; }

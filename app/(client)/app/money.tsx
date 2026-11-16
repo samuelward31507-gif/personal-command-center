@@ -10,6 +10,7 @@ import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
 import type { Biz, Data, Go, InvoiceRow } from "./types";
 import { emailDoc } from "./crew";
 import { CatalogPicker, asLine, useCatalog } from "./catalog";
+import { FieldIcon } from "./sources";
 
 /**
  * Editable quote or invoice lines: what, how many, the unit price. Totals are worked out, never typed. On a quote (options)
@@ -183,6 +184,7 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
 
 /** Money: what's owed and how late, what came in, every invoice with its balance, every payment. Quotes have their own tab. */
 export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: { d: Data; go: Go; wide: boolean; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void> }) {
+  const [ticked, setTicked] = useState<Set<string>>(new Set());
   const list = d.invoices ?? [], pays = d.payments ?? [], today = todayIso();
   const [f, setF] = useState<"open" | "draft" | "paid" | "all">("open"), [view, setView] = useState<"invoices" | "payments">("invoices");
   const [picking, setPicking] = useState(false), [making, setMaking] = useState(""), [pq, setPq] = useState(""), [exp, setExp] = useState(false);
@@ -258,13 +260,17 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
             <td className="mut">{dateLabel(p.paid_on)}</td><td><b>{p.customer}</b></td><td className="mut">#{p.number}</td><td className="mut">{PAY_METHODS.find(m => m[0] === p.method)?.[1].split(",")[0]}{p.note ? `, ${p.note}` : ""}</td><td className="num"><b>{dollars(p.amount)}</b></td></tr>)}</tbody></table>)
       : !shown.length ? <p className="fine" style={{ padding: "10px 0" }}>{f === "open" ? "Nothing outstanding. Invoices start from a won job and pull the lines from the quote." : "No invoices here."}</p>
       : wide ? <table className="tbl inv-tbl">
-        <colgroup><col style={{ width: 76 }} /><col style={{ width: 190 }} /><col /><col style={{ width: 92 }} /><col style={{ width: 92 }} /><col style={{ width: 170 }} /><col style={{ width: 110 }} /><col style={{ width: 110 }} /></colgroup>
-        <thead><tr><th>Invoice</th><th>Customer</th><th>For</th><th>Issued</th><th>Due</th><th>Status</th><th className="right">Total</th><th className="right">Balance</th></tr></thead>
+        <colgroup><col style={{ width: 40 }} /><col style={{ width: 76 }} /><col style={{ width: 190 }} /><col /><col style={{ width: 92 }} /><col style={{ width: 92 }} /><col style={{ width: 170 }} /><col style={{ width: 110 }} /><col style={{ width: 110 }} /></colgroup>
+        <thead><tr><th className="ck-col"><input type="checkbox" aria-label="Select all" checked={!!shown.length && shown.every(i => ticked.has(i.id))} onChange={e => setTicked(e.target.checked ? new Set(shown.map(i => i.id)) : new Set())} /></th>
+          <th><FieldIcon name="invoice" />Invoice</th><th><FieldIcon name="user" />Customer</th><th><FieldIcon name="ruler" />For</th><th><FieldIcon name="cal" />Issued</th><th><FieldIcon name="clock" />Due</th><th><FieldIcon name="sort" />Status</th><th className="right"><FieldIcon name="dollar" />Total</th><th className="right"><FieldIcon name="dollar" />Balance</th></tr></thead>
         <tbody>{shown.map(i => { const st = invoiceState(i), bal = balanceOf(i); return <tr key={i.id} tabIndex={0} onClick={() => go.invoice(i.id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(i.id); }}>
+          <td className="ck-col" onClick={e => e.stopPropagation()}><input type="checkbox" aria-label={`Select invoice ${i.number}`} checked={ticked.has(i.id)} onChange={() => setTicked(t => { const n = new Set(t); if (n.has(i.id)) n.delete(i.id); else n.add(i.id); return n; })} /></td>
           <td className="mut num-l">#{i.number}</td><td><b>{i.customer || fmtPhone(i.phone)}</b></td><td className="mut">{i.items[0]?.name || ""}</td>
           <td className="mut">{i.sent_at ? dateLabel(i.sent_at) : "–"}</td><td className={st.tone === "red" ? "bad-t" : "mut"}>{i.due_on ? dateLabel(i.due_on) : "–"}</td>
           <td><span className={"chipx " + chipFor(st.tone)}>{st.text}</span></td><td className="num mut">{dollars(i.total)}</td><td className="num"><b>{i.status === "void" ? "–" : dollars(bal)}</b></td>
-        </tr>; })}</tbody></table>
+        </tr>; })}</tbody>
+        {(() => { const list = ticked.size ? shown.filter(i => ticked.has(i.id)) : shown, tot = list.filter(i => i.status !== "void").reduce((a, i) => a + i.total, 0), bal = list.reduce((a, i) => a + balanceOf(i), 0);
+          return <tfoot><tr><td /><td colSpan={2}><b>{list.length}</b>{ticked.size ? "selected" : "count"}</td><td /><td /><td /><td /><td className="num"><b>{dollars(tot)}</b>sum</td><td className="num"><b>{dollars(bal)}</b>owed</td></tr></tfoot>; })()}</table>
       : shown.map(i => { const st = invoiceState(i); return <button key={i.id} type="button" className="jrow" onClick={() => go.invoice(i.id)}>
           <span style={{ minWidth: 0 }}><b>{i.customer || fmtPhone(i.phone)}</b><small>#{i.number}{i.due_on ? `, due ${dateLabel(i.due_on)}` : ""}</small></span>
           <span className="r"><b>{dollars(balanceOf(i) || i.total)}</b><em className={st.tone === "red" ? "red" : st.tone === "green" ? "green" : ""}>{st.text}</em></span></button>; })}

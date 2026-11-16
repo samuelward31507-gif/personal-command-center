@@ -89,6 +89,7 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
   const lostSheet = losing && <LostPicker name={r.name} busy={!!r.busy} onClose={() => setLosing(false)} onPick={why => { void r.act("stage", { action: "stage", stage: "lost", reason: why }, `Marked lost, ${why.toLowerCase()}. Follow-ups stopped.`); setLosing(false); }} />;
   return <>
     <div className="insp-h">
+      <Avatar name={r.name} size="xl" />
       <div className="t"><b>{r.name}</b><span>{fmtPhone(r.phone)}</span></div>
       <div className="acts">
         {biz.canCall ? <button type="button" className="btn ghost ic" title="Call" aria-label="Call" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} /></button> : <a className="btn ghost ic" title="Call" aria-label="Call" href={`tel:${r.phone}`}><Icon name="phone" size={14} /></a>}

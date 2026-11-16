@@ -15,7 +15,7 @@ html body main .mp-seg button[aria-pressed=true] { color: #121417 !important; }
 .mp-goal { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--mc-hover); }
 .mp-goal-h { display: flex; justify-content: space-between; gap: 10px; font-size: 14.5px; color: #121417; }
 .mp-goal-h span { font-size: 12.5px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
-.mp-goal-h span.ok { background: #f1f1ef; color: #181a1e; } .mp-goal-h span.bad { background: #f1f1ef; color: #a02b17; }
+.mp-goal-h span.ok { background: #f4f5f6; color: #181a1e; } .mp-goal-h span.bad { background: #f4f5f6; color: #a02b17; }
 .mp-bar { height: 6px; margin: 10px 0; border-radius: 99px; background: var(--mc-hover); overflow: hidden; }
 .mp-bar i { display: block; height: 100%; background: #121417; border-radius: 99px; }
 .mp-goal p { margin: 0; font-size: 13.5px; color: #4c525c; line-height: 1.55; }

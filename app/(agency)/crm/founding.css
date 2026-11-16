@@ -8,31 +8,31 @@
 .fo-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .fo-field { display: grid; gap: 5px; min-width: 0; font-size: 12px; color: #353a41; }
 .fo-field.wide { grid-column: 1 / -1; }
-.fo-field input, .fo-field select, .fo-field textarea { width: 100%; box-sizing: border-box; min-height: 36px; padding: 6px 10px; border-radius: 8px; border: 1px solid #dcddda; background: var(--mc-panel); color: #121417; font: inherit; font-size: 13.5px; }
+.fo-field input, .fo-field select, .fo-field textarea { width: 100%; box-sizing: border-box; min-height: 36px; padding: 6px 10px; border-radius: 8px; border: 1px solid #d3d8df; background: var(--mc-panel); color: #121417; font: inherit; font-size: 13.5px; }
 .fo-field input:focus, .fo-field select:focus { outline: none; border-color: #575f6b; }
 .fo-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
 .fo-btn { min-height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--mc-line-2); background: transparent; color: #121417; font: inherit; font-size: 13px; font-weight: 550; cursor: pointer; }
 .fo-btn.primary { background: #121417; color: var(--mc-bg); border-color: #121417; }
 .fo-btn:disabled { opacity: .5; cursor: default; }
-.fo-calc { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: #f1f1ef; color: #121417; line-height: 1.5; }
+.fo-calc { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: #f4f5f6; color: #121417; line-height: 1.5; }
 .fo-calc.warn { background: #f6f2ea; color: #a37214; }
 .fo-calc b { color: inherit; }
-.fo-chip { margin-top: 14px; padding: 12px 14px; border-radius: 10px; border: 1px solid #dcddda; background: #f6f6f4; }
+.fo-chip { margin-top: 14px; padding: 12px 14px; border-radius: 10px; border: 1px solid #d3d8df; background: #fafafb; }
 .fo-chip p { margin: 0; font-size: 14px; line-height: 1.5; color: #121417; }
 .fo-chip small { display: block; margin-top: 8px; color: #515862; font-size: 12px; }
 .fo-note { margin: 10px 0 0; font-size: 12.5px; }
 .fo-note.ok { color: #397e49; } .fo-note.bad { color: #a31414; }
 .fo-status { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--mc-raised); color: #181a1e; }
-.fo-status.met { background: #f1f1ef; color: #328646; } .fo-status.risk { background: #f6f2ea; color: #a37214; } .fo-status.missed { background: #f1f1ef; color: #a02b17; }
+.fo-status.met { background: #f4f5f6; color: #328646; } .fo-status.risk { background: #f6f2ea; color: #a37214; } .fo-status.missed { background: #f4f5f6; color: #a02b17; }
 .fo-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
-.fo-kpis div { padding: 10px 12px; border-radius: 10px; background: #f6f6f4; border: 1px solid var(--mc-raised); }
+.fo-kpis div { padding: 10px 12px; border-radius: 10px; background: #fafafb; border: 1px solid var(--mc-raised); }
 .fo-kpis small { display: block; font-size: 11.5px; color: #575f6b; }
 .fo-kpis b { display: block; margin-top: 2px; font-size: 15px; color: #121417; font-weight: 600; }
 .fo-check { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; }
 .fo-check label { display: flex; gap: 8px; align-items: center; font-size: 13px; color: #25282d; }
-.fo-check input[type=number] { width: 80px; min-height: 28px; padding: 2px 8px; border-radius: 6px; border: 1px solid #dcddda; background: var(--mc-panel); color: #121417; font: inherit; }
+.fo-check input[type=number] { width: 80px; min-height: 28px; padding: 2px 8px; border-radius: 6px; border: 1px solid #d3d8df; background: var(--mc-panel); color: #121417; font: inherit; }
 .fo-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
-.fo-list li { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; background: #f6f6f4; border: 1px solid var(--mc-raised); font-size: 13px; }
+.fo-list li { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; background: #fafafb; border: 1px solid var(--mc-raised); font-size: 13px; }
 .fo-list li small { color: #575f6b; }
 .fo-x { border: 0; background: none; color: #575f6b; cursor: pointer; font-size: 12px; }
 @media (max-width: 720px) { .fo-grid, .fo-grid.three, .fo-kpis, .fo-check { grid-template-columns: 1fr 1fr; } }
