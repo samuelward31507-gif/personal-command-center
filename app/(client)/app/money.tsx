@@ -4,7 +4,7 @@
 // here as the right-hand pane. The invoice sheet is where lines are edited, texted and marked paid.
 import { useState } from "react";
 import { dollars, lineTotal, overdue, totals, type Item } from "@/lib/billing";
-import type { CardInvoice } from "@/lib/crm";
+import { PAY_METHODS, type CardInvoice, type Payment } from "@/lib/crm";
 import { Icon, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast } from "./parts";
 import { line } from "./jobs";
 import type { Data, Go, InvoiceRow } from "./types";
@@ -34,20 +34,26 @@ export function LineEditor({ items, setItems, tax, setTax }: { items: Item[]; se
   </div>;
 }
 
+/** What's still owed on an invoice. */
+export const balanceOf = (i: CardInvoice) => i.status === "paid" || i.status === "void" ? 0 : Math.max(0, Math.round((i.total - (i.paid_amount ?? 0)) * 100) / 100);
+/** A small set of states, lateness worked out from the due date (Stripe's way). */
 export function invoiceState(i: CardInvoice): { text: string; tone: "" | "green" | "blue" | "amber" | "red" } {
   if (i.status === "paid") return { text: `Paid${i.paid_at ? " " + dateLabel(i.paid_at) : ""}`, tone: "green" };
   if (i.status === "void") return { text: "Voided", tone: "" };
   if (i.status === "draft") return { text: "Draft", tone: "" };
   if (i.paid_claimed_at) return { text: "Says they paid", tone: "amber" };
-  if (overdue(i.status, i.due_on, todayIso())) return { text: "Past due", tone: "red" };
-  return { text: i.viewed_at ? "Opened" : "Sent", tone: "blue" };
+  if (overdue(i.status, i.due_on, todayIso())) return { text: (i.paid_amount ?? 0) > 0 ? "Past due, part paid" : "Past due", tone: "red" };
+  if ((i.paid_amount ?? 0) > 0) return { text: "Part paid", tone: "blue" };
+  return { text: "Awaiting payment", tone: "blue" };
 }
 const dotFor = (tone: string) => tone === "green" ? "good" : tone === "red" ? "bad" : tone === "amber" ? "ember" : tone === "blue" ? "ink" : "";
 
 /** One invoice: lines, due date, note; send it, copy the link, mark it paid. */
-export function InvoiceSheet({ inv, customer, email, project, api, toast, reload, payLink, onClose, onSetup }: { inv: CardInvoice; customer: string; email?: string; project: string; api: Api; toast: Toast; reload: () => Promise<void>; payLink: boolean; onClose: () => void; onSetup: () => void }) {
+export function InvoiceSheet({ inv, customer, email, payments = [], project, api, toast, reload, payLink, onClose, onSetup }: { inv: CardInvoice; customer: string; email?: string; payments?: Payment[]; project: string; api: Api; toast: Toast; reload: () => Promise<void>; payLink: boolean; onClose: () => void; onSetup: () => void }) {
   const [items, setItems] = useState<Item[]>(inv.items), [tax, setTax] = useState(inv.tax_rate), [note, setNote] = useState(inv.note), [due, setDue] = useState(inv.due_on ?? "");
   const [busy, setBusy] = useState(""), [arm, setArm] = useArm();
+  const bal = balanceOf(inv), mine = payments.filter(p => p.invoice_id === inv.id);
+  const [paying, setPaying] = useState(false), [pAmt, setPAmt] = useState(String(bal || "")), [pMethod, setPMethod] = useState<string>("card"), [pOn, setPOn] = useState(todayIso()), [pNote, setPNote] = useState("");
   const locked = inv.status === "paid" || inv.status === "void";
   const dirty = JSON.stringify(items) !== JSON.stringify(inv.items) || tax !== inv.tax_rate || note !== inv.note || due !== (inv.due_on ?? "");
   const st = invoiceState(inv);
@@ -69,7 +75,7 @@ export function InvoiceSheet({ inv, customer, email, project, api, toast, reload
   return <Sheet onClose={onClose} title={`Invoice #${inv.number}`} sub={<>{customer}, <span className={"dot " + dotFor(st.tone)} style={{ display: "inline-flex" }}>{st.text}</span></>}
     foot={<>
       {inv.status === "paid" ? <button type="button" className="btn" disabled={!!busy} onClick={() => void act("unpaid", { action: "invoiceset", what: "unpaid" }, "Marked unpaid.")}>Mark unpaid</button>
-        : !locked && <button type="button" className="btn ok" disabled={!!busy} onClick={() => void act("paid", { action: "invoiceset", what: "paid" }, `Paid. ${dollars(inv.total)} recorded.`, true)}>Mark paid</button>}
+        : !locked && !paying && <button type="button" className="btn ok" disabled={!!busy} onClick={() => { setPAmt(String(bal)); setPaying(true); }}>Record payment</button>}
       {inv.status === "sent" && <button type="button" className="btn" disabled={!!busy} onClick={() => void act("pause", { action: "invoiceset", what: inv.reminders_paused ? "resume" : "pause" }, inv.reminders_paused ? "Reminders back on." : "Reminders paused.")}>{inv.reminders_paused ? "Resume reminders" : "Pause reminders"}</button>}
       {!locked && <button type="button" className="btn danger" disabled={!!busy} onClick={() => arm === "void" ? void act("void", { action: "invoiceset", what: "void" }, "Invoice voided.", true) : setArm("void")}>{arm === "void" ? "Tap again to void" : "Void"}</button>}
       <span style={{ flex: 1 }} />
@@ -88,7 +94,21 @@ export function InvoiceSheet({ inv, customer, email, project, api, toast, reload
         <div className="two"><label className="field"><span>Due</span><input type="date" value={due} onChange={e => setDue(e.target.value)} /></label></div>
         <label className="field"><span>Note <em>they&rsquo;ll see it</em></span><textarea rows={2} value={note} maxLength={600} onChange={e => setNote(e.target.value)} placeholder="Thanks for your business. Two-year warranty on the install." /></label>
       </>}
-    {inv.status === "sent" && <p className="fine">{inv.reminders_paused ? "Payment reminders are paused." : inv.reminders ? `${inv.reminders} of 3 payment reminders sent.` : "Up to 3 reminders after the due date."}</p>}
+    {(mine.length > 0 || paying || (inv.status !== "draft" && inv.status !== "void")) && <section className="ledger">
+      <p className="sec">Payments<small>{dollars(inv.total - bal)} of {dollars(inv.total)} in</small></p>
+      {mine.map(p => <div key={p.id} className="lrow2"><span>{dateLabel(p.paid_on)}</span><span className="mut">{PAY_METHODS.find(m => m[0] === p.method)?.[1].split(",")[0] ?? "Other"}{p.note ? `, ${p.note}` : ""}</span><b>{dollars(p.amount)}</b>
+        <button type="button" className="btn ghost sm ic" aria-label="Remove this payment" title="Remove" disabled={!!busy} onClick={() => arm === "rm" + p.id ? void act("rm", { action: "paymentdelete", payment: p.id }, "Payment removed.") : setArm("rm" + p.id)}><Icon name={arm === "rm" + p.id ? "check" : "x"} size={12} /></button></div>)}
+      <div className="lrow2 bal"><span>Balance</span><span /><b style={bal > 0 && st.tone === "red" ? { color: "var(--bad)" } : undefined}>{dollars(bal)}</b><span /></div>
+      {paying && <form className="payform" onSubmit={e => { e.preventDefault(); void act("pay", { action: "payment", amount: pAmt, method: pMethod, on: pOn, note: pNote }, Number(pAmt) >= bal ? `Paid in full. ${dollars(Number(pAmt))} recorded.` : `${dollars(Number(pAmt) || 0)} recorded. ${dollars(Math.max(0, bal - (Number(pAmt) || 0)))} still owed.`).then(r => { if (r) setPaying(false); }); }}>
+        <label className="field"><span>Amount</span><span className="inwrap"><i>$</i><input inputMode="decimal" autoFocus value={pAmt} onChange={e => setPAmt(e.target.value.replace(/[^\d.]/g, ""))} /></span></label>
+        <label className="field"><span>How</span><select value={pMethod} onChange={e => setPMethod(e.target.value)}>{PAY_METHODS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+        <label className="field"><span>Date</span><input type="date" value={pOn} onChange={e => setPOn(e.target.value)} /></label>
+        <label className="field"><span>Note <em>check number, last 4</em></span><input value={pNote} maxLength={200} onChange={e => setPNote(e.target.value)} /></label>
+        <div className="acts-row end" style={{ gridColumn: "1 / -1" }}><button type="button" className="btn ghost" onClick={() => setPaying(false)}>Cancel</button><button type="submit" className="btn ink" disabled={!!busy || !(Number(pAmt) > 0)}>{busy === "pay" ? <Spinner /> : "Record payment"}</button></div>
+      </form>}
+      <p className="fine">{payLink ? "Card payments land in your own account through your pay link. Record them here, with cash, checks and deposits, so the balance stays right." : "Record cash, checks and deposits here so the balance stays right."}</p>
+    </section>}
+    {inv.status === "sent" && <p className="fine">{inv.reminders_paused ? "Payment reminders are paused." : inv.reminders ? `${inv.reminders} of 3 payment reminders sent, each for the balance.` : "Up to 3 reminders after the due date, each for the balance."}</p>}
   </Sheet>;
 }
 
@@ -110,56 +130,58 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
   </Sheet>;
 }
 
-/** Money: what is owed, collected, quoted and won, then the invoices and the quotes as tables. */
+/** Money: what's owed and how late, what came in, every invoice with its balance, every payment. Quotes have their own tab. */
 export function MoneyScreen({ d, go, wide }: { d: Data; go: Go; wide: boolean }) {
-  const list = d.invoices ?? [], today = todayIso(), L = d.live;
-  const [f, setF] = useState<"open" | "paid" | "all">("open");
-  const out = list.filter(i => i.status === "sent"), late = out.filter(i => overdue(i.status, i.due_on, today));
-  const paid30 = list.filter(i => i.status === "paid" && i.paid_at && Date.parse(i.paid_at) > Date.now() - 30 * 86400000).reduce((a, i) => a + i.total, 0);
-  const shown = f === "open" ? list.filter(i => i.status === "sent" || i.status === "draft") : f === "paid" ? list.filter(i => i.status === "paid") : list;
-  const quotes = (d.board ?? []).filter(c => c.stage === "quoted" && (c.quote?.amount || c.value)).sort((a, b) => b.at.localeCompare(a.at));
-  const owed = out.reduce((a, i) => a + i.total, 0);
-  const quoteState = (c: typeof quotes[number]) => c.quote?.status === "replied" ? ["They replied", "bad"] : c.quote?.viewed ? [`Opened ${ago(c.quote.viewed)}`, "ink"] : c.quote?.linked ? [c.quote.steps ? `Follow-up ${c.quote.steps} of 4 sent` : "Sent, follow-up in 2 days", ""] : ["Not sent yet", "ember"];
-  const views = <div className="views" role="tablist" aria-label="Show">{([["open", "Open", list.filter(i => i.status === "sent" || i.status === "draft").length], ["paid", "Paid", list.filter(i => i.status === "paid").length], ["all", "All", list.length]] as const).map(([k, l, n]) =>
-    <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}<em>{n}</em></button>)}</div>;
+  const list = d.invoices ?? [], pays = d.payments ?? [], today = todayIso();
+  const [f, setF] = useState<"open" | "draft" | "paid" | "all">("open"), [view, setView] = useState<"invoices" | "payments">("invoices");
+  const open = list.filter(i => i.status === "sent"), late = open.filter(i => overdue(i.status, i.due_on, today));
+  const outstanding = open.reduce((a, i) => a + balanceOf(i), 0), lateAmt = late.reduce((a, i) => a + balanceOf(i), 0);
+  const monthStart = today.slice(0, 8) + "01";
+  const collected = pays.filter(p => p.paid_on >= monthStart).reduce((a, p) => a + p.amount, 0);
+  const paidRecent = list.filter(i => i.status === "paid" && i.paid_at && i.sent_at && Date.parse(i.paid_at) > Date.now() - 90 * 86400000);
+  const payDays = paidRecent.length ? Math.round(paidRecent.reduce((a, i) => a + (Date.parse(i.paid_at!) - Date.parse(i.sent_at!)) / 86400000, 0) / paidRecent.length) : null;
+  // Aging: days past due, from the due date (QuickBooks' buckets).
+  const daysLate = (i: InvoiceRow) => i.due_on ? Math.floor((Date.parse(today + "T12:00:00") - Date.parse(i.due_on + "T12:00:00")) / 86400000) : 0;
+  const buckets = [["Not yet due", (n: number) => n <= 0], ["1 to 30 days", (n: number) => n >= 1 && n <= 30], ["31 to 60", (n: number) => n > 30 && n <= 60], ["61 to 90", (n: number) => n > 60 && n <= 90], ["Over 90", (n: number) => n > 90]] as const;
+  const aging = buckets.map(([l, t]) => ({ l, v: open.filter(i => t(daysLate(i))).reduce((a, i) => a + balanceOf(i), 0) }));
+  const shown = f === "open" ? list.filter(i => i.status === "sent") : f === "draft" ? list.filter(i => i.status === "draft") : f === "paid" ? list.filter(i => i.status === "paid") : list;
+  const counts = { open: open.length, draft: list.filter(i => i.status === "draft").length, paid: list.filter(i => i.status === "paid").length, all: list.length };
   return <>
-    <header className="tb"><h1 className="h1">Money</h1><span className="sub">Invoices and quotes</span>
-      <div className="acts"><button type="button" className="btn ghost" onClick={() => go.tab("numbers")}>Reports</button><button type="button" className="btn" onClick={go.billing}>Pay link and tax</button></div></header>
-    <div className="pad money-page">
-      <div className="stats">
-        <div className="stat"><span>Owed to you</span><b style={late.length ? { color: "var(--bad)" } : undefined}>{usd(owed)}</b><small className={late.length ? "down" : ""}>{late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"} past due` : out.length ? `${out.length} out, none late` : "All paid up"}</small></div>
-        <div className="stat"><span>Collected, 30 days</span><b>{usd(paid30)}</b><small>through your pay link</small></div>
-        <div className="stat"><span>Quoted, waiting</span><b>{usd(L.chasingValue)}</b><small>{L.chasing ? `${L.chasing} ${L.chasing === 1 ? "quote" : "quotes"}, Cinder following up` : "No quotes out"}</small></div>
-        <div className="stat"><span>Won, 30 days</span><b>{usd(L.wonValue)}</b><small>{L.won ? `${L.won} ${L.won === 1 ? "job" : "jobs"} from Cinder leads` : "No wins yet"}</small></div>
+    <header className="tb"><h1 className="h1">Money</h1><span className="sub">{outstanding ? `${usd(outstanding)} owed to you${late.length ? `, ${usd(lateAmt)} past due` : ""}` : "Nothing owed"}</span>
+      <div className="acts"><button type="button" className="btn" onClick={go.billing}>Pay link and tax</button></div></header>
+    <div className="pad money2">
+      <div className="figs4">
+        <div><span>Outstanding</span><b>{usd(outstanding)}</b><small>{open.length} {open.length === 1 ? "invoice" : "invoices"} awaiting payment</small></div>
+        <div><span>Past due</span><b style={lateAmt ? { color: "var(--bad)" } : undefined}>{usd(lateAmt)}</b><small className={late.length ? "down" : ""}>{late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"}, reminders going out` : "None late"}</small></div>
+        <div><span>Collected this month</span><b>{usd(collected)}</b><small>{(() => { const k = pays.filter(p => p.paid_on >= monthStart).length; return `${k} ${k === 1 ? "payment" : "payments"} recorded`; })()}</small></div>
+        <div><span>Days to get paid</span><b>{payDays == null ? "–" : payDays}</b><small>average, last 90 days</small></div>
       </div>
-
-      <section className="card">
-        <div className="hd"><h2>Invoices</h2>{views}<small style={{ marginLeft: "auto" }}>{shown.length} {shown.length === 1 ? "invoice" : "invoices"}</small></div>
-        {!shown.length ? <p className="fine" style={{ padding: "6px 0" }}>{f === "open" ? "Nothing outstanding. Invoices are created from a won job and pull the lines from the quote." : "No invoices yet."}</p>
-        : wide ? <table className="tbl flush" style={{ tableLayout: "fixed" }}>
-          <colgroup><col style={{ width: 70 }} /><col style={{ width: 180 }} /><col /><col style={{ width: 90 }} /><col style={{ width: 140 }} /><col style={{ width: 90 }} /><col style={{ width: 100 }} /></colgroup>
-          <thead><tr><th>Invoice</th><th>Customer</th><th>For</th><th>Sent</th><th>Status</th><th>Due</th><th className="right">Amount</th></tr></thead>
-          <tbody>{shown.map(i => { const st = invoiceState(i), name = i.customer || fmtPhone(i.phone); return <tr key={i.id} tabIndex={0} onClick={() => go.invoice(i.id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(i.id); }}>
-            <td className="mut">#{i.number}</td><td><b>{name}</b></td><td className="mut">{i.items[0]?.name || ""}</td><td className="mut">{i.sent_at ? dateLabel(i.sent_at) : "Not sent"}</td>
-            <td><span className={"dot " + dotFor(st.tone)}>{st.text}</span></td><td className={st.tone === "red" ? "" : "mut"} style={st.tone === "red" ? { color: "var(--bad)" } : undefined}>{i.due_on ? dateLabel(i.due_on) : "–"}</td><td className="num">{dollars(i.total)}</td>
-          </tr>; })}</tbody></table>
-        : shown.map(i => { const st = invoiceState(i), name = i.customer || fmtPhone(i.phone); return <button key={i.id} type="button" className="jrow" style={{ padding: 0 }} onClick={() => go.invoice(i.id)}>
-          <span style={{ minWidth: 0 }}><b>{name}</b><small>#{i.number}{i.due_on ? `, due ${dateLabel(i.due_on)}` : ""}</small></span>
-          <span className="r"><b>{dollars(i.total)}</b><em className={st.tone === "red" ? "red" : st.tone === "green" ? "green" : ""}>{st.text}</em></span></button>; })}
-      </section>
-
-      <section className="card">
-        <div className="hd"><h2>Quotes</h2><small>{quotes.length ? `${quotes.length} out, ${short(L.chasingValue)} waiting on an answer` : "none out"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>Jobs</button></div>
-        {!quotes.length ? <p className="fine" style={{ padding: "6px 0" }}>Quotes you send from a job show here until they are won or lost.</p>
-        : wide ? <table className="tbl flush" style={{ tableLayout: "fixed" }}>
-          <colgroup><col style={{ width: 180 }} /><col /><col style={{ width: 90 }} /><col style={{ width: 200 }} /><col style={{ width: 100 }} /></colgroup>
-          <thead><tr><th>Customer</th><th>Job</th><th>Sent</th><th>Status</th><th className="right">Amount</th></tr></thead>
-          <tbody>{quotes.map(c => { const [t, tone] = quoteState(c); return <tr key={c.id} tabIndex={0} onClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
-            <td><b>{c.name}</b></td><td className="mut">{line(c)}</td><td className="mut">{ago(c.at)}</td><td><span className={"dot " + tone}>{t}</span></td><td className="num">{dollars(c.quote?.amount ?? c.value ?? 0)}</td>
-          </tr>; })}</tbody></table>
-        : quotes.map(c => { const [t, tone] = quoteState(c); return <button key={c.id} type="button" className="jrow" style={{ padding: 0 }} onClick={() => go.record(c.id)}>
-          <span style={{ minWidth: 0 }}><b>{c.name}</b><small>{line(c)}</small></span><span className="r"><b>{dollars(c.quote?.amount ?? c.value ?? 0)}</b><em className={tone === "bad" ? "red" : ""}>{t}</em></span></button>; })}
-      </section>
+      {outstanding > 0 && <div className="aging" aria-label="Owed, by how late">
+        <div className="aging-bar">{aging.map((a, k) => a.v > 0 ? <i key={a.l} className={"b" + k} style={{ flexGrow: a.v }} title={`${a.l}: ${usd(a.v)}`} /> : null)}</div>
+        <dl>{aging.map((a, k) => <div key={a.l}><dt><i className={"b" + k} />{a.l}</dt><dd className={a.v ? "" : "faint"}>{usd(a.v)}</dd></div>)}</dl>
+      </div>}
+      <div className="list-tools">
+        <div className="seg" role="tablist" aria-label="Show"><button type="button" role="tab" aria-selected={view === "invoices"} className={view === "invoices" ? "on" : ""} onClick={() => setView("invoices")}>Invoices</button><button type="button" role="tab" aria-selected={view === "payments"} className={view === "payments" ? "on" : ""} onClick={() => setView("payments")}>Payments</button></div>
+        {view === "invoices" && <div className="views" role="tablist" aria-label="Filter">{([["open", "Awaiting payment"], ["draft", "Drafts"], ["paid", "Paid"], ["all", "All"]] as const).map(([k, l]) =>
+          <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}{counts[k] ? <em>{counts[k]}</em> : null}</button>)}</div>}
+      </div>
+      {view === "payments" ? (!pays.length ? <p className="fine" style={{ padding: "10px 0" }}>Payments you record on an invoice show here: card, cash, check, deposits.</p>
+        : <table className="tbl"><colgroup><col style={{ width: 110 }} /><col /><col style={{ width: 100 }} /><col style={{ width: 200 }} /><col style={{ width: 120 }} /></colgroup>
+          <thead><tr><th>Date</th><th>Customer</th><th>Invoice</th><th>How</th><th className="right">Amount</th></tr></thead>
+          <tbody>{pays.map(p => <tr key={p.id} tabIndex={0} onClick={() => go.invoice(p.invoice_id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(p.invoice_id); }}>
+            <td className="mut">{dateLabel(p.paid_on)}</td><td><b>{p.customer}</b></td><td className="mut">#{p.number}</td><td className="mut">{PAY_METHODS.find(m => m[0] === p.method)?.[1].split(",")[0]}{p.note ? `, ${p.note}` : ""}</td><td className="num"><b>{dollars(p.amount)}</b></td></tr>)}</tbody></table>)
+      : !shown.length ? <p className="fine" style={{ padding: "10px 0" }}>{f === "open" ? "Nothing outstanding. Invoices start from a won job and pull the lines from the quote." : "No invoices here."}</p>
+      : wide ? <table className="tbl inv-tbl">
+        <colgroup><col style={{ width: 76 }} /><col style={{ width: 190 }} /><col /><col style={{ width: 92 }} /><col style={{ width: 92 }} /><col style={{ width: 170 }} /><col style={{ width: 110 }} /><col style={{ width: 110 }} /></colgroup>
+        <thead><tr><th>Invoice</th><th>Customer</th><th>For</th><th>Issued</th><th>Due</th><th>Status</th><th className="right">Total</th><th className="right">Balance</th></tr></thead>
+        <tbody>{shown.map(i => { const st = invoiceState(i), bal = balanceOf(i); return <tr key={i.id} tabIndex={0} onClick={() => go.invoice(i.id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(i.id); }}>
+          <td className="mut num-l">#{i.number}</td><td><b>{i.customer || fmtPhone(i.phone)}</b></td><td className="mut">{i.items[0]?.name || ""}</td>
+          <td className="mut">{i.sent_at ? dateLabel(i.sent_at) : "–"}</td><td className={st.tone === "red" ? "bad-t" : "mut"}>{i.due_on ? dateLabel(i.due_on) : "–"}</td>
+          <td><span className={"dot " + dotFor(st.tone)}>{st.text}</span></td><td className="num mut">{dollars(i.total)}</td><td className="num"><b>{i.status === "void" ? "–" : dollars(bal)}</b></td>
+        </tr>; })}</tbody></table>
+      : shown.map(i => { const st = invoiceState(i); return <button key={i.id} type="button" className="jrow" onClick={() => go.invoice(i.id)}>
+          <span style={{ minWidth: 0 }}><b>{i.customer || fmtPhone(i.phone)}</b><small>#{i.number}{i.due_on ? `, due ${dateLabel(i.due_on)}` : ""}</small></span>
+          <span className="r"><b>{dollars(balanceOf(i) || i.total)}</b><em className={st.tone === "red" ? "red" : st.tone === "green" ? "green" : ""}>{st.text}</em></span></button>; })}
     </div>
   </>;
 }

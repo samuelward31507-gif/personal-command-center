@@ -6,6 +6,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import "./app.css";
 import { Wordmark } from "../brand";
+import { QuotesScreen, QuoteEditor } from "./quotes";
 import { demoApi } from "./demo";
 import { Avatar, Icon, Spinner, fmtPhone, initials, typePhone, useToast } from "./parts";
 import type { Biz, Data, Go, Tab } from "./types";
@@ -107,9 +108,9 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
 }
 
 // ---------- The app ----------
-type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | null;
+type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | { kind: "quote"; id: string } | null;
 const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam"];
-const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Home", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "calendar", l: "Calendar", ic: "cal", n: "4" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Reports", ic: "bars", n: "6" }];
+const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Home", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "quotes", l: "Quotes", ic: "quote", n: "4" }, { k: "calendar", l: "Calendar", ic: "cal", n: "5" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Reports", ic: "bars", n: "6" }];
 
 export default function CinderApp() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
@@ -148,7 +149,7 @@ export default function CinderApp() {
       if (t) await api("/api/app/auth", { action: "link", token: t }).catch(() => null);
       const th = q.get("thread"), tb = q.get("tab");
       if (th && /^[0-9a-f-]{36}$/i.test(th)) setOpen({ kind: "thread", id: th });
-      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", home: "today", invoices: "invoices", money: "invoices", customers: "customers", system: "system" };
+      const map: Record<string, Tab> = { sam: "sam", estimates: "calendar", calendar: "calendar", numbers: "numbers", jobs: "jobs", leads: "inbox", inbox: "inbox", today: "today", home: "today", invoices: "invoices", money: "invoices", customers: "customers", system: "system", quotes: "quotes" };
       if (tb && map[tb]) setTab(map[tb]);
       if (location.search) try { history.replaceState(null, "", "/app"); } catch { /* keep the URL */ }
       await load("", tb && map[tb] ? map[tb] : "today");
@@ -160,7 +161,9 @@ export default function CinderApp() {
   const goTab = useCallback((t: Tab) => { setTab(t); setOpen(null); window.scrollTo(0, 0); if (t === "sam" || t === "calendar") void load(project, t); }, [load, project]);
   const go: Go = useMemo(() => ({
     tab: goTab,
-    record: (id, opts) => { setOpen({ kind: "record", id, ask: opts?.ask, view: opts?.view, draft: opts?.draft }); window.scrollTo(0, 0); },
+    // Writing a quote always happens in the quote editor, wherever the button was.
+    record: (id, opts) => { setOpen(opts?.ask === "quoted" ? { kind: "quote", id } : { kind: "record", id, ask: opts?.ask, view: opts?.view, draft: opts?.draft }); window.scrollTo(0, 0); },
+    quote: id => { setOpen({ kind: "quote", id }); window.scrollTo(0, 0); },
     thread: id => { setOpen(wide ? { kind: "record", id, view: "activity" } : { kind: "thread", id }); window.scrollTo(0, 0); },
     invoice: id => setInv(id),
     addLead: () => setSheet("add"), importCustomers: () => setSheet("import"), billing: () => setSheet("billing"),
@@ -210,11 +213,13 @@ export default function CinderApp() {
 
   let page: React.ReactNode;
   if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
+  else if (open?.kind === "quote") page = <QuoteEditor key={open.id} id={open.id} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => setOpen(null)} />;
   else if (open?.kind === "record") page = <RecordPage key={open.id + (open.draft ? ":d" : "")} id={open.id} ask={open.ask} view={open.view} draft={open.draft} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
   else if (tab === "today" && crew) page = <CalendarScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} />;
   else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
+  else if (tab === "quotes") page = <QuotesScreen d={d} go={go} wide={wide} />;
   else if (tab === "calendar") page = <CalendarScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} />;
   else if (tab === "invoices") page = <MoneyScreen d={d} go={go} wide={wide} />;
   else if (tab === "numbers") page = <ReportsScreen d={d} biz={biz} go={go} project={project} api={api} toast={toast} reload={reload} onWinback={() => setSheet("winback")} />;
@@ -224,8 +229,9 @@ export default function CinderApp() {
 
   return <div className="shell">
     <nav className="rail" aria-label="Sections">
+      <div className="brand-row"><Wordmark className="rail-mark" /></div>
       <button type="button" className="ws" title={bizName}>
-        <span className="av sm ink">{initials(bizName || "C").charAt(0)}</span><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
+        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
         {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
       </button>
       <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} />Search<kbd>⌘K</kbd></button>
@@ -257,7 +263,7 @@ export default function CinderApp() {
     {sheet === "import" && <ImportSheet project={project} api={api} toast={toast} reload={reload} customers={d.customers ?? []} business={bizName} onClose={() => setSheet(null)} />}
     {sheet === "billing" && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
-    {invNow && <InvoiceSheet key={invNow.id + invNow.status} inv={invNow} customer={invNow.customer || fmtPhone(invNow.phone)} email={(d.board ?? []).find(b => b.id === invNow.thread_id)?.email} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
+    {invNow && <InvoiceSheet key={invNow.id + invNow.status + (invNow.paid_amount ?? 0)} inv={invNow} payments={d.payments} customer={invNow.customer || fmtPhone(invNow.phone)} email={(d.board ?? []).find(b => b.id === invNow.thread_id)?.email} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
     {toastNode}
   </div>;
 }

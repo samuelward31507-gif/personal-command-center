@@ -11,7 +11,8 @@ const reply = (body: Record<string, unknown>, status = 200) => Response.json(bod
 const EXAMPLE: PublicInvoice = { business: "Ridgeline Fence Co.", owner: "Mike", phone: "+17205550100", customer: "Dana Ruiz", number: 1042,
   items: [{ name: "6 ft Wood privacy fence, installed", qty: 80, unit: "ft", price: 43 }, { name: "Walk gate", qty: 1, unit: "", price: 550 }, { name: "Tear-out and haul-away", qty: 80, unit: "ft", price: 4 }],
   tax_rate: 0, total: 4310, note: "Thanks for choosing us. Two-year workmanship warranty on everything we installed.", due_on: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
-  issued: new Date().toISOString().slice(0, 10), status: "open", pay_link: "https://square.link/u/example", claimed: false, address: "2210 Oak Dr, Littleton" };
+  issued: new Date().toISOString().slice(0, 10), status: "open", pay_link: "https://square.link/u/example", claimed: false, address: "2210 Oak Dr, Littleton",
+  paid_amount: 1000, payments: [{ amount: 1000, paid_on: new Date(Date.now() - 20 * 86400000).toISOString().slice(0, 10) }] };
 
 /** GET /api/inv?token=… — public: one invoice behind its private link. */
 export async function GET(req: Request) {

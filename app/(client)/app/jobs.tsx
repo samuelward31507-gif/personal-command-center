@@ -3,7 +3,7 @@
 // Jobs: New, Estimate booked, Quoted, Won, Done, Lost. A table and a board on a desk, a list on a phone, the record
 // open beside the list. Every job shows its value, its next step and how long it has sat in its stage.
 // Done is a won job that's been paid. Lost asks why. j/k move, Enter opens, Esc closes, c adds a lead.
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { LOST_REASONS, STAGE_LABEL, type Card, type Stage } from "@/lib/crm";
 import { Avatar, Empty, Icon, Menu, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
 import { Inspector } from "./record";
@@ -46,6 +46,35 @@ export function nextUp(c: Card, today = todayIso()): { text: string; tone: Tone;
   if (c.stage === "booked") return { text: "Estimate done, write the quote", tone: "red", icon: "quote" };
   return { text: "Cinder is replying", tone: "", icon: "bolt" };
 }
+export type Who = "you" | "customer" | "scheduled" | "cinder" | "closed";
+export const WHO_LABEL: Record<Who, string> = { you: "Your move", customer: "Waiting on the customer", scheduled: "Scheduled", cinder: "Cinder is on it", closed: "Done or lost" };
+const WHO_ORDER: Who[] = ["you", "customer", "scheduled", "cinder", "closed"];
+/** Who owes the next move on a job, and the verb that makes it when it's the owner's. */
+export function moveOf(c: Card, today = todayIso()): { who: Who; verb: string; run: (go: Go) => void } {
+  const rec = (go: Go) => go.record(c.id), job = (go: Go) => go.record(c.id, { view: "job" }), none = { verb: "", run: rec };
+  if (c.status === "paused") return { who: "you", verb: "Reply", run: go => go.thread(c.id) };
+  if (c.remind && !c.remind.sent && Date.parse(c.remind.at) <= Date.now()) return { who: "you", verb: "Open", run: rec };
+  if (c.stage === "lost") return { who: "closed", ...none };
+  if (c.stage === "won") {
+    const inv = c.invoice;
+    if (inv?.status === "paid") return { who: "closed", ...none };
+    if (inv?.status === "sent") return inv.due_on && inv.due_on < today ? { who: "you", verb: "Follow up", run: go => go.invoice(inv.id) } : { who: "customer", ...none };
+    if (inv?.status === "draft") return { who: "you", verb: "Send invoice", run: go => go.invoice(inv.id) };
+    if (c.install && c.install >= today) return { who: "scheduled", ...none };
+    if (c.install) return { who: "you", verb: "Invoice", run: job };
+    return { who: "you", verb: "Schedule", run: job };
+  }
+  if (c.stage === "quoted" && c.quote) {
+    if (c.quote.status === "replied") return { who: "you", verb: "Reply", run: go => go.thread(c.id) };
+    if (!c.quote.linked) return { who: "you", verb: "Send quote", run: go => go.quote(c.id) };
+    if (c.quote.steps >= 4) return { who: "you", verb: "Nudge", run: go => go.record(c.id, { view: "activity" }) };
+    return { who: "customer", ...none };
+  }
+  if (c.next && Date.parse(c.next) > Date.now() - 3600000) return { who: "scheduled", ...none };
+  if (c.next && (c.stage === "new" || c.stage === "booked")) return { who: "you", verb: "Write quote", run: go => go.quote(c.id) };
+  if (c.stage === "booked") return { who: "you", verb: "Write quote", run: go => go.quote(c.id) };
+  return { who: "cinder", ...none };
+}
 export const priceOf = (c: Card) => c.value ? usd(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "";
 const city = (c: Card) => { const a = String(c.details.address ?? ""); const parts = a.split(",").map(s => s.trim()).filter(Boolean); return parts.length > 1 ? parts[parts.length - 1].replace(/\s+\d{5}(-\d{4})?$/, "") : ""; };
 const isOpen = (c: Card) => c.stage === "new" || c.stage === "booked" || c.stage === "quoted";
@@ -86,6 +115,14 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
     return base.filter(c => lane === "all" || laneOf(c) === lane).filter(c => src === "any" || c.source === src)
       .filter(c => !t || c.name.toLowerCase().includes(t) || c.line.toLowerCase().includes(t) || String(c.details.address ?? "").toLowerCase().includes(t) || (digits.length >= 3 && c.phone.replace(/\D/g, "").includes(digits)));
   }, [base, q, lane, src]);
+  // Grouped by who owes the next move when nothing narrows the list; the owner's move first, longest waiting first.
+  const grouped = lane === "all" && !q.trim();
+  const groups = useMemo(() => {
+    if (!grouped) return [{ who: "you" as Who, cards: shown, value: 0 }];
+    const m = new Map<Who, Card[]>();
+    for (const c of shown) { const w = moveOf(c, today).who; m.set(w, [...(m.get(w) ?? []), c]); }
+    return WHO_ORDER.filter(w => m.has(w)).map(w => { const list = m.get(w)!.sort((a, b) => daysIn(b) - daysIn(a)); return { who: w, cards: list, value: list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0) }; });
+  }, [shown, grouped, today]);
   const counts = { open: cards.filter(isOpen).length, won: everyone.filter(c => c.stage === "won").length, all: everyone.length };
   const pipeline = cards.filter(isOpen).reduce((a, c) => a + (c.value ?? c.ballpark?.high ?? 0), 0);
 
@@ -154,18 +191,20 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
         : wide && mode === "board" ? <Board cards={view === "open" ? everyone.filter(c => src === "any" || c.source === src) : shown} sel={sel} drag={drag} over={over} setDrag={setDrag} setOver={setOver} move={move} open={open} />
         : wide ? <>
           <div className="tbl-wrap"><table className={"tbl jobs-tbl" + (sel ? " compact" : "")}>
-            <colgroup><col style={{ width: 200 }} /><col className="c2" style={{ width: 130 }} /><col /><col style={{ width: 140 }} /><col style={{ width: 104 }} /><col style={{ width: 210 }} /><col style={{ width: 80 }} /><col className="c2" style={{ width: 110 }} /></colgroup>
-            <thead><tr><th>Customer</th><th className="c2">Phone</th><th>Job</th><th>Stage</th><th className="right">Value</th><th>Next step</th><th className="right">In stage</th><th className="c2">Came from</th></tr></thead>
-            <tbody>{shown.map(c => { const n = nextUp(c, today), name = c.name || fmtPhone(c.phone), town = city(c), l = laneOf(c), days = daysIn(c); return <tr key={c.id} data-row={c.id} tabIndex={0} className={sel === c.id ? "sel" : ""} aria-selected={sel === c.id} onClick={() => open(c.id)} onDoubleClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
-              <td><span className="name"><Avatar name={name} size="sm" /><span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}><b>{name}</b>{town && <span className="faint">, {town}</span>}</span></span></td>
-              <td className="mut c2">{fmtPhone(c.phone)}</td>
-              <td className={c.line ? "" : "faint"}>{line(c) || (c.notes ? c.notes.slice(0, 48) : "No details yet")}</td>
-              <td><span className={"stage " + (l === "done" ? "won" : l)}><i />{LANE_LABEL[l]}</span></td>
-              <td className={"num" + (c.value ? "" : " mut")}>{c.value ? usd(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "–"}</td>
-              <td><span className={"next " + n.tone}><Icon name={n.icon} size={13} />{n.text}</span></td>
-              <td className={"num" + (stale(c, days) ? "" : " mut")} style={stale(c, days) ? { color: "var(--ember)" } : undefined}>{l === "done" || l === "lost" ? "–" : daysLabel(days)}</td>
-              <td className="mut c2">{sourceLabel(c.source)}</td>
-            </tr>; })}</tbody>
+            <colgroup><col style={{ width: 210 }} /><col style={{ width: 300 }} /><col /><col style={{ width: 104 }} /><col style={{ width: 84 }} /><col style={{ width: 150 }} /><col className="c2" style={{ width: 110 }} /></colgroup>
+            <thead><tr><th>Customer</th><th>Next step</th><th>Job</th><th className="right">Value</th><th className="right">Waiting</th><th>Stage</th><th className="c2">Came from</th></tr></thead>
+            <tbody>{groups.map(g => <Fragment key={g.who}>
+              {grouped && <tr className="grp-row"><td colSpan={7}><b>{WHO_LABEL[g.who]}</b><span>{g.cards.length} {g.cards.length === 1 ? "job" : "jobs"}{g.value ? `, ${usd(g.value)}` : ""}</span></td></tr>}
+              {g.cards.map(c => { const n = nextUp(c, today), m = moveOf(c, today), name = c.name || fmtPhone(c.phone), town = city(c), l = laneOf(c), days = daysIn(c); return <tr key={c.id} data-row={c.id} tabIndex={0} className={(sel === c.id ? "sel" : "") + (m.who === "you" ? " mine" : "")} aria-selected={sel === c.id} onClick={() => open(c.id)} onDoubleClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
+                <td><span className="name"><Avatar name={name} size="sm" /><span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}><b>{name}</b>{town && <span className="faint">, {town}</span>}</span></span></td>
+                <td><span className="nxt"><span className={"next " + n.tone}>{n.text}</span>{m.verb && <button type="button" className="btn sm" onClick={e => { e.stopPropagation(); m.run(go); }}>{m.verb}</button>}</span></td>
+                <td className={c.line ? "mut" : "faint"}>{line(c) || (c.notes ? c.notes.slice(0, 48) : "No details yet")}</td>
+                <td className={"num" + (c.value ? "" : " mut")}>{c.value ? usd(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "–"}</td>
+                <td className={"num" + (stale(c, days) ? "" : " mut")} style={stale(c, days) ? { color: "var(--ember)" } : undefined}>{l === "done" || l === "lost" ? "–" : daysLabel(days)}</td>
+                <td><span className={"stage " + (l === "done" ? "won" : l)}><i />{LANE_LABEL[l]}</span></td>
+                <td className="mut c2">{sourceLabel(c.source)}</td>
+              </tr>; })}
+            </Fragment>)}</tbody>
           </table></div>
           <div className="pane-foot"><span>{shown.length} of {base.length}</span><span className="hint"><span><kbd>j</kbd><kbd>k</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>c</kbd> new lead</span></span></div>
         </>

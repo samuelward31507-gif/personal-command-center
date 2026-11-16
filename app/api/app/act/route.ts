@@ -5,9 +5,9 @@ import { cleanOwnerSetup } from "@/lib/crm";
 import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
-import { addLead, importCustomers, moveStage, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
+import { addLead, addPhoto, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
-import { createInvoice, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
+import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     setup?: unknown; stage?: string; details?: unknown; value?: string | null; notes?: string; name?: string; phone?: string;
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
-    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string; email?: string; at?: string | null };
+    rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string; email?: string; at?: string | null; method?: string; payment?: string; data?: string; kind?: string; caption?: string; photo?: string };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
         // Won with an install date: it goes on the owner's Google Calendar.
         if (b.stage === "won" && b.install !== undefined) { const s2 = await scheduleInstall(sql, c, b.thread, { date: b.install, time: b.time, days: b.days }); return json({ ok: true, calendar: s2.calendar }); }
         // Quoted with lines: the owner's lines and tax set the total. Nothing goes to the customer unless he asked.
-        if (b.stage === "quoted" && b.items !== undefined) { const l = await saveQuoteLines(sql, c, b.thread, { items: b.items, tax: b.tax, note: b.note }); if (!l.ok) return json({ error: l.error }, 400); }
+        if (b.stage === "quoted" && b.items !== undefined) { const l = await saveQuoteLines(sql, c, b.thread, { items: b.items, tax: b.tax, note: b.note, deposit: b.deposit }); if (!l.ok) return json({ error: l.error }, 400); }
         if (b.stage !== "quoted" || !b.link) return json({ ok: true });
         // Quoted, and the owner wants the customer to have it: text the link they approve from.
         const l = await sendQuoteLink(sql, c, b.thread, b.note);
@@ -111,13 +111,33 @@ export async function POST(req: Request) {
     }
     if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
     // The crew sees the schedule and the jobs and can text, call, tick steps and leave notes. Money and settings stay with the owner.
-    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
+    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
     if (s.role === "crew" && b.action === "card") { b.details = undefined; b.value = undefined; b.notes = undefined; b.review = undefined; b.email = undefined; }
     if (b.action === "ask") {
       const q = String(b.question ?? "").trim().slice(0, 500);
       if (!q) return json({ error: "Ask something." }, 400);
       const a = await askCinder(sql, c, q);
       return a ? json({ ok: true, answer: a }) : json({ error: "Cinder couldn't answer just now." }, 503);
+    }
+    if (b.action === "payment") {
+      if (!b.invoice || !UUID.test(b.invoice)) return json({ error: "Which invoice?" }, 400);
+      const r = await recordPayment(sql, c, b.invoice, { amount: b.amount, method: b.method, on: b.on, note: b.note });
+      return r.ok ? json({ ok: true, balance: r.balance }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "paymentdelete") {
+      if (!b.payment || !UUID.test(b.payment)) return json({ error: "Which payment?" }, 400);
+      const r = await deletePayment(sql, c, b.payment);
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
+    }
+    if (b.action === "photo") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const r = await addPhoto(sql, c, b.thread, { data: b.data, kind: b.kind, caption: b.caption });
+      return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "photodelete") {
+      if (!b.photo || !UUID.test(b.photo)) return json({ error: "Which photo?" }, 400);
+      const r = await removePhoto(sql, c, b.photo);
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
     }
     if (b.action === "remind") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);

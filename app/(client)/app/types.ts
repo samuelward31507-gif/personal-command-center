@@ -1,5 +1,5 @@
 // What the app gets from /api/app/data, and how screens ask the shell to move around.
-import type { Card, CardInvoice, Stage } from "@/lib/crm";
+import type { Card, CardInvoice, Payment, Stage } from "@/lib/crm";
 import type { CalEvent } from "@/lib/client-schedule";
 
 export type Conv = { id: string; name: string; source: string; status: string; at: string | null; last: string; ask?: string };
@@ -16,6 +16,7 @@ export type Data = { /** The owner, or a crew member who sees the schedule and t
   /** The website key (chat bubble and intake webhook) and the app's public origin, for the System screen. */
   key?: string; origin?: string;
   /** Jobber: whether it's wired up for this business, and the link that connects it. */
+  payments?: Payment[];
   jobber?: { available: boolean; connected: boolean; account: string; error: string; lastPush: string | null; connectUrl: string };
   /** Connections: each lead source's activity, texts that didn't send, the consent log. */
   wires?: { sources: { source: string; leads: number; last: string | null; last30: number }[]; failures: { id: string; at: string; body: string; name: string; phone: string; thread: string; source: string }[]; log: { at: string; event: string; source: string; phone: string; evidence: string }[] } };
@@ -23,9 +24,9 @@ export type Text = { id: string; direction: string; author: string; body: string
   /** Twilio's word on an outgoing text: sent, delivered, undelivered, failed, or "" before the carrier answered. */
   status?: string };
 export type Thread = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
-export type { Card, CardInvoice, Stage };
+export type { Card, CardInvoice, Payment, Stage };
 
-export type Tab = "today" | "inbox" | "jobs" | "calendar" | "customers" | "invoices" | "numbers" | "system" | "sam" | "more";
+export type Tab = "today" | "inbox" | "jobs" | "quotes" | "calendar" | "customers" | "invoices" | "numbers" | "system" | "sam" | "more";
 /** Where a screen can send the owner. The shell owns the state; screens just ask. */
 export type Go = {
   tab: (t: Tab) => void;
@@ -33,6 +34,8 @@ export type Go = {
   /** Open the command bar (⌘K). */
   find: () => void;
   thread: (id: string) => void;
+  /** The quote editor for this customer, full page. */
+  quote: (id: string) => void;
   invoice: (id: string) => void;
   addLead: () => void;
   importCustomers: () => void;
@@ -42,5 +45,5 @@ export type Go = {
 /** What the business has set up, so screens can show the right button or the right nudge. */
 export type Biz = { crew: boolean; reviewLink: boolean; number: boolean; owner: string; business: string; priceBook: string; taxRate: string; payLink: boolean; calendar: boolean; trade: string; canCall: boolean };
 
-export const SOURCE: Record<string, string> = { missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote follow-up", review: "Review request", rehash: "Old lead", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook", google: "Google", yelp: "Yelp", nextdoor: "Nextdoor", zapier: "Form", referral: "Referral", owner: "Added by you", import: "Imported" };
+export const SOURCE: Record<string, string> = { "booking page": "Booking page", missed_call: "Missed call", "web chat": "Website chat", "web form": "Web form", text: "Text", quote: "Quote follow-up", review: "Review request", rehash: "Old lead", angi: "Angi", thumbtack: "Thumbtack", facebook: "Facebook", google: "Google", yelp: "Yelp", nextdoor: "Nextdoor", zapier: "Form", referral: "Referral", owner: "Added by you", import: "Imported" };
 export const sourceLabel = (s: string) => SOURCE[s] ?? (s ? s.charAt(0).toUpperCase() + s.slice(1) : "Unknown");

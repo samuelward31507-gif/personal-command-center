@@ -58,7 +58,7 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
         {groups.length ? groups.map(g => <section key={g.day}><div className={"grp" + (g.day === "Your turn" ? " hot" : "")}><b>{g.day}</b><span>{g.items.length}</span></div>
           {g.items.map(c => { const st = STATUS[c.status] ?? STATUS.auto; return <button key={c.id} type="button" data-cv={c.id} className={"cv" + (sel === c.id ? " sel" : "")} aria-current={sel === c.id ? "true" : undefined} onClick={() => pick(c.id)}>
             <Avatar name={c.name} size="lg" />
-            <span style={{ minWidth: 0 }}><span className="cv-top"><b>{c.status === "paused" && <i aria-label="Your turn" />}{c.name}</b><time>{ago(c.at)}</time></span><small>{c.last}</small><small className={"st " + st[1]}>{st[0]} · {sourceLabel(c.source)}</small></span>
+            <span style={{ minWidth: 0 }}><span className="cv-top"><b>{c.status === "paused" && <i aria-label="Your turn" />}{c.name}</b><time>{ago(c.at)}</time></span><small>{c.last}</small><small className={"st " + st[1]}>{st[0]}, {sourceLabel(c.source)}</small></span>
           </button>; })}</section>)
           : <Empty title={filter === "all" ? "No leads yet" : filter === "needs" ? "Nothing waiting on you" : "No bookings yet"} text={filter === "all" ? "Calls, texts and form leads show up here the moment they come in." : undefined} />}
       </div>

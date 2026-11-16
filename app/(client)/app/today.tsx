@@ -2,13 +2,14 @@
 
 // Home: the dashboard. Four figures, what needs the owner, the pipeline by stage, today's visits, the week as a
 // strip of days, what Cinder did, and the latest activity. Everything is a tap from here.
-import { jobSteps, STAGE_LABEL, STAGES, type Stage } from "@/lib/crm";
+import { jobSteps } from "@/lib/crm";
+import type { Report } from "@/lib/client-reports";
 import { overdue } from "@/lib/billing";
 import { useEffect, useState } from "react";
-import { Avatar, Icon, Spinner, ago, clock, dateLabel, first, fmtPhone, secs, short, todayIso, usd, type Api } from "./parts";
+import { Icon, Spinner, ago, clock, dateLabel, first, fmtPhone, secs, todayIso, usd, type Api } from "./parts";
 import { line } from "./jobs";
 import { suggestReply } from "./replies";
-import { sourceLabel, type Biz, type Data, type Go } from "./types";
+import type { Biz, Data, Go } from "./types";
 
 type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "review" | "sam" | "remind";
 type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string; primary?: boolean; draft?: string; money: number };
@@ -95,69 +96,45 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask }: { d: Data; 
   const days = Array.from({ length: 7 }, (_, k) => { const dd = new Date(Date.parse(today + "T12:00:00") + k * 86400000); const key = iso(dd); return { key, dow: dd.toLocaleDateString("en-US", { weekday: "short" }), num: dd.getDate(), items: visits.filter(v => v.day === key) }; });
   const nextVisit = visits.find(v => v.day > today);
 
-  // Pipeline by stage, from the board.
-  const open = cards.filter(c => !c.pastCustomer);
-  const pipe = STAGES.filter(s => s !== "lost").map(s => { const list = open.filter(c => c.stage === s); return { s, n: list.length, v: list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? c.ballpark?.high ?? 0), 0) }; });
-  const pipeTotal = Math.max(1, pipe.reduce((a, p) => a + p.n, 0));
-  const PIPE_FILL: Record<Stage, string> = { new: "var(--g3)", booked: "var(--g1)", quoted: "var(--ink)", won: "var(--good)", lost: "var(--g3)" };
-
-  const sent = invoices.filter(i => i.status === "sent"), owed = sent.reduce((a, i) => a + i.total, 0), late = sent.filter(i => overdue(i.status, i.due_on, today));
-  const lastWeek = L.weeks.at(-1);
-  const recent = L.conversations.slice(0, 8);
+  const sent = invoices.filter(i => i.status === "sent"), owed = sent.reduce((a, i) => a + i.total - (i.paid_amount ?? 0), 0), late = sent.filter(i => overdue(i.status, i.due_on, today));
   const dateLine = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const [all, setAll] = useState(false);
+  // The last 30 days, with the rates that matter: from the same report as the Reports tab.
+  const [rep, setRep] = useState<Report | null>(null);
+  useEffect(() => { let on = true; api<{ report: Report }>(`/api/app/data?p=${project}&report=30`).then(r => { if (on) setRep(r.report); }).catch(() => {}); return () => { on = false; }; }, [api, project]);
+  const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "–");
+  const shown = all ? actions : actions.slice(0, 7);
 
   return <>
-    <header className="tb"><h1 className="h1">Home</h1><span className="sub">{dateLine}</span>
+    <header className="tb"><h1 className="h1">Home</h1><span className="sub">{dateLine}{actions.length ? `, ${actions.length} ${actions.length === 1 ? "thing" : "things"} waiting on you` : ""}</span>
       <div className="acts"><button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={14} />New lead{wide && <kbd>c</kbd>}</button></div></header>
-    <div className="pad home">
-      <div className="stats" style={{ gridColumn: "1 / -1" }}>
-        <button type="button" className="stat" onClick={() => go.tab("numbers")}><span>Won, last 30 days</span><b>{usd(L.wonValue)}</b><small className={L.won ? "up" : ""}>{L.won ? `${L.won} ${L.won === 1 ? "job" : "jobs"} from Cinder leads` : "No wins yet"}</small></button>
-        <button type="button" className="stat" onClick={() => go.tab("invoices")}><span>Owed to you</span><b>{usd(owed)}</b><small className={late.length ? "down" : ""}>{late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"} past due` : sent.length ? `${sent.length} ${sent.length === 1 ? "invoice" : "invoices"} out` : "All paid up"}</small></button>
-        <button type="button" className="stat" onClick={() => go.tab("invoices")}><span>Quotes out</span><b>{usd(L.chasingValue)}</b><small>{L.chasing ? `${L.chasing} waiting, Cinder following up` : "Nothing waiting"}</small></button>
-        <button type="button" className="stat" onClick={() => go.tab("numbers")}><span>Leads answered</span><b>{L.answered}<small> of {L.leads}</small></b><small>{L.replySec != null ? `First reply in ${secs(L.replySec)}, day or night` : "Last 30 days"}</small></button>
-      </div>
-
+    <div className="pad home2">
       <div className="col">
+        <section className="todo">
+          <p className="sec">Your move<small>{actions.length ? `${usd(atStake)} riding on these` : ""}</small></p>
+          {actions.length ? <>{shown.map((a, k) => <div key={a.key} className={"trow" + (a.kind === "reply" || a.kind === "money" ? " hot" : "")}>
+            <Icon name={ICON[a.kind][0]} size={15} />
+            <span className="tt"><b>{a.title}</b><small>{a.sub}</small>{a.draft && <q className="nudge">{a.draft}</q>}</span>
+            <span className="tm">{a.money ? usd(a.money) : ""}</span>
+            <button type="button" className={"btn sm" + (k === 0 ? " ink" : "")} onClick={a.go}>{a.cta}</button>
+          </div>)}
+            {actions.length > 7 && <button type="button" className="link more" onClick={() => setAll(x => !x)}>{all ? "Show fewer" : `Show all ${actions.length}`}</button>}</>
+          : <p className="empty-line">You&rsquo;re clear. New leads, quotes to write and late invoices land here.</p>}
+        </section>
         <AskBox api={api} project={project} ask={ask} />
-        <section className="card">
-          <div className="hd"><h2>Needs you</h2><small>{actions.length ? `${actions.length} ${actions.length === 1 ? "thing" : "things"}${atStake ? `, ${usd(atStake)} at stake` : ""}` : "Clear"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>All jobs</button></div>
-          {actions.length ? actions.slice(0, 8).map(a => <div key={a.key} className="row tall needs">
-            <span className={"ic " + ICON[a.kind][1]}><Icon name={ICON[a.kind][0]} size={14} /></span>
-            <span style={{ minWidth: 0 }}><b>{a.title}</b><small>{a.sub}</small>{a.draft && <q className="nudge">{a.draft}</q>}</span>
-            <b className={"num" + (a.money ? "" : " faint")} style={{ fontWeight: 500 }}>{a.money ? usd(a.money) : ""}</b>
-            <button type="button" className={"btn sm" + (a.primary ? " ink" : "")} onClick={a.go}>{a.cta}</button>
-          </div>) : <p className="fine" style={{ padding: "6px 0" }}>Nothing waiting on you. New leads, late invoices and quotes to write land here.</p>}
-        </section>
-
-        <section className="card">
-          <div className="hd"><h2>Pipeline</h2><small>{open.length} {open.length === 1 ? "job" : "jobs"} on the board</small><button type="button" className="link" onClick={() => go.tab("jobs")}>Jobs</button></div>
-          <div className="pipe" aria-hidden="true">{pipe.map(p => p.n > 0 && <i key={p.s} style={{ flex: p.n, background: PIPE_FILL[p.s] }} />)}</div>
-          <div className="pipe-legend">{pipe.map(p => <button key={p.s} type="button" onClick={() => go.tab("jobs")}><i style={{ background: PIPE_FILL[p.s] }} /><span>{STAGE_LABEL[p.s]}</span><b>{p.n}</b><small>{p.v ? short(p.v) : ""}</small></button>)}</div>
-          <span className="sr">{Math.round((pipe[3].n / pipeTotal) * 100)} percent won</span>
-        </section>
-
-        <section className="card">
-          <div className="hd"><h2>Recent activity</h2><button type="button" className="link" onClick={() => go.tab("inbox")}>Inbox</button></div>
-          {recent.map(c => <button key={c.id} type="button" className="row tall feed" onClick={() => go.thread(c.id)}>
-            <Avatar name={c.name} />
-            <span style={{ minWidth: 0 }}><b>{c.name}<span className="faint" style={{ fontWeight: 400 }}>, {sourceLabel(c.source).toLowerCase()}</span></b><small>{c.last}</small></span>
-            <span className="feed-r">{c.status === "paused" ? <span className="dot ember">Your turn</span> : c.status === "booked" ? <span className="dot ink">Booked</span> : <span className="faint">{ago(c.at)}</span>}</span>
-          </button>)}
-        </section>
       </div>
 
-      <div className="col">
-        <section className="card">
-          <div className="hd"><h2>Today</h2><small>{todayList.length ? `${todayList.length} ${todayList.length === 1 ? "visit" : "visits"}` : "Nothing booked"}</small><button type="button" className="link" onClick={() => go.tab("calendar")}>Calendar</button></div>
-          {todayList.length ? todayList.map(v => <div key={v.key} className="t wk"><button type="button" className="wk-main" onClick={v.go}><time>{v.time}</time><span style={{ minWidth: 0 }}><b>{v.who}</b><small>{v.what === "estimate" ? "Estimate" : "Install"}{v.sub ? ", " + v.sub : ""}</small></span></button>
-            <span className="wk-acts">{v.addr && <a className="btn ghost sm ic" href={"https://maps.google.com/?daddr=" + encodeURIComponent(v.addr)} target="_blank" rel="noreferrer" title="Directions" aria-label={"Directions to " + v.who}><Icon name="pin" size={13} /></a>}
-              {v.phone && <a className="btn ghost sm ic" href={"tel:" + v.phone} title="Call" aria-label={"Call " + v.who}><Icon name="phone" size={13} /></a>}
-              {v.id && <button type="button" className="btn ghost sm ic" title="Text" aria-label={"Text " + v.who} onClick={() => go.thread(v.id!)}><Icon name="chat" size={13} /></button>}</span></div>)
-            : <p className="fine" style={{ padding: "4px 0 6px" }}>{nextVisit ? `Nothing today. Next up: ${nextVisit.who}, ${nextVisit.what}, ${dateLabel(nextVisit.day)} at ${nextVisit.time}.` : "Nothing today. Cinder books estimates where you're free as leads come in."}</p>}
+      <div className="col side">
+        <section>
+          <p className="sec">Today<small>{todayList.length ? `${todayList.length} ${todayList.length === 1 ? "visit" : "visits"}` : ""}</small><button type="button" className="link" onClick={() => go.tab("calendar")}>Calendar</button></p>
+          {todayList.length ? todayList.map(v => <div key={v.key} className="vrow"><button type="button" className="vmain" onClick={v.go}><time>{v.time}</time><span style={{ minWidth: 0 }}><b>{v.who}</b><small>{v.what === "estimate" ? "Estimate" : "Install"}{v.sub ? `, ${v.sub}` : ""}</small></span></button>
+            <span className="vacts">{v.addr && <a className="btn ghost sm ic" href={"https://maps.google.com/?daddr=" + encodeURIComponent(v.addr)} target="_blank" rel="noreferrer" title="Directions" aria-label={"Directions to " + v.who}><Icon name="pin" size={13} /></a>}
+              {v.phone && <a className="btn ghost sm ic" href={"tel:" + v.phone} title="Call" aria-label={"Call " + v.who}><Icon name="phone" size={13} /></a>}</span></div>)
+            : <p className="empty-line">{nextVisit ? `Nothing today. Next: ${nextVisit.who}, ${nextVisit.what}, ${dateLabel(nextVisit.day)} at ${nextVisit.time}.` : "Nothing booked. Cinder books estimates where your calendar is free."}</p>}
         </section>
 
-        <section className="card">
-          <div className="hd"><h2>This week</h2><small>{visits.filter(v => v.what === "estimate").length} estimates, {new Set(visits.filter(v => v.what === "install").map(v => v.who)).size} installs</small></div>
+        <section>
+          <p className="sec">This week<small>{visits.filter(v => v.what === "estimate").length} estimates, {new Set(visits.filter(v => v.what === "install").map(v => v.who)).size} installs</small></p>
           <div className="week">{days.map((dd, k) => <button key={dd.key} type="button" className={"wd" + (k === 0 ? " today" : "")} onClick={() => go.tab("calendar")}>
             <span className="wd-h"><small>{dd.dow}</small><b>{dd.num}</b></span>
             {dd.items.slice(0, 3).map(v => <span key={v.key} className={"wd-i " + v.what} title={`${v.time} ${v.who}`}><em>{v.time === "All day" ? "" : v.time.replace(":00", "").replace(" ", "")}</em>{first(v.who)}</span>)}
@@ -165,11 +142,15 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask }: { d: Data; 
           </button>)}</div>
         </section>
 
-        <section className="card">
-          <div className="hd"><h2>Cinder this week</h2><button type="button" className="link" onClick={() => go.tab("system")}>Settings</button></div>
-          <div className="row tall"><span className="ic"><Icon name="bolt" size={14} /></span><span><b>{lastWeek ? `${lastWeek.leads} ${lastWeek.leads === 1 ? "lead" : "leads"} answered, ${lastWeek.booked} ${lastWeek.booked === 1 ? "estimate" : "estimates"} booked` : "Waiting for the first lead"}</b><small>{L.replySec != null ? `Typical first reply in ${secs(L.replySec)}` : "Day or night"}</small></span></div>
-          <div className="row tall"><span className="ic"><Icon name="clock" size={14} /></span><span><b>{L.chasing ? `${L.chasing} ${L.chasing === 1 ? "quote" : "quotes"} being followed up` : "No quotes waiting"}</b><small>{L.chasing ? `${usd(L.chasingValue)} open, stops the moment they reply` : "Quoted jobs get four follow-ups"}</small></span></div>
-          <div className="row tall"><span className="ic"><Icon name="user" size={14} /></span><span><b>{d.unreadFromSam ? "Sam wrote to you" : "Sam Ward, your rep"}</b><small>{d.unreadFromSam ? `${d.unreadFromSam} new` : "Hours, prices, wording changes"}</small></span><button type="button" className="btn sm" onClick={() => go.tab("sam")}>Open</button></div>
+        <section>
+          <p className="sec">Last 30 days<button type="button" className="link" onClick={() => go.tab("numbers")}>Reports</button></p>
+          <dl className="kv30">
+            <div><dt>Won</dt><dd>{usd(rep?.now.wonValue ?? L.wonValue)}<small>{rep ? `${rep.now.won} ${rep.now.won === 1 ? "job" : "jobs"}` : ""}</small></dd></div>
+            <div><dt>Book rate</dt><dd>{rep ? pct(rep.now.booked, rep.now.leads) : pct(L.booked, L.leads)}<small>{rep ? `${rep.now.booked} of ${rep.now.leads} leads` : ""}</small></dd></div>
+            <div><dt>Close rate</dt><dd>{rep ? pct(rep.now.won, rep.now.quoted) : "–"}<small>{rep ? `${rep.now.won} of ${rep.now.quoted} quoted` : ""}</small></dd></div>
+            <div><dt>First reply</dt><dd>{secs(rep?.now.replySec ?? L.replySec)}<small>median, day or night</small></dd></div>
+            <div><dt>Owed to you</dt><dd className={late.length ? "bad-t" : ""}>{usd(owed)}<small>{late.length ? `${late.length} past due` : sent.length ? `${sent.length} out` : "nothing out"}</small></dd></div>
+          </dl>
         </section>
       </div>
     </div>

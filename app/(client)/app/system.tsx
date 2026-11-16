@@ -106,6 +106,12 @@ function Connections({ d, biz, go, push, onPush, toast, api, project, demo }: { 
           {src.key === "web chat" && key && <Code text={snippet} block toast={toast} />}
           {src.key === "number" && !s.has_cell && <p>Your cell isn&rsquo;t on file, so calls can&rsquo;t ring you and tests have nowhere to go. Ask Sam to add it.</p>}
         </Row>; })}
+      {key && <Row state={s.booking_page === "no" ? "off" : "on"} name="Your booking page" st={s.booking_page === "no" ? "Off" : d.calendar?.connected ? "Live, times from your Google Calendar" : "Live, customers ask for a time"}
+        open={open === "bookpage"} onToggle={() => setOpen(open === "bookpage" ? null : "bookpage")}
+        acts={<><Code text={`${origin}/b/${key}`} toast={toast} /><a className="btn sm" href={`/b/${demo ? "example" : key}`} target="_blank" rel="noreferrer">Open</a></>}>
+        <p>Customers pick an estimate time from your real calendar, leave their address and what they need, and get a confirmation text. You get the alert. Put the link on your website, your Google profile and in your email signature.</p>
+        <ol><li>Copy the link.</li><li>Add a &ldquo;Book an estimate&rdquo; button on your site that opens it.</li><li>Add it to your Google Business Profile as the booking link.</li></ol>
+      </Row>}
       {!all && visible.length < SOURCES.length && <button type="button" className="link" style={{ padding: "8px 0" }} onClick={() => setAll(true)}>Show {SOURCES.length - visible.length} more lead sites</button>}
     </section>
 

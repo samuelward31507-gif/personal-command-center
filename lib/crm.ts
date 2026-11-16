@@ -216,7 +216,7 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   if (r.nudge_hours !== undefined) out.nudge_hours = parseDayList(r.nudge_hours, 3, 168).join(",");
   if (r.dnt !== undefined) out.dnt = parseDnt(r.dnt).join(",");
   if (r.team !== undefined) out.team = JSON.stringify(parseTeam(r.team));
-  pick("monthly_report", ["", "yes", "no"]);
+  pick("monthly_report", ["", "yes", "no"]); pick("booking_page", ["", "yes", "no"]);
   return out;
 }
 
@@ -259,13 +259,20 @@ export type Card = { id: string; name: string; phone: string; source: string; st
   crew?: string;
   email?: string;
   /** "Remind me": when, and what about. Cleared once it's sent or the owner clears it. */
-  remind?: { at: string; note: string; sent: boolean } | null };
+  remind?: { at: string; note: string; sent: boolean } | null;
+  photos?: Photo[] };
 export const cleanEmail = (v: unknown) => { const s = String(v ?? "").trim().toLowerCase().slice(0, 120); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) ? s : ""; };
 export type CardInvoice = { id: string; number: number; status: string; items: { name: string; qty: number; unit: string; price: number }[]; tax_rate: number; total: number; note: string;
-  due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null };
-
+  due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null;
+  /** What has come in so far, from recorded payments. Balance is total minus this. */
+  paid_amount?: number };
+export type Payment = { id: string; invoice_id: string; thread_id: string; amount: number; method: PayMethod; paid_on: string; note: string; number?: number; customer?: string };
+export const PAY_METHODS = [["card", "Card, through your pay link"], ["cash", "Cash"], ["check", "Check"], ["bank", "Bank transfer, Zelle or Venmo"], ["other", "Other"]] as const;
+export type PayMethod = (typeof PAY_METHODS)[number][0];
+export const cleanPayMethod = (v: unknown): PayMethod => (PAY_METHODS.some(m => m[0] === v) ? v as PayMethod : "other");
+export type Photo = { id: string; kind: "before" | "during" | "after" | "other"; caption: string; at: string; shared: boolean };
 // ---------- Where the jobs come from ----------
-export const SOURCE_LABEL: Record<string, string> = { missed_call: "Missed calls", text: "Texts", "web form": "Website form", "web chat": "Website chat", angi: "Angi", thumbtack: "Thumbtack",
+export const SOURCE_LABEL: Record<string, string> = { "booking page": "Booking page", missed_call: "Missed calls", text: "Texts", "web form": "Website form", "web chat": "Website chat", angi: "Angi", thumbtack: "Thumbtack",
   facebook: "Facebook", google: "Google", yelp: "Yelp", nextdoor: "Nextdoor", owner: "Added by you", import: "Imported", rehash: "Old leads", zapier: "Forms", referral: "Referrals" };
 export type SourceRow = { source: string; label: string; leads: number; booked: number; won: number; wonValue: number };
 /** Leads, estimates and won jobs per lead source, from the board itself: no setup, nothing to tag. Best earner first. */

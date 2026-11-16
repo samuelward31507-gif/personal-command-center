@@ -1,6 +1,7 @@
 // The example business behind /app?demo=1: the real app over an in-memory copy of its API,
 // so Sam (and prospects on a call) can click through exactly what a client sees. Nothing leaves the browser.
-import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, cleanWinback, detailLine, parsePriceBook, stageFor, STAGES, winbackDraft, type Card, type CardInvoice, type Details } from "@/lib/crm";
+import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, cleanWinback, detailLine, parsePriceBook, stageFor, STAGES, winbackDraft, type Card, type CardInvoice, type Details , cleanPayMethod, type Payment, type Photo } from "@/lib/crm";
+import type { Report, ReportNumbers } from "@/lib/client-reports";
 import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
 import { cleanImportRows, importAs } from "@/lib/customer-import";
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
@@ -102,6 +103,12 @@ function seed() {
       { id: "iv2", thread_id: "w1", number: 1042, status: "sent", items: [{ name: "6 ft cedar privacy fence, installed", qty: 220, unit: "ft", price: 35 }, { name: "Walk gate", qty: 2, unit: "", price: 450 }], tax_rate: 0, total: 8600, note: "", due_on: at(-2, 12).slice(0, 10),
         sent_at: at(-9, 12), viewed_at: at(-9, 18), paid_at: null, paid_claimed_at: null, reminders: 1, reminders_paused: false, url: "/i/example" },
     ] as (CardInvoice & { thread_id: string })[],
+    payments: [
+      { id: "pm1", invoice_id: "iv1", thread_id: "w3", amount: 5000, method: "check", paid_on: at(-26, 12).slice(0, 10), note: "Deposit, check 1182" },
+      { id: "pm2", invoice_id: "iv1", thread_id: "w3", amount: 6200, method: "card", paid_on: at(-8, 12).slice(0, 10), note: "" },
+      { id: "pm3", invoice_id: "iv2", thread_id: "w1", amount: 2500, method: "bank", paid_on: at(-24, 12).slice(0, 10), note: "Deposit by Zelle" },
+    ] as Payment[],
+    photos: {} as Record<string, Photo[]>,
     won: 5, wonValue: 37500,
     wonJobs: [{ id: "w1", customer_name: "Henderson family", customer_phone: "+17205550110", amount: 8600 as number | null, won_at: at(-9, 12) }],
   };
@@ -116,6 +123,24 @@ const quoteSms = (name: string, amount: number | null, id: string) => {
 
 let S: ReturnType<typeof seed> | null = null;
 const st = () => (S ??= seed());
+const paidOn = (invoiceId: string) => st().payments.filter(p => p.invoice_id === invoiceId).reduce((a, p) => a + p.amount, 0);
+
+/** The example business's report: believable numbers for a fence shop with a few dozen leads a month. */
+function demoReport(days: 30 | 90 | 365): Report {
+  const k = days === 30 ? 1 : days === 90 ? 3.1 : 12.4;
+  const num = (leads: number, booked: number, quoted: number, won: number, wonValue: number, extra: Partial<ReportNumbers> = {}): ReportNumbers => ({ leads, booked, quoted, won, wonValue, lost: Math.round(quoted * 0.3),
+    replySec: 9, afterHoursLeads: Math.round(leads * 0.34), afterHoursWon: Math.round(won * 0.4), afterHoursValue: Math.round(wonValue * 0.38), cycleDays: 11.4, payDays: 6.2,
+    collected: Math.round(wonValue * 0.82), invoiced: Math.round(wonValue * 0.9), appts: booked, noShows: Math.max(0, Math.round(booked * 0.07)), reviews: Math.round(won * 0.9), ...extra });
+  const r = (x: number) => Math.round(x * k);
+  return { days,
+    now: num(r(41), r(14), r(9), r(5), r(37500)),
+    before: num(r(33), r(10), r(8), r(4), r(29800), { replySec: 14, cycleDays: 13.8, payDays: 8.5 }),
+    sources: [{ source: "angi", leads: r(9), booked: r(4), quoted: r(3), won: r(2), wonValue: r(18100) }, { source: "missed_call", leads: r(13), booked: r(4), quoted: r(3), won: r(1), wonValue: r(8600) },
+      { source: "web form", leads: r(8), booked: r(3), quoted: r(2), won: r(1), wonValue: r(6900) }, { source: "google", leads: r(6), booked: r(2), quoted: r(1), won: r(1), wonValue: r(3900) },
+      { source: "booking page", leads: r(3), booked: r(1), quoted: 0, won: 0, wonValue: 0 }, { source: "thumbtack", leads: r(2), booked: 0, quoted: 0, won: 0, wonValue: 0 }],
+    lostReasons: [{ reason: "Price", n: r(2) }, { reason: "Went with someone else", n: r(1) }, { reason: "Timing", n: Math.max(1, r(0.5)) }],
+    openQuotes: { n: 4, value: 32627 } };
+}
 const money = (v: unknown) => Number(String(v ?? "").replace(/[$,\s]/g, "").replace(/k$/i, "000")) || null;
 
 function data() {
@@ -140,7 +165,8 @@ function data() {
       failures: [{ id: "f1", at: ago(12), body: "Good question. Mike will get back to you on that directly today.", name: "Tom Becker", phone: "+17205550177", thread: "t1", source: "web form" }],
       log: [{ at: ago(40), event: "inbound_call", source: "missed_call", phone: "+17205550161", evidence: "Missed call, texted back in 6s" }, { at: ago(300), event: "web_form", source: "web form", phone: "+17205550123", evidence: "Submitted a form asking to be contacted" }, { at: ago(540), event: "inbound_text", source: "text", phone: "+17205550139", evidence: "Texted the business number" },
         { at: ago(2880), event: "paid_lead", source: "angi", phone: "+17205550177", evidence: "Requested a quote on Angi" }, { at: ago(2940), event: "opt_out", source: "", phone: "+17205550177", evidence: "Replied STOP" }, { at: ago(5760), event: "owner_import", source: "jobber", phone: "+17205550112", evidence: "Imported from Jobber, past customer" }, { at: ago(8640), event: "web_form", source: "web chat", phone: "+17205550150", evidence: "Asked through the website chat" }] },
-    customers: customers(), invoices: s.invoices.map(i => { const th = s.threads[i.thread_id]?.thread; return { ...i, customer: th?.customer_name ?? "", phone: th?.customer_phone ?? "" }; }),
+    customers: customers(), invoices: s.invoices.map(i => { const th = s.threads[i.thread_id]?.thread; return { ...i, paid_amount: paidOn(i.id), customer: th?.customer_name ?? "", phone: th?.customer_phone ?? "" }; }),
+    payments: s.payments.map(p => ({ ...p, number: s.invoices.find(i => i.id === p.invoice_id)?.number, customer: s.threads[p.thread_id]?.thread.customer_name ?? "" })),
     winback: { past: 23, eligible: s.winbackSent ? 0 : 4, names: ["Rob", "Megan", "Luis", "Kara"], draft: winbackDraft(s.setup.trade, s.setup.owner_name, s.setup.display_name) },
   };
 }
@@ -165,7 +191,7 @@ function board(all = false): Card[] {
       quote: q ? { id: q.id, amount: q.amount, status: q.status, steps: q.steps_sent, linked: q.linked, url: q.linked ? EXAMPLE_LINK : null, viewed: q.viewed, note: q.note, items: q.items, tax: q.tax_rate, deposit: q.deposit ?? null } : null,
       next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, installTime: c.installTime ?? null, installDays: c.installDays ?? 1, onCalendar: !!c.onCalendar,
       reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, job: { ...(c.job ?? {}) }, costs: { materials: 0, labor: 0, other: 0, ...(c.costs ?? {}) }, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void").at(-1) ?? null,
-      stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null };
+      stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [] };
   }).sort((a, b) => b.at.localeCompare(a.at));
 }
 
@@ -185,6 +211,8 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
   const fail = (msg: string, status = 400) => { const e = new Error(msg) as Error & { status?: number }; e.status = status; throw e; };
   const now = new Date().toISOString();
   if (path.startsWith("/api/app/data")) {
+    const rp = new URL(path, "https://x").searchParams.get("report");
+    if (rp) return { report: demoReport(Number(rp) === 90 ? 90 : Number(rp) === 365 ? 365 : 30) };
     const th = new URL(path, "https://x").searchParams.get("thread");
     if (th) { const t = s.threads[th] ?? fail("Not found", 404); return { thread: t!.thread, texts: t!.texts.map((x, i, all) => ({ ...x, status: x.direction === "out" && x.author !== "system" ? (th === "t1" && i === all.length - 1 ? "undelivered" : "delivered") : "" })) }; }
     return data();
@@ -212,6 +240,24 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
     if (b.action === "review") { s.wonJobs = s.wonJobs.filter(j => j.id !== b.quote); return { ok: true }; }
     if (b.action === "setup") { Object.assign(s.setup, cleanOwnerSetup(b.setup)); return { ok: true }; }
     if (b.action === "testtext") return { ok: true };
+    if (b.action === "payment") {
+      const inv = s.invoices.find(i => i.id === b.invoice) ?? fail("Which invoice?", 404);
+      const bal = inv!.total - paidOn(inv!.id), amt = Math.round(Number(String(b.amount ?? "").replace(/[$,]/g, "")) * 100) / 100;
+      if (!(amt > 0)) fail("Type the amount, like 1500.");
+      if (amt > bal + 0.005) fail(`That's more than the ${bal.toLocaleString("en-US")} still owed.`);
+      s.payments.unshift({ id: "pm" + ++n, invoice_id: inv!.id, thread_id: inv!.thread_id, amount: amt, method: cleanPayMethod(b.method), paid_on: cleanDate(b.on) ?? now.slice(0, 10), note: String(b.note ?? "") });
+      if (paidOn(inv!.id) >= inv!.total - 0.005) { inv!.status = "paid"; inv!.paid_at = now; }
+      return { ok: true, balance: Math.max(0, inv!.total - paidOn(inv!.id)) };
+    }
+    if (b.action === "paymentdelete") {
+      const p = s.payments.find(x => x.id === b.payment) ?? fail("That payment was already removed.", 404);
+      s.payments = s.payments.filter(x => x.id !== p!.id);
+      const inv = s.invoices.find(i => i.id === p!.invoice_id);
+      if (inv && inv.status === "paid" && paidOn(inv.id) < inv.total) { inv.status = inv.sent_at ? "sent" : "draft"; inv.paid_at = null; }
+      return { ok: true };
+    }
+    if (b.action === "photo") { const id = String(b.data ?? ""); if (!id.startsWith("data:image/")) fail("That photo didn't come through."); (s.photos[String(b.thread)] ??= []).push({ id, kind: b.kind === "after" ? "after" : "before", caption: "", at: now, shared: false }); return { ok: true, id }; }
+    if (b.action === "photodelete") { for (const k of Object.keys(s.photos)) s.photos[k] = s.photos[k].filter(p => p.id !== b.photo); return { ok: true }; }
     if (b.action === "remind") { const c = (s.crm[t!.thread.id] ??= { details: {}, notes: "" }); c.remind = b.at ? { at: String(b.at), note: String(b.note ?? ""), sent: false } : null; return { ok: true }; }
     if (b.action === "ask") {
       await new Promise(r => setTimeout(r, 700));
@@ -351,7 +397,8 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
         th?.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: `Hi ${(th.thread.customer_name || "").split(" ")[0]}, here's invoice #${inv.number} from Ridgeline Fence Co for $${inv.total.toLocaleString("en-US")}. You can see it and pay here: https://app.cinderrevenue.com/i/example`, at: now });
         return { ok: true, sent: true, link: EXAMPLE_INVOICE }; }
       const what = String(b.what);
-      if (what === "paid") { inv.status = "paid"; inv.paid_at = now; } else if (what === "unpaid") { inv.status = inv.sent_at ? "sent" : "draft"; inv.paid_at = null; }
+      if (what === "paid") { const left = inv.total - paidOn(inv.id); if (left > 0) s.payments.unshift({ id: "pm" + ++n, invoice_id: inv.id, thread_id: inv.thread_id, amount: left, method: "other", paid_on: now.slice(0, 10), note: "Marked paid in full" }); inv.status = "paid"; inv.paid_at = now; }
+      else if (what === "unpaid") { s.payments = s.payments.filter(p => p.invoice_id !== inv.id); inv.status = inv.sent_at ? "sent" : "draft"; inv.paid_at = null; }
       else if (what === "void") inv.status = "void"; else if (what === "pause" || what === "resume") inv.reminders_paused = what === "pause";
       return { ok: true };
     }
