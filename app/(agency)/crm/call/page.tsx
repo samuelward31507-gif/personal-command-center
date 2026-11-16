@@ -58,8 +58,11 @@ export default function CallModePage() {
   const [mail, setMail] = useState<{ to: string; style: "info_email" | "info_email_time"; busy: boolean; msg: { ok: boolean; text: string } | null }>({ to: "", style: "info_email", busy: false, msg: null });
   const readyLink = useRef<HTMLAnchorElement | null>(null);
   useEffect(() => { if (ready) readyLink.current?.focus(); }, [ready]);
-  // "New only" hides follow-ups so the list is just people you have never called.
-  const [newOnly, setNewOnly] = useState(() => { try { return localStorage.getItem("cinder.newonly") !== "off"; } catch { return true; } });
+  // Who's on the list: everyone (warm leads first), warm only (callbacks, interested, send-info), or new only.
+  // Default is everyone: hiding follow-ups by default buried warm leads.
+  type ListMode = "all" | "warm" | "new";
+  const [mode, setMode] = useState<ListMode>(() => { try { const v = localStorage.getItem("cinder.callmode"); return v === "warm" || v === "new" ? v : "all"; } catch { return "all"; } });
+  const chooseMode = (m: ListMode) => { setMode(m); try { localStorage.setItem("cinder.callmode", m); } catch { /* fine */ } };
   const pendingDial = useRef(false);
   const [session, setSession] = useState<{ start: number; dials: number } | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -104,12 +107,12 @@ export default function CallModePage() {
       slots.forEach((n, k) => { items[n] = ordered[k]; });
       // A contact can show up as both a follow-up and a deal next step: call them once.
       const seen = new Set<string>();
-      setQueue(items.filter(i => { const id = i.contact!.id; if (seen.has(id)) return false; seen.add(id); return !newOnly || i.group === "prospects"; }));
+      setQueue(items.filter(i => { const id = i.contact!.id; if (seen.has(id)) return false; seen.add(id); return mode === "new" ? i.group === "prospects" : mode === "warm" ? i.group !== "prospects" : true; }));
       setContacts(byId);
       setIndex(0);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not build the call list."); }
     finally { setLoading(false); }
-  }, [newOnly]);
+  }, [mode]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     fetch("/api/offer", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(d => d && setFounding({ script: d.script, left: d.left })).catch(() => {});
@@ -374,7 +377,11 @@ export default function CallModePage() {
         {unaudited > 0 && <button className="u-btn" disabled={!!auditing} onClick={() => void auditRest()}>
           {auditing ? `Researching ${auditing.done}/${auditing.total}${auditing.current ? `, ${auditing.current}` : ""}` : `Research the next ${Math.min(10, unaudited)}`}</button>}
         <button className="u-btn u-btn-bare" aria-pressed={autoDial} title="After no answer, voicemail, gatekeeper, wrong number or a quick no, the next call opens by itself" onClick={toggleAuto}>Auto-dial {autoDial ? "on" : "off"}</button>
-        <button className="u-btn u-btn-bare" aria-pressed={newOnly} title="Show only people you have never called" onClick={() => setNewOnly(v => { const n = !v; try { localStorage.setItem("cinder.newonly", n ? "on" : "off"); } catch { /* fine */ } return n; })}>{newOnly ? "New only" : "Everyone"}</button>
+        <div className="u-seg" role="group" aria-label="Who to call">
+          <button type="button" aria-pressed={mode === "all"} title="Warm leads first, then new prospects" onClick={() => chooseMode("all")}>Everyone</button>
+          <button type="button" aria-pressed={mode === "warm"} title="Callbacks, interested and send-info only" onClick={() => chooseMode("warm")}>Warm</button>
+          <button type="button" aria-pressed={mode === "new"} title="Only people you have never called" onClick={() => chooseMode("new")}>New</button>
+        </div>
         <button className="u-btn u-btn-bare" onClick={() => void load()}>Refresh list</button>
       </div>
     </div>
