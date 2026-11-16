@@ -212,7 +212,7 @@ export default function Dashboard() {
     <div className="u-head">
       <div>
         <p className="u-note" style={{ marginBottom: 8 }}>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
-        <h1 className="u-title">{greeting}, {ws.ownerFirstName}</h1>
+        <h1 className="u-title">{greeting}, {ws.ownerFirstName}.{b ? <span className="u-dim"> {b.today.calls >= target ? "Target hit. Keep going." : `${target - b.today.calls} dials to go.`}</span> : null}</h1>
       </div>
       <div className="u-head-actions"><Link className="u-btn u-btn-light u-btn-lg" href="/crm/call">Start calling</Link></div>
     </div>

@@ -71,7 +71,7 @@ export default function PipelinePage(){
  </div>;
  return <div className="u-page pb-page" role="region" aria-label="Pipeline">
   <div className="u-head">
-   <h1 className="u-title">Pipeline</h1>
+   <h1 className="u-title">Pipeline{(()=>{const n=deals.filter(d=>!["won","lost","nurture"].includes(d.stage)).length;return deals.length?<span className="u-dim"> {n} open {n===1?"deal":"deals"}.</span>:null})()}</h1>
    <div className="u-head-actions">
     <div className="u-seg" role="group" aria-label="Layout"><button type="button" aria-pressed={view==="board"} onClick={()=>{setView("board");setFilter("open")}}>Board</button><button type="button" aria-pressed={view==="list"} onClick={()=>setView("list")}>List</button></div>
     <button className="u-btn u-btn-light" onClick={startNew}>New deal</button>
