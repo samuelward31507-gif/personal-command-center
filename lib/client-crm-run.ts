@@ -165,7 +165,7 @@ export async function addLead(sql: Sql, c: Client, input: { name?: string; phone
 
 /** For the setup flow: what the owner already told us (or Sam filled in), so nothing is asked twice. */
 export function ownerSetupView(setup: Record<string, string>) {
-  const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at", "quote_terms", "warranty", "financing_note", "financing_link", "review_on_paid", "labor_rate", "catalog"];
+  const k = ["display_name", "owner_name", "website", "trade", "service_area", "team_size", "years", "leads_month", "lead_sources", "software", "price_book", "share_ballpark", "priority", "onboarded_at", "quote_terms", "warranty", "financing_note", "financing_link", "review_on_paid", "labor_rate", "catalog", "evening_text", "golive", "golive_start", "software"];
   return { ...Object.fromEntries([...k, "pay_link", "tax_rate", "invoice_days"].map(x => [x, setup[x] ?? ""])), has_calendar: "", has_review_link: setup.review_link ? "yes" : "", has_number: setup.texting_number ? "yes" : "",
     // Read-only for the System screen: what Sam has wired. Values that could identify a person stay out.
     has_cell: setup.owner_cell ? "yes" : "", has_booking_link: setup.booking_link ? "yes" : "", hours: setup.hours ?? "",

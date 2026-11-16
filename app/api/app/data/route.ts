@@ -11,6 +11,7 @@ import { customerEmailReady } from "@/lib/client-email";
 import { winbackDraft } from "@/lib/crm";
 import { loadPlans, loadTime, loadVisits } from "@/lib/client-service-run";
 import { qboConfigured, qboState } from "@/lib/qbo";
+import { eveningFor } from "@/lib/client-evening";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -69,6 +70,7 @@ export async function GET(req: Request) {
       loadTime(sql, c, s.role === "crew" ? crewMe : null).catch(e => { console.error("Time failed", e instanceof Error ? e.message : e); return []; }),
       sql`SELECT company_name, last_error, last_push_at FROM public.client_qbo WHERE project_id = ${c.projectId}::uuid`.catch(() => []),
     ]);
+    const evening = s.role === "crew" ? undefined : await eveningFor(sql, c.projectId, c.setup.timezone || "America/Denver").catch(() => undefined);
     // Their real calendar, read only on the Calendar tab (it's a Google call).
     let events: CalEvent[] = [], calError = "";
     const connected = (calRow as unknown[]).length > 0;
@@ -85,6 +87,7 @@ export async function GET(req: Request) {
     const crew = s.role === "crew";
     return json({
       role: s.role === "crew" ? "crew" : s.role === "office" ? "office" : "owner", me, project: c.projectId,
+      evening,
       plans: crew ? plans.map(p => ({ ...p, items: [], total: 0, tax_rate: 0 })) : plans, visits, time,
       emailReady: customerEmailReady(), business: c.setup.display_name || "", number: c.setup.texting_number || "", canCall: !!(c.setup.owner_cell && c.setup.texting_number),
       owner: c.setup.owner_name || "", businesses: biz, live,

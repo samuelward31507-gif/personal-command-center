@@ -125,4 +125,10 @@ ok(() => assert.equal(crc32(new TextEncoder().encode("hello")), 0x3610a686));
 ok(() => { const z = zip([{ name: "a.csv", data: "x,y\r\n" }, { name: "photos/1.jpg", data: new Uint8Array([1, 2, 3]) }]); const v = new DataView(z.buffer);
   assert.equal(v.getUint32(0, true), 0x04034b50); assert.equal(v.getUint32(z.length - 22, true), 0x06054b50); assert.equal(v.getUint16(z.length - 12, true), 2); });
 
+// ---------- The evening summary text ----------
+const { eveningText } = await import("./lib/client-evening.ts");
+ok(() => assert.equal(eveningText({ since: "", leads: 0, afterHours: 0, replySec: null, booked: 0, quotesBack: 0, quotesBackValue: 0, paid: 0, reviews: 0 }, "Byers Fence", "https://x/app"), null));
+ok(() => assert.equal(eveningText({ since: "", leads: 6, afterHours: 4, replySec: 8, booked: 2, quotesBack: 1, quotesBackValue: 3400, paid: 0, reviews: 0 }, "Byers Fence.", "https://x/app"),
+  "Byers Fence: while you worked today, 4 leads answered after hours, 2 estimates booked, $3,400 in quotes back. https://x/app"));
+ok(() => assert.ok(eveningText({ since: "", leads: 1, afterHours: 0, replySec: 75, booked: 0, quotesBack: 0, quotesBackValue: 0, paid: 1500, reviews: 1 }, "", "u").startsWith("While you worked today, 1 lead answered in 1m, $1,500 paid, 1 review ask sent.")));
 console.log(`switch: ${n} checks passed`);

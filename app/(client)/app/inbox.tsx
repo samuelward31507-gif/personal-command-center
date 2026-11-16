@@ -6,19 +6,33 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { Avatar, Empty, Icon, Spinner, ago, clock, dayKey, dayName, first, fmtPhone, type Api, type Toast } from "./parts";
 import { sourceLabel, type Conv, type Data, type Go, type Text, type Thread } from "./types";
+import { Chip, SourceMark, secText, type Tone } from "./sources";
+
+/** What a lead's row says about where it stands, in the fixed colors: green booked or won, amber waiting on them, red your turn, grey new. */
+export function leadState(c: Conv): { text: string; tone: Tone } {
+  if (c.status === "booked" || c.stage === "booked") return { text: "Booked", tone: "green" };
+  if (c.stage === "won") return { text: "Won", tone: "green" };
+  if (c.stage === "lost" || c.status === "opted_out") return { text: c.status === "opted_out" ? "Opted out" : "Lost", tone: "grey" };
+  if (c.status === "paused") return { text: "Your turn", tone: "red" };
+  if (c.stage === "quoted") return { text: "Quoted", tone: "violet" };
+  if (c.lastDir === "out") return { text: "Waiting", tone: "amber" };
+  return { text: "New", tone: "grey" };
+}
 
 const STATUS: Record<string, [string, string]> = { auto: ["Cinder replying", ""], paused: ["Your turn", "needs"], booked: ["Booked", "booked"], closed: ["Closed", ""], opted_out: ["Opted out", ""] };
 const typing = (e: KeyboardEvent) => { const t = e.target as HTMLElement | null; return !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable); };
 
 export function InboxScreen({ d, project, api, toast, reload, go, wide, push, onPush }: { d: Data; project: string; api: Api; toast: Toast; reload: () => Promise<void>; go: Go; wide: boolean; push: string; onPush: () => void }) {
-  const [filter, setFilter] = useState<"all" | "needs" | "booked">("all");
+  const [filter, setFilter] = useState<"all" | "new" | "needs" | "waiting" | "booked">("all");
   const [sel, setSel] = useState<string | null>(null);
   const [hidePush, setHidePush] = useState(true);
   useEffect(() => { try { setHidePush(localStorage.getItem("cinder-push-card") === "hide"); } catch { /* private mode */ } }, []);
   const L = d.live;
   const convs = useMemo(() => {
     const all = L.conversations;
-    const list = filter === "needs" ? all.filter(c => c.status === "paused") : filter === "booked" ? all.filter(c => c.status === "booked") : all;
+    const dayAgo = Date.now() - 86400000;
+    const list = filter === "needs" ? all.filter(c => c.status === "paused") : filter === "booked" ? all.filter(c => leadState(c).tone === "green") : filter === "waiting" ? all.filter(c => leadState(c).text === "Waiting")
+      : filter === "new" ? all.filter(c => c.created && Date.parse(c.created) > dayAgo) : all;
     // Your turn first, then newest.
     return [...list].sort((a, b) => Number(b.status === "paused") - Number(a.status === "paused") || (b.at ?? "").localeCompare(a.at ?? ""));
   }, [L.conversations, filter]);
@@ -42,11 +56,12 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
     };
     addEventListener("keydown", h); return () => removeEventListener("keydown", h);
   }, [convs, sel, go, wide]);
-  const views = <div className="views" role="tablist" aria-label="Filter">{([["all", "All", L.conversations.length], ["needs", "Your turn", L.needs], ["booked", "Booked", L.conversations.filter(c => c.status === "booked").length]] as const).map(([k, l, n]) =>
+  const views = <div className="views" role="tablist" aria-label="Filter">{([["all", "All", L.conversations.length], ["new", "New", L.conversations.filter(c => c.created && Date.parse(c.created) > Date.now() - 86400000).length], ["needs", "Your turn", L.needs],
+      ["waiting", "Waiting", L.conversations.filter(c => leadState(c).text === "Waiting").length], ["booked", "Booked", L.conversations.filter(c => leadState(c).tone === "green").length]] as const).map(([k, l, n]) =>
     <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}{n ? <em>{n}</em> : null}</button>)}</div>;
   const current = convs.find(c => c.id === sel) ?? L.conversations.find(c => c.id === sel);
   return <>
-    <header className="tb"><h1 className="h1">Inbox</h1><span className="sub">{L.needs ? `${L.needs} waiting on you` : "Cinder has every conversation covered"}</span>
+    <header className="tb"><h1 className="h1 two">Inbox. <span>{L.leadsToday ? `${L.leadsToday} new today` : L.needs ? `${L.needs} waiting on you` : "Every lead answered"}{L.replySecWeek != null ? `, first reply in ${secText(L.replySecWeek)}` : ""}.</span></h1>
       <div className="acts"><button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={14} />New lead{wide && <kbd>c</kbd>}</button></div></header>
     <div className="inbox">
       <div className="list">
@@ -56,9 +71,11 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
           <div className="acts-row" style={{ marginTop: 8 }}>{push === "off" && <button type="button" className="btn ink sm" onClick={onPush}>Turn on</button>}
             <button type="button" className="btn ghost sm" onClick={() => { setHidePush(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>}
         {groups.length ? groups.map(g => <section key={g.day}><div className={"grp" + (g.day === "Your turn" ? " hot" : "")}><b>{g.day}</b><span>{g.items.length}</span></div>
-          {g.items.map(c => { const st = STATUS[c.status] ?? STATUS.auto; return <button key={c.id} type="button" data-cv={c.id} className={"cv" + (sel === c.id ? " sel" : "")} aria-current={sel === c.id ? "true" : undefined} onClick={() => pick(c.id)}>
-            <Avatar name={c.name} size="lg" />
-            <span style={{ minWidth: 0 }}><span className="cv-top"><b>{c.status === "paused" && <i aria-label="Your turn" />}{c.name}</b><time>{ago(c.at)}</time></span><small>{c.last}</small><small className={"st " + st[1]}>{st[0]}, {sourceLabel(c.source)}</small></span>
+          {g.items.map(c => { const ls = leadState(c); return <button key={c.id} type="button" data-cv={c.id} className={"cv lead" + (sel === c.id ? " sel" : "")} aria-current={sel === c.id ? "true" : undefined} onClick={() => pick(c.id)}>
+            <span className="cv-av"><Avatar name={c.name} size="lg" /><SourceMark source={c.source} size={18} /></span>
+            <span style={{ minWidth: 0 }}><span className="cv-top"><b>{c.status === "paused" && <i aria-label="Your turn" />}{c.name}</b><time>{ago(c.at)}</time></span>
+              <small className="cv-meta">{c.replySec != null ? <span className="rt">{c.source === "missed_call" ? "texted back" : "replied"} in {secText(c.replySec)}</span> : <span className="rt mut">no reply yet</span>}<Chip tone={ls.tone}>{ls.text}</Chip><span className="mut">{sourceLabel(c.source)}</span></small>
+              <small>{c.last}</small></span>
           </button>; })}</section>)
           : <Empty title={filter === "all" ? "No leads yet" : filter === "needs" ? "Nothing waiting on you" : "No bookings yet"} text={filter === "all" ? "Calls, texts and form leads show up here the moment they come in." : undefined} />}
       </div>

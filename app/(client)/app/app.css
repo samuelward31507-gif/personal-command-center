@@ -1108,3 +1108,38 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 .sw-link { font: 12px/1.4 var(--mono, ui-monospace, monospace); background: var(--paper); padding: 6px 8px; border-radius: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .sw-cta .panel-b { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; } .sw-cta .panel-b span { flex: 1; font-size: 14px; }
 .btn.bad { color: var(--bad); }
+
+/* ---------- v8: value chips (ten tones, fixed meanings), source marks, lead feed, Today top ---------- */
+.vc, .srcm { --t-bg: rgba(110, 116, 125, .12); --t-fg: #4a5059; }
+.vc.grey, .srcm.grey { --t-bg: rgba(110, 116, 125, .12); --t-fg: #4a5059; }
+.vc.blue, .srcm.blue { --t-bg: rgba(37, 99, 235, .10); --t-fg: #1d4ed8; }
+.vc.sky, .srcm.sky { --t-bg: rgba(14, 165, 233, .12); --t-fg: #0369a1; }
+.vc.violet, .srcm.violet { --t-bg: rgba(124, 58, 237, .10); --t-fg: #6d28d9; }
+.vc.pink, .srcm.pink { --t-bg: rgba(219, 39, 119, .10); --t-fg: #be185d; }
+.vc.red, .srcm.red { --t-bg: rgba(220, 38, 38, .10); --t-fg: #b91c1c; }
+.vc.orange, .srcm.orange { --t-bg: rgba(234, 88, 12, .10); --t-fg: #c2410c; }
+.vc.amber, .srcm.amber { --t-bg: rgba(217, 119, 6, .12); --t-fg: #a16207; }
+.vc.green, .srcm.green { --t-bg: rgba(22, 163, 74, .10); --t-fg: #15803d; }
+.vc.teal, .srcm.teal { --t-bg: rgba(13, 148, 136, .10); --t-fg: #0f766e; }
+.vc { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 6px; background: var(--t-bg); color: var(--t-fg); font-size: 11.5px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.srcm { display: inline-grid; place-items: center; flex: none; border-radius: 6px; background: var(--t-bg); color: var(--t-fg); font: 700 10px/1 var(--ff-tight); letter-spacing: -.02em; box-shadow: 0 0 0 2px #fff; }
+.cv.lead { align-items: flex-start; }
+.cv-av { position: relative; flex: none; } .cv-av .srcm { position: absolute; right: -4px; bottom: -4px; }
+.cv-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 2px 0; } .cv-meta .rt { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; } .cv-meta .mut { color: var(--g1); }
+.h1.two span { color: var(--g2, #8a8f98); font-weight: inherit; }
+.today-top { display: grid; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 760px) { .today-top { grid-template-columns: minmax(0, 1fr); } }
+.speed { padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; }
+.speed-fig { font: 600 44px/1 var(--ff-tight); letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--ink); }
+.speed small { color: var(--g1); font-size: 12.5px; }
+.wyw { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; background: linear-gradient(180deg, #fff, var(--paper)); }
+.wyw-h { display: flex; align-items: baseline; gap: 10px; } .wyw-h h2 { font: 600 17px/1.2 var(--ff-tight); letter-spacing: -.01em; margin: 0; } .wyw-h time { margin-left: auto; color: var(--g1); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.wyw-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px 18px; }
+.wyw-figs div { display: flex; flex-direction: column; gap: 2px; border-left: 2px solid var(--hair-2); padding-left: 12px; }
+.wyw-figs b { font: 600 30px/1.05 var(--ff-tight); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.wyw-figs span { color: var(--g1); font-size: 12.5px; }
+.wyw-none { color: var(--g1); font-size: 13.5px; margin: 0; }
+.wyw-text { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px; border-radius: 6px; font-size: 12.5px; color: var(--g1); border: 1px solid var(--hair-2); background: #fff; transition: background .14s; }
+.wyw-text:hover { background: var(--hover); color: var(--ink); }
+.tb .h1.two { display: block; flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inbox .filt .views { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .inbox .filt .views button { white-space: nowrap; flex: none; }

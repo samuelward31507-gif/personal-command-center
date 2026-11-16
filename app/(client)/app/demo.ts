@@ -202,12 +202,16 @@ function data() {
   const conversations = Object.values(s.threads).filter(t => t.texts.length).map(({ thread, texts }) => {
     const last = texts.filter(x => x.author !== "system").at(-1) ?? texts.at(-1)!;
     const ask = texts.filter(x => x.direction === "in" && x.author !== "system").at(-1)?.body ?? "";
-    return { id: thread.id, name: thread.customer_name || "(303) 555-0199", source: thread.source, status: thread.status, at: last.at, last: last.body, ask };
+    const firstIn = texts.find(x => x.direction === "in"), stage = s.crm[thread.id]?.stage ?? (thread.id.startsWith("q") ? "quoted" : thread.id.startsWith("w") ? "won" : thread.id.startsWith("l") ? "lost" : "");
+    const lastSpoke = texts.filter(x => x.author !== "system").at(-1);
+    return { id: thread.id, name: thread.customer_name || "(303) 555-0199", source: thread.source, status: thread.status, at: last.at, last: last.body, ask,
+      created: (firstIn ?? texts[0]).at, replySec: thread.source === "import" ? null : [6, 9, 4, 11, 7, 5, 8, 12, 6, 10][Object.keys(s.threads).indexOf(thread.id) % 10], lastDir: lastSpoke?.direction ?? "", stage };
   }).sort((a, b) => b.at.localeCompare(a.at));
   return {
     project: "demo", business: "Ridgeline Fence Co. (example)", number: "+17205550100", canCall: true, role: "owner" as const, me: "", emailReady: true,
     businesses: [{ project_id: "demo", name: "Ridgeline Fence Co. (example)" }], unreadFromSam: 0,
-    live: { leads: 41, needs: conversations.filter(c => c.status === "paused").length, answered: 41, booked: 14, replySec: 9,
+    evening: { since: ago(1440), leads: 6, afterHours: 4, replySec: 8, booked: 2, quotesBack: 1, quotesBackValue: 3400, paid: 2500, reviews: 1 },
+    live: { replySecWeek: 8, leadsWeek: 11, leadsToday: conversations.filter(c => Date.parse(c.created) > Date.now() - 86400000).length, leads: 41, needs: conversations.filter(c => c.status === "paused").length, answered: 41, booked: 14, replySec: 9,
       afterHours: { leads: 14, won: 5, wonValue: 31400 }, chasing: s.quotes.length, chasingValue: s.quotes.reduce((t, q) => t + (q.amount || 0), 0), won: s.won, wonValue: s.wonValue, revived: 4, reviews: 11,
       weeks: [{ week: "a", leads: 8, booked: 3 }, { week: "b", leads: 11, booked: 4 }, { week: "c", leads: 9, booked: 3 }, { week: "d", leads: 13, booked: 4 }], conversations },
     owner: "Mike", appointments: s.appts, quotes: s.quotes, quoteSteps: 4, wonJobs: s.wonJobs, hasReviewLink: true,

@@ -218,7 +218,7 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   if (r.nudge_hours !== undefined) out.nudge_hours = parseDayList(r.nudge_hours, 3, 168).join(",");
   if (r.dnt !== undefined) out.dnt = parseDnt(r.dnt).join(",");
   if (r.team !== undefined) out.team = JSON.stringify(parseTeam(r.team));
-  pick("monthly_report", ["", "yes", "no"]); pick("booking_page", ["", "yes", "no"]); pick("review_on_paid", ["", "yes", "no"]);
+  pick("monthly_report", ["", "yes", "no"]); pick("booking_page", ["", "yes", "no"]); pick("review_on_paid", ["", "yes", "no"]); pick("evening_text", ["", "yes", "no"]);
   if (r.labor_rate !== undefined) { const n = Number(String(r.labor_rate ?? "").replace(/[$,\s]/g, "")); out.labor_rate = Number.isFinite(n) && n > 0 && n <= 500 ? String(Math.round(n * 100) / 100) : ""; }
   pick("quote_terms", undefined, 1200); pick("warranty", undefined, 300); pick("financing_note", undefined, 160);
   if (r.financing_link !== undefined) { const u = String(r.financing_link ?? "").trim().slice(0, 300); out.financing_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }

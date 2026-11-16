@@ -7,6 +7,7 @@ import { runDueTexts, runHandoffChecks, runLeadNudges, runOwnerReminders, sendMo
 import { loadWorkspace } from "@/lib/workspace-data";
 import { runAutoReviews, runPaidReviews } from "@/lib/client-close-run";
 import { runPlanReminders } from "@/lib/client-service-run";
+import { runEveningTexts } from "@/lib/client-evening";
 import { runInvoiceReminders } from "@/lib/client-billing-run";
 
 export const runtime = "nodejs";
@@ -38,6 +39,8 @@ export async function GET(request: Request) {
     texts.due = await runDueTexts(sql, started).catch(e => { console.error("Due texts failed", e); return null; });
     texts.handoffs = await runHandoffChecks(sql, started).catch(e => { console.error("Handoff checks failed", e); return null; });
     texts.ownerReminders = await runOwnerReminders(sql).catch(e => { console.error("Owner reminders failed", e); return null; });
+    // "While you worked": each owner who asked for it, once, between 6 and 8 PM in their own time zone.
+    texts.evening = await runEveningTexts(sql, started).catch(e => { console.error("Evening texts failed", e); return null; });
     if (hour >= 9 && hour < 19) {
       texts.reminders = await sendReminders(sql).catch(e => { console.error("Reminders failed", e); return null; });
       // The day after an install the owner marked won: the Google review ask (each client's own hours are checked too).
