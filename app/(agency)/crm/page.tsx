@@ -1,5 +1,6 @@
 "use client";
 import { Logo, Pill, toneForStatus } from "../ui/logo";
+import { DomainChip, FavButton, Nudge, daysSince } from "../ui/parts";
 import { ThIcon } from "../ui/th-icons";
 import ContactDeals from "./contact-deals";
 import ProspectReportCard from "./prospect-report-card";
@@ -14,7 +15,7 @@ import ImportModal from "./import-modal";
 import InfoKit from "./info-kit";
 import DiscoveryPanel from "./discovery-panel";
 import TextDraft, { type TextContext } from "./text-draft";
-type Contact={id:string;name:string;company:string;role:string;email:string;phone:string;website:string;instagram:string;facebook:string;linkedin?:string;niche?:string;location:string;timeZone:string;status:"Lead"|"Contact"|"Customer"|"Partner";source:string;lastContact:string;lastTouchAt?:string;lastTouchOutcome?:string;nextFollowUp:string;notes:string;createdAt:string};
+type Contact={id:string;name:string;company:string;role:string;email:string;phone:string;website:string;instagram:string;facebook:string;linkedin?:string;niche?:string;location:string;timeZone:string;status:"Lead"|"Contact"|"Customer"|"Partner";source:string;lastContact:string;lastTouchAt?:string;lastNote?:string;lastTouchOutcome?:string;nextFollowUp:string;notes:string;createdAt:string};
 type Activity={id:string;contact_id:string;channel:"call"|"text"|"note";action:string;outcome:string;notes:string;sequence_step:number|null;occurred_at:string};
 const KEY="cinder.crm.contacts.v1";
 const blank={name:"",company:"",role:"",email:"",phone:"",website:"",instagram:"",facebook:"",linkedin:"",location:"",timeZone:"",status:"Lead" as Contact["status"],source:"",lastContact:"",nextFollowUp:"",notes:""};
@@ -29,6 +30,7 @@ export default function ContactsPage(){
  const [contacts,setContacts]=useState<Contact[]>([]),[loaded,setLoaded]=useState(false),[query,setQuery]=useState(""),[filter,setFilter]=useState("Not called today"),[show,setShow]=useState(false),[selected,setSelected]=useState<string|null>(null),[editing,setEditing]=useState<string|null>(null),[draft,setDraft]=useState(blank),[saved,setSaved]=useState(true),[activities,setActivities]=useState<Activity[]>([]),[activityLoading,setActivityLoading]=useState(false),[showImport,setShowImport]=useState(false),[sheet,setSheet]=useState(false),[sortBy,setSortBy]=useState<"list"|"followup"|"name">("list");
  useEffect(()=>{const p=new URLSearchParams(window.location.search);const q=p.get("q");if(q)setQuery(q.slice(0,200));const c=p.get("contact");if(c&&/^[0-9a-f-]{36}$/i.test(c)){setSelected(c);setSheet(true)}if(p.get("new")==="1"){setDraft(blank);setEditing(null);setShow(true)}},[]);
  useEffect(()=>{let active=true;fetch("/api/contacts",{cache:"no-store"}).then(async r=>{if(!r.ok)throw new Error("Could not load contacts");return r.json()}).then(data=>{if(active)setContacts(Array.isArray(data.contacts)?data.contacts:[]);if(active)setSaved(true)}).catch(()=>{if(active)setSaved(false)}).finally(()=>{if(active)setLoaded(true)});return()=>{active=false}},[]);
+ const [tab,setTab]=useState<"activity"|"fields"|"work">("activity");
  const [outcomeNote,setOutcomeNote]=useState(""),[outcomeBusy,setOutcomeBusy]=useState<CallOutcome|null>(null),[outcomeResult,setOutcomeResult]=useState<{ok:boolean;text:string;deal?:SuggestedDealData|null;textCtx?:TextContext|null;contactId?:string;who?:string}|null>(null),[callFor,setCallFor]=useState<string|null>(null);
  useEffect(()=>{setOutcomeNote("");setOutcomeResult(null)},[selected]);
  async function logOutcome(contact:Contact,outcome:CallOutcome){
@@ -58,6 +60,7 @@ export default function ContactsPage(){
  const current=contacts.find(c=>c.id===selected);
  const idx=current?visible.findIndex(c=>c.id===current.id):-1,nextContact=idx>=0?visible[idx+1]:undefined,prevContact=idx>0?visible[idx-1]:undefined;
  const go=(c?:Contact)=>{if(!c)return;setSelected(c.id);setSheet(true);setTimeout(()=>{document.querySelector(".ct-table tr.is-on")?.scrollIntoView({block:"nearest"});document.querySelector(".ct-drawer")?.scrollTo({top:0})},0)};
+ useEffect(()=>{if(!sheet)return;const k=(e:KeyboardEvent)=>{if(e.metaKey||e.ctrlKey||e.altKey||(e.target as HTMLElement)?.closest?.("input,textarea,select,[contenteditable='true']"))return;if(e.key==="ArrowDown"||e.key==="j"){e.preventDefault();go(nextContact)}else if(e.key==="ArrowUp"||e.key==="k"){e.preventDefault();go(prevContact)}};window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k)});
  useEffect(()=>{if(!sheet)return;const k=(e:KeyboardEvent)=>{if(e.key==="Escape"&&!(e.target as HTMLElement)?.closest?.("input,textarea,select"))setSheet(false)};window.addEventListener("keydown",k);return()=>window.removeEventListener("keydown",k)},[sheet]);
  const calledToday=contacts.filter(touchedToday).length;
  const due=contacts.filter(c=>c.nextFollowUp&&c.nextFollowUp<=today()).length;
@@ -73,7 +76,7 @@ export default function ContactsPage(){
  const href=(v:string,base="")=>v.startsWith("http")?v:"https://"+base+v.replace(/^@/,"");
  return <div className="u-page ct-page" role="region" aria-label="Contacts">
   <div className="u-head">
-   <h1 className="u-title">Contacts{contacts.length?<span className="u-dim"> {counts.todo} to call, {calledToday} called today.</span>:null}</h1>
+   <h1 className="u-title">Prospects{contacts.length?<span className="u-dim"> {counts.todo} to call, {calledToday} called today.</span>:null}</h1>
    <div className="u-head-actions">
     <button className="u-btn u-btn-bare" onClick={exportCsv} disabled={!contacts.length}>Export</button>
     <button className="u-btn" onClick={()=>setShowImport(true)}>Import</button>
@@ -117,27 +120,27 @@ export default function ContactsPage(){
       <button type="button" className="u-btn u-btn-bare" onClick={()=>setSheet(false)} aria-label="Close">Close</button>
      </div>
     </div>
-    <h2 className="ct-name">{current.company||current.name}</h2>
-    <p className="ct-sub">{[current.company?current.name:"",current.role].filter(Boolean).join(", ")||"No role on file"}<span style={{marginLeft:10}}><Pill tone={toneForStatus(current.status)}>{current.status}</Pill></span>{current.source&&<span className="u-quiet" style={{marginLeft:10}}>from {current.source}</span>}</p>
+    <div className="rp-head">
+     <Logo name={current.company||current.name} website={current.website} size={44} />
+     <div className="rp-id">
+      <h2 className="ct-name">{current.company||current.name}</h2>
+      <p className="ct-sub">{[current.company?current.name:"",current.role].filter(Boolean).join(", ")||"No role on file"}</p>
+      <div className="rp-meta"><Pill tone={toneForStatus(current.status)}>{current.status}</Pill><DomainChip website={current.website}/>{current.location&&<span>{current.location}</span>}{current.source&&<span>from {current.source}</span>}</div>
+     </div>
+     <FavButton fav={{id:current.id,name:current.company||current.name,website:current.website,href:"/crm?contact="+current.id}}/>
+    </div>
     <div className="ct-actions">
      {current.phone&&<button type="button" className="u-btn u-btn-light" onClick={()=>callContact(current)}>Call {current.phone}</button>}
      {current.email&&<a className="u-btn" href={"mailto:"+current.email}>Email</a>}
      <button type="button" className="u-btn" onClick={()=>edit(current)}>Edit</button>
     </div>
     {touchedToday(current)?<p className="u-flash" role="status" style={{marginTop:16}}>Called today at {timeText(current.lastTouchAt||"")}, {outcomeText(current.lastTouchOutcome).toLowerCase()}. Don&apos;t call again unless they asked.</p>:null}
-
-    <dl className="ct-facts">
-     <div><dt>Phone</dt><dd>{current.phone?<a href={"tel:"+current.phone}>{current.phone}</a>:"—"}</dd></div>
-     <div><dt>Email</dt><dd>{current.email?<a href={"mailto:"+current.email}>{current.email}</a>:"—"}</dd></div>
-     <div><dt>Website</dt><dd>{current.website?<a href={href(current.website)} target="_blank" rel="noreferrer">{current.website.replace(/^https?:\/\//,"")}</a>:"—"}</dd></div>
-     <div><dt>Location</dt><dd>{current.location||"—"}</dd></div>
-     <div><dt>Instagram</dt><dd>{current.instagram?<a href={href(current.instagram,"instagram.com/")} target="_blank" rel="noreferrer">{current.instagram}</a>:"—"}</dd></div>
-     <div><dt>Facebook</dt><dd>{current.facebook?<a href={href(current.facebook,"facebook.com/")} target="_blank" rel="noreferrer">Page</a>:"—"}</dd></div>
-     <div><dt>LinkedIn</dt><dd>{current.linkedin?<a href={href(current.linkedin,"linkedin.com/in/")} target="_blank" rel="noreferrer">Profile</a>:"—"}</dd></div>
-     <div><dt>Last call</dt><dd>{current.lastTouchAt?`${dateLabel(localDay(current.lastTouchAt))}, ${outcomeText(current.lastTouchOutcome).toLowerCase()}`:"Never"}</dd></div>
-     <div><dt>Next follow-up</dt><dd>{dateLabel(current.nextFollowUp)}</dd></div>
-    </dl>
-    {current.notes&&<div className="ct-sec"><h3 className="u-h2">Notes</h3><p className="ct-notes">{current.notes}</p></div>}
+    {(()=>{const facts=[current.niche?current.niche+" business":"",current.location?"in "+current.location:""].filter(Boolean).join(" ");const last=current.lastNote||current.notes?.split("\n")[0]||"";const s=[facts?facts.charAt(0).toUpperCase()+facts.slice(1)+".":"",last?"Last note: "+last.slice(0,140)+(last.length>140?"…":""):""].filter(Boolean).join(" ");return s?<p className="rp-sum">{s}</p>:null})()}
+    {!touchedToday(current)&&(()=>{const d=daysSince(current.lastTouchAt);if(d===null)return <Nudge action={current.phone?"Call":undefined} onAction={()=>callContact(current)}>You haven&apos;t talked yet.</Nudge>;if(current.nextFollowUp&&current.nextFollowUp<=today())return <Nudge tone="warn" action={current.phone?"Call":undefined} onAction={()=>callContact(current)}>Follow-up is due{current.nextFollowUp<today()?" since "+dateLabel(current.nextFollowUp).replace(/, \d{4}$/,""):" today"}.</Nudge>;return d>=7?<Nudge tone="warn" action={current.phone?"Call":undefined} onAction={()=>callContact(current)}>{d} days since you last talked.</Nudge>:null})()}
+    <div className="rp-tabs" role="tablist" aria-label="Record">
+     {([["activity","Activity",activities.length],["fields","Details",null],["work","Deals & research",null]] as const).map(([k,l,n])=><button key={k} type="button" role="tab" aria-selected={tab===k} className={tab===k?"is-on":""} onClick={()=>setTab(k)}>{l}{n?<span>{n}</span>:null}</button>)}
+    </div>
+    {tab==="activity"&&<>
 
     <div className="ct-sec">
      <h3 className="u-h2">{callFor===current.id?"How did the call go?":"Log a call"}</h3>
@@ -149,6 +152,26 @@ export default function ContactsPage(){
      {outcomeResult?.ok&&nextContact&&<button type="button" className="u-btn" style={{marginTop:10}} onClick={()=>go(nextContact)}>Next: {nextContact.company||nextContact.name}</button>}
     </div>
 
+    <div className="ct-sec">
+     <h3 className="u-h2">Activity</h3>
+     {activityLoading?<p className="u-note">Loading…</p>:activities.length?<ol className="ct-log">{activities.map(a=><li key={a.id}><span className="ct-log-t">{new Date(a.occurred_at).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span><div><strong>{a.action==="outbound_call"?"Call":a.action==="outbound_text"?"Text sent":a.action==="inbound_text"?"They replied":"Note"}<span className="u-quiet">, {a.outcome.replaceAll("_"," ")}</span></strong>{a.notes&&<p>{a.notes}</p>}</div></li>)}</ol>:<p className="u-note">Nothing logged yet.</p>}
+    </div>
+    </>}
+    {tab==="fields"&&<>
+    <dl className="ct-facts">
+     <div><dt><ThIcon name="phone" />Phone</dt><dd>{current.phone?<a href={"tel:"+current.phone}>{current.phone}</a>:"—"}</dd></div>
+     <div><dt><ThIcon name="mail" />Email</dt><dd>{current.email?<a href={"mailto:"+current.email}>{current.email}</a>:"—"}</dd></div>
+     <div><dt><ThIcon name="company" />Website</dt><dd>{current.website?<a href={href(current.website)} target="_blank" rel="noreferrer">{current.website.replace(/^https?:\/\//,"")}</a>:"—"}</dd></div>
+     <div><dt><ThIcon name="pin" />Location</dt><dd>{current.location||"—"}</dd></div>
+     <div><dt><ThIcon name="person" />Instagram</dt><dd>{current.instagram?<a href={href(current.instagram,"instagram.com/")} target="_blank" rel="noreferrer">{current.instagram}</a>:"—"}</dd></div>
+     <div><dt><ThIcon name="person" />Facebook</dt><dd>{current.facebook?<a href={href(current.facebook,"facebook.com/")} target="_blank" rel="noreferrer">Page</a>:"—"}</dd></div>
+     <div><dt><ThIcon name="person" />LinkedIn</dt><dd>{current.linkedin?<a href={href(current.linkedin,"linkedin.com/in/")} target="_blank" rel="noreferrer">Profile</a>:"—"}</dd></div>
+     <div><dt><ThIcon name="clock" />Last call</dt><dd>{current.lastTouchAt?`${dateLabel(localDay(current.lastTouchAt))}, ${outcomeText(current.lastTouchOutcome).toLowerCase()}`:"Never"}</dd></div>
+     <div><dt><ThIcon name="calendar" />Next follow-up</dt><dd>{dateLabel(current.nextFollowUp)}</dd></div>
+    </dl>
+    {current.notes&&<div className="ct-sec"><h3 className="u-h2">Notes</h3><p className="ct-notes">{current.notes}</p></div>}
+    </>}
+    {tab==="work"&&<>
     <div className="ct-sec ct-legacy">
      {(()=>{if(auditLoading)return <><h3 className="u-h2">Research</h3><p className="u-note">Loading…</p></>;if(!latestAudit)return <><h3 className="u-h2">Research</h3><p className="u-note">No research yet. <Link href={`/crm/audit?contact=${current.id}`} style={{textDecoration:"underline"}}>Research this business</Link></p></>;const plain=(t:string)=>t.replace(/\*\*/g,"").replace(/^[-*•]\s+/gm,"- ").trim();const verdict=plain(reportSection(latestAudit.content,"Verdict")).replace(/^- /,""),next=plain(reportSection(latestAudit.content,"Next CRM action")).replace(/^- /,"");return <><div className="u-h2-row"><h3 className="u-h2">Research</h3><Link className="u-note" href={`/crm/audits/${latestAudit.id}`} style={{textDecoration:"underline"}}>Full report</Link></div>{verdict&&<p className="ct-notes">{verdict}</p>}{next&&<p className="ct-notes" style={{marginTop:8}}><span className="u-quiet">Next step: </span>{next}</p>}<p className="u-note" style={{marginTop:8}}>{new Date(latestAudit.createdAt).toLocaleDateString(undefined,{month:"short",day:"numeric"})}, {latestAudit.confidence} confidence. Written by AI, verify before quoting.</p></>})()}
     </div>
@@ -156,11 +179,7 @@ export default function ContactsPage(){
     <div className="ct-legacy"><ContactDeals contactId={current.id} name={current.name} company={current.company}/></div>
     <div className="ct-legacy"><InfoKit key={current.id} id={current.id} name={current.name} company={current.company||""} notes={current.notes||""} onReply={a=>{setActivities(old=>[a,...old].slice(0,100))}}/></div>
     <details className="ct-more"><summary>Discovery notes and report card</summary><div className="ct-legacy"><div className="crm-detail-section"><DiscoveryPanel key={"disc-"+current.id} contactId={current.id}/></div><ProspectReportCard contactId={current.id} company={current.company||current.name}/></div></details>
-
-    <div className="ct-sec">
-     <h3 className="u-h2">Activity</h3>
-     {activityLoading?<p className="u-note">Loading…</p>:activities.length?<ol className="ct-log">{activities.map(a=><li key={a.id}><span className="ct-log-t">{new Date(a.occurred_at).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</span><div><strong>{a.action==="outbound_call"?"Call":a.action==="outbound_text"?"Text sent":a.action==="inbound_text"?"They replied":"Note"}<span className="u-quiet">, {a.outcome.replaceAll("_"," ")}</span></strong>{a.notes&&<p>{a.notes}</p>}</div></li>)}</ol>:<p className="u-note">Nothing logged yet.</p>}
-    </div>
+    </>}
 
     <div className="ct-foot"><span className="u-note">Added {dateLabel(current.createdAt.slice(0,10))}</span><button className="u-btn u-btn-bare" onClick={()=>{if(confirm("Park this contact? Their follow-up is cleared and any sequence stops. Nothing is deleted.")){fetch("/api/contacts?id="+encodeURIComponent(current.id),{method:"DELETE"}).then(response=>{if(response.ok){setContacts(old=>old.map(c=>c.id===current.id?{...c,nextFollowUp:""}:c));setSelected(null);setSheet(false)}else alert("Could not park this contact. Please try again.")}).catch(()=>alert("Could not park this contact. Please try again."))}}}>Park</button></div>
    </div>

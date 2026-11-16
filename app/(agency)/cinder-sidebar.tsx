@@ -6,6 +6,8 @@ import Link from "next/link";
 import { BrandWordmark, CinderMark, CINDER_MONO } from "./cinder-brand";
 import CommandBar from "./command-bar";
 import { applyAccent, useWorkspace } from "./use-workspace";
+import { Logo } from "./ui/logo";
+import { useFavorites } from "./ui/parts";
 
 type Props = {
   activeKey: string;
@@ -17,16 +19,16 @@ type Props = {
 // The places you use every day; the rest lives under "More" so the sidebar stays calm.
 // The daily loop only: see what needs you, dial, work deals, show up to meetings, run clients.
 const primary = [
-  ["needs-you", "Dashboard", "chart", "/crm/needs-you"],
-  ["call", "Call mode", "phone", "/crm/call"],
+  ["needs-you", "Today", "sun", "/crm/needs-you"],
+  ["contacts", "Prospects", "users", "/crm"],
+  ["call", "Call", "phone", "/crm/call"],
   ["pipeline", "Pipeline", "growth", "/crm/pipeline"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
-  ["contacts", "Contacts", "users", "/crm"],
   ["client-success", "Clients", "briefcase", "/crm/client-success"],
+  ["finance", "Money", "money", "/crm/finance"],
 ] as const;
 // Everything else, one click away. Outreach, Operations, AI team and Signals stay reachable by URL and ⌘K.
 const secondary = [
-  ["finance", "Money", "money", "/crm/finance"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
   ["reports", "Client reports", "doc", "/crm/reports"],
   ["email", "Email", "send", "/crm/email"],
@@ -38,7 +40,7 @@ const secondary = [
   ["funnel", "Funnel", "chart", "/crm/funnel"],
 ] as const;
 // LinkedIn and Partners stay reachable by URL and ⌘K; they aren't in use yet, so they don't take a row.
-const SECONDARY_PATHS = ["/crm/email", "/crm/leads", "/crm/linkedin", "/crm/groups", "/crm/content", "/crm/partners", "/crm/funnel", "/crm/finance", "/crm/tasks", "/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
+const SECONDARY_PATHS = ["/crm/email", "/crm/leads", "/crm/linkedin", "/crm/groups", "/crm/content", "/crm/partners", "/crm/funnel", "/crm/tasks", "/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
@@ -85,17 +87,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
   const custom = !!ws.logoUrl || !/^cinder\b/i.test(ws.businessName.trim());
   // White-label: the workspace's accent replaces the ember, and the tab title carries their name.
   useEffect(() => { applyAccent(ws.accentColor); if (custom) document.title = ws.shortName || ws.businessName; }, [ws.accentColor, ws.shortName, ws.businessName, custom]);
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
-  useEffect(() => {
-    let on = true;
-    fetch("/api/projects", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(d => {
-      if (!on || !d?.projects) return;
-      setClients((d.projects as { id: string; name: string; clientName: string; contactName: string; status: string }[])
-        .filter(p => !["completed", "cancelled"].includes(p.status)).slice(0, 5)
-        .map(p => ({ id: p.id, name: p.clientName || p.contactName || p.name })));
-    }).catch(() => {});
-    return () => { on = false; };
-  }, []);
+  const { favs } = useFavorites();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const inSecondary = SECONDARY_PATHS.some(p => pathname.startsWith(p));
@@ -148,7 +140,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
     {mobileOpen && <button type="button" data-variant="primary" className="cx-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
     <aside className={"cx-side" + (collapsed ? " is-collapsed" : "") + (mobileOpen ? " is-open" : "")} aria-label="Cinder navigation">
       <div className="cx-top">
-        <Link href="/crm/needs-you" className="cx-brand" onClick={() => setMobileOpen(false)} title="Dashboard">
+        <Link href="/crm/needs-you" className="cx-brand" onClick={() => setMobileOpen(false)} title="Today">
           {collapsed ? (custom ? <span className="cx-mark cx-mark-text" aria-label={ws.businessName}>{(ws.shortName || ws.businessName).trim().charAt(0).toUpperCase()}</span> : <CinderMark className="cx-mark" ring={CINDER_MONO} ember={CINDER_MONO} />) : <BrandWordmark name={ws.businessName} logoUrl={ws.logoUrl} className="cx-logo" mono fallbackTitle="Cinder" />}
         </Link>
         <button type="button" data-variant="primary" className="cx-collapse" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
@@ -169,11 +161,12 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
           <Icon name="more" /><span className="cx-label">More</span><span className={"cx-chev" + (moreOpen ? " is-open" : "")} aria-hidden="true">›</span>
         </button>
         {moreOpen && <div className="cx-sub">{secondary.map(item)}</div>}
-        {!collapsed && clients.length > 0 && <>
-          <div className="cx-group">Clients</div>
-          {clients.map(c => <Link key={c.id} href={`/crm/client-success/${c.id}`} className={"cx-item cx-client" + (pathname === `/crm/client-success/${c.id}` ? " is-active" : "")} onClick={() => setMobileOpen(false)}>
-            <span className="cx-dot" aria-hidden="true">{c.name.slice(0, 1).toUpperCase()}</span><span className="cx-label">{c.name}</span>
-          </Link>)}
+        {!collapsed && <>
+          <div className="cx-group">Favorites</div>
+          {favs.length === 0 ? <p className="cx-fav-hint">Star a prospect or deal to pin it here.</p>
+            : favs.map(f => <Link key={f.id} href={f.href} className="cx-item cx-client cx-fav" onClick={() => setMobileOpen(false)}>
+              <Logo name={f.name} website={f.website} size={18} /><span className="cx-label">{f.name}</span>
+            </Link>)}
         </>}
       </nav>
 

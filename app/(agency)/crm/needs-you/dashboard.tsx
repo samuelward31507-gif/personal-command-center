@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { STAGE_LABELS, type DealStage } from "@/lib/offers";
 import { MOVE_OUT_MRR, WEEKLY_MEETING_TARGET, DAILY_EMAIL_TARGET, DAILY_LINKEDIN_TARGET } from "@/lib/scoreboard";
-import { EmberGauge, WeekStrip } from "./cockpit";
+import { Logo } from "../../ui/logo";
+import { DraftCard } from "../../ui/parts";
+import type { QueueItem } from "@/lib/my-day";
 import { dueFollowUps } from "@/lib/email-outreach";
 import { INBOX_URL, CHANNEL_LABEL } from "@/lib/inbox-links";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
@@ -30,8 +32,8 @@ type Board = {
 };
 type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string; contactFirst?: string; contactCompany?: string; contactPhone?: string; contactTimeZone?: string; contactLocation?: string };
 type Referral = { dealId: string; title: string; id: string; firstName: string; company: string; phone: string; wonAt: string | null };
-type Warm = { id: string; firstName: string; company: string; phone: string; niche: string; location?: string; callNote?: string; outcome: string; at: string | null; infoSentAt: string | null; repliedAt: string | null; tasks: { id: string; title: string; due: string | null; day: number }[] };
-type Todo = { key: string; title: string; why: string; overdue: boolean; href: string; action: string; onClick?: () => void; alt?: { label: string; onClick: () => void } };
+type Warm = { id: string; firstName: string; company: string; phone: string; website?: string; niche: string; location?: string; callNote?: string; outcome: string; at: string | null; infoSentAt: string | null; repliedAt: string | null; tasks: { id: string; title: string; due: string | null; day: number }[] };
+type Todo = { key: string; title: string; why: string; overdue: boolean; href: string; action: string; onClick?: () => void; alt?: { label: string; onClick: () => void }; name?: string; website?: string; body?: string };
 type Alert = { level: "urgent" | "soon" | "info"; kind: string; text: string; href: string };
 
 const usd = (n: number) => "$" + Math.round(n || 0).toLocaleString("en-US");
@@ -53,6 +55,7 @@ export default function Dashboard() {
   const [doneKeys, setDoneKeys] = useState<Record<string, true>>({});
   const [dms, setDms] = useState<{ id: string; channel: "instagram" | "facebook"; from: string; body: string; at: string }[]>([]);
   const [content, setContent] = useState<{ key: string; channel: string; at: string }[] | null>(null);
+  const [queue, setQueue] = useState<QueueItem[] | null>(null);
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -96,18 +99,26 @@ export default function Dashboard() {
         liCheck ? { key: "li-check", title: `Check ${liCheck} LinkedIn request${liCheck === 1 ? "" : "s"} for accepts`, why: "Sent 3+ days ago. Mark the ones who accepted.", overdue: false, href: "/crm/linkedin", action: "Open" } : null,
       ].filter(Boolean) as Todo[]);
     });
+    {
+      const d0 = new Date(), dayEnd = new Date(d0); dayEnd.setHours(23, 59, 59, 999);
+      const windowEnd = new Date(dayEnd); windowEnd.setDate(windowEnd.getDate() + 1);
+      fetch(`/api/my-day?today=${localDay(d0)}&dayEnd=${encodeURIComponent(dayEnd.toISOString())}&windowEnd=${encodeURIComponent(windowEnd.toISOString())}`, { cache: "no-store" })
+        .then(r => (r.ok ? r.json() : { items: [] })).then(d => setQueue(((d.items ?? []) as QueueItem[]).filter(i => i.callable && i.contact).sort((a, b) => a.rank - b.rank))).catch(() => setQueue([]));
+    }
     fetch("/api/ops-alerts", { cache: "no-store" }).then(r => (r.ok ? r.json() : { alerts: [] })).then(d => setAlerts(d.alerts ?? [])).catch(() => {});
     const t = setInterval(() => tick(x => x + 1), 60000);
     return () => clearInterval(t);
   }, []);
 
-  // C starts calling from here, like the hint on the button says.
+  // C starts calling; Enter sends the first ready text, like the hints on the buttons say.
+  const firstDraft = useRef<(() => void) | null>(null);
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey || e.key.toLowerCase() !== "c") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       const el = e.target as HTMLElement | null;
-      if (el?.closest?.("input, textarea, select, [contenteditable='true']")) return;
-      window.location.href = "/crm/call";
+      if (el?.closest?.("input, textarea, select, button, a, [contenteditable='true'], [role='dialog']")) return;
+      if (e.key.toLowerCase() === "c") window.location.href = "/crm/call";
+      else if (e.key === "Enter" && firstDraft.current) { e.preventDefault(); firstDraft.current(); }
     };
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
@@ -133,7 +144,7 @@ export default function Dashboard() {
     const k = e.contactPhone ? meetingNudge(new Date(e.startsAt), new Date(), null) : null;
     if (!k || nudged[e.id + ":" + k]) return [];
     const who = e.contactName || e.title;
-    return [{ key: "text:" + e.id + k, title: k === "confirm" ? `Text ${who} to confirm` : `Text ${who} a reminder`, why: e.title, overdue: k === "remind", href: "/crm/calendar", action: "Text", onClick: () => nudge(e, k) }];
+    return [{ key: "text:" + e.id + k, title: k === "confirm" ? `Text ${who} to confirm` : `Text ${who} a reminder`, why: k === "confirm" ? `Confirm ${e.title}` : `Remind before ${e.title}`, overdue: k === "remind", href: "/crm/calendar", action: "Text", name: e.contactCompany || who, onClick: () => nudge(e, k) }];
   });
   // Warm leads: the info text they asked for, then the day 1/2/3/7 follow-up texts. One text per lead per day.
   const endToday = new Date(); endToday.setHours(23, 59, 59, 999);
@@ -154,8 +165,9 @@ export default function Dashboard() {
     if (!w.infoSentAt) {
       const key = "info:" + w.id;
       if (doneKeys[key]) return [];
-      return [{ key, title: `Send info to ${who}`, why: `Said ${w.outcome === "interested" ? "they're interested" : "send info"} on ${short(w.at)}. No text sent yet.`, overdue: true, href: `/crm?contact=${w.id}`, action: "Text",
-        onClick: () => log(infoText({ firstName: first, demoLink: pickDemoLink(niche, ws.demoLink), niche, company: w.company }), undefined, key), alt: { label: "Loom", onClick: () => setLoom({ w, key, url: "" }) } }];
+      const body = infoText({ firstName: first, demoLink: pickDemoLink(niche, ws.demoLink), niche, company: w.company });
+      return [{ key, title: `Send info to ${who}`, why: `Asked for info ${short(w.at)}`, overdue: true, href: `/crm?contact=${w.id}`, action: "Text", name: who, website: w.website, body,
+        onClick: () => log(body, undefined, key), alt: { label: "Loom", onClick: () => setLoom({ w, key, url: "" }) } }];
     }
     const next = w.tasks[0];
     if (!next || !next.due) return [];
@@ -163,8 +175,9 @@ export default function Dashboard() {
     if (Date.parse(next.due) > endToday.getTime() || textedRecently) { upcomingTexts++; return []; }
     const key = "fu:" + next.id;
     if (doneKeys[key]) return [];
-    return [{ key, title: `Follow up with ${who}`, why: `Info sent ${short(w.infoSentAt)}. ${next.day === 7 ? "Last" : `Day ${next.day}`} follow-up text.`, overdue: Date.parse(next.due) < startToday.getTime(), href: `/crm?contact=${w.id}`, action: "Text",
-      onClick: () => log(infoFollowUpText({ firstName: first, company: w.company, day: next.day, niche }), next.id, key), alt: { label: "Loom", onClick: () => setLoom({ w, taskId: next.id, key, url: "" }) } }];
+    const body = infoFollowUpText({ firstName: first, company: w.company, day: next.day, niche });
+    return [{ key, title: `Follow up with ${who}`, why: `${next.day === 7 ? "Last" : `Day ${next.day}`} follow-up, info sent ${short(w.infoSentAt)}`, overdue: Date.parse(next.due) < startToday.getTime(), href: `/crm?contact=${w.id}`, action: "Text", name: who, website: w.website, body,
+      onClick: () => log(body, next.id, key), alt: { label: "Loom", onClick: () => setLoom({ w, taskId: next.id, key, url: "" }) } }];
   });
   // Unread Instagram / Facebook DMs: one row per channel, newest message as the preview.
   const dmRows: Todo[] = (["instagram", "facebook"] as const).flatMap(ch => {
@@ -177,7 +190,7 @@ export default function Dashboard() {
     const key = "ref:" + r.dealId;
     if (doneKeys[key]) return [];
     const first = r.firstName && r.firstName !== r.company ? r.firstName : "";
-    return [{ key, title: `Ask ${r.company || r.firstName || "your client"} for a referral`, why: `Client since ${short(r.wonAt)}. Two weeks in is when happy clients say yes.`, overdue: false, href: `/crm?contact=${r.id}`, action: "Text",
+    return [{ key, title: `Ask ${r.company || r.firstName || "your client"} for a referral`, why: `Client since ${short(r.wonAt)}, ask for a referral`, overdue: false, href: `/crm?contact=${r.id}`, action: "Text", name: r.company || r.firstName, body: referralText({ firstName: first }),
       onClick: () => { const body = referralText({ firstName: first }); window.location.href = smsHref(r.phone, body); void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: r.id, direction: "outbound", body }) }).catch(() => {}); setDoneKeys(k => ({ ...k, [key]: true })); } }];
   });
   function sendLoom() {
@@ -221,68 +234,87 @@ export default function Dashboard() {
   const byLabel = g?.by ? new Date(g.by + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : "";
 
   const left = Math.max(0, target - (b?.today.calls ?? 0));
-  const tc = b?.channels?.today;
   const next = upcoming[0];
-  const todayStats: [string, number | undefined, string][] = [
-    ["Conversations", b?.today.connects, "/crm/call"],
-    ["Meetings", b?.today.meetings, "/crm/calendar"],
-    ["Emails", tc?.emails, "/crm/email"],
-    ["Replies", tc ? tc.replies + tc.textReplies : undefined, "/crm/email"],
-    ["Texts", tc?.texts, "/crm/call"],
-  ];
-  return <div className="u-page db-page cp-page" role="region" aria-label="Dashboard">
-    <section className="cp-hero">
-      <div className="cp-hero-l">
-        <p className="cp-date">{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}{b?.streak ? <span className="cp-streak"><i aria-hidden="true" />{b.streak}-day streak</span> : null}</p>
-        <h1 className="u-title cp-title">{greeting}, {ws.ownerFirstName}.{b ? <span className="u-dim"> {b.today.calls >= target ? "Target hit. Keep going." : `${left} dials to go.`}</span> : null}</h1>
-        <p className="cp-lede">{b ? (b.week.meetings >= WEEKLY_MEETING_TARGET ? `${b.week.meetings} meetings booked this week. The week's target is done.` : `${b.week.meetings} of ${WEEKLY_MEETING_TARGET} meetings booked this week, from ${b.week.connects} conversations.`) : "\u00a0"}</p>
-        <div className="cp-ctas">
-          <Link className="u-btn u-btn-light u-btn-lg cp-go" href="/crm/call">Start calling <kbd>C</kbd></Link>
-          {next && <Link className="cp-next" href={next.dealId ? `/crm/deals/${next.dealId}` : next.contactId ? `/crm?contact=${next.contactId}` : "/crm/calendar"}>
-            <span className="cp-next-k">{when(next).day ? `${when(next).day}, next meeting` : (until(next.startsAt) || "Next meeting")}</span>
-            <span className="cp-next-v">{when(next).t} · {next.contactName || next.title}</span>
-          </Link>}
+
+  const drafts = (list ?? []).filter(t => t.onClick && !doneKeys[t.key]);
+  const waiting = (list ?? []).filter(t => !t.onClick);
+  const calls = (queue ?? []).slice(0, 6);
+  firstDraft.current = drafts[0]?.onClick ?? null;
+  const skip = (k: string) => setDoneKeys(d => ({ ...d, [k]: true }));
+  const firstCall = calls[0];
+  const replies = waiting.filter(t => t.overdue).length;
+  const nameOf = (c: QueueItem["contact"]) => c ? (c.company || c.name) : "";
+  const brief: React.ReactNode[] = [];
+  if (b) brief.push(b.today.calls >= target ? `You've hit today's ${target} dials. ` : b.today.calls > 0 ? `${b.today.calls} dials in, ${left} to go. ` : `${target} dials on the board today. `);
+  if (replies) brief.push(`${replies} conversation${replies === 1 ? " is" : "s are"} waiting on a reply. `);
+  if (next) brief.push(<span key="m">Your next meeting is <Link href={next.dealId ? `/crm/deals/${next.dealId}` : next.contactId ? `/crm?contact=${next.contactId}` : "/crm/calendar"}>{next.contactCompany || next.contactName || next.title}</Link> {when(next).day ? "tomorrow" : "today"} at {when(next).t}. </span>);
+  else if (events) brief.push("No meetings booked yet, so the calls are the day. ");
+  if (firstCall) brief.push(<span key="c">Start with <Link href={`/crm?contact=${firstCall.contact!.id}`}>{nameOf(firstCall.contact)}</Link>{firstCall.why ? `, who ${/^(said|asked|wants|wanted|told)/i.test(firstCall.why) ? firstCall.why.charAt(0).toLowerCase() + firstCall.why.slice(1).replace(/\.$/, "") : "is next in line (" + firstCall.why.replace(/\.$/, "") + ")"}` : ""}. </span>);
+  if (drafts.length) brief.push(`${drafts.length} text${drafts.length === 1 ? " is" : "s are"} written and ready below.`);
+  const loadingBrief = !b && queue === null;
+
+  return <div className="u-page db-page td-page" role="region" aria-label="Today">
+    <div className="td-grid">
+      <div className="td-main">
+        <p className="td-date">{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+        <h1 className="u-title td-title">{greeting}, {ws.ownerFirstName}.</h1>
+        <p className="td-brief" aria-live="polite">{loadingBrief ? "\u00a0" : brief.length ? brief : "Nothing new overnight. Make the first call and the day starts moving."}</p>
+
+        <section className="td-sec">
+          <div className="u-h2-row"><h2 className="u-h2">Ready to send {drafts.length > 0 && <span className="u-quiet">{drafts.length}</span>}</h2>{upcomingTexts > 0 && <span className="u-note">{upcomingTexts} more coming this week</span>}</div>
+          {list === null ? <p className="u-note" role="status">Loading…</p> : drafts.length === 0 ? <p className="u-note">Nothing to send right now. New follow-ups show up here as soon as they&apos;re due.</p>
+            : <div className="td-drafts">{(allTodo ? drafts : drafts.slice(0, 5)).map((t, i) => <DraftCard key={t.key} active={i === 0} name={t.name || t.title} website={t.website} why={t.why} body={t.body} href={t.href.startsWith("/") ? t.href : undefined}
+                sendLabel={t.action === "Text" ? "Send text" : t.action} onSend={t.onClick!} onSkip={() => skip(t.key)} />)}</div>}
+          {drafts.length > 5 && <button type="button" className="u-btn u-btn-bare td-more" onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${drafts.length}`}</button>}
+          {waiting.length > 0 && <div className="u-rows td-waiting">{waiting.map(t => <Link key={t.key} className="u-row" href={t.href} target={t.href.startsWith("http") ? "_blank" : undefined}>
+            <span className={"u-dot" + (t.overdue ? " is-ember" : "")} aria-hidden="true" />
+            <div className="u-row-main"><strong>{t.title}</strong>{t.why && <span>{t.why}</span>}</div>
+            <span className="u-row-end">{t.action}</span>
+          </Link>)}</div>}
+        </section>
+
+        <section className="td-sec">
+          <div className="u-h2-row"><h2 className="u-h2">Call first {queue && queue.length > 0 && <span className="u-quiet">{queue.length}</span>}</h2><Link className="u-btn u-btn-light td-go" href="/crm/call">Start calling <kbd>C</kbd></Link></div>
+          {queue === null ? <p className="u-note" role="status">Loading…</p> : calls.length === 0 ? <p className="u-note">No one queued. Add prospects and they&apos;ll line up here in order.</p>
+            : <ol className="td-calls">{calls.map((q, i) => <li key={q.id}>
+                <Link href={`/crm?contact=${q.contact!.id}`} className="td-call">
+                  <span className="td-call-n u-num">{i + 1}</span>
+                  <Logo name={nameOf(q.contact)} website={q.contact!.website} size={24} />
+                  <span className="td-call-who"><b>{nameOf(q.contact)}</b>{q.contact!.company && q.contact!.name && q.contact!.name !== q.contact!.company ? <span>{q.contact!.name}</span> : null}</span>
+                  <span className="td-call-why">{q.why || q.title}</span>
+                  <span className={"td-call-when" + (q.status === "overdue" ? " is-due" : "")}>{q.status === "overdue" ? "Overdue" : q.status === "today" ? "Today" : ""}</span>
+                </Link>
+              </li>)}</ol>}
+        </section>
+      </div>
+
+      <aside className="td-rail" aria-label="Today at a glance">
+        <div className="td-rail-sec">
+          <h2 className="td-rail-h">Meetings</h2>
+          {events === null ? <p className="u-note">Loading…</p> : upcoming.length === 0 ? <p className="u-note">Nothing booked today or tomorrow.</p>
+            : upcoming.slice(0, 4).map(e => <Link key={e.id} className="td-ev" href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"}>
+                <span className="td-ev-t u-num">{when(e).day ? "Tmrw " : ""}{when(e).t}</span>
+                <span className="td-ev-who"><Logo name={e.contactCompany || e.contactName || e.title} size={18} /><span>{e.contactCompany || e.contactName || e.title}</span></span>
+              </Link>)}
         </div>
-        <div className="cp-today">{todayStats.map(([k, n, href]) => <Link key={k} href={href} className="cp-stat"><b>{n ?? "—"}</b><span>{k}</span></Link>)}</div>
-      </div>
-      <div className="cp-hero-r">
-        <EmberGauge value={b?.today.calls ?? 0} target={target} loading={!b} />
-        {b && b.days.length > 0 && <WeekStrip days={b.days} target={target} />}
-      </div>
-    </section>
-
-    <div className="u-split u-split-2 u-block cp-row">
-      <section>
-        <div className="u-h2-row"><h2 className="u-h2">Your follow-ups today {list && <span className="u-quiet">{list.length}</span>}</h2><span className="u-note">DMs, texts, email and LinkedIn. Calls stay in Call mode.</span></div>
-        {list === null ? <p className="u-note" role="status">Loading…</p> : list.length === 0 ? <p className="u-note">{upcomingTexts ? `Nothing due right now. ${upcomingTexts} follow-up text${upcomingTexts === 1 ? "" : "s"} coming up in the next few days.` : "No follow-ups waiting. Go make calls."}</p>
-          : <div className="u-rows">{(allTodo ? list : list.slice(0, 8)).map(t => <div key={t.key} className="u-row db-todo">
-              <span className={"u-dot" + (t.overdue ? " is-bad" : "")} aria-label={t.overdue ? "Overdue" : "Due today"} />
-              <div className="u-row-main"><strong>{t.title}</strong>{t.why && <span>{t.why}</span>}</div>
-              {t.alt && <button type="button" className="u-btn u-btn-bare" title="Record a 2-minute Loom for them instead of the plain text" onClick={t.alt.onClick}>{t.alt.label}</button>}
-              {t.onClick ? <button type="button" className="u-btn u-btn-light" onClick={t.onClick}>{t.action}</button> : <Link className="u-btn u-btn-bare" href={t.href}>{t.action}</Link>}
-            </div>)}</div>}
-        {list && list.length > 0 && upcomingTexts > 0 && <p className="u-note" style={{ marginTop: 10 }}>{upcomingTexts} more follow-up text{upcomingTexts === 1 ? "" : "s"} coming up in the next few days.</p>}
-        {list && list.length > 8 && <button type="button" className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${list.length}`}</button>}
-      </section>
-
-      <section>
-        <div className="u-h2-row"><h2 className="u-h2">Next up</h2><Link className="u-note" href="/crm/calendar" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Calendar</Link></div>
-        {events === null ? <p className="u-note">Loading…</p> : upcoming.length === 0
-          ? <div className="u-rows"><div className="u-row"><div className="u-row-main"><strong>Nothing booked today or tomorrow</strong><span>Meetings come from dials. Book one in Call mode.</span></div></div></div>
-          : <div className="u-rows">{upcoming.slice(0, 4).map((e, i) => { const k = e.contactPhone ? meetingNudge(new Date(e.startsAt), new Date(), null) : null; const done = k && nudged[e.id + ":" + k]; return <div key={e.id} className="u-row db-ev db-ev-wrap">
-            <Link className="db-ev-link" href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"}>
-              <div className="db-ev-t"><b className="u-num">{when(e).t}</b><span>{[when(e).day, i === 0 ? until(e.startsAt) : ""].filter(Boolean).join(", ")}</span></div>
-              <div className="u-row-main"><strong>{e.title}</strong>{e.contactName && <span>{e.contactName}</span>}</div>
-            </Link>
-            {k && <button type="button" className={"u-btn " + (done ? "u-btn-bare" : "u-btn-light")} title={k === "confirm" ? "Text them to confirm. Prospects who reply yes almost always show." : "Text a reminder before the call"} onClick={() => nudge(e, k)}>{done ? (k === "confirm" ? "Confirm sent" : "Reminder sent") : k === "confirm" ? "Text to confirm" : "Text reminder"}</button>}
-          </div>; })}</div>}
-        {alerts.length > 0 && <div style={{ marginTop: 28 }}>
-          <div className="u-h2-row"><h2 className="u-h2">Needs attention</h2></div>
-          <div className="u-rows">{alerts.slice(0, 5).map((a, i) => <Link key={i} className="u-row" href={a.href} style={{ minHeight: 46 }}><span className={"u-dot" + (a.level === "urgent" ? " is-bad" : "")} /><div className="u-row-main"><span style={{ color: "var(--u-soft)", fontSize: 13.5, whiteSpace: "normal" }}>{a.text}</span></div></Link>)}</div>
+        <div className="td-rail-sec">
+          <h2 className="td-rail-h">So far today</h2>
+          <dl className="td-stats">
+            <div><dt>Dials</dt><dd className="u-num">{b ? b.today.calls : "—"}<small> / {target}</small></dd></div>
+            <div><dt>Conversations</dt><dd className="u-num">{b ? b.today.connects : "—"}</dd></div>
+            <div><dt>Meetings this week</dt><dd className="u-num">{b ? b.week.meetings : "—"}<small> / {WEEKLY_MEETING_TARGET}</small></dd></div>
+            <div><dt>Streak</dt><dd className="u-num">{b ? b.streak : "—"}<small> days</small></dd></div>
+          </dl>
+          <div className="td-meter" aria-label={`${b?.today.calls ?? 0} of ${target} dials`}><i style={{ width: Math.min(100, ((b?.today.calls ?? 0) / Math.max(1, target)) * 100) + "%" }} /></div>
+        </div>
+        {alerts.length > 0 && <div className="td-rail-sec">
+          <h2 className="td-rail-h">Needs attention</h2>
+          {alerts.slice(0, 4).map((a, i) => <Link key={i} className="td-alert" href={a.href}><span className={"u-dot" + (a.level === "urgent" ? " is-bad" : "")} aria-hidden="true" />{a.text}</Link>)}
         </div>}
-      </section>
+      </aside>
     </div>
 
+    <div className="td-below">
     <section className="u-block cp-month-wrap">
       <div className="u-h2-row"><h2 className="u-h2">This month</h2></div>
     <div className="u-figs cp-month">
@@ -336,6 +368,7 @@ export default function Dashboard() {
       </tbody></table></div>
       {b.sources.best && <p className="u-note" style={{ marginTop: 12 }}>{b.sources.best.label} books the most meetings per deal ({b.sources.best.meetingRate}%). Spend more time there.</p>}
     </section>}
+    </div>
     {loom && <div className="u-scrim" role="dialog" aria-modal="true" aria-label="Send a Loom" onMouseDown={e => { if (e.target === e.currentTarget) setLoom(null); }}>
       <div className="u-dialog" style={{ width: "min(560px, 100%)" }}>
         <h3>Loom for {loom.w.company || loom.w.firstName}</h3>
