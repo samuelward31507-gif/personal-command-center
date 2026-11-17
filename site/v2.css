@@ -935,3 +935,15 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 .vid video { transition: opacity .18s ease; }
 .vid video.swap { opacity: 0; }
 @media (max-width: 520px) { .vid-tabs { width: 100%; } .vid-tabs button { flex: 1; padding: 10px 6px; font-size: 13.5px; } }
+
+/* ── One theme. Cool, clean surfaces; colour only as crisp accents (icons, bars, edges), never as glow or wash. ── */
+.stage-wrap::before, .stage-wrap::after { display: none; }
+.motion .stage-wrap::before { animation: none; }
+.win { box-shadow: 0 0 0 1px rgba(18, 20, 23, .08), 0 2px 4px rgba(18, 20, 23, .03), 0 40px 100px -40px rgba(18, 20, 23, .35); }
+.win::before { display: none; }
+.iph-frame { box-shadow: inset 0 0 0 1.5px #44464b, inset 0 0 0 3px #0e0e10, 0 50px 100px -30px rgba(18, 20, 23, .5), 0 0 0 1px rgba(18, 20, 23, .2); }
+.bx-vis { background: linear-gradient(180deg, #f9fafb, #f3f4f6); }
+.pp-card.is-main { box-shadow: 0 0 0 1.5px var(--ember), 0 1px 2px rgba(18, 20, 23, .04), 0 24px 60px -30px rgba(18, 20, 23, .28); }
+.pp-card.is-main::before { display: none; }
+.vs.play .vs-with { box-shadow: 0 0 0 1.5px rgba(23, 144, 90, .45), var(--shadow); }
+.start.play li:last-child { box-shadow: 0 0 0 1.5px rgba(23, 144, 90, .45), var(--shadow); }
