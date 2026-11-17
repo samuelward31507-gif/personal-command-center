@@ -8,6 +8,7 @@ export const DEMO_TRADES = {
   Plumbing: { thing: "plumbing company", business: "Clearline Plumbing", questions: "what's happening, where in the home, whether it's urgent, and access" },
   Landscaping: { thing: "landscaping company", business: "Greenway Landscapes", questions: "yard size, the look they want, budget range, and timeline" },
   Fence: { thing: "fence company", business: "Summit Fence Co.", questions: "footage, material, gates, and timeline" },
+  Generator: { thing: "standby generator dealer", business: "Summit Power & Generator", questions: "home size, natural gas or propane, whole-home or essentials only, and the address for a site visit" },
   Pool: { thing: "pool builder", business: "Blue Ridge Pools", questions: "timeline, rough budget range, pool type, and whether the yard has access for equipment" },
   Remodeling: { thing: "remodeling company", business: "Oakline Remodeling", questions: "which room, the scope, budget range, and timeline" },
   Other: { thing: "local service business", business: "Your Business", questions: "what they need, where, budget range if relevant, and timeline" },

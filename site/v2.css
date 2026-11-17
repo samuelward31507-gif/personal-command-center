@@ -917,7 +917,7 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 .vs.play .vs-with { box-shadow: 0 0 0 1.5px rgba(23, 144, 90, .28), 0 30px 70px -30px rgba(23, 144, 90, .35); transition: box-shadow 1s var(--ease) 3s; }
 .vs.play .vs-without { transition: opacity 1s var(--ease) 3.2s; opacity: .82; }
 /* Setup: three steps arrive in order; the last one lights up */
-.motion .start li { opacity: 0; transform: translateY(14px); transition: opacity .7s var(--ease), transform .8s var(--ease), box-shadow .8s var(--ease); }
+.motion .start[data-play] li { opacity: 0; transform: translateY(14px); transition: opacity .7s var(--ease), transform .8s var(--ease), box-shadow .8s var(--ease); }
 .motion .start.play li { opacity: 1; transform: none; }
 .motion .start.play li:nth-child(2) { transition-delay: .25s; }
 .motion .start.play li:nth-child(3) { transition-delay: .5s; }
@@ -926,3 +926,12 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 .pp-card.is-main { position: relative; box-shadow: 0 0 0 1px rgba(242, 67, 29, .22), 0 2px 4px rgba(18, 20, 23, .03), 0 40px 90px -40px rgba(200, 60, 20, .4); }
 .pp-card.is-main::before { content: ""; position: absolute; top: 0; left: 10%; right: 10%; height: 1.5px; background: linear-gradient(90deg, rgba(242, 67, 29, 0), var(--ember) 35%, #ffa45c 60%, rgba(255, 164, 92, 0)); }
 @media (prefers-reduced-motion: reduce) { .fact-bar > i { width: calc(var(--v) * 100%) !important; } }
+
+/* Demo film picker */
+.vid-tabs { display: flex; justify-content: center; gap: 4px; width: max-content; margin: 0 auto 22px; padding: 4px; border-radius: 999px; background: #fff; box-shadow: 0 0 0 1px var(--line), var(--shadow); }
+.vid-tabs button { border: 0; background: transparent; font: 500 14.5px/1 var(--sans); color: var(--text-3); padding: 10px 16px; border-radius: 999px; cursor: pointer; transition: background .2s, color .2s; }
+.vid-tabs button:hover { color: var(--text); }
+.vid-tabs button[aria-selected="true"] { background: var(--text); color: #fff; }
+.vid video { transition: opacity .18s ease; }
+.vid video.swap { opacity: 0; }
+@media (max-width: 520px) { .vid-tabs { width: 100%; } .vid-tabs button { flex: 1; padding: 10px 6px; font-size: 13.5px; } }

@@ -11,9 +11,10 @@ export const FIRST_CALL_VIDEO = "https://personal-command-center-ten-ruby.vercel
 // ---- merge fields ----
 
 /** fence / pool / detailing / "" from the company name, notes or an outreach niche. */
-export function nicheFor(...hints: (string | null | undefined)[]): "fence" | "pool" | "detailing" | "" {
+export function nicheFor(...hints: (string | null | undefined)[]): "fence" | "generator" | "pool" | "detailing" | "" {
   const s = hints.filter(Boolean).join(" ");
   if (/\bfenc(e|es|ing)\b/i.test(s)) return "fence";
+  if (/\bgenerators?\b|\bgenerac\b|\bkohler power\b|\bstandby power\b/i.test(s)) return "generator";
   if (/\bdetail(s|ing|ers?)?\b|\bceramic coating|\bppf\b/i.test(s)) return "detailing";
   if (/\bpools?\b|\bspas?\b|\bswim/i.test(s)) return "pool";
   return "";
@@ -21,6 +22,7 @@ export function nicheFor(...hints: (string | null | undefined)[]): "fence" | "po
 export function demoLinkFor(niche: string): string {
   // /fence-demo and /pool-demo were retired (they redirect to /demo). Fence gets the fence cut of the video.
   if (niche === "fence") return "https://cinderrevenue.com/watch?story=fence";
+  if (niche === "generator") return "https://cinderrevenue.com/watch?story=generator";
   if (niche === "pool" || niche === "detailing") return "https://cinderrevenue.com/demo";
   return "https://cinderrevenue.com";
 }
@@ -39,7 +41,8 @@ export function demoText(i: { firstName?: string; company?: string; niche?: stri
   const custom = (i.settingsLink ?? "").trim();
   let link = /^https:\/\/\S+$/.test(custom) && custom.replace(/\/$/, "") !== DEFAULT_DEMO_LINK ? custom
     : i.niche === "detailing" || i.niche === "pool" ? "https://cinderrevenue.com/demo"
-    : i.niche === "fence" ? "https://cinderrevenue.com/watch?story=fence" : "https://cinderrevenue.com/watch";
+    : i.niche === "fence" ? "https://cinderrevenue.com/watch?story=fence"
+    : i.niche === "generator" ? "https://cinderrevenue.com/watch?story=generator" : "https://cinderrevenue.com/watch";
   if (/^https:\/\/cinderrevenue\.com\/(watch|demo)/.test(link)) {
     const u = new URL(link);
     if (i.firstName?.trim()) u.searchParams.set("n", i.firstName.trim());

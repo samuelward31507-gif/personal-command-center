@@ -26,6 +26,25 @@
       ],
       booked: { date: "Tuesday, November 4", time: "3:44", title: "Estimate booked: Dana", lines: ["Wed 9:00 AM", "Wood privacy ~150 ft, 1 gate"] }
     },
+    generator: {
+      contact: { name: "Tom", sub: "New lead", initial: "T" },
+      opener: { kind: "call", time: "5:52", number: "(719) 555-0143", place: "Colorado Springs, CO" },
+      replyIn: "Replied in 7 sec",
+      chapters: [
+        ["The call", "5:52 PM. The office closed an hour ago when a homeowner calls."],
+        ["Missed", "Nobody picks up. After two outages this month, he's calling every dealer on the list."],
+        ["Texted back", "Seconds later, your business texts him back."],
+        ["Qualified", "It asks the questions you'd ask before every site visit."],
+        ["Booked", "Then it books the site visit on your calendar."],
+        ["Your text", "You get one text with everything. He never called the next dealer."]
+      ],
+      thread: [
+        ["ch", 2], ["out", "Hi, it's Summit Power & Generator. Sorry we missed you, the office just closed! What can we help with?"], ["in", "power went out twice this month. looking at a whole home generator"],
+        ["ch", 3], ["time", "5:53"], ["out", "We can help with that. About how big is the house, and is it natural gas or propane?"], ["in", "about 2,800 sq ft, natural gas"], ["out", "Got it, we'll size it on site. What's the address for the visit?"], ["in", "1180 Pine Ridge Dr"],
+        ["ch", 4], ["time", "5:55"], ["out", "Thanks! I can have someone out:\n1) Thursday 10:00 AM\n2) Friday 2:00 PM"], ["in", "thursday works"], ["out", "You're booked for Thursday at 10:00 AM. We'll text when we're on the way."]
+      ],
+      booked: { date: "Tuesday, November 4", time: "5:56", title: "Site visit booked: Tom", lines: ["Thu 10:00 AM · 1180 Pine Ridge Dr", "Whole-home standby · ~2,800 sq ft", "Natural gas"] }
+    },
     general: {
       contact: { name: "Dana", sub: "New lead · website", initial: "D" },
       opener: { kind: "call", time: "3:40", number: "(303) 555-0187", place: "Aurora, CO" },
@@ -131,9 +150,9 @@
   function mount(root, key, autoplay) {
   var story = STORIES[key];
   if (!story) return;
-  // Personalization: replace the sample business name in the conversation (used by /watch?b=...).
+  // Personalization: replace every sample business name in the conversation (used by /watch?b=...).
   var biz = (root.getAttribute("data-biz") || "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, 40);
-  if (biz) story = Object.assign({}, story, { thread: story.thread.map(function (s) { return s.map(function (x) { return typeof x === "string" ? x.split("Summit Home Services").join(biz) : x; }); }) });
+  if (biz) story = Object.assign({}, story, { thread: story.thread.map(function (s) { return s.map(function (x) { return typeof x === "string" ? ["Summit Home Services", "Summit Fence Co.", "Summit Power & Generator"].reduce(function (a, k) { return a.split(k).join(biz); }, x) : x; }); }) });
   var SPEED = parseFloat(root.getAttribute("data-film-speed")) || 1;
   var manual = root.hasAttribute("data-film-manual");
 

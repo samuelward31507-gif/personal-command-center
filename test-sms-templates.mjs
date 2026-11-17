@@ -77,6 +77,8 @@ ok(() => assert.deepEqual(ip.tasks.map(t => t.title), ["Follow up on info (day 1
 ok(() => assert.equal(demoLinkFor(nicheFor("Blue Haven Pools")), "https://cinderrevenue.com/demo"));
 ok(() => assert.equal(demoLinkFor(nicheFor("Summit Roofing")), "https://cinderrevenue.com"));
 ok(() => assert.equal(demoLinkFor(""), "https://cinderrevenue.com"));
+ok(() => assert.equal(nicheFor("Pikes Peak Generac Dealer"), "generator"));
+ok(() => assert.equal(demoLinkFor(nicheFor("Front Range Standby Generators")), "https://cinderrevenue.com/watch?story=generator"));
 ok(() => assert.equal(tzOf({ timeZone: "America/Chicago", location: "Atlanta, GA" }), "America/Chicago"), "contact field wins");
 ok(() => assert.equal(tzOf({ timeZone: "Not/AZone", location: "Atlanta, GA" }), "America/New_York"), "bad field falls back to state");
 ok(() => assert.equal(tzOf({ location: "", phone: "(214) 555-0100" }), "America/Chicago"), "then area code");
