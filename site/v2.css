@@ -1007,6 +1007,3 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 .stage-wrap::before { background:
     radial-gradient(ellipse 34% 26% at 50% 30%, rgba(242, 67, 29, .32), rgba(242, 67, 29, 0) 100%),
     radial-gradient(ellipse 40% 30% at 50% 50%, rgba(255, 150, 60, .22), rgba(255, 150, 60, 0) 100%); }
-/* Feature grid: neutral fields, ink icon tiles */
-.bx-vis { background: linear-gradient(180deg, #f7f8fa, #f1f2f5); }
-.bx-ic { background: linear-gradient(180deg, #2a2d33, #121417); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 6px 14px -6px rgba(18, 20, 23, .5); }
