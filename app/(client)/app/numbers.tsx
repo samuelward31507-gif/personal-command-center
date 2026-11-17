@@ -5,7 +5,7 @@
 // lost, then reviews and win-back. Definitions match Jobber and ServiceTitan.
 import { useCallback, useEffect, useState } from "react";
 import { jobPrice } from "@/lib/service";
-import type { Period, Report, ReportNumbers } from "@/lib/client-reports";
+import type { People, Period, Report, ReportNumbers } from "@/lib/client-reports";
 import { PERIODS, periodRange, type PeriodKey } from "@/lib/periods";
 import { Avatar, Spinner, ago, secs, short, usd, type Api, type Toast } from "./parts";
 import { Bars, Donut, Guide, Kpis, PageHead, type Kpi } from "./charts";
@@ -144,9 +144,9 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
           </section>
           <RecurringPanel d={d} go={go} onPlans={() => go.tab("plans")} />
           <HoursPanel d={d} go={go} />
-          <CrewPanel d={d} win={win} />
-          <CommissionPanel d={d} win={win} />
-          <TaxPanel d={d} win={win} />
+          <CrewPanel d={d} win={win} people={r?.people} />
+          <CommissionPanel d={d} win={win} people={r?.people} />
+          <TaxPanel d={d} win={win} people={r?.people} />
           <section className="panel s6">
             <div className="panel-h"><h2>Reviews</h2><small>{n!.reviews} asked, {rg.phrase}</small></div>
             {d.ratings && d.ratings.n > 0 && <p className="fine" style={{ padding: "8px 0 0" }}>Customers rated finished jobs <b style={{ color: "var(--ink)" }}>{d.ratings.avg} of 5</b> ({d.ratings.n} {d.ratings.n === 1 ? "rating" : "ratings"} this year{d.ratings.low ? `, ${d.ratings.low} at 3 or lower` : ""}).</p>}
@@ -175,12 +175,14 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
 /** Who on the crew did what in the period: jobs won with them on it, their value, and hours clocked. */
 type Win = { since: number; until: number; phrase: string };
 const inWin = (w: Win, at: string | number) => { const t = typeof at === "number" ? at : Date.parse(at.length === 10 ? at + "T12:00:00" : at); return t >= w.since && t < w.until; };
-function CrewPanel({ d, win }: { d: Data; win: Win }) {
+function CrewPanel({ d, win, people }: { d: Data; win: Win; people?: People }) {
   const team = parseTeam(d.setup?.team ?? "[]"), d10 = (p: string) => p.replace(/\D/g, "").slice(-10);
   if (!team.length) return null;
   const rows = [{ cell: "", name: d.owner ? d.owner.split(" ")[0] + " (you)" : "You" }, ...team.map(m => ({ cell: m.cell, name: m.name || m.cell }))].map(p => {
     const jobs = (d.board ?? []).filter(c => c.stage === "won" && !c.pastCustomer && inWin(win, c.stageAt ?? c.at) && d10(c.crewMember ?? "") === d10(p.cell));
     const mins = (d.time ?? []).filter(e => inWin(win, e.started_at) && d10(e.member) === d10(p.cell)).reduce((a, e) => a + minutesOf(e), 0);
+    const srv = people?.crew.find(x => x.member === d10(p.cell));
+    if (people) return { ...p, jobs: srv?.jobs ?? 0, value: srv?.value ?? 0, hours: Math.round((srv?.minutes ?? 0) / 6) / 10 };
     return { ...p, jobs: jobs.length, value: jobs.reduce((a, c) => a + (jobPrice(c) ?? 0), 0), hours: Math.round(mins / 6) / 10 };
   }).filter(r => r.jobs || r.hours);
   return <section className="panel s6">
@@ -192,11 +194,11 @@ function CrewPanel({ d, win }: { d: Data; win: Win }) {
 }
 
 /** Sales tax on what was paid in the period, by month: what to send the state. */
-function TaxPanel({ d, win }: { d: Data; win: Win }) {
+function TaxPanel({ d, win, people }: { d: Data; win: Win; people?: People }) {
   const paid = (d.invoices ?? []).filter(i => i.status === "paid" && !!i.paid_at && inWin(win, i.paid_at) && i.tax_rate > 0);
   const months = new Map<string, { taxable: number; tax: number; n: number }>();
   for (const i of paid) { const t = totals(i.items, i.tax_rate), k = (i.paid_at ?? "").slice(0, 7); const m = months.get(k) ?? { taxable: 0, tax: 0, n: 0 }; m.taxable += t.subtotal; m.tax += t.tax; m.n++; months.set(k, m); }
-  const list = [...months.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  const list = people ? people.tax.map(t => [t.month, t] as const) : [...months.entries()].sort((a, b) => b[0].localeCompare(a[0]));
   return <section className="panel s6">
     <div className="panel-h"><h2>Sales tax</h2><small>on invoices paid, {win.phrase}</small></div>
     <div className="panel-b">{list.length ? <table className="tbl flush"><thead><tr><th>Month</th><th className="right">Invoices</th><th className="right">Taxable</th><th className="right">Tax collected</th></tr></thead>
@@ -206,10 +208,12 @@ function TaxPanel({ d, win }: { d: Data; win: Win }) {
 }
 
 /** Commissions owed for the period: each person's percentage of what was collected on their jobs. */
-function CommissionPanel({ d, win }: { d: Data; win: Win }) {
+function CommissionPanel({ d, win, people }: { d: Data; win: Win; people?: People }) {
   const team = parseTeam(d.setup?.team ?? "[]");
   if (!team.some(m => m.commission)) return null;
-  const rows = commissions(team, d.board ?? [], (d.payments ?? []).filter(p => inWin(win, p.paid_on)), "0000-00-00");
+  const rows = people ? team.filter(m => (m.commission ?? 0) > 0).map(m => { const c = people.collected.find(x => x.member === m.cell.replace(/\D/g, "").slice(-10));
+      const collected = c?.amount ?? 0; return { name: m.name || m.cell, pct: m.commission!, collected, jobs: c?.jobs ?? 0, owed: Math.round(collected * m.commission!) / 100 }; }).sort((a, b) => b.owed - a.owed)
+    : commissions(team, d.board ?? [], (d.payments ?? []).filter(p => inWin(win, p.paid_on)), "0000-00-00");
   return <section className="panel s6">
     <div className="panel-h"><h2>Commissions</h2><small>on money collected, {win.phrase}</small></div>
     <div className="panel-b"><table className="tbl flush"><thead><tr><th>Who</th><th className="right">Rate</th><th className="right">Collected</th><th className="right">Owed</th></tr></thead>

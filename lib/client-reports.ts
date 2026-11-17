@@ -8,7 +8,7 @@
 //   time to pay = average days from invoice sent to paid
 // "Leads" are new conversations from real lead sources: imports, review asks and follow-up rounds don't count.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { periodRange, type PeriodKey } from "@/lib/periods";
+import { periodRange, taxByMonth, type PeriodKey } from "@/lib/periods";
 
 type Sql = NeonQueryFunction<false, false>;
 export type Period = 30 | 90 | 365;
@@ -23,7 +23,9 @@ export type ReportNumbers = Funnel & {
 /** paid: money actually collected (payments recorded) on the jobs that came from this source. */
 export type SourceRow = { source: string; leads: number; booked: number; quoted: number; won: number; wonValue: number; paid: number };
 export type Point = { label: string; leads: number; booked: number; won: number; wonValue: number; collected: number };
-export type Report = { days: Period; key?: PeriodKey; from?: string; to?: string; now: ReportNumbers; before: ReportNumbers; sources: SourceRow[]; lostReasons: { reason: string; n: number }[]; openQuotes: { n: number; value: number }; series: Point[] };
+/** Per person (by the last 10 digits of their cell, "" = the owner) and sales tax, counted on the server over the whole window. */
+export type People = { crew: { member: string; jobs: number; value: number; minutes: number }[]; collected: { member: string; amount: number; jobs: number }[]; tax: { month: string; taxable: number; tax: number; n: number }[] };
+export type Report = { days: Period; key?: PeriodKey; from?: string; to?: string; people?: People; now: ReportNumbers; before: ReportNumbers; sources: SourceRow[]; lostReasons: { reason: string; n: number }[]; openQuotes: { n: number; value: number }; series: Point[] };
 
 const NOT_LEADS = ["import", "review", "due", "quote", "rehash"];
 
@@ -99,11 +101,37 @@ export async function reportFor(sql: Sql, pid: string, tz: string, key: PeriodKe
         UNION ALL SELECT refunded_on, -amount FROM public.client_refunds WHERE project_id = ${pid}::uuid AND refunded_on >= (${from.toISOString()}::timestamptz AT TIME ZONE ${tz})::date AND refunded_on < (${to.toISOString()}::timestamptz AT TIME ZONE ${tz})::date) m GROUP BY 1`.catch(() => []) as Promise<Record<string, unknown>[]>,
   ]);
   const paid = new Map(pay.map(r => [String(r.k), Number(r.collected) || 0]));
+  const people = await peopleFor(sql, pid, tz, from.toISOString(), to.toISOString()).catch(e => { console.error("Report people failed", e instanceof Error ? e.message : e); return undefined; });
   return {
-    days, key, from: from.toISOString(), to: to.toISOString(), now: cur, before,
+    days, key, people, from: from.toISOString(), to: to.toISOString(), now: cur, before,
     sources: src.map(r => ({ source: String(r.source), leads: Number(r.leads) || 0, booked: Number(r.booked) || 0, quoted: Number(r.quoted) || 0, won: Number(r.won) || 0, wonValue: Number(r.won_value) || 0, paid: Number(r.paid) || 0 })),
     lostReasons: lost.filter(r => r.reason).map(r => ({ reason: String(r.reason), n: Number(r.n) || 0 })),
     openQuotes: { n: Number(open[0]?.n) || 0, value: Number(open[0]?.value) || 0 },
     series: ser.map(r => ({ label: String(r.k), leads: Number(r.leads) || 0, booked: Number(r.booked) || 0, won: Number(r.won) || 0, wonValue: Number(r.won_value) || 0, collected: paid.get(String(r.k)) ?? 0 })),
+  };
+}
+
+/** Who did what in the window, and the sales tax collected, from every row (not just what the app has loaded). */
+async function peopleFor(sql: Sql, pid: string, tz: string, from: string, to: string): Promise<People> {
+  const [crew, hours, coll, tax] = await Promise.all([
+    sql`SELECT right(regexp_replace(coalesce(t.crew_member, ''), '[^0-9]', '', 'g'), 10) AS m, count(*)::int AS jobs,
+        coalesce(sum(coalesce((SELECT max(i.total) FROM public.client_invoices i WHERE i.thread_id = t.id AND i.status <> 'void'), t.value, 0)), 0)::float AS value
+      FROM public.client_threads t WHERE t.project_id = ${pid}::uuid AND t.stage = 'won' AND t.stage_at >= ${from}::timestamptz AND t.stage_at < ${to}::timestamptz GROUP BY 1` as Promise<Record<string, unknown>[]>,
+    sql`SELECT right(regexp_replace(coalesce(e.member, ''), '[^0-9]', '', 'g'), 10) AS m,
+        coalesce(sum(least(960, greatest(0, extract(epoch FROM (coalesce(e.ended_at, now()) - e.started_at)) / 60))), 0)::float AS minutes
+      FROM public.client_time e WHERE e.project_id = ${pid}::uuid AND e.started_at >= ${from}::timestamptz AND e.started_at < ${to}::timestamptz GROUP BY 1`.catch(() => []) as Promise<Record<string, unknown>[]>,
+    sql`SELECT right(regexp_replace(coalesce(t.crew_member, ''), '[^0-9]', '', 'g'), 10) AS m, sum(x.a)::float AS amount, count(DISTINCT t.id)::int AS jobs FROM (
+        SELECT thread_id, amount AS a FROM public.client_payments WHERE project_id = ${pid}::uuid AND paid_on >= (${from}::timestamptz AT TIME ZONE ${tz})::date AND paid_on < (${to}::timestamptz AT TIME ZONE ${tz})::date
+        UNION ALL SELECT thread_id, -amount FROM public.client_refunds WHERE project_id = ${pid}::uuid AND refunded_on >= (${from}::timestamptz AT TIME ZONE ${tz})::date AND refunded_on < (${to}::timestamptz AT TIME ZONE ${tz})::date
+      ) x JOIN public.client_threads t ON t.id = x.thread_id GROUP BY 1`.catch(() => []) as Promise<Record<string, unknown>[]>,
+    sql`SELECT to_char(paid_at AT TIME ZONE ${tz}, 'YYYY-MM') AS month, items, tax_rate::float AS tax_rate FROM public.client_invoices
+      WHERE project_id = ${pid}::uuid AND status = 'paid' AND tax_rate > 0 AND paid_at >= ${from}::timestamptz AND paid_at < ${to}::timestamptz LIMIT 5000` as Promise<Record<string, unknown>[]>,
+  ]);
+  const mins = new Map(hours.map(h => [String(h.m ?? ""), Number(h.minutes) || 0]));
+  const members = new Set([...crew.map(r => String(r.m ?? "")), ...mins.keys()]);
+  return {
+    crew: [...members].map(m => { const r = crew.find(x => String(x.m ?? "") === m); return { member: m, jobs: Number(r?.jobs) || 0, value: Number(r?.value) || 0, minutes: Math.round(mins.get(m) ?? 0) }; }),
+    collected: coll.map(r => ({ member: String(r.m ?? ""), amount: Math.round((Number(r.amount) || 0) * 100) / 100, jobs: Number(r.jobs) || 0 })),
+    tax: taxByMonth(tax.map(r => ({ month: String(r.month), items: Array.isArray(r.items) ? r.items as { qty: number; price: number }[] : [], taxRate: Number(r.tax_rate) || 0 }))),
   };
 }

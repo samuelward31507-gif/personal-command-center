@@ -43,3 +43,14 @@ export function periodRange(key: PeriodKey, now: Date, tz: string): Range {
   const from = startOf(`${y - 1}-01-01`, tz), to = startOf(`${y}-01-01`, tz);
   return { key, from, to, prevFrom: startOf(`${y - 2}-01-01`, tz), prevTo: from, unit: "month", phrase: String(y - 1), vs: String(y - 2), current: false };
 }
+
+/** Sales tax on invoices paid, by month (newest first): the taxable amount, the tax, how many. */
+export function taxByMonth(rows: { month: string; items: { qty: number; price: number }[]; taxRate: number }[]): { month: string; taxable: number; tax: number; n: number }[] {
+  const c = (n: number) => Math.round(n * 100) / 100, m = new Map<string, { taxable: number; tax: number; n: number }>();
+  for (const r of rows) {
+    if (!(r.taxRate > 0)) continue;
+    const sub = c(r.items.reduce((a, i) => a + (Number(i.qty) || 0) * (Number(i.price) || 0), 0)), x = m.get(r.month) ?? { taxable: 0, tax: 0, n: 0 };
+    x.taxable = c(x.taxable + sub); x.tax = c(x.tax + c(sub * r.taxRate / 100)); x.n++; m.set(r.month, x);
+  }
+  return [...m.entries()].map(([month, v]) => ({ month, ...v })).sort((a, b) => b.month.localeCompare(a.month));
+}

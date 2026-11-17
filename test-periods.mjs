@@ -16,4 +16,7 @@ ok(() => { const r = P.periodRange("lastmonth", new Date("2026-01-10T18:00:00Z")
 ok(() => { const r = P.periodRange("year", now, tz); assert.equal(r.from.toISOString(), "2026-01-01T07:00:00.000Z"); assert.equal(r.unit, "month"); assert.equal(r.phrase, "2026 so far"); });
 ok(() => { const r = P.periodRange("lastyear", now, tz); assert.equal(r.from.toISOString(), "2025-01-01T07:00:00.000Z"); assert.equal(r.to.toISOString(), "2026-01-01T07:00:00.000Z"); assert.equal(r.vs, "2024"); });
 ok(() => { assert.ok(P.isPeriodKey("lastmonth")); assert.ok(!P.isPeriodKey("7")); });
+ok(() => { const m = P.taxByMonth([{ month: "2026-10", items: [{ qty: 2, price: 100 }], taxRate: 8 }, { month: "2026-10", items: [{ qty: 1, price: 50.5 }], taxRate: 8 },
+    { month: "2026-11", items: [{ qty: 1, price: 1000 }], taxRate: 7.25 }, { month: "2026-11", items: [{ qty: 1, price: 999 }], taxRate: 0 }]);
+  assert.deepEqual(m, [{ month: "2026-11", taxable: 1000, tax: 72.5, n: 1 }, { month: "2026-10", taxable: 250.5, tax: 20.04, n: 2 }]); });
 console.log(`periods: ${n} checks passed`);
