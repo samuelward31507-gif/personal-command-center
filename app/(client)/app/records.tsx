@@ -7,6 +7,8 @@ import { EQUIPMENT_KINDS, LOGGED, ageYears, taskOrder, type Equipment } from "@/
 import type { Data, Go } from "./types";
 import { ORDER_STATUS, linesFromQuote, orderText, orderTotal, type Order, type OrderLine } from "@/lib/orders";
 import { catalogFrom } from "./catalog";
+import { cleanDaysOff, type DayOff } from "@/lib/client-booking";
+import { teamOf } from "./crew";
 
 type Ctx = { d: Data; project: string; api: Api; toast: Toast; reload: () => Promise<void> };
 const todayIso = () => new Date().toLocaleDateString("en-CA");
@@ -235,4 +237,29 @@ function OrderSheet({ ctx, card, order, onClose }: { ctx: Ctx; card: Parameters<
       <span style={{ flex: 1 }} />{orderTotal(lines) > 0 && <b>{dollarsOf(orderTotal(lines))}</b>}</div>
     <label className="field"><span>Note for the supplier</span><textarea rows={2} value={note} maxLength={500} onChange={e => setNote(e.target.value)} placeholder="Deliver to the driveway, call on arrival." /></label>
   </Sheet>;
+}
+
+// ---------- Days off ----------
+/** Holidays, vacation, a crew member out: the booking page and the agent skip business closures; the crew view shows who's out. */
+export function DaysOffEditor({ ctx }: { ctx: Ctx }) {
+  const today = todayIso(), list = cleanDaysOff(ctx.d.setup?.days_off ?? "[]", today), team = teamOf(ctx.d);
+  const [adding, setAdding] = useState(false), [v, setV] = useState({ from: today, to: today, who: "", note: "" }), [busy, setBusy] = useState(false);
+  const save = async (next: DayOff[], done: string) => { setBusy(true);
+    try { await ctx.api("/api/app/act", { p: ctx.project, action: "daysoff", input: next }); ctx.toast(done); await ctx.reload(); return true; }
+    catch (e) { ctx.toast(e instanceof Error ? e.message : "Didn't save.", true); return false; } finally { setBusy(false); } };
+  const who = (cell: string) => !cell ? "Closed" : team.find(t => t.cell.replace(/\D/g, "").slice(-10) === cell.replace(/\D/g, "").slice(-10))?.name ?? cell;
+  const span = (o: DayOff) => o.from === o.to ? dateLabel(o.from) : `${dateLabel(o.from)} to ${dateLabel(o.to)}`;
+  const upcoming = list.filter(o => o.to >= today);
+  return <li style={{ height: "auto", padding: "8px 0", flexDirection: "column", alignItems: "stretch", gap: 6 }}>
+    <span>Days off<small className="mut" style={{ display: "block" }}>Holidays and vacation close the booking page and the agent won&rsquo;t offer those days. A crew member&rsquo;s days off show on the crew view.</small></span>
+    {upcoming.length > 0 && <table className="tbl flush"><tbody>{upcoming.map((o, k) => <tr key={k}><td className="nowrap">{span(o)}</td><td><b>{who(o.who)}</b>{o.note ? <span className="mut">, {o.note}</span> : null}</td>
+      <td className="right"><button type="button" className="btn ghost sm ic" aria-label="Remove" disabled={busy} onClick={() => void save(list.filter(x => x !== o), "Removed.")}><Icon name="x" size={12} /></button></td></tr>)}</tbody></table>}
+    {adding ? <form className="acts-row" style={{ flexWrap: "wrap", gap: 8 }} onSubmit={async e => { e.preventDefault(); if (await save([...list, { ...v, to: v.to < v.from ? v.from : v.to }], v.who ? `${who(v.who)} is off ${span({ ...v, to: v.to < v.from ? v.from : v.to })}.` : "Closed. Nothing will be offered those days.")) { setAdding(false); setV({ from: today, to: today, who: "", note: "" }); } }}>
+        <select className="input sm" style={{ width: "auto" }} aria-label="Who" value={v.who} onChange={e => setV({ ...v, who: e.target.value })}><option value="">Whole business</option>{team.filter(t => t.cell).map(t => <option key={t.cell} value={t.cell}>{t.name}</option>)}</select>
+        <input className="input sm" style={{ width: "auto" }} type="date" aria-label="From" value={v.from} min={today} onChange={e => setV({ ...v, from: e.target.value, to: v.to < e.target.value ? e.target.value : v.to })} />
+        <input className="input sm" style={{ width: "auto" }} type="date" aria-label="To" value={v.to} min={v.from} onChange={e => setV({ ...v, to: e.target.value })} />
+        <input className="input sm" style={{ width: 160 }} aria-label="Note" value={v.note} maxLength={60} placeholder="Thanksgiving" onChange={e => setV({ ...v, note: e.target.value })} />
+        <button type="submit" className="btn sm ink" disabled={busy}>{busy ? <Spinner /> : "Add"}</button><button type="button" className="btn ghost sm" onClick={() => setAdding(false)}>Cancel</button></form>
+      : <span className="acts-row"><button type="button" className="btn sm" onClick={() => setAdding(true)}><Icon name="plus" size={13} />Add days off</button></span>}
+  </li>;
 }

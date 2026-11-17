@@ -39,4 +39,15 @@ assert.match(B.mondayText("X", { leads: 1, answered: 1, replySec: null, booked: 
 assert.deepEqual(B.parseIntake({ "First Name": "Dana", "Last Name": "Ruiz", Phone: "(720) 555-0148", Email: "d@x.com", Message: "120 ft cedar" }), { name: "Dana Ruiz", phone: "+17205550148", email: "d@x.com", message: "120 ft cedar", source: "web form" });
 assert.equal(B.parseIntake({ name: "No phone" }), null);
 assert.equal(B.parseIntake({ phone: "555-01" }), null);
+// Days off: cleaned, a business closure covers everyone, the booking times skip closed days.
+{ const list = B.cleanDaysOff(JSON.stringify([{ from: "2026-11-26", to: "2026-11-27", note: " Thanksgiving " }, { from: "2026-12-01", to: "2026-12-03", who: "(303) 555-0142", note: "Vacation" },
+    { from: "2026-12-05", to: "2026-12-01" }, { from: "2026-01-01", to: "2026-01-02" }, { from: "2026-12-01", to: "2027-03-01" }, { from: "nope" }]), "2026-11-16");
+  assert.equal(list.length, 2, "backwards, long-ago, over 60 days and bad dates are dropped"); assert.equal(list[0].note, "Thanksgiving"); assert.equal(list[1].who, "+13035550142");
+  assert.ok(B.offOn(list, "2026-11-27")); assert.ok(B.offOn(list, "2026-11-27", "+13035550142"), "a closure covers the crew too");
+  assert.equal(B.offOn(list, "2026-12-02"), null, "one person out doesn't close the business"); assert.ok(B.offOn(list, "2026-12-02", "3035550142"));
+  assert.equal(B.offOn(list, "2026-12-02", "+13035550199"), null);
+  const h = { ...B.parseHours("Mon-Fri 8-5", "America/Denver"), off: [{ from: "2026-11-26", to: "2026-11-27", who: "", note: "" }] };
+  const slots = B.freeSlots([], h, new Date("2026-11-25T15:00:00Z"), { days: 7, max: 20 });
+  assert.ok(slots.length > 0); assert.ok(!slots.some(s => /Nov 26|Nov 27/.test(s.label)), "nothing on closed days");
+  assert.equal(B.withBookingPrefs(B.parseHours(""), { days_off: JSON.stringify([{ from: "2099-01-01", to: "2099-01-02" }, { from: "2099-02-01", to: "2099-02-02", who: "+13035550142" }]) }).off?.length, 1, "only business closures block booking"); }
 console.log("client booking ok");

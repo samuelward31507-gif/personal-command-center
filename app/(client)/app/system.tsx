@@ -9,7 +9,7 @@ import { ChecklistsSheet } from "./parity";
 import { contrastOnWhite, dominantColor, readableAccent } from "@/lib/brand";
 import { sourceLabel, type Biz, type Data, type Go, type LeadMail } from "./types";
 import { PageHead } from "./charts";
-import { ActivityLog, FieldLabelsEditor } from "./records";
+import { ActivityLog, DaysOffEditor, FieldLabelsEditor } from "./records";
 import { FollowUps } from "./automations";
 
 type View = "connections" | "tools" | "agent" | "account";
@@ -404,6 +404,7 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
       <li><span>Business details and price book</span><button type="button" className="btn sm" onClick={go.setup}>Edit</button></li>
       <ReviewLink d={d} api={api} project={project} toast={toast} reload={reload} />
       <FieldLabelsEditor ctx={{ d, project, api, toast, reload }} />
+      {d.role !== "crew" && <DaysOffEditor ctx={{ d, project, api, toast, reload }} />}
       {d.role !== "office" && d.role !== "crew" && <FollowUps ctx={{ d, project, api, toast, reload }} />}
       <li><span>Invoices, tax and pay link</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
       <li><span>Notifications on this device</span>{push === "on" ? <span className="dot good">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <span className="mut">{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</span>}</li>

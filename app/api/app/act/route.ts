@@ -12,6 +12,7 @@ import { replyToFor } from "@/lib/client-lead-mail-run";
 import { addExpense, deleteExpense } from "@/lib/client-expenses-run";
 import { LOGGED, activityDetail } from "@/lib/records";
 import { quoteValidDays } from "@/lib/service";
+import { cleanDaysOff } from "@/lib/client-booking";
 import { saveRules } from "@/lib/client-automations-run";
 import { deleteOrder, saveOrder, setOrderStatus } from "@/lib/client-orders-run";
 import { addFile, removeEquipment, removeFile, saveEquipment, saveTask, serviceEquipment, setTask } from "@/lib/client-records-run";
@@ -263,6 +264,12 @@ async function handle(req: Request) {
       if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which order?" }, 400);
       const r = b.action === "orderstatus" ? await setOrderStatus(sql, c, b.entry, b.status, member) : await deleteOrder(sql, c, b.entry);
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "daysoff") {
+      if (s.role === "crew") return json({ error: "Only the office can change days off." }, 403);
+      const list = cleanDaysOff(b.input, new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" }));
+      await sql`UPDATE public.client_ops SET setup = setup || ${JSON.stringify({ days_off: JSON.stringify(list) })}::jsonb, updated_at = now() WHERE project_id = ${c.projectId}::uuid AND owner_id = ${c.owner}`;
+      return json({ ok: true });
     }
     if (b.action === "automations") { if (s.role !== "owner") return json({ error: "Only the owner can change follow-ups." }, 403); const r = await saveRules(sql, c, b.input); return r.ok ? json({ ok: true }) : json({ error: r.error }, 400); }
     if (b.action === "expense") { const r = await addExpense(sql, c, member, b.input); return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400); }

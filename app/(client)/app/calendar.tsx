@@ -11,6 +11,7 @@ import { line } from "./jobs";
 import { crewName, teamOf } from "./crew";
 import { routeUrl } from "./parity";
 import { visitDays } from "@/lib/service";
+import { cleanDaysOff, offOn, type DayOff } from "@/lib/client-booking";
 import type { Biz, Data, Go } from "./types";
 
 type Block = { key: string; kind: "estimate" | "install" | "event" | "visit"; title: string; sub: string; start: number; end: number; allDay: boolean; day: string; thread?: string; link?: string; apptId?: string; name?: string; addr?: string; crew?: string };
@@ -30,7 +31,8 @@ type Drag = { apptId: string; x0: number; y0: number; moved: boolean; day: strin
  * The day by crew member: one column each (you first), estimates, installs and plan visits where they fall. Drag a job
  * to another column to hand it to them (they get a text with the details); each column has its own route in time order.
  */
-function CrewDay({ day, setDay, today, team, blocks, busy, onOpen, onAssign }: { day: string; setDay: (d: string) => void; today: string; team: { cell: string; name: string }[]; blocks: Block[]; busy: string; onOpen: (b: Block) => void; onAssign: (b: Block, cell: string) => void }) {
+function CrewDay({ day, setDay, today, team, blocks, busy, onOpen, onAssign, daysOff = [] }: { day: string; setDay: (d: string) => void; today: string; team: { cell: string; name: string }[]; blocks: Block[]; busy: string; onOpen: (b: Block) => void; onAssign: (b: Block, cell: string) => void; daysOff?: DayOff[] }) {
+  const closed = offOn(daysOff.filter(o => !o.who), day);
   const grid = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ key: string; x0: number; col: number; moved: boolean } | null>(null);
   const colOf = (b: Block) => Math.max(0, team.findIndex(t => d10(t.cell) === d10(b.crew ?? "")));
@@ -50,11 +52,11 @@ function CrewDay({ day, setDay, today, team, blocks, busy, onOpen, onAssign }: {
       <button type="button" className="btn ghost sm ic" aria-label="Previous day" onClick={() => shift(-1)}><Icon name="back" size={14} /></button>
       <button type="button" className="btn ghost sm" onClick={() => setDay(today)} disabled={day === today}>Today</button>
       <button type="button" className="btn ghost sm ic" aria-label="Next day" onClick={() => shift(1)}><Icon name="fwd" size={14} /></button>
-      <b>{label}</b><small>{blocks.length ? `${blocks.length} ${blocks.length === 1 ? "stop" : "stops"}` : "Nothing booked"}. Drag a job onto someone to hand it to them.</small>
+      <b>{label}</b>{closed && <small className="bad-t">Closed{closed.note ? `: ${closed.note}` : ""}.</small>}<small>{blocks.length ? `${blocks.length} ${blocks.length === 1 ? "stop" : "stops"}` : "Nothing booked"}. Drag a job onto someone to hand it to them.</small>
     </div>
     <div className="cal crew" style={{ ["--cols" as string]: team.length }}>
       <div className="cal-head"><div className="cal-gutter" />{team.map(t => { const mine = blocks.filter(b => d10(b.crew ?? "") === d10(t.cell)).sort((a, b) => a.start - b.start); const url = routeUrl(mine.filter(b => b.addr).map(b => b.addr!));
-        return <div key={t.cell || "me"} className="cal-dh crew-h"><b>{t.name}</b><small>{mine.length ? `${mine.length} ${mine.length === 1 ? "stop" : "stops"}` : "Free"}</small>{url && <a className="btn ghost sm" href={url} target="_blank" rel="noreferrer" title="Their stops in order, on the map"><Icon name="pin" size={12} />Route</a>}</div>; })}</div>
+        return <div key={t.cell || "me"} className="cal-dh crew-h"><b>{t.name}</b><small>{(() => { const out = t.cell ? offOn(daysOff, day, t.cell) : closed; return out ? <span className="bad-t">Out{out.note ? `, ${out.note}` : ""}</span> : null; })() ?? (mine.length ? `${mine.length} ${mine.length === 1 ? "stop" : "stops"}` : "Free")}</small>{url && <a className="btn ghost sm" href={url} target="_blank" rel="noreferrer" title="Their stops in order, on the map"><Icon name="pin" size={12} />Route</a>}</div>; })}</div>
       {allDay.length > 0 && <div className="cal-allday"><div className="cal-gutter"><small>All day</small></div>{team.map((t, k) => <div key={t.cell || "me"} className="cal-ad">{allDay.filter(b => colOf(b) === k).map(b => <button key={b.key} type="button" className={"cal-chip " + b.kind} onClick={() => onOpen(b)}>{b.title}</button>)}</div>)}</div>}
       <div className="cal-body" ref={grid} style={{ height: hours.length * ROW }}>
         <div className="cal-gutter">{hours.map(h => <div key={h} className="cal-h" style={{ top: (h - H0) * ROW }}><small>{h === 12 ? "12 PM" : h > 12 ? `${h - 12} PM` : `${h} AM`}</small></div>)}</div>
@@ -185,7 +187,7 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
           {!cal.connected && !cal.error && <p className="fine">Connect your Google Calendar and estimates only get booked where you&rsquo;re free. Your own events show up here too.</p>}
           {outcomes}
         </div>}
-        {mode === "crew" ? <CrewDay day={day} setDay={setDay} today={today} team={team} blocks={allBlocks.filter(b => b.day === day && b.kind !== "event")} busy={busy}
+        {mode === "crew" ? <CrewDay daysOff={cleanDaysOff(d.setup?.days_off ?? "[]", today)} day={day} setDay={setDay} today={today} team={team} blocks={allBlocks.filter(b => b.day === day && b.kind !== "event")} busy={busy}
             onOpen={open} onAssign={(b, cell) => void act("assign" + b.key, { action: "assign", thread: b.thread, member: cell }, r => `${cell ? `Assigned to ${crewName(d, cell)}` : "Taken back by you"}.${(r as { texted?: boolean }).texted ? " Texted them the details." : ""}`)} />
         : <div className="cal">
           <div className="cal-head"><div className="cal-gutter" />{days.map(dd => { const x = new Date(dd + "T12:00:00"); return <div key={dd} className={"cal-dh" + (dd === today ? " today" : "")}><small>{x.toLocaleDateString("en-US", { weekday: "short" })}</small><b>{x.getDate()}</b></div>; })}</div>
