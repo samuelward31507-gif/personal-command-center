@@ -42,3 +42,18 @@ ok(() => assert.ok(chosen(offered, { tier: "Better", addons: [3] }).every(i => !
 ok(() => assert.deepEqual(cleanChoice({ tier: "Nope", addons: [0, 3, 3, 9] }, offered), { tier: "Good", addons: [3] }));
 ok(() => assert.equal(totals(chosen(cleanItems([{ name: "a", qty: 1, unit: "", price: 10 }]), null)).total, 10));
 console.log(`Billing checks passed (${n} assertions).`);
+
+// Payment reminders by email: who gets which, and how each reads.
+{ const B = await import("./lib/billing.ts");
+  const base = { textingNumber: true, phone: "+13035550142", optedOut: false, email: "dana@example.com", emailed: false };
+  assert.deepEqual(B.reminderChannels(base), { text: true, email: false }, "textable and never emailed: text only");
+  assert.deepEqual(B.reminderChannels({ ...base, emailed: true }), { text: true, email: true }, "got it by email: both");
+  assert.deepEqual(B.reminderChannels({ ...base, phone: "" }), { text: false, email: true }, "no cell: email");
+  assert.deepEqual(B.reminderChannels({ ...base, optedOut: true }), { text: false, email: true }, "opted out of texts: email only");
+  assert.deepEqual(B.reminderChannels({ ...base, textingNumber: false }), { text: false, email: true });
+  assert.deepEqual(B.reminderChannels({ ...base, phone: "", email: "not an email" }), { text: false, email: false });
+  const m = B.reminderEmail(0, { first: "Dana", business: "Ridgeline Fence Co.", owner: "Mike", number: 1044, total: 6300, dueOn: "2026-11-20" });
+  assert.equal(m.subject, "Reminder: invoice #1044 from Ridgeline Fence Co"); assert.equal(m.lines[0], "Hi Dana,"); assert.match(m.lines[1], /for \$6,300 was due November 20\./); assert.equal(m.button, "Pay $6,300");
+  assert.match(B.reminderEmail(2, { first: "", business: "", owner: "Mike", number: 7, total: 99.5, dueOn: "" }).lines[2], /Mike will sort it out/);
+  assert.match(B.reminderEmail(1, { first: "", business: "X", owner: "", number: 7, total: 10, dueOn: "" }).subject, /still open/);
+  console.log("reminder emails ok"); }

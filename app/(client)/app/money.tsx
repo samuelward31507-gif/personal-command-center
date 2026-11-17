@@ -159,7 +159,7 @@ export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], 
       </form>}
       <p className="fine">{payLink ? "Card payments land in your own account through your pay link. Record them here, with cash, checks and deposits, so the balance stays right." : "Record cash, checks and deposits here so the balance stays right."}</p>
     </section>}
-    {inv.status === "sent" && <p className="fine">{inv.reminders_paused ? "Payment reminders are paused." : inv.reminders ? `${inv.reminders} of 3 payment reminders sent, each for the balance.` : "Up to 3 reminders after the due date, each for the balance."}</p>}
+    {inv.status === "sent" && <p className="fine">{inv.reminders_paused ? "Payment reminders are paused." : inv.reminders ? `${inv.reminders} of 3 payment reminders sent, each for the balance.` : "Up to 3 reminders after the due date, each for the balance."}{!inv.reminders_paused && email ? " By text, and by email when they got the invoice by email or can't be texted." : ""}</p>}
   </Sheet>;
 }
 

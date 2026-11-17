@@ -3,6 +3,9 @@
 // list of every customer. Every write is scoped to the signed-in owner's business; every text is logged.
 import { randomBytes } from "node:crypto";
 import type { NeonQueryFunction } from "@neondatabase/serverless";
+import { reminderChannels, reminderEmail } from "@/lib/billing";
+import { sendCustomerEmail } from "@/lib/client-email";
+import { replyToFor } from "@/lib/client-lead-mail-run";
 import { chosen, cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, type Item } from "@/lib/billing";
 import { cleanDate, cleanDetails, cleanPayMethod, detailLine, type Payment } from "@/lib/crm";
 import { changeOrderLines, lateFeeOn, refundProblem } from "@/lib/service";
@@ -364,7 +367,7 @@ export async function runLateFees(sql: Sql, limit = 200): Promise<{ added: numbe
 /** Daily: the payment reminders that are due, in each owner's texting hours. A reply from the customer pauses them. */
 export async function runInvoiceReminders(sql: Sql, limit = 60): Promise<{ sent: number; skipped: number }> {
   const rows = await sql`SELECT i.id, i.owner_id, i.project_id, i.thread_id, i.number, (i.total - i.paid_amount)::float AS total, i.due_on::text AS due_on, i.reminders, i.reminders_paused, i.token, i.last_reminder_at,
-      t.customer_phone, t.customer_name, t.status AS thread_status, t.last_in_at
+      t.customer_phone, t.customer_name, t.status AS thread_status, t.last_in_at, coalesce(t.customer_email, '') AS customer_email, (i.emailed_at IS NOT NULL) AS emailed
     FROM public.client_invoices i JOIN public.client_threads t ON t.id = i.thread_id
     WHERE i.status = 'sent' AND NOT i.reminders_paused AND i.reminders < 3 AND i.due_on < current_date + 1 ORDER BY i.due_on LIMIT 500` as Record<string, unknown>[];
   const clients = new Map<string, Client | null>();
@@ -374,7 +377,9 @@ export async function runInvoiceReminders(sql: Sql, limit = 60): Promise<{ sent:
     const key = String(r.owner_id) + r.project_id;
     if (!clients.has(key)) clients.set(key, await clientById(sql, String(r.owner_id), String(r.project_id)));
     const c = clients.get(key);
-    if (!c?.setup.texting_number || r.thread_status === "opted_out" || !r.token) { skipped++; continue; }
+    if (!c || !r.token) { skipped++; continue; }
+    const via = reminderChannels({ textingNumber: !!c.setup.texting_number, phone: String(r.customer_phone ?? ""), optedOut: r.thread_status === "opted_out", email: String(r.customer_email ?? ""), emailed: r.emailed === true });
+    if (!via.text && !via.email) { skipped++; continue; }
     // They texted back since the last reminder: a person should answer, so reminders wait for the owner.
     if (r.last_in_at && r.last_reminder_at && new Date(String(r.last_in_at)) > new Date(String(r.last_reminder_at))) { await sql`UPDATE public.client_invoices SET reminders_paused = true WHERE id = ${String(r.id)}::uuid`; skipped++; continue; }
     const step = reminderDue({ status: "sent", dueOn: String(r.due_on), reminders: Number(r.reminders), paused: false }, todayIn(c));
@@ -382,9 +387,17 @@ export async function runInvoiceReminders(sql: Sql, limit = 60): Promise<{ sent:
     if (!inTextingHours(tz(c))) { skipped++; continue; }
     const [claimed] = await sql`UPDATE public.client_invoices SET reminders = reminders + 1, last_reminder_at = now() WHERE id = ${String(r.id)}::uuid AND reminders = ${step} AND status = 'sent' RETURNING id`;
     if (!claimed) continue;
-    const ok = await sendToCustomer(sql, c, String(r.thread_id), String(r.customer_phone), fillInvoice(REMINDER_TEXTS[step], { first: first(String(r.customer_name ?? "")), business: c.setup.display_name || "",
-      owner: first(c.setup.owner_name || ""), number: Number(r.number), total: Number(r.total), url: invoiceUrl(String(r.token)) }), "template");
-    if (ok) sent++; else skipped++;
+    const texted = via.text ? await sendToCustomer(sql, c, String(r.thread_id), String(r.customer_phone), fillInvoice(REMINDER_TEXTS[step], { first: first(String(r.customer_name ?? "")), business: c.setup.display_name || "",
+      owner: first(c.setup.owner_name || ""), number: Number(r.number), total: Number(r.total), url: invoiceUrl(String(r.token)) }), "template") : false;
+    let mailed = false;
+    if (via.email) {
+      const m = reminderEmail(step, { first: first(String(r.customer_name ?? "")), business: c.setup.display_name || "", owner: first(c.setup.owner_name || ""), number: Number(r.number), total: Number(r.total), dueOn: String(r.due_on ?? "") });
+      const to = String(r.customer_email).trim();
+      const e = await sendCustomerEmail({ to, business: c.setup.display_name || "", replyTo: replyToFor(String(r.thread_id)) || c.setup.alert_email || undefined, subject: m.subject, lines: m.lines, button: { label: m.button, url: invoiceUrl(String(r.token)) } }).catch(() => ({ ok: false }));
+      mailed = e.ok;
+      if (mailed) await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${String(r.thread_id)}::uuid, 'out', 'system', ${`Payment reminder ${step + 1} of 3 for invoice #${r.number} emailed to ${to}.`})`;
+    }
+    if (texted || mailed) sent++; else skipped++;
   }
   return { sent, skipped };
 }

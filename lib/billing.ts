@@ -81,6 +81,27 @@ export const REMINDER_TEXTS = [
   "Hi {first}, {business} here. Invoice #{number} for {total} is still open. Here's the link to pay: {url} Any questions, just reply.",
   "Hi {first}, last reminder from {business} on invoice #{number} ({total}): {url} If something's off, reply and {owner} will sort it out.",
 ] as const;
+/** The same three reminders as emails: a subject, a few short lines, and the pay button (the owner's own invoice page). */
+export function reminderEmail(step: number, v: { first: string; business: string; owner: string; number: number; total: number; dueOn: string }): { subject: string; lines: string[]; button: string } {
+  const biz = v.business.trim().replace(/\.+$/, "") || "us", hi = `Hi${v.first ? " " + v.first : ""},`, amt = dollars(v.total);
+  const due = /^\d{4}-\d{2}-\d{2}$/.test(v.dueOn) ? new Date(v.dueOn + "T12:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" }) : "";
+  const s = Math.max(0, Math.min(2, Math.round(step)));
+  return {
+    subject: s === 0 ? `Reminder: invoice #${v.number} from ${biz}` : s === 1 ? `Invoice #${v.number} from ${biz} is still open` : `Last reminder: invoice #${v.number} from ${biz}`,
+    lines: [hi, s === 0 ? `A friendly reminder that invoice #${v.number} for ${amt} was due${due ? ` ${due}` : ""}.` : s === 1 ? `Invoice #${v.number} for ${amt} is still open.` : `This is our last reminder about invoice #${v.number} for ${amt}.`,
+      s === 2 ? `If something's off, just reply and ${v.owner || "we"} will sort it out.` : "You can see it and pay online. Questions? Just reply to this email.", `Thank you, ${biz}`],
+    button: `Pay ${amt}`,
+  };
+}
+/**
+ * How a reminder goes out. Text when the business has a texting number and the customer a cell (and didn't opt out of
+ * texts). Email when they have an address and either can't be texted or got the invoice by email in the first place.
+ */
+export function reminderChannels(o: { textingNumber: boolean; phone: string; optedOut: boolean; email: string; emailed: boolean }): { text: boolean; email: boolean } {
+  const text = o.textingNumber && o.phone.replace(/\D/g, "").length >= 10 && !o.optedOut;
+  const email = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(o.email.trim()) && (!text || o.emailed);
+  return { text, email };
+}
 export function fillInvoice(t: string, v: { first: string; business: string; owner: string; number: number; total: number; url: string }): string {
   return t.replace(/\s*\{first\}(?=[,!.?])/g, v.first ? " " + v.first : "").replace(/\{first\}/g, v.first || "there")
     .replace(/\{business\}/g, v.business.trim().replace(/\.+$/, "")).replace(/\{owner\}/g, v.owner || "we").replace(/\{number\}/g, String(v.number))
