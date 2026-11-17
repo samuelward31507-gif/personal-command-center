@@ -20,6 +20,8 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="/fonts/InterDisplay-SemiBold.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="/fonts/Inter-Regular.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/v2.css">
 <script>document.documentElement.classList.add("js");if(matchMedia("(prefers-reduced-motion: no-preference)").matches)document.documentElement.classList.add("motion")</script>
@@ -37,14 +39,26 @@
 
 <section class="hero" id="top">
   <div class="hero-bg" aria-hidden="true"></div>
-  <div class="wrap hero-in">
-    <h1 class="split">You missed the call. Someone else booked the job.</h1>
-    <p class="lede">While you’re on a job, Cinder texts back every missed call and web form in about 10 seconds, books the estimate on your calendar, and follows up every quote until it’s a yes or a no.</p>
-    <div class="hero-ctas">
-      <a class="btn btn-go" href="#book">Book a free 15-minute call</a>
-      <a class="btn btn-ghost" href="#try">Try it on your business</a>
+  <div class="wrap hero-in hero-split">
+    <div class="hero-copy">
+      <h1 class="split">You missed the call. Someone else booked the job.</h1>
+      <p class="lede">While you’re on a job, Cinder texts back every missed call and web form in about 10 seconds, books the estimate on your calendar, and follows up every quote until it’s a yes or a no.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-go" href="#book">Book a free 15-minute call</a>
+        <a class="btn btn-ghost" href="#try">Try it on your business</a>
+      </div>
+      <p class="hero-terms"><b>Nothing monthly until we book your first appointment.</b> No contract. Keep your number.</p>
     </div>
-    <p class="hero-terms"><b>Nothing monthly until we book your first appointment.</b> No contract. Keep your number.</p>
+    <div class="lock" role="img" aria-label="Your phone while you're on a job: a missed call from Dana, Cinder texting her back in 9 seconds, her reply, and the estimate booked for Thursday">
+      <div class="lock-top" aria-hidden="true"><span class="lock-date">Tuesday, June 9</span><span class="lock-time">2:14</span></div>
+      <ul class="nfs" aria-hidden="true">
+        <li class="nf nf-1"><i class="nf-app nf-phone"><svg viewBox="0 0 24 24"><path fill="#fff" d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1z"/></svg></i><div class="nf-b"><p class="nf-h"><b>Phone</b><time>2:14 PM</time></p><p class="nf-t">Missed call</p><p>Dana Ruiz · mobile</p></div></li>
+        <li class="nf nf-2"><i class="nf-app nf-cinder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16.5 7.2A6.6 6.6 0 1 0 16.5 16.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="17.6" cy="12" r="1.7" fill="#fff"/></svg></i><div class="nf-b"><p class="nf-h"><b>Cinder</b><time>9s later</time></p><p class="nf-t">Texted Dana back</p><p>“Hey Dana, it’s Mike with Ridgeline Fence. Sorry I missed you, I’m on a job. What can I help with?”</p></div></li>
+        <li class="nf nf-3"><i class="nf-app nf-cinder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16.5 7.2A6.6 6.6 0 1 0 16.5 16.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="17.6" cy="12" r="1.7" fill="#fff"/></svg></i><div class="nf-b"><p class="nf-h"><b>Cinder</b><time>2:16 PM</time></p><p class="nf-t">Dana replied</p><p>“Need a quote on about 120 ft of cedar privacy fence.”</p></div></li>
+        <li class="nf nf-4 nf-win"><i class="nf-app nf-cinder" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16.5 7.2A6.6 6.6 0 1 0 16.5 16.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="17.6" cy="12" r="1.7" fill="#fff"/></svg></i><div class="nf-b"><p class="nf-h"><b>Cinder</b><time>2:19 PM</time></p><p class="nf-t">Estimate booked</p><p>Thursday 8:00 AM with Dana Ruiz. It’s on your calendar.</p></div></li>
+      </ul>
+      <p class="lock-foot" aria-hidden="true">You didn’t touch your phone.</p>
+    </div>
   </div>
 
   <div class="stage-wrap" id="product">
@@ -217,20 +231,20 @@
       <p class="lede">Set up for your trade in about 30 minutes of your time. You approve the wording, then you just show up to appointments.</p>
     </div>
     <div class="bento">
-      <article class="bx" data-bx="timer">
+      <article class="bx bx-wide2" data-bx="timer">
         <div class="bx-vis"><div class="ui">
           <div class="ui-h"><span>Missed call</span><em>2:14 PM</em></div>
           <div class="ui-row"><span class="ui-ic ui-miss"></span><div><b>(720) 555-0148</b><small>Rang out while you were on a job</small></div></div>
           <div class="big-clock"><b data-bt>0:00</b><div class="bc-bar"><i data-bb></i></div><span data-bs>Missed call · 2:14 PM</span></div>
         </div></div>
-        <div class="bx-copy"><h3>Answered in seconds, not hours</h3><p>Missed calls, web forms, Facebook, Angi and Thumbtack leads all get a text from your business while you’re still on the ladder.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z" fill="#fff"/></svg></i><h3>Answered in seconds, not hours</h3><p>Missed calls, web forms, Facebook, Angi and Thumbtack leads all get a text from your business while you’re still on the ladder.</p></div>
       </article>
       <article class="bx" data-bx="qual">
         <div class="bx-vis"><div class="ui">
           <div class="ui-h"><span>Dana Ruiz</span><em class="ok">Qualified</em></div>
           <dl class="q-list"><div><dt>Job</dt><dd>Cedar privacy, ~120 ft</dd></div><div><dt>Tear-out</dt><dd>Yes, old fence leaning</dd></div><div><dt>Address</dt><dd>In your service area</dd></div><div><dt>Price range sent</dt><dd>$42–56 a foot</dd></div></dl>
         </div></div>
-        <div class="bx-copy"><h3>Qualified before you drive out</h3><p>Your questions and your price range, so you only meet people who are serious.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="m3.5 6 1.2 1.2L7 4.8M3.5 12l1.2 1.2L7 10.8M3.5 18l1.2 1.2L7 16.8" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></i><h3>Qualified before you drive out</h3><p>Your questions and your price range, so you only meet people who are serious.</p></div>
       </article>
       <article class="bx" data-bx="cal">
         <div class="bx-vis"><div class="ui">
@@ -240,29 +254,29 @@
           <div class="ag"><time>1:00</time><div><b>Marcus Hill · vinyl, 80 ft</b><small>Booked by Cinder</small></div></div>
           <div class="ag"><time>3:30</time><div><b>Ana Torres · gate repair</b><small>Booked by you</small></div></div>
         </div></div>
-        <div class="bx-copy"><h3>Booked on your real calendar</h3><p>They pick from your open times. Reminders go out, and no-shows get a rebooking text.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3" stroke="#fff" stroke-width="2.2" fill="none"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="15" r="1.8" fill="#fff"/></svg></i><h3>Booked on your real calendar</h3><p>They pick from your open times. Reminders go out, and no-shows get a rebooking text.</p></div>
       </article>
-      <article class="bx" data-bx="chase">
+      <article class="bx bx-wide2" data-bx="chase">
         <div class="bx-vis"><div class="ui">
           <div class="ui-h"><span>Quote · Priya Shah</span><em>$6,840</em></div>
           <ol class="chase-line"><li data-cd><b>Day 2</b><span>Checked in on the quote</span></li><li data-cd><b>Day 5</b><span>Answered a question about posts</span></li><li data-cd><b>Day 10</b><span>Offered your financing</span></li><li data-cd class="is-won"><b>Day 12</b><span>“Let’s do it.” Quote approved</span></li></ol>
         </div></div>
-        <div class="bx-copy"><h3>Every quote chased to a yes or a no</h3><p>Days 2, 5, 10 and 21, in your words. Real price talk comes straight to you.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.7M20 4v4.7h-4.7M20 12a8 8 0 0 1-13.7 5.6L4 15.3M4 20v-4.7h4.7" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></i><h3>Every quote chased to a yes or a no</h3><p>Days 2, 5, 10 and 21, in your words. Real price talk comes straight to you.</p></div>
       </article>
       <article class="bx" data-bx="es">
         <div class="bx-vis"><div class="ui">
           <div class="ui-h"><span>New lead · web form</span><em>Replied in 8 sec</em></div>
           <div class="lang"><p class="b-in" data-li>¿Cuánto cuesta una cerca de madera de 30 metros?</p><p class="b-out" data-lo>Normalmente entre $4,200 y $5,400. ¿Le queda bien el jueves a las 8 para medir?</p></div>
         </div></div>
-        <div class="bx-copy"><h3>English and Spanish</h3><p>It answers in the language they texted in.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h10a2 2 0 0 1 2 2V13a2 2 0 0 1-2 2H9l-3.5 3v-3H4a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2z" fill="#fff"/><path d="M18 9h2a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2h-1v2.5L16 18.5h-3.5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg></i><h3>English and Spanish</h3><p>It answers in the language they texted in.</p></div>
       </article>
-      <article class="bx" data-bx="stars">
+      <article class="bx bx-wide2" data-bx="stars">
         <div class="bx-vis"><div class="ui">
           <div class="ui-h"><span>Henderson · job finished</span><em class="ok">Paid</em></div>
           <div class="ui-row"><span class="ui-ic ui-sent"></span><div><b>Review request sent</b><small>The morning after, by text, with your Google link</small></div></div>
           <div class="ui-row rv-row"><div class="stars" data-stars><i></i><i></i><i></i><i></i><i></i></div><small>New review on your Google profile</small></div>
         </div></div>
-        <div class="bx-copy"><h3>Reviews on autopilot</h3><p>The morning after the job’s done and paid, it asks for the Google review.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2.8 2.8 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17l-5.7 3.1 1.2-6.3L2.9 9.4l6.3-.8L12 2.8z" fill="#fff"/></svg></i><h3>Reviews on autopilot</h3><p>The morning after the job’s done and paid, it asks for the Google review.</p></div>
       </article>
     </div>
     <p class="try-line"><a href="/product">See the full product</a></p>
