@@ -20,6 +20,8 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="/fonts/InterDisplay-SemiBold.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="/fonts/Inter-Regular.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/v2.css">
 <script>document.documentElement.classList.add("js");if(matchMedia("(prefers-reduced-motion: no-preference)").matches)document.documentElement.classList.add("motion")</script>
@@ -124,10 +126,14 @@
       <h2 class="split">The job goes to whoever answers first.</h2>
       <p class="lede">Most owners don’t have a lead problem. They have a follow-through problem.</p>
     </div>
-    <div class="facts">
-      <div class="fact"><span class="fig-k">Fig. 1</span><b class="fig" data-count="78" data-suffix="%">78%</b><p>of people have taken their business elsewhere after a company didn’t pick up.</p><a href="https://www.callrail.com/blog/missed-calls-cost-businesses-more-than-ever" rel="noopener">CallRail survey of 1,000 consumers, 2025</a></div>
-      <div class="fact"><span class="fig-k">Fig. 2</span><b class="fig" data-count="97" data-suffix="%">97%</b><p>of homeowners say how fast you respond affects who they hire.</p><a href="https://housecallpro.com/resources/home-service-customer-service-report-trends-statistics" rel="noopener">Housecall Pro survey of 1,040 homeowners, 2025</a></div>
-      <div class="fact"><span class="fig-k">Fig. 3</span><b class="fig">~½</b><p>of calls to home-service businesses reach a person. The other half ring out or hit voicemail.</p><a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca, 70 million calls, 2026</a></div>
+    <figure class="shot shot-wide" data-shot>
+      <div class="shot-frame"><img src="/media/shots/on-the-job.jpg" alt="A fence installer setting a post while his phone lights up on the tailgate behind him" decoding="async" fetchpriority="low" width="2400" height="1028"></div>
+      <figcaption><b>2:14 PM.</b> Halfway through setting posts. The phone rings on the tailgate, forty feet away.</figcaption>
+    </figure>
+    <div class="facts" data-play>
+      <div class="fact"><span class="fig-k">Fig. 1</span><b class="fig" data-count="78" data-suffix="%">78%</b><i class="fact-bar" style="--v:.78" aria-hidden="true"><i></i></i><p>of people have taken their business elsewhere after a company didn’t pick up.</p><a href="https://www.callrail.com/blog/missed-calls-cost-businesses-more-than-ever" rel="noopener">CallRail survey of 1,000 consumers, 2025</a></div>
+      <div class="fact"><span class="fig-k">Fig. 2</span><b class="fig" data-count="97" data-suffix="%">97%</b><i class="fact-bar" style="--v:.97" aria-hidden="true"><i></i></i><p>of homeowners say how fast you respond affects who they hire.</p><a href="https://housecallpro.com/resources/home-service-customer-service-report-trends-statistics" rel="noopener">Housecall Pro survey of 1,040 homeowners, 2025</a></div>
+      <div class="fact"><span class="fig-k">Fig. 3</span><b class="fig">~½</b><i class="fact-bar" style="--v:.5" aria-hidden="true"><i></i></i><p>of calls to home-service businesses reach a person. The other half ring out or hit voicemail.</p><a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" rel="noopener">Invoca, 70 million calls, 2026</a></div>
     </div>
   </div>
 </section>
@@ -138,7 +144,12 @@
       <h2>Same missed call. <span>Two different endings.</span></h2>
       <p class="lede">Dana needs a fence and you’re up on a job. Here’s what happens next, with and without Cinder.</p>
     </div>
-    <div class="vs">
+    <figure class="shot shot-wide" data-shot>
+      <div class="shot-frame"><img src="/media/shots/the-homeowner.jpg" alt="A homeowner on her porch steps texting, an old leaning fence behind her" decoding="async" fetchpriority="low" width="2400" height="1028"></div>
+      <figcaption><b>Dana.</b> Three tabs open, three fence companies. She hires whoever gets back to her first.</figcaption>
+    </figure>
+
+    <div class="vs" data-play>
       <div class="vs-col vs-without">
         <p class="vs-k">Without Cinder</p>
         <ol class="tl">
@@ -208,20 +219,20 @@
       <p class="lede">Set up for your trade in about 30 minutes of your time. You approve the wording, then you just show up to appointments.</p>
     </div>
     <div class="bento">
-      <article class="bx" data-bx="timer">
+      <article class="bx bx-wide2" data-bx="timer">
         <div class="bx-vis"><div class="ui">
           <div class="ui-h"><span>Missed call</span><em>2:14 PM</em></div>
           <div class="ui-row"><span class="ui-ic ui-miss"></span><div><b>(720) 555-0148</b><small>Rang out while you were on a job</small></div></div>
           <div class="big-clock"><b data-bt>0:00</b><div class="bc-bar"><i data-bb></i></div><span data-bs>Missed call · 2:14 PM</span></div>
         </div></div>
-        <div class="bx-copy"><h3>Answered in seconds, not hours</h3><p>Missed calls, web forms, Facebook, Angi and Thumbtack leads all get a text from your business while you’re still on the ladder.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2z" fill="#fff"/></svg></i><h3>Answered in seconds, not hours</h3><p>Missed calls, web forms, Facebook, Angi and Thumbtack leads all get a text from your business while you’re still on the ladder.</p></div>
       </article>
       <article class="bx" data-bx="qual">
         <div class="bx-vis"><div class="ui">
           <div class="ui-h"><span>Dana Ruiz</span><em class="ok">Qualified</em></div>
           <dl class="q-list"><div><dt>Job</dt><dd>Cedar privacy, ~120 ft</dd></div><div><dt>Tear-out</dt><dd>Yes, old fence leaning</dd></div><div><dt>Address</dt><dd>In your service area</dd></div><div><dt>Price range sent</dt><dd>$42–56 a foot</dd></div></dl>
         </div></div>
-        <div class="bx-copy"><h3>Qualified before you drive out</h3><p>Your questions and your price range, so you only meet people who are serious.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="m3.5 6 1.2 1.2L7 4.8M3.5 12l1.2 1.2L7 10.8M3.5 18l1.2 1.2L7 16.8" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></i><h3>Qualified before you drive out</h3><p>Your questions and your price range, so you only meet people who are serious.</p></div>
       </article>
       <article class="bx" data-bx="cal">
         <div class="bx-vis"><div class="ui">
@@ -231,29 +242,29 @@
           <div class="ag"><time>1:00</time><div><b>Marcus Hill · vinyl, 80 ft</b><small>Booked by Cinder</small></div></div>
           <div class="ag"><time>3:30</time><div><b>Ana Torres · gate repair</b><small>Booked by you</small></div></div>
         </div></div>
-        <div class="bx-copy"><h3>Booked on your real calendar</h3><p>They pick from your open times. Reminders go out, and no-shows get a rebooking text.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3" stroke="#fff" stroke-width="2.2" fill="none"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="15" r="1.8" fill="#fff"/></svg></i><h3>Booked on your real calendar</h3><p>They pick from your open times. Reminders go out, and no-shows get a rebooking text.</p></div>
       </article>
-      <article class="bx" data-bx="chase">
+      <article class="bx bx-wide2" data-bx="chase">
         <div class="bx-vis"><div class="ui">
           <div class="ui-h"><span>Quote · Priya Shah</span><em>$6,840</em></div>
           <ol class="chase-line"><li data-cd><b>Day 2</b><span>Checked in on the quote</span></li><li data-cd><b>Day 5</b><span>Answered a question about posts</span></li><li data-cd><b>Day 10</b><span>Offered your financing</span></li><li data-cd class="is-won"><b>Day 12</b><span>“Let’s do it.” Quote approved</span></li></ol>
         </div></div>
-        <div class="bx-copy"><h3>Every quote chased to a yes or a no</h3><p>Days 2, 5, 10 and 21, in your words. Real price talk comes straight to you.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.7M20 4v4.7h-4.7M20 12a8 8 0 0 1-13.7 5.6L4 15.3M4 20v-4.7h4.7" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></i><h3>Every quote chased to a yes or a no</h3><p>Days 2, 5, 10 and 21, in your words. Real price talk comes straight to you.</p></div>
       </article>
       <article class="bx" data-bx="es">
         <div class="bx-vis"><div class="ui">
           <div class="ui-h"><span>New lead · web form</span><em>Replied in 8 sec</em></div>
           <div class="lang"><p class="b-in" data-li>¿Cuánto cuesta una cerca de madera de 30 metros?</p><p class="b-out" data-lo>Normalmente entre $4,200 y $5,400. ¿Le queda bien el jueves a las 8 para medir?</p></div>
         </div></div>
-        <div class="bx-copy"><h3>English and Spanish</h3><p>It answers in the language they texted in.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h10a2 2 0 0 1 2 2V13a2 2 0 0 1-2 2H9l-3.5 3v-3H4a2 2 0 0 1-2-2V7.5a2 2 0 0 1 2-2z" fill="#fff"/><path d="M18 9h2a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2h-1v2.5L16 18.5h-3.5" stroke="#fff" stroke-width="1.8" fill="none" stroke-linejoin="round"/></svg></i><h3>English and Spanish</h3><p>It answers in the language they texted in.</p></div>
       </article>
-      <article class="bx" data-bx="stars">
+      <article class="bx bx-wide2" data-bx="stars">
         <div class="bx-vis"><div class="ui">
           <div class="ui-h"><span>Henderson · job finished</span><em class="ok">Paid</em></div>
           <div class="ui-row"><span class="ui-ic ui-sent"></span><div><b>Review request sent</b><small>The morning after, by text, with your Google link</small></div></div>
           <div class="ui-row rv-row"><div class="stars" data-stars><i></i><i></i><i></i><i></i><i></i></div><small>New review on your Google profile</small></div>
         </div></div>
-        <div class="bx-copy"><h3>Reviews on autopilot</h3><p>The morning after the job’s done and paid, it asks for the Google review.</p></div>
+        <div class="bx-copy"><i class="bx-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 2.8 2.8 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17l-5.7 3.1 1.2-6.3L2.9 9.4l6.3-.8L12 2.8z" fill="#fff"/></svg></i><h3>Reviews on autopilot</h3><p>The morning after the job’s done and paid, it asks for the Google review.</p></div>
       </article>
     </div>
     <p class="try-line"><a href="/product">See the full product</a></p>
@@ -266,7 +277,7 @@
       <h2 class="split">From the first call to live in about 14 days.</h2>
       <p class="lede">Every shop prices, qualifies and schedules differently. Fifteen minutes is how Cinder ends up sounding like you, not like a bot.</p>
     </div>
-    <ol class="start">
+    <ol class="start" data-play>
       <li><span class="st-n">15 min</span><h3>We learn your business</h3><p>How leads reach you today, what you ask on every job, your price ranges, when you can do estimates. We run your numbers with you.</p></li>
       <li><span class="st-n">About 14 days</span><h3>We build it around you</h3><p>Your questions, your prices, your calendar, your wording, on your existing number. You approve every message before it goes live.</p></li>
       <li><span class="st-n">Then</span><h3>You show up to estimates</h3><p>Booked estimates land on your calendar with the job details attached. You drive out, measure and quote.</p></li>
@@ -324,6 +335,11 @@
 
 <section class="sec book" id="book">
   <div class="wrap">
+    <figure class="shot shot-wide" data-shot>
+      <div class="shot-frame"><img src="/media/shots/estimate-day.jpg" alt="A contractor's pickup pulling up to a house in the morning for an estimate" decoding="async" fetchpriority="low" width="2400" height="1028"></div>
+      <figcaption><b>Thursday, 8:00 AM.</b> The estimate Cinder booked while you were working. You just show up.</figcaption>
+    </figure>
+
     <div class="head-c book-head">
       <h2 class="split">Find out how many jobs you’re missing.</h2>
       <p class="lede">A free 15-minute diagnosis. We walk your business from the first call to the review and show you where jobs are slipping. Bring rough numbers: leads a month, average job, how many quotes you close.</p>
@@ -364,6 +380,8 @@ var set=function(c,t){document.querySelectorAll(c).forEach(function(e){e.textCon
 if(n){set(".p-intro","it's "+n+" with");set(".p-owner-s",n+"'s");}else if(b){set(".p-intro","this is");set(".p-owner-s","your");}})();
 
 </script>
+<script>(function(){var io="IntersectionObserver"in window?new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -12% 0px",threshold:.2}):null;document.querySelectorAll("[data-shot] img").forEach(function(i){var f=i.closest("[data-shot]");function ok(){if(!i.naturalWidth)return;f.classList.add("ok");io?io.observe(f):f.classList.add("in")}if(i.complete)ok();else{i.addEventListener("load",ok);i.addEventListener("error",function(){f.remove()})}})})();</script>
+<script>(function(){var els=document.querySelectorAll("[data-play]");if(!("IntersectionObserver"in window)||!document.documentElement.classList.contains("motion")){els.forEach(function(e){e.classList.add("play")});return}var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("play");io.unobserve(e.target)}})},{threshold:.35});els.forEach(function(e){io.observe(e)})})();</script>
 <script src="/live.js" defer></script>
 <script>
 (function () {

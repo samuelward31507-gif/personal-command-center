@@ -6,6 +6,9 @@ import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
 import { cleanImportRows, importAs } from "@/lib/customer-import";
 import { demoSwitch } from "./demo-switch";
 import { sourceLabel, type LeadMail } from "./types";
+import { cleanExpense, mileageRate, type Expense } from "@/lib/expenses";
+import { cleanEquipment, cleanFile, cleanTags, cleanTask, type Equipment, type Task } from "@/lib/records";
+import type { FileRow } from "@/lib/client-records-run";
 import { nextChaseDay } from "@/lib/client-runtime";
 import { cleanLogo, hexOk, readableAccent } from "@/lib/brand";
 import { addInterval, changeOrderLines, cleanCatalog, cleanChangeOrder, cleanPlan, cleanSignoff, type ChangeOrder, type Plan, type Signoff, type TimeEntry } from "@/lib/service";
@@ -64,9 +67,9 @@ function seed() {
     l2: { thread: { id: "l2", customer_name: "Ashley Kim", customer_phone: "+13035550141", source: "thumbtack", status: "closed" }, texts: [
       tx("in", "system", "Passed on the quote online: \u201cWent with a cheaper bid\u201d", 60 * 24 * 7)] },
   };
-  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null; crewMember?: string; reviewAfter?: string | null; properties?: { id: string; address: string; gate_code: string; notes: string }[]; checklist?: { name: string; items: { label: string; done: boolean; at?: string; by?: string }[] } | null }> = {
+  const crm: Record<string, { stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null; crewMember?: string; reviewAfter?: string | null; properties?: { id: string; address: string; gate_code: string; notes: string }[]; checklist?: { name: string; items: { label: string; done: boolean; at?: string; by?: string }[] } | null; tags?: string[]; referredBy?: string | null }> = {
     t1: { details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" }, notes: "Asked about financing. Call him.", email: "tom.becker@example.com", remind: { at: ago(30), note: "Call Tom back about financing", sent: false } },
-    t2: { details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No", address: "77 Aspen Ct, Englewood" }, notes: "Replacing chain link.", crewMember: "+17205550188", crew: "Side gate is unlocked. Measure the back line from the shed." },
+    t2: { tags: ["hoa"], details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No", address: "77 Aspen Ct, Englewood" }, notes: "Replacing chain link.", crewMember: "+17205550188", crew: "Side gate is unlocked. Measure the back line from the shed." },
     t3: { details: { material: "Vinyl" }, notes: "" },
     t4: { details: { length_ft: 120, material: "Horizontal cedar", gates: 2, hoa: "Yes" }, notes: "HOA needs drawings before install.", value: 6200 },
     t5: { details: {}, notes: "Went with someone else." },
@@ -140,6 +143,20 @@ function seed() {
     ] as TimeEntry[],
     signoffs: {} as Record<string, Signoff>,
     won: 5, wonValue: 37500,
+    equipment: [
+      { id: "eq1", thread_id: "t2", kind: "Gate operator", make: "LiftMaster", model: "LA400", serial: "LA4-22-08812", location: "Driveway gate", installed_on: "2023-05-12", warranty_until: new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10), notes: "Solar panel on the post", history: [{ on: "2026-05-02", note: "Annual check, new battery", by: "" }], customer: "Dana Ruiz" },
+    ] as Equipment[],
+    files: [] as FileRow[],
+    tasks: [
+      { id: "k1", title: "Order 40 cedar posts for the Becker job", due_on: new Date().toLocaleDateString("en-CA"), assignee: "", thread: "t1", done_at: null, created_at: ago(600), customer: "Tom Becker" },
+      { id: "k2", title: "Call the city about the Mendez permit", due_on: null, assignee: "", thread: null, done_at: null, created_at: ago(1200) },
+    ] as Task[],
+    expenses: [
+      { id: "x1", kind: "expense", vendor: "Home Depot", category: "materials", amount: 1284.37, miles: null, spent_on: ago(1440).slice(0, 10), note: "Cedar pickets, 40 posts", member: "", thread_id: "t1", customer: "Tom Becker", receipt: false },
+      { id: "x2", kind: "expense", vendor: "Denver Arapahoe Disposal", category: "dump", amount: 85, miles: null, spent_on: ago(2880).slice(0, 10), note: "Old fence tear-out", member: "+17205550188", thread_id: null, receipt: false },
+      { id: "x3", kind: "mileage", vendor: "", category: "vehicle", amount: 16.8, miles: 24, spent_on: ago(4320).slice(0, 10), note: "Supply run", member: "", thread_id: null, receipt: false },
+      { id: "x4", kind: "expense", vendor: "Shell", category: "fuel", amount: 72.4, miles: null, spent_on: ago(300).slice(0, 10), note: "", member: "+17205550188", thread_id: null, receipt: false },
+    ] as Expense[],
     // Leads by email: one Angi lead that went straight on the board, two that came without a phone, a Gmail forwarding code.
     mail: [
       { id: "m1", at: ago(25), from: "Thumbtack <no-reply@thumbtack.com>", subject: "Derek W. wants a quote for Fence Repair", source: "thumbtack", status: "no_phone", name: "Derek W.", phone: "", email: "", message: "Fence Repair. Gate sags and won't latch. Timing: Within a week", code: "", link: "", thread: "", why: "" },
@@ -230,7 +247,7 @@ function data() {
     calendar: { connected: true, email: "mike@ridgelinefence.com", events: s.events, error: "", connectUrl: "#" },
     messages: s.messages, board: board(), setup: { ...s.setup, has_review_link: "yes", has_number: "yes", has_calendar: "yes", has_cell: "yes", has_booking_link: "yes" },
     key: "example-key-ridgeline-0000", origin: typeof location !== "undefined" ? location.origin : "",
-    mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: s.mail },
+    mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: s.mail }, expenses: s.expenses, equipment: s.equipment, files: s.files, tasks: s.tasks,
     jobber: { available: true, connected: true, account: "Ridgeline Fence Co.", error: "", lastPush: ago(2880), connectUrl: "#" },
     quickbooks: { available: true, connected: true, company: "Ridgeline Fence Co. LLC", error: "", lastPush: ago(95), connectUrl: "#" },
     wires: { sources: [{ source: "missed_call", leads: 19, last30: 7, last: ago(40) }, { source: "web form", leads: 12, last30: 5, last: ago(300) }, { source: "angi", leads: 8, last30: 3, last: ago(2880) }, { source: "web chat", leads: 2, last30: 1, last: ago(8640) }],
@@ -265,7 +282,7 @@ function board(all = false): Card[] {
         views: q.id === "q1" ? 3 : q.viewed ? 1 : 0, lastViewed: q.viewed, chasePaused: false, nextChase: q.status === "open" ? nextChaseDay(q.sent_on, q.steps_sent) : null } : null,
       next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, installTime: c.installTime ?? null, installDays: c.installDays ?? 1, onCalendar: !!c.onCalendar,
       reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, job: { ...(c.job ?? {}) }, costs: { materials: 0, labor: 0, other: 0, ...(c.costs ?? {}) }, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void" && !(i as { plan_id?: string }).plan_id).at(-1) ?? null,
-      stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crewMember: c.crewMember ?? "", crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [],
+      stageAt: c.stageAt ?? texts[0]?.at ?? null, lostReason: c.lostReason ?? "", crewMember: c.crewMember ?? "", tags: c.tags ?? [], referredBy: c.referredBy ?? null, crew: c.crew ?? "", email: c.email ?? "", remind: c.remind ?? null, photos: s.photos[thread.id] ?? [],
       changeOrders: s.cos.filter(x => x.thread_id === thread.id && x.status !== "void").map(x => ({ ...x, url: x.url ? EXAMPLE_CO : null })), reviewAfter: c.reviewSent ? null : c.reviewAfter ?? null, signoff: s.signoffs[thread.id] ?? null, properties: c.properties ?? [], checklist: c.checklist ?? null };
   }).sort((a, b) => b.at.localeCompare(a.at));
 }
@@ -320,6 +337,27 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
     if (b.action === "review") { s.wonJobs = s.wonJobs.filter(j => j.id !== b.quote); return { ok: true }; }
     if (b.action === "setup") { Object.assign(s.setup, cleanOwnerSetup(b.setup)); const o = (b.setup ?? {}) as Record<string, unknown>; if (o.brand_color !== undefined) { const h = hexOk(o.brand_color); s.setup.brand_color = h ? readableAccent(h) : ""; } if (o.brand_logo !== undefined) s.setup.brand_logo = cleanLogo(o.brand_logo); if (o.show_powered !== undefined) s.setup.show_powered = o.show_powered === "yes" ? "yes" : "no"; return { ok: true }; }
     if (b.action === "testtext") return { ok: true };
+    if (b.action === "expense") {
+      const e = cleanExpense(b.input, mileageRate(s.setup.mileage_rate), new Date().toLocaleDateString("en-CA"));
+      if ("error" in e) fail(e.error);
+      const x = e as Exclude<typeof e, { error: string }>, id = "x" + Date.now();
+      s.expenses.unshift({ id, kind: x.kind, vendor: x.vendor, category: x.category, amount: x.amount, miles: x.miles, spent_on: x.spent_on, note: x.note, member: "", thread_id: x.thread, customer: x.thread ? s.threads[x.thread]?.thread.customer_name : undefined, receipt: !!(b.input as { receipt?: string })?.receipt });
+      return { ok: true, id };
+    }
+    if (b.action === "equipment") {
+      const e = cleanEquipment(b.input); if ("error" in e) fail(e.error);
+      const x = e as Exclude<typeof e, { error: string }>;
+      const cur = s.equipment.find(q => q.id === b.entry);
+      if (cur) Object.assign(cur, x); else s.equipment.push({ ...x, id: "eq" + Date.now(), thread_id: String(b.thread), history: [], customer: s.threads[String(b.thread)]?.thread.customer_name });
+      return { ok: true };
+    }
+    if (b.action === "equipservice") { const e = s.equipment.find(q => q.id === b.entry); if (e) e.history.unshift({ on: new Date().toLocaleDateString("en-CA"), note: String(b.note || "Serviced"), by: "" }); return { ok: true }; }
+    if (b.action === "equipremove") { s.equipment = s.equipment.filter(q => q.id !== b.entry); return { ok: true }; }
+    if (b.action === "fileadd") { const f = cleanFile(b.input); if ("error" in f) fail(f.error); const x = f as Exclude<typeof f, { error: string }>; s.files.unshift({ id: "f" + Date.now(), thread_id: String(b.thread), name: x.name, mime: x.mime, size: Math.floor(x.data.length * 3 / 4), created_at: now }); return { ok: true }; }
+    if (b.action === "fileremove") { s.files = s.files.filter(f => f.id !== b.entry); return { ok: true }; }
+    if (b.action === "task") { const t = cleanTask(b.input); if ("error" in t) fail(t.error); const x = t as Exclude<typeof t, { error: string }>; s.tasks.push({ ...x, id: "k" + Date.now(), done_at: null, created_at: now }); return { ok: true }; }
+    if (b.action === "taskdone") { const t = s.tasks.find(q => q.id === b.entry); if (t) t.done_at = b.done === false ? null : now; return { ok: true }; }
+    if (b.action === "expensedelete") { s.expenses = s.expenses.filter(e => e.id !== b.entry); return { ok: true }; }
     if (b.action === "maildismiss") { const m = s.mail.find(x => x.id === b.thread); if (m && m.status !== "lead" && m.status !== "added") { m.status = "ignored"; m.why = "Dismissed"; } return { ok: true }; }
     if (b.action === "mailadd") {
       const m = s.mail.find(x => x.id === b.thread && (x.status === "no_phone" || x.status === "new"));
@@ -426,6 +464,8 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
         if (b.value !== undefined) c.value = money(b.value);
         if (b.install !== undefined) c.install = cleanDate(b.install);
         if (b.review !== undefined) c.reviewAuto = !!b.review;
+        if (b.tags !== undefined) c.tags = cleanTags(b.tags);
+        if (b.referredBy !== undefined) c.referredBy = typeof b.referredBy === "string" && b.referredBy ? b.referredBy : null;
         return { ok: true };
       }
       const stage = String(b.stage);

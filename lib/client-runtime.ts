@@ -11,7 +11,8 @@ export type Vars = { first?: string; business?: string; owner?: string; link?: s
 export function fill(body: string, v: Vars): string {
   let s = body.replace(/\s*\{first\}(?=[,!.?])/g, v.first?.trim() ? " " + v.first.trim() : "").replace(/\{first\}/g, v.first?.trim() || "there");
   for (const k of ["business", "owner", "link", "time", "review_link"] as const) s = s.split(`{${k}}`).join((v[k] || "").trim());
-  return s.replace(/[ \t]+([,.!?])/g, "$1").replace(/[ \t]{2,}/g, " ").trim();
+  // "Ridgeline Fence Co." then ". Any questions" reads as one period, not two (an ellipsis stays as typed).
+  return s.replace(/[ \t]+([,.!?])/g, "$1").replace(/(?<!\.)([.!?])\.(?!\.)/g, "$1").replace(/[ \t]{2,}/g, " ").trim();
 }
 
 export type Approved = { key: string; body: string; status: string }[];

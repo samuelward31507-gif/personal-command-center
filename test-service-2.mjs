@@ -46,4 +46,53 @@ ok(() => { const id = "0b9a5c7e-1111-4222-8333-444455556666", s = qboState(id); 
   ok(() => assert.equal(S2.tappedAt("2026-11-17T09:00:00Z", now), "2026-11-16T15:00:00.000Z", "a phone clock ahead can't add hours"));
   ok(() => assert.equal(S2.tappedAt("2026-11-10T09:00:00Z", now), "2026-11-15T15:00:00.000Z", "at most a day back"));
   ok(() => assert.equal(S2.tappedAt(undefined, now), "2026-11-16T15:00:00.000Z")); }
+// Late fees: a percentage of the balance or a flat amount, kept within a quarter of the balance and $500.
+{ const S3 = await import("./lib/service.ts");
+  ok(() => assert.equal(S3.lateFeeOn("5%", 1000), 50));
+  ok(() => assert.equal(S3.lateFeeOn("25", 1000), 25));
+  ok(() => assert.equal(S3.lateFeeOn("$25", 60), 15, "never more than a quarter of the balance"));
+  ok(() => assert.equal(S3.lateFeeOn("90%", 1000), 250, "a percentage is capped at 25%"));
+  ok(() => assert.equal(S3.lateFeeOn("2000", 50000), 500, "and at $500"));
+  ok(() => { assert.equal(S3.lateFeeOn("", 1000), 0); assert.equal(S3.lateFeeOn("abc", 1000), 0); assert.equal(S3.lateFeeOn("5%", 0), 0); }); }
+// Timesheets for payroll: lines in local time, weeks from Monday, overtime past 40 hours at 1.5x, open entries left out.
+{ const S4 = await import("./lib/service.ts");
+  const e = (m, s, en, customer) => ({ member: m, started_at: s, ended_at: en, customer });
+  // Luis: five 9-hour days (Mon Nov 9 to Fri Nov 13, 2026, Denver), 45 hours; the owner one 2-hour stretch; one still open.
+  const days = ["09", "10", "11", "12", "13"].map(d => e("+17205550188", `2026-11-${d}T14:00:00Z`, `2026-11-${d}T23:00:00Z`, "Tom Becker"));
+  const all = [...days, e("", "2026-11-12T16:00:00Z", "2026-11-12T18:00:00Z"), e("+17205550188", "2026-11-16T14:00:00Z", null)];
+  const t = S4.timesheet(all, { "": "Mike", "7205550188": "Luis" }, { "7205550188": 28 }, 40, "America/Denver");
+  ok(() => assert.equal(t.lines.length, 6, "the open entry is left out"));
+  ok(() => assert.deepEqual(t.lines[0], { person: "Luis", date: "2026-11-09", job: "Tom Becker", start: "7:00 AM", end: "4:00 PM", hours: 9, rate: 28 }));
+  ok(() => { const w = t.weeks.find(x => x.person === "Luis"); assert.deepEqual(w, { person: "Luis", week: "2026-11-09", hours: 45, regular: 40, overtime: 5, rate: 28, pay: 1330 }); });
+  ok(() => { const w = t.weeks.find(x => x.person === "Mike"); assert.equal(w.hours, 2); assert.equal(w.pay, 80); assert.equal(t.lines.find(l => l.person === "Mike").job, "General"); });
+  ok(() => { const s = S4.timesheet([e("+17205550188", "2026-11-15T15:00:00Z", "2026-11-15T19:00:00Z")], {}, {}, 0, "America/Denver"); assert.equal(s.weeks[0].week, "2026-11-09", "Sunday belongs to the week that started Monday"); assert.equal(s.lines[0].person, "+17205550188"); }); }
+// Commissions: a percentage of what was collected on the jobs each person was on, in the period.
+{ const S5 = await import("./lib/service.ts");
+  const team = [{ cell: "+17205550188", name: "Luis", commission: 5 }, { cell: "+17205550190", name: "Ana" }];
+  const jobs = [{ id: "a", crewMember: "+17205550188" }, { id: "b", crewMember: "+17205550188" }, { id: "c", crewMember: "" }];
+  const pays = [{ thread_id: "a", amount: 4000, paid_on: "2026-11-02" }, { thread_id: "b", amount: 1500.5, paid_on: "2026-11-10" }, { thread_id: "a", amount: 900, paid_on: "2026-09-01" }, { thread_id: "c", amount: 700, paid_on: "2026-11-03" }];
+  const r = S5.commissions(team, jobs, pays, "2026-10-17");
+  ok(() => assert.deepEqual(r, [{ name: "Luis", pct: 5, collected: 5500.5, jobs: 2, owed: 275.03 }], "only people with a percentage; only the period; only their jobs"));
+  ok(() => { const t = parseTeam(JSON.stringify([{ name: "Luis", cell: "7205550188", commission: "7.5%" }, { name: "Max", cell: "7205550199", commission: "90" }])); assert.equal(t[0].commission, 7.5); assert.equal(t[1].commission, undefined, "at most 50%"); }); }
 console.log(`service 2: ${n} checks passed`);
+
+// Refunds: never more than came in, less what already went back.
+{ const { refundProblem } = await import("./lib/service.ts");
+  assert.equal(refundProblem(1000, 0, 200), null);
+  assert.equal(refundProblem(1000, 800, 200), null, "exactly what's left");
+  assert.match(refundProblem(1000, 800, 250), /more than the \$200 paid/);
+  assert.match(refundProblem(1000, 1000, 1), /already refunded/);
+  assert.match(refundProblem(0, 0, 50), /Nothing has been paid/);
+  assert.match(refundProblem(1000, 0, 0), /Type the amount/);
+  assert.match(refundProblem(1000, 0, NaN), /Type the amount/);
+  assert.match(refundProblem(500.5, 0, 600), /\$500\.50/);
+  console.log("refunds ok"); }
+
+// Quotes that expire: the setting, the last day from the day it went out, and expiry after the whole last day.
+{ const S = await import("./lib/service.ts");
+  assert.equal(S.quoteValidDays("30"), 30); assert.equal(S.quoteValidDays(""), 0); assert.equal(S.quoteValidDays(400), 0); assert.equal(S.quoteValidDays(-5), 0);
+  assert.equal(S.quoteGoodThrough("2026-11-16", 30), "2026-12-16"); assert.equal(S.quoteGoodThrough("2026-12-20", 14), "2027-01-03");
+  assert.equal(S.quoteGoodThrough("2026-11-16", 0), null); assert.equal(S.quoteGoodThrough("soon", 30), null);
+  assert.equal(S.quoteExpired("2026-12-16", "2026-12-16"), false, "the last day still counts"); assert.equal(S.quoteExpired("2026-12-16", "2026-12-17"), true);
+  assert.equal(S.quoteExpired(null, "2030-01-01"), false, "no end date");
+  console.log("quote expiry ok"); }

@@ -6,7 +6,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { jobPrice } from "@/lib/service";
 import { LOST_REASONS, STAGE_LABEL, jobProfit, type Card, type Stage } from "@/lib/crm";
-import { crewName, crewTag } from "./crew";
+import { crewName, crewTag, teamOf } from "./crew";
 import { Avatar, Empty, Icon, Menu, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, usd, when, type Api, type Toast } from "./parts";
 import { Chip, FieldIcon, Stg } from "./sources";
 import { Inspector } from "./record";
@@ -119,6 +119,16 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
   useEffect(() => { const h = () => setVw(innerWidth); h(); addEventListener("resize", h); return () => removeEventListener("resize", h); }, []);
   const setCols = (v: "auto" | "more" | "core") => { setColsRaw(v); try { localStorage.setItem("cinder-job-cols", v); } catch { /* private mode */ } };
   const [losing, setLosing] = useState<Card | null>(null), [busy, setBusy] = useState(false), [ticked, setTicked] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const crewList = teamOf(d);
+  const bulk = async (done: string, run: (c: Card) => Promise<unknown>) => {
+    const list = (d.board ?? []).filter(c => ticked.has(c.id));
+    if (!list.length || !confirm(`${done.split(" ")[0]} ${list.length} ${list.length === 1 ? "job" : "jobs"}?`)) return;
+    setBulkBusy(true); let ok = 0;
+    for (const c of list) { try { await run(c); ok++; } catch { /* the rest still go */ } }
+    await reload(); setBulkBusy(false); setTicked(new Set());
+    toast(`${done}: ${ok} of ${list.length}.`, ok < list.length);
+  };
   const tick = (id: string) => setTicked(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const today = todayIso();
   // Open: every job still in motion, won jobs too until they are paid.
@@ -231,7 +241,15 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
               const prof = list.reduce((a, c) => { const p = c.stage === "won" ? jobProfit(jobPrice(c), c.costs) : null; return a + (p?.profit ?? 0); }, 0);
               return <tfoot><tr><td /><td><b>{list.length}</b>{ticked.size ? "selected" : "count"}</td><td /><td /><td className="num"><b>{usd(sum)}</b>sum</td>{extra && <td className="num">{prof ? <><b>{usd(prof)}</b>sum</> : null}</td>}<td /><td />{extra && <td />}<td /></tr></tfoot>; })()}
           </table></div>
-          <div className="pane-foot"><span>{shown.length} of {base.length}</span><span className="hint"><span><kbd>j</kbd><kbd>k</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>c</kbd> new lead</span></span></div>
+          {ticked.size > 0 ? <div className="pane-foot bulk-bar" role="toolbar" aria-label="With the selected jobs">
+            <b>{ticked.size} selected</b>
+            <Menu label="Move to" value={"" as string} options={[{ key: "", label: "Pick a stage" }, { key: "new", label: "New" }, { key: "booked", label: "Estimate booked" }, { key: "quoted", label: "Quoted" }, { key: "lost", label: "Lost" }]} onPick={k => { if (k) void bulk(`Moved to ${k === "booked" ? "Booked" : k}`, c => api("/api/app/act", { p: project, thread: c.id, action: "stage", stage: k, ...(k === "lost" ? { reason: "Closed in bulk" } : {}) })); }} />
+            {crewList.length > 1 && <Menu label="Assign" value={"" as string} options={[{ key: "", label: "Pick someone" }, ...crewList.map(m => ({ key: m.cell || "me", label: m.name }))]} onPick={k => { if (k) void bulk("Assigned", c => api("/api/app/act", { p: project, thread: c.id, action: "assign", member: k === "me" ? "" : k })); }} />}
+            <button type="button" className="btn sm" disabled={bulkBusy} onClick={() => { const t = prompt("Tag to add to the selected customers"); if (t && t.trim()) void bulk(`Tagged "${t.trim().toLowerCase()}"`, c => api("/api/app/act", { p: project, thread: c.id, action: "card", tags: [...(c.tags ?? []), t.trim()] })); }}>Add tag</button>
+            <span style={{ flex: 1 }} />{bulkBusy && <Spinner />}
+            <button type="button" className="btn ghost sm" onClick={() => setTicked(new Set())}>Clear</button>
+          </div>
+          : <div className="pane-foot"><span>{shown.length} of {base.length}</span><span className="hint"><span><kbd>j</kbd><kbd>k</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>c</kbd> new lead</span></span></div>}
         </>
         : <PhoneList cards={shown} open={id => go.record(id)} />}
         </section></div>

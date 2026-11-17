@@ -153,4 +153,17 @@ ok(() => assert.match(ui, /\/api\/contacts\/outcome/, "outcomes logged from the 
 ok(() => assert.match(ui, /confirm\(`Mark \$\{item\.contact\.name\} do not contact\?/, "do-not-contact confirmed"));
 ok(() => assert.doesNotMatch(ui, /sms|text message/i, "queue never drafts or sends texts"));
 
+{
+  const q = buildQueue({ ...base(), speedTests: [
+    { contactId: "s1", company: "Ridge Fence", at: "2026-10-28T12:00:00Z", via: "form" },
+    { contactId: "s2", company: "Oak Fence", at: "2026-10-25T12:00:00Z", via: "call" },
+  ] });
+  const a = q.find(i => i.id === "speedtest:s1"), b = q.find(i => i.id === "speedtest:s2");
+  ok(() => assert.match(a.title, /Did Ridge Fence reply/));
+  ok(() => assert.match(a.why, /web form, 3h ago/));
+  ok(() => assert.equal(a.callable, false, "speed test check is never on the call list"));
+  ok(() => assert.match(b.title, /Oak Fence never replied/));
+  ok(() => assert.equal(a.href, "/crm/call?contact=s1"));
+}
+
 console.log(`My Day queue regression checks passed (${n} assertions).`);

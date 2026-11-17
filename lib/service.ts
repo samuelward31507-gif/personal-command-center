@@ -156,3 +156,77 @@ export function tappedAt(v: unknown, now = Date.now()): string {
   const t = Date.parse(String(v ?? ""));
   return new Date(Number.isFinite(t) ? Math.min(now, Math.max(now - 24 * 3600000, t)) : now).toISOString();
 }
+
+/**
+ * The owner's late fee ("5%" of the balance, or a flat "25"), on a balance. Kept within reason: at most a quarter of
+ * the balance and $500. 0 when it's off or unreadable. (Owners should check their state's limit; the copy says so.)
+ */
+export function lateFeeOn(setting: unknown, balance: number): number {
+  const s = String(setting ?? "").trim();
+  if (!s || !(balance > 0)) return 0;
+  const n = Number(s.replace(/[^\d.]/g, ""));
+  if (!(n > 0)) return 0;
+  const fee = /%/.test(s) ? balance * Math.min(n, 25) / 100 : n;
+  return Math.round(Math.min(fee, balance * 0.25, 500) * 100) / 100;
+}
+
+/**
+ * Timesheets for payroll: one line per clocked stretch (in the business's time zone), and per person per week
+ * (Monday to Sunday) the regular and overtime hours (over 40 in the week) and the pay at their rate, overtime at 1.5x.
+ * Open entries (still clocked in) are left out: payroll pays finished time.
+ */
+export type SheetLine = { person: string; date: string; job: string; start: string; end: string; hours: number; rate: number };
+export type SheetWeek = { person: string; week: string; hours: number; regular: number; overtime: number; rate: number; pay: number };
+export function timesheet(entries: Pick<TimeEntry, "member" | "started_at" | "ended_at" | "customer">[], names: Record<string, string>, rates: Record<string, number>, ownerRate: number, tz: string): { lines: SheetLine[]; weeks: SheetWeek[] } {
+  const day = (iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: tz });
+  const hm = (iso: string) => new Date(iso).toLocaleTimeString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" });
+  const monday = (ymd: string) => { const d = new Date(ymd + "T12:00:00Z"); const k = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - k); return d.toISOString().slice(0, 10); };
+  const who = (m: string) => (m ? names[d10(m)] || m : names[""] || "Owner");
+  const rateOf = (m: string) => (m ? rates[d10(m)] || 0 : ownerRate);
+  const lines: SheetLine[] = entries.filter(e => e.ended_at).sort((a, b) => a.started_at.localeCompare(b.started_at))
+    .map(e => ({ person: who(e.member), date: day(e.started_at), job: e.customer || "General", start: hm(e.started_at), end: hm(e.ended_at!), hours: Math.round(minutesOf(e) / 60 * 100) / 100, rate: rateOf(e.member), member: e.member }))
+    .map(({ member, ...l }) => { void member; return l; });
+  const byKey = new Map<string, SheetWeek>();
+  for (const l of lines) {
+    const key = l.person + "|" + monday(l.date);
+    const w = byKey.get(key) ?? { person: l.person, week: monday(l.date), hours: 0, regular: 0, overtime: 0, rate: l.rate, pay: 0 };
+    w.hours = Math.round((w.hours + l.hours) * 100) / 100; byKey.set(key, w);
+  }
+  const weeks = [...byKey.values()].map(w => { const regular = Math.min(40, w.hours), overtime = Math.round(Math.max(0, w.hours - 40) * 100) / 100;
+    return { ...w, regular: Math.round(regular * 100) / 100, overtime, pay: Math.round((regular * w.rate + overtime * w.rate * 1.5) * 100) / 100 }; })
+    .sort((a, b) => a.week.localeCompare(b.week) || a.person.localeCompare(b.person));
+  return { lines, weeks };
+}
+
+/**
+ * Commissions: for each person with a percentage, what was collected in the period on the jobs they were on, and their
+ * share. Collected (not sold) is what most shops pay on, so nobody is paid on money that never comes in.
+ */
+export function commissions(team: { cell: string; name: string; commission?: number }[], jobs: { id: string; crewMember?: string }[], payments: { thread_id: string; amount: number; paid_on: string }[], since: string): { name: string; pct: number; collected: number; jobs: number; owed: number }[] {
+  const byJob = new Map(jobs.map(j => [j.id, d10(j.crewMember ?? "")]));
+  return team.filter(m => (m.commission ?? 0) > 0).map(m => {
+    const mine = payments.filter(p => p.paid_on >= since && byJob.get(p.thread_id) === d10(m.cell));
+    const collected = Math.round(mine.reduce((a, p) => a + p.amount, 0) * 100) / 100;
+    return { name: m.name || m.cell, pct: m.commission!, collected, jobs: new Set(mine.map(p => p.thread_id)).size, owed: Math.round(collected * m.commission! ) / 100 };
+  }).sort((a, b) => b.owed - a.owed);
+}
+
+/** Whether a refund can go out: never more than what came in on the invoice less what was already given back. */
+export function refundProblem(paid: number, refunded: number, amount: number): string | null {
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  if (!Number.isFinite(amount) || amount <= 0) return "Type the amount, like 200.";
+  const room = r2(paid - refunded);
+  if (room <= 0) return paid > 0 ? "Everything paid on this invoice was already refunded." : "Nothing has been paid on this invoice yet.";
+  if (r2(amount) > room + 0.005) return `That's more than the $${room.toLocaleString("en-US", { minimumFractionDigits: room % 1 ? 2 : 0, maximumFractionDigits: 2 })} paid.`;
+  return null;
+}
+
+/** How long quotes hold, from the owner's setting: 0 (or nothing) is no end date, else 1 to 365 days. */
+export const quoteValidDays = (v: unknown) => { const n = Math.round(Number(v)); return n > 0 && n <= 365 ? n : 0; };
+/** The last day a quote can be approved, counted from the day its link went out. Null when quotes don't expire. */
+export function quoteGoodThrough(sentDay: string, days: number): string | null {
+  if (!days || !/^\d{4}-\d{2}-\d{2}$/.test(sentDay)) return null;
+  return new Date(Date.parse(sentDay + "T12:00:00Z") + days * 86400000).toISOString().slice(0, 10);
+}
+/** Past its last day (the whole last day still counts). */
+export const quoteExpired = (validUntil: string | null | undefined, today: string) => !!validUntil && validUntil < today;

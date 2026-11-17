@@ -19,6 +19,7 @@ import type { QueueItem } from "@/lib/my-day";
 import SuggestedDeal, { type SuggestedDealData } from "../../suggested-deal";
 import TextDraft, { type TextContext } from "../text-draft";
 import { CallEmail } from "./call-email";
+import SpeedLoom from "./speed-loom";
 
 /** Outcomes that roll straight into the next dial when auto-dial is on. */
 const AUTO_NEXT: string[] = ["no_answer", "voicemail", "gatekeeper", "wrong_number", "not_interested", "not_a_fit"];
@@ -57,8 +58,11 @@ export default function CallModePage() {
   const [mail, setMail] = useState<{ to: string; style: "info_email" | "info_email_time"; busy: boolean; msg: { ok: boolean; text: string } | null }>({ to: "", style: "info_email", busy: false, msg: null });
   const readyLink = useRef<HTMLAnchorElement | null>(null);
   useEffect(() => { if (ready) readyLink.current?.focus(); }, [ready]);
-  // "New only" hides follow-ups so the list is just people you have never called.
-  const [newOnly, setNewOnly] = useState(() => { try { return localStorage.getItem("cinder.newonly") !== "off"; } catch { return true; } });
+  // Who's on the list: everyone (warm leads first), warm only (callbacks, interested, send-info), or new only.
+  // Default is everyone: hiding follow-ups by default buried warm leads.
+  type ListMode = "all" | "warm" | "new";
+  const [mode, setMode] = useState<ListMode>(() => { try { const v = localStorage.getItem("cinder.callmode"); return v === "warm" || v === "new" ? v : "all"; } catch { return "all"; } });
+  const chooseMode = (m: ListMode) => { setMode(m); try { localStorage.setItem("cinder.callmode", m); } catch { /* fine */ } };
   const pendingDial = useRef(false);
   const [session, setSession] = useState<{ start: number; dials: number } | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -103,12 +107,12 @@ export default function CallModePage() {
       slots.forEach((n, k) => { items[n] = ordered[k]; });
       // A contact can show up as both a follow-up and a deal next step: call them once.
       const seen = new Set<string>();
-      setQueue(items.filter(i => { const id = i.contact!.id; if (seen.has(id)) return false; seen.add(id); return !newOnly || i.group === "prospects"; }));
+      setQueue(items.filter(i => { const id = i.contact!.id; if (seen.has(id)) return false; seen.add(id); return mode === "new" ? i.group === "prospects" : mode === "warm" ? i.group !== "prospects" : true; }));
       setContacts(byId);
       setIndex(0);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not build the call list."); }
     finally { setLoading(false); }
-  }, [newOnly]);
+  }, [mode]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     fetch("/api/offer", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(d => d && setFounding({ script: d.script, left: d.left })).catch(() => {});
@@ -373,7 +377,11 @@ export default function CallModePage() {
         {unaudited > 0 && <button className="u-btn" disabled={!!auditing} onClick={() => void auditRest()}>
           {auditing ? `Researching ${auditing.done}/${auditing.total}${auditing.current ? `, ${auditing.current}` : ""}` : `Research the next ${Math.min(10, unaudited)}`}</button>}
         <button className="u-btn u-btn-bare" aria-pressed={autoDial} title="After no answer, voicemail, gatekeeper, wrong number or a quick no, the next call opens by itself" onClick={toggleAuto}>Auto-dial {autoDial ? "on" : "off"}</button>
-        <button className="u-btn u-btn-bare" aria-pressed={newOnly} title="Show only people you have never called" onClick={() => setNewOnly(v => { const n = !v; try { localStorage.setItem("cinder.newonly", n ? "on" : "off"); } catch { /* fine */ } return n; })}>{newOnly ? "New only" : "Everyone"}</button>
+        <div className="u-seg" role="group" aria-label="Who to call">
+          <button type="button" aria-pressed={mode === "all"} title="Warm leads first, then new prospects" onClick={() => chooseMode("all")}>Everyone</button>
+          <button type="button" aria-pressed={mode === "warm"} title="Callbacks, interested and send-info only" onClick={() => chooseMode("warm")}>Warm</button>
+          <button type="button" aria-pressed={mode === "new"} title="Only people you have never called" onClick={() => chooseMode("new")}>New</button>
+        </div>
         <button className="u-btn u-btn-bare" onClick={() => void load()}>Refresh list</button>
       </div>
     </div>
@@ -453,6 +461,7 @@ export default function CallModePage() {
         </div>
 
         {audit !== undefined && <AuditCard content={audit?.content} auditId={audit?.id} contactId={contact.id} />}
+        <SpeedLoom contact={contact} firstName={playFirst} auditContent={audit?.content ?? null} bookingLink={wsp.bookingLink || null} />
 
         <div className="dl-history">
           <span><b>Last touch</b>{last}</span>
@@ -479,8 +488,8 @@ export default function CallModePage() {
           return <div className="dl-open dl-play" aria-label="What to say">
             {say === null ? <>
               <div><span>Open</span><p>{f(play.open)}</p></div>
-              <div><span>Pain</span><div className="dl-parts">{f(play.pitch).split(" ... (let them talk, then) ").map((part, i) => <p key={i}>{i > 0 && <em className="dl-pause">Let them talk.</em>}{part}</p>)}</div></div>
-              <div><span>Ask</span><p>{f(CLOSE)} <button type="button" className="dl-more" onClick={() => setSay("close")}>Guarantee</button></p></div>
+              <div><span>Script</span><div className="dl-parts">{f(play.pitch).split(" ... (let them talk, then) ").map((part, i) => <p key={i}>{i > 0 && <em className="dl-pause">Let them talk.</em>}{part}</p>)}</div></div>
+              <div><span>Ask</span><p>{f(play.close ?? CLOSE)} <button type="button" className="dl-more" onClick={() => setSay("close")}>Guarantee</button></p></div>
               <div><span>After they book</span><p className="dl-dig">{play.dig.map((q, i) => <span key={i}><i>{i + 1}</i>{f(q)} </span>)}</p></div>
             </> : <div className="dl-say" role="status">
               <span>{ob ? "Say" : say === "close" ? "Close" : say === "voicemail" ? "Voicemail" : "Gatekeeper"}</span>
@@ -489,10 +498,10 @@ export default function CallModePage() {
               {ob ? <>
                 <p>{f(ob.say)}</p>
                 {ob.then && !/^then the close\.?$/i.test(ob.then.trim()) && <p className="dl-then">{f(ob.then)}</p>}
-                {ob.then && /the close/i.test(ob.then) && <p className="dl-then"><b>Then close:</b> {f(CLOSE)}</p>}
+                {ob.then && /the close/i.test(ob.then) && <p className="dl-then"><b>Then close:</b> {f(play.close ?? CLOSE)}</p>}
               </> : say === "close" ? <>
                 <p className="dl-then"><b>Guarantee:</b> {f(play.guarantee)}</p>
-                <p>{f(CLOSE)}</p>
+                <p>{f(play.close ?? CLOSE)}</p>
               </> : say === "voicemail" ? <p>{f(VOICEMAIL[track])}</p> : say === "gatekeeper" ? <p>{f(GATEKEEPER)}</p> : null}
               <button type="button" className="dl-say-x" onClick={() => setSay(null)}>Back to script <kbd>Esc</kbd></button>
               </div>

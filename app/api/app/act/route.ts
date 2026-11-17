@@ -9,9 +9,16 @@ import { parseAmount } from "@/lib/client-schedule";
 import { digits10 } from "@/lib/client-runtime";
 import { sendAlert } from "@/lib/notify";
 import { replyToFor } from "@/lib/client-lead-mail-run";
+import { addExpense, deleteExpense } from "@/lib/client-expenses-run";
+import { LOGGED, activityDetail } from "@/lib/records";
+import { quoteValidDays } from "@/lib/service";
+import { cleanDaysOff } from "@/lib/client-booking";
+import { saveRules } from "@/lib/client-automations-run";
+import { deleteOrder, saveOrder, setOrderStatus } from "@/lib/client-orders-run";
+import { addFile, removeEquipment, removeFile, saveEquipment, saveTask, serviceEquipment, setTask } from "@/lib/client-records-run";
 import { setPhone, addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
-import { createInvoice, deletePayment, recordPayment, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
+import { createInvoice, deletePayment, deleteRefund, recordPayment, recordRefund, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 import { clockIn, clockOut, editTime, planVisit, saveChangeOrder, savePlan, sendChangeOrder, setChangeOrder, setPlan } from "@/lib/client-service-run";
 import { portalLink, saveSignoff } from "@/lib/client-portal-run";
 import { saveProperty, setChecklist, tickChecklist } from "@/lib/client-parity-run";
@@ -42,7 +49,7 @@ const UUID = /^[0-9a-f-]{36}$/i;
  *  quotelines { thread, items, tax?, note?, send? } — the quote's lines (the owner sends it himself). install { thread, install, time?, days? } — on Google Calendar.
  *  invoice { thread } — a draft invoice for the job. invoicesave / invoicesend / invoiceset { invoice, ... } — edit, text it, paid | unpaid | void | pause | resume.
  */
-export async function POST(req: Request) {
+async function handle(req: Request) {
   const s = appSession(req);
   if (!s) return json({ error: "Sign in" }, 401);
   const b = await req.json().catch(() => ({})) as { p?: string; action?: string; thread?: string; body?: string; status?: string; appt?: string; result?: string; amount?: string; review?: boolean; quote?: string;
@@ -50,13 +57,13 @@ export async function POST(req: Request) {
     link?: boolean; note?: string; install?: string | null; send?: boolean;
     items?: unknown; tax?: unknown; time?: string | null; days?: number; invoice?: string; what?: string; due?: string | null; step?: string; done?: boolean; on?: string; costs?: unknown;
     rows?: unknown; as?: unknown; consent?: unknown; from?: unknown; reason?: string; message?: string; deposit?: unknown; crew?: string; start?: string; question?: string; email?: string; at?: string | null; method?: string; payment?: string; data?: string; kind?: string; caption?: string; photo?: string; member?: string;
-    plan?: string; input?: unknown; skip?: boolean; co?: string; entry?: string; end?: string | null; remove?: boolean };
+    plan?: string; input?: unknown; skip?: boolean; tags?: unknown; referredBy?: unknown; tag?: string; custom?: unknown; percent?: number; rest?: boolean; statement?: boolean; co?: string; entry?: string; end?: string | null; remove?: boolean };
   try {
     const sql = db();
     const c = await clientFor(sql, s, b.p);
     if (!c) return json({ error: "Sign in" }, 401);
     // The crew sees the schedule and the jobs and can text, call, tick steps, leave notes and clock hours. Money and settings stay with the owner.
-    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit", "signoff", "checktick"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
+    if (s.role === "crew" && !["reply", "status", "call", "jobstep", "card", "reschedule", "outcome", "photo", "clockin", "clockout", "visit", "signoff", "checktick", "expense", "equipment", "equipservice", "fileadd"].includes(String(b.action))) return json({ error: "Only the owner can do that." }, 403);
     if (s.role === "crew" && c.setup.crew_scope === "assigned") {
       const me10 = (s.phone || "").replace(/\D/g, "").slice(-10);
       const tid = b.thread && UUID.test(b.thread) ? b.thread : null;
@@ -127,8 +134,20 @@ export async function POST(req: Request) {
       }
       let value: number | null | undefined;
       if (b.value !== undefined) { value = b.value === null || b.value === "" ? null : parseAmount(String(b.value)); if (b.value && value == null) return json({ error: "Type the job value as a number, like 9400." }, 400); }
-      const r = await saveCard(sql, c, b.thread, { details: b.details, value, notes: b.notes, crew: b.crew, name: b.name, email: b.email, install: b.install, review: b.review });
+      const r = await saveCard(sql, c, b.thread, { custom: b.custom, tags: s.role === "crew" ? undefined : b.tags, referredBy: s.role === "crew" ? undefined : b.referredBy, details: b.details, value, notes: b.notes, crew: b.crew, name: b.name, email: b.email, install: b.install, review: b.review });
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
+    }
+    // Give a quote more time: from today (or its current last day, if later) plus the owner's usual length (30 if none).
+    if (b.action === "quoteextend") {
+      if (s.role === "crew") return json({ error: "Only the office can change quotes." }, 403);
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
+      const days = quoteValidDays(c.setup.quote_valid_days) || 30, today = new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" });
+      const [q] = await sql`UPDATE public.client_quotes q SET valid_until = greatest(${today}::date, coalesce(q.valid_until, ${today}::date)) + ${days}::int
+        FROM public.client_threads t WHERE t.id = ${b.thread}::uuid AND t.project_id = ${c.projectId}::uuid AND q.project_id = t.project_id
+          AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
+          AND q.kind = 'quote' AND q.approved_at IS NULL AND q.declined_at IS NULL AND q.status IN ('open', 'replied')
+        RETURNING q.valid_until::text AS valid_until` as { valid_until: string }[];
+      return q ? json({ ok: true, validUntil: q.valid_until }) : json({ error: "There's no open quote to extend." }, 404);
     }
     if (b.action === "quotelink" || b.action === "reviewnow") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
@@ -146,7 +165,7 @@ export async function POST(req: Request) {
         return json({ ok: true, total: l.total, link: q.url ?? "", sent: q.sent, warn: q.sent ? "" : q.error ?? "" });
       }
       if (b.action === "install") { const r = await scheduleInstall(sql, c, b.thread, { date: b.install, time: b.time, days: b.days }); return r.ok ? json({ ok: true, calendar: r.calendar }) : json({ error: r.error }, 404); }
-      const r = await createInvoice(sql, c, b.thread);
+      const r = await createInvoice(sql, c, b.thread, b.percent || b.rest ? { percent: b.percent, rest: b.rest } : undefined);
       return r.ok ? json({ ok: true, invoice: r.invoice }) : json({ error: r.error }, 409);
     }
     if (b.action === "invoicesave" || b.action === "invoicesend" || b.action === "invoiceset") {
@@ -202,6 +221,18 @@ export async function POST(req: Request) {
       await sql`UPDATE public.client_ops SET setup = setup || jsonb_build_object('catalog', ${JSON.stringify(list)}::text), updated_at = now() WHERE project_id = ${c.projectId}::uuid AND owner_id = ${c.owner}`;
       return json({ ok: true, count: list.length });
     }
+    // The photo report: the finished job's After photos, on the customer's page, in one text.
+    if (b.action === "photoreport") {
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
+      const [n] = await sql`SELECT count(*)::int AS n FROM public.client_photos WHERE thread_id = ${b.thread}::uuid AND project_id = ${c.projectId}::uuid AND (kind = 'after' OR shared)` as { n: number }[];
+      if (!n?.n) return json({ error: "Take a few After photos on the job first." }, 409);
+      const r = await portalLink(sql, c, b.thread);
+      if (!r.ok) return json({ error: r.error }, 404);
+      const [t] = await sql`SELECT customer_phone, customer_name FROM public.client_threads WHERE id = ${b.thread}::uuid` as { customer_phone: string; customer_name: string }[];
+      const firstName = (t.customer_name || "").split(" ")[0];
+      const ok = await sendToCustomer(sql, c, b.thread, t.customer_phone, `Hi${firstName ? " " + firstName : ""}, it's ${(c.setup.display_name || "us").replace(/\.+$/, "")}. Here are the photos of your finished job (${n.n}): ${r.url}`, "owner");
+      return ok ? json({ ok: true }) : json({ error: "That text didn't go. Check the number, or copy the customer page link instead." }, 502);
+    }
     // The customer's own page: copy the link, or text it to them.
     if (b.action === "portallink") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
@@ -212,7 +243,12 @@ export async function POST(req: Request) {
       if (t.status === "opted_out") return json({ ok: true, link: r.url, sent: false, warn: "They opted out of texts. Copy the link and email it instead." });
       if (!c.setup.texting_number) return json({ ok: true, link: r.url, sent: false, warn: "Your texting number isn't connected yet. Copy the link instead." });
       const firstName = (t.customer_name || "").split(" ")[0];
-      const ok = await sendToCustomer(sql, c, b.thread, t.customer_phone, `Hi${firstName ? " " + firstName : ""}, it's ${(c.setup.display_name || "us").replace(/\.+$/, "")}. Here's your page with your quotes, invoices and upcoming visits, any time: ${r.url}`, "owner");
+      const [owe] = b.statement ? await sql`SELECT count(*)::int AS n, coalesce(sum(total - paid_amount), 0)::float AS owed FROM public.client_invoices WHERE thread_id = ${b.thread}::uuid AND status = 'sent'` as { n: number; owed: number }[] : [];
+      if (b.statement && !owe?.n) return json({ error: "Nothing is owed on this customer." }, 409);
+      const biz = (c.setup.display_name || "us").replace(/\.+$/, "");
+      const ok = await sendToCustomer(sql, c, b.thread, t.customer_phone, b.statement
+        ? `Hi${firstName ? " " + firstName : ""}, it's ${biz}. Your statement: ${owe.n} open ${owe.n === 1 ? "invoice" : "invoices"}, $${owe.owed.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} in all. See each one and pay here: ${r.url}`
+        : `Hi${firstName ? " " + firstName : ""}, it's ${biz}. Here's your page with your quotes, invoices and upcoming visits, any time: ${r.url}`, "owner");
       return json({ ok: true, link: r.url, sent: ok, warn: ok ? "" : "The text didn't send. Copy the link instead." });
     }
     if (b.action === "checklist") {
@@ -221,6 +257,31 @@ export async function POST(req: Request) {
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     // A lead email that came without a phone: the owner adds the number (nobody is texted), or dismisses it.
+    // Material orders on a job (owner and office).
+    if (b.action === "order" || b.action === "orderstatus" || b.action === "orderdelete") {
+      if (s.role === "crew") return json({ error: "Only the office can order materials." }, 403);
+      if (b.action === "order") { if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400); const r = await saveOrder(sql, c, b.thread, b.entry && UUID.test(b.entry) ? b.entry : null, b.input, member); return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400); }
+      if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which order?" }, 400);
+      const r = b.action === "orderstatus" ? await setOrderStatus(sql, c, b.entry, b.status, member) : await deleteOrder(sql, c, b.entry);
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "daysoff") {
+      if (s.role === "crew") return json({ error: "Only the office can change days off." }, 403);
+      const list = cleanDaysOff(b.input, new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" }));
+      await sql`UPDATE public.client_ops SET setup = setup || ${JSON.stringify({ days_off: JSON.stringify(list) })}::jsonb, updated_at = now() WHERE project_id = ${c.projectId}::uuid AND owner_id = ${c.owner}`;
+      return json({ ok: true });
+    }
+    if (b.action === "automations") { if (s.role !== "owner") return json({ error: "Only the owner can change follow-ups." }, 403); const r = await saveRules(sql, c, b.input); return r.ok ? json({ ok: true }) : json({ error: r.error }, 400); }
+    if (b.action === "expense") { const r = await addExpense(sql, c, member, b.input); return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400); }
+    if (b.action === "expensedelete") { if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which expense?" }, 400); const r = await deleteExpense(sql, c, b.entry); return r.ok ? json({ ok: true }) : json({ error: r.error }, 404); }
+    // Equipment at the customer's address, documents on the job, the office's to-dos.
+    if (b.action === "equipment") { if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400); const r = await saveEquipment(sql, c, b.thread, b.entry && UUID.test(b.entry) ? b.entry : null, b.input); return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400); }
+    if (b.action === "equipservice") { if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which one?" }, 400); const r = await serviceEquipment(sql, c, b.entry, b.note, member); return r.ok ? json({ ok: true }) : json({ error: r.error }, 404); }
+    if (b.action === "equipremove") { if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which one?" }, 400); return json(await removeEquipment(sql, c, b.entry)); }
+    if (b.action === "fileadd") { if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400); const r = await addFile(sql, c, b.thread, b.input, member); return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400); }
+    if (b.action === "fileremove") { if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which document?" }, 400); return json(await removeFile(sql, c, b.entry)); }
+    if (b.action === "task") { const r = await saveTask(sql, c, b.input, member); return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400); }
+    if (b.action === "taskdone") { if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which to-do?" }, 400); return json(await setTask(sql, c, b.entry, b.done !== false)); }
     if (b.action === "setphone") {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
       const r = await setPhone(sql, c, b.thread, String(b.phone ?? ""));
@@ -260,7 +321,7 @@ export async function POST(req: Request) {
       await sql`UPDATE public.client_threads SET review_after = NULL WHERE id = ${b.thread}::uuid AND project_id = ${c.projectId}::uuid`;
       return json({ ok: true });
     }
-    if (b.action === "winback") { const r = await sendWinback(sql, c, b.body); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
+    if (b.action === "winback") { const r = await sendWinback(sql, c, b.body, 150, b.tag); return r.ok ? json({ ok: true, sent: r.sent, left: r.left }) : json({ error: r.error }, 409); }
     if (b.action === "ask") {
       const q = String(b.question ?? "").trim().slice(0, 500);
       if (!q) return json({ error: "Ask something." }, 400);
@@ -302,6 +363,17 @@ export async function POST(req: Request) {
       if (!b.invoice || !UUID.test(b.invoice)) return json({ error: "Which invoice?" }, 400);
       const r = await recordPayment(sql, c, b.invoice, { amount: b.amount, method: b.method, on: b.on, note: b.note });
       return r.ok ? json({ ok: true, balance: r.balance }) : json({ error: r.error }, 400);
+    }
+    if (b.action === "refund" || b.action === "refunddelete") {
+      if (s.role === "crew") return json({ error: "Only the office can refund." }, 403);
+      if (b.action === "refunddelete") {
+        if (!b.payment || !UUID.test(b.payment)) return json({ error: "Which refund?" }, 400);
+        const r = await deleteRefund(sql, c, b.payment);
+        return r.ok ? json({ ok: true }) : json({ error: r.error }, 404);
+      }
+      if (!b.invoice || !UUID.test(b.invoice)) return json({ error: "Which invoice?" }, 400);
+      const r = await recordRefund(sql, c, b.invoice, { amount: b.amount, method: b.method, on: b.on, note: b.note });
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     if (b.action === "paymentdelete") {
       if (!b.payment || !UUID.test(b.payment)) return json({ error: "Which payment?" }, 400);
@@ -419,4 +491,22 @@ export async function POST(req: Request) {
     }
     return json({ error: "Unknown action." }, 400);
   } catch (e) { console.error("App action failed", e instanceof Error ? e.message : e); return json({ error: "Something went wrong." }, 500); }
+}
+
+/** Every change runs through handle(); the ones that succeed and matter get a line in the activity log. */
+export async function POST(req: Request) {
+  const body = await req.clone().json().catch(() => ({})) as Record<string, unknown>;
+  const res = await handle(req);
+  const action = String(body.action ?? "");
+  if (res.ok && LOGGED[action]) {
+    try {
+      const s = appSession(req);
+      if (s) {
+        const sql = db(), c = await clientFor(sql, s, typeof body.p === "string" ? body.p : undefined);
+        const thread = typeof body.thread === "string" && /^[0-9a-f-]{36}$/i.test(body.thread) ? body.thread : null;
+        if (c) await sql`INSERT INTO public.client_activity (project_id, who, role, action, thread_id, detail) VALUES (${c.projectId}::uuid, ${s.role === "owner" ? "" : "+1" + (s.phone || "").replace(/\D/g, "").slice(-10)}, ${s.role || "owner"}, ${action}, ${thread}::uuid, ${activityDetail(action, body)})`;
+      }
+    } catch (e) { console.error("Activity log failed", e instanceof Error ? e.message : e); }
+  }
+  return res;
 }

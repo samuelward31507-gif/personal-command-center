@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { dollars, totals, type Item } from "@/lib/billing";
 import { hoursText, laborOf, minutesOf, monthlyValue, ratesOf, type ChangeOrder, type TimeEntry } from "@/lib/service";
 import { parseTeam, type Card, type Costs } from "@/lib/crm";
-import { Avatar, Icon, Sheet, Spinner, ago, clock, dateLabel, first, fmtPhone, todayIso, usd, useArm } from "./parts";
+import { Avatar, Icon, Sheet, Spinner, ago, clock, dateLabel, first, fmtPhone, todayIso, usd, useArm, inDemo } from "./parts";
 import { LineEditor } from "./money";
 import { crewName } from "./crew";
 import type { Data, Go } from "./types";
@@ -119,7 +119,7 @@ export function HoursPanel({ d, go }: { d: Data; go: Go }) {
   const rows = [...people.entries()].map(([m, es]) => ({ m, ...laborOf(es, rates, ownerRate), jobs: new Set(es.map(e => e.thread_id).filter(Boolean)).size })).sort((a, b) => b.minutes - a.minutes);
   const top = rows[0]?.minutes || 1, tot = rows.reduce((a, r) => a + r.cost, 0);
   return <section className="panel s6">
-    <div className="panel-h"><h2>Crew hours</h2><small>last 14 days{tot ? `, ${usd(tot)} in labor` : ""}</small></div>
+    <div className="panel-h"><h2>Crew hours</h2><small>last 14 days{tot ? `, ${usd(tot)} in labor` : ""}</small><div className="r"><a className="link" href={`/api/app/export?p=${d.project}&what=timesheets`} onClick={e => { if (inDemo()) { e.preventDefault(); alert("The example business has no real hours to export."); } }} title="The last 14 days by person and week, overtime split out, as a file for your payroll service">Timesheets for payroll</a></div></div>
     <div className="panel-b">{rows.length ? <ul className="bars hours-bars">{rows.map(r => <li key={r.m || "owner"}><span>{r.m ? crewName(d, r.m) : `${first(d.owner || "You")} (you)`}</span><i style={{ width: `${(r.minutes / top) * 100}%` }} /><b>{hoursText(r.minutes)}<small>{r.cost ? ` ${usd(r.cost)}` : ""}, {r.jobs} {r.jobs === 1 ? "job" : "jobs"}</small></b></li>)}</ul>
       : <p className="fine" style={{ padding: "8px 0" }}>When you or your crew clock in from Your day, hours show here by person, and on each job as a labor cost. <button type="button" className="link" onClick={() => go.tab("today")}>Your day</button></p>}</div>
   </section>;

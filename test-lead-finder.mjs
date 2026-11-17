@@ -4,7 +4,9 @@ assert.equal(L.cityState("1234 E Main St, Aurora, CO 80012, USA"), "Aurora, CO")
 assert.equal(L.cityState("Fort Collins, CO, USA"), "Fort Collins, CO");
 const good = { id: "a", displayName: { text: "Ridge Fence Co" }, formattedAddress: "1 A St, Denver, CO 80202, USA", nationalPhoneNumber: "(303) 555-0101", rating: 4.8, userRatingCount: 87, businessStatus: "OPERATIONAL" };
 assert.ok(L.scorePlace(good).score >= 80);
-assert.match(L.scorePlace(good).why, /87 reviews, no website/);
+assert.match(L.scorePlace(good).why, /87 reviews, owner-operator size, no website/);
+assert.ok(L.scorePlace({ ...good, userRatingCount: 300 }).score < L.scorePlace(good).score, "front-desk size ranks below owner-operators");
+assert.equal(L.scorePlace({ ...good, displayName: { text: "Superior Fence & Rail of Dayton" } }).score, 0, "franchise skipped");
 assert.equal(L.scorePlace({ ...good, nationalPhoneNumber: "" }).score, 0);
 assert.equal(L.scorePlace({ ...good, businessStatus: "CLOSED_PERMANENTLY" }).score, 0);
 assert.equal(L.scorePlace({ ...good, displayName: { text: "The Home Depot" } }).score, 0);

@@ -35,7 +35,7 @@ const demoStart = () => { demoOn = true; try { sessionStorage.setItem(DEMO_KEY, 
 const demoStop = () => { demoOn = false; try { sessionStorage.removeItem(DEMO_KEY); } catch { /* private mode */ } };
 
 // Work done on the job without signal: these actions wait on the phone and go out, in order, when it's back.
-const QUEUE_KEY = "cinder-queue", QUEUEABLE = new Set(["jobstep", "checktick", "clockin", "clockout", "card", "photo", "signoff"]);
+const QUEUE_KEY = "cinder-queue", QUEUEABLE = new Set(["jobstep", "checktick", "clockin", "clockout", "card", "photo", "signoff", "expense"]);
 type Queued = { path: string; body: Record<string, unknown>; at: string };
 const readQueue = (): Queued[] => { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]"); } catch { return []; } };
 const writeQueue = (q: Queued[]): boolean => { let ok = true; try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q.slice(-200))); } catch { ok = false; } dispatchEvent(new Event("cinder-queue")); return ok; };
@@ -274,7 +274,7 @@ export default function CinderApp() {
   else if (open?.kind === "quote") page = <QuoteEditor key={open.id} id={open.id} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => setOpen(null)} />;
   else if (open?.kind === "record") page = <RecordPage key={open.id + (open.draft ? ":d" : "")} id={open.id} ask={open.ask} view={open.view} draft={open.draft} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
   else if (tab === "today" && crew) page = <MyDay d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} />;
-  else if (tab === "today") page = <TodayScreen d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} toast={toast} />;
+  else if (tab === "today") page = <TodayScreen reload={reload} d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} toast={toast} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
   else if (tab === "switch") page = <SwitchScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
@@ -336,7 +336,7 @@ export default function CinderApp() {
     {sheet === "import" && <ImportSheet project={project} api={api} toast={toast} reload={reload} customers={d.customers ?? []} business={bizName} onClose={() => setSheet(null)} />}
     {sheet === "pricelist" && <PriceListSheet items={catalog.items} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
     {sheet === "billing" && <BillingSettings setup={d.setup ?? {}} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
-    {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
+    {sheet === "winback" && d.winback && <WinbackSheet w={d.winback} biz={biz} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} tags={[...new Set((d.board ?? []).flatMap(c => c.tags ?? []))].sort()} />}
     {invNow && <InvoiceSheet key={invNow.id + invNow.status + (invNow.paid_amount ?? 0)} inv={invNow} payments={d.payments} customer={invNow.customer || fmtPhone(invNow.phone)} email={(d.board ?? []).find(b => b.id === invNow.thread_id)?.email} emailReady={d.emailReady} project={project} api={api} toast={toast} reload={reload} payLink={biz.payLink} onClose={() => setInv(null)} onSetup={() => { setInv(null); setSheet("billing"); }} />}
     {toastNode}
   </div></CatalogContext.Provider>;

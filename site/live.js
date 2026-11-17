@@ -266,6 +266,7 @@
   var biz = document.getElementById("demo-biz"), av = document.getElementById("demo-av"), chat = document.getElementById("demo-chat"), say = document.getElementById("demo-say"), send = document.getElementById("demo-send");
   var ex = { Fence: ["Summit Fence Co.", "Need a quote for about 150 ft of cedar privacy fence in the backyard. We have a dog so need a gate too."],
     Roofing: ["Summit Roofing", "Our roof is leaking in two spots after the storm. Two-story house, about 15 years old. Can someone come look?"],
+    Generator: ["Summit Power & Generator", "Power went out twice this month. Looking at a whole-home generator. House is about 2,800 sq ft, natural gas."],
     Pool: ["Blue Ridge Pools", "Thinking about putting in an inground pool next spring. Backyard is about 40x60. What's the process?"],
     Other: ["Your Business", "Hi, I saw your website and I'd like to get a quote. When could someone come out?"] };
   var history = [], busy = false, done = false, MAX = 6, mine = 0;
@@ -297,7 +298,7 @@
     var body = { trade: f.trade.value, business: name(), customer: "Dana", request: text, website: f.website.value };
     if (!first) body.history = history.slice();
     fetch("/api/demo-reply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "That didn't go through. Try again."); return d; }); })
+      .then(function (r) { return r.json().catch(function () { throw new Error("The demo is offline for a minute. Try again shortly."); }).then(function (d) { if (!r.ok) throw new Error(d.error || "That didn't go through. Try again."); return d; }); })
       .then(function (d) {
         ty.remove(); add("in", d.reply);
         history.push({ from: "them", text: text }, { from: "us", text: d.reply });
@@ -316,6 +317,20 @@
     turn(f.request.value.trim(), true);
   });
   chat.addEventListener("submit", function (e) { e.preventDefault(); var v = say.value.trim(); if (!v) return; say.value = ""; turn(v, false); });
+
+  // Personal demo links: /try?b=Byers Fence&t=fence. Their name and trade are filled in, the heading speaks to them,
+  // and the conversation starts on its own when the phone comes into view, so they see their own missed lead answered.
+  var q = new URLSearchParams(location.search), clean = function (v) { return (v || "").replace(/[<>\u0000-\u001f]/g, "").trim().slice(0, 60); };
+  var pb = clean(q.get("b")), pt = { fence: "Fence", generator: "Generator", generators: "Generator", roofing: "Roofing", pool: "Pool", pools: "Pool" }[(q.get("t") || "").toLowerCase()];
+  if (pt) { f.trade.value = pt; f.dispatchEvent(new Event("change", { bubbles: true })); }
+  if (pb) {
+    f.business.value = pb; setName();
+    var sec = f.closest("section"), h = sec && sec.querySelector("h1, h2");
+    if (h) h.textContent = "Here’s " + pb + " answering a new lead.";
+    var phone = t.closest(".iph, .try-phone, .ios") || t, started = false;
+    var kick = function () { if (started) return; started = true; setTimeout(function () { f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event("submit", { cancelable: true })); }, 900); };
+    if ("IntersectionObserver" in window) { var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { io.disconnect(); kick(); } }, { threshold: .5 }); io.observe(phone); } else kick();
+  }
 })();
 
 // ---------- Phone menu ----------

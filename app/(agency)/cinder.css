@@ -508,6 +508,34 @@ a.pt-draft-who:hover { text-decoration: underline !important; text-underline-off
   .td-tbl .why { display: none; }
   .ct-page .ct-bar .ct-search { width: 100%; margin-left: 0; }
 }
+/* Motion system. One curve, three speeds: 120ms answers a press, 200ms opens a surface, 320ms moves a page. */
+:root { --k-ease-out: cubic-bezier(.16, 1, .3, 1); --k-ease-in: cubic-bezier(.4, 0, 1, 1); }
+/* Route: every page in the shell mounts a fresh element, so the entrance replays on each navigation */
+.crm-shell-main > :not(.topbar) { animation: k-route 320ms var(--k-ease-out) both; }
+@keyframes k-route { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+/* Lists: the first rows arrive in sequence, the rest land together */
+.u-page .u-rows > .u-row { animation: k-row 260ms var(--k-ease-out) both; animation-delay: 80ms; }
+.u-page .u-rows > .u-row:nth-child(1) { animation-delay: 40ms; }
+.u-page .u-rows > .u-row:nth-child(2) { animation-delay: 55ms; }
+.u-page .u-rows > .u-row:nth-child(3) { animation-delay: 70ms; }
+.u-page .u-rows > .u-row:nth-child(4) { animation-delay: 85ms; }
+.u-page .u-rows > .u-row:nth-child(5) { animation-delay: 100ms; }
+.u-page .u-rows > .u-row:nth-child(6) { animation-delay: 115ms; }
+.u-page .u-rows > .u-row:nth-child(7) { animation-delay: 130ms; }
+.u-page .u-rows > .u-row:nth-child(n+8) { animation-delay: 145ms; }
+@keyframes k-row { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+/* Numbers settle in */
+.u-figs .u-fig-v { animation: k-fig 420ms var(--k-ease-out) 120ms both; }
+@keyframes k-fig { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+/* Overlays: scrim fades, the dialog rises out of it */
+.u-scrim { animation: k-fade 180ms ease-out both; }
+.u-scrim > .u-dialog { animation: k-pop 220ms var(--k-ease-out) 30ms both; }
+@keyframes k-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes k-pop { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+/* Press: every button gives under the finger */
+.u-btn { transition: box-shadow 120ms, background 120ms, transform 120ms var(--k-ease-out); }
+.u-btn:active:not(:disabled) { transform: scale(.97); }
+a.hn-card:active, a.u-row:active, button.u-row:active { transform: scale(.995); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
 /* ---------- Pass 2 fixes ---------- */

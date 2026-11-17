@@ -20,6 +20,8 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="/fonts/InterDisplay-SemiBold.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="/fonts/Inter-Regular.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/v2.css">
 <script>document.documentElement.classList.add("js");if(matchMedia("(prefers-reduced-motion: no-preference)").matches)document.documentElement.classList.add("motion")</script>
@@ -44,8 +46,13 @@
 </section>
 <section class="sec pvid" id="film">
   <div class="wrap">
+    <div class="vid-tabs" role="tablist" aria-label="Choose a film">
+      <button type="button" role="tab" aria-selected="true" data-v="/media/cinder-demo.mp4" data-p="/media/cinder-demo-poster.jpg" data-n="66 seconds. The business, names and numbers are examples.">Overview</button>
+      <button type="button" role="tab" aria-selected="false" data-v="/media/cinder-fence-wide.mp4" data-p="/media/cinder-fence-wide-poster.jpg" data-n="28 seconds. A fence lead on a job day. Names and numbers are examples.">Fence</button>
+      <button type="button" role="tab" aria-selected="false" data-v="/media/cinder-generator-wide.mp4" data-p="/media/cinder-generator-wide-poster.jpg" data-n="28 seconds. A generator lead after hours. Names and numbers are examples.">Standby generators</button>
+    </div>
     <div class="vid"><video src="/media/cinder-demo.mp4" poster="/media/cinder-demo-poster.jpg" controls autoplay muted playsinline preload="metadata" aria-label="A 66-second film: a missed call and an unanswered quote, then the same lead texted back, booked and the quote won with Cinder"></video></div>
-    <p class="vid-note">66 seconds. The business, names and numbers are examples.</p>
+    <p class="vid-note" id="vid-note">66 seconds. The business, names and numbers are examples.</p>
   </div>
 </section>
 <section class="sec ptry" id="try">
@@ -55,7 +62,7 @@
       <p class="lede">Type what a homeowner would send you, then keep the conversation going on the phone. It asks your questions and books the estimate, the way it would for a real lead.</p>
       <form class="tf" id="demo" autocomplete="off">
         <div class="tf-row">
-          <label>Your trade<select name="trade"><option value="Fence">Fence</option><option value="Roofing">Roofing</option><option value="Pool">Pools and spas</option><option value="Other">Something else</option></select></label>
+          <label>Your trade<select name="trade"><option value="Fence">Fence</option><option value="Generator">Standby generators</option><option value="Roofing">Roofing</option><option value="Pool">Pools and spas</option><option value="Other">Something else</option></select></label>
           <label>Your business name<input name="business" maxlength="60" placeholder="Summit Fence Co."></label>
         </div>
         <label>What they send you<textarea name="request" rows="3" maxlength="400" required>Need a quote for about 150 ft of cedar privacy fence in the backyard. We have a dog so need a gate too.</textarea></label>
@@ -135,6 +142,10 @@ var set=function(c,t){document.querySelectorAll(c).forEach(function(e){e.textCon
 if(n){set(".p-intro","it's "+n+" with");set(".p-owner-s",n+"'s");}else if(b){set(".p-intro","this is");set(".p-owner-s","your");}})();
 
 </script>
+<script>(function(){var bs=document.querySelectorAll(".vid-tabs button"),v=document.querySelector("#film video"),n=document.getElementById("vid-note");if(!v)return;
+function pick(b){bs.forEach(function(x){x.setAttribute("aria-selected",x===b?"true":"false")});v.classList.add("swap");setTimeout(function(){v.poster=b.dataset.p;v.src=b.dataset.v;n.textContent=b.dataset.n;v.play&&v.play().catch(function(){});v.classList.remove("swap")},180)}
+bs.forEach(function(b){b.addEventListener("click",function(){pick(b)})});
+var t=(new URLSearchParams(location.search).get("t")||"").toLowerCase();var m={fence:1,generator:2,generators:2}[t];if(m)pick(bs[m])})();</script>
 <script src="/live.js" defer></script>
 <script>
 (function () {

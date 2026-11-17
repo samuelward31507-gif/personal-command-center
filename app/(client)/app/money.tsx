@@ -10,6 +10,7 @@ import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
 import type { Biz, Data, Go, InvoiceRow } from "./types";
 import { emailDoc } from "./crew";
 import { CatalogPicker, asLine, useCatalog } from "./catalog";
+import { ExpensesView } from "./expenses";
 import { FieldIcon } from "./sources";
 
 /**
@@ -91,6 +92,8 @@ export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], 
   const [items, setItems] = useState<Item[]>(inv.items), [tax, setTax] = useState(inv.tax_rate), [note, setNote] = useState(inv.note), [due, setDue] = useState(inv.due_on ?? "");
   const [busy, setBusy] = useState(""), [arm, setArm] = useArm();
   const bal = balanceOf(inv), mine = payments.filter(p => p.invoice_id === inv.id);
+  const refunded = Math.round(-mine.filter(p => p.refund).reduce((a, p) => a + p.amount, 0) * 100) / 100, canRefund = Math.round((inv.total - bal - refunded) * 100) / 100;
+  const [refunding, setRefunding] = useState(false);
   const [paying, setPaying] = useState(false), [pAmt, setPAmt] = useState(String(bal || "")), [pMethod, setPMethod] = useState<string>("card"), [pOn, setPOn] = useState(todayIso()), [pNote, setPNote] = useState("");
   const locked = inv.status === "paid" || inv.status === "void";
   const dirty = JSON.stringify(items) !== JSON.stringify(inv.items) || tax !== inv.tax_rate || note !== inv.note || due !== (inv.due_on ?? "");
@@ -114,6 +117,7 @@ export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], 
     foot={<>
       {inv.status === "paid" ? <button type="button" className="btn" disabled={!!busy} onClick={() => void act("unpaid", { action: "invoiceset", what: "unpaid" }, "Marked unpaid.")}>Mark unpaid</button>
         : !locked && !paying && <button type="button" className="btn ok" disabled={!!busy} onClick={() => { setPAmt(String(bal)); setPaying(true); }}>Record payment</button>}
+      {inv.status !== "void" && canRefund > 0 && !refunding && !paying && <button type="button" className="btn" disabled={!!busy} onClick={() => { setPAmt(String(canRefund)); setPMethod("card"); setPNote(""); setRefunding(true); }}>Refund</button>}
       {inv.status === "sent" && <button type="button" className="btn" disabled={!!busy} onClick={() => void act("pause", { action: "invoiceset", what: inv.reminders_paused ? "resume" : "pause" }, inv.reminders_paused ? "Reminders back on." : "Reminders paused.")}>{inv.reminders_paused ? "Resume reminders" : "Pause reminders"}</button>}
       {!locked && <button type="button" className="btn danger" disabled={!!busy} onClick={() => arm === "void" ? void act("void", { action: "invoiceset", what: "void" }, "Invoice voided.", true) : setArm("void")}>{arm === "void" ? "Tap again to void" : "Void"}</button>}
       <span style={{ flex: 1 }} />
@@ -134,8 +138,17 @@ export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], 
       </>}
     {(mine.length > 0 || paying || (inv.status !== "draft" && inv.status !== "void")) && <section className="ledger">
       <p className="sec">Payments<small>{dollars(inv.total - bal)} of {dollars(inv.total)} in</small></p>
-      {mine.map(p => <div key={p.id} className="lrow2"><span>{dateLabel(p.paid_on)}</span><span className="mut">{PAY_METHODS.find(m => m[0] === p.method)?.[1].split(",")[0] ?? "Other"}{p.note ? `, ${p.note}` : ""}</span><b>{dollars(p.amount)}</b>
-        <button type="button" className="btn ghost sm ic" aria-label="Remove this payment" title="Remove" disabled={!!busy} onClick={() => arm === "rm" + p.id ? void act("rm", { action: "paymentdelete", payment: p.id }, "Payment removed.") : setArm("rm" + p.id)}><Icon name={arm === "rm" + p.id ? "check" : "x"} size={12} /></button></div>)}
+      {mine.map(p => <div key={p.id} className="lrow2"><span>{dateLabel(p.paid_on)}</span><span className="mut">{p.refund ? "Refund, " : ""}{PAY_METHODS.find(m => m[0] === p.method)?.[1].split(",")[0] ?? "Other"}{p.note ? `, ${p.note}` : ""}</span><b>{p.refund ? `−${dollars(-p.amount)}` : dollars(p.amount)}</b>
+        <button type="button" className="btn ghost sm ic" aria-label={p.refund ? "Remove this refund" : "Remove this payment"} title="Remove" disabled={!!busy} onClick={() => arm === "rm" + p.id ? void act("rm", { action: p.refund ? "refunddelete" : "paymentdelete", payment: p.id }, p.refund ? "Refund removed." : "Payment removed.") : setArm("rm" + p.id)}><Icon name={arm === "rm" + p.id ? "check" : "x"} size={12} /></button></div>)}
+      {refunded > 0 && <div className="lrow2"><span>Kept</span><span className="mut">after {dollars(refunded)} refunded</span><b>{dollars(inv.total - bal - refunded)}</b><span /></div>}
+      {refunding && <form className="payform" onSubmit={e => { e.preventDefault(); void act("refund", { action: "refund", amount: pAmt, method: pMethod, on: pOn, note: pNote }, `Refund of ${dollars(Number(pAmt) || 0)} recorded.`).then(r => { if (r) setRefunding(false); }); }}>
+        <label className="field"><span>Refund amount <em>up to {dollars(canRefund)}</em></span><span className="inwrap"><i>$</i><input inputMode="decimal" autoFocus value={pAmt} onChange={e => setPAmt(e.target.value.replace(/[^\d.]/g, ""))} /></span></label>
+        <label className="field"><span>How it went back</span><select value={pMethod} onChange={e => setPMethod(e.target.value)}>{PAY_METHODS.map(([k, l]) => <option key={k} value={k}>{k === "card" ? "Card, through your processor" : l}</option>)}</select></label>
+        <label className="field"><span>Date</span><input type="date" value={pOn} onChange={e => setPOn(e.target.value)} /></label>
+        <label className="field"><span>Why <em>for your records</em></span><input value={pNote} maxLength={200} onChange={e => setPNote(e.target.value)} placeholder="Gate canceled" /></label>
+        <p className="fine" style={{ gridColumn: "1 / -1" }}>Send the money back from your own account first (Square, Stripe, cash, check). This records it, lowers what the invoice charged, and takes it off collected. It doesn&rsquo;t go to QuickBooks, so add it there too.</p>
+        <div className="acts-row end" style={{ gridColumn: "1 / -1" }}><button type="button" className="btn ghost" onClick={() => setRefunding(false)}>Cancel</button><button type="submit" className="btn ink" disabled={!!busy || !(Number(pAmt) > 0) || Number(pAmt) > canRefund + 0.005}>{busy === "refund" ? <Spinner /> : "Record refund"}</button></div>
+      </form>}
       <div className="lrow2 bal"><span>Balance</span><span /><b style={bal > 0 && st.tone === "red" ? { color: "var(--bad)" } : undefined}>{dollars(bal)}</b><span /></div>
       {paying && <form className="payform" onSubmit={e => { e.preventDefault(); void act("pay", { action: "payment", amount: pAmt, method: pMethod, on: pOn, note: pNote }, Number(pAmt) >= bal ? `Paid in full. ${dollars(Number(pAmt))} recorded.` : `${dollars(Number(pAmt) || 0)} recorded. ${dollars(Math.max(0, bal - (Number(pAmt) || 0)))} still owed.`).then(r => { if (r) setPaying(false); }); }}>
         <label className="field"><span>Amount</span><span className="inwrap"><i>$</i><input inputMode="decimal" autoFocus value={pAmt} onChange={e => setPAmt(e.target.value.replace(/[^\d.]/g, ""))} /></span></label>
@@ -146,7 +159,7 @@ export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], 
       </form>}
       <p className="fine">{payLink ? "Card payments land in your own account through your pay link. Record them here, with cash, checks and deposits, so the balance stays right." : "Record cash, checks and deposits here so the balance stays right."}</p>
     </section>}
-    {inv.status === "sent" && <p className="fine">{inv.reminders_paused ? "Payment reminders are paused." : inv.reminders ? `${inv.reminders} of 3 payment reminders sent, each for the balance.` : "Up to 3 reminders after the due date, each for the balance."}</p>}
+    {inv.status === "sent" && <p className="fine">{inv.reminders_paused ? "Payment reminders are paused." : inv.reminders ? `${inv.reminders} of 3 payment reminders sent, each for the balance.` : "Up to 3 reminders after the due date, each for the balance."}{!inv.reminders_paused && email ? " By text, and by email when they got the invoice by email or can't be texted." : ""}</p>}
   </Sheet>;
 }
 
@@ -154,11 +167,12 @@ export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], 
 export function BillingSettings({ setup, project, api, toast, reload, onClose }: { setup: Record<string, string>; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onClose: () => void }) {
   const [link, setLink] = useState(setup.pay_link || ""), [tax, setTax] = useState(setup.tax_rate || ""), [daysDue, setDays] = useState(setup.invoice_days || "7"), [busy, setBusy] = useState(false);
   const [rop, setRop] = useState(setup.review_on_paid !== "no"), [rate, setRate] = useState(setup.labor_rate || "");
+  const [lateFee, setLateFee] = useState(setup.late_fee || ""), [lateDays, setLateDays] = useState(setup.late_fee_days || "15"), [qValid, setQValid] = useState(setup.quote_valid_days || "0");
   const [fin, setFin] = useState(setup.financing_link || ""), [finNote, setFinNote] = useState(setup.financing_note || ""), [warranty, setWarranty] = useState(setup.warranty || ""), [terms, setTerms] = useState(setup.quote_terms || "");
   return <Sheet onClose={onClose} title="Invoices and payments" sub="Used on every quote and invoice" wide
     foot={<button type="button" className="btn ink" disabled={busy} onClick={async () => {
       setBusy(true);
-      try { await api("/api/app/act", { p: project, action: "setup", setup: { pay_link: link, tax_rate: tax || "0", invoice_days: daysDue, financing_link: fin.trim() && !/^https?:\/\//.test(fin.trim()) ? "https://" + fin.trim() : fin.trim(), financing_note: finNote, warranty, quote_terms: terms, review_on_paid: rop ? "yes" : "no", labor_rate: rate } }); toast("Saved."); await reload(); onClose(); }
+      try { await api("/api/app/act", { p: project, action: "setup", setup: { quote_valid_days: qValid, late_fee: lateFee, late_fee_days: lateDays, pay_link: link, tax_rate: tax || "0", invoice_days: daysDue, financing_link: fin.trim() && !/^https?:\/\//.test(fin.trim()) ? "https://" + fin.trim() : fin.trim(), financing_note: finNote, warranty, quote_terms: terms, review_on_paid: rop ? "yes" : "no", labor_rate: rate } }); toast("Saved."); await reload(); onClose(); }
       catch (e) { toast(e instanceof Error ? e.message : "Couldn't save.", true); } finally { setBusy(false); }
     }}>{busy ? <Spinner /> : "Save"}</button>}>
     <label className="field"><span>Your pay link</span><input inputMode="url" value={link} onChange={e => setLink(e.target.value)} placeholder="square.link/u/yourbusiness" /></label>
@@ -167,6 +181,11 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
       <label className="field"><span>Sales tax</span><span className="inwrap"><input inputMode="decimal" value={tax} onChange={e => setTax(e.target.value.replace(/[^\d.]/g, ""))} placeholder="0" /><em>%</em></span></label>
       <label className="field"><span>Invoices are due</span><select value={daysDue} onChange={e => setDays(e.target.value)}><option value="0">On receipt</option><option value="7">In 7 days</option><option value="14">In 14 days</option><option value="30">In 30 days</option></select></label>
     </div>
+    <div className="two">
+      <label className="field"><span>Late fee <em>optional</em></span><input value={lateFee} onChange={e => setLateFee(e.target.value.replace(/[^\d.%$]/g, ""))} placeholder="5% or 25" /></label>
+      <label className="field"><span>Added after</span><select value={lateDays} onChange={e => setLateDays(e.target.value)}>{["7", "15", "30", "45", "60"].map(n => <option key={n} value={n}>{n} days past due</option>)}</select></label>
+    </div>
+    <p className="fine" style={{ marginTop: -6 }}>Added once, as its own line, and the customer sees it on the invoice. Leave it blank for none. Some states cap late fees; check yours.</p>
     <p className="sec" style={{ marginTop: 10 }}>On every quote</p>
     <div className="two">
       <label className="field"><span>Financing link <em>optional</em></span><input inputMode="url" value={fin} onChange={e => setFin(e.target.value)} placeholder="Your Hearth, Wisetack or GreenSky page" /></label>
@@ -174,6 +193,7 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
     </div>
     <p className="fine" style={{ marginTop: -6 }}>Customers who can pay monthly say yes to the bigger option more often. The lender handles the application and pays you.</p>
     <label className="field"><span>Warranty <em>shown on the quote</em></span><input value={warranty} maxLength={300} onChange={e => setWarranty(e.target.value)} placeholder="Two years on workmanship. Materials carry the maker&rsquo;s warranty." /></label>
+    <label className="field"><span>Quotes are good for</span><select value={qValid} onChange={e => setQValid(e.target.value)}>{[["0", "No end date"], ["14", "14 days"], ["30", "30 days"], ["45", "45 days"], ["60", "60 days"], ["90", "90 days"]].map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
     <label className="field"><span>Terms <em>they agree to when they approve</em></span><textarea rows={4} value={terms} maxLength={1200} onChange={e => setTerms(e.target.value)} placeholder="Prices hold for 30 days. The deposit comes off the final invoice. The balance is due when the job is done." /></label>
     <p className="sec" style={{ marginTop: 10 }}>After the job</p>
     <label className={"toggle" + (setup.has_review_link === "yes" ? "" : " off")}><input type="checkbox" checked={rop && setup.has_review_link === "yes"} disabled={setup.has_review_link !== "yes"} onChange={e => setRop(e.target.checked)} /><i /><span><b>Ask for a Google review once an invoice is paid in full</b><small>{setup.has_review_link === "yes" ? "One text, a couple of hours after the money comes in, inside texting hours. Once per customer, ever." : "Needs your Google review link (Settings, Account)."}</small></span></label>
@@ -184,9 +204,25 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
 
 /** Money: what's owed and how late, what came in, every invoice with its balance, every payment. Quotes have their own tab. */
 export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: { d: Data; go: Go; wide: boolean; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void> }) {
+  // Batch: won jobs with a price and no invoice, and drafts waiting to go.
+  const [batch, setBatch] = useState<"" | "bill" | "send">("");
+  const toBill = (d.board ?? []).filter(c => c.stage === "won" && !c.pastCustomer && !c.invoice && (c.value ?? c.quote?.amount ?? 0) > 0);
+  const drafts = (d.invoices ?? []).filter(i => i.status === "draft" && i.total > 0);
+  const billAll = async () => {
+    if (!confirm(`Draft an invoice for each of ${toBill.length} won ${toBill.length === 1 ? "job" : "jobs"}? Nothing is sent yet; you check them first.`)) return;
+    setBatch("bill"); let made = 0;
+    for (const c of toBill) { try { await api("/api/app/act", { p: project, thread: c.id, action: "invoice" }); made++; } catch { /* the next one still goes */ } }
+    await reload(); setBatch(""); toast(`${made} ${made === 1 ? "invoice" : "invoices"} drafted. Check them under Drafts, then send.`);
+  };
+  const sendAll = async () => {
+    if (!confirm(`Text all ${drafts.length} draft invoices to their customers now?`)) return;
+    setBatch("send"); let sent = 0, held = 0;
+    for (const i of drafts) { try { const r = await api<{ sent?: boolean }>("/api/app/act", { p: project, invoice: i.id, action: "invoicesend" }); if (r.sent) sent++; else held++; } catch { held++; } }
+    await reload(); setBatch(""); toast(`${sent} sent.${held ? ` ${held} couldn't go by text (opted out, outside texting hours, or no number); they're marked sent, copy their links.` : ""}`, held > 0 && !sent);
+  };
   const [ticked, setTicked] = useState<Set<string>>(new Set());
   const list = d.invoices ?? [], pays = d.payments ?? [], today = todayIso();
-  const [f, setF] = useState<"open" | "draft" | "paid" | "all">("open"), [view, setView] = useState<"invoices" | "payments">("invoices");
+  const [f, setF] = useState<"open" | "draft" | "paid" | "all">("open"), [view, setView] = useState<"invoices" | "payments" | "expenses">("invoices");
   const [picking, setPicking] = useState(false), [making, setMaking] = useState(""), [pq, setPq] = useState(""), [exp, setExp] = useState(false);
   // Who can be invoiced: won jobs without an invoice first, then everyone else on file.
   const board = d.board ?? [];
@@ -225,13 +261,15 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
             <small>Opens in Excel, Google Sheets or QuickBooks.</small></div>}</div>
         <PriceListButton />
         <button type="button" className="btn" onClick={go.billing}>Pay link and tax</button>
+        {toBill.length > 0 && <button type="button" className="btn" disabled={!!batch} onClick={() => void billAll()} title="A draft for each won job that has a price and no invoice yet">{batch === "bill" ? <Spinner /> : null}Bill {toBill.length} finished {toBill.length === 1 ? "job" : "jobs"}</button>}
+        {drafts.length > 1 && <button type="button" className="btn" disabled={!!batch} onClick={() => void sendAll()}>{batch === "send" ? <Spinner /> : null}Send {drafts.length} drafts</button>}
         <button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New invoice</button>
       </>} />
     <div className="dash money2">
       {!fresh && <Kpis quiet items={[
         { label: "Outstanding", value: usd(outstanding), sub: `${open.length} ${open.length === 1 ? "invoice" : "invoices"} awaiting payment` },
         { label: "Past due", value: usd(lateAmt), sub: late.length ? `${late.length} ${late.length === 1 ? "invoice" : "invoices"}, reminders going out` : "None late", tone: late.length ? "down" : "" },
-        { label: "Collected this month", value: usd(collected), sub: (() => { const k = pays.filter(p => p.paid_on >= monthStart).length; return `${k} ${k === 1 ? "payment" : "payments"} recorded`; })(), tone: collected ? "up" : "", spark: weeklyIn, sparkTone: "good" },
+        { label: "Collected this month", value: usd(collected), sub: (() => { const k = pays.filter(p => p.paid_on >= monthStart && !p.refund).length, rf = pays.filter(p => p.paid_on >= monthStart && p.refund).length; return `${k} ${k === 1 ? "payment" : "payments"} recorded${rf ? `, ${rf} ${rf === 1 ? "refund" : "refunds"}` : ""}`; })(), tone: collected ? "up" : "", spark: weeklyIn, sparkTone: "good" },
         { label: "Days to get paid", value: payDays == null ? "–" : String(payDays), sub: "average, last 90 days" },
       ]} />}
       {fresh && <Guide title="Get paid faster" sub="Invoices go out by text with a Pay button that opens your own payment page. Reminders follow up on their own until the balance is zero. The money never passes through this app."
@@ -249,15 +287,16 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
         <dl>{aging.map((a, k) => <div key={a.l}><dt><i className={"b" + k} />{a.l}</dt><dd className={a.v ? "" : "faint"}>{usd(a.v)}</dd></div>)}</dl>
       </div>}
       <div className="list-tools panel-tools">
-        <div className="seg" role="tablist" aria-label="Show"><button type="button" role="tab" aria-selected={view === "invoices"} className={view === "invoices" ? "on" : ""} onClick={() => setView("invoices")}>Invoices</button><button type="button" role="tab" aria-selected={view === "payments"} className={view === "payments" ? "on" : ""} onClick={() => setView("payments")}>Payments</button></div>
+        <div className="seg" role="tablist" aria-label="Show"><button type="button" role="tab" aria-selected={view === "invoices"} className={view === "invoices" ? "on" : ""} onClick={() => setView("invoices")}>Invoices</button><button type="button" role="tab" aria-selected={view === "payments"} className={view === "payments" ? "on" : ""} onClick={() => setView("payments")}>Payments</button><button type="button" role="tab" aria-selected={view === "expenses"} className={view === "expenses" ? "on" : ""} onClick={() => setView("expenses")}>Expenses</button></div>
         {view === "invoices" && <div className="views" role="tablist" aria-label="Filter">{([["open", "Awaiting payment"], ["draft", "Drafts"], ["paid", "Paid"], ["all", "All"]] as const).map(([k, l]) =>
           <button key={k} type="button" role="tab" aria-selected={f === k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}{counts[k] ? <em>{counts[k]}</em> : null}</button>)}</div>}
       </div>
-      {view === "payments" ? (!pays.length ? <p className="fine" style={{ padding: "10px 0" }}>Payments you record on an invoice show here: card, cash, check, deposits.</p>
+      {view === "expenses" ? <ExpensesView d={d} project={project} api={api} toast={toast} reload={reload} go={go} />
+      : view === "payments" ? (!pays.length ? <p className="fine" style={{ padding: "10px 0" }}>Payments you record on an invoice show here: card, cash, check, deposits.</p>
         : <table className="tbl"><colgroup><col style={{ width: 110 }} /><col /><col style={{ width: 100 }} /><col style={{ width: 200 }} /><col style={{ width: 120 }} /></colgroup>
           <thead><tr><th>Date</th><th>Customer</th><th>Invoice</th><th>How</th><th className="right">Amount</th></tr></thead>
           <tbody>{pays.map(p => <tr key={p.id} tabIndex={0} onClick={() => go.invoice(p.invoice_id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(p.invoice_id); }}>
-            <td className="mut">{dateLabel(p.paid_on)}</td><td><b>{p.customer}</b></td><td className="mut">#{p.number}</td><td className="mut">{PAY_METHODS.find(m => m[0] === p.method)?.[1].split(",")[0]}{p.note ? `, ${p.note}` : ""}</td><td className="num"><b>{dollars(p.amount)}</b></td></tr>)}</tbody></table>)
+            <td className="mut">{dateLabel(p.paid_on)}</td><td><b>{p.customer}</b></td><td className="mut">#{p.number}</td><td className="mut">{p.refund ? "Refund, " : ""}{PAY_METHODS.find(m => m[0] === p.method)?.[1].split(",")[0]}{p.note ? `, ${p.note}` : ""}</td><td className="num"><b>{p.refund ? `−${dollars(-p.amount)}` : dollars(p.amount)}</b></td></tr>)}</tbody></table>)
       : !shown.length ? <p className="fine" style={{ padding: "10px 0" }}>{f === "open" ? "Nothing outstanding. Invoices start from a won job and pull the lines from the quote." : "No invoices here."}</p>
       : wide ? <table className="tbl inv-tbl">
         <colgroup><col style={{ width: 40 }} /><col style={{ width: 76 }} /><col style={{ width: 190 }} /><col /><col style={{ width: 92 }} /><col style={{ width: 92 }} /><col style={{ width: 170 }} /><col style={{ width: 110 }} /><col style={{ width: 110 }} /></colgroup>

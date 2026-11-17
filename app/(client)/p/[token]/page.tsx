@@ -11,7 +11,7 @@ type P = { business: string; owner: string; phone: string; customer: string; pay
   invoices: { number: number; total: number; balance: number; status: string; due_on: string | null; url: string | null; issued: string }[];
   changeOrders: { number: number; title: string; total: number; status: string; url: string | null }[];
   coming: { kind: "estimate" | "install" | "visit"; date: string; time: string | null; what: string }[];
-  photos: string[]; signoff: { signed_by: string; at: string } | null };
+  photos: string[]; signoff: { signed_by: string; at: string } | null; canRate?: boolean; rating?: number | null; reviewLink?: string };
 
 const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
 const day = (d: string) => new Date(d.length === 10 ? d + "T12:00:00" : d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
@@ -31,6 +31,21 @@ export default function CustomerPage() {
   const open = p ? p.invoices.filter(i => i.balance > 0) : [];
   const waiting = p ? [...p.quotes.filter(q => q.status === "open" && q.url), ...p.changeOrders.filter(c => c.status === "sent" && c.url)].length : 0;
   const sms = p?.phone ? `sms:${p.phone}` : "", tel = p?.phone ? `tel:${p.phone}` : "";
+  // Rating the finished job, and asking for more work: both go straight to the business.
+  const [stars, setStars] = useState(0), [comment, setComment] = useState(""), [rated, setRated] = useState<number | null>(null);
+  const [ask, setAsk] = useState(""), [asked, setAsked] = useState(false), [sending, setSending] = useState(""), [postErr, setPostErr] = useState("");
+  const post = async (body: Record<string, unknown>) => {
+    const r = await fetch("/api/p", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, ...body }) });
+    const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "That didn't go through.");
+  };
+  const rate = async () => { setSending("rate"); setPostErr(""); try { await post({ action: "rate", rating: stars, comment }); setRated(stars); } catch (e) { setPostErr(e instanceof Error ? e.message : "That didn't go through."); } finally { setSending(""); } };
+  const request = async () => { setSending("ask"); setPostErr(""); try { await post({ action: "request", text: ask }); setAsked(true); } catch (e) { setPostErr(e instanceof Error ? e.message : "That didn't go through."); } finally { setSending(""); } };
+  const myRating = rated ?? p?.rating ?? null;
+  // Moving or canceling something coming up: one at a time, the owner confirms by text.
+  const [moving, setMoving] = useState<number | null>(null), [want, setWant] = useState<"move" | "cancel">("move"), [note, setNote] = useState(""), [moved, setMoved] = useState<Record<number, "move" | "cancel">>({});
+  const change = async (k: number) => { const c = p!.coming[k]; setSending("change"); setPostErr("");
+    try { await post({ action: "change", change: { kind: c.kind, date: c.date, what: c.what, want, note } }); setMoved(m => ({ ...m, [k]: want })); setMoving(null); setNote(""); }
+    catch (e) { setPostErr(e instanceof Error ? e.message : "That didn't go through."); } finally { setSending(""); } };
 
   return <main className="doc portal">
     {err ? <section className="doc-card doc-msg"><h1>This link isn&rsquo;t working</h1><p>{err}</p></section>
@@ -45,7 +60,17 @@ export default function CustomerPage() {
         </section>
 
         {p.coming.length > 0 && <section className="doc-card"><h2 className="doc-h">Coming up</h2>
-          <ul className="doc-list">{p.coming.map((c, k) => <li key={k}><span><b>{c.what}</b><small>{c.kind === "estimate" ? "Estimate" : c.kind === "install" ? "Install" : "Service visit"}</small></span><em>{day(c.date)}{c.time ? `, ${clock(c.time)}` : ""}</em></li>)}</ul></section>}
+          <ul className="doc-list">{p.coming.map((c, k) => <li key={k} style={moving === k ? { flexWrap: "wrap" } : undefined}><span><b>{c.what}</b><small>{c.kind === "estimate" ? "Estimate" : c.kind === "install" ? "Install" : "Service visit"}
+              {moved[k] ? <>, {moved[k] === "move" ? "you asked to move it" : "you asked to cancel"}</> : moving !== k && <><br /><button type="button" className="doc-link" onClick={() => { setMoving(k); setWant("move"); setNote(""); }}>Need a different time?</button></>}</small></span>
+            <em>{day(c.date)}{c.time ? `, ${clock(c.time)}` : ""}</em>
+            {moving === k && <div style={{ flexBasis: "100%", marginTop: 8 }}>
+              <div className="doc-acts" role="radiogroup" aria-label="What you need">
+                <button type="button" role="radio" aria-checked={want === "move"} className={"btn" + (want === "move" ? " ink" : "")} onClick={() => setWant("move")}>Move it</button>
+                <button type="button" role="radio" aria-checked={want === "cancel"} className={"btn" + (want === "cancel" ? " ink" : "")} onClick={() => setWant("cancel")}>Cancel it</button></div>
+              <textarea className="doc-input" rows={2} maxLength={300} value={note} onChange={e => setNote(e.target.value)} placeholder={want === "move" ? "What days or times work better?" : "Anything we should know? (optional)"} style={{ marginTop: 8 }} />
+              <div className="doc-acts"><button type="button" className="btn lg ink" disabled={sending === "change" || (want === "move" && note.trim().length < 3)} onClick={() => void change(k)}>{sending === "change" ? "Sending" : `Send to ${p.owner || biz}`}</button>
+                <button type="button" className="btn lg" onClick={() => setMoving(null)}>Never mind</button></div>
+              <p className="doc-fine">{p.owner || biz} will text you to confirm. Until then, it stays on the calendar as is.</p></div>}</li>)}</ul></section>}
 
         {(p.quotes.length > 0 || p.changeOrders.length > 0) && <section className="doc-card"><h2 className="doc-h">Quotes and changes</h2>
           <ul className="doc-list">
@@ -59,6 +84,23 @@ export default function CustomerPage() {
         {(p.photos.length > 0 || p.signoff) && <section className="doc-card"><h2 className="doc-h">Your finished job</h2>
           {p.photos.length > 0 && <div className="doc-photos">{p.photos.map(id => <a key={id} href={`/api/p?token=${encodeURIComponent(token)}&photo=${id}`} target="_blank" rel="noreferrer"><img src={`/api/p?token=${encodeURIComponent(token)}&photo=${id}`} alt="After photo" loading="lazy" /></a>)}</div>}
           {p.signoff && <p className="doc-fine" style={{ marginTop: 10 }}>Signed off by {p.signoff.signed_by} on {day(p.signoff.at)}.</p>}</section>}
+
+        {p.canRate && <section className="doc-card"><h2 className="doc-h">How did we do?</h2>
+          {myRating ? <p className="doc-fine">You rated the job {myRating} of 5. Thank you{myRating <= 3 ? `; ${p.owner || biz} will be in touch` : ""}.</p>
+            : <>
+              <div className="doc-stars" role="radiogroup" aria-label="Your rating">{[1, 2, 3, 4, 5].map(n => <button key={n} type="button" role="radio" aria-checked={stars === n} aria-label={`${n} of 5`} className={n <= stars ? "on" : ""} onClick={() => setStars(n)}>★</button>)}</div>
+              {stars > 0 && <><textarea className="doc-input" rows={3} maxLength={1000} value={comment} onChange={e => setComment(e.target.value)} placeholder={stars <= 3 ? "What should we have done better?" : "Anything you'd like to tell us? (optional)"} />
+                <button type="button" className="btn ink lg" disabled={sending === "rate"} onClick={() => void rate()}>{sending === "rate" ? "Sending" : "Send"}</button></>}
+            </>}
+          {p.reviewLink && <p className="doc-fine" style={{ marginTop: 10 }}>Reviews help a small business more than anything. <a href={p.reviewLink} target="_blank" rel="noreferrer">Leave {biz} a Google review</a>.</p>}
+        </section>}
+
+        <section className="doc-card"><h2 className="doc-h">Need something else?</h2>
+          {asked ? <p className="doc-fine">Sent. {p.owner || biz} will get back to you soon.</p> : <>
+            <textarea className="doc-input" rows={3} maxLength={1000} value={ask} onChange={e => setAsk(e.target.value)} placeholder="Another section of fence, a repair, a seasonal service..." />
+            <button type="button" className="btn lg" disabled={sending === "ask" || ask.trim().length < 3} onClick={() => void request()}>{sending === "ask" ? "Sending" : `Send to ${p.owner || biz}`}</button></>}
+        </section>
+        {postErr && <p className="doc-fine" role="alert" style={{ color: "#b42318", textAlign: "center" }}>{postErr}</p>}
 
         <p className="doc-foot">{p.business ? `${p.business}. ` : ""}This page is private to you.</p>
       </>}

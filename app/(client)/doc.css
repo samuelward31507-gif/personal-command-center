@@ -106,3 +106,12 @@ a.doc-fin:hover b { text-decoration: underline; text-underline-offset: 3px; }
 .bk-photos { display: flex; gap: 8px; flex-wrap: wrap; }
 .bk-ph { width: 72px; height: 72px; padding: 0; border: 0; border-radius: 10px; overflow: hidden; } .bk-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .bk-add { display: grid; place-items: center; width: 72px; height: 72px; border: 1px dashed var(--g3, #c4c7cc); border-radius: 10px; font-size: 12px; color: var(--g1); cursor: pointer; text-align: center; padding: 4px; }
+
+/* The customer page: rating the job and asking for more. */
+.doc-stars { display: flex; gap: 6px; margin: 6px 0 10px; }
+.doc-stars button { font-size: 30px; line-height: 1; color: #d3d8df; background: none; border: 0; padding: 2px; cursor: pointer; }
+.doc-stars button.on { color: #e0a42f; }
+.doc-input { width: 100%; box-sizing: border-box; border: 1px solid #d3d8df; border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 15px; margin: 0 0 10px; resize: vertical; }
+
+/* A quiet text button inside a list line ("Need a different time?"). */
+.doc-link { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }

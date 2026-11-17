@@ -124,5 +124,11 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
     failedRuns: failedRuns.map(r => ({ id: String(r.id), title: String(r.task_title || "Untitled task"), agent: String(r.agent_name ?? ""), at: iso(r.at) })),
     tasks: tasks.map(r => ({ id: String(r.id), title: String(r.title), status: String(r.status), priority: String(r.priority), dueAt: iso(r.due_at), contactName: r.contact_name ? String(r.contact_name) : null, dealTitle: r.deal_title ? String(r.deal_title) : null })),
   };
+  // Speed tests waiting on a reply (column added in 0089; skip quietly if it isn't there yet).
+  try {
+    const st = await sql`SELECT id, company, speed_test FROM public.contacts WHERE owner_id = ${owner} AND speed_test IS NOT NULL
+      AND speed_test->>'repliedAt' IS NULL AND (speed_test->>'at')::timestamptz > now() - interval '3 days' ORDER BY (speed_test->>'at') LIMIT 30`;
+    input.speedTests = st.map(r => ({ contactId: String(r.id), company: String(r.company ?? ""), at: String((r.speed_test as Record<string, unknown>).at), via: (["form", "call", "text"].includes(String((r.speed_test as Record<string, unknown>).via)) ? String((r.speed_test as Record<string, unknown>).via) : "form") as "form" | "call" | "text" }));
+  } catch { /* column missing: no speed tests */ }
   return { items: buildQueue(input), now: input.now };
 }

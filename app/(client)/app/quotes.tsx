@@ -158,7 +158,7 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
     <div className="qe-body">
       <div className="qe-form">
         {locked ? <p className="fine">{s === "approved" ? `${firstName} approved this quote. It's now a won job.` : `${firstName} passed on this quote${card.lostReason ? `: ${card.lostReason}` : ""}.`}</p> : null}
-        <section><p className="sec">Line items</p>{locked ? <DocLines items={clean} taxRate={tax} total={t.total} /> : <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} options />}</section>
+        <section><p className="sec">Line items{!locked && <TemplatePicker d={d} project={project} api={api} toast={toast} reload={reload} items={items} onUse={setItems} />}</p>{locked ? <DocLines items={clean} taxRate={tax} total={t.total} /> : <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} options />}</section>
         {!locked && <>
           <section><p className="sec">What&rsquo;s included<small>they&rsquo;ll see it</small></p>
             <textarea className="input" rows={3} style={{ height: "auto", padding: "6px 8px" }} value={note} maxLength={600} onChange={e => setNote(e.target.value)} placeholder="Tear-out and haul-away, steel posts set in concrete, two-year workmanship warranty" /></section>
@@ -194,4 +194,20 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
     </div>
     {losing && <LostPicker name={card.name || fmtPhone(card.phone)} busy={busy === "lost"} onClose={() => setLosing(false)} onPick={r => void lose(r)} />}
   </div>;
+}
+
+/** Saved quotes: start a quote from one, or keep this quote's lines as one. */
+function TemplatePicker({ d, project, api, toast, reload, items, onUse }: { d: Data; project: string; api: Api; toast: Toast; reload: () => Promise<void>; items: Item[]; onUse: (items: Item[]) => void }) {
+  const list = (() => { try { const v = JSON.parse(d.setup?.quote_templates || "[]"); return Array.isArray(v) ? (v as { name: string; items: Item[] }[]) : []; } catch { return []; } })();
+  const save = async () => {
+    const name = prompt("Name this template", items[0]?.name?.slice(0, 40) || "Standard job"); if (!name || !name.trim()) return;
+    const next = [...list.filter(t => t.name.toLowerCase() !== name.trim().toLowerCase()), { name: name.trim(), items }];
+    try { await api("/api/app/act", { p: project, action: "setup", setup: { quote_templates: next } }); toast(`Saved "${name.trim()}". It's in the template list on every quote.`); await reload(); }
+    catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); }
+  };
+  return <span className="tpl-pick">
+    {list.length > 0 && <select className="input sm" value="" aria-label="Start from a template" onChange={e => { const t = list.find(x => x.name === e.target.value); if (t && (items.length <= 1 || confirm(`Replace these lines with "${t.name}"?`))) onUse(t.items.map(x => ({ ...x }))); }}>
+      <option value="">Start from a template</option>{list.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}</select>}
+    {items.some(i => i.name.trim()) && <button type="button" className="link" onClick={() => void save()}>Save as template</button>}
+  </span>;
 }

@@ -2,6 +2,11 @@
    True black, neutral greys, Geist throughout, quiet medium-weight headlines.
    One accent: the ember from the logo, used only for live moments and money. Never for decoration alone. */
 
+@font-face { font-family: "Cinder Display"; src: url("/fonts/InterDisplay-SemiBold.woff") format("woff"); font-weight: 500 600; font-display: swap; }
+@font-face { font-family: "Cinder Display"; src: url("/fonts/InterDisplay-Bold.woff") format("woff"); font-weight: 700 800; font-display: swap; }
+@font-face { font-family: "Cinder Text"; src: url("/fonts/Inter-Regular.woff") format("woff"); font-weight: 300 400; font-display: swap; }
+@font-face { font-family: "Cinder Text"; src: url("/fonts/Inter-Medium.woff") format("woff"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Cinder Text"; src: url("/fonts/Inter-SemiBold.woff") format("woff"); font-weight: 600 800; font-display: swap; }
 :root {
   /* Warm graphite, matched to the Cinder CRM */
   --night: #131211;
@@ -15,7 +20,7 @@
   --ember: #F2431D;
   --ember-hi: #ff7d3b;
   --ember-dim: #8a8a8a;
-  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, "Segoe UI", sans-serif;
+  --sans: "Cinder Text", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
   --wide: "Archivo", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --wrap: 1180px;
   --gut: clamp(20px, 4vw, 40px);
@@ -943,8 +948,8 @@ h2 { font-size: clamp(29px, 3.15vw, 44px); }
   --line: rgba(18,20,23,.08); --line-2: rgba(18,20,23,.15);
   --concrete: #80858d; --fog: #4a4f57; --paper: #121417;
   --ember: #121417; --ember-hi: #2c3038;
-  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, "Segoe UI", sans-serif;
-  --wide: "Inter Tight", "Inter Display", "Inter", system-ui, sans-serif;
+  --sans: "Cinder Text", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
+  --wide: "Cinder Display", "Inter Tight", system-ui, sans-serif;
 }
 body { background: var(--night); color: var(--fog); }
 ::selection { background: #dadde2; color: #121417; }

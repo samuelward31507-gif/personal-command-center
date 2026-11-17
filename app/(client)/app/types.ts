@@ -27,6 +27,20 @@ export type Data = { /** The owner, or a crew member who sees the schedule and t
   jobber?: { available: boolean; connected: boolean; account: string; error: string; lastPush: string | null; connectUrl: string };
   /** QuickBooks Online: invoices and payments pushed to the owner's books. */
   quickbooks?: { available: boolean; connected: boolean; company: string; error: string; lastPush: string | null; connectUrl: string };
+  /** Who did what, the last 200 changes (the owner only). */
+  activity?: { at: string; who: string; role: string; action: string; detail: string; thread: string | null; customer: string }[];
+  /** Customers' ratings of finished jobs from their page, the last year. */
+  ratings?: { avg: number | null; n: number; low: number };
+  /** Equipment at customers' addresses, documents on jobs, and the office's to-dos. */
+  equipment?: import("@/lib/records").Equipment[];
+  files?: import("@/lib/client-records-run").FileRow[];
+  tasks?: import("@/lib/records").Task[];
+  /** The owner's own follow-ups: how many each rule has sent, and when last (owner only). */
+  autoSent?: Record<string, { n: number; last: string }>;
+  /** Material orders on jobs: open ones, and the last 13 months (owner and office only). */
+  orders?: import("@/lib/orders").Order[];
+  /** Expenses and mileage, the last 13 months (owner and office only). */
+  expenses?: import("@/lib/expenses").Expense[];
   /** Leads by email: the forwarding address ("" until it's set up on Cinder's side) and the last emails it received. */
   mail?: { address: string; recent: LeadMail[] };
   /** Connections: each lead source's activity, texts that didn't send, the consent log. */

@@ -93,3 +93,11 @@ ok(() => assert.deepEqual(jobProfit(8600, { materials: 3100, labor: 1800, other:
 ok(() => assert.equal(jobProfit(8600, { materials: 0, labor: 0, other: 0 }), null));
 
 console.log(`CRM checks passed (${n} assertions).`);
+
+// Quote templates: named, up to 30 lines each, options and tiers kept, prices clean, no duplicate names.
+{ const { quoteTemplates } = await import("./lib/crm.ts");
+  const t = quoteTemplates(JSON.stringify([{ name: " Cedar 6ft ", items: [{ name: "Cedar privacy", qty: "140", unit: "ft", price: "62.5" }, { name: "Walk gate", qty: 1, price: 550, opt: true }, { name: "Better", qty: 1, price: 9800, tier: "Better" }] },
+    { name: "cedar 6FT", items: [{ name: "dup" }] }, { name: "", items: [{ name: "x" }] }, { name: "Empty", items: [] }]));
+  assert.equal(t.length, 1); assert.equal(t[0].name, "Cedar 6ft"); assert.equal(t[0].items[0].qty, 140); assert.equal(t[0].items[0].price, 62.5); assert.equal(t[0].items[1].opt, true); assert.equal(t[0].items[2].tier, "Better");
+  assert.equal(quoteTemplates(Array.from({ length: 25 }, (_, i) => ({ name: "T" + i, items: [{ name: "x", price: 1 }] }))).length, 20);
+  console.log("quote templates ok"); }

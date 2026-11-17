@@ -17,7 +17,8 @@ ok(() => assert.ok(fillLine(GATEKEEPER, "trades", "").includes("who should I ask
 ok(() => assert.ok(fillLine("{price} x", "trades").includes("$1,997")));
 ok(() => assert.ok(fillLine("{price} x", "detailing").includes("$997")));
 ok(() => assert.ok(!/\{/.test(fillLine(CLOSE, "trades", "A"))));
-for (const t of ["trades", "detailing"]) ok(() => assert.match(SCRIPTS[t].open, /30 seconds to tell you why I called/, "permission-based opener"));
+for (const t of ["trades", "detailing"]) ok(() => assert.match(SCRIPTS[t].open, /30 seconds/, "permission-based opener"));
+ok(() => assert.match(SCRIPTS.trades.close, /Tomorrow at 10 or Wednesday at 2/, "trades close books a time"));
 ok(() => assert.doesNotMatch(CLOSE, /interested|open to/i, "soft ask only"));
 ok(() => assert.match(CLOSE, /morning or afternoon/));
 ok(() => assert.ok(SCRIPTS.trades.objections.some(o => o.key === "w" && /slammed/.test(o.label))));

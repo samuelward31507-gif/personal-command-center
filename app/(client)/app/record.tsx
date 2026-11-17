@@ -7,6 +7,8 @@ import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./
 import { draftItems, jobFields, jobProfit, jobProgress, jobSteps, rangeText, STAGE_LABEL, STAGES, type Card, type CardInvoice, type Costs, type Details, type Stage } from "@/lib/crm";
 import { chosen, dollars, totals, type Item } from "@/lib/billing";
 import { Avatar, Empty, Icon, Sheet, Spinner, StageChip, ago, clock, dateLabel, dayKey, dayName, first, fmtPhone, short, useArm, type Api, type Toast, noPhone, typePhone } from "./parts";
+import { JobExpenses } from "./expenses";
+import { CustomFieldsBox, EquipmentBox, FilesBox, OrdersBox, TagsRow } from "./records";
 import { quoteText } from "@/lib/crm";
 import { CrewPick, crewName, emailDoc } from "./crew";
 import { PlanBox } from "./plans";
@@ -123,6 +125,13 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
           <JobPanel r={r} biz={biz} ask={ask} setAsk={setAsk} go={go} canText={!!canText} />
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <Steps card={r.card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <CostBox card={r.card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
+          {r.card && <CustomFieldsBox ctx={{ d, project, api, toast, reload }} card={r.card} act={r.act} />}
+          {r.card && !biz.crew && <TagsRow ctx={{ d, project, api, toast, reload }} card={r.card} act={r.act} />}
+          {r.card && <EquipmentBox ctx={{ d, project, api, toast, reload }} thread={r.card.id} />}
+          {r.card && <FilesBox ctx={{ d, project, api, toast, reload }} thread={r.card.id} />}
+          {r.card && (r.card.stage === "won" || r.card.stage === "quoted") && !r.card.pastCustomer && <JobExpenses d={d} thread={r.card.id} project={project} api={api} toast={toast} reload={reload} materials={r.card.costs.materials}
+            onUse={amt => void r.act("costs", { action: "jobcosts", costs: { ...r.card!.costs, materials: amt } }, "Materials cost updated.")} />}
+          {r.card && !biz.crew && (r.card.stage === "won" || r.card.stage === "quoted") && !r.card.pastCustomer && <OrdersBox ctx={{ d, project, api, toast, reload }} card={r.card} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <ChecklistBox d={d} card={r.card} trade={biz.trade} act={r.act} busy={r.busy} canPick={!biz.crew} onPhoto={async (label, f) => { try { await r.act("photo", { action: "photo", kind: "during", caption: label, data: await shrink(f) }, "Photo added."); } catch { r.toast("That photo didn't work.", true); } }} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && <SignoffBox owner={!biz.crew} d={d} card={r.card} trade={biz.trade} save={async input => !!(await r.act("signoff", { action: "signoff", input }, "Signed off. Install and walk-through ticked."))} />}
           {r.card && r.card.stage === "won" && !r.card.pastCustomer && !biz.crew && <HoursBox d={d} card={r.card} act={r.act} busy={r.busy} />}
@@ -179,7 +188,7 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       {next.icon === "cal" && <button type="button" className="btn ink sm" onClick={() => setTab("job")}>Open the job</button>}
       {noPhone(phone) ? null : biz.canCall ? <button type="button" className="btn sm" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}>Call {first(name)}</button> : <a className="btn sm" href={`tel:${phone}`}>Call {first(name)}</a>}
     </div></section> : null;
-  const rail = <>{!biz.crew && needs}{!biz.crew && money}{!biz.crew && card && card.stage === "won" && !card.pastCustomer && <CostBox card={card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}
+  const rail = <>{!biz.crew && needs}{!biz.crew && money}{!biz.crew && card && card.stage === "won" && !card.pastCustomer && <CostBox card={card} busy={r.busy} save={c => void r.act("costs", { action: "jobcosts", costs: c }, "Costs saved.")} />}{card && <EquipmentBox ctx={{ d, project, api, toast, reload }} thread={card.id} />}{card && <FilesBox ctx={{ d, project, api, toast, reload }} thread={card.id} />}{card && (card.stage === "won" || card.stage === "quoted") && !card.pastCustomer && <JobExpensesSlot d={d} thread={card.id} project={project} api={api} toast={toast} reload={reload} materials={card.costs.materials} onUse={biz.crew ? undefined : amt => void r.act("costs", { action: "jobcosts", costs: { ...card.costs, materials: amt } }, "Materials cost updated.")} />}{card && !biz.crew && (card.stage === "won" || card.stage === "quoted") && !card.pastCustomer && <OrdersBox ctx={{ d, project, api, toast, reload }} card={card} />}
     {card && card.stage === "won" && !card.pastCustomer && <ChecklistBox d={d} card={card} trade={biz.trade} act={r.act} busy={r.busy} canPick={!biz.crew} onPhoto={async (label, f) => { try { await r.act("photo", { action: "photo", kind: "during", caption: label, data: await shrink(f) }, "Photo added."); } catch { r.toast("That photo didn't work.", true); } }} />}
     {card && card.stage === "won" && !card.pastCustomer && <SignoffBox owner={!biz.crew} d={d} card={card} trade={biz.trade} save={async input => !!(await r.act("signoff", { action: "signoff", input }, "Signed off. Install and walk-through ticked."))} />}
     {!biz.crew && card && card.stage === "won" && !card.pastCustomer && <HoursBox d={d} card={card} act={r.act} busy={r.busy} />}
@@ -409,7 +418,9 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
       {q.deposit && !editLines ? <p className="fine">Deposit {dollars(q.deposit)} to hold the date{biz.payLink ? ", paid through your pay link once they approve." : ". Add your pay link in Money so they can pay it from the quote page."}</p> : null}
       <div className="chase">
         {q.views ? <p className="chase-v"><b>Viewed {q.views} {q.views === 1 ? "time" : "times"}</b>{q.lastViewed ? `, last ${ago(q.lastViewed)}` : ""}, not approved.</p> : null}
-        <p className="fine">{!q.linked ? "Not sent yet." : q.status === "stopped" ? "Follow-ups stopped." : q.chasePaused ? "Follow-ups are off: this quote came in from your old app." : q.nextChase ? `Next follow-up ${dateLabel(q.nextChase)}${q.steps ? `, ${q.steps} sent so far` : ""}.` : "Every follow-up has gone out."}</p>
+        <p className="fine">{!q.linked ? "Not sent yet." : q.status === "stopped" ? "Follow-ups stopped." : q.chasePaused ? "Follow-ups are off: this quote came in from your old app." : q.nextChase ? `Next follow-up ${dateLabel(q.nextChase)}${q.steps ? `, ${q.steps} sent so far` : ""}.` : "Every follow-up has gone out."}
+          {q.validUntil && (q.status === "open" || q.status === "replied") && <>{" "}{q.validUntil < new Date().toLocaleDateString("en-CA") ? <span className="bad-t">Expired {dateLabel(q.validUntil)}: they can&rsquo;t approve it.</span> : `Good through ${dateLabel(q.validUntil)}.`}{" "}
+            {!biz.crew && <button type="button" className="link" disabled={r.busy === "extend"} onClick={() => void r.act("extend", { action: "quoteextend" }, "Quote extended.")}>Extend</button>}</>}</p>
         <div className="acts-row">
           {q.linked && q.status !== "won" && q.status !== "lost" && <button type="button" className="btn sm" disabled={!!busy || !canText} onClick={() => void act("nudge", { action: "quotenudge" }, `Texted ${firstName} about the quote.`)}>{busy === "nudge" ? <Spinner /> : "Nudge now"}</button>}
           {q.status === "stopped" || q.chasePaused ? <button type="button" className="btn sm" disabled={!!busy} onClick={() => void act("chase", { action: "quotechase", on: true }, "Following up again.")}>Start following up</button>
@@ -436,10 +447,10 @@ function JobPanel({ r, biz, ask, setAsk, go, canText }: { r: Rec; biz: Biz; ask:
       {!biz.crew && <ChangeOrders card={card} act={act} busy={busy} canText={canText} taxRate={Number(biz.taxRate) || 0} />}
       {sec("Invoice", card.invoice ? <span className={"dot " + (invoiceState(card.invoice).tone === "green" ? "good" : invoiceState(card.invoice).tone === "red" ? "bad" : "")} style={{ marginLeft: "auto" }}>{invoiceState(card.invoice).text}</span> : null, card.invoice ? <>
         <div className="money"><span>#{card.invoice.number}{card.invoice.status === "sent" && card.invoice.due_on ? `, due ${dateLabel(card.invoice.due_on)}` : ""}</span><b>{dollars(card.invoice.total)}</b></div>
-        <div className="acts-row end"><button type="button" className="btn ink" onClick={() => go.invoice(card.invoice!.id)}>Open invoice</button></div>
+        <div className="acts-row end">{card.invoice.status === "sent" && canText && <button type="button" className="btn ghost" disabled={!!busy} title="One text with everything they owe and where to pay" onClick={() => void act("statement", { action: "portallink", send: true, statement: true }, "Statement sent.")}>Send statement</button>}<button type="button" className="btn" disabled={!!busy} onClick={async () => { const res = await act("invoice", { action: "invoice", rest: true }, "Invoice for the rest drafted."); if (res?.invoice) go.invoice(res.invoice.id); }}>Bill the rest</button><button type="button" className="btn ink" onClick={() => go.invoice(card.invoice!.id)}>Open invoice</button></div>
       </> : <>
         <p className="fine">Pulls the lines from the quote. You check it before it goes.</p>
-        <div className="acts-row end"><button type="button" className="btn ink" disabled={!!busy} onClick={async () => { const res = await act("invoice", { action: "invoice" }, "Invoice drafted."); if (res?.invoice) go.invoice(res.invoice.id); }}>{busy === "invoice" ? <Spinner /> : "Create invoice"}</button></div>
+        <div className="acts-row end">{[25, 50].map(p => <button key={p} type="button" className="btn" disabled={!!busy} title={`A progress invoice for ${p}% of the job`} onClick={async () => { const res = await act("invoice", { action: "invoice", percent: p }, `Invoice for ${p}% drafted.`); if (res?.invoice) go.invoice(res.invoice.id); }}>Bill {p}%</button>)}<button type="button" className="btn ink" disabled={!!busy} onClick={async () => { const res = await act("invoice", { action: "invoice" }, "Invoice drafted."); if (res?.invoice) go.invoice(res.invoice.id); }}>{busy === "invoice" ? <Spinner /> : "Create invoice"}</button></div>
       </>)}
       {sec("Review", card.reviewSent ? <span className="dot good" style={{ marginLeft: "auto" }}>Asked {ago(card.reviewSent)}</span> : card.reviewAfter ? <span className="dot ink" style={{ marginLeft: "auto" }}>Queued</span> : null, <>
         {card.reviewAfter && !card.reviewSent && <div className="money"><span>Paid in full, so the ask goes out {Date.parse(card.reviewAfter) - Date.now() > 3600000 * 20 ? dateLabel(card.reviewAfter) : `about ${clock(card.reviewAfter)}`}</span><button type="button" className="link" disabled={!!busy} onClick={() => void act("rvc", { action: "reviewcancel" }, "Review ask cancelled.")}>Don&rsquo;t ask</button></div>}
@@ -479,6 +490,7 @@ export function Steps({ card, trade, busy, tick }: { card: Card; trade: string; 
 }
 
 /** What the job cost, and what it made. Three numbers, no spreadsheet. */
+function JobExpensesSlot(p: React.ComponentProps<typeof JobExpenses>) { return <JobExpenses {...p} />; }
 function CostBox({ card, busy, save }: { card: Card; busy: string; save: (c: Costs) => void }) {
   const [c, setC] = useState({ materials: card.costs.materials ? String(card.costs.materials) : "", labor: card.costs.labor ? String(card.costs.labor) : "", other: card.costs.other ? String(card.costs.other) : "" });
   const num = (v: string) => Number(v.replace(/[^\d.]/g, "")) || 0;

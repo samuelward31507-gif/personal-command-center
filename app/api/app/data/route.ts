@@ -6,13 +6,17 @@ import { connectionsReport, loadBoard, ownerSetupView } from "@/lib/client-crm-r
 import { jobberConfigured, jobberState } from "@/lib/jobber-core";
 import { winbackAudience } from "@/lib/client-close-run";
 import { loadCustomers, loadInvoices, loadPayments } from "@/lib/client-billing-run";
-import { reportFor, type Period } from "@/lib/client-reports";
+import { reportFor } from "@/lib/client-reports";
+import { isPeriodKey, type PeriodKey } from "@/lib/periods";
 import { customerEmailReady } from "@/lib/client-email";
 import { winbackDraft } from "@/lib/crm";
 import { loadPlans, loadTime, loadVisits } from "@/lib/client-service-run";
 import { qboConfigured, qboState } from "@/lib/qbo";
 import { eveningFor } from "@/lib/client-evening";
 import { leadMailAddressFor, loadMail } from "@/lib/client-lead-mail-run";
+import { loadExpenses } from "@/lib/client-expenses-run";
+import { loadOrders } from "@/lib/client-orders-run";
+import { loadEquipment, loadFiles, loadTasks } from "@/lib/client-records-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,8 +33,8 @@ export async function GET(req: Request) {
     // Reports for the period the owner picked: its own request, so the rest of the app stays quick.
     if (q.get("report")) {
       if (s.role === "crew") return json({ error: "Only the owner sees reports." }, 403);
-      const days = ([30, 90, 365].includes(Number(q.get("report"))) ? Number(q.get("report")) : 30) as Period;
-      return json({ report: await reportFor(sql, c.projectId, c.setup.timezone || "America/Denver", days) });
+      const key = isPeriodKey(q.get("report")) ? q.get("report") as PeriodKey : "30";
+      return json({ report: await reportFor(sql, c.projectId, c.setup.timezone || "America/Denver", key) });
     }
     // Crew limited to their own jobs (Settings, Account): only threads assigned to them, in every list and every conversation.
     const crewOnlyMine = s.role === "crew" && c.setup.crew_scope === "assigned";
@@ -77,6 +81,13 @@ export async function GET(req: Request) {
       sql`SELECT company_name, last_error, last_push_at FROM public.client_qbo WHERE project_id = ${c.projectId}::uuid`.catch(() => []),
     ]);
     const mailRows = s.role === "crew" ? [] : await loadMail(sql, c).catch(() => []);
+    const autoSent = s.role !== "owner" ? [] : await sql`SELECT rule_id, count(*) FILTER (WHERE ok)::int AS n, max(sent_at) AS last FROM public.client_auto_sends WHERE project_id = ${c.projectId}::uuid GROUP BY 1`.catch(() => []) as { rule_id: string; n: number; last: Date | string }[];
+    const orders = s.role === "crew" ? [] : await loadOrders(sql, c).catch(() => []);
+    const expenses = s.role === "crew" ? [] : await loadExpenses(sql, c).catch(e => { console.error("Expenses failed", e instanceof Error ? e.message : e); return []; });
+    const activity = s.role !== "owner" ? [] : await sql`SELECT a.at, a.who, a.role, a.action, a.detail, a.thread_id, t.customer_name FROM public.client_activity a LEFT JOIN public.client_threads t ON t.id = a.thread_id
+      WHERE a.project_id = ${c.projectId}::uuid ORDER BY a.at DESC LIMIT 200`.catch(() => []) as Record<string, unknown>[];
+    const [rt] = s.role === "crew" ? [] : await sql`SELECT round(avg(rating)::numeric, 1)::float AS avg, count(*)::int AS n, count(*) FILTER (WHERE rating <= 3)::int AS low FROM public.client_feedback WHERE project_id = ${c.projectId}::uuid AND created_at > now() - interval '365 days'`.catch(() => []) as { avg: number | null; n: number; low: number }[];
+    const [equipment0, files0, tasks] = await Promise.all([loadEquipment(sql, c).catch(() => []), loadFiles(sql, c).catch(() => []), s.role === "crew" ? Promise.resolve([]) : loadTasks(sql, c).catch(() => [])]);
     const evening = s.role === "crew" ? undefined : await eveningFor(sql, c.projectId, c.setup.timezone || "America/Denver").catch(() => undefined);
     // Their real calendar, read only on the Calendar tab (it's a Google call).
     let events: CalEvent[] = [], calError = "";
@@ -105,7 +116,8 @@ export async function GET(req: Request) {
       board: crewOnlyMine ? scoped(board, b => b.id).map(b => c.setup.crew_prices === "yes" ? { ...b, costs: { materials: 0, labor: 0, other: 0 } } : { ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 }, changeOrders: (b.changeOrders ?? []).map(x => ({ ...x, items: [], total: 0, url: null })) })
         : crew && c.setup.crew_prices === "yes" ? board.map(b => ({ ...b, costs: { materials: 0, labor: 0, other: 0 } })) : crew ? board.map(b => ({ ...b, value: null, ballpark: null, quote: null, invoice: null, costs: { materials: 0, labor: 0, other: 0 }, changeOrders: (b.changeOrders ?? []).map(x => ({ ...x, items: [], total: 0, url: null })) })) : board,
       setup: crew ? { display_name: c.setup.display_name || "", owner_name: c.setup.owner_name || "", trade: c.setup.trade || "", checklists: c.setup.checklists || "", crew_prices: c.setup.crew_prices || "", brand_color: c.setup.brand_color || "", brand_logo: c.setup.brand_logo || "" } : { ...ownerSetupView(c.setup), has_calendar: (calRow as unknown[]).length ? "yes" : "", team: c.setup.team || "[]", monthly_report: c.setup.monthly_report || "" },
-      customers: crew ? [] : customers, invoices: crew ? [] : invoices, payments: crew ? [] : payments,
+      customers: crew ? [] : customers, invoices: crew ? [] : invoices, payments: crew ? [] : payments, expenses, orders, autoSent: Object.fromEntries(autoSent.map(a => [a.rule_id, { n: Number(a.n) || 0, last: a.last instanceof Date ? a.last.toISOString() : String(a.last) }])), tasks, activity: activity.map(a => ({ at: a.at instanceof Date ? a.at.toISOString() : String(a.at), who: String(a.who ?? ""), role: String(a.role ?? ""), action: String(a.action), detail: String(a.detail ?? ""), thread: a.thread_id ? String(a.thread_id) : null, customer: a.customer_name ? String(a.customer_name) : "" })), ratings: rt ? { avg: rt.avg, n: rt.n, low: rt.low } : undefined,
+      equipment: crewOnlyMine ? equipment0.filter(e => mine.has(e.thread_id)) : equipment0, files: crewOnlyMine ? files0.filter(f => mine.has(f.thread_id)) : files0,
       key: String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? ""), origin, wires,
       mail: crew ? undefined : { address: leadMailAddressFor(String((keyRow as { chat_key?: string }[])[0]?.chat_key ?? "")), recent: mailRows },
       jobber: (() => { const j = (jobberRow as { account_name?: string; last_error?: string; last_push_at?: unknown; connected_at?: unknown }[])[0];

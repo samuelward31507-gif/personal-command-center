@@ -14,6 +14,7 @@ import { ClockBar, myClock } from "./jobwork";
 import { SignoffSheet } from "./finish";
 import { ChecklistBox, routeUrl } from "./parity";
 import { visitDays, type Plan } from "@/lib/service";
+import { cleanDaysOff, offOn } from "@/lib/client-booking";
 import type { Biz, Data, Go } from "./types";
 
 const d10 = (p: string) => (p || "").replace(/\D/g, "").slice(-10);
@@ -37,6 +38,8 @@ export function CrewPick({ d, card, project, api, toast, reload }: { d: Data; ca
     <span className="crewpick">{busy ? <Spinner /> : card.crewMember ? <Avatar name={crewName(d, card.crewMember)} size="sm" /> : null}
       <select aria-label="Who is on this job" value={card.crewMember ?? ""} disabled={busy} onChange={async e => {
         const member = e.target.value, who = team.find(t => t.cell === member)?.name ?? "";
+        const out = card.install && member ? offOn(cleanDaysOff(d.setup?.days_off ?? "[]", card.install), card.install, member) : null;
+        if (out && !confirm(`${first(who)} is off ${dateLabel(card.install!)}${out.note ? ` (${out.note})` : ""}. Put them on it anyway?`)) { e.target.value = card.crewMember ?? ""; return; }
         setBusy(true);
         try { const r = await api<{ texted?: boolean }>("/api/app/act", { p: project, action: "assign", thread: card.id, member }); toast(member ? `${first(who)} is on it.${r.texted ? ` Texted ${first(who)} the details.` : ""}` : "Back with you."); await reload(); }
         catch (err) { toast(err instanceof Error ? err.message : "That didn't work.", true); }

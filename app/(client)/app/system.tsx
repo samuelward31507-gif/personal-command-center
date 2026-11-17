@@ -9,6 +9,8 @@ import { ChecklistsSheet } from "./parity";
 import { contrastOnWhite, dominantColor, readableAccent } from "@/lib/brand";
 import { sourceLabel, type Biz, type Data, type Go, type LeadMail } from "./types";
 import { PageHead } from "./charts";
+import { ActivityLog, DaysOffEditor, FieldLabelsEditor } from "./records";
+import { FollowUps } from "./automations";
 
 type View = "connections" | "tools" | "agent" | "account";
 type State = "on" | "todo" | "off" | "bad";
@@ -370,7 +372,7 @@ function Agent({ d, go, toast, api, project, reload }: { d: Data; go: Go; toast:
 }
 
 // ---------- Account ----------
-type Member = { name: string; cell: string; role: "crew" | "office" | "owner"; rate?: number };
+type Member = { name: string; cell: string; role: "crew" | "office" | "owner"; rate?: number; commission?: number };
 function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, reload, toast }: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; demo: boolean; onSignOut: () => void; api: Api; project: string; reload: () => Promise<void>; toast: Toast }) {
   const s = d.setup ?? {};
   const team: Member[] = (() => { try { const v = JSON.parse(s.team || "[]"); return Array.isArray(v) ? v : []; } catch { return []; } })();
@@ -383,7 +385,7 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
     <p className="sec">Team<small>{team.length ? `${team.length} of 10` : "just you"}</small></p>
     <ul className="settings">
       {team.map(m => <li key={m.cell}><span><b style={{ color: "var(--ink)" }}>{m.name || fmtPhone(m.cell)}</b> {m.name ? <span className="mut">{fmtPhone(m.cell)}</span> : null}</span><span className="acts-row"><span className="mut">{m.role === "owner" ? "Owner, sees everything" : m.role === "office" ? "Office, everything but settings" : "Crew, schedule and jobs only"}</span>
-        <label className="inwrap rate" title="What an hour of their time costs you"><i>$</i><input inputMode="decimal" aria-label={`${m.name || "Their"} hourly rate`} defaultValue={m.rate ? String(m.rate) : ""} placeholder="rate" onBlur={e => { const v = Number(e.target.value.replace(/[^\d.]/g, "")) || 0; if (v !== (m.rate ?? 0)) void saveTeam(team.map(x => x.cell === m.cell ? { ...x, rate: v || undefined } : x)); }} /><em>/hr</em></label><button type="button" className="btn sm" disabled={busy} onClick={() => void saveTeam(team.filter(x => x.cell !== m.cell))}>Remove</button></span></li>)}
+        <label className="inwrap rate" title="What an hour of their time costs you"><i>$</i><input inputMode="decimal" aria-label={`${m.name || "Their"} hourly rate`} defaultValue={m.rate ? String(m.rate) : ""} placeholder="rate" onBlur={e => { const v = Number(e.target.value.replace(/[^\d.]/g, "")) || 0; if (v !== (m.rate ?? 0)) void saveTeam(team.map(x => x.cell === m.cell ? { ...x, rate: v || undefined } : x)); }} /><em>/hr</em></label><label className="inwrap rate" title="Their commission on what's collected on the jobs they're on"><input inputMode="decimal" aria-label={`${m.name || "Their"} commission`} defaultValue={m.commission ? String(m.commission) : ""} placeholder="comm." onBlur={e => { const v = Number(e.target.value.replace(/[^\d.]/g, "")) || 0; if (v !== (m.commission ?? 0)) void saveTeam(team.map(x => x.cell === m.cell ? { ...x, commission: v || undefined } : x)); }} /><em>%</em></label><button type="button" className="btn sm" disabled={busy} onClick={() => void saveTeam(team.filter(x => x.cell !== m.cell))}>Remove</button></span></li>)}
       {adding ? <li style={{ height: "auto", padding: "8px 0" }}><form className="acts-row" style={{ width: "100%" }} onSubmit={e => { e.preventDefault(); if (cell.replace(/\D/g, "").length < 10) return toast("Enter a 10-digit cell.", true); void saveTeam([...team, { name: name.trim(), cell, role, ...(Number(rate) > 0 ? { rate: Number(rate) } : {}) }]); setRate(""); }}>
         <input className="input" style={{ width: 140 }} placeholder="Name" value={name} onChange={e => setName(e.target.value)} autoFocus />
         <input className="input" style={{ width: 150 }} placeholder="Cell" inputMode="tel" value={cell} onChange={e => setCell(typePhone(e.target.value))} />
@@ -401,6 +403,9 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
       {s.timezone && <li><span>Time zone</span><b>{s.timezone.replace(/_/g, " ")}</b></li>}
       <li><span>Business details and price book</span><button type="button" className="btn sm" onClick={go.setup}>Edit</button></li>
       <ReviewLink d={d} api={api} project={project} toast={toast} reload={reload} />
+      <FieldLabelsEditor ctx={{ d, project, api, toast, reload }} />
+      {d.role !== "crew" && <DaysOffEditor ctx={{ d, project, api, toast, reload }} />}
+      {d.role !== "office" && d.role !== "crew" && <FollowUps ctx={{ d, project, api, toast, reload }} />}
       <li><span>Invoices, tax and pay link</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
       <li><span>Notifications on this device</span>{push === "on" ? <span className="dot good">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <span className="mut">{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</span>}</li>
       <li className="brand-li"><span>Your logo and color</span><span className="acts-row"><BrandEdit d={d} api={api} project={project} toast={toast} reload={reload} /></span></li>
@@ -414,6 +419,7 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
       <li><span>Your Cinder rep</span><button type="button" className="btn sm" onClick={() => go.tab("sam")}>Message Sam</button></li>
       <li><span /><button type="button" className="btn sm" onClick={onSignOut}><Icon name="out" size={13} />{demo ? "Leave the example" : "Sign out"}</button></li>
     </ul>
+    {d.role !== "office" && d.role !== "crew" && <ActivityLog ctx={{ d, project, api, toast, reload }} go={go} />}
   </div>;
 }
 

@@ -20,6 +20,8 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="/fonts/InterDisplay-SemiBold.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="/fonts/Inter-Regular.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/v2.css">
 <script>document.documentElement.classList.add("js");if(matchMedia("(prefers-reduced-motion: no-preference)").matches)document.documentElement.classList.add("motion")</script>
@@ -42,7 +44,7 @@
       <p class="lede">Type what a homeowner would send you, then keep the conversation going on the phone. It asks your questions and books the estimate, the way it would for a real lead.</p>
       <form class="tf" id="demo" autocomplete="off">
         <div class="tf-row">
-          <label>Your trade<select name="trade"><option value="Fence">Fence</option><option value="Roofing">Roofing</option><option value="Pool">Pools and spas</option><option value="Other">Something else</option></select></label>
+          <label>Your trade<select name="trade"><option value="Fence">Fence</option><option value="Generator">Standby generators</option><option value="Roofing">Roofing</option><option value="Pool">Pools and spas</option><option value="Other">Something else</option></select></label>
           <label>Your business name<input name="business" maxlength="60" placeholder="Summit Fence Co."></label>
         </div>
         <label>What they send you<textarea name="request" rows="3" maxlength="400" required>Need a quote for about 150 ft of cedar privacy fence in the backyard. We have a dog so need a gate too.</textarea></label>

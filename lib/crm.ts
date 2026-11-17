@@ -170,7 +170,8 @@ export function parseDnt(v: unknown): string[] {
   return [...seen];
 }
 export const TEAM_MAX = 10;
-export type TeamMember = { name: string; cell: string; role: "crew" | "office" | "owner"; /** What an hour of their time costs, for job labor from clocked hours. */ rate?: number };
+export type TeamMember = { name: string; cell: string; role: "crew" | "office" | "owner"; /** What an hour of their time costs, for job labor from clocked hours. */ rate?: number;
+  /** Their commission: a percentage of what's collected on the jobs they're on. */ commission?: number };
 /** The owner's team from setup.team: up to ten people, each a name, a +1 cell, a role (owner, office, crew) and an hourly rate. */
 export function parseTeam(v: unknown): TeamMember[] {
   let arr: unknown = v;
@@ -183,12 +184,39 @@ export function parseTeam(v: unknown): TeamMember[] {
     const d = String(r.cell ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
     if (d.length !== 10 || seen.has(d)) continue;
     seen.add(d);
-    const rate = Number(String(r.rate ?? "").replace(/[$,\s]/g, ""));
-    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : r.role === "office" ? "office" : "crew", ...(Number.isFinite(rate) && rate > 0 && rate <= 500 ? { rate: Math.round(rate * 100) / 100 } : {}) });
+    const rate = Number(String(r.rate ?? "").replace(/[$,\s]/g, "")), pct = Number(String(r.commission ?? "").replace(/[%\s]/g, ""));
+    out.push({ name: String(r.name ?? "").trim().slice(0, 40), cell: "+1" + d, role: r.role === "owner" ? "owner" : r.role === "office" ? "office" : "crew", ...(Number.isFinite(rate) && rate > 0 && rate <= 500 ? { rate: Math.round(rate * 100) / 100 } : {}),
+      ...(Number.isFinite(pct) && pct > 0 && pct <= 50 ? { commission: Math.round(pct * 10) / 10 } : {}) });
     if (out.length >= TEAM_MAX) break;
   }
   return out;
 }
+/** Saved quotes to start from: up to 20, each a name and up to 30 lines (options and tiers kept). */
+export function quoteTemplates(v: unknown): { name: string; items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[] }[] {
+  let arr: unknown = v;
+  if (typeof v === "string") { try { arr = JSON.parse(v); } catch { arr = []; } }
+  const out: { name: string; items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[] }[] = [];
+  for (const t of Array.isArray(arr) ? arr : []) {
+    const o = (t && typeof t === "object" ? t : {}) as Record<string, unknown>;
+    const name = String(o.name ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 60);
+    const items = (Array.isArray(o.items) ? o.items : []).slice(0, 30).map(x => { const i = (x && typeof x === "object" ? x : {}) as Record<string, unknown>;
+      const price = Math.max(0, Math.min(10_000_000, Math.round(Number(i.price) * 100) / 100 || 0)), qty = Math.max(0.01, Math.min(100000, Number(i.qty) || 1));
+      return { name: String(i.name ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 120) || "Line", qty, unit: String(i.unit ?? "").trim().slice(0, 12), price,
+        ...(typeof i.tier === "string" && i.tier ? { tier: i.tier.slice(0, 20) } : {}), ...(i.opt === true ? { opt: true } : {}) }; });
+    if (name && items.length && !out.some(x => x.name.toLowerCase() === name.toLowerCase())) out.push({ name, items });
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+/** The owner's custom field labels: up to 10, 40 characters, no repeats in any case. Mirrors cleanFieldLabels in lib/records.ts. */
+function fieldLabels(v: unknown): string[] {
+  let arr: unknown = v;
+  if (typeof v === "string") { try { arr = JSON.parse(v); } catch { arr = v.split(","); } }
+  const out: string[] = [];
+  for (const x of Array.isArray(arr) ? arr : []) { const l = String(x ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 40); if (l && !out.some(o => o.toLowerCase() === l.toLowerCase())) out.push(l); if (out.length >= 10) break; }
+  return out;
+}
+
 export function cleanOwnerSetup(input: unknown): Record<string, string> {
   const r = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
   const out: Record<string, string> = {};
@@ -226,6 +254,13 @@ export function cleanOwnerSetup(input: unknown): Record<string, string> {
   pick("quote_terms", undefined, 1200); pick("warranty", undefined, 300); pick("financing_note", undefined, 160);
   pick("agent_paused", ["", "yes"]);
   pick("crew_scope", ["", "assigned"]);
+  if (r.late_fee !== undefined) { const v = String(r.late_fee ?? "").trim(); const n = Number(v.replace(/[^\d.]/g, "")); out.late_fee = n > 0 ? (/%/.test(v) ? `${Math.min(25, Math.round(n * 10) / 10)}%` : String(Math.min(500, Math.round(n * 100) / 100))) : ""; }
+  int("late_fee_days", 1, 90);
+  int("monthly_goal", 0, 10000000);
+  int("quote_valid_days", 0, 365);
+  if (r.custom_fields !== undefined) out.custom_fields = JSON.stringify(fieldLabels(r.custom_fields));
+  if (r.quote_templates !== undefined) out.quote_templates = JSON.stringify(quoteTemplates(r.quote_templates));
+  if (r.mileage_rate !== undefined) { const n = Number(String(r.mileage_rate ?? "").replace(/[^\d.]/g, "")); out.mileage_rate = n > 0 && n <= 5 ? String(Math.round(n * 1000) / 1000) : ""; }
   if (r.review_link !== undefined) { const u = String(r.review_link ?? "").trim().slice(0, 300); out.review_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   if (r.financing_link !== undefined) { const u = String(r.financing_link ?? "").trim().slice(0, 300); out.financing_link = /^https:\/\/[^\s]+$/.test(u) ? u : ""; }
   return out;
@@ -259,11 +294,15 @@ ${bp ? `- Ballpark from the owner's own prices for ${bp.basis}: ${rangeText(bp)}
 
 // ---------- The board's card (shared by the server, the app and the example business) ----------
 export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
+  /** The owner's tags, and the customer who referred them. */
+  tags?: string[]; referredBy?: string | null; custom?: Record<string, string>;
   ballpark: { low: number; high: number } | null; notes: string; next: string | null; at: string;
   quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
     items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax: number; deposit?: number | null;
     /** How many times they opened it, the last time, whether follow-ups are paused (imported quotes start paused), and when the next one goes. */
-    views?: number; lastViewed?: string | null; chasePaused?: boolean; nextChase?: string | null } | null;
+    views?: number; lastViewed?: string | null; chasePaused?: boolean; nextChase?: string | null;
+    /** The last day the customer can approve it; null = no end date. */
+    validUntil?: string | null } | null;
   install: string | null; installTime: string | null; installDays: number; onCalendar: boolean; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean;
   invoice: CardInvoice | null; job: Record<string, string>; costs: Costs;
   /** When the job entered its current stage, and the owner's reason when it was lost. */
@@ -291,7 +330,8 @@ export type CardInvoice = { id: string; number: number; status: string; items: {
   due_on: string | null; sent_at: string | null; viewed_at: string | null; paid_at: string | null; paid_claimed_at: string | null; reminders: number; reminders_paused: boolean; url: string | null;
   /** What has come in so far, from recorded payments. Balance is total minus this. */
   paid_amount?: number };
-export type Payment = { id: string; invoice_id: string; thread_id: string; amount: number; method: PayMethod; paid_on: string; note: string; number?: number; customer?: string };
+/** A payment, or a refund (refund: true, amount below zero) so every sum over the list nets out on its own. */
+export type Payment = { id: string; invoice_id: string; thread_id: string; amount: number; method: PayMethod; paid_on: string; note: string; number?: number; customer?: string; refund?: boolean };
 export const PAY_METHODS = [["card", "Card, through your pay link"], ["cash", "Cash"], ["check", "Check"], ["bank", "Bank transfer, Zelle or Venmo"], ["other", "Other"]] as const;
 export type PayMethod = (typeof PAY_METHODS)[number][0];
 export const cleanPayMethod = (v: unknown): PayMethod => (PAY_METHODS.some(m => m[0] === v) ? v as PayMethod : "other");

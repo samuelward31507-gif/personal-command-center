@@ -53,6 +53,8 @@ export type QueueInput = {
   /** Prospects whose first-ever logged call happened today (counts against the daily cap). */
   firstTouchesToday?: number;
   dailyNewProspects?: number;
+  /** Speed tests still waiting on a reply (asked in the last 3 days). */
+  speedTests?: { contactId: string; company: string; at: string; via: "form" | "call" | "text" }[];
 };
 
 const NICHE = /\b(fence|fencing)\b/i;
@@ -149,6 +151,19 @@ export function buildQueue(input: QueueInput): QueueItem[] {
   });
 
   // 2. Meetings in the next ~36h; unprepared ones rank first.
+  // Speed tests waiting on a reply: a quick check, not a call. Under 48 hours it's still running; past that it's a "no reply".
+  const VIA = { form: "web form", call: "a call", text: "a text" } as const;
+  for (const t of input.speedTests ?? []) {
+    const hrs = Math.max(0, Math.round((Date.parse(input.now) - Date.parse(t.at)) / 3600000));
+    const done = hrs >= 48;
+    items.push({
+      id: "speedtest:" + t.contactId, group: "revenue", status: done ? "today" : "upcoming",
+      title: done ? `${t.company || "Prospect"} never replied to your quote request` : `Did ${t.company || "they"} reply to your quote request?`,
+      why: done ? `Speed test by ${VIA[t.via]}, ${hrs} hours, no reply. That's your opener.` : `Speed test by ${VIA[t.via]}, ${hrs < 1 ? "under an hour" : hrs + "h"} ago. Tap They replied when they do.`,
+      lastActivity: null, due: t.at, href: `/crm/call?contact=${t.contactId}`, contact: null, callable: false, rank: 50,
+    });
+  }
+
   for (const m of input.meetings) {
     const when = new Date(m.startsAt);
     const isToday = day(m.startsAt) === today;

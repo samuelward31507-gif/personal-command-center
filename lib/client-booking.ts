@@ -3,11 +3,42 @@
 // after a no-show, English or Spanish, and a Monday text report. This is the logic behind each.
 
 export type Busy = { start: string; end: string };
-export type Hours = { tz: string; days: number[]; start: number; end: number; slotMin: number; leadHours: number; perDay?: number; bufferMin?: number };
+export type Hours = { tz: string; days: number[]; start: number; end: number; slotMin: number; leadHours: number; perDay?: number; bufferMin?: number;
+  /** Days the business is closed (holidays, vacation): nothing is offered on them. */ off?: DayOff[] };
+
+/** A day or a stretch off: the whole business (who = "") or one person on the team (their +1 cell). */
+export type DayOff = { from: string; to: string; who: string; note: string };
+const YMD = /^\d{4}-\d{2}-\d{2}$/;
+/**
+ * The owner's days off, checked: real dates, up to 60 days each, no more than 40 kept, and ones that ended over a month
+ * ago dropped. Sorted by start.
+ */
+export function cleanDaysOff(v: unknown, today: string): DayOff[] {
+  let arr: unknown = v;
+  if (typeof v === "string") { try { arr = JSON.parse(v); } catch { arr = []; } }
+  const cutoff = new Date(Date.parse(today + "T12:00:00Z") - 31 * 86400000).toISOString().slice(0, 10);
+  const out: DayOff[] = [];
+  for (const x of Array.isArray(arr) ? arr : []) {
+    const o = (x && typeof x === "object" ? x : {}) as Record<string, unknown>;
+    const from = String(o.from ?? ""), to = String(o.to ?? o.from ?? "");
+    if (!YMD.test(from) || !YMD.test(to) || to < from || isNaN(Date.parse(from)) || isNaN(Date.parse(to))) continue;
+    if ((Date.parse(to) - Date.parse(from)) / 86400000 > 60 || to < cutoff) continue;
+    const d = String(o.who ?? "").replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+    out.push({ from, to, who: d.length === 10 ? "+1" + d : "", note: String(o.note ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 60) });
+    if (out.length >= 40) break;
+  }
+  return out.sort((a, b) => a.from.localeCompare(b.from));
+}
+/** Whether `ymd` is off for this person ("" = the business). A business closure covers everyone. */
+export function offOn(list: DayOff[], ymd: string, who = ""): DayOff | null {
+  const d = (s: string) => s.replace(/\D/g, "").slice(-10);
+  return list.find(o => o.from <= ymd && ymd <= o.to && (!o.who || (who && d(o.who) === d(who)))) ?? null;
+}
 /** The owner's booking preferences from setup, applied to parsed hours: lead time, times offered per day, buffer around other events. */
 export function withBookingPrefs(h: Hours, setup: Record<string, string> | undefined): Hours {
   const n = (k: string, lo: number, hi: number) => { const v = Number(setup?.[k]); return Number.isFinite(v) && v >= lo && v <= hi ? v : undefined; };
-  return { ...h, leadHours: n("book_lead_hours", 1, 72) ?? h.leadHours, perDay: n("book_per_day", 1, 8) ?? 2, bufferMin: n("book_buffer_min", 0, 120) ?? 0 };
+  const off = cleanDaysOff(setup?.days_off ?? "[]", new Date().toISOString().slice(0, 10)).filter(o => !o.who);
+  return { ...h, leadHours: n("book_lead_hours", 1, 72) ?? h.leadHours, perDay: n("book_per_day", 1, 8) ?? 2, bufferMin: n("book_buffer_min", 0, 120) ?? 0, ...(off.length ? { off } : {}) };
 }
 export type Slot = { start: string; end: string; label: string };
 
@@ -51,7 +82,7 @@ export function freeSlots(busy: Busy[], h: Hours, now: Date, opts: { days?: numb
   const earliest = now.getTime() + h.leadHours * 3600000;
   for (let i = 0; i < (opts.days ?? 10) && out.length < (opts.max ?? 6); i++) {
     const ymd = localYmd(new Date(now.getTime() + i * 86400000), h.tz);
-    if (!h.days.includes(localDow(ymd))) continue;
+    if (!h.days.includes(localDow(ymd)) || (h.off && offOn(h.off, ymd))) continue;
     let perDay = 0;
     for (let m = h.start * 60; m + h.slotMin <= h.end * 60 && perDay < cap && out.length < (opts.max ?? 6); m += h.slotMin) {
       const s = zoned(ymd, Math.floor(m / 60), m % 60, h.tz).getTime(), e = s + h.slotMin * 60000;
@@ -144,10 +175,12 @@ export function mondayText(business: string, w: WeekNumbers, link: string): stri
     `${w.answered} of ${w.leads} lead${w.leads === 1 ? "" : "s"} answered${w.replySec != null ? `, typically in ${w.replySec < 60 ? w.replySec + " sec" : Math.round(w.replySec / 60) + " min"}` : ""}`,
     `${w.booked} estimate${w.booked === 1 ? "" : "s"} booked`,
     w.quotesChased ? `${w.quotesChased} quote${w.quotesChased === 1 ? "" : "s"} followed up${w.openQuoteValue ? ` (${usd(w.openQuoteValue)} open)` : ""}` : "",
-    w.won ? `${w.won} won${w.wonValue ? `, ${usd(w.wonValue)}` : ""}` : "",
+    w.won ? `${w.won} job${w.won === 1 ? "" : "s"} won` : "",
     w.reviews ? `${w.reviews} review request${w.reviews === 1 ? "" : "s"} sent` : "",
   ].filter(Boolean);
-  return `Cinder for ${business}, last week: ${parts.join(", ")}. Every conversation: ${link}`.slice(0, 600);
+  // Money first when there is any: a won job is the line the owner remembers.
+  const lead = w.won && w.wonValue ? `${usd(w.wonValue)} in jobs won. ` : "";
+  return `Cinder for ${business}, last week: ${lead}${parts.join(", ")}. Every conversation: ${link}`.slice(0, 600);
 }
 
 /** Inbound web lead: pull a usable name, phone and job out of whatever a form sends. */

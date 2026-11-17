@@ -17,6 +17,9 @@ const csv = (rows: unknown[][]) => "﻿" + rows.map(r => r.map(cell).join(",")).
  * GET /api/app/export?p=<project>&what=customers|invoices|payments — a CSV the owner (or the bookkeeper) opens in a
  * spreadsheet or QuickBooks. Customers by default. Owner only.
  */
+import { ratesOf, timesheet } from "@/lib/service";
+import { parseTeam } from "@/lib/crm";
+
 export async function GET(req: Request) {
   const s = appSession(req);
   if (!s) return Response.json({ error: "Sign in" }, { status: 401 });
@@ -30,7 +33,7 @@ export async function GET(req: Request) {
       return new Response(new Uint8Array(body), { headers: { "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="${slug}-everything-${new Date().toISOString().slice(0, 10)}.zip"`, "Cache-Control": "no-store" } });
     } catch (e) { console.error("Export all failed", e instanceof Error ? e.message : e); return Response.json({ error: "Couldn't export." }, { status: 500 }); }
   }
-  const q = q0, what = ["invoices", "payments"].includes(q.get("what") ?? "") ? q.get("what")! : "customers";
+  const q = q0, what = ["invoices", "payments", "timesheets"].includes(q.get("what") ?? "") ? q.get("what")! : "customers";
   try {
     const sql = db();
     const c = await clientFor(sql, s, q.get("p"));
@@ -42,6 +45,19 @@ export async function GET(req: Request) {
       body = csv([["Invoice", "Customer", "Phone", "Status", "Issued", "Due", "Paid on", "Subtotal and tax", "Total", "Paid", "Balance", "Note"],
         ...list.map(i => [i.number, i.customer, i.phone, i.status === "sent" ? "Awaiting payment" : i.status[0].toUpperCase() + i.status.slice(1), i.sent_at?.slice(0, 10) ?? "", i.due_on ?? "", i.paid_at?.slice(0, 10) ?? "",
           i.items.map(x => `${x.name} ${x.qty}${x.unit ? " " + x.unit : ""} x ${x.price}`).join("; ") + (i.tax_rate ? `; tax ${i.tax_rate}%` : ""), i.total, i.paid_amount ?? 0, i.status === "void" ? 0 : Math.max(0, i.total - (i.paid_amount ?? 0)), i.note])]);
+    } else if (what === "timesheets") {
+      // Hours for payroll: from / to (YYYY-MM-DD) in the business's time zone, the last 14 days by default.
+      const tzone = c.setup.timezone || "America/Denver";
+      const to = /^\d{4}-\d{2}-\d{2}$/.test(q.get("to") ?? "") ? q.get("to")! : new Date().toLocaleDateString("en-CA", { timeZone: tzone });
+      const from = /^\d{4}-\d{2}-\d{2}$/.test(q.get("from") ?? "") ? q.get("from")! : new Date(Date.parse(to + "T12:00:00Z") - 13 * 86400000).toISOString().slice(0, 10);
+      const rows = await sql`SELECT x.member, x.started_at, x.ended_at, t.customer_name AS customer FROM public.client_time x LEFT JOIN public.client_threads t ON t.id = x.thread_id
+        WHERE x.project_id = ${c.projectId}::uuid AND x.ended_at IS NOT NULL AND (x.started_at AT TIME ZONE ${tzone})::date BETWEEN ${from}::date AND ${to}::date ORDER BY x.started_at` as Record<string, unknown>[];
+      const team = parseTeam(c.setup.team), names: Record<string, string> = { "": c.setup.owner_name || "Owner" };
+      for (const m of team) names[m.cell.replace(/\D/g, "").slice(-10)] = m.name || m.cell;
+      const { lines, weeks } = timesheet(rows.map(r => ({ member: String(r.member ?? ""), started_at: new Date(String(r.started_at)).toISOString(), ended_at: new Date(String(r.ended_at)).toISOString(), customer: r.customer ? String(r.customer) : undefined })),
+        names, ratesOf(team), Number(c.setup.labor_rate) || 0, tzone);
+      body = csv([["Week of", "Person", "Hours", "Regular", "Overtime", "Rate", "Pay (overtime at 1.5x)"], ...weeks.map(w => [w.week, w.person, w.hours, w.regular, w.overtime, w.rate || "", w.rate ? w.pay : ""]),
+        [], ["Date", "Person", "Job", "In", "Out", "Hours", "Rate"], ...lines.map(l => [l.date, l.person, l.job, l.start, l.end, l.hours, l.rate || ""])]);
     } else if (what === "payments") {
       const list = await loadPayments(sql, c, 5000);
       body = csv([["Date", "Customer", "Invoice", "Method", "Amount", "Note"],
@@ -68,9 +84,12 @@ async function everything(sql: Sql, c: Client): Promise<Uint8Array> {
   const files = await Promise.all([
     table("customers", await q(sql`SELECT id, customer_name AS name, customer_phone AS phone, customer_email AS email, details->>'address' AS address, source, stage, status, value, notes, crew_notes, created_at, updated_at, hidden_at, source_system, source_ref FROM public.client_threads WHERE project_id = ${p}::uuid ORDER BY created_at`)),
     table("properties", await q(sql`SELECT id, thread_id AS customer_id, address, gate_code, notes, created_at FROM public.client_properties WHERE project_id = ${p}::uuid ORDER BY created_at`)),
+    table("expenses", await q(sql`SELECT e.id, e.spent_on, e.kind, e.vendor, e.category, e.amount, e.miles, e.note, e.thread_id AS customer_id, e.member, e.created_at FROM public.client_expenses e WHERE e.project_id = ${p}::uuid ORDER BY e.spent_on`)),
     table("quotes", await q(sql`SELECT id, customer_name, customer_phone, amount, status, sent_on, items, tax_rate, deposit, note, viewed_at, approved_at, declined_at, created_at FROM public.client_quotes WHERE project_id = ${p}::uuid ORDER BY created_at`)),
     table("invoices", await q(sql`SELECT id, thread_id AS customer_id, number, status, items, tax_rate, total, paid_amount, due_on, sent_at, paid_at, note, created_at FROM public.client_invoices WHERE project_id = ${p}::uuid ORDER BY number`)),
     table("payments", await q(sql`SELECT id, invoice_id, thread_id AS customer_id, amount, method, paid_on, note, created_at FROM public.client_payments WHERE project_id = ${p}::uuid ORDER BY paid_on`)),
+    table("orders", await q(sql`SELECT id, thread_id AS customer_id, supplier, supplier_email, items, status, needed_on, note, ordered_at, received_at, created_at FROM public.client_orders WHERE project_id = ${p}::uuid ORDER BY created_at`)),
+    table("refunds", await q(sql`SELECT id, invoice_id, thread_id AS customer_id, amount, method, refunded_on, note, created_at FROM public.client_refunds WHERE project_id = ${p}::uuid ORDER BY refunded_on`)),
     table("service-plans", await q(sql`SELECT id, thread_id AS customer_id, name, items, total, every_n, every_unit, next_on, ends_on, status, visits_done, created_at FROM public.client_plans WHERE project_id = ${p}::uuid ORDER BY created_at`)),
     table("visits", await q(sql`SELECT id, plan_id, thread_id AS customer_id, on_date, status, invoice_id FROM public.client_visits WHERE project_id = ${p}::uuid ORDER BY on_date`)),
     table("change-orders", await q(sql`SELECT id, thread_id AS customer_id, number, title, items, total, status, signed_by, decided_at, created_at FROM public.client_change_orders WHERE project_id = ${p}::uuid ORDER BY created_at`)),
