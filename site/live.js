@@ -341,3 +341,23 @@
   sheet.addEventListener("click", function (e) { if (e.target.closest("a")) set(false); });
   addEventListener("keydown", function (e) { if (e.key === "Escape") set(false); });
 })();
+
+// ---------- Depth: product visuals drift a few pixels slower than the page ----------
+(function () {
+  var html = document.documentElement;
+  if (!html.classList.contains("motion") || html.classList.contains("rm") || !("IntersectionObserver" in window)) return;
+  var items = [].slice.call(document.querySelectorAll(".bx-vis .ui, .try-phone .iph, .vs-with .lock"));
+  if (!items.length) return;
+  var live = new Set(), ticking = false, AMP = 14;
+  var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) live.add(e.target); else live.delete(e.target); }); frame(); }, { rootMargin: "10% 0px" });
+  items.forEach(function (el) { io.observe(el); });
+  function update() {
+    ticking = false; var vh = innerHeight;
+    live.forEach(function (el) {
+      var r = el.getBoundingClientRect(), p = (r.top + r.height / 2) / vh; // 0 at top, 1 at bottom
+      el.style.translate = "0 " + ((p - .5) * AMP).toFixed(2) + "px";
+    });
+  }
+  function frame() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+  addEventListener("scroll", frame, { passive: true }); addEventListener("resize", frame);
+})();
