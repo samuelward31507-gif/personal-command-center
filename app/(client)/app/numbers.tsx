@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { jobPrice } from "@/lib/service";
 import type { Period, Report, ReportNumbers } from "@/lib/client-reports";
+import { PERIODS, periodRange, type PeriodKey } from "@/lib/periods";
 import { Avatar, Spinner, ago, secs, short, usd, type Api, type Toast } from "./parts";
 import { Bars, Donut, Guide, Kpis, PageHead, type Kpi } from "./charts";
 import { HoursPanel, RecurringPanel } from "./jobwork";
@@ -15,7 +16,6 @@ import { totals } from "@/lib/billing";
 import { commissions, minutesOf } from "@/lib/service";
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : null);
-const PERIOD: Record<Period, string> = { 30: "the last 30 days", 90: "the last 90 days", 365: "the last 12 months" };
 const SRC_COLORS = ["#121417", "#d0663f", "#1a8f55", "#0a7cf0", "#8a8f98", "#c9a227", "#6b3f86", "#b4b8bf"];
 
 /** "+12% vs before", green when it's better. `lowerIsBetter` for times; `points` for rates. */
@@ -29,29 +29,33 @@ function delta(now: number | null, before: number | null, o: { lowerIsBetter?: b
 }
 
 export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinback }: { d: Data; biz: Biz; go: Go; project: string; api: Api; toast: Toast; reload: () => Promise<void>; onWinback: () => void }) {
-  const [days, setDays] = useState<Period>(30);
+  const [key, setKey] = useState<PeriodKey>("30");
+  const rg = periodRange(key, new Date(), d.setup?.timezone || "America/Denver"), days = (key === "90" ? 90 : rg.unit === "month" ? 365 : 30) as Period;
+  const win = { since: rg.from.getTime(), until: rg.to.getTime(), phrase: rg.phrase };
   const [r, setR] = useState<Report | null>(null), [err, setErr] = useState(""), [busy, setBusy] = useState("");
-  const load = useCallback(async (n: Period) => {
+  const load = useCallback(async (n: PeriodKey) => {
     setErr("");
     try { setR((await api<{ report: Report }>(`/api/app/data?p=${project}&report=${n}`)).report); } catch (e) { setErr(e instanceof Error ? e.message : "Couldn't load the report."); }
   }, [api, project]);
-  useEffect(() => { void load(days); }, [days, load]);
+  useEffect(() => { void load(key); }, [key, load]);
   const askReview = async (id: string, name: string) => { setBusy(id); try { await api("/api/app/act", { p: project, action: "review", quote: id }); toast(`Review request sent to ${name.split(" ")[0]}.`); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't send.", true); } finally { setBusy(""); } };
 
   const n = r?.now, b = r?.before, ser = r?.series ?? [];
   const rate = (x?: ReportNumbers) => x ? { book: pct(x.booked, x.leads), quote: pct(x.quoted, x.booked), close: pct(x.won, x.quoted), avg: x.won ? x.wonValue / x.won : null, noShow: pct(x.noShows, x.appts) } : null;
   const R = rate(n), B = rate(b);
-  const lab = (k: string, i: number) => { const t = new Date(k + "T12:00:00"); return days === 365 ? t.toLocaleDateString("en-US", { month: "short" }) : i === ser.length - 1 ? "This week" : t.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+  const lab = (k: string, i: number) => { const t = new Date(k + "T12:00:00"); return rg.unit === "month" ? t.toLocaleDateString("en-US", { month: "short" }) : i === ser.length - 1 && rg.current ? "This week" : t.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
   const pending = d.wonJobs ?? [], wb = d.winback;
   const lostTotal = r?.lostReasons.reduce((a, x) => a + x.n, 0) ?? 0;
   const srcTotal = r?.sources.reduce((a, s) => a + s.wonValue, 0) ?? 0;
   const ready = !!(r && n && b && R && B);
 
   return <>
-    <PageHead title="Reports" sub={ready && n!.leads ? `${usd(n!.wonValue)} won from ${n!.leads} leads in ${PERIOD[days]}.` : ready ? "No leads yet in this period." : `How ${PERIOD[days]} went.`}
-      actions={<div className="seg" role="tablist" aria-label="Period">{([30, 90, 365] as Period[]).map(p => <button key={p} type="button" role="tab" aria-selected={days === p} className={days === p ? "on" : ""} onClick={() => setDays(p)}>{p === 365 ? "12 months" : `${p} days`}</button>)}</div>} />
+    <PageHead title="Reports" sub={ready && n!.leads ? `${usd(n!.wonValue)} won from ${n!.leads} leads in ${rg.phrase}, against ${rg.vs}.` : ready ? "No leads yet in this period." : `How ${rg.phrase} went.`}
+      actions={<span className="acts-row"><div className="seg" role="tablist" aria-label="Period">{(["30", "90", "365"] as PeriodKey[]).map(p => <button key={p} type="button" role="tab" aria-selected={key === p} className={key === p ? "on" : ""} onClick={() => { setR(null); setKey(p); }}>{PERIODS.find(x => x[0] === p)![1]}</button>)}</div>
+        <select className="input sm" style={{ width: "auto" }} aria-label="Calendar period" value={["month", "lastmonth", "year", "lastyear"].includes(key) ? key : ""} onChange={e => { if (e.target.value) { setR(null); setKey(e.target.value as PeriodKey); } }}>
+          <option value="">Month or year</option>{PERIODS.filter(p => !/^\d/.test(p[0])).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></span>} />
     <div className="dash rep2">
-      {err ? <div className="panel"><div className="panel-b"><p className="fine" style={{ color: "var(--bad)", padding: "12px 0" }}>{err} <button type="button" className="link" onClick={() => void load(days)}>Try again</button></p></div></div>
+      {err ? <div className="panel"><div className="panel-b"><p className="fine" style={{ color: "var(--bad)", padding: "12px 0" }}>{err} <button type="button" className="link" onClick={() => void load(key)}>Try again</button></p></div></div>
       : !ready ? <div className="panel"><div className="panel-b skel-rows" style={{ padding: 18 }}><i className="skel" /><i className="skel" /><i className="skel" /></div></div>
       : n!.leads === 0 && b!.leads === 0 && !ser.length ? <Guide title="Your numbers start with your first lead"
         sub="Book rate, close rate, average job, speed to lead, money collected and where the work comes from, all worked out for you and compared with the period before. Nothing to set up."
@@ -76,7 +80,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
 
         <div className="grid12">
           <section className="panel s5">
-            <div className="panel-h"><h2>From lead to won</h2><small>{PERIOD[days]}</small></div>
+            <div className="panel-h"><h2>From lead to won</h2><small>{rg.phrase}</small></div>
             <div className="panel-b funnel2">{([["Leads", n!.leads, null, ""], ["Estimates booked", n!.booked, R!.book, "book rate"], ["Quoted", n!.quoted, R!.quote, "of booked"], ["Won", n!.won, R!.close, "close rate"]] as const).map(([k, v, of, l], i) =>
               <div key={k} className="fn"><div className="fn-t"><span>{k}</span><b>{v}</b>{of != null && <em>{of}% {l}</em>}</div>
                 <i className={"fn-bar s" + i} style={{ width: `${n!.leads ? Math.max(3, (v / n!.leads) * 100) : 0}%` }} /></div>)}
@@ -84,12 +88,12 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
             </div>
           </section>
           <section className="panel s7">
-            <div className="panel-h"><h2>Leads and bookings</h2><small>{days === 365 ? "by month" : "by week"}</small></div>
+            <div className="panel-h"><h2>Leads and bookings</h2><small>{rg.unit === "month" ? "by month" : "by week"}</small></div>
             <div className="panel-b" style={{ paddingTop: 18 }}>{ser.length > 1 ? <Bars data={ser.map((p, i) => ({ label: lab(p.label, i), a: p.leads, b: p.booked }))} a="Leads" b="Booked" height={190} />
               : <p className="fine" style={{ padding: "30px 0" }}>The chart fills in as the weeks go by.</p>}</div>
           </section>
           <section className="panel s7">
-            <div className="panel-h"><h2>Money in</h2><small>won and collected, {days === 365 ? "by month" : "by week"}</small></div>
+            <div className="panel-h"><h2>Money in</h2><small>won and collected, {rg.unit === "month" ? "by month" : "by week"}</small></div>
             <div className="panel-b" style={{ paddingTop: 18 }}>{ser.length > 1 ? <Bars data={ser.map((p, i) => ({ label: lab(p.label, i), a: p.wonValue, b: p.collected }))} a="Won" b="Collected" height={170} fmt={v => short(v)} />
               : <p className="fine" style={{ padding: "30px 0" }}>The chart fills in as the weeks go by.</p>}</div>
           </section>
@@ -110,7 +114,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
             const jobs = (d.board ?? []).filter(c => c.stage === "won").map(c => ({ c, p: jobProfit(jobPrice(c), c.costs) })).filter(x => x.p).sort((a, b) => a.p!.margin - b.p!.margin);
             const uncosted = Math.max(0, n!.won - n!.costed);
             return <section className="panel s12">
-              <div className="panel-h"><h2>Profit on won jobs</h2><small>{n!.costed ? `${n!.costed} of ${n!.won} won ${n!.won === 1 ? "job" : "jobs"} with costs logged` : PERIOD[days]}</small></div>
+              <div className="panel-h"><h2>Profit on won jobs</h2><small>{n!.costed ? `${n!.costed} of ${n!.won} won ${n!.won === 1 ? "job" : "jobs"} with costs logged` : rg.phrase}</small></div>
               <div className="panel-b profit2">{n!.costed ? <>
                 <div className="profit-fig">
                   <Donut size={124} total={margin == null ? "–" : `${margin}%`} label="margin" parts={[{ label: "Profit", value: Math.max(0, profit), color: "var(--good)" }, { label: "Costs", value: n!.costs, color: "var(--g3)" }]} />
@@ -127,7 +131,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
             </section>;
           })()}
           <section className="panel s12">
-            <div className="panel-h"><h2>Where the work came from</h2><small>{PERIOD[days]}</small></div>
+            <div className="panel-h"><h2>Where the work came from</h2><small>{rg.phrase}</small></div>
             <div className="panel-b src2">
               {r!.sources.length ? <>
                 <Donut parts={r!.sources.map((s, i) => ({ label: s.source, value: s.wonValue || s.leads * 0.001, color: SRC_COLORS[i % SRC_COLORS.length] }))} total={short(srcTotal)} label="won" size={150} />
@@ -140,11 +144,11 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
           </section>
           <RecurringPanel d={d} go={go} onPlans={() => go.tab("plans")} />
           <HoursPanel d={d} go={go} />
-          <CrewPanel d={d} days={days} />
-          <CommissionPanel d={d} days={days} />
-          <TaxPanel d={d} days={days} />
+          <CrewPanel d={d} win={win} />
+          <CommissionPanel d={d} win={win} />
+          <TaxPanel d={d} win={win} />
           <section className="panel s6">
-            <div className="panel-h"><h2>Reviews</h2><small>{n!.reviews} asked {days === 365 ? "this year" : `in ${days} days`}</small></div>
+            <div className="panel-h"><h2>Reviews</h2><small>{n!.reviews} asked, {rg.phrase}</small></div>
             {d.ratings && d.ratings.n > 0 && <p className="fine" style={{ padding: "8px 0 0" }}>Customers rated finished jobs <b style={{ color: "var(--ink)" }}>{d.ratings.avg} of 5</b> ({d.ratings.n} {d.ratings.n === 1 ? "rating" : "ratings"} this year{d.ratings.low ? `, ${d.ratings.low} at 3 or lower` : ""}).</p>}
             <div className="panel-b">
               {!biz.reviewLink && <p className="fine" style={{ padding: "8px 0" }}>Add your Google review link in Settings, Account, and the morning after each install the customer gets one text asking for a review.</p>}
@@ -169,16 +173,18 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
 }
 
 /** Who on the crew did what in the period: jobs won with them on it, their value, and hours clocked. */
-function CrewPanel({ d, days }: { d: Data; days: number }) {
-  const team = parseTeam(d.setup?.team ?? "[]"), since = Date.now() - days * 86400000, d10 = (p: string) => p.replace(/\D/g, "").slice(-10);
+type Win = { since: number; until: number; phrase: string };
+const inWin = (w: Win, at: string | number) => { const t = typeof at === "number" ? at : Date.parse(at.length === 10 ? at + "T12:00:00" : at); return t >= w.since && t < w.until; };
+function CrewPanel({ d, win }: { d: Data; win: Win }) {
+  const team = parseTeam(d.setup?.team ?? "[]"), d10 = (p: string) => p.replace(/\D/g, "").slice(-10);
   if (!team.length) return null;
   const rows = [{ cell: "", name: d.owner ? d.owner.split(" ")[0] + " (you)" : "You" }, ...team.map(m => ({ cell: m.cell, name: m.name || m.cell }))].map(p => {
-    const jobs = (d.board ?? []).filter(c => c.stage === "won" && !c.pastCustomer && Date.parse(c.stageAt ?? c.at) > since && d10(c.crewMember ?? "") === d10(p.cell));
-    const mins = (d.time ?? []).filter(e => Date.parse(e.started_at) > since && d10(e.member) === d10(p.cell)).reduce((a, e) => a + minutesOf(e), 0);
+    const jobs = (d.board ?? []).filter(c => c.stage === "won" && !c.pastCustomer && inWin(win, c.stageAt ?? c.at) && d10(c.crewMember ?? "") === d10(p.cell));
+    const mins = (d.time ?? []).filter(e => inWin(win, e.started_at) && d10(e.member) === d10(p.cell)).reduce((a, e) => a + minutesOf(e), 0);
     return { ...p, jobs: jobs.length, value: jobs.reduce((a, c) => a + (jobPrice(c) ?? 0), 0), hours: Math.round(mins / 6) / 10 };
   }).filter(r => r.jobs || r.hours);
   return <section className="panel s6">
-    <div className="panel-h"><h2>Crew</h2><small>won jobs they were on, and hours, last {days} days</small></div>
+    <div className="panel-h"><h2>Crew</h2><small>won jobs they were on, and hours, {win.phrase}</small></div>
     <div className="panel-b">{rows.length ? <table className="tbl flush"><thead><tr><th>Who</th><th className="right">Jobs</th><th className="right">Value</th><th className="right">Hours</th></tr></thead>
       <tbody>{rows.map(r => <tr key={r.cell || "me"} style={{ cursor: "default" }}><td><b>{r.name}</b></td><td className="num">{r.jobs}</td><td className="num">{r.value ? usd(r.value) : "–"}</td><td className="num mut">{r.hours || "–"}</td></tr>)}</tbody></table>
       : <p className="fine" style={{ padding: "8px 0" }}>Assign jobs to your crew and have them clock in, and this shows who did what.</p>}</div>
@@ -186,14 +192,13 @@ function CrewPanel({ d, days }: { d: Data; days: number }) {
 }
 
 /** Sales tax on what was paid in the period, by month: what to send the state. */
-function TaxPanel({ d, days }: { d: Data; days: number }) {
-  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
-  const paid = (d.invoices ?? []).filter(i => i.status === "paid" && (i.paid_at ?? "").slice(0, 10) >= since && i.tax_rate > 0);
+function TaxPanel({ d, win }: { d: Data; win: Win }) {
+  const paid = (d.invoices ?? []).filter(i => i.status === "paid" && !!i.paid_at && inWin(win, i.paid_at) && i.tax_rate > 0);
   const months = new Map<string, { taxable: number; tax: number; n: number }>();
   for (const i of paid) { const t = totals(i.items, i.tax_rate), k = (i.paid_at ?? "").slice(0, 7); const m = months.get(k) ?? { taxable: 0, tax: 0, n: 0 }; m.taxable += t.subtotal; m.tax += t.tax; m.n++; months.set(k, m); }
   const list = [...months.entries()].sort((a, b) => b[0].localeCompare(a[0]));
   return <section className="panel s6">
-    <div className="panel-h"><h2>Sales tax</h2><small>on invoices paid, last {days} days</small></div>
+    <div className="panel-h"><h2>Sales tax</h2><small>on invoices paid, {win.phrase}</small></div>
     <div className="panel-b">{list.length ? <table className="tbl flush"><thead><tr><th>Month</th><th className="right">Invoices</th><th className="right">Taxable</th><th className="right">Tax collected</th></tr></thead>
       <tbody>{list.map(([k, m]) => <tr key={k} style={{ cursor: "default" }}><td><b>{new Date(k + "-15T12:00:00").toLocaleDateString("en-US", { month: "long", year: "numeric" })}</b></td><td className="num">{m.n}</td><td className="num">{usd(m.taxable)}</td><td className="num"><b>{usd(m.tax)}</b></td></tr>)}</tbody></table>
       : <p className="fine" style={{ padding: "8px 0" }}>Invoices with sales tax on them show here once they&rsquo;re paid. Set your rate in Invoices and payments.</p>}</div>
@@ -201,13 +206,12 @@ function TaxPanel({ d, days }: { d: Data; days: number }) {
 }
 
 /** Commissions owed for the period: each person's percentage of what was collected on their jobs. */
-function CommissionPanel({ d, days }: { d: Data; days: number }) {
+function CommissionPanel({ d, win }: { d: Data; win: Win }) {
   const team = parseTeam(d.setup?.team ?? "[]");
   if (!team.some(m => m.commission)) return null;
-  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
-  const rows = commissions(team, d.board ?? [], d.payments ?? [], since);
+  const rows = commissions(team, d.board ?? [], (d.payments ?? []).filter(p => inWin(win, p.paid_on)), "0000-00-00");
   return <section className="panel s6">
-    <div className="panel-h"><h2>Commissions</h2><small>on money collected, last {days} days</small></div>
+    <div className="panel-h"><h2>Commissions</h2><small>on money collected, {win.phrase}</small></div>
     <div className="panel-b"><table className="tbl flush"><thead><tr><th>Who</th><th className="right">Rate</th><th className="right">Collected</th><th className="right">Owed</th></tr></thead>
       <tbody>{rows.map(r => <tr key={r.name} style={{ cursor: "default" }}><td><b>{r.name}</b><small className="mut">{r.jobs ? `, ${r.jobs} ${r.jobs === 1 ? "job" : "jobs"}` : ""}</small></td><td className="num mut">{r.pct}%</td><td className="num">{usd(r.collected)}</td><td className="num"><b>{usd(r.owed)}</b></td></tr>)}</tbody></table>
       <p className="fine" style={{ marginTop: 6 }}>Set each person&rsquo;s percentage in Settings, Account, next to their hourly rate.</p></div>

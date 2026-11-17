@@ -6,7 +6,8 @@ import { connectionsReport, loadBoard, ownerSetupView } from "@/lib/client-crm-r
 import { jobberConfigured, jobberState } from "@/lib/jobber-core";
 import { winbackAudience } from "@/lib/client-close-run";
 import { loadCustomers, loadInvoices, loadPayments } from "@/lib/client-billing-run";
-import { reportFor, type Period } from "@/lib/client-reports";
+import { reportFor } from "@/lib/client-reports";
+import { isPeriodKey, type PeriodKey } from "@/lib/periods";
 import { customerEmailReady } from "@/lib/client-email";
 import { winbackDraft } from "@/lib/crm";
 import { loadPlans, loadTime, loadVisits } from "@/lib/client-service-run";
@@ -32,8 +33,8 @@ export async function GET(req: Request) {
     // Reports for the period the owner picked: its own request, so the rest of the app stays quick.
     if (q.get("report")) {
       if (s.role === "crew") return json({ error: "Only the owner sees reports." }, 403);
-      const days = ([30, 90, 365].includes(Number(q.get("report"))) ? Number(q.get("report")) : 30) as Period;
-      return json({ report: await reportFor(sql, c.projectId, c.setup.timezone || "America/Denver", days) });
+      const key = isPeriodKey(q.get("report")) ? q.get("report") as PeriodKey : "30";
+      return json({ report: await reportFor(sql, c.projectId, c.setup.timezone || "America/Denver", key) });
     }
     // Crew limited to their own jobs (Settings, Account): only threads assigned to them, in every list and every conversation.
     const crewOnlyMine = s.role === "crew" && c.setup.crew_scope === "assigned";

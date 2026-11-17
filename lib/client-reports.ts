@@ -8,6 +8,7 @@
 //   time to pay = average days from invoice sent to paid
 // "Leads" are new conversations from real lead sources: imports, review asks and follow-up rounds don't count.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
+import { periodRange, type PeriodKey } from "@/lib/periods";
 
 type Sql = NeonQueryFunction<false, false>;
 export type Period = 30 | 90 | 365;
@@ -22,7 +23,7 @@ export type ReportNumbers = Funnel & {
 /** paid: money actually collected (payments recorded) on the jobs that came from this source. */
 export type SourceRow = { source: string; leads: number; booked: number; quoted: number; won: number; wonValue: number; paid: number };
 export type Point = { label: string; leads: number; booked: number; won: number; wonValue: number; collected: number };
-export type Report = { days: Period; now: ReportNumbers; before: ReportNumbers; sources: SourceRow[]; lostReasons: { reason: string; n: number }[]; openQuotes: { n: number; value: number }; series: Point[] };
+export type Report = { days: Period; key?: PeriodKey; from?: string; to?: string; now: ReportNumbers; before: ReportNumbers; sources: SourceRow[]; lostReasons: { reason: string; n: number }[]; openQuotes: { n: number; value: number }; series: Point[] };
 
 const NOT_LEADS = ["import", "review", "due", "quote", "rehash"];
 
@@ -68,12 +69,12 @@ async function numbers(sql: Sql, pid: string, tz: string, from: string, to: stri
 }
 
 /** The report for the last `days`, the same-length period before it, leads by source and why jobs were lost. */
-export async function reportFor(sql: Sql, pid: string, tz: string, days: Period): Promise<Report> {
-  const now = new Date(), from = new Date(now.getTime() - days * 86400000), prev = new Date(from.getTime() - days * 86400000);
-  const unit = days === 365 ? "month" : "week";
+export async function reportFor(sql: Sql, pid: string, tz: string, key: PeriodKey): Promise<Report> {
+  const rg = periodRange(key, new Date(), tz), from = rg.from, to = rg.to, unit = rg.unit;
+  const days = (key === "90" ? 90 : rg.unit === "month" ? 365 : 30) as Period;
   const [cur, before, src, lost, open, ser, pay] = await Promise.all([
-    numbers(sql, pid, tz, from.toISOString(), new Date(now.getTime() + 60000).toISOString()),
-    numbers(sql, pid, tz, prev.toISOString(), from.toISOString()),
+    numbers(sql, pid, tz, from.toISOString(), to.toISOString()),
+    numbers(sql, pid, tz, rg.prevFrom.toISOString(), rg.prevTo.toISOString()),
     sql`SELECT t.source,
         count(*)::int AS leads,
         count(*) FILTER (WHERE t.stage IN ('booked', 'quoted', 'won') OR t.status = 'booked' OR EXISTS (SELECT 1 FROM public.client_appointments a WHERE a.thread_id = t.id))::int AS booked,
@@ -82,24 +83,24 @@ export async function reportFor(sql: Sql, pid: string, tz: string, days: Period)
         coalesce(sum(t.value) FILTER (WHERE t.stage = 'won'), 0)::float AS won_value,
         coalesce(sum((SELECT sum(p.amount) FROM public.client_payments p WHERE p.thread_id = t.id)), 0)::float
           - coalesce(sum((SELECT sum(r.amount) FROM public.client_refunds r WHERE r.thread_id = t.id)), 0)::float AS paid
-      FROM public.client_threads t WHERE t.project_id = ${pid}::uuid AND t.source <> ALL(${NOT_LEADS}::text[]) AND t.created_at >= ${from.toISOString()}::timestamptz
+      FROM public.client_threads t WHERE t.project_id = ${pid}::uuid AND t.source <> ALL(${NOT_LEADS}::text[]) AND t.created_at >= ${from.toISOString()}::timestamptz AND t.created_at < ${to.toISOString()}::timestamptz
       GROUP BY 1 ORDER BY 6 DESC, 2 DESC` as Promise<Record<string, unknown>[]>,
     sql`SELECT substring(z.body FROM '^Marked lost: (.+?)\\. Follow-ups stopped\\.$') AS reason, count(*)::int AS n
       FROM public.client_texts z JOIN public.client_threads t ON t.id = z.thread_id
-      WHERE t.project_id = ${pid}::uuid AND z.author = 'system' AND z.body LIKE 'Marked lost:%' AND z.at >= ${from.toISOString()}::timestamptz GROUP BY 1 ORDER BY 2 DESC` as Promise<Record<string, unknown>[]>,
+      WHERE t.project_id = ${pid}::uuid AND z.author = 'system' AND z.body LIKE 'Marked lost:%' AND z.at >= ${from.toISOString()}::timestamptz AND z.at < ${to.toISOString()}::timestamptz GROUP BY 1 ORDER BY 2 DESC` as Promise<Record<string, unknown>[]>,
     sql`SELECT count(*)::int AS n, coalesce(sum(amount), 0)::float AS value FROM public.client_quotes WHERE project_id = ${pid}::uuid AND kind = 'quote' AND status IN ('open', 'replied')` as Promise<Record<string, unknown>[]>,
     // The trend: leads, booked and won by week (by month for a year), in the owner's time zone.
     sql`SELECT to_char(date_trunc(${unit}, t.created_at AT TIME ZONE ${tz}), 'YYYY-MM-DD') AS k, count(*)::int AS leads,
         count(*) FILTER (WHERE t.stage IN ('booked', 'quoted', 'won') OR t.status = 'booked' OR EXISTS (SELECT 1 FROM public.client_appointments a WHERE a.thread_id = t.id))::int AS booked,
         count(*) FILTER (WHERE t.stage = 'won')::int AS won, coalesce(sum(t.value) FILTER (WHERE t.stage = 'won'), 0)::float AS won_value
-      FROM public.client_threads t WHERE t.project_id = ${pid}::uuid AND t.source <> ALL(${NOT_LEADS}::text[]) AND t.created_at >= ${from.toISOString()}::timestamptz GROUP BY 1 ORDER BY 1` as Promise<Record<string, unknown>[]>,
+      FROM public.client_threads t WHERE t.project_id = ${pid}::uuid AND t.source <> ALL(${NOT_LEADS}::text[]) AND t.created_at >= ${from.toISOString()}::timestamptz AND t.created_at < ${to.toISOString()}::timestamptz GROUP BY 1 ORDER BY 1` as Promise<Record<string, unknown>[]>,
     sql`SELECT to_char(date_trunc(${unit}, d::timestamp), 'YYYY-MM-DD') AS k, sum(a)::float AS collected FROM (
-        SELECT paid_on AS d, amount AS a FROM public.client_payments WHERE project_id = ${pid}::uuid AND paid_on >= ${from.toISOString()}::date
-        UNION ALL SELECT refunded_on, -amount FROM public.client_refunds WHERE project_id = ${pid}::uuid AND refunded_on >= ${from.toISOString()}::date) m GROUP BY 1`.catch(() => []) as Promise<Record<string, unknown>[]>,
+        SELECT paid_on AS d, amount AS a FROM public.client_payments WHERE project_id = ${pid}::uuid AND paid_on >= (${from.toISOString()}::timestamptz AT TIME ZONE ${tz})::date AND paid_on < (${to.toISOString()}::timestamptz AT TIME ZONE ${tz})::date
+        UNION ALL SELECT refunded_on, -amount FROM public.client_refunds WHERE project_id = ${pid}::uuid AND refunded_on >= (${from.toISOString()}::timestamptz AT TIME ZONE ${tz})::date AND refunded_on < (${to.toISOString()}::timestamptz AT TIME ZONE ${tz})::date) m GROUP BY 1`.catch(() => []) as Promise<Record<string, unknown>[]>,
   ]);
   const paid = new Map(pay.map(r => [String(r.k), Number(r.collected) || 0]));
   return {
-    days, now: cur, before,
+    days, key, from: from.toISOString(), to: to.toISOString(), now: cur, before,
     sources: src.map(r => ({ source: String(r.source), leads: Number(r.leads) || 0, booked: Number(r.booked) || 0, quoted: Number(r.quoted) || 0, won: Number(r.won) || 0, wonValue: Number(r.won_value) || 0, paid: Number(r.paid) || 0 })),
     lostReasons: lost.filter(r => r.reason).map(r => ({ reason: String(r.reason), n: Number(r.n) || 0 })),
     openQuotes: { n: Number(open[0]?.n) || 0, value: Number(open[0]?.value) || 0 },
