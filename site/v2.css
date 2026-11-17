@@ -835,3 +835,25 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 .motion .stage-wrap::before { animation: dawn 2.2s cubic-bezier(.22, 1, .36, 1) .25s both; }
 @keyframes dawn { from { opacity: 0; transform: translate(-50%, 120px) scale(.85); } to { opacity: 1; transform: translateX(-50%); } }
 @media (max-width: 760px) { .stage-wrap::before { top: -160px; width: 900px; height: 820px; filter: blur(24px); } }
+
+/* ── Photography ──────────────────────────────────────────────────────────────
+   Cinematic stills of the moments the product is about. A shot only appears once
+   its image has loaded, so a missing file never leaves a hole. */
+.shot { display: none; margin: 56px auto 72px; max-width: 1180px; }
+.shot.ok { display: block; }
+.shot-frame { position: relative; overflow: hidden; border-radius: 18px; aspect-ratio: 21 / 9; background: #e9eaed;
+  box-shadow: 0 0 0 1px rgba(18, 20, 23, .06), 0 40px 90px -40px rgba(18, 20, 23, .35); }
+.shot-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.shot-frame::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .18)); }
+.shot figcaption { max-width: 640px; margin: 18px auto 0; text-align: center; color: var(--text-3); font-size: 15px; line-height: 1.55; }
+.shot figcaption b { color: var(--text); font-weight: 600; }
+.book .shot { margin-top: 0; }
+/* Reveal: the frame wipes open from the bottom while the photo settles from a slight push-in */
+.motion .shot.ok .shot-frame { clip-path: inset(18% 6% 0 6% round 18px); transition: clip-path 1.3s var(--ease); }
+.motion .shot.ok .shot-frame img { transform: scale(1.12); transition: transform 2.2s var(--ease); }
+.motion .shot.ok figcaption { opacity: 0; transform: translateY(10px); transition: opacity .8s var(--ease) .5s, transform .9s var(--ease) .5s; }
+.motion .shot.ok.in .shot-frame { clip-path: inset(0 0 0 0 round 18px); }
+.motion .shot.ok.in .shot-frame img { transform: scale(1.0); }
+.motion .shot.ok.in figcaption { opacity: 1; transform: none; }
+@media (max-width: 760px) { .shot { margin: 36px -4px 48px; } .shot-frame { aspect-ratio: 4 / 3; border-radius: 14px; } }
+@media (prefers-reduced-motion: reduce) { .shot .shot-frame, .shot .shot-frame img, .shot figcaption { clip-path: none !important; transform: none !important; opacity: 1 !important; } }
