@@ -962,3 +962,18 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 .motion .phero .hero-in > :not(h1) { animation: up 1s var(--ease) both; }
 /* Reduce Motion: no travel or blur, but still a gentle fade */
 .rm .rv, .rm .split .w, .rm .stage, .rm .start[data-play] li, .rm .vs .tl li { transform: none !important; filter: none !important; }
+
+/* ── Final transition pass ─────────────────────────────────────────────────────────── */
+/* Buttons: lift on hover, give on press */
+.btn { transition: transform .22s var(--ease), box-shadow .22s var(--ease), background .2s ease, border-color .2s ease, color .2s ease; }
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(.97); transition-duration: .08s; }
+.btn-ghost:hover, .btn-line:hover { box-shadow: 0 1px 2px rgba(18,20,23,.04), 0 8px 20px -10px rgba(18,20,23,.25); }
+/* Feature cards: the card lifts, the product inside rises a little more */
+.bx .bx-vis .ui { transition: transform .45s var(--ease), box-shadow .45s var(--ease); }
+.bx:hover .bx-vis .ui { transform: translateY(-6px); box-shadow: 0 -1px 0 rgba(18,20,23,.02), 0 26px 50px -20px rgba(18,20,23,.3); }
+/* Page change: the nav highlight slides from the old tab to the new one */
+.nav-links a[aria-current="page"] { view-transition-name: nav-pill; }
+::view-transition-group(nav-pill) { animation-duration: .45s; animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
+::view-transition-old(nav-pill), ::view-transition-new(nav-pill) { animation-duration: .3s; }
+@media (prefers-reduced-motion: reduce) { .btn:hover, .bx:hover .bx-vis .ui { transform: none; } }
