@@ -27,15 +27,32 @@ export function dayRange(date: string, tz = AGENT_TZ): { start: string; end: str
 
 export type AuthResult = { ok: true; owner: string } | { ok: false; status: 401 | 503; error: string };
 
-/** Bearer check against AGENT_API_KEY, constant time. The owner is fixed by env; a caller can never pick one. */
-export function agentAuth(header: string | null, env: Record<string, string | undefined>): AuthResult {
+/** The key from either header, forgiving about case, extra spaces and a missing "Bearer". */
+export function extractKey(authorization: string | null, apiKeyHeader: string | null): string {
+  const a = (authorization ?? "").trim();
+  const m = /^bearer\s+(.+)$/i.exec(a);
+  const k = (m ? m[1] : a || (apiKeyHeader ?? "")).trim();
+  return k.replace(/^["']|["']$/g, "");
+}
+
+export const hashKey = (key: string) => createHash("sha256").update("cinder-agent:" + key).digest("hex");
+const same = (a: string, b: string) => timingSafeEqual(createHash("sha256").update(a).digest(), createHash("sha256").update(b).digest());
+
+/** A key made in Settings: "cnd_" and 48 hex characters. */
+export const isKeyShape = (k: string) => /^cnd_[0-9a-f]{48}$/.test(k);
+
+/**
+ * The env key check, constant time. The owner is fixed by env; a caller can never pick one. Keys made in Settings
+ * are checked against the database by the route (agentGuard), which calls this first.
+ */
+export function agentAuth(authorization: string | null, env: Record<string, string | undefined>, apiKeyHeader: string | null = null): AuthResult {
   const key = env.AGENT_API_KEY?.trim() ?? "";
   const owner = (env.AGENT_OWNER_ID || env.HERMES_BRIDGE_OWNER_ID || env.CINDER_OWNER_ID || "").trim();
-  if (!env.DATABASE_URL || key.length < MIN_KEY || !owner) return { ok: false, status: 503, error: "The agent API isn't configured." };
-  const a = createHash("sha256").update(header ?? "").digest();
-  const b = createHash("sha256").update(`Bearer ${key}`).digest();
-  if (!timingSafeEqual(a, b)) return { ok: false, status: 401, error: "Unauthorized." };
-  return { ok: true, owner };
+  if (!env.DATABASE_URL || !owner) return { ok: false, status: 503, error: "The agent API isn't configured." };
+  const supplied = extractKey(authorization, apiKeyHeader);
+  if (!supplied) return { ok: false, status: 401, error: "Unauthorized. Send the key as Authorization: Bearer <key>." };
+  if (key.length >= MIN_KEY && same(supplied, key)) return { ok: true, owner };
+  return { ok: false, status: 401, error: "Unauthorized. The key doesn't match. Make a new one in Settings, Automations, Grok Bot." };
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -142,6 +159,83 @@ export function webhookTarget(url: string | undefined, key: string | undefined):
   try { return new URL(u).protocol === "https:" ? { url: u, key: k } : null; } catch { return null; }
 }
 
+export const REPLY_CHANNELS = ["instagram", "facebook", "facebook_group", "linkedin", "email", "tiktok", "other"] as const;
+export type Reply = { contactId: string | null; channel: (typeof REPLY_CHANNELS)[number]; from: string; text: string; url: string };
+
+/** A prospect replied somewhere the command center can't see (a DM, a group comment). Logged on the contact and alerted. */
+export function parseReply(body: unknown): { reply: Reply } | { error: string } {
+  const b = (body && typeof body === "object" && !Array.isArray(body) ? body : {}) as Record<string, unknown>;
+  const contactId = b.contactId === undefined || b.contactId === null || b.contactId === "" ? null : isUuid(b.contactId) ? b.contactId : undefined;
+  if (contactId === undefined) return { error: "contactId must be a contact's id, or left out for someone new." };
+  const channel = (REPLY_CHANNELS as readonly string[]).includes(String(b.channel)) ? (b.channel as Reply["channel"]) : null;
+  if (!channel) return { error: `channel is one of ${REPLY_CHANNELS.join(", ")}.` };
+  const text = str(b.text, 2000);
+  if (!text) return { error: "text is required: what they said." };
+  const from = str(b.from, 160);
+  if (!contactId && !from) return { error: "from is required when there's no contactId: their name or handle." };
+  return { reply: { contactId, channel, from, text, url: httpUrl(b.url) } };
+}
+
+export type NewProspect = { business: string; phone: string; website: string; location: string; owner: string; source: string; notes: string };
+export const MAX_PROSPECTS_PER_CALL = 50;
+
+/** Prospects found on public pages. A US phone is required (the call list needs one); duplicates in the batch are dropped. */
+export function parseProspects(body: unknown): { prospects: NewProspect[]; rejected: number } | { error: string } {
+  const b = (body && typeof body === "object" && !Array.isArray(body) ? body : {}) as Record<string, unknown>;
+  const list = Array.isArray(b.prospects) ? b.prospects : null;
+  if (!list || !list.length) return { error: "prospects is a list of { business, phone, website, location, owner, source }." };
+  if (list.length > MAX_PROSPECTS_PER_CALL) return { error: `At most ${MAX_PROSPECTS_PER_CALL} prospects per call.` };
+  const seen = new Set<string>(); const out: NewProspect[] = []; let rejected = 0;
+  for (const raw of list) {
+    const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    const business = str(o.business, 200);
+    const digits = str(o.phone, 40).replace(/\D/g, "");
+    const ten = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+    if (!business || ten.length !== 10 || seen.has(ten)) { rejected++; continue; }
+    seen.add(ten);
+    const site = str(o.website, 300);
+    out.push({ business, phone: `(${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}`, website: site && !/^https?:\/\//i.test(site) ? "https://" + site : site,
+      location: str(o.location, 120), owner: str(o.owner, 80), source: httpUrl(o.source), notes: str(o.notes, 500) });
+  }
+  return { prospects: out, rejected };
+}
+
+/** The content plan's date math: drafts are stored by the Monday of their week plus a day number (0 = Monday). */
+export function weekAndDay(date: string): { week: string; day: number } {
+  const d = new Date(date + "T12:00:00Z");
+  const day = (d.getUTCDay() + 6) % 7;
+  const monday = new Date(d.getTime() - day * 86_400_000);
+  return { week: monday.toISOString().slice(0, 10), day };
+}
+
+export type ContentUpdate = { id: string; status: "posted" | "skipped" | null; url: string; views: number | null; comments: number | null; leads: number | null };
+export function parseContentUpdate(body: unknown): { update: ContentUpdate } | { error: string } {
+  const b = (body && typeof body === "object" && !Array.isArray(body) ? body : {}) as Record<string, unknown>;
+  if (!isUuid(b.id)) return { error: "id must be a content draft's id." };
+  const status = b.status === "posted" || b.status === "skipped" ? b.status : b.status === undefined ? null : undefined;
+  if (status === undefined) return { error: "status is posted or skipped." };
+  const n = (v: unknown) => (v === undefined || v === null || v === "" ? null : Number.isFinite(Number(v)) && Number(v) >= 0 ? Math.floor(Number(v)) : NaN);
+  const views = n(b.views), comments = n(b.comments), leads = n(b.leads);
+  if ([views, comments, leads].some(x => Number.isNaN(x))) return { error: "views, comments and leads are whole numbers." };
+  const url = httpUrl(b.url);
+  if (status === "posted" && !url) return { error: "A posted item needs the post's url." };
+  return { update: { id: b.id, status, url, views, comments, leads } };
+}
+
+export type ContactInfo = { contactId: string; email: string; owner: string; facebook: string; instagram: string; source: string };
+
+/** Contact details Grok found for a prospect (owner's name, email, socials). Only fills what's empty; never overwrites Sam's data. */
+export function parseContactInfo(body: unknown): { info: ContactInfo } | { error: string } {
+  const b = (body && typeof body === "object" && !Array.isArray(body) ? body : {}) as Record<string, unknown>;
+  if (!isUuid(b.contactId)) return { error: "contactId must be a contact's id." };
+  const email = str(b.email, 200).toLowerCase();
+  if (email && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return { error: "email doesn't look like an email address." };
+  const info = { contactId: b.contactId, email, owner: str(b.owner, 80), facebook: httpUrl(b.facebook), instagram: httpUrl(b.instagram), source: httpUrl(b.source) };
+  if (!info.email && !info.owner && !info.facebook && !info.instagram) return { error: "Give at least one of email, owner, facebook or instagram." };
+  if (!info.source) return { error: "source is required: the page where you found it." };
+  return { info };
+}
+
 export type Draft = { contactId: string; channel: "text" | "email"; subject: string; body: string; reason: string };
 
 /** A draft for Sam to send himself. Texts stay short; emails need a subject. No links except Sam's own domains. */
@@ -195,6 +289,13 @@ export function openApi(baseUrl: string) {
       } },
       "/api/agent/my-texts": { get: { summary: "Sam's last texts to prospects, newest first, for his style profile", parameters: [{ name: "limit", in: "query", required: false, schema: { type: "integer", minimum: 5, maximum: 100 } }], responses: ok("{ texts: [{ text, at }] }") } },
       "/api/agent/runs": { post: { summary: "Record one routine run (agent, task, status, summary, counts). Failed runs show on Sam's Today.", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["agent"], properties: { agent: { type: "string" }, task: { type: "string" }, status: { enum: ["succeeded", "failed"] }, summary: { type: "string" }, counts: { type: "object" } } } } } }, responses: ok("{ id }") } },
+      "/api/agent/contact-info": { post: { summary: "Fill a prospect's empty email, owner name, Facebook or Instagram, with the source page", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["contactId", "source"], properties: { contactId: id, email: { type: "string" }, owner: { type: "string" }, facebook: { type: "string" }, instagram: { type: "string" }, source: { type: "string" } } } } } }, responses: ok("{ filled: [field names] }") } },
+      "/api/agent/replies": { post: { summary: "Log a prospect's reply from a DM, group comment, LinkedIn or TikTok; emails Sam an alert", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["channel", "text"], properties: { contactId: id, channel: { enum: [...REPLY_CHANNELS] }, from: { type: "string" }, text: { type: "string" }, url: { type: "string" } } } } } }, responses: ok("{ logged, alerted }") } },
+      "/api/agent/prospects": { post: { summary: "Add up to 50 prospects to the call list (business and US phone required; duplicates and do-not-contact skipped)", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["prospects"], properties: { prospects: { type: "array", maxItems: 50, items: { type: "object", required: ["business", "phone"] } } } } } } }, responses: ok("{ added, duplicates, rejected }") } },
+      "/api/agent/content": {
+        get: { summary: "Planned posts for a date", parameters: [date], responses: ok("{ date, posts: [{ id, platform, format, hook, body, slides, status, url }] }") },
+        post: { summary: "Mark a planned post posted or skipped, or record its views, comments and leads", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["id"], properties: { id, status: { enum: ["posted", "skipped"] }, url: { type: "string" }, views: { type: "integer" }, comments: { type: "integer" }, leads: { type: "integer" } } } } } }, responses: ok("{ ok }") },
+      },
       "/api/agent/drafts": { post: {
         summary: "Save a text or email draft for Sam to review and send himself. One open agent draft per prospect; a new one replaces it.",
         requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["contactId", "body"], properties: {
@@ -277,6 +378,49 @@ export const TOOLS = [
     } },
     annotations: { readOnlyHint: false, destructiveHint: false },
   },
+  {
+    name: "log_reply", title: "Log a prospect's reply",
+    description: "A prospect or lead replied somewhere Sam's command center can't see: an Instagram or Facebook DM, a Facebook group comment, LinkedIn, TikTok. Logs it on their record and emails Sam an alert. Leave contactId out for someone not in the CRM yet and give their name or handle in from.",
+    inputSchema: { type: "object", required: ["channel", "text"], properties: {
+      contactId: uuid, channel: { type: "string", enum: [...REPLY_CHANNELS] }, from: { type: "string", description: "Their name or handle" },
+      text: { type: "string", description: "What they said, word for word" }, url: { type: "string", description: "Link to the conversation or comment" },
+    } },
+    annotations: { readOnlyHint: false, destructiveHint: false },
+  },
+  {
+    name: "add_prospects", title: "Add prospects to the call list",
+    description: "Add up to 50 businesses you found on public pages (Google Maps, their websites) to Sam's call list. Each needs a business name and a US phone number. Duplicates of anyone already in the CRM or on the do-not-contact list are skipped automatically. Only real businesses you saw a listing for; never guess a phone number.",
+    inputSchema: { type: "object", required: ["prospects"], properties: { prospects: { type: "array", maxItems: 50, items: { type: "object", required: ["business", "phone"], properties: {
+      business: { type: "string" }, phone: { type: "string" }, website: { type: "string" }, location: { type: "string", description: "City, ST" },
+      owner: { type: "string", description: "Owner's name if the listing shows it" }, source: { type: "string", description: "URL of the listing you found it on" },
+      notes: { type: "string", description: "Rating, review count, anything useful for the call" },
+    } } } } },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+  },
+  {
+    name: "get_content_queue", title: "Today's planned posts",
+    description: "Sam's content plan for a date: each planned post with its platform (feed, video, linkedin, group, x, gbp), hook, body, slide text and status. Post only what's planned, after Sam approves, then call update_content.",
+    inputSchema: { type: "object", properties: { date } },
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "update_content", title: "Mark a post posted, or record its numbers",
+    description: "After Sam approves and it's published: status posted with the post's url. Later, record views, comments and leads (people who messaged about it). Use status skipped for a planned post Sam chose not to use.",
+    inputSchema: { type: "object", required: ["id"], properties: {
+      id: uuid, status: { type: "string", enum: ["posted", "skipped"] }, url: { type: "string" },
+      views: { type: "integer" }, comments: { type: "integer" }, leads: { type: "integer" },
+    } },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+  },
+  {
+    name: "save_contact_info", title: "Fill in a prospect's contact details",
+    description: "Save the owner's name, a business email, or Facebook and Instagram pages you found for a prospect, with the page you found them on. Only fills fields that are empty; never overwrites what Sam has.",
+    inputSchema: { type: "object", required: ["contactId", "source"], properties: {
+      contactId: uuid, email: { type: "string" }, owner: { type: "string", description: "Owner's full name" },
+      facebook: { type: "string" }, instagram: { type: "string" }, source: { type: "string", description: "URL where you found it" },
+    } },
+    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+  },
 ] as const;
 
 const s = (v: unknown) => (typeof v === "string" ? v : v === undefined || v === null ? "" : String(v));
@@ -291,6 +435,11 @@ export function toolCall(name: string, args: Record<string, unknown>): ToolCall 
     case "save_draft": return { method: "POST", path: "/api/agent/drafts", body: args };
     case "get_my_texts": return { method: "GET", path: "/api/agent/my-texts", query: args.limit ? { limit: s(args.limit) } : {} };
     case "log_run": return { method: "POST", path: "/api/agent/runs", body: args };
+    case "save_contact_info": return { method: "POST", path: "/api/agent/contact-info", body: args };
+    case "log_reply": return { method: "POST", path: "/api/agent/replies", body: args };
+    case "add_prospects": return { method: "POST", path: "/api/agent/prospects", body: args };
+    case "get_content_queue": return { method: "GET", path: "/api/agent/content", query: args.date ? { date: s(args.date) } : {} };
+    case "update_content": return { method: "POST", path: "/api/agent/content", body: args };
     default: return null;
   }
 }

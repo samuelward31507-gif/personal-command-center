@@ -1,6 +1,6 @@
 // Tests for the agent API's rules (auth, briefs, drafts). Run: node --experimental-strip-types --no-warnings test-agent-api.mjs
 import assert from "node:assert/strict";
-import { agentAuth, parseBrief, parseDraft, briefMarkdown, dateParam, openApi, isUuid, dayRange } from "./lib/agent-api.ts";
+import { agentAuth, extractKey, isKeyShape, hashKey, parseBrief, parseDraft, briefMarkdown, dateParam, openApi, isUuid, dayRange } from "./lib/agent-api.ts";
 
 
 let n = 0;
@@ -14,8 +14,17 @@ const today = "2026-11-17";
 ok(() => assert.deepEqual(agentAuth(`Bearer ${KEY}`, env), { ok: true, owner: "owner-1" }));
 ok(() => assert.equal(agentAuth(`Bearer ${KEY}x`, env).ok, false));
 ok(() => assert.equal(agentAuth(null, env).status, 401));
-ok(() => assert.equal(agentAuth(`Bearer ${KEY}`, { ...env, AGENT_API_KEY: "short" }).status, 503));
+ok(() => assert.equal(agentAuth(`Bearer ${KEY}`, { ...env, AGENT_API_KEY: "short" }).status, 401));
 ok(() => assert.equal(agentAuth(`Bearer ${KEY}`, { ...env, CINDER_OWNER_ID: "" }).status, 503));
+ok(() => assert.equal(agentAuth(`  bearer   ${KEY}  `, env).ok, true));
+ok(() => assert.equal(agentAuth(KEY, env).ok, true));
+ok(() => assert.equal(agentAuth(null, env, KEY).ok, true));
+ok(() => assert.equal(agentAuth(`Bearer "${KEY}"`, env).ok, true));
+ok(() => assert.equal(extractKey("Bearer cnd_x", null), "cnd_x"));
+ok(() => assert.equal(isKeyShape("cnd_" + "a".repeat(48)), true));
+ok(() => assert.equal(isKeyShape("cnd_" + "g".repeat(48)), false));
+ok(() => assert.equal(hashKey("a"), hashKey("a")));
+ok(() => assert.notEqual(hashKey("a"), hashKey("b")));
 ok(() => assert.equal(agentAuth(`Bearer ${KEY}`, { ...env, AGENT_OWNER_ID: "owner-2" }).owner, "owner-2"));
 ok(() => assert.equal(agentAuth(`Bearer ${KEY}`, { ...env, DATABASE_URL: "" }).status, 503));
 
@@ -76,7 +85,7 @@ ok(() => assert.deepEqual(dayRange("2026-11-17"), { start: "2026-11-17T07:00:00.
 ok(() => assert.deepEqual(dayRange("2026-07-04"), { start: "2026-07-04T06:00:00.000Z", end: "2026-07-05T06:00:00.000Z" }));
 
 // The OpenAPI lists every route
-ok(() => assert.deepEqual(Object.keys(openApi("https://x").paths).sort(), ["/api/agent/brief", "/api/agent/call-list", "/api/agent/drafts", "/api/agent/meetings", "/api/agent/my-texts", "/api/agent/prospect", "/api/agent/runs"]));
+ok(() => assert.deepEqual(Object.keys(openApi("https://x").paths).sort(), ["/api/agent/brief", "/api/agent/call-list", "/api/agent/contact-info", "/api/agent/content", "/api/agent/drafts", "/api/agent/meetings", "/api/agent/my-texts", "/api/agent/prospect", "/api/agent/prospects", "/api/agent/replies", "/api/agent/runs"]));
 
 console.log(`agent api: ${n} checks passed`);
 
@@ -86,7 +95,7 @@ let m = 0; const mk = fn => { fn(); m++; };
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26" } }).reply.result.protocolVersion, "2025-03-26"));
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "1999" } }).reply.result.protocolVersion, "2025-06-18"));
 mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", method: "notifications/initialized" }), { notify: true }));
-mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", id: 2, method: "tools/list" }).reply.result.tools.map(t => t.name), ["get_call_list", "get_prospect", "get_meetings", "save_brief", "save_draft", "get_my_texts", "log_run"]));
+mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", id: 2, method: "tools/list" }).reply.result.tools.map(t => t.name), ["get_call_list", "get_prospect", "get_meetings", "save_brief", "save_draft", "get_my_texts", "log_run", "log_reply", "add_prospects", "get_content_queue", "update_content", "save_contact_info"]));
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "drop_tables", arguments: {} } }).reply.error.code, -32602));
 mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "get_prospect", arguments: { id: C } } }).call, { id: 4, name: "get_prospect", args: { id: C } }));
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 5, method: "resources/list" }).reply.error.code, -32601));
@@ -108,5 +117,31 @@ wk(() => assert.equal(webhookTarget("https://x.com/hook", ""), null));
 wk(() => assert.deepEqual(webhookTarget(" https://x.com/hook ", "k"), { url: "https://x.com/hook", key: "k" }));
 wk(() => assert.deepEqual(toolCall("get_my_texts", {}), { method: "GET", path: "/api/agent/my-texts", query: {} }));
 wk(() => assert.equal(toolCall("log_run", { agent: "Scout" }).path, "/api/agent/runs"));
-wk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 9, method: "tools/list" }).reply.result.tools.length, 7));
+
 console.log(`agent runs and webhooks: ${w} checks passed`);
+
+// DMs, prospects, content
+const { parseReply, parseProspects, weekAndDay, parseContentUpdate } = await import("./lib/agent-api.ts");
+let d = 0; const dk = fn => { fn(); d++; };
+dk(() => assert.equal(parseReply({ channel: "instagram", from: "@ridgefence", text: "how much?" }).reply.contactId, null));
+dk(() => assert.ok("error" in parseReply({ channel: "instagram", text: "hi" })));
+dk(() => assert.ok("error" in parseReply({ channel: "carrier pigeon", from: "x", text: "hi" })));
+dk(() => assert.ok("error" in parseReply({ contactId: "x", channel: "facebook", text: "hi" })));
+dk(() => { const r = parseProspects({ prospects: [
+  { business: "Ridge Fence", phone: "+1 (720) 555-0177", website: "ridgefence.com", location: "Denver, CO" },
+  { business: "Dup", phone: "720.555.0177" }, { business: "No phone" }, { phone: "7205550100" }, { business: "Short", phone: "555-0100" } ] });
+  assert.equal(r.prospects.length, 1); assert.equal(r.rejected, 4); assert.equal(r.prospects[0].phone, "(720) 555-0177"); assert.equal(r.prospects[0].website, "https://ridgefence.com"); });
+dk(() => assert.ok("error" in parseProspects({ prospects: Array(51).fill({ business: "a", phone: "7205550100" }) })));
+dk(() => assert.deepEqual(weekAndDay("2026-11-17"), { week: "2026-11-16", day: 1 }));
+dk(() => assert.deepEqual(weekAndDay("2026-11-22"), { week: "2026-11-16", day: 6 }));
+dk(() => assert.ok("error" in parseContentUpdate({ id: C, status: "posted" })));
+dk(() => assert.equal(parseContentUpdate({ id: C, status: "posted", url: "https://facebook.com/p/1" }).update.status, "posted"));
+dk(() => assert.equal(parseContentUpdate({ id: C, views: 1200, comments: 4 }).update.status, null));
+dk(() => assert.ok("error" in parseContentUpdate({ id: C, views: -3 })));
+dk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 10, method: "tools/list" }).reply.result.tools.length, 12));
+console.log(`agent dms, prospects, content: ${d} checks passed`);
+const { parseContactInfo } = await import("./lib/agent-api.ts");
+assert.ok("error" in parseContactInfo({ contactId: C, email: "bob@ridge.com" }));
+assert.ok("error" in parseContactInfo({ contactId: C, email: "nope", source: "https://x.com" }));
+assert.equal(parseContactInfo({ contactId: C, email: "Bob@Ridge.com", source: "https://ridge.com/contact" }).info.email, "bob@ridge.com");
+console.log("agent contact info: 3 checks passed");
