@@ -64,7 +64,7 @@ export async function refillLeads(sql: Sql, o: string, floor = Number(process.en
   const [w] = await sql`SELECT count(*)::int AS n FROM public.contacts c WHERE c.owner_id = ${o} AND lower(coalesce(c.status,'')) = 'lead'
     AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.contact_id = c.id AND a.channel = 'call')` as { n: number }[];
   let waiting = w?.n ?? 0, added = 0, ran = 0;
-  const queue = await sql`SELECT id FROM public.lead_searches WHERE owner_id = ${o} AND status = 'queued' ORDER BY last_run_at NULLS FIRST, created_at LIMIT 8` as { id: string }[];
+  const queue = await sql`SELECT id FROM public.lead_searches WHERE owner_id = ${o} AND status = 'queued' ORDER BY last_run_at NULLS FIRST, created_at LIMIT 4` as { id: string }[];
   for (const q of queue) {
     if (waiting >= floor) break;
     const r = await runSearch(sql, o, q.id, 3).catch(e => { console.error("Lead refill search failed", e instanceof Error ? e.message : e); return null; });

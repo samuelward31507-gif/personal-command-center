@@ -33,7 +33,7 @@ async function findListing(l: HiringLead) {
  */
 export async function findHiring(sql: Sql, owner: string, opts: { maxLookups?: number; budgetMs?: number; enough?: number } = {}): Promise<{ jobs: number; matched: number; added: number; upgraded: number; noListing: number; widened: boolean } | null> {
   if (!hiringConfigured()) return null;
-  const until = Date.now() + (opts.budgetMs ?? 60_000), maxLookups = opts.maxLookups ?? 30, enough = opts.enough ?? 10;
+  const until = Date.now() + (opts.budgetMs ?? 60_000), maxLookups = opts.maxLookups ?? 15, enough = opts.enough ?? 10;
   const have = await sql`SELECT id, company, right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) AS p, coalesce(notes, '') AS notes FROM public.contacts WHERE owner_id = ${owner}` as { id: string; company: string; p: string; notes: string }[];
   const blocked = new Set((await sql`SELECT right(phone_normalized, 10) AS p FROM public.contact_suppressions WHERE owner_id = ${owner} AND coalesce(phone_normalized, '') <> ''` as { p: string }[]).map(r => r.p));
   const byPhone = new Map(have.filter(h => h.p).map(h => [h.p, h]));
