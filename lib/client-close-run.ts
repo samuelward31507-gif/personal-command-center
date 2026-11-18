@@ -6,6 +6,7 @@ import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { chosen, cleanChoice, cleanItems, totals } from "@/lib/billing";
 import { cleanWinback, detailLine, cleanDetails, money, quoteText, reviewDue, QUOTE_TOKEN } from "@/lib/crm";
 import { quoteExpired, quoteGoodThrough, quoteValidDays } from "@/lib/service";
+import { cleanDrawing, measureOf, staticMapUrl } from "@/lib/fence";
 import { digits10, fill, inTextingHours } from "@/lib/client-runtime";
 import { alertOwner, clientById, quoteUrl, sendReviewRequest, sendToCustomer, type Client } from "@/lib/client-runtime-run";
 import { emitEvent } from "@/lib/client-webhook";
@@ -48,6 +49,8 @@ export async function sendQuoteLink(sql: Sql, c: Client, threadId: string, note?
 export type PublicQuote = { financing?: { link: string; note: string } | null; terms?: string; warranty?: string; choice?: { tier: string | null; addons: number[] } | null; business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
   items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax_rate: number;
   state: "open" | "approved" | "declined" | "closed" | "expired"; answeredAt: string | null;
+  /** The fence line drawn for this job (a satellite picture and its feet), when the owner measured it. */
+  fence?: { img: string; feet: number; gates: number } | null;
   /** The last day it can be approved (null = no end date). */
   validUntil?: string | null;
   /** A deposit to hold the date, paid on the owner's own pay page. Cinder never takes the money. */
@@ -63,10 +66,13 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
   if (!q) return null;
   const c = await clientById(sql, String(q.owner_id), String(q.project_id));
   if (!c) return null;
-  const [t] = await sql`SELECT customer_name, details FROM public.client_threads WHERE project_id = ${c.projectId}::uuid
-    AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(String(q.customer_phone))} LIMIT 1` as { customer_name: string; details: unknown }[];
+  const [t] = await sql`SELECT customer_name, details, measure FROM public.client_threads WHERE project_id = ${c.projectId}::uuid
+    AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${digits10(String(q.customer_phone))} LIMIT 1` as { customer_name: string; details: unknown; measure: unknown }[];
   await sql`UPDATE public.client_quotes SET viewed_at = coalesce(viewed_at, now()), view_count = view_count + 1, last_viewed_at = now() WHERE id = ${String(q.id)}::uuid`;
   const status = String(q.status);
+  // The fence line the owner drew, as a satellite picture with its feet, when there is one.
+  const drawing = t?.measure ? cleanDrawing(t.measure) : null, fm = drawing?.runs.length ? measureOf(drawing) : null;
+  const fence = fm && fm.newFeet ? { img: staticMapUrl(drawing, process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "", "640x360"), feet: fm.newFeet, gates: fm.gates.single + fm.gates.double } : null;
   // The quote's last day: set the first time it's opened after going out, if the owner's quotes have an end date.
   let validUntil = q.valid_until ? String(q.valid_until) : null;
   if (!validUntil && q.link_day && !q.approved_at && !q.declined_at) {
@@ -75,7 +81,7 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
   }
   const today = new Date().toLocaleDateString("en-CA", { timeZone: tz(c) });
   return {
-    validUntil,
+    fence, validUntil,
     business: c.setup.display_name || "", owner: first(c.setup.owner_name || ""), phone: c.setup.texting_number || "",
     customer: first(t?.customer_name || String(q.customer_name || "")), amount: q.amount == null ? null : Number(q.amount),
     line: t ? detailLine(c.setup.trade, cleanDetails(c.setup.trade, t.details)) : "", note: String(q.note ?? ""), sent: String(q.sent_on),

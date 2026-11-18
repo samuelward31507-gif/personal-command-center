@@ -3,6 +3,7 @@
 import type { NeonQueryFunction } from "@neondatabase/serverless";
 import type { Client } from "@/lib/client-runtime-run";
 import { cleanEquipment, cleanFile, cleanTask, type Equipment, type Task } from "@/lib/records";
+import { cleanPaperwork, stepsFrom, stepsNotNeeded } from "@/lib/paperwork";
 
 type Sql = NeonQueryFunction<false, false>;
 const today = (c: Client) => new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" });
@@ -88,4 +89,16 @@ export async function loadTasks(sql: Sql, c: Client): Promise<Task[]> {
   const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : v ? String(v) : null);
   return rows.map(r => ({ id: String(r.id), title: String(r.title), due_on: r.due_on ? String(r.due_on) : null, assignee: String(r.assignee ?? ""), thread: r.thread_id ? String(r.thread_id) : null,
     done_at: iso(r.done_at), created_at: iso(r.created_at) ?? "", customer: r.customer_name ? String(r.customer_name) : undefined }));
+}
+
+// ---------- Fence job paperwork ----------
+/** Saves the paperwork and ticks the job steps it settles (a locate requested, a permit or HOA approved or not needed). */
+export async function savePaperwork(sql: Sql, c: Client, threadId: string, input: unknown): Promise<{ ok: boolean; error?: string }> {
+  const t = await ownThread(sql, c, threadId);
+  if (!t) return { ok: false, error: "That job isn't here." };
+  const p = cleanPaperwork(input), steps: Record<string, string> = { ...stepsFrom(p) };
+  for (const k of stepsNotNeeded(p)) steps[k] = today(c);
+  await sql`UPDATE public.client_threads SET paperwork = ${JSON.stringify(p)}::jsonb, job_steps = coalesce(job_steps, '{}'::jsonb) || ${JSON.stringify(steps)}::jsonb, updated_at = now()
+    WHERE id = ${t}::uuid`;
+  return { ok: true };
 }

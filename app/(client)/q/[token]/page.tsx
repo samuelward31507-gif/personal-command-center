@@ -8,7 +8,7 @@ import "../../doc.css";
 import { DocLines, QuoteOptions, hasOptions } from "../../doc-lines";
 import { chosen, totals, type Choice } from "@/lib/billing";
 
-type Q = { business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
+type Q = { fence?: { img: string; feet: number; gates: number } | null; business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
   items?: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax_rate?: number;
   financing?: { link: string; note: string } | null; terms?: string; warranty?: string; choice?: Choice | null;
   state: "open" | "approved" | "declined" | "closed" | "expired"; answeredAt: string | null; validUntil?: string | null; deposit?: number | null; payLink?: string };
@@ -51,6 +51,8 @@ export default function QuotePage() {
           <p className="doc-k">Quote{q.customer ? ` for ${q.customer}` : ""}, {day(q.sent)}{q.state === "open" && q.validUntil ? `. Good through ${day(q.validUntil)}` : ""}</p>
           <p className="doc-amt">{amount ? usd(amount) : "Your quote"}{opts && live ? <small className="doc-amt-sub"> for what you picked</small> : null}</p>
           {q.line && <p className="doc-line">{q.line.replace(/\s·\s/g, ", ")}</p>}
+          {q.fence && <figure className="doc-fence">{q.fence.img ? <img src={q.fence.img} alt={`Where the fence goes: ${Math.round(q.fence.feet)} ft`} loading="lazy" /> : null}
+            <figcaption>Where your fence goes: {Math.round(q.fence.feet).toLocaleString("en-US")} ft{q.fence.gates ? `, ${q.fence.gates} ${q.fence.gates === 1 ? "gate" : "gates"}` : ""}, measured from above.</figcaption></figure>}
           {q.items && q.items.length > 0 && (opts ? <QuoteOptions items={q.items} taxRate={q.tax_rate ?? 0} choice={pick} onChoice={live ? setPick : undefined} /> : <DocLines items={q.items} taxRate={q.tax_rate ?? 0} total={q.amount ?? 0} />)}
           {q.note && <div className="doc-note"><h2>What&rsquo;s included</h2><p>{q.note}</p></div>}
           {q.warranty && <div className="doc-note"><h2>Warranty</h2><p>{q.warranty}</p></div>}

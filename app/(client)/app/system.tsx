@@ -11,6 +11,7 @@ import { sourceLabel, type Biz, type Data, type Go, type LeadMail } from "./type
 import { PageHead } from "./charts";
 import { ActivityLog, DaysOffEditor, FieldLabelsEditor } from "./records";
 import { FollowUps } from "./automations";
+import { FenceTypesEditor } from "./measure";
 
 type View = "connections" | "tools" | "agent" | "account";
 type State = "on" | "todo" | "off" | "bad";
@@ -406,6 +407,7 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
       <ReviewLink d={d} api={api} project={project} toast={toast} reload={reload} />
       <FieldLabelsEditor ctx={{ d, project, api, toast, reload }} />
       {d.role !== "crew" && <DaysOffEditor ctx={{ d, project, api, toast, reload }} />}
+      {d.role !== "crew" && (/fence/i.test(biz.trade) || !!d.setup?.fence_types) && <FenceTypesEditor ctx={{ d, project, api, toast, reload }} />}
       {d.role !== "office" && d.role !== "crew" && <FollowUps ctx={{ d, project, api, toast, reload }} />}
       <li><span>Invoices, tax and pay link</span><button type="button" className="btn sm" onClick={go.billing}>{biz.payLink ? "Edit" : "Add pay link"}</button></li>
       <li><span>Notifications on this device</span>{push === "on" ? <span className="dot good">On</span> : push === "off" ? <button type="button" className="btn sm" onClick={onPush}>Turn on</button> : <span className="mut">{push === "blocked" ? "Blocked in settings" : push === "ios-install" ? "Add to Home Screen first" : "Not on this browser"}</span>}</li>

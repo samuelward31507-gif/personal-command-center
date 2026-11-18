@@ -15,6 +15,8 @@ import { quoteValidDays } from "@/lib/service";
 import { cleanDaysOff } from "@/lib/client-booking";
 import { saveRules } from "@/lib/client-automations-run";
 import { deleteOrder, saveOrder, setOrderStatus } from "@/lib/client-orders-run";
+import { measureOrder, measureQuote, saveFenceTypes, saveMeasure } from "@/lib/client-measure-run";
+import { savePaperwork } from "@/lib/client-records-run";
 import { addFile, removeEquipment, removeFile, saveEquipment, saveTask, serviceEquipment, setTask } from "@/lib/client-records-run";
 import { setPhone, addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
@@ -263,6 +265,22 @@ async function handle(req: Request) {
       if (b.action === "order") { if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400); const r = await saveOrder(sql, c, b.thread, b.entry && UUID.test(b.entry) ? b.entry : null, b.input, member); return r.ok ? json({ ok: true, id: r.id }) : json({ error: r.error }, 400); }
       if (!b.entry || !UUID.test(b.entry)) return json({ error: "Which order?" }, 400);
       const r = b.action === "orderstatus" ? await setOrderStatus(sql, c, b.entry, b.status, member) : await deleteOrder(sql, c, b.entry);
+      return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
+    }
+    // Measure-to-quote: the drawing on the job, its quote, its material order; and the owner's fence types.
+    if (b.action === "measure" || b.action === "measurequote" || b.action === "measureorder" || b.action === "fencetypes") {
+      if (s.role === "crew") return json({ error: "Only the office can measure and price." }, 403);
+      if (b.action === "fencetypes") return json(await saveFenceTypes(sql, c, b.input));
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
+      const r = b.action === "measure" ? await saveMeasure(sql, c, b.thread, b.input)
+        : b.action === "measurequote" ? await measureQuote(sql, c, b.thread, (b.input as { types?: unknown } | undefined)?.types)
+        : await measureOrder(sql, c, b.thread, (b.input as { type?: unknown } | undefined)?.type, member);
+      return r.ok ? json(r) : json({ error: r.error }, 400);
+    }
+    if (b.action === "paperwork") {
+      if (s.role === "crew") return json({ error: "Only the office can change the paperwork." }, 403);
+      if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which job?" }, 400);
+      const r = await savePaperwork(sql, c, b.thread, b.input);
       return r.ok ? json({ ok: true }) : json({ error: r.error }, 400);
     }
     if (b.action === "daysoff") {

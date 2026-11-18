@@ -50,7 +50,10 @@ export async function runPreAudit(opts: { sql: Sql; owner: string; apiKey: strin
   const contacts = await sql`
     SELECT c.id, c.company, c.first_name, c.last_name, c.website, c.location, c.notes FROM public.contacts c
     WHERE c.owner_id = ${owner} AND c.id = ANY(${ids}::uuid[])
-      AND NOT EXISTS (SELECT 1 FROM public.research_artifacts r WHERE r.owner_id = c.owner_id AND r.contact_id = c.id AND r.artifact_type = 'audit_prep' AND r.status <> 'archived')`;
+      AND NOT EXISTS (SELECT 1 FROM public.research_artifacts r WHERE r.owner_id = c.owner_id AND r.contact_id = c.id AND r.artifact_type = 'audit_prep' AND r.status <> 'archived')
+      -- Grok's Scout already researched them (for free, on the subscription): don't pay for a second audit.
+      AND NOT EXISTS (SELECT 1 FROM public.research_artifacts g WHERE g.owner_id = c.owner_id AND g.contact_id = c.id AND g.artifact_type = 'call_brief'
+        AND g.author = 'grok' AND g.status <> 'archived' AND g.updated_at > now() - interval '7 days')`;
   const order = new Map(ids.map((id, i) => [id, i]));
   const batch = contacts.sort((a, b) => (order.get(String(a.id)) ?? 0) - (order.get(String(b.id)) ?? 0)).slice(0, budget);
   const model = process.env.CINDER_AUDIT_MODEL?.trim() || DEFAULT_AUDIT_MODEL;

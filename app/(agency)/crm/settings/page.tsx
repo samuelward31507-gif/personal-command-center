@@ -11,6 +11,46 @@ import "./settings.css";
 
 const authClient = createAuthClient();
 
+/** Grok Bot's door into the command center: the MCP address and a key you make here, shown once. */
+function GrokCard() {
+  const [state, setState] = useState<{ last4: string; createdAt: string; lastUsedAt: string | null } | null | undefined>(undefined);
+  const [fresh, setFresh] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState("");
+  const [url, setUrl] = useState("");
+  useEffect(() => { setUrl(window.location.origin + "/api/agent/mcp"); fetch("/api/agent-keys", { cache: "no-store" }).then(r => r.json()).then(d => setState(d.key ?? null)).catch(() => setState(null)); }, []);
+  const copy = (what: string, text: string) => void copyText(text).then(() => { setCopied(what); setTimeout(() => setCopied(""), 1400); });
+  async function make() {
+    if (state && !confirm("Make a new key? The current one stops working right away, so Grok Bot needs the new one.")) return;
+    setBusy(true);
+    try { const r = await fetch("/api/agent-keys", { method: "POST" }); const d = await r.json(); if (d.key) { setFresh(d.key); setState({ last4: d.key.slice(-4), createdAt: new Date().toISOString(), lastUsedAt: null }); } }
+    finally { setBusy(false); }
+  }
+  const when = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const box: React.CSSProperties = { flex: "1 1 260px", padding: "9px 12px", borderRadius: 9, border: "1px solid #dcddda", background: "#ffffff", color: "#121417", fontSize: 13, overflowWrap: "anywhere" };
+  const btn: React.CSSProperties = { height: 36, padding: "0 14px", borderRadius: 9, border: "1px solid #121417", background: "#121417", color: "#ffffff", fontWeight: 600, cursor: "pointer" };
+  return <section style={CARD}>
+    <h2 style={{ fontSize: 18, margin: 0 }}>Grok Bot</h2>
+    <p style={{ color: "#4c525c", fontSize: 13, margin: "6px 0 14px" }}>Lets your Grok Bots read your call list, prospects, meetings and content plan, and save briefs, drafts and leads for you to review. Nothing they do here sends a message.</p>
+    <p style={{ fontSize: 12.5, fontWeight: 600, margin: "0 0 6px" }}>Server address</p>
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+      <code style={box}>{url}</code>
+      <button type="button" style={{ ...btn, background: "#fff", color: "#121417", border: "1px solid #dcddda" }} onClick={() => copy("url", url)}>{copied === "url" ? "Copied" : "Copy"}</button>
+    </div>
+    <p style={{ fontSize: 12.5, fontWeight: 600, margin: "0 0 6px" }}>Key</p>
+    {fresh ? <>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <code style={box}>{fresh}</code>
+        <button type="button" style={btn} onClick={() => copy("key", fresh)}>{copied === "key" ? "Copied" : "Copy key"}</button>
+      </div>
+      <p style={{ color: "#a34a14", fontSize: 12.5, margin: "8px 0 0" }}>Shown once. Paste it into Grok Bot&apos;s secret field now; you can always make a new one.</p>
+    </> : <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+      <span style={{ fontSize: 13, color: "#4c525c" }}>{state === undefined ? "Checking…" : state ? `Key ending ${state.last4}, made ${when(state.createdAt)}. ${state.lastUsedAt ? `Last used ${when(state.lastUsedAt)}.` : "Not used yet."}` : "No key yet."}</span>
+      <button type="button" style={btn} disabled={busy} onClick={() => void make()}>{busy ? "Making…" : state ? "Make a new key" : "Make a key"}</button>
+    </div>}
+  </section>;
+}
+
 /** Public lead form link: share it in your bio, email signature or anywhere prospects find you. */
 function LeadFormLink() {
   const [url, setUrl] = useState("");
@@ -164,7 +204,7 @@ export default function SettingsPage() {
 
       {tab === "business" && <><WorkspaceCard /><OfferCard /></>}
 
-      {tab === "automations" && <><LeadFormLink /><OvernightAudits /><SundayReview /></>}
+      {tab === "automations" && <><GrokCard /><LeadFormLink /><OvernightAudits /><SundayReview /></>}
 
       {tab === "account" && <>
       <section style={CARD}>
