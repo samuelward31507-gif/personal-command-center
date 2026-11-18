@@ -58,11 +58,11 @@ export function hiringIntro(m: Merge, role: string): EmailTemplate {
     subject: fillTemplate(`your ${r.toLowerCase()} opening`, m),
     body: fillTemplate(`Hi {first_name},
 
-Saw {company} is hiring a ${r.toLowerCase()}. Before you fill it, one question: who gets the calls that come in after 5, on weekends, or while they're on the other line?
+Saw {company} is hiring a ${r.toLowerCase()}. Before you fill it: who handles the calls at 6pm, on Saturdays, or when they're already on the other line?
 
-Those are the homeowners who call the next company on the list. I set contractors up so every missed call and web form gets a text back in about 10 seconds, their questions get answered, and the estimate books itself on your calendar. It works alongside whoever you hire, and covers the gap until you do.
+That's where most jobs slip. I give contractors a front desk that never clocks out. Every caller you can't get to hears back in seconds, gets their questions answered, and gets the estimate booked on your calendar. Nights, weekends, lunch breaks, all of it, for a fraction of a salary. It works alongside whoever you hire, or covers you until you do.
 
-Open to a quick look? Just reply "yes" and I'll send a couple of times.
+Worth a quick look? Just reply "yes" and I'll send a couple of times.
 
 {my_name}
 {business}

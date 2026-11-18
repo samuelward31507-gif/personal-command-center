@@ -113,7 +113,7 @@ export function infoText(i: { firstName?: string; demoLink: string; slot1?: stri
 export function hiringText(i: { firstName?: string; company?: string; role?: string }): string {
   const hi = `Hey${i.firstName?.trim() ? " " + i.firstName.trim() : ""}, Sam with Cinder Revenue.`;
   const role = (i.role || "receptionist").toLowerCase();
-  return `${hi} Saw ${i.company?.trim() || "you guys"} is hiring a ${role}. Quick one: who catches the calls after 5 and on weekends? I set up contractors so every missed call gets a text back in seconds and the estimate booked. Mind if I give you a quick call tomorrow? Reply STOP to opt out.`;
+  return `${hi} Saw ${i.company?.trim() || "you guys"} is hiring a ${role}. Who's covering the calls after 5 and on weekends? I set contractors up with a front desk that never clocks out: every caller hears back in seconds and gets the estimate booked. Mind if I call you tomorrow? Reply STOP to opt out.`;
 }
 
 export function smsHref(phone: string, body: string): string {
