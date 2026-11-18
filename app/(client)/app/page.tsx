@@ -324,6 +324,8 @@ export default function CinderApp() {
     </nav>
     <div className="main">
       {demo && <div className="demo"><span>Example business, sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>}
+      {!demo && (d.failed?.length ?? 0) > 0 && <div className="offline-bar" role="alert"><span>Your {d.failed!.length > 1 ? `${d.failed!.slice(0, -1).join(", ")} and ${d.failed!.at(-1)}` : d.failed![0]} didn&rsquo;t load. Nothing is lost.</span>
+        <button type="button" className="btn sm" onClick={() => void reload()}>Try again</button></div>}
       {!demo && (!online || pending > 0) && <div className={"offline-bar" + (online ? " syncing" : "")} role="status"><span>{online ? `Saving ${pending} ${pending === 1 ? "change" : "changes"} from while you were offline` : `Offline. You're seeing what was saved on this phone${pending ? `; ${pending} ${pending === 1 ? "change waits" : "changes wait"} to send` : ""}. Checklists, photos, notes and the clock still work.`}</span></div>}
       <div className={"page" + (open ? " has-open" : "")} role="main">{page}</div>
     </div>
