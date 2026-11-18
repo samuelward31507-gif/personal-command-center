@@ -44,6 +44,7 @@ export default function CallModePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [audit, setAudit] = useState<Audit | null | undefined>(undefined);
+  const [scout, setScout] = useState<{ id: string; content: string; updatedAt: string } | null>(null);
   const [founding, setFounding] = useState<{ script: string; left: number } | null>(null);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -153,6 +154,10 @@ export default function CallModePage() {
     fetch(`/api/research-artifacts?type=audit_prep&contactId=${contact.id}`, { cache: "no-store" })
       .then(r => r.json()).then(d => { if (live) setAudit((d.artifacts ?? []).filter((a: { status: string }) => a.status !== "archived")[0] ?? null); })
       .catch(() => live && setAudit(null));
+    setScout(null);
+    fetch(`/api/research-artifacts?type=call_brief&contactId=${contact.id}`, { cache: "no-store" })
+      .then(r => r.json()).then(d => { if (live) setScout((d.artifacts ?? []).filter((a: { status: string; author?: string }) => a.status !== "archived" && a.author === "grok")[0] ?? null); })
+      .catch(() => {});
     return () => { live = false; };
   }, [contact?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -460,6 +465,7 @@ export default function CallModePage() {
           </div>
         </div>
 
+        {scout && <ScoutBrief content={scout.content} updatedAt={scout.updatedAt} />}
         {audit !== undefined && <AuditCard content={audit?.content} auditId={audit?.id} contactId={contact.id} />}
         <SpeedLoom contact={contact} firstName={playFirst} auditContent={audit?.content ?? null} bookingLink={wsp.bookingLink || null} />
 
@@ -613,4 +619,26 @@ function clean(text: string) { return text.replace(/\*\*/g, "").replace(/^[-*•
 function Block({ title, text }: { title: string; text: string }) {
   const lines = text.split("\n").map(l => l.replace(/\*\*/g, "").trim()).filter(Boolean);
   return <div className="dl-col"><h2 className="u-h2">{title}</h2><ul>{lines.map((l, i) => <li key={i}>{l.replace(/^[-*•]\s+|^\d+[.)]\s+/, "")}</li>)}</ul></div>;
+}
+
+/** Grok's research on this prospect, from the agent API. Shown above the audit, labeled as the agent's, never as fact. */
+function ScoutBrief({ content, updatedAt }: { content: string; updatedAt: string }) {
+  const part = (h: string) => reportSection(content, h);
+  const link = (line: string, i: number) => {
+    const m = /^(.*)\(\[source\]\((https?:[^)\s]+)\),\s*checked\s*([\d-]+)\)\s*$/.exec(line);
+    return <li key={i}>{m ? <>{m[1].trim()} <a href={m[2]} target="_blank" rel="noreferrer" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>source</a> <span className="u-note">{m[3]}</span></> : line}</li>;
+  };
+  const list = (text: string) => <ul>{text.split("\n").map(l => l.replace(/^[-*•]\s+/, "").trim()).filter(Boolean).map(link)}</ul>;
+  const when = new Date(updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return <div className="dl-brief" aria-label="Grok's research">
+    <p className="dl-verdict">{clean(part("Summary"))}</p>
+    <div className="dl-cols">
+      {part("Angle") && <div className="dl-col"><h2 className="u-h2">Pitch</h2>{list(part("Angle"))}</div>}
+      {part("How leads reach them") && <div className="dl-col"><h2 className="u-h2">How leads reach them</h2>{list(part("How leads reach them"))}</div>}
+      {part("Don't claim") && <div className="dl-col"><h2 className="u-h2">Don't claim</h2>{list(part("Don't claim"))}</div>}
+    </div>
+    {part("Verified") && <div className="dl-col"><h2 className="u-h2">Seen on their pages</h2>{list(part("Verified"))}</div>}
+    {part("Not verified") && <div className="dl-col"><h2 className="u-h2">Not verified</h2>{list(part("Not verified"))}</div>}
+    <div className="dl-brief-foot"><span>Researched by Grok, {when}. Check before you quote it.</span></div>
+  </div>;
 }

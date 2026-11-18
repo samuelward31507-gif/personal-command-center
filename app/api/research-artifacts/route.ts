@@ -65,7 +65,7 @@ function mapRow(row: Record<string, unknown>) {
     researchedAt: row.researched_at ?? null, createdAt: row.created_at, updatedAt: row.updated_at,
     contactName: String(row.contact_name ?? ""), company: String(row.company ?? ""),
     dealTitle: String(row.deal_title ?? ""), eventTitle: String(row.event_title ?? ""),
-    eventStartsAt: row.event_starts_at ?? null,
+    eventStartsAt: row.event_starts_at ?? null, author: String(row.author ?? "founder"),
   };
 }
 export async function GET(request: Request) {
@@ -85,7 +85,7 @@ export async function GET(request: Request) {
     const rows = await sql`
       SELECT r.id, r.contact_id, r.deal_id, r.calendar_event_id, r.artifact_type, r.title,
         r.source_urls, r.verified_facts, r.hypotheses, r.confidence, r.content, r.status,
-        r.researched_at, r.created_at, r.updated_at,
+        r.researched_at, r.created_at, r.updated_at, r.author,
         trim(concat_ws(' ', c.first_name, c.last_name)) AS contact_name, c.company,
         d.title AS deal_title, e.title AS event_title, e.starts_at AS event_starts_at
       FROM public.research_artifacts r

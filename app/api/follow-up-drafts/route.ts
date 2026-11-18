@@ -18,11 +18,12 @@ export async function GET() {
   if (!process.env.DATABASE_URL) return fail("DATABASE_URL is not configured.", 503);
   try {
     const sql = neon(process.env.DATABASE_URL);
-    const rows = await sql`SELECT f.id, f.contact_id, f.pattern, f.reason, f.body, f.created_at, c.company, c.first_name, c.last_name, c.phone, c.website
+    const rows = await sql`SELECT f.id, f.contact_id, f.pattern, f.reason, f.body, f.channel, f.subject, f.author, f.created_at, c.email, c.company, c.first_name, c.last_name, c.phone, c.website
       FROM public.follow_up_drafts f JOIN public.contacts c ON c.id = f.contact_id
       WHERE f.owner_id = ${user.id} AND f.status = 'ready' AND (f.snooze_until IS NULL OR f.snooze_until < now())
       ORDER BY f.created_at DESC LIMIT 20`;
     return Response.json({ drafts: rows.map(r => ({ id: String(r.id), contactId: String(r.contact_id), pattern: String(r.pattern), reason: String(r.reason), body: String(r.body),
+      channel: String(r.channel ?? "text"), subject: String(r.subject ?? ""), author: String(r.author ?? "cinder"), email: String(r.email ?? ""),
       company: String(r.company ?? ""), firstName: String(r.first_name ?? ""), phone: String(r.phone ?? ""), website: String(r.website ?? "") })) }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Follow-up drafts load failed", { name: error instanceof Error ? error.name : typeof error });
