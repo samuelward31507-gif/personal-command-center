@@ -46,7 +46,7 @@ export async function runAutopilot(sql: Sql, o: string, ws: WorkspaceSettings, o
   const rows = await sql`SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company, c.location, c.niche, c.email, c.website, coalesce(c.notes, '') AS notes
     FROM public.contacts c
     WHERE c.owner_id = ${o} AND c.email ~* '^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$'
-      AND lower(coalesce(c.status, '')) <> 'customer'
+      AND lower(coalesce(c.status, '')) NOT IN ('customer', 'duplicate')
       AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND (a.notes LIKE 'Email sent: %' OR a.notes LIKE 'Email reply:%' OR a.notes LIKE 'Email bounced:%' OR a.notes LIKE 'Email undeliverable:%'))
       AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND a.channel = 'call'
         AND a.outcome IN ('answered','connected','interested','meeting_booked','not_a_fit','not_interested','send_info','callback_requested','do_not_contact','wrong_contact','wrong_number'))
