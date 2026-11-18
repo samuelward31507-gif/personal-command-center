@@ -5,6 +5,8 @@ import { GET as prospect } from "../prospect/route";
 import { GET as meetings } from "../meetings/route";
 import { POST as brief } from "../brief/route";
 import { POST as drafts } from "../drafts/route";
+import { GET as myTexts } from "../my-texts/route";
+import { POST as runs } from "../runs/route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +14,7 @@ export const dynamic = "force-dynamic";
 const HANDLERS: Record<string, (r: Request) => Promise<Response>> = {
   "/api/agent/call-list": callList, "/api/agent/prospect": prospect, "/api/agent/meetings": meetings,
   "/api/agent/brief": brief, "/api/agent/drafts": drafts,
+  "/api/agent/my-texts": myTexts, "/api/agent/runs": runs,
 };
 
 /** Runs one tool by calling the matching REST handler with the same key, so both doors share every rule. */

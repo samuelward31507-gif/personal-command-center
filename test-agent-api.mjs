@@ -76,7 +76,7 @@ ok(() => assert.deepEqual(dayRange("2026-11-17"), { start: "2026-11-17T07:00:00.
 ok(() => assert.deepEqual(dayRange("2026-07-04"), { start: "2026-07-04T06:00:00.000Z", end: "2026-07-05T06:00:00.000Z" }));
 
 // The OpenAPI lists every route
-ok(() => assert.deepEqual(Object.keys(openApi("https://x").paths).sort(), ["/api/agent/brief", "/api/agent/call-list", "/api/agent/drafts", "/api/agent/meetings", "/api/agent/prospect"]));
+ok(() => assert.deepEqual(Object.keys(openApi("https://x").paths).sort(), ["/api/agent/brief", "/api/agent/call-list", "/api/agent/drafts", "/api/agent/meetings", "/api/agent/my-texts", "/api/agent/prospect", "/api/agent/runs"]));
 
 console.log(`agent api: ${n} checks passed`);
 
@@ -86,7 +86,7 @@ let m = 0; const mk = fn => { fn(); m++; };
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26" } }).reply.result.protocolVersion, "2025-03-26"));
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "1999" } }).reply.result.protocolVersion, "2025-06-18"));
 mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", method: "notifications/initialized" }), { notify: true }));
-mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", id: 2, method: "tools/list" }).reply.result.tools.map(t => t.name), ["get_call_list", "get_prospect", "get_meetings", "save_brief", "save_draft"]));
+mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", id: 2, method: "tools/list" }).reply.result.tools.map(t => t.name), ["get_call_list", "get_prospect", "get_meetings", "save_brief", "save_draft", "get_my_texts", "log_run"]));
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "drop_tables", arguments: {} } }).reply.error.code, -32602));
 mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "get_prospect", arguments: { id: C } } }).call, { id: 4, name: "get_prospect", args: { id: C } }));
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 5, method: "resources/list" }).reply.error.code, -32601));
@@ -95,3 +95,18 @@ mk(() => assert.deepEqual(toolCall("get_call_list", { date: "2026-11-18", limit:
 mk(() => assert.equal(toolCall("save_draft", { contactId: C }).path, "/api/agent/drafts"));
 mk(() => assert.ok(TOOLS.every(t => t.inputSchema.type === "object" && t.description.length > 40)));
 console.log(`agent mcp: ${m} checks passed`);
+
+// Runs and webhooks
+const { parseRun, webhookTarget } = await import("./lib/agent-api.ts");
+let w = 0; const wk = fn => { fn(); w++; };
+wk(() => assert.deepEqual(parseRun({ agent: "Scout", counts: { researched: 12, skipped: 3, "bad key!": 4, failed: -1 } }).run, { agent: "Scout", task: "Routine run", status: "succeeded", summary: "", counts: { researched: 12, skipped: 3 } }));
+wk(() => assert.ok("error" in parseRun({ status: "failed" })));
+wk(() => assert.ok("error" in parseRun({ agent: "Scout", status: "maybe" })));
+wk(() => assert.equal(parseRun({ agent: "Prep", status: "failed", summary: "Gmail signed out" }).run.status, "failed"));
+wk(() => assert.equal(webhookTarget("http://x.com/hook", "k"), null));
+wk(() => assert.equal(webhookTarget("https://x.com/hook", ""), null));
+wk(() => assert.deepEqual(webhookTarget(" https://x.com/hook ", "k"), { url: "https://x.com/hook", key: "k" }));
+wk(() => assert.deepEqual(toolCall("get_my_texts", {}), { method: "GET", path: "/api/agent/my-texts", query: {} }));
+wk(() => assert.equal(toolCall("log_run", { agent: "Scout" }).path, "/api/agent/runs"));
+wk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 9, method: "tools/list" }).reply.result.tools.length, 7));
+console.log(`agent runs and webhooks: ${w} checks passed`);

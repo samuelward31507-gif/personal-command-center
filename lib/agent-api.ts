@@ -116,6 +116,32 @@ export function briefMarkdown(b: Brief): string {
   return out.join("\n\n");
 }
 
+export type Run = { agent: string; task: string; status: "succeeded" | "failed"; summary: string; counts: Record<string, number> };
+
+/** A routine's record of one run: who, what, how it went, and its counts, so a quiet night with zero done stands out. */
+export function parseRun(body: unknown): { run: Run } | { error: string } {
+  const b = (body && typeof body === "object" && !Array.isArray(body) ? body : {}) as Record<string, unknown>;
+  const agent = str(b.agent, 60);
+  if (!agent) return { error: "agent is required, e.g. Scout." };
+  const task = str(b.task, 200) || "Routine run";
+  const status = b.status === "failed" ? "failed" : b.status === undefined || b.status === "succeeded" ? "succeeded" : null;
+  if (!status) return { error: "status is succeeded or failed." };
+  const counts: Record<string, number> = {};
+  const c = (b.counts && typeof b.counts === "object" && !Array.isArray(b.counts) ? b.counts : {}) as Record<string, unknown>;
+  for (const [k, v] of Object.entries(c).slice(0, 12)) {
+    const n = Number(v);
+    if (/^[a-z_]{1,30}$/i.test(k) && Number.isFinite(n) && n >= 0) counts[k] = Math.floor(n);
+  }
+  return { run: { agent, task, status, summary: str(b.summary, 1000), counts } };
+}
+
+/** Webhook to wake a Grok routine: https only, with its key, or nothing. */
+export function webhookTarget(url: string | undefined, key: string | undefined): { url: string; key: string } | null {
+  const u = (url ?? "").trim(); const k = (key ?? "").trim();
+  if (!u || !k) return null;
+  try { return new URL(u).protocol === "https:" ? { url: u, key: k } : null; } catch { return null; }
+}
+
 export type Draft = { contactId: string; channel: "text" | "email"; subject: string; body: string; reason: string };
 
 /** A draft for Sam to send himself. Texts stay short; emails need a subject. No links except Sam's own domains. */
@@ -167,6 +193,8 @@ export function openApi(baseUrl: string) {
         } } } } },
         responses: ok("{ id, replaced, movedToGuesses }"),
       } },
+      "/api/agent/my-texts": { get: { summary: "Sam's last texts to prospects, newest first, for his style profile", parameters: [{ name: "limit", in: "query", required: false, schema: { type: "integer", minimum: 5, maximum: 100 } }], responses: ok("{ texts: [{ text, at }] }") } },
+      "/api/agent/runs": { post: { summary: "Record one routine run (agent, task, status, summary, counts). Failed runs show on Sam's Today.", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["agent"], properties: { agent: { type: "string" }, task: { type: "string" }, status: { enum: ["succeeded", "failed"] }, summary: { type: "string" }, counts: { type: "object" } } } } } }, responses: ok("{ id }") } },
       "/api/agent/drafts": { post: {
         summary: "Save a text or email draft for Sam to review and send himself. One open agent draft per prospect; a new one replaces it.",
         requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["contactId", "body"], properties: {
@@ -234,6 +262,21 @@ export const TOOLS = [
     } },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
   },
+  {
+    name: "get_my_texts", title: "Sam's recent texts",
+    description: "The last texts Sam sent prospects (newest first), to learn how he writes: length, greeting, sign-off, tone. Use these to build or refresh his style profile; never copy a text to someone else.",
+    inputSchema: { type: "object", properties: { limit: { type: "integer", minimum: 5, maximum: 100, description: "Default 50" } } },
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: "log_run", title: "Record a routine run",
+    description: "Call once at the end of every routine run: which Bot, what it did, succeeded or failed, a one-line summary and counts (e.g. researched, skipped, failed). A failed run shows up on Sam's Today. Always log, even when there was nothing to do.",
+    inputSchema: { type: "object", required: ["agent"], properties: {
+      agent: { type: "string", description: "Scout, Prep, Closer or Coach" }, task: { type: "string" }, status: { type: "string", enum: ["succeeded", "failed"] },
+      summary: { type: "string" }, counts: { type: "object", additionalProperties: { type: "integer" } },
+    } },
+    annotations: { readOnlyHint: false, destructiveHint: false },
+  },
 ] as const;
 
 const s = (v: unknown) => (typeof v === "string" ? v : v === undefined || v === null ? "" : String(v));
@@ -246,6 +289,8 @@ export function toolCall(name: string, args: Record<string, unknown>): ToolCall 
     case "get_meetings": return { method: "GET", path: "/api/agent/meetings", query: args.date ? { date: s(args.date) } : {} };
     case "save_brief": return { method: "POST", path: "/api/agent/brief", body: args };
     case "save_draft": return { method: "POST", path: "/api/agent/drafts", body: args };
+    case "get_my_texts": return { method: "GET", path: "/api/agent/my-texts", query: args.limit ? { limit: s(args.limit) } : {} };
+    case "log_run": return { method: "POST", path: "/api/agent/runs", body: args };
     default: return null;
   }
 }

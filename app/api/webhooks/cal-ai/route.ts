@@ -1,5 +1,6 @@
 import { unwrapCalAiPayload, validCalAiEmail, verifyCalAiSignature, validCalAiDate } from "@/lib/cal-ai-webhook";
 import { sendAlert } from "@/lib/notify";
+import { pingGrok } from "@/lib/agent-ping";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { bookingPerson, bookingAnswers, splitName, stageAfterBooking, stageAfterMeeting, localDate, lastTenDigits } from "@/lib/cal-booking";
 import { suggestOffer } from "@/lib/offers";
@@ -295,6 +296,10 @@ export async function POST(request: Request) {
           createdContact ? "New contact and deal created at Meeting booked, with a prep task." : "",
         ].filter(Boolean), link: { label: "Open the deal", path: dealId ? `/crm/deals/${dealId}` : `/crm?contact=${contact.id}` } });
       }
+      // Wake Grok's Prep routine (only if its webhook is set), so the brief and reminder draft exist within minutes.
+      const [booked] = await sql`SELECT id, contact_id FROM public.calendar_events WHERE owner_id = ${ownerId} AND provider = 'cal_ai' AND provider_event_id = ${uid} LIMIT 1`;
+      await pingGrok("prep", { event: trigger === "BOOKING_RESCHEDULED" ? "meeting_rescheduled" : "meeting_booked", calendarEventId: booked ? String(booked.id) : null,
+        prospectId: booked?.contact_id ? String(booked.contact_id) : contact?.id ?? null, business: person?.company || person?.name || "", startsAt: startsIso });
     } else if (trigger === "MEETING_ENDED") {
       const ev = await sql`
         UPDATE public.calendar_events SET status = 'completed', updated_at = now()
@@ -317,6 +322,9 @@ export async function POST(request: Request) {
         await sql`INSERT INTO public.tasks (owner_id, title, description, status, priority, due_at, contact_id, deal_id)
           VALUES (${ownerId}, ${"Follow up after the call"}, ${"Log what you learned in discovery, then send the recap or proposal while it's fresh."}, 'todo', 'high', ${due}::timestamptz, ${contactId}::uuid, ${deal?.id ?? null}::uuid)`;
       }
+      // Nudge Grok's Closer (only if its webhook is set) to ask Sam how the call went while it's fresh.
+      const [ended] = await sql`SELECT id FROM public.calendar_events WHERE owner_id = ${ownerId} AND provider = 'cal_ai' AND provider_event_id = ${uid} LIMIT 1`;
+      await pingGrok("closer", { event: "meeting_ended", calendarEventId: ended ? String(ended.id) : null, prospectId: contactId, business: person?.company || person?.name || "", startsAt: null });
     }
 
     await sql`
