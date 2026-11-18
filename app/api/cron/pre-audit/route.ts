@@ -6,6 +6,7 @@ import { runPreAudit, logRun } from "@/lib/pre-audit";
 import { refillLeads } from "@/lib/lead-finder-run";
 import { bearerMatches } from "@/lib/bearer";
 import { findEmails } from "@/lib/find-emails-run";
+import { findHiring } from "@/lib/hiring-finder-run";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,6 +41,9 @@ export async function GET(request: Request) {
     // First top up the call list from saved Google Maps searches, so the new leads get audited tonight too.
     const refill = await refillLeads(sql, owner).catch(e => ({ error: e instanceof Error ? e.message : "failed" }));
     console.info("Lead refill", refill);
+    // Companies hiring someone to answer their phones: the best voice-receptionist and speed-to-lead prospects.
+    const hiring = await findHiring(sql, owner).catch(e => ({ error: e instanceof Error ? e.message : "failed" }));
+    console.info("Hiring finder", hiring);
     // Overnight audits of the whole call list are off by default (they mostly went unread). Audits now run when a
     // prospect books a meeting. Set PRE_AUDIT=on to bring the overnight run back.
     const result = process.env.PRE_AUDIT === "on"
