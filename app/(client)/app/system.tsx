@@ -202,7 +202,8 @@ function AgentRow({ d, api, project, toast, reload, open, onToggle }: { d: Data;
     catch (e) { toast(e instanceof Error ? e.message : "Couldn't change it.", true); } finally { setBusy(false); }
   };
   const n30 = (d.wires?.sources ?? []).filter(x => x.source !== "import" && x.source !== "owner").reduce((a, x) => a + x.last30, 0);
-  return <Row state={!d.number ? "todo" : on ? "on" : "off"} name="Speed-to-lead agent" n30={n30 ? String(n30) : ""} st={!d.number ? "Waiting on your texting number" : on ? `Connected, replying and booking${sec != null ? `, first reply in ${sec < 60 ? sec + "s" : Math.round(sec / 60) + "m"}` : ""}` : "Paused, replies go to you"}
+  const lastAny = (d.wires?.sources ?? []).filter(x => x.source !== "import" && x.source !== "owner").map(x => x.last || "").filter(Boolean).sort().pop() || "";
+  return <Row state={!d.number ? "todo" : on ? "on" : "off"} name="Speed-to-lead agent" n30={n30 ? String(n30) : ""} last={lastAny ? ago(lastAny) : ""} st={!d.number ? "Waiting on your texting number" : on ? `Connected, replying and booking${sec != null ? `, first reply in ${sec < 60 ? sec + "s" : Math.round(sec / 60) + "m"}` : ""}` : "Paused, replies go to you"}
     open={open} onToggle={onToggle}
     acts={d.number ? <button type="button" className={"btn sm" + (on ? " ghost" : " ink")} disabled={busy} onClick={() => void set(on)}>{busy ? <Spinner /> : on ? "Pause" : "Turn on"}</button> : undefined}>
     <p>Cinder texts every new lead in seconds, answers their questions in your words, gives a ballpark if you allow it, and books the estimate on your calendar. Anything it can&rsquo;t answer comes to you.</p>

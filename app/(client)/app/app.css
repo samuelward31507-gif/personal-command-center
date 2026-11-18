@@ -1520,3 +1520,12 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 .ri.on .obj svg { color: var(--ink) !important; }
 /* Record header: Call, Text, Quote named; expand and close as icons. */
 .insp-h .acts { gap: 6px; align-items: center; }
+
+/* Inbox filters: all five fit the list column (no hidden scroll). */
+.inbox .filt { padding: 0 8px; }
+.inbox .filt .views { gap: 0; }
+.inbox .filt .views > button { padding: 0 7px; gap: 4px; font-size: 13px; }
+@media (min-width: 1280px) { .inbox .split > .pane.list, .inbox .pane.list { min-width: 372px; } }
+
+/* Connections: green is for money. Connected is a dark neutral dot; needs-setup takes the accent; errors stay red. */
+.cx.on .cx-t .cdot { background: var(--g1); }
