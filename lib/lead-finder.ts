@@ -4,6 +4,7 @@
 export type Place = {
   id: string; displayName?: { text?: string }; formattedAddress?: string; nationalPhoneNumber?: string; internationalPhoneNumber?: string;
   websiteUri?: string; rating?: number; userRatingCount?: number; businessStatus?: string; primaryTypeDisplayName?: { text?: string };
+  regularOpeningHours?: { periods?: { open?: { day?: number; hour?: number }; close?: { day?: number; hour?: number } }[] };
 };
 export type Lead = { placeId: string; company: string; phone: string; website: string; location: string; rating: number | null; reviews: number; score: number; why: string };
 
@@ -30,30 +31,49 @@ export function nicheOf(trade: string): Niche {
   return "";
 }
 
+/** Days of the week (0 = Sunday) the listing says they're open, or null when Google has no hours. */
+export function openDays(p: Place): Set<number> | null {
+  const periods = p.regularOpeningHours?.periods;
+  if (!periods?.length) return null;
+  if (periods.length === 1 && !periods[0].close) return new Set([0, 1, 2, 3, 4, 5, 6]); // open 24/7
+  return new Set(periods.map(x => x.open?.day).filter((d): d is number => typeof d === "number"));
+}
+
+/** Fence demand dies December–February outside the Sunbelt (frozen ground, no leads). */
+const COLD = new Set(["AK","CO","CT","DE","IA","ID","IL","IN","KS","MA","MD","ME","MI","MN","MO","MT","ND","NE","NH","NJ","NY","OH","OR","PA","RI","SD","UT","VT","WA","WI","WV","WY"]);
+export const inWinterLull = (state: string, month: number) => COLD.has(state) && (month === 11 || month <= 1);
+
 /**
- * The ICP filter (see the sales playbook): an established local installer, big enough to have steady jobs and pay for
- * leads, small enough that the owner still picks up. Google Maps can't see ads, so this only keeps the companies
- * worth checking; Lister upgrades the ones paying for leads to grade A.
- * Hard rules: real phone, open, not a franchise or supply yard, rating 4.0+, a real website (they market themselves),
- * enough reviews to be busy (fence 40+, generators 25+: dealers collect fewer reviews), and not a giant (600+).
+ * The ICP (sales playbook, "Who we call"): companies that lose real money to slow replies. That takes four things at
+ * once: enough leads (an established shop, not a 2-person crew), leads they compete for (homeowners get 3 quotes;
+ * shared leads go to up to 5 pros), nobody free to answer fast (crews in the field, closed weekends), and a big
+ * ticket. Google can't see lead volume or ads, so this keeps the companies worth checking and ranks them;
+ * Lister marks the ones paying for leads as A, and the call itself confirms volume.
+ * Signals that earned their place from Sam's own calls: closed a weekend day (41% interested vs 22%).
+ * Hard rules: real phone, open, not a franchise or supply yard, 4.0+, 40–600 reviews (generators 25–600).
  */
-export function scorePlace(p: Place, trade = ""): { score: number; why: string } {
+export function scorePlace(p: Place, trade = "", now = new Date()): { score: number; why: string } {
   const phone = digits10(p.nationalPhoneNumber || p.internationalPhoneNumber || "");
   if (phone.length !== 10) return { score: 0, why: "no phone" };
   if (p.businessStatus && p.businessStatus !== "OPERATIONAL") return { score: 0, why: "not open" };
   const name = p.displayName?.text || "";
   if (BIG.test(name)) return { score: 0, why: "franchise or national chain" };
   if (NOT_INSTALLER.test(name)) return { score: 0, why: "supply yard or rental, not an installer" };
-  const n = p.userRatingCount ?? 0, r = p.rating ?? 0;
-  const min = nicheOf(trade) === "Standby generators" ? 25 : 40;
-  if (n < min) return { score: 0, why: `only ${n} reviews, too small` };
-  if (n > 600) return { score: 0, why: `${n} reviews, too big (front desk, sales team)` };
+  const n = p.userRatingCount ?? 0, r = p.rating ?? 0, niche = nicheOf(trade);
+  const min = niche === "Standby generators" ? 25 : 40;
+  if (n < min) return { score: 0, why: `only ${n} reviews, too small for steady leads` };
+  if (n > 600) return { score: 0, why: `${n} reviews, too big (has a front desk)` };
   if (r < 4.0) return { score: 0, why: `${r}★, under 4.0` };
-  if (!p.websiteUri || SOCIAL.test(p.websiteUri)) return { score: 0, why: "no real website" };
-  let s = 50; const why: string[] = [];
-  if (n <= 300) { s += 30; why.push(`${n} reviews, busy owner-run size`); } else { s += 12; why.push(`${n} reviews, may have an office`); }
-  if (r >= 4.6) { s += 15; why.push(`${r}★`); } else { s += 5; why.push(`${r}★`); }
-  return { score: Math.min(100, s), why: why.join(", ") };
+  let s = 45; const why: string[] = [];
+  if (n <= 300) { s += 25; why.push(`${n} reviews, established but owner-run`); } else { s += 10; why.push(`${n} reviews, may have an office`); }
+  if (r >= 4.6) s += 5;
+  why.push(`${r}★`);
+  const days = openDays(p);
+  if (days && (!days.has(6) || !days.has(0))) { s += 15; why.push(!days.has(6) ? "closed Saturdays" : "closed Sundays"); }
+  if (p.websiteUri && !SOCIAL.test(p.websiteUri)) s += 10; else why.push("no real website");
+  const state = /,\s*([A-Z]{2})\s+\d{5}/.exec(p.formattedAddress || "")?.[1] ?? "";
+  if (niche === "Fence" && inWinterLull(state, now.getMonth())) { s -= 20; why.push("winter lull in " + state); }
+  return { score: Math.max(0, Math.min(100, s)), why: why.join(", ") };
 }
 
 export function toLead(p: Place, trade = ""): Lead | null {

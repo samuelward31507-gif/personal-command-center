@@ -5,7 +5,7 @@ import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { nicheOf, noteFor, pickLeads, type Lead, type Place } from "@/lib/lead-finder";
 
 type Sql = NeonQueryFunction<false, false>;
-const FIELDS = "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.businessStatus,nextPageToken";
+const FIELDS = "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.businessStatus,places.regularOpeningHours,nextPageToken";
 export const placesConfigured = () => !!process.env.GOOGLE_PLACES_KEY?.trim();
 
 export async function searchPlaces(query: string, pageToken = ""): Promise<{ places: Place[]; next: string }> {
