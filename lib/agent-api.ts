@@ -185,6 +185,20 @@ export const gradeOf = (notes: string): "A" | "B" | "C" | "" => (/Lead grade:\s*
 export const MAX_PROSPECTS_PER_CALL = 50;
 
 /** Prospects found on public pages. A US phone is required (the call list needs one); duplicates in the batch are dropped. */
+/**
+ * A company hiring a receptionist or CSR gets more calls than it can answer and has budgeted a salary to fix it:
+ * the strongest sign it needs a voice receptionist. It makes the prospect grade A ("Lead grade: A · Hiring: …").
+ */
+export function withHiring(notes: string, hiring: unknown): string {
+  const h = (hiring && typeof hiring === "object" ? hiring : {}) as Record<string, unknown>;
+  const role = str(h.role, 80);
+  if (!role) return notes;
+  const posted = /^\d{4}-\d{2}-\d{2}$/.test(str(h.posted, 10)) ? str(h.posted, 10) : "";
+  const url = httpUrl(h.url);
+  const rest = notes.replace(/Lead grade:\s*[ABC]\b\s*[·:-]?\s*/i, "").trim();
+  return [`Lead grade: A · Hiring: ${role}${posted ? ` (posted ${posted})` : ""}${url ? ` ${url}` : ""}`, rest].filter(Boolean).join("\n").slice(0, 700);
+}
+
 export function parseProspects(body: unknown): { prospects: NewProspect[]; rejected: number } | { error: string } {
   const b = (body && typeof body === "object" && !Array.isArray(body) ? body : {}) as Record<string, unknown>;
   const list = Array.isArray(b.prospects) ? b.prospects : null;
@@ -200,7 +214,7 @@ export function parseProspects(body: unknown): { prospects: NewProspect[]; rejec
     seen.add(ten);
     const site = str(o.website, 300);
     out.push({ business, phone: `(${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}`, website: site && !/^https?:\/\//i.test(site) ? "https://" + site : site,
-      location: str(o.location, 120), owner: str(o.owner, 80), source: httpUrl(o.source), notes: str(o.notes, 500), niche: nicheOf(str(o.niche, 60)) });
+      location: str(o.location, 120), owner: str(o.owner, 80), source: httpUrl(o.source), notes: withHiring(str(o.notes, 500), o.hiring), niche: nicheOf(str(o.niche, 60)) });
   }
   return { prospects: out, rejected };
 }
@@ -399,7 +413,9 @@ export const TOOLS = [
       business: { type: "string" }, phone: { type: "string" }, website: { type: "string" }, location: { type: "string", description: "City, ST" },
       owner: { type: "string", description: "Owner's name if the listing shows it" }, source: { type: "string", description: "URL of the listing you found it on" },
       notes: { type: "string", description: "Start with \"Lead grade: A\" (or B or C), then why, then rating and review count" },
-      niche: { type: "string", enum: ["fence", "generators"], description: "fence = residential fence installer; generators = standby generator dealer/installer" },
+      niche: { type: "string", enum: ["fence", "generators", "other"], description: "fence = residential fence installer; generators = standby generator dealer/installer; other = any other home-service trade" },
+      hiring: { type: "object", description: "Set when the company has an open job post for a receptionist, CSR, call-taker, dispatcher or office manager who answers phones. Makes it grade A.", properties: {
+        role: { type: "string", description: "Job title as posted" }, url: { type: "string", description: "URL of the job post" }, posted: { type: "string", description: "Date posted, YYYY-MM-DD" } } },
     } } } } },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
   },

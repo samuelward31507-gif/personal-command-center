@@ -463,6 +463,8 @@ export default function CallModePage() {
             <p className="dl-pos">{picked ? "Callback" : `${index + 1} of ${queue.length} · ${item?.group === "prospects" ? "New prospect" : item?.status === "overdue" ? "Overdue follow-up" : "Follow-up"}`}{picked && <button type="button" className="u-btn u-btn-bare" style={{ height: 24, marginLeft: 8 }} onClick={() => setPicked(null)}>Back to my list</button>}</p>
             <div className="dl-name-row"><Logo name={who} website={contact.website} size={46} /><h1 className="dl-name">{who}</h1></div>
             <div className="dl-meta">
+              {(() => { const g = /Lead grade:\s*([ABC])\b/.exec(contact.notes ?? "")?.[1]; return g ? <span title={g === "A" ? "Pays for leads or is hiring for the phones: call first" : "Fits the ICP, no paid leads found"}>Grade {g}</span> : null; })()}
+              {(() => { const h = /Hiring:\s*([^\n·]+?)(?:\s+(https?:\/\/\S+))?(?:\n|·|$)/.exec(contact.notes ?? ""); return h ? <span title="They posted a job for someone to answer the phones">{h[2] ? <a href={h[2]} target="_blank" rel="noreferrer">Hiring: {h[1].trim()}</a> : <>Hiring: {h[1].trim()}</>}</span> : null; })()}
               {contact.name && contact.name !== contact.company && <span>{contact.name}</span>}
               {contact.location && cityOf(contact.location) && <span>{contact.location}</span>}
               {lt && <span className={"dl-local is-" + lt.window} title={lt.window === "good" ? "Good time: owners are usually off the job" : lt.window === "late" ? "Too early or too late to call" : "During the work day"}><i aria-hidden="true" />{lt.time} their time</span>}
