@@ -177,7 +177,8 @@ export default function CinderApp() {
 
   useEffect(() => {
     setPush(pushState());
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/app-sw.js", { scope: "/app" }).catch(() => {});
+    // Not on a dev server: there, built files keep their names while their content changes, and the cache would serve old ones.
+    if ("serviceWorker" in navigator && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) navigator.serviceWorker.register("/app-sw.js", { scope: "/app" }).catch(() => {});
   }, []);
   async function enablePush() { const err = await turnOnPush(project); setPush(pushState()); toast(err ?? "Notifications are on.", !!err); }
 

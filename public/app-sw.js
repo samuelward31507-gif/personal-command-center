@@ -9,6 +9,8 @@ self.addEventListener("activate", e => e.waitUntil((async () => {
 })()));
 self.addEventListener("message", e => { if (e.data === "cinder-clear") e.waitUntil(Promise.all([caches.delete(DATA), caches.delete(SHELL)])); });
 
+// Every deploy brings new file names; keep the newest 300 so the cache doesn't grow forever.
+const trim = async (c, max) => { const keys = await c.keys(); for (const k of keys.slice(0, Math.max(0, keys.length - max))) await c.delete(k); };
 const fresh = async (req, cacheName) => {
   try {
     const res = await fetch(req);
@@ -32,7 +34,10 @@ self.addEventListener("fetch", event => {
   }
   // Built scripts and styles never change under the same name.
   if (url.pathname.startsWith("/_next/static/")) {
-    event.respondWith(caches.match(req, { cacheName: STATIC }).then(hit => hit || fetch(req).then(async res => { if (res.ok) (await caches.open(STATIC)).put(req, res.clone()); return res; })));
+    event.respondWith(caches.match(req, { cacheName: STATIC }).then(hit => hit || fetch(req).then(async res => {
+      if (res.ok) { const c = await caches.open(STATIC); await c.put(req, res.clone()); trim(c, 300); }
+      return res;
+    })));
     return;
   }
   // The app's data and job photos: newest when online, the last copy when not.

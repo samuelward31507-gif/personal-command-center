@@ -216,6 +216,8 @@ button.row:hover { background: var(--wash); }
 .tbl th { text-align: left; font: 500 13.5px/1 var(--ff); letter-spacing: -.1px; color: var(--g1); padding: 0 12px; height: 36px; border-bottom: 1px solid var(--hair-2); border-right: 1px solid var(--hair); white-space: nowrap; background: #fff; position: sticky; top: 0; z-index: 1; }
 .tbl td { padding: 0 12px; height: 40px; border-bottom: 1px solid var(--hair); border-right: 1px solid var(--hair); white-space: nowrap; vertical-align: middle; color: var(--ink2); font-weight: 400; letter-spacing: -.07px; overflow: hidden; text-overflow: ellipsis; max-width: 0; background: #fff; }
 .tbl :is(th, td):last-child { border-right: 0; }
+/* Fifth pass: rows are separated by hairlines; columns by space, never lines. */
+.tbl :is(th, td) { border-right: 0; }
 .tbl th:first-child, .tbl td:first-child { padding-left: 16px; } .tbl th:last-child, .tbl td:last-child { padding-right: 16px; }
 .tbl tbody tr { cursor: default; } .tbl tbody tr:hover td { background: var(--wash); }
 .tbl tbody tr.sel td { background: var(--on-row); }

@@ -1499,3 +1499,24 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 
 /* Quote templates, beside the Line items heading. */
 .tpl-pick { display: inline-flex; gap: 10px; align-items: center; margin-left: 12px; font-weight: 400; } .tpl-pick .input { width: auto; height: 26px; font-size: 12.5px; }
+
+/* ---------- Fifth pass, round 2: Jobs and the record ---------- */
+/* The jobs list sits on the window, not in a card; the header row is white, not washed. */
+.jobs-panel { box-shadow: none; border-radius: 0; background: transparent; }
+.jobs-panel .jobs-tools { background: transparent; padding-left: 0; padding-right: 0; }
+.jobs-panel .jobs-tbl th { background: #fff; }
+.jobs-panel .jobs-tbl th:first-child, .jobs-panel .jobs-tbl td:first-child { padding-left: 4px; }
+.jobs-panel .pane-foot { background: transparent; }
+.jobs-tbl.v5 td.act { padding-right: 4px; }
+.jobs-tbl.v5 td.act .btn { width: auto; min-width: 76px; padding: 0 10px; white-space: nowrap; }
+/* Docked list: name and next step only, nothing cut off. */
+.jobs-tbl.v5.slim colgroup col:nth-child(1), .jobs-tbl.v5.slim th:nth-child(1), .jobs-tbl.v5.slim tr:not(.grp-row) td:nth-child(1) { display: none; }
+.jobs-tbl.v5.slim .grp-row td { padding-left: 12px; }
+.jobs-tbl.v5.slim .ctag, .jobs-tbl.v5.slim .av { display: none; }
+.jobs-tbl.v5.slim td:nth-child(2) { padding-left: 12px; }
+/* The rail: the business logo is its only colour; object icons are quiet. */
+.obj { background: none !important; box-shadow: none !important; }
+.obj svg { color: var(--g2) !important; width: 14px !important; height: 14px !important; }
+.ri.on .obj svg { color: var(--ink) !important; }
+/* Record header: Call, Text, Quote named; expand and close as icons. */
+.insp-h .acts { gap: 6px; align-items: center; }
