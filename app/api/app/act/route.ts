@@ -1,5 +1,5 @@
 import { appSession, bridgeCall, clientFor, db, json } from "@/lib/client-app-run";
-import { askCinder, markNoShow, previewReply, rescheduleAppointment, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
+import { askCinder, markNoShow, previewReply, rehearseReply, rescheduleAppointment, sendReviewRequest, sendToCustomer } from "@/lib/client-runtime-run";
 import { sendSms } from "@/lib/twilio";
 import { sendCustomerEmail } from "@/lib/client-email";
 import { quoteUrl } from "@/lib/client-runtime-run";
@@ -424,6 +424,14 @@ async function handle(req: Request) {
       if (!message) return json({ error: "Type what a lead might say." }, 400);
       const r = await previewReply(c, message, b.setup ? cleanOwnerSetup(b.setup) : {});
       return r ? json({ ok: true, ...r }) : json({ error: "The agent couldn't answer just now." }, 503);
+    }
+    if (b.action === "rehearse") {
+      // The first-day practice lead. Nothing is stored and nobody is texted.
+      if (s.role === "crew" || s.role === "office") return json({ error: "Only the owner can run the practice lead." }, 403);
+      const history = Array.isArray((b as Record<string, unknown>).history) ? ((b as Record<string, unknown>).history as { direction: string; body: string }[]).slice(-12) : [];
+      if (!history.length) return json({ error: "Nothing to answer." }, 400);
+      const r = await rehearseReply(sql, c, history, (b as Record<string, unknown>).known);
+      return r ? json({ ok: true, ...r }) : json({ error: "The reply engine couldn't answer just now." }, 503);
     }
     if (b.action === "testtext") {
       // A real text from the business number to the owner's own cell, so he knows the number works.

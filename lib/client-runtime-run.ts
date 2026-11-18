@@ -771,3 +771,28 @@ export async function runDueTexts(sql: Sql, now = new Date(), limit = 120): Prom
   }
   return { sent, skipped };
 }
+
+/**
+ * The first-day practice lead: a made-up homeowner's conversation, answered by the same reply engine, rules, prices and
+ * open times a real lead gets. Times come from the calendar when one is connected, else from the owner's hours. Nothing
+ * is saved, nothing goes on the calendar and nobody is texted.
+ */
+export async function rehearseReply(sql: Sql, c: Client, history: { direction: string; body: string }[], knownIn: unknown):
+  Promise<{ reply: string; stage: string; handoff: boolean; booked: string | null; known: Record<string, unknown> } | null> {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return null;
+  const now = new Date();
+  const slots = (await bookingSlots(sql, c, 8).catch(() => null))
+    ?? freeSlots([], withBookingPrefs(parseHours(c.setup.hours, tzOf(c), 60), c.setup), now, { days: 14, max: 8, lang: "en" });
+  const known = cleanDetails(c.setup.trade, knownIn);
+  const bp = c.setup.share_ballpark === "no" ? null : ballpark(parsePriceBook(c.setup.price_book), known);
+  const system = replySystem(c.setup, c.messages) + intakeRules(c.setup.trade, known, bp) + bookingRules(slots);
+  try {
+    const clean = history.slice(-12).map(h => ({ direction: h.direction === "out" ? "out" : "in", body: String(h.body ?? "").slice(0, 500) }));
+    const text = await claudeText({ apiKey: key, system, user: replyUser(clean, "Practice Lead"), label: "Client reply practice", model: process.env.CINDER_REPLY_MODEL?.trim() || "claude-haiku-5-5", maxTokens: 600, timeoutMs: 20000 });
+    const d = parseDecision(text);
+    if (!d) return null;
+    const slot = pickedSlot(d.book, slots);
+    return { reply: d.reply, stage: slot ? "booked" : d.stage, handoff: d.handoff, booked: slot ? slotLabel(slot.start, tzOf(c), "en") : null, known: { ...known, ...cleanDetails(c.setup.trade, d.job ?? {}) } };
+  } catch (e) { console.error("Practice reply failed", e instanceof Error ? e.message : e); return null; }
+}

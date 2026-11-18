@@ -415,6 +415,7 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
       <li><span>Show &ldquo;Powered by Cinder&rdquo;</span><span className="acts-row"><span className="mut">{s.show_powered === "yes" ? "Shown at the bottom of the menu" : "Hidden: the app shows only your business"}</span><button type="button" className="btn sm" disabled={busy} onClick={async () => { setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: { show_powered: s.show_powered === "yes" ? "no" : "yes" } }); toast("Saved."); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } }}>{s.show_powered === "yes" ? "Hide" : "Show"}</button></span></li>
       <li><span>Job checklists</span><span className="acts-row"><span className="mut">Fence install, repair, your own</span><button type="button" className="btn sm" onClick={() => setLists(true)}>Edit</button></span></li>
       <li><span>Crew sees prices</span><span className="acts-row"><span className="mut">{s.crew_prices === "yes" ? "Quotes and invoice totals, never your costs" : "No money at all"}</span><button type="button" className="btn sm" disabled={busy} onClick={async () => { setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: { crew_prices: s.crew_prices === "yes" ? "no" : "yes" } }); toast("Saved."); await reload(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } }}>{s.crew_prices === "yes" ? "Hide prices" : "Show prices"}</button></span></li>
+      <li><span>Coming from Jobber or Housecall Pro</span><span className="acts-row"><span className="mut">What each thing is called here</span><button type="button" className="btn sm" onClick={() => go.tab("from")}>Open</button></span></li>
       <li><span>Move your business in</span><span className="acts-row"><span className="mut">Jobber, QuickBooks, Housecall Pro, ServiceTitan, a spreadsheet</span><button type="button" className="btn sm" onClick={() => go.tab("switch")}>Open</button></span></li>
       <li><span>Export everything</span><span className="acts-row"><span className="mut">Every record as a CSV, and your photos, in one zip</span>{demo ? <button type="button" className="btn sm" onClick={() => toast("The example can't be exported. Your real business downloads as one zip.")}>Download</button> : <a className="btn sm" href={`/api/app/export?p=${encodeURIComponent(project)}&what=all`}>Download</a>}</span></li>
       <li><span>Customers</span><span className="acts-row"><b>{d.customers?.length ?? 0}</b><button type="button" className="btn sm" onClick={go.importCustomers}>Import</button>{demo ? <button type="button" className="btn sm" onClick={() => toast("The example can't be exported. Your real customers download as a CSV.")}>Export CSV</button> : <a className="btn sm" href={`/api/app/export?p=${encodeURIComponent(project)}`}>Export CSV</a>}</span></li>
@@ -422,6 +423,13 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
       <li><span>Your Cinder rep</span><button type="button" className="btn sm" onClick={() => go.tab("sam")}>Message Sam</button></li>
       <li><span /><button type="button" className="btn sm" onClick={onSignOut}><Icon name="out" size={13} />{demo ? "Leave the example" : "Sign out"}</button></li>
     </ul>
+    {d.role !== "office" && d.role !== "crew" && <><p className="sec" style={{ marginTop: 20 }}>Your data is yours</p>
+      <ul className="own-l">
+        <li><b>Take all of it, any time.</b><span>Export everything gives you every record as a spreadsheet and every photo, in one zip, right away.</span></li>
+        <li><b>Nothing you bring in is deleted.</b><span>Undoing a move hides the customers it added and puts back what it changed, for 7 days after it. Leads are never deleted.</span></li>
+        <li><b>You see who changed what.</b><span>The activity below lists the changes you, your office and your crew make, newest first.</span></li>
+        <li><b>Your money goes straight to you.</b><span>Customers pay through your own pay link. Payments are recorded here; card details never are.</span></li>
+      </ul></>}
     {d.role !== "office" && d.role !== "crew" && <ActivityLog ctx={{ d, project, api, toast, reload }} go={go} />}
   </div>;
 }

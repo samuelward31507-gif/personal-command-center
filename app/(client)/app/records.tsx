@@ -155,7 +155,8 @@ export function ActivityLog({ ctx, go }: { ctx: Ctx; go: Go }) {
   const [all, setAll] = useState(false);
   const team = (() => { try { const v = JSON.parse(ctx.d.setup?.team || "[]"); return Array.isArray(v) ? (v as { cell: string; name: string }[]) : []; } catch { return []; } })();
   const who = (cell: string) => !cell ? (ctx.d.owner ? ctx.d.owner.split(" ")[0] : "You") : team.find(m => m.cell.replace(/\D/g, "").slice(-10) === cell.replace(/\D/g, "").slice(-10))?.name || cell;
-  if (!list.length) return null;
+  if (!list.length) return <><p className="sec" style={{ marginTop: 20 }}>Activity<small>who did what, newest first</small></p>
+    <p className="fine" style={{ padding: "8px 0" }}>Nothing yet. Every change you, your office or your crew make shows here.</p></>;
   const shown = all ? list : list.slice(0, 15);
   return <>
     <p className="sec" style={{ marginTop: 20 }}>Activity<small>who did what, newest first</small></p>

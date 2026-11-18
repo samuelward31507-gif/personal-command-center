@@ -246,4 +246,26 @@ ok(() => {
   assert.equal(S.jobberUser({ id: "U2", name: { full: "No Phone" } }), null);
   assert.equal(S.jobberUser({ id: "U3", name: "Plain", phone: "720 555 0177" }).phone, "+17205550177");
 });
+
+// ---------- The match report: every source customer, what happened to it, and why ----------
+ok(() => {
+  const s = { ...S.emptyStaged(), customers: [...people, { ref: "g", name: "", phone: "", email: "", notes: "", properties: [] }],
+    quotes: [{ ref: "q1", customerRef: "b", status: "open", items: [], total: 900 }], jobs: [{ ref: "j1", customerRef: "f", title: "Gate", status: "done" }] };
+  const rows = S.matchReport(s, {}, { byPhone: { "7205550199": "Ann L." }, byRef: {} });
+  assert.deepEqual(rows.map(r => r.outcome), ["New", "Merged", "Merged", "New", "Merged", "Matched", "Left out"]);
+  assert.equal(rows[1].detail, "With Dana Ruiz (same phone)");
+  assert.equal(rows[2].detail, "With Dana Ruiz (same email)");
+  assert.equal(rows[4].detail, "With Tom Becker (same name and address)", "the first record keeps its name"); assert.equal(rows[3].detail, "", "it took the phone from the record merged into it");
+  assert.equal(rows[0].quotes, 1, "a merged record's quote counts on the customer it joined");
+  assert.equal(rows[1].quotes, 0);
+  assert.equal(rows[5].detail, "Ann L. was already here: filled in, not doubled"); assert.equal(rows[5].jobs, 1);
+  assert.equal(rows[6].detail, "No name, phone or email");
+  assert.equal(rows[0].phone, "(720) 555-0148");
+});
+ok(() => { const rows = S.matchReport({ ...S.emptyStaged(), customers: people }, { splits: ["b", "c"] });
+  assert.deepEqual(rows.map(r => r.outcome).slice(0, 3), ["New", "New", "New"], "an undone merge reports them separately"); });
+ok(() => { const rows = S.matchReport({ ...S.emptyStaged(), customers: [{ ref: "x9", name: "Old Client", phone: "", email: "", notes: "", properties: [] }] }, {}, { byPhone: {}, byRef: { x9: "Old Client" } });
+  assert.equal(rows[0].outcome, "Matched", "a second move matches on the old app's own id"); });
+ok(() => { const rows = S.matchReport({ ...S.emptyStaged(), customers: [{ ref: "y", name: "Email Only", phone: "", email: "e@x.com", notes: "", properties: [] }] }, { phones: { y: "720-555-0100" } });
+  assert.equal(rows[0].phone, "(720) 555-0100", "phones typed on the check step are in the report"); assert.equal(rows[0].detail, ""); });
 console.log(`switch: ${n} checks passed`);

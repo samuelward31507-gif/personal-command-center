@@ -48,6 +48,7 @@ async function load(sql: Sql, c: Client, id: string) {
   const [r] = await sql`SELECT * FROM public.client_imports WHERE id = ${id}::uuid AND project_id = ${c.projectId}::uuid` as Record<string, unknown>[];
   return r ?? null;
 }
+import { matchReport, type Existing, type MatchRow } from "@/lib/switch";
 const staged = (r: Record<string, unknown>): Staged => ({ ...emptyStaged(), ...(r.staged as Staged) });
 const iso = (v: unknown) => v ? new Date(String(v)).toISOString() : null;
 
@@ -439,4 +440,21 @@ export async function setGoLive(sql: Sql, c: Client, key: string, done: boolean)
   const cur = (() => { try { return JSON.parse(c.setup.golive || "{}") as Record<string, string>; } catch { return {}; } })();
   if (done) cur[key] = new Date().toISOString().slice(0, 10); else delete cur[key];
   await sql`UPDATE public.client_ops SET setup = setup || jsonb_build_object('golive', ${JSON.stringify(cur)}::text) WHERE project_id = ${c.projectId}::uuid AND owner_id = ${c.owner}`;
+}
+
+/** The match report for a move: who came in new, who matched someone already here, who merged, who was left out. */
+export async function importReport(sql: Sql, c: Client, id: string): Promise<{ source: string; rows: MatchRow[] } | null> {
+  const r = await load(sql, c, id);
+  if (!r) return null;
+  const s = staged(r), d = (r.decisions ?? {}) as Decisions, sys = String(r.source);
+  // "Already here" means before this move: the records this move created don't count as matches for themselves.
+  const ex = await sql`SELECT customer_name, customer_phone, source_system, source_ref FROM public.client_threads WHERE project_id = ${c.projectId}::uuid
+    AND (import_id IS NULL OR import_id <> ${id}::uuid) AND hidden_at IS NULL` as { customer_name: string; customer_phone: string; source_system: string; source_ref: string }[];
+  const existing: Existing = { byPhone: {}, byRef: {} };
+  for (const t of ex) {
+    const p = String(t.customer_phone ?? "").replace(/\D/g, "").slice(-10);
+    if (p.length === 10 && !(p in existing.byPhone)) existing.byPhone[p] = String(t.customer_name ?? "");
+    if (t.source_system === sys && t.source_ref) existing.byRef[t.source_ref] = String(t.customer_name ?? "");
+  }
+  return { source: sys, rows: matchReport(s, d, existing) };
 }

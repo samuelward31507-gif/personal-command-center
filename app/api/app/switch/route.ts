@@ -1,5 +1,5 @@
 import { appSession, clientFor, db, json } from "@/lib/client-app-run";
-import { clearImport, currentImport, decide, pullStep, runStep, setGoLive, stageRows, startImport, undoImport } from "@/lib/client-switch-run";
+import { clearImport, currentImport, decide, importReport, pullStep, runStep, setGoLive, stageRows, startImport, undoImport } from "@/lib/client-switch-run";
 import { openToResend, resendOpen } from "@/lib/client-golive-run";
 import { SOURCES } from "@/lib/switch";
 
@@ -17,6 +17,17 @@ export async function GET(req: Request) {
     const sql = db(), c = await clientFor(sql, s, new URL(req.url).searchParams.get("p"));
     if (!c) return json({ error: "Sign in" }, 401);
     if (s.role === "crew") return json({ error: "Only the owner can move data in." }, 403);
+    const rid = new URL(req.url).searchParams.get("report");
+    if (rid) {
+      if (!UUID.test(rid)) return json({ error: "Which move?" }, 400);
+      const rep = await importReport(sql, c, rid);
+      if (!rep) return json({ error: "Not found." }, 404);
+      const cell = (v: unknown) => { const t = String(v ?? ""); return /^[=+\-@\t\r]/.test(t) ? "'" + t : /[",\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+      const from = SOURCES.find(x => x.key === rep.source)?.name ?? rep.source;
+      const body = "\ufeff" + [[`Customer in ${from}`, "Phone", "Email", "Address", "What happened", "Detail", "Quotes", "Jobs", "Invoices"],
+        ...rep.rows.map(x => [x.name, x.phone, x.email, x.address, x.outcome, x.detail, x.quotes, x.jobs, x.invoices])].map(r => r.map(cell).join(",")).join("\r\n") + "\r\n";
+      return new Response(body, { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="match-report-${rep.source}-${new Date().toISOString().slice(0, 10)}.csv"`, "Cache-Control": "no-store" } });
+    }
     return json({ import: await currentImport(sql, c), resend: await openToResend(sql, c).catch(() => ({ quotes: 0, invoices: 0 })), golive: (() => { try { return JSON.parse(c.setup.golive || "{}"); } catch { return {}; } })(), goliveStart: c.setup.golive_start || null });
   } catch (e) { console.error("Switch load failed", e instanceof Error ? e.message : e); return json({ error: "Couldn't load." }, 500); }
 }
