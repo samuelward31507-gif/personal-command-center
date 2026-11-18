@@ -1,6 +1,8 @@
 import { unwrapCalAiPayload, validCalAiEmail, verifyCalAiSignature, validCalAiDate } from "@/lib/cal-ai-webhook";
 import { sendAlert } from "@/lib/notify";
 import { pingGrok } from "@/lib/agent-ping";
+import { after } from "next/server";
+import { auditOnBooking } from "@/lib/booking-audit";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 import { bookingPerson, bookingAnswers, splitName, stageAfterBooking, stageAfterMeeting, localDate, lastTenDigits } from "@/lib/cal-booking";
 import { suggestOffer } from "@/lib/offers";
@@ -9,6 +11,7 @@ import { loadWorkspace } from "@/lib/workspace-data";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 type Person = { email?: unknown; name?: unknown; phone?: unknown };
 type BookingPayload = {
@@ -295,6 +298,11 @@ export async function POST(request: Request) {
           person?.notes ? `They wrote: ${person.notes.slice(0, 300)}` : "",
           createdContact ? "New contact and deal created at Meeting booked, with a prep task." : "",
         ].filter(Boolean), link: { label: "Open the deal", path: dealId ? `/crm/deals/${dealId}` : `/crm?contact=${contact.id}` } });
+        // In-depth audit of their business the moment they book, so the meeting opens with research (after the reply, off the clock).
+        if (trigger === "BOOKING_CREATED" || createdContact) {
+          const cid = contact.id;
+          after(() => auditOnBooking(sql, ownerId, cid, dealId ?? null, when).catch(e => console.error("Booking audit failed", e instanceof Error ? e.name : e)));
+        }
       }
       // Wake Grok's Prep routine (only if its webhook is set), so the brief and reminder draft exist within minutes.
       const [booked] = await sql`SELECT id, contact_id FROM public.calendar_events WHERE owner_id = ${ownerId} AND provider = 'cal_ai' AND provider_event_id = ${uid} LIMIT 1`;
