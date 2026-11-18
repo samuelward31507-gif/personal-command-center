@@ -43,12 +43,10 @@ export function PlansScreen({ d, project, api, toast, reload, go }: { d: Data; p
     <div className="dash">
       {plans.length ? <>
         <Kpis quiet items={[
-          { label: "Active plans", value: String(active.length), sub: plans.length > active.length ? `${plans.length - active.length} paused or ended` : "all running" },
-          { label: "Recurring a month", value: usd(mrr), sub: `${usd(mrr * 12)} a year`, tone: mrr ? "up" : "" },
           { label: "Visits this week", value: String(week), sub: week ? "reminded the day before" : "none booked" },
           { label: "Due now", value: String(due.length), sub: due.length ? "mark done or skip" : "nothing waiting", tone: due.length ? "warn" : "" },
         ]} />
-        <section className="panel">
+        <section className="panel flat">
           <div className="panel-h"><h2>Every plan</h2><small>next visit first</small></div>
           <div className="panel-b flush">
             <table className="tbl plans-tbl"><colgroup><col style={{ width: 200 }} /><col /><col style={{ width: 132 }} /><col style={{ width: 140 }} /><col style={{ width: 92 }} /><col style={{ width: 84 }} /><col style={{ width: 236 }} /></colgroup><thead><tr><th>Customer</th><th>Plan</th><th>How often</th><th>Next visit</th><th className="right">Per visit</th><th className="right">A month</th><th /></tr></thead>
@@ -57,7 +55,7 @@ export function PlansScreen({ d, project, api, toast, reload, go }: { d: Data; p
                   <td><span className="name"><Avatar name={p.customer || fmtPhone(p.phone)} size="sm" /><b>{p.customer || fmtPhone(p.phone)}</b></span></td>
                   <td><span className="t2"><b>{p.name}</b><small>{[p.crew_member ? crewName(d, p.crew_member) : "", p.remind ? "reminder text" : "", p.invoice ? "invoice each visit" : ""].filter(Boolean).join(", ")}</small></span></td>
                   <td className="mut">{everyLabel(p.every, p.unit)}</td>
-                  <td>{p.status !== "active" ? <span className="chip">{p.status === "paused" ? "Paused" : "Ended"}</span> : <span className={late ? "bad" : ""}>{p.next_on ? `${dateLabel(p.next_on)}${p.time ? ", " + clock12(p.time) : ""}` : "–"}{late ? <small className="bad"> late</small> : null}</span>}</td>
+                  <td>{p.status !== "active" ? <span className="mut">{p.status === "paused" ? "Paused" : "Ended"}</span> : <span className={late ? "bad" : ""}>{p.next_on ? `${dateLabel(p.next_on)}${p.time ? ", " + clock12(p.time) : ""}` : "–"}{late ? <small className="bad"> late</small> : null}</span>}</td>
                   <td className="num">{crew ? "–" : dollars(p.total)}</td>
                   <td className="num mut">{crew ? "–" : usd(monthlyValue(p))}</td>
                   <td className="acts" onClick={e => e.stopPropagation()}>{now && <span className="acts-row" style={{ flexWrap: "nowrap", justifyContent: "flex-end" }}>

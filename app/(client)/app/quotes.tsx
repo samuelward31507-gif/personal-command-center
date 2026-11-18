@@ -51,7 +51,6 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
       actions={<button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New quote</button>} />
     <div className="dash quotes">
       {rows.length > 0 && <Kpis quiet items={[
-        { label: "Open", value: usd(open.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${open.length} ${open.length === 1 ? "quote" : "quotes"}, follow-ups going out`, onClick: () => setF("open"), active: f === "open" },
         { label: "Your move", value: String(counts.draft + open.filter(r => r.s === "changes").length), sub: `${counts.draft} to send, ${open.filter(r => r.s === "changes").length} asked for changes`, tone: counts.draft ? "warn" : "", onClick: () => setF("draft"), active: f === "draft" },
         { label: "Approved, 30 days", value: usd(approved30.reduce((a, r) => a + amountOf(r.c), 0)), sub: `${approved30.length} ${approved30.length === 1 ? "job" : "jobs"}`, tone: approved30.length ? "up" : "", onClick: () => setF("approved"), active: f === "approved" },
         { label: "Approval rate, 90 days", value: rate == null ? "–" : `${rate}%`, sub: "approved of sent" },
@@ -71,7 +70,7 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
       </div>
       {!shown.length ? <Empty title={f === "open" ? "No quotes out" : "Nothing here"} text={f === "open" ? "Write one from an estimate. It goes out by text and gets followed up until they answer." : undefined} action={f === "open" ? <button type="button" className="btn ink" onClick={() => setPicking(true)}>New quote</button> : undefined} />
       : wide ? <table className="tbl q-tbl">
-        <colgroup><col style={{ width: 40 }} /><col style={{ width: 210 }} /><col /><col style={{ width: 150 }} /><col style={{ width: 200 }} /><col style={{ width: 100 }} /><col style={{ width: 110 }} /></colgroup>
+        <colgroup><col style={{ width: 40 }} /><col style={{ width: 210 }} /><col /><col style={{ width: 150 }} /><col style={{ width: 260 }} /><col style={{ width: 96 }} /><col style={{ width: 110 }} /></colgroup>
         <thead><tr><th className="ck-col"><input type="checkbox" aria-label="Select all" checked={!!shown.length && shown.every(x => ticked.has(x.c.id))} onChange={e => setTicked(e.target.checked ? new Set(shown.map(x => x.c.id)) : new Set())} /></th>
           <th>Customer</th><th>Job</th><th>Status</th><th>Viewed</th><th className="right">Deposit</th><th className="right">Total</th></tr></thead>
         <tbody>{shown.map(({ c, s }) => <tr key={c.id} tabIndex={0} onClick={() => go.quote(c.id)} onKeyDown={e => { if (e.key === "Enter") go.quote(c.id); }}>
@@ -79,12 +78,12 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
           <td><span className="name"><Avatar name={c.name || c.phone} size="sm" /><b>{c.name || fmtPhone(c.phone)}</b></span></td>
           <td className={c.line ? "" : "faint"}>{line(c) || "No details yet"}</td>
           <td><Stg stage={STG[s]}>{Q_LABEL[s]}</Stg></td>
-          <td className="mut">{c.quote?.views ? `${c.quote.views}x, ${ago(c.quote.lastViewed ?? c.quote.viewed)}` : c.quote?.viewed ? `Opened ${ago(c.quote.viewed)}` : c.quote?.linked ? "Not opened yet" : "Not sent"}{(s === "awaiting" || s === "opened") && c.quote?.steps ? `, ${c.quote.steps} follow-ups` : ""}</td>
+          <td className="mut">{c.quote?.views ? `${c.quote.views}x, ${ago(c.quote.lastViewed ?? c.quote.viewed)}` : c.quote?.viewed ? `Opened ${ago(c.quote.viewed)}` : c.quote?.linked ? "Not opened yet" : "Not sent"}{(s === "awaiting" || s === "opened") && c.quote?.steps ? `, ${c.quote.steps} follow-up${c.quote.steps === 1 ? "" : "s"}` : ""}</td>
           <td className="num mut">{c.quote?.deposit ? usd(c.quote.deposit) : "–"}</td>
           <td className="num"><b>{amountOf(c) ? dollars(amountOf(c)) : "–"}</b></td>
         </tr>)}</tbody>
-        {(() => { const list = ticked.size ? shown.filter(x => ticked.has(x.c.id)) : shown, sum = list.reduce((a, x) => a + (amountOf(x.c) || 0), 0);
-          return <tfoot><tr><td /><td><b>{list.length}</b>{ticked.size ? "selected" : "count"}</td><td /><td /><td /><td /><td className="num"><b>{dollars(sum)}</b>sum</td></tr></tfoot>; })()}</table>
+        {ticked.size > 0 && (() => { const list = shown.filter(x => ticked.has(x.c.id)), sum = list.reduce((a, x) => a + (amountOf(x.c) || 0), 0);
+          return <tfoot><tr><td /><td><b>{list.length}</b>selected</td><td /><td /><td /><td /><td className="num"><b>{dollars(sum)}</b>sum</td></tr></tfoot>; })()}</table>
       : <div>{shown.map(({ c, s }) => <button key={c.id} type="button" className="jrow" onClick={() => go.quote(c.id)}>
           <span style={{ minWidth: 0 }}><b>{c.name || fmtPhone(c.phone)}</b><small>{line(c) || "No details yet"}</small></span>
           <span className="r"><b>{amountOf(c) ? usd(amountOf(c)) : "–"}</b><em className={s === "changes" ? "red" : s === "approved" ? "green" : ""}>{Q_LABEL[s]}</em></span></button>)}</div>}

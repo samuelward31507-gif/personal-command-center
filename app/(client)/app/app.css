@@ -1529,3 +1529,33 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 
 /* Connections: green is for money. Connected is a dark neutral dot; needs-setup takes the accent; errors stay red. */
 .cx.on .cx-t .cdot { background: var(--g1); }
+
+/* Quotes and invoices: the list sits on the window, like Jobs. */
+.dash.quotes > section.panel, .money2 > section.panel { box-shadow: none; border-radius: 0; background: transparent; }
+.dash.quotes > section.panel .list-tools, .money2 > section.panel .list-tools { padding-left: 0; padding-right: 0; background: transparent; }
+.dash.quotes .tbl th, .money2 .tbl th { background: #fff; }
+
+/* A stale age is said with weight, not the accent (the accent means "your turn"). */
+.jobs-tbl.v5 td.num.late { color: var(--ink); font-weight: 600; }
+
+/* Calendar: one accent. Events are white; the left edge says what they are: an estimate (the next step) takes the
+   accent, an install is ink, a plan visit and anything else is grey. No green, peach or blue washes. */
+.cal-ev, .cal-ev.install, .cal-ev.visit, .cal-ev.estimate { background: #fff; }
+.cal-ev.estimate { border-left-color: var(--ember); }
+.cal-ev.install { border-left-color: var(--ink); }
+.cal-ev.visit { border-left-color: var(--g2); }
+.cal-ev.event { background: var(--paper); border-left-color: var(--g3); }
+.cal-chip.install { border-left-color: var(--ink); } .cal-chip.visit { border-left-color: var(--g2); }
+.dayrow.install b::before { background: var(--ink); }
+
+/* Small selects: room for the arrow so the label never runs under it. */
+select.input.sm { padding-right: 26px; }
+
+/* A list that is the whole screen sits on the window, not in a card. */
+.panel.flat { box-shadow: none; border-radius: 0; background: transparent; }
+.panel.flat > .panel-h { padding-left: 0; padding-right: 0; }
+.panel.flat .tbl th:first-child, .panel.flat .tbl td:first-child { padding-left: 0; }
+
+/* Reports: rates and times are grey; only money is green or red. Non-money sparklines are grey. */
+.fn-t em { color: var(--g2); }
+.spark.ink { color: var(--g2); }

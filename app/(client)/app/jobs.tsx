@@ -43,7 +43,7 @@ export function nextUp(c: Card, today = todayIso()): { text: string; tone: Tone;
     if (!c.quote.linked) return { text: "Quote not sent yet", tone: "amber", icon: "quote" };
     if (c.quote.steps >= 4) return { text: "Went quiet, nudge them", tone: "amber", icon: "chat" };
     if (c.quote.viewed) return { text: `Opened the quote ${ago(c.quote.viewed)}`, tone: "", icon: "eye" };
-    return { text: c.quote.views ? `Viewed ${c.quote.views}x, ${c.quote.steps ? `${c.quote.steps} follow-ups sent` : "first follow-up soon"}` : c.quote.chasePaused ? "Follow-ups off" : c.quote.steps ? `${c.quote.steps} follow-ups sent` : "Follow-up in 2 days", tone: "", icon: "clock" };
+    return { text: c.quote.views ? `Viewed ${c.quote.views}x, ${c.quote.steps ? `${c.quote.steps} follow-up${c.quote.steps === 1 ? "" : "s"} sent` : "first follow-up soon"}` : c.quote.chasePaused ? "Follow-ups off" : c.quote.steps ? `${c.quote.steps} follow-up${c.quote.steps === 1 ? "" : "s"} sent` : "Follow-up in 2 days", tone: "", icon: "clock" };
   }
   if (c.status === "paused") return { text: "Needs a reply", tone: "red", icon: "chat" };
   if (c.next) return { text: `Estimate ${when(c.next)}`, tone: "blue", icon: "cal" };
