@@ -1,4 +1,4 @@
-import { parseProspects } from "@/lib/agent-api";
+import { gradeOf, parseProspects } from "@/lib/agent-api";
 import { agentGuard, agentJson } from "@/lib/agent-route";
 
 export const runtime = "nodejs";
@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/agent/prospects: businesses Grok found on public listings, added as leads the same way the Google Maps
  * lead finder adds them. Anyone already in the CRM (by the last 10 digits of their phone) or on the do-not-contact
- * list is skipped.
+ * list is skipped, except that a grade-A prospect upgrades a lead already in the CRM (the Google Maps finder adds
+ * them as B; Lister checks ads and marks the ones paying for leads as A).
  */
 export async function POST(request: Request) {
   const g = await agentGuard(request);
@@ -18,17 +19,26 @@ export async function POST(request: Request) {
     const have = await g.sql`SELECT right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) AS p FROM public.contacts WHERE owner_id = ${g.owner} AND coalesce(phone, '') <> ''
       UNION SELECT right(phone_normalized, 10) FROM public.contact_suppressions WHERE owner_id = ${g.owner} AND coalesce(phone_normalized, '') <> ''` as { p: string }[];
     const known = new Set(have.map(r => r.p));
-    let added = 0, duplicates = 0;
+    let added = 0, duplicates = 0, upgraded = 0;
     for (const p of parsed.prospects) {
       const ten = p.phone.replace(/\D/g, "");
-      if (known.has(ten)) { duplicates++; continue; }
+      if (known.has(ten)) {
+        if (gradeOf(p.notes) === "A") {
+          const r = await g.sql`UPDATE public.contacts SET notes = 'Lead grade: A · ' || regexp_replace(coalesce(notes, ''), 'Lead grade: [ABC] · ?', '') || E'\n' || ${p.notes},
+              niche = CASE WHEN coalesce(niche, '') = '' THEN ${p.niche} ELSE niche END, updated_at = now()
+            WHERE owner_id = ${g.owner} AND right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) = ${ten}
+              AND coalesce(notes, '') NOT LIKE 'Lead grade: A%' RETURNING id` as { id: string }[];
+          if (r.length) { upgraded++; continue; }
+        }
+        duplicates++; continue;
+      }
       const [first, ...rest] = p.owner.split(/\s+/);
       const notes = ["Found by Grok", p.notes, p.source ? `Listing: ${p.source}` : ""].filter(Boolean).join("\n");
-      await g.sql`INSERT INTO public.contacts (owner_id, first_name, last_name, company, email, phone, status, source, notes, website, location)
-        VALUES (${g.owner}, ${first ?? ""}, ${rest.join(" ")}, ${p.business}, '', ${p.phone}, 'lead', 'Grok', ${notes}, ${p.website}, ${p.location})`;
+      await g.sql`INSERT INTO public.contacts (owner_id, first_name, last_name, company, email, phone, status, source, notes, website, location, niche)
+        VALUES (${g.owner}, ${first ?? ""}, ${rest.join(" ")}, ${p.business}, '', ${p.phone}, 'lead', 'Grok', ${notes}, ${p.website}, ${p.location}, ${p.niche})`;
       known.add(ten); added++;
     }
-    return agentJson({ added, duplicates, rejected: parsed.rejected }, 201);
+    return agentJson({ added, upgraded, duplicates, rejected: parsed.rejected }, 201);
   } catch (e) {
     console.error("Agent prospects failed", e instanceof Error ? e.message.slice(0, 200) : e);
     return agentJson({ error: "Could not add the prospects." }, 500);

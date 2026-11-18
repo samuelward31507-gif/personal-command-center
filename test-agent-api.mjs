@@ -145,3 +145,15 @@ assert.ok("error" in parseContactInfo({ contactId: C, email: "bob@ridge.com" }))
 assert.ok("error" in parseContactInfo({ contactId: C, email: "nope", source: "https://x.com" }));
 assert.equal(parseContactInfo({ contactId: C, email: "Bob@Ridge.com", source: "https://ridge.com/contact" }).info.email, "bob@ridge.com");
 console.log("agent contact info: 3 checks passed");
+
+{ // ICP: niche and grade on prospects
+  const A = await import("./lib/agent-api.ts");
+  const r = A.parseProspects({ prospects: [{ business: "Volt Generators", phone: "813-555-0142", niche: "generators", notes: "Lead grade: A · running Google LSA" }, { business: "Ridge Fence", phone: "303-555-0101", niche: "fence" }, { business: "X", phone: "303-555-0102" }] });
+  assert.equal(r.prospects[0].niche, "Standby generators");
+  assert.equal(r.prospects[1].niche, "Fence");
+  assert.equal(r.prospects[2].niche, "");
+  assert.equal(A.gradeOf(r.prospects[0].notes), "A");
+  assert.equal(A.gradeOf("lead grade: b, busy"), "B");
+  assert.equal(A.gradeOf("no grade"), "");
+  console.log("agent prospects ICP ok");
+}
