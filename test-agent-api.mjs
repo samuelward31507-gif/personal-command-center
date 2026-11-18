@@ -95,7 +95,7 @@ let m = 0; const mk = fn => { fn(); m++; };
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26" } }).reply.result.protocolVersion, "2025-03-26"));
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "1999" } }).reply.result.protocolVersion, "2025-06-18"));
 mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", method: "notifications/initialized" }), { notify: true }));
-mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", id: 2, method: "tools/list" }).reply.result.tools.map(t => t.name), ["get_call_list", "get_prospect", "get_meetings", "save_brief", "save_draft", "get_my_texts", "log_run", "log_reply", "add_prospects", "get_content_queue", "update_content", "save_contact_info"]));
+mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", id: 2, method: "tools/list" }).reply.result.tools.map(t => t.name), ["get_call_list", "get_prospect", "get_meetings", "save_brief", "save_draft", "get_my_texts", "log_run", "log_reply", "add_prospects", "get_content_queue", "update_content", "save_contact_info", "get_needs_phone"]));
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "drop_tables", arguments: {} } }).reply.error.code, -32602));
 mk(() => assert.deepEqual(handleRpc({ jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "get_prospect", arguments: { id: C } } }).call, { id: 4, name: "get_prospect", args: { id: C } }));
 mk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 5, method: "resources/list" }).reply.error.code, -32601));
@@ -138,7 +138,7 @@ dk(() => assert.ok("error" in parseContentUpdate({ id: C, status: "posted" })));
 dk(() => assert.equal(parseContentUpdate({ id: C, status: "posted", url: "https://facebook.com/p/1" }).update.status, "posted"));
 dk(() => assert.equal(parseContentUpdate({ id: C, views: 1200, comments: 4 }).update.status, null));
 dk(() => assert.ok("error" in parseContentUpdate({ id: C, views: -3 })));
-dk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 10, method: "tools/list" }).reply.result.tools.length, 12));
+dk(() => assert.equal(handleRpc({ jsonrpc: "2.0", id: 10, method: "tools/list" }).reply.result.tools.length, 13));
 console.log(`agent dms, prospects, content: ${d} checks passed`);
 const { parseContactInfo } = await import("./lib/agent-api.ts");
 assert.ok("error" in parseContactInfo({ contactId: C, email: "bob@ridge.com" }));
@@ -166,4 +166,14 @@ console.log("agent contact info: 3 checks passed");
   assert.equal(r.prospects[1].notes, "", "no role, no hiring line");
   assert.equal(A.withHiring("x", { role: "Office manager", posted: "last week", url: "javascript:alert(1)" }), "Lead grade: A · Hiring: Office manager\nx", "bad date and url dropped");
   console.log("hiring signal ok");
+}
+
+{ // phone + website on save_contact_info
+  const A = await import("./lib/agent-api.ts");
+  const id = "11111111-1111-4111-8111-111111111111";
+  const r = A.parseContactInfo({ contactId: id, phone: "+1 (813) 555-0142", website: "ridgefence.com", source: "https://ridgefence.com/contact" });
+  assert.equal(r.info.phone, "(813) 555-0142"); assert.equal(r.info.website, "https://ridgefence.com");
+  assert.match(A.parseContactInfo({ contactId: id, phone: "555-0142", source: "https://x.com" }).error, /10-digit/);
+  assert.deepEqual(A.toolCall("get_needs_phone", { limit: 20 }), { method: "GET", path: "/api/agent/needs-phone", query: { limit: "20" } });
+  console.log("needs-phone ok");
 }

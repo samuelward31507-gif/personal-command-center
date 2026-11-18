@@ -5,7 +5,7 @@ import { claudeText } from "@/lib/ai-text";
 import { syncReplies } from "@/lib/gmail-sync";
 import { sortNewMail } from "@/lib/gmail-inbox";
 import { sendColdEmail } from "@/lib/gmail-send";
-import { fillTemplate, mergeFor, TEMPLATE_SETS, trackOf } from "@/lib/email-outreach";
+import { fillTemplate, hiringIntro, hiringRole, mergeFor, TEMPLATE_SETS, trackOf } from "@/lib/email-outreach";
 import { fetchPage, htmlToText } from "@/lib/website-text";
 import { findEmails } from "@/lib/find-emails-run";
 import { insertLine, parseLines, personalPrompt, PERSONAL_SYSTEM, runAllowance } from "@/lib/autopilot";
@@ -43,17 +43,17 @@ export async function runAutopilot(sql: Sql, o: string, ws: WorkspaceSettings, o
   await findEmails(sql, o, { limit: 20, budgetMs: opts.budgetMs * 0.15 }).catch(() => null);
 
   // 3. Who: a valid email, never emailed, never spoken to (anyone you've talked to is yours to follow up), not parked or suppressed.
-  const rows = await sql`SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company, c.location, c.niche, c.email, c.website
+  const rows = await sql`SELECT c.id, trim(concat_ws(' ', c.first_name, c.last_name)) AS name, c.company, c.location, c.niche, c.email, c.website, coalesce(c.notes, '') AS notes
     FROM public.contacts c
     WHERE c.owner_id = ${o} AND c.email ~* '^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$'
-      AND lower(coalesce(c.status, '')) <> 'customer'
+      AND lower(coalesce(c.status, '')) NOT IN ('customer', 'duplicate')
       AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND (a.notes LIKE 'Email sent: %' OR a.notes LIKE 'Email reply:%' OR a.notes LIKE 'Email bounced:%' OR a.notes LIKE 'Email undeliverable:%'))
       AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND a.channel = 'call'
         AND a.outcome IN ('answered','connected','interested','meeting_booked','not_a_fit','not_interested','send_info','callback_requested','do_not_contact','wrong_contact','wrong_number'))
       AND NOT EXISTS (SELECT 1 FROM public.contact_suppressions x WHERE x.owner_id = c.owner_id AND (x.contact_id = c.id OR x.email_normalized = lower(c.email)))
       AND NOT EXISTS (SELECT 1 FROM public.contact_outreach co WHERE co.owner_id = c.owner_id AND co.contact_id = c.id AND co.status = 'parked')
       AND NOT EXISTS (SELECT 1 FROM public.gmail_inbox g WHERE g.owner_id = c.owner_id AND g.contact_id = c.id)
-    ORDER BY (coalesce(c.website, '') <> '') DESC, c.created_at DESC LIMIT ${Math.min(allowance, 60)}` as { id: string; name: string; company: string; location: string; niche: string; email: string; website: string | null }[];
+    ORDER BY (coalesce(c.notes, '') LIKE '%Hiring:%') DESC, (coalesce(c.website, '') <> '') DESC, c.created_at DESC LIMIT ${Math.min(allowance, 60)}` as { id: string; name: string; company: string; location: string; niche: string; email: string; website: string | null; notes: string }[];
   if (!rows.length) { out.note = "Nobody new to email. Run Find emails, or import more contacts."; return save(); }
 
   // 4. Personal first lines, 10 businesses per Claude call.
@@ -73,8 +73,10 @@ export async function runAutopilot(sql: Sql, o: string, ws: WorkspaceSettings, o
   // 5. Send, spaced out, until the goal, the inboxes or the time budget runs out.
   for (const c of rows) {
     if (!allowance || Date.now() - started > opts.budgetMs) break;
-    const t = TEMPLATE_SETS[trackOf(c.niche)].intro, m = mergeFor(c, ws);
-    const line = lines.get(c.id) ?? "";
+    const m = mergeFor(c, ws), role = hiringRole(c.notes);
+    // Companies hiring for the phones get the job-post pitch (no AI first line: the job post is the personal part).
+    const t = role ? hiringIntro(m, role) : TEMPLATE_SETS[trackOf(c.niche)].intro;
+    const line = role ? "" : lines.get(c.id) ?? "";
     const r = await sendColdEmail(sql, o, ws, { contactId: c.id, step: "intro", subject: fillTemplate(t.subject, m), body: insertLine(fillTemplate(t.body, m), line) });
     if (r.ok) { out.sent.push({ company: c.company || c.name, email: c.email, personal: !!line }); allowance--; }
     else if (r.status === 429) { out.stopped = r.error; break; }

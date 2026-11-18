@@ -241,7 +241,7 @@ export function parseContentUpdate(body: unknown): { update: ContentUpdate } | {
   return { update: { id: b.id, status, url, views, comments, leads } };
 }
 
-export type ContactInfo = { contactId: string; email: string; owner: string; facebook: string; instagram: string; source: string };
+export type ContactInfo = { contactId: string; email: string; owner: string; facebook: string; instagram: string; source: string; phone: string; website: string };
 
 /** Contact details Grok found for a prospect (owner's name, email, socials). Only fills what's empty; never overwrites Sam's data. */
 export function parseContactInfo(body: unknown): { info: ContactInfo } | { error: string } {
@@ -249,8 +249,12 @@ export function parseContactInfo(body: unknown): { info: ContactInfo } | { error
   if (!isUuid(b.contactId)) return { error: "contactId must be a contact's id." };
   const email = str(b.email, 200).toLowerCase();
   if (email && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return { error: "email doesn't look like an email address." };
-  const info = { contactId: b.contactId, email, owner: str(b.owner, 80), facebook: httpUrl(b.facebook), instagram: httpUrl(b.instagram), source: httpUrl(b.source) };
-  if (!info.email && !info.owner && !info.facebook && !info.instagram) return { error: "Give at least one of email, owner, facebook or instagram." };
+  const digits = str(b.phone, 40).replace(/\D/g, ""), ten = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  if (str(b.phone, 40) && ten.length !== 10) return { error: "phone must be a 10-digit US number." };
+  const site = str(b.website, 300);
+  const info = { contactId: b.contactId, email, owner: str(b.owner, 80), facebook: httpUrl(b.facebook), instagram: httpUrl(b.instagram), source: httpUrl(b.source),
+    phone: ten ? `(${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}` : "", website: site && !/^https?:\/\//i.test(site) ? "https://" + site : httpUrl(site) };
+  if (!info.email && !info.owner && !info.facebook && !info.instagram && !info.phone && !info.website) return { error: "Give at least one of phone, website, email, owner, facebook or instagram." };
   if (!info.source) return { error: "source is required: the page where you found it." };
   return { info };
 }
@@ -436,12 +440,18 @@ export const TOOLS = [
   },
   {
     name: "save_contact_info", title: "Fill in a prospect's contact details",
-    description: "Save the owner's name, a business email, or Facebook and Instagram pages you found for a prospect, with the page you found them on. Only fills fields that are empty; never overwrites what Sam has.",
+    description: "Save the business phone, website, owner's name, a business email, or Facebook and Instagram pages you found for a prospect, with the page you found them on. Only fills fields that are empty; never overwrites what Sam has. If the phone already belongs to another contact, the two are merged into that one.",
     inputSchema: { type: "object", required: ["contactId", "source"], properties: {
-      contactId: uuid, email: { type: "string" }, owner: { type: "string", description: "Owner's full name" },
+      contactId: uuid, phone: { type: "string", description: "The business's main phone, from its own website or Google listing" }, website: { type: "string" }, email: { type: "string" }, owner: { type: "string", description: "Owner's full name" },
       facebook: { type: "string" }, instagram: { type: "string" }, source: { type: "string", description: "URL where you found it" },
     } },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
+  },
+  {
+    name: "get_needs_phone", title: "Hiring leads missing a phone number",
+    description: "Companies the nightly hiring finder found with an open receptionist, CSR or dispatcher job, but no phone number yet: id, company, city, the job title and the job post link. Find each one's own website or Google listing and call save_contact_info with the phone (and website). Fence and generator companies come first.",
+    inputSchema: { type: "object", properties: { limit: { type: "integer", minimum: 1, maximum: 50 } } },
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
   },
 ] as const;
 
@@ -462,6 +472,7 @@ export function toolCall(name: string, args: Record<string, unknown>): ToolCall 
     case "add_prospects": return { method: "POST", path: "/api/agent/prospects", body: args };
     case "get_content_queue": return { method: "GET", path: "/api/agent/content", query: args.date ? { date: s(args.date) } : {} };
     case "update_content": return { method: "POST", path: "/api/agent/content", body: args };
+    case "get_needs_phone": return { method: "GET", path: "/api/agent/needs-phone", query: args.limit ? { limit: s(args.limit) } : {} };
     default: return null;
   }
 }

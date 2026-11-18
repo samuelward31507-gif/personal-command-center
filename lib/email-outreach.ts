@@ -51,6 +51,30 @@ If missed calls or quotes that go quiet ever start costing {company} jobs, reply
   },
 };
 
+/** Intro for a company with an open receptionist/CSR job (from the hiring finder): opens on their job post. */
+export function hiringIntro(m: Merge, role: string): EmailTemplate {
+  const r = (role || "receptionist").replace(/\s*\(posted[^)]*\)\s*/i, "").trim().slice(0, 60) || "receptionist";
+  return {
+    subject: fillTemplate(`your ${r.toLowerCase()} opening`, m),
+    body: fillTemplate(`Hi {first_name},
+
+Saw {company} is hiring a ${r.toLowerCase()}. Before you fill it: who handles the calls at 6pm, on Saturdays, or when they're already on the other line?
+
+That's where most jobs slip. I give contractors a front desk that never clocks out. Every caller you can't get to hears back in seconds, gets their questions answered, and gets the estimate booked on your calendar. Nights, weekends, lunch breaks, all of it, for a fraction of a salary. It works alongside whoever you hire, or covers you until you do.
+
+Worth a quick look? Just reply "yes" and I'll send a couple of times.
+
+{my_name}
+{business}
+{website}`, m),
+  };
+}
+
+/** The job title from a hiring-finder note ("Hiring: Receptionist / CSR (posted …) https://…"), or "". */
+export function hiringRole(notes: string): string {
+  return (/Hiring:\s*([^\n·]+?)(?:\s+\(posted|\s+https?:|\n|·|$)/.exec(notes || "")?.[1] ?? "").trim();
+}
+
 /** Detailers get a different pitch: their money is repeat customers, not missed quotes. */
 export const DETAILING_TEMPLATES: Record<EmailStep, EmailTemplate> = {
   intro: {

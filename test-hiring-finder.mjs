@@ -1,0 +1,37 @@
+import assert from "node:assert/strict";
+const H = await import("./lib/hiring-finder.ts");
+const now = new Date("2026-11-18T12:00:00Z");
+const job = { id: "1", title: "Receptionist / Customer Service", company: { display_name: "Ridge Fence Co., LLC" }, location: { display_name: "Tampa, Hillsborough County" }, redirect_url: "https://www.adzuna.com/details/1", created: "2026-11-12T08:00:00Z", description: "Answer phones and book fence estimates for our installers." };
+const l = H.pickJob(job, now);
+assert.equal(l.company, "Ridge Fence Co., LLC"); assert.equal(l.trade, "fence"); assert.equal(l.posted, "2026-11-12");
+assert.equal(H.pickJob({ ...job, title: "Fence Installer" }, now), null, "field roles skipped");
+assert.equal(H.pickJob({ ...job, title: "Outside Sales Representative" }, now), null);
+assert.equal(H.pickJob({ ...job, company: { display_name: "Robert Half" } }, now), null, "staffing agencies skipped");
+assert.equal(H.pickJob({ ...job, company: { display_name: "Tampa General Hospital" }, description: "front desk" }, now), null, "not home services");
+assert.equal(H.pickJob({ ...job, company: { display_name: "Acme Corp" }, description: "Answer phones for our law office." }, now), null, "no trade");
+assert.equal(H.pickJob({ ...job, created: "2026-09-01T00:00:00Z" }, now), null, "too old");
+assert.equal(H.pickJob({ ...job, company: { display_name: "Gulf Coast Power" }, description: "Generac standby generator dealer seeks dispatcher" , title: "Dispatcher" }, now).trade, "generators");
+assert.equal(H.pickJob({ ...job, company: { display_name: "Cool Air HVAC" }, description: "" , title: "CSR" }, now).trade, "other");
+assert.equal(H.pickJobs([job, { ...job, id: "2", location: { display_name: "Orlando" } }], now).length, 1, "one lead per employer");
+assert.ok(H.sameCompany("Ridge Fence Co., LLC", "Ridge Fence Company"));
+assert.ok(!H.sameCompany("Ridge Fence Co., LLC", "Blue Ridge Roofing"));
+assert.match(H.hiringNote(l), /^Lead grade: A · Hiring: Receptionist \/ Customer Service \(posted 2026-11-12\) https:\/\/www\.adzuna\.com\/details\/1/);
+console.log("hiring finder ok");
+{
+  const E = await import("./lib/email-outreach.ts");
+  const S = await import("./lib/sms-templates.ts");
+  const note = H.hiringNote(l);
+  assert.equal(E.hiringRole(note), "Receptionist / Customer Service");
+  assert.equal(E.hiringRole("Lead grade: B · 4.8★"), "");
+  const m = E.mergeFor({ name: "", company: "Ridge Fence Co" }, { ownerFirstName: "Sam", businessName: "Cinder Revenue Company", bookingLink: "https://cal.com/x", websiteUrl: "https://cinderrevenue.com" });
+  const t = E.hiringIntro(m, E.hiringRole(note));
+  assert.equal(t.subject, "your receptionist / customer service opening");
+  assert.match(t.body, /^Hi there,\n\nSaw Ridge Fence Co is hiring a receptionist \/ customer service\./);
+  assert.ok(!/\{\w+\}/.test(t.body), "no unfilled fill-ins");
+  assert.ok(!/https?:\/\/(?!cinderrevenue)/.test(t.body), "no links in a first cold email");
+  const txt = S.hiringText({ company: "Ridge Fence Co", role: "Receptionist" });
+  assert.match(txt, /^Hey, Sam with Cinder Revenue\. Saw Ridge Fence Co is hiring a receptionist\./);
+  assert.match(txt, /Reply STOP to opt out\.$/);
+  assert.ok(txt.length <= 320, "two SMS segments max");
+  console.log("hiring email + text ok");
+}
