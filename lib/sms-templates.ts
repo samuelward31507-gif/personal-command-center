@@ -94,28 +94,32 @@ export function localClock(at: Date, tz: string | null): string {
 
 export function voicemailText(i: { firstName?: string; callTime: string; demoLink: string; niche?: string }): string {
   const name = (i.firstName ?? "").trim() || "there";
-  if (i.niche === "detailing") return `Hey${name ? " " + name : ""}, Sam with Cinder. Tried you at ${i.callTime}, probably caught you mid-detail. Quick one: how many past customers haven't rebooked in 3+ months? I set it up so they get a text when they're due and book themselves back in. Here's how: ${i.demoLink}\n\nWorth a quick call tomorrow, morning or afternoon?`;
-  return `Hey${name ? " " + name : ""}, Sam with Cinder. Tried you at ${i.callTime}, probably caught you on a job. When that happens with a homeowner, most don't leave a voicemail, they call the next company. Here's what they'd get from you instead: ${i.demoLink}\n\nWorth a quick call tomorrow, morning or afternoon?`;
+  if (i.niche === "detailing") return `Hey ${name}, Sam with Cinder. Tried you at ${i.callTime}, probably caught you mid-detail. Quick one: how many past customers haven't been back in 3+ months? I set it up so they get a text when they're due and rebook themselves. 30 seconds on how: ${i.demoLink}\n\nWorth a quick call tomorrow, morning or afternoon?`;
+  const where = i.niche === "generator" ? "probably caught you on an install" : "probably caught you on a job";
+  return `Hey ${name}, Sam with Cinder. Tried you at ${i.callTime}, ${where}. When that happens with a homeowner, most don't leave a voicemail. They call the next company. Here's what they'd get from you instead (30 sec): ${i.demoLink}\n\nWorth a quick call tomorrow, morning or afternoon?`;
 }
+/** After a call where they said "send me something" or showed interest. One idea, the risk taken off, one easy ask. */
 export function infoText(i: { firstName?: string; demoLink: string; slot1?: string; slot2?: string; niche?: string; company?: string }): string {
   const name = (i.firstName ?? "").trim();
   i = { ...i, demoLink: personalLink(i.demoLink, name, i.company) };
   const hi = `Hey${name ? " " + name : ""}, Sam with Cinder, good talking with you.`;
-  const ask = `Easiest is I show you in 15 min. Grab any time that works here: ${BOOKING_LINK}`;
-  if (i.niche === "detailing") return `${hi} Here's how it works: ${i.demoLink}\n\nYour past customers get a text when they're due and book themselves back in, anyone who calls while you're mid-detail gets a text back in seconds, and happy customers get asked for a review. I build it and run it, you don't touch the tech.\n\nWe start with one campaign to your past customers. If it doesn't book at least 3x what you pay, it's free.\n\n${ask}`;
-  return `${hi} Here's the 30-second demo of what your customers get when you can't pick up: ${i.demoLink}\n\nEvery missed call and form gets a text back in about 10 seconds and the estimate lands on your calendar. Every quote gets followed up until it's a yes or a no. I build it and run it, you don't touch the tech.\n\nNo contract, monthly starts after your first booked appointment, and 5 booked in 30 days or your next month is free.\n\n${ask}`;
+  const when = i.slot1 && i.slot2 ? `${i.slot1} or ${i.slot2} tomorrow` : "tomorrow morning or afternoon";
+  const ask = `Easiest is I show you live in 15 min. Does ${when} work? Or grab a time here: ${BOOKING_LINK}`;
+  if (i.niche === "detailing") return `${hi} Here's how it works: ${i.demoLink}\n\nPast customers get a text when they're due and book themselves back in. Anyone who calls while you're mid-detail hears back in seconds. Happy customers get asked for a review. I set it up and run it, you don't touch the tech.\n\nWe start with one campaign to your past customers. If it doesn't book at least 3x what you pay, it's free.\n\n${ask}`;
+  const visit = i.niche === "generator" ? "site visit" : "estimate";
+  return `${hi} Here's 30 seconds of what your customers get when you can't pick up: ${i.demoLink}\n\nMissed calls and forms get a text back in about 10 seconds, the ${visit} lands on your calendar, and every quote gets followed up until it's a yes or a no. I set it up and run it.\n\nNo contract. Monthly starts after your first booked appointment, and if it's not 5 booked in 30 days, your next month is free.\n\n${ask}`;
 }
 
 // ---- sending helpers ----
 
-/** Opens the phone's Messages app with the number and body filled in (works on iOS and Android). */
 /** First text to a company hiring for the phones (sent before the first call). */
 export function hiringText(i: { firstName?: string; company?: string; role?: string }): string {
   const hi = `Hey${i.firstName?.trim() ? " " + i.firstName.trim() : ""}, Sam with Cinder Revenue.`;
   const role = (i.role || "receptionist").toLowerCase();
-  return `${hi} Saw ${i.company?.trim() || "you guys"} is hiring a ${role}. Who's covering the calls after 5 and on weekends? I set contractors up with a front desk that never clocks out: every caller hears back in seconds and gets the estimate booked. Mind if I call you tomorrow? Reply STOP to opt out.`;
+  return `${hi} Saw ${i.company?.trim() || "you guys"} is hiring a ${role}. Who answers the phone after 5 and on weekends right now? I set contractors up with a front desk that never clocks out: every caller hears back in seconds and the estimate gets booked. Mind if I call tomorrow? Reply STOP to opt out.`;
 }
 
+/** Opens the phone's Messages app with the number and body filled in (works on iOS and Android). */
 export function smsHref(phone: string, body: string): string {
   const digits = (phone || "").replace(/[^\d+]/g, "");
   const num = digits.startsWith("+") ? digits : digits.length === 10 ? "+1" + digits : digits.length === 11 && digits.startsWith("1") ? "+" + digits : digits;
@@ -228,14 +232,14 @@ export function meetingWhen(startsAt: Date, now: Date, tz: string | null): strin
 /** Day-before confirmation. Asking for a reply is what cuts no-shows: people show up for what they said yes to. */
 export function confirmText(i: { firstName?: string; when: string; business?: string }): string {
   const name = (i.firstName ?? "").trim();
-  return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. Confirming our call ${i.when}. Still good? Just reply yes, or tell me a better time.`;
+  return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. Confirming our call ${i.when}. Still good? Just reply yes, or text me a time that works better.`;
 }
-/** Same-day reminder, about an hour before, with the join link when the booking has one. */
+/** Same-day reminder, in the last few hours, with the join link when the booking has one. Link last so it's one tap. */
 export function reminderText(i: { firstName?: string; when: string; link?: string }): string {
   const name = (i.firstName ?? "").trim();
   return i.link
-    ? `Hey${name ? " " + name : ""}, Sam here. See you ${i.when}. Here's the link to join: ${i.link}`
-    : `Hey${name ? " " + name : ""}, Sam here. Quick reminder we're talking ${i.when}. Talk soon.`;
+    ? `Hey${name ? " " + name : ""}, Sam here. See you ${i.when}. 15 minutes, nothing to prep, just open this from your phone or computer: ${i.link}`
+    : `Hey${name ? " " + name : ""}, Sam here. Quick reminder we're talking ${i.when}. 15 minutes, nothing to prep. Talk soon.`;
 }
 /** Right after they book: what the call is, so they show up curious instead of forgetting why they booked. */
 export function bookedText(i: { firstName?: string; when: string; business?: string; company?: string; link?: string; video?: string }): string {
@@ -244,12 +248,12 @@ export function bookedText(i: { firstName?: string; when: string; business?: str
   const what = video
     ? `Here's a 2-minute video of what ${co} customers would get the next time you miss a call: ${video}\n\nOn the call I'll walk you through it live, 15 minutes.`
     : `It's a quick 15-minute screen share: I'll show you exactly what ${co} customers would get the next time you miss a call.`;
-  return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. You're booked for ${i.when}. ${what}${i.link ? ` Join here: ${i.link}` : ""} If anything comes up, just text me a better time.`;
+  return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. You're booked for ${i.when}. ${what}${i.link ? `\n\nJoin here: ${i.link}` : ""}\n\nIf anything comes up, just text me a better time.`;
 }
 /** A few minutes past the start and they're not on: make it easy to join or move it, never guilt. */
 export function lateText(i: { firstName?: string; link?: string; booking?: string }): string {
   const name = (i.firstName ?? "").trim();
-  return `Hey${name ? " " + name : ""}, Sam here. I'm on the call now${i.link ? `: ${i.link}` : ""}. If today got busy, no problem, grab another time here: ${i.booking || BOOKING_LINK}`;
+  return `Hey${name ? " " + name : ""}, Sam here. I'm on the call now${i.link ? `, here's the link: ${i.link}` : "."}\n\nIf today got busy, no problem, grab another time here: ${i.booking || BOOKING_LINK}`;
 }
 /** Which show-up step a meeting needs right now, in order: welcome (booked in the last 12 hours, more than 3 hours
  * out), confirm (within a day and a half), remind (last 3 hours), late (2 to 20 minutes past the start), and
@@ -273,17 +277,20 @@ export const joinLink = (description: string | null | undefined) => /(?:^|\n)Joi
 
 // ---- follow-ups after the info text ----
 
-/** The follow-up text for each info follow-up day (1, 2, 3, 7). Short, one question, easy to answer. */
+/** The follow-up text for each info follow-up day (1, 2, 3, 7). Each adds something new and ends in one easy question;
+ * day 7 closes the loop politely, which is the one people answer most. */
 export function infoFollowUpText(i: { firstName?: string; company?: string; day: number; slot1?: string; slot2?: string; niche?: string }): string {
   const hi = `Hey${(i.firstName ?? "").trim() ? " " + i.firstName!.trim() : ""}`;
   if (i.day <= 1) return i.niche === "detailing"
     ? `${hi}, Sam with Cinder. Did you get a chance to look at the demo I sent yesterday? Happy to answer anything by text.`
-    : `${hi}, Sam with Cinder. Here's a quick 35-second video on why the first call back matters so much: ${FIRST_CALL_VIDEO}\n\nHappy to answer anything by text.`;
-  if (i.day === 2) return `${hi}, Sam again. Easiest way to see if it fits ${i.company || "you"} is a quick 15 min call. Grab any time here: ${BOOKING_LINK}`;
+    : `${hi}, Sam with Cinder. 35 seconds on why the first company to call back usually gets the job: ${FIRST_CALL_VIDEO}\n\nHow fast do you get back to new leads right now?`;
+  if (i.day === 2) return `${hi}, Sam again. Want me to show you what this would look like for ${i.company || "you"}? 15 min, tomorrow morning or afternoon. Or grab a time here: ${BOOKING_LINK}`;
   if (i.day === 3) return i.niche === "detailing"
     ? `${hi}, quick one: how many past customers haven't rebooked in the last 3 months? That's usually where the first month's bookings come from. Want me to show you?`
-    : `${hi}, quick one: how many calls go to voicemail on a busy week? That's usually where the first month's jobs come from. Want me to show you?`;
-  return `${hi}, last one from me. If it ever makes sense to look at this, just text back "demo" and I'll set it up.`;
+    : i.niche === "generator"
+      ? `${hi}, quick one: how many generator quotes go quiet after the site visit? That's usually where the first month's jobs come from. Want me to show you?`
+      : `${hi}, quick one: how many calls go to voicemail on a busy week? That's usually where the first month's jobs come from. Want me to show you?`;
+  return `${hi}, haven't heard back, so I'll guess the timing's off and stop texting. If missed calls ever start costing you jobs, just text "demo" and I'll set it up.`;
 }
 
 /** Text that carries a Loom you recorded for one prospect. */
