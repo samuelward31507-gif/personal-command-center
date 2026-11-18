@@ -157,3 +157,13 @@ console.log("agent contact info: 3 checks passed");
   assert.equal(A.gradeOf("no grade"), "");
   console.log("agent prospects ICP ok");
 }
+
+{ // hiring a receptionist = grade A
+  const A = await import("./lib/agent-api.ts");
+  const r = A.parseProspects({ prospects: [{ business: "Volt Generators", phone: "813-555-0142", niche: "generators", notes: "Lead grade: B · 4.8★ from 90 reviews", hiring: { role: "Receptionist / CSR", url: "https://www.indeed.com/viewjob?jk=abc", posted: "2026-11-12" } }, { business: "Ridge Fence", phone: "303-555-0101", hiring: { role: "" } }] });
+  assert.equal(A.gradeOf(r.prospects[0].notes), "A");
+  assert.match(r.prospects[0].notes, /^Lead grade: A · Hiring: Receptionist \/ CSR \(posted 2026-11-12\) https:\/\/www\.indeed\.com\/viewjob\?jk=abc\n4\.8★/);
+  assert.equal(r.prospects[1].notes, "", "no role, no hiring line");
+  assert.equal(A.withHiring("x", { role: "Office manager", posted: "last week", url: "javascript:alert(1)" }), "Lead grade: A · Hiring: Office manager\nx", "bad date and url dropped");
+  console.log("hiring signal ok");
+}
