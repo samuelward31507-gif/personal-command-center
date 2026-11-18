@@ -1559,3 +1559,20 @@ select.input.sm { padding-right: 26px; }
 /* Reports: rates and times are grey; only money is green or red. Non-money sparklines are grey. */
 .fn-t em { color: var(--g2); }
 .spark.ink { color: var(--g2); }
+
+/* Phone: two-line rows (name and value; next step and stage). "Your turn" takes the accent, not red. */
+.jrow small.jr-next.red, .jrow small.jr-next.amber { color: var(--ember); font-weight: 500; }
+@media (max-width: 899px) {
+  .ph-a > .views, .ph-a > .seg { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); padding-right: 24px; }
+}
+
+/* Phone record: full screen, Call / Text / the next action pinned at the bottom; the app tabs step aside. */
+.rec-bar { display: none; }
+@media (max-width: 899px) {
+  .rec-h .acts > .btn:not(.ic), .rec-h .acts > a.btn:not(.ic) { display: none; }
+  .rec-bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, .96); border-top: 1px solid var(--hair); backdrop-filter: blur(8px); }
+  .rec-bar .btn { height: 44px; justify-content: center; gap: 6px; font-size: 15px; }
+  body:has(.page.has-open .rec-bar) nav.tabs { display: none; }
+  .page.has-open:has(.rec-bar) { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+}

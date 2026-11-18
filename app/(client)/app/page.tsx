@@ -30,7 +30,8 @@ import { CommandBar } from "./command";
 
 // The example business (/app?demo=1) answers every call in the browser; nothing reaches the server.
 const DEMO_KEY = "cinder-demo";
-let demoOn = false;
+// Read once when the module loads, so a reload (or a dev hot-reload) of the example business stays in it.
+let demoOn = (() => { try { return typeof window !== "undefined" && sessionStorage.getItem(DEMO_KEY) === "1"; } catch { return false; } })();
 const demoStart = () => { demoOn = true; try { sessionStorage.setItem(DEMO_KEY, "1"); } catch { /* private mode */ } };
 const demoStop = () => { demoOn = false; try { sessionStorage.removeItem(DEMO_KEY); } catch { /* private mode */ } };
 
@@ -236,7 +237,7 @@ export default function CinderApp() {
   useEffect(() => { document.querySelector(".main > .page")?.scrollTo(0, 0); }, [tab, open]);
   const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
   if (state === "loading") return <div className="load"><span className="spin" aria-label="Loading" /></div>;
-  if (state === "out") return <SignIn onIn={() => void load("")} onDemo={() => { demoStart(); setDemo(true); setTab("today"); void load("", "today"); }} />;
+  if (state === "out") return <SignIn onIn={() => { demoStop(); void load(""); }} onDemo={() => { demoStart(); setDemo(true); setTab("today"); void load("", "today"); }} />;
   if (!d) return null;
 
   const L = d.live;

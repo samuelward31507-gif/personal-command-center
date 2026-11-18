@@ -273,7 +273,7 @@ function PhoneList({ cards, open }: { cards: Card[]; open: (id: string) => void 
   return <div>{groups.map(g => <section key={g.title}>
     <div className="grp"><b>{g.title}</b><span>{g.items.length}{g.sum ? `, ${short(g.sum)}` : ""}</span></div>
     {g.items.map(c => { const n = nextUp(c, today), name = c.name || fmtPhone(c.phone), l = laneOf(c), days = daysIn(c); return <button key={c.id} type="button" className="jrow" onClick={() => open(c.id)}>
-      <span style={{ minWidth: 0 }}><b>{name}</b><small>{line(c) || sourceLabel(c.source)}</small><small className={"jr-next " + n.tone}>{n.text}</small></span>
+      <span style={{ minWidth: 0 }}><b>{name}</b><small className={"jr-next " + n.tone} title={line(c) || sourceLabel(c.source)}>{n.text}</small></span>
       <span className="r"><b>{priceOf(c) || "–"}</b><em>{LANE_LABEL[l]}{l !== "done" && l !== "lost" ? `, ${daysLabel(days).toLowerCase()}` : ""}</em></span></button>; })}
   </section>)}</div>;
 }
