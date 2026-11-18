@@ -69,14 +69,9 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
 /* Headings: weight and tracking, not size. Titles live in the 52px bar; big type is for figures only. */
 .h1 { font: 600 15px/20px var(--ff); letter-spacing: -.22px; color: var(--ink); }
 .h2 { font: 600 14px/20px var(--ff); letter-spacing: -.22px; color: var(--ink); }
-.h0 { font: 600 24px/28px var(--ff-tight); letter-spacing: -.5px; color: var(--ink); }
 .sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 0 6px; font: 600 14px/20px var(--ff); letter-spacing: -.22px; color: var(--ink); }
 .sec small { font-weight: 500; color: var(--g3); font-size: 13px; }
 .sec .link { font-weight: 500; }
-.fig { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
-.fig b { font: 600 14px/1 var(--ff); font-variant-numeric: tabular-nums; color: var(--ink); }
-.fig span { font-size: 13px; color: var(--g2); }
-.fig.lg b { font: 600 24px/1 var(--ff-tight); letter-spacing: -.5px; }
 
 /* ---------- Buttons: 32px, 8px radius, a hairline ring and a 1px drop. Primary is near-black. ---------- */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 32px; padding: 0 11px; border: 0; border-radius: var(--r2); background: #fff;
@@ -125,7 +120,6 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
 .dot.good { color: #16703f; } .dot.good::before { background: var(--good); }
 .dot.bad { color: #b42318; } .dot.bad::before { background: var(--bad); }
 .dot.ember { color: var(--ember); } .dot.ember::before { background: var(--ember); }
-.dot.hollow::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 .stage { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: var(--g1); white-space: nowrap; }
 .stage i { width: 7px; height: 7px; border-radius: 50%; background: var(--g4); flex: 0 0 auto; }
 .stage.new i { background: transparent; box-shadow: inset 0 0 0 1.5px var(--g2); }

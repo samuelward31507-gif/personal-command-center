@@ -91,7 +91,7 @@
 .jobs-tools .sort { margin-left: auto; font-size: 12px; color: var(--g1); white-space: nowrap; } .jobs-tools .sort b { font-weight: 500; color: var(--ink); }
 .tbl-wrap { overflow: auto; flex: 1; min-height: 0; }
 .tbl.jobs-tbl { table-layout: fixed; min-width: 1040px; }
-.tbl.jobs-tbl.compact { min-width: 0; } .tbl.jobs-tbl.compact .c2 { display: none; }
+.tbl.jobs-tbl.compact { min-width: 0; }
 .skel-rows { padding: 0 16px; } .skel-rows i { display: block; height: 14px; margin: 9px 0; width: 60%; } .skel-rows i:nth-child(2n) { width: 40%; }
 .board { display: flex; gap: 10px; overflow-x: auto; padding: 12px 16px 16px; scroll-snap-type: x mandatory; flex: 1; }
 .col-b { flex: 1 1 200px; min-width: 200px; max-width: 300px; scroll-snap-align: start; display: flex; flex-direction: column; gap: 6px; min-height: 240px; padding: 0; }
@@ -289,13 +289,6 @@
 
 /* ---------- System ---------- */
 .wires { display: flex; flex-direction: column; gap: 20px; max-width: 820px; }
-.wire { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 0 10px; padding: 10px 0; border-bottom: 1px solid var(--hair); }
-.wire:last-child { border-bottom: 0; }
-.wire .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--g3); margin-top: 7px; }
-.wire.on .dot { background: var(--good); } .wire.todo .dot { background: var(--ember); }
-.wire .wt { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; } .wire .wt b { font-weight: 500; } .wire .wt .st { font-size: 12px; color: var(--g1); } .wire.on .wt .st { color: var(--good); } .wire.todo .wt .st { color: var(--ember); }
-.wire p { color: var(--g1); font-size: 12.5px; line-height: 1.5; margin-top: 1px; max-width: 70ch; }
-.wire .wa { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
 .code { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; height: 26px; padding: 0 8px; border: 1px solid var(--hair); border-radius: var(--r1); background: var(--paper); font: 500 12px var(--mono); color: var(--ink); min-width: 0; }
 .code span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .code button { color: var(--g1); display: inline-flex; } .code button:hover { color: var(--ink); }
@@ -377,9 +370,6 @@ details.skipped summary { cursor: pointer; font-size: 12.5px; color: var(--g1); 
 
  
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 4px 0 2px; }
-.wd { display: flex; flex-direction: column; gap: 3px; min-height: 84px; padding: 6px; border: 1px solid var(--hair); border-radius: var(--r2); text-align: left; min-width: 0; transition: border-color var(--t), background var(--t); }
-.wd:hover { border-color: var(--hair-2); background: var(--hover); }
-.wd.today { border-color: var(--ink); }
   
 
 
@@ -581,12 +571,6 @@ details.skipped summary { cursor: pointer; font-size: 12.5px; color: var(--g1); 
 
 
 
-.met { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px 14px 0; border-bottom: 1px solid var(--hair); min-width: 0; }
-.met:not(:nth-child(4n+1)) { padding-left: 16px; border-left: 1px solid var(--hair); }
-.met > span { font-size: 12.5px; color: var(--g1); }
-.met > b { font: 600 20px/1.15 var(--ff-tight); letter-spacing: -.015em; font-variant-numeric: tabular-nums; }
-.met > small { font-size: 12px; } .met .up { color: var(--good); } .met .down { color: var(--bad); }
-.met > em { font-style: normal; font-size: 11.5px; color: var(--g2); line-height: 1.4; margin-top: 2px; }
 
 .rep .money b small { font-weight: 400; font-size: 12px; }
 .bars { display: flex; flex-direction: column; gap: 6px; }
@@ -595,8 +579,6 @@ details.skipped summary { cursor: pointer; font-size: 12.5px; color: var(--g1); 
 .bars li b { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
 @media (max-width: 899px) {
   .funnel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .met:nth-child(odd) { padding-left: 0 !important; border-left: 0 !important; }
-  .met:nth-child(even) { padding-left: 16px; border-left: 1px solid var(--hair); }
   
   
 }
@@ -833,12 +815,11 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 .lv-m { font-size: 13px; color: var(--g1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lv .say { text-align: left; } .lv time { font-size: 12px; color: var(--g2); text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 899px) { .lv { grid-template-columns: 28px minmax(0, 1fr) auto; } .lv-m, .lv time { display: none; } }
-.dash .week .wd { background: var(--page); }
 
 
 
 .dash > * { flex-shrink: 0; }
-  .dash .wd { min-height: 58px; padding: 5px 4px; } .dash .week { gap: 3px; }
+  .dash .week { gap: 3px; }
 .dash, .ph { flex: 0 0 auto; }
 .main > .page:has(> .dash) { background: var(--wash); }
 
@@ -1273,11 +1254,8 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 
 /* Jobs table: core columns, nothing cut that matters, one fixed action column. */
 .tbl.jobs-tbl.v5 { min-width: 0; width: 100%; }
-.tbl.jobs-tbl.v5 .c2 { display: none; }
 @media (min-width: 1600px) { .tbl.jobs-tbl.v5.cols-auto .c2 { display: table-cell; } }
-.tbl.jobs-tbl.v5.cols-more .c2 { display: table-cell; }
 .tbl.jobs-tbl.v5.cols-more { min-width: 1180px; }
-.tbl.jobs-tbl.v5.compact .c2 { display: none; }
 .jobs-tbl.v5 td .name { gap: 8px; }
 .jobs-tbl.v5 td .name b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .jobs-tbl.v5 .turn { width: 6px; height: 6px; border-radius: 50%; background: var(--ember); flex: none; margin-left: -2px; }
@@ -1584,7 +1562,7 @@ select.input.sm { padding-right: 26px; }
 .page > * { animation: k-route 320ms var(--k-ease-out) both; }
 @keyframes k-route { from { opacity: 0; } to { opacity: 1; } }
 /* Lists: the first rows arrive 15ms apart from 40ms, the rest land together at 145ms. */
-.jobs-tbl tbody tr, .inbox .cv, .t5 .ym-row, .jrow { animation: k-row 260ms var(--k-ease-out) both; animation-delay: 145ms; }
+.jobs-tbl tbody tr, .inbox .cv, .jrow { animation: k-row 260ms var(--k-ease-out) both; animation-delay: 145ms; }
 .jobs-tbl tbody tr:nth-child(1), .inbox .cv:nth-child(1), .jrow:nth-child(1) { animation-delay: 40ms; }
 .jobs-tbl tbody tr:nth-child(2), .inbox .cv:nth-child(2), .jrow:nth-child(2) { animation-delay: 55ms; }
 .jobs-tbl tbody tr:nth-child(3), .inbox .cv:nth-child(3), .jrow:nth-child(3) { animation-delay: 70ms; }
