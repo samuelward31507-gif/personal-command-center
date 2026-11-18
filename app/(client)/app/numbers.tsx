@@ -18,8 +18,12 @@ import { commissions, minutesOf } from "@/lib/service";
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : null);
 const SRC_COLORS = ["#121417", "#d0663f", "#1a8f55", "#0a7cf0", "#8a8f98", "#c9a227", "#6b3f86", "#b4b8bf"];
 
-/** "+12% vs before", green when it's better. `lowerIsBetter` for times; `points` for rates. */
-function delta(now: number | null, before: number | null, o: { lowerIsBetter?: boolean; points?: boolean } = {}): Pick<Kpi, "sub" | "tone"> {
+/** "+12% vs before". Coloured only for money (`money`): green and red mean money in this app. `lowerIsBetter` for times; `points` for rates. */
+function delta(now: number | null, before: number | null, o: { lowerIsBetter?: boolean; points?: boolean; money?: boolean } = {}): Pick<Kpi, "sub" | "tone"> {
+  const r = delta0(now, before, o);
+  return o.money ? r : { sub: r.sub, tone: "" };
+}
+function delta0(now: number | null, before: number | null, o: { lowerIsBetter?: boolean; points?: boolean } = {}): Pick<Kpi, "sub" | "tone"> {
   if (now == null || before == null || (before === 0 && now === 0)) return { sub: "No change vs before", tone: "" };
   if (before === 0) return { sub: "New this period", tone: o.lowerIsBetter ? "" : "up" };
   const d = o.points ? Math.round(now - before) : Math.round(((now - before) / before) * 100);
@@ -66,15 +70,15 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
         ]} />
       : <>
         <Kpis items={[
-          { label: "Won", value: usd(n!.wonValue), ...delta(n!.wonValue, b!.wonValue), spark: ser.map(p => p.wonValue), sparkTone: "good" },
+          { label: "Won", value: usd(n!.wonValue), ...delta(n!.wonValue, b!.wonValue, { money: true }), spark: ser.map(p => p.wonValue), sparkTone: "good" },
           { label: "Book rate", value: R!.book == null ? "–" : `${R!.book}%`, ...delta(R!.book, B!.book, { points: true }), spark: ser.map(p => p.leads ? p.booked / p.leads : 0) },
           { label: "Close rate", value: R!.close == null ? "–" : `${R!.close}%`, ...delta(R!.close, B!.close, { points: true }) },
-          { label: "Average job", value: R!.avg == null ? "–" : usd(R!.avg), ...delta(R!.avg, B!.avg) },
+          { label: "Average job", value: R!.avg == null ? "–" : usd(R!.avg), ...delta(R!.avg, B!.avg, { money: true }) },
         ]} />
         <Kpis items={[
           { label: "Speed to lead", value: secs(n!.replySec), ...delta(n!.replySec, b!.replySec, { lowerIsBetter: true }) },
           { label: "Sales cycle", value: n!.cycleDays == null ? "–" : `${n!.cycleDays} days`, ...delta(n!.cycleDays, b!.cycleDays, { lowerIsBetter: true }) },
-          { label: "Collected", value: usd(n!.collected), ...delta(n!.collected, b!.collected), spark: ser.map(p => p.collected), sparkTone: "good" },
+          { label: "Collected", value: usd(n!.collected), ...delta(n!.collected, b!.collected, { money: true }), spark: ser.map(p => p.collected), sparkTone: "good" },
           { label: "Days to get paid", value: n!.payDays == null ? "–" : `${n!.payDays} days`, ...delta(n!.payDays, b!.payDays, { lowerIsBetter: true }) },
         ]} />
 

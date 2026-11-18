@@ -58,7 +58,9 @@ export default function Dashboard() {
   const [queue, setQueue] = useState<QueueItem[] | null>(null);
   const [ask, setAsk] = useState("");
   const [dbrief, setDbrief] = useState<{ text: string; calls: { contactId: string; reason: string }[]; generatedAt: string } | null | undefined>(undefined);
-  const [radar, setRadar] = useState<{ id: string; contactId: string; reason: string; body: string; company: string; firstName: string; phone: string; website: string }[]>([]);
+  const [grok, setGrok] = useState<{ briefs: { id: string; contactId: string | null; type: string; who: string; at: string }[]; drafts: number; runs: { agent: string; task: string; status: string; summary: string; at: string | null }[] } | null>(null);
+  useEffect(() => { fetch("/api/agent-activity", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).then(d => setGrok(d && Array.isArray(d.briefs) ? d : null)).catch(() => {}); }, []);
+  const [radar, setRadar] = useState<{ id: string; contactId: string; reason: string; body: string; company: string; firstName: string; phone: string; website: string; channel?: string; subject?: string; author?: string; email?: string }[]>([]);
   const [writing, setWriting] = useState(false);
   const [, tick] = useState(0);
 
@@ -244,9 +246,15 @@ export default function Dashboard() {
 
   const haveText = new Set((list ?? []).map(t => t.contactId).filter(Boolean));
   const radarTodos: Todo[] = radar.filter(r => !haveText.has(r.contactId) && !doneKeys["radar:" + r.id]).map(r => ({
-    key: "radar:" + r.id, title: `Follow up with ${r.company || r.firstName}`, why: r.reason, overdue: true, href: `/crm?contact=${r.contactId}`, action: "Text",
+    key: "radar:" + r.id, title: `Follow up with ${r.company || r.firstName}`, why: r.author === "grok" ? `${r.reason} (drafted by Grok, check it first)` : r.reason, overdue: true, href: `/crm?contact=${r.contactId}`, action: r.channel === "email" ? "Email" : "Text",
     name: r.company || r.firstName, website: r.website, body: r.body, contactId: r.contactId,
     onClick: () => {
+      if (r.channel === "email") {
+        if (r.email) window.location.href = `mailto:${encodeURIComponent(r.email)}?subject=${encodeURIComponent(r.subject ?? "")}&body=${encodeURIComponent(r.body)}`;
+        void fetch("/api/follow-up-drafts", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: r.id, status: "sent" }) }).catch(() => {});
+        setDoneKeys(k => ({ ...k, ["radar:" + r.id]: true }));
+        return;
+      }
       if (r.phone) window.location.href = smsHref(r.phone, r.body);
       void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: r.contactId, direction: "outbound", body: r.body }) }).catch(() => {});
       void fetch("/api/follow-up-drafts", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: r.id, status: "sent" }) }).catch(() => {});
@@ -390,6 +398,20 @@ export default function Dashboard() {
               </div>; })}
         </div>
       </section>
+
+      {grok && (grok.briefs.length > 0 || grok.runs.length > 0 || grok.drafts > 0) && <section className="td-sec td-side-sec" aria-label="Grok, last 24 hours">
+        <div className="td-sh">Grok<span className="ct">{grok.briefs.length}</span><span className="r">{grok.drafts > 0 ? `${grok.drafts} draft${grok.drafts === 1 ? "" : "s"} to check` : "last 24 hours"}</span></div>
+        <div className="td-card">
+          {grok.runs.map((r, i) => <div key={"r" + i} className="td-mt">
+            <span className="dot" style={{ background: r.status === "failed" ? "#F2431D" : "#b5bdc9" }} /><b>{r.agent}</b><span className="what">{r.summary || r.task}</span>
+            <span className="t">{r.at ? new Date(r.at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : ""}</span>
+          </div>)}
+          {grok.briefs.slice(0, 8).map(b => <Link key={b.id} className="td-mt" href={b.contactId ? `/crm/call?contact=${b.contactId}` : "/crm"}>
+            <span className="dot" style={{ background: "#b5bdc9" }} /><b>{b.who || "A prospect"}</b><span className="what">{b.type === "meeting_brief" ? "Meeting brief" : "Researched"}</span>
+          </Link>)}
+          {grok.briefs.length > 8 && <p className="td-empty">and {grok.briefs.length - 8} more on the call screen</p>}
+        </div>
+      </section>}
 
       </aside>
     </div>

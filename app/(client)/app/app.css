@@ -91,7 +91,7 @@
 .jobs-tools .sort { margin-left: auto; font-size: 12px; color: var(--g1); white-space: nowrap; } .jobs-tools .sort b { font-weight: 500; color: var(--ink); }
 .tbl-wrap { overflow: auto; flex: 1; min-height: 0; }
 .tbl.jobs-tbl { table-layout: fixed; min-width: 1040px; }
-.tbl.jobs-tbl.compact { min-width: 0; } .tbl.jobs-tbl.compact .c2 { display: none; }
+.tbl.jobs-tbl.compact { min-width: 0; }
 .skel-rows { padding: 0 16px; } .skel-rows i { display: block; height: 14px; margin: 9px 0; width: 60%; } .skel-rows i:nth-child(2n) { width: 40%; }
 .board { display: flex; gap: 10px; overflow-x: auto; padding: 12px 16px 16px; scroll-snap-type: x mandatory; flex: 1; }
 .col-b { flex: 1 1 200px; min-width: 200px; max-width: 300px; scroll-snap-align: start; display: flex; flex-direction: column; gap: 6px; min-height: 240px; padding: 0; }
@@ -289,13 +289,6 @@
 
 /* ---------- System ---------- */
 .wires { display: flex; flex-direction: column; gap: 20px; max-width: 820px; }
-.wire { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 0 10px; padding: 10px 0; border-bottom: 1px solid var(--hair); }
-.wire:last-child { border-bottom: 0; }
-.wire .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--g3); margin-top: 7px; }
-.wire.on .dot { background: var(--good); } .wire.todo .dot { background: var(--ember); }
-.wire .wt { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; } .wire .wt b { font-weight: 500; } .wire .wt .st { font-size: 12px; color: var(--g1); } .wire.on .wt .st { color: var(--good); } .wire.todo .wt .st { color: var(--ember); }
-.wire p { color: var(--g1); font-size: 12.5px; line-height: 1.5; margin-top: 1px; max-width: 70ch; }
-.wire .wa { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
 .code { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; height: 26px; padding: 0 8px; border: 1px solid var(--hair); border-radius: var(--r1); background: var(--paper); font: 500 12px var(--mono); color: var(--ink); min-width: 0; }
 .code span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .code button { color: var(--g1); display: inline-flex; } .code button:hover { color: var(--ink); }
@@ -377,9 +370,6 @@ details.skipped summary { cursor: pointer; font-size: 12.5px; color: var(--g1); 
 
  
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 4px 0 2px; }
-.wd { display: flex; flex-direction: column; gap: 3px; min-height: 84px; padding: 6px; border: 1px solid var(--hair); border-radius: var(--r2); text-align: left; min-width: 0; transition: border-color var(--t), background var(--t); }
-.wd:hover { border-color: var(--hair-2); background: var(--hover); }
-.wd.today { border-color: var(--ink); }
   
 
 
@@ -581,12 +571,6 @@ details.skipped summary { cursor: pointer; font-size: 12.5px; color: var(--g1); 
 
 
 
-.met { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px 14px 0; border-bottom: 1px solid var(--hair); min-width: 0; }
-.met:not(:nth-child(4n+1)) { padding-left: 16px; border-left: 1px solid var(--hair); }
-.met > span { font-size: 12.5px; color: var(--g1); }
-.met > b { font: 600 20px/1.15 var(--ff-tight); letter-spacing: -.015em; font-variant-numeric: tabular-nums; }
-.met > small { font-size: 12px; } .met .up { color: var(--good); } .met .down { color: var(--bad); }
-.met > em { font-style: normal; font-size: 11.5px; color: var(--g2); line-height: 1.4; margin-top: 2px; }
 
 .rep .money b small { font-weight: 400; font-size: 12px; }
 .bars { display: flex; flex-direction: column; gap: 6px; }
@@ -595,8 +579,6 @@ details.skipped summary { cursor: pointer; font-size: 12.5px; color: var(--g1); 
 .bars li b { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
 @media (max-width: 899px) {
   .funnel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .met:nth-child(odd) { padding-left: 0 !important; border-left: 0 !important; }
-  .met:nth-child(even) { padding-left: 16px; border-left: 1px solid var(--hair); }
   
   
 }
@@ -833,12 +815,11 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 .lv-m { font-size: 13px; color: var(--g1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lv .say { text-align: left; } .lv time { font-size: 12px; color: var(--g2); text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 899px) { .lv { grid-template-columns: 28px minmax(0, 1fr) auto; } .lv-m, .lv time { display: none; } }
-.dash .week .wd { background: var(--page); }
 
 
 
 .dash > * { flex-shrink: 0; }
-  .dash .wd { min-height: 58px; padding: 5px 4px; } .dash .week { gap: 3px; }
+  .dash .week { gap: 3px; }
 .dash, .ph { flex: 0 0 auto; }
 .main > .page:has(> .dash) { background: var(--wash); }
 
@@ -1273,11 +1254,8 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 
 /* Jobs table: core columns, nothing cut that matters, one fixed action column. */
 .tbl.jobs-tbl.v5 { min-width: 0; width: 100%; }
-.tbl.jobs-tbl.v5 .c2 { display: none; }
 @media (min-width: 1600px) { .tbl.jobs-tbl.v5.cols-auto .c2 { display: table-cell; } }
-.tbl.jobs-tbl.v5.cols-more .c2 { display: table-cell; }
 .tbl.jobs-tbl.v5.cols-more { min-width: 1180px; }
-.tbl.jobs-tbl.v5.compact .c2 { display: none; }
 .jobs-tbl.v5 td .name { gap: 8px; }
 .jobs-tbl.v5 td .name b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .jobs-tbl.v5 .turn { width: 6px; height: 6px; border-radius: 50%; background: var(--ember); flex: none; margin-left: -2px; }
@@ -1499,3 +1477,113 @@ button.kpi:hover { background: var(--wash); } .kpi.on { background: var(--wash);
 
 /* Quote templates, beside the Line items heading. */
 .tpl-pick { display: inline-flex; gap: 10px; align-items: center; margin-left: 12px; font-weight: 400; } .tpl-pick .input { width: auto; height: 26px; font-size: 12.5px; }
+
+/* ---------- Fifth pass, round 2: Jobs and the record ---------- */
+/* The jobs list sits on the window, not in a card; the header row is white, not washed. */
+.jobs-panel { box-shadow: none; border-radius: 0; background: transparent; }
+.jobs-panel .jobs-tools { background: transparent; padding-left: 0; padding-right: 0; }
+.jobs-panel .jobs-tbl th { background: #fff; }
+.jobs-panel .jobs-tbl th:first-child, .jobs-panel .jobs-tbl td:first-child { padding-left: 4px; }
+.jobs-panel .pane-foot { background: transparent; }
+.jobs-tbl.v5 td.act { padding-right: 4px; }
+.jobs-tbl.v5 td.act .btn { width: auto; min-width: 76px; padding: 0 10px; white-space: nowrap; }
+/* Docked list: name and next step only, nothing cut off. */
+.jobs-tbl.v5.slim colgroup col:nth-child(1), .jobs-tbl.v5.slim th:nth-child(1), .jobs-tbl.v5.slim tr:not(.grp-row) td:nth-child(1) { display: none; }
+.jobs-tbl.v5.slim .grp-row td { padding-left: 12px; }
+.jobs-tbl.v5.slim .ctag, .jobs-tbl.v5.slim .av { display: none; }
+.jobs-tbl.v5.slim td:nth-child(2) { padding-left: 12px; }
+/* The rail: the business logo is its only colour; object icons are quiet. */
+.obj { background: none !important; box-shadow: none !important; }
+.obj svg { color: var(--g2) !important; width: 14px !important; height: 14px !important; }
+.ri.on .obj svg { color: var(--ink) !important; }
+/* Record header: Call, Text, Quote named; expand and close as icons. */
+.insp-h .acts { gap: 6px; align-items: center; }
+
+/* Inbox filters: all five fit the list column (no hidden scroll). */
+.inbox .filt { padding: 0 8px; }
+.inbox .filt .views { gap: 0; }
+.inbox .filt .views > button { padding: 0 7px; gap: 4px; font-size: 13px; }
+@media (min-width: 1280px) { .inbox .split > .pane.list, .inbox .pane.list { min-width: 372px; } }
+
+/* Connections: green is for money. Connected is a dark neutral dot; needs-setup takes the accent; errors stay red. */
+.cx.on .cx-t .cdot { background: var(--g1); }
+
+/* Quotes and invoices: the list sits on the window, like Jobs. */
+.dash.quotes > section.panel, .money2 > section.panel { box-shadow: none; border-radius: 0; background: transparent; }
+.dash.quotes > section.panel .list-tools, .money2 > section.panel .list-tools { padding-left: 0; padding-right: 0; background: transparent; }
+.dash.quotes .tbl th, .money2 .tbl th { background: #fff; }
+
+/* A stale age is said with weight, not the accent (the accent means "your turn"). */
+.jobs-tbl.v5 td.num.late { color: var(--ink); font-weight: 600; }
+
+/* Calendar: one accent. Events are white; the left edge says what they are: an estimate (the next step) takes the
+   accent, an install is ink, a plan visit and anything else is grey. No green, peach or blue washes. */
+.cal-ev, .cal-ev.install, .cal-ev.visit, .cal-ev.estimate { background: #fff; }
+.cal-ev.estimate { border-left-color: var(--ember); }
+.cal-ev.install { border-left-color: var(--ink); }
+.cal-ev.visit { border-left-color: var(--g2); }
+.cal-ev.event { background: var(--paper); border-left-color: var(--g3); }
+.cal-chip.install { border-left-color: var(--ink); } .cal-chip.visit { border-left-color: var(--g2); }
+.dayrow.install b::before { background: var(--ink); }
+
+/* Small selects: room for the arrow so the label never runs under it. */
+select.input.sm { padding-right: 26px; }
+
+/* A list that is the whole screen sits on the window, not in a card. */
+.panel.flat { box-shadow: none; border-radius: 0; background: transparent; }
+.panel.flat > .panel-h { padding-left: 0; padding-right: 0; }
+.panel.flat .tbl th:first-child, .panel.flat .tbl td:first-child { padding-left: 0; }
+
+/* Reports: rates and times are grey; only money is green or red. Non-money sparklines are grey. */
+.fn-t em { color: var(--g2); }
+.spark.ink { color: var(--g2); }
+
+/* Phone: two-line rows (name and value; next step and stage). "Your turn" takes the accent, not red. */
+.jrow small.jr-next.red, .jrow small.jr-next.amber { color: var(--ember); font-weight: 500; }
+@media (max-width: 899px) {
+  .ph-a > .views, .ph-a > .seg { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); padding-right: 24px; }
+}
+
+/* Phone record: full screen, Call / Text / the next action pinned at the bottom; the app tabs step aside. */
+.rec-bar { display: none; }
+@media (max-width: 899px) {
+  .rec-h .acts > .btn:not(.ic), .rec-h .acts > a.btn:not(.ic) { display: none; }
+  .rec-bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, .96); border-top: 1px solid var(--hair); backdrop-filter: blur(8px); }
+  .rec-bar .btn { height: 44px; justify-content: center; gap: 6px; font-size: 15px; }
+  body:has(.page.has-open .rec-bar) nav.tabs { display: none; }
+  .page.has-open:has(.rec-bar) { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+}
+
+/* ---------- Motion (docs/motion-system.md): one curve, three speeds ---------- */
+:root { --k-ease-out: cubic-bezier(.16, 1, .3, 1); --k-ease-in: cubic-bezier(.4, 0, 1, 1); }
+/* Route: each screen mounts fresh, so this replays on every navigation. Opacity only: a transform here would make the
+   phone record's pinned action bar (position: fixed) ride along during the entrance. */
+.page > * { animation: k-route 320ms var(--k-ease-out) both; }
+@keyframes k-route { from { opacity: 0; } to { opacity: 1; } }
+/* Lists: the first rows arrive 15ms apart from 40ms, the rest land together at 145ms. */
+.jobs-tbl tbody tr, .inbox .cv, .jrow { animation: k-row 260ms var(--k-ease-out) both; animation-delay: 145ms; }
+.jobs-tbl tbody tr:nth-child(1), .inbox .cv:nth-child(1), .jrow:nth-child(1) { animation-delay: 40ms; }
+.jobs-tbl tbody tr:nth-child(2), .inbox .cv:nth-child(2), .jrow:nth-child(2) { animation-delay: 55ms; }
+.jobs-tbl tbody tr:nth-child(3), .inbox .cv:nth-child(3), .jrow:nth-child(3) { animation-delay: 70ms; }
+.jobs-tbl tbody tr:nth-child(4), .inbox .cv:nth-child(4), .jrow:nth-child(4) { animation-delay: 85ms; }
+.jobs-tbl tbody tr:nth-child(5), .inbox .cv:nth-child(5), .jrow:nth-child(5) { animation-delay: 100ms; }
+.jobs-tbl tbody tr:nth-child(6), .inbox .cv:nth-child(6), .jrow:nth-child(6) { animation-delay: 115ms; }
+.jobs-tbl tbody tr:nth-child(7), .inbox .cv:nth-child(7), .jrow:nth-child(7) { animation-delay: 130ms; }
+@keyframes k-row { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+/* Headline figures settle in. */
+.kfig { animation: k-fig 420ms var(--k-ease-out) 120ms both; font-variant-numeric: tabular-nums; }
+@keyframes k-fig { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } to { opacity: 1; transform: none; filter: none; } }
+/* Sheets rise out of their scrim; on a phone the sheet comes up from below. */
+.scrim { animation: k-fade 180ms ease-out both; }
+.scrim > .sheet { animation: k-pop 220ms var(--k-ease-out) 30ms both; }
+@media (max-width: 699px) { .scrim > .sheet { animation: k-up 260ms var(--k-ease-out) both; } }
+@keyframes k-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes k-pop { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes k-up { from { transform: translateY(100%); } to { transform: none; } }
+/* Press: buttons give under the finger; rows barely. */
+.btn { transition: background 120ms, box-shadow 120ms, transform 120ms var(--k-ease-out); }
+.btn:active:not(:disabled) { transform: scale(.97); }
+.jrow:active, .tabs > button:active { transform: scale(.995); }
+/* Reduced motion: nothing moves. */
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

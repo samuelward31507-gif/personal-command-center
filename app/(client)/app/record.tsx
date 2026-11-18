@@ -94,7 +94,9 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
       <Avatar name={r.name} size="xl" />
       <div className="t"><b>{r.name}</b><span>{[fmtPhone(r.phone), r.address].filter(Boolean).join(", ")}</span></div>
       <div className="acts">
-        {noPhone(r.phone) ? null : biz.canCall ? <button type="button" className="btn ghost ic" title="Call" aria-label="Call" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} /></button> : <a className="btn ghost ic" title="Call" aria-label="Call" href={`tel:${r.phone}`}><Icon name="phone" size={14} /></a>}
+        {noPhone(r.phone) ? null : biz.canCall ? <button type="button" className="btn sm" title="Call (rings your cell first)" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={13} />Call</button> : <a className="btn sm" href={`tel:${r.phone}`}><Icon name="phone" size={13} />Call</a>}
+        {!noPhone(r.phone) && <button type="button" className="btn sm" onClick={() => (document.querySelector(".insp textarea, .rec textarea") as HTMLTextAreaElement | null)?.focus()}>Text</button>}
+        {!biz.crew && r.card && !r.card.pastCustomer && <button type="button" className="btn sm" onClick={() => go.quote(id)}>Quote</button>}
         <button type="button" className="btn ghost ic" title="Open full record (↵)" aria-label="Open full record" onClick={onExpand}><Icon name="expand" size={14} /></button>
         <button type="button" className="btn ghost ic" title="Close (esc)" aria-label="Close" onClick={onClose}><Icon name="x" size={14} /></button>
       </div>
@@ -222,6 +224,12 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
         {!biz.crew && primary}
       </div>
     </header>
+    {/* On a phone: the three things you do with a customer, under your thumb. */}
+    <div className="rec-bar" role="toolbar" aria-label={`With ${first(name)}`}>
+      {noPhone(phone) ? null : biz.canCall ? <button type="button" className="btn" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={16} />Call</button> : <a className="btn" href={`tel:${phone}`}><Icon name="phone" size={16} />Call</a>}
+      {!noPhone(phone) && <button type="button" className="btn" onClick={() => { setTab("activity"); setTimeout(() => ta.current?.focus(), 50); }}><Icon name="chat" size={16} />Text</button>}
+      {!biz.crew && primary}
+    </div>
     {card?.stage === "quoted" && card.quote?.linked && (card.quote.views ?? 0) > 0 && !biz.crew && <div className="chase-banner"><Icon name="eye" size={14} /><span>Quote viewed {card.quote.views} {card.quote.views === 1 ? "time" : "times"}, not approved.</span>
       <button type="button" className="btn sm" disabled={!!r.busy || !canText} onClick={() => void r.act("nudge", { action: "quotenudge" }, `Texted ${first(name)} about the quote.`)}>{r.busy === "nudge" ? <Spinner /> : "Nudge"}</button></div>}
     <div className="rec-body">

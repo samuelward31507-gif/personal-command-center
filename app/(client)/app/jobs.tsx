@@ -43,7 +43,7 @@ export function nextUp(c: Card, today = todayIso()): { text: string; tone: Tone;
     if (!c.quote.linked) return { text: "Quote not sent yet", tone: "amber", icon: "quote" };
     if (c.quote.steps >= 4) return { text: "Went quiet, nudge them", tone: "amber", icon: "chat" };
     if (c.quote.viewed) return { text: `Opened the quote ${ago(c.quote.viewed)}`, tone: "", icon: "eye" };
-    return { text: c.quote.views ? `Viewed ${c.quote.views}x, ${c.quote.steps ? `${c.quote.steps} follow-ups sent` : "first follow-up soon"}` : c.quote.chasePaused ? "Follow-ups off" : c.quote.steps ? `${c.quote.steps} follow-ups sent` : "Follow-up in 2 days", tone: "", icon: "clock" };
+    return { text: c.quote.views ? `Viewed ${c.quote.views}x, ${c.quote.steps ? `${c.quote.steps} follow-up${c.quote.steps === 1 ? "" : "s"} sent` : "first follow-up soon"}` : c.quote.chasePaused ? "Follow-ups off" : c.quote.steps ? `${c.quote.steps} follow-up${c.quote.steps === 1 ? "" : "s"} sent` : "Follow-up in 2 days", tone: "", icon: "clock" };
   }
   if (c.status === "paused") return { text: "Needs a reply", tone: "red", icon: "chat" };
   if (c.next) return { text: `Estimate ${when(c.next)}`, tone: "blue", icon: "cal" };
@@ -220,7 +220,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
         : wide && mode === "board" ? <Board cards={view === "open" ? everyone.filter(c => src === "any" || c.source === src) : shown} sel={sel} drag={drag} over={over} setDrag={setDrag} setOver={setOver} move={move} open={open} who={cell => crewName(d, cell)} />
         : wide ? <>
           <div className="tbl-wrap"><table className={"tbl jobs-tbl v5 cols-" + cols + (sel ? " compact" : "") + (slim ? " slim" : "")}>
-            <colgroup><col style={{ width: 40 }} /><col style={{ width: 210 }} /><col /><col style={{ width: 200 }} /><col style={{ width: 124 }} />{extra && <col style={{ width: 104 }} />}<col style={{ width: 132 }} /><col style={{ width: 76 }} />{extra && <col style={{ width: 116 }} />}<col style={{ width: 104 }} /></colgroup>
+            <colgroup><col style={{ width: 40 }} /><col style={{ width: 210 }} /><col style={{ width: 220 }} /><col /><col style={{ width: 112 }} />{extra && <col style={{ width: 104 }} />}<col style={{ width: 120 }} /><col style={{ width: 76 }} />{extra && <col style={{ width: 116 }} />}<col style={{ width: 120 }} /></colgroup>
             <thead><tr><th className="ck-col"><input type="checkbox" aria-label="Select all" checked={!!shown.length && shown.every(c => ticked.has(c.id))} onChange={e => setTicked(e.target.checked ? new Set(shown.map(c => c.id)) : new Set())} /></th><th>Customer</th><th>Next step</th><th>Job</th><th className="right">Value</th>{extra && <th className="right" title="Price minus the costs you logged on the job">Profit</th>}<th>Stage</th><th className="right" title="Days since the last change">Age</th>{extra && <th>Came from</th>}<th><span className="sr">Action</span></th></tr></thead>
             <tbody>{groups.map(g => <Fragment key={g.who}>
               {grouped && <tr className="grp-row"><td colSpan={extra ? 10 : 8}><b>{WHO_LABEL[g.who]}</b><span>{g.cards.length} {g.cards.length === 1 ? "job" : "jobs"}{g.value ? `, ${usd(g.value)}` : ""}</span></td></tr>}
@@ -237,9 +237,9 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
                 <td className="act">{m.verb && <button type="button" className={"btn sm" + (m.who === "you" ? "" : " ghost")} onClick={e => { e.stopPropagation(); m.run(go); }}>{m.verb}</button>}</td>
               </tr>; })}
             </Fragment>)}</tbody>
-            {(() => { const list = ticked.size ? shown.filter(c => ticked.has(c.id)) : shown, sum = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
+            {ticked.size > 0 && (() => { const list = shown.filter(c => ticked.has(c.id)), sum = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
               const prof = list.reduce((a, c) => { const p = c.stage === "won" ? jobProfit(jobPrice(c), c.costs) : null; return a + (p?.profit ?? 0); }, 0);
-              return <tfoot><tr><td /><td><b>{list.length}</b>{ticked.size ? "selected" : "count"}</td><td /><td /><td className="num"><b>{usd(sum)}</b>sum</td>{extra && <td className="num">{prof ? <><b>{usd(prof)}</b>sum</> : null}</td>}<td /><td />{extra && <td />}<td /></tr></tfoot>; })()}
+              return <tfoot><tr><td /><td><b>{list.length}</b>selected</td><td /><td /><td className="num"><b>{usd(sum)}</b>sum</td>{extra && <td className="num">{prof ? <><b>{usd(prof)}</b>sum</> : null}</td>}<td /><td />{extra && <td />}<td /></tr></tfoot>; })()}
           </table></div>
           {ticked.size > 0 ? <div className="pane-foot bulk-bar" role="toolbar" aria-label="With the selected jobs">
             <b>{ticked.size} selected</b>
@@ -273,7 +273,7 @@ function PhoneList({ cards, open }: { cards: Card[]; open: (id: string) => void 
   return <div>{groups.map(g => <section key={g.title}>
     <div className="grp"><b>{g.title}</b><span>{g.items.length}{g.sum ? `, ${short(g.sum)}` : ""}</span></div>
     {g.items.map(c => { const n = nextUp(c, today), name = c.name || fmtPhone(c.phone), l = laneOf(c), days = daysIn(c); return <button key={c.id} type="button" className="jrow" onClick={() => open(c.id)}>
-      <span style={{ minWidth: 0 }}><b>{name}</b><small>{line(c) || sourceLabel(c.source)}</small><small className={"jr-next " + n.tone}>{n.text}</small></span>
+      <span style={{ minWidth: 0 }}><b>{name}</b><small className={"jr-next " + n.tone} title={line(c) || sourceLabel(c.source)}>{n.text}</small></span>
       <span className="r"><b>{priceOf(c) || "–"}</b><em>{LANE_LABEL[l]}{l !== "done" && l !== "lost" ? `, ${daysLabel(days).toLowerCase()}` : ""}</em></span></button>; })}
   </section>)}</div>;
 }
