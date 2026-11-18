@@ -63,7 +63,7 @@ export function ChecklistsSheet({ d, project, api, toast, reload, onClose }: { d
       <button type="button" className="btn" onClick={onClose}>Cancel</button>
       <button type="button" className="btn ink" disabled={busy} onClick={async () => { setBusy(true); try { await api("/api/app/act", { p: project, action: "setup", setup: { checklists: lists.map(l => ({ name: l.name, items: l.text.split("\n") })) } }); toast("Checklists saved."); await reload(); onClose(); } catch (e) { toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } }}>{busy ? <Spinner /> : "Save"}</button></>}>
     {lists.map((l, k) => <div key={k} className="cl-edit">
-      <div className="acts-row"><input className="input" style={{ flex: 1 }} value={l.name} maxLength={60} placeholder="Fence install" onChange={e => setLists(x => x.map((y, j) => j === k ? { ...y, name: e.target.value } : y))} />
+      <div className="acts-row"><input aria-label="Checklist name" className="input" style={{ flex: 1 }} value={l.name} maxLength={60} placeholder="Fence install" onChange={e => setLists(x => x.map((y, j) => j === k ? { ...y, name: e.target.value } : y))} />
         <button type="button" className="btn ghost sm ic" aria-label="Remove this checklist" onClick={() => setLists(x => x.filter((_, j) => j !== k))}><Icon name="x" size={13} /></button></div>
       <textarea className="input" rows={Math.min(10, Math.max(3, l.text.split("\n").length + 1))} value={l.text} onChange={e => setLists(x => x.map((y, j) => j === k ? { ...y, text: e.target.value } : y))} placeholder={"Locate utilities\nSet posts\nFinal walk"} />
     </div>)}

@@ -40,7 +40,11 @@ export async function GET(request: Request) {
     // First top up the call list from saved Google Maps searches, so the new leads get audited tonight too.
     const refill = await refillLeads(sql, owner).catch(e => ({ error: e instanceof Error ? e.message : "failed" }));
     console.info("Lead refill", refill);
-    const result = await runPreAudit({ sql, owner, apiKey, tz: (await loadWorkspace(owner)).timezone });
+    // Overnight audits of the whole call list are off by default (they mostly went unread). Audits now run when a
+    // prospect books a meeting. Set PRE_AUDIT=on to bring the overnight run back.
+    const result = process.env.PRE_AUDIT === "on"
+      ? await runPreAudit({ sql, owner, apiKey, tz: (await loadWorkspace(owner)).timezone })
+      : { status: "skipped" as const, audited: 0, attempted: 0, candidates: 0, reason: "overnight audits are off; audits run when a meeting is booked", ms: 0 };
     // Then find emails for new contacts, so tomorrow's calls and Autopilot have someone to email.
     const emails = await findEmails(sql, owner, { limit: 80, budgetMs: 60_000 }).catch(e => ({ error: e instanceof Error ? e.message : "failed" }));
     console.info("Overnight email finder", emails);

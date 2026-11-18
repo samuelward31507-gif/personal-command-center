@@ -39,7 +39,7 @@ export function SignoffSheet({ card, trade, owner, onClose, save }: { card: Card
     <p className="sec">Walk it together</p>
     <div className="checks">{checks.map((c, k) => <label key={k} className="check"><input type="checkbox" checked={c.done} onChange={e => setChecks(xs => xs.map((x, j) => j === k ? { ...x, done: e.target.checked } : x))} /><span>{c.label}</span></label>)}
       <form className="acts-row" onSubmit={e => { e.preventDefault(); if (extra.trim()) { setChecks(xs => [...xs, { label: extra.trim().slice(0, 80), done: true }]); setExtra(""); } }}>
-        <input className="input" style={{ flex: 1 }} value={extra} maxLength={80} onChange={e => setExtra(e.target.value)} placeholder="Add a check, like Sprinkler heads back in place" /><button type="submit" className="btn sm">Add</button></form></div>
+        <input aria-label="Add a check" className="input" style={{ flex: 1 }} value={extra} maxLength={80} onChange={e => setExtra(e.target.value)} placeholder="Add a check, like Sprinkler heads back in place" /><button type="submit" className="btn sm">Add</button></form></div>
     <label className="field"><span>Anything to note <em>optional, it goes on their record</em></span><textarea rows={2} value={note} maxLength={600} onChange={e => setNote(e.target.value)} placeholder="Touch-up on the gate post next week. Left the extra pickets in the garage." /></label>
     <label className="field"><span>Customer name</span><input value={name} maxLength={80} onChange={e => setName(e.target.value)} autoComplete="name" /></label>
     <SignaturePad onChange={setSig} />

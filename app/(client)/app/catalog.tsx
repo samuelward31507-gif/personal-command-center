@@ -24,7 +24,7 @@ export function CatalogPicker({ onPick }: { onPick: (c: CatalogItem) => void }) 
   return <div className="cat-pick" ref={box}>
     <button type="button" className={"btn sm" + (open ? " on" : "")} onClick={() => setOpen(o => !o)}><Icon name="search" size={13} />From price list</button>
     {open && <div className="cat-pop" role="dialog" aria-label="Your price list">
-      <input className="input" autoFocus value={q} placeholder="Search your price list" onChange={e => { setQ(e.target.value); setK(0); }}
+      <input aria-label="Search your price list" className="input" autoFocus value={q} placeholder="Search your price list" onChange={e => { setQ(e.target.value); setK(0); }}
         onKeyDown={e => { if (e.key === "ArrowDown") { e.preventDefault(); setK(x => Math.min(hits.length - 1, x + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setK(x => Math.max(0, x - 1)); } else if (e.key === "Enter" && hits[k]) { e.preventDefault(); pick(hits[k]); } else if (e.key === "Escape") setOpen(false); }} />
       <ul>{hits.length ? hits.map((c, i) => <li key={c.name}><button type="button" className={i === k ? "on" : ""} onMouseEnter={() => setK(i)} onClick={() => pick(c)}><span>{c.name}</span><b>{dollars(c.price)}{c.unit ? <small>/{c.unit}</small> : null}</b></button></li>)
         : <li className="none">Nothing called that. <button type="button" className="link" onClick={edit}>Add it to the list</button></li>}</ul>

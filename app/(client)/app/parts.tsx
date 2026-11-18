@@ -152,4 +152,4 @@ export function useArm() {
   return [arm, setArm] as const;
 }
 
-export function Spinner() { return <span className="spin" aria-label="Working" />; }
+export function Spinner() { return <span className="spin" role="status" aria-label="Working" />; }

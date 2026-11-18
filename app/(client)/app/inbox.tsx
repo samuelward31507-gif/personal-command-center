@@ -6,7 +6,8 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { Avatar, Empty, Icon, Spinner, ago, clock, dayKey, dayName, first, fmtPhone, type Api, type Toast } from "./parts";
 import { mailWaiting, sourceLabel, type Conv, type Data, type Go, type Text, type Thread } from "./types";
-import { MailWaiting } from "./system";
+import dynamic from "next/dynamic";
+const MailWaiting = dynamic(() => import("./system").then(m => m.MailWaiting), { ssr: false });
 import { Chip, SourceMark, secText, type Tone } from "./sources";
 
 /** What a lead's row says about where it stands, in the fixed colors: green booked or won, amber waiting on them, red your turn, grey new. */

@@ -32,7 +32,7 @@ const GROUP_ORDER: QueueGroup[] = ["revenue", "prospects", "meetings", "deals", 
 export const DAILY_NEW_PROSPECTS = 15;
 const STATUS_ORDER: Record<QueueStatus, number> = { blocked: 0, overdue: 1, today: 2, upcoming: 3 };
 
-type ContactRef = { id: string; name: string; company: string; phone: string; lastOutcome: string | null; lastAt: string | null; verdict: string | null; niche?: string };
+type ContactRef = { id: string; name: string; company: string; phone: string; lastOutcome: string | null; lastAt: string | null; verdict: string | null; niche?: string; grade?: string };
 export type QueueInput = {
   today: string; // owner's local YYYY-MM-DD
   now: string; // ISO
@@ -70,6 +70,10 @@ export function prospectScore(p: { contact: ContactRef; website: string }): numb
   // A target trade: fence/pool by name, or any lead the Sunday lead run tagged (fence, auto detailing).
   if (NICHE.test(p.contact.company) || POOL.test(p.contact.company) || (p.contact.niche ?? "").trim()) score += 20;
   if (p.website) score += 5;
+  // Lister's grade (A: running ads or clearly busy and stretched; B: solid local shop): the best leads get called first.
+  if (p.contact.grade === "A") score += 30;
+  else if (p.contact.grade === "B") score += 15;
+  else if (p.contact.grade === "C") score -= 10;
   return score;
 }
 

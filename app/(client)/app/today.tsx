@@ -224,7 +224,7 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
           {nums.map(n => <button key={n.label} type="button" className="t5-num" onClick={n.go} disabled={!n.go}><span>{n.label}<small>{n.sub}</small></span><b className={n.tone || ""}>{n.value}</b></button>)}
         </section>
         <section><h3>Pipeline<small>{usd(pipeTotal)} open</small></h3>
-          <div className="t5-pipe" aria-hidden="true">{pipe.map(p => <i key={p.st} className={p.st} style={{ flexGrow: Math.max(p.v, pipeTotal ? pipeTotal * 0.04 : 1) }} />)}</div>
+          <div className={"t5-pipe" + (pipeTotal ? "" : " none")} aria-hidden="true">{pipeTotal > 0 && pipe.map(p => <i key={p.st} className={p.st} style={{ flexGrow: Math.max(p.v, pipeTotal ? pipeTotal * 0.04 : 1) }} />)}</div>
           {pipe.map(p => <button key={p.st} type="button" className="t5-num" onClick={() => go.tab("jobs")}><span><i className={"sw " + p.st} />{PIPE_L[p.st]}<small>{p.n}</small></span><b>{usd(p.v)}</b></button>)}
         </section>
         {isOwner && (setupLeft > 0 || (d.customers ?? []).length < 5) && <section><h3>Setting up</h3>

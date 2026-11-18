@@ -1,6 +1,6 @@
 // The example business behind /app?demo=1: the real app over an in-memory copy of its API,
 // so Sam (and prospects on a call) can click through exactly what a client sees. Nothing leaves the browser.
-import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, cleanWinback, detailLine, parsePriceBook, stageFor, STAGES, winbackDraft, type Card, type CardInvoice, type Details , cleanPayMethod, type Payment, type Photo } from "@/lib/crm";
+import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, rangeText, cleanWinback, detailLine, parsePriceBook, stageFor, STAGES, winbackDraft, type Card, type CardInvoice, type Details , cleanPayMethod, type Payment, type Photo } from "@/lib/crm";
 import type { Report, ReportNumbers } from "@/lib/client-reports";
 import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
 import { cleanImportRows, importAs } from "@/lib/customer-import";
@@ -232,7 +232,7 @@ function asCrew<T extends Record<string, unknown>>(x: T): T {
 function blank<T extends Record<string, unknown>>(x: T): T {
   const live = { ...(x.live as Record<string, unknown>), leads: 0, needs: 0, answered: 0, booked: 0, replySec: null, chasing: 0, chasingValue: 0, won: 0, wonValue: 0, revived: 0, reviews: 0, weeks: [], conversations: [], afterHours: { leads: 0, won: 0, wonValue: 0 , paid: Math.round((0 ) * 0.8)} };
   const setup = { ...(x.setup as Record<string, string>), price_book: "", pay_link: "", has_review_link: "", has_calendar: "" };
-  return { ...x, live, setup, board: [], invoices: [], payments: [], customers: [], appointments: [], quotes: [], wonJobs: [], plans: [], time: [], visits: [], hasReviewLink: false, calendar: { connected: false, email: "", events: [], error: "", connectUrl: "#" }, wires: { sources: [], failures: [], log: [] }, mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: [] }, winback: { past: 0, eligible: 0, names: [], draft: "" } };
+  return { ...x, live: { ...live, leadsToday: 0, replySecWeek: null }, setup, evening: null, tasks: [], activity: [], equipment: [], files: [], orders: [], expenses: [], board: [], invoices: [], payments: [], customers: [], appointments: [], quotes: [], wonJobs: [], plans: [], time: [], visits: [], hasReviewLink: false, calendar: { connected: false, email: "", events: [], error: "", connectUrl: "#" }, wires: { sources: [], failures: [], log: [] }, mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: [] }, winback: { past: 0, eligible: 0, names: [], draft: "" } };
 }
 const EXAMPLE_CO = (typeof location !== "undefined" ? location.origin : "") + "/c/example";
 function plansOut() { const s = st(); return s.plans.map(p => ({ ...p, customer: s.threads[p.thread_id]?.thread.customer_name ?? "", phone: s.threads[p.thread_id]?.thread.customer_phone ?? "" })); }
@@ -422,6 +422,15 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       const th = s.threads[a!.thread_id]; const label = when.toLocaleString("en-US", { weekday: "long", hour: "numeric", minute: "2-digit" });
       th?.texts.push({ id: "d" + ++n, direction: "out", author: "system", body: `Estimate moved to ${label}.`, at: now }, { id: "d" + ++n, direction: "out", author: "owner", body: `Hi ${th.thread.customer_name.split(" ")[0]}, Ridgeline Fence Co. here. We've moved your estimate to ${label}. If that doesn't work, reply and we'll find another time.`, at: now });
       return { ok: true, texted: true, when: label };
+    }
+    if (b.action === "rehearse") {
+      // The practice lead in the example: the same three steps the engine takes (ask, ballpark and two times, book).
+      const h = Array.isArray(b.history) ? b.history as { direction: string; body: string }[] : [], turn = h.filter(x => x.direction === "in").length;
+      await new Promise(r => setTimeout(r, 900));
+      const o = s.setup, owner = (o.owner_name || "We").split(" ")[0], bp = ballpark(parsePriceBook(o.price_book), { length_ft: 150, material: "Cedar", gates: 1 });
+      if (turn <= 1) return { ok: true, reply: `Hi, this is ${o.display_name.replace(/\.+$/, "")}. Happy to help with that. Roughly how many feet, what material, and what's the address?`, stage: "qualifying", handoff: false, booked: null, known: {} };
+      if (turn === 2) return { ok: true, reply: `Thanks! For about 150 ft of cedar with one gate, most jobs run ${bp ? rangeText(bp) : "$5,700–$7,200"}, final price after we measure. ${owner} can come out Thursday at 9:00 AM or Friday at 1:00 PM. Which works?`, stage: "booking_offered", handoff: false, booked: null, known: { length_ft: 150, material: "Cedar", gates: 1 } };
+      return { ok: true, reply: `You're set for Thursday at 9:00 AM. ${owner} will meet you at 1420 Maple St to measure. Reply here if anything changes.`, stage: "booked", handoff: false, booked: "Thursday at 9:00 AM", known: { length_ft: 150, material: "Cedar", gates: 1 } };
     }
     if (b.action === "preview") {
       // The example answers the way the agent would, without the model: a lead's question, Mike's rules, a next step.

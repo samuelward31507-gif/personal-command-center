@@ -85,13 +85,17 @@ export default function CallModePage() {
   // Playbook panel: an objection id, or "close", "voicemail", "gatekeeper". null shows the script.
   const [say, setSay] = useState<string | null>(null);
 
+  // Today's list is the daily call target (Settings, 100 by default), follow-ups included. "Add 20 more" stretches it.
+  const [base, setBase] = useState(100);
+  const [extra, setExtra] = useState(() => { try { return Number(localStorage.getItem("cinder.callExtra." + localKey(new Date()))) || 0; } catch { return 0; } });
+  const addMore = () => { const n = extra + 20; setExtra(n); try { localStorage.setItem("cinder.callExtra." + localKey(new Date()), String(n)); } catch { /* fine */ } };
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
       const now = new Date();
       const tomorrow = new Date(now); tomorrow.setHours(0, 0, 0, 0); tomorrow.setDate(tomorrow.getDate() + 1);
       const dayAfter = new Date(tomorrow); dayAfter.setDate(dayAfter.getDate() + 1);
-      const q = new URLSearchParams({ today: localKey(now), dayEnd: tomorrow.toISOString(), windowEnd: dayAfter.toISOString(), prospects: "1500" });
+      const q = new URLSearchParams({ today: localKey(now), dayEnd: tomorrow.toISOString(), windowEnd: dayAfter.toISOString(), prospects: String(base + extra) });
       const [dayRes, cRes] = await Promise.all([fetch("/api/my-day?" + q, { cache: "no-store" }), fetch("/api/contacts", { cache: "no-store" })]);
       if (dayRes.status === 401) throw new Error("Sign in to start calling.");
       const day = await dayRes.json().catch(() => ({}));
@@ -108,12 +112,18 @@ export default function CallModePage() {
       slots.forEach((n, k) => { items[n] = ordered[k]; });
       // A contact can show up as both a follow-up and a deal next step: call them once.
       const seen = new Set<string>();
-      setQueue(items.filter(i => { const id = i.contact!.id; if (seen.has(id)) return false; seen.add(id); return mode === "new" ? i.group === "prospects" : mode === "warm" ? i.group !== "prospects" : true; }));
+      const once = items.filter(i => { const id = i.contact!.id; if (seen.has(id)) return false; seen.add(id); return true; });
+      // The server already took off the prospects first-called today, so the new ones it sends are what's left of the
+      // daily number. Follow-ups count toward it too: drop that many new prospects from the end.
+      const followUps = once.filter(i => i.group !== "prospects").length;
+      let room = Math.max(0, once.length - followUps * 2);
+      const today = once.filter(i => i.group !== "prospects" || room-- > 0);
+      setQueue(today.filter(i => mode === "new" ? i.group === "prospects" : mode === "warm" ? i.group !== "prospects" : true));
       setContacts(byId);
       setIndex(0);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not build the call list."); }
     finally { setLoading(false); }
-  }, [mode]);
+  }, [mode, base, extra]);
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     fetch("/api/offer", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(d => d && setFounding({ script: d.script, left: d.left })).catch(() => {});
@@ -162,6 +172,7 @@ export default function CallModePage() {
   }, [contact?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const wsp = useWorkspace();
+  useEffect(() => { if (wsp.dailyCallTarget) setBase(wsp.dailyCallTarget); }, [wsp.dailyCallTarget]);
   const offers = useMemo(() => offersFrom(wsp), [wsp]);
   const offer = useMemo(() => suggestOffer(contact?.company ?? "", audit ? reportSection(audit.content, "Verdict") : null, offers), [contact?.company, audit, offers]);
   const brief = audit ? {
@@ -436,7 +447,8 @@ export default function CallModePage() {
             <Logo name={q.contact?.company || q.contact?.name || ""} website={q.contact?.website} size={26} />
             <span className="dl-q-main"><b>{q.contact?.company || q.contact?.name}</b><small>{q.group === "prospects" ? "New" : q.status === "overdue" ? "Overdue follow-up" : "Follow-up"}{/Audit:/.test(q.why) ? " · researched" : ""}</small></span>
           </button>)}
-          {queue.length === 0 && <p className="u-note" style={{ padding: "8px 4px" }}>The list is empty.</p>}
+          {queue.length === 0 && <p className="u-note" style={{ padding: "8px 4px" }}>Today&apos;s list is done.</p>}
+          {(queue.length === 0 || index >= queue.length - 1) && <button type="button" className="u-btn" style={{ margin: "8px 4px" }} onClick={addMore}>Add 20 more</button>}
         </div>
         {logged.length > 0 && <div className="dl-logged"><span className="u-fig-k">Logged this session</span>{logged.slice(0, 8).map((l, i) => <div key={i}><span>{l.name}</span><small>{l.outcome}</small></div>)}</div>}
       </aside>

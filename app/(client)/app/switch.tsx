@@ -30,13 +30,13 @@ export function SwitchScreen({ d, project, api, toast, reload, go }: { d: Data; 
 
   const steps = ["Where from", "Connect or add files", "Check it", "Bring it in", "Go live"];
   return <>
-    <PageHead title={`Move to ${appName}`} sub={`Step ${at} of 5. ${steps[at - 1]}.`} actions={at > 1 && at < 4 ? <button type="button" className="btn ghost" onClick={() => setStep(at - 1)}><Icon name="back" size={14} />Back</button> : undefined} />
+    <PageHead title={`Move to ${appName}`} sub={`Step ${at} of 5. ${steps[at - 1]}.`} actions={at > 1 && at < 4 ? <button type="button" className="btn ghost" onClick={() => setStep(at - 1)}><Icon name="back" size={14} />Back</button> : <button type="button" className="btn ghost" onClick={() => go.tab("from")}>What&rsquo;s called what</button>} />
     <div className="dash sw">
       <ol className="sw-steps" aria-label="Steps">{steps.map((s, i) => <li key={s} className={i + 1 < at ? "done" : i + 1 === at ? "on" : ""}><i>{i + 1 < at ? <Icon name="check" size={10} /> : i + 1}</i><span>{s}</span></li>)}</ol>
       {!got ? <section className="panel"><div className="panel-b skel-rows" style={{ padding: 18 }}><i className="skel" /><i className="skel" /></div></section>
         : at === 1 ? <PickSource pick={pick} setPick={setPick} busy={busy} onNext={async () => { if (pick === "none") { setStep(5); return; } const r = await act("start", { action: "start", source: pick }); if (r) setStep(2); }} />
         : at === 2 ? <Connect d={d} imp={imp} source={imp?.source ?? pick} busy={busy} act={act} toast={toast} onNext={() => setStep(3)} />
-        : at === 3 && imp?.preview ? <Check imp={imp} busy={busy} act={act} onRun={async () => { setStep(4); await runAll(); }} />
+        : at === 3 && imp?.preview ? <Check imp={imp} busy={busy} act={act} report={`/api/app/switch?p=${project}&report=${imp.id}`} toast={toast} onRun={async () => { setStep(4); await runAll(); }} />
         : at === 3 ? <section className="panel"><div className="panel-b"><p className="fine" style={{ padding: "12px 0" }}>Nothing read yet. Go back and connect or add a file.</p></div></section>
         : at === 4 ? <Running imp={imp} busy={busy} onContinue={() => void runAll()} />
         : <GoLive d={d} imp={got.import} golive={got.golive ?? {}} start={got.goliveStart ?? null} resend={got.resend ?? { quotes: 0, invoices: 0 }} onResent={left => setGot(g => g && ({ ...g, resend: left }))} appName={appName} busy={busy} project={project} api={api} toast={toast}
@@ -145,7 +145,7 @@ function SamplePreview({ kind, s }: { kind: Kind; s: Staged }) {
   return <div className="sw-sample"><table className="tbl flush"><thead><tr>{head.map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{rows.length ? rows.map((r, i) => <tr key={i}>{r.map((v, k) => <td key={k} className={v === "No phone" ? "warn" : ""}>{v}</td>)}</tr>) : <tr><td colSpan={4} className="mut">Nothing readable in the first rows. Check the columns above.</td></tr>}</tbody></table></div>;
 }
 
-function Check({ imp, busy, act, onRun }: { imp: View; busy: string; act: Act; onRun: () => void }) {
+function Check({ imp, busy, act, onRun, report, toast }: { imp: View; busy: string; act: Act; onRun: () => void; report: string; toast: Toast }) {
   const p = imp.preview!, [open, setOpen] = useState<"" | "merges" | "phones">(""), [phones, setPhones] = useState<Record<string, string>>({});
   const splits = useRef<string[]>([]);
   const row = (k: string, n: number, sub: React.ReactNode = null, action: React.ReactNode = null) => <div className="sw-row"><span>{k}</span><b>{n.toLocaleString("en-US")}</b><small>{sub}</small>{action}</div>;
@@ -170,7 +170,9 @@ function Check({ imp, busy, act, onRun }: { imp: View; busy: string; act: Act; o
           <div className="acts-row end"><button type="submit" className="btn sm ink" disabled={!!busy}>Save phones</button></div></form>}
       </>}
       <p className="fine" style={{ marginTop: 12 }}>Nobody gets a text from this. Open quotes come in with follow-ups off, unpaid invoices with reminders off, and plans paused. You turn each on when you&rsquo;re ready.</p>
-      <div className="acts-row end" style={{ marginTop: 12 }}><button type="button" className="btn ink lg" disabled={!!busy || p.customers + p.items + p.team === 0} onClick={onRun}>Import everything</button></div>
+      <div className="acts-row end" style={{ marginTop: 12 }}>
+        {p.sourceCustomers > 0 && <a className="btn ghost" href={report} title="One row per customer: new, matched, merged or left out, and why" onClick={e => { if (inDemo()) { e.preventDefault(); toast("In the example the report doesn't download. Yours is a spreadsheet with one row per customer from your old app: new, matched, merged or left out, and why."); } }}><Icon name="out" size={14} />Match report</a>}
+        <button type="button" className="btn ink lg" disabled={!!busy || p.customers + p.items + p.team === 0} onClick={onRun}>Import everything</button></div>
     </div></section>;
 }
 
@@ -216,6 +218,7 @@ function GoLive({ d, imp, golive, start, appName, busy, project, api, toast, onT
         {line("customers", "Customers")}{line("quotes", "Quotes")}{line("jobs", "Jobs")}{line("invoices", "Invoices")}{line("payments", "Payments")}{line("plans", "Service plans")}{line("team", "Team")}{line("items", "Price list")}
         <div className="acts-row" style={{ marginTop: 12 }}>
           <a className="btn" onClick={e => { if (inDemo()) { e.preventDefault(); toast("The example business has nothing to export. Your own export downloads a real file."); } }} href={`/api/app/export?p=${project}&what=all`}><Icon name="out" size={14} />Export everything</a>
+          <a className="btn ghost" href={`/api/app/switch?p=${project}&report=${done.id}`} title="One row per customer: new, matched, merged or left out, and why" onClick={e => { if (inDemo()) { e.preventDefault(); toast("In the example the report doesn't download. Yours is a spreadsheet with one row per customer from your old app: new, matched, merged or left out, and why."); } }}>Match report</a>
           <button type="button" className="btn ghost" onClick={onAgain}>Add more from another app</button>
           {done.canUndo && <button type="button" className="btn ghost bad" disabled={!!busy} onClick={onUndo} title="For 7 days after the move">{busy === "undo" ? <Spinner /> : "Undo this move"}</button>}
         </div>

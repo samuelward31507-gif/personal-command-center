@@ -117,7 +117,7 @@ export function TagsRow({ ctx, card, act }: { ctx: Ctx; card: { id: string; tags
   const save = (next: string[]) => void act("tags", { action: "card", tags: next }, "Tags saved.");
   return <section className="card"><div className="hd"><h2>Tags and referrals</h2></div>
     <div className="tag-row">{tags.map(t => <span key={t} className="tagx">{t}<button type="button" aria-label={`Remove ${t}`} onClick={() => save(tags.filter(x => x !== t))}>×</button></span>)}
-      {adding ? <form onSubmit={e => { e.preventDefault(); const t = v.trim().toLowerCase(); if (t) save([...tags, t]); setV(""); setAdding(false); }}><input className="input sm" list="tag-list" autoFocus value={v} onChange={e => setV(e.target.value)} onBlur={() => { if (!v.trim()) setAdding(false); }} placeholder="commercial" style={{ width: 140 }} /><datalist id="tag-list">{all.map(t => <option key={t} value={t} />)}</datalist></form>
+      {adding ? <form onSubmit={e => { e.preventDefault(); const t = v.trim().toLowerCase(); if (t) save([...tags, t]); setV(""); setAdding(false); }}><input aria-label="New tag" className="input sm" list="tag-list" autoFocus value={v} onChange={e => setV(e.target.value)} onBlur={() => { if (!v.trim()) setAdding(false); }} placeholder="commercial" style={{ width: 140 }} /><datalist id="tag-list">{all.map(t => <option key={t} value={t} />)}</datalist></form>
         : <button type="button" className="btn ghost sm" onClick={() => setAdding(true)}>+ Tag</button>}</div>
     <div className="money"><span>Referred by</span><select className="input sm" style={{ width: 200 }} value={card.referredBy ?? ""} onChange={e => void act("ref", { action: "card", referredBy: e.target.value || null }, e.target.value ? "Referral saved." : "Referral removed.")}>
       <option value="">Nobody</option>{people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
@@ -145,7 +145,7 @@ export function FieldLabelsEditor({ ctx }: { ctx: Ctx }) {
   return <li style={{ height: "auto", padding: "8px 0", flexDirection: "column", alignItems: "stretch", gap: 6 }}>
     <span>Your own fields on every customer<small className="mut" style={{ display: "block" }}>Gate code, HOA, PO number, dog&rsquo;s name: up to 10. They show on each job.</small></span>
     <span className="tag-row">{labels.map(l => <span key={l} className="tagx">{l}<button type="button" aria-label={`Remove ${l}`} disabled={busy} onClick={() => void save(labels.filter(x => x !== l))}>×</button></span>)}
-      {labels.length < 10 && <form onSubmit={e => { e.preventDefault(); if (v.trim()) { void save([...labels, v.trim()]); setV(""); } }}><input className="input sm" style={{ width: 160 }} value={v} onChange={e => setV(e.target.value)} placeholder="Add a field" disabled={busy} /></form>}</span>
+      {labels.length < 10 && <form onSubmit={e => { e.preventDefault(); if (v.trim()) { void save([...labels, v.trim()]); setV(""); } }}><input aria-label="New field label" className="input sm" style={{ width: 160 }} value={v} onChange={e => setV(e.target.value)} placeholder="Add a field" disabled={busy} /></form>}</span>
   </li>;
 }
 
@@ -155,7 +155,8 @@ export function ActivityLog({ ctx, go }: { ctx: Ctx; go: Go }) {
   const [all, setAll] = useState(false);
   const team = (() => { try { const v = JSON.parse(ctx.d.setup?.team || "[]"); return Array.isArray(v) ? (v as { cell: string; name: string }[]) : []; } catch { return []; } })();
   const who = (cell: string) => !cell ? (ctx.d.owner ? ctx.d.owner.split(" ")[0] : "You") : team.find(m => m.cell.replace(/\D/g, "").slice(-10) === cell.replace(/\D/g, "").slice(-10))?.name || cell;
-  if (!list.length) return null;
+  if (!list.length) return <><p className="sec" style={{ marginTop: 20 }}>Activity<small>who did what, newest first</small></p>
+    <p className="fine" style={{ padding: "8px 0" }}>Nothing yet. Every change you, your office or your crew make shows here.</p></>;
   const shown = all ? list : list.slice(0, 15);
   return <>
     <p className="sec" style={{ marginTop: 20 }}>Activity<small>who did what, newest first</small></p>

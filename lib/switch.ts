@@ -518,3 +518,35 @@ export const jobberItem = (n: J): NItem => ({ ref: "jobber:" + String(n.id), nam
 /** A recurring Jobber job becomes a service plan, paused until the owner checks how often it runs. */
 export const jobberPlan = (n: J): NPlan | null => String(n.jobType ?? "").toUpperCase() !== "RECURRING" ? null
   : { ref: "jobber:plan:" + String(n.id), customerRef: "jobber:" + String((n.client as J | undefined)?.id ?? ""), name: ctl(n.title, 80) || "Service plan", total: money(n.total), every: 1, unit: "month", next_on: anyDate(n.startAt) };
+
+// ---------- The match report: every customer from the old app, and what happened to it ----------
+export type MatchOutcome = "New" | "Matched" | "Merged" | "Left out";
+export type MatchRow = { name: string; phone: string; email: string; address: string; outcome: MatchOutcome; detail: string; quotes: number; jobs: number; invoices: number };
+/** Who is already here, so a match can be named: the last 10 digits of each phone, and the old app's own ids. */
+export type Existing = { byPhone: Record<string, string>; byRef: Record<string, string> };
+
+/**
+ * One row per customer in the old app's data, in its order: new here, matched to someone already here (filled in,
+ * not doubled), merged with another record from the same data, or left out and why. Uses the same rules as the move
+ * itself (dedupe, then a match on the old app's id or the phone), so the report and the move never disagree.
+ */
+export function matchReport(s: Staged, d: Decisions = {}, existing: Existing = { byPhone: {}, byRef: {} }): MatchRow[] {
+  const fixed = s.customers.map(c => d.phones?.[c.ref] ? { ...c, phone: e164(d.phones[c.ref]) || c.phone } : c);
+  const { customers, merges, remap } = dedupe(fixed, d.splits);
+  const keepOf = new Map(customers.map(c => [c.ref, c]));
+  const why = new Map<string, Merge["merged"][number]>();
+  for (const m of merges) for (const x of m.merged) why.set(x.ref, x);
+  const count = (list: { customerRef: string }[], root: string) => list.filter(x => (remap[x.customerRef] ?? x.customerRef) === root).length;
+  const fmt = (p: string) => p.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, "($1) $2-$3");
+  return fixed.map(c => {
+    const root = remap[c.ref] ?? c.ref, keep = keepOf.get(root) ?? c;
+    const base = { name: c.name, phone: c.phone ? fmt(c.phone) : "", email: c.email, address: c.properties[0]?.address ?? "",
+      quotes: count(s.quotes, root), jobs: count(s.jobs, root), invoices: count(s.invoices, root) };
+    if (!c.phone && !c.name && !c.email) return { ...base, outcome: "Left out" as const, detail: "No name, phone or email", quotes: 0, jobs: 0, invoices: 0 };
+    const merged = why.get(c.ref);
+    if (root !== c.ref && merged) return { ...base, outcome: "Merged" as const, detail: `With ${keep.name || fmt(keep.phone) || keep.email || "another record"} (same ${merged.why})`, quotes: 0, jobs: 0, invoices: 0 };
+    const here = existing.byRef[keep.ref] ?? (keep.phone ? existing.byPhone[keep.phone.replace(/\D/g, "").slice(-10)] : undefined);
+    if (here !== undefined) return { ...base, outcome: "Matched" as const, detail: `${here || "Someone"} was already here: filled in, not doubled` };
+    return { ...base, outcome: "New" as const, detail: keep.phone ? "" : "Comes in with no phone; add one on the record" };
+  });
+}
