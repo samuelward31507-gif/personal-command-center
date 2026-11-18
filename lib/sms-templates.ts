@@ -238,9 +238,13 @@ export function reminderText(i: { firstName?: string; when: string; link?: strin
     : `Hey${name ? " " + name : ""}, Sam here. Quick reminder we're talking ${i.when}. Talk soon.`;
 }
 /** Right after they book: what the call is, so they show up curious instead of forgetting why they booked. */
-export function bookedText(i: { firstName?: string; when: string; business?: string; company?: string; link?: string }): string {
-  const name = (i.firstName ?? "").trim();
-  return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. You're booked for ${i.when}. It's a quick 15-minute screen share: I'll show you exactly what ${i.company?.trim() || "your"} customers would get the next time you miss a call.${i.link ? ` Join here: ${i.link}` : ""} If anything comes up, just text me a better time.`;
+export function bookedText(i: { firstName?: string; when: string; business?: string; company?: string; link?: string; video?: string }): string {
+  const name = (i.firstName ?? "").trim(), video = (i.video ?? "").trim();
+  const co = i.company?.trim() || "your";
+  const what = video
+    ? `Here's a 2-minute video of what ${co} customers would get the next time you miss a call: ${video}\n\nOn the call I'll walk you through it live, 15 minutes.`
+    : `It's a quick 15-minute screen share: I'll show you exactly what ${co} customers would get the next time you miss a call.`;
+  return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. You're booked for ${i.when}. ${what}${i.link ? ` Join here: ${i.link}` : ""} If anything comes up, just text me a better time.`;
 }
 /** A few minutes past the start and they're not on: make it easy to join or move it, never guilt. */
 export function lateText(i: { firstName?: string; link?: string; booking?: string }): string {

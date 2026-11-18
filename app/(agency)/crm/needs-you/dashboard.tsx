@@ -143,7 +143,7 @@ export default function Dashboard() {
     if (!e.contactPhone || !e.contactId) return;
     const tz = resolveTimeZone({ timeZone: e.contactTimeZone, location: e.contactLocation, phone: e.contactPhone }, timeZoneFor, timeZoneForPhone);
     const at = meetingWhen(new Date(e.startsAt), new Date(), tz), link = joinLink(e.description), first = firstOf(e);
-    const body = kind === "welcome" ? bookedText({ firstName: first, when: at, business: ws.businessName, company: e.contactCompany, link })
+    const body = kind === "welcome" ? bookedText({ firstName: first, when: at, business: ws.businessName, company: e.contactCompany, link, video: ws.bookedVideo })
       : kind === "confirm" ? confirmText({ firstName: first, when: at, business: ws.businessName })
       : kind === "remind" ? reminderText({ firstName: first, when: at, link })
       : lateText({ firstName: first, link, booking: ws.bookingLink });

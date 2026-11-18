@@ -19,6 +19,7 @@ const IDENTITY: Field[] = [
   { key: "bookingLink", label: "Booking link", type: "url", help: "Where prospects book a call. Used on prospect reports." },
   { key: "websiteUrl", label: "Your website", type: "url", help: "Signs your cold emails." },
   { key: "demoLink", label: "Demo link", type: "url", help: "Your overview Loom or demo page. Paste a Loom here and every info text, voicemail text, email follow-up and LinkedIn message uses it. Leave it as cinderrevenue.com/demo to send fence leads the fence video." },
+  { key: "bookedVideo", label: "Booked-call video", type: "url", help: "A short Loom sent in the “you're booked” text right after someone books. Leave empty to send the text without a video." },
   { key: "logoUrl", label: "Logo image link", type: "url", help: "White-label: an https link to your logo (PNG or SVG). Replaces the Cinder wordmark in the app and on everything clients see. Leave empty for Cinder." },
 ];
 
