@@ -296,6 +296,8 @@ ${bp ? `- Ballpark from the owner's own prices for ${bp.basis}: ${rangeText(bp)}
 export type Card = { id: string; name: string; phone: string; source: string; status: string; stage: Stage; details: Details; line: string; value: number | null;
   /** The owner's tags, and the customer who referred them. */
   tags?: string[]; referredBy?: string | null; custom?: Record<string, string>;
+  /** Fence job paperwork (811 locate, permit, HOA, pins, sign-off) as saved; read with cleanPaperwork. */
+  paperwork?: Record<string, unknown> | null;
   /** The fence line drawn on the map for this job (measure-to-quote), or null. */
   measure?: { runs: { id: string; points: { lat: number; lng: number }[]; kind: "new" | "tearout" }[]; gates: { id: string; run: string; at: { lat: number; lng: number }; type: "single" | "double"; width: number }[]; center?: { lat: number; lng: number }; zoom?: number } | null;
   ballpark: { low: number; high: number } | null; notes: string; next: string | null; at: string;

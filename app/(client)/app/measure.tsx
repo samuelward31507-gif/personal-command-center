@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon, Sheet, Spinner, type Api, type Toast } from "./parts";
 import { FENCE_STARTERS, cleanFenceTypes, measureOf, runFeet, staticMapUrl, takeoff, type Drawing, type FenceType, type LatLng } from "@/lib/fence";
 import type { Card } from "@/lib/crm";
+import { addBusinessDays, cleanPaperwork, digBlockers, locateLine, paperworkItems, type Paperwork } from "@/lib/paperwork";
+import { photoSrc, shrink } from "./photos";
 import type { Data } from "./types";
 
 type Ctx = { d: Data; project: string; api: Api; toast: Toast; reload: () => Promise<void> };
@@ -184,4 +186,54 @@ export function FenceTypesEditor({ ctx }: { ctx: Ctx }) {
           <span style={{ flex: 1 }} /><button type="button" className="btn ghost sm" onClick={() => setEdit(null)}>Cancel</button><button type="button" className="btn sm ink" disabled={busy} onClick={() => void save()}>{busy ? <Spinner /> : "Save fence types"}</button></span>
       </div>}
   </li>;
+}
+
+// ---------- Fence job paperwork ----------
+/**
+ * The paperwork a fence job needs before anyone digs: 811 locate, permit, HOA, the line or survey pins, and the
+ * customer's sign-off on the line. The office fills it in; the crew sees it (ticket number and line photos) read-only.
+ */
+export function PaperworkBox({ ctx, card, canEdit }: { ctx: Ctx; card: Card; canEdit: boolean }) {
+  const today = new Date().toLocaleDateString("en-CA");
+  const saved = cleanPaperwork(card.paperwork ?? {});
+  const [p, setP] = useState<Paperwork | null>(null), [busy, setBusy] = useState(false);
+  const items = paperworkItems(saved, today), done = items.filter(i => i.done).length;
+  const loc = locateLine(saved, today), blockers = digBlockers(saved, card.install);
+  const linePhotos = (card.photos ?? []).filter(x => /locate|811|line|pin|survey|marks/i.test(x.caption));
+  const save = async () => { if (!p) return; setBusy(true);
+    try { await ctx.api("/api/app/act", { p: ctx.project, action: "paperwork", thread: card.id, input: p }); ctx.toast("Paperwork saved."); await ctx.reload(); setP(null); }
+    catch (e) { ctx.toast(e instanceof Error ? e.message : "Didn't save.", true); } finally { setBusy(false); } };
+  const addPhoto = async (f: File, caption: string) => { setBusy(true);
+    try { await ctx.api("/api/app/act", { p: ctx.project, action: "photo", thread: card.id, kind: "during", caption, data: await shrink(f) }); ctx.toast("Photo added."); await ctx.reload(); }
+    catch (e) { ctx.toast(e instanceof Error ? e.message : "That photo didn't go up.", true); } finally { setBusy(false); } };
+  const set = <K extends keyof Paperwork>(k: K, v: Partial<Paperwork[K]>) => setP(x => x ? { ...x, [k]: { ...x[k], ...v } } : x);
+  return <section className="card"><div className="hd"><h2>Paperwork</h2><small style={{ marginLeft: "auto" }} className={blockers.length ? "pw-warn" : ""}>{loc.text}</small></div>
+    {!p ? <>
+      <ul className="pw-list">{items.map(i => <li key={i.key} className={i.done ? "done" : ""}>{i.done ? <Icon name="check" size={13} /> : <i className="pw-open" aria-hidden="true" />}<span>{i.label}</span><small>{i.key === "locate" && saved.locate.ticket ? `#${saved.locate.ticket}, ${i.text.charAt(0).toLowerCase() + i.text.slice(1)}` : i.text}</small></li>)}</ul>
+      {blockers.length > 0 && <p className="fine pw-warn" role="alert">Not clear to dig on {new Date(card.install + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}: {blockers.join(" ")}</p>}
+      {linePhotos.length > 0 && <div className="pw-photos">{linePhotos.slice(0, 6).map(x => <a key={x.id} href={photoSrc(x.id)} target="_blank" rel="noreferrer"><img src={photoSrc(x.id)} alt={x.caption} loading="lazy" /><small>{x.caption}</small></a>)}</div>}
+      <div className="acts-row end" style={{ marginTop: 6 }}>
+        <label className={"btn sm" + (busy ? " busy" : "")}><Icon name="upload" size={13} />Photo of the marks<input type="file" accept="image/*" capture="environment" hidden disabled={busy} onChange={e => { const f = e.target.files?.[0]; if (f) void addPhoto(f, "Locate marks"); e.target.value = ""; }} /></label>
+        {canEdit && <button type="button" className="btn sm" onClick={() => setP(saved)}>{done ? "Update" : "Fill in"}</button>}
+      </div>
+    </> : <div className="pw-form">
+      <fieldset><legend>Utility locate (811)</legend>
+        <label>Ticket number<input className="input sm" value={p.locate.ticket} maxLength={40} onChange={e => set("locate", { ticket: e.target.value })} placeholder="A2611170042" /></label>
+        <label>Requested<input className="input sm" type="date" value={p.locate.requested ?? ""} onChange={e => set("locate", { requested: e.target.value || null, ...(e.target.value && !p.locate.clears ? { clears: addBusinessDays(e.target.value, 3) } : {}) })} /></label>
+        <label>Clears on<input className="input sm" type="date" value={p.locate.clears ?? ""} onChange={e => set("locate", { clears: e.target.value || null })} /><small>3 business days after the call by default. Check your state&rsquo;s rule.</small></label></fieldset>
+      <fieldset><legend>Permit</legend>
+        <label>Needed?<select className="input sm" value={p.permit.needed} onChange={e => set("permit", { needed: e.target.value as Paperwork["permit"]["needed"] })}><option value="">Not checked</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+        {p.permit.needed === "yes" && <><label>Permit number<input className="input sm" value={p.permit.number} maxLength={40} onChange={e => set("permit", { number: e.target.value })} /></label>
+          <label>Approved<input className="input sm" type="date" value={p.permit.approved ?? ""} onChange={e => set("permit", { approved: e.target.value || null })} /></label></>}</fieldset>
+      <fieldset><legend>HOA</legend>
+        <label>In an HOA?<select className="input sm" value={p.hoa.needed} onChange={e => set("hoa", { needed: e.target.value as Paperwork["hoa"]["needed"] })}><option value="">Not checked</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+        {p.hoa.needed === "yes" && <label>Approved<input className="input sm" type="date" value={p.hoa.approved ?? ""} onChange={e => set("hoa", { approved: e.target.value || null })} /></label>}</fieldset>
+      <fieldset><legend>Property line</legend>
+        <label>Pins or survey confirmed<input className="input sm" type="date" value={p.pins.confirmed ?? ""} onChange={e => set("pins", { confirmed: e.target.value || null })} /></label>
+        <label>Note<input className="input sm" value={p.pins.note} maxLength={200} onChange={e => set("pins", { note: e.target.value })} placeholder="Pins found at both back corners" /></label>
+        <label>Customer signed off on the line<input className="input sm" type="date" value={p.signoff.on ?? ""} onChange={e => set("signoff", { on: e.target.value || null })} /></label>
+        <label>Signed by<input className="input sm" value={p.signoff.by} maxLength={80} onChange={e => set("signoff", { by: e.target.value })} placeholder={card.name} /></label></fieldset>
+      <div className="acts-row end"><button type="button" className="btn ghost sm" onClick={() => setP(null)}>Cancel</button><button type="button" className="btn sm ink" disabled={busy} onClick={() => void save()}>{busy ? <Spinner /> : "Save paperwork"}</button></div>
+    </div>}
+  </section>;
 }
