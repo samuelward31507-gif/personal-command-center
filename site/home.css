@@ -567,5 +567,3 @@ p, li, dd { text-wrap: pretty; }
 
 .notif .ic.ic-logo { background: none; padding: 0; overflow: hidden; }
 .notif .ic.ic-logo svg { display: block; }
-
-.plan-tag{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0;vertical-align:middle;color:#8a3a1c;background:#fbe9e2}

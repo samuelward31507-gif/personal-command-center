@@ -977,3 +977,5 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 ::view-transition-group(nav-pill) { animation-duration: .45s; animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
 ::view-transition-old(nav-pill), ::view-transition-new(nav-pill) { animation-duration: .3s; }
 @media (prefers-reduced-motion: reduce) { .btn:hover, .bx:hover .bx-vis .ui { transform: none; } }
+
+.plan-tag{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0;vertical-align:middle;color:#8a3a1c;background:#fbe9e2}
