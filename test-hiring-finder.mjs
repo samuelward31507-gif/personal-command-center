@@ -17,3 +17,21 @@ assert.ok(H.sameCompany("Ridge Fence Co., LLC", "Ridge Fence Company"));
 assert.ok(!H.sameCompany("Ridge Fence Co., LLC", "Blue Ridge Roofing"));
 assert.match(H.hiringNote(l), /^Lead grade: A · Hiring: Receptionist \/ Customer Service \(posted 2026-11-12\) https:\/\/www\.adzuna\.com\/details\/1/);
 console.log("hiring finder ok");
+{
+  const E = await import("./lib/email-outreach.ts");
+  const S = await import("./lib/sms-templates.ts");
+  const note = H.hiringNote(l);
+  assert.equal(E.hiringRole(note), "Receptionist / Customer Service");
+  assert.equal(E.hiringRole("Lead grade: B · 4.8★"), "");
+  const m = E.mergeFor({ name: "", company: "Ridge Fence Co" }, { ownerFirstName: "Sam", businessName: "Cinder Revenue Company", bookingLink: "https://cal.com/x", websiteUrl: "https://cinderrevenue.com" });
+  const t = E.hiringIntro(m, E.hiringRole(note));
+  assert.equal(t.subject, "your receptionist / customer service opening");
+  assert.match(t.body, /^Hi there,\n\nSaw Ridge Fence Co is hiring a receptionist \/ customer service\./);
+  assert.ok(!/\{\w+\}/.test(t.body), "no unfilled fill-ins");
+  assert.ok(!/https?:\/\/(?!cinderrevenue)/.test(t.body), "no links in a first cold email");
+  const txt = S.hiringText({ company: "Ridge Fence Co", role: "Receptionist" });
+  assert.match(txt, /^Hey, Sam with Cinder Revenue\. Saw Ridge Fence Co is hiring a receptionist\./);
+  assert.match(txt, /Reply STOP to opt out\.$/);
+  assert.ok(txt.length <= 320, "two SMS segments max");
+  console.log("hiring email + text ok");
+}

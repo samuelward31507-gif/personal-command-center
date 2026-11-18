@@ -51,6 +51,30 @@ If missed calls or quotes that go quiet ever start costing {company} jobs, reply
   },
 };
 
+/** Intro for a company with an open receptionist/CSR job (from the hiring finder): opens on their job post. */
+export function hiringIntro(m: Merge, role: string): EmailTemplate {
+  const r = (role || "receptionist").replace(/\s*\(posted[^)]*\)\s*/i, "").trim().slice(0, 60) || "receptionist";
+  return {
+    subject: fillTemplate(`your ${r.toLowerCase()} opening`, m),
+    body: fillTemplate(`Hi {first_name},
+
+Saw {company} is hiring a ${r.toLowerCase()}. Before you fill it, one question: who gets the calls that come in after 5, on weekends, or while they're on the other line?
+
+Those are the homeowners who call the next company on the list. I set contractors up so every missed call and web form gets a text back in about 10 seconds, their questions get answered, and the estimate books itself on your calendar. It works alongside whoever you hire, and covers the gap until you do.
+
+Open to a quick look? Just reply "yes" and I'll send a couple of times.
+
+{my_name}
+{business}
+{website}`, m),
+  };
+}
+
+/** The job title from a hiring-finder note ("Hiring: Receptionist / CSR (posted …) https://…"), or "". */
+export function hiringRole(notes: string): string {
+  return (/Hiring:\s*([^\n·]+?)(?:\s+\(posted|\s+https?:|\n|·|$)/.exec(notes || "")?.[1] ?? "").trim();
+}
+
 /** Detailers get a different pitch: their money is repeat customers, not missed quotes. */
 export const DETAILING_TEMPLATES: Record<EmailStep, EmailTemplate> = {
   intro: {

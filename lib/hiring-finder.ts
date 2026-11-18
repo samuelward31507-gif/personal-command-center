@@ -10,7 +10,9 @@ export type Job = {
 export type HiringLead = { jobId: string; company: string; role: string; location: string; url: string; posted: string; trade: string };
 
 /** Searches the nightly run makes: a trade word plus the phone roles (Adzuna's what = all words, what_or = any). */
-export const HIRING_TRADES = ["fence", "generator", "hvac", "plumbing", "roofing", "electrical", "garage door"];
+/** Sam's niches first; the other trades only fill in when the niches come up short (see findHiring). */
+export const HIRING_NICHE_TRADES = ["fence", "generator", "generac"];
+export const HIRING_OTHER_TRADES = ["hvac", "plumbing", "roofing", "electrical", "garage door"];
 export const PHONE_ROLES = "receptionist dispatcher csr scheduler \"customer service\" \"call center\" \"front desk\" \"office assistant\"";
 
 /** The job is mostly answering phones or booking work, not a field or sales role. */

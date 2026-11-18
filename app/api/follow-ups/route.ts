@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import { getAllowedSession } from "@/lib/auth/server";
+import { hiringRole } from "@/lib/email-outreach";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,7 +52,17 @@ export async function GET() {
           AND a.action = 'outbound_text' AND a.notes ILIKE '%quick favor:%')
       ORDER BY won_at LIMIT 20`;
     const referrals = won.map(x => ({ dealId: String(x.deal_id), title: String(x.title ?? ""), id: String(x.id), firstName: String(x.first_name ?? ""), company: String(x.company ?? ""), phone: String(x.phone ?? ""), wonAt: iso(x.won_at) }));
-    return Response.json({ leads, referrals }, { headers: { "Cache-Control": "no-store" } });
+    // Companies hiring for the phones (hiring finder): text them before the first call. They stay off the call list until then.
+    const hiringRows = await sql`SELECT c.id, c.first_name, c.company, c.phone, c.niche, c.website, c.notes, coalesce(c.email, '') AS email,
+        EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND a.notes LIKE 'Email sent: intro%') AS emailed
+      FROM public.contacts c
+      WHERE c.owner_id = ${o} AND c.phone <> '' AND coalesce(c.notes, '') LIKE '%Hiring:%' AND lower(coalesce(c.status, '')) IN ('lead', 'contact', 'prospect')
+        AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id AND (a.action = 'outbound_text' OR a.channel = 'call'))
+        AND NOT EXISTS (SELECT 1 FROM public.contact_suppressions s WHERE s.owner_id = c.owner_id AND s.contact_id = c.id)
+      ORDER BY c.created_at LIMIT 50`;
+    const hiring = hiringRows.map(x => ({ id: String(x.id), firstName: String(x.first_name ?? ""), company: String(x.company ?? ""), phone: String(x.phone ?? ""),
+      niche: String(x.niche ?? ""), website: String(x.website ?? ""), role: hiringRole(String(x.notes ?? "")), hasEmail: !!String(x.email).trim(), emailed: !!x.emailed }));
+    return Response.json({ leads, referrals, hiring }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     console.error("Follow-ups GET failed", e);
     return Response.json({ error: "Couldn't load follow-ups." }, { status: 500 });

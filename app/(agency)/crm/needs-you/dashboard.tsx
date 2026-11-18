@@ -10,7 +10,7 @@ import type { QueueItem } from "@/lib/my-day";
 import { dueFollowUps } from "@/lib/email-outreach";
 import { INBOX_URL, CHANNEL_LABEL } from "@/lib/inbox-links";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
-import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText } from "@/lib/sms-templates";
+import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText, hiringText } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
 
@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [allTodo, setAllTodo] = useState(false);
   const [warm, setWarm] = useState<Warm[] | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [hiring, setHiring] = useState<{ id: string; firstName: string; company: string; phone: string; niche: string; website: string; role: string; hasEmail: boolean; emailed: boolean }[]>([]);
   const [loom, setLoom] = useState<{ w: Warm; taskId?: string; key: string; url: string } | null>(null);
   const [doneKeys, setDoneKeys] = useState<Record<string, true>>({});
   const [dms, setDms] = useState<{ id: string; channel: "instagram" | "facebook"; from: string; body: string; at: string }[]>([]);
@@ -78,7 +79,7 @@ export default function Dashboard() {
     fetch("/api/inbox", { cache: "no-store" }).then(r => (r.ok ? r.json() : { messages: [] })).then(d => setDms(d.messages ?? [])).catch(() => {});
     // Content log: only used to nudge today's page post. No row if it fails (e.g. table not migrated yet).
     fetch("/api/content", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).then(d => setContent(Array.isArray(d?.posted) ? d.posted : null)).catch(() => {});
-    fetch("/api/follow-ups", { cache: "no-store" }).then(r => (r.ok ? r.json() : { leads: [] })).then(d => { setWarm(d.leads ?? []); setReferrals(d.referrals ?? []); }).catch(() => setWarm([]));
+    fetch("/api/follow-ups", { cache: "no-store" }).then(r => (r.ok ? r.json() : { leads: [] })).then(d => { setWarm(d.leads ?? []); setReferrals(d.referrals ?? []); setHiring(d.hiring ?? []); }).catch(() => setWarm([]));
     // Your manual follow-ups: email, LinkedIn and texts only. Calls (callbacks, redials) live in Call mode.
     Promise.all([
       fetch("/api/email-outreach", { cache: "no-store" }).then(r => (r.ok ? r.json() : { sent: [], heard: [] })).catch(() => ({ sent: [], heard: [] })),
@@ -201,6 +202,16 @@ export default function Dashboard() {
     return [{ key, title: `Ask ${r.company || r.firstName || "your client"} for a referral`, why: `Client since ${short(r.wonAt)}, ask for a referral`, overdue: false, href: `/crm?contact=${r.id}`, action: "Text", name: r.company || r.firstName, body: referralText({ firstName: first }),
       onClick: () => { const body = referralText({ firstName: first }); window.location.href = smsHref(r.phone, body); void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: r.id, direction: "outbound", body }) }).catch(() => {}); setDoneKeys(k => ({ ...k, [key]: true })); } }];
   });
+  // Hiring for the phones: text before the first call (the 6am Autopilot emails them first). Texting moves them to Call mode.
+  const hiringRows: Todo[] = hiring.flatMap(h => {
+    const key = "hire:" + h.id;
+    if (doneKeys[key]) return [];
+    const who = h.company || h.firstName || "this company";
+    const body = hiringText({ firstName: h.firstName && h.firstName !== h.company ? h.firstName : "", company: h.company, role: h.role });
+    const mail = h.emailed ? "emailed" : h.hasEmail ? "email goes out with Autopilot" : "no email found";
+    return [{ key, title: `Text ${who} before you call`, why: `Hiring: ${h.role || "receptionist"} · ${mail}`, overdue: h.emailed || !h.hasEmail, href: `/crm?contact=${h.id}`, action: "Text", name: who, website: h.website, body, contactId: h.id,
+      onClick: () => { window.location.href = smsHref(h.phone, body); void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: h.id, direction: "outbound", body }) }).catch(() => {}); setDoneKeys(k => ({ ...k, [key]: true })); } }];
+  });
   function sendLoom() {
     if (!loom || !/^https?:\/\/\S+$/.test(loom.url.trim())) return;
     const w = loom.w, first = w.firstName && w.firstName !== w.company ? w.firstName : "";
@@ -212,7 +223,7 @@ export default function Dashboard() {
   }
   const contentRows: Todo[] = content && !content.some(p => p.channel === "page" && localDay(new Date(p.at)) === localDay())
     ? [{ key: "content:page", title: "Post today's page post", why: "Facebook page and Instagram. It's written, copy it and post.", overdue: false, href: "/crm/content", action: "Open" }] : [];
-  const all = [...dmRows, ...warmTexts, ...meetingTexts, ...refRows, ...contentRows];
+  const all = [...dmRows, ...warmTexts, ...hiringRows, ...meetingTexts, ...refRows, ...contentRows];
   const list: Todo[] | null = todo === null || warm === null ? null : [...all.filter(t => t.overdue), ...todo.filter(t => t.overdue), ...all.filter(t => !t.overdue), ...todo.filter(t => !t.overdue)];
   const when = (e: Ev) => {
     const s = new Date(e.startsAt), isToday = localDay(s) === localDay();

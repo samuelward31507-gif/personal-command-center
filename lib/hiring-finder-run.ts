@@ -2,7 +2,7 @@
 // Google Maps listing (for the phone number) → grade-A leads in Contacts. Needs ADZUNA_APP_ID + ADZUNA_APP_KEY
 // (free at developer.adzuna.com) and GOOGLE_PLACES_KEY. No AI calls.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { HIRING_TRADES, PHONE_ROLES, companyKey, hiringNote, pickJobs, sameCompany, type HiringLead, type Job } from "@/lib/hiring-finder";
+import { HIRING_NICHE_TRADES, HIRING_OTHER_TRADES, PHONE_ROLES, companyKey, hiringNote, pickJobs, sameCompany, type HiringLead, type Job } from "@/lib/hiring-finder";
 import { cityState } from "@/lib/lead-finder";
 import { placesConfigured, searchPlaces } from "@/lib/lead-finder-run";
 
@@ -31,44 +31,52 @@ async function findListing(l: HiringLead) {
  * Nightly: search each trade for phone-role jobs posted in the last 3 weeks, add new employers as grade-A leads,
  * and upgrade employers already in Contacts (by phone) to grade A with the job attached. Skips the do-not-contact list.
  */
-export async function findHiring(sql: Sql, owner: string, opts: { maxLookups?: number; budgetMs?: number } = {}): Promise<{ jobs: number; matched: number; added: number; upgraded: number; noListing: number } | null> {
+export async function findHiring(sql: Sql, owner: string, opts: { maxLookups?: number; budgetMs?: number; enough?: number } = {}): Promise<{ jobs: number; matched: number; added: number; upgraded: number; noListing: number; widened: boolean } | null> {
   if (!hiringConfigured()) return null;
-  const until = Date.now() + (opts.budgetMs ?? 60_000), maxLookups = opts.maxLookups ?? 30;
-  const jobs: Job[] = [];
-  for (const t of HIRING_TRADES) {
-    if (Date.now() > until) break;
-    jobs.push(...await adzuna(t).catch(e => { console.error("Adzuna search failed", t, e instanceof Error ? e.message : e); return []; }));
-  }
-  const leads = pickJobs(jobs);
+  const until = Date.now() + (opts.budgetMs ?? 60_000), maxLookups = opts.maxLookups ?? 30, enough = opts.enough ?? 10;
   const have = await sql`SELECT id, company, right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) AS p, coalesce(notes, '') AS notes FROM public.contacts WHERE owner_id = ${owner}` as { id: string; company: string; p: string; notes: string }[];
   const blocked = new Set((await sql`SELECT right(phone_normalized, 10) AS p FROM public.contact_suppressions WHERE owner_id = ${owner} AND coalesce(phone_normalized, '') <> ''` as { p: string }[]).map(r => r.p));
   const byPhone = new Map(have.filter(h => h.p).map(h => [h.p, h]));
   const knownJobs = new Set(have.flatMap(h => [...h.notes.matchAll(/Hiring:[^\n]*?(https?:\/\/\S+)/g)].map(m => m[1])));
   const knownNames = new Set(have.filter(h => /Hiring:/.test(h.notes)).map(h => companyKey(h.company)));
-  let matched = 0, added = 0, upgraded = 0, noListing = 0, lookups = 0;
-  for (const l of leads) {
-    if (knownJobs.has(l.url) || knownNames.has(companyKey(l.company))) continue;
-    if (lookups >= maxLookups || Date.now() > until) break;
-    lookups++;
-    const place = await findListing(l).catch(() => null);
-    if (!place) { noListing++; continue; }
-    const digits = (place.nationalPhoneNumber || place.internationalPhoneNumber || "").replace(/\D/g, "").slice(-10);
-    if (digits.length !== 10 || blocked.has(digits)) continue;
-    matched++;
-    const note = hiringNote(l), existing = byPhone.get(digits);
-    if (existing) {
-      if (/Hiring:/.test(existing.notes)) continue;
-      await sql`UPDATE public.contacts SET notes = ${note} || E'\n' || regexp_replace(coalesce(notes, ''), 'Lead grade: [ABC] · ?', ''), updated_at = now() WHERE id = ${existing.id}`;
-      upgraded++; continue;
+  const t = { jobs: 0, matched: 0, added: 0, upgraded: 0, noListing: 0, widened: false };
+  let lookups = 0;
+
+  async function pass(trades: string[], only?: (l: HiringLead) => boolean) {
+    const jobs: Job[] = [];
+    for (const trade of trades) {
+      if (Date.now() > until) break;
+      jobs.push(...await adzuna(trade).catch(e => { console.error("Adzuna search failed", trade, e instanceof Error ? e.message : e); return []; }));
     }
-    const phone = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-    const rating = place.rating ? `\n${place.rating}★ from ${place.userRatingCount ?? 0} reviews on Google` : "";
-    try {
-      await sql`INSERT INTO public.contacts (owner_id, first_name, last_name, company, email, phone, status, source, notes, website, location, niche)
-        VALUES (${owner}, '', '', ${(place.displayName?.text || l.company).slice(0, 120)}, '', ${phone}, 'lead', 'Hiring finder', ${note + rating},
-          ${(place.websiteUri || "").slice(0, 300)}, ${cityState(place.formattedAddress || "") || l.location}, ${NICHE[l.trade] ?? ""})`;
-      byPhone.set(digits, { id: "", company: l.company, p: digits, notes: note }); added++;
-    } catch (e) { console.error("Hiring lead insert failed", e instanceof Error ? e.message : e); }
+    t.jobs += jobs.length;
+    for (const l of pickJobs(jobs).filter(l => !only || only(l))) {
+      if (knownJobs.has(l.url) || knownNames.has(companyKey(l.company))) continue;
+      if (lookups >= maxLookups || Date.now() > until) break;
+      lookups++; knownNames.add(companyKey(l.company));
+      const place = await findListing(l).catch(() => null);
+      if (!place) { t.noListing++; continue; }
+      const digits = (place.nationalPhoneNumber || place.internationalPhoneNumber || "").replace(/\D/g, "").slice(-10);
+      if (digits.length !== 10 || blocked.has(digits)) continue;
+      t.matched++;
+      const note = hiringNote(l), existing = byPhone.get(digits);
+      if (existing) {
+        if (/Hiring:/.test(existing.notes)) continue;
+        await sql`UPDATE public.contacts SET notes = ${note} || E'\n' || regexp_replace(coalesce(notes, ''), 'Lead grade: [ABC] · ?', ''), updated_at = now() WHERE id = ${existing.id}`;
+        t.upgraded++; continue;
+      }
+      const phone = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+      const rating = place.rating ? `\n${place.rating}★ from ${place.userRatingCount ?? 0} reviews on Google` : "";
+      try {
+        await sql`INSERT INTO public.contacts (owner_id, first_name, last_name, company, email, phone, status, source, notes, website, location, niche)
+          VALUES (${owner}, '', '', ${(place.displayName?.text || l.company).slice(0, 120)}, '', ${phone}, 'lead', 'Hiring finder', ${note + rating},
+            ${(place.websiteUri || "").slice(0, 300)}, ${cityState(place.formattedAddress || "") || l.location}, ${NICHE[l.trade] ?? ""})`;
+        byPhone.set(digits, { id: "", company: l.company, p: digits, notes: note }); t.added++;
+      } catch (e) { console.error("Hiring lead insert failed", e instanceof Error ? e.message : e); }
+    }
   }
-  return { jobs: jobs.length, matched, added, upgraded, noListing };
+
+  // Fence and generator companies first. Only when they give fewer than `enough` new leads, widen to the other trades.
+  await pass(HIRING_NICHE_TRADES, l => l.trade !== "other");
+  if (t.added + t.upgraded < enough && Date.now() < until) { t.widened = true; await pass(HIRING_OTHER_TRADES); }
+  return t;
 }
