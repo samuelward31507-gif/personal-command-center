@@ -64,7 +64,9 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
         AND NOT EXISTS (SELECT 1 FROM public.contact_activities a WHERE a.owner_id = c.owner_id AND a.contact_id = c.id
           -- A hiring-finder lead gets its intro email and text before the first call; those don't count as contact.
           AND (coalesce(c.notes, '') NOT LIKE '%Hiring:%' OR (a.action <> 'outbound_text' AND coalesce(a.notes, '') NOT LIKE 'Email sent: intro%')) AND a.outcome <> 'initiated')
-        -- ...and it stays off the call list until it's been texted.
+        -- Call mode only gets grade A (pays for leads, a top-tier Generac dealer, or hiring for the phones). B leads stay in Contacts.
+        AND coalesce(c.notes, '') LIKE '%Lead grade: A%'
+        -- A hiring lead stays off the call list until it's been texted.
         AND (coalesce(c.notes, '') NOT LIKE '%Hiring:%' OR EXISTS (SELECT 1 FROM public.contact_activities t WHERE t.owner_id = c.owner_id AND t.contact_id = c.id AND t.action = 'outbound_text'))
         AND NOT EXISTS (SELECT 1 FROM public.contact_outreach o WHERE o.owner_id = c.owner_id AND o.contact_id = c.id)
         AND NOT EXISTS (SELECT 1 FROM public.contact_suppressions s WHERE s.owner_id = c.owner_id AND s.contact_id = c.id)
