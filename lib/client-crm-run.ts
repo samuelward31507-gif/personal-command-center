@@ -33,7 +33,7 @@ export async function loadBoard(sql: Sql, c: Client): Promise<Card[]> {
       (t.winback_at IS NOT NULL AND t.last_in_at > t.winback_at AND (t.stage_at IS NULL OR t.stage_at < t.winback_at)) AS winback_replied,
       t.stage_at, lr.body AS lost_note, t.crew_notes, t.crew_member, q.deposit::float AS quote_deposit, t.customer_email, t.remind_at, t.remind_note, t.remind_sent_at, t.review_after, t.checklist, t.tags, t.referred_by, t.custom
     FROM public.client_threads t
-    LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate, view_count, last_viewed_at, chase_paused, sent_on FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
+    LEFT JOIN LATERAL (SELECT id, amount, status, steps_sent, token, link_sent_at, viewed_at, note, items, tax_rate, view_count, last_viewed_at, chase_paused, sent_on, deposit, valid_until FROM public.client_quotes x WHERE x.project_id = t.project_id AND x.kind = 'quote'
       AND right(regexp_replace(x.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)
       ORDER BY x.created_at DESC LIMIT 1) q ON true
     LEFT JOIN LATERAL (SELECT sent_at FROM public.client_reviews r WHERE r.project_id = t.project_id
