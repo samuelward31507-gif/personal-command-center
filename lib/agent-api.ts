@@ -176,7 +176,12 @@ export function parseReply(body: unknown): { reply: Reply } | { error: string } 
   return { reply: { contactId, channel, from, text, url: httpUrl(b.url) } };
 }
 
-export type NewProspect = { business: string; phone: string; website: string; location: string; owner: string; source: string; notes: string };
+// Same mapping as nicheOf in lib/lead-finder.ts (kept here so this file stays import-free for the node tests).
+type Niche = "Fence" | "Standby generators" | "";
+const nicheOf = (t: string): Niche => /fenc/i.test(t) ? "Fence" : /generat|generac|kohler|standby/i.test(t) ? "Standby generators" : "";
+export type NewProspect = { business: string; phone: string; website: string; location: string; owner: string; source: string; notes: string; niche: Niche };
+/** The grade Lister wrote first in the notes ("Lead grade: A"), if any. */
+export const gradeOf = (notes: string): "A" | "B" | "C" | "" => (/Lead grade:\s*([ABC])\b/i.exec(notes)?.[1]?.toUpperCase() ?? "") as "A" | "B" | "C" | "";
 export const MAX_PROSPECTS_PER_CALL = 50;
 
 /** Prospects found on public pages. A US phone is required (the call list needs one); duplicates in the batch are dropped. */
@@ -195,7 +200,7 @@ export function parseProspects(body: unknown): { prospects: NewProspect[]; rejec
     seen.add(ten);
     const site = str(o.website, 300);
     out.push({ business, phone: `(${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}`, website: site && !/^https?:\/\//i.test(site) ? "https://" + site : site,
-      location: str(o.location, 120), owner: str(o.owner, 80), source: httpUrl(o.source), notes: str(o.notes, 500) });
+      location: str(o.location, 120), owner: str(o.owner, 80), source: httpUrl(o.source), notes: str(o.notes, 500), niche: nicheOf(str(o.niche, 60)) });
   }
   return { prospects: out, rejected };
 }
@@ -389,11 +394,12 @@ export const TOOLS = [
   },
   {
     name: "add_prospects", title: "Add prospects to the call list",
-    description: "Add up to 50 businesses you found on public pages (Google Maps, their websites) to Sam's call list. Each needs a business name and a US phone number. Duplicates of anyone already in the CRM or on the do-not-contact list are skipped automatically. Only real businesses you saw a listing for; never guess a phone number.",
+    description: "Add up to 50 businesses you found on public pages (Google Maps, their websites) to Sam's call list. Each needs a business name and a US phone number. Duplicates of anyone already in the CRM or on the do-not-contact list are skipped automatically, except a prospect whose notes start with \"Lead grade: A\": that upgrades the existing lead to A (the Google Maps finder adds leads as B). Only real businesses you saw a listing for; never guess a phone number.",
     inputSchema: { type: "object", required: ["prospects"], properties: { prospects: { type: "array", maxItems: 50, items: { type: "object", required: ["business", "phone"], properties: {
       business: { type: "string" }, phone: { type: "string" }, website: { type: "string" }, location: { type: "string", description: "City, ST" },
       owner: { type: "string", description: "Owner's name if the listing shows it" }, source: { type: "string", description: "URL of the listing you found it on" },
-      notes: { type: "string", description: "Rating, review count, anything useful for the call" },
+      notes: { type: "string", description: "Start with \"Lead grade: A\" (or B or C), then why, then rating and review count" },
+      niche: { type: "string", enum: ["fence", "generators"], description: "fence = residential fence installer; generators = standby generator dealer/installer" },
     } } } } },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
   },

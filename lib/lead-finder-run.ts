@@ -2,10 +2,10 @@
 // (Places API (New) enabled on the same Google Cloud project as Gmail). Each page is one search call
 // and returns up to 20 businesses.
 import type { NeonQueryFunction } from "@neondatabase/serverless";
-import { noteFor, pickLeads, type Lead, type Place } from "@/lib/lead-finder";
+import { nicheOf, noteFor, pickLeads, type Lead, type Place } from "@/lib/lead-finder";
 
 type Sql = NeonQueryFunction<false, false>;
-const FIELDS = "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.businessStatus,nextPageToken";
+const FIELDS = "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.businessStatus,places.regularOpeningHours,nextPageToken";
 export const placesConfigured = () => !!process.env.GOOGLE_PLACES_KEY?.trim();
 
 export async function searchPlaces(query: string, pageToken = ""): Promise<{ places: Place[]; next: string }> {
@@ -26,11 +26,11 @@ async function existingPhones(sql: Sql, o: string): Promise<Set<string>> {
 }
 
 export async function addLeads(sql: Sql, o: string, leads: Lead[], trade: string): Promise<number> {
-  let added = 0;
+  let added = 0; const niche = nicheOf(trade);
   for (const l of leads) {
     try {
-      await sql`INSERT INTO public.contacts (owner_id, first_name, last_name, company, email, phone, status, source, notes, website, location)
-        VALUES (${o}, '', '', ${l.company}, '', ${l.phone}, 'lead', 'Google Maps', ${noteFor(l, trade)}, ${l.website}, ${l.location})`;
+      await sql`INSERT INTO public.contacts (owner_id, first_name, last_name, company, email, phone, status, source, notes, website, location, niche)
+        VALUES (${o}, '', '', ${l.company}, '', ${l.phone}, 'lead', 'Google Maps', ${noteFor(l, trade)}, ${l.website}, ${l.location}, ${niche})`;
       added++;
     } catch (e) { console.error("Lead insert failed", e instanceof Error ? e.message : e); }
   }
@@ -47,7 +47,7 @@ export async function runSearch(sql: Sql, o: string, id: string, pages = 3): Pro
     if (s.pages > 0 && !token) { done = true; break; }
     const r = await searchPlaces(`${s.trade} in ${s.city}`, token);
     found += r.places.length;
-    const leads = pickLeads(r.places, have);
+    const leads = pickLeads(r.places, have, s.trade);
     leads.forEach(l => have.add(l.phone.replace(/\D/g, "").slice(-10)));
     added += await addLeads(sql, o, leads, s.trade);
     token = r.next; s.pages++;

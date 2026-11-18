@@ -76,6 +76,8 @@ Keep both Hermes bridge variables server-side. Do not put the token in client co
 
 SQL migrations are stored in `db/migrations`. Test schema changes on an isolated Neon branch first, then apply the same migration to the intended target branch and verify the resulting indexes/constraints before relying on them in application code.
 
+Production builds check this for you. `prebuild` runs `tools/check-migrations.mjs`, which reads every file in `db/migrations`, works out the tables, columns and indexes they add, and stops a Vercel production build if the production database is missing any of them, naming the files to apply. It only reads the schema. Preview and local builds skip it; run `npm run check:migrations` with `DATABASE_URL` set to check any database by hand. To let one build through anyway, set `SKIP_MIGRATION_CHECK=1` for that deploy. Files and production that differ on purpose are listed, with the reason, in `KNOWN_DIFFERENCES` in `lib/migration-check.mjs`.
+
 The project handoff migration adds database-level uniqueness for one delivery project per deal and one milestone title per project (case-insensitive after trimming). The calendar migration adds owner-scoped events with time-range constraints and indexes. These additive migrations are idempotent; the calendar event table has been applied to the current Neon `main` branch and its schema has been verified.
 
 ## Safety and implementation notes

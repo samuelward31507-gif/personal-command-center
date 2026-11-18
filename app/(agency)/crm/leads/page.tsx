@@ -8,7 +8,7 @@ import "./leads.css";
 
 type Search = { id: string; trade: string; city: string; pages: number; found: number; added: number; status: string; last_run_at: string | null };
 type Data = { searches: Search[]; waiting: number; fromMaps: number; floor: number; configured: boolean };
-const PICKS = ["fence company", "deck builder", "concrete contractor", "roofing contractor", "landscaping company", "auto detailing", "pressure washing", "garage door company"];
+const PICKS = ["fence company", "fence contractor", "generac dealer", "standby generator installer", "standby generator dealer"];
 const ago = (d: string | null) => (d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Not yet");
 
 export default function LeadFinder() {
