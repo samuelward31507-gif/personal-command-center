@@ -115,3 +115,7 @@ a.doc-fin:hover b { text-decoration: underline; text-underline-offset: 3px; }
 
 /* A quiet text button inside a list line ("Need a different time?"). */
 .doc-link { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+/* The fence line on the customer's quote. */
+.doc-fence { margin: 12px 0 4px; } .doc-fence img { display: block; width: 100%; height: auto; border-radius: 10px; background: #eef0f3; }
+.doc-fence figcaption { margin-top: 6px; font-size: 13px; color: #6f7988; }
