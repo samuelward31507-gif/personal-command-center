@@ -230,18 +230,42 @@ export function confirmText(i: { firstName?: string; when: string; business?: st
   const name = (i.firstName ?? "").trim();
   return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. Confirming our call ${i.when}. Still good? Just reply yes, or tell me a better time.`;
 }
-/** Same-day reminder, about an hour before. */
-export function reminderText(i: { firstName?: string; when: string }): string {
+/** Same-day reminder, about an hour before, with the join link when the booking has one. */
+export function reminderText(i: { firstName?: string; when: string; link?: string }): string {
   const name = (i.firstName ?? "").trim();
-  return `Hey${name ? " " + name : ""}, Sam here. Quick reminder we're talking ${i.when}. I'll call you at this number. Talk soon.`;
+  return i.link
+    ? `Hey${name ? " " + name : ""}, Sam here. See you ${i.when}. Here's the link to join: ${i.link}`
+    : `Hey${name ? " " + name : ""}, Sam here. Quick reminder we're talking ${i.when}. Talk soon.`;
 }
-/** Which no-show text a meeting needs right now: confirm when it's within ~a day and a half, remind in the last 3 hours. */
-export function meetingNudge(startsAt: Date, now: Date, tz: string | null): "confirm" | "remind" | null {
-  const ms = startsAt.getTime() - now.getTime();
+/** Right after they book: what the call is, so they show up curious instead of forgetting why they booked. */
+export function bookedText(i: { firstName?: string; when: string; business?: string; company?: string; link?: string }): string {
+  const name = (i.firstName ?? "").trim();
+  return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. You're booked for ${i.when}. It's a quick 15-minute screen share: I'll show you exactly what ${i.company?.trim() || "your"} customers would get the next time you miss a call.${i.link ? ` Join here: ${i.link}` : ""} If anything comes up, just text me a better time.`;
+}
+/** A few minutes past the start and they're not on: make it easy to join or move it, never guilt. */
+export function lateText(i: { firstName?: string; link?: string; booking?: string }): string {
+  const name = (i.firstName ?? "").trim();
+  return `Hey${name ? " " + name : ""}, Sam here. I'm on the call now${i.link ? `: ${i.link}` : ""}. If today got busy, no problem, grab another time here: ${i.booking || BOOKING_LINK}`;
+}
+/** Which show-up step a meeting needs right now, in order: welcome (booked in the last 12 hours, more than 3 hours
+ * out), confirm (within a day and a half), remind (last 3 hours), late (2 to 20 minutes past the start), and
+ * "did they show" (20 minutes past the start until 2 days later, while no outcome is logged). */
+export type MeetingStep = "welcome" | "confirm" | "remind" | "late" | "showed?";
+export function meetingNudge(startsAt: Date, now: Date, tz: string | null, o: { createdAt?: Date | null; outcome?: string | null; done?: (k: MeetingStep) => boolean } = {}): MeetingStep | null {
+  void tz;
+  const ms = startsAt.getTime() - now.getTime(), done = o.done ?? (() => false);
+  if (o.outcome) return null;
+  if (ms <= -20 * 60000) return ms > -48 * 3600000 ? "showed?" : null;
+  if (ms <= -2 * 60000) return done("late") ? null : "late";
   if (ms <= 0) return null;
-  if (ms <= 3 * 3600000) return "remind";
-  return ms <= 36 * 3600000 ? "confirm" : null;
+  if (ms <= 3 * 3600000) return done("remind") ? null : "remind";
+  const fresh = o.createdAt && now.getTime() - o.createdAt.getTime() < 12 * 3600000;
+  if (fresh && !done("welcome") && !done("confirm")) return "welcome";
+  return ms <= 36 * 3600000 && !done("confirm") ? "confirm" : null;
 }
+
+/** The join link Cinder saved on a Cal.com booking ("Join: https://…" in the description), or "". */
+export const joinLink = (description: string | null | undefined) => /(?:^|\n)Join: (https?:\/\/\S+)/.exec(description ?? "")?.[1] ?? "";
 
 // ---- follow-ups after the info text ----
 
