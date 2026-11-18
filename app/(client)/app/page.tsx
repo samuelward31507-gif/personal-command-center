@@ -7,7 +7,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import "./app.css";
 import { Wordmark } from "../brand";
 import { QuotesScreen, QuoteEditor } from "./quotes";
-import { demoApi } from "./demo";
 import { Avatar, Icon, Spinner, fmtPhone, initials, typePhone, useToast } from "./parts";
 import type { Biz, Data, Go, Tab } from "./types";
 import { mailWaiting } from "./types";
@@ -15,19 +14,38 @@ import { splitAppointments } from "@/lib/client-schedule";
 import { TodayScreen } from "./today";
 import { JobsScreen, type JobsView } from "./jobs";
 import { PlansScreen } from "./plans";
-import { SwitchScreen } from "./switch";
-import { ComingFromScreen } from "./coming-from";
 import { CatalogContext, PriceListSheet, catalogFrom } from "./catalog";
 import { RecordPage } from "./record";
 import { InboxScreen, ThreadView } from "./inbox";
-import { CalendarScreen } from "./calendar";
 import { MyDay } from "./crew";
 import { MoneyScreen, InvoiceSheet, BillingSettings } from "./money";
-import { ReportsScreen } from "./numbers";
-import { SystemScreen } from "./system";
-import { Onboarding } from "./setup";
-import { AddLeadSheet, ImportSheet, WinbackSheet } from "./sheets";
-import { CommandBar } from "./command";
+import dynamic from "next/dynamic";
+
+// Screens most visits never open load on demand, then warm in the background once the first screen is up (warmScreens),
+// so a tab is ready by the time it's tapped. The first paint carries only Home, Inbox, Jobs and the record.
+const Wait = () => <div className="page-wait" role="status" aria-label="Loading"><i className="skel" /><i className="skel" /><i className="skel" /></div>;
+const CalendarScreen = dynamic(() => import("./calendar").then(m => m.CalendarScreen), { ssr: false, loading: Wait });
+const ReportsScreen = dynamic(() => import("./numbers").then(m => m.ReportsScreen), { ssr: false, loading: Wait });
+const SystemScreen = dynamic(() => import("./system").then(m => m.SystemScreen), { ssr: false, loading: Wait });
+const SwitchScreen = dynamic(() => import("./switch").then(m => m.SwitchScreen), { ssr: false, loading: Wait });
+const ComingFromScreen = dynamic(() => import("./coming-from").then(m => m.ComingFromScreen), { ssr: false, loading: Wait });
+const Onboarding = dynamic(() => import("./setup").then(m => m.Onboarding), { ssr: false, loading: Wait });
+const CommandBar = dynamic(() => import("./command").then(m => m.CommandBar), { ssr: false });
+const AddLeadSheet = dynamic(() => import("./sheets").then(m => m.AddLeadSheet), { ssr: false });
+const ImportSheet = dynamic(() => import("./sheets").then(m => m.ImportSheet), { ssr: false });
+const WinbackSheet = dynamic(() => import("./sheets").then(m => m.WinbackSheet), { ssr: false });
+/** The app's own outline while the first data comes in: a rail, a title, rows. Fades in only if it takes a moment. */
+function Boot() {
+  return <div className="boot" role="status" aria-label="Loading">
+    <aside className="boot-rail" aria-hidden="true">{[70, 55, 60, 50, 65, 45, 58].map((w, i) => <i key={i} className="skel" style={{ width: w + "%" }} />)}</aside>
+    <div className="boot-main" aria-hidden="true"><i className="skel boot-h" />{[92, 78, 85, 70, 88, 64].map((w, i) => <div key={i} className="boot-row"><i className="skel" style={{ width: w + "%" }} /><i className="skel" style={{ width: (w - 30) + "%" }} /></div>)}</div>
+  </div>;
+}
+function warmScreens() {
+  const go = () => { for (const f of [() => import("./calendar"), () => import("./system"), () => import("./numbers"), () => import("./command"), () => import("./sheets"), () => import("./switch"), () => import("./setup"), () => import("./coming-from")]) void f().catch(() => {}); };
+  const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+  if (w.requestIdleCallback) w.requestIdleCallback(go, { timeout: 4000 }); else setTimeout(go, 1500);
+}
 
 // The example business (/app?demo=1) answers every call in the browser; nothing reaches the server.
 const DEMO_KEY = "cinder-demo";
@@ -55,7 +73,7 @@ async function flushQueue(): Promise<{ sent: number; dropped: string[] }> {
 }
 
 async function api<T>(path: string, body?: unknown): Promise<T> {
-  if (demoOn && !path.startsWith("/api/app/auth") && !path.startsWith("/api/app/push")) return await demoApi(path, (body ?? {}) as Record<string, unknown>) as T;
+  if (demoOn && !path.startsWith("/api/app/auth") && !path.startsWith("/api/app/push")) { const { demoApi } = await import("./demo"); return await demoApi(path, (body ?? {}) as Record<string, unknown>) as T; }
   const b = body as Record<string, unknown> | undefined;
   const queueable = !!b && path === "/api/app/act" && QUEUEABLE.has(String(b.action));
   const queue = () => { const at = new Date().toISOString();
@@ -189,6 +207,8 @@ export default function CinderApp() {
     catch (e) { if ((e as { status?: number }).status === 401) setState("out"); }
   }, [project, tab]);
   useEffect(() => { reloadRef.current = () => { if (project) void load(project, tab); }; }, [load, project, tab]);
+  const warmed = useRef(false);
+  useEffect(() => { if (d && !warmed.current) { warmed.current = true; warmScreens(); } }, [d]);
 
   useEffect(() => {
     const q = new URLSearchParams(location.search), t = q.get("t");
@@ -237,9 +257,9 @@ export default function CinderApp() {
   // The workspace scrolls inside its window: every move starts at the top.
   useEffect(() => { document.querySelector(".main > .page")?.scrollTo(0, 0); }, [tab, open]);
   const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
-  if (state === "loading") return <div className="load"><span className="spin" aria-label="Loading" /></div>;
+  if (state === "loading") return <Boot />;
   if (state === "out") return <SignIn onIn={() => { demoStop(); void load(""); }} onDemo={() => { demoStart(); setDemo(true); setTab("today"); void load("", "today"); }} />;
-  if (!d) return null;
+  if (!d) return <Boot />;
 
   const L = d.live;
   const bizName = d.business || d.businesses.find(b => b.project_id === project)?.name || "";
