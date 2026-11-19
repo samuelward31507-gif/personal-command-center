@@ -164,6 +164,9 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
     </header>
     <div className="qe-body">
       <div className="qe-form">
+        {q && (q.signed || q.signedName) && <section className="card box qe-signed"><b className="t-em">Approved online{q.signedName ? ` by ${q.signedName}` : ""}</b>
+          {q.signed && !q.id.startsWith("demo") && <img className="sigimg" src={`/api/app/signature?quote=${q.id}`} alt={`${q.signedName || "Their"} signature`} />}
+          <p className="fine">{q.signed ? "Their signature is kept with this quote." : "They typed their name to approve."}</p></section>}
         {locked ? <p className="fine">{s === "approved" ? `${firstName} approved this quote. It's now a won job.` : `${firstName} passed on this quote${card.lostReason ? `: ${card.lostReason}` : ""}.`}</p> : null}
         <section><p className="sec">Line items{!locked && <TemplatePicker d={d} project={project} api={api} toast={toast} reload={reload} items={items} onUse={setItems} />}</p>{locked ? <DocLines items={clean} taxRate={tax} total={t.total} /> : <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} options />}</section>
         {!locked && <>

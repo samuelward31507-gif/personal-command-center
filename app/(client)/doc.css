@@ -119,3 +119,9 @@ a.doc-fin:hover b { text-decoration: underline; text-underline-offset: 3px; }
 /* The fence line on the customer's quote. */
 .doc-fence { margin: 12px 0 4px; } .doc-fence img { display: block; width: 100%; height: auto; border-radius: 10px; background: #eef0f3; }
 .doc-fence figcaption { margin-top: 6px; font-size: 13px; color: #6f7988; }
+
+/* The signature pad on the customer's quote: a finger-sized box with a line to sign on. */
+.doc .sigpad, .doc-sign .sigpad { position: relative; border: 1px solid var(--hair-3, #d3d8df); border-radius: var(--r2, 8px); background: #fff; height: 168px; }
+.doc-sign .sigpad canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; border-radius: inherit; }
+.doc-sign .sigline { position: absolute; left: 18px; right: 18px; bottom: 34px; border-top: 1px solid var(--hair-2, #e6e7ea); padding-top: 4px; font-size: 12px; color: var(--g2, #5d6674); pointer-events: none; }
+.doc-sign .sigclear { position: absolute; top: 8px; right: 10px; font-size: 13px; }

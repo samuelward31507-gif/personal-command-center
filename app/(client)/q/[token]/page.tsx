@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import "../../doc.css";
 import { DocLines, QuoteOptions, hasOptions } from "../../doc-lines";
 import { chosen, totals, type Choice } from "@/lib/billing";
+import { SignaturePad } from "../../sigpad";
 
 type Q = { fence?: { img: string; feet: number; gates: number } | null; business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
   items?: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax_rate?: number;
@@ -20,7 +21,7 @@ const Check = () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" 
 export default function QuotePage() {
   const { token } = useParams<{ token: string }>();
   const [q, setQ] = useState<Q | null>(null), [err, setErr] = useState("");
-  const [busy, setBusy] = useState(false), [no, setNo] = useState(false), [why, setWhy] = useState(""), [fail, setFail] = useState(""), [signer, setSigner] = useState(""), [pick, setPick] = useState<Choice>({ tier: null, addons: [] });
+  const [busy, setBusy] = useState(false), [no, setNo] = useState(false), [why, setWhy] = useState(""), [fail, setFail] = useState(""), [signer, setSigner] = useState(""), [sig, setSig] = useState(""), [pick, setPick] = useState<Choice>({ tier: null, addons: [] });
   useEffect(() => {
     fetch("/api/q?token=" + encodeURIComponent(token), { cache: "no-store" })
       .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || "This quote link isn't valid."); setQ(j); if (j.choice) setPick(j.choice); })
@@ -29,7 +30,7 @@ export default function QuotePage() {
   async function answer(a: "approve" | "decline") {
     setBusy(true); setFail("");
     try {
-      const r = await fetch("/api/q", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, answer: a, reason: why, name: signer, ...(opts ? { choice: pick } : {}) }) });
+      const r = await fetch("/api/q", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, answer: a, reason: why, name: signer, ...(a === "approve" && sig ? { signature: sig } : {}), ...(opts ? { choice: pick } : {}) }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "That didn't go through.");
       setQ(x => x && { ...x, state: j.state, answeredAt: new Date().toISOString() });
@@ -72,9 +73,10 @@ export default function QuotePage() {
                 <button type="submit" className="btn ink lg" disabled={busy}>{busy ? "Sending…" : "Send my answer"}</button></div>
             </form>
           : <div className="doc-acts">
-              <label className="doc-sign"><span>Your name, to approve</span><input className="input" value={signer} onChange={e => setSigner(e.target.value)} placeholder="Dana Ruiz" maxLength={80} autoComplete="name" /></label>
-              <button type="button" className="btn ink lg" disabled={busy || signer.trim().length < 2} onClick={() => void answer("approve")}>{busy ? "Approving…" : `Approve${amount ? ` ${usd(amount)}` : " quote"}`}</button>
-              <p className="doc-fine">Approving tells {who} you&rsquo;re ready{q.terms ? " and that you agree to the terms below" : ""}. Nothing is charged here.{q.deposit ? ` A ${usd(q.deposit)} deposit holds your install date, paid on ${biz}'s own payment page after you approve.` : ""}</p>
+              <label className="doc-sign"><span>Your name</span><input className="input" value={signer} onChange={e => setSigner(e.target.value)} placeholder="Dana Ruiz" maxLength={80} autoComplete="name" /></label>
+              <div className="doc-sign"><span>Your signature, to approve</span><SignaturePad onChange={setSig} /></div>
+              <button type="button" className="btn ink lg" disabled={busy || signer.trim().length < 2 || !sig} onClick={() => void answer("approve")}>{busy ? "Approving…" : `Approve${amount ? ` ${usd(amount)}` : " quote"}`}</button>
+              <p className="doc-fine">Approving tells {who} you&rsquo;re ready{q.terms ? " and that you agree to the terms below" : ""}. Nothing is charged here.{q.deposit ? ` Next you'll pay the ${usd(q.deposit)} deposit that holds your install date, on ${biz}'s own payment page.` : ""} Your signature is kept with the quote.</p>
               {sms && <a className="btn lg" href={sms}>Text a question</a>}
               <button type="button" className="link" style={{ alignSelf: "center", fontSize: 14 }} onClick={() => setNo(true)}>No thanks</button>
             </div>}

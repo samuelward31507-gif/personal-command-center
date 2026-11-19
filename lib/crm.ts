@@ -306,7 +306,9 @@ export type Card = { id: string; name: string; phone: string; source: string; st
     /** How many times they opened it, the last time, whether follow-ups are paused (imported quotes start paused), and when the next one goes. */
     views?: number; lastViewed?: string | null; chasePaused?: boolean; nextChase?: string | null;
     /** The last day the customer can approve it; null = no end date. */
-    validUntil?: string | null } | null;
+    validUntil?: string | null;
+    /** Who approved it online and whether they drew a signature (the image is fetched on its own). */
+    signedName?: string | null; signed?: boolean } | null;
   install: string | null; installTime: string | null; installDays: number; onCalendar: boolean; reviewAuto: boolean; reviewSent: string | null; pastCustomer: boolean;
   invoice: CardInvoice | null; job: Record<string, string>; costs: Costs;
   /** When the job entered its current stage, and the owner's reason when it was lost. */
