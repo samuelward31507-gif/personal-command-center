@@ -177,3 +177,16 @@ console.log("agent contact info: 3 checks passed");
   assert.deepEqual(A.toolCall("get_needs_phone", { limit: 20 }), { method: "GET", path: "/api/agent/needs-phone", query: { limit: "20" } });
   console.log("needs-phone ok");
 }
+
+// Every MCP tool must have a handler in the MCP route (get_needs_phone shipped without one).
+{
+  const { readFileSync } = await import("node:fs");
+  const A = await import("./lib/agent-api.ts");
+  const route = readFileSync("app/api/agent/mcp/route.ts", "utf8");
+  for (const t of A.TOOLS ?? []) {
+    const call = A.toolCall(t.name, { id: "00000000-0000-4000-8000-000000000000", contactId: "00000000-0000-4000-8000-000000000000" });
+    assert.ok(call, t.name + " maps to a REST call");
+    assert.ok(call.path === "/api/agent/content" || route.includes(`"${call.path}"`), t.name + " has a handler in the MCP route");
+  }
+  console.log("mcp handlers ok");
+}
