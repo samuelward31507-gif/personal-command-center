@@ -6,7 +6,7 @@ export const TEMPLATE_LABEL: Record<TextTemplate, string> = { "T-VM": "Voicemail
 export const SAM_TZ = "America/Denver";
 export const DEFAULT_SLOTS = ["10am", "2pm"] as const;
 /** 35-second explainer: why the first call back matters (HBR 2011 response-time study). Served from the CRM's public folder. */
-export const FIRST_CALL_VIDEO = "https://personal-command-center-ten-ruby.vercel.app/content/videos/why-first-call.mp4";
+export const FIRST_CALL_VIDEO = "https://cinderrevenue.com/first-call";
 
 // ---- merge fields ----
 

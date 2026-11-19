@@ -3,7 +3,7 @@
 export type DraftKind = "info_text" | "info_dm" | "info_email" | "info_email_time" | "followup_text" | "stay_in_touch";
 
 /** 35-second explainer video. Same URL as FIRST_CALL_VIDEO in lib/sms-templates (kept import-free so tests run in plain node). */
-export const FIRST_CALL_VIDEO = "https://personal-command-center-ten-ruby.vercel.app/content/videos/why-first-call.mp4";
+export const FIRST_CALL_VIDEO = "https://cinderrevenue.com/first-call";
 
 /** The two info emails Sam picks between: more work (owners with room) or time back (owners who are slammed). */
 export const INFO_EMAIL_STYLES = [{ kind: "info_email" as const, label: "More work" }, { kind: "info_email_time" as const, label: "Time back" }];
