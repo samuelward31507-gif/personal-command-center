@@ -9,7 +9,7 @@
 .doc-k { color: var(--g1); font-size: 13px; }
 .doc-amt { font: 600 36px/1.05 var(--ff-tight); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .doc-line { color: var(--ink); font-size: 14px; line-height: 1.45; }
-.doc-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; color: var(--g1); }
+.doc-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--g1); }
 .doc-meta b { color: var(--ink); font-weight: 500; }
 .doc-note { padding-top: 12px; border-top: 1px solid var(--hair); }
 .doc-note h2 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
@@ -56,7 +56,7 @@
 .bk-times button { height: 42px; border: 1px solid var(--hair-2); border-radius: var(--r2); background: var(--page); font-size: 15px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
 .bk-times button.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
 .bk-form { display: flex; flex-direction: column; gap: 12px; }
-.bk-consent { display: flex; gap: 10px; align-items: flex-start; font-size: 12.5px; color: var(--g1); line-height: 1.45; }
+.bk-consent { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--g1); line-height: 1.45; }
 .bk-consent input { margin-top: 2px; width: 18px; height: 18px; flex: none; accent-color: var(--ink); }
 .doc-sign em { font-style: normal; color: var(--g2); }
 .bk-times button { display: flex; align-items: center; justify-content: center; }
@@ -74,7 +74,7 @@
 .doc-tier input, .doc-addon input { width: 18px; height: 18px; margin: 0; accent-color: var(--ink); }
 .doc-tier .t, .doc-addon .t { min-width: 0; display: flex; flex-direction: column; }
 .doc-tier .t b, .doc-addon .t b { font-size: 15px; font-weight: 600; }
-.doc-tier .t small, .doc-addon .t small { font-size: 12.5px; color: var(--g1); line-height: 1.4; }
+.doc-tier .t small, .doc-addon .t small { font-size: 13px; color: var(--g1); line-height: 1.4; }
 .doc-tier em, .doc-addon em { font-style: normal; font-weight: 600; font-variant-numeric: tabular-nums; }
 .doc-addon .t b { font-weight: 500; font-size: 14px; }
 .doc-incl h2 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
@@ -84,9 +84,9 @@
 .doc-incl li small { color: var(--g1); }
 .doc-fin { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--wash, #f6f5f1); color: var(--ink); text-decoration: none; }
 .doc-fin b { font-size: 14.5px; }
-.doc-fin span { font-size: 12.5px; color: var(--g1); }
+.doc-fin span { font-size: 13px; color: var(--g1); }
 a.doc-fin:hover b { text-decoration: underline; text-underline-offset: 3px; }
-.doc-terms { max-width: 480px; margin: 14px auto 0; padding: 0 16px; font-size: 12.5px; color: var(--g1); }
+.doc-terms { max-width: 480px; margin: 14px auto 0; padding: 0 16px; font-size: 13px; color: var(--g1); }
 .doc-terms summary { cursor: pointer; font-weight: 500; color: var(--ink); }
 .doc-terms p { margin-top: 6px; line-height: 1.55; white-space: pre-line; }
 
