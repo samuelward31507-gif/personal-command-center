@@ -1809,3 +1809,24 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: .55; cursor: po
   .t5-nums-b { padding: 0 14px 8px; border-top: 1px solid var(--hair); }
   .t5-rail .t5-dup { display: none; }
 }
+
+/* Status pills: 24px, a tinted background, one meaning per color.
+   Grey = waiting or done, green = paid/booked/won, orange = your move, red = failed or late. */
+.shell .dot { height: 24px; padding: 0 9px 0 8px; border-radius: 12px; background: var(--paper-2); color: var(--g1); font-size: 12px; font-weight: 500; }
+.shell .dot::before { width: 6px; height: 6px; }
+.shell .dot.ink { background: rgba(28, 29, 31, .07); color: var(--ink); }
+.shell .dot.good { background: var(--good-bg); color: var(--good-ink); }
+.shell .dot.bad { background: rgba(194, 38, 28, .09); color: #b42318; }
+.shell .dot.ember { background: var(--warn-bg); color: var(--warn); } .shell .dot.ember::before { background: var(--warn); }
+.shell .qe-h .dot, .shell .sheet .hd .dot { height: 22px; }
+.stg { height: 24px; padding: 0 9px 0 8px; border-radius: 12px; background: var(--paper-2); font-size: 12px; font-weight: 500; }
+.stg.won, .stg.done { background: var(--good-bg); color: var(--good-ink); } .stg.won i, .stg.done i { background: var(--good); }
+.stg.turn { background: var(--warn-bg); color: var(--warn); } .stg.turn i { background: var(--warn); }
+.stg.lost { background: transparent; }
+.board .col-b h2 .stg { background: none; padding: 0; height: auto; }
+
+/* Under a short quote list: next follow-ups and recent wins, side by side on a desk. */
+.q-after { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
+.q-after .panel-h { display: flex; align-items: baseline; gap: 10px; padding: 14px 18px 6px; } .q-after .panel-h h2 { font: 600 15px/20px var(--ff); } .q-after .panel-h small { color: var(--g2); font-size: 13px; }
+.q-after-l { padding: 0 18px 10px; } .q-after-l li { display: grid; grid-template-columns: minmax(0, 1fr) auto 90px; gap: 12px; align-items: center; min-height: 44px; border-top: 1px solid var(--hair); font-size: 14px; }
+.q-after-l li .link { text-align: left; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .q-after-l li b { text-align: right; font-weight: 500; }

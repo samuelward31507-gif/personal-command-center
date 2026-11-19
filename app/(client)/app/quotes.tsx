@@ -88,6 +88,18 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
           <span style={{ minWidth: 0 }}><b>{c.name || fmtPhone(c.phone)}</b><small>{line(c) || "No details yet"}</small></span>
           <span className="r"><b>{amountOf(c) ? usd(amountOf(c)) : "–"}</b><em className={s === "changes" ? "red" : s === "approved" ? "green" : ""}>{Q_LABEL[s]}</em></span></button>)}</div>}
       </section>}
+      {/* A short list leaves room: show what's coming next for the quotes that are out, so the page answers "what happens now?" */}
+      {rows.length > 0 && shown.length < 8 && f === "open" && (() => {
+        const next = open.filter(r => r.c.quote?.linked && r.c.quote?.nextChase).sort((a, b) => (a.c.quote!.nextChase ?? "").localeCompare(b.c.quote!.nextChase ?? "")).slice(0, 5);
+        const won = approved30.slice(0, 5);
+        if (!next.length && !won.length) return null;
+        return <div className="q-after">
+          {next.length > 0 && <section className="panel"><div className="panel-h"><h2>Next follow-ups</h2><small>sent for you, stops the moment they answer</small></div>
+            <ul className="q-after-l">{next.map(({ c }) => <li key={c.id}><button type="button" className="link" onClick={() => go.quote(c.id)}>{c.name || fmtPhone(c.phone)}</button><span className="mut">{dateLabel(c.quote!.nextChase!)}</span><b className="num">{amountOf(c) ? usd(amountOf(c)) : ""}</b></li>)}</ul></section>}
+          {won.length > 0 && <section className="panel"><div className="panel-h"><h2>Approved in the last 30 days</h2><small>{won.length} {won.length === 1 ? "job" : "jobs"}, {usd(won.reduce((a, r) => a + amountOf(r.c), 0))}</small></div>
+            <ul className="q-after-l">{won.map(({ c }) => <li key={c.id}><button type="button" className="link" onClick={() => go.quote(c.id)}>{c.name || fmtPhone(c.phone)}</button><span className="mut">{c.quote?.signedName ? `Signed by ${c.quote.signedName}` : line(c) || ""}</span><b className="num">{amountOf(c) ? usd(amountOf(c)) : ""}</b></li>)}</ul></section>}
+        </div>;
+      })()}
     </div>
     {picking && <Sheet title="New quote" sub="Who is it for?" onClose={() => setPicking(false)}>
       {cand.length ? <div className="pick">{cand.map(c => <button key={c.id} type="button" className="row" onClick={() => { setPicking(false); go.quote(c.id); }}>
