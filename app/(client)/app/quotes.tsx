@@ -106,6 +106,7 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
   // A quote saved as just an amount (by text, QUOTE 4200) opens as that amount; a new one starts from the price book.
   const [items, setItems] = useState<Item[]>(() => q?.items?.length ? q.items : q?.amount ? [{ name: card ? line(card) || "The job" : "The job", qty: 1, unit: "", price: q.amount }] : card ? draftItems(biz.trade, card.details, biz.priceBook) : []);
   const [tax, setTax] = useState<number>(() => q?.items?.length ? q.tax : Number(biz.taxRate) || 0);
+  const [qMore, setQMore] = useState(false);
   const [note, setNote] = useState(q?.note ?? ""), [deposit, setDeposit] = useState(q?.deposit ? String(q.deposit) : "");
   const [busy, setBusy] = useState(""), [losing, setLosing] = useState(false);
   if (!card) return <div className="pad"><button type="button" className="btn ghost" onClick={onBack}><Icon name="back" size={14} />Back</button><Empty title="That quote isn't here" text="It may have been moved. Open the customer from Jobs." /></div>;
@@ -146,10 +147,17 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
       <button type="button" className="btn ghost ic" onClick={onBack} aria-label="Back" title="Back (esc)"><Icon name="back" size={16} /></button>
       <div className="t"><h1>Quote for {card.name || fmtPhone(card.phone)}</h1><span><span className={"dot " + TONE[s]}>{Q_LABEL[s]}</span>{q?.viewed ? `, opened ${ago(q.viewed)}` : ""}{q?.linked && q.steps ? `, ${q.steps} of 4 follow-ups sent` : ""}</span></div>
       <div className="acts">
-        <button type="button" className="btn" onClick={() => go.record(card.id)}>Customer</button>
-        {!locked && <button type="button" className="btn" disabled={!!busy} onClick={() => void copy()}><Icon name="link" size={13} />Copy link</button>}
-        {!locked && mail && <button type="button" className="btn" disabled={!!busy} title={card.email ? `Email it to ${card.email}` : "Add their email on the customer first"} onClick={async () => { setBusy("email"); await emailDoc({ ready: d.emailReady, api, project, toast, reload, kind: "quote", thread: card.id, to: card.email, name: card.name, mailto: mail }); setBusy(""); }}>{busy === "email" ? <Spinner /> : <Icon name="send" size={13} />}Email</button>}
-        {!locked && <button type="button" className="btn" disabled={!!busy || !dirty} onClick={() => void save(false)}>{busy === "save" ? <Spinner /> : "Save draft"}</button>}
+        <div className="menu-wrap qe-more"><button type="button" className="btn" aria-haspopup="menu" aria-expanded={qMore} onClick={() => setQMore(m => !m)}>More<Icon name="down" size={13} /></button>
+          {qMore && <div className="menu pop" role="menu" onMouseLeave={() => setQMore(false)}>
+            <button type="button" role="menuitem" onClick={() => { setQMore(false); go.record(card.id); }}>Customer</button>
+            {!locked && <button type="button" role="menuitem" disabled={!!busy} onClick={() => { setQMore(false); void copy(); }}>Copy link</button>}
+            {!locked && mail && <button type="button" role="menuitem" disabled={!!busy} onClick={async () => { setQMore(false); setBusy("email"); await emailDoc({ ready: d.emailReady, api, project, toast, reload, kind: "quote", thread: card.id, to: card.email, name: card.name, mailto: mail }); setBusy(""); }}>Email it</button>}
+            {!locked && dirty && <button type="button" role="menuitem" disabled={!!busy} onClick={() => { setQMore(false); void save(false); }}>Save draft</button>}
+          </div>}</div>
+        <button type="button" className="btn qe-sec" onClick={() => go.record(card.id)}>Customer</button>
+        {!locked && <button type="button" className="btn qe-sec" disabled={!!busy} onClick={() => void copy()}><Icon name="link" size={13} />Copy link</button>}
+        {!locked && mail && <button type="button" className="btn qe-sec" disabled={!!busy} title={card.email ? `Email it to ${card.email}` : "Add their email on the customer first"} onClick={async () => { setBusy("email"); await emailDoc({ ready: d.emailReady, api, project, toast, reload, kind: "quote", thread: card.id, to: card.email, name: card.name, mailto: mail }); setBusy(""); }}>{busy === "email" ? <Spinner /> : <Icon name="send" size={13} />}Email</button>}
+        {!locked && <button type="button" className="btn qe-sec" disabled={!!busy || !dirty} onClick={() => void save(false)}>{busy === "save" ? <Spinner /> : "Save draft"}</button>}
         {!locked && <button type="button" className="btn ink" disabled={!!busy || t.total <= 0} onClick={() => void save(true)}>{busy === "send" ? <Spinner /> : q?.linked && !dirty ? `Text it again` : `Text ${firstName} ${dollars(t.total)}`}</button>}
         {s === "approved" && <button type="button" className="btn ink" onClick={() => go.record(card.id, { view: "job" })}>Open the job</button>}
       </div>

@@ -68,7 +68,7 @@ function seed() {
       tx("in", "system", "Passed on the quote online: \u201cWent with a cheaper bid\u201d", 60 * 24 * 7)] },
   };
   const crm: Record<string, { measure?: Card["measure"]; paperwork?: Record<string, unknown> | null; stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null; crewMember?: string; reviewAfter?: string | null; properties?: { id: string; address: string; gate_code: string; notes: string }[]; checklist?: { name: string; items: { label: string; done: boolean; at?: string; by?: string }[] } | null; tags?: string[]; referredBy?: string | null }> = {
-    t1: { details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" },
+    t1: { value: 9400, details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" },
       measure: { runs: [{ id: "r1", kind: "new", points: [{ lat: 39.6133, lng: -105.0166 }, { lat: 39.6135471, lng: -105.0166 }, { lat: 39.6135471, lng: -105.0164226 }] }],
         gates: [{ id: "g1", run: "r1", at: { lat: 39.6135471, lng: -105.0166 }, type: "single", width: 4 }], center: { lat: 39.61342, lng: -105.01652 }, zoom: 20 }, notes: "Asked about financing. Call him.", email: "tom.becker@example.com", remind: { at: ago(30), note: "Call Tom back about financing", sent: false } },
     t2: { tags: ["hoa"], details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No", address: "77 Aspen Ct, Englewood" }, notes: "Replacing chain link.", crewMember: "+17205550188", crew: "Side gate is unlocked. Measure the back line from the shed." },
@@ -95,7 +95,7 @@ function seed() {
     leads_month: "10-30", lead_sources: "Phone calls, Website form, Google, Angi", software: "None, just my phone", share_ballpark: "yes", priority: "quotes", onboarded_at: "2026-11-01T15:00:00.000Z", pay_link: "https://square.link/u/example", tax_rate: "0", invoice_days: "7",
     hours: "Mon-Fri 7:00-18:00, Sat 8:00-12:00", timezone: "America/Denver", service_area: "Littleton, Highlands Ranch, Castle Rock and 25 miles around", rules: "No repairs under $500. No commercial bids.", questions: "Rough length in feet, material, and the address.",
     prices: "Cedar privacy runs $38–48 a foot installed. Vinyl $40–55. Chain link $18–26.", financing: "We offer 12 months no interest through Wisetack on jobs over $3,000.", tone: "Hey Mark, Mike here with Ridgeline. We can swing by Thursday at 4 to measure, that work?\nSounds good, see you then. Gate's on the left side of the house.", avoid: "Never quote a firm price. Don't promise a date for the install.",
-    handoff: "The job is over $20,000, or they mention a neighbor dispute over the property line.", book_lead_hours: "3", book_per_day: "2", book_buffer_min: "30", quote_days: "2,5,10,21", nudge_hours: "2,20,68", dnt: "+17205550177", a2p_status: "Approved", forwarding: "Their number forwards missed calls here", team: JSON.stringify([{ name: "Luis", cell: "+17205550188", role: "crew", rate: 28 }, { name: "Jess", cell: "+17205550166", role: "office", rate: 24 }, { name: "Tony", cell: "+17205550155", role: "crew", rate: 26 }]), monthly_report: "yes", labor_rate: "45", review_on_paid: "yes", brand_color: "#2f6b4f", catalog: JSON.stringify([{"name":"6 ft cedar privacy, installed","unit":"ft","price":43,"cost":24},{"name":"6 ft vinyl privacy, installed","unit":"ft","price":48,"cost":27},{"name":"5 ft chain link, installed","unit":"ft","price":22,"cost":11},{"name":"Ranch rail, 3 rail","unit":"ft","price":15,"cost":7},{"name":"Walk gate, 4 ft","unit":"","price":550,"cost":240},{"name":"Double drive gate, 12 ft","unit":"","price":1450,"cost":720},{"name":"Tear-out and haul-away","unit":"ft","price":4,"cost":1.5},{"name":"Stain and seal","unit":"ft","price":5.25,"cost":1.8},{"name":"Post replacement, in concrete","unit":"","price":140,"cost":45},{"name":"Soft wash, both sides","unit":"ft","price":1.1,"cost":0.3}]),
+    handoff: "The job is over $20,000, or they mention a neighbor dispute over the property line.", book_lead_hours: "3", book_per_day: "2", book_buffer_min: "30", quote_days: "2,5,10", nudge_hours: "2,20,68", dnt: "+17205550177", a2p_status: "Approved", forwarding: "Their number forwards missed calls here", team: JSON.stringify([{ name: "Luis", cell: "+17205550188", role: "crew", rate: 28 }, { name: "Jess", cell: "+17205550166", role: "office", rate: 24 }, { name: "Tony", cell: "+17205550155", role: "crew", rate: 26 }]), monthly_report: "yes", labor_rate: "45", review_on_paid: "yes", brand_color: "#2f6b4f", catalog: JSON.stringify([{"name":"6 ft cedar privacy, installed","unit":"ft","price":43,"cost":24},{"name":"6 ft vinyl privacy, installed","unit":"ft","price":48,"cost":27},{"name":"5 ft chain link, installed","unit":"ft","price":22,"cost":11},{"name":"Ranch rail, 3 rail","unit":"ft","price":15,"cost":7},{"name":"Walk gate, 4 ft","unit":"","price":550,"cost":240},{"name":"Double drive gate, 12 ft","unit":"","price":1450,"cost":720},{"name":"Tear-out and haul-away","unit":"ft","price":4,"cost":1.5},{"name":"Stain and seal","unit":"ft","price":5.25,"cost":1.8},{"name":"Post replacement, in concrete","unit":"","price":140,"cost":45},{"name":"Soft wash, both sides","unit":"ft","price":1.1,"cost":0.3}]),
     warranty: "Two years on workmanship. Materials carry the maker's warranty.", financing_link: "https://example.com/financing", financing_note: "Pay over time, as low as $120 a month",
     quote_terms: "Prices hold for 30 days. The deposit holds the install date and comes off the final invoice. The balance is due when the job is done.",
     price_book: JSON.stringify({ unit: "ft", rates: [{ name: "Wood privacy (cedar)", low: 38, high: 48 }, { name: "Vinyl", low: 40, high: 55 }, { name: "Chain link", low: 18, high: 26 }, { name: "Ranch rail", low: 12, high: 18 }], gate: [450, 650] }) };
@@ -157,6 +157,13 @@ function seed() {
       { id: "eq1", thread_id: "t2", kind: "Gate operator", make: "LiftMaster", model: "LA400", serial: "LA4-22-08812", location: "Driveway gate", installed_on: "2023-05-12", warranty_until: new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10), notes: "Solar panel on the post", history: [{ on: "2026-05-02", note: "Annual check, new battery", by: "" }], customer: "Dana Ruiz" },
     ] as Equipment[],
     files: [] as FileRow[],
+    activity: [
+      { at: ago(18), who: "", role: "owner", action: "card", detail: "price set to $9,400", thread: "t1", customer: "Tom Becker" },
+      { at: ago(95), who: "", role: "owner", action: "payment", detail: "$2,150, card", thread: null, customer: "Henderson" },
+      { at: ago(240), who: "", role: "owner", action: "stage", detail: "Won", thread: "q3", customer: "Jen Park" },
+      { at: ago(610), who: "", role: "owner", action: "measure", detail: "186 ft", thread: "t4", customer: "Priya Shah" },
+      { at: ago(1440), who: "", role: "owner", action: "reviewnow", detail: "", thread: null, customer: "Henderson" },
+    ],
     tasks: [
       { id: "k1", title: "Order 40 cedar posts for the Becker job", due_on: new Date().toLocaleDateString("en-CA"), assignee: "", thread: "t1", done_at: null, created_at: ago(600), customer: "Tom Becker" },
       { id: "k2", title: "Call the city about the Mendez permit", due_on: null, assignee: "", thread: null, done_at: null, created_at: ago(1200) },
@@ -258,10 +265,10 @@ function data() {
     messages: s.messages, board: board(), setup: { ...s.setup, has_review_link: "yes", has_number: "yes", has_calendar: "yes", has_cell: "yes", has_booking_link: "yes" },
     key: "example-key-ridgeline-0000", origin: typeof location !== "undefined" ? location.origin : "",
     mail: { address: "example-key-ridgeline-0000@leads.cinder.example", recent: s.mail }, expenses: s.expenses, equipment: s.equipment, files: s.files, tasks: s.tasks,
-    jobber: { available: true, connected: true, account: "Ridgeline Fence Co.", error: "", lastPush: ago(2880), connectUrl: "#" },
-    quickbooks: { available: true, connected: true, company: "Ridgeline Fence Co. LLC", error: "", lastPush: ago(95), connectUrl: "#" },
+    jobber: { available: false, connected: false, account: "", error: "", lastPush: null, connectUrl: "" },
+    quickbooks: { available: false, connected: false, company: "", error: "", lastPush: null, connectUrl: "" },
     wires: { sources: [{ source: "missed_call", leads: 19, last30: 7, last: ago(40) }, { source: "web form", leads: 12, last30: 5, last: ago(300) }, { source: "angi", leads: 8, last30: 3, last: ago(2880) }, { source: "web chat", leads: 2, last30: 1, last: ago(8640) }],
-      failures: [{ id: "f1", at: ago(12), body: "Good question. Mike will get back to you on that directly today.", name: "Tom Becker", phone: "+17205550177", thread: "t1", source: "web form" }],
+      failures: [],
       log: [{ at: ago(40), event: "inbound_call", source: "missed_call", phone: "+17205550161", evidence: "Missed call, texted back in 6s" }, { at: ago(300), event: "web_form", source: "web form", phone: "+17205550123", evidence: "Submitted a form asking to be contacted" }, { at: ago(540), event: "inbound_text", source: "text", phone: "+17205550139", evidence: "Texted the business number" },
         { at: ago(2880), event: "paid_lead", source: "angi", phone: "+17205550177", evidence: "Requested a quote on Angi" }, { at: ago(2940), event: "opt_out", source: "", phone: "+17205550177", evidence: "Replied STOP" }, { at: ago(5760), event: "owner_import", source: "jobber", phone: "+17205550112", evidence: "Imported from Jobber, past customer" }, { at: ago(8640), event: "web_form", source: "web chat", phone: "+17205550150", evidence: "Asked through the website chat" }] },
     plans: plansOut(), visits: [], time: s.time.map(e => ({ ...e, customer: e.thread_id ? s.threads[e.thread_id]?.thread.customer_name ?? "" : "" })),
@@ -314,11 +321,13 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
   const now = new Date().toISOString();
   if (path.startsWith("/api/app/data")) {
     const rp = new URL(path, "https://x").searchParams.get("report");
-    if (rp) { const r = demoReport(Number(rp) === 90 ? 90 : Number(rp) === 365 ? 365 : 30); if (!emptyDemo()) return { report: r };
+    if (rp) { const r = demoReport(Number(rp) === 90 ? 90 : Number(rp) === 365 ? 365 : 30);
+      // Quotes out: counted from the example's own board, the same way the Quotes page counts them, so the two always agree.
+      if (!emptyDemo()) { const out = (data().board ?? []).filter(c => c.stage === "quoted" && c.quote); return { report: { ...r, openQuotes: { n: out.length, value: Math.round(out.reduce((a, c) => a + (c.quote?.amount ?? c.value ?? 0), 0)) } } }; }
       const z = { ...r.now, leads: 0, booked: 0, quoted: 0, won: 0, wonValue: 0, lost: 0, replySec: null, afterHoursLeads: 0, afterHoursWon: 0, afterHoursValue: 0, cycleDays: null, payDays: null, collected: 0, invoiced: 0, appts: 0, noShows: 0, reviews: 0 };
       return { report: { ...r, now: z, before: z, sources: [], lostReasons: [], openQuotes: { n: 0, value: 0 }, series: [] } }; }
     const th = new URL(path, "https://x").searchParams.get("thread");
-    if (th) { const t = s.threads[th] ?? fail("Not found", 404); return { thread: t!.thread, texts: t!.texts.map((x, i, all) => ({ ...x, status: x.direction === "out" && x.author !== "system" ? (th === "t1" && i === all.length - 1 ? "undelivered" : "delivered") : "" })) }; }
+    if (th) { const t = s.threads[th] ?? fail("Not found", 404); return { thread: t!.thread, texts: t!.texts.map(x => ({ ...x, status: x.direction === "out" && x.author !== "system" ? "delivered" : "" })) }; }
     return emptyDemo() ? blank(data()) : crewDemo() ? asCrew(data()) : data();
   }
   if (path.startsWith("/api/app/switch")) return demoSwitch(path, b,
