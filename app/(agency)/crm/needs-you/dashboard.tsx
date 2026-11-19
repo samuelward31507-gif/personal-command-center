@@ -10,7 +10,7 @@ import type { QueueItem } from "@/lib/my-day";
 import { dueFollowUps } from "@/lib/email-outreach";
 import { INBOX_URL, CHANNEL_LABEL } from "@/lib/inbox-links";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
-import { bookedText, confirmText, joinLink, lateText, meetingNudge, meetingWhen, reminderText, type MeetingStep, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText, hiringText } from "@/lib/sms-templates";
+import { auditText, bookedText, tryDemoLink, prepLink, prepText, confirmText, joinLink, lateText, meetingNudge, meetingWhen, reminderText, type MeetingStep, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText, hiringText } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
 
@@ -30,7 +30,7 @@ type Board = {
   working?: Record<"trades" | "cities", { label: string; dials: number; convos: number; meetings: number }[]>;
   goal: { goal: number; by?: string; collected: number; expected: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
 };
-type Ev = { id: string; title: string; description?: string | null; createdAt?: string; outcome?: string | null; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string; contactFirst?: string; contactCompany?: string; contactPhone?: string; contactTimeZone?: string; contactLocation?: string };
+type Ev = { id: string; title: string; description?: string | null; createdAt?: string; outcome?: string | null; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string; contactFirst?: string; contactCompany?: string; contactPhone?: string; contactTimeZone?: string; contactLocation?: string ; contactNiche?: string };
 type Referral = { dealId: string; title: string; id: string; firstName: string; company: string; phone: string; wonAt: string | null };
 type Warm = { id: string; firstName: string; company: string; phone: string; website?: string; niche: string; location?: string; callNote?: string; outcome: string; at: string | null; infoSentAt: string | null; repliedAt: string | null; tasks: { id: string; title: string; due: string | null; day: number }[] };
 type Todo = { key: string; title: string; why: string; overdue: boolean; href: string; action: string; onClick?: () => void; alt?: { label: string; onClick: () => void }; name?: string; website?: string; body?: string; contactId?: string };
@@ -139,12 +139,21 @@ export default function Dashboard() {
   const target = b?.targets?.dailyCalls ?? ws.dailyCallTarget ?? 100;
   const [nudged, setNudged] = useState<Record<string, true>>(() => { try { return JSON.parse(localStorage.getItem("cinder.nudged.v1") || "{}"); } catch { return {}; } });
   const firstOf = (e: Ev) => e.contactFirst && e.contactFirst !== e.contactCompany ? e.contactFirst : "";
-  function nudge(e: Ev, kind: Exclude<MeetingStep, "showed?">) {
+  async function nudge(e: Ev, kind: Exclude<MeetingStep, "showed?">) {
     if (!e.contactPhone || !e.contactId) return;
     const tz = resolveTimeZone({ timeZone: e.contactTimeZone, location: e.contactLocation, phone: e.contactPhone }, timeZoneFor, timeZoneForPhone);
     const at = meetingWhen(new Date(e.startsAt), new Date(), tz), link = joinLink(e.description), first = firstOf(e);
-    const body = kind === "welcome" ? bookedText({ firstName: first, when: at, business: ws.businessName, company: e.contactCompany, link, video: ws.bookedVideo })
-      : kind === "confirm" ? confirmText({ firstName: first, when: at, business: ws.businessName })
+    let audit = auditLinks[e.id] ?? "";
+    if (kind === "audit" && !audit) {
+      // Made once from their homepage. No website or nothing to report: skip to the next step.
+      const r = await fetch("/api/prospect-reports/audit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: e.contactId }) }).catch(() => null);
+      audit = r?.ok ? ((await r.json().catch(() => ({}))).link ?? "") : "";
+      if (!audit) { markNudged(e.id + ":audit"); return; }
+    }
+    const body = kind === "welcome" ? bookedText({ firstName: first, when: at, business: ws.businessName, company: e.contactCompany, link, prep: prepLink({ firstName: first, company: e.contactCompany, site: ws.websiteUrl }) })
+      : kind === "audit" ? auditText({ firstName: first, company: e.contactCompany, link: audit })
+      : kind === "prep" ? prepText({ firstName: first, company: e.contactCompany })
+      : kind === "confirm" ? confirmText({ firstName: first, when: at, business: ws.businessName, demo: e.contactCompany ? tryDemoLink({ firstName: first, company: e.contactCompany, niche: e.contactNiche ?? "", site: ws.websiteUrl }) : "" })
       : kind === "remind" ? reminderText({ firstName: first, when: at, link })
       : lateText({ firstName: first, link, booking: ws.bookingLink });
     window.location.href = smsHref(e.contactPhone, body);
@@ -163,6 +172,17 @@ export default function Dashboard() {
     setEvents(prev => (prev ?? []).map(x => x.id === e.id ? { ...x, outcome: o } : x));
     if (o === "no_show" && j?.text?.href) window.location.href = j.text.href;
   }
+  // Make each due audit ahead of the tap, so tapping opens Messages straight away (phones block a delayed open).
+  const [auditLinks, setAuditLinks] = useState<Record<string, string>>({});
+  useEffect(() => {
+    for (const e of events ?? []) {
+      if (!e.contactId || auditLinks[e.id] !== undefined || stepOf(e) !== "audit") continue;
+      setAuditLinks(p => ({ ...p, [e.id]: "" }));
+      void fetch("/api/prospect-reports/audit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: e.contactId }) })
+        .then(r => (r.ok ? r.json() : null)).then(d => { if (d?.link) setAuditLinks(p => ({ ...p, [e.id]: d.link })); else markNudged(e.id + ":audit"); }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events]);
   const stepOf = (e: Ev) => e.contactPhone || e.contactId ? meetingNudge(new Date(e.startsAt), new Date(), null, { createdAt: e.createdAt ? new Date(e.createdAt) : null, outcome: e.outcome, done: k => !!nudged[e.id + ":" + k] }) : null;
   const upcoming = (events ?? []).filter(e => new Date(e.endsAt).getTime() > Date.now()).sort((x, y) => x.startsAt.localeCompare(y.startsAt));
   // The show-up sequence for every meeting, one step at a time: welcome text right after booking, confirm the day
@@ -170,6 +190,8 @@ export default function Dashboard() {
   // "did they show" until it's answered.
   const STEP: Record<MeetingStep, { title: (w: string) => string; why: string; action: string }> = {
     welcome: { title: w => `Text ${w}: you're booked`, why: "Right after booking: what the call is, and the join link", action: "Text" },
+    audit: { title: w => `Text ${w} their free audit`, why: "What their site shows and what slow replies cost them, before the call", action: "Text" },
+    prep: { title: w => `Text ${w} a prep question`, why: "Keeps them warm until the call, and their answers shape your demo", action: "Text" },
     confirm: { title: w => `Text ${w} to confirm`, why: "Ask for a yes. People show up for what they said yes to", action: "Text" },
     remind: { title: w => `Text ${w} the join link`, why: "Meeting in the next 3 hours", action: "Text" },
     late: { title: w => `${w} isn't on yet: text them`, why: "I'm on now, here's the link, or grab another time", action: "Text" },
@@ -425,7 +447,7 @@ export default function Dashboard() {
                 <Logo name={who} size={20} />
                 <Link href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"} style={{ minWidth: 0, display: "flex", gap: 10, color: "inherit" }}><b>{who}</b><span className="what">{e.title !== who ? e.title : ""}</span></Link>
                 <span className="t">{when(e).day ? "Tomorrow, " : i === 0 && until(e.startsAt) ? until(e.startsAt) + " · " : ""}{when(e).t}</span>
-                {k && k !== "showed?" && e.contactPhone && <button type="button" className={"u-btn" + (done ? " u-btn-bare" : "")} onClick={() => nudge(e, k)}>{{ welcome: "Welcome", confirm: "Confirm", remind: "Send link", late: "I'm on" }[k]}</button>}
+                {k && k !== "showed?" && e.contactPhone && <button type="button" className={"u-btn" + (done ? " u-btn-bare" : "")} onClick={() => nudge(e, k)}>{{ welcome: "Welcome", audit: "Audit", prep: "Prep", confirm: "Confirm", remind: "Send link", late: "I'm on" }[k]}</button>}
               </div>; })}
         </div>
       </section>

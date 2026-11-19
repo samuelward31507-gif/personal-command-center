@@ -5,7 +5,7 @@ import {
   quietHoursWarning, planFor, dueAt, nextBusinessDay, zonedTime, localDate,
 } from "./lib/sms-templates.ts";
 import { timeZoneFor, timeZoneForPhone } from "./lib/local-time.ts";
-import { meetingNudge, meetingWhen, confirmText, reminderText, bookedText, lateText, joinLink, infoFollowUpText, infoText as infoT, loomText, referralText, loomPoints, pickDemoLink } from "./lib/sms-templates.ts";
+import { meetingNudge, meetingWhen, confirmText, reminderText, bookedText, prepLink, prepText, lateText, joinLink, infoFollowUpText, infoText as infoT, loomText, referralText, loomPoints, pickDemoLink } from "./lib/sms-templates.ts";
 let n = 0; const ok = (fn, msg) => { try { fn(); n++; } catch (e) { e.message = (msg ? msg + ": " : "") + e.message; throw e; } };
 const tzOf = c => resolveTimeZone(c, timeZoneFor, timeZoneForPhone);
 
@@ -113,15 +113,18 @@ ok(() => assert.equal(meetingNudge(new Date("2026-11-07T15:00:00Z"), nowM, null)
 ok(() => assert.equal(meetingNudge(new Date("2026-11-09T15:55:00Z"), nowM, null), "late", "5 min late: late text"));
 ok(() => assert.equal(meetingNudge(new Date("2026-11-09T15:55:00Z"), nowM, null, { done: k => k === "late" }), null, "late text sent: wait for the show check"));
 ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T15:00:00Z") }), "welcome", "just booked: welcome first"));
-ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T15:00:00Z"), done: k => k === "welcome" }), "confirm", "welcomed: confirm next"));
+ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T15:00:00Z"), done: k => k === "welcome" }), "audit", "welcomed: free audit next"));
+ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T15:00:00Z"), done: k => k === "welcome" || k === "audit" }), "confirm", "audit sent: confirm next"));
+ok(() => assert.equal(meetingNudge(new Date("2026-11-09T19:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T14:00:00Z"), done: k => k === "welcome" }), "remind", "call in 3 hours: no audit, just the link"));
 ok(() => assert.equal(meetingNudge(new Date("2026-11-09T18:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T15:30:00Z") }), "remind", "booked for today: skip welcome, remind"));
 ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null, { done: k => k === "confirm" }), null, "confirmed: nothing until the reminder"));
 ok(() => assert.equal(joinLink("Notes\nJoin: https://app.cal.com/video/abc"), "https://app.cal.com/video/abc"));
 ok(() => assert.equal(joinLink("no link"), ""));
 ok(() => assert.match(reminderText({ firstName: "Mark", when: "today at 1:00 PM", link: "https://app.cal.com/video/abc" }), /nothing to prep, just open this from your phone or computer: https:\/\/app\.cal\.com\/video\/abc$/));
 ok(() => assert.match(bookedText({ firstName: "Mark", when: "tomorrow at 10:00 AM", business: "Cinder", company: "Ridge Fence", link: "https://x.co/v" }), /^Hey Mark, Sam with Cinder\. You're booked for tomorrow at 10:00 AM\. .*Ridge Fence customers[\s\S]*Join here: https:\/\/x\.co\/v\n\nIf anything/));
-ok(() => assert.match(bookedText({ firstName: "Mark", when: "tomorrow at 10:00 AM", company: "Ridge Fence", video: "https://loom.com/share/abc" }), /Here's a 2-minute video of what Ridge Fence customers would get the next time you miss a call: https:\/\/loom\.com\/share\/abc\n\nOn the call I'll walk you through it live/));
-ok(() => assert.doesNotMatch(bookedText({ when: "tomorrow at 10:00 AM" }), /video/, "no video set: no video line"));
+ok(() => assert.match(bookedText({ firstName: "Mark", when: "tomorrow at 10:00 AM", company: "Ridge Fence", prep: prepLink({ firstName: "Mark", company: "Ridge Fence" }) }), /what to expect on the call, so you know exactly what we're doing: https:\/\/cinderrevenue\.com\/meet\?n=Mark&b=Ridge\+Fence\n/));
+ok(() => assert.equal(prepLink({}), "https://cinderrevenue.com/meet"));
+ok(() => assert.doesNotMatch(bookedText({ when: "tomorrow at 10:00 AM" }), /video/, "no prep page: no video line"));
 ok(() => assert.match(lateText({ link: "https://x.co/v" }), /^Hey, Sam here\. I'm on the call now, here's the link: https:\/\/x\.co\/v\n\nIf today got busy, no problem, grab another time here: https:\/\/cinderrevenue\.com\/book$/));
 ok(() => assert.equal(meetingWhen(new Date("2026-11-10T17:00:00Z"), nowM, "America/Denver"), "tomorrow at 10:00 AM"));
 ok(() => assert.equal(meetingWhen(new Date("2026-11-09T18:00:00Z"), nowM, "America/New_York"), "today at 1:00 PM", "prospect's own time zone"));
@@ -147,3 +150,20 @@ ok(() => assert.equal(pickDemoLink("fence", "not a link"), "https://cinderrevenu
   assert.equal(demoText({ niche: "detailing" }).link, "https://cinderrevenue.com/demo");
   assert.equal(demoText({ niche: "", settingsLink: "https://loom.com/share/abc" }).link, "https://loom.com/share/abc"); }
 console.log(`Text template checks passed (${n} assertions).`);
+
+{
+  const now = new Date("2026-11-09T15:00:00Z"), far = new Date("2026-11-12T17:00:00Z");
+  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-08T20:00:00Z"), done: k => k === "welcome" || k === "audit" }), "prep", "booked yesterday, call 3 days out: prep question");
+  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-09T10:00:00Z"), done: k => k === "welcome" || k === "audit" }), null, "booked this morning: wait until tomorrow");
+  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-08T20:00:00Z"), done: k => k === "welcome" || k === "audit" || k === "prep" }), null, "prep sent: wait for confirm");
+  assert.match(prepText({ firstName: "Mark", company: "Ridge Fence" }), /^Hey Mark, Sam again\. Quick one so I can set up the demo as Ridge Fence: .*working your way\.$/);
+  console.log("prep step ok");
+}
+
+{
+  const { auditText, tryDemoLink, confirmText } = await import("./lib/sms-templates.ts");
+  assert.match(auditText({ firstName: "Mark", company: "Ridge Fence", link: "https://cinderrevenue.com/report/abc" }), /^Hey Mark, Sam with Cinder\. Before our call I looked at Ridge Fence's website.*report: https:\/\/cinderrevenue\.com\/report\/abc\n\nChange any number/s);
+  assert.equal(tryDemoLink({ firstName: "Mark", company: "Ridge Fence", niche: "Fence" }), "https://cinderrevenue.com/demo?b=Ridge+Fence&n=Mark&t=fence");
+  assert.match(confirmText({ firstName: "Mark", when: "tomorrow at 10:00 AM", demo: "https://x.co/d" }), /Still good\? Just reply yes, or text me a time that works better\.\n\nWant a head start\?.*: https:\/\/x\.co\/d$/s);
+  console.log("pre-call value ok");
+}
