@@ -231,15 +231,7 @@ export default function Dashboard() {
       onClick: () => { const body = referralText({ firstName: first }); window.location.href = smsHref(r.phone, body); void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: r.id, direction: "outbound", body }) }).catch(() => {}); setDoneKeys(k => ({ ...k, [key]: true })); } }];
   });
   // Hiring for the phones: text before the first call (the 6am Autopilot emails them first). Texting moves them to Call mode.
-  const hiringRows: Todo[] = hiring.flatMap(h => {
-    const key = "hire:" + h.id;
-    if (doneKeys[key]) return [];
-    const who = h.company || h.firstName || "this company";
-    const body = hiringText({ firstName: h.firstName && h.firstName !== h.company ? h.firstName : "", company: h.company, role: h.role });
-    const mail = h.emailed ? "emailed" : h.hasEmail ? "email goes out with Autopilot" : "no email found";
-    return [{ key, title: `Text ${who} before you call`, why: `Hiring: ${h.role || "receptionist"} · ${mail}`, overdue: h.emailed || !h.hasEmail, href: `/crm?contact=${h.id}`, action: "Text", name: who, website: h.website, body, contactId: h.id,
-      onClick: () => { window.location.href = smsHref(h.phone, body); void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: h.id, direction: "outbound", body }) }).catch(() => {}); setDoneKeys(k => ({ ...k, [key]: true })); } }];
-  });
+  // Hiring leads are never texted (most are landlines): they get the hiring email, then a call.
   function sendLoom() {
     if (!loom || !/^https?:\/\/\S+$/.test(loom.url.trim())) return;
     const w = loom.w, first = w.firstName && w.firstName !== w.company ? w.firstName : "";
@@ -251,7 +243,7 @@ export default function Dashboard() {
   }
   const contentRows: Todo[] = content && !content.some(p => p.channel === "page" && localDay(new Date(p.at)) === localDay())
     ? [{ key: "content:page", title: "Post today's page post", why: "Facebook page and Instagram. It's written, copy it and post.", overdue: false, href: "/crm/content", action: "Open" }] : [];
-  const all = [...dmRows, ...warmTexts, ...hiringRows, ...meetingTexts, ...refRows, ...contentRows];
+  const all = [...dmRows, ...warmTexts, ...meetingTexts, ...refRows, ...contentRows];
   const list: Todo[] | null = todo === null || warm === null ? null : [...all.filter(t => t.overdue), ...todo.filter(t => t.overdue), ...all.filter(t => !t.overdue), ...todo.filter(t => !t.overdue)];
   const when = (e: Ev) => {
     const s = new Date(e.startsAt), isToday = localDay(s) === localDay();

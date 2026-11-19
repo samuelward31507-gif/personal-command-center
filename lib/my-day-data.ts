@@ -66,8 +66,9 @@ export async function loadMyDay(sql: NeonQueryFunction<false, false>, owner: str
           AND (coalesce(c.notes, '') NOT LIKE '%Hiring:%' OR (a.action <> 'outbound_text' AND coalesce(a.notes, '') NOT LIKE 'Email sent: intro%')) AND a.outcome <> 'initiated')
         -- Call mode only gets grade A (pays for leads, a top-tier Generac dealer, or hiring for the phones). B leads stay in Contacts.
         AND coalesce(c.notes, '') LIKE '%Lead grade: A%'
-        -- A hiring lead stays off the call list until it's been texted.
-        AND (coalesce(c.notes, '') NOT LIKE '%Hiring:%' OR EXISTS (SELECT 1 FROM public.contact_activities t WHERE t.owner_id = c.owner_id AND t.contact_id = c.id AND (t.action = 'outbound_text' OR coalesce(t.notes, '') LIKE 'Email sent: intro%')))
+        -- A hiring lead with an email waits for its intro email first; one with no email goes straight to the call
+        -- list (most of their numbers are landlines, so it's never texted).
+        AND (coalesce(c.notes, '') NOT LIKE '%Hiring:%' OR coalesce(trim(c.email), '') = '' OR EXISTS (SELECT 1 FROM public.contact_activities t WHERE t.owner_id = c.owner_id AND t.contact_id = c.id AND coalesce(t.notes, '') LIKE 'Email sent: intro%'))
         AND NOT EXISTS (SELECT 1 FROM public.contact_outreach o WHERE o.owner_id = c.owner_id AND o.contact_id = c.id)
         AND NOT EXISTS (SELECT 1 FROM public.contact_suppressions s WHERE s.owner_id = c.owner_id AND s.contact_id = c.id)
       ORDER BY c.created_at LIMIT 1500`,
