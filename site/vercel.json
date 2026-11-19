@@ -4,6 +4,10 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/meet",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/meet"
+    },
+    {
       "source": "/first-call",
       "destination": "/media/why-first-call.mp4"
     },

@@ -5,7 +5,7 @@ import {
   quietHoursWarning, planFor, dueAt, nextBusinessDay, zonedTime, localDate,
 } from "./lib/sms-templates.ts";
 import { timeZoneFor, timeZoneForPhone } from "./lib/local-time.ts";
-import { meetingNudge, meetingWhen, confirmText, reminderText, bookedText, lateText, joinLink, infoFollowUpText, infoText as infoT, loomText, referralText, loomPoints, pickDemoLink } from "./lib/sms-templates.ts";
+import { meetingNudge, meetingWhen, confirmText, reminderText, bookedText, prepLink, lateText, joinLink, infoFollowUpText, infoText as infoT, loomText, referralText, loomPoints, pickDemoLink } from "./lib/sms-templates.ts";
 let n = 0; const ok = (fn, msg) => { try { fn(); n++; } catch (e) { e.message = (msg ? msg + ": " : "") + e.message; throw e; } };
 const tzOf = c => resolveTimeZone(c, timeZoneFor, timeZoneForPhone);
 
@@ -120,8 +120,9 @@ ok(() => assert.equal(joinLink("Notes\nJoin: https://app.cal.com/video/abc"), "h
 ok(() => assert.equal(joinLink("no link"), ""));
 ok(() => assert.match(reminderText({ firstName: "Mark", when: "today at 1:00 PM", link: "https://app.cal.com/video/abc" }), /nothing to prep, just open this from your phone or computer: https:\/\/app\.cal\.com\/video\/abc$/));
 ok(() => assert.match(bookedText({ firstName: "Mark", when: "tomorrow at 10:00 AM", business: "Cinder", company: "Ridge Fence", link: "https://x.co/v" }), /^Hey Mark, Sam with Cinder\. You're booked for tomorrow at 10:00 AM\. .*Ridge Fence customers[\s\S]*Join here: https:\/\/x\.co\/v\n\nIf anything/));
-ok(() => assert.match(bookedText({ firstName: "Mark", when: "tomorrow at 10:00 AM", company: "Ridge Fence", video: "https://loom.com/share/abc" }), /Here's a 2-minute video of what Ridge Fence customers would get the next time you miss a call: https:\/\/loom\.com\/share\/abc\n\nOn the call I'll walk you through it live/));
-ok(() => assert.doesNotMatch(bookedText({ when: "tomorrow at 10:00 AM" }), /video/, "no video set: no video line"));
+ok(() => assert.match(bookedText({ firstName: "Mark", when: "tomorrow at 10:00 AM", company: "Ridge Fence", prep: prepLink({ firstName: "Mark", company: "Ridge Fence" }) }), /what to expect on the call, so you know exactly what we're doing: https:\/\/cinderrevenue\.com\/meet\?n=Mark&b=Ridge\+Fence\n/));
+ok(() => assert.equal(prepLink({}), "https://cinderrevenue.com/meet"));
+ok(() => assert.doesNotMatch(bookedText({ when: "tomorrow at 10:00 AM" }), /video/, "no prep page: no video line"));
 ok(() => assert.match(lateText({ link: "https://x.co/v" }), /^Hey, Sam here\. I'm on the call now, here's the link: https:\/\/x\.co\/v\n\nIf today got busy, no problem, grab another time here: https:\/\/cinderrevenue\.com\/book$/));
 ok(() => assert.equal(meetingWhen(new Date("2026-11-10T17:00:00Z"), nowM, "America/Denver"), "tomorrow at 10:00 AM"));
 ok(() => assert.equal(meetingWhen(new Date("2026-11-09T18:00:00Z"), nowM, "America/New_York"), "today at 1:00 PM", "prospect's own time zone"));

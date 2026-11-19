@@ -242,13 +242,21 @@ export function reminderText(i: { firstName?: string; when: string; link?: strin
     : `Hey${name ? " " + name : ""}, Sam here. Quick reminder we're talking ${i.when}. 15 minutes, nothing to prep. Talk soon.`;
 }
 /** Right after they book: what the call is, so they show up curious instead of forgetting why they booked. */
-export function bookedText(i: { firstName?: string; when: string; business?: string; company?: string; link?: string; video?: string }): string {
-  const name = (i.firstName ?? "").trim(), video = (i.video ?? "").trim();
+export function bookedText(i: { firstName?: string; when: string; business?: string; company?: string; link?: string; prep?: string }): string {
+  const name = (i.firstName ?? "").trim();
   const co = i.company?.trim() || "your";
-  const what = video
-    ? `Here's a 2-minute video of what ${co} customers would get the next time you miss a call: ${video}\n\nOn the call I'll walk you through it live, 15 minutes.`
+  const what = i.prep
+    ? `Here's a 2-minute video and what to expect on the call, so you know exactly what we're doing: ${i.prep}`
     : `It's a quick 15-minute screen share: I'll show you exactly what ${co} customers would get the next time you miss a call.`;
   return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. You're booked for ${i.when}. ${what}${i.link ? `\n\nJoin here: ${i.link}` : ""}\n\nIf anything comes up, just text me a better time.`;
+}
+/** The "before our call" page for a booked prospect: cinderrevenue.com/meet?n=First&b=Company. */
+export function prepLink(i: { firstName?: string; company?: string; site?: string }): string {
+  const q = new URLSearchParams();
+  if (i.firstName?.trim()) q.set("n", i.firstName.trim());
+  if (i.company?.trim()) q.set("b", i.company.trim());
+  const qs = q.toString();
+  return `${(i.site || "https://cinderrevenue.com").replace(/\/$/, "")}/meet${qs ? "?" + qs : ""}`;
 }
 /** A few minutes past the start and they're not on: make it easy to join or move it, never guilt. */
 export function lateText(i: { firstName?: string; link?: string; booking?: string }): string {

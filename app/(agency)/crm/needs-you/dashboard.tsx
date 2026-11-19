@@ -10,7 +10,7 @@ import type { QueueItem } from "@/lib/my-day";
 import { dueFollowUps } from "@/lib/email-outreach";
 import { INBOX_URL, CHANNEL_LABEL } from "@/lib/inbox-links";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
-import { bookedText, confirmText, joinLink, lateText, meetingNudge, meetingWhen, reminderText, type MeetingStep, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText, hiringText } from "@/lib/sms-templates";
+import { bookedText, prepLink, confirmText, joinLink, lateText, meetingNudge, meetingWhen, reminderText, type MeetingStep, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText, hiringText } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
 
@@ -143,7 +143,7 @@ export default function Dashboard() {
     if (!e.contactPhone || !e.contactId) return;
     const tz = resolveTimeZone({ timeZone: e.contactTimeZone, location: e.contactLocation, phone: e.contactPhone }, timeZoneFor, timeZoneForPhone);
     const at = meetingWhen(new Date(e.startsAt), new Date(), tz), link = joinLink(e.description), first = firstOf(e);
-    const body = kind === "welcome" ? bookedText({ firstName: first, when: at, business: ws.businessName, company: e.contactCompany, link, video: ws.bookedVideo })
+    const body = kind === "welcome" ? bookedText({ firstName: first, when: at, business: ws.businessName, company: e.contactCompany, link, prep: prepLink({ firstName: first, company: e.contactCompany, site: ws.websiteUrl }) })
       : kind === "confirm" ? confirmText({ firstName: first, when: at, business: ws.businessName })
       : kind === "remind" ? reminderText({ firstName: first, when: at, link })
       : lateText({ firstName: first, link, booking: ws.bookingLink });

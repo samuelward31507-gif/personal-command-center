@@ -1,0 +1,26 @@
+/* "Before our call" page: light, quiet, one column. Matches cinderrevenue.com. */
+.mt { --ink: #121417; --mute: #5b616b; --line: #e3e6ea; --ember: #c2300f; --bg: #f6f7f9;
+  min-height: 100vh; background: var(--bg); color: var(--ink); font-family: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased; padding: 0 20px 96px; }
+.mt > * { max-width: 720px; margin-left: auto; margin-right: auto; }
+.mt-top { padding: 22px 0; border-bottom: 1px solid var(--line); }
+.mt-brand { font-weight: 640; letter-spacing: -0.01em; font-size: 15px; }
+.mt-hero { padding: clamp(40px, 7vw, 72px) 0 28px; }
+.mt-hero h1 { margin: 0 0 16px; font-size: clamp(32px, 5vw, 46px); line-height: 1.08; letter-spacing: -0.035em; font-weight: 600; text-wrap: balance; }
+.mt-hero p { margin: 0; font-size: 17px; line-height: 1.55; color: var(--mute); max-width: 36em; }
+.mt-video { margin-bottom: 40px; }
+.mt-video iframe { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 14px; background: #fff; display: block; }
+.mt-btn { display: inline-block; padding: 13px 20px; border-radius: 10px; background: var(--ink); color: #fff; text-decoration: none; font-weight: 560; }
+.mt-sec { padding: 28px 0; border-top: 1px solid var(--line); }
+.mt-sec h2 { margin: 0 0 12px; font-size: 20px; letter-spacing: -0.02em; font-weight: 620; }
+.mt-sec p, .mt-sec li { font-size: 16px; line-height: 1.6; color: #2b3038; }
+.mt-sec p { margin: 0; }
+.mt-steps, .mt-list { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
+.mt-steps b { color: var(--ink); font-weight: 600; }
+.mt-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.mt-cols h3 { margin: 0 0 6px; font-size: 15px; font-weight: 620; color: var(--ember); }
+.mt-cols p { font-size: 15px; }
+.mt-foot { padding-top: 28px; border-top: 1px solid var(--line); }
+.mt-foot p { margin: 0; color: var(--mute); font-size: 15px; }
+.mt-foot a { color: var(--ink); }
+@media (max-width: 680px) { .mt-cols { grid-template-columns: 1fr; gap: 16px; } }
