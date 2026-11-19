@@ -112,4 +112,7 @@ ok(() => assert.equal(M.replyText("Paid it this morning.\r\n\r\nSent from my iPh
 ok(() => assert.equal(M.replyText("Yes please.\n\n________________________________\nFrom: Ridgeline Fence <quotes@cinder.test>\nSent: Monday\n"), "Yes please."));
 ok(() => assert.equal(M.replyText("Approved!\n-----Original Message-----\nFrom: x"), "Approved!"));
 ok(() => assert.equal(M.replyText("> only quoted"), ""));
+// The number only in a tap-to-call link, or only in the subject.
+ok(() => { const r = M.readMail({ from: "Angi Leads <leads@angi.com>", subject: "New lead: Dana Ruiz", text: "Name: Dana Ruiz\nProject: Fence install\nCall the customer", html: '<p>Name: Dana Ruiz</p><a href="tel:+17205550148">Call</a>' }); assert.equal(r.kind, "lead"); assert.equal(r.lead.phone, "+17205550148"); });
+ok(() => { const r = M.readMail({ from: "Website <wordpress@ridgelinefence.com>", subject: "New request from Sam, 720-555-0133", text: "Name: Sam Lee\nMessage: cedar fence" }); assert.equal(r.kind, "lead"); assert.equal(r.lead.phone, "+17205550133"); });
 console.log(`lead mail: ${n} checks passed`);
