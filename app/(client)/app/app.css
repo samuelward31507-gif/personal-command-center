@@ -1789,3 +1789,23 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: .55; cursor: po
 }
 /* "Needs you" labels and counts are orange; red stays for failures and late money. */
 .grp.hot b, .inbox .grp.hot b, .shell .ri em.hot { color: var(--warn); }
+
+/* Receivables: a ramp from "not due yet" to "very late", so the bar shows where the money sits. */
+.aging .b0 { background: #9aa3b0; } .aging .b1 { background: #d9a441; } .aging .b2 { background: var(--warn); } .aging .b3 { background: #c2261c; } .aging .b4 { background: #8f1d15; }
+.aging-bar { background: var(--paper-2); }
+
+/* Report bars carry meaning: the funnel in the business's color, lost reasons in a muted red. */
+.funnel2 .fn-bar.s0 { background: #c9ced6; } .funnel2 .fn-bar.s1 { background: #9aa3b0; } .funnel2 .fn-bar.s2 { background: #5d6674; } .funnel2 .fn-bar.s3 { background: var(--good); }
+.bars.lost li i { background: #d98a83; }
+
+/* Today's numbers, folded under the summary on a phone. */
+.t5-nums { display: none; }
+@media (max-width: 720px) {
+  .t5-nums { display: block; border: 1px solid var(--hair-2); border-radius: var(--r3); background: #fff; }
+  .t5-nums > summary { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px; list-style: none; cursor: pointer; }
+  .t5-nums > summary::-webkit-details-marker { display: none; }
+  .t5-nums > summary b { font-weight: 600; } .t5-nums > summary span { flex: 1; min-width: 0; color: var(--g1); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .t5-nums[open] > summary svg { transform: rotate(180deg); }
+  .t5-nums-b { padding: 0 14px 8px; border-top: 1px solid var(--hair); }
+  .t5-rail .t5-dup { display: none; }
+}

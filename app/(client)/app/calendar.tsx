@@ -16,7 +16,20 @@ import type { Biz, Data, Go } from "./types";
 
 type Block = { key: string; kind: "estimate" | "install" | "event" | "visit"; title: string; sub: string; start: number; end: number; allDay: boolean; day: string; thread?: string; link?: string; apptId?: string; name?: string; addr?: string; crew?: string };
 const maps = (a: string) => `https://maps.google.com/?daddr=${encodeURIComponent(a)}`;
-const H0 = 6, H1 = 20, ROW = 44;
+const ROW = 44;
+/** The hours the grid shows: from the business's opening hour to its closing hour (Settings, "Mon-Fri 7:00-18:00"),
+ *  widened to fit anything booked outside them. Empty early and late hours are left off. Falls back to 7 AM to 6 PM. */
+function dayRange(hoursText: string | undefined, blocks: { start: number; end: number; allDay?: boolean }[]): [number, number] {
+  let lo = 24, hi = 0;
+  for (const m of (hoursText ?? "").matchAll(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*[-–]\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/gi)) {
+    let a = Number(m[1]), b = Number(m[4]); const bm = Number(m[5] || 0);
+    if (/pm/i.test(m[3] || "") && a < 12) a += 12; if (/pm/i.test(m[6] || "") && b < 12) b += 12; if (!m[6] && b < a) b += 12;
+    if (a >= 0 && a < 24 && b > a && b <= 24) { lo = Math.min(lo, a); hi = Math.max(hi, b + (bm ? 1 : 0)); }
+  }
+  if (lo >= hi) { lo = 7; hi = 18; }
+  for (const x of blocks) { if (x.allDay) continue; const s = new Date(x.start), e = new Date(x.end); lo = Math.min(lo, s.getHours()); hi = Math.max(hi, e.getHours() + (e.getMinutes() ? 1 : 0)); }
+  return [Math.max(0, lo), Math.min(24, Math.max(hi, lo + 4))];
+}
 /** Events that overlap in one column sit side by side: each gets a lane index and the column's lane count. */
 function laneOf<B extends { key: string; start: number; end: number }>(list: B[]): Map<string, { i: number; n: number }> {
   const out = new Map<string, { i: number; n: number }>(), sorted = [...list].sort((a, b) => a.start - b.start);
@@ -44,7 +57,8 @@ type Drag = { apptId: string; x0: number; y0: number; moved: boolean; day: strin
  * The day by crew member: one column each (you first), estimates, installs and plan visits where they fall. Drag a job
  * to another column to hand it to them (they get a text with the details); each column has its own route in time order.
  */
-function CrewDay({ day, setDay, today, team, blocks, busy, onOpen, onAssign, daysOff = [] }: { day: string; setDay: (d: string) => void; today: string; team: { cell: string; name: string }[]; blocks: Block[]; busy: string; onOpen: (b: Block) => void; onAssign: (b: Block, cell: string) => void; daysOff?: DayOff[] }) {
+function CrewDay({ day, setDay, today, team, blocks, busy, onOpen, onAssign, daysOff = [], range = [7, 18] }: { range?: [number, number]; day: string; setDay: (d: string) => void; today: string; team: { cell: string; name: string }[]; blocks: Block[]; busy: string; onOpen: (b: Block) => void; onAssign: (b: Block, cell: string) => void; daysOff?: DayOff[] }) {
+  const [H0, H1] = range;
   const closed = offOn(daysOff.filter(o => !o.who), day);
   const grid = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ key: string; x0: number; col: number; moved: boolean } | null>(null);
@@ -124,6 +138,7 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
     return out;
   }, [d, cal.events, byThread, days]);
   const blocks = who === "all" ? allBlocks : allBlocks.filter(b => b.kind === "event" || (b.crew ?? "") === who);
+  const [H0, H1] = useMemo(() => dayRange(d.setup?.hours, allBlocks), [d.setup?.hours, allBlocks]);
   const team = teamOf(d);
   const route = (dd: string) => routeUrl(blocks.filter(b => b.day === dd && b.kind !== "event" && b.addr).sort((a, b) => a.start - b.start).map(b => b.addr!));
   const crewPick = team.length > 1 ? <select className="input sm" aria-label="Whose schedule" value={who} onChange={e => setWho(e.target.value)} style={{ width: "auto" }}><option value="all">Everyone</option>{team.map(t => <option key={t.cell} value={t.cell}>{t.name}</option>)}</select> : null;
@@ -200,7 +215,7 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
           {!cal.connected && !cal.error && <p className="fine">Connect your Google Calendar and estimates only get booked where you&rsquo;re free. Your own events show up here too.</p>}
           {outcomes}
         </div>}
-        {mode === "crew" ? <CrewDay daysOff={cleanDaysOff(d.setup?.days_off ?? "[]", today)} day={day} setDay={setDay} today={today} team={team} blocks={allBlocks.filter(b => b.day === day && b.kind !== "event")} busy={busy}
+        {mode === "crew" ? <CrewDay range={[H0, H1]} daysOff={cleanDaysOff(d.setup?.days_off ?? "[]", today)} day={day} setDay={setDay} today={today} team={team} blocks={allBlocks.filter(b => b.day === day && b.kind !== "event")} busy={busy}
             onOpen={open} onAssign={(b, cell) => void act("assign" + b.key, { action: "assign", thread: b.thread, member: cell }, r => `${cell ? `Assigned to ${crewName(d, cell)}` : "Taken back by you"}.${(r as { texted?: boolean }).texted ? " Texted them the details." : ""}`)} />
         : <div className="cal">
           <div className="cal-head"><div className="cal-gutter" />{days.map(dd => { const x = new Date(dd + "T12:00:00"); return <div key={dd} className={"cal-dh" + (dd === today ? " today" : "")}><small>{x.toLocaleDateString("en-US", { weekday: "short" })}</small><b>{x.getDate()}</b></div>; })}</div>

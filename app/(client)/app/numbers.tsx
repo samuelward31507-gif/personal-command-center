@@ -109,7 +109,7 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
               <div className="money"><span>Invoiced</span><b>{usd(n!.invoiced)}</b></div>
               <div className="money"><span>No-shows</span><b>{R!.noShow == null ? "–" : `${R!.noShow}%`}<small> {n!.noShows} of {n!.appts}</small></b></div>
               <p className="sec" style={{ marginTop: 16 }}>Why jobs were lost<small>{lostTotal ? `${lostTotal} lost` : ""}</small></p>
-              {r!.lostReasons.length ? <ul className="bars">{r!.lostReasons.map(x => <li key={x.reason}><span>{x.reason}</span><i style={{ width: `${(x.n / (r!.lostReasons[0]?.n || 1)) * 100}%` }} /><b>{x.n}</b></li>)}</ul>
+              {r!.lostReasons.length ? <ul className="bars lost">{r!.lostReasons.map(x => <li key={x.reason}><span>{x.reason}</span><i style={{ width: `${(x.n / (r!.lostReasons[0]?.n || 1)) * 100}%` }} /><b>{x.n}</b></li>)}</ul>
                 : <p className="fine">Mark a job lost with a reason and the pattern shows here.</p>}
             </div>
           </section>
