@@ -138,7 +138,7 @@ export default function CallModePage() {
 
   const item = queue[index];
   const contact = picked && contacts[picked] ? contacts[picked] : item?.contact ? { ...item.contact, ...(contacts[item.contact.id] ?? {}) } as Contact : null;
-  const track: Track = contact && openerFor(contact.niche, contact.company, contact.notes).trade === "detailing" ? "detailing" : "trades";
+  const track: Track = !contact ? "trades" : openerFor(contact.niche, contact.company, contact.notes).trade === "detailing" ? "detailing" : /generator/i.test(contact.niche ?? "") ? "generator" : "trades";
   const play = SCRIPTS[track];
   const playFirst = contact ? firstName(contact.name ?? "", contact.company ?? "") : "";
   useEffect(() => { setSay(null); }, [contact?.id]);
