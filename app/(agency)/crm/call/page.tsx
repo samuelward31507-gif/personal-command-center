@@ -502,7 +502,7 @@ export default function CallModePage() {
         })()}
 
         {(() => {
-          const f = (line: string) => fillLine(line, track, playFirst);
+          const f = (line: string) => fillLine(line, track, playFirst, { niche: contact?.niche, company: contact?.company });
           const ob = play.objections.find(o => o.id === say);
           const extra = [["voicemail", "Voicemail"], ["gatekeeper", "Gatekeeper"]] as const;
           return <div className="dl-open dl-play" aria-label="What to say">
