@@ -39,7 +39,7 @@ export const ANGLES = [
 
 export const PILLARS: Record<string, { name: string; brief: string; weight: number; platforms: Platform[] }> = {
   missed: { name: "Missed calls", brief: "What happens to calls a contractor can't pick up on a job, and the fix: a text back in seconds that books the estimate.", weight: 3, platforms: ["feed", "video", "linkedin"] },
-  quotes: { name: "Quote follow-up", brief: "Quotes that go quiet aren't no's. Follow-up on day 2, 5, 10 and 21 until it's a yes or a no.", weight: 3, platforms: ["feed", "video", "linkedin"] },
+  quotes: { name: "Quote follow-up", brief: "Quotes that go quiet aren't no's. Follow-up on days 2, 5 and 10, then monthly until it's a yes or a no.", weight: 3, platforms: ["feed", "video", "linkedin"] },
   build: { name: "Building in public", brief: "Sam's real week running Cinder: the numbers from this week, what worked, what didn't. Use only the numbers given.", weight: 3, platforms: ["feed", "video", "linkedin"] },
   heard: { name: "What owners told me", brief: "One thing contractors said on cold calls this week, and what it means for their business. Never name anyone.", weight: 3, platforms: ["feed", "video", "linkedin", "group"] },
   tip: { name: "Free tip", brief: "One practical thing a trade business owner can do this week without buying anything: a follow-up text to copy, how to ask for a review, a better voicemail greeting, Google profile basics.", weight: 3, platforms: ["feed", "video", "linkedin", "group"] },

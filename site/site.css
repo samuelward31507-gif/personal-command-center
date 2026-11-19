@@ -970,3 +970,6 @@ body { background: var(--night); color: var(--fog); }
 .demo-phone { border: 0 !important; border-radius: 20px !important; box-shadow: none !important; background: #f6f7f9 !important; aspect-ratio: 9 / 16; width: min(380px, 100%); }
 /* /watch is a dark full-screen film: keep its original dark tokens. */
 body.watch { --night: #131211; --night-2: #1a1917; --night-3: #221f1d; --line: #262321; --line-2: #33302c; --concrete: #8f8881; --fog: #b2aba3; --paper: #f3efe9; background: #131211; color: #b2aba3; }
+
+.cal-direct { margin: 12px 0 0; text-align: center; font-size: 14px; color: #6b6b6b; }
+.cal-direct a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }

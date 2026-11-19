@@ -210,9 +210,7 @@
         await sleep(700); cmd.classList.add("hit"); await sleep(380); cmd.classList.remove("open", "hit");
         toast.classList.add("show"); row("Quote", "Priya Shah", "$6,840 · cedar", "Sent · chase on", "done");
         await sleep(2200); toast.classList.remove("show"); if (!alive()) break;
-        step(3); row("Invoice #1042", "Henderson", "$8,600", "Paid", "done paid");
-        await tick(K("booked"), booked, booked + 8600, 1200, money); booked += 8600;
-        await sleep(3200);
+        await sleep(1600);
         win.classList.add("resetting"); await sleep(500);
         feed.innerHTML = ""; $$(".ev.new", slot).forEach(function (n) { n.remove(); });
         leads = 5; booked = 32450; K("leads").textContent = "5"; K("ans").textContent = "5 of 5"; K("inbox").textContent = "3"; K("booked").textContent = money(booked);

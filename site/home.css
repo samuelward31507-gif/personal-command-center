@@ -567,3 +567,6 @@ p, li, dd { text-wrap: pretty; }
 
 .notif .ic.ic-logo { background: none; padding: 0; overflow: hidden; }
 .notif .ic.ic-logo svg { display: block; }
+
+.cal-direct { margin: 12px 0 0; text-align: center; font-size: 14px; color: #6b6b6b; }
+.cal-direct a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }

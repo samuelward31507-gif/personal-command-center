@@ -6,7 +6,7 @@ export const AGREEMENT_TEMPLATE = "# Cinder Revenue Company Service Agreement\n\
 
 const SCHEDULE_BASE = "- Text reply in about 10 seconds to missed calls, website forms, Facebook lead ads, and Angi or Thumbtack leads Client forwards\n- Client's qualifying questions and price range before anything is booked\n- Client's job rules (minimums, small jobs, service area)\n- Appointment booking on Client's calendar\n- Appointment reminders and automatic no-show rebooking texts\n- Replies in English and Spanish\n- Owner alert with the full lead summary; owner can take over any conversation\n- Up to 3 follow-up texts to new leads who go quiet, and a reminder to Client when a handed-off customer is waiting\n- Weekly text report on Mondays\n- Voice AI answering for missed and after-hours calls, added at no extra cost when Cinder releases it";
 export const SCHEDULE_TIER1 = "**Never Miss a Lead. Setup {{setup_fee}}, then {{monthly_fee}}/month.**\n\n" + SCHEDULE_BASE + "\n- Includes 2,000 texts/month";
-export const SCHEDULE_TIER2 = "**Book & Close. Setup {{setup_fee}}, then {{monthly_fee}}/month.**\n\n**Lead response**\n\n" + SCHEDULE_BASE + "\n\n**Quote follow-up and closing**\n\n- Follow-up on every quote on days 2, 5, 10 and 21 until it's a yes or a no, with replies answered in seconds\n- Client starts a quote's follow-up by sending one text\n- \"Too expensive\" replies get Client's financing or a smaller option; real price negotiation goes to Client\n- Reactivation campaign (included): at go-live, a one-time round of texts to open quotes from the last 90 days, unbooked leads from the last 12 months and past customers that Client provides\n- Review request after every completed job\n- Monthly results report: leads, booked estimates, quotes won and reply times\n- Includes 5,000 texts/month";
+export const SCHEDULE_TIER2 = "**Book & Close. Setup {{setup_fee}}, then {{monthly_fee}}/month.**\n\n**Lead response**\n\n" + SCHEDULE_BASE + "\n\n**Quote follow-up and closing**\n\n- Follow-up on every quote on days 2, 5 and 10, then monthly until it's a yes or a no, with replies answered in seconds\n- Client starts a quote's follow-up by sending one text\n- \"Too expensive\" replies get Client's financing or a smaller option; real price negotiation goes to Client\n- Reactivation campaign (included): at go-live, a one-time round of texts to open quotes from the last 90 days, unbooked leads from the last 12 months and past customers that Client provides\n- Review request after every completed job\n- Monthly results report: leads, booked estimates, quotes won and reply times\n- Includes 5,000 texts/month";
 
 export type AgreementTier = "tier1" | "tier2";
 export const TIER_TERMS: Record<AgreementTier, { planName: string; includedTexts: string; schedule: string }> = {
@@ -118,7 +118,7 @@ export function planItems(tier: AgreementTier): string[] {
   ];
   if (tier === "tier1") return [...base, "2,000 texts a month included"];
   return [...base,
-    "Every quote followed up on days 2, 5, 10 and 21 until it's a yes or a no",
+    "Every quote followed up on days 2, 5 and 10, then monthly until it's a yes or a no",
     "\u201cToo expensive\u201d gets your financing or a smaller option; real price talk comes to you",
     "Reactivation campaign, included: your open quotes, unbooked leads and past customers texted once, the week you go live",
     "A review request after every finished job",

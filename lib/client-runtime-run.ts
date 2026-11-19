@@ -412,7 +412,7 @@ async function ownerText(sql: Sql, c: Client, body: string): Promise<void> {
   await sql`UPDATE public.client_appointments SET status = 'done' WHERE thread_id = ${t.id}::uuid AND status = 'booked' AND starts_at < now()`;
   await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${t.id}::uuid, 'out', 'system', ${`Quote sent${q.amount ? `: $${q.amount.toLocaleString("en-US")}` : ""}. Cinder follows up until they answer.`})`;
   const who = t.customer_name || e164(t.customer_phone);
-  await sendSms(cell, from, `Got it. Following up with ${who} on the ${q.amount ? "$" + q.amount.toLocaleString("en-US") + " " : ""}quote: days 2, 5, 10 and 21, until they answer.`);
+  await sendSms(cell, from, `Got it. Following up with ${who} on the ${q.amount ? "$" + q.amount.toLocaleString("en-US") + " " : ""}quote: days 2, 5 and 10, then monthly until they answer.`);
 }
 
 /** Marks an estimate canceled and removes it from the owner's Google Calendar. True when the calendar is clean. */

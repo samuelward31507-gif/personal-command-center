@@ -17,7 +17,7 @@ Fence, roofing, concrete, HVAC: if you're on a job when the phone rings, this is
 
 That's not a no. Nobody followed up.
 
-Cinder follows up on every quote by text on day 2, 5, 10 and 21 until it's a yes or a no, and answers their questions in seconds. The jobs you already quoted are the easiest ones to close.` },
+Cinder follows up on every quote by text on days 2, 5 and 10, then monthly until it's a yes or a no, and answers their questions in seconds. The jobs you already quoted are the easiest ones to close.` },
   { key: "p-guess", channel: "page", label: "Owners guess wrong", body: `Business owners guessed they answered 97% of their calls. Call recordings showed 66% (Service Direct).
 
 Nobody's lazy. You're on a roof, in a trench, under a car. The phone rings anyway.
@@ -151,7 +151,7 @@ End card: "Missed calls are jobs. Answer them all."` },
   { key: "v-quote", channel: "video", label: "The quote follow-up", shoot: "Screen-record the quote follow-up texts from the demo (or mock them up in your notes app).", body: `Hook: "You didn't lose that job. You just never followed up."
 
 VO: Here's what happens to most contractor quotes. Sent once. Never chased.
-VO: This is what follow-up looks like on autopilot: day 2, day 5, day 10, day 21, until it's a yes or a no.
+VO: This is what follow-up looks like on autopilot: day 2, day 5, day 10, then monthly, until it's a yes or a no.
 VO: The jobs you already quoted are the easiest ones to close.` },
   { key: "v-19", channel: "video", label: "19 and building this", shoot: "Desk, laptop, the CRM on screen. Voiceover or just captions.", body: `Hook: "I'm 19 and I cold call contractors every day"
 
@@ -186,7 +186,7 @@ Most companies reply the next morning. By then they've booked someone else. Link
 Every missed call gets a text back in seconds and the estimate booked. Link in bio.`,
   "v-quote": `You didn't lose that job. You just never followed up.
 
-Day 2, day 5, day 10, day 21: every quote chased until it's a yes or a no, without you lifting a finger. Link in bio.`,
+Day 2, day 5, day 10, then monthly: every quote chased until it's a yes or a no, without you lifting a finger. Link in bio.`,
   "v-19": `I'm 19 and I cold call contractors every day. They all say the same thing: they're not short on leads, they lose them.
 
 So I built the fix. Follow along.`,

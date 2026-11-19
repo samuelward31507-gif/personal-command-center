@@ -47,7 +47,7 @@ export const TIER2_EXTRAS: readonly PlaybookStep[] = [
   { title: "Import the last 6 months of quotes", description: "Name, phone, job, amount and date for every open quote (Schedule B item 11). Launch revival texts open quotes from the last 90 days.", dueInDays: 10 },
   { title: "Add budget, financing and feasibility questions", description: "Budget ranges, financing details, and site questions like access, HOA, slope and permits.", dueInDays: 11 },
   { title: "Set up two-step booking, zones and estimator rotation", description: "Video call first, then site visit; service zones by day; estimator schedules.", dueInDays: 14 },
-  { title: "Build quote follow-up (days 2, 5, 10, 21)", description: "Every quote followed up on days 2, 5, 10 and 21 until it's a yes or a no; 'too expensive' gets financing or a smaller option. Within quiet hours.", dueInDays: 16 },
+  { title: "Build quote follow-up (days 2, 5, 10, then monthly)", description: "Every quote followed up on days 2, 5 and 10, then monthly until it's a yes or a no; 'too expensive' gets financing or a smaller option. Within quiet hours.", dueInDays: 16 },
   { title: "Set up the daily owner summary and quiet hours", description: "One morning summary to the owner; no follow-ups outside 8 am–8 pm.", dueInDays: 17 },
   { title: "Connect the client's CRM", description: "Sync leads, bookings and outcomes with their CRM (Schedule B item 16).", dueInDays: 18 },
   { title: "Launch-week reactivation of old quotes", description: "One respectful message to the last 6 months of quotes, only contacts the client has permission to reach.", dueInDays: 30 },
