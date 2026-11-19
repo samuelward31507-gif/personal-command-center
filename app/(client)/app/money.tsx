@@ -40,13 +40,14 @@ export function LineEditor({ items, setItems, tax, setTax, options }: { items: I
   return <div className={"le" + (options ? " opts" : "")}>
     {options && tiers.length > 0 && <div className="le-tiers"><span>Options they pick from</span>{tiers.map(tr => <input key={tr} className="input" aria-label={`Rename ${tr}`} defaultValue={tr} onBlur={e => { if (e.target.value !== tr) rename(tr, e.target.value); }} onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} />)}</div>}
     <ul>{items.map((i, k) => <li key={k} className={"lrow" + (i.opt ? " is-opt" : i.tier ? " is-tier" : "")}>
-      <input className="input" aria-label="What" value={i.name} placeholder={cat.length ? "What it is, or pick from your price list" : "What it is"} list={cat.length ? listId : undefined} onChange={e => named(k, e.target.value)} />
+      {cat.length ? <input className="input le-what" aria-label="What" value={i.name} placeholder="What it is, or pick from your price list" list={listId} onChange={e => named(k, e.target.value)} />
+        : <textarea className="input le-what" aria-label="What" rows={1} value={i.name} placeholder="What it is" onKeyDown={e => { if (e.key === "Enter") e.preventDefault(); }} onChange={e => named(k, e.target.value.replace(/\n/g, " "))} />}
       <span className="nums">
         {options && (tiers.length > 0 || i.opt || addons.length > 0) && <select className="lmode" aria-label="Which option" value={mode(i)} onChange={e => setMode(k, e.target.value)}>
-          <option value="inc">{tiers.length ? "In every option" : "Included"}</option>
+          <option value="inc">{tiers.length ? "Every option" : "Included"}</option>
           {tiers.map(tr => <option key={tr} value={"t:" + tr}>{tr}</option>)}
           <option value="new">New option</option>
-          <option value="opt">Add-on they can tick</option>
+          <option value="opt">Add-on</option>
         </select>}
         <label className="inwrap"><input aria-label="Quantity" inputMode="decimal" value={i.qty || ""} placeholder="1" onChange={e => set(k, { qty: n(e.target.value) })} />{i.unit && <em>{i.unit}</em>}</label>
         <span className="x" aria-hidden="true">×</span>
@@ -90,7 +91,7 @@ const dotFor = (tone: string) => tone === "green" ? "good" : tone === "red" ? "b
 /** One invoice: lines, due date, note; send it, copy the link, mark it paid. */
 export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], project, api, toast, reload, payLink, onClose, onSetup }: { inv: CardInvoice; customer: string; email?: string; emailReady?: boolean; payments?: Payment[]; project: string; api: Api; toast: Toast; reload: () => Promise<void>; payLink: boolean; onClose: () => void; onSetup: () => void }) {
   const [items, setItems] = useState<Item[]>(inv.items), [tax, setTax] = useState(inv.tax_rate), [note, setNote] = useState(inv.note), [due, setDue] = useState(inv.due_on ?? "");
-  const [busy, setBusy] = useState(""), [arm, setArm] = useArm();
+  const [busy, setBusy] = useState(""), [arm, setArm] = useArm(), [more, setMore] = useState(false);
   const bal = balanceOf(inv), mine = payments.filter(p => p.invoice_id === inv.id);
   const refunded = Math.round(-mine.filter(p => p.refund).reduce((a, p) => a + p.amount, 0) * 100) / 100, canRefund = Math.round((inv.total - bal - refunded) * 100) / 100;
   const [refunding, setRefunding] = useState(false);
@@ -115,16 +116,22 @@ export function InvoiceSheet({ inv, customer, email, emailReady, payments = [], 
   }
   return <Sheet onClose={onClose} title={`Invoice #${inv.number}`} sub={<>{customer}, <span className={"dot " + dotFor(st.tone)} style={{ display: "inline-flex" }}>{st.text}</span></>}
     foot={<>
-      {inv.status === "paid" ? <button type="button" className="btn" disabled={!!busy} onClick={() => void act("unpaid", { action: "invoiceset", what: "unpaid" }, "Marked unpaid.")}>Mark unpaid</button>
-        : !locked && !paying && <button type="button" className="btn ok" disabled={!!busy} onClick={() => { setPAmt(String(bal)); setPaying(true); }}>Record payment</button>}
-      {inv.status !== "void" && canRefund > 0 && !refunding && !paying && <button type="button" className="btn" disabled={!!busy} onClick={() => { setPAmt(String(canRefund)); setPMethod("card"); setPNote(""); setRefunding(true); }}>Refund</button>}
-      {inv.status === "sent" && <button type="button" className="btn" disabled={!!busy} onClick={() => void act("pause", { action: "invoiceset", what: inv.reminders_paused ? "resume" : "pause" }, inv.reminders_paused ? "Reminders back on." : "Reminders paused.")}>{inv.reminders_paused ? "Resume reminders" : "Pause reminders"}</button>}
-      {!locked && <button type="button" className="btn danger" disabled={!!busy} onClick={() => arm === "void" ? void act("void", { action: "invoiceset", what: "void" }, "Invoice voided.", true) : setArm("void")}>{arm === "void" ? "Tap again to void" : "Void"}</button>}
+      {/* Three things in view: the second action, Save when there's an edit, the main one. The rest sit in More, Void last and apart. */}
+      {(inv.status !== "void" && canRefund > 0 && !refunding && !paying) || inv.status === "sent" || !locked ? <div className="menu-wrap">
+        <button type="button" className="btn" aria-expanded={more} aria-haspopup="menu" disabled={!!busy} onClick={() => setMore(m => !m)}>More<Icon name="down" size={13} /></button>
+        {more && <div className="menu pop up" role="menu" onMouseLeave={() => setMore(false)}>
+          {inv.status !== "void" && canRefund > 0 && !refunding && !paying && <button type="button" role="menuitem" onClick={() => { setMore(false); setPAmt(String(canRefund)); setPMethod("card"); setPNote(""); setRefunding(true); }}>Refund</button>}
+          {inv.status === "sent" && <button type="button" role="menuitem" onClick={() => { setMore(false); void act("pause", { action: "invoiceset", what: inv.reminders_paused ? "resume" : "pause" }, inv.reminders_paused ? "Reminders back on." : "Reminders paused."); }}>{inv.reminders_paused ? "Resume reminders" : "Pause reminders"}</button>}
+          {!locked && <button type="button" role="menuitem" onClick={() => { setMore(false); void copy(); }}>Copy link</button>}
+          {!locked && inv.url && <button type="button" role="menuitem" title={email ? `Email it to ${email}` : "Add their email on the customer first"} onClick={async () => { setMore(false); setBusy("email"); await emailDoc({ ready: emailReady, api, project, toast, reload, kind: "invoice", invoice: inv.id, to: email, name: customer, mailto: `mailto:${email ?? ""}?subject=${encodeURIComponent(`Invoice #${inv.number}`)}&body=${encodeURIComponent(`Hi ${first}, here's your invoice for ${dollars(bal)}${inv.due_on ? `, due ${dateLabel(inv.due_on)}` : ""}. You can see it and pay here: ${inv.url}`)}` }); setBusy(""); }}>Email it</button>}
+          {!locked && <><hr /><button type="button" role="menuitem" className="danger" onClick={() => { if (arm === "void") { setMore(false); void act("void", { action: "invoiceset", what: "void" }, "Invoice voided.", true); } else setArm("void"); }}>{arm === "void" ? "Tap again to void this invoice" : "Void invoice"}</button></>}
+        </div>}
+      </div> : null}
       <span style={{ flex: 1 }} />
-      {!locked && dirty && <button type="button" className="btn" disabled={!!busy} onClick={() => void save()}>Save</button>}
-      {!locked && <button type="button" className="btn" disabled={!!busy} onClick={() => void copy()}>Copy link</button>}
-      {!locked && inv.url && <button type="button" className="btn" disabled={!!busy} title={email ? `Email it to ${email}` : "Add their email on the customer first"} onClick={async () => { setBusy("email"); await emailDoc({ ready: emailReady, api, project, toast, reload, kind: "invoice", invoice: inv.id, to: email, name: customer, mailto: `mailto:${email ?? ""}?subject=${encodeURIComponent(`Invoice #${inv.number}`)}&body=${encodeURIComponent(`Hi ${first}, here's your invoice for ${dollars(bal)}${inv.due_on ? `, due ${dateLabel(inv.due_on)}` : ""}. You can see it and pay here: ${inv.url}`)}` }); setBusy(""); }}>{busy === "email" ? <Spinner /> : "Email it"}</button>}
-      {!locked && <button type="button" className="btn ink" disabled={!!busy} onClick={() => void send()}>{busy === "send" ? <Spinner /> : inv.status === "sent" ? "Text it again" : `Text ${first}`}</button>}
+      {!locked && dirty && <button type="button" className="btn" disabled={!!busy} onClick={() => void save()}>{busy === "save" ? <Spinner /> : "Save"}</button>}
+      {inv.status === "paid" ? <button type="button" className="btn" disabled={!!busy} onClick={() => void act("unpaid", { action: "invoiceset", what: "unpaid" }, "Marked unpaid.")}>Mark unpaid</button>
+        : !locked && !paying && <button type="button" className="btn" disabled={!!busy} onClick={() => { setPAmt(String(bal)); setPaying(true); }}>Record payment</button>}
+      {!locked && <button type="button" className="btn ink" disabled={!!busy} onClick={() => void send()}>{busy === "send" || busy === "email" ? <Spinner /> : inv.status === "sent" ? "Text it again" : `Text ${first}`}</button>}
     </>}>
     {!payLink && !locked && <div className="card box"><b className="t-em">No pay link yet</b><p className="fine" style={{ marginTop: 2 }}>Add your Square, Stripe or PayPal link so customers can pay from the invoice.</p>
       <button type="button" className="btn sm" style={{ marginTop: 8 }} onClick={onSetup}>Add pay link</button></div>}

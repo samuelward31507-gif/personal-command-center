@@ -17,6 +17,19 @@ import type { Biz, Data, Go } from "./types";
 type Block = { key: string; kind: "estimate" | "install" | "event" | "visit"; title: string; sub: string; start: number; end: number; allDay: boolean; day: string; thread?: string; link?: string; apptId?: string; name?: string; addr?: string; crew?: string };
 const maps = (a: string) => `https://maps.google.com/?daddr=${encodeURIComponent(a)}`;
 const H0 = 6, H1 = 20, ROW = 44;
+/** Events that overlap in one column sit side by side: each gets a lane index and the column's lane count. */
+function laneOf<B extends { key: string; start: number; end: number }>(list: B[]): Map<string, { i: number; n: number }> {
+  const out = new Map<string, { i: number; n: number }>(), sorted = [...list].sort((a, b) => a.start - b.start);
+  let group: B[] = [], ends: number[] = [], groupEnd = -Infinity, at = new Map<string, number>();
+  const flush = () => { for (const b of group) out.set(b.key, { i: at.get(b.key)!, n: Math.max(1, ends.length) }); group = []; ends = []; at = new Map(); };
+  for (const b of sorted) {
+    if (b.start >= groupEnd) { flush(); groupEnd = -Infinity; }
+    let i = ends.findIndex(e => e <= b.start); if (i < 0) { i = ends.length; ends.push(b.end); } else ends[i] = b.end;
+    at.set(b.key, i); group.push(b); groupEnd = Math.max(groupEnd, b.end);
+  }
+  flush();
+  return out;
+}
 const iso = (d: Date) => d.toLocaleDateString("en-CA");
 const d10 = (p: string) => (p || "").replace(/\D/g, "").slice(-10);
 /** The week starts on Sunday, the way US calendars do. */
@@ -197,10 +210,10 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
             {days.map(dd => <div key={dd} className={"cal-col" + (dd === today ? " today" : "")}>
               {hours.map(h => <i key={h} className="cal-line" style={{ top: (h - H0) * ROW }} />)}
               {dd === today && nowTop > 0 && nowTop < hours.length * ROW && <i className="cal-now" style={{ top: nowTop }} />}
-              {blocks.filter(b => b.day === dd && !b.allDay).map(b => { const top = Math.max(0, (mins(b.start, dd) - H0 * 60) / 60 * ROW), h = Math.max(ROW * 0.6, (b.end - b.start) / 3600000 * ROW); const dragging = !!drag && drag.apptId === b.apptId && drag.moved; return <button key={b.key} type="button" className={"cal-ev " + b.kind + (sel && sel === b.thread ? " sel" : "") + (dragging ? " lift" : "") + (b.kind === "estimate" && b.apptId ? " grab" : "")} style={{ top, height: h }} onClick={() => { if (b.kind !== "estimate" || !b.apptId) open(b); }} onPointerDown={onDown(b)} onPointerUp={onUp(b)} onPointerCancel={() => setDrag(null)} title={`${clock(new Date(b.start).toISOString())} ${b.title}, ${b.sub}${b.kind === "estimate" ? ". Drag to move it" : ""}`}>
+              {(() => { const todays = blocks.filter(b => b.day === dd && !b.allDay), ln = laneOf(todays); return todays.map(b => { const top = Math.max(0, (mins(b.start, dd) - H0 * 60) / 60 * ROW), h = Math.max(ROW * 0.6, (b.end - b.start) / 3600000 * ROW); const dragging = !!drag && drag.apptId === b.apptId && drag.moved; const L = ln.get(b.key) ?? { i: 0, n: 1 }; return <button key={b.key} type="button" className={"cal-ev " + b.kind + (sel && sel === b.thread ? " sel" : "") + (dragging ? " lift" : "") + (b.kind === "estimate" && b.apptId ? " grab" : "")} style={{ top, height: h, ...(L.n > 1 ? { left: `calc(${(L.i / L.n) * 100}% + 2px)`, width: `calc(${100 / L.n}% - 4px)`, right: "auto" } : {}) }} onClick={() => { if (b.kind !== "estimate" || !b.apptId) open(b); }} onPointerDown={onDown(b)} onPointerUp={onUp(b)} onPointerCancel={() => setDrag(null)} title={`${clock(new Date(b.start).toISOString())} ${b.title}, ${b.sub}${b.kind === "estimate" ? ". Drag to move it" : ""}`}>
                 <b>{b.title}</b><small>{clock(new Date(b.start).toISOString()).replace(":00", "")}{b.kind !== "event" ? `, ${b.kind}` : ""}</small>
                 {b.kind === "estimate" && h >= ROW * 1.4 && b.sub && <small>{b.sub}</small>}
-              </button>; })}
+              </button>; }); })()}
               {drag?.moved && drag.day === dd && <div className="cal-ev estimate ghost" style={{ top: (drag.min - H0 * 60) / 60 * ROW, height: ROW }} aria-hidden="true"><b>{blocks.find(b => b.apptId === drag.apptId)?.title}</b><small>{clock(new Date(Date.parse(dd + "T00:00:00") + drag.min * 60000).toISOString()).replace(":00", "")}</small></div>}
             </div>)}
           </div>

@@ -115,7 +115,8 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
   const [vw, setVw] = useState(1440);
   const extraCols = (open: boolean) => cols === "more" || (cols === "auto" && vw >= 1600 && !open);
   const extra = extraCols(!!sel);
-  const slim = !!sel && vw >= 1280;
+  // The table docks beside the record on a wide screen. The board never does: the record floats over it, so lanes keep their width.
+  const slim = !!sel && vw >= 1280 && mode === "table";
   useEffect(() => { const h = () => setVw(innerWidth); h(); addEventListener("resize", h); return () => removeEventListener("resize", h); }, []);
   const setCols = (v: "auto" | "more" | "core") => { setColsRaw(v); try { localStorage.setItem("cinder-job-cols", v); } catch { /* private mode */ } };
   const [losing, setLosing] = useState<Card | null>(null), [busy, setBusy] = useState(false), [ticked, setTicked] = useState<Set<string>>(new Set());

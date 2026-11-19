@@ -258,7 +258,7 @@ export default function CinderApp() {
   useEffect(() => { document.querySelector(".main > .page")?.scrollTo(0, 0); }, [tab, open]);
   const due = useMemo(() => splitAppointments(d?.appointments ?? []).due, [d]);
   if (state === "loading") return <Boot />;
-  if (state === "out") return <SignIn onIn={() => { demoStop(); void load(""); }} onDemo={() => { demoStart(); setDemo(true); setTab("today"); void load("", "today"); }} />;
+  if (state === "out") return <SignIn onIn={() => { demoStop(); void load(""); }} onDemo={() => { demoStart(); setDemo(true); setTab("today"); setState("loading"); void load("", "today"); }} />;
   if (!d) return <Boot />;
 
   const L = d.live;
@@ -272,7 +272,9 @@ export default function CinderApp() {
   const records: { k: Tab; l: string; ic: string; obj: string }[] = crew ? [{ k: "jobs", l: "Jobs", ic: "jobs", obj: "jobs" }]
     : [{ k: "customers", l: "Customers", ic: "users", obj: "customers" }, { k: "jobs", l: "Jobs", ic: "jobs", obj: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote", obj: "quotes" },
        { k: "invoices", l: "Invoices", ic: "invoice", obj: "invoices" }, { k: "plans", l: "Plans", ic: "cal", obj: "plans" }];
-  const isOn = (k: Tab) => tab === k && !open;
+  // The rail lights the section you're in, from what's on screen: a quote is Quotes, a conversation is Inbox, a record is Customers or Jobs.
+  const here: Tab = !open ? tab : open.kind === "quote" ? "quotes" : open.kind === "thread" ? "inbox" : tab === "customers" ? "customers" : "jobs";
+  const isOn = (k: Tab) => here === k;
   const signOut = async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null);
     // A shared phone keeps nothing: the saved copy of the app's data and anything still waiting go with the sign-out.
     try { localStorage.removeItem(QUEUE_KEY); navigator.serviceWorker?.controller?.postMessage("cinder-clear"); } catch { /* nothing saved */ }
@@ -289,8 +291,8 @@ export default function CinderApp() {
   const counts: Partial<Record<Tab, number>> = { inbox: L.needs + mailN, calendar: due.length, invoices: owed };
   const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = crew ? [{ k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }]
     : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs + mailN }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote" }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
-  const phoneTab: Tab = MORE.includes(tab) ? "more" : tab;
-  const active = (k: Tab) => tab === k && !open;
+  const phoneTab: Tab = MORE.includes(here) ? "more" : here;
+  const active = (k: Tab) => here === k;
 
   let page: React.ReactNode;
   if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
@@ -354,7 +356,7 @@ export default function CinderApp() {
       <div className={"page" + (open ? " has-open" : "")} role="main">{page}</div>
     </div>
     <nav className="tabs" aria-label="Sections">
-      {phoneTabs.map(t => <button key={t.k} type="button" className={phoneTab === t.k && !open ? "on" : ""} aria-current={phoneTab === t.k && !open ? "page" : undefined} onClick={() => goTab(t.k)}>
+      {phoneTabs.map(t => <button key={t.k} type="button" className={phoneTab === t.k ? "on" : ""} aria-current={phoneTab === t.k ? "page" : undefined} onClick={() => goTab(t.k)}>
         <Icon name={t.ic} size={21} />{t.l}{t.n ? <em>{t.n}</em> : null}</button>)}
     </nav>
     {sheet === "cmd" && <CommandBar d={d} go={go} onClose={() => setSheet(null)} onWinback={() => setSheet("winback")} onAsk={crew ? undefined : q => { setAskQ({ q, n: Date.now() }); goTab("today"); }} />}
