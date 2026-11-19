@@ -113,7 +113,9 @@ ok(() => assert.equal(meetingNudge(new Date("2026-11-07T15:00:00Z"), nowM, null)
 ok(() => assert.equal(meetingNudge(new Date("2026-11-09T15:55:00Z"), nowM, null), "late", "5 min late: late text"));
 ok(() => assert.equal(meetingNudge(new Date("2026-11-09T15:55:00Z"), nowM, null, { done: k => k === "late" }), null, "late text sent: wait for the show check"));
 ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T15:00:00Z") }), "welcome", "just booked: welcome first"));
-ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T15:00:00Z"), done: k => k === "welcome" }), "confirm", "welcomed: confirm next"));
+ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T15:00:00Z"), done: k => k === "welcome" }), "audit", "welcomed: free audit next"));
+ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T15:00:00Z"), done: k => k === "welcome" || k === "audit" }), "confirm", "audit sent: confirm next"));
+ok(() => assert.equal(meetingNudge(new Date("2026-11-09T19:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T14:00:00Z"), done: k => k === "welcome" }), "remind", "call in 3 hours: no audit, just the link"));
 ok(() => assert.equal(meetingNudge(new Date("2026-11-09T18:00:00Z"), nowM, null, { createdAt: new Date("2026-11-09T15:30:00Z") }), "remind", "booked for today: skip welcome, remind"));
 ok(() => assert.equal(meetingNudge(new Date("2026-11-10T17:00:00Z"), nowM, null, { done: k => k === "confirm" }), null, "confirmed: nothing until the reminder"));
 ok(() => assert.equal(joinLink("Notes\nJoin: https://app.cal.com/video/abc"), "https://app.cal.com/video/abc"));
@@ -151,9 +153,17 @@ console.log(`Text template checks passed (${n} assertions).`);
 
 {
   const now = new Date("2026-11-09T15:00:00Z"), far = new Date("2026-11-12T17:00:00Z");
-  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-08T20:00:00Z"), done: k => k === "welcome" }), "prep", "booked yesterday, call 3 days out: prep question");
-  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-09T10:00:00Z"), done: k => k === "welcome" }), null, "booked this morning: wait until tomorrow");
-  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-08T20:00:00Z"), done: k => k === "welcome" || k === "prep" }), null, "prep sent: wait for confirm");
+  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-08T20:00:00Z"), done: k => k === "welcome" || k === "audit" }), "prep", "booked yesterday, call 3 days out: prep question");
+  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-09T10:00:00Z"), done: k => k === "welcome" || k === "audit" }), null, "booked this morning: wait until tomorrow");
+  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-08T20:00:00Z"), done: k => k === "welcome" || k === "audit" || k === "prep" }), null, "prep sent: wait for confirm");
   assert.match(prepText({ firstName: "Mark", company: "Ridge Fence" }), /^Hey Mark, Sam again\. Quick one so I can set up the demo as Ridge Fence: .*working your way\.$/);
   console.log("prep step ok");
+}
+
+{
+  const { auditText, tryDemoLink, confirmText } = await import("./lib/sms-templates.ts");
+  assert.match(auditText({ firstName: "Mark", company: "Ridge Fence", link: "https://cinderrevenue.com/report/abc" }), /^Hey Mark, Sam with Cinder\. Before our call I looked at Ridge Fence's website.*report: https:\/\/cinderrevenue\.com\/report\/abc\n\nChange any number/s);
+  assert.equal(tryDemoLink({ firstName: "Mark", company: "Ridge Fence", niche: "Fence" }), "https://cinderrevenue.com/demo?b=Ridge+Fence&n=Mark&t=fence");
+  assert.match(confirmText({ firstName: "Mark", when: "tomorrow at 10:00 AM", demo: "https://x.co/d" }), /Still good\? Just reply yes, or text me a time that works better\.\n\nWant a head start\?.*: https:\/\/x\.co\/d$/s);
+  console.log("pre-call value ok");
 }

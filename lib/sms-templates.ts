@@ -230,9 +230,9 @@ export function meetingWhen(startsAt: Date, now: Date, tz: string | null): strin
   return `${label} at ${time}`;
 }
 /** Day-before confirmation. Asking for a reply is what cuts no-shows: people show up for what they said yes to. */
-export function confirmText(i: { firstName?: string; when: string; business?: string }): string {
+export function confirmText(i: { firstName?: string; when: string; business?: string; demo?: string }): string {
   const name = (i.firstName ?? "").trim();
-  return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. Confirming our call ${i.when}. Still good? Just reply yes, or text me a time that works better.`;
+  return `Hey${name ? " " + name : ""}, Sam with ${i.business || "Cinder"}. Confirming our call ${i.when}. Still good? Just reply yes, or text me a time that works better.${i.demo ? `\n\nWant a head start? It's already set up as your business. Text it like a homeowner would: ${i.demo}` : ""}`;
 }
 /** Same-day reminder, in the last few hours, with the join link when the booking has one. Link last so it's one tap. */
 export function reminderText(i: { firstName?: string; when: string; link?: string }): string {
@@ -258,6 +258,21 @@ export function prepLink(i: { firstName?: string; company?: string; site?: strin
   const qs = q.toString();
   return `${(i.site || "https://cinderrevenue.com").replace(/\/$/, "")}/meet${qs ? "?" + qs : ""}`;
 }
+/** Their free audit before the call: what their own site shows and what slow replies likely cost them. */
+export function auditText(i: { firstName?: string; company?: string; link: string }): string {
+  const name = (i.firstName ?? "").trim(), co = i.company?.trim() || "your business";
+  return `Hey${name ? " " + name : ""}, Sam with Cinder. Before our call I looked at ${co}'s website and ran the numbers on what slow replies likely cost you. Here's your free report: ${i.link}\n\nChange any number to match your business. We'll go through it together on the call.`;
+}
+/** A try-it-yourself demo set up as their business, sent with the day-before confirmation. */
+export function tryDemoLink(i: { firstName?: string; company?: string; niche?: string; site?: string }): string {
+  const q = new URLSearchParams();
+  if (i.company?.trim()) q.set("b", i.company.trim());
+  if (i.firstName?.trim()) q.set("n", i.firstName.trim());
+  const t = /generator/i.test(i.niche ?? "") ? "generator" : /fenc/i.test(i.niche ?? "") ? "fence" : "";
+  if (t) q.set("t", t);
+  const qs = q.toString();
+  return `${(i.site || "https://cinderrevenue.com").replace(/\/$/, "")}/demo${qs ? "?" + qs : ""}`;
+}
 /** The day after booking, when the call is still days away: one question that gets them thinking about their own
  * business, and lets Sam build the demo around their answers. People show up for something they've put work into. */
 export function prepText(i: { firstName?: string; company?: string }): string {
@@ -272,7 +287,7 @@ export function lateText(i: { firstName?: string; link?: string; booking?: strin
 /** Which show-up step a meeting needs right now, in order: welcome (booked in the last 12 hours, more than 3 hours
  * out), confirm (within a day and a half), remind (last 3 hours), late (2 to 20 minutes past the start), and
  * "did they show" (20 minutes past the start until 2 days later, while no outcome is logged). */
-export type MeetingStep = "welcome" | "prep" | "confirm" | "remind" | "late" | "showed?";
+export type MeetingStep = "welcome" | "audit" | "prep" | "confirm" | "remind" | "late" | "showed?";
 export function meetingNudge(startsAt: Date, now: Date, tz: string | null, o: { createdAt?: Date | null; outcome?: string | null; done?: (k: MeetingStep) => boolean } = {}): MeetingStep | null {
   void tz;
   const ms = startsAt.getTime() - now.getTime(), done = o.done ?? (() => false);
@@ -281,11 +296,12 @@ export function meetingNudge(startsAt: Date, now: Date, tz: string | null, o: { 
   if (ms <= -2 * 60000) return done("late") ? null : "late";
   if (ms <= 0) return null;
   if (ms <= 3 * 3600000) return done("remind") ? null : "remind";
-  const fresh = o.createdAt && now.getTime() - o.createdAt.getTime() < 12 * 3600000;
-  if (fresh && !done("welcome") && !done("confirm")) return "welcome";
-  // Booked more than a day and a half out: one touch in between, the day after booking, so they stay warm.
-  const settled = o.createdAt && now.getTime() - o.createdAt.getTime() >= 16 * 3600000;
-  if (ms > 36 * 3600000 && settled && !done("prep") && !done("confirm")) return "prep";
+  const since = o.createdAt ? now.getTime() - o.createdAt.getTime() : -1;
+  if (since >= 0 && since < 12 * 3600000 && !done("welcome") && !done("confirm")) return "welcome";
+  // Before the call, deliver value so they show up already sold: their free audit an hour or more after booking (when
+  // the call is still 6+ hours off), then, if the call is days away, a prep question the day after booking.
+  if (since >= 3600000 && ms > 6 * 3600000 && !done("audit") && !done("confirm")) return "audit";
+  if (ms > 36 * 3600000 && since >= 16 * 3600000 && !done("prep") && !done("confirm")) return "prep";
   return ms <= 36 * 3600000 && !done("confirm") ? "confirm" : null;
 }
 
