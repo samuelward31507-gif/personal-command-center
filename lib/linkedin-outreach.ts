@@ -33,3 +33,25 @@ We start with one campaign to your past customers. If it doesn't book at least 3
 Worth 15 minutes? {booking_link}
 
 {my_name}`;
+
+/** Companies hiring for the phones (from the hiring finder). The role is filled in before the usual fill-ins. */
+export const HIRING_LINKEDIN: Record<LinkedInStep, string> = {
+  connect: `Hi {first_name}, saw {company} is hiring a {role}. I help contractors make sure every caller hears back in seconds. Would be good to connect.`,
+  message: `Thanks for connecting, {first_name}.
+
+Saw the {role} opening. Before you fill it: who answers when it's 6pm, a Saturday, or they're already on the other line?
+
+I set contractors up with a front desk that never clocks out: every missed call and form gets a text back from your business in about 10 seconds, and the estimate books itself on your calendar. Here's 30 seconds of it: {demo_link}
+
+Worth 15 minutes before you hire? {booking_link}
+
+{my_name}`,
+};
+export const withRole = (template: string, role: string) => template.replaceAll("{role}", (role || "receptionist").toLowerCase());
+/** A LinkedIn profile link (linkedin.com/in/...), cleaned, or "" if it isn't one. */
+export function profileLink(v: string): string {
+  const m = /^(?:https?:\/\/)?(?:[a-z]{2,3}\.)?linkedin\.com\/in\/([A-Za-z0-9\-_%]{2,100})\/?(?:[?#].*)?$/i.exec((v || "").trim());
+  return m ? `https://www.linkedin.com/in/${m[1]}` : "";
+}
+/** The job post link in a hiring lead's notes ("Hiring: Receptionist (posted ...) https://..."), or "". */
+export const jobPostLink = (notes: string) => /Hiring:[^\n]*?(https?:\/\/\S+)/.exec(notes || "")?.[1] ?? "";
