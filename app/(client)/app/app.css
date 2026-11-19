@@ -1830,3 +1830,14 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: .55; cursor: po
 .q-after .panel-h { display: flex; align-items: baseline; gap: 10px; padding: 14px 18px 6px; } .q-after .panel-h h2 { font: 600 15px/20px var(--ff); } .q-after .panel-h small { color: var(--g2); font-size: 13px; }
 .q-after-l { padding: 0 18px 10px; } .q-after-l li { display: grid; grid-template-columns: minmax(0, 1fr) auto 90px; gap: 12px; align-items: center; min-height: 44px; border-top: 1px solid var(--hair); font-size: 14px; }
 .q-after-l li .link { text-align: left; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .q-after-l li b { text-align: right; font-weight: 500; }
+
+/* Help */
+.help { max-width: 760px; display: flex; flex-direction: column; gap: 18px; padding-top: 16px; }
+.help-find { width: 100%; max-width: 420px; }
+.help-g h2 { font: 600 13px/20px var(--ff); color: var(--g1); margin: 0 0 6px; }
+.help-a { border-top: 1px solid var(--hair); } .help-g .help-a:last-child { border-bottom: 1px solid var(--hair); }
+.help-a > button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 0 2px; font: 500 15px/20px var(--ff); color: var(--ink); text-align: left; border-radius: 0; }
+.help-a > button span { flex: 1; } .help-a > button svg { color: var(--g3); transition: transform var(--t); } .help-a.on > button svg { transform: rotate(180deg); }
+.help-b { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 0 2px 14px; } .help-b p { font-size: 14px; line-height: 22px; color: var(--ink2); max-width: 64ch; }
+.help-sam { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 18px; border-radius: var(--r3); background: var(--paper); box-shadow: 0 0 0 1px var(--hair-2); }
+.help-sam span { flex: 1 1 240px; color: var(--g1); font-size: 14px; }

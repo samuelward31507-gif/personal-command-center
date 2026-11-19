@@ -29,6 +29,7 @@ const ReportsScreen = dynamic(() => import("./numbers").then(m => m.ReportsScree
 const SystemScreen = dynamic(() => import("./system").then(m => m.SystemScreen), { ssr: false, loading: Wait });
 const SwitchScreen = dynamic(() => import("./switch").then(m => m.SwitchScreen), { ssr: false, loading: Wait });
 const ComingFromScreen = dynamic(() => import("./coming-from").then(m => m.ComingFromScreen), { ssr: false, loading: Wait });
+const HelpScreen = dynamic(() => import("./help").then(m => m.HelpScreen), { ssr: false, loading: Wait });
 const Onboarding = dynamic(() => import("./setup").then(m => m.Onboarding), { ssr: false, loading: Wait });
 const CommandBar = dynamic(() => import("./command").then(m => m.CommandBar), { ssr: false });
 const AddLeadSheet = dynamic(() => import("./sheets").then(m => m.AddLeadSheet), { ssr: false });
@@ -160,7 +161,7 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
 
 // ---------- The app ----------
 type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | { kind: "quote"; id: string } | null;
-const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam", "calendar"];
+const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam", "calendar", "help"];
 const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Home", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "quotes", l: "Quotes", ic: "quote", n: "4" }, { k: "calendar", l: "Calendar", ic: "cal", n: "5" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Reports", ic: "bars", n: "6" }];
 
 export default function CinderApp() {
@@ -311,6 +312,7 @@ export default function CinderApp() {
   else if (tab === "numbers") page = <ReportsScreen d={d} biz={biz} go={go} project={project} api={api} toast={toast} reload={reload} onWinback={() => setSheet("winback")} />;
   else if (tab === "system") page = <SystemScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} toast={toast} api={api} project={project} reload={reload} demo={demo} onSignOut={signOut} />;
   else if (tab === "more") page = <MoreScreen d={d} go={go} owed={owed} />;
+  else if (tab === "help") page = <HelpScreen go={go} />;
   else page = <SamScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
 
   const catalog = { items: catalogFrom(d.setup), edit: () => setSheet("pricelist") };
@@ -343,6 +345,7 @@ export default function CinderApp() {
       </div>}
       <div className="rail-foot">
         {d.setup?.show_powered === "yes" && <a className="powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by <Wordmark className="pw-mark" /></a>}
+        <button type="button" className={"ri" + (active("help") ? " on" : "")} onClick={() => goTab("help")}><Icon name="search" size={15} />Help</button>
         {d.role !== "crew" && d.role !== "office" && <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>}
         {crew ? <button type="button" className="me" onClick={() => void signOut()}><Avatar name="Crew" /><span className="t"><b>Crew</b><small>Sign out</small></span></button>
           : <button type="button" className="me" onClick={() => goTab("sam")}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{d.owner || "You"}</b><small>Owner</small></span></button>}
@@ -381,6 +384,7 @@ function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
     { k: "from", l: "Coming from Jobber or Housecall Pro", s: "What each thing is called here", ic: "table" },
     { k: "plans", l: "Service plans", s: (d.plans ?? []).some(p => p.status === "active") ? `${(d.plans ?? []).filter(p => p.status === "active").length} active` : "Repeat work on a schedule", ic: "cal" },
     { k: "system", l: "Settings", s: "How leads come in, prices, notifications", ic: "gear" },
+    { k: "help", l: "Help", s: "Short answers to common questions", ic: "search" },
     { k: "sam", l: "Sam", s: d.unreadFromSam ? `${d.unreadFromSam} new` : "Your account rep", ic: "user", n: d.unreadFromSam },
   ];
   return <>
