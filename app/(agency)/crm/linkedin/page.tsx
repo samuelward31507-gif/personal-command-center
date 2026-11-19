@@ -10,9 +10,9 @@ import "../email/email.css";
 
 type Contact = { id: string; name: string; company: string; linkedin?: string; location?: string; status?: string; lastTouchOutcome?: string; niche?: string; notes?: string };
 type Log = { contactId: string; step: string; at: string };
-type Tab = "hiring" | "connect" | "waiting" | "message";
+type Tab = "hiring" | "connect" | "follow";
 
-const TABS: { key: Tab; label: string }[] = [{ key: "hiring", label: "Hiring posts" }, { key: "connect", label: "Connect" }, { key: "waiting", label: "Waiting" }, { key: "message", label: "Message" }];
+const TABS: { key: Tab; label: string }[] = [{ key: "hiring", label: "Hiring posts" }, { key: "connect", label: "Connect" }, { key: "follow", label: "Message" }];
 const STOP = new Set(["do_not_contact", "not_interested", "not_a_fit", "meeting_booked", "wrong_contact"]);
 const KEY = "cinder.linkedin.templates.v5";
 const isHiring = (c: Contact) => (c.notes ?? "").includes("Hiring:");
@@ -46,7 +46,7 @@ export default function LinkedInPage() {
   const queues = useMemo(() => {
     const by = new Map<string, Set<string>>();
     for (const x of log) by.set(x.contactId, (by.get(x.contactId) ?? new Set()).add(x.step));
-    const out: Record<Tab, Contact[]> = { hiring: [], connect: [], waiting: [], message: [] };
+    const out: Record<Tab, Contact[]> = { hiring: [], connect: [], follow: [] };
     for (const c of contacts ?? []) {
       if (STOP.has(c.lastTouchOutcome ?? "") || (c.status ?? "").toLowerCase() === "customer") continue;
       const s = by.get(c.id) ?? new Set();
@@ -54,8 +54,8 @@ export default function LinkedInPage() {
       // and save the profile of whoever posted it or the owner. Then it joins Connect with the hiring note.
       if (!c.linkedin) { if (isHiring(c) && /linkedin\.com/i.test(jobPostLink(c.notes ?? "")) && !s.has("skipped")) out.hiring.push(c); continue; }
       if (s.has("message")) continue;
-      if (s.has("accepted")) out.message.push(c);
-      else if (s.has("connect")) out.waiting.push(c);
+      // Request sent: they wait in Message until you send the first message (once they've accepted).
+      if (s.has("connect")) out.follow.push(c);
       else out.connect.push(c);
     }
     return out;
@@ -65,7 +65,7 @@ export default function LinkedInPage() {
   const current = list.find(c => c.id === picked) ?? list[0] ?? null;
   const merge = current ? mergeFor(current, ws) : null;
   const role = current && isHiring(current) ? hiringRole(current.notes ?? "") : "";
-  const text = current && merge && tab !== "hiring" ? (tab === "message"
+  const text = current && merge && tab !== "hiring" ? (tab === "follow"
     ? fillTemplate(role ? withRole(HIRING_LINKEDIN.message, role) : trackOf(current.niche) === "detailing" ? tpl.detailing : tpl.message, merge)
     : useNote || role ? fillTemplate(role ? withRole(HIRING_LINKEDIN.connect, role) : tpl.connect, merge) : "") : "";
 
@@ -92,13 +92,28 @@ export default function LinkedInPage() {
     } catch (e) { setError(e instanceof Error ? e.message : "Couldn't log that."); }
     finally { setBusy(false); }
   }
+  // Hiring posts, one tap: save the profile you pasted, copy the connection note, open their profile, log the request.
+  function saveAndConnect(c: Contact) {
+    const link = profileLink(profile);
+    if (!link) { setError("Paste a profile link that looks like linkedin.com/in/their-name."); return; }
+    const m = mergeFor(c, ws);
+    void copyText(fillTemplate(withRole(HIRING_LINKEDIN.connect, hiringRole(c.notes ?? "")), m));
+    window.open(link, "_blank", "noopener");
+    setCopied(true);
+    void (async () => { await saveProfile(c); await mark(c, "connect"); })();
+  }
+  async function sentMessage(c: Contact) {
+    const by = new Set(log.filter(x => x.contactId === c.id).map(x => x.step));
+    if (!by.has("accepted")) await fetch("/api/linkedin-outreach", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: c.id, step: "accepted" }) }).catch(() => null);
+    await mark(c, "message");
+  }
   function openProfile() {
     if (!current?.linkedin) return;
     if (text) { void copyText(text); setCopied(true); }
     window.open(url(current.linkedin), "_blank", "noopener");
   }
 
-  const editKey: LinkedInStep | "detailing" = tab === "message" ? (trackOf(current?.niche) === "detailing" ? "detailing" : "message") : "connect";
+  const editKey: LinkedInStep | "detailing" = tab === "follow" ? (trackOf(current?.niche) === "detailing" ? "detailing" : "message") : "connect";
   return <div className="u-page em-page" role="region" aria-label="LinkedIn">
     <div className="u-head">
       <h1 className="u-title">LinkedIn</h1>
@@ -112,8 +127,8 @@ export default function LinkedInPage() {
     <div className="u-figs">
       <div className="u-fig"><span className="u-fig-k">Requests this week</span><div className="u-fig-v">{sentWeek}<small>/ {WEEKLY_CONNECT_CAP}</small></div><div className="u-meter"><i style={{ width: Math.min(100, (sentWeek / WEEKLY_CONNECT_CAP) * 100) + "%" }} /></div><div className="u-fig-sub">LinkedIn restricts accounts that go much past this</div></div>
       <div className="u-fig"><span className="u-fig-k">Ready to connect</span><div className="u-fig-v">{queues.connect.length}</div><div className="u-fig-sub">owners with a LinkedIn profile</div></div>
-      <div className="u-fig"><span className="u-fig-k">Waiting to accept</span><div className="u-fig-v">{queues.waiting.length}</div><div className="u-fig-sub">mark them accepted when they do</div></div>
-      <div className="u-fig"><span className="u-fig-k">Ready to message</span><div className="u-fig-v">{queues.message.length}</div><div className="u-fig-sub">accepted, pitch not sent yet</div></div>
+      <div className="u-fig"><span className="u-fig-k">Hiring posts</span><div className="u-fig-v">{queues.hiring.length}</div><div className="u-fig-sub">find who posted the job</div></div>
+      <div className="u-fig"><span className="u-fig-k">Requests out</span><div className="u-fig-v">{queues.follow.length}</div><div className="u-fig-sub">message them once they accept</div></div>
     </div>
 
     {editing && <section className="em-edit u-sheet">
@@ -123,8 +138,8 @@ export default function LinkedInPage() {
     </section>}
 
     {contacts === null ? <p className="u-note" role="status">Loading…</p> : list.length === 0 ? <div className="u-void">
-      <h2>{tab === "hiring" ? "No hiring posts to open" : tab === "connect" ? "Nobody to connect with" : tab === "waiting" ? "No pending requests" : "No one to message yet"}</h2>
-      <p>{tab === "hiring" ? "Companies the nightly hiring finder found on LinkedIn show up here until you save who posted the job." : tab === "connect" ? "Contacts with a LinkedIn profile show up here. The Sunday lead run adds owners' profiles when it finds them, or add one on any contact." : tab === "waiting" ? "Requests you send land here until you mark them accepted." : "When someone accepts, mark them accepted and they move here with your first message ready."}</p>
+      <h2>{tab === "hiring" ? "No hiring posts to open" : tab === "connect" ? "Nobody to connect with" : "No one to message yet"}</h2>
+      <p>{tab === "hiring" ? "Companies the nightly hiring finder found on LinkedIn show up here until you save who posted the job." : tab === "connect" ? "Contacts with a LinkedIn profile show up here. The Sunday lead run adds owners' profiles when it finds them, or add one on any contact." : "Everyone you send a request to lands here. When they accept on LinkedIn, send them the message."}</p>
       {tab === "connect" && <Link className="u-btn u-btn-light" href="/crm">Open contacts</Link>}
     </div> : <div className="em-split">
       <div className="u-rows em-list">{list.map(c => <div key={c.id} className={"u-row em-item" + (current?.id === c.id ? " is-on" : "")}>
@@ -135,31 +150,25 @@ export default function LinkedInPage() {
 
       {current && tab === "hiring" && <div className="em-read">
         <div className="em-to"><span>Hiring</span><b>{hiringRole(current.notes ?? "")}</b><Link href={`/crm?contact=${current.id}`} className="u-note" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Contact</Link></div>
-        <ol className="u-note" style={{ margin: "0 0 14px", paddingLeft: 18, lineHeight: 1.7 }}>
-          <li>Open the job post. You&apos;re signed in to LinkedIn, so you can see it.</li>
-          <li>Find who posted it under &ldquo;Meet the hiring team&rdquo;, or the owner on the company&apos;s People tab.</li>
-          <li>Copy their profile link and paste it here. They move to Connect with a note about the opening.</li>
-        </ol>
-        <input className="u-field" value={profile} onChange={e => setProfile(e.target.value)} placeholder="https://www.linkedin.com/in/…" aria-label="Their LinkedIn profile link" onKeyDown={e => { if (e.key === "Enter") void saveProfile(current); }} />
+        <p className="u-note" style={{ margin: "0 0 12px" }}>Open the post, find who posted it (&ldquo;Meet the hiring team&rdquo;), and paste their profile link. Connect copies your note and opens their profile: tap Connect, then Add a note, then paste.</p>
+        <input className="u-field" value={profile} onChange={e => setProfile(e.target.value)} placeholder="https://www.linkedin.com/in/…" aria-label="Their LinkedIn profile link" onKeyDown={e => { if (e.key === "Enter") saveAndConnect(current); }} />
         <div className="em-acts" style={{ marginTop: 12 }}>
           <button className="u-btn u-btn-light u-btn-lg" onClick={() => window.open(jobPostLink(current.notes ?? ""), "_blank", "noopener")}>Open the job post</button>
           <span style={{ flex: 1 }} />
           <button className="u-btn u-btn-bare" disabled={busy} onClick={() => void mark(current, "skipped")}>No one listed</button>
-          <button className="u-btn" disabled={busy || !profile.trim()} onClick={() => void saveProfile(current)}>Save profile</button>
+          <button className="u-btn" disabled={busy || !profile.trim()} onClick={() => saveAndConnect(current)}>Connect</button>
         </div>
       </div>}
       {current && tab !== "hiring" && <div className="em-read">
         <div className="em-to"><span>To</span><b>{current.name || current.company}</b><Link href={`/crm?contact=${current.id}`} className="u-note" style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Contact</Link></div>
         {tab === "connect" && !role && <label className="u-note" style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}><input type="checkbox" checked={useNote} onChange={e => setUseNote(e.target.checked)} /> Add a note (free accounts get only a few a month)</label>}
         {text ? <div className="em-paper"><pre className="em-body">{text}</pre>{tab === "connect" && <p className="u-note" style={{ marginTop: 12, color: text.length > CONNECT_NOTE_LIMIT ? "#b73629" : "#717b8b" }}>{text.length} / {CONNECT_NOTE_LIMIT} characters</p>}</div>
-          : tab === "waiting" ? <p className="u-note">Request sent. Check LinkedIn, then mark accepted when they connect.</p>
           : <p className="u-note">Send the request without a note. The pitch goes in your first message once they accept.</p>}
         <div className="em-acts">
           <button className="u-btn u-btn-light u-btn-lg" disabled={busy} onClick={openProfile}>{text ? "Copy and open profile" : "Open profile"}</button>
           <span style={{ flex: 1 }} />
           {tab === "connect" && <button className="u-btn" disabled={busy} onClick={() => void mark(current, "connect")}>Request sent</button>}
-          {tab === "waiting" && <button className="u-btn" disabled={busy} onClick={() => void mark(current, "accepted")}>Accepted</button>}
-          {tab === "message" && <button className="u-btn" disabled={busy} onClick={() => void mark(current, "message")}>Message sent</button>}
+          {tab === "follow" && <button className="u-btn" disabled={busy} onClick={() => void sentMessage(current)}>Message sent</button>}
         </div>
         {copied && <p className="u-note" style={{ marginTop: 10 }}>Copied. Paste it on LinkedIn.</p>}
       </div>}

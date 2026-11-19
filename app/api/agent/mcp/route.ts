@@ -11,6 +11,7 @@ import { POST as replies } from "../replies/route";
 import { POST as addProspects } from "../prospects/route";
 import { GET as content, POST as contentUpdate } from "../content/route";
 import { POST as contactInfo } from "../contact-info/route";
+import { GET as needsPhone } from "../needs-phone/route";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ const HANDLERS: Record<string, (r: Request) => Promise<Response>> = {
   "/api/agent/brief": brief, "/api/agent/drafts": drafts,
   "/api/agent/my-texts": myTexts, "/api/agent/runs": runs,
   "/api/agent/replies": replies, "/api/agent/prospects": addProspects, "/api/agent/contact-info": contactInfo,
+  "/api/agent/needs-phone": needsPhone,
 };
 
 /** Runs one tool by calling the matching REST handler with the same key, so both doors share every rule. */
@@ -33,6 +35,7 @@ async function runTool(request: Request, name: string, args: Record<string, unkn
     body: call.method === "POST" ? JSON.stringify(call.body ?? {}) : undefined,
   });
   const handler = call.path === "/api/agent/content" ? (call.method === "GET" ? content : contentUpdate) : HANDLERS[call.path];
+  if (!handler) return { content: [{ type: "text", text: `No handler for ${name}.` }], isError: true };
   const res = await handler(inner);
   const text = await res.text();
   return { content: [{ type: "text", text }], isError: res.status >= 400 };
