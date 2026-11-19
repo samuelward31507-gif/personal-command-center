@@ -59,7 +59,22 @@ const DETAILING_ONLY: Objection[] = [
   { id: "slammed", label: "No, we're booked out", key: "w", say: "Good spot to be in. Then it's not more cars, it's steadier money with less chasing. How many of your customers are on a maintenance plan? ... We offer a plan after every job, fill slow weeks from your own customer list, and get a review from every happy customer, without you texting anyone.", then: "Then the close. Lead with the Reactivation campaign here." },
 ];
 
-export type Script = { open: string; dig: string[]; pitch: string; close?: string; guarantee: string; price: string; objections: Objection[] };
+/** One answer to the either/or question. probe: dig into it. mirror: repeat it back. fix: the one fix. close: a demo ask about that fix. tier: the plan that fix lives in. */
+export type Side = { id: "calls" | "quotes"; label: string; key: string; probe: string[]; mirror: string; fix: string; close: string; tier: string };
+
+export type Script = { open: string; dig: string[]; pitch: string; sides?: [Side, Side]; close?: string; guarantee: string; price: string; objections: Objection[] };
+
+const MIRROR = "Repeat it back in his words: \"So if I heard you right, ...\" Then: \"That's exactly what we fix.\"";
+const QUOTES_SIDE = (what: string, demo: string): Side => ({
+  id: "quotes", label: "Quotes going quiet", key: "q", tier: "Book & Close",
+  probe: [
+    "What happens right now after a quote goes out? Who follows up, and when?",
+    `Roughly how many ${what} a month never hear back?`,
+  ],
+  mirror: MIRROR,
+  fix: "Here's the fix. Every quote gets followed up for you on days 2, 5 and 10, then monthly until it's a yes or a no. If they say it's too expensive, it offers your financing or a smaller option, and real price talk comes straight to you. You don't touch it.",
+  close: `Easiest way to see it is a 15-minute demo. I'll show it chasing ${demo} that went quiet, set up as {company}. Does tomorrow or Friday work better?`,
+});
 
 export const SCRIPTS: Record<Track, Script> = {
   trades: {
@@ -69,7 +84,19 @@ export const SCRIPTS: Record<Track, Script> = {
       "\"Roughly how many leads do you get a week, and what's an average job?\" Log both in the notes.",
       "\"Anyone else, like a partner, who should be on that call?\"",
     ],
-    pitch: "Most installers I talk to lose jobs two ways. Calls that hit voicemail while you're on a job, and quotes that go out and then get ghosted. Which one hits you harder, missed calls or quotes that go quiet? ... (let them talk, then) What are you doing about that right now? ... (let them talk, then) Repeat back what he said, in his words. Then one fix only. Missed calls: \"When you miss a call, Cinder texts them back in about ten seconds, asks the job questions you'd ask, and books the estimate on your calendar. So they never move on to the next guy.\" Quotes: \"Every quote gets followed up for you on days 2, 5 and 10, then monthly until it's a yes or a no, and you don't touch it.\"",
+    pitch: "Most installers I talk to lose jobs two ways. Calls that hit voicemail while you're on a job, and quotes that go out and then get ghosted. Which one hits you harder, missed calls or quotes that go quiet?",
+    sides: [
+      { id: "calls", label: "Missed calls / slow follow-up", key: "m", tier: "Never Miss a Lead",
+        probe: [
+          "What happens to a call right now when you're up on a job and can't pick up?",
+          "How long before someone calls them back? Same day, next day?",
+        ],
+        mirror: MIRROR,
+        fix: "Here's the fix. When you miss a call or a form comes in, Cinder texts them back in about ten seconds, asks the job questions you'd ask, and books the estimate on your calendar. They never get the chance to call the next guy.",
+        close: "Easiest way to see it is a 15-minute demo. I'll show it texting back a missed call, set up as {company}. Does tomorrow or Friday work better?",
+      },
+      QUOTES_SIDE("fence quotes", "a fence quote"),
+    ],
     close: "Easiest way to see it is a 15-minute demo, where I show it texting back a lead like one of yours, set up as {company}. Does tomorrow or Friday work better?",
     guarantee: "Never Miss a Lead: every lead gets a reply in under 60 seconds, or that month is free. Book & Close: 5 booked appointments in your first 30 days (3 if you get under 30 leads a month), or your next month is free. And the monthly doesn't start until your first booked appointment.",
     price: "There are two options. Never Miss a Lead is $997 to set up, then $697 a month. Book & Close is $1,997 to set up, then $1,497 a month, and the monthly doesn't start until your first booked appointment.",
@@ -82,7 +109,19 @@ export const SCRIPTS: Record<Track, Script> = {
       "\"Roughly how many leads do you get a week, and what's an average job?\" Log both in the notes.",
       "\"Anyone else, like a partner, who should be on that call?\"",
     ],
-    pitch: "Most dealers I talk to lose jobs two ways. The outage rush, when calls pile up and whoever answers first wins, and big install quotes that go out and then get ghosted. Which one hits you harder, the outage rush or big quotes that go quiet? ... (let them talk, then) What are you doing about that right now? ... (let them talk, then) Repeat back what he said, in his words. Then one fix only. Outage rush: \"When you can't pick up, Cinder texts them back in about ten seconds, qualifies them (home size, fuel type, timeline) and books the site visit. You're the first dealer they hear from, even when you get 40 calls in a day.\" Quotes: \"Every quote gets followed up for you on days 2, 5 and 10, then monthly until it's a yes or a no, and you don't touch it.\"",
+    pitch: "Most dealers I talk to lose jobs two ways. The outage rush, when calls pile up and whoever answers first wins, and big install quotes that go out and then get ghosted. Which one hits you harder, the outage rush or big quotes that go quiet?",
+    sides: [
+      { id: "calls", label: "Outage rush / missed calls", key: "m", tier: "Never Miss a Lead",
+        probe: [
+          "Last big outage, what happened to the calls you couldn't get to?",
+          "How long before those people heard back from you?",
+        ],
+        mirror: MIRROR,
+        fix: "Here's the fix. When you can't pick up, Cinder texts them back in about ten seconds, qualifies them (home size, fuel type, timeline) and books the site visit. You're the first dealer they hear from, even on a 40-call day.",
+        close: "Easiest way to see it is a 15-minute demo. I'll show it handling an outage-day lead, set up as {company}. Does tomorrow or Friday work better?",
+      },
+      QUOTES_SIDE("install quotes", "an install quote"),
+    ],
     close: "Easiest way to see it is a 15-minute demo, where I show it handling an outage-day lead, set up as {company}. Does tomorrow or Friday work better?",
     guarantee: "Never Miss a Lead: every lead gets a reply in under 60 seconds, or that month is free. Book & Close: 5 booked appointments in your first 30 days (3 if you get under 30 leads a month), or your next month is free. And the monthly doesn't start until your first booked appointment.",
     price: "There are two options. Never Miss a Lead is $997 to set up, then $697 a month. Book & Close is $1,997 to set up, then $1,497 a month, and the monthly doesn't start until your first booked appointment.",

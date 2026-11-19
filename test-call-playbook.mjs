@@ -28,3 +28,18 @@ ok(() => assert.ok(SCRIPTS.detailing.objections.some(o => o.key === "w" && /book
 ok(() => assert.match(fillLine(SCRIPTS.trades.close, "trades", "Mark", { company: "Ridge Fence" }), /set up as Ridge Fence\./));
 ok(() => assert.match(SCRIPTS.trades.open, /I'll be honest, this is a cold call/));
 console.log(`Call playbook checks passed (${n} assertions).`);
+
+// The fence and generator pitch forks on the either/or answer.
+for (const t of ["trades", "generator"]) {
+  const sides = SCRIPTS[t].sides;
+  ok(() => assert.equal(sides?.length, 2, `${t}: two sides`));
+  ok(() => assert.deepEqual(sides.map(x => x.id), ["calls", "quotes"]));
+  ok(() => assert.deepEqual(sides.map(x => x.key), ["m", "q"]));
+  for (const sd of sides) {
+    ok(() => assert.ok(sd.probe.length && sd.fix && /\{company\}/.test(sd.close), `${t}/${sd.id} complete`));
+    ok(() => assert.ok(!SCRIPTS[t].objections.some(o => o.key === sd.key), `${t}/${sd.id} key is free`));
+  }
+  ok(() => assert.equal(sides[1].tier, "Book & Close"));
+  ok(() => assert.match(sides[1].fix, /days 2, 5 and 10, then monthly/));
+}
+ok(() => assert.equal(SCRIPTS.detailing.sides, undefined));
