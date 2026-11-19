@@ -448,8 +448,8 @@ export const TOOLS = [
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true },
   },
   {
-    name: "get_needs_phone", title: "Hiring leads missing a phone number",
-    description: "Companies the nightly hiring finder found with an open receptionist, CSR or dispatcher job, but no phone number yet: id, company, city, the job title and the job post link. Find each one's own website or Google listing and call save_contact_info with the phone (and website). Fence and generator companies come first.",
+    name: "get_needs_phone", title: "Hiring leads missing a phone number or email",
+    description: "Companies the nightly hiring finder found with an open receptionist, CSR or dispatcher job that are missing a phone number, an email, or both (missing says which): id, company, city, website, the job title and the job post link. Many of these phones are landlines that can't get texts, so the email is how they hear from Sam first. Find the business's own email (its website's contact page, the job post itself, its Facebook page, BBB or Google listing; never guess one like info@) and its main phone, and call save_contact_info with what you found and the page you found it on. Phone-less leads come first, then fence and generator companies.",
     inputSchema: { type: "object", properties: { limit: { type: "integer", minimum: 1, maximum: 50 } } },
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
   },
