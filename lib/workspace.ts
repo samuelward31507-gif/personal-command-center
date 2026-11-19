@@ -17,6 +17,7 @@ export type WorkspaceSettings = {
   bookingLink: string;    // where prospects book a call (Cal.com, Calendly…); used on prospect reports
   websiteUrl: string;     // your site; signs cold emails
   demoLink: string;       // a demo page or video; linked in follow-ups
+  bookedVideo: string;    // a short video sent in the "you're booked" text ("" = text without a video)
   logoUrl: string;        // white-label: https image shown in place of the Cinder wordmark ("" = Cinder)
   accentColor: string;    // white-label: the one accent color, #rrggbb ("" = default ink)
   tier1: TierSettings;
@@ -42,6 +43,7 @@ export const DEFAULT_WORKSPACE: WorkspaceSettings = {
   bookingLink: "https://cinderrevenue.com/book",
   websiteUrl: "https://cinderrevenue.com",
   demoLink: "https://cinderrevenue.com/demo",
+  bookedVideo: "",
   logoUrl: "",
   accentColor: "",
   tier1: { label: "Never Miss a Lead", setupFee: 997, monthlyFee: 697, setupLink: "", monthlyLink: "" },
@@ -106,6 +108,7 @@ export function mergeWorkspace(saved: unknown, base: WorkspaceSettings = DEFAULT
   if (typeof r.bookingLink === "string" && isPaymentLink(r.bookingLink.trim())) out.bookingLink = r.bookingLink.trim().slice(0, 300);
   if (typeof r.websiteUrl === "string" && isPaymentLink(r.websiteUrl.trim())) out.websiteUrl = r.websiteUrl.trim().slice(0, 300);
   if (typeof r.demoLink === "string" && isPaymentLink(r.demoLink.trim())) out.demoLink = r.demoLink.trim().slice(0, 300);
+  if (typeof r.bookedVideo === "string" && isPaymentLink(r.bookedVideo.trim())) out.bookedVideo = r.bookedVideo.trim().slice(0, 300);
   if (typeof r.logoUrl === "string" && isLogoUrl(r.logoUrl.trim())) out.logoUrl = r.logoUrl.trim();
   if (typeof r.accentColor === "string" && isHexColor(r.accentColor.trim())) out.accentColor = r.accentColor.trim().toLowerCase();
   for (const t of ["tier1", "tier2"] as const) {
@@ -137,6 +140,7 @@ export function validateWorkspace(input: unknown): { error: string } | { ok: Wor
   if (typeof r.bookingLink === "string" && r.bookingLink.trim() && !isPaymentLink(r.bookingLink.trim())) return { error: "Booking link must be a full https:// address." };
   if (typeof r.websiteUrl === "string" && r.websiteUrl.trim() && !isPaymentLink(r.websiteUrl.trim())) return { error: "Website must be a full https:// address." };
   if (typeof r.demoLink === "string" && r.demoLink.trim() && !isPaymentLink(r.demoLink.trim())) return { error: "Demo link must be a full https:// address." };
+  if (typeof r.bookedVideo === "string" && r.bookedVideo.trim() && !isPaymentLink(r.bookedVideo.trim())) return { error: "Booked-call video must be a full https:// address." };
   if (typeof r.logoUrl === "string" && r.logoUrl.trim() && !isLogoUrl(r.logoUrl.trim())) return { error: "Logo must be a full https:// image address." };
   if (typeof r.accentColor === "string" && r.accentColor.trim() && !isHexColor(r.accentColor.trim())) return { error: "Accent color must look like #ff6a1f." };
   for (const t of ["tier1", "tier2"] as const) {
@@ -156,7 +160,7 @@ export function validateWorkspace(input: unknown): { error: string } | { ok: Wor
   const calls = money(r.dailyCallTarget);
   if (!Number.isFinite(calls) || calls < 1 || calls > 500) return { error: "Daily call target must be between 1 and 500." };
   if (r.taxSetAsidePct !== undefined) { const t = money(r.taxSetAsidePct); if (!Number.isFinite(t) || t < 0 || t > 60) return { error: "Tax set-aside must be between 0 and 60%." }; }
-  return { ok: mergeWorkspace(r, { ...DEFAULT_WORKSPACE, address: "", contactEmail: "", paymentLink: "", paymentInstructions: "", bookingLink: "", websiteUrl: "", demoLink: "", logoUrl: "", accentColor: "" }) };
+  return { ok: mergeWorkspace(r, { ...DEFAULT_WORKSPACE, address: "", contactEmail: "", paymentLink: "", paymentInstructions: "", bookingLink: "", websiteUrl: "", demoLink: "", bookedVideo: "", logoUrl: "", accentColor: "" }) };
 }
 
 /** The offer catalog, priced from settings. Service types never change: deals and agreements key off them. */

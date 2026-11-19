@@ -42,5 +42,5 @@ for (const d of ["info_text", "info_dm", "info_email", "info_email_time"]) ok(()
 ok(() => assert.doesNotMatch(buildDraft("stay_in_touch", base).body, /watch/), "stay-in-touch stays short");
 { const f = buildDraft("followup_text", { firstName: "Mark", company: "JC Fence Company, LLC", me: "Sam", bookingLink: "x" });
   assert.match(f.body, /^Hey Mark, Sam with Cinder\. Here's a quick 35-second video/);
-  assert.match(f.body, /why-first-call\.mp4/); assert.match(f.body, /work for JC Fence Company\? Morning or afternoon/); }
+  assert.match(f.body, /cinderrevenue\.com\/first-call/); assert.match(f.body, /work for JC Fence Company\? Morning or afternoon/); }
 console.log(`Call draft + local time checks passed (${n} assertions).`);

@@ -49,7 +49,7 @@ async function validateLinks(sql: ReturnType<typeof db>, ownerId: string, contac
   return null;
 }
 const selectEvents = `
-  SELECT e.id, e.title, e.description, e.starts_at, e.ends_at, e.all_day, e.event_type, e.status,
+  SELECT e.id, e.title, e.description, e.starts_at, e.ends_at, e.all_day, e.event_type, e.status, e.outcome,
     e.contact_id, e.deal_id, e.created_at, e.updated_at,
     trim(concat_ws(' ', c.first_name, c.last_name)) AS contact_name, c.first_name AS contact_first, c.company AS contact_company, c.phone AS contact_phone, c.time_zone AS contact_tz, c.location AS contact_location, d.title AS deal_title
   FROM public.calendar_events e
@@ -58,7 +58,7 @@ const selectEvents = `
 `;
 function mapEvent(r: Record<string, unknown>) {
   return { id:r.id, title:r.title, description:r.description, startsAt:r.starts_at, endsAt:r.ends_at, allDay:r.all_day,
-    type:r.event_type, status:r.status, contactId:r.contact_id, dealId:r.deal_id,
+    type:r.event_type, status:r.status, outcome:r.outcome ?? null, contactId:r.contact_id, dealId:r.deal_id,
     contactName:r.contact_name ?? "", contactFirst:r.contact_first ?? "", contactCompany:r.contact_company ?? "", contactPhone:r.contact_phone ?? "", contactTimeZone:r.contact_tz ?? "", contactLocation:r.contact_location ?? "", dealTitle:r.deal_title ?? "", createdAt:r.created_at, updatedAt:r.updated_at };
 }
 export async function GET(request: Request) {

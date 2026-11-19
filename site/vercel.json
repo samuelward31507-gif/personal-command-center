@@ -4,6 +4,10 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/first-call",
+      "destination": "/media/why-first-call.mp4"
+    },
+    {
       "source": "/api/t",
       "destination": "https://personal-command-center-ten-ruby.vercel.app/api/track"
     },

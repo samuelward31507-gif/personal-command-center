@@ -12,7 +12,7 @@ export function noShowEmail(i: { firstName: string; company: string; me: string;
 }
 
 export function noShowText(i: { firstName: string; me: string; bookingLink: string; when: string }): string {
-  return `Hey${i.firstName ? " " + i.firstName : ""}, ${i.me} with Cinder. Missed you ${i.when}, no worries. Want to grab a new time? ${i.bookingLink} or just text me morning or afternoon.`;
+  return `Hey${i.firstName ? " " + i.firstName : ""}, ${i.me} with Cinder. Looks like we missed each other ${i.when}. No worries, I know jobs run long. Want to do tomorrow instead, morning or afternoon? Or grab a time here: ${i.bookingLink}`;
 }
 
 /** "this morning" / "this afternoon" / "on Tuesday" relative to now, in the owner's time zone. */

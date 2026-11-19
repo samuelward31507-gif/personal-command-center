@@ -10,7 +10,7 @@ import type { QueueItem } from "@/lib/my-day";
 import { dueFollowUps } from "@/lib/email-outreach";
 import { INBOX_URL, CHANNEL_LABEL } from "@/lib/inbox-links";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
-import { confirmText, meetingNudge, meetingWhen, reminderText, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText, hiringText } from "@/lib/sms-templates";
+import { bookedText, confirmText, joinLink, lateText, meetingNudge, meetingWhen, reminderText, type MeetingStep, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText, hiringText } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
 
@@ -30,7 +30,7 @@ type Board = {
   working?: Record<"trades" | "cities", { label: string; dials: number; convos: number; meetings: number }[]>;
   goal: { goal: number; by?: string; collected: number; expected: number; gapAfterExpected: number; daysLeft: number; progressPct: number; withExpectedPct: number; perDeal: { label: string; valueByGoal: number; dealsNeeded: number | null }[] };
 };
-type Ev = { id: string; title: string; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string; contactFirst?: string; contactCompany?: string; contactPhone?: string; contactTimeZone?: string; contactLocation?: string };
+type Ev = { id: string; title: string; description?: string | null; createdAt?: string; outcome?: string | null; startsAt: string; endsAt: string; allDay: boolean; type: string; status: string; contactId: string | null; dealId: string | null; contactName: string; contactFirst?: string; contactCompany?: string; contactPhone?: string; contactTimeZone?: string; contactLocation?: string };
 type Referral = { dealId: string; title: string; id: string; firstName: string; company: string; phone: string; wonAt: string | null };
 type Warm = { id: string; firstName: string; company: string; phone: string; website?: string; niche: string; location?: string; callNote?: string; outcome: string; at: string | null; infoSentAt: string | null; repliedAt: string | null; tasks: { id: string; title: string; due: string | null; day: number }[] };
 type Todo = { key: string; title: string; why: string; overdue: boolean; href: string; action: string; onClick?: () => void; alt?: { label: string; onClick: () => void }; name?: string; website?: string; body?: string; contactId?: string };
@@ -70,8 +70,9 @@ export default function Dashboard() {
     fetch(`/api/scoreboard?today=${localDay(now)}&tz=${now.getTimezoneOffset()}`, { cache: "no-store" })
       .then(async r => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(r.status === 401 ? "Sign in to see your numbers." : j.error || "Couldn't load your numbers."); setB(j); })
       .catch(e => setErr(e instanceof Error ? e.message : "Couldn't load your numbers."));
-    const start = new Date(); start.setHours(0, 0, 0, 0);
-    const end = new Date(start); end.setDate(end.getDate() + 2);
+    // From yesterday: a meeting that ended last night still needs its "did they show" answer this morning.
+    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - 1);
+    const end = new Date(start); end.setDate(end.getDate() + 3);
     // The route requires from/to (YYYY-MM-DD) as well as fromAt/toAt, or it 400s and no meetings show.
     fetch(`/api/calendar-events?from=${localDay(start)}&to=${localDay(end)}&fromAt=${encodeURIComponent(start.toISOString())}&toAt=${encodeURIComponent(end.toISOString())}`, { cache: "no-store" })
       .then(r => (r.ok ? r.json() : { events: [] })).then(d => setEvents((d.events ?? []).filter((e: Ev) => e.status !== "cancelled")))
@@ -137,23 +138,50 @@ export default function Dashboard() {
   const greeting = now.getHours() < 5 ? "Late night" : now.getHours() < 12 ? "Morning" : now.getHours() < 18 ? "Afternoon" : "Evening";
   const target = b?.targets?.dailyCalls ?? ws.dailyCallTarget ?? 100;
   const [nudged, setNudged] = useState<Record<string, true>>(() => { try { return JSON.parse(localStorage.getItem("cinder.nudged.v1") || "{}"); } catch { return {}; } });
-  function nudge(e: Ev, kind: "confirm" | "remind") {
+  const firstOf = (e: Ev) => e.contactFirst && e.contactFirst !== e.contactCompany ? e.contactFirst : "";
+  function nudge(e: Ev, kind: Exclude<MeetingStep, "showed?">) {
     if (!e.contactPhone || !e.contactId) return;
     const tz = resolveTimeZone({ timeZone: e.contactTimeZone, location: e.contactLocation, phone: e.contactPhone }, timeZoneFor, timeZoneForPhone);
-    const at = meetingWhen(new Date(e.startsAt), new Date(), tz);
-    const body = kind === "confirm" ? confirmText({ firstName: e.contactFirst && e.contactFirst !== e.contactCompany ? e.contactFirst : "", when: at, business: ws.businessName }) : reminderText({ firstName: e.contactFirst && e.contactFirst !== e.contactCompany ? e.contactFirst : "", when: at });
+    const at = meetingWhen(new Date(e.startsAt), new Date(), tz), link = joinLink(e.description), first = firstOf(e);
+    const body = kind === "welcome" ? bookedText({ firstName: first, when: at, business: ws.businessName, company: e.contactCompany, link, video: ws.bookedVideo })
+      : kind === "confirm" ? confirmText({ firstName: first, when: at, business: ws.businessName })
+      : kind === "remind" ? reminderText({ firstName: first, when: at, link })
+      : lateText({ firstName: first, link, booking: ws.bookingLink });
     window.location.href = smsHref(e.contactPhone, body);
     void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: e.contactId, direction: "outbound", body }) }).catch(() => {});
-    const next = { ...nudged, [e.id + ":" + kind]: true as const }; setNudged(next);
-    try { localStorage.setItem("cinder.nudged.v1", JSON.stringify(next)); } catch { /* fine */ }
+    markNudged(e.id + ":" + kind);
   }
+  function markNudged(key: string) {
+    setNudged(prev => { const next = { ...prev, [key]: true as const }; try { localStorage.setItem("cinder.nudged.v1", JSON.stringify(next)); } catch { /* fine */ } return next; });
+  }
+  // Did they show? No-show runs the existing flow: reschedule email (when Gmail and their email exist), a callback task
+  // for tomorrow morning, and a reschedule text to send from your phone. Showed logs it and queues the next step.
+  async function outcome(e: Ev, o: "showed" | "no_show") {
+    markNudged(e.id + ":showed?");
+    const r = await fetch("/api/calendar-events/outcome", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: e.id, outcome: o }) }).catch(() => null);
+    const j = r?.ok ? await r.json().catch(() => ({})) : {};
+    setEvents(prev => (prev ?? []).map(x => x.id === e.id ? { ...x, outcome: o } : x));
+    if (o === "no_show" && j?.text?.href) window.location.href = j.text.href;
+  }
+  const stepOf = (e: Ev) => e.contactPhone || e.contactId ? meetingNudge(new Date(e.startsAt), new Date(), null, { createdAt: e.createdAt ? new Date(e.createdAt) : null, outcome: e.outcome, done: k => !!nudged[e.id + ":" + k] }) : null;
   const upcoming = (events ?? []).filter(e => new Date(e.endsAt).getTime() > Date.now()).sort((x, y) => x.startsAt.localeCompare(y.startsAt));
-  // Meeting texts (confirm the day before, remind in the last 3 hours) join the follow-up list.
-  const meetingTexts: Todo[] = upcoming.flatMap(e => {
-    const k = e.contactPhone ? meetingNudge(new Date(e.startsAt), new Date(), null) : null;
-    if (!k || nudged[e.id + ":" + k]) return [];
-    const who = e.contactName || e.title;
-    return [{ key: "text:" + e.id + k, title: k === "confirm" ? `Text ${who} to confirm` : `Text ${who} a reminder`, why: k === "confirm" ? `Confirm ${e.title}` : `Remind before ${e.title}`, overdue: k === "remind", href: "/crm/calendar", action: "Text", name: e.contactCompany || who, onClick: () => nudge(e, k) }];
+  // The show-up sequence for every meeting, one step at a time: welcome text right after booking, confirm the day
+  // before, reminder with the join link in the last 3 hours, a no-guilt "I'm on now" text a few minutes late, then
+  // "did they show" until it's answered.
+  const STEP: Record<MeetingStep, { title: (w: string) => string; why: string; action: string }> = {
+    welcome: { title: w => `Text ${w}: you're booked`, why: "Right after booking: what the call is, and the join link", action: "Text" },
+    confirm: { title: w => `Text ${w} to confirm`, why: "Ask for a yes. People show up for what they said yes to", action: "Text" },
+    remind: { title: w => `Text ${w} the join link`, why: "Meeting in the next 3 hours", action: "Text" },
+    late: { title: w => `${w} isn't on yet: text them`, why: "I'm on now, here's the link, or grab another time", action: "Text" },
+    "showed?": { title: w => `Did ${w} show?`, why: "No-show sends the reschedule email and text, and sets a callback", action: "No-show" },
+  };
+  const meetingTexts: Todo[] = (events ?? []).filter(e => e.status !== "cancelled").flatMap(e => {
+    const k = stepOf(e);
+    if (!k || (k !== "showed?" && !e.contactPhone)) return [];
+    const who = e.contactName || e.title, s = STEP[k];
+    return [{ key: "text:" + e.id + k, title: s.title(who), why: `${s.why} · ${e.title}`, overdue: k === "remind" || k === "late" || k === "showed?", href: "/crm/calendar", action: s.action, name: e.contactCompany || who,
+      onClick: () => (k === "showed?" ? void outcome(e, "no_show") : nudge(e, k)),
+      ...(k === "showed?" ? { alt: { label: "Showed", onClick: () => void outcome(e, "showed") } } : {}) }];
   });
   // Warm leads: the info text they asked for, then the day 1/2/3/7 follow-up texts. One text per lead per day.
   const endToday = new Date(); endToday.setHours(23, 59, 59, 999);
@@ -203,15 +231,7 @@ export default function Dashboard() {
       onClick: () => { const body = referralText({ firstName: first }); window.location.href = smsHref(r.phone, body); void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: r.id, direction: "outbound", body }) }).catch(() => {}); setDoneKeys(k => ({ ...k, [key]: true })); } }];
   });
   // Hiring for the phones: text before the first call (the 6am Autopilot emails them first). Texting moves them to Call mode.
-  const hiringRows: Todo[] = hiring.flatMap(h => {
-    const key = "hire:" + h.id;
-    if (doneKeys[key]) return [];
-    const who = h.company || h.firstName || "this company";
-    const body = hiringText({ firstName: h.firstName && h.firstName !== h.company ? h.firstName : "", company: h.company, role: h.role });
-    const mail = h.emailed ? "emailed" : h.hasEmail ? "email goes out with Autopilot" : "no email found";
-    return [{ key, title: `Text ${who} before you call`, why: `Hiring: ${h.role || "receptionist"} · ${mail}`, overdue: h.emailed || !h.hasEmail, href: `/crm?contact=${h.id}`, action: "Text", name: who, website: h.website, body, contactId: h.id,
-      onClick: () => { window.location.href = smsHref(h.phone, body); void fetch("/api/contacts/texts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contactId: h.id, direction: "outbound", body }) }).catch(() => {}); setDoneKeys(k => ({ ...k, [key]: true })); } }];
-  });
+  // Hiring leads are never texted (most are landlines): they get the hiring email, then a call.
   function sendLoom() {
     if (!loom || !/^https?:\/\/\S+$/.test(loom.url.trim())) return;
     const w = loom.w, first = w.firstName && w.firstName !== w.company ? w.firstName : "";
@@ -223,7 +243,7 @@ export default function Dashboard() {
   }
   const contentRows: Todo[] = content && !content.some(p => p.channel === "page" && localDay(new Date(p.at)) === localDay())
     ? [{ key: "content:page", title: "Post today's page post", why: "Facebook page and Instagram. It's written, copy it and post.", overdue: false, href: "/crm/content", action: "Open" }] : [];
-  const all = [...dmRows, ...warmTexts, ...hiringRows, ...meetingTexts, ...refRows, ...contentRows];
+  const all = [...dmRows, ...warmTexts, ...meetingTexts, ...refRows, ...contentRows];
   const list: Todo[] | null = todo === null || warm === null ? null : [...all.filter(t => t.overdue), ...todo.filter(t => t.overdue), ...all.filter(t => !t.overdue), ...todo.filter(t => !t.overdue)];
   const when = (e: Ev) => {
     const s = new Date(e.startsAt), isToday = localDay(s) === localDay();
@@ -399,13 +419,13 @@ export default function Dashboard() {
         <div className="td-sh">Meetings{upcoming.length > 0 && <span className="ct">{upcoming.length}</span>}<span className="r"><Link href="/crm/calendar" style={{ color: "inherit" }}>Calendar</Link></span></div>
         <div className="td-card">
           {events === null ? <p className="td-empty">Loading…</p> : upcoming.length === 0 ? <p className="td-empty">Nothing booked today or tomorrow. Meetings come from dials.</p>
-            : upcoming.slice(0, 5).map((e, i) => { const k = e.contactPhone ? meetingNudge(new Date(e.startsAt), new Date(), null) : null; const done = k && nudged[e.id + ":" + k]; const who = e.contactCompany || e.contactName || e.title;
+            : upcoming.slice(0, 5).map((e, i) => { const k = stepOf(e); const done = false; const who = e.contactCompany || e.contactName || e.title;
               return <div key={e.id} className="td-mt">
                 <span className="dot" style={{ background: i === 0 ? "#16a34a" : "#e3a008" }} />
                 <Logo name={who} size={20} />
                 <Link href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"} style={{ minWidth: 0, display: "flex", gap: 10, color: "inherit" }}><b>{who}</b><span className="what">{e.title !== who ? e.title : ""}</span></Link>
                 <span className="t">{when(e).day ? "Tomorrow, " : i === 0 && until(e.startsAt) ? until(e.startsAt) + " · " : ""}{when(e).t}</span>
-                {k && <button type="button" className={"u-btn" + (done ? " u-btn-bare" : "")} onClick={() => nudge(e, k)}>{done ? "Sent" : k === "confirm" ? "Confirm" : "Remind"}</button>}
+                {k && k !== "showed?" && e.contactPhone && <button type="button" className={"u-btn" + (done ? " u-btn-bare" : "")} onClick={() => nudge(e, k)}>{{ welcome: "Welcome", confirm: "Confirm", remind: "Send link", late: "I'm on" }[k]}</button>}
               </div>; })}
         </div>
       </section>

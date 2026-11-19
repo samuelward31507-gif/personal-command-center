@@ -29,10 +29,20 @@ type BookingPayload = {
   createdAt?: unknown;
   metadata?: unknown;
   responses?: unknown;
+  videoCallData?: unknown;
+  location?: unknown;
 };
 
 type Sql = NeonQueryFunction<false, false>;
 const TZ = () => process.env.CINDER_TIMEZONE?.trim() || "America/Denver";
+
+/** The meeting's join link (Cal Video or another video app), so reminders can carry it. */
+function joinUrlOf(p: BookingPayload): string {
+  const pick = (v: unknown) => (typeof v === "string" && /^https:\/\/\S+$/.test(v.trim()) ? v.trim().slice(0, 500) : "");
+  const meta = (p.metadata && typeof p.metadata === "object" ? p.metadata : {}) as Record<string, unknown>;
+  const video = (p.videoCallData && typeof p.videoCallData === "object" ? p.videoCallData : {}) as Record<string, unknown>;
+  return pick(meta.videoCallUrl) || pick(video.url) || pick(p.location);
+}
 
 /** The contact's open deal (newest first), if any. */
 async function openDeal(sql: Sql, ownerId: string, contactId: string) {
@@ -241,7 +251,8 @@ export async function POST(request: Request) {
         return Response.json({ error: "Booking startTime/endTime are invalid." }, { status: 400 });
       }
       const title = text(payload.title, 300) || "Cal.ai meeting";
-      const description = text(payload.description, 3000);
+      const joinUrl = joinUrlOf(payload);
+      const description = [text(payload.description, 2900), joinUrl ? `Join: ${joinUrl}` : ""].filter(Boolean).join("\n");
       const startsIso = new Date(startsAt).toISOString();
       const endsIso = new Date(endsAt).toISOString();
       const rescheduleUid = text(payload.rescheduleUid, 300);

@@ -5,13 +5,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useWorkspace } from "../../use-workspace";
 import { mailtoLink } from "@/lib/deal-workspace";
-import { fillTemplate, mergeFor, TEMPLATE_SETS, TRACK_LABEL, trackOf, STEP_GAP_DAYS, type EmailStep, type EmailTemplate, type Track } from "@/lib/email-outreach";
+import { fillTemplate, hiringIntro, hiringRole, mergeFor, TEMPLATE_SETS, TRACK_LABEL, trackOf, STEP_GAP_DAYS, type EmailStep, type EmailTemplate, type Track } from "@/lib/email-outreach";
 import "./email.css";
 import InfoSend from "./info-send";
 import FindEmails from "./find-emails";
 import AutopilotPanel from "./autopilot-panel";
 
-type Contact = { id: string; name: string; company: string; email: string; location?: string; status?: string; lastTouchOutcome?: string; nextFollowUp?: string; source?: string; niche?: string };
+const isHiring = (c: { notes?: string }) => (c.notes ?? "").includes("Hiring:");
+type Contact = { id: string; name: string; company: string; email: string; location?: string; status?: string; lastTouchOutcome?: string; nextFollowUp?: string; source?: string; niche?: string; notes?: string };
 type Sent = { contactId: string; step: string; at: string };
 type Heard = { contactId: string; kind: "reply" | "bounce"; at: string; preview: string; from: string };
 const SYNC_KEY = "cinder.gmail.sync.at";
@@ -154,7 +155,8 @@ export default function EmailPage() {
   const et: Track = editTrack ?? trackOf(current?.niche);
   const etpl = templates[et][step];
   const merge = current ? mergeFor(current, ws) : null;
-  const filled = current && merge ? { subject: fillTemplate(tpl.subject, merge), body: fillTemplate(tpl.body, merge) } : null;
+  // A company hiring for the phones gets the hiring email as its first email, not the general one.
+  const filled = current && merge ? (step === "intro" && isHiring(current) ? hiringIntro(merge, hiringRole(current.notes ?? "")) : { subject: fillTemplate(tpl.subject, merge), body: fillTemplate(tpl.body, merge) }) : null;
   const today = localDay();
   const sentToday = sent.filter(s => localDay(new Date(s.at)) === today).length;
   const sentWeek = sent.filter(s => Date.now() - Date.parse(s.at) < 7 * 86400000).length;
@@ -197,7 +199,7 @@ export default function EmailPage() {
   /** Send the selected emails one at a time from Gmail, with a short random pause between each. */
   async function sendBulk() {
     const runStep = step;
-    const batch = chosen.map(c => { const m = mergeFor(c, ws), tplNow = templates[trackOf(c.niche)][runStep]; return { c, subject: fillTemplate(tplNow.subject, m), body: fillTemplate(tplNow.body, m) }; });
+    const batch = chosen.map(c => { const m = mergeFor(c, ws), tplNow = templates[trackOf(c.niche)][runStep]; const h = runStep === "intro" && isHiring(c) ? hiringIntro(m, hiringRole(c.notes ?? "")) : null; return { c, subject: h ? h.subject : fillTemplate(tplNow.subject, m), body: h ? h.body : fillTemplate(tplNow.body, m) }; });
     const today = Math.min(batch.length, room);
     if (batch.length && today === 0) { setError("All your inboxes are at today's limit. Press Send tomorrow, or connect another inbox."); return; }
     if (!batch.length || !confirm(`Send ${today} email${today === 1 ? "" : "s"} now from ${(gmail?.inboxes?.length ?? 1) > 1 ? `your ${gmail?.inboxes?.length} inboxes (they rotate)` : gmail?.email}?${batch.length > today ? ` That's everything your inboxes have room for today. The other ${batch.length - today} stay selected for tomorrow.` : ""} They go out one at a time over about ${Math.ceil((today * (GAP[0] + GAP[1])) / 2 / 60)} min. Keep this tab open.`)) return;
@@ -363,7 +365,7 @@ export default function EmailPage() {
         <div className="u-rows em-list">{list.map(c => <div key={c.id} className={"u-row em-item" + (current?.id === c.id ? " is-on" : "") + (selected.has(c.id) ? " is-sel" : "")}>
           <input type="checkbox" className="em-check" checked={selected.has(c.id)} disabled={!!run} onChange={() => toggle(c.id)} aria-label={`Select ${c.company || c.name}`} />
           <button type="button" className="em-pick" onClick={() => setPicked(c.id)}>
-            <div className="u-row-main"><strong>{c.company || c.name}</strong><span>{[c.location, trackOf(c.niche) === "detailing" ? "Detailer" : "", c.email].filter(Boolean).join(" · ")}</span></div>
+            <div className="u-row-main"><strong>{c.company || c.name}</strong><span>{[isHiring(c) ? `Hiring: ${hiringRole(c.notes ?? "")}` : "", c.location, trackOf(c.niche) === "detailing" ? "Detailer" : "", c.email].filter(Boolean).join(" · ")}</span></div>
           </button>
         </div>)}</div>
         {skipped.size > 0 && <button className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setSkipped(new Set())}>Bring back {skipped.size} skipped</button>}
