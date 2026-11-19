@@ -15,7 +15,7 @@ const clean = (v: string | null, n = 60) => (v ?? "").replace(/[<>]/g, "").trim(
  * the call covers, so they show up warm instead of guarded.
  */
 export default function MeetPage() {
-  const [b, setB] = useState<Brand>({ businessName: "Cinder Revenue Company", ownerFirstName: "Sam" });
+  const [b, setB] = useState<Brand>({ businessName: "Cinder Revenue Company", ownerFirstName: "Sam", bookingLink: "https://cinderrevenue.com/book" });
   const [who, setWho] = useState({ first: "", company: "" });
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
