@@ -10,7 +10,7 @@ import type { QueueItem } from "@/lib/my-day";
 import { dueFollowUps } from "@/lib/email-outreach";
 import { INBOX_URL, CHANNEL_LABEL } from "@/lib/inbox-links";
 import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
-import { bookedText, prepLink, confirmText, joinLink, lateText, meetingNudge, meetingWhen, reminderText, type MeetingStep, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText, hiringText } from "@/lib/sms-templates";
+import { bookedText, prepLink, prepText, confirmText, joinLink, lateText, meetingNudge, meetingWhen, reminderText, type MeetingStep, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText, hiringText } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
 
@@ -144,6 +144,7 @@ export default function Dashboard() {
     const tz = resolveTimeZone({ timeZone: e.contactTimeZone, location: e.contactLocation, phone: e.contactPhone }, timeZoneFor, timeZoneForPhone);
     const at = meetingWhen(new Date(e.startsAt), new Date(), tz), link = joinLink(e.description), first = firstOf(e);
     const body = kind === "welcome" ? bookedText({ firstName: first, when: at, business: ws.businessName, company: e.contactCompany, link, prep: prepLink({ firstName: first, company: e.contactCompany, site: ws.websiteUrl }) })
+      : kind === "prep" ? prepText({ firstName: first, company: e.contactCompany })
       : kind === "confirm" ? confirmText({ firstName: first, when: at, business: ws.businessName })
       : kind === "remind" ? reminderText({ firstName: first, when: at, link })
       : lateText({ firstName: first, link, booking: ws.bookingLink });
@@ -170,6 +171,7 @@ export default function Dashboard() {
   // "did they show" until it's answered.
   const STEP: Record<MeetingStep, { title: (w: string) => string; why: string; action: string }> = {
     welcome: { title: w => `Text ${w}: you're booked`, why: "Right after booking: what the call is, and the join link", action: "Text" },
+    prep: { title: w => `Text ${w} a prep question`, why: "Keeps them warm until the call, and their answers shape your demo", action: "Text" },
     confirm: { title: w => `Text ${w} to confirm`, why: "Ask for a yes. People show up for what they said yes to", action: "Text" },
     remind: { title: w => `Text ${w} the join link`, why: "Meeting in the next 3 hours", action: "Text" },
     late: { title: w => `${w} isn't on yet: text them`, why: "I'm on now, here's the link, or grab another time", action: "Text" },
@@ -425,7 +427,7 @@ export default function Dashboard() {
                 <Logo name={who} size={20} />
                 <Link href={e.dealId ? `/crm/deals/${e.dealId}` : e.contactId ? `/crm?contact=${e.contactId}` : "/crm/calendar"} style={{ minWidth: 0, display: "flex", gap: 10, color: "inherit" }}><b>{who}</b><span className="what">{e.title !== who ? e.title : ""}</span></Link>
                 <span className="t">{when(e).day ? "Tomorrow, " : i === 0 && until(e.startsAt) ? until(e.startsAt) + " · " : ""}{when(e).t}</span>
-                {k && k !== "showed?" && e.contactPhone && <button type="button" className={"u-btn" + (done ? " u-btn-bare" : "")} onClick={() => nudge(e, k)}>{{ welcome: "Welcome", confirm: "Confirm", remind: "Send link", late: "I'm on" }[k]}</button>}
+                {k && k !== "showed?" && e.contactPhone && <button type="button" className={"u-btn" + (done ? " u-btn-bare" : "")} onClick={() => nudge(e, k)}>{{ welcome: "Welcome", prep: "Prep", confirm: "Confirm", remind: "Send link", late: "I'm on" }[k]}</button>}
               </div>; })}
         </div>
       </section>

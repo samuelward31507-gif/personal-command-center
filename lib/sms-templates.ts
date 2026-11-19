@@ -258,6 +258,12 @@ export function prepLink(i: { firstName?: string; company?: string; site?: strin
   const qs = q.toString();
   return `${(i.site || "https://cinderrevenue.com").replace(/\/$/, "")}/meet${qs ? "?" + qs : ""}`;
 }
+/** The day after booking, when the call is still days away: one question that gets them thinking about their own
+ * business, and lets Sam build the demo around their answers. People show up for something they've put work into. */
+export function prepText(i: { firstName?: string; company?: string }): string {
+  const name = (i.firstName ?? "").trim();
+  return `Hey${name ? " " + name : ""}, Sam again. Quick one so I can set up the demo as ${i.company?.trim() || "your business"}: what are the 2 or 3 questions you always ask a homeowner on the first call? I'll build them in so you see it working your way.`;
+}
 /** A few minutes past the start and they're not on: make it easy to join or move it, never guilt. */
 export function lateText(i: { firstName?: string; link?: string; booking?: string }): string {
   const name = (i.firstName ?? "").trim();
@@ -266,7 +272,7 @@ export function lateText(i: { firstName?: string; link?: string; booking?: strin
 /** Which show-up step a meeting needs right now, in order: welcome (booked in the last 12 hours, more than 3 hours
  * out), confirm (within a day and a half), remind (last 3 hours), late (2 to 20 minutes past the start), and
  * "did they show" (20 minutes past the start until 2 days later, while no outcome is logged). */
-export type MeetingStep = "welcome" | "confirm" | "remind" | "late" | "showed?";
+export type MeetingStep = "welcome" | "prep" | "confirm" | "remind" | "late" | "showed?";
 export function meetingNudge(startsAt: Date, now: Date, tz: string | null, o: { createdAt?: Date | null; outcome?: string | null; done?: (k: MeetingStep) => boolean } = {}): MeetingStep | null {
   void tz;
   const ms = startsAt.getTime() - now.getTime(), done = o.done ?? (() => false);
@@ -277,6 +283,9 @@ export function meetingNudge(startsAt: Date, now: Date, tz: string | null, o: { 
   if (ms <= 3 * 3600000) return done("remind") ? null : "remind";
   const fresh = o.createdAt && now.getTime() - o.createdAt.getTime() < 12 * 3600000;
   if (fresh && !done("welcome") && !done("confirm")) return "welcome";
+  // Booked more than a day and a half out: one touch in between, the day after booking, so they stay warm.
+  const settled = o.createdAt && now.getTime() - o.createdAt.getTime() >= 16 * 3600000;
+  if (ms > 36 * 3600000 && settled && !done("prep") && !done("confirm")) return "prep";
   return ms <= 36 * 3600000 && !done("confirm") ? "confirm" : null;
 }
 

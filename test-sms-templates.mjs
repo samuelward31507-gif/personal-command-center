@@ -5,7 +5,7 @@ import {
   quietHoursWarning, planFor, dueAt, nextBusinessDay, zonedTime, localDate,
 } from "./lib/sms-templates.ts";
 import { timeZoneFor, timeZoneForPhone } from "./lib/local-time.ts";
-import { meetingNudge, meetingWhen, confirmText, reminderText, bookedText, prepLink, lateText, joinLink, infoFollowUpText, infoText as infoT, loomText, referralText, loomPoints, pickDemoLink } from "./lib/sms-templates.ts";
+import { meetingNudge, meetingWhen, confirmText, reminderText, bookedText, prepLink, prepText, lateText, joinLink, infoFollowUpText, infoText as infoT, loomText, referralText, loomPoints, pickDemoLink } from "./lib/sms-templates.ts";
 let n = 0; const ok = (fn, msg) => { try { fn(); n++; } catch (e) { e.message = (msg ? msg + ": " : "") + e.message; throw e; } };
 const tzOf = c => resolveTimeZone(c, timeZoneFor, timeZoneForPhone);
 
@@ -148,3 +148,12 @@ ok(() => assert.equal(pickDemoLink("fence", "not a link"), "https://cinderrevenu
   assert.equal(demoText({ niche: "detailing" }).link, "https://cinderrevenue.com/demo");
   assert.equal(demoText({ niche: "", settingsLink: "https://loom.com/share/abc" }).link, "https://loom.com/share/abc"); }
 console.log(`Text template checks passed (${n} assertions).`);
+
+{
+  const now = new Date("2026-11-09T15:00:00Z"), far = new Date("2026-11-12T17:00:00Z");
+  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-08T20:00:00Z"), done: k => k === "welcome" }), "prep", "booked yesterday, call 3 days out: prep question");
+  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-09T10:00:00Z"), done: k => k === "welcome" }), null, "booked this morning: wait until tomorrow");
+  assert.equal(meetingNudge(far, now, null, { createdAt: new Date("2026-11-08T20:00:00Z"), done: k => k === "welcome" || k === "prep" }), null, "prep sent: wait for confirm");
+  assert.match(prepText({ firstName: "Mark", company: "Ridge Fence" }), /^Hey Mark, Sam again\. Quick one so I can set up the demo as Ridge Fence: .*working your way\.$/);
+  console.log("prep step ok");
+}
