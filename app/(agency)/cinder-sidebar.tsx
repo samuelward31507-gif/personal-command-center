@@ -31,6 +31,7 @@ const records = [
 ] as const;
 const secondary = [
   ["email", "Email", "send", "/crm/email"],
+  ["linkedin", "LinkedIn", "person", "/crm/linkedin"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
   ["reports", "Client reports", "doc", "/crm/reports"],
   ["leads", "Lead finder", "search", "/crm/leads"],
