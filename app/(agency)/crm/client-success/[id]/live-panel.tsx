@@ -124,7 +124,7 @@ export default function LivePanel({ projectId }: { projectId: string }) {
     </div>}
 
     {tab === "quotes" && <div>
-      <p className="op-hint">Add a quote the day it goes out. It gets followed up on days 2, 5, 10 and 21 from the client&apos;s number, and stops the moment the customer replies or opts out.</p>
+      <p className="op-hint">Add a quote the day it goes out. It gets followed up on days 2, 5 and 10, then monthly from the client&apos;s number, and stops the moment the customer replies or opts out.</p>
       <form className="op-fields lv-form" onSubmit={async e => { e.preventDefault(); if (await act("quote", q, "Quote added. The first follow-up goes out on day 2.")) setQ({ ...q, name: "", phone: "", amount: "" }); }}>
         <label><span>Customer</span><input value={q.name} onChange={e => setQ({ ...q, name: e.target.value })} /></label>
         <label><span>Cell</span><input value={q.phone} onChange={e => setQ({ ...q, phone: e.target.value })} required /></label>

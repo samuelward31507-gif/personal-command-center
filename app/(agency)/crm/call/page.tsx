@@ -84,6 +84,8 @@ export default function CallModePage() {
   const [picked, setPicked] = useState<string | null>(null);
   // Playbook panel: an objection id, or "close", "voicemail", "gatekeeper". null shows the script.
   const [say, setSay] = useState<string | null>(null);
+  // Which answer they gave to the either/or question: the script forks on it.
+  const [side, setSide] = useState<"calls" | "quotes" | null>(null);
 
   // Today's list is the daily call target (Settings, 100 by default), follow-ups included. "Add 20 more" stretches it.
   const [base, setBase] = useState(100);
@@ -138,10 +140,10 @@ export default function CallModePage() {
 
   const item = queue[index];
   const contact = picked && contacts[picked] ? contacts[picked] : item?.contact ? { ...item.contact, ...(contacts[item.contact.id] ?? {}) } as Contact : null;
-  const track: Track = contact && openerFor(contact.niche, contact.company, contact.notes).trade === "detailing" ? "detailing" : "trades";
+  const track: Track = !contact ? "trades" : openerFor(contact.niche, contact.company, contact.notes).trade === "detailing" ? "detailing" : /generator/i.test(contact.niche ?? "") ? "generator" : "trades";
   const play = SCRIPTS[track];
   const playFirst = contact ? firstName(contact.name ?? "", contact.company ?? "") : "";
-  useEffect(() => { setSay(null); }, [contact?.id]);
+  useEffect(() => { setSay(null); setSide(null); }, [contact?.id]);
   const matches = useMemo(() => {
     const t = search.trim().toLowerCase();
     if (t.length < 2) return [];
@@ -356,7 +358,9 @@ export default function CallModePage() {
       if (ready && e.key === "Escape") { e.preventDefault(); setReady(false); return; }
       if (dialog || typing) return;
       const ob = contact ? play.objections.find(o => o.key === e.key) : undefined;
+      const fork = contact ? play.sides?.find(sd => sd.key === e.key.toLowerCase()) : undefined;
       if (e.key === "Escape" && say) { e.preventDefault(); setSay(null); }
+      else if (fork) { e.preventDefault(); setSay(null); setSide(v => (v === fork.id ? null : fork.id)); }
       else if (ob) { e.preventDefault(); setSay(s => (s === ob.id ? null : ob.id)); }
       else if (e.key === "d" || e.key === "D") { const link = document.querySelector<HTMLAnchorElement>(".dl-demo-text"); if (link) { e.preventDefault(); link.click(); } }
       else if (e.key === "c" || e.key === "C") { e.preventDefault(); const link = document.querySelector<HTMLAnchorElement>(".dl-call-link"); if (link) link.click(); else dial(); }
@@ -509,7 +513,22 @@ export default function CallModePage() {
             {say === null ? <>
               <div><span>Open</span><p>{f(play.open)}</p></div>
               <div><span>Script</span><div className="dl-parts">{f(play.pitch).split(" ... (let them talk, then) ").map((part, i) => <p key={i}>{i > 0 && <em className="dl-pause">Let them talk.</em>}{part}</p>)}</div></div>
-              <div><span>Ask</span><p>{f(play.close ?? CLOSE)} <button type="button" className="dl-more" onClick={() => setSay("close")}>Guarantee</button></p></div>
+              {play.sides && <div><span>Bigger problem?</span><div className="dl-fork">
+                <div className="dl-fork-pick" role="group" aria-label="Which one hits them harder">
+                  {play.sides.map(sd => <button type="button" key={sd.id} className="dl-fork-btn" aria-pressed={side === sd.id} onClick={() => setSide(v => (v === sd.id ? null : sd.id))}>{sd.label}<kbd>{sd.key.toUpperCase()}</kbd></button>)}
+                </div>
+                {(() => {
+                  const sd = play.sides.find(x => x.id === side);
+                  if (!sd) return <p className="dl-fork-hint">Let them answer, then tap their side.</p>;
+                  return <div className="dl-parts dl-fork-body">
+                    {sd.probe.map((q, i) => <p key={i}>{i > 0 && <em className="dl-pause">Let them talk.</em>}{f(q)}</p>)}
+                    <p><em className="dl-pause">Let them talk.</em>{f(sd.mirror)}</p>
+                    <p>{f(sd.fix)}</p>
+                    <p className="dl-fork-tier">This is in {sd.tier}.</p>
+                  </div>;
+                })()}
+              </div></div>}
+              <div><span>Ask</span><p>{f(play.sides?.find(x => x.id === side)?.close ?? play.close ?? CLOSE)} <button type="button" className="dl-more" onClick={() => setSay("close")}>Guarantee</button></p></div>
               <div><span>After they book</span><p className="dl-dig">{play.dig.map((q, i) => <span key={i}><i>{i + 1}</i>{f(q)} </span>)}</p></div>
             </> : <div className="dl-say" role="status">
               <span>{ob ? "Say" : say === "close" ? "Close" : say === "voicemail" ? "Voicemail" : "Gatekeeper"}</span>

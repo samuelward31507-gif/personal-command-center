@@ -979,3 +979,6 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 @media (prefers-reduced-motion: reduce) { .btn:hover, .bx:hover .bx-vis .ui { transform: none; } }
 
 .plan-tag{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:0;vertical-align:middle;color:#8a3a1c;background:#fbe9e2}
+
+.cal-direct { margin: 12px 0 0; text-align: center; font-size: 14px; color: #6b6b6b; }
+.cal-direct a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
