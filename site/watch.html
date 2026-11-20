@@ -82,7 +82,7 @@ body.watch { font-family: var(--sans); -webkit-font-smoothing: antialiased; colo
 [data-l="w"] .film { left: 1220px; top: 132px; width: 420px !important; }
 [data-l="w"] .film-phone { height: 866px; }
 [data-l="w"] .film-bar { margin-top: 22px; }
-[data-l="w"] .film-cap { left: -1124px; width: 760px; top: 262px; font-size: 64px; gap: 22px; }
+[data-l="w"] .film-cap { left: -1124px; width: 920px; top: 262px; font-size: 56px; gap: 22px; }
 [data-l="w"] .film-kick { font-size: 21px; }
 
 /* End card */
@@ -155,12 +155,15 @@ body.watch { --night: #f6f7f9; --night-2: #fff; --night-3: #eef0f3; --line: rgba
 .watch .fs-notif-cinder { border-color: rgba(255,255,255,.12); box-shadow: none; }
 
 /* Chapter list under the caption (wide): what the film covers, the current step lit */
-.w-steps { position: absolute; left: var(--l); top: 640px; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; }
-.w-steps li { display: flex; align-items: center; gap: 16px; font: 500 26px/1.2 var(--sans, system-ui); color: #b4b8bf; transition: color .4s ease; }
+.w-steps { position: absolute; left: var(--l); top: 690px; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.w-steps li { display: flex; align-items: center; gap: 16px; font: 500 24px/1.2 var(--sans, system-ui); color: #b4b8bf; transition: color .4s ease; }
 .w-steps li i { width: 10px; height: 10px; border-radius: 50%; background: #d9dce1; transition: background .4s ease, transform .4s ease; }
 .w-steps li.done { color: #6b7079; } .w-steps li.done i { background: #6b7079; }
 .w-steps li.on { color: #121417; } .w-steps li.on i { background: #F2431D; transform: scale(1.3); }
 [data-l="v"] .w-steps { display: none; }
+/* The step list belongs to the demo: hidden over the opening line, the stats and the end card. */
+.w-steps { opacity: 0; transition: opacity .4s ease; }
+[data-sc="s4"] .w-steps { opacity: 1; }
 </style>
 </head>
 <body class="watch">

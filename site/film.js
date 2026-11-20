@@ -152,7 +152,7 @@
   if (!story) return;
   // Personalization: replace every sample business name in the conversation (used by /watch?b=...).
   var biz = (root.getAttribute("data-biz") || "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, 40);
-  if (biz) story = Object.assign({}, story, { thread: story.thread.map(function (s) { return s.map(function (x) { return typeof x === "string" ? ["Summit Home Services", "Summit Fence Co.", "Summit Power & Generator"].reduce(function (a, k) { return a.split(k).join(biz); }, x) : x; }); }) });
+  if (biz) story = Object.assign({}, story, { thread: story.thread.map(function (s) { return s.map(function (x) { return typeof x === "string" ? ["Summit Fence Co. ", "Summit Home Services", "Summit Fence Co.", "Summit Power & Generator"].reduce(function (a, k) { return a.split(k).join(k.slice(-1) === " " ? biz + (/[.!?]$/.test(biz) ? " " : ". ") : biz); }, x) : x; }); }) });
   var SPEED = parseFloat(root.getAttribute("data-film-speed")) || 1;
   var manual = root.hasAttribute("data-film-manual");
 
