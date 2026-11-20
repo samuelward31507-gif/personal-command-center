@@ -1894,3 +1894,60 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: .55; cursor: po
   .t6-live li span { grid-column: 2 / 4; grid-row: 2; margin-top: -6px; }
   .t6-week { display: none; }
 }
+
+/* ==========================================================================
+   The website's window, everywhere (Nov 2026). Measured from the app window on cinderrevenue.com:
+   a light grey side rail, one hairline color, a small bold title with the ⌘K box beside it,
+   white content with generous padding, quiet rows, color only on outcomes. This layer comes last on purpose.
+   ========================================================================== */
+:root { --line: rgba(18, 20, 23, .07); --line-2: rgba(18, 20, 23, .11); --side: #fafbfc; --w2: #4a4f57; --w3: #8b9098; }
+
+/* Rail */
+.shell .rail { background: var(--side); border-right: 1px solid var(--line); padding: 14px 10px 10px; }
+.shell .rail .ri { height: 32px; padding: 0 10px; gap: 10px; border-radius: 7px; font: 500 14px/1 var(--ff); color: var(--w2); }
+.shell .rail .ri svg { color: var(--w3); }
+.shell .rail .ri:hover:not(.on) { background: rgba(18, 20, 23, .03); }
+.shell .rail .ri.on { background: rgba(18, 20, 23, .05); color: var(--ink); font-weight: 500; }
+.shell .rail .ri.on svg { color: var(--ink); }
+.shell .rail .ri.on::before { display: none; }
+.shell .rail .ri em { color: var(--w3); font-size: 12px; }
+.shell .rail .ri em.hot { min-width: 18px; height: 18px; padding: 0 6px; border-radius: 9px; background: var(--ink); color: #fff; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
+.shell .rail .rail-search { box-shadow: 0 0 0 1px var(--line); background: #fff; }
+
+/* Page head: the day's name in a small bold title, the summary in grey beside it, ⌘K on the right. No rule under it. */
+.ph { min-height: 64px; padding: 18px 28px 10px; background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 0; }
+.ph h1 { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.ph h1 > span { font: 600 20px/26px var(--ff-tight); letter-spacing: -.03em; }
+.ph h1 > em { font: 500 14px/20px var(--ff); letter-spacing: -.12px; color: var(--w3); }
+.find { height: 32px; width: 270px; background: #fff; box-shadow: 0 0 0 1px var(--line); color: var(--w3); font-size: 13px; }
+.find:hover { box-shadow: 0 0 0 1px var(--line-2); }
+.find kbd, .shell kbd { font: 500 11px/1 var(--ff); color: var(--w2); background: #f4f4f2; border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px; box-shadow: none; }
+@media (max-width: 899px) { .ph { padding: 14px 16px 8px; min-height: 0; } .ph h1 > span { font-size: 19px; } }
+
+/* Surfaces: white, one hairline, no drop shadows on resting cards. */
+.panel { box-shadow: 0 0 0 1px var(--line); }
+.t6-figs, .t6-day { box-shadow: 0 0 0 1px var(--line); border-radius: 10px; }
+.t6-figs > button { border-left-color: var(--line); }
+.t6-figs > button:nth-child(n+3) { border-top-color: var(--line); }
+.t6-figs dt { font-size: 12px; color: var(--w3); }
+.t6-figs dd { font-size: 22px; letter-spacing: -.03em; }
+.t6-live li, .t5-row:not(.visit), .tbl td, .settings li { border-color: var(--line); }
+
+/* Today: content and rail like the window: white rail with a hairline, This week first. */
+.t5-main { padding: 6px 28px 40px; gap: 26px; }
+.t5-rail { background: #fff; border-left: 1px solid var(--line); padding: 18px 18px 40px; gap: 22px; }
+.t5-rail h3 { font: 600 15px/20px var(--ff-tight); letter-spacing: -.02em; color: var(--ink); }
+.t6-ev { background: #f7f8fa; font-size: 12.5px; }
+.t6-day > b { font-size: 12px; color: var(--w3); }
+.t6-live li em, .t5-row .tm { font-size: 12.5px; }
+.t5-sec > header h2 { font: 600 15px/20px var(--ff-tight); letter-spacing: -.02em; }
+.t5-sec > header small, .t6-k { color: var(--w3); font-size: 12.5px; }
+.t5-row .btn.sm:not(.ink) { box-shadow: 0 0 0 1px var(--line); background: #fff; }
+
+/* Status: the window shows outcomes as colored text with a dot, not filled pills. */
+.shell .dot { height: auto; padding: 0; background: none !important; font-size: 13px; font-weight: 500; }
+.shell .dot.good { color: var(--good-ink); } .shell .dot.bad { color: #b42318; } .shell .dot.ember { color: var(--warn); }
+.stg { height: auto; padding: 0; background: none !important; font-size: 13px; }
+
+/* Tables read like the Live list: no header band, hairline rows. */
+.tbl th { background: transparent; color: var(--w3); font-weight: 500; font-size: 12px; border-color: var(--line); }
