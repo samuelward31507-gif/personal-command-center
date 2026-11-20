@@ -189,7 +189,7 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
 
   // The four numbers across the top, like the window on the website: today's leads, how many got a reply,
   // what got booked this week, and how fast the first reply goes out.
-  const isToday = (at: string | null) => !!at && iso(new Date(at)) === today;
+  const isToday = (at?: string | null) => !!at && iso(new Date(at)) === today;
   const todays = L.conversations.filter(c => isToday(c.created));
   const answeredToday = todays.filter(c => c.replySec != null).length;
   const weekAgo = Date.now() - 7 * 86400000;
