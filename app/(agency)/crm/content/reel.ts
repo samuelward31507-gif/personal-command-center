@@ -173,9 +173,10 @@ async function recordFrames(s: ReturnType<typeof reelScene>, onProgress?: (p: nu
 
 /** Make the reel. `onProgress` gets 0–1. */
 export async function renderReel(scenes: Card[], onProgress?: (p: number) => void): Promise<Blob> {
-  await document.fonts?.ready;
+  await Promise.race([document.fonts?.ready, new Promise(r => setTimeout(r, 3000))]);
   const s = reelScene(scenes);
-  const cfg = await avcConfig();
+  onProgress?.(0);
+  const cfg = await Promise.race([avcConfig(), new Promise<null>(r => setTimeout(() => r(null), 3000))]);
   if (cfg) { try { return await encodeFrames(s, cfg, onProgress); } catch (e) { console.warn("Encoder failed, recording instead", e); } }
   return recordFrames(s, onProgress);
 }

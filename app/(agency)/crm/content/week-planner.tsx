@@ -118,10 +118,10 @@ function DraftCard({ d, busy, act, meta, auto, making }: { d: Draft; busy: boole
   const [ready, setReady] = useState<File[] | null>(null);
   const cardKey = JSON.stringify(cards);
   useEffect(() => {
-    if (isReel) return;
+    // Reels too: their scenes as tall photos, for phones that can't make video (Instagram turns photos into a reel).
     let live = true;
     const t = setTimeout(() => {
-      Promise.all(cards.map((c, i) => cardPng(c, { page: cards.length > 1 ? `${i + 1}/${cards.length}` : undefined })))
+      Promise.all(cards.map((c, i) => cardPng(c, isReel ? { tall: true } : { page: cards.length > 1 ? `${i + 1}/${cards.length}` : undefined })))
         .then(blobs => { if (live) setReady(asFiles(blobs.map((blob, i) => ({ blob, name: `${fileBase(d)}${cards.length > 1 ? "-" + (i + 1) : ""}.png` })))); })
         .catch(() => {});
     }, 400);
@@ -157,10 +157,15 @@ function DraftCard({ d, busy, act, meta, auto, making }: { d: Draft; busy: boole
     if (reel) { await saveReel(reel.blob); return; }
     setErr(""); setWork(0);
     try {
-      const { blob } = await getReel(d.id, scenesFor(d), p => setWork(p));
+      // If this phone can't make video, say so within 25 seconds instead of sitting at 0%.
+      let last = Date.now();
+      const { blob } = await new Promise<{ blob: Blob; fresh: boolean }>((resolve, reject) => {
+        const dog = setInterval(() => { if (Date.now() - last > 25000) { clearInterval(dog); reject(new Error("This phone couldn't make the video. Tap Save scenes to Photos and make the reel in Instagram, or use Download all on a computer.")); } }, 1000);
+        getReel(d.id, scenesFor(d), p => { last = Date.now(); setWork(p); }).then(r => { clearInterval(dog); resolve(r); }, e => { clearInterval(dog); reject(e); });
+      });
       setReel(r => { if (r) URL.revokeObjectURL(r.src); return { src: URL.createObjectURL(blob), blob }; });
       await saveReel(blob);
-    } catch (e) { setErr(e instanceof Error ? e.message : "Couldn't make the reel."); }
+    } catch (e) { setErr(e instanceof Error && /phone couldn't|can't make video/i.test(e.message) ? e.message : "Couldn't make the video here. Tap Save scenes to Photos and make the reel in Instagram, or use Download all on a computer."); }
     finally { setWork(null); }
   }
   const progress = work ?? (making !== undefined && making >= 0 ? making : null), waiting = making === -1 && work === null;
@@ -196,6 +201,7 @@ function DraftCard({ d, busy, act, meta, auto, making }: { d: Draft; busy: boole
         {isReel ? <button type="button" className={"u-btn" + (reel ? " u-btn-go" : "")} disabled={!reel && progress !== null} onClick={() => void makeReel()}>{reel ? (isPhone() ? "Save reel to Photos" : "Download reel") : progress !== null ? `Making reel ${Math.round(progress * 100)}%` : waiting ? "Make this reel now" : "Make reel"}</button>
           : pending ? <button type="button" className="u-btn u-btn-go" onClick={async () => { if (await shareNow(pending)) setPending(null); }}>Save {pending.length} to Photos</button>
           : <button type="button" className="u-btn" onClick={downloadSlides}>{ready && canShareFiles(ready) ? `Save ${cards.length > 1 ? cards.length + " " : ""}to Photos` : `Download${cards.length > 1 ? ` ${cards.length}` : ""}`}</button>}
+        {isReel && !reel && ready && canShareFiles(ready) && <button type="button" className="u-btn" onClick={() => { navigator.share({ files: ready }).catch(() => {}); }}>Save {cards.length} scenes to Photos</button>}
         {meta.connected && (d.platform === "feed" || isReel) && !posted && d.media > 0 && <button type="button" className="u-btn" disabled={busy} onClick={() => void act("publish_now")}>Post now</button>}
         <button type="button" className="u-btn u-btn-bare" onClick={() => setEditing(true)}>Edit</button>
         <button type="button" className="u-btn u-btn-bare" disabled={busy} onClick={() => setNoting(n => !n)}>Rewrite</button>
