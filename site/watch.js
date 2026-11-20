@@ -27,6 +27,7 @@
   function scene(id) {
     return function () {
       [].forEach.call(stage.querySelectorAll(".sc"), function (s) { s.classList.toggle("on", s.id === id); });
+      stage.setAttribute("data-sc", id);
       log("scene:" + id);
     };
   }
