@@ -187,6 +187,29 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
   ];
   const pipeTotal = pipe.reduce((a, p) => a + p.v, 0);
 
+  // The four numbers across the top, like the window on the website: today's leads, how many got a reply,
+  // what got booked this week, and how fast the first reply goes out.
+  const isToday = (at: string | null) => !!at && iso(new Date(at)) === today;
+  const todays = L.conversations.filter(c => isToday(c.created));
+  const answeredToday = todays.filter(c => c.replySec != null).length;
+  const weekAgo = Date.now() - 7 * 86400000;
+  const bookedWeek = cards.filter(c => !c.pastCustomer && (c.stage === "booked" || c.stage === "won") && c.stageAt && Date.parse(c.stageAt) > weekAgo);
+  const bookedWeekValue = bookedWeek.reduce((a, c) => a + (jobPrice(c) ?? c.value ?? 0), 0);
+  const figs = [
+    { k: "Leads today", v: String(L.leadsToday || todays.length), go: () => go.tab("inbox") },
+    { k: "Answered", v: (L.leadsToday || todays.length) ? `${answeredToday} of ${L.leadsToday || todays.length}` : "–", go: () => go.tab("inbox") },
+    { k: "Booked this week", v: bookedWeekValue ? usd(bookedWeekValue) : String(bookedWeek.length), go: () => go.tab("jobs") },
+    { k: "First reply", v: secs(L.replySecWeek ?? sec), go: () => go.tab("numbers") },
+  ];
+  // The live list: what just happened, one line each, the outcome on the right in green when it went well.
+  const feed = L.conversations.slice(0, 6).map(c => {
+    const card = byThread.get(c.id);
+    const outcome = c.status === "paused" ? { t: "Your turn", tone: "wait" } : c.status === "booked" ? { t: card?.stage === "won" ? "Won" : "Booked", tone: "done" }
+      : c.status === "opted_out" ? { t: "Opted out", tone: "" } : c.replySec != null ? { t: `Texted in ${secs(c.replySec)}`, tone: "done" } : { t: c.at ? ago(c.at) : "", tone: "" };
+    const when = c.created ? (isToday(c.created) ? clock(c.created) : dateLabel(iso(new Date(c.created)))) : "";
+    return { id: c.id, name: c.name || "New lead", what: [sourceLabel(c.source), when].filter(Boolean).join(" · "), ...outcome };
+  });
+
   return <>
     <PageHead title={dateLine} sub={actions.length ? `${actions.length} ${actions.length === 1 ? "thing needs" : "things need"} you${atStake ? `, ${usd(atStake)} on them` : ""}.` : "Nothing needs you right now."}
       actions={<><button type="button" className="find" onClick={go.find}><Icon name="search" size={14} />Find anyone or do anything<kbd>⌘K</kbd></button><button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={14} />New lead</button></>} />
@@ -201,6 +224,11 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
             {pipe.map(p => <button key={p.st} type="button" className="t5-num" onClick={() => go.tab("jobs")}><span><i className={"sw " + p.st} />{PIPE_L[p.st]}<small>{p.n}</small></span><b>{usd(p.v)}</b></button>)}
           </div>
         </details>
+        <dl className="t6-figs">{figs.map(f => <button key={f.k} type="button" onClick={f.go}><dt>{f.k}</dt><dd>{f.v.endsWith("s") && /^\d+s$/.test(f.v) ? <>{f.v.slice(0, -1)}<i>s</i></> : f.v}</dd></button>)}</dl>
+        {feed.length > 0 && <section className="t6-live">
+          <header><span className="t6-k">Live</span><button type="button" className="link" onClick={() => go.tab("inbox")}>Inbox</button></header>
+          <ul>{feed.map(f => <li key={f.id} className={f.tone}><button type="button" onClick={() => go.thread(f.id)}><i aria-hidden="true" /><b>{f.name}</b><span>{f.what}</span><em>{f.t}</em></button></li>)}</ul>
+        </section>}
         <section className="t5-sec">
           <header><h2>Your move</h2><small>{actions.length ? `${actions.length}, newest leads first, then the most money` : "all clear"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>All jobs</button></header>
           {actions.length ? <div className="t5-list">{shown.map((a, k) => <div key={a.key} className={"t5-row" + (a.kind === "reply" || a.urgent ? " turn" : "")}>
@@ -222,11 +250,16 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
                 {v.phone && <a className="btn ghost sm ic" href={"tel:" + v.phone} title="Call" aria-label={"Call " + v.who}><Icon name="phone" size={13} /></a>}</span>
             </div>)}</div>
           : <p className="t5-empty">{nextVisit ? `Nothing today. Next: ${nextVisit.who}, ${nextVisit.what}, ${dateLabel(nextVisit.day)} at ${nextVisit.time}.` : "Nothing booked yet. Estimates get booked where your calendar is free."}</p>}
-          <div className="t5-week">{days.map((dd, k) => <button key={dd.key} type="button" className={"wk" + (k === 0 ? " today" : "")} onClick={() => go.tab("calendar")} title={dd.items.map(v => `${v.time} ${v.who}`).join("\n") || "Nothing booked"}>
-            <small>{dd.dow}</small><b>{dd.num}</b><span>{dd.items.length ? dd.items.length : ""}</span></button>)}</div>
         </section>
       </div>
       <aside className="t5-rail">
+        <section className="t6-week"><h3>This week<small><button type="button" className="link" onClick={() => go.tab("calendar")}>Calendar</button></small></h3>
+          {days.slice(0, 5).map((dd, k) => <button key={dd.key} type="button" className={"t6-day" + (k === 0 ? " today" : "")} onClick={() => go.tab("calendar")}>
+            <b>{k === 0 ? "Today" : dd.dow}</b>
+            {dd.items.length ? dd.items.slice(0, 3).map(v => <p key={v.key} className={"t6-ev" + (v.what === "estimate" ? "" : " inst")}>{v.time} · {v.who}<span>{v.what === "estimate" ? "Estimate" : "Install"}{v.sub ? `, ${v.sub}` : ""}</span></p>) : <span className="t6-free">Open</span>}
+            {dd.items.length > 3 && <span className="t6-free">+{dd.items.length - 3} more</span>}
+          </button>)}
+        </section>
         {isOwner && <GoalBox d={d} cards={cards} api={api} project={project} toast={toast} reload={reload} />}
         <section className="t5-dup"><h3>Last 30 days</h3>
           {nums.map(n => <button key={n.label} type="button" className="t5-num" onClick={n.go} disabled={!n.go}><span>{n.label}<small>{n.sub}</small></span><b className={n.tone || ""}>{n.value}</b></button>)}

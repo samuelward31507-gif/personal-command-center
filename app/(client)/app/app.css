@@ -1841,3 +1841,56 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: .55; cursor: po
 .help-b { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 0 2px 14px; } .help-b p { font-size: 14px; line-height: 22px; color: var(--ink2); max-width: 64ch; }
 .help-sam { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 18px; border-radius: var(--r3); background: var(--paper); box-shadow: 0 0 0 1px var(--hair-2); }
 .help-sam span { flex: 1 1 240px; color: var(--g1); font-size: 14px; }
+
+/* ---------- Today, in the look of the window on the website ----------
+   Four numbers in one bordered strip, a quiet Live list with the outcome in green, This week as day cards. */
+.t6-figs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 22px; border-radius: 12px; background: #fff; box-shadow: 0 0 0 1px var(--hair-2); overflow: hidden; }
+.t6-figs > button { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 16px 15px; text-align: left; border-left: 1px solid var(--hair); border-radius: 0; cursor: pointer; transition: background var(--t); }
+.t6-figs > button:first-child { border-left: 0; }
+.t6-figs > button:hover { background: var(--paper); }
+.t6-figs > button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.t6-figs dt { font-size: 13px; color: var(--g2); }
+.t6-figs dd { margin: 0; font: 600 26px/1.1 var(--ff-tight); letter-spacing: -.035em; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.t6-figs dd i { font-style: normal; font-size: 17px; color: var(--g3); margin-left: 1px; }
+
+.t6-live { margin: 0 0 26px; }
+.t6-live > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.t6-k { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--g2); }
+.t6-k::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px var(--good-bg); }
+@media (prefers-reduced-motion: no-preference) { .t6-k::before { animation: t6beat 2.4s ease-in-out infinite; } }
+@keyframes t6beat { 50% { box-shadow: 0 0 0 5px var(--good-bg); } }
+.t6-live ul { list-style: none; margin: 0; padding: 0; }
+.t6-live li { border-top: 1px solid var(--hair); }
+.t6-live li > button { display: grid; grid-template-columns: 8px auto minmax(0, 1fr) auto; gap: 12px; align-items: baseline; width: 100%; min-height: 44px; padding: 12px 2px; text-align: left; border-radius: 0; font-size: 14px; }
+.t6-live li > button:hover b { text-decoration: underline; text-underline-offset: 3px; }
+.t6-live li > button > i { align-self: center; width: 7px; height: 7px; border-radius: 50%; background: #c9cdd3; }
+.t6-live li.done > button > i { background: var(--good); } .t6-live li.wait > button > i { background: var(--warn); }
+.t6-live li b { font-weight: 600; color: var(--ink); white-space: nowrap; }
+.t6-live li span { color: var(--g2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t6-live li em { font-style: normal; font-size: 13px; color: var(--g2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.t6-live li.done em { color: var(--good-ink); font-weight: 500; } .t6-live li.wait em { color: var(--warn); font-weight: 500; }
+
+/* Your move, in the same quiet rows: no filled buttons except the first. */
+.t5-sec > header h2 { font: 600 15px/20px var(--ff); letter-spacing: -.1px; }
+.t5-row:not(.visit) { border-top: 1px solid var(--hair); }
+.t5-row .tt b { font-weight: 600; }
+
+/* This week: one card per day, events with a colored edge. */
+.t6-week h3 { display: flex; align-items: baseline; justify-content: space-between; }
+.t6-day { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: 100%; min-height: 64px; margin: 0 0 8px; padding: 10px 12px; text-align: left; border-radius: 10px; background: #fff; box-shadow: 0 0 0 1px var(--hair-2); cursor: pointer; transition: box-shadow var(--t); }
+.t6-day:hover { box-shadow: 0 0 0 1px var(--hair-3); }
+.t6-day > b { font-size: 12px; font-weight: 500; color: var(--g2); }
+.t6-day.today > b { color: var(--ink); font-weight: 600; }
+.t6-ev { margin: 0; padding: 6px 9px; border-radius: 7px; background: var(--paper); border-left: 2px solid #8a919c; font-size: 13px; line-height: 18px; color: var(--ink); display: flex; flex-direction: column; }
+.t6-ev.inst { border-left-color: var(--good); }
+.t6-ev span { color: var(--g2); font-size: 12px; }
+.t6-free { font-size: 12px; color: var(--g3); }
+
+@media (max-width: 720px) {
+  .t6-figs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .t6-figs > button:nth-child(3) { border-left: 0; }
+  .t6-figs > button:nth-child(n+3) { border-top: 1px solid var(--hair); }
+  .t6-live li > button { grid-template-columns: 8px minmax(0, 1fr) auto; }
+  .t6-live li span { grid-column: 2 / 4; grid-row: 2; margin-top: -6px; }
+  .t6-week { display: none; }
+}
