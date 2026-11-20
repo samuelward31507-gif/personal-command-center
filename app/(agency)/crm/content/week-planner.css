@@ -91,3 +91,9 @@ body .ct-page .ct-lib-h { margin-top: 8px; }
   body .ct-page .cw-post, body .ct-page .cw-post.is-reel { grid-template-columns: 1fr; }
   body .ct-page .cw-media { max-width: 220px; }
 }
+
+/* On a phone the page title scrolls away, so the day bar (with Download all) is the only thing pinned and nothing hides behind it. */
+@media (max-width: 760px) {
+  body .ct-page > .u-head { position: static; }
+  body .ct-page > .u-head .u-title-sub { font-size: 14px; line-height: 20px; }
+}

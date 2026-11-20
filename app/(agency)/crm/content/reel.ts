@@ -123,11 +123,17 @@ async function encodeFrames(s: ReturnType<typeof reelScene>, cfg: VideoEncoderCo
     encoder.encode(vf, { keyFrame: f % (FPS * 2) === 0 });
     vf.close();
     // Don't run ahead of the encoder; also gives the page a moment to stay responsive.
-    while (encoder.encodeQueueSize > 3 && !failure) await new Promise(r => setTimeout(r, 4));
+    // Some phones (Safari on iPhone) accept frames and then stop producing output. Give up after 6 seconds of no
+    // movement and fall back to recording, instead of waiting forever.
+    const stuckSince = performance.now();
+    while (encoder.encodeQueueSize > 3 && !failure) {
+      if (performance.now() - stuckSince > 6000) { failure = new Error("The video encoder stalled."); break; }
+      await new Promise(r => setTimeout(r, 4));
+    }
     if (f % 10 === 0) { onProgress?.(f / frames); await new Promise(r => setTimeout(r, 0)); }
   }
-  if (!failure) await encoder.flush().catch(e => { failure = e; });
-  if (encoder.state !== "closed") encoder.close();
+  if (!failure) await Promise.race([encoder.flush(), new Promise((_, no) => setTimeout(() => no(new Error("The video encoder stalled.")), 15000))]).catch(e => { failure = e; });
+  try { if (encoder.state !== "closed") encoder.close(); } catch { /* already gone */ }
   if (failure) throw failure instanceof Error ? failure : new Error("The video encoder stopped.");
   if (!avcC) throw new Error("The video encoder gave no stream header.");
   onProgress?.(1);
@@ -189,15 +195,20 @@ export function reelKey(id: string, scenes: Card[]): string {
   for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
   return `${VERSION}:${id}:${(h >>> 0).toString(36)}`;
 }
+// The browser's storage can hang on iPhone (private tabs, a blocked upgrade). Never wait on it more than 3 seconds:
+// without it a reel is still made, just not kept.
+let dbP: Promise<IDBDatabase | null> | null = null;
 function store(): Promise<IDBDatabase | null> {
-  return new Promise(res => {
+  return dbP ??= new Promise(res => {
+    const t = setTimeout(() => res(null), 3000);
     try {
       const r = indexedDB.open("cinder-reels", 1);
       r.onupgradeneeded = () => r.result.createObjectStore("reels");
-      r.onsuccess = () => res(r.result); r.onerror = () => res(null);
-    } catch { res(null); }
+      r.onsuccess = () => { clearTimeout(t); res(r.result); }; r.onerror = () => { clearTimeout(t); res(null); }; r.onblocked = () => { clearTimeout(t); res(null); };
+    } catch { clearTimeout(t); res(null); }
   });
 }
+const within = <T,>(p: Promise<T>, ms: number, fallback: T) => Promise.race([p, new Promise<T>(r => setTimeout(() => r(fallback), ms))]);
 async function cacheGet(key: string): Promise<Blob | null> {
   const db = await store(); if (!db) return null;
   return new Promise(res => { try { const q = db.transaction("reels").objectStore("reels").get(key); q.onsuccess = () => res(q.result instanceof Blob ? q.result : null); q.onerror = () => res(null); } catch { res(null); } });
@@ -209,9 +220,9 @@ async function cachePut(key: string, blob: Blob): Promise<void> {
 /** The reel for a post: from this browser if it was made before, otherwise made now and kept. */
 export async function getReel(id: string, scenes: Card[], onProgress?: (p: number) => void): Promise<{ blob: Blob; fresh: boolean }> {
   const key = reelKey(id, scenes);
-  const hit = await cacheGet(key);
+  const hit = await within(cacheGet(key), 3000, null);
   if (hit) { onProgress?.(1); return { blob: hit, fresh: false }; }
   const blob = await renderReel(scenes, onProgress);
-  await cachePut(key, blob);
+  await within(cachePut(key, blob), 3000, undefined);
   return { blob, fresh: true };
 }
