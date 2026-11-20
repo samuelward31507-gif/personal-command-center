@@ -99,7 +99,7 @@ export async function publicQuote(sql: Sql, token: string): Promise<PublicQuote 
  * The customer approved (or passed on) the quote. Approve: the job is won, follow-ups stop, the owner hears right away.
  * Pass: follow-ups stop and the owner hears why, if they said. Answering twice changes nothing.
  */
-export async function answerQuote(sql: Sql, token: string, answer: "approve" | "decline", reason = "", signedBy = "", choiceIn: unknown = null): Promise<{ ok: boolean; state?: PublicQuote["state"]; error?: string }> {
+export async function answerQuote(sql: Sql, token: string, answer: "approve" | "decline", reason = "", signedBy = "", choiceIn: unknown = null, signatureIn = ""): Promise<{ ok: boolean; state?: PublicQuote["state"]; error?: string }> {
   // Past its last day, old prices can't be approved; passing on it still works.
   if (answer === "approve" && QUOTE_TOKEN.test(token)) {
     const [e] = await sql`SELECT q.valid_until::text AS valid_until, o.setup->>'timezone' AS tz FROM public.client_quotes q LEFT JOIN public.client_ops o ON o.project_id = q.project_id
@@ -117,7 +117,11 @@ export async function answerQuote(sql: Sql, token: string, answer: "approve" | "
   }
   if (!QUOTE_TOKEN.test(token)) return { ok: false, error: "This quote link isn't valid." };
   const approve = answer === "approve";
+  // A drawn signature: a small PNG from the quote page, nothing else. Anything that isn't one is dropped, not stored.
+  const sig = approve && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signatureIn) && signatureIn.length <= 300_000 ? signatureIn : null;
+  const signedName = approve ? signedBy.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 80) || null : null;
   const [q] = await sql`UPDATE public.client_quotes SET status = ${approve ? "won" : "lost"}, last_step_at = now(),
+      signed_name = CASE WHEN ${approve}::boolean THEN ${signedName} ELSE signed_name END, signature = CASE WHEN ${approve}::boolean THEN ${sig} ELSE signature END,
       approved_at = CASE WHEN ${approve}::boolean THEN now() ELSE approved_at END, declined_at = CASE WHEN ${approve}::boolean THEN declined_at ELSE now() END
     WHERE token = ${token} AND approved_at IS NULL AND declined_at IS NULL AND status <> 'won'
     RETURNING id, owner_id, project_id, customer_phone, customer_name, amount::float AS amount` as { id: string; owner_id: string; project_id: string; customer_phone: string; customer_name: string; amount: number | null }[];
@@ -132,7 +136,7 @@ export async function answerQuote(sql: Sql, token: string, answer: "approve" | "
   const why = reason.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 300);
   const by = signedBy.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 80);
   if (t) await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${t.id}::uuid, 'in', 'system',
-    ${approve ? `Approved the quote online${by ? ` as "${by}"` : ""}${q.amount ? `: ${money(q.amount)}` : ""}` : `Passed on the quote online${why ? `: "${why}"` : ""}`})`;
+    ${approve ? `${sig ? "Signed and approved" : "Approved"} the quote online${by ? ` as "${by}"` : ""}${q.amount ? `: ${money(q.amount)}` : ""}` : `Passed on the quote online${why ? `: "${why}"` : ""}`})`;
   await alertOwner(c, approve
     ? `Cinder · Quote approved: ${name}${q.amount ? `, ${money(q.amount)}` : ""}. Text them to set the install date.`
     : `Cinder · Quote declined: ${name}${why ? `. They said: "${why}"` : ". They didn't say why"}. Follow-ups stopped.`, t?.id, sql);
@@ -232,4 +236,11 @@ export async function sendWinback(sql: Sql, c: Client, body: unknown, limit = 15
     if (ok) sent++;
   }
   return { ok: true, sent, left: Math.max(0, eligible.length - limit) };
+}
+
+/** The signature a customer drew approving a quote, for the owner's own businesses only. */
+export async function quoteSignature(sql: Sql, projects: string[], id: string): Promise<string | null> {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const [r] = await sql`SELECT signature FROM public.client_quotes WHERE id = ${id}::uuid AND project_id = ANY(${projects}::uuid[]) AND signature IS NOT NULL` as { signature: string }[];
+  return r?.signature ?? null;
 }

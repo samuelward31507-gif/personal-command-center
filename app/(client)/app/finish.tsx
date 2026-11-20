@@ -2,30 +2,14 @@
 
 // The end of a job and the customer's side of it. SignoffSheet: a short walk-through checklist, a note, the customer's name
 // and their signature drawn on the phone. SignoffBox: the sign-off on the record. PortalSheet: the customer's own page.
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { SignaturePad } from "../sigpad";
 import type { Card } from "@/lib/crm";
 import { Icon, Sheet, Spinner, dateLabel, first, type Api, type Toast } from "./parts";
 import { crewName } from "./crew";
 import type { Data } from "./types";
 
 const CHECKS = (trade: string) => ["The work matches the quote", "Site cleaned up, debris hauled away", ...(/fenc/i.test(trade) ? ["Gates open, close and latch"] : []), "Walked the finished job together"];
-
-/** A signature pad: finger or mouse, smooth enough to look like a signature, exported as a small PNG. */
-function SignaturePad({ onChange }: { onChange: (png: string) => void }) {
-  const cv = useRef<HTMLCanvasElement>(null), last = useRef<{ x: number; y: number } | null>(null), ink = useRef(false), [inked, setInked] = useState(false);
-  useEffect(() => { const c = cv.current!; const r = c.getBoundingClientRect(); c.width = Math.round(r.width * 2); c.height = Math.round(r.height * 2);
-    const g = c.getContext("2d")!; g.scale(2, 2); g.lineWidth = 2.2; g.lineCap = "round"; g.lineJoin = "round"; g.strokeStyle = "#121417"; }, []);
-  const at = (e: React.PointerEvent) => { const r = cv.current!.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  const done = () => { last.current = null; if (!ink.current) return; const c = cv.current!, out = document.createElement("canvas"); out.width = 600; out.height = Math.round(600 * c.height / c.width);
-    out.getContext("2d")!.drawImage(c, 0, 0, out.width, out.height); onChange(out.toDataURL("image/png")); };
-  return <div className="sigpad">
-    <canvas ref={cv} aria-label="Sign here" onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); last.current = at(e); }}
-      onPointerMove={e => { if (!last.current) return; const p = at(e), g = cv.current!.getContext("2d")!; g.beginPath(); g.moveTo(last.current.x, last.current.y); g.lineTo(p.x, p.y); g.stroke(); last.current = p; if (!ink.current) { ink.current = true; setInked(true); } }}
-      onPointerUp={done} onPointerCancel={done} />
-    <span className="sigline" aria-hidden="true">Sign here</span>
-    {inked && <button type="button" className="link sigclear" onClick={() => { const c = cv.current!; c.getContext("2d")!.clearRect(0, 0, c.width, c.height); ink.current = false; setInked(false); onChange(""); }}>Clear</button>}
-  </div>;
-}
 
 /** Hand the phone to the customer: they check the work, sign, and the job's install and walk-through steps tick. */
 export function SignoffSheet({ card, trade, owner, onClose, save }: { card: Card; trade: string; owner?: boolean; onClose: () => void; save: (input: Record<string, unknown>) => Promise<boolean> }) {

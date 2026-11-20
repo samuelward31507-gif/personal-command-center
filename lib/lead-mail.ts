@@ -195,6 +195,9 @@ export function readMail(mail: MailIn, exclude: string[] = [], inboundDomain = "
   const phoneRaw = f.phone || f.phonenumber || f.mobile || f.mobilephone || f.cell || f.cellphone || f.telephone || f.tel || f.primaryphone || f.customerphone || f.contactphone || "";
   let phone = digits10(phoneRaw);
   if (phone.length !== 10 || exclude.map(digits10).includes(phone)) phone = firstPhone(body, exclude);
+  // Lead sites often put the number only in a tap-to-call link or the subject line ("New lead from Dana, 720-555-0148").
+  if (!phone && mail.html) { const tel = [...mail.html.matchAll(/href=["']tel:([^"']+)["']/gi)].map(m => digits10(m[1])).find(d => d.length === 10 && !exclude.map(digits10).includes(d)); if (tel) phone = tel; }
+  if (!phone) phone = firstPhone(subject, exclude);
 
   const domain = inboundDomain.trim().toLowerCase();
   const usable = (a: string) => !!a && !isAutomated(a) && !(domain && a.endsWith("@" + domain));

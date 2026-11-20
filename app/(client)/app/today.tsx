@@ -193,6 +193,14 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
     <div className="t5">
       <div className="t5-main">
         {evText && <p className="t5-over">{evText}{isOwner && <button type="button" className="link" onClick={() => void toggleEv()}>{evSms ? "Stop the 6 PM text" : "Text me this at 6 PM"}</button>}</p>}
+        {/* On a phone the numbers sit right under the summary, folded, instead of three screens down. */}
+        <details className="t5-nums">
+          <summary><b>Numbers</b><span>{usd(pipeTotal)} open{nums[0] ? `, ${nums[0].label.toLowerCase()} ${nums[0].value}` : ""}</span><Icon name="down" size={14} /></summary>
+          <div className="t5-nums-b">
+            {nums.map(n => <button key={n.label} type="button" className="t5-num" onClick={n.go} disabled={!n.go}><span>{n.label}<small>{n.sub}</small></span><b className={n.tone || ""}>{n.value}</b></button>)}
+            {pipe.map(p => <button key={p.st} type="button" className="t5-num" onClick={() => go.tab("jobs")}><span><i className={"sw " + p.st} />{PIPE_L[p.st]}<small>{p.n}</small></span><b>{usd(p.v)}</b></button>)}
+          </div>
+        </details>
         <section className="t5-sec">
           <header><h2>Your move</h2><small>{actions.length ? `${actions.length}, newest leads first, then the most money` : "all clear"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>All jobs</button></header>
           {actions.length ? <div className="t5-list">{shown.map((a, k) => <div key={a.key} className={"t5-row" + (a.kind === "reply" || a.urgent ? " turn" : "")}>
@@ -220,10 +228,10 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
       </div>
       <aside className="t5-rail">
         {isOwner && <GoalBox d={d} cards={cards} api={api} project={project} toast={toast} reload={reload} />}
-        <section><h3>Last 30 days</h3>
+        <section className="t5-dup"><h3>Last 30 days</h3>
           {nums.map(n => <button key={n.label} type="button" className="t5-num" onClick={n.go} disabled={!n.go}><span>{n.label}<small>{n.sub}</small></span><b className={n.tone || ""}>{n.value}</b></button>)}
         </section>
-        <section><h3>Pipeline<small>{usd(pipeTotal)} open</small></h3>
+        <section className="t5-dup"><h3>Pipeline<small>{usd(pipeTotal)} open</small></h3>
           <div className={"t5-pipe" + (pipeTotal ? "" : " none")} aria-hidden="true">{pipeTotal > 0 && pipe.map(p => <i key={p.st} className={p.st} style={{ flexGrow: Math.max(p.v, pipeTotal ? pipeTotal * 0.04 : 1) }} />)}</div>
           {pipe.map(p => <button key={p.st} type="button" className="t5-num" onClick={() => go.tab("jobs")}><span><i className={"sw " + p.st} />{PIPE_L[p.st]}<small>{p.n}</small></span><b>{usd(p.v)}</b></button>)}
         </section>
