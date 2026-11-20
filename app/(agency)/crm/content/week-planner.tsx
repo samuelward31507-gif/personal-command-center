@@ -147,13 +147,19 @@ function DraftCard({ d, busy, act, meta, auto, making }: { d: Draft; busy: boole
     setReel(r => { if (r?.blob === auto) return r; if (r) URL.revokeObjectURL(r.src); return { src: URL.createObjectURL(auto), blob: auto }; });
   }, [auto]);
   const reelName = (b: Blob) => `${fileBase(d)}.${reelExt(b)}`;
+  // On a phone the reel goes to the share sheet ("Save Video" puts it in Photos); on a computer it downloads.
+  async function saveReel(blob: Blob) {
+    const file = new File([blob], reelName(blob), { type: blob.type || "video/mp4" });
+    if (canShareFiles([file])) { try { await navigator.share({ files: [file] }); return; } catch (e) { if ((e as Error)?.name === "AbortError") return; } }
+    downloadBlob(blob, reelName(blob));
+  }
   async function makeReel() {
-    if (reel) { downloadBlob(reel.blob, reelName(reel.blob)); return; }
+    if (reel) { await saveReel(reel.blob); return; }
     setErr(""); setWork(0);
     try {
       const { blob } = await getReel(d.id, scenesFor(d), p => setWork(p));
       setReel(r => { if (r) URL.revokeObjectURL(r.src); return { src: URL.createObjectURL(blob), blob }; });
-      downloadBlob(blob, reelName(blob));
+      await saveReel(blob);
     } catch (e) { setErr(e instanceof Error ? e.message : "Couldn't make the reel."); }
     finally { setWork(null); }
   }
@@ -187,7 +193,7 @@ function DraftCard({ d, busy, act, meta, auto, making }: { d: Draft; busy: boole
       </>}
       {!editing && <div className="cw-row">
         <button type="button" className="u-btn u-btn-go" onClick={copy}>{copied ? "Copied" : "Copy caption"}</button>
-        {isReel ? <button type="button" className={"u-btn" + (reel ? " u-btn-go" : "")} disabled={!reel && (progress !== null || waiting)} onClick={() => void makeReel()}>{reel ? "Download reel" : progress !== null ? `Making reel ${Math.round(progress * 100)}%` : waiting ? "Up next…" : "Make reel"}</button>
+        {isReel ? <button type="button" className={"u-btn" + (reel ? " u-btn-go" : "")} disabled={!reel && progress !== null} onClick={() => void makeReel()}>{reel ? (isPhone() ? "Save reel to Photos" : "Download reel") : progress !== null ? `Making reel ${Math.round(progress * 100)}%` : waiting ? "Make this reel now" : "Make reel"}</button>
           : pending ? <button type="button" className="u-btn u-btn-go" onClick={async () => { if (await shareNow(pending)) setPending(null); }}>Save {pending.length} to Photos</button>
           : <button type="button" className="u-btn" onClick={downloadSlides}>{ready && canShareFiles(ready) ? `Save ${cards.length > 1 ? cards.length + " " : ""}to Photos` : `Download${cards.length > 1 ? ` ${cards.length}` : ""}`}</button>}
         {meta.connected && (d.platform === "feed" || isReel) && !posted && d.media > 0 && <button type="button" className="u-btn" disabled={busy} onClick={() => void act("publish_now")}>Post now</button>}
@@ -317,7 +323,13 @@ export default function WeekPlanner() {
         const { d, key } = next;
         setMaking({ id: d.id, p: 0 });
         try {
-          const { blob, fresh } = await getReel(d.id, scenesFor(d), p => setMaking({ id: d.id, p }));
+          // A watchdog: if a reel makes no progress for 30 seconds, give up on it and move to the next one, so one
+          // stuck reel never leaves the rest saying "Up next". A given-up reel gets its own Make reel button.
+          let last = Date.now();
+          const { blob, fresh } = await new Promise<{ blob: Blob; fresh: boolean }>((resolve, reject) => {
+            const dog = setInterval(() => { if (Date.now() - last > 30000) { clearInterval(dog); reject(new Error("Reel stopped making progress")); } }, 2000);
+            getReel(d.id, scenesFor(d), p => { last = Date.now(); setMaking({ id: d.id, p }); }).then(r => { clearInterval(dog); resolve(r); }, e => { clearInterval(dog); reject(e); });
+          });
           done.current[key] = blob; setReels(r => ({ ...r, [key]: blob }));
           // Kept on the server too when it fits, so it can post itself once Facebook and Instagram are connected.
           if (fresh && !d.media && blob.size <= MAX_UPLOAD) upload(d.id, 0, blob).catch(() => {});
