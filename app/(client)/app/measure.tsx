@@ -45,7 +45,7 @@ export function PlanView({ d, height = 260 }: { d: Drawing; height?: number }) {
   const W = 600, H = height, pad = 44, span = Math.max(maxX - minX, maxY - minY, 1e-6), sc = Math.min((W - pad * 2) / Math.max(maxX - minX, span * 0.25), (H - pad * 2) / Math.max(maxY - minY, span * 0.25));
   const ox = (W - (maxX - minX) * sc) / 2, oy = (H - (maxY - minY) * sc) / 2;
   const at = (p: LatLng) => { const q = xy(p); return { x: ox + (q.x - minX) * sc, y: oy + (q.y - minY) * sc }; };
-  const segs = d.runs.flatMap(r => r.points.slice(1).map((p, i) => ({ id: r.id + i, kind: r.kind, a: at(r.points[i]), b: at(p), feet: runFeet({ id: "", kind: r.kind, points: [r.points[i], p] }) })));
+  const segs = d.runs.flatMap(r => r.points.slice(1).map((p, i) => ({ id: r.id + i, kind: r.kind, a: at(r.points[i]), b: at(p), feet: runFeet({ points: [r.points[i], p] }) })));
   return <svg className="ms-plan" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Fence plan: ${segs.filter(s => s.kind === "new").map(s => Math.round(s.feet) + " ft").join(", ")}`}>
     {segs.map(s => { const mx = (s.a.x + s.b.x) / 2, my = (s.a.y + s.b.y) / 2, dx = s.b.x - s.a.x, dy = s.b.y - s.a.y, len = Math.hypot(dx, dy) || 1, nx = -dy / len * 16, ny = dx / len * 16;
       return <g key={s.id}><line x1={s.a.x} y1={s.a.y} x2={s.b.x} y2={s.b.y} stroke={s.kind === "new" ? "#1c1d1f" : "#8a919c"} strokeWidth={s.kind === "new" ? 3 : 2} strokeDasharray={s.kind === "new" ? undefined : "6 5"} strokeLinecap="round" />
