@@ -982,3 +982,58 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 
 .cal-direct { margin: 12px 0 0; text-align: center; font-size: 14px; color: #6b6b6b; }
 .cal-direct a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ==========================================================================
+   DESIGN-SPEC (Nov 20). One palette with the app: ink #1c1d1f, ink-2 #5d6674, line #eeeff1,
+   white page, no tinted sections. Headlines in one color at -0.022em. Monochrome pill buttons
+   that change background only. Short reveals with no blur. The hero product window and phone stay.
+   ========================================================================== */
+:root {
+  --bg: #ffffff; --bg-2: #ffffff; --card: #ffffff;
+  --text: #1c1d1f; --text-2: #5d6674; --text-3: #5d6674; --text-4: #5d6674; --head-2: #1c1d1f;
+  --line: #eeeff1; --line-2: #e6e7ea; --ok: #15803d; --bad: #c81e1e;
+  --ease: cubic-bezier(.2, 0, 0, 1);
+}
+body { background: #fff; color: #1c1d1f; }
+.sec-tint { background: #fff; }
+.sec { padding: 144px 0; }
+@media (max-width: 639px) { .sec { padding: 96px 0; } }
+
+/* Type */
+.hero h1 { font: 600 72px/76px var(--head); letter-spacing: -.022em; max-width: 960px; color: #1c1d1f; }
+.split .w.dim, .center-head h2 span, .head h2 span { color: #1c1d1f; }
+h2, .center-head h2, .head h2 { letter-spacing: -.02em; }
+.lede { font-size: 20px; line-height: 30px; letter-spacing: -.006em; color: #5d6674; max-width: 600px; }
+.hero-terms { margin-top: 16px; font-size: 14px; line-height: 20px; color: #5d6674; }
+.hero-terms b { font-weight: 400; color: inherit; }
+@media (max-width: 639px) {
+  .hero h1 { font-size: 44px; line-height: 48px; letter-spacing: -.022em; }
+  .lede { font-size: 17px; line-height: 26px; }
+}
+
+/* Buttons: ink pill, 48px (52 on a phone), background change only. The second hero action is a link. */
+.btn { min-height: 48px; font-size: 16px; transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease); }
+.btn:hover, .btn-go:hover { transform: none; box-shadow: none; }
+.btn-go { background: #1c1d1f; box-shadow: none; } .btn-go:hover { background: #2e3238; } .btn-go:active { background: #000; }
+.btn-ghost { background: #fff; border: 1px solid #d3d8df; box-shadow: none; } .btn-ghost:hover { background: #f4f5f6; }
+.hero-link { display: inline-flex; align-items: center; min-height: 48px; padding: 0 8px; font: 500 16px/24px var(--sans); color: #1c1d1f; border-radius: 8px; transition: background 200ms var(--ease); }
+.hero-link:hover { background: #f4f5f6; }
+@media (max-width: 639px) { .btn { min-height: 52px; } .hero-link { min-height: 44px; width: 100%; justify-content: center; } }
+
+/* Pricing: no shadows, no ember ring or tag; the recommended plan gets a 2px ink border. */
+.plan, .pp-card { border-radius: 16px; border: 1px solid #e6e7ea; box-shadow: none; }
+.plan.plan-main, .pp-card.is-main { border: 2px solid #1c1d1f; box-shadow: none; }
+.pp-card.is-main::before { display: none; }
+.pp-card:hover { transform: none; box-shadow: none; border-color: #d3d8df; }
+.pp-card.is-main:hover { border-color: #1c1d1f; }
+.plan .tag { background: none; color: #5d6674; padding: 0; font-size: 14px; font-weight: 500; margin-left: 8px; }
+
+/* Reveals: 500ms, opacity and 12px, no blur, no scale. */
+.motion .rv { transform: translateY(12px); filter: none; transition: opacity 500ms cubic-bezier(.165, .84, .44, 1), transform 500ms cubic-bezier(.165, .84, .44, 1); }
+.motion .split .w { transform: translateY(12px); filter: none; transition: opacity 500ms cubic-bezier(.165, .84, .44, 1), transform 500ms cubic-bezier(.165, .84, .44, 1); }
+.motion .split.in .w { transform: none; }
+@keyframes up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* Small text never under 12px and never lighter than ink-2. */
+.footer, .footer a, .foot, .foot a { color: #5d6674; font-size: 14px; }
+.st-n { background: none; padding: 0; font-size: 12px; color: #5d6674; }
