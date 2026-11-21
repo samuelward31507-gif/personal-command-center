@@ -188,7 +188,7 @@
   .sw-shot .iph { left: -6px; }
   .sw-shot .win { margin-left: 120px; width: auto; }
 }
-@media (max-width: 1360px) { .sw-shot .sw-figs { gap: 16px; } .sw-shot .sw-fig .v { font-size: 18px; } }
+@media (max-width: 1520px) { .sw-shot .sw-figs { gap: 16px; } .sw-shot .sw-fig .v { font-size: 18px; } }
 .sw-shot .sw-q-amt small { display: block; margin-top: 2px; }
 @media (max-width: 899px) {
   .sw-hero { padding-top: 112px; }
@@ -198,3 +198,18 @@
   .sw-jump .sw-jump-go { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .motion .sw-shot, .motion .sw-shot .iph { animation: none; } }
+
+/* Hero v3: no phone on desktop, the whole app on screen, and the hero plus the section bar fill exactly the first screen */
+.sw-hero { display: flex; align-items: center; min-height: calc(100svh - 54px); padding: 110px 0 36px; }
+.sw-hero-grid { grid-template-columns: clamp(380px, 33.5vw, 480px) minmax(0, 1fr); gap: 48px; }
+/* lines up with the nav on the left; the app gets the extra room on wide screens, never past the screen's edge */
+.sw-shot .stage { width: min(1000px, calc(100% + max(0px, (100vw - 1180px) / 2 - 40px))); padding: 0; }
+.sw-shot .win .sw-main { padding-right: 26px; }
+.sw-shot .win { margin-left: 0; }
+@media (min-width: 900px) { .sw-shot .iph { display: none; } }
+@media (max-height: 760px) and (min-width: 1181px) { .sw-shot .sw-app { min-height: 0; } .sw-shot .sw-row:nth-of-type(n+4) { display: none; } }
+@media (max-width: 1180px) {
+  .sw-hero { display: block; min-height: 0; padding: 112px 0 48px; }
+  .sw-hero-grid { grid-template-columns: minmax(0, 1fr); gap: 48px; }
+  .sw-shot .win { margin-left: 0; width: 100%; }
+}
