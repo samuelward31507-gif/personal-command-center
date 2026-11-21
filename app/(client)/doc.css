@@ -126,3 +126,12 @@ a.doc-fin:hover b { text-decoration: underline; text-underline-offset: 3px; }
 .doc-sign .sigline { position: absolute; left: 18px; right: 18px; bottom: 34px; border-top: 1px solid var(--hair-2, #e6e7ea); padding-top: 4px; font-size: 12px; color: var(--g2, #5d6674); pointer-events: none; }
 .doc-sign .sigclear { position: absolute; top: 8px; right: 10px; font-size: 13px; }
 .doc-biz .doc-lang { margin-left: auto; font-size: 14px; }
+
+/* Photos on a quote: a picture on each option (a past install), or a row of them above the lines. */
+.doc-tier.has-img { grid-template-columns: 20px minmax(0, 1fr) auto; grid-template-rows: auto auto; padding-top: 10px; }
+.doc-tier-img { grid-column: 1 / -1; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 8px; background: #f4f5f6; }
+.doc-photos { display: grid; gap: 8px; margin: 14px 0 4px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.doc-photos.n1 { grid-template-columns: 1fr; }
+.doc-photos figure { margin: 0; }
+.doc-photos img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 10px; background: #f4f5f6; }
+.doc-photos figcaption { margin-top: 4px; font-size: 13px; line-height: 18px; color: #5d6674; }

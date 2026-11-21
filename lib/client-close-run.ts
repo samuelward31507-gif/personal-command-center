@@ -244,3 +244,11 @@ export async function quoteSignature(sql: Sql, projects: string[], id: string): 
   const [r] = await sql`SELECT signature FROM public.client_quotes WHERE id = ${id}::uuid AND project_id = ANY(${projects}::uuid[]) AND signature IS NOT NULL` as { signature: string }[];
   return r?.signature ?? null;
 }
+
+/** A photo on the customer's quote page: only one the owner put on a line of that very quote. */
+export async function quotePhoto(sql: Sql, token: string, id: string): Promise<{ mime: string; bytes: Buffer } | null> {
+  if (!QUOTE_TOKEN.test(token) || !/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const [r] = await sql`SELECT p.mime, p.bytes FROM public.client_photos p JOIN public.client_quotes q ON q.project_id = p.project_id
+    WHERE q.token = ${token} AND p.id = ${id}::uuid AND coalesce(q.items_offered, q.items) @> ${JSON.stringify([{ photo: id }])}::jsonb LIMIT 1` as { mime: string; bytes: Buffer }[];
+  return r ?? null;
+}

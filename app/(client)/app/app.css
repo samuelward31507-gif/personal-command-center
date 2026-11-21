@@ -2093,3 +2093,18 @@ tr[tabindex], tr[style*="pointer"] { cursor: pointer; }
   .main .todo-ck { position: relative; } .main .todo-ck::after { content: ""; position: absolute; inset: -14px; }
   .main .todo-row { min-height: 52px; }
 }
+
+/* Photos on a quote (the editor): a slot per option, and the picker. */
+.qp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.qp-slot { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.qp-img, .qp-add { display: block; width: 100%; aspect-ratio: 16 / 10; border-radius: 8px; overflow: hidden; padding: 0; }
+.qp-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.qp-add { display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px dashed #d3d8df; background: #fafafb; color: #5d6674; font-size: 13px; font-weight: 500; }
+.qp-add:hover { background: #f4f5f6; color: #1c1d1f; }
+.qp-l { font-size: 13px; line-height: 18px; color: #5d6674; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qp-x { align-self: flex-start; font-size: 13px; }
+.qp-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.qp-pick button { display: flex; flex-direction: column; gap: 4px; padding: 0; text-align: left; font-size: 12px; line-height: 16px; color: #5d6674; min-width: 0; }
+.qp-pick img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 8px; background: #f4f5f6; }
+.qp-pick button:hover img { outline: 2px solid #1c1d1f; outline-offset: 1px; }
+.qp-pick span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

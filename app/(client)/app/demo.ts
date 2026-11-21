@@ -124,7 +124,7 @@ function seed() {
       { id: "e4", title: "Crew off", start: at(3, 0), end: at(4, 0), allDay: true, link: GC }],
     quotes: [
       { id: "q1", customer_name: "Lena Ortiz", customer_phone: "+17205550191", amount: 7800 as number | null, sent_on: at(-6, 12).slice(0, 10), steps_sent: 2, status: "open", linked: true, viewed: ago(60 * 3) as string | null, note: "Remove old wood fence, 6 ft white vinyl privacy, one 4 ft gate.", deposit: 1500 as number | null,
-        items: [{ name: "6 ft White vinyl privacy", qty: 160, unit: "ft", price: 42, tier: "Good" }, { name: "6 ft Vinyl privacy with lattice top", qty: 160, unit: "ft", price: 49, tier: "Better" }, { name: "6 ft Tan vinyl, heavy-duty posts, lifetime warranty", qty: 160, unit: "ft", price: 56, tier: "Best" },
+        items: [{ name: "6 ft White vinyl privacy", qty: 160, unit: "ft", price: 42, tier: "Good", photo: "demo:vinyl-white" }, { name: "6 ft Vinyl privacy with lattice top", qty: 160, unit: "ft", price: 49, tier: "Better", photo: "demo:vinyl-lattice" }, { name: "6 ft Tan vinyl, heavy-duty posts, lifetime warranty", qty: 160, unit: "ft", price: 56, tier: "Best", photo: "demo:vinyl-tan" },
           { name: "Walk gate", qty: 1, unit: "", price: 760 }, { name: "Tear-out and haul-away", qty: 160, unit: "ft", price: 2 }, { name: "Second walk gate", qty: 1, unit: "", price: 760, opt: true }, { name: "Post caps, solar lit", qty: 18, unit: "", price: 28, opt: true }] as Item[], tax_rate: 0 },
       { id: "q2", customer_name: "Kyle Brandt", customer_phone: "+13035550133", amount: 12400 as number | null, sent_on: at(-3, 12).slice(0, 10), steps_sent: 1, status: "open", linked: true, viewed: null as string | null, note: "", deposit: null as number | null, items: [] as Item[], tax_rate: 0 },
       { id: "q3", customer_name: "Jen Park", customer_phone: "+17205550120", amount: 2870 as number | null, sent_on: at(-1, 12).slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null as string | null, note: "", items: [] as Item[], tax_rate: 0 }],
@@ -427,7 +427,7 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       if (inv && inv.status === "paid" && paidOn(inv.id) < inv.total) { inv.status = inv.sent_at ? "sent" : "draft"; inv.paid_at = null; }
       return { ok: true };
     }
-    if (b.action === "photo") { const id = String(b.data ?? ""); if (!id.startsWith("data:image/")) fail("That photo didn't come through."); (s.photos[String(b.thread)] ??= []).push({ id, kind: b.kind === "after" ? "after" : "before", caption: "", at: now, shared: false }); return { ok: true, id }; }
+    if (b.action === "photo") { const id = String(b.data ?? ""); if (!id.startsWith("data:image/")) fail("That photo didn't come through."); (s.photos[String(b.thread)] ??= []).push({ id, kind: b.kind === "after" ? "after" : b.kind === "other" ? "other" : "before", caption: "", at: now, shared: false }); return { ok: true, id }; }
     if (b.action === "photodelete") { for (const k of Object.keys(s.photos)) s.photos[k] = s.photos[k].filter(p => p.id !== b.photo); return { ok: true }; }
     if (b.action === "remind") { const c = (s.crm[t!.thread.id] ??= { details: {}, notes: "" }); c.remind = b.at ? { at: String(b.at), note: String(b.note ?? ""), sent: false } : null; return { ok: true }; }
     if (b.action === "ask") {
@@ -521,7 +521,7 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
         if (q && typeof b.note === "string") q.note = b.note.trim().slice(0, 600);
         if (q && b.deposit !== undefined) q.deposit = money(b.deposit);
         const qq = s.quotes.find(x => x.customer_phone.replace(/\D/g, "").slice(-10) === d10);
-        if (qq && b.items !== undefined) { qq.items = cleanItems(b.items); qq.tax_rate = cleanTax(b.tax); qq.amount = totals(qq.items, qq.tax_rate).total; c.value = qq.amount; }
+        if (qq && b.items !== undefined) { qq.items = cleanItems(b.items, { photos: "any" }); qq.tax_rate = cleanTax(b.tax); qq.amount = totals(qq.items, qq.tax_rate).total; c.value = qq.amount; }
         if (q && b.link) { q.linked = true; th!.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: quoteSms(th!.thread.customer_name, q.amount, th!.thread.id), at: now }); }
         else s.quotes.unshift({ id: "q" + Date.now(), customer_name: th!.thread.customer_name, customer_phone: th!.thread.customer_phone, amount: amt, sent_on: now.slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null, note: "", items: [], tax_rate: 0 });
         const nq = s.quotes.find(x => x.customer_phone.replace(/\D/g, "").slice(-10) === d10)!;
@@ -577,7 +577,7 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       const q = s.quotes.find(x => x.customer_phone.replace(/\D/g, "").slice(-10) === d10);
       if (b.action === "quotelines") {
         if (!q) fail("Move them to Quoted first.", 409);
-        const items = cleanItems(b.items); if (!items.length) fail("Add at least one line with a price.");
+        const items = cleanItems(b.items, { photos: "any" }); if (!items.length) fail("Add at least one line with a price.");
         q!.items = items; q!.tax_rate = cleanTax(b.tax); q!.amount = totals(items, q!.tax_rate).total; c.value = q!.amount;
         if (typeof b.note === "string") q!.note = b.note;
         if (b.deposit !== undefined) q!.deposit = money(b.deposit);
