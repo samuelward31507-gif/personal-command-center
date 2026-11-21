@@ -14,28 +14,36 @@ type Ctx = { d: Data; project: string; api: Api; toast: Toast; reload: () => Pro
 const todayIso = () => new Date().toLocaleDateString("en-CA");
 
 // ---------- Equipment ----------
+/** The examples in the equipment form, in the owner's trade: gate operators for a fence shop, generators for a dealer. */
+function equipCopy(trade: string | undefined) {
+  if (/fenc|gate/i.test(trade ?? "")) return { kind: "Gate operator", where: "Driveway gate", make: "LiftMaster", model: "LA400", notes: "Solar panel on the post, battery replaced 2025",
+    kinds: ["Gate operator", "Keypad", "Solar kit", "Fence", "Gate", "Other"], intro: "Gate operators, keypads and solar kits: what\u2019s installed, its serial number and warranty, and every service. Your crew can add it from the nameplate." };
+  if (/generat|standby|electric/i.test(trade ?? "")) return { kind: "Standby generator", where: "Side yard, on the pad", make: "Generac", model: "Guardian 24kW", notes: "200 A transfer switch, oil changed at 200 hours",
+    kinds: ["Standby generator", "Transfer switch", "Portable generator", "Electrical panel", "Battery", "Other"], intro: "Generators and transfer switches: what\u2019s installed, its serial number and warranty, and every service. Your crew can add it from the nameplate." };
+  return { kind: "Furnace", where: "Basement", make: "Carrier", model: "59SC5A060E17", notes: "Filter size 16x25x1", kinds: [...EQUIPMENT_KINDS] as string[], intro: "Furnaces, water heaters, panels, pumps: what\u2019s here, its serial number and warranty, and every service. Your crew can add it from the nameplate." };
+}
 function EquipmentSheet({ ctx, thread, item, onClose }: { ctx: Ctx; thread: string; item?: Equipment; onClose: () => void }) {
   const [f, setF] = useState({ kind: item?.kind ?? "", make: item?.make ?? "", model: item?.model ?? "", serial: item?.serial ?? "", location: item?.location ?? "", installed_on: item?.installed_on ?? "", warranty_until: item?.warranty_until ?? "", notes: item?.notes ?? "" });
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false), ex = equipCopy(ctx.d.setup?.trade);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   const save = async () => { setBusy(true); try { await ctx.api("/api/app/act", { p: ctx.project, action: "equipment", thread, entry: item?.id, input: f }); ctx.toast(item ? "Saved." : "Added."); await ctx.reload(); onClose(); }
     catch (e) { ctx.toast(e instanceof Error ? e.message : "Couldn't save.", true); } finally { setBusy(false); } };
   return <Sheet title={item ? "Edit equipment" : "Add equipment"} sub="What's installed at this address" onClose={onClose}
     foot={<><button type="button" className="btn" onClick={onClose}>Cancel</button><button type="button" className="btn ink" disabled={busy} onClick={() => void save()}>{busy ? <Spinner /> : null}Save</button></>}>
     <div className="two">
-      <label className="field"><span>What it is</span><input list="eq-kinds" value={f.kind} onChange={set("kind")} placeholder="Furnace" autoFocus /><datalist id="eq-kinds">{EQUIPMENT_KINDS.map(k => <option key={k} value={k} />)}</datalist></label>
-      <label className="field"><span>Where</span><input value={f.location} onChange={set("location")} placeholder="Basement" /></label>
+      <label className="field"><span>What it is</span><input list="eq-kinds" value={f.kind} onChange={set("kind")} placeholder={ex.kind} autoFocus /><datalist id="eq-kinds">{ex.kinds.map(k => <option key={k} value={k} />)}</datalist></label>
+      <label className="field"><span>Where</span><input value={f.location} onChange={set("location")} placeholder={ex.where} /></label>
     </div>
     <div className="two">
-      <label className="field"><span>Make</span><input value={f.make} onChange={set("make")} placeholder="Carrier" /></label>
-      <label className="field"><span>Model</span><input value={f.model} onChange={set("model")} placeholder="59SC5A060E17" /></label>
+      <label className="field"><span>Make</span><input value={f.make} onChange={set("make")} placeholder={ex.make} /></label>
+      <label className="field"><span>Model</span><input value={f.model} onChange={set("model")} placeholder={ex.model} /></label>
     </div>
     <label className="field"><span>Serial number</span><input value={f.serial} onChange={set("serial")} placeholder="From the nameplate" autoCapitalize="characters" /></label>
     <div className="two">
       <label className="field"><span>Installed</span><input type="date" value={f.installed_on} onChange={set("installed_on")} /></label>
       <label className="field"><span>Warranty until</span><input type="date" value={f.warranty_until} onChange={set("warranty_until")} /></label>
     </div>
-    <label className="field"><span>Notes</span><input value={f.notes} onChange={set("notes")} placeholder="Filter size 16x25x1, condensate pump replaced 2025" /></label>
+    <label className="field"><span>Notes</span><input value={f.notes} onChange={set("notes")} placeholder={ex.notes} /></label>
   </Sheet>;
 }
 
@@ -57,7 +65,7 @@ export function EquipmentBox({ ctx, thread }: { ctx: Ctx; thread: string }) {
         <div className="eq-a"><button type="button" className="btn sm" disabled={busy === e.id} onClick={() => void serviced(e)}>Log service</button>
           <button type="button" className="btn ghost sm" onClick={() => setEdit(e)}>Edit</button>{ctx.d.role !== "crew" && <button type="button" className="btn ghost sm ic" aria-label="Remove" title="Remove" onClick={() => void remove(e)}><Icon name="x" size={12} /></button>}</div>
       </div>; })
-      : <p className="fine">Furnaces, water heaters, panels, pumps: what&rsquo;s here, its serial number and warranty, and every service. Your crew can add it from the nameplate.</p>}
+      : <p className="fine">{equipCopy(ctx.d.setup?.trade).intro}</p>}
     <div className="acts-row end" style={{ marginTop: 6 }}><button type="button" className="btn sm" onClick={() => setEdit("new")}><Icon name="plus" size={13} />Add equipment</button></div>
     {edit && <EquipmentSheet ctx={ctx} thread={thread} item={edit === "new" ? undefined : edit} onClose={() => setEdit(null)} />}
   </section>;

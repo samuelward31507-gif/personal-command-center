@@ -3,7 +3,9 @@
 
 /** A quote or invoice line. `tier`: belongs to one option the customer picks between (Good, Better, Best).
  *  `opt`: an add-on the customer can tick. Lines with neither are always included. */
-export type Item = { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean };
+/** photo: a job photo shown with this line on the quote (a past install, their yard): a photo id, or a sample in the demo. */
+export type Item = { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean; photo?: string };
+const PHOTO_ID = /^(?:[0-9a-f-]{36}|demo:[a-z0-9-]{1,40})$/i;
 export type Choice = { tier: string | null; addons: number[] };
 export type Totals = { subtotal: number; tax: number; total: number };
 
@@ -11,7 +13,8 @@ const cents = (n: number) => Math.round(n * 100) / 100;
 const num = (v: unknown) => { const n = Number(String(v ?? "").replace(/[$,\s]/g, "")); return Number.isFinite(n) ? n : NaN; };
 
 /** Up to 30 lines, each with a name, a quantity above zero and a price of zero or more. Anything else is dropped. */
-export function cleanItems(input: unknown): Item[] {
+/** Lines as typed. photos "any" keeps the demo's in-browser photos (data: URLs); the server keeps photo ids only. */
+export function cleanItems(input: unknown, opts: { photos?: "ids" | "any" } = {}): Item[] {
   if (!Array.isArray(input)) return [];
   const out: Item[] = [];
   for (const r of input.slice(0, 30)) {
@@ -21,7 +24,8 @@ export function cleanItems(input: unknown): Item[] {
     const qty = num(o.qty ?? 1), price = num(o.price);
     if (!name || !(qty > 0) || qty > 100000 || !(price >= 0) || price > 10_000_000) continue;
     const tier = String(o.tier ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 40);
-    out.push({ name, qty: cents(qty), unit: String(o.unit ?? "").trim().slice(0, 12), price: cents(price), ...(tier ? { tier } : {}), ...(o.opt === true && !tier ? { opt: true } : {}) });
+    const ph = typeof o.photo === "string" ? o.photo : "", photo = PHOTO_ID.test(ph) || (opts.photos === "any" && /^data:image\/(?:jpeg|png|webp);base64,/.test(ph) && ph.length < 1_400_000) ? ph : "";
+    out.push({ name, qty: cents(qty), unit: String(o.unit ?? "").trim().slice(0, 12), price: cents(price), ...(tier ? { tier } : {}), ...(o.opt === true && !tier ? { opt: true } : {}), ...(photo ? { photo } : {}) });
   }
   return out;
 }
@@ -107,3 +111,6 @@ export function fillInvoice(t: string, v: { first: string; business: string; own
     .replace(/\{business\}/g, v.business.trim().replace(/\.+$/, "")).replace(/\{owner\}/g, v.owner || "we").replace(/\{number\}/g, String(v.number))
     .replace(/\{total\}/g, dollars(v.total)).replace(/\{url\}/g, v.url);
 }
+
+/** The note that marks a deposit recorded from the job's "Deposit in" step, so unticking it can find it again. */
+export const DEPOSIT_NOTE = "Deposit to hold the install date";

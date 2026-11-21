@@ -68,8 +68,9 @@ function useRecord(id: string, d: Data, project: string, api: Api, toast: Toast,
   const since = cust?.since ? new Date(cust.since).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "";
   const price = card ? jobPrice(card) : null;
   const inv = card?.invoice ?? invoices.find(i => i.status !== "void") ?? null;
-  const paid = invoices.filter(i => i.status === "paid").reduce((a, i) => a + i.total, 0);
-  const owed = invoices.filter(i => i.status === "sent").reduce((a, i) => a + i.total, 0);
+  // Every dollar in on this job (deposits and part payments too), and what's still out on the invoices sent.
+  const paid = invoices.filter(i => i.status !== "void").reduce((a, i) => a + (i.status === "paid" ? i.total : i.paid_amount ?? 0), 0);
+  const owed = invoices.filter(i => i.status === "sent").reduce((a, i) => a + Math.max(0, i.total - (i.paid_amount ?? 0)), 0);
   return { card, cust, invoices, texts, busy, arm, setArm, act, name, phone, address, source, status, since, price, inv, paid, owed, project, owner: d.owner, emailReady: d.emailReady, api, toast, reload };
 }
 type Rec = ReturnType<typeof useRecord>;
@@ -311,7 +312,7 @@ function Activity({ r, canText, ta, compact, draft0 }: { r: Rec; canText: boolea
   const [draft, setDraft] = useState(draft0 ?? "");
   // Help in the reply box: a reply that fits where the conversation stands, and the owner's saved replies.
   const snips = useSnippets(r.project), [editSnips, setEditSnips] = useState(false);
-  const sug = useMemo(() => suggestReply(name, texts, { stage: card?.stage, owner: r.owner, quoteAmount: card?.quote?.amount }), [name, texts, card?.stage, r.owner, card?.quote?.amount]);
+  const sug = useMemo(() => suggestReply(name, texts, { stage: card?.stage, owner: r.owner, quoteAmount: card?.quote?.amount, paid: card?.invoice?.status === "paid" }), [name, texts, card?.stage, r.owner, card?.quote?.amount, card?.invoice?.status]);
   const end = useRef<HTMLDivElement>(null);
   const items = useMemo<Ev[]>(() => {
     const out: Ev[] = (texts ?? []).map(t => ({ at: t.at, kind: "text", text: t }));

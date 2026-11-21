@@ -20,14 +20,15 @@ export function DocLines({ items, taxRate, total }: { items: Item[]; taxRate: nu
 }
 
 /** The options on a quote: one to pick, add-ons to tick, what's always included, and the total for what's picked. */
-export function QuoteOptions({ items, taxRate, choice, onChoice }: { items: BItem[]; taxRate: number; choice: Choice; onChoice?: (c: Choice) => void }) {
+/** src turns a line's photo into an image address; an option shows the first photo on its lines. */
+export function QuoteOptions({ items, taxRate, choice, onChoice, src }: { items: BItem[]; taxRate: number; choice: Choice; onChoice?: (c: Choice) => void; src?: (photo?: string) => string }) {
   const tiers = tiersOf(items), base = items.filter(i => !i.tier && !i.opt);
   const pick = choice.tier && tiers.includes(choice.tier) ? choice.tier : tiers[0] ?? null;
   const live = !!onChoice, total = totals(chosen(items, { tier: pick, addons: choice.addons }), taxRate).total;
   return <div className="doc-opts">
     {tiers.length > 0 && <fieldset className="doc-tiers" disabled={!live}><legend>{live ? "Pick one" : "Options"}</legend>
-      {tiers.map(tr => { const lines = items.filter(i => i.tier === tr), tt = totals(chosen(items, { tier: tr, addons: [] }), taxRate).total;
-        return <label key={tr} className={"doc-tier" + (pick === tr ? " on" : "")}>
+      {tiers.map(tr => { const lines = items.filter(i => i.tier === tr), tt = totals(chosen(items, { tier: tr, addons: [] }), taxRate).total, img = src?.(lines.find(l => l.photo)?.photo) ?? "";
+        return <label key={tr} className={"doc-tier" + (pick === tr ? " on" : "") + (img ? " has-img" : "")}>{img && <img className="doc-tier-img" src={img} alt={`${tr}: ${lines[0]?.name ?? ""}`} loading="lazy" />}
           <input type="radio" name="tier" checked={pick === tr} onChange={() => onChoice?.({ tier: tr, addons: choice.addons })} />
           <span className="t"><b>{tr}</b><small>{lines.map(l => l.name).join(", ")}</small></span><em>{usd(tt)}</em>
         </label>; })}
@@ -43,3 +44,10 @@ export function QuoteOptions({ items, taxRate, choice, onChoice }: { items: BIte
   </div>;
 }
 export const hasOptions = (items: BItem[]) => items.some(i => i.tier || i.opt);
+
+/** Photos on a quote without options: each line that has one, with its name under it. */
+export function DocPhotos({ items, src }: { items: BItem[]; src: (photo?: string) => string }) {
+  const shown = items.filter(i => i.photo).slice(0, 4);
+  if (!shown.length) return null;
+  return <div className={"doc-photos n" + shown.length}>{shown.map((i, k) => <figure key={k}><img src={src(i.photo)} alt={i.name} loading="lazy" /><figcaption>{i.name}</figcaption></figure>)}</div>;
+}

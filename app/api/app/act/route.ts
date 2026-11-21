@@ -20,7 +20,7 @@ import { savePaperwork } from "@/lib/client-records-run";
 import { addFile, removeEquipment, removeFile, saveEquipment, saveTask, serviceEquipment, setTask } from "@/lib/client-records-run";
 import { setPhone, addLead, addPhoto, assignCrew, importCustomers, moveStage, removePhoto, saveCard, saveOwnerSetup, setJobCosts, setJobStep, setReminder } from "@/lib/client-crm-run";
 import { reviewNow, sendQuoteLink, sendWinback } from "@/lib/client-close-run";
-import { createInvoice, deletePayment, deleteRefund, recordPayment, recordRefund, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
+import { createInvoice, deletePayment, deleteRefund, recordDeposit, recordPayment, recordRefund, undoDeposit, saveInvoice, saveQuoteLines, scheduleInstall, sendInvoice, setInvoice } from "@/lib/client-billing-run";
 import { clockIn, clockOut, editTime, planVisit, saveChangeOrder, savePlan, sendChangeOrder, setChangeOrder, setPlan } from "@/lib/client-service-run";
 import { portalLink, saveSignoff } from "@/lib/client-portal-run";
 import { saveProperty, setChecklist, tickChecklist } from "@/lib/client-parity-run";
@@ -183,7 +183,11 @@ async function handle(req: Request) {
       if (!b.thread || !UUID.test(b.thread)) return json({ error: "Which customer?" }, 400);
       if (b.action === "jobcosts") { const r = await setJobCosts(sql, c, b.thread, b.costs); return r.ok ? json({ ok: true }) : json({ error: r.error }, 404); }
       const r = await setJobStep(sql, c, b.thread, b.step, !!b.done, b.on);
-      return r.ok ? json({ ok: true, job: r.job }) : json({ error: r.error }, 400);
+      if (!r.ok) return json({ error: r.error }, 400);
+      // "Deposit in" records the quote's deposit as money in, so Paid and the job's invoice come out right.
+      let deposit: number | null = null;
+      if (b.step === "deposit" && s.role !== "crew") { if (b.done) deposit = (await recordDeposit(sql, c, b.thread, b.on))?.amount ?? null; else await undoDeposit(sql, c, b.thread); }
+      return json({ ok: true, job: r.job, deposit });
     }
     // Service plans: a visit every N weeks or months, reminded the day before and invoiced after each visit.
     if (b.action === "plan") {

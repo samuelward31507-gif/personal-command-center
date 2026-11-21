@@ -4,6 +4,8 @@ import { Geist_Mono, Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
 // One stylesheet for the whole command center. The older layered sheets were retired in favor of it.
 import "./cinder.css";
+// DESIGN-SPEC layer: the same look as the client app. Last, so it wins.
+import "./spec.css";
 
 // Same faces as cinderrevenue.com: Inter for interface text, Inter Tight for titles and figures.
 // The variable names stay as they were so every older stylesheet picks the new faces up.

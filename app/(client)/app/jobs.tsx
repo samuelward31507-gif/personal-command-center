@@ -189,7 +189,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
     <PageHead title={view === "all" ? "Customers" : "Jobs"} sub={view === "open" ? `${counts.open} open, ${usd(pipeline)} in play.` : view === "won" ? `${counts.won} won.` : `${counts.all} people.`}
       actions={<>
         {!wide && <div className="views" role="tablist" aria-label="View">
-          {([["open", "Open", counts.open], ["won", "Won", counts.won], ["all", "Everyone", counts.all]] as const).map(([k, l, n]) =>
+          {([["open", "Open", counts.open], ["won", "Won", counts.won], ["all", "All", counts.all]] as const).map(([k, l, n]) =>
             <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => { setView(k); setSel(null); }}>{l}<em>{n}</em></button>)}
           {!biz.crew && <button type="button" role="tab" aria-selected={false} onClick={() => go.tab("plans")}>Plans<em>{(d.plans ?? []).filter(p => p.status === "active").length}</em></button>}
         </div>}

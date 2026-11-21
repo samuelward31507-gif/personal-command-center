@@ -196,7 +196,7 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
     <p className="sec" style={{ marginTop: 10 }}>On every quote</p>
     <div className="two">
       <label className="field"><span>Financing link <em>optional</em></span><input inputMode="url" value={fin} onChange={e => setFin(e.target.value)} placeholder="Your Hearth, Wisetack or GreenSky page" /></label>
-      <label className="field"><span>What it says</span><input value={finNote} maxLength={160} onChange={e => setFinNote(e.target.value)} placeholder="Pay over time, as low as $120 a month" /></label>
+      <label className="field"><span>What it says</span><input value={finNote} maxLength={160} onChange={e => setFinNote(e.target.value)} placeholder="Pay over time. See your rate in 30 seconds." /><small className="fine">It shows on every quote, big or small, so leave out a monthly dollar figure.</small></label>
     </div>
     <p className="fine" style={{ marginTop: -6 }}>Customers who can pay monthly say yes to the bigger option more often. The lender handles the application and pays you.</p>
     <label className="field"><span>Warranty <em>shown on the quote</em></span><input value={warranty} maxLength={300} onChange={e => setWarranty(e.target.value)} placeholder="Two years on workmanship. Materials carry the maker&rsquo;s warranty." /></label>
@@ -212,18 +212,19 @@ export function BillingSettings({ setup, project, api, toast, reload, onClose }:
 /** Money: what's owed and how late, what came in, every invoice with its balance, every payment. Quotes have their own tab. */
 export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: { d: Data; go: Go; wide: boolean; biz: Biz; project: string; api: Api; toast: Toast; reload: () => Promise<void> }) {
   // Batch: won jobs with a price and no invoice, and drafts waiting to go.
-  const [batch, setBatch] = useState<"" | "bill" | "send">("");
+  const [batch, setBatch] = useState<"" | "bill" | "send">(""), [armSend, setArmSend] = useState(false);
   const toBill = (d.board ?? []).filter(c => c.stage === "won" && !c.pastCustomer && !c.invoice && (c.value ?? c.quote?.amount ?? 0) > 0);
   const drafts = (d.invoices ?? []).filter(i => i.status === "draft" && i.total > 0);
   const billAll = async () => {
-    if (!confirm(`Draft an invoice for each of ${toBill.length} won ${toBill.length === 1 ? "job" : "jobs"}? Nothing is sent yet; you check them first.`)) return;
+    // Drafts only: nothing goes to a customer until they're sent, so no confirm step.
     setBatch("bill"); let made = 0;
     for (const c of toBill) { try { await api("/api/app/act", { p: project, thread: c.id, action: "invoice" }); made++; } catch { /* the next one still goes */ } }
     await reload(); setBatch(""); toast(`${made} ${made === 1 ? "invoice" : "invoices"} drafted. Check them under Drafts, then send.`);
   };
   const sendAll = async () => {
-    if (!confirm(`Text all ${drafts.length} draft invoices to their customers now?`)) return;
-    setBatch("send"); let sent = 0, held = 0;
+    // Texts go out, so the first tap arms the button and the second sends.
+    if (!armSend) { setArmSend(true); window.setTimeout(() => setArmSend(false), 5000); return; }
+    setArmSend(false); setBatch("send"); let sent = 0, held = 0;
     for (const i of drafts) { try { const r = await api<{ sent?: boolean }>("/api/app/act", { p: project, invoice: i.id, action: "invoicesend" }); if (r.sent) sent++; else held++; } catch { held++; } }
     await reload(); setBatch(""); toast(`${sent} sent.${held ? ` ${held} couldn't go by text (opted out, outside texting hours, or no number); they're marked sent, copy their links.` : ""}`, held > 0 && !sent);
   };
@@ -269,7 +270,7 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
         <PriceListButton />
         <button type="button" className="btn" onClick={go.billing}>Pay link and tax</button>
         {toBill.length > 0 && <button type="button" className="btn" disabled={!!batch} onClick={() => void billAll()} title="A draft for each won job that has a price and no invoice yet">{batch === "bill" ? <Spinner /> : null}Bill {toBill.length} finished {toBill.length === 1 ? "job" : "jobs"}</button>}
-        {drafts.length > 1 && <button type="button" className="btn" disabled={!!batch} onClick={() => void sendAll()}>{batch === "send" ? <Spinner /> : null}Send {drafts.length} drafts</button>}
+        {drafts.length > 1 && <button type="button" className={"btn" + (armSend ? " ink" : "")} disabled={!!batch} onClick={() => void sendAll()}>{batch === "send" ? <Spinner /> : null}{armSend ? `Tap again to text ${drafts.length} customers` : `Send ${drafts.length} drafts`}</button>}
         <button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New invoice</button>
       </>} />
     <div className="dash money2">

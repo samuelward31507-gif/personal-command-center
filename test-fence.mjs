@@ -68,5 +68,5 @@ ok(() => { const B = north(A, 100), d = { runs: [{ id: "r1", kind: "new", points
 ok(() => { const d = F.cleanDrawing({ runs: [{ id: "r1", points: [A, { lat: 999, lng: 0 }, north(A, 10)] }, { id: "x", points: [A] }], gates: [{ run: "r1", at: A, type: "double", width: 40 }, { run: "nope", at: A }] });
   assert.equal(d.runs.length, 1); assert.equal(d.runs[0].points.length, 2); assert.equal(d.gates.length, 1); assert.equal(d.gates[0].width, 12, "out-of-range width falls back"); });
 ok(() => { assert.equal(F.cleanFenceTypes([{ name: "" }, { name: "Split rail", postSpacing: 99 }]).length, 1); assert.equal(F.cleanFenceTypes([{ name: "Split rail", postSpacing: 99 }])[0].postSpacing, 8); });
-ok(() => assert.equal(F.FENCE_STARTERS.length, 5));
+ok(() => assert.equal(F.FENCE_STARTERS.length, 7));
 console.log(`fence: ${n} checks passed`);

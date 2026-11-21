@@ -25,7 +25,7 @@ export function CommandBar({ d, go, onClose, onWinback, onAsk }: { d: Data; go: 
     const cards = d.board ?? [], invoices = d.invoices ?? [], byId = new Map(cards.map(c => [c.id, c]));
     const run = (f: () => void) => () => { onClose(); f(); };
 
-    const sections: [Tab, string, string, string, string][] = [["today", "Home", "home", "⌘1", "home dashboard today"], ["inbox", "Inbox", "chat", "⌘2", "inbox messages texts replies"], ["jobs", "Jobs", "jobs", "⌘3", "jobs board pipeline customers everyone"], ["calendar", "Calendar", "cal", "⌘4", "calendar estimates schedule week"], ["invoices", "Money", "invoice", "⌘5", "money invoices owed what's owed whats owed paid quotes"], ["numbers", "Reports", "bars", "⌘6", "reports numbers stats sources"], ["system", "Settings", "gear", "⌘7", "settings system wires website chat number"]];
+    const sections: [Tab, string, string, string, string][] = [["today", "Today", "home", "⌘1", "today home dashboard"], ["inbox", "Inbox", "chat", "⌘2", "inbox messages texts replies"], ["jobs", "Jobs", "jobs", "⌘3", "jobs board pipeline"], ["customers", "Customers", "users", "", "customers everyone people clients"], ["plans", "Service plans", "cal", "", "service plans recurring repeat"], ["calendar", "Calendar", "cal", "⌘4", "calendar estimates schedule week"], ["invoices", "Money", "invoice", "⌘5", "money invoices owed what's owed whats owed paid quotes"], ["numbers", "Reports", "bars", "⌘6", "reports numbers stats sources"], ["system", "Settings", "gear", "⌘7", "settings system wires website chat number"]];
     const actions: Hit[] = [
       { key: "add", group: "Actions", icon: "plus", title: "Add a lead", sub: "Someone who called you directly", cta: "Add", kbd: "c", run: run(go.addLead) },
       { key: "imp", group: "Actions", icon: "upload", title: "Import customers", sub: "Jobber export or CSV", cta: "Import", run: run(go.importCustomers) },
@@ -33,7 +33,7 @@ export function CommandBar({ d, go, onClose, onWinback, onAsk }: { d: Data; go: 
       { key: "setup", group: "Actions", icon: "edit", title: "Edit prices and setup", cta: "Open", run: run(go.setup) },
     ];
     if (!verb && raw.length < 2) {
-      const owed = invoices.filter(i => i.status === "sent"), sum = owed.reduce((a, i) => a + i.total, 0);
+      const owed = invoices.filter(i => i.status === "sent"), sum = owed.reduce((a, i) => a + Math.max(0, i.total - (i.paid_amount ?? 0)), 0);
       const waiting = d.live.conversations.filter(c => c.status === "paused").slice(0, 3).map<Hit>(c => ({ key: "w" + c.id, group: "Waiting on you", icon: "chat", title: `Reply to ${c.name}`, sub: c.ask || c.last, cta: "Reply", run: run(() => go.thread(c.id)) }));
       const money: Hit[] = owed.length ? [{ key: "owed", group: "Waiting on you", icon: "invoice", title: `What's owed, ${usd(sum)}`, sub: `${owed.length} ${owed.length === 1 ? "invoice" : "invoices"} out`, cta: "Open", run: run(() => go.tab("invoices")) }] : [];
       return [...waiting, ...money, ...actions, ...sections.map<Hit>(([k, l, ic, kb]) => ({ key: "s" + k, group: "Go to", icon: ic, title: l, cta: "Go", kbd: kb, run: run(() => go.tab(k)) }))];

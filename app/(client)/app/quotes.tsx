@@ -6,7 +6,9 @@ import { useMemo, useState } from "react";
 import "../doc.css";
 import { DocLines } from "../doc-lines";
 import { chosen, dollars, totals, type Item } from "@/lib/billing";
-import { QuoteOptions, hasOptions } from "../doc-lines";
+import { DocPhotos, QuoteOptions, hasOptions } from "../doc-lines";
+import { QuotePhotos } from "./quote-photos";
+import { quotePhotoSrc } from "@/lib/quote-photo";
 import { draftItems, quoteText, type Card } from "@/lib/crm";
 import { Avatar, Empty, Icon, Sheet, Spinner, ago, dateLabel, first, fmtPhone, usd, type Api, type Toast } from "./parts";
 import { FieldIcon, Stg } from "./sources";
@@ -182,6 +184,7 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
         {locked ? <p className="fine">{s === "approved" ? `${firstName} approved this quote. It's now a won job.` : `${firstName} passed on this quote${card.lostReason ? `: ${card.lostReason}` : ""}.`}</p> : null}
         <section><p className="sec">Line items{!locked && <TemplatePicker d={d} project={project} api={api} toast={toast} reload={reload} items={items} onUse={setItems} />}</p>{locked ? <DocLines items={clean} taxRate={tax} total={t.total} /> : <LineEditor items={items} setItems={setItems} tax={tax} setTax={setTax} options />}</section>
         {!locked && <>
+          <QuotePhotos items={items} setItems={setItems} card={card} d={d} api={api} project={project} toast={toast} />
           <section><p className="sec">What&rsquo;s included<small>they&rsquo;ll see it</small></p>
             <textarea className="input" rows={3} style={{ height: "auto", padding: "6px 8px" }} value={note} maxLength={600} onChange={e => setNote(e.target.value)} placeholder="Tear-out and haul-away, steel posts set in concrete, two-year workmanship warranty" /></section>
           <section><p className="sec">Deposit<small>optional, paid through your own pay link after they approve</small></p>
@@ -202,7 +205,7 @@ export function QuoteEditor({ id, d, biz, project, api, toast, reload, go, onBac
             <p className="doc-k">Quote for {firstName}, {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
             <p className="doc-amt">{t.total ? dollars(t.total) : "$0"}</p>
             {card.line && <p className="doc-line">{line(card)}</p>}
-            {clean.length > 0 && (opts ? <QuoteOptions items={clean} taxRate={tax} choice={{ tier: null, addons: [] }} /> : <DocLines items={clean} taxRate={tax} total={t.total} />)}
+            {clean.length > 0 && (opts ? <QuoteOptions items={clean} taxRate={tax} choice={{ tier: null, addons: [] }} src={p => quotePhotoSrc(p)} /> : <><DocPhotos items={clean} src={p => quotePhotoSrc(p)} /><DocLines items={clean} taxRate={tax} total={t.total} /></>)}
             {note.trim() && <div className="doc-note"><h2>What&rsquo;s included</h2><p>{note}</p></div>}
             {d.setup?.warranty && <div className="doc-note"><h2>Warranty</h2><p>{d.setup.warranty}</p></div>}
             {d.setup?.financing_link && <span className="doc-fin"><b>{d.setup.financing_note || "Pay over time"}</b><span>Your financing link</span></span>}

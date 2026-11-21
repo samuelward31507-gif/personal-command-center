@@ -128,7 +128,7 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
   const mine = t?.status === "paused";
   const name = t?.customer_name || conv?.name || (t ? fmtPhone(t.customer_phone) : "");
   const snips = useSnippets(project), [editSnips, setEditSnips] = useState(false);
-  const sug = suggestReply(name, texts, { stage: t?.status === "booked" ? "booked" : undefined });
+  const stage = conv?.stage || (t?.status === "booked" ? "booked" : undefined), sug = suggestReply(name, texts, { stage });
   const st = t ? (STATUS[t.status] ?? STATUS.auto) : null;
   let lastDay = "", lastWho = "";
   const lastOut = texts ? [...texts].reverse().find(x => x.direction === "out" && x.author !== "system")?.id : undefined;
@@ -139,7 +139,7 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
       {t && <Avatar name={name} size="lg" />}
       <div className="who"><b>{name || "Loading"}</b><small>{t ? <>{fmtPhone(t.customer_phone)}, {sourceLabel(t.source)}{st ? <>, <span className={st[1] === "needs" ? "ember-t" : ""}>{st[0]}</span></> : null}</> : " "}</small></div>
       {t && <div className="acts-row" style={{ flexWrap: "nowrap" }}>
-        {t.status !== "opted_out" && t.status !== "booked" && <button type="button" className="btn sm" disabled={!!busy} onClick={() => void act("status", { status: "booked" }, "Marked booked.")}>Mark booked</button>}
+        {t.status !== "opted_out" && t.status !== "booked" && !["booked", "quoted", "won", "lost"].includes(stage ?? "") && <button type="button" className="btn sm" disabled={!!busy} onClick={() => void act("status", { status: "booked" }, "Marked booked.")}>Mark booked</button>}
         {canCall ? <button type="button" className="btn sm" disabled={!!busy} onClick={() => void act("call", {}, "Calling your cell. Pick up and we'll connect them.")}><Icon name="phone" size={13} />Call</button>
           : <a className="btn sm" href={`tel:${t.customer_phone}`}><Icon name="phone" size={13} />Call</a>}
         {onRecord && <button type="button" className="btn sm" onClick={onRecord}>{embedded ? "Open record" : "Record"}{embedded && <kbd>↵</kbd>}</button>}

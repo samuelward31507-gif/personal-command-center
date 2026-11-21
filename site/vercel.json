@@ -88,6 +88,46 @@
       "destination": "https://personal-command-center-ten-ruby.vercel.app/api/testimonial"
     },
     {
+      "source": "/q/:token",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/q/:token"
+    },
+    {
+      "source": "/i/:token",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/i/:token"
+    },
+    {
+      "source": "/c/:token",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/c/:token"
+    },
+    {
+      "source": "/p/:token",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/p/:token"
+    },
+    {
+      "source": "/b/:key",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/b/:key"
+    },
+    {
+      "source": "/api/q",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/q"
+    },
+    {
+      "source": "/api/inv",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/inv"
+    },
+    {
+      "source": "/api/c",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/c"
+    },
+    {
+      "source": "/api/p",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/p"
+    },
+    {
+      "source": "/api/book",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/book"
+    },
+    {
       "source": "/_next/:path*",
       "destination": "https://personal-command-center-ten-ruby.vercel.app/_next/:path*"
     },

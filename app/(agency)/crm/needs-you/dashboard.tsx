@@ -280,6 +280,21 @@ export default function Dashboard() {
     return "In " + (h ? `${h}h ` : "") + (m || !h ? `${m}m` : "");
   };
 
+  // Your move: J and K walk the rows, Enter opens one. The live line turns over every few seconds.
+  const [sel, setSel] = useState(0), [li, setLi] = useState(0);
+  const kb = useRef<{ n: number; open: (i: number) => void }>({ n: 0, open: () => {} });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey || !kb.current.n || (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) || document.querySelector("[role=dialog]")) return;
+      const k = e.key.toLowerCase();
+      if (k === "j") { e.preventDefault(); setSel(i => Math.min(kb.current.n - 1, i + 1)); }
+      else if (k === "k") { e.preventDefault(); setSel(i => Math.max(0, i - 1)); }
+      else if (k === "enter" && el === document.body) { e.preventDefault(); setSel(i => { kb.current.open(i); return i; }); }
+    };
+    window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  useEffect(() => { const t = setInterval(() => setLi(i => i + 1), 5000); return () => clearInterval(t); }, []);
   if (err) return <div className="u-page db-page" role="region" aria-label="Dashboard"><div className="u-void"><h2>{err}</h2></div></div>;
 
   const g = b?.goal;
@@ -360,11 +375,31 @@ export default function Dashboard() {
   const loadingBrief = !b && queue === null;
   const hello = greeting === "Late night" ? "Late night" : `Good ${greeting.toLowerCase()}`;
   const askHref = (q: string) => `/crm/ask?q=${encodeURIComponent(q)}`;
+  const shownDrafts = allTodo ? drafts : drafts.slice(0, 5);
+  kb.current = { n: shownDrafts.length, open: i => { const h = shownDrafts[i]?.href; if (h) window.location.href = h; } };
+  const needs = drafts.length + waiting.length;
+  // The live line: who's waiting on you, what Grok just did, or how the dials are going.
+  const liveItems: { who: string; what: string; when: string }[] = [
+    ...waiting.slice(0, 2).map(t => ({ who: t.title, what: t.why ? t.why.charAt(0).toLowerCase() + t.why.slice(1) : "is waiting on you", when: t.overdue ? "overdue" : "now" })),
+    ...(grok?.runs ?? []).slice(0, 2).map(r => ({ who: r.agent, what: (r.summary || r.task || "").replace(/\.$/, ""), when: r.at ? new Date(r.at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "" })),
+    ...(b ? [{ who: "Calls today", what: `${b.today.calls} of ${target}, ${b.today.connects} conversation${b.today.connects === 1 ? "" : "s"}`, when: "live" }] : []),
+  ].filter(x => x.what);
+  const lv = liveItems.length ? liveItems[li % liveItems.length] : null;
+  // Where the dials should be by now, on a 9 to 5 calling day.
+  const hr = now.getHours() + now.getMinutes() / 60, pace = Math.min(1, Math.max(0, (hr - 9) / 8));
+  const callsPct = Math.min(100, ((b?.today.calls ?? 0) / Math.max(1, target)) * 100);
+  const onPace = (b?.today.calls ?? 0) >= Math.round(target * pace);
+  const pipeTotal = b?.pipeline.reduce((a, p) => a + p.monthly, 0) ?? 0;
   const shortAgo = (iso: string | null) => { if (!iso) return "—"; const d = Math.floor((Date.now() - Date.parse(iso)) / 86400000); return d <= 0 ? "Today" : d === 1 ? "1d" : d + "d"; };
 
   return <div className="u-page db-page" role="region" aria-label="Today">
-    <div className="u-head">
-      <h1 className="u-title">Today<span className="u-dim">{now.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}</span></h1>
+    <div className="u-head td8-head">
+      <div className="td8-title">
+        <p className="td8-date">{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
+        <h1 className="u-title">Today</h1>
+        <p className="td8-sub">{needs ? <><span className="td8-hot">{needs} {needs === 1 ? "thing" : "things"}</span> {needs === 1 ? "needs" : "need"} you.</> : "Nothing needs you right now."}{openMrr > 0 && <> <b>{usd(openMrr)}/mo</b> in open deals.</>}</p>
+        {lv && <p className="td8-live" aria-live="polite"><i aria-hidden="true" /><span className="g">Live</span><span key={li} className="td8-live-t"><b>{lv.who}</b> {lv.what}{lv.when && <em> · {lv.when}</em>}</span></p>}
+      </div>
       <div className="u-head-actions">
         {upcoming.length > 0 && <Link className="u-btn u-btn-bare td-hide-sm" href="/crm/calendar">{upcoming.length} meeting{upcoming.length === 1 ? "" : "s"}</Link>}
         <Link className="u-btn u-btn-light" href="/crm/call">Start calling <kbd>C</kbd></Link>
@@ -373,7 +408,20 @@ export default function Dashboard() {
 
     <div className="td-shell">
       <div className="td-main">
-      <h2 className="td-hello">{hello}, {ws.ownerFirstName}</h2>
+      <div className="td8-figs" aria-label="Today's numbers">
+        <Link href="/crm/scoreboard" className="td8-fig"><span className="k">Calls today</span><span className="v">{b ? b.today.calls : "—"}<small>of {target}</small></span>
+          <span className="td8-meter" aria-hidden="true"><i style={{ width: callsPct + "%" }} /><u style={{ left: pace * 100 + "%" }} /></span>
+          <span className="c">{b ? <>{onPace ? "On pace" : "Behind pace"} · <b>{left}</b> to go{b.streak ? <> · {b.streak}-day streak</> : null}</> : "\u00a0"}</span></Link>
+        <Link href="/crm/calendar" className="td8-fig"><span className="k">Meetings this week</span><span className="v">{b ? b.week.meetings : "—"}<small>of {WEEKLY_MEETING_TARGET}</small></span>
+          <span className="td8-sq" aria-hidden="true">{Array.from({ length: WEEKLY_MEETING_TARGET }, (_, i) => <i key={i} className={i < (b?.week.meetings ?? 0) ? "on" : ""} />)}</span>
+          <span className="c">{b ? <><b>{b.today.connects}</b> conversation{b.today.connects === 1 ? "" : "s"} today</> : "\u00a0"}</span></Link>
+        <Link href="/crm/pipeline" className="td8-fig"><span className="k">Open pipeline</span><span className="v">{b ? usd(pipeTotal) : "—"}<small>/mo</small></span>
+          <span className="td8-split" aria-hidden="true">{(b?.pipeline ?? []).filter(p => p.monthly > 0).map((p, i) => <i key={p.stage} style={{ width: (p.monthly / Math.max(1, pipeTotal)) * 100 + "%", opacity: 1 - i * 0.18 }} />)}</span>
+          <span className="c">{b ? <>{b.pipeline.reduce((a, p) => a + p.deals, 0)} deals · {(b.pipeline ?? []).filter(p => p.deals).map(p => STAGE_LABELS[p.stage as DealStage] ?? p.stage).slice(0, 2).join(", ")}</> : "\u00a0"}</span></Link>
+        <Link href="/crm/finance" className="td8-fig"><span className="k">MRR</span><span className="v">{b ? usd(b.recurring.mrr) : "—"}<small>/mo</small></span>
+          <span className="td8-meter" aria-hidden="true"><i style={{ width: Math.min(100, ((b?.recurring.mrr ?? 0) / MOVE_OUT_MRR) * 100) + "%" }} /></span>
+          <span className="c">{b ? <><b>{usd(Math.max(0, MOVE_OUT_MRR - b.recurring.mrr))}</b> to the move-out number · {b.recurring.clients} client{b.recurring.clients === 1 ? "" : "s"}</> : "\u00a0"}</span></Link>
+      </div>
       <p className="td-brief" aria-live="polite">{written ?? (loadingBrief || dbrief === undefined ? "\u00a0" : brief.length ? brief : "Nothing new overnight. Make the first call and the day starts moving.")}</p>
       <p className="td-brief-meta">{dbrief ? <>Written by Cinder at {new Date(dbrief.generatedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} from your calls, meetings and deals.</> : dbrief === null ? <>Cinder writes this every morning at 5.</> : null}
         {dbrief !== undefined && <button type="button" className="td-rewrite" onClick={writeNow} disabled={writing}>{writing ? "Writing…" : dbrief ? "Rewrite" : "Write it now"}</button>}</p>
@@ -393,10 +441,10 @@ export default function Dashboard() {
       </div>
 
       <section className="td-sec">
-        <div className="td-sh">Ready to send{drafts.length > 0 && <span className="ct">{drafts.length}</span>}{upcomingTexts > 0 && <span className="r">{upcomingTexts} more due this week</span>}</div>
+        <div className="td-sh">Your move{drafts.length > 0 && <span className="ct">{drafts.length}</span>}<span className="r td8-keys"><kbd>J</kbd><kbd>K</kbd> to move <kbd>↵</kbd> open{upcomingTexts > 0 && <> · {upcomingTexts} more due this week</>}</span></div>
         <div className="td-card">
           {list === null ? <p className="td-empty" role="status">Loading…</p> : drafts.length === 0 ? <p className="td-empty">Nothing to send right now. Follow-ups land here, already written, the moment they&apos;re due.</p>
-            : (allTodo ? drafts : drafts.slice(0, 5)).map((t, i) => <DraftCard key={t.key} active={i === 0} name={t.name || t.title} website={t.website} why={t.why} body={t.body} href={t.href.startsWith("/") ? t.href : undefined}
+            : shownDrafts.map((t, i) => <DraftCard key={t.key} active={i === Math.min(sel, shownDrafts.length - 1)} name={t.name || t.title} website={t.website} why={t.why} body={t.body} href={t.href.startsWith("/") ? t.href : undefined}
                 sendLabel="Send" onSend={t.onClick!} onSkip={() => skip(t.key)} />)}
         </div>
         {drafts.length > 5 && <button type="button" className="u-btn u-btn-bare" style={{ marginTop: 8 }} onClick={() => setAllTodo(v => !v)}>{allTodo ? "Show fewer" : `Show all ${drafts.length}`}</button>}
@@ -419,17 +467,6 @@ export default function Dashboard() {
       </section>
       </div>
       <aside className="td-side" aria-label="Today at a glance">
-      <section className="td-sec td-side-sec">
-        <div className="td-sh">Today</div>
-        <div className="td-card td-stats-card">
-          <dl className="td-kpis">
-            <div><dt>Dials</dt><dd className="u-num">{b ? b.today.calls : "—"}<small> / {target}</small></dd><div className="u-meter td-kpi-meter"><i style={{ width: Math.min(100, ((b?.today.calls ?? 0) / Math.max(1, target)) * 100) + "%" }} /></div></div>
-            <div><dt>Conversations</dt><dd className="u-num">{b ? b.today.connects : "—"}</dd></div>
-            <div><dt>Meetings this week</dt><dd className="u-num">{b ? b.week.meetings : "—"}<small> / {WEEKLY_MEETING_TARGET}</small></dd></div>
-            <div><dt>Streak</dt><dd className="u-num">{b ? b.streak : "—"}<small> days</small></dd></div>
-          </dl>
-        </div>
-      </section>
       {waiting.length > 0 && <section className="td-sec td-side-sec">
         <div className="td-sh">Waiting on you<span className="ct">{waiting.length}</span></div>
         <div className="td-card">{waiting.map(t => <Link key={t.key} className="td-mt" href={t.href} target={t.href.startsWith("http") ? "_blank" : undefined}>
