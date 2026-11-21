@@ -302,7 +302,7 @@ export type Card = { id: string; name: string; phone: string; source: string; st
   measure?: { runs: { id: string; points: { lat: number; lng: number }[]; kind: "new" | "tearout" }[]; gates: { id: string; run: string; at: { lat: number; lng: number }; type: "single" | "double"; width: number }[]; center?: { lat: number; lng: number }; zoom?: number } | null;
   ballpark: { low: number; high: number } | null; notes: string; next: string | null; at: string;
   quote: { id: string; amount: number | null; status: string; steps: number; linked: boolean; url: string | null; viewed: string | null; note: string;
-    items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax: number; deposit?: number | null;
+    items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean; photo?: string }[]; tax: number; deposit?: number | null;
     /** How many times they opened it, the last time, whether follow-ups are paused (imported quotes start paused), and when the next one goes. */
     views?: number; lastViewed?: string | null; chasePaused?: boolean; nextChase?: string | null;
     /** The last day the customer can approve it; null = no end date. */

@@ -47,7 +47,7 @@ export async function sendQuoteLink(sql: Sql, c: Client, threadId: string, note?
 }
 
 export type PublicQuote = { financing?: { link: string; note: string } | null; terms?: string; warranty?: string; choice?: { tier: string | null; addons: number[] } | null; business: string; owner: string; phone: string; customer: string; amount: number | null; line: string; note: string; sent: string;
-  items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean }[]; tax_rate: number;
+  items: { name: string; qty: number; unit: string; price: number; tier?: string; opt?: boolean; photo?: string }[]; tax_rate: number;
   state: "open" | "approved" | "declined" | "closed" | "expired"; answeredAt: string | null;
   /** The fence line drawn for this job (a satellite picture and its feet), when the owner measured it. */
   fence?: { img: string; feet: number; gates: number } | null;
