@@ -18,6 +18,7 @@ type Props = {
 // Work you do every day: plain line icons.
 const daily = [
   ["needs-you", "Today", "sun", "/crm/needs-you"],
+  ["outbound", "Outbound", "send", "/crm/outbound"],
   ["call", "Call", "phone", "/crm/call"],
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
   ["ask", "Ask Cinder", "spark", "/crm/ask"],
@@ -30,8 +31,6 @@ const records = [
   ["finance", "Money", "#e3a008", "cash", "/crm/finance"],
 ] as const;
 const secondary = [
-  ["email", "Email", "send", "/crm/email"],
-  ["linkedin", "LinkedIn", "person", "/crm/linkedin"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
   ["reports", "Client reports", "doc", "/crm/reports"],
   ["leads", "Lead finder", "search", "/crm/leads"],
@@ -41,7 +40,7 @@ const secondary = [
   ["practice", "Practice", "mic", "/crm/practice"],
   ["funnel", "Funnel", "chart", "/crm/funnel"],
 ] as const;
-const SECONDARY_PATHS = ["/crm/email", "/crm/leads", "/crm/linkedin", "/crm/groups", "/crm/content", "/crm/partners", "/crm/funnel", "/crm/tasks", "/crm/outreach", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
+const SECONDARY_PATHS = ["/crm/leads", "/crm/groups", "/crm/content", "/crm/partners", "/crm/funnel", "/crm/tasks", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function ObjIcon({ name }: { name: string }) {
   const p: Record<string, React.ReactNode> = {
@@ -117,6 +116,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
   };
   const isActive = (key: string, href: string) => {
     if (key === "contacts") return pathname === "/crm";
+    if (key === "outbound") return ["/crm/outbound", "/crm/email", "/crm/linkedin", "/crm/outreach"].some(p => pathname.startsWith(p));
     if (key === "pipeline") return pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/deals");
     if (key === "preparation") return pathname.startsWith("/crm/preparation") || pathname.startsWith("/crm/audit");
     if (href === "/crm") return false;
