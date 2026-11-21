@@ -5,7 +5,7 @@
 import { jobSteps } from "@/lib/crm";
 import type { Report } from "@/lib/client-reports";
 import { overdue } from "@/lib/billing";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar, Icon, Spinner, ago, clock, dateLabel, first, fmtPhone, secs, todayIso, usd, type Api } from "./parts";
 import { Bars, Guide, Kpis, PageHead } from "./charts";
 import { TodayTop } from "./evening";
@@ -210,30 +210,112 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
     return { id: c.id, name: c.name || "New lead", what: [sourceLabel(c.source), when].filter(Boolean).join(" · "), ...outcome };
   });
 
-  // One idea: what needs you right now, and what it's worth. Everything else lives one tap away.
+  // Today, the same shape as the owner's command center: the title and what needs them, a live line, the four numbers
+  // that run a fence or generator shop, Your move (J and K to walk it), the quotes out, then Next up and to-dos.
   const upNext = todayList.find(v => v.at > Date.now() - 30 * 60000) ?? nextVisit;
   const openTasks = (d.tasks ?? []).filter(t => !t.done_at).length;
   const [showTasks, setShowTasks] = useState(false);
-  const shortDate = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  return <div className="t7">
-    <header className="t7-head">
-      <p className="t7-date"><span className="wide-only">{dateLine}</span><span className="narrow-only">{shortDate}</span></p>
-      <h1 className="t7-hero">{actions.length ? <>{actions.length} {actions.length === 1 ? "thing needs" : "things need"} you.{atStake > 0 && <><br />{usd(atStake)} on {actions.length === 1 ? "it" : "them"}.</>}</> : <>Nothing needs you.<br /><span className="t7-calm">Cinder is handling it.</span></>}</h1>
-      {evText && <p className="t7-sub">{evText.replace(/^[^:]+: /, "").replace(/\.$/, "")}</p>}
+  const rows = all ? actions : actions.slice(0, 6);
+  const [sel, setSel] = useState(-1);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey || !rows.length || (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) || document.querySelector(".sheet, [role=dialog]")) return;
+      const k = e.key.toLowerCase();
+      if (k === "j" || k === "arrowdown") { e.preventDefault(); setSel(i => Math.min(rows.length - 1, i + 1)); }
+      else if (k === "k" || k === "arrowup") { if (sel < 0) return; e.preventDefault(); setSel(i => Math.max(0, i - 1)); }
+      else if (k === "escape") setSel(-1);
+      else if (sel >= 0 && (k === "enter" || k === rows[sel]?.cta.charAt(0).toLowerCase())) { e.preventDefault(); rows[sel]?.go(); }
+    };
+    window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey);
+  }, [rows, sel]);
+  useEffect(() => { if (sel >= rows.length) setSel(rows.length - 1); }, [rows.length, sel]);
+
+  // The live line: the last few leads Cinder answered, one at a time.
+  const liveList = L.conversations.filter(c => c.replySec != null && c.created).slice(0, 3);
+  const [li, setLi] = useState(0);
+  useEffect(() => { if (liveList.length < 2) return; const t = setInterval(() => setLi(i => i + 1), 5000); return () => clearInterval(t); }, [liveList.length]);
+  const lv = liveList.length ? liveList[li % liveList.length] : null;
+
+  // The four numbers: what sold, how fast every lead hears back, how many quotes turn into jobs, and where the quotes are.
+  const now = rep?.now, before = rep?.before;
+  const sold = now?.wonValue ?? L.wonValue, soldBefore = before?.wonValue ?? 0, jobs = now?.won ?? L.won;
+  const closeRate = now && now.quoted ? Math.round((now.won / now.quoted) * 100) : null;
+  const closeBefore = before && before.quoted ? Math.round((before.won / before.quoted) * 100) : null;
+  const leads30 = L.leads, answered30 = L.answered;
+  const qCards = cards.filter(c => c.stage === "quoted" && c.quote && !c.pastCustomer);
+  const qv = (c: (typeof qCards)[number]) => c.quote?.amount ?? c.value ?? 0;
+  const notSent = qCards.filter(c => !c.quote!.linked), viewed = qCards.filter(c => c.quote!.linked && c.quote!.viewed), sentOnly = qCards.filter(c => c.quote!.linked && !c.quote!.viewed);
+  const qTotal = qCards.reduce((a, c) => a + qv(c), 0), share = (l: typeof qCards) => qTotal ? (l.reduce((a, c) => a + qv(c), 0) / qTotal) * 100 : 0;
+  const soldN = useCountUp(sold), secN = useCountUp(sec ?? 0), closeN = useCountUp(closeRate ?? 0), quotesN = useCountUp(qTotal);
+  const series = (rep?.series ?? []).map(p => p.wonValue);
+
+  // Quotes out, the next step for each first.
+  const qRows = qCards.map(c => { const q = c.quote!, views = q.views ?? (q.viewed ? 1 : 0);
+    const st = !q.linked ? ["Not sent", "urgent"] : q.status === "replied" ? ["Answered", "urgent"] : views >= 2 ? [`Viewed ${views} times`, "urgent"] : q.viewed ? ["Viewed", ""] : ["Sent", ""];
+    const next = !q.linked ? "Send the quote" : q.status === "replied" ? "Read their answer" : views >= 2 ? "Call today" : q.nextChase ? `Auto follow-up ${dateLabel(q.nextChase)}` : "Waiting on them";
+    return { c, st, next, rank: st[1] ? 0 : 1, v: qv(c) }; }).sort((a, b) => a.rank - b.rank || b.v - a.v);
+
+  return <div className="t8">
+    <header className="t8-head">
+      <div className="t8-title">
+        <p className="t8-date">{dateLine}</p>
+        <h1>Today</h1>
+        <p className="t8-sub">{actions.length ? <><span className="t8-hot">{actions.length} {actions.length === 1 ? "thing" : "things"}</span> {actions.length === 1 ? "needs" : "need"} you.{atStake > 0 && <> <b>{usd(atStake)}</b> on {actions.length === 1 ? "it" : "them"}.</>}</> : "Nothing needs you. Cinder is handling it."}</p>
+        {lv && <p className="t8-live" aria-live="polite"><i aria-hidden="true" /><span className="g">Live</span><span key={lv.id + li} className="t8-live-t"><b>{lv.name}</b> got a text back in {secs(lv.replySec ?? null)} <em>· {ago(lv.created!)}</em></span></p>}
+      </div>
+      <div className="t8-acts"><button type="button" className="btn" onClick={() => go.tab("calendar")}>Calendar</button><button type="button" className="btn ink" onClick={go.addLead}>New lead</button></div>
     </header>
     {ask && ask.q && <section className="t7-ask"><AskBox api={api} project={project} ask={ask} d={d} go={go} /></section>}
-    {actions.length > 0 && <section className="t7-sec">
-      <header><h2>Your move</h2>{actions.length > 5 && <button type="button" className="t7-quiet" onClick={() => setAll(x => !x)}>{all ? "Show fewer" : `Show all ${actions.length}`}</button>}</header>
-      <ul className="t7-list">{(all ? actions : actions.slice(0, 5)).map(a => <li key={a.key}>
-        <button type="button" className="t7-row" onClick={a.go}>
-          <span className="t7-t"><b>{a.title}</b><small>{a.sub}</small></span>
-          {a.kind === "reply" || a.urgent ? <em className="t7-st urgent">{a.kind === "reply" ? "Needs a reply" : a.cta}</em> : <em className="t7-st" />}
-          <span className="t7-amt">{a.money ? usd(a.money) : ""}</span>
-          <span className="t7-go" aria-hidden="true">{a.cta} →</span>
-        </button>
-      </li>)}</ul>
+
+    <section className="t8-figs" aria-label="Last 30 days">
+      <button type="button" className="t8-fig" onClick={() => go.tab("numbers")}>
+        <span className="k">Sold, last 30 days</span>
+        <span className="v">{usd(soldN)}{sold > soldBefore && soldBefore > 0 ? <small className="up">+{usd(sold - soldBefore)}</small> : null}</span>
+        {series.length > 1 && <Spark values={series} />}
+        <span className="c">{jobs} {jobs === 1 ? "job" : "jobs"}{jobs ? <> · <b>{usd(Math.round(sold / jobs))}</b> average job</> : null}</span>
+      </button>
+      <button type="button" className="t8-fig" onClick={() => go.tab("inbox")}>
+        <span className="k">Speed to lead</span>
+        <span className="v">{sec != null ? secs(secN) : "–"}{leads30 > 0 && answered30 >= leads30 ? <small className="up">every lead</small> : null}</span>
+        <span className="c t8-gap"><b>{answered30} of {leads30}</b> leads answered</span>
+        <span className="c">Most shops take <b>40+ minutes</b></span>
+      </button>
+      <button type="button" className="t8-fig" onClick={() => go.tab("numbers")}>
+        <span className="k">Close rate</span>
+        <span className="v">{closeRate != null ? `${closeN}%` : "–"}{closeRate != null && closeBefore != null && closeRate > closeBefore ? <small className="up">+{closeRate - closeBefore} pts</small> : null}</span>
+        <span className="t8-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, closeRate ?? 0)}%` }} /></span>
+        <span className="c">{now ? <><b>{now.won}</b> won of <b>{now.quoted}</b> quotes · typical is 15–30%</> : "Won quotes out of quotes sent"}</span>
+      </button>
+      <button type="button" className="t8-fig" onClick={() => go.tab("quotes")}>
+        <span className="k">Quotes out</span>
+        <span className="v">{usd(quotesN)}<small>{qCards.length} open</small></span>
+        <span className="t8-split" aria-hidden="true">{notSent.length > 0 && <i className="ns" style={{ width: `${share(notSent)}%` }} />}{viewed.length > 0 && <i className="vw" style={{ width: `${share(viewed)}%` }} />}{sentOnly.length > 0 && <i className="st" style={{ width: `${share(sentOnly)}%` }} />}</span>
+        <span className="c t8-legend">{notSent.length > 0 && <span><i className="ns" />Not sent</span>}<span><i className="vw" />Viewed</span><span><i className="st" />Sent</span></span>
+      </button>
+    </section>
+
+    {actions.length > 0 && <section className="t8-sec">
+      <header><h2>Your move <span>{actions.length}</span></h2><span className="t8-hint wide-only"><kbd>J</kbd><kbd>K</kbd> to move <kbd>↵</kbd> open</span></header>
+      <ul className="t8-rows">{rows.map((a, i) => { const st = STATUS_OF(a);
+        return <li key={a.key}><button type="button" className={"t8-row" + (i === sel ? " sel" : "") + (st.isNew ? " new" : "")} onClick={a.go} onMouseEnter={() => sel >= 0 && setSel(i)}>
+          <span className="t"><b>{a.title}</b><small>{a.sub}</small></span>
+          <em className={"st " + st.tone}>{st.text}</em>
+          <span className="amt">{a.money ? usd(a.money) : ""}</span>
+          <span className="go">{i === sel && <><kbd>↵</kbd><kbd>{a.cta.charAt(0).toUpperCase()}</kbd></>}<b>{a.cta} →</b></span>
+        </button></li>; })}</ul>
+      {actions.length > 6 && <button type="button" className="t8-more" onClick={() => setAll(x => !x)}>{all ? "Show fewer" : `Show all ${actions.length}`}</button>}
     </section>}
-    <section className="t7-next">
+
+    {qRows.length > 0 && <section className="t8-sec">
+      <header><h2>Quotes <span>{qRows.length} open · {usd(qTotal)}</span></h2><span className="t8-hint">Sorted by next step</span></header>
+      <div className="t8-tablewrap"><table className="t8-table"><thead><tr><th>Customer</th><th>Status</th><th>Next</th><th className="num">Value</th></tr></thead>
+        <tbody>{qRows.slice(0, 8).map(({ c, st, next, v }) => <tr key={c.id} tabIndex={0} onClick={() => go.quote(c.id)} onKeyDown={e => { if (e.key === "Enter") go.quote(c.id); }}>
+          <td><span className="who"><span className="ini" aria-hidden="true">{(c.name || "?").charAt(0).toUpperCase()}</span>{c.name || fmtPhone(c.phone)}</span></td>
+          <td className={"st " + st[1]}>{st[0]}</td><td>{next}</td><td className="num">{v ? usd(v) : "–"}</td></tr>)}</tbody></table></div>
+    </section>}
+
+    <section className="t8-next">
       <button type="button" className="t7-line" onClick={() => go.tab("calendar")}><span className="t7-k">Next up</span>
         <span className="t7-v">{upNext ? `${upNext.day === today ? "" : dateLabel(upNext.day) + ", "}${upNext.time} · ${upNext.what === "estimate" ? "Estimate" : "Install"} · ${upNext.who}${upNext.addr ? " · " + upNext.addr : ""}` : "Nothing booked yet"}</span><span className="t7-arr" aria-hidden="true">→</span></button>
       {isOwner && <button type="button" className="t7-line" aria-expanded={showTasks} onClick={() => setShowTasks(x => !x)}><span className="t7-k">To-dos</span>
@@ -242,4 +324,36 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
       {isOwner && nextSetup && <button type="button" className="t7-line" onClick={() => go.tab("system")}><span className="t7-k">Setup</span><span className="t7-v">{setupLeft} {setupLeft === 1 ? "step" : "steps"} left · {nextSetup.title}</span><span className="t7-arr" aria-hidden="true">→</span></button>}
     </section>
   </div>;
+}
+
+/** Each row's status, as a word: orange when it's on the owner now, green when it went well. New leads get a dot. */
+function STATUS_OF(a: Action): { text: string; tone: "urgent" | "good" | ""; isNew?: boolean } {
+  const p = ["sam", "qr", "qs", "nq", "pc", "pm", "od", "dr", "in", "js", "iv", "rv", "rm", "r", "m", "q", "k", "w"].find(x => a.key.startsWith(x)) ?? "";
+  const map: Record<string, [string, "urgent" | "good" | ""]> = { r: ["Needs a reply", "urgent"], m: ["No phone yet", "urgent"], qr: ["Answered", "urgent"], pc: ["Says they paid", "good"], od: ["Late", "urgent"], dr: ["Draft", ""],
+    q: ["Estimate done", "urgent"], qs: ["Not sent", "urgent"], nq: ["Follow up today", "urgent"], in: ["Not scheduled", ""], js: ["Install soon", ""], iv: ["Not invoiced", "urgent"], rv: ["Paid", "good"], rm: ["Reminder", ""], k: ["To-do", ""], w: ["Warranty", ""], pm: ["Thin margin", "urgent"], sam: ["New", ""] };
+  const [text, tone] = map[p] ?? ["", ""];
+  return { text, tone, isNew: p === "r" || p === "m" };
+}
+
+/** A small trend line, ink, with a dot on the latest point. */
+function Spark({ values }: { values: number[] }) {
+  const w = 120, h = 28, mx = Math.max(...values), mn = Math.min(...values), span = mx - mn || 1;
+  const pts = values.map((v, i) => [(i / (values.length - 1)) * w, h - 3 - ((v - mn) / span) * (h - 6)] as const);
+  const [lx, ly] = pts[pts.length - 1];
+  return <svg className="t8-spark" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true"><path d={"M" + pts.map(p => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" L")} /><circle cx={lx} cy={ly} r={2.5} /></svg>;
+}
+
+/** Counts up to a number once, over 700ms; straight to it when the owner asked for less motion. */
+function useCountUp(target: number) {
+  const [v, setV] = useState(target);
+  const done = useRef(false);
+  useEffect(() => {
+    if (done.current || !target) { setV(target); return; }
+    done.current = true;
+    if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches) { setV(target); return; }
+    const t0 = performance.now(); let raf = 0;
+    const step = (t: number) => { const p = Math.min(1, (t - t0) / 700); setV(Math.round(target * (1 - Math.pow(1 - p, 3)))); if (p < 1) raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step); return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return v;
 }
