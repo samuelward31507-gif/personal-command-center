@@ -14,7 +14,9 @@ function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/ask")) return "Ask Cinder";
   if (pathname.startsWith("/crm/needs-you")) return "Today";
   if (pathname.startsWith("/crm/call")) return "Call mode";
+  if (pathname.startsWith("/crm/outbound")) return "Outbound";
   if (pathname.startsWith("/crm/email")) return "Email";
+  if (pathname.startsWith("/crm/linkedin")) return "LinkedIn";
   if (pathname.startsWith("/crm/content")) return "Content";
   if (pathname.startsWith("/crm/practice")) return "Practice";
   if (pathname.startsWith("/crm/scoreboard")) return "Scoreboard";
