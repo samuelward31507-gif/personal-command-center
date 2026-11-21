@@ -107,3 +107,6 @@ export function fillInvoice(t: string, v: { first: string; business: string; own
     .replace(/\{business\}/g, v.business.trim().replace(/\.+$/, "")).replace(/\{owner\}/g, v.owner || "we").replace(/\{number\}/g, String(v.number))
     .replace(/\{total\}/g, dollars(v.total)).replace(/\{url\}/g, v.url);
 }
+
+/** The note that marks a deposit recorded from the job's "Deposit in" step, so unticking it can find it again. */
+export const DEPOSIT_NOTE = "Deposit to hold the install date";

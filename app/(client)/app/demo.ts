@@ -2,7 +2,7 @@
 // so Sam (and prospects on a call) can click through exactly what a client sees. Nothing leaves the browser.
 import { ballpark, cleanDate, cleanDetails, cleanOwnerSetup, rangeText, cleanWinback, detailLine, parsePriceBook, stageFor, STAGES, winbackDraft, type Card, type CardInvoice, type Details , cleanPayMethod, type Payment, type Photo } from "@/lib/crm";
 import type { Report, ReportNumbers } from "@/lib/client-reports";
-import { cleanItems, cleanTax, totals, type Item } from "@/lib/billing";
+import { cleanItems, cleanTax, DEPOSIT_NOTE, totals, type Item } from "@/lib/billing";
 import { cleanImportRows, importAs } from "@/lib/customer-import";
 import { demoSwitch } from "./demo-switch";
 import { sourceLabel, type LeadMail } from "./types";
@@ -15,6 +15,9 @@ import { addInterval, changeOrderLines, cleanCatalog, cleanChangeOrder, cleanPla
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 const at = (days: number, hour: number, min = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(hour, min, 0, 0); return d.toISOString(); };
 const GC = "https://calendar.google.com/calendar/r/week";
+/** n business days from today (Mon to Fri), at that hour: the example's estimates never land on a weekend. */
+const bd = (n: number, hour: number, min = 0) => { const d = new Date(), step = n < 0 ? -1 : 1; let k = Math.abs(n); while (k > 0) { d.setDate(d.getDate() + step); if (d.getDay() % 6) k--; } d.setHours(hour, min, 0, 0); return d.toISOString(); };
+const wd = (iso: string) => new Date(iso).toLocaleDateString("en-US", { weekday: "long" });
 
 type T = { id: string; direction: "in" | "out"; author: string; body: string; at: string };
 type Th = { id: string; customer_name: string; customer_phone: string; source: string; status: string };
@@ -22,25 +25,27 @@ let n = 0;
 const tx = (direction: "in" | "out", author: string, body: string, m: number): T => ({ id: "d" + ++n, direction, author, body, at: ago(m) });
 
 function seed() {
+  // The estimates on the calendar, and the days the texts name for them, come from the same dates.
+  const A0 = bd(-1, 15), A1 = bd(1, 8), A2 = bd(2, 15), A3 = bd(3, 10, 30);
   const threads: Record<string, { thread: Th; texts: T[] }> = {
     t1: { thread: { id: "t1", customer_name: "Tom Becker", customer_phone: "+17205550177", source: "web form", status: "paused" }, texts: [
       tx("in", "system", "New web form lead: “Cedar fence, 140 ft, side and back yard”", 40),
       tx("out", "template", "Hi Tom, this is Ridgeline Fence. Thanks for reaching out. What’s the address so I can give you a price range?", 40),
       tx("in", "customer", "2210 Oak Dr, Littleton", 30),
-      tx("out", "ai", "Thanks Tom. For about 140 ft of cedar privacy, it usually runs $8,400 to $9,800. I can measure Thursday at 10:30 or Friday at 3.", 29),
-      tx("in", "customer", "Do you guys offer financing on the $9,400 job?", 12),
+      tx("out", "ai", `Thanks Tom. For about 140 ft of cedar privacy with a gate, it usually runs $5,900 to $7,300. I can measure ${wd(A3)} at 10:30 or ${wd(bd(4, 15))} at 3.`, 29),
+      tx("in", "customer", "Do you guys offer financing on the $6,570 job?", 12),
       tx("out", "template", "Good question. Mike will get back to you on that directly today.", 12)] },
     t2: { thread: { id: "t2", customer_name: "Dana Ruiz", customer_phone: "+17205550148", source: "missed_call", status: "booked" }, texts: [
       tx("in", "system", "Missed call from (720) 555-0148", 55),
       tx("out", "template", "Hi, this is Ridgeline Fence. Sorry we missed your call. What can we help with?", 55),
       tx("in", "customer", "Need a quote to replace about 80 ft of chain link with wood", 52),
-      tx("out", "ai", "We can do that. Wood privacy for 80 ft usually runs $3,900 to $4,800. I can have Mike measure Thursday at 8:00 AM or Friday at 1:00 PM. Which works?", 51),
-      tx("in", "customer", "Thursday 8", 49),
-      tx("out", "ai", "You’re booked: Thursday at 8:00 AM. Mike will see you then.", 48)] },
+      tx("out", "ai", `We can do that. Wood privacy for 80 ft usually runs $3,500 to $4,500. I can have Mike measure ${wd(A1)} at 8:00 AM or ${wd(bd(2, 13))} at 1:00 PM. Which works?`, 51),
+      tx("in", "customer", `${wd(A1)} 8`, 49),
+      tx("out", "ai", `You’re booked: ${wd(A1)} at 8:00 AM. Mike will see you then.`, 48)] },
     t3: { thread: { id: "t3", customer_name: "Marcus Hill", customer_phone: "+13035550112", source: "web chat", status: "auto" }, texts: [
       tx("in", "system", "New chat from the website", 140),
       tx("in", "customer", "How much is vinyl per foot?", 138),
-      tx("out", "ai", "Vinyl usually runs $38–48 a foot. I can measure Friday at 3.", 130)] },
+      tx("out", "ai", `Vinyl usually runs $40–55 a foot. I can measure ${wd(A2)} at 3.`, 130)] },
     t4: { thread: { id: "t4", customer_name: "Priya Shah", customer_phone: "+17205550163", source: "google", status: "auto" }, texts: [
       tx("in", "system", "Quote sent: $6,200 horizontal cedar. Follow-up started.", 60 * 74),
       tx("out", "template", "Hi Priya, Mike here. Happy to walk through the quote.", 60 * 26)] },
@@ -56,11 +61,11 @@ function seed() {
       tx("in", "system", "New Angi lead: “Ranch rail around 2 acres”", 60 * 24 * 5),
       tx("in", "system", "Quote sent: $12,400. Cinder follows up until they answer.", 60 * 24 * 3)] },
     q3: { thread: { id: "q3", customer_name: "Jen Park", customer_phone: "+17205550120", source: "web form", status: "auto" }, texts: [
-      tx("in", "system", "Quote sent: $4,650. Cinder follows up until they answer.", 60 * 24)] },
+      tx("in", "system", "Quote sent: $2,870. Cinder follows up until they answer.", 60 * 24)] },
     w1: { thread: { id: "w1", customer_name: "Henderson family", customer_phone: "+17205550110", source: "missed_call", status: "closed" }, texts: [
       tx("in", "system", "Job won: $8,600", 60 * 24 * 9)] },
     w2: { thread: { id: "w2", customer_name: "Carla Mendez", customer_phone: "+17205550124", source: "angi", status: "closed" }, texts: [
-      tx("out", "owner", "Hi Carla, here's your quote from Ridgeline Fence Co: $6,900 for 150 ft, 6 ft Vinyl, 1 gate. You can look it over and approve it here: https://app.cinderrevenue.com/q/example", 60 * 24 * 5),
+      tx("out", "owner", "Hi Carla, here's your quote from Ridgeline Fence Co: $6,900 for 150 ft, 6 ft Vinyl, 1 gate. You can look it over and approve it here: https://app.cinderrevenue.com/q/example-carla", 60 * 24 * 5),
       tx("in", "system", "Approved the quote online: $6,900", 60 * 24 * 4)] },
     w3: { thread: { id: "w3", customer_name: "Bill Turner", customer_phone: "+13035550187", source: "angi", status: "closed" }, texts: [
       tx("in", "system", "Job won: $11,200", 60 * 24 * 16)] },
@@ -68,7 +73,7 @@ function seed() {
       tx("in", "system", "Passed on the quote online: \u201cWent with a cheaper bid\u201d", 60 * 24 * 7)] },
   };
   const crm: Record<string, { measure?: Card["measure"]; paperwork?: Record<string, unknown> | null; stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null; crewMember?: string; reviewAfter?: string | null; properties?: { id: string; address: string; gate_code: string; notes: string }[]; checklist?: { name: string; items: { label: string; done: boolean; at?: string; by?: string }[] } | null; tags?: string[]; referredBy?: string | null }> = {
-    t1: { value: 9400, details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" },
+    t1: { value: 6570, details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" },
       measure: { runs: [{ id: "r1", kind: "new", points: [{ lat: 39.6133, lng: -105.0166 }, { lat: 39.6135471, lng: -105.0166 }, { lat: 39.6135471, lng: -105.0164226 }] }],
         gates: [{ id: "g1", run: "r1", at: { lat: 39.6135471, lng: -105.0166 }, type: "single", width: 4 }], center: { lat: 39.61342, lng: -105.01652 }, zoom: 20 }, notes: "Asked about financing. Call him.", email: "tom.becker@example.com", remind: { at: ago(30), note: "Call Tom back about financing", sent: false } },
     t2: { tags: ["hoa"], details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No", address: "77 Aspen Ct, Englewood" }, notes: "Replacing chain link.", crewMember: "+17205550188", crew: "Side gate is unlocked. Measure the back line from the shed." },
@@ -77,7 +82,7 @@ function seed() {
     t5: { details: {}, notes: "Went with someone else." },
     q1: { details: { length_ft: 160, material: "Vinyl", height: "6 ft", gates: 1, hoa: "Yes" }, notes: "", value: 7800, email: "lena.ortiz@example.com" },
     q2: { details: { length_ft: 900, material: "Ranch rail", gates: 2 }, notes: "Horses. Needs it before spring.", value: 12400 },
-    q3: { details: { length_ft: 110, material: "Chain link", height: "5 ft", gates: 1 }, notes: "", value: 4650 },
+    q3: { details: { length_ft: 110, material: "Chain link", height: "5 ft", gates: 1 }, notes: "", value: 2870 },
     w1: { properties: [{ id: "prw1a", address: "418 Willow Ln, Littleton", gate_code: "4418", notes: "Two dogs, keep the side gate shut." }, { id: "prw1b", address: "9 Lakeview Ct, Evergreen (cabin)", gate_code: "", notes: "Gravel drive, call before coming up." }], details: { length_ft: 220, material: "cedar", height: "6 ft", gates: 2, address: "418 Willow Ln, Littleton" }, notes: "Install done. Ask for a review.", crew: "Gate code 4418. Two dogs, keep the side gate shut. Park on Willow, not the driveway.", value: 8600, install: at(-11, 8).slice(0, 10), installTime: "07:30", installDays: 1, onCalendar: true, job: { deposit: at(-26, 9).slice(0, 10), permit: at(-21, 9).slice(0, 10), locate: at(-18, 9).slice(0, 10), materials: at(-16, 9).slice(0, 10), installed: at(-11, 9).slice(0, 10), walk: at(-10, 9).slice(0, 10) }, costs: { materials: 3150, labor: 1900, other: 120 } },
     w2: { stage: "won", paperwork: { locate: { ticket: "A2611130318", requested: "2026-11-13", clears: "2026-11-18" }, permit: { needed: "yes", number: "FN-26-4471", approved: null }, hoa: { needed: "no", approved: null }, pins: { confirmed: "2026-11-12", note: "Pins found at both back corners" }, signoff: { on: null, by: "" } }, checklist: { name: "Fence install", items: [{ label: "811 locate marks checked", done: true, at: ago(60 * 26), by: "+17205550188" }, { label: "Property line and HOA approval confirmed", done: true, at: ago(60 * 26), by: "owner" }, { label: "Posts set and plumb", done: false }, { label: "Panels or pickets hung, level", done: false }, { label: "Gates hung, swing and latch", done: false }, { label: "Debris hauled, yard raked", done: false }, { label: "Final walk with the customer", done: false }] }, crewMember: "+17205550188", crew: "Old fence is already down. Dumpster in the driveway, park on the street.", details: { length_ft: 150, material: "Vinyl", height: "6 ft", gates: 1, address: "905 Cherry St, Centennial" }, notes: "Approved from the link.", value: 6900, costs: { materials: 2950, labor: 1400, other: 90 }, job: { deposit: at(-1, 9).slice(0, 10), materials: at(-1, 9).slice(0, 10) }, install: at(0, 8).slice(0, 10), installTime: "08:00", installDays: 1, onCalendar: true, reviewAuto: true },
     w3: { stage: "won", details: { length_ft: 260, material: "Wood privacy", height: "6 ft", gates: 2 }, notes: "", value: 11200, costs: { materials: 5400, labor: 3600, other: 350 }, install: at(-12, 8).slice(0, 10), installDays: 2, onCalendar: true, reviewSent: at(-11, 9) },
@@ -86,27 +91,33 @@ function seed() {
   const setup: Record<string, string> = { display_name: "Ridgeline Fence Co.", owner_name: "Mike", trade: "Fence",
     fence_types: JSON.stringify([
       { id: "pt", name: "Pressure-treated privacy", height: 6, infill: "Pickets", postSpacing: 8, railsPerSection: 3, picketsPerFoot: 2.2, concretePerPost: 2,
-        cost: { post: 14, gatePost: 26, rail: 6, picket: 1.9, concrete: 6.5, gateSingle: 110, gateDouble: 210, laborPerFoot: 10 }, price: { perFoot: 45, gateSingle: 450, gateDouble: 850, tearoutPerFoot: 4 } },
+        cost: { post: 14, gatePost: 26, rail: 6, picket: 1.9, concrete: 6.5, gateSingle: 110, gateDouble: 210, laborPerFoot: 10 }, price: { perFoot: 36, gateSingle: 450, gateDouble: 850, tearoutPerFoot: 4 } },
       { id: "cedar", name: "Cedar privacy", height: 6, infill: "Pickets", postSpacing: 8, railsPerSection: 3, picketsPerFoot: 2.2, concretePerPost: 2,
-        cost: { post: 24, gatePost: 38, rail: 9, picket: 3.1, concrete: 6.5, gateSingle: 140, gateDouble: 260, laborPerFoot: 12 }, price: { perFoot: 62, gateSingle: 550, gateDouble: 950, tearoutPerFoot: 4 } },
+        cost: { post: 24, gatePost: 38, rail: 9, picket: 3.1, concrete: 6.5, gateSingle: 140, gateDouble: 260, laborPerFoot: 12 }, price: { perFoot: 43, gateSingle: 550, gateDouble: 950, tearoutPerFoot: 4 } },
       { id: "vinyl", name: "Vinyl privacy", height: 6, infill: "Panels", postSpacing: 8, railsPerSection: 0, picketsPerFoot: 0.125, concretePerPost: 2,
-        cost: { post: 42, gatePost: 60, picket: 118, concrete: 6.5, gateSingle: 260, gateDouble: 480, laborPerFoot: 11 }, price: { perFoot: 78, gateSingle: 700, gateDouble: 1250, tearoutPerFoot: 4 } },
+        cost: { post: 42, gatePost: 60, picket: 118, concrete: 6.5, gateSingle: 260, gateDouble: 480, laborPerFoot: 11 }, price: { perFoot: 48, gateSingle: 600, gateDouble: 1250, tearoutPerFoot: 4 } },
+      { id: "chain", name: "Chain link", height: 5, infill: "Fabric (ft)", postSpacing: 10, railsPerSection: 1, picketsPerFoot: 1, concretePerPost: 1,
+        cost: { post: 18, gatePost: 30, rail: 12, picket: 3.2, concrete: 6.5, gateSingle: 120, gateDouble: 260, laborPerFoot: 6 }, price: { perFoot: 22, gateSingle: 450, gateDouble: 900, tearoutPerFoot: 3 } },
+      { id: "horiz", name: "Horizontal cedar", height: 6, infill: "Boards", postSpacing: 6, railsPerSection: 0, picketsPerFoot: 2, concretePerPost: 2,
+        cost: { post: 26, gatePost: 40, picket: 6.4, concrete: 6.5, gateSingle: 180, gateDouble: 340, laborPerFoot: 14 }, price: { perFoot: 52, gateSingle: 650, gateDouble: 1200, tearoutPerFoot: 4 } },
+      { id: "ranch", name: "Ranch rail, 3 rail", height: 4, infill: "Rails", postSpacing: 8, railsPerSection: 3, picketsPerFoot: 0, concretePerPost: 1,
+        cost: { post: 16, gatePost: 34, rail: 8, picket: 0, concrete: 6.5, gateSingle: 160, gateDouble: 380, laborPerFoot: 4 }, price: { perFoot: 12, gateSingle: 450, gateDouble: 800, tearoutPerFoot: 3 } },
     ]), website: "https://ridgelinefence.example", team_size: "2-5 people", years: "6-10 years",
     leads_month: "10-30", lead_sources: "Phone calls, Website form, Google, Angi", software: "None, just my phone", share_ballpark: "yes", priority: "quotes", onboarded_at: "2026-11-01T15:00:00.000Z", pay_link: "https://square.link/u/example", tax_rate: "0", invoice_days: "7",
     hours: "Mon-Fri 7:00-18:00, Sat 8:00-12:00", timezone: "America/Denver", service_area: "Littleton, Highlands Ranch, Castle Rock and 25 miles around", rules: "No repairs under $500. No commercial bids.", questions: "Rough length in feet, material, and the address.",
     prices: "Cedar privacy runs $38–48 a foot installed. Vinyl $40–55. Chain link $18–26.", financing: "We offer 12 months no interest through Wisetack on jobs over $3,000.", tone: "Hey Mark, Mike here with Ridgeline. We can swing by Thursday at 4 to measure, that work?\nSounds good, see you then. Gate's on the left side of the house.", avoid: "Never quote a firm price. Don't promise a date for the install.",
     handoff: "The job is over $20,000, or they mention a neighbor dispute over the property line.", book_lead_hours: "3", book_per_day: "2", book_buffer_min: "30", quote_days: "2,5,10", nudge_hours: "2,20,68", dnt: "+17205550177", a2p_status: "Approved", forwarding: "Their number forwards missed calls here", team: JSON.stringify([{ name: "Luis", cell: "+17205550188", role: "crew", rate: 28 }, { name: "Jess", cell: "+17205550166", role: "office", rate: 24 }, { name: "Tony", cell: "+17205550155", role: "crew", rate: 26 }]), monthly_report: "yes", labor_rate: "45", review_on_paid: "yes", brand_color: "#2f6b4f", catalog: JSON.stringify([{"name":"6 ft cedar privacy, installed","unit":"ft","price":43,"cost":24},{"name":"6 ft vinyl privacy, installed","unit":"ft","price":48,"cost":27},{"name":"5 ft chain link, installed","unit":"ft","price":22,"cost":11},{"name":"Ranch rail, 3 rail","unit":"ft","price":15,"cost":7},{"name":"Walk gate, 4 ft","unit":"","price":550,"cost":240},{"name":"Double drive gate, 12 ft","unit":"","price":1450,"cost":720},{"name":"Tear-out and haul-away","unit":"ft","price":4,"cost":1.5},{"name":"Stain and seal","unit":"ft","price":5.25,"cost":1.8},{"name":"Post replacement, in concrete","unit":"","price":140,"cost":45},{"name":"Soft wash, both sides","unit":"ft","price":1.1,"cost":0.3}]),
-    warranty: "Two years on workmanship. Materials carry the maker's warranty.", financing_link: "https://example.com/financing", financing_note: "Pay over time, as low as $120 a month",
+    warranty: "Two years on workmanship. Materials carry the maker's warranty.", financing_link: "https://example.com/financing", financing_note: "Pay over time with Wisetack. See your rate in 30 seconds, no hit to your credit.",
     quote_terms: "Prices hold for 30 days. The deposit holds the install date and comes off the final invoice. The balance is due when the job is done.",
     price_book: JSON.stringify({ unit: "ft", rates: [{ name: "Wood privacy (cedar)", low: 38, high: 48 }, { name: "Vinyl", low: 40, high: 55 }, { name: "Chain link", low: 18, high: 26 }, { name: "Ranch rail", low: 12, high: 18 }], gate: [450, 650] }) };
   return {
     threads, crm, setup,
     messages: [{ author: "client", body: "Can we add Saturday mornings?", created_at: ago(60 * 30) }, { author: "owner", body: "Done. Saturday 8 to noon is live now.", created_at: ago(60 * 27) }],
     appts: [
-      { id: "a0", starts_at: at(-1, 15), thread_id: "t4", customer_name: "Priya Shah", customer_phone: "+17205550163", event_id: "g0", link: GC },
-      { id: "a1", starts_at: at(1, 8), thread_id: "t2", customer_name: "Dana Ruiz", customer_phone: "+17205550148", event_id: "g1", link: GC },
-      { id: "a2", starts_at: at(2, 15), thread_id: "t3", customer_name: "Marcus Hill", customer_phone: "+13035550112", event_id: "g2", link: GC },
-      { id: "a3", starts_at: at(4, 10, 30), thread_id: "t1", customer_name: "Tom Becker", customer_phone: "+17205550177", event_id: "g3", link: GC }],
+      { id: "a0", starts_at: A0, thread_id: "t4", customer_name: "Priya Shah", customer_phone: "+17205550163", event_id: "g0", link: GC },
+      { id: "a1", starts_at: A1, thread_id: "t2", customer_name: "Dana Ruiz", customer_phone: "+17205550148", event_id: "g1", link: GC },
+      { id: "a2", starts_at: A2, thread_id: "t3", customer_name: "Marcus Hill", customer_phone: "+13035550112", event_id: "g2", link: GC },
+      { id: "a3", starts_at: A3, thread_id: "t1", customer_name: "Tom Becker", customer_phone: "+17205550177", event_id: "g3", link: GC }],
     events: [
       { id: "e1", title: "Gate repair, 1180 Elm St", start: at(1, 9, 30), end: at(1, 16), allDay: false, link: GC },
       { id: "e2", title: "Material pickup", start: at(2, 7), end: at(2, 8), allDay: false, link: GC },
@@ -116,17 +127,20 @@ function seed() {
         items: [{ name: "6 ft White vinyl privacy", qty: 160, unit: "ft", price: 42, tier: "Good" }, { name: "6 ft Vinyl privacy with lattice top", qty: 160, unit: "ft", price: 49, tier: "Better" }, { name: "6 ft Tan vinyl, heavy-duty posts, lifetime warranty", qty: 160, unit: "ft", price: 56, tier: "Best" },
           { name: "Walk gate", qty: 1, unit: "", price: 760 }, { name: "Tear-out and haul-away", qty: 160, unit: "ft", price: 2 }, { name: "Second walk gate", qty: 1, unit: "", price: 760, opt: true }, { name: "Post caps, solar lit", qty: 18, unit: "", price: 28, opt: true }] as Item[], tax_rate: 0 },
       { id: "q2", customer_name: "Kyle Brandt", customer_phone: "+13035550133", amount: 12400 as number | null, sent_on: at(-3, 12).slice(0, 10), steps_sent: 1, status: "open", linked: true, viewed: null as string | null, note: "", deposit: null as number | null, items: [] as Item[], tax_rate: 0 },
-      { id: "q3", customer_name: "Jen Park", customer_phone: "+17205550120", amount: 4650 as number | null, sent_on: at(-1, 12).slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null as string | null, note: "", items: [] as Item[], tax_rate: 0 }],
+      { id: "q3", customer_name: "Jen Park", customer_phone: "+17205550120", amount: 2870 as number | null, sent_on: at(-1, 12).slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null as string | null, note: "", items: [] as Item[], tax_rate: 0 }],
     winbackSent: false,
     invoices: [
       { id: "iv1", thread_id: "w3", number: 1041, status: "paid", items: [{ name: "6 ft Wood privacy fence, installed", qty: 260, unit: "ft", price: 39 }, { name: "Walk gate", qty: 2, unit: "", price: 530 }], tax_rate: 0, total: 11200, note: "", due_on: at(-6, 12).slice(0, 10),
         sent_at: at(-10, 12), viewed_at: at(-10, 15), paid_at: at(-8, 12), paid_claimed_at: null, reminders: 0, reminders_paused: false, url: "/i/example" },
+      { id: "iv0", thread_id: "w2", number: 1043, status: "paid", items: [{ name: "Deposit for 150 ft, 6 ft Vinyl, 1 gate", qty: 1, unit: "", price: 2300 }], tax_rate: 0, total: 2300, note: DEPOSIT_NOTE, due_on: at(-1, 12).slice(0, 10),
+        sent_at: null, viewed_at: null, paid_at: at(-1, 9), paid_claimed_at: null, reminders: 0, reminders_paused: true, url: null },
       { id: "iv2", thread_id: "w1", number: 1042, status: "sent", items: [{ name: "6 ft cedar privacy fence, installed", qty: 220, unit: "ft", price: 35 }, { name: "Walk gate", qty: 2, unit: "", price: 450 }], tax_rate: 0, total: 8600, note: "", due_on: at(-2, 12).slice(0, 10),
         sent_at: at(-9, 12), viewed_at: at(-9, 18), paid_at: null, paid_claimed_at: null, reminders: 1, reminders_paused: false, url: "/i/example" },
     ] as (CardInvoice & { thread_id: string })[],
     payments: [
       { id: "pm1", invoice_id: "iv1", thread_id: "w3", amount: 5000, method: "check", paid_on: at(-26, 12).slice(0, 10), note: "Deposit, check 1182" },
       { id: "pm2", invoice_id: "iv1", thread_id: "w3", amount: 6200, method: "card", paid_on: at(-8, 12).slice(0, 10), note: "" },
+      { id: "pm0", invoice_id: "iv0", thread_id: "w2", amount: 2300, method: "card", paid_on: at(-1, 12).slice(0, 10), note: "Deposit" },
       { id: "pm3", invoice_id: "iv2", thread_id: "w1", amount: 2500, method: "bank", paid_on: at(-24, 12).slice(0, 10), note: "Deposit by Zelle" },
     ] as Payment[],
     photos: {} as Record<string, Photo[]>,
@@ -158,7 +172,7 @@ function seed() {
     ] as Equipment[],
     files: [] as FileRow[],
     activity: [
-      { at: ago(18), who: "", role: "owner", action: "card", detail: "price set to $9,400", thread: "t1", customer: "Tom Becker" },
+      { at: ago(18), who: "", role: "owner", action: "card", detail: "price set to $6,570", thread: "t1", customer: "Tom Becker" },
       { at: ago(95), who: "", role: "owner", action: "payment", detail: "$2,150, card", thread: null, customer: "Henderson" },
       { at: ago(240), who: "", role: "owner", action: "stage", detail: "Won", thread: "q3", customer: "Jen Park" },
       { at: ago(610), who: "", role: "owner", action: "measure", detail: "186 ft", thread: "t4", customer: "Priya Shah" },
@@ -187,11 +201,13 @@ function seed() {
   };
 }
 
-const EXAMPLE_LINK = (typeof location !== "undefined" ? location.origin : "") + "/q/example";
+/** Each example customer has their own sample quote, so the link in their texts opens their quote, not someone else's. */
+const QUOTE_SLUG: Record<string, string> = { w2: "carla", q1: "lena", q2: "kyle", q3: "jen" };
+const quoteLink = (thread: string, host = typeof location !== "undefined" ? location.origin : "") => host + "/q/example" + (QUOTE_SLUG[thread] ? "-" + QUOTE_SLUG[thread] : "");
 const EXAMPLE_INVOICE = (typeof location !== "undefined" ? location.origin : "") + "/i/example";
 const quoteSms = (name: string, amount: number | null, id: string) => {
   const d = st().crm[id]; const line = d ? detailLine("Fence", cleanDetails("Fence", d.details)) : "";
-  return `Hi ${name.split(" ")[0] || "there"}, here's your quote from Ridgeline Fence Co${amount ? `: $${amount.toLocaleString("en-US")}${line ? ` for ${line}` : ""}` : ""}. You can look it over and approve it here: https://app.cinderrevenue.com/q/example`;
+  return `Hi ${name.split(" ")[0] || "there"}, here's your quote from Ridgeline Fence Co${amount ? `: $${amount.toLocaleString("en-US")}${line ? ` for ${line}` : ""}` : ""}. You can look it over and approve it here: ${quoteLink(id, "https://app.cinderrevenue.com")}`;
 };
 
 let S: ReturnType<typeof seed> | null = null;
@@ -295,7 +311,7 @@ function board(all = false): Card[] {
     return { id: thread.id, name: thread.customer_name, phone: thread.customer_phone, source: thread.source, status: thread.status,
       stage: stageFor({ stage: c.stage ?? null, status: thread.status, quote_status: quoteStatus, next_appt: next }), details, line: detailLine(s.setup.trade, details),
       value: c.value ?? q?.amount ?? null, ballpark: bp ? { low: bp.low, high: bp.high } : null, notes: c.notes,
-      quote: q ? { id: q.id, amount: q.amount, status: q.status, steps: q.steps_sent, linked: q.linked, url: q.linked ? EXAMPLE_LINK : null, viewed: q.viewed, note: q.note, items: q.items, tax: q.tax_rate, deposit: q.deposit ?? null,
+      quote: q ? { id: q.id, amount: q.amount, status: q.status, steps: q.steps_sent, linked: q.linked, url: q.linked ? quoteLink(thread.id) : null, viewed: q.viewed, note: q.note, items: q.items, tax: q.tax_rate, deposit: q.deposit ?? null,
         views: q.id === "q1" ? 3 : q.viewed ? 1 : 0, lastViewed: q.viewed, chasePaused: false, nextChase: q.status === "open" ? nextChaseDay(q.sent_on, q.steps_sent) : null } : null,
       next, at: texts.at(-1)?.at ?? new Date().toISOString(), install: c.install ?? null, installTime: c.installTime ?? null, installDays: c.installDays ?? 1, onCalendar: !!c.onCalendar,
       reviewAuto: !!c.reviewAuto, reviewSent: c.reviewSent ?? null, pastCustomer: false, job: { ...(c.job ?? {}) }, costs: { materials: 0, labor: 0, other: 0, ...(c.costs ?? {}) }, invoice: s.invoices.filter(i => i.thread_id === thread.id && i.status !== "void" && !(i as { plan_id?: string }).plan_id).at(-1) ?? null,
@@ -310,7 +326,7 @@ function customers() {
   return b.map(c => { const inv = s.invoices.filter(i => i.thread_id === c.id && i.status !== "void");
     const won = c.stage === "won" ? (c.value ?? 0) : 0;
     return { id: c.id, name: c.name, phone: c.phone, email: c.email ?? "", address: String(c.details.address ?? ""), source: c.source, status: c.status, stage: c.stage, since: c.at, last: c.at,
-      jobs: c.stage === "won" ? 1 : 0, spent: won, owed: inv.filter(i => i.status === "sent").reduce((a, i) => a + i.total, 0), open_quote: c.stage === "quoted" ? c.quote?.amount ?? null : null, line: c.line }; });
+      jobs: c.stage === "won" ? 1 : 0, spent: won, owed: inv.filter(i => i.status === "sent").reduce((a, i) => a + Math.max(0, i.total - paidOn(i.id)), 0), open_quote: c.stage === "quoted" ? c.quote?.amount ?? null : null, line: c.line }; });
 }
 
 /** Answers the app's API calls for the example business. Throws like the real API on errors. */
@@ -420,7 +436,7 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       const quoted = bd.filter(c => c.stage === "quoted"), paused = Object.values(s.threads).filter(t => t.thread.status === "paused");
       if (/quote/.test(q)) return { ok: true, answer: `${quoted.length} quotes are out: ${quoted.map(c => `${c.name.split(" ")[0]} (${c.quote?.amount ? "$" + c.quote.amount.toLocaleString("en-US") : "no amount"}${c.quote?.viewed ? ", opened" : ", not opened"})`).join(", ")}. Cinder follows up on its own; open Jobs to nudge one yourself.` };
       if (/owe|money|paid|invoice/.test(q)) { const owed = s.invoices.filter(i => i.status === "sent"); return { ok: true, answer: owed.length ? `${owed.length} invoices are out for ${owed.reduce((a, i) => a + i.total, 0).toLocaleString("en-US")}: ${owed.map(i => `${s.threads[i.thread_id]?.thread.customer_name.split(" ")[0]} ${i.total.toLocaleString("en-US")}`).join(", ")}. Reminders go out on their own; Money has the details.` : "Nothing is owed right now." }; }
-      if (/book|week|calendar|estimate|schedule/.test(q)) return { ok: true, answer: `${s.appts.length} estimates are on the calendar: ${s.appts.map(a => `${a.customer_name.split(" ")[0]} ${new Date(a.starts_at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })}`).join(", ")}. Carla Mendez's install is Thursday.` };
+      if (/book|week|calendar|estimate|schedule/.test(q)) return { ok: true, answer: `${s.appts.length} estimates are on the calendar: ${s.appts.map(a => `${a.customer_name.split(" ")[0]} ${new Date(a.starts_at).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" })}`).join(", ")}. Carla Mendez's install is today.` };
       if (/reply|waiting|answer|needs/.test(q)) return { ok: true, answer: paused.length ? `${paused.length} waiting on you: ${paused.map(t => t.thread.customer_name).join(", ")}. Open Inbox to reply.` : "Nothing is waiting on you." };
       return { ok: true, answer: `Last 30 days: 41 leads, all answered, 14 estimates booked, ${s.wonValue.toLocaleString("en-US")} won. ${paused.length} conversation${paused.length === 1 ? "" : "s"} waiting on you and ${quoted.length} quotes out. Ask about quotes, money, the week, or who's waiting.` };
     }
@@ -521,7 +537,7 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       }
       if (stage === "won") { c.install = cleanDate(b.install); c.installTime = typeof b.time === "string" ? b.time : null; c.installDays = Number(b.days) || 1; c.onCalendar = !!c.install; c.reviewAuto = !!b.review; }
       c.stage = stage; c.stageAt = now; if (stage === "lost") c.lostReason = typeof b.reason === "string" ? b.reason : ""; if (amt) c.value = amt;
-      return stage === "quoted" && b.link ? { ok: true, sent: true, link: EXAMPLE_LINK } : stage === "won" && c.install ? { ok: true, calendar: "added" } : { ok: true };
+      return stage === "quoted" && b.link ? { ok: true, sent: true, link: quoteLink(th!.thread.id) } : stage === "won" && c.install ? { ok: true, calendar: "added" } : { ok: true };
     }
     if (b.action === "quotelink" || b.action === "reviewnow") {
       const th = typeof b.thread === "string" ? s.threads[b.thread] : undefined;
@@ -529,15 +545,29 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       if (b.action === "reviewnow") { (s.crm[th!.thread.id] ??= { details: {}, notes: "" }).reviewSent = now; th!.texts.push({ id: "d" + ++n, direction: "out", author: "template", body: "Hi, thanks again for choosing Ridgeline Fence Co. Would you leave us a quick Google review? It really helps a small business: https://g.page/r/example", at: now }); return { ok: true }; }
       const d10 = th!.thread.customer_phone.replace(/\D/g, "").slice(-10);
       const q = s.quotes.find(x => x.customer_phone.replace(/\D/g, "").slice(-10) === d10) ?? fail("Move them to Quoted first.", 409);
-      if (b.send === false) return { ok: true, link: EXAMPLE_LINK, sent: false };
+      if (b.send === false) return { ok: true, link: quoteLink(th!.thread.id), sent: false };
       if (typeof b.note === "string" && b.note) q.note = b.note.trim().slice(0, 600);
       q.linked = true; th!.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: quoteSms(th!.thread.customer_name, q.amount, th!.thread.id), at: now });
-      return { ok: true, link: EXAMPLE_LINK, sent: true };
+      return { ok: true, link: quoteLink(th!.thread.id), sent: true };
     }
     if (b.action === "jobstep" || b.action === "jobcosts") {
       const c = (s.crm[String(b.thread)] ??= { details: {}, notes: "" });
       if (b.action === "jobcosts") { const o = (b.costs ?? {}) as Record<string, unknown>; const v = (x: unknown) => Math.max(0, Math.round(Number(String(x ?? "").replace(/[$,]/g, "")) || 0)); c.costs = { materials: v(o.materials), labor: v(o.labor), other: v(o.other) }; return { ok: true }; }
-      const job = (c.job ??= {}); if (b.done) job[String(b.step)] = now.slice(0, 10); else delete job[String(b.step)]; return { ok: true, job };
+      const job = (c.job ??= {}); if (b.done) job[String(b.step)] = now.slice(0, 10); else delete job[String(b.step)];
+      // "Deposit in": the quote's deposit is recorded as money in, like the server does.
+      let deposit: number | null = null;
+      if (b.step === "deposit") {
+        const id = String(b.thread), th = s.threads[id], d10 = (p: string) => p.replace(/\D/g, "").slice(-10);
+        const mine = s.invoices.filter(i => i.thread_id === id && i.status !== "void" && !(i as { plan_id?: string }).plan_id);
+        if (b.done && th && !mine.length) {
+          const q = s.quotes.find(x => d10(x.customer_phone) === d10(th.thread.customer_phone)), amt = Number(q?.deposit ?? 0);
+          if (amt > 0) { const iv = { id: "iv" + Date.now(), thread_id: id, number: Math.max(1040, ...s.invoices.map(i => i.number)) + 1, status: "paid", items: [{ name: `Deposit for ${detailLine("Fence", cleanDetails("Fence", c.details)) || "the job"}`, qty: 1, unit: "", price: amt }], tax_rate: 0, total: amt, note: DEPOSIT_NOTE,
+              due_on: now.slice(0, 10), sent_at: null, viewed_at: null, paid_at: now, paid_claimed_at: null, reminders: 0, reminders_paused: true, url: null } as CardInvoice & { thread_id: string };
+            s.invoices.push(iv); s.payments.unshift({ id: "pm" + ++n, invoice_id: iv.id, thread_id: id, amount: amt, method: "other", paid_on: now.slice(0, 10), note: "Deposit" }); deposit = amt; }
+        }
+        if (!b.done && mine.length && mine.every(i => i.note === DEPOSIT_NOTE)) for (const i of mine) { i.status = "void"; s.payments = s.payments.filter(p => p.invoice_id !== i.id); }
+      }
+      return { ok: true, job, deposit };
     }
     if (b.action === "quotelines" || b.action === "install" || b.action === "invoice") {
       const th = typeof b.thread === "string" ? s.threads[b.thread] : undefined;
@@ -551,15 +581,21 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
         q!.items = items; q!.tax_rate = cleanTax(b.tax); q!.amount = totals(items, q!.tax_rate).total; c.value = q!.amount;
         if (typeof b.note === "string") q!.note = b.note;
         if (b.deposit !== undefined) q!.deposit = money(b.deposit);
-        if (b.send) { q!.linked = true; th!.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: quoteSms(th!.thread.customer_name, q!.amount, th!.thread.id), at: now }); return { ok: true, sent: true, link: EXAMPLE_LINK }; }
+        if (b.send) { q!.linked = true; th!.texts.push({ id: "d" + ++n, direction: "out", author: "owner", body: quoteSms(th!.thread.customer_name, q!.amount, th!.thread.id), at: now }); return { ok: true, sent: true, link: quoteLink(th!.thread.id) }; }
         return { ok: true, total: q!.amount };
       }
       if (b.action === "install") { c.install = cleanDate(b.install); c.installTime = typeof b.time === "string" ? b.time : null; c.installDays = Number(b.days) || 1; c.onCalendar = !!c.install; return { ok: true, calendar: c.install ? "added" : "removed" }; }
       const open = s.invoices.find(i => i.thread_id === th!.thread.id && (i.status === "draft" || i.status === "sent") && !(i as { plan_id?: string }).plan_id);
       if (open) return { ok: true, invoice: open };
-      const items: Item[] = q?.items?.length ? q.items : [{ name: `${detailLine("Fence", cleanDetails("Fence", c.details)) || "Job"}, installed`, qty: 1, unit: "", price: c.value ?? q?.amount ?? 0 }];
+      let items: Item[] = q?.items?.length ? [...q.items] : [{ name: `${detailLine("Fence", cleanDetails("Fence", c.details)) || "Job"}, installed`, qty: 1, unit: "", price: c.value ?? q?.amount ?? 0 }];
       for (const co of s.cos.filter(x => x.thread_id === th!.thread.id && x.status === "approved" && !x.invoiced)) { items.push(...changeOrderLines(co)); co.invoiced = true; }
-      const inv = { id: "iv" + Date.now(), thread_id: th!.thread.id, number: 1001 + s.invoices.length + 41, status: "draft", items, tax_rate: q?.tax_rate ?? 0, total: totals(items, q?.tax_rate ?? 0).total, note: "",
+      // A deposit or progress bill is already on the job: this invoice is the rest, like the server.
+      const billed = s.invoices.filter(i => i.thread_id === th!.thread.id && i.status !== "void" && !(i as { plan_id?: string }).plan_id).reduce((a, i) => a + i.total, 0);
+      if (billed > 0) { const full = totals(items, q?.tax_rate ?? 0).total, left = Math.round((full - billed) * 100) / 100, $ = (v: number) => "$" + v.toLocaleString("en-US");
+        if (left <= 0.005) fail("Everything on this job is already billed.");
+        items = [{ name: `Balance for ${detailLine("Fence", cleanDetails("Fence", c.details)) || "the job"} (job total ${$(full)}, ${$(billed)} billed before)`, qty: 1, unit: "", price: left }]; }
+      const tax = billed > 0 ? 0 : q?.tax_rate ?? 0;
+      const inv = { id: "iv" + Date.now(), thread_id: th!.thread.id, number: Math.max(1040, ...s.invoices.map(i => i.number)) + 1, status: "draft", items, tax_rate: tax, total: totals(items, tax).total, note: "",
         due_on: at(7, 12).slice(0, 10), sent_at: null, viewed_at: null, paid_at: null, paid_claimed_at: null, reminders: 0, reminders_paused: false, url: null } as CardInvoice & { thread_id: string };
       s.invoices.push(inv);
       return { ok: true, invoice: inv };
@@ -591,7 +627,7 @@ export async function demoApi(path: string, b: Record<string, unknown> = {}): Pr
       p!.next_on = p!.ends_on && next > p!.ends_on ? null : next; if (!p!.next_on) p!.status = "ended";
       if (done) { p!.visits_done++; p!.last_on = on; }
       let invoice: string | null = null;
-      if (done && p!.invoice) { const inv = { id: "iv" + Date.now(), thread_id: p!.thread_id, number: 1001 + s.invoices.length + 41, status: "sent", items: p!.items, tax_rate: p!.tax_rate, total: p!.total, note: `${p!.name}, visit on ${on}`,
+      if (done && p!.invoice) { const inv = { id: "iv" + Date.now(), thread_id: p!.thread_id, number: Math.max(1040, ...s.invoices.map(i => i.number)) + 1, status: "sent", items: p!.items, tax_rate: p!.tax_rate, total: p!.total, note: `${p!.name}, visit on ${on}`,
           due_on: at(7, 12).slice(0, 10), sent_at: now, viewed_at: null, paid_at: null, paid_claimed_at: null, reminders: 0, reminders_paused: false, url: EXAMPLE_INVOICE, plan_id: p!.id } as CardInvoice & { thread_id: string };
         s.invoices.push(inv); invoice = inv.id; }
       s.threads[p!.thread_id]?.texts.push({ id: "d" + ++n, direction: "out", author: "system", body: done ? `${p!.name}: visit on ${on} done.${invoice ? ` Invoice for ${p!.total.toLocaleString("en-US")} texted.` : ""}` : `${p!.name}: visit on ${on} skipped.`, at: now });

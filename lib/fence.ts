@@ -142,6 +142,8 @@ export const FENCE_STARTERS: Omit<FenceType, "id" | "cost" | "price">[] = [
   { name: "Vinyl privacy", height: 6, infill: "Panels", postSpacing: 8, railsPerSection: 0, picketsPerFoot: 0.125, concretePerPost: 2 },
   { name: "Black aluminum", height: 4, infill: "Panels", postSpacing: 6, railsPerSection: 0, picketsPerFoot: 1 / 6, concretePerPost: 1 },
   { name: "Chain link", height: 4, infill: "Fabric (ft)", postSpacing: 10, railsPerSection: 1, picketsPerFoot: 1, concretePerPost: 1 },
+  { name: "Horizontal cedar", height: 6, infill: "Boards", postSpacing: 6, railsPerSection: 0, picketsPerFoot: 2, concretePerPost: 2 },
+  { name: "Ranch rail, 3 rail", height: 4, infill: "Rails", postSpacing: 8, railsPerSection: 3, picketsPerFoot: 0, concretePerPost: 1 },
 ];
 
 /**

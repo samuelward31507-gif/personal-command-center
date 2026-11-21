@@ -2076,3 +2076,20 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: .55; cursor: po
 @media (hover: hover) { .tbl:not(:has(.ck-col input:checked)) tr:not(:hover) .ck-col input { opacity: 0; } }
 /* The keyboard-hint footer lives in ⌘K help, not under the table. */
 .pane-foot .hint, .btn kbd { display: none; }
+
+/* ==========================================================================
+   Audit fixes (Nov 20): the fence plan when there's no satellite map, a pointer on rows that open, and 44px
+   tap targets on a phone for every button, link button and checkbox the owner taps with a thumb.
+   ========================================================================== */
+.ms-plan { display: block; width: 100%; height: auto; max-height: 100%; }
+.ms-map.ms-off:has(.ms-plan) { background: #fff; padding: 12px; }
+.card .ms-plan { margin: 4px 0 2px; border-radius: 8px; background: #fafafb; }
+tr[tabindex], tr[style*="pointer"] { cursor: pointer; }
+@media (max-width: 899px) {
+  .main .btn, .main .btn.sm, .main .btn.lg { min-height: 44px; }
+  .main button.link { min-height: 44px; display: inline-flex; align-items: center; padding: 0 4px; }
+  .main input[type="checkbox"], .main input[type="radio"] { width: 22px; height: 22px; }
+  .main label:has(> input[type="checkbox"]) { min-height: 44px; display: inline-flex; align-items: center; gap: 10px; }
+  .main .todo-ck { position: relative; } .main .todo-ck::after { content: ""; position: absolute; inset: -14px; }
+  .main .todo-row { min-height: 52px; }
+}

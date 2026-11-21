@@ -6,7 +6,7 @@ import type { NeonQueryFunction } from "@neondatabase/serverless";
 import { reminderChannels, reminderEmail } from "@/lib/billing";
 import { sendCustomerEmail } from "@/lib/client-email";
 import { replyToFor } from "@/lib/client-lead-mail-run";
-import { chosen, cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, type Item } from "@/lib/billing";
+import { chosen, cleanItems, cleanTax, fillInvoice, invoiceText, reminderDue, REMINDER_TEXTS, totals, INVOICE_TOKEN, dollars, DEPOSIT_NOTE, type Item } from "@/lib/billing";
 import { cleanDate, cleanDetails, cleanPayMethod, detailLine, type Payment } from "@/lib/crm";
 import { changeOrderLines, lateFeeOn, refundProblem } from "@/lib/service";
 import { qboDeletePayment, qboSyncInvoice, qboSyncPayment } from "@/lib/qbo";
@@ -201,9 +201,14 @@ export async function loadPayments(sql: Sql, c: Client, limit = 200): Promise<Pa
 export async function createInvoice(sql: Sql, c: Client, threadId: string, part?: { percent?: unknown; rest?: unknown }): Promise<{ ok: boolean; invoice?: Invoice; error?: string }> {
   const t = await threadOf(sql, c, threadId);
   if (!t) return { ok: false, error: "Not found." };
-  const progress = !!part && (part.rest === true || Number(part.percent) > 0);
+  let progress = !!part && (part.rest === true || Number(part.percent) > 0);
   const [open] = progress ? [] : await sql`SELECT * FROM public.client_invoices WHERE thread_id = ${t.id}::uuid AND status IN ('draft', 'sent') AND plan_id IS NULL ORDER BY created_at DESC LIMIT 1` as Record<string, unknown>[];
   if (open) return { ok: true, invoice: asInvoice(open) };
+  // A deposit or a progress bill is already on this job: the job's invoice is the rest, never the whole job again.
+  if (!progress) {
+    const [pb] = await sql`SELECT coalesce(sum(total), 0)::float AS billed FROM public.client_invoices WHERE thread_id = ${t.id}::uuid AND plan_id IS NULL AND status <> 'void'` as { billed: number }[];
+    if ((pb?.billed ?? 0) > 0) { part = { rest: true }; progress = true; }
+  }
   const [q] = await sql`SELECT items, tax_rate::float AS tax_rate, amount::float AS amount FROM public.client_quotes WHERE project_id = ${c.projectId}::uuid AND kind = 'quote'
     AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${phoneMatch(t.customer_phone)} ORDER BY (status = 'won') DESC, created_at DESC LIMIT 1` as { items: unknown; tax_rate: number; amount: number | null }[];
   let items = chosen(cleanItems(q?.items), null);
@@ -412,7 +417,7 @@ export async function loadCustomers(sql: Sql, c: Client): Promise<Customer[]> {
     FROM public.client_threads t
     LEFT JOIN LATERAL (SELECT count(*) AS jobs, sum(coalesce(amount, 0)) AS spent FROM public.client_quotes q WHERE q.project_id = t.project_id AND q.status = 'won'
       AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10)) w ON true
-    LEFT JOIN LATERAL (SELECT sum(total) AS owed FROM public.client_invoices i WHERE i.thread_id = t.id AND i.status = 'sent') o ON true
+    LEFT JOIN LATERAL (SELECT sum(total - coalesce(paid_amount, 0)) AS owed FROM public.client_invoices i WHERE i.thread_id = t.id AND i.status = 'sent') o ON true
     LEFT JOIN LATERAL (SELECT amount FROM public.client_quotes q WHERE q.project_id = t.project_id AND q.kind = 'quote' AND q.status IN ('open', 'replied')
       AND right(regexp_replace(q.customer_phone, '[^0-9]', '', 'g'), 10) = right(regexp_replace(t.customer_phone, '[^0-9]', '', 'g'), 10) ORDER BY q.created_at DESC LIMIT 1) oq ON true
     WHERE t.project_id = ${c.projectId}::uuid AND t.source NOT IN ('review', 'due') AND t.hidden_at IS NULL
@@ -433,4 +438,46 @@ export async function loadInvoices(sql: Sql, c: Client): Promise<(Invoice & { th
 export async function invoicesByThread(sql: Sql, c: Client): Promise<Record<string, Invoice>> {
   const rows = await sql`SELECT DISTINCT ON (thread_id) * FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid AND status <> 'void' AND plan_id IS NULL ORDER BY thread_id, created_at DESC` as Record<string, unknown>[];
   return Object.fromEntries(rows.map(r => [String(r.thread_id), asInvoice(r)]));
+}
+
+// ---------- Deposits ----------
+/**
+ * "Deposit in" on a won job: the quote's deposit is recorded as a paid deposit invoice, so the job shows it as paid and
+ * the job's invoice later bills only the rest. Once per job, and only before anything else is billed. No review ask,
+ * no "paid" event: the job isn't done.
+ */
+export async function recordDeposit(sql: Sql, c: Client, threadId: string, on?: string): Promise<{ amount: number } | null> {
+  const t = await threadOf(sql, c, threadId);
+  if (!t) return null;
+  const [billed] = await sql`SELECT count(*)::int AS n FROM public.client_invoices WHERE thread_id = ${t.id}::uuid AND plan_id IS NULL AND status <> 'void'` as { n: number }[];
+  if ((billed?.n ?? 0) > 0) return null;
+  const [q] = await sql`SELECT deposit::float AS deposit FROM public.client_quotes WHERE project_id = ${c.projectId}::uuid AND kind = 'quote'
+    AND right(regexp_replace(customer_phone, '[^0-9]', '', 'g'), 10) = ${phoneMatch(t.customer_phone)} ORDER BY (status = 'won') DESC, created_at DESC LIMIT 1` as { deposit: number | null }[];
+  const amount = round2(Number(q?.deposit ?? 0));
+  if (!(amount > 0)) return null;
+  const label = detailLine(c.setup.trade, cleanDetails(c.setup.trade, t.details)) || "the job";
+  const day = cleanDate(on) ?? new Date().toLocaleDateString("en-CA", { timeZone: c.setup.timezone || "America/Denver" });
+  const items: Item[] = [{ name: `Deposit for ${label}`, qty: 1, unit: "", price: amount }];
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const [inv] = await sql`INSERT INTO public.client_invoices (owner_id, project_id, thread_id, number, items, tax_rate, total, due_on, note, status, paid_at, paid_amount, reminders_paused)
+        VALUES (${c.owner}, ${c.projectId}::uuid, ${t.id}::uuid, (SELECT coalesce(max(number), 1000) + 1 FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid),
+          ${JSON.stringify(items)}::jsonb, 0, ${amount}, ${day}::date, ${DEPOSIT_NOTE}, 'paid', now(), ${amount}, true) RETURNING id, number` as { id: string; number: number }[];
+      await sql`INSERT INTO public.client_payments (owner_id, project_id, invoice_id, thread_id, amount, method, paid_on, note)
+        VALUES (${c.owner}, ${c.projectId}::uuid, ${inv.id}::uuid, ${t.id}::uuid, ${amount}, 'other', ${day}::date, 'Deposit')`;
+      await sql`INSERT INTO public.client_texts (owner_id, thread_id, direction, author, body) VALUES (${c.owner}, ${t.id}::uuid, 'out', 'system',
+        ${`Deposit of ${dollars(amount)} recorded. The job's invoice will bill the rest.`})`;
+      return { amount };
+    } catch (e) { if (attempt) { console.error("Deposit record failed", e instanceof Error ? e.message : e); return null; } }
+  }
+  return null;
+}
+/** Unticking "Deposit in": the deposit it recorded comes back off, as long as nothing else was billed after it. */
+export async function undoDeposit(sql: Sql, c: Client, threadId: string): Promise<void> {
+  const [d] = await sql`SELECT id FROM public.client_invoices WHERE thread_id = ${threadId}::uuid AND project_id = ${c.projectId}::uuid AND note = ${DEPOSIT_NOTE} AND status = 'paid' AND plan_id IS NULL
+    AND NOT EXISTS (SELECT 1 FROM public.client_invoices o WHERE o.thread_id = ${threadId}::uuid AND o.plan_id IS NULL AND o.status <> 'void' AND o.note IS DISTINCT FROM ${DEPOSIT_NOTE})
+    ORDER BY created_at DESC LIMIT 1` as { id: string }[];
+  if (!d) return;
+  await sql`DELETE FROM public.client_payments WHERE invoice_id = ${d.id}::uuid`;
+  await sql`UPDATE public.client_invoices SET status = 'void', paid_amount = 0, paid_at = NULL WHERE id = ${d.id}::uuid`;
 }

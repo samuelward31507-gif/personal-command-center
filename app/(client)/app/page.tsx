@@ -161,8 +161,8 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
 
 // ---------- The app ----------
 type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | { kind: "quote"; id: string } | null;
-const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam", "calendar", "help"];
-const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Home", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "quotes", l: "Quotes", ic: "quote", n: "4" }, { k: "calendar", l: "Calendar", ic: "cal", n: "5" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Reports", ic: "bars", n: "6" }];
+const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam", "quotes", "help", "plans", "switch", "from"];
+const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Today", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "quotes", l: "Quotes", ic: "quote", n: "4" }, { k: "calendar", l: "Calendar", ic: "cal", n: "5" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Reports", ic: "bars", n: "6" }];
 
 export default function CinderApp() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
@@ -204,7 +204,8 @@ export default function CinderApp() {
   async function enablePush() { const err = await turnOnPush(project); setPush(pushState()); toast(err ?? "Notifications are on.", !!err); }
 
   const load = useCallback(async (p = project, t = tab) => {
-    try { const j = await api<Data>(`/api/app/data?p=${p}${t === "sam" ? "&tab=sam" : t === "calendar" ? "&tab=cal" : ""}`); setD(j); setProject(j.project); setState("in"); }
+    try { const j = await api<Data & { signedOut?: boolean }>(`/api/app/data?p=${p}${t === "sam" ? "&tab=sam" : t === "calendar" ? "&tab=cal" : ""}${p ? "" : "&probe=1"}`);
+      if (j.signedOut) { setState("out"); return; } setD(j); setProject(j.project); setState("in"); }
     catch (e) { if ((e as { status?: number }).status === 401) setState("out"); }
   }, [project, tab]);
   useEffect(() => { reloadRef.current = () => { if (project) void load(project, tab); }; }, [load, project, tab]);
@@ -272,7 +273,7 @@ export default function CinderApp() {
   const top = sections.filter(s => s.k === "today" || s.k === "inbox" || s.k === "calendar");
   const records: { k: Tab; l: string; ic: string; obj: string }[] = crew ? [{ k: "jobs", l: "Jobs", ic: "jobs", obj: "jobs" }]
     : [{ k: "customers", l: "Customers", ic: "users", obj: "customers" }, { k: "jobs", l: "Jobs", ic: "jobs", obj: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote", obj: "quotes" },
-       { k: "invoices", l: "Invoices", ic: "invoice", obj: "invoices" }, { k: "plans", l: "Plans", ic: "cal", obj: "plans" }];
+       { k: "invoices", l: "Money", ic: "invoice", obj: "invoices" }, { k: "plans", l: "Service plans", ic: "cal", obj: "plans" }];
   // The rail lights the section you're in, from what's on screen: a quote is Quotes, a conversation is Inbox, a record is Customers or Jobs.
   const here: Tab = !open ? tab : open.kind === "quote" ? "quotes" : open.kind === "thread" ? "inbox" : tab === "customers" ? "customers" : "jobs";
   const isOn = (k: Tab) => here === k;
@@ -291,7 +292,7 @@ export default function CinderApp() {
   const mailN = crew ? 0 : mailWaiting(d).length;
   const counts: Partial<Record<Tab, number>> = { inbox: L.needs + mailN, calendar: due.length, invoices: owed };
   const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = crew ? [{ k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }]
-    : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs + mailN }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote" }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
+    : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs + mailN }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
   const phoneTab: Tab = MORE.includes(here) ? "more" : here;
   const active = (k: Tab) => here === k;
 
@@ -340,7 +341,7 @@ export default function CinderApp() {
       </div>
       {tab === "jobs" && !open && <div className="rail-grp views">
         <div className="rail-lbl">Views</div>
-        {([["open", "Open", jobCounts.open], ["won", "Won", jobCounts.won], ["all", "Everyone", jobCounts.all]] as const).map(([k, l, n]) =>
+        {([["open", "Open", jobCounts.open], ["won", "Won", jobCounts.won], ["all", "All", jobCounts.all]] as const).map(([k, l, n]) =>
           <button key={k} type="button" className={"ri" + (tab === "jobs" && jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); if (tab !== "jobs") goTab("jobs"); }}>{l}<em>{n}</em></button>)}
       </div>}
       <div className="rail-foot">
@@ -376,10 +377,10 @@ export default function CinderApp() {
 // ---------- More (phone) ----------
 function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
   const items: { k: Tab; l: string; s: string; ic: string; n?: number }[] = [
-    { k: "calendar", l: "Calendar", s: "Estimates, installs and visits", ic: "cal" },
+    { k: "quotes", l: "Quotes", s: "What's out, who opened it, what's next", ic: "quote" },
     { k: "invoices", l: "Money", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
     { k: "numbers", l: "Reports", s: "What came in and what it made", ic: "bars" },
-    { k: "customers", l: "Everyone", s: `${d.customers?.length ?? 0} people`, ic: "users" },
+    { k: "customers", l: "Customers", s: `${d.customers?.length ?? 0} people`, ic: "users" },
     { k: "switch", l: "Move your business in", s: "From Jobber, QuickBooks, a spreadsheet or your phone", ic: "upload" },
     { k: "from", l: "Coming from Jobber or Housecall Pro", s: "What each thing is called here", ic: "table" },
     { k: "plans", l: "Service plans", s: (d.plans ?? []).some(p => p.status === "active") ? `${(d.plans ?? []).filter(p => p.status === "active").length} active` : "Repeat work on a schedule", ic: "cal" },

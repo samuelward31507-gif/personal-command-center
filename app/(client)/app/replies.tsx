@@ -17,17 +17,22 @@ export function useSnippets(project: string) {
 }
 
 /** A reply that fits where the conversation stands: what they last asked, or the next step if nobody's said anything. */
-export function suggestReply(name: string, texts: Text[] | null, opts: { stage?: string; owner?: string; quoteAmount?: number | null } = {}): string {
-  const n = /^[A-Za-z]/.test((name || "").trim()) && first(name) !== "them" ? first(name) : "";
+export function suggestReply(name: string, texts: Text[] | null, opts: { stage?: string; owner?: string; quoteAmount?: number | null; paid?: boolean } = {}): string {
+  // A first name only when it is one: "Henderson family", "Oak Ridge HOA" or "Pine Farms LLC" get a plain "Hi".
+  const group = /\b(family|household|farms?|ranch|llc|inc|co|company|corp|hoa|properties|property|church|school|homes|builders)\b/i.test(name || "");
+  const n = !group && /^[A-Za-z]/.test((name || "").trim()) && first(name) !== "them" ? first(name) : "";
   const hi = n ? `Hi ${n}, ` : "Hi, ";
   const list = texts ?? [];
-  const lastIn = [...list].reverse().find(t => t.direction === "in" || t.direction === "inbound");
+  // The customer's last words: system notes ("Job won", "Quote sent") don't count as them talking.
+  const lastIn = [...list].reverse().find(t => (t.direction === "in" || t.direction === "inbound") && t.author !== "system");
+  const done = opts.stage === "won" || opts.stage === "lost";
   const lastAny = list.at(-1);
   const theirs = lastIn && lastAny && lastIn.id === lastAny.id ? (lastIn.body || "").toLowerCase() : "";
   const photo = !!lastIn?.media?.length && lastIn.id === lastAny?.id;
 
   if (photo) return `Thanks${n ? ` ${n}` : ""}, got the photos. That helps a lot. I'll have a number for you shortly.`;
   if (theirs) {
+    if (done && /\b(how much|price|cost|estimate|quote|ballpark)\b/.test(theirs)) return `${hi}happy to help with that. I'll put a price together and text it to you today.`;
     if (/\b(how much|price|cost|estimate|quote|ballpark)\b/.test(theirs)) return `${hi}happy to get you a real number. Easiest is a quick look in person. I can come by tomorrow morning or afternoon, which works better?`;
     if (/\b(when|what time|available|availability|schedule|today|tomorrow)\b/.test(theirs)) return `${hi}I can do tomorrow morning or later this week. What day works best for you?`;
     if (/\b(paid|sent (the )?payment|venmo|zelle|check)\b/.test(theirs)) return `Thanks${n ? ` ${n}` : ""}! I'll confirm it came through and send a receipt.`;
@@ -38,7 +43,7 @@ export function suggestReply(name: string, texts: Text[] | null, opts: { stage?:
   }
   // They haven't answered: the next step for where the job stands.
   if (opts.stage === "quoted") return `${hi}just checking you got the quote${opts.quoteAmount ? ` for $${Math.round(opts.quoteAmount).toLocaleString("en-US")}` : ""}. Any questions I can answer?`;
-  if (opts.stage === "won") return `${hi}just confirming we're all set. I'll text you the day before we start.`;
+  if (opts.stage === "won") return opts.paid ? `${hi}thanks again for choosing us. If anything with the fence ever needs a look, text me here.` : `${hi}just confirming we're all set. I'll text you the day before we start.`;
   if (opts.stage === "booked") return `${hi}looking forward to seeing you. I'll text when I'm on the way.`;
   if (!list.length) return `${hi}this is ${opts.owner ? first(opts.owner) : "us"}. What can I help you with?`;
   return `${hi}just following up. Still want to get this on the calendar?`;

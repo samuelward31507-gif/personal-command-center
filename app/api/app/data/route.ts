@@ -24,8 +24,9 @@ export const dynamic = "force-dynamic";
 /** GET ?p=<project>&thread=<id>&tab=cal|sam — the signed-in owner's business: numbers, every lead, estimates, quotes, their calendar, one conversation. */
 export async function GET(req: Request) {
   const s = appSession(req);
-  if (!s) return json({ error: "Sign in" }, 401);
   const q = new URL(req.url).searchParams;
+  // Opening /app checks for a session first: "signed out" is an answer there, not an error in the browser's console.
+  if (!s) return q.get("probe") ? json({ signedOut: true }) : json({ error: "Sign in" }, 401);
   try {
     const sql = db();
     const c = await clientFor(sql, s, q.get("p"));

@@ -32,6 +32,29 @@ function loadMaps(): Promise<GM> {
   return loading;
 }
 
+/**
+ * The fence line as a plan, drawn from the saved points: the picture when there's no satellite map on this account
+ * (or no key yet). New runs solid, tear-out dashed, gates as gaps with a tick, each side labeled in feet.
+ */
+export function PlanView({ d, height = 260 }: { d: Drawing; height?: number }) {
+  const pts = d.runs.flatMap(r => r.points);
+  if (!pts.length) return null;
+  const lat0 = pts.reduce((a, p) => a + p.lat, 0) / pts.length, k = Math.cos(lat0 * Math.PI / 180);
+  const xy = (p: LatLng) => ({ x: p.lng * k, y: -p.lat });
+  const all = pts.map(xy), minX = Math.min(...all.map(p => p.x)), maxX = Math.max(...all.map(p => p.x)), minY = Math.min(...all.map(p => p.y)), maxY = Math.max(...all.map(p => p.y));
+  const W = 600, H = height, pad = 44, span = Math.max(maxX - minX, maxY - minY, 1e-6), sc = Math.min((W - pad * 2) / Math.max(maxX - minX, span * 0.25), (H - pad * 2) / Math.max(maxY - minY, span * 0.25));
+  const ox = (W - (maxX - minX) * sc) / 2, oy = (H - (maxY - minY) * sc) / 2;
+  const at = (p: LatLng) => { const q = xy(p); return { x: ox + (q.x - minX) * sc, y: oy + (q.y - minY) * sc }; };
+  const segs = d.runs.flatMap(r => r.points.slice(1).map((p, i) => ({ id: r.id + i, kind: r.kind, a: at(r.points[i]), b: at(p), feet: runFeet({ id: "", kind: r.kind, points: [r.points[i], p] }) })));
+  return <svg className="ms-plan" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Fence plan: ${segs.filter(s => s.kind === "new").map(s => Math.round(s.feet) + " ft").join(", ")}`}>
+    {segs.map(s => { const mx = (s.a.x + s.b.x) / 2, my = (s.a.y + s.b.y) / 2, dx = s.b.x - s.a.x, dy = s.b.y - s.a.y, len = Math.hypot(dx, dy) || 1, nx = -dy / len * 16, ny = dx / len * 16;
+      return <g key={s.id}><line x1={s.a.x} y1={s.a.y} x2={s.b.x} y2={s.b.y} stroke={s.kind === "new" ? "#1c1d1f" : "#8a919c"} strokeWidth={s.kind === "new" ? 3 : 2} strokeDasharray={s.kind === "new" ? undefined : "6 5"} strokeLinecap="round" />
+        <text x={mx + nx} y={my + ny + 4} textAnchor="middle" fontSize="13" fontWeight="500" fill="#5d6674">{Math.round(s.feet)} ft</text></g>; })}
+    {d.runs.filter(r => r.kind === "new").flatMap(r => r.points).map((p, i) => { const q = at(p); return <circle key={"p" + i} cx={q.x} cy={q.y} r={4} fill="#fff" stroke="#1c1d1f" strokeWidth={2} />; })}
+    {d.gates.map(g => { const q = at(g.at); return <g key={g.id}><rect x={q.x - 9} y={q.y - 9} width={18} height={18} rx={4} fill="#fff" stroke="#1c1d1f" strokeWidth={2} /><text x={q.x} y={q.y + 26} textAnchor="middle" fontSize="12" fill="#5d6674">{g.type === "double" ? "Drive gate" : "Gate"}</text></g>; })}
+  </svg>;
+}
+
 /** On the record: the fence line if there is one (a satellite picture, the feet), and the way in to measure. */
 export function MeasureBox({ ctx, card, canEdit }: { ctx: Ctx; card: Card; canEdit: boolean }) {
   const [open, setOpen] = useState(false);
@@ -40,7 +63,7 @@ export function MeasureBox({ ctx, card, canEdit }: { ctx: Ctx; card: Card; canEd
   if (!d && !canEdit) return null;
   return <section className="card"><div className="hd"><h2>Fence line</h2>{m && <small style={{ marginLeft: "auto" }}>{ft(m.newFeet)}{m.gates.single + m.gates.double ? `, ${m.gates.single + m.gates.double} ${m.gates.single + m.gates.double === 1 ? "gate" : "gates"}` : ""}{m.tearoutFeet ? `, ${ft(m.tearoutFeet)} out` : ""}</small>}</div>
     {img ? <img className="fence-img" src={img} alt={`The fence line, ${m ? ft(m.newFeet) : ""}`} loading="lazy" />
-      : d ? <p className="fine">{ft(m!.newFeet)} drawn. The picture shows once the map is connected.</p>
+      : d ? <PlanView d={d} height={220} />
       : <p className="fine">Trace the fence on the satellite map: feet, gates and tear-out add up as you tap, and one tap prices it into the quote.</p>}
     {canEdit && <div className="acts-row end" style={{ marginTop: 6 }}><button type="button" className="btn sm" onClick={() => setOpen(true)}><Icon name="pin" size={13} />{d ? "Edit the line" : "Measure on the map"}</button></div>}
     {open && <MeasureSheet ctx={ctx} card={card} onClose={() => setOpen(false)} />}
@@ -138,7 +161,7 @@ function MeasureSheet({ ctx, card, onClose }: { ctx: Ctx; card: Card; onClose: (
       <button type="button" className="btn ghost sm" onClick={() => { if (confirm("Clear the whole drawing?")) { setDraw({ runs: [], gates: [] }); setActive(null); } }} disabled={!draw.runs.length}>Clear</button>
       <span className="ms-tot"><b>{ft(m.newFeet)}</b>{m.gates.single + m.gates.double ? `, ${m.gates.single + m.gates.double} ${m.gates.single + m.gates.double === 1 ? "gate" : "gates"}` : ""}{m.tearoutFeet ? `, ${ft(m.tearoutFeet)} out` : ""}</span>
     </div>
-    {!KEY ? <div className="ms-map ms-off"><p><b>The map isn&rsquo;t connected yet.</b> Sam adds the Google Maps key once, and this opens on the customer&rsquo;s yard from above.</p></div>
+    {!KEY ? <div className="ms-map ms-off">{draw.runs.length ? <PlanView d={draw} height={320} /> : <p><b>Drawing on the satellite map turns on with your account.</b> Until then, type the feet on the job and the quote prices it the same way.</p>}</div>
       : mapErr ? <div className="ms-map ms-off"><p>{mapErr}</p></div>
       : <div ref={box} className="ms-map" aria-label="Satellite map. Tap along the property line to draw the fence." />}
     {draw.runs.length > 0 && <ul className="ms-runs">{draw.runs.map((r, i) => <li key={r.id} className={r.id === active ? "on" : ""}><button type="button" onClick={() => { setActive(r.id); setMode(r.kind === "tearout" ? "tearout" : "fence"); }}>
