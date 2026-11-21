@@ -55,7 +55,7 @@ function AskBox({ api, project, ask, d, go }: { api: Api; project: string; ask?:
 }
 
 /** The month's goal: won so far against what the owner aims for. Set it once; it stays. */
-function GoalBox({ d, cards, api, project, toast, reload }: { d: Data; cards: NonNullable<Data["board"]>; api: Api; project: string; toast?: (t: string, bad?: boolean) => void; reload?: () => Promise<void> }) {
+export function GoalBox({ d, cards, api, project, toast, reload }: { d: Data; cards: NonNullable<Data["board"]>; api: Api; project: string; toast?: (t: string, bad?: boolean) => void; reload?: () => Promise<void> }) {
   const goal = Number(d.setup?.monthly_goal) || 0, month = new Date().toLocaleDateString("en-CA").slice(0, 7);
   const won = cards.filter(c => c.stage === "won" && !c.pastCustomer && (c.stageAt ?? "").slice(0, 7) === month).reduce((a, c) => a + (jobPrice(c) ?? 0), 0);
   const setGoal = async () => { const v = prompt("Your goal for won work each month, in dollars", goal ? String(goal) : "50000"); if (v === null) return;
@@ -210,70 +210,36 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
     return { id: c.id, name: c.name || "New lead", what: [sourceLabel(c.source), when].filter(Boolean).join(" · "), ...outcome };
   });
 
-  return <>
-    <PageHead title={dateLine} sub={actions.length ? `${actions.length} ${actions.length === 1 ? "thing needs" : "things need"} you${atStake ? `, ${usd(atStake)} on them` : ""}.` : "Nothing needs you right now."}
-      actions={<><button type="button" className="find" onClick={go.find}><Icon name="search" size={14} />Find anyone or do anything<kbd>⌘K</kbd></button><button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={14} />New lead</button></>} />
-    <div className="t5">
-      <div className="t5-main">
-        {evText && <p className="t5-over">{evText}{isOwner && <button type="button" className="link" onClick={() => void toggleEv()}>{evSms ? "Stop the 6 PM text" : "Text me this at 6 PM"}</button>}</p>}
-        {/* On a phone the numbers sit right under the summary, folded, instead of three screens down. */}
-        <details className="t5-nums">
-          <summary><b>Numbers</b><span>{usd(pipeTotal)} open{nums[0] ? `, ${nums[0].label.toLowerCase()} ${nums[0].value}` : ""}</span><Icon name="down" size={14} /></summary>
-          <div className="t5-nums-b">
-            {nums.map(n => <button key={n.label} type="button" className="t5-num" onClick={n.go} disabled={!n.go}><span>{n.label}<small>{n.sub}</small></span><b className={n.tone || ""}>{n.value}</b></button>)}
-            {pipe.map(p => <button key={p.st} type="button" className="t5-num" onClick={() => go.tab("jobs")}><span><i className={"sw " + p.st} />{PIPE_L[p.st]}<small>{p.n}</small></span><b>{usd(p.v)}</b></button>)}
-          </div>
-        </details>
-        <dl className="t6-figs">{figs.map(f => <button key={f.k} type="button" onClick={f.go}><dt>{f.k}</dt><dd>{f.v.endsWith("s") && /^\d+s$/.test(f.v) ? <>{f.v.slice(0, -1)}<i>s</i></> : f.v}</dd></button>)}</dl>
-        {feed.length > 0 && <section className="t6-live">
-          <header><span className="t6-k">Live</span><button type="button" className="link" onClick={() => go.tab("inbox")}>Inbox</button></header>
-          <ul>{feed.map(f => <li key={f.id} className={f.tone}><button type="button" onClick={() => go.thread(f.id)}><i aria-hidden="true" /><b>{f.name}</b><span>{f.what}</span><em>{f.t}</em></button></li>)}</ul>
-        </section>}
-        <section className="t5-sec">
-          <header><h2>Your move</h2><small>{actions.length ? `${actions.length}, newest leads first, then the most money` : "all clear"}</small><button type="button" className="link" onClick={() => go.tab("jobs")}>All jobs</button></header>
-          {actions.length ? <div className="t5-list">{shown.map((a, k) => <div key={a.key} className={"t5-row" + (a.kind === "reply" || a.urgent ? " turn" : "")}>
-              <i className="td" aria-hidden="true" />
-              <button type="button" className="tt" onClick={a.go}><b>{a.title}</b><small>{a.sub}</small>{a.draft && <q className="nudge">{a.draft}</q>}</button>
-              <span className="tm">{a.money ? usd(a.money) : ""}</span>
-              <button type="button" className={"btn sm" + (k === 0 ? " ink" : "")} onClick={a.go}>{a.cta}</button>
-            </div>)}
-            {actions.length > 7 && <button type="button" className="link more" onClick={() => setAll(x => !x)}>{all ? "Show fewer" : `Show all ${actions.length}`}</button>}</div>
-          : <p className="t5-empty">You&rsquo;re clear. New leads, quotes to write and late invoices land here.</p>}
-        </section>
-        {isOwner && <TasksSection ctx={{ d, project, api, toast: toast ?? (() => {}), reload: reload ?? (async () => {}) }} go={go} />}
-        <section className="t5-sec">
-          <header><h2>Today</h2><small>{todayList.length ? `${todayList.length} ${todayList.length === 1 ? "visit" : "visits"}` : "nothing booked"}</small><button type="button" className="link" onClick={() => go.tab("calendar")}>Calendar</button></header>
-          {todayList.length ? <div className="t5-list">{todayList.map(v => <div key={v.key} className="t5-row visit">
-              <time>{v.time}</time>
-              <button type="button" className="tt" onClick={v.go}><b>{v.who}</b><small>{v.what === "estimate" ? "Estimate" : "Install"}{v.sub ? `, ${v.sub}` : ""}</small></button>
-              <span className="vacts">{v.addr && <a className="btn ghost sm" href={"https://maps.google.com/?daddr=" + encodeURIComponent(v.addr)} target="_blank" rel="noreferrer" aria-label={"Directions to " + v.who}><Icon name="pin" size={13} />Route</a>}
-                {v.phone && <a className="btn ghost sm ic" href={"tel:" + v.phone} title="Call" aria-label={"Call " + v.who}><Icon name="phone" size={13} /></a>}</span>
-            </div>)}</div>
-          : <p className="t5-empty">{nextVisit ? `Nothing today. Next: ${nextVisit.who}, ${nextVisit.what}, ${dateLabel(nextVisit.day)} at ${nextVisit.time}.` : "Nothing booked yet. Estimates get booked where your calendar is free."}</p>}
-        </section>
-      </div>
-      <aside className="t5-rail">
-        <section className="t6-week"><h3>This week<small><button type="button" className="link" onClick={() => go.tab("calendar")}>Calendar</button></small></h3>
-          {days.slice(0, 5).map((dd, k) => <button key={dd.key} type="button" className={"t6-day" + (k === 0 ? " today" : "")} onClick={() => go.tab("calendar")}>
-            <b>{k === 0 ? "Today" : dd.dow}</b>
-            {dd.items.length ? dd.items.slice(0, 3).map(v => <p key={v.key} className={"t6-ev" + (v.what === "estimate" ? "" : " inst")}>{v.time} · {v.who}<span>{v.what === "estimate" ? "Estimate" : "Install"}{v.sub ? `, ${v.sub}` : ""}</span></p>) : <span className="t6-free">Open</span>}
-            {dd.items.length > 3 && <span className="t6-free">+{dd.items.length - 3} more</span>}
-          </button>)}
-        </section>
-        {isOwner && <GoalBox d={d} cards={cards} api={api} project={project} toast={toast} reload={reload} />}
-        <section className="t5-dup"><h3>Last 30 days</h3>
-          {nums.map(n => <button key={n.label} type="button" className="t5-num" onClick={n.go} disabled={!n.go}><span>{n.label}<small>{n.sub}</small></span><b className={n.tone || ""}>{n.value}</b></button>)}
-        </section>
-        <section className="t5-dup"><h3>Pipeline<small>{usd(pipeTotal)} open</small></h3>
-          <div className={"t5-pipe" + (pipeTotal ? "" : " none")} aria-hidden="true">{pipeTotal > 0 && pipe.map(p => <i key={p.st} className={p.st} style={{ flexGrow: Math.max(p.v, pipeTotal ? pipeTotal * 0.04 : 1) }} />)}</div>
-          {pipe.map(p => <button key={p.st} type="button" className="t5-num" onClick={() => go.tab("jobs")}><span><i className={"sw " + p.st} />{PIPE_L[p.st]}<small>{p.n}</small></span><b>{usd(p.v)}</b></button>)}
-        </section>
-        {isOwner && (setupLeft > 0 || (d.customers ?? []).length < 5) && <section><h3>Setting up</h3>
-          {nextSetup && <div className="t5-setup"><span><b>{nextSetup.title}</b><small>{setupLeft} {setupLeft === 1 ? "step" : "steps"} left. {nextSetup.text}</small></span>{nextSetup.action}</div>}
-          {(d.customers ?? []).length < 5 && <div className="t5-setup"><span><b>Bring your customers over</b><small>From Jobber, QuickBooks or a spreadsheet. About 10 minutes.</small></span><button type="button" className="btn sm" onClick={() => go.tab("switch")}>Move them in</button></div>}
-        </section>}
-        <section><h3>Ask</h3><AskBox api={api} project={project} ask={ask} d={d} go={go} /></section>
-      </aside>
-    </div>
-  </>;
+  // One idea: what needs you right now, and what it's worth. Everything else lives one tap away.
+  const upNext = todayList.find(v => v.at > Date.now() - 30 * 60000) ?? nextVisit;
+  const openTasks = (d.tasks ?? []).filter(t => !t.done_at).length;
+  const [showTasks, setShowTasks] = useState(false);
+  const shortDate = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  return <div className="t7">
+    <header className="t7-head">
+      <p className="t7-date"><span className="wide-only">{dateLine}</span><span className="narrow-only">{shortDate}</span></p>
+      <h1 className="t7-hero">{actions.length ? <>{actions.length} {actions.length === 1 ? "thing needs" : "things need"} you.{atStake > 0 && <><br />{usd(atStake)} on {actions.length === 1 ? "it" : "them"}.</>}</> : <>Nothing needs you.<br /><span className="t7-calm">Cinder is handling it.</span></>}</h1>
+      {evText && <p className="t7-sub">{evText.replace(/^[^:]+: /, "").replace(/\.$/, "")}</p>}
+    </header>
+    {ask && ask.q && <section className="t7-ask"><AskBox api={api} project={project} ask={ask} d={d} go={go} /></section>}
+    {actions.length > 0 && <section className="t7-sec">
+      <header><h2>Your move</h2>{actions.length > 5 && <button type="button" className="t7-quiet" onClick={() => setAll(x => !x)}>{all ? "Show fewer" : `Show all ${actions.length}`}</button>}</header>
+      <ul className="t7-list">{(all ? actions : actions.slice(0, 5)).map(a => <li key={a.key}>
+        <button type="button" className="t7-row" onClick={a.go}>
+          <span className="t7-t"><b>{a.title}</b><small>{a.sub}</small></span>
+          {a.kind === "reply" || a.urgent ? <em className="t7-st urgent">{a.kind === "reply" ? "Needs a reply" : a.cta}</em> : <em className="t7-st" />}
+          <span className="t7-amt">{a.money ? usd(a.money) : ""}</span>
+          <span className="t7-go" aria-hidden="true">{a.cta} →</span>
+        </button>
+      </li>)}</ul>
+    </section>}
+    <section className="t7-next">
+      <button type="button" className="t7-line" onClick={() => go.tab("calendar")}><span className="t7-k">Next up</span>
+        <span className="t7-v">{upNext ? `${upNext.day === today ? "" : dateLabel(upNext.day) + ", "}${upNext.time} · ${upNext.what === "estimate" ? "Estimate" : "Install"} · ${upNext.who}${upNext.addr ? " · " + upNext.addr : ""}` : "Nothing booked yet"}</span><span className="t7-arr" aria-hidden="true">→</span></button>
+      {isOwner && <button type="button" className="t7-line" aria-expanded={showTasks} onClick={() => setShowTasks(x => !x)}><span className="t7-k">To-dos</span>
+        <span className="t7-v">{openTasks ? `${openTasks} open` : "None open"}</span><span className="t7-arr" aria-hidden="true">{showTasks ? "↑" : "→"}</span></button>}
+      {isOwner && showTasks && <div className="t7-tasks"><TasksSection ctx={{ d, project, api, toast: toast ?? (() => {}), reload: reload ?? (async () => {}) }} go={go} /></div>}
+      {isOwner && nextSetup && <button type="button" className="t7-line" onClick={() => go.tab("system")}><span className="t7-k">Setup</span><span className="t7-v">{setupLeft} {setupLeft === 1 ? "step" : "steps"} left · {nextSetup.title}</span><span className="t7-arr" aria-hidden="true">→</span></button>}
+    </section>
+  </div>;
 }

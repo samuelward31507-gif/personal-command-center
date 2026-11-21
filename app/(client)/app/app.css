@@ -1951,3 +1951,128 @@ input[type="date"]::-webkit-calendar-picker-indicator { opacity: .55; cursor: po
 
 /* Tables read like the Live list: no header band, hairline rows. */
 .tbl th { background: transparent; color: var(--w3); font-weight: 500; font-size: 12px; border-color: var(--line); }
+
+/* ==========================================================================
+   DESIGN-SPEC (Nov 20): Today is one idea. What needs you, and what it's worth.
+   hero-num 40/44 (phone 32/36) Inter Display 600 -0.02em; rows 56px (phone 64px); status is a word.
+   ========================================================================== */
+.t7 { flex: 1; min-height: 0; overflow: auto; padding: 32px 40px 64px; }
+.t7 > * { max-width: 1120px; }
+.t7-head { margin-bottom: 48px; }
+.t7-date { font: 400 13px/18px var(--ff); color: #5d6674; margin-bottom: 12px; }
+.t7-hero { font: 600 40px/44px var(--ff-tight); letter-spacing: -.02em; color: #1c1d1f; font-feature-settings: "tnum" 1; }
+.t7-calm { color: #5d6674; }
+.t7-sub { margin-top: 12px; font: 400 15px/22px var(--ff); letter-spacing: -.006em; color: #5d6674; }
+.t7-ask { margin-bottom: 40px; max-width: 720px; }
+.t7-sec { margin-bottom: 40px; }
+.t7-sec > header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.t7-sec h2 { font: 600 15px/20px var(--ff); letter-spacing: -.01em; color: #1c1d1f; }
+.t7-quiet { height: 32px; padding: 0 8px; border-radius: 8px; font: 500 14px/20px var(--ff); color: #5d6674; transition: background 120ms cubic-bezier(.2,0,0,1), color 120ms cubic-bezier(.2,0,0,1); }
+.t7-quiet:hover { background: #f4f5f6; color: #1c1d1f; }
+.t7-list { list-style: none; margin: 0; padding: 0; }
+.t7-list li { border-bottom: 1px solid #eeeff1; }
+.t7-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 96px 0; align-items: center; column-gap: 16px; width: 100%; min-height: 56px; padding: 10px 12px; margin: 0 -12px; width: calc(100% + 24px); text-align: left; border-radius: 8px; transition: background 120ms cubic-bezier(.2,0,0,1); }
+.t7-row:hover, .t7-row:focus-visible { background: #f4f5f6; }
+.t7-row:focus-visible { outline: 2px solid #1c1d1f; outline-offset: -2px; }
+.t7-t { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.t7-t b { font: 500 14px/20px var(--ff); letter-spacing: -.01em; color: #1c1d1f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t7-t small { font: 400 13px/18px var(--ff); color: #5d6674; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t7-st { font: 500 13px/18px var(--ff); font-style: normal; color: #5d6674; white-space: nowrap; }
+.t7-st.urgent { color: #b3461c; }
+.t7-amt { font: 500 14px/20px var(--ff); color: #1c1d1f; text-align: right; font-feature-settings: "tnum" 1; }
+.t7-go { overflow: hidden; white-space: nowrap; font: 500 14px/20px var(--ff); color: #1c1d1f; opacity: 0; transition: opacity 120ms cubic-bezier(.2,0,0,1); }
+@media (hover: hover) { .t7-row:hover { grid-template-columns: minmax(0, 1fr) auto 96px auto; } .t7-row:hover .t7-go, .t7-row:focus-visible .t7-go { opacity: 1; } }
+.t7-next { display: flex; flex-direction: column; border-top: 1px solid #eeeff1; }
+.t7-line { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; align-items: center; gap: 16px; min-height: 48px; padding: 0 12px; margin: 0 -12px; width: calc(100% + 24px); text-align: left; border-bottom: 1px solid #eeeff1; border-radius: 0; transition: background 120ms cubic-bezier(.2,0,0,1); }
+.t7-line:hover { background: #f4f5f6; }
+.t7-k { font: 500 13px/18px var(--ff); color: #5d6674; }
+.t7-v { font: 500 14px/20px var(--ff); color: #1c1d1f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t7-arr { color: #5d6674; }
+.t7-tasks { padding: 16px 0 8px; border-bottom: 1px solid #eeeff1; }
+.narrow-only { display: none; }
+@media (max-width: 767px) {
+  .t7 { padding: 16px 16px 32px; }
+  .t7-head { margin-bottom: 32px; }
+  .t7-hero { font-size: 32px; line-height: 36px; }
+  .wide-only { display: none; } .narrow-only { display: inline; }
+  .t7-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "t amt" "t st"; min-height: 64px; padding: 12px 0; margin: 0; width: 100%; border-radius: 0; }
+  .t7-row:hover { background: none; }
+  .t7-t { grid-area: t; } .t7-t b { font-size: 16px; line-height: 22px; } .t7-t small { font-size: 14px; line-height: 20px; }
+  .t7-amt { grid-area: amt; } .t7-st { grid-area: st; text-align: right; } .t7-go { display: none; }
+  .t7-line { grid-template-columns: 80px minmax(0, 1fr) auto; min-height: 52px; padding: 0; margin: 0; width: 100%; }
+}
+
+/* ==========================================================================
+   DESIGN-SPEC (Nov 20): app shell and tokens. Two text colors (ink #1c1d1f, ink-2 #5d6674),
+   three status colors used only as words, one hairline (#eeeff1), no shadows on resting surfaces,
+   ink focus ring, 28/34 page titles, rows without bordered buttons.
+   ========================================================================== */
+:root {
+  --ink: #1c1d1f; --g1: #5d6674; --g2: #5d6674; --g3: #5d6674; --g4: #8a919c;
+  --hair: #eeeff1; --hair-2: #eeeff1; --hair-3: #d3d8df;
+  --line: #eeeff1; --line-2: #d3d8df; --w2: #5d6674; --w3: #5d6674;
+  --good: #15803d; --good-ink: #15803d; --bad: #c81e1e; --bad-ink: #c81e1e; --warn: #b3461c;
+  --ring: 0 0 0 2px #1c1d1f;
+  --sh-card: none; --sh-btn: none; --sh-pri: none;
+}
+:focus-visible { outline: 2px solid #1c1d1f; outline-offset: 2px; }
+.shell input:focus-visible, .shell select:focus-visible, .shell textarea:focus-visible, .shell .input:focus-within { box-shadow: 0 0 0 1px #1c1d1f; outline: 0; }
+
+/* Rail: 232px, 32px items, no group labels, counts as plain numbers. */
+@media (min-width: 900px) {
+  .shell .rail { width: 232px; flex: 0 0 232px; padding: 12px 8px; background: #fafafb; border-right: 1px solid #eeeff1; }
+  .shell .rail .ri { height: 32px; border-radius: 8px; color: #5d6674; }
+  .shell .rail .ri:hover:not(.on) { background: #f4f5f6; }
+  .shell .rail .ri.on { background: #eeeff1; color: #1c1d1f; }
+  .shell .rail .rail-lbl { visibility: hidden; height: 16px; margin-top: 0; }
+  .shell .rail .ri em, .shell .rail .ri em.hot { min-width: 0; height: auto; padding: 0; background: none; color: #5d6674; font: 500 12px/16px var(--ff); }
+  .shell .rail .rail-search { height: 32px; border-radius: 8px; background: #fff; box-shadow: none; border: 1px solid #d3d8df; color: #5d6674; }
+  .shell .rail .biz-mark, .shell .rail .biz-logo, .shell .rail .ws .av { display: none; }
+  .ph .find { display: none; }
+}
+
+/* Page header: 28/34 title, one grey sentence under it, 24px of space, no rule. */
+.ph { padding: 32px 40px 24px; min-height: 0; background: #fff; border-bottom: 0; }
+.ph h1 { flex-direction: column; align-items: flex-start; gap: 8px; }
+.ph h1 > span { font: 600 28px/34px var(--ff-tight); letter-spacing: -.015em; color: #1c1d1f; }
+.ph h1 > em { font: 400 15px/22px var(--ff); letter-spacing: -.006em; color: #5d6674; }
+@media (max-width: 899px) { .ph { padding: 16px; } .ph h1 > span { font-size: 24px; line-height: 30px; } }
+
+/* Example-business bar: a quiet line, not a black band. */
+.demo { height: 36px; background: #fafafb; color: #5d6674; border-bottom: 1px solid #eeeff1; font: 500 13px/18px var(--ff); }
+.demo button { height: 32px; padding: 0 10px; border-radius: 8px; color: #1c1d1f; font-weight: 500; }
+.demo button:hover { background: #f4f5f6; }
+@media (pointer: coarse) { .demo { height: 48px; } .demo button { min-height: 44px; min-width: 44px; } }
+
+/* Buttons: no shadows, ink primary, white secondary with a #d3d8df border. */
+.btn { box-shadow: none; }
+.btn:not(.ink):not(.ghost):not(.link) { background: #fff; border: 1px solid #d3d8df; box-shadow: none; }
+.btn:not(.ink):not(.ghost):not(.link):hover { background: #f4f5f6; }
+.btn.ink { background: #1c1d1f; color: #fff; box-shadow: none; border: 0; }
+.btn.ink:hover { background: #2e3238; } .btn.ink:active { background: #000; }
+
+/* Status is a word, never a shape: no dots, pills, avatars or tinted chips anywhere. */
+.shell .dot::before, .stg i, .shell .turn, .ud, .t5-row .td { display: none !important; }
+.shell .dot, .stg { color: #5d6674; }
+.shell .dot.good, .stg.won, .stg.done { color: #15803d; }
+.shell .dot.ember, .shell .dot.warn, .stg.turn, .next.bad, .next.ember, .next.warn { color: #b3461c; }
+.shell .dot.bad { color: #c81e1e; }
+.tbl .name .av, .jobs-tbl .av, .q-tbl .av, .q-list .av, .ilist .av, .jcard .av { display: none; }
+.ctag { background: none !important; padding: 0 !important; color: #5d6674 !important; font: 400 13px/18px var(--ff) !important; }
+
+/* Tables: 36px header in 12px ink-2, 44px rows, hairlines, group rows as section labels. */
+.tbl th { height: 36px; font: 500 12px/16px var(--ff); color: #5d6674; background: #fff; border-bottom: 1px solid #eeeff1; }
+.tbl tbody tr:not(.grp-row) td { height: 44px; border-bottom: 1px solid #eeeff1; }
+.tbl tbody tr:not(.grp-row):hover td { background: #f4f5f6; }
+.tbl tbody tr.sel td { background: #eeeff1; }
+.tbl .grp-row td { height: 40px; padding-top: 24px; background: #fff !important; border-bottom: 1px solid #eeeff1; }
+.tbl .grp-row td b { font: 600 15px/20px var(--ff); color: #1c1d1f; margin-right: 8px; }
+.tbl .grp-row td span { font: 400 13px/18px var(--ff); color: #5d6674; }
+/* Row actions: hidden at rest, a quiet text action on hover. The row click already opens the job. */
+.tbl td.act .btn { background: none !important; border: 0 !important; color: #1c1d1f; font-weight: 500; padding: 0 8px; }
+.tbl td.act .btn::after { content: " →"; }
+@media (hover: hover) { .tbl tr:not(:hover):not(:focus-within) td.act .btn { opacity: 0; } }
+/* Checkboxes appear on hover, or once anything is ticked. */
+@media (hover: hover) { .tbl:not(:has(.ck-col input:checked)) tr:not(:hover) .ck-col input { opacity: 0; } }
+/* The keyboard-hint footer lives in ⌘K help, not under the table. */
+.pane-foot .hint, .btn kbd { display: none; }

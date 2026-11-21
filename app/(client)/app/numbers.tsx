@@ -10,6 +10,7 @@ import { PERIODS, periodRange, type PeriodKey } from "@/lib/periods";
 import { Avatar, Spinner, ago, secs, short, usd, type Api, type Toast } from "./parts";
 import { Bars, Donut, Guide, Kpis, PageHead, type Kpi } from "./charts";
 import { HoursPanel, RecurringPanel } from "./jobwork";
+import { GoalBox } from "./today";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 import { jobProfit, parseTeam } from "@/lib/crm";
 import { totals } from "@/lib/billing";
@@ -59,6 +60,8 @@ export function ReportsScreen({ d, biz, go, project, api, toast, reload, onWinba
         <select className="input sm" style={{ width: "auto" }} aria-label="Calendar period" value={["month", "lastmonth", "year", "lastyear"].includes(key) ? key : ""} onChange={e => { if (e.target.value) { setR(null); setKey(e.target.value as PeriodKey); } }}>
           <option value="">Month or year</option>{PERIODS.filter(p => !/^\d/.test(p[0])).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></span>} />
     <div className="dash rep2">
+      {/* The monthly goal moved here from Today: it's a number to check, not a thing to do. */}
+      {!biz.crew && d.role !== "office" && <div className="panel rep-goal"><div className="panel-b"><GoalBox d={d} cards={d.board ?? []} api={api} project={project} toast={toast} reload={reload} /></div></div>}
       {err ? <div className="panel"><div className="panel-b"><p className="fine" style={{ color: "var(--bad)", padding: "12px 0" }}>{err} <button type="button" className="link" onClick={() => void load(key)}>Try again</button></p></div></div>
       : !ready ? <div className="panel"><div className="panel-b skel-rows" style={{ padding: 18 }}><i className="skel" /><i className="skel" /><i className="skel" /></div></div>
       : n!.leads === 0 && b!.leads === 0 && !ser.length ? <Guide title="Your numbers start with your first lead"
