@@ -190,3 +190,18 @@ console.log("agent contact info: 3 checks passed");
   }
   console.log("mcp handlers ok");
 }
+
+// Prospects carry a published email and the owner's LinkedIn profile, so every Outbound channel can reach them.
+{
+  const A = await import("./lib/agent-api.ts");
+  const r = A.parseProspects({ prospects: [
+    { business: "Ridge Fence", phone: "1 (555) 201-3344", email: " Office@RidgeFence.com ", linkedin: "linkedin.com/in/dale-ridge/?trk=x", location: "Tulsa, OK", notes: "Lead grade: A · Angi profile" },
+    { business: "Bad Data Fence", phone: "555-201-9999", email: "not-an-email", linkedin: "https://www.linkedin.com/company/bad-data" },
+  ] });
+  assert.equal(r.prospects[0].email, "office@ridgefence.com");
+  assert.equal(r.prospects[0].linkedin, "https://www.linkedin.com/in/dale-ridge");
+  assert.equal(r.prospects[1].email, "", "an invalid email is dropped");
+  assert.equal(r.prospects[1].linkedin, "", "a company page is not an owner profile");
+  assert.equal(A.linkedinProfile("https://uk.linkedin.com/in/jo-smith"), "https://www.linkedin.com/in/jo-smith");
+  console.log("prospect channels ok");
+}

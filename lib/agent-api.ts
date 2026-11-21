@@ -179,7 +179,13 @@ export function parseReply(body: unknown): { reply: Reply } | { error: string } 
 // Same mapping as nicheOf in lib/lead-finder.ts (kept here so this file stays import-free for the node tests).
 type Niche = "Fence" | "Standby generators" | "";
 const nicheOf = (t: string): Niche => /fenc/i.test(t) ? "Fence" : /generat|generac|kohler|standby/i.test(t) ? "Standby generators" : "";
-export type NewProspect = { business: string; phone: string; website: string; location: string; owner: string; source: string; notes: string; niche: Niche };
+export type NewProspect = { business: string; phone: string; website: string; location: string; owner: string; source: string; notes: string; niche: Niche; email: string; linkedin: string };
+const EMAIL = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
+/** A personal LinkedIn profile (linkedin.com/in/...), normalised; anything else is dropped. */
+export function linkedinProfile(v: unknown): string {
+  const m = /^(?:https?:\/\/)?(?:[a-z]{2,3}\.)?linkedin\.com\/in\/([A-Za-z0-9\-_%.]{2,100})\/?(?:[?#].*)?$/i.exec(str(v, 300));
+  return m ? `https://www.linkedin.com/in/${m[1]}` : "";
+}
 /** The grade Lister wrote first in the notes ("Lead grade: A"), if any. */
 export const gradeOf = (notes: string): "A" | "B" | "C" | "" => (/Lead grade:\s*([ABC])\b/i.exec(notes)?.[1]?.toUpperCase() ?? "") as "A" | "B" | "C" | "";
 export const MAX_PROSPECTS_PER_CALL = 50;
@@ -214,7 +220,8 @@ export function parseProspects(body: unknown): { prospects: NewProspect[]; rejec
     seen.add(ten);
     const site = str(o.website, 300);
     out.push({ business, phone: `(${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}`, website: site && !/^https?:\/\//i.test(site) ? "https://" + site : site,
-      location: str(o.location, 120), owner: str(o.owner, 80), source: httpUrl(o.source), notes: withHiring(str(o.notes, 500), o.hiring), niche: nicheOf(str(o.niche, 60)) });
+      location: str(o.location, 120), owner: str(o.owner, 80), source: httpUrl(o.source), notes: withHiring(str(o.notes, 500), o.hiring), niche: nicheOf(str(o.niche, 60)),
+      email: (() => { const e = str(o.email, 200).toLowerCase(); return EMAIL.test(e) ? e : ""; })(), linkedin: linkedinProfile(o.linkedin) });
   }
   return { prospects: out, rejected };
 }
@@ -314,7 +321,7 @@ export function openApi(baseUrl: string) {
       "/api/agent/runs": { post: { summary: "Record one routine run (agent, task, status, summary, counts). Failed runs show on Sam's Today.", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["agent"], properties: { agent: { type: "string" }, task: { type: "string" }, status: { enum: ["succeeded", "failed"] }, summary: { type: "string" }, counts: { type: "object" } } } } } }, responses: ok("{ id }") } },
       "/api/agent/contact-info": { post: { summary: "Fill a prospect's empty email, owner name, Facebook or Instagram, with the source page", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["contactId", "source"], properties: { contactId: id, email: { type: "string" }, owner: { type: "string" }, facebook: { type: "string" }, instagram: { type: "string" }, source: { type: "string" } } } } } }, responses: ok("{ filled: [field names] }") } },
       "/api/agent/replies": { post: { summary: "Log a prospect's reply from a DM, group comment, LinkedIn or TikTok; emails Sam an alert", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["channel", "text"], properties: { contactId: id, channel: { enum: [...REPLY_CHANNELS] }, from: { type: "string" }, text: { type: "string" }, url: { type: "string" } } } } } }, responses: ok("{ logged, alerted }") } },
-      "/api/agent/prospects": { post: { summary: "Add up to 50 prospects to the call list (business and US phone required; duplicates and do-not-contact skipped)", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["prospects"], properties: { prospects: { type: "array", maxItems: 50, items: { type: "object", required: ["business", "phone"] } } } } } } }, responses: ok("{ added, duplicates, rejected }") } },
+      "/api/agent/prospects": { post: { summary: "Add up to 50 prospects to the call list (business and US phone required; optional email and owner LinkedIn profile; duplicates and do-not-contact skipped, but their missing email or LinkedIn is filled in)", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["prospects"], properties: { prospects: { type: "array", maxItems: 50, items: { type: "object", required: ["business", "phone"] } } } } } } }, responses: ok("{ added, upgraded, enriched, duplicates, rejected }") } },
       "/api/agent/content": {
         get: { summary: "Planned posts for a date", parameters: [date], responses: ok("{ date, posts: [{ id, platform, format, hook, body, slides, status, url }] }") },
         post: { summary: "Mark a planned post posted or skipped, or record its views, comments and leads", requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["id"], properties: { id, status: { enum: ["posted", "skipped"] }, url: { type: "string" }, views: { type: "integer" }, comments: { type: "integer" }, leads: { type: "integer" } } } } } }, responses: ok("{ ok }") },
@@ -412,10 +419,12 @@ export const TOOLS = [
   },
   {
     name: "add_prospects", title: "Add prospects to the call list",
-    description: "Add up to 50 businesses you found on public pages (Google Maps, their websites) to Sam's call list. Each needs a business name and a US phone number. Duplicates of anyone already in the CRM or on the do-not-contact list are skipped automatically, except a prospect whose notes start with \"Lead grade: A\": that upgrades the existing lead to A (the Google Maps finder adds leads as B). Only real businesses you saw a listing for; never guess a phone number.",
+    description: "Add up to 50 businesses you found on public pages (Google Maps, their websites) to Sam's call list. Each needs a business name and a US phone number. Duplicates of anyone already in the CRM or on the do-not-contact list are skipped automatically, except a prospect whose notes start with \"Lead grade: A\": that upgrades the existing lead to A (the Google Maps finder adds leads as B). For a duplicate, a missing email or LinkedIn profile is filled in from yours. Only real businesses you saw a listing for; never guess a phone number.",
     inputSchema: { type: "object", required: ["prospects"], properties: { prospects: { type: "array", maxItems: 50, items: { type: "object", required: ["business", "phone"], properties: {
       business: { type: "string" }, phone: { type: "string" }, website: { type: "string" }, location: { type: "string", description: "City, ST" },
       owner: { type: "string", description: "Owner's name if the listing shows it" }, source: { type: "string", description: "URL of the listing you found it on" },
+      email: { type: "string", description: "An email address the business publishes (its site, Facebook page or a listing). Never guess one." },
+      linkedin: { type: "string", description: "The owner's personal LinkedIn profile URL (linkedin.com/in/...), only when it clearly matches this owner and company." },
       notes: { type: "string", description: "Start with \"Lead grade: A\" (or B or C), then why, then rating and review count" },
       niche: { type: "string", enum: ["fence", "generators", "other"], description: "fence = residential fence installer; generators = standby generator dealer/installer; other = any other home-service trade" },
       hiring: { type: "object", description: "Set when the company has an open job post for a receptionist, CSR, call-taker, dispatcher or office manager who answers phones. Makes it grade A.", properties: {
