@@ -436,7 +436,8 @@ export async function loadInvoices(sql: Sql, c: Client): Promise<(Invoice & { th
 }
 /** The latest invoice on each won card. */
 export async function invoicesByThread(sql: Sql, c: Client): Promise<Record<string, Invoice>> {
-  const rows = await sql`SELECT DISTINCT ON (thread_id) * FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid AND status <> 'void' AND plan_id IS NULL ORDER BY thread_id, created_at DESC` as Record<string, unknown>[];
+  // The job's invoice, not the deposit taken from "Deposit in": that one counts as paid money, not as the job billed.
+  const rows = await sql`SELECT DISTINCT ON (thread_id) * FROM public.client_invoices WHERE project_id = ${c.projectId}::uuid AND status <> 'void' AND plan_id IS NULL AND note IS DISTINCT FROM ${DEPOSIT_NOTE} ORDER BY thread_id, created_at DESC` as Record<string, unknown>[];
   return Object.fromEntries(rows.map(r => [String(r.thread_id), asInvoice(r)]));
 }
 

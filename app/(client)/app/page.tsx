@@ -325,7 +325,7 @@ export default function CinderApp() {
     <nav className="rail" aria-label="Sections">
       <div className="brand-row">{d.setup?.brand_logo ? <img className="biz-logo" src={d.setup.brand_logo} alt={bizName || "Logo"} /> : <span className="biz-mark" style={brand ? { background: brand } : undefined} aria-hidden="true">{initials(bizName || "B").charAt(0)}</span>}</div>
       <button type="button" className="ws" title={bizName}>
-        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
+        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><svg className="ws-mark" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5c.6 2.3 3.9 3.6 3.9 7.4A3.9 3.9 0 0 1 8 12.8a3.9 3.9 0 0 1-3.9-3.9c0-1.6.8-2.7 1.6-3.5.1 1.2.8 2 1.6 2.2C7.2 5.6 7.4 3.4 8 1.5Z" fill="currentColor" /></svg><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
         {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
       </button>
       <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} />Search<kbd>⌘K</kbd></button>
