@@ -13,6 +13,7 @@ import { bookingRules, detectLang, ES, EN, existingBookingRules, freeSlots, isOp
 import { busyTimes, clientCalendar, createEvent, deleteEvent, moveEvent } from "@/lib/client-calendar";
 import { syncBookingToJobber } from "@/lib/jobber";
 import { sendAlert } from "@/lib/notify";
+import { allowEvent } from "@/lib/rate-limit";
 import { paymentLinkFor } from "@/lib/workspace";
 import { loadWorkspace } from "@/lib/workspace-data";
 import { pushFromAlert, pushToProject } from "@/lib/client-push";
@@ -77,6 +78,13 @@ export async function sendToCustomer(sql: Sql, c: Client, threadId: string, phon
   if (isDoNotText(c.setup, phone)) { await log(sql, c, threadId, "out", "system", "Not sent: this number is on your do-not-text list.", false); return false; }
   const sent = await sendSmsDetailed(e164(phone), c.setup.texting_number || "", body, true);
   await log(sql, c, threadId, "out", author, body, sent.ok, [], sent.sid);
+  // Speed watch: a text that fails to send emails Sam right away (once an hour per client, so an outage isn't 50 emails).
+  if (!sent.ok && await allowEvent("speed-alert", c.projectId, 1, 60)) {
+    await sendAlert({ subject: `${c.setup.display_name || "A client"}: a text to a customer failed to send`, lines: [
+      `A text from ${c.setup.display_name || "a client"}'s number (${c.setup.texting_number || "no number set"}) failed to send.`,
+      "Leads may not be getting answered. Check the number and its registration in Twilio, then send a test lead.",
+    ], link: { label: "Open Speed", path: "/crm/speed" } }).catch(() => false);
+  }
   return sent.ok;
 }
 

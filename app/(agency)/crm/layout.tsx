@@ -32,6 +32,7 @@ function pageTitle(pathname: string, view: string) {
   if (pathname.startsWith("/crm/workforce") || view === "workforce") return "AI team";
   if (pathname.startsWith("/crm/intelligence") || view === "intelligence") return "Signals";
   if (pathname.startsWith("/crm/strategy") || view === "strategy") return "Strategy & memory";
+  if (pathname.startsWith("/crm/speed")) return "Speed";
   if (pathname.startsWith("/crm/settings") || view === "settings") return "Settings";
   if (view === "schedule") return "My day";
   if (view === "needs-you") return "Today";
