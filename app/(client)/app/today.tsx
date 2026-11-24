@@ -100,7 +100,7 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
     quoted.add(a.thread_id);
     actions.push({ key: "q" + a.id, kind: "quote", title: `Quote ${a.customer_name}`, sub: `Estimate ${new Date(a.starts_at).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}${c?.line ? `, ${line(c)}` : ""}`, go: () => c ? go.record(c.id, { ask: "quoted" }) : go.tab("calendar"), cta: "Write quote", money: worth(c) });
   }
-  for (const c of cards) if (!quoted.has(c.id) && c.stage === "quoted" && c.quote && !c.quote.linked && c.quote.amount) actions.push({ key: "qs" + c.id, kind: "quote", title: `Send ${c.name} the quote`, sub: `${usd(c.quote.amount)}, not sent yet`, go: () => go.record(c.id), cta: "Send", money: c.quote.amount });
+  for (const c of cards) if (!quoted.has(c.id) && (c.stage === "quoted" || c.stage === "booked") && c.quote && !c.quote.linked && c.quote.amount) actions.push({ key: "qs" + c.id, kind: "quote", title: `Send ${c.name} the quote`, sub: `${usd(c.quote.amount)}, not sent yet`, go: () => go.record(c.id), cta: "Send", money: c.quote.amount });
   // Quotes they keep opening without saying yes: a nudge in the owner's words, written and waiting.
   for (const c of cards) if (c.stage === "quoted" && c.quote?.linked && c.quote.status !== "replied" && ((c.quote.views ?? 0) >= 2 || c.quote.steps >= (d.quoteSteps || 3))) {
     const draft = suggestReply(c.name, null, { stage: "quoted", owner: d.owner, quoteAmount: c.quote.amount });

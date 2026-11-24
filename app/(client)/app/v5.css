@@ -204,3 +204,33 @@ html .shell.v5 .tabs em { background: var(--acc); font-size: 11px; }
 .v5 .thread .compose .msg-send svg { color: var(--on-ink); }
 .v5 .thread .lgx p { box-shadow: none !important; }
 .v5 .thread .lgx p::before, .v5 .thread .lgx::before { display: none !important; }
+
+/* ---------- Jobs: summary, board with five fixed columns ---------- */
+.v5 .jobs-sum { margin: 24px 36px 0; padding: 16px 20px; }
+.jobs-sum .js-h { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.jobs-sum .js-leg { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+.v5 ~ .split, .shell.v5 .split { background: var(--bg); }
+.shell.v5 .jobs-dash { padding: 16px 36px 24px; background: transparent; }
+.shell.v5 .jobs-panel { background: transparent; border: 0; box-shadow: none; padding: 0; }
+.shell.v5 .jobs-tools .inwrap { border-radius: 999px; background: var(--panel); box-shadow: none; border: 1px solid var(--line2); }
+.shell.v5 .board { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; overflow-x: auto; padding: 0; }
+.shell.v5 .board .col-b { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 0; min-width: 200px; }
+.shell.v5 .board .col-b.over { border-color: var(--line2); background: var(--hover2); }
+.shell.v5 .board .col-b h2 { display: flex; align-items: baseline; gap: 8px; padding: 14px 14px 12px; margin: 0; border-bottom: 1px solid var(--line); font: 500 13px/1.3 var(--f5); }
+.shell.v5 .board .col-b h2 em { font: 400 11px/1 var(--m5); color: var(--t3); font-style: normal; color: var(--t3); }
+.shell.v5 .board .col-b h2 b { margin-left: auto; font: 500 13px/1.3 var(--f5); font-variant-numeric: tabular-nums; }
+.shell.v5 .board .lost-note { margin: 10px 14px 0; padding: 6px 8px; border: 1px dashed var(--line2); border-radius: 8px; font: 400 11.5px/1.4 var(--f5); color: var(--t3); }
+.shell.v5 .board .cards { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.shell.v5 .board .jcard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: none; padding: 10px 12px; transition: border-color var(--d5) var(--e5); }
+.shell.v5 .board .jcard:hover { border-color: var(--line2); } .shell.v5 .board .jcard.sel { border-color: var(--t1); }
+.shell.v5 .board .jcard .n { font: 500 13px/1.3 var(--f5); }
+.shell.v5 .board .jcard .kv-r { font: 400 12px/1.4 var(--f5); color: var(--t2); }
+.shell.v5 .board .jcard .kv-r svg { display: none; }
+.shell.v5 .board .jcard .kv-r b { font-weight: 500; color: var(--t1); font-variant-numeric: tabular-nums; }
+.shell.v5 .board .jcard .lost-r span { color: var(--bad-text); }
+.shell.v5 .board .none { margin: 6px 4px; font: 400 12px/1.4 var(--f5); color: var(--t3); }
+.shell.v5 .tbl-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.shell.v5 .tbl th { font: 500 10px/1 var(--m5); letter-spacing: .08em; text-transform: uppercase; color: var(--t3); height: 34px; background: transparent; }
+.shell.v5 .tbl td { height: 40px; border-bottom: 1px solid var(--line); }
+.shell.v5 .tbl tr:hover td { background: var(--hover2); }
+@media (max-width: 899px) { .v5 .jobs-sum { margin: 16px 16px 0; } .shell.v5 .jobs-dash { padding: 12px 16px 24px; } }
