@@ -191,14 +191,14 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
       <div>
         <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase()}</span>{d.project === "demo" && <span className="v5-ex">Example business, sample data</span>}</div>
         <h1 className="v5-h1">{view === "all" ? "Customers" : "Jobs"}</h1>
-        <p className="v5-sub">{view === "open" ? `${counts.open} open, ${usd(pipeline)} in play.` : view === "won" ? `${counts.won} won.` : `${counts.all} people.`}</p>
+        <p className="v5-sub">{view === "open" ? `${counts.open} open, ${usd(pipeline)} in play.` : view === "won" ? `${counts.won} won.` : (() => { const m = Date.now() - 30 * 86400000; const fresh = everyone.filter(c => Date.parse(c.stageAt ?? c.at) > m || Date.parse(c.at) > m); return `${counts.all} people. ${d.live.leads} leads in the last 30 days, ${d.live.booked} booked an estimate.`; })()}</p>
       </div>
       <div className="v5-acts">
         {!wide && <div className="v5-seg" role="tablist" aria-label="View">
           {([["open", "Open", counts.open], ["won", "Won", counts.won], ["all", "All", counts.all]] as const).map(([k, l, n]) =>
             <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => { setView(k); setSel(null); }}>{l} {n}</button>)}
         </div>}
-        {wide && <div className="v5-seg" role="tablist" aria-label="Layout">
+        {wide && view !== "all" && <div className="v5-seg" role="tablist" aria-label="Layout">
           <button type="button" role="tab" aria-selected={mode === "board"} className={mode === "board" ? "on" : ""} onClick={() => setMode("board")} title="Board (b)">Board</button>
           <button type="button" role="tab" aria-selected={mode === "table"} className={mode === "table" ? "on" : ""} onClick={() => setMode("table")} title="Table (t)">Table</button></div>}
         {wide && d.winback && d.winback.past > 0 && view === "all" && <button type="button" className="b5" onClick={onWinback}>Text past customers</button>}

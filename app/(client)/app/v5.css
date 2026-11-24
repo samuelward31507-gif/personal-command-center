@@ -304,3 +304,6 @@ html .shell.v5 .tabs em { background: var(--acc); font-size: 11px; }
 .shell.v5 .rep-goal { display: none; }
 .v5-sel { height: 34px !important; border-radius: 999px !important; }
 @media (max-width: 1180px) { .n5-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .n5-row { flex-direction: column; } .n5-funnel { width: auto; } }
+.shell.v5 .jobs-tools { position: relative; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 0 12px; margin: 0; background: var(--bg); height: auto; min-height: 0; }
+.shell.v5 .jobs-tools .sort { margin-left: auto; }
+.shell.v5 .docked .jobs-tools .search { flex: 1 1 100%; }
