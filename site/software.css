@@ -11,7 +11,7 @@
 .sw-app { display: grid; grid-template-columns: 188px minmax(0, 1fr); min-height: 520px; background: #fff; }
 .sw-rail { background: #fafafb; border-right: 1px solid var(--a-line); padding: 12px 8px; display: flex; flex-direction: column; gap: 1px; font-size: 13px; }
 .sw-ws { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 8px; font-weight: 600; }
-.sw-ws svg { width: 18px; height: 18px; flex: 0 0 18px; border-radius: 5px; background: #F2431D; }
+.sw-ws-init { display: grid; place-items: center; flex: 0 0 18px; width: 18px; height: 18px; border-radius: 5px; background: #1c1d1f; color: #fff; font: 600 10.5px/1 var(--font-ui, inherit); font-style: normal; }
 .sw-search { display: flex; align-items: center; gap: 8px; height: 28px; margin: 4px 0 10px; padding: 0 8px; border-radius: 7px; background: #fff; box-shadow: inset 0 0 0 1px #d3d8df; color: var(--a-2); }
 .sw-search kbd { margin-left: auto; font: 500 10px/1 ui-monospace, monospace; padding: 3px 5px; border-radius: 5px; background: var(--a-hover); color: var(--a-2); }
 .sw-ri { display: flex; align-items: center; gap: 9px; height: 28px; padding: 0 8px; border-radius: 7px; color: var(--a-2); font-weight: 500; }
@@ -153,9 +153,9 @@
 .sw-hero .hero-terms { margin-top: 18px; max-width: 40ch; line-height: 1.5; }
 
 .sw-appid { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
-.sw-appicon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 11px; background: #F2431D;
-  box-shadow: 0 8px 20px -10px rgba(242,67,29,.6), 0 1px 2px rgba(18,20,23,.12); }
-.sw-appicon svg { width: 48px; height: 48px; display: block; }
+/* The app icon: ink mark on a white tile (the one place the mark sits in a tile, per the logo kit). */
+.sw-appicon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 11px; background: #fff; box-shadow: inset 0 0 0 1px rgba(18,20,23,.1); }
+.sw-appicon svg { width: 34px; height: 34px; display: block; }
 .sw-appname { display: flex; flex-direction: column; line-height: 1.25; }
 .sw-appname b { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -.01em; }
 .sw-appname small { font-size: 13.5px; color: var(--text-3); }

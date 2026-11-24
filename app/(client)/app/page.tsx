@@ -5,7 +5,7 @@
 // ⌘K finds anyone. Installs to the home screen like an app (/app.webmanifest).
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./app.css";
-import { AppIcon, Wordmark } from "../brand";
+import { Wordmark } from "../brand";
 import { QuotesScreen, QuoteEditor } from "./quotes";
 import { Avatar, Icon, Spinner, fmtPhone, initials, typePhone, useToast } from "./parts";
 import type { Biz, Data, Go, Tab } from "./types";
@@ -325,7 +325,7 @@ export default function CinderApp() {
     <nav className="rail" aria-label="Sections">
       <div className="brand-row">{d.setup?.brand_logo ? <img className="biz-logo" src={d.setup.brand_logo} alt={bizName || "Logo"} /> : <span className="biz-mark" style={brand ? { background: brand } : undefined} aria-hidden="true">{initials(bizName || "B").charAt(0)}</span>}</div>
       <button type="button" className="ws" title={bizName}>
-        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><AppIcon className="ws-mark" /><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
+        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><span className="ws-mark" aria-hidden="true">{initials(bizName || "Y").charAt(0)}</span><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
         {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
       </button>
       <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} />Search<kbd>⌘K</kbd></button>
@@ -345,7 +345,7 @@ export default function CinderApp() {
           <button key={k} type="button" className={"ri" + (tab === "jobs" && jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); if (tab !== "jobs") goTab("jobs"); }}>{l}<em>{n}</em></button>)}
       </div>}
       <div className="rail-foot">
-        {d.setup?.show_powered === "yes" && <a className="powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by <Wordmark className="pw-mark" /></a>}
+        {d.setup?.show_powered === "yes" && <a className="powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by Cinder</a>}
         <button type="button" className={"ri" + (active("help") ? " on" : "")} onClick={() => goTab("help")}><Icon name="search" size={15} />Help</button>
         {d.role !== "crew" && d.role !== "office" && <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>}
         {crew ? <button type="button" className="me" onClick={() => void signOut()}><Avatar name="Crew" /><span className="t"><b>Crew</b><small>Sign out</small></span></button>

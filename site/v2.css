@@ -64,7 +64,11 @@ h3 { font-family: var(--head); font-size: 19px; font-weight: 600; line-height: 1
 .nav { position: fixed; inset: 0 0 auto; z-index: 50; border-bottom: 1px solid transparent; transition: background .3s, border-color .3s; }
 .nav.is-scrolled { background: rgba(246, 247, 249, .82); -webkit-backdrop-filter: saturate(180%) blur(18px); backdrop-filter: saturate(180%) blur(18px); border-bottom-color: var(--line); }
 .nav-in { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 66px; }
-.brand svg { height: 24px; width: auto; color: var(--text); }
+/* The Cinder mark (slash C, mark only). Small variant at these sizes; ink only; clear space = 25% of its height,
+   built into the link's padding so the tap target is at least 44x44. Desktop 40px tall, mobile 32px. */
+.brand { display: inline-flex; flex: none; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 10px; margin-left: -10px; color: #1c1d1f; border-radius: 10px; }
+.brand .brand-mark { display: block; height: 40px; width: auto; }
+.brand:focus-visible { outline: 2px solid #1c1d1f; outline-offset: 0; }
 .nav-links { display: flex; gap: 2px; }
 .nav-links a, .nav-try { color: var(--text-3); text-decoration: none; font-size: 14.5px; padding: 8px 12px; border-radius: 8px; transition: color .2s, background .2s; }
 .nav-links a:hover, .nav-try:hover { color: var(--text); background: rgba(18,20,23,.04); }
@@ -432,7 +436,8 @@ input[type=range]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 
 .foot nav { display: flex; gap: 20px; flex-wrap: wrap; }
 .foot nav a { text-decoration: none; color: var(--text-3); }
 .foot nav a:hover { color: var(--text); }
-.foot .brand svg { height: 20px; }
+.foot .brand .brand-mark { height: 32px; }
+.foot .brand { padding: 8px; margin-left: -8px; }
 .stickybook { position: fixed; left: 14px; right: 14px; bottom: 14px; z-index: 40; display: none; min-height: 52px; align-items: center; justify-content: center; border-radius: 999px; background: var(--text); color: #fff; font-weight: 600; text-decoration: none; transform: translateY(140%); transition: transform .45s var(--ease); box-shadow: 0 16px 40px -10px rgba(18,20,23,.45); }
 .stickybook.on { transform: none; }
 
@@ -982,3 +987,8 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 
 .cal-direct { margin: 12px 0 0; text-align: center; font-size: 14px; color: #6b6b6b; }
 .cal-direct a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 767px) {
+  .brand { padding: 8px; margin-left: -8px; }
+  .brand .brand-mark { height: 32px; }
+}

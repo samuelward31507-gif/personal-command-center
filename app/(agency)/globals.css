@@ -151,7 +151,6 @@ h1 { font-size: clamp(27px, 2.8vw, 35px); line-height: 1.2; letter-spacing: -1.5
 /* Cinder brand identity */
 .cinder-mark { display: inline-flex; align-items: center; justify-content: center; width: 25px; height: 25px; color: #f6f6f4; flex: 0 0 auto; }
 .cinder-mark svg { width: 25px; height: 25px; display: block; }
-.cinder-wordmark { font-size: 14px; font-weight: 750; letter-spacing: 2px; color: #ffffff; }
 
 /* Cinder visual refinement: restrained monochrome with one warm brand accent */
 :root { --accent: #575f6b; --background: #121417; --foreground: #ffffff; --muted: #828891; --line: #1b1d21; --panel: #121417; }
@@ -230,7 +229,6 @@ h1 { font-family:var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFon
 .schedule-summary strong { font-size:15px; }
 .text-action, .back-home-button, .date-chip { font-size:12px; }
 .local-note { font-size:11px; }
-.cinder-wordmark { font-family:var(--font-geist-sans), Inter, sans-serif; letter-spacing:1.5px; }
 
 
 /* Live business snapshot on the Cinder home dashboard */

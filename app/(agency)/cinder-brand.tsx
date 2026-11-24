@@ -1,25 +1,18 @@
-// The Cinder brand: "Cinder" in Instrument Sans with the tip of the C broken off (lib/cinder-logo.ts),
-// the C on its own as the small mark, and the ember on its own. The logo is always one colour.
-import { useId } from "react";
+// The Cinder brand: the slash-C mark (lib/cinder-mark.ts). Mark only, no wordmark, one colour:
+// ink on light, #f5f5f3 on dark. The small variant is for 48px and below; the master for 64px and up.
 import { usePublicBrand } from "./use-workspace";
-import { ICON_C_TRANSFORM, LOGO_BODY_CLIP, LOGO_BODY_CLIP_SMALL, LOGO_C, LOGO_REST, LOGO_REST_X, LOGO_TIP_CLIP, LOGO_TIP_CLIP_SMALL, LOGO_TIP_SHIFT, LOGO_TIP_SHIFT_SMALL, LOGO_VIEWBOX } from "@/lib/cinder-logo";
+import { MARK_INK, MARK_ON_DARK, MARK_PATH, MARK_SMALL_PATH, MARK_SMALL_VIEWBOX, MARK_VIEWBOX } from "@/lib/cinder-mark";
 
-export const CINDER_ON_NIGHT = "#ededed";
+export const CINDER_ON_NIGHT = MARK_ON_DARK;
 export const CINDER_EMBER_ON_NIGHT = "#F2431D";
-/** In-app ink for the wordmark letters. The ember always keeps its colour. */
+/** The mark takes the surrounding text colour (set it to ink on light surfaces). */
 export const CINDER_MONO = "currentColor";
 
-
-/** Small mark: the broken C on its own. `ring` colours it; `ember` is accepted for older callers and ignored (one colour). */
-export function CinderMark({ className, ring = CINDER_ON_NIGHT, title }: { className?: string; ring?: string; ember?: string; title?: string }) {
-  const id = "cm" + useId().replace(/:/g, "");
+/** The mark. `ring` is its colour; `ember` is accepted for older callers and ignored. `large` switches to the master (64px and up). */
+export function CinderMark({ className, ring = MARK_INK, title, large = false }: { className?: string; ring?: string; ember?: string; title?: string; large?: boolean }) {
   return (
-    <svg viewBox="0 0 100 100" className={className} role={title ? "img" : undefined} aria-hidden={title ? undefined : true} aria-label={title}>
-      <defs><clipPath id={id + "b"}><polygon points={LOGO_BODY_CLIP_SMALL} /></clipPath><clipPath id={id + "t"}><polygon points={LOGO_TIP_CLIP_SMALL} /></clipPath></defs>
-      <g transform={ICON_C_TRANSFORM} fill={ring}>
-        <path clipPath={`url(#${id}b)`} d={LOGO_C} />
-        <g transform={`translate(${LOGO_TIP_SHIFT_SMALL})`}><path clipPath={`url(#${id}t)`} d={LOGO_C} /></g>
-      </g>
+    <svg viewBox={large ? MARK_VIEWBOX : MARK_SMALL_VIEWBOX} className={className} role={title ? "img" : undefined} aria-hidden={title ? undefined : true} aria-label={title}>
+      <path d={large ? MARK_PATH : MARK_SMALL_PATH} fill={ring} />
     </svg>
   );
 }
@@ -33,20 +26,9 @@ export function CinderEmber({ className }: { className?: string }) {
   );
 }
 
-/** The wordmark, height-driven. `mono` takes the text colour; `ink` sets it outright; `small` widens the break for sizes under ~24px. */
-export function CinderLogo({ className, title = "Cinder", mono = false, ink, small = false }: { className?: string; title?: string; mono?: boolean; ink?: string; small?: boolean }) {
-  const id = "cw" + useId().replace(/:/g, "");
-  const fill = ink ?? (mono ? CINDER_MONO : CINDER_ON_NIGHT);
-  return (
-    <svg viewBox={LOGO_VIEWBOX} className={className} role="img" aria-label={title}>
-      <defs><clipPath id={id + "b"}><polygon points={small ? LOGO_BODY_CLIP_SMALL : LOGO_BODY_CLIP} /></clipPath><clipPath id={id + "t"}><polygon points={small ? LOGO_TIP_CLIP_SMALL : LOGO_TIP_CLIP} /></clipPath></defs>
-      <g fill={fill}>
-        <path clipPath={`url(#${id}b)`} d={LOGO_C} />
-        <g transform={`translate(${small ? LOGO_TIP_SHIFT_SMALL : LOGO_TIP_SHIFT})`}><path clipPath={`url(#${id}t)`} d={LOGO_C} /></g>
-        <path transform={`translate(${LOGO_REST_X} 0)`} d={LOGO_REST} />
-      </g>
-    </svg>
-  );
+/** Cinder's logo where a wordmark used to be: the mark on its own (there is no wordmark). Height-driven. */
+export function CinderLogo({ className, title = "Cinder", mono = false, ink, small = true }: { className?: string; title?: string; mono?: boolean; ink?: string; small?: boolean }) {
+  return <CinderMark className={className} title={title} ring={ink ?? (mono ? CINDER_MONO : MARK_INK)} large={!small} />;
 }
 
 /** A workspace's own wordmark: their logo image, or their name set in the display face. Cinder when not white-labelled. */

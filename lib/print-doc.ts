@@ -51,24 +51,17 @@ export function markdownToHtml(md: string): string {
 }
 
 
-// New logo (Nov 2026): "Cinder" with the tip of the C broken off. Kept in sync with lib/cinder-logo.ts; inlined so this file stays import-free.
-const P_LOGO_VIEWBOX = "-20 -790 3185 820";
-const P_LOGO_C = "M391 10Q317 10 254.5 -17.5Q192 -45 146 -94.5Q100 -144 75 -211.5Q50 -279 50 -360Q50 -441 75 -508.5Q100 -576 145.5 -625.5Q191 -675 253.5 -702.5Q316 -730 390 -730Q471 -730 535.5 -697Q600 -664 641.5 -604Q683 -544 693 -464H611Q599 -553 540.5 -604.5Q482 -656 391 -656Q314 -656 256 -618.5Q198 -581 166 -514.5Q134 -448 134 -360Q134 -272 166 -205.5Q198 -139 256 -101.5Q314 -64 390 -64Q483 -64 542.5 -116Q602 -168 613 -256H695Q685 -176 643.5 -116Q602 -56 537.5 -23Q473 10 391 10Z";
-const P_LOGO_REST = "M80 0V-510H160V0ZM74 -626V-720H166V-626Z M308 0V-510H383V-390H388V0ZM673 0V-334Q673 -392 644 -421Q615 -450 558 -450Q508 -450 469.5 -428Q431 -406 409.5 -367Q388 -328 388 -276L375 -397Q401 -454 454.5 -487Q508 -520 576 -520Q656 -520 704.5 -474.5Q753 -429 753 -355V0Z M1266 0V-119L1276 -116Q1257 -58 1206.5 -24Q1156 10 1086 10Q1017 10 965.5 -23Q914 -56 885.5 -115Q857 -174 857 -253Q857 -333 886 -393Q915 -453 967 -486Q1019 -519 1089 -519Q1161 -519 1210 -484Q1259 -449 1277 -385L1261 -383V-720H1341V0ZM1101 -60Q1178 -60 1221.5 -112.5Q1265 -165 1265 -256Q1265 -345 1221 -397Q1177 -449 1101 -449Q1025 -449 982 -397Q939 -345 939 -253Q939 -163 982 -111.5Q1025 -60 1101 -60Z M1698 10Q1625 10 1569 -24.5Q1513 -59 1481 -119Q1449 -179 1449 -257Q1449 -335 1480.5 -394.5Q1512 -454 1569 -487Q1626 -520 1700 -520Q1771 -520 1823.5 -489Q1876 -458 1904.5 -402Q1933 -346 1933 -270Q1933 -260 1932.5 -251Q1932 -242 1930 -231H1509V-298H1881L1855 -261Q1855 -353 1814.5 -402.5Q1774 -452 1700 -452Q1624 -452 1577.5 -399.5Q1531 -347 1531 -258Q1531 -167 1577.5 -112.5Q1624 -58 1702 -58Q1751 -58 1788 -79.5Q1825 -101 1842 -141H1918Q1893 -71 1834.5 -30.5Q1776 10 1698 10Z M2041 0V-510H2116V-380H2121V0ZM2121 -266 2108 -387Q2126 -452 2172 -486Q2218 -520 2278 -520Q2303 -520 2312 -516V-439Q2307 -441 2298 -441.5Q2289 -442 2276 -442Q2200 -442 2160.5 -396.5Q2121 -351 2121 -266Z";
-const P_LOGO_REST_X = 789.0;
-const P_LOGO_BODY_CLIP = "372.5,-360.0 3343.4,-777.0 372.5,2640.0 -2627.5,-360.0 372.0,-3360.0 1962.3,-2904.1";
-const P_LOGO_TIP_CLIP = "372.5,-360.0 2219.5,-2724.0 2970.6,-1860.0 3343.3,-777.5";
-const P_LOGO_TIP_SHIFT = "16 -16";
-const P_LOGO_BODY_CLIP_SMALL = "372.5,-360.0 3343.4,-777.0 372.5,2640.0 -2627.5,-360.0 372.0,-3360.0 1780.9,-3008.8";
-const P_LOGO_TIP_CLIP_SMALL = "372.5,-360.0 2300.9,-2658.1 2970.6,-1860.0 3343.3,-777.5";
-const P_LOGO_TIP_SHIFT_SMALL = "32 -32";
+// The Cinder logo (slash C): mark only. Kept in sync with lib/cinder-mark.ts; inlined so this file stays import-free.
+const P_MARK_VIEWBOX = "151.04 168.00 791.63 703.15";
+const P_MARK = "M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z";
+const P_MARK_SMALL_VIEWBOX = "220.36 168.00 671.10 656.00";
+const P_MARK_SMALL = "M298.10,607.86 C285.10,573.04 278.00,535.35 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L745.33,279.26 C736.00,284.06 726.77,288.89 717.65,293.74 C689.71,281.06 658.68,274.00 626.00,274.00 C503.39,274.00 404.00,373.39 404.00,496.00 C404.00,498.40 404.04,500.79 404.11,503.17 C362.90,538.59 327.51,573.72 298.10,607.86 Z M228.36,785.51 C257.66,652.57 490.20,426.12 864.18,252.00 L883.46,274.98 C598.63,516.59 384.45,713.28 247.64,808.49 Z M818.29,607.02 L848.08,624.22 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C517.94,816.00 444.74,786.60 388.62,738.00 C417.82,715.23 448.38,690.40 480.41,663.59 C519.38,697.48 570.30,718.00 626.00,718.00 C708.16,718.00 779.90,673.36 818.29,607.02 Z";
 
-/** The wordmark as inline SVG, one colour. ink = letter colour. */
-let n = 0;
-export function wordmark(ink = "#121417", height = 24): string {
-  const id = "cw" + (++n);
-  const small = height < 28;
-  return `<svg viewBox="${P_LOGO_VIEWBOX}" height="${height}" style="height:${height}px;width:auto;display:block" role="img" aria-label="Cinder Revenue Company"><defs><clipPath id="${id}b"><polygon points="${small ? P_LOGO_BODY_CLIP_SMALL : P_LOGO_BODY_CLIP}"/></clipPath><clipPath id="${id}t"><polygon points="${small ? P_LOGO_TIP_CLIP_SMALL : P_LOGO_TIP_CLIP}"/></clipPath></defs><g fill="${ink}"><path clip-path="url(#${id}b)" d="${P_LOGO_C}"/><g transform="translate(${small ? P_LOGO_TIP_SHIFT_SMALL : P_LOGO_TIP_SHIFT})"><path clip-path="url(#${id}t)" d="${P_LOGO_C}"/></g><path transform="translate(${P_LOGO_REST_X} 0)" d="${P_LOGO_REST}"/></g></svg>`;
+/** The mark as inline SVG, one colour (ink on light, #f5f5f3 on dark). The small variant at 48px and below. */
+export function wordmark(ink = "#1c1d1f", height = 24): string {
+  const small = height <= 48;
+  const fill = /^#?f{3}(f{3})?$/i.test(ink.replace("#", "")) ? "#f5f5f3" : ink;
+  return `<svg viewBox="${small ? P_MARK_SMALL_VIEWBOX : P_MARK_VIEWBOX}" height="${height}" style="height:${height}px;width:auto;display:block" role="img" aria-label="Cinder Revenue Company"><path d="${small ? P_MARK_SMALL : P_MARK}" fill="${fill}"/></svg>`;
 }
 
 /** A self-printing branded page: dark cover band with the wordmark, the document, and a footer. Same look as the PDFs Cinder sends. */
@@ -123,10 +116,10 @@ hr{border:0;border-top:1px solid #e3e6ea;margin:24px 0}
 .ft{margin:30px .8in 0;padding:14px 0 .45in;border-top:1px solid #e3e6ea;color:#9a9fa6;font-size:8.5pt;display:flex;justify-content:space-between;align-items:center}
 @media print{html{background:#fff}.sheet{margin:0;box-shadow:none;max-width:none}.band{margin:0}.content{padding:.35in .05in 0}.ft{margin:30px 0 0;padding-bottom:0}}
 </style></head><body><div class="sheet">
-<header class="band"><div class="band-top">${wordmark("#f3f4f6", 26)}<span>${esc(o.kind)}${o.docNo ? " · No. " + esc(o.docNo) : ""}</span></div>
+<header class="band"><div class="band-top">${wordmark("#f5f5f3", 26)}<span>${esc(o.kind)}${o.docNo ? " · No. " + esc(o.docNo) : ""}</span></div>
 <h1>${inline(title)}</h1>${sub ? `<p>${inline(sub)}</p>` : ""}</header>
 <main class="content">${body}</main>
-<footer class="ft">${wordmark("#9a9fa6", 13)}<span>${esc(o.business)} · cinderrevenue.com</span></footer>
+<footer class="ft">${wordmark("#1c1d1f", 16)}<span>${esc(o.business)} · cinderrevenue.com</span></footer>
 </div>${o.autoPrint ? `<script>document.fonts.ready.then(()=>setTimeout(()=>print(),200))</script>` : ""}</body></html>`;
 }
 
@@ -341,7 +334,7 @@ ${sp || sc ? `<p class="esign">Signed electronically. ${sp ? `${esc(sp.name)} fo
     ["Governing law", "State of Colorado (Section 13.1)"],
   ];
   const cover = `<section class="sheet cover">
-${wordmark("#121417", 30)}
+${wordmark("#1c1d1f", 30)}
 <div class="rule"></div>
 <p class="kind">Service Agreement</p>
 <h1>${legalInline(f.plan || "Service Agreement")}</h1>
@@ -438,7 +431,7 @@ export function proposalDoc(md: string, o: { no: string; business?: string; prep
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proposal ${esc(o.no)}${co.length ? " for " + esc(co.join(", ")) : ""}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@600&display=swap" rel="stylesheet">
 <style>:root{--run:"${esc(business)} · Proposal No. ${esc(o.no)}${co.length ? " · " + esc(co.join(", ")) : ""}"}${PROPOSAL_CSS}</style></head><body>
-<section class="sheet cover">${wordmark("#f3f4f6", 30)}<div class="rule"></div><p class="kind">Proposal</p><h1>${inline(title)}</h1>${plan ? `<p class="plan">Recommended plan: <b>${inline(plan)}</b></p>` : ""}
+<section class="sheet cover">${wordmark("#f5f5f3", 30)}<div class="rule"></div><p class="kind">Proposal</p><h1>${inline(title)}</h1>${plan ? `<p class="plan">Recommended plan: <b>${inline(plan)}</b></p>` : ""}
 <dl><div><dt>PREPARED FOR</dt><dd>${inline(person || "")}${co.length ? "<br>" + inline(co.join(", ")) : ""}</dd></div><div><dt>PREPARED BY</dt><dd>${esc(o.preparedBy || "Samuel Ward")}<br>${esc(business)}</dd></div><div><dt>DATE</dt><dd>${inline(date)}${valid ? `<br><span style="color:#8d9198">Valid until ${esc(valid)}</span>` : ""}</dd></div><div><dt>PROPOSAL NO.</dt><dd>${esc(o.no)}</dd></div></dl></section>
 <section class="sheet"><div class="body">${markdownToHtml(rest).replace("<h2>Your investment</h2>", '<h2 class="pb">Your investment</h2>')}</div>
 <div class="accept"><h3>Acceptance</h3><p>Accepting this proposal means you'd like to start. Your service agreement follows, and the agreement's terms govern the work.</p>
