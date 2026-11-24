@@ -34,7 +34,10 @@ html body .cx-side.is-collapsed { --cx-w: 56px; }
 html body .cx-top { height: 40px; margin-bottom: 8px; }
 html body .cx-ws { height: 40px; padding: 0 10px; font: 600 14px/20px var(--k-ff); letter-spacing: -.01em; }
 html body .cx-ws-mark, html body .cx-avatar { display: none; }
-html body .cx-side.is-collapsed .cx-ws-mark { display: grid; background: #1c1d1f; box-shadow: none; }
+html body .cx-side.is-collapsed .cx-ws-mark { display: grid; background: transparent; box-shadow: none; }
+html body .cx-side.is-collapsed .cx-ws-mark:not(.is-text):not(.is-img) svg { width: 20px; height: 20px; }
+html body .cx-side.is-collapsed .cx-ws-mark:not(.is-text):not(.is-img) svg * { fill: #1c1d1f !important; stroke: none; }
+html body .cx-side.is-collapsed .cx-ws-mark.is-text { background: #1c1d1f; }
 html body .cx-qa { margin-bottom: 16px; }
 html body .cx-qa-btn { height: 32px; padding: 0 10px; border-radius: 8px; background: #fff; box-shadow: inset 0 0 0 1px #d3d8df; color: #5d6674; font: 400 14px/20px var(--k-ff); }
 html body .cx-qa-btn:hover { box-shadow: inset 0 0 0 1px #b5bdc9; }

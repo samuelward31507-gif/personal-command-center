@@ -1,5 +1,6 @@
 import { gradeOf, parseProspects } from "@/lib/agent-api";
 import { agentGuard, agentJson } from "@/lib/agent-route";
+import { timeZoneFor } from "@/lib/local-time";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,10 +20,22 @@ export async function POST(request: Request) {
     const have = await g.sql`SELECT right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) AS p FROM public.contacts WHERE owner_id = ${g.owner} AND coalesce(phone, '') <> ''
       UNION SELECT right(phone_normalized, 10) FROM public.contact_suppressions WHERE owner_id = ${g.owner} AND coalesce(phone_normalized, '') <> ''` as { p: string }[];
     const known = new Set(have.map(r => r.p));
-    let added = 0, duplicates = 0, upgraded = 0;
+    let added = 0, duplicates = 0, upgraded = 0, enriched = 0;
     for (const p of parsed.prospects) {
       const ten = p.phone.replace(/\D/g, "");
       if (known.has(ten)) {
+        // Fill in what the lead is missing (never overwrite): an email or the owner's LinkedIn, so every channel can reach them.
+        if (p.email || p.linkedin) {
+          const e = await g.sql`UPDATE public.contacts SET
+              email = CASE WHEN coalesce(email, '') = '' AND ${p.email} <> '' THEN ${p.email} ELSE email END,
+              linkedin_url = CASE WHEN coalesce(linkedin_url, '') = '' AND ${p.linkedin} <> '' THEN ${p.linkedin} ELSE linkedin_url END,
+              updated_at = now()
+            WHERE owner_id = ${g.owner} AND right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) = ${ten}
+              AND ((coalesce(email, '') = '' AND ${p.email} <> '') OR (coalesce(linkedin_url, '') = '' AND ${p.linkedin} <> ''))
+              AND NOT EXISTS (SELECT 1 FROM public.contact_suppressions x WHERE x.owner_id = ${g.owner} AND right(x.phone_normalized, 10) = ${ten})
+            RETURNING id` as { id: string }[];
+          if (e.length) enriched++;
+        }
         if (gradeOf(p.notes) === "A") {
           const r = await g.sql`UPDATE public.contacts SET notes = 'Lead grade: A · ' || regexp_replace(coalesce(notes, ''), 'Lead grade: [ABC] · ?', '') || E'\n' || ${p.notes},
               niche = CASE WHEN coalesce(niche, '') = '' THEN ${p.niche} ELSE niche END, updated_at = now()
@@ -33,12 +46,13 @@ export async function POST(request: Request) {
         duplicates++; continue;
       }
       const [first, ...rest] = p.owner.split(/\s+/);
-      const notes = ["Found by Grok", p.notes, p.source ? `Listing: ${p.source}` : ""].filter(Boolean).join("\n");
-      await g.sql`INSERT INTO public.contacts (owner_id, first_name, last_name, company, email, phone, status, source, notes, website, location, niche)
-        VALUES (${g.owner}, ${first ?? ""}, ${rest.join(" ")}, ${p.business}, '', ${p.phone}, 'lead', 'Grok', ${notes}, ${p.website}, ${p.location}, ${p.niche})`;
+      // The grade goes first: the call list and Outbound read "Lead grade: A" at the start of the notes.
+      const notes = [p.notes, "Found by Grok", p.source ? `Listing: ${p.source}` : ""].filter(Boolean).join("\n");
+      await g.sql`INSERT INTO public.contacts (owner_id, first_name, last_name, company, role, email, phone, status, source, notes, website, location, niche, linkedin_url, time_zone)
+        VALUES (${g.owner}, ${first || p.business}, ${rest.join(" ")}, ${p.business}, ${p.owner ? "Owner" : ""}, ${p.email}, ${p.phone}, 'lead', 'Grok', ${notes}, ${p.website}, ${p.location}, ${p.niche}, ${p.linkedin}, ${timeZoneFor(p.location) ?? ""})`;
       known.add(ten); added++;
     }
-    return agentJson({ added, upgraded, duplicates, rejected: parsed.rejected }, 201);
+    return agentJson({ added, upgraded, enriched, duplicates, rejected: parsed.rejected }, 201);
   } catch (e) {
     console.error("Agent prospects failed", e instanceof Error ? e.message.slice(0, 200) : e);
     return agentJson({ error: "Could not add the prospects." }, 500);

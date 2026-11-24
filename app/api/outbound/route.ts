@@ -32,7 +32,7 @@ export async function GET() {
     const [counts, textQueue, liContacts, liLog, log] = await Promise.all([
       sql`SELECT
           (SELECT count(*) FROM public.contacts WHERE owner_id = ${o} AND created_at >= ${dayStart}::timestamptz)::int AS found,
-          (SELECT count(*) FROM public.contacts WHERE owner_id = ${o} AND created_at >= ${dayStart}::timestamptz AND notes ~* '^\\s*Lead grade:\\s*A\\b')::int AS grade_a,
+          (SELECT count(*) FROM public.contacts WHERE owner_id = ${o} AND created_at >= ${dayStart}::timestamptz AND notes ~* '^[[:space:]]*Lead grade:[[:space:]]*A([^[:alnum:]]|$)')::int AS grade_a,
           (SELECT count(*) FROM public.contact_activities WHERE owner_id = ${o} AND occurred_at >= ${dayStart}::timestamptz
             AND (action IN ('outbound_text','outbound_call') OR notes LIKE 'Email sent: %' OR notes LIKE 'LinkedIn: connect %' OR notes LIKE 'LinkedIn: message %'))::int AS touches,
           (SELECT count(*) FROM public.contact_activities WHERE owner_id = ${o} AND occurred_at >= ${dayStart}::timestamptz AND action = 'outbound_text')::int AS texts,
@@ -54,7 +54,7 @@ export async function GET() {
           AND coalesce(trim(c.phone), '') <> ''
           AND NOT EXISTS (SELECT 1 FROM public.contact_activities t WHERE t.owner_id = ${o} AND t.contact_id = c.id AND t.action = 'outbound_text' AND t.occurred_at >= lc.occurred_at)
           AND NOT (lc.outcome = 'voicemail' AND EXISTS (SELECT 1 FROM public.contact_activities t WHERE t.owner_id = ${o} AND t.contact_id = c.id AND t.action = 'outbound_text' AND t.template = 'T-VM'))
-          AND NOT EXISTS (SELECT 1 FROM public.contact_activities t WHERE t.owner_id = ${o} AND t.contact_id = c.id AND t.action = 'inbound_text' AND t.notes ~* '\\m(stop|stopall|unsubscribe)\\M')
+          AND NOT EXISTS (SELECT 1 FROM public.contact_activities t WHERE t.owner_id = ${o} AND t.contact_id = c.id AND t.action = 'inbound_text' AND t.notes ~* '(^|[^[:alpha:]])(stop|stopall|unsubscribe)([^[:alpha:]]|$)')
           AND NOT EXISTS (SELECT 1 FROM public.contact_suppressions x WHERE x.owner_id = ${o}
             AND (x.contact_id = c.id OR (x.phone_normalized <> '' AND x.phone_normalized = regexp_replace(c.phone, '[^0-9]', '', 'g'))))
         ORDER BY lc.occurred_at DESC LIMIT 40`,
@@ -62,7 +62,7 @@ export async function GET() {
         FROM public.contacts c
         WHERE c.owner_id = ${o} AND coalesce(trim(c.linkedin_url), '') <> '' AND NOT (coalesce(c.status, '') = ANY(${STOP}::text[]))
           AND NOT EXISTS (SELECT 1 FROM public.contact_suppressions x WHERE x.owner_id = ${o} AND x.contact_id = c.id)
-        ORDER BY (c.notes ~* '^\\s*Lead grade:\\s*A\\b') DESC, c.created_at DESC LIMIT 300`,
+        ORDER BY (c.notes ~* '^[[:space:]]*Lead grade:[[:space:]]*A([^[:alnum:]]|$)') DESC, c.created_at DESC LIMIT 300`,
       sql`SELECT contact_id, notes, occurred_at FROM public.contact_activities
         WHERE owner_id = ${o} AND notes LIKE 'LinkedIn: %' ORDER BY occurred_at DESC LIMIT 3000`,
       sql`SELECT a.occurred_at, a.action, a.outcome, a.notes, a.channel, c.company, c.first_name, c.last_name
@@ -74,6 +74,9 @@ export async function GET() {
     ]);
 
     const c = (counts[0] ?? {}) as Row;
+    const [probe] = await sql`SELECT count(*)::int AS calls, count(*) FILTER (WHERE outcome IN ('voicemail','send_info','interested'))::int AS textable
+      FROM public.contact_activities WHERE owner_id = ${o} AND action = 'outbound_call' AND occurred_at > now() - interval '3 days'` as { calls: number; textable: number }[];
+    console.log(`outbound-probe ${JSON.stringify({ owner: o.slice(0, 6), calls3d: probe?.calls ?? -1, textable: probe?.textable ?? -1, queue: textQueue.length })}`);
     const name = (r: Row) => [s(r.first_name), s(r.last_name)].filter(Boolean).join(" ").trim();
 
     // LinkedIn: where each person is, from the steps Sam logged.
