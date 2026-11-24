@@ -17,6 +17,8 @@ import { jobPrice } from "@/lib/service";
 import { jobProfit } from "@/lib/crm";
 import { TasksSection } from "./records";
 import { taskOrder, warrantyEndingSoon } from "@/lib/records";
+import { AreaChart, StackBar, Sparkline, C } from "./v5-charts";
+import "./v5.css";
 
 type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "review" | "sam" | "remind";
 type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string; primary?: boolean; draft?: string; money: number; urgent?: boolean };
@@ -68,7 +70,7 @@ export function GoalBox({ d, cards, api, project, toast, reload }: { d: Data; ca
   </section>;
 }
 
-export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload }: { d: Data; biz: Biz; go: Go; wide: boolean; api: Api; project: string; ask?: { q: string; n: number }; toast?: (t: string, bad?: boolean) => void; reload?: () => Promise<void> }) {
+export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload, demo = false }: { d: Data; biz: Biz; go: Go; wide: boolean; api: Api; project: string; ask?: { q: string; n: number }; toast?: (t: string, bad?: boolean) => void; reload?: () => Promise<void>; demo?: boolean }) {
   const today = todayIso(), L = d.live, cards = d.board ?? [], invoices = d.invoices ?? [];
   const byThread = new Map(cards.map(c => [c.id, c]));
   const asks = L.conversations.filter(c => c.status === "paused");
@@ -256,73 +258,118 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
     const next = !q.linked ? "Send the quote" : q.status === "replied" ? "Read their answer" : views >= 2 ? "Call today" : q.nextChase ? `Auto follow-up ${dateLabel(q.nextChase)}` : "Waiting on them";
     return { c, st, next, rank: st[1] ? 0 : 1, v: qv(c) }; }).sort((a, b) => a.rank - b.rank || b.v - a.v);
 
-  return <div className="t8">
-    <header className="t8-head">
-      <div className="t8-title">
-        <p className="t8-date">{dateLine}</p>
-        <h1>Today</h1>
-        <p className="t8-sub">{actions.length ? <><span className="t8-hot">{actions.length} {actions.length === 1 ? "thing" : "things"}</span> {actions.length === 1 ? "needs" : "need"} you.{atStake > 0 && <> <b>{usd(atStake)}</b> on {actions.length === 1 ? "it" : "them"}.</>}</> : "Nothing needs you. Cinder is handling it."}</p>
-        {lv && <p className="t8-live" aria-live="polite"><i aria-hidden="true" /><span className="g">Live</span><span key={lv.id + li} className="t8-live-t"><b>{lv.name}</b> got a text back in {secs(lv.replySec ?? null)} <em>· {ago(lv.created!)}</em></span></p>}
+  // ---------- The Nov 24 design (client-01-today) ----------
+  const DAY = 86400000, noon = (s: string) => Date.parse(s + "T12:00:00");
+  const days30 = Array.from({ length: 30 }, (_, k) => iso(new Date(noon(today) - (29 - k) * DAY)));
+  const from30 = days30[0], from60 = iso(new Date(noon(from30) - 30 * DAY));
+  const wonDay = (c: (typeof cards)[number]) => (c.stageAt ? iso(new Date(c.stageAt)) : "");
+  const wonAll = cards.filter(c => c.stage === "won" && !c.pastCustomer && c.stageAt);
+  const wonIn = wonAll.filter(c => wonDay(c) >= from30 && wonDay(c) <= today);
+  const wonPrev = wonAll.filter(c => wonDay(c) >= from60 && wonDay(c) < from30).reduce((a, c) => a + (jobPrice(c) ?? 0), 0);
+  const wonRun = days30.map(day => wonIn.filter(c => wonDay(c) <= day).reduce((a, c) => a + (jobPrice(c) ?? 0), 0));
+  const pays = (d.payments ?? []).filter(p => p.paid_on >= from30 && p.paid_on <= today);
+  const colRun = days30.map(day => pays.filter(p => p.paid_on <= day).reduce((a, p) => a + p.amount, 0));
+  const wonV = wonRun[29] ?? 0, wonN = wonIn.length, collected = colRun[29] ?? 0;
+  const delta = wonPrev > 0 ? Math.round(((wonV - wonPrev) / wonPrev) * 100) : null;
+  const lastWonIdx = (() => { for (let i = 29; i > 0; i--) if (wonRun[i] !== wonRun[i - 1]) return i; return 29; })();
+  const lateSum = late.reduce((a, i) => a + i.total - (i.paid_amount ?? 0), 0), notDue = Math.max(0, owed - lateSum);
+  const shortDay = (s: string) => new Date(noon(s)).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const longDay = (s: string) => new Date(noon(s)).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const whoOf = (a: Action) => a.title.replace(/^(Reply to|Quote|Send|Invoice|Schedule|Check in with) /, "").split(/,| keeps| went| answered| says| emailed|'s|: /)[0].trim();
+  const ini = (s: string) => { const p = s.replace(/[^A-Za-z ]/g, "").split(" ").filter(Boolean); return ((p[0]?.[0] ?? "") + (p[1]?.[0] ?? "")).toUpperCase() || "•"; };
+  const lead = actions[0];
+  const upcoming = visits.filter(v => v.at > Date.now() - 3600000).slice(0, 5);
+  const holiday = (() => { // US holidays in the next 8 days, so a closed day shows on the calendar card
+    const y = Number(today.slice(0, 4)), nov1 = new Date(y, 10, 1), tg = new Date(y, 10, 1 + ((4 - nov1.getDay() + 7) % 7) + 21);
+    const list: [string, string][] = [[iso(tg), "Thanksgiving"], [`${y}-12-25`, "Christmas"], [`${y}-12-31`, "New Year's Eve"], [`${y}-07-04`, "Independence Day"]];
+    return list.find(([day]) => day >= today && noon(day) - noon(today) <= 8 * DAY) ?? null; })();
+  const greeting = `Good ${part}${ownerFirst ? ", " + ownerFirst : ""}`;
+  const subline = actions.length ? `${actions.length} ${actions.length === 1 ? "thing needs" : "things need"} you. Everything else is handled.` : "Nothing needs you. Everything else is handled.";
+  const eyebrowDate = new Date(noon(today)).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase();
+
+  return <div className="v5 v5-today">
+    <header className="v5-top">
+      <div>
+        <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{eyebrowDate}</span>{demo && <span className="v5-ex">Example business, sample data</span>}</div>
+        <h1 className="v5-h1">{greeting}</h1>
+        <p className="v5-sub">{subline}</p>
       </div>
-      <div className="t8-acts"><button type="button" className="btn" onClick={() => go.tab("calendar")}>Calendar</button><button type="button" className="btn ink" onClick={go.addLead}>New lead</button></div>
+      <div className="v5-acts">
+        {lead ? <><button type="button" className="b5" onClick={go.addLead}>New lead</button><button type="button" className="b5 pri" onClick={lead.go}>Start with {first(whoOf(lead)) || "the first one"}</button></>
+          : <button type="button" className="b5 pri" onClick={go.addLead}>New lead</button>}
+      </div>
     </header>
-    {ask && ask.q && <section className="t7-ask"><AskBox api={api} project={project} ask={ask} d={d} go={go} /></section>}
+    {ask && ask.q && <section className="t7-ask" style={{ margin: "16px 36px 0" }}><AskBox api={api} project={project} ask={ask} d={d} go={go} /></section>}
 
-    <section className="t8-figs" aria-label="Last 30 days">
-      <button type="button" className="t8-fig" onClick={() => go.tab("numbers")}>
-        <span className="k">Sold, last 30 days</span>
-        <span className="v">{usd(soldN)}{sold > soldBefore && soldBefore > 0 ? <small className="up">+{usd(sold - soldBefore)}</small> : null}</span>
-        {series.length > 1 && <Spark values={series} />}
-        <span className="c">{jobs} {jobs === 1 ? "job" : "jobs"}{jobs ? <> · <b>{usd(Math.round(sold / jobs))}</b> average job</> : null}</span>
-      </button>
-      <button type="button" className="t8-fig" onClick={() => go.tab("inbox")}>
-        <span className="k">Speed to lead</span>
-        <span className="v">{sec != null ? secs(secN) : "–"}{leads30 > 0 && answered30 >= leads30 ? <small className="up">every lead</small> : null}</span>
-        <span className="c t8-gap"><b>{answered30} of {leads30}</b> leads answered</span>
-        <span className="c">Most shops take <b>40+ minutes</b></span>
-      </button>
-      <button type="button" className="t8-fig" onClick={() => go.tab("numbers")}>
-        <span className="k">Close rate</span>
-        <span className="v">{closeRate != null ? `${closeN}%` : "–"}{closeRate != null && closeBefore != null && closeRate > closeBefore ? <small className="up">+{closeRate - closeBefore} pts</small> : null}</span>
-        <span className="t8-bar" aria-hidden="true"><i style={{ width: `${Math.min(100, closeRate ?? 0)}%` }} /></span>
-        <span className="c">{now ? <><b>{now.won}</b> won of <b>{now.quoted}</b> quotes · typical is 15–30%</> : "Won quotes out of quotes sent"}</span>
-      </button>
-      <button type="button" className="t8-fig" onClick={() => go.tab("quotes")}>
-        <span className="k">Quotes out</span>
-        <span className="v">{usd(quotesN)}<small>{qCards.length} open</small></span>
-        <span className="t8-split" aria-hidden="true">{notSent.length > 0 && <i className="ns" style={{ width: `${share(notSent)}%` }} />}{viewed.length > 0 && <i className="vw" style={{ width: `${share(viewed)}%` }} />}{sentOnly.length > 0 && <i className="st" style={{ width: `${share(sentOnly)}%` }} />}</span>
-        <span className="c t8-legend">{notSent.length > 0 && <span><i className="ns" />Not sent</span>}<span><i className="vw" />Viewed</span><span><i className="st" />Sent</span></span>
-      </button>
-    </section>
+    <div className="v5-body grid-mobile">
+      <div className="row1">
+        <section className="v5-card hero-card" aria-label="Won in the last 30 days">
+          <div className="hero-top">
+            <div>
+              <div className="v5-lab">Won · last 30 days</div>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
+                <span className="v5-hero">{usd(wonV)}</span>
+                {delta != null && <span className={"v5-delta " + (delta > 0 ? "up" : "flat")}>{delta > 0 ? "+" : ""}{delta}%</span>}
+                {delta != null && <span className="v5-dim" style={{ fontSize: 12 }}>vs prior 30 days</span>}
+              </div>
+              <p className="v5-muted" style={{ marginTop: 8 }}>{wonN} {wonN === 1 ? "job" : "jobs"}{wonN ? `, ${usd(Math.round(wonV / wonN))} average` : ""} · {usd(collected)} collected{qCards.length ? ` · ${usd(qTotal)} waiting on ${qCards.length} ${qCards.length === 1 ? "quote" : "quotes"}` : ""}</p>
+            </div>
+            <div className="hero-legend" style={{ display: "flex", gap: 14, marginTop: 4 }}><span className="v5-leg"><i style={{ background: C.accent }} />Won</span><span className="v5-leg"><i style={{ background: C.grey }} />Collected</span></div>
+          </div>
+          <div className="m-spark" style={{ display: "none" }}><Sparkline values={wonRun} width={320} height={40} /></div>
+          <div style={{ marginTop: 12 }}>
+            <AreaChart labels={days30.map(shortDay)} initial={wonN ? lastWonIdx : undefined}
+              series={[{ key: "won", label: "Won", values: wonRun, color: C.accent, fill: true }, { key: "col", label: "Collected", values: colRun, color: C.grey }]}
+              note={i => { const c = wonIn.find(x => wonDay(x) === days30[i]); return c ? { text: `${c.name} approved`, value: usd(jobPrice(c) ?? 0) } : null; }}
+              summary={`Won ${usd(wonV)} and collected ${usd(collected)} in the last 30 days.`} />
+          </div>
+        </section>
+        <div className="side">
+          <button type="button" className="v5-card" style={{ textAlign: "left", cursor: "pointer" }} onClick={() => go.tab("invoices")}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span className="v5-lab">Owed to you</span>{lateSum > 0 && <span className="v5-st bad"><i />{usd(lateSum)} past due</span>}</div>
+            <div className="v5-kv" style={{ margin: "10px 0 12px" }}>{usd(owed)}</div>
+            <StackBar label={`${usd(notDue)} not yet due, ${usd(lateSum)} late`} parts={[{ key: "due", value: notDue, color: C.grey }, { key: "late", value: lateSum, color: C.accent }]} />
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, gap: 8, flexWrap: "wrap" }}><span className="v5-leg"><i className="sq" style={{ background: C.grey }} />Not yet due {usd(notDue)}</span><span className="v5-leg"><i className="sq" style={{ background: C.accent }} />Late {usd(lateSum)}</span></div>
+          </button>
+          <section className="v5-card" aria-label="First reply">
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span className="v5-lab">First reply</span><span className="v5-dim" style={{ fontSize: 12 }}>median, nights too</span></div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, margin: "10px 0 12px", flexWrap: "wrap" }}><span className="v5-kv">{secs(sec)}</span><span className="v5-muted">{answered30} of {leads30} leads answered</span></div>
+            <StackBar label={`${answered30} of ${leads30} leads answered`} parts={[{ key: "a", value: answered30, color: C.accent }, { key: "m", value: Math.max(0, leads30 - answered30), color: C.grey }]} />
+          </section>
+        </div>
+      </div>
 
-    {actions.length > 0 && <section className="t8-sec">
-      <header><h2>Your move <span>{actions.length}</span></h2><span className="t8-hint wide-only"><kbd>J</kbd><kbd>K</kbd> to move <kbd>↵</kbd> open</span></header>
-      <ul className="t8-rows">{rows.map((a, i) => { const st = STATUS_OF(a);
-        return <li key={a.key}><button type="button" className={"t8-row" + (i === sel ? " sel" : "") + (st.isNew ? " new" : "")} onClick={a.go} onMouseEnter={() => sel >= 0 && setSel(i)}>
-          <span className="t"><b>{a.title}</b><small>{a.sub}</small></span>
-          <em className={"st " + st.tone}>{st.text}</em>
-          <span className="amt">{a.money ? usd(a.money) : ""}</span>
-          <span className="go">{i === sel && <><kbd>↵</kbd><kbd>{a.cta.charAt(0).toUpperCase()}</kbd></>}<b>{a.cta} →</b></span>
-        </button></li>; })}</ul>
-      {actions.length > 6 && <button type="button" className="t8-more" onClick={() => setAll(x => !x)}>{all ? "Show fewer" : `Show all ${actions.length}`}</button>}
-    </section>}
+      <div className="row2">
+        <section className="v5-card needs" aria-label="Needs you">
+          <div className="v5-ch"><span className="v5-ct">Needs you<small>{actions.length} {actions.length === 1 ? "thing" : "things"}{atStake ? ` · ${usd(atStake)} riding on them` : ""} · most urgent first</small></span>
+            {actions.length > 6 && <button type="button" className="b5 ghost sm" onClick={() => setAll(x => !x)}>{all ? "Show fewer" : `Show all ${actions.length}`}</button>}</div>
+          {actions.length === 0 ? <div className="v5-empty">Nothing needs you right now. New leads get answered for you and show up here when it&apos;s your turn.</div>
+            : rows.map((a, i) => { const st = STATUS_OF(a), who = whoOf(a);
+              return <div key={a.key} role="button" tabIndex={0} className={"v5-row" + (i === sel ? " sel" : "")} onClick={a.go} onKeyDown={e => { if (e.key === "Enter") a.go(); }} onMouseEnter={() => sel >= 0 && setSel(i)}>
+                <span className="v5-av" aria-hidden="true">{ini(who)}</span>
+                <span className="who"><b>{who || a.title}</b><small>{a.sub}{st.text ? ` · ${st.text}` : ""}</small></span>
+                <span className="amt">{a.money ? usd(a.money) : "–"}</span>
+                <span className="act"><button type="button" className="b5 sm" onClick={e => { e.stopPropagation(); a.go(); }}>{a.cta}</button></span>
+              </div>; })}
+        </section>
+        <section className="v5-card cal" aria-label="Next on the calendar">
+          <div className="v5-ch"><span className="v5-ct">Next on the calendar</span><button type="button" className="b5 ghost sm" onClick={() => go.tab("calendar")}>Calendar</button></div>
+          {upcoming.length === 0 && !holiday ? <div className="v5-empty">Nothing booked yet. Estimates land here the moment a lead books one.</div> : <>
+            {upcoming.map(v => <button type="button" key={v.key} className="v5-cal-row" style={{ width: "100%", border: 0, borderBottom: "1px solid var(--line)", background: "transparent", textAlign: "left", cursor: "pointer" }} onClick={v.go}>
+              <span className="d">{new Date(v.at).toLocaleDateString("en-US", { weekday: "short" })} {new Date(v.at).getDate()}</span>
+              <span style={{ minWidth: 0 }}><b>{v.who}</b><small>{v.what === "estimate" ? "Estimate" : "Install"}{v.addr ? ` · ${v.addr}` : ""}</small></span>
+              <span className="t">{v.time}</span></button>)}
+            {holiday && <div className="v5-cal-row closed"><span className="d">{longDay(holiday[0]).split(",")[0]}</span><span>{longDay(holiday[0])} · {holiday[1]}, closed</span><span /></div>}
+          </>}
+        </section>
+      </div>
 
-    {qRows.length > 0 && <section className="t8-sec">
-      <header><h2>Quotes <span>{qRows.length} open · {usd(qTotal)}</span></h2><span className="t8-hint">Sorted by next step</span></header>
-      <div className="t8-tablewrap"><table className="t8-table"><thead><tr><th>Customer</th><th>Status</th><th>Next</th><th className="num">Value</th></tr></thead>
-        <tbody>{qRows.slice(0, 8).map(({ c, st, next, v }) => <tr key={c.id} tabIndex={0} onClick={() => go.quote(c.id)} onKeyDown={e => { if (e.key === "Enter") go.quote(c.id); }}>
-          <td><span className="who"><span className="ini" aria-hidden="true">{(c.name || "?").charAt(0).toUpperCase()}</span>{c.name || fmtPhone(c.phone)}</span></td>
-          <td className={"st " + st[1]}>{st[0]}</td><td>{next}</td><td className="num">{v ? usd(v) : "–"}</td></tr>)}</tbody></table></div>
-    </section>}
-
-    <section className="t8-next">
-      <button type="button" className="t7-line" onClick={() => go.tab("calendar")}><span className="t7-k">Next up</span>
-        <span className="t7-v">{upNext ? `${upNext.day === today ? "" : dateLabel(upNext.day) + ", "}${upNext.time} · ${upNext.what === "estimate" ? "Estimate" : "Install"} · ${upNext.who}${upNext.addr ? " · " + upNext.addr : ""}` : "Nothing booked yet"}</span><span className="t7-arr" aria-hidden="true">→</span></button>
-      {isOwner && <button type="button" className="t7-line" aria-expanded={showTasks} onClick={() => setShowTasks(x => !x)}><span className="t7-k">To-dos</span>
-        <span className="t7-v">{openTasks ? `${openTasks} open` : "None open"}</span><span className="t7-arr" aria-hidden="true">{showTasks ? "↑" : "→"}</span></button>}
-      {isOwner && showTasks && <div className="t7-tasks"><TasksSection ctx={{ d, project, api, toast: toast ?? (() => {}), reload: reload ?? (async () => {}) }} go={go} /></div>}
-      {isOwner && nextSetup && <button type="button" className="t7-line" onClick={() => go.tab("system")}><span className="t7-k">Setup</span><span className="t7-v">{setupLeft} {setupLeft === 1 ? "step" : "steps"} left · {nextSetup.title}</span><span className="t7-arr" aria-hidden="true">→</span></button>}
-    </section>
+      {isOwner && (nextSetup || openTasks > 0) && <div className="t8-next" style={{ marginTop: 16 }}>
+        {openTasks > 0 && <button type="button" className="t7-line" aria-expanded={showTasks} onClick={() => setShowTasks(x => !x)}><span className="t7-k">To-dos</span><span className="t7-v">{openTasks} open</span><span className="t7-arr" aria-hidden="true">{showTasks ? "↑" : "→"}</span></button>}
+        {showTasks && <div className="t7-tasks"><TasksSection ctx={{ d, project, api, toast: toast ?? (() => {}), reload: reload ?? (async () => {}) }} go={go} /></div>}
+        {nextSetup && <button type="button" className="t7-line" onClick={() => go.tab("system")}><span className="t7-k">Setup</span><span className="t7-v">{setupLeft} {setupLeft === 1 ? "step" : "steps"} left · {nextSetup.title}</span><span className="t7-arr" aria-hidden="true">→</span></button>}
+      </div>}
+    </div>
   </div>;
 }
 

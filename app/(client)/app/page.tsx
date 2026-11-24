@@ -5,6 +5,7 @@
 // ⌘K finds anyone. Installs to the home screen like an app (/app.webmanifest).
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./app.css";
+import "./v5.css";
 import { Wordmark } from "../brand";
 import { QuotesScreen, QuoteEditor } from "./quotes";
 import { Avatar, Icon, Spinner, fmtPhone, initials, typePhone, useToast } from "./parts";
@@ -301,7 +302,7 @@ export default function CinderApp() {
   else if (open?.kind === "quote") page = <QuoteEditor key={open.id} id={open.id} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => setOpen(null)} />;
   else if (open?.kind === "record") page = <RecordPage key={open.id + (open.draft ? ":d" : "")} id={open.id} ask={open.ask} view={open.view} draft={open.draft} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
   else if (tab === "today" && crew) page = <MyDay d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} />;
-  else if (tab === "today") page = <TodayScreen reload={reload} d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} toast={toast} />;
+  else if (tab === "today") page = <TodayScreen reload={reload} d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} toast={toast} demo={demo} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
   else if (tab === "switch") page = <SwitchScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
@@ -321,35 +322,32 @@ export default function CinderApp() {
   const brand = d.setup?.brand_color && /^#[0-9a-f]{6}$/i.test(d.setup.brand_color) ? d.setup.brand_color : "";
   const tint = (a: number) => brand ? `rgba(${parseInt(brand.slice(1, 3), 16)}, ${parseInt(brand.slice(3, 5), 16)}, ${parseInt(brand.slice(5, 7), 16)}, ${a})` : "";
   const shellStyle = brand ? { "--ember": brand, "--ember-soft": tint(0.12), "--ember-bg": tint(0.1) } as React.CSSProperties : undefined;
-  return <CatalogContext.Provider value={catalog}><div className="shell" style={shellStyle}>
+  return <CatalogContext.Provider value={catalog}><div className="shell v5" style={shellStyle}>
     <nav className="rail" aria-label="Sections">
       <div className="brand-row">{d.setup?.brand_logo ? <img className="biz-logo" src={d.setup.brand_logo} alt={bizName || "Logo"} /> : <span className="biz-mark" style={brand ? { background: brand } : undefined} aria-hidden="true">{initials(bizName || "B").charAt(0)}</span>}</div>
       <button type="button" className="ws" title={bizName}>
-        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><span className="ws-mark" aria-hidden="true">{initials(bizName || "Y").charAt(0)}</span><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
+        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><span className="ws-mark" aria-hidden="true">{initials(bizName || "Y").charAt(0)}</span><span style={{ minWidth: 0, flex: 1 }}><b>{bizName || "Your business"}</b>{demo && <small>Example</small>}</span>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
         {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
       </button>
-      <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} />Search<kbd>⌘K</kbd></button>
-      <div className="rail-grp">
-        {top.map(s => <button key={s.k} type="button" className={"ri" + (active(s.k) ? " on" : "")} aria-current={active(s.k) ? "page" : undefined} onClick={() => goTab(s.k)}>
-          <Icon name={s.ic} size={16} />{s.k === "today" ? "Today" : s.l}{counts[s.k] ? <em className={s.k === "inbox" ? "hot" : ""}>{counts[s.k]}</em> : null}</button>)}
-      </div>
-      <div className="rail-lbl">Records</div>
-      <div className="rail-grp">
-        {records.map(r => <button key={r.k} type="button" className={"ri" + (isOn(r.k) ? " on" : "")} aria-current={isOn(r.k) ? "page" : undefined} onClick={() => goTab(r.k)}>
-          <span className={"obj " + r.obj}><Icon name={r.ic} size={12} /></span>{r.l}{counts[r.k] ? <em>{counts[r.k]}</em> : null}</button>)}
-        {!crew && <button type="button" className={"ri" + (active("numbers") ? " on" : "")} onClick={() => goTab("numbers")}><span className="obj reports"><Icon name="bars" size={12} /></span>Reports</button>}
-      </div>
-      {tab === "jobs" && !open && <div className="rail-grp views">
-        <div className="rail-lbl">Views</div>
-        {([["open", "Open", jobCounts.open], ["won", "Won", jobCounts.won], ["all", "All", jobCounts.all]] as const).map(([k, l, n]) =>
-          <button key={k} type="button" className={"ri" + (tab === "jobs" && jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); if (tab !== "jobs") goTab("jobs"); }}>{l}<em>{n}</em></button>)}
-      </div>}
+      <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} /><span>Search or jump to</span><kbd>⌘K</kbd></button>
+      {(crew ? [{ g: "Run the day", items: [{ k: "inbox" as Tab, l: "Inbox" }, { k: "jobs" as Tab, l: "Jobs" }, { k: "calendar" as Tab, l: "Calendar" }] }] : [
+        { g: "Run the day", items: [{ k: "today" as Tab, l: "Today" }, { k: "inbox" as Tab, l: "Inbox" }, { k: "calendar" as Tab, l: "Calendar" }] },
+        { g: "Sell", items: [{ k: "jobs" as Tab, l: "Jobs" }, { k: "quotes" as Tab, l: "Quotes" }] },
+        { g: "Get paid", items: [{ k: "invoices" as Tab, l: "Money" }, { k: "plans" as Tab, l: "Plans" }] },
+        { g: "People", items: [{ k: "customers" as Tab, l: "Customers" }] },
+        { g: "Business", items: [{ k: "numbers" as Tab, l: "Numbers" }, ...(d.role !== "office" ? [{ k: "system" as Tab, l: "Settings" }] : [])] },
+      ]).map(grp => <div key={grp.g}>
+        <div className="rail-lbl">{grp.g}</div>
+        <div className="rail-grp">{grp.items.map(s => { const on = active(s.k) || (s.k === "system" && active("sam")) || isOn(s.k);
+          const n = s.k === "system" ? d.unreadFromSam : counts[s.k];
+          return <button key={s.k} type="button" className={"ri" + (on ? " on" : "")} aria-current={on ? "page" : undefined} onClick={() => goTab(s.k)}>
+            <span>{s.l}</span>{n ? <em className={s.k === "inbox" || s.k === "invoices" || s.k === "system" ? "hot" : ""}>{n}</em> : null}</button>; })}</div>
+      </div>)}
       <div className="rail-foot">
         {d.setup?.show_powered === "yes" && <a className="powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by Cinder</a>}
-        <button type="button" className={"ri" + (active("help") ? " on" : "")} onClick={() => goTab("help")}><Icon name="search" size={15} />Help</button>
-        {d.role !== "crew" && d.role !== "office" && <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>}
         {crew ? <button type="button" className="me" onClick={() => void signOut()}><Avatar name="Crew" /><span className="t"><b>Crew</b><small>Sign out</small></span></button>
-          : <button type="button" className="me" onClick={() => goTab("sam")}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{d.owner || "You"}</b><small>Owner</small></span></button>}
+          : <div className="me"><button type="button" className="me-who" onClick={() => goTab("sam")} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, textAlign: "left" }}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{(d.owner || "You").split(" ")[0]}</b><small>Owner</small></span></button>
+            <button type="button" className="me-help" aria-label="Help" title="Help" onClick={() => goTab("help")}><kbd>?</kbd></button></div>}
       </div>
     </nav>
     <div className="main">
