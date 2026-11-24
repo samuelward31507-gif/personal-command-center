@@ -16,11 +16,11 @@ type Props = {
 };
 
 // The Nov 24 design: three groups named for the job. Each tab has one job and one main action.
-const groups = [
+const groups: [string, (readonly [string, string, string, string])[]][] = [
   ["Sell", [["needs-you", "Today", "sun", "/crm/needs-you"], ["call", "Call", "phone", "/crm/call"], ["outbound", "Outbound", "send", "/crm/outbound"], ["contacts", "Prospects", "users", "/crm"], ["pipeline", "Deals", "dollar", "/crm/pipeline"]]],
   ["Clients", [["client-success", "Clients", "check", "/crm/client-success"], ["finance", "Money", "money", "/crm/finance"]]],
   ["Get better", [["content", "Content", "megaphone", "/crm/content"], ["practice", "Practice", "mic", "/crm/practice"], ["funnel", "Numbers", "chart", "/crm/funnel"]]],
-] as const;
+];
 // Folded into the tabs above (brief Part 4). Still reachable here until each tab carries them inside.
 const secondary = [
   ["calendar", "Calendar", "calendar", "/crm/calendar"],

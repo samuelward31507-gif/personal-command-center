@@ -49,3 +49,19 @@ body .db-page .db-todo .u-btn { flex: none; }
 
 /* Loom talking points */
 body .db-loom { margin: 0 0 16px; padding-left: 20px; display: grid; gap: 8px; font-size: 14px; line-height: 1.5; color: var(--u-soft); }
+
+/* ---------- Nov 24 design: Today's three figures ---------- */
+html body .u-page > .u-head.s5-top { padding: 26px 40px 20px; border-bottom: 1px solid rgba(18,20,23,.08); align-items: flex-end; background: transparent; }
+.s5-figs { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 16px; margin: 24px 0; }
+.s5-figs > a { display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; color: inherit; text-decoration: none; transition: border-color 150ms cubic-bezier(.16,1,.3,1); }
+.s5-figs > a:hover { border-color: rgba(18,20,23,.14); }
+.s5-hv { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.s5-meter { position: relative; height: 8px; border-radius: 4px; background: #eef0f3; margin-top: 6px; } .s5-meter i { position: absolute; inset: 0 auto 0 0; background: #f2431d; border-radius: 4px; } .s5-meter u { position: absolute; right: 0; top: -4px; bottom: -4px; border-right: 1.5px dashed #666c76; }
+.s5-ml { display: flex; justify-content: space-between; font: 400 11px/1 var(--m5); color: #666c76; }
+.s5-bars { position: relative; display: flex; gap: 8px; align-items: flex-end; height: 72px; padding-bottom: 14px; margin-top: 10px; }
+.s5-bar { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
+.s5-bar i { display: block; width: 18px; border-radius: 4px 4px 0 0; } .s5-bar small { position: absolute; bottom: -14px; font: 400 11px/1 var(--f5); color: #666c76; }
+.s5-bars u { position: absolute; left: 0; right: 0; border-top: 1px dashed rgba(18,20,23,.22); margin-bottom: 14px; }
+.s5-stack { display: flex; gap: 2px; height: 8px; border-radius: 5px; overflow: hidden; margin-top: 6px; } .s5-stack i { border-radius: 5px; }
+.s5-leg { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+@media (max-width: 1100px) { .s5-figs { grid-template-columns: 1fr; } }
