@@ -109,11 +109,11 @@ export default function MoneyPage() {
 
   return <div className="u-page" role="region" aria-label="Money">
     <div className="u-head">
-      <h1 className="u-title">Money</h1>
+      <h1 className="u-title">Money<span className="u-dim">{loading ? "" : `${usd(collectedNow)} collected in ${monthName(thisMonth, true)}, ${usd(mrr)}/mo recurring. ${owed?.totalOpen ? `${usd(owed.totalOpen)} owed to you${owed.totalOverdue ? `, ${usd(owed.totalOverdue)} overdue` : ""}.` : "Nobody owes you anything."}`}</span></h1>
       <div className="u-head-actions">
         <div className="u-seg" role="group" aria-label="Range">{([6, 12] as const).map(n => <button key={n} type="button" aria-pressed={range === n} onClick={() => setRange(n)}>{n} months</button>)}</div>
         <button className="u-btn" onClick={() => setAdding("expense")}>Log expense</button>
-        <button className="u-btn u-btn-light" onClick={() => setAdding("revenue")}>Record revenue</button>
+        <button className="u-btn u-btn-dark" onClick={() => setAdding("revenue")}>Record payment</button>
       </div>
     </div>
 
@@ -197,7 +197,7 @@ export default function MoneyPage() {
         {(ledger === "revenue" ? revenue.length : 1) > 0 && <button className="u-btn u-btn-bare" onClick={() => setAdding(ledger === "revenue" ? "revenue" : "expense")}>{ledger === "revenue" ? "Record revenue" : "Log expense"}</button>}
       </div>
       {loading ? <p className="u-note">Loading…</p> : ledger === "revenue"
-        ? revenue.length === 0 ? <div className="u-void"><h2>No revenue yet</h2><p>Record a setup fee or retainer when a client signs. Paid records feed the charts above.</p><button className="u-btn u-btn-light" onClick={() => setAdding("revenue")}>Record revenue</button></div>
+        ? revenue.length === 0 ? <div className="u-void"><h2>No revenue yet</h2><p>Record a setup fee or retainer when a client signs. Paid records feed the charts above.</p><button className="u-btn u-btn-dark" onClick={() => setAdding("revenue")}>Record payment</button></div>
           : <div className="u-tablewrap"><table className="u-table"><thead><tr><th>Record</th><th>Type</th><th>Client</th><th>Date</th><th>Status</th><th className="is-num">Amount</th><th /></tr></thead><tbody>
             {revSorted.slice(0, all ? undefined : 12).map(r => <tr key={r.id}>
               <td className="is-strong">{r.title}</td><td>{TYPE[r.revenue_type] || r.revenue_type}</td><td>{r.contact_name || r.project_name || "—"}</td>
