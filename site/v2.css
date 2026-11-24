@@ -1025,3 +1025,20 @@ a, button, summary, input, select, textarea { -webkit-tap-highlight-color: trans
 .aud-fine { margin: 14px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--text-4); }
 @media (max-width: 980px) { .aud-grid { grid-template-columns: 1fr; gap: 32px; } .aud-out { position: static; } }
 @media (max-width: 640px) { .aud-card { padding: 20px; } }
+
+/* ---------- Your own app band (home) ---------- */
+.appband { display: grid; grid-template-columns: .95fr 1.05fr; gap: 64px; align-items: center; }
+.appband-copy h2 { margin-top: 0; }
+.appband-ctas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.appband-vis { display: flex; justify-content: center; }
+.ui.ui-lg { max-width: 520px; font-size: 14px; box-shadow: var(--shadow-lg); }
+.mv { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+.mv:last-child { border-bottom: 0; }
+.mv b { display: block; font-weight: 500; color: var(--text); }
+.mv small { display: block; color: var(--text-3); font-size: 12.5px; }
+.mv-st { font-size: 12px; color: var(--text-3); border: 1px solid var(--line-2); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.mv-st.hot { color: var(--ember); border-color: rgba(242, 67, 29, .3); background: rgba(242, 67, 29, .06); }
+.mv-amt { font-variant-numeric: tabular-nums; font-weight: 500; color: var(--text); min-width: 64px; text-align: right; }
+@media (max-width: 900px) { .appband { grid-template-columns: 1fr; gap: 40px; } }
+@media (max-width: 520px) { .mv { grid-template-columns: 1fr auto; } .mv-st { display: none; } }
+.appband-copy .lede { margin-top: 20px; }
