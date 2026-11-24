@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 /**
  * GET: everything the Outbound page needs that isn't email (email comes from the Gmail endpoints).
  * - loop: today's Find / Score / Reach / Reply / Book numbers (Sam's day, Denver time)
- * - text: texts ready to send by hand (voicemail text after a voicemail, info text after "send info"/"interested")
+ * - text: texts ready to send by hand (info text only for people who asked: no texts after a voicemail (that would be a cold text) after "send info"/"interested")
  * - linkedin: people to connect with and people who accepted and still need the first message
  * - log: what happened today, newest first
  * Cinder never sends a text or touches LinkedIn: these are drafts Sam sends himself.
@@ -50,7 +50,7 @@ export async function GET() {
           ORDER BY a.contact_id, a.occurred_at DESC)
         SELECT c.id, c.first_name, c.last_name, c.company, c.phone, c.time_zone, c.niche, c.notes, lc.outcome, lc.occurred_at
         FROM last_call lc JOIN public.contacts c ON c.id = lc.contact_id AND c.owner_id = ${o}
-        WHERE lc.outcome IN ('voicemail','send_info','interested')
+        WHERE lc.outcome IN ('send_info','interested')
           AND coalesce(trim(c.phone), '') <> ''
           AND NOT EXISTS (SELECT 1 FROM public.contact_activities t WHERE t.owner_id = ${o} AND t.contact_id = c.id AND t.action = 'outbound_text' AND t.occurred_at >= lc.occurred_at)
           AND NOT (lc.outcome = 'voicemail' AND EXISTS (SELECT 1 FROM public.contact_activities t WHERE t.owner_id = ${o} AND t.contact_id = c.id AND t.action = 'outbound_text' AND t.template = 'T-VM'))

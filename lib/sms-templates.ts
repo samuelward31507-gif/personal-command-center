@@ -178,7 +178,7 @@ export type OutcomePlan = {
 
 /**
  * What one logged outcome drafts and schedules.
- * - voicemail → T-VM (once per contact, ever) + "Call back" next business day 9:30am their time
+ * - voicemail → no text (it would be a cold text) + "Call back" next business day 9:30am their time
  * - send_info → T-INFO + follow-ups day 1/2/3/7
  * - no_answer → no text; Redial day 3 and day 7; a 3rd no-answer in a row closes it out
  * - do-not-contact / STOP → no drafts for anything
@@ -192,9 +192,9 @@ export function planFor(outcome: string, ctx: {
     const due = nextBusinessDay(ctx.now, ctx.tz);
     plan.tasks.push({ title: "Call back", due });
     plan.followUp = localDate(due, ctx.tz);
+    // No text after a voicemail (Nov 24): they never asked to hear from us, so a text would be a cold text.
+    // Call back instead. Texts go only to people who asked for info or said they're interested.
     if (blocked) plan.notice = blocked;
-    else if (ctx.vmSentAt) plan.notice = `Voicemail text already sent ${ctx.vmSentAt}. Call instead.`;
-    else plan.template = "T-VM";
   } else if (outcome === "send_info" || outcome === "interested") {
     // Interested and Send info get the same info text and follow-up calls.
     for (const d of INFO_FOLLOW_UP_DAYS) plan.tasks.push({ title: `Follow up on info (day ${d})`, due: dueAt(ctx.now, ctx.tz, d) });
