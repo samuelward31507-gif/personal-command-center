@@ -18,6 +18,7 @@ import { jobProfit } from "@/lib/crm";
 import { TasksSection } from "./records";
 import { taskOrder, warrantyEndingSoon } from "@/lib/records";
 import { AreaChart, StackBar, Sparkline, C } from "./v5-charts";
+import { todayFigures } from "@/lib/today-figures";
 import "./v5.css";
 
 type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "review" | "sam" | "remind";
@@ -83,12 +84,12 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
     const pf = jobProfit(jobPrice(c), c.costs);
     if (pf && pf.margin < 15) actions.push({ key: "pm" + c.id, kind: "money", title: `${c.name}'s job is at a ${pf.margin}% margin`, sub: `${usd(pf.cost)} in costs on ${usd(jobPrice(c) ?? 0)}${pf.profit < 0 ? ", a loss" : ""}`, go: () => go.record(c.id, { view: "job" }), cta: "Look", money: 0 });
   }
-  for (const m of mailWaiting(d)) actions.push({ key: "m" + m.id, kind: "reply", title: `${m.name || m.email || sourceLabel(m.source)} emailed, no phone`, sub: `${sourceLabel(m.source || "email")} by email${m.message ? `: ${m.message.slice(0, 90)}` : ""}`, go: () => go.tab("inbox"), cta: "Add phone", money: 0, urgent: true });
+  for (const m of mailWaiting(d)) actions.push({ key: "m" + m.id, kind: "reply", title: `${m.name || m.email || sourceLabel(m.source)} emailed, no phone`, sub: `${sourceLabel(m.source || "email")} by email${m.message ? `: ${m.message.slice(0, 90)}` : ""}`, go: () => go.tab("inbox"), cta: "Add phone", money: 0 });
   for (const a of asks) actions.push({ key: "r" + a.id, kind: "reply", title: `Reply to ${a.name}`, sub: a.ask || a.last, go: () => go.thread(a.id), cta: "Reply", primary: true, money: worth(byThread.get(a.id)) });
   for (const c of cards) if (c.stage === "quoted" && c.quote?.status === "replied") actions.push({ key: "qr" + c.id, kind: "reply", title: `${c.name} answered the quote`, sub: c.quote.amount ? `${usd(c.quote.amount)} quote` : "", go: () => go.thread(c.id), cta: "Read", money: c.quote.amount ?? 0 });
   for (const i of invoices) {
     if (i.status === "sent" && i.paid_claimed_at) actions.push({ key: "pc" + i.id, kind: "money", title: `${i.customer} says they paid`, sub: `${usd(i.total)}, invoice #${i.number}`, go: () => go.invoice(i.id), cta: "Check", money: i.total });
-    else if (overdue(i.status, i.due_on, today)) actions.push({ key: "od" + i.id, kind: "money", title: `${i.customer}, invoice ${daysPast(i.due_on!)} ${daysPast(i.due_on!) === 1 ? "day" : "days"} late`, sub: `${usd(i.total)}, #${i.number}${i.reminders ? `, ${i.reminders} reminder${i.reminders === 1 ? "" : "s"} sent` : ""}`, go: () => go.invoice(i.id), cta: "Open", money: i.total });
+    else if (overdue(i.status, i.due_on, today)) actions.push({ key: "od" + i.id, kind: "money", title: `${i.customer}, invoice ${daysPast(i.due_on!)} ${daysPast(i.due_on!) === 1 ? "day" : "days"} late`, sub: `Invoice #${i.number} is ${daysPast(i.due_on!)} ${daysPast(i.due_on!) === 1 ? "day" : "days"} late${i.reminders ? `, ${i.reminders} reminder${i.reminders === 1 ? "" : "s"} sent` : ""}`, go: () => go.invoice(i.id), cta: "Call", money: i.total - (i.paid_amount ?? 0) });
     else if (i.status === "draft") actions.push({ key: "dr" + i.id, kind: "invoice", title: `Send ${first(i.customer)}'s invoice`, sub: `${usd(i.total)}, #${i.number}, draft`, go: () => go.invoice(i.id), cta: "Send", money: i.total });
   }
   const due = d.appointments.filter(a => Date.parse(a.starts_at) < Date.now() - 3600000);
@@ -111,7 +112,7 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
     else if (c.install && c.install >= today) {
       const days = Math.round((Date.parse(c.install + "T12:00:00") - Date.parse(today + "T12:00:00")) / 86400000);
       const step = jobSteps(biz.trade, c.details).find(s => !c.job[s.key]);
-      if (days <= 7 && step && step.key !== "installed" && step.key !== "walk") actions.push({ key: "js" + c.id, kind: "install", title: `${c.name}, ${step.label.toLowerCase()}?`, sub: `Install ${days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}${c.line ? `, ${line(c)}` : ""}`, go: () => go.record(c.id, { view: "job" }), cta: "Open job", money: worth(c) });
+      if (days <= 2 && step && step.key !== "installed" && step.key !== "walk") actions.push({ key: "js" + c.id, kind: "install", title: `${c.name}, ${step.label.toLowerCase()}?`, sub: `Install ${days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}${c.line ? `, ${line(c)}` : ""}`, go: () => go.record(c.id, { view: "job" }), cta: "Open job", money: worth(c) });
     }
     else if (c.install && c.install < today && !c.invoice) actions.push({ key: "iv" + c.id, kind: "invoice", title: `Invoice ${c.name}`, sub: `Installed ${dateLabel(c.install)}${c.value ? `, ${usd(c.value)}` : ""}`, go: () => go.record(c.id, { view: "job" }), cta: "Invoice", money: worth(c) });
     else if (c.install && c.install < today && c.invoice?.status === "paid" && !c.reviewSent && biz.reviewLink) actions.push({ key: "rv" + c.id, kind: "review", title: `${c.name}, ask for the review`, sub: `Installed ${dateLabel(c.install)}, paid in full`, go: () => go.record(c.id, { view: "job" }), cta: "Open", money: worth(c) });
@@ -265,17 +266,15 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
   const wonDay = (c: (typeof cards)[number]) => (c.stageAt ? iso(new Date(c.stageAt)) : "");
   const wonAll = cards.filter(c => c.stage === "won" && !c.pastCustomer && c.stageAt);
   const wonIn = wonAll.filter(c => wonDay(c) >= from30 && wonDay(c) <= today);
-  const wonPrev = wonAll.filter(c => wonDay(c) >= from60 && wonDay(c) < from30).reduce((a, c) => a + (jobPrice(c) ?? 0), 0);
-  const wonRun = days30.map(day => wonIn.filter(c => wonDay(c) <= day).reduce((a, c) => a + (jobPrice(c) ?? 0), 0));
-  const pays = (d.payments ?? []).filter(p => p.paid_on >= from30 && p.paid_on <= today);
-  const colRun = days30.map(day => pays.filter(p => p.paid_on <= day).reduce((a, p) => a + p.amount, 0));
-  const wonV = wonRun[29] ?? 0, wonN = wonIn.length, collected = colRun[29] ?? 0;
-  const delta = wonPrev > 0 ? Math.round(((wonV - wonPrev) / wonPrev) * 100) : null;
+  const F = todayFigures({ today, dayOf: (at: string) => iso(new Date(at)),
+    cards: cards.map(c => ({ stage: c.stage, pastCustomer: c.pastCustomer, stageAt: c.stageAt, price: jobPrice(c) ?? 0 })),
+    payments: d.payments ?? [], invoices });
+  const wonRun = F.wonRun, colRun = F.colRun, wonV = F.wonValue, wonN = F.wonCount, collected = F.collected, delta = F.delta;
   const lastWonIdx = (() => { for (let i = 29; i > 0; i--) if (wonRun[i] !== wonRun[i - 1]) return i; return 29; })();
-  const lateSum = late.reduce((a, i) => a + i.total - (i.paid_amount ?? 0), 0), notDue = Math.max(0, owed - lateSum);
+  const lateSum = F.late, notDue = F.notDue;
   const shortDay = (s: string) => new Date(noon(s)).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const longDay = (s: string) => new Date(noon(s)).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  const whoOf = (a: Action) => a.title.replace(/^(Reply to|Quote|Send|Invoice|Schedule|Check in with) /, "").split(/,| keeps| went| answered| says| emailed|'s|: /)[0].trim();
+  const whoOf = (a: Action) => a.title.replace(/^(Reply to|Quote|Send|Invoice|Schedule|Check in with) /, "").replace(/ the quote$/, "").split(/,| keeps| went| answered| says| emailed|'s|: /)[0].trim();
   const ini = (s: string) => { const p = s.replace(/[^A-Za-z ]/g, "").split(" ").filter(Boolean); return ((p[0]?.[0] ?? "") + (p[1]?.[0] ?? "")).toUpperCase() || "•"; };
   const lead = actions[0];
   const upcoming = visits.filter(v => v.at > Date.now() - 3600000).slice(0, 5);
@@ -283,6 +282,7 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
     const y = Number(today.slice(0, 4)), nov1 = new Date(y, 10, 1), tg = new Date(y, 10, 1 + ((4 - nov1.getDay() + 7) % 7) + 21);
     const list: [string, string][] = [[iso(tg), "Thanksgiving"], [`${y}-12-25`, "Christmas"], [`${y}-12-31`, "New Year's Eve"], [`${y}-07-04`, "Independence Day"]];
     return list.find(([day]) => day >= today && noon(day) - noon(today) <= 8 * DAY) ?? null; })();
+  const sentQ = qCards.filter(c => c.quote!.linked);
   const greeting = `Good ${part}${ownerFirst ? ", " + ownerFirst : ""}`;
   const subline = actions.length ? `${actions.length} ${actions.length === 1 ? "thing needs" : "things need"} you. Everything else is handled.` : "Nothing needs you. Everything else is handled.";
   const eyebrowDate = new Date(noon(today)).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase();
@@ -312,7 +312,7 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
                 {delta != null && <span className={"v5-delta " + (delta > 0 ? "up" : "flat")}>{delta > 0 ? "+" : ""}{delta}%</span>}
                 {delta != null && <span className="v5-dim" style={{ fontSize: 12 }}>vs prior 30 days</span>}
               </div>
-              <p className="v5-muted" style={{ marginTop: 8 }}>{wonN} {wonN === 1 ? "job" : "jobs"}{wonN ? `, ${usd(Math.round(wonV / wonN))} average` : ""} · {usd(collected)} collected{qCards.length ? ` · ${usd(qTotal)} waiting on ${qCards.length} ${qCards.length === 1 ? "quote" : "quotes"}` : ""}</p>
+              <p className="v5-muted" style={{ marginTop: 8 }}>{wonN} {wonN === 1 ? "job" : "jobs"}{wonN ? `, ${usd(Math.round(wonV / wonN))} average` : ""} · {usd(collected)} collected{sentQ.length ? ` · ${usd(sentQ.reduce((a, c) => a + qv(c), 0))} waiting on ${sentQ.length} ${sentQ.length === 1 ? "quote" : "quotes"}` : ""}</p>
             </div>
             <div className="hero-legend" style={{ display: "flex", gap: 14, marginTop: 4 }}><span className="v5-leg"><i style={{ background: C.accent }} />Won</span><span className="v5-leg"><i style={{ background: C.grey }} />Collected</span></div>
           </div>

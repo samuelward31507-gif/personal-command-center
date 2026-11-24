@@ -14,6 +14,9 @@ import { cleanLogo, hexOk, readableAccent } from "@/lib/brand";
 import { addInterval, changeOrderLines, cleanCatalog, cleanChangeOrder, cleanPlan, cleanSignoff, type ChangeOrder, type Plan, type Signoff, type TimeEntry } from "@/lib/service";
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 const at = (days: number, hour: number, min = 0) => { const d = new Date(); d.setDate(d.getDate() + days); d.setHours(hour, min, 0, 0); return d.toISOString(); };
+/** A date from the build pack's example data (its "today" is Sun Nov 22, 2026), moved so the example's today is today. */
+const ex = (iso: string, hour = 12, min = 0) => { const d = new Date(); d.setDate(d.getDate() + Math.round((Date.parse(iso + "T12:00:00Z") - Date.parse("2026-11-22T12:00:00Z")) / 86400000)); d.setHours(hour, min, 0, 0); return d.toISOString(); };
+const exd = (iso: string) => ex(iso).slice(0, 10);
 const GC = "https://calendar.google.com/calendar/r/week";
 /** n business days from today (Mon to Fri), at that hour: the example's estimates never land on a weekend. */
 const bd = (n: number, hour: number, min = 0) => { const d = new Date(), step = n < 0 ? -1 : 1; let k = Math.abs(n); while (k > 0) { d.setDate(d.getDate() + step); if (d.getDay() % 6) k--; } d.setHours(hour, min, 0, 0); return d.toISOString(); };
@@ -31,9 +34,9 @@ function seed() {
     t1: { thread: { id: "t1", customer_name: "Tom Becker", customer_phone: "+17205550177", source: "web form", status: "paused" }, texts: [
       tx("in", "system", "New web form lead: “Cedar fence, 140 ft, side and back yard”", 40),
       tx("out", "template", "Hi Tom, this is Ridgeline Fence. Thanks for reaching out. What’s the address so I can give you a price range?", 40),
-      tx("in", "customer", "2210 Oak Dr, Littleton", 30),
+      tx("in", "customer", "2210 Aspen Ct, Littleton", 30),
       tx("out", "ai", `Thanks Tom. For about 140 ft of cedar privacy with a gate, it usually runs $5,900 to $7,300. I can measure ${wd(A3)} at 10:30 or ${wd(bd(4, 15))} at 3.`, 29),
-      tx("in", "customer", "Do you guys offer financing on the $6,570 job?", 12),
+      tx("in", "customer", "Do you guys offer financing on the $9,400 job?", 12),
       tx("out", "template", "Good question. Mike will get back to you on that directly today.", 12)] },
     t2: { thread: { id: "t2", customer_name: "Dana Ruiz", customer_phone: "+17205550148", source: "missed_call", status: "booked" }, texts: [
       tx("in", "system", "Missed call from (720) 555-0148", 55),
@@ -61,7 +64,7 @@ function seed() {
       tx("in", "system", "New Angi lead: “Ranch rail around 2 acres”", 60 * 24 * 5),
       tx("in", "system", "Quote sent: $12,400. Cinder follows up until they answer.", 60 * 24 * 3)] },
     q3: { thread: { id: "q3", customer_name: "Jen Park", customer_phone: "+17205550120", source: "web form", status: "auto" }, texts: [
-      tx("in", "system", "Quote sent: $2,870. Cinder follows up until they answer.", 60 * 24)] },
+      tx("in", "system", "Estimate done. Quote drafted: $4,650.", 60 * 24 * 3)] },
     w1: { thread: { id: "w1", customer_name: "Henderson family", customer_phone: "+17205550110", source: "missed_call", status: "closed" }, texts: [
       tx("in", "system", "Job won: $8,600", 60 * 24 * 9)] },
     w2: { thread: { id: "w2", customer_name: "Carla Mendez", customer_phone: "+17205550124", source: "angi", status: "closed" }, texts: [
@@ -69,23 +72,29 @@ function seed() {
       tx("in", "system", "Approved the quote online: $6,900", 60 * 24 * 4)] },
     w3: { thread: { id: "w3", customer_name: "Bill Turner", customer_phone: "+13035550187", source: "angi", status: "closed" }, texts: [
       tx("in", "system", "Job won: $11,200", 60 * 24 * 16)] },
+    w4: { thread: { id: "w4", customer_name: "Grace Lee", customer_phone: "+13035550126", source: "web form", status: "closed" }, texts: [
+      tx("in", "system", "Approved the quote online: $4,300", 60 * 24 * 8)] },
+    w5: { thread: { id: "w5", customer_name: "Omar Diaz", customer_phone: "+17205550135", source: "thumbtack", status: "closed" }, texts: [
+      tx("in", "system", "Approved the quote online: $6,500", 60 * 24 * 5)] },
     l2: { thread: { id: "l2", customer_name: "Ashley Kim", customer_phone: "+13035550141", source: "thumbtack", status: "closed" }, texts: [
       tx("in", "system", "Passed on the quote online: \u201cWent with a cheaper bid\u201d", 60 * 24 * 7)] },
   };
   const crm: Record<string, { measure?: Card["measure"]; paperwork?: Record<string, unknown> | null; stage?: string; details: Details; value?: number | null; notes: string; install?: string | null; installTime?: string | null; installDays?: number; onCalendar?: boolean; reviewAuto?: boolean; reviewSent?: string | null; job?: Record<string, string>; costs?: Record<string, number>; stageAt?: string; lostReason?: string; crew?: string; email?: string; remind?: { at: string; note: string; sent: boolean } | null; crewMember?: string; reviewAfter?: string | null; properties?: { id: string; address: string; gate_code: string; notes: string }[]; checklist?: { name: string; items: { label: string; done: boolean; at?: string; by?: string }[] } | null; tags?: string[]; referredBy?: string | null }> = {
-    t1: { value: 6570, details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Oak Dr, Littleton" },
+    t1: { value: 9400, details: { length_ft: 140, material: "cedar", height: "6 ft", gates: 1, address: "2210 Aspen Ct, Littleton" },
       measure: { runs: [{ id: "r1", kind: "new", points: [{ lat: 39.6133, lng: -105.0166 }, { lat: 39.6135471, lng: -105.0166 }, { lat: 39.6135471, lng: -105.0164226 }] }],
-        gates: [{ id: "g1", run: "r1", at: { lat: 39.6135471, lng: -105.0166 }, type: "single", width: 4 }], center: { lat: 39.61342, lng: -105.01652 }, zoom: 20 }, notes: "Asked about financing. Call him.", email: "tom.becker@example.com", remind: { at: ago(30), note: "Call Tom back about financing", sent: false } },
+        gates: [{ id: "g1", run: "r1", at: { lat: 39.6135471, lng: -105.0166 }, type: "single", width: 4 }], center: { lat: 39.61342, lng: -105.01652 }, zoom: 20 }, notes: "Asked about financing. Call him.", email: "tom.becker@example.com" },
     t2: { tags: ["hoa"], details: { length_ft: 80, material: "Wood privacy", height: "6 ft", gates: 1, hoa: "No", address: "77 Aspen Ct, Englewood" }, notes: "Replacing chain link.", crewMember: "+17205550188", crew: "Side gate is unlocked. Measure the back line from the shed." },
     t3: { details: { material: "Vinyl" }, notes: "" },
     t4: { details: { length_ft: 120, material: "Horizontal cedar", gates: 2, hoa: "Yes" }, notes: "HOA needs drawings before install.", value: 6200 },
     t5: { details: {}, notes: "Went with someone else." },
     q1: { details: { length_ft: 160, material: "Vinyl", height: "6 ft", gates: 1, hoa: "Yes" }, notes: "", value: 7800, email: "lena.ortiz@example.com" },
     q2: { details: { length_ft: 900, material: "Ranch rail", gates: 2 }, notes: "Horses. Needs it before spring.", value: 12400 },
-    q3: { details: { length_ft: 110, material: "Chain link", height: "5 ft", gates: 1 }, notes: "", value: 2870 },
-    w1: { properties: [{ id: "prw1a", address: "418 Willow Ln, Littleton", gate_code: "4418", notes: "Two dogs, keep the side gate shut." }, { id: "prw1b", address: "9 Lakeview Ct, Evergreen (cabin)", gate_code: "", notes: "Gravel drive, call before coming up." }], details: { length_ft: 220, material: "cedar", height: "6 ft", gates: 2, address: "418 Willow Ln, Littleton" }, notes: "Install done. Ask for a review.", crew: "Gate code 4418. Two dogs, keep the side gate shut. Park on Willow, not the driveway.", value: 8600, install: at(-11, 8).slice(0, 10), installTime: "07:30", installDays: 1, onCalendar: true, job: { deposit: at(-26, 9).slice(0, 10), permit: at(-21, 9).slice(0, 10), locate: at(-18, 9).slice(0, 10), materials: at(-16, 9).slice(0, 10), installed: at(-11, 9).slice(0, 10), walk: at(-10, 9).slice(0, 10) }, costs: { materials: 3150, labor: 1900, other: 120 } },
-    w2: { stage: "won", paperwork: { locate: { ticket: "A2611130318", requested: "2026-11-13", clears: "2026-11-18" }, permit: { needed: "yes", number: "FN-26-4471", approved: null }, hoa: { needed: "no", approved: null }, pins: { confirmed: "2026-11-12", note: "Pins found at both back corners" }, signoff: { on: null, by: "" } }, checklist: { name: "Fence install", items: [{ label: "811 locate marks checked", done: true, at: ago(60 * 26), by: "+17205550188" }, { label: "Property line and HOA approval confirmed", done: true, at: ago(60 * 26), by: "owner" }, { label: "Posts set and plumb", done: false }, { label: "Panels or pickets hung, level", done: false }, { label: "Gates hung, swing and latch", done: false }, { label: "Debris hauled, yard raked", done: false }, { label: "Final walk with the customer", done: false }] }, crewMember: "+17205550188", crew: "Old fence is already down. Dumpster in the driveway, park on the street.", details: { length_ft: 150, material: "Vinyl", height: "6 ft", gates: 1, address: "905 Cherry St, Centennial" }, notes: "Approved from the link.", value: 6900, costs: { materials: 2950, labor: 1400, other: 90 }, job: { deposit: at(-1, 9).slice(0, 10), materials: at(-1, 9).slice(0, 10) }, install: at(0, 8).slice(0, 10), installTime: "08:00", installDays: 1, onCalendar: true, reviewAuto: true },
-    w3: { stage: "won", details: { length_ft: 260, material: "Wood privacy", height: "6 ft", gates: 2 }, notes: "", value: 11200, costs: { materials: 5400, labor: 3600, other: 350 }, install: at(-12, 8).slice(0, 10), installDays: 2, onCalendar: true, reviewSent: at(-11, 9) },
+    q3: { details: { length_ft: 110, material: "Chain link", height: "5 ft", gates: 1, address: "502 Pine Ave, Aurora" }, notes: "Quote drafted, not sent.", value: 4650 },
+    w1: { properties: [{ id: "prw1a", address: "418 Willow Ln, Littleton", gate_code: "4418", notes: "Two dogs, keep the side gate shut." }, { id: "prw1b", address: "9 Lakeview Ct, Evergreen (cabin)", gate_code: "", notes: "Gravel drive, call before coming up." }], details: { length_ft: 220, material: "cedar", height: "6 ft", gates: 2, address: "418 Willow Ln, Littleton" }, stageAt: ex("2026-10-27"), notes: "Install done. Ask for a review.", crew: "Gate code 4418. Two dogs, keep the side gate shut. Park on Willow, not the driveway.", value: 8600, install: exd("2026-11-09"), installTime: "07:30", installDays: 1, onCalendar: true, job: { deposit: at(-26, 9).slice(0, 10), permit: at(-21, 9).slice(0, 10), locate: at(-18, 9).slice(0, 10), materials: at(-16, 9).slice(0, 10), installed: at(-11, 9).slice(0, 10), walk: at(-10, 9).slice(0, 10) }, costs: { materials: 3150, labor: 1900, other: 120 } },
+    w2: { stage: "won", stageAt: ex("2026-11-19"), paperwork: { locate: { ticket: "A2611130318", requested: "2026-11-13", clears: "2026-11-18" }, permit: { needed: "yes", number: "FN-26-4471", approved: null }, hoa: { needed: "no", approved: null }, pins: { confirmed: "2026-11-12", note: "Pins found at both back corners" }, signoff: { on: null, by: "" } }, checklist: { name: "Fence install", items: [{ label: "811 locate marks checked", done: true, at: ago(60 * 26), by: "+17205550188" }, { label: "Property line and HOA approval confirmed", done: true, at: ago(60 * 26), by: "owner" }, { label: "Posts set and plumb", done: false }, { label: "Panels or pickets hung, level", done: false }, { label: "Gates hung, swing and latch", done: false }, { label: "Debris hauled, yard raked", done: false }, { label: "Final walk with the customer", done: false }] }, crewMember: "+17205550188", crew: "Old fence is already down. Dumpster in the driveway, park on the street.", details: { length_ft: 150, material: "Vinyl", height: "6 ft", gates: 1, address: "905 Cherry St, Centennial" }, notes: "Approved from the link.", value: 6900, costs: { materials: 2950, labor: 1400, other: 90 }, job: { deposit: at(-1, 9).slice(0, 10), materials: at(-1, 9).slice(0, 10) }, install: exd("2026-11-20"), installTime: "08:00", installDays: 1, onCalendar: true, reviewAuto: true },
+    w3: { stage: "won", stageAt: ex("2026-10-25"), details: { length_ft: 300, material: "cedar", height: "6 ft", gates: 2, address: "12 Quail Ct, Castle Rock" }, notes: "", value: 11200, costs: { materials: 5400, labor: 3600, other: 350 }, install: exd("2026-11-10"), installDays: 2, onCalendar: true, reviewSent: ex("2026-11-12") },
+    w4: { stage: "won", stageAt: ex("2026-11-14"), details: { length_ft: 100, material: "Aluminum", height: "4 ft", gates: 1, address: "64 Lark St, Golden" }, notes: "", value: 4300, install: exd("2026-12-02"), installDays: 1, onCalendar: true },
+    w5: { stage: "won", stageAt: ex("2026-11-17"), details: { length_ft: 180, material: "cedar", height: "6 ft", gates: 1, address: "230 Main St, Arvada" }, notes: "", value: 6500, install: exd("2026-11-27"), installTime: "08:00", installDays: 1, onCalendar: true, crewMember: "+17205550188", job: { deposit: exd("2026-11-17"), materials: exd("2026-11-20") } },
     l2: { stage: "lost", details: { length_ft: 90, material: "Chain link", height: "4 ft" }, notes: "Went with a cheaper bid.", lostReason: "Price" },
   };
   const setup: Record<string, string> = { display_name: "Ridgeline Fence Co.", owner_name: "Mike", trade: "Fence",
@@ -123,25 +132,31 @@ function seed() {
       { id: "e2", title: "Material pickup", start: at(2, 7), end: at(2, 8), allDay: false, link: GC },
       { id: "e4", title: "Crew off", start: at(3, 0), end: at(4, 0), allDay: true, link: GC }],
     quotes: [
-      { id: "q1", customer_name: "Lena Ortiz", customer_phone: "+17205550191", amount: 7800 as number | null, sent_on: at(-6, 12).slice(0, 10), steps_sent: 2, status: "open", linked: true, viewed: ago(60 * 3) as string | null, note: "Remove old wood fence, 6 ft white vinyl privacy, one 4 ft gate.", deposit: 1500 as number | null,
+      { id: "q1", customer_name: "Lena Ortiz", customer_phone: "+17205550191", amount: 7800 as number | null, sent_on: exd("2026-11-18"), steps_sent: 2, status: "open", linked: true, viewed: ago(60 * 3) as string | null, note: "Remove old wood fence, 6 ft white vinyl privacy, one 4 ft gate.", deposit: 1500 as number | null,
         items: [{ name: "6 ft White vinyl privacy", qty: 160, unit: "ft", price: 42, tier: "Good", photo: "demo:vinyl-white" }, { name: "6 ft Vinyl privacy with lattice top", qty: 160, unit: "ft", price: 49, tier: "Better", photo: "demo:vinyl-lattice" }, { name: "6 ft Tan vinyl, heavy-duty posts, lifetime warranty", qty: 160, unit: "ft", price: 56, tier: "Best", photo: "demo:vinyl-tan" },
           { name: "Walk gate", qty: 1, unit: "", price: 760 }, { name: "Tear-out and haul-away", qty: 160, unit: "ft", price: 2 }, { name: "Second walk gate", qty: 1, unit: "", price: 760, opt: true }, { name: "Post caps, solar lit", qty: 18, unit: "", price: 28, opt: true }] as Item[], tax_rate: 0 },
-      { id: "q2", customer_name: "Kyle Brandt", customer_phone: "+13035550133", amount: 12400 as number | null, sent_on: at(-3, 12).slice(0, 10), steps_sent: 1, status: "open", linked: true, viewed: null as string | null, note: "", deposit: null as number | null, items: [] as Item[], tax_rate: 0 },
-      { id: "q3", customer_name: "Jen Park", customer_phone: "+17205550120", amount: 2870 as number | null, sent_on: at(-1, 12).slice(0, 10), steps_sent: 0, status: "open", linked: false, viewed: null as string | null, note: "", items: [] as Item[], tax_rate: 0 }],
+      { id: "q2", customer_name: "Kyle Brandt", customer_phone: "+13035550133", amount: 12400 as number | null, sent_on: exd("2026-11-17"), steps_sent: 1, status: "open", linked: true, viewed: null as string | null, note: "", deposit: null as number | null, items: [] as Item[], tax_rate: 0 },
+      { id: "q3", customer_name: "Jen Park", customer_phone: "+17205550120", amount: 4650 as number | null, sent_on: exd("2026-11-19"), steps_sent: 0, status: "open", linked: false, viewed: null as string | null, note: "", items: [] as Item[], tax_rate: 0 }],
     winbackSent: false,
     invoices: [
-      { id: "iv1", thread_id: "w3", number: 1041, status: "paid", items: [{ name: "6 ft Wood privacy fence, installed", qty: 260, unit: "ft", price: 39 }, { name: "Walk gate", qty: 2, unit: "", price: 530 }], tax_rate: 0, total: 11200, note: "", due_on: at(-6, 12).slice(0, 10),
-        sent_at: at(-10, 12), viewed_at: at(-10, 15), paid_at: at(-8, 12), paid_claimed_at: null, reminders: 0, reminders_paused: false, url: "/i/example" },
-      { id: "iv0", thread_id: "w2", number: 1043, status: "paid", items: [{ name: "Deposit for 150 ft, 6 ft Vinyl, 1 gate", qty: 1, unit: "", price: 2300 }], tax_rate: 0, total: 2300, note: DEPOSIT_NOTE, due_on: at(-1, 12).slice(0, 10),
-        sent_at: null, viewed_at: null, paid_at: at(-1, 9), paid_claimed_at: null, reminders: 0, reminders_paused: true, url: null },
-      { id: "iv2", thread_id: "w1", number: 1042, status: "sent", items: [{ name: "6 ft cedar privacy fence, installed", qty: 220, unit: "ft", price: 35 }, { name: "Walk gate", qty: 2, unit: "", price: 450 }], tax_rate: 0, total: 8600, note: "", due_on: at(-2, 12).slice(0, 10),
-        sent_at: at(-9, 12), viewed_at: at(-9, 18), paid_at: null, paid_claimed_at: null, reminders: 1, reminders_paused: false, url: "/i/example" },
+      { id: "iv1", thread_id: "w3", number: 1041, status: "paid", items: [{ name: "6 ft cedar privacy fence, installed", qty: 300, unit: "ft", price: 34 }, { name: "Walk gate", qty: 2, unit: "", price: 500 }], tax_rate: 0, total: 11200, note: "", due_on: exd("2026-11-17"),
+        sent_at: ex("2026-11-10"), viewed_at: ex("2026-11-10", 15), paid_at: ex("2026-11-12"), paid_claimed_at: null, reminders: 0, reminders_paused: false, url: "/i/example" },
+      { id: "iv2", thread_id: "w1", number: 1042, status: "sent", items: [{ name: "6 ft cedar privacy fence, installed", qty: 220, unit: "ft", price: 35 }, { name: "Walk gate", qty: 2, unit: "", price: 450 }], tax_rate: 0, total: 8600, note: "", due_on: exd("2026-11-18"),
+        sent_at: ex("2026-11-11"), viewed_at: ex("2026-11-11", 18), paid_at: null, paid_claimed_at: null, reminders: 1, reminders_paused: false, url: "/i/example" },
+      { id: "iv3", thread_id: "w2", number: 1043, status: "sent", items: [{ name: "6 ft vinyl privacy fence, installed", qty: 150, unit: "ft", price: 42 }, { name: "Walk gate", qty: 1, unit: "", price: 600 }], tax_rate: 0, total: 6900, note: "", due_on: exd("2026-11-28"),
+        sent_at: ex("2026-11-21"), viewed_at: null, paid_at: null, paid_claimed_at: null, reminders: 0, reminders_paused: false, url: "/i/example" },
+      { id: "ivd4", thread_id: "w4", number: 1044, status: "paid", items: [{ name: "Deposit to hold the date", qty: 1, unit: "", price: 1000 }], tax_rate: 0, total: 1000, note: DEPOSIT_NOTE, due_on: exd("2026-11-14"),
+        sent_at: null, viewed_at: null, paid_at: ex("2026-11-14"), paid_claimed_at: null, reminders: 0, reminders_paused: true, url: null },
+      { id: "ivd5", thread_id: "w5", number: 1045, status: "paid", items: [{ name: "Deposit to hold the date", qty: 1, unit: "", price: 1500 }], tax_rate: 0, total: 1500, note: DEPOSIT_NOTE, due_on: exd("2026-11-17"),
+        sent_at: null, viewed_at: null, paid_at: ex("2026-11-17"), paid_claimed_at: null, reminders: 0, reminders_paused: true, url: null },
     ] as (CardInvoice & { thread_id: string })[],
     payments: [
-      { id: "pm1", invoice_id: "iv1", thread_id: "w3", amount: 5000, method: "check", paid_on: at(-26, 12).slice(0, 10), note: "Deposit, check 1182" },
-      { id: "pm2", invoice_id: "iv1", thread_id: "w3", amount: 6200, method: "card", paid_on: at(-8, 12).slice(0, 10), note: "" },
-      { id: "pm0", invoice_id: "iv0", thread_id: "w2", amount: 2300, method: "card", paid_on: at(-1, 12).slice(0, 10), note: "Deposit" },
-      { id: "pm3", invoice_id: "iv2", thread_id: "w1", amount: 2500, method: "bank", paid_on: at(-24, 12).slice(0, 10), note: "Deposit by Zelle" },
+      { id: "pm1", invoice_id: "iv1", thread_id: "w3", amount: 5000, method: "check", paid_on: exd("2026-10-25"), note: "Check 1182, deposit" },
+      { id: "pm3", invoice_id: "iv2", thread_id: "w1", amount: 2500, method: "bank", paid_on: exd("2026-10-27"), note: "Zelle, deposit" },
+      { id: "pm2", invoice_id: "iv1", thread_id: "w3", amount: 6200, method: "card", paid_on: exd("2026-11-12"), note: "" },
+      { id: "pm4", invoice_id: "ivd4", thread_id: "w4", amount: 1000, method: "card", paid_on: exd("2026-11-14"), note: "Deposit" },
+      { id: "pm5", invoice_id: "ivd5", thread_id: "w5", amount: 1500, method: "card", paid_on: exd("2026-11-17"), note: "Deposit" },
+      { id: "pm0", invoice_id: "iv3", thread_id: "w2", amount: 2300, method: "card", paid_on: exd("2026-11-19"), note: "Deposit" },
     ] as Payment[],
     photos: {} as Record<string, Photo[]>,
     // Service plans: the Henderson wash is due today (Luis goes), Bill Turner's yearly seal is next month.
@@ -168,7 +183,7 @@ function seed() {
     signoffs: {} as Record<string, Signoff>,
     won: 5, wonValue: 37500,
     equipment: [
-      { id: "eq1", thread_id: "t2", kind: "Gate operator", make: "LiftMaster", model: "LA400", serial: "LA4-22-08812", location: "Driveway gate", installed_on: "2023-05-12", warranty_until: new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10), notes: "Solar panel on the post", history: [{ on: "2026-05-02", note: "Annual check, new battery", by: "" }], customer: "Dana Ruiz" },
+      { id: "eq1", thread_id: "t2", kind: "Gate operator", make: "LiftMaster", model: "LA400", serial: "LA4-22-08812", location: "Driveway gate", installed_on: "2023-05-12", warranty_until: new Date(Date.now() + 200 * 86400000).toISOString().slice(0, 10), notes: "Solar panel on the post", history: [{ on: "2026-05-02", note: "Annual check, new battery", by: "" }], customer: "Dana Ruiz" },
     ] as Equipment[],
     files: [] as FileRow[],
     activity: [
@@ -179,7 +194,7 @@ function seed() {
       { at: ago(1440), who: "", role: "owner", action: "reviewnow", detail: "", thread: null, customer: "Henderson" },
     ],
     tasks: [
-      { id: "k1", title: "Order 40 cedar posts for the Becker job", due_on: new Date().toLocaleDateString("en-CA"), assignee: "", thread: "t1", done_at: null, created_at: ago(600), customer: "Tom Becker" },
+      { id: "k1", title: "Order 40 cedar posts for the Becker job", due_on: null, assignee: "", thread: "t1", done_at: null, created_at: ago(600), customer: "Tom Becker" },
       { id: "k2", title: "Call the city about the Mendez permit", due_on: null, assignee: "", thread: null, done_at: null, created_at: ago(1200) },
     ] as Task[],
     expenses: [
@@ -191,13 +206,13 @@ function seed() {
     // Leads by email: one Angi lead that went straight on the board, two that came without a phone, a Gmail forwarding code.
     mail: [
       { id: "m1", at: ago(25), from: "Thumbtack <no-reply@thumbtack.com>", subject: "Derek W. wants a quote for Fence Repair", source: "thumbtack", status: "no_phone", name: "Derek W.", phone: "", email: "", message: "Fence Repair. Gate sags and won't latch. Timing: Within a week", code: "", link: "", thread: "", why: "" },
-      { id: "m2", at: ago(140), from: "Google Local Services <noreply-localservices@google.com>", subject: "You have a new message lead", source: "google", status: "no_phone", name: "Pat Green", phone: "", email: "pat.green@example.com", message: "Fence repair. Two posts snapped in the wind. Address: Denver, CO 80205", code: "", link: "", thread: "", why: "" },
+      { id: "m2", at: ago(140), from: "Google Local Services <noreply-localservices@google.com>", subject: "You have a new message lead", source: "google", status: "lead", name: "Pat Green", phone: "+17205550174", email: "pat.green@example.com", message: "Fence repair. Two posts snapped in the wind. Address: Denver, CO 80205", code: "", link: "", thread: "", why: "" },
       { id: "m3", at: ago(300), from: "WordPress <wordpress@ridgelinefence.com>", subject: "New submission from Contact Us", source: "web form", status: "lead", name: "Tom Becker", phone: "+17205550177", email: "tom.becker@example.com", message: "Cedar fence, 140 ft, side and back yard", code: "", link: "", thread: "t1", why: "" },
       { id: "m4", at: ago(1500), from: "Gmail Team <forwarding-noreply@google.com>", subject: "(#482913075) Gmail Forwarding Confirmation", source: "", status: "confirm", name: "", phone: "", email: "", message: "", code: "482913075", link: "https://mail.google.com/", thread: "", why: "" },
       { id: "m5", at: ago(2900), from: "Angi Leads <leads@angi.com>", subject: "New Lead: Fence Installation - Aurora, CO", source: "angi", status: "lead", name: "Maria Lopez", phone: "+17205550142", email: "maria.lopez@example.com", message: "Install a Wood Fence. About 120 feet, cedar if possible", code: "", link: "", thread: "", why: "" },
       { id: "m6", at: ago(4300), from: "Home Depot <receipts@homedepot.com>", subject: "Your receipt from The Home Depot", source: "", status: "ignored", name: "", phone: "", email: "", message: "", code: "", link: "", thread: "", why: "Not a lead" },
     ] as LeadMail[],
-    wonJobs: [{ id: "w1", customer_name: "Henderson family", customer_phone: "+17205550110", amount: 8600 as number | null, won_at: at(-9, 12) }],
+    wonJobs: [{ id: "w1", customer_name: "Henderson family", customer_phone: "+17205550110", amount: 8600 as number | null, won_at: ex("2026-10-27") }],
   };
 }
 
