@@ -7,6 +7,19 @@ import { useEffect, useState } from "react";
 import { createAuthClient } from "@neondatabase/auth/next";
 import { WorkspaceCard } from "./workspace-card";
 import { OfferCard } from "./offer-card";
+import { useWorkspace } from "../../use-workspace";
+import { offersFrom } from "@/lib/workspace";
+
+/** The two offers, read-only: new deals use these prices. Setup is always the full price, paid upfront. No discounts. */
+function OffersShown() {
+  const ws = useWorkspace(), o = offersFrom(ws);
+  const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
+  return <section className="set-offers" aria-label="Offers">
+    <h2>Offers</h2><p>New deals use these prices. Setup is always the full price, paid upfront.</p>
+    <div className="set-offer-grid">{[["Tier 1", o.tier1], ["Tier 2", o.tier2]].map(([k, t]) => { const x = t as typeof o.tier1; return <div key={k as string} className="set-offer">
+      <span className="k">{k as string}</span><b>{x.label}</b><span className="v">{usd(x.setupFee)} setup + {usd(x.monthlyFee)}/mo</span></div>; })}</div>
+  </section>;
+}
 import "./settings.css";
 
 const authClient = createAuthClient();
@@ -194,7 +207,7 @@ export default function SettingsPage() {
 
   return (
     <main className="u-page set-page">
-      <div className="u-head"><h1 className="u-title">Settings<span className="u-dim">Business details, prices, your goal and the jobs Cinder runs</span></h1></div>
+      <div className="u-head"><h1 className="u-title">Settings<span className="u-dim">Prices, goals and what runs on its own. Business details stay in Account.</span></h1></div>
 
       {error && <p role="alert" style={{ marginTop: 20, padding: 12, borderRadius: 8, background:"#f6ecec", color:"#a31414", fontSize: 13 }}>{error}</p>}
 
@@ -202,7 +215,7 @@ export default function SettingsPage() {
         {TABS.map(t => <button key={t.key} type="button" aria-pressed={tab === t.key} aria-selected={tab === t.key} onClick={() => pick(t.key)}>{t.label}</button>)}
       </nav>
 
-      {tab === "business" && <><WorkspaceCard /><OfferCard /></>}
+      {tab === "business" && <><OffersShown /><WorkspaceCard /><OfferCard /></>}
 
       {tab === "automations" && <><GrokCard /><LeadFormLink /><OvernightAudits /><SundayReview /></>}
 
@@ -240,4 +253,4 @@ export default function SettingsPage() {
 
 const CARD: React.CSSProperties = { marginTop: 18, border: "1px solid #e7e7e4", borderRadius: 16, background: "#ffffff", padding: 22 };
 type Tab = "business" | "automations" | "account";
-const TABS: { key: Tab; label: string }[] = [{ key: "business", label: "Business" }, { key: "automations", label: "Automations" }, { key: "account", label: "Account" }];
+const TABS: { key: Tab; label: string }[] = [{ key: "business", label: "Offers and goals" }, { key: "automations", label: "Automations" }, { key: "account", label: "Account" }];
