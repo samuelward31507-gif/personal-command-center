@@ -112,3 +112,33 @@ export function Sparkline({ values, width = 120, height = 32 }: { values: number
     <circle cx={lx} cy={ly} r="2.5" fill={C.accent} />
   </svg>;
 }
+
+/** Grouped bars: grey for the total, the accent for the outcome; hover shows both and the rate. Beside, never on, the bars. */
+export function GroupedBars({ data, aLabel, bLabel, summary, height = 180 }: { data: { label: string; a: number; b: number; note?: string }[]; aLabel: string; bLabel: string; summary: string; height?: number }) {
+  const W = 640, left = 34, top = 8, bottom = 26, ph = height - top - bottom, n = data.length;
+  const max = niceMax(Math.max(1, ...data.flatMap(x => [x.a, x.b])));
+  const slot = (W - left) / Math.max(1, n), bw = Math.min(22, slot / 3);
+  const y = (v: number) => top + ph - (v / max) * ph;
+  const [h, setH] = useState<number | null>(null);
+  const ticks = [1, 2, 3, 4].map(k => (max * k) / 4).filter(t => Number.isInteger(t) || max > 8);
+  return <div className="v5-chart" style={{ position: "relative" }}>
+    <svg viewBox={`0 0 ${W} ${height}`} width="100%" role="img" aria-label={summary} tabIndex={0} style={{ display: "block", overflow: "visible" }} onPointerLeave={() => setH(null)}
+      onKeyDown={e => { if (e.key === "ArrowRight") setH(i => Math.min(n - 1, (i ?? -1) + 1)); else if (e.key === "ArrowLeft") setH(i => Math.max(0, (i ?? n) - 1)); }}>
+      {ticks.map(t => <g key={t}><line x1={left} x2={W} y1={y(t)} y2={y(t)} stroke={C.grid} /><text x={left - 10} y={y(t) + 3.5} textAnchor="end" fontSize="11" fill={C.label}>{Math.round(t)}</text></g>)}
+      <line x1={left} x2={W} y1={y(0)} y2={y(0)} stroke={C.base} />
+      {data.map((x, i) => { const cx = left + slot * i + slot / 2; return <g key={i} onPointerEnter={() => setH(i)}>
+        {h === i && <rect x={cx - bw - 10} y={top} width={bw * 2 + 24} height={ph} rx="8" fill="rgba(18,20,23,.035)" />}
+        <rect x={cx - bw - 2} y={y(x.a)} width={bw} height={Math.max(0, y(0) - y(x.a))} rx="4" fill={C.grey} />
+        <rect x={cx + 2} y={y(x.b)} width={bw} height={Math.max(0, y(0) - y(x.b))} rx="4" fill={C.accent} />
+        <text x={cx} y={height - 6} textAnchor="middle" fontSize="11" fill={C.label}>{x.label}</text>
+        <rect x={left + slot * i} y={top} width={slot} height={ph} fill="transparent" />
+      </g>; })}
+    </svg>
+    {h != null && <div className="v5-tip" style={{ left: `${((left + slot * h + slot / 2 + (h > n / 2 ? -270 : 20)) / W) * 100}%`, top: 0, width: 220 }} role="status">
+      <div className="v5-lab v5-tip-h">{data[h].note ?? data[h].label}</div>
+      <div className="v5-tip-r"><i style={{ background: C.grey }} /><span>{aLabel}</span><b>{data[h].a}</b></div>
+      <div className="v5-tip-r"><i style={{ background: C.accent }} /><span>{bLabel}</span><b>{data[h].b}</b></div>
+      <div className="v5-tip-r"><i style={{ background: "transparent" }} /><span>Rate</span><b>{data[h].a ? Math.round((data[h].b / data[h].a) * 100) : 0}%</b></div>
+    </div>}
+  </div>;
+}

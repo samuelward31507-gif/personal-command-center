@@ -245,16 +245,19 @@ function demoReport(days: 30 | 90 | 365): Report {
     costed: Math.max(0, won - 1), costedValue: Math.round(wonValue * 0.8), costs: Math.round(wonValue * 0.8 * 0.58), collected: Math.round(wonValue * 0.82), invoiced: Math.round(wonValue * 0.9), appts: booked, noShows: Math.max(0, Math.round(booked * 0.07)), reviews: Math.round(won * 0.9), ...extra });
   const r = (x: number) => Math.round(x * k);
   return { days,
-    now: num(r(41), r(14), r(9), r(5), r(37500)),
-    before: num(r(33), r(10), r(8), r(4), r(29800), { replySec: 14, cycleDays: 13.8, payDays: 8.5 }),
-    sources: [{ source: "angi", leads: r(9), booked: r(4), quoted: r(3), won: r(2), wonValue: r(18100) , paid: Math.round((r(18100) ) * 0.8)}, { source: "missed_call", leads: r(13), booked: r(4), quoted: r(3), won: r(1), wonValue: r(8600) , paid: Math.round((r(8600) ) * 0.8)},
-      { source: "web form", leads: r(8), booked: r(3), quoted: r(2), won: r(1), wonValue: r(6900) , paid: Math.round((r(6900) ) * 0.8)}, { source: "google", leads: r(6), booked: r(2), quoted: r(1), won: r(1), wonValue: r(3900) , paid: Math.round((r(3900) ) * 0.8)},
-      { source: "booking page", leads: r(3), booked: r(1), quoted: 0, won: 0, wonValue: 0 , paid: Math.round((0 ) * 0.8)}, { source: "thumbtack", leads: r(2), booked: 0, quoted: 0, won: 0, wonValue: 0 , paid: Math.round((0 ) * 0.8)}],
-    lostReasons: [{ reason: "Price", n: r(2) }, { reason: "Went with someone else", n: r(1) }, { reason: "Timing", n: Math.max(1, r(0.5)) }],
+    now: num(r(41), r(14), r(9), r(5), r(37500), { lost: r(2), collected: r(18500) }),
+    before: num(r(36), r(11), r(8), r(4), r(29800), { replySec: 14, cycleDays: 13.8, payDays: 8.5, collected: r(15900) }),
+    // The build brief's sources: Google 15/6/4/2 $18,100, Web form 10/4/3/2 $12,900, Angi 8/2/1/0, Thumbtack 5/1/1/1 $6,500, Referral 3/1/0/0.
+    sources: [{ source: "google", leads: r(15), booked: r(6), quoted: r(4), won: r(2), wonValue: r(18100), paid: r(11200) }, { source: "web form", leads: r(10), booked: r(4), quoted: r(3), won: r(2), wonValue: r(12900), paid: r(3500) },
+      { source: "angi", leads: r(8), booked: r(2), quoted: r(1), won: 0, wonValue: 0, paid: 0 }, { source: "thumbtack", leads: r(5), booked: r(1), quoted: r(1), won: r(1), wonValue: r(6500), paid: r(1500) },
+      { source: "referral", leads: r(3), booked: r(1), quoted: 0, won: 0, wonValue: 0, paid: 0 }],
+    lostReasons: [{ reason: "Price", n: r(1) }, { reason: "Went with someone else", n: r(1) }],
     openQuotes: { n: 4, value: 32627 },
     // A believable trend: weeks for 30 and 90 days, months for a year, oldest first.
-    series: Array.from({ length: days === 30 ? 5 : days === 90 ? 13 : 12 }, (_, i) => {
-      const n = days === 30 ? 5 : days === 90 ? 13 : 12, back = n - 1 - i, d = new Date(); if (days === 365) d.setMonth(d.getMonth() - back, 1); else d.setDate(d.getDate() - back * 7);
+    series: days === 30 ? [[9, 4, 2, 19800, 7500], [8, 3, 0, 0, 0], [10, 3, 1, 4300, 7200], [11, 3, 2, 13400, 3800], [3, 1, 0, 0, 0]].map(([leads, booked, won, wonValue, collected], i) => {
+      const d = new Date(); d.setDate(d.getDate() - d.getDay() - 1 - (4 - i) * 7); return { label: d.toLocaleDateString("en-CA"), leads, booked, won, wonValue, collected }; }) :
+    Array.from({ length: days === 90 ? 13 : 12 }, (_, i) => {
+      const n = days === 90 ? 13 : 12, back = n - 1 - i, d = new Date(); if (days === 365) d.setMonth(d.getMonth() - back, 1); else d.setDate(d.getDate() - back * 7);
       const w = days === 365 ? 4.3 : 1, wave = 1 + 0.35 * Math.sin(i * 1.3) + i * 0.03;
       const leads = Math.round(9 * w * wave), booked = Math.round(leads * (0.3 + 0.08 * Math.cos(i))), won = Math.max(0, Math.round(booked * 0.38));
       return { label: d.toLocaleDateString("en-CA"), leads, booked, won, wonValue: won * 7300, collected: Math.round(won * 7300 * 0.85) };

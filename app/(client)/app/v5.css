@@ -284,3 +284,23 @@ html .shell.v5 .tabs em { background: var(--acc); font-size: 11px; }
 .shell.v5 .aging .b0 { background: #c4c8cf !important; } .shell.v5 .aging .b1 { background: #f2431d !important; }
 .shell.v5 .aging .b2 { background: #b3461c !important; } .shell.v5 .aging .b3, .shell.v5 .aging .b4 { background: #121417 !important; }
 .shell.v5 .aging-bar { gap: 2px; border-radius: 5px; overflow: hidden; } .shell.v5 .aging-bar i { border-radius: 5px; }
+
+/* ---------- Numbers ---------- */
+.n5 { margin-bottom: 16px; }
+.n5-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.n5-k { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; } .n5-k small { font-size: 12.5px; line-height: 1.4; }
+.n5-v { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.n5-row { display: flex; gap: 16px; margin-top: 16px; } .n5-weeks { flex: 1; min-width: 0; } .n5-funnel { width: 380px; flex: none; }
+.n5-fn { padding: 8px 0; } .n5-fn-t { display: flex; justify-content: space-between; font: 400 13px/1.4 var(--f5); } .n5-fn-t b { font-weight: 500; }
+.n5-fn-bar { display: block; height: 8px; margin: 6px 0 4px; background: var(--bg2); border-radius: 4px; overflow: hidden; } .n5-fn-bar i { display: block; height: 100%; border-radius: 4px; }
+.n5-fn small { font-size: 12px; }
+.n5-src { margin-top: 16px; } .n5-tw { overflow-x: auto; }
+.n5-tbl { width: 100%; border-collapse: collapse; font: 400 13px/1.3 var(--f5); }
+.n5-tbl th { height: 34px; padding: 0 18px; font: 500 10px/1 var(--m5); letter-spacing: .08em; text-transform: uppercase; color: var(--t3); text-align: left; border-bottom: 1px solid var(--line); }
+.n5-tbl td { height: 32px; padding: 0 18px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.n5-tbl .r { text-align: right; } .n5-tbl tfoot td { font-weight: 500; border-bottom: 0; border-top: 1px solid var(--line2); }
+.n5-tbl small { font-size: 11.5px; }
+.n5-def { margin: 0; padding: 12px 18px 14px; border-top: 1px solid var(--line); font: 400 12px/1.5 var(--f5); color: var(--t2); }
+.shell.v5 .rep-goal { display: none; }
+.v5-sel { height: 34px !important; border-radius: 999px !important; }
+@media (max-width: 1180px) { .n5-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .n5-row { flex-direction: column; } .n5-funnel { width: auto; } }
