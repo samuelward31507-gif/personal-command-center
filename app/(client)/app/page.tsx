@@ -326,7 +326,7 @@ export default function CinderApp() {
     <nav className="rail" aria-label="Sections">
       <div className="brand-row">{d.setup?.brand_logo ? <img className="biz-logo" src={d.setup.brand_logo} alt={bizName || "Logo"} /> : <span className="biz-mark" style={brand ? { background: brand } : undefined} aria-hidden="true">{initials(bizName || "B").charAt(0)}</span>}</div>
       <button type="button" className="ws" title={bizName}>
-        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><span className="ws-mark" aria-hidden="true">{initials(bizName || "Y").charAt(0)}</span><span style={{ minWidth: 0, flex: 1 }}><b>{bizName || "Your business"}</b>{demo && <small>Example</small>}</span>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
+        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><span className="ws-mark" aria-hidden="true">{initials(bizName || "Y").charAt(0)}</span><span style={{ minWidth: 0, flex: 1 }}><b>{(bizName || "Your business").replace(/ \(example\)$/, "")}</b>{demo && <small>Example</small>}</span>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
         {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
       </button>
       <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} /><span>Search or jump to</span><kbd>⌘K</kbd></button>
