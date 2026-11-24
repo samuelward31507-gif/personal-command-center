@@ -5,6 +5,7 @@
 // ⌘K finds anyone. Installs to the home screen like an app (/app.webmanifest).
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./app.css";
+import "./v5.css";
 import { Wordmark } from "../brand";
 import { QuotesScreen, QuoteEditor } from "./quotes";
 import { Avatar, Icon, Spinner, fmtPhone, initials, typePhone, useToast } from "./parts";
@@ -161,8 +162,8 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
 
 // ---------- The app ----------
 type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | { kind: "quote"; id: string } | null;
-const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam", "quotes", "help", "plans", "switch", "from"];
-const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Today", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "quotes", l: "Quotes", ic: "quote", n: "4" }, { k: "calendar", l: "Calendar", ic: "cal", n: "5" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Reports", ic: "bars", n: "6" }];
+const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam", "calendar", "help", "plans", "switch", "from"];
+const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Today", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "quotes", l: "Quotes", ic: "quote", n: "4" }, { k: "calendar", l: "Calendar", ic: "cal", n: "5" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Numbers", ic: "bars", n: "6" }];
 
 export default function CinderApp() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
@@ -292,7 +293,7 @@ export default function CinderApp() {
   const mailN = crew ? 0 : mailWaiting(d).length;
   const counts: Partial<Record<Tab, number>> = { inbox: L.needs + mailN, calendar: due.length, invoices: owed };
   const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = crew ? [{ k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }]
-    : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs + mailN }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
+    : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs + mailN }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote" }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
   const phoneTab: Tab = MORE.includes(here) ? "more" : here;
   const active = (k: Tab) => here === k;
 
@@ -301,7 +302,7 @@ export default function CinderApp() {
   else if (open?.kind === "quote") page = <QuoteEditor key={open.id} id={open.id} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => setOpen(null)} />;
   else if (open?.kind === "record") page = <RecordPage key={open.id + (open.draft ? ":d" : "")} id={open.id} ask={open.ask} view={open.view} draft={open.draft} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => { setOpen(null); void reload(); }} />;
   else if (tab === "today" && crew) page = <MyDay d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} />;
-  else if (tab === "today") page = <TodayScreen reload={reload} d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} toast={toast} />;
+  else if (tab === "today") page = <TodayScreen reload={reload} d={d} biz={biz} go={go} wide={wide} api={api} project={project} ask={askQ} toast={toast} demo={demo} />;
   else if (tab === "inbox") page = <InboxScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} push={push} onPush={() => void enablePush()} />;
   else if (tab === "jobs" || tab === "customers") page = <JobsScreen d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} wide={wide} view={tab === "customers" ? "all" : jobsView} setView={v => { setJobsView(v); setTab("jobs"); }} onWinback={() => setSheet("winback")} />;
   else if (tab === "switch") page = <SwitchScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
@@ -313,7 +314,7 @@ export default function CinderApp() {
   else if (tab === "numbers") page = <ReportsScreen d={d} biz={biz} go={go} project={project} api={api} toast={toast} reload={reload} onWinback={() => setSheet("winback")} />;
   else if (tab === "system") page = <SystemScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} toast={toast} api={api} project={project} reload={reload} demo={demo} onSignOut={signOut} />;
   else if (tab === "more") page = <MoreScreen d={d} go={go} owed={owed} />;
-  else if (tab === "help") page = <HelpScreen go={go} />;
+  else if (tab === "help") page = <SystemScreen key="help" view="help" d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} toast={toast} api={api} project={project} reload={reload} demo={demo} onSignOut={signOut} />;
   else page = <SamScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
 
   const catalog = { items: catalogFrom(d.setup), edit: () => setSheet("pricelist") };
@@ -321,35 +322,32 @@ export default function CinderApp() {
   const brand = d.setup?.brand_color && /^#[0-9a-f]{6}$/i.test(d.setup.brand_color) ? d.setup.brand_color : "";
   const tint = (a: number) => brand ? `rgba(${parseInt(brand.slice(1, 3), 16)}, ${parseInt(brand.slice(3, 5), 16)}, ${parseInt(brand.slice(5, 7), 16)}, ${a})` : "";
   const shellStyle = brand ? { "--ember": brand, "--ember-soft": tint(0.12), "--ember-bg": tint(0.1) } as React.CSSProperties : undefined;
-  return <CatalogContext.Provider value={catalog}><div className="shell" style={shellStyle}>
+  return <CatalogContext.Provider value={catalog}><div className="shell v5" style={shellStyle}>
     <nav className="rail" aria-label="Sections">
       <div className="brand-row">{d.setup?.brand_logo ? <img className="biz-logo" src={d.setup.brand_logo} alt={bizName || "Logo"} /> : <span className="biz-mark" style={brand ? { background: brand } : undefined} aria-hidden="true">{initials(bizName || "B").charAt(0)}</span>}</div>
       <button type="button" className="ws" title={bizName}>
-        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><span className="ws-mark" aria-hidden="true">{initials(bizName || "Y").charAt(0)}</span><b>{bizName || "Your business"}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
+        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><span className="ws-mark" aria-hidden="true">{initials(bizName || "Y").charAt(0)}</span><span style={{ minWidth: 0, flex: 1 }}><b>{(bizName || "Your business").replace(/ \(example\)$/, "")}</b>{demo && <small>Example</small>}</span>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
         {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
       </button>
-      <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} />Search<kbd>⌘K</kbd></button>
-      <div className="rail-grp">
-        {top.map(s => <button key={s.k} type="button" className={"ri" + (active(s.k) ? " on" : "")} aria-current={active(s.k) ? "page" : undefined} onClick={() => goTab(s.k)}>
-          <Icon name={s.ic} size={16} />{s.k === "today" ? "Today" : s.l}{counts[s.k] ? <em className={s.k === "inbox" ? "hot" : ""}>{counts[s.k]}</em> : null}</button>)}
-      </div>
-      <div className="rail-lbl">Records</div>
-      <div className="rail-grp">
-        {records.map(r => <button key={r.k} type="button" className={"ri" + (isOn(r.k) ? " on" : "")} aria-current={isOn(r.k) ? "page" : undefined} onClick={() => goTab(r.k)}>
-          <span className={"obj " + r.obj}><Icon name={r.ic} size={12} /></span>{r.l}{counts[r.k] ? <em>{counts[r.k]}</em> : null}</button>)}
-        {!crew && <button type="button" className={"ri" + (active("numbers") ? " on" : "")} onClick={() => goTab("numbers")}><span className="obj reports"><Icon name="bars" size={12} /></span>Reports</button>}
-      </div>
-      {tab === "jobs" && !open && <div className="rail-grp views">
-        <div className="rail-lbl">Views</div>
-        {([["open", "Open", jobCounts.open], ["won", "Won", jobCounts.won], ["all", "All", jobCounts.all]] as const).map(([k, l, n]) =>
-          <button key={k} type="button" className={"ri" + (tab === "jobs" && jobsView === k ? " on" : "")} onClick={() => { setJobsView(k); setOpen(null); if (tab !== "jobs") goTab("jobs"); }}>{l}<em>{n}</em></button>)}
-      </div>}
+      <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} /><span>Search or jump to</span><kbd>⌘K</kbd></button>
+      {(crew ? [{ g: "Run the day", items: [{ k: "inbox" as Tab, l: "Inbox" }, { k: "jobs" as Tab, l: "Jobs" }, { k: "calendar" as Tab, l: "Calendar" }] }] : [
+        { g: "Run the day", items: [{ k: "today" as Tab, l: "Today" }, { k: "inbox" as Tab, l: "Inbox" }, { k: "calendar" as Tab, l: "Calendar" }] },
+        { g: "Sell", items: [{ k: "jobs" as Tab, l: "Jobs" }, { k: "quotes" as Tab, l: "Quotes" }] },
+        { g: "Get paid", items: [{ k: "invoices" as Tab, l: "Money" }, { k: "plans" as Tab, l: "Plans" }] },
+        { g: "People", items: [{ k: "customers" as Tab, l: "Customers" }] },
+        { g: "Business", items: [{ k: "numbers" as Tab, l: "Numbers" }, ...(d.role !== "office" ? [{ k: "system" as Tab, l: "Settings" }] : [])] },
+      ]).map(grp => <div key={grp.g}>
+        <div className="rail-lbl">{grp.g}</div>
+        <div className="rail-grp">{grp.items.map(s => { const on = active(s.k) || (s.k === "system" && (active("sam") || active("help"))) || isOn(s.k);
+          const n = s.k === "system" ? d.unreadFromSam : counts[s.k];
+          return <button key={s.k} type="button" className={"ri" + (on ? " on" : "")} aria-current={on ? "page" : undefined} onClick={() => goTab(s.k)}>
+            <span>{s.l}</span>{n ? <em className={s.k === "inbox" || s.k === "invoices" || s.k === "system" ? "hot" : ""}>{n}</em> : null}</button>; })}</div>
+      </div>)}
       <div className="rail-foot">
         {d.setup?.show_powered === "yes" && <a className="powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by Cinder</a>}
-        <button type="button" className={"ri" + (active("help") ? " on" : "")} onClick={() => goTab("help")}><Icon name="search" size={15} />Help</button>
-        {d.role !== "crew" && d.role !== "office" && <button type="button" className={"ri" + (active("system") || active("sam") ? " on" : "")} onClick={() => goTab("system")}><Icon name="gear" size={15} />Settings{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>}
         {crew ? <button type="button" className="me" onClick={() => void signOut()}><Avatar name="Crew" /><span className="t"><b>Crew</b><small>Sign out</small></span></button>
-          : <button type="button" className="me" onClick={() => goTab("sam")}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{d.owner || "You"}</b><small>Owner</small></span></button>}
+          : <div className="me"><button type="button" className="me-who" onClick={() => goTab("sam")} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, textAlign: "left" }}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{(d.owner || "You").split(" ")[0]}</b><small>Owner</small></span></button>
+            <button type="button" className="me-help" aria-label="Help" title="Help" onClick={() => goTab("help")}><kbd>?</kbd></button></div>}
       </div>
     </nav>
     <div className="main">
@@ -377,9 +375,9 @@ export default function CinderApp() {
 // ---------- More (phone) ----------
 function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
   const items: { k: Tab; l: string; s: string; ic: string; n?: number }[] = [
-    { k: "quotes", l: "Quotes", s: "What's out, who opened it, what's next", ic: "quote" },
+    { k: "calendar", l: "Calendar", s: "Estimates and installs this week", ic: "cal" },
     { k: "invoices", l: "Money", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
-    { k: "numbers", l: "Reports", s: "What came in and what it made", ic: "bars" },
+    { k: "numbers", l: "Numbers", s: "What came in and what it made", ic: "bars" },
     { k: "customers", l: "Customers", s: `${d.customers?.length ?? 0} people`, ic: "users" },
     { k: "switch", l: "Move your business in", s: "From Jobber, QuickBooks, a spreadsheet or your phone", ic: "upload" },
     { k: "from", l: "Coming from Jobber or Housecall Pro", s: "What each thing is called here", ic: "table" },

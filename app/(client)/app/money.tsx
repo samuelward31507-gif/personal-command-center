@@ -5,6 +5,8 @@
 import { useId, useState } from "react";
 import { chosen, dollars, lineTotal, overdue, tiersOf, totals, type Item } from "@/lib/billing";
 import { PAY_METHODS, type CardInvoice, type Payment } from "@/lib/crm";
+import { DEPOSIT_NOTE } from "@/lib/billing";
+import { AreaChart, C } from "./v5-charts";
 import { Avatar, Icon, Sheet, Spinner, ago, dateLabel, fmtPhone, short, todayIso, useArm, usd, type Api, type Toast, inDemo } from "./parts";
 import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
 import type { Biz, Data, Go, InvoiceRow } from "./types";
@@ -259,25 +261,58 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
   const shown = f === "open" ? list.filter(i => i.status === "sent") : f === "draft" ? list.filter(i => i.status === "draft") : f === "paid" ? list.filter(i => i.status === "paid") : list;
   const counts = { open: open.length, draft: list.filter(i => i.status === "draft").length, paid: list.filter(i => i.status === "paid").length, all: list.length };
   return <>
-    <PageHead title="Money" sub={fresh ? "No invoices yet. Here's how money flows." : outstanding ? `${usd(outstanding)} owed to you${late.length ? `, ${usd(lateAmt)} of it past due.` : ", none of it late."}` : "Nothing owed. Everything is paid up."}
-      actions={<>
-        <div className="menu-wrap"><button type="button" className="btn" aria-expanded={exp} onClick={() => setExp(x => !x)}><Icon name="upload" size={13} />Export</button>
+    <header className="v5-top v5">
+      <div>
+        <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase()}</span>{d.project === "demo" && <span className="v5-ex">Example business, sample data</span>}</div>
+        <h1 className="v5-h1">Money</h1>
+        <p className="v5-sub">{fresh ? "No invoices yet. Here's how money flows." : outstanding ? `${usd(outstanding)} owed to you${late.length ? `, ${usd(lateAmt)} of it past due.` : ", none of it late."} Reminders go out on their own.` : "Nothing owed. Everything is paid."}</p>
+      </div>
+      <div className="v5-acts">
+        <div className="menu-wrap"><button type="button" className="b5" aria-expanded={exp} onClick={() => setExp(x => !x)}><Icon name="upload" size={13} />Export</button>
           {exp && <div className="menu pop" role="menu" onMouseLeave={() => setExp(false)}>
             <a role="menuitem" onClick={e => { if (inDemo()) { e.preventDefault(); toast("The example business has nothing to export. Your own export downloads a real file."); } }} href={`/api/app/export?p=${encodeURIComponent(project)}&what=invoices`}>Invoices, as CSV</a>
             <a role="menuitem" onClick={e => { if (inDemo()) { e.preventDefault(); toast("The example business has nothing to export. Your own export downloads a real file."); } }} href={`/api/app/export?p=${encodeURIComponent(project)}&what=payments`}>Payments, as CSV</a>
             <a role="menuitem" onClick={e => { if (inDemo()) { e.preventDefault(); toast("The example business has nothing to export. Your own export downloads a real file."); } }} href={`/api/app/export?p=${encodeURIComponent(project)}`}>Customers, as CSV</a>
             <small>Opens in Excel, Google Sheets or QuickBooks.</small></div>}</div>
         <PriceListButton />
-        <button type="button" className="btn" onClick={go.billing}>Pay link and tax</button>
+        <button type="button" className="b5" onClick={go.billing}>Pay link and tax</button>
         {toBill.length > 0 && <button type="button" className="btn" disabled={!!batch} onClick={() => void billAll()} title="A draft for each won job that has a price and no invoice yet">{batch === "bill" ? <Spinner /> : null}Bill {toBill.length} finished {toBill.length === 1 ? "job" : "jobs"}</button>}
         {drafts.length > 1 && <button type="button" className={"btn" + (armSend ? " ink" : "")} disabled={!!batch} onClick={() => void sendAll()}>{batch === "send" ? <Spinner /> : null}{armSend ? `Tap again to text ${drafts.length} customers` : `Send ${drafts.length} drafts`}</button>}
-        <button type="button" className="btn ink" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New invoice</button>
-      </>} />
+        <button type="button" className="b5 pri" onClick={() => setPicking(true)}>New invoice</button>
+      </div>
+    </header>
+    {!fresh && (() => { // The four figures, money in over 30 days, and what was spent
+      const D = 86400000, days = Array.from({ length: 30 }, (_, k) => new Date(Date.parse(today + "T12:00:00") - (29 - k) * D).toLocaleDateString("en-CA"));
+      const in30 = pays.filter(p => p.paid_on >= days[0] && p.paid_on <= today), prev = pays.filter(p => p.paid_on < days[0] && p.paid_on >= new Date(Date.parse(days[0] + "T12:00:00") - 30 * D).toLocaleDateString("en-CA"));
+      const col = in30.reduce((a, p) => a + p.amount, 0), colPrev = prev.reduce((a, p) => a + p.amount, 0), run = days.map(dd => in30.filter(p => p.paid_on <= dd).reduce((a, p) => a + p.amount, 0));
+      const deps = list.filter(i => i.status === "paid" && i.note === DEPOSIT_NOTE && (board.find(c => c.id === i.thread_id)?.invoice == null));
+      const depSum = deps.reduce((a, i) => a + i.total, 0);
+      const exps = (d.expenses ?? []).filter(x => x.spent_on >= monthStart && x.spent_on <= today), spent = Math.round(exps.reduce((a, x) => a + x.amount, 0) * 100) / 100;
+      const cats = new Map<string, number>(); for (const x of exps) cats.set(x.category, Math.round(((cats.get(x.category) ?? 0) + x.amount) * 100) / 100);
+      const CAT: Record<string, string> = { materials: "Materials", dump: "Dump and disposal", fuel: "Fuel", vehicle: "Vehicle", tools: "Tools", subs: "Subcontractors", other: "Other" };
+      const catRows = [...cats].sort((a, b) => b[1] - a[1]), catMax = Math.max(1, ...catRows.map(c => c[1]));
+      const lastPay = [...in30].sort((a, b) => a.paid_on.localeCompare(b.paid_on)).at(-1);
+      const cents = (v: number) => dollars(v);
+      return <div className="v5 m5">
+        <div className="m5-kpis">
+          <div className="v5-card m5-k"><span className="v5-lab">Owed to you</span><span className="v5-kv">{usd(outstanding)}</span><small className="v5-muted">{lateAmt ? <span className="v5-st bad"><i />{usd(lateAmt)} past due</span> : "None of it late"}</small></div>
+          <div className="v5-card m5-k"><span className="v5-lab">Collected · 30 days</span><span className="m5-v"><span className="v5-kv">{usd(col)}</span>{colPrev > 0 && <span className={"v5-delta " + (col > colPrev ? "up" : "flat")}>{col > colPrev ? "+" : ""}{Math.round(((col - colPrev) / colPrev) * 100)}%</span>}</span><small className="v5-muted">{in30.length} {in30.length === 1 ? "payment" : "payments"}, deposits included</small></div>
+          <div className="v5-card m5-k"><span className="v5-lab">Deposits held</span><span className="v5-kv">{usd(depSum)}</span><small className="v5-muted">{deps.length ? deps.map(i => `${i.customer.split(" ")[0]} ${usd(i.total)}`).join(", ") : "None right now"}</small></div>
+          <div className="v5-card m5-k"><span className="v5-lab">Spent this month</span><span className="v5-kv">{cents(spent)}</span><small className="v5-muted">{exps.length} {exps.length === 1 ? "expense" : "expenses"}</small></div>
+        </div>
+        <div className="m5-row">
+          <section className="v5-card m5-chart" aria-label="Money in, last 30 days"><div className="v5-ch"><span className="v5-ct">Money in, last 30 days<small>running total</small></span><span className="v5-leg"><i style={{ background: C.accent }} />Collected</span></div>
+            <div style={{ padding: "12px 18px 10px" }}><AreaChart labels={days.map(dd => new Date(dd + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }))} series={[{ key: "in", label: "So far", values: run, color: C.accent, fill: true }]}
+              initial={lastPay ? days.indexOf(lastPay.paid_on) : undefined} note={i => { const p = in30.find(x => x.paid_on === days[i]); return p ? { text: `${p.customer}, ${PAY_METHODS.find(m => m[0] === p.method)?.[1].split(",")[0].toLowerCase()}`, value: usd(p.amount) } : null; }}
+              summary={`${usd(col)} collected in the last 30 days.`} /></div></section>
+          <section className="v5-card m5-exp" aria-label="Spent this month"><div className="v5-ch"><span className="v5-ct">Expenses this month</span><span className="v5-dim num">{cents(spent)}</span></div>
+            <div style={{ padding: "8px 18px 14px" }}>{catRows.length ? catRows.map(([k, v]) => <div key={k} className="m5-cat"><span>{CAT[k] ?? k}</span><span className="m5-bar"><i style={{ width: `${(v / catMax) * 100}%` }} /></span><b className="num">{cents(v)}</b></div>)
+              : <p className="v5-dim" style={{ fontSize: 12.5 }}>Nothing logged this month.</p>}
+              <div className="m5-cat tot"><span>Total</span><span /><b className="num">{cents(spent)}</b></div></div></section>
+        </div>
+      </div>; })()}
     <div className="dash money2">
-      {!fresh && <Kpis quiet items={[
-        { label: "Collected this month", value: usd(collected), sub: (() => { const k = pays.filter(p => p.paid_on >= monthStart && !p.refund).length, rf = pays.filter(p => p.paid_on >= monthStart && p.refund).length; return `${k} ${k === 1 ? "payment" : "payments"} recorded${rf ? `, ${rf} ${rf === 1 ? "refund" : "refunds"}` : ""}`; })(), tone: collected ? "up" : "", spark: weeklyIn, sparkTone: "good" },
-        { label: "Days to get paid", value: payDays == null ? "–" : String(payDays), sub: "average, last 90 days" },
-      ]} />}
+
       {fresh && <Guide title="Get paid faster" sub="Invoices go out by text with a Pay button that opens your own payment page. Reminders follow up on their own until the balance is zero. The money never passes through this app."
         steps={[
           { title: "Add your pay link", text: "Square, Stripe, PayPal or your own checkout page. It sits behind every Pay button.", done: biz.payLink, action: <button type="button" className="btn sm" onClick={go.billing}>Add pay link</button> },

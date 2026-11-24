@@ -67,9 +67,15 @@ export function Kpis({ items, quiet }: { items: Kpi[]; quiet?: boolean }) {
 
 /** A page's opening line in the site's two-tone style: the point in ink, the context in grey. */
 export function PageHead({ title, sub, actions, kicker }: { title: string; sub?: string; actions?: React.ReactNode; kicker?: React.ReactNode }) {
-  return <header className="ph">
-    <div className="ph-t">{kicker && <div className="ph-k">{kicker}</div>}<h1><span>{title}</span>{sub && <> <em>{sub}</em></>}</h1></div>
-    {actions && <div className="ph-a">{actions}</div>}
+  // The Nov 24 header: date eyebrow, 30px title, one plain sentence, pill actions (the old .btn ink is the one primary).
+  const eyebrow = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase();
+  return <header className="v5-top v5 ph5">
+    <div>
+      <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{eyebrow}</span>{typeof window !== "undefined" && (() => { try { return sessionStorage.getItem("cinder-demo") === "1"; } catch { return false; } })() && <span className="v5-ex">Example business, sample data</span>}{kicker}</div>
+      <h1 className="v5-h1">{title}</h1>
+      {sub && <p className="v5-sub">{sub}</p>}
+    </div>
+    {actions && <div className="v5-acts ph-a">{actions}</div>}
   </header>;
 }
 

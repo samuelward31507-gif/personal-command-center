@@ -2,7 +2,7 @@
 
 // Inbox: every conversation, the ones waiting on the owner first, with the thread beside the list on a desk.
 // The thread reads like Messages: the customer in grey on the left, Cinder and the owner in blue on the right.
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ReplyKit, SnippetEditor, suggestReply, tabTakes, useSnippets } from "./replies";
 import { Avatar, Empty, Icon, Spinner, ago, clock, dayKey, dayName, first, fmtPhone, type Api, type Toast } from "./parts";
 import { mailWaiting, sourceLabel, type Conv, type Data, type Go, type Text, type Thread } from "./types";
@@ -25,7 +25,7 @@ const STATUS: Record<string, [string, string]> = { auto: ["Replying for you", ""
 const typing = (e: KeyboardEvent) => { const t = e.target as HTMLElement | null; return !!t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable); };
 
 export function InboxScreen({ d, project, api, toast, reload, go, wide, push, onPush }: { d: Data; project: string; api: Api; toast: Toast; reload: () => Promise<void>; go: Go; wide: boolean; push: string; onPush: () => void }) {
-  const [filter, setFilter] = useState<"all" | "new" | "needs" | "waiting" | "booked">("all");
+  const [filter, setFilter] = useState<"all" | "new" | "needs" | "waiting" | "booked" | "auto">(() => (d.live.needs > 0 || mailWaiting(d).length > 0 ? "needs" : "all"));
   const [sel, setSel] = useState<string | null>(null);
   const [hidePush, setHidePush] = useState(true);
   useEffect(() => { try { setHidePush(localStorage.getItem("cinder-push-card") === "hide"); } catch { /* private mode */ } }, []);
@@ -33,7 +33,7 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
   const convs = useMemo(() => {
     const all = L.conversations;
     const dayAgo = Date.now() - 86400000;
-    const list = filter === "needs" ? all.filter(c => c.status === "paused") : filter === "booked" ? all.filter(c => leadState(c).tone === "green") : filter === "waiting" ? all.filter(c => leadState(c).text === "Waiting")
+    const list = filter === "needs" ? all.filter(c => c.status === "paused") : filter === "auto" ? all.filter(c => c.status === "auto") : filter === "booked" ? all.filter(c => leadState(c).tone === "green") : filter === "waiting" ? all.filter(c => leadState(c).text === "Waiting")
       : filter === "new" ? all.filter(c => c.created && Date.parse(c.created) > dayAgo) : all;
     // Your turn first, then newest.
     return [...list].sort((a, b) => Number(b.status === "paused") - Number(a.status === "paused") || (b.at ?? "").localeCompare(a.at ?? ""));
@@ -68,35 +68,51 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
       ["waiting", "Waiting", L.conversations.filter(c => leadState(c).text === "Waiting").length], ["booked", "Booked", L.conversations.filter(c => leadState(c).tone === "green").length]] as const).map(([k, l, n]) =>
     <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}{n ? <em>{n}</em> : null}</button>)}</div>;
   const current = convs.find(c => c.id === sel) ?? L.conversations.find(c => c.id === sel);
-  return <>
-    <header className="tb"><h1 className="h1 two">Inbox. <span>{L.leadsToday ? `${L.leadsToday} new today` : L.needs ? `${L.needs} waiting on you` : "Every lead answered"}{L.replySecWeek != null ? `, first reply in ${secText(L.replySecWeek)}` : ""}.</span></h1>
-      <div className="acts"><button type="button" className="btn ink" onClick={go.addLead}><Icon name="plus" size={14} />New lead{wide && <kbd>c</kbd>}</button></div></header>
-    <div className="inbox">
-      <div className="list">
-        <div className="filt">{views}</div>
-        {!hidePush && (push === "off" || push === "ios-install") && <div className="card box" style={{ margin: 12 }}>
-          <b className="t-em">Turn on notifications</b><p className="fine" style={{ marginTop: 2 }}>{push === "off" ? "New leads, bookings and replies that need you." : "Tap Share, then “Add to Home Screen”, and open the app from there."}</p>
-          <div className="acts-row" style={{ marginTop: 8 }}>{push === "off" && <button type="button" className="btn ink sm" onClick={onPush}>Turn on</button>}
-            <button type="button" className="btn ghost sm" onClick={() => { setHidePush(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>}
-        {showMails && <section><div className="grp hot"><b>Lead emails, no phone</b><span>{mails.length}</span></div>
-          {mails.map(m => { const key = "mail:" + m.id, who = m.name || m.email || sourceLabel(m.source); return <Fragment key={m.id}>
-            <button type="button" className={"cv lead" + (sel === key || openMail === m.id ? " sel" : "")} aria-current={sel === key ? "true" : undefined} aria-expanded={wide ? undefined : openMail === m.id}
+  const yourTurn = L.needs + mails.length, auto = L.conversations.filter(c => c.status === "auto").length;
+  const eyebrow = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase();
+  const pill = (c: Conv): [string, string] => c.status === "paused" ? ["Your turn", "acc"] : c.status === "opted_out" ? ["Opted out", ""] : c.stage === "won" ? ["Won", "good"] : c.stage === "lost" ? ["Lost", ""]
+    : c.status === "booked" || c.stage === "booked" ? ["Booked", ""] : c.stage === "quoted" ? ["Quote out", ""] : ["Replying for you", ""];
+  const ini = (s: string) => { const p = s.replace(/[^A-Za-z ]/g, "").split(" ").filter(Boolean); return ((p[0]?.[0] ?? "") + (p[1]?.[0] ?? "")).toUpperCase() || "#"; };
+  const when = (iso: string | null) => { if (!iso) return ""; const dd = new Date(iso), now = new Date(); const sameDay = dd.toDateString() === now.toDateString();
+    return sameDay ? clock(iso) : Date.now() - dd.getTime() < 6 * 86400000 ? dd.toLocaleDateString("en-US", { weekday: "short" }) + " " + clock(iso) : dd.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+  return <div className="v5 v5-inbox">
+    <header className="v5-top">
+      <div>
+        <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{eyebrow}</span>{d.project === "demo" && <span className="v5-ex">Example business, sample data</span>}</div>
+        <h1 className="v5-h1">Inbox</h1>
+        <p className="v5-sub">Every text, call, form and lead site in one thread per customer. {yourTurn ? `${yourTurn} ${yourTurn === 1 ? "is" : "are"} your turn.` : "Nothing is waiting on you."}</p>
+      </div>
+      <div className="v5-acts"><button type="button" className="b5 pri" onClick={go.addLead}>New lead</button></div>
+    </header>
+    <div className="v5-body ib-grid">
+      <section className="v5-card ib-list" aria-label="Conversations">
+        <div className="ib-filt"><div className="v5-seg" role="tablist" aria-label="Filter">
+          {([["needs", "Your turn", yourTurn], ["auto", "Replying for you", auto], ["all", "All", 0]] as const).map(([k, l, n]) =>
+            <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}{n ? ` ${n}` : ""}</button>)}
+        </div></div>
+        {!hidePush && (push === "off" || push === "ios-install") && <div className="ib-push">
+          <b>Turn on notifications</b><p>{push === "off" ? "New leads, bookings and replies that need you." : "Tap Share, then \u201cAdd to Home Screen\u201d, and open the app from there."}</p>
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>{push === "off" && <button type="button" className="b5 sm pri" onClick={onPush}>Turn on</button>}
+            <button type="button" className="b5 sm ghost" onClick={() => { setHidePush(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>}
+        <div className="ib-rows">
+          {showMails && mails.map(m => { const key = "mail:" + m.id, who = m.name || m.email || sourceLabel(m.source); return <Fragment key={m.id}>
+            <button type="button" className={"ib-row" + (sel === key || openMail === m.id ? " sel" : "")} aria-current={sel === key ? "true" : undefined} aria-expanded={wide ? undefined : openMail === m.id}
               onClick={() => (wide ? setSel(key) : setOpenMail(o => (o === m.id ? null : m.id)))}>
-              <span className="cv-dot on" aria-label="Your turn" />
-              <span style={{ minWidth: 0 }}><span className="cv-top"><b>{who}</b><time>{ago(m.at)}</time></span>
-                <small>No phone, {sourceLabel(m.source || "email")} by email. {m.message || m.subject}</small></span>
+              <span className="v5-av" aria-hidden="true">{ini(who)}</span>
+              <span className="ib-t"><span className="ib-top"><b>{who}</b><time>{when(m.at)}</time></span>
+                <small>{sourceLabel(m.source || "email")} by email, no phone. {m.message || m.subject}</small><span className="v5-pill acc">Your turn</span></span>
             </button>
             {!wide && openMail === m.id && <div className="mail-inline"><MailWaiting r={m} go={go} toast={toast} api={api} project={project} reload={reload} /></div>}
-          </Fragment>; })}</section>}
-        {groups.length ? groups.map(g => <section key={g.day}><div className={"grp" + (g.day === "Your turn" ? " hot" : "")}><b>{g.day}</b><span>{g.items.length}</span></div>
-          {g.items.map(c => { const ls = leadState(c); return <button key={c.id} type="button" data-cv={c.id} className={"cv lead" + (sel === c.id ? " sel" : "")} aria-current={sel === c.id ? "true" : undefined} onClick={() => pick(c.id)}>
-            <span className={"cv-dot" + (c.status === "paused" ? " on" : "")} aria-label={c.status === "paused" ? "Your turn" : undefined} />
-            <span style={{ minWidth: 0 }}><span className="cv-top"><b>{c.name}</b><time>{ago(c.at)}</time></span>
-              <small title={`${sourceLabel(c.source)}, ${ls.text}`}>{c.last}</small></span>
-          </button>; })}</section>)
-          : showMails ? null : <Empty title={filter === "all" ? "No leads yet" : filter === "needs" ? "Nothing waiting on you" : "No bookings yet"} text={filter === "all" ? "Calls, texts and form leads show up here the moment they come in." : undefined} />}
-      </div>
-      {wide && <aside className="conv" aria-label="Conversation">{selMail
+          </Fragment>; })}
+          {convs.map(c => { const [pl, tone] = pill(c); return <button key={c.id} type="button" data-cv={c.id} className={"ib-row" + (sel === c.id ? " sel" : "")} aria-current={sel === c.id ? "true" : undefined} onClick={() => pick(c.id)}>
+            <span className="v5-av" aria-hidden="true">{ini(c.name)}</span>
+            <span className="ib-t"><span className="ib-top"><b>{c.name}</b><time>{when(c.at)}</time></span>
+              <small>{c.last}</small><span className={"v5-pill " + tone}>{pl}</span></span>
+          </button>; })}
+          {!convs.length && !showMails && <div className="v5-empty">{filter === "needs" ? "Nothing is waiting on you. New leads get answered for you." : filter === "auto" ? "No conversations are being answered for you right now." : "No leads yet. Calls, texts and form leads show up here the moment they come in."}</div>}
+        </div>
+      </section>
+      {wide && <section className="v5-card ib-conv" aria-label="Conversation">{selMail
         ? <div className="mail-pane">
             <header><b>{selMail.name || selMail.email || sourceLabel(selMail.source)}</b><small>{sourceLabel(selMail.source || "email")} by email, {ago(selMail.at)}</small></header>
             <dl><dt>From</dt><dd>{selMail.from}</dd><dt>Subject</dt><dd>{selMail.subject}</dd>{selMail.email && <><dt>Email</dt><dd>{selMail.email}</dd></>}</dl>
@@ -105,9 +121,38 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
           </div>
         : sel && !sel.startsWith("mail:")
         ? <ThreadView key={sel} id={sel} project={project} canCall={d.canCall} api={api} toast={toast} onChange={() => void reload()} onRecord={() => go.record(sel)} embedded conv={current} />
-        : <Empty title="No conversation open" text="Pick one on the left, or press j." />}</aside>}
+        : <div className="v5-empty" style={{ margin: "auto" }}>Pick a conversation on the left, or press J.</div>}</section>}
+      {wide && sel && !sel.startsWith("mail:") && current && <LeadCard d={d} conv={current} go={go} />}
     </div>
-  </>;
+  </div>;
+}
+
+/** The lead card beside the thread: made from what came in, the source stamped on arrival. */
+function LeadCard({ d, conv, go }: { d: Data; conv: Conv; go: Go }) {
+  const c = (d.board ?? []).find(b => b.id === conv.id);
+  const appt = d.appointments.filter(a => a.thread_id === conv.id).sort((a, b) => a.starts_at.localeCompare(b.starts_at)).find(a => Date.parse(a.starts_at) > Date.now() - 12 * 3600000);
+  const STAGE: Record<string, string> = { new: "New", booked: "Estimate booked", quoted: "Quoted", won: "Won", lost: "Lost" };
+  const value = c ? c.value ?? c.quote?.amount ?? (c.ballpark ? c.ballpark.high : null) : null;
+  const usd = (v: number) => "$" + Math.round(v).toLocaleString("en-US");
+  const rows: [string, ReactNode][] = [
+    ["Stage", <span key="s" className="v5-pill">{STAGE[c?.stage ?? ""] ?? (conv.status === "booked" ? "Estimate booked" : "New")}</span>],
+    ["Source", sourceLabel(conv.source)],
+    ["Job", c?.line || "Not known yet"],
+    ["Address", String(c?.details.address ?? "") || "Not given yet"],
+    ["Estimate", appt ? new Date(appt.starts_at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Not booked"],
+    ["Likely value", value ? usd(value) : "Not priced yet"],
+    ["Came in", conv.created ? new Date(conv.created).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "–"],
+    ["First reply", conv.replySec != null ? `${conv.replySec}s` : "–"],
+  ];
+  return <aside className="v5-card ib-lead" aria-label="Lead card">
+    <div className="v5-ct">Lead card</div>
+    <p className="v5-dim" style={{ fontSize: 12, margin: "2px 0 8px" }}>Made automatically when the {sourceLabel(conv.source).toLowerCase()} came in</p>
+    {rows.map(([k, v]) => <div key={k} className="ib-kv"><span className="v5-lab">{k}</span><span>{v}</span></div>)}
+    <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+      <button type="button" className="b5 sm" onClick={() => go.record(conv.id, { view: "job" })}>Open job</button>
+      {appt && <button type="button" className="b5 sm" onClick={() => go.tab("calendar")}>Move estimate</button>}
+    </div>
+  </aside>;
 }
 
 /** One conversation: a log of who said what, with the composer under it. */
@@ -169,6 +214,7 @@ export function ThreadView({ id, project, canCall, api, toast, onBack, onChange,
         })}
       <div ref={end} />
     </div>
+    {mine && <p className="ib-handoff"><i aria-hidden="true" /><span><b>Handed to you.</b> Replies on this thread are paused until you answer or turn them back on.</span></p>}
     {t && t.status !== "opted_out" && <div className="compose">
       {editSnips && <SnippetEditor list={snips.list} onSave={snips.save} onClose={() => setEditSnips(false)} />}
       <form className="box" onSubmit={async e => { e.preventDefault(); if (draft.trim() && await act("reply", { body: draft }, "Sent from your business number.")) setDraft(""); }}>

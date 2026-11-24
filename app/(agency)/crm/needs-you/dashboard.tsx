@@ -13,6 +13,7 @@ import { timeZoneFor, timeZoneForPhone } from "@/lib/local-time";
 import { auditText, bookedText, tryDemoLink, prepLink, prepText, confirmText, joinLink, lateText, meetingNudge, meetingWhen, reminderText, type MeetingStep, resolveTimeZone, smsHref, infoText, infoFollowUpText, pickDemoLink, nicheFor, loomText, loomPoints, referralText, hiringText } from "@/lib/sms-templates";
 import { useWorkspace } from "../../use-workspace";
 import "./dashboard.css";
+import "../../../(client)/app/v5.css";
 
 type Board = {
   today: { calls: number; connects: number; meetings: number };
@@ -393,55 +394,50 @@ export default function Dashboard() {
   const shortAgo = (iso: string | null) => { if (!iso) return "—"; const d = Math.floor((Date.now() - Date.parse(iso)) / 86400000); return d <= 0 ? "Today" : d === 1 ? "1d" : d + "d"; };
 
   return <div className="u-page db-page" role="region" aria-label="Today">
-    <div className="u-head td8-head">
-      <div className="td8-title">
-        <p className="td8-date">{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
-        <h1 className="u-title">Today</h1>
-        <p className="td8-sub">{needs ? <><span className="td8-hot">{needs} {needs === 1 ? "thing" : "things"}</span> {needs === 1 ? "needs" : "need"} you.</> : "Nothing needs you right now."}{openMrr > 0 && <> <b>{usd(openMrr)}/mo</b> in open deals.</>}</p>
-        {lv && <p className="td8-live" aria-live="polite"><i aria-hidden="true" /><span className="g">Live</span><span key={li} className="td8-live-t"><b>{lv.who}</b> {lv.what}{lv.when && <em> · {lv.when}</em>}</span></p>}
+    <header className="u-head v5-top v5 s5-top">
+      <div>
+        <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase()}</span></div>
+        <h1 className="v5-h1">Good {now.getHours() < 12 ? "morning" : now.getHours() < 17 ? "afternoon" : "evening"}{ws.ownerFirstName ? `, ${ws.ownerFirstName}` : ""}</h1>
+        <p className="v5-sub">{needs ? `${needs} ${needs === 1 ? "thing needs" : "things need"} you.` : "Nothing needs you right now."}{openMrr > 0 ? ` ${usd(openMrr)}/mo in open deals` : ""}{upcoming.length ? `${openMrr > 0 ? "," : ""} ${upcoming.length} ${upcoming.length === 1 ? "meeting" : "meetings"} coming up.` : openMrr > 0 ? "." : ""}</p>
       </div>
-      <div className="u-head-actions">
-        {upcoming.length > 0 && <Link className="u-btn u-btn-bare td-hide-sm" href="/crm/calendar">{upcoming.length} meeting{upcoming.length === 1 ? "" : "s"}</Link>}
-        <Link className="u-btn u-btn-light" href="/crm/call">Start calling <kbd>C</kbd></Link>
+      <div className="v5-acts">
+        <button type="button" className="b5" onClick={() => window.dispatchEvent(new Event("cinder:command"))}>Ask Cinder</button>
+        <Link className="b5 pri" href="/crm/call">Start calling</Link>
       </div>
+    </header>
+    <div className="v5 s5-figs">
+      <Link href="/crm/finance" className="v5-card s5-hero">
+        <span className="v5-lab">Monthly recurring</span>
+        <span className="s5-hv"><span className="v5-hero">{b ? usd(b.recurring.mrr) : "–"}</span><span className="v5-muted">/mo</span></span>
+        <span className="v5-muted">{b ? `${b.recurring.clients} ${b.recurring.clients === 1 ? "client" : "clients"} · ${usd(Math.max(0, MOVE_OUT_MRR - b.recurring.mrr))} a month to the ${usd(MOVE_OUT_MRR)} move-out number` : "\u00a0"}</span>
+        <span className="s5-meter" role="img" aria-label={`${usd(b?.recurring.mrr ?? 0)} of ${usd(MOVE_OUT_MRR)} a month`}><i style={{ width: Math.min(100, ((b?.recurring.mrr ?? 0) / MOVE_OUT_MRR) * 100) + "%" }} /><u /></span>
+        <span className="s5-ml"><span>$0</span><span>Move-out {usd(MOVE_OUT_MRR)}/mo</span></span>
+      </Link>
+      {(() => { // Dials: the last five weekdays against the daily target
+        const days = (b?.days ?? []).filter(x => { const wd = new Date(x.date + "T12:00:00").getDay(); return wd > 0 && wd < 6; }).slice(-5);
+        const sum = days.reduce((a, x) => a + x.calls, 0), max = Math.max(target, ...days.map(x => x.calls));
+        return <Link href="/crm/scoreboard" className="v5-card s5-dials">
+          <span className="v5-lab">Dials · last 5 weekdays</span>
+          <span className="s5-hv"><span className="v5-kv">{sum}</span><span className="v5-muted">of {target * 5}</span></span>
+          <span className="s5-bars" role="img" aria-label={days.map(x => `${x.date}: ${x.calls}`).join(", ")}>{days.map(x => <span key={x.date} className="s5-bar"><i style={{ height: `${(x.calls / max) * 100}%`, background: x.calls >= target ? "var(--acc)" : "#c4c8cf" }} /><small>{new Date(x.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" }).charAt(0)}</small></span>)}<u style={{ bottom: `${(target / max) * 100}%` }} /></span>
+          <span className="v5-muted">today {b?.today.calls ?? 0} of {target}{b?.streak ? ` · ${b.streak}-day streak` : ""}</span>
+        </Link>; })()}
+      {(() => { // Open deals by stage
+        const rows = (b?.pipeline ?? []).filter(p => p.deals > 0), setup = rows.reduce((a, p) => a + p.setup, 0), n = rows.reduce((a, p) => a + p.deals, 0);
+        const shade = ["#c4c8cf", "#8b9098", "#f9a48f", "#f2431d", "#b3461c", "#121417"];
+        return <Link href="/crm/pipeline" className="v5-card s5-deals">
+          <span className="v5-lab">Open deals</span>
+          <span className="s5-hv"><span className="v5-kv">{usd(pipeTotal)}</span><span className="v5-muted">/mo + {usd(setup)} setup</span></span>
+          <span className="s5-stack">{rows.map((p, i) => <i key={p.stage} style={{ flex: Math.max(1, p.deals), background: shade[i % shade.length] }} />)}</span>
+          <span className="s5-leg">{rows.map((p, i) => <span key={p.stage} className="v5-leg"><i className="sq" style={{ background: shade[i % shade.length] }} />{({ interested: "Interested", meeting_booked: "Meeting booked", meeting_held: "Demo held", proposal_sent: "Proposal sent" } as Record<string, string>)[p.stage] ?? STAGE_LABELS[p.stage as DealStage] ?? p.stage} {p.deals}</span>)}{!rows.length && <span className="v5-muted">No open deals yet.</span>}</span>
+          <span className="v5-dim" style={{ fontSize: 12 }}>{n} {n === 1 ? "deal" : "deals"}</span>
+        </Link>; })()}
     </div>
 
     <div className="td-shell">
       <div className="td-main">
-      <div className="td8-figs" aria-label="Today's numbers">
-        <Link href="/crm/scoreboard" className="td8-fig"><span className="k">Calls today</span><span className="v">{b ? b.today.calls : "—"}<small>of {target}</small></span>
-          <span className="td8-meter" aria-hidden="true"><i style={{ width: callsPct + "%" }} /><u style={{ left: pace * 100 + "%" }} /></span>
-          <span className="c">{b ? <>{onPace ? "On pace" : "Behind pace"} · <b>{left}</b> to go{b.streak ? <> · {b.streak}-day streak</> : null}</> : "\u00a0"}</span></Link>
-        <Link href="/crm/calendar" className="td8-fig"><span className="k">Meetings this week</span><span className="v">{b ? b.week.meetings : "—"}<small>of {WEEKLY_MEETING_TARGET}</small></span>
-          <span className="td8-sq" aria-hidden="true">{Array.from({ length: WEEKLY_MEETING_TARGET }, (_, i) => <i key={i} className={i < (b?.week.meetings ?? 0) ? "on" : ""} />)}</span>
-          <span className="c">{b ? <><b>{b.today.connects}</b> conversation{b.today.connects === 1 ? "" : "s"} today</> : "\u00a0"}</span></Link>
-        <Link href="/crm/pipeline" className="td8-fig"><span className="k">Open pipeline</span><span className="v">{b ? usd(pipeTotal) : "—"}<small>/mo</small></span>
-          <span className="td8-split" aria-hidden="true">{(b?.pipeline ?? []).filter(p => p.monthly > 0).map((p, i) => <i key={p.stage} style={{ width: (p.monthly / Math.max(1, pipeTotal)) * 100 + "%", opacity: 1 - i * 0.18 }} />)}</span>
-          <span className="c">{b ? <>{b.pipeline.reduce((a, p) => a + p.deals, 0)} deals · {(b.pipeline ?? []).filter(p => p.deals).map(p => STAGE_LABELS[p.stage as DealStage] ?? p.stage).slice(0, 2).join(", ")}</> : "\u00a0"}</span></Link>
-        <Link href="/crm/finance" className="td8-fig"><span className="k">MRR</span><span className="v">{b ? usd(b.recurring.mrr) : "—"}<small>/mo</small></span>
-          <span className="td8-meter" aria-hidden="true"><i style={{ width: Math.min(100, ((b?.recurring.mrr ?? 0) / MOVE_OUT_MRR) * 100) + "%" }} /></span>
-          <span className="c">{b ? <><b>{usd(Math.max(0, MOVE_OUT_MRR - b.recurring.mrr))}</b> to the move-out number · {b.recurring.clients} client{b.recurring.clients === 1 ? "" : "s"}</> : "\u00a0"}</span></Link>
-      </div>
-      <p className="td-brief" aria-live="polite">{written ?? (loadingBrief || dbrief === undefined ? "\u00a0" : brief.length ? brief : "Nothing new overnight. Make the first call and the day starts moving.")}</p>
-      <p className="td-brief-meta">{dbrief ? <>Written by Cinder at {new Date(dbrief.generatedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} from your calls, meetings and deals.</> : dbrief === null ? <>Cinder writes this every morning at 5.</> : null}
-        {dbrief !== undefined && <button type="button" className="td-rewrite" onClick={writeNow} disabled={writing}>{writing ? "Writing…" : dbrief ? "Rewrite" : "Write it now"}</button>}</p>
-
-      <form className="td-ask" onSubmit={e => { e.preventDefault(); if (ask.trim()) window.location.href = askHref(ask.trim()); }}>
-        <input value={ask} onChange={e => setAsk(e.target.value)} placeholder="Ask Cinder or tell it what to do…" aria-label="Ask Cinder" maxLength={500} />
-        <div className="td-ask-row">
-          <span className="lg-pill" data-tone="grey">Prospects</span><span className="lg-pill" data-tone="grey">Calls</span><span className="lg-pill" data-tone="grey">Deals</span>
-          <button type="submit" className="td-ask-send" disabled={!ask.trim()} aria-label="Ask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6" /></svg></button>
-        </div>
-      </form>
-      <div className="td-sugg">
-        <Link href={askHref("Who should I call first today, and why?")}><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.5 2 6 6 2-6 2-2 6.5-2-6.5-6-2 6-2 2-6Z" /></svg>Who should I call first?</Link>
-        {next ? <Link href={askHref(`Prep me for my meeting with ${next.contactCompany || next.contactName || next.title}.`)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5" /><path d="M7.5 3v4M16.5 3v4M4 10h16" /></svg>Prep for {next.contactCompany || next.contactName || "my next meeting"}</Link>
-          : <Link href={askHref("Which deals are stuck and what should I do about them?")}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 16 10 10l4 4 6-8" /></svg>Which deals are stuck?</Link>}
-        <Link href={askHref("Recap my last call and tell me the next step.")}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z" /></svg>Recap my last call</Link>
-      </div>
-
       <section className="td-sec">
-        <div className="td-sh">Your move{drafts.length > 0 && <span className="ct">{drafts.length}</span>}<span className="r td8-keys"><kbd>J</kbd><kbd>K</kbd> to move <kbd>↵</kbd> open{upcomingTexts > 0 && <> · {upcomingTexts} more due this week</>}</span></div>
+        <div className="td-sh">Needs you{drafts.length > 0 && <span className="ct">{drafts.length}</span>}<span className="r td8-keys"><kbd>J</kbd><kbd>K</kbd> to move <kbd>↵</kbd> open{upcomingTexts > 0 && <> · {upcomingTexts} more due this week</>}</span></div>
         <div className="td-card">
           {list === null ? <p className="td-empty" role="status">Loading…</p> : drafts.length === 0 ? <p className="td-empty">Nothing to send right now. Follow-ups land here, already written, the moment they&apos;re due.</p>
             : shownDrafts.map((t, i) => <DraftCard key={t.key} active={i === Math.min(sel, shownDrafts.length - 1)} name={t.name || t.title} website={t.website} why={t.why} body={t.body} href={t.href.startsWith("/") ? t.href : undefined}

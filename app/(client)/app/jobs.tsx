@@ -12,6 +12,7 @@ import { Chip, FieldIcon, Stg } from "./sources";
 import { Inspector } from "./record";
 import { sourceLabel, type Biz, type Data, type Go } from "./types";
 import { Guide, Kpis, PageHead } from "./charts";
+import { StackBar, C } from "./v5-charts";
 
 type Tone = "blue" | "red" | "green" | "amber" | "";
 export type JobsView = "open" | "won" | "all";
@@ -106,7 +107,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
     const extra: Card[] = (d.customers ?? []).filter(c => !seen.has(c.id)).map(c => ({ id: c.id, name: c.name, phone: c.phone, source: c.source, status: c.status, stage: (c.stage as Stage) || "won", details: (c.address ? { address: c.address } : {}) as Card["details"], line: c.line, value: c.spent || null, ballpark: null, notes: "", next: null, at: c.last, quote: null, install: null, installTime: null, installDays: 1, onCalendar: false, reviewAuto: false, reviewSent: null, pastCustomer: true, invoice: null, job: {}, costs: { materials: 0, labor: 0, other: 0 } }));
     return [...cards, ...extra];
   }, [cards, d.customers]);
-  const [mode, setMode] = useState<"table" | "board">("table");
+  const [mode, setMode] = useState<"table" | "board">(view === "all" ? "table" : "board");
   const [q, setQ] = useState(""), [src, setSrc] = useState("any"), [lane, setLane] = useState<"all" | Lane>("all");
   const [sel, setSel] = useState<string | null>(null);
   const [who, setWho] = useState<"all" | Who>("all");
@@ -186,20 +187,35 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
   const laneOptions: { key: "all" | Lane; label: string; count?: number }[] = [{ key: "all", label: "All", count: base.length }, ...LANES.map(l => ({ key: l as "all" | Lane, label: LANE_LABEL[l], count: base.filter(c => laneOf(c) === l).length })).filter(o => o.count)];
 
   return <>
-    <PageHead title={view === "all" ? "Customers" : "Jobs"} sub={view === "open" ? `${counts.open} open, ${usd(pipeline)} in play.` : view === "won" ? `${counts.won} won.` : `${counts.all} people.`}
-      actions={<>
-        {!wide && <div className="views" role="tablist" aria-label="View">
+    <header className="v5-top">
+      <div>
+        <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase()}</span>{d.project === "demo" && <span className="v5-ex">Example business, sample data</span>}</div>
+        <h1 className="v5-h1">{view === "all" ? "Customers" : "Jobs"}</h1>
+        <p className="v5-sub">{view === "open" ? `${counts.open} open, ${usd(pipeline)} in play.` : view === "won" ? `${counts.won} won.` : (() => { const m = Date.now() - 30 * 86400000; const fresh = everyone.filter(c => Date.parse(c.stageAt ?? c.at) > m || Date.parse(c.at) > m); return `${counts.all} people. ${d.live.leads} leads in the last 30 days, ${d.live.booked} booked an estimate.`; })()}</p>
+      </div>
+      <div className="v5-acts">
+        {!wide && <div className="v5-seg" role="tablist" aria-label="View">
           {([["open", "Open", counts.open], ["won", "Won", counts.won], ["all", "All", counts.all]] as const).map(([k, l, n]) =>
-            <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => { setView(k); setSel(null); }}>{l}<em>{n}</em></button>)}
-          {!biz.crew && <button type="button" role="tab" aria-selected={false} onClick={() => go.tab("plans")}>Plans<em>{(d.plans ?? []).filter(p => p.status === "active").length}</em></button>}
+            <button key={k} type="button" role="tab" aria-selected={view === k} className={view === k ? "on" : ""} onClick={() => { setView(k); setSel(null); }}>{l} {n}</button>)}
         </div>}
-        {wide && <div className="seg" role="tablist" aria-label="Layout">
-          <button type="button" role="tab" aria-selected={mode === "table"} className={mode === "table" ? "on" : ""} onClick={() => setMode("table")} title="Table (t)"><Icon name="table" size={13} />Table</button>
-          <button type="button" role="tab" aria-selected={mode === "board"} className={mode === "board" ? "on" : ""} onClick={() => setMode("board")} title="Board (b)"><Icon name="jobs" size={13} />Board</button></div>}
-        {wide && d.winback && d.winback.past > 0 && <button type="button" className="btn" onClick={onWinback}>Text past customers</button>}
-        {wide && <button type="button" className="btn" onClick={go.importCustomers}>Import</button>}
-        <button type="button" className="btn ink" onClick={go.addLead} title="Add lead (c)"><Icon name="plus" size={14} />{wide ? "New lead" : "New"}{wide && <kbd>c</kbd>}</button>
-      </>} />
+        {wide && view !== "all" && <div className="v5-seg" role="tablist" aria-label="Layout">
+          <button type="button" role="tab" aria-selected={mode === "board"} className={mode === "board" ? "on" : ""} onClick={() => setMode("board")} title="Board (b)">Board</button>
+          <button type="button" role="tab" aria-selected={mode === "table"} className={mode === "table" ? "on" : ""} onClick={() => setMode("table")} title="Table (t)">Table</button></div>}
+        {wide && d.winback && d.winback.past > 0 && view === "all" && <button type="button" className="b5" onClick={onWinback}>Text past customers</button>}
+        {wide && <button type="button" className="b5" onClick={go.importCustomers}>Import</button>}
+        <button type="button" className="b5 pri" onClick={go.addLead} title="Add lead (c)">New lead</button>
+      </div>
+    </header>
+    {view === "open" && (() => { // Booked to won, not paid: every job with a price, by stage
+      const inLane = (l: Lane) => cards.filter(c => !c.pastCustomer && laneOf(c) === l);
+      const priced = (l: Lane) => inLane(l).reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
+      const parts = [{ key: "booked", label: "Estimate booked", n: inLane("booked").length, v: priced("booked"), color: "#c4c8cf" }, { key: "quoted", label: "Quoted", n: inLane("quoted").length, v: priced("quoted"), color: C.light }, { key: "won", label: "Won, not paid", n: inLane("won").length, v: priced("won"), color: C.accent }];
+      const total = parts.reduce((a, p) => a + p.v, 0), withPrice = parts.reduce((a, p) => a + p.n, 0), fresh = inLane("new").length;
+      return <section className="v5-card jobs-sum" aria-label="Booked to won, not paid">
+        <div className="js-h"><span className="v5-lab">Booked to won, not paid</span><span className="v5-kv">{usd(total)}</span><span className="v5-muted">{withPrice} {withPrice === 1 ? "job" : "jobs"} with a price</span></div>
+        <StackBar height={8} label={parts.map(p => `${p.label} ${usd(p.v)}`).join(", ")} parts={parts.map(p => ({ key: p.key, value: p.v, color: p.color }))} />
+        <div className="js-leg">{parts.map(p => <span key={p.key} className="v5-leg"><i className="sq" style={{ background: p.color }} />{p.label} {p.n} · {usd(p.v)}</span>)}{fresh > 0 && <span className="v5-leg"><i className="sq" style={{ background: "var(--bg2)" }} />New {fresh} (no price yet)</span>}</div>
+      </section>; })()}
     <div className={"split" + (sel && wide ? " has-insp" : "") + (slim ? " docked" : "")}>
       <div className="pane list"><div className="dash jobs-dash">
         <section className="panel jobs-panel">
@@ -281,11 +297,13 @@ function PhoneList({ cards, open }: { cards: Card[]; open: (id: string) => void 
 
 function Board({ cards, sel, drag, over, setDrag, setOver, move, open, who }: { who: (cell: string) => string; cards: Card[]; sel: string | null; drag: string | null; over: Lane | null; setDrag: (v: string | null) => void; setOver: (f: Lane | null | ((o: Lane | null) => Lane | null)) => void; move: (id: string, s: Lane) => void; open: (id: string) => void }) {
   const today = todayIso();
-  return <div className="board">{LANES.map(l => { const list = cards.filter(c => laneOf(c) === l); const total = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
+  const monthAgo = Date.now() - 30 * 86400000;
+  return <div className="board">{LANES.filter((l): boolean => l !== "done").map(l => { const list = cards.filter(c => laneOf(c) === l && (l !== "lost" || !c.stageAt || Date.parse(c.stageAt) > monthAgo)); const total = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
     return <section key={l} className={"col-b" + (over === l ? " over" : "")} aria-label={LANE_LABEL[l]}
       onDragOver={e => { if (drag) { e.preventDefault(); setOver(l); } }} onDragLeave={() => setOver(o => o === l ? null : o)}
       onDrop={e => { e.preventDefault(); setOver(null); if (drag) move(drag, l); setDrag(null); }}>
-      <h2><Stg stage={l === "done" ? "won" : l}>{l === "booked" ? "Booked" : LANE_LABEL[l]}</Stg><em>{list.length}</em><b>{total ? short(total) : ""}</b></h2>
+      <h2><span className="bh-t">{l === "booked" ? "Estimate booked" : l === "lost" ? "Lost · last 30 days" : LANE_LABEL[l]}</span><em>{list.length}</em><b>{total ? usd(total) : ""}</b></h2>
+      {l === "lost" && <p className="lost-note">A job can only move here with a reason.</p>}
       <div className="cards">{list.length ? list.map(c => { const n = nextUp(c, today), name = c.name || fmtPhone(c.phone), days = daysIn(c); return <button key={c.id} type="button" className={"jcard" + (sel === c.id ? " sel" : "")} draggable onDragStart={() => setDrag(c.id)} onDragEnd={() => { setDrag(null); setOver(null); }} onClick={() => open(c.id)}>
         <span className="n"><Avatar name={name} size="sm" /><span>{name}</span></span>
         <span className="kv-r"><Icon name="dollar" size={12} /><b>{priceOf(c) || "–"}</b></span>

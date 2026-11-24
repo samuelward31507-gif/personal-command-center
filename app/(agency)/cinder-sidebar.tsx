@@ -15,32 +15,23 @@ type Props = {
   onNavigate?: (key: string) => void;
 };
 
-// Work you do every day: plain line icons.
-const daily = [
-  ["needs-you", "Today", "sun", "/crm/needs-you"],
-  ["outbound", "Outbound", "send", "/crm/outbound"],
-  ["call", "Call", "phone", "/crm/call"],
+// The Nov 24 design: three groups named for the job. Each tab has one job and one main action.
+const groups: [string, (readonly [string, string, string, string])[]][] = [
+  ["Sell", [["needs-you", "Today", "sun", "/crm/needs-you"], ["call", "Call", "phone", "/crm/call"], ["outbound", "Outbound", "send", "/crm/outbound"], ["contacts", "Prospects", "users", "/crm"], ["pipeline", "Deals", "dollar", "/crm/pipeline"]]],
+  ["Clients", [["client-success", "Clients", "check", "/crm/client-success"], ["finance", "Money", "money", "/crm/finance"]]],
+  ["Get better", [["content", "Content", "megaphone", "/crm/content"], ["practice", "Practice", "mic", "/crm/practice"], ["funnel", "Numbers", "chart", "/crm/funnel"]]],
+];
+// Folded into the tabs above (brief Part 4). Still reachable here until each tab carries them inside.
+const secondary = [
   ["calendar", "Calendar", "calendar", "/crm/calendar"],
   ["ask", "Ask Cinder", "spark", "/crm/ask"],
-] as const;
-// Records: each kind of thing has its own colored square, so the eye finds it before reading.
-const records = [
-  ["contacts", "Prospects", "#2f7cf6", "person", "/crm"],
-  ["pipeline", "Deals", "#f2752b", "dollar", "/crm/pipeline"],
-  ["client-success", "Clients", "#17a55a", "check", "/crm/client-success"],
-  ["finance", "Money", "#e3a008", "cash", "/crm/finance"],
-] as const;
-const secondary = [
+  ["leads", "Lead finder", "search", "/crm/leads"],
+  ["preparation", "Research", "search", "/crm/preparation"],
   ["projects", "Delivery", "delivery", "/crm/projects"],
   ["reports", "Client reports", "doc", "/crm/reports"],
-  ["leads", "Lead finder", "search", "/crm/leads"],
-  ["content", "Content", "megaphone", "/crm/content"],
   ["groups", "Groups", "groups", "/crm/groups"],
-  ["preparation", "Research", "search", "/crm/preparation"],
-  ["practice", "Practice", "mic", "/crm/practice"],
-  ["funnel", "Funnel", "chart", "/crm/funnel"],
 ] as const;
-const SECONDARY_PATHS = ["/crm/leads", "/crm/groups", "/crm/content", "/crm/partners", "/crm/funnel", "/crm/tasks", "/crm/projects", "/crm/preparation", "/crm/practice", "/crm/audit", "/crm/scoreboard", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
+const SECONDARY_PATHS = ["/crm/calendar", "/crm/ask", "/crm/leads", "/crm/groups", "/crm/partners", "/crm/tasks", "/crm/projects", "/crm/preparation", "/crm/audit", "/crm/reports", "/crm/operations", "/crm/workforce", "/crm/intelligence", "/crm/strategy"];
 
 function ObjIcon({ name }: { name: string }) {
   const p: Record<string, React.ReactNode> = {
@@ -118,6 +109,9 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
   const isActive = (key: string, href: string) => {
     if (key === "contacts") return pathname === "/crm";
     if (key === "outbound") return ["/crm/outbound", "/crm/email", "/crm/linkedin", "/crm/outreach"].some(p => pathname.startsWith(p));
+    if (key === "client-success") return ["/crm/client-success", "/crm/projects", "/crm/reports"].some(p => pathname.startsWith(p));
+    if (key === "content") return pathname.startsWith("/crm/content") || pathname.startsWith("/crm/groups");
+    if (key === "funnel") return pathname.startsWith("/crm/funnel") || pathname.startsWith("/crm/scoreboard");
     if (key === "pipeline") return pathname.startsWith("/crm/pipeline") || pathname.startsWith("/crm/deals");
     if (key === "preparation") return pathname.startsWith("/crm/preparation") || pathname.startsWith("/crm/audit");
     if (href === "/crm") return false;
@@ -163,14 +157,10 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
         </button>
       </div>
 
-      <nav className="cx-nav" aria-label="Main">
-        {daily.map(([key, label, icon, href]) => link(key, label, href, <Icon name={icon} />, key === "call" ? <kbd className="cx-kbd cx-hint">C</kbd> : undefined))}
-      </nav>
-
-      <div className="cx-group">Records</div>
-      <nav className="cx-nav" aria-label="Records">
-        {records.map(([key, label, color, glyph, href]) => link(key, label, href, <span className="cx-obj" style={{ background: color }}><ObjIcon name={glyph} /></span>))}
-      </nav>
+      {groups.map(([g, items]) => <div key={g}>
+        <div className="cx-group">{g}</div>
+        <nav className="cx-nav" aria-label={g}>{items.map(([key, label, icon, href]) => link(key, label, href, <Icon name={icon} />))}</nav>
+      </div>)}
 
       {!collapsed && <>
         <div className="cx-group">Favorites</div>

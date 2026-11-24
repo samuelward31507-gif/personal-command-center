@@ -4,7 +4,7 @@ export const DEAL_STAGES = ["new", "qualified", "contacted", "interested", "meet
 export type DealStage = typeof DEAL_STAGES[number];
 export const STAGE_LABELS: Record<DealStage, string> = {
   new: "New prospect", qualified: "Qualified", contacted: "Contacted", interested: "Interested", meeting_booked: "Meeting booked",
-  meeting_held: "Demo / call held", proposal: "Proposal", negotiation: "Negotiation", won: "Won", lost: "Lost", nurture: "Nurture",
+  meeting_held: "Demo held", proposal: "Proposal sent", negotiation: "Negotiation", won: "Won", lost: "Lost", nurture: "Nurture",
 };
 export const OPEN_STAGES: DealStage[] = ["new", "qualified", "contacted", "interested", "meeting_booked", "meeting_held", "proposal", "negotiation", "nurture"];
 

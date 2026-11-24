@@ -46,7 +46,7 @@ export default function PracticePage() {
   const live = turns.length > 0 && !card;
 
   return <main className="u-page pr-page">
-    <div className="u-head"><h1 className="u-title">Practice calls<span className="u-dim"> {reps} of 10 reps today</span></h1></div>
+    <div className="u-head"><h1 className="u-title">Practice<span className="u-dim"> {reps} of 10 reps today</span></h1></div>
     <p className="u-note pr-intro">Cinder plays a contractor who doesn’t want to talk to you. Get through the opener, handle the objections, ask for the meeting. Then you get scored.</p>
 
     {!live && <section className="pr-pick">
