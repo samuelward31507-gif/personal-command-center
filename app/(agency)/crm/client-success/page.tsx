@@ -31,6 +31,9 @@ export default function ClientsPage() {
   const [editing, setEditing] = useState<Account | "new" | null>(null);
   const [ticketForm, setTicketForm] = useState(false);
   const [showClosed, setShowClosed] = useState(false);
+  const [weekly, setWeekly] = useState<{ week: string; clients: { projectId: string; name: string; estimates: number; text: string; reply: { leads: number; medianSec: number | null; met: boolean } }[] } | null>(null);
+  const [copied, setCopied] = useState("");
+  useEffect(() => { void fetch("/api/client-success/weekly", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(setWeekly).catch(() => setWeekly(null)); }, []);
 
   const load = useCallback(async () => {
     try {
@@ -125,6 +128,16 @@ export default function ClientsPage() {
         </tr>;
       })}</tbody>
     </table></div>}
+
+    {weekly && weekly.clients.length > 0 && <section style={{ marginTop: 44 }} aria-label="Weekly reports">
+      <div className="u-h2-row"><h2 className="u-h2">This week&apos;s check-ins</h2><span className="u-note">{weekly.week}. Copy each one and send it from your own phone or email. Nothing goes out on its own.</span></div>
+      <div className="cl-ob">{weekly.clients.map(w => <div key={w.projectId} className="u-block cl-ob-card">
+        <strong>{w.name}</strong>
+        <span className="u-note">{w.estimates} {w.estimates === 1 ? "estimate" : "estimates"} booked · {w.reply.leads ? `${w.reply.leads} leads, typical reply ${w.reply.medianSec ?? "–"} sec` : "no new leads"}</span>
+        <pre className="cl-wk-text">{w.text}</pre>
+        <button type="button" className="u-btn" onClick={() => { void navigator.clipboard?.writeText(w.text).then(() => { setCopied(w.projectId); setTimeout(() => setCopied(""), 1800); }); }}>{copied === w.projectId ? "Copied" : "Copy check-in"}</button>
+      </div>)}</div>
+    </section>}
 
     <section style={{ marginTop: 44 }}>
       <div className="u-h2-row">
