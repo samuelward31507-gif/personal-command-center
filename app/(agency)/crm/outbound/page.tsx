@@ -176,14 +176,13 @@ export default function OutboundPage() {
   return <div className="u-page ob-page" role="region" aria-label="Outbound">
     <div className="u-head td8-head">
       <div className="td8-title">
-        <p className="td8-date">{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
         <h1 className="u-title">Outbound</h1>
         <p className="td8-sub">{!d ? "Loading…" : needs ? <><span className="td8-hot">{needs} {needs === 1 ? "thing" : "things"}</span> {needs === 1 ? "needs" : "need"} you: {[texts.length && `${texts.length} ${texts.length === 1 ? "text" : "texts"}`, liMessage.length && `${liMessage.length} LinkedIn ${liMessage.length === 1 ? "message" : "messages"}`, hotReplies && `${hotReplies} ${hotReplies === 1 ? "reply" : "replies"}`].filter(Boolean).join(", ")}.{autopilot?.enabled ? " Email runs on its own." : ""}</> : <>Nothing needs you right now.{autopilot?.enabled ? " Email runs on its own." : ""}</>}</p>
         {live && <p className="td8-live" aria-live="polite"><i aria-hidden="true" /><span className="g">Live</span><span className="td8-live-t"><b>{live.what}{live.count ? ` +${live.count - 1} more` : ""}</b><em> · {ago(live.at)}</em></span></p>}
       </div>
       <div className="u-head-actions">
-        <Link className="u-btn u-btn-bare td-hide-sm" href="/crm/leads">Find leads</Link>
-        <Link className="u-btn u-btn-light" href="/crm/call">Start calling <kbd>C</kbd></Link>
+        <Link className="u-btn td-hide-sm" href="/crm/leads">Lead finder</Link>
+        <Link className="u-btn u-btn-dark" href="/crm/call">Start calling</Link>
       </div>
     </div>
 
@@ -204,12 +203,12 @@ export default function OutboundPage() {
       {/* TEXT */}
       <section className="ob-col" aria-label="Text">
         <header className="ob-ch">
-          <div className="ob-ct"><span className="ci"><Ico d={ICON.text} /></span>Text<span className="ob-md">You send</span></div>
+          <div className="ob-ct"><span className="ci"><Ico d={ICON.text} /></span>Text<span className="ob-md">Only people who asked</span></div>
           <div className="ob-cs"><div><b>{d?.text.sentToday ?? "—"}</b>Sent today</div><div><b>{d?.text.repliesToday ?? "—"}</b>Replied</div><div><b>{texts.length}</b>Ready</div></div>
         </header>
         <div className="ob-cl">
           <div className="ob-lab"><span>Ready to send</span>{texts.length > 1 && <span className="ob-keys"><kbd>J</kbd><kbd>K</kbd></span>}</div>
-          {d && !texts.length && <p className="ob-empty">Nothing to text. Voicemail and info texts show up here after your calls.</p>}
+          {d && !texts.length && <p className="ob-empty">Nothing to text. A text shows up here only when someone asked for info or said they&apos;re interested on a call.</p>}
           {texts.map(t => {
             const key = "t" + t.contactId, on = textSel === t.contactId, body = drafts[key] ?? textDraft(t);
             const quiet = quietHoursWarning(new Date(), t.timeZone);

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { copyText } from "@/lib/copy";
 import { useCallback, useEffect, useState } from "react";
@@ -72,8 +73,9 @@ export default function ContentPage() {
     <div className="u-head">
       <div>
         <h1 className="u-title">Content</h1>
-        <p className="u-title-sub">Cinder writes every post from your real week, with its image. Copy, download, post, mark it posted, and log what it brought in.</p>
+        <p className="u-title-sub">{posted === null ? "Posts written from your real week, posted by hand." : `${(posted ?? []).filter(p => Date.parse(p.at) > Date.now() - 7 * 86400000).length} posted in the last 7 days. Meta isn't connected, so you post by hand.`}</p>
       </div>
+      <div className="u-head-actions"><Link className="u-btn" href="/crm/groups">Groups</Link></div>
     </div>
     {error && <p className="u-flash is-bad" role="alert" style={{ marginBottom: 16 }}>{error}</p>}
 
