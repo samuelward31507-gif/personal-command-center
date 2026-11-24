@@ -82,6 +82,7 @@ function Icon({ name }: { name: string }) {
     clipboard: <><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3.5h6v1M9 11h6M9 15h4"/></>,
     rail: <><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></>,
     plus: <path d="M12 5v14M5 12h14"/>,
+    bolt: <path d="M13 2 3 14h9l-1 8 10-12h-9z"/>,
     megaphone: <><path d="M4 10v4l11 5V5L4 10Z"/><path d="M15 9h1.5a3 3 0 0 1 0 6H15"/><path d="M7 15.4V19a1.5 1.5 0 0 0 3 0v-2.3"/></>,
   };
   return <svg className="cx-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.spark}</svg>;
@@ -128,6 +129,15 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
       {glyph}<span className="cx-label">{label}</span>{extra}
     </Link>;
   const wsName = ws.shortName || ws.businessName || "Cinder";
+  // Speed badge: clients whose speed-to-lead is broken right now. Sam's app only (the client app has its own sidebar).
+  const [broken, setBroken] = useState(0);
+  useEffect(() => {
+    let on = true;
+    const check = () => fetch("/api/speed?summary=1", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => { if (on && j) setBroken(Number(j.broken) || 0); }).catch(() => {});
+    check();
+    const t = setInterval(check, 120_000);
+    return () => { on = false; clearInterval(t); };
+  }, []);
 
   return <>
     <CommandBar />
@@ -180,6 +190,7 @@ export default function CinderSidebar({ activeKey, mode, pathname = "/", onNavig
       </nav>
 
       <div className="cx-foot">
+        {link("speed", "Speed", "/crm/speed", <Icon name="bolt" />, broken ? <span className="cx-count cx-count-hot" aria-label={`${broken} broken`}>{broken}</span> : undefined)}
         {link("settings", "Settings", "/crm/settings", <Icon name="settings" />)}
         <div className="cx-profile" title={collapsed ? `${ws.ownerFirstName} · ${ws.businessName}` : undefined}>
           <span className="cx-avatar">{ws.ownerFirstName.slice(0, 1).toUpperCase()}</span>

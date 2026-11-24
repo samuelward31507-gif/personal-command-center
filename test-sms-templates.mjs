@@ -22,7 +22,7 @@ ok(() => assert.match(vm, /^Hey Mike, Sam with Cinder\. Tried you at 6:15, proba
 ok(() => assert.match(vm, /cinderrevenue\.com\/watch\?story=fence\n\nWorth a quick call tomorrow, morning or afternoon\?$/));
 ok(() => assert.doesNotMatch(vm, /\d+%/, "no unsourced stats in texts"));
 const p1 = planFor("voicemail", { now: calledAt, tz: gaTz });
-ok(() => assert.equal(p1.template, "T-VM"));
+ok(() => assert.equal(p1.template, null), "no text after a voicemail");
 ok(() => assert.equal(p1.tasks[0].title, "Call back"));
 ok(() => assert.equal(p1.tasks[0].due.toISOString(), "2026-11-06T14:30:00.000Z"), "Fri 9:30am EST");
 ok(() => assert.equal(p1.followUp, "2026-11-06"));
@@ -30,7 +30,7 @@ ok(() => assert.equal(p1.followUp, "2026-11-06"));
 // Acceptance 2: second voicemail → no draft, "already sent" notice
 const p2 = planFor("voicemail", { now: calledAt, tz: gaTz, vmSentAt: "Nov 5" });
 ok(() => assert.equal(p2.template, null));
-ok(() => assert.equal(p2.notice, "Voicemail text already sent Nov 5. Call instead."));
+ok(() => assert.equal(p2.notice, null));
 ok(() => assert.equal(p2.tasks[0].title, "Call back"), "the call-back task is still created");
 
 // Acceptance 3: no first name → "Hey there"
