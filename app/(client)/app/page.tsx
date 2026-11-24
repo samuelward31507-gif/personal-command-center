@@ -162,8 +162,8 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
 
 // ---------- The app ----------
 type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | { kind: "quote"; id: string } | null;
-const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam", "quotes", "help", "plans", "switch", "from"];
-const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Today", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "quotes", l: "Quotes", ic: "quote", n: "4" }, { k: "calendar", l: "Calendar", ic: "cal", n: "5" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Reports", ic: "bars", n: "6" }];
+const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam", "calendar", "help", "plans", "switch", "from"];
+const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Today", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "quotes", l: "Quotes", ic: "quote", n: "4" }, { k: "calendar", l: "Calendar", ic: "cal", n: "5" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Numbers", ic: "bars", n: "6" }];
 
 export default function CinderApp() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
@@ -293,7 +293,7 @@ export default function CinderApp() {
   const mailN = crew ? 0 : mailWaiting(d).length;
   const counts: Partial<Record<Tab, number>> = { inbox: L.needs + mailN, calendar: due.length, invoices: owed };
   const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = crew ? [{ k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }]
-    : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs + mailN }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
+    : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs + mailN }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote" }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
   const phoneTab: Tab = MORE.includes(here) ? "more" : here;
   const active = (k: Tab) => here === k;
 
@@ -375,9 +375,9 @@ export default function CinderApp() {
 // ---------- More (phone) ----------
 function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
   const items: { k: Tab; l: string; s: string; ic: string; n?: number }[] = [
-    { k: "quotes", l: "Quotes", s: "What's out, who opened it, what's next", ic: "quote" },
+    { k: "calendar", l: "Calendar", s: "Estimates and installs this week", ic: "cal" },
     { k: "invoices", l: "Money", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
-    { k: "numbers", l: "Reports", s: "What came in and what it made", ic: "bars" },
+    { k: "numbers", l: "Numbers", s: "What came in and what it made", ic: "bars" },
     { k: "customers", l: "Customers", s: `${d.customers?.length ?? 0} people`, ic: "users" },
     { k: "switch", l: "Move your business in", s: "From Jobber, QuickBooks, a spreadsheet or your phone", ic: "upload" },
     { k: "from", l: "Coming from Jobber or Housecall Pro", s: "What each thing is called here", ic: "table" },
