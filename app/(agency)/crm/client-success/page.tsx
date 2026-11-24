@@ -75,10 +75,10 @@ export default function ClientsPage() {
     <div className="u-head">
       <h1 className="u-title">Clients{rows.length ? <span className="u-dim"> {live.length} live, {usd(mrr)}/mo</span> : null}</h1>
       <div className="u-head-actions">
-        <Link className="u-btn u-btn-bare" href="/crm/projects">Delivery</Link>
-        <Link className="u-btn u-btn-bare" href="/crm/reports">Monthly reports</Link>
+        <Link className="u-btn" href="/crm/projects">Delivery</Link>
+        <Link className="u-btn" href="/crm/reports">Monthly reports</Link>
         <button className="u-btn" onClick={() => setTicketForm(true)}>Log a support issue</button>
-        {rows.length > 0 && <button className="u-btn u-btn-light" onClick={() => setEditing("new")}>Add health record</button>}
+        {rows.length > 0 && <button className="u-btn u-btn-dark" onClick={() => setEditing("new")}>Add health record</button>}
       </div>
     </div>
     {error && <p className="u-flash is-bad" role="alert" style={{ marginBottom: 18 }}>{error}</p>}
@@ -90,10 +90,23 @@ export default function ClientsPage() {
       <div className="u-fig"><span className="u-fig-k">Next renewal</span><div className="u-fig-v" style={{ fontSize: 30 }}>{nextRenewal ? `${daysUntil(nextRenewal.renewal_date)} days` : "—"}</div><div className="u-fig-sub">{nextRenewal ? <><b>{nextRenewal.client_name}</b>, {day(nextRenewal.renewal_date)}</> : "No renewal dates set"}</div></div>
     </div>
 
+    {(() => { // Onboarding cards: clients whose checklist isn't finished yet
+      const ob = rows.filter(r => r.project && r.project.milestoneCount > 0 && r.project.doneMilestones < r.project.milestoneCount && r.project.status !== "completed");
+      if (!ob.length) return null;
+      return <section style={{ marginTop: 28 }} aria-label="Onboarding">
+        <div className="u-h2-row"><h2 className="u-h2">Onboarding</h2><span className="u-note">{ob.length} {ob.length === 1 ? "client" : "clients"} still setting up</span></div>
+        <div className="cl-ob">{ob.map(r => { const p = r.project!, pct = Math.round(p.doneMilestones / p.milestoneCount * 100);
+          return <Link key={r.key} className="u-block cl-ob-card" href={`/crm/client-success/${p.id}`}>
+            <strong>{r.name}</strong>
+            <div className="cl-prog"><div className="cl-prog-bar"><i style={{ width: pct + "%" }} /></div><span>{p.doneMilestones} of {p.milestoneCount}</span></div>
+            <span className="u-note">{p.milestoneCount - p.doneMilestones} {p.milestoneCount - p.doneMilestones === 1 ? "step" : "steps"} left. Open the checklist</span>
+          </Link>; })}</div>
+      </section>; })()}
+
     {projects === null ? <p className="u-note" role="status">Loading clients…</p> : rows.length === 0 ? <div className="u-void">
       <h2>No clients yet</h2>
       <p>When a deal is marked won, the client shows up here with an onboarding checklist, their own page, and a health record you can track to renewal.</p>
-      <Link className="u-btn u-btn-light" href="/crm/pipeline">Open deals</Link>
+      <Link className="u-btn u-btn-dark" href="/crm/pipeline">Open deals</Link>
     </div> : <div className="u-tablewrap"><table className="u-table cl-table">
       <thead><tr><th>Client</th><th>Onboarding</th><th>Status</th><th>Health</th><th>Renewal</th><th className="is-num">Monthly</th><th /></tr></thead>
       <tbody>{rows.map(r => {

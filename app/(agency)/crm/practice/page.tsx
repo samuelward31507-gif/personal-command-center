@@ -18,6 +18,9 @@ export default function PracticePage() {
   const end = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { end.current?.scrollIntoView({ block: "end", behavior: "smooth" }); }, [turns, card]);
+  // Score trend: the last 10 scored reps on this device (the brief's "score, last 10 reps").
+  const [hist, setHist] = useState<{ at: string; score: number }[]>([]);
+  useEffect(() => { try { setHist(JSON.parse(localStorage.getItem("cinder.practice.scores") || "[]")); } catch { /* storage unavailable */ } }, []);
   useEffect(() => { try { setReps(Number(localStorage.getItem("cinder.practice.reps." + new Date().toISOString().slice(0, 10)) || 0)); } catch { /* storage unavailable */ } }, []);
 
   async function call(action: "reply" | "score", next: Turn[]) {
@@ -30,6 +33,7 @@ export default function PracticePage() {
         setCard(d.score);
         const n = reps + 1; setReps(n);
         try { localStorage.setItem("cinder.practice.reps." + new Date().toISOString().slice(0, 10), String(n)); } catch { /* ignore */ }
+        if (typeof d.score?.score === "number") { const h = [...hist, { at: new Date().toISOString(), score: d.score.score }].slice(-10); setHist(h); try { localStorage.setItem("cinder.practice.scores", JSON.stringify(h)); } catch { /* ignore */ } }
       } else setTurns([...next, { who: "owner", text: String(d.owner || "…") }]);
     } catch (e) { setError(e instanceof Error ? e.message : "Something went wrong."); }
     finally { setBusy(""); box.current?.focus(); }
@@ -47,6 +51,11 @@ export default function PracticePage() {
 
   return <main className="u-page pr-page">
     <div className="u-head"><h1 className="u-title">Practice<span className="u-dim"> {reps} of 10 reps today</span></h1></div>
+    {hist.length > 0 && (() => { const last = hist[hist.length - 1].score, firstS = hist[0].score, w = 260, h = 46, mx = 100;
+      const pts = hist.map((x, i) => `${hist.length === 1 ? w : (i / (hist.length - 1)) * w},${h - 3 - (x.score / mx) * (h - 6)}`).join(" ");
+      return <div className="u-figs" style={{ marginTop: 20 }}><div className="u-fig"><span className="u-fig-k">Score · last {hist.length} {hist.length === 1 ? "rep" : "reps"}</span>
+        <div className="u-fig-v">{last}{hist.length > 1 && <small style={{ fontSize: 13, marginLeft: 8, color: last >= firstS ? "#15803d" : "#4a4f57" }}>{last >= firstS ? "+" : ""}{last - firstS} since {new Date(hist[0].at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</small>}</div>
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label={`Scores: ${hist.map(x => x.score).join(", ")}`} style={{ marginTop: 8, overflow: "visible" }}><polyline points={pts} fill="none" stroke="#f2431d" strokeWidth="1.75" strokeLinejoin="round" strokeLinecap="round" /></svg></div></div>; })()}
     <p className="u-note pr-intro">Cinder plays a contractor who doesn’t want to talk to you. Get through the opener, handle the objections, ask for the meeting. Then you get scored.</p>
 
     {!live && <section className="pr-pick">

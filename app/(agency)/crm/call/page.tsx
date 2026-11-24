@@ -565,7 +565,7 @@ export default function CallModePage() {
               {brief.flags && <Block title="Watch out for" text={brief.flags} />}
             </div>
             <div className="dl-brief-foot">
-              <span>Plan <b>{offer.label}</b>, ${offer.setupFee.toLocaleString()} setup + ${offer.monthlyFee.toLocaleString()}/mo{founding && founding.left > 0 ? ` · ${founding.left} founding spot${founding.left === 1 ? "" : "s"} left` : ""}</span>
+              <span>Suggested <b>{offer.label}</b>. Price: {offers.tier1.label} is ${offers.tier1.setupFee.toLocaleString()} to set up, paid upfront, then ${offers.tier1.monthlyFee.toLocaleString()} a month. {offers.tier2.label} is ${offers.tier2.setupFee.toLocaleString()} to set up, paid upfront, then ${offers.tier2.monthlyFee.toLocaleString()} a month.</span>
               <span title="Written by AI from public web research. Check anything important before you rely on it.">Research, check before quoting</span>
               <Link href={`/crm/audits/${audit!.id}`} style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Full report</Link>
             </div>

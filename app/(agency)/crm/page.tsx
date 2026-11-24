@@ -81,9 +81,25 @@ export default function ContactsPage(){
    <div className="u-head-actions">
     <button className="u-btn u-btn-bare" onClick={exportCsv} disabled={!contacts.length}>Export</button>
     <button className="u-btn" onClick={()=>setShowImport(true)}>Import</button>
-    <button className="u-btn u-btn-light" onClick={add}>New prospect</button>
+    <button className="u-btn" onClick={add}>New prospect</button>
+    <Link className="u-btn u-btn-dark" href="/crm/leads">Lead finder</Link>
    </div>
   </div>
+  {contacts.length>0&&(()=>{ // The brief's four figures and where everyone stands
+   const grade=(c:Contact)=>(/Lead grade:\s*([ABC])\b/i.exec(c.notes||"")?.[1]||"").toUpperCase();
+   const trade=(c:Contact)=>/generator|standby|power/i.test((c.niche||"")+" "+c.company)?"Generator":"Fence";
+   const g={A:contacts.filter(c=>grade(c)==="A").length,B:contacts.filter(c=>grade(c)==="B").length,C:contacts.filter(c=>grade(c)==="C").length};
+   const fence=contacts.filter(c=>trade(c)==="Fence").length;
+   const st:Record<string,number>={};for(const c of contacts)st[c.status]=(st[c.status]||0)+1;
+   return <>
+    <div className="u-figs">
+     <div className="u-fig"><span className="u-fig-k">Prospects</span><div className="u-fig-v">{contacts.length}</div><div className="u-fig-sub">Fence {fence} · Generator {contacts.length-fence}</div></div>
+     <div className="u-fig"><span className="u-fig-k">Grade A</span><div className="u-fig-v">{g.A}</div><div className="u-fig-sub">A {g.A} · B {g.B} · C {g.C}</div></div>
+     <div className="u-fig"><span className="u-fig-k">To call</span><div className="u-fig-v">{counts.todo}</div><div className="u-fig-sub">{calledToday} called today</div></div>
+     <div className="u-fig"><span className="u-fig-k">Follow-ups due</span><div className="u-fig-v">{counts.due}</div><div className="u-fig-sub">on or before today</div></div>
+    </div>
+    <p className="u-note" style={{marginTop:12}}>Where they stand: {Object.entries(st).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${k} ${n}`).join(" · ")} = {contacts.length}</p>
+   </>})()}
   {loaded&&!saved&&<p className="u-flash is-bad" role="alert" style={{marginBottom:18}}>Couldn&apos;t reach your workspace. Changes may not save. Refresh to retry.</p>}
 
   <div className="ct-bar">

@@ -307,3 +307,9 @@ html body .pb-col { background: #fff; border: 1px solid rgba(18,20,23,.08); bord
 html body .pb-col-name::before, html body .pb-stop-k i { background: #8b9098 !important; }
 html body .pb-deal { border: 1px solid rgba(18,20,23,.08); border-radius: 10px; box-shadow: none; }
 html body .pb-deal.is-late .pb-foot-k { color: #b3461c; }
+
+/* Clients: onboarding cards */
+.cl-ob{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:12px}
+.cl-ob-card{display:flex;flex-direction:column;gap:10px;padding:16px;text-decoration:none;color:inherit;transition:border-color .15s}
+.cl-ob-card:hover{border-color:rgba(18,20,23,.2)}
+.cl-ob-card:focus-visible{outline:2px solid #f2431d;outline-offset:2px}
