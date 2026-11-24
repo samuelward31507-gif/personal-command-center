@@ -298,7 +298,7 @@ function PhoneList({ cards, open }: { cards: Card[]; open: (id: string) => void 
 function Board({ cards, sel, drag, over, setDrag, setOver, move, open, who }: { who: (cell: string) => string; cards: Card[]; sel: string | null; drag: string | null; over: Lane | null; setDrag: (v: string | null) => void; setOver: (f: Lane | null | ((o: Lane | null) => Lane | null)) => void; move: (id: string, s: Lane) => void; open: (id: string) => void }) {
   const today = todayIso();
   const monthAgo = Date.now() - 30 * 86400000;
-  return <div className="board">{LANES.filter(l => l !== "done").map(l => { const list = cards.filter(c => laneOf(c) === l && (l !== "lost" || !c.stageAt || Date.parse(c.stageAt) > monthAgo)); const total = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
+  return <div className="board">{LANES.filter((l): boolean => l !== "done").map(l => { const list = cards.filter(c => laneOf(c) === l && (l !== "lost" || !c.stageAt || Date.parse(c.stageAt) > monthAgo)); const total = list.reduce((a, c) => a + (c.value ?? c.quote?.amount ?? 0), 0);
     return <section key={l} className={"col-b" + (over === l ? " over" : "")} aria-label={LANE_LABEL[l]}
       onDragOver={e => { if (drag) { e.preventDefault(); setOver(l); } }} onDragLeave={() => setOver(o => o === l ? null : o)}
       onDrop={e => { e.preventDefault(); setOver(null); if (drag) move(drag, l); setDrag(null); }}>
