@@ -565,7 +565,7 @@ export default function CallModePage() {
               {brief.flags && <Block title="Watch out for" text={brief.flags} />}
             </div>
             <div className="dl-brief-foot">
-              <span>Start from <b>{offer.label}</b>, then price the build from what the audit found. Floors: {offers.tier1.label} ${offers.tier1.setupFee.toLocaleString()} setup, paid upfront, + ${offers.tier1.monthlyFee.toLocaleString()}/mo. {offers.tier2.label} ${offers.tier2.setupFee.toLocaleString()} + ${offers.tier2.monthlyFee.toLocaleString()}/mo. Never quote under the floor.</span>
+              <span>Start from <b>{offer.label}</b>. Price the build from their monthly revenue and what the audit found; it can go above or below the reference. Reference: {offers.tier1.label} ${offers.tier1.setupFee.toLocaleString()} setup + ${offers.tier1.monthlyFee.toLocaleString()}/mo. {offers.tier2.label} ${offers.tier2.setupFee.toLocaleString()} + ${offers.tier2.monthlyFee.toLocaleString()}/mo.</span>
               <span title="Written by AI from public web research. Check anything important before you rely on it.">Research, check before quoting</span>
               <Link href={`/crm/audits/${audit!.id}`} style={{ textDecoration: "underline", textUnderlineOffset: 3 }}>Full report</Link>
             </div>
