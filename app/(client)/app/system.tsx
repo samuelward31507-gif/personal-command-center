@@ -9,11 +9,12 @@ import { ChecklistsSheet } from "./parity";
 import { contrastOnWhite, dominantColor, readableAccent } from "@/lib/brand";
 import { sourceLabel, type Biz, type Data, type Go, type LeadMail } from "./types";
 import { PageHead } from "./charts";
+import { HelpScreen } from "./help";
 import { ActivityLog, DaysOffEditor, FieldLabelsEditor } from "./records";
 import { FollowUps } from "./automations";
 import { FenceTypesEditor } from "./measure";
 
-type View = "connections" | "tools" | "agent" | "account";
+export type View = "connections" | "tools" | "agent" | "account" | "help";
 type State = "on" | "todo" | "off" | "bad";
 
 // ---------- Connections ----------
@@ -437,11 +438,11 @@ function Account({ d, biz, go, push, onPush, demo, onSignOut, api, project, relo
 
 export function SystemScreen(p: { d: Data; biz: Biz; go: Go; push: string; onPush: () => void; toast: Toast; api: Api; project: string; reload: () => Promise<void>; demo: boolean; onSignOut: () => void; view?: View }) {
   const [view, setView] = useState<View>(p.view ?? "connections");
-  const sub = view === "connections" ? "Every place leads come from, and whether it's working." : view === "tools" ? "Where things go out: your texting number, calendar, books and alerts." : view === "agent" ? "What Cinder says and does, in your words." : "The business, your team and this device.";
+  const sub = view === "connections" ? "Every place leads come from, and whether it's working." : view === "tools" ? "Where things go out: your texting number, calendar, books and alerts." : view === "help" ? "Short answers, and the screen that does each thing. Sam set up your account and answers himself, usually the same day." : view === "agent" ? "What Cinder says and does, in your words." : "The business, your team and this device.";
   return <>
     <PageHead title="Settings" sub={sub}
-      actions={<div className="seg" role="tablist">{(["connections", "tools", "agent", "account"] as View[]).map(v => <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? "on" : ""} onClick={() => setView(v)}>{v === "connections" ? "Connections" : v === "tools" ? "Tools" : v === "agent" ? "Agent" : "Account"}</button>)}</div>} />
-    <div className="set-body">{view === "connections" ? <Connections {...p} /> : view === "tools" ? <Tools {...p} /> : view === "agent" ? <Agent {...p} /> : <Account {...p} />}</div>
+      actions={<div className="seg" role="tablist">{(["connections", "tools", "agent", "account", "help"] as View[]).map(v => <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? "on" : ""} onClick={() => setView(v)}>{v === "connections" ? "Connections" : v === "tools" ? "Tools" : v === "agent" ? "Agent" : v === "account" ? "Account" : "Help"}</button>)}</div>} />
+    <div className="set-body">{view === "help" ? <div className="set-help"><HelpScreen go={p.go} /></div> : view === "connections" ? <Connections {...p} /> : view === "tools" ? <Tools {...p} /> : view === "agent" ? <Agent {...p} /> : <Account {...p} />}</div>
   </>;
 }
 

@@ -46,6 +46,19 @@ export function PlansScreen({ d, project, api, toast, reload, go }: { d: Data; p
           { label: "Visits this week", value: String(week), sub: week ? "reminded the day before" : "none booked" },
           { label: "Due now", value: String(due.length), sub: due.length ? "mark done or skip" : "nothing waiting", tone: due.length ? "warn" : "" },
         ]} />
+        {!crew && (() => { // Offer a plan after the install: won jobs that are done or underway, with no plan yet
+          const planned = new Set(plans.map(p => p.thread_id));
+          const cand = (d.board ?? []).filter(c => c.stage === "won" && !c.pastCustomer && !planned.has(c.id)).slice(0, 5);
+          if (!cand.length) return null;
+          const suggest = (c: (typeof cand)[number]) => { const m = String(c.details.material ?? "").toLowerCase();
+            return /cedar|wood/.test(m) ? ["Stain and seal", "once a year"] : /vinyl/.test(m) ? ["Seasonal fence wash", "every 3 months"] : /alum|iron|steel/.test(m) ? ["Gate and hardware check", "once a year"] : ["Yearly inspection", "once a year"]; };
+          return <section className="v5-card plan-offer" aria-label="Offer a plan after the install">
+            <div className="v5-ch"><span className="v5-ct">Offer a plan after the install<small>{cand.length} {cand.length === 1 ? "customer" : "customers"} could be offered one</small></span></div>
+            {cand.map(c => { const [name, every] = suggest(c); return <div key={c.id} className="v5-row" style={{ cursor: "default" }}>
+              <span className="v5-av" aria-hidden="true">{(c.name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}</span>
+              <span className="who"><b>{c.name}</b><small>{c.line ? c.line + " · " : ""}{name}, {every}</small></span>
+              <span className="act"><button type="button" className="b5 sm" onClick={() => setSheet({ thread: c.id })}>Offer plan</button></span></div>; })}
+          </section>; })()}
         <section className="panel flat">
           <div className="panel-h"><h2>Every plan</h2><small>next visit first</small></div>
           <div className="panel-b flush">

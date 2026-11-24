@@ -314,7 +314,7 @@ export default function CinderApp() {
   else if (tab === "numbers") page = <ReportsScreen d={d} biz={biz} go={go} project={project} api={api} toast={toast} reload={reload} onWinback={() => setSheet("winback")} />;
   else if (tab === "system") page = <SystemScreen d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} toast={toast} api={api} project={project} reload={reload} demo={demo} onSignOut={signOut} />;
   else if (tab === "more") page = <MoreScreen d={d} go={go} owed={owed} />;
-  else if (tab === "help") page = <HelpScreen go={go} />;
+  else if (tab === "help") page = <SystemScreen key="help" view="help" d={d} biz={biz} go={go} push={push} onPush={() => void enablePush()} toast={toast} api={api} project={project} reload={reload} demo={demo} onSignOut={signOut} />;
   else page = <SamScreen d={d} project={project} api={api} toast={toast} reload={reload} go={go} />;
 
   const catalog = { items: catalogFrom(d.setup), edit: () => setSheet("pricelist") };
@@ -338,7 +338,7 @@ export default function CinderApp() {
         { g: "Business", items: [{ k: "numbers" as Tab, l: "Numbers" }, ...(d.role !== "office" ? [{ k: "system" as Tab, l: "Settings" }] : [])] },
       ]).map(grp => <div key={grp.g}>
         <div className="rail-lbl">{grp.g}</div>
-        <div className="rail-grp">{grp.items.map(s => { const on = active(s.k) || (s.k === "system" && active("sam")) || isOn(s.k);
+        <div className="rail-grp">{grp.items.map(s => { const on = active(s.k) || (s.k === "system" && (active("sam") || active("help"))) || isOn(s.k);
           const n = s.k === "system" ? d.unreadFromSam : counts[s.k];
           return <button key={s.k} type="button" className={"ri" + (on ? " on" : "")} aria-current={on ? "page" : undefined} onClick={() => goTab(s.k)}>
             <span>{s.l}</span>{n ? <em className={s.k === "inbox" || s.k === "invoices" || s.k === "system" ? "hot" : ""}>{n}</em> : null}</button>; })}</div>
