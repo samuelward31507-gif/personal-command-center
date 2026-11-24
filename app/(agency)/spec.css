@@ -313,3 +313,5 @@ html body .pb-deal.is-late .pb-foot-k { color: #b3461c; }
 .cl-ob-card{display:flex;flex-direction:column;gap:10px;padding:16px;text-decoration:none;color:inherit;transition:border-color .15s}
 .cl-ob-card:hover{border-color:rgba(18,20,23,.2)}
 .cl-ob-card:focus-visible{outline:2px solid #f2431d;outline-offset:2px}
+.cl-wk-text{margin:0;white-space:pre-wrap;font:inherit;font-size:13px;line-height:1.5;color:#4a4f57;background:#f6f7f9;border-radius:10px;padding:10px 12px;max-height:180px;overflow:auto}
+.cl-ob-card .u-btn{align-self:flex-start}

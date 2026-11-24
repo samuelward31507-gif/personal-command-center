@@ -23,7 +23,7 @@
       };
     })(window, "https://app.cal.com/embed/embed.js", "init");
     window.Cal("init", "book", { origin: "https://cal.com" });
-    window.Cal.ns.book("inline", { elementOrSelector: "#cal-inline", calLink: CAL, config: { layout: "month_view", theme: theme } });
+    window.Cal.ns.book("inline", { elementOrSelector: "#cal-inline", calLink: CAL, config: Object.assign({ layout: "month_view", theme: theme }, window.cinderBookNotes ? { notes: String(window.cinderBookNotes).slice(0, 900) } : {}) });
     window.Cal.ns.book("on", { action: "bookingSuccessful", callback: function () { if (window.cinderTrack) window.cinderTrack("click", { label: "Book: booked on site" }); } });
     window.Cal.ns.book("ui", { theme: theme, hideEventTypeDetails: true, layout: "month_view", cssVarsPerTheme: { dark: { "cal-brand": "#ededed" }, light: { "cal-brand": "#121417" } } });
     // The moment the calendar's frame arrives, the placeholder goes away.
@@ -31,8 +31,10 @@
     // If the calendar hasn't drawn after 8s (blocked script, slow network), show the plain link prominently.
     setTimeout(function () { if (!box.querySelector("iframe")) box.classList.add("is-fallback"); }, 8000);
   }
+  window.cinderLoadCal = loadCal; // the audit page loads the calendar once results (and booking notes) are ready
   if (box) {
-    if ("IntersectionObserver" in window) {
+    if (box.hasAttribute("data-wait")) { /* loaded by the page, or by a book click below */ }
+    else if ("IntersectionObserver" in window) {
       var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { loadCal(); io.disconnect(); } }, { rootMargin: "900px 0px" });
       io.observe(box);
     } else loadCal();

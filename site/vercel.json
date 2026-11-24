@@ -80,6 +80,10 @@
       "destination": "https://personal-command-center-ten-ruby.vercel.app/api/demo-reply"
     },
     {
+      "source": "/api/site-audit",
+      "destination": "https://personal-command-center-ten-ruby.vercel.app/api/site-audit"
+    },
+    {
       "source": "/testimonial/:token",
       "destination": "https://personal-command-center-ten-ruby.vercel.app/testimonial/:token"
     },
