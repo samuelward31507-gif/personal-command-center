@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";
+import { validateAudit, auditChecks } from "./lib/site-audit.ts";
+import { isPrivateAddress } from "./lib/safe-fetch.ts";
+assert.equal(validateAudit({ fax: "x", business: "A", website: "a.com" }), "spam");
+assert.deepEqual(validateAudit({ business: "", website: "a.com" }), { error: "Enter your business name." });
+const ok = validateAudit({ business: "Example Fence Co", website: "examplefence.com", leads: "40", jobValue: "$6,500", closeRate: 30, speed: "day", followsUp: "no" });
+assert.equal(ok.leads, 40); assert.equal(ok.jobValue, 6500); assert.equal(ok.speed, "day"); assert.equal(ok.followsUp, false);
+assert.match(validateAudit({ business: "A", website: "a.com", leads: 0, jobValue: 5000, closeRate: 30 }).error, /Leads/);
+console.log("ok - audit form is validated and the honeypot is caught");
+const base = { reached: true, https: true, ms: 1200, title: "", description: "", mobile: true, tapToCall: false, phoneShown: true, form: true, booking: "", chat: "", textUs: false, financing: false, pricing: false, reviewsShown: true, serviceArea: true, copyrightYear: 2026, socials: [], words: 400 };
+const c = auditChecks(base);
+assert.equal(c.find(x => x.key === "book").ok, false); assert.equal(c.find(x => x.key === "text").ok, false); assert.equal(c.find(x => x.key === "speed").ok, true);
+assert.ok(c.every(x => !x.detail.includes("!")));
+console.log("ok - checks come only from what the page shows");
+for (const ip of ["127.0.0.1", "10.1.2.3", "172.16.0.1", "192.168.1.1", "169.254.169.254", "100.64.0.1", "0.0.0.0", "::1", "fd00::1", "fe80::1", "::ffff:10.0.0.1"]) assert.equal(isPrivateAddress(ip), true, ip);
+for (const ip of ["8.8.8.8", "76.76.21.21", "2606:4700::1111"]) assert.equal(isPrivateAddress(ip), false, ip);
+console.log("ok - private and metadata addresses are refused");
