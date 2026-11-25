@@ -260,6 +260,7 @@ p{color:var(--t2)}
 .after{position:relative;overflow:hidden}
 .what{margin-top:40px;font:400 clamp(24px,2.4vw,32px)/1.32 var(--serif);color:var(--t1);max-width:30em}
 .what em{font-style:normal;color:var(--t2)}
+.inl{color:var(--acc-t);white-space:nowrap;transition:color .2s}.inl:hover{color:var(--t1)}.inl:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:2px}
 .prod{position:relative;margin-top:200px;perspective:1800px}
 .prod::before{content:"";position:absolute;left:10%;right:10%;top:-140px;height:300px;background:radial-gradient(50% 50% at 50% 60%,rgba(255,255,255,.10),transparent 70%);pointer-events:none}
 .screen{position:relative;transform-origin:50% 0;transform:rotateX(calc(22deg - 10deg*var(--p,0)));max-width:1060px;margin:0 auto;border-radius:16px;border:1px solid var(--line2);overflow:hidden;background:#0b0b0c;
@@ -673,6 +674,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
   .intake-stage{grid-template-columns:1fr}
   .board{height:auto;opacity:1;margin-top:12px;overflow:auto}
 }
+@media (max-width:820px){.hero .stage{position:relative;top:auto;right:auto;width:100%;height:auto;display:flex;justify-content:center;padding:32px var(--g) 48px;order:2;-webkit-mask-image:none;mask-image:none}.hero .hwin{width:100%;max-width:440px;margin:0;transform:none!important}}
 </style>
 </head>
 <body>
@@ -707,7 +709,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
     <span class="eyebrow"><i></i>Free 15-minute audit<span class="eb2"> · for service businesses</span></span>
     <h1 id="h1"><span class="ln" style="--i:0"><span>More jobs from</span></span> <span class="ln" style="--i:1"><span>the leads you</span></span> <span class="ln" style="--i:2"><span>already get.</span></span></h1>
     <p class="lede">We audit how your business answers, books, quotes and follows up, then build what fixes the leaks. No new ad spend.</p>
-    <div class="acts"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="#audit">What the audit covers</a></div>
+    <div class="acts"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
     <p class="terms">Free, 15 minutes, and you keep what we find.</p>
     <div class="tick" aria-label="Sample activity, sample data">
       <span class="tlab"><i></i>Sample data</span>
@@ -853,8 +855,8 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
 
 <section id="after" class="sec after" aria-labelledby="h-after">
   <div class="wrap">
-    <div class="split"><h2 id="h-after">Fixes are scoped after the audit.</h2><p>Only if you want them, and only the ones your business needs.</p></div>
-    <p class="what">Cinder Revenue builds AI systems, and the websites they run on, for service businesses. <em>They answer every lead, book estimates, chase quotes, send invoice reminders and ask for the review, so the jobs the audit found stop slipping.</em></p>
+    <div class="split"><h2 id="h-after">Fixes are scoped after the audit.</h2><p>Only if you want them, and only the ones your business needs. It all runs in your own app. <a class="inl" href="/software">See the app</a></p></div>
+    <p class="what">Cinder Revenue builds the systems, and the websites they run on, for service businesses. <em>They answer every lead, book estimates, chase quotes, send invoice reminders and ask for the review, so the jobs the audit found stop slipping.</em></p>
 
     <figure class="art band art-chain" data-seq="chain" data-n="24"><img src="/assets/seq/chain/still-1x.webp" srcset="/assets/seq/chain/still-1x.webp 1000w, /assets/seq/chain/still-2x.webp 2000w" sizes="(max-width:820px) 100vw, 1100px" alt="Illustration: a chain of links draws together as you scroll, from the first text to the booked job." width="2000" height="639" decoding="async"></figure>
     <div class="split" style="margin-top:20px"><h3 class="h2s">One thread per lead, from first text to booked.</h3><p>Every call, form and lead-site message lands in one place, gets an answer in seconds, and moves across the board on its own. You step in when it needs you.</p></div>
@@ -922,7 +924,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
     <div class="in">
       <h2 id="h-final">Find out how many jobs you’re missing.</h2>
       <p>A free 15-minute audit. We walk your business from the first call to the review, show you where jobs are slipping, and what fixing it is worth.</p>
-      <div class="acts"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="mailto:sam.cinderrevenue@gmail.com">Email Sam</a></div>
+      <div class="acts"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
     </div>
     <div class="promise"><div><b>Where jobs slip</b>From the first call to the review, including after hours.</div><div><b>A dollar number on each leak</b>Worked out from your own numbers.</div><div><b>What to fix first</b>In order, whether or not you work with us.</div></div>
   </div>
@@ -932,9 +934,9 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
 <footer>
   <div class="wrap">
     <div class="ft">
-      <div><a class="brand" href="#top" aria-label="Back to top"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" class="brand-mark" viewBox="151.04 168.00 791.63 703.15"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z" fill="currentColor"/></svg><span>Cinder Revenue</span></a><p>AI systems and websites for service businesses. Every engagement starts with a free audit.</p></div>
-      <div><h4>The audit</h4><ul><li><a href="#audit">What it covers</a></li><li><a href="#checks">What we check</a></li><li><a href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></li></ul></div>
-      <div><h4>Product</h4><ul><li><a href="#after">After the audit</a></li><li><a href="/demo">Demo</a></li></ul></div>
+      <div><a class="brand" href="#top" aria-label="Back to top"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" class="brand-mark" viewBox="151.04 168.00 791.63 703.15"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z" fill="currentColor"/></svg><span>Cinder Revenue</span></a><p>Systems and websites that win more jobs for service businesses. Every engagement starts with a free audit.</p></div>
+      <div><h4>The audit</h4><ul><li><a href="#audit">What it covers</a></li><li><a href="#checks">What we check</a></li><li><a href="/audit">Check your site</a></li><li><a href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></li></ul></div>
+      <div><h4>Product</h4><ul><li><a href="#after">After the audit</a></li><li><a href="/software">The app</a></li><li><a href="/demo">Demo</a></li></ul></div>
       <div><h4>Company</h4><ul><li><a href="#who">Founder</a></li><li><a href="mailto:sam.cinderrevenue@gmail.com">Email Sam</a></li></ul></div>
       <div><h4>Legal</h4><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
     </div>
@@ -946,7 +948,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
 <script>
 (function(){
 var d=document,b=d.documentElement,FINE=matchMedia('(pointer:fine)').matches;var motionQ='';try{motionQ=new URLSearchParams(location.search).get('motion')||''}catch(err){}var RM=motionQ==='reduce'?true:motionQ==='full'?false:matchMedia('(prefers-reduced-motion: reduce)').matches;
-var LITE=false;try{var cores=navigator.hardwareConcurrency||8, mem=navigator.deviceMemory||8; if(cores<=4||mem<=4) LITE=true;}catch(err){}
+var LITE=false;try{var cores=navigator.hardwareConcurrency||8, mem=navigator.deviceMemory||8; if(cores<=2||mem<=2) LITE=true;}catch(err){}
 if(motionQ==='full') LITE=false; if(motionQ==='lite') LITE=true;
 b.classList.add('js');b.classList.add(RM?'motion-reduce':'motion-full'); if(LITE) b.classList.add('lite');
 var STILL=function(){return window.__still!=null};
@@ -1115,14 +1117,14 @@ function wake(){if(!live){live=true; lastT=0; requestAnimationFrame(tickAll)}}
 function onScroll(){wake()}
 function tickAll(now){
   if(!lastT) lastT=now;
-  var dt=Math.min(40, now-lastT); lastT=now;
+  var raw=now-lastT, dt=Math.min(40, raw); lastT=now;
   if(!LITE && motionQ!=='full'){
     tickAll.samples=tickAll.samples||[];
-    if(tickAll.samples.length<8) tickAll.samples.push(dt);
+    if(tickAll.samples.length<8) tickAll.samples.push(raw);
     else if(!tickAll.checked){
       tickAll.checked=1;
       var ss=tickAll.samples.slice(1), avg=ss.reduce(function(a,b){return a+b},0)/Math.max(1,ss.length);
-      if(avg>40){LITE=true; b.classList.add('lite'); seqs.forEach(function(s){s.drop()}); seqs=[];}
+      if(avg>34){LITE=true; b.classList.add('lite'); seqs.forEach(function(s){s.drop()}); seqs=[];}
     }
   }
   var vh=innerHeight, y=window.scrollY||b.scrollTop||d.body.scrollTop||0, more=false;
