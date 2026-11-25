@@ -80,31 +80,58 @@ p{color:var(--t2);text-wrap:pretty}
 .nav ul a{font-size:var(--f2);color:var(--t2);transition:color var(--d1)}.nav ul a:hover{color:var(--t1)}
 .nav .btn{height:36px;padding:0 14px;border-radius:var(--r1)}
 
-/* 1. Hero: words left, the live unit right */
-.hero{position:relative;padding:136px 0 0;overflow:hidden}
-.hero::before{content:"";position:absolute;right:-10%;top:-30%;width:900px;height:900px;background:radial-gradient(closest-side,rgba(255,255,255,.06),transparent 70%);pointer-events:none}
-.hero .wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:24px;align-items:center;min-height:min(720px,calc(100vh - 200px));position:relative}
-.hero h1{font-size:var(--f7);letter-spacing:-.045em;line-height:.98}
+/* Hero */
+.hero{position:relative;padding:168px 0 0;overflow:hidden}
+.hero::before{content:"";position:absolute;left:50%;top:-420px;width:1400px;height:900px;transform:translateX(-30%);background:radial-gradient(closest-side,rgba(255,255,255,.09),transparent 72%);pointer-events:none}
+.hero .wrap{display:grid;grid-template-columns:1fr 1.05fr;gap:48px;align-items:center;position:relative}
+.hero h1{font-size:clamp(52px,6.2vw,88px);letter-spacing:-.045em;line-height:.98}
+.hero .lede{margin-top:28px}
+.hero .acts{margin-top:40px}
+.hero .terms{margin-top:18px;font-size:14px;color:var(--t3)}
+
+/* Hero: centered over a field of glass slats (CSS only, sharp at any size) */
+.hero{padding:200px 0 0;text-align:center;isolation:isolate}
+.hero::before{display:none}
+.hero .wrap{grid-template-columns:1fr;justify-items:center}
+.hero h1{max-width:13ch;margin:0 auto}
+.hero .lede{margin:28px auto 0;max-width:32em}
+.hero .acts{justify-content:center}
+.rays{position:absolute;left:0;right:0;top:-80px;height:1100px;z-index:-1;overflow:hidden;pointer-events:none}
+.rays-in{position:absolute;left:50%;top:0;width:1500px;height:1000px;transform:translateX(-50%)}
+.rays i{--x:calc((var(--k) - 4) * 118px);position:absolute;left:50%;top:40px;width:96px;height:900px;margin-left:-48px;border-radius:60px;
+  background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(150,180,255,.10) 28%,rgba(220,230,255,.34) 52%,rgba(120,160,255,.16) 72%,rgba(255,255,255,0) 100%);
+  box-shadow:inset 1px 0 0 rgba(255,255,255,.28),inset -1px 0 0 rgba(255,255,255,.06);
+  transform:translate3d(var(--x),var(--y,0px),0) rotate(24deg) scaleY(calc(1 - (var(--k) - 4) * (var(--k) - 4) * .045));
+  opacity:calc(1 - (var(--k) - 4) * (var(--k) - 4) * .07);will-change:transform}
+.rays i:nth-child(odd){background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.07) 30%,rgba(235,240,255,.24) 55%,rgba(255,255,255,0) 100%)}
+.rays-core{position:absolute;left:50%;top:330px;width:900px;height:520px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(120,160,255,.30),rgba(79,140,255,.10) 45%,transparent 75%);filter:blur(10px)}
+.rays-fade{position:absolute;inset:0;background:radial-gradient(60% 46% at 50% 36%,rgba(0,0,0,.55),transparent 70%),linear-gradient(180deg,#000 0%,transparent 16%,transparent 62%,#000 96%)}
+.js .rays i{animation:slat 1.6s var(--e) both;animation-delay:calc(.08s * (4 - (var(--k) - 4) * (var(--k) - 4) / 4))}
+@keyframes slat{from{opacity:0;transform:translate3d(var(--x),120px,0) rotate(24deg) scaleY(.6)}}
+.js .rays-core{animation:core 2.2s var(--e) .2s both}
+@keyframes core{from{opacity:0;transform:translateX(-50%) scale(.7)}}
+.hb-stage{position:relative;margin:96px auto 0;max-width:1300px;padding:0 var(--g);perspective:2200px}
+.hb-screen{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 -1px 0 rgba(255,255,255,.25) inset;transform:rotateX(20deg) scale(.98);transform-origin:50% 0;-webkit-mask-image:linear-gradient(#000 35%,transparent 92%);mask-image:linear-gradient(#000 35%,transparent 92%)}
+.hb-screen img{width:100%}
+.js .hb-screen{animation:hbin 1.5s var(--e) .45s both}
+@keyframes hbin{from{opacity:0;transform:rotateX(36deg) scale(.94) translate3d(0,60px,0)}to{opacity:1;transform:rotateX(20deg) scale(.98)}}
 .hero h1 .ln{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em}
 .hero h1 .ln span{display:block}
-.hero .lede{margin-top:28px;font-size:var(--f4);line-height:1.55;max-width:28em}
-.hero .acts{margin-top:40px}
-.hero .terms{margin-top:18px;font-size:var(--f2);color:var(--t3)}
-.stage{position:relative;height:min(620px,62vh);min-height:420px}
-.unit-host{position:absolute;inset:0}
-.stage .fb{display:none}
-.unit-failed .stage .fb{display:block;position:absolute;inset:8% 0;border-radius:var(--r3);overflow:hidden;box-shadow:0 0 0 1px var(--line2);transform:perspective(1800px) rotateY(-14deg) rotateX(6deg)}
-.unit-failed .stage .fb img{width:100%;height:100%;object-fit:cover;object-position:0 0}
-.tick{position:absolute;width:11px;height:11px;border:solid var(--line2);border-width:1px 0 0 1px;pointer-events:none}
-.tick.a{left:0;top:0}.tick.b{right:0;top:0;transform:rotate(90deg)}.tick.c{right:0;bottom:0;transform:rotate(180deg)}.tick.d{left:0;bottom:0;transform:rotate(-90deg)}
-.tools{margin-top:72px;border-top:1px solid var(--line)}
+.js .hero h1 .ln span{animation:up 1s var(--e) both}
+.js .hero h1 .ln:nth-child(2) span{animation-delay:.06s}.js .hero h1 .ln:nth-child(3) span{animation-delay:.12s}
+.js .hero .lede,.js .hero .acts,.js .hero .terms{animation:fade .9s var(--e) both}
+.js .hero .lede{animation-delay:.25s}.js .hero .acts{animation-delay:.33s}.js .hero .terms{animation-delay:.4s}
+@keyframes up{from{transform:translate3d(0,105%,0)}to{transform:none}}
+
+.hero .terms{color:var(--t3)}
+.tools{border-top:1px solid var(--line);position:relative;background:#000}
 .tools .wrap{display:flex;align-items:center;gap:36px;min-height:72px;overflow:hidden;white-space:nowrap}
 .tools span{font-size:var(--f2);color:var(--t3)}
 .tools .lab{color:var(--t2)}
 .js .hero h1 .ln span{animation:up var(--d3) var(--e) both}
 .js .hero h1 .ln:nth-child(2) span{animation-delay:.06s}.js .hero h1 .ln:nth-child(3) span{animation-delay:.12s}
-.js .hero .lede,.js .hero .acts,.js .hero .terms,.js .stage{animation:fade .9s var(--e) both}
-.js .hero .lede{animation-delay:.25s}.js .hero .acts{animation-delay:.33s}.js .hero .terms{animation-delay:.4s}.js .stage{animation-delay:.3s}
+.js .hero .lede,.js .hero .acts,.js .hero .terms{animation:fade .9s var(--e) both}
+.js .hero .lede{animation-delay:.25s}.js .hero .acts{animation-delay:.33s}.js .hero .terms{animation-delay:.4s}
 @keyframes up{from{transform:translate3d(0,105%,0)}to{transform:none}}
 @keyframes fade{from{opacity:0;transform:translate3d(0,16px,0)}to{opacity:1;transform:none}}
 
@@ -181,7 +208,7 @@ p{color:var(--t2);text-wrap:pretty}
 .js .sum.in ol>li:nth-child(2){transition-delay:.12s}.js .sum.in ol>li:nth-child(3){transition-delay:.24s}.js .sum.in ol>li:nth-child(4){transition-delay:.36s}.js .sum.in ol>li:nth-child(5){transition-delay:.48s}
 
 /* 4. What we build: the unit pins and comes apart */
-.bd{position:relative;height:340vh;border-top:1px solid var(--line)}
+.bd{position:relative;height:320vh}
 .bd-pin{position:sticky;top:0;height:100vh;display:grid;grid-template-columns:320px 1fr 300px;gap:24px;align-items:center;max-width:calc(var(--w) + var(--g)*2);margin:0 auto;padding:64px var(--g) 0}
 .bd-head p{margin-top:18px;font-size:var(--f4)}
 .bd-meter{margin-top:32px;display:flex;align-items:center;gap:12px}
@@ -233,8 +260,6 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 /* Tablet */
 @media (max-width:1100px){
   .nav ul{display:none}.nav .btn{margin-left:auto}
-  .hero .wrap{grid-template-columns:1fr;min-height:0}
-  .hero .stage{height:460px;min-height:0}
   .bd-pin{grid-template-columns:1fr 280px;grid-template-rows:auto 1fr;padding-top:88px}
   .bd-head{grid-column:1/-1}
   .bd .stage{height:100%;min-height:360px}
@@ -244,12 +269,14 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   :root{--g:20px;--sec:104px}
   .head{margin-bottom:48px}.head p{font-size:var(--f3)}
   .audit,.story,.duo,.founder{grid-template-columns:1fr;gap:28px}
-  .hero{padding:112px 0 0}
+  .hero{padding:132px 0 0}
+  .rays{height:860px;top:-40px}.rays-in{transform:translateX(-50%) scale(.55);transform-origin:50% 0}.rays-core{top:250px;width:520px;height:380px}
+  .hb-stage{margin-top:56px;padding:0}
+  .hb-screen{border-radius:10px;transform:rotateX(16deg) scale(1.3);transform-origin:30% 0}
+  .js .hb-screen{animation:none}
   .hero h1{font-size:clamp(44px,12vw,56px)}
   .hero .lede{font-size:var(--f3)}
   .hero .acts .btn{width:100%;height:50px}
-  .hero .stage{height:340px;margin:8px calc(var(--g)*-1) 0}
-  .tools{margin-top:40px}
   .tools .wrap{min-height:0;padding:22px var(--g);flex-wrap:wrap;gap:10px 22px;white-space:normal}
   .tools .lab{width:100%}
   .story{gap:0}
@@ -297,7 +324,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   <div class="wrap">
     <a class="brand" href="#top" aria-label="Cinder Revenue Company, home"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" class="brand-mark" viewBox="151.04 168.00 791.63 703.15"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z" fill="currentColor"/></svg><span>Cinder Revenue</span></a>
     <nav aria-label="Main"><ul>
-      <li><a href="#problem">The problem</a></li><li><a href="#audit">The free audit</a></li><li><a href="#inside">What we build</a></li><li><a href="#app">The app</a></li>
+      <li><a href="#inside">What we build</a></li><li><a href="#problem">The problem</a></li><li><a href="#audit">The free audit</a></li><li><a href="#app">The app</a></li>
     </ul></nav>
     <a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a>
   </div>
@@ -305,6 +332,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 
 <main id="main">
 <section class="hero" id="top" aria-labelledby="h1">
+  <div class="rays" id="rays" aria-hidden="true"><div class="rays-in"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i style="--k:8"></i></div><div class="rays-core"></div><div class="rays-fade"></div></div>
   <div class="wrap">
     <div>
       <h1 id="h1"><span class="ln"><span>More jobs from</span></span><span class="ln"><span>the leads you</span></span><span class="ln"><span>already get.</span></span></h1>
@@ -312,9 +340,31 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
       <div class="acts"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
       <p class="terms">The audit is free, and you keep what we find.</p>
     </div>
-    <div class="stage" id="heroStage"><div class="fb"><img src="/assets/screens/today-1200.webp" width="1200" height="750" alt=""></div><div class="unit-host" id="heroHost"></div></div>
+    
   </div>
-  <div class="tools"><div class="wrap"><span class="lab">Works alongside</span><span>Jobber</span><span>Housecall Pro</span><span>Google Calendar</span><span>Facebook Lead Ads</span><span>Angi</span><span>Thumbtack</span><span>Google Business Profile</span></div></div>
+  <div class="hb-stage" aria-hidden="true"><div class="hb-screen"><img src="/assets/screens/today-2400.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1300px) 100vw, 1300px" width="2400" height="1500" alt="" fetchpriority="high"></div></div>
+</section>
+
+<section class="tools" aria-label="Works alongside"><div class="wrap"><span class="lab">Works alongside</span><span>Jobber</span><span>Housecall Pro</span><span>Google Calendar</span><span>Facebook Lead Ads</span><span>Angi</span><span>Thumbtack</span><span>Google Business Profile</span></div>
+</section>
+
+<section id="inside" class="bd" aria-labelledby="h-inside">
+  <div class="bd-pin">
+    <div class="bd-head">
+      <h2 id="h-inside">What we build, taken apart.</h2>
+      <p>Six parts, one system. You only get the parts your audit says you need.</p>
+      <div class="bd-meter" aria-hidden="true"><i><b id="bdm"></b></i><span class="mono" id="bdl">Assembled</span></div>
+    </div>
+    <div class="stage" id="bdStage"><i class="tick a"></i><i class="tick b"></i><i class="tick c"></i><i class="tick d"></i><div class="fb"><img src="/assets/screens/today-1200.webp" width="1200" height="750" alt=""></div><div class="unit-host" id="bdHost"></div></div>
+    <ol class="parts" id="parts">
+      <li data-k="5"><b><span>01</span>Answering</b><p>Every call, text and form gets a reply in seconds, even after hours.</p></li>
+      <li data-k="4"><b><span>02</span>Booking</b><p>Leads pick a time and land on your calendar, with reminders so they show up.</p></li>
+      <li data-k="3"><b><span>03</span>Quote follow-up</b><p>Sent quotes get followed up until the customer says yes or no.</p></li>
+      <li data-k="2"><b><span>04</span>Invoices</b><p>Unpaid invoices get polite reminders, so you get paid without chasing.</p></li>
+      <li data-k="1"><b><span>05</span>Reviews</b><p>Happy customers get asked for a review after every paid job.</p></li>
+      <li data-k="0"><b><span>06</span>Website</b><p>A site that turns visitors into booked jobs, if yours is part of the leak.</p></li>
+    </ol>
+  </div>
 </section>
 
 <section id="problem" class="sec" aria-labelledby="h-out">
@@ -387,25 +437,6 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   </div>
 </section>
 
-<section id="inside" class="bd" aria-labelledby="h-inside">
-  <div class="bd-pin">
-    <div class="bd-head">
-      <h2 id="h-inside">What we build, taken apart.</h2>
-      <p>Six parts, one system. You only get the parts your audit says you need.</p>
-      <div class="bd-meter" aria-hidden="true"><i><b id="bdm"></b></i><span class="mono" id="bdl">Assembled</span></div>
-    </div>
-    <div class="stage" id="bdStage"><i class="tick a"></i><i class="tick b"></i><i class="tick c"></i><i class="tick d"></i><div class="fb"><img src="/assets/screens/today-1200.webp" width="1200" height="750" alt=""></div><div class="unit-host" id="bdHost"></div></div>
-    <ol class="parts" id="parts">
-      <li data-k="5"><b><span>01</span>Answering</b><p>Every call, text and form gets a reply in seconds, even after hours.</p></li>
-      <li data-k="4"><b><span>02</span>Booking</b><p>Leads pick a time and land on your calendar, with reminders so they show up.</p></li>
-      <li data-k="3"><b><span>03</span>Quote follow-up</b><p>Sent quotes get followed up until the customer says yes or no.</p></li>
-      <li data-k="2"><b><span>04</span>Invoices</b><p>Unpaid invoices get polite reminders, so you get paid without chasing.</p></li>
-      <li data-k="1"><b><span>05</span>Reviews</b><p>Happy customers get asked for a review after every paid job.</p></li>
-      <li data-k="0"><b><span>06</span>Website</b><p>A site that turns visitors into booked jobs, if yours is part of the leak.</p></li>
-    </ol>
-  </div>
-</section>
-
 <section id="app" class="sec" aria-labelledby="h-app">
   <div class="wrap">
     <div class="head"><h2 id="h-app" class="rv">It all runs in your own app.</h2><p class="rv d1">Every lead, estimate, quote and invoice in one place, with what needs you at the top. <a class="inl" href="/software">See the app</a></p></div>
@@ -463,11 +494,12 @@ function setStep(s){if(s===cur)return;cur=s;steps.forEach(function(el){el.classL
 setStep(0);
 
 /* One live 3D unit: it sits in the hero, then moves down into "taken apart" and opens there */
-var heroHost=d.getElementById('heroHost'),bdHost=d.getElementById('bdHost'),U=null,frame=null,where='',lastP=-1,lastA=-1;
-function unitReady(){if(U||!window.CinderUnit)return;U=window.CinderUnit;U.mount(heroHost);frame=heroHost.firstElementChild;where='hero';onScroll()}
+var bdHost=d.getElementById('bdHost'),U=null,lastP=-1,lastA=-1;
+function unitReady(){if(U||!window.CinderUnit)return;U=window.CinderUnit;U.mount(bdHost);onScroll()}
 addEventListener('cinder-unit',unitReady);
 
 var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),parts=[].slice.call(d.querySelectorAll('#parts li')),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl');
+var slats=[].slice.call(d.querySelectorAll('#rays i'));
 var names=['Answering','Booking','Quote follow-up','Invoices','Reviews','Website'];
 var ticking=false,lastK=-2;
 function clamp(v){return v<0?0:v>1?1:v}
@@ -483,12 +515,12 @@ function update(){
   var span=br.height-vh,bp=clamp(-br.top/span);
   if(br.top<vh&&br.bottom>0)bdm.style.setProperty('--p',bp.toFixed(4));
   /* screws out and layers apart over the first 55% of the pin, then each part gets its turn */
-  var k=bp<.4?-1:Math.min(5,Math.floor((bp-.4)/.6*6));
+  var k=bp<.5?-1:Math.min(5,Math.floor((bp-.5)/.5*6));
   if(k!==lastK){lastK=k;parts.forEach(function(li,i){li.classList.toggle('on',i===Math.max(0,k))});bdl.textContent=bp<.02?'Assembled':k<0?'Taking it apart':String(k+1).padStart(2,'0')+' / 06 · '+names[k]}
-  if(U&&frame){
-    var near=br.top<vh*1.4&&br.bottom>-vh*.4,want=near?'bd':'hero';
-    if(want!==where){where=want;(near?bdHost:heroHost).appendChild(frame)}
-    var p=near?clamp(bp/.55):0;
+  if(!RM&&y<1200){slats.forEach(function(el,i){el.style.setProperty('--y',(-(y*(.12+Math.abs(i-4)*.05))).toFixed(1)+'px')})}
+  if(U){
+    /* screws start lifting while the section scrolls in; fully apart a little past the middle of the pin */
+    var p=clamp((vh*.75-br.top)/(vh*.75+span*.5));
     if(Math.abs(p-lastP)>.0005){lastP=p;U.setProgress(p)}
     var a=Math.max(0,k);if(a!==lastA){lastA=a;U.setActive(a)}
   }
