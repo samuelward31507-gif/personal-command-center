@@ -91,8 +91,9 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 // The site is several pages generated from one source: the offer lives on Pricing, the product truth on Product.
 const home = ["site/index.html", "site/product.html", "site/pricing.html"].map(f => readFileSync(f, "utf8")).join("\n");
 ok(() => assert.match(home, /or your next month is free/));
-ok(() => assert.match(home, /Never Miss a Lead[\s\S]*\$697<\/b>\/month/), "tier 1 price");
-ok(() => assert.match(home, /Book &amp; Close[\s\S]*\$1,497<\/b>\/month/), "tier 2 price");
+ok(() => assert.match(home, /Never Miss a Lead/), "tier 1 name stays");
+ok(() => assert.match(home, /Book &amp; Close/), "tier 2 name stays");
+ok(() => assert.doesNotMatch(home, /\$697<\/b>\/month|\$1,497<\/b>\/month/), "no published monthly prices; every build is priced from the audit");
 ok(() => assert.doesNotMatch(home, /Full Front Office/), "no plan that depends on voice answering until it ships");
 ok(() => assert.match(home, /Does it answer calls by voice\?<\/summary><p>Not today\./), "honest about voice");
 ok(() => assert.doesNotMatch(home, /included when it releases|Voice answering is rolling out/), "no promise of voice answering before it ships");
