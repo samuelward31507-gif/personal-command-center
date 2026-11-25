@@ -21,7 +21,6 @@
 <link rel="apple-touch-icon" href="/icon/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="/assets/seq/cspin/00.webp" as="image" type="image/webp" fetchpriority="high">
 <style>
 /* Fonts, SIL Open Font License 1.1, self-hosted, licences in assets/fonts/:
    Inter 4.1 variable (opsz + wght: the Display cut kicks in at large sizes), Geist Mono variable (labels). */
@@ -365,7 +364,7 @@ p{color:var(--t2)}
 .js .hero h1.sweep .ln>span{animation:sweep 1.5s cubic-bezier(.4,0,.2,1) .55s 1 both}
 @keyframes sweep{from{background-position:130% 0,0 calc(var(--i)*50%)}to{background-position:-30% 0,0 calc(var(--i)*50%)}}
 /* scroll reveals: rise, unblur */
-.rv{opacity:0;transform:translate3d(0,8px,0);transition:opacity .4s cubic-bezier(.2,.7,.2,1),transform .45s cubic-bezier(.2,.7,.2,1);will-change:opacity,transform}
+.rv{opacity:0;transform:translate3d(0,12px,0);transition:opacity .32s cubic-bezier(.16,1,.3,1),transform .32s cubic-bezier(.16,1,.3,1)}
 .rv.in{opacity:1;transform:none;will-change:auto}
 /* section seams: a hairline of light */
 .sec{position:relative}
@@ -489,8 +488,8 @@ html.motion-reduce .rv{transform:none;filter:none;transition:opacity .7s cubic-b
 
 /* ===== v9: the mechanical breakdown ===== */
 .bd{position:relative;border-top:1px solid var(--line)}
-.bd-track{position:relative;height:auto}
-.bd-pin{position:relative;height:auto;min-height:0;overflow:hidden}
+.bd-track{position:relative;height:440vh}
+.bd-pin{position:sticky;top:0;height:100vh;min-height:640px;overflow:hidden}
 .bd-lines{display:none}
 .bd-labels{position:static;display:grid;gap:12px}
 .bd-labels li{position:static;transform:none;opacity:1}
@@ -501,14 +500,14 @@ html.motion-reduce .rv{transform:none;filter:none;transition:opacity .7s cubic-b
 .bd-head .lab{display:block;margin-bottom:22px}
 .bd-meter{margin-top:34px;display:flex;align-items:center;gap:12px;font:450 11.5px/1 var(--mono);color:var(--t3);letter-spacing:.06em;text-transform:uppercase}
 .bd-meter i{position:relative;display:block;width:120px;height:1px;background:var(--line2)}
-.bd-meter i b{position:absolute;left:0;top:-.5px;height:2px;width:calc(var(--s,0)*100%);background:linear-gradient(90deg,var(--acc),#a9c4ff)}
+.bd-meter i b{position:absolute;left:0;top:-.5px;height:2px;width:calc(var(--s,0)*100%);background:#f4f4f5}
 .bd-meter span{min-width:11em;color:var(--t2)}
 .bd-art{position:relative;justify-self:center;margin:0;height:min(calc(100vh - 120px),860px);aspect-ratio:900/1000;max-width:100%}
 .bd-art img{width:100%;height:100%;object-fit:contain}
 .bd-lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:1}
 .bd-lines path{fill:none;stroke:rgba(255,255,255,.34);stroke-width:1;transition:stroke .3s}
 .bd-lines circle{fill:#000;stroke:rgba(255,255,255,.75);stroke-width:1}
-.bd-lines .on path{stroke:var(--acc-t)}.bd-lines .on circle{stroke:var(--acc-t);fill:var(--acc)}
+.bd-lines .on path{stroke:#fff}.bd-lines .on circle{stroke:#fff;fill:#fff}
 .bd-labels{list-style:none;position:relative;align-self:stretch}
 .bd-labels li{position:absolute;left:0;right:0;transform:translateY(-50%);opacity:var(--o,1)}
 .bd-labels .n{font:450 11.5px/1 var(--mono);color:var(--t3);letter-spacing:.06em;transition:color .3s}
@@ -577,7 +576,7 @@ h2,.h2s{font-weight:620;letter-spacing:-.048em;text-align:left}
 .hero h1 .ln>span{background:none!important;color:#fff;-webkit-text-fill-color:#fff}
 .split,.duo,.sec .wrap,.closing .in,.tools .wrap{text-align:left}
 .tools .wrap{justify-content:flex-start}
-.eyebrow,.fig>.lab,.bd-head>.lab,.card>.lab,.prodcap,.intake-cap,figcaption.lab,.fx .pk,.bd-meter{display:none!important}
+.eyebrow,.fig>.lab,.bd-head>.lab,.card>.lab,.prodcap,.intake-cap,figcaption.lab,.fx .pk{display:none!important}
 .card,.doc,.thread{
   background:#0c0c0d!important;border:1px solid rgba(255,255,255,.14)!important;
   box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
@@ -593,9 +592,41 @@ main a:not(.btn):hover,footer a:not(.btn):hover{color:#fff}
 .iso .acc{stroke:#d4d4d8}
 .doc tr.leak td.s,.ck .note,.hud .since,.tk span,.step.on .sn,.thread .sys{color:#d4d4d8}
 .brand svg{width:22px;height:22px}
-.art-phone2,.art-stack,.art-chain,.art-mods,.art-pickets,.art-svc,.closing .obj,.bd-art{display:none!important}
-.story{grid-template-columns:1fr}
 .prod{margin-top:28px}
+.step{min-height:62vh;opacity:.42;transform:none;transition:opacity .24s cubic-bezier(.16,1,.3,1)}
+.step.on{opacity:1}
+.story{grid-template-columns:1fr 1fr;gap:40px}
+.story .stage2{display:block}
+.story .steps{padding:12vh 0 18vh}
+.story .pin{position:sticky;top:calc(50vh - 360px);height:720px}
+html.lite .story{grid-template-columns:1fr}
+html.lite .story .steps{padding:8px 0}
+html.lite .step{min-height:0;opacity:1}
+html.lite .story .pin{position:relative;top:0;height:auto}
+html.lite .bd-track,html.lite .bd-pin{height:auto!important;position:relative!important;min-height:0!important}
+html.lite .bd-lines{display:none!important}
+html.lite .bd-labels{position:static!important;display:grid!important;grid-template-columns:1fr 1fr;gap:0 48px}
+html.lite .bd-labels li{position:static!important;transform:none!important;opacity:1!important}
+html.lite .seqc{display:none!important}
+.closing .obj{position:absolute;right:4%;top:96px;width:min(420px,34%);margin:0}
+.stage{display:flex;align-items:center;justify-content:flex-end;padding:0 56px 0 0;-webkit-mask-image:none;mask-image:none}
+.hero-cmark .stage{width:50%;right:0;-webkit-mask-image:none;mask-image:none}
+.hwin{width:min(440px,100%);background:#0c0c0d;border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:14px 14px 16px;color:#f4f4f5}
+.hwin-bar{display:flex;align-items:center;gap:6px;height:28px;margin:-14px -14px 14px;padding:0 12px;border-bottom:1px solid rgba(255,255,255,.12);font:500 12px/1 var(--sans);color:#a1a1aa}
+.hwin-bar i{width:8px;height:8px;border-radius:50%;background:#2a2a2c;display:block}
+.hwin-bar span{margin-left:8px}
+.hmsg{max-width:92%;margin-top:8px;padding:10px 12px;border-radius:10px;background:#161616;font-size:14px;line-height:1.45;color:#f4f4f5}
+.hmsg.out{margin-left:auto;background:#1c1c1e}
+.hmsg small,.hbook small{display:block;margin-top:4px;font:400 11px/1.3 var(--mono);color:#8a8f98}
+.hbook{margin-top:10px;padding:10px 12px;border:1px solid rgba(255,255,255,.16);border-radius:10px;display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.hbook b{font-weight:620}
+.hwin .hmsg,.hwin .hbook{opacity:0;transform:translate3d(0,12px,0)}
+.hwin.play .hmsg,.hwin.play .hbook{opacity:1;transform:none;transition:opacity .32s cubic-bezier(.16,1,.3,1),transform .32s cubic-bezier(.16,1,.3,1)}
+.hwin.play .hmsg:nth-child(2){transition-delay:.05s}
+.hwin.play .hmsg:nth-child(3){transition-delay:.1s}
+.hwin.play .hmsg:nth-child(4){transition-delay:.15s}
+.hwin.play .hbook{transition-delay:.2s}
+html.motion-reduce .hwin .hmsg,html.motion-reduce .hwin .hbook{opacity:1;transform:none;transition:none}
 .screen{transform:none!important;border:1px solid rgba(255,255,255,.16);border-radius:10px;overflow:hidden;background:#000;box-shadow:none;max-width:1120px}
 .screen img{width:100%;height:auto}
 .rv{transform:translate3d(0,8px,0)}
@@ -605,22 +636,17 @@ main a:not(.btn):hover,footer a:not(.btn):hover{color:#fff}
 .btn:not(.ghost):hover,.btn.ghost:hover{box-shadow:none}
 .lc.glow{background:#111;border-color:rgba(255,255,255,.16);box-shadow:none}
 .lc.glow i{color:#d4d4d8;border-color:rgba(255,255,255,.2)}
-.story{grid-template-columns:1fr;gap:0;margin-top:8px}
-.story .steps{padding:0}
-.story .stage2{display:none}
-.step{min-height:0;opacity:1;transform:none;max-width:40em;padding:22px 0;justify-content:flex-start}
+.story{grid-template-columns:1fr 1fr;gap:40px;margin-top:28px}
+.story .steps{padding:12vh 0 18vh}
+.story .stage2{display:block}
+.story .pin{position:sticky;top:calc(50vh - 360px);height:720px}
+.step{min-height:62vh;opacity:.42;transform:none;max-width:34em;padding:0;justify-content:center}
+.step.on{opacity:1}
 .step h3{margin-top:8px;font-weight:620;letter-spacing:-.03em}
 .lab{display:none!important}
 .tlab{display:none}
 h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
-.bd-track,.bd-pin{height:auto!important;min-height:0!important;position:relative!important;overflow:visible}
-.bd-in{display:block;height:auto;padding:72px 40px 28px}
-.bd-head{max-width:640px}
-.bd-head p{display:block}
-.bd-labels{position:static!important;display:grid!important;grid-template-columns:1fr 1fr;gap:0 64px;margin-top:36px;list-style:none}
-.bd-labels li{position:static!important;transform:none!important;opacity:1!important;padding:20px 0;border-top:1px solid rgba(255,255,255,.12)}
-.bd-labels li::before{display:none}
-.bd-labels p{display:block;max-width:36em}
+.bd-head p{display:block}.bd-meter{display:flex!important}
 .card,.doc,.thread{background:#0c0c0d!important;border:1px solid rgba(255,255,255,.14)!important;border-color:rgba(255,255,255,.14)!important;box-shadow:none!important}
 .prod{margin-top:48px;perspective:none}
 .screen{max-width:1120px;border-radius:12px;transform:none!important;-webkit-mask-image:none!important;mask-image:none!important;box-shadow:none}
@@ -640,11 +666,10 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
 #spin{opacity:1!important;transform:none!important}
 .hud{background:#0c0c0d;box-shadow:none;text-transform:none;letter-spacing:0}
 @media (max-width:820px){
-  .bd-track,.bd-pin{height:auto!important}
-  .bd-in{padding:48px 20px 12px}
-  .bd-labels{grid-template-columns:1fr;gap:0}
-  .bd-head p{display:block}
+  html:not(.lite) .bd-track{height:300vh!important}
+  html:not(.lite) .bd-pin{height:100svh!important;position:sticky!important}
   .step{min-height:0;padding:18px 0}
+  .hwin{width:min(100%,440px);margin:28px auto 0}
   .intake-stage{grid-template-columns:1fr}
   .board{height:auto;opacity:1;margin-top:12px;overflow:auto}
 }
@@ -666,11 +691,14 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
 <section class="hero" id="top" aria-labelledby="h1">
   <div class="light"></div>
     <div class="beam" aria-hidden="true"></div>
-  <div class="stage" role="img" aria-label="Illustration: a week of estimate slots cast as one dark object. Raised tiles are booked estimates; the outlined tile is the next one being booked.">
-    <div class="haze" aria-hidden="true"></div>
-    <canvas id="obj" aria-hidden="true"></canvas>
-    <canvas id="spin" aria-hidden="true"></canvas>
-    <img class="still" src="/assets/seq/cspin/00.webp" alt="" width="1400" height="1260">
+  <div class="stage">
+    <div class="hwin" id="hwin" role="img" aria-label="Example: a lead texts in, hears back in 10 seconds, and the estimate is booked for Thursday at 9:00 AM.">
+      <div class="hwin-bar" aria-hidden="true"><i></i><i></i><i></i><span>Inbox · Brightline</span></div>
+      <div class="hmsg">Hi, looking for a quote on a project at my house. Called earlier but no answer.<small>7:42 PM</small></div>
+      <div class="hmsg out">Sorry we missed you. Mike can come Thursday at 9:00 AM or Friday at 1:00 PM.<small>7:42 PM · 10s later</small></div>
+      <div class="hmsg">Thursday at 9 works<small>7:49 PM</small></div>
+      <div class="hbook"><b>Booked</b><span>Thu 9:00 AM · 41 Aspen Ct</span></div>
+    </div>
   </div>
   <div class="topbeam" aria-hidden="true"></div>
   <div class="vig" aria-hidden="true"></div>
@@ -710,7 +738,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
         <div class="step" data-at="3"><span class="sn">04 · Reminded</span><h3>The reminder is already queued.</h3><p>The evening before, Dana gets a text, so Thursday’s slot doesn’t turn into a no-show.</p></div>
       </div>
       <div class="stage2"><div class="pin">
-        <figure class="art art-phone2"></figure>
+        <figure class="art art-phone2" data-seq="notes" data-n="32" data-drive="story"><img src="/assets/seq/notes/still-1x.webp" srcset="/assets/seq/notes/still-1x.webp 560w, /assets/seq/notes/still-2x.webp 1120w" sizes="(max-width:820px) 86vw, 520px" alt="Illustration: four keys land one by one as you scroll: missed call, replied in 10 seconds, estimate booked, reminder queued. Sample data." width="1120" height="1330" decoding="async"></figure>
         <div class="hud" aria-hidden="true"><i></i><span>Sample</span><b class="clock">7:42:13 PM</b><span class="since">Reminder queued</span></div>
       </div></div>
     </div>
@@ -754,7 +782,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
   <div class="wrap">
     <div class="duo">
       <div><h2 id="h-audit">Fifteen minutes, free, and you keep what we find.</h2><p class="sub">We walk your shop from the first call to the review and show you where jobs are slipping. Fixes are scoped after the audit, only if you want them.</p></div>
-      <figure class="art art-stack"></figure>
+      <figure class="art art-stack" data-seq="pipe" data-n="24"><img src="/assets/seq/pipe/still-1x.webp" srcset="/assets/seq/pipe/still-1x.webp 500w, /assets/seq/pipe/still-2x.webp 1000w" sizes="(max-width:820px) 86vw, 480px" alt="Illustration: a joint in a steel line slides closed as you scroll. The audit finds the leak." width="1000" height="824" decoding="async"></figure>
     </div>
     <div class="figs">
       <div class="fig"><span class="lab">Fig 0.1</span><svg class="iso" viewBox="-169 -25 372 239" role="img" aria-label="Figure: a week of estimate slots, one being booked"><polygon class="" points="197.5,114.0 34.6,208.0 34.6,194.0 197.5,100.0"/><polygon class="" points="-162.8,94.0 34.6,208.0 34.6,194.0 -162.8,80.0"/><polygon class="" points="0.0,-14.0 197.5,100.0 34.6,194.0 -162.8,80.0"/><polygon class="" points="29.4,13.0 0.0,30.0 0.0,21.2 29.4,4.2"/><polygon class="" points="-29.4,13.0 0.0,30.0 0.0,21.2 -29.4,4.2"/><polygon class="" points="0.0,-12.8 29.4,4.2 0.0,21.2 -29.4,4.2"/><polygon class="" points="66.5,34.4 37.1,51.4 37.1,35.4 66.5,18.4"/><polygon class="" points="7.6,34.4 37.1,51.4 37.1,35.4 7.6,18.4"/><polygon class="" points="37.1,1.4 66.5,18.4 37.1,35.4 7.6,18.4"/><polygon class="" points="-7.6,34.4 -37.1,51.4 -37.1,42.6 -7.6,25.6"/><polygon class="" points="-66.5,34.4 -37.1,51.4 -37.1,42.6 -66.5,25.6"/><polygon class="" points="-37.1,8.6 -7.6,25.6 -37.1,42.6 -66.5,25.6"/><polygon class="" points="103.6,55.8 74.1,72.8 74.1,64.0 103.6,47.0"/><polygon class="" points="44.7,55.8 74.1,72.8 74.1,64.0 44.7,47.0"/><polygon class="" points="74.1,30.0 103.6,47.0 74.1,64.0 44.7,47.0"/><polygon class="" points="29.4,55.8 0.0,72.8 0.0,56.8 29.4,39.8"/><polygon class="" points="-29.4,55.8 0.0,72.8 0.0,56.8 -29.4,39.8"/><polygon class="" points="0.0,22.8 29.4,39.8 0.0,56.8 -29.4,39.8"/><polygon class="" points="-44.7,55.8 -74.1,72.8 -74.1,64.0 -44.7,47.0"/><polygon class="" points="-103.6,55.8 -74.1,72.8 -74.1,64.0 -103.6,47.0"/><polygon class="" points="-74.1,30.0 -44.7,47.0 -74.1,64.0 -103.6,47.0"/><polygon class="" points="140.6,77.2 111.2,94.2 111.2,78.2 140.6,61.2"/><polygon class="" points="81.8,77.2 111.2,94.2 111.2,78.2 81.8,61.2"/><polygon class="" points="111.2,44.2 140.6,61.2 111.2,78.2 81.8,61.2"/><polygon class="" points="66.5,77.2 37.1,94.2 37.1,85.4 66.5,68.4"/><polygon class="" points="7.6,77.2 37.1,94.2 37.1,85.4 7.6,68.4"/><polygon class="" points="37.1,51.4 66.5,68.4 37.1,85.4 7.6,68.4"/><polygon class="slot" points="-7.6,77.2 -37.1,94.2 -37.1,91.8 -7.6,74.8"/><polygon class="slot" points="-66.5,77.2 -37.1,94.2 -37.1,91.8 -66.5,74.8"/><polygon class="slot" points="-37.1,57.8 -7.6,74.8 -37.1,91.8 -66.5,74.8"/><polygon class="" points="-81.8,77.2 -111.2,94.2 -111.2,85.4 -81.8,68.4"/><polygon class="" points="-140.6,77.2 -111.2,94.2 -111.2,85.4 -140.6,68.4"/><polygon class="" points="-111.2,51.4 -81.8,68.4 -111.2,85.4 -140.6,68.4"/><polygon class="" points="177.7,98.6 148.3,115.6 148.3,106.8 177.7,89.8"/><polygon class="" points="118.8,98.6 148.3,115.6 148.3,106.8 118.8,89.8"/><polygon class="" points="148.3,72.8 177.7,89.8 148.3,106.8 118.8,89.8"/><polygon class="" points="103.6,98.6 74.1,115.6 74.1,106.8 103.6,89.8"/><polygon class="" points="44.7,98.6 74.1,115.6 74.1,106.8 44.7,89.8"/><polygon class="" points="74.1,72.8 103.6,89.8 74.1,106.8 44.7,89.8"/><polygon class="" points="29.4,98.6 0.0,115.6 0.0,99.6 29.4,82.6"/><polygon class="" points="-29.4,98.6 0.0,115.6 0.0,99.6 -29.4,82.6"/><polygon class="" points="0.0,65.6 29.4,82.6 0.0,99.6 -29.4,82.6"/><polygon class="" points="-44.7,98.6 -74.1,115.6 -74.1,99.6 -44.7,82.6"/><polygon class="" points="-103.6,98.6 -74.1,115.6 -74.1,99.6 -103.6,82.6"/><polygon class="" points="-74.1,65.6 -44.7,82.6 -74.1,99.6 -103.6,82.6"/><polygon class="" points="140.6,120.0 111.2,137.0 111.2,121.0 140.6,104.0"/><polygon class="" points="81.8,120.0 111.2,137.0 111.2,121.0 81.8,104.0"/><polygon class="" points="111.2,87.0 140.6,104.0 111.2,121.0 81.8,104.0"/><polygon class="" points="66.5,120.0 37.1,137.0 37.1,121.0 66.5,104.0"/><polygon class="" points="7.6,120.0 37.1,137.0 37.1,121.0 7.6,104.0"/><polygon class="" points="37.1,87.0 66.5,104.0 37.1,121.0 7.6,104.0"/><polygon class="" points="-7.6,120.0 -37.1,137.0 -37.1,128.2 -7.6,111.2"/><polygon class="" points="-66.5,120.0 -37.1,137.0 -37.1,128.2 -66.5,111.2"/><polygon class="" points="-37.1,94.2 -7.6,111.2 -37.1,128.2 -66.5,111.2"/><polygon class="" points="29.4,141.4 0.0,158.4 0.0,142.4 29.4,125.4"/><polygon class="" points="-29.4,141.4 0.0,158.4 0.0,142.4 -29.4,125.4"/><polygon class="" points="0.0,108.4 29.4,125.4 0.0,142.4 -29.4,125.4"/><polygon class="" points="103.6,141.4 74.1,158.4 74.1,149.6 103.6,132.6"/><polygon class="" points="44.7,141.4 74.1,158.4 74.1,149.6 44.7,132.6"/><polygon class="" points="74.1,115.6 103.6,132.6 74.1,149.6 44.7,132.6"/><polygon class="" points="66.5,162.8 37.1,179.8 37.1,171.0 66.5,154.0"/><polygon class="" points="7.6,162.8 37.1,179.8 37.1,171.0 7.6,154.0"/><polygon class="" points="37.1,137.0 66.5,154.0 37.1,171.0 7.6,154.0"/><polygon class="acc" points="-7.6,7.2 -37.1,24.2 -37.1,15.4 -7.6,-1.6"/><polygon class="acc" points="-66.5,7.2 -37.1,24.2 -37.1,15.4 -66.5,-1.6"/><polygon class="acc" points="-37.1,-18.6 -7.6,-1.6 -37.1,15.4 -66.5,-1.6"/><line class="dot" x1="-7.6" y1="74.8" x2="-7.6" y2="7.2"/><line class="dot" x1="-37.1" y1="91.8" x2="-37.1" y2="24.2"/><line class="dot" x1="-66.5" y1="74.8" x2="-66.5" y2="7.2"/></svg><h3>Book a time</h3><p>Pick 15 minutes on the calendar. Bring rough numbers.</p><ul><li>Leads a month</li><li>Your average job</li><li>How many quotes you close</li></ul></div>
@@ -815,7 +843,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
       <div class="bd-in">
         <div class="bd-head"><span class="lab">Taken apart · illustration</span><h2 id="h-inside">What we build, <span class="dim">taken apart.</span></h2><p>Six parts, one system, built after the audit. You only get the parts your business needs.</p>
           <div class="bd-meter" aria-hidden="true"><i><b></b></i><span>Assembled</span></div></div>
-        <figure class="art bd-art"><div class="bd-tags" aria-hidden="true"><span data-i="0">01</span><span data-i="1">02</span><span data-i="2">03</span><span data-i="3">04</span><span data-i="4">05</span><span data-i="5">06</span></div></figure>
+        <figure class="art bd-art" data-seq="unit" data-n="24" data-drive="bd"><img src="/assets/seq/unit/still-1x.webp" srcset="/assets/seq/unit/still-1x.webp 700w, /assets/seq/unit/still-2x.webp 1400w" sizes="(max-width:820px) 70vw, 640px" alt="Illustration: a machined unit comes apart into six layers as you scroll, then goes back together: answering, booking, quotes, invoices, reviews and website." width="1400" height="1556" decoding="async"><div class="bd-tags" aria-hidden="true"><span data-i="0">01</span><span data-i="1">02</span><span data-i="2">03</span><span data-i="3">04</span><span data-i="4">05</span><span data-i="5">06</span></div></figure>
         <ol class="bd-labels"><li data-i="0"><span class="n">01</span><b>Answering</b><p>Every call, text and form gets a reply in seconds, even after hours.</p></li><li data-i="1"><span class="n">02</span><b>Booking</b><p>Leads pick a time and land on your calendar, with reminders so they show up.</p></li><li data-i="2"><span class="n">03</span><b>Quote follow-up</b><p>Sent quotes get followed up until the customer says yes or no.</p></li><li data-i="3"><span class="n">04</span><b>Invoices</b><p>Unpaid invoices get polite reminders, so you get paid without chasing.</p></li><li data-i="4"><span class="n">05</span><b>Reviews</b><p>Happy customers get asked for a review after every paid job.</p></li><li data-i="5"><span class="n">06</span><b>Website</b><p>A site that turns visitors into booked jobs, if yours is part of the leak.</p></li></ol>
         <p class="bd-cap"></p>
       </div>
@@ -828,7 +856,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
     <div class="split"><h2 id="h-after">Fixes are scoped after the audit.</h2><p>Only if you want them, and only the ones your business needs.</p></div>
     <p class="what">Cinder Revenue builds AI systems, and the websites they run on, for service businesses. <em>They answer every lead, book estimates, chase quotes, send invoice reminders and ask for the review, so the jobs the audit found stop slipping.</em></p>
 
-    <figure class="art band art-chain"></figure>
+    <figure class="art band art-chain" data-seq="chain" data-n="24"><img src="/assets/seq/chain/still-1x.webp" srcset="/assets/seq/chain/still-1x.webp 1000w, /assets/seq/chain/still-2x.webp 2000w" sizes="(max-width:820px) 100vw, 1100px" alt="Illustration: a chain of links draws together as you scroll, from the first text to the booked job." width="2000" height="639" decoding="async"></figure>
     <div class="split" style="margin-top:20px"><h3 class="h2s">One thread per lead, from first text to booked.</h3><p>Every call, form and lead-site message lands in one place, gets an answer in seconds, and moves across the board on its own. You step in when it needs you.</p></div>
     <div class="intake-stage" aria-label="Example: a lead’s text thread and the pipeline board, sample data">
       <div class="board" aria-hidden="true">
@@ -867,7 +895,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
       <div class="fx on"><b>A review after every job<i class="pk">Picked</i></b><span>Every paid job gets asked for a review.</span></div>
       <div class="fx off"><b>A website that books<i class="pk">Not needed</i></b><span>If your site is part of the leak, we build the site too.</span></div>
     </div>
-    <figure class="art art-browser art-mods"><figcaption class="lab">Sample audit: 4 of 6 picked. Only those get built.</figcaption></figure>
+    <figure class="art art-browser art-mods" data-seq="modules" data-n="32"><img src="/assets/seq/modules/still-1x.webp" srcset="/assets/seq/modules/still-1x.webp 700w, /assets/seq/modules/still-2x.webp 1400w" sizes="(max-width:820px) 90vw, 720px" alt="Illustration: six modules. As you scroll, the four a sample audit picked drop into place and the other two stay out." width="1400" height="1179" decoding="async"><figcaption class="lab">Sample audit: 4 of 6 picked. Only those get built.</figcaption></figure>
     </div>
   </div>
 </section>
@@ -875,7 +903,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
 <section id="who" class="sec" aria-labelledby="h-who">
   <div class="wrap">
     <div class="split"><h2 id="h-who">Built for businesses that run on leads.</h2><p>Home services, clinics, studios and local pros. If leads come in by call, form or text, the audit works the same way.</p></div>
-    <figure class="art band art-pickets art-svc"></figure>
+    <figure class="art band art-pickets art-svc" data-seq="services" data-n="24"><img src="/assets/seq/services/still-1x.webp" srcset="/assets/seq/services/still-1x.webp 1000w, /assets/seq/services/still-2x.webp 2000w" sizes="(max-width:820px) 100vw, 1100px" alt="Illustration: a row of service marks. As you scroll, one of them is picked." width="2000" height="722" decoding="async"></figure>
     <div class="trades">
       <div class="trade"><span class="lab">Out on the job</span><h3>The phone rings while your hands are full.</h3><p>You’re with a customer while the next one calls someone else. The audit finds how many of those you lose, and what happens to the quotes you do send.</p></div>
       <div class="trade"><span class="lab">Busy weeks</span><h3>When leads pile up, the leak is bigger than the missed call.</h3><p>A storm, a promotion or a full Monday brings them in all at once. The audit looks at how they get answered, how visits get booked, and how quotes get followed up.</p></div>
@@ -889,7 +917,7 @@ h2 .dim,h1 .dim{color:#fff;-webkit-text-fill-color:#fff}
 
 <section class="closing" aria-labelledby="h-final">
   <div class="light"></div>
-  <figure class="art obj"></figure>
+  <figure class="art obj" data-seq="counter" data-n="24"><img src="/assets/seq/counter/still-1x.webp" srcset="/assets/seq/counter/still-1x.webp 550w, /assets/seq/counter/still-2x.webp 1100w" sizes="(max-width:820px) 70vw, 420px" alt="Illustration: a mechanical timer rolls as you scroll and settles on 15:00, for the free 15-minute audit." width="1100" height="1003" decoding="async"></figure>
   <div class="wrap">
     <div class="in">
       <h2 id="h-final">Find out how many jobs you’re missing.</h2>
@@ -959,87 +987,117 @@ function pumpQ(){
     })((hiQ.length?hiQ:loQ).shift());
   }
 }
-function ease(dt){return 1-Math.exp(-Math.min(40,dt)/130)}
-if(HERO==='cmark'&&!LITE){
-  var c=d.getElementById('spin'), x=c.getContext('2d'), N=60, F=new Array(N);
-  var cur=0, tgt=0, shown=-1, hero=d.querySelector('.hero'), stage=d.querySelector('.hero .stage'), sized=false;
-  x.imageSmoothingEnabled=true; if('imageSmoothingQuality' in x) x.imageSmoothingQuality='high';
-  function src(i){return '/assets/seq/cspin/'+(i<10?'0':'')+i+'.webp'}
-  function fitH(){
-    var r=stage.getBoundingClientRect();
+
+var story=d.getElementById('how'),steps=[].slice.call(d.querySelectorAll('.step')),hud=d.querySelector('.hud');
+var heroEl=d.querySelector('.hero'), hwin=d.getElementById('hwin');
+var tier=(Math.min(window.devicePixelRatio||1,2)>1.25)?'2x':'1x';
+function pad2(i){return (i<10?'0':'')+i}
+function bdS(vh){if(STILL())return .5;var r=bdTrack.getBoundingClientRect();return cl(-r.top/Math.max(1,r.height-vh))}
+function bdP(s){return s<.42?s/.42:s<.58?1:1-(s-.58)/.42}
+var qs=function(a,z,v){var t=cl((v-a)/(z-a));return t*t*t*(t*(t*6-15)+10)};function bdE(k,p){var a=.26+k*.11;return qs(a,a+.2,p)}
+function bdLayout(){if(mob())return;var A=ANCH[ANCH.length-1],ar=bdArt.getBoundingClientRect(),lr=bdL[0].parentNode.getBoundingClientRect(),ys=A.map(function(a){return ar.top+a[1]*ar.height-lr.top});
+  var order=ys.map(function(y,i){return i}).sort(function(a,b){return ys[a]-ys[b]}),last=-1e9,gap=Math.min(96,lr.height/6.4);order.forEach(function(i){var y=Math.max(ys[i],last+gap);ys[i]=y;last=y});
+  bdL.forEach(function(li,i){li.style.top=ys[i].toFixed(1)+'px'})}
+function bdFx(vh,i,p){var s=bdS(vh),n=ANCH.length,ai=Math.round(i*(n-1)/Math.max(1,(window.__unitN||n)-1)),A=ANCH[Math.min(ai,n-1)],E=bdL.map(function(_,k){return bdE(k,p)}),act=-1,best=1;
+  E.forEach(function(e,k){if(e>.02&&e<.98&&Math.abs(e-.5)<best){best=Math.abs(e-.5);act=k}});
+  if(act<0&&s>.42&&s<.58)act=Math.min(5,Math.floor((s-.42)/.16*6));
+  if(STILL())act=-1;
+  var done=E.filter(function(e){return e>.5}).length;
+  bdMeter.style.setProperty('--s',s.toFixed(3));
+  var st=done===0&&act<0?(p>.01?'Unscrewing the bolts':'Assembled'):act>=0?String(act+1).padStart(2,'0')+' / 06 · '+bdL[act].querySelector('b').textContent:done===6?'06 / 06 · Taken apart':String(done).padStart(2,'0')+' / 06';
+  if(bdMs.textContent!==st)bdMs.textContent=st;
+  bdL.forEach(function(li,k){var e=E[k];li.style.opacity=(k===act?1:.34+.66*e).toFixed(3);li.classList.toggle('on',k===act);
+    var t=bdT[k];if(t){t.style.opacity=e.toFixed(3);t.style.left=(A[k][0]*100)+'%';t.style.top=(A[k][1]*100)+'%';}});
+  var cap=act>=0?String(act+1).padStart(2,'0')+'/06 '+bdL[act].querySelector('b').textContent:'';if(bdCap.textContent!==cap)bdCap.textContent=cap}
+var ANCH=[[[0.5479,0.5286],[0.5468,0.5724],[0.5458,0.6109],[0.5449,0.6497],[0.5439,0.6911],[0.5431,0.7224]],[[0.5478,0.5288],[0.5468,0.5725],[0.5458,0.611],[0.5449,0.6499],[0.5439,0.6912],[0.5431,0.7226]],[[0.5478,0.5298],[0.5467,0.5735],[0.5458,0.612],[0.5448,0.6508],[0.5438,0.6922],[0.5431,0.7235]],[[0.5477,0.532],[0.5467,0.5757],[0.5457,0.6141],[0.5448,0.6529],[0.5438,0.6942],[0.543,0.7255]],[[0.5476,0.5352],[0.5466,0.5789],[0.5456,0.6173],[0.5447,0.656],[0.5437,0.6973],[0.5429,0.7285]],[[0.5475,0.5392],[0.5464,0.5828],[0.5455,0.6211],[0.5446,0.6598],[0.5436,0.701],[0.5428,0.7322]],[[0.5474,0.5434],[0.5463,0.5869],[0.5454,0.6252],[0.5444,0.6638],[0.5434,0.7049],[0.5427,0.7361]],[[0.5472,0.5472],[0.5461,0.5906],[0.5452,0.6289],[0.5443,0.6674],[0.5433,0.7085],[0.5425,0.7395]],[[0.547,0.5502],[0.5459,0.5935],[0.545,0.6317],[0.5441,0.6701],[0.5431,0.7112],[0.5423,0.7422]],[[0.5468,0.5519],[0.5457,0.5952],[0.5448,0.6333],[0.5439,0.6718],[0.5429,0.7127],[0.5421,0.7438]],[[0.5465,0.5525],[0.5455,0.5958],[0.5445,0.6339],[0.5436,0.6723],[0.5426,0.7132],[0.5419,0.7442]],[[0.5462,0.5526],[0.5452,0.5958],[0.5443,0.6339],[0.5434,0.6723],[0.5424,0.7132],[0.5416,0.7442]],[[0.5459,0.5574],[0.5449,0.6006],[0.544,0.6385],[0.5431,0.6769],[0.5421,0.7177],[0.5414,0.7486]],[[0.5456,0.575],[0.5446,0.6179],[0.5437,0.6556],[0.5428,0.6936],[0.5418,0.7342],[0.5411,0.7649]],[[0.5453,0.6054],[0.5443,0.6478],[0.5434,0.6851],[0.5425,0.7228],[0.5415,0.7629],[0.5408,0.7933]],[[0.5449,0.643],[0.5439,0.6848],[0.543,0.7216],[0.5421,0.7588],[0.5411,0.7983],[0.5404,0.8283]],[[0.5445,0.6794],[0.5435,0.7207],[0.5426,0.757],[0.5417,0.7936],[0.5408,0.8327],[0.5401,0.8622]],[[0.5441,0.7067],[0.5431,0.7475],[0.5422,0.7834],[0.5414,0.8197],[0.5404,0.8584],[0.5397,0.8876]],[[0.5437,0.7204],[0.5427,0.761],[0.5418,0.7968],[0.541,0.8328],[0.54,0.8713],[0.5393,0.9004]],[[0.5433,0.7226],[0.5423,0.7631],[0.5414,0.7988],[0.5405,0.8348],[0.5396,0.8731],[0.5389,0.9022]],[[0.5428,0.7209],[0.5418,0.7614],[0.541,0.7971],[0.5401,0.8331],[0.5392,0.8714],[0.5385,0.9005]],[[0.5423,0.7177],[0.5414,0.7582],[0.5405,0.7938],[0.5397,0.8298],[0.5387,0.8682],[0.5381,0.8973]],[[0.5419,0.7124],[0.5409,0.7529],[0.5401,0.7886],[0.5392,0.8246],[0.5383,0.8631],[0.5376,0.8922]],[[0.5414,0.705],[0.5404,0.7456],[0.5396,0.7813],[0.5387,0.8174],[0.5378,0.8559],[0.5371,0.8851]],[[0.5408,0.6956],[0.5399,0.7363],[0.5391,0.7721],[0.5382,0.8083],[0.5373,0.8469],[0.5367,0.8761]],[[0.5403,0.6845],[0.5394,0.7253],[0.5386,0.7613],[0.5377,0.7975],[0.5368,0.8362],[0.5362,0.8655]],[[0.5398,0.6722],[0.5388,0.7132],[0.538,0.7492],[0.5372,0.7856],[0.5363,0.8244],[0.5357,0.8538]],[[0.5392,0.6592],[0.5383,0.7003],[0.5375,0.7364],[0.5367,0.7729],[0.5358,0.8119],[0.5352,0.8414]],[[0.5386,0.646],[0.5377,0.6872],[0.5369,0.7234],[0.5361,0.7601],[0.5353,0.7991],[0.5346,0.8287]],[[0.5381,0.633],[0.5372,0.6743],[0.5364,0.7107],[0.5356,0.7475],[0.5347,0.7866],[0.5341,0.8164]],[[0.5375,0.6207],[0.5366,0.6621],[0.5358,0.6986],[0.535,0.7355],[0.5342,0.7748],[0.5335,0.8046]],[[0.5369,0.6093],[0.536,0.6508],[0.5352,0.6874],[0.5344,0.7244],[0.5336,0.7638],[0.533,0.7937]],[[0.5362,0.599],[0.5354,0.6407],[0.5346,0.6773],[0.5338,0.7144],[0.533,0.7539],[0.5324,0.7838]],[[0.5356,0.5897],[0.5348,0.6318],[0.534,0.6686],[0.5332,0.7057],[0.5324,0.7452],[0.5318,0.7752]],[[0.535,0.5815],[0.5341,0.6245],[0.5334,0.6613],[0.5326,0.6984],[0.5318,0.7381],[0.5312,0.7681]],[[0.5344,0.5743],[0.5335,0.6188],[0.5328,0.6556],[0.532,0.6928],[0.5312,0.7324],[0.5306,0.7625]],[[0.5338,0.5681],[0.5328,0.6148],[0.5321,0.6516],[0.5314,0.6888],[0.5306,0.7284],[0.53,0.7585]],[[0.5331,0.5629],[0.5322,0.6125],[0.5315,0.6493],[0.5308,0.6864],[0.53,0.726],[0.5294,0.7561]],[[0.5325,0.5587],[0.5315,0.6119],[0.5308,0.6486],[0.5301,0.6857],[0.5294,0.7253],[0.5288,0.7553]],[[0.5319,0.5556],[0.5309,0.613],[0.5302,0.6496],[0.5295,0.6866],[0.5287,0.7262],[0.5282,0.7561]],[[0.5313,0.5531],[0.5302,0.6152],[0.5295,0.6518],[0.5288,0.6887],[0.5281,0.7282],[0.5275,0.7581]],[[0.5307,0.5507],[0.5295,0.6181],[0.5288,0.6545],[0.5281,0.6914],[0.5274,0.7307],[0.5269,0.7605]],[[0.5301,0.5483],[0.5288,0.6211],[0.5281,0.6574],[0.5275,0.6942],[0.5268,0.7334],[0.5262,0.7632]],[[0.5295,0.5458],[0.5281,0.6241],[0.5275,0.6604],[0.5268,0.697],[0.5261,0.7362],[0.5256,0.7659]],[[0.5289,0.5433],[0.5274,0.6271],[0.5268,0.6633],[0.5261,0.6999],[0.5254,0.7389],[0.5249,0.7685]],[[0.5283,0.5408],[0.5267,0.63],[0.5261,0.6661],[0.5254,0.7026],[0.5248,0.7416],[0.5242,0.7711]],[[0.5276,0.5384],[0.526,0.6326],[0.5254,0.6689],[0.5248,0.7053],[0.5241,0.7442],[0.5236,0.7736]],[[0.527,0.5359],[0.5253,0.6347],[0.5247,0.6717],[0.5241,0.708],[0.5234,0.7467],[0.5229,0.7761]],[[0.5263,0.5335],[0.5246,0.6362],[0.524,0.6744],[0.5234,0.7106],[0.5227,0.7493],[0.5222,0.7786]],[[0.5257,0.531],[0.524,0.637],[0.5233,0.6772],[0.5227,0.7133],[0.5221,0.7519],[0.5216,0.7812]],[[0.525,0.5285],[0.5233,0.6372],[0.5226,0.68],[0.522,0.716],[0.5214,0.7545],[0.5209,0.7837]],[[0.5244,0.526],[0.5226,0.6366],[0.5219,0.6827],[0.5213,0.7186],[0.5207,0.757],[0.5202,0.7861]],[[0.5237,0.5235],[0.522,0.6354],[0.5212,0.6854],[0.5206,0.7212],[0.52,0.7595],[0.5195,0.7886]],[[0.5231,0.5211],[0.5213,0.6337],[0.5205,0.6881],[0.5199,0.7238],[0.5193,0.762],[0.5189,0.791]],[[0.5224,0.5186],[0.5207,0.6315],[0.5198,0.6907],[0.5192,0.7264],[0.5186,0.7645],[0.5182,0.7934]],[[0.5217,0.5161],[0.52,0.6291],[0.5191,0.6934],[0.5185,0.729],[0.518,0.767],[0.5175,0.7958]],[[0.5211,0.5135],[0.5194,0.6266],[0.5184,0.6961],[0.5178,0.7316],[0.5173,0.7695],[0.5168,0.7983]],[[0.5204,0.5109],[0.5187,0.6241],[0.5177,0.6989],[0.5171,0.7342],[0.5166,0.7721],[0.5162,0.8008]],[[0.5197,0.5084],[0.5181,0.6216],[0.517,0.7015],[0.5165,0.7368],[0.5159,0.7745],[0.5155,0.8032]],[[0.5191,0.5059],[0.5175,0.6192],[0.5163,0.7038],[0.5158,0.7393],[0.5152,0.7769],[0.5148,0.8055]],[[0.5184,0.5034],[0.5168,0.6168],[0.5156,0.7057],[0.5151,0.7418],[0.5146,0.7793],[0.5142,0.8078]],[[0.5177,0.5009],[0.5162,0.6143],[0.5149,0.707],[0.5144,0.7442],[0.5139,0.7817],[0.5135,0.8102]],[[0.517,0.4984],[0.5155,0.6119],[0.5142,0.7078],[0.5137,0.7467],[0.5132,0.7841],[0.5128,0.8125]],[[0.5164,0.4958],[0.5149,0.6094],[0.5136,0.7078],[0.513,0.7492],[0.5126,0.7865],[0.5122,0.8148]],[[0.5157,0.4933],[0.5142,0.6069],[0.5129,0.7073],[0.5124,0.7517],[0.5119,0.7889],[0.5115,0.8172]],[[0.515,0.4908],[0.5136,0.6045],[0.5123,0.7061],[0.5117,0.7541],[0.5112,0.7913],[0.5109,0.8195]],[[0.5144,0.4883],[0.513,0.602],[0.5117,0.7043],[0.511,0.7566],[0.5106,0.7936],[0.5102,0.8217]],[[0.5137,0.4857],[0.5123,0.5996],[0.5111,0.7022],[0.5104,0.759],[0.5099,0.7959],[0.5096,0.824]],[[0.5131,0.4832],[0.5117,0.5971],[0.5105,0.6998],[0.5097,0.7614],[0.5093,0.7983],[0.509,0.8263]],[[0.5124,0.4806],[0.5111,0.5946],[0.5099,0.6974],[0.5091,0.7639],[0.5087,0.8007],[0.5083,0.8286]],[[0.5118,0.478],[0.5105,0.5921],[0.5093,0.6949],[0.5085,0.7664],[0.508,0.8031],[0.5077,0.831]],[[0.5111,0.4754],[0.5099,0.5896],[0.5087,0.6925],[0.5078,0.7688],[0.5074,0.8055],[0.5071,0.8333]],[[0.5105,0.4729],[0.5092,0.5871],[0.5081,0.6902],[0.5072,0.771],[0.5068,0.8077],[0.5065,0.8355]],[[0.5099,0.4704],[0.5086,0.5847],[0.5075,0.6878],[0.5066,0.7727],[0.5062,0.81],[0.5059,0.8377]],[[0.5093,0.4679],[0.508,0.5822],[0.5069,0.6854],[0.506,0.774],[0.5056,0.8123],[0.5053,0.84]],[[0.5086,0.4653],[0.5074,0.5798],[0.5064,0.683],[0.5054,0.7747],[0.505,0.8146],[0.5047,0.8422]],[[0.508,0.4628],[0.5069,0.5773],[0.5058,0.6806],[0.5048,0.7748],[0.5044,0.817],[0.5041,0.8445]],[[0.5074,0.4602],[0.5063,0.5748],[0.5052,0.6782],[0.5043,0.7743],[0.5038,0.8193],[0.5035,0.8467]],[[0.5068,0.4577],[0.5057,0.5723],[0.5047,0.6758],[0.5037,0.7732],[0.5032,0.8216],[0.503,0.849]],[[0.5063,0.4552],[0.5051,0.5699],[0.5041,0.6735],[0.5032,0.7715],[0.5027,0.8238],[0.5024,0.8512]],[[0.5057,0.4527],[0.5046,0.5675],[0.5036,0.6711],[0.5027,0.7695],[0.5021,0.8261],[0.5019,0.8534]],[[0.5051,0.4501],[0.504,0.565],[0.5031,0.6687],[0.5021,0.7672],[0.5016,0.8284],[0.5013,0.8556]],[[0.5045,0.4475],[0.5035,0.5625],[0.5025,0.6663],[0.5016,0.7649],[0.501,0.8308],[0.5008,0.8579]],[[0.504,0.4449],[0.503,0.56],[0.502,0.6639],[0.5011,0.7626],[0.5005,0.8331],[0.5003,0.8603]],[[0.5035,0.4423],[0.5024,0.5575],[0.5015,0.6615],[0.5007,0.7603],[0.5,0.8355],[0.4998,0.8626]],[[0.5029,0.4398],[0.5019,0.5551],[0.501,0.6592],[0.5002,0.758],[0.4995,0.8376],[0.4993,0.8648]],[[0.5024,0.4373],[0.5014,0.5526],[0.5005,0.6568],[0.4997,0.7558],[0.499,0.8393],[0.4988,0.867]],[[0.5019,0.4348],[0.5009,0.5502],[0.5001,0.6545],[0.4992,0.7535],[0.4985,0.8406],[0.4983,0.8692]],[[0.5014,0.4322],[0.5005,0.5478],[0.4996,0.6521],[0.4988,0.7513],[0.4981,0.8414],[0.4978,0.8715]],[[0.5009,0.4296],[0.5,0.5453],[0.4991,0.6498],[0.4984,0.749],[0.4976,0.8415],[0.4974,0.8738]],[[0.5004,0.4271],[0.4995,0.5429],[0.4987,0.6474],[0.4979,0.7468],[0.4972,0.8411],[0.4969,0.8761]],[[0.5,0.4246],[0.4991,0.5404],[0.4983,0.6451],[0.4975,0.7446],[0.4968,0.8402],[0.4965,0.8784]],[[0.4995,0.422],[0.4986,0.538],[0.4979,0.6428],[0.4971,0.7424],[0.4964,0.8388],[0.4961,0.8806]],[[0.4991,0.4195],[0.4982,0.5356],[0.4974,0.6405],[0.4967,0.7402],[0.496,0.8369],[0.4956,0.8829]],[[0.4987,0.417],[0.4978,0.5332],[0.497,0.6382],[0.4963,0.738],[0.4956,0.8349],[0.4952,0.8852]],[[0.4982,0.4144],[0.4974,0.5307],[0.4967,0.6358],[0.4959,0.7357],[0.4953,0.8328],[0.4949,0.8876]],[[0.4978,0.4118],[0.497,0.5282],[0.4963,0.6335],[0.4956,0.7335],[0.4949,0.8307],[0.4945,0.89]],[[0.4975,0.4092],[0.4967,0.5258],[0.4959,0.6312],[0.4952,0.7313],[0.4946,0.8286],[0.4941,0.8924]],[[0.4971,0.4067],[0.4963,0.5234],[0.4956,0.6289],[0.4949,0.7292],[0.4942,0.8266],[0.4938,0.8946]],[[0.4967,0.4041],[0.496,0.521],[0.4953,0.6266],[0.4946,0.727],[0.4939,0.8246],[0.4935,0.8964]],[[0.4964,0.4016],[0.4956,0.5186],[0.4949,0.6244],[0.4943,0.7249],[0.4936,0.8226],[0.4931,0.8979]],[[0.4961,0.399],[0.4953,0.5162],[0.4946,0.6221],[0.494,0.7228],[0.4933,0.8206],[0.4928,0.8988]],[[0.4958,0.3965],[0.495,0.5138],[0.4943,0.6199],[0.4937,0.7207],[0.4931,0.8186],[0.4926,0.8993]],[[0.4955,0.3939],[0.4947,0.5114],[0.4941,0.6176],[0.4934,0.7185],[0.4928,0.8166],[0.4923,0.8991]],[[0.4952,0.3914],[0.4945,0.509],[0.4938,0.6154],[0.4932,0.7165],[0.4926,0.8146],[0.4921,0.8985]],[[0.4949,0.3888],[0.4942,0.5067],[0.4936,0.6132],[0.493,0.7144],[0.4924,0.8127],[0.4918,0.8973]],[[0.4947,0.3863],[0.494,0.5043],[0.4933,0.611],[0.4927,0.7123],[0.4921,0.8108],[0.4916,0.8958]],[[0.4945,0.3838],[0.4938,0.502],[0.4931,0.6088],[0.4925,0.7103],[0.4919,0.8089],[0.4914,0.8941]],[[0.4943,0.3811],[0.4936,0.4995],[0.4929,0.6065],[0.4923,0.7082],[0.4918,0.807],[0.4913,0.8923]],[[0.4941,0.3785],[0.4934,0.4971],[0.4928,0.6043],[0.4922,0.7061],[0.4916,0.8051],[0.4911,0.8905]],[[0.4939,0.3759],[0.4932,0.4947],[0.4926,0.6021],[0.492,0.7041],[0.4914,0.8032],[0.491,0.8888]],[[0.4938,0.3734],[0.4931,0.4924],[0.4925,0.6],[0.4919,0.7022],[0.4913,0.8014],[0.4908,0.8872]],[[0.4936,0.3711],[0.493,0.4903],[0.4923,0.598],[0.4918,0.7004],[0.4912,0.7998],[0.4907,0.8857]],[[0.4935,0.3691],[0.4928,0.4885],[0.4922,0.5963],[0.4917,0.6988],[0.4911,0.7983],[0.4906,0.8843]],[[0.4934,0.3673],[0.4927,0.4869],[0.4921,0.5948],[0.4916,0.6974],[0.491,0.7971],[0.4905,0.8832]],[[0.4933,0.3659],[0.4927,0.4856],[0.4921,0.5936],[0.4915,0.6963],[0.4909,0.7961],[0.4905,0.8822]],[[0.4933,0.3649],[0.4926,0.4846],[0.492,0.5927],[0.4914,0.6955],[0.4909,0.7953],[0.4904,0.8815]],[[0.4932,0.3641],[0.4926,0.4839],[0.492,0.5921],[0.4914,0.6949],[0.4908,0.7948],[0.4904,0.881]],[[0.4932,0.3637],[0.4925,0.4835],[0.4919,0.5917],[0.4914,0.6946],[0.4908,0.7945],[0.4903,0.8807]],[[0.4932,0.3635],[0.4925,0.4833],[0.4919,0.5916],[0.4914,0.6944],[0.4908,0.7943],[0.4903,0.8806]]];
+
+var bd=d.getElementById('inside'),bdTrack=bd.querySelector('.bd-track'),bdPin=bd.querySelector('.bd-pin'),bdArt=bd.querySelector('.bd-art'),
+  bdL=[].slice.call(bd.querySelectorAll('.bd-labels li')),bdT=[].slice.call(bd.querySelectorAll('.bd-tags span')),bdCap=bd.querySelector('.bd-cap'),bdMeter=bd.querySelector('.bd-meter'),bdMs=bdMeter.querySelector('span');
+function makeSeq(fig){
+  var img=fig.querySelector('img'), n=+fig.dataset.n, name=fig.dataset.seq;
+  var fr=new Array(n), shown=-1, cv=null, gx=null, armed=false, lastI=-1;
+  function url(i){return '/assets/seq/'+name+'/'+tier+'/'+pad2(i)+'.webp'}
+  function fit(){
+    if(!cv||!img) return;
+    var r=img.getBoundingClientRect();
     if(r.width<2||r.height<2) return;
-    var dpr=Math.min(devicePixelRatio||1, 2);
-    var w=Math.max(1, Math.round(r.width*dpr)), h=Math.max(1, Math.round(r.height*dpr));
-    if(c.width!==w||c.height!==h){c.width=w; c.height=h; shown=-1;}
-    sized=true;
+    var dpr=Math.min(window.devicePixelRatio||1,2);
+    var w=Math.max(1,Math.round(r.width*dpr)), h=Math.max(1,Math.round(r.height*dpr));
+    if(cv.width!==w||cv.height!==h){cv.width=w; cv.height=h; shown=-1;}
   }
-  function progH(){
-    if(mob()){var q=stage.getBoundingClientRect(); return cl((innerHeight*.5-q.top)/(innerHeight*1.1))}
-    var rr=hero.getBoundingClientRect(); return cl(-rr.top/(rr.height*1.05));
+  function ensure(){
+    if(cv) return;
+    cv=d.createElement('canvas'); cv.className='seqc'; cv.setAttribute('aria-hidden','true');
+    img.insertAdjacentElement('afterend', cv);
+    gx=cv.getContext('2d');
+    gx.imageSmoothingEnabled=true;
+    if('imageSmoothingQuality' in gx) gx.imageSmoothingQuality='high';
+    fit();
   }
-  function slotH(i){i=((i%N)+N)%N; if(!F[i]) F[i]={url:src(i), busy:0, bmp:null}; return F[i];}
-  function askH(i, high){
-    var s=slotH(i); if(s.bmp||s.busy) return;
-    s.busy=1; qJob({url:s.url, done:function(bmp){s.busy=0; if(bmp) s.bmp=bmp;}}, high);
+  function ask(i, high){
+    if(i<0||i>=n) return;
+    var s=fr[i]; if(!s) s=fr[i]={busy:0,bmp:null};
+    if(s.bmp||s.busy) return;
+    s.busy=1;
+    qJob({url:url(i), done:function(bmp){s.busy=0; if(bmp){s.bmp=bmp; wake();}}}, !!high);
   }
-  function retainH(center){
-    var keep={};
-    for(var k=-3;k<=10;k++) keep[((Math.round(center)+k)%N+N)%N]=1;
-    for(var i=0;i<N;i++) if(!keep[i] && F[i] && F[i].bmp && F[i].bmp.close){F[i].bmp.close(); F[i].bmp=null;}
+  function retain(c){
+    var keep={}; keep[c]=1; if(c-1>=0) keep[c-1]=1; if(c+1<n) keep[c+1]=1;
+    for(var i=0;i<n;i++) if(!keep[i]&&fr[i]&&fr[i].bmp&&fr[i].bmp.close){fr[i].bmp.close(); fr[i].bmp=null;}
   }
-  function drawH(){
-    var f=Math.round(cur); if(f<0)f=0; if(f>N-1)f=N-1;
-    var A=F[f]&&F[f].bmp;
+  function draw(f){
+    var A=fr[f]&&fr[f].bmp;
     if(!A||f===shown) return;
-    fitH();
-    var scale=Math.min(c.width/A.width, c.height/A.height, 1);
+    ensure(); fit();
+    var scale=Math.min(cv.width/A.width, cv.height/A.height, 1);
     var w=Math.round(A.width*scale), h=Math.round(A.height*scale);
-    var ox=Math.round((c.width-w)/2+(mob()?0:c.width*.06)), oy=Math.round((c.height-h)/2);
-    x.imageSmoothingEnabled=true;
-    if('imageSmoothingQuality' in x) x.imageSmoothingQuality='high';
-    x.clearRect(0,0,c.width,c.height);
-    x.drawImage(A, ox, oy, w, h);
+    var ox=Math.round((cv.width-w)/2), oy=Math.round((cv.height-h)/2);
+    gx.imageSmoothingEnabled=true;
+    if('imageSmoothingQuality' in gx) gx.imageSmoothingQuality='high';
+    gx.clearRect(0,0,cv.width,cv.height);
+    gx.drawImage(A, ox, oy, w, h);
     shown=f;
+    if(!fig.classList.contains('live')) fig.classList.add('live');
   }
-  heroSpin={
-    resize:function(){sized=false; shown=-1; fitH(); drawH();},
-    preload:function(){for(var i=4;i<N;i+=4) askH(i, false);},
-    step:function(dt){
-      var box=hero.getBoundingClientRect();
-      if(box.bottom<0||box.top>innerHeight) return false;
-      var p=progH(); tgt=p*(N-1);
-      var around=Math.round(tgt);
-      askH(around, true); askH(around-1, true); askH(around+1, true);
-      if((heroSpin._g||0)>8){heroSpin._g=0; retainH(tgt);} else heroSpin._g=(heroSpin._g||0)+1;
-      cur+=(tgt-cur)*ease(dt);
-      if(Math.abs(tgt-cur)<0.35) cur=tgt;
-      heroSpin.p=p;
-      drawH();
-      return Math.round(cur)!==Math.round(tgt);
+  return {
+    fig:fig, name:name,
+    arm:function(){ if(armed) return; armed=true; ask(0,true); ask(1,true); },
+    refit:function(){ shown=-1; fit(); },
+    drop:function(){ if(cv&&cv.parentNode) cv.parentNode.removeChild(cv); cv=null; shown=-1; fig.classList.remove('live'); for(var i=0;i<n;i++) if(fr[i]&&fr[i].bmp&&fr[i].bmp.close){fr[i].bmp.close(); fr[i].bmp=null;} },
+    step:function(vh){
+      var box=fig.getBoundingClientRect();
+      if(box.bottom<-vh||box.top>vh*2) return false;
+      if(!armed) this.arm();
+      var f=Math.round(prog(vh)*(n-1));
+      if(f<0)f=0; if(f>n-1)f=n-1;
+      ask(f,true);
+      var ready=fr[f]&&fr[f].bmp;
+      if(ready){ ask(f+1,true); ask(f-1,false); retain(f); draw(f); }
+      if(name==='unit'&&f!==lastI&&ready){ lastI=f; window.__unitN=n; bdFx(vh,f,n>1?f/(n-1):0); }
+      return !ready;
     }
   };
-  SPN=heroSpin;
-  askH(0, true);
-  b.classList.remove('pre-spin');
+  function prog(vh){
+    if(fig.dataset.drive==='bd') return bdP(bdS(vh));
+    if(fig.dataset.drive==='story'){ var r=story.getBoundingClientRect(); return cl((vh*.5-r.top)/Math.max(1,r.height-vh*.6)); }
+    var q=fig.getBoundingClientRect(); return cl((vh-(q.top+q.height/2))/(vh*.62));
+  }
 }
-else try{if(!window.CinderStudio)throw 0;var opt=Object.assign({},OPT,mob()?{cam:[OPT.cam[0],OPT.cam[1],OPT.cam[2]+1.5],look:[0,OPT.look[1],0]}:{});o=CinderStudio.create(cv,opt);o.resize();if(!RM&&!window.__noIntro)o.intro();
-  if(!RM&&FINE)addEventListener('pointermove',function(e){o.pointer(e.clientX/innerWidth*2-1,e.clientY/innerHeight*2-1)},{passive:true});
-  if(RM)o.renderOnce();else new IntersectionObserver(function(es){es.forEach(function(x){heroOn=x.isIntersecting;x.isIntersecting?o.start():o.stop()})}).observe(cv);
-}catch(e){b.classList.add('no-gl')}
-addEventListener('resize',function(){if(o)o.resize();onScroll()});
-/* ---- thread plays once in view ---- */
-var ms=d.querySelector('.msgs');
-if(RM)ms.classList.add('play');else new IntersectionObserver(function(es,ob){es.forEach(function(x){if(x.isIntersecting){ms.classList.add('play');ob.disconnect()}})},{threshold:.4}).observe(ms);
-/* ---- hero ticker: sample events, one at a time; pauses off screen ---- */
-var tk=[].slice.call(d.querySelectorAll('.tk li')),ti=0;tk[0].classList.add('on');
-/* ticker stays on the first sample line: swapping it forced layout on a timer */
-/* ---- scroll-scrubbed 3D frame sequences ---- */
-var story=d.getElementById('how'),steps=[].slice.call(d.querySelectorAll('.step')),hud=d.querySelector('.hud');
-var seqs=[];
-requestAnimationFrame(function(){requestAnimationFrame(function(){
-  var ric=window.requestIdleCallback||function(fn){setTimeout(fn,40)};
-  ric(function(){ if(heroSpin&&heroSpin.preload) heroSpin.preload(); },{timeout:500});
-})});
+var seqs=LITE?[]:[].slice.call(d.querySelectorAll('[data-seq]')).map(makeSeq);
+if(!LITE&&'IntersectionObserver' in window){
+  var seen=new IntersectionObserver(function(es){es.forEach(function(e){ if(!e.isIntersecting) return; if(e.target._seq) e.target._seq.arm(); seen.unobserve(e.target); });},{rootMargin:'100% 0px'});
+  seqs.forEach(function(s){ s.fig._seq=s; seen.observe(s.fig); });
+}
+if(!LITE){ bdLayout(); addEventListener('resize',function(){ bdLayout(); seqs.forEach(function(s){s.refit()}); }); }
+else addEventListener('resize',function(){ seqs.forEach(function(s){s.refit()}); });
+function heroShift(){
+  if(!hwin) return;
+  if(LITE||RM){ if(hwin._t){ hwin._t=''; hwin.style.transform=''; } return; }
+  var r=heroEl.getBoundingClientRect(), p=cl(-r.top/Math.max(1,r.height)), y=Math.round(p*12);
+  var t=y?'translate3d(0,'+y+'px,0)':'';
+  if(hwin._t!==t){ hwin._t=t; hwin.style.transform=t; }
+}
+
 /* ---- story: steps light up, the sample clock ticks ---- */
 var clock=hud.querySelector('.clock'),since=hud.querySelector('.since');
 function storyFx(vh){if(STILL()){steps.forEach(function(e){e.classList.add('on')});return}
@@ -1064,13 +1122,13 @@ function tickAll(now){
     else if(!tickAll.checked){
       tickAll.checked=1;
       var ss=tickAll.samples.slice(1), avg=ss.reduce(function(a,b){return a+b},0)/Math.max(1,ss.length);
-      if(avg>40){LITE=true; b.classList.add('lite'); heroSpin=null;}
+      if(avg>40){LITE=true; b.classList.add('lite'); seqs.forEach(function(s){s.drop()}); seqs=[];}
     }
   }
   var vh=innerHeight, y=window.scrollY||b.scrollTop||d.body.scrollTop||0, more=false;
   if((y>12)!==b.classList.contains('scrolled')) b.classList.toggle('scrolled', y>12);
-  if(heroSpin) more=heroSpin.step(dt)||more;
-  if(seqs){for(var si=0;si<seqs.length;si++) more=seqs[si].step(dt, vh, now)||more}
+  heroShift();
+  if(seqs){for(var si=0;si<seqs.length;si++) more=seqs[si].step(vh)||more}
   if(story){
     var sr=story.getBoundingClientRect();
     if(sr.bottom>-80&&sr.top<vh+80) storyFx(vh);
@@ -1089,6 +1147,8 @@ function tickAll(now){
 addEventListener('scroll',wake,{passive:true,capture:true});
 d.addEventListener('scroll',wake,{passive:true,capture:true});
 wake();
+var ms=d.querySelector('.msgs');
+if(ms){ if(RM) ms.classList.add('play'); else new IntersectionObserver(function(es,ob){es.forEach(function(x){if(x.isIntersecting){ms.classList.add('play');ob.disconnect()}})},{threshold:.4}).observe(ms); }
 /* ---- reveals: hidden only after this script adds .rv; a simple fade, including reduced motion ---- */
 var rvs=[].slice.call(d.querySelectorAll('.sec .split,.cards>.card,.outs>div,.fig,.audit>*,.ck,.st,.trade,.founder,.promise>div,.fx,.intake-stage,.closing .in,.prodcap,.intake-cap,.fixwrap .art,.tools .wrap'));
 function markIn(e){if(!e||e.classList.contains('in'))return;e.classList.add('in');e.addEventListener('transitionend',function done(ev){if(ev.propertyName!=='opacity')return;e.style.willChange='auto';e.removeEventListener('transitionend',done);});}
@@ -1100,9 +1160,10 @@ revealVisible();setTimeout(revealVisible,700);setTimeout(revealRest,3000);
 addEventListener('resize',revealVisible);
 /* numbers stay on the figure written in the page. A count-up was leaving the wrong number on screen. */
 var cnt=[].slice.call(d.querySelectorAll('[data-count]'));
-window.__cinder={revealAll:function(){ms.classList.add('play');d.querySelectorAll('.rv').forEach(markIn);cnt.forEach(function(e){e.textContent=e.dataset.count});onScroll()}};
+window.__cinder={revealAll:function(){if(ms)ms.classList.add('play');d.querySelectorAll('.rv').forEach(markIn);cnt.forEach(function(e){e.textContent=e.dataset.count});onScroll()}};
 /* ---- entrance: one orchestrated move, about 1.2s ---- */
-if(!RM&&!STILL()){b.classList.add('pre');requestAnimationFrame(function(){requestAnimationFrame(function(){b.classList.remove('pre');d.getElementById('h1').classList.add('sweep')})});setTimeout(function(){b.classList.remove('pre')},1600)}
+if(hwin) hwin.classList.add('play');
+if(!RM&&!STILL()){b.classList.add('pre');requestAnimationFrame(function(){requestAnimationFrame(function(){b.classList.remove('pre')})});setTimeout(function(){b.classList.remove('pre')},700)}
 })();
 </script>
 </body>
