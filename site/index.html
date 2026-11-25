@@ -82,30 +82,32 @@ p{color:var(--t2);text-wrap:pretty}
 .hero .acts{margin-top:40px}
 .hero .terms{margin-top:18px;font-size:14px;color:var(--t3)}
 
-/* Hero A: one crisp mark, split layout (vector, sharp at any size) */
-.mk{position:relative;height:560px;display:grid;place-items:center;perspective:1600px}
-.mk-in{position:relative;width:min(470px,92%);transform-style:preserve-3d;transform:rotateX(10deg) rotateY(-22deg);will-change:transform}
-.mk-svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 50px 50px rgba(0,0,0,.85))}
-.mk-floor{position:absolute;left:50%;bottom:40px;width:520px;height:90px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(255,255,255,.07),transparent);pointer-events:none}
-.mk::before{content:"";position:absolute;left:50%;top:44%;width:720px;height:720px;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(255,255,255,.06),transparent 70%);pointer-events:none}
-.sweep{animation:sweep 7s cubic-bezier(.45,0,.2,1) 1.6s infinite}
-@keyframes sweep{0%{transform:skewX(-20deg) translateX(-400px)}22%,100%{transform:skewX(-20deg) translateX(1300px)}}
-.js .mk-in{animation:mkin 1.4s var(--e) .2s both}
-@keyframes mkin{from{opacity:0;transform:rotateX(18deg) rotateY(-40deg) translate3d(0,30px,0)}to{opacity:1;transform:rotateX(10deg) rotateY(-22deg)}}
-.hb-stage{display:none}
-/* Hero B: centered text over the product, Raycast-style */
-html.hero-b .hero{padding-bottom:0}
-html.hero-b .hero .wrap{grid-template-columns:1fr;text-align:center;justify-items:center}
-html.hero-b .hero h1{max-width:14ch}
-html.hero-b .hero .lede{margin-left:auto;margin-right:auto}
-html.hero-b .hero .acts{justify-content:center}
-html.hero-b .mk{display:none}
-html.hero-b .hb-stage{display:block;position:relative;margin:72px auto 0;max-width:1300px;padding:0 var(--g);perspective:2200px}
-.hb-screen{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 -1px 0 rgba(255,255,255,.25) inset;transform:rotateX(22deg) scale(.98);transform-origin:50% 0;-webkit-mask-image:linear-gradient(#000 35%,transparent 92%);mask-image:linear-gradient(#000 35%,transparent 92%)}
+/* Hero: centered over a field of glass slats (CSS only, sharp at any size) */
+.hero{padding:200px 0 0;text-align:center;isolation:isolate}
+.hero::before{display:none}
+.hero .wrap{grid-template-columns:1fr;justify-items:center}
+.hero h1{max-width:13ch;margin:0 auto}
+.hero .lede{margin:28px auto 0;max-width:32em}
+.hero .acts{justify-content:center}
+.rays{position:absolute;left:0;right:0;top:-80px;height:1100px;z-index:-1;overflow:hidden;pointer-events:none}
+.rays-in{position:absolute;left:50%;top:0;width:1500px;height:1000px;transform:translateX(-50%)}
+.rays i{--x:calc((var(--k) - 4) * 118px);position:absolute;left:50%;top:40px;width:96px;height:900px;margin-left:-48px;border-radius:60px;
+  background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(150,180,255,.10) 28%,rgba(220,230,255,.34) 52%,rgba(120,160,255,.16) 72%,rgba(255,255,255,0) 100%);
+  box-shadow:inset 1px 0 0 rgba(255,255,255,.28),inset -1px 0 0 rgba(255,255,255,.06);
+  transform:translate3d(var(--x),var(--y,0px),0) rotate(24deg) scaleY(calc(1 - (var(--k) - 4) * (var(--k) - 4) * .045));
+  opacity:calc(1 - (var(--k) - 4) * (var(--k) - 4) * .07);will-change:transform}
+.rays i:nth-child(odd){background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.07) 30%,rgba(235,240,255,.24) 55%,rgba(255,255,255,0) 100%)}
+.rays-core{position:absolute;left:50%;top:330px;width:900px;height:520px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(120,160,255,.30),rgba(79,140,255,.10) 45%,transparent 75%);filter:blur(10px)}
+.rays-fade{position:absolute;inset:0;background:radial-gradient(60% 46% at 50% 36%,rgba(0,0,0,.55),transparent 70%),linear-gradient(180deg,#000 0%,transparent 16%,transparent 62%,#000 96%)}
+.js .rays i{animation:slat 1.6s var(--e) both;animation-delay:calc(.08s * (4 - (var(--k) - 4) * (var(--k) - 4) / 4))}
+@keyframes slat{from{opacity:0;transform:translate3d(var(--x),120px,0) rotate(24deg) scaleY(.6)}}
+.js .rays-core{animation:core 2.2s var(--e) .2s both}
+@keyframes core{from{opacity:0;transform:translateX(-50%) scale(.7)}}
+.hb-stage{position:relative;margin:96px auto 0;max-width:1300px;padding:0 var(--g);perspective:2200px}
+.hb-screen{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 -1px 0 rgba(255,255,255,.25) inset;transform:rotateX(20deg) scale(.98);transform-origin:50% 0;-webkit-mask-image:linear-gradient(#000 35%,transparent 92%);mask-image:linear-gradient(#000 35%,transparent 92%)}
 .hb-screen img{width:100%}
-html.hero-b .hero::after{content:"";position:absolute;left:50%;top:430px;width:1300px;height:420px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(79,140,255,.12),transparent 75%);pointer-events:none}
-.js html.hero-b .hb-screen,.js.hero-b .hb-screen{animation:hbin 1.5s var(--e) .35s both}
-@keyframes hbin{from{opacity:0;transform:rotateX(38deg) scale(.94) translate3d(0,60px,0)}to{opacity:1;transform:rotateX(22deg) scale(.98)}}
+.js .hb-screen{animation:hbin 1.5s var(--e) .45s both}
+@keyframes hbin{from{opacity:0;transform:rotateX(36deg) scale(.94) translate3d(0,60px,0)}to{opacity:1;transform:rotateX(20deg) scale(.98)}}
 .hero h1 .ln{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em}
 .hero h1 .ln span{display:block}
 .js .hero h1 .ln span{animation:up 1s var(--e) both}
@@ -282,7 +284,6 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 @media (max-width:1100px){
   .nav ul{display:none}.nav .btn{margin-left:auto}
   .hero .wrap{grid-template-columns:1fr}
-  .mk{height:460px}
   .bd-pin{grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;padding-top:96px}
   .bd-head{grid-column:1/-1}
   .iso{height:460px}
@@ -293,14 +294,14 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   .sec{padding:104px 0}
   .head,.audit,.story,.duo,.founder{grid-template-columns:1fr;gap:28px}
   .head{margin-bottom:48px}
-  .hero{padding:120px 0 64px}
+  .hero{padding:132px 0 0}
+  .rays{height:860px;top:-40px}.rays-in{transform:translateX(-50%) scale(.55);transform-origin:50% 0}.rays-core{top:250px;width:520px;height:380px}
+  .hb-stage{margin-top:56px;padding:0}
+  .hb-screen{border-radius:10px;transform:rotateX(16deg) scale(1.3);transform-origin:30% 0}
+  .js .hb-screen{animation:none}
   .hero h1{font-size:clamp(44px,12vw,56px)}
   .hero .lede{font-size:17px}
   .hero .acts .btn{width:100%;height:50px}
-  .mk{height:340px;margin-top:8px}.mk-in{width:min(300px,78%)}.mk::before{width:420px;height:420px}.mk-floor{width:300px;bottom:10px}
-  html.hero-b .hb-stage{margin-top:48px;padding:0 0}
-  .hb-screen{border-radius:10px;transform:rotateX(18deg) scale(1.25);transform-origin:30% 0}
-  html.hero-b .hero::after{top:520px;width:600px}
   .tools .wrap{height:auto;padding:22px var(--g);flex-wrap:wrap;gap:10px 22px;white-space:normal}
   .tools .lab{width:100%}
   /* Story on phones: the phone sits on top and stays while the steps scroll under it */
@@ -362,6 +363,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 
 <main id="main">
 <section class="hero" id="top" aria-labelledby="h1">
+  <div class="rays" id="rays" aria-hidden="true"><div class="rays-in"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i style="--k:8"></i></div><div class="rays-core"></div><div class="rays-fade"></div></div>
   <div class="wrap">
     <div>
       <h1 id="h1"><span class="ln"><span>More jobs from</span></span><span class="ln"><span>the leads you</span></span><span class="ln"><span>already get.</span></span></h1>
@@ -369,15 +371,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
       <div class="acts"><a class="btn pri" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
       <p class="terms">Free, 15 minutes, and you keep what we find.</p>
     </div>
-    <div class="mk" id="mk" aria-hidden="true"><div class="mk-in" id="mkin"><svg viewBox="151.04 168.00 791.63 703.15" class="mk-svg"><defs>
-<linearGradient id="mkSide" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a2a2f"/><stop offset="1" stop-color="#08080a"/></linearGradient>
-<linearGradient id="mkFace" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f4f6"/><stop offset=".38" stop-color="#9c9ca3"/><stop offset=".62" stop-color="#3b3b41"/><stop offset="1" stop-color="#18181b"/></linearGradient>
-<linearGradient id="mkSweep" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-<clipPath id="mkClip"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></clipPath></defs>
-<g transform="translate(22.4,30.8)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(20.8,28.6)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(19.2,26.4)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(17.6,24.2)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(16.0,22.0)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(14.4,19.8)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(12.8,17.6)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(11.2,15.4)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(9.6,13.2)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(8.0,11.0)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(6.4,8.8)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(4.8,6.6)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(3.2,4.4)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(1.6,2.2)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g>
-<g fill="url(#mkFace)" stroke="rgba(255,255,255,.35)" stroke-width="1.2"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g>
-<g clip-path="url(#mkClip)"><rect class="sweep" x="0" y="100" width="260" height="900" fill="url(#mkSweep)" transform="skewX(-20)"/></g>
-</svg></div><div class="mk-floor"></div></div>
+    
   </div>
   <div class="hb-stage" aria-hidden="true"><div class="hb-screen"><img src="/assets/screens/today-2400.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1300px) 100vw, 1300px" width="2400" height="1500" alt="" fetchpriority="high"></div></div>
 </section>
@@ -560,7 +554,6 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 <script>
 (function(){
 var d=document,root=d.documentElement;root.classList.add('js');
-var HQ='';try{HQ=new URLSearchParams(location.search).get('hero')||''}catch(e){}if(HQ==='b')root.classList.add('hero-b');
 var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 var FINE=matchMedia('(pointer:fine)').matches;
 
@@ -584,7 +577,7 @@ function setStep(s){if(s===cur)return;cur=s;steps.forEach(function(el){el.classL
 setStep(0);
 
 /* Scroll-linked pieces: one rAF, transforms only */
-var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),iso=d.getElementById('iso'),pls=[].slice.call(iso.querySelectorAll('.pl')),parts=[].slice.call(d.querySelectorAll('#parts li')),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl'),shot=d.getElementById('shot'),mkin=d.getElementById('mkin');
+var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),iso=d.getElementById('iso'),pls=[].slice.call(iso.querySelectorAll('.pl')),parts=[].slice.call(d.querySelectorAll('#parts li')),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl'),shot=d.getElementById('shot'),rays=d.getElementById('rays'),slats=[].slice.call(rays.querySelectorAll('i'));
 var names=['Answering','Booking','Quote follow-up','Invoices','Reviews','Website'];
 var ticking=false,lastK=-2,mx=0,my=0;
 function clamp(v){return v<0?0:v>1?1:v}
@@ -595,6 +588,7 @@ function update(){
   var fr=flow.getBoundingClientRect(),br=bd.getBoundingClientRect();
   /* then write */
   nav.classList.toggle('on',y>8);
+  if(!RM&&y<1200){slats.forEach(function(el,i){el.style.setProperty('--y',(-(y*(.12+Math.abs(i-4)*.05))).toFixed(1)+'px')})}
   setStep(best);
   var fp=mob?clamp((vh*.65-fr.top)/fr.height):clamp((vh*.8-fr.top)/(vh*.5));
   flow.style.setProperty('--p',fp.toFixed(4));
@@ -608,12 +602,6 @@ function update(){
 function onScroll(){if(!ticking){ticking=true;requestAnimationFrame(update)}}
 addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update();
 
-/* Hero A: the mark turns slightly toward the cursor (desktop only) */
-if(FINE&&!RM&&mkin){var tx=0,ty=0,cx=0,cy=0,run=false;
-  mkin.addEventListener('animationend',function(){mkin.style.animation='none';mkin.style.transform='rotateX(10deg) rotateY(-22deg)'});
-  function tilt(){cx+=(tx-cx)*.07;cy+=(ty-cy)*.07;mkin.style.transform='rotateX('+(10-cy*8).toFixed(3)+'deg) rotateY('+(-22+cx*14).toFixed(3)+'deg)';if(Math.abs(tx-cx)>.001||Math.abs(ty-cy)>.001)requestAnimationFrame(tilt);else run=false}
-  d.querySelector('.hero').addEventListener('pointermove',function(e){if(mkin.style.animation!=='none')return;tx=e.clientX/innerWidth-.5;ty=e.clientY/innerHeight-.5;if(!run){run=true;requestAnimationFrame(tilt)}});
-}
 })();
 </script>
 </body>
