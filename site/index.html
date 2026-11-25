@@ -65,7 +65,7 @@ p{color:var(--t2);text-wrap:pretty}
 
 /* Nav */
 .nav{position:fixed;inset:0 0 auto;z-index:50;transition:background .3s,border-color .3s;border-bottom:1px solid transparent}
-.nav.on{background:rgba(0,0,0,.72);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-color:var(--line)}
+.nav.on{background:rgba(0,0,0,.88);border-color:var(--line)}
 .nav .wrap{display:flex;align-items:center;gap:40px;height:68px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px;letter-spacing:-.02em}
 .brand-mark{width:22px;height:22px;fill:currentColor}
@@ -82,48 +82,30 @@ p{color:var(--t2);text-wrap:pretty}
 .hero .acts{margin-top:40px}
 .hero .terms{margin-top:18px;font-size:14px;color:var(--t3)}
 
-/* Hero graphic: the app, lifted off the page */
-.hg{position:relative;height:620px;perspective:2200px}
-.hg-tilt{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(9deg) rotateY(-15deg) rotateZ(1.5deg);will-change:transform}
-.win{position:absolute;left:2%;top:70px;width:560px;border-radius:16px;background:linear-gradient(180deg,#141417,#0b0b0d);box-shadow:0 0 0 1px rgba(255,255,255,.12),0 1px 0 rgba(255,255,255,.14) inset,0 60px 120px -40px rgba(0,0,0,.9),0 30px 60px -30px rgba(0,0,0,.8);overflow:hidden}
-.win-bar{display:flex;align-items:center;gap:10px;height:46px;padding:0 16px;border-bottom:1px solid var(--line)}
-.win-bar i{width:10px;height:10px;border-radius:50%;background:#2a2a2e}
-.win-bar b{margin-left:8px;font-size:13px;font-weight:550;color:var(--t1)}
-.win-bar span{margin-left:auto}
-.win-k{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line)}
-.win-k div{padding:16px 18px;border-right:1px solid var(--line)}.win-k div:last-child{border-right:0}
-.win-k b{display:block;font-size:24px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.win-k small{font-size:12px;color:var(--t3)}
-.rows{padding:6px}
-.row{display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;padding:11px 12px;border-radius:10px}
-.row.sel{background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px var(--line)}
-.av{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;background:var(--s4);font:600 11px/1 var(--sans);color:var(--t2)}
-.row b{display:block;font-size:14px;font-weight:550;letter-spacing:-.01em}
-.row small{display:block;font-size:12.5px;color:var(--t3)}
-.pill{font:500 11.5px/1 var(--mono);padding:6px 8px;border-radius:6px;color:var(--t2);box-shadow:inset 0 0 0 1px var(--line2);white-space:nowrap}
-.pill.blue{color:#fff;background:var(--acc);box-shadow:none}
-.card{position:absolute;border-radius:14px;background:#16161a;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 1px 0 rgba(255,255,255,.12) inset,0 40px 80px -30px rgba(0,0,0,.95);padding:14px 16px}
-.card .mono{display:block;margin-bottom:6px}
-.card b{display:block;font-size:14px;font-weight:550}
-.card p{font-size:13px;line-height:1.45;margin-top:2px}
-.c1{left:-12%;top:420px;width:260px;transform:translateZ(110px)}
-.c2{right:-8%;top:0;width:228px;transform:translateZ(140px)}
-.c3{right:-4%;top:440px;width:210px;transform:translateZ(80px)}
-.c1 .bub{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--s4);font-size:13px;line-height:1.4;color:var(--t1)}
-.cal{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:10px}
-.cal i{height:22px;border-radius:4px;background:var(--s3)}.cal i.on{background:var(--acc)}
-.stars{margin-top:6px;letter-spacing:2px;color:var(--t1);font-size:13px}
-/* Hero entrance */
-.js .hg .win,.js .hg .card{opacity:0}
-.js .hg.go .win{animation:rise 1.1s var(--e) .15s both}
-.js .hg.go .c2{animation:pop 1s var(--e) .55s both}
-.js .hg.go .c1{animation:pop 1s var(--e) .7s both}
-.js .hg.go .c3{animation:pop 1s var(--e) .85s both}
-.js .hg.go .row{animation:fade .6s var(--e) both}
-.js .hg.go .row:nth-child(1){animation-delay:.5s}.js .hg.go .row:nth-child(2){animation-delay:.58s}.js .hg.go .row:nth-child(3){animation-delay:.66s}.js .hg.go .row:nth-child(4){animation-delay:.74s}
-@keyframes rise{from{opacity:0;transform:translate3d(0,40px,-60px)}to{opacity:1;transform:none}}
-@keyframes pop{from{opacity:0;translate:0 24px}to{opacity:1;translate:0 0}}
-@keyframes fade{from{opacity:0;transform:translate3d(0,8px,0)}to{opacity:1;transform:none}}
+/* Hero A: one crisp mark, split layout (vector, sharp at any size) */
+.mk{position:relative;height:560px;display:grid;place-items:center;perspective:1600px}
+.mk-in{position:relative;width:min(470px,92%);transform-style:preserve-3d;transform:rotateX(10deg) rotateY(-22deg);will-change:transform}
+.mk-svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(0 50px 50px rgba(0,0,0,.85))}
+.mk-floor{position:absolute;left:50%;bottom:40px;width:520px;height:90px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(255,255,255,.07),transparent);pointer-events:none}
+.mk::before{content:"";position:absolute;left:50%;top:44%;width:720px;height:720px;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(255,255,255,.06),transparent 70%);pointer-events:none}
+.sweep{animation:sweep 7s cubic-bezier(.45,0,.2,1) 1.6s infinite}
+@keyframes sweep{0%{transform:skewX(-20deg) translateX(-400px)}22%,100%{transform:skewX(-20deg) translateX(1300px)}}
+.js .mk-in{animation:mkin 1.4s var(--e) .2s both}
+@keyframes mkin{from{opacity:0;transform:rotateX(18deg) rotateY(-40deg) translate3d(0,30px,0)}to{opacity:1;transform:rotateX(10deg) rotateY(-22deg)}}
+.hb-stage{display:none}
+/* Hero B: centered text over the product, Raycast-style */
+html.hero-b .hero{padding-bottom:0}
+html.hero-b .hero .wrap{grid-template-columns:1fr;text-align:center;justify-items:center}
+html.hero-b .hero h1{max-width:14ch}
+html.hero-b .hero .lede{margin-left:auto;margin-right:auto}
+html.hero-b .hero .acts{justify-content:center}
+html.hero-b .mk{display:none}
+html.hero-b .hb-stage{display:block;position:relative;margin:72px auto 0;max-width:1300px;padding:0 var(--g);perspective:2200px}
+.hb-screen{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 -1px 0 rgba(255,255,255,.25) inset;transform:rotateX(22deg) scale(.98);transform-origin:50% 0;-webkit-mask-image:linear-gradient(#000 35%,transparent 92%);mask-image:linear-gradient(#000 35%,transparent 92%)}
+.hb-screen img{width:100%}
+html.hero-b .hero::after{content:"";position:absolute;left:50%;top:430px;width:1300px;height:420px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(79,140,255,.12),transparent 75%);pointer-events:none}
+.js html.hero-b .hb-screen,.js.hero-b .hb-screen{animation:hbin 1.5s var(--e) .35s both}
+@keyframes hbin{from{opacity:0;transform:rotateX(38deg) scale(.94) translate3d(0,60px,0)}to{opacity:1;transform:rotateX(22deg) scale(.98)}}
 .hero h1 .ln{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em}
 .hero h1 .ln span{display:block}
 .js .hero h1 .ln span{animation:up 1s var(--e) both}
@@ -151,7 +133,7 @@ p{color:var(--t2);text-wrap:pretty}
 .step .mono{margin-bottom:14px}
 .step h3{font-size:30px;letter-spacing:-.03em;line-height:1.1}
 .step p{margin-top:12px;font-size:17px}
-.stick{position:sticky;top:calc(50vh - 300px);height:600px;display:flex;align-items:center}
+.stick{position:sticky;top:calc(50vh - 290px);height:580px}
 .phone{position:relative;width:340px;height:580px;margin:0 auto;border-radius:44px;background:#0a0a0c;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 0 0 8px #050506,0 0 0 9px rgba(255,255,255,.1),0 60px 120px -40px rgba(0,0,0,.9);overflow:hidden}
 .phone-top{height:64px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;border-bottom:1px solid var(--line)}
 .phone-top b{font-size:13px;font-weight:600}.phone-top small{display:block;text-align:center;font-size:11px;color:var(--t3)}
@@ -229,6 +211,21 @@ p{color:var(--t2);text-wrap:pretty}
 .bd-meter{margin-top:32px;display:flex;align-items:center;gap:12px}
 .bd-meter i{position:relative;width:120px;height:2px;background:var(--line2);overflow:hidden}
 .bd-meter i b{position:absolute;inset:0;background:var(--t1);transform-origin:left;transform:scaleX(var(--p,0))}
+.iso{position:relative;height:620px;perspective:2400px}
+.iso-in{position:absolute;left:50%;top:70%;width:0;height:0;transform-style:preserve-3d;transform:rotateX(58deg) rotateZ(-42deg)}
+.pl{position:absolute;left:-140px;top:-140px;width:280px;height:280px;transform-style:preserve-3d;transform:translateZ(calc(var(--i) * (18px + var(--p,0) * 50px)))}
+.pl .top{position:absolute;inset:0;border-radius:22px;background:linear-gradient(135deg,#33333a,#18181c 55%,#111114);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.22);display:flex;align-items:flex-end;padding:22px;transition:background .45s,box-shadow .45s}
+.pl .top span{font:500 12px/1 var(--mono);color:var(--t3);transition:color .45s}
+.pl .top b{position:absolute;left:22px;top:22px;font-size:15px;font-weight:600;color:var(--t2);transition:color .45s}
+.pl .e1,.pl .e2{position:absolute;background:linear-gradient(90deg,#1b1b1f,#0c0c0e);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.pl .e1{left:14px;right:14px;bottom:0;height:12px;transform-origin:bottom;transform:rotateX(-90deg)}
+.pl .e2{top:14px;bottom:14px;right:0;width:12px;transform-origin:right;transform:rotateY(90deg)}
+.pl.on .top{background:linear-gradient(135deg,#3a3a42,#1c1c21 60%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.3)}
+.pl.on .top b{color:#fff}.pl.on .top span{color:var(--acc2)}
+.pl .ico{position:absolute;right:22px;top:20px;width:28px;height:28px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--line2);display:grid;place-items:center}
+.pl .ico svg{width:15px;height:15px;stroke:var(--t2);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:stroke .45s}
+.pl.on .ico svg{stroke:#fff}
+.shadow{position:absolute;left:-170px;top:-170px;width:340px;height:340px;border-radius:40px;background:radial-gradient(closest-side,rgba(0,0,0,.9),transparent);transform:translateZ(-30px)}
 .parts li{padding:14px 0 14px 16px;border-left:1px solid var(--line);transition:border-color .45s}
 .parts li b{display:flex;gap:10px;font-size:15px;font-weight:600;color:var(--t3);transition:color .45s}
 .parts li b span{font:500 12px/22px var(--mono)}
@@ -285,9 +282,10 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 @media (max-width:1100px){
   .nav ul{display:none}.nav .btn{margin-left:auto}
   .hero .wrap{grid-template-columns:1fr}
-  .hg{height:560px;max-width:640px;margin:0 auto;width:100%}
+  .mk{height:460px}
   .bd-pin{grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;padding-top:96px}
   .bd-head{grid-column:1/-1}
+  .iso{height:460px}
 }
 /* Phone */
 @media (max-width:760px){
@@ -299,14 +297,15 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   .hero h1{font-size:clamp(44px,12vw,56px)}
   .hero .lede{font-size:17px}
   .hero .acts .btn{width:100%;height:50px}
-  .hg{height:440px;margin-top:24px}
-  .win{left:0;width:520px}
-  .c1{left:-2%;top:400px}.c2{left:300px;right:auto;top:-20px}.c3{display:none}
+  .mk{height:340px;margin-top:8px}.mk-in{width:min(300px,78%)}.mk::before{width:420px;height:420px}.mk-floor{width:300px;bottom:10px}
+  html.hero-b .hb-stage{margin-top:48px;padding:0 0}
+  .hb-screen{border-radius:10px;transform:rotateX(18deg) scale(1.25);transform-origin:30% 0}
+  html.hero-b .hero::after{top:520px;width:600px}
   .tools .wrap{height:auto;padding:22px var(--g);flex-wrap:wrap;gap:10px 22px;white-space:normal}
   .tools .lab{width:100%}
   /* Story on phones: the phone sits on top and stays while the steps scroll under it */
   .story{gap:0}
-  .stick{position:sticky;top:64px;height:auto;z-index:2;background:linear-gradient(#000 88%,transparent);padding:4px 0 16px;display:block}
+  .stick{position:sticky;top:64px;height:auto;z-index:2;background:linear-gradient(#000 88%,transparent);padding:8px 0 20px}
   .phone{width:min(300px,82vw);height:330px;border-radius:34px}
   .feed{padding:12px 12px;gap:8px}
   .msg{font-size:13px}
@@ -336,40 +335,16 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   .promise{margin-top:64px;gap:24px}
   .legal{flex-direction:column}
   .nav .brand span{display:none}
-  .hg{height:400px}
-  .hg-tilt{transform:rotateX(8deg) rotateY(-10deg) rotateZ(1deg) scale(.58)!important;transform-origin:0 0}
   .bd-pin{padding-top:76px}
-}
-
-/* Rendered sequences: drawn at full screen resolution, no blending */
-.seq{position:relative;margin:0}
-.seq img,.seq canvas{position:absolute;inset:0;width:100%;height:100%}
-.seq canvas{object-fit:contain}
-.seq img{object-fit:contain}
-.seq canvas{opacity:0}
-.seq.live canvas{opacity:1}.seq.live img{opacity:0}
-.head.wart{grid-template-columns:1fr 1fr;align-items:center}
-.head.wart .ht p{margin-top:24px}
-.head.wart .seq{width:100%;max-width:520px;justify-self:end}
-.stick .seq{width:min(500px,100%);margin:0 auto}
-.bd-art{width:100%;max-width:560px;max-height:84vh;justify-self:center}
-.band{margin:64px auto 0;width:100%;max-width:1100px}
-.mods{margin:88px auto -24px;width:100%;max-width:760px}
-.ctr{width:420px;margin:-40px auto 8px}
-@media (max-width:760px){
-  .head.wart{grid-template-columns:1fr}
-  .head.wart .seq{max-width:420px;justify-self:center}
-  .stick .seq{width:min(330px,86vw)}
-  .bd-art{max-width:300px;max-height:46vh}
-  .band{margin-top:40px;width:130%;margin-left:-15%}
-  .mods{margin:56px auto -12px}
-  .ctr{width:280px;margin-top:-20px}
+  .iso{height:330px;flex:none}
+  .iso-in{top:78%;transform:rotateX(58deg) rotateZ(-42deg) scale(.5)}
+  .pl{transform:translateZ(calc(var(--i) * (16px + var(--p,0) * 26px)))}
+  .iso-in{top:82%}
 }
 /* Reduced motion: keep the fades, drop the movement */
 @media (prefers-reduced-motion:reduce){
   .rv{transform:none!important}
   .js .hero h1 .ln span{animation:none}
-  .hg-tilt{transition:none}
 }
 </style>
 </head>
@@ -394,24 +369,17 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
       <div class="acts"><a class="btn pri" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
       <p class="terms">Free, 15 minutes, and you keep what we find.</p>
     </div>
-    <div class="hg" id="hg" role="img" aria-label="Example: the Cinder app's evening view. Four new leads, all answered in seconds, one estimate booked for Thursday at 9:00 AM. Sample data.">
-      <div class="hg-tilt" id="hgt">
-        <div class="win">
-          <div class="win-bar" aria-hidden="true"><i></i><i></i><i></i><b>Tonight</b><span class="mono">Brightline Fence · sample</span></div>
-          <div class="win-k"><div><b>4</b><small>new leads</small></div><div><b>9s</b><small>first reply</small></div><div><b>1</b><small>booked</small></div></div>
-          <div class="rows">
-            <div class="row sel"><span class="av">DR</span><div><b>Dana Ruiz</b><small>New project · missed call 7:42 PM</small></div><span class="pill blue">Booked Thu 9:00</span></div>
-            <div class="row"><span class="av">AH</span><div><b>Alvarez home</b><small>Service visit · call</small></div><span class="pill">Replied 9s</span></div>
-            <div class="row"><span class="av">JP</span><div><b>Jen Park</b><small>Repair quote · web form</small></div><span class="pill">Replied 12s</span></div>
-            <div class="row"><span class="av">LO</span><div><b>Lena Ortiz</b><small>Opened your quote 3 times</small></div><span class="pill">Follow-up sent</span></div>
-          </div>
-        </div>
-        <div class="card c2"><span class="mono">Estimate booked</span><b>Thu, 9:00 AM</b><p>41 Aspen Ct · on Mike’s calendar</p><div class="cal" aria-hidden="true"><i></i><i></i><i></i><i class="on"></i><i></i></div></div>
-        <div class="card c1"><span class="mono">7:42 PM · 10s after the missed call</span><div class="bub">Sorry we missed you. Mike can come Thursday at 9:00 AM or Friday at 1:00 PM.</div></div>
-        <div class="card c3"><span class="mono">Job paid</span><b>Review requested</b><div class="stars" aria-hidden="true">★★★★★</div></div>
-      </div>
-    </div>
+    <div class="mk" id="mk" aria-hidden="true"><div class="mk-in" id="mkin"><svg viewBox="151.04 168.00 791.63 703.15" class="mk-svg"><defs>
+<linearGradient id="mkSide" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a2a2f"/><stop offset="1" stop-color="#08080a"/></linearGradient>
+<linearGradient id="mkFace" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f4f6"/><stop offset=".38" stop-color="#9c9ca3"/><stop offset=".62" stop-color="#3b3b41"/><stop offset="1" stop-color="#18181b"/></linearGradient>
+<linearGradient id="mkSweep" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<clipPath id="mkClip"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></clipPath></defs>
+<g transform="translate(22.4,30.8)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(20.8,28.6)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(19.2,26.4)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(17.6,24.2)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(16.0,22.0)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(14.4,19.8)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(12.8,17.6)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(11.2,15.4)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(9.6,13.2)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(8.0,11.0)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(6.4,8.8)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(4.8,6.6)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(3.2,4.4)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g><g transform="translate(1.6,2.2)" fill="url(#mkSide)"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g>
+<g fill="url(#mkFace)" stroke="rgba(255,255,255,.35)" stroke-width="1.2"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></g>
+<g clip-path="url(#mkClip)"><rect class="sweep" x="0" y="100" width="260" height="900" fill="url(#mkSweep)" transform="skewX(-20)"/></g>
+</svg></div><div class="mk-floor"></div></div>
   </div>
+  <div class="hb-stage" aria-hidden="true"><div class="hb-screen"><img src="/assets/screens/today-2400.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1300px) 100vw, 1300px" width="2400" height="1500" alt="" fetchpriority="high"></div></div>
 </section>
 
 <section class="tools" aria-label="Works alongside">
@@ -423,7 +391,16 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
     <div class="head"><h2 id="h-out" class="rv">You don’t need more leads. You need fewer of them slipping.</h2><p class="rv d1">Most service businesses already pay for enough leads. The money is lost between the first call and the paid invoice. That’s where we work.</p></div>
     <div class="story" id="story">
       <div class="stick">
-        <figure class="seq " data-seq="notes" data-n="32" data-mode="story" style="aspect-ratio:1120/1330"><img src="/assets/seq/notes/still-2x.webp" width="1120" height="1330" alt="Illustration: a black slab where each step of the evening lands as a note: the missed call, the text sent to Dana Ruiz, Thursday 9:00 AM at 41 Aspen Ct, and the reminder for the night before." decoding="async" loading="lazy"><canvas aria-hidden="true"></canvas></figure>
+        <div class="phone" role="img" aria-label="Example phone thread: missed call at 7:42 PM, a text 10 seconds later with two estimate times, the customer picks Thursday at 9:00, the estimate is booked and a reminder is queued. Sample data.">
+          <div class="phone-top" aria-hidden="true"><div><b>Dana Ruiz</b><small>(303) 555-0148</small></div></div>
+          <div class="feed" aria-hidden="true">
+            <span class="ev sys call" data-s="0">Missed call · 7:42 PM</span>
+            <div class="ev msg out" data-s="1">Hi Dana, it’s Brightline. Sorry we missed you. Mike can come Thursday at 9:00 AM or Friday at 1:00 PM. Which works?<small>7:42 PM · 10s later</small></div>
+            <div class="ev msg" data-s="2">Thursday at 9 works<small>7:49 PM</small></div>
+            <div class="ev bk" data-s="2"><span class="dt"><small>Thu</small><b>26</b></span><div><b class="t">Estimate booked · 9:00 AM</b><span>41 Aspen Ct · Mike’s calendar</span></div></div>
+            <span class="ev sys" data-s="3">Reminder queued · Wed 6:00 PM</span>
+          </div>
+        </div>
       </div>
       <ol class="steps">
         <li class="step" data-s="0"><span class="mono">01 · Missed call</span><h3>7:42 PM. A call you can’t take.</h3><p>You’re on a job site. A homeowner calls about a new project, and it rings out.</p></li>
@@ -471,7 +448,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 
 <section id="checks" class="sec" aria-labelledby="h-checks" style="border-top:1px solid var(--line)">
   <div class="wrap">
-    <div class="head wart"><div class="ht"><h2 id="h-checks" class="rv">Jobs leak in more places than the missed call.</h2><p class="rv d1">Most owners don’t have a lead problem. They have a follow-through problem. The audit walks every step a job goes through, then puts the leaks in order.</p></div><figure class="seq " data-seq="pipe" data-n="24" data-mode="play" style="aspect-ratio:1000/824"><img src="/assets/seq/pipe/still-2x.webp" width="1000" height="824" alt="Illustration: a black pipe with a leaking joint that gets clamped shut." decoding="async" loading="lazy"><canvas aria-hidden="true"></canvas></figure></div>
+    <div class="head"><h2 id="h-checks" class="rv">Jobs leak in more places than the missed call.</h2><p class="rv d1">Most owners don’t have a lead problem. They have a follow-through problem. The audit walks every step a job goes through, then puts the leaks in order.</p></div>
     <div class="flow" id="flow">
       <div class="flow-line" aria-hidden="true"><i></i></div>
       <ol class="fl">
@@ -503,7 +480,17 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
       <p>Six parts, one system, built after the audit. You only get the parts your business needs.</p>
       <div class="bd-meter" aria-hidden="true"><i><b id="bdm"></b></i><span class="mono" id="bdl">Assembled</span></div>
     </div>
-    <figure class="seq bd-art" data-seq="unit" data-n="24" data-mode="scrub" style="aspect-ratio:1400/1556"><img src="/assets/seq/unit/still-2x.webp" width="1400" height="1556" alt="Illustration: a black unit made of six stacked layers that lifts apart, screws first, as you scroll." decoding="async" loading="lazy"><canvas aria-hidden="true"></canvas></figure>
+    <div class="iso" aria-hidden="true">
+      <div class="iso-in" id="iso">
+        <div class="shadow"></div>
+        <div class="pl" style="--i:0"><div class="e1"></div><div class="e2"></div><div class="top"><b>Website</b><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></span><span>06</span></div></div>
+        <div class="pl" style="--i:1"><div class="e1"></div><div class="e2"></div><div class="top"><b>Reviews</b><span class="ico"><svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></span><span>05</span></div></div>
+        <div class="pl" style="--i:2"><div class="e1"></div><div class="e2"></div><div class="top"><b>Invoices</b><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span><span>04</span></div></div>
+        <div class="pl" style="--i:3"><div class="e1"></div><div class="e2"></div><div class="top"><b>Quote follow-up</b><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v4h4"/></svg></span><span>03</span></div></div>
+        <div class="pl" style="--i:4"><div class="e1"></div><div class="e2"></div><div class="top"><b>Booking</b><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><span>02</span></div></div>
+        <div class="pl" style="--i:5"><div class="e1"></div><div class="e2"></div><div class="top"><b>Answering</b><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg></span><span>01</span></div></div>
+      </div>
+    </div>
     <ol class="parts" id="parts">
       <li data-k="5"><b><span>01</span>Answering</b><p>Every call, text and form gets a reply in seconds, even after hours.</p></li>
       <li data-k="4"><b><span>02</span>Booking</b><p>Leads pick a time and land on your calendar, with reminders so they show up.</p></li>
@@ -519,10 +506,8 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   <div class="wrap">
     <div class="head"><h2 id="h-after" class="rv">Fixes are scoped after the audit.</h2><p class="rv d1">Only if you want them, and only the ones your business needs. It all runs in your own app. <a class="inl" href="/software">See the app</a></p></div>
     <p class="what rv">Cinder Revenue builds the systems, and the websites they run on, for service businesses. <em>They answer every lead, book estimates, chase quotes, send invoice reminders and ask for the review, so the jobs the audit found stop slipping.</em></p>
-    <figure class="seq band" data-seq="chain" data-n="24" data-mode="play" style="aspect-ratio:2000/639"><img src="/assets/seq/chain/still-2x.webp" width="2000" height="639" alt="Illustration: a black chain whose links close up one by one." decoding="async" loading="lazy"><canvas aria-hidden="true"></canvas></figure>
     <figure class="shot" id="shot"><img src="/assets/screens/today-1200.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1240px) 100vw, 1200px" width="2400" height="1500" alt="The Cinder app's Today screen for an example business: what needs you, what's owed, and how fast leads hear back. Sample data." loading="lazy" decoding="async"></figure>
     <p class="mono shot-cap">Today: what needs you, what’s owed, how fast leads hear back. Example business, sample data.</p>
-    <figure class="seq mods" data-seq="modules" data-n="32" data-mode="play" style="aspect-ratio:1400/1179"><img src="/assets/seq/modules/still-2x.webp" width="1400" height="1179" alt="Illustration: modules dropping into place on a black board, one for each part picked." decoding="async" loading="lazy"><canvas aria-hidden="true"></canvas></figure>
     <ul class="picks">
       <li class="rv"><b>Answer every lead in seconds<span class="pill blue">Picked</span></b><p>Calls and forms get a reply while you’re on a job or after hours.</p></li>
       <li class="rv d1"><b>Qualify and book estimates<span class="pill blue">Picked</span></b><p>Serious leads land on your calendar, and no-shows get rebooked.</p></li>
@@ -538,8 +523,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 <section id="who" class="sec" aria-labelledby="h-who" style="border-top:1px solid var(--line)">
   <div class="wrap">
     <div class="head"><h2 id="h-who" class="rv">Built for businesses that run on leads.</h2><p class="rv d1">Home services, clinics, studios and local pros. If leads come in by call, form or text, the audit works the same way.</p></div>
-    <figure class="seq band" data-seq="services" data-n="24" data-mode="play" style="aspect-ratio:2000/722"><img src="/assets/seq/services/still-2x.webp" width="2000" height="722" alt="Illustration: a row of black keys, one for each kind of service business." decoding="async" loading="lazy"><canvas aria-hidden="true"></canvas></figure>
-    <div class="duo" style="margin-top:72px">
+    <div class="duo">
       <div class="rv"><span class="mono">Out on the job</span><h3>The phone rings while your hands are full.</h3><p>You’re with a customer while the next one calls someone else. The audit finds how many of those you lose, and what happens to the quotes you do send.</p></div>
       <div class="rv d1"><span class="mono">Busy weeks</span><h3>When leads pile up, the leak is bigger than the missed call.</h3><p>A storm, a promotion or a full Monday brings them in all at once. The audit looks at how they get answered, how visits get booked, and how quotes get followed up.</p></div>
     </div>
@@ -552,7 +536,6 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 
 <section class="closing" aria-labelledby="h-final">
   <div class="wrap">
-    <figure class="seq ctr" data-seq="counter" data-n="24" data-mode="play" style="aspect-ratio:1100/1003"><img src="/assets/seq/counter/still-2x.webp" width="1100" height="1003" alt="Illustration: a mechanical timer that rolls and settles on 15:00, for the free 15-minute audit." decoding="async" loading="lazy"><canvas aria-hidden="true"></canvas></figure>
     <h2 id="h-final" class="rv">Find out how many jobs you’re missing.</h2>
     <p class="rv d1">A free 15-minute audit. We walk your business from the first call to the review, show you where jobs are slipping, and what fixing it is worth.</p>
     <div class="acts rv d2"><a class="btn pri" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
@@ -577,6 +560,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 <script>
 (function(){
 var d=document,root=d.documentElement;root.classList.add('js');
+var HQ='';try{HQ=new URLSearchParams(location.search).get('hero')||''}catch(e){}if(HQ==='b')root.classList.add('hero-b');
 var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 var FINE=matchMedia('(pointer:fine)').matches;
 
@@ -584,7 +568,6 @@ var FINE=matchMedia('(pointer:fine)').matches;
 var nav=d.getElementById('nav');
 
 /* Hero entrance */
-var hg=d.getElementById('hg');requestAnimationFrame(function(){hg.classList.add('go')});
 
 /* Reveal on enter */
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px',threshold:.01});
@@ -600,64 +583,36 @@ var steps=[].slice.call(d.querySelectorAll('.step')),evs=[].slice.call(d.querySe
 function setStep(s){if(s===cur)return;cur=s;steps.forEach(function(el){el.classList.toggle('on',+el.dataset.s===s)});evs.forEach(function(el){el.classList.toggle('on',+el.dataset.s<=s)})}
 setStep(0);
 
-
-/* Sequence player: decode the 2x frames once, draw at device resolution, no crossfades.
-   'play' runs through once when it comes into view; 'scrub' and 'story' glide toward the scroll position. */
-var SEQ={},DPR=Math.min(2.5,window.devicePixelRatio||1);
-function Seq(fig){
-  var me=this,n=+fig.dataset.n,name=fig.dataset.seq,mode=fig.dataset.mode,cv=fig.querySelector('canvas'),ctx=cv.getContext('2d'),fr=[],ready=false,cur=mode==='play'?0:0,tgt=0,shown=-1,raf=0,t0=0;
-  me.target=function(v){tgt=v*(n-1);kick()};
-  function size(){var im=fr[0];if(im&&(cv.width!==im.width||cv.height!==im.height)){cv.width=im.width;cv.height=im.height;shown=-1}}
-  function draw(i){i=Math.max(0,Math.min(n-1,i));if(i===shown||!fr[i])return;shown=i;ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(fr[i],0,0)}
-  function loop(t){raf=0;if(!ready)return;
-    if(mode==='play'){if(!t0)t0=t;var p=Math.min(1,(t-t0)/(n*38));var e=1-Math.pow(1-p,3);draw(Math.round(e*(n-1)));if(p<1)kick();return}
-    var d=tgt-cur;cur+=Math.abs(d)<.02?d:d*.16;draw(Math.round(cur));if(Math.abs(tgt-cur)>.01)kick()}
-  function kick(){if(!raf&&ready)raf=requestAnimationFrame(loop)}
-  me.load=function(){if(me.loading)return me.loading;var left=n,res;me.loading=new Promise(function(r){res=r});
-    for(var i=0;i<n;i++)(function(i){var img=new Image();img.decoding='async';img.src='/assets/seq/'+name+'/2x/'+String(i).padStart(2,'0')+'.webp';
-      (img.decode?img.decode():Promise.resolve()).then(function(){var tw=Math.min(img.naturalWidth,Math.ceil(fig.getBoundingClientRect().width*DPR)||img.naturalWidth);if(window.createImageBitmap&&tw<img.naturalWidth){return createImageBitmap(img,{resizeWidth:tw,resizeHeight:Math.round(img.naturalHeight*tw/img.naturalWidth),resizeQuality:'high'}).then(function(bm){fr[i]=bm},function(){fr[i]=img})}fr[i]=img},function(){}).then(function(){if(--left===0){res();if(fr.filter(Boolean).length<n*.8)return;ready=true;size();if(RM){draw(n-1)}else if(mode==='play'){draw(0);fig.classList.add('live');if(me.inview)kick()}else{cur=tgt;draw(Math.round(cur))}fig.classList.add('live');}})})(i)};
-  me.enter=function(){me.inview=true;if(mode==='play'&&ready)kick()};
-  me.resize=function(){if(ready){size();var k=shown;shown=-1;draw(mode==='play'?(t0?n-1:0):Math.round(cur))}};
-  SEQ[name]=me;
-}
-var seqs=[].slice.call(d.querySelectorAll('.seq')).map(function(f){var s=new Seq(f);s.fig=f;return s});
-var near=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var s=seqs.find(function(x){return x.fig===e.target});s.load();near.unobserve(e.target)}})},{rootMargin:'1400px 0px'});
-var seen=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var s=seqs.find(function(x){return x.fig===e.target});s.enter();seen.unobserve(e.target)}})},{threshold:.35});
-seqs.forEach(function(s){near.observe(s.fig);seen.observe(s.fig)});
-/* Load the rest in the background, one at a time, so nothing decodes mid-scroll */
-addEventListener('load',function(){setTimeout(function(){seqs.reduce(function(p,s){return p.then(function(){return s.load()})},Promise.resolve())},600)});
-addEventListener('resize',function(){seqs.forEach(function(s){s.resize()})});
-
 /* Scroll-linked pieces: one rAF, transforms only */
-var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),parts=[].slice.call(d.querySelectorAll('#parts li')),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl'),shot=d.getElementById('shot'),hgt=d.getElementById('hgt');
+var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),iso=d.getElementById('iso'),pls=[].slice.call(iso.querySelectorAll('.pl')),parts=[].slice.call(d.querySelectorAll('#parts li')),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl'),shot=d.getElementById('shot'),mkin=d.getElementById('mkin');
 var names=['Answering','Booking','Quote follow-up','Invoices','Reviews','Website'];
 var ticking=false,lastK=-2,mx=0,my=0;
 function clamp(v){return v<0?0:v>1?1:v}
 function update(){
   ticking=false;var vh=innerHeight,y=scrollY,mob=innerWidth<=760;
   /* read everything first */
-  var mid=vh*.5,best=0,bd0=1e9,stR=steps.map(function(el){return el.getBoundingClientRect()});stR.forEach(function(r,i){var c=Math.abs(r.top+r.height/2-mid);if(c<bd0){bd0=c;best=i}});
+  var mid=vh*.5,best=0,bd0=1e9;steps.forEach(function(el,i){var r=el.getBoundingClientRect(),c=Math.abs(r.top+r.height/2-mid);if(c<bd0){bd0=c;best=i}});
   var fr=flow.getBoundingClientRect(),br=bd.getBoundingClientRect();
   /* then write */
   nav.classList.toggle('on',y>8);
   setStep(best);
-  if(SEQ.notes){var sp0=0;for(var j=0;j<steps.length;j++){var r=stR[j];var c=r.top+r.height/2;if(c<mid){sp0=j;var nx=stR[j+1];if(nx){var c2=nx.top+nx.height/2;sp0=j+clamp((mid-c)/(c2-c))}}}SEQ.notes.target(sp0/(steps.length-1))}
   var fp=mob?clamp((vh*.65-fr.top)/fr.height):clamp((vh*.8-fr.top)/(vh*.5));
   flow.style.setProperty('--p',fp.toFixed(4));
   flowLis.forEach(function(li,i){li.classList.toggle('on',fp>=(mob?i/flowLis.length:i/(flowLis.length-1))-.001)});
   var span=br.height-vh,bp=clamp(-br.top/span);
-  var sep=RM?1:clamp(bp/.62);
-  if(br.top<vh&&br.bottom>0){bdm.style.setProperty('--p',bp.toFixed(4));SEQ.unit&&SEQ.unit.target(sep)}
-  var k=bp<.04?-1:Math.min(5,Math.floor(bp/.96*6));
-  if(k!==lastK){lastK=k;parts.forEach(function(li,i){li.classList.toggle('on',i===Math.max(0,k))});bdl.textContent=k<0?'Taking it apart':String(k+1).padStart(2,'0')+' / 06 · '+names[k]}
+  var sep=RM?(bp>.05?1:0):clamp(bp/.3);
+  if(br.top<vh&&br.bottom>0){pls.forEach(function(p){p.style.setProperty('--p',sep.toFixed(4))});bdm.style.setProperty('--p',bp.toFixed(4))}
+  var k=bp<.3?-1:Math.min(5,Math.floor((bp-.3)/.7*6));
+  if(k!==lastK){lastK=k;parts.forEach(function(li,i){li.classList.toggle('on',i===Math.max(0,k))});pls.forEach(function(p,i){p.classList.toggle('on',k>=0&&i===5-k)});bdl.textContent=k<0?'Taking it apart':String(k+1).padStart(2,'0')+' / 06 · '+names[k]}
 }
 function onScroll(){if(!ticking){ticking=true;requestAnimationFrame(update)}}
 addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update();
 
-/* Hero: gentle tilt toward the cursor (desktop only) */
-if(FINE&&!RM){var tx=0,ty=0,cx=0,cy=0,run=false;
-  function tilt(){cx+=(tx-cx)*.08;cy+=(ty-cy)*.08;hgt.style.transform='rotateX('+(9-cy*3).toFixed(3)+'deg) rotateY('+(-15+cx*5).toFixed(3)+'deg) rotateZ(1.5deg)';if(Math.abs(tx-cx)>.001||Math.abs(ty-cy)>.001)requestAnimationFrame(tilt);else run=false}
-  d.querySelector('.hero').addEventListener('pointermove',function(e){tx=e.clientX/innerWidth-.5;ty=e.clientY/innerHeight-.5;if(!run){run=true;requestAnimationFrame(tilt)}});
+/* Hero A: the mark turns slightly toward the cursor (desktop only) */
+if(FINE&&!RM&&mkin){var tx=0,ty=0,cx=0,cy=0,run=false;
+  mkin.addEventListener('animationend',function(){mkin.style.animation='none';mkin.style.transform='rotateX(10deg) rotateY(-22deg)'});
+  function tilt(){cx+=(tx-cx)*.07;cy+=(ty-cy)*.07;mkin.style.transform='rotateX('+(10-cy*8).toFixed(3)+'deg) rotateY('+(-22+cx*14).toFixed(3)+'deg)';if(Math.abs(tx-cx)>.001||Math.abs(ty-cy)>.001)requestAnimationFrame(tilt);else run=false}
+  d.querySelector('.hero').addEventListener('pointermove',function(e){if(mkin.style.animation!=='none')return;tx=e.clientX/innerWidth-.5;ty=e.clientY/innerHeight-.5;if(!run){run=true;requestAnimationFrame(tilt)}});
 }
 })();
 </script>
