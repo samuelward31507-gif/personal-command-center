@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>More jobs from the leads you already get | Cinder Revenue Company</title>
-<meta name="description" content="For service businesses: a free 15-minute audit of how your business answers, books, quotes and follows up, then we build what fixes the leaks. No new ad spend.">
+<meta name="description" content="For service businesses: a free audit of how your business answers, books, quotes and follows up, then we build what fixes the leaks. No new ad spend.">
 <meta name="theme-color" content="#000000">
 <link rel="canonical" href="https://cinderrevenue.com/">
 <meta property="og:title" content="More jobs from the leads you already get | Cinder Revenue Company">
-<meta property="og:description" content="A free 15-minute audit of how your business answers, books, quotes and follows up, then we build what fixes the leaks.">
+<meta property="og:description" content="A free audit of how your business answers, books, quotes and follows up, then we build what fixes the leaks.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://cinderrevenue.com/">
 <meta property="og:image" content="https://cinderrevenue.com/og.jpg">
@@ -20,334 +20,276 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/icon/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" crossorigin>
 <link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
 <style>
-/* Inter 4.1 + Geist Mono, SIL Open Font License 1.1, self-hosted (licences in assets/fonts/) */
+/* Cinder design system v1. Rules live in DESIGN.md: change them there first, then here. */
 @font-face{font-family:"Inter";src:url(/assets/fonts/InterVariable.woff2) format("woff2");font-weight:100 900;font-display:swap}
 @font-face{font-family:"Geist Mono";src:url(/assets/fonts/GeistMono-Variable.ttf) format("truetype");font-weight:100 900;font-display:swap}
 :root{
-  --bg:#000;--s1:#08080a;--s2:#0e0e10;--s3:#16161a;--s4:#1e1e23;
-  --line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.13);--line3:rgba(255,255,255,.2);
-  --t1:#f5f5f7;--t2:#a1a1aa;--t3:#71717a;
-  --acc:#4f8cff;--acc2:#7aa8ff;
+  /* colour: 11 tokens */
+  --bg:#000;--s1:#0a0a0c;--s2:#111114;--s3:#1a1a1f;
+  --line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);
+  --t1:#f4f4f6;--t2:#a1a1aa;--t3:#6e6e78;
+  --acc:#4f8cff;--acc-t:#93b4ff;
+  /* type: 7 sizes */
+  --f1:12px;--f2:14px;--f3:16px;--f4:18px;--f5:24px;--f6:clamp(36px,4.2vw,56px);--f7:clamp(48px,5.8vw,84px);
+  /* radius: 3 */
+  --r1:6px;--r2:10px;--r3:16px;
+  /* space: 8-pt; section rhythm */
+  --sec:168px;--w:1200px;--g:40px;
+  /* motion: one curve, three durations, transforms and opacity only */
+  --e:cubic-bezier(.16,1,.3,1);--d1:.2s;--d2:.6s;--d3:1s;
   --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
-  --w:1200px;--g:40px;--e:cubic-bezier(.16,1,.3,1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--bg);color:var(--t1);-webkit-text-size-adjust:100%;scroll-padding-top:80px}
-body{font:400 16px/1.6 var(--sans);font-feature-settings:"cv11","ss03";-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
+body{font:400 var(--f3)/1.6 var(--sans);font-feature-settings:"cv11","ss03";-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
 img{display:block;max-width:100%;height:auto}
 a{color:inherit;text-decoration:none}
 ul,ol{list-style:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:6px}
-.skip{position:absolute;left:-999px;top:8px;z-index:99;background:var(--t1);color:#000;padding:8px 12px;border-radius:8px}.skip:focus{left:8px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:var(--r1)}
+.skip{position:absolute;left:-999px;top:8px;z-index:99;background:var(--t1);color:#000;padding:8px 12px;border-radius:var(--r2)}.skip:focus{left:8px}
 .wrap{max-width:calc(var(--w) + var(--g)*2);margin:0 auto;padding:0 var(--g)}
-.mono{font-family:var(--mono);font-size:12px;letter-spacing:0;color:var(--t3)}
+.mono{font-family:var(--mono);font-size:var(--f1);color:var(--t3)}
 h1,h2,h3{font-weight:600;letter-spacing:-.035em;line-height:1.04;color:var(--t1);text-wrap:balance}
-h2{font-size:clamp(34px,4.2vw,56px)}
-h3{font-size:20px;letter-spacing:-.02em;line-height:1.25}
+h2{font-size:var(--f6)}
+h3{font-size:var(--f4);letter-spacing:-.02em;line-height:1.3}
 p{color:var(--t2);text-wrap:pretty}
-.lede{font-size:18px;line-height:1.55;max-width:34em}
-.sec{padding:160px 0;position:relative}
-.head{display:grid;grid-template-columns:1.1fr .9fr;gap:64px;align-items:end;margin-bottom:72px}
-.head p{font-size:17px;max-width:30em}
+.sec{padding:var(--sec) 0;position:relative;border-top:1px solid var(--line)}
+.head{max-width:40em;margin-bottom:80px}
+.head p{margin-top:20px;font-size:var(--f4);max-width:32em}
 
-/* Buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 20px;border-radius:10px;font-size:15px;font-weight:550;letter-spacing:-.01em;background:var(--t1);color:#000;transition:background .2s,transform .2s var(--e)}
-.btn:hover{background:#fff}
-.btn:active{transform:scale(.98)}
-.btn.pri{background:var(--acc);color:#fff}.btn.pri:hover{background:#6a9dff}
-.btn.ghost{background:transparent;color:var(--t1);box-shadow:inset 0 0 0 1px var(--line3)}.btn.ghost:hover{background:rgba(255,255,255,.06)}
+/* Buttons: white is primary, outline is secondary */
+.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 20px;border-radius:var(--r2);font-size:var(--f2);font-weight:550;letter-spacing:-.01em;background:var(--t1);color:#000;transition:background var(--d1),transform var(--d1) var(--e)}
+.btn:hover{background:#fff}.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;color:var(--t1);box-shadow:inset 0 0 0 1px var(--line2)}.btn.ghost:hover{background:rgba(255,255,255,.06)}
 .acts{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.inl{color:var(--acc2);transition:color .2s}.inl:hover{color:var(--t1)}
+.inl{color:var(--acc-t);transition:color var(--d1)}.inl:hover{color:var(--t1)}
 
 /* Nav */
 .nav{position:fixed;inset:0 0 auto;z-index:50;transition:background .3s,border-color .3s;border-bottom:1px solid transparent}
 .nav.on{background:rgba(0,0,0,.88);border-color:var(--line)}
-.nav .wrap{display:flex;align-items:center;gap:40px;height:68px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px;letter-spacing:-.02em}
+.nav .wrap{display:flex;align-items:center;gap:40px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:var(--f3);letter-spacing:-.02em}
 .brand-mark{width:22px;height:22px;fill:currentColor}
 .nav ul{display:flex;gap:28px;margin-left:auto}
-.nav ul a{font-size:14px;color:var(--t2);transition:color .2s}.nav ul a:hover{color:var(--t1)}
-.nav .btn{height:36px;padding:0 14px;font-size:14px;border-radius:8px}
+.nav ul a{font-size:var(--f2);color:var(--t2);transition:color var(--d1)}.nav ul a:hover{color:var(--t1)}
+.nav .btn{height:36px;padding:0 14px;border-radius:var(--r1)}
 
-/* Hero */
-.hero{position:relative;padding:168px 0 120px;overflow:hidden}
-.hero::before{content:"";position:absolute;left:50%;top:-420px;width:1400px;height:900px;transform:translateX(-30%);background:radial-gradient(closest-side,rgba(255,255,255,.09),transparent 72%);pointer-events:none}
-.hero .wrap{display:grid;grid-template-columns:1fr 1.05fr;gap:48px;align-items:center;position:relative}
-.hero h1{font-size:clamp(52px,6.2vw,88px);letter-spacing:-.045em;line-height:.98}
-.hero .lede{margin-top:28px}
-.hero .acts{margin-top:40px}
-.hero .terms{margin-top:18px;font-size:14px;color:var(--t3)}
-
-/* Hero: centered over a field of glass slats (CSS only, sharp at any size) */
-.hero{padding:200px 0 0;text-align:center;isolation:isolate}
-.hero::before{display:none}
-.hero .wrap{grid-template-columns:1fr;justify-items:center}
-.hero h1{max-width:13ch;margin:0 auto}
-.hero .lede{margin:28px auto 0;max-width:32em}
-.hero .acts{justify-content:center}
-.rays{position:absolute;left:0;right:0;top:-80px;height:1100px;z-index:-1;overflow:hidden;pointer-events:none}
-.rays-in{position:absolute;left:50%;top:0;width:1500px;height:1000px;transform:translateX(-50%)}
-.rays i{--x:calc((var(--k) - 4) * 118px);position:absolute;left:50%;top:40px;width:96px;height:900px;margin-left:-48px;border-radius:60px;
-  background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(150,180,255,.10) 28%,rgba(220,230,255,.34) 52%,rgba(120,160,255,.16) 72%,rgba(255,255,255,0) 100%);
-  box-shadow:inset 1px 0 0 rgba(255,255,255,.28),inset -1px 0 0 rgba(255,255,255,.06);
-  transform:translate3d(var(--x),var(--y,0px),0) rotate(24deg) scaleY(calc(1 - (var(--k) - 4) * (var(--k) - 4) * .045));
-  opacity:calc(1 - (var(--k) - 4) * (var(--k) - 4) * .07);will-change:transform}
-.rays i:nth-child(odd){background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.07) 30%,rgba(235,240,255,.24) 55%,rgba(255,255,255,0) 100%)}
-.rays-core{position:absolute;left:50%;top:330px;width:900px;height:520px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(120,160,255,.30),rgba(79,140,255,.10) 45%,transparent 75%);filter:blur(10px)}
-.rays-fade{position:absolute;inset:0;background:radial-gradient(60% 46% at 50% 36%,rgba(0,0,0,.55),transparent 70%),linear-gradient(180deg,#000 0%,transparent 16%,transparent 62%,#000 96%)}
-.js .rays i{animation:slat 1.6s var(--e) both;animation-delay:calc(.08s * (4 - (var(--k) - 4) * (var(--k) - 4) / 4))}
-@keyframes slat{from{opacity:0;transform:translate3d(var(--x),120px,0) rotate(24deg) scaleY(.6)}}
-.js .rays-core{animation:core 2.2s var(--e) .2s both}
-@keyframes core{from{opacity:0;transform:translateX(-50%) scale(.7)}}
-.hb-stage{position:relative;margin:96px auto 0;max-width:1300px;padding:0 var(--g);perspective:2200px}
-.hb-screen{position:relative;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 -1px 0 rgba(255,255,255,.25) inset;transform:rotateX(20deg) scale(.98);transform-origin:50% 0;-webkit-mask-image:linear-gradient(#000 35%,transparent 92%);mask-image:linear-gradient(#000 35%,transparent 92%)}
-.hb-screen img{width:100%}
-.js .hb-screen{animation:hbin 1.5s var(--e) .45s both}
-@keyframes hbin{from{opacity:0;transform:rotateX(36deg) scale(.94) translate3d(0,60px,0)}to{opacity:1;transform:rotateX(20deg) scale(.98)}}
+/* 1. Hero: words left, the live unit right */
+.hero{position:relative;padding:136px 0 0;overflow:hidden}
+.hero::before{content:"";position:absolute;right:-10%;top:-30%;width:900px;height:900px;background:radial-gradient(closest-side,rgba(255,255,255,.06),transparent 70%);pointer-events:none}
+.hero .wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:24px;align-items:center;min-height:min(720px,calc(100vh - 200px));position:relative}
+.hero h1{font-size:var(--f7);letter-spacing:-.045em;line-height:.98}
 .hero h1 .ln{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em}
 .hero h1 .ln span{display:block}
-.js .hero h1 .ln span{animation:up 1s var(--e) both}
+.hero .lede{margin-top:28px;font-size:var(--f4);line-height:1.55;max-width:28em}
+.hero .acts{margin-top:40px}
+.hero .terms{margin-top:18px;font-size:var(--f2);color:var(--t3)}
+.stage{position:relative;height:min(620px,62vh);min-height:420px}
+.unit-host{position:absolute;inset:0}
+.stage .fb{display:none}
+.unit-failed .stage .fb{display:block;position:absolute;inset:8% 0;border-radius:var(--r3);overflow:hidden;box-shadow:0 0 0 1px var(--line2);transform:perspective(1800px) rotateY(-14deg) rotateX(6deg)}
+.unit-failed .stage .fb img{width:100%;height:100%;object-fit:cover;object-position:0 0}
+.tick{position:absolute;width:11px;height:11px;border:solid var(--line2);border-width:1px 0 0 1px;pointer-events:none}
+.tick.a{left:0;top:0}.tick.b{right:0;top:0;transform:rotate(90deg)}.tick.c{right:0;bottom:0;transform:rotate(180deg)}.tick.d{left:0;bottom:0;transform:rotate(-90deg)}
+.tools{margin-top:72px;border-top:1px solid var(--line)}
+.tools .wrap{display:flex;align-items:center;gap:36px;min-height:72px;overflow:hidden;white-space:nowrap}
+.tools span{font-size:var(--f2);color:var(--t3)}
+.tools .lab{color:var(--t2)}
+.js .hero h1 .ln span{animation:up var(--d3) var(--e) both}
 .js .hero h1 .ln:nth-child(2) span{animation-delay:.06s}.js .hero h1 .ln:nth-child(3) span{animation-delay:.12s}
-.js .hero .lede,.js .hero .acts,.js .hero .terms{animation:fade .9s var(--e) both}
-.js .hero .lede{animation-delay:.25s}.js .hero .acts{animation-delay:.33s}.js .hero .terms{animation-delay:.4s}
+.js .hero .lede,.js .hero .acts,.js .hero .terms,.js .stage{animation:fade .9s var(--e) both}
+.js .hero .lede{animation-delay:.25s}.js .hero .acts{animation-delay:.33s}.js .hero .terms{animation-delay:.4s}.js .stage{animation-delay:.3s}
 @keyframes up{from{transform:translate3d(0,105%,0)}to{transform:none}}
-
-/* Tools strip */
-.tools{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.tools .wrap{display:flex;align-items:center;gap:36px;height:76px;overflow:hidden;white-space:nowrap}
-.tools span{font-size:14px;color:var(--t3)}
-.tools .lab{color:var(--t2);font-size:13px}
+@keyframes fade{from{opacity:0;transform:translate3d(0,16px,0)}to{opacity:1;transform:none}}
 
 /* Reveal */
 .rv{opacity:0;transform:translate3d(0,24px,0);transition:opacity .9s var(--e),transform .9s var(--e)}
 .rv.in{opacity:1;transform:none}
 .rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
 
-/* Story: steps drive a live inbox */
+/* 2. The problem: steps drive a live thread */
 .story{display:grid;grid-template-columns:1fr 1fr;gap:80px}
 .steps{padding:6vh 0 30vh}
 .step{min-height:64vh;display:flex;flex-direction:column;justify-content:center;max-width:30em;opacity:.28;transition:opacity .5s var(--e)}
 .step.on{opacity:1}
 .step .mono{margin-bottom:14px}
-.step h3{font-size:30px;letter-spacing:-.03em;line-height:1.1}
-.step p{margin-top:12px;font-size:17px}
+.step h3{font-size:clamp(24px,2.4vw,32px);letter-spacing:-.03em;line-height:1.1}
+.step p{margin-top:12px;font-size:var(--f4)}
 .stick{position:sticky;top:calc(50vh - 290px);height:580px}
 .phone{position:relative;width:340px;height:580px;margin:0 auto;border-radius:44px;background:#0a0a0c;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 0 0 8px #050506,0 0 0 9px rgba(255,255,255,.1),0 60px 120px -40px rgba(0,0,0,.9);overflow:hidden}
 .phone-top{height:64px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;border-bottom:1px solid var(--line)}
-.phone-top b{font-size:13px;font-weight:600}.phone-top small{display:block;text-align:center;font-size:11px;color:var(--t3)}
+.phone-top b{font-size:var(--f2);font-weight:600}.phone-top small{display:block;text-align:center;font-size:var(--f1);color:var(--t3)}
 .feed{padding:16px 14px;display:flex;flex-direction:column;gap:10px}
 .ev{opacity:0;transform:translate3d(0,14px,0) scale(.98);transition:opacity .55s var(--e),transform .55s var(--e)}
 .ev.on{opacity:1;transform:none}
-.ev.sys{align-self:center;font:500 11.5px/1 var(--mono);color:var(--t3);padding:7px 10px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line2)}
+.ev.sys{align-self:center;font:500 var(--f1)/1 var(--mono);color:var(--t3);padding:7px 10px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line2)}
 .ev.sys.call{color:var(--t1)}
-.msg{max-width:84%;padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.4;background:var(--s4);color:var(--t1)}
-.msg small{display:block;margin-top:4px;font:400 10.5px/1 var(--mono);color:var(--t3)}
+.msg{max-width:84%;padding:10px 13px;border-radius:var(--r3);font-size:var(--f2);line-height:1.4;background:var(--s3);color:var(--t1)}
+.msg small{display:block;margin-top:4px;font:400 11px/1 var(--mono);color:var(--t3)}
 .msg.out{align-self:flex-end;background:var(--acc);color:#fff}.msg.out small{color:rgba(255,255,255,.75)}
-.bk{align-self:stretch;padding:12px 14px;border-radius:14px;box-shadow:inset 0 0 0 1px var(--line2);display:flex;gap:12px;align-items:center;background:var(--s2)}
-.bk .dt{width:42px;height:42px;border-radius:10px;background:#fff;color:#000;display:grid;place-items:center;text-align:center;line-height:1}
+.bk{align-self:stretch;padding:12px 14px;border-radius:var(--r3);box-shadow:inset 0 0 0 1px var(--line2);display:flex;gap:12px;align-items:center;background:var(--s2)}
+.bk .dt{width:42px;height:42px;border-radius:var(--r2);background:#fff;color:#000;display:grid;place-items:center;text-align:center;line-height:1}
 .bk .dt small{display:block;font:600 9px/1 var(--sans);color:#e11d2e;text-transform:uppercase}
 .bk .dt b{font-size:18px;font-weight:650}
-.bk b.t{display:block;font-size:14px;font-weight:600}.bk span{font-size:12.5px;color:var(--t3)}
-.outs{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:120px;padding-top:48px;border-top:1px solid var(--line)}
-.outs p{margin-top:10px}
+.bk b.t{display:block;font-size:var(--f2);font-weight:600}.bk span{font-size:var(--f1);color:var(--t3)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:120px;border-top:1px solid var(--line)}
+.stat{padding:40px 32px 8px 0}
+.stat+.stat{padding-left:32px;border-left:1px solid var(--line)}
+.stat b{display:block;font-size:var(--f7);font-weight:600;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.stat p{margin-top:16px;color:var(--t1)}
+.stat a{display:inline-block;margin-top:14px;font:400 var(--f1)/1.5 var(--mono);color:var(--t3);border-bottom:1px solid var(--line2);transition:color var(--d1)}.stat a:hover{color:var(--t1)}
 
-/* Audit */
+/* 3. The free audit: a line through every step, then the summary */
+.flow{position:relative;margin-bottom:120px}.fl{display:grid;grid-template-columns:repeat(5,1fr);gap:24px}
+.flow-line{position:absolute;left:0;right:0;top:15px;height:2px;background:var(--line2);overflow:hidden}
+.flow-line i{position:absolute;inset:0;background:var(--t1);transform-origin:left;transform:scaleX(var(--p,0))}
+.flow li{position:relative;padding-top:52px}
+.flow .dot{position:absolute;top:8px;left:0;width:16px;height:16px;border-radius:50%;background:#000;box-shadow:inset 0 0 0 2px var(--line2);transition:box-shadow .4s,background .4s}
+.flow li.on .dot{background:var(--t1);box-shadow:0 0 0 5px rgba(255,255,255,.08)}
+.flow .mono{display:block;margin-bottom:10px}
+.flow p{margin-top:10px;font-size:var(--f2)}
 .audit{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
-.how{display:grid;gap:0}
 .how li{display:grid;grid-template-columns:44px 1fr;gap:4px 16px;padding:24px 0;border-top:1px solid var(--line)}
 .how li:last-child{border-bottom:1px solid var(--line)}
-.how .n{font:500 12px/28px var(--mono);color:var(--t3)}
+.how .n{font:500 var(--f1)/28px var(--mono);color:var(--t3)}
 .how p{grid-column:2}
-.how ul{grid-column:2;margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
-.how ul li{display:block;padding:5px 9px;border:0;border-radius:6px;font-size:13px;color:var(--t2);box-shadow:inset 0 0 0 1px var(--line2)}
-.how ul li:last-child{border:0}
-.spec{margin-top:40px;display:grid;grid-template-columns:120px 1fr;gap:14px 24px;font-size:15px}
-.spec dt{font:500 12px/24px var(--mono);color:var(--t3)}
-.spec dd{color:var(--t1)}
-.spec dd.big{font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1}
-.quote{margin-top:40px;font-size:22px;letter-spacing:-.02em;color:var(--t1)}.quote small{display:block;margin-top:6px;font:400 12px var(--mono);color:var(--t3)}
-.sum{position:sticky;top:110px;border-radius:18px;background:linear-gradient(180deg,#111114,#0a0a0c);box-shadow:0 0 0 1px var(--line2),0 1px 0 rgba(255,255,255,.08) inset,0 50px 100px -40px rgba(0,0,0,.9);overflow:hidden}
-.sum header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
-.sum header b{font-size:15px;font-weight:600}
-.sum ol li{display:grid;grid-template-columns:1fr auto;gap:2px 16px;padding:16px 22px;border-bottom:1px solid var(--line);transition:background .4s}
-.sum ol li b{font-size:14.5px;font-weight:550}.sum ol li small{grid-column:1;font-size:13px;color:var(--t3)}
-.tag{grid-row:1/3;grid-column:2;align-self:center;font:500 11.5px/1 var(--mono);padding:6px 8px;border-radius:6px;color:var(--t2);box-shadow:inset 0 0 0 1px var(--line2)}
-.tag.leak{color:#fff;box-shadow:inset 0 0 0 1px rgba(79,140,255,.6);background:rgba(79,140,255,.14)}
+.price{margin-top:40px;padding:24px;border-radius:var(--r3);background:var(--s1);box-shadow:inset 0 0 0 1px var(--line)}
+.price b{display:block;font-size:var(--f4);font-weight:600;letter-spacing:-.02em}
+.price p{margin-top:8px;font-size:var(--f2)}
+.quote{margin-top:40px;font-size:var(--f5);letter-spacing:-.02em;color:var(--t1)}.quote small{display:block;margin-top:6px;font:400 var(--f1) var(--mono);color:var(--t3)}
+.sum{position:sticky;top:110px;border-radius:var(--r3);background:linear-gradient(180deg,#111114,#0a0a0c);box-shadow:0 0 0 1px var(--line2),0 1px 0 rgba(255,255,255,.08) inset,0 50px 100px -40px rgba(0,0,0,.9);overflow:hidden}
+.sum header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line)}
+.sum header b{font-size:var(--f3);font-weight:600}
+.sum ol li{display:grid;grid-template-columns:1fr auto;gap:2px 16px;padding:16px 22px;border-bottom:1px solid var(--line)}
+.sum ol li b{font-size:var(--f2);font-weight:550}.sum ol li small{grid-column:1;font-size:var(--f1);color:var(--t3)}
+.tag{grid-row:1/3;grid-column:2;align-self:center;font:500 var(--f1)/1 var(--mono);padding:6px 8px;border-radius:var(--r1);color:var(--t2);box-shadow:inset 0 0 0 1px var(--line2)}
+.tag.leak{color:#fff;box-shadow:inset 0 0 0 1px rgba(79,140,255,.55);background:rgba(79,140,255,.12)}
 .sum .fix{padding:18px 22px}
-.sum .fix b{font-size:14px}
+.sum .fix b{font-size:var(--f2)}
 .sum .fix ol{margin-top:10px;display:grid;gap:8px;counter-reset:f}
-.sum .fix ol li{display:flex;gap:10px;padding:0;border:0;font-size:14px;color:var(--t1);counter-increment:f}
-.sum .fix ol li::before{content:counter(f);width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font:600 11px/1 var(--mono);background:var(--s4);color:var(--t2);flex:none}
-.sum figcaption{padding:12px 22px;border-top:1px solid var(--line);font:400 11.5px/1.5 var(--mono);color:var(--t3)}
+.sum .fix ol li{display:flex;gap:10px;padding:0;border:0;font-size:var(--f2);color:var(--t1);counter-increment:f}
+.sum .fix ol li::before{content:counter(f);width:20px;height:20px;border-radius:var(--r1);display:grid;place-items:center;font:600 11px/1 var(--mono);background:var(--s3);color:var(--t2);flex:none}
+.sum figcaption{padding:12px 22px;border-top:1px solid var(--line);font:400 var(--f1)/1.5 var(--mono);color:var(--t3)}
 .js .sum ol>li{opacity:.25}
 .js .sum.in ol>li{opacity:1;transition:opacity .5s var(--e)}
 .js .sum.in ol>li:nth-child(2){transition-delay:.12s}.js .sum.in ol>li:nth-child(3){transition-delay:.24s}.js .sum.in ol>li:nth-child(4){transition-delay:.36s}.js .sum.in ol>li:nth-child(5){transition-delay:.48s}
 
-/* Checks: one line through every step */
-.flow{position:relative}.fl{display:grid;grid-template-columns:repeat(5,1fr);gap:24px}
-.flow-line{position:absolute;left:0;right:0;top:15px;height:2px;background:var(--line2);overflow:hidden}
-.flow-line i{position:absolute;inset:0;background:linear-gradient(90deg,var(--t1),var(--acc));transform-origin:left;transform:scaleX(var(--p,0))}
-.flow li{position:relative;padding-top:52px}
-.flow .dot{position:absolute;top:8px;left:0;width:16px;height:16px;border-radius:50%;background:#000;box-shadow:inset 0 0 0 2px var(--line3);transition:box-shadow .4s,background .4s}
-.flow li.on .dot{background:var(--t1);box-shadow:0 0 0 5px rgba(255,255,255,.08)}
-.flow .mono{display:block;margin-bottom:10px}
-.flow p{margin-top:10px;font-size:15px}
-.flow em{display:block;margin-top:10px;font-style:normal;font:500 12px var(--mono);color:var(--acc2)}
-
-/* Research */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
-.stat{padding:40px 32px 8px 0}
-.stat+.stat{padding-left:32px;border-left:1px solid var(--line)}
-.stat b{display:block;font-size:clamp(56px,6vw,84px);font-weight:600;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
-.stat p{margin-top:16px;font-size:16px;color:var(--t1)}
-.stat a{display:inline-block;margin-top:14px;font:400 12px/1.5 var(--mono);color:var(--t3);border-bottom:1px solid var(--line2);transition:color .2s}.stat a:hover{color:var(--t1)}
-
-/* Taken apart: six real layers */
-.bd{position:relative;height:300vh;border-top:1px solid var(--line)}
-.bd-pin{position:sticky;top:0;height:100vh;display:grid;grid-template-columns:340px 1fr 320px;gap:32px;align-items:center;max-width:calc(var(--w) + var(--g)*2);margin:0 auto;padding:0 var(--g)}
-.bd-head p{margin-top:18px;font-size:17px}
+/* 4. What we build: the unit pins and comes apart */
+.bd{position:relative;height:340vh;border-top:1px solid var(--line)}
+.bd-pin{position:sticky;top:0;height:100vh;display:grid;grid-template-columns:320px 1fr 300px;gap:24px;align-items:center;max-width:calc(var(--w) + var(--g)*2);margin:0 auto;padding:64px var(--g) 0}
+.bd-head p{margin-top:18px;font-size:var(--f4)}
 .bd-meter{margin-top:32px;display:flex;align-items:center;gap:12px}
 .bd-meter i{position:relative;width:120px;height:2px;background:var(--line2);overflow:hidden}
 .bd-meter i b{position:absolute;inset:0;background:var(--t1);transform-origin:left;transform:scaleX(var(--p,0))}
-.iso{position:relative;height:620px;perspective:2400px}
-.iso-in{position:absolute;left:50%;top:70%;width:0;height:0;transform-style:preserve-3d;transform:rotateX(58deg) rotateZ(-42deg)}
-.pl{position:absolute;left:-140px;top:-140px;width:280px;height:280px;transform-style:preserve-3d;transform:translateZ(calc(var(--i) * (18px + var(--p,0) * 50px)))}
-.pl .top{position:absolute;inset:0;border-radius:22px;background:linear-gradient(135deg,#33333a,#18181c 55%,#111114);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.22);display:flex;align-items:flex-end;padding:22px;transition:background .45s,box-shadow .45s}
-.pl .top span{font:500 12px/1 var(--mono);color:var(--t3);transition:color .45s}
-.pl .top b{position:absolute;left:22px;top:22px;font-size:15px;font-weight:600;color:var(--t2);transition:color .45s}
-.pl .e1,.pl .e2{position:absolute;background:linear-gradient(90deg,#1b1b1f,#0c0c0e);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
-.pl .e1{left:14px;right:14px;bottom:0;height:12px;transform-origin:bottom;transform:rotateX(-90deg)}
-.pl .e2{top:14px;bottom:14px;right:0;width:12px;transform-origin:right;transform:rotateY(90deg)}
-.pl.on .top{background:linear-gradient(135deg,#3a3a42,#1c1c21 60%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.3)}
-.pl.on .top b{color:#fff}.pl.on .top span{color:var(--acc2)}
-.pl .ico{position:absolute;right:22px;top:20px;width:28px;height:28px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--line2);display:grid;place-items:center}
-.pl .ico svg{width:15px;height:15px;stroke:var(--t2);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:stroke .45s}
-.pl.on .ico svg{stroke:#fff}
-.shadow{position:absolute;left:-170px;top:-170px;width:340px;height:340px;border-radius:40px;background:radial-gradient(closest-side,rgba(0,0,0,.9),transparent);transform:translateZ(-30px)}
+.bd .stage{height:min(680px,78vh)}
 .parts li{padding:14px 0 14px 16px;border-left:1px solid var(--line);transition:border-color .45s}
-.parts li b{display:flex;gap:10px;font-size:15px;font-weight:600;color:var(--t3);transition:color .45s}
-.parts li b span{font:500 12px/22px var(--mono)}
-.parts li p{font-size:14px;line-height:1.5;max-height:0;overflow:hidden;opacity:0;transition:max-height .5s var(--e),opacity .45s,margin .5s var(--e)}
+.parts li b{display:flex;gap:10px;font-size:var(--f3);font-weight:600;color:var(--t3);transition:color .45s}
+.parts li b span{font:500 var(--f1)/24px var(--mono)}
+.parts li p{font-size:var(--f2);line-height:1.5;max-height:0;overflow:hidden;opacity:0;transition:max-height .5s var(--e),opacity .45s,margin .5s var(--e)}
 .parts li.on{border-color:var(--t1)}
 .parts li.on b{color:var(--t1)}
 .parts li.on p{max-height:80px;opacity:1;margin-top:6px}
 
-/* After the audit */
-.what{margin-top:40px;font-size:clamp(22px,2.2vw,28px);line-height:1.35;letter-spacing:-.02em;color:var(--t1);max-width:30em}
-.what em{font-style:normal;color:var(--t3)}
-.shot{margin-top:72px;border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--line2),0 80px 160px -60px rgba(0,0,0,.9);transform-origin:50% 0}
+/* 5. The app */
+.shot{border-radius:var(--r3);overflow:hidden;box-shadow:0 0 0 1px var(--line2),0 80px 160px -60px rgba(0,0,0,.9);transform-origin:50% 0}
 .js .shot{opacity:0;transform:perspective(2000px) rotateX(12deg) scale(.94) translate3d(0,40px,0);transition:opacity 1s var(--e),transform 1.4s var(--e)}
 .js .shot.in{opacity:1;transform:none}
 .shot img{width:100%}
 .shot-cap{margin-top:16px;text-align:center}
-.picks{margin-top:88px;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
-.picks li{background:#050506;padding:26px 24px}
-.picks li b{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px;font-weight:600}
-.picks li p{margin-top:8px;font-size:14px}
-.picks .pill.no{color:var(--t3)}
-.picks-cap{margin-top:16px}
 
-/* Who */
-.duo{display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:8px}
+/* 6. Who it's for */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:56px}
 .duo .mono{display:block;margin-bottom:12px}
-.duo h3{font-size:24px}
+.duo h3{font-size:var(--f5)}
 .duo p{margin-top:12px}
 .founder{margin-top:96px;padding-top:48px;border-top:1px solid var(--line);display:grid;grid-template-columns:240px 1fr;gap:56px}
-.founder b{font-size:15px}.founder small{display:block;font:400 12px var(--mono);color:var(--t3);margin-top:4px}
+.founder b{font-size:var(--f3)}.founder small{display:block;font:400 var(--f1) var(--mono);color:var(--t3);margin-top:4px}
 .founder blockquote{font-size:clamp(22px,2.3vw,30px);line-height:1.35;letter-spacing:-.02em;color:var(--t1)}
 .founder blockquote em{font-style:normal;color:var(--t3)}
 
-/* Closing */
-.closing{padding:180px 0 160px;border-top:1px solid var(--line);position:relative;overflow:hidden}
-.closing::before{content:"";position:absolute;left:50%;top:-300px;width:1200px;height:700px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(255,255,255,.07),transparent 72%);pointer-events:none}
-.closing .wrap{position:relative;text-align:center}
-.closing h2{font-size:clamp(44px,5.6vw,76px);max-width:13ch;margin:0 auto}
-.closing p{margin:24px auto 0;max-width:34em;font-size:18px}
+/* 7. Book the call */
+.closing{padding:200px 0 180px;border-top:1px solid var(--line);position:relative;overflow:hidden;text-align:center}
+.closing::before{content:"";position:absolute;left:50%;top:-300px;width:1200px;height:700px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(255,255,255,.06),transparent 72%);pointer-events:none}
+.closing .wrap{position:relative}
+.closing h2{font-size:var(--f7);max-width:13ch;margin:0 auto}
+.closing p{margin:24px auto 0;max-width:32em;font-size:var(--f4)}
 .closing .acts{justify-content:center;margin-top:40px}
-.promise{margin-top:96px;display:grid;grid-template-columns:repeat(3,1fr);gap:40px;text-align:left;padding-top:40px;border-top:1px solid var(--line)}
-.promise b{display:block;font-size:15px;color:var(--t1)}.promise span{font-size:14px;color:var(--t2)}
 
 /* Footer */
 footer{border-top:1px solid var(--line);padding:72px 0 48px}
-.ft{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:40px}
-.ft p{margin-top:14px;font-size:14px;max-width:22em}
-.ft h4{font-size:13px;font-weight:550;color:var(--t1);margin-bottom:14px}
+.ft{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:40px}
+.ft p{margin-top:14px;font-size:var(--f2);max-width:22em}
+.ft h4{font-size:var(--f2);font-weight:550;color:var(--t1);margin-bottom:14px}
 .ft ul{display:grid;gap:10px}
-.ft ul a{font-size:14px;color:var(--t2);transition:color .2s}.ft ul a:hover{color:var(--t1)}
-.legal{margin-top:64px;display:flex;justify-content:space-between;gap:24px;font-size:12.5px;color:var(--t3)}
+.ft ul a{font-size:var(--f2);color:var(--t2);transition:color var(--d1)}.ft ul a:hover{color:var(--t1)}
+.legal{margin-top:64px;display:flex;justify-content:space-between;gap:24px;font-size:var(--f1);color:var(--t3)}
 
 /* Tablet */
 @media (max-width:1100px){
   .nav ul{display:none}.nav .btn{margin-left:auto}
-  .hero .wrap{grid-template-columns:1fr}
-  .bd-pin{grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;padding-top:96px}
+  .hero .wrap{grid-template-columns:1fr;min-height:0}
+  .hero .stage{height:460px;min-height:0}
+  .bd-pin{grid-template-columns:1fr 280px;grid-template-rows:auto 1fr;padding-top:88px}
   .bd-head{grid-column:1/-1}
-  .iso{height:460px}
+  .bd .stage{height:100%;min-height:360px}
 }
 /* Phone */
 @media (max-width:760px){
-  :root{--g:20px}
-  .sec{padding:104px 0}
-  .head,.audit,.story,.duo,.founder{grid-template-columns:1fr;gap:28px}
-  .head{margin-bottom:48px}
-  .hero{padding:132px 0 0}
-  .rays{height:860px;top:-40px}.rays-in{transform:translateX(-50%) scale(.55);transform-origin:50% 0}.rays-core{top:250px;width:520px;height:380px}
-  .hb-stage{margin-top:56px;padding:0}
-  .hb-screen{border-radius:10px;transform:rotateX(16deg) scale(1.3);transform-origin:30% 0}
-  .js .hb-screen{animation:none}
+  :root{--g:20px;--sec:104px}
+  .head{margin-bottom:48px}.head p{font-size:var(--f3)}
+  .audit,.story,.duo,.founder{grid-template-columns:1fr;gap:28px}
+  .hero{padding:112px 0 0}
   .hero h1{font-size:clamp(44px,12vw,56px)}
-  .hero .lede{font-size:17px}
+  .hero .lede{font-size:var(--f3)}
   .hero .acts .btn{width:100%;height:50px}
-  .tools .wrap{height:auto;padding:22px var(--g);flex-wrap:wrap;gap:10px 22px;white-space:normal}
+  .hero .stage{height:340px;margin:8px calc(var(--g)*-1) 0}
+  .tools{margin-top:40px}
+  .tools .wrap{min-height:0;padding:22px var(--g);flex-wrap:wrap;gap:10px 22px;white-space:normal}
   .tools .lab{width:100%}
-  /* Story on phones: the phone sits on top and stays while the steps scroll under it */
   .story{gap:0}
   .stick{position:sticky;top:64px;height:auto;z-index:2;background:linear-gradient(#000 88%,transparent);padding:8px 0 20px}
   .phone{width:min(300px,82vw);height:330px;border-radius:34px}
-  .feed{padding:12px 12px;gap:8px}
-  .msg{font-size:13px}
+  .feed{padding:12px;gap:8px}
   .steps{padding:8px 0 16vh}
   .step{min-height:48vh;justify-content:flex-start;padding-top:24px}
-  .step h3{font-size:24px}
-  .outs,.stats,.promise,.picks,.ft{grid-template-columns:1fr}
-  .outs{margin-top:72px;gap:28px}
+  .stats,.ft{grid-template-columns:1fr}
+  .stats{margin-top:72px;border-top:0}
   .stat,.stat+.stat{padding:32px 0 8px;border-left:0;border-top:1px solid var(--line)}
-  .stats{border-top:0}
+  .flow{margin-bottom:72px}
   .fl{grid-template-columns:1fr;gap:0}
   .flow-line{left:7px;right:auto;top:0;bottom:0;width:2px;height:auto}
-  .flow-line i{transform-origin:top;transform:scaleY(var(--p,0));background:linear-gradient(180deg,var(--t1),var(--acc))}
+  .flow-line i{transform-origin:top;transform:scaleY(var(--p,0))}
   .flow li{padding:0 0 32px 40px}
   .flow .dot{top:4px}
   .sum{position:relative;top:0}
-  .bd{height:240vh}
-  .bd-pin{display:flex;flex-direction:column;justify-content:flex-start;gap:8px;padding-top:84px}
-  .bd-head h2{font-size:32px}.bd-head p{font-size:15px;margin-top:10px}.bd-meter{display:none}
-  .parts{width:100%}
+  .bd{height:260vh}
+  .bd-pin{display:flex;flex-direction:column;justify-content:flex-start;gap:4px;padding:76px var(--g) 0}
+  .bd-head h2{font-size:32px}.bd-head p{font-size:var(--f2);margin-top:10px}.bd-meter{display:none}
+  .bd .stage{flex:1;min-height:0;height:auto;width:calc(100% + var(--g)*2);margin:0 calc(var(--g)*-1)}
+  .parts{width:100%;padding-bottom:20px}
   .parts li{padding:6px 0 6px 14px}
   .parts li:not(.on){display:none}
   .parts li.on p{max-height:60px}
-  .shot{margin-top:48px;border-radius:10px}
-  .closing{padding:120px 0}
+  .shot{border-radius:var(--r2)}
+  .closing{padding:128px 0}
   .closing .acts .btn{width:100%;height:50px}
-  .promise{margin-top:64px;gap:24px}
   .legal{flex-direction:column}
   .nav .brand span{display:none}
-  .bd-pin{padding-top:76px}
-  .iso{height:330px;flex:none}
-  .iso-in{top:78%;transform:rotateX(58deg) rotateZ(-42deg) scale(.5)}
-  .pl{transform:translateZ(calc(var(--i) * (16px + var(--p,0) * 26px)))}
-  .iso-in{top:82%}
 }
-/* Reduced motion: keep the fades, drop the movement */
 @media (prefers-reduced-motion:reduce){
   .rv{transform:none!important}
   .js .hero h1 .ln span{animation:none}
 }
 </style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -355,34 +297,29 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   <div class="wrap">
     <a class="brand" href="#top" aria-label="Cinder Revenue Company, home"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" class="brand-mark" viewBox="151.04 168.00 791.63 703.15"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z" fill="currentColor"/></svg><span>Cinder Revenue</span></a>
     <nav aria-label="Main"><ul>
-      <li><a href="#outcomes">Outcomes</a></li><li><a href="#audit">The free audit</a></li><li><a href="#checks">What we check</a></li><li><a href="#inside">What we build</a></li><li><a href="/software">The app</a></li>
+      <li><a href="#problem">The problem</a></li><li><a href="#audit">The free audit</a></li><li><a href="#inside">What we build</a></li><li><a href="#app">The app</a></li>
     </ul></nav>
-    <a class="btn pri" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a>
+    <a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a>
   </div>
 </header>
 
 <main id="main">
 <section class="hero" id="top" aria-labelledby="h1">
-  <div class="rays" id="rays" aria-hidden="true"><div class="rays-in"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i style="--k:8"></i></div><div class="rays-core"></div><div class="rays-fade"></div></div>
   <div class="wrap">
     <div>
       <h1 id="h1"><span class="ln"><span>More jobs from</span></span><span class="ln"><span>the leads you</span></span><span class="ln"><span>already get.</span></span></h1>
       <p class="lede">We audit how your business answers, books, quotes and follows up, then build what fixes the leaks. No new ad spend.</p>
-      <div class="acts"><a class="btn pri" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
-      <p class="terms">Free, 15 minutes, and you keep what we find.</p>
+      <div class="acts"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
+      <p class="terms">The audit is free, and you keep what we find.</p>
     </div>
-    
+    <div class="stage" id="heroStage"><div class="fb"><img src="/assets/screens/today-1200.webp" width="1200" height="750" alt=""></div><div class="unit-host" id="heroHost"></div></div>
   </div>
-  <div class="hb-stage" aria-hidden="true"><div class="hb-screen"><img src="/assets/screens/today-2400.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1300px) 100vw, 1300px" width="2400" height="1500" alt="" fetchpriority="high"></div></div>
+  <div class="tools"><div class="wrap"><span class="lab">Works alongside</span><span>Jobber</span><span>Housecall Pro</span><span>Google Calendar</span><span>Facebook Lead Ads</span><span>Angi</span><span>Thumbtack</span><span>Google Business Profile</span></div></div>
 </section>
 
-<section class="tools" aria-label="Works alongside">
-  <div class="wrap"><span class="lab">Works alongside</span><span>Jobber</span><span>Housecall Pro</span><span>Google Calendar</span><span>Facebook Lead Ads</span><span>Angi</span><span>Thumbtack</span><span>Google Business Profile</span></div>
-</section>
-
-<section id="outcomes" class="sec" aria-labelledby="h-out">
+<section id="problem" class="sec" aria-labelledby="h-out">
   <div class="wrap">
-    <div class="head"><h2 id="h-out" class="rv">You don’t need more leads. You need fewer of them slipping.</h2><p class="rv d1">Most service businesses already pay for enough leads. The money is lost between the first call and the paid invoice. That’s where we work.</p></div>
+    <div class="head"><h2 id="h-out" class="rv">You don’t need more leads. You need fewer of them slipping.</h2><p class="rv d1">Most service businesses already pay for enough leads. The money is lost between the first call and the paid invoice.</p></div>
     <div class="story" id="story">
       <div class="stick">
         <div class="phone" role="img" aria-label="Example phone thread: missed call at 7:42 PM, a text 10 seconds later with two estimate times, the customer picks Thursday at 9:00, the estimate is booked and a reminder is queued. Sample data.">
@@ -403,25 +340,35 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
         <li class="step" data-s="3"><span class="mono">04 · Reminded</span><h3>The reminder is already queued.</h3><p>The evening before, Dana gets a text, so Thursday’s slot doesn’t turn into a no-show.</p></li>
       </ol>
     </div>
-    <div class="outs">
-      <div class="rv"><h3>More money from the leads you already get</h3><p>Every call answered, every estimate booked, every quote chased. Jobs you were already paying to win stop going to the next shop.</p></div>
-      <div class="rv d1"><h3>Without running any more ads</h3><p>We fix what happens after the phone rings, not how often it rings. Your ad budget stays where it is.</p></div>
-      <div class="rv d2"><h3>Time back</h3><p>Replies, reminders, follow-ups and review requests run on their own, so evenings stop going to callbacks.</p></div>
+    <div class="stats">
+      <div class="stat rv"><b><span data-count="78">78</span>%</b><p>of people have taken their business elsewhere after a company didn’t pick up.</p><a href="https://www.callrail.com/blog/missed-calls-cost-businesses-more-than-ever" target="_blank" rel="noopener">CallRail survey of 1,000 consumers, 2025</a></div>
+      <div class="stat rv d1"><b><span data-count="97">97</span>%</b><p>of homeowners say how fast you respond affects who they hire.</p><a href="https://housecallpro.com/resources/home-service-customer-service-report-trends-statistics" target="_blank" rel="noopener">Housecall Pro survey of 1,000+ homeowners, 2025</a></div>
+      <div class="stat rv d2"><b>~½</b><p>of calls to home-service businesses reach a person. The rest ring out or go to voicemail.</p><a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" target="_blank" rel="noopener">Invoca, 70 million calls, 2026</a></div>
     </div>
   </div>
 </section>
 
-<section id="audit" class="sec" aria-labelledby="h-audit" style="border-top:1px solid var(--line)">
+<section id="audit" class="sec" aria-labelledby="h-audit">
   <div class="wrap">
-    <div class="head"><h2 id="h-audit" class="rv">Fifteen minutes, free, and you keep what we find.</h2><p class="rv d1">We walk your shop from the first call to the review and show you where jobs are slipping. Fixes are scoped after the audit, only if you want them.</p></div>
+    <div class="head"><h2 id="h-audit" class="rv">A full audit of your business, free.</h2><p class="rv d1">We walk every step a job goes through, from the first call to the review, including after hours. Then we put the leaks in order.</p></div>
+    <div class="flow" id="flow">
+      <div class="flow-line" aria-hidden="true"><i></i></div>
+      <ol class="fl">
+      <li><span class="dot"></span><span class="mono">Step 1</span><h3>How leads come in</h3><p>Calls, web forms, Facebook, Angi and Thumbtack. Where each one lands, and who sees it.</p></li>
+      <li><span class="dot"></span><span class="mono">Step 2</span><h3>How they get answered</h3><p>How fast a new lead hears back, including after hours and while you’re on a job.</p></li>
+      <li><span class="dot"></span><span class="mono">Step 3</span><h3>How estimates get booked</h3><p>Whether serious leads end up on your calendar, and whether no-shows get rebooked.</p></li>
+      <li><span class="dot"></span><span class="mono">Step 4</span><h3>How quotes get followed up</h3><p>Quotes sent and never chased. Who opened one three times and never heard back.</p></li>
+      <li><span class="dot"></span><span class="mono">Step 5</span><h3>How jobs get paid and reviewed</h3><p>Invoices that run late, and finished jobs that never got a review request.</p></li>
+      </ol>
+    </div>
     <div class="audit">
       <div>
         <ol class="how">
-          <li class="rv"><span class="n">01</span><h3>Book a time</h3><p>Pick 15 minutes on the calendar. Bring rough numbers.</p><ul><li>Leads a month</li><li>Your average job</li><li>How many quotes you close</li></ul></li>
-          <li class="rv"><span class="n">02</span><h3>We walk your shop</h3><p>From the first call to the review, including after hours. We run your numbers together.</p><ul><li>How leads come in and get answered</li><li>How estimates get booked</li><li>How quotes and invoices get followed up</li></ul></li>
-          <li class="rv"><span class="n">03</span><h3>You leave with a plan</h3><p>Yours to keep, whether or not you work with us.</p><ul><li>Where jobs slip</li><li>A dollar number on each leak</li><li>What to fix first, in order</li></ul></li>
+          <li class="rv"><span class="n">01</span><h3>Book a time</h3><p>Bring rough numbers: leads a month, your average job, how many quotes you close.</p></li>
+          <li class="rv"><span class="n">02</span><h3>We walk your business</h3><p>Calls, forms, texts, estimates, quotes, invoices and reviews. We run your numbers together.</p></li>
+          <li class="rv"><span class="n">03</span><h3>You leave with a plan</h3><p>Where jobs slip, what each leak costs, and what to fix first. Yours to keep, whether or not you work with us.</p></li>
         </ol>
-        <dl class="spec rv"><dt>Cost</dt><dd class="big">Free</dd><dt>How long</dt><dd>15 minutes, on a call</dd><dt>What it covers</dt><dd>How leads come in, get answered, booked, quoted and followed up, from the first call to the review, including after hours.</dd><dt>Bring</dt><dd>Leads a month, your average job, and how many quotes you close. Rough is fine.</dd></dl>
+        <div class="price rv"><b>Every build is custom.</b><p>Fixes are scoped after the audit, only if you want them, and priced to your business’s size. A crew doing $50k a month doesn’t pay what a $500k shop pays.</p></div>
         <p class="quote rv">“If it isn’t a fit, I’ll say so.”<small>Sam Ward, founder</small></p>
       </div>
       <figure class="sum" id="sum">
@@ -434,35 +381,8 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
           <li><b>How jobs get paid and reviewed</b><small>No review request after the job</small><span class="tag leak">Leak</span></li>
         </ol>
         <div class="fix"><b>Fix first</b><ol><li>Chase every quote</li><li>Answer after-hours calls</li><li>Ask for the review</li></ol></div>
-        <figcaption>Illustration. Your audit puts a dollar number on each leak, from your own numbers.</figcaption>
+        <figcaption>Example. Yours puts a dollar number on each leak, worked out from your own numbers.</figcaption>
       </figure>
-    </div>
-  </div>
-</section>
-
-<section id="checks" class="sec" aria-labelledby="h-checks" style="border-top:1px solid var(--line)">
-  <div class="wrap">
-    <div class="head"><h2 id="h-checks" class="rv">Jobs leak in more places than the missed call.</h2><p class="rv d1">Most owners don’t have a lead problem. They have a follow-through problem. The audit walks every step a job goes through, then puts the leaks in order.</p></div>
-    <div class="flow" id="flow">
-      <div class="flow-line" aria-hidden="true"><i></i></div>
-      <ol class="fl">
-      <li><span class="dot"></span><span class="mono">Step 1</span><h3>How leads come in</h3><p>Calls, web forms, Facebook, Angi and Thumbtack. Where each one lands, and who sees it.</p></li>
-      <li><span class="dot"></span><span class="mono">Step 2</span><h3>How they get answered</h3><p>How fast a new lead hears back, including after hours and while you’re on a job.</p><em>Speed to lead lives here.</em></li>
-      <li><span class="dot"></span><span class="mono">Step 3</span><h3>How estimates get booked</h3><p>Whether serious leads end up on your calendar, and whether no-shows get rebooked.</p></li>
-      <li><span class="dot"></span><span class="mono">Step 4</span><h3>How quotes get followed up</h3><p>Quotes sent and never chased. Who opened one three times and never heard back.</p></li>
-      <li><span class="dot"></span><span class="mono">Step 5</span><h3>How jobs get paid and reviewed</h3><p>Invoices that run late, and finished jobs that never got a review request.</p></li>
-      </ol>
-    </div>
-  </div>
-</section>
-
-<section class="sec" aria-labelledby="h-research" style="padding-top:40px">
-  <div class="wrap">
-    <div class="head"><h2 id="h-research" class="rv">What the research says about answering.</h2><p class="rv d1">Three outside studies. We don’t publish numbers we can’t source.</p></div>
-    <div class="stats">
-      <div class="stat rv"><b><span data-count="78">78</span>%</b><p>of people have taken their business elsewhere after a company didn’t pick up.</p><a href="https://www.callrail.com/blog/missed-calls-cost-businesses-more-than-ever" target="_blank" rel="noopener">CallRail survey of 1,000 consumers, 2025</a></div>
-      <div class="stat rv d1"><b><span data-count="97">97</span>%</b><p>of homeowners say how fast you respond affects who they hire.</p><a href="https://housecallpro.com/resources/home-service-customer-service-report-trends-statistics" target="_blank" rel="noopener">Housecall Pro survey of 1,000+ homeowners, 2025</a></div>
-      <div class="stat rv d2"><b>~½</b><p>of calls to home-service businesses reach a person. The rest ring out or go to voicemail.</p><a href="https://invoca.com/reports/the-invoca-home-services-lead-conversion-benchmarks-report-2026" target="_blank" rel="noopener">Invoca, 70 million calls, 2026</a></div>
     </div>
   </div>
 </section>
@@ -471,20 +391,10 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   <div class="bd-pin">
     <div class="bd-head">
       <h2 id="h-inside">What we build, taken apart.</h2>
-      <p>Six parts, one system, built after the audit. You only get the parts your business needs.</p>
+      <p>Six parts, one system. You only get the parts your audit says you need.</p>
       <div class="bd-meter" aria-hidden="true"><i><b id="bdm"></b></i><span class="mono" id="bdl">Assembled</span></div>
     </div>
-    <div class="iso" aria-hidden="true">
-      <div class="iso-in" id="iso">
-        <div class="shadow"></div>
-        <div class="pl" style="--i:0"><div class="e1"></div><div class="e2"></div><div class="top"><b>Website</b><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></span><span>06</span></div></div>
-        <div class="pl" style="--i:1"><div class="e1"></div><div class="e2"></div><div class="top"><b>Reviews</b><span class="ico"><svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></span><span>05</span></div></div>
-        <div class="pl" style="--i:2"><div class="e1"></div><div class="e2"></div><div class="top"><b>Invoices</b><span class="ico"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg></span><span>04</span></div></div>
-        <div class="pl" style="--i:3"><div class="e1"></div><div class="e2"></div><div class="top"><b>Quote follow-up</b><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v4h4"/></svg></span><span>03</span></div></div>
-        <div class="pl" style="--i:4"><div class="e1"></div><div class="e2"></div><div class="top"><b>Booking</b><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><span>02</span></div></div>
-        <div class="pl" style="--i:5"><div class="e1"></div><div class="e2"></div><div class="top"><b>Answering</b><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg></span><span>01</span></div></div>
-      </div>
-    </div>
+    <div class="stage" id="bdStage"><i class="tick a"></i><i class="tick b"></i><i class="tick c"></i><i class="tick d"></i><div class="fb"><img src="/assets/screens/today-1200.webp" width="1200" height="750" alt=""></div><div class="unit-host" id="bdHost"></div></div>
     <ol class="parts" id="parts">
       <li data-k="5"><b><span>01</span>Answering</b><p>Every call, text and form gets a reply in seconds, even after hours.</p></li>
       <li data-k="4"><b><span>02</span>Booking</b><p>Leads pick a time and land on your calendar, with reminders so they show up.</p></li>
@@ -496,34 +406,24 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   </div>
 </section>
 
-<section id="after" class="sec" aria-labelledby="h-after" style="border-top:1px solid var(--line)">
+<section id="app" class="sec" aria-labelledby="h-app">
   <div class="wrap">
-    <div class="head"><h2 id="h-after" class="rv">Fixes are scoped after the audit.</h2><p class="rv d1">Only if you want them, and only the ones your business needs. It all runs in your own app. <a class="inl" href="/software">See the app</a></p></div>
-    <p class="what rv">Cinder Revenue builds the systems, and the websites they run on, for service businesses. <em>They answer every lead, book estimates, chase quotes, send invoice reminders and ask for the review, so the jobs the audit found stop slipping.</em></p>
+    <div class="head"><h2 id="h-app" class="rv">It all runs in your own app.</h2><p class="rv d1">Every lead, estimate, quote and invoice in one place, with what needs you at the top. <a class="inl" href="/software">See the app</a></p></div>
     <figure class="shot" id="shot"><img src="/assets/screens/today-1200.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1240px) 100vw, 1200px" width="2400" height="1500" alt="The Cinder app's Today screen for an example business: what needs you, what's owed, and how fast leads hear back. Sample data." loading="lazy" decoding="async"></figure>
     <p class="mono shot-cap">Today: what needs you, what’s owed, how fast leads hear back. Example business, sample data.</p>
-    <ul class="picks">
-      <li class="rv"><b>Answer every lead in seconds<span class="pill blue">Picked</span></b><p>Calls and forms get a reply while you’re on a job or after hours.</p></li>
-      <li class="rv d1"><b>Qualify and book estimates<span class="pill blue">Picked</span></b><p>Serious leads land on your calendar, and no-shows get rebooked.</p></li>
-      <li class="rv d2"><b>Chase every quote<span class="pill blue">Picked</span></b><p>Quotes get followed up instead of sitting unanswered.</p></li>
-      <li class="rv"><b>Invoices and reminders<span class="pill no">Not needed</span></b><p>Late invoices get a reminder before you have to make the call.</p></li>
-      <li class="rv d1"><b>A review after every job<span class="pill blue">Picked</span></b><p>Every paid job gets asked for a review.</p></li>
-      <li class="rv d2"><b>A website that books<span class="pill no">Not needed</span></b><p>If your site is part of the leak, we build the site too.</p></li>
-    </ul>
-    <p class="mono picks-cap">Sample audit: 4 of 6 picked. Only those get built.</p>
   </div>
 </section>
 
-<section id="who" class="sec" aria-labelledby="h-who" style="border-top:1px solid var(--line)">
+<section id="who" class="sec" aria-labelledby="h-who">
   <div class="wrap">
     <div class="head"><h2 id="h-who" class="rv">Built for businesses that run on leads.</h2><p class="rv d1">Home services, clinics, studios and local pros. If leads come in by call, form or text, the audit works the same way.</p></div>
     <div class="duo">
-      <div class="rv"><span class="mono">Out on the job</span><h3>The phone rings while your hands are full.</h3><p>You’re with a customer while the next one calls someone else. The audit finds how many of those you lose, and what happens to the quotes you do send.</p></div>
-      <div class="rv d1"><span class="mono">Busy weeks</span><h3>When leads pile up, the leak is bigger than the missed call.</h3><p>A storm, a promotion or a full Monday brings them in all at once. The audit looks at how they get answered, how visits get booked, and how quotes get followed up.</p></div>
+      <div class="rv"><span class="mono">Out on the job</span><h3>The phone rings while your hands are full.</h3><p>You’re with a customer while the next one calls someone else.</p></div>
+      <div class="rv d1"><span class="mono">Busy weeks</span><h3>When leads pile up, the leak gets bigger.</h3><p>A storm, a promotion or a full Monday brings them in all at once.</p></div>
     </div>
     <div class="founder rv">
       <div><b>Samuel Ward</b><small>Founder, Colorado</small></div>
-      <blockquote>“I’m Sam, founder of Cinder Revenue Company. I build and watch every client’s system myself, and I only take on a few businesses at a time so each one gets that attention. <em>If something breaks, you hear it from me before you notice.</em>”</blockquote>
+      <blockquote>“I build and watch every client’s system myself, and I only take on a few businesses at a time. <em>If something breaks, you hear it from me before you notice.</em>”</blockquote>
     </div>
   </div>
 </section>
@@ -531,9 +431,8 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 <section class="closing" aria-labelledby="h-final">
   <div class="wrap">
     <h2 id="h-final" class="rv">Find out how many jobs you’re missing.</h2>
-    <p class="rv d1">A free 15-minute audit. We walk your business from the first call to the review, show you where jobs are slipping, and what fixing it is worth.</p>
-    <div class="acts rv d2"><a class="btn pri" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
-    <div class="promise"><div class="rv"><b>Where jobs slip</b><span>From the first call to the review, including after hours.</span></div><div class="rv d1"><b>A dollar number on each leak</b><span>Worked out from your own numbers.</span></div><div class="rv d2"><b>What to fix first</b><span>In order, whether or not you work with us.</span></div></div>
+    <p class="rv d1">A free audit of your business, from the first call to the review. You keep what we find.</p>
+    <div class="acts rv d2"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
   </div>
 </section>
 </main>
@@ -542,67 +441,489 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   <div class="wrap">
     <div class="ft">
       <div><a class="brand" href="#top" aria-label="Back to top"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" class="brand-mark" viewBox="151.04 168.00 791.63 703.15"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z" fill="currentColor"/></svg><span>Cinder Revenue</span></a><p>Systems and websites that win more jobs for service businesses. Every engagement starts with a free audit.</p></div>
-      <div><h4>The audit</h4><ul><li><a href="#audit">What it covers</a></li><li><a href="#checks">What we check</a></li><li><a href="/audit">Check your site</a></li><li><a href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></li></ul></div>
-      <div><h4>Product</h4><ul><li><a href="#after">After the audit</a></li><li><a href="/software">The app</a></li><li><a href="/demo">Demo</a></li></ul></div>
-      <div><h4>Company</h4><ul><li><a href="#who">Founder</a></li><li><a href="mailto:sam.cinderrevenue@gmail.com">Email Sam</a></li></ul></div>
-      <div><h4>Legal</h4><ul><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
+      <div><h4>The audit</h4><ul><li><a href="#audit">What it covers</a></li><li><a href="/audit">Check your site</a></li><li><a href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></li></ul></div>
+      <div><h4>Product</h4><ul><li><a href="#inside">What we build</a></li><li><a href="/software">The app</a></li><li><a href="/demo">Demo</a></li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="#who">Founder</a></li><li><a href="mailto:sam.cinderrevenue@gmail.com">Email Sam</a></li><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
     </div>
     <div class="legal"><span>© 2026 Cinder Revenue Company, Colorado</span><span>App screens, threads and cards show an example business with sample data.</span></div>
   </div>
 </footer>
-
 <script>
 (function(){
 var d=document,root=d.documentElement;root.classList.add('js');
 var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
-var FINE=matchMedia('(pointer:fine)').matches;
-
-/* Nav background once scrolled */
 var nav=d.getElementById('nav');
-
-/* Hero entrance */
-
-/* Reveal on enter */
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px',threshold:.01});
 d.querySelectorAll('.rv,#sum,#shot').forEach(function(el){io.observe(el)});
-
-/* Count-up */
 var co=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;co.unobserve(e.target);var el=e.target,to=+el.dataset.count,t0=0;if(RM){el.textContent=to;return}
   function f(t){if(!t0)t0=t;var p=Math.min(1,(t-t0)/1100);el.textContent=Math.round(to*(1-Math.pow(1-p,4)));if(p<1)requestAnimationFrame(f)}el.textContent=0;requestAnimationFrame(f)})},{threshold:.6});
 d.querySelectorAll('[data-count]').forEach(function(el){co.observe(el)});
-
-/* Story: the step in the middle of the screen drives the phone */
 var steps=[].slice.call(d.querySelectorAll('.step')),evs=[].slice.call(d.querySelectorAll('.ev')),cur=-1;
 function setStep(s){if(s===cur)return;cur=s;steps.forEach(function(el){el.classList.toggle('on',+el.dataset.s===s)});evs.forEach(function(el){el.classList.toggle('on',+el.dataset.s<=s)})}
 setStep(0);
 
-/* Scroll-linked pieces: one rAF, transforms only */
-var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),iso=d.getElementById('iso'),pls=[].slice.call(iso.querySelectorAll('.pl')),parts=[].slice.call(d.querySelectorAll('#parts li')),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl'),shot=d.getElementById('shot'),rays=d.getElementById('rays'),slats=[].slice.call(rays.querySelectorAll('i'));
+/* One live 3D unit: it sits in the hero, then moves down into "taken apart" and opens there */
+var heroHost=d.getElementById('heroHost'),bdHost=d.getElementById('bdHost'),U=null,frame=null,where='',lastP=-1,lastA=-1;
+function unitReady(){if(U||!window.CinderUnit)return;U=window.CinderUnit;U.mount(heroHost);frame=heroHost.firstElementChild;where='hero';onScroll()}
+addEventListener('cinder-unit',unitReady);
+
+var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),parts=[].slice.call(d.querySelectorAll('#parts li')),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl');
 var names=['Answering','Booking','Quote follow-up','Invoices','Reviews','Website'];
-var ticking=false,lastK=-2,mx=0,my=0;
+var ticking=false,lastK=-2;
 function clamp(v){return v<0?0:v>1?1:v}
 function update(){
   ticking=false;var vh=innerHeight,y=scrollY,mob=innerWidth<=760;
-  /* read everything first */
   var mid=vh*.5,best=0,bd0=1e9;steps.forEach(function(el,i){var r=el.getBoundingClientRect(),c=Math.abs(r.top+r.height/2-mid);if(c<bd0){bd0=c;best=i}});
   var fr=flow.getBoundingClientRect(),br=bd.getBoundingClientRect();
-  /* then write */
   nav.classList.toggle('on',y>8);
-  if(!RM&&y<1200){slats.forEach(function(el,i){el.style.setProperty('--y',(-(y*(.12+Math.abs(i-4)*.05))).toFixed(1)+'px')})}
   setStep(best);
   var fp=mob?clamp((vh*.65-fr.top)/fr.height):clamp((vh*.8-fr.top)/(vh*.5));
   flow.style.setProperty('--p',fp.toFixed(4));
   flowLis.forEach(function(li,i){li.classList.toggle('on',fp>=(mob?i/flowLis.length:i/(flowLis.length-1))-.001)});
   var span=br.height-vh,bp=clamp(-br.top/span);
-  var sep=RM?(bp>.05?1:0):clamp(bp/.3);
-  if(br.top<vh&&br.bottom>0){pls.forEach(function(p){p.style.setProperty('--p',sep.toFixed(4))});bdm.style.setProperty('--p',bp.toFixed(4))}
-  var k=bp<.3?-1:Math.min(5,Math.floor((bp-.3)/.7*6));
-  if(k!==lastK){lastK=k;parts.forEach(function(li,i){li.classList.toggle('on',i===Math.max(0,k))});pls.forEach(function(p,i){p.classList.toggle('on',k>=0&&i===5-k)});bdl.textContent=k<0?'Taking it apart':String(k+1).padStart(2,'0')+' / 06 · '+names[k]}
+  if(br.top<vh&&br.bottom>0)bdm.style.setProperty('--p',bp.toFixed(4));
+  /* screws out and layers apart over the first 55% of the pin, then each part gets its turn */
+  var k=bp<.4?-1:Math.min(5,Math.floor((bp-.4)/.6*6));
+  if(k!==lastK){lastK=k;parts.forEach(function(li,i){li.classList.toggle('on',i===Math.max(0,k))});bdl.textContent=bp<.02?'Assembled':k<0?'Taking it apart':String(k+1).padStart(2,'0')+' / 06 · '+names[k]}
+  if(U&&frame){
+    var near=br.top<vh*1.4&&br.bottom>-vh*.4,want=near?'bd':'hero';
+    if(want!==where){where=want;(near?bdHost:heroHost).appendChild(frame)}
+    var p=near?clamp(bp/.55):0;
+    if(Math.abs(p-lastP)>.0005){lastP=p;U.setProgress(p)}
+    var a=Math.max(0,k);if(a!==lastA){lastA=a;U.setActive(a)}
+  }
 }
 function onScroll(){if(!ticking){ticking=true;requestAnimationFrame(update)}}
 addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update();
-
 })();
+</script>
+<script type="module">
+let target = 0, active = 0, instance = null, library;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+function smooth(x) {
+  x = clamp(x);
+  return x * x * (3 - 2 * x);
+}
+
+function dependencies() {
+  return library ??= Promise.all([
+    import('three'),
+    import('three/addons/geometries/RoundedBoxGeometry.js'),
+    import('three/addons/environments/RoomEnvironment.js'),
+    import('three/addons/utils/BufferGeometryUtils.js')
+  ]);
+}
+
+function mount(el) {
+  if (!(el instanceof Element)) throw new TypeError('CinderUnit.mount expects a container element');
+  instance?.destroy();
+
+  const frame = document.createElement('div');
+  frame.style.cssText = 'width:100%;height:100%;overflow:hidden;background:transparent';
+  frame.setAttribute('role', 'img');
+  frame.setAttribute('aria-label', 'Cinder unit, a stack of six graphite modules');
+  el.append(frame);
+
+  let disposed = false, cleanup = () => {};
+  const unit = {
+    wake() {},
+    destroy() {
+      if (disposed) return;
+      disposed = true;
+      cleanup();
+      frame.remove();
+      if (instance === unit) instance = null;
+    }
+  };
+  instance = unit;
+
+  dependencies().then(([T, {RoundedBoxGeometry}, {RoomEnvironment}, {mergeGeometries}]) => {
+    if (disposed) return;
+    const canvas = document.createElement('canvas');
+    const options = {
+      alpha:true, antialias:true, powerPreference:'high-performance', premultipliedAlpha:true
+    };
+    const context = canvas.getContext('webgl2', options) || canvas.getContext('webgl', options);
+    if (!context) { document.documentElement.classList.add('unit-failed'); return; }
+
+    let renderer, raf = 0, intersection, observer, onRelease = () => {};
+    const resources = new Set();
+    function own(resource) {
+      resources.add(resource);
+      return resource;
+    }
+    cleanup = () => {
+      cancelAnimationFrame(raf);
+      observer?.disconnect();
+      intersection?.disconnect();
+      onRelease();
+      resources.forEach(resource => resource.dispose());
+      renderer?.dispose();
+      renderer?.forceContextLoss();
+    };
+
+    renderer = new T.WebGLRenderer({...options, canvas, context});
+    renderer.setClearColor(0, 0);
+    renderer.toneMapping = T.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.06;
+    const scene = new T.Scene();
+    const camera = new T.OrthographicCamera(-240, 240, 240, -240, 1, 2200);
+
+    const room = new RoomEnvironment(renderer);
+    const pmrem = new T.PMREMGenerator(renderer);
+    try {
+      scene.environment = own(pmrem.fromScene(room, .035)).texture;
+    } finally {
+      room.dispose();
+      pmrem.dispose();
+    }
+
+    function light(x, y, z, color, intensity) {
+      const lamp = new T.DirectionalLight(color, intensity);
+      lamp.position.set(x, y, z);
+      scene.add(lamp);
+    }
+    light(-4, 8, 3, 0xffffff, 3.1);
+    light(2, 3, -5, 0xcad6ec, 2);
+
+    const grain = document.createElement('canvas');
+    grain.width = grain.height = 128;
+    const brush = grain.getContext('2d');
+    const pixels = brush.createImageData(128, 128);
+    let seed = 71;
+    function noise() {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    }
+    for (let y = 0; y < 128; y++) {
+      const row = (noise() - .5) * 62;
+      for (let x = 0; x < 128; x++) {
+        pixels.data.set([
+          128 + (noise() - .5) * 4,
+          128 + row + (noise() - .5) * 8,
+          251, 255
+        ], 4 * (y * 128 + x));
+      }
+    }
+    brush.putImageData(pixels, 0, 0);
+    const normal = own(new T.CanvasTexture(grain));
+    normal.wrapS = normal.wrapT = T.RepeatWrapping;
+    normal.repeat.set(1, 3);
+
+    function metal(color, roughness = .36, extra = {}) {
+      return own(new T.MeshStandardMaterial({color, roughness, metalness:.82, ...extra}));
+    }
+    const faces = [0x34343a, 0x252529, 0x37373c, 0x29292f, 0x323238, 0x25252a]
+      .map(color => metal(color, .38, {
+        normalMap:normal, normalScale:new T.Vector2(.12, .26)
+      }));
+    const trim = Array.from({length:6}, () => metal(0x45454c, .29));
+    const black = metal(0x101013, .57);
+    const gasket = metal(0x151519, .75);
+    const silver = metal(0x66666d, .29);
+    const blue = metal(0x4f8cff, .24, {
+      emissive:0x4f8cff, emissiveIntensity:1, toneMapped:false
+    });
+    const root = new T.Group();
+    scene.add(root);
+
+    function mesh(parent, geometry, material, x = 0, y = 0, z = 0) {
+      const object = new T.Mesh(own(geometry), material);
+      object.position.set(x, y, z);
+      parent.add(object);
+      return object;
+    }
+    function box(w, h, d, r) {
+      return new RoundedBoxGeometry(w, h, d, 2, r);
+    }
+    function disk(parent, r, h, material, x, y, z, sides = 64) {
+      return mesh(parent, new T.CylinderGeometry(r, r, h, sides), material, x, y, z);
+    }
+    function ring(parent, r, thickness, material, x, y, z, segments = 96) {
+      const object = mesh(parent, new T.TorusGeometry(r, thickness, 6, segments), material, x, y, z);
+      object.rotation.x = -Math.PI / 2;
+      return object;
+    }
+    function repeats(parent, geometry, material, poses) {
+      const batch = new T.InstancedMesh(own(geometry), material, poses.length);
+      const dummy = new T.Object3D();
+      poses.forEach(([x, y, z, angle = 0], i) => {
+        dummy.position.set(x, y, z);
+        dummy.rotation.y = angle;
+        dummy.updateMatrix();
+        batch.setMatrixAt(i, dummy.matrix);
+      });
+      parent.add(batch);
+      resources.add(batch);
+      return batch;
+    }
+
+    const plates = [];
+    const body = box(280, 12, 280, 4.8);
+    const lip = box(279, 1.7, 279, .8);
+    const seal = box(269, 2, 269, 1);
+    for (let i = 0; i < 6; i++) {
+      const group = new T.Group();
+      plates.push(group);
+      root.add(group);
+      mesh(group, body, faces[i], 0, -.6, 0);
+      mesh(group, lip, trim[i], 0, 4.6, 0);
+      mesh(group, seal, gasket, 0, -7.3, 0);
+      if (i) mesh(group, box(278, 2, 278, .9), faces[i], 0, 6.1, 0);
+    }
+
+    // Top cover with a circular opening over a recessed dial bed.
+    const lid = plates[0], profile = new T.Shape(), b = 139, r = 8;
+    profile.moveTo(-b+r, -b);
+    profile.lineTo(b-r, -b); profile.quadraticCurveTo(b, -b, b, -b+r);
+    profile.lineTo(b, b-r); profile.quadraticCurveTo(b, b, b-r, b);
+    profile.lineTo(-b+r, b); profile.quadraticCurveTo(-b, b, -b, b-r);
+    profile.lineTo(-b, -b+r); profile.quadraticCurveTo(-b, -b, -b+r, -b);
+    const hole = new T.Path();
+    hole.absarc(0, 0, 58, 0, Math.PI * 2, true);
+    profile.holes.push(hole);
+    const cap = new T.ExtrudeGeometry(profile, {
+      depth:2, bevelEnabled:false, curveSegments:64
+    });
+    cap.rotateX(-Math.PI / 2);
+    const uv = cap.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i)/278, uv.getY(i)/278);
+    mesh(lid, cap, faces[0], 0, 5.5, 0);
+    disk(lid, 57.8, .35, black, 0, 5.78, 0, 96);
+    ring(lid, 55.4, .85, blue, 0, 6.22, 0, 128);
+    disk(lid, 52.8, .9, faces[1], 0, 6.05, 0, 128);
+    ring(lid, 49.5, .25, trim[0], 0, 6.56, 0);
+
+    const ticks = [];
+    for (let j = 0; j < 48; j++) {
+      const angle = j * Math.PI / 24;
+      ticks.push([64*Math.sin(angle), 7.62, 64*Math.cos(angle), angle]);
+    }
+    repeats(lid, new T.BoxGeometry(.75, .18, 2.6), silver, ticks);
+    for (let j = 0; j < 3; j++) {
+      const bar = mesh(lid, box(3, .5, [12,21,16][j], .24), silver, (j-1)*6, 6.7, 0);
+      bar.rotation.y = .29;
+    }
+
+    // Answering grille and engraved vector lettering.
+    const dots = [];
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 15; col++) dots.push([(col-7)*4.6, 7.65, -87+row*4.4]);
+    }
+    repeats(lid, new T.CylinderGeometry(1.23, 1.23, .3, 10), black, dots);
+
+    const glyph = {
+      C:'40 10 01 05 16 46', I:'00 40/20 26/06 46', N:'06 00 46 40',
+      D:'06 00 20 41 45 26 06', E:'40 00 06 46/03 33',
+      R:'06 00 30 41 42 33 03/23 46', V:'00 26 40', U:'00 05 16 36 45 40',
+      T:'00 40/20 26', '·':'23 24'
+    };
+    const strokes = [];
+    let cursor = -54;
+    for (const ch of 'CINDER REVENUE · UNIT') {
+      for (const path of glyph[ch]?.split('/') || []) {
+        const points = path.split(' ').map(s =>
+          new T.Vector3(cursor + Number(s[0])*.83, 7.65, 92 + Number(s[1])*.83)
+        );
+        for (let k = 1; k < points.length; k++) {
+          const a = points[k-1], b = points[k], direction = b.clone().sub(a);
+          const geometry = new T.BoxGeometry(.52, .12, direction.length()+.12);
+          geometry.rotateY(Math.atan2(direction.x, direction.z));
+          geometry.translate((a.x+b.x)/2, a.y, (a.z+b.z)/2);
+          strokes.push(geometry);
+        }
+      }
+      cursor += 5.35;
+    }
+    mesh(lid, mergeGeometries(strokes), silver);
+    strokes.forEach(geometry => geometry.dispose());
+
+    const screwMat = metal(0x67676b, .26, {transparent:true});
+    const crossMat = metal(0x0d0d10, .6, {transparent:true});
+    const screws = [];
+    for (const [x,z] of [[-117,-117],[117,-117],[-117,117],[117,117]]) {
+      disk(lid, 5.2, .25, black, x, 7.64, z, 24);
+      const screw = new T.Group();
+      screw.position.set(x, 7.8, z);
+      lid.add(screw);
+      screws.push(screw);
+      disk(screw, 4.5, 1.7, screwMat, 0, 1, 0, 28);
+      disk(screw, 2.1, 8, screwMat, 0, -3.7, 0, 14);
+      mesh(screw, new T.BoxGeometry(5.3, .15, 1.12), crossMat, 0, 1.91, 0);
+      mesh(screw, new T.BoxGeometry(1.12, .15, 5.3), crossMat, 0, 1.92, 0);
+    }
+
+    // Booking, quote follow-up, invoices, reviews, and website.
+    const keys = [];
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 4; col++) {
+        const pose = [(col-1.5)*13, 8.3, 86+row*10];
+        if (col === 2 && row === 2) mesh(plates[1], box(10,2,7,1), blue, ...pose);
+        else keys.push(pose);
+      }
+    }
+    repeats(plates[1], box(10,2,7,1), trim[1], keys);
+    disk(plates[2], 15, .25, black, 0, 7.3, 111);
+    ring(plates[2], 15, .9, silver, 0, 7.8, 111);
+    mesh(plates[3], box(79,1,5,.48), trim[3], 0, 7.45, 117);
+    mesh(plates[3], box(76,.6,2.8,.29), black, 0, 8, 117);
+
+    const star = new T.Shape();
+    for (let k = 0; k < 10; k++) {
+      const angle = Math.PI/2 + k*Math.PI/5;
+      const radius = k%2 ? 4.3 : 10;
+      star[k ? 'lineTo' : 'moveTo'](Math.cos(angle)*radius, Math.sin(angle)*radius);
+    }
+    star.closePath();
+    const mark = new T.ShapeGeometry(star);
+    mark.rotateX(-Math.PI/2);
+    mesh(plates[4], mark, silver, 0, 7.35, 119);
+    mesh(plates[5], box(47,1.5,19,.7), trim[5], 0, 7.7, 115);
+    mesh(plates[5], box(43,.6,15,.28), black, 0, 8.55, 115);
+
+    const cableMaterial = metal(0x212126, .59, {metalness:.15});
+    const cablePath = new T.CatmullRomCurve3(
+      [[136,0,48],[155,0,48],[173,-1,46],[193,-4,35],[216,-5,33],[231,-5,42]]
+        .map(p => new T.Vector3(...p))
+    );
+    mesh(plates[5], new T.TubeGeometry(cablePath,36,2.1,10,false), cableMaterial);
+    mesh(plates[5], box(15,8,10,2), gasket, 143, 0, 48);
+
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let value = reduced.matches ? 1 : target;
+    let velocity = 0, last = 0, inView = false, width = 0, height = 0;
+    let lost = false, previousDpr = 0;
+    frame.append(canvas);
+    frame.style.background = 'transparent';
+    canvas.style.cssText = 'display:block;width:100%;height:100%';
+
+    function wake() {
+      if (!disposed && !raf && inView && !document.hidden && !lost && width && height) {
+        raf = requestAnimationFrame(draw);
+      }
+    }
+    unit.wake = wake;
+
+    function draw(now) {
+      raf = 0;
+      if (!inView || document.hidden || lost || disposed) return;
+      const goal = reduced.matches ? 1 : target;
+      // Closed-form critically damped spring. A step reaches 95% in 119 ms.
+      const dt = last ? Math.min((now-last)/1000, .05) : 1/60;
+      last = now;
+      const error = value-goal, k = velocity+40*error, decay = Math.exp(-40*dt);
+      value = goal + (error+k*dt)*decay;
+      velocity = (velocity-40*k*dt)*decay;
+      if (reduced.matches || (Math.abs(goal-value)<.00012 && Math.abs(velocity)<.005)) {
+        value = goal;
+        velocity = 0;
+      }
+
+      const turn = smooth(value/.25);
+      screwMat.opacity = crossMat.opacity = 1-smooth((value-.14)/.11);
+      screws.forEach((screw, j) => {
+        screw.visible = value < .25;
+        screw.position.y = 7.8 + turn*32;
+        screw.rotation.y = j*.7 + turn*Math.PI*4;
+      });
+      const expand = clamp((value-.25)/.60);
+      plates.forEach((group, i) => {
+        const lift = smooth((expand-i*.135)/.46);
+        group.position.y = (5-i)*(16+19.5*lift);
+        group.rotation.y = (5-i)*.009*lift;
+        trim[i].color.setHex(i === active ? 0x777d87 : 0x45454c);
+      });
+
+      const center = plates[0].position.y*.5 + 3;
+      camera.position.set(450, center+375, 575);
+      camera.lookAt(10, center, 0);
+      renderer.render(scene, camera);
+      if (value !== goal || velocity !== 0) wake();
+      else last = 0;
+    }
+
+    function resize() {
+      const w = frame.clientWidth, h = frame.clientHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      if (w === width && h === height && previousDpr === dpr) return;
+      width = w;
+      height = h;
+      previousDpr = dpr;
+      if (!w || !h) return;
+      renderer.setPixelRatio(dpr);
+      renderer.setSize(w, h, false);
+      const half = Math.max(464/(w/h), 375)/2;
+      camera.top = half;
+      camera.bottom = -half;
+      camera.left = -half*w/h;
+      camera.right = -camera.left;
+      camera.updateProjectionMatrix();
+      wake();
+    }
+    function visibility() {
+      if (!inView || document.hidden || lost) {
+        cancelAnimationFrame(raf);
+        raf = last = 0;
+      } else wake();
+    }
+    function contextLost(event) {
+      event.preventDefault();
+      lost = true;
+      canvas.style.visibility = 'hidden';
+      visibility();
+    }
+    function contextRestored() {
+      if (!disposed) mount(el);
+    }
+    canvas.addEventListener('webglcontextlost', contextLost);
+    canvas.addEventListener('webglcontextrestored', contextRestored);
+    reduced.addEventListener('change', wake);
+    document.addEventListener('visibilitychange', visibility);
+    window.addEventListener('resize', resize);
+    onRelease = () => {
+      canvas.removeEventListener('webglcontextlost', contextLost);
+      canvas.removeEventListener('webglcontextrestored', contextRestored);
+      reduced.removeEventListener('change', wake);
+      document.removeEventListener('visibilitychange', visibility);
+      window.removeEventListener('resize', resize);
+    };
+    observer = new ResizeObserver(resize);
+    observer.observe(frame);
+    intersection = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      visibility();
+    });
+    intersection.observe(frame);
+    resize();
+  }).catch(() => {
+    if (disposed) return;
+    cleanup();
+    cleanup = () => {};
+    unit.wake = () => {};
+    frame.replaceChildren();
+    document.documentElement.classList.add('unit-failed');
+    library = undefined;
+  });
+  return unit.destroy;
+}
+
+window.CinderUnit = {
+  mount,
+  setProgress(p) {
+    if (!Number.isFinite(p)) return;
+    const next = clamp(p);
+    if (next !== target) {
+      target = next;
+      instance?.wake();
+    }
+  },
+  setActive(i) {
+    if (!Number.isInteger(i) || i < 0 || i > 5 || i === active) return;
+    active = i;
+    instance?.wake();
+  }
+};
+window.dispatchEvent(new Event('cinder-unit'));
 </script>
 </body>
 </html>
