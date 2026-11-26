@@ -193,7 +193,10 @@ function mount(el){
     shell(plate(346,319,8,3,.8),rubber,-14);
     shell(plate(352,324,9,16,1.3),flank,-11);
     shell(plate(352,324,9,1,.18),rubber,5);
-    shell(cut(slots,6,.65),alloy,7);
+    const deckFinish=own(alloy.clone());
+deckFinish.color.setHex(0x5e5d63);
+deckFinish.envMapIntensity=.44;
+shell(cut(slots,6,.65),deckFinish,7);
 
     const fixed=[];
     function place(o){fixed.push([o,o.position.z]);return o}
@@ -293,7 +296,45 @@ for(let i=0;i<4;i++){
   const edge=basic(0x251e21);
   mesh(key,plate(282,40,3.1,1.1,.34),edge,0,14.25);
   mesh(key,plate(280,39,3.1,1.5,.55),polish,0,15.6);
-  mesh(key,plate(279,39,3,5.7,.70),glass,0,17.4);
+  // Light travels through the sidewall from the existing red or warm-white edge.
+const core=own(glass.clone());
+core.onBeforeCompile=shader=>{
+  shader.uniforms.edgeLight={value:edge.color};
+  shader.vertexShader='varying vec3 glassPoint; varying float sideFace;\n'+
+    shader.vertexShader.replace('#include <begin_vertex>',`
+      #include <begin_vertex>
+      glassPoint=position;
+      sideFace=1.0-abs(normal.y);
+    `);
+  shader.fragmentShader='uniform vec3 edgeLight; varying vec3 glassPoint; varying float sideFace;\n'+
+    shader.fragmentShader.replace('#include <emissivemap_fragment>',`
+      #include <emissivemap_fragment>
+      float band=exp(-1.4*abs(glassPoint.y-3.5));
+      float alongEdge=(glassPoint.x+42.0)/85.0;
+      float strip=.48+.52*exp(-alongEdge*alongEdge);
+      totalEmissiveRadiance+=sideFace*strip*(
+        edgeLight*(.12+.21*band)+vec3(.028,.026,.024)*band
+      );
+    `);
+};
+mesh(key,plate(279,39,3,5.7,.70),core,0,17.4);
+// A narrow contact shadow follows the key across the deck as it changes slots.
+const shadow=own(new T.ShaderMaterial({
+  transparent:true,depthWrite:false,toneMapped:false,
+  uniforms:{strength:{value:0}},
+  vertexShader:`varying vec2 v;
+    void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+  fragmentShader:`varying vec2 v;uniform float strength;
+    void main(){
+      vec2 q=abs((v-.5)*vec2(300.,56.))-vec2(139.,18.);
+      float distanceToSeat=length(max(q,0.))+min(max(q.x,q.y),0.)-3.;
+      float contact=1.-smoothstep(-1.,4.,distanceToSeat);
+      gl_FragColor=vec4(0.,0.,0.,strength*contact);
+    }`
+}));
+const contactLine=mesh(row,new T.PlaneGeometry(300,56),shadow,0,13.82);
+contactLine.rotation.x=-Math.PI/2;
+contactLine.castShadow=contactLine.receiveShadow=false;
 
   const cap=mesh(key,plate(279,39,3,6.4,.95),lens,0,24.1);
   cap.castShadow=false;
@@ -352,7 +393,7 @@ for(let i=0;i<4;i++){
   sheen.castShadow=sheen.receiveShadow=false;
   sheen.renderOrder=4;
 
-  keys.push({row,key,label,reflect,type,scan,edge,sweep,hover:0,slot:-1});
+  keys.push({row,key,label,reflect,type,scan,edge,sweep,shadow,hover:0,slot:-1});
 
   const ink=basic(0x201e20);
   const leg=mesh(unit,plate(1.4,1,.45,.19,.08),ink,railX,13.8);
@@ -451,19 +492,20 @@ for(let i=0;i<4;i++){
   camera.lookAt(aim);
   camera.updateMatrixWorld();
 
-  const corners=[];
-  for(const x of [-178,178]){
-    for(const y of [-14,32]){
-      for(const z of [-164,164]){
-        corners.push(new T.Vector3(x,y,deckZ(z)).project(camera));
-      }
+  const point=new T.Vector3();
+  let left=Infinity,right=-Infinity,top=-Infinity,bottom=Infinity;
+  for(const [part] of body){
+    const vertices=part.geometry.attributes.position;
+    for(let i=0;i<vertices.count;i++){
+      point.fromBufferAttribute(vertices,i).add(part.position).project(camera);
+      left=Math.min(left,point.x);right=Math.max(right,point.x);
+      bottom=Math.min(bottom,point.y);top=Math.max(top,point.y);
     }
   }
-  const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);
-  const low=Math.min(...xs),high=Math.max(...xs);
-  camera.zoom=Math.min(1.87/(high-low),1.66/(Math.max(...ys)-Math.min(...ys)));
+  // The viewport is 2 projection units wide. Retain vertical clearance in short frames.
+  camera.zoom=Math.min(1.70/(right-left),1.66/(top-bottom));
   camera.updateProjectionMatrix();
-  camera.projectionMatrix.elements[8]=-(low+high)/2*camera.zoom;
+  camera.projectionMatrix.elements[8]=(left+right)*.5*camera.zoom;
   camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
 
   keys.forEach(k=>k.slot=-1);
@@ -586,6 +628,7 @@ run=now=>{
     const fall=clamp(t/.29);
     const compression=2*(ease(t,.29,.365)-ease(t,.365,.45));
     k.key.position.y=120*(1-fall*fall)-compression+k.hover;
+    k.shadow.uniforms.strength.value=.36*(1-ease(k.key.position.y,0,9));
     k.key.rotation.z=-.092*(1-ease(t,.02,.29));
     k.key.rotation.x=.058*(1-ease(t,0,.28));
     impact=Math.max(impact,ease(t,.29,.335)-ease(t,.335,.45));
