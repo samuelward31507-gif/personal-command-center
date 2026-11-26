@@ -1,4 +1,4 @@
-// V4 call slab: four-key console. API: mount(el), setStep(n), destroy(); el.onStepClick(i).
+// V4 call slab: four-key console. API: mount(el), setProgress(n), destroy(); el.onStepClick(i).
 const copy=[
   ['MISSED CALL','(303) 555-0148','7:42 PM','RINGING'],
   ['REPLIED IN 10S','Text sent to Dana Ruiz','7:42 PM','REPLIED'],
@@ -11,7 +11,7 @@ function ease(x,a,b){
   return t*t*(3-2*t);
 }
 
-let instance=null,step=0,fonts;
+let instance=null,progress=0,fonts;
 function loadFonts(){
   // The site already self-hosts Inter and Geist Mono; wait for them instead of fetching copies.
   return fonts??=Promise.allSettled([document.fonts.load('600 32px Inter'),document.fonts.load('500 32px "Geist Mono"')]);
@@ -47,13 +47,19 @@ function mount(el){
   on(document,'visibilitychange',pause);
   on(rm,'change',invalidate);
 
+  function releaseGPU(lost=false){
+    resources.forEach(resource=>resource.dispose());
+    resources.clear();
+    renderer?.dispose();
+    if(!lost)renderer?.forceContextLoss();
+    renderer=null;
+  }
   function destroy(){
     dead=true;
     cancelAnimationFrame(raf);
     io.disconnect();ro.disconnect();
     off.forEach(f=>f());
-    resources.forEach(r=>r.dispose());
-    renderer?.dispose();renderer?.forceContextLoss();
+    releaseGPU();
     frame.remove();
   }
   instance={destroy,invalidate};
@@ -75,7 +81,7 @@ function mount(el){
     canvas.setAttribute('aria-label','Cinder four-key call console');
     frame.append(canvas);
     on(canvas,'webglcontextlost',e=>{
-      e.preventDefault();cancelAnimationFrame(raf);raf=0;run=()=>{};
+      e.preventDefault();cancelAnimationFrame(raf);raf=0;run=()=>{};releaseGPU(true);
     });
     on(canvas,'webglcontextrestored',()=>{if(!dead)mount(el)});
     renderer.setClearColor(0,0);
@@ -269,7 +275,7 @@ place(strip.o);
 
 place(print(unit,288,15,5,13.9,147,(c,w)=>{
   text(c,'CINDER · LINE 01',0,7.5,8,true,'#18181a');
-  text(c,'S/N CR-L01-0427',w,7.5,6.4,true,'#262529',true);
+  text(c,'EXAMPLE BUSINESS · SAMPLE DATA',w,7.5,6.4,true,'#262529',true);
 }).o);
 
 const keys=[],picks=[],links=[];
@@ -571,7 +577,7 @@ function calibrate(k,slot){
   ?.object.userData.index??-1;
     }
     on(canvas,'pointermove',e=>{
-      if(!fine.matches)return;
+      if(!fine.matches||rm.matches)return;
       hover=hit(e);tx=-pt.y*.0698;tz=pt.x*.0698;
       canvas.style.cursor=hover>=0?'pointer':'';
       invalidate();
@@ -584,23 +590,18 @@ function calibrate(k,slot){
 const duration=.98;
 
 run=now=>{
-  if(dead||!resize())return;
+  if(dead||gl.isContextLost()||!resize())return;
   if(reset){samples=0;dirtyShadow=true;reset=false}
 
   const dt=last?Math.max(0,(now-last)/1000):0;
   last=now;
   const reduced=rm.matches,follow=1-Math.exp(-dt*14);
-  const delta=step-playhead;
-  let moving=Math.abs(delta)>0;
-
-  // A single reversible clock keeps the carriage, display and light in sync
-  // when the page changes direction during a landing.
-  playhead+=Math.sign(delta)*Math.min(Math.abs(delta),dt/duration);
-
-  const rx=reduced?0:tx,rz=reduced?0:tz;
-  moving||=Math.abs(rx-unit.rotation.x)+Math.abs(rz-unit.rotation.z)>.0002;
-  unit.rotation.x+=(rx-unit.rotation.x)*follow;
-  unit.rotation.z+=(rz-unit.rotation.z)*follow;
+  const goal=-.18+3.18*progress;
+  let moving=playhead!==goal;
+  playhead=goal;
+  const rx=(-.10+.19*progress)+(reduced?0:tx);
+  const rz=.055*Math.sin(Math.PI*2*progress)+(reduced?0:tz);
+  unit.rotation.set(rx,.15-.30*progress,rz);
   if(!reduced)clock+=dt;
 
   const phase=keys.map((_,i)=>duration*clamp(playhead-i+1));
@@ -620,7 +621,7 @@ run=now=>{
     }
     depth=Math.max(0,Math.min(3,depth));
     const lo=Math.floor(depth),hi=Math.min(3,lo+1),mix=depth-lo;
-    k.row.position.set(5,0,T.MathUtils.lerp(slotDepth[lo],slotDepth[hi],mix));
+    k.row.position.set(5+54*(1-ease(t,0,.39)),0,T.MathUtils.lerp(slotDepth[lo],slotDepth[hi],mix));
     k.row.scale.z=T.MathUtils.lerp(slotScale[lo],slotScale[hi],mix);
     calibrate(k,Math.round(depth));
 
@@ -636,7 +637,7 @@ run=now=>{
     const lit=ease(t,.60,.78)*ease(k.row.scale.z,.36,.75);
     k.label.o.material.opacity=lit;
     k.reflect.material.opacity=lit*.009;
-    k.scan.value=i===step&&t>.66&&t<.94 ? (t-.66)/.28*1.25-.125 : -2;
+    k.scan.value=t>0&&t>.66&&t<.94 ? (t-.66)/.28*1.25-.125 : -2;
     k.sweep.uniforms.phase.value=reduced?-2:(clock%8)*.85-1;
 
     const reply=ease(phase[1],.29,.45);
@@ -646,9 +647,8 @@ run=now=>{
     roll+=ease(t,.29,.53);
   }
 
-  unit.position.y=-impact;
-  if(Math.abs(roll-stripState.roll)>.002||
-     (Number.isInteger(roll)&&roll!==stripState.roll)){
+  unit.position.y=-2.5*impact;
+  if(roll!==stripState.roll){
     stripState.roll=roll;
     strip.redraw();
   }
@@ -703,12 +703,12 @@ run=now=>{
 
 window.CinderSlab={
   mount,
-  setStep(n){
+  setProgress(n){
     if(!Number.isFinite(n))return;
-    const v=Math.max(0,Math.min(3,Math.round(n)));
-    if(v!==step){step=v;instance?.invalidate()}
+    const v=clamp(n);
+    if(v!==progress){progress=v;instance?.invalidate()}
   },
-  setProgress(){},
   destroy(){instance?.destroy();instance=null}
 };
 window.dispatchEvent(new Event('cinder-slab'));
+window.dispatchEvent(new Event('cinder-visual'));

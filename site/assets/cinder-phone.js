@@ -57,8 +57,10 @@ function mount(el) {
   renderer.shadowMap.type = T.PCFSoftShadowMap;
   renderer.toneMapping = T.ACESFilmicToneMapping;
 
+  const gl=renderer.getContext(),debug=gl.getExtension('WEBGL_debug_renderer_info');
+  const gpu=debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):'';
   const low = matchMedia('(pointer:coarse)').matches ||
-    (navigator.hardwareConcurrency || 8) <= 4 || !renderer.capabilities.isWebGL2;
+    (navigator.hardwareConcurrency || 8) <= 4 || /swiftshader|llvmpipe/i.test(gpu) || !renderer.capabilities.isWebGL2;
   const reduced = matchMedia('(prefers-reduced-motion:reduce)');
   const hover = matchMedia('(hover:hover) and (pointer:fine)');
   const scene = new T.Scene();
@@ -312,10 +314,11 @@ function mount(el) {
     wake();
   }
   function resize() {
+    if(lost || dead)return;
     width = el.clientWidth;
     height = el.clientHeight;
     if (!width || !height) return;
-    const span = Math.max(724, 390 * height / width), aspect = width / height;
+    const span = Math.max(669, 373 * height / width), aspect = width / height;
     Object.assign(cam, { left: -span * aspect / 2, right: span * aspect / 2, top: span / 2, bottom: -span / 2 });
     cam.updateProjectionMatrix();
     renderer.setSize(width, height, false);
@@ -368,7 +371,7 @@ function mount(el) {
 
   function tick(now) {
     frame = 0;
-    if (!visible || document.hidden || lost || dead || !width || !height) return;
+    if (!visible || document.hidden || lost || dead || !width || !height || gl.isContextLost()) return;
     const dt = Math.min(.05, (now - last) / 1000 || .016);
     last = now;
     const previous = p, oldX = tiltX, oldY = tiltY;
@@ -385,9 +388,9 @@ function mount(el) {
     tiltY += (targetY - tiltY) * k;
     const moving = p !== requested || Math.abs(tiltX - targetX) + Math.abs(tiltY - targetY) > .0001;
     const rise = ease(p / .3);
-    phone.scale.setScalar(.83 + .17 * rise);
-    phone.position.y = -120 * (1 - rise);
-    phone.rotation.set(rad(-35 + 15 * rise + 4 * tiltY), rad(-9 + 4 * tiltX), 0, 'YXZ');
+    phone.scale.setScalar(.94 + .06 * rise);
+    phone.position.y = -53 * (1 - rise);
+    phone.rotation.set(rad(-35 + 15 * rise + 4 * tiltY), rad(-32 + 26 * rise + 4 * tiltX), rad(-7 + 7 * rise), 'YXZ');
     floor.position.y = phone.position.y - 325 * phone.scale.x * Math.cos(phone.rotation.x) - 14;
     feed();
     age += dt;
@@ -460,10 +463,26 @@ function mount(el) {
     mouseX = mouseY = 0;
     invalidate();
   }, opts);
+  let released=false;
+  function releaseGPU(){
+    if(released)return;
+    released=true;
+    quad.dispose();
+    passes.forEach(pass => pass.dispose());
+    ao?.gtaoMaterial.dispose();
+    ao?.blendMaterial.dispose();
+    composer.dispose();
+    keyLight.shadow.dispose();
+    owned.forEach(resource => resource.dispose());
+    scene.clear();
+    renderer.dispose();
+    if(!lost)renderer.forceContextLoss();
+  }
   canvas.addEventListener('webglcontextlost', e => {
     e.preventDefault();
     lost = true;
     park();
+    releaseGPU();
   }, opts);
   canvas.addEventListener('webglcontextrestored', () => {
     if (!dead) mount(el);
@@ -489,15 +508,7 @@ function mount(el) {
       abort.abort();
       ro.disconnect();
       io.disconnect();
-      quad.dispose();
-      passes.forEach(pass => pass.dispose());
-      ao?.gtaoMaterial.dispose();
-      ao?.blendMaterial.dispose();
-      composer.dispose();
-      keyLight.shadow.dispose();
-      owned.forEach(resource => resource.dispose());
-      scene.clear();
-      renderer.dispose();
+      releaseGPU();
       canvas.remove();
     }
   };
@@ -520,3 +531,4 @@ function destroy() {
 window.CinderPhone = { mount, setProgress, destroy };
 
 window.dispatchEvent(new Event('cinder-phone'));
+window.dispatchEvent(new Event('cinder-visual'));

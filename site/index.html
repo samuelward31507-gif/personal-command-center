@@ -20,8 +20,8 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/icon/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" crossorigin>
+
+<link rel="modulepreload" href="/assets/vendor/three/three.module.min.js" crossorigin>
 <link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/nav.css">
 <style>
@@ -323,9 +323,15 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   .rv{transform:none!important}
   .js .hero h1 .ln span{animation:none}
 }
+/* Keep the app poster until the first assembled frame is available. */
+#heroHost{height:clamp(240px,40vw,560px);margin-top:clamp(32px,5vh,64px)}
+#heroHost .hb-screen{position:absolute;inset:0 8%;pointer-events:none}
+#heroHost.instrument-ready .hb-screen{display:none}
+.phone-host{width:min(100%,max(306px,52svh))}
+@media(max-width:900px){.audit-vis{height:auto;aspect-ratio:1.12;align-self:center}}
 </style>
 <script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+{"imports":{"three":"/assets/vendor/three/three.module.min.js","three/addons/":"/assets/vendor/three/addons/"}}
 </script>
 </head>
 <body>
@@ -356,7 +362,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
     </div>
     
   </div>
-  <div class="hb-stage" aria-hidden="true"><div class="hb-screen"><img src="/assets/screens/today-2400.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1300px) 100vw, 1300px" width="2400" height="1500" alt="" fetchpriority="high"></div></div>
+  <div class="hb-stage" id="heroHost"><div class="hb-screen" aria-hidden="true"><img src="/assets/screens/today-2400.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1300px) 100vw, 1300px" width="2400" height="1500" alt="" fetchpriority="high"></div></div>
 </section>
 
 <section class="tools" aria-label="Works alongside the tools you already use">
@@ -433,7 +439,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   <div class="phone-host" id="phoneHost"></div>
 </div></section>
 
-<section id="back" class="sec" data-backdrop aria-labelledby="h-back" style="isolation:isolate;overflow:hidden"><div class="backdrop" data-variant="4" data-calm=".3" data-intensity=".6"></div>
+<section id="back" class="sec" data-backdrop aria-labelledby="h-back" style="isolation:isolate;overflow:clip"><div class="backdrop" data-variant="4" data-calm=".3" data-intensity=".6"></div>
   <div class="wrap back">
     <div>
       <h2 id="h-back" class="rv">What you get back.</h2>
@@ -477,26 +483,45 @@ var nav={classList:{toggle:function(){}}};
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px',threshold:.01});
 d.querySelectorAll('.rv,#shot').forEach(function(el){io.observe(el)});
 var steps=[].slice.call(d.querySelectorAll('.step')),evs=[].slice.call(d.querySelectorAll('.ev')),cur=-1;
-function setStep(s){if(s===cur)return;cur=s;if(window.CinderSlab)CinderSlab.setStep(s);steps.forEach(function(el){el.classList.toggle('on',+el.dataset.s===s)});evs.forEach(function(el){el.classList.toggle('on',+el.dataset.s<=s)})}
+function setStep(s){if(s===cur)return;cur=s;steps.forEach(function(el){el.classList.toggle('on',+el.dataset.s===s)});evs.forEach(function(el){el.classList.toggle('on',+el.dataset.s<=s)})}
 setStep(0);
 var bdHost=d.getElementById('bdHost'),bdDesc=d.getElementById('bdDesc'),U=null,lastP=-1,lastA=-1;
 var descs=["Every call, text and form gets a reply in seconds, even after hours.", "Leads pick a time and land on your calendar, with reminders so they show up.", "Sent quotes get followed up until the customer says yes or no.", "Unpaid invoices get polite reminders, so you get paid without chasing.", "Happy customers get asked for a review after every paid job.", "A site that turns visitors into booked jobs, if yours is part of the leak."];
+// Allocate each WebGL renderer as its stage approaches the viewport.
+var nearCallbacks=new Map();
+var nearVisual=new IntersectionObserver(function(entries){
+  entries.forEach(function(entry){
+    if(!entry.isIntersecting)return;
+    var ready=nearCallbacks.get(entry.target);
+    nearVisual.unobserve(entry.target);nearCallbacks.delete(entry.target);ready();
+  });
+},{rootMargin:'160px'});
+function whenNear(el,ready){nearCallbacks.set(el,ready);nearVisual.observe(el)}
 function unitReady(){if(U||!window.CinderUnit)return;U=window.CinderUnit;U.mount(bdHost);onScroll()}
-addEventListener('cinder-unit',unitReady);
-var slabOn=false;function slabReady(){if(slabOn||!window.CinderSlab)return;slabOn=true;CinderSlab.setStep(Math.max(0,cur));var sh=d.getElementById('slabHost');sh.onStepClick=function(i){var s=steps[i];if(s)scrollTo({top:scrollY+s.getBoundingClientRect().top-innerHeight*.5+s.offsetHeight/2,behavior:'smooth'})};CinderSlab.mount(sh)}
-addEventListener('cinder-slab',slabReady);
+addEventListener('cinder-unit',function(){whenNear(bdHost,unitReady)});
+var slabOn=false;function slabReady(){if(slabOn||!window.CinderSlab)return;slabOn=true;var sh=d.getElementById('slabHost');sh.onStepClick=function(i){var s=steps[i];if(s)scrollTo({top:scrollY+s.getBoundingClientRect().top-innerHeight*.5+s.offsetHeight/2,behavior:'smooth'})};CinderSlab.mount(sh);onScroll()}
+addEventListener('cinder-slab',function(){whenNear(d.getElementById('slabHost'),slabReady)});
 var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl'),slats=[].slice.call(d.querySelectorAll('#rays i'));
 var names=['Answering','Booking','Quote follow-up','Invoices','Reviews','Website'];
 
 var aH=d.getElementById('auditHost'),aSec=d.getElementById('audit'),A=null,aP=-1;
 function auditReady(){if(A||!window.CinderAudit)return;A=window.CinderAudit;A.mount(aH);onScroll()}
-addEventListener('cinder-audit',auditReady);
+addEventListener('cinder-audit',function(){whenNear(aH,auditReady)});
 var pH=d.getElementById('phoneHost'),pSec=d.getElementById('app'),P=null,pP=-1;
 function phoneReady(){if(P||!window.CinderPhone)return;P=window.CinderPhone;P.mount(pH);onScroll()}
-addEventListener('cinder-phone',phoneReady);
-var gH=d.getElementById('backHost'),gets=[].slice.call(d.querySelectorAll('.gets li')),G=null,gS=-1;
-function backReady(){if(G||!window.CinderBack)return;G=window.CinderBack;G.mount(gH);gS=-1;onScroll()}
-addEventListener('cinder-back',backReady);
+addEventListener('cinder-phone',function(){whenNear(pH,phoneReady)});
+var gH=d.getElementById('backHost'),gets=[].slice.call(d.querySelectorAll('.gets li')),G=null;
+function backReady(){if(G||!window.CinderBack)return;G=window.CinderBack;G.mount(gH);onScroll()}
+addEventListener('cinder-back',function(){whenNear(gH,backReady)});
+var hero=d.getElementById('heroHost'),H=null;
+addEventListener('cinder-visual',function(){
+  if(!H&&window.CinderHero){H=CinderHero;H.mount(hero);onScroll()}
+});
+function lineProgress(lines,anchor){
+  var centers=lines.map(function(el){var r=el.getBoundingClientRect();return r.top+r.height/2});
+  for(var i=1;i<centers.length;i++)if(anchor<centers[i])return clamp((i-1+(anchor-centers[i-1])/Math.max(1,centers[i]-centers[i-1]))/(centers.length-1));
+  return 1;
+}
 function trackP(el){var r=el.getBoundingClientRect(),vh=innerHeight;if(r.height>vh*1.2)return clamp(-r.top/(r.height-vh));return clamp((vh*.9-r.top)/(vh*.9))}
 var ticking=false,lastK=-2;
 function clamp(v){return v<0?0:v>1?1:v}
@@ -507,11 +532,13 @@ function update(){
   nav.classList.toggle('on',y>8);
   if(!RM&&y<1200){slats.forEach(function(el,i){el.style.setProperty('--y',(-(y*(.12+Math.abs(i-4)*.05))).toFixed(1)+'px')})}
   setStep(best);
+  if(slabOn)CinderSlab.setProgress(lineProgress(steps,mid));
+  if(H)H.setProgress(clamp(y/Math.max(1,hero.offsetTop+hero.offsetHeight)));
   var fp=matchMedia('(max-width:900px)').matches?clamp((vh*.7-fr.top)/fr.height):clamp(trackP(aSec)/.7);
   var ap=trackP(matchMedia('(max-width:900px)').matches?aH:aSec);
   if(A&&Math.abs(ap-aP)>.0002){aP=ap;A.setProgress(ap)}
   var pp=trackP(pSec);if(P&&Math.abs(pp-pP)>.0002){pP=pp;P.setProgress(pp)}
-  if(G){var gm=vh*(innerWidth<=900?.72:.5),gb=0,gd=1e9;gets.forEach(function(el,i){var r=el.getBoundingClientRect(),c=Math.abs(r.top+r.height/2-gm);if(c<gd){gd=c;gb=i}});if(gb!==gS){gS=gb;G.setStep(gb)}}
+  if(G)G.setProgress(lineProgress(gets,vh*(innerWidth<=900?.72:.5)));
 
   flow.style.setProperty('--p',fp.toFixed(4));
   flowLis.forEach(function(li,i){li.classList.toggle('on',fp>=i/flowLis.length-.001)});
@@ -527,6 +554,7 @@ addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onS
 </script>
 <script src="/assets/scenes.js"></script>
 <script type="module" src="/assets/cinder-field.js"></script>
+<script type="module" src="/assets/cinder-hero.js"></script>
 <script type="module" src="/assets/cinder-slab.js"></script>
 <script type="module" src="/assets/cinder-unit.js"></script>
 <script type="module" src="/assets/cinder-audit.js"></script>

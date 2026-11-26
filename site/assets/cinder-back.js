@@ -34,9 +34,9 @@ function destroy() {
 
 async function mount(el) {
   if (!(el instanceof Element)) throw new TypeError('mount requires a container');
-  const firstStep=requested;
+  const firstProgress=requested;
   destroy();
-  requested=firstStep;
+  requested=firstProgress;
   const token=generation;
   await document.fonts.ready;
   if(token!==generation) return;
@@ -44,13 +44,14 @@ async function mount(el) {
   instance.go(requested);
 }
 
-function setStep(n) {
-  if(!Number.isInteger(n)||n<0||n>3) return;
+function setProgress(n) {
+  if(!Number.isFinite(n)) return;
+  n=clamp(n,0,1);
   requested=n;
   instance?.go(n);
 }
 
-window.CinderBack=Object.freeze({mount,setStep,destroy});
+window.CinderBack=Object.freeze({mount,setProgress,destroy});
 
 function create(el) {
   const renderer=new T.WebGLRenderer({
@@ -68,7 +69,9 @@ function create(el) {
   renderer.shadowMap.enabled=true;
   renderer.shadowMap.type=T.PCFSoftShadowMap;
 
-  const lite=matchMedia('(max-width:700px),(pointer:coarse)').matches
+  const gl=renderer.getContext(),debug=gl.getExtension('WEBGL_debug_renderer_info');
+  const software=debug&&/swiftshader|llvmpipe/i.test(gl.getParameter(debug.UNMASKED_RENDERER_WEBGL));
+  const lite=software||matchMedia('(max-width:700px),(pointer:coarse)').matches
     || navigator.deviceMemory<=4 || !renderer.capabilities.isWebGL2;
   const scene=new T.Scene();
   const camera=new T.PerspectiveCamera(18,1,.1,70);
@@ -449,12 +452,12 @@ function create(el) {
   // All story poses and the LED envelope are functions of this single time coordinate.
   const stops=[.84,1.48,2.12,3.17];
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-  let p=0,target=stops[0],age=0,previousTime=0,idle=0;
+  let p=0,target=0,previousTime=0,idle=0;
   let frame=0,timer=0,visible=true,lost=false,disposed=false,dirty=true;
 
   function pose(t,life){
     const retract=ease(t,.85,1.12),lift=ease(t,1.02,1.32);
-    const lower=ease(t,1.49,1.81),rise=ease(t,1.66,2.02);
+    const lower=ease(t,1.60,1.91),rise=ease(t,1.48,1.95);
     const dock=ease(t,2.12,2.53);
     const counterIn=ease(t,2.24,2.60),phoneIn=ease(t,2.40,2.77);
 
@@ -501,7 +504,7 @@ function create(el) {
     const minutes=268+32*sweep;
     hands[0].rotation.z=-tau*minutes/720;
     hands[1].rotation.z=-tau*minutes/60;
-    hands[2].rotation.z=-tau*(48+(t===stops[2]?Math.floor(life)%60:0))/60;
+    hands[2].rotation.z=-tau*(48+sweep*12)/60;
     faceMat.color.setRGB(1,1-.032*sweep,1-.08*sweep);
 
     // Last seat at 2.77. No mechanical movement through the pause or breath.
@@ -524,15 +527,13 @@ function create(el) {
   }
   function tick(now){
     frame=0;
+    if(gl.isContextLost())return;
     const elapsed=previousTime?(now-previousTime)/1000:1/60;
     const dt=Math.min(elapsed,.05);
     previousTime=now;
     const moving=p!==target;
     if(moving){
-      // Smooth travel speed. Direction always comes from the latest target.
-      age+=dt;
-      const speed=reduced.matches?1:1-(1+age/.025)*Math.exp(-age/.025);
-      p+=Math.sign(target-p)*Math.min(Math.abs(target-p),dt*speed);
+      p=target;
       samples=0;
       idle=0;
     }else if(!reduced.matches){
@@ -628,16 +629,9 @@ function create(el) {
 
   return {
     go(n){
-      const names=[
-        '019 jobs','0 callbacks','Clock at 5:00',
-        'Counter, handset and clock docked with a steady red status light'
-      ];
-      canvas.setAttribute('aria-label',names[n]);
-      if(target!==stops[n]){
-        target=stops[n];
-        age=0;
-        previousTime=0;
-      }
+      const position=n*3,index=Math.min(2,Math.floor(position));
+      target=T.MathUtils.lerp(stops[index],stops[index+1],position-index);
+      canvas.setAttribute('aria-label',['Job counter','Handset in cradle','Clock at five','Three instruments docked'][Math.round(position)]+'. Example business, sample data.');
       wake();
     },
     dispose(){
@@ -657,3 +651,4 @@ function create(el) {
 }
 
 window.dispatchEvent(new Event('cinder-back'));
+window.dispatchEvent(new Event('cinder-visual'));
