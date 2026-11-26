@@ -100,6 +100,54 @@
       if (!nw && tk > .4) { var tp = P(h, top, -h); text(c, tp[0] + 14, tp[1] - 2, 'One app', cl(tk * 2 - .8), '600 14px Inter,system-ui,sans-serif') } }
   }, 6);
 
+  // ---- Homepage: what we build. A board of sixteen builds, not a fixed package. Scroll and one group at a time
+  // stands up out of the board with its names on pins; the rest sit back. Then empty places open for whatever
+  // else the business needs, and one line is traced through every tile: it all runs in one app.
+  var BT = ['Calls', 'Texts', 'Forms', 'Lead vetting', 'Booking', 'Reminders', 'Estimates', 'Quote follow-up', 'Invoices', 'Reviews', 'Old customers', 'Quiet quotes', 'Job updates', 'Crew schedule', 'Reports', 'Website'], BG = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5];
+  function arc(c, G, x, z, r, a0, a1, stroke) { c.beginPath(); for (var i = 0; i <= 16; i++) { var a = lerp(a0, a1, i / 16), q = G(x + Math.cos(a) * r, z + Math.sin(a) * r); i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]) } c.strokeStyle = stroke; c.stroke() }
+  function bx(G, x0, z0, x1, z1) { return [G(x0, z0), G(x1, z0), G(x1, z1), G(x0, z1)] }
+  var BGL = [
+    function (c, G, k) { [.3, .6, .9].forEach(function (r) { arc(c, G, -.55, .55, r, -1.5708, 0, k) }); oval(c, G, -.55, .55, .1, null, k) },
+    function (c, G, k) { poly(c, [G(-.62, -.5), G(.62, -.5), G(.62, .2), G(-.08, .2), G(-.42, .62), G(-.36, .2), G(-.62, .2)], k) },
+    function (c, G, k) { [-.42, 0].forEach(function (z) { poly(c, bx(G, -.62, z - .13, .62, z + .13), k) }); poly(c, bx(G, -.62, .34, -.1, .6), null, k) },
+    function (c, G, k) { poly(c, [G(-.66, -.52), G(.66, -.52), G(.14, .04), G(.14, .62), G(-.14, .62), G(-.14, .04)], k) },
+    function (c, G, k) { [[-.6, -.6], [.06, -.6], [-.6, .06], [.06, .06]].forEach(function (q, i) { poly(c, bx(G, q[0], q[1], q[0] + .54, q[1] + .54), k, i === 1 ? k : null) }) },
+    function (c, G, k) { oval(c, G, 0, 0, .62, k); seg(c, G(0, 0), G(0, -.42), k); seg(c, G(0, 0), G(.3, .12), k) },
+    function (c, G, k) { poly(c, bx(G, -.66, -.2, .66, .2), k); for (var i = -2; i <= 2; i++)seg(c, G(i * .24, -.2), G(i * .24, i % 2 ? -.02 : .06), k) },
+    function (c, G, k) { seg(c, G(-.6, .3), G(.6, .3), k); [-.6, 0, .6].forEach(function (x, i) { oval(c, G, x, .3, .1 + i * .05, null, k) }); arc(c, G, -.3, .3, .3, Math.PI, 2 * Math.PI, k); arc(c, G, .3, .3, .3, Math.PI, 2 * Math.PI, k) },
+    function (c, G, k) { poly(c, bx(G, -.46, -.62, .46, .62), k); seg(c, G(-.26, -.3), G(.26, -.3), k); seg(c, G(-.26, -.04), G(.26, -.04), k); poly(c, bx(G, .02, .22, .28, .44), null, k) },
+    function (c, G, k) { var pts = []; for (var j = 0; j < 10; j++) { var a = -Math.PI / 2 + j * Math.PI / 5, r = j % 2 ? .28 : .7; pts.push(G(Math.cos(a) * r, .04 + Math.sin(a) * r)) } poly(c, pts, k) },
+    function (c, G, k) { arc(c, G, 0, 0, .56, -.6, 4.4, k); poly(c, [G(.3, -.62), G(.66, -.36), G(.3, -.12)], null, k) },
+    function (c, G, k) { poly(c, bx(G, -.62, -.32, .3, .62), k); poly(c, bx(G, -.3, -.62, .62, .32), k) },
+    function (c, G, k) { [-.42, .08].forEach(function (x) { c.beginPath(); var a = G(x, -.5), b = G(x + .42, 0), d = G(x, .5); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.lineTo(d[0], d[1]); c.strokeStyle = k; c.stroke() }) },
+    function (c, G, k) { [[0, -.38], [-.42, .32], [.42, .32]].forEach(function (q) { oval(c, G, q[0], q[1], .24, k) }) },
+    function (c, G, k) { [[-.6, .1], [-.16, -.24], [.28, -.6]].forEach(function (q) { poly(c, bx(G, q[0], q[1], q[0] + .3, .62), null, k) }) },
+    function (c, G, k) { poly(c, bx(G, -.64, -.56, .64, .56), k); seg(c, G(-.64, -.26), G(.64, -.26), k); poly(c, bx(G, -.42, .0, .1, .26), null, k) }];
+  window.CinderBoard = mk(function (c, W, H, s, t) {
+    var nw = W < 520, u = Math.min(W * (nw ? .27 : .285), H * (nw ? .27 : .3)), pit = .5, hs = .2, P = iso(W * .5, H / 2 + u * .22, u, 1), act = Math.round(s) - 1, one = ez((s - 7.25) / .6), any = ez((s - 6.3) / .5), pins = [], i;
+    function tile(x, z, h, a, hot, g, n) {
+      var T = [P(x - hs, h, z - hs), P(x + hs, h, z - hs), P(x + hs, h, z + hs), P(x - hs, h, z + hs)], gr = c.createLinearGradient(T[0][0], T[0][1], T[2][0], T[2][1]); gr.addColorStop(0, 'rgb(30,30,34)'); gr.addColorStop(1, 'rgb(11,11,13)');
+      poly(c, [T[3], T[2], P(x + hs, 0, z + hs), P(x - hs, 0, z + hs)], ink(.34 * a), 'rgb(5,5,6)'); poly(c, [T[1], T[2], P(x + hs, 0, z + hs), P(x + hs, 0, z - hs)], ink(.34 * a), 'rgb(16,16,19)'); poly(c, T, hot > .5 ? red(.55 + .45 * hot) : ink(.62 * a), gr);
+      if (g > .02) { c.lineWidth = hot > .5 ? 1.25 : 1; BGL[n](c, function (gx, gz) { return P(x + gx * hs * .62, h, z + gz * hs * .62) }, ink((.5 + .5 * hot) * a * g)); c.lineWidth = 1 }
+    }
+    // back to front, so nearer tiles cover the ones behind
+    var order = []; for (i = 0; i < 16; i++)order.push(i); order.sort(function (a, b) { return (a % 4 + (a >> 2)) - (b % 4 + (b >> 2)) });
+    order.forEach(function (n) {
+      var col = n % 4, row = n >> 2, x = (col - 1.5) * pit, z = (row - 2) * pit, wave = ez((s * 1.5 - (col + row) / 6 * .9) / .4), hot = ez(cl(1.4 - Math.abs(s - (BG[n] + 1)) * 1.8)) * (1 - one), h = .028 + .03 * wave + .2 * hot + .035 * one, a = lerp(.42, .62, wave) + .38 * Math.max(hot, one);
+      tile(x, z, h, a, hot, wave, n); if (hot > .05) pins.push([P(x, h, z), n, hot])
+    });
+    // the places still open: whatever else the business needs
+    if (any > 0) for (i = 0; i < 4; i++) { var gx = (i - 1.5) * pit, k = ez(any * 1.6 - i * .2), q = [P(gx - hs, 0, 1 - hs), P(gx + hs, 0, 1 - hs), P(gx + hs, 0, 1 + hs), P(gx - hs, 0, 1 + hs)]; if (k <= 0) continue; c.setLineDash([3, 4]); poly(c, q, ink(.5 * k)); c.setLineDash([]); var m = P(gx, 0, 1), on = Math.abs(s - 7) < .5; seg(c, [m[0] - 5, m[1]], [m[0] + 5, m[1]], on ? RED : ink(.6 * k)); seg(c, [m[0], m[1] - 5], [m[0], m[1] + 5], on ? RED : ink(.6 * k)) }
+    // one app: a single line is traced through every tile, then a frame closes round the board
+    if (one > 0) { var path = [], r2, c2; for (r2 = 0; r2 < 4; r2++)for (c2 = 0; c2 < 4; c2++) { var cc = r2 % 2 ? 3 - c2 : c2; path.push(P((cc - 1.5) * pit, .064, (r2 - 2) * pit)) } var L = one * 1.5 * (path.length - 1); c.beginPath(); c.moveTo(path[0][0], path[0][1]); for (i = 1; i < path.length && i - 1 < L; i++) { var f = cl(L - (i - 1)); c.lineTo(lerp(path[i - 1][0], path[i][0], f), lerp(path[i - 1][1], path[i][1], f)) } c.strokeStyle = RED; c.lineWidth = 1.6; c.stroke(); c.lineWidth = 1;
+      var e = 1.06, F = [P(-e, 0, -1 - .3), P(e, 0, -1 - .3), P(e, 0, 1 + .3), P(-e, 0, 1 + .3)], fk = cl(one * 2.2 - 1.1); for (i = 0; i < 4; i++)part(c, F[i], F[(i + 1) % 4], fk * 4 - i, ink(.55)) }
+    // names on pins of stepped heights, so neighbours never collide
+    pins.sort(function (a, b) { return a[0][0] - b[0][0] }); var top0 = 1e9; pins.forEach(function (q) { top0 = Math.min(top0, q[0][1]) }); pins.forEach(function (pn, j) {
+      var p0 = pn[0], a = pn[2], stp = Math.min(25, pins.length > 1 ? (top0 - 42) / (pins.length - 1) : 25), y = lerp(p0[1] - 8, top0 - 16 - (pins.length - 1 - j) * stp, a); seg(c, [Math.round(p0[0]) + .5, p0[1] - 4], [Math.round(p0[0]) + .5, y], ink(.6 * a)); dot(c, [p0[0], p0[1] - 3], 2, RED);
+      c.font = '600 ' + (nw ? 11.5 : 13) + 'px Inter,system-ui,sans-serif'; var w = c.measureText(BT[pn[1]]).width + 16, lx = Math.max(w / 2 + 2, Math.min(W - w / 2 - 2, p0[0])); c.fillStyle = 'rgba(8,8,9,' + (.94 * a) + ')'; c.fillRect(Math.round(lx - w / 2), Math.round(y - 22), Math.round(w), 22); c.strokeStyle = ink(.3 * a); c.strokeRect(Math.round(lx - w / 2) + .5, Math.round(y - 22) + .5, Math.round(w), 22); text(c, lx, y - 10.5, BT[pn[1]], a, c.font, 'center') });
+    if (any > 0 && Math.abs(s - 7) < .6) { var ya = ez(cl(1.4 - Math.abs(s - 7) * 1.8)), g0 = P(.25, 0, 1.22); text(c, g0[0], g0[1] + 26, 'Yours', ya, '600 ' + (nw ? 11.5 : 13) + 'px Inter,system-ui,sans-serif', 'center') }
+  }, 8);
+
   // ---- Homepage: the audit sheet. Booked, walked, ranked, scoped.
   var ROWS = [['CALLS', '4 of 10 missed after 5 PM'], ['FORMS', 'Reply goes out next day'], ['ESTIMATES', 'Booked by phone tag'], ['QUOTES', 'No follow-up after day 2'], ['INVOICES', '2 late, no reminder'], ['REVIEWS', 'Never asked']], RANK = [1, 4, 5, 2, 6, 3], PICK = [0, 3, 5];
   window.CinderReport = mk(function (c, W, H, s, t, S) {
