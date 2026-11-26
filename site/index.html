@@ -473,7 +473,7 @@ var bdHost=d.getElementById('bdHost'),bdDesc=d.getElementById('bdDesc'),U=null,l
 var descs=["Every call, text and form gets a reply in seconds, even after hours.", "Leads pick a time and land on your calendar, with reminders so they show up.", "Sent quotes get followed up until the customer says yes or no.", "Unpaid invoices get polite reminders, so you get paid without chasing.", "Happy customers get asked for a review after every paid job.", "A site that turns visitors into booked jobs, if yours is part of the leak."];
 function unitReady(){if(U||!window.CinderUnit)return;U=window.CinderUnit;U.mount(bdHost);onScroll()}
 addEventListener('cinder-unit',unitReady);
-var slabOn=false;function slabReady(){if(slabOn||!window.CinderSlab)return;slabOn=true;CinderSlab.setStep(Math.max(0,cur));CinderSlab.mount(d.getElementById('slabHost'))}
+var slabOn=false;function slabReady(){if(slabOn||!window.CinderSlab)return;slabOn=true;CinderSlab.setStep(Math.max(0,cur));var sh=d.getElementById('slabHost');sh.onStepClick=function(i){var s=steps[i];if(s)scrollTo({top:scrollY+s.getBoundingClientRect().top-innerHeight*.5+s.offsetHeight/2,behavior:'smooth'})};CinderSlab.mount(sh)}
 addEventListener('cinder-slab',slabReady);
 var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl'),slats=[].slice.call(d.querySelectorAll('#rays i'));
 var names=['Answering','Booking','Quote follow-up','Invoices','Reviews','Website'];
