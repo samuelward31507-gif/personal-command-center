@@ -6,24 +6,28 @@ window.CinderHero=instrument({
   model({T,camera,group,box,ring,disc,add,own,labelPlate,deck,side,steel,seal,glass,ink,invalidate,ease}){
     const chassis=group(),lid=group(chassis),base=group(chassis),foot=group(chassis);
     const mobile=matchMedia('(max-width:700px)').matches;
-    chassis.scale.setScalar(mobile?1.15:.9);
+    chassis.scale.setScalar(mobile?1.2:.96);
     const gasket=group(lid),display=group(lid);
     lid.position.y=-93;
 
     // Low, broad stand with a visible hinge and an inset cable channel.
     box(0,0,0,524,61,39,side,7,base);
-    box(0,0,20,518,56,4,deck,2,base);
+    box(0,0,20,518,56,4,side,2,base);
+    box(0,29,0,516,1.6,36,deck,.7,base);
     box(0,0,0,420,19,74,side,6,foot);
+    box(0,9,0,414,1.2,68,deck,.5,foot);
     box(0,-2,0,248,5,30,seal,2,foot);
     for(const x of [-206,206]){
       const bearing=group(base);bearing.position.set(x,25,5);bearing.rotation.y=Math.PI/2;
       disc(0,0,0,14,58,steel,bearing);ring(0,0,30,9,1.4,seal,bearing);
     }
     for(let j=0;j<19;j++)box(-220+j*5,-6,22.4,2,9,1,seal,.45,base);
-    box(211,0,23,18,2,1,ink(0xff2a3a),.5,base);
+    
     labelPlate('EXAMPLE BUSINESS · SAMPLE DATA',0,0,22.5,200,10,base);
 
     // Thin graphite display, brushed bezel, recessed gasket and smoked glass.
+    const floor=new T.PlaneGeometry(1800,1100);floor.rotateX(-Math.PI/2);
+    add(floor,own(new T.ShadowMaterial({opacity:.24})),0,-187,-70);
     box(0,126,0,505,261,15,side,6,lid);
     box(0,126,8,501,257,4,deck,2,lid);
     box(0,126,0,484,242,3,seal,1.4,gasket);
@@ -40,7 +44,7 @@ window.CinderHero=instrument({
     texture.magFilter=T.LinearFilter;
     const screen=own(new T.MeshBasicMaterial({map:texture, toneMapped:false}));
     add(new T.PlaneGeometry(462,228),screen,0,126,2.2,display);
-    const liveDot=add(new T.CircleGeometry(4.2,24),ink(0xff2a3a),-122,107,3.2,display);
+    
     const powerRows=[107,89,71,53].map(y=>box(0,y,3.5,454,18,1,ink(0x09090b),.2,display));
 
     function drawDashboard(progress,arrival){
@@ -82,16 +86,17 @@ window.CinderHero=instrument({
 
     return (p,arrival)=>{
       powerRows.forEach((row,i)=>{row.visible=arrival<.20+i*.18});
-      camera.zoom=1+.08*ease(p,0,.55);
-      camera.position.z=810-70*ease(p,0,.55);
+      camera.zoom=1+.08*ease(p,0,1);
+      camera.position.z=810-70*ease(p,0,1);
       camera.lookAt(0,0,0);camera.updateProjectionMatrix();camera.updateMatrixWorld();
       const shut=1-arrival;
       // Stand rises and locks; display swings from a 15-degree back tilt.
-      chassis.rotation.set(-.10+.20*p,-.07+.14*p,.018-.036*p);
-      chassis.scale.setScalar(mobile?1.15:.9);
+      chassis.rotation.set(-.10+.20*p,-.105*ease(p,0,1),.018-.036*p);
+      chassis.scale.setScalar(mobile?1.2:.96);
       base.position.set(0,-125-26*shut,-5);
       foot.position.set(0,-156-31*shut,-14-36*shut);
-      lid.rotation.x=-.262*shut-.12;
+      lid.rotation.x=-.20944*shut;
+      lid.position.y=-93+24*arrival;
       gasket.position.z=11+38*shut;
       display.position.z=14+73*shut;
       drawDashboard(p,arrival);
