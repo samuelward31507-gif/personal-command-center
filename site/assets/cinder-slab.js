@@ -39,7 +39,7 @@ function mount(el){
       raf=requestAnimationFrame(t=>{raf=0;run(t)});
     }
   }
-  function invalidate(){reset=true;wake()}
+  function invalidate(){if(!raf)last=0;reset=true;wake()}
   function pause(){cancelAnimationFrame(raf);raf=0;last=0;wake()}
   const io=new IntersectionObserver(([entry])=>{live=entry.isIntersecting;pause()});
   const ro=new ResizeObserver(invalidate);
@@ -83,7 +83,7 @@ function mount(el){
     renderer.toneMappingExposure=1.08;
 
     const scene=new T.Scene(),unit=new T.Group();
-    const camera=new T.OrthographicCamera(-1,1,1,-1,1,2000);
+    const camera=new T.PerspectiveCamera(35,1,2,5000);
     scene.add(unit);
     camera.position.set(33,820,353);camera.lookAt(0,0,0);camera.updateMatrixWorld();
 
@@ -238,68 +238,139 @@ function mount(el){
       c.font=(mono?'500 ':'600 ')+size+'px '+(mono?'"Geist Mono",monospace':'Inter,Arial,sans-serif');
       c.textAlign=right?'right':'left';c.fillStyle=color;c.fillText(str,x,y);
     }
-    let compact=false,mainSize=13,smallSize=9,status=-1;
-    place(mesh(unit,plate(285,25,3,1,.32),flank,5,13.8,-131));
-    place(mesh(unit,plate(281,21,2.3,1,.24),glass,5,15,-131));
-    const strip=print(unit,273,18,5,16.5,-131,(c,w)=>{
-      text(c,'LINE 01',5,9,8,true,'#bcb9b4');
-      if(status>=0){
-        c.fillStyle=status===0?'#e5172f':'#e5e0d6';
-        c.fillRect(w-112,7.4,3.2,3.2);
-        text(c,copy[status][3],w-5,9,9,true,'#e6e1db',true);
-      }
-    });
-    place(strip.o);
-    place(print(unit,288,15,5,13.9,147,(c,w)=>{
-      text(c,'CINDER · LINE 01',0,7.5,8,true,'#18181a');
-      text(c,'S/N CR-L01-0427',w,7.5,6.4,true,'#262529',true);
-    }).o);
+    let compact=false;
+const stripState={roll:-1};
 
-    const keys=[],picks=[],links=[],railX=-152;
-    for(let i=0;i<4;i++){
-      const row=new T.Group(),key=new T.Group();
-      unit.add(row);row.add(key);row.position.set(5,0,rows[i]);
-      mesh(row,plate(291,46,3.6,1,.25),rubber,0,7);
-      mesh(key,plate(275,33,3,6,.34),flank,0,4.5);
-      mesh(key,plate(285,41,3.4,3,.42),alloy,0,10);
-      const edge=basic(0x251e21);
-      mesh(key,plate(281.5,37.5,2.9,.7,.16),edge,0,13.3);
-      const cap=mesh(key,plate(280,36,2.6,2.6,.44),glass,0,14.05);
-      cap.userData.index=i;picks.push(cap);
-      const label=print(key,269,34,0,17.12,0,(c,w)=>{
-        text(c,copy[i][0],3,7.6,smallSize,true,'#d4d0ca');
-        text(c,copy[i][2],w-3,7.6,smallSize,true,'#d4d0ca',true);
-        text(c,copy[i][1],3,23,mainSize,false);
-      });
-      const sweep=own(new T.ShaderMaterial({
-        transparent:true,depthWrite:false,uniforms:{phase:{value:-1}},
-        vertexShader:`varying vec2 v;
-          void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-        fragmentShader:`varying vec2 v;uniform float phase;
-          void main(){float d=abs(v.x+.13*v.y-phase);
-          gl_FragColor=vec4(.84,.83,.8,(1.-smoothstep(.0,.16,d))*.065);}`
-      }));
-      const sheen=mesh(key,new T.PlaneGeometry(276,33),sweep,0,17.22);
-      sheen.rotation.x=-Math.PI/2;sheen.castShadow=sheen.receiveShadow=false;
-      keys.push({row,key,label,edge,sweep,level:0,hover:0,scale:1});
-      const ink=basic(0x201e20);
-      const leg=mesh(unit,plate(1.4,1,.45,.19,.08),ink,railX,13.8);
-      const tap=mesh(unit,plate(12,1.4,.53,.2,.08),ink,railX+5.6,13.8);
-      links.push({ink,leg,tap});
-    }
+place(mesh(unit,plate(285,25,3,1,.32),flank,5,13.8,-131));
+place(mesh(unit,plate(281,21,2.3,1,.24),glass,5,15,-131));
 
-    // Render the opaque hardware and transparent canvas into a linear target.
-    // Average still samples before display conversion and the final SMAA pass.
+const strip=print(unit,273,18,5,16.5,-131,(c,w)=>{
+  text(c,'LINE 01',5,9,8,true,'#aaa8a3');
+  c.fillStyle='#e5172f';
+  c.beginPath();
+  c.arc(w-112,9,1.8,0,2*Math.PI);
+  c.fill();
+
+  c.save();
+  c.beginPath();
+  c.rect(w-105,1,101,16);
+  c.clip();
+  copy.forEach((line,i)=>{
+    text(c,line[3],w-4,9+(i-stripState.roll)*18,11,true,'#f2f1ee',true);
+  });
+  c.globalCompositeOperation='destination-out';
+  for(let y=3;y<16;y+=3.6)c.fillRect(w-105,y,103,.40);
+  c.restore();
+});
+place(strip.o);
+
+place(print(unit,288,15,5,13.9,147,(c,w)=>{
+  text(c,'CINDER · LINE 01',0,7.5,8,true,'#18181a');
+  text(c,'S/N CR-L01-0427',w,7.5,6.4,true,'#262529',true);
+}).o);
+
+const keys=[],picks=[],links=[];
+const wells=[],slotDepth=[],slotScale=[];
+const railX=-152;
+
+const polish=mat(0x535259,.21,{envMapIntensity:.65,clearcoat:.3});
+const lens=mat(0x88878a,.19,{
+  metalness:.22,transparent:true,opacity:.105,depthWrite:false,clearcoat:.9
+});
+const rim=basic(0x3a3435);
+place(mesh(unit,plate(313,1.05,.48,.23,.12),rim,0,6.83,162.4));
+
+for(let i=0;i<4;i++){
+  const row=new T.Group(),key=new T.Group();
+  unit.add(row);
+  row.add(key);
+
+  // Wells belong to the chassis. Keys move independently between them.
+  wells.push(mesh(unit,plate(291,46,3.6,1,.25),rubber,5,7,rows[i]));
+  mesh(key,plate(271,33,3,7,.42),flank,0,4);
+  mesh(key,plate(286,44,3.7,3,.65),alloy,0,11);
+
+  const edge=basic(0x251e21);
+  mesh(key,plate(282,40,3.1,1.1,.34),edge,0,14.25);
+  mesh(key,plate(280,39,3.1,1.5,.55),polish,0,15.6);
+  mesh(key,plate(279,39,3,5.7,.70),glass,0,17.4);
+
+  const cap=mesh(key,plate(279,39,3,6.4,.95),lens,0,24.1);
+  cap.castShadow=false;
+  cap.userData.index=i;
+  picks.push(cap);
+
+  // Calibrate the lettering for the perspective at its seated slot.
+  const type={sx:1,sy:1};
+  const label=print(key,268,38,0,24.16,0,(c,w)=>{
+    const main=compact?14:15.6,small=compact?9.7:11;
+    c.save();
+    c.scale(1/type.sx,1/type.sy);
+    const left=3*type.sx,right=(w-3)*type.sx;
+    text(c,copy[i][0],left,9*type.sy,small,true,'#d4d0ca');
+    text(c,copy[i][2],right,9*type.sy,small,true,'#d4d0ca',true);
+    text(c,copy[i][1],left,27*type.sy,main,false);
+    c.restore();
+  });
+
+  const reflect=label.o.clone();
+  reflect.material=own(label.o.material.clone());
+  reflect.position.set(.18,31.55,2.5);
+  key.add(reflect);
+
+  // Modulate only the letter strokes during the post-landing scan.
+  const scan={value:-2};
+  label.o.material.onBeforeCompile=shader=>{
+    shader.uniforms.linePhase=scan;
+    shader.fragmentShader='uniform float linePhase;\n'+
+      shader.fragmentShader.replace('#include <map_fragment>',`
+        #include <map_fragment>
+        float distanceToLine=abs(vMapUv.y-linePhase);
+        diffuseColor.rgb*=1.0+.32*(1.0-smoothstep(.0,.09,distanceToLine));
+      `);
+  };
+
+  label.o.renderOrder=1;
+  cap.renderOrder=2;
+  reflect.renderOrder=3;
+
+  const sweep=own(new T.ShaderMaterial({
+    transparent:true,depthWrite:false,uniforms:{phase:{value:-2}},
+    vertexShader:`varying vec2 v;
+      void main(){
+        v=uv;
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);
+      }`,
+    fragmentShader:`varying vec2 v;uniform float phase;
+      void main(){
+        float d=abs(v.x+.13*v.y-phase);
+        gl_FragColor=vec4(.84,.83,.8,(1.-smoothstep(.0,.16,d))*.055);
+      }`
+  }));
+  const sheen=mesh(key,new T.PlaneGeometry(275,36),sweep,0,31.58);
+  sheen.rotation.x=-Math.PI/2;
+  sheen.castShadow=sheen.receiveShadow=false;
+  sheen.renderOrder=4;
+
+  keys.push({row,key,label,reflect,type,scan,edge,sweep,hover:0,slot:-1});
+
+  const ink=basic(0x201e20);
+  const leg=mesh(unit,plate(1.4,1,.45,.19,.08),ink,railX,13.8);
+  const tap=mesh(unit,plate(12,1.4,.53,.2,.08),basic(0x201e20),railX+5.6,13.8);
+  const spark=mesh(unit,plate(1.65,6,.7,.21,.11),basic(0xf2e5db),railX,14.18);
+  links.push({ink,leg,tap,spark});
+}
+
     const target=(type,depth=false)=>own(new T.WebGLRenderTarget(1,1,{type,depthBuffer:depth}));
-    const beauty=target(lite?T.UnsignedByteType:T.HalfFloatType,true);
+    const beauty=target(renderer.extensions.has('EXT_color_buffer_float')?T.HalfFloatType:T.UnsignedByteType,true);
     const encoded=target(T.UnsignedByteType);
     const smaa=own(new SMAAPass(1,1)),quad=own(new FullScreenQuad(null));
     let ao,contact,history;
     if(!lite){
       ao=own(new GTAOPass(scene,camera,1,1,undefined,
         {radius:3.4,thickness:2.2,samples:8,scale:.85},{radius:2,samples:4,rings:1}));
-      ao.gtaoMaterial.defines.PERSPECTIVE_CAMERA=0;
-      ao.pdMaterial.defines.PERSPECTIVE_CAMERA=0;
+      ao.gtaoMaterial.defines.PERSPECTIVE_CAMERA=1;
+      ao.pdMaterial.defines.PERSPECTIVE_CAMERA=1;
       ao.blendIntensity=.27;
       ao.blendMaterial.blendSrcAlpha=T.ZeroFactor;
       ao.blendMaterial.blendDstAlpha=T.OneFactor;
@@ -335,16 +406,16 @@ function mount(el){
     function render(still){
       const refine=still&&!lite;
       if(!refine)samples=0;
-      const m=camera.projectionMatrix.elements,cx=m[12],cy=m[13];
+      const m=camera.projectionMatrix.elements,cx=m[8],cy=m[9];
       if(refine){
-        m[12]+=(halton(samples+1,2)-.5)*2/nx;
-        m[13]+=(halton(samples+1,3)-.5)*2/ny;
+        m[8]+=(halton(samples+1,2)-.5)*2/nx;
+        m[9]+=(halton(samples+1,3)-.5)*2/ny;
       }
       camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
       renderer.setRenderTarget(beauty);renderer.render(scene,camera);
       let src=beauty;
       if(ao){ao.render(renderer,contact,beauty);src=contact}
-      m[12]=cx;m[13]=cy;
+      m[8]=cx;m[9]=cy;
       camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
       if(refine){
         renderer.setRenderTarget(history);
@@ -361,56 +432,101 @@ function mount(el){
     }
 
     function resize(){
-      const width=frame.clientWidth,height=frame.clientHeight;
-      const dpr=Math.min(devicePixelRatio||1,2);
-      if(!width||!height)return false;
-      if(w===width&&h===height&&nx===Math.floor(width*dpr))return true;
-      w=width;h=height;compact=w<600&&w/h>1.05;
-      const px=Math.min(w*(compact ? .90 : .75)/376,h*.90/(compact?205:327));
-      camera.left=-w/(2*px);camera.right=-camera.left;
-      camera.top=h/(2*px);camera.bottom=-camera.top;camera.updateProjectionMatrix();
-      mainSize=Math.min(compact?18.8:17.2,(compact?14:15.6)/(px*.918));
-      smallSize=Math.min(compact?12.2:11.6,(compact?9.7:11)/(px*.918));
-      printed.forEach(f=>f());
-      renderer.setPixelRatio(dpr);renderer.setSize(w,h,false);
-      nx=canvas.width;ny=canvas.height;
-      for(const t of [beauty,encoded,contact,history])t?.setSize(nx,ny);
-      smaa.setSize(nx,ny);ao?.setSize(Math.ceil(nx*.67),Math.ceil(ny*.67));
-      layout='';reset=true;
-      return true;
-    }
+  const width=frame.clientWidth,height=frame.clientHeight;
+  const dpr=Math.min(devicePixelRatio||1,2);
+  if(!width||!height)return false;
+  if(w===width&&h===height&&nx===Math.floor(width*dpr))return true;
 
-    // Compress the corresponding portions of the milled deck with their keys.
-    // Screw positions, slots, trace junctions and the front grille stay registered.
-    function shapeDeck(){
-      const sig=keys.map(k=>k.scale.toFixed(3)).join('/');
-      if(sig===layout)return;
-      layout=sig;
-      function map(z){
-        let v=z;
-        for(let i=0;i<4;i++)v+=(keys[i].scale-1)*(60*clamp((z-rows[i]+30)/60)-30);
-        return v;
+  w=width;h=height;
+  compact=w<600&&w/h>1.05;
+  for(let i=0;i<4;i++)slotScale[i]=compact&&i<2 ? .34 : 1;
+  shapeDeck();
+
+  camera.aspect=w/h;
+  camera.zoom=1;
+  camera.updateProjectionMatrix();
+
+  const aim=new T.Vector3(0,13,0);
+  camera.position.set(130,395,495).add(aim);
+  camera.lookAt(aim);
+  camera.updateMatrixWorld();
+
+  const corners=[];
+  for(const x of [-178,178]){
+    for(const y of [-14,32]){
+      for(const z of [-164,164]){
+        corners.push(new T.Vector3(x,y,deckZ(z)).project(camera));
       }
-      for(const [o,src] of body){
-        const pos=o.geometry.attributes.position;
-        for(let i=0;i<pos.count;i++)pos.setZ(i,map(src[i*3+2]));
-        pos.needsUpdate=true;o.geometry.computeBoundingSphere();
-      }
-      fixed.forEach(([o,z])=>o.position.z=map(z));
-      keys.forEach((k,i)=>{
-        const z=map(rows[i]),start=i?map(rows[i-1]):map(-131);
-        k.row.position.z=z;k.row.scale.z=k.scale;
-        const l=links[i];
-        l.leg.position.z=(start+z)/2;l.leg.scale.z=(z-start)/1.16;l.tap.position.z=z;
-      });
     }
+  }
+  const xs=corners.map(p=>p.x),ys=corners.map(p=>p.y);
+  const low=Math.min(...xs),high=Math.max(...xs);
+  camera.zoom=Math.min(1.87/(high-low),1.66/(Math.max(...ys)-Math.min(...ys)));
+  camera.updateProjectionMatrix();
+  camera.projectionMatrix.elements[8]=low*camera.zoom+1.08;
+  camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+
+  keys.forEach(k=>k.slot=-1);
+  printed.forEach(redraw=>redraw());
+  renderer.setPixelRatio(dpr);
+  renderer.setSize(w,h,false);
+  nx=canvas.width;ny=canvas.height;
+  for(const target of [beauty,encoded,contact,history])target?.setSize(nx,ny);
+  smaa.setSize(nx,ny);
+  ao?.setSize(Math.ceil(nx*.67),Math.ceil(ny*.67));
+  reset=true;
+  return true;
+}
+
+function deckZ(z){
+  return slotScale.reduce((v,scale,i)=>{
+    return v+(scale-1)*(60*clamp((z-rows[i]+30)/60)-30);
+  },z);
+}
+
+function shapeDeck(){
+  for(const [o,src] of body){
+    const pos=o.geometry.attributes.position;
+    for(let i=0;i<pos.count;i++)pos.setZ(i,deckZ(src[i*3+2]));
+    pos.needsUpdate=true;
+    o.geometry.computeBoundingSphere();
+  }
+  fixed.forEach(([o,z])=>o.position.z=deckZ(z));
+  wells.forEach((well,i)=>{
+    const z=deckZ(rows[i]),start=i?deckZ(rows[i-1]):deckZ(-131);
+    slotDepth[i]=z;
+    well.position.z=z;
+    well.scale.z=slotScale[i];
+    const link=links[i];
+    link.leg.position.z=(start+z)/2;
+    link.leg.scale.z=(z-start)/1.16;
+    link.tap.position.z=z;
+  });
+}
+
+function calibrate(k,slot){
+  if(k.slot===slot)return;
+  k.slot=slot;
+
+  const project=(x,z)=>new T.Vector3(x,24.16,z).project(camera);
+  const z=slotDepth[slot];
+  const a=project(5,z),b=project(6,z),c=project(5,z+1);
+
+  // Screen-space length of the baseline and height perpendicular to it.
+  const bx=(b.x-a.x)*w/2,by=(b.y-a.y)*h/2;
+  const cx=(c.x-a.x)*w/2,cy=(c.y-a.y)*h/2;
+  k.type.sx=Math.hypot(bx,by);
+  k.type.sy=Math.abs(bx*cy-by*cx)/k.type.sx;
+  k.label.redraw();
+}
 
     const ray=new T.Raycaster(),pt=new T.Vector2();
     function hit(e){
       const b=canvas.getBoundingClientRect();
       pt.set(2*(e.clientX-b.left)/b.width-1,1-2*(e.clientY-b.top)/b.height);
       ray.setFromCamera(pt,camera);
-      return ray.intersectObjects(picks,false)[0]?.object.userData.index??-1;
+      return ray.intersectObjects(picks.filter(o=>o.parent.parent.visible),false)[0]
+  ?.object.userData.index??-1;
     }
     on(canvas,'pointermove',e=>{
       if(!fine.matches)return;
@@ -422,55 +538,110 @@ function mount(el){
     on(canvas,'click',e=>{const i=hit(e);if(i>=0)el.onStepClick?.(i)});
 
     const dark=new T.Color(0x211e20),red=new T.Color(0xe5172f),white=new T.Color(0xe7e0d2);
-    let dirtyShadow=true;
-    run=now=>{
-      if(dead||!resize())return;
-      if(reset){samples=0;dirtyShadow=true;reset=false}
-      const dt=last?Math.min(.08,(now-last)/1000):0;
-      last=now;
-      const snap=rm.matches,follow=snap?1:1-Math.exp(-dt*11);
-      const rx=snap?0:tx,rz=snap?0:tz;
-      let moving=Math.abs(rx-unit.rotation.x)+Math.abs(rz-unit.rotation.z)>.00015;
-      unit.rotation.x+=(rx-unit.rotation.x)*follow;
-      unit.rotation.z+=(rz-unit.rotation.z)*follow;
-      if(!snap)clock+=dt;
-      let state=-1;
+    let playhead=-1,dirtyShadow=true;
+const duration=.98;
 
-      for(let i=0;i<4;i++){
-        const k=keys[i],goal=i<=step?1:0;
-        const sg=compact&&(i>step||i<step-1) ? .29 : 1;
-        const next=snap?goal:k.level+Math.sign(goal-k.level)*
-          Math.min(Math.abs(goal-k.level),dt/(.88+i*.026));
-        const lift=!snap&&hover===i?1:0;
-        moving||=next!==k.level||Math.abs(k.hover-lift)>.006||Math.abs(k.scale-sg)>.001;
-        k.level=next;k.hover+=(lift-k.hover)*follow;k.scale+=(sg-k.scale)*follow;
-        if(Math.abs(k.scale-sg)<.001)k.scale=sg;
+run=now=>{
+  if(dead||!resize())return;
+  if(reset){samples=0;dirtyShadow=true;reset=false}
 
-        // One reversible phase drives the rise, click, label delay and trace.
-        k.key.position.y=-6+13*ease(next,0,.43)-ease(next,.43,.53)+ease(next,.53,.62)+k.hover;
-        const lit=ease(next,.79,.92);
-        k.label.o.material.opacity=lit*ease(k.scale,.35,.85);
-        k.label.o.visible=k.label.o.material.opacity>.001;
-        if(next>=.62)state=i;
+  const dt=last?Math.max(0,(now-last)/1000):0;
+  last=now;
+  const reduced=rm.matches,follow=1-Math.exp(-dt*14);
+  const delta=step-playhead;
+  let moving=Math.abs(delta)>0;
 
-        const pulse=snap ? .78 : .74+.22*Math.sin(clock*2.4);
-        const missed=pulse+(.34-pulse)*ease(keys[1].level,.55,.65);
-        k.edge.color.copy(dark).lerp(i?white:red,ease(next,.48,.64)*(i ? .70 : missed));
-        k.sweep.uniforms.phase.value=snap?-1:(clock%8)*.85-1;
-        const trail=snap||clock%8>6?0:Math.exp(-7*((clock%8)*.90-i-.5)**2);
-        links[i].ink.color.copy(dark).lerp(i?white:red,ease(next,.92,1)*(.44+.34*trail));
-      }
-      shapeDeck();
-      if(state!==status){status=state;strip.redraw()}
-      const idleChange=!snap&&(keys[1].level<.65||clock%8<6);
-      if(dirtyShadow||moving){renderer.shadowMap.needsUpdate=true;dirtyShadow=false}
-      if(moving||idleChange||!samples||samples<16){
-        if(!moving&&idleChange&&now-lastRender<33){wake();return}
-        lastRender=now;
-        if(render(!moving&&!idleChange))wake();
-      }
-      if(moving||!snap)wake();
-    };
+  // A single reversible clock keeps the carriage, display and light in sync
+  // when the page changes direction during a landing.
+  playhead+=Math.sign(delta)*Math.min(Math.abs(delta),dt/duration);
+
+  const rx=reduced?0:tx,rz=reduced?0:tz;
+  moving||=Math.abs(rx-unit.rotation.x)+Math.abs(rz-unit.rotation.z)>.0002;
+  unit.rotation.x+=(rx-unit.rotation.x)*follow;
+  unit.rotation.z+=(rz-unit.rotation.z)*follow;
+  if(!reduced)clock+=dt;
+
+  const phase=keys.map((_,i)=>duration*clamp(playhead-i+1));
+  let roll=-1,impact=0;
+
+  for(let i=0;i<4;i++){
+    const k=keys[i],t=phase[i],lift=hover===i?1:0;
+    moving||=Math.abs(k.hover-lift)>.01;
+    k.hover+=(lift-k.hover)*follow;
+    k.row.visible=t>0;
+    if(!k.row.visible)continue;
+
+    let depth=3;
+    for(let j=i+1;j<4;j++){
+      const lag=(j-i-1)*.033;
+      depth-=ease(phase[j],.018+lag,.265+lag);
+    }
+    depth=Math.max(0,Math.min(3,depth));
+    const lo=Math.floor(depth),hi=Math.min(3,lo+1),mix=depth-lo;
+    k.row.position.set(5,0,T.MathUtils.lerp(slotDepth[lo],slotDepth[hi],mix));
+    k.row.scale.z=T.MathUtils.lerp(slotScale[lo],slotScale[hi],mix);
+    calibrate(k,Math.round(depth));
+
+    // 290ms accelerating fall, followed by one compression and release.
+    const fall=clamp(t/.29);
+    const compression=2*(ease(t,.29,.365)-ease(t,.365,.45));
+    k.key.position.y=120*(1-fall*fall)-compression+k.hover;
+    k.key.rotation.z=-.092*(1-ease(t,.02,.29));
+    k.key.rotation.x=.058*(1-ease(t,0,.28));
+    impact=Math.max(impact,ease(t,.29,.335)-ease(t,.335,.45));
+
+    const lit=ease(t,.60,.78)*ease(k.row.scale.z,.36,.75);
+    k.label.o.material.opacity=lit;
+    k.reflect.material.opacity=lit*.009;
+    k.scan.value=i===step&&t>.66&&t<.94 ? (t-.66)/.28*1.25-.125 : -2;
+    k.sweep.uniforms.phase.value=reduced?-2:(clock%8)*.85-1;
+
+    const reply=ease(phase[1],.29,.45);
+    const pulse=reduced ? .78 : .76+.20*Math.sin(clock*2.4);
+    const brightness=i ? .67 : T.MathUtils.lerp(pulse,.34,reply);
+    k.edge.color.copy(dark).lerp(i?white:red,ease(t,.29,.45)*brightness);
+    roll+=ease(t,.29,.53);
+  }
+
+  unit.position.y=-impact;
+  if(Math.abs(roll-stripState.roll)>.002||
+     (Number.isInteger(roll)&&roll!==stripState.roll)){
+    stripState.roll=roll;
+    strip.redraw();
+  }
+  rim.color.copy(dark).lerp(red,reduced ? .18 : .18+.045*Math.sin(clock*.78));
+
+  links.forEach((link,slot)=>{
+    const end=slotDepth[slot];
+    link.tap.material.color.copy(dark);
+    for(let j=0;j<4;j++){
+      const proximity=clamp(1-Math.abs(keys[j].row.position.z-end)/18);
+      link.tap.material.color.lerp(j?white:red,proximity*ease(phase[j],.90,.98)*.64);
+    }
+    link.ink.color.copy(dark).lerp(phase[1]>.78?white:red,.42*ease(phase[0],.78,.98));
+
+    const flight=ease(phase[slot],.78,.98);
+    const start=slot?slotDepth[2]:deckZ(-131),front=slotDepth[3];
+    link.spark.visible=flight>0&&flight<1;
+    link.spark.position.set(
+      railX+11*ease(flight,.86,1),
+      14.18,
+      T.MathUtils.lerp(start,front,clamp(flight/.86))
+    );
+    link.spark.rotation.y=Math.PI*.5*ease(flight,.82,.91);
+  });
+
+  if(dirtyShadow||moving){
+    renderer.shadowMap.needsUpdate=true;
+    dirtyShadow=false;
+  }
+  if(!moving&&!reduced&&now-lastRender<33){wake();return}
+
+  lastRender=now;
+  const more=render(!moving&&reduced);
+  if(more||moving||!reduced)wake();
+};
+
 
     printed.forEach(f=>f());
     loadFonts().then(()=>{if(!dead){printed.forEach(f=>f());invalidate()}});
