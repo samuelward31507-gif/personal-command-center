@@ -241,7 +241,7 @@ function mount(el) {
     c.fillStyle = '#3A3A40';
     c.fillRect(6, 64, 248, .8);
   }));
-  const reply = sheet(248, 18, 0, 0, 16.18, c => text(c, 'Replied in 10s', 1, 13, 12, white, true));
+  const reply = sheet(248, 18, 0, 0, 16.18, c => text(c, 'Replied in seconds', 1, 13, 12, white, true));
   const bars = events.map((_, i) => mesh(new T.PlaneGeometry(1.6, 43), own(new T.MeshBasicMaterial({
     color: i === 0 ? red : white, transparent: true, depthWrite: false, toneMapped: false
   }))));
@@ -366,7 +366,7 @@ function mount(el) {
     canvas.setAttribute('aria-label',
       'Brightline Co. Today. Won this month $' + amount.toLocaleString('en-US') + '. ' +
       events.slice(0, count).reverse().map(e => e.join('. ')).join('. ') +
-      (arrivals[0] >= .98 ? '. Replied in 10s.' : '') + ' Example business. Sample data.');
+      (arrivals[0] >= .98 ? '. Replied in seconds.' : '') + ' Example business. Sample data.');
   }
 
   function tick(now) {

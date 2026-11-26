@@ -1,7 +1,7 @@
 // V4 call slab: four-key console. API: mount(el), setProgress(n), destroy(); el.onStepClick(i).
 const copy=[
   ['MISSED CALL','(303) 555-0148','7:42 PM','RINGING'],
-  ['REPLIED IN 10S','Text sent to Dana Ruiz','7:42 PM','REPLIED'],
+  ['REPLIED IN SECONDS','Text sent to Dana Ruiz','7:42 PM','REPLIED'],
   ['ESTIMATE BOOKED','Thu 9:00 AM · 41 Aspen Ct','7:51 PM','BOOKED'],
   ['REMINDER QUEUED','Text the night before','WED 6:00 PM','REMINDER SET']
 ];
