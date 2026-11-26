@@ -577,7 +577,7 @@ function update(){
   if(!RM&&y<1200){slats.forEach(function(el,i){el.style.setProperty('--y',(-(y*(.12+Math.abs(i-4)*.05))).toFixed(1)+'px')})}
   setStep(best);
   if(slabOn)CinderSlab.setProgress(lineProgress(steps,mid));
-  if(H)H.setProgress(clamp(y/Math.max(1,hero.offsetTop+hero.offsetHeight)));
+  if(H)H.setProgress(clamp(y/600));
   var fp=matchMedia('(max-width:900px)').matches?clamp((vh*.7-fr.top)/fr.height):clamp(trackP(aSec)/.7);
   var ap=trackP(matchMedia('(max-width:900px)').matches?aH:aSec);
   if(A&&Math.abs(ap-aP)>.0002){aP=ap;A.setProgress(ap)}
