@@ -3,7 +3,7 @@ import {instrument} from './instrument-studio.js';
 window.CinderHero=instrument({
   label:'Brightline Co Today dashboard on a machined studio monitor. Example business, sample data.',
   span:[580,370],assemble:true,
-  model({T,group,box,ring,disc,add,own,labelPlate,deck,side,steel,seal,glass,ink,invalidate,ease}){
+  model({T,camera,group,box,ring,disc,add,own,labelPlate,deck,side,steel,seal,glass,ink,invalidate,ease}){
     const chassis=group(),lid=group(chassis),base=group(chassis),foot=group(chassis);
     const mobile=matchMedia('(max-width:700px)').matches;
     chassis.scale.setScalar(mobile?1.15:.9);
