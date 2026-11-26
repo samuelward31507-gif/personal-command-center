@@ -46,7 +46,7 @@
       if (weak && seen && fix < 1) { var hgt = H * .26 * COST[w] * (1 - fix); c.fillStyle = red(.16); c.fillRect(Math.round(x - R), y - R - 10 - hgt, 2 * R, hgt); seg(c, x - R, Math.round(y - R - 10 - hgt) + .5, x + R, Math.round(y - R - 10 - hgt) + .5, RED) }
       if (weak && fix > 0) { var dy = (1 - fix) * H * .34; c.fillStyle = '#000'; c.fillRect(x - R - 1, y - R - 1, 2 * R + 2, 2 * R + 2); sq(c, x, y - dy, R, ink(.95), ink(.12 + .88 * ez(fix * 2 - 1))); if (fix < 1) seg(c, x, y - dy - R - 4, x, y - dy - R - 4 - 22 * (1 - fix), ink(.4)) }
       else { c.fillStyle = '#000'; c.fillRect(x - R - 1, y - R - 1, 2 * R + 2, 2 * R + 2); sq(c, x, y, R, weak && seen ? RED : ink(seen ? .85 : .25), weak && seen ? red(.14) : null); if (seen && !weak) sq(c, x, y, 2.5, null, ink(.9)) }
-      if (!nw || i % 3 === 0 || (weak && seen)) txt(c, s, x, y + R + 20, weak && seen && fix < 1 ? 1 : seen ? .7 : .3, 'center', MONO, weak && seen && fix < 1 ? RED : null)
+      if (!nw || (weak && seen) || ((i === 0 || i === n - 1) && !(scan > x0 && WEAK.indexOf(i === 0 ? 1 : n - 2) >= 0))) txt(c, s, x, y + R + 20, weak && seen && fix < 1 ? 1 : seen ? .7 : .3, 'center', MONO, weak && seen && fix < 1 ? RED : null)
     });
     if (a > 0 && a < 1) { seg(c, scan, H * .2, scan, H * .86, ink(.7)); c.fillStyle = ink(.05); c.fillRect(scan - 60, H * .2, 60, H * .66) }
     if (r > 0) for (var k = 0; k < 7; k++) { var m = (t * .11 + k / 7) % 1, px = lerp(x0, x1, m); if (m > r * 1.2) continue; c.fillStyle = k % 3 === 0 ? RED : ink(1); c.fillRect(px - 2.5, y - 2.5, 5, 5); c.fillStyle = ink(.25); c.fillRect(px - 16, y - .5, 13, 1) }
