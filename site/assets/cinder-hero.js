@@ -3,7 +3,7 @@ import {instrument} from './instrument-studio.js';
 window.CinderHero=instrument({
   label:'Brightline Co Today dashboard on a machined studio monitor. Example business, sample data.',
   span:[580,370],assemble:true,
-  model({T,group,box,ring,disc,add,own,labelPlate,deck,side,steel,seal,glass,ink,invalidate}){
+  model({T,group,box,ring,disc,add,own,labelPlate,deck,side,steel,seal,glass,ink,invalidate,ease}){
     const chassis=group(),lid=group(chassis),base=group(chassis),foot=group(chassis);
     const gasket=group(lid),display=group(lid);
     lid.position.y=-93;
@@ -38,6 +38,7 @@ window.CinderHero=instrument({
     texture.magFilter=T.LinearFilter;
     const screen=own(new T.MeshBasicMaterial({map:texture, toneMapped:false}));
     add(new T.PlaneGeometry(462,228),screen,0,126,2.2,display);
+    const liveDot=add(new T.CircleGeometry(4.2,24),ink(0xff2a3a),-122,107,3.2,display);
 
     function drawDashboard(progress,arrival){
       ctx.setTransform(scale,0,0,scale,0,0);
