@@ -6,10 +6,15 @@ window.CinderAudit=instrument({
   label:'Five inspection gauges opening to show pass or leak. Example business, sample data.',
   span:[432,337],
   model({T,group,box,disc,ring,screw,labelPlate,deck,side,steel,seal,glass,ink,ease}){
-    const ivory=ink(0xcac7c0),crimson=ink(0xd4142a);
+    const ivory=ink(0xf2f1ee),crimson=ink(0xff2a3a);
     box(0,0,-7,420,294,32,side,8);
     box(0,0,6,416,290,4,seal,2);
     box(0,0,12,418,292,9,deck,4);
+    // Brushed alloy bezel: four rails sit around the graphite instrument plate.
+    box(0,149,16,430,7,5,deck,2);
+    box(0,-149,16,430,7,5,deck,2);
+    box(-211,0,16,7,294,5,deck,2);
+    box(211,0,16,7,294,5,deck,2);
     for(const x of [-195,195])for(const y of [-130,130])screw(x,y,17);
     const chambers=[];
     for(const [i,title] of ['INTAKE','REPLY','BOOKING','QUOTES','REVIEWS'].entries()){
@@ -44,7 +49,7 @@ window.CinderAudit=instrument({
     const receipt=group();receipt.position.set(0,-116,22);
     box(0,-116,18,219,28,4,seal,1);
     box(0,0,0,210,23,5,glass,2,receipt);
-    const result=labelPlate('3 LEAKS  /  5 CHECKS',0,0,3,172,14,receipt);
+    const result=labelPlate('3 LEAKS  /  5 CHECKS',0,0,3,172,14,receipt);\n    result.material.color.set(0xff2a3a);
     labelPlate('EXAMPLE BUSINESS · SAMPLE DATA',0,-137,18,180,9);
     return p=>{
       chambers.forEach(({hinge,needle,leak},i)=>{
