@@ -485,8 +485,8 @@ function create(el) {
     [counterIn,phoneIn,dock].forEach((travel,i)=>{
       const pad=pads[i];
       pad.visible=travel>0;
-      pad.scale.set(travel,travel*(1-.12*ease(travel,.82,1)),travel);
-      pad.position.y=.202+.0225*pad.scale.y;
+      const contact=ease(travel,.70,.92);\n      pad.scale.set(travel,travel*(1-.20*contact),travel);
+      pad.position.y=.202+.0225*pad.scale.y-.006*contact;
     });
 
     clock.rotation.x=-.85*(1-rise);
