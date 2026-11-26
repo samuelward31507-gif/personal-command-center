@@ -203,10 +203,10 @@ export function instrument({label,span,assemble,model}) {
       function ring(x,y,z,r,t,m,parent){
         return add(new T.TorusGeometry(r,t,8,72),m,x,y,z,parent);
       }
-      function labelPlate(str,x,y,z,w,h,parent){
+      function labelPlate(str,x,y,z,w,h,parent,color='#f2f1ee'){
         const map=tex(Math.ceil(w*5),Math.ceil(h*5),c=>{
           c.scale(5,5);c.font='500 '+(h*.63)+'px "Geist Mono",monospace';
-          c.textAlign='center';c.textBaseline='middle';c.fillStyle='#f2f1ee';
+          c.textAlign='center';c.textBaseline='middle';c.fillStyle=color;
           c.fillText(str,w/2,h/2,w-2);
         });
         const mat=own(new T.MeshBasicMaterial({map,transparent:true,depthWrite:false}));
