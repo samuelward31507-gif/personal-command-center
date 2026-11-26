@@ -11,7 +11,6 @@ window.CinderAudit=instrument({
     box(0,0,7,416,290,5,seal,2); // recessed black reveal
     box(0,0,12,418,292,9,deck,4); // brushed aluminum perimeter bezel
     box(0,0,18,402,276,5,side,3); // deep graphite instrument plate
-    ring(0,0,20.8,201,1.2,steel);
     // Brushed alloy bezel: four rails sit around the graphite instrument plate.
     box(0,149,16,430,7,5,deck,2);
     box(0,-149,16,430,7,5,deck,2);
