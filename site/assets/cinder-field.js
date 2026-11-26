@@ -1,5 +1,5 @@
-// Cinder Field — precision studio backdrops.
-// A single 2D canvas keeps the backdrop inexpensive beside foreground WebGL scenes.
+// Cinder Field — glossy graphite edge-light backdrops.
+// One lightweight 2D canvas per backdrop; compositions stay out of headline space.
 (() => {
   const instances = new Map();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -9,8 +9,21 @@
     for (const ch of String(value)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
     return (h >>> 0) / 4294967296;
   };
-  const families = ['edge-panel', 'optic', 'channels', 'bevel', 'reflection', 'prism'];
-
+  const layouts = [
+    // Hero: broad opposing graphite pieces, the richest red reflections.
+    [[-.10,.13,.72,.29,-.48,1],[1.08,.37,.72,.30,.42,1],[.02,1.02,.76,.27,-.36,.78],[1.03,.94,.54,.20,-.50,.72]],
+    // Statement: left upper bevel and a heavy right-side glass bar.
+    [[-.14,.24,.72,.27,.34,.78],[1.08,.58,.80,.30,-.40,.82],[.13,1.04,.62,.23,-.25,.64]],
+    // App: high right slab, low left counterweight, long edge reflection.
+    [[1.10,.12,.78,.28,.58,.76],[-.12,.65,.78,.30,-.35,.72],[.93,1.02,.58,.22,-.18,.58]],
+    // Audit: forms enter from opposite lower corners.
+    [[-.08,.48,.76,.29,-.55,.76],[1.10,.88,.80,.28,.42,.78],[.86,-.08,.58,.21,-.36,.58]],
+    // Outcomes: deliberately quieter and smaller.
+    [[-.12,.18,.62,.23,-.42,.42],[1.10,.72,.64,.24,.38,.44],[.04,1.05,.58,.19,-.25,.34]],
+    // Closing: two upright edge forms with a low cross-sweep.
+    [[-.14,.42,.68,.28,.56,.72],[1.12,.28,.72,.29,-.58,.78],[.52,1.08,.82,.22,-.14,.66]]
+  ];
+  const families = ['hero','statement','app','audit','outcomes','closing'];
   function mount(el, { variant = 0, seed = '', calm = .88, intensity = 1 } = {}) {
     instances.get(el)?.destroy();
     const canvas = document.createElement('canvas');
@@ -19,129 +32,97 @@
     canvas.setAttribute('aria-hidden', 'true');
     canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
     el.append(canvas);
-
     const salt = hash(seed);
     let visible = false, raf = 0, timer = 0, last = 0, elapsed = 0, scrollP = 0;
     let width = 0, height = 0, dpr = 1, dead = false;
     const interval = 1000 / 60;
-    const family = () => families[((Math.floor(Number(variant) || 0) % families.length) + families.length) % families.length];
-    const px = n => Math.round(n * dpr) / dpr;
-    const stroke = (color, lineWidth = 1) => { ctx.strokeStyle = color; ctx.lineWidth = lineWidth; ctx.lineCap = 'butt'; ctx.lineJoin = 'miter'; };
-    const line = (x1, y1, x2, y2, color, lineWidth = 1) => {
-      stroke(color, lineWidth); ctx.beginPath(); ctx.moveTo(px(x1), px(y1)); ctx.lineTo(px(x2), px(y2)); ctx.stroke();
-    };
-    const poly = (points, fill) => {
-      ctx.fillStyle = fill; ctx.beginPath(); ctx.moveTo(px(points[0][0]), px(points[0][1]));
-      for (let i = 1; i < points.length; i++) ctx.lineTo(px(points[i][0]), px(points[i][1]));
-      ctx.closePath(); ctx.fill();
-    };
-    const arc = (x, y, r, a, b, color, lineWidth = 1) => {
-      stroke(color, lineWidth); ctx.beginPath(); ctx.arc(x, y, r, a, b); ctx.stroke();
-    };
-    function drawEdgePanel(t, drift) {
-      const side = salt > .5 ? 1 : -1, x = side > 0 ? width * 1.02 : -width * .02;
-      const y = height * (.25 + (salt % .3));
-      ctx.save(); ctx.translate(x, y); ctx.rotate(side * (-.28 + salt * .14));
-      const w = width * (.28 + salt * .06), h = height * 1.15;
-      poly([[0,-h*.5],[side*w,-h*.42],[side*w,h*.42],[0,h*.5]], '#080809');
-      line(0,-h*.5,side*w,-h*.42,'#202024',2);
-      line(side*w,-h*.42,side*w,h*.42,'#111114',2);
-      line(0,h*.5,side*w,h*.42,'#17171b',1);
-      const sweep = ((t * .045 + drift + salt) % 1);
-      const sy = -h*.36 + sweep*h*.72;
-      line(0,sy,side*w,sy-side*w*.08,'#77767c',1.1);
-      line(0,sy+2,side*w,sy-side*w*.08+2,'rgba(242,241,238,.16)',1);
-      line(side*w*.82,-h*.38,side*w*.82,h*.38,'#2a2a2f',3);
+    const selected = () => ((Math.floor(Number(variant)||0)%layouts.length)+layouts.length)%layouts.length;
+    const px = n => Math.round(n*dpr)/dpr;
+    function chamferPath(w,h,cut) {
+      ctx.beginPath();
+      ctx.moveTo(-w/2+cut,-h/2);ctx.lineTo(w/2-cut,-h/2);
+      ctx.lineTo(w/2,-h/2+cut);ctx.lineTo(w/2,h/2-cut);
+      ctx.lineTo(w/2-cut,h/2);ctx.lineTo(-w/2+cut,h/2);
+      ctx.lineTo(-w/2,h/2-cut);ctx.lineTo(-w/2,-h/2+cut);
+      ctx.closePath();
+    }
+    function edge(x1,y1,x2,y2,color,lw=1) {
+      ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.lineCap='butt';ctx.beginPath();
+      ctx.moveTo(px(x1),px(y1));ctx.lineTo(px(x2),px(y2));ctx.stroke();
+    }
+    function form(spec,index,t,drift,redLevel) {
+      const [nx,ny,nw,nh,angle,weight]=spec;
+      const w=width*nw,h=height*nh;
+      const bob=Math.sin(t*.22+salt*6+index)*height*.006;
+      ctx.save();
+      ctx.translate(width*(nx+drift*(index%2?-.5:.5)),height*ny+bob);
+      ctx.rotate(angle+Math.sin(t*.17+index+salt)*.018+scrollP*(index%2?-.018:.018));
+      const cut=Math.min(w*.12,h*.24,24*dpr);
+      chamferPath(w,h,cut);
+      const body=ctx.createLinearGradient(-w*.12,-h*.5,w*.22,h*.5);
+      body.addColorStop(0,'#252529');body.addColorStop(.16,'#17171b');
+      body.addColorStop(.48,'#09090b');body.addColorStop(.78,'#1b1b20');
+      body.addColorStop(1,'#050506');ctx.fillStyle=body;ctx.fill();
+      // A saturated reflection is clipped to the machined face, never a surrounding glow.
+      ctx.save();chamferPath(w,h,cut);ctx.clip();
+      const sweep=(.5+.5*Math.sin(t*.16+salt*8+index*1.7));
+      const lx=-w*.48+sweep*w*.96;
+      const red=ctx.createLinearGradient(-w*.15,h*.08,w*.44,-h*.42);
+      red.addColorStop(0,'rgba(70,3,12,0)');
+      red.addColorStop(.28,'rgba(138,10,23,'+(redLevel*.28)+')');
+      red.addColorStop(.58,'rgba(212,20,42,'+(redLevel*.52)+')');
+      red.addColorStop(.76,'rgba(86,5,15,'+(redLevel*.22)+')');
+      red.addColorStop(1,'rgba(18,2,5,0)');
+      ctx.fillStyle=red;ctx.fillRect(-w/2,-h/2,w,h);
+      // Dark glossy band, broad enough to read as a real smoked surface.
+      const gloss=ctx.createLinearGradient(0,-h*.48,0,h*.18);
+      gloss.addColorStop(0,'rgba(242,241,238,.16)');
+      gloss.addColorStop(.14,'rgba(242,241,238,.055)');
+      gloss.addColorStop(.32,'rgba(255,255,255,0)');
+      gloss.addColorStop(1,'rgba(0,0,0,.38)');
+      ctx.fillStyle=gloss;ctx.fillRect(-w/2,-h/2,w,h);
+      // Narrow reflected crimson strip along one bevel.
+      const redEdge=ctx.createLinearGradient(-w*.5,h*.38,w*.5,h*.08);
+      redEdge.addColorStop(0,'rgba(138,10,23,0)');
+      redEdge.addColorStop(.42,'rgba(212,20,42,'+(redLevel*.88)+')');
+      redEdge.addColorStop(.7,'rgba(212,20,42,'+(redLevel*.42)+')');
+      redEdge.addColorStop(1,'rgba(138,10,23,0)');
+      ctx.fillStyle=redEdge;
+      ctx.beginPath();ctx.moveTo(-w*.5,h*.28);ctx.lineTo(w*.5,h*.04);
+      ctx.lineTo(w*.5,h*.13);ctx.lineTo(-w*.5,h*.37);ctx.closePath();ctx.fill();
+      ctx.restore();
+      // Beveled graphite edges and precise warm-white speculars.
+      chamferPath(w,h,cut);ctx.strokeStyle='rgba(119,118,124,.78)';ctx.lineWidth=1.2;ctx.stroke();
+      edge(-w/2+cut,-h/2,w/2-cut,-h/2,'rgba(242,241,238,.72)',1.25);
+      edge(-w/2,-h/2+cut,-w/2,h/2-cut,'rgba(242,241,238,.22)',1);
+      edge(-w/2+cut,h/2,w/2-cut,h/2,'rgba(119,118,124,.34)',1);
+      // Moving highlight segment travels along the top chamfer, with a fine crimson echo.
+      const p=(t*.055+salt*.71+index*.23)%1;
+      const sx=-w*.43+p*w*.86, sy=-h*.5;
+      const len=Math.max(24*dpr,w*.12);
+      edge(sx-len*.5,sy,sx+len*.5,sy,'rgba(242,241,238,'+(.48+.22*Math.sin(t*.2+index))+')',1.65);
+      edge(sx-len*.5,sy+2*dpr,sx+len*.5,sy+2*dpr,'rgba(212,20,42,'+(redLevel*.88)+')',1.15);
+      // A narrow side face gives the slabs real thickness.
+      ctx.fillStyle='#050506';ctx.beginPath();
+      ctx.moveTo(w/2-cut,-h/2);ctx.lineTo(w/2,-h/2+cut);
+      ctx.lineTo(w/2,h/2-cut);ctx.lineTo(w/2-cut,h/2);
+      ctx.closePath();ctx.fill();
+      edge(w/2-cut,-h/2,w/2,-h/2+cut,'#77767c',1);
       ctx.restore();
     }
-    function drawOptic(t, drift) {
-      const side = salt > .5 ? 1 : -1, cx = side > 0 ? width * 1.04 : -width * .04;
-      const cy = height * (.18 + salt * .28), r = Math.min(width, height) * (.46 + salt * .06);
-      ctx.save(); ctx.translate(cx, cy); ctx.scale(1, .86);
-      arc(0,0,r,Math.PI*.56,Math.PI*1.48,'#252529',2);
-      arc(0,0,r-5,Math.PI*.56,Math.PI*1.48,'#111114',1);
-      arc(0,0,r*.83,Math.PI*.58,Math.PI*1.45,'#333338',1);
-      arc(0,0,r*.72,Math.PI*.60,Math.PI*1.43,'#17171a',2);
-      const a = Math.PI * (.75 + .38 * Math.sin(t*.045 + drift));
-      const x = Math.cos(a)*r*.9, y = Math.sin(a)*r*.9;
-      line(0,0,x,y,'#77767c',1);
-      line(0,0,x*.72,y*.72,'rgba(242,241,238,.42)',1);
-      line(x*.68,y*.68,x,y,'#d4142a',1);
-      ctx.restore();
-    }
-    function drawChannels(t, drift) {
-      const side = salt > .5 ? 1 : -1, start = side > 0 ? width * .74 : width * .26;
-      const sign = side > 0 ? 1 : -1, y0 = height * (.14 + salt * .26);
-      const span = width * .44, gap = Math.min(22, height*.035);
-      for (let i = 0; i < 3; i++) {
-        const y = y0 + i * gap, x1 = start, x2 = start + sign * span;
-        line(x1,y,x1+sign*span*.28,y+sign*span*.035,'#1c1c1f',2);
-        line(x1+sign*span*.28,y+sign*span*.035,x2,y+sign*span*.10,'#101012',2);
-        line(x1,y-1,x1+sign*span*.28,y+sign*span*.035-1,'#39393e',1);
-      }
-      const phase = ((t * .12 + drift + salt) % 1);
-      const x = start + sign * span * phase;
-      const y = y0 + 2 * gap + sign * span * .10 * phase;
-      line(x-sign*13,y-sign*1.3,x,y,'#d4142a',1.4);
-      line(x,y,x+sign*9,y+sign*1.1,'#ff2a3a',1);
-    }
-    function drawBevel(t, drift) {
-      const side = salt > .5 ? 1 : -1, x = side > 0 ? width * .91 : width * .09;
-      const y = height * (.76 + salt * .08), w = width * .46, h = height * .3;
-      const p = [[x,y-h],[x+side*w,y-h*.72],[x+side*w,y+h*.7],[x,y+h]];
-      poly(p,'#080809');
-      line(p[0][0],p[0][1],p[1][0],p[1][1],'#2a2a2f',3);
-      line(p[1][0],p[1][1],p[2][0],p[2][1],'#17171a',2);
-      line(p[2][0],p[2][1],p[3][0],p[3][1],'#111114',1);
-      const q = ((t*.05 + drift + salt) % 1);
-      const sx = p[0][0] + (p[1][0]-p[0][0])*q, sy = p[0][1] + (p[1][1]-p[0][1])*q;
-      line(sx,sy,sx+side*width*.05,sy-height*.012,'#77767c',1.2);
-      line(sx+side*width*.05,sy-height*.012,sx+side*width*.08,sy-height*.019,'rgba(242,241,238,.22)',1);
-    }
-    function drawReflection(t, drift) {
-      const side = salt > .5 ? 1 : -1, x = side > 0 ? width * .98 : width * .02;
-      const y = height * (.17 + salt * .35), w = width * .38, h = height * .84;
-      poly([[x,y-h*.5],[x+side*w,y-h*.43],[x+side*w,y+h*.43],[x,y+h*.5]], '#070708');
-      line(x,y-h*.5,x+side*w,y-h*.43,'#222226',2);
-      line(x+side*w,y-h*.43,x+side*w,y+h*.43,'#161619',2);
-      line(x,y+h*.5,x+side*w,y+h*.43,'#1b1b1f',1);
-      const p = (t*.06 + drift + salt) % 1;
-      const sx = x + side*w*p, sy = y-h*.35 + h*.7*p;
-      line(sx,sy,sx+side*w*.08,sy-h*.025,'#77767c',1);
-      line(sx+side*w*.08,sy-h*.025,sx+side*w*.14,sy-h*.04,'rgba(242,241,238,.28)',1);
-    }
-    function drawPrism(t, drift) {
-      const side = salt > .5 ? 1 : -1, x = side > 0 ? width * .98 : width * .02;
-      const y = height * (.58 + salt * .12), w = width * .32, h = height * .46;
-      const a=[x,y-h*.5], b=[x+side*w,y-h*.18], c=[x+side*w*.82,y+h*.48], d=[x,y+h*.5];
-      poly([a,b,c,d],'#080809');
-      line(a[0],a[1],b[0],b[1],'#2a2a2f',2);
-      line(b[0],b[1],c[0],c[1],'#1c1c1f',1);
-      line(c[0],c[1],d[0],d[1],'#17171a',1);
-      const p=(t*.055+drift+salt)%1, sx=a[0]+(b[0]-a[0])*p, sy=a[1]+(b[1]-a[1])*p;
-      line(sx,sy,sx+side*w*.11,sy+h*.04,'#77767c',1);
-      line(sx+side*w*.11,sy+h*.04,sx+side*w*.16,sy+h*.06,'#d4142a',1);
-    }
-    const draw = { 'edge-panel':drawEdgePanel, optic:drawOptic, channels:drawChannels, bevel:drawBevel, reflection:drawReflection, prism:drawPrism };
-
     function render(now) {
-      raf=0;
-      if (dead || !visible || document.hidden) return;
-      if (last && !reduced.matches) elapsed += Math.min(.1,(now-last)/1000);
+      raf=0;if(dead||!visible||document.hidden)return;
+      if(last&&!reduced.matches)elapsed+=Math.min(.08,(now-last)/1000);
       last=now;
-      ctx.setTransform(1,0,0,1,0,0);
-      ctx.fillStyle='#000';ctx.fillRect(0,0,width,height);
-      const drift = reduced.matches ? 0 : scrollP * .035;
-      ctx.save();ctx.globalAlpha=clamp(intensity,0,1);draw[family()](elapsed,drift);ctx.restore();
-      // Black center is reserved for copy; all precise light stays at the perimeter.
-      const cx=width*.5, cy=height*.48, radius=Math.max(width*.38,height*.42);
-      const protect=ctx.createRadialGradient(cx,cy,Math.min(width,height)*.12,cx,cy,radius);
+      ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,width,height);
+      const v=selected(),drift=reduced.matches?0:scrollP*.022+Math.sin(elapsed*.12)*.012;
       const quiet=clamp(Number(calm)||0,0,1);
-      protect.addColorStop(0,'rgba(0,0,0,'+(0.985+quiet*.014)+')');
-      protect.addColorStop(.58,'rgba(0,0,0,'+(0.92+quiet*.075)+')');
-      protect.addColorStop(1,'rgba(0,0,0,'+(0.12+quiet*.24)+')');
-      ctx.fillStyle=protect;ctx.fillRect(0,0,width,height);
-      if (!reduced.matches) timer=setTimeout(wake,interval);
+      const redLevel=(v===0?1.08:.78)*(1-quiet*.18)*clamp(Number(intensity)||0,0,1);
+      const specs=layouts[v];
+      ctx.save();ctx.globalAlpha=clamp(Number(intensity)||0,0,1);
+      specs.forEach((s,i)=>form(s,i,reduced.matches?0:elapsed,drift,redLevel*(s[5]||1)));
+      ctx.restore();
+      if(!reduced.matches)timer=setTimeout(wake,interval);
     }
     function resize() {
       const r=el.getBoundingClientRect();if(!r.width||!r.height)return;
@@ -149,9 +130,9 @@
       width=Math.max(1,Math.round(r.width*dpr));height=Math.max(1,Math.round(r.height*dpr));
       canvas.width=width;canvas.height=height;wake();
     }
-    function wake() {clearTimeout(timer);if(!dead&&visible&&!document.hidden&&!raf)raf=requestAnimationFrame(render);}
-    function pause() {cancelAnimationFrame(raf);clearTimeout(timer);raf=0;timer=0;last=0;if(visible&&!document.hidden)wake();}
-    function updateScroll() {
+    function wake(){clearTimeout(timer);if(!dead&&visible&&!document.hidden&&!raf)raf=requestAnimationFrame(render);}
+    function pause(){cancelAnimationFrame(raf);clearTimeout(timer);raf=0;timer=0;last=0;if(visible&&!document.hidden)wake();}
+    function updateScroll(){
       const sec=el.closest('[data-backdrop]')||el,r=sec.getBoundingClientRect();
       scrollP=clamp((innerHeight*.5-r.top)/Math.max(r.height,1),0,1);wake();
     }
