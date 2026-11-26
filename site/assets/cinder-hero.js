@@ -82,13 +82,13 @@ window.CinderHero=instrument({
 
     return (p,arrival)=>{
       powerRows.forEach((row,i)=>{row.visible=arrival<.20+i*.18});
-      camera.zoom=1+.12*ease(p,0,.55);
+      camera.zoom=1+.08*ease(p,0,.55);
       camera.position.z=810-70*ease(p,0,.55);
       camera.lookAt(0,0,0);camera.updateProjectionMatrix();camera.updateMatrixWorld();
       const shut=1-arrival;
       // Stand rises and locks; display swings from a 15-degree back tilt.
       chassis.rotation.set(-.10+.20*p,-.07+.14*p,.018-.036*p);
-      chassis.scale.setScalar(1+.075*p);
+      chassis.scale.setScalar(mobile?1.15:.9);
       base.position.set(0,-125-26*shut,-5);
       foot.position.set(0,-156-31*shut,-14-36*shut);
       lid.rotation.x=-.262*shut-.12;
