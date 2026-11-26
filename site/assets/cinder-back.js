@@ -535,21 +535,15 @@ function create(el) {
   function tick(now){
     frame=0;
     if(gl.isContextLost())return;
-    const elapsed=previousTime?(now-previousTime)/1000:1/60;
-    const dt=Math.min(elapsed,.05);
-    previousTime=now;
     const moving=p!==target;
     if(moving){
       p=target;
       samples=0;
       idle=0;
-    }else if(!reduced.matches){
-      idle+=elapsed;
     }
-    const life=reduced.matches||moving?0:idle;
-    const clockTick=!reduced.matches&&p===stops[2]
-      &&Math.floor(life)!==Math.floor(life-elapsed);
-    const changed=dirty||moving||life%7.6>=6.3||(life>0&&life%7.6<elapsed)||clockTick;
+    // The pose is scroll-scrubbed only. No idle timer may advance the model.
+    const life=0;
+    const changed=dirty||moving||samples===0;
 
     if(changed){
       samples=0;
@@ -564,12 +558,8 @@ function create(el) {
       wake();
       return;
     }
-    if((!lite&&samples<16)||!reduced.matches){
-      const nextSweep=6.3-(life%7.6);
-      const nextTick=p===stops[2]?1-life%1:Infinity;
-      const delay=(!lite&&samples<16)||nextSweep<=0 ? 1/30 : Math.min(nextSweep,nextTick);
-      timer=setTimeout(wake,Math.max(1000/30,delay*1000));
-    }
+    // Only continue while the still-frame accumulation is converging.
+    if(!lite&&samples<16)timer=setTimeout(wake,1000/30);
   }
   function resize(){
     width=Math.max(1,el.clientWidth);
@@ -587,7 +577,7 @@ function create(el) {
     samples=0;
     wake();
   }
-  function suspend(){cancel();previousTime=0}
+  function suspend(){cancel()}
   function visibility(){if(document.hidden||!visible)suspend();else wake()}
   function preference(){idle=0;dirty=true;wake()}
 
