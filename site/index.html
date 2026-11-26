@@ -89,7 +89,7 @@ p{color:var(--t2);text-wrap:pretty}
   transform:translate3d(var(--x),var(--y,0px),0) rotate(24deg) scaleY(calc(1 - (var(--k) - 4) * (var(--k) - 4) * .045));
   opacity:calc(1 - (var(--k) - 4) * (var(--k) - 4) * .07);will-change:transform}
 .rays i:nth-child(odd){background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.05) 30%,rgba(255,250,245,.16) 55%,rgba(255,255,255,0) 100%)}
-.rays-core{position:absolute;left:50%;top:380px;width:900px;height:480px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(212,20,42,.28),rgba(140,10,24,.10) 50%,transparent 76%)}
+.rays-core{display:none;position:absolute;left:50%;top:380px;width:900px;height:480px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(212,20,42,.28),rgba(140,10,24,.10) 50%,transparent 76%)}
 .rays-fade{position:absolute;inset:0;background:radial-gradient(60% 46% at 50% 36%,rgba(0,0,0,.6),transparent 70%),linear-gradient(180deg,#000 0%,transparent 16%,transparent 62%,#000 96%)}
 .js .rays i{animation:slat 1.6s var(--e) both;animation-delay:calc(.08s * (4 - (var(--k) - 4) * (var(--k) - 4) / 4))}
 @keyframes slat{from{opacity:0;transform:translate3d(var(--x),120px,0) rotate(24deg) scaleY(.6)}}
@@ -106,9 +106,15 @@ p{color:var(--t2);text-wrap:pretty}
 .js .hero .lede{animation-delay:.25s}.js .hero .acts{animation-delay:.33s}.js .hero .terms{animation-delay:.4s}
 @keyframes up{from{transform:translate3d(0,105%,0)}to{transform:none}}
 @keyframes fade{from{opacity:0;transform:translate3d(0,16px,0)}to{opacity:1;transform:none}}
-.tools{border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;background:#000}
-.tools .wrap{display:flex;align-items:center;gap:36px;min-height:72px;overflow:hidden;white-space:nowrap}
-.tools span{font-size:var(--f2);color:var(--t3)}.tools .lab{color:var(--t2)}
+.tools{border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;background:#000;padding:28px 0 32px}
+.tools-lab{text-align:center;font-size:var(--f1);font-family:var(--mono);color:var(--t3);margin-bottom:22px}
+.marquee{display:flex;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.mq{display:flex;flex:none;gap:56px;padding-right:56px;animation:mq 46s linear infinite}
+.mq li{display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:var(--f3);font-weight:550;letter-spacing:-.01em;color:var(--t2)}
+.mq svg{width:20px;height:20px;fill:var(--t2)}
+.marquee:hover .mq{animation-play-state:paused}
+@keyframes mq{from{transform:translate3d(-100%,0,0)}to{transform:translate3d(0,0,0)}}
+@media (prefers-reduced-motion:reduce){.mq{animation:none}}
 
 .rv{opacity:0;transform:translate3d(0,24px,0);transition:opacity .9s var(--e),transform .9s var(--e)}
 .rv.in{opacity:1;transform:none}
@@ -116,7 +122,7 @@ p{color:var(--t2);text-wrap:pretty}
 
 /* 2 SPLIT: what we fix, the unit comes apart */
 .bd{position:relative;height:320vh}
-.bd-pin{position:sticky;top:0;height:100vh;display:grid;grid-template-columns:340px 1fr 290px;gap:24px;align-items:center;max-width:calc(var(--w) + var(--g)*2);margin:0 auto;padding:64px var(--g) 0}
+.bd-pin{position:sticky;top:0;height:100vh;display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:center;max-width:calc(var(--w) + var(--g)*2);margin:0 auto;padding:64px var(--g) 0}
 .bd-head h2{font-size:clamp(34px,3.6vw,48px)}
 .bd-head p{margin-top:18px;font-size:var(--f4)}
 .bd-meter{margin-top:32px;display:flex;align-items:center;gap:12px}
@@ -129,18 +135,18 @@ p{color:var(--t2);text-wrap:pretty}
 .unit-failed .stage .fb img{width:100%;height:100%;object-fit:cover;object-position:0 0}
 .tick{position:absolute;width:11px;height:11px;border:solid var(--line2);border-width:1px 0 0 1px;pointer-events:none}
 .tick.a{left:0;top:0}.tick.b{right:0;top:0;transform:rotate(90deg)}.tick.c{right:0;bottom:0;transform:rotate(180deg)}.tick.d{left:0;bottom:0;transform:rotate(-90deg)}
-.parts li{padding:14px 0 14px 16px;border-left:1px solid var(--line);transition:border-color .45s}
-.parts li b{display:flex;gap:10px;font-size:var(--f3);font-weight:600;color:var(--t3);transition:color .45s}
-.parts li b span{font:500 var(--f1)/24px var(--mono)}
-.parts li p{font-size:var(--f2);line-height:1.5;max-height:0;overflow:hidden;opacity:0;transition:max-height .5s var(--e),opacity .45s,margin .5s var(--e)}
-.parts li.on{border-color:var(--acc)}
-.parts li.on b{color:var(--t1)}
-.parts li.on p{max-height:80px;opacity:1;margin-top:6px}
+.leads{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.leads line{stroke:rgba(255,248,240,.28);stroke-width:1}
+.leads circle{fill:var(--t1)}
+.calls{position:absolute;inset:0;pointer-events:none}
+.calls li{position:absolute;right:0;width:var(--lw,190px);display:flex;gap:10px;align-items:center;font-size:var(--f2);font-weight:600;color:var(--t3);opacity:0;transform:translate3d(0,-50%,0);transition:color .35s}
+.calls li span{font:500 var(--f1)/1 var(--mono)}
+.calls li.on{color:var(--t1)}.calls li.on span{color:var(--acc-hi)}
+.bd-desc{margin-top:28px;min-height:3.2em;font-size:var(--f3);color:var(--t1);max-width:24em;transition:opacity .3s}
 
 /* 3 OVERLAY: the line, then the thread */
 .ovl{position:relative;border-top:1px solid var(--line)}
 .ovl-line{min-height:92vh;display:grid;place-items:center;text-align:center;padding:120px 0;position:relative;overflow:hidden}
-.ovl-line::before{content:"";position:absolute;left:50%;top:50%;width:1100px;height:600px;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(212,20,42,.16),transparent 72%);pointer-events:none}
 .ovl-line h2{position:relative;font-size:var(--f7);letter-spacing:-.045em;line-height:1;max-width:14ch;margin:0 auto}
 .ovl-line h2 em{font-style:normal;color:var(--t3)}
 .ovl-line p{position:relative;margin:28px auto 0;max-width:30em;font-size:var(--f4)}
@@ -151,7 +157,10 @@ p{color:var(--t2);text-wrap:pretty}
 .step .mono{margin-bottom:14px}
 .step h3{font-size:clamp(24px,2.4vw,32px);letter-spacing:-.03em;line-height:1.1}
 .step p{margin-top:12px;font-size:var(--f4)}
-.stick{position:sticky;top:calc(50vh - 290px);height:580px}
+.stick{position:sticky;top:calc(50vh - 300px);height:600px}
+.slab{position:absolute;inset:0}
+.stick .phone{display:none}
+.slab-failed .stick .phone{display:block}.slab-failed .slab{display:none}
 .phone{position:relative;width:340px;height:580px;margin:0 auto;border-radius:44px;background:#0a0a0b;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 0 0 8px #050505,0 0 0 9px rgba(255,255,255,.1),0 60px 120px -40px rgba(0,0,0,.9);overflow:hidden}
 .phone-top{height:64px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;border-bottom:1px solid var(--line)}
 .phone-top b{font-size:var(--f2);font-weight:600}.phone-top small{display:block;text-align:center;font-size:var(--f1);color:var(--t3)}
@@ -227,7 +236,8 @@ p{color:var(--t2);text-wrap:pretty}
 
 /* 7 OVERLAY: book the audit */
 .closing{padding:220px 0 200px;border-top:1px solid var(--line);position:relative;overflow:hidden;text-align:center;isolation:isolate}
-.closing::before{content:"";position:absolute;left:50%;bottom:-360px;width:1300px;height:720px;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(212,20,42,.26),rgba(120,8,20,.08) 55%,transparent 76%);z-index:-1}
+.closing .bigmark{position:absolute;left:50%;top:50%;width:min(1100px,140vw);transform:translate(-50%,-46%);z-index:-1;fill:none;stroke:rgba(255,248,240,.09);stroke-width:1.2;vector-effect:non-scaling-stroke;pointer-events:none}
+.closing .bigmark path{vector-effect:non-scaling-stroke}
 .closing h2{font-size:var(--f7);letter-spacing:-.045em;max-width:12ch;margin:0 auto;line-height:1}
 .closing p{margin:24px auto 0;max-width:30em;font-size:var(--f4)}
 .closing .acts{justify-content:center;margin-top:40px}
@@ -242,7 +252,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 
 @media (max-width:1100px){
   .nav ul{display:none}.nav .btn{margin-left:auto}
-  .bd-pin{grid-template-columns:1fr 260px;grid-template-rows:auto 1fr;padding-top:88px}
+  .bd-pin{grid-template-columns:1fr;grid-template-rows:auto 1fr;padding-top:88px}
   .bd-head{grid-column:1/-1}
   .stage{height:100%;min-height:360px}
   .audit,.back{gap:56px}
@@ -257,16 +267,12 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   .hero h1{font-size:clamp(44px,12vw,56px)}
   .hero .lede{font-size:var(--f3)}
   .hero .acts .btn{width:100%;height:50px}
-  .tools .wrap{min-height:0;padding:22px var(--g);flex-wrap:wrap;gap:10px 22px;white-space:normal}
-  .tools .lab{width:100%}
   .bd{height:260vh}
   .bd-pin{display:flex;flex-direction:column;justify-content:flex-start;gap:4px;padding:76px var(--g) 0}
   .bd-head h2{font-size:30px}.bd-head p{font-size:var(--f2);margin-top:10px}.bd-meter{display:none}
   .stage{flex:1;min-height:0;height:auto;width:calc(100% + var(--g)*2);margin:0 calc(var(--g)*-1)}
-  .parts{width:100%;padding-bottom:20px}
-  .parts li{padding:6px 0 6px 14px}
-  .parts li:not(.on){display:none}
-  .parts li.on p{max-height:60px}
+  .calls{--lw:118px}.calls li{font-size:var(--f1)}
+  .bd-desc{margin-top:10px;font-size:var(--f2);min-height:2.6em}
   .ovl-line{min-height:80vh;padding:96px 0}
   .ovl-line h2,.fix-ovl h2,.closing h2{font-size:clamp(40px,11vw,52px)}
   .ovl-line p,.fix-ovl .txt p,.closing p{font-size:var(--f3)}
@@ -274,6 +280,8 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   .story{gap:0}
   .stick{position:sticky;top:64px;height:auto;z-index:2;background:linear-gradient(#000 88%,transparent);padding:8px 0 20px}
   .phone{width:min(300px,82vw);height:330px;border-radius:34px}
+  .stick{height:300px;margin:0 calc(var(--g)*-1)}
+  .slab-failed .stick{height:auto}
   .feed{padding:12px;gap:8px}
   .steps{padding:8px 0 16vh}
   .step{min-height:48vh;justify-content:flex-start;padding-top:24px}
@@ -323,7 +331,9 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   <div class="hb-stage" aria-hidden="true"><div class="hb-screen"><img src="/assets/screens/today-2400.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1300px) 100vw, 1300px" width="2400" height="1500" alt="" fetchpriority="high"></div></div>
 </section>
 
-<section class="tools" aria-label="Works alongside"><div class="wrap"><span class="lab">Works alongside</span><span>Jobber</span><span>Housecall Pro</span><span>Google Calendar</span><span>Facebook Lead Ads</span><span>Angi</span><span>Thumbtack</span><span>Google Business Profile</span></div>
+<section class="tools" aria-label="Works alongside the tools you already use">
+  <p class="tools-lab">Works alongside the tools you already use</p>
+  <div class="marquee"><ul class="mq"><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.316 5.684H24v12.632h-5.684V5.684zM5.684 24h12.632v-5.684H5.684V24zM18.316 5.684V0H1.895A1.894 1.894 0 0 0 0 1.895v16.421h5.684V5.684h12.632zm-7.207 6.25v-.065c.272-.144.5-.349.687-.617s.279-.595.279-.982c0-.379-.099-.72-.3-1.025a2.05 2.05 0 0 0-.832-.714 2.703 2.703 0 0 0-1.197-.257c-.6 0-1.094.156-1.481.467-.386.311-.65.671-.793 1.078l1.085.452c.086-.249.224-.461.413-.633.189-.172.445-.257.767-.257.33 0 .602.088.816.264a.86.86 0 0 1 .322.703c0 .33-.12.589-.36.778-.24.19-.535.284-.886.284h-.567v1.085h.633c.407 0 .748.109 1.02.327.272.218.407.499.407.843 0 .336-.129.614-.387.832s-.565.327-.924.327c-.351 0-.651-.103-.897-.311-.248-.208-.422-.502-.521-.881l-1.096.452c.178.616.505 1.082.977 1.401.472.319.984.478 1.538.477a2.84 2.84 0 0 0 1.293-.291c.382-.193.684-.458.902-.794.218-.336.327-.72.327-1.149 0-.429-.115-.797-.344-1.105a2.067 2.067 0 0 0-.881-.689zm2.093-1.931l.602.913L15 10.045v5.744h1.187V8.446h-.827l-2.158 1.557zM22.105 0h-3.289v5.184H24V1.895A1.894 1.894 0 0 0 22.105 0zm-3.289 23.5l4.684-4.684h-4.684V23.5zM0 22.105C0 23.152.848 24 1.895 24h3.289v-5.184H0v3.289z"/></svg><span>Google Calendar</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg><span>Gmail</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg><span>Google Business Profile</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg><span>Facebook Lead Ads</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg><span>Instagram</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.18 6.38h11.69v2.68H6.17zm7.27 3.8v3.14c0 3.23-.02 3.74-.14 4.36a7.95 7.95 0 0 1-1.3 2.87c-.03 0-.78-1.35-.9-1.62-.17-.4-.3-.8-.4-1.25l-.09-.41-.02-5.78.16-.2a3.3 3.3 0 0 1 2.44-1.1zM12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0Z"/></svg><span>Thumbtack</span></li><li><span>Jobber</span></li><li><span>Housecall Pro</span></li><li><span>Angi</span></li></ul><ul class="mq" aria-hidden="true"><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.316 5.684H24v12.632h-5.684V5.684zM5.684 24h12.632v-5.684H5.684V24zM18.316 5.684V0H1.895A1.894 1.894 0 0 0 0 1.895v16.421h5.684V5.684h12.632zm-7.207 6.25v-.065c.272-.144.5-.349.687-.617s.279-.595.279-.982c0-.379-.099-.72-.3-1.025a2.05 2.05 0 0 0-.832-.714 2.703 2.703 0 0 0-1.197-.257c-.6 0-1.094.156-1.481.467-.386.311-.65.671-.793 1.078l1.085.452c.086-.249.224-.461.413-.633.189-.172.445-.257.767-.257.33 0 .602.088.816.264a.86.86 0 0 1 .322.703c0 .33-.12.589-.36.778-.24.19-.535.284-.886.284h-.567v1.085h.633c.407 0 .748.109 1.02.327.272.218.407.499.407.843 0 .336-.129.614-.387.832s-.565.327-.924.327c-.351 0-.651-.103-.897-.311-.248-.208-.422-.502-.521-.881l-1.096.452c.178.616.505 1.082.977 1.401.472.319.984.478 1.538.477a2.84 2.84 0 0 0 1.293-.291c.382-.193.684-.458.902-.794.218-.336.327-.72.327-1.149 0-.429-.115-.797-.344-1.105a2.067 2.067 0 0 0-.881-.689zm2.093-1.931l.602.913L15 10.045v5.744h1.187V8.446h-.827l-2.158 1.557zM22.105 0h-3.289v5.184H24V1.895A1.894 1.894 0 0 0 22.105 0zm-3.289 23.5l4.684-4.684h-4.684V23.5zM0 22.105C0 23.152.848 24 1.895 24h3.289v-5.184H0v3.289z"/></svg><span>Google Calendar</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg><span>Gmail</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg><span>Google Business Profile</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg><span>Facebook Lead Ads</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg><span>Instagram</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.18 6.38h11.69v2.68H6.17zm7.27 3.8v3.14c0 3.23-.02 3.74-.14 4.36a7.95 7.95 0 0 1-1.3 2.87c-.03 0-.78-1.35-.9-1.62-.17-.4-.3-.8-.4-1.25l-.09-.41-.02-5.78.16-.2a3.3 3.3 0 0 1 2.44-1.1zM12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0Z"/></svg><span>Thumbtack</span></li><li><span>Jobber</span></li><li><span>Housecall Pro</span></li><li><span>Angi</span></li></ul></div>
 </section>
 
 <section id="inside" class="bd" aria-labelledby="h-inside">
@@ -332,16 +342,10 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
       <h2 id="h-inside">We find what’s costing you jobs.</h2>
       <p>Then we build the fix, one part at a time. You only get the parts your audit says you need.</p>
       <div class="bd-meter" aria-hidden="true"><i><b id="bdm"></b></i><span class="mono" id="bdl">Assembled</span></div>
+      <p class="bd-desc" id="bdDesc" aria-live="polite"></p>
     </div>
-    <div class="stage" id="bdStage"><i class="tick a"></i><i class="tick b"></i><i class="tick c"></i><i class="tick d"></i><div class="fb"><img src="/assets/screens/today-1200.webp" width="1200" height="750" alt=""></div><div class="unit-host" id="bdHost"></div></div>
-    <ol class="parts" id="parts">
-      <li data-k="5"><b><span>01</span>Answering</b><p>Every call, text and form gets a reply in seconds, even after hours.</p></li>
-      <li data-k="4"><b><span>02</span>Booking</b><p>Leads pick a time and land on your calendar, with reminders so they show up.</p></li>
-      <li data-k="3"><b><span>03</span>Quote follow-up</b><p>Sent quotes get followed up until the customer says yes or no.</p></li>
-      <li data-k="2"><b><span>04</span>Invoices</b><p>Unpaid invoices get polite reminders, so you get paid without chasing.</p></li>
-      <li data-k="1"><b><span>05</span>Reviews</b><p>Happy customers get asked for a review after every paid job.</p></li>
-      <li data-k="0"><b><span>06</span>Website</b><p>A site that turns visitors into booked jobs, if yours is part of the leak.</p></li>
-    </ol>
+    <div class="stage" id="bdStage"><i class="tick a"></i><i class="tick b"></i><i class="tick c"></i><i class="tick d"></i><div class="fb"><img src="/assets/screens/today-1200.webp" width="1200" height="750" alt=""></div><div class="unit-host" id="bdHost"></div><svg class="leads" id="leads" aria-hidden="true"></svg><ol class="calls" id="calls"><li><span>01</span>Answering</li><li><span>02</span>Booking</li><li><span>03</span>Quote follow-up</li><li><span>04</span>Invoices</li><li><span>05</span>Reviews</li><li><span>06</span>Website</li></ol></div>
+    
   </div>
 </section>
 
@@ -352,7 +356,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   </div></div>
   <div class="wrap">
     <div class="story" id="story">
-      <div class="stick">
+      <div class="stick"><div class="slab" id="slabHost" role="img" aria-label="Each step of a lead drops in: missed call from (303) 555-0148 at 7:42 PM, text sent to Dana Ruiz, estimate booked Thursday 9:00 AM at 41 Aspen Ct, reminder queued for Wednesday 6:00 PM. Sample data."></div>
         <div class="phone" role="img" aria-label="Example phone thread: missed call at 7:42 PM, a text 10 seconds later with two estimate times, the customer picks Thursday at 9:00, the estimate is booked and a reminder is queued. Sample data.">
           <div class="phone-top" aria-hidden="true"><div><b>Dana Ruiz</b><small>(303) 555-0148</small></div></div>
           <div class="feed" aria-hidden="true">
@@ -428,6 +432,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 </section>
 
 <section class="closing" aria-labelledby="h-final">
+  <svg class="bigmark" viewBox="151.04 168.00 791.63 703.15" aria-hidden="true"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></svg>
   <div class="wrap">
     <h2 id="h-final" class="rv">Find out what you’re missing.</h2>
     <p class="rv d1">A free audit of your business. You keep what we find.</p>
@@ -455,12 +460,19 @@ var nav=d.getElementById('nav');
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px',threshold:.01});
 d.querySelectorAll('.rv,#sum,#shot').forEach(function(el){io.observe(el)});
 var steps=[].slice.call(d.querySelectorAll('.step')),evs=[].slice.call(d.querySelectorAll('.ev')),cur=-1;
-function setStep(s){if(s===cur)return;cur=s;steps.forEach(function(el){el.classList.toggle('on',+el.dataset.s===s)});evs.forEach(function(el){el.classList.toggle('on',+el.dataset.s<=s)})}
+function setStep(s){if(s===cur)return;cur=s;if(window.CinderSlab)CinderSlab.setStep(s);steps.forEach(function(el){el.classList.toggle('on',+el.dataset.s===s)});evs.forEach(function(el){el.classList.toggle('on',+el.dataset.s<=s)})}
 setStep(0);
 var bdHost=d.getElementById('bdHost'),U=null,lastP=-1,lastA=-1;
-function unitReady(){if(U||!window.CinderUnit)return;U=window.CinderUnit;U.mount(bdHost);onScroll()}
+function unitReady(){if(U||!window.CinderUnit)return;U=window.CinderUnit;U.shift=innerWidth<=760?.2:.24;U.onFrame=onUnitFrame;U.mount(bdHost);onScroll()}
 addEventListener('cinder-unit',unitReady);
-var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),parts=[].slice.call(d.querySelectorAll('#parts li')),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl'),slats=[].slice.call(d.querySelectorAll('#rays i'));
+var slabOn=false;function slabReady(){if(slabOn||!window.CinderSlab)return;slabOn=true;CinderSlab.setStep(Math.max(0,cur));CinderSlab.mount(d.getElementById('slabHost'))}
+addEventListener('cinder-slab',slabReady);
+var leads=d.getElementById('leads'),calls=[].slice.call(d.querySelectorAll('#calls li')),stage=d.getElementById('bdStage'),bdDesc=d.getElementById('bdDesc'),NS='http://www.w3.org/2000/svg',lines=[];
+var descs=["Every call, text and form gets a reply in seconds, even after hours.", "Leads pick a time and land on your calendar, with reminders so they show up.", "Sent quotes get followed up until the customer says yes or no.", "Unpaid invoices get polite reminders, so you get paid without chasing.", "Happy customers get asked for a review after every paid job.", "A site that turns visitors into booked jobs, if yours is part of the leak."];
+calls.forEach(function(){var g=d.createElementNS(NS,'g'),l=d.createElementNS(NS,'line'),c=d.createElementNS(NS,'circle');c.setAttribute('r','2.5');g.appendChild(l);g.appendChild(c);leads.appendChild(g);lines.push([g,l,c])});
+function onUnitFrame(pts,open){var sw=stage.clientWidth,lw=parseFloat(getComputedStyle(calls[0]).width)||190,x2=sw-lw-14,o=Math.max(0,Math.min(1,(open-.55)/.35));
+  pts.forEach(function(p,i){var L=lines[i];L[1].setAttribute('x1',p.x+6);L[1].setAttribute('y1',p.y);L[1].setAttribute('x2',x2);L[1].setAttribute('y2',p.y);L[2].setAttribute('cx',p.x+6);L[2].setAttribute('cy',p.y);L[0].style.opacity=o;calls[i].style.top=p.y+'px';calls[i].style.opacity=o})}
+var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl'),slats=[].slice.call(d.querySelectorAll('#rays i'));
 var names=['Answering','Booking','Quote follow-up','Invoices','Reviews','Website'];
 var ticking=false,lastK=-2;
 function clamp(v){return v<0?0:v>1?1:v}
@@ -477,7 +489,7 @@ function update(){
   var span=br.height-vh,bp=clamp(-br.top/span);
   if(br.top<vh&&br.bottom>0)bdm.style.setProperty('--p',bp.toFixed(4));
   var k=bp<.5?-1:Math.min(5,Math.floor((bp-.5)/.5*6));
-  if(k!==lastK){lastK=k;parts.forEach(function(li,i){li.classList.toggle('on',i===Math.max(0,k))});bdl.textContent=bp<.02?'Assembled':k<0?'Taking it apart':String(k+1).padStart(2,'0')+' / 06 · '+names[k]}
+  if(k!==lastK){lastK=k;calls.forEach(function(li,i){li.classList.toggle('on',k>=0&&i===k)});bdDesc.textContent=k<0?'':descs[k];bdl.textContent=bp<.02?'Assembled':k<0?'Taking it apart':String(k+1).padStart(2,'0')+' / 06 · '+names[k]}
   if(U){
     var p=clamp((vh*.75-br.top)/(vh*.75+span*.5));
     if(Math.abs(p-lastP)>.0005){lastP=p;U.setProgress(p)}
@@ -488,6 +500,7 @@ function onScroll(){if(!ticking){ticking=true;requestAnimationFrame(update)}}
 addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update();
 })();
 </script>
+<script type="module" src="/assets/cinder-slab.js"></script>
 <script type="module">
 let target = 0, active = 0, instance = null, library;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -650,16 +663,19 @@ function mount(el) {
     }
 
     const plates = [];
-    const body = box(280, 12, 280, 4.8);
+    const body = box(280, 34, 280, 4.8);
     const lip = box(279, 1.7, 279, .8);
     const seal = box(269, 2, 269, 1);
     for (let i = 0; i < 6; i++) {
       const group = new T.Group();
       plates.push(group);
       root.add(group);
-      mesh(group, body, faces[i], 0, -.6, 0);
+      mesh(group, body, faces[i], 0, -11.6, 0);
       mesh(group, lip, trim[i], 0, 4.6, 0);
-      mesh(group, seal, gasket, 0, -7.3, 0);
+      mesh(group, seal, gasket, 0, -29.3, 0);
+      const vents = [];
+      for (let v = 0; v < 13; v++) vents.push([140.4, -11.6, -96 + v*16]);
+      repeats(group, new T.BoxGeometry(.9, 16, 3.2), black, vents);
       if (i) mesh(group, box(278, 2, 278, .9), faces[i], 0, 6.1, 0);
     }
 
@@ -739,7 +755,8 @@ function mount(el) {
       lid.add(screw);
       screws.push(screw);
       disk(screw, 4.5, 1.7, screwMat, 0, 1, 0, 28);
-      disk(screw, 2.1, 8, screwMat, 0, -3.7, 0, 14);
+      disk(screw, 2.1, 30, screwMat, 0, -14, 0, 14);
+      for (let t = 0; t < 9; t++) disk(screw, 2.6, .8, screwMat, 0, -4 - t*2.9, 0, 14);
       mesh(screw, new T.BoxGeometry(5.3, .15, 1.12), crossMat, 0, 1.91, 0);
       mesh(screw, new T.BoxGeometry(1.12, .15, 5.3), crossMat, 0, 1.92, 0);
     }
@@ -783,7 +800,8 @@ function mount(el) {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
     let value = reduced.matches ? 1 : target;
     let velocity = 0, last = 0, inView = false, width = 0, height = 0;
-    let lost = false, previousDpr = 0;
+    let lost = false, previousDpr = 0, aspect = 1;
+    const probe = new T.Vector3();
     frame.append(canvas);
     frame.style.background = 'transparent';
     canvas.style.cssText = 'display:block;width:100%;height:100%';
@@ -811,24 +829,42 @@ function mount(el) {
       }
 
       const turn = smooth(value/.25);
-      screwMat.opacity = crossMat.opacity = 1-smooth((value-.14)/.11);
+      screwMat.opacity = crossMat.opacity = 1;
       screws.forEach((screw, j) => {
-        screw.visible = value < .25;
-        screw.position.y = 7.8 + turn*32;
+        screw.position.y = 7.8 + turn*64;
         screw.rotation.y = j*.7 + turn*Math.PI*4;
       });
       const expand = clamp((value-.25)/.60);
       plates.forEach((group, i) => {
         const lift = smooth((expand-i*.135)/.46);
-        group.position.y = (5-i)*(16+46*lift);
+        group.position.y = (5-i)*(38+44*lift);
         group.rotation.y = (5-i)*.009*lift;
-        trim[i].color.setHex(i === active ? 0x777d87 : 0x45454c);
+        trim[i].color.setHex(i === active && expand > .5 ? 0xd4142a : 0x45454c);
       });
 
-      const center = plates[0].position.y*.5 + 3;
+      const center = plates[0].position.y*.5 - 8 + turn*14;
+      const open = smooth(expand);
+      const half = Math.max((500 + 40*open)/aspect, 430 + 330*open)/2;
+      const halfW = half*aspect, shift = halfW*window.CinderUnit.shift;
+      camera.top = half; camera.bottom = -half;
+      camera.left = -halfW - shift; camera.right = halfW - shift;
+      camera.updateProjectionMatrix();
       camera.position.set(450, center+375, 575);
       camera.lookAt(10, center, 0);
       renderer.render(scene, camera);
+      const report = window.CinderUnit.onFrame;
+      if (report) {
+        camera.updateMatrixWorld();
+        const pts = plates.map(group => {
+          let best = null;
+          for (const [cx, cz] of [[140,140],[140,-140],[-140,140],[-140,-140]]) {
+            probe.set(cx, group.position.y - 11.6, cz).project(camera);
+            if (!best || probe.x > best.x) best = {x: probe.x, y: probe.y};
+          }
+          return {x: (best.x+1)/2*width, y: (1-best.y)/2*height};
+        });
+        report(pts, open);
+      }
       if (value !== goal || velocity !== 0) wake();
       else last = 0;
     }
@@ -843,12 +879,7 @@ function mount(el) {
       if (!w || !h) return;
       renderer.setPixelRatio(dpr);
       renderer.setSize(w, h, false);
-      const half = Math.max(500/(w/h), 600)/2;
-      camera.top = half;
-      camera.bottom = -half;
-      camera.left = -half*w/h;
-      camera.right = -camera.left;
-      camera.updateProjectionMatrix();
+      aspect = w/h;
       wake();
     }
     function visibility() {
@@ -900,6 +931,8 @@ function mount(el) {
 
 window.CinderUnit = {
   mount,
+  shift: 0,
+  onFrame: null,
   setProgress(p) {
     if (!Number.isFinite(p)) return;
     const next = clamp(p);
