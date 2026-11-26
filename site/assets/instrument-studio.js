@@ -214,7 +214,7 @@ export function instrument({label,span,assemble,model}) {
       }
       await document.fonts.ready;
       if(dead||!renderer)return;
-      const pose=model({T,scene,group,box,disc,ring,add,screw,own,labelPlate,
+      const pose=model({T,scene,camera,group,box,disc,ring,add,screw,own,labelPlate,
         deck,side,steel,seal,glass,ink,ease,invalidate});
       for(const [m,parts] of batches){
         const gs=parts.map(g=>g.index?g.toNonIndexed():g);
