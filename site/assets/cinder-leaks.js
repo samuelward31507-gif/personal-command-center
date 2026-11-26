@@ -29,7 +29,7 @@
     ctx.clearRect(0,0,W,H);
     var G=8;
     for(var g=-G;g<=G;g++){
-      var al='rgba(242,241,238,'+(.09*(1-Math.abs(g)/G)).toFixed(3)+')';
+      var al='rgba(242,241,238,'+(.13*(1-Math.abs(g)/G)).toFixed(3)+')';
       line(proj(g,0,-G),proj(g,0,G),al);line(proj(-G,0,g),proj(G,0,g),al);
     }
     var off=.16,leaks=st.map(function(el){return +el.dataset.leak||0}),nw=narrow();
