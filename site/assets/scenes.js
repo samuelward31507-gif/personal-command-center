@@ -6,10 +6,13 @@
   var scenes = [].slice.call(document.querySelectorAll('[data-scene]')).map(function (sec) {
     return { sec: sec, name: sec.dataset.scene, host: sec.querySelector('.sx-host'), steps: [].slice.call(sec.querySelectorAll('.sx-step')), active: sec.dataset.active, api: null, last: -1 };
   });
+  // Load each visual only when its section comes within a screen of the viewport.
+  var near = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { scenes.forEach(function (s) { if (s.sec === e.target) s.near = true; }); near.unobserve(e.target); attach(); } }); }, { rootMargin: '100% 0px' });
+  scenes.forEach(function (s) { near.observe(s.sec); });
   function attach() {
     scenes.forEach(function (s) {
       var api = window[s.name];
-      if (s.api || !api || !s.host) return;
+      if (s.api || !api || !s.host || !s.near) return;
       s.api = api; s.sec.classList.add('is-live');
       if (api.setStep) api.setStep(0);
       api.mount(s.host);
