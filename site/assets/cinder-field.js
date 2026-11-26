@@ -30,102 +30,123 @@ function mount(el,{variant=0,seed='',calm=.88,intensity=1}={}){
   function alloy(n){const v=Math.round(clamp(n*1.2,0,110));return 'rgb('+v+','+v+','+(v+1)+')'}
   function relief(family,phase){
     const turn=phase+variation*4,light=i=>.5+.5*Math.cos(i-turn*.7);
-    if(family==='diaphragm'){
+    const tau=Math.PI*2;
+    if(family==='rotor'){
+      c.scale(1,.64);c.rotate(-.23);
+      for(let i=0;i<4;i++)arc(1-i*.059,0,tau,.036,alloy(30+i*7));
+      const blades=32+Math.floor(variation*8);
+      for(let i=0;i<blades;i++){
+        c.save();const a=i*tau/blades+turn*.18;c.rotate(a);
+        polygon([[.23,-.05],[.78,-.15],[.81,-.046],[.26,.044]],alloy(22+63*light(a)));
+        polygon([[.23,-.05],[.78,-.15],[.78,-.14],[.24,-.035]],alloy(75+31*light(a)));
+        c.restore();
+      }
+      arc(.20,0,tau,.14,alloy(43));arc(.255,0,tau,.007,alloy(95));
+      for(let i=0;i<36;i++){const a=i*tau/36;arc(.945,a,a+.033,.013,i%9===0?'#94202a':'#3a3a40')}
+    }else if(family==='tiles'){
+      c.transform(1,.22,-.35,.68,0,0);
+      const pitch=.22,shift=(turn*.035%pitch+pitch)%pitch;
+      for(let i=-7;i<8;i++)for(let j=-6;j<7;j++){
+        const x=i*pitch+shift,y=j*pitch,w=pitch*.88,h=pitch*.88;
+        polygon([[x,y],[x+w,y],[x+w,y+h],[x,y+h]],alloy(24+30*light(i*.18+j*.14)));
+        polygon([[x,y],[x+w,y],[x+w,y+.012],[x,y+.012]],alloy(65+36*light(i*.2)));
+        c.fillStyle='#111113';c.beginPath();c.arc(x+.035,y+.035,.012,0,tau);c.fill();
+      }
+    }else if(family==='fins'){
+      c.rotate(-.13);
+      for(let i=-20;i<=20;i++){
+        const y=i*.052+turn*.014,w=2.35;
+        polygon([[-1.25,y],[1.12,y-.025],[1.12,y+.025],[-1.25,y+.052]],alloy(22+38*light(i*.17)));
+        polygon([[-1.25,y],[1.12,y-.025],[1.12,y-.012],[-1.25,y+.014]],alloy(70+40*light(i*.16)));
+        polygon([[1.12,y-.025],[1.17,y+.002],[1.17,y+.046],[1.12,y+.025]],'#111113');
+      }
+    }else if(family==='gear'){
+      c.scale(1,.7);c.rotate(turn*.035);
+      for(let i=0;i<48;i++){
+        c.save();c.rotate(i*tau/48);
+        polygon([[.72,-.035],[.94,-.048],[.98,0],[.94,.048],[.72,.035]],alloy(28+50*light(i*.23)));
+        polygon([[.72,-.035],[.94,-.048],[.94,-.036],[.72,-.023]],alloy(83));
+        c.restore();
+      }
+      arc(.72,0,tau,.035,alloy(75));arc(.61,0,tau,.018,alloy(35));
+      for(let i=0;i<8;i++){c.save();c.rotate(i*tau/8);polygon([[.18,-.04],[.61,-.065],[.61,.065],[.18,.04]],alloy(25+38*light(i*.5)));c.restore()}
+      arc(.18,0,tau,.07,alloy(60));arc(.105,0,tau,.018,alloy(95));
+    }else if(family==='perforated'){
+      c.transform(1,.08,-.18,.9,0,0);
+      const pitch=.105,shift=(turn*.012%pitch+pitch)%pitch;
+      for(let x=-1.1;x<1.15;x+=pitch)for(let y=-1.1;y<1.15;y+=pitch){
+        const px=x+shift,py=y;
+        c.fillStyle=alloy(22+22*light(px*4+py*3));c.fillRect(px,py,pitch*.82,pitch*.82);
+        c.fillStyle='#080809';c.beginPath();c.arc(px+pitch*.41,py+pitch*.41,pitch*.22,0,tau);c.fill();
+        arc(pitch*.22,0,tau,.004,alloy(55+20*light(px+py)));
+      }
+      for(let i=-1;i<=1;i++)arc(.9,i*.55-.18,i*.55+.18,.012,alloy(75));
+    }else if(family==='rails'){
+      c.rotate(-.17);
+      for(let i=-10;i<=10;i++){
+        const x=i*.105+turn*.012,y=-1.2,w=.062,h=2.45;
+        polygon([[x,y],[x+w,y+.02],[x+w+.04,y+h],[x+.04,y+h]],alloy(26+34*light(i*.24)));
+        polygon([[x,y],[x+w,y+.02],[x+w,y+.05],[x,y+.03]],alloy(82+38*light(i*.2)));
+        polygon([[x+w,y+.02],[x+w+.04,y+.07],[x+w+.04,y+h],[x+w,y+h-.04]],'#111113');
+        if(i%4===0){c.fillStyle='#09090b';c.beginPath();c.arc(x+w*.5,y+.18,.014,0,tau);c.fill()}
+      }
+    }else if(family==='honeycomb'){
+      const pitch=.13,hex=(x,y,r,fill)=>{
+        const pts=[];for(let k=0;k<6;k++){const a=k*tau/6+Math.PI/6;pts.push([x+r*Math.cos(a),y+r*Math.sin(a)])}polygon(pts,fill)
+      };
+      for(let x=-1.2;x<1.2;x+=pitch*1.5)for(let y=-1.2;y<1.2;y+=pitch*Math.sqrt(3)){
+        const yy=y+((Math.round(x/(pitch*1.5))&1)?pitch*Math.sqrt(3)/2:0);
+        hex(x,yy,pitch*.72,alloy(20+28*light(x*2+yy*3)));
+        hex(x,yy,pitch*.49,'#09090b');
+        const a=Math.atan2(yy,x)-turn*.2;arc(pitch*.62,a,a+.42,.006,alloy(64));
+      }
+    }else if(family==='grooves'){
+      c.scale(1,.68);c.rotate(-.15);
+      for(let i=0;i<30;i++){
+        const r=.12+i*.031,bright=22+30*light(i*.18);
+        arc(r,0,tau,.009,alloy(bright));
+        arc(r+.012,0,tau,.004,alloy(70+42*light(i*.17)));
+      }
+      arc(.08,0,tau,.025,alloy(95));
+    }else if(family==='diaphragm'){
       c.scale(1,.7);const excursion=.035*Math.sin(turn);
       for(let i=0;i<12;i++){
         const radius=.28+i*.053+excursion*(1-i/12);
-        arc(radius,0,Math.PI*2,.037,alloy(27+19*light(i*.42)));
+        arc(radius,0,tau,.037,alloy(27+19*light(i*.42)));
         arc(radius+.018,-1.9+turn*.12,.72+turn*.12,.006,alloy(79));
       }
-      arc(.23,0,2*Math.PI,.08,alloy(45));
+      arc(.23,0,tau,.08,alloy(45));
       for(let i=0;i<4;i++)arc(.94,i*Math.PI/2,i*Math.PI/2+.16,.013,'#891421');
     }else if(family==='iris'){
-      c.scale(1,.74);arc(.91,0,2*Math.PI,.14,alloy(39));
+      c.scale(1,.74);arc(.91,0,tau,.14,alloy(39));
       for(let i=0;i<12;i++){
         c.save();c.rotate(i*Math.PI/6);const jaw=.38+.09*Math.sin(turn);
         polygon([[jaw,0],[.82,-.18],[.85,.12],[jaw+.06,.20]],alloy(28+44*light(i*.52)));
         polygon([[jaw,0],[.82,-.18],[.82,-.17],[jaw,.012]],alloy(76));c.restore();
       }
-    }else if(family==='rotor'||family==='lathe'){
-      c.scale(1,.64);c.rotate(-.23);
-      for(let i=0;i<4;i++)arc(1-i*.059,0,2*Math.PI,.036,alloy(30+i*7));
-      if(family==='rotor'){
-        const blades=32+Math.floor(variation*8);
-        for(let i=0;i<blades;i++){
-          c.save();const a=i*2*Math.PI/blades+turn*.18;c.rotate(a);
-          polygon([[.23,-.05],[.78,-.15],[.81,-.046],[.26,.044]],alloy(22+63*light(a)));
-          polygon([[.23,-.05],[.78,-.15],[.78,-.14],[.24,-.035]],alloy(75+31*light(a)));
-          c.restore();
-        }
-        arc(.20,0,2*Math.PI,.14,alloy(43));arc(.255,0,2*Math.PI,.007,alloy(95));
-      }else{
-        for(let i=0;i<19;i++){
-          const r=.16+i*.032;arc(r,0,2*Math.PI,.014,alloy(20+22*light(i*.15)));
-          arc(r,turn*.24+i*.06,turn*.24+i*.06+.82,.008,alloy(64));
+    }else if(family==='lathe'){
+      c.scale(1,.64);
+      for(let i=0;i<19;i++){
+        const r=.16+i*.032;arc(r,0,tau,.014,alloy(20+22*light(i*.15)));
+        arc(r,turn*.24+i*.06,turn*.24+i*.06+.82,.008,alloy(64));
+      }
+    }else if(family==='belt'){
+      c.transform(1,.19,-.36,.66,0,0);
+      for(let lane=0;lane<4;lane++){
+        const y=-.7+lane*.46,shift=(turn*.08% .24+.24)% .24;
+        for(let i=-8;i<9;i++){
+          const x=i*.24+shift;
+          polygon([[x,y],[x+.19,y-.02],[x+.19,y+.20],[x,y+.22]],alloy(24+32*light(i*.2+lane)));
+          polygon([[x,y],[x+.19,y-.02],[x+.19,y-.005],[x,y+.015]],alloy(76));
         }
       }
-      for(let i=0;i<36;i++){const a=i*Math.PI/18;arc(.945,a,a+.033,.013,i%9===0?'#94202a':'#3a3a40')}
-    }else if(family==='fins'||family==='louvers'||family==='rails'){
-      c.transform(1,.12,-.24,.72,0,0);
-      const rail=family==='rails',louver=family==='louvers';
-      const count=rail?12:34,pitch=2.2/count,shift=turn*(rail?.045:.025);
-      for(let i=-2;i<count+2;i++){
-        const x=-1.1+i*pitch+(shift%pitch+pitch)%pitch;
-        const h=rail?1.85:2.05,w=pitch*(rail?.52:.79);
-        const skew=(louver?.13:.035)*Math.sin(turn*.18+i*.05);
-        polygon([[x,-h/2],[x+w,-h/2+skew],[x+w,h/2+skew],[x,h/2]],alloy(22+46*light(i*.18)));
-        polygon([[x+w,-h/2+skew],[x+w+.025,-h/2+.035+skew],[x+w+.025,h/2+.035],[x+w,h/2+skew]],'#111113');
-        polygon([[x,-h/2],[x+w,-h/2+skew],[x+w,-h/2+skew+.008],[x,-h/2+.008]],alloy(68+30*light(i*.11)));
-      }
-    }else if(family==='gear'){
-      c.scale(1,.72);c.rotate(turn*.035);
-      for(let i=0;i<48;i++){
-        const a=i*tau/48,inner=.72,outer=i%2===0?1.04:.94;
-        polygon([[Math.cos(a)*inner,Math.sin(a)*inner],[Math.cos(a+.045)*inner,Math.sin(a+.045)*inner],
-          [Math.cos(a+.045)*outer,Math.sin(a+.045)*outer],[Math.cos(a)*outer,Math.sin(a)*outer]],
-          alloy(27+48*light(i*.13)));
-      }
-      for(let i=0;i<6;i++)arc(.16+i*.105,0,tau,.018,alloy(24+27*light(i*.3)));
-      arc(.13,0,tau,.075,alloy(54));
-    }else if(family==='perforated'){
-      c.transform(1,.08,-.16,.72,0,0);
-      for(let row=-12;row<=12;row++)for(let col=-16;col<=16;col++){
-        const x=col*.065+(row%2)*.0325,y=row*.073;
-        c.fillStyle=alloy(23+43*light(col*.17+row*.11));
-        c.beginPath();c.ellipse(x,y,.022,.029,0,0,tau);c.fill();
-        c.strokeStyle='#111113';c.lineWidth=.009;c.stroke();
-      }
-    }else if(family==='honeycomb'){
-      c.transform(1,.08,-.14,.72,0,0);
-      const r=.058,dx=r*1.72,dy=r*1.5;
-      for(let row=-13;row<=13;row++)for(let col=-17;col<=17;col++){
-        const x=col*dx+(row%2)*dx/2,y=row*dy;
-        c.beginPath();for(let k=0;k<6;k++){const a=k*tau/6;const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;
-          if(k===0)c.moveTo(px,py);else c.lineTo(px,py)}
-        c.closePath();c.lineWidth=.014;c.strokeStyle=alloy(22+43*light(col*.14+row*.17));c.stroke();
-        c.fillStyle='#09090b';c.fill();
-      }
-    }else if(family==='grooves'||family==='lathe'){
-      c.scale(1,.68);
-      for(let i=0;i<30;i++){
-        const r=.10+i*.032;
-        arc(r,0,tau,.012,alloy(22+28*light(i*.18)));
-        arc(r+.009,turn*.035+i*.02,turn*.035+i*.02+.65,.006,alloy(62+28*light(i*.13)));
-      }
-      arc(.075,0,tau,.035,alloy(48));
-    }else{
-      // Milled grid tiles: each tile has a dark seam, bevel and a moving edge.
-      c.transform(1,.16,-.28,.70,0,0);
-      const n=9,pitch=2/n,shift=turn*.025;
-      for(let i=-2;i<n+2;i++){
-        const x=-1+i*pitch+(shift%pitch+pitch)%pitch;
-        for(let j=-2;j<n+2;j++){
-          const y=-1+j*pitch,w=pitch*.84,h=pitch*.84,skew=.025*Math.sin(turn*.2+i*.06);
-          polygon([[x,y],[x+w,y+skew],[x+w,y+h],[x,y+h-skew]],alloy(24+38*light(i*.17+j*.25)));
-          polygon([[x+w,y+skew],[x+w+.018,y+.036+skew],[x+w+.018,y+h+.036],[x+w,y+h]],'#111113');
-          polygon([[x,y],[x+w,y+skew],[x+w,y+skew+.007],[x,y+.007]],alloy(64+30*light(i*.1)));
-          c.fillStyle='#0b0b0c';c.beginPath();c.arc(x+w*.18,y+.037,.009,0,tau);c.fill();
-        }
+    }else if(family==='louvers'){
+      c.rotate(-.12);
+      for(let i=-16;i<=16;i++){
+        const x=i*.065+turn*.01;
+        polygon([[x,-1.2],[x+.035,-1.18],[x+.035,1.18],[x,1.2]],alloy(24+34*light(i*.2)));
+        polygon([[x,-1.2],[x+.035,-1.18],[x+.035,-1.12],[x,-1.14]],alloy(75+38*light(i*.2)));
+        polygon([[x+.035,-1.18],[x+.075,-1.13],[x+.075,1.2],[x+.035,1.18]],'#111113');
       }
     }
   }
