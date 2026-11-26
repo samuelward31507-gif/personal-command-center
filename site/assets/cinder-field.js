@@ -136,9 +136,10 @@
       // Black center is reserved for copy; all precise light stays at the perimeter.
       const cx=width*.5, cy=height*.48, radius=Math.max(width*.38,height*.42);
       const protect=ctx.createRadialGradient(cx,cy,Math.min(width,height)*.12,cx,cy,radius);
-      protect.addColorStop(0,'rgba(0,0,0,.995)');
-      protect.addColorStop(.58,'rgba(0,0,0,.97)');
-      protect.addColorStop(1,'rgba(0,0,0,.22)');
+      const quiet=clamp(Number(calm)||0,0,1);
+      protect.addColorStop(0,'rgba(0,0,0,'+(0.985+quiet*.014)+')');
+      protect.addColorStop(.58,'rgba(0,0,0,'+(0.92+quiet*.075)+')');
+      protect.addColorStop(1,'rgba(0,0,0,'+(0.12+quiet*.24)+')');
       ctx.fillStyle=protect;ctx.fillRect(0,0,width,height);
       if (!reduced.matches) timer=setTimeout(wake,interval);
     }
