@@ -171,7 +171,7 @@ function mount(el,{variant=0,seed='',calm=.88,intensity=1}={}){
       relief(family,phase*(side<0?1:-.7));c.restore();
     }
     const shade=c.createLinearGradient(0,0,w,0);
-    const edge=1-clamp(intensity,0,1)*.80,center=Math.max(edge,.52+.42*clamp(calm,0,1));
+    const edge=1-clamp(intensity,0,1)*.80,center=Math.max(edge,.42+.42*clamp(calm,0,1));
     for(const [at,a] of [[0,edge],[.38,center],[.62,center],[1,edge]])shade.addColorStop(at,'rgba(0,0,0,'+a+')');
     c.fillStyle=shade;c.fillRect(0,0,w,h);
     if(!reduced.matches)timer=setTimeout(wake,42);
