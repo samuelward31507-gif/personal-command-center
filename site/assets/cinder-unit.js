@@ -940,9 +940,12 @@ function mount(el){
         g.rotation.y=(5-i)*Math.PI/300*fraction;
         gains[i]=1-.55*(sum-weights[i])*reveal;
         g.updateMatrixWorld(true);
-        for(const x of [-140,140])for(const y of [-18,covers[i].position.y+4])for(const z of [-140,140]){
+        // Frame the unit as if nothing were selected, so the camera holds still when the active layer changes.
+        const lifted=6*selection[i];
+        for(const x of [-140,140])for(const y of [-18,13.6+room*18+4])for(const z of [-140,140]){
           point.set(x,y,z).applyMatrix4(g.matrixWorld);
-          include(point.x,point.y,point.z);caster(point.x,point.y,point.z);
+          caster(point.x,point.y,point.z);
+          include(point.x,point.y-lifted,point.z);
         }
         anchors[i].set(138,10,-136).applyMatrix4(g.matrixWorld);
       }
@@ -951,8 +954,10 @@ function mount(el){
         s.position.y=2.2+70*rise;
         s.rotation.y=i*.31+4*Math.PI*(1-(1-rise)**2);
         point.copy(s.position).applyMatrix4(cap.matrixWorld);
+        caster(point.x,point.y+5,point.z);
+        point.y-=16*selection[0];
         include(point.x-6,point.y+3,point.z+6);include(point.x+6,point.y+3,point.z-6);
-        include(point.x-6,point.y+3,point.z-6);caster(point.x,point.y+5,point.z);
+        include(point.x-6,point.y+3,point.z-6);
       });
       for(const [x,y,z] of cablePoints){include(x+3,y-3,z-3);caster(x,y,z)}
       const pose=[p,...selection].join('/');
