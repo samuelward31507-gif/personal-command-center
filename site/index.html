@@ -491,7 +491,7 @@ function update(){
   flowLis.forEach(function(li,i){li.classList.toggle('on',fp>=i/flowLis.length-.001)});
   var span=br.height-vh,bp=clamp(-br.top/span);
   if(br.top<vh&&br.bottom>0)bdm.style.setProperty('--p',bp.toFixed(4));
-  var k=bp<.2||bp>=.8?-1:Math.min(5,Math.floor((bp-.2)/.1));
+  var k=-1,KS=[.25,.35,.45,.55,.65,.72];if(bp<.8)for(var q=0;q<6;q++)if(bp>=KS[q])k=q;
   if(k!==lastK){lastK=k;bdDesc.textContent=k<0?'':descs[k];bdl.textContent=bp<.06||bp>.96?'Assembled':k>=0?String(k+1).padStart(2,'0')+' / 06 · '+names[k]:(bp>.8?'Putting it back together':'Taking it apart')}
   if(U){if(Math.abs(bp-lastP)>.0003){lastP=bp;U.setProgress(bp)}if(k!==lastA){lastA=k;U.setActive(k)}}
 }
