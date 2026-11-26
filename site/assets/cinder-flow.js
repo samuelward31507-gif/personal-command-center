@@ -15,8 +15,8 @@ document.querySelectorAll('[data-flow]').forEach(host=>{const P=V[(+host.dataset
     for(let k=0;k<=SEG;k++,v++){aT[v]=k/SEG;aS[v]=s;aR[v*3]=r1;aR[v*3+1]=r2;aR[v*3+2]=r3;if(k)idx.push(v-1,v)}}
   const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(new Float32Array(n*3),3));
   g.setAttribute('aT',new T.BufferAttribute(aT,1));g.setAttribute('aS',new T.BufferAttribute(aS,1));g.setAttribute('aR',new T.BufferAttribute(aR,3));g.setIndex(idx);
-  const mat=new T.ShaderMaterial({transparent:true,depthWrite:false,depthTest:thread,blending:T.AdditiveBlending,uniforms:{uTime:{value:0},uIn:{value:0},uMode:{value:wave?1:thread?2:0},uP:{value:new T.Vector4(P[0],P[1],P[2],P[3])},uG:{value:new T.Vector3()},uD:{value:new T.Vector3(0,-1,0)},uK:{value:1}},
-  vertexShader:`uniform float uTime;uniform float uIn;uniform float uMode;uniform float uK;uniform vec4 uP;uniform vec3 uG;uniform vec3 uD;attribute float aT;attribute float aS;attribute vec3 aR;varying vec3 vC;
+  const mat=new T.ShaderMaterial({transparent:true,depthWrite:false,depthTest:thread,blending:T.AdditiveBlending,uniforms:{uTime:{value:0},uIn:{value:0},uMode:{value:wave?1:thread?2:0},uP:{value:new T.Vector4(P[0],P[1],P[2],P[3])},uG:{value:new T.Vector3()},uGain:{value:1},uD:{value:new T.Vector3(0,-1,0)},uK:{value:1}},
+  vertexShader:`uniform float uTime;uniform float uIn;uniform float uMode;uniform float uK;uniform float uGain;uniform vec4 uP;uniform vec3 uG;uniform vec3 uD;attribute float aT;attribute float aS;attribute vec3 aR;varying vec3 vC;
   void main(){float tm=uTime;vec3 z=vec3(0.,0.,1.),nr,c,off;float w,ph,up=0.,fq=38.;
     if(uMode<.5){float th=mix(.62,5.66,aT);float R=1.+.07*sin(th*1.3+tm*.23)+.03*sin(th*3.1-tm*.31);
       w=.2+.09*sin(th*2.1-tm*.19+1.)+.03*sin(th*5.-tm*.4);ph=th*1.35+tm*.16+.35*sin(tm*.07);
@@ -38,7 +38,7 @@ document.querySelectorAll('[data-flow]').forEach(host=>{const P=V[(+host.dataset
     float taper=smoothstep(0.,.14,aT)*smoothstep(1.,.8,aT);vec3 grey=vec3(.66,.66,.7),red=vec3(.86,.05,.15);
     vec3 base=(grey*(.035+.16*sheen*sheen*sheen+.12*edge)+red*.07*(1.-sheen))*run*1.25*mix(1.,.95,up);
     float front=exp(-pow((uIn*1.25-aR.y*.18-aT)*18.,2.))*(1.-step(1.,uIn));
-    vC=(base+red*pulse*.9+vec3(1.,.92,.92)*pow(pulse,8.)*.7+red*front*.8)*taper*depth*grow;}`,
+    vC=(base+red*pulse*.9+vec3(1.,.92,.92)*pow(pulse,8.)*.7+red*front*.8)*taper*depth*grow*uGain;}`,
   fragmentShader:`varying vec3 vC;void main(){gl_FragColor=vec4(vC,1.);}`});
   const ribbon=new T.LineSegments(g,mat);ribbon.frustumCulled=false;const grp=new T.Group();grp.add(ribbon);scene.add(grp);
   // the ring the strands pass through: dark machined race, steel edge, one crimson line, a dial of ticks
@@ -54,16 +54,21 @@ document.querySelectorAll('[data-flow]').forEach(host=>{const P=V[(+host.dataset
     const tk=new T.InstancedMesh(new T.BoxGeometry(.0034,.0016,1),new T.MeshBasicMaterial({color:0x77777d,toneMapped:false}),72),o=new T.Object3D();
     for(let i=0;i<72;i++){const a=i/72*Math.PI*2,L=i%6?.018:.034;o.position.set(Math.cos(a)*(.375-L/2),h+.001,Math.sin(a)*(.375-L/2));o.rotation.set(0,-a+Math.PI/2,0);o.scale.set(1,1,L);o.updateMatrix();tk.setMatrixAt(i,o.matrix)}dial.add(tk);
     ring.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),D);scene.add(ring);mat.uniforms.uD.value.copy(D)}
-  let W=1,H=1,raf=0,vis=true;const t0=performance.now();
+  let W=1,H=1,raf=0,vis=true,tt=34,last=performance.now(),lastY=scrollY,boost=0,sc=0,px=0,py=0,tx=0,ty=0;const t0=performance.now();
+  // the hero ribbon leans toward the pointer; every ribbon runs faster while the page is scrolling
+  if(!wave&&!thread&&matchMedia('(hover:hover) and (pointer:fine)').matches)addEventListener('pointermove',e=>{tx=e.clientX/innerWidth*2-1;ty=e.clientY/innerHeight*2-1},{passive:true});
   function size(){const b=host.getBoundingClientRect();W=Math.max(1,b.width);H=Math.max(1,b.height);r.setPixelRatio(Math.min(devicePixelRatio||1,2));r.setSize(W,H,false);cam.aspect=W/H;cam.updateProjectionMatrix();if(!raf)raf=requestAnimationFrame(draw)}
   function draw(now){raf=0;const t=RM?20:(now-t0)/1000+20,narrow=W<700,u=H/(2*4.6*Math.tan(16*Math.PI/180));
-    mat.uniforms.uTime.value=t*1.7;const it=RM||wave?1:Math.min(1,(now-t0)/2600);mat.uniforms.uIn.value=1-Math.pow(1-it,3);
+    const dt=Math.min(.05,(now-last)/1000);last=now;boost+=(Math.min(1,Math.abs(scrollY-lastY)/36)-boost)*.1;lastY=scrollY;tt+=dt*1.7*(1+2.4*boost);mat.uniforms.uTime.value=RM?34:tt;const it=RM||wave?1:Math.min(1,(now-t0)/2600);mat.uniforms.uIn.value=1-Math.pow(1-it,3);
     if(thread){const hw=1.3194*W/H,K=narrow?.66:1.28,G=mat.uniforms.uG.value;G.set(narrow?hw*.14:hw*.43,narrow?-.5:.02,0);mat.uniforms.uK.value=K;ring.position.copy(G);ring.scale.setScalar(K);dial.rotation.y=t*.06;
       if(tags.length){const A0=new T.Vector3(2.3,1.75,-2.7).multiplyScalar(K).add(G),A1=D.clone().multiplyScalar(-.95*K).add(G),B1=D.clone().multiplyScalar(.8*K).add(G),B2=new T.Vector3(-.6,-1.9,1.15).multiplyScalar(K).add(G),v=new T.Vector3();
         tags.forEach(el=>{const nn=narrow&&el.dataset.n?el.dataset.n.split(',').map(Number):null,a=nn?nn[0]:+el.dataset.flowTag,up=a<.46,q=up?a/.46:(a-.46)/.54,m=1-q,p=up?[A0,A1,G]:[G,B1,B2];v.set(0,0,0).addScaledVector(p[0],m*m).addScaledVector(p[1],2*m*q).addScaledVector(p[2],q*q).project(cam);el.style.left=((v.x+1)/2*W+(nn?nn[1]:+el.dataset.dx||0))+'px';el.style.top=((1-v.y)/2*H+(nn?nn[2]:+el.dataset.dy||0))+'px'})}}
     else if(wave){grp.scale.setScalar(Math.max(narrow?2.1:1.2,1.12*W/(6.6*u))*(narrow?.55:1));grp.position.set(0,0,0);grp.rotation.set(P[4]+.06*Math.sin(t*.08),.1*Math.sin(t*.05),P[5]+.03*Math.sin(t*.06))}
-    else{const Rp=narrow?W*.78:Math.min(W*.33,620),cyp=narrow?H*.62:H*.54,cxp=narrow?W*.06:W*.315;
-      grp.scale.setScalar(Rp/u);grp.position.set(cxp/u,(H/2-cyp)/u,0);grp.rotation.set(.42+.08*Math.sin(t*.09),-.38+.14*Math.sin(t*.061),.2+.05*Math.sin(t*.047))}
+    else{const Rp=narrow?W*.72:Math.min(W*.46,800),cyp=narrow?Rp*1.02:Rp*1.12,cxp=narrow?W*.1:W*.12,k=Math.min(1,dt*7);
+      sc+=(Math.min(1,scrollY/(innerHeight*.44))-sc)*k;px+=(tx-px)*k*.5;py+=(ty-py)*k*.5;const e=sc*sc*(3-2*sc);
+      // scrolling away: the sweep closes into the Cinder C, upright in the middle of the screen, while the next section rises over it
+      const L=(a,b)=>a+(b-a)*e,Rc=Math.min(H*.25,W*.3),sw=1-e;mat.uniforms.uGain.value=L(1,.62);
+      grp.scale.setScalar(L(Rp,Rc)/u);grp.position.set(L(cxp,0)/u,(H/2-L(cyp,H*.33))/u,0);grp.rotation.set(L(.42,.1)+.08*Math.sin(t*.09)*sw+py*.05,L(-.38,-.08)+.14*Math.sin(t*.061)*sw+px*.07,L(.2,0)+.05*Math.sin(t*.047)*sw)}
     r.render(scene,cam);if(vis&&!RM)raf=requestAnimationFrame(draw)}
   new ResizeObserver(size).observe(host);
   new IntersectionObserver(e=>{vis=e[0].isIntersecting;if(vis&&!raf)raf=requestAnimationFrame(draw)}).observe(host);size();
