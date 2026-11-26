@@ -648,7 +648,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   </div></div>
 </section>
 
-<section id="audit" class="hx" aria-labelledby="h-audit"><div class="hx-vis"><div class="hx-host" data-plate="CinderReport" role="img" aria-label="An example audit sheet: six parts of the business checked, ranked by cost, then the fixes you pick."></div></div>
+<section id="audit" class="hx" aria-labelledby="h-audit"><div class="hx-vis"><div class="hx-host" data-plate="CinderSheet" role="img" aria-label="An example audit sheet: six parts of the business checked, ranked by cost, then the fixes you pick."></div></div>
 <div class="hx-copy"><h2 id="h-audit">First, a free audit.</h2><p class="hx-lead">Four steps, and the first three cost you nothing.</p>
 <div class="hx-step"><span>01</span><h3>Book a time</h3><p>Bring rough numbers: leads a month, your average job, how many quotes you close.</p></div><div class="hx-step"><span>02</span><h3>We walk your business</h3><p>Calls, forms, texts, estimates, quotes, invoices and reviews, including after hours.</p></div><div class="hx-step"><span>03</span><h3>You keep the plan</h3><p>Whether or not you work with us.</p></div><div class="hx-step"><span>04</span><h3>Every fix is custom</h3><p>Scoped after the audit, only if you want it, and priced to your business’s size.</p></div>
 <div class="acts"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></div></div></section>
@@ -658,7 +658,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 <div class="hx-step"><p class="bw">Answering<sup>[01]</sup></p><p>Every call, text and form gets a reply in seconds, day or night, from your own number.</p><a class="inl" href="/answering">More on answering</a></div><div class="hx-step"><p class="bw">Booking<sup>[02]</sup></p><p>Serious leads pick a time you’re actually free. The estimate lands on your calendar, with a reminder so they show up.</p><a class="inl" href="/booking">More on booking</a></div><div class="hx-step"><p class="bw">Follow-up<sup>[03]</sup></p><p>Every quote and invoice gets chased until it’s settled. It stops the moment they answer.</p><a class="inl" href="/follow-up">More on follow-up</a></div><div class="hx-step"><p class="bw">Reviews<sup>[04]</sup></p><p>Every finished job ends with a review request, sent while the customer is still happy.</p><a class="inl" href="/reviews">More on reviews</a></div><div class="hx-step"><p class="bw">Website<sup>[05]</sup></p><p>A site built to turn a visitor into a booked estimate, wired into everything above.</p><a class="inl" href="/websites">More on websites</a></div>
 <div class="hx-step"><p class="bw">One app</p><p>Whatever we build runs in one place. Open it and see what needs you today.</p><a class="inl" href="/software">See the software</a></div></div></section>
 
-<section id="back" class="hx" aria-labelledby="h-back"><div class="hx-vis"><div class="hx-host" data-plate="CinderDay" role="img" aria-label="A 24-hour dial of a working day: more jobs booked, phone time handled for you, the evening left free."></div></div>
+<section id="back" class="hx" aria-labelledby="h-back"><div class="hx-vis"><div class="hx-host" data-plate="CinderGauge" role="img" aria-label="A 24-hour dial of a working day: more jobs booked, phone time handled for you, the evening left free."></div></div>
 <div class="hx-copy"><h2 id="h-back">What you get back.</h2>
 <div class="hx-step"><h3>More jobs</h3><p>From the leads you already pay for.</p></div><div class="hx-step"><h3>Less time on the phone</h3><p>Replies, reminders and follow-ups go out without you.</p></div><div class="hx-step"><h3>Your evenings back</h3><p>No callback list waiting for you after the last job.</p></div><div class="hx-step"><h3>One place for everything</h3><p>Every lead, quote and invoice, and what needs you today.</p></div></div></section>
 
@@ -729,6 +729,8 @@ new IntersectionObserver(function(e){vis=e[0].isIntersecting;if(vis&&!raf)raf=re
 addEventListener('resize',function(){build()});
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(build);build();if(RM){outs.forEach(function(li){li.classList.add('hit')})}})();</script>
 <script src="/assets/cinder-leaks.js" defer></script>
+<script type="module" src="/assets/cinder-gauge.js"></script>
+<script type="module" src="/assets/cinder-objects.js"></script>
 <script src="/assets/cinder-plates.js" defer></script>
 <script src="/assets/scenes.js"></script>
 <script type="module" src="/assets/cinder-field.js"></script>

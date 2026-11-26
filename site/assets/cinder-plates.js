@@ -205,5 +205,6 @@
     })
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  addEventListener('cinder-plate', boot); addEventListener('load', boot);
   dispatchEvent(new Event('cinder-visual'));
 })();
