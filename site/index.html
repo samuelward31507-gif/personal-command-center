@@ -96,11 +96,10 @@ p{color:var(--t2);text-wrap:pretty}
 @keyframes slat{from{opacity:0;transform:translate3d(var(--x),120px,0) rotate(24deg) scaleY(.6)}}
 .js .rays-core{animation:core 2.2s var(--e) .2s both}
 @keyframes core{from{opacity:0;transform:translateX(-50%) scale(.7)}}
-.hb-stage{position:relative;margin:96px auto 0;max-width:1300px;padding:0 var(--g);perspective:2200px}
-.hb-screen{position:relative;border-radius:var(--r3);overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.14),0 -1px 0 rgba(255,255,255,.25) inset;transform:rotateX(20deg) scale(.98);transform-origin:50% 0;-webkit-mask-image:linear-gradient(#000 35%,transparent 92%);mask-image:linear-gradient(#000 35%,transparent 92%)}
-.hb-screen img{width:100%}
-.js .hb-screen{animation:hbin 1.5s var(--e) .45s both}
-@keyframes hbin{from{opacity:0;transform:rotateX(36deg) scale(.94) translate3d(0,60px,0)}to{opacity:1;transform:rotateX(20deg) scale(.98)}}
+.hb-stage{position:relative;margin:clamp(52px,7vw,96px) auto 0;max-width:1300px;padding:0 var(--g);height:clamp(420px,42vw,570px);perspective:2200px;isolation:isolate}
+.hb-stage canvas{display:block;width:100%;height:100%;touch-action:pan-y}
+@media(max-width:700px){.hero{padding-top:112px}.hb-stage{margin-top:38px;height:360px;padding:0 2vw}}
+
 .js .hero h1 .ln span{animation:up var(--d3) var(--e) both}
 .js .hero h1 .ln:nth-child(2) span{animation-delay:.06s}.js .hero h1 .ln:nth-child(3) span{animation-delay:.12s}
 .js .hero .lede,.js .hero .acts,.js .hero .terms{animation:fade .9s var(--e) both}
@@ -407,7 +406,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
     </div>
     
   </div>
-  <div class="hb-stage" id="heroHost"><div class="hb-screen" aria-hidden="true"><img src="/assets/screens/today-2400.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1300px) 100vw, 1300px" width="2400" height="1500" alt="" fetchpriority="high"></div></div>
+  <div class="hb-stage" id="heroHost" aria-label="Brightline Co example Today dashboard on a machined studio monitor"></div>
 </section>
 
 <section class="tools" aria-label="Works alongside the tools you already use">
