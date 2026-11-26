@@ -3,6 +3,7 @@
 (() => {
   const instances = new Map();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const lite = matchMedia('(max-width: 700px)');
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const hash = value => {
     let h = 2166136261;
@@ -120,13 +121,13 @@
       const redLevel=(v===0?1.08:.78)*(1-quiet*.18)*clamp(Number(intensity)||0,0,1);
       const specs=layouts[v];
       ctx.save();ctx.globalAlpha=clamp(Number(intensity)||0,0,1);
-      specs.forEach((s,i)=>form(s,i,reduced.matches?0:elapsed,drift,redLevel*(s[5]||1)));
+      specs.slice(0,lite.matches?3:specs.length).forEach((s,i)=>form(s,i,reduced.matches?0:elapsed,drift,redLevel*(s[5]||1)));
       ctx.restore();
       if(!reduced.matches)timer=setTimeout(wake,interval);
     }
     function resize() {
       const r=el.getBoundingClientRect();if(!r.width||!r.height)return;
-      dpr=Math.min(2,window.devicePixelRatio||1);
+      dpr=Math.min(lite.matches?1.5:2,window.devicePixelRatio||1);
       width=Math.max(1,Math.round(r.width*dpr));height=Math.max(1,Math.round(r.height*dpr));
       canvas.width=width;canvas.height=height;wake();
     }
