@@ -5,7 +5,7 @@
   var sec=document.getElementById('leaks');if(!sec)return;
   var map=sec.querySelector('.lk-map'),cv=sec.querySelector('.lk-cv'),ctx=cv.getContext('2d');
   var st=[].slice.call(sec.querySelectorAll('.lk-st')),tot=sec.querySelector('.lk-total b');
-  var RM=matchMedia('(prefers-reduced-motion: reduce)').matches,P=0,raf=0,vis=false,dpr=1,W=0,H=0,t0=performance.now(),last=-1;
+  var RM=false,shown=0,P=0,raf=0,vis=false,dpr=1,W=0,H=0,t0=performance.now(),last=-1;
   map.classList.add('is3d');
   function sm(x){x=Math.max(0,Math.min(1,x));return x*x*(3-2*x)}
   function narrow(){return W<700}
@@ -31,11 +31,9 @@
     for(var s=0;s<N-1;s++){
       var A=station(s),B=station(s+1);
       for(var side=-1;side<=1;side+=2){
-        var ox=nw?off*side:0,oz=nw?0:off*side,lit=head>s+.02;
-        line(proj(A.x+ox,.02,A.z+oz),proj(B.x+ox,.02,B.z+oz),lit?'rgba(242,241,238,.95)':'rgba(242,241,238,.4)');
+        var ox=nw?off*side:0,oz=nw?0:off*side,f=Math.max(0,Math.min(1,head-s)),a0=proj(A.x+ox,.02,A.z+oz),b0=proj(B.x+ox,.02,B.z+oz);
+        line(a0,b0,'rgba(242,241,238,.26)');if(f>0)line(a0,[a0[0]+(b0[0]-a0[0])*f,a0[1]+(b0[1]-a0[1])*f],'rgba(242,241,238,.98)');
       }
-      for(var k=1;k<10;k++){var m=k/10,X=A.x+(B.x-A.x)*m,Z=A.z+(B.z-A.z)*m;
-        line(proj(X+(nw?-off:0),.02,Z+(nw?0:-off)),proj(X+(nw?off:0),.02,Z+(nw?0:off)),'rgba(242,241,238,'+(head>s+m?.5:.18)+')')}
     }
     var sum=0;
     st.forEach(function(el,i){
@@ -60,8 +58,8 @@
     if(u>0&&u<1){for(var k2=0;k2<14;k2++){var q=Math.max(0,head-k2*.03),j=Math.min(N-2,Math.floor(q)),g2=q-j,A2=station(j),B2=station(j+1);
       var pp=proj(A2.x+(B2.x-A2.x)*g2,.05,A2.z+(B2.z-A2.z)*g2);
       ctx.fillStyle='rgba(255,255,255,'+(1-k2/14).toFixed(2)+')';ctx.beginPath();ctx.arc(pp[0],pp[1],Math.max(.6,3.4-k2*.2),0,7);ctx.fill()}}
-    if(sum!==last){last=sum;tot.textContent='$'+sum.toLocaleString('en-US')}
-    if(vis&&!RM)raf=requestAnimationFrame(frame);
+    shown+=(sum-shown)*.14;if(Math.abs(sum-shown)<4)shown=sum;var sv=Math.round(shown/10)*10;if(sv!==last){last=sv;tot.textContent='$'+sv.toLocaleString('en-US')}
+    if(vis)raf=requestAnimationFrame(frame);
   }
   function onScroll(){var r=sec.getBoundingClientRect();P=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height-innerHeight)));if(!raf)raf=requestAnimationFrame(frame)}
   new IntersectionObserver(function(e){vis=e[0].isIntersecting;if(vis&&!raf)raf=requestAnimationFrame(frame)}).observe(sec);

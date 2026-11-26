@@ -4,7 +4,7 @@
 import * as T from 'three';
 const RM=false;
 // wave presets: amplitude, frequency, width, twist, tilt, roll. One per page, so no two backdrops match.
-const V=[[.36,5.2,.3,7.5,.5,-.1],[.2,3,.42,4,.75,.12],[.5,7.5,.22,11,.3,0],[.28,2.2,.5,3,.95,-.2],[.42,4.2,.26,14,.55,.18],[.16,9,.34,6,.4,-.05],[.6,3.6,.2,9,.65,.1],[.3,6,.46,5,.85,0],[.24,4.6,.38,17,.6,-.16],[.46,2.8,.3,8,.35,.2],[.18,6.8,.5,10,.7,-.08],[.54,5,.24,3.5,.45,.14]];
+const V=[[.36,5.2,.3,7.5,.5,-.1],[.2,3,.42,4,.75,.12],[.5,7.5,.22,11,.3,0],[.28,2.2,.5,3,.95,-.2],[.42,4.2,.26,14,.55,.18],[.16,9,.34,6,.4,-.05],[.6,3.6,.2,9,.65,.1],[.3,6,.46,5,.85,0],[.24,4.6,.38,17,.6,-.16],[.46,2.8,.3,8,.35,.2],[.18,6.8,.5,10,.7,-.08],[.54,5,.24,3.5,.45,.14],[.26,2.6,.62,6.5,.82,.07]];
 document.querySelectorAll('[data-flow]').forEach(host=>{const P=V[(+host.dataset.v||0)%V.length];
   const wave=host.dataset.flow==='wave',thread=host.dataset.flow==='thread',small=innerWidth<700;
   const cv=document.createElement('canvas');cv.className='flow-cv';cv.setAttribute('aria-hidden','true');host.append(cv);
