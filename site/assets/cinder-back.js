@@ -456,10 +456,11 @@ function create(el) {
   let frame=0,timer=0,visible=true,lost=false,disposed=false,dirty=true;
 
   function pose(t,life){
-    const retract=ease(t,.85,1.12),lift=ease(t,1.02,1.32);
-    const lower=ease(t,1.60,1.91),rise=ease(t,1.48,1.95);
-    const dock=ease(t,2.12,2.53);
-    const counterIn=ease(t,2.24,2.60),phoneIn=ease(t,2.40,2.77);
+    const retract=ease(t,.72,1.10),lift=ease(t,.90,1.25);
+    // Each incoming module begins its lift before the outgoing one finishes sinking.
+    const lower=ease(t,1.48,1.82),rise=ease(t,1.36,1.82);
+    const dock=ease(t,1.98,2.42);
+    const counterIn=ease(t,2.10,2.46),phoneIn=ease(t,2.24,2.60);
 
     function place(o,size,x,z,raised,isVisible){
       o.visible=isVisible;
@@ -484,7 +485,7 @@ function create(el) {
     [counterIn,phoneIn,dock].forEach((travel,i)=>{
       const pad=pads[i];
       pad.visible=travel>0;
-      pad.scale.set(travel,travel*(1-.38*ease(travel,.72,1)),travel);
+      pad.scale.set(travel,travel*(1-.12*ease(travel,.82,1)),travel);
       pad.position.y=.202+.0225*pad.scale.y;
     });
 
@@ -496,7 +497,12 @@ function create(el) {
     flag.visible=flag.position.y>1.195;
 
     const ring=ease(t,1.13,1.22)*(1-ease(t,1.32,1.47));
-    ringLamp.emissiveIntensity=ring*1.1;
+    const seatPulse=Math.max(
+      ease(t,.78,.84)*(1-ease(t,.84,.92)),
+      ease(t,1.42,1.48)*(1-ease(t,1.48,1.56)),
+      ease(t,2.06,2.12)*(1-ease(t,2.12,2.20))
+    );
+    ringLamp.emissiveIntensity=Math.max(ring*1.1,seatPulse*1.35);
     handset.position.x=.020*ring*Math.sin(t*135);
     handset.rotation.z=.014*ring*Math.sin(t*135);
 
