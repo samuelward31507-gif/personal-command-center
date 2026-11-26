@@ -271,6 +271,26 @@
   ],
   "redirects": [
     {
+      "source": "/book",
+      "destination": "/free-audit#book",
+      "permanent": false
+    },
+    {
+      "source": "/how-it-works",
+      "destination": "/free-audit",
+      "permanent": false
+    },
+    {
+      "source": "/product",
+      "destination": "/software",
+      "permanent": false
+    },
+    {
+      "source": "/pricing",
+      "destination": "/free-audit",
+      "permanent": false
+    },
+    {
       "source": "/try",
       "destination": "/demo#try",
       "permanent": false
