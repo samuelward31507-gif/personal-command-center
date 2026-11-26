@@ -332,6 +332,9 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 
 
 @media (max-width:900px){
+  .stick{height:230px}
+  .audit-vis{height:44svh!important}
+  .fix-stick{grid-template-rows:auto minmax(0,58svh)}
   #back>.backdrop{display:none}
   #back{background:#000}
   .back-vis{height:30svh;top:56px;box-shadow:0 16px 16px -4px #000}
@@ -489,7 +492,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
       <div class="founder rv d1"><blockquote>“I build and watch every client’s system myself, and I only take on a few businesses at a time. If it isn’t a fit, I’ll say so.”</blockquote><small>Sam Ward, founder</small></div>
     </div>
     <ul class="gets">
-      <li class="rv"><b>More jobs</b><p>From the leads you already pay for. No new ad spend.</p></li>
+      <li class="rv"><b>More jobs</b><p>From the leads you already pay for.</p></li>
       <li class="rv"><b>Less time on the phone</b><p>Replies, reminders and follow-ups go out without you.</p></li>
       <li class="rv"><b>Your evenings back</b><p>No callback list waiting for you after the last job.</p></li>
       <li class="rv"><b>One place for everything</b><p>Every lead, quote and invoice, and what needs you today.</p></li>
@@ -528,7 +531,7 @@ var steps=[].slice.call(d.querySelectorAll('.step')),evs=[].slice.call(d.querySe
 function setStep(s){if(s===cur)return;cur=s;steps.forEach(function(el){el.classList.toggle('on',+el.dataset.s===s)});evs.forEach(function(el){el.classList.toggle('on',+el.dataset.s<=s)})}
 setStep(0);
 var bdHost=d.getElementById('bdHost'),bdDesc=d.getElementById('bdDesc'),U=null,lastP=-1,lastA=-1;
-var descs=["Every call, text and form gets a reply in seconds, even after hours.", "Leads pick a time and land on your calendar, with reminders so they show up.", "Sent quotes get followed up until the customer says yes or no.", "Unpaid invoices get polite reminders, so you get paid without chasing.", "Happy customers get asked for a review after every paid job.", "A site that turns visitors into booked jobs, if yours is part of the leak."];
+var descs=["Every call, text and form gets a reply in seconds, even after hours.", "Leads pick a time and land on your calendar, with reminders so they show up.", "Sent quotes get followed up until the customer says yes or no.", "Unpaid invoices get polite reminders, so you get paid without chasing.", "Happy customers get asked for a review after every finished job.", "A site that turns visitors into booked jobs, if yours is part of the leak."];
 // Allocate each WebGL renderer as its stage approaches the viewport.
 var nearCallbacks=new Map();
 var nearVisual=new IntersectionObserver(function(entries){

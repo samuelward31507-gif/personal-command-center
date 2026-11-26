@@ -267,3 +267,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 .tl li:last-child b{color:var(--t1)}
 
 @media (max-width:900px){.gnav.on{background:#000}.cmp .cr .y::before{display:none}}
+
+/* Mobile sizing v2: pinned visuals smaller so the text leads */
+@media (max-width:900px){.sx-vis{height:38svh}.sx-step{min-height:44vh}.sx-step h3{font-size:24px}}
+@media (max-width:900px){.sx-pin{display:contents}.sx-vis{position:sticky;top:64px;width:100%}}
