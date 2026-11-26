@@ -2,7 +2,7 @@
 // allocating another WebGL context alongside each foreground instrument.
 const instances=new Map();
 const reduced=matchMedia('(prefers-reduced-motion:reduce)');
-const families=['rotor','fins','tiles','lathe','belt','louvers'];
+const families=['rotor','tiles','fins','gear','perforated','rails','honeycomb','grooves'];
 const pages={'/answering':'diaphragm','/booking':'tiles','/follow-up':'belt','/reviews':'lathe',
   '/websites':'louvers','/free-audit':'iris','/software':'fins'};
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
@@ -27,7 +27,7 @@ function mount(el,{variant=0,seed='',calm=.88,intensity=1}={}){
   function arc(r,a,b,width,stroke){
     c.beginPath();c.strokeStyle=stroke;c.lineWidth=width;c.arc(0,0,r,a,b);c.stroke();
   }
-  function alloy(n){const v=Math.round(clamp(n,0,110));return 'rgb('+v+','+v+','+(v+1)+')'}
+  function alloy(n){const v=Math.round(clamp(n*1.2,0,110));return 'rgb('+v+','+v+','+(v+1)+')'}
   function relief(family,phase){
     const turn=phase+variation*4,light=i=>.5+.5*Math.cos(i-turn*.7);
     if(family==='diaphragm'){
@@ -65,24 +65,66 @@ function mount(el,{variant=0,seed='',calm=.88,intensity=1}={}){
         }
       }
       for(let i=0;i<36;i++){const a=i*Math.PI/18;arc(.945,a,a+.033,.013,i%9===0?'#94202a':'#3a3a40')}
+    }else if(family==='fins'||family==='louvers'||family==='rails'){
+      c.transform(1,.12,-.24,.72,0,0);
+      const rail=family==='rails',louver=family==='louvers';
+      const count=rail?12:34,pitch=2.2/count,shift=turn*(rail?.045:.025);
+      for(let i=-2;i<count+2;i++){
+        const x=-1.1+i*pitch+(shift%pitch+pitch)%pitch;
+        const h=rail?1.85:2.05,w=pitch*(rail?.52:.79);
+        const skew=(louver?.13:.035)*Math.sin(turn*.18+i*.05);
+        polygon([[x,-h/2],[x+w,-h/2+skew],[x+w,h/2+skew],[x,h/2]],alloy(22+46*light(i*.18)));
+        polygon([[x+w,-h/2+skew],[x+w+.025,-h/2+.035+skew],[x+w+.025,h/2+.035],[x+w,h/2+skew]],'#111113');
+        polygon([[x,-h/2],[x+w,-h/2+skew],[x+w,-h/2+skew+.008],[x,-h/2+.008]],alloy(68+30*light(i*.11)));
+      }
+    }else if(family==='gear'){
+      c.scale(1,.72);c.rotate(turn*.035);
+      for(let i=0;i<48;i++){
+        const a=i*tau/48,inner=.72,outer=i%2===0?1.04:.94;
+        polygon([[Math.cos(a)*inner,Math.sin(a)*inner],[Math.cos(a+.045)*inner,Math.sin(a+.045)*inner],
+          [Math.cos(a+.045)*outer,Math.sin(a+.045)*outer],[Math.cos(a)*outer,Math.sin(a)*outer]],
+          alloy(27+48*light(i*.13)));
+      }
+      for(let i=0;i<6;i++)arc(.16+i*.105,0,tau,.018,alloy(24+27*light(i*.3)));
+      arc(.13,0,tau,.075,alloy(54));
+    }else if(family==='perforated'){
+      c.transform(1,.08,-.16,.72,0,0);
+      for(let row=-12;row<=12;row++)for(let col=-16;col<=16;col++){
+        const x=col*.065+(row%2)*.0325,y=row*.073;
+        c.fillStyle=alloy(23+43*light(col*.17+row*.11));
+        c.beginPath();c.ellipse(x,y,.022,.029,0,0,tau);c.fill();
+        c.strokeStyle='#111113';c.lineWidth=.009;c.stroke();
+      }
+    }else if(family==='honeycomb'){
+      c.transform(1,.08,-.14,.72,0,0);
+      const r=.058,dx=r*1.72,dy=r*1.5;
+      for(let row=-13;row<=13;row++)for(let col=-17;col<=17;col++){
+        const x=col*dx+(row%2)*dx/2,y=row*dy;
+        c.beginPath();for(let k=0;k<6;k++){const a=k*tau/6;const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;
+          if(k===0)c.moveTo(px,py);else c.lineTo(px,py)}
+        c.closePath();c.lineWidth=.014;c.strokeStyle=alloy(22+43*light(col*.14+row*.17));c.stroke();
+        c.fillStyle='#09090b';c.fill();
+      }
+    }else if(family==='grooves'||family==='lathe'){
+      c.scale(1,.68);
+      for(let i=0;i<30;i++){
+        const r=.10+i*.032;
+        arc(r,0,tau,.012,alloy(22+28*light(i*.18)));
+        arc(r+.009,turn*.035+i*.02,turn*.035+i*.02+.65,.006,alloy(62+28*light(i*.13)));
+      }
+      arc(.075,0,tau,.035,alloy(48));
     }else{
-      c.transform(1,.19,-.36,.66,0,0);
-      const tile=family==='tiles',belt=family==='belt',louver=family==='louvers';
-      const shift=turn*(belt?.12:.035);
-      const n=tile?9:25,pitch=2/n;
+      // Milled grid tiles: each tile has a dark seam, bevel and a moving edge.
+      c.transform(1,.16,-.28,.70,0,0);
+      const n=9,pitch=2/n,shift=turn*.025;
       for(let i=-2;i<n+2;i++){
         const x=-1+i*pitch+(shift%pitch+pitch)%pitch;
-        const count=tile?7:belt?3:1;
-        for(let j=0;j<count;j++){
-          const y=-1+j*2/count,w=pitch*(belt?.73:.84),h=2/count*.95;
-          const bevel=.012,skew=louver?.16*Math.sin(turn*.23+i*.06):.035;
-          polygon([[x,y],[x+w,y+skew],[x+w,y+h],[x,y+h-skew]],alloy(19+32*light(i*.17+j*.25)));
-          polygon([[x+w,y+skew],[x+w+bevel,y+.036+skew],[x+w+bevel,y+h+.036],[x+w,y+h]],'#111113');
-          polygon([[x,y],[x+w,y+skew],[x+w,y+skew+.007],[x,y+.007]],alloy(62+40*light(i*.1)));
-          if((i+2*j)%8===0){
-            c.fillStyle='#891421';c.fillRect(x+w*.15,y+h*.83,w*.58,.008);
-          }
-          if(tile||belt){c.fillStyle='#0b0b0c';c.beginPath();c.arc(x+w*.18,y+.037,.009,0,Math.PI*2);c.fill()}
+        for(let j=-2;j<n+2;j++){
+          const y=-1+j*pitch,w=pitch*.84,h=pitch*.84,skew=.025*Math.sin(turn*.2+i*.06);
+          polygon([[x,y],[x+w,y+skew],[x+w,y+h],[x,y+h-skew]],alloy(24+38*light(i*.17+j*.25)));
+          polygon([[x+w,y+skew],[x+w+.018,y+.036+skew],[x+w+.018,y+h+.036],[x+w,y+h]],'#111113');
+          polygon([[x,y],[x+w,y+skew],[x+w,y+skew+.007],[x,y+.007]],alloy(64+30*light(i*.1)));
+          c.fillStyle='#0b0b0c';c.beginPath();c.arc(x+w*.18,y+.037,.009,0,tau);c.fill();
         }
       }
     }
