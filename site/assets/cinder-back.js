@@ -485,7 +485,8 @@ function create(el) {
     [counterIn,phoneIn,dock].forEach((travel,i)=>{
       const pad=pads[i];
       pad.visible=travel>0;
-      const contact=ease(travel,.70,.92);\n      pad.scale.set(travel,travel*(1-.20*contact),travel);
+      const contact=ease(travel,.70,.92);
+      pad.scale.set(travel,travel*(1-.20*contact),travel);
       pad.position.y=.202+.0225*pad.scale.y-.006*contact;
     });
 
