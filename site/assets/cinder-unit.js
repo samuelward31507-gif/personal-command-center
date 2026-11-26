@@ -594,8 +594,8 @@ function mount(el) {
         changed = now;
       }
       const select = reduce.matches ? 1 : ease(now,changed,changed+250);
-      const show = ease(p,.42,.52)*(1-ease(p,.8,.94));
-      const hold = ease(p,.59,.62)*(1-ease(p,.80,.84));
+      const show = ease(p,.14,.22)*(1-ease(p,.84,.95));
+      const hold = ease(p,.2,.24)*(1-ease(p,.8,.84));
       let sum = 0;
       for (let i = 0; i < 6; i++) {
         weights[i] = from[i]+((i === chosen ? 1 : 0)-from[i])*select;
@@ -606,8 +606,8 @@ function mount(el) {
       bounds.set([Infinity,-Infinity,Infinity,-Infinity]);
       for (let i = 5; i >= 0; i--) {
         if (i < 5) {
-          const open = ease(p,.24+(4-i)*.022,.525+(4-i)*.02375);
-          const close = ease(p,.80+i*.013,.888+i*.013);
+          const open = ease(p,.2+i*.1,.28+i*.1);
+          const close = ease(p,.8+(4-i)*.012,.87+(4-i)*.012);
           lift += 46*open**(1+.035*i)*(1-close);
         }
         const group = plates[i], fraction = i === 5 ? 0 : lift/(46*(5-i));
@@ -670,7 +670,7 @@ function mount(el) {
 
       rows.forEach(({tag,lines},i) => {
         const y = start+i*gap, anchor = anchors[i];
-        const alpha = opacity*(1-.55*(sum-weights[i])*hold);
+        const alpha = opacity*ease(p,.2+i*.1,.26+i*.1)*(1-.55*(sum-weights[i])*hold);
         tag.style.transform = 'translate('+labelX+'px,'+y+'px) translateY(-50%)';
         tag.style.opacity = alpha;
         tag.style.visibility = alpha > .001 ? 'visible' : 'hidden';
