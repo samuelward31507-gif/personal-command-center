@@ -62,7 +62,8 @@ function make(def){
     function frame(n){raf=0;const dt=Math.min(.05,(n-last)/1000);last=n;now=RM?12:Math.max(0,(n-t0)/1000);
       s+=(prog-s)*(RM?1:Math.min(1,dt*9));{const yf=s*(def.yaw.length-1),yi=Math.min(def.yaw.length-2,Math.floor(yf));yaw=lerp(def.yaw[yi],def.yaw[yi+1],ez(yf-yi))}
       if(!born&&vis){born=now||.001;canvas.style.opacity=1}const e=RM?1:ez((now-born)/1.3);
-      rig.rotation.y=Math.PI/4+yaw+(RM?0:(def.sway==null?.06:def.sway)*Math.sin(now*.4))-(1-e)*(def.swing==null?.5:def.swing);rig.scale.setScalar(lerp(.93,1,e));
+      const E={yaw:-(1-e)*(def.swing==null?.5:def.swing),scale:lerp(.93,1,e),sx:0,lift:0};if(def.enter)def.enter(RM?1:c01((now-born)/(def.enterTime||1.3)),E);
+      rig.rotation.y=Math.PI/4+yaw+(RM?0:(def.sway==null?.06:def.sway)*Math.sin(now*.4))+E.yaw;rig.scale.setScalar(E.scale);rig.position.set(E.sx*.7071,0,-E.sx*.7071);copies[0].g.position.y=E.lift;copies[1].g.position.y=-2-E.lift;
       def.update({t:now,p:s,copies,M});composer?composer.render():renderer.render(scene,camera);if(vis&&!RM)raf=requestAnimationFrame(frame)}
     kick=()=>{if(!raf)raf=requestAnimationFrame(frame)};
     new ResizeObserver(size).observe(host);new IntersectionObserver(e=>{vis=e[0].isIntersecting;if(vis){last=performance.now();kick()}}).observe(host);size();
@@ -71,6 +72,7 @@ function make(def){
 // ---- Homepage, the audit: a machined sheet. A gantry walks the rows, the costs rank themselves, three get picked.
 const COST=[1,.45,.35,.8,.25,.6],ORDER=[0,3,5,1,2,4],PICK=[0,3,5],ROWS=['CALLS','FORMS','ESTIMATES','QUOTES','INVOICES','REVIEWS'];
 window.CinderSheet=make({fit:[280,235],yaw:[.34,.2,.08,.26],aim:10,
+  enterTime:1.7,enter(k,E){const o=1-Math.pow(1-k,4);E.sx=lerp(-460,0,o);E.yaw=lerp(-1.05,0,o);E.scale=1},
   mats:K=>({row:ROWS.map(()=>K.led()),chk:ROWS.map(()=>K.led()),head:K.led(0xff1f3a),scan:K.led(0xff1f3a)}),
   build(K,M){const g=new T.Group(),r={bars:[]};add(g,rb(390,16,540,10),K.body,0,8,0);
     const tex=K.texture(680,960,c=>{c.fillStyle='#0b0b0d';c.fillRect(0,0,680,960);c.fillStyle='rgba(242,241,238,.9)';c.font='500 30px "Geist Mono",monospace';c.fillText('AUDIT',40,74);c.fillStyle='rgba(242,241,238,.3)';c.fillRect(40,104,600,2);
@@ -149,6 +151,8 @@ const GYAW=[.5,-.35,-1.25,.1],hr=h=>(h-12)/24*TAU,hp=(h,r,y)=>new T.Vector3(Math
 function arc(r0,r1,hgt,h0,h1,m,y){const sh=new T.Shape(),a=Math.PI/2-hr(h0),b=Math.PI/2-hr(h1);sh.absarc(0,0,r1,a,b,true);sh.absarc(0,0,r0,b,a,false);
   const o=new T.Mesh(new T.ExtrudeGeometry(sh,{depth:hgt,bevelEnabled:true,bevelThickness:.8,bevelSize:.8,bevelSegments:2,curveSegments:96}),m);o.rotation.x=-Math.PI/2;o.position.y=y;o.castShadow=o.receiveShadow=true;return o}
 window.CinderGauge=make({fit:[320,222],yaw:GYAW,aim:20,
+  // set down like a coin: it drops the last few inches still turning, then settles
+  enterTime:2.2,enter(k,E){const o=1-Math.pow(1-k,3);E.yaw=(1-o)*(1-o)*5.6;E.lift=70*Math.pow(1-k,4);E.scale=1},
   mats:K=>({extra:[K.led(0xff1f3a),K.led(0xff1f3a)],phone:K.led(0xff1f3a),eve:K.led(),cap:K.led(),tip:K.led(0xff1f3a)}),
   build(K,M){const g=new T.Group(),r={extras:[]},R=300;
     const shell=add(g,new T.LatheGeometry([[0,0],[R,0],[R+8,8],[R+8,38],[R+2,46],[R-22,46],[R-28,40],[0,40]].map(p=>new T.Vector2(p[0],p[1])),160),K.body);

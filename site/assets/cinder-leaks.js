@@ -5,7 +5,7 @@
   var sec=document.getElementById('leaks');if(!sec)return;
   var map=sec.querySelector('.lk-map'),cv=sec.querySelector('.lk-cv'),ctx=cv.getContext('2d');
   var st=[].slice.call(sec.querySelectorAll('.lk-st')),tot=sec.querySelector('.lk-total b');
-  var RM=false,shown=0,P=0,raf=0,vis=false,dpr=1,W=0,H=0,t0=performance.now(),last=-1;
+  var RM=false,shown=0,tIn=0,P=0,raf=0,vis=false,dpr=1,W=0,H=0,t0=performance.now(),last=-1;
   map.classList.add('is3d');
   function sm(x){x=Math.max(0,Math.min(1,x));return x*x*(3-2*x)}
   function narrow(){return W<700}
@@ -27,19 +27,20 @@
   function frame(now){
     raf=0;var T=RM?3:(now-t0)/1000,u=sm((P-.05)/.82),head=u*(N-1);setCam(P);
     ctx.clearRect(0,0,W,H);
+    if(vis&&!tIn)tIn=now;var intro=tIn?sm((now-tIn)/1500):0;
     var off=.16,leaks=st.map(function(el){return +el.dataset.leak||0}),nw=narrow();
     for(var s=0;s<N-1;s++){
       var A=station(s),B=station(s+1);
       for(var side=-1;side<=1;side+=2){
         var ox=nw?off*side:0,oz=nw?0:off*side,f=Math.max(0,Math.min(1,head-s)),a0=proj(A.x+ox,.02,A.z+oz),b0=proj(B.x+ox,.02,B.z+oz);
-        line(a0,b0,'rgba(242,241,238,.26)');if(f>0)line(a0,[a0[0]+(b0[0]-a0[0])*f,a0[1]+(b0[1]-a0[1])*f],'rgba(242,241,238,.98)');
+        var dr=Math.max(0,Math.min(1,intro*(N-1)-s));if(dr>0)line(a0,[a0[0]+(b0[0]-a0[0])*dr,a0[1]+(b0[1]-a0[1])*dr],'rgba(242,241,238,.26)');if(f>0)line(a0,[a0[0]+(b0[0]-a0[0])*f,a0[1]+(b0[1]-a0[1])*f],'rgba(242,241,238,.98)');
       }
     }
     var sum=0;
     st.forEach(function(el,i){
-      var S=station(i),reached=head>=i-.02,leak=leaks[i];
-      var base=proj(S.x,0,S.z),top=proj(S.x,1.25,S.z);
-      var pl=[[-.3,-.3],[.3,-.3],[.3,.3],[-.3,.3]].map(function(o){return proj(S.x+o[0],0,S.z+o[1])});
+      var S=station(i),reached=head>=i-.02,leak=leaks[i],g=i?sm((head-(i-.45))/.45):intro,pad=.06+.24*g;
+      var base=proj(S.x,0,S.z),top=proj(S.x,.12+1.13*g,S.z);
+      var pl=[[-pad,-pad],[pad,-pad],[pad,pad],[-pad,pad]].map(function(o){return proj(S.x+o[0],0,S.z+o[1])});el.style.opacity=(.0+g).toFixed(3);
       ctx.beginPath();pl.forEach(function(p,j){j?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])});ctx.closePath();
       ctx.fillStyle=reached?(leak?'rgba(255,42,58,.14)':'rgba(242,241,238,.08)'):'rgba(242,241,238,.02)';ctx.fill();
       ctx.strokeStyle=reached?(leak?'rgba(255,42,58,.75)':'rgba(242,241,238,.6)'):'rgba(242,241,238,.2)';ctx.stroke();
