@@ -3,7 +3,7 @@
 const instances=new Map();
 const reduced=matchMedia('(prefers-reduced-motion:reduce)');
 const families=['rotor','tiles','fins','gear','perforated','rails','honeycomb','grooves'];
-const pages={'/answering':'diaphragm','/booking':'tiles','/follow-up':'belt','/reviews':'lathe',
+const pages={'/answering':'diaphragm','/booking':'rails','/follow-up':'belt','/reviews':'lathe',
   '/websites':'louvers','/free-audit':'iris','/software':'fins'};
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
 function hash(value){
