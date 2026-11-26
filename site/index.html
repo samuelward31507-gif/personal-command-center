@@ -23,6 +23,7 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" crossorigin>
 <link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/nav.css">
 <style>
 /* Cinder design system v2 (see DESIGN.md). Black, graphite, warm white; crimson only for live moments. */
 @font-face{font-family:"Inter";src:url(/assets/fonts/InterVariable.woff2) format("woff2");font-weight:100 900;font-display:swap}
@@ -243,7 +244,7 @@ p{color:var(--t2);text-wrap:pretty}
 .closing .acts{justify-content:center;margin-top:40px}
 
 footer{border-top:1px solid var(--line);padding:72px 0 48px}
-.ft{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:40px}
+.ft{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:40px}
 .ft p{margin-top:14px;font-size:var(--f2);max-width:22em}
 .ft h4{font-size:var(--f2);font-weight:550;color:var(--t1);margin-bottom:14px}
 .ft ul{display:grid;gap:10px}
@@ -306,13 +307,18 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<header class="nav" id="nav">
-  <div class="wrap">
-    <a class="brand" href="#top" aria-label="Cinder Revenue Company, home"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" class="brand-mark" viewBox="151.04 168.00 791.63 703.15"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z" fill="currentColor"/></svg><span>Cinder Revenue</span></a>
-    <nav aria-label="Main"><ul>
-      <li><a href="#inside">What we fix</a></li><li><a href="#audit">The free audit</a></li><li><a href="#app">The app</a></li><li><a href="#back">What you get back</a></li>
+<header class="gnav" id="nav">
+  <div class="gnav-in">
+    <a class="gbrand" href="/" aria-label="Cinder Revenue Company, home"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" class="brand-mark" viewBox="151.04 168.00 791.63 703.15"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z" fill="currentColor"/></svg><span>Cinder Revenue</span></a>
+    <nav class="glinks" aria-label="Main"><ul>
+      <li class="has-menu"><button type="button" aria-expanded="false" aria-controls="sysmenu">Systems</button>
+        <div class="gmenu" id="sysmenu"><ul><li><a href="/answering"><b>Answering</b><span>Every call and message gets a reply in seconds.</span></a></li><li><a href="/booking"><b>Booking</b><span>Serious leads land on your calendar and show up.</span></a></li><li><a href="/follow-up"><b>Follow-up</b><span>Every quote and invoice gets chased until it’s settled.</span></a></li><li><a href="/reviews"><b>Reviews</b><span>Every happy customer gets asked for a review.</span></a></li><li><a href="/websites"><b>Websites</b><span>A site that turns visitors into booked jobs.</span></a></li></ul></div></li>
+      <li><a href="/app">The app</a></li><li><a href="/audit">The free audit</a></li><li><a href="/about">About</a></li>
     </ul></nav>
-    <a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a>
+    <a class="gcta" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a>
+    <details class="gmob"><summary aria-label="Menu"><i></i><i></i></summary><div class="gmob-p">
+      <a href="/answering">Answering</a><a href="/booking">Booking</a><a href="/follow-up">Follow-up</a><a href="/reviews">Reviews</a><a href="/websites">Websites</a><a href="/app">The app</a><a href="/audit">The free audit</a><a href="/about">About</a>
+    </div></details>
   </div>
 </header>
 
@@ -411,7 +417,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 <section id="app" class="fix-ovl" aria-labelledby="h-fix">
   <div class="wrap txt">
     <h2 id="h-fix" class="rv">Then we fix it.</h2>
-    <p class="rv d1">Calls answered, estimates booked, quotes chased, reviews asked for. It runs on its own, and you see all of it in one app. <a class="inl" href="/software">See the app</a></p>
+    <p class="rv d1">Calls answered, estimates booked, quotes chased, reviews asked for. It runs on its own, and you see all of it in one app. <a class="inl" href="/app">See the app</a></p>
   </div>
   <div class="shot-wrap"><figure class="shot" id="shot"><img src="/assets/screens/today-1200.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1300px) 100vw, 1300px" width="2400" height="1500" alt="The Cinder app's Today screen for an example business: what needs you, what's owed, and how fast leads hear back. Sample data." loading="lazy" decoding="async"></figure></div>
 </section>
@@ -446,7 +452,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
     <div class="ft">
       <div><a class="brand" href="#top" aria-label="Back to top"><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" class="brand-mark" viewBox="151.04 168.00 791.63 703.15"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z" fill="currentColor"/></svg><span>Cinder Revenue</span></a><p>We audit service businesses, then fix what’s costing them jobs.</p></div>
       <div><h4>The audit</h4><ul><li><a href="#audit">How it works</a></li><li><a href="/audit">Check your site</a></li><li><a href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></li></ul></div>
-      <div><h4>Product</h4><ul><li><a href="#inside">What we fix</a></li><li><a href="/software">The app</a></li><li><a href="/demo">Demo</a></li></ul></div>
+      <div><h4>Systems</h4><ul><li><a href="/answering">Answering</a></li><li><a href="/booking">Booking</a></li><li><a href="/follow-up">Follow-up</a></li><li><a href="/reviews">Reviews</a></li><li><a href="/websites">Websites</a></li></ul></div><div><h4>Product</h4><ul><li><a href="/app">The app</a></li><li><a href="/demo">Demo</a></li><li><a href="/about">About</a></li></ul></div>
       <div><h4>Company</h4><ul><li><a href="mailto:sam.cinderrevenue@gmail.com">Email Sam</a></li><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
     </div>
     <div class="legal"><span>© 2026 Cinder Revenue Company, Colorado</span><span>App screens, threads and cards show an example business with sample data.</span></div>
@@ -456,7 +462,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 (function(){
 var d=document,root=d.documentElement;root.classList.add('js');
 var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
-var nav=d.getElementById('nav');
+var nav={classList:{toggle:function(){}}};
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -12% 0px',threshold:.01});
 d.querySelectorAll('.rv,#sum,#shot').forEach(function(el){io.observe(el)});
 var steps=[].slice.call(d.querySelectorAll('.step')),evs=[].slice.call(d.querySelectorAll('.ev')),cur=-1;
@@ -488,10 +494,10 @@ function update(){
   flowLis.forEach(function(li,i){li.classList.toggle('on',fp>=i/flowLis.length-.001)});
   var span=br.height-vh,bp=clamp(-br.top/span);
   if(br.top<vh&&br.bottom>0)bdm.style.setProperty('--p',bp.toFixed(4));
-  var k=bp<.5?-1:Math.min(5,Math.floor((bp-.5)/.5*6));
-  if(k!==lastK){lastK=k;calls.forEach(function(li,i){li.classList.toggle('on',k>=0&&i===k)});bdDesc.textContent=k<0?'':descs[k];bdl.textContent=bp<.02?'Assembled':k<0?'Taking it apart':String(k+1).padStart(2,'0')+' / 06 · '+names[k]}
+  var k=bp<.46||bp>.8?-1:Math.min(5,Math.floor((bp-.46)/.34*6));
+  if(k!==lastK){lastK=k;calls.forEach(function(li,i){li.classList.toggle('on',k>=0&&i===k)});bdDesc.textContent=k<0?'':descs[k];bdl.textContent=bp<.02||bp>.97?'Assembled':k<0?(bp>.8?'Putting it back together':'Taking it apart'):String(k+1).padStart(2,'0')+' / 06 · '+names[k]}
   if(U){
-    var p=clamp((vh*.75-br.top)/(vh*.75+span*.5));
+    var p=clamp((vh*.75-br.top)/(vh*.75+span*.5));if(bp>.8)p=Math.min(p,clamp((1-bp)/.2));
     if(Math.abs(p-lastP)>.0005){lastP=p;U.setProgress(p)}
     var a=Math.max(0,k);if(a!==lastA){lastA=a;U.setActive(a)}
   }
@@ -949,5 +955,8 @@ window.CinderUnit = {
 };
 window.dispatchEvent(new Event('cinder-unit'));
 </script>
+<script>(function(){var n=document.getElementById('nav');function f(){n.classList.toggle('on',scrollY>8)}addEventListener('scroll',f,{passive:true});f();
+var m=document.querySelector('.has-menu'),b=m&&m.querySelector('button');if(b){b.addEventListener('click',function(){var o=!m.classList.contains('open');m.classList.toggle('open',o);b.setAttribute('aria-expanded',o)});document.addEventListener('click',function(e){if(!m.contains(e.target)){m.classList.remove('open');b.setAttribute('aria-expanded','false')}});document.addEventListener('keydown',function(e){if(e.key==='Escape'){m.classList.remove('open');b.setAttribute('aria-expanded','false')}})}
+var p=location.pathname.replace(/\/$/,'');document.querySelectorAll('.glinks a,.gmob-p a').forEach(function(a){if(a.getAttribute('href')===p)a.setAttribute('aria-current','page')})})();</script>
 </body>
 </html>

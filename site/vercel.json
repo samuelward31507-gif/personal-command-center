@@ -271,6 +271,11 @@
   ],
   "redirects": [
     {
+      "source": "/software",
+      "destination": "/app",
+      "permanent": true
+    },
+    {
       "source": "/try",
       "destination": "/demo#try",
       "permanent": false
