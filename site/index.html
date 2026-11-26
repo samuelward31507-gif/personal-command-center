@@ -31,7 +31,7 @@
 :root{
   --bg:#000;--s1:#0b0b0c;--s2:#111113;--s3:#1c1c1f;
   --line:rgba(255,248,240,.08);--line2:rgba(255,248,240,.14);
-  --t1:#f2f1ee;--t2:#a3a19d;--t3:#6f6d69;
+  --t1:#f2f1ee;--t2:#a3a19d;--t3:#8b8985;
   --acc:#d4142a;--acc-hi:#ff2a3a;
   --f1:12px;--f2:14px;--f3:16px;--f4:18px;--f5:24px;--f6:clamp(36px,4.4vw,60px);--f7:clamp(48px,6.4vw,96px);
   --r1:6px;--r2:10px;--r3:16px;
@@ -329,6 +329,40 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 #heroHost.instrument-ready .hb-screen{display:none}
 .phone-host{width:min(100%,max(306px,52svh))}
 @media(max-width:900px){.audit-vis{height:auto;aspect-ratio:1.12;align-self:center}}
+
+/* sizing guard */
+.audit-vis{width:100%;max-width:100%;overflow:hidden;contain:size}
+.audit-vis canvas,.phone-host canvas,.back-vis canvas{max-width:100%}
+@media (max-width:900px){.audit-vis{height:62svh}}
+/* ===== Audit pass (Nov 25): red, tighter pins, bigger phone, mobile cleanups ===== */
+.bd-meter i b{background:var(--acc-hi)}
+.flow-line i{background:linear-gradient(var(--t1),var(--acc-hi))}
+.flow li.on .dot{background:var(--t1);box-shadow:0 0 0 5px rgba(212,20,42,.18)}
+.flow li.on:last-child .dot{background:var(--acc-hi)}
+.gets li{min-height:30vh;position:relative}
+.gets li b::before{content:"";display:block;width:28px;height:2px;margin-bottom:18px;background:var(--acc-hi);transform:scaleX(0);transform-origin:left;transition:transform .6s var(--e)}
+.gets li.in b::before{transform:scaleX(1)}
+.inl:hover{border-color:var(--acc-hi)}
+.btn.ghost:hover{box-shadow:inset 0 0 0 1px var(--acc-hi)}
+.audit-track{height:220vh}
+.audit-vis{height:min(84svh,800px)}
+.audit{grid-template-columns:.85fr 1.15fr;gap:56px}
+.fix-track{height:280vh}
+@media (min-width:901px){
+  .fix-stick{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-rows:1fr;align-items:center;padding:64px clamp(20px,4vw,72px) 0;gap:24px}
+  .fix-stick .txt{text-align:left;margin:0;padding:0;max-width:none}
+  .fix-stick .txt p{margin-left:0}
+  .phone-host{height:calc(100svh - 64px);width:100%}
+}
+@media (max-width:900px){
+  .gnav.on{background:#000}
+  .stick{background:#000;box-shadow:0 24px 24px -8px #000}
+  .back-vis{box-shadow:0 20px 20px -6px #000}
+  .fix-stick{background:#000}
+  .gets li{min-height:44vh}
+  .audit{grid-template-columns:1fr}
+  .audit-vis{height:62svh}
+}
 </style>
 <script type="importmap">
 {"imports":{"three":"/assets/vendor/three/three.module.min.js","three/addons/":"/assets/vendor/three/addons/"}}
