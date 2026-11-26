@@ -491,11 +491,12 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   .hx-step,#build .hx-step{min-height:58vh;justify-content:flex-end;padding-bottom:6vh}
   .bw{font-size:clamp(44px,13vw,64px)}
 }
-/* Hero: split screen. Copy on the left, the job log on the right. */
-.hs{position:relative;min-height:100svh;display:grid;align-items:center;padding:88px 0 28px;overflow:hidden;isolation:isolate}
+/* Hero: copy on the left. On the right, scattered strands pass through a ring and leave as one ribbon. */
+.hs{position:relative;min-height:100svh;display:grid;align-items:center;padding:96px 0 48px;overflow:hidden;isolation:isolate}
 .hs>.backdrop{position:absolute;inset:0;z-index:-1}
-.hs .flow-cv{-webkit-mask-image:linear-gradient(#000 72%,transparent);mask-image:linear-gradient(#000 72%,transparent)}
-.hs-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.06fr);gap:24px;align-items:center;width:100%}
+.hs .flow-cv{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
+.hs>.wrap{width:100%}
+.hs-copy{position:relative;max-width:600px}
 .hs h1{font-size:clamp(44px,5.3vw,84px);letter-spacing:-.045em;line-height:.99;max-width:11ch}
 .hs h1 .ln{display:block;overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}.hs h1 .ln span{display:block}
 .hs .lede{margin-top:26px;max-width:27em;font-size:var(--f4);line-height:1.55;color:var(--t2)}
@@ -505,17 +506,16 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 .hs-steps b{display:block;font-size:var(--f3);font-weight:600;letter-spacing:-.02em;color:var(--t1)}
 .hs-steps b::before{content:"0" counter(hs);display:block;margin-bottom:8px;font:500 11px/1 "Geist Mono",ui-monospace,monospace;letter-spacing:.08em;color:#e0193a}
 .hs-steps span{display:block;margin-top:6px;font-size:13px;line-height:1.45;color:var(--t2)}
-.hs-vis{position:relative;height:min(84svh,860px);margin:0 calc(-1*max(var(--g),(100vw - var(--w))/2)) 0 -110px}
-.hs-copy{position:relative;z-index:1}.hs-vis{pointer-events:none}
-.hs-host{position:absolute;inset:0 0 -6svh;-webkit-mask-image:linear-gradient(#000 86%,transparent);mask-image:linear-gradient(#000 86%,transparent)}
-.hs-vis small{position:absolute;right:max(var(--g),(100vw - var(--w))/2);bottom:17%;width:168px;text-align:right;font-size:12px;line-height:1.5;color:rgba(242,241,238,.42)}
+.fl-tag{position:absolute;z-index:1;white-space:nowrap;font:500 12px/1 "Geist Mono",ui-monospace,monospace;letter-spacing:.02em;color:rgba(242,241,238,.62);padding-left:14px}
+.fl-tag::before{content:"";position:absolute;left:0;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:#e0193a}
+.js .fl-tag{animation:fade 1.2s var(--e) 1.6s both}
 .js .hs h1 .ln span{animation:up var(--d3) var(--e) both}
 .js .hs h1 .ln:nth-child(2) span{animation-delay:.06s}.js .hs h1 .ln:nth-child(3) span{animation-delay:.12s}
 .js .hs .lede,.js .hs .acts,.js .hs-steps{animation:fade .9s var(--e) both}.js .hs .lede{animation-delay:.25s}.js .hs .acts{animation-delay:.33s}.js .hs-steps{animation-delay:.42s}
 @media (max-width:900px){
-  .hs{padding:104px 0 24px;align-items:start}.hs-grid{grid-template-columns:1fr;gap:8px}
+  .hs{padding:104px 0 46svh;align-items:start;min-height:0}
   .hs h1{font-size:clamp(40px,11.5vw,54px)}.hs .lede{margin-top:16px;font-size:var(--f3)}.hs .acts{margin-top:22px}.hs .acts .btn{width:100%;height:50px}
-  .hs-steps{display:none}.hs-vis{height:min(126vw,66svh);margin:0 -20px}.hs-host{inset:0}.hs-vis small{position:static;display:block;width:auto;padding:0 20px;text-align:center;transform:translateY(calc(min(126vw,66svh) + 4px))}
+  .hs-steps{display:none}.fl-tag{font-size:11px}
 }
 /* sizing guard */
 .audit-vis{width:100%;max-width:100%;overflow:hidden;contain:size}
@@ -574,15 +574,14 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 </header>
 
 <main id="main">
-<section class="hs" id="top" aria-labelledby="h1"><div class="backdrop" data-flow="c"></div>
-  <div class="wrap hs-grid">
+<section class="hs" id="top" aria-labelledby="h1"><div class="backdrop" data-flow="thread" role="img" aria-label="Loose strands come in scattered, pass through a dark machined ring and leave as one tight ribbon."><span class="fl-tag" data-flow-tag=".2" data-dx="-400" data-dy="-30" data-n=".36,-232,-40">The leads you already get</span><span class="fl-tag" data-flow-tag=".72" data-dx="84" data-dy="0" data-n=".74,44,0">Booked jobs</span></div>
+  <div class="wrap">
     <div class="hs-copy">
       <h1 id="h1"><span class="ln"><span>More jobs from</span></span><span class="ln"><span>the leads you</span></span><span class="ln"><span>already get.</span></span></h1>
       <p class="lede">We audit your business, find where jobs slip away, and build what fixes it. No new ad spend.</p>
       <div class="acts"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div>
       <ol class="hs-steps"><li><b>We audit</b><span>Where jobs slip, and what each leak costs you.</span></li><li><b>We build</b><span>Only the fixes your audit calls for.</span></li><li><b>It runs</b><span>On its own, while you’re on the job.</span></li></ol>
     </div>
-    <div class="hs-vis"><div class="hs-host" data-plate="CinderTape" role="img" aria-label="A machined printer feeding out a long tape of job tickets. Each ticket is a lead that turned into a job: a missed call that became a booked estimate, an old quote that got signed, a website form that became a site visit, a finished job that became a five-star review. Sample data."></div><small>Each ticket is a lead you already had. Sample data.</small></div>
   </div>
 </section>
 
