@@ -456,11 +456,10 @@ function create(el) {
   let frame=0,timer=0,visible=true,lost=false,disposed=false,dirty=true;
 
   function pose(t,life){
-    const retract=ease(t,.72,1.10),lift=ease(t,.90,1.25);
-    // Each incoming module begins its lift before the outgoing one finishes sinking.
-    const lower=ease(t,1.48,1.82),rise=ease(t,1.36,1.82);
-    const dock=ease(t,1.98,2.42);
-    const counterIn=ease(t,2.10,2.46),phoneIn=ease(t,2.24,2.60);
+    const retract=ease(t,.85,1.12),lift=ease(t,1.02,1.32);
+    const lower=ease(t,1.60,1.91),rise=ease(t,1.48,1.95);
+    const dock=ease(t,2.12,2.53);
+    const counterIn=ease(t,2.24,2.60),phoneIn=ease(t,2.40,2.77);
 
     function place(o,size,x,z,raised,isVisible){
       o.visible=isVisible;
@@ -485,9 +484,8 @@ function create(el) {
     [counterIn,phoneIn,dock].forEach((travel,i)=>{
       const pad=pads[i];
       pad.visible=travel>0;
-      const contact=ease(travel,.70,.92);
-      pad.scale.set(travel,travel*(1-.20*contact),travel);
-      pad.position.y=.202+.0225*pad.scale.y-.006*contact;
+      pad.scale.set(travel,travel*(1-.38*ease(travel,.72,1)),travel);
+      pad.position.y=.202+.0225*pad.scale.y;
     });
 
     clock.rotation.x=-.85*(1-rise);
@@ -498,12 +496,7 @@ function create(el) {
     flag.visible=flag.position.y>1.195;
 
     const ring=ease(t,1.13,1.22)*(1-ease(t,1.32,1.47));
-    const seatPulse=Math.max(
-      ease(t,.78,.84)*(1-ease(t,.84,.92)),
-      ease(t,1.42,1.48)*(1-ease(t,1.48,1.56)),
-      ease(t,2.06,2.12)*(1-ease(t,2.12,2.20))
-    );
-    ringLamp.emissiveIntensity=Math.max(ring*1.1,seatPulse*1.35);
+    ringLamp.emissiveIntensity=ring*1.1;
     handset.position.x=.020*ring*Math.sin(t*135);
     handset.rotation.z=.014*ring*Math.sin(t*135);
 
@@ -535,15 +528,21 @@ function create(el) {
   function tick(now){
     frame=0;
     if(gl.isContextLost())return;
+    const elapsed=previousTime?(now-previousTime)/1000:1/60;
+    const dt=Math.min(elapsed,.05);
+    previousTime=now;
     const moving=p!==target;
     if(moving){
       p=target;
       samples=0;
       idle=0;
+    }else if(!reduced.matches){
+      idle+=elapsed;
     }
-    // The pose is scroll-scrubbed only. No idle timer may advance the model.
-    const life=0;
-    const changed=dirty||moving||samples===0;
+    const life=reduced.matches||moving?0:idle;
+    const clockTick=!reduced.matches&&p===stops[2]
+      &&Math.floor(life)!==Math.floor(life-elapsed);
+    const changed=dirty||moving||life%7.6>=6.3||(life>0&&life%7.6<elapsed)||clockTick;
 
     if(changed){
       samples=0;
@@ -558,8 +557,12 @@ function create(el) {
       wake();
       return;
     }
-    // Only continue while the still-frame accumulation is converging.
-    if(!lite&&samples<16)timer=setTimeout(wake,1000/30);
+    if((!lite&&samples<16)||!reduced.matches){
+      const nextSweep=6.3-(life%7.6);
+      const nextTick=p===stops[2]?1-life%1:Infinity;
+      const delay=(!lite&&samples<16)||nextSweep<=0 ? 1/30 : Math.min(nextSweep,nextTick);
+      timer=setTimeout(wake,Math.max(1000/30,delay*1000));
+    }
   }
   function resize(){
     width=Math.max(1,el.clientWidth);
@@ -577,7 +580,7 @@ function create(el) {
     samples=0;
     wake();
   }
-  function suspend(){cancel()}
+  function suspend(){cancel();previousTime=0}
   function visibility(){if(document.hidden||!visible)suspend();else wake()}
   function preference(){idle=0;dirty=true;wake()}
 

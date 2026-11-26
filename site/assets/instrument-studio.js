@@ -203,10 +203,10 @@ export function instrument({label,span,assemble,model}) {
       function ring(x,y,z,r,t,m,parent){
         return add(new T.TorusGeometry(r,t,8,72),m,x,y,z,parent);
       }
-      function labelPlate(str,x,y,z,w,h,parent,color='#f2f1ee'){
+      function labelPlate(str,x,y,z,w,h,parent){
         const map=tex(Math.ceil(w*5),Math.ceil(h*5),c=>{
           c.scale(5,5);c.font='500 '+(h*.63)+'px "Geist Mono",monospace';
-          c.textAlign='center';c.textBaseline='middle';c.fillStyle=color;
+          c.textAlign='center';c.textBaseline='middle';c.fillStyle='#f2f1ee';
           c.fillText(str,w/2,h/2,w-2);
         });
         const mat=own(new T.MeshBasicMaterial({map,transparent:true,depthWrite:false}));
@@ -214,7 +214,7 @@ export function instrument({label,span,assemble,model}) {
       }
       await document.fonts.ready;
       if(dead||!renderer)return;
-      const pose=model({T,scene,camera,group,box,disc,ring,add,screw,own,labelPlate,
+      const pose=model({T,scene,group,box,disc,ring,add,screw,own,labelPlate,
         deck,side,steel,seal,glass,ink,ease,invalidate});
       for(const [m,parts] of batches){
         const gs=parts.map(g=>g.index?g.toNonIndexed():g);
@@ -287,10 +287,6 @@ export function instrument({label,span,assemble,model}) {
         // Only the sampling copy receives subpixel offsets. The scene camera
         // and the projection used for interaction stay fixed throughout the scan.
         const refine=still&&!lite;
-        sampleCamera.position.copy(camera.position);
-        sampleCamera.quaternion.copy(camera.quaternion);
-        sampleCamera.zoom=camera.zoom;
-        sampleCamera.updateMatrixWorld();
         sampleCamera.projectionMatrix.copy(camera.projectionMatrix);
         if(refine){
           const m=sampleCamera.projectionMatrix.elements;
