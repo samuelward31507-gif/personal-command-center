@@ -39,7 +39,7 @@ document.querySelectorAll('[data-flow]').forEach(host=>{const P=V[(+host.dataset
   function draw(now){raf=0;const t=RM?20:(now-t0)/1000+20,narrow=W<700,u=H/(2*4.6*Math.tan(16*Math.PI/180));
     mat.uniforms.uTime.value=t*1.7;const it=RM||wave?1:Math.min(1,(now-t0)/2600);mat.uniforms.uIn.value=1-Math.pow(1-it,3);
     if(wave){grp.scale.setScalar(Math.max(narrow?2.1:1.2,1.12*W/(6.6*u))*(narrow?.55:1));grp.position.set(0,0,0);grp.rotation.set(P[4]+.06*Math.sin(t*.08),.1*Math.sin(t*.05),P[5]+.03*Math.sin(t*.06))}
-    else{const Rp=narrow?W*.78:Math.min(W*.38,700),cyp=narrow?H*.62:H*.56,cxp=narrow?W*.06:W*.32;
+    else{const Rp=narrow?W*.78:Math.min(W*.33,620),cyp=narrow?H*.62:H*.54,cxp=narrow?W*.06:W*.315;
       grp.scale.setScalar(Rp/u);grp.position.set(cxp/u,(H/2-cyp)/u,0);grp.rotation.set(.42+.08*Math.sin(t*.09),-.38+.14*Math.sin(t*.061),.2+.05*Math.sin(t*.047))}
     r.render(scene,cam);if(vis&&!RM)raf=requestAnimationFrame(draw)}
   new ResizeObserver(size).observe(host);

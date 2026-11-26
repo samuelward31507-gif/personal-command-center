@@ -51,7 +51,9 @@ function make(def){
     rig.add(copies[0].g);copies[1].g.scale.y=-1;copies[1].g.position.y=-2;rig.add(copies[1].g);
     // the floor: a dark mirror that is clearest right under the object and falls off to black
     const fall=texture(256,256,c=>{const g=c.createRadialGradient(128,128,0,128,128,128);g.addColorStop(0,'#c4c4c4');g.addColorStop(.55,'#e6e6e6');g.addColorStop(1,'#fff');c.fillStyle=g;c.fillRect(0,0,256,256)});
-    const floor=new T.Mesh(new T.PlaneGeometry(1700,1700),new T.MeshBasicMaterial({color:0,transparent:true,alphaMap:fall,depthWrite:false}));floor.rotation.x=-Math.PI/2;floor.position.y=-1;floor.renderOrder=2;scene.add(floor);
+    const floor=new T.Mesh(new T.PlaneGeometry(1700,1700),new T.MeshBasicMaterial({color:0,transparent:true,alphaMap:fall,depthWrite:false}));floor.rotation.x=-Math.PI/2;floor.position.y=-1;floor.renderOrder=2;
+    if(def.pool){floor.material.alphaMap=texture(256,256,c=>{const g=c.createRadialGradient(128,128,0,128,128,128);g.addColorStop(0,'#c4c4c4');g.addColorStop(.42,'#fff');g.addColorStop(.76,'#fff');g.addColorStop(.9,'#555');g.addColorStop(1,'#000');c.fillStyle=g;c.fillRect(0,0,256,256)});
+      const fg=new T.Group();fg.rotation.y=Math.PI/4;scene.add(fg);fg.add(floor);floor.position.z=def.pool[0];floor.scale.set(def.pool[1]/850,def.pool[2]/850,1)}else scene.add(floor);
     let composer=null;if(!lightTier){try{composer=new EffectComposer(renderer,new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,samples:4}));composer.addPass(new RenderPass(scene,camera));
       const ao=new GTAOPass(scene,camera,1,1,undefined,{radius:3.4,thickness:2.2,samples:8,scale:.85},{radius:2,samples:4,rings:1});ao.blendIntensity=.5;composer.addPass(ao);composer.addPass(new OutputPass());composer.addPass(new SMAAPass(1,1))}catch(e){composer=null}}
     let W=1,H=1,raf=0,vis=false,s=0,yaw=def.yaw[0],last=performance.now(),born=0;const t0=last;
@@ -60,7 +62,7 @@ function make(def){
     function frame(n){raf=0;const dt=Math.min(.05,(n-last)/1000);last=n;now=RM?12:Math.max(0,(n-t0)/1000);
       s+=(prog-s)*(RM?1:Math.min(1,dt*9));{const yf=s*(def.yaw.length-1),yi=Math.min(def.yaw.length-2,Math.floor(yf));yaw=lerp(def.yaw[yi],def.yaw[yi+1],ez(yf-yi))}
       if(!born&&vis){born=now||.001;canvas.style.opacity=1}const e=RM?1:ez((now-born)/1.3);
-      rig.rotation.y=Math.PI/4+yaw+(RM?0:.06*Math.sin(now*.4))-(1-e)*.5;rig.scale.setScalar(lerp(.93,1,e));
+      rig.rotation.y=Math.PI/4+yaw+(RM?0:(def.sway==null?.06:def.sway)*Math.sin(now*.4))-(1-e)*(def.swing==null?.5:def.swing);rig.scale.setScalar(lerp(.93,1,e));
       def.update({t:now,p:s,copies,M});composer?composer.render():renderer.render(scene,camera);if(vis&&!RM)raf=requestAnimationFrame(frame)}
     kick=()=>{if(!raf)raf=requestAnimationFrame(frame)};
     new ResizeObserver(size).observe(host);new IntersectionObserver(e=>{vis=e[0].isIntersecting;if(vis){last=performance.now();kick()}}).observe(host);size();
@@ -215,4 +217,72 @@ window.CinderShip=make({fit:[270,275],yaw:[.5,.3,.65],aim:80,
   update({t,p,copies,M}){const q=1+c01(p)*6.99,n=Math.floor(q),f=q-n;M.edge.color.copy(RED).multiplyScalar(.7+.3*Math.sin(t*5));
     copies.forEach(c=>c.r.pl.forEach((pl,i)=>{pl.visible=i<=n;const top=i===n,k=top?ez(f*1.5):1;pl.position.y=22+i*20+90*(1-k);pl.scale.setScalar(.7+.3*k);pl.userData.e.material=top?M.edge:M.old}))}});
 
+// ---- Homepage hero: the job log. A roll of paper feeds through a machined printer, down its face and out across
+// the floor. Every ticket is a job that came from a lead the business already had. The tape is the picture.
+const TK=[['Missed call, 7:42 PM','Estimate booked','Thursday, 9:00 AM'],['Quote sent 3 weeks ago','Quote signed','After the second follow-up'],['Website form, Sunday','Site visit booked','Monday, 8:30 AM'],
+  ['Job finished Friday','5-star review','Asked the same day'],['Text, 9:14 PM','Estimate booked','Friday, 2:00 PM'],['Missed call, on a roof','Callback booked','Today, 4:30 PM']];
+const TW=214,SL=Math.atan2(105,150),SD=[Math.cos(SL),-Math.sin(SL)],SN=[Math.sin(SL),Math.cos(SL)],ROLL=[-256,196,48];
+// the tape's side profile as [z,y] samples with running length; zB is where it leaves the print bridge, zT the tear bar
+const TAPE=(()=>{const P=[],to=(z,y)=>P.push([z,y]),line=(a,b,n)=>{for(let i=1;i<=n;i++)to(lerp(a[0],b[0],i/n),lerp(a[1],b[1],i/n))},
+    bez=(a,b,c,d,n)=>{for(let i=1;i<=n;i++){const t=i/n,u=1-t;to(u*u*u*a[0]+3*u*u*t*b[0]+3*u*t*t*c[0]+t*t*t*d[0],u*u*u*a[1]+3*u*u*t*b[1]+3*u*t*t*c[1]+t*t*t*d[1])}};
+  const G=[-196,134.6],dx=G[0]-ROLL[0],dy=G[1]-ROLL[1],al=Math.atan2(dy,dx)-Math.acos(ROLL[2]/Math.hypot(dx,dy)),T0=[ROLL[0]+ROLL[2]*Math.cos(al),ROLL[1]+ROLL[2]*Math.sin(al)];
+  const S0=[-170+1.4*SN[0],132+1.4*SN[1]],S1=[-20+1.4*SN[0],27+1.4*SN[1]],F=[92,1.6],E=[452,1.6];
+  to(T0[0],T0[1]);line(T0,G,14);bez(G,[G[0]+12,G[1]],[S0[0]-9*SD[0],S0[1]-9*SD[1]],[S0[0]+6*SD[0],S0[1]+6*SD[1]],10);line(P[P.length-1],S1,40);
+  bez(S1,[S1[0]+46*SD[0],S1[1]+46*SD[1]],[F[0]-52,F[1]],F,26);
+  const bump=u=>u<0||u>1?0:Math.pow(Math.sin(Math.PI*u),2);for(let i=1;i<=90;i++){const z=lerp(F[0],E[0],i/90);to(z,1.6+7*bump((z-128)/150)+4*bump((z-296)/128))}
+  for(let i=1;i<=70;i++){const f=i/70*TAU*1.32,r=31-2.5*f;to(E[0]+r*Math.sin(f),1.6+31-r*Math.cos(f))}
+  let s=0;const S=[0];for(let i=1;i<P.length;i++){s+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);S[i]=s}
+  const at=z=>{for(let i=1;i<P.length;i++)if(P[i][0]>=z)return i;return P.length-1};
+  const iB=at(-176),iT=at(-33);return {P,S,iB,sT:S[iT],len:S[iT]-S[at(-170)]}})();
+const TLEN=TAPE.len,LTEX=TLEN*TK.length;
+function strip(i0,i1){const {P,S}=TAPE,n=i1-i0+1,pos=new Float32Array(n*6),uv=new Float32Array(n*4),idx=[];
+  for(let k=0;k<n;k++){const i=i0+k,z=P[i][0],y=P[i][1],v=(TAPE.sT-S[i])/LTEX;pos.set([-TW/2,y,z,TW/2,y,z],k*6);uv.set([0,v,1,v],k*4);if(k)idx.push(2*k-2,2*k,2*k-1,2*k-1,2*k,2*k+1)}
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(pos,3));g.setAttribute('uv',new T.BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();return g}
+// a rounded outline in the side plane, extruded across the width, with its texture coordinates brought back to 0..1
+function slab(pts,rad,width,bev){const sh=new T.Shape(),n=pts.length,q=(a,b,d)=>{const l=Math.hypot(b[0]-a[0],b[1]-a[1]);return [a[0]+(b[0]-a[0])*d/l,a[1]+(b[1]-a[1])*d/l]};
+  pts.forEach((p,i)=>{const a=pts[(i+n-1)%n],b=pts[(i+1)%n],r=rad[i],p0=q(p,a,r),p1=q(p,b,r);i?sh.lineTo(-p0[0],p0[1]):sh.moveTo(-p0[0],p0[1]);sh.quadraticCurveTo(-p[0],p[1],-p1[0],p1[1])});sh.closePath();
+  const g=new T.ExtrudeGeometry(sh,{depth:width-2*bev,bevelEnabled:true,bevelThickness:bev,bevelSize:bev,bevelOffset:-bev,bevelSegments:4,curveSegments:10});g.translate(0,0,bev-width/2);g.rotateY(Math.PI/2);
+  const u=g.attributes.uv;for(let i=0;i<u.count;i++)u.setXY(i,u.getX(i)/300,u.getY(i)/300);return g}
+function paintTape(c,W,h){c.fillStyle='#efede6';c.fillRect(0,0,W,h*TK.length);c.textBaseline='alphabetic';
+  TK.forEach((t,k)=>{const y=k*h;c.fillStyle='rgba(12,12,14,.3)';for(let x=10;x<W-10;x+=20)c.fillRect(x,y-2,11,4);
+    c.textAlign='left';c.fillStyle='#7a766e';c.font='500 29px "Geist Mono",ui-monospace,monospace';c.fillText(t[0],58,y+h*.27);
+    let f=74;c.fillStyle='#0c0c0e';do{c.font='650 '+f+'px "Inter",system-ui,sans-serif';f-=2}while(c.measureText(t[1]).width>W-116&&f>40);c.fillText(t[1],56,y+h*.53);
+    c.fillStyle='#c8102e';c.fillRect(58,y+h*.71-25,18,18);c.fillStyle='rgba(12,12,14,.82)';c.font='500 36px "Inter",system-ui,sans-serif';c.fillText(t[2],92,y+h*.71);
+    c.fillStyle='#9d9990';c.font='500 21px "Geist Mono",ui-monospace,monospace';c.fillText('Cinder',58,y+h*.9);c.textAlign='right';c.fillText('Sample data',W-58,y+h*.9)})}
+window.CinderTape=make({fit:[262,318],yaw:[-.16,-.16],aim:18,sway:.035,swing:.3,pool:[130,370,630],
+  mats(K){const W=720,h=Math.round(W*TLEN/TW),tex=K.texture(W,h*TK.length,c=>paintTape(c,W,h),true);tex.wrapT=T.RepeatWrapping;
+    if(document.fonts&&document.fonts.load)Promise.all([document.fonts.load('650 74px "Inter"'),document.fonts.load('500 29px "Geist Mono"')]).then(()=>{paintTape(tex.image.getContext('2d'),W,h);tex.needsUpdate=true}).catch(()=>{});
+    const fib=K.texture(256,256,c=>{const d=c.createImageData(256,256);for(let i=0;i<65536;i++){const v=236+Math.random()*19;d.data.set([v,v,v,255],i*4)}c.putImageData(d,0,0)});fib.wrapS=fib.wrapT=T.RepeatWrapping;fib.repeat.set(2,14);
+    return {tex,led:K.led(0xff1f3a),paper:new T.MeshStandardMaterial({map:tex,roughness:.92,roughnessMap:fib,metalness:0,color:0xdedbd4}),
+      blank:new T.MeshStandardMaterial({roughness:.92,metalness:0,color:0xd2cfc8,side:T.DoubleSide}),back:new T.MeshStandardMaterial({roughness:.92,metalness:0,color:0xc4c1ba,side:T.BackSide}),
+      rubber:new T.MeshStandardMaterial({color:0x0b0b0c,roughness:.62,metalness:0})}},
+  build(K,M){const g=new T.Group(),r={},d=new T.Group();g.add(d);g.position.z=88;
+    add(d,slab([[-300,4],[-300,132],[-170,132],[-20,27],[-20,4]],[5,13,11,6,4],300,5),K.body);
+    add(d,box(276,1.2,112),K.enamel,0,132.3,-238,false);
+    const mid=[-95,79.5],onS=(o,along,up,rx=SL)=>{o.position.y=mid[1]+along*SD[1]+up*SN[1];o.position.z=mid[0]+along*SD[0]+up*SN[0];o.rotation.x=rx;return o};
+    [-1,1].forEach(q=>{onS(add(d,rb(5,5,166,1.6),K.alloy,q*112),0,2.6)});
+    // print bridge: the paper goes in blank and comes out as a job
+    add(d,rb(258,19,28,4),K.graphite,0,147.5,-184);[-1,1].forEach(q=>{add(d,box(12,7,28),K.graphite,q*123,135.5,-184);add(d,cyl(4.2,1.6,20),K.alloy,q*114,157.6,-184,false)});
+    add(d,box(172,1.4,2.6),M.led,0,157.6,-174.5,false);
+    const lab=K.texture(512,48,c=>{c.fillStyle='rgba(242,241,238,.5)';c.font='500 26px "Geist Mono",monospace';c.textAlign='center';c.fillText('CINDER  JOB LOG',256,33)},true);
+    const lp=add(d,new T.PlaneGeometry(128,12),new T.MeshBasicMaterial({map:lab,transparent:true,toneMapped:false}),0,157.2,-188,false);lp.rotation.x=-Math.PI/2;
+    // tear bar at the foot of the face
+    onS(add(d,rb(244,7,13,2.4),K.alloy),76,8);[-1,1].forEach(q=>onS(add(d,box(8,9,13),K.alloy,q*118),76,3.4));
+    const saw=new T.Shape();saw.moveTo(-108,0);for(let i=0;i<48;i++){saw.lineTo(-108+i*4.5+2.25,4.2);saw.lineTo(-108+(i+1)*4.5,0)}saw.lineTo(108,-3);saw.lineTo(-108,-3);
+    onS(add(d,new T.ExtrudeGeometry(saw,{depth:1,bevelEnabled:false}),K.alloy),82.5,5.4,SL+Math.PI/2);
+    // the roll, in a cradle of two machined cheeks
+    const ch=[[-55,0],[55,0],[55,64],[38,103],[0,119],[-38,103],[-55,64]];[-1,1].forEach(q=>{add(d,slab(ch,[3,3,26,24,24,24,26],8,1.6),K.alloy,q*114,132,ROLL[0])});
+    const spin=new T.Group();spin.position.set(0,ROLL[1],ROLL[0]);d.add(spin);r.spin=spin;const ax=(o)=>{o.rotation.z=Math.PI/2;return o};
+    ax(add(spin,cyl(ROLL[2],TW,96),M.blank));ax(add(spin,cyl(13,TW+3,48),K.graphite));ax(add(spin,cyl(6,268,32),K.alloy));
+    [-1,1].forEach(q=>{ax(add(spin,cyl(14,9,48),K.alloy,q*123.5));add(spin,box(1.4,20,3),K.enamel,q*128.2,0,0,false)});
+    // feed wheel and vents on the side
+    const kn=new T.Group();kn.position.set(150,58,-236);d.add(kn);r.knob=kn;ax(add(kn,cyl(23,13,64),K.alloy,6.5));ax(add(kn,cyl(15,2,48),K.graphite,13.6));add(kn,box(1.4,22,3),K.enamel,14.8,0,0,false);
+    for(let i=0;i<8;i++)add(d,box(1.4,36,4.6),K.enamel,150,58,-190+i*11,false);
+    [[-128,-282],[128,-282],[-128,-42],[128,-42]].forEach(q=>add(d,cyl(12,4,32),M.rubber,q[0],2,q[1]));[-138,138].forEach((x,i)=>screw(d,K,x,132.4,-288,i));
+    add(d,cyl(7,10,32),K.graphite,151,16,-282).rotation.z=Math.PI/2;
+    add(d,new T.TubeGeometry(new T.CatmullRomCurve3([[156,16,-282],[184,7,-286],[214,4.4,-316],[196,4.4,-372],[110,4.4,-404],[-40,4.4,-398]].map(p=>new T.Vector3(p[0],p[1],p[2]))),64,4.2,12),M.rubber);
+    // the tape
+    const last=TAPE.P.length-1;add(g,strip(0,TAPE.iB),M.blank);const sg=strip(TAPE.iB,last);add(g,sg,M.paper);add(g,sg,M.back,0,0,0,false);return {g,r}},
+  update({t,copies,M}){const C=3.6,k=Math.floor(t/C),u=(t-k*C)/1.25,m=u<1,adv=(k+ez(u))*TLEN;
+    M.tex.offset.y=(adv/LTEX)%1;lit(M.led,DARK,RED,m?1:.22+.1*Math.sin(t*2.2));copies.forEach(c=>{c.r.spin.rotation.x=-adv/ROLL[2];c.r.knob.rotation.x=-adv/30})}});
 dispatchEvent(new Event('cinder-visual'));dispatchEvent(new Event('cinder-plate'));
