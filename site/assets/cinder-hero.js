@@ -1,86 +1,92 @@
 import {instrument} from './instrument-studio.js';
 
 window.CinderHero=instrument({
-  label:'A hinged desktop terminal assembles around the Cinder app. Example business, sample data.',
+  label:'Brightline Co Today dashboard on a machined studio monitor. Example business, sample data.',
   span:[580,370],assemble:true,
   model({T,group,box,ring,disc,add,own,labelPlate,deck,side,steel,seal,glass,ink,invalidate}){
     const chassis=group(),lid=group(chassis),base=group(chassis),foot=group(chassis);
     const gasket=group(lid),display=group(lid);
     lid.position.y=-93;
+
+    // Low, broad stand with a visible hinge and an inset cable channel.
     box(0,0,0,524,61,39,side,7,base);
     box(0,0,20,518,56,4,deck,2,base);
-    // Machined pedestal, visible hinge and recessed cable race behind the panel.
-    box(0,58,-13,52,104,27,side,5,chassis);
-    box(0,27,-20,92,18,46,deck,3,chassis);
-    box(0,57,-28,17,63,3,seal,1,chassis);
-    box(0,57,-30,10,54,1,steel,.5,chassis);
     box(0,0,0,420,19,74,side,6,foot);
+    box(0,-2,0,248,5,30,seal,2,foot);
     for(const x of [-206,206]){
       const bearing=group(base);bearing.position.set(x,25,5);bearing.rotation.y=Math.PI/2;
       disc(0,0,0,14,58,steel,bearing);ring(0,0,30,9,1.4,seal,bearing);
     }
     for(let j=0;j<19;j++)box(-220+j*5,-6,22.4,2,9,1,seal,.45,base);
-    box(211,0,23,18,2,1,ink(0xd4142a),.5,base);
+    box(211,0,23,18,2,1,ink(0xff2a3a),.5,base);
     labelPlate('EXAMPLE BUSINESS · SAMPLE DATA',0,0,22.5,200,10,base);
+
+    // Thin graphite display, brushed bezel, recessed gasket and smoked glass.
     box(0,126,0,505,261,15,side,6,lid);
     box(0,126,8,501,257,4,deck,2,lid);
     box(0,126,0,484,242,3,seal,1.4,gasket);
     box(0,126,0,476,237,4,glass,1.8,display);
-    // Draw the product UI at 2x backing resolution: no raster screenshot and
-    // crisp typography on high-DPI displays.
-    const screenCanvas=document.createElement('canvas');
-    screenCanvas.width=2400;screenCanvas.height=1200;
-    const ctx=screenCanvas.getContext('2d');ctx.scale(2,2);
-    const W=1200,H=600;
-    ctx.fillStyle='#09090b';ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#111113';ctx.fillRect(0,0,190,H);
-    ctx.strokeStyle='rgba(242,241,238,.09)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(190,0);ctx.lineTo(190,H);ctx.stroke();
-    ctx.fillStyle='#f2f1ee';ctx.font='600 23px Inter, sans-serif';ctx.fillText('CINDER',28,43);
-    ctx.fillStyle='#77767c';ctx.font='500 13px "Geist Mono", monospace';ctx.fillText('REVENUE',28,64);
-    ['Today','Leads','Schedule','Quotes','Money'].forEach((s,i)=>{
-      ctx.fillStyle=i===0?'#242428':'#111113';ctx.fillRect(18,94+i*47,154,36);
-      ctx.fillStyle=i===0?'#f2f1ee':'#a3a19d';ctx.font='500 16px Inter, sans-serif';ctx.fillText(s,34,117+i*47);
-    });
-    ctx.fillStyle='#f2f1ee';ctx.font='600 29px Inter, sans-serif';ctx.fillText('Today',230,61);
-    ctx.fillStyle='#a3a19d';ctx.font='16px Inter, sans-serif';ctx.fillText('Brightline Co',230,91);
-    ctx.fillStyle='#1c1c1f';ctx.fillRect(230,119,940,132);
-    ctx.fillStyle='#a3a19d';ctx.font='14px "Geist Mono", monospace';ctx.fillText('WON THIS MONTH',258,153);
-    ctx.fillStyle='#f2f1ee';ctx.font='600 48px Inter, sans-serif';ctx.fillText('$28,450',258,211);
-    ctx.fillStyle='#77767c';ctx.font='14px Inter, sans-serif';ctx.fillText('Example business · sample data',875,153);
-    ctx.fillStyle='#1c1c1f';ctx.fillRect(230,272,940,270);
-    ctx.fillStyle='#a3a19d';ctx.font='14px "Geist Mono", monospace';ctx.fillText('RECENT ACTIVITY',258,307);
-    const rows=[
-      ['New lead','Replied in seconds','07:42 PM'],
-      ['Estimate booked','Thu · 9:00 AM','Today'],
-      ['Quote followed up','Awaiting response','Today'],
-      ['Invoice paid','Brightline · $4,800','Today']
-    ];
-    rows.forEach((r,i)=>{
-      const y=350+i*48;
-      ctx.strokeStyle='rgba(242,241,238,.08)';ctx.beginPath();ctx.moveTo(258,y+13);ctx.lineTo(1142,y+13);ctx.stroke();
-      ctx.fillStyle='#f2f1ee';ctx.font='500 17px Inter, sans-serif';ctx.fillText(r[0],258,y);
-      ctx.fillStyle='#a3a19d';ctx.font='15px Inter, sans-serif';ctx.fillText(r[1],530,y);
-      ctx.fillStyle='#77767c';ctx.font='13px "Geist Mono", monospace';ctx.fillText(r[2],1040,y);
-    });
-    const texture=own(new T.CanvasTexture(screenCanvas));
-    texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=4;
-    const screen=own(new T.MeshBasicMaterial({map:texture}));
-    screen.onBeforeCompile=shader=>{
-      shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',
-        '#include <map_fragment>\n diffuseColor.rgb=vec3(dot(diffuseColor.rgb,vec3(.2126,.7152,.0722)));');
-    };
+
+    // A 4x canvas texture is rendered as actual text, never a screenshot.
+    const canvas=document.createElement('canvas');
+    const scale=4;canvas.width=1904;canvas.height=948;
+    const ctx=canvas.getContext('2d');
+    const texture=own(new T.CanvasTexture(canvas));
+    texture.colorSpace=T.SRGBColorSpace;
+    texture.anisotropy=8;
+    texture.minFilter=T.LinearMipmapLinearFilter;
+    texture.magFilter=T.LinearFilter;
+    const screen=own(new T.MeshBasicMaterial({map:texture, toneMapped:false}));
     add(new T.PlaneGeometry(462,228),screen,0,126,2.2,display);
+
+    function drawDashboard(progress,arrival){
+      ctx.setTransform(scale,0,0,scale,0,0);
+      ctx.clearRect(0,0,476,237);
+      ctx.fillStyle='#09090b';ctx.fillRect(0,0,476,237);
+      ctx.fillStyle='#111113';ctx.fillRect(0,0,476,33);
+      ctx.fillStyle='#f2f1ee';ctx.font='600 10px Inter, sans-serif';ctx.fillText('BRIGHTLINE CO',16,20);
+      ctx.fillStyle='#a3a19d';ctx.font='500 9px "Geist Mono", monospace';ctx.fillText('TODAY',126,20);
+      ctx.fillStyle='#ff2a3a';ctx.beginPath();ctx.arc(448,16,2.5,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#a3a19d';ctx.font='9px "Geist Mono", monospace';ctx.fillText('LIVE',456,19);
+      ctx.fillStyle='#6f6d69';ctx.fillText('WON THIS MONTH',16,54);
+      ctx.fillStyle='#f2f1ee';ctx.font='600 27px Inter, sans-serif';ctx.fillText('$84,250',16,85);
+      ctx.fillStyle='#6f6d69';ctx.font='9px "Geist Mono", monospace';ctx.fillText('4 RECENT EVENTS',16,108);
+      const rows=[
+        ['NEW LEAD','Replied in seconds','JUST NOW'],
+        ['ESTIMATE','Booked · Thu 9:00 AM','TODAY'],
+        ['QUOTE','Followed up','TODAY'],
+        ['INVOICE','Paid','TODAY']
+      ];
+      rows.forEach((row,i)=>{
+        const y=119+i*25,shown=Math.min(1,Math.max(0,(arrival-.12-i*.12)/.22));
+        ctx.globalAlpha=shown;
+        ctx.strokeStyle='#29292d';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(16,y);ctx.lineTo(460,y);ctx.stroke();
+        ctx.fillStyle='#a3a19d';ctx.font='8px "Geist Mono", monospace';ctx.fillText(row[0],16,y+10);
+        ctx.fillStyle='#f2f1ee';ctx.font='500 10px Inter, sans-serif';ctx.fillText(row[1],112,y+10);
+        ctx.fillStyle='#6f6d69';ctx.font='8px "Geist Mono", monospace';ctx.textAlign='right';ctx.fillText(row[2],459,y+10);ctx.textAlign='left';
+        // Scroll-scrubbed landing signal on the first event row.
+        if(i===0&&progress>.48){
+          ctx.globalAlpha=Math.min(1,(progress-.48)/.18);
+          ctx.fillStyle='#ff2a3a';ctx.beginPath();ctx.arc(7,y+5,2.3,0,Math.PI*2);ctx.fill();
+        }
+      });
+      ctx.globalAlpha=1;
+      ctx.fillStyle='#6f6d69';ctx.font='8px "Geist Mono", monospace';ctx.fillText('Example business · sample data',16,230);
+      texture.needsUpdate=true;
+    }
+    drawDashboard(0,0);
+
     return (p,arrival)=>{
       const shut=1-arrival;
-      chassis.rotation.set(-.10+.20*p,-.17+.32*p+.14*ease(p,0,.42),.018-.036*p);
+      // Stand rises and locks; display swings from a 15-degree back tilt.
+      chassis.rotation.set(-.10+.20*p,-.07+.14*p,.018-.036*p);
+      chassis.scale.setScalar(1+.075*p);
       base.position.set(0,-125-26*shut,-5);
       foot.position.set(0,-156-31*shut,-14-36*shut);
-      lid.rotation.x=-.91*shut-.12-.20*p+.26*ease(p,0,.28);
+      lid.rotation.x=-.262*shut-.12;
       gasket.position.z=11+38*shut;
       display.position.z=14+73*shut;
-      // A tiny live indicator arrives with the first scroll beat.
-      base.position.x=2.5*ease(p,.18,.34);
+      drawDashboard(p,arrival);
     };
   }
 });
