@@ -287,7 +287,7 @@ export function instrument({label,span,assemble,model}) {
         // Only the sampling copy receives subpixel offsets. The scene camera
         // and the projection used for interaction stay fixed throughout the scan.
         const refine=still&&!lite;
-        sampleCamera.projectionMatrix.copy(camera.projectionMatrix);
+        sampleCamera.position.copy(camera.position);\n        sampleCamera.quaternion.copy(camera.quaternion);\n        sampleCamera.zoom=camera.zoom;\n        sampleCamera.updateMatrixWorld();\n        sampleCamera.projectionMatrix.copy(camera.projectionMatrix);
         if(refine){
           const m=sampleCamera.projectionMatrix.elements;
           m[12]+=(halton(samples+1,2)-.5)*2/canvas.width;
