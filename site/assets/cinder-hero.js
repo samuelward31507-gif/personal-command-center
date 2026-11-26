@@ -19,7 +19,7 @@ window.CinderHero=instrument({
     box(0,-2,0,248,5,30,seal,2,foot);
     for(const x of [-206,206]){
       const bearing=group(base);bearing.position.set(x,25,5);bearing.rotation.y=Math.PI/2;
-      disc(0,0,0,14,58,steel,bearing);ring(0,0,30,9,1.4,seal,bearing);
+      disc(0,0,0,14,58,side,bearing);ring(0,0,30,9,1.4,deck,bearing);
     }
     for(let j=0;j<19;j++)box(-220+j*5,-6,22.4,2,9,1,seal,.45,base);
     
@@ -29,7 +29,11 @@ window.CinderHero=instrument({
     const floor=new T.PlaneGeometry(1800,1100);floor.rotateX(-Math.PI/2);
     add(floor,own(new T.ShadowMaterial({opacity:.24})),0,-187,-70);
     box(0,126,0,505,261,15,side,6,lid);
-    box(0,126,8,501,257,4,deck,2,lid);
+    box(0,126,8,501,257,4,side,2,lid);
+    box(0,254,10.2,498,1.3,1,deck,.4,lid);
+    box(0,-2,10.2,498,1.3,1,deck,.4,lid);
+    box(-249,126,10.2,1.3,255,1,deck,.4,lid);
+    box(249,126,10.2,1.3,255,1,deck,.4,lid);
     box(0,126,0,484,242,3,seal,1.4,gasket);
     box(0,126,0,476,237,4,glass,1.8,display);
 
