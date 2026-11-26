@@ -5,6 +5,8 @@ window.CinderHero=instrument({
   span:[580,370],assemble:true,
   model({T,group,box,ring,disc,add,own,labelPlate,deck,side,steel,seal,glass,ink,invalidate,ease}){
     const chassis=group(),lid=group(chassis),base=group(chassis),foot=group(chassis);
+    const mobile=matchMedia('(max-width:700px)').matches;
+    chassis.scale.setScalar(mobile?1.15:.9);
     const gasket=group(lid),display=group(lid);
     lid.position.y=-93;
 
