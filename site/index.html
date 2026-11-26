@@ -330,6 +330,14 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 .phone-host{width:min(100%,max(306px,52svh))}
 @media(max-width:900px){.audit-vis{height:auto;aspect-ratio:1.12;align-self:center}}
 
+
+@media (max-width:900px){
+  #back>.backdrop{display:none}
+  #back{background:#000}
+  .back-vis{height:30svh;top:56px;box-shadow:0 16px 16px -4px #000}
+  .gets li{min-height:34vh;padding-top:20px}
+  .back>div:first-child>h2{margin-bottom:4px}
+}
 /* sizing guard */
 .audit-vis{width:100%;max-width:100%;overflow:hidden;contain:size}
 .audit-vis canvas,.phone-host canvas,.back-vis canvas{max-width:100%}
