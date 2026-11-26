@@ -35,6 +35,7 @@
 <section class="ov ov-hero plain" aria-labelledby="h1"><div class="wrap">
   <p class="eb">Integrations</p><h1 id="h1" class="rv">Keep the tools you already use.</h1>
   <p class="rv d1">Cinder plugs into your calendar, your books and the places your leads come from, so nothing gets copied over by hand.</p>
+  <div class="pv" data-plate="CinderHub" role="img" aria-label="The tools Cinder connects to, around one hub."></div>
 </div></section>
 <section class="ig"><div class="wrap"><div class="ig-h"><h2 class="rv">Connected both ways.</h2><p class="rv d1">You approve it once. After that, everything lands where it belongs.</p></div><ul><li class="rv"><b>Google Calendar</b><p>Leads only see times you’re actually free, and every booked estimate lands on your calendar with the address and the job.</p></li><li class="rv"><b>Jobber</b><p>Every estimate we book shows up in Jobber as a request on that customer’s record. Nobody retypes a booking.</p></li><li class="rv"><b>QuickBooks Online</b><p>Every invoice you send and every payment you record lands in your books, on the right customer.</p></li></ul></div></section>
 
@@ -66,6 +67,7 @@
 var ms=document.querySelectorAll('.has-menu');ms.forEach(function(m){var b=m.querySelector('button');if(!b)return;b.addEventListener('click',function(){var o=!m.classList.contains('open');ms.forEach(function(x){x.classList.remove('open');x.querySelector('button').setAttribute('aria-expanded','false')});m.classList.toggle('open',o);b.setAttribute('aria-expanded',o)});document.addEventListener('click',function(e){if(!m.contains(e.target)){m.classList.remove('open');b.setAttribute('aria-expanded','false')}});document.addEventListener('keydown',function(e){if(e.key==='Escape'){m.classList.remove('open');b.setAttribute('aria-expanded','false')}})});
 var p=location.pathname.replace(/\/$/,'');document.querySelectorAll('.glinks a,.gmob-p a').forEach(function(a){if(a.getAttribute('href')===p)a.setAttribute('aria-current','page')})})();</script>
 <script>(function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -10% 0px'});document.querySelectorAll('.rv').forEach(function(el){io.observe(el)})})();</script>
+<script src="/assets/cinder-plates.js"></script>
 <script src="/assets/scenes.js"></script>
 <script type="module" src="/assets/cinder-field.js"></script>
 

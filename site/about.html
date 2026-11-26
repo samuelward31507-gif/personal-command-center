@@ -35,7 +35,7 @@
 <section class="ov ov-hero plain" aria-labelledby="h1"><div class="wrap">
   <p class="eb">About</p><h1 id="h1" class="rv">One founder. A few clients at a time.</h1>
   <p class="rv d1">Cinder Revenue Company audits service businesses, then fixes what’s costing them jobs.</p>
-  <div class="vis-slot" data-visual="V3"></div>
+  <div class="pv" data-plate="CinderOne" role="img" aria-label="One founder at the center with a few clients in orbit."></div>
 </div></section>
 <section><div class="wrap"><div class="p-body">
   <p class="rv">Most service businesses already get enough leads. The jobs are lost after the phone rings: calls that go unanswered, estimates that never get booked, quotes nobody chases.</p>
@@ -64,6 +64,7 @@
 var ms=document.querySelectorAll('.has-menu');ms.forEach(function(m){var b=m.querySelector('button');if(!b)return;b.addEventListener('click',function(){var o=!m.classList.contains('open');ms.forEach(function(x){x.classList.remove('open');x.querySelector('button').setAttribute('aria-expanded','false')});m.classList.toggle('open',o);b.setAttribute('aria-expanded',o)});document.addEventListener('click',function(e){if(!m.contains(e.target)){m.classList.remove('open');b.setAttribute('aria-expanded','false')}});document.addEventListener('keydown',function(e){if(e.key==='Escape'){m.classList.remove('open');b.setAttribute('aria-expanded','false')}})});
 var p=location.pathname.replace(/\/$/,'');document.querySelectorAll('.glinks a,.gmob-p a').forEach(function(a){if(a.getAttribute('href')===p)a.setAttribute('aria-current','page')})})();</script>
 <script>(function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -10% 0px'});document.querySelectorAll('.rv').forEach(function(el){io.observe(el)})})();</script>
+<script src="/assets/cinder-plates.js"></script>
 <script src="/assets/scenes.js"></script>
 <script type="module" src="/assets/cinder-field.js"></script>
 

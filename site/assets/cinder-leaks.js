@@ -15,7 +15,7 @@
   var cam={yaw:0,pitch:0,dist:0,fov:0};
   function setCam(p){
     if(narrow()){cam.yaw=(p-.5)*.14;cam.pitch=.95;cam.dist=10.4;cam.fov=1.3}
-    else{cam.yaw=-.38+(p-.5)*.34;cam.pitch=.42;cam.dist=12.5;cam.fov=1.05}
+    else{cam.yaw=-.38+(p-.5)*.34;cam.pitch=.42;cam.dist=12.5;cam.fov=1.32}
   }
   function proj(x,y,z){
     var cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw),X=x*cy-z*sy,Z=x*sy+z*cy;
@@ -27,20 +27,15 @@
   function frame(now){
     raf=0;var T=RM?3:(now-t0)/1000,u=sm((P-.05)/.82),head=u*(N-1);setCam(P);
     ctx.clearRect(0,0,W,H);
-    var G=8;
-    for(var g=-G;g<=G;g++){
-      var al='rgba(242,241,238,'+(.13*(1-Math.abs(g)/G)).toFixed(3)+')';
-      line(proj(g,0,-G),proj(g,0,G),al);line(proj(-G,0,g),proj(G,0,g),al);
-    }
     var off=.16,leaks=st.map(function(el){return +el.dataset.leak||0}),nw=narrow();
     for(var s=0;s<N-1;s++){
       var A=station(s),B=station(s+1);
       for(var side=-1;side<=1;side+=2){
         var ox=nw?off*side:0,oz=nw?0:off*side,lit=head>s+.02;
-        line(proj(A.x+ox,.02,A.z+oz),proj(B.x+ox,.02,B.z+oz),lit?'rgba(242,241,238,.55)':'rgba(242,241,238,.22)');
+        line(proj(A.x+ox,.02,A.z+oz),proj(B.x+ox,.02,B.z+oz),lit?'rgba(242,241,238,.95)':'rgba(242,241,238,.4)');
       }
       for(var k=1;k<10;k++){var m=k/10,X=A.x+(B.x-A.x)*m,Z=A.z+(B.z-A.z)*m;
-        line(proj(X+(nw?-off:0),.02,Z+(nw?0:-off)),proj(X+(nw?off:0),.02,Z+(nw?0:off)),'rgba(242,241,238,'+(head>s+m?.35:.12)+')')}
+        line(proj(X+(nw?-off:0),.02,Z+(nw?0:-off)),proj(X+(nw?off:0),.02,Z+(nw?0:off)),'rgba(242,241,238,'+(head>s+m?.5:.18)+')')}
     }
     var sum=0;
     st.forEach(function(el,i){

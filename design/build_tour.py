@@ -173,7 +173,7 @@ STEPS=[('Overview','You only see what needs you.','Six things today. Everything 
  ('Gets paid','Invoices chase themselves.','Reminders go out with your own pay link until it’s settled.')]
 SEC=f'''<section id="tour" class="tour" aria-label="What Cinder does on its own"><div class="tour-pin">
   <canvas class="tour-cv" aria-hidden="true"></canvas>
-  <div class="tour-head"><h2>Then it does the work.</h2><p>If it doesn’t need a person, a person shouldn’t be doing it. You run the jobs. This runs everything around them.</p></div>
+  <div class="tour-head"><h2>It does the work. You do the jobs.</h2><p>If it doesn’t need a person, a person shouldn’t be doing it.</p></div>
   <div class="tour-screen" data-tex="/assets/screens/scr-today-2400.webp" role="img" aria-label="The Cinder app for an example fence company, sample data">{APP}</div>
   <div class="tour-caps">{''.join(f'<article><h3>{t}</h3><p>{d}</p></article>' for l,t,d in STEPS)}</div>
   <div class="tour-sats">{''.join(f'<div class="sat-set">{l}{r}</div>' for l,r in SETS)}</div>
@@ -269,8 +269,10 @@ CSS='''/* CRM tour */
 }
 @media (prefers-reduced-motion:reduce){.touring .cs *,.touring .sat,.touring .sat *{animation:none!important}.cs .cur{display:none}.sat .a{opacity:1}.ph .dots{display:none}}
 '''
-p=ROOT+'/site/index.html';h=open(p).read()
-h=re.sub(r'\n<section id="tour".*?</div></section>\n','\n',h,count=1,flags=re.S)
-h=h.replace('\n<section id="problem"','\n'+SEC+'\n<section id="problem"',1)
-h=re.sub(r'/\* CRM tour \*/.*?(?=/\* sizing guard \*/)',lambda m:CSS,h,count=1,flags=re.S)
-open(p,'w').write(h);print('ok',h.count('id="tour"'))
+open(ROOT+'/site/assets/tour.css','w').write(CSS.replace('/* CRM tour */\n',''))
+p=ROOT+'/site/software.html';h=open(p).read()
+if 'id="tour"' in h: h=re.sub(r'<section id="tour".*?</div></section>\n',lambda m:SEC,h,count=1,flags=re.S)
+else: h=re.sub(r'<section class="sx wait" data-scene="CinderApp".*?</section>',lambda m:SEC,h,count=1,flags=re.S)
+if 'tour.css' not in h: h=h.replace('<link rel="stylesheet" href="/assets/nav.css">','<link rel="stylesheet" href="/assets/nav.css"><link rel="stylesheet" href="/assets/tour.css">',1)
+if 'cinder-tour.js' not in h: h=h.replace('</body>','<script type="module" src="/assets/cinder-tour.js"></script>\n</body>',1)
+open(p,'w').write(h);print('ok',h.count('id="tour"'),'tour.css' in h)
