@@ -11,13 +11,13 @@
     return {
       setStep: function (i) { if (i !== S.step) { S.step = i; S.ts = S.t } if (S.kick) S.kick() }, setProgress: function () { },
       mount: function (host) {
-        var cv = document.createElement('canvas'); cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block'; cv.setAttribute('aria-hidden', 'true');
+        var cv = document.createElement('canvas'); cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .9s cubic-bezier(.2,.8,.2,1)'; cv.setAttribute('aria-hidden', 'true');
         if (getComputedStyle(host).position === 'static') host.style.position = 'relative'; host.appendChild(cv);
         var c = cv.getContext('2d'), W = 1, H = 1, vis = false, raf = 0, t0 = performance.now(), last = t0;
         function size() { var r = host.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2); W = Math.max(1, r.width); H = Math.max(1, r.height); cv.width = W * d; cv.height = H * d; c.setTransform(d, 0, 0, d, 0, 0); kick() }
         function frame(now) {
           raf = 0; var dt = Math.min(.05, (now - last) / 1000); last = now; S.s += (S.step - S.s) * (RM ? 1 : Math.min(1, dt * 4.5)); S.t = RM ? 40 : Math.max(0, (now - t0) / 1000); S.since = RM ? 99 : S.t - S.ts;
-          c.clearRect(0, 0, W, H); c.lineWidth = 1; c.lineJoin = 'round'; draw(c, W, H, S.s, S.t, S); if (vis && !RM) raf = requestAnimationFrame(frame)
+          if (vis || RM) cv.style.opacity = 1; c.clearRect(0, 0, W, H); c.lineWidth = 1; c.lineJoin = 'round'; draw(c, W, H, S.s, S.t, S); if (vis && !RM) raf = requestAnimationFrame(frame)
         }
         function kick() { if (!raf) raf = requestAnimationFrame(frame) }
         new ResizeObserver(size).observe(host); new IntersectionObserver(function (e) { vis = e[0].isIntersecting; if (vis) { last = performance.now(); kick() } }).observe(host); size(); S.kick = kick
