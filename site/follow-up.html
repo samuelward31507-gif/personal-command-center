@@ -11,6 +11,7 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/page.css"><link rel="stylesheet" href="/assets/nav.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -29,13 +30,15 @@
   </div>
 </header>
 <main id="main">
-<section class="p-hero" aria-labelledby="h1"><div class="wrap">
+<section class="ov ov-hero" data-backdrop aria-labelledby="h1"><div class="backdrop"></div><div class="wrap">
   <p class="eb">Follow-up</p><h1 id="h1" class="rv">Every quote gets chased.</h1><p class="rv d1">Quotes and invoices get followed up until the customer says yes, no, or paid.</p>
   <div class="acts rv d2"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></div>
-  <div class="vis-slot" data-visual="V9"></div>
 </div></section>
-<section aria-labelledby="h-how"><div class="wrap p-split"><h2 id="h-how" class="rv">How it works.</h2><ol class="p-steps"><li class="rv"><span class="n">01</span><h3>A quote goes out</h3><p>You send it the way you already do.</p></li><li class="rv"><span class="n">02</span><h3>Follow-ups go out on schedule</h3><p>Polite check-ins until they answer, so no quote goes quiet.</p></li><li class="rv"><span class="n">03</span><h3>Invoices get paid</h3><p>Late invoices get a reminder before you have to make the call.</p></li></ol></div></section>
-
+<section class="sx" data-scene="CinderUnit" data-active="2" data-visual="V9" aria-labelledby="h-how">
+  <div class="sx-pin"><div class="sx-vis"><div class="sx-host"></div></div></div>
+  <div class="sx-copy"><h2 id="h-how">How it works.</h2><div class="sx-step"><span class="n">01</span><h3>A quote goes out</h3><p>You send it the way you already do.</p></div><div class="sx-step"><span class="n">02</span><h3>Follow-ups go out on schedule</h3><p>Polite check-ins until they answer, so no quote goes quiet.</p></div><div class="sx-step"><span class="n">03</span><h3>Invoices get paid</h3><p>Late invoices get a reminder before you have to make the call.</p></div></div>
+</section>
+<section class="ov ov-line" data-backdrop><div class="backdrop"></div><div class="wrap"><h2 class="rv">A quote nobody chases is a job <em>you gave away.</em></h2></div></section>
 <section class="p-close" aria-labelledby="h-close"><div class="wrap">
   <h2 id="h-close" class="rv">Find out what you’re missing.</h2>
   <p class="rv d1">A free audit of your business. You keep what we find.</p>
@@ -57,5 +60,7 @@
 var m=document.querySelector('.has-menu'),b=m&&m.querySelector('button');if(b){b.addEventListener('click',function(){var o=!m.classList.contains('open');m.classList.toggle('open',o);b.setAttribute('aria-expanded',o)});document.addEventListener('click',function(e){if(!m.contains(e.target)){m.classList.remove('open');b.setAttribute('aria-expanded','false')}});document.addEventListener('keydown',function(e){if(e.key==='Escape'){m.classList.remove('open');b.setAttribute('aria-expanded','false')}})}
 var p=location.pathname.replace(/\/$/,'');document.querySelectorAll('.glinks a,.gmob-p a').forEach(function(a){if(a.getAttribute('href')===p)a.setAttribute('aria-current','page')})})();</script>
 <script>(function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -10% 0px'});document.querySelectorAll('.rv').forEach(function(el){io.observe(el)})})();</script>
+<script src="/assets/scenes.js"></script>
+<script type="module" src="/assets/cinder-unit.js"></script>
 </body>
 </html>
