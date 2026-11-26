@@ -139,4 +139,3 @@
   .tour-nav{bottom:14px;max-width:calc(100% - 20px);overflow-x:auto}.tour-nav button{padding:7px 11px;font-size:12px}
   .tour-note{display:none}
 }
-@media (prefers-reduced-motion:reduce){.touring .cs *,.touring .sat,.touring .sat *{animation:none!important}.cs .cur{display:none}.sat .a{opacity:1}.ph .dots{display:none}}

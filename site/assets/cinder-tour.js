@@ -11,7 +11,7 @@ if(sec){
   const cur=scr.querySelector('.cur'),rip=scr.querySelector('.rip'),prog=sec.querySelector('.tour-prog i'),nums=[...scr.querySelectorAll('[data-n]')];
   const REST=[[950,552],[944,902],[742,524],[806,650],[772,524]];
   const cs=scr.querySelector('.cs'),FOC=[[880,440,700],[640,50,640],[304,80,720],[726,400,830],[300,220,780]];
-  const N=imgs.length,RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const N=imgs.length,RM=false;
 
   const r=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true,powerPreference:'high-performance'});
   r.setClearColor(0,0);r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=1.18;r.outputColorSpace=T.SRGBColorSpace;

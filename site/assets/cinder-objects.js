@@ -10,7 +10,7 @@ import {GTAOPass} from 'three/addons/postprocessing/GTAOPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {SMAAPass} from 'three/addons/postprocessing/SMAAPass.js';
 
-const RM=matchMedia('(prefers-reduced-motion: reduce)').matches,c01=v=>v<0?0:v>1?1:v,ez=x=>{x=c01(x);return x*x*(3-2*x)},lerp=(a,b,t)=>a+(b-a)*t;
+const RM=false,c01=v=>v<0?0:v>1?1:v,ez=x=>{x=c01(x);return x*x*(3-2*x)},lerp=(a,b,t)=>a+(b-a)*t;
 const RED=new T.Color(0xff1f3a),DARK=new T.Color(0x1a1a1d),WHITE=new T.Color(0xf2f1ee),TAU=Math.PI*2;
 const rb=(w,h,d,r=4)=>new RoundedBoxGeometry(w,h,d,3,r),box=(w,h,d)=>new T.BoxGeometry(w,h,d),cyl=(r,h,s=64,r2)=>new T.CylinderGeometry(r,r2==null?r:r2,h,s);
 const add=(g,geo,m,x=0,y=0,z=0,sh=true)=>{const o=new T.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=sh;o.receiveShadow=true;g.add(o);return o};

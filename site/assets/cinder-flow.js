@@ -1,7 +1,7 @@
 // A ribbon of fine strands, always flowing, with crimson pulses running along it. Time-driven only.
 // data-flow="c": bent into the Cinder C (hero). data-flow="wave": a long wave crossing the section.
 import * as T from 'three';
-const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const RM=false;
 // wave presets: amplitude, frequency, width, twist, tilt, roll. One per page, so no two backdrops match.
 const V=[[.36,5.2,.3,7.5,.5,-.1],[.2,3,.42,4,.75,.12],[.5,7.5,.22,11,.3,0],[.28,2.2,.5,3,.95,-.2],[.42,4.2,.26,14,.55,.18],[.16,9,.34,6,.4,-.05],[.6,3.6,.2,9,.65,.1],[.3,6,.46,5,.85,0],[.24,4.6,.38,17,.6,-.16],[.46,2.8,.3,8,.35,.2],[.18,6.8,.5,10,.7,-.08],[.54,5,.24,3.5,.45,.14]];
 document.querySelectorAll('[data-flow]').forEach(host=>{const P=V[(+host.dataset.v||0)%V.length];
@@ -39,7 +39,7 @@ document.querySelectorAll('[data-flow]').forEach(host=>{const P=V[(+host.dataset
   function draw(now){raf=0;const t=RM?20:(now-t0)/1000+20,narrow=W<700,u=H/(2*4.6*Math.tan(16*Math.PI/180));
     mat.uniforms.uTime.value=t*1.7;const it=RM||wave?1:Math.min(1,(now-t0)/2600);mat.uniforms.uIn.value=1-Math.pow(1-it,3);
     if(wave){grp.scale.setScalar(Math.max(narrow?2.1:1.2,1.12*W/(6.6*u))*(narrow?.55:1));grp.position.set(0,0,0);grp.rotation.set(P[4]+.06*Math.sin(t*.08),.1*Math.sin(t*.05),P[5]+.03*Math.sin(t*.06))}
-    else{const Rp=narrow?W*.72:Math.min(W*.46,800),cyp=narrow?Rp*1.02:Rp*1.12,cxp=narrow?W*.1:W*.12;
+    else{const Rp=narrow?W*.78:Math.min(W*.38,700),cyp=narrow?H*.62:H*.56,cxp=narrow?W*.06:W*.32;
       grp.scale.setScalar(Rp/u);grp.position.set(cxp/u,(H/2-cyp)/u,0);grp.rotation.set(.42+.08*Math.sin(t*.09),-.38+.14*Math.sin(t*.061),.2+.05*Math.sin(t*.047))}
     r.render(scene,cam);if(vis&&!RM)raf=requestAnimationFrame(draw)}
   new ResizeObserver(size).observe(host);

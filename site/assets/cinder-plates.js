@@ -1,7 +1,7 @@
 // Line-and-dot visuals, one per page. Canvas 2D, crisp 1px lines, white on black, crimson only where something happens.
 // Each is a global with mount(host) and setStep(i), so scenes.js can drive it; [data-plate] hosts mount on their own.
 (function () {
-  var RM = matchMedia('(prefers-reduced-motion: reduce)').matches, RED = '#e0193a', INK = '242,241,238';
+  var RM = false, RED = '#e0193a', INK = '242,241,238';
   var MONO = '500 10.5px "Geist Mono",ui-monospace,monospace', SANS = '500 13px Inter,system-ui,sans-serif';
   function cl(v) { return v < 0 ? 0 : v > 1 ? 1 : v } function lerp(a, b, t) { return a + (b - a) * t } function ez(x) { x = cl(x); return x * x * (3 - 2 * x) }
   function ink(a) { return 'rgba(' + INK + ',' + cl(a).toFixed(3) + ')' }
