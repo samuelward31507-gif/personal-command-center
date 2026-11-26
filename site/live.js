@@ -92,7 +92,7 @@
   // ---------- Ambient lead field ----------
   var EVENTS = [["Missed call", "Aurora", "Texted in 8s", "ok"], ["Web form", "Vinyl, 80 ft", "Texted in 6s", "ok"], ["Facebook lead", "9:52 PM", "Texted in 9s", "ok"], ["Estimate", "Thu 8:00 AM", "Booked", "ok"],
     ["Angi", "Chain link, 200 ft", "Texted in 11s", "ok"], ["Quote", "$6,840 · cedar", "Approved", "ok"], ["Missed call", "Littleton", "Texted in 7s", "ok"], ["Invoice #1042", "$8,600", "Paid", "ok"],
-    ["Follow-up", "Day 5 · Priya S.", "Replied", "ok"], ["Thumbtack", "Gate repair", "Texted in 10s", "ok"], ["Review", "Henderson", "5 stars", "ok"], ["Estimate", "Fri 1:00 PM", "Booked", "ok"],
+    ["Follow-up", "Day 5 · Priya S.", "Replied", "ok"], ["Thumbtack", "Gate repair", "Texted in seconds", "ok"], ["Review", "Henderson", "5 stars", "ok"], ["Estimate", "Fri 1:00 PM", "Booked", "ok"],
     ["Web form", "Deck railing", "Texted in 5s", "ok"], ["Missed call", "Parker", "Texted in 9s", "ok"], ["Quote", "$12,300 · composite", "Sent", ""], ["Estimate", "Mon 3:30 PM", "Booked", "ok"]];
   var amb = $("[data-amb]");
   if (amb) {
