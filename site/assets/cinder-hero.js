@@ -40,7 +40,8 @@ window.CinderHero=instrument({
     texture.magFilter=T.LinearFilter;
     const screen=own(new T.MeshBasicMaterial({map:texture, toneMapped:false}));
     add(new T.PlaneGeometry(462,228),screen,0,126,2.2,display);
-    const liveDot=add(new T.CircleGeometry(4.2,24),ink(0xff2a3a),-122,107,3.2,display);\n    const powerRows=[107,89,71,53].map(y=>box(0,y,3.5,454,18,1,ink(0x09090b),.2,display));
+    const liveDot=add(new T.CircleGeometry(4.2,24),ink(0xff2a3a),-122,107,3.2,display);
+    const powerRows=[107,89,71,53].map(y=>box(0,y,3.5,454,18,1,ink(0x09090b),.2,display));
 
     function drawDashboard(progress,arrival){
       ctx.setTransform(scale,0,0,scale,0,0);
@@ -79,7 +80,11 @@ window.CinderHero=instrument({
     }
     drawDashboard(0,0);
 
-    return (p,arrival)=>{\n      powerRows.forEach((row,i)=>{row.visible=arrival<.20+i*.18});\n      camera.zoom=1+.12*ease(p,0,.55);\n      camera.position.z=810-70*ease(p,0,.55);\n      camera.lookAt(0,0,0);camera.updateProjectionMatrix();camera.updateMatrixWorld();
+    return (p,arrival)=>{
+      powerRows.forEach((row,i)=>{row.visible=arrival<.20+i*.18});
+      camera.zoom=1+.12*ease(p,0,.55);
+      camera.position.z=810-70*ease(p,0,.55);
+      camera.lookAt(0,0,0);camera.updateProjectionMatrix();camera.updateMatrixWorld();
       const shut=1-arrival;
       // Stand rises and locks; display swings from a 15-degree back tilt.
       chassis.rotation.set(-.10+.20*p,-.07+.14*p,.018-.036*p);
