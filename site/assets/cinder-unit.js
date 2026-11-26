@@ -935,13 +935,13 @@ function mount(el){
         const reveal=seams[Math.min(i,4)],room=i?Math.min(reveal,seams[i-1]):reveal;
         const g=plates[i],fraction=i===5?0:lift/(72*(5-i));
         selection[i]=weights[i]*room;
-        covers[i].position.y=13.6+room*18+10*selection[i];
-        g.position.set((5-i)*1.3*fraction,(5-i)*35.5+lift+6*selection[i],0);
+        covers[i].position.y=13.6+room*18;
+        g.position.set((5-i)*1.3*fraction,(5-i)*35.5+lift,0);
         g.rotation.y=(5-i)*Math.PI/300*fraction;
         gains[i]=1-.55*(sum-weights[i])*reveal;
         g.updateMatrixWorld(true);
         // Frame the unit as if nothing were selected, so the camera holds still when the active layer changes.
-        const lifted=6*selection[i];
+        const lifted=0;
         for(const x of [-140,140])for(const y of [-18,13.6+room*18+4])for(const z of [-140,140]){
           point.set(x,y,z).applyMatrix4(g.matrixWorld);
           caster(point.x,point.y,point.z);
@@ -955,7 +955,7 @@ function mount(el){
         s.rotation.y=i*.31+4*Math.PI*(1-(1-rise)**2);
         point.copy(s.position).applyMatrix4(cap.matrixWorld);
         caster(point.x,point.y+5,point.z);
-        point.y-=16*selection[0];
+        
         include(point.x-6,point.y+3,point.z+6);include(point.x+6,point.y+3,point.z-6);
         include(point.x-6,point.y+3,point.z-6);
       });
