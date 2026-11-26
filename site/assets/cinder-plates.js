@@ -200,7 +200,8 @@
     [].slice.call(document.querySelectorAll('[data-plate]')).forEach(function (host) {
       var api = window[host.dataset.plate]; if (!api || host.dataset.on) return; host.dataset.on = 1; api.mount(host);
       var sec = host.closest('.hx'); if (!sec) return; var steps = [].slice.call(sec.querySelectorAll('.hx-step')), last = -1, tk = false;
-      function upd() { tk = false; var vh = innerHeight, best = 0, bd = 1e9; steps.forEach(function (el, i) { var b = el.getBoundingClientRect(), d = Math.abs((innerWidth <= 900 ? b.bottom - 90 : b.top + b.height / 2) - vh * (innerWidth <= 900 ? .78 : .5)); if (d < bd) { bd = d; best = i } }); if (best !== last) { last = best; api.setStep(best); steps.forEach(function (el, i) { el.classList.toggle('on', i === best) }) } }
+      function upd() { tk = false; var vh = innerHeight, best = 0, bd = 1e9; steps.forEach(function (el, i) { var b = el.getBoundingClientRect(), d = Math.abs((innerWidth <= 900 ? b.bottom - 90 : b.top + b.height / 2) - vh * (innerWidth <= 900 ? .78 : .5)); if (d < bd) { bd = d; best = i } }); if (best !== last) { last = best; if (api.setStep) api.setStep(best); steps.forEach(function (el, i) { el.classList.toggle('on', i === best) }) }
+        if (!api.setStep && api.setProgress) { var a = steps[0].getBoundingClientRect(), z = steps[steps.length - 1].getBoundingClientRect(), c0 = a.top + a.height / 2, c1 = z.top + z.height / 2; api.setProgress(Math.max(0, Math.min(1, (vh * (innerWidth <= 900 ? .7 : .5) - c0) / ((c1 - c0) || 1)))) } }
       addEventListener('scroll', function () { if (!tk) { tk = true; requestAnimationFrame(upd) } }, { passive: true }); addEventListener('resize', upd); upd()
     })
   }
