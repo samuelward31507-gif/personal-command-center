@@ -53,7 +53,8 @@ window.CinderAudit=instrument({
     const receipt=group();receipt.position.set(0,-116,22);
     box(0,-116,18,219,28,4,seal,1);
     box(0,0,0,210,23,5,glass,2,receipt);
-    const result=labelPlate('3 LEAKS  /  5 CHECKS',0,0,3,172,14,receipt,'#ff2a3a');\n    result.material.color.set(0xff2a3a);
+    const result=labelPlate('3 LEAKS  /  5 CHECKS',0,0,3,172,14,receipt,'#ff2a3a');
+    result.material.color.set(0xff2a3a);
     labelPlate('EXAMPLE BUSINESS · SAMPLE DATA',0,-137,18,180,9);
     return p=>{
       chambers.forEach(({hinge,needle,leak},i)=>{
