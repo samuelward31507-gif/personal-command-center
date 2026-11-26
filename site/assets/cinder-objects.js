@@ -63,7 +63,7 @@ function make(def){
       s+=(prog-s)*(RM?1:Math.min(1,dt*9));{const yf=s*(def.yaw.length-1),yi=Math.min(def.yaw.length-2,Math.floor(yf));yaw=lerp(def.yaw[yi],def.yaw[yi+1],ez(yf-yi))}
       if(!born&&vis){born=now||.001;canvas.style.opacity=1}const e=RM?1:ez((now-born)/1.3);
       const E={yaw:-(1-e)*(def.swing==null?.5:def.swing),scale:lerp(.93,1,e),sx:0,lift:0};if(def.enter)def.enter(RM?1:c01((now-born)/(def.enterTime||1.3)),E);
-      rig.rotation.y=Math.PI/4+yaw+(RM?0:(def.sway==null?.06:def.sway)*Math.sin(now*.4))+E.yaw;rig.scale.setScalar(E.scale);rig.position.set(E.sx*.7071,0,-E.sx*.7071);copies[0].g.position.y=E.lift;copies[1].g.position.y=-2-E.lift;
+      rig.rotation.y=Math.PI/4+yaw+(RM?0:(def.sway==null?.06:def.sway)*Math.sin(now*.4))+E.yaw;rig.scale.setScalar(E.scale);rig.position.set((E.sx+(E.sz||0))*.7071,0,((E.sz||0)-E.sx)*.7071);copies[0].g.position.y=E.lift;copies[1].g.position.y=-2-E.lift;
       def.update({t:now,p:s,copies,M});composer?composer.render():renderer.render(scene,camera);if(vis&&!RM)raf=requestAnimationFrame(frame)}
     kick=()=>{if(!raf)raf=requestAnimationFrame(frame)};
     new ResizeObserver(size).observe(host);new IntersectionObserver(e=>{vis=e[0].isIntersecting;if(vis){last=performance.now();kick()}}).observe(host);size();
@@ -289,4 +289,58 @@ window.CinderTape=make({fit:[262,318],yaw:[-.16,-.16],aim:18,sway:.035,swing:.3,
     const last=TAPE.P.length-1;add(g,strip(0,TAPE.iB),M.blank);const sg=strip(TAPE.iB,last);add(g,sg,M.paper);add(g,sg,M.back,0,0,0,false);return {g,r}},
   update({t,copies,M}){const C=3.6,k=Math.floor(t/C),u=(t-k*C)/1.25,m=u<1,adv=(k+ez(u))*TLEN;
     M.tex.offset.y=(adv/LTEX)%1;lit(M.led,DARK,RED,m?1:.22+.1*Math.sin(t*2.2));copies.forEach(c=>{c.r.spin.rotation.x=-adv/ROLL[2];c.r.knob.rotation.x=-adv/30})}});
+// ---- Homepage, what we build: a patch bay. An empty machined chassis with a bus along its floor. Modules are
+// lowered into the bays one at a time and screwed down, each with its own face of knobs, sliders, meters and
+// jacks. Two blank panels hold the places still open. Then crimson cables patch every module to the next.
+const BAYS=[{n:'LEADS',k:[['j',-18,-76],['j',0,-76],['j',18,-76],['K',0,-22,17],['l',24,-50],['w',0,34,46,26]]},
+  {n:'BOOKING',k:[['w',0,-60,48,42],['k',-16,-8,10],['k',16,-8,10],['l',0,18],['s',0,46,42]]},
+  {n:'QUOTES',k:[['s',-17,-46,72,1],['s',17,-46,72,1],['l',-17,6],['l',17,6],['K',0,40,15]]},
+  {n:'AFTER THE JOB',k:[['k',-16,-70,10],['k',16,-70,10],['w',0,-26,48,30],['K',0,24,16],['l',24,-2]]},
+  {n:'WIN-BACKS',k:[['K',0,-56,19],['t',-16,-8],['t',16,-8],['l',0,14],['w',0,44,46,22]]},
+  {n:'OFFICE',k:[['k',-16,-74,9],['k',16,-74,9],['k',-16,-44,9],['k',16,-44,9],['s',0,-10,44],['l',-18,18],['l',0,18],['l',18,18],['w',0,50,46,18]]},
+  {n:'YOURS',blank:1,k:[['l',0,-60]]},{n:'YOURS',blank:1,k:[['l',0,-60]]}];
+const bayX=i=>(i-3.5)*77,BAYC=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]];
+function bayModule(K,M,i){const d=BAYS[i],m=new T.Group(),r={knobs:[],caps:[],bars:[],screws:[]};add(m,rb(72,5,236,2.2),K.body,0,0,0);
+  const lab=K.texture(256,44,c=>{c.fillStyle='rgba(10,10,12,.86)';let f=25;do{c.font='600 '+f+'px "Geist Mono",ui-monospace,monospace';f--}while(c.measureText(d.n).width>236&&f>12);c.textAlign='center';c.fillText(d.n,128,30)},true);
+  const lp=add(m,new T.PlaneGeometry(62,10.6),new T.MeshBasicMaterial({map:lab,transparent:true,toneMapped:false}),0,2.62,-103,false);lp.rotation.x=-Math.PI/2;
+  [[-27,-111],[27,111]].forEach((q,k)=>{const s=new T.Group();s.position.set(q[0],2.4,q[1]);s.scale.setScalar(.7);screw(s,K,0,0,0,k);m.add(s);r.screws.push(s)});
+  if(d.blank){add(m,box(24,1,3),K.enamel,0,2.7,30,false);add(m,box(3,1,24),K.enamel,0,2.7,30,false)}
+  else [-16,16].forEach(x=>{add(m,cyl(7.6,2.6,6),K.alloy,x,3.8,88);add(m,cyl(5,5,24),K.alloy,x,5,88);add(m,cyl(3.3,5.4,20),K.enamel,x,5.1,88,false)});
+  d.k.forEach((q,n)=>{const [ty,x,z,a,b]=q;
+    if(ty==='K'||ty==='k'){const kn=new T.Group(),ht=ty==='K'?15:10;kn.position.set(x,2.5,z);add(kn,cyl(a*1.12,3,48),K.graphite,0,1.5,0);add(kn,cyl(a*.8,ht,48,a*.92),K.enamel,0,3+ht/2,0);add(kn,cyl(a*.58,1.6,32),K.alloy,0,3.8+ht,0,false);add(kn,box(1.8,1.2,a*.46),M.ptr,0,4.7+ht,-a*.5,false);
+      kn.userData.a0=(Math.sin(i*7.3+n*3.1)*.5)*2.4;m.add(kn);r.knobs.push(kn)}
+    else if(ty==='j'){add(m,cyl(7.6,2.6,6),K.alloy,x,3.8,z);add(m,cyl(5,5,24),K.alloy,x,5,z);add(m,cyl(3.3,5.4,20),K.enamel,x,5.1,z,false)}
+    else if(ty==='l'){add(m,cyl(4.6,2.4,24),K.alloy,x,3.7,z,false);add(m,cyl(2.9,3.4,20),M.led[i],x,4.3,z,false)}
+    else if(ty==='w'){add(m,rb(a+7,2.4,b+7,1.4),K.graphite,x,3.6,z,false);add(m,box(a,2.8,b),K.enamel,x,3.9,z,false);const rows=b>24?3:2;for(let e=0;e<rows;e++){const bar=add(m,box(a-12,3.2,2.6),e?M.ptr:M.led[i],x,4,z+(e-(rows-1)/2)*b*.28,false);bar.userData={x0:x,w:a-12};r.bars.push(bar)}}
+    else if(ty==='s'){add(m,b?box(4.4,2.4,a):box(a,2.4,4.4),K.enamel,x,3.6,z,false);const cap=add(m,b?rb(13,7,9,1.6):rb(9,7,13,1.6),K.alloy,x,7,z);cap.userData={x0:x,z0:z,len:a,v:b};r.caps.push(cap)}
+    else if(ty==='t'){add(m,cyl(5.6,3,6),K.alloy,x,4,z);const lv=add(m,cyl(1.7,13,12),K.alloy,x,10,z+(x<0?2.6:-2.6));lv.rotation.x=.42*(x<0?1:-1)}});
+  return {m,r}}
+window.CinderBay=make({fit:[348,272],yaw:[1.04,.98,.9,.84,.94],aim:52,sway:.04,
+  enterTime:1.6,enter(k,E){const o=1-Math.pow(1-k,4);E.sz=lerp(-300,0,o);E.yaw=lerp(.5,0,o);E.scale=1},
+  mats:K=>({led:BAYS.map(()=>K.led()),pwr:K.led(),ptr:K.led(0xe9e8e4),cable:new T.MeshStandardMaterial({color:0xc4122c,roughness:.42,metalness:0}),rubber:new T.MeshStandardMaterial({color:0x0b0b0c,roughness:.62,metalness:0})}),
+  build(K,M){const g=new T.Group(),r={mods:[],cab:[]};
+    add(g,rb(676,12,300,9),K.graphite,0,6,0);add(g,box(634,1.4,256),K.enamel,0,12.6,0,false);
+    // the bus every module plugs into
+    add(g,box(610,3,30),K.graphite,0,14.5,0);for(let i=0;i<8;i++){add(g,box(26,7,12),K.enamel,bayX(i),19,0);for(let e=0;e<5;e++)add(g,box(1.6,3,1.6),K.alloy,bayX(i)-8+e*4,24,0,false)}
+    [-1,1].forEach(q=>{add(g,rb(644,14,18,3),K.alloy,0,41,q*120);add(g,rb(676,42,10,3),K.graphite,0,27,q*145);add(g,rb(18,60,300,5),K.body,q*329,30,0);[-112,112].forEach((z,e)=>screw(g,K,q*329,60.2,z,e+q))});
+    for(let i=0;i<8;i++)[-1,1].forEach(q=>add(g,cyl(2.6,1,12),K.enamel,bayX(i)+27*q,48.3,-111*q,false));
+    const brand=K.texture(512,48,c=>{c.fillStyle='rgba(242,241,238,.5)';c.font='500 26px "Geist Mono",monospace';c.fillText('CINDER  PATCH BAY',6,33)},true);
+    add(g,new T.PlaneGeometry(150,14),new T.MeshBasicMaterial({map:brand,transparent:true,toneMapped:false}),-232,30,150.2,false);add(g,cyl(4.2,2,24),K.alloy,300,30,150.4,false).rotation.x=Math.PI/2;add(g,cyl(2.6,2.6,20),M.pwr,300,30,150.8,false).rotation.x=Math.PI/2;
+    [[-300,-124],[300,-124],[-300,124],[300,124]].forEach(q=>add(g,cyl(13,4,32),M.rubber,q[0],-2,q[1]));
+    add(g,new T.TubeGeometry(new T.CatmullRomCurve3([[-250,22,-150],[-256,8,-176],[-300,4.4,-206],[-380,4.4,-214],[-470,4.4,-190]].map(p=>new T.Vector3(p[0],p[1],p[2]))),48,4.4,12),M.rubber);
+    for(let i=0;i<8;i++){const o=bayModule(K,M,i);o.m.position.set(bayX(i),50.5,0);g.add(o.m);r.mods.push(o)}
+    BAYC.forEach((q,k)=>{const loop=k===5,xa=bayX(q[0])+(loop?-16:16)*(loop?-1:1),xb=bayX(q[1])+(loop?-16:-16),A=new T.Vector3(loop?bayX(5)+16:bayX(q[0])+16,70,88),B=new T.Vector3(loop?bayX(0)-16:bayX(q[1])-16,70,88),h=loop?92:34+(k%2)*10,
+        pts=[A,A.clone().add(new T.Vector3(0,h*.55,loop?26:6)),A.clone().lerp(B,.5).add(new T.Vector3(0,h,loop?74:16)),B.clone().add(new T.Vector3(0,h*.55,loop?26:6)),B],
+        mesh=add(g,new T.TubeGeometry(new T.CatmullRomCurve3(pts),loop?90:40,2.5,8),M.cable),plug=P=>{const pg=new T.Group();pg.position.set(P.x,56,P.z);add(pg,cyl(3.5,11,16),K.alloy,0,5.5,0);add(pg,cyl(4.6,5,16),K.graphite,0,12.5,0);g.add(pg);return pg};
+      r.cab.push({mesh,seg:loop?90:40,pa:plug(A),pb:plug(B)})});
+    return {g,r}},
+  update({t,p,copies,M}){const s=p*8,one=ez((s-7.1)/.8);lit(M.pwr,DARK,RED,one);
+    for(let i=0;i<8;i++){const real=i<6,a=real?ez((s-(i+.3))/.55):ez((s-(6.3+(i-6)*.14))/.5),hot=real?ez(c01(1.4-Math.abs(s-(i+1))*1.8)):ez(c01(1.4-Math.abs(s-7)*1.8)),sc=real?ez((s-(i+.8))/.22):ez((s-(6.86+(i-6)*.1))/.2);
+      lit(M.led[i],DARK,RED,Math.max(one*.9,hot*(.62+.38*Math.sin(t*3+i))));
+      copies.forEach(c=>{const o=c.r.mods[i];o.m.visible=a>.002;o.m.position.y=50.5+(1-a)*200;o.m.rotation.z=(1-a)*.2*(i%2?-1:1);o.m.rotation.x=-(1-a)*.14;
+        o.r.screws.forEach((q,k)=>{q.position.y=2.4+(1-sc)*11;q.rotation.y=(1-sc)*8+k});
+        o.r.knobs.forEach((q,k)=>{q.rotation.y=q.userData.a0+hot*(1.5+.5*Math.sin(t*1.1+k*2+i))+one*.6});
+        o.r.caps.forEach((q,k)=>{const d=q.userData,v=(lerp(.16,.5+.42*Math.sin(t*.9+k*2.1+i),hot)-.5)*d.len*.78;if(d.v)q.position.z=d.z0+v;else q.position.x=d.x0+v});
+        o.r.bars.forEach((q,k)=>{const d=q.userData,l=lerp(.16,.3+.7*(.5+.5*Math.sin(t*1.6+k*1.7+i)),Math.max(hot,one*.8));q.scale.x=l;q.position.x=d.x0-(1-l)*d.w/2})})}
+    copies.forEach(c=>c.r.cab.forEach((q,k)=>{const kk=ez(one*2-k*.15);q.mesh.visible=kk>.01;q.mesh.geometry.setDrawRange(0,Math.floor(q.seg*kk)*48);q.pa.visible=kk>.01;q.pb.visible=kk>.97}))}});
 dispatchEvent(new Event('cinder-visual'));dispatchEvent(new Event('cinder-plate'));
