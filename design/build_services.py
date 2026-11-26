@@ -185,11 +185,11 @@ def nav():
     mob = ''.join(f'<p class="gm-h">{e(gn)}</p>' + ''.join(f'<a href="/{s}">{e(BY[s]["name"])}</a>' for s in ORDER[gid]) for gid, gn in GROUPS)
     return f'''<nav class="glinks" aria-label="Main"><ul>
       <li class="has-menu mega"><button type="button" aria-expanded="false" aria-controls="sysmenu">What we build</button>
-        <div class="gmenu mega" id="sysmenu"><div class="gm-cols">{cols}</div><a class="gm-all" href="/everything"><b>Everything we build</b><span>{len(ALL)} builds and counting. The one thing we don’t do is run ads.</span></a></div></li>
+        <div class="gmenu mega" id="sysmenu"><div class="gm-cols">{cols}</div><a class="gm-all" href="/everything"><b>Everything we build</b><span>{len(ALL)} builds and counting. The one thing we don’t do is run ads.</span></a><a class="gm-all gm-q" href="/questions"><b>Questions</b><span>Straight answers before you book.</span></a></div></li>
       <li class="has-menu"><button type="button" aria-expanded="false" aria-controls="swmenu">Software</button>
         <div class="gmenu" id="swmenu"><ul><li><a href="/software"><b>The app</b><span>Everything we build, in one app on your phone.</span></a></li><li><a href="/integrations"><b>Integrations</b><span>Works with your calendar, your books and your lead sources.</span></a></li><li><a href="/whats-new"><b>What’s new</b><span>What we’ve shipped lately.</span></a></li></ul></div></li><li><a href="/trades">Trades</a></li><li><a href="/free-audit">The free audit</a></li><li><a href="/story">Our story</a></li><li><a href="/about">About</a></li>
     </ul></nav>''', f'''<details class="gmob"><summary aria-label="Menu"><i></i><i></i></summary><div class="gmob-p">
-      <a href="/everything">Everything we build</a>{mob}<p class="gm-h">Cinder</p><a href="/software">Software</a><a href="/whats-new">What’s new</a><a href="/trades">Trades</a><a href="/free-audit">The free audit</a><a href="/story">Our story</a><a href="/about">About</a>
+      <a href="/everything">Everything we build</a>{mob}<p class="gm-h">Cinder</p><a href="/software">Software</a><a href="/whats-new">What’s new</a><a href="/trades">Trades</a><a href="/free-audit">The free audit</a><a href="/story">Our story</a><a href="/questions">Questions</a><a href="/about">About</a>
     </div></details>'''
 def ribbon(i):  # a wave of its own for every page: amplitude, frequency, width, twist, tilt, roll
     r = lambda k, a, b: round(a + (b - a) * ((i * 0.6180339887 * (k + 1) + k * 0.37) % 1), 3)
@@ -234,5 +234,29 @@ def main():
             blk = f'''<section id="everything" class="ixs" aria-labelledby="h-every"><div class="wrap"><div class="ixs-h"><h2 id="h-every" class="rv">If AI can do it, we build it.</h2><p class="rv d1">{len(ALL)} builds today, in eight parts of your business, and room for whatever yours needs next. The one thing we don’t do is run ads.</p></div>{index_block()}</div></section>'''
             t2 = re.sub(r'<section id="everything".*?</section>\n?', '', t2, flags=re.S); k = t2.index('<section id="back"'); t2 = t2[:k] + blk + '\n' + t2[k:]
         if t2 != t: f.write_text(t2); count += 1
+    # every question in one place
+    GEN = [('What does the audit cost?', 'Nothing. It is free, and you keep the plan whether or not you work with us.'), ('What happens in the audit?', 'You bring rough numbers: leads a month, your average job, how many quotes you close. We walk your business from the first call to the review, including after hours, and show you where jobs are going.'),
+           ('Do I have to buy a package?', 'No. There are no packages. We build what your audit calls for and nothing else.'), ('How is it priced?', "Every fix is scoped after the audit, only if you want it, and priced to your business's size."),
+           ('Do you run ads?', 'No. Everything we build works on leads and customers you already have.'), ('Who builds it?', "Sam does. He builds and watches every client's system himself, and takes on a few businesses at a time."),
+           ('Where do I see what it is doing?', 'In one app on your phone. Every reply, booking and follow-up is there.'), ('Does it work with the tools I already use?', 'Yes. It connects to your calendar, your books and your lead sources.')]
+    qa = lambda items: ''.join(f'<details class="rv"><summary>{e(q)}</summary><p>{e(a)}</p></details>' for q, a in items)
+    secs = f'<section class="faq"><div class="wrap"><h2 class="rv">The basics.</h2><div>{qa(GEN)}</div></div></section>'
+    for gid, gn in GROUPS:
+        items = [(f'{BY[sl]["name"]}: {q}', a) for sl in ORDER[gid] if 'faq' in BY[sl] for q, a in BY[sl]['faq'][:-1]]
+        if items: secs += f'<section class="faq"><div class="wrap"><h2 class="rv">{e(gn)}.</h2><div>{qa(items)}</div></div></section>'
+    nq = len(GEN) + sum(len(p['faq']) - 1 for p in NEW)
+    page('Questions', 'Straight answers about the audit, what we build, and how it works.', 'questions', f'''<section class="ov ov-hero svc" aria-labelledby="h1"><div class="backdrop" data-flow="wave" data-p="{ribbon(11)}"></div><div class="wrap">
+  <p class="eb">Questions</p><h1 id="h1" class="rv">Straight answers.</h1><p class="rv d1">{nq} questions owners ask before they book, answered plainly. If yours is not here, ask it on the call.</p>
+  <div class="acts rv d2"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></div>
+</div></section>''' + secs)
+    BAR = '''<div class="bookbar" id="bookbar" hidden><p><b>Free audit.</b> It starts with a 15-minute call, and you keep the plan.</p><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></div>
+<script>(function(){var b=document.getElementById('bookbar');if(!b)return;b.hidden=false;var end=document.querySelector('.p-close,.closing,footer'),near=false;function f(){b.classList.toggle('on',scrollY>innerHeight*.8&&!near)}if(end&&'IntersectionObserver' in window)new IntersectionObserver(function(e){near=e[0].isIntersecting;f()},{rootMargin:'0px 0px -20% 0px'}).observe(end);addEventListener('scroll',f,{passive:true});f()})();</script>
+'''
+    for f in sorted(S.glob('*.html')):
+        t = f.read_text()
+        if '<header class="gnav"' not in t: continue
+        t2 = re.sub(r'<div class="bookbar".*?</script>\n', '', t, flags=re.S).replace('</body>', BAR + '</body>', 1)
+        t2 = t2.replace('<li><a href="/privacy">Privacy</a></li>', '<li><a href="/questions">Questions</a></li><li><a href="/privacy">Privacy</a></li>') if '/questions">Questions' not in t2 else t2
+        if t2 != t: f.write_text(t2)
     print('pages written:', len(NEW) + 1, 'nav updated on', count, 'files; builds:', len(ALL))
 if __name__ == '__main__': main()

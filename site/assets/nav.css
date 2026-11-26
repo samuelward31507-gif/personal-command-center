@@ -64,3 +64,11 @@
 .ixp{padding:120px 0 var(--sec,300px)}
 @media (max-width:900px){.ixs-h{grid-template-columns:1fr;gap:18px;margin-bottom:44px}.ixs-h p{justify-self:start}.ix{grid-template-columns:1fr 1fr;gap:40px 20px}.ixp{padding:56px 0 120px}}
 @media (max-width:520px){.ix{grid-template-columns:1fr}}
+
+/* ---- the booking bar: one clear next step, on every page, once you are past the first screen ---- */
+.bookbar{position:fixed;left:50%;bottom:18px;z-index:60;display:flex;align-items:center;gap:22px;padding:10px 10px 10px 22px;background:rgba(11,11,12,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-radius:16px;box-shadow:0 0 0 1px rgba(255,248,240,.14),0 24px 60px -18px #000;transform:translate(-50%,160%);opacity:0;transition:transform .7s cubic-bezier(.16,1,.3,1),opacity .4s;white-space:nowrap}
+.bookbar.on{transform:translate(-50%,0);opacity:1}
+.bookbar p{margin:0;font:400 14px/1.3 Inter,system-ui,sans-serif;color:#a3a19d;max-width:none}.bookbar p b{color:#f2f1ee;font-weight:600;margin-right:4px}
+.bookbar .btn{height:40px;padding:0 16px;font-size:14px}
+.gmenu.mega .gm-q{margin-top:0;border-top:0;padding-top:2px}
+@media (max-width:760px){.bookbar{left:10px;right:10px;bottom:10px;transform:translateY(160%);justify-content:space-between;gap:10px;padding:8px 8px 8px 14px;white-space:normal}.bookbar.on{transform:none}.bookbar p{font-size:12.5px}.bookbar p b{display:block}.bookbar .btn{flex:none;height:42px}}
