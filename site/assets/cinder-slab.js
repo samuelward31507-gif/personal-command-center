@@ -447,7 +447,7 @@ for(let i=0;i<4;i++){
   camera.updateProjectionMatrix();
 
   const aim=new T.Vector3(0,13,0);
-  camera.position.set(130,395,495).add(aim);
+  camera.position.set(45,560,370).add(aim);
   camera.lookAt(aim);
   camera.updateMatrixWorld();
 
@@ -463,7 +463,7 @@ for(let i=0;i<4;i++){
   const low=Math.min(...xs),high=Math.max(...xs);
   camera.zoom=Math.min(1.87/(high-low),1.66/(Math.max(...ys)-Math.min(...ys)));
   camera.updateProjectionMatrix();
-  camera.projectionMatrix.elements[8]=low*camera.zoom+1.08;
+  camera.projectionMatrix.elements[8]=-(low+high)/2*camera.zoom;
   camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
 
   keys.forEach(k=>k.slot=-1);
