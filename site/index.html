@@ -122,7 +122,7 @@ p{color:var(--t2);text-wrap:pretty}
 .rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
 
 /* 2 SPLIT: what we fix, the unit comes apart */
-.bd{position:relative;height:320vh}
+.bd{position:relative;height:420vh}
 .bd-pin{position:sticky;top:0;height:100vh;display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:center;max-width:calc(var(--w) + var(--g)*2);margin:0 auto;padding:64px var(--g) 0}
 .bd-head h2{font-size:clamp(34px,3.6vw,48px)}
 .bd-head p{margin-top:18px;font-size:var(--f4)}
@@ -268,7 +268,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   .hero h1{font-size:clamp(44px,12vw,56px)}
   .hero .lede{font-size:var(--f3)}
   .hero .acts .btn{width:100%;height:50px}
-  .bd{height:260vh}
+  .bd{height:340vh}
   .bd-pin{display:flex;flex-direction:column;justify-content:flex-start;gap:4px;padding:76px var(--g) 0}
   .bd-head h2{font-size:30px}.bd-head p{font-size:var(--f2);margin-top:10px}.bd-meter{display:none}
   .stage{flex:1;min-height:0;height:auto;width:calc(100% + var(--g)*2);margin:0 calc(var(--g)*-1)}
@@ -350,7 +350,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
       <div class="bd-meter" aria-hidden="true"><i><b id="bdm"></b></i><span class="mono" id="bdl">Assembled</span></div>
       <p class="bd-desc" id="bdDesc" aria-live="polite"></p>
     </div>
-    <div class="stage" id="bdStage"><i class="tick a"></i><i class="tick b"></i><i class="tick c"></i><i class="tick d"></i><div class="fb"><img src="/assets/screens/today-1200.webp" width="1200" height="750" alt=""></div><div class="unit-host" id="bdHost"></div><svg class="leads" id="leads" aria-hidden="true"></svg><ol class="calls" id="calls"><li><span>01</span>Answering</li><li><span>02</span>Booking</li><li><span>03</span>Quote follow-up</li><li><span>04</span>Invoices</li><li><span>05</span>Reviews</li><li><span>06</span>Website</li></ol></div>
+    <div class="stage" id="bdStage"><i class="tick a"></i><i class="tick b"></i><i class="tick c"></i><i class="tick d"></i><div class="fb"><img src="/assets/screens/today-1200.webp" width="1200" height="750" alt=""></div><div class="unit-host" id="bdHost"></div></div>
     
   </div>
 </section>
@@ -468,16 +468,12 @@ d.querySelectorAll('.rv,#sum,#shot').forEach(function(el){io.observe(el)});
 var steps=[].slice.call(d.querySelectorAll('.step')),evs=[].slice.call(d.querySelectorAll('.ev')),cur=-1;
 function setStep(s){if(s===cur)return;cur=s;if(window.CinderSlab)CinderSlab.setStep(s);steps.forEach(function(el){el.classList.toggle('on',+el.dataset.s===s)});evs.forEach(function(el){el.classList.toggle('on',+el.dataset.s<=s)})}
 setStep(0);
-var bdHost=d.getElementById('bdHost'),U=null,lastP=-1,lastA=-1;
-function unitReady(){if(U||!window.CinderUnit)return;U=window.CinderUnit;U.shift=innerWidth<=760?.26:.36;U.onFrame=onUnitFrame;U.mount(bdHost);onScroll()}
+var bdHost=d.getElementById('bdHost'),bdDesc=d.getElementById('bdDesc'),U=null,lastP=-1,lastA=-1;
+var descs=["Every call, text and form gets a reply in seconds, even after hours.", "Leads pick a time and land on your calendar, with reminders so they show up.", "Sent quotes get followed up until the customer says yes or no.", "Unpaid invoices get polite reminders, so you get paid without chasing.", "Happy customers get asked for a review after every paid job.", "A site that turns visitors into booked jobs, if yours is part of the leak."];
+function unitReady(){if(U||!window.CinderUnit)return;U=window.CinderUnit;U.mount(bdHost);onScroll()}
 addEventListener('cinder-unit',unitReady);
 var slabOn=false;function slabReady(){if(slabOn||!window.CinderSlab)return;slabOn=true;CinderSlab.setStep(Math.max(0,cur));CinderSlab.mount(d.getElementById('slabHost'))}
 addEventListener('cinder-slab',slabReady);
-var leads=d.getElementById('leads'),calls=[].slice.call(d.querySelectorAll('#calls li')),stage=d.getElementById('bdStage'),bdDesc=d.getElementById('bdDesc'),NS='http://www.w3.org/2000/svg',lines=[];
-var descs=["Every call, text and form gets a reply in seconds, even after hours.", "Leads pick a time and land on your calendar, with reminders so they show up.", "Sent quotes get followed up until the customer says yes or no.", "Unpaid invoices get polite reminders, so you get paid without chasing.", "Happy customers get asked for a review after every paid job.", "A site that turns visitors into booked jobs, if yours is part of the leak."];
-calls.forEach(function(){var g=d.createElementNS(NS,'g'),l=d.createElementNS(NS,'line'),c=d.createElementNS(NS,'circle');c.setAttribute('r','2.5');g.appendChild(l);g.appendChild(c);leads.appendChild(g);lines.push([g,l,c])});
-function onUnitFrame(pts,open){var sw=stage.clientWidth,lw=parseFloat(getComputedStyle(calls[0]).width)||190,x2=sw-lw-14,o=Math.max(0,Math.min(1,(open-.55)/.35));
-  pts.forEach(function(p,i){var L=lines[i];L[1].setAttribute('x1',p.x+6);L[1].setAttribute('y1',p.y);L[1].setAttribute('x2',x2);L[1].setAttribute('y2',p.y);L[2].setAttribute('cx',p.x+6);L[2].setAttribute('cy',p.y);L[0].style.opacity=o;calls[i].style.top=p.y+'px';calls[i].style.opacity=o})}
 var flow=d.getElementById('flow'),flowLis=[].slice.call(flow.querySelectorAll('li')),bd=d.getElementById('inside'),bdm=d.getElementById('bdm'),bdl=d.getElementById('bdl'),slats=[].slice.call(d.querySelectorAll('#rays i'));
 var names=['Answering','Booking','Quote follow-up','Invoices','Reviews','Website'];
 var ticking=false,lastK=-2;
@@ -494,467 +490,16 @@ function update(){
   flowLis.forEach(function(li,i){li.classList.toggle('on',fp>=i/flowLis.length-.001)});
   var span=br.height-vh,bp=clamp(-br.top/span);
   if(br.top<vh&&br.bottom>0)bdm.style.setProperty('--p',bp.toFixed(4));
-  var k=bp<.46||bp>.8?-1:Math.min(5,Math.floor((bp-.46)/.34*6));
-  if(k!==lastK){lastK=k;calls.forEach(function(li,i){li.classList.toggle('on',k>=0&&i===k)});bdDesc.textContent=k<0?'':descs[k];bdl.textContent=bp<.02||bp>.97?'Assembled':k<0?(bp>.8?'Putting it back together':'Taking it apart'):String(k+1).padStart(2,'0')+' / 06 · '+names[k]}
-  if(U){
-    var p=clamp((vh*.75-br.top)/(vh*.75+span*.5));if(bp>.8)p=Math.min(p,clamp((1-bp)/.2));
-    if(Math.abs(p-lastP)>.0005){lastP=p;U.setProgress(p)}
-    var a=Math.max(0,k);if(a!==lastA){lastA=a;U.setActive(a)}
-  }
+  var k=bp<.62||bp>=.8?-1:Math.min(5,Math.floor((bp-.62)/.18*6));
+  if(k!==lastK){lastK=k;bdDesc.textContent=k<0?'':descs[k];bdl.textContent=bp<.06||bp>.96?'Assembled':k>=0?String(k+1).padStart(2,'0')+' / 06 · '+names[k]:(bp>.8?'Putting it back together':'Taking it apart')}
+  if(U){if(Math.abs(bp-lastP)>.0003){lastP=bp;U.setProgress(bp)}if(k!==lastA){lastA=k;U.setActive(k)}}
 }
 function onScroll(){if(!ticking){ticking=true;requestAnimationFrame(update)}}
 addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update();
 })();
 </script>
 <script type="module" src="/assets/cinder-slab.js"></script>
-<script type="module">
-let target = 0, active = 0, instance = null, library;
-const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
-function smooth(x) {
-  x = clamp(x);
-  return x * x * (3 - 2 * x);
-}
-
-function dependencies() {
-  return library ??= Promise.all([
-    import('three'),
-    import('three/addons/geometries/RoundedBoxGeometry.js'),
-    import('three/addons/environments/RoomEnvironment.js'),
-    import('three/addons/utils/BufferGeometryUtils.js')
-  ]);
-}
-
-function mount(el) {
-  if (!(el instanceof Element)) throw new TypeError('CinderUnit.mount expects a container element');
-  instance?.destroy();
-
-  const frame = document.createElement('div');
-  frame.style.cssText = 'width:100%;height:100%;overflow:hidden;background:transparent';
-  frame.setAttribute('role', 'img');
-  frame.setAttribute('aria-label', 'Cinder unit, a stack of six graphite modules');
-  el.append(frame);
-
-  let disposed = false, cleanup = () => {};
-  const unit = {
-    wake() {},
-    destroy() {
-      if (disposed) return;
-      disposed = true;
-      cleanup();
-      frame.remove();
-      if (instance === unit) instance = null;
-    }
-  };
-  instance = unit;
-
-  dependencies().then(([T, {RoundedBoxGeometry}, {RoomEnvironment}, {mergeGeometries}]) => {
-    if (disposed) return;
-    const canvas = document.createElement('canvas');
-    const options = {
-      alpha:true, antialias:true, powerPreference:'high-performance', premultipliedAlpha:true
-    };
-    const context = canvas.getContext('webgl2', options) || canvas.getContext('webgl', options);
-    if (!context) { document.documentElement.classList.add('unit-failed'); return; }
-
-    let renderer, raf = 0, intersection, observer, onRelease = () => {};
-    const resources = new Set();
-    function own(resource) {
-      resources.add(resource);
-      return resource;
-    }
-    cleanup = () => {
-      cancelAnimationFrame(raf);
-      observer?.disconnect();
-      intersection?.disconnect();
-      onRelease();
-      resources.forEach(resource => resource.dispose());
-      renderer?.dispose();
-      renderer?.forceContextLoss();
-    };
-
-    renderer = new T.WebGLRenderer({...options, canvas, context});
-    renderer.setClearColor(0, 0);
-    renderer.toneMapping = T.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.06;
-    const scene = new T.Scene();
-    const camera = new T.OrthographicCamera(-240, 240, 240, -240, 1, 2200);
-
-    const room = new RoomEnvironment(renderer);
-    const pmrem = new T.PMREMGenerator(renderer);
-    try {
-      scene.environment = own(pmrem.fromScene(room, .035)).texture;
-    } finally {
-      room.dispose();
-      pmrem.dispose();
-    }
-
-    function light(x, y, z, color, intensity) {
-      const lamp = new T.DirectionalLight(color, intensity);
-      lamp.position.set(x, y, z);
-      scene.add(lamp);
-    }
-    light(-4, 8, 3, 0xffffff, 3.1);
-    light(2, 3, -5, 0xe9e4dc, 2);
-
-    const grain = document.createElement('canvas');
-    grain.width = grain.height = 128;
-    const brush = grain.getContext('2d');
-    const pixels = brush.createImageData(128, 128);
-    let seed = 71;
-    function noise() {
-      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-      return seed / 4294967296;
-    }
-    for (let y = 0; y < 128; y++) {
-      const row = (noise() - .5) * 62;
-      for (let x = 0; x < 128; x++) {
-        pixels.data.set([
-          128 + (noise() - .5) * 4,
-          128 + row + (noise() - .5) * 8,
-          251, 255
-        ], 4 * (y * 128 + x));
-      }
-    }
-    brush.putImageData(pixels, 0, 0);
-    const normal = own(new T.CanvasTexture(grain));
-    normal.wrapS = normal.wrapT = T.RepeatWrapping;
-    normal.repeat.set(1, 3);
-
-    function metal(color, roughness = .36, extra = {}) {
-      return own(new T.MeshStandardMaterial({color, roughness, metalness:.82, ...extra}));
-    }
-    const faces = [0x34343a, 0x252529, 0x37373c, 0x29292f, 0x323238, 0x25252a]
-      .map(color => metal(color, .38, {
-        normalMap:normal, normalScale:new T.Vector2(.12, .26)
-      }));
-    const trim = Array.from({length:6}, () => metal(0x45454c, .29));
-    const black = metal(0x101013, .57);
-    const gasket = metal(0x151519, .75);
-    const silver = metal(0x66666d, .29);
-    const blue = metal(0xff2a3a, .24, {
-      emissive:0xe0142c, emissiveIntensity:1, toneMapped:false
-    });
-    const root = new T.Group();
-    scene.add(root);
-
-    function mesh(parent, geometry, material, x = 0, y = 0, z = 0) {
-      const object = new T.Mesh(own(geometry), material);
-      object.position.set(x, y, z);
-      parent.add(object);
-      return object;
-    }
-    function box(w, h, d, r) {
-      return new RoundedBoxGeometry(w, h, d, 2, r);
-    }
-    function disk(parent, r, h, material, x, y, z, sides = 64) {
-      return mesh(parent, new T.CylinderGeometry(r, r, h, sides), material, x, y, z);
-    }
-    function ring(parent, r, thickness, material, x, y, z, segments = 96) {
-      const object = mesh(parent, new T.TorusGeometry(r, thickness, 6, segments), material, x, y, z);
-      object.rotation.x = -Math.PI / 2;
-      return object;
-    }
-    function repeats(parent, geometry, material, poses) {
-      const batch = new T.InstancedMesh(own(geometry), material, poses.length);
-      const dummy = new T.Object3D();
-      poses.forEach(([x, y, z, angle = 0], i) => {
-        dummy.position.set(x, y, z);
-        dummy.rotation.y = angle;
-        dummy.updateMatrix();
-        batch.setMatrixAt(i, dummy.matrix);
-      });
-      parent.add(batch);
-      resources.add(batch);
-      return batch;
-    }
-
-    const plates = [];
-    const body = box(280, 34, 280, 4.8);
-    const lip = box(279, 1.7, 279, .8);
-    const seal = box(269, 2, 269, 1);
-    for (let i = 0; i < 6; i++) {
-      const group = new T.Group();
-      plates.push(group);
-      root.add(group);
-      mesh(group, body, faces[i], 0, -11.6, 0);
-      mesh(group, lip, trim[i], 0, 4.6, 0);
-      mesh(group, seal, gasket, 0, -29.3, 0);
-      const vents = [];
-      for (let v = 0; v < 13; v++) vents.push([140.4, -11.6, -96 + v*16]);
-      repeats(group, new T.BoxGeometry(.9, 16, 3.2), black, vents);
-      if (i) mesh(group, box(278, 2, 278, .9), faces[i], 0, 6.1, 0);
-    }
-
-    // Top cover with a circular opening over a recessed dial bed.
-    const lid = plates[0], profile = new T.Shape(), b = 139, r = 8;
-    profile.moveTo(-b+r, -b);
-    profile.lineTo(b-r, -b); profile.quadraticCurveTo(b, -b, b, -b+r);
-    profile.lineTo(b, b-r); profile.quadraticCurveTo(b, b, b-r, b);
-    profile.lineTo(-b+r, b); profile.quadraticCurveTo(-b, b, -b, b-r);
-    profile.lineTo(-b, -b+r); profile.quadraticCurveTo(-b, -b, -b+r, -b);
-    const hole = new T.Path();
-    hole.absarc(0, 0, 58, 0, Math.PI * 2, true);
-    profile.holes.push(hole);
-    const cap = new T.ExtrudeGeometry(profile, {
-      depth:2, bevelEnabled:false, curveSegments:64
-    });
-    cap.rotateX(-Math.PI / 2);
-    const uv = cap.attributes.uv;
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i)/278, uv.getY(i)/278);
-    mesh(lid, cap, faces[0], 0, 5.5, 0);
-    disk(lid, 57.8, .35, black, 0, 5.78, 0, 96);
-    ring(lid, 55.4, .85, blue, 0, 6.22, 0, 128);
-    disk(lid, 52.8, .9, faces[1], 0, 6.05, 0, 128);
-    ring(lid, 49.5, .25, trim[0], 0, 6.56, 0);
-
-    const ticks = [];
-    for (let j = 0; j < 48; j++) {
-      const angle = j * Math.PI / 24;
-      ticks.push([64*Math.sin(angle), 7.62, 64*Math.cos(angle), angle]);
-    }
-    repeats(lid, new T.BoxGeometry(.75, .18, 2.6), silver, ticks);
-    for (let j = 0; j < 3; j++) {
-      const bar = mesh(lid, box(3, .5, [12,21,16][j], .24), silver, (j-1)*6, 6.7, 0);
-      bar.rotation.y = .29;
-    }
-
-    // Answering grille and engraved vector lettering.
-    const dots = [];
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 15; col++) dots.push([(col-7)*4.6, 7.65, -87+row*4.4]);
-    }
-    repeats(lid, new T.CylinderGeometry(1.23, 1.23, .3, 10), black, dots);
-
-    const glyph = {
-      C:'40 10 01 05 16 46', I:'00 40/20 26/06 46', N:'06 00 46 40',
-      D:'06 00 20 41 45 26 06', E:'40 00 06 46/03 33',
-      R:'06 00 30 41 42 33 03/23 46', V:'00 26 40', U:'00 05 16 36 45 40',
-      T:'00 40/20 26', '·':'23 24'
-    };
-    const strokes = [];
-    let cursor = -54;
-    for (const ch of 'CINDER REVENUE · UNIT') {
-      for (const path of glyph[ch]?.split('/') || []) {
-        const points = path.split(' ').map(s =>
-          new T.Vector3(cursor + Number(s[0])*.83, 7.65, 92 + Number(s[1])*.83)
-        );
-        for (let k = 1; k < points.length; k++) {
-          const a = points[k-1], b = points[k], direction = b.clone().sub(a);
-          const geometry = new T.BoxGeometry(.52, .12, direction.length()+.12);
-          geometry.rotateY(Math.atan2(direction.x, direction.z));
-          geometry.translate((a.x+b.x)/2, a.y, (a.z+b.z)/2);
-          strokes.push(geometry);
-        }
-      }
-      cursor += 5.35;
-    }
-    mesh(lid, mergeGeometries(strokes), silver);
-    strokes.forEach(geometry => geometry.dispose());
-
-    const screwMat = metal(0x67676b, .26, {transparent:true});
-    const crossMat = metal(0x0d0d10, .6, {transparent:true});
-    const screws = [];
-    for (const [x,z] of [[-117,-117],[117,-117],[-117,117],[117,117]]) {
-      disk(lid, 5.2, .25, black, x, 7.64, z, 24);
-      const screw = new T.Group();
-      screw.position.set(x, 7.8, z);
-      lid.add(screw);
-      screws.push(screw);
-      disk(screw, 4.5, 1.7, screwMat, 0, 1, 0, 28);
-      disk(screw, 2.1, 30, screwMat, 0, -14, 0, 14);
-      for (let t = 0; t < 9; t++) disk(screw, 2.6, .8, screwMat, 0, -4 - t*2.9, 0, 14);
-      mesh(screw, new T.BoxGeometry(5.3, .15, 1.12), crossMat, 0, 1.91, 0);
-      mesh(screw, new T.BoxGeometry(1.12, .15, 5.3), crossMat, 0, 1.92, 0);
-    }
-
-    // Booking, quote follow-up, invoices, reviews, and website.
-    const keys = [];
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 4; col++) {
-        const pose = [(col-1.5)*13, 8.3, 86+row*10];
-        if (col === 2 && row === 2) mesh(plates[1], box(10,2,7,1), blue, ...pose);
-        else keys.push(pose);
-      }
-    }
-    repeats(plates[1], box(10,2,7,1), trim[1], keys);
-    disk(plates[2], 15, .25, black, 0, 7.3, 111);
-    ring(plates[2], 15, .9, silver, 0, 7.8, 111);
-    mesh(plates[3], box(79,1,5,.48), trim[3], 0, 7.45, 117);
-    mesh(plates[3], box(76,.6,2.8,.29), black, 0, 8, 117);
-
-    const star = new T.Shape();
-    for (let k = 0; k < 10; k++) {
-      const angle = Math.PI/2 + k*Math.PI/5;
-      const radius = k%2 ? 4.3 : 10;
-      star[k ? 'lineTo' : 'moveTo'](Math.cos(angle)*radius, Math.sin(angle)*radius);
-    }
-    star.closePath();
-    const mark = new T.ShapeGeometry(star);
-    mark.rotateX(-Math.PI/2);
-    mesh(plates[4], mark, silver, 0, 7.35, 119);
-    mesh(plates[5], box(47,1.5,19,.7), trim[5], 0, 7.7, 115);
-    mesh(plates[5], box(43,.6,15,.28), black, 0, 8.55, 115);
-
-    const cableMaterial = metal(0x212126, .59, {metalness:.15});
-    const cablePath = new T.CatmullRomCurve3(
-      [[136,0,48],[155,0,48],[173,-1,46],[193,-4,35],[216,-5,33],[231,-5,42]]
-        .map(p => new T.Vector3(...p))
-    );
-    mesh(plates[5], new T.TubeGeometry(cablePath,36,2.1,10,false), cableMaterial);
-    mesh(plates[5], box(15,8,10,2), gasket, 143, 0, 48);
-
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-    let value = reduced.matches ? 1 : target;
-    let velocity = 0, last = 0, inView = false, width = 0, height = 0;
-    let lost = false, previousDpr = 0, aspect = 1;
-    const probe = new T.Vector3();
-    frame.append(canvas);
-    frame.style.background = 'transparent';
-    canvas.style.cssText = 'display:block;width:100%;height:100%';
-
-    function wake() {
-      if (!disposed && !raf && inView && !document.hidden && !lost && width && height) {
-        raf = requestAnimationFrame(draw);
-      }
-    }
-    unit.wake = wake;
-
-    function draw(now) {
-      raf = 0;
-      if (!inView || document.hidden || lost || disposed) return;
-      const goal = reduced.matches ? 1 : target;
-      // Closed-form critically damped spring. A step reaches 95% in 119 ms.
-      const dt = last ? Math.min((now-last)/1000, .05) : 1/60;
-      last = now;
-      const error = value-goal, k = velocity+40*error, decay = Math.exp(-40*dt);
-      value = goal + (error+k*dt)*decay;
-      velocity = (velocity-40*k*dt)*decay;
-      if (reduced.matches || (Math.abs(goal-value)<.00012 && Math.abs(velocity)<.005)) {
-        value = goal;
-        velocity = 0;
-      }
-
-      const turn = smooth(value/.25);
-      screwMat.opacity = crossMat.opacity = 1;
-      screws.forEach((screw, j) => {
-        screw.position.y = 7.8 + turn*64;
-        screw.rotation.y = j*.7 + turn*Math.PI*4;
-      });
-      const expand = clamp((value-.25)/.60);
-      plates.forEach((group, i) => {
-        const lift = smooth((expand-i*.135)/.46);
-        group.position.y = (5-i)*(38+44*lift);
-        group.rotation.y = (5-i)*.009*lift;
-        trim[i].color.setHex(i === active && expand > .5 ? 0xd4142a : 0x45454c);
-      });
-
-      const center = plates[0].position.y*.5 - 8 + turn*14;
-      const open = smooth(expand);
-      const half = Math.max((520 + 60*open)/aspect, 520 + 260*open)/2;
-      const halfW = half*aspect, shift = halfW*window.CinderUnit.shift;
-      camera.top = half; camera.bottom = -half;
-      camera.left = -halfW - shift; camera.right = halfW - shift;
-      camera.updateProjectionMatrix();
-      camera.position.set(450, center+375, 575);
-      camera.lookAt(10, center, 0);
-      renderer.render(scene, camera);
-      const report = window.CinderUnit.onFrame;
-      if (report) {
-        camera.updateMatrixWorld();
-        const pts = plates.map(group => {
-          let best = null;
-          for (const [cx, cz] of [[140,140],[140,-140],[-140,140],[-140,-140]]) {
-            probe.set(cx, group.position.y - 11.6, cz).project(camera);
-            if (!best || probe.x > best.x) best = {x: probe.x, y: probe.y};
-          }
-          return {x: (best.x+1)/2*width, y: (1-best.y)/2*height};
-        });
-        report(pts, open);
-      }
-      if (value !== goal || velocity !== 0) wake();
-      else last = 0;
-    }
-
-    function resize() {
-      const w = frame.clientWidth, h = frame.clientHeight;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      if (w === width && h === height && previousDpr === dpr) return;
-      width = w;
-      height = h;
-      previousDpr = dpr;
-      if (!w || !h) return;
-      renderer.setPixelRatio(dpr);
-      renderer.setSize(w, h, false);
-      aspect = w/h;
-      wake();
-    }
-    function visibility() {
-      if (!inView || document.hidden || lost) {
-        cancelAnimationFrame(raf);
-        raf = last = 0;
-      } else wake();
-    }
-    function contextLost(event) {
-      event.preventDefault();
-      lost = true;
-      canvas.style.visibility = 'hidden';
-      visibility();
-    }
-    function contextRestored() {
-      if (!disposed) mount(el);
-    }
-    canvas.addEventListener('webglcontextlost', contextLost);
-    canvas.addEventListener('webglcontextrestored', contextRestored);
-    reduced.addEventListener('change', wake);
-    document.addEventListener('visibilitychange', visibility);
-    window.addEventListener('resize', resize);
-    onRelease = () => {
-      canvas.removeEventListener('webglcontextlost', contextLost);
-      canvas.removeEventListener('webglcontextrestored', contextRestored);
-      reduced.removeEventListener('change', wake);
-      document.removeEventListener('visibilitychange', visibility);
-      window.removeEventListener('resize', resize);
-    };
-    observer = new ResizeObserver(resize);
-    observer.observe(frame);
-    intersection = new IntersectionObserver(([entry]) => {
-      inView = entry.isIntersecting;
-      visibility();
-    });
-    intersection.observe(frame);
-    resize();
-  }).catch(() => {
-    if (disposed) return;
-    cleanup();
-    cleanup = () => {};
-    unit.wake = () => {};
-    frame.replaceChildren();
-    document.documentElement.classList.add('unit-failed');
-    library = undefined;
-  });
-  return unit.destroy;
-}
-
-window.CinderUnit = {
-  mount,
-  shift: 0,
-  onFrame: null,
-  setProgress(p) {
-    if (!Number.isFinite(p)) return;
-    const next = clamp(p);
-    if (next !== target) {
-      target = next;
-      instance?.wake();
-    }
-  },
-  setActive(i) {
-    if (!Number.isInteger(i) || i < 0 || i > 5 || i === active) return;
-    active = i;
-    instance?.wake();
-  }
-};
-window.dispatchEvent(new Event('cinder-unit'));
-</script>
+<script type="module" src="/assets/cinder-unit.js"></script>
 <script>(function(){var n=document.getElementById('nav');function f(){n.classList.toggle('on',scrollY>8)}addEventListener('scroll',f,{passive:true});f();
 var m=document.querySelector('.has-menu'),b=m&&m.querySelector('button');if(b){b.addEventListener('click',function(){var o=!m.classList.contains('open');m.classList.toggle('open',o);b.setAttribute('aria-expanded',o)});document.addEventListener('click',function(e){if(!m.contains(e.target)){m.classList.remove('open');b.setAttribute('aria-expanded','false')}});document.addEventListener('keydown',function(e){if(e.key==='Escape'){m.classList.remove('open');b.setAttribute('aria-expanded','false')}})}
 var p=location.pathname.replace(/\/$/,'');document.querySelectorAll('.glinks a,.gmob-p a').forEach(function(a){if(a.getAttribute('href')===p)a.setAttribute('aria-current','page')})})();</script>
