@@ -108,7 +108,7 @@ async function mount(el) {
     w = nw; h = nh;
     renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
     renderer.setSize(w, h, false);
-    const a = w / h, half = Math.max(470 / a, 400) / 2;
+    const a = w / h, half = Math.max(390 / a, 330) / 2;
     camera.top = half; camera.bottom = -half; camera.left = -half * a; camera.right = half * a;
     camera.position.set(450, 385, 575); camera.lookAt(0, 4, 18);
     camera.updateProjectionMatrix();
