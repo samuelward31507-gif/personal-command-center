@@ -74,14 +74,14 @@ p{color:var(--t2);text-wrap:pretty}
 .nav .btn{height:36px;padding:0 14px;border-radius:var(--r1)}
 
 /* 1 OVERLAY: hero */
-.hero{position:relative;padding:200px 0 0;overflow:hidden;text-align:center;isolation:isolate}
+ .hero{position:relative;padding:124px 0 0;overflow:hidden;text-align:center;isolation:isolate}
 .hero .wrap{display:grid;justify-items:center;position:relative}
-.hero h1{font-size:var(--f7);letter-spacing:-.045em;line-height:.98;max-width:13ch;margin:0 auto}
+ .hero h1{font-size:clamp(48px,5.2vw,76px);letter-spacing:-.045em;line-height:.96;max-width:16ch;margin:0 auto;position:relative;z-index:2}
 .hero h1 .ln{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em}
 .hero h1 .ln span{display:block}
-.hero .lede{margin:28px auto 0;max-width:32em;font-size:var(--f4);line-height:1.55}
-.hero .acts{margin-top:40px;justify-content:center}
-.hero .terms{margin-top:18px;font-size:var(--f2);color:var(--t3)}
+ .hero .lede{margin:16px auto 0;max-width:32em;font-size:var(--f3);line-height:1.45;position:relative;z-index:2}
+ .hero .acts{margin-top:24px;justify-content:center;position:relative;z-index:2}
+ .hero .terms{margin-top:10px;font-size:var(--f2);color:var(--t3);position:relative;z-index:2}
 .rays{position:absolute;left:0;right:0;top:-80px;height:1100px;z-index:-1;overflow:hidden;pointer-events:none}
 .rays-in{position:absolute;left:50%;top:0;width:1500px;height:1000px;transform:translateX(-50%)}
 .rays i{--x:calc((var(--k) - 4) * 118px);position:absolute;left:50%;top:40px;width:96px;height:900px;margin-left:-48px;border-radius:60px;
@@ -96,9 +96,9 @@ p{color:var(--t2);text-wrap:pretty}
 @keyframes slat{from{opacity:0;transform:translate3d(var(--x),120px,0) rotate(24deg) scaleY(.6)}}
 .js .rays-core{animation:core 2.2s var(--e) .2s both}
 @keyframes core{from{opacity:0;transform:translateX(-50%) scale(.7)}}
-.hb-stage{position:relative;margin:clamp(52px,7vw,96px) auto 0;max-width:1300px;padding:0 var(--g);height:clamp(420px,42vw,570px);perspective:2200px;isolation:isolate}
+ .hb-stage{position:relative;z-index:1;margin:-178px auto 0;max-width:1300px;padding:0 var(--g);height:clamp(500px,48vw,650px);perspective:2200px;isolation:isolate}
 .hb-stage canvas{display:block;width:100%;height:100%;touch-action:pan-y}
-@media(max-width:700px){.hero{padding-top:112px}.hb-stage{margin-top:38px;height:360px;padding:0 2vw}}
+@media(max-width:700px){.hero{padding-top:112px}.hero h1{font-size:clamp(42px,11.2vw,52px);max-width:15ch}.hero .lede{margin-top:14px;font-size:16px}.hero .acts{margin-top:20px}.hero .terms{margin-top:8px}.hb-stage{margin-top:-118px;height:430px;padding:0 2vw}}
 
 .js .hero h1 .ln span{animation:up var(--d3) var(--e) both}
 .js .hero h1 .ln:nth-child(2) span{animation-delay:.06s}.js .hero h1 .ln:nth-child(3) span{animation-delay:.12s}
