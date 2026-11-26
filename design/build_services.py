@@ -163,7 +163,7 @@ P('custom-agents', 'custom', 'Custom agents', 'An agent built for one job in you
   [('The task waits for you.', 'The task is done when you look.'), ('You hire for it.', 'You build it once.'), ('Nobody knows how it is done but you.', 'It is written down and running.')],
   [('What can an agent do?', 'Read, write, look things up, fill in forms and use the tools you connect. It works inside limits you set.'), ('What will it not do?', 'Spend money or send anything you have marked for approval without asking.')]),
 P('custom-builds', 'custom', 'Custom builds', "If it doesn't need a person, we can build it.", "If it doesn't need a person, we can build it.",
-  'Everything on this site started as something one business asked for. If yours has a job that eats your week, tell us.',
+  'The builds on this site are the common ones. If your business has a job that eats your week and is not on the list, tell us.',
   [('Start with the audit', 'We find where your time and jobs are going.'), ('We scope it with you', 'What it does, what it will not do, and what it costs.'), ('We build and watch it', 'It runs in your app with everything else.'), ('The one thing we do not do', 'Run ads. Everything here works on leads and customers you already have.')],
   'The list on this site is where we started, not where we stop.',
   [('"There is no software for that."', 'There is now.'), ('You bend your business to fit a tool.', 'The tool is built around your business.'), ('A dozen logins.', 'One app.')],
@@ -187,9 +187,9 @@ def nav():
       <li class="has-menu mega"><button type="button" aria-expanded="false" aria-controls="sysmenu">What we build</button>
         <div class="gmenu mega" id="sysmenu"><div class="gm-cols">{cols}</div><a class="gm-all" href="/everything"><b>Everything we build</b><span>{len(ALL)} builds and counting. The one thing we don’t do is run ads.</span></a></div></li>
       <li class="has-menu"><button type="button" aria-expanded="false" aria-controls="swmenu">Software</button>
-        <div class="gmenu" id="swmenu"><ul><li><a href="/software"><b>The app</b><span>Everything we build, in one app on your phone.</span></a></li><li><a href="/integrations"><b>Integrations</b><span>Works with your calendar, your books and your lead sources.</span></a></li><li><a href="/whats-new"><b>What’s new</b><span>What we’ve shipped lately.</span></a></li></ul></div></li><li><a href="/trades">Trades</a></li><li><a href="/free-audit">The free audit</a></li><li><a href="/about">About</a></li>
+        <div class="gmenu" id="swmenu"><ul><li><a href="/software"><b>The app</b><span>Everything we build, in one app on your phone.</span></a></li><li><a href="/integrations"><b>Integrations</b><span>Works with your calendar, your books and your lead sources.</span></a></li><li><a href="/whats-new"><b>What’s new</b><span>What we’ve shipped lately.</span></a></li></ul></div></li><li><a href="/trades">Trades</a></li><li><a href="/free-audit">The free audit</a></li><li><a href="/story">Our story</a></li><li><a href="/about">About</a></li>
     </ul></nav>''', f'''<details class="gmob"><summary aria-label="Menu"><i></i><i></i></summary><div class="gmob-p">
-      <a href="/everything">Everything we build</a>{mob}<p class="gm-h">Cinder</p><a href="/software">Software</a><a href="/whats-new">What’s new</a><a href="/trades">Trades</a><a href="/free-audit">The free audit</a><a href="/about">About</a>
+      <a href="/everything">Everything we build</a>{mob}<p class="gm-h">Cinder</p><a href="/software">Software</a><a href="/whats-new">What’s new</a><a href="/trades">Trades</a><a href="/free-audit">The free audit</a><a href="/story">Our story</a><a href="/about">About</a>
     </div></details>'''
 def ribbon(i):  # a wave of its own for every page: amplitude, frequency, width, twist, tilt, roll
     r = lambda k, a, b: round(a + (b - a) * ((i * 0.6180339887 * (k + 1) + k * 0.37) % 1), 3)
