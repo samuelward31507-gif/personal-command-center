@@ -30,7 +30,7 @@
   </div>
 </header>
 <main id="main">
-<section class="ov ov-hero" data-backdrop aria-labelledby="h1"><div class="backdrop"></div><div class="wrap">
+<section class="ov ov-hero" data-backdrop aria-labelledby="h1"><div class="backdrop" data-variant="3" data-calm=".88"></div><div class="wrap">
   <p class="eb">Reviews</p><h1 id="h1" class="rv">More five-star reviews.</h1><p class="rv d1">Every paid job gets asked for a review, and your name keeps showing up where people look.</p>
   <div class="acts rv d2"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></div>
 </div></section>
@@ -38,7 +38,7 @@
   <div class="sx-pin"><div class="sx-vis"><div class="sx-host"></div></div></div>
   <div class="sx-copy"><h2 id="h-how">How it works.</h2><div class="sx-step"><span class="n">01</span><h3>The job gets paid</h3><p>The moment it’s marked done, the review ask is queued.</p></div><div class="sx-step"><span class="n">02</span><h3>They get asked at the right time</h3><p>A short text with a direct link, while the job is fresh.</p></div><div class="sx-step"><span class="n">03</span><h3>Your name gets around</h3><p>Reviews and regular posts keep you in front of people searching nearby.</p></div></div>
 </section>
-<section class="ov ov-line" data-backdrop><div class="backdrop"></div><div class="wrap"><h2 class="rv">The shop with the reviews <em>gets the call.</em></h2></div></section>
+<section class="ov ov-line" data-backdrop><div class="backdrop" data-variant="0" data-calm=".85"></div><div class="wrap"><h2 class="rv">The shop with the reviews <em>gets the call.</em></h2></div></section>
 <section class="p-close" aria-labelledby="h-close"><div class="wrap">
   <h2 id="h-close" class="rv">Find out what you’re missing.</h2>
   <p class="rv d1">A free audit of your business. You keep what we find.</p>
@@ -61,6 +61,7 @@ var m=document.querySelector('.has-menu'),b=m&&m.querySelector('button');if(b){b
 var p=location.pathname.replace(/\/$/,'');document.querySelectorAll('.glinks a,.gmob-p a').forEach(function(a){if(a.getAttribute('href')===p)a.setAttribute('aria-current','page')})})();</script>
 <script>(function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -10% 0px'});document.querySelectorAll('.rv').forEach(function(el){io.observe(el)})})();</script>
 <script src="/assets/scenes.js"></script>
+<script type="module" src="/assets/cinder-field.js"></script>
 <script type="module" src="/assets/cinder-unit.js"></script>
 </body>
 </html>

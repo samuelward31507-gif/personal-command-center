@@ -17,7 +17,7 @@
       tick();
     });
     var F = window.CinderField;
-    if (F) [].slice.call(document.querySelectorAll('[data-backdrop] .backdrop:not(.on)')).forEach(function (el) { el.classList.add('on'); F.mount(el); });
+    if (F) [].slice.call(document.querySelectorAll('[data-backdrop] .backdrop:not(.on)')).forEach(function (el, i) { el.classList.add('on'); var o = { variant: +el.dataset.variant || 0, seed: location.pathname + '#' + i }; if (el.dataset.calm) o.calm = +el.dataset.calm; if (el.dataset.intensity) o.intensity = +el.dataset.intensity; F.mount(el, o); });
   }
   ['cinder-unit', 'cinder-slab', 'cinder-field', 'cinder-visual'].forEach(function (e) { addEventListener(e, attach); });
   var ticking = false;

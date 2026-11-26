@@ -30,7 +30,7 @@
   </div>
 </header>
 <main id="main">
-<section class="ov ov-hero" data-backdrop aria-labelledby="h1"><div class="backdrop"></div><div class="wrap">
+<section class="ov ov-hero" data-backdrop aria-labelledby="h1"><div class="backdrop" data-variant="4" data-calm=".88"></div><div class="wrap">
   <p class="eb">Websites</p><h1 id="h1" class="rv">A site that books jobs.</h1><p class="rv d1">Fast on a phone, clear about what you do, and built to turn visitors into booked estimates.</p>
   <div class="acts rv d2"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></div>
 </div></section>
@@ -38,7 +38,7 @@
   <div class="sx-pin"><div class="sx-vis"><div class="sx-host"></div></div></div>
   <div class="sx-copy"><h2 id="h-how">What you get.</h2><div class="sx-step"><span class="n">01</span><h3>Fast on a phone</h3><p>Most of your visitors are on one. It loads before they give up.</p></div><div class="sx-step"><span class="n">02</span><h3>Booking built in</h3><p>Visitors pick a time or get a reply in seconds, right from the page.</p></div><div class="sx-step"><span class="n">03</span><h3>Set up for local search</h3><p>Built so the people near you can find you.</p></div></div>
 </section>
-<section class="ov ov-line" data-backdrop><div class="backdrop"></div><div class="wrap"><h2 class="rv">Your site should book jobs <em>while you’re on one.</em></h2></div></section>
+<section class="ov ov-line" data-backdrop><div class="backdrop" data-variant="1" data-calm=".85"></div><div class="wrap"><h2 class="rv">Your site should book jobs <em>while you’re on one.</em></h2></div></section>
 <section class="p-close" aria-labelledby="h-close"><div class="wrap">
   <h2 id="h-close" class="rv">Find out what you’re missing.</h2>
   <p class="rv d1">A free audit of your business. You keep what we find.</p>
@@ -61,6 +61,7 @@ var m=document.querySelector('.has-menu'),b=m&&m.querySelector('button');if(b){b
 var p=location.pathname.replace(/\/$/,'');document.querySelectorAll('.glinks a,.gmob-p a').forEach(function(a){if(a.getAttribute('href')===p)a.setAttribute('aria-current','page')})})();</script>
 <script>(function(){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{rootMargin:'0px 0px -10% 0px'});document.querySelectorAll('.rv').forEach(function(el){io.observe(el)})})();</script>
 <script src="/assets/scenes.js"></script>
+<script type="module" src="/assets/cinder-field.js"></script>
 <script type="module" src="/assets/cinder-unit.js"></script>
 </body>
 </html>

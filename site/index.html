@@ -119,6 +119,8 @@ p{color:var(--t2);text-wrap:pretty}
 
 .backdrop{position:absolute;inset:0;z-index:-1;pointer-events:none}
 .ovl-line,.fix-ovl{isolation:isolate}
+.backdrop{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.ovl-line{isolation:isolate}
 .rv{opacity:0;transform:translate3d(0,24px,0);transition:opacity .9s var(--e),transform .9s var(--e)}
 .rv.in{opacity:1;transform:none}
 .rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.16s}.rv.d3{transition-delay:.24s}
@@ -215,7 +217,7 @@ p{color:var(--t2);text-wrap:pretty}
 .js .sum.in ol>li:nth-child(2){transition-delay:.12s}.js .sum.in ol>li:nth-child(3){transition-delay:.24s}.js .sum.in ol>li:nth-child(4){transition-delay:.36s}.js .sum.in ol>li:nth-child(5){transition-delay:.48s}
 
 /* 5 OVERLAY: then we fix it, over the app */
-.fix-ovl{position:relative;border-top:1px solid var(--line);overflow:hidden;padding:var(--sec) 0 0}
+.fix-ovl{position:relative;border-top:1px solid var(--line);overflow:hidden;padding:calc(var(--sec)*1.5) 0;isolation:isolate}
 .fix-ovl .txt{position:relative;z-index:2;text-align:center}
 .fix-ovl h2{font-size:var(--f7);letter-spacing:-.045em;line-height:1}
 .fix-ovl .txt p{margin:24px auto 0;max-width:32em;font-size:var(--f4)}
@@ -325,8 +327,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 </header>
 
 <main id="main">
-<section class="hero" id="top" data-backdrop aria-labelledby="h1"><div class="backdrop"></div>
-  <div class="rays" id="rays" aria-hidden="true"><div class="rays-in"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i style="--k:8"></i></div><div class="rays-core"></div><div class="rays-fade"></div></div>
+<section class="hero" id="top" data-backdrop aria-labelledby="h1"><div class="backdrop" data-variant="0" data-calm=".88"></div>
   <div class="wrap">
     <div>
       <h1 id="h1"><span class="ln"><span>More jobs from</span></span><span class="ln"><span>the leads you</span></span><span class="ln"><span>already get.</span></span></h1>
@@ -358,7 +359,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 </section>
 
 <section id="problem" class="ovl" aria-labelledby="h-line">
-  <div class="ovl-line" data-backdrop><div class="backdrop"></div><div class="wrap">
+  <div class="ovl-line" data-backdrop><div class="backdrop" data-variant="1" data-calm=".85"></div><div class="wrap">
     <h2 id="h-line" class="rv">Every missed call is a job <em>someone else gets.</em></h2>
     <p class="rv d1">Most businesses don’t need more leads. They need fewer of them slipping.</p>
   </div></div>
@@ -416,15 +417,14 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   </div>
 </section>
 
-<section id="app" class="fix-ovl" data-backdrop aria-labelledby="h-fix"><div class="backdrop"></div>
+<section id="app" class="fix-ovl" data-backdrop aria-labelledby="h-fix"><div class="backdrop" data-variant="3" data-calm=".85"></div>
   <div class="wrap txt">
     <h2 id="h-fix" class="rv">Then we fix it.</h2>
     <p class="rv d1">Calls answered, estimates booked, quotes chased, reviews asked for. It runs on its own, and you see all of it in one app. <a class="inl" href="/app">See the app</a></p>
   </div>
-  <div class="shot-wrap"><figure class="shot" id="shot"><img src="/assets/screens/today-1200.webp" srcset="/assets/screens/today-1200.webp 1200w, /assets/screens/today-2400.webp 2400w" sizes="(max-width:1300px) 100vw, 1300px" width="2400" height="1500" alt="The Cinder app's Today screen for an example business: what needs you, what's owed, and how fast leads hear back. Sample data." loading="lazy" decoding="async"></figure></div>
 </section>
 
-<section id="back" class="sec" aria-labelledby="h-back">
+<section id="back" class="sec" data-backdrop aria-labelledby="h-back" style="isolation:isolate;overflow:hidden"><div class="backdrop" data-variant="4" data-calm=".3" data-intensity=".6"></div>
   <div class="wrap back">
     <div>
       <h2 id="h-back" class="rv">What you get back.</h2>
@@ -439,8 +439,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
   </div>
 </section>
 
-<section class="closing" data-backdrop aria-labelledby="h-final"><div class="backdrop"></div>
-  <svg class="bigmark" viewBox="151.04 168.00 791.63 703.15" aria-hidden="true"><path d="M316.37,648.06 C291.89,602.83 278.00,551.04 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L751.94,267.81 C717.65,250.65 678.95,241.00 638.00,241.00 C497.17,241.00 383.00,355.17 383.00,496.00 C383.00,523.78 387.44,550.53 395.66,575.57 C367.10,600.45 340.63,624.68 316.37,648.06 Z M159.04,860.85 C223.30,733.17 510.90,463.12 932.74,211.64 L934.67,213.93 C589.39,509.53 325.03,744.41 160.96,863.15 Z M817.60,677.03 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C507.95,816.00 426.59,778.80 368.44,718.94 C391.88,699.72 416.19,679.51 441.35,658.35 C488.13,714.94 558.85,751.00 638.00,751.00 C708.05,751.00 771.51,722.75 817.60,677.03 Z"/></svg>
+<section class="closing" data-backdrop aria-labelledby="h-final"><div class="backdrop" data-variant="5" data-calm=".88"></div>
   <div class="wrap">
     <h2 id="h-final" class="rv">Find out what you’re missing.</h2>
     <p class="rv d1">A free audit of your business. You keep what we find.</p>
@@ -501,6 +500,7 @@ addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onS
 })();
 </script>
 <script src="/assets/scenes.js"></script>
+<script type="module" src="/assets/cinder-field.js"></script>
 <script type="module" src="/assets/cinder-slab.js"></script>
 <script type="module" src="/assets/cinder-unit.js"></script>
 <script>(function(){var n=document.getElementById('nav');function f(){n.classList.toggle('on',scrollY>8)}addEventListener('scroll',f,{passive:true});f();
