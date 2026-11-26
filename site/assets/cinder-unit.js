@@ -506,7 +506,7 @@ function mount(el) {
     const fine = matchMedia('(hover:hover) and (pointer:fine)');
     const weights = new Float64Array(6), from = new Float64Array(6);
     const anchors = plates.map(() => new T.Vector3());
-    let p = reduce.matches ? .7 : progress, velocity = 0, previous = 0;
+    let p = progress, velocity = 0, previous = 0;
     let chosen = -1, changed = 0, hover = -1, clock = 0, lastTick = 0;
     let w = 0, h = 0, labelWidth = 0, phone = false, dpr = 0;
     const signal = new T.Color(0xe5172f), silver = new T.Color(0x6f6d69);
@@ -578,7 +578,7 @@ function mount(el) {
 
       const dt = previous ? Math.min(.05,(now-previous)/1000) : 1/60;
       previous = now;
-      const goal = reduce.matches ? .7 : progress;
+      const goal = progress;
       const error = p-goal, k = velocity+40*error, decay = Math.exp(-40*dt);
       p = goal+(error+k*dt)*decay;
       velocity = (velocity-40*k*dt)*decay;

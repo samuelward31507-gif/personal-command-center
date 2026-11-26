@@ -90,7 +90,7 @@ async function mount(el) {
     const k = reduced.matches ? 1 : 1 - Math.exp(-dt * 11);
     let moving = false;
     bars.forEach((b, i) => {
-      const on = reduced.matches || i <= step;
+      const on = i <= step;
       const ty = on ? 0 : 150, to = on ? 1 : 0;
       b.y += (ty - b.y) * k; b.o += (to - b.o) * k;
       if (Math.abs(ty - b.y) > .05 || Math.abs(to - b.o) > .003) moving = true; else { b.y = ty; b.o = to; }
