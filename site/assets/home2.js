@@ -45,7 +45,7 @@
       [[0, '0:00'], [10, '0:10'], [30, '0:30'], [60, '1:00']].forEach(function (q) { var x = sec(q[0]); line(c, px(x), yA - H * .13, px(x), yB + 18, ink(.08)); txt(c, q[1], x, yA - H * .13 - 10, ink(.4), 'center', F('500', 11, 1)) });
       var bx = X(brk + .01); c.strokeStyle = ink(.4); c.lineWidth = 1; [0, 6].forEach(function (o) { c.beginPath(); c.moveTo(bx + o - 4, yA - H * .13 - 4); c.lineTo(bx + o + 4, yA - H * .13 - 18); c.stroke() }); txt(c, 'That evening', X(.86), yA - H * .13 - 10, ink(.4), 'center', F('500', 11, 1));
       function lane(y, name, ev, live) {
-        txt(c, name, x1, y - 16, ink(live ? .95 : .5), 'right', F('600', 14)); line(c, x0, px(y), x1, px(y), ink(.14)); line(c, x0, px(y), hx, px(y), ink(live ? .95 : .4), live ? 1.5 : 1);
+        txt(c, name, live ? x1 : x0 + 16, y - 16, ink(live ? .95 : .5), live ? 'right' : 'left', F('600', 14)); line(c, x0, px(y), x1, px(y), ink(.14)); line(c, x0, px(y), hx, px(y), ink(live ? .95 : .4), live ? 1.5 : 1);
         ev.forEach(function (q, i) { var e = ez((k - q[0]) * 16), x = X(q[0]); if (e <= 0) return; c.globalAlpha = e; card(c, x - 5, y - 5, 10, 10, 3, ink(.9), q[2] === 2 ? RED : live ? ink(.95) : '#050506'); pill(c, q[0] > .8 ? x + 8 : x, y + ((i % 2 ? 1 : -1) * (live ? 1 : -1)) * 34, q[1], { al: q[0] > .8 ? 'r' : null, dot: q[2] === 2 ? RED : null, s: 12.5, stroke: ink(live ? .5 : .22), col: ink(live ? .95 : .55), fill: '#050506' }); c.globalAlpha = 1 })
       }
       lane(yA, 'With it', [[9 / 60 * (brk - .04), 'Reply sent, 0:09', 1], [34 / 60 * (brk - .04), 'Time picked', 1], [brk - .04, 'Estimate booked', 2]], true);
