@@ -373,15 +373,41 @@ for i, (part, ic, find, cost, tone, fix, _) in enumerate(PATH):
         rows += '<div class="ac-r" style="--d:%d">%s<b>%s</b><span>%s</span><em>%s</em><small>%s</small></div>' % (i, tile, part, find, cost, fix)
     else:
         rows += '<div class="ac-r ok" style="--d:%d">%s<b>%s</b><em>Fine as it is</em></div>' % (i, tile, part)
-HERO = ('<section class="hs"><div class="w hs-g"><div class="hs-t"><span class="pill"><i></i>The free audit takes fifteen minutes</span>'
+def _hm_chart():
+    # where 100 leads went, as one clean line: the sample audit's own numbers
+    v = [100, 71, 58, 39, 34]; xs = [0, 25, 50, 75, 100]; yv = lambda a: 100 - a * .86
+    pts = [(x, yv(a)) for x, a in zip(xs, v)]
+    def seg(p0, p1, n=16):
+        out_ = []
+        for k in range(n):
+            t = k / n; e = t * t * (3 - 2 * t); out_.append((p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * e))
+        return out_
+    line = sum((seg(a, b) for a, b in zip(pts, pts[1:])), []) + [pts[-1]]
+    d = 'M' + ' L'.join('%.2f %.2f' % q for q in line)
+    drops = ''.join('<line class="dr" x1="%d" y1="%.1f" x2="%d" y2="100"/>' % (x, y, x) for x, y in pts[1:-1])
+    nodes = ''.join('<i class="nd%s" style="left:%d%%;top:%.1f%%;--k:%d"></i>' % (' r' if k == 3 else '', x, y, k) for k, (x, y) in enumerate(pts))
+    hz = ('<i class="hz" style="left:50%%;top:%.1f%%;width:25%%;height:%.1f%%;--k:3"></i><i class="hz h2" style="left:0;top:%.1f%%;width:25%%;height:%.1f%%;--k:1"></i>'
+          % (yv(58), yv(39) - yv(58), yv(100), yv(71) - yv(100)))
+    tags = ('<b class="tg" style="left:62.5%%;top:%.1f%%;--k:3">[19 quotes went quiet]</b><b class="tg g" style="left:12.5%%;top:%.1f%%;--k:1">[29 got no answer]</b>' % ((yv(58) + yv(39)) / 2, (yv(100) + yv(71)) / 2))
+    ticks = ''.join('<span class="tk%s" style="left:%d%%"><b>%d</b>%s</span>' % (' a' if k == 0 else (' z' if k == 4 else ''), x, a, t) for k, (x, a, t) in enumerate(zip(xs, v, ['Leads in', 'Got an answer', 'Booked', 'Quote signed', 'Paid'])))
+    return ('<div class="hm-c" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path class="ax" d="M0 0 V100 H100"/><path class="l2" d="M0 %.1f H25"/><path class="l2" d="M50 %.1f H75"/>%s</svg>'
+            '<div class="hm-cw"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path class="ln" d="%s"/></svg></div>%s%s%s%s</div>' % (yv(100), yv(58), drops, d, hz, nodes, tags, ticks))
+
+
+_HM_SIDE = [('Getting found', 'Fine', 0), ('Front desk', '$2,400 a month', 0), ('Calendar', '11 hours a week', 0), ('Quotes', '$3,100 a month', 1), ('The work', 'Fine', 0), ('Money', '$14,600 waiting', 0), ('After the job', '$900 a month', 0)]
+_HM_FIND = [('Quotes', '13 quotes never followed up', '$3,100 a month', 'Check-ins on day two and five'), ('Front desk', '8 calls missed after hours', '$2,400 a month', 'A text back in seconds'),
+            ('Calendar', 'Scheduling and reminders by hand', '11 hours a week', 'Booking that runs itself')]
+HERO = ('<section class="hm"><div class="w hm-t"><a class="hm-p" href="/free-audit">The free audit takes fifteen minutes<i></i></a>'
         '<h1>Find out what your business is losing.</h1>'
-        '<p class="sub">We take your business apart, put a number on what&rsquo;s costing you jobs and hours, and build systems made for it. Nothing off the shelf.</p>'
-        '<div class="cta"><a class="btn" %s>Book your free audit</a><a class="btn q" href="/free-audit">See what we check</a></div>'
-        '<p class="hs-n">Free. Fifteen minutes. You keep what we find.</p></div>'
-        '<div class="hs-p"><div class="card ac"><div class="rep-h"><span class="dot"></span><b>Free audit</b><span>Ridgeline Fence</span>'
-        '<span class="tag">Example business, sample data</span></div><div class="ac-b"><i class="ac-l"><b></b></i>%s</div>'
-        '<div class="ac-f"><div><b>$6,400</b>lost a month</div><div><b>$14,600</b>waiting to be paid</div><div><b>11 hours</b>by hand a week</div></div>'
-        '</div></div></div></section>' % (CAL, rows))
+        '<p class="sub">We take your business apart, put a number on what&rsquo;s costing you jobs and hours, and build systems made for it.</p>'
+        '<div class="cta"><a class="btn q" href="/free-audit">See what we check</a><a class="btn" %s>Book your free audit</a></div></div>'
+        '<div class="w hm-s"><div class="hm-w"><div class="hm-b"><i></i><i></i><i></i><b>Free audit</b><span>Ridgeline Fence</span><em>Example business, sample data</em></div>'
+        '<div class="hm-g"><div class="hm-l"><p>Seven parts of the business</p>%s</div>'
+        '<div class="hm-m"><div class="hm-h"><div><h2>Where the jobs went</h2><p>100 leads in the last 30 days. 34 became paid jobs.</p></div><span>[Audit complete]</span></div>%s</div>'
+        '<div class="hm-r"><p>Fix first</p>%s</div></div>'
+        '<div class="hm-f"><div><b>$6,400</b>lost a month</div><div><b>$14,600</b>waiting to be paid</div><div><b>11 hours</b>by hand a week</div></div></div></div></section>'
+        % (CAL, ''.join('<div class="%s" style="--k:%d"><span>%s</span><b class="%s">%s</b></div>' % ('on' if on else '', k, a, 'f' if b == 'Fine' else '', b) for k, (a, b, on) in enumerate(_HM_SIDE)),
+           _hm_chart(), ''.join('<div style="--k:%d"><span>%s</span><b>%s</b><em>%s</em><u>%s</u></div>' % (k, a, c, b, d) for k, (a, b, c, d) in enumerate(_HM_FIND))))
 
 RAN = [('8:00 AM', 'Four customers reminded', 'Tomorrow&rsquo;s visits, by text'),
        ('9:15 AM', 'Quote #1042 followed up', 'The day-two check-in'),
@@ -413,7 +439,7 @@ addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(p
 
 (function(){
 var qs=[].slice.call(document.querySelectorAll('.fq blockquote,.fq .cq-t'));if(!qs.length)return;
-if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search))return;
+if(/[?&]motion=off/.test(location.search))return;
 qs.forEach(function(q){
 var words=q.textContent.split(' ');q.innerHTML=words.map(function(w){return '<span>'+w+'</span>'}).join(' ');q.classList.add('fill');
 var sp=q.querySelectorAll('span'),last=-1,tick=false;
@@ -438,7 +464,7 @@ new IntersectionObserver(function(e){if(e[0].isIntersecting){bd.classList.remove
 (function(){
 var ck=document.querySelector('.ck'),top=document.querySelector('.top'),darks=document.querySelectorAll('.au,.hw,.bd,.cl,.fo');if(!ck)return;
 var q=location.search,force=/[?&]motion=on/.test(q),snap=/[?&]snap=1/.test(q),band=ck.querySelector('.ck-dark'),cur=-1,dk=false;
-if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!force){onscroll=nav;nav();return}
+if(/[?&]motion=off/.test(q)){onscroll=nav;nav();return}
 ck.classList.add('on');
 var pin=ck.querySelector('.ck-pin'),txt=ck.querySelector('.ck-top'),inner=ck.querySelector('.ck-i'),hands=ck.querySelector('.ck-h'),
 wedge=ck.querySelector('.ck-w'),arc=ck.querySelector('.ck-a'),needle=ck.querySelector('.ck-n'),count=ck.querySelector('.ck-count'),title=ck.querySelector('.ck-title');
@@ -473,7 +499,7 @@ addEventListener('scroll',nav,{passive:true});addEventListener('resize',function
 (function(){
 var root=document.querySelector('.dayp');if(!root)return;
 var ch=[].slice.call(root.querySelectorAll('.dch')),top=document.querySelector('.top'),cur='',tick=false;
-var still=innerWidth<861||(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search));
+var still=innerWidth<861||(/[?&]motion=off/.test(location.search));
 var items=ch.map(function(c){var it=[].slice.call(c.querySelectorAll('.tr-e,.tr-f,.qo-t,.qo-r,.inv-p,.gt-r,.gt-f,.ng-x,.ng-g>div,.mr p,.pop'));if(!still)it.forEach(function(x){x.classList.add('bi')});return it});
 if(!still)root.classList.add('live');
 function f(){tick=false;var vh=innerHeight,best=0,bd=1e9,total=document.documentElement.scrollHeight-vh;
@@ -486,7 +512,7 @@ addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(f
 })();
 (function(){
 var els=[].slice.call(document.querySelectorAll('[data-sp]'));if(!els.length)return;
-if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search))return;
+if(/[?&]motion=off/.test(location.search))return;
 if(innerWidth<861)els=els.filter(function(e){return e.classList.contains('pt')});if(!els.length)return;
 var top=document.querySelector('.top'),mine=false,run=false,snap=/[?&]snap=1/.test(location.search);
 var st=els.map(function(e){e.classList.add('sp-live');var n=e.querySelector('.pt-n');return {e:e,pt:e.classList.contains('pt'),cv:e.hasAttribute('data-cv'),c:-1,n:n,to:n?+n.getAttribute('data-to'):0,fmt:n?n.getAttribute('data-fmt'):'',last:-1}});
@@ -505,7 +531,7 @@ addEventListener('scroll',q,{passive:true});addEventListener('resize',q);f();
 })();
 (function(){
 var sc=[].slice.call(document.querySelectorAll('.sc'));if(!sc.length)return;
-if(innerWidth<981||(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search)))return;
+if(innerWidth<981||(/[?&]motion=off/.test(location.search)))return;
 sc.forEach(function(el){el.classList.add('live');
 var ss=[].slice.call(el.querySelectorAll('.sc-s')),cs=[].slice.call(el.querySelectorAll('.sc-c')),n=ss.length,bar=el.querySelector('.sc-b i'),last=-1,lastk=-1,tick=false;
 var items=ss.map(function(s){var it=[].slice.call(s.querySelectorAll('.tr-e,.tr-f,.qo-t,.qo-r,.inv-p,.fl-r,.rn-f,.oq-r,.wkc-g i,.ag-g>div,.pk-f,.rvw>*,.rpt>div,.rpt>p'));it.forEach(function(x){x.classList.add('bi')});return it});
@@ -519,14 +545,14 @@ cs.forEach(function(c,j){c.addEventListener('click',function(e){if(e.target.clos
 })();
 (function(){
 var els=[].slice.call(document.querySelectorAll('.t-exp,.t-wipe,.t-door,[data-in]'));if(!els.length)return;
-if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search))return;
+if(/[?&]motion=off/.test(location.search))return;
 var tick=false;function f(){tick=false;var vh=innerHeight;els.forEach(function(e){var r=e.getBoundingClientRect(),p=Math.max(0,Math.min(1,(vh-r.top)/(vh*.72)));e.style.setProperty('--p',p.toFixed(3))})}
 function q(){if(!tick){tick=true;requestAnimationFrame(f)}}addEventListener('scroll',q,{passive:true});addEventListener('resize',q);f();
 })();
 (function(){
 var bar=document.querySelector('.chb');if(!bar)return;
 var secs=[].slice.call(document.querySelectorAll('[data-ch]')),cells=[].slice.call(bar.querySelectorAll('a')),cur=-2,dk=null,tick=false;
-var calm=matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search),hero=document.querySelector('.dhero');
+var calm=/[?&]motion=off/.test(location.search),hero=document.querySelector('.dhero');
 function f(){tick=false;var mid=innerHeight/2,low=innerHeight-40,at=-1,d=false;if(hero&&!calm)hero.style.setProperty('--h',Math.max(0,Math.min(1,scrollY/(hero.offsetHeight*.7))).toFixed(4));secs.forEach(function(s){var r=s.getBoundingClientRect();if(r.top<=mid&&r.bottom>mid)at=+s.getAttribute('data-ch');
 if(r.top<=low&&r.bottom>low)d=s.classList.contains('dk')||(s.classList.contains('pt')&&(!s.classList.contains('sp-live')||parseFloat(s.style.getPropertyValue('--g'))>.5))});
 if(at!==cur){cur=at;bar.classList.toggle('on',at>=0);cells.forEach(function(c,i){c.classList.toggle('on',i===at)})}
@@ -538,6 +564,48 @@ if(s)scrollTo({top:s.getBoundingClientRect().top+scrollY+4,behavior:calm?'auto':
 """
 
 CSS = r'''
+/* ---- homepage top: one centred statement over the audit itself, drawn in hairlines ---- */
+.hm{position:relative;overflow:hidden;background:radial-gradient(46% 38% at 0 100%,#e2e6f2 0,rgba(226,230,242,0) 72%),radial-gradient(46% 38% at 100% 100%,#e6e4f0 0,rgba(230,228,240,0) 72%),#fff;border-bottom:1px solid var(--ln)}
+.hm-t{text-align:center;padding:clamp(72px,9.5vh,132px) 0 clamp(44px,5.4vh,72px)}
+.hm-p{display:inline-flex;align-items:center;gap:8px;padding:7px 12px 7px 14px;border-radius:10px;box-shadow:0 0 0 1px var(--ln);font-size:14.5px;font-weight:500;color:var(--ink);background:#fff}
+.hm-p i{width:6px;height:6px;border-top:1.5px solid currentColor;border-right:1.5px solid currentColor;transform:rotate(45deg);opacity:.6}
+.hm h1{margin:clamp(26px,3.4vh,44px) auto 0;max-width:12.5em;font-size:clamp(44px,5.5vw,104px);line-height:.98;letter-spacing:-.052em;font-weight:600;text-wrap:balance}
+.hm .sub{margin:clamp(20px,2.6vh,32px) auto 0;max-width:27em;font-size:clamp(17px,1.25vw,23px);line-height:1.35;color:var(--g2);text-wrap:balance}
+.hm .cta{margin-top:clamp(24px,3vh,38px);justify-content:center}
+.hm-s{padding-bottom:clamp(56px,6vw,104px)}
+.hm-w{border-radius:18px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.1),0 40px 80px -40px rgba(30,36,70,.28);overflow:hidden;animation:hmup .9s cubic-bezier(.2,.7,.2,1) both}
+@keyframes hmup{from{opacity:0;transform:translateY(34px)}}@keyframes hmin{from{opacity:0;transform:translateY(8px)}}@keyframes hmwipe{from{clip-path:inset(-14px 100% -14px -14px)}to{clip-path:inset(-14px -14px -14px -14px)}}@keyframes hmfade{from{opacity:0}}
+.hm-b{display:flex;align-items:center;gap:8px;height:46px;padding:0 18px;border-bottom:1px solid var(--ln);background:#fafafa;font-size:13.5px}
+.hm-b i{width:10px;height:10px;border-radius:50%;background:#d9dbe0}.hm-b i:nth-child(3){margin-right:10px}.hm-b b{font-weight:600;white-space:nowrap}.hm-b span{color:var(--g2)}
+.hm-b em{margin-left:auto;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:var(--g2)}
+.hm-g{display:grid;grid-template-columns:clamp(230px,18vw,280px) minmax(0,1fr) clamp(270px,22vw,340px)}
+.hm-l{padding:22px 12px;border-right:1px solid var(--ln);background:#fafafa}.hm-l p,.hm-r>p{margin:0 10px 12px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--g2)}
+.hm-l div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 10px;border-radius:8px;font-size:14.5px;animation:hmin .5s calc(.5s + var(--k)*.07s) both}
+.hm-l div.on{background:#fff;box-shadow:0 0 0 1px var(--ln)}.hm-l b{font-weight:500;font-size:13px;white-space:nowrap}.hm-l b.f{color:var(--g3);font-weight:400}
+.hm-m{padding:26px clamp(22px,2.4vw,40px) 30px;min-width:0}
+.hm-h{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}.hm-h h2{margin:0;font:400 clamp(24px,1.9vw,34px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.018em}
+.hm-h p{margin:8px 0 0;font-size:14.5px;color:var(--g2)}.hm-h span{flex:none;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--g2);padding-top:8px}
+.hm-c{position:relative;height:clamp(240px,31vh,330px);margin:34px 0 52px}
+.hm-c svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.hm-c svg *{fill:none;vector-effect:non-scaling-stroke}
+.hm-c .ax{stroke:var(--ink);stroke-width:1}.hm-c .ln{stroke:var(--ink);stroke-width:1.3}.hm-c .l2{stroke:#9a9da5;stroke-width:1;stroke-dasharray:5 4;animation:hmfade .6s 1.5s both}
+.hm-c .dr{stroke:#a3a6ad;stroke-width:1;stroke-dasharray:1.5 3.5;animation:hmfade .5s 1.7s both}
+.hm-cw{position:absolute;inset:0;animation:hmwipe 1.5s .7s cubic-bezier(.45,.05,.3,1) both}
+.hm-c .nd{position:absolute;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;background:var(--ink);animation:hmfade .3s calc(.8s + var(--k)*.33s) both}
+.hm-c .nd.r{width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1.5px var(--ink)}.hm-c .nd.r::after{content:"";position:absolute;inset:4.5px;border-radius:50%;background:var(--ink)}
+.hm-c .hz{position:absolute;background:repeating-linear-gradient(135deg,transparent 0 5px,rgba(23,24,26,.2) 5px 6px);animation:hmfade .6s calc(1s + var(--k)*.33s) both}.hm-c .hz.h2{background:repeating-linear-gradient(45deg,transparent 0 8px,rgba(23,24,26,.13) 8px 9px)}
+.hm-c .tg{position:absolute;transform:translate(-50%,-50%);padding:4px 6px 3px;border-radius:3px;background:var(--ink);color:#fff;font:500 9.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;animation:hmfade .5s calc(1.2s + var(--k)*.33s) both}
+.hm-c .tg.g{background:#eceef2;color:var(--ink)}
+.hm-c .tk{position:absolute;top:calc(100% + 12px);transform:translateX(-50%);text-align:center;font:500 10.5px/1.3 "Geist Mono",monospace;color:var(--g2);white-space:nowrap}
+.hm-c .tk b{display:block;font:540 15px/1.2 Inter,system-ui,sans-serif;letter-spacing:-.01em;color:var(--ink)}.hm-c .tk.a{transform:none;text-align:left}.hm-c .tk.z{transform:translateX(-100%);text-align:right}
+.hm-r{padding:22px 16px;border-left:1px solid var(--ln)}.hm-r>p{margin-left:6px}
+.hm-r div{display:grid;grid-template-columns:1fr auto;gap:3px 10px;padding:14px 12px;border-radius:10px;box-shadow:0 0 0 1px var(--ln);animation:hmin .55s calc(1.9s + var(--k)*.16s) both}.hm-r div+div{margin-top:8px}
+.hm-r span{font-size:14.5px;font-weight:540}.hm-r b{font-size:14px;font-weight:540;white-space:nowrap}.hm-r em{grid-column:1/-1;font-style:normal;font-size:13px;color:var(--g2)}
+.hm-r u{grid-column:1/-1;margin-top:8px;padding-top:9px;border-top:1px dashed var(--ln);text-decoration:none;font:500 10.5px/1.3 "Geist Mono",monospace;color:var(--ink)}
+.hm-f{display:grid;grid-template-columns:repeat(3,1fr);background:var(--dk);color:#8f9197;font-size:13.5px}.hm-f div{padding:20px clamp(18px,2vw,34px)}.hm-f div+div{border-left:1px solid var(--dl)}
+.hm-f b{display:block;margin-bottom:4px;color:#fff;font-size:clamp(22px,1.7vw,30px);font-weight:540;letter-spacing:-.03em}
+@media(max-width:1180px){.hm-g{grid-template-columns:minmax(0,1fr) 290px}.hm-l{display:none}}
+@media(max-width:860px){.hm-t{padding:56px 0 36px}.hm h1{font-size:40px}.hm-g{grid-template-columns:minmax(0,1fr)}.hm-r{border-left:0;border-top:1px solid var(--ln)}.hm-b span,.hm-h span{display:none}.hm-c{height:220px}.hm-c .tk{font-size:8.5px;white-space:normal;width:4.6em}.hm-c .tk b{font-size:13px}
+.hm-c .tg{font-size:8px;letter-spacing:0}.hm-f{font-size:11.5px}.hm-f div{padding:14px 12px}.hm-f b{font-size:18px}.hm .cta{flex-wrap:wrap}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
