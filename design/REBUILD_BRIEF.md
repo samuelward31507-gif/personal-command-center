@@ -344,3 +344,9 @@ Sam: wants page themes that change colour as you scroll from one "page" to the n
 - Lines are existing copy from the build pages; the hero heading and "Scroll through a day at an example business" are new.
 - Reduced motion or under 861px: chapters are stacked, the sky still changes colour.
 - Code: `chap()`, `SKY`, `DAYP`, `CSS_DAY` in `mk_pages.py`; the `.dayp` script in `light.js`.
+
+### 22j. /day made clean (27 Nov)
+
+Sam on the sky version: he still wants the clean designs from earlier; clouds maybe later, sketched, left out for now; the page should be long and be a design that stays with the screen and animates as you scroll.
+
+`/day` is now white, in the site's clean look. One split screen stays in place for the whole page: on the left, a row of the six times with the current one marked, one line in the homepage quote setting, one small sentence and a link; on the right, a tinted panel that never moves, with the picture inside it changing and building row by row. Six chapters, about 14,000 px of scroll on desktop. The sky, sun, moon, stars and clouds are removed (the sky version is in git at 6e1357e if he wants it back).
