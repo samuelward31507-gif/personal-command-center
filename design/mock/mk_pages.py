@@ -1129,19 +1129,25 @@ AGING = ('<div class="cd ag">%s<div class="ag-g">%s</div><div class="pk-f"><b>$1
     '<div><b>%s</b><em>%s</em>%s</div>' % (t, a, ''.join('<i style="width:%d%%"><u>%s</u></i>' % q for q in rows)) for t, a, rows in [
         ('This week', '$4,300', [(92, 'Fence install'), (54, 'Gate repair')]), ('8 to 30 days', '$6,200', [(100, 'Vinyl fence'), (62, 'Fence install'), (30, 'Repair')]), ('Over 30 days', '$4,100', [(80, 'Chain link'), (40, 'Gate')])])))
 # a statement beside one large figure
-IVNUM = ('<section class="ivn"><div class="w ivn-g"><p class="st-t">%s</p><div class="ivn-n"><b data-count="14600" data-pre="$">$14,600</b><span>waiting to be paid</span><em>Example business, sample data</em></div></div></section>' % ap(p['line']))
+IVNUM = ('<section class="ivn"><div class="w ivn-g"><p class="st-t">%s</p><div class="ivn-n"><b data-count="14600" data-pre="$">$14,600</b><span>waiting to be paid</span><em>Example business, sample data</em></div><div class="ivn-r" data-in aria-hidden="true"><i></i>%s</div></div></section>'
+         % (ap(p['line']), ''.join('<span style="--l:%.1f%%;--w:%.1f%%;--k:%d"><b>%s</b><em>%s</em></span>' % x for x in [(0, 15.5, 0, 'This week', '$4,300'), (17.5, 49, 1, '8 to 30 days', '$6,200'), (68.5, 31.5, 2, 'Over 30 days', '$4,100')])))
 # what is owed, by age, as three bars. They rise as you scroll, then the view goes into the oldest one and that becomes the next screen.
 _ivb = [('This week', '$4,300', 69, ('Full install', 'Repair'), 'b'), ('8 to 30 days', '$6,200', 100, ('Replacement', 'Full install', 'Repair'), 'y'), ('Over 30 days', '$4,100', 66, ('Large install', 'Repair'), 'r')]
 IVBARS = ('<section class="ivb" data-sp><div class="ivb-i"><div class="w ivb-f"><div class="ivb-t"><span class="lb">What you see</span>'
           '<p class="st-t">You get paid without being the one who asks. <span>What is outstanding, by customer and by age.</span></p>'
           '<p class="fa-k">[Outstanding, by age]<em>Example business, sample data</em></p></div>'
           '<div class="ivb-c" aria-hidden="true"><span class="ivb-y" style="--y:25.2%%">$2k</span><span class="ivb-y" style="--y:50.3%%">$4k</span><span class="ivb-y" style="--y:75.5%%">$6k</span>'
-          '<span class="ivb-tot">$14,600 in all</span>%s</div></div><p class="ivb-n">Sent the day the job ends, followed up until it is paid.</p></div></section>'
-          % ''.join('<div class="ivb-b %s" style="--i:%d;--h:%d%%"><em>%s</em><div>%s</div><b>%s</b></div>' % (c, k, h, a, ''.join('<i>%s</i>' % x for x in jobs), t)
-                    for k, (t, a, h, jobs, c) in enumerate(_ivb)))
+          '<span class="ivb-tot">$14,600 in all</span>%s</div></div><div class="ivb-g" aria-hidden="true">%s</div><p class="ivb-n">Sent the day the job ends, followed up until it is paid.</p></div></section>'
+          % (''.join('<div class="ivb-b %s" style="--i:%d;--h:%d%%"><em>%s</em><div>%s</div><b>%s</b></div>' % (c, k, h, a, ''.join('<i>%s</i>' % x for x in jobs), t)
+                     for k, (t, a, h, jobs, c) in enumerate(_ivb)),
+             ''.join('<span style="--x:%.2f%%">%s</span>' % (dd / 22 * 100, lb) for dd, lb in ((0, 'Sent'), (3, 'Day 3'), (10, 'Day 10'), (21, 'Day 21')))))
 # the three reminders, each a little firmer, arriving in turn on a dark ground
 IVLAD = ('<section class="ivl" data-live="8"><div class="w ivl-i"><div class="ivl-t"><p class="st-t">Friendly first, firmer later. <span>And never from you personally.</span></p>'
-         '<p class="ivl-k">They stop the moment it is paid. You can stop them for one customer in one tap.</p></div><div class="ivl-m" aria-hidden="true">%s<div class="ivl-p" data-hd="6"><span>Day 22</span><b>Paid</b></div></div></div></section>'
+         '<p class="ivl-k">They stop the moment it is paid. You can stop them for one customer in one tap.</p></div><div class="ivl-m" aria-hidden="true">'
+         '<div class="ivl-d" data-in><svg viewBox="0 0 1000 150" preserveAspectRatio="none"><path class="m" pathLength="1" d="M20 36 H980"/><path class="rl" d="M20 122 H980"/>'
+         + ''.join('<path class="dp" style="--k:%d" d="M%d 36 V122"/>' % (k, 20 + dd / 22 * 960) for k, dd in enumerate((3, 10, 21)))
+         + '</svg>' + ''.join('<span class="n" style="--x:%.2f%%;--k:%d">%s</span>' % (2 + dd / 22 * 96, k, lb) for k, (dd, lb) in enumerate(((0, 'Sent'), (3, 'Day 3'), (10, 'Day 10'), (21, 'Day 21'))))
+         + '<span class="p">Paid at any point: the reminders stop</span></div>%s<div class="ivl-p" data-hd="6"><span>Day 22</span><b>Paid</b></div></div></div></section>'
          % ''.join('<div class="ivl-r" data-hd="%d" style="--k:%d"><span>%s</span><p>%s</p></div>' % (at, k, d, t) for k, (at, d, t) in enumerate([
              (0, 'Day 3', 'Hi, just a reminder that the invoice for your job is ready. You can pay from this message.'),
              (2, 'Day 10', 'Your invoice for the job is now a week past due. Here is the link to settle it.'),
@@ -2638,6 +2644,23 @@ CSS_FA = r"""
 .ivb.sp-live .ivb-b.r i{color:rgba(255,255,255,calc(1 - var(--r)*4));box-shadow:0 2px 0 rgba(255,255,255,calc(1 - var(--r)*3));background:color-mix(in srgb,#266df1 calc((1 - var(--e)*var(--e))*100%),var(--dk))}
 .ivb.sp-live .ivb-n{display:block;position:absolute;left:0;right:0;top:50%;margin:0 auto;padding:0 24px;max-width:13em;text-align:center;color:#fff;font-size:clamp(34px,4.4vw,84px);line-height:1.02;letter-spacing:-.045em;font-weight:600;
 opacity:var(--w);transform:translateY(calc(-50% + (1 - var(--w))*40px))}}
+.ivn-g{row-gap:clamp(44px,5vw,84px)}.ivn-r{grid-column:1/-1;position:relative;height:74px}
+.ivn-r>i{position:absolute;left:0;right:0;top:0;height:14px;border-bottom:1px solid var(--ink);background:repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px calc(100%/60));clip-path:inset(0 calc((1 - var(--p,1))*100%) 0 0)}
+.ivn-r span{--o:clamp(0,calc(var(--p,1)*4 - 1 - var(--k)*.8),1);position:absolute;left:var(--l);width:var(--w);top:22px;height:10px;border:1px solid var(--ink);border-top:0;opacity:var(--o)}
+.ivn-r span b{position:absolute;left:0;top:20px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t2);white-space:nowrap}
+.ivn-r span em{position:absolute;right:0;top:18px;font-style:normal;font-size:14px;font-weight:560}
+.ivb-g{display:none}
+@media(min-width:861px){.ivb.sp-live{--g1:clamp(0,calc((var(--p,0) - .74)/.14),1)}
+.ivb.sp-live .ivb-g{display:block;position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 1px,transparent 1px calc(100%/22));clip-path:inset(0 calc((1 - var(--g1))*100%) 0 0)}
+.ivb-g span{position:absolute;left:var(--x);bottom:11vh;padding-left:10px;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:#fff;white-space:nowrap;opacity:clamp(0,calc(var(--g1)*3 - 2),1)}
+.ivb-g span::before{content:"";position:absolute;left:-4px;top:1px;width:8px;height:8px;background:#fff}
+.ivb.sp-live .ivb-i{background:color-mix(in srgb,#fff calc((1 - clamp(0,calc(var(--r)*4 - 3),1))*100%),color-mix(in srgb,#1b4fc0 calc((1 - clamp(0,calc((var(--p,0) - .93)/.07),1))*100%),var(--dk)))}
+.ivb.sp-live .ivb-b.r i{background:color-mix(in srgb,#266df1 calc((1 - var(--e)*var(--e))*100%),#1b4fc0)}}
+.ivl-d{position:relative;height:150px;margin-bottom:26px}.ivl-d svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.ivl-d path{fill:none;vector-effect:non-scaling-stroke;stroke:#fff;stroke-width:1}
+.ivl-d .m{stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--p,1))}.ivl-d .rl{stroke:#5c5e63;stroke-dasharray:3 5}.ivl-d .dp{stroke:#5c5e63;stroke-dasharray:3 5;opacity:clamp(0,calc(var(--p,1)*5 - 1.5 - var(--k)),1)}
+.ivl-d .n{position:absolute;left:var(--x);top:8px;transform:translateX(-50%);padding-top:38px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:#e3e4e7;white-space:nowrap;opacity:clamp(0,calc(var(--p,1)*5 - .5 - var(--k)),1)}
+.ivl-d .n::before{content:"";position:absolute;left:50%;top:24px;width:9px;height:9px;margin-left:-4.5px;background:#fff;box-shadow:0 0 0 5px var(--dk)}.ivl-d .n:first-of-type{transform:none}.ivl-d .n:first-of-type::before{left:0;margin-left:0}
+.ivl-d .p{position:absolute;left:2%;bottom:-2px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:#8f9197;background:var(--dk);padding-right:10px}
 .ivl{background:var(--dk);color:#fff}.ivl-i{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(30px,5vw,100px);align-items:center;border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(72px,7vw,130px) clamp(22px,3.1vw,60px)}
 .ivl .st-t{margin:0;color:#fff;max-width:12em}.ivl .st-t span{color:#8f9197}.ivl-k{margin:26px 0 0;max-width:24em;font-size:clamp(14.5px,1vw,17px);line-height:1.45;color:#a9abb0}
 .ivl-m{display:grid;gap:14px}.ivl-r{display:grid;grid-template-columns:5.4em minmax(0,1fr);align-items:start;gap:16px;margin-left:calc(var(--k)*clamp(18px,4vw,70px))}
