@@ -451,3 +451,18 @@ h1,h2,h3{font-weight:560}
 @media (prefers-reduced-motion:reduce){.il [data-lit],.il [data-lit] path,.il [data-lit] ellipse,.il [data-lit] text{transition:none!important}.il .pulse{animation:none}
   .js .ax .ax-copy>*,.js .pz .pz-h>div>*,.js .ax .ax-vis,.js .ax .ax-cols,.js .pz .pz-stage{opacity:1;transform:none;transition:none}}
 .il text.lb,.lkv text.lb{font-size:12.5px}
+/* ---- v22: the portal. The phone drawing plays, the scroll flies through its screen, and the screen opens into the app's Calendar. ---- */
+.pz.pt{height:560vh}
+.pz.pt .pz-h{display:grid;grid-template-columns:1fr;gap:0}
+.pt-hd{grid-area:1/1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:64px;align-items:end}
+.pt-a{opacity:var(--ha,1)}.pt-b{opacity:var(--hb,0)}.pz.pt:not(.pb) .pt-b,.pz.pt.pb .pt-a{pointer-events:none}
+.pt-bm{display:none}
+.pz.pt .pz-stage{border-radius:0}
+.pt-art{position:absolute;inset:0;display:grid;transform-origin:0 0;will-change:transform,opacity}.pt-art svg{width:100%;height:100%}
+.pz.pt .pz-fig{opacity:0}
+.il.flying [data-lit] path,.il.flying [data-lit] ellipse{stroke-dasharray:none!important;transition:none!important}.il.flying [data-lit]{transition:none!important}
+@media (max-width:900px){.pz.pt{height:auto}.pz.pt .pz-h{display:block}.pz-h .pt-b{display:none}.pt-a{opacity:1}.pt-hd{display:block}.pt-art{position:static;height:300px;margin-bottom:8px}
+  .pt-bm{display:block;margin:44px 0 22px}.pt-bm h3{font:560 29px/1.06 "Inter Display",Inter,sans-serif;letter-spacing:-.032em;color:#f2f1ee}.pt-bm .inl{display:inline-block;margin-top:16px}.pz.pt .pz-fig{opacity:1!important}}
+@media (prefers-reduced-motion:reduce){.pt-art{transition:none}}
+.il.flying text,.il.flying .cl,.il.flying .cd,.il.flying .gd{opacity:0!important;transition:opacity .25s!important}
+@media (max-width:900px){.pz-stage .pt-bm{grid-area:auto}}

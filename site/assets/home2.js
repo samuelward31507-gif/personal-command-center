@@ -68,7 +68,39 @@
     var fig = sec.querySelector('.pz-fig'), bs = [].slice.call(sec.querySelectorAll('.pz-b')), tk = false, ezz = function (x) { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x) };
     var SHOW = [1, 3, 4], lastSt = -1;   // the step at which each card comes out
     function state(st) { if (st === lastSt) return; lastSt = st; for (var k = 1; k <= 4; k++) sec.classList.toggle('s' + k, st >= k); bs.forEach(function (b, i) { b.classList.toggle('on', st >= SHOW[i]) }) }
-    function up() { tk = false; if (innerWidth <= 900) { fig.style.removeProperty('--z'); state(4); return } var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight))); fig.style.setProperty('--z', (1.6 - .6 * ezz(p / .3)).toFixed(4)); state(p > .8 ? 4 : p > .66 ? 3 : p > .5 ? 2 : p > .33 ? 1 : 0) }
+    // a portal section: a drawing plays first, then the scroll flies through one face of it and that face opens into the app screen
+    var pt = sec.classList.contains('pt'), art = sec.querySelector('.pt-art'), asvg = art && art.querySelector('svg'), aparts = art ? [].slice.call(art.querySelectorAll('[data-lit]')) : [], M = null, lastK = -9;
+    function cl(x) { return x < 0 ? 0 : x > 1 ? 1 : x }
+    function solve() {   // the affine map that carries the drawn screen (a parallelogram) onto the real screen (a rectangle)
+      art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), F = fig.getBoundingClientRect(), S = asvg.dataset.scr.split(' ').map(Number);
+      if (!c || !F.width) return;
+      function P(i) { return [c.a * S[i] + c.c * S[i + 1] + c.e - L.left, c.b * S[i] + c.d * S[i + 1] + c.f - L.top] }
+      var p1 = P(0), p2 = P(2), p3 = P(4), q = [[F.right - L.left, F.top - L.top], [F.right - L.left, F.bottom - L.top], [F.left - L.left, F.top - L.top]];
+      var det = p1[0] * (p2[1] - p3[1]) - p1[1] * (p2[0] - p3[0]) + (p2[0] * p3[1] - p3[0] * p2[1]);
+      function row(k) { var u1 = q[0][k], u2 = q[1][k], u3 = q[2][k]; return [(u1 * (p2[1] - p3[1]) - p1[1] * (u2 - u3) + (u2 * p3[1] - u3 * p2[1])) / det, (p1[0] * (u2 - u3) - u1 * (p2[0] - p3[0]) + (p2[0] * u3 - p3[0] * u2)) / det, (p1[0] * (p2[1] * u3 - p3[1] * u2) - p1[1] * (p2[0] * u3 - p3[0] * u2) + u1 * (p2[0] * p3[1] - p3[0] * p2[1])) / det] }
+      var X = row(0), Y = row(1); M = [X[0], Y[0], X[1], Y[1], X[2], Y[2]];
+    }
+    function litArt(k) { if (k === lastK) return; lastK = k; aparts.forEach(function (e) { var n = +e.dataset.lit; e.classList.toggle('on', n <= k); e.classList.toggle('now', n === k) }) }
+    function upPortal(p) {
+      litArt(p < .025 ? -1 : p < .085 ? 0 : p < .145 ? 1 : p < .205 ? 2 : 3);
+      var t = ezz((p - .27) / .2);
+      if (t > 0 && !M) solve();
+      if (t <= 0 || !M) art.style.transform = 'none';
+      else { var I = [1, 0, 0, 1, 0, 0]; art.style.transform = 'matrix(' + I.map(function (v, i) { return (v + (M[i] - v) * t).toFixed(5) }).join(',') + ')' }
+      asvg.classList.toggle('flying', t > 0);
+      art.style.opacity = (1 - cl((t - .5) / .38)).toFixed(3); art.style.visibility = t >= 1 ? 'hidden' : 'visible';
+      fig.style.opacity = cl((t - .46) / .42).toFixed(3);
+      sec.style.setProperty('--ha', (1 - cl(t / .4)).toFixed(3)); sec.style.setProperty('--hb', cl((t - .6) / .4).toFixed(3)); sec.classList.toggle('pb', t > .5);
+      state(t < 1 ? 0 : p > .9 ? 4 : p > .78 ? 3 : p > .66 ? 2 : p > .54 ? 1 : 0);
+    }
+    function up() {
+      tk = false;
+      if (innerWidth <= 900) { fig.style.removeProperty('--z'); if (pt) { art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; fig.style.opacity = 1; asvg.classList.remove('flying'); litArt(3) } state(4); return }
+      var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight)));
+      if (pt) { fig.style.setProperty('--z', 1); upPortal(p); return }
+      fig.style.setProperty('--z', (1.6 - .6 * ezz(p / .3)).toFixed(4)); state(p > .8 ? 4 : p > .66 ? 3 : p > .5 ? 2 : p > .33 ? 1 : 0)
+    }
+    if (pt) addEventListener('resize', function () { M = null });
     var cs = fig.querySelector('.cs'), stage = sec.querySelector('.pz-stage');
     function fit() { if (!cs) return; var w = fig.offsetWidth; if (!w) return; cs.style.setProperty('--s', (w / 1600).toFixed(5)); stage.style.setProperty('--fw', w + 'px'); stage.style.setProperty('--pz', Math.max(.58, Math.min(1, w / 780)).toFixed(3)) }
     if ('ResizeObserver' in window) new ResizeObserver(fit).observe(fig); addEventListener('resize', fit); fit();
@@ -184,6 +216,7 @@
   // ---- drawings: measure every stroke so it can draw itself in when its part arrives
   function arm() {
     [].forEach.call(document.querySelectorAll('svg.il'), function (svg) {
+      if (svg.classList.contains('flying')) return;
       var m = svg.getScreenCTM && svg.getScreenCTM(), k = m ? Math.sqrt(m.a * m.a + m.b * m.b) : 1;
       [].forEach.call(svg.querySelectorAll('[data-lit] path:not(.ds),[data-lit] ellipse'), function (e) { var L = 0; try { L = e.getTotalLength() * k } catch (x) { } e.style.setProperty('--l', Math.ceil(L || 600) + 4) });
     });

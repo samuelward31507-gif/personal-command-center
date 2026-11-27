@@ -105,3 +105,9 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Frames: square, hairline, registration marks on the corners (home2.css v21). No rounded dark boxes. Section seams are a single hairline with marks at the rails.
 - Drawings: faded ground grid, lit top edges, graded faces (defs #ilt/#ill/#ilr, mask #ilm inserted once by patch_home), bevel lines, and every part named with a dot, leader and mono label (Iso.grid / bevel / callout in home_art.py). Funnel has stage names on the right and leak amounts on the left.
 - Motion: parts lower into place while their strokes draw themselves (home2.js arm() measures each stroke into --l), faces fill after, labels light last. Sections rise in the first time they are seen (.seen).
+
+## Pass 22 (Sam: wants some drawings interactive, a "portal" you scroll through into another screen; transitions stay top quality)
+- The portal: speed to lead and the calendar are one pinned section now (`.pz.pt`, 560vh). The phone drawing plays its four steps, then the scroll flies through the phone's screen: an affine matrix (solved in home2.js from the screen's three corners, data-scr on the svg) carries the drawn parallelogram onto the real Calendar's rectangle while the line art fades and the app screen fades in. Headings cross-fade. Then the calendar story plays.
+- Phones get the two parts stacked, no fly-through.
+- The "three paragraphs across" under the phone drawing are gone; the labels on the drawing carry it.
+- Next candidates for the same idea: dive down the funnel into the six layers; open the quote sheet; lift the stack to reveal the Today screen (ask Sam first: he wants only one CRM screen on the homepage).

@@ -109,6 +109,11 @@ def reply():
     o.append(lit(1, '<path class="rd nf" d="M%.1f,%.1f L%.1f,%.1f"/><path class="rd nf" d="M%.1f,%.1f A%.1f,%.1f 0 0 1 %.1f,%.1f"/>' % (cx, cy, cx + rx * math.cos(-1.15), cy + ry * math.sin(-1.15), cx, cy - ry, rx, ry, cx + rx * math.cos(-1.15), cy + ry * math.sin(-1.15)), 'fade'))
     return svg(''.join(o), 'A phone drawn in thin lines, lying flat. A message lifts off the screen, the reply sits just above it, and a small dial beside it shows only a few seconds gone.')
 
+def reply_screen():
+    """three corners of the phone's screen in the reply drawing's own coordinates (back, right, left): the portal flies through this"""
+    I = Iso(300, 200, 1.0); pts = [I.p(12, 14, 12), I.p(158, 14, 12), I.p(12, 276, 12)]; del BB[:]
+    return ' '.join('%s %s' % q for q in pts)
+
 def quote():
     """One quote. Two check-ins set down beside it, then the signature."""
     I = Iso(250, 120, 1.0); o = [I.grid(190, 110, 300), lit(0, I.slab(0, 0, 0, 170, 236, 4) + I.bevel(0, 0, 4, 170, 236, 9) + I.lines(0, 0, 4, 170, 150, 5, 'sk', 22, short=(0, 4)) + I.path([(22, 204, 4), (148, 204, 4)], False, 'sk') + I.callout(170, 0, 4, 'Quote, sent Monday'))]
