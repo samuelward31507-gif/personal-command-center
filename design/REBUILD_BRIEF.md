@@ -625,3 +625,6 @@ Sam: still laggy, page not at the Invoicing standard. Hero now has the profile w
 
 ### 23l. Reviews, third pass (Nov 27)
 Sam: "Keep improving it". Problem signs now three line drawings (SIGN_PIC reviews); plain question cards replaced by three picture cells (RV3, same questions and answers); timeline titles sans instead of serif.
+
+### 23m. Reviews graph hand-over, crisp (Nov 27)
+Sam: smooth now but the graph blurs as the zoom starts (bitmap being scaled). The graph no longer scales at all: a flat blue shape cut to the curve grows from under it (sharp at any size), then the worded blue. Added year totals to the two labels (about 240 / 36, from 20 and 3 a month) and month marks. Curve is still a shape: a steady rate is a straight line; Sam asked for the exponential look.
