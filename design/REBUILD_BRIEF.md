@@ -326,3 +326,12 @@ Sam, after the clean pass: pages need to be longer, with more information, uniqu
 - Two more scroll-driven hand-overs: `t-wipe` (circle opening from the top, like the homepage clock) and `t-door` (opens from the middle). They sit on the what-we-need section on two pages in three.
 - A page no longer repeats its problem headline as its closing line.
 - Pages now run roughly 5,000 to 5,800 px tall on desktop, up from about 3,500.
+
+### 22h. Pinned scenes on the most used pages (27 Nov)
+
+Sam: the most useful pages should be much longer and more intricate, with other pages appearing inside them as graphics that build, move and change on scroll; he pointed at the launch page behind the banner at the top of Attio's site (not fetchable from here, so built from his description).
+
+- `stage()` in `mk_pages.py` + a script in `light.js`: a dark stage pins to the screen for five screens of scrolling. Captions sit on the left with a progress line; on the right, one picture at a time, each taken from another page, its rows arriving one by one as you scroll. Clicking a caption jumps to its scene. Under reduced motion or below 981px wide the scenes are stacked, each with its caption.
+- `/answering`: "Follow one lead through the business": the missed-call thread, the week calendar (booking), the quote and its check-ins (follow-up), the invoice (invoices), the review ask (reviews). Replaces the old dark "How it works" split.
+- `/software`: "What it did while you were on the job": inbox, calendar, open quotes, money owed, Monday report, each linking to its page.
+- Candidates for the same treatment next: free audit, everything, websites, home.

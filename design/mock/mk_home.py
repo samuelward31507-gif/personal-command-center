@@ -466,9 +466,23 @@ function loop(){var t=target();if(cur<0||snap)cur=t;else cur+=(t-cur)*.17;if(Mat
 addEventListener('resize',measure);measure();loop();
 })();
 (function(){
-if(document.querySelector('.ck'))return;var top=document.querySelector('.top'),darks=document.querySelectorAll('.hw,.cl,.fo,.sn,.jr,.dh,.sx.dk,.s-dk,.chp,.s3,.sg2,.yw0'),dk=false;if(!top)return;
+if(document.querySelector('.ck'))return;var top=document.querySelector('.top'),darks=document.querySelectorAll('.hw,.cl,.fo,.sn,.jr,.dh,.sx.dk,.s-dk,.chp,.s3,.sg2,.yw0,.sc'),dk=false;if(!top)return;
 function nav(){var d=false;for(var i=0;i<darks.length&&!d;i++){var r=darks[i].getBoundingClientRect();d=r.top<62&&r.bottom>34}if(d!==dk){dk=d;top.classList.toggle('dk',d)}}
 addEventListener('scroll',nav,{passive:true});addEventListener('resize',nav);nav();
+})();
+(function(){
+var sc=[].slice.call(document.querySelectorAll('.sc'));if(!sc.length)return;
+if(innerWidth<981||(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search)))return;
+sc.forEach(function(el){el.classList.add('live');
+var ss=[].slice.call(el.querySelectorAll('.sc-s')),cs=[].slice.call(el.querySelectorAll('.sc-c')),n=ss.length,bar=el.querySelector('.sc-b i'),last=-1,lastk=-1,tick=false;
+var items=ss.map(function(s){var it=[].slice.call(s.querySelectorAll('.tr-e,.tr-f,.qo-t,.qo-r,.inv-p,.fl-r,.rn-f,.oq-r,.wkc-g i,.ag-g>div,.pk-f,.rvw>*,.rpt>div,.rpt>p'));it.forEach(function(x){x.classList.add('bi')});return it});
+function f(){tick=false;var r=el.getBoundingClientRect(),p=Math.max(0,Math.min(.9999,-r.top/(r.height-innerHeight))),x=p*n,i=Math.floor(x),q=Math.min(1,(x-i)/.62),k=Math.ceil(q*items[i].length);
+if(bar)bar.style.transform='scaleY('+p.toFixed(3)+')';
+if(i!==last){last=i;lastk=-1;ss.forEach(function(s,j){s.classList.toggle('on',j===i);s.classList.toggle('past',j<i)});cs.forEach(function(c,j){c.classList.toggle('on',j===i)})}
+if(k!==lastk){lastk=k;items[i].forEach(function(e,j){e.classList.toggle('in',j<k)})}}
+addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(f)}},{passive:true});addEventListener('resize',f);f();
+cs.forEach(function(c,j){c.addEventListener('click',function(e){if(e.target.closest('a'))return;var r=el.getBoundingClientRect();scrollTo({top:scrollY+r.top+(r.height-innerHeight)*((j+.5)/n),behavior:'smooth'})})});
+});
 })();
 (function(){
 var els=[].slice.call(document.querySelectorAll('.t-exp,.t-wipe,.t-door'));if(!els.length)return;

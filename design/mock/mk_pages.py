@@ -2036,8 +2036,77 @@ CSS_FULL = r"""
 @media(max-width:860px){.sg1 ol,.sg2 ol,.yw-g{grid-template-columns:minmax(0,1fr)}.sg2 li{padding:0 0 22px}.sg0 li{font-size:22px}.yw-g>div{padding:44px var(--pad)}.yw-g>div+div{border-left:0;border-top:1px solid var(--ln)}.yw0 .yw-g>div+div{border-color:var(--dl)}.yw1 .yw-g{padding:44px var(--pad)}.yw1 .yw-g>div{padding:22px}}
 """
 
+# =====================================================================================
+# Pinned scenes. Sam: the most used pages should be much longer and more intricate, with other pages appearing inside them as
+# pictures that build, move and change as you scroll. A stage pins to the screen; each scene is another page's picture, and its
+# rows arrive one by one as the scroll moves through it. Without motion, or on a phone, the scenes are simply stacked.
+# =====================================================================================
+def stage(label, title, scenes):
+    caps = ''.join('<li class="sc-c%s"><b>%s</b><span>%s</span>%s</li>' % (' on' if i == 0 else '', t, x, ('<a href="%s">%s %s</a>' % (href, link, ARROW)) if href else '') for i, (t, x, href, link, _) in enumerate(scenes))
+    pics = ''.join('<div class="sc-s%s"><p class="sc-k"><b>%s</b> %s</p>%s</div>' % (' on' if i == 0 else '', t, x, g) for i, (t, x, _, _, g) in enumerate(scenes))
+    return ('<section class="sc" style="--n:%d"><div class="sc-p"><div class="w sc-g"><div class="sc-l"><span class="lb">%s</span><p class="st-t">%s</p><div class="sc-x"><div class="sc-b"><i></i></div><ol>%s</ol></div></div><div class="sc-r">%s</div></div></div></section>'
+            % (len(scenes), label, title, caps, pics))
+
+
+LEAD = stage('One lead, start to finish', 'Follow one lead through the business.', [
+    ('A call rings out. A reply goes out.', 'A missed call at 7:42 PM gets a text back in seconds, with times to pick from.', '', '', THREAD),
+    ('It lands on your calendar.', 'The lead picks from times you are actually free. Reminders are set the moment it books.', '/booking', 'Booking', WEEK),
+    ('The quote gets chased.', 'Days 2, 5 and 10, then monthly, until it is a yes or a no.', '/follow-up', 'Follow-up', QUOTE),
+    ('The invoice goes out and gets paid.', 'Sent the day the job ends, with polite reminders until it is settled.', '/invoicing', 'Invoices', INVOICE),
+    ('They get asked for a review.', 'A short text with a direct link, while the job is fresh.', '/reviews', 'Reviews', ASK)])
+DAYAPP = stage('One day in the app', 'What it did while you were on the job.', [
+    ('Every lead gets an answer in seconds.', 'Calls, texts, forms and lead sites. Day or night, the reply goes out from your number.', '/answering', 'Answering', INBOX),
+    ('Estimates land on your calendar.', 'Leads pick from times you&rsquo;re actually free. You just show up.', '/booking', 'Booking', WEEK),
+    ('Every quote gets chased.', 'Day 2, day 5, day 10, then monthly. It stops the moment they answer.', '/follow-up', 'Follow-up', OPEN),
+    ('Invoices chase themselves.', 'Reminders go out with your own pay link until it&rsquo;s settled.', '/invoicing', 'Invoices', AGING),
+    ('Your numbers, every Monday.', 'Leads in, jobs booked, quotes open, money owed and what needs you.', '/reports', 'Reports', REPORT_PH)])
+
+
+def flag(name, body):
+    secs = re.findall(r'<section\b.*?</section>', body, re.S)
+    if ''.join(secs) != body:
+        return body
+    if name == 'answering':
+        return ''.join(LEAD if x.startswith('<section class="hw"') else x for x in secs)
+    if name == 'software':
+        return ''.join((DAYAPP + x) if 'class="duo"' in x else x for x in secs)
+    return body
+
+
+CSS_STAGE = r"""
+.sc{background:var(--dk);color:#fff}
+.sc-g{border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(72px,6vw,112px) var(--pad)}
+.sc .lb{background:rgba(109,155,255,.16);color:#a9c4ff}.sc .st-t{color:#fff;max-width:12em;font-size:clamp(27px,1.95vw,37px)}
+.sc-l ol,.sc-b{display:none}
+.sc-r{display:grid;gap:clamp(40px,4vw,72px);margin-top:clamp(36px,3vw,56px)}
+.sc-s{display:grid;gap:18px;justify-items:center}.sc-s>*{max-width:100%}
+.sc-k{justify-self:start;margin:0;max-width:30em;font-size:clamp(15px,1vw,18px);line-height:1.4;color:#a3a5aa}.sc-k b{display:block;margin-bottom:4px;color:#fff;font-size:clamp(18px,1.3vw,24px);font-weight:540;letter-spacing:-.02em}
+.sc .ph-k{display:none}
+.sc .cd,.sc .rvw,.sc .ph-s{color:var(--ink)}
+.sc.live{height:calc(var(--n)*82vh + 100vh)}
+.sc.live .sc-p{position:sticky;top:0;height:100vh;display:flex;align-items:center}
+.sc.live .sc-g{display:grid;grid-template-columns:minmax(0,.44fr) minmax(0,1fr);gap:clamp(28px,4vw,76px);align-items:center;width:min(1390px,calc(100vw - 200px));height:100%;padding-top:clamp(84px,7vh,110px);padding-bottom:clamp(28px,4vh,56px);box-sizing:border-box}
+.sc.live .sc-k{display:none}
+.sc.live .sc-x{position:relative;margin-top:clamp(28px,4vh,52px);padding-left:22px}
+.sc.live .sc-b{display:block;position:absolute;left:0;top:6px;bottom:6px;width:2px;border-radius:1px;background:rgba(255,255,255,.14)}.sc-b i{display:block;width:100%;height:100%;background:#6d9bff;transform-origin:top;transform:scaleY(0)}
+.sc.live ol{display:block;list-style:none;margin:0;padding:0}
+.sc.live .sc-c{padding:clamp(9px,1.3vh,14px) 0;cursor:pointer;opacity:.38;transition:opacity .3s}.sc.live .sc-c.on{opacity:1;cursor:default}
+.sc-c b{display:block;font-size:clamp(17px,1.25vw,23px);font-weight:540;letter-spacing:-.02em;line-height:1.16}
+.sc-c span,.sc-c a{display:block;max-height:0;overflow:hidden;opacity:0;transition:max-height .45s,opacity .35s,margin .45s}
+.sc-c span{max-width:24em;font-size:clamp(14px,.9vw,16.5px);line-height:1.4;color:#a3a5aa}
+.sc-c a{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:540;color:#a9c4ff}.sc-c a svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.sc-c.on span{max-height:6em;opacity:1;margin-top:8px}.sc-c.on a{max-height:2em;opacity:1;margin-top:10px}
+.sc.live .sc-r{position:relative;display:block;margin:0;height:min(660px,74vh)}
+.sc.live .sc-s{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(56px) scale(.94);transition:opacity .4s,transform .7s cubic-bezier(.2,.7,.2,1);pointer-events:none}
+.sc.live .sc-s.on{opacity:1;transform:none;pointer-events:auto}.sc.live .sc-s.past{transform:translateY(-56px) scale(.94)}
+.sc.live .bi{opacity:0;transform:translateY(10px);transition:opacity .35s,transform .45s cubic-bezier(.2,.7,.2,1)}.sc.live .bi.in{opacity:1;transform:none}
+.sc.live .wkc-g i.bi{transform:scale(.8)}.sc.live .wkc-g i.bi.in{transform:none}
+@media(min-width:1700px){.sc.live .sc-s>*{zoom:1.12}}
+@media(max-height:760px){.sc.live .sc-s>*{zoom:.86}}
+"""
+
 out = pathlib.Path(ROOT) / 'site'
-CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL
+CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL + CSS_STAGE
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V
@@ -2088,7 +2157,7 @@ PAGES = [
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, full(slug, body), css=PCSS, index=(slug != '404'))
+        doc = page(title, desc, '/' + slug, full(slug, flag(slug, body)), css=PCSS, index=(slug != '404'))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)
