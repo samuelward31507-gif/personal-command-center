@@ -1989,6 +1989,7 @@ def full(name, body):
     top = [x for x in secs if kind(x) == 'top']; fa_ = [x for x in secs if kind(x) == 'faq']; mid = [x for x in secs if kind(x) not in ('top', 'faq', 'cl')]
     kinds = [kind(x) for x in mid]; p = BY[name]; mods = RHYTHM[name][1]
     sg = signs_sec(X[name][1] if name in X else SIGNS_OLD[name], i % 3)
+    wa = set()
     if name in X:   # a page should not say the same sentence twice
         wa = set(re.findall(r'[a-z]{4,}', X[name][0][0].lower()))
         same = lambda x: len(wa & set(re.findall(r'[a-z]{4,}', re.sub(r'<[^>]+>', ' ', x).lower()))) >= .5 * len(wa)
@@ -2001,7 +2002,9 @@ def full(name, body):
     if 'cmp' in p and not any('class="sw"' in x for x in mid):
         extra.append(H.split('What changes', 'Before and after.' if ap(X[name][3]) in body else ap(X[name][3]), '', swap(p['cmp'])).replace('<section class="sp"', '<section class="sp %s"' % ('v-f' if i % 2 else 's-dkp'), 1))
     if 'bl' not in kinds and 'line' in p:
-        extra.append(calm(ap(p['line'])))
+        lw = set(re.findall(r'[a-z]{4,}', p['line'].lower())); first = ap(p['line']).split('.')[0]
+        if not (len(lw & wa) >= .5 * len(lw) or first in body):
+            extra.append(calm(ap(p['line'])))
     return ''.join(top + mid + extra + [yw_sec(p['group'], (i + 1) % 3)] + fa_ + [next_sec(name), CL])
 
 
