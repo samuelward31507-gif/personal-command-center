@@ -6,6 +6,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./app.css";
 import "./v5.css";
+import "./v6.css";
 import { Wordmark } from "../brand";
 import { QuotesScreen, QuoteEditor } from "./quotes";
 import { Avatar, Icon, Spinner, fmtPhone, initials, typePhone, useToast } from "./parts";
