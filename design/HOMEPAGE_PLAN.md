@@ -100,3 +100,8 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 ## Pass 20 (Sam: "I don't like that for the home screen")
 - Reverted pass 19. The homepage has ONE real app screen, the calendar. Speed to lead, the invoice and what-you-get-back are line drawings again.
 - Rule, now confirmed twice: on the homepage, the calendar is the only CRM screen. Do not add more. The other app views belong on the Software page.
+
+## Pass 21 (Sam: transitions bad, designs basic/cheap, hates the rounded dark wraps; wants sharp squares and a high-tech feel in the same Attio-style line language)
+- Frames: square, hairline, registration marks on the corners (home2.css v21). No rounded dark boxes. Section seams are a single hairline with marks at the rails.
+- Drawings: faded ground grid, lit top edges, graded faces (defs #ilt/#ill/#ilr, mask #ilm inserted once by patch_home), bevel lines, and every part named with a dot, leader and mono label (Iso.grid / bevel / callout in home_art.py). Funnel has stage names on the right and leak amounts on the left.
+- Motion: parts lower into place while their strokes draw themselves (home2.js arm() measures each stroke into --l), faces fill after, labels light last. Sections rise in the first time they are seen (.seen).

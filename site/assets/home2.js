@@ -181,4 +181,16 @@
     if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { if (e[0].isIntersecting && !seen) { seen = true; go(0) } if (!e[0].isIntersecting) clearTimeout(t2); else if (seen && au) go(sel) }, { threshold: .25 }).observe(sw); else go(0);
     addEventListener('resize', function () { if (seen) go(sel) })
   }
+  // ---- drawings: measure every stroke so it can draw itself in when its part arrives
+  function arm() {
+    [].forEach.call(document.querySelectorAll('svg.il'), function (svg) {
+      var m = svg.getScreenCTM && svg.getScreenCTM(), k = m ? Math.sqrt(m.a * m.a + m.b * m.b) : 1;
+      [].forEach.call(svg.querySelectorAll('[data-lit] path:not(.ds),[data-lit] ellipse'), function (e) { var L = 0; try { L = e.getTotalLength() * k } catch (x) { } e.style.setProperty('--l', Math.ceil(L || 600) + 4) });
+    });
+  }
+  arm(); addEventListener('resize', arm); addEventListener('load', arm);
+  // ---- sections make an entrance the first time they come into view
+  var secs = [].slice.call(document.querySelectorAll('.ax,.pz'));
+  if (!rm && 'IntersectionObserver' in window) { var so = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('seen'); so.unobserve(e.target) } }) }, { rootMargin: '0px 0px -22% 0px' }); secs.forEach(function (x) { so.observe(x) }) }
+  else secs.forEach(function (x) { x.classList.add('seen') });
 })();

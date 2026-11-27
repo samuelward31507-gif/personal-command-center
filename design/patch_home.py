@@ -99,7 +99,7 @@ BACK = ax('', 5, 'What you get back', 'Most of the day is already done.', [('Ans
 
 TK = '<div class="tk" aria-hidden="true"></div>'
 W = lambda x: '<!--h2-->' + TK + x + '<!--/h2-->\n'
-ins('<section id="problem"', W(WHERE))
+ins('<section id="problem"', '<!--h2--><svg class="il-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="ilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0f0f12"/></linearGradient><linearGradient id="ill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111114"/><stop offset="1" stop-color="#08080a"/></linearGradient><linearGradient id="ilr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0a0c"/><stop offset="1" stop-color="#040405"/></linearGradient><radialGradient id="ilg"><stop offset=".12" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="ilm" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#ilg)"/></mask></defs></svg><!--/h2-->\n' + W(WHERE))
 ins('<section id="build"', W(AUDIT) + '<!--h2-->' + TK + '<!--/h2-->\n')
 ins('<section id="everything"', W(SPEED) + W(CAL) + W(QUOTE) + W(INVOICE) + W(REVIEW) + W(CUSTOM) + W(BACK) + '<!--h2-->' + TK + '<!--/h2-->\n')
 # the numbers: say what the audit checks against each one
