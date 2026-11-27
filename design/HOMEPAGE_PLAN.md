@@ -36,3 +36,8 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Sequences page: recipient list beside a vertical timeline of sent messages and waits. Same idea as our quote timeline.
 - Centered chip above a two-line heading on inner pages; changelog uses a ruler of ticks as a year scale.
 - Still to do with these: carry the frame, chips and product pieces to the inner pages.
+
+## Pass 8 (Sam, Nov 26 night)
+- Every picture is dark: hairline outlines on near-black, bone type, red only for leaks and new things (home2.css v9). The calendar is the only white screen.
+- Where the jobs go is a flat line drawing on desktop (six nodes on a line, the three leaks drop below it, total at the bottom); phones get the dark findings list.
+- Sam likes: First, a free audit (line plates). Keep that language for anything new.

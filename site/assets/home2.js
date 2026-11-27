@@ -78,6 +78,7 @@
       parts.forEach(function (e) { e.classList.toggle('on', +(e.dataset.at || e.dataset.lit) <= k) });
       lis.forEach(function (li, i) { li.classList.toggle('on', i <= k); li.classList.toggle('cur', i === c) });
       ones.forEach(function (e) { e.classList.toggle('cur', +e.dataset.is === c) });
+      sec.style.setProperty('--k', c);
       vals.forEach(function (e) { e.textContent = pick(e.dataset.v.split('|'), k) });
       ws.forEach(function (e) { e.style.width = pick(e.dataset.w.split(','), k) });
     }

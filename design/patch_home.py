@@ -34,11 +34,22 @@ AV = lambda x: f'<span class="ap-av">{x}</span>'; CK = '<span class="ap-ck"></sp
 # 1. where the jobs go: the audit's findings for one lead, as the report reads
 LK = [('First call', '7:42 PM, on a job', None), ('Reply', 'After hours', ('Calls go to voicemail', '−$2,400/mo')), ('Booked', 'Same day', None), ('Quote', 'Sent once', ('No follow-up after day 2', '−$3,100/mo')), ('Paid', 'Invoice due', None), ('Review', 'Job done', ('Never asked', '−$900/mo'))]
 TOT = '$0|$2,400|$2,400|$5,500|$5,500|$6,400'
+def leakline():
+    X = lambda i: 52 + i * 112; Y = 150; g = []
+    for i, (n, d, lk) in enumerate(LK):
+        x = X(i); drop = ''
+        if lk:
+            rx = min(x - 84, 664 - 169); cx = rx + 84
+            drop = f'<g class="lk-drop"><path class="lk-dash" d="M{x},{Y + 9} V{Y + 86}"/><rect x="{rx}" y="{Y + 86}" width="168" height="70" rx="10"/><text class="lk-amt" x="{cx}" y="{Y + 116}" text-anchor="middle">{lk[1]}</text><text class="lk-why" x="{cx}" y="{Y + 138}" text-anchor="middle">{lk[0]}</text></g>'
+        g.append(f'<g class="lkn{" leak" if lk else ""}" data-lit="{i}"><text class="lk-n" x="{x}" y="{Y - 44}" text-anchor="middle">{n}</text><text class="lk-d" x="{x}" y="{Y - 24}" text-anchor="middle">{d}</text><circle cx="{x}" cy="{Y}" r="7"/>{drop}</g>')
+    return ('<svg class="lnv lkv" viewBox="0 0 664 470" role="img" aria-label="Example business: one lead drawn as a line from first call to review. Three leaks drop off it: after-hours calls go to voicemail, 2,400 dollars a month. No quote follow-up after day 2, 3,100 dollars a month. Reviews never asked for, 900 dollars a month. Total 6,400 dollars a month. Sample findings."><title>Where the jobs go</title>'
+        f'<path class="lk-base" d="M{X(0)},{Y} H{X(5)}"/><path class="lk-fill" d="M{X(0)},{Y} H{X(5)}"/>' + ''.join(g)
+        + f'<path class="lk-rule" d="M0,372 H664"/><text class="lk-tl" x="0" y="420">Leaking every month</text><text class="lk-tv" x="664" y="426" text-anchor="end" data-v="{TOT}">$6,400</text></svg>')
 WHERE = ax('long', 6, 'The audit', 'Where the jobs go. <em>Most businesses lose them at the same few points.</em>', [], BOOK,
-  '<div class="ap ap-audit" role="img" aria-label="Example audit findings for one lead, from first call to review. Three leaks: after-hours calls go to voicemail, 2,400 dollars a month. No quote follow-up after day 2, 3,100 dollars a month. Reviews never asked for, 900 dollars a month. Total 6,400 dollars a month. Sample data."><div class="ap-hd"><div><b>One lead, followed end to end</b><span>Audit findings</span></div><span class="ap-pill r" data-v="0 leaks|1 leak|1 leak|2 leaks|2 leaks|3 leaks">3 leaks</span></div><div class="ap-bd">'
+  leakline() + '<div class="ap ap-audit" aria-hidden="true"><div class="ap-hd"><div><b>One lead, followed end to end</b><span>Audit findings</span></div><span class="ap-pill r" data-v="0 leaks|1 leak|1 leak|2 leaks|2 leaks|3 leaks">3 leaks</span></div><div class="ap-bd">'
   + ''.join(f'<div class="au-row{" leak" if lk else ""}" data-lit="{i}"><i></i><div><b>{n}</b><span>{d}</span></div>' + (f'<div class="au-lk"><code>{lk[1]}</code><span>{lk[0]}</span></div>' if lk else '<span class="ap-pill">No leak</span>') + '</div>' for i, (n, d, lk) in enumerate(LK))
   + f'</div><div class="au-ft"><span>Leaking every month</span><code data-v="{TOT}">$6,400</code></div></div>',
-  extra=f'<p class="ax-p">The audit follows one lead from the first call to the review, finds where yours slip, and puts a dollar number on each.</p><p class="ax-tot"><span>Leaking every month</span><b data-v="{TOT}">$6,400</b></p><p class="ax-note">Example business, sample findings. Your audit uses your own numbers.</p>', tag='h2', sid=' id="leaks"', small='<small>Example business, sample findings</small>')
+  extra=f'<p class="ax-p">The audit follows one lead from the first call to the review, finds where yours slip, and puts a dollar number on each.</p><p class="ax-note">Example business, sample findings. Your audit uses your own numbers.</p>', tag='h2', sid=' id="leaks"', panel='lk', small='<small>Example business, sample findings</small>')
 
 # 2. the audit: six layers, drawn as plain line geometry
 LAYERS = [('Answering', 'What does a new customer get when they call, text or fill out your form after hours? We check.'), ('Booking', 'How many steps sit between “I’m interested” and a time on your calendar? We count them.'), ('Quote follow-up', 'What happens to a quote after it’s sent? We look at how many went quiet.'), ('Invoices', 'How long does a finished job take to get paid? We check what’s late and why.'), ('Reviews', 'How many finished jobs turned into a review? We compare the two numbers.'), ('Website', 'Does your site turn a visitor into a call? We test it on a phone.')]
