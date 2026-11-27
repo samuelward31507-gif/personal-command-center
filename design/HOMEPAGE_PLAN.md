@@ -96,3 +96,7 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Built by pz() in patch_home.py from the Software page's own `.cs` markup (view(k)); story hooks are data-st (appear at step), data-sw (swap in), data-un (remove at step); cards per section via data-show.
 - Page rhythm: funnel (drawing), numbers, audit plates (drawing), patch bay (3D), Inbox (screen), Calendar (screen), quote (drawing), Money (screen), review (drawing), custom (drawing), Today (screen).
 - This goes against Sam's earlier "only the calendar is white". Done on purpose after he approved the calendar; revert is `git revert` of this commit if he objects.
+
+## Pass 20 (Sam: "I don't like that for the home screen")
+- Reverted pass 19. The homepage has ONE real app screen, the calendar. Speed to lead, the invoice and what-you-get-back are line drawings again.
+- Rule, now confirmed twice: on the homepage, the calendar is the only CRM screen. Do not add more. The other app views belong on the Software page.
