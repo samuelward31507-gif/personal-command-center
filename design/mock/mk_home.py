@@ -12,6 +12,9 @@ mark = re.sub(r'<style>.*?</style>', '', fav, flags=re.S).replace('class="m"', '
 hero = open(ROOT + '/design/mock/hero-light.html').read()
 hero_css = re.search(r'<style>(.*?)</style>', hero, re.S).group(1)
 hero_body = re.search(r'(<section class="hero">.*?)</body>', hero, re.S).group(1)
+CAL = 'href="https://cal.com/audit-call/15min" target="_blank" rel="noopener"'
+hero_body = hero_body.replace('<a class="btn" href="#">Book your free audit</a>', '<a class="btn" %s>Book your free audit</a>' % CAL)
+hero_body = hero_body.replace('<a class="btn q" href="#">See what we check</a>', '<a class="btn q" href="/free-audit">See what we check</a>')
 
 # ---------- tools grid ----------
 ORDER = ['Google Calendar', 'Jobber', 'Gmail', 'Housecall Pro', 'Instagram',
@@ -99,9 +102,9 @@ FACE = ('<svg class="ck-face" viewBox="-100 -100 200 200" aria-hidden="true"><g 
         '<line class="ck-n" x1="0" y1="0" x2="0" y2="-80" transform="rotate(90)"/><circle r="1.9" fill="#fff"/></g></svg>' % (outer, inner))
 CK = ('<section class="ck"><div class="ck-pin"><div class="ck-top"><span class="lb">Where to start</span>'
       '<p class="st-t">Fifteen minutes to find yours. <span>One call. We ask how leads reach you and what happens after, then put a number on each leak.</span></p>'
-      '<a class="btn" href="#">Book your free audit</a></div>'
+      '<a class="btn" %s>Book your free audit</a></div>'
       '<div class="ck-dark">%s<div class="ck-count">15:00</div>'
-      '<div class="ck-title"><span>It starts with</span><h2>The free audit</h2></div></div></div></section>' % FACE)
+      '<div class="ck-title"><span>It starts with</span><h2>The free audit</h2></div></div></div></section>' % (CAL, FACE))
 
 IC = {
  'call': '<path d="M7.6 3.6 5.4 4.2c-.8.2-1.3 1-1.2 1.8.7 6.3 6.2 11.7 12.4 12.4.9.1 1.6-.4 1.9-1.2l.6-2.2-3.7-2-1.6 1.6c-1.9-1-3.6-2.7-4.6-4.6l1.6-1.6z"/><path d="m15 4 4.5 4.5m0-4.5L15 8.5"/>',
@@ -286,6 +289,15 @@ html,body{overflow-x:clip}
 @media(max-width:1180px){.w,.nav{width:calc(100vw - 64px)}.ck.on .ck-pin::before,.ck.on .ck-dark::before{width:calc(100vw - 64px)}.nav ul{display:none}}
 @media(max-width:860px){
 .w,.nav{width:calc(100vw - 32px)}:root{--pad:20px}
+.hero{padding:52px 20px 0}h1{white-space:normal;font-size:35px;line-height:1.06;text-wrap:balance}.sub{font-size:16px}.stage{margin-top:36px}
+.ground{height:auto;overflow:visible;padding:0 16px 28px}
+.rep{position:relative;left:auto;top:auto;margin:0;width:100%;height:auto}
+.rep-h{height:auto;flex-wrap:wrap;gap:6px 10px;padding:12px 14px}.rep-h .tag{margin-left:0;width:100%}
+.rep-b{padding:16px 14px 8px}.rep-t{display:block}.tot{text-align:left;margin-top:14px}
+.bars{gap:6px;height:132px;margin-top:18px}.bar{border-radius:6px}.bar u{border-radius:6px 6px 0 0}.bar em{left:5px;top:7px;font-size:9.5px}
+.lab{gap:6px}.lab div{font-size:10.5px;line-height:1.25}.lab b{font-size:15px}
+table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-child(2){text-align:right}
+.f1,.f2{position:relative;left:auto;right:auto;top:auto;width:100%;margin-top:12px}
 .tl ul{grid-template-columns:1fr 1fr}.tl li{height:60px;font-size:14px;border-right:1px solid var(--ln)!important;border-bottom:1px solid var(--ln)!important}
 .tl li:nth-child(2n){border-right:0!important}.tl li:nth-last-child(-n+2){border-bottom:0!important}
 .st-i{padding:72px var(--pad) 48px}.st-t{font-size:26px;line-height:1.14}
@@ -306,11 +318,11 @@ html,body{overflow-x:clip}
 }
 '''
 
-NAV = ('<header class="top"><div class="nav"><b>%s Cinder Revenue</b><ul><li>What we fix</li><li>The free audit</li><li>The app</li><li>Trades</li><li>Our story</li></ul>'
-       '<a class="btn" href="#">Book your free audit</a></div></header>' % mark)
+NAV = ('<header class="top"><div class="nav"><a href="/" class="nav-b"><b>%s Cinder Revenue</b></a><ul><li><a href="/everything">What we fix</a></li><li><a href="/free-audit">The free audit</a></li><li><a href="/software">The app</a></li><li><a href="/trades">Trades</a></li><li><a href="/story">Our story</a></li></ul>'
+       '<a class="btn" %s>Book your free audit</a></div></header>' % (mark, CAL))
 html = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        '<title>Homepage mockup (light) | Cinder Revenue</title><style>%s%s</style></head><body>%s<div class="heroband">%s</div>%s%s%s%s%s<script>%s</script></body></html>'
+        '<title>More jobs from the leads you already get | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s<div class="heroband">%s</div>%s%s%s%s%s<script>%s</script></body></html>'
         % (hero_css, CSS, NAV, hero_body, TOOLS, PROB, LK, CK, AU, JS))
-for p in (ROOT + '/design/mock/home-light.html', ROOT + '/site/_home-light.html'):
+for p in (ROOT + '/design/mock/home-light.html', ROOT + '/site/new.html'):
     open(p, 'w').write(html)
 print('ok', len(html))
