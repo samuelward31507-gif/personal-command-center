@@ -69,23 +69,150 @@ LOGROWS = [('New number', 'Sat 7:42 PM', 'No call back', 'r'), ('New number', 'S
 LOG = ('<div class="cd lg"><div class="lg-h"><b>Missed calls</b><span>After hours</span></div>%s</div>'
        % ''.join('<div class="lg-r"><u>%s</u><div><b>%s</b><span>%s</span></div><em class="%s">%s</em></div>' % (PHONE, a, b, c, t) for a, b, t, c in LOGROWS))
 
-SUM = ('<div class="cd sm"><div class="sm-r"><span>New callers who got no answer</span><b>3</b></div>'
-       '<div class="sm-r"><span><i>&times;</i>Leads that become jobs</span><b>1 in 3</b></div>'
-       '<div class="sm-r"><span><i>&times;</i>Average job</span><b>$2,400</b></div>'
-       '<div class="sm-r t"><span>Lost a month</span><b>$2,400</b></div></div>')
+SUM = None  # built below, once summ() exists
 
+# ---------- shared pieces for the leak blocks ----------
+SAMPLE = 'Example business, sample data'
+
+
+def head(title, sub='Ridgeline Fence, last 30 days'):
+    return '<div class="ch-h"><div><b>%s</b><span>%s</span></div><em>%s</em></div>' % (title, sub, SAMPLE)
+
+
+def tally(kick, title, viz, rows):
+    return ('<div class="cd ta"><div class="fk">%s</div><div class="ta-t">%s</div>%s<dl>%s</dl></div>'
+            % (kick, title, viz, ''.join('<div><dt>%s</dt><dd>%s</dd></div>' % r for r in rows)))
+
+
+def pills(*groups):
+    n = sum(c for c, _ in groups)
+    return '<div class="ta-b" style="grid-template-columns:repeat(%d,1fr)">%s</div>' % (n, ''.join('<i class="%s"></i>' % k * c for c, k in groups))
+
+
+def facts(title, tag, rows):
+    """A small card of label/value rows; a row's third item is its tone (r, y, g or empty)."""
+    return ('<div class="cd fc"><div class="lg-h"><b>%s</b><span>%s</span></div>%s</div>'
+            % (title, tag, ''.join('<div class="fc-r"><span>%s</span><b class="%s">%s</b></div>' % (l, t, v) for l, v, t in rows)))
+
+
+def summ(rows, total, tone='r'):
+    op = any(x for _, _, x in rows)
+    body = ''.join('<div class="sm-r"><span>%s%s</span><b>%s</b></div>' % (('<i>%s</i>' % ('&times;' if x else '')) if op else '', l, v) for l, v, x in rows)
+    return '<div class="cd sm">%s<div class="sm-r t %s"><span>%s%s</span><b>%s</b></div></div>' % (body, tone, '<i></i>' if op else '', total[0], total[1])
+
+
+def block(i, lead, rest, big, stat, how, howpic, cost, costpic):
+    st = ('<div class="lk-f"><b>%s</b><p>%s</p><span>%s</span></div>' % stat) if stat else ''
+    return ('<article class="lk-b" id="leak-%d"><div class="lk-s"><p class="bs">%s <span>%s</span></p></div>'
+            '<div class="lk-p"><div class="lk-pi">%s</div></div>%s'
+            '<div class="lk-2"><div><h3>How you&rsquo;d know.</h3><p>%s</p>%s</div>'
+            '<div><h3>What it costs.</h3><p>%s</p>%s</div></div></article>' % (i, lead, rest, big, st, how, howpic, cost, costpic))
+
+
+# ---------- 2: slow replies ----------
+REPLIES = [('Website form', 4, 'Booked'), ('Facebook lead', 38, 'Booked'), ('Thumbtack', 65, 'Booked'), ('Website form', 192, 'Went cold'),
+           ('Google message', 140, 'Booked'), ('Angi', 340, 'Went cold'), ('Facebook lead', 52, 'Booked'), ('Missed call', 1140, 'Went cold')]
+
+
+def dur(m):
+    return '%d min' % m if m < 60 else ('%d h' % (m // 60) if m % 60 == 0 else '%d h %02d min' % (m // 60, m % 60))
+
+
+rp_rows = ''.join('<div class="rp-r%s"><span>%s</span><div class="rp-t"><u class="%s%s" style="width:%.1f%%"></u></div><b>%s</b><em class="%s">%s</em></div>'
+                  % (' hot' if m == 192 else '', src, 'c' if out != 'Booked' else 'b', ' over' if m > 360 else '', min(100, m / 360 * 100), dur(m),
+                     'r' if out != 'Booked' else 'g', out) for src, m, out in REPLIES)
+RP = ('<div class="cd ch rp">%s<div class="ch-k"><span><i class="a"></i>Booked</span><span><i class="m"></i>Went cold</span><span><i class="five"></i>Five minutes</span></div>'
+      '<div class="rp-b"><div class="rp-five"><span>5 min</span></div>%s</div>'
+      '<div class="rp-x"><span>0</span><span>2 h</span><span>4 h</span><span>6 h+</span></div></div>' % (head('Time to first reply'), rp_rows))
+RP_T = tally('First replies, last 30 days', '71 replies. 12 inside five minutes.',
+             '<div class="ta-s"><i class="a" style="flex:12"></i><i class="l" style="flex:27"></i><i class="y" style="flex:32"></i></div>',
+             [('Under five minutes', '12'), ('Under an hour', '27'), ('Over an hour', '32')])
+RP_A = facts('Website form', 'Tuesday', [('Form received', '10:14 AM', ''), ('First reply', '1:26 PM', ''), ('Waited', '3 h 12 min', 'y')])
+RP_B = ('<div class="cd bk"><div class="lg-h"><b>Booked, by reply time</b><span>71 leads</span></div>%s</div>'
+        % ''.join('<div class="bk-r"><span>%s</span><div><u style="width:%d%%"></u></div><b>%d of %d</b></div>' % (l, round(a_ / n * 100), a_, n)
+                  for l, a_, n in [('Under five minutes', 11, 12), ('Under an hour', 23, 27), ('Over an hour', 24, 32)]))
+
+# ---------- 3: quotes that go quiet ----------
+# (number, job, last day shown, opened on days, follow-ups on days, signed)
+QUOTES = [('#1038', 'Chain link, 80 ft', 3, [1], [2], True), ('#1039', 'Gate repair', 6, [0], [2, 5], True),
+          ('#1040', 'Vinyl privacy, 150 ft', 12, [1, 4], [], False), ('#1041', 'Cedar picket', 11, [], [], False),
+          ('#1042', 'Cedar fence, 120 ft', 9, [1, 3], [], False), ('#1043', 'Pool fence', 2, [0], [1], True),
+          ('#1044', 'Farm fence, 400 ft', 6, [2], [], False)]
+
+
+def qx(d):
+    return '%.2f%%' % (d / 14 * 100)
+
+
+def qrow(n, job, last, opens, fups, signed):
+    marks = '<i class="s" style="left:0"></i>' + ''.join('<i class="o" style="left:%s"></i>' % qx(d + .35) for d in opens)
+    marks += ''.join('<i class="f" style="left:%s"></i>' % qx(d) for d in fups)
+    marks += '<i class="%s" style="left:%s"></i>' % ('g' if signed else 'e', qx(last))
+    tag = ('g', 'Signed') if signed else (('r', 'Going cold') if last >= 9 else ('y', 'No follow-up'))
+    return ('<div class="qt-r%s"><span><b>%s</b>%s</span><div class="qt-t"><u class="%s" style="width:%s"></u>%s</div><em class="%s">%s</em></div>'
+            % (' hot' if n == '#1042' else '', n, job, 'ok' if signed else 'no', qx(last), marks, tag[0], tag[1]))
+
+
+QT = ('<div class="cd ch qt">%s<div class="ch-k"><span><i class="s"></i>Sent</span><span><i class="o"></i>Opened</span><span><i class="f"></i>Follow-up</span><span><i class="g"></i>Signed</span></div>'
+      '<div class="qt-b">%s</div><div class="qt-x"><span>Sent</span><span>Day 4</span><span>Day 8</span><span>Day 12</span></div></div>'
+      % (head('Quotes since they were sent'), ''.join(qrow(*q) for q in QUOTES)))
+QT_T = tally('Quotes, last 30 days', '19 not signed. 13 never chased.', pills((6, 'a'), (13, 'y')),
+             [('Opened at least once', '9 of 13'), ('Average age', '8 days'), ('Worth', '$31,000')])
+QT_A = facts('Quote #1042', 'Cedar fence, 120 ft', [('Sent', 'Nine days ago', ''), ('Opened', 'Twice', ''), ('Follow-ups', 'None', 'y')])
+QT_B = summ([('Quotes with no follow-up', '13', False), ('Worth', '$31,000', False), ('Come back with a check-in', '1 in 10', True)], ('Lost a month', '$3,100'))
+
+# ---------- 4: late invoices ----------
+AGE = [('Not invoiced yet', 2100, '1 job', 'x'), ('Under 2 weeks', 5400, '3 jobs', 'a'),
+       ('2 to 4 weeks', 3100, '1 job', 'y'), ('Over 30 days', 4000, '2 jobs', 'm')]
+IV = ('<div class="cd ch iv">%s<div class="iv-b">%s</div></div>'
+      % (head('Finished and unpaid', 'Ridgeline Fence, by how long it has waited'),
+         ''.join('<div><div class="iv-c"><u class="%s" style="height:%d%%"><b>$%s</b></u></div><span>%s</span><em>%s</em></div>'
+                 % (k, round(v / 5400 * 100), format(v, ','), l, j) for l, v, j, k in AGE)))
+IV_T = tally('Money owed to you, today', '$14,600 waiting.', pills((1, 'x'), (3, 'a'), (1, 'y'), (2, 'm')),
+             [('Days from finished to invoiced', '6'), ('Reminders sent', '0'), ('Oldest invoice', '41 days')])
+IV_A = facts('Cedar fence, 120 ft', 'One job', [('Finished', 'Fri, Oct 9', ''), ('Invoice sent', 'Thu, Oct 15', ''), ('Paid', 'Not yet, 27 days', 'y')])
+IV_B = summ([('Finished, not invoiced', '$2,100', False), ('Invoiced, not paid', '$12,500', False)], ('Waiting on money', '$14,600'), 'y')
+
+# ---------- 5: no reviews ----------
+STAR = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="m6 1.2 1.45 3 3.3.45-2.4 2.3.6 3.25L6 8.65 3.05 10.2l.6-3.25-2.4-2.3 3.3-.45z" fill="currentColor"/></svg>'
+tiles = ''.join('<i class="%s">%s</i>' % (('v', STAR) if j in (4, 13, 27) else (('k', '') if j in (9, 22) else ('', ''))) for j in range(34))
+RV = ('<div class="cd ch rv">%s<div class="ch-k"><span><i class="v"></i>Left a review</span><span><i class="k"></i>Asked, no review</span><span><i class="n"></i>Never asked</span></div>'
+      '<div class="rv-g">%s</div><div class="rv-c"><div class="fk">Search: fence company near me</div>'
+      '<div class="rv-r"><span>Top result</span><div><u style="width:100%%"></u></div><b>212 reviews</b></div>'
+      '<div class="rv-r you"><span>Ridgeline Fence</span><div><u style="width:18%%"></u></div><b>38 reviews</b></div></div></div>'
+      % (head('Finished jobs and reviews'), tiles))
+RV_T = tally('Reviews, last 30 days', '34 jobs. 3 reviews.',
+             '<div class="ta-s"><i class="a" style="flex:3"></i><i class="l" style="flex:2"></i><i class="x" style="flex:29"></i></div>',
+             [('Asked for a review', '5'), ('Never asked', '29'), ('Left one when asked', '3 of 5')])
+RV_A = facts('Last month', 'Your count', [('Jobs finished', '34', ''), ('Asked for a review', '5', ''), ('Reviews received', '3', 'y')])
+RV_B = summ([('Finished jobs never asked', '29', False), ('Leave one when asked', '3 in 5', True)], ('Reviews missed a month', 'About 17'), 'y')
+
+SUM = summ([('New callers who got no answer', '3', False), ('Leads that become jobs', '1 in 3', True), ('Average job', '$2,400', True)], ('Lost a month', '$2,400'))
 LEAKS = ['After-hours calls', 'Slow replies', 'Quotes that go quiet', 'Late invoices', 'No reviews']
-LK = ('<section class="lk"><div class="w lk-g"><aside class="lk-n"><ul>%s</ul></aside><div class="lk-m">'
-      '<article class="lk-b"><div class="lk-s"><p class="bs">The call you never knew about. <span>Saturday, 7:42 PM: a homeowner gets your voicemail and calls the next company on the list.</span></p></div>'
-      '<div class="lk-p"><div class="lk-pi">%s%s</div></div>'
-      '<div class="lk-f"><b>78%%</b><p>of people have taken their business elsewhere after a company didn&rsquo;t pick up.</p>'
-      '<span>CallRail survey of 1,000 consumers, 2025</span></div>'
-      '<div class="lk-2"><div><h3>How you&rsquo;d know.</h3><p>Open your call log and count the calls after five and on weekends. '
-      'Then count how many got a call back within the hour.</p>%s</div>'
-      '<div><h3>What it costs.</h3><p>New callers who got no answer, times how often you win the job, times what a job is worth. '
-      'The audit runs it on your numbers.</p>%s</div></div></article></div></div></section>'
-      % (''.join('<li%s>%s</li>' % (' class="on"' if i == 0 else '', n) for i, n in enumerate(LEAKS)), CHART, TALLY, LOG, SUM))
-
+BLOCKS = [
+    block(1, 'The call you never knew about.', 'Saturday, 7:42 PM: a homeowner gets your voicemail and calls the next company on the list.',
+          CHART + TALLY, ('78%', 'of people have taken their business elsewhere after a company didn&rsquo;t pick up.', 'CallRail survey of 1,000 consumers, 2025'),
+          'Open your call log and count the calls after five and on weekends. Then count how many got a call back within the hour.', LOG,
+          'New callers who got no answer, times how often you win the job, times what a job is worth. The audit runs it on your numbers.', SUM),
+    block(2, 'The lead that waited three hours.', 'A form comes in at 10:14. You&rsquo;re on a job until one. By then someone else has already replied.',
+          RP + RP_T, ('21&times;', 'more likely to qualify a lead when you reach them within 5 minutes instead of 30.', 'MIT / InsideSales lead response study'),
+          'Take last week&rsquo;s leads. Write down when each one came in and when someone first replied. The gap is your number.', RP_A,
+          'Leads that wait book less often. The audit splits yours by how fast they heard back and shows the booking rate for each.', RP_B),
+    block(3, 'The quote nobody chased.', 'It went out nine days ago and they&rsquo;ve opened it twice. Nobody checked in, so it&rsquo;s still sitting there.',
+          QT + QT_T, None,
+          'Open the quotes you sent last month. Count the ones with no answer from them and no follow-up from you.', QT_A,
+          'Add up what those quotes are worth, then take the share a simple check-in would bring back. The audit does both.', QT_B),
+    block(4, 'The job that&rsquo;s done and not paid.', 'The work finished on a Friday. The invoice went out the next Thursday, and nobody has brought it up since.',
+          IV + IV_T, None,
+          'List the jobs you finished last month. Next to each, write the day the invoice went out and the day the money arrived.', IV_A,
+          'This one isn&rsquo;t lost, it&rsquo;s late. It&rsquo;s your money sitting in someone else&rsquo;s account while you pay for materials.', IV_B),
+    block(5, 'The happy customer nobody asked.', 'They said it looked great at the gate. Nobody sent the link, so Google never heard about it.',
+          RV + RV_T, None,
+          'Count the jobs you finished last month and the reviews you got. Then search your trade and town and count theirs.', RV_A,
+          'A homeowner choosing between two companies sees the review counts side by side. The audit works out how many you missed.', RV_B),
+]
+LK = ('<section class="lk"><div class="w lk-g"><aside class="lk-n"><ul>%s</ul></aside><div class="lk-m">%s</div></div></section>'
+      % (''.join('<li%s><a href="#leak-%d">%s</a></li>' % (' class="on"' if i == 0 else '', i + 1, n) for i, n in enumerate(LEAKS)), ''.join(BLOCKS)))
 
 # ---------- the clock: light to dark through the dial ----------
 def tick(i, r0, r1, col):
@@ -122,6 +249,15 @@ AU = ('<section class="au"><div class="w au-g">%s</div><div class="w au-e"></div
       % ''.join('<div><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg><h3>%s</h3><p>%s</p></div>' % (IC[k], t, p) for k, t, p in PTS))
 
 JS = r"""
+(function(){
+var items=[].slice.call(document.querySelectorAll('.lk-n li')),blocks=[].slice.call(document.querySelectorAll('.lk-b')),strip=document.querySelector('.lk-n ul'),at=0,tick=false;
+if(!items.length)return;
+function pick(){tick=false;var line=innerHeight*.42,n=0;for(var i=0;i<blocks.length;i++){if(blocks[i].getBoundingClientRect().top<=line)n=i}
+if(n===at)return;items[at].classList.remove('on');items[n].classList.add('on');at=n;
+if(strip.scrollWidth>strip.clientWidth+4){var el=items[n];strip.scrollTo({left:el.offsetLeft-20,behavior:'smooth'})}}
+addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(pick)}},{passive:true});addEventListener('resize',pick);pick();
+})();
+
 (function(){
 var ck=document.querySelector('.ck'),top=document.querySelector('.top'),au=document.querySelector('.au');if(!ck)return;
 var q=location.search,force=/[?&]motion=on/.test(q),snap=/[?&]snap=1/.test(q),band=ck.querySelector('.ck-dark'),cur=-1,dk=false;
@@ -191,13 +327,13 @@ h1{font-size:clamp(40px,3.334vw,60px)}.sub{font-size:clamp(16px,1.05vw,19px)}
 .lk-n{border-right:1px solid var(--ln)}
 .lk-n ul{position:sticky;top:clamp(150px,11vw,210px);list-style:none;margin:clamp(84px,5.9vw,112px) 0 clamp(84px,5.9vw,112px);padding:0}
 .lk-n li{position:relative;padding:0 var(--pad);height:clamp(31px,2vw,38px);display:flex;align-items:center;font-size:clamp(15px,.95vw,18px);font-weight:500;letter-spacing:-.012em;color:var(--g3)}
-.lk-n li.on{color:var(--ink)}.lk-n li.on::before{content:"";position:absolute;left:-1px;top:3px;bottom:3px;width:2px;background:var(--blue)}
+.lk-n li.on{color:var(--ink)}
 .lk-s{padding:clamp(84px,5.9vw,112px) var(--pad) clamp(70px,4.9vw,94px)}
-.bs{margin:0;max-width:19em;font-size:clamp(19px,1.265vw,24px);line-height:1.16;letter-spacing:-.02em;font-weight:500;color:var(--ink);text-wrap:balance}
+.bs{margin:0;max-width:20.5em;font-size:clamp(19px,1.265vw,24px);line-height:1.16;letter-spacing:-.02em;font-weight:500;color:var(--ink);text-wrap:pretty}
 .bs span{color:var(--g2)}
 .lk-p{background:var(--pn);border-top:1px solid var(--ln);border-bottom:1px solid var(--ln);padding:clamp(52px,3.9vw,74px) 0;display:flex;justify-content:center}
 .lk-pi{position:relative;width:812px}
-@media(min-width:1700px){.lk-pi,.lg,.sm{zoom:1.1}}
+@media(min-width:1700px){.lk-pi,.lg,.sm,.fc,.bk{zoom:1.1}}
 @media(max-width:1300px){.lk-pi{zoom:.86}}
 
 .ch{width:640px;padding:18px 22px 16px}
@@ -234,6 +370,7 @@ h1{font-size:clamp(40px,3.334vw,60px)}.sub{font-size:clamp(16px,1.05vw,19px)}
 .lk-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 .lk-2>div{padding:clamp(42px,2.95vw,56px) clamp(24px,1.6vw,30px) clamp(60px,4.4vw,84px)}
 .lk-2>div+div{border-left:1px solid var(--ln)}
+.lk-2>div{position:relative}.lk-2>div::after{content:"Sample data";position:absolute;left:clamp(24px,1.6vw,30px);bottom:clamp(20px,1.6vw,30px);font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
 .lk-2 h3{margin:0;font-size:clamp(15.5px,.95vw,18px);font-weight:500;letter-spacing:-.012em}
 .lk-2 p{margin:4px 0 0;max-width:23em;font-size:clamp(15px,.9vw,17px);line-height:1.3;color:#8a8c92}
 .lg,.sm{margin:clamp(32px,2.6vw,50px) auto 0;width:392px;max-width:100%}
@@ -245,9 +382,69 @@ h1{font-size:clamp(40px,3.334vw,60px)}.sub{font-size:clamp(16px,1.05vw,19px)}
 .lg-r em.r{background:#fdeaea;color:#c23b3f}.lg-r em.y{background:#fff4d6;color:#a86a00}
 .sm{padding:4px 16px}
 .sm-r{display:flex;justify-content:space-between;align-items:center;height:46px;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--t2)}
-.sm-r i{font-style:normal;display:inline-block;width:18px;color:var(--t3)}.sm-r span{padding-left:0}.sm-r:first-child span{padding-left:18px}
+.sm-r i{font-style:normal;display:inline-block;width:18px;color:var(--t3)}
 .sm-r b{font-weight:560;color:var(--ink);font-variant-numeric:tabular-nums}
-.sm-r.t{border-bottom:0;height:54px;color:var(--ink);font-weight:560}.sm-r.t span{padding-left:18px}.sm-r.t b{font-size:19px;letter-spacing:-.02em;color:var(--red);font-weight:600}
+.sm-r.t{border-bottom:0;height:54px;color:var(--ink);font-weight:560}.sm-r.t b{font-size:19px;letter-spacing:-.02em;color:var(--red);font-weight:600}
+
+/* ---- pieces shared by the leak pictures ---- */
+html{scroll-behavior:smooth}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.lk-b{scroll-margin-top:clamp(60px,3.6vw,68px)}.lk-b+.lk-b{border-top:1px solid var(--ln)}
+.lk-n li a{display:flex;align-items:center;height:100%;transition:color .2s}.lk-n li:not(.on) a:hover{color:#8a8d93}
+.lk-n li{transition:color .25s}.lk-n li::before{content:"";position:absolute;left:-1px;top:3px;bottom:3px;width:2px;background:var(--blue);opacity:0;transition:opacity .25s}.lk-n li.on::before{opacity:1}
+.ta-b .y,.ta-s .y{background:var(--amber)}.ta-b .x{background:#d9dbe0}.ta-b .l,.ta-s .l{background:#a9c3f9}.ta-s .a{background:var(--blue)}.ta-s .x{background:#d9dbe0}
+.ta-s{display:flex;gap:3px;margin-top:12px}.ta-s i{height:18px;border-radius:3px}
+em.g,.tg-g{background:#e7f6ec;color:#1c7a43}em.r{background:#fdeaea;color:#c23b3f}em.y{background:#fff4d6;color:#a86a00}
+.ch em.g,.ch em.r,.ch em.y{font-style:normal;display:inline-flex;align-items:center;justify-content:center;height:21px;padding:0 8px;border-radius:999px;font-size:11.5px;font-weight:520;white-space:nowrap;justify-self:end}
+.fc,.bk{margin:clamp(32px,2.6vw,50px) auto 0;width:392px;max-width:100%}
+.fc-r{display:flex;justify-content:space-between;align-items:center;height:46px;padding:0 15px;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--t2)}.fc-r:last-child{border-bottom:0}
+.fc-r b{font-weight:560;color:var(--ink);font-variant-numeric:tabular-nums}.fc-r b.y{color:#a86a00}.fc-r b.r{color:var(--red)}
+.sm-r.t.y b{color:#a86a00}
+.bk-r{display:grid;grid-template-columns:128px 1fr 62px;align-items:center;gap:12px;height:46px;padding:0 15px;border-bottom:1px solid var(--line);font-size:13px;color:var(--t2)}.bk-r:last-child{border-bottom:0}
+.bk-r div{height:8px;border-radius:4px;background:#eef0f4;overflow:hidden}.bk-r u{display:block;height:100%;border-radius:4px;background:var(--blue)}
+.bk-r b{text-align:right;font-weight:560;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* the four later charts leave room for the card beside them */
+.rp,.qt,.iv,.rv{width:596px}
+/* 2: time to first reply */
+.ch-k .five{width:0;height:12px;border-radius:0;border-left:1.5px dashed var(--blue)}
+.rp-b{position:relative;margin-top:14px;--c1:118px;--c3:82px;--c4:78px}
+.rp-r{display:grid;grid-template-columns:var(--c1) 1fr var(--c3) var(--c4);align-items:center;height:33px;font-size:12.5px;color:var(--t2);border-radius:7px}
+.rp-r.hot{background:#f6f7f9;box-shadow:0 0 0 6px #f6f7f9}
+.rp-r>b{text-align:right;font-weight:540;color:var(--ink);font-variant-numeric:tabular-nums;padding-right:10px;white-space:nowrap}
+.rp-t{height:10px;border-radius:5px;background:#f1f2f5}.rp-t u{display:block;min-width:7px;height:100%;border-radius:5px}.rp-t u.b{background:var(--blue)}.rp-t u.c{background:var(--red)}
+.rp-t u.over{border-radius:5px 0 0 5px;-webkit-mask-image:linear-gradient(90deg,#000 86%,transparent);mask-image:linear-gradient(90deg,#000 86%,transparent)}
+.rp-five{position:absolute;top:-4px;bottom:-4px;left:calc(var(--c1) + (100% - var(--c1) - var(--c3) - var(--c4))*.0139);border-left:1.5px dashed var(--blue);z-index:1}
+.rp-five span{position:absolute;left:7px;top:-13px;font-size:11px;font-weight:540;color:var(--blue);white-space:nowrap;background:#fff;padding:0 3px;display:none}
+.rp-x{position:relative;height:16px;margin:8px 160px 0 118px;font-size:11.5px;color:var(--t3)}.rp-x span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}.rp-x span:nth-child(1){left:0;transform:none}.rp-x span:nth-child(2){left:33.33%}.rp-x span:nth-child(3){left:66.67%}.rp-x span:nth-child(4){left:auto;right:0;transform:none}
+/* 3: quotes since they were sent */
+.ch-k .s{background:var(--ink)}.ch-k .o{background:#fff;box-shadow:inset 0 0 0 1.6px var(--amber)}.ch-k .f{background:var(--blue)}.ch-k .g{background:#2a9d5c}
+.qt-b{margin-top:14px}
+.qt-r{display:grid;grid-template-columns:170px 1fr 92px;align-items:center;height:37px;font-size:12.5px;color:var(--t2);border-radius:7px}
+.qt-r.hot{background:#f6f7f9;box-shadow:0 0 0 6px #f6f7f9}
+.qt-r>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qt-r>span b{font:500 11.5px/1 "Geist Mono",monospace;color:var(--t3);margin-right:8px}
+.qt-t{position:relative;height:100%;margin:0 14px 0 6px}
+.qt-t::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:repeating-linear-gradient(90deg,rgba(23,24,26,.1) 0 2px,transparent 2px 6px)}
+.qt-t u{position:absolute;left:0;top:50%;height:2px;margin-top:-1px;border-radius:1px}.qt-t u.ok{background:#9bc6ad}.qt-t u.no{background:#f3cf7e}
+.qt-t i{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%}
+.qt-t .s{background:var(--ink)}.qt-t .o{background:#fff;box-shadow:inset 0 0 0 1.6px var(--amber)}.qt-t .f{background:var(--blue);box-shadow:0 0 0 2px #fff}
+.qt-t .g{width:15px;height:15px;margin:-7.5px 0 0 -7.5px;background:#2a9d5c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 15 15'%3E%3Cpath d='m4.3 7.7 2.1 2.1 4.3-4.6' fill='none' stroke='%23fff' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/15px;box-shadow:0 0 0 2px #fff}
+.qt-t .e{width:2px;height:11px;margin:-5.5px 0 0 -1px;border-radius:1px;background:var(--amber)}
+.qt-x{display:grid;grid-template-columns:4fr 4fr 4fr 2fr;margin:6px 106px 0 176px;font-size:11.5px;color:var(--t3)}.qt-x span{white-space:nowrap}
+/* 4: finished and unpaid */
+.iv-b{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.iv-c{height:196px;display:flex;align-items:flex-end;border-radius:9px;background:#f6f7f9}
+.iv-c u{position:relative;display:block;width:100%;border-radius:9px;text-decoration:none}
+.iv-c u.x{background:repeating-linear-gradient(135deg,#dfe2e8 0 2px,#eef0f4 2px 6px)}.iv-c u.a{background:var(--blue)}.iv-c u.y{background:var(--amber)}.iv-c u.m{background:var(--red)}
+.iv-c u b{position:absolute;left:11px;top:10px;font-size:15px;font-weight:600;letter-spacing:-.02em;color:#fff;font-variant-numeric:tabular-nums}.iv-c u.x b{color:var(--ink)}
+.iv-b span{display:block;margin-top:10px;font-size:12.5px;line-height:1.3;color:var(--ink);font-weight:520}.iv-b em{display:block;font-style:normal;font-size:12px;color:var(--t3)}
+/* 5: finished jobs and reviews */
+.ch-k .v{background:var(--blue)}.ch-k .k{background:#fff;box-shadow:inset 0 0 0 1.6px var(--blue)}.ch-k .n{background:#e3e5ea}
+.rv-g{display:grid;grid-template-columns:repeat(17,1fr);gap:7px;margin-top:16px}
+.rv-g i{aspect-ratio:1;border-radius:6px;background:#eceef2;display:grid;place-items:center;color:#fff}
+.rv-g i.v{background:var(--blue)}.rv-g i.k{background:#fff;box-shadow:inset 0 0 0 1.6px var(--blue)}.rv-g svg{width:56%;height:56%}
+.rv-c{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.rv-r{display:grid;grid-template-columns:118px 1fr 88px;align-items:center;gap:12px;height:32px;margin-top:6px;font-size:12.5px;color:var(--t2)}
+.rv-r div{height:10px;border-radius:5px;background:#f1f2f5}.rv-r u{display:block;height:100%;border-radius:5px;background:#c9ccd3}.rv-r.you u{background:var(--blue)}
+.rv-r b{text-align:right;font-weight:540;color:var(--ink);font-variant-numeric:tabular-nums}.rv-r.you span{color:var(--ink);font-weight:520}
 
 /* ---- the clock: the page turns dark through the dial ---- */
 :root{--dk:#101010;--dl:rgba(255,255,255,.1)}
@@ -285,7 +482,7 @@ h1{font-size:clamp(40px,3.334vw,60px)}.sub{font-size:clamp(16px,1.05vw,19px)}
 
 /* ---- narrower screens ---- */
 html,body{overflow-x:clip}
-@media(max-width:1300px){.lk-f{grid-template-columns:auto minmax(0,1fr)}.lk-f span{grid-column:2;text-align:left}.lg,.sm{zoom:.9}}
+@media(max-width:1300px){.lk-f{grid-template-columns:auto minmax(0,1fr)}.lk-f span{grid-column:2;text-align:left}.lg,.sm,.fc,.bk{zoom:.9}}
 @media(max-width:1180px){.w,.nav{width:calc(100vw - 64px)}.ck.on .ck-pin::before,.ck.on .ck-dark::before{width:calc(100vw - 64px)}.nav ul{display:none}}
 @media(max-width:860px){
 .w,.nav{width:calc(100vw - 32px)}:root{--pad:20px}
@@ -303,7 +500,6 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 .st-i{padding:72px var(--pad) 48px}.st-t{font-size:26px;line-height:1.14}
 .lk-g{grid-template-columns:minmax(0,1fr)}.lk-n{border-right:0;border-bottom:1px solid var(--ln);position:sticky;top:60px;z-index:5;background:rgba(250,250,250,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .lk-n ul{position:static;margin:0;display:flex;gap:22px;overflow-x:auto;padding:0 var(--pad);scrollbar-width:none}.lk-n li{padding:0;height:46px;white-space:nowrap;flex:none}
-.lk-n li.on::before{left:0;right:0;top:auto;bottom:-1px;width:auto;height:2px}
 .lk-s{padding:52px var(--pad) 44px}.bs{font-size:20px}
 .lk-p{padding:20px 16px}.lk-pi{width:100%;zoom:1}.ch{width:100%;padding:16px 14px 12px}.ch-h{display:block}.ch-h em{display:block;padding-top:8px}
 .ch-p{grid-template-columns:32px 1fr}.ch-a{height:210px}.ch-a i{width:6px;height:6px;margin:-3px 0 0 -3px}.ch-k{gap:12px}
@@ -314,6 +510,12 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 .ck-top .st-t{font-size:24px}.ck.on .ck-top{padding-top:96px}
 .au-g{grid-template-columns:minmax(0,1fr)}.au-g>div{min-height:0;display:grid;grid-template-columns:24px 1fr;column-gap:14px;padding:20px}.au-g>div+div{border-left:0;border-top:1px solid var(--dl)}
 .au-g svg{grid-row:1/3;margin:2px 0 0}.au-g h3{margin:0}.au-g p{max-width:none}
+.lk-n li a{height:46px}.lk-n li::before{left:0;right:0;top:auto;bottom:-1px;width:auto;height:2px}
+.fc,.bk{zoom:1;margin-top:24px}
+.rp-b{--c1:92px;--c3:70px;--c4:0px}.rp-r{font-size:12px}.rp-r>em{display:none!important}.rp-r>b{padding-right:0}.rp-x{margin:8px 70px 0 92px}
+.qt-r{grid-template-columns:104px 1fr 0}.qt-r>span b{display:block;margin:0 0 3px}.qt-r>em{display:none!important}.qt-t{margin:0 8px 0 6px}.qt-r{height:44px}.qt-x{margin:6px 8px 0 110px}
+.iv-b{gap:8px}.iv-c{height:150px}.iv-c u b{left:7px;top:8px;font-size:12.5px}.iv-b span{font-size:11.5px}
+.rv-g{gap:4px}.rv-g i{border-radius:4px}.rv-r{grid-template-columns:96px 1fr 78px;gap:8px}
 .lg-r{gap:9px;padding:0 12px}.lg-r em{font-size:11.5px;padding:0 7px}
 }
 '''

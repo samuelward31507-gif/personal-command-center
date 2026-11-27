@@ -138,3 +138,11 @@ Sam asked for the clock transition back as Cinder's own touch, simpler and in th
 - What happens: a centred statement ("Fifteen minutes to find yours.") sits over a small black dial drawn in hairlines. As the section scrolls in, the hand sweeps to fifteen minutes. The section then holds for about one and a third screens while the dial grows until it fills the window, the statement scrolls away, and "It starts with / The free audit" comes up inside it. The dial's inner ring of ticks stays as the line motif around the title. Five short points follow (what the audit checks).
 - How: one sticky stage, a `clip-path` circle on the dark layer, an SVG of ticks sized to the same radius, and one eased scroll value. No rings rotating, no frame squaring off, no light flood. The nav turns dark with the page.
 - Runs on phones. With reduced motion it is a plain hard edge to a dark band with the dial drawn at fifteen minutes. `?motion=on` forces the motion, `?snap=1` turns the easing off for screenshots.
+
+## 12. All five leaks, and the page on the preview (27 Nov)
+
+- The page so far is on the preview at `/new` (file `site/new.html`, written by `design/mock/mk_home.py`). The old homepage at `/` is untouched.
+- All five leak blocks are built on one pattern. The list on the left stays fixed and its highlight follows the block on screen; each item is a link to its block. On a phone the list is a strip under the nav that slides to the active item.
+- Pictures: calls by day and hour; time to first reply per lead; quotes on a fourteen-day line with opens and follow-ups; unpaid work by how long it has waited; finished jobs as tiles with the reviews marked.
+- Sourced lines: CallRail on the first block, MIT / InsideSales on the second. Quotes, invoices and reviews have none because the site has no sourced figure for them yet.
+- Sample numbers agree with the hero report: 71 replies and 58 booked, 19 quotes not signed, $3,100 a month from quotes, 34 finished jobs.
