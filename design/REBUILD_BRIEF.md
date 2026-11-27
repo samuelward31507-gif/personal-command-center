@@ -285,3 +285,20 @@ Sam approved the level of the second pass. The remaining five front-desk pages a
 | `/after-hours` | Dark, full width | One night on a ruler | Two calls at 2 AM going two ways; the rota; the morning summary |
 
 Questions are shown three ways across the group (cards, fold-out, list, plus the text thread on `/answering`). The nav now turns dark over dark sections on inner pages too. Done so far: home, free audit, everything, websites, and all six front-desk pages. Left: 25 build pages (calendar 4, quotes 3, money 2, after the job 6, getting found 2, team 5, custom 3), then software, trades, story, about, questions, whats-new, audit, privacy, terms, 404.
+
+### 22d. The whole site is on the light look (27 Nov)
+
+Sam, away from his desk: finish every page, same design, each with its own feel; he will review at his computer. All 46 pages in `site/` are now built by `mk_home.py` (home, new, free audit) and `mk_pages.py` (everything else). No old dark page is left. Preview only.
+
+- Build pages, 32 of them: each has its own top, one drawn picture and one diagram no other page uses. Shared across pages: the problem statement, the crossed-out/kept list, three ways of showing questions, the closing band.
+- Other pages: the app (drawn app window; what you see beside what the customer sees), trades (tape measure to quote), story (three chapters), about (the founder quote as the picture), questions (all 60, grouped, with the group list following the scroll), what's new (dated list), the site check, privacy, terms, 404.
+- Text for privacy, terms, questions and the site check is read from `design/mock/legacy/` (the old pages, saved before replacement) so nothing was retyped. The site-check form and result keep the ids and field names `site/audit.js` uses.
+- Founder quote appears only with words Sam has said: `/everything`, `/websites`, `/custom-builds`, `/story`, `/about`.
+
+Open before production:
+1. Analytics. Production's homepage loads `/t.js` (anonymous page views and booking clicks). The light pages do not load it. Going live as is would stop the site's analytics. Sam to decide; it is one line in `page()`.
+2. Terms page still names the old plans ("Book & Close", "Never Miss a Lead") and a $497 add-on, carried over word for word because it is legal text. It contradicts "no packages" elsewhere. Sam to decide the wording.
+3. About page carries "No contract. Month to month, cancel by text with 30 days' notice." from the old page.
+4. Not carried over from the old dark pages: the phone booking bar, the mega menu, the 3D/animated scenes.
+5. `light.css` still has unused styles from earlier homepage attempts; old dark scripts and styles are still in `site/assets/` but nothing links to them.
+6. Nothing was checked in a live browser: stills only. The site check posts to `/api/site-audit` and needs a real run on the preview.
