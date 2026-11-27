@@ -875,3 +875,10 @@ section:has(+ .t-sheet)::after{content:"";display:block;height:40px}section:has(
 .pg.v-l .pg-g>div{grid-template-columns:36px minmax(0,1fr);gap:6px 12px}.pg.v-l p{grid-column:2}
 .t-sheet{margin-top:-28px;border-radius:28px 28px 0 0}.t-arc{margin-top:-40px;border-radius:50% 50% 0 0/40px 40px 0 0}
 }
+
+.cq{border-top:1px solid var(--ln)}
+.fq .cq-t{margin:0 auto;max-width:19em;font:400 clamp(27px,2.35vw,45px)/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.018em;color:var(--ink);text-wrap:balance}
+.fq .cq-t.fill span{color:#c9cbd0;transition:color .25s}.fq .cq-t.fill span.on{color:var(--ink)}
+.fq .cq-s{margin:clamp(24px,2vw,38px) auto 0;max-width:34em;font-size:clamp(14.5px,.92vw,17px);line-height:1.5;color:var(--t2);text-wrap:balance}
+.cq+.sx{border-top:0}.sx+.cq{border-top:1px solid var(--ln)}
+@media(max-width:860px){.fq .cq-t{font-size:25px}}

@@ -1897,8 +1897,60 @@ section:has(+ .t-sheet)::after{content:"";display:block;height:40px}section:has(
 }
 """
 
+# =====================================================================================
+# Clean pass. Sam: not different designs. He wants what the founder quote on the homepage has: clean, calm, a small amount of
+# information. So each build page is now five things and nothing else: its top, the problem set like that quote, its one diagram,
+# its one line set the same way, and the questions folded shut. The rhythm rows above are no longer applied.
+# =====================================================================================
+def calm(big, small=''):
+    return ('<section class="fq cq"><div class="w fq-i"><p class="cq-t">%s</p>%s</div></section>' % (big, ('<p class="cq-s">%s</p>' % small) if small else ''))
+
+
+def pairs(sec):
+    for pat in (r'<summary>(.*?)<i></i></summary><p>(.*?)</p>', r'<dt><span>(.*?)</span></dt><dd><span>(.*?)</span></dd>', r'<dt>(.*?)</dt><dd>(.*?)</dd>', r'<h3>(.*?)</h3><p>(.*?)</p>'):
+        got = re.findall(pat, sec, re.S)
+        if got:
+            return got
+    return []
+
+
+OLDLINE = {'booking': ('The lead said yes. Then nobody picked a time.', 'A booked estimate is a job you can still win.'),
+           'follow-up': ('A quote nobody chases is a job you gave away.', 'Each quote is followed up on a schedule and stops the moment there is an answer.'),
+           'reviews': ('The shop with the reviews gets the call.', 'Most happy customers never leave a review because nobody asked.')}
+CLEAN = [k for k in RHYTHM if k != 'integrations']
+
+
+def clean(name, body):
+    if name not in CLEAN:
+        return body
+    secs = re.findall(r'<section\b.*?</section>', body, re.S)
+    kind = lambda x: KIND.get(re.match(r'<section class="([a-z0-9]+)', x).group(1), 'other')
+    top = [x for x in secs if kind(x) == 'top'][0]; dia = [x for x in secs if kind(x) == 'sx'][:1]; fa_ = [x for x in secs if kind(x) == 'faq'][0]
+    if name in X:
+        prob = calm(ap(X[name][0][0]), ap(X[name][0][1]))
+        wa, wb = (set(re.findall(r'[a-z]{4,}', t.lower())) for t in (X[name][0][0], BY[name]['line']))
+        line_ = calm(ap(X[name][3])) if len(wa & wb) >= .5 * min(len(wa), len(wb)) else calm(ap(BY[name]['line']), ap(X[name][3]))
+    else:
+        st_ = [x for x in secs if kind(x) == 'st'][0]; m = re.search(r'<p class="st-t">(.*?) <span>(.*?)</span></p>', st_, re.S)
+        prob = calm(m.group(1), m.group(2)); line_ = calm(*OLDLINE[name])
+    if not dia:
+        dia = [x for x in secs if kind(x) == 'sp'][:1]
+    dia = [re.sub(r'^<section class="[^"]*"', '<section class="sx wh"', d, count=1) if d.startswith('<section class="sx') else d for d in dia]
+    qa = pairs(fa_)[:3]; assert qa, name
+    return top + prob + ''.join(dia) + line_ + qfold(qa).replace('<details open>', '<details>') + CL
+
+
+CSS_CLEAN = r"""
+.cq{border-top:1px solid var(--ln)}
+.fq .cq-t{margin:0 auto;max-width:19em;font:400 clamp(27px,2.35vw,45px)/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.018em;color:var(--ink);text-wrap:balance}
+.fq .cq-t.fill span{color:#c9cbd0;transition:color .25s}.fq .cq-t.fill span.on{color:var(--ink)}
+.fq .cq-s{margin:clamp(24px,2vw,38px) auto 0;max-width:34em;font-size:clamp(14.5px,.92vw,17px);line-height:1.5;color:var(--t2);text-wrap:balance}
+.cq+.sx{border-top:0}.sx+.cq{border-top:1px solid var(--ln)}
+@media(max-width:860px){.fq .cq-t{font-size:25px}}
+"""
+
 out = pathlib.Path(ROOT) / 'site'
-CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY
+CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V
@@ -1949,7 +2001,7 @@ PAGES = [
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, restyle(slug, body), css=PCSS, index=(slug != '404'))
+        doc = page(title, desc, '/' + slug, clean(slug, body), css=PCSS, index=(slug != '404'))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)

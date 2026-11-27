@@ -310,3 +310,9 @@ Sam on the finished site: "seems like they all follow the same pattern", wants e
 - `RHYTHM` in `mk_pages.py`: one row per build page (30 rows, no two alike, asserted). It sets the running order of the sections below the top, which ones sit on dark, tint or blue, the shape of the statement, line and cells, and how a section hands over to the next: `t-sheet` (rounded sheet sliding over), `t-arc` (curved edge), `t-angle` (slanted edge), `t-rule` (heavy rule), `t-exp` (grows from an inset card to full width as it scrolls in; script in `light.js`, off under reduced motion).
 - `restyle()` applies the row after the page is assembled, so page content is untouched. Tops are not changed.
 - Not yet done: the same treatment for home-level pages (app, trades, story, about), and any page-to-page transition. If Sam meant the switch between pages rather than between sections, that is still open.
+
+### 22f. Clean pass (27 Nov)
+
+Sam, after the rhythm pass: "Not like different designs, but something like on the first page ... just clean with a small amount of info." Read as the founder quote block on the homepage (he has praised it twice). The rhythm rows are no longer applied.
+
+Every build page except answering, websites, everything and integrations is now five things: its top; the problem set like the homepage quote (serif line, one small sentence under it); its one diagram; its one line set the same way; three questions folded shut; then the closing band. `clean()` in `mk_pages.py` does this after assembly, so the fuller sections (crossed-out lists, numbered points, second pictures, included lists) are still in the file and can be put back per page.
