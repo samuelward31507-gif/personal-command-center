@@ -315,12 +315,29 @@ for i, (name, _, _, _, lit) in enumerate(PARTS):
 WHEEL = ('<svg class="bd-w" viewBox="0 0 520 412" role="img" aria-label="Eight parts of a business in a ring. Example audits light different parts for different businesses.">'
          '<g class="bd-k">%s</g>%s%s%s<text class="bd-c1" x="%d" y="%d" text-anchor="middle">Example audit</text>'
          '<text class="bd-c2" x="%d" y="%d" text-anchor="middle">5 of 8</text></svg>' % (ring, spokes, nodes, labels, CX, CY - 8, CX, CY + 20))
+def _pv_rings():
+    # eight thin rings, one per part of the business, each drawn differently; they build outward as the words scroll
+    def ticks(r, n, ln):
+        return ''.join('<line x1="200" y1="%.1f" x2="200" y2="%.1f" transform="rotate(%.2f 200 200)"/>' % (200 - r, 200 - r - ln, k * 360.0 / n) for k in range(n))
+    def nodes(r, angs):
+        return ''.join('<rect class="q" x="%.1f" y="%.1f" width="6" height="6"/>' % (200 + r * math.sin(math.radians(a)) - 3, 200 - r * math.cos(math.radians(a)) - 3) for a in angs)
+    R = [26, 48, 70, 92, 114, 136, 158, 182]
+    body = ['<circle class="s" pathLength="1" r="%d"/><rect class="q" x="197" y="197" width="6" height="6"/>' % R[0],
+            '<circle class="o" r="%d"/>' % R[1],
+            '<circle class="s" pathLength="1" r="%d"/>%s' % (R[2], nodes(R[2], (0, 90, 180, 270))),
+            ticks(R[3], 48, 7),
+            '<circle class="d" r="%d"/>' % R[4],
+            '<circle class="s" pathLength="1" r="%d"/>%s' % (R[5], nodes(R[5], (40, 160, 280))),
+            '<circle class="o" r="%d"/>' % R[6],
+            '<circle class="s" pathLength="1" r="%d"/>%s' % (R[7], ticks(R[7], 72, 6))]
+    return '<svg class="pv-d" viewBox="0 0 400 400" aria-hidden="true">%s</svg>' % ''.join('<g style="--i:%d">%s</g>' % (k, b.replace('<circle ', '<circle cx="200" cy="200" transform="rotate(-90 200 200)" ')) for k, b in enumerate(body))
+
+
 BD = ('<section class="pv"><div class="w pv-h"><span class="lb">After the audit</span>'
       '<p class="st-t">Then we build whatever fixes it. <span>Made for your business, not pulled from a template.</span></p></div>'
-      '<div class="pv-p" data-sp><div class="pv-s"><div class="pv-c">%s</div><div class="pv-k" aria-hidden="true">%s</div></div></div>'
+      '<div class="pv-p" data-sp><div class="pv-s"><div class="w pv-g"><div class="pv-a">%s</div><div class="pv-w"><div class="pv-c">%s</div></div></div></div></div>'
       '<div class="w pv-e"><a class="btn g" href="/everything">See everything we build</a><p>The one thing we don&rsquo;t do is run ads.</p></div></section>'
-      % (''.join('<a class="pv-x%s" style="--i:%d" href="%s"><em>0%d / 08</em><b>%s</b><span>%s</span></a>' % (' z' if k == 7 else '', k, h, k + 1, n, t) for k, (n, _, t, h, _) in enumerate(PARTS)),
-         ''.join('<i style="--i:%d"></i>' % k for k in range(8))))
+      % (_pv_rings(), ''.join('<a class="pv-x" style="--i:%d" href="%s"><em>0%d</em><b>%s</b><span>%s</span></a>' % (k, h, k + 1, n, t) for k, (n, _, t, h, _) in enumerate(PARTS))))
 
 # ---------- how it works: the call, the findings, the build, it runs ----------
 STEPS = [('The call.', 'Fifteen minutes, part by part: how work comes in, gets quoted, gets done and gets paid.'),
@@ -645,22 +662,23 @@ CSS = r'''
 .hv-s b{display:block;margin-top:18px;font:400 clamp(24px,2.1vw,38px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.02em}
 .hv-s span{display:block;margin-top:14px;max-width:19em;font-size:clamp(14.5px,1vw,17px);line-height:1.5;color:#8f9197}
 .pv-h{padding:clamp(110px,11vw,210px) var(--pad) clamp(40px,5vw,90px);box-sizing:border-box}
-.pv-c{display:grid;gap:0;padding:0 var(--pad)}
-.pv-x{display:block;padding:26px 0;border-top:1px solid var(--dl);color:#fff}
+.pv-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(32px,5vw,96px);padding:0 var(--pad);box-sizing:border-box}
+.pv-a{display:flex;justify-content:center}.pv-d{width:min(460px,100%);height:auto}
+.pv-d *{fill:none;stroke:#fff;stroke-width:1;vector-effect:non-scaling-stroke}.pv-d .q{fill:#fff;stroke:none}.pv-d .o{stroke-dasharray:1.5 5;opacity:.7}.pv-d .d{stroke-dasharray:9 7}
+.pv-d g{--q:clamp(0,calc(var(--p,1)*7 - var(--i) + .7),1);opacity:var(--q);transform-origin:200px 200px;transform:rotate(calc((1 - var(--q))*-50deg))}
+.pv-d .s{stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--q))}
+.pv-x{display:block;padding:24px 0;border-top:1px solid var(--dl);color:#fff}
 .pv-x em{display:block;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:#7f8187}
-.pv-x b{display:block;margin-top:12px;font:400 34px/1.05 Georgia,"Times New Roman",serif;letter-spacing:-.025em}
-.pv-x span{display:block;margin-top:10px;font-size:15.5px;line-height:1.45;color:#8f9197}.pv-k{display:none}
+.pv-x b{display:block;margin-top:10px;font:400 clamp(32px,3.6vw,64px)/1.05 Georgia,"Times New Roman",serif;letter-spacing:-.025em}
+.pv-x span{display:block;margin-top:10px;font-size:clamp(14.5px,1.05vw,18px);line-height:1.45;color:#a3a5aa}
 .pv-e{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:clamp(56px,6vw,110px) var(--pad) clamp(90px,9vw,170px);box-sizing:border-box}.pv-e p{margin:0;font-size:14.5px;color:#7f8187}
-.pv-p.sp-live{height:560vh}.pv-p.sp-live .pv-s{position:sticky;top:0;height:100vh;overflow:hidden}
-.pv-p.sp-live .pv-c{position:absolute;inset:0;padding:0}
-.pv-p.sp-live .pv-x{--x:calc(var(--p,0)*7.6 - var(--i) + .5);--act:clamp(0,calc(min(var(--x),1 - var(--x))*5),1);position:absolute;left:0;right:0;top:50%;padding:0 24px;border:0;text-align:center;opacity:var(--act);transform:translateY(calc(-50% + (.5 - var(--x))*70px));pointer-events:none}
-.pv-p.sp-live .pv-x.z{--act:clamp(0,calc(var(--x)*5),1);transform:translateY(calc(-50% + (.5 - min(var(--x),.5))*70px))}
-.pv-p.sp-live .pv-x b{margin-top:clamp(20px,3vh,36px);font-size:clamp(60px,10vw,190px);line-height:.98;letter-spacing:-.04em}
-.pv-p.sp-live .pv-x span{margin-top:clamp(22px,3.4vh,40px);font-size:clamp(16px,1.25vw,22px)}
-.pv-p.sp-live .pv-k{display:flex;gap:10px;position:absolute;left:50%;bottom:clamp(56px,9vh,96px);transform:translateX(-50%)}
-.pv-k i{width:34px;border-top:1px solid #fff;opacity:clamp(.2,calc((var(--p,0)*7.6 - var(--i) + .5)*8),1)}
+.pv-p.sp-live{height:520vh}.pv-p.sp-live .pv-s{position:sticky;top:0;height:100vh;overflow:hidden}.pv-p.sp-live .pv-g{height:100%}
+.pv-p.sp-live .pv-w{--h:clamp(120px,19vh,170px);height:100vh;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,transparent 6%,#000 34%,#000 66%,transparent 94%);mask-image:linear-gradient(180deg,transparent 6%,#000 34%,#000 66%,transparent 94%)}
+.pv-p.sp-live .pv-c{transform:translateY(calc(50vh - (var(--p,0)*7 + .5)*var(--h)))}
+.pv-p.sp-live .pv-x{--f:calc(var(--p,0)*7 - var(--i));--n:clamp(0,calc(1 - max(var(--f),calc(var(--f)*-1))*1.5),1);height:var(--h);box-sizing:border-box;padding:0;border:0;display:flex;flex-direction:column;justify-content:center;opacity:calc(.2 + var(--n)*.8)}
+.pv-p.sp-live .pv-x span{opacity:var(--n)}
 @media(max-width:860px){.hv-i{padding:72px var(--pad)}.hv-s{grid-template-columns:minmax(0,1fr);gap:34px;padding-top:0;padding-left:28px;margin-top:48px}.hv-s::before,.hv-s::after{left:3px;right:auto;top:6px;bottom:0;border-top:0;border-left:1px dashed rgba(255,255,255,.22)}.hv-s::after{border-left:1px solid #fff;transform-origin:top;transform:scaleY(var(--d))}
-.hv-s i{left:-28px;top:3px}.pv-h{padding:72px var(--pad) 36px}.pv-e{padding:40px var(--pad) 72px}}
+.hv-s i{left:-28px;top:3px}.pv-g{grid-template-columns:minmax(0,1fr)}.pv-d{width:220px;margin-bottom:8px}.pv-h{padding:72px var(--pad) 36px}.pv-e{padding:40px var(--pad) 72px}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
