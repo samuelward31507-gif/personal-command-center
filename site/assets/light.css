@@ -151,6 +151,14 @@ td.n{font-variant-numeric:tabular-nums;color:var(--red);font-weight:560}
 .pv::before{bottom:auto;height:110vh}
 .pv-p.sp-live .pv-s::before{-webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 50%,#000 0,transparent 100%);mask-image:radial-gradient(ellipse 70% 60% at 50% 50%,#000 0,transparent 100%)}
 .hv-i,.pv-h,.pv-g,.pv-e{position:relative;z-index:1}
+/* the frame behind the dark homepage sections: side rules, a ruled strip between blocks, small nodes where lines meet */
+.hv,.pv{border-top:1px solid var(--dl)}
+.hv-i,.pv-h,.pv-g,.pv-e{border-left:1px solid var(--dl);border-right:1px solid var(--dl)}
+.rsp{position:relative;z-index:1;height:58px;box-sizing:border-box;border:1px solid var(--dl);background:repeating-linear-gradient(90deg,var(--dl) 0 1px,transparent 1px 58px)}
+.rsp::before,.rsp::after{content:"";position:absolute;top:-3px;width:5px;height:5px;background:#55575d;box-shadow:0 58px 0 #55575d}.rsp::before{left:-3px}.rsp::after{right:-3px}
+.pv-p.sp-live .pv-g::before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--dl)}
+.pv-p.sp-live .pv-g::after{content:"";position:absolute;left:calc(50% - 2.5px);top:calc(50% - 2.5px);width:5px;height:5px;background:#55575d}
+.pv-e{border-bottom:1px solid var(--dl)}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}

@@ -336,7 +336,7 @@ def _pv_rings():
 BD = ('<section class="pv"><div class="w pv-h"><span class="lb">After the audit</span>'
       '<p class="st-t">Then we build whatever fixes it. <span>Made for your business, not pulled from a template.</span></p></div>'
       '<div class="pv-p" data-sp><div class="pv-s"><div class="w pv-g"><div class="pv-a">%s</div><div class="pv-w"><div class="pv-c">%s</div></div></div></div></div>'
-      '<div class="w pv-e"><a class="btn g" href="/everything">See everything we build</a><p>The one thing we don&rsquo;t do is run ads.</p></div></section>'
+      '<div class="w rsp" aria-hidden="true"></div><div class="w pv-e"><a class="btn g" href="/everything">See everything we build</a><p>The one thing we don&rsquo;t do is run ads.</p></div></section>'
       % (_pv_rings(), ''.join('<a class="pv-x" style="--i:%d" href="%s"><em>0%d</em><b>%s</b><span>%s</span></a>' % (k, h, k + 1, n, t) for k, (n, _, t, h, _) in enumerate(PARTS))))
 
 # ---------- how it works: the call, the findings, the build, it runs ----------
@@ -354,7 +354,7 @@ FD = ('<div class="fd"><div class="fd-h"><span class="dot"></span><b>Audit findi
       % ''.join('<div class="fd-r"><small>%s</small><b>%s</b><em class="%s">%s</em><span><i></i>%s</span></div>' % (p, f, t, c, b) for p, f, c, t, b in FIND))
 HW = ('<section class="hv"><div class="w hv-i"><span class="lb">How it works</span>'
       '<p class="st-t">One call. Then a plan with numbers on it. <span>You decide what gets built.</span></p>'
-      '<div class="hv-s" data-in>%s</div></div></section>'
+      '<div class="hv-s" data-in>%s</div></div><div class="w rsp" aria-hidden="true"></div></section>'
       % ''.join('<div style="--i:%d"><i></i><em>0%d</em><b>%s</b><span>%s</span></div>' % (k, k + 1, a, b) for k, (a, b) in enumerate(STEPS)))
 CL = ('<section class="cl"><div class="w cl-i"><h2>Find out what you&rsquo;re missing.</h2><p>A free audit of your business. You keep what we find.</p>'
       '<div><a class="btn" %s>Book your free audit</a><a class="btn g" href="/free-audit">See what we check</a></div></div></section>' % CAL)
@@ -686,6 +686,14 @@ CSS = r'''
 .pv::before{bottom:auto;height:110vh}
 .pv-p.sp-live .pv-s::before{-webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 50%,#000 0,transparent 100%);mask-image:radial-gradient(ellipse 70% 60% at 50% 50%,#000 0,transparent 100%)}
 .hv-i,.pv-h,.pv-g,.pv-e{position:relative;z-index:1}
+/* the frame behind the dark homepage sections: side rules, a ruled strip between blocks, small nodes where lines meet */
+.hv,.pv{border-top:1px solid var(--dl)}
+.hv-i,.pv-h,.pv-g,.pv-e{border-left:1px solid var(--dl);border-right:1px solid var(--dl)}
+.rsp{position:relative;z-index:1;height:58px;box-sizing:border-box;border:1px solid var(--dl);background:repeating-linear-gradient(90deg,var(--dl) 0 1px,transparent 1px 58px)}
+.rsp::before,.rsp::after{content:"";position:absolute;top:-3px;width:5px;height:5px;background:#55575d;box-shadow:0 58px 0 #55575d}.rsp::before{left:-3px}.rsp::after{right:-3px}
+.pv-p.sp-live .pv-g::before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--dl)}
+.pv-p.sp-live .pv-g::after{content:"";position:absolute;left:calc(50% - 2.5px);top:calc(50% - 2.5px);width:5px;height:5px;background:#55575d}
+.pv-e{border-bottom:1px solid var(--dl)}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
