@@ -315,11 +315,12 @@ for i, (name, _, _, _, lit) in enumerate(PARTS):
 WHEEL = ('<svg class="bd-w" viewBox="0 0 520 412" role="img" aria-label="Eight parts of a business in a ring. Example audits light different parts for different businesses.">'
          '<g class="bd-k">%s</g>%s%s%s<text class="bd-c1" x="%d" y="%d" text-anchor="middle">Example audit</text>'
          '<text class="bd-c2" x="%d" y="%d" text-anchor="middle">5 of 8</text></svg>' % (ring, spokes, nodes, labels, CX, CY - 8, CX, CY + 20))
-BD = ('<section class="pb" data-sp><div class="pb-s"><div class="w pb-g"><div class="pb-t"><span class="lb">After the audit</span>'
-      '<p class="st-t">Then we build whatever fixes it. <span>Made for your business, not pulled from a template. No two audits turn up the same list, '
-      'so no two builds are the same.</span></p><a class="btn g" href="/everything">See everything we build</a><p class="pb-n">The one thing we don&rsquo;t do is run ads.</p></div>'
-      '<ol>%s</ol></div></div></section>'
-      % ''.join('<li class="%s" style="--i:%d"><a href="%s"><i>0%d</i><b>%s</b><span>%s</span></a></li>' % ('z' if k == 7 else '', k, h, k + 1, n, t) for k, (n, _, t, h, _) in enumerate(PARTS)))
+BD = ('<section class="pv"><div class="w pv-h"><span class="lb">After the audit</span>'
+      '<p class="st-t">Then we build whatever fixes it. <span>Made for your business, not pulled from a template.</span></p></div>'
+      '<div class="pv-p" data-sp><div class="pv-s"><div class="pv-c">%s</div><div class="pv-k" aria-hidden="true">%s</div></div></div>'
+      '<div class="w pv-e"><a class="btn g" href="/everything">See everything we build</a><p>The one thing we don&rsquo;t do is run ads.</p></div></section>'
+      % (''.join('<a class="pv-x%s" style="--i:%d" href="%s"><em>0%d / 08</em><b>%s</b><span>%s</span></a>' % (' z' if k == 7 else '', k, h, k + 1, n, t) for k, (n, _, t, h, _) in enumerate(PARTS)),
+         ''.join('<i style="--i:%d"></i>' % k for k in range(8))))
 
 # ---------- how it works: the call, the findings, the build, it runs ----------
 STEPS = [('The call.', 'Fifteen minutes, part by part: how work comes in, gets quoted, gets done and gets paid.'),
@@ -334,10 +335,10 @@ FIND = [('Front desk', '8 calls missed after hours', '$2,400 a month', 'r', 'A t
 FD = ('<div class="fd"><div class="fd-h"><span class="dot"></span><b>Audit findings</b><span>Ridgeline Fence</span><span class="tag">Example business, sample data</span></div>%s'
       '<div class="fd-f"><div><b>$6,400</b>lost a month</div><div><b>$14,600</b>waiting to be paid</div><div><b>11 hours</b>by hand a week</div></div></div>'
       % ''.join('<div class="fd-r"><small>%s</small><b>%s</b><em class="%s">%s</em><span><i></i>%s</span></div>' % (p, f, t, c, b) for p, f, c, t, b in FIND))
-HW = ('<section class="hw"><div class="w hw-g"><div class="hw-t"><span class="lb">How it works</span>'
+HW = ('<section class="hv"><div class="w hv-i"><span class="lb">How it works</span>'
       '<p class="st-t">One call. Then a plan with numbers on it. <span>You decide what gets built.</span></p>'
-      '<ol>%s</ol></div><div class="hw-r">%s</div></div></section>'
-      % (''.join('<li><div><b>%s</b><span>%s</span></div></li>' % st for st in STEPS), '@@RUN@@'))
+      '<div class="hv-s" data-in>%s</div></div></section>'
+      % ''.join('<div style="--i:%d"><i></i><em>0%d</em><b>%s</b><span>%s</span></div>' % (k, k + 1, a, b) for k, (a, b) in enumerate(STEPS)))
 CL = ('<section class="cl"><div class="w cl-i"><h2>Find out what you&rsquo;re missing.</h2><p>A free audit of your business. You keep what we find.</p>'
       '<div><a class="btn" %s>Book your free audit</a><a class="btn g" href="/free-audit">See what we check</a></div></div></section>' % CAL)
 
@@ -459,7 +460,7 @@ new IntersectionObserver(function(e){if(e[0].isIntersecting){bd.classList.remove
 })();
 
 (function(){
-var ck=document.querySelector('.ck'),top=document.querySelector('.top'),darks=document.querySelectorAll('.au,.hw,.bd,.pb,.cl,.fo');if(!ck)return;
+var ck=document.querySelector('.ck'),top=document.querySelector('.top'),darks=document.querySelectorAll('.au,.hw,.hv,.pv,.cl,.fo');if(!ck)return;
 var q=location.search,force=/[?&]motion=on/.test(q),snap=/[?&]snap=1/.test(q),band=ck.querySelector('.ck-dark'),cur=-1,dk=false;
 if(/[?&]motion=off/.test(q)){onscroll=nav;nav();return}
 ck.classList.add('on');
@@ -630,6 +631,36 @@ CSS = r'''
 .pb.sp-live{height:440vh}.pb.sp-live .pb-s{position:sticky;top:0;height:100vh;display:flex;align-items:center}.pb.sp-live .pb-g{height:100%;padding-top:84px;padding-bottom:40px}
 .pb:not(.sp-live) li{--lit:1;--act:1}
 @media(max-width:860px){.pb-g{grid-template-columns:minmax(0,1fr);padding:56px var(--pad)}.pb li b{font-size:26px}.tml-r{grid-template-columns:62px minmax(0,1fr);column-gap:36px}.tml-l::before,.tml-l::after{left:78px}.tml-r i{left:75px}}
+/* ---- homepage dark sections, opened up: one idea per screen ---- */
+.hv,.pv{background:var(--dk);color:#fff}
+.hv .lb,.pv .lb{background:rgba(255,255,255,.09);color:#c9cbd0}
+.hv-i{padding:clamp(110px,11vw,210px) var(--pad) clamp(110px,11vw,200px);box-sizing:border-box}
+.hv .st-t,.pv .st-t{margin-top:20px;max-width:17em;color:#fff;font-size:clamp(30px,3.5vw,64px);line-height:1.06}.hv .st-t span,.pv .st-t span{color:#7f8187}
+.hv-s{--d:clamp(0,calc((var(--p,1) - .2)*1.5),1);position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(24px,4vw,72px);margin-top:clamp(72px,8vw,150px);padding-top:44px}
+.hv-s::before{content:"";position:absolute;left:0;right:0;top:3px;border-top:1px dashed rgba(255,255,255,.22)}
+.hv-s::after{content:"";position:absolute;left:0;right:0;top:3px;border-top:1px solid #fff;transform-origin:left;transform:scaleX(var(--d))}
+.hv-s div{--q:clamp(0,calc(var(--d)*4.4 - var(--i) - .05),1);position:relative;opacity:calc(.22 + var(--q)*.78)}
+.hv-s i{position:absolute;left:0;top:-44px;width:7px;height:7px;background:#fff;transform:scale(var(--q))}
+.hv-s em{display:block;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:#7f8187}
+.hv-s b{display:block;margin-top:18px;font:400 clamp(24px,2.1vw,38px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.02em}
+.hv-s span{display:block;margin-top:14px;max-width:19em;font-size:clamp(14.5px,1vw,17px);line-height:1.5;color:#8f9197}
+.pv-h{padding:clamp(110px,11vw,210px) var(--pad) clamp(40px,5vw,90px);box-sizing:border-box}
+.pv-c{display:grid;gap:0;padding:0 var(--pad)}
+.pv-x{display:block;padding:26px 0;border-top:1px solid var(--dl);color:#fff}
+.pv-x em{display:block;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:#7f8187}
+.pv-x b{display:block;margin-top:12px;font:400 34px/1.05 Georgia,"Times New Roman",serif;letter-spacing:-.025em}
+.pv-x span{display:block;margin-top:10px;font-size:15.5px;line-height:1.45;color:#8f9197}.pv-k{display:none}
+.pv-e{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:clamp(56px,6vw,110px) var(--pad) clamp(90px,9vw,170px);box-sizing:border-box}.pv-e p{margin:0;font-size:14.5px;color:#7f8187}
+.pv-p.sp-live{height:560vh}.pv-p.sp-live .pv-s{position:sticky;top:0;height:100vh;overflow:hidden}
+.pv-p.sp-live .pv-c{position:absolute;inset:0;padding:0}
+.pv-p.sp-live .pv-x{--x:calc(var(--p,0)*7.6 - var(--i) + .5);--act:clamp(0,calc(min(var(--x),1 - var(--x))*5),1);position:absolute;left:0;right:0;top:50%;padding:0 24px;border:0;text-align:center;opacity:var(--act);transform:translateY(calc(-50% + (.5 - var(--x))*70px));pointer-events:none}
+.pv-p.sp-live .pv-x.z{--act:clamp(0,calc(var(--x)*5),1);transform:translateY(calc(-50% + (.5 - min(var(--x),.5))*70px))}
+.pv-p.sp-live .pv-x b{margin-top:clamp(20px,3vh,36px);font-size:clamp(60px,10vw,190px);line-height:.98;letter-spacing:-.04em}
+.pv-p.sp-live .pv-x span{margin-top:clamp(22px,3.4vh,40px);font-size:clamp(16px,1.25vw,22px)}
+.pv-p.sp-live .pv-k{display:flex;gap:10px;position:absolute;left:50%;bottom:clamp(56px,9vh,96px);transform:translateX(-50%)}
+.pv-k i{width:34px;border-top:1px solid #fff;opacity:clamp(.2,calc((var(--p,0)*7.6 - var(--i) + .5)*8),1)}
+@media(max-width:860px){.hv-i{padding:72px var(--pad)}.hv-s{grid-template-columns:minmax(0,1fr);gap:34px;padding-top:0;padding-left:28px;margin-top:48px}.hv-s::before,.hv-s::after{left:3px;right:auto;top:6px;bottom:0;border-top:0;border-left:1px dashed rgba(255,255,255,.22)}.hv-s::after{border-left:1px solid #fff;transform-origin:top;transform:scaleY(var(--d))}
+.hv-s i{left:-28px;top:3px}.pv-h{padding:72px var(--pad) 36px}.pv-e{padding:40px var(--pad) 72px}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
@@ -1166,7 +1197,7 @@ NAV = ('<a class="skip" href="#main">Skip to content</a><header class="top"><div
        '<ul>%s</ul><div class="nav-r"><a class="btn" %s>Book your free audit</a>'
        '<details class="mm"><summary aria-label="Menu"><i></i><i></i></summary><nav class="mm-p" aria-label="Menu">%s</nav></details></div></div></header>'
        % (mark, ''.join('<li><a href="%s">%s</a></li>' % l for l in LINKS), CAL, ''.join('<a href="%s">%s</a>' % l for l in LINKS + [('/questions', 'Questions')])))
-HW = HW.replace('@@RUN@@', RUN)
+
 
 # =====================================================================================
 # Inner pages. Each one is built from the same pieces as the homepage and wrapped by page().

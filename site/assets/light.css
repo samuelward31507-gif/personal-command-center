@@ -113,6 +113,36 @@ td.n{font-variant-numeric:tabular-nums;color:var(--red);font-weight:560}
 .pb.sp-live{height:440vh}.pb.sp-live .pb-s{position:sticky;top:0;height:100vh;display:flex;align-items:center}.pb.sp-live .pb-g{height:100%;padding-top:84px;padding-bottom:40px}
 .pb:not(.sp-live) li{--lit:1;--act:1}
 @media(max-width:860px){.pb-g{grid-template-columns:minmax(0,1fr);padding:56px var(--pad)}.pb li b{font-size:26px}.tml-r{grid-template-columns:62px minmax(0,1fr);column-gap:36px}.tml-l::before,.tml-l::after{left:78px}.tml-r i{left:75px}}
+/* ---- homepage dark sections, opened up: one idea per screen ---- */
+.hv,.pv{background:var(--dk);color:#fff}
+.hv .lb,.pv .lb{background:rgba(255,255,255,.09);color:#c9cbd0}
+.hv-i{padding:clamp(110px,11vw,210px) var(--pad) clamp(110px,11vw,200px);box-sizing:border-box}
+.hv .st-t,.pv .st-t{margin-top:20px;max-width:17em;color:#fff;font-size:clamp(30px,3.5vw,64px);line-height:1.06}.hv .st-t span,.pv .st-t span{color:#7f8187}
+.hv-s{--d:clamp(0,calc((var(--p,1) - .2)*1.5),1);position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(24px,4vw,72px);margin-top:clamp(72px,8vw,150px);padding-top:44px}
+.hv-s::before{content:"";position:absolute;left:0;right:0;top:3px;border-top:1px dashed rgba(255,255,255,.22)}
+.hv-s::after{content:"";position:absolute;left:0;right:0;top:3px;border-top:1px solid #fff;transform-origin:left;transform:scaleX(var(--d))}
+.hv-s div{--q:clamp(0,calc(var(--d)*4.4 - var(--i) - .05),1);position:relative;opacity:calc(.22 + var(--q)*.78)}
+.hv-s i{position:absolute;left:0;top:-44px;width:7px;height:7px;background:#fff;transform:scale(var(--q))}
+.hv-s em{display:block;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:#7f8187}
+.hv-s b{display:block;margin-top:18px;font:400 clamp(24px,2.1vw,38px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.02em}
+.hv-s span{display:block;margin-top:14px;max-width:19em;font-size:clamp(14.5px,1vw,17px);line-height:1.5;color:#8f9197}
+.pv-h{padding:clamp(110px,11vw,210px) var(--pad) clamp(40px,5vw,90px);box-sizing:border-box}
+.pv-c{display:grid;gap:0;padding:0 var(--pad)}
+.pv-x{display:block;padding:26px 0;border-top:1px solid var(--dl);color:#fff}
+.pv-x em{display:block;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:#7f8187}
+.pv-x b{display:block;margin-top:12px;font:400 34px/1.05 Georgia,"Times New Roman",serif;letter-spacing:-.025em}
+.pv-x span{display:block;margin-top:10px;font-size:15.5px;line-height:1.45;color:#8f9197}.pv-k{display:none}
+.pv-e{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:clamp(56px,6vw,110px) var(--pad) clamp(90px,9vw,170px);box-sizing:border-box}.pv-e p{margin:0;font-size:14.5px;color:#7f8187}
+.pv-p.sp-live{height:560vh}.pv-p.sp-live .pv-s{position:sticky;top:0;height:100vh;overflow:hidden}
+.pv-p.sp-live .pv-c{position:absolute;inset:0;padding:0}
+.pv-p.sp-live .pv-x{--x:calc(var(--p,0)*7.6 - var(--i) + .5);--act:clamp(0,calc(min(var(--x),1 - var(--x))*5),1);position:absolute;left:0;right:0;top:50%;padding:0 24px;border:0;text-align:center;opacity:var(--act);transform:translateY(calc(-50% + (.5 - var(--x))*70px));pointer-events:none}
+.pv-p.sp-live .pv-x.z{--act:clamp(0,calc(var(--x)*5),1);transform:translateY(calc(-50% + (.5 - min(var(--x),.5))*70px))}
+.pv-p.sp-live .pv-x b{margin-top:clamp(20px,3vh,36px);font-size:clamp(60px,10vw,190px);line-height:.98;letter-spacing:-.04em}
+.pv-p.sp-live .pv-x span{margin-top:clamp(22px,3.4vh,40px);font-size:clamp(16px,1.25vw,22px)}
+.pv-p.sp-live .pv-k{display:flex;gap:10px;position:absolute;left:50%;bottom:clamp(56px,9vh,96px);transform:translateX(-50%)}
+.pv-k i{width:34px;border-top:1px solid #fff;opacity:clamp(.2,calc((var(--p,0)*7.6 - var(--i) + .5)*8),1)}
+@media(max-width:860px){.hv-i{padding:72px var(--pad)}.hv-s{grid-template-columns:minmax(0,1fr);gap:34px;padding-top:0;padding-left:28px;margin-top:48px}.hv-s::before,.hv-s::after{left:3px;right:auto;top:6px;bottom:0;border-top:0;border-left:1px dashed rgba(255,255,255,.22)}.hv-s::after{border-left:1px solid #fff;transform-origin:top;transform:scaleY(var(--d))}
+.hv-s i{left:-28px;top:3px}.pv-h{padding:72px var(--pad) 36px}.pv-e{padding:40px var(--pad) 72px}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
