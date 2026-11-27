@@ -59,8 +59,6 @@ def stack():
 AUDIT = ax('rev one long', 6, 'Step one', 'First, a free audit.', 'We go through your business layer by layer and find what is costing you jobs. You keep the plan, whether or not you work with us.', BOOK, stack(), 'a', tag='h2', sid=' id="inside"', panel='line', small='')
 
 # 3. speed to lead
-SPEED = ax('', 4, 'Front desk', 'New leads hear back in seconds.', [('A reply in seconds.', 'A form, a text or a missed call gets an answer by text, in your business’s name.', 1), ('They pick the time.', 'The reply offers openings from your real calendar. No phone tag.', 2), ('It lands booked.', 'The estimate is on your calendar with the address and the job on it.', 3)], '/answering|How answering works', ART.reply(), 'b', panel='ill', small='')
-
 # 4. the calendar screen
 def col(jobs):
     return '<div class="cal-col">' + ''.join(f'<div class="cal-jb {c}" style="top:{a}%;height:{h}%">{x}</div>' for a, h, x, c in jobs) + '</div>'
@@ -83,19 +81,70 @@ POPS = [
   ('<div class="pp-hd"><span class="pp-av">DR</span><div><b>Dana Ruiz</b><span>Text message</span></div></div><p class="pp-mt r">Sent for you</p><div class="pp-m me">I can get you a free estimate. Does Fri 8:00 AM, Mon 10:00 AM or Tue 2:00 PM work?</div><div class="pp-s2"><p class="pp-mt">Dana</p><div class="pp-m">Friday at 8 works.</div><div class="pp-ok"><span class="pp-ck"></span>Booked. It’s on your calendar.</div></div>', 'The lead picks', 'Three times from your real calendar, by text. No phone tag.'),
   ('<div class="pp-r"><span class="pp-ck"></span><div><b>Estimate booked</b><span>Friday, 8:00 AM</span></div><span class="pp-new">New</span></div><div class="pp-kv"><span>Who</span><b>Dana Ruiz</b><span>Where</span><b>214 Alder St</b><span>Job</span><b>Cedar privacy fence, 120 ft</b></div>', 'It lands complete', 'The address and the job are on the booking when you open it.'),
   ('<p class="pp-l">Reminders, set when it booked</p><div class="pp-r"><span class="pp-dt"></span><div><b>The day before</b><span>Thursday, by text</span></div><span class="pp-st">Scheduled</span></div><div class="pp-r"><span class="pp-dt"></span><div><b>The morning of</b><span>Friday, by text</span></div><span class="pp-st">Scheduled</span></div>', 'Reminders set themselves', 'One the day before and one the morning of, from the moment it books.')]
-CAL = ('<section class="pz"><div class="pz-in"><div class="pz-h"><div><p class="px-k"><i></i>Calendar</p><h3>The estimate lands on your calendar.</h3><p class="ax-s">The lead is offered three times from your real calendar and picks one. You just show up.</p></div><div><a class="inl" href="/booking">How booking works</a></div></div><div class="pz-stage"><figure class="pz-fig" style="transform-origin:91% 30%">' + CALV + '</figure>' + ''.join(f'<div class="pz-b pz-b{i + 1}"><div class="pp">{card}</div><b>{b}</b><p>{d}</p></div>' for i, (card, b, d) in enumerate(POPS)) + '</div></div></section>')
+# ---- sections that show the app's real screens (markup lifted from the Software page at build time) ----
+_SW = (pathlib.Path(__file__).resolve().parent.parent / 'site' / 'software.html').read_text()
+_CS = _SW[_SW.index('<div class="cs">'):]; _MAINS = [m.start() for m in re.finditer(r'<main', _CS)]
+def view(k):
+    """the k-th view of the real app: 0 Today, 1 Inbox, 2 Calendar, 3 Quotes, 4 Money"""
+    a = _MAINS[k]; m = _CS[a:_CS.index('</main>', a) + 7]
+    return re.sub(r'^<main(?: class="on")?>', '<main class="on">', m)
+def aside(on):
+    return ASIDE.replace('<a class="on">Calendar</a>', '<a>Calendar</a>').replace(f'<a>{on}', f'<a class="on">{on}')
+def pops(items):
+    return ''.join(f'<div class="pz-b pz-b{i + 1}"><div class="pp">{card}</div><b>{b}</b><p>{d}</p></div>' for i, (card, b, d) in enumerate(items))
+def pz(name, chip, h, sub, link, screen, items, show, origin, label):
+    href, more = link.split('|')
+    return (f'<section class="pz {name}" data-show="{show}"><div class="pz-in"><div class="pz-h"><div><p class="px-k"><i></i>{chip}</p><h3>{h}</h3><p class="ax-s">{sub}</p></div><div><a class="inl" href="{href}">{more}</a></div></div>'
+            f'<div class="pz-stage"><figure class="pz-fig" style="transform-origin:{origin}"><div class="cs" role="img" aria-label="{label}">{screen}</div></figure>{pops(items)}</div></div></section>')
+HD = lambda av, name, sub, tag='': f'<div class="pp-hd"><span class="pp-av">{av}</span><div><b>{name}</b><span>{sub}</span></div>{tag}</div>'
+OKROW = lambda b, d, tag='': f'<div class="pp-r"><span class="pp-ck"></span><div><b>{b}</b><span>{d}</span></div>{tag}</div>'
+
+# speed to lead: the Inbox. The lead comes in, the reply goes out, the thread runs, the estimate is booked.
+INBOX = view(1)
+for a_, b_ in [('<p class="bub me a" style="--t:.5s">', '<p class="bub them">Website form: cedar privacy fence, about 140 ft, with a gate.</p><p class="bub me" data-st="2">'), ('<p class="meta a" style="align-self:flex-end;--t:.7s">', '<p class="meta" style="align-self:flex-end" data-st="2">'),
+               ('<p class="bub them a" style="--t:1.5s">', '<p class="bub them" data-st="3">'), ('<p class="bub me a" style="--t:2.3s">', '<p class="bub me" data-st="3">'), ('<p class="meta a" style="align-self:flex-end;--t:2.5s">', '<p class="meta" style="align-self:flex-end" data-st="3">'),
+               ('<p class="bub them a" style="--t:3.3s">', '<p class="bub them" data-st="3">'), ('<p class="hand a" style="--t:4.1s">', '<p class="hand" data-st="4">'),
+               ('<span>Stage</span>Estimate booked', '<span>Stage</span><em data-st="4">Estimate booked</em>'), ('<span>Estimate</span>Tue 10:30 AM', '<span>Estimate</span><em data-st="4">Tue 10:30 AM</em>'), ('<span>First reply</span>6s', '<span>First reply</span><em data-st="2">6s</em>')]:
+    assert a_ in INBOX, a_; INBOX = INBOX.replace(a_, b_)
+SPEED = pz('inbox', 'Front desk', 'New leads hear back in seconds.', 'By text, in your business’s name, while they are still looking.', '/answering|How answering works', aside('Inbox') + INBOX, [
+  (HD('TB', 'Tom Becker', 'Website form, 12:40 AM', '<span class="pp-new">New lead</span>') + '<div class="pp-m">Looking for a quote on a cedar privacy fence. About 140 ft, with a gate.</div>', 'A lead writes in', 'A form, a text or a missed call, at any hour.'),
+  ('<p class="pp-l">First reply</p><p class="pp-big">6 seconds</p>' + OKROW('Sent for you', '12:40 AM, by text'), 'The reply goes out', 'In seconds, by text, in your business’s name.'),
+  (OKROW('Estimate booked', 'Tuesday, 10:30 AM') + '<div class="pp-ok"><span class="pp-dt"></span>Handed to you: he asked about financing.</div>', 'It lands booked', 'Anything that needs a person comes to you.')],
+  '1,2,4', '58% 46%', 'The Inbox screen in the Cinder app for an example fence company. A new lead from the website form gets a reply by text six seconds later, the conversation continues, and an estimate is booked for Tuesday at 10:30 AM. Sample data.')
+
+CAL = pz('cal', 'Calendar', 'The estimate lands on your calendar.', 'The lead is offered three times from your real calendar and picks one. You just show up.', '/booking|How booking works', CALV[CALV.index('<aside>'):CALV.rindex('</div>')], POPS, '1,3,4', '91% 30%',
+  'The Calendar screen in the Cinder app for an example fence company, one week. A new estimate with Dana Ruiz is booked on Friday at 8:00 AM. The two other times that were offered are shown as still open. Sample data.')
+
+# the invoice: the Money screen. Sent, reminded, paid.
+MONEY = view(4)
+for a_, b_ in [('<p class="sub">$10,700 owed to you. Reminders go out on their own.</p>', '<p class="sub">Invoices go out the day the job ends. Reminders go out on their own.</p>'),
+               ('<p class="big">$10,700</p><p class="note"><i class="dot"></i>$6,100 late</p>', '<p class="big"><span data-un="4">$10,700</span><span data-sw="4">$4,600</span></p><p class="note"><span data-un="4"><i class="dot"></i>$6,100 late</span><span data-sw="4">Nothing late</span></p>'),
+               ('<p class="big">$18,500</p><p class="note">6 payments</p>', '<p class="big"><span data-un="4">$18,500</span><span data-sw="4">$24,600</span></p><p class="note"><span data-un="4">6 payments</span><span data-sw="4">7 payments</span></p>'),
+               ('<span class="pill a" style="margin-left:auto;--t:1.2s"><i class="dot"></i>Late, reminder sent</span>', '<span class="pill" style="margin-left:auto" data-un="2">Sent, due Nov 22</span><span class="pill" style="margin-left:auto" data-sw="2" data-un="4"><i class="dot"></i>Late, reminder sent</span><span class="pill k" style="margin-left:auto" data-sw="4">Paid</span>'),
+               ('<div class="li a" style="--t:2s"><i class="ck"></i><div><b>Bill Turner</b>', '<div class="li" data-sw="4"><i class="ck"></i><div><b>Henderson family</b><small>Card</small></div><span class="amt">$6,100</span></div><div class="li"><i class="ck"></i><div><b>Bill Turner</b>')]:
+    assert a_ in MONEY, a_; MONEY = MONEY.replace(a_, b_)
+INVOICE = pz('money', 'Money', 'The invoice gets paid.', 'Sent the day the job ends and followed up until it is settled.', '/invoicing|How invoices work', aside('Money') + MONEY, [
+  ('<p class="pp-l">Invoice #1042</p><p class="pp-big">$6,100</p>' + OKROW('Sent the day the job ended', 'Henderson family, due Nov 22'), 'Sent the day the job ends', 'Not at the end of the month.'),
+  (HD('HF', 'Henderson family', 'Text message') + '<p class="pp-mt r">Sent for you, 3 days late</p><div class="pp-m me">Hi, a quick reminder that invoice #1042 for $6,100 was due Nov 22. Here is the link to pay.</div>', 'Reminded when it runs late', 'Politely, and on a schedule.'),
+  (OKROW('Paid in full', '$6,100, by card', '<span class="pp-st">Paid</span>') + '<div class="pp-ok"><span class="pp-ck"></span>Reminders stopped on their own.</div>', 'Stops when it’s paid', 'Nobody is chased for money they already sent.')],
+  '1,2,4', '46% 62%', 'The Money screen in the Cinder app for an example fence company. An invoice for the Henderson family goes out, runs late, gets a reminder, and is paid. Sample data.')
+
+# what you get back: the Today screen, with the handled list filling in
+TODAY = view(0); _n = [0]
+def _st(m): _n[0] += 1; return f'<div class="li" data-st="{min(4, _n[0])}"><i class="ck'
+TODAY = TODAY[:TODAY.index('Handled for you')] + re.sub(r'<div class="li"><i class="ck', _st, TODAY[TODAY.index('Handled for you'):])
+TODAY = re.sub(r' style="--t:[^"]*"', '', TODAY)
+BACK = pz('today solo', 'What you get back', 'Most of the day is already done.', 'Open the app and you only see what needs you.', '/software|See the software', aside('Today') + TODAY, [], '', '82% 70%',
+  'The Today screen in the Cinder app for an example fence company: money won, first reply time and money owed across the top, five things that need you, and five things already handled today. Sample data.').replace('<section class="pz today solo"', '<section id="back" class="pz today solo"')
 
 # 5. the quote and its follow-up
 QUOTE = ax('rev', 4, 'Quotes', 'No quote goes quiet.', 'Each one gets a check-in on day two and another on day five, and it stops the moment they say yes or no.', '/follow-up|How follow-up works', ART.quote(), 'a', panel='ill', small='')
 # 6. the invoice
-INVOICE = ax('', 3, 'Money', 'The invoice gets paid.', 'Sent the day the job ends and followed up until it is settled.', '/invoicing|How invoices work', ART.invoice(), 'c', panel='ill', small='')
 # 7. the review
 REVIEW = ax('', 3, 'After the job', 'Every job ends with a review request.', [('Asked the day after.', 'While the job is still fresh, not three weeks later.', 0), ('The review comes in.', 'On your Google profile, where the next customer looks.', 1), ('It gets a reply.', 'The same day, in your name.', 2)], '/reviews|How reviews work', ART.review(), 'b', panel='ill', small='')
 # 8. something only your business has
 CUSTOM = ax('', 4, 'Custom', 'Built around how you already work.', 'Tell us how the job gets done today and we build it step by step, with room for the next piece.', '/custom-builds|How custom builds work', ART.blocks(), 'a', panel='ill', small='')
 # 9. what you get back: the day's work, stacking up
-BACK = ax('', 5, 'What you get back', 'Most of the day is already done.', [('Answered.', 'New leads got a reply while you were on a job.', 0), ('Booked and followed up.', 'Estimates are on the calendar. Open quotes got their check-in.', 2), ('Reminded and asked.', 'Late invoices were nudged. Finished jobs were asked for a review.', 4), ('What’s left is yours.', 'The few things that need a person.', None)], '/software|See the software', ART.tower(), 'b', sid=' id="back"', panel='ill', small='')
-
 
 TK = '<div class="tk" aria-hidden="true"></div>'
 W = lambda x: '<!--h2-->' + TK + x + '<!--/h2-->\n'

@@ -90,3 +90,9 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 ## Pass 18 (Sam: "make it better", calendar section)
 - The section now plays the booking as you scroll (classes s1..s4 on `.pz`, set in home2.js): three offered slots on the calendar, the text goes out (thread card), the lead picks, Friday's offered slot becomes the black estimate and the other two disappear, then the booking card, then the reminders card.
 - Three pop-outs instead of four, asymmetric: thread on the left, booking and reminders on the right. Cards scale with the screen (`--pz`), and the screen is sized so the cards always fit beside it (container units on `.pz-stage`).
+
+## Pass 19 (Sam: "nice", then "back to the full homepage designs")
+- The calendar treatment (real app screen + pop-outs + a story that plays on scroll) now also carries: speed to lead (Inbox view), the invoice (Money view), what you get back (Today view, no pop-outs, handled list fills in).
+- Built by pz() in patch_home.py from the Software page's own `.cs` markup (view(k)); story hooks are data-st (appear at step), data-sw (swap in), data-un (remove at step); cards per section via data-show.
+- Page rhythm: funnel (drawing), numbers, audit plates (drawing), patch bay (3D), Inbox (screen), Calendar (screen), quote (drawing), Money (screen), review (drawing), custom (drawing), Today (screen).
+- This goes against Sam's earlier "only the calendar is white". Done on purpose after he approved the calendar; revert is `git revert` of this commit if he objects.
