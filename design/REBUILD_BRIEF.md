@@ -570,3 +570,12 @@ White inside a hairline frame; a lavender-to-white wash under heroes; soft grey 
 - Hiring: H5 board. Team assistant: H4. Field notes: H3 voice to notes. Reports: H2 + S19. Call review: H8 black + waveform.
 - Custom agents: H3. Custom builds: H6. Integrations: H9.
 - About, Questions, What's new (S12), The app (S4 tabs), Everything (S11), Who it's for, Free audit: one each, after the build pages.
+
+## 23f. Seven kinds of hand-over; Reviews curve bends and floods (Nov 27)
+
+Sam on Reviews: drew an exponential curve with drop lines over my straight line; marked the dark cells "weak"; and "we're still doing the same design, the same zoom in on the rectangle... everything needs to be custom."
+
+- `TKINDS` in mk_pages.py: every page's drawing now hands over one of seven ways, assigned in menu order so neighbours differ: rect (the old zoom), iris (a circle opens from the focal), doors (the white screen parts down the middle), blinds (eight horizontal slats close), thru (the drawing flies at you and you pass through it), rise (a dark sheet with round shoulders comes up), slash (a diagonal sweeps across). Every fifth lands on blue instead of black (`t-blue`). 5 pages each.
+- Reviews: the curve is exponential with 36 drop lines, pinned, and its own filled area swells from the bottom-right corner, turns blue then black, and becomes the next section. No rectangle transition on this page. Labelled "Illustration"; the "20 a month / 3 a month" tags are gone because they described straight lines.
+- Reviews: the three dark cells are replaced by one lit timeline (`RVPIPE`, `.rvp`): job marked done, ask queued, text sent, review left, on your profile, lighting in turn on the live engine.
+- Still true: seven kinds across 35 pages means each kind repeats five times. More kinds are needed, and graph pages should hand over through their own graph the way Reviews now does.

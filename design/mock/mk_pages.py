@@ -1141,21 +1141,20 @@ RVHERO = ('<section class="rh" data-live="8"><div class="w rh-i"><span class="lb
           '<div class="rh-c c4" data-hd="5"><span>Your Google profile</span><b>New review</b></div>'
           '<p class="rh-n">Example. Sample data.</p></div></section>' % (BOOK, AUDITLINK, stars(5)))
 # one line across the whole screen: reviews over a year, asked every time against asked when someone remembers
-_rvx = [i / 12 for i in range(13)]
-RVCURVE = ('<section class="rvc"><div class="rvc-i" data-in><div class="w rvc-t"><p class="fa-k">[Reviews, one year]<em>Example business, sample data</em></p>'
+RVCURVE = ('<section class="rvc" data-sp><div class="rvc-i"><div class="w rvc-t"><p class="fa-k">[Reviews, over time]<em>Illustration</em></p>'
            '<h2>Every finished job gets asked.</h2><p>Most happy customers never leave a review because nobody asked.</p></div>'
-           '<div class="rvc-g" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none">%s<path class="ar" d="M0 100 L100 12 L100 100Z"/>'
-           '<path class="lo" d="M0 100 L100 86.8"/><path class="hi" d="M0 100 L100 12"/></svg>'
-           '<b class="tg hi">Asked every time<em>about 20 a month</em></b><b class="tg lo">Asked when someone remembers<em>3 a month</em></b>%s</div></div></section>'
-           % (''.join('<path class="dr" d="M%.2f %.2f V100"/>' % (x * 100, 100 - x * 88) for x in _rvx[1:]),
-              ''.join('<span style="left:%.2f%%">%s</span>' % (x * 100, m) for x, m in zip(_rvx[::3], ('Start', '3 months', '6 months', '9 months', 'A year')))))
-_rv1 = '<div class="rv rv1"><p><span>Full install</span><b>Done</b></p><p class="k"><span>Review ask</span><b>Queued</b></p></div>'
-_rv2 = '<div class="rv rv2"><p class="hb o">Mind leaving a quick review? It takes a minute.</p><em>Leave a review</em></div>'
-_rv3 = '<div class="rv rv3"><div>%s<b>212</b></div><div class="g">%s<b>9</b></div></div>' % (stars(5), stars(5))
-RV3 = ('<section class="v3 v3d"><div class="w v3-i"><p class="st-t">Asked at the right moment, every time. <span>Not when someone remembers.</span></p><div class="v3-g">%s</div></div></section>'
-       % ''.join('<div><div class="v3-p" aria-hidden="true">%s</div><b>%s.</b><span>%s</span></div>' % x for x in [
-           (_rv1, 'The job gets paid', 'The moment it&rsquo;s marked done, the review ask is queued.'), (_rv2, 'They get asked at the right time', 'A short text with a direct link, while the job is fresh.'),
-           (_rv3, 'Your name gets around', 'Reviews and regular posts keep you in front of people searching nearby.')]))
+           '<div class="rvc-g" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path class="dr" style="--x:0.280" d="M28.00 96.93 V100"/><path class="dr" style="--x:0.301" d="M30.06 96.53 V100"/><path class="dr" style="--x:0.321" d="M32.11 96.09 V100"/><path class="dr" style="--x:0.342" d="M34.17 95.61 V100"/><path class="dr" style="--x:0.362" d="M36.23 95.10 V100"/><path class="dr" style="--x:0.383" d="M38.29 94.53 V100"/><path class="dr" style="--x:0.403" d="M40.34 93.91 V100"/><path class="dr" style="--x:0.424" d="M42.40 93.24 V100"/><path class="dr" style="--x:0.445" d="M44.46 92.51 V100"/><path class="dr" style="--x:0.465" d="M46.51 91.71 V100"/><path class="dr" style="--x:0.486" d="M48.57 90.83 V100"/><path class="dr" style="--x:0.506" d="M50.63 89.88 V100"/><path class="dr" style="--x:0.527" d="M52.69 88.85 V100"/><path class="dr" style="--x:0.547" d="M54.74 87.71 V100"/><path class="dr" style="--x:0.568" d="M56.80 86.48 V100"/><path class="dr" style="--x:0.589" d="M58.86 85.14 V100"/><path class="dr" style="--x:0.609" d="M60.91 83.67 V100"/><path class="dr" style="--x:0.630" d="M62.97 82.08 V100"/><path class="dr" style="--x:0.650" d="M65.03 80.34 V100"/><path class="dr" style="--x:0.671" d="M67.09 78.44 V100"/><path class="dr" style="--x:0.691" d="M69.14 76.37 V100"/><path class="dr" style="--x:0.712" d="M71.20 74.11 V100"/><path class="dr" style="--x:0.733" d="M73.26 71.65 V100"/><path class="dr" style="--x:0.753" d="M75.31 68.97 V100"/><path class="dr" style="--x:0.774" d="M77.37 66.05 V100"/><path class="dr" style="--x:0.794" d="M79.43 62.86 V100"/><path class="dr" style="--x:0.815" d="M81.49 59.38 V100"/><path class="dr" style="--x:0.835" d="M83.54 55.60 V100"/><path class="dr" style="--x:0.856" d="M85.60 51.47 V100"/><path class="dr" style="--x:0.877" d="M87.66 46.96 V100"/><path class="dr" style="--x:0.897" d="M89.71 42.05 V100"/><path class="dr" style="--x:0.918" d="M91.77 36.70 V100"/><path class="dr" style="--x:0.938" d="M93.83 30.86 V100"/><path class="dr" style="--x:0.959" d="M95.89 24.50 V100"/><path class="dr" style="--x:0.979" d="M97.94 17.56 V100"/><path class="dr" style="--x:1.000" d="M100.00 10.00 V100"/><path class="ar" d="M0.00 100.00 L1.25 99.93 L2.50 99.85 L3.75 99.77 L5.00 99.68 L6.25 99.59 L7.50 99.49 L8.75 99.39 L10.00 99.28 L11.25 99.17 L12.50 99.05 L13.75 98.93 L15.00 98.80 L16.25 98.66 L17.50 98.51 L18.75 98.36 L20.00 98.20 L21.25 98.03 L22.50 97.85 L23.75 97.65 L25.00 97.45 L26.25 97.24 L27.50 97.02 L28.75 96.79 L30.00 96.54 L31.25 96.28 L32.50 96.01 L33.75 95.72 L35.00 95.41 L36.25 95.09 L37.50 94.75 L38.75 94.39 L40.00 94.02 L41.25 93.62 L42.50 93.20 L43.75 92.76 L45.00 92.30 L46.25 91.81 L47.50 91.30 L48.75 90.75 L50.00 90.18 L51.25 89.58 L52.50 88.94 L53.75 88.27 L55.00 87.57 L56.25 86.82 L57.50 86.04 L58.75 85.21 L60.00 84.34 L61.25 83.42 L62.50 82.46 L63.75 81.44 L65.00 80.36 L66.25 79.23 L67.50 78.04 L68.75 76.78 L70.00 75.45 L71.25 74.06 L72.50 72.58 L73.75 71.03 L75.00 69.40 L76.25 67.67 L77.50 65.86 L78.75 63.94 L80.00 61.92 L81.25 59.80 L82.50 57.56 L83.75 55.20 L85.00 52.71 L86.25 50.08 L87.50 47.32 L88.75 44.41 L90.00 41.34 L91.25 38.10 L92.50 34.69 L93.75 31.09 L95.00 27.31 L96.25 23.31 L97.50 19.11 L98.75 14.67 L100.00 10.00 L100 100 L0 100Z"/><path class="hi" d="M0.00 100.00 L1.25 99.93 L2.50 99.85 L3.75 99.77 L5.00 99.68 L6.25 99.59 L7.50 99.49 L8.75 99.39 L10.00 99.28 L11.25 99.17 L12.50 99.05 L13.75 98.93 L15.00 98.80 L16.25 98.66 L17.50 98.51 L18.75 98.36 L20.00 98.20 L21.25 98.03 L22.50 97.85 L23.75 97.65 L25.00 97.45 L26.25 97.24 L27.50 97.02 L28.75 96.79 L30.00 96.54 L31.25 96.28 L32.50 96.01 L33.75 95.72 L35.00 95.41 L36.25 95.09 L37.50 94.75 L38.75 94.39 L40.00 94.02 L41.25 93.62 L42.50 93.20 L43.75 92.76 L45.00 92.30 L46.25 91.81 L47.50 91.30 L48.75 90.75 L50.00 90.18 L51.25 89.58 L52.50 88.94 L53.75 88.27 L55.00 87.57 L56.25 86.82 L57.50 86.04 L58.75 85.21 L60.00 84.34 L61.25 83.42 L62.50 82.46 L63.75 81.44 L65.00 80.36 L66.25 79.23 L67.50 78.04 L68.75 76.78 L70.00 75.45 L71.25 74.06 L72.50 72.58 L73.75 71.03 L75.00 69.40 L76.25 67.67 L77.50 65.86 L78.75 63.94 L80.00 61.92 L81.25 59.80 L82.50 57.56 L83.75 55.20 L85.00 52.71 L86.25 50.08 L87.50 47.32 L88.75 44.41 L90.00 41.34 L91.25 38.10 L92.50 34.69 L93.75 31.09 L95.00 27.31 L96.25 23.31 L97.50 19.11 L98.75 14.67 L100.00 10.00"/></svg></div>'
+           '<div class="rvc-k" aria-hidden="true"></div></div></section>')
+# after the job, in one line: five moments on a hairline, lit one after another
+_rn = lambda at, tag, title, body: '<div class="rvp-n" data-hd="%d"><span>%s</span><b>%s</b>%s</div>' % (at, tag, title, body)
+RVPIPE = ('<section class="rvp" data-live="8"><div class="w rvp-i"><p class="st-t">Asked at the right moment, every time. <span>Not when someone remembers.</span></p>'
+          '<div class="rvp-l" aria-hidden="true"><i></i>%s</div><div class="rvp-t">%s</div></div></section>'
+          % (_rn(0, '4:10 PM', 'Job marked done', '<p>Full install</p>') + _rn(1, '4:10 PM', 'Ask queued', '<p>No one had to remember</p>')
+             + _rn(2, '4:11 PM', 'Text sent', '<p class="hb o">Mind leaving a quick review? It takes a minute.</p>') + _rn(4, '4:26 PM', 'Review left', stars(5))
+             + _rn(5, 'On your profile', 'Where people look', '<p>Next to your name in search</p>'),
+             ''.join('<div><b>%s.</b><span>%s</span></div>' % x for x in [
+                 ('The job gets paid', 'The moment it&rsquo;s marked done, the review ask is queued.'), ('They get asked at the right time', 'A short text with a direct link, while the job is fresh.'),
+                 ('Your name gets around', 'Reviews and regular posts keep you in front of people searching nearby.')])))
 SEARCH_L = SEARCH.replace('<div class="q">', '<div class="q" data-sc="0">').replace('<div class="on">', '<div class="on" data-sc="2">').replace('<div class="">', '<div class="" data-sc="1">')
 RVACD = ('<section class="acd" data-live="3,3,3"><div class="w acd-g"><div class="acd-t"><span class="lb">Where people look</span><p class="st-t">The shop with the reviews gets the call.</p>'
          '<div class="acd-l">%s</div></div><div class="acd-p">%s<p class="sd-n">Example. Sample data.</p></div></div></section>'
@@ -1164,7 +1163,7 @@ RVACD = ('<section class="acd" data-live="3,3,3"><div class="w acd-g"><div class
              (2, 'The one with the reviews gets the call.', 'Asking in person feels awkward, so it doesn&rsquo;t happen. This asks for you.')]), SEARCH_L))
 REVIEWS = (RVHERO
            + statement('The problem', 'People pick the name with the reviews.', 'Your work is good and your customers are happy. But nobody asks them, so the shop down the road with more stars gets the call.')
-           + RVCURVE + RV3 + RVACD
+           + RVCURVE + RVPIPE + RVACD
            + qcards([('When does the ask go out?', 'Right after the job is marked done.'), ('Does every customer get asked?', 'Every finished job gets a request.'),
                      ('Where do reviews go?', 'Straight to the place you want them, usually your Google profile.')]) + CL)
 
@@ -1889,7 +1888,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rh': 'top', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -1906,7 +1905,7 @@ RHYTHM = {
     'follow-up': ('st v3 sx acd ic as', {'st': 'v-2', 'sx': 't-exp'}),
     'invoicing': ('sx st sp bl', {'sx': 't-sheet', 'st': 's-tn v-c', 'sp': 'v-f', 'bl': 's-dk v-sf t-angle'}),
     'bookkeeping': ('st sx pg sp', {'st': 'v-xl t-rule', 'sx': 'v-pin', 'pg': 'v-l', 'sp': 's-dkp'}),
-    'reviews': ('st rvc v3 acd', {'st': 'v-2'}),
+    'reviews': ('st rvc rvp acd', {'st': 'v-2'}),
     'review-replies': ('st sx pg', {'st': 'v-c', 'sx': 'v-pin t-rule', 'pg': 'v-l'}),
     'win-backs': ('bl st sx sp', {'bl': 's-bl', 'st': 't-sheet', 'sx': 's-tn', 'sp': 'v-f'}),
     'maintenance-reminders': ('st sx pg bl', {'st': 'v-2', 'sx': 's-tn t-exp', 'pg': 's-dk', 'bl': 'v-xl'}),
@@ -2529,17 +2528,25 @@ CSS_FA = r"""
 .rh-c p{margin:8px 0 0;line-height:1.38}.rh-c .sr5,.rh-c .sr5 svg{color:#f0a001;fill:#f0a001}
 .rh-c.c1{left:5%;top:17%}.rh-c.c2{right:4%;top:24%}.rh-c.c3{left:9%;bottom:15%}.rh-c.c4{right:8%;bottom:12%}
 .rh-n{position:absolute;left:0;right:0;bottom:22px;margin:0;font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3)}
-.rvc{background:#fff;border-top:1px solid var(--ln);border-bottom:1px solid var(--ln);overflow:hidden}.rvc-i{position:relative;min-height:min(92vh,900px);display:flex;flex-direction:column}
+.rvc{--a:clamp(0,calc(var(--p,1)/.5),1);--r:0;background:#fff;border-top:1px solid var(--ln)}.rvc-i{position:relative;height:min(92vh,900px);display:flex;flex-direction:column;overflow:hidden}
 .rvc-t{position:relative;z-index:2;padding-top:clamp(64px,6vw,110px);box-sizing:border-box}.rvc-t .fa-k{justify-content:flex-start;gap:16px;margin:0 0 22px}
 .rvc h2{margin:0;max-width:9em;font-size:clamp(38px,4.6vw,84px);line-height:1;letter-spacing:-.045em;font-weight:600}.rvc-t>p:last-child{margin:18px 0 0;max-width:24em;font-size:clamp(15.5px,1.1vw,19px);line-height:1.42;color:var(--g2)}
-.rvc-g{position:relative;flex:1;min-height:340px;margin-top:-6vh}.rvc-g svg{position:absolute;inset:0 0 34px 0;width:100%;height:calc(100% - 34px);overflow:visible;clip-path:inset(0 calc((1 - var(--p,1))*100%) 0 0)}
-.rvc-g path{fill:none;vector-effect:non-scaling-stroke}.rvc-g .hi{stroke:#266df1;stroke-width:2}.rvc-g .lo{stroke:#b4b7bf;stroke-width:1.5}.rvc-g .dr{stroke:#266df1;stroke-width:1;opacity:.22}
-.rvc-g .ar{fill:#266df1;opacity:.05}
-.rvc-g span{position:absolute;bottom:8px;transform:translateX(-50%);font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}
-.rvc-g span:first-of-type{transform:none;margin-left:14px}.rvc-g span:last-of-type{transform:translateX(-100%);margin-left:-14px}
-.rvc-g .tg{position:absolute;right:clamp(18px,4vw,80px);font-size:14px;font-weight:560;padding:8px 12px;border-radius:8px;white-space:nowrap;opacity:clamp(0,calc(var(--p,1)*6 - 4.6),1)}
-.rvc-g .tg em{display:block;margin-top:3px;font-style:normal;font-weight:400;font-size:12.5px;opacity:.82}
-.rvc-g .tg.hi{top:20%;background:#266df1;color:#fff}.rvc-g .tg.lo{bottom:calc(34px + 15%);background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--ln)}
+.rvc-g{position:absolute;inset:18% 0 0 0}.rvc-g svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.rvc-g path{fill:none;vector-effect:non-scaling-stroke}.rvc-g .hi{stroke:#266df1;stroke-width:2.2;clip-path:inset(-10% calc((1 - var(--a))*100%) -10% 0)}
+.rvc-g .dr{stroke:#266df1;stroke-width:1;opacity:calc(.3*clamp(0,calc((var(--a) - var(--x))*14),1))}
+.rvc-g .ar{fill:color-mix(in srgb,#266df1 calc((1 - var(--r))*100%),var(--dk));opacity:calc(.07*clamp(0,calc(var(--a)*3 - 2),1) + clamp(0,calc(var(--r)*5),.93));transform-box:view-box;transform-origin:100% 100%;transform:scale(calc(1 + var(--r)*var(--r)*26))}
+.rvc-g .hi,.rvc-g .dr{transition:none}.rvc.sp-live .rvc-g .hi{opacity:calc(1 - var(--r)*3)}.rvc.sp-live .rvc-t{opacity:calc(1 - var(--r)*2.4)}
+.rvc-k{display:none}
+@media(min-width:861px){.rvc.sp-live{height:250vh;--a:clamp(0,calc(var(--p,0)/.5),1);--r:clamp(0,calc((var(--p,0) - .58)/.42),1)}.rvc.sp-live .rvc-i{position:sticky;top:0;height:100vh}}
+.rvp{background:var(--dk);color:#fff}.rvp-i{border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(72px,7vw,130px) clamp(22px,3.1vw,60px) clamp(64px,6vw,110px)}
+.rvp .st-t{margin:0 0 clamp(48px,5vw,90px);max-width:22em;color:#fff}.rvp .st-t span{color:#8f9197}
+.rvp-l{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(12px,1.4vw,26px)}.rvp-l>i{position:absolute;left:0;right:0;top:5px;height:1px;background:#3a3b40}
+.rvp-n{position:relative;padding-top:34px;transition:opacity .4s}.rvp-n::before{content:"";position:absolute;left:0;top:0;width:11px;height:11px;background:#266df1;box-shadow:0 0 0 5px var(--dk)}
+.rvp.live .rvp-n[data-hd]:not(.in){opacity:.28}.rvp.live .rvp-n[data-hd]:not(.in)::before{background:#5c5e63}.rvp.live .rvp-n[data-hd].in{animation:none;opacity:1}
+.rvp-n span{display:block;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:#8f9197}.rvp-n b{display:block;margin-top:12px;font:400 clamp(20px,1.7vw,30px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.012em}
+.rvp-n p{margin:12px 0 0;font-size:14px;line-height:1.4;color:#a9abb0}.rvp-n p.hb{max-width:none;background:#266df1;color:#fff;border-radius:12px 12px 12px 3px}.rvp-n .sr5{margin-top:14px}.rvp-n .sr5 svg{fill:#f0a001;width:20px;height:20px}
+.rvp-t{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(20px,2.4vw,44px);margin-top:clamp(56px,6vw,100px);padding-top:clamp(24px,2.4vw,40px);border-top:1px solid var(--dl)}
+.rvp-t b{display:block;font-size:clamp(16px,1.1vw,19px);font-weight:560}.rvp-t span{display:block;margin-top:8px;font-size:clamp(14px,.95vw,16.5px);line-height:1.42;color:#a9abb0}
 .v3d{background:var(--dk);color:#fff}.v3d .st-t{color:#fff}.v3d .v3-i,.v3d .v3-g,.v3d .v3-g>div{border-color:var(--dl)}.v3d .st-t span{color:#8f9197}.v3d .v3-g span{color:#a9abb0}
 .v3d .v3-p{background:#17181a;box-shadow:inset 0 0 0 1px var(--dl);color:var(--ink)}
 .rv{width:76%;font-size:13px}.rv1{background:#fff;border-radius:10px;overflow:hidden}.rv1 p{display:flex;justify-content:space-between;margin:0;padding:12px 14px}.rv1 p span{margin:0;font-size:13px;color:var(--g2)}.rv1 p b{font-size:13px}
@@ -2549,7 +2556,7 @@ CSS_FA = r"""
 .acd.live .srx>[data-sc]{transition:opacity .3s,box-shadow .3s}.acd.live .srx>[data-sc]:not(.on){opacity:.45}.acd .srx>div.on{background:#fff;box-shadow:inset 0 0 0 2px var(--ink),0 30px 60px -36px rgba(45,45,47,.5)}
 .acd .acd-p .srx{width:100%;max-width:560px}
 @media(max-width:1100px){.rh-i{padding-bottom:40px}.rh-c{position:static;width:auto;margin:10px auto 0;max-width:340px}.rh-c.c1{margin-top:36px}.rh-n{position:static;margin-top:16px}}
-@media(max-width:860px){.rvc-g .tg{font-size:12px;right:10px}.rvc-g span:nth-of-type(2),.rvc-g span:nth-of-type(4){display:none}.rvc-i{min-height:640px}}
+@media(max-width:860px){.rvc-i{height:640px}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
 /* ---- live windows on the inner pages ---- */
 .lvh>*{min-width:0}.lvh>.cd,.lvh>div:first-child{flex:0 1 auto}
 .sdw{flex:none;width:clamp(210px,17vw,250px);box-sizing:border-box;padding:14px 12px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.16),0 30px 60px -34px rgba(38,38,40,.4);font-size:13px;text-align:left;min-height:170px}
@@ -2714,14 +2721,17 @@ DWX = {  # pages that are not builds: (label, line, title)
     'integrations': ('Custom', 'Integrations.', 'It works with what you already use.'),
 }
 GNAME = dict(GROUPS)
+TKINDS = ['rect', 'iris', 'doors', 'blinds', 'thru', 'rise', 'slash']
+_TORDER = [x for g, _ in GROUPS for x in ORDER[g]] + ['free-audit', 'who-its-for', 'about', 'whats-new', 'questions']
 def dportal(slug, label, line_, title):
-    return ('<section class="pt pt-dw" data-sp style="%s"><div class="pt-s"><div class="pt-a"><span>[%s]</span><p>%s</p></div><div class="pt-d"><h2>%s</h2></div>'
-            '<div class="pt-o" aria-hidden="true">%s</div></div></section>' % (DW.focal(slug), label, line_, title, DW.svg(slug)))
+    i = _TORDER.index(slug) if slug in _TORDER else len(slug)
+    return ('<section class="pt pt-dw k-%s%s" data-sp style="%s"><div class="pt-s"><div class="pt-a"><span>[%s]</span><p>%s</p></div><div class="pt-d"><h2>%s</h2></div>'
+            '<div class="pt-o" aria-hidden="true">%s</div></div></section>' % (TKINDS[i % 7], ' t-blue' if i % 5 == 2 else '', DW.focal(slug), label, line_, title, DW.svg(slug)))
 
 
 def trans(name, body):
     # one transition per page, drawn for that page: the drawing builds as you scroll, then one part of it grows into the next screen
-    if name not in DW.D:
+    if name not in DW.D or name == 'reviews':   # Reviews hands over through its own graph
         return body
     body = re.sub(r'<section class="pt pt-(?:bubble|sheet|grid|app|bars|cols)" data-sp>.*?</section>', '', body, flags=re.S) if name in BY and name != 'answering' else body
     if 'class="pt ' in body:
@@ -2934,6 +2944,18 @@ clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((10
 opacity:clamp(0,calc(var(--a,0)*9 - 7.9 + var(--g,0)*20),1);
 clip-path:inset(calc(var(--T)*var(--k)) calc((100% - var(--L) - var(--fw)*var(--W))*var(--k)) calc((100% - var(--T) - var(--fh)*var(--W))*var(--k)) calc(var(--L)*var(--k)) round calc(var(--fr)*var(--W)*var(--k)))}
 @media(max-width:860px){.pt-dw.sp-live .pt-s{--W:min(86vw,calc((100vh - 300px)*1.75));--cy:58%}.pt-dw svg *{stroke-width:1.7}}
+/* seven ways a drawing hands over to the next screen */
+.pt-dw.t-blue .pt-d{background:#266df1}
+.pt-dw.k-iris.sp-live .pt-d{clip-path:circle(calc(var(--fh)*var(--W)*.5*var(--k) + 150vmax*var(--g,0)) at calc(var(--L) + var(--fw)*var(--W)/2) calc(var(--T) + var(--fh)*var(--W)/2))}
+.pt-dw.k-rise.sp-live .pt-d{opacity:1;clip-path:inset(calc(var(--k)*100%) 0 0 0 round calc(var(--k)*56px) calc(var(--k)*56px) 0 0)}
+.pt-dw.k-blinds.sp-live .pt-d{opacity:1;clip-path:none;-webkit-mask:repeating-linear-gradient(180deg,#000 0 calc(var(--g,0)*12.6vh),transparent 0 12.5vh);mask:repeating-linear-gradient(180deg,#000 0 calc(var(--g,0)*12.6vh),transparent 0 12.5vh)}
+.pt-dw.k-slash.sp-live .pt-d{opacity:1;clip-path:polygon(calc(100% - var(--g,0)*170%) 0,100% 0,100% 100%,calc(150% - var(--g,0)*170%) 100%)}
+.pt-dw.k-doors.sp-live .pt-d{opacity:1;clip-path:none;z-index:0}
+.pt-dw.k-doors.sp-live .pt-s::before,.pt-dw.k-doors.sp-live .pt-s::after{content:"";position:absolute;top:0;bottom:0;width:50.2%;background:#fff;z-index:1}
+.pt-dw.k-doors.sp-live .pt-s::before{left:0;transform:translateX(calc(var(--g,0)*-100%));box-shadow:1px 0 0 var(--ln)}.pt-dw.k-doors.sp-live .pt-s::after{right:0;transform:translateX(calc(var(--g,0)*100%))}
+.pt-dw.k-doors.sp-live .pt-a{z-index:2}
+.pt-dw.k-thru.sp-live .pt-d{clip-path:none;opacity:clamp(0,calc(var(--g,0)*1.7 - .25),1)}
+.pt-dw.k-thru.sp-live .pt-o{opacity:calc(1 - var(--g,0)*.9);transform-origin:calc((var(--fx) + var(--fw)/2)*100%) calc((var(--fy) + var(--fh)/2)*175%);transform:translate(-50%,-50%) scale(calc(1 + var(--g,0)*var(--g,0)*22))}
 /* five columns filling, then closing up into one screen */
 .pt-cols.sp-live .pt-s{--w:min(420px,80vw);--h:min(150px,34vw);--cy:62%}
 .pt-cols.sp-live .pt-d{z-index:2;background:none;clip-path:none}
