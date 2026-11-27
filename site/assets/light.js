@@ -147,3 +147,7 @@ x.classList.add('live');
 var q=/[?&]view=(\d)(?:&step=(\d))?/.exec(location.search);if(q){sc=Math.min(+q[1],n-1);st=q[2]?+q[2]:9;draw(true);return}
 draw(true);if('IntersectionObserver' in window)new IntersectionObserver(function(e){vis=e[0].isIntersecting}).observe(x);
 setInterval(function(){if(!vis||document.hidden)return;st++;if(st>(len[sc]||len[len.length-1])){sc=(sc+1)%n;st=0;draw(true)}else draw(false)},1050)});
+
+[].forEach.call(document.querySelectorAll('[data-count]'),function(e){var to=+e.getAttribute('data-count'),pre=e.getAttribute('data-pre')||'',done=false;
+if(!('IntersectionObserver' in window))return;new IntersectionObserver(function(x,o){if(!x[0].isIntersecting||done)return;done=true;o.disconnect();var t0=performance.now();
+(function f(t){var k=Math.min(1,(t-t0)/1100);k=1-Math.pow(1-k,3);e.textContent=pre+Math.round(to*k).toLocaleString('en-US');if(k<1)requestAnimationFrame(f)})(t0)},{threshold:.6}).observe(e)});

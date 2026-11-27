@@ -1129,13 +1129,14 @@ AGING = ('<div class="cd ag">%s<div class="ag-g">%s</div><div class="pk-f"><b>$1
     '<div><b>%s</b><em>%s</em>%s</div>' % (t, a, ''.join('<i style="width:%d%%"><u>%s</u></i>' % q for q in rows)) for t, a, rows in [
         ('This week', '$4,300', [(92, 'Fence install'), (54, 'Gate repair')]), ('8 to 30 days', '$6,200', [(100, 'Vinyl fence'), (62, 'Fence install'), (30, 'Repair')]), ('Over 30 days', '$4,100', [(80, 'Chain link'), (40, 'Gate')])])))
 # a statement beside one large figure
-IVNUM = ('<section class="ivn"><div class="w ivn-g"><p class="st-t">%s</p><div class="ivn-n"><b>$14,600</b><span>waiting to be paid</span><em>Example business, sample data</em></div></div></section>' % ap(p['line']))
+IVNUM = ('<section class="ivn"><div class="w ivn-g"><p class="st-t">%s</p><div class="ivn-n"><b data-count="14600" data-pre="$">$14,600</b><span>waiting to be paid</span><em>Example business, sample data</em></div></div></section>' % ap(p['line']))
 # what is owed, by age, as three bars. They rise as you scroll, then the view goes into the oldest one and that becomes the next screen.
 _ivb = [('This week', '$4,300', 69, ('Full install', 'Repair'), 'b'), ('8 to 30 days', '$6,200', 100, ('Replacement', 'Full install', 'Repair'), 'y'), ('Over 30 days', '$4,100', 66, ('Large install', 'Repair'), 'r')]
 IVBARS = ('<section class="ivb" data-sp><div class="ivb-i"><div class="w ivb-f"><div class="ivb-t"><span class="lb">What you see</span>'
           '<p class="st-t">You get paid without being the one who asks. <span>What is outstanding, by customer and by age.</span></p>'
           '<p class="fa-k">[Outstanding, by age]<em>Example business, sample data</em></p></div>'
-          '<div class="ivb-c" aria-hidden="true">%s</div></div></div></section>'
+          '<div class="ivb-c" aria-hidden="true"><span class="ivb-y" style="--y:25.2%%">$2k</span><span class="ivb-y" style="--y:50.3%%">$4k</span><span class="ivb-y" style="--y:75.5%%">$6k</span>'
+          '<span class="ivb-tot">$14,600 in all</span>%s</div></div><p class="ivb-n">Sent the day the job ends, followed up until it is paid.</p></div></section>'
           % ''.join('<div class="ivb-b %s" style="--i:%d;--h:%d%%"><em>%s</em><div>%s</div><b>%s</b></div>' % (c, k, h, a, ''.join('<i>%s</i>' % x for x in jobs), t)
                     for k, (t, a, h, jobs, c) in enumerate(_ivb)))
 # the three reminders, each a little firmer, arriving in turn on a dark ground
@@ -1150,7 +1151,7 @@ _iv2 = '<div class="iv iv2"><p class="hb o">Your invoice is ready. You can pay f
 _iv3 = '<div class="iv iv3">%s</div>' % ''.join('<p><span>%s</span><b>%s</b><i class="%s"></i></p>' % x for x in [('Customer A', '$2,100', 'b'), ('Customer B', '$1,850', 'y'), ('Customer C', '$4,100', 'r')])
 d = p['does']
 IV3 = ('<section class="v3"><div class="w v3-i"><p class="st-t">%s</p><div class="v3-g">%s</div></div></section>'
-       % (ap(X['invoicing'][2]), ''.join('<div><div class="v3-p" aria-hidden="true">%s</div><b>%s.</b><span>%s</span></div>' % (pic, ap(a), ap(b)) for pic, (a, b) in ((_iv1, d[0]), (_iv2, d[2]), (_iv3, d[3])))))
+       % ('%s. <span>%s</span>' % (ap(d[1][0]), ap(d[1][1])), ''.join('<div><div class="v3-p" aria-hidden="true">%s</div><b>%s.</b><span>%s</span></div>' % (pic, ap(a), ap(b)) for pic, (a, b) in ((_iv1, d[0]), (_iv2, d[2]), (_iv3, d[3])))))
 INVOICING = (hero_split('Money', p['h1'], p['lede'], '', INVOICE)
              + problem('invoicing')
              + IVNUM + IVBARS + IVLAD + IV3
@@ -2625,11 +2626,18 @@ CSS_FA = r"""
 .ivb-b em{display:block;margin-bottom:10px;font-style:normal;font-size:clamp(20px,1.9vw,32px);font-weight:500;letter-spacing:-.02em;opacity:var(--v)}
 .ivb-b>b{position:absolute;left:0;top:calc(100% + 12px);font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t2);white-space:nowrap}
 .ivb-f{padding-bottom:46px}
-@media(min-width:861px){.ivb.sp-live{height:240vh;--a:clamp(0,calc(var(--p,0)/.42),1);--r:clamp(0,calc((var(--p,0) - .6)/.4),1)}
-.ivb.sp-live .ivb-i{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,#fff calc((1 - clamp(0,calc(var(--r)*3 - 2),1))*100%),var(--dk))}
-.ivb.sp-live .ivb-f{flex:none;margin:0 auto;transform-origin:89% 72%;transform:scale(calc(1 + var(--r)*var(--r)*var(--r)*46));will-change:transform}
-.ivb.sp-live .ivb-t,.ivb.sp-live .ivb-b em,.ivb.sp-live .ivb-b>b{opacity:calc(1 - var(--r)*5)}.ivb.sp-live .ivb-b em{opacity:calc(var(--v) - var(--r)*5)}
-.ivb.sp-live .ivb-b.r i{color:rgba(255,255,255,calc(1 - var(--r)*4));background:color-mix(in srgb,#266df1 calc((1 - var(--r)*var(--r))*100%),var(--dk))}}
+.ivb-c{position:relative}.ivb-y{position:absolute;left:0;right:0;bottom:calc(var(--y)*1);height:0;border-top:1px dashed #d5d8de;font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3);text-indent:-3.2em;opacity:clamp(0,calc(var(--a)*4),1)}
+.ivb-y{line-height:0}.ivb-tot{position:absolute;right:0;top:0;padding:8px 12px;border-radius:8px;background:var(--ink);color:#fff;font-size:13.5px;font-weight:560;opacity:clamp(0,calc(var(--a)*6 - 5),1);transform:translateY(calc((1 - clamp(0,calc(var(--a)*6 - 5),1))*8px))}
+.ivb-b i:last-child{border-radius:9px 9px 0 0}.ivb-c{margin-left:3.2em}
+.ivb-n{display:none}
+@media(min-width:861px){.ivb.sp-live{height:280vh;--a:clamp(0,calc(var(--p,0)/.36),1);--r:clamp(0,calc((var(--p,0) - .46)/.38),1);--e:calc(var(--r)*var(--r)*(3 - 2*var(--r)));--w:clamp(0,calc((var(--p,0) - .84)/.12),1)}
+.ivb.sp-live .ivb-i{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,#fff calc((1 - clamp(0,calc(var(--r)*4 - 3),1))*100%),var(--dk))}
+/* the hand-over, in three beats: everything but the oldest bar steps back, the view goes into that bar, and the next line arrives on it */
+.ivb.sp-live .ivb-f{flex:none;margin:0 auto;transform-origin:88.5% 74%;transform:scale(calc(1 + var(--e)*var(--e)*var(--e)*52));will-change:transform}
+.ivb.sp-live .ivb-t,.ivb.sp-live .ivb-b>b,.ivb.sp-live .ivb-y,.ivb.sp-live .ivb-tot,.ivb.sp-live .ivb-b:not(.r){opacity:calc(1 - var(--r)*4.5)}.ivb.sp-live .ivb-b em{opacity:calc(var(--v) - var(--r)*4.5)}
+.ivb.sp-live .ivb-b.r i{color:rgba(255,255,255,calc(1 - var(--r)*4));box-shadow:0 2px 0 rgba(255,255,255,calc(1 - var(--r)*3));background:color-mix(in srgb,#266df1 calc((1 - var(--e)*var(--e))*100%),var(--dk))}
+.ivb.sp-live .ivb-n{display:block;position:absolute;left:0;right:0;top:50%;margin:0 auto;padding:0 24px;max-width:13em;text-align:center;color:#fff;font-size:clamp(34px,4.4vw,84px);line-height:1.02;letter-spacing:-.045em;font-weight:600;
+opacity:var(--w);transform:translateY(calc(-50% + (1 - var(--w))*40px))}}
 .ivl{background:var(--dk);color:#fff}.ivl-i{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(30px,5vw,100px);align-items:center;border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(72px,7vw,130px) clamp(22px,3.1vw,60px)}
 .ivl .st-t{margin:0;color:#fff;max-width:12em}.ivl .st-t span{color:#8f9197}.ivl-k{margin:26px 0 0;max-width:24em;font-size:clamp(14.5px,1vw,17px);line-height:1.45;color:#a9abb0}
 .ivl-m{display:grid;gap:14px}.ivl-r{display:grid;grid-template-columns:5.4em minmax(0,1fr);align-items:start;gap:16px;margin-left:calc(var(--k)*clamp(18px,4vw,70px))}
