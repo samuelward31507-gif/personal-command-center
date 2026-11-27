@@ -404,13 +404,13 @@ RAN = [('8:00 AM', 'Four customers reminded', 'Tomorrow&rsquo;s visits, by text'
        ('2:30 PM', 'Invoice sent', 'Cedar fence, the day it finished'),
        ('5:00 PM', 'Review asked for', 'Gate repair, finished yesterday'),
        ('7:42 PM', 'Missed call texted back', 'Nine seconds after it rang out')]
-_HM_SAT = (
-    '<div class="hm-q q1" aria-hidden="true"><div class="hm-qb"><i></i><i></i><i></i></div><div class="hm-qc"><p class="qk">Saturday, 7:42 PM</p>'
+_HM_SAT = (   # the three "fix first" findings, each pulled out of the audit on a leader line and shown fixed
+    '<div class="hm-q q1" aria-hidden="true"><i class="hm-ld"></i><p class="hm-qb">[Fix 02]<b>Front desk</b></p><div class="hm-qc"><p class="qk">Saturday, 7:42 PM</p>'
     '<p class="qm" style="--j:0"><b>Missed call</b>New number, no voicemail</p><p class="qm o" style="--j:1">Sorry we missed you. Want a time tomorrow? 9:00 or 1:30</p><p class="qm" style="--j:2">1:30 works</p></div></div>'
-    '<div class="hm-q q2 dk" aria-hidden="true"><div class="hm-qb"><i></i><i></i><i></i></div><div class="hm-qc"><p class="qk">&gt; What ran today</p>%s<p class="qf" style="--j:5">Five things done. None of them by hand.</p></div></div>'
-    '<div class="hm-q q3" aria-hidden="true"><div class="hm-qb"><i></i><i></i><i></i></div><div class="hm-qc"><p class="qk">Invoice, cedar fence 120 ft</p>'
-    '<p class="qr" style="--j:0"><span>Job finished</span><b>Fri 4:12 PM</b></p><p class="qr" style="--j:1"><span>Invoice sent</span><b>Fri 4:12 PM</b></p><p class="qr" style="--j:2"><span>Reminder</span><b>Day 3</b></p>'
-    '<p class="qr t" style="--j:3"><span>Paid</span><b>$4,800</b></p></div></div>'
+    '<div class="hm-q q2 dk" aria-hidden="true"><i class="hm-ld"></i><p class="hm-qb">[Fix 03]<b>Calendar</b></p><div class="hm-qc"><p class="qk">&gt; What ran today</p>%s<p class="qf" style="--j:5">Five things done. None of them by hand.</p></div></div>'
+    '<div class="hm-q q3" aria-hidden="true"><i class="hm-ld"></i><p class="hm-qb">[Fix 01]<b>Quotes</b></p><div class="hm-qc"><p class="qk">Quote #1042, cedar fence 120 ft</p>'
+    '<p class="qr" style="--j:0"><span>Quote sent</span><b>Monday</b></p><p class="qr" style="--j:1"><span>Check-in</span><b>Day 2</b></p><p class="qr" style="--j:2"><span>Check-in</span><b>Day 5</b></p>'
+    '<p class="qr t" style="--j:3"><span>Signed</span><b>$4,800</b></p></div></div>'
     % ''.join('<p class="ql" style="--j:%d"><time>%s</time>%s</p>' % (k, t, a_) for k, (t, a_, b_) in enumerate(RAN)))
 
 def _hm_chart():
@@ -717,18 +717,20 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 .hm-q{display:none}
 .hm-x.sp-live{height:210vh}.hm-x.sp-live .hm-y{position:sticky;top:0;height:100vh;display:flex;align-items:flex-start;justify-content:center;padding-top:clamp(84px,12vh,130px);box-sizing:border-box}
 .hm-x.sp-live .hm-s{padding-bottom:0}.hm-x.sp-live .hm-w{transform:scale(calc(1 - var(--p,0)*.2));transform-origin:50% 45%}
-.hm-x.sp-live .hm-q{--e:clamp(0,calc((var(--p,0) - var(--s))*3.4),1);display:block;position:absolute;z-index:3;width:clamp(230px,17.5vw,300px);border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.1),0 30px 60px -30px rgba(30,36,70,.35);overflow:hidden;opacity:var(--e);font-size:13px}
+.hm-x.sp-live .hm-q{--e:clamp(0,calc((var(--p,0) - var(--s))*3.4),1);display:block;position:absolute;z-index:3;width:clamp(230px,17.5vw,300px);border-radius:4px;background:#fff;box-shadow:0 0 0 1px var(--ink);opacity:var(--e);font-size:13px}
 .hm-q.q1{--s:.12;left:max(24px,calc(50% - 800px));top:15vh;transform:translate(calc((1 - var(--e))*140px),calc((1 - var(--e))*40px))}
-.hm-q.q2{--s:.3;left:max(40px,calc(50% - 760px));bottom:9vh;transform:translate(calc((1 - var(--e))*140px),calc((1 - var(--e))*-40px))}
+.hm-q.q2{--s:.3;left:max(40px,calc(50% - 760px));top:50vh;transform:translate(calc((1 - var(--e))*140px),calc((1 - var(--e))*-40px))}
 .hm-q.q3{--s:.2;right:max(24px,calc(50% - 800px));top:24vh;transform:translate(calc((1 - var(--e))*-140px),calc((1 - var(--e))*30px))}
-.hm-qb{display:flex;gap:6px;padding:12px 12px 10px}.hm-qb i{width:9px;height:9px;border-radius:50%;background:#ff5f57}.hm-qb i:nth-child(2){background:#febc2e}.hm-qb i:nth-child(3){background:#28c840}
-.hm-qc{margin:0 8px 8px;padding:12px;border-radius:8px;background:#fafafa;box-shadow:0 0 0 1px var(--ln)}.hm-qc p{margin:0}
+.hm-qb{display:flex;justify-content:space-between;align-items:baseline;margin:0;padding:11px 12px 10px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--g2)}.hm-qb b{font:540 13.5px/1 Inter,system-ui,sans-serif;letter-spacing:-.01em;text-transform:none;color:var(--ink)}
+.hm-ld{--l:calc(var(--e)*clamp(70px,9vw,170px));position:absolute;top:58%;left:100%;width:var(--l);border-top:1px solid var(--ink)}.hm-ld::after{content:"";position:absolute;right:-4px;top:-4px;width:7px;height:7px;background:var(--ink);box-shadow:0 0 0 3px #fff}
+.hm-q.q3 .hm-ld{left:auto;right:100%}.hm-q.q3 .hm-ld::after{right:auto;left:-4px}.hm-q.q2 .hm-ld{top:30%}
+.hm-qc{margin:0;padding:12px;border-top:1px solid var(--ln);background:#fafafa}.hm-qc p{margin:0}
 .hm-qc p[style]{--v:clamp(0,calc((var(--p,0) - var(--s) - .16 - var(--j)*.07)*12),1);opacity:var(--v);transform:translateY(calc((1 - var(--v))*8px))}
 .hm-q .qk{font:500 10.5px/1.3 "Geist Mono",monospace;color:var(--g2);margin-bottom:10px}
 .hm-q .qm{max-width:88%;margin-top:7px;padding:8px 10px;border-radius:10px 10px 10px 3px;background:#eceef2;line-height:1.35}.hm-q .qm b{display:block;font-weight:600}
 .hm-q .qm.o{margin-left:auto;border-radius:10px 10px 3px 10px;background:var(--ink);color:#fff}
 .hm-q .qr{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--ln);color:var(--g2)}.hm-q .qr b{font-weight:540;color:var(--ink)}.hm-q .qr.t b{font-size:16px}
-.hm-q.dk{background:#17181a}.hm-q.dk .hm-qc{background:#101010;box-shadow:0 0 0 1px #2c2d31;color:#e3e4e7;font:500 11px/1.5 "Geist Mono",monospace}.hm-q.dk .qk{color:#fff}
+.hm-x.sp-live .hm-q.dk{background:#17181a}.hm-q.dk .hm-qb{color:#8f9197}.hm-q.dk .hm-qb b{color:#fff}.hm-q.dk .hm-qc{background:#101010;border-top-color:#2c2d31;color:#e3e4e7;font:500 11px/1.5 "Geist Mono",monospace}.hm-q.dk .qk{color:#fff}
 .hm-q .ql{display:flex;gap:10px;margin-top:5px}.hm-q .ql time{flex:none;width:4.6em;color:#7f8187}.hm-q .qf{margin-top:12px;padding-top:10px;border-top:1px solid #2c2d31;color:#8f9197}
 /* moving between pages: the old page fades down a touch, the new one rises in */
 @view-transition{navigation:auto}
