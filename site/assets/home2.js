@@ -72,6 +72,7 @@
     var pt = sec.classList.contains('pt'), art = sec.querySelector('.pt-art'), asvg = art && art.querySelector('svg'), aparts = art ? [].slice.call(art.querySelectorAll('[data-lit]')) : [], M = null, lastK = -9;
     function cl(x) { return x < 0 ? 0 : x > 1 ? 1 : x }
     var world = sec.querySelector('.pt-world'), rim = sec.querySelector('.pt-rim'), ov = sec.querySelector('.pt-ov'), pin = sec.querySelector('.pz-in'), G = null;
+    var frame = ov && ov.querySelector('.pt-frame'), ct = ov && ov.querySelector('.pt-ct'), ctb = ct && ct.querySelector('b'), hand2 = ov && ov.querySelector('.pt-hand2'), SPIN = [8, -14, 6, -10, 18, -7, 12, -16], lastN = 0;
     var tc = ov && ov.querySelector('.pt-c'), rings = ov ? [].slice.call(ov.querySelectorAll('.pt-r')) : [], rays = ov && ov.querySelector('.pt-rays'), hand = ov && ov.querySelector('.pt-hand'), hub = ov && ov.querySelector('.pt-hub'), title = ov && ov.querySelector('.pt-title');
     function solve() {   // where the dial sits, in the drawing's layer and in the pinned frame, and how far it has to open to swallow the frame
       art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), V = pin.getBoundingClientRect(), D = asvg.dataset.dial.split(' ').map(Number);
@@ -94,15 +95,20 @@
       ov.style.visibility = d >= 1 ? 'hidden' : 'visible'; ov.style.opacity = (1 - cl((d - .25) / .6)).toFixed(3);
       ov.style.clipPath = td >= 1 ? 'none' : 'ellipse(' + rx.toFixed(1) + 'px ' + ry.toFixed(1) + 'px at ' + G.X.toFixed(1) + 'px ' + G.Y.toFixed(1) + 'px)';
       rim.style.cssText = 'left:' + (G.X - rx).toFixed(1) + 'px;top:' + (G.Y - ry).toFixed(1) + 'px;width:' + (2 * rx).toFixed(1) + 'px;height:' + (2 * ry).toFixed(1) + 'px;opacity:' + (td >= 1 ? 0 : 1);
-      // 2. through it: rings of a clock face come at you and pass, a second hand sweeps, the centre drifts to the middle of the frame
-      var u = t * (9.1 + Math.log(.46 * Math.min(G.W, G.H) / 44) / Math.log(2.05)) - 1.1, m = ezz(cl(t / .5)), cx = G.X + (G.W / 2 - G.X) * m, cy = G.Y + (G.H / 2 - G.Y) * m, live = cl(t / .16) * (1 - cl((t - .74) / .16));
+      // 2. through it: the works of a clock come at you ring by ring and pass, each turning its own way; hands sweep; a counter runs the seconds
+      var G2 = 2.05, u = t * (9.1 + Math.log(.46 * Math.min(G.W, G.H) / 44) / Math.log(G2)) - 1.1, m = ezz(cl(t / .5)), cx = G.X + (G.W / 2 - G.X) * m, cy = G.Y + (G.H / 2 - G.Y) * m, live = cl(t / .14) * (1 - cl((t - .7) / .14));
       tc.setAttribute('transform', 'translate(' + cx.toFixed(1) + ',' + cy.toFixed(1) + ')');
-      rings.forEach(function (g, i) { var r = 44 * Math.pow(2.05, u - i), o = r < 5 ? 0 : cl((r - 5) / 28) * (1 - cl((r - G.far * .85) / (G.far * .5))); g.setAttribute('transform', 'scale(' + (r / 100).toFixed(4) + ')'); g.style.opacity = (o * (i === 8 ? 1 : .8)).toFixed(3) });
-      rays.style.opacity = (live * .9).toFixed(3); rays.style.strokeDashoffset = (-u * 70).toFixed(1);
-      hand.style.opacity = live.toFixed(3); hub.style.opacity = live.toFixed(3); hand.setAttribute('transform', 'rotate(' + (t * 560).toFixed(2) + ')');
-      // 3. the title page, then 4. scrolling on brings the calendar up
-      var tt = cl((t - .8) / .2);
-      title.style.opacity = (tt * (1 - cl(d / .45))).toFixed(3); title.style.transform = 'translateY(' + (-ed * 14).toFixed(2) + 'vh) scale(' + (.93 + .07 * ezz(tt)).toFixed(4) + ')';
+      rings.forEach(function (g, i) { var r = 44 * Math.pow(G2, u - i), o = r < 5 ? 0 : cl((r - 5) / 28) * (1 - cl((r - G.far * .8) / (G.far * .45))); g.setAttribute('transform', 'rotate(' + (u * SPIN[i]).toFixed(2) + ') scale(' + (r / 100).toFixed(4) + ')'); g.style.opacity = (o * (1 - cl((t - .82) / .16))).toFixed(3) });
+      rays.style.opacity = (live * .9).toFixed(3); rays.style.strokeDashoffset = (-u * 90).toFixed(1);
+      hand.style.opacity = live.toFixed(3); hand2.style.opacity = (live * .8).toFixed(3); hub.style.opacity = live.toFixed(3); hand.setAttribute('transform', 'rotate(' + (t * 620).toFixed(2) + ')'); hand2.setAttribute('transform', 'rotate(' + (140 + t * 70).toFixed(2) + ')');
+      var n = Math.max(1, Math.min(6, 1 + Math.floor(t / .7 * 6))); if (n !== lastN) { lastN = n; ctb.textContent = '00:0' + n }
+      ct.style.opacity = live.toFixed(3); ct.style.transform = 'translate(' + (cx - G.W / 2).toFixed(1) + 'px,' + (cy - G.H / 2).toFixed(1) + 'px)';
+      // 3. the last ring squares itself into the frame of the title page, and the headline rises into it
+      var r8 = 44 * Math.pow(G2, u - 8), ef = ezz(cl((t - .72) / .28)), FX = G.W * .05, FY = G.H * .11, FW = G.W - 2 * FX, FH = G.H - 2 * FY;
+      var fw = 2 * r8 + (FW - 2 * r8) * ef, fh = 2 * r8 + (FH - 2 * r8) * ef, fx = (cx - r8) + (FX - (cx - r8)) * ef, fy = (cy - r8) + (FY - (cy - r8)) * ef;
+      frame.style.cssText = 'left:' + fx.toFixed(1) + 'px;top:' + fy.toFixed(1) + 'px;width:' + Math.max(0, fw).toFixed(1) + 'px;height:' + Math.max(0, fh).toFixed(1) + 'px;border-radius:' + ((1 - ef) * Math.min(fw, fh) / 2).toFixed(1) + 'px;opacity:' + (r8 < 5 ? 0 : cl((r8 - 5) / 28)).toFixed(3);
+      var tt = cl((t - .84) / .16);
+      title.style.opacity = (1 - cl(d / .45)).toFixed(3); title.style.setProperty('--tl', ezz(tt).toFixed(4)); title.style.setProperty('--fm', ef.toFixed(3)); title.style.transform = 'translateY(' + (-ed * 14).toFixed(2) + 'vh)';
       sec.style.setProperty('--ha', (1 - cl(t / .22)).toFixed(3)); sec.style.setProperty('--hb', cl((d - .4) / .5).toFixed(3)); sec.classList.toggle('pb', d > .4);
       world.style.visibility = d > 0 ? 'visible' : 'hidden'; fig.style.opacity = ed.toFixed(3); fig.style.setProperty('--z', 1); fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', ((1 - ed) * 90).toFixed(1) + 'px');
       state(d < 1 ? 0 : p > .93 ? 4 : p > .86 ? 3 : p > .78 ? 2 : p > .71 ? 1 : 0);

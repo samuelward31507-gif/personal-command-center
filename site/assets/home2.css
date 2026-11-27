@@ -494,3 +494,20 @@ h1,h2,h3{font-weight:560}
 .pt-rim{z-index:4}
 @media (max-width:900px){.pz.pt{height:auto}.pt-ov,.pt-rim{display:none!important}.pt-world{position:static;visibility:visible!important;display:grid;gap:22px}}
 @media (prefers-reduced-motion:reduce){.pt-cue{animation:none}}
+/* ---- v25: the way through the clock, properly. Eight different rings of clockwork turning against each other, two hands, a seconds counter,
+   and the last ring squares itself into the frame of the title page while the headline rises into it line by line. ---- */
+.pt-tun circle,.pt-tun path{stroke:rgba(255,248,240,.7)}
+.pt-tun .th{stroke:rgba(255,248,240,.26)}.pt-tun .tk{stroke:rgba(255,248,240,.46)}.pt-tun .br{stroke:#f7f6f3;stroke-width:1.6}
+.pt-r:nth-of-type(3n+1) circle{stroke:rgba(255,248,240,.7)}.pt-r:last-of-type circle{stroke:rgba(255,248,240,.26)}
+.pt-tun text{font:500 7.5px "Geist Mono",ui-monospace,monospace;fill:#c9c7c2;stroke:none;text-anchor:middle;dominant-baseline:central}
+.pt-rays path{stroke:rgba(255,248,240,.24);stroke-dasharray:10 46}
+.pt-tun .pt-hand2{stroke:rgba(255,248,240,.75);stroke-width:1}
+.pt-frame{position:absolute;box-shadow:inset 0 0 0 1px rgba(255,248,240,.62);pointer-events:none;opacity:0}
+.pt-ct{position:absolute;left:50%;top:50%;margin:64px 0 0 -70px;width:140px;text-align:center;pointer-events:none;opacity:0}
+.pt-ct b{display:block;font:500 30px/1 "Geist Mono",ui-monospace,monospace;letter-spacing:.04em;color:#f2f1ee;font-variant-numeric:tabular-nums}
+.pt-ct span{display:block;margin-top:8px;font:500 11px/1 "Geist Mono",ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:#8b8985}
+.pt-title{opacity:1}
+.pt-title>.px-k,.pt-title>.pt-ts,.pt-title>.pt-cue{opacity:var(--tl,0);transform:translateY(calc((1 - var(--tl,0))*14px))}
+.pt-tt{max-width:none}.pt-tt span{display:block;overflow:hidden;padding-bottom:.12em;margin-bottom:-.12em}
+.pt-tt i{display:block;font-style:normal;transform:translateY(calc((1 - var(--tl,0))*108%))}.pt-tt span+span i{transform:translateY(calc((1 - var(--tl,0))*150%))}
+.pt-title::before{opacity:var(--fm,0)}

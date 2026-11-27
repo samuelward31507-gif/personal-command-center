@@ -124,3 +124,7 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
   4. title page: chip, big centred headline, one line, corner marks, a scroll cue. The last ring settles as a red frame around it;
   5. scrolling on fades the title page, brings the top-left heading in and the real Calendar up from below; then the booking story plays.
 - The tunnel is `.pt-tun` (inline SVG built in patch_home.py). Sam may want to design what we pass through himself; it is one SVG group to swap.
+
+## Pass 25 (Sam: "need better", the trip through the clock)
+- The tunnel is clockwork now: eight different rings (tick ring, broken arcs, numerals, double ring with inward ticks, dashes, notched gear) scaling past and turning against each other (SPIN in home2.js), a red second hand and a bone minute hand, moving speed lines, and a mono counter running 00:01 to 00:06.
+- The last ring is a div (`.pt-frame`) that squares itself from a circle into the title page's frame; the headline rises into it line by line (`--tl`), corner marks arrive with the frame (`--fm`).
