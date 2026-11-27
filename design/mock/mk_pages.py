@@ -1104,11 +1104,32 @@ LADDER = ('<div class="ld">%s</div>' % ''.join('<div><em>%s</em><p>%s</p></div>'
 AGING = ('<div class="cd ag">%s<div class="ag-g">%s</div><div class="pk-f"><b>$14,600</b><span>waiting to be paid, in one list.</span></div></div>' % (head('Outstanding', 'By age'), ''.join(
     '<div><b>%s</b><em>%s</em>%s</div>' % (t, a, ''.join('<i style="width:%d%%"><u>%s</u></i>' % q for q in rows)) for t, a, rows in [
         ('This week', '$4,300', [(92, 'Fence install'), (54, 'Gate repair')]), ('8 to 30 days', '$6,200', [(100, 'Vinyl fence'), (62, 'Fence install'), (30, 'Repair')]), ('Over 30 days', '$4,100', [(80, 'Chain link'), (40, 'Gate')])])))
+# a statement beside one large figure
+IVNUM = ('<section class="ivn"><div class="w ivn-g"><p class="st-t">%s</p><div class="ivn-n"><b>$14,600</b><span>waiting to be paid</span><em>Example business, sample data</em></div></div></section>' % ap(p['line']))
+# what is owed, by age, as three bars. They rise as you scroll, then the view goes into the oldest one and that becomes the next screen.
+_ivb = [('This week', '$4,300', 69, ('Full install', 'Repair'), 'b'), ('8 to 30 days', '$6,200', 100, ('Replacement', 'Full install', 'Repair'), 'y'), ('Over 30 days', '$4,100', 66, ('Large install', 'Repair'), 'r')]
+IVBARS = ('<section class="ivb" data-sp><div class="ivb-i"><div class="w ivb-f"><div class="ivb-t"><span class="lb">What you see</span>'
+          '<p class="st-t">You get paid without being the one who asks. <span>What is outstanding, by customer and by age.</span></p>'
+          '<p class="fa-k">[Outstanding, by age]<em>Example business, sample data</em></p></div>'
+          '<div class="ivb-c" aria-hidden="true">%s</div></div></div></section>'
+          % ''.join('<div class="ivb-b %s" style="--i:%d;--h:%d%%"><em>%s</em><div>%s</div><b>%s</b></div>' % (c, k, h, a, ''.join('<i>%s</i>' % x for x in jobs), t)
+                    for k, (t, a, h, jobs, c) in enumerate(_ivb)))
+# the three reminders, each a little firmer, arriving in turn on a dark ground
+IVLAD = ('<section class="ivl" data-live="8"><div class="w ivl-i"><div class="ivl-t"><p class="st-t">Friendly first, firmer later. <span>And never from you personally.</span></p>'
+         '<p class="ivl-k">They stop the moment it is paid. You can stop them for one customer in one tap.</p></div><div class="ivl-m" aria-hidden="true">%s<div class="ivl-p" data-hd="6"><span>Day 22</span><b>Paid</b></div></div></div></section>'
+         % ''.join('<div class="ivl-r" data-hd="%d" style="--k:%d"><span>%s</span><p>%s</p></div>' % (at, k, d, t) for k, (at, d, t) in enumerate([
+             (0, 'Day 3', 'Hi, just a reminder that the invoice for your job is ready. You can pay from this message.'),
+             (2, 'Day 10', 'Your invoice for the job is now a week past due. Here is the link to settle it.'),
+             (4, 'Day 21', 'This invoice is three weeks past due. Please pay today or reply so we can sort it out.')])))
+_iv1 = '<div class="iv iv1">%s<p><b>Job finished</b><b class="k">Invoice sent</b></p></div>' % ''.join('<i class="%s">%s</i>' % ('on' if d == 'Fri' else '', d) for d in ('Mon', 'Tue', 'Wed', 'Thu', 'Fri'))
+_iv2 = '<div class="iv iv2"><p class="hb o">Your invoice is ready. You can pay from this message.</p><em>Pay now</em></div>'
+_iv3 = '<div class="iv iv3">%s</div>' % ''.join('<p><span>%s</span><b>%s</b><i class="%s"></i></p>' % x for x in [('Customer A', '$2,100', 'b'), ('Customer B', '$1,850', 'y'), ('Customer C', '$4,100', 'r')])
+d = p['does']
+IV3 = ('<section class="v3"><div class="w v3-i"><p class="st-t">%s</p><div class="v3-g">%s</div></div></section>'
+       % (ap(X['invoicing'][2]), ''.join('<div><div class="v3-p" aria-hidden="true">%s</div><b>%s.</b><span>%s</span></div>' % (pic, ap(a), ap(b)) for pic, (a, b) in ((_iv1, d[0]), (_iv2, d[2]), (_iv3, d[3])))))
 INVOICING = (hero_split('Money', p['h1'], p['lede'], '', INVOICE)
              + problem('invoicing')
-             + sx('Friendly first, firmer later.', 'And never from you personally.', LADDER, 'wh')
-             + H.split('What you see', 'You get paid without being the one who asks.', 'What is outstanding, by customer and by age.', AGING)
-             + bigline(p['line'])
+             + IVNUM + IVBARS + IVLAD + IV3
              + faq('Questions.', xfaq(p)) + CL)
 
 # ---- /bookkeeping : a paper receipt becoming a filed cost; what each job actually made ----
@@ -1888,7 +1909,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -1903,7 +1924,7 @@ RHYTHM = {
     'estimates': ('st v3 ewk acd', {'st': 's-tn v-xl'}),
     'proposals': ('st bl sx sp', {'bl': 's-dk t-arc', 'sx': 't-sheet'}),
     'follow-up': ('st v3 sx acd ic as', {'st': 'v-2', 'sx': 't-exp'}),
-    'invoicing': ('sx st sp bl', {'sx': 't-sheet', 'st': 's-tn v-c', 'sp': 'v-f', 'bl': 's-dk v-sf t-angle'}),
+    'invoicing': ('st ivn ivb ivl v3', {'st': 's-tn v-c'}),
     'bookkeeping': ('st sx pg sp', {'st': 'v-xl t-rule', 'sx': 'v-pin', 'pg': 'v-l', 'sp': 's-dkp'}),
     'reviews': ('st rvc rvp acd', {'st': 'v-2'}),
     'review-replies': ('st sx pg', {'st': 'v-c', 'sx': 'v-pin t-rule', 'pg': 'v-l'}),
@@ -2070,7 +2091,7 @@ def next_sec(name):
             % (BY[name]['name'], ap(BY[name]['short']), ''.join('<a href="/%s"><b>%s</b><span>%s</span></a>' % (o, BY[o]['name'], ap(BY[o]['short'])) for o in others)))
 
 
-HAND = {'estimates', 'reviews'}
+HAND = {'estimates', 'reviews', 'invoicing'}
 def full(name, body):
     if name not in CLEAN:
         return body
@@ -2395,7 +2416,6 @@ def _g_audit():   # one business from first lead to paid, with the two biggest d
 
 FIGS = {   # page: (section it goes after, the figure)
     'follow-up': ('sg', linefig('Chased until it is a yes or a no.', 'Days 2, 5 and 10, then monthly', 'Each quote is followed up on a schedule and stops the moment there is an answer.', _g_follow())),
-    'invoicing': ('pg', linefig('Polite reminders until it is settled.', 'Sent the day the job ends', 'Friendly first, firmer later. They stop the moment it is paid.', _g_invoice(), 'dk')),
     'reports': ('sg', linefig('Your numbers, every Monday.', 'One short report each week', 'Leads in, jobs booked, quotes open, money owed and what needs you.', _g_reports(), 'f')),
     'answering': ('st', linefig('Day or night, the reply goes out from your number.', 'Calls, texts, forms and lead sites', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', _g_answer())),
     'everything': ('fq', linefig('The audit finds what to fix first.', 'Free, and built around your business', 'Each build is made for the business it goes into. Your free audit decides which ones you need.', _g_audit(), 'f', '<div class="cta">%s</div>' % BOOK)),
@@ -2565,6 +2585,41 @@ CSS_FA = r"""
 .acd .acd-p .srx{width:100%;max-width:560px}
 @media(max-width:1100px){.rh-i{padding-bottom:40px}.rh-c{position:static;width:auto;margin:10px auto 0;max-width:340px}.rh-c.c1{margin-top:36px}.rh-n{position:static;margin-top:16px}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
+/* ---- /invoicing ---- */
+.ivn-g{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:center;gap:clamp(30px,5vw,100px);border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(72px,8vw,150px) clamp(22px,3.1vw,60px)}
+.ivn .st-t{margin:0;max-width:15em}.ivn-n{padding-left:clamp(24px,3vw,56px);border-left:1px solid var(--ln)}
+.ivn-n b{display:block;font-size:clamp(64px,8vw,150px);line-height:.9;letter-spacing:-.055em;font-weight:500}.ivn-n span{display:block;margin-top:16px;font-size:clamp(16px,1.2vw,21px);color:var(--g2)}
+.ivn-n em{display:block;margin-top:18px;font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;letter-spacing:.04em;color:var(--t3)}
+.ivb{--a:clamp(0,calc(var(--p,1)/.45),1);--r:0;border-top:1px solid var(--ln)}.ivb-i{position:relative;overflow:hidden;background:#fff}
+.ivb-f{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(30px,5vw,90px);align-items:end;height:min(86vh,820px);box-sizing:border-box;padding:clamp(56px,6vw,100px) clamp(22px,3.1vw,60px) 0;border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.ivb-t{align-self:center}.ivb-t .st-t{margin:20px 0 26px;max-width:14em}.ivb-t .fa-k{display:grid;gap:8px;margin:0}
+.ivb-c{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(14px,2vw,36px);align-items:end;height:100%;border-bottom:1px solid var(--ink)}
+.ivb-b{--v:clamp(0,calc(var(--a)*3.4 - var(--i)),1);position:relative;height:calc(var(--h)*.78);display:flex;flex-direction:column;justify-content:flex-end}
+.ivb-b>div{flex:1;display:flex;flex-direction:column-reverse;gap:2px;transform-origin:bottom;transform:scaleY(var(--v))}
+.ivb-b i{flex:1;display:flex;align-items:flex-end;padding:10px 12px;font-style:normal;font-size:12.5px;font-weight:540;color:#fff;background:#266df1;min-height:0;overflow:hidden;box-shadow:0 2px 0 #fff}
+.ivb-b.b i{background:#cfdcfd;color:#1f4fbe}.ivb-b.y i{background:#7fa8f7;color:#fff}.ivb-b.r i{background:#266df1}.ivb-b i:last-child{border-radius:6px 6px 0 0}
+.ivb-b em{display:block;margin-bottom:10px;font-style:normal;font-size:clamp(20px,1.9vw,32px);font-weight:500;letter-spacing:-.02em;opacity:var(--v)}
+.ivb-b>b{position:absolute;left:0;top:calc(100% + 12px);font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t2);white-space:nowrap}
+.ivb-f{padding-bottom:46px}
+@media(min-width:861px){.ivb.sp-live{height:240vh;--a:clamp(0,calc(var(--p,0)/.42),1);--r:clamp(0,calc((var(--p,0) - .6)/.4),1)}
+.ivb.sp-live .ivb-i{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,#fff calc((1 - clamp(0,calc(var(--r)*3 - 2),1))*100%),var(--dk))}
+.ivb.sp-live .ivb-f{flex:none;margin:0 auto;transform-origin:89% 72%;transform:scale(calc(1 + var(--r)*var(--r)*var(--r)*46));will-change:transform}
+.ivb.sp-live .ivb-t,.ivb.sp-live .ivb-b em,.ivb.sp-live .ivb-b>b{opacity:calc(1 - var(--r)*5)}.ivb.sp-live .ivb-b em{opacity:calc(var(--v) - var(--r)*5)}
+.ivb.sp-live .ivb-b.r i{color:rgba(255,255,255,calc(1 - var(--r)*4));background:color-mix(in srgb,#266df1 calc((1 - var(--r)*var(--r))*100%),var(--dk))}}
+.ivl{background:var(--dk);color:#fff}.ivl-i{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(30px,5vw,100px);align-items:center;border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(72px,7vw,130px) clamp(22px,3.1vw,60px)}
+.ivl .st-t{margin:0;color:#fff;max-width:12em}.ivl .st-t span{color:#8f9197}.ivl-k{margin:26px 0 0;max-width:24em;font-size:clamp(14.5px,1vw,17px);line-height:1.45;color:#a9abb0}
+.ivl-m{display:grid;gap:14px}.ivl-r{display:grid;grid-template-columns:5.4em minmax(0,1fr);align-items:start;gap:16px;margin-left:calc(var(--k)*clamp(18px,4vw,70px))}
+.ivl-r span,.ivl-p span{padding-top:14px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:#8f9197}
+.ivl-r p{margin:0;padding:14px 16px;border-radius:14px 14px 14px 4px;background:#232427;font-size:clamp(14.5px,1.05vw,17.5px);line-height:1.4}
+.ivl-r[style*="--k:1"] p{background:#2f2a1c;box-shadow:inset 0 0 0 1px #f0a001}.ivl-r[style*="--k:2"] p{background:#33201f;box-shadow:inset 0 0 0 1px #e5484e}
+.ivl-p{display:flex;align-items:center;gap:16px;margin:8px 0 0 calc(3*clamp(18px,4vw,70px))}.ivl-p span{padding:0;width:5.4em}.ivl-p b{padding:10px 18px;border-radius:999px;background:#266df1;font-size:15px;font-weight:560}
+.iv{width:78%;font-size:13px}.iv1{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.iv1 i{padding:16px 0 12px;border-radius:7px;background:#fff;box-shadow:inset 0 0 0 1px var(--ln);font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;text-align:center;color:var(--t3)}
+.iv1 i.on{background:var(--ink);color:#fff;box-shadow:none}.iv1 p{grid-column:1/-1;display:flex;justify-content:flex-end;gap:6px;margin:8px 0 0}.iv1 p b{padding:6px 9px;border-radius:6px;background:#fff;box-shadow:inset 0 0 0 1px var(--ln);font-size:12px;font-weight:540}.iv1 p b.k{background:#266df1;color:#fff;box-shadow:none}
+.iv2{display:grid;gap:10px}.iv2 .hb{margin:0;max-width:none}.iv2 em{font-style:normal;justify-self:end;padding:9px 16px;border-radius:8px;background:#266df1;color:#fff;font-weight:560}
+.iv3{background:#fff;border-radius:10px;box-shadow:0 0 0 1px var(--ln)}.iv3 p{display:flex;align-items:center;gap:10px;margin:0;padding:11px 14px;border-top:1px solid var(--ln)}.iv3 p:first-child{border-top:0}
+.iv3 p span{flex:1;margin:0;font-size:13px;color:var(--ink)}.iv3 p b{font-size:13px;font-weight:560}.iv3 i{width:9px;height:9px;border-radius:50%;background:#266df1}.iv3 i.y{background:#f0a001}.iv3 i.r{background:#e5484e}
+@media(max-width:860px){.ivn-g,.ivb-f,.ivl-i{grid-template-columns:minmax(0,1fr)}.ivn-n{padding:26px 0 0;border-left:0;border-top:1px solid var(--ln)}.ivb-f{height:auto;padding-bottom:46px}.ivb-c{height:320px}
+.ivl-r{margin-left:0;grid-template-columns:minmax(0,1fr);gap:6px}.ivl-r span{padding-top:0}.ivl-p{margin-left:0}}
 /* ---- live windows on the inner pages ---- */
 .lvh>*{min-width:0}.lvh>.cd,.lvh>div:first-child{flex:0 1 auto}
 .sdw{flex:none;width:clamp(210px,17vw,250px);box-sizing:border-box;padding:14px 12px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.16),0 30px 60px -34px rgba(38,38,40,.4);font-size:13px;text-align:left;min-height:170px}
@@ -2739,7 +2794,7 @@ def dportal(slug, label, line_, title):
 
 def trans(name, body):
     # one transition per page, drawn for that page: the drawing builds as you scroll, then one part of it grows into the next screen
-    if name not in DW.D or name == 'reviews':   # Reviews hands over through its own graph
+    if name not in DW.D or name in ('reviews', 'invoicing'):   # these hand over through their own graph
         return body
     body = re.sub(r'<section class="pt pt-(?:bubble|sheet|grid|app|bars|cols)" data-sp>.*?</section>', '', body, flags=re.S) if name in BY and name != 'answering' else body
     if 'class="pt ' in body:

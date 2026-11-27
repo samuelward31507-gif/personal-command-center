@@ -581,3 +581,14 @@ Sam on Reviews: drew an exponential curve with drop lines over my straight line;
 - Still true: seven kinds across 35 pages means each kind repeats five times. More kinds are needed, and graph pages should hand over through their own graph the way Reviews now does.
 - Sam: "I want the expo graph to look like Attio's." Reviews curve rebuilt to that form: inside the page frame under a dotted band, a gentle bend from the bottom-left to the top-right corner, 150 fine drop lines that strengthen to the right, and on the left a blue tag, a bold-then-grey sentence and four figures with blue bars (34 jobs finished, 5 asked, 3 received, about 17 missed: the example month already on the homepage). It still draws on scroll and then floods from the bottom-right into the dark timeline. `#e4ebfe` and `#1f4fbe` kept through `mono()` for the tag.
 - Sam: "I kind of want the graph to be the transition... zooms in on the graph and then it transitions from there." Done on Reviews: after the curve draws, the whole graph scales up about a point under the curve (86% 74%), the area under it fills blue until blue is the screen, then darkens into the timeline. The circle flood is gone.
+
+## 23g. Invoicing (Nov 27)
+
+Sam approved the Reviews graph-as-transition ("Perfect"). Invoicing rebuilt by hand, different from Estimates, Reviews and Follow-up:
+- Split hero kept (headline left, the invoice card right, strip under it).
+- `IVNUM` (`.ivn`): the page's own line beside one large figure, $14,600 waiting, labelled sample data.
+- `IVBARS` (`.ivb`), pinned: what is owed by age as three stacked bars in three blues (This week $4,300, 8 to 30 days $6,200, Over 30 days $4,100; the buckets already on the page). They rise in turn, then the view goes into the oldest bar, which fills the screen and darkens into the next section. This is the page's transition; no drawing portal here.
+- `IVLAD` (`.ivl`): the three reminders on black, stepping to the right and getting firmer (plain, amber outline, red outline), then a blue Paid, arriving in turn.
+- `IV3`: three cells (the job day and invoice on the same day, the pay button in the message, a list by customer).
+- Blues `#cfdcfd` and `#7fa8f7` kept through `mono()`.
+Done to the standard: homepage, Estimates, Reviews, Invoicing. Close: Follow-up.
