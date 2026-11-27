@@ -404,14 +404,30 @@ RAN = [('8:00 AM', 'Four customers reminded', 'Tomorrow&rsquo;s visits, by text'
        ('2:30 PM', 'Invoice sent', 'Cedar fence, the day it finished'),
        ('5:00 PM', 'Review asked for', 'Gate repair, finished yesterday'),
        ('7:42 PM', 'Missed call texted back', 'Nine seconds after it rang out')]
-_HM_SAT = (   # the three "fix first" findings, each pulled out of the audit on a leader line and shown fixed
-    '<div class="hm-q q1" aria-hidden="true"><i class="hm-ld"></i><p class="hm-qb">[Fix 02]<b>Front desk</b></p><div class="hm-qc"><p class="qk">Saturday, 7:42 PM</p>'
-    '<p class="qm" style="--j:0"><b>Missed call</b>New number, no voicemail</p><p class="qm o" style="--j:1">Sorry we missed you. Want a time tomorrow? 9:00 or 1:30</p><p class="qm" style="--j:2">1:30 works</p></div></div>'
-    '<div class="hm-q q2 dk" aria-hidden="true"><i class="hm-ld"></i><p class="hm-qb">[Fix 03]<b>Calendar</b></p><div class="hm-qc"><p class="qk">&gt; What ran today</p>%s<p class="qf" style="--j:5">Five things done. None of them by hand.</p></div></div>'
-    '<div class="hm-q q3" aria-hidden="true"><i class="hm-ld"></i><p class="hm-qb">[Fix 01]<b>Quotes</b></p><div class="hm-qc"><p class="qk">Quote #1042, cedar fence 120 ft</p>'
-    '<p class="qr" style="--j:0"><span>Quote sent</span><b>Monday</b></p><p class="qr" style="--j:1"><span>Check-in</span><b>Day 2</b></p><p class="qr" style="--j:2"><span>Check-in</span><b>Day 5</b></p>'
-    '<p class="qr t" style="--j:3"><span>Signed</span><b>$4,800</b></p></div></div>'
-    % ''.join('<p class="ql" style="--j:%d"><time>%s</time>%s</p>' % (k, t, a_) for k, (t, a_, b_) in enumerate(RAN)))
+def _sc(n, items):
+    return '<div data-sc="%d">%s</div>' % (n, ''.join(items))
+_b = lambda at, who, text: '<p class="hb %s" data-at="%d">%s</p>' % (who, at, text)          # a text bubble: o = the business, c = the customer
+_n = lambda at, title, text: '<p class="hn" data-at="%d"><b>%s</b>%s</p>' % (at, title, text)   # a notification on the owner's phone
+_l = lambda at, t, text: '<p class="hl" data-at="%d"><time>%s</time>%s</p>' % (at, t, text)     # a line in the log
+_HM_SAT = (   # three windows beside the app, each running in step with the screen it is showing
+    '<div class="hx hx-p" aria-hidden="true"><i class="hx-nc"></i><p class="hx-k">Customer&rsquo;s phone</p><div class="hx-b">%s</div></div>'
+    '<div class="hx hx-n" aria-hidden="true"><p class="hx-k">Your phone</p><div class="hx-b">%s</div></div>'
+    '<div class="hx hx-l" aria-hidden="true"><p class="hx-k">&gt; What ran</p><div class="hx-b">%s</div></div>'
+    % (_sc(0, ['<p class="hx-e">No new messages</p>'])
+       + _sc(1, [_b(1, 'c', '<b>Missed call</b>Sat 7:42 PM'), _b(2, 'o', 'Sorry we missed you, this is Ridgeline Fence. Want a time for an estimate?'), _b(3, 'c', 'Yes. Thursday afternoon?'), _b(4, 'o', 'Thursday 2 PM is yours.')])
+       + _sc(2, [_b(1, 'o', 'Reminder: your estimate is tomorrow at 2 PM. Reply C to confirm.'), _b(3, 'c', 'C'), _b(4, 'o', 'Confirmed. See you then.')])
+       + _sc(3, [_b(1, 'o', 'Any questions on your quote? Happy to walk through it.'), _b(3, 'o', 'Checking in on the cedar fence quote.'), _b(4, 'c', 'Looks good. Let&rsquo;s do it.')])
+       + _sc(4, [_b(1, 'o', 'Your invoice from Ridgeline Fence is ready. Pay here.'), _b(3, 'o', 'A reminder: your invoice is still open.'), _b(4, 'c', 'Paid. Thanks.')]),
+       _sc(0, [_n(1, 'Audit complete', 'Three things to fix first')])
+       + _sc(1, [_n(2, 'Missed call texted back', 'New number, Sat 7:42 PM'), _n(5, 'Estimate booked', 'Thu 2 PM')])
+       + _sc(2, [_n(1, 'Reminder sent', 'Estimate, Thu 2 PM'), _n(4, 'Confirmed', 'No call needed')])
+       + _sc(3, [_n(1, 'Check-in sent', 'Quote #1042, day 2'), _n(5, 'Quote signed', '$4,800')])
+       + _sc(4, [_n(1, 'Invoice sent', 'The day the job ended'), _n(5, 'Invoice paid', 'Cedar fence, 120 ft')]),
+       _sc(0, [_l(1, 'Audit', 'Seven parts checked'), _l(2, 'Audit', 'Three fixes ranked')])
+       + _sc(1, [_l(1, '7:42 PM', 'Call missed'), _l(2, '7:42 PM', 'Text back sent'), _l(4, '7:44 PM', 'Time offered'), _l(5, '7:44 PM', 'Estimate booked')])
+       + _sc(2, [_l(1, 'Wed 2 PM', 'Reminder sent'), _l(3, 'Wed 2 PM', 'Customer confirmed'), _l(4, 'Wed 2 PM', 'Calendar updated')])
+       + _sc(3, [_l(0, 'Mon', 'Quote sent'), _l(1, 'Day 2', 'Check-in sent'), _l(3, 'Day 5', 'Check-in sent'), _l(5, 'Day 5', 'Quote signed')])
+       + _sc(4, [_l(0, 'Fri', 'Job finished'), _l(1, 'Fri', 'Invoice sent'), _l(3, 'Day 3', 'Reminder sent'), _l(5, 'Day 3', 'Paid')])))
 
 def _hm_chart():
     # where 100 leads went, as one clean line: the sample audit's own numbers
@@ -443,29 +459,34 @@ HERO = ('<section class="hm"><div class="w hm-t"><a class="hm-p" href="/free-aud
         '<div class="cta"><a class="btn q" href="/free-audit">See what we check</a><a class="btn" %s>Book your free audit</a></div></div>'
         '<div class="hm-x" data-sp><div class="hm-y"><div class="w hm-s"><div class="hm-w"><div class="hm-b"><i></i><i></i><i></i><b>Free audit</b><span>Ridgeline Fence</span><em>Example business, sample data</em></div>'
         '<div class="hm-g"><div class="hm-l"><p>Seven parts of the business</p>%s</div>'
-        '<div class="hm-m"><div class="hm-v on" data-s="-1" data-f="-1"><div class="hm-h"><div><h2>Where the jobs went</h2><p>100 leads in the last 30 days. 34 became paid jobs.</p></div><span>[Audit complete]</span></div>%s</div>@@VIEWS@@</div>'
+        '<div class="hm-m"><div class="hm-v on" data-sc="0" data-s="-1" data-f="-1"><div class="hm-h"><div><h2>Where the jobs went</h2><p>100 leads in the last 30 days. 34 became paid jobs.</p></div><span>[Audit complete]</span></div>%s</div>@@VIEWS@@</div>'
         '<div class="hm-r"><p>Fix first</p>%s</div></div>'
         '</div></div>@@SAT@@</div></div></section>'
         % (CAL, ''.join('<div class="%s" style="--k:%d"><span>%s</span><b class="%s">%s</b></div>' % ('on' if on else '', k, a, 'f' if b == 'Fine' else '', b) for k, (a, b, on) in enumerate(_HM_SIDE)),
            _hm_chart(), ''.join('<div style="--k:%d"><span>%s</span><b>%s</b><em>%s</em><u>%s</u></div>' % (k, a, c, b, d) for k, (a, b, c, d) in enumerate(_HM_FIND))))
 HERO = HERO.replace('@@SAT@@', _HM_SAT)
-# the window plays on its own: after the overview it opens each finding in turn, the way someone would click through the report
-def _hm_view(side, find, tag, title, figure, body, fix):
-    return ('<div class="hm-v" data-s="%d" data-f="%d"><div class="hm-h"><div><h2 data-ty="%s">%s</h2><p>%s</p></div><span>[%s]</span></div>%s'
-            '<p class="vf"><b>[Fix]</b><span data-ty="%s">%s</span></p></div>' % (side, find, title, title, figure, tag, body, fix, fix))
+# the window walks through the fixes on its own: each screen shows the leak the audit found, then the system handling it, step by step
+def _hm_view(n, side, find, tag, title, figure, body, fix):
+    return ('<div class="hm-v" data-sc="%d" data-s="%d" data-f="%d"><div class="hm-h"><div><h2 data-ty="%s">%s</h2><p>%s</p></div><span>[%s]</span></div>%s'
+            '<p class="vf" data-at="1"><b>[Fix]</b><span data-ty="%s">%s</span></p></div>' % (n, side, find, title, title, figure, tag, body, fix, fix))
+_cp = lambda text, at, to=None, cls='': '<em class="cp %s" data-at="%d"%s>%s</em>' % (cls, at, '' if to is None else ' data-to="%d"' % to, text)
+_st = lambda at, a, b, cls='': '<div class="vr vs %s" data-at="%d"><i></i><b>%s</b><span>%s</span></div>' % (cls, at, a, b)
 _HM_VIEWS = (
-    _hm_view(1, 1, 'Front desk', '8 calls missed after hours', '$2,400 a month',
-             '<div class="hm-vb">%s</div>' % ''.join('<div class="vr" style="--k:%d"><b>%s</b><span>%s</span><em class="%s">%s</em></div>' % (k, a, b, d, c) for k, (a, b, c, d) in enumerate(LOGROWS)),
+    _hm_view(1, 1, 1, 'Front desk', '8 calls missed after hours', '$2,400 a month',
+             '<div class="hm-vb"><div class="vr lv"><b>New number</b><span>Sat 7:42 PM</span>%s%s%s</div>%s</div>'
+             % (_cp('No call back', 0, 2, 'r'), _cp('Texted back in seconds', 2, 5), _cp('Booked Thu 2 PM', 5, None, 'k'),
+                ''.join('<div class="vr old"><b>%s</b><span>%s</span><em class="%s">%s</em></div>' % (a, b, d, c) for a, b, c, d in LOGROWS[1:])),
              'A text back in seconds')
-    + _hm_view(2, 2, 'Calendar', 'Scheduling and reminders by hand', '11 hours a week',
-               '<div class="hm-vb">%s</div>' % ''.join('<div class="vr vt" style="--k:%d"><b>%s</b><u><i style="width:%d%%"></i></u><span>%s h</span></div>' % (k, a, h / 3 * 100, ('%g' % h)) for k, (a, h) in enumerate(TASKS)),
+    + _hm_view(2, 2, 2, 'Calendar', 'Scheduling and reminders by hand', '11 hours a week',
+               '<div class="hm-vb">%s</div>' % ''.join('<div class="vr vt"><b>%s</b>%s%s<u><i style="width:%d%%"></i></u></div>'
+                                                      % (a, _cp('Runs itself', k + 1, None, 'k'), _cp('%g h' % h, 0, k + 1, 'h'), h / 3 * 100) for k, (a, h) in enumerate(TASKS)),
                'Booking that runs itself')
-    + _hm_view(3, 0, 'Quotes', '13 quotes never followed up', '$3,100 a month',
-               '<div class="vq">%s</div>' % ''.join('<i style="--k:%d"></i>' % k for k in range(13)),
+    + _hm_view(3, 3, 0, 'Quotes', '13 quotes never followed up', '$3,100 a month',
+               '<div class="vq">%s</div><div class="hm-vb">%s</div>' % (''.join('<i class="%s"></i>' % ('on' if k == 4 else '') for k in range(13)),
+                                                                     _st(0, 'Quote #1042 sent', 'Monday') + _st(1, 'Check-in', 'Day 2') + _st(3, 'Check-in', 'Day 5') + _st(5, 'Signed', '$4,800', 'k')),
                'Check-ins on day two and five')
-    + _hm_view(5, -1, 'Money', 'Invoices go out six days late', '$14,600 waiting',
-               '<div class="vb">%s</div>' % ''.join('<div style="--k:%d"><b>%s</b><i style="height:%d%%"></i><span>%s</span></div>' % (k, v, h, n)
-                                                   for k, (n, v, h) in enumerate((('Not invoiced yet', '$2,100', 39), ('Under 2 weeks', '$5,400', 100), ('2 to 4 weeks', '$3,100', 57), ('Over 30 days', '$4,000', 74)))),
+    + _hm_view(4, 5, -1, 'Money', 'Invoices go out six days late', '$14,600 waiting',
+               '<div class="hm-vb">%s</div>' % (_st(0, 'Job finished', 'Friday') + _st(1, 'Invoice sent', 'Friday') + _st(3, 'Reminder', 'Day 3') + _st(5, 'Paid', 'Cedar fence, 120 ft', 'k')),
                'An invoice the day the job ends'))
 HERO = HERO.replace('@@VIEWS@@', _HM_VIEWS)
 
@@ -781,24 +802,38 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 @media(max-width:860px){.tl.tl2 ul{grid-template-columns:repeat(2,minmax(0,1fr))}.tl.tl2 li:nth-last-child(2){border-bottom:1px solid var(--ln)!important}}
 /* fine vertical lines along the top and bottom of the closing block on every page */
 .cl{background-image:linear-gradient(180deg,rgba(16,16,16,0) 0,var(--dk) 200px,var(--dk) calc(100% - 200px),rgba(16,16,16,0) 100%),repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px)}
-/* the hero window plays on its own, one finding after another */
+/* the hero window walks through the fixes on its own; three windows beside it run in step */
 .hm-m{display:grid}.hm-v{grid-area:1/1;min-width:0;opacity:0;visibility:hidden;transition:opacity .35s,visibility 0s .35s}.hm-v.on{opacity:1;visibility:visible;transition:opacity .45s .14s}
 .hm-l div,.hm-r div{transition:background .3s,box-shadow .3s}.hm-r div.hi{box-shadow:0 0 0 1px var(--ink)}
+.hm-x.live [data-at]:not(.in){display:none}.hm-x.live [data-at].in{animation:hmin .45s both}
 .hm-vb{margin-top:24px}.vr{display:flex;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--ln);font-size:14.5px}.vr b{font-weight:520;flex:1}.vr span{font-size:13px;color:var(--g2);white-space:nowrap}
-.vr em{font-style:normal;font-size:12px;font-weight:500;padding:4px 8px;border-radius:6px;background:#eeeef0;white-space:nowrap}.vr em.r{background:var(--ink);color:#fff}
-.vr.vt b{flex:0 0 46%}.vr.vt u{flex:1;height:6px;border-radius:3px;background:#eeeef0;overflow:hidden}.vr.vt u i{display:block;height:100%;background:var(--ink);border-radius:3px;transform-origin:left}
-.vr.vt span{flex:0 0 3.2em;text-align:right}
-.vq{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:clamp(5px,.6vw,10px);margin-top:34px;padding-bottom:26px;border-bottom:1px solid var(--ln)}
-.vq i{aspect-ratio:.74;border:1px solid var(--ink);border-radius:3px;background:linear-gradient(#c3c6cd,#c3c6cd) 50% 30%/56% 1px no-repeat,linear-gradient(#c3c6cd,#c3c6cd) 50% 48%/56% 1px no-repeat,linear-gradient(#c3c6cd,#c3c6cd) 30% 66%/36% 1px no-repeat}
-.vb{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,20px);margin-top:22px;height:clamp(170px,14vw,230px)}
-.vb div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}.vb b{font-size:14px;font-weight:540;margin-bottom:7px}.vb i{display:block;border-radius:5px 5px 0 0;background:#dfe1e6;transform-origin:bottom}
-.vb div:nth-child(2) i,.vb div:nth-child(4) i{background:var(--ink)}.vb span{padding-top:9px;border-top:1px solid var(--ink);font-size:12.5px;color:var(--g2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.vf{margin:20px 0 0;display:flex;gap:10px;align-items:center;font:500 11.5px/1.3 "Geist Mono",monospace;letter-spacing:.02em}.vf b{color:var(--g2);font-weight:500}
+.vr em{font-style:normal;font-size:12px;font-weight:500;padding:4px 8px;border-radius:6px;background:#eeeef0;white-space:nowrap}.vr em.r{background:#fff;box-shadow:inset 0 0 0 1px var(--ink)}.vr em.k{background:var(--ink);color:#fff}
+.vr.old{opacity:.5}.vr.lv{padding:16px 14px;margin:0 -14px 6px;border:1px solid var(--ink);border-radius:10px}
+.vr.vt b{flex:0 0 44%}.vr.vt u{flex:1;order:2;height:6px;border-radius:3px;background:#eeeef0;overflow:hidden}.vr.vt u i{display:block;height:100%;background:var(--ink);border-radius:3px;transform-origin:left;transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.vr.vt em{order:3;flex:0 0 6.4em;text-align:center}.vr.vt em.h{background:none;color:var(--g2);text-align:right;padding-right:0}.vr.vt em.k.in~u i{transform:scaleX(0)}
+.vr.vs i{flex:none;width:7px;height:7px;background:var(--ink)}.vr.vs.k{font-weight:560}.vr.vs.k span{font-size:14.5px;font-weight:560;color:var(--ink)}
+.vq{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:clamp(5px,.6vw,10px);margin-top:26px}
+.vq i{aspect-ratio:.74;border:1px solid #c3c6cd;border-radius:3px;background:linear-gradient(#c3c6cd,#c3c6cd) 50% 30%/56% 1px no-repeat,linear-gradient(#c3c6cd,#c3c6cd) 50% 48%/56% 1px no-repeat,linear-gradient(#c3c6cd,#c3c6cd) 30% 66%/36% 1px no-repeat}
+.vq i.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}.vq+.hm-vb{margin-top:16px}
+.vf{margin:18px 0 0;display:flex;gap:10px;align-items:center;font:500 11.5px/1.3 "Geist Mono",monospace;letter-spacing:.02em}.vf b{color:var(--g2);font-weight:500}
 .vf span::after{content:"";display:inline-block;width:6px;height:12px;margin-left:4px;vertical-align:-2px;background:var(--ink);animation:vcar 1s steps(1) infinite}@keyframes vcar{50%{opacity:0}}
-.hm-v.on .vr,.hm-v.on .vq i,.hm-v.on .vb div{animation:hmin .5s calc(.3s + var(--k)*.07s) both}
-.hm-v.on .vr.vt u i{animation:vgrow .7s calc(.45s + var(--k)*.07s) cubic-bezier(.2,.7,.2,1) both}.hm-v.on .vb i{animation:vup .7s calc(.4s + var(--k)*.09s) cubic-bezier(.2,.7,.2,1) both}
-@keyframes vgrow{from{transform:scaleX(0)}}@keyframes vup{from{transform:scaleY(0)}}
-@media(max-width:860px){.vq{grid-template-columns:repeat(7,minmax(0,1fr))}.vr.vt b{flex-basis:52%}.vb span{white-space:normal;font-size:11.5px;line-height:1.25;min-height:2.6em}.vb b{font-size:13px}}
+.hx{display:none}
+@media(min-width:861px){
+.hm-x.sp-live{--dn:calc(min(var(--p,0)*2.4,1)*9vh)}.hm-x.sp-live .hm-w{transform:translateY(var(--dn)) scale(calc(1 - min(var(--p,0)*2.4,1)*.25));transform-origin:50% 42%}
+.hm-x.sp-live .hx{--e:clamp(0,calc((var(--p,0) - var(--s))*5),1);display:block;position:absolute;z-index:3;width:clamp(180px,16.6vw,262px);opacity:var(--e);background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.16),0 30px 60px -34px rgba(38,38,40,.4);font-size:13px}
+.hx-p{--s:.03;left:max(18px,calc(50% - 790px));top:calc(clamp(84px,12vh,130px) + 3vh + var(--dn));height:min(56vh,520px);border-radius:28px;padding:30px 12px 14px;box-sizing:border-box;transform:translateX(calc((1 - var(--e))*150px))}
+.hx-nc{position:absolute;left:50%;top:10px;width:64px;height:7px;margin-left:-32px;border-radius:4px;background:var(--ink)}
+.hx-n{--s:.1;right:max(18px,calc(50% - 790px));top:calc(clamp(84px,12vh,130px) + 3vh + var(--dn));border-radius:14px;padding:12px;min-height:150px;box-sizing:border-box;transform:translateX(calc((1 - var(--e))*-150px))}
+.hx-l{--s:.17;right:max(18px,calc(50% - 790px));top:calc(clamp(84px,12vh,130px) + 3vh + 174px + var(--dn));border-radius:10px;padding:12px;min-height:min(30vh,250px);box-sizing:border-box;transform:translateX(calc((1 - var(--e))*-150px))}
+.hm-x.sp-live .hx-l{background:#17181a;color:#e3e4e7;box-shadow:0 30px 60px -34px rgba(38,38,40,.5)}}
+.hx-k{margin:0 0 12px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--g2)}.hx-p .hx-k{text-align:center}.hx-l .hx-k{color:#fff}
+.hx [data-sc]{display:none}.hx [data-sc].on{display:block}
+.hx-e{margin:30% 0 0;text-align:center;color:var(--g3);font-size:12.5px}
+.hb{max-width:86%;width:fit-content;margin:8px 0 0;padding:8px 10px;border-radius:12px 12px 12px 3px;background:#eceef2;line-height:1.35}.hb b{display:block;font-weight:600}
+.hb.o{margin-left:auto;border-radius:12px 12px 3px 12px;background:var(--ink);color:#fff}
+.hn{margin:0 0 8px;padding:10px 11px;border-radius:10px;background:#f4f5f7;line-height:1.35;color:var(--g2)}.hn b{display:block;font-weight:580;color:var(--ink)}
+.hl{display:flex;gap:10px;margin:6px 0 0;font:500 11px/1.5 "Geist Mono",monospace}.hl time{flex:none;width:5.6em;color:#7f8187}
+@media(max-width:860px){.vq{grid-template-columns:repeat(7,minmax(0,1fr))}.vr.vt b{flex-basis:50%}.vr.lv{margin:0 0 6px}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
@@ -1453,14 +1488,18 @@ def mono(text):
 
 
 JS += r"""
-(function(){var m=document.querySelector('.hm-m');if(!m)return;var vs=[].slice.call(m.querySelectorAll('.hm-v'));if(vs.length<2)return;
-var sd=[].slice.call(document.querySelectorAll('.hm-l div')),fr=[].slice.call(document.querySelectorAll('.hm-r div')),i=0,vis=true;
-function type(el){var t=el.getAttribute('data-ty'),n=0;clearTimeout(el._t);el.textContent='';(function f(){n+=2;el.textContent=t.slice(0,n);if(n<t.length)el._t=setTimeout(f,24)})()}
-function show(k){i=k;vs.forEach(function(v,j){v.classList.toggle('on',j===k)});var s=+vs[k].getAttribute('data-s'),f=+vs[k].getAttribute('data-f');
-sd.forEach(function(d,j){d.classList.toggle('on',j===s)});fr.forEach(function(d,j){d.classList.toggle('hi',j===f)});[].forEach.call(vs[k].querySelectorAll('[data-ty]'),type)}
-if('IntersectionObserver' in window)new IntersectionObserver(function(e){vis=e[0].isIntersecting}).observe(m);
-var q=/[?&]view=(\d)/.exec(location.search);if(q){show(+q[1]);return}
-setInterval(function(){if(vis&&!document.hidden)show((i+1)%vs.length)},4800)})();
+(function(){var x=document.querySelector('.hm-x');if(!x)return;var vs=[].slice.call(x.querySelectorAll('.hm-v'));if(vs.length<2)return;
+var gr=[].slice.call(x.querySelectorAll('[data-sc]')),at=[].slice.call(x.querySelectorAll('[data-at]')),sd=[].slice.call(x.querySelectorAll('.hm-l div')),fr=[].slice.call(x.querySelectorAll('.hm-r div')),sc=0,st=0,vis=true;
+at.forEach(function(e){var g=e.closest('[data-sc]');e._s=g?+g.getAttribute('data-sc'):-1;e._a=+e.getAttribute('data-at');e._z=e.hasAttribute('data-to')?+e.getAttribute('data-to'):99});
+function type(el){var t=el.getAttribute('data-ty'),n=0;clearTimeout(el._t);el.textContent='';(function f(){n+=2;el.textContent=t.slice(0,n);if(n<t.length)el._t=setTimeout(f,22)})()}
+function draw(fresh){gr.forEach(function(g){g.classList.toggle('on',+g.getAttribute('data-sc')===sc)});
+at.forEach(function(e){var on=e._s===sc&&st>=e._a&&st<e._z,was=e.classList.contains('in');e.classList.toggle('in',on);if(on&&!was){var t=e.querySelector('[data-ty]');if(t)type(t)}});
+if(fresh){var v=vs[sc],s=+v.getAttribute('data-s'),f=+v.getAttribute('data-f');sd.forEach(function(d,j){d.classList.toggle('on',j===s)});fr.forEach(function(d,j){d.classList.toggle('hi',j===f)});
+var h=v.querySelector('h2[data-ty]');if(h)type(h)}}
+x.classList.add('live');
+var q=/[?&]view=(\d)(?:&step=(\d))?/.exec(location.search);if(q){sc=+q[1];st=q[2]?+q[2]:9;draw(true);return}
+draw(true);if('IntersectionObserver' in window)new IntersectionObserver(function(e){vis=e[0].isIntersecting}).observe(x);
+setInterval(function(){if(!vis||document.hidden)return;st++;if(st>(sc?7:4)){sc=(sc+1)%vs.length;st=0;draw(true)}else draw(false)},1050)})();
 """
 ALLCSS = mono(hero_css + CSS)
 VER = hashlib.sha1((ALLCSS + JS).encode()).hexdigest()[:8]

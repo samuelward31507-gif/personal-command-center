@@ -490,3 +490,11 @@ Sam sent a recording of Attio's homepage hero: "i like this... it's just a video
 - The audit window now steps through five views on a timer (4.8 s each, paused off screen or in a background tab): the overview, then Front desk, Calendar, Quotes and Money. The sidebar selection and the matching "Fix first" card move with it, the heading and the fix line type in, rows and bars arrive in turn. `_hm_view()` / `_HM_VIEWS` in mk_home.py; script at the end of `JS`. `?view=N` holds one view for screenshots.
 - Every figure in the views is sample data already on the homepage (`LOGROWS`, `TASKS`, the unpaid buckets, the findings). Nothing new.
 - The scroll call-outs are unchanged.
+
+## 22z. Hero becomes a walkthrough, not a slideshow (Nov 27)
+
+Sam: "not just pictures put into a slideshow... an actual walkthrough... the things coming out on the side have other things running on it that hook up with the screen that it's showing." And the three pop-outs with black leader lines "look pretty cheap", covering words.
+
+- Pop-outs and leader lines removed. On scroll the window shrinks and three windows slide out beside it, not over it: the customer's phone (left), the owner's phone (right, top) and a dark log (right, bottom). `_HM_SAT` in mk_home.py.
+- One clock (1.05 s a step) drives the screen and all three windows. Each scene shows the leak the audit found, then the fix handling it step by step: a missed call texted back and booked; the five hand tasks switching to "Runs itself"; quote #1042 checked in on day 2 and 5 and signed; an invoice sent the day the job ended, reminded, paid. Elements carry `data-sc` (scene) and `data-at` / `data-to` (steps). `?view=N&step=K` holds a moment for screenshots.
+- Sample dialogue in the phone is new wording, shown under "Example business, sample data".
