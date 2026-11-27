@@ -463,3 +463,14 @@ Sam: "Do the things you can and bring that custom / advanced feel to all pages."
 - Homepage: a "Built for trades that quote" row under the tools row, seven trades linking to /trades (names from the Trades page plus Fence).
 - `/new` removed (unlinked duplicate of the homepage).
 - Still needs Sam: photo and background, real proof, build timeline, terms wording.
+
+## 22w. One drawing made for each page (Nov 27)
+
+Sam: "Fix them all. Custom to the page. No repeated images. Every page needs to be on par with the homepage."
+
+- `design/mock/drawings.py`: 36 hairline drawings on a 560 x 320 canvas, one per page, each used once (31 build pages, plus Free audit, Trades, About, What's new, Questions, Integrations). Each is a list of steps and one plain rectangle, the focal.
+- `dportal()` / `trans()` in mk_pages.py: section `.pt.pt-dw`. The drawing draws itself step by step as you scroll (`--a`), the focal fills, then grows to the whole screen (`--g`) and opens on the page's own line. This replaces the six shared objects from 22v on build pages. Answering, A day, Everything, The app and the homepage keep their own one-off transitions.
+- Free audit page is now written from mk_pages.py (with the pages stylesheet) so it can carry its transition.
+- Trades page: a small drawing for each of the six trades in the grid (`TRSVG`).
+- Check run: no drawing over 400 characters appears on more than one page; no overflow on any page at 1440 or 390 wide.
+- Not done: the build pages still share section layouts (problem, signs, how it works, what changes, questions). The words and the product windows differ per page; the block shapes do not.

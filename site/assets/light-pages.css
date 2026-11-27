@@ -812,6 +812,7 @@
 .tpm-q>div:not(.rep-h){display:flex;justify-content:space-between;gap:12px;padding:12px 18px;border-top:1px solid var(--line);font-size:14px}.tpm-q>div:nth-child(2){border-top:0}.tpm-q span{color:var(--t3);font:500 11.5px/1.6 "Geist Mono",monospace}.tpm-q b{font-weight:540}
 .tpm-q .on{background:#f7f9ff;box-shadow:inset 3px 0 0 var(--blue)}.tpm-q .on span{color:var(--blue)}.tpm-s em{display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:9px;background:var(--blue);color:#fff;font-style:normal;font-size:13px;font-weight:560}
 .trd{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--ln);border-radius:16px;overflow:hidden}.trd div{padding:clamp(22px,1.8vw,34px);border-left:1px solid var(--ln);border-top:1px solid var(--ln);margin:-1px 0 0 -1px;background:var(--g)}
+.trd svg{display:block;width:120px;height:64px;margin-bottom:22px;overflow:visible}.trd svg *{fill:none;stroke:var(--ink);stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round}.trd svg .g{stroke:#b4b7bf}
 .trd b{display:block;font-size:clamp(19px,1.4vw,26px);font-weight:560;letter-spacing:-.024em}.trd span{display:block;margin-top:8px;max-width:20em;font-size:clamp(14px,.9vw,16.5px);line-height:1.4;color:var(--g2)}
 /* ============ what's new ============ */
 .ih-l:not(:has(.ih-p)) .ih-i{padding-bottom:clamp(56px,5vw,96px)}
@@ -1016,6 +1017,19 @@ clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((10
 .pt-bars.sp-live .pt-o{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:calc((1 - var(--g,0))*14px);opacity:1;top:calc(var(--cy) + (50% - var(--cy))*var(--g,0));width:calc(var(--w) + (100% - var(--w))*var(--g,0));height:calc(var(--h) + (100% - var(--h))*var(--g,0))}
 .pt-bars .pt-o i{position:relative;box-shadow:inset 0 0 0 1px var(--ink),0 0 0 calc(var(--g,0)*1px) var(--dk);border-radius:calc((1 - var(--g,0))*3px);overflow:hidden}
 .pt-bars .pt-o i::after{content:"";position:absolute;inset:0;background:var(--dk);transform-origin:left;transform:scaleX(clamp(0,calc(var(--a,0)*3.3 - var(--i) + var(--g,0)*6),1))}
+/* a drawing made for the page: it draws itself, then one part of it fills and grows into the next screen */
+.pt-dw.sp-live .pt-s{--W:min(860px,86vw,calc((100vh - 330px)*1.75));--H:calc(var(--W)*4/7);--cy:calc(50% + 70px)}
+.pt-dw.sp-live .pt-o{width:var(--W);height:var(--H);z-index:2}
+.pt-dw svg{display:block;width:100%;height:100%;overflow:visible}
+.pt-dw svg *{fill:none;stroke:var(--ink);stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}
+.pt-dw svg .s{stroke-dasharray:1;stroke-dashoffset:clamp(0,calc(1 - (var(--a,0)*1.12*var(--n) - var(--i))),1)}
+.pt-dw svg .g{stroke:#b4b7bf}
+.pt-dw svg .da{stroke:#b4b7bf;stroke-dasharray:3 4;opacity:clamp(0,calc(var(--a,0)*1.12*var(--n) - var(--i)),1)}
+.pt-dw svg .nd{fill:var(--ink);stroke:none;opacity:clamp(0,calc(var(--a,0)*1.12*var(--n) - var(--i)),1)}
+.pt-dw.sp-live .pt-d{--L:calc(50% - var(--W)/2 + var(--fx)*var(--W));--T:calc(var(--cy) - var(--H)/2 + var(--fy)*var(--W));--k:calc(1 - var(--g,0));z-index:1;
+opacity:clamp(0,calc(var(--a,0)*9 - 7.9 + var(--g,0)*20),1);
+clip-path:inset(calc(var(--T)*var(--k)) calc((100% - var(--L) - var(--fw)*var(--W))*var(--k)) calc((100% - var(--T) - var(--fh)*var(--W))*var(--k)) calc(var(--L)*var(--k)) round calc(var(--fr)*var(--W)*var(--k)))}
+@media(max-width:860px){.pt-dw.sp-live .pt-s{--W:min(86vw,calc((100vh - 300px)*1.75));--cy:58%}.pt-dw svg *{stroke-width:1.7}}
 /* five columns filling, then closing up into one screen */
 .pt-cols.sp-live .pt-s{--w:min(420px,80vw);--h:min(150px,34vw);--cy:62%}
 .pt-cols.sp-live .pt-d{z-index:2;background:none;clip-path:none}

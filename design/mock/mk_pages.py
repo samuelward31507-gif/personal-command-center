@@ -12,6 +12,16 @@ exec(_src, _ns)
 GROUPS, ALL, ORDER = _ns['GROUPS'], _ns['ALL'], _ns['ORDER']
 BY = {p['slug']: p for p in ALL}
 ap = lambda t: t.replace("'", '&rsquo;')
+# a small hairline drawing for each trade, each used once
+_tr = lambda body: '<svg viewBox="0 0 120 64" aria-hidden="true">%s</svg>' % body
+TRSVG = {
+    'Roofing': _tr('<path d="M8 54 L60 12 L112 54"/><path class="g" d="M22 54 L60 23 L98 54M36 54 L60 34 L84 54M50 54 L60 45 L70 54"/><path d="M84 31 V16 h10 V39"/><path class="g" d="M4 54 H116"/>'),
+    'HVAC': _tr('<rect x="24" y="8" width="72" height="48" rx="4"/><circle cx="52" cy="32" r="16"/><path d="M52 16 C58 24 58 28 52 32 C46 36 46 40 52 48M36 32 C44 26 48 26 52 32 C56 38 60 38 68 32"/><path class="g" d="M76 20 H90M76 28 H90M76 36 H90M76 44 H90"/>'),
+    'Plumbing': _tr('<path d="M8 20 H70 a14 14 0 0 1 14 14 V58M8 36 H62 a6 6 0 0 1 6 6 V58"/><path d="M30 16 V40M36 16 V40"/><path class="g" d="M64 50 H88M64 56 H88"/><path class="g" d="M100 14 c-6 8 -6 12 0 12 c6 0 6 -4 0 -12z"/>'),
+    'Landscaping and hardscaping': _tr('<path class="g" d="M4 50 C30 34 50 58 76 42 S108 40 116 30M4 58 C30 44 52 64 78 50 S108 50 116 40"/><circle cx="34" cy="20" r="12"/><path d="M34 32 V46"/><path d="M78 10 h30 v20 h-30z"/><path class="g" d="M88 10 v20M98 10 v20M78 20 h30"/>'),
+    'Concrete': _tr('<path d="M10 40 L50 20 L110 30 L70 52 Z"/><path d="M10 40 V46 L70 58 V52M70 58 L110 36 V30"/><path class="g" d="M30 30 L90 41M40 46 L80 25"/>'),
+    'Painting': _tr('<rect x="14" y="10" width="62" height="18" rx="5"/><path d="M76 19 H88 V36 H46 V46"/><rect x="42" y="46" width="8" height="14" rx="2"/><path class="g" d="M96 12 V56M104 12 V44M112 12 V52"/>'),
+}
 GICON = {'desk': 'chat', 'cal': 'cal', 'sales': 'quote', 'money': 'money', 'after': 'star', 'seen': 'find', 'team': 'team', 'custom': 'plus'}
 GLINE = {'desk': 'Every call, form and message answered, day or night.', 'cal': 'Estimates booked, crews scheduled, customers reminded.',
          'sales': 'Sent the same day and followed up until there is an answer.', 'money': 'Invoices out the day the job ends, and chased until paid.',
@@ -1657,7 +1667,7 @@ TRADES = (inner_hero('Trades', 'Built for the trades.', 'For owner-run service b
           + statement('Built first for fence', 'Fence companies get tools made for how they actually sell.', '')
           + cells([('quote', 'Measure to quote', 'Measure the run on site and the quote builds itself, with Good, Better and Best options.'), ('tool', 'Seven fence types', 'Wood, vinyl, chain link, aluminum and more, each priced its own way.'),
                    ('plus', 'Material orders', 'Order what each job needs, straight from the job.'), ('find', 'Job paperwork', 'The documents a fence job needs, filled in for you.')], 'pg-4')
-          + sx('Works for any trade that quotes.', 'The same system answers, books, follows up and asks for reviews, whatever you install or fix.', '<div class="trd">%s</div>' % ''.join('<div><b>%s</b><span>%s</span></div>' % x for x in [
+          + sx('Works for any trade that quotes.', 'The same system answers, books, follows up and asks for reviews, whatever you install or fix.', '<div class="trd">%s</div>' % ''.join('<div>%s<b>%s</b><span>%s</span></div>' % (TRSVG[x[0]], x[0], x[1]) for x in [
               ('Roofing', 'Storm-season call spikes answered in seconds, inspections booked.'), ('HVAC', 'After-hours calls answered, tune-ups and installs booked.'), ('Plumbing', 'Urgent calls answered first, estimates booked the same day.'),
               ('Landscaping and hardscaping', 'Quotes chased until they&rsquo;re settled, spring rush included.'), ('Concrete', 'Bids followed up on, deposits collected to hold the date.'), ('Painting', 'Estimates booked, quotes followed up, reviews asked for.')]), 'wh')
           + ask('Don&rsquo;t see your trade?', 'If you quote jobs, it fits.', 'How the audit works', '/free-audit')
@@ -1768,6 +1778,7 @@ CSS_REST = r"""
 .tpm-q>div:not(.rep-h){display:flex;justify-content:space-between;gap:12px;padding:12px 18px;border-top:1px solid var(--line);font-size:14px}.tpm-q>div:nth-child(2){border-top:0}.tpm-q span{color:var(--t3);font:500 11.5px/1.6 "Geist Mono",monospace}.tpm-q b{font-weight:540}
 .tpm-q .on{background:#f7f9ff;box-shadow:inset 3px 0 0 var(--blue)}.tpm-q .on span{color:var(--blue)}.tpm-s em{display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:9px;background:var(--blue);color:#fff;font-style:normal;font-size:13px;font-weight:560}
 .trd{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--ln);border-radius:16px;overflow:hidden}.trd div{padding:clamp(22px,1.8vw,34px);border-left:1px solid var(--ln);border-top:1px solid var(--ln);margin:-1px 0 0 -1px;background:var(--g)}
+.trd svg{display:block;width:120px;height:64px;margin-bottom:22px;overflow:visible}.trd svg *{fill:none;stroke:var(--ink);stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round}.trd svg .g{stroke:#b4b7bf}
 .trd b{display:block;font-size:clamp(19px,1.4vw,26px);font-weight:560;letter-spacing:-.024em}.trd span{display:block;margin-top:8px;max-width:20em;font-size:clamp(14px,.9vw,16.5px);line-height:1.4;color:var(--g2)}
 /* ============ what's new ============ */
 .ih-l:not(:has(.ih-p)) .ih-i{padding-bottom:clamp(56px,5vw,96px)}
@@ -2310,21 +2321,41 @@ FIGS = {   # page: (section it goes after, the figure)
 }
 
 
-GKIND = {'desk': 'bubble', 'cal': 'grid', 'sales': 'sheet', 'money': 'bars', 'after': 'cols', 'seen': 'app', 'team': 'grid', 'custom': 'app'}
+import drawings as DW
+DWX = {  # pages that are not builds: (label, line, title)
+    'free-audit': ('The free audit', 'The business, taken apart.', 'Every part of it, checked.'),
+    'trades': ('Trades', 'Built first for fence.', 'Built around how you quote.'),
+    'about': ('About', 'Colorado.', 'Working with service businesses anywhere in the US.'),
+    'whats-new': ('What&rsquo;s new', 'What shipped.', 'Every change, with its date.'),
+    'questions': ('Questions', 'Asked before the call.', 'Straight answers.'),
+    'integrations': ('Custom', 'Integrations.', 'It works with what you already use.'),
+}
 GNAME = dict(GROUPS)
+def dportal(slug, label, line_, title):
+    return ('<section class="pt pt-dw" data-sp style="%s"><div class="pt-s"><div class="pt-a"><span>[%s]</span><p>%s</p></div><div class="pt-d"><h2>%s</h2></div>'
+            '<div class="pt-o" aria-hidden="true">%s</div></div></section>' % (DW.focal(slug), label, line_, title, DW.svg(slug)))
+
+
 def trans(name, body):
-    if name not in BY or 'class="pt ' in body:
+    # one transition per page, drawn for that page: the drawing builds as you scroll, then one part of it grows into the next screen
+    if name not in DW.D:
+        return body
+    body = re.sub(r'<section class="pt pt-(?:bubble|sheet|grid|app|bars|cols)" data-sp>.*?</section>', '', body, flags=re.S) if name in BY and name != 'answering' else body
+    if 'class="pt ' in body:
         return body
     secs = re.findall(r'<section\b.*?</section>', body, re.S)
-    if ''.join(secs) != body:
+    if ''.join(secs) != body or len(secs) < 2:
         return body
     hit = [i for i, x in enumerate(secs) if re.match(r'<section class="st\b', x)]
-    if not hit:
-        return body
-    g = BY[name]['group']; plain = re.sub(r'<[^>]+>', '', body)
-    short = ap(BY[name]['short']); x3 = ap(X[name][3]) if name in X and isinstance(X[name][3], str) else ''
-    title = short if short and re.sub(r'<[^>]+>', '', short) not in plain else (x3 or short or GLINE[g])
-    secs.insert(hit[0] + 1, portal(GKIND[g], GNAME[g], BY[name]['name'] + '.', title, count=(GKIND[g] == 'sheet')))
+    at = (hit[0] + 1) if hit and name in BY else 1
+    if name in DWX:
+        label, line_, title = DWX[name]
+    else:
+        g = BY[name]['group']; plain = re.sub(r'<[^>]+>', '', body)
+        short = ap(BY[name]['short']); x3 = ap(X[name][3]) if name in X and isinstance(X[name][3], str) else ''
+        title = short if short and re.sub(r'<[^>]+>', '', short) not in plain else (x3 or short or GLINE[g])
+        label, line_ = GNAME[g], BY[name]['name'] + '.'
+    secs.insert(at, dportal(name, label, line_, title))
     return ''.join(secs)
 
 
@@ -2507,6 +2538,19 @@ clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((10
 .pt-bars.sp-live .pt-o{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:calc((1 - var(--g,0))*14px);opacity:1;top:calc(var(--cy) + (50% - var(--cy))*var(--g,0));width:calc(var(--w) + (100% - var(--w))*var(--g,0));height:calc(var(--h) + (100% - var(--h))*var(--g,0))}
 .pt-bars .pt-o i{position:relative;box-shadow:inset 0 0 0 1px var(--ink),0 0 0 calc(var(--g,0)*1px) var(--dk);border-radius:calc((1 - var(--g,0))*3px);overflow:hidden}
 .pt-bars .pt-o i::after{content:"";position:absolute;inset:0;background:var(--dk);transform-origin:left;transform:scaleX(clamp(0,calc(var(--a,0)*3.3 - var(--i) + var(--g,0)*6),1))}
+/* a drawing made for the page: it draws itself, then one part of it fills and grows into the next screen */
+.pt-dw.sp-live .pt-s{--W:min(860px,86vw,calc((100vh - 330px)*1.75));--H:calc(var(--W)*4/7);--cy:calc(50% + 70px)}
+.pt-dw.sp-live .pt-o{width:var(--W);height:var(--H);z-index:2}
+.pt-dw svg{display:block;width:100%;height:100%;overflow:visible}
+.pt-dw svg *{fill:none;stroke:var(--ink);stroke-width:.85;stroke-linecap:round;stroke-linejoin:round}
+.pt-dw svg .s{stroke-dasharray:1;stroke-dashoffset:clamp(0,calc(1 - (var(--a,0)*1.12*var(--n) - var(--i))),1)}
+.pt-dw svg .g{stroke:#b4b7bf}
+.pt-dw svg .da{stroke:#b4b7bf;stroke-dasharray:3 4;opacity:clamp(0,calc(var(--a,0)*1.12*var(--n) - var(--i)),1)}
+.pt-dw svg .nd{fill:var(--ink);stroke:none;opacity:clamp(0,calc(var(--a,0)*1.12*var(--n) - var(--i)),1)}
+.pt-dw.sp-live .pt-d{--L:calc(50% - var(--W)/2 + var(--fx)*var(--W));--T:calc(var(--cy) - var(--H)/2 + var(--fy)*var(--W));--k:calc(1 - var(--g,0));z-index:1;
+opacity:clamp(0,calc(var(--a,0)*9 - 7.9 + var(--g,0)*20),1);
+clip-path:inset(calc(var(--T)*var(--k)) calc((100% - var(--L) - var(--fw)*var(--W))*var(--k)) calc((100% - var(--T) - var(--fh)*var(--W))*var(--k)) calc(var(--L)*var(--k)) round calc(var(--fr)*var(--W)*var(--k)))}
+@media(max-width:860px){.pt-dw.sp-live .pt-s{--W:min(86vw,calc((100vh - 300px)*1.75));--cy:58%}.pt-dw svg *{stroke-width:1.7}}
 /* five columns filling, then closing up into one screen */
 .pt-cols.sp-live .pt-s{--w:min(420px,80vw);--h:min(150px,34vw);--cy:62%}
 .pt-cols.sp-live .pt-d{z-index:2;background:none;clip-path:none}
@@ -2649,5 +2693,6 @@ if __name__ == '__main__':
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)
+    (out / 'free-audit.html').write_text(page('The free audit', 'A free fifteen-minute audit of your service business. We walk it from the first call to the last invoice, put a number on what it is costing you, and tell you what to fix first. You keep the plan.', '/free-audit', trans('free-audit', H.AUDIT), css=PCSS))
     (out / 'index.html').write_text(page('Find out what your business is losing', H.DESC, '/', _home, css=PCSS))
     print('pages', [p[0] for p in PAGES], V)
