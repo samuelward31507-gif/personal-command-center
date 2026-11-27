@@ -5,7 +5,8 @@ import * as T from 'three';
 const RM=false;
 // wave presets: amplitude, frequency, width, twist, tilt, roll. One per page, so no two backdrops match.
 const V=[[.36,5.2,.3,7.5,.5,-.1],[.2,3,.42,4,.75,.12],[.5,7.5,.22,11,.3,0],[.28,2.2,.5,3,.95,-.2],[.42,4.2,.26,14,.55,.18],[.16,9,.34,6,.4,-.05],[.6,3.6,.2,9,.65,.1],[.3,6,.46,5,.85,0],[.24,4.6,.38,17,.6,-.16],[.46,2.8,.3,8,.35,.2],[.18,6.8,.5,10,.7,-.08],[.54,5,.24,3.5,.45,.14],[.26,2.6,.62,6.5,.82,.07]];
-document.querySelectorAll('[data-flow]').forEach(host=>{const P=host.dataset.p?host.dataset.p.split(',').map(Number):V[(+host.dataset.v||0)%V.length];
+// each ribbon is built only when it is close to the screen, so a page does not pay for all of them at load
+const initFlow=host=>{const P=host.dataset.p?host.dataset.p.split(',').map(Number):V[(+host.dataset.v||0)%V.length];
   const wave=host.dataset.flow==='wave',thread=host.dataset.flow==='thread',small=innerWidth<700;
   const cv=document.createElement('canvas');cv.className='flow-cv';cv.setAttribute('aria-hidden','true');host.append(cv);
   const r=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true,powerPreference:'high-performance'});r.setClearColor(0,0);
@@ -72,4 +73,5 @@ document.querySelectorAll('[data-flow]').forEach(host=>{const P=host.dataset.p?h
     r.render(scene,cam);if(vis&&!RM)raf=requestAnimationFrame(draw)}
   new ResizeObserver(size).observe(host);
   new IntersectionObserver(e=>{vis=e[0].isIntersecting;if(vis&&!tIn)tIn=performance.now();if(vis&&!raf)raf=requestAnimationFrame(draw)},{threshold:.12}).observe(host);size();
-});
+};
+document.querySelectorAll('[data-flow]').forEach(h=>{if(h.getBoundingClientRect().top<innerHeight*1.4||!('IntersectionObserver' in window))initFlow(h);else new IntersectionObserver((e,o)=>{if(e[0].isIntersecting){o.disconnect();initFlow(h)}},{rootMargin:'70% 0px'}).observe(h)});
