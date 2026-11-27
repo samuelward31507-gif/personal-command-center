@@ -2150,27 +2150,240 @@ DRAW = {
 }
 DRAW['dotsfs'] = '<div class="dts" aria-hidden="true">%s</div>' % ''.join('<i class="%s" style="--i:%d"></i>' % ('b' if q % 11 == 0 else '', q) for q in [168, 249, 55, 180, 41, 67, 242, 12, 52, 209, 196, 176, 93, 128, 256, 216, 99, 46, 123, 156, 43, 56, 90, 14, 259, 147, 116, 89, 68, 138, 164, 237, 226, 38, 262, 105, 110, 122, 203, 57, 239, 244, 133, 192, 44, 42, 204, 60, 51, 134, 205, 219, 252, 220, 146, 213, 125, 64, 208, 160, 28, 222, 109, 72, 198, 158, 191, 35, 126, 91, 103, 154, 8, 170, 217, 233, 62, 236, 88, 82, 174, 165, 32, 202, 187, 171, 182, 6, 140, 136, 142, 221, 108, 87, 250, 70, 111, 258, 20, 24, 92, 121, 78, 148, 39, 19, 201, 251, 49, 188, 197, 106, 248, 129, 232, 224, 211, 223, 139, 76, 234, 31, 81, 190, 26, 11, 230, 247, 149, 214, 84, 186, 66, 113, 145, 37, 245, 246, 100, 47, 183, 5, 253, 173, 185, 184, 150, 179, 29, 240, 178, 33, 155, 130, 254, 229, 143, 45, 124, 119, 261, 2, 25, 63, 34, 30, 206, 235, 85, 79, 22, 86, 69, 172, 218, 161, 200, 18, 107, 257, 96, 120, 13, 53, 54, 0, 175, 4, 195, 98, 74, 193, 102, 27, 144, 17, 228, 73, 131, 58, 194, 80, 65, 181, 210, 141, 104, 71, 241, 117, 21, 169, 1, 127, 75, 163, 59, 132, 50, 215, 151, 112, 83, 118, 199, 7, 153, 61, 225, 255, 9, 15, 16, 135, 212, 3, 159, 40, 166, 157, 189, 167, 115, 101, 152, 10, 162, 177, 227, 207, 137, 23, 36, 77, 114, 48, 95, 243, 94, 97, 260, 263, 238, 231])
 
+# =====================================================================================
+# Line graphs. Sam, on Attio's architecture page: "i really like the way the line graphs look, anywhere we can use some of those
+# on our site?" These are ours, in that register: hairlines, dotted drops to the axis, small square nodes, hatching, bracketed
+# mono tags. Nothing is traced from theirs. Every chart is sample data and says so. The plot box is 0..100 both ways; the lines are
+# an SVG stretched to the box with non-scaling strokes, and every label, node and hatch is HTML placed by percentage, so text and
+# nodes keep their size on a phone. The solid line is wiped in left to right by --d; nodes, drops and tags arrive as it passes.
+# =====================================================================================
+def _dense(pts, n=18):
+    xs = [a for a, _ in pts]; ys = [b for _, b in pts]; k = len(pts)
+    dl = [(ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]) for i in range(k - 1)]
+    m = [dl[0]] + [0 if dl[i - 1] * dl[i] <= 0 else (dl[i - 1] + dl[i]) / 2 for i in range(1, k - 1)] + [dl[-1]]
+    for i in range(k - 1):
+        if dl[i] == 0:
+            m[i] = m[i + 1] = 0
+        else:
+            a, b = m[i] / dl[i], m[i + 1] / dl[i]; q = a * a + b * b
+            if q > 9:
+                t = 3 / q ** .5; m[i] = t * a * dl[i]; m[i + 1] = t * b * dl[i]
+    out_ = []
+    for i in range(k - 1):
+        h = xs[i + 1] - xs[i]
+        for j in range(n):
+            t = j / n; t2 = t * t; t3 = t2 * t
+            out_.append((xs[i] + h * t, (2 * t3 - 3 * t2 + 1) * ys[i] + (t3 - 2 * t2 + t) * h * m[i] + (-2 * t3 + 3 * t2) * ys[i + 1] + (t3 - t2) * h * m[i + 1]))
+    return out_ + [pts[-1]]
+
+
+def _yat(line_, x):
+    for (a, b), (c, d) in zip(line_, line_[1:]):
+        if a <= x <= c:
+            return b if c == a else b + (d - b) * (x - a) / (c - a)
+    return line_[-1][1]
+
+
+_poly = lambda pts: 'M' + ' L'.join('%.2f %.2f' % q for q in pts)
+_ln = lambda d, c='ln': '<path class="%s" d="%s"/>' % (c, d)
+_nd = lambda x, y, c='': '<i class="nd %s" style="left:%.2f%%;top:%.2f%%;--t:%.3f"></i>' % (c, x, y, min(x / 100, .9))
+_pl = lambda x, y, text, c='', t=None: '<b class="lgp %s" style="left:%.2f%%;top:%.2f%%;--t:%.3f">[%s]</b>' % (c, x, y, min(x / 100 if t is None else t, .88), text)
+_tk = lambda x, text, c='': '<span class="tk %s" style="left:%.2f%%">%s</span>' % (c, x, text)
+_dr = lambda x, y: '<line class="dr" x1="%.2f" y1="%.2f" x2="%.2f" y2="100" style="--t:%.3f"/>' % (x, y, x, x / 100)
+_hz = lambda x0, y0, x1, y1, c='', clip='': '<i class="hz %s" style="left:%.2f%%;top:%.2f%%;width:%.2f%%;height:%.2f%%;--t:%.3f%s"></i>' % (c, x0, y0, x1 - x0, y1 - y0, x0 / 100, clip)
+_AX = '<path class="ax" d="M0 0 V100 H100"/>'
+
+
+def _ticks(xs, labels):
+    return ''.join(_tk(x, t, 'a' if i == 0 else ('z' if i == len(xs) - 1 else '')) for i, (x, t) in enumerate(zip(xs, labels)))
+
+
+def _lg(base, solid, html, cap, legend=''):
+    return ('<div class="lgr" aria-hidden="true"><p class="cp">%s</p>%s<svg viewBox="0 0 100 100" preserveAspectRatio="none">%s</svg><div class="lgr-w"><svg viewBox="0 0 100 100" preserveAspectRatio="none">%s</svg></div>%s</div>'
+            % (cap, ('<p class="lgr-k">%s</p>' % legend) if legend else '', base, solid, html))
+
+
+def linefig(title, tag, text, chart, cls='', extra=''):
+    return ('<section class="lf %s"><div class="w lf-i"><div class="lf-t"><h2>%s</h2><p class="lf-k">[%s]</p><p>%s</p>%s</div><div class="lf-d" data-in>%s<p class="lf-n">Sample data, example business</p></div></div></section>'
+            % (cls, title, tag, text, extra, chart))
+
+
+def _g_follow():   # quotes still open after the quote is sent: followed up on days 2, 5 and 10, against left alone
+    T = [0, 25, 50, 75, 100]; yv = lambda v: 100 - v * 9
+    fu = _dense([(0, yv(10)), (25, yv(10)), (33.3, yv(7.9)), (50, yv(7.6)), (57, yv(5.6)), (75, yv(5.2)), (79, yv(3.6)), (87.5, yv(2.6)), (100, yv(2))])
+    la = _dense([(0, yv(10)), (25, yv(9.8)), (50, yv(9.5)), (75, yv(9.2)), (100, yv(8.7))])
+    base = _AX + _ln(_poly(la), 'l2') + ''.join(_dr(x, _yat(fu, x)) for x in T[1:4])
+    html = (''.join(_nd(x, _yat(fu, x)) for x in T[1:4]) + _nd(100, yv(2), 'r') + _pl(100, yv(2) - 9, 'Followed up', 'e') + _pl(100, yv(8.7) + 9, 'Left alone', 'g e', .2)
+            + _ticks(T, ['Sent', 'Day 2', 'Day 5', 'Day 10', 'Day 30']))
+    return _lg(base, _ln(_poly(fu)), html, 'Quotes still waiting on an answer')
+
+
+def _g_reviews():   # reviews counted over a year: every finished job asked, against asking when you remember
+    inc = [3, 2, 3, 4, 3, 3, 4, 2, 3, 3, 4, 3]; tot = float(sum(inc)); yv = lambda v: 96 - v / tot * 84
+    pts = [(0, 96)]; v = 0; risers = []
+    for i, k in enumerate(inc):
+        x = (i + 1) * 100 / 12.0; pts.append((x, yv(v))); v += k; pts.append((x, yv(v))); risers.append((x, yv(v)))
+    rem = [(0, 96), (33.3, 96), (33.3, yv(2)), (75, yv(2)), (75, yv(3)), (100, yv(3))]
+    base = _AX + _ln(_poly(rem), 'l2') + ''.join(_dr(x, y) for x, y in risers[:-1])
+    html = (''.join(_nd(x, y, 'o') for x, y in risers[:-1]) + _nd(100, yv(tot), 'r') + _pl(96, yv(tot) - 2, 'Every job asked', 'e') + _pl(100, yv(3) - 8, 'Asked when you remember', 'g e', .2)
+            + _ticks([0, 25, 50, 75, 100], ['Jan', 'Apr', 'Jul', 'Oct', 'Jan']))
+    return _lg(base, _ln(_poly(pts)), html, 'Reviews on your profile')
+
+
+def _g_invoice():   # what one job is owed: reminders on days 3 and 7, paid on day 9, against paid on day 41 when nobody asks
+    T = [0, 25, 50, 75, 100]; top = 24
+    base = _AX + _ln('M75 %d H100 V100' % top, 'l2')
+    html = (_hz(75, top, 100, 100) + _nd(25, top) + _nd(50, top) + _nd(75, top, 'r') + _pl(25, top - 10, 'Reminder', 'g') + _pl(50, top - 10, 'Reminder', 'g') + _pl(75, top - 10, 'Paid')
+            + _pl(87.5, (top + 100) / 2.0, 'The wait', 'g', .8) + _pl(98.5, 91, 'If nobody asks', 'g e', .86) + _ticks(T, ['Sent', 'Day 3', 'Day 7', 'Day 9', 'Day 41']))
+    return _lg(base, _ln('M0 %d H75 V100' % top), html, 'What you are owed on one job')
+
+
+def _g_reports():   # eight weeks of the Monday report: leads in, jobs booked, quotes open
+    xs = [i * 100 / 7.0 for i in range(8)]; yv = lambda v: 100 - v * 5.6
+    leads = _dense([(x, yv(v)) for x, v in zip(xs, [9, 11, 8, 12, 13, 11, 15, 14])]); jobs = _dense([(x, yv(v)) for x, v in zip(xs, [3, 4, 4, 5, 6, 5, 7, 7])])
+    quotes = _dense([(x, yv(v)) for x, v in zip(xs, [6.4, 7.2, 6.6, 6.2, 5.4, 4.6, 4, 3])])
+    base = _AX + ''.join('<path class="gr" d="M0 %d H100"/>' % y for y in (16, 44, 72)) + _ln(_poly(quotes), 'l2') + ''.join(_dr(x, _yat(jobs, x)) for x in xs[1:-1])
+    html = (''.join(_nd(x, _yat(jobs, x), 'o') for x in xs[1:-1]) + _nd(100, yv(14), 'r') + _nd(100, yv(7), 'r')
+            + _ticks(xs, ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8']))
+    return _lg(base, _ln(_poly(leads)) + _ln(_poly(jobs), 'ln n2'), html, 'The last eight weeks',
+               '<b class="lgp"><i></i>Leads in</b><b class="lgp"><i class="o"></i>Jobs booked</b><b class="lgp g"><i class="d"></i>Quotes open</b>')
+
+
+def _g_answer():   # when leads come in across a day, with the hours you are on a job and the hours you are closed
+    hx = lambda h: (h - 6) * 100 / 18.0; yv = lambda v: 100 - v * 12.6
+    cur = _dense([(hx(h), yv(v)) for h, v in [(6, .6), (7.5, 2.2), (9, 4.6), (10.5, 5.2), (12, 3.6), (13.5, 3.2), (15, 3.9), (17, 5.4), (18.5, 6.2), (20, 5), (21.5, 3), (23, 1.4), (24, .8)]])
+    def under(a, b):   # the area under the curve between two hours, as a clip polygon inside its own box
+        x0, x1 = hx(a), hx(b); seg = [(x, y) for x, y in cur if x0 <= x <= x1]; seg = [(x0, _yat(cur, x0))] + seg + [(x1, _yat(cur, x1))]; ty = min(y for _, y in seg)
+        poly = ','.join('%.1f%% %.1f%%' % ((x - x0) / (x1 - x0) * 100, (y - ty) / (100 - ty) * 100) for x, y in seg)
+        return x0, ty, x1, ';clip-path:polygon(%s,100%% 100%%,0 100%%)' % poly
+    a0, at, a1, ac = under(8, 17); b0, bt, b1, bc = under(18, 24)
+    hrs = [7.2, 8.6, 9.7, 11, 12.6, 14.2, 15.8, 17.3, 18.4, 19.2, 20.3, 21.8]
+    base = _AX + ''.join(_dr(hx(h), _yat(cur, hx(h))) for h in hrs)
+    html = (_hz(a0, at, a1, 100, '', ac) + _hz(b0, bt, b1, 100, 'h2', bc) + ''.join(_nd(hx(h), _yat(cur, hx(h))) for h in hrs)
+            + _pl((a0 + a1) / 2, 88, 'On a job', 'g') + _pl((b0 + b1) / 2, 88, 'Closed', 'g')
+            + _ticks([hx(h) for h in (6, 9, 12, 15, 18, 21, 24)], ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM', '12 AM']))
+    return _lg(base, _ln(_poly(cur)), html, 'When leads come in', '<b class="lgp"><i class="q"></i>Reply sent</b>')
+
+
+def _g_audit():   # one business from first lead to paid, with the two biggest drops marked
+    v = [100, 84, 70, 64, 30, 27]; yv = lambda a: 100 - a * .84; mid = [10, 30, 50, 70, 90]
+    d = 'M0 %.1f' % yv(v[0]) + ''.join(' H%d V%.1f' % (x, yv(v[i + 1])) for i, x in enumerate(mid)) + ' H100'
+    base = _AX + '<path class="l2" style="--t:.1" d="M10 %.1f H30"/><path class="l2" style="--t:.7" d="M70 %.1f H90"/>' % (yv(v[0]), yv(v[3]))
+    html = (_hz(70, yv(v[3]), 90, yv(v[4])) + _hz(10, yv(v[0]), 30, yv(v[1]), 'h2') + ''.join(_nd(x, yv(v[i]), 'fl' if i == 3 else '') for i, x in enumerate(mid))
+            + _pl(80, (yv(v[3]) + yv(v[4])) / 2, 'Fix this first', '', .72) + _pl(20, (yv(v[0]) + yv(v[1])) / 2, 'Then this', 'g', .2)
+            + _ticks([0, 20, 40, 60, 80, 100], ['Leads', 'Answered', 'Booked', 'Quoted', 'Won', 'Paid']))
+    return _lg(base, _ln(d), html, 'One business, taken apart')
+
+
+FIGS = {   # page: (section it goes after, the figure)
+    'follow-up': ('sg', linefig('Chased until it is a yes or a no.', 'Days 2, 5 and 10, then monthly', 'Each quote is followed up on a schedule and stops the moment there is an answer.', _g_follow())),
+    'reviews': ('sg', linefig('Every finished job gets asked.', 'A short text with a direct link', 'Most happy customers never leave a review because nobody asked.', _g_reviews(), 'f')),
+    'invoicing': ('pg', linefig('Polite reminders until it is settled.', 'Sent the day the job ends', 'Friendly first, firmer later. They stop the moment it is paid.', _g_invoice(), 'dk')),
+    'reports': ('sg', linefig('Your numbers, every Monday.', 'One short report each week', 'Leads in, jobs booked, quotes open, money owed and what needs you.', _g_reports(), 'f')),
+    'answering': ('st', linefig('Day or night, the reply goes out from your number.', 'Calls, texts, forms and lead sites', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', _g_answer())),
+    'everything': ('fq', linefig('The audit finds what to fix first.', 'Free, and built around your business', 'Each build is made for the business it goes into. Your free audit decides which ones you need.', _g_audit(), 'f', '<div class="cta">%s</div>' % BOOK)),
+}
+
+
+def figs(name, body):
+    if name not in FIGS:
+        return body
+    after, fig = FIGS[name]; secs = re.findall(r'<section\b.*?</section>', body, re.S); assert ''.join(secs) == body, name
+    hit = [i for i, x in enumerate(secs) if re.match(r'<section class="%s\b' % after, x)]; assert hit, (name, after)
+    secs.insert(hit[0] + 1, fig)
+    return ''.join(secs)
+
+
+CSS_LINE = r"""
+.lf{background:#fff;border-top:1px solid var(--ln)}
+.lf-i{position:relative;display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr);gap:clamp(36px,5.4vw,104px);align-items:center;border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(80px,7vw,136px) var(--pad)}
+.lf-i::before,.lf-i::after{content:"";position:absolute;top:-3px;width:5px;height:5px;background:var(--ink)}.lf-i::before{left:-3px}.lf-i::after{right:-3px}
+.lf h2{margin:0;max-width:11em;font:400 clamp(30px,2.9vw,54px)/1.08 Georgia,"Times New Roman",serif;letter-spacing:-.022em;text-wrap:balance}
+.lf-k{margin:clamp(12px,1vw,18px) 0 0;font:500 11.5px/1.5 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}
+.lf-t>p:not(.lf-k){margin:clamp(18px,1.6vw,30px) 0 0;max-width:25em;font-size:clamp(15.5px,1.05vw,19px);line-height:1.5;color:var(--t2)}
+.lf .cta{margin-top:clamp(22px,2vw,36px);justify-content:flex-start}
+.lf.f .lf-i{grid-template-columns:minmax(0,1.22fr) minmax(0,.78fr)}.lf.f .lf-t{order:2}
+.lf-d{--d:clamp(0,calc((var(--p,1) - .3)*1.75),1)}
+.lf-n{margin:0;text-align:right;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
+.lgr{--k:var(--ink);--bg:#fff;--soft:#eceef2;position:relative;aspect-ratio:16/10;margin:34px 0 46px}
+.lgr svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.lgr svg *{vector-effect:non-scaling-stroke;fill:none}
+.lgr-w{position:absolute;inset:0;clip-path:inset(-14px calc((1 - var(--d,1))*(100% + 14px) - 14px) -14px -14px)}
+.lgr .ax{stroke:var(--k);stroke-width:1}.lgr .gr{stroke:#c4c7cd;stroke-width:1;stroke-dasharray:1.5 5}
+.lgr .ln{stroke:var(--k);stroke-width:1.6;stroke-linejoin:round}.lgr .ln.n2{stroke-width:1.1}
+.lgr .l2{stroke:#9a9da5;stroke-width:1.2;stroke-dasharray:5 4;opacity:clamp(0,calc(var(--p,1)*5 - 1),1)}
+.lgr .l2[style]{opacity:clamp(0,calc((var(--d,1) - var(--t))*8),1)}
+.lgr .dr{stroke:#a3a6ad;stroke-width:1;stroke-dasharray:1.5 3.5;opacity:clamp(0,calc((var(--d,1) - var(--t))*14),1)}
+.lgr .nd{--q:clamp(0,calc((var(--d,1) - var(--t))*14 + .02),1);position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;background:var(--k);opacity:var(--q);transform:scale(calc(.4 + var(--q)*.6))}
+.lgr .nd.o{width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%}
+.lgr .nd.r,.lgr .nd.fl{width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--k)}
+.lgr .nd.r::after,.lgr .nd.fl::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--k)}
+.lgr .nd.fl{box-shadow:inset 0 0 0 1.5px var(--red)}.lgr .nd.fl::after{background:var(--red)}
+.lgr .lgp{position:absolute;padding:5px 7px 4px;border-radius:3px;background:var(--k);color:var(--bg);font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;transform:translate(-50%,-50%);opacity:clamp(0,calc((var(--d,1) - var(--t))*10 + .02),1)}
+.lgr .lgp.g{background:var(--soft);color:var(--k)}.lgr .lgp.e{transform:translate(-100%,-50%)}
+.lgr .tk{position:absolute;top:calc(100% + 13px);transform:translateX(-50%);font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3);white-space:nowrap}
+.lgr .tk::before{content:"";position:absolute;left:50%;top:-13px;height:5px;border-left:1px solid var(--k)}
+.lgr .tk.a{transform:none}.lgr .tk.a::before{left:0}.lgr .tk.z{transform:translateX(-100%)}.lgr .tk.z::before{left:auto;right:0}
+.lgr .cp{position:absolute;left:0;bottom:calc(100% + 14px);margin:0;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)}
+.lgr .hz{position:absolute;background:repeating-linear-gradient(135deg,transparent 0 5px,rgba(23,24,26,.2) 5px 6px);opacity:clamp(0,calc((var(--d,1) - var(--t))*6),1)}
+.lgr .hz.h2{background:repeating-linear-gradient(45deg,transparent 0 8px,rgba(23,24,26,.13) 8px 9px)}
+.lgr-k{position:absolute;right:0;bottom:calc(100% + 8px);display:flex;gap:6px;margin:0}
+.lgr-k .lgp{position:static;display:inline-flex;align-items:center;gap:7px;transform:none;opacity:1}
+.lgr-k i{width:14px;border-top:1.6px solid currentColor}.lgr-k i.o{border-top-width:1.1px}.lgr-k i.d{border-top:1.2px dashed currentColor}.lgr-k i.q{width:6px;height:6px;border:0;background:currentColor}
+.lf.dk{background:var(--dk);color:#fff;border-top:0}.lf.dk .lf-i{border-color:var(--dl)}.lf.dk .lf-i::before,.lf.dk .lf-i::after{background:#fff}
+.lf.dk .lf-t>p:not(.lf-k){color:#a3a5aa}.lf.dk .lf-k,.lf.dk .lf-n,.lf.dk .lgr .cp,.lf.dk .lgr .tk{color:#7f8187}
+.lf.dk .lgr{--k:#fff;--bg:var(--dk);--soft:#2b2c30}.lf.dk .lgr .lgp.g{color:#e3e4e7}.lf.dk .lgr .l2{stroke:#6f7279}.lf.dk .lgr .hz{background:repeating-linear-gradient(135deg,transparent 0 5px,rgba(255,255,255,.2) 5px 6px)}
+@media(max-width:1100px){.lf-i,.lf.f .lf-i{grid-template-columns:minmax(0,1fr)}.lf.f .lf-t{order:0}.lf h2{max-width:14em}}
+@media(max-width:860px){.lf-i{padding:56px var(--pad) 52px;gap:30px}.lf h2{font-size:28px}.lgr{aspect-ratio:5/4}
+.lgr .lgp,.lgr .tk,.lgr .cp{font-size:9.5px;letter-spacing:.02em}.lgr-k{left:0;right:auto;flex-wrap:wrap}.lgr:has(.lgr-k) .cp{display:none}}
+"""
+
 
 def spine(title, events):
     return ('<section class="spn" data-sp><div class="spn-s"><p class="spn-h">%s</p><div class="spn-b"><div class="spn-l"><i></i></div><ol>%s</ol></div></div></section>'
             % (title, ''.join('<li class="%s" style="--i:%d"><time>%s</time><b>%s</b></li>' % ('l' if n % 2 == 0 else 'r', n, t, x) for n, (t, x) in enumerate(events))))
 
 
+def dayline(title, small, href, link, events):
+    # the whole day as one stepped line: it climbs a step each time something is handled; the last moment is the one that rang a person
+    hx = lambda h: (h - 6) * 100 / 21.0; lv = lambda k: 88 - k * 14; xs = [hx(h) for h, _, _ in events]; n = len(xs) - 1
+    d = 'M0 %d' % lv(0) + ''.join(' H%.2f V%d' % (x, lv(i + 1)) for i, x in enumerate(xs[:n])) + ' H100'
+    base = _AX + ''.join('<path class="gr" d="M0 %d H100"/>' % lv(k) for k in range(1, n + 1)) + ''.join(_dr(x, lv(i)) for i, x in enumerate(xs[:n])) + _dr(xs[n], lv(n))
+    lab = ''.join('<div class="dln-l" style="left:%.2f%%;top:%d%%;width:%.2f%%;--t:%.3f"><time>%s</time><b>%s</b></div>' % (x, lv(i + 1), xs[i + 1] - x, x / 100, events[i][1], events[i][2]) for i, x in enumerate(xs[:n]))
+    lab += '<div class="dln-l n" style="left:%.2f%%;top:%d%%;--t:.9"><time>%s</time><b>%s</b></div>' % (xs[n], lv(n), events[n][1], events[n][2])
+    html = ''.join(_nd(x, lv(i + 1)) for i, x in enumerate(xs[:n])) + _nd(xs[n], lv(n), 'fl') + lab + _ticks([hx(h) for h in range(6, 28, 3)], ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM', '12 AM', '3 AM'])
+    lst = '<ol class="dln-o">%s</ol>' % ''.join('<li><time>%s</time>%s</li>' % (t, x) for _, t, x in events)
+    return ('<section class="dln" data-sp><div class="dln-s"><div class="w dln-i"><div class="dln-t"><h2>%s</h2><div><p>%s</p><a class="btn q" href="%s">%s</a></div></div>%s%s</div></div></section>'
+            % (title, small, href, link, _lg(base, _ln(d), html, 'Handled without you, across one day'), lst))
+
+
+def ch(n, html):
+    return html.replace('<section ', '<section data-ch="%d" ' % n, 1)
+
+
+_arc = lambda h: -21 + (h - 6) * 2.0
+DHERO_ART = ('<div class="dh-g" aria-hidden="true"></div><div class="dh-a" aria-hidden="true"><i class="arc"></i>%s<i class="sun"></i></div>'
+             % ''.join('<i class="hr" style="--a:%.1fdeg"><span>%s</span></i>' % (_arc(h), t) for h, t in zip(range(6, 28, 3), ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM', '12 AM', '3 AM'])))
+CHB = '<nav class="chb" aria-label="Parts of the day">%s</nav>' % ''.join('<a href="#">%s <i>[0%d]</i></a>' % (t, i + 1) for i, t in enumerate(['The day', 'Morning', 'Afternoon', 'Evening', 'Night']))
+
+
 DAYP = ('<div class="dayp2">'
-        + '<section class="dhero"><div class="w dhero-i"><span class="lb">A day with it running</span><h1>One day, start to finish.</h1><p class="sub">Scroll through a day at an example business. The pictures are sample data.</p><div class="cta">%s</div><em>Scroll</em></div></section>' % BOOK
-        + spine('One day at an example business', [('6:31 AM', 'A form came in. Answered and booked.'), ('9:12 AM', 'A missed call. A text back in 9 seconds.'), ('12:40 PM', 'One job ran long. Two stops moved.'),
-                                                   ('4:12 PM', 'The job ended. The invoice went out.'), ('6:05 PM', 'Monday&rsquo;s quote got its check-in.'), ('2:07 AM', 'A burst pipe. The on-call phone rang.')])
-        + words([('9:12 AM', 'The phone rings while you&rsquo;re on a roof.', 'It still gets answered.'),
-                 ('', 'A reply goes out in seconds.', 'Sorry we missed you, with times to pick from. No callback list.'),
-                 ('', 'It all lands in your app.', 'The thread, the lead and what happens next, in one place.')], THREAD)
-        + design('dial', 'One job running long should not cost you the afternoon.', 'The day adjusts without you making the calls.', '/dispatch', 'Scheduling and dispatch')
-        + portal('line', '4:12 PM', 'Invoices go out when the job is done.')
-        + words([('', 'Friendly first, firmer later.', 'And never from you personally.'),
-                 ('', 'They stop the moment it is paid.', 'You can stop them for one customer in one tap.'),
-                 ('', 'You get paid without being the one who asks.', 'What is outstanding, by customer and by age.')], INVOICE, True)
-        + design('stack', 'A quote nobody chases is a job you gave away.', 'Days 2, 5 and 10, then monthly, until it&rsquo;s a yes or a no.', '/follow-up', 'Follow-up', False, 'f')
-        + design('dotsfs', 'Only the real emergencies wake you.', 'The burst pipe at 2 AM and the quote request at 2 AM are not the same call.', '/after-hours', 'After hours', True, 'fs')
-        + '</div>' + CL)
+        + '<section class="dhero">%s<div class="w dhero-i"><span class="lb">A day with it running</span><h1>One day, start to finish.</h1><p class="sub">Scroll through a day at an example business. The pictures are sample data.</p><div class="cta">%s</div></div></section>' % (DHERO_ART, BOOK)
+        + ch(0, spine('One day at an example business', [('6:31 AM', 'A form came in. Answered and booked.'), ('9:12 AM', 'A missed call. A text back in 9 seconds.'), ('12:40 PM', 'One job ran long. Two stops moved.'),
+                                                          ('4:12 PM', 'The job ended. The invoice went out.'), ('6:05 PM', 'Monday&rsquo;s quote got its check-in.'), ('2:07 AM', 'A burst pipe. The on-call phone rang.')]))
+        + ch(1, words([('9:12 AM', 'The phone rings while you&rsquo;re on a roof.', 'It still gets answered.'),
+                       ('', 'A reply goes out in seconds.', 'Sorry we missed you, with times to pick from. No callback list.'),
+                       ('', 'It all lands in your app.', 'The thread, the lead and what happens next, in one place.')], THREAD))
+        + ch(2, design('dial', 'One job running long should not cost you the afternoon.', 'The day adjusts without you making the calls.', '/dispatch', 'Scheduling and dispatch'))
+        + ch(2, portal('line', '4:12 PM', 'Invoices go out when the job is done.'))
+        + ch(2, words([('', 'Friendly first, firmer later.', 'And never from you personally.'),
+                       ('', 'They stop the moment it is paid.', 'You can stop them for one customer in one tap.'),
+                       ('', 'You get paid without being the one who asks.', 'What is outstanding, by customer and by age.')], INVOICE, True))
+        + ch(3, design('stack', 'A quote nobody chases is a job you gave away.', 'Days 2, 5 and 10, then monthly, until it&rsquo;s a yes or a no.', '/follow-up', 'Follow-up', False, 'f'))
+        + ch(3, dayline('Five things handled without you. One worth waking up for.', 'The whole day on one line. Sample data from an example business.', '/reports', 'Reports',
+                        [(6.52, '6:31 AM', 'Form answered and booked'), (9.2, '9:12 AM', 'Missed call texted back'), (12.67, '12:40 PM', 'Two stops moved'), (16.2, '4:12 PM', 'Invoice sent'),
+                         (18.08, '6:05 PM', 'Quote check-in sent'), (26.12, '2:07 AM', 'On-call phone rang')]))
+        + ch(4, design('dotsfs', 'Only the real emergencies wake you.', 'The burst pipe at 2 AM and the quote request at 2 AM are not the same call.', '/after-hours', 'After hours', True, 'fs'))
+        + CHB + '</div>' + CL)
 
 CSS_DAY = r"""
 .dayp2{background:#fff}
@@ -2243,13 +2456,48 @@ CSS_DAY = r"""
 .pt-blinds.sp-live .pt-d{-webkit-mask:repeating-linear-gradient(90deg,#000 0 calc(min(var(--p,0)*1.5,1)*12.6vw),transparent 0 12.5vw);mask:repeating-linear-gradient(90deg,#000 0 calc(min(var(--p,0)*1.5,1)*12.6vw),transparent 0 12.5vw)}
 .pt-diamond.sp-live .pt-d{--r:calc(min(var(--p,0)*1.5,1)*125vmax);clip-path:polygon(50% calc(50% - var(--r)),calc(50% + var(--r)) 50%,50% calc(50% + var(--r)),calc(50% - var(--r)) 50%)}
 .pt-iris.sp-live .pt-d{--o:calc((1 - min(var(--p,0)*1.5,1))*50%);clip-path:inset(var(--o) var(--o) round calc((1 - min(var(--p,0)*1.5,1))*120px))}
+/* the day as one line: a whole-screen stepped line graph that is wiped in by the scroll */
+.dln{--d:clamp(0,calc(var(--p,1)*1.3 - .1),1);background:#fff;border-bottom:1px solid var(--ln)}
+.dln-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(64px,6vw,112px) var(--pad);box-sizing:border-box}
+.dln-t{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.5fr);gap:clamp(24px,4vw,80px);align-items:end}
+.dln h2{margin:0;max-width:15em;font:400 clamp(30px,3.1vw,58px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.022em;text-wrap:balance}
+.dln-t p{margin:0;max-width:22em;font-size:clamp(15px,1.05vw,19px);line-height:1.45;color:var(--t2)}.dln .btn{margin-top:clamp(14px,1.4vw,22px)}
+.dln .lgr{aspect-ratio:21/9;margin:clamp(56px,7vh,84px) 0 30px}
+.dln-l{position:absolute;box-sizing:border-box;padding:0 10px 12px 14px;transform:translateY(-100%);opacity:clamp(0,calc((var(--d,1) - var(--t))*12),1)}
+.dln-l time{display:block;font:500 12px/1 "Geist Mono",monospace;color:var(--blue)}
+.dln-l b{display:block;margin-top:7px;font:400 clamp(15px,1.3vw,22px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.012em}
+.dln-l.n{padding:0 16px 0 0;transform:translate(-100%,16px);text-align:right;white-space:nowrap}.dln-l.n time{color:var(--red)}
+.dln-o{display:none}
+.dln.sp-live{height:300vh}.dln.sp-live .dln-s{position:sticky;top:0;height:100vh}
+.dln.sp-live .dln-i{display:flex;flex-direction:column;height:100%;padding-top:clamp(92px,12vh,128px);padding-bottom:clamp(84px,11vh,104px)}
+.dln.sp-live .lgr{flex:1;min-height:0;aspect-ratio:auto;margin-bottom:26px}
+/* the top of /day: graph paper and the day's arc, with a marker that moves along it as the page starts to scroll */
+.dhero{position:relative;overflow:hidden}.dhero-i{position:relative;padding-bottom:clamp(170px,26vh,280px)}
+.dh-g{position:absolute;inset:0;background-image:linear-gradient(var(--ln) 1px,transparent 1px),linear-gradient(90deg,var(--ln) 1px,transparent 1px);background-size:56px 56px;background-position:50% 0;opacity:.7;-webkit-mask-image:radial-gradient(ellipse 58% 52% at 50% 40%,transparent 46%,#000 100%);mask-image:radial-gradient(ellipse 58% 52% at 50% 40%,transparent 46%,#000 100%)}
+.dh-a{position:absolute;left:50%;top:calc(100% - clamp(150px,23vh,250px));width:240vw;height:240vw;margin-left:-120vw;pointer-events:none}
+.dh-a .arc{position:absolute;inset:0;border-radius:50%;border:1px dashed #a9acb3}
+.dh-a .hr,.dh-a .sun{position:absolute;left:50%;top:0;width:0;height:50%;transform-origin:50% 100%;transform:rotate(var(--a))}
+.dh-a .hr::before{content:"";position:absolute;left:-.5px;top:-5px;height:11px;border-left:1px solid var(--ink)}
+.dh-a .hr span{position:absolute;left:0;top:18px;transform:translateX(-50%);font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3);white-space:nowrap}
+.dh-a .sun{--a:calc(-20deg + var(--h,0)*40deg)}
+.dh-a .sun::before{content:"";position:absolute;left:-8px;top:-8px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#fff;border:1.5px solid var(--ink)}
+.dh-a .sun::after{content:"";position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--blue)}
+/* where you are in the day, along the bottom */
+.chb{position:fixed;left:50%;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:min(780px,calc(100vw - 460px));background:#fff;box-shadow:0 0 0 1px var(--ln);transform:translate(-50%,110%);transition:transform .35s cubic-bezier(.2,.7,.2,1),background .25s}
+.chb.on{transform:translate(-50%,0)}
+.chb a{display:flex;justify-content:center;gap:7px;padding:13px 6px 12px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;color:var(--t3);transition:background .25s,color .25s}
+.chb a+a{border-left:1px solid var(--ln)}.chb i{font-style:normal;opacity:.6}.chb a.on{background:var(--ink);color:#fff}
+.chb.dk{background:#1a1b1e;box-shadow:0 0 0 1px #2c2d31}.chb.dk a{color:#8f9197}.chb.dk a+a{border-color:#2c2d31}.chb.dk a.on{background:#fff;color:var(--ink)}
+@media(max-width:1000px){.chb{display:none}}
+@media(max-width:860px){.dln-i{padding:56px var(--pad)}.dln-t{grid-template-columns:minmax(0,1fr);gap:16px}.dln h2{font-size:28px}.dln .lgr{aspect-ratio:4/3;margin-top:44px}.dln-l{display:none}.dln-o{display:block;list-style:none;margin:34px 0 0;padding:0}.dln-o li{display:flex;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--ln);font-size:15.5px;line-height:1.3}.dln-o time{flex:none;width:5.4em;font:500 11.5px/1 "Geist Mono",monospace;color:var(--blue)}.dln-o li:last-child time{color:var(--red)}
+.dln .tk:nth-of-type(even){display:none}.dh-a .hr:nth-of-type(odd) span{display:none}.dh-a .hr span{font-size:9.5px}.dh-g{background-size:40px 40px}}
 @media(max-width:860px){.wsc-g,.dsn-g{grid-template-columns:minmax(0,1fr)}.wsc-p{order:-1;border:0!important;border-bottom:1px solid var(--ln)!important}.wsc-s{position:static;height:auto;padding:28px 14px}.wsc-w>div{min-height:0;padding:44px var(--pad)}.wsc.f .wsc-w{order:0}
 .spn li,.spn li.r{width:auto;margin:0;text-align:left;transform:none;opacity:1;padding:16px 0 16px 28px}.spn-l{left:0}.spn li::before{left:0!important;right:auto!important;width:16px}.dsn.f .dsn-t{order:0}.dsn.fs .dsn-t{min-height:70vh}.dsn.fs .dts{grid-template-columns:repeat(12,1fr)}
 .dsn-g{min-height:0}.dsn-t{padding:56px var(--pad) 8px}.dsn-d{border-left:0;padding:28px var(--pad) 56px}.wsc h2,.dsn h2{font-size:28px}}
 """
 
 out = pathlib.Path(ROOT) / 'site'
-CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL + CSS_STAGE + CSS_DAY
+CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL + CSS_STAGE + CSS_DAY + CSS_LINE
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V
@@ -2301,7 +2549,7 @@ PAGES = [
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, full(slug, flag(slug, body)), css=PCSS, index=(slug not in ('404', 'day')))
+        doc = page(title, desc, '/' + slug, figs(slug, full(slug, flag(slug, body))), css=PCSS, index=(slug not in ('404', 'day')))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)

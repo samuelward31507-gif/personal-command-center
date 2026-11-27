@@ -376,3 +376,21 @@ Sam: refine it; the clock-hand sweep transition is too basic, replace it with a 
 - Sweep removed. `/day` now uses `pt-line`: a line draws down the centre of the screen with a blue dot at its tip, then opens left and right into the dark screen. `/story` uses `pt-bands`: six bands close in from alternating sides.
 - New whole-screen section on `/day`, `spine()`: a line runs down the middle and the six moments of the day branch off it left and right as it passes.
 - The dots design is now whole-screen: the field fills the dark screen behind centred words. The stack design is flipped so the drawing is on the left.
+
+### 22n. Line graphs (27 Nov)
+
+Sam sent a screen recording of Attio's architecture page ("i really like this") and asked where line graphs like theirs could go on our site. That page is the reference he could not name earlier ("the pop up link at the top of the page").
+
+What he is responding to there: hairline technical drawings (a curve with dotted drops to the axis, hatching, small square nodes, bracketed mono tags), a serif line beside each, a chapter bar along the bottom, big moments that take the whole screen. Ours are drawn from scratch in that register; nothing is traced or reworded from theirs.
+
+- Kit in `mk_pages.py` (`_lg`, `linefig`, `_g_*`): the plot box is 0..100 both ways, lines are an SVG stretched to the box with non-scaling strokes, and every label, node and hatch is HTML placed by percentage, so text keeps its size on a phone. The solid line is wiped in left to right by `--d`; nodes, drops and tags arrive as it passes. Driven by `[data-in]` on the chart (same enter-progress script as `.t-exp`), so it also draws on phones. Fully drawn without motion.
+- Every chart is sample data and is captioned "Sample data, example business". No result is claimed.
+- Six charts, each on one page, inserted after `full()` by `figs()`:
+  - `/follow-up`: quotes still waiting on an answer, followed up on days 2, 5 and 10 against left alone.
+  - `/reviews`: a year of reviews as a stair, every job asked against asked when you remember.
+  - `/invoicing` (dark): what one job is owed, reminders, paid, and the wait when nobody asks (hatched).
+  - `/reports`: eight weeks of leads in, jobs booked, quotes open.
+  - `/answering`: when leads come in across a day, hatched for the hours on a job and the hours closed.
+  - `/everything`: one business from lead to paid as a stepped line, the two biggest drops hatched and tagged "Fix this first" / "Then this", with the book button.
+- `/day`: the top now sits on graph paper with the day's arc along the bottom and a marker that moves along it as the page starts to scroll. New whole-screen section `dayline()`: the day as one stepped line that climbs each time something is handled, wiped in by the scroll, ending on the 2:07 AM call that rang a person. A chapter bar (`.chb`, The day / Morning / Afternoon / Evening / Night) is fixed along the bottom from the spine onward, shows where you are, and jumps on click; hidden below 1000px.
+- Not done: the homepage and `/free-audit` were left alone (approved). The audit chart is the obvious candidate for both; needs Sam's OK.

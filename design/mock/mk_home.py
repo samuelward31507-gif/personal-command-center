@@ -508,10 +508,22 @@ cs.forEach(function(c,j){c.addEventListener('click',function(e){if(e.target.clos
 });
 })();
 (function(){
-var els=[].slice.call(document.querySelectorAll('.t-exp,.t-wipe,.t-door'));if(!els.length)return;
+var els=[].slice.call(document.querySelectorAll('.t-exp,.t-wipe,.t-door,[data-in]'));if(!els.length)return;
 if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search))return;
 var tick=false;function f(){tick=false;var vh=innerHeight;els.forEach(function(e){var r=e.getBoundingClientRect(),p=Math.max(0,Math.min(1,(vh-r.top)/(vh*.72)));e.style.setProperty('--p',p.toFixed(3))})}
 function q(){if(!tick){tick=true;requestAnimationFrame(f)}}addEventListener('scroll',q,{passive:true});addEventListener('resize',q);f();
+})();
+(function(){
+var bar=document.querySelector('.chb');if(!bar)return;
+var secs=[].slice.call(document.querySelectorAll('[data-ch]')),cells=[].slice.call(bar.querySelectorAll('a')),cur=-2,dk=null,tick=false;
+var calm=matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search),hero=document.querySelector('.dhero');
+function f(){tick=false;var mid=innerHeight/2,low=innerHeight-40,at=-1,d=false;if(hero&&!calm)hero.style.setProperty('--h',Math.max(0,Math.min(1,scrollY/(hero.offsetHeight*.7))).toFixed(4));secs.forEach(function(s){var r=s.getBoundingClientRect();if(r.top<=mid&&r.bottom>mid)at=+s.getAttribute('data-ch');
+if(r.top<=low&&r.bottom>low)d=s.classList.contains('dk')||(s.classList.contains('pt')&&(!s.classList.contains('sp-live')||parseFloat(s.style.getPropertyValue('--p'))>.5))});
+if(at!==cur){cur=at;bar.classList.toggle('on',at>=0);cells.forEach(function(c,i){c.classList.toggle('on',i===at)})}
+if(d!==dk){dk=d;bar.classList.toggle('dk',d)}}
+function q(){if(!tick){tick=true;requestAnimationFrame(f)}}addEventListener('scroll',q,{passive:true});addEventListener('resize',q);f();
+cells.forEach(function(c,i){c.addEventListener('click',function(e){e.preventDefault();var s=secs.filter(function(x){return +x.getAttribute('data-ch')===i})[0];
+if(s)scrollTo({top:s.getBoundingClientRect().top+scrollY+4,behavior:calm?'auto':'smooth'})})});
 })();
 """
 
