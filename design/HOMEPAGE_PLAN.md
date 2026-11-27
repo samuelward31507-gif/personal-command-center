@@ -72,3 +72,8 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 ## Pass 14 (Sam: still set up as bullets; wants paragraphs)
 - Each scroll section is now a short headline and ONE paragraph of prose (`.ax-para`). No list, no hairlines, no leads. Sentences are spans that brighten as the scroll reaches their part of the drawing (`data-lit` / `data-is`).
 - Syntax in patch_home.py: `[sentence](2)` lights at step 2, `[sentence](i2)` is bright only while step 2 is current.
+
+## Pass 15 (Sam picked "a mix of all" from three mocked text layouts; text too big; font basic)
+- ax() has three modes, mixed down the page: a = one two-tone statement (audit, quote, custom), b = headline + full-width picture + short paragraphs side by side (speed, review, what you get back), c = few words (where the jobs go, invoice).
+- Type in the scroll sections is smaller across the board (home2.css v16).
+- Font: still Inter. raw.githubusercontent.com is blocked from this workspace, so a new typeface needs Sam to attach the font file (or OK a git clone attempt).
