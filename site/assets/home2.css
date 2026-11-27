@@ -710,3 +710,19 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 @media (min-width:901px){.hs-pin{height:auto!important;min-height:0!important}}
 @media (min-width:1381px){.hv-c1{left:-104px}.hv-c2{right:-104px}}
 @media (min-width:901px) and (max-width:1380px){.hv-c2{display:none}.hv-c1{left:16px;bottom:44px;width:230px}}
+/* ---- v35: transitions studied from the reference recording, done in Cinder's own way. The hero picture grows into place with its pieces sliding in;
+   the trip through the clock is the flip from dark to light (the title page floods bone and runs straight into the light call band);
+   the quote reads itself word by word. ---- */
+@media (min-width:901px){
+  .hv-f{transform:scale(calc(.9 + var(--hq,0)*.1));transform-origin:50% 0;will-change:transform}
+  .hv-c{opacity:var(--hq,0)}.hv-c1{transform:translateX(calc((1 - var(--hq,0))*-70px))}.hv-c2{transform:translateX(calc((1 - var(--hq,0))*70px))}
+}
+.pt-ac .pt-ov{background:color-mix(in srgb,#f2f1ee calc(var(--lt,0)*100%),#000)}
+.pt-ac .pt-tt{color:color-mix(in srgb,#0a0a0c calc(var(--lt,0)*100%),#f2f1ee)}
+.pt-ac .pt-ts{color:color-mix(in srgb,#45443f calc(var(--lt,0)*100%),#a8a6a1)}
+.pt-ac .pt-title .sx-k{color:color-mix(in srgb,#6f6d69 calc(var(--lt,0)*100%),#8b8985)}
+.pt-ac .pt-frame{box-shadow:inset 0 0 0 1px color-mix(in srgb,rgba(10,10,12,.5) calc(var(--lt,0)*100%),rgba(255,248,240,.62))}
+.pt-ac .pt-title::before{--c:color-mix(in srgb,rgba(10,10,12,.5) calc(var(--fm,0)*100%),rgba(255,248,240,.5))}
+.pt-ac .pt-cue{background:linear-gradient(#0a0a0c,rgba(10,10,12,0))}
+.pt-ac+.ac{animation:none!important;background:#f2f1ee;padding-top:40px}
+.samq .qw{color:#55534f;transition:color .3s}.samq .qw.on{color:#f2f1ee}

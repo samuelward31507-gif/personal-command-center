@@ -169,7 +169,6 @@ B4 = ('<section class="b4"><p class="sx-k">It runs</p><h2 class="it-s">' + _two(
   + '</div></section>')
 move_before('<section id="problem"', '<section class="closing"')
 ins('<section class="tools"', W0(HV))
-ins('<section class="samq"', W0(INTRO) + W0(FAS))
 ins('<section class="closing"', W0(B4))
 # the numbers: say what the audit checks against each one
 a_, b_ = blk('<section id="problem"'); P = s[a_:b_].split('</a></li>')
@@ -187,7 +186,8 @@ _OVC = (OV.replace('<p class="sx-k">Calendar</p>', '<p class="sx-k">The free aud
 assert 'Fifteen minutes.' in _OVC and 'data-v=' in _OVC and 'What is for' not in _OVC
 PCALL = ('<section class="pt2 pt-ac" aria-label="The free audit call"><div class="pt2-pin"><div class="pt2-box"><i class="pt2-fr" aria-hidden="true"></i><div class="pt-art">' + _CLK + '</div></div>' + _OVC + '<i class="pt-rim" aria-hidden="true"></i></div>'
   '<div class="pt2-flow"><div class="ptc-h"><p class="sx-k">You have a problem. Start here.</p><h2>It starts with one short call.</h2></div></div><div class="pt2-run" aria-hidden="true"></div></section>')
-ins('<section class="closing"', W0(PCALL) + AC)
+# pass 35: the clock sits mid-page and is the way into the light stretch (the call), the way the reference flips theme for its core section
+ins('<section class="samq"', W0(INTRO) + W0(FAS) + W0(PCALL) + AC)
 # red marks what is being lost, in three places only: this line in the stats, the running total under the funnel, and one word of the last headline
 if 'class="rd-t"' not in s: s = s.replace('Find out what you’re missing.', 'Find out what you’re <em class="rd-t">missing.</em>', 1)
 if 'home2.css' not in s: s = s.replace('</head>', '<link rel="stylesheet" href="/assets/home2.css">\n</head>', 1)

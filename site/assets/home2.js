@@ -159,7 +159,7 @@
       var r8 = 44 * Math.pow(G2, u - 8), ef = ez01((t - .72) / .28), FX = G.W * .05, FY = G.H * .11, FW = G.W - 2 * FX, FH = G.H - 2 * FY;
       var fw = 2 * r8 + (FW - 2 * r8) * ef, fh = 2 * r8 + (FH - 2 * r8) * ef, fx = (cx - r8) + (FX - (cx - r8)) * ef, fy = (cy - r8) + (FY - (cy - r8)) * ef;
       frame.style.cssText = 'left:' + fx.toFixed(1) + 'px;top:' + fy.toFixed(1) + 'px;width:' + Math.max(0, fw).toFixed(1) + 'px;height:' + Math.max(0, fh).toFixed(1) + 'px;border-radius:' + ((1 - ef) * Math.min(fw, fh) / 2).toFixed(1) + 'px;opacity:' + (r8 < 5 ? 0 : cl01((r8 - 5) / 28)).toFixed(3);
-      title.style.setProperty('--tl', ez01((t - .84) / .16).toFixed(4)); title.style.setProperty('--fm', ef.toFixed(3))
+      ov.style.setProperty('--lt', ef.toFixed(3)); title.style.setProperty('--tl', ez01((t - .84) / .16).toFixed(4)); title.style.setProperty('--fm', ef.toFixed(3))
     })
   })();
   // ---- hero: pick a problem, get the fix in one line
@@ -261,6 +261,17 @@
     var links = [].slice.call(fan.querySelectorAll('a')), bs = [].slice.call(document.querySelectorAll('.fa-b')), tops = [], cur = -9;
     Flow.onMeasure(function (y) { tops = bs.map(function (b) { return b.getBoundingClientRect().top + y }) });
     Flow.sub(function (y) { var line = y + innerHeight * .45, k = 0; for (var i = 0; i < tops.length; i++) if (tops[i] <= line) k = i; if (k !== cur) { cur = k; links.forEach(function (a, i) { a.classList.toggle('cur', i === k) }) } })
+  })();
+  // ---- hero picture: it grows into place and its two floating pieces slide in as the first scroll happens
+  var hvs = document.querySelector('.hv');
+  if (hvs) Flow.sub(function (y) { hvs.style.setProperty('--hq', innerWidth <= 900 ? 1 : ez01(y / (innerHeight * .5)).toFixed(4)) });
+  // ---- the quote reads itself: words go from grey to white as it comes up the screen
+  var sq = document.querySelector('.samq blockquote');
+  if (sq && sq.firstChild && sq.firstChild.nodeType === 3) (function () {
+    var words = sq.firstChild.textContent.split(/\s+/).filter(Boolean), frag = document.createDocumentFragment(), sp = [], top = 0, lastN = -1;
+    words.forEach(function (w) { var e = document.createElement('span'); e.className = 'qw'; e.textContent = w + ' '; frag.appendChild(e); sp.push(e) }); sq.replaceChild(frag, sq.firstChild);
+    Flow.onMeasure(function (y) { top = sq.getBoundingClientRect().top + y });
+    Flow.sub(function (y) { var n = Math.round(cl01((y + innerHeight * .82 - top) / (innerHeight * .5)) * sp.length); if (rm) n = sp.length; if (n !== lastN) { lastN = n; sp.forEach(function (e, i) { e.classList.toggle('on', i < n) }) } })
   })();
   // ---- drawings: measure every stroke so it can draw itself in. Lengths come from the drawing's laid-out size, with room for the camera's zoom.
   function arm() {
