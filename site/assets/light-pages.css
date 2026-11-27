@@ -1250,7 +1250,12 @@ clip-path:inset(calc(var(--T)*var(--k)) calc((100% - var(--L) - var(--fw)*var(--
 .rvc-s{display:grid;grid-template-columns:repeat(2,auto);justify-content:start;gap:clamp(22px,2.2vw,36px) clamp(36px,5vw,90px);margin-top:clamp(30px,3.4vw,58px)}
 .rvc-s div{padding-left:22px;border-left:2px solid #266df1}.rvc-s b{display:block;font-size:clamp(24px,2.1vw,36px);font-weight:500;letter-spacing:-.02em;line-height:1}.rvc-s span{display:block;margin-top:8px;font-size:clamp(14px,1vw,17px);color:var(--t2)}
 .rvc-n{margin:26px 0 0;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;color:var(--t3)}
-.rvc-k{position:absolute;inset:0;z-index:3;pointer-events:none;background:color-mix(in srgb,#266df1 calc((1 - var(--r))*130%),var(--dk));clip-path:circle(calc(var(--r)*var(--r)*190vmax) at 88% 100%)}
+.rvc-k{display:none}.rvc-g .ar{fill:color-mix(in srgb,#266df1 calc((1 - var(--r)*var(--r))*100%),var(--dk));opacity:clamp(0,calc(var(--r)*2.6),1)}
+/* the graph is the hand-over: the view dives in under the curve until the blue is the whole screen, then it darkens into the next section */
+.rvc.sp-live .rvc-f{transform-origin:86% 74%;transform:scale(calc(1 + var(--r)*var(--r)*var(--r)*44));will-change:transform}
+.rvc.sp-live .rvc-t{opacity:calc(1 - var(--r)*5)}.rvc.sp-live .rvc-f::before{opacity:calc(1 - var(--r)*5)}
+.rvc.sp-live .rvc-g .dr{opacity:calc((.08 + .34*var(--x))*clamp(0,calc((var(--a) - var(--x))*18),1)*(1 - var(--r)))}
+.rvc.sp-live .rvc-i{background:color-mix(in srgb,#fff calc((1 - clamp(0,calc(var(--r)*3 - 2),1))*100%),var(--dk))}
 @media(min-width:861px){.rvc.sp-live{height:240vh;--a:clamp(0,calc(var(--p,0)/.46),1);--r:clamp(0,calc((var(--p,0) - .6)/.4),1)}.rvc.sp-live .rvc-i{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center}.rvc.sp-live .rvc-f{flex:none;margin:0 auto}}
 .rvp{background:var(--dk);color:#fff}.rvp-i{border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(72px,7vw,130px) clamp(22px,3.1vw,60px) clamp(64px,6vw,110px)}
 .rvp .st-t{margin:0 0 clamp(48px,5vw,90px);max-width:22em;color:#fff}.rvp .st-t span{color:#8f9197}
