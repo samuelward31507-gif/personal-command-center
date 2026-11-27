@@ -319,6 +319,16 @@
       "source": "/pool-demo",
       "destination": "/demo",
       "permanent": false
+    },
+    {
+      "source": "/watch",
+      "destination": "/software",
+      "permanent": false
+    },
+    {
+      "source": "/generators",
+      "destination": "/trades",
+      "permanent": false
     }
   ]
 }

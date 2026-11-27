@@ -1,0 +1,49 @@
+<section class="sec ptry aud" id="audit">
+  <div class="wrap aud-grid">
+    <div class="aud-copy">
+      <h1>Where are you losing jobs?</h1>
+      <p class="lede">We load your website the way a homeowner does, check what they run into, and work out what slow replies likely cost you each month from your own numbers. About 20 seconds.</p>
+      <form class="tf" id="aud-form" autocomplete="off" novalidate>
+        <div class="tf-row">
+          <label>Business name<input name="business" maxlength="60" required placeholder="Summit Fence Co."></label>
+          <label>Website<input name="website" maxlength="200" required inputmode="url" placeholder="summitfence.com"></label>
+        </div>
+        <div class="tf-row">
+          <label>Trade<select name="trade"><option value="fence">Fence</option><option value="generator">Standby generators</option><option value="other">Other home service</option></select></label>
+          <label>New leads a month<input name="leads" inputmode="numeric" required value="40"></label>
+        </div>
+        <div class="tf-row">
+          <label>Average job ($)<input name="jobValue" inputmode="numeric" required value="6500"></label>
+          <label>Quotes you close (%)<input name="closeRate" inputmode="numeric" required value="30"></label>
+        </div>
+        <div class="tf-row">
+          <label>How fast a new lead hears back<select name="speed"><option value="5min">Within 5 minutes</option><option value="hour" selected>Within the hour</option><option value="day">Same day</option><option value="next">Next day or later</option></select></label>
+          <label>Every quote followed up twice?<select name="followsUp"><option value="no">No, or not always</option><option value="yes">Yes, every one</option></select></label>
+        </div>
+        <label class="tf-hp" aria-hidden="true">Fax<input name="fax" tabindex="-1"></label>
+        <div class="tf-go"><button class="btn btn-go" type="submit" id="aud-go">Run my audit</button><span id="aud-note">Nothing is texted or emailed to you.</span></div>
+        <p class="aud-err" id="aud-err" role="alert" hidden></p>
+      </form>
+    </div>
+
+    <div class="aud-out" id="aud-out" aria-live="polite">
+      <div class="aud-card aud-empty" id="aud-empty">
+        <p class="aud-k">What you’ll get</p>
+        <ul class="aud-list">
+          <li><i class="aud-dot"></i><span><b>What a homeowner runs into</b> on your site: booking, texting, tap to call, load time, reviews.</span></li>
+          <li><i class="aud-dot"></i><span><b>A monthly dollar figure</b> for slow replies and quotes nobody chased, from your numbers.</span></li>
+          <li><i class="aud-dot"></i><span><b>What to fix first,</b> in order.</span></li>
+        </ul>
+      </div>
+      <div class="aud-card" id="aud-res" hidden>
+        <p class="aud-k" id="aud-site"></p>
+        <div class="aud-money"><span class="aud-v" id="aud-month"></span><span class="aud-u">a month, likely</span></div>
+        <p class="aud-sub" id="aud-sub"></p>
+        <ul class="aud-checks" id="aud-checks"></ul>
+        <div class="aud-fix" id="aud-fixbox"><p class="aud-k">Fix first</p><ol id="aud-fix"></ol></div>
+        <a class="btn btn-go aud-cta" href="#book" id="aud-book">Walk through it on a 15-minute call</a>
+        <p class="aud-fine">Estimate assumes a lead that hears back within 5 minutes goes elsewhere 2% of the time, within the hour 10%, same day 20%, next day or later 30%, and that following up every quote twice wins 1 in 10 more of the quotes you send. Your real numbers will differ. The website check covers your homepage only.</p>
+      </div>
+    </div>
+  </div>
+</section>

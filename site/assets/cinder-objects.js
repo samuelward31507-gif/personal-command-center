@@ -248,7 +248,7 @@ function slab(pts,rad,width,bev){const sh=new T.Shape(),n=pts.length,q=(a,b,d)=>
   const g=new T.ExtrudeGeometry(sh,{depth:width-2*bev,bevelEnabled:true,bevelThickness:bev,bevelSize:bev,bevelOffset:-bev,bevelSegments:4,curveSegments:10});g.translate(0,0,bev-width/2);g.rotateY(Math.PI/2);
   const u=g.attributes.uv;for(let i=0;i<u.count;i++)u.setXY(i,u.getX(i)/300,u.getY(i)/300);return g}
 function paintTape(c,W,h){c.fillStyle='#efede6';c.fillRect(0,0,W,h*TK.length);c.textBaseline='alphabetic';
-  TK.forEach((t,k)=>{const y=k*h;c.fillStyle='rgba(12,12,14,.3)';for(let x=10;x<W-10;x+=20)c.fillRect(x,y-2,11,4);
+  (window.CinderTapeTickets||TK).forEach((t,k)=>{const y=k*h;c.fillStyle='rgba(12,12,14,.3)';for(let x=10;x<W-10;x+=20)c.fillRect(x,y-2,11,4);
     c.textAlign='left';c.fillStyle='#7a766e';c.font='500 29px "Geist Mono",ui-monospace,monospace';c.fillText(t[0],58,y+h*.27);
     let f=74;c.fillStyle='#0c0c0e';do{c.font='650 '+f+'px "Inter",system-ui,sans-serif';f-=2}while(c.measureText(t[1]).width>W-116&&f>40);c.fillText(t[1],56,y+h*.53);
     c.fillStyle='#c8102e';c.fillRect(58,y+h*.71-25,18,18);c.fillStyle='rgba(12,12,14,.82)';c.font='500 36px "Inter",system-ui,sans-serif';c.fillText(t[2],92,y+h*.71);
