@@ -181,3 +181,9 @@ Still to build: founder quote, sourced numbers, footer.
 - **Headline.** Changed to "Find out what your business is losing." Sam had not answered the question; he said the hero still read as speed to lead. The old line was "More jobs from the leads you already get." Swap it back in `HERO` in `mk_home.py` if he says so.
 - **Custom.** Said in four places: under the headline ("systems made for it. Nothing off the shelf."), in "What we do" ("Not one product, and not a template"), in step three of how it works, and in the build statement ("Made for your business, not pulled from a template. No two audits turn up the same list, so no two builds are the same."). The ring now switches between three example audits (fence company, plumber, roofer) that light different parts.
 - **Tools.** The grid looked too much like the reference's logo grid. It is the moving strip from the old homepage again, with the logos in their own colours.
+
+## 16. Tools grid back, hero made louder (27 Nov)
+
+- Sam asked for the tools grid back in place of the moving strip. Restored.
+- Hero picture, same idea, more in it: the parts of the path are tinted by what the audit found (red for money lost, amber for hours or money waiting, green for fine); each finding card has a large figure and its fix in a green tag; a blue dot travels the path on a loop and each part pulses as it passes; the totals are a dark card that overlaps the bottom-left corner; the ground behind is a deeper blue wash with a faint dot grid.
+- Prompts were written for two other chats to carry this look into the personal CRM (`app/(agency)`) and the client app (`app/(client)/app`).

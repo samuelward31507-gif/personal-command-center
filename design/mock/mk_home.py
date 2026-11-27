@@ -28,12 +28,12 @@ for _a, _b in [
     assert _a in hero_body, _a[:50]
     hero_body = hero_body.replace(_a, _b)
 
-# ---------- tools: the moving strip ----------
+# ---------- tools grid ----------
 ORDER = ['Google Calendar', 'Jobber', 'Gmail', 'Housecall Pro', 'Instagram',
          'QuickBooks', 'Facebook Lead Ads', 'Angi', 'Google Business Profile', 'Thumbtack']
 cells = ''.join('<li>%s<span>%s</span></li>' % (tools.get(n, ''), n) for n in ORDER)
-TOOLS = ('<section class="tm" aria-label="Works alongside the tools you already use"><p>Works alongside the tools you already use</p>'
-         '<div class="tm-v"><ul>%s%s</ul></div></section>' % (cells, cells.replace('<li>', '<li aria-hidden="true">')))
+TOOLS = ('<section class="tl" aria-label="Works alongside the tools you already use"><div class="w tl-g">'
+         '<p class="tl-c">Works alongside the tools you already use</p><ul>%s</ul></div></section>' % cells)
 
 # ---------- problem statement ----------
 WHAT = ('<section class="st"><div class="w st-i"><span class="lb">What we do</span>'
@@ -350,23 +350,25 @@ PATH = [('Getting found', 'find', None, None, None, None, None),
         ('The work', 'tool', None, None, None, None, None),
         ('Money', 'money', 'Invoices go out six days late', '$14,600 waiting', 'y', 'An invoice the day the job ends', 'dn'),
         ('After the job', 'star', 'No review request on 29 jobs', '$900 a month', 'r', 'A request the day after', 'up')]
-MW, CW = 1000, 214
+MW, CW = 1000, 222
+UP = {1, 3, 5}
 steps = ''
-for i, (part, ic, find, cost, tone, fix, side) in enumerate(PATH):
+for i, (part, ic, find, cost, tone, fix, _) in enumerate(PATH):
     x = 62 + i * (MW - 124) / 6
-    cl = min(max(x - CW / 2, 18), MW - 18 - CW) - x
-    card = ('<div class="mp-c %s" style="--cl:%.1fpx;--cx:%.1fpx;--d:%d"><b>%s</b><em class="%s">%s</em><span><i></i>%s</span></div>'
-            % (side, cl, -cl, i, find, tone, cost, fix)) if find else '<span class="mp-ok">Fine as it is</span>'
-    steps += ('<div class="mp-s%s" style="--x:%.1fpx"><div class="mp-t"><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg></div><div class="mp-lb">%s</div>%s</div>'
-              % (' f-' + tone if find else ' ok', x, IC[ic], part, card))
+    cl = (min(max(x - CW / 2, 18), MW + 46 - CW) - x) if i != 2 else -CW / 2
+    card = ('<div class="mp-c %s %s" style="--cl:%.1fpx;--cx:%.1fpx;--d:%d"><b>%s</b><em>%s</em><span>%s</span></div>'
+            % ('up' if i in UP else 'dn', tone, cl, -cl, i, find, cost, fix)) if find else '<span class="mp-ok">Fine as it is</span>'
+    steps += ('<div class="mp-s%s" style="--x:%.1fpx;--i:%d"><div class="mp-t"><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg></div><div class="mp-lb">%s</div>%s</div>'
+              % (' f-' + tone if find else ' ok', x, i, IC[ic], part, card))
+TOTAL = ('<div class="mp-tot"><div class="fk">What it adds up to</div><b>$6,400</b><span>lost every month</span>'
+         '<dl><div><dt>Waiting to be paid</dt><dd>$14,600</dd></div><div><dt>By hand, every week</dt><dd>11 hours</dd></div></dl>'
+         '<p>Five findings. Two parts fine as they are.</p></div>')
 HERO = ('<section class="hero"><span class="pill"><i></i>The free audit takes fifteen minutes</span>'
         '<h1>Find out what your business is losing.</h1>'
         '<p class="sub">We take your business apart, put a number on what&rsquo;s costing you jobs and hours, and build systems made for it. Nothing off the shelf.</p>'
         '<div class="cta"><a class="btn" %s>Book your free audit</a><a class="btn q" href="/free-audit">See what we check</a></div></section>'
         '<div class="stage"><div class="ground"><div class="card mp"><div class="rep-h"><span class="dot"></span><b>Free audit</b><span>Ridgeline Fence</span>'
-        '<span class="tag">Example business, sample data</span></div><div class="mp-b"><div class="mp-l"></div>%s</div>'
-        '<div class="mp-f"><div><b>$6,400</b>lost a month</div><div><b>$14,600</b>waiting to be paid</div><div><b>11 hours</b>by hand a week</div>'
-        '<p>Five findings. Two parts fine as they are.</p></div></div></div></div>' % (CAL, steps))
+        '<span class="tag">Example business, sample data</span></div><div class="mp-b"><div class="mp-l"><i></i></div>%s</div>%s</div></div></div>' % (CAL, steps, TOTAL))
 
 JS = r"""
 (function(){
@@ -721,6 +723,43 @@ td i.h{background:var(--amber)}td.n.h{color:#a86a00}td.n{white-space:nowrap}
 .bd-tabs button{appearance:none;border:0;cursor:pointer;height:30px;padding:0 12px;border-radius:999px;background:transparent;color:#8f9197;font:500 13px/1 Inter,sans-serif;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);transition:background .25s,color .25s}
 .bd-tabs button.on{background:#fff;color:var(--ink);box-shadow:none}.bd-tabs button:focus-visible{outline:2px solid #5d90fb;outline-offset:2px}
 
+/* ---- hero, louder: colour on the path, a job moving along it, a dark total ---- */
+.stage{background:linear-gradient(rgba(255,255,255,0),#edf0ff 34%,#c9d3fb 100%)}
+.stage::before{content:"";position:absolute;inset:0;background:radial-gradient(rgba(38,80,200,.2) 1px,transparent 1.4px) 0 0/22px 22px;-webkit-mask-image:linear-gradient(transparent 12%,#000 70%);mask-image:linear-gradient(transparent 12%,#000 70%);pointer-events:none}
+.ground{height:706px;overflow:visible}
+.mp{box-shadow:0 0 0 1px rgba(23,24,26,.07),0 2px 4px rgba(23,24,26,.04),0 40px 80px -30px rgba(40,60,150,.45)}
+.mp-b{height:500px}
+.mp-l{top:239px;border-top:2px dashed #c3c9d6}
+.mp-l i{position:absolute;top:-6.5px;left:0;width:11px;height:11px;margin-left:-5.5px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px rgba(38,109,240,.18);animation:mpd 8s linear infinite}
+.mp-s{top:213px}
+.mp-t{left:-26px;width:52px;height:52px;border-radius:14px}.mp-t svg{width:23px;height:23px;stroke-width:1.6}
+.mp-t::after{display:none}
+.mp-t::before{content:"";position:absolute;inset:-1px;border-radius:15px;border:2px solid currentColor;opacity:0;animation:mpp 8s linear infinite;animation-delay:calc(var(--i)*1.333s)}
+.f-r .mp-t{background:#fdeceb;color:#cf3a3f;box-shadow:0 0 0 1px rgba(229,72,77,.3),0 3px 8px rgba(229,72,77,.14)}
+.f-y .mp-t{background:#fff3d2;color:#a86a00;box-shadow:0 0 0 1px rgba(240,160,0,.38),0 3px 8px rgba(240,160,0,.14)}
+.ok .mp-t{background:#e7f6ec;color:#1c7a43;box-shadow:0 0 0 1px rgba(42,157,92,.3)}
+.mp-lb{top:62px;font-size:13.5px;font-weight:560}.mp-ok{top:89px}
+.mp-c{width:222px;padding:14px 15px 13px;border-radius:12px;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 2px 4px rgba(23,24,26,.05),0 22px 36px -18px rgba(30,40,110,.42)}
+.mp-c::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0}
+.mp-c.r::before{background:var(--red)}.mp-c.y::before{background:var(--amber)}
+.mp-c.up{bottom:54px}.mp-c.dn{top:114px}.mp-c.up::after{height:54px}.mp-c.dn::after{height:26px}
+.mp-c::after{border-left:2px solid #c3c9d6}
+.mp-c b{font-size:13.5px}
+.mp-c em{margin-top:4px;font-size:21px;font-weight:620;letter-spacing:-.035em;line-height:1.15}
+.mp-c.r em{color:var(--red)}.mp-c.y em{color:#b87400}
+.mp-c span{display:inline-flex;margin-top:10px;padding:0 9px;height:23px;border-top:0;border-radius:999px;background:#e7f6ec;color:#1c7a43;font-size:12px;font-weight:520;white-space:nowrap}
+.mp-tot{position:absolute;z-index:2;left:-64px;bottom:-92px;width:258px;padding:18px 20px 16px;border-radius:14px;background:#101113;color:#fff;text-align:left;box-shadow:0 30px 60px -22px rgba(16,17,19,.7);animation:mpc .6s cubic-bezier(.2,.7,.2,1) 1.25s both}
+.mp-tot .fk{color:#8f9197}
+.mp-tot b{display:block;margin-top:12px;font-size:40px;line-height:1;font-weight:620;letter-spacing:-.045em;font-variant-numeric:tabular-nums}
+.mp-tot>span{display:block;margin-top:5px;font-size:13px;color:#ff8a8e}
+.mp-tot dl{margin:15px 0 0}.mp-tot dl div{display:flex;justify-content:space-between;align-items:center;height:34px;border-top:1px solid rgba(255,255,255,.1);font-size:12.5px}
+.mp-tot dt{color:#a3a5aa}.mp-tot dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums;color:#f5b83d}
+.mp-tot p{margin:10px 0 0;font-size:12px;color:#8f9197}
+@keyframes mpd{0%{left:0;opacity:0}3%{opacity:1}97%{opacity:1}100%{left:100%;opacity:0}}
+@keyframes mpp{0%{opacity:0;transform:scale(1)}1.5%{opacity:.7;transform:scale(1)}9%{opacity:0;transform:scale(1.42)}100%{opacity:0;transform:scale(1.42)}}
+@media(prefers-reduced-motion:reduce){.mp-l i,.mp-t::before{animation:none;opacity:0}.mp-tot{animation:none}}
+@media(max-width:1100px){.ground{height:610px}.mp-tot{left:-34px;width:236px}}
+
 /* ---- narrower screens ---- */
 html,body{overflow-x:clip}
 @media(max-width:1180px){.bd-g{grid-template-columns:repeat(2,minmax(0,1fr))}.bd-g a:nth-child(4n+1){border-left:1px solid var(--dl)}.bd-g a:nth-child(2n+1){border-left:0}}
@@ -774,6 +813,9 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 .mp-c{position:static;width:auto;grid-column:1/-1;animation:none}.mp-c::after{display:none}
 .mp-f{height:auto;flex-wrap:wrap;gap:12px 22px;padding:14px;align-items:flex-start}.mp-f b{font-size:17px}.mp-f p{margin:0;width:100%}
 .tm li{font-size:14.5px;margin-right:40px}
+.stage::before{display:none}.mp-b{height:auto}.mp-t{left:auto;width:44px;height:44px;border-radius:12px}.mp-t::before,.mp-l i{display:none}
+.mp-c{width:auto;padding:12px 14px}.mp-c em{font-size:19px}.mp-s{top:auto}
+.mp-tot{position:static;width:auto;margin:6px 14px 14px;animation:none}.mp-tot b{font-size:34px}
 .lg-r{gap:9px;padding:0 12px}.lg-r em{font-size:11.5px;padding:0 7px}
 }
 '''
