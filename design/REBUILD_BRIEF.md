@@ -271,3 +271,17 @@ Sam: go further, every page has to hold the homepage's standard; he likes the fo
 - `/websites`: two phones side by side (most sites, greyed and crossed out, against yours); one visit drawn in four numbered steps on dark; a field that links to the site check. Sign cells, built-in cells and the related row removed.
 - `/answering`: the day is now one chart, hour by hour, with a blue "With it" row; Monday report card beside the included list; questions set as a text thread; the related row became a four-step chain. Before/after table removed.
 - No two of the three pages now share a section below the top, apart from the closing band and footer.
+
+### 22c. Front desk finished (27 Nov)
+
+Sam approved the level of the second pass. The remaining five front-desk pages are built the same way. Copy is the existing copy in `design/build_services.py` and `design/pages2.py`; nothing new was claimed.
+
+| Page | Top | Its own picture | Its diagram |
+|---|---|---|---|
+| `/phone-agent` | Split, live call on a dark panel | Call with a transcript and waveform | The call as a fork: books it, or hands off to you; then the call summary |
+| `/website-chat` | Centred over a browser window | Site with the chat open at 10 PM | What you give it against what it says, each answer tagged with its source |
+| `/social-messages` | Split | Three apps dropping into one inbox | One message, three companies, who replied when |
+| `/lead-vetting` | Left-set over a table | This week's leads, sorted | Two lead cards, one booked, one turned away |
+| `/after-hours` | Dark, full width | One night on a ruler | Two calls at 2 AM going two ways; the rota; the morning summary |
+
+Questions are shown three ways across the group (cards, fold-out, list, plus the text thread on `/answering`). The nav now turns dark over dark sections on inner pages too. Done so far: home, free audit, everything, websites, and all six front-desk pages. Left: 25 build pages (calendar 4, quotes 3, money 2, after the job 6, getting found 2, team 5, custom 3), then software, trades, story, about, questions, whats-new, audit, privacy, terms, 404.

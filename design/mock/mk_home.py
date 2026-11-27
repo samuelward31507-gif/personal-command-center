@@ -463,6 +463,11 @@ var t=ez(cl((p-.58)/.26));title.style.opacity=t.toFixed(3);title.style.transform
 function loop(){var t=target();if(cur<0||snap)cur=t;else cur+=(t-cur)*.17;if(Math.abs(t-cur)<.0004)cur=t;draw(cur);nav();requestAnimationFrame(loop)}
 addEventListener('resize',measure);measure();loop();
 })();
+(function(){
+if(document.querySelector('.ck'))return;var top=document.querySelector('.top'),darks=document.querySelectorAll('.hw,.cl,.fo,.sn,.jr,.dh,.sx.dk'),dk=false;if(!top)return;
+function nav(){var d=false;for(var i=0;i<darks.length&&!d;i++){var r=darks[i].getBoundingClientRect();d=r.top<62&&r.bottom>34}if(d!==dk){dk=d;top.classList.toggle('dk',d)}}
+addEventListener('scroll',nav,{passive:true});addEventListener('resize',nav);nav();
+})();
 """
 
 CSS = r'''

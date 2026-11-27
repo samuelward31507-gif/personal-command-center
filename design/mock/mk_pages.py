@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The inner pages of the light site. Every page shares the theme (nav, footer, type, colours) from mk_home.py
 and gets its own picture, its own layout and one thing no other page has. Run after mk_home.py; it imports it."""
-import hashlib, pathlib, re
+import hashlib, pathlib, re, sys
 import mk_home as H
 from mk_home import IC, CAL, BOOK, CL, ROOT, inner_hero, statement, cells, faq, ask, page
 
@@ -416,13 +416,345 @@ CSS = r"""
 .nx-g>*+*::before{display:block!important;right:auto;left:28px;top:auto;bottom:100%;width:0;height:22px;border-top:0;border-left:1.5px dashed #b3bbcf}
 }
 """
+# =====================================================================================
+# The rest of the front desk. Copy comes from design/build_services.py and design/pages2.py; every picture is drawn for its page.
+# =====================================================================================
+sys.path.insert(0, str(pathlib.Path(ROOT) / 'design'))
+import pages2
+X = pages2.X
+SAMPLE = 'Example, sample data'
+AUDITLINK = '<a class="btn q" href="/free-audit">How the audit works</a>'
+
+
+def sx(title, rest, inner, cls=''):
+    return ('<section class="sx %s"><div class="w sx-i"><p class="sx-t">%s%s</p>%s</div></section>' % (cls, title, (' <span>%s</span>' % rest) if rest else '', inner))
+
+
+def swap(rows):
+    return '<ul class="sw">%s</ul>' % ''.join('<li><s>%s</s>%s<b>%s</b></li>' % (ap(a), ARROW, ap(b)) for a, b in rows)
+
+
+def qcards(qa):
+    return ('<section class="qc"><div class="w qc-i"><p class="sx-t">Questions.</p><div class="qc-g">%s</div></div></section>' % ''.join('<div><h3>%s</h3><p>%s</p></div>' % (ap(q), ap(a)) for q, a in qa))
+
+
+def qfold(qa, cls=''):
+    return ('<section class="qf %s"><div class="w qf-g"><p class="sx-t">Questions.</p><div>%s</div></div></section>'
+            % (cls, ''.join('<details%s><summary>%s<i></i></summary><p>%s</p></details>' % (' open' if i == 0 else '', ap(q), ap(a)) for i, (q, a) in enumerate(qa))))
+
+
+def dark(label, lead, rest, extra, picture):
+    return ('<section class="hw"><div class="w hw-g"><div class="hw-t"><span class="lb">%s</span><p class="st-t">%s <span>%s</span></p>%s</div><div class="hw-r">%s</div></div></section>' % (label, lead, rest, extra, picture))
+
+
+def frows(rows):
+    return ''.join('<div class="fl-r"><i>%s</i><b>%s</b><span>%s</span></div>' % x for x in rows)
+
+
+def hero_split(pill, h1, sub, note, picture, cls='', second=AUDITLINK):
+    return ('<section class="hs %s"><div class="w hs-g"><div class="hs-t"><span class="pill"><i></i>%s</span><h1>%s</h1><p class="sub">%s</p><div class="cta">%s%s</div>%s</div>'
+            '<div class="hs-p">%s</div></div></section>' % (cls, pill, ap(h1), ap(sub), BOOK, second, ('<p class="hs-n">%s</p>' % ap(note)) if note else '', picture))
+
+
+# ---- /phone-agent : a live call on a dark panel; the call drawn as a fork; the summary you read afterwards ----
+p = BY['phone-agent']
+bars = [22, 40, 64, 36, 80, 52, 30, 70, 92, 58, 34, 62, 84, 46, 26, 54, 76, 40, 66, 88, 50, 30, 60, 78, 44, 24, 56, 72, 38, 62, 46, 28]
+CALL = ('<div class="fl ca"><div class="fd-h"><span class="dot"></span><b>Live call</b><span>Ridgeline Fence</span><span class="tag">%s</span></div>'
+        '<div class="ca-w"><div>%s</div><time>0:48</time></div><div class="ca-t">%s</div>'
+        '<div class="rn-f"><span>Estimate booked while you were on the roof.</span><em>Wed 2 PM</em></div></div>'
+        % (SAMPLE, ''.join('<i style="height:%d%%"></i>' % b for b in bars),
+           ''.join('<p class="%s"><i>%s</i>%s</p>' % x for x in [
+               ('a', 'Assistant', 'Thanks for calling Ridgeline Fence. I&rsquo;m the assistant here. What can I help with?'),
+               ('c', 'Caller', 'I need a quote on a privacy fence.'),
+               ('a', 'Assistant', 'I can set that up. What&rsquo;s the address, and how soon do you need it?'),
+               ('c', 'Caller', 'It&rsquo;s in Monument. Sometime this month.'),
+               ('a', 'Assistant', 'I have Wednesday at 2 or Thursday at 11. Which works?')])))
+MISSED = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3.5 20.5 8M20.5 3.5 16 8M6.6 3.5h3l1.5 4-2 1.3a11 11 0 0 0 5 5l1.4-2 4 1.5v3a2 2 0 0 1-2.2 2A16 16 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/></svg>'
+RECENTS = ('<div class="cd rc"><div class="rep-h"><span class="dot"></span><b>Recents</b><span>While you were on the roof</span><span class="tag">%s</span></div>%s</div>'
+           % (SAMPLE, ''.join('<div class="rc-r">%s<b>%s</b><time>%s</time></div>' % (MISSED, ap(t), tm) for t, tm in zip(X['phone-agent'][1], ('10:12 AM', '11:47 AM', '2:14 PM')))))
+d = p['does']
+FORK = ('<div class="fo2"><div class="fo2-n"><i>1</i><b>%s</b><span>%s</span></div><div class="fo2-n"><i>2</i><b>%s</b><span>%s</span></div>'
+        '<div class="fo2-b"><u></u><div class="fo2-n y"><em>Wants an estimate</em><b>Books it</b><span>The estimate goes on your calendar.</span></div>'
+        '<div class="fo2-n r"><em>Asks for a person, or it&rsquo;s urgent</em><b>Hands off</b><span>The call rings through to you.</span></div><u></u></div>'
+        '<div class="fo2-n"><i>4</i><b>%s</b><span>%s</span></div></div>' % (ap(d[0][0]), ap(d[0][1]), ap(d[1][0]), ap(d[1][1]), ap(d[3][0]), ap(d[3][1])))
+SUMMARY = ('<div class="fl"><div class="fd-h"><span class="dot"></span><b>Call summary</b><span>2:14 PM</span><span class="tag">%s</span></div>%s'
+           '<div class="rn-f"><span>Recording attached.</span><em>1 min 32 sec</em></div></div>'
+           % (SAMPLE, frows([('Who', 'New caller', 'Homeowner, first call'), ('Job', 'Privacy fence, about 180 ft', 'Wants cedar'),
+                             ('Where', 'Monument', 'Inside your service area'), ('Next', 'Estimate booked', 'Wed 2 PM, on your calendar')])))
+PHONE_AGENT = (hero_split('Front desk', p['h1'], 'A voice assistant answers when you can&rsquo;t, takes the details and books the estimate.',
+                          'It says who it is, and it hands the call to you when someone asks for a person.', CALL, 'hs-d')
+               + H.split('The problem', X['phone-agent'][0][0], X['phone-agent'][0][1], RECENTS)
+               + sx(X['phone-agent'][2], '', FORK, 'wh')
+               + dark('What changes', 'You stay on the job.', 'The call still turns into an estimate.', swap(p['cmp']), SUMMARY)
+               + qcards(p['faq']) + CL)
+
+# ---- /website-chat : a browser window with the chat open at 10 PM; every answer tagged with where it came from ----
+p = BY['website-chat']
+BROWSER = ('<div class="cd bw"><div class="bw-b"><i></i><i></i><i></i><span>Your website</span><time>10:04 PM</time></div><div class="bw-g"><div class="bw-s"><b>Fences built right.</b><u></u><u></u><u class="s"></u><div><i></i><i></i><i></i></div></div>'
+           '<div class="bw-c"><div class="bw-h"><span class="dot"></span><b>Ask us anything</b><span class="tag">%s</span></div><div class="bw-m"><p>Do you build cedar fences in Monument?</p>'
+           '<p class="me">Yes. Cedar privacy and picket, and Monument is in our service area. Want a time for a free estimate?</p><p>Sure</p>'
+           '<div><span>Tue 9 AM</span><span class="on">Wed 2 PM</span><span>Thu 11 AM</span></div></div></div></div></div>' % SAMPLE)
+KB = ('<div class="kb"><div class="kb-s"><h3>What you give it</h3>%s</div><div class="kb-a"><h3>What it says</h3>%s</div></div>'
+      % (''.join('<div><b>%s</b><span>%s</span></div>' % x for x in [('Services', 'Cedar, vinyl, chain link, gates, repairs'), ('Service area', 'Monument, Colorado Springs, Castle Rock'),
+                                                                   ('Hours', 'Monday to Saturday, 7 to 5'), ('How you price', 'Free estimates. Ranges only, never a final price.')]),
+         ''.join('<div class="%s"><p>%s</p><p class="me">%s</p><em>%s</em></div>' % x for x in [
+             ('', 'Do you do repairs?', 'Yes, fence and gate repairs.', 'From: Services'),
+             ('', 'Are you open Saturday?', 'Yes, 7 to 5.', 'From: Hours'),
+             ('h', 'Can you beat another quote?', 'That one is for the owner. I&rsquo;ve passed it on with this conversation.', 'Handed to you')])))
+WEBSITE_CHAT = (inner_hero('Front desk', ap(p['h1']), ap(p['lede']), BOOK + AUDITLINK, BROWSER)
+                + statement('The problem', X['website-chat'][0][0], ap(X['website-chat'][0][1]))
+                + sx('It answers from your own information.', 'Anything it can&rsquo;t answer goes to you with the conversation attached.', KB, 'wh')
+                + '<section class="bl"><div class="w bl-i"><p>%s</p></div></section>' % ap(p['line'])
+                + H.split('What changes', 'The visitor leaves with a time,', 'not a number to call tomorrow.', swap(p['cmp']))
+                + qfold(p['faq']) + CL)
+
+# ---- /social-messages : three apps dropping into one inbox; three companies racing to reply ----
+p = BY['social-messages']
+FUNNEL = ('<div class="fn"><div class="fn-s">%s</div><div class="cd fn-i"><div class="rep-h"><span class="dot"></span><b>One inbox</b><span>In your app</span><span class="tag">%s</span></div>%s</div></div>'
+          % (''.join('<div><i>%s</i><p>%s</p></div>' % x for x in [('Facebook', 'How much for a gate repair?'), ('Instagram', 'Do you do vinyl?'), ('Google', 'Are you taking new jobs?')]),
+             SAMPLE, ''.join('<div class="fn-r"><i>%s</i><b>%s</b><span>%s</span></div>' % x for x in [
+                 ('Facebook', 'How much for a gate repair?', 'Replied in 7 seconds. Asked for a photo.'),
+                 ('Instagram', 'Do you do vinyl?', 'Replied in 9 seconds. Picking a time.'),
+                 ('Google', 'Are you taking new jobs?', 'Replied in 6 seconds. Booked Thu 11 AM.')])))
+RACE = ('<div class="cd ra"><div class="rep-h"><span class="dot"></span><b>One message, three companies</b><span class="tag">Example</span></div>%s</div>'
+        % ''.join('<div class="ra-r %s"><b>%s</b><div><i style="width:%s"></i></div><span>%s</span></div>' % x for x in [
+            ('', 'Company one', '100%', 'Saw the message two days later.'),
+            ('', 'Company two', '34%', 'Replied &ldquo;call us&rdquo; that evening.'),
+            ('y', 'You', '14px', 'Replied in 8 seconds, with times to pick from.')]))
+WHO = ('<section class="pg pg-4"><div class="w pg-g">%s</div></section>'
+       % ''.join('<div>%s<h3>%s</h3><p>%s</p></div>' % (svg(k), ap(t), ap(x)) for k, (t, x) in zip(('chat', 'time', 'quote', 'cal'), p['does'])))
+SOCIAL = (hero_split('Front desk', p['h1'], p['lede'], '', FUNNEL)
+          + statement('The problem', X['social-messages'][0][0], ap(X['social-messages'][0][1]))
+          + sx('A lead messages three companies.', 'The first real reply usually gets the job.', RACE)
+          + WHO
+          + faq('Questions.', [(ap(q), ap(a)) for q, a in p['faq']]) + CL)
+
+# ---- /lead-vetting : a left-set top over a sorting table; two lead cards, one booked and one turned away ----
+p = BY['lead-vetting']
+SORT = ('<div class="cd vt"><div class="rep-h"><span class="dot"></span><b>This week&rsquo;s leads</b><span>Ridgeline Fence</span><span class="tag">%s</span></div>'
+        '<div class="vt-r vt-h"><span>Lead</span><span>What they said</span><span>Sorted</span></div>%s'
+        '<div class="vt-f"><b>4 asked</b><span>2 booked. 2 got a polite no. Nobody drove out to find out.</span></div></div>'
+        % (SAMPLE, ''.join('<div class="vt-r %s"><b>%s</b><span>%s</span><em>%s</em></div>' % x for x in [
+            ('g', 'Privacy fence, 180 ft', 'Monument. This month. Budget in range.', 'Good fit. Booked Wed 2 PM'),
+            ('g', 'Gate repair', 'Castle Rock. This week.', 'Good fit. Booked Thu 11 AM'),
+            ('n', 'Ranch fencing', '90 miles out.', 'Out of area. Polite no'),
+            ('n', 'One loose board', 'Below your minimum.', 'Not a fit. Polite no')])))
+def lead(cls, verdict, rows, foot):
+    return ('<div class="cd lc %s"><div class="rep-h"><span class="dot"></span><b>New lead</b><span class="tag">%s</span></div><dl>%s</dl><p>%s</p></div>'
+            % (cls, verdict, ''.join('<div%s><dt>%s</dt><dd>%s</dd></div>' % ((' class="x"' if f else ''), q, a) for q, a, f in rows), foot))
+LEADS = ('<div class="lc-g">%s%s</div>' % (
+    lead('g', 'Good fit', [('Job type', 'Privacy fence', 0), ('Size', 'About 180 ft', 0), ('Address', 'Monument', 0), ('Timing', 'This month', 0), ('Budget range', 'In range', 0)], 'Booked for Wed 2 PM. You walk in knowing what they said.'),
+    lead('n', 'Not a fit', [('Job type', 'Ranch fencing', 0), ('Size', 'About 2 miles', 0), ('Address', '90 miles out', 1), ('Timing', 'Next year', 0), ('Budget range', 'Not sure yet', 0)], 'A clear, polite no went out. Nobody is left waiting, and nobody drove out.')))
+LEAD_VETTING = ('<section class="ih ih-l"><div class="w ih-i"><span class="lb">Front desk</span><h1>%s</h1><p class="sub">%s</p><div class="cta">%s%s</div></div><div class="ih-p"><div class="w ih-pi">%s</div></div></section>'
+                % (ap(p['h1']), ap(p['lede']), BOOK, AUDITLINK, SORT)
+                + statement('The problem', X['lead-vetting'][0][0], ap(X['lead-vetting'][0][1]))
+                + sx(X['lead-vetting'][2], 'The answers travel with the lead.', LEADS, 'wh')
+                + H.split('What changes', 'Not every lead is a job.', 'You shouldn&rsquo;t have to find that out in person.', swap(p['cmp']))
+                + qcards(p['faq']) + CL)
+
+# ---- /after-hours : a dark top with one night on a ruler; two calls at 2 AM going two ways; the rota; the morning summary ----
+p = BY['after-hours']
+NIGHT = ('<div class="ng"><div class="ng-h"><b>One night</b><span>Example plumber, sample data</span></div><div class="ng-x">%s%s</div><div class="ng-g">%s</div></div>'
+         % (''.join('<span>%s</span>' % t for t in ('6 PM', '9 PM', 'Midnight', '3 AM', '6 AM', '8 AM')),
+            ''.join('<i class="%s" style="left:%.1f%%"></i>' % x for x in [('', 23.1), ('', 40.5), ('u', 57.7), ('', 89.4)]),
+            ''.join('<div class="%s"><time>%s</time><b>%s</b><span>%s</span></div>' % x for x in [
+                ('', '9:14 PM', 'Quote request', 'Booked for Tue 9 AM.'), ('', '11:40 PM', 'Question about a water heater', 'Answered.'),
+                ('u', '2:07 AM', 'Burst pipe', 'On-call phone rang.'), ('', '6:31 AM', 'Website form', 'Booked for Thu 11 AM.')])))
+TWO = ('<div class="tw"><div class="tw-c u"><time>2:07 AM</time><p>&ldquo;There&rsquo;s water coming through the ceiling.&rdquo;</p><ol><li>Asks what is happening</li><li>Sorted as urgent</li><li>Rings your on-call number</li></ol><em>Someone is on the way</em></div>'
+       '<div class="tw-c"><time>2:12 AM</time><p>&ldquo;Can I get a quote on a new water heater?&rdquo;</p><ol><li>Asks what is happening</li><li>Sorted as can wait</li><li>Booked for the next open slot, with a confirmation</li></ol><em>Nobody is woken</em></div></div>')
+ROTA = ('<div class="cd ro"><div class="rep-h"><span class="dot"></span><b>On call this week</b><span class="tag">%s</span></div><div class="ro-g">%s</div></div>'
+        % (SAMPLE, ''.join('<div class="%s"><b>%s</b><span>%s</span></div>' % x for x in [('', 'Mon', 'You'), ('', 'Tue', 'You'), ('o', 'Wed', 'Crew lead'), ('o', 'Thu', 'Crew lead'), ('', 'Fri', 'You'), ('o', 'Sat', 'Crew lead'), ('o', 'Sun', 'Crew lead')])))
+MORNING = ('<div class="cd mr mo"><div class="rep-h"><span class="dot"></span><b>Morning summary</b><span>7:00 AM</span><span class="tag">%s</span></div>'
+           '<p>Overnight: 4 came in. 1 emergency went to on-call at 2:07 AM. 2 were booked. 1 question was answered. Nothing is waiting on you.</p></div>' % SAMPLE)
+AFTER_HOURS = ('<section class="dh"><div class="w dh-i"><span class="lb">Front desk</span><h1>%s</h1><p class="sub">%s</p><div class="cta">%s<a class="btn q" href="/free-audit">How the audit works</a></div>%s</div></section>'
+               % (ap(p['h1']), ap(p['lede']), BOOK, NIGHT)
+               + statement('The problem', X['after-hours'][0][0], ap(X['after-hours'][0][1]))
+               + sx('The burst pipe at 2 AM and the quote request at 2 AM', 'are not the same call.', TWO, 'wh')
+               + H.split('On call', 'The right person gets woken.', 'Emergencies ring your on-call number. Nothing else does. Whoever you set, on a rota you control.', ROTA)
+               + '<section class="sp sp-r"><div class="w sp-g"><div class="sp-p">%s</div><div class="sp-t"><span class="lb">The morning after</span><p class="st-t">You read what was handled. <span>Not what you missed.</span></p></div></div></section>' % MORNING
+               + qfold(p['faq'][:2] + [p['faq'][2]]) + CL)
+
+CSS_DESK = r"""
+/* ============ pieces the front-desk pages draw on ============ */
+.sx{border-top:1px solid var(--ln)}.sx.wh{background:#fff}
+.sx-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(88px,7vw,132px) var(--pad) clamp(80px,6.4vw,124px)}
+.sx-t{margin:0 0 clamp(36px,3vw,56px);max-width:19em;font-size:clamp(27px,1.95vw,37px);line-height:1.12;letter-spacing:-.028em;font-weight:500;text-wrap:pretty}.sx-t span{color:var(--g2)}
+.sw{list-style:none;margin:0;padding:0;display:grid;width:100%;max-width:560px}
+.sw li{display:grid;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr);gap:14px;align-items:center;padding:clamp(14px,1.1vw,20px) 0;border-top:1px solid var(--ln);font-size:clamp(14.5px,.9vw,17px);line-height:1.32}
+.sw li:first-child{border-top:0}.sw s{color:var(--t3);text-decoration-color:rgba(138,141,147,.55)}.sw b{font-weight:560;letter-spacing:-.01em}
+.sw svg{width:16px;height:16px;fill:none;stroke:var(--blue);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.sp-p .sw{padding:8px 22px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.06),0 14px 34px -22px rgba(30,40,80,.28)}
+.hw .sw{margin-top:clamp(32px,2.8vw,52px);max-width:34em}.hw .sw li{grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr);border-color:var(--dl)}.hw .sw li::before{display:none}.hw .sw li b{font-size:inherit}.hw .sw s{color:#7f8187}.hw .sw svg{stroke:#6d9bff}
+.qc{border-top:1px solid var(--ln)}.qc-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(80px,6.4vw,124px) var(--pad)}
+.qc-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.1vw,20px)}
+.qc-g div{padding:clamp(20px,1.6vw,30px) clamp(20px,1.6vw,30px) clamp(26px,2vw,38px);border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.06),0 14px 34px -24px rgba(30,40,80,.25)}
+.qc-g h3{margin:0;font-size:clamp(16px,1.02vw,19.5px);font-weight:560;letter-spacing:-.014em;line-height:1.25}.qc-g p{margin:10px 0 0;font-size:clamp(14.5px,.88vw,16.5px);line-height:1.42;color:var(--g2)}
+.qf{border-top:1px solid var(--ln);background:#fff}.qf-g{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(80px,6.4vw,124px) var(--pad)}
+.qf .sx-t{margin:0}.qf details{border-top:1px solid var(--ln)}.qf details:last-child{border-bottom:1px solid var(--ln)}
+.qf summary{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:clamp(18px,1.4vw,26px) 0;cursor:pointer;list-style:none;font-size:clamp(16px,1.05vw,20px);font-weight:540;letter-spacing:-.014em}
+.qf summary::-webkit-details-marker{display:none}
+.qf summary i{position:relative;flex:none;width:14px;height:14px}.qf summary i::before,.qf summary i::after{content:"";position:absolute;left:0;right:0;top:6px;height:1.5px;background:var(--ink);transition:transform .2s}
+.qf summary i::after{transform:rotate(90deg)}.qf details[open] summary i::after{transform:rotate(0)}
+.qf details p{margin:0;padding:0 40px clamp(20px,1.6vw,30px) 0;max-width:34em;font-size:clamp(15px,.92vw,17.5px);line-height:1.45;color:var(--g2)}
+.bl{border-top:1px solid var(--ln);background:#fff}
+.bl-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(96px,8.6vw,164px) 24px;text-align:center}
+.bl p{margin:0 auto;max-width:17em;font-size:clamp(30px,2.75vw,52px);line-height:1.08;font-weight:560;letter-spacing:-.038em;text-wrap:balance}
+.sp-r .sp-p{border-left:0;border-right:1px solid var(--ln)}
+.pg h3{margin-top:clamp(40px,3.4vw,64px)}
+
+/* ============ /phone-agent ============ */
+.hs-d .hs-p{background:#101010;border-left:0}
+.ca{max-width:520px}
+.ca-w{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid var(--dl)}
+.ca-w div{flex:1;display:flex;align-items:center;gap:3px;height:44px}.ca-w i{flex:1;min-width:2px;border-radius:2px;background:#5d90fb}.ca-w i:nth-child(n+21){background:#3a3c42}
+.ca-w time{font:500 12px/1 "Geist Mono",monospace;color:#a3a5aa}
+.ca-t{display:grid;gap:12px;padding:16px 18px 18px;border-bottom:1px solid var(--dl)}
+.ca-t p{margin:0;display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px;font-size:13.5px;line-height:1.4;color:#e4e5e7}
+.ca-t p i{font:500 11px/1.7 "Geist Mono",monospace;font-style:normal;color:#6d9bff}.ca-t p.c{color:#a3a5aa}.ca-t p.c i{color:#7f8187}
+.rc{width:100%;max-width:500px}
+.rc-r{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:12px;align-items:center;padding:15px 18px;border-top:1px solid var(--line);font-size:14px}.rc-r:first-of-type{border-top:0}
+.rc-r svg{width:18px;height:18px;fill:none;stroke:var(--red);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.rc-r b{font-weight:520;letter-spacing:-.008em;line-height:1.3}
+.rc-r time{font:500 11.5px/1 "Geist Mono",monospace;color:var(--red);white-space:nowrap}
+.fo2{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:44px;align-items:center}
+.fo2-n{position:relative;padding:clamp(18px,1.4vw,26px) clamp(18px,1.4vw,26px) clamp(22px,1.7vw,32px);border-radius:14px;background:var(--g);box-shadow:inset 0 0 0 1px var(--ln)}
+.fo2-n i{display:grid;place-items:center;width:22px;height:22px;margin-bottom:14px;border-radius:50%;background:var(--ink);color:#fff;font:600 11px/1 "Geist Mono",monospace;font-style:normal}
+.fo2-n em{display:inline-flex;align-items:center;height:22px;margin-bottom:12px;padding:0 8px;border-radius:6px;font-style:normal;font-size:11.5px;font-weight:560}
+.fo2-n.y em{background:#e9eeff;color:#2a4ea8}.fo2-n.r em{background:#fff4d6;color:#a86a00}
+.fo2-n b{display:block;font-size:clamp(16px,1vw,19px);font-weight:560;letter-spacing:-.014em}.fo2-n span{display:block;margin-top:6px;font-size:clamp(14px,.86vw,16px);line-height:1.36;color:var(--g2)}
+.fo2>.fo2-n+.fo2-n::before{content:"";position:absolute;right:100%;top:50%;width:44px;border-top:1.5px dashed #b3bbcf}
+.fo2-b{position:relative;display:grid;gap:16px}
+.fo2-b u{position:absolute;top:25%;bottom:25%;left:-22px;border-left:1.5px dashed #b3bbcf}.fo2-b u:last-child{left:auto;right:-22px}
+.fo2-b::before,.fo2-b::after{content:"";position:absolute;top:50%;width:22px;border-top:1.5px dashed #b3bbcf}.fo2-b::before{left:-44px}.fo2-b::after{right:-44px}
+.fo2-b .fo2-n::before,.fo2-b .fo2-n::after{content:"";position:absolute;top:50%;width:22px;border-top:1.5px dashed #b3bbcf}.fo2-b .fo2-n::before{right:100%}.fo2-b .fo2-n::after{left:100%}
+.fo2>.fo2-b+.fo2-n::before{display:none}
+
+/* ============ /website-chat ============ */
+.bw{width:min(1040px,100%);overflow:hidden}
+.bw-b{display:flex;align-items:center;gap:7px;height:44px;padding:0 16px;border-bottom:1px solid var(--line)}
+.bw-b i{width:10px;height:10px;border-radius:50%;background:#e2e4e8}
+.bw-b span{flex:1;max-width:340px;margin:0 auto;display:grid;place-items:center;height:26px;border-radius:7px;background:#f1f2f5;font-size:12px;color:var(--t2)}
+.bw-b time{font:500 11.5px/1 "Geist Mono",monospace;color:var(--t3)}
+.bw-g{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:28px;padding:36px 28px 28px;text-align:left;min-height:420px;background:#fbfbfc}
+.bw-s{display:grid;gap:10px;align-content:start;padding-top:12px}.bw-s b{margin-bottom:8px;font-size:clamp(28px,2.4vw,40px);font-weight:620;letter-spacing:-.04em;line-height:1.05}
+.bw-s u{height:9px;border-radius:5px;background:#e9ebef;max-width:420px}.bw-s u.s{max-width:250px}
+.bw-s div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:22px;max-width:480px}.bw-s div i{aspect-ratio:4/3;border-radius:10px;background:repeating-linear-gradient(135deg,#eceef2 0 2px,#f7f8fa 2px 6px)}
+.bw-c{align-self:end;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 30px 60px -28px rgba(30,40,110,.5)}
+.bw-h{display:flex;align-items:center;gap:9px;height:44px;padding:0 14px;border-bottom:1px solid var(--line);font-size:13px}.bw-h b{font-weight:600}
+.bw-m{display:grid;gap:8px;padding:14px;font-size:13.5px;line-height:1.38}
+.bw-m p{margin:0;width:fit-content;max-width:88%;padding:8px 12px;border-radius:13px 13px 13px 4px;background:#f1f2f5}.bw-m p.me{margin-left:auto;border-radius:13px 13px 4px 13px;background:var(--blue);color:#fff}
+.bw-m div{display:flex;gap:6px;justify-content:flex-end;margin-top:2px}.bw-m span{display:grid;place-items:center;height:32px;padding:0 10px;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(23,24,26,.12);font-size:12px;font-weight:520}.bw-m span.on{background:var(--blue);color:#fff;box-shadow:none}
+@media(min-width:1700px){.bw{zoom:1.1}}
+.kb{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(28px,3.4vw,64px);align-items:start}
+.kb h3{margin:0 0 14px;font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}
+.kb-s{display:grid}.kb-s div{padding:clamp(14px,1.1vw,20px) 0;border-top:1px solid var(--ln)}.kb-s div:last-child{border-bottom:1px solid var(--ln)}
+.kb-s b{display:block;font-size:clamp(15.5px,.98vw,18.5px);font-weight:560;letter-spacing:-.012em}.kb-s span{display:block;margin-top:3px;font-size:clamp(14px,.86vw,16px);color:var(--g2)}
+.kb-a{display:grid;gap:12px}.kb-a>div{display:grid;gap:8px;padding:16px 18px 14px;border-radius:14px;background:var(--g);box-shadow:inset 0 0 0 1px var(--ln);font-size:clamp(14.5px,.9vw,16.5px);line-height:1.38}
+.kb-a p{margin:0;width:fit-content;max-width:86%;padding:9px 13px;border-radius:14px 14px 14px 5px;background:#eceef2}.kb-a p.me{margin-left:auto;border-radius:14px 14px 5px 14px;background:var(--blue);color:#fff}
+.kb-a em{justify-self:end;display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:#e9eeff;color:#2a4ea8;font-style:normal;font-size:11.5px;font-weight:560}
+.kb-a .h p.me{background:var(--ink)}.kb-a .h em{background:#fff4d6;color:#a86a00}
+
+/* ============ /social-messages ============ */
+.fn{width:100%;max-width:560px}
+.fn-s{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fn-s div{position:relative;padding:12px 13px 14px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.07),0 16px 30px -20px rgba(30,40,110,.4)}
+.fn-s i{font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:var(--t3)}.fn-s p{margin:7px 0 0;font-size:13px;line-height:1.3;font-weight:520}
+.fn-s div::after{content:"";position:absolute;left:50%;top:100%;height:34px;border-left:1.5px dashed #9fb0dd}
+.fn-i{margin-top:34px}
+.fn-r{display:grid;grid-template-columns:84px minmax(0,1fr);gap:2px 12px;padding:13px 18px 14px;border-top:1px solid var(--line)}.fn-r:first-of-type{border-top:0}
+.fn-r i{grid-row:1/3;align-self:start;justify-self:start;display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:#f1f2f5;font-style:normal;font-size:11.5px;font-weight:540;color:var(--t2)}
+.fn-r b{font-size:14px;font-weight:560;letter-spacing:-.008em}.fn-r span{grid-column:2;font-size:12.5px;color:var(--t2)}
+@media(min-width:1700px){.fn{zoom:1.12}}
+.ra-r{display:grid;grid-template-columns:minmax(0,.22fr) minmax(0,1fr) minmax(0,.5fr);gap:clamp(14px,1.6vw,30px);align-items:center;padding:clamp(18px,1.5vw,28px) clamp(18px,1.6vw,30px);border-top:1px solid var(--line)}.ra-r:first-of-type{border-top:0}
+.ra-r b{font-size:clamp(15px,.95vw,18px);font-weight:560;letter-spacing:-.012em;color:var(--t2)}
+.ra-r div{height:14px;border-radius:7px;background:#f1f2f5}.ra-r div i{display:block;height:100%;border-radius:7px;background:#c9cbd0}
+.ra-r span{font-size:clamp(14px,.86vw,16px);line-height:1.34;color:var(--g2)}
+.ra-r.y{background:#f7f9ff}.ra-r.y b{color:#1f4fbf}.ra-r.y i{background:var(--blue)}.ra-r.y span{color:var(--ink);font-weight:520}
+
+/* ============ /lead-vetting ============ */
+.ih-l .ih-i{text-align:left;padding-left:var(--pad);padding-right:var(--pad)}.ih-l h1{margin-left:0;max-width:12em}.ih-l .sub{margin-left:0;text-align:left;text-wrap:pretty}.ih-l .cta{justify-content:flex-start}
+.ih-l .ih-pi{padding-left:var(--pad);padding-right:var(--pad)}
+.vt{width:100%;overflow:hidden;text-align:left}
+.vt-r{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1fr) minmax(0,.8fr);gap:16px;align-items:center;padding:clamp(14px,1.1vw,20px) clamp(18px,1.5vw,28px);border-top:1px solid var(--line);font-size:clamp(14px,.9vw,16.5px)}
+.vt-h{padding-top:12px;padding-bottom:12px;border-top:0;font:500 11.5px/1 "Geist Mono",monospace;color:var(--t3)}
+.vt-r b{font-weight:560;letter-spacing:-.01em}.vt-r>span{color:var(--g2)}.vt-h>span{color:var(--t3)}
+.vt-r em{justify-self:start;display:inline-flex;align-items:center;min-height:26px;padding:3px 10px;border-radius:7px;font-style:normal;font-size:clamp(12px,.76vw,13.5px);font-weight:560}
+.vt-r.g em{background:#e7f6ec;color:#1c7a43}.vt-r.n em{background:#f1f2f5;color:var(--t2)}.vt-r.n b{color:var(--t2)}
+.vt-f{display:flex;align-items:baseline;gap:12px;padding:16px clamp(18px,1.5vw,28px) 17px;background:#101113;color:#8f9197;font-size:13px}.vt-f b{color:#fff;font-size:20px;font-weight:600;letter-spacing:-.03em;white-space:nowrap}
+.lc-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(16px,1.8vw,32px)}
+.lc dl{margin:0;padding:6px 18px}.lc dl div{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1fr);gap:12px;padding:12px 0;border-top:1px solid var(--line);font-size:clamp(14px,.9vw,16.5px)}.lc dl div:first-child{border-top:0}
+.lc dt{color:var(--t2)}.lc dd{margin:0;font-weight:540;letter-spacing:-.008em}.lc dl div.x dd{color:var(--red)}
+.lc>p{margin:0;padding:16px 18px 18px;border-top:1px solid var(--line);font-size:clamp(14px,.88vw,16px);line-height:1.4}
+.lc.g .tag{color:#1c7a43}.lc.g>p{background:#f3faf5;border-radius:0 0 12px 12px}.lc.n{box-shadow:0 0 0 1px rgba(23,24,26,.06)}.lc.n .dot{background:#c9cbd0}.lc.n dd{color:var(--t2);font-weight:500}.lc.n>p{color:var(--g2)}
+
+/* ============ /after-hours ============ */
+.dh{background:#0c0d10;color:#fff}
+.dh-i{border-left:1px solid var(--dl);border-right:1px solid var(--dl);text-align:center;padding:clamp(80px,7vw,132px) var(--pad) clamp(64px,5.6vw,108px)}
+.dh .lb{background:rgba(109,155,255,.16);color:#a9c4ff}
+.dh h1{margin:clamp(18px,1.5vw,28px) auto 0;max-width:14em;font-size:clamp(38px,3.2vw,60px);line-height:1.05;letter-spacing:-.04em;font-weight:600;text-wrap:balance}
+.dh .sub{color:#a3a5aa;margin:clamp(14px,1.2vw,22px) auto 0;max-width:33em}
+.dh .btn{background:#fff;color:var(--ink)}.dh .btn.q{background:transparent;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.24)}
+.ng{margin-top:clamp(56px,5vw,96px);text-align:left;border-radius:14px;background:#15161a;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.ng-h{display:flex;align-items:center;gap:10px;height:46px;padding:0 18px;border-bottom:1px solid var(--dl);font-size:13px;color:#8f9197}.ng-h b{color:#fff;font-weight:600}.ng-h span{margin-left:auto;font:500 11.5px/1 "Geist Mono",monospace}
+.ng-x{position:relative;display:flex;justify-content:space-between;margin:0 clamp(18px,1.6vw,30px);padding:26px 0 30px;font:500 11px/1 "Geist Mono",monospace;color:#7f8187}
+.ng-x::after{content:"";position:absolute;left:0;right:0;bottom:12px;height:2px;border-radius:1px;background:linear-gradient(90deg,#2b3350,#3a4a8a 45%,#3a4a8a 70%,#806a3a)}
+.ng-x i{position:absolute;bottom:7px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#6d9bff;box-shadow:0 0 0 4px #15161a}.ng-x i.u{background:var(--amber)}
+.ng-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--dl)}
+.ng-g div{padding:clamp(16px,1.3vw,24px) clamp(18px,1.6vw,30px) clamp(20px,1.6vw,30px);border-left:1px solid var(--dl)}.ng-g div:first-child{border-left:0}
+.ng-g time{font:500 11.5px/1 "Geist Mono",monospace;color:#6d9bff}.ng-g .u time{color:var(--amber)}
+.ng-g b{display:block;margin-top:10px;font-size:clamp(15px,.98vw,18.5px);font-weight:560;letter-spacing:-.012em}.ng-g span{display:block;margin-top:4px;font-size:clamp(13.5px,.84vw,15.5px);color:#a3a5aa}
+.tw{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(16px,1.8vw,32px)}
+.tw-c{padding:clamp(22px,1.8vw,34px);border-radius:16px;background:var(--g);box-shadow:inset 0 0 0 1px var(--ln)}
+.tw-c time{font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}
+.tw-c p{margin:12px 0 clamp(20px,1.6vw,30px);font:400 clamp(21px,1.6vw,30px)/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.014em}
+.tw-c ol{list-style:none;margin:0;padding:0;counter-reset:t}.tw-c li{counter-increment:t;display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--ln);font-size:clamp(14.5px,.92vw,17px)}
+.tw-c li::before{content:counter(t);flex:none;font:500 11.5px/1.7 "Geist Mono",monospace;color:var(--t3)}
+.tw-c em{display:inline-flex;align-items:center;height:30px;margin-top:14px;padding:0 12px;border-radius:8px;background:#e9eeff;color:#2a4ea8;font-style:normal;font-size:13.5px;font-weight:560}
+.tw-c.u{background:#fffaf0;box-shadow:inset 0 0 0 1px #f3e2b8}.tw-c.u time{color:#a86a00}.tw-c.u li{border-color:#f0e4c6}.tw-c.u em{background:var(--amber);color:#3d2a00}
+.ro{width:100%;max-width:560px}.ro-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;padding:16px}
+.ro-g div{display:grid;gap:8px;justify-items:center;padding:12px 4px 14px;border-radius:10px;background:#f1f2f5;text-align:center}
+.ro-g b{font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}.ro-g span{font-size:12.5px;font-weight:560;line-height:1.15}.ro-g .o{background:#e9eeff}.ro-g .o span{color:#2a4ea8}
+.mo{margin:0;max-width:500px}.mo p{font-size:clamp(15px,.95vw,17px)}
+.qf.dkq{background:var(--dk)}
+
+@media(max-width:1180px){
+.fo2{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.fo2 *::before,.fo2 *::after,.fo2-b u{display:none!important}
+.qc-g{grid-template-columns:minmax(0,1fr)}
+.bw-g{grid-template-columns:minmax(0,1fr) 320px}
+.ng-g{grid-template-columns:repeat(2,minmax(0,1fr))}.ng-g div:nth-child(odd){border-left:0}.ng-g div:nth-child(n+3){border-top:1px solid var(--dl)}
+}
+@media(max-width:860px){
+.sx-i{padding:64px var(--pad) 56px}.sx-t{font-size:25px;margin-bottom:28px}
+.sw li,.hw .sw li{grid-template-columns:minmax(0,1fr);gap:4px;padding:14px 0}.sw svg{display:none}.sp-p .sw{padding:6px 16px}
+.qc-i{padding:56px var(--pad)}.qf-g{grid-template-columns:minmax(0,1fr);gap:24px;padding:56px var(--pad)}.qf details p{padding-right:0}
+.bl-i{padding:72px 20px}.bl p{font-size:28px}
+.sp-r .sp-p{border-right:0;order:2}
+.hs-d .hs-p{padding:28px 14px 36px}.ca-t p{grid-template-columns:minmax(0,1fr);gap:2px}
+.fo2{grid-template-columns:minmax(0,1fr);gap:12px}
+.bw-g{grid-template-columns:minmax(0,1fr);padding:22px 14px 14px;min-height:0}.bw-s div{display:none}.bw-b span{max-width:none}
+.kb{grid-template-columns:minmax(0,1fr)}
+.fn-s{gap:6px}.fn-s div{padding:10px 9px 12px}.fn-s p{font-size:12px}.fn-r{grid-template-columns:minmax(0,1fr)}.fn-r i{grid-row:auto;margin-bottom:6px}.fn-r span{grid-column:1}
+.ra-r{grid-template-columns:minmax(0,1fr);gap:10px}
+.vt-h{display:none}.vt-r{grid-template-columns:minmax(0,1fr);gap:6px}.vt-f{flex-direction:column;gap:4px}
+.lc-g{grid-template-columns:minmax(0,1fr)}
+.dh-i{padding:64px 14px 48px}.dh h1{font-size:36px}.ng-x span:nth-child(even){display:none}.ng-g{grid-template-columns:minmax(0,1fr)}.ng-g div{border-left:0;border-top:1px solid var(--dl)}.ng-g div:first-child{border-top:0}
+.tw{grid-template-columns:minmax(0,1fr)}.tw-c p{font-size:21px}
+.ro-g{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+"""
+
 out = pathlib.Path(ROOT) / 'site'
+CSS = CSS + CSS_DESK
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V
 PAGES = [
     ('everything', 'Everything we build', 'Every build Cinder makes for service businesses, in eight parts of the business. Each one is made for the business it goes into, and your free audit decides which ones you need.', EVERYTHING),
     ('websites', 'Websites', 'A website built for your business that loads fast on a phone, says what you do, and books the estimate from the page.', WEBSITES),
+    ('phone-agent', 'Phone agent', 'A voice assistant answers the calls you cannot, takes the details and books the estimate. It says who it is and hands the call to you when someone asks for a person.', PHONE_AGENT),
+    ('website-chat', 'Website chat', 'A chat on your website answers questions from your own information and offers a time for an estimate, including at night.', WEBSITE_CHAT),
+    ('social-messages', 'Messages and DMs', 'Messages from Facebook, Instagram and your Google profile land in one inbox and get a reply in seconds.', SOCIAL),
+    ('lead-vetting', 'Lead vetting', 'Every new lead is asked your questions first, so good fits are booked and poor fits get a polite no before anyone drives out.', LEAD_VETTING),
+    ('after-hours', 'After hours', 'Calls and messages that come in after you close get handled, and only real emergencies ring whoever is on call.', AFTER_HOURS),
     ('answering', 'Answering', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', ANSWERING),
 ]
 if __name__ == '__main__':
