@@ -418,3 +418,9 @@ Sam: the transitions are still weak; he wants the clock's recipe (an image you g
 
 - Sam: the homepage top is weak and does not read as the homepage; he likes Attio's layout but not a CRM screen. New top (`.hm` in `mk_home.py`): centred pill, one very large headline, sub, two buttons, then a full-width "Free audit" window in the hairline style: seven parts of the business down the left, "Where the jobs went" as one line (100, 71, 58, 39, 34) with the two biggest drops hatched and tagged, three "fix first" findings on the right, the three totals along the bottom. Same sample numbers as before. It draws once on load.
 - Sam could not see any scroll motion: his system has reduce-motion on, and every scroll effect was switched off for it. Scroll-driven effects now run regardless; `?motion=off` turns them off. The one auto-rotating block still respects the setting.
+
+### 22r. Homepage, top to bottom, first pass (27 Nov)
+
+Sam approved the new top. Changes he asked for: Mac window buttons (red, yellow, green); the dark sections' pictures redone simple and colourless; the eight parts were cluttered, extend the page and let them open; more motion. He asked whether to keep the black totals bar under the window: removed (the same figures are already in the window).
+- "What ran today" is now a hairline timeline (`.tml`) that draws as it scrolls in.
+- The ring, the example tabs and the eight-cell grid are gone. `.pb` is one pinned screen: words stay left, the eight parts ink in on the right and each opens its one line in turn; each row links to its page.

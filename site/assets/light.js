@@ -32,7 +32,7 @@ new IntersectionObserver(function(e){if(e[0].isIntersecting){bd.classList.remove
 })();
 
 (function(){
-var ck=document.querySelector('.ck'),top=document.querySelector('.top'),darks=document.querySelectorAll('.au,.hw,.bd,.cl,.fo');if(!ck)return;
+var ck=document.querySelector('.ck'),top=document.querySelector('.top'),darks=document.querySelectorAll('.au,.hw,.bd,.pb,.cl,.fo');if(!ck)return;
 var q=location.search,force=/[?&]motion=on/.test(q),snap=/[?&]snap=1/.test(q),band=ck.querySelector('.ck-dark'),cur=-1,dk=false;
 if(/[?&]motion=off/.test(q)){onscroll=nav;nav();return}
 ck.classList.add('on');

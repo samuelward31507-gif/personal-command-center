@@ -315,13 +315,11 @@ for i, (name, _, _, _, lit) in enumerate(PARTS):
 WHEEL = ('<svg class="bd-w" viewBox="0 0 520 412" role="img" aria-label="Eight parts of a business in a ring. Example audits light different parts for different businesses.">'
          '<g class="bd-k">%s</g>%s%s%s<text class="bd-c1" x="%d" y="%d" text-anchor="middle">Example audit</text>'
          '<text class="bd-c2" x="%d" y="%d" text-anchor="middle">5 of 8</text></svg>' % (ring, spokes, nodes, labels, CX, CY - 8, CX, CY + 20))
-BD = ('<section class="bd"><div class="w bd-h"><div class="bd-t"><span class="lb">After the audit</span>'
+BD = ('<section class="pb" data-sp><div class="pb-s"><div class="w pb-g"><div class="pb-t"><span class="lb">After the audit</span>'
       '<p class="st-t">Then we build whatever fixes it. <span>Made for your business, not pulled from a template. No two audits turn up the same list, '
-      'so no two builds are the same.</span></p><a class="btn g" href="/everything">See everything we build</a></div>'
-      '<div class="bd-r"><div class="bd-x">%s<div class="bd-tabs"><span>Example audits</span><button type="button" class="on">Fence company</button>'
-      '<button type="button">Plumber</button><button type="button">Roofer</button></div></div></div></div><div class="w bd-g">%s</div>'
-      '<div class="w bd-e"><p>The one thing we don&rsquo;t do is run ads.</p></div></section>'
-      % (WHEEL, ''.join('<a href="%s"><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg><h3>%s.</h3><p>%s</p></a>' % (h, IC[k], n, t) for n, k, t, h, _ in PARTS)))
+      'so no two builds are the same.</span></p><a class="btn g" href="/everything">See everything we build</a><p class="pb-n">The one thing we don&rsquo;t do is run ads.</p></div>'
+      '<ol>%s</ol></div></div></section>'
+      % ''.join('<li class="%s" style="--i:%d"><a href="%s"><i>0%d</i><b>%s</b><span>%s</span></a></li>' % ('z' if k == 7 else '', k, h, k + 1, n, t) for k, (n, _, t, h, _) in enumerate(PARTS)))
 
 # ---------- how it works: the call, the findings, the build, it runs ----------
 STEPS = [('The call.', 'Fifteen minutes, part by part: how work comes in, gets quoted, gets done and gets paid.'),
@@ -405,7 +403,7 @@ HERO = ('<section class="hm"><div class="w hm-t"><a class="hm-p" href="/free-aud
         '<div class="hm-g"><div class="hm-l"><p>Seven parts of the business</p>%s</div>'
         '<div class="hm-m"><div class="hm-h"><div><h2>Where the jobs went</h2><p>100 leads in the last 30 days. 34 became paid jobs.</p></div><span>[Audit complete]</span></div>%s</div>'
         '<div class="hm-r"><p>Fix first</p>%s</div></div>'
-        '<div class="hm-f"><div><b>$6,400</b>lost a month</div><div><b>$14,600</b>waiting to be paid</div><div><b>11 hours</b>by hand a week</div></div></div></div></section>'
+        '</div></div></section>'
         % (CAL, ''.join('<div class="%s" style="--k:%d"><span>%s</span><b class="%s">%s</b></div>' % ('on' if on else '', k, a, 'f' if b == 'Fine' else '', b) for k, (a, b, on) in enumerate(_HM_SIDE)),
            _hm_chart(), ''.join('<div style="--k:%d"><span>%s</span><b>%s</b><em>%s</em><u>%s</u></div>' % (k, a, c, b, d) for k, (a, b, c, d) in enumerate(_HM_FIND))))
 
@@ -415,9 +413,8 @@ RAN = [('8:00 AM', 'Four customers reminded', 'Tomorrow&rsquo;s visits, by text'
        ('5:00 PM', 'Review asked for', 'Gate repair, finished yesterday'),
        ('7:42 PM', 'Missed call texted back', 'Nine seconds after it rang out')]
 TICK = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.25"/><path d="m4.9 8.2 2.1 2.1 4.1-4.4"/></svg>'
-RUN = ('<div class="fd rn"><div class="fd-h"><span class="dot"></span><b>What ran today</b><span>Ridgeline Fence</span><span class="tag">Example business, sample data</span></div>%s'
-       '<div class="rn-f"><span>Five things done. None of them by hand.</span><em>1 needs you</em></div></div>'
-       % ''.join('<div class="rn-r"><time>%s</time>%s<b>%s</b><span>%s</span></div>' % (t, TICK, a_, b_) for t, a_, b_ in RAN))
+RUN = ('<div class="tml" data-in><p class="tml-k">[What ran today]<em>Example business, sample data</em></p><div class="tml-l">%s</div><p class="tml-f">Five things done. None of them by hand.</p></div>'
+       % ''.join('<div class="tml-r" style="--i:%d"><time>%s</time><i></i><b>%s</b><span>%s</span></div>' % (k, t, a_, b_) for k, (t, a_, b_) in enumerate(RAN)))
 FQ = ('<section class="fq"><div class="w fq-i"><blockquote>&ldquo;I build and watch every client&rsquo;s system myself, and I only take on a few businesses at a time. '
       'If it isn&rsquo;t a fit, I&rsquo;ll say so.&rdquo;</blockquote><p><b>Sam Ward</b>Founder, Cinder Revenue</p></div></section>')
 FT = ('<footer class="fo"><div class="w fo-g"><div class="fo-b"><a href="/" class="nav-b"><b>%s Cinder Revenue</b></a><p>We audit service businesses, then build what fixes them.</p></div>'
@@ -462,7 +459,7 @@ new IntersectionObserver(function(e){if(e[0].isIntersecting){bd.classList.remove
 })();
 
 (function(){
-var ck=document.querySelector('.ck'),top=document.querySelector('.top'),darks=document.querySelectorAll('.au,.hw,.bd,.cl,.fo');if(!ck)return;
+var ck=document.querySelector('.ck'),top=document.querySelector('.top'),darks=document.querySelectorAll('.au,.hw,.bd,.pb,.cl,.fo');if(!ck)return;
 var q=location.search,force=/[?&]motion=on/.test(q),snap=/[?&]snap=1/.test(q),band=ck.querySelector('.ck-dark'),cur=-1,dk=false;
 if(/[?&]motion=off/.test(q)){onscroll=nav;nav();return}
 ck.classList.add('on');
@@ -576,7 +573,7 @@ CSS = r'''
 .hm-w{border-radius:18px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.1),0 40px 80px -40px rgba(30,36,70,.28);overflow:hidden;animation:hmup .9s cubic-bezier(.2,.7,.2,1) both}
 @keyframes hmup{from{opacity:0;transform:translateY(34px)}}@keyframes hmin{from{opacity:0;transform:translateY(8px)}}@keyframes hmwipe{from{clip-path:inset(-14px 100% -14px -14px)}to{clip-path:inset(-14px -14px -14px -14px)}}@keyframes hmfade{from{opacity:0}}
 .hm-b{display:flex;align-items:center;gap:8px;height:46px;padding:0 18px;border-bottom:1px solid var(--ln);background:#fafafa;font-size:13.5px}
-.hm-b i{width:10px;height:10px;border-radius:50%;background:#d9dbe0}.hm-b i:nth-child(3){margin-right:10px}.hm-b b{font-weight:600;white-space:nowrap}.hm-b span{color:var(--g2)}
+.hm-b i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.hm-b i:nth-child(2){background:#febc2e}.hm-b i:nth-child(3){background:#28c840}.hm-b i:nth-child(3){margin-right:10px}.hm-b b{font-weight:600;white-space:nowrap}.hm-b span{color:var(--g2)}
 .hm-b em{margin-left:auto;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:var(--g2)}
 .hm-g{display:grid;grid-template-columns:clamp(230px,18vw,280px) minmax(0,1fr) clamp(270px,22vw,340px)}
 .hm-l{padding:22px 12px;border-right:1px solid var(--ln);background:#fafafa}.hm-l p,.hm-r>p{margin:0 10px 12px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--g2)}
@@ -606,6 +603,33 @@ CSS = r'''
 @media(max-width:1180px){.hm-g{grid-template-columns:minmax(0,1fr) 290px}.hm-l{display:none}}
 @media(max-width:860px){.hm-t{padding:56px 0 36px}.hm h1{font-size:40px}.hm-g{grid-template-columns:minmax(0,1fr)}.hm-r{border-left:0;border-top:1px solid var(--ln)}.hm-b span,.hm-h span{display:none}.hm-c{height:220px}.hm-c .tk{font-size:8.5px;white-space:normal;width:4.6em}.hm-c .tk b{font-size:13px}
 .hm-c .tg{font-size:8px;letter-spacing:0}.hm-f{font-size:11.5px}.hm-f div{padding:14px 12px}.hm-f b{font-size:18px}.hm .cta{flex-wrap:wrap}}
+/* ---- dark sections on the homepage, redrawn in hairlines with no colour ---- */
+.hw .hw-t .lb,.pb .pb-t .lb{background:rgba(255,255,255,.09);color:#c9cbd0}
+.tml{--d:clamp(0,calc((var(--p,1) - .25)*1.6),1);width:min(520px,100%);margin:0 auto;color:#fff}
+.tml-k{display:flex;justify-content:space-between;gap:12px;margin:0 0 26px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:#8f9197}.tml-k em{font-style:normal;text-transform:none;letter-spacing:0}
+.tml-l{position:relative;list-style:none;margin:0;padding:0}
+.tml-l::before{content:"";position:absolute;left:92px;top:8px;bottom:8px;border-left:1px solid #fff;transform-origin:top;transform:scaleY(var(--d))}
+.tml-l::after{content:"";position:absolute;left:92px;top:8px;bottom:8px;border-left:1px dashed rgba(255,255,255,.22)}
+.tml-r{--q:clamp(0,calc(var(--d)*5.6 - var(--i) - .2),1);position:relative;display:grid;grid-template-columns:72px minmax(0,1fr);column-gap:44px;row-gap:5px;padding:0 0 30px;opacity:calc(.25 + var(--q)*.75)}
+.tml-r:last-child{padding-bottom:0}
+.tml time{grid-row:1/3;padding-top:4px;font:500 11.5px/1 "Geist Mono",monospace;color:#8f9197;white-space:nowrap}
+.tml-r i{position:absolute;left:89px;top:5px;width:7px;height:7px;background:#fff;transform:scale(var(--q))}
+.tml b{font-size:clamp(16px,1.15vw,19px);font-weight:500;letter-spacing:-.014em}.tml-r span{grid-column:2;font-size:14px;color:#8f9197}
+.tml-f{margin:34px 0 0;padding-top:18px;border-top:1px solid var(--dl);font-size:14px;color:#a3a5aa}
+.pb{background:var(--dk);color:#fff}
+.pb-g{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(32px,5vw,96px);align-items:center;border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(72px,6vw,120px) var(--pad);box-sizing:border-box}
+.pb .st-t{color:#fff;margin-top:18px}.pb .st-t span{color:#8f9197}.pb .btn{margin-top:clamp(22px,2vw,34px)}.pb-n{margin:clamp(28px,3vw,48px) 0 0;font-size:14.5px;color:#8f9197}
+.pb ol{list-style:none;margin:0;padding:0;border-top:1px solid var(--dl)}
+.pb li{--x:calc(var(--p,1)*8.3 - var(--i));--lit:clamp(.26,calc(var(--x)*3),1);--act:clamp(0,calc(min(var(--x),1.12 - var(--x))*6),1);border-bottom:1px solid var(--dl)}
+.pb li.z{--act:clamp(0,calc(var(--x)*6),1)}
+.pb li a{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:baseline;padding:clamp(11px,1.5vh,17px) 0;color:#fff;opacity:var(--lit)}
+.pb li i{font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:#8f9197}
+.pb li b{font:400 clamp(24px,2.5vw,44px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.02em}
+.pb li span{grid-column:2;overflow:hidden;max-height:calc(var(--act)*3.2em);opacity:var(--act);font-size:clamp(14.5px,1.02vw,18px);line-height:1.45;color:#a3a5aa}
+.pb li span::before{content:"";display:block;height:8px}
+.pb.sp-live{height:440vh}.pb.sp-live .pb-s{position:sticky;top:0;height:100vh;display:flex;align-items:center}.pb.sp-live .pb-g{height:100%;padding-top:84px;padding-bottom:40px}
+.pb:not(.sp-live) li{--lit:1;--act:1}
+@media(max-width:860px){.pb-g{grid-template-columns:minmax(0,1fr);padding:56px var(--pad)}.pb li b{font-size:26px}.tml-r{grid-template-columns:62px minmax(0,1fr);column-gap:36px}.tml-l::before,.tml-l::after{left:78px}.tml-r i{left:75px}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
