@@ -1,0 +1,180 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Homepage mockup (light) | Cinder Revenue</title><style>
+@font-face{font-family:"Inter";src:url(/assets/fonts/InterVariable.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Geist Mono";src:url(/assets/fonts/GeistMono-Variable.ttf) format("truetype");font-weight:100 900;font-display:swap}
+:root{--ink:#17181a;--t2:#5c5e63;--t3:#8a8d93;--line:rgba(23,24,26,.09);--bg:#fff;--panel:#f5f6f8;--blue:#266df0;--red:#e5484d;--amber:#f0a000;--tint:#eaf0ff}
+*{box-sizing:border-box}html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Inter,system-ui,sans-serif;font-feature-settings:"cv11","ss03","calt"}
+a{color:inherit;text-decoration:none}
+.nav{height:60px;display:flex;align-items:center;justify-content:space-between;max-width:1240px;margin:0 auto;padding:0 28px}
+.nav b{font-weight:600;font-size:15px;letter-spacing:-.01em;display:flex;gap:9px;align-items:center}.nav b i{width:16px;height:16px;border-radius:50%;box-shadow:inset 0 0 0 2.5px var(--ink);clip-path:polygon(0 0,100% 0,100% 38%,55% 50%,100% 62%,100% 100%,0 100%)}
+.nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-size:14px;color:var(--t2)}
+.btn{display:inline-flex;align-items:center;height:34px;padding:0 13px;border-radius:9px;background:var(--ink);color:#fff;font-weight:560;font-size:13.5px;letter-spacing:-.005em}
+.btn.q{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px rgba(11,11,13,.14)}
+.hero{position:relative;z-index:1;text-align:center;padding:76px 24px 0}
+.pill{display:inline-flex;align-items:center;gap:8px;height:28px;padding:0 12px 0 10px;border-radius:999px;background:var(--tint);color:#1f4fbf;font:500 12.5px/1 Inter,sans-serif}
+.pill i{width:6px;height:6px;border-radius:50%;background:var(--blue)}
+h1{margin:22px auto 0;font-weight:570;font-size:48px;line-height:1.08;letter-spacing:-.036em;white-space:nowrap}
+.sub{margin:16px auto 0;font-size:16px;line-height:1.5;color:var(--t2);max-width:29em;text-wrap:balance}
+.cta{margin-top:24px;display:flex;gap:8px;justify-content:center}
+.stage{position:relative;margin:44px 0 0;background:linear-gradient(rgba(255,255,255,0),#eef1fe 44%,#d5dcfa 100%)}
+.ground{position:relative;height:640px;max-width:1240px;margin:0 auto;overflow:hidden}
+.ground::after{content:"";display:none;position:absolute;inset:0;background:linear-gradient(rgba(11,11,13,.035) 1px,transparent 1px) 0 0/100% 44px,linear-gradient(90deg,rgba(11,11,13,.035) 1px,transparent 1px) 0 0/44px 100%;-webkit-mask-image:radial-gradient(70% 80% at 50% 100%,#000,transparent);mask-image:radial-gradient(70% 80% at 50% 100%,#000,transparent)}
+.card{position:absolute;z-index:1;background:#fff;border-radius:12px;box-shadow:0 0 0 1px rgba(11,11,13,.07),0 2px 4px rgba(11,11,13,.04),0 28px 60px -28px rgba(30,50,120,.3)}
+.rep{left:50%;top:6px;width:900px;margin-left:-450px;height:680px}
+.rep-h{display:flex;align-items:center;gap:10px;height:46px;padding:0 18px;border-bottom:1px solid var(--line);font-size:13px;color:var(--t2)}
+.rep-h b{color:var(--ink);font-weight:600}.rep-h .tag{margin-left:auto;font:500 11.5px/1 "Geist Mono",monospace;color:var(--t3)}
+.rep-h .dot{width:9px;height:9px;border-radius:3px;background:var(--blue)}
+.rep-b{padding:22px 26px}
+.rep-t{display:flex;align-items:flex-end;justify-content:space-between}
+.rep-t h2{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em}.rep-t p{margin:3px 0 0;font-size:13px;color:var(--t3)}
+.tot{text-align:right}.tot span{display:block;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}.tot b{display:block;margin-top:6px;font-size:28px;font-weight:600;letter-spacing:-.03em;color:var(--red);font-variant-numeric:tabular-nums}
+.bars{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;height:190px;margin-top:22px;align-items:end}
+.bar{position:relative;height:100%;border-radius:8px;background:repeating-linear-gradient(135deg,#fde3e3 0 6px,#fef1f1 6px 12px);overflow:hidden}
+.bar u{position:absolute;left:0;right:0;bottom:0;background:var(--blue);border-radius:8px 8px 0 0}
+.bar em{position:absolute;left:10px;top:9px;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:#c23b3f}
+.lab{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:10px}.lab div{font-size:12.5px;color:var(--t2)}.lab b{display:block;font-size:17px;font-weight:600;color:var(--ink);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+table{width:100%;margin-top:20px;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font:500 11px/1 "Geist Mono",monospace;color:var(--t3);padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+td{padding:11px 0;border-bottom:1px solid var(--line);color:var(--t2)}td:first-child{color:var(--ink);font-weight:520}td i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:10px}
+td.n{font-variant-numeric:tabular-nums;color:var(--red);font-weight:560}
+.fix{display:inline-flex;height:22px;align-items:center;padding:0 9px;border-radius:999px;background:#e7f6ec;color:#1c7a43;font-size:12px;font-weight:520}
+.f1{left:22px;top:214px;width:226px;padding:14px 16px}.f2{right:22px;top:372px;width:232px;padding:14px 16px}
+.fk{font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}.ft{margin-top:9px;font-size:14px;font-weight:560;letter-spacing:-.01em}.fs{margin-top:3px;font-size:12.5px;color:var(--t2)}
+.fr{margin-top:11px;padding-top:10px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:12.5px;color:var(--t2)}.fr b{display:inline-flex;height:20px;align-items:center;padding:0 8px;border-radius:999px;background:#fdeaea;color:#c23b3f;font-weight:560;font-size:12px}.f2 .fr b{background:#fff4d6;color:#a86a00}
+.f3{left:86px;bottom:64px;width:210px;padding:16px 18px;background:#0b0b0d;color:#fff;box-shadow:0 28px 60px -24px rgba(11,11,13,.6)}
+.f3 .fk{color:#8f8d89}.f3 b{display:block;margin-top:10px;font-size:30px;font-weight:600;letter-spacing:-.03em}.f3 p{margin:4px 0 0;font-size:12.5px;color:#b7b5b0}
+.note{position:absolute;left:190px;bottom:14px;display:none;z-index:2;font:500 11px/1 "Geist Mono",monospace;color:#9a7f82}
+
+/* ---- shared page frame ---- */
+:root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
+body{background:var(--g)}
+.w{width:min(1390px,calc(100vw - 200px));margin:0 auto}
+.mk{width:20px;height:20px;color:var(--ink)}
+.top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--ln)}
+.nav{max-width:none;width:min(1390px,calc(100vw - 200px));padding:0 4px;height:clamp(60px,3.6vw,68px)}
+.nav b{font-size:clamp(15px,.95vw,18px);gap:8px}.nav ul{font-size:clamp(14px,.84vw,16px);gap:clamp(26px,1.7vw,32px);color:var(--ink)}
+.btn{height:clamp(34px,2.1vw,40px);font-size:clamp(13.5px,.84vw,16px);border-radius:clamp(9px,.55vw,11px);padding:0 clamp(13px,.74vw,14px)}
+.heroband{background:#fff}
+h1{font-size:clamp(40px,3.334vw,60px)}.sub{font-size:clamp(16px,1.05vw,19px)}
+.hero{padding-top:clamp(76px,5.6vw,104px)}
+@media(min-width:1700px){.ground{zoom:1.16}}
+.lb{display:inline-flex;align-items:center;height:clamp(21px,1.22vw,23px);padding:0 7px;border-radius:6px;background:#e9eeff;color:#2a4ea8;font-size:clamp(12.5px,.76vw,14.5px);font-weight:500}
+.cd{background:#fff;border-radius:12px;box-shadow:0 0 0 1px rgba(23,24,26,.06),0 1px 2px rgba(23,24,26,.04),0 14px 34px -22px rgba(30,40,80,.28)}
+.fk{font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
+
+/* ---- tools grid ---- */
+.tl{border-top:1px solid var(--ln);border-bottom:1px solid var(--ln)}
+.tl-g{border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.tl-c{margin:0;padding:0 var(--pad);height:clamp(40px,2.75vw,52px);display:flex;align-items:center;font-size:clamp(13px,.8vw,15px);color:var(--g2);border-bottom:1px solid var(--ln)}
+.tl ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr)}
+.tl li{height:clamp(74px,5.05vw,96px);display:flex;align-items:center;justify-content:center;gap:clamp(8px,.58vw,11px);font-weight:600;font-size:clamp(15px,1.03vw,19.5px);letter-spacing:-.015em;color:var(--ink);border-right:1px solid var(--ln);border-bottom:1px solid var(--ln)}
+.tl li:nth-child(5n){border-right:0}.tl li:nth-child(n+6){border-bottom:0}
+.tl li svg{width:clamp(18px,1.2vw,23px);height:clamp(18px,1.2vw,23px);flex:none}.tl li svg *{fill:currentColor}
+
+/* ---- two-tone statement ---- */
+.st-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(112px,8.4vw,160px) var(--pad) clamp(60px,4.3vw,82px)}
+.st-t{margin:clamp(20px,1.5vw,28px) 0 0;max-width:21.6em;font-size:clamp(29px,2.08vw,39.5px);line-height:1.115;letter-spacing:-.028em;font-weight:500;color:var(--ink);text-wrap:pretty}
+.st-t span{color:var(--g2)}
+
+/* ---- the leaks: fixed list + blocks ---- */
+.lk{border-top:1px solid var(--ln)}
+.lk-g{display:grid;grid-template-columns:24.9% minmax(0,1fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.lk-n{border-right:1px solid var(--ln)}
+.lk-n ul{position:sticky;top:clamp(150px,11vw,210px);list-style:none;margin:clamp(84px,5.9vw,112px) 0 clamp(84px,5.9vw,112px);padding:0}
+.lk-n li{position:relative;padding:0 var(--pad);height:clamp(31px,2vw,38px);display:flex;align-items:center;font-size:clamp(15px,.95vw,18px);font-weight:500;letter-spacing:-.012em;color:var(--g3)}
+.lk-n li.on{color:var(--ink)}.lk-n li.on::before{content:"";position:absolute;left:-1px;top:3px;bottom:3px;width:2px;background:var(--blue)}
+.lk-s{padding:clamp(84px,5.9vw,112px) var(--pad) clamp(70px,4.9vw,94px)}
+.bs{margin:0;max-width:19em;font-size:clamp(19px,1.265vw,24px);line-height:1.16;letter-spacing:-.02em;font-weight:500;color:var(--ink);text-wrap:balance}
+.bs span{color:var(--g2)}
+.lk-p{background:var(--pn);border-top:1px solid var(--ln);border-bottom:1px solid var(--ln);padding:clamp(52px,3.9vw,74px) 0;display:flex;justify-content:center}
+.lk-pi{position:relative;width:812px}
+@media(min-width:1700px){.lk-pi,.lg,.sm{zoom:1.1}}
+@media(max-width:1300px){.lk-pi{zoom:.86}}
+
+.ch{width:640px;padding:18px 22px 16px}
+.ch-h{display:flex;justify-content:space-between;align-items:flex-start}
+.ch-h b{display:block;font-size:15px;font-weight:600;letter-spacing:-.015em}.ch-h span{display:block;margin-top:2px;font-size:12.5px;color:var(--t3)}
+.ch-h em{font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:var(--t3);padding-top:4px}
+.ch-k{display:flex;gap:16px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--t2)}
+.ch-k span{display:flex;align-items:center;gap:7px}.ch-k i{width:8px;height:8px;border-radius:50%}.ch-k .a{background:var(--blue)}.ch-k .m{background:var(--red)}
+.ch-k .x{width:14px;height:10px;border-radius:3px;background:repeating-linear-gradient(135deg,#e4e6eb 0 2px,#f4f5f7 2px 5px)}
+.ch-p{display:grid;grid-template-columns:40px 1fr;margin-top:14px}
+.ch-d{display:grid;grid-template-rows:repeat(7,1fr);font-size:12px;color:var(--t3)}.ch-d span{display:flex;align-items:center}
+.ch-a{position:relative;height:266px;border-radius:9px;background:repeating-linear-gradient(135deg,#eceef2 0 2px,#f7f8fa 2px 6px);box-shadow:inset 0 0 0 1px rgba(23,24,26,.05)}
+.ch-o{position:absolute;left:12.5%;width:56.25%;top:0;height:71.43%;background:#fff;border-radius:9px 9px 8px 8px;box-shadow:0 0 0 1px rgba(23,24,26,.08)}
+.ch-o span{position:absolute;left:9px;top:-19px;font-size:11.5px;color:var(--t3);display:none}
+.ch-a s{position:absolute;top:0;bottom:0;width:1px;background:rgba(23,24,26,.045)}
+.ch-a i{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%}
+.ch-a i.a{background:var(--blue)}.ch-a i.m{background:var(--red)}
+.ch-a i.hot{box-shadow:0 0 0 4px rgba(229,72,77,.18),0 0 0 9px rgba(229,72,77,.08)}
+.ch-t{position:absolute;transform:translate(-50%,13px);height:22px;padding:0 8px;display:flex;align-items:center;border-radius:6px;background:var(--ink);color:#fff;font-size:11.5px;font-weight:520;white-space:nowrap}
+.ch-t::after{content:"";position:absolute;left:50%;top:-3px;width:7px;height:7px;margin-left:-3.5px;background:var(--ink);transform:rotate(45deg);border-radius:1px}
+.ch-x{grid-column:2;position:relative;height:22px;font-size:11.5px;color:var(--t3)}.ch-x span{position:absolute;top:8px;transform:translateX(-50%);white-space:nowrap}.ch-x span:first-child{transform:none}
+
+.ta{position:absolute;right:0;top:92px;width:226px;padding:15px 16px 6px;box-shadow:0 0 0 1px rgba(23,24,26,.07),0 2px 4px rgba(23,24,26,.04),0 26px 50px -22px rgba(30,40,90,.38)}
+.ta-t{margin-top:9px;font-size:16px;font-weight:600;letter-spacing:-.018em}
+.ta-b{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-top:12px}.ta-b i{height:18px;border-radius:3px}.ta-b .a{background:var(--blue)}.ta-b .m{background:var(--red)}
+.ta dl{margin:12px 0 0}.ta dl div{display:flex;justify-content:space-between;align-items:center;height:34px;border-top:1px solid var(--line);font-size:12.5px}
+.ta dt{color:var(--t2)}.ta dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+
+.lk-f{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:clamp(16px,1.3vw,24px);padding:clamp(20px,1.5vw,28px) var(--pad);border-bottom:1px solid var(--ln)}
+.lk-f b{font-size:clamp(26px,1.9vw,36px);font-weight:560;letter-spacing:-.035em;line-height:1}
+.lk-f p{margin:0;max-width:27em;font-size:clamp(14.5px,.93vw,17.5px);line-height:1.3;color:var(--g2)}
+.lk-f span{font:500 clamp(11px,.66vw,12.5px)/1.3 "Geist Mono",monospace;color:var(--t3);text-align:right}
+
+.lk-2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.lk-2>div{padding:clamp(42px,2.95vw,56px) clamp(24px,1.6vw,30px) clamp(60px,4.4vw,84px)}
+.lk-2>div+div{border-left:1px solid var(--ln)}
+.lk-2 h3{margin:0;font-size:clamp(15.5px,.95vw,18px);font-weight:500;letter-spacing:-.012em}
+.lk-2 p{margin:4px 0 0;max-width:23em;font-size:clamp(15px,.9vw,17px);line-height:1.3;color:#8a8c92}
+.lg,.sm{margin:clamp(32px,2.6vw,50px) auto 0;width:392px;max-width:100%}
+.lg-h{display:flex;justify-content:space-between;align-items:center;height:42px;padding:0 15px;border-bottom:1px solid var(--line);font-size:13px}.lg-h b{font-weight:600}.lg-h span{color:var(--t3);font-size:12.5px}
+.lg-r{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:11px;padding:0 15px;height:52px;border-bottom:1px solid var(--line)}.lg-r:last-child{border-bottom:0}
+.lg-r u{width:28px;height:28px;border-radius:8px;background:#fdeceb;color:#d13c41;display:grid;place-items:center;text-decoration:none}.lg-r u svg{width:15px;height:15px}
+.lg-r b{display:block;font-size:13.5px;font-weight:540;letter-spacing:-.008em}.lg-r span{display:block;font-size:12px;color:var(--t3)}
+.lg-r em{font-style:normal;display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:520;white-space:nowrap}
+.lg-r em.r{background:#fdeaea;color:#c23b3f}.lg-r em.y{background:#fff4d6;color:#a86a00}
+.sm{padding:4px 16px}
+.sm-r{display:flex;justify-content:space-between;align-items:center;height:46px;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--t2)}
+.sm-r i{font-style:normal;display:inline-block;width:18px;color:var(--t3)}.sm-r span{padding-left:0}.sm-r:first-child span{padding-left:18px}
+.sm-r b{font-weight:560;color:var(--ink);font-variant-numeric:tabular-nums}
+.sm-r.t{border-bottom:0;height:54px;color:var(--ink);font-weight:560}.sm-r.t span{padding-left:18px}.sm-r.t b{font-size:19px;letter-spacing:-.02em;color:var(--red);font-weight:600}
+
+/* ---- narrower screens ---- */
+html,body{overflow-x:clip}
+@media(max-width:1300px){.lk-f{grid-template-columns:auto minmax(0,1fr)}.lk-f span{grid-column:2;text-align:left}.lg,.sm{zoom:.9}}
+@media(max-width:1180px){.w,.nav{width:calc(100vw - 64px)}.nav ul{display:none}}
+@media(max-width:860px){
+.w,.nav{width:calc(100vw - 32px)}:root{--pad:20px}
+.tl ul{grid-template-columns:1fr 1fr}.tl li{height:60px;font-size:14px;border-right:1px solid var(--ln)!important;border-bottom:1px solid var(--ln)!important}
+.tl li:nth-child(2n){border-right:0!important}.tl li:nth-last-child(-n+2){border-bottom:0!important}
+.st-i{padding:72px var(--pad) 48px}.st-t{font-size:26px;line-height:1.14}
+.lk-g{grid-template-columns:minmax(0,1fr)}.lk-n{border-right:0;border-bottom:1px solid var(--ln);position:sticky;top:60px;z-index:5;background:rgba(250,250,250,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.lk-n ul{position:static;margin:0;display:flex;gap:22px;overflow-x:auto;padding:0 var(--pad);scrollbar-width:none}.lk-n li{padding:0;height:46px;white-space:nowrap;flex:none}
+.lk-n li.on::before{left:0;right:0;top:auto;bottom:-1px;width:auto;height:2px}
+.lk-s{padding:52px var(--pad) 44px}.bs{font-size:20px}
+.lk-p{padding:20px 16px}.lk-pi{width:100%;zoom:1}.ch{width:100%;padding:16px 14px 12px}.ch-h{display:block}.ch-h em{display:block;padding-top:8px}
+.ch-p{grid-template-columns:32px 1fr}.ch-a{height:210px}.ch-a i{width:6px;height:6px;margin:-3px 0 0 -3px}.ch-k{gap:12px}
+.ta{position:static;width:100%;margin-top:12px}.ch-t{transform:translate(-82%,13px)}.ch-t::after{left:82%}
+.lk-f{grid-template-columns:auto 1fr;padding:22px var(--pad)}.lk-f span{grid-column:1/-1;text-align:left}
+.lk-2{grid-template-columns:minmax(0,1fr)}.lk-2>div{padding:36px var(--pad) 44px}.lk-2>div+div{border-left:0;border-top:1px solid var(--ln)}.lg,.sm{zoom:1;margin-top:24px}
+.lg-r{gap:9px;padding:0 12px}.lg-r em{font-size:11.5px;padding:0 7px}
+}
+</style></head><body><header class="top"><div class="nav"><b><svg class="mk" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="215.26 155.35 681.30 681.30"><path d="M298.10,607.86 C285.10,573.04 278.00,535.35 278.00,496.00 C278.00,319.27 421.27,176.00 598.00,176.00 C663.18,176.00 723.81,195.49 774.38,228.95 L774.36,228.98 L745.33,279.26 C736.00,284.06 726.77,288.89 717.65,293.74 C689.71,281.06 658.68,274.00 626.00,274.00 C503.39,274.00 404.00,373.39 404.00,496.00 C404.00,498.40 404.04,500.79 404.11,503.17 C362.90,538.59 327.51,573.72 298.10,607.86 Z M228.36,785.51 C257.66,652.57 490.20,426.12 864.18,252.00 L883.46,274.98 C598.63,516.59 384.45,713.28 247.64,808.49 Z M818.29,607.02 L848.08,624.22 L764.25,769.43 L764.20,769.51 C715.76,799.01 658.86,816.00 598.00,816.00 C517.94,816.00 444.74,786.60 388.62,738.00 C417.82,715.23 448.38,690.40 480.41,663.59 C519.38,697.48 570.30,718.00 626.00,718.00 C708.16,718.00 779.90,673.36 818.29,607.02 Z" fill="currentColor"/></svg> Cinder Revenue</b><ul><li>What we fix</li><li>The free audit</li><li>The app</li><li>Trades</li><li>Our story</li></ul><a class="btn" href="#">Book your free audit</a></div></header><div class="heroband"><section class="hero"><span class="pill"><i></i>The free audit takes fifteen minutes</span>
+<h1>More jobs from the leads you already get.</h1>
+<p class="sub">Most lost jobs are lost after the lead comes in. We find where yours go, put a number on each leak, and build what stops it.</p>
+<div class="cta"><a class="btn" href="#">Book your free audit</a><a class="btn q" href="#">See what we check</a></div></section>
+<div class="stage"><div class="ground">
+<div class="card rep"><div class="rep-h"><span class="dot"></span><b>Audit report</b><span>Ridgeline Fence</span><span class="tag">Example business, sample data</span></div>
+<div class="rep-b"><div class="rep-t"><div><h2>Where the jobs went</h2><p>100 leads in the last 30 days. 34 became paid jobs.</p></div><div class="tot"><span>Leaking every month</span><b>$6,400</b></div></div>
+<div class="bars"><div class="bar"><u style="height:100%"></u></div><div class="bar"><em>29 lost</em><u style="height:71%"></u></div><div class="bar"><em>13 lost</em><u style="height:58%"></u></div><div class="bar"><em>19 lost</em><u style="height:39%"></u></div><div class="bar"><em>5 lost</em><u style="height:34%"></u></div></div>
+<div class="lab"><div><b>100</b>Leads in</div><div><b>71</b>Got an answer</div><div><b>58</b>Booked</div><div><b>39</b>Quote signed</div><div><b>34</b>Paid</div></div>
+<table><tr><th>Leak</th><th>Lost a month</th><th>What stops it</th></tr>
+<tr><td><i></i>Calls and forms after hours</td><td class="n">$2,400</td><td><span class="fix">A reply in seconds</span></td></tr>
+<tr><td><i></i>Quotes with no follow-up</td><td class="n">$3,100</td><td><span class="fix">Check-ins on day two and five</span></td></tr>
+<tr><td><i></i>Finished jobs never asked for a review</td><td class="n">$900</td><td><span class="fix">A request the day after</span></td></tr></table></div></div>
+<div class="card f1"><div class="fk">Saturday, 7:42 PM</div><div class="ft">Missed call, new number</div><div class="fs">No voicemail left. No reply sent.</div><div class="fr"><span>Called a competitor</span><b>Lost</b></div></div>
+<div class="card f2"><div class="fk">Quote #1042</div><div class="ft">Sent nine days ago</div><div class="fs">Opened twice. Nobody followed up.</div><div class="fr"><span>120 ft cedar fence</span><b>Going cold</b></div></div>
+<span class="note">Illustration. Your audit uses your own numbers.</span>
+</div></div>
+</div><section class="tl" aria-label="Works alongside the tools you already use"><div class="w tl-g"><p class="tl-c">Works alongside the tools you already use</p><ul><li><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M18.316 5.684H24v12.632h-5.684V5.684zM5.684 24h12.632v-5.684H5.684V24zM18.316 5.684V0H1.895A1.894 1.894 0 0 0 0 1.895v16.421h5.684V5.684h12.632zm-7.207 6.25v-.065c.272-.144.5-.349.687-.617s.279-.595.279-.982c0-.379-.099-.72-.3-1.025a2.05 2.05 0 0 0-.832-.714 2.703 2.703 0 0 0-1.197-.257c-.6 0-1.094.156-1.481.467-.386.311-.65.671-.793 1.078l1.085.452c.086-.249.224-.461.413-.633.189-.172.445-.257.767-.257.33 0 .602.088.816.264a.86.86 0 0 1 .322.703c0 .33-.12.589-.36.778-.24.19-.535.284-.886.284h-.567v1.085h.633c.407 0 .748.109 1.02.327.272.218.407.499.407.843 0 .336-.129.614-.387.832s-.565.327-.924.327c-.351 0-.651-.103-.897-.311-.248-.208-.422-.502-.521-.881l-1.096.452c.178.616.505 1.082.977 1.401.472.319.984.478 1.538.477a2.84 2.84 0 0 0 1.293-.291c.382-.193.684-.458.902-.794.218-.336.327-.72.327-1.149 0-.429-.115-.797-.344-1.105a2.067 2.067 0 0 0-.881-.689zm2.093-1.931l.602.913L15 10.045v5.744h1.187V8.446h-.827l-2.158 1.557zM22.105 0h-3.289v5.184H24V1.895A1.894 1.894 0 0 0 22.105 0zm-3.289 23.5l4.684-4.684h-4.684V23.5zM0 22.105C0 23.152.848 24 1.895 24h3.289v-5.184H0v3.289z"/></svg><span>Google Calendar</span></li><li><span>Jobber</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg><span>Gmail</span></li><li><span>Housecall Pro</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#E4405F" d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg><span>Instagram</span></li><li><span>QuickBooks</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#0866FF" d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg><span>Facebook Lead Ads</span></li><li><span>Angi</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg><span>Google Business Profile</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#009FD9" d="M6.18 6.38h11.69v2.68H6.17zm7.27 3.8v3.14c0 3.23-.02 3.74-.14 4.36a7.95 7.95 0 0 1-1.3 2.87c-.03 0-.78-1.35-.9-1.62-.17-.4-.3-.8-.4-1.25l-.09-.41-.02-5.78.16-.2a3.3 3.3 0 0 1 2.44-1.1zM12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0Z"/></svg><span>Thumbtack</span></li></ul></div></section><section class="st"><div class="w st-i"><span class="lb">The problem</span><p class="st-t">The jobs you lose, you never hear about. <span>The caller who got voicemail doesn&rsquo;t ring back. The quote that went quiet doesn&rsquo;t remind you. They hire someone else, and your month looks normal.</span></p></div></section><section class="lk"><div class="w lk-g"><aside class="lk-n"><ul><li class="on">After-hours calls</li><li>Slow replies</li><li>Quotes that go quiet</li><li>Late invoices</li><li>No reviews</li></ul></aside><div class="lk-m"><article class="lk-b"><div class="lk-s"><p class="bs">The call you never knew about. <span>Saturday, 7:42 PM: a homeowner gets your voicemail and calls the next company on the list.</span></p></div><div class="lk-p"><div class="lk-pi"><div class="cd ch"><div class="ch-h"><div><b>Calls by day and hour</b><span>Ridgeline Fence, last 30 days</span></div><em>Example business, sample data</em></div><div class="ch-k"><span><i class="a"></i>Answered</span><span><i class="m"></i>Missed</span><span><i class="x"></i>After hours</span></div><div class="ch-p"><div class="ch-d"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div><div class="ch-a"><div class="ch-o"><span>Office hours</span></div><s style="left:18.75%"></s><s style="left:37.50%"></s><s style="left:56.25%"></s><s style="left:75.00%"></s><s style="left:93.75%"></s><i class="a" style="left:23.44%;top:50.00%"></i><i class="a" style="left:67.19%;top:50.00%"></i><i class="a" style="left:29.69%;top:50.00%"></i><i class="a" style="left:67.19%;top:64.29%"></i><i class="a" style="left:48.44%;top:50.00%"></i><i class="a" style="left:23.44%;top:64.29%"></i><i class="m" style="left:32.81%;top:21.43%"></i><i class="a" style="left:29.69%;top:21.43%"></i><i class="a" style="left:54.69%;top:64.29%"></i><i class="a" style="left:32.81%;top:50.00%"></i><i class="a" style="left:32.81%;top:64.29%"></i><i class="a" style="left:45.31%;top:64.29%"></i><i class="a" style="left:51.56%;top:7.14%"></i><i class="a" style="left:57.81%;top:64.29%"></i><i class="a" style="left:20.31%;top:35.71%"></i><i class="a" style="left:14.06%;top:21.43%"></i><i class="a" style="left:48.44%;top:7.14%"></i><i class="a" style="left:57.81%;top:50.00%"></i><i class="m" style="left:29.69%;top:7.14%"></i><i class="a" style="left:57.81%;top:35.71%"></i><i class="a" style="left:26.56%;top:64.29%"></i><i class="a" style="left:20.31%;top:21.43%"></i><i class="a" style="left:17.19%;top:7.14%"></i><i class="a" style="left:39.06%;top:7.14%"></i><i class="m" style="left:35.94%;top:7.14%"></i><i class="m" style="left:26.56%;top:7.14%"></i><i class="a" style="left:48.44%;top:64.29%"></i><i class="a" style="left:20.31%;top:50.00%"></i><i class="a" style="left:60.94%;top:7.14%"></i><i class="a" style="left:51.56%;top:64.29%"></i><i class="a" style="left:54.69%;top:50.00%"></i><i class="a" style="left:54.69%;top:35.71%"></i><i class="a" style="left:48.44%;top:21.43%"></i><i class="a" style="left:14.06%;top:64.29%"></i><i class="a" style="left:45.31%;top:21.43%"></i><i class="a" style="left:17.19%;top:35.71%"></i><i class="a" style="left:67.19%;top:35.71%"></i><i class="a" style="left:29.69%;top:64.29%"></i><i class="a" style="left:60.94%;top:21.43%"></i><i class="a" style="left:57.81%;top:7.14%"></i><i class="a" style="left:26.56%;top:35.71%"></i><i class="a" style="left:20.31%;top:64.29%"></i><i class="a" style="left:54.69%;top:21.43%"></i><i class="a" style="left:14.06%;top:7.14%"></i><i class="a" style="left:32.81%;top:35.71%"></i><i class="a" style="left:64.06%;top:64.29%"></i><i class="a" style="left:60.94%;top:50.00%"></i><i class="a" style="left:29.69%;top:35.71%"></i><i class="a" style="left:67.19%;top:7.14%"></i><i class="a" style="left:39.06%;top:21.43%"></i><i class="a" style="left:67.19%;top:21.43%"></i><i class="a" style="left:39.06%;top:35.71%"></i><i class="a" style="left:64.06%;top:7.14%"></i><i class="a" style="left:39.06%;top:50.00%"></i><i class="m" style="left:64.06%;top:50.00%"></i><i class="a" style="left:57.81%;top:21.43%"></i><i class="a" style="left:51.56%;top:35.71%"></i><i class="a" style="left:60.94%;top:64.29%"></i><i class="a" style="left:45.31%;top:50.00%"></i><i class="a" style="left:60.94%;top:35.71%"></i><i class="a" style="left:42.19%;top:50.00%"></i><i class="a" style="left:23.44%;top:7.14%"></i><i class="m" style="left:78.12%;top:7.14%"></i><i class="a" style="left:6.25%;top:21.43%"></i><i class="m" style="left:81.25%;top:21.43%"></i><i class="a" style="left:71.88%;top:35.71%"></i><i class="m" style="left:87.50%;top:50.00%"></i><i class="a" style="left:75.00%;top:64.29%"></i><i class="m" style="left:84.38%;top:64.29%"></i><i class="m" style="left:21.88%;top:78.57%"></i><i class="a" style="left:31.25%;top:78.57%"></i><i class="m hot" style="left:85.62%;top:78.57%"></i><i class="m" style="left:25.00%;top:92.86%"></i><i class="m" style="left:62.50%;top:92.86%"></i><b class="ch-t" style="left:85.62%;top:78.57%">Sat 7:42 PM</b></div><div class="ch-x"><span style="left:0.00%">6 AM</span><span style="left:18.75%">9</span><span style="left:37.50%">12 PM</span><span style="left:56.25%">3</span><span style="left:75.00%">6</span><span style="left:93.75%">9 PM</span></div></div></div><div class="cd ta"><div class="fk">After hours, last 30 days</div><div class="ta-t">12 calls. 8 missed.</div><div class="ta-b"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="m"></i><i class="m"></i><i class="m"></i><i class="m"></i><i class="m"></i><i class="m"></i><i class="m"></i><i class="m"></i></div><dl><div><dt>Called back within the hour</dt><dd>0</dd></div><div><dt>From new numbers</dt><dd>3</dd></div><div><dt>Share of all missed calls</dt><dd>62%</dd></div></dl></div></div></div><div class="lk-f"><b>78%</b><p>of people have taken their business elsewhere after a company didn&rsquo;t pick up.</p><span>CallRail survey of 1,000 consumers, 2025</span></div><div class="lk-2"><div><h3>How you&rsquo;d know.</h3><p>Open your call log and count the calls after five and on weekends. Then count how many got a call back within the hour.</p><div class="cd lg"><div class="lg-h"><b>Missed calls</b><span>After hours</span></div><div class="lg-r"><u><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 2.2 3.6 2.6c-.6.2-1 .8-.9 1.4.5 4.7 4.6 8.8 9.3 9.3.6.1 1.2-.3 1.4-.9l.4-1.6-2.7-1.5-1.2 1.2c-1.4-.7-2.7-2-3.4-3.4l1.2-1.2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="m10.2 2.6 3.2 3.2m0-3.2-3.2 3.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></u><div><b>New number</b><span>Sat 7:42 PM</span></div><em class="r">No call back</em></div><div class="lg-r"><u><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 2.2 3.6 2.6c-.6.2-1 .8-.9 1.4.5 4.7 4.6 8.8 9.3 9.3.6.1 1.2-.3 1.4-.9l.4-1.6-2.7-1.5-1.2 1.2c-1.4-.7-2.7-2-3.4-3.4l1.2-1.2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="m10.2 2.6 3.2 3.2m0-3.2-3.2 3.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></u><div><b>New number</b><span>Sun 10:03 AM</span></div><em class="r">No call back</em></div><div class="lg-r"><u><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 2.2 3.6 2.6c-.6.2-1 .8-.9 1.4.5 4.7 4.6 8.8 9.3 9.3.6.1 1.2-.3 1.4-.9l.4-1.6-2.7-1.5-1.2 1.2c-1.4-.7-2.7-2-3.4-3.4l1.2-1.2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="m10.2 2.6 3.2 3.2m0-3.2-3.2 3.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></u><div><b>Existing customer</b><span>Mon 6:31 PM</span></div><em class="y">Called back Tue 9:10 AM</em></div><div class="lg-r"><u><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.2 2.2 3.6 2.6c-.6.2-1 .8-.9 1.4.5 4.7 4.6 8.8 9.3 9.3.6.1 1.2-.3 1.4-.9l.4-1.6-2.7-1.5-1.2 1.2c-1.4-.7-2.7-2-3.4-3.4l1.2-1.2z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="m10.2 2.6 3.2 3.2m0-3.2-3.2 3.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></u><div><b>New number</b><span>Thu 8:04 PM</span></div><em class="r">No call back</em></div></div></div><div><h3>What it costs.</h3><p>New callers who got no answer, times how often you win the job, times what a job is worth. The audit runs it on your numbers.</p><div class="cd sm"><div class="sm-r"><span>New callers who got no answer</span><b>3</b></div><div class="sm-r"><span><i>&times;</i>Leads that become jobs</span><b>1 in 3</b></div><div class="sm-r"><span><i>&times;</i>Average job</span><b>$2,400</b></div><div class="sm-r t"><span>Lost a month</span><b>$2,400</b></div></div></div></div></article></div></div></section></body></html>

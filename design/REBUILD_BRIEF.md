@@ -120,3 +120,12 @@ Not carried over until they are true: customer logos, a customer story.
 
 - `design/mock/hero-light.html` is the hero, built from scratch for light and checked next to the reference hero frame. It is a mockup: copy it into `site/` to view it (it loads fonts from `/assets/fonts/`). Not on the preview.
 - The hero picture is an audit report for an example business: a five-step drop-off chart, the monthly leak total, and a table of the three leaks with what stops each. Two small cards sit over its edges (a missed call, a quote going cold).
+
+## 10. Second piece built (27 Nov, hero approved by Sam)
+
+- `design/mock/home-light.html` is the hero plus the next three pieces: the tools grid, the one-line problem statement, and the first leak block (after-hours calls). Built by `design/mock/mk_home.py`, which also writes an untracked copy to `site/_home-light.html` for viewing.
+- Page frame taken from the reference: `#fafafa` ground below the hero, `#e6e6e6` hairlines, guide lines down both container edges, `#f1f2f5` picture panels, white cards.
+- Sizes are set to match the reference at a 1900-wide window and scale down with the window (1440 is the floor for desktop). Checked at 1896, 1440, 1200 and 390.
+- The leak block is the pattern for the other four: a two-tone statement, one large picture in a pale panel, a one-line sourced statistic, then "How you'd know" and "What it costs" side by side, each with a small picture.
+- Sample numbers agree with the hero's audit report: three unanswered new callers, one in three leads becomes a job, $2,400 average job, $2,400 a month.
+- Still open: the hero has no phone layout yet; nav items are placeholders; nothing is wired into `site/index.html`.
