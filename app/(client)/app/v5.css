@@ -471,3 +471,45 @@ html .shell.v5 .profit-jobs .bars li i.warn { background: var(--warn); }
   .v5-acts:has(> :nth-child(3)) { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -16px; padding-right: 16px; }
   .v5-acts:has(> :nth-child(3)) > :is(.ink, .b5.pri) { order: -1; }
 }
+html .shell.v5 :is(.next.act, .jrow small.jr-next.act, .jrow .jr-next.act) { color: var(--t1); font-weight: 500; }
+/* Rows inside a card are rows, not little cards: buttons brought a 9px corner that curved every hairline. */
+.v5-cal-row, .q5-row, .ib-row { border-radius: 0; }
+
+/* ---------- Jobs board, Attio pass ---------- */
+/* Columns are soft grey lanes with no outline; cards are white with the ring-and-drop shadow; the board is not
+   boxed inside another panel. The tools row sits on the ground above it. */
+@media (min-width: 900px) { .shell.v5 .jobs-dash { padding: 8px 32px 32px; } }
+.shell.v5 .jobs-panel { background: transparent; border: 0; box-shadow: none; }
+.shell.v5 .jobs-tools { padding: 0 0 12px; border: 0; background: transparent; }
+.shell.v5 .jobs-panel .board { background: transparent; gap: 12px; padding: 0; }
+.shell.v5 .board .col-b { background: var(--bg2); border: 0; border-radius: 12px; }
+.shell.v5 .board .col-b h2 { background: var(--bg2); border-radius: 12px 12px 0 0; border: 0; }
+.shell.v5 .col-b > header, .shell.v5 .col-b .col-h { background: transparent; border: 0; }
+.shell.v5 .col-b .cards { padding: 4px 8px 8px; gap: 8px; }
+.shell.v5 .jcard { border: 0; border-radius: 10px; box-shadow: 0 0 0 1px rgba(23, 24, 26, .06), 0 1px 2px rgba(23, 24, 26, .05); transition: box-shadow var(--d5) var(--e5); }
+.shell.v5 .jcard:hover { box-shadow: 0 0 0 1px rgba(23, 24, 26, .09), 0 6px 16px -6px rgba(30, 40, 80, .22); }
+.shell.v5 .jcard .f { border-top-color: var(--line); }
+
+/* Settings > Connections: working is green, needs setup amber (it was the accent, so green for a green business),
+   broken red, off grey. */
+html .shell.v5 .cx.on .cx-t .cdot { background: var(--good); }
+html .shell.v5 .cx.todo .cx-t .cdot { background: var(--warn); }
+html .shell.v5 .cx.bad .cx-t .cdot { background: var(--bad); }
+
+/* ---------- Quiet number strips and older tables, Attio pass ---------- */
+/* The quiet KPI strip (Plans, and older screens) becomes the same cards as Money and Numbers. */
+.shell.v5 .kq { gap: 12px; border: 0; background: transparent; margin: 0 0 16px; }
+.shell.v5 .kq-i { flex: 1 1 180px; padding: 14px 18px 16px; background: var(--panel); border: 0; border-radius: var(--r3); box-shadow: var(--sh-card); gap: 4px; }
+.shell.v5 .kq-l { font: 500 12.5px/1.4 var(--f5); color: var(--t3); }
+.shell.v5 .kq-v { font: 600 26px/1.15 var(--f5); letter-spacing: -.03em; }
+.shell.v5 .kq-s { font: 400 12.5px/1.4 var(--f5); color: var(--t2); }
+.shell.v5 button.kq-i:hover { background: var(--panel); box-shadow: 0 0 0 1px rgba(23, 24, 26, .1), var(--sh-card); }
+.shell.v5 .kq-i.on { box-shadow: 0 0 0 1.5px var(--t1), var(--sh-card); }
+@media (max-width: 720px) { .shell.v5 .kq-i { flex-basis: calc(50% - 6px); border: 0; } }
+/* Tables in a card start and end 18px in from its edge (some started flush against it). Names drop their
+   underline: the whole row is the link. */
+.shell.v5 .tbl :is(td, th):first-child { padding-left: 18px; }
+.shell.v5 .tbl :is(td, th):last-child { padding-right: 18px; }
+.shell.v5 .plans-tbl :is(.name b, .t2 b) { box-shadow: none; }
+/* Older "flat" panels lost their head padding when the card styling arrived. */
+.shell.v5 .panel.flat > .panel-h { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }

@@ -110,7 +110,7 @@ export function Inspector({ id, d, biz, project, api, toast, reload, go, onClose
         : <span>{r.card?.pastCustomer ? "Past customer" : sourceLabel(r.source)}</span>}
       {r.price ? <b className="amt">{dollars(r.price)}</b> : null}
     </div>
-    {next && (next.tone === "red" || next.tone === "amber") && <div className="insp-sub" style={{ color: next.tone === "red" ? "var(--bad)" : "var(--ink)" }}><Icon name={next.icon} size={13} /><span>{next.text}</span></div>}
+    {next && (next.tone === "red" || next.tone === "amber") && <div className="insp-sub" style={{ color: next.tone === "red" && next.late ? "var(--bad)" : "var(--ink)" }}><Icon name={next.icon} size={13} /><span>{next.text}</span></div>}
     {noPhone(r.phone) && <AddPhone r={r} />}
     <div className="insp-tabs" role="tablist">
       <button type="button" role="tab" aria-selected={tab === "activity"} className={tab === "activity" ? "on" : ""} onClick={() => setTab("activity")}>Activity{r.texts ? <em>{r.texts.length}</em> : null}</button>

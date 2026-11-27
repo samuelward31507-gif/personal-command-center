@@ -28,10 +28,14 @@ export const daysLabel = (n: number) => n === 0 ? "Today" : n === 1 ? "1 day" : 
 const stale = (c: Card, n: number) => (c.stage === "new" && n >= 2) || (c.stage === "quoted" && n >= 14) || (c.stage === "booked" && n >= 7);
 
 /** The one thing to know about this job right now. */
-export function nextUp(c: Card, today = todayIso()): { text: string; tone: Tone; icon: string } {
+/** How a next step is drawn. The "red" tone decides what lands in Needs you; on screen only lateness is red, the rest
+ *  of what needs the owner is ink (red is kept for late and lost). */
+export const nextCls = (n: { tone: Tone; late?: boolean }) => (n.tone === "red" && !n.late ? "act" : n.tone);
+
+export function nextUp(c: Card, today = todayIso()): { text: string; tone: Tone; icon: string; late?: boolean } {
   if (c.pastCustomer) return { text: "Came back", tone: "amber", icon: "star" };
   if (c.stage === "won") {
-    if (c.invoice && c.invoice.status === "sent" && c.invoice.due_on && c.invoice.due_on < today) return { text: `Invoice ${Math.max(1, Math.round((Date.parse(today + "T12:00:00") - Date.parse(c.invoice.due_on + "T12:00:00")) / 86400000))} days late`, tone: "red", icon: "invoice" };
+    if (c.invoice && c.invoice.status === "sent" && c.invoice.due_on && c.invoice.due_on < today) return { text: `Invoice ${Math.max(1, Math.round((Date.parse(today + "T12:00:00") - Date.parse(c.invoice.due_on + "T12:00:00")) / 86400000))} days late`, tone: "red", icon: "invoice" , late: true };
     if (c.invoice?.status === "paid") return { text: c.reviewSent ? "Paid, review asked" : "Paid, ask for a review", tone: "green", icon: "check" };
     if (c.invoice && c.invoice.status === "sent") return { text: `Invoice #${c.invoice.number} out`, tone: "", icon: "invoice" };
     if (c.install && c.install >= today) return { text: `Install ${dateLabel(c.install)}${c.installDays > 1 ? `, ${c.installDays} days` : ""}`, tone: "blue", icon: "cal" };
@@ -244,7 +248,7 @@ export function JobsScreen({ d, biz, project, api, toast, reload, go, wide, view
               {g.cards.map(c => { const n = nextUp(c, today), m = moveOf(c, today), name = c.name || fmtPhone(c.phone), town = city(c), l = laneOf(c), days = daysIn(c); return <tr key={c.id} data-row={c.id} tabIndex={0} className={(sel === c.id ? "sel" : "") + (m.who === "you" ? " mine" : "")} aria-selected={sel === c.id} onClick={() => open(c.id)} onDoubleClick={() => go.record(c.id)} onKeyDown={e => { if (e.key === "Enter") go.record(c.id); }}>
                 <td className="ck-col" onClick={e => e.stopPropagation()}><input type="checkbox" aria-label={`Select ${name}`} checked={ticked.has(c.id)} onChange={() => tick(c.id)} /></td>
                 <td title={town ? `${name}, ${town}` : name}><span className="name">{m.who === "you" ? <i className="turn" aria-label="Your turn" /> : <i className="turn off" aria-hidden="true" />}<Avatar name={name} size="sm" /><b>{name}</b>{c.crewMember && <span className="ctag" title={`${crewName(d, c.crewMember)} is on this job`}>{crewTag(d, c.crewMember)}</span>}</span></td>
-                <td><span className={"next " + n.tone}>{n.text}</span></td>
+                <td><span className={"next " + nextCls(n)}>{n.text}</span></td>
                 <td className={c.line ? "mut" : "faint"}>{line(c) || (c.notes ? c.notes.slice(0, 48) : "No details yet")}</td>
                 <td className={"num" + (c.value ? "" : " mut")}>{c.value ? usd(c.value) : c.ballpark ? `~${short(c.ballpark.low)}–${short(c.ballpark.high).replace("$", "")}` : "–"}</td>
                 {(() => { const pf = c.stage === "won" ? jobProfit(jobPrice(c), c.costs) : null; return !extra ? null : <td className={"num" + (pf ? "" : " faint")} title={pf ? `${usd(pf.cost)} in costs` : c.stage === "won" ? "Log costs on the job to see profit" : undefined}>{pf ? <><span style={pf.profit < 0 ? { color: "var(--bad)" } : undefined}>{usd(pf.profit)}</span> <small className="mut">{pf.margin}%</small></> : "–"}</td>; })()}
@@ -290,7 +294,7 @@ function PhoneList({ cards, open }: { cards: Card[]; open: (id: string) => void 
   return <div>{groups.map(g => <section key={g.title}>
     <div className="grp"><b>{g.title}</b><span>{g.items.length}{g.sum ? `, ${short(g.sum)}` : ""}</span></div>
     {g.items.map(c => { const n = nextUp(c, today), name = c.name || fmtPhone(c.phone), l = laneOf(c), days = daysIn(c); return <button key={c.id} type="button" className="jrow" onClick={() => open(c.id)}>
-      <span style={{ minWidth: 0 }}><b>{name}</b><small className={"jr-next " + n.tone} title={line(c) || sourceLabel(c.source)}>{n.text}</small></span>
+      <span style={{ minWidth: 0 }}><b>{name}</b><small className={"jr-next " + nextCls(n)} title={line(c) || sourceLabel(c.source)}>{n.text}</small></span>
       <span className="r"><b>{priceOf(c) || "–"}</b><em>{LANE_LABEL[l]}{l !== "done" && l !== "lost" ? `, ${daysLabel(days).toLowerCase()}` : ""}</em></span></button>; })}
   </section>)}</div>;
 }
@@ -309,7 +313,7 @@ function Board({ cards, sel, drag, over, setDrag, setOver, move, open, who }: { 
         <span className="kv-r"><Icon name="dollar" size={12} /><b>{priceOf(c) || "–"}</b></span>
         <span className="kv-r"><Icon name="ruler" size={12} /><span>{line(c) || (c.notes ? c.notes.slice(0, 60) : "No job details yet")}</span></span>
         {(c.crewMember || c.invoice?.status === "paid") && <span className="kv-r"><Icon name={c.invoice?.status === "paid" ? "check" : "user"} size={12} /><span>{c.invoice?.status === "paid" ? "Paid" : `Crew: ${who(c.crewMember!)}`}</span></span>}
-        <span className="f"><span className={"next " + n.tone}><Icon name={n.icon} size={12} />{n.text}</span>{l !== "done" && l !== "lost" && <span className={stale(c, days) ? "stale" : "faint"}>{days}d</span>}</span>
+        <span className="f"><span className={"next " + nextCls(n)}><Icon name={n.icon} size={12} />{n.text}</span>{l !== "done" && l !== "lost" && <span className={stale(c, days) ? "stale" : "faint"}>{days}d</span>}</span>
       </button>; }) : <p className="none">{l === "new" ? "New leads land here." : l === "booked" ? "Estimates on the calendar." : l === "quoted" ? "Quotes being chased." : l === "won" ? "Won, not paid yet." : l === "done" ? "Paid. Mark the invoice paid to land here." : "Lost, with the reason."}</p>}</div>
     </section>; })}</div>;
 }

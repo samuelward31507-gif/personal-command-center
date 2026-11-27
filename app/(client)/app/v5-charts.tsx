@@ -2,7 +2,20 @@
 // Charts for the Nov 24 design (build brief Part 2.5): one accent per chart, everything else grey, monotone curves
 // that never overshoot, horizontal gridlines only, no axis lines, a tooltip that sits beside the data, never on it.
 // Areas are a flat 10% tint of their line (Nov 27): no fading gradients, as on the site's pictures.
-import React, { useId, useMemo, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
+
+/** Draw at the chart's real width (Nov 27): a fixed 724-unit drawing scaled down on a phone made 11px labels 5px.
+ *  Returns a ref for the wrapper and its width in px (the design width until it has been measured). */
+function useWidth(base: number): [React.RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [w, setW] = useState(base);
+  useEffect(() => {
+    const el = ref.current; if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(([e]) => { const v = Math.round(e.contentRect.width); if (v > 0) setW(Math.max(260, v)); });
+    ro.observe(el); return () => ro.disconnect();
+  }, []);
+  return [ref, w];
+}
 
 // The business's own colour (--acc, set from their setup) for the good series; amber for waiting; light grey for the rest.
 export const C = { accent: "var(--acc)", grey: "var(--g4)", light: "var(--warn)", bad: "var(--bad)", grid: "rgba(23,24,26,.06)", base: "rgba(23,24,26,.14)", label: "var(--g2)" };
@@ -45,29 +58,34 @@ export function AreaChart({ series, labels, height = 168, format = (v: number) =
   note?: (i: number) => { text: string; value?: string } | null; summary: string; initial?: number;
 }) {
   const id = useId().replace(/:/g, "");
-  const W = 724, left = 44, right = 8, top = 8, bottom = 26, ph = height - top - bottom;
+  const [box, W] = useWidth(724);
+  // Taller on a wide desk as before (it used to scale with width), never shorter than asked on a phone.
+  const H = Math.round(height * Math.max(1, Math.min(1.4, W / 724))), fs = W < 600 ? 11 : 12;
+  const left = 44, right = 8, top = 8, bottom = 26, ph = H - top - bottom;
   const n = labels.length;
   const max = niceMax(Math.max(1, ...series.flatMap(s => s.values)));
   const x = (i: number) => left + (n < 2 ? 0 : (i / (n - 1)) * (W - left - right));
   const y = (v: number) => top + ph - (v / max) * ph;
   const [hover, setHover] = useState<number | null>(initial ?? null);
+  // The marker can rest on the latest point, but the tooltip only opens while someone is pointing at the chart.
+  const [active, setActive] = useState(false);
   const ticks = [1, 2, 3, 4].map(k => (max * k) / 4);
   const xl = useMemo(() => { const step = Math.max(1, Math.round((n - 1) / 4)); const out: number[] = []; for (let i = 0; i < n; i += step) out.push(i); if (out[out.length - 1] !== n - 1) { if (n - 1 - out[out.length - 1] < step / 2) out.pop(); out.push(n - 1); } return out; }, [n]);
   const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const r = e.currentTarget.getBoundingClientRect(), px = ((e.clientX - r.left) / r.width) * W;
-    setHover(Math.max(0, Math.min(n - 1, Math.round(((px - left) / (W - left - right)) * (n - 1)))));
+    setHover(Math.max(0, Math.min(n - 1, Math.round(((px - left) / (W - left - right)) * (n - 1))))); setActive(true);
   };
   const h = hover;
   const tipLeft = h == null ? 0 : x(h) > W * 0.55 ? x(h) - 262 : x(h) + 14;
   const nt = h != null && note ? note(h) : null;
-  return <div className="v5-chart" style={{ position: "relative" }}>
-    <svg viewBox={`0 0 ${W} ${height}`} width="100%" role="img" aria-label={summary} tabIndex={0} style={{ display: "block", overflow: "visible" }}
-      onPointerMove={onMove} onPointerLeave={() => setHover(initial ?? null)}
-      onKeyDown={e => { if (e.key === "ArrowRight") setHover(i => Math.min(n - 1, (i ?? -1) + 1)); else if (e.key === "ArrowLeft") setHover(i => Math.max(0, (i ?? n) - 1)); }}>
+  return <div className="v5-chart" ref={box} style={{ position: "relative" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={summary} tabIndex={0} style={{ display: "block", overflow: "visible" }}
+      onPointerMove={onMove} onPointerLeave={() => { setHover(initial ?? null); setActive(false); }} onBlur={() => setActive(false)}
+      onKeyDown={e => { if (e.key === "ArrowRight") { setActive(true); setHover(i => Math.min(n - 1, (i ?? -1) + 1)); } else if (e.key === "ArrowLeft") { setActive(true); setHover(i => Math.max(0, (i ?? n) - 1)); } }}>
       <defs>{series.filter(s => s.fill).map(s => <linearGradient key={s.key} id={`g${id}${s.key}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={s.color} stopOpacity=".1" /><stop offset="100%" stopColor={s.color} stopOpacity=".1" /></linearGradient>)}</defs>
-      {ticks.map(t => <g key={t}><line x1={left} x2={W - right} y1={y(t)} y2={y(t)} stroke={C.grid} /><text x={left - 10} y={y(t) + 3.5} textAnchor="end" fontSize="11" fill={C.label} className="tn">{axis(t)}</text></g>)}
+      {ticks.map(t => <g key={t}><line x1={left} x2={W - right} y1={y(t)} y2={y(t)} stroke={C.grid} /><text x={left - 10} y={y(t) + 3.5} textAnchor="end" fontSize={fs} fill={C.label} className="tn">{axis(t)}</text></g>)}
       <line x1={left} x2={W - right} y1={y(0)} y2={y(0)} stroke={C.base} />
-      {xl.map(i => <text key={i} x={x(i)} y={height - 6} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"} fontSize="11" fill={C.label}>{labels[i]}</text>)}
+      {xl.map(i => <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"} fontSize={fs} fill={C.label}>{labels[i]}</text>)}
       {h != null && <line x1={x(h)} x2={x(h)} y1={top} y2={y(0)} stroke="rgba(23,24,26,.22)" />}
       {[...series].reverse().map(s => {
         const pts = s.values.map((v, i) => [x(i), y(v)] as [number, number]);
@@ -79,7 +97,7 @@ export function AreaChart({ series, labels, height = 168, format = (v: number) =
         </g>;
       })}
     </svg>
-    {h != null && <div className="v5-tip" style={{ left: `${(tipLeft / W) * 100}%`, top: 0 }} role="status">
+    {h != null && active && <div className="v5-tip" style={{ left: `${(tipLeft / W) * 100}%`, top: 0 }} role="status">
       <div className="v5-lab v5-tip-h">{labels[h]}</div>
       {series.map(s => <div key={s.key} className="v5-tip-r"><i style={{ background: s.color }} /><span>{s.label}</span><b>{format(s.values[h] ?? 0)}</b></div>)}
       {nt && <div className="v5-tip-r"><i style={{ background: "transparent" }} /><span>{nt.text}</span><b>{nt.value ?? ""}</b></div>}
@@ -117,22 +135,24 @@ export function Sparkline({ values, width = 120, height = 32 }: { values: number
 
 /** Grouped bars: grey for the total, the accent for the outcome; hover shows both and the rate. Beside, never on, the bars. */
 export function GroupedBars({ data, aLabel, bLabel, summary, height = 180 }: { data: { label: string; a: number; b: number; note?: string }[]; aLabel: string; bLabel: string; summary: string; height?: number }) {
-  const W = 640, left = 34, top = 8, bottom = 26, ph = height - top - bottom, n = data.length;
+  const [box, W] = useWidth(640);
+  const H = Math.round(height * Math.max(1, Math.min(1.4, W / 640))), fs = W < 600 ? 11 : 12;
+  const left = 34, top = 8, bottom = 26, ph = H - top - bottom, n = data.length;
   const max = niceMax(Math.max(1, ...data.flatMap(x => [x.a, x.b])));
   const slot = (W - left) / Math.max(1, n), bw = Math.min(22, slot / 3);
   const y = (v: number) => top + ph - (v / max) * ph;
   const [h, setH] = useState<number | null>(null);
   const ticks = [1, 2, 3, 4].map(k => (max * k) / 4).filter(t => Number.isInteger(t) || max > 8);
-  return <div className="v5-chart" style={{ position: "relative" }}>
-    <svg viewBox={`0 0 ${W} ${height}`} width="100%" role="img" aria-label={summary} tabIndex={0} style={{ display: "block", overflow: "visible" }} onPointerLeave={() => setH(null)}
+  return <div className="v5-chart" ref={box} style={{ position: "relative" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={summary} tabIndex={0} style={{ display: "block", overflow: "visible" }} onPointerLeave={() => setH(null)}
       onKeyDown={e => { if (e.key === "ArrowRight") setH(i => Math.min(n - 1, (i ?? -1) + 1)); else if (e.key === "ArrowLeft") setH(i => Math.max(0, (i ?? n) - 1)); }}>
-      {ticks.map(t => <g key={t}><line x1={left} x2={W} y1={y(t)} y2={y(t)} stroke={C.grid} /><text x={left - 10} y={y(t) + 3.5} textAnchor="end" fontSize="11" fill={C.label}>{Math.round(t)}</text></g>)}
+      {ticks.map(t => <g key={t}><line x1={left} x2={W} y1={y(t)} y2={y(t)} stroke={C.grid} /><text x={left - 10} y={y(t) + 3.5} textAnchor="end" fontSize={fs} fill={C.label}>{Math.round(t)}</text></g>)}
       <line x1={left} x2={W} y1={y(0)} y2={y(0)} stroke={C.base} />
       {data.map((x, i) => { const cx = left + slot * i + slot / 2; return <g key={i} onPointerEnter={() => setH(i)}>
         {h === i && <rect x={cx - bw - 10} y={top} width={bw * 2 + 24} height={ph} rx="8" fill="rgba(23,24,26,.035)" />}
         <rect x={cx - bw - 2} y={y(x.a)} width={bw} height={Math.max(0, y(0) - y(x.a))} rx="4" fill={C.grey} />
         <rect x={cx + 2} y={y(x.b)} width={bw} height={Math.max(0, y(0) - y(x.b))} rx="4" fill={C.accent} />
-        <text x={cx} y={height - 6} textAnchor="middle" fontSize="11" fill={C.label}>{x.label}</text>
+        <text x={cx} y={H - 6} textAnchor="middle" fontSize={fs} fill={C.label}>{x.label}</text>
         <rect x={left + slot * i} y={top} width={slot} height={ph} fill="transparent" />
       </g>; })}
     </svg>
