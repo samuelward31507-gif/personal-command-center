@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Builds design/mock/home-light.html: approved hero + tools grid + problem statement + first leak block."""
-import json, random, re, sys
+import json, math, random, re, sys
 
 ROOT = '/home/claude/personal-command-center'  # repo root
 import os
@@ -82,6 +82,73 @@ LK = ('<section class="lk"><div class="w lk-g"><aside class="lk-n"><ul>%s</ul></
       '<div><h3>What it costs.</h3><p>New callers who got no answer, times how often you win the job, times what a job is worth. '
       'The audit runs it on your numbers.</p>%s</div></div></article></div></div></section>'
       % (''.join('<li%s>%s</li>' % (' class="on"' if i == 0 else '', n) for i, n in enumerate(LEAKS)), CHART, TALLY, LOG, SUM))
+
+
+# ---------- the clock: light to dark through the dial ----------
+def tick(i, r0, r1, col):
+    a = math.radians(i * 6)
+    return '<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f" stroke="%s"/>' % (r0 * math.sin(a), -r0 * math.cos(a), r1 * math.sin(a), -r1 * math.cos(a), col)
+
+
+outer = ''.join(tick(i, 86 if i % 5 == 0 else 91, 95, 'rgba(255,255,255,.82)' if i % 5 == 0 else 'rgba(255,255,255,.3)') for i in range(60))
+inner = ''.join(tick(i, 93 if i % 5 == 0 else 96.5, 100,
+                     ('#6d9bff' if i % 5 == 0 else 'rgba(109,155,255,.75)') if i <= 15 else ('rgba(255,255,255,.62)' if i % 5 == 0 else 'rgba(255,255,255,.28)'))
+                for i in range(60))
+FACE = ('<svg class="ck-face" viewBox="-100 -100 200 200" aria-hidden="true"><g class="ck-o">%s</g><g class="ck-i" transform="scale(.42)">%s</g>'
+        '<g class="ck-h"><path class="ck-w" d="M0 0L0 -80A80 80 0 0 1 80 0Z"/><path class="ck-a" d="M0 -80A80 80 0 0 1 80 0"/>'
+        '<line class="ck-n" x1="0" y1="0" x2="0" y2="-80" transform="rotate(90)"/><circle r="1.9" fill="#fff"/></g></svg>' % (outer, inner))
+CK = ('<section class="ck"><div class="ck-pin"><div class="ck-top"><span class="lb">Where to start</span>'
+      '<p class="st-t">Fifteen minutes to find yours. <span>One call. We ask how leads reach you and what happens after, then put a number on each leak.</span></p>'
+      '<a class="btn" href="#">Book your free audit</a></div>'
+      '<div class="ck-dark">%s<div class="ck-count">15:00</div>'
+      '<div class="ck-title"><span>It starts with</span><h2>The free audit</h2></div></div></div></section>' % FACE)
+
+IC = {
+ 'call': '<path d="M7.6 3.6 5.4 4.2c-.8.2-1.3 1-1.2 1.8.7 6.3 6.2 11.7 12.4 12.4.9.1 1.6-.4 1.9-1.2l.6-2.2-3.7-2-1.6 1.6c-1.9-1-3.6-2.7-4.6-4.6l1.6-1.6z"/><path d="m15 4 4.5 4.5m0-4.5L15 8.5"/>',
+ 'time': '<circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.6 1.7M9.5 2.8h5"/>',
+ 'quote': '<path d="M6.5 3.5h8l3.5 3.5v13.5h-11.5z"/><path d="M14.5 3.5V7H18M9.5 11.5h5.5M9.5 15h3.5"/>',
+ 'money': '<rect x="3.5" y="6" width="17" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 9.5v5M17.5 9.5v5"/>',
+ 'star': '<path d="m12 3.8 2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
+}
+PTS = [('call', 'Missed calls.', 'We count the calls nobody answered last month.'),
+       ('time', 'First replies.', 'We time how long a new lead waits to hear back.'),
+       ('quote', 'Open quotes.', 'We count the quotes that never got a follow-up.'),
+       ('money', 'Unpaid work.', 'We total the finished jobs still waiting on money.'),
+       ('star', 'Reviews.', 'We compare jobs finished with reviews asked for.')]
+AU = ('<section class="au"><div class="w au-g">%s</div><div class="w au-e"></div></section>'
+      % ''.join('<div><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg><h3>%s</h3><p>%s</p></div>' % (IC[k], t, p) for k, t, p in PTS))
+
+JS = r"""
+(function(){
+var ck=document.querySelector('.ck'),top=document.querySelector('.top'),au=document.querySelector('.au');if(!ck)return;
+var q=location.search,force=/[?&]motion=on/.test(q),snap=/[?&]snap=1/.test(q),band=ck.querySelector('.ck-dark'),cur=-1,dk=false;
+if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!force){onscroll=nav;nav();return}
+ck.classList.add('on');
+var pin=ck.querySelector('.ck-pin'),txt=ck.querySelector('.ck-top'),inner=ck.querySelector('.ck-i'),hands=ck.querySelector('.ck-h'),
+wedge=ck.querySelector('.ck-w'),arc=ck.querySelector('.ck-a'),needle=ck.querySelector('.ck-n'),count=ck.querySelector('.ck-count'),title=ck.querySelector('.ck-title');
+var vw,vh,R0,R1;
+function cl(x){return x<0?0:x>1?1:x}
+function ez(x){return x*x*(3-2*x)}
+function measure(){vw=document.documentElement.clientWidth;vh=innerHeight;R0=Math.min(vh*.22,vw*.36,240);R1=Math.hypot(vw/2,vh/2)*1.03;
+inner.setAttribute('transform','scale('+Math.min(.8,.44*vh/R1).toFixed(4)+')');cur=-1}
+function target(){var r=ck.getBoundingClientRect();return cl((vh*.85-r.top)/(vh*.85))+cl(-r.top/(r.height-vh))}
+function nav(){var a=au.getBoundingClientRect(),c=ck.getBoundingClientRect(),o=ck.classList.contains('on'),k=band.getBoundingClientRect(),d=(a.top<34&&a.bottom>34)||(o&&cur>1.8&&c.bottom>34)||(!o&&k.top<34&&k.bottom>34);
+if(d!==dk){dk=d;top.classList.toggle('dk',d)}}
+function draw(v){var a=ez(cl(v)),p=cl(v-1),th=a*Math.PI/2,x=(80*Math.sin(th)).toFixed(2),y=(-80*Math.cos(th)).toFixed(2);
+needle.setAttribute('transform','rotate('+(a*90).toFixed(2)+')');
+if(a>.004){wedge.setAttribute('d','M0 0L0 -80A80 80 0 0 1 '+x+' '+y+'Z');arc.setAttribute('d','M0 -80A80 80 0 0 1 '+x+' '+y)}
+wedge.style.opacity=arc.style.opacity=a>.004?1:0;
+var sec=Math.round(a*900),m=Math.floor(sec/60),s2=sec%60;count.textContent=(m<10?'0':'')+m+':'+(s2<10?'0':'')+s2;
+var g=cl(p/.86),e=Math.pow(g,1.5),r=R0*Math.pow(R1/R0,e),cy=(.66-.16*ez(cl(p/.5)))*vh;
+if(g>=1)r=R1*1.02;
+pin.style.setProperty('--r',r.toFixed(1)+'px');pin.style.setProperty('--cy',cy.toFixed(1)+'px');
+txt.style.transform='translate3d(0,'+(-p*vh*.9).toFixed(1)+'px,0)';txt.style.opacity=(1-cl(p/.3)).toFixed(3);
+var f=(1-cl((p-.04)/.26)).toFixed(3);hands.style.opacity=f;count.style.opacity=f;
+var t=ez(cl((p-.58)/.26));title.style.opacity=t.toFixed(3);title.style.transform='translate3d(0,calc(-50% + '+((1-t)*44).toFixed(1)+'px),0)'}
+function loop(){var t=target();if(cur<0||snap)cur=t;else cur+=(t-cur)*.17;if(Math.abs(t-cur)<.0004)cur=t;draw(cur);nav();requestAnimationFrame(loop)}
+addEventListener('resize',measure);measure();loop();
+})();
+"""
 
 CSS = r'''
 /* ---- shared page frame ---- */
@@ -179,10 +246,44 @@ h1{font-size:clamp(40px,3.334vw,60px)}.sub{font-size:clamp(16px,1.05vw,19px)}
 .sm-r b{font-weight:560;color:var(--ink);font-variant-numeric:tabular-nums}
 .sm-r.t{border-bottom:0;height:54px;color:var(--ink);font-weight:560}.sm-r.t span{padding-left:18px}.sm-r.t b{font-size:19px;letter-spacing:-.02em;color:var(--red);font-weight:600}
 
+/* ---- the clock: the page turns dark through the dial ---- */
+:root{--dk:#101010;--dl:rgba(255,255,255,.1)}
+.top{transition:background .3s,border-color .3s}.top .nav b,.top .nav ul,.top .mk,.top .btn{transition:color .3s,background .3s}
+.top.dk{background:rgba(16,16,16,.9);border-color:var(--dl)}.top.dk .nav b,.top.dk .nav ul,.top.dk .mk{color:#fff}.top.dk .btn{background:#fff;color:var(--ink)}
+.ck{position:relative;border-top:1px solid var(--ln)}
+.ck-top{text-align:center;padding:clamp(88px,7.2vw,136px) 24px clamp(40px,3vw,56px)}
+.ck-top .st-t{margin-left:auto;margin-right:auto;max-width:21em;font-size:clamp(26px,1.9vw,36px);text-wrap:balance}
+.ck-top .btn{margin-top:clamp(22px,1.7vw,32px)}
+.ck-dark{position:relative;background:var(--dk);color:#fff;text-align:center;padding:72px 0 88px}
+.ck-face{display:block;width:300px;height:300px;margin:0 auto;overflow:visible}
+.ck-face line,.ck-face path{vector-effect:non-scaling-stroke;stroke-width:1.1;fill:none}
+.ck-face .ck-w{fill:rgba(77,134,247,.3);stroke:none}.ck-face .ck-a{stroke:#6d9bff;stroke-width:1.8}.ck-face .ck-n{stroke:#fff;stroke-width:1.5;stroke-linecap:round}
+.ck-count{margin-top:-96px;height:96px;font:500 13px/1 "Geist Mono",monospace;letter-spacing:.02em;color:rgba(255,255,255,.72)}
+.ck-title span{display:block;font-size:clamp(15px,.92vw,17.5px);color:#8f9197}
+.ck-title h2{margin:clamp(6px,.5vw,10px) 0 0;font-size:clamp(46px,5.05vw,96px);line-height:1;font-weight:600;letter-spacing:-.045em}
+.ck.on{height:235vh;height:calc(100svh + 135vh)}
+.ck.on .ck-pin{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;--r:200px;--cy:66vh}
+.ck.on .ck-pin::before,.ck.on .ck-dark::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(1390px,calc(100vw - 200px));transform:translateX(-50%);border-left:1px solid var(--ln);border-right:1px solid var(--ln);pointer-events:none}
+.ck.on .ck-dark::before{border-color:var(--dl)}
+.ck.on .ck-top{position:absolute;left:0;right:0;top:0;padding-top:clamp(104px,14.5vh,170px);will-change:transform,opacity}
+.ck.on .ck-dark{position:absolute;inset:0;padding:0;clip-path:circle(var(--r) at 50% var(--cy))}
+.ck.on .ck-face{position:absolute;left:50%;top:var(--cy);width:calc(var(--r)*2);height:calc(var(--r)*2);margin:calc(var(--r)*-1) 0 0 calc(var(--r)*-1)}
+.ck.on .ck-count{position:absolute;left:0;right:0;top:calc(var(--cy) + var(--r)*.5);margin:0;height:auto}
+.ck.on .ck-title{position:absolute;left:0;right:0;top:50%;opacity:0;will-change:transform,opacity}
+/* ---- the dark stretch: what the audit checks ---- */
+.au{background:var(--dk);color:#fff;border-top:1px solid var(--dl)}
+.au-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-left:1px solid var(--dl);border-right:1px solid var(--dl);border-bottom:1px solid var(--dl)}
+.au-g>div{padding:clamp(22px,1.5vw,28px) clamp(20px,1.42vw,27px) clamp(30px,2.2vw,42px);min-height:clamp(180px,11.7vw,222px)}
+.au-g>div+div{border-left:1px solid var(--dl)}
+.au-g svg{width:clamp(20px,1.26vw,24px);height:clamp(20px,1.26vw,24px);fill:none;stroke:#a9abb0;stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round;display:block}
+.au-g h3{margin:clamp(44px,3.5vw,66px) 0 0;font-size:clamp(15px,.92vw,17.5px);font-weight:560;letter-spacing:-.012em}
+.au-g p{margin:6px 0 0;font-size:clamp(14px,.84vw,16px);line-height:1.3;color:#8f9197;max-width:15em}
+.au-e{height:clamp(120px,10vw,190px);border-left:1px solid var(--dl);border-right:1px solid var(--dl)}
+
 /* ---- narrower screens ---- */
 html,body{overflow-x:clip}
 @media(max-width:1300px){.lk-f{grid-template-columns:auto minmax(0,1fr)}.lk-f span{grid-column:2;text-align:left}.lg,.sm{zoom:.9}}
-@media(max-width:1180px){.w,.nav{width:calc(100vw - 64px)}.nav ul{display:none}}
+@media(max-width:1180px){.w,.nav{width:calc(100vw - 64px)}.ck.on .ck-pin::before,.ck.on .ck-dark::before{width:calc(100vw - 64px)}.nav ul{display:none}}
 @media(max-width:860px){
 .w,.nav{width:calc(100vw - 32px)}:root{--pad:20px}
 .tl ul{grid-template-columns:1fr 1fr}.tl li{height:60px;font-size:14px;border-right:1px solid var(--ln)!important;border-bottom:1px solid var(--ln)!important}
@@ -197,6 +298,10 @@ html,body{overflow-x:clip}
 .ta{position:static;width:100%;margin-top:12px}.ch-t{transform:translate(-82%,13px)}.ch-t::after{left:82%}
 .lk-f{grid-template-columns:auto 1fr;padding:22px var(--pad)}.lk-f span{grid-column:1/-1;text-align:left}
 .lk-2{grid-template-columns:minmax(0,1fr)}.lk-2>div{padding:36px var(--pad) 44px}.lk-2>div+div{border-left:0;border-top:1px solid var(--ln)}.lg,.sm{zoom:1;margin-top:24px}
+.ck.on .ck-pin::before,.ck.on .ck-dark::before{width:calc(100vw - 32px)}
+.ck-top .st-t{font-size:24px}.ck.on .ck-top{padding-top:96px}
+.au-g{grid-template-columns:minmax(0,1fr)}.au-g>div{min-height:0;display:grid;grid-template-columns:24px 1fr;column-gap:14px;padding:20px}.au-g>div+div{border-left:0;border-top:1px solid var(--dl)}
+.au-g svg{grid-row:1/3;margin:2px 0 0}.au-g h3{margin:0}.au-g p{max-width:none}
 .lg-r{gap:9px;padding:0 12px}.lg-r em{font-size:11.5px;padding:0 7px}
 }
 '''
@@ -204,8 +309,8 @@ html,body{overflow-x:clip}
 NAV = ('<header class="top"><div class="nav"><b>%s Cinder Revenue</b><ul><li>What we fix</li><li>The free audit</li><li>The app</li><li>Trades</li><li>Our story</li></ul>'
        '<a class="btn" href="#">Book your free audit</a></div></header>' % mark)
 html = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        '<title>Homepage mockup (light) | Cinder Revenue</title><style>%s%s</style></head><body>%s<div class="heroband">%s</div>%s%s%s</body></html>'
-        % (hero_css, CSS, NAV, hero_body, TOOLS, PROB, LK))
+        '<title>Homepage mockup (light) | Cinder Revenue</title><style>%s%s</style></head><body>%s<div class="heroband">%s</div>%s%s%s%s%s<script>%s</script></body></html>'
+        % (hero_css, CSS, NAV, hero_body, TOOLS, PROB, LK, CK, AU, JS))
 for p in (ROOT + '/design/mock/home-light.html', ROOT + '/site/_home-light.html'):
     open(p, 'w').write(html)
 print('ok', len(html))

@@ -129,3 +129,12 @@ Not carried over until they are true: customer logos, a customer story.
 - The leak block is the pattern for the other four: a two-tone statement, one large picture in a pale panel, a one-line sourced statistic, then "How you'd know" and "What it costs" side by side, each with a small picture.
 - Sample numbers agree with the hero's audit report: three unanswered new callers, one in three leads becomes a job, $2,400 average job, $2,400 a month.
 - Still open: the hero has no phone layout yet; nav items are placeholders; nothing is wired into `site/index.html`.
+
+## 11. The clock, rebuilt for the light site (27 Nov)
+
+Sam asked for the clock transition back as Cinder's own touch, simpler and in the new style. It is in `design/mock/home-light.html`, after the leaks.
+
+- Where: the point where the page turns dark for the free audit. The reference cuts to black with a hard edge; Cinder scrolls through a clock instead.
+- What happens: a centred statement ("Fifteen minutes to find yours.") sits over a small black dial drawn in hairlines. As the section scrolls in, the hand sweeps to fifteen minutes. The section then holds for about one and a third screens while the dial grows until it fills the window, the statement scrolls away, and "It starts with / The free audit" comes up inside it. The dial's inner ring of ticks stays as the line motif around the title. Five short points follow (what the audit checks).
+- How: one sticky stage, a `clip-path` circle on the dark layer, an SVG of ticks sized to the same radius, and one eased scroll value. No rings rotating, no frame squaring off, no light flood. The nav turns dark with the page.
+- Runs on phones. With reduced motion it is a plain hard edge to a dark band with the dial drawn at fifteen minutes. `?motion=on` forces the motion, `?snap=1` turns the easing off for screenshots.
