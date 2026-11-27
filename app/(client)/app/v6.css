@@ -60,7 +60,7 @@
 /* The main button stays ink (the shape rule above must not wash it out to white). */
 .v5 .b5.pri, .shell.v5 .btn.ink:not(.ic):not(.link) { background: var(--ink); color: #fff; box-shadow: 0 0 0 1px var(--ink); }
 .v5 .b5.pri:hover, .shell.v5 .btn.ink:not(.ic):not(.link):not(:disabled):hover { background: var(--ink-hover); }
-.shell.v5 .btn.ink:disabled { background: var(--g4); box-shadow: 0 0 0 1px var(--g4); color: #fff; }
+.shell.v5 .btn.ink:not(.ic):not(.link):disabled, .shell.v5 .btn:not(.ic):not(.link):disabled { opacity: 1; background: var(--paper-2); box-shadow: none; color: var(--g-faint); cursor: default; }
 .shell.v5 .btn.ghost { box-shadow: none; background: transparent; }
 .shell.v5 .btn.ghost:hover { background: var(--hover); }
 
