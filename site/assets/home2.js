@@ -69,6 +69,28 @@
     function up() { tk = false; if (innerWidth <= 900) { fig.style.removeProperty('--z'); bs.forEach(function (b) { b.classList.add('on') }); return } var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight))); fig.style.setProperty('--z', (1.75 - .75 * ezz(p / .42)).toFixed(4)); bs.forEach(function (b, i) { b.classList.toggle('on', p > .46 + i * .12) }) }
     addEventListener('scroll', function () { if (!tk) { tk = true; requestAnimationFrame(up) } }, { passive: true }); addEventListener('resize', up); setTimeout(up, 400)
   });
+  // ---- product pieces: the scroll steps through a pinned section and each step switches parts of the piece on
+  [].forEach.call(document.querySelectorAll('.ax'), function (sec) {
+    var N = +sec.dataset.steps || 3, q = function (x) { return [].slice.call(sec.querySelectorAll(x)) }, parts = q('[data-at],[data-lit]'), lis = q('.px-steps li'), ones = q('[data-is]'), vals = q('[data-v]'), ws = q('[data-w]'), auto = sec.classList.contains('bone'), one = sec.classList.contains('one'), cur = -2, tk = false, cyc = 0;
+    function pick(list, k) { return list[Math.max(0, Math.min(list.length - 1, k))] }
+    function set(k) {
+      if (k === cur) return; cur = k; var c = Math.max(0, k);
+      parts.forEach(function (e) { e.classList.toggle('on', +(e.dataset.at || e.dataset.lit) <= k) });
+      lis.forEach(function (li, i) { li.classList.toggle('on', i <= k); li.classList.toggle('cur', i === c) });
+      ones.forEach(function (e) { e.classList.toggle('cur', +e.dataset.is === c) });
+      vals.forEach(function (e) { e.textContent = pick(e.dataset.v.split('|'), k) });
+      ws.forEach(function (e) { e.style.width = pick(e.dataset.w.split(','), k) });
+    }
+    function up() {
+      tk = false; if (auto) return;
+      if (innerWidth <= 900) { if (one && !rm) { if (!cyc) { set(0); cyc = setInterval(function () { var r = sec.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) set((cur + 1) % N) }, 2400) } } else set(N - 1); return }
+      if (cyc) { clearInterval(cyc); cyc = 0 }
+      var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(.999, (-r.top + innerHeight * .12) / Math.max(1, r.height - innerHeight)));
+      set(r.top > innerHeight * .55 ? -1 : Math.floor(p * N));
+    }
+    if (auto) { if (rm || !('IntersectionObserver' in window)) set(N - 1); else new IntersectionObserver(function (e, o) { if (e[0].isIntersecting) { o.disconnect(); var k = 0; set(0); var t = setInterval(function () { k++; set(k); if (k >= N - 1) clearInterval(t) }, 1100) } }, { threshold: .45 }).observe(sec) }
+    else { addEventListener('scroll', function () { if (!tk) { tk = true; requestAnimationFrame(up) } }, { passive: true }); addEventListener('resize', up); up() }
+  });
   // ---- hero: pick a problem, get the fix in one line
   var hq = document.getElementById('hq');
   if (hq) {
