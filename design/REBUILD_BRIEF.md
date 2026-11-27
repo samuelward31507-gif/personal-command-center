@@ -622,3 +622,6 @@ New sample wording: Labor, Materials, Third reminder, Reminders / Per customer /
 
 ### 23k. Reviews, second pass (Nov 27)
 Sam: still laggy, page not at the Invoicing standard. Hero now has the profile window rising from the bottom edge (count + rows arriving). Hand-over no longer changes anything inside the scaled graph (that repainted 150 SVG lines every frame): only transform and opacity on separate layers. Blue landing with words and the month as 34 squares, then dark. Search panel: three names with review-count bars.
+
+### 23l. Reviews, third pass (Nov 27)
+Sam: "Keep improving it". Problem signs now three line drawings (SIGN_PIC reviews); plain question cards replaced by three picture cells (RV3, same questions and answers); timeline titles sans instead of serif.
