@@ -1949,8 +1949,92 @@ CSS_CLEAN = r"""
 @media(max-width:860px){.fq .cq-t{font-size:25px}}
 """
 
+# =====================================================================================
+# Full pass. Sam, after the clean pass: the pages need to be longer, carry more information, have their own designs, and some
+# should have stronger transitions. So: every section a page had is back, the per-page rhythm rows are applied again, and each
+# page gains what the old copy already had but the new pages never showed: the three signs, what we need from you and what we
+# take care of, the points or the before/after if it was missing, its line in the homepage quote setting, and where it leads next.
+# =====================================================================================
+SIGNS_OLD = {'booking': ['Phone tag to find a time', 'Estimates nobody confirmed', 'Empty driveways'],
+             'follow-up': ['Quotes sent and never mentioned again', 'Customers who say they forgot', 'No list of what is still open'],
+             'reviews': ['Great jobs with no review to show for them', 'Asking only when you remember', 'A competitor with more stars and no better work']}
+SHOWN = {'phone-agent', 'reminders', 'estimates', 'job-updates', 'referrals'}   # pages whose diagram already walks through the four points
+YWT = {0: 't-wipe', 2: 't-door'}
+
+
+def signs_sec(items, v):
+    return ('<section class="sg sg%d"><div class="w sg-i"><p class="sg-t">How you know you have it</p><ol>%s</ol></div></section>' % (v, ''.join('<li>%s</li>' % ap(t) for t in items)))
+
+
+def yw_sec(group, v):
+    need, take = pages2.YW[group]
+    col = lambda t, items: '<div><h3>%s</h3><ul>%s</ul></div>' % (t, ''.join('<li>%s</li>' % ap(x) for x in items))
+    return '<section class="yw yw%d %s"><div class="w yw-g">%s%s</div></section>' % (v, YWT.get(v, ''), col('What we need from you', need), col('What we take care of', take))
+
+
+def next_sec(name):
+    sib = ORDER[BY[name]['group']]; i = sib.index(name); others = [sib[(i + k) % len(sib)] for k in range(1, len(sib))][:3]
+    if len(others) < 3:
+        others += [x for x in ('answering', 'booking', 'follow-up', 'reviews') if x != name and x not in others][:3 - len(others)]
+    return ('<section class="nx"><div class="w nx-i"><p class="nx-t">Works with the rest.</p><div class="nx-g"><div class="on"><b>%s</b><span>%s</span></div>%s</div></div></section>'
+            % (BY[name]['name'], ap(BY[name]['short']), ''.join('<a href="/%s"><b>%s</b><span>%s</span></a>' % (o, BY[o]['name'], ap(BY[o]['short'])) for o in others)))
+
+
+def full(name, body):
+    if name not in CLEAN:
+        return body
+    i = CLEAN.index(name); body = restyle(name, body)
+    secs = re.findall(r'<section\b.*?</section>', body, re.S)
+    kind = lambda x: KIND.get(re.match(r'<section class="([a-z0-9]+)', x).group(1), 'other')
+    top = [x for x in secs if kind(x) == 'top']; fa_ = [x for x in secs if kind(x) == 'faq']; mid = [x for x in secs if kind(x) not in ('top', 'faq', 'cl')]
+    kinds = [kind(x) for x in mid]; p = BY[name]; mods = RHYTHM[name][1]
+    sg = signs_sec(X[name][1] if name in X else SIGNS_OLD[name], i % 3)
+    if name in X:   # a page should not say the same sentence twice
+        wa = set(re.findall(r'[a-z]{4,}', X[name][0][0].lower()))
+        same = lambda x: len(wa & set(re.findall(r'[a-z]{4,}', re.sub(r'<[^>]+>', ' ', x).lower()))) >= .5 * len(wa)
+        mid = [x for x in mid if not (kind(x) == 'bl' and same(x))]
+    if name != 'phone-agent':   # its Recents card already shows the three signs
+        mid.insert(([kind(x) for x in mid].index('st') + 1) if 'st' in kinds else 1, sg)
+    extra = []
+    if 'does' in p and 'pg' not in kinds and name not in SHOWN:
+        extra.append(numbered(p['does']).replace('<section class="pg ', '<section class="pg %s ' % ('v-l' if i % 2 else ''), 1))
+    if 'cmp' in p and not any('class="sw"' in x for x in mid):
+        extra.append(H.split('What changes', 'Before and after.' if ap(X[name][3]) in body else ap(X[name][3]), '', swap(p['cmp'])).replace('<section class="sp"', '<section class="sp %s"' % ('v-f' if i % 2 else 's-dkp'), 1))
+    if 'bl' not in kinds and 'line' in p:
+        extra.append(calm(ap(p['line'])))
+    return ''.join(top + mid + extra + [yw_sec(p['group'], (i + 1) % 3)] + fa_ + [next_sec(name), CL])
+
+
+CSS_FULL = r"""
+/* the three signs, three ways */
+.sg{border-top:1px solid var(--ln)}.sg-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(64px,5.4vw,104px) var(--pad)}
+.sg-t{margin:0 0 clamp(20px,1.8vw,32px);font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}
+.sg ol{list-style:none;margin:0;padding:0;counter-reset:g}.sg li{counter-increment:g}
+.sg0 li{display:flex;gap:clamp(18px,2vw,36px);align-items:baseline;padding:clamp(16px,1.5vw,28px) 0;border-top:1px solid var(--ln);font-size:clamp(22px,2vw,38px);line-height:1.12;font-weight:540;letter-spacing:-.03em}
+.sg0 li::before{content:"0" counter(g);font:500 12px/1 "Geist Mono",monospace;color:var(--red);letter-spacing:0}
+.sg1{background:linear-gradient(180deg,#f6f8ff,#e6ebfd)}.sg1 ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.2vw,22px)}
+.sg1 li{padding:clamp(20px,1.8vw,34px);border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.06),0 20px 40px -28px rgba(30,40,110,.4);font-size:clamp(17px,1.25vw,24px);line-height:1.2;font-weight:540;letter-spacing:-.02em}
+.sg1 li::before{content:"";display:block;width:10px;height:10px;margin-bottom:clamp(28px,3vw,56px);border-radius:3px;background:var(--red)}
+.sg2{background:var(--dk);color:#fff;border-top:0}.sg2 .sg-i{border-color:var(--dl)}.sg2 .sg-t{color:#8f9197}.sg2 ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.sg2 li{padding:0 clamp(18px,2vw,36px) 0 0;font:400 clamp(21px,1.7vw,32px)/1.2 Georgia,serif;letter-spacing:-.014em}.sg2 li::before{content:counter(g);display:block;margin-bottom:14px;font:500 12px/1 "Geist Mono",monospace;color:#e5484d;letter-spacing:0}
+/* what we need, what we take care of, three ways */
+.yw{border-top:1px solid var(--ln)}.yw-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.yw-g>div{padding:clamp(64px,5.4vw,104px) var(--pad)}.yw-g>div+div{border-left:1px solid var(--ln)}
+.yw h3{margin:0 0 clamp(20px,1.8vw,32px);font-size:clamp(25px,1.8vw,34px);font-weight:500;letter-spacing:-.028em}
+.yw ul{list-style:none;margin:0;padding:0}.yw li{padding:clamp(13px,1.1vw,20px) 0;border-top:1px solid var(--ln);font-size:clamp(15.5px,1vw,19px);line-height:1.36;letter-spacing:-.01em}
+.yw0{background:var(--dk);color:#fff;border-top:0}.yw0 .yw-g,.yw0 .yw-g>div,.yw0 li{border-color:var(--dl)}.yw0 li{color:#d6d7da}.yw0 .yw-g>div:first-child h3{color:#8f9197}
+.yw1 .yw-g{gap:clamp(12px,1.2vw,22px);padding:clamp(64px,5.4vw,104px) var(--pad)}.yw1 .yw-g>div{padding:clamp(22px,2vw,38px);border:0;border-radius:18px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.06),0 20px 40px -28px rgba(30,40,80,.3)}
+.yw1 .yw-g>div+div{background:var(--ink);color:#fff}.yw1 .yw-g>div+div li{border-color:rgba(255,255,255,.12)}
+.yw2{background:linear-gradient(180deg,#f6f8ff,#e6ebfd)}.yw2 .yw-g>div+div h3{color:var(--blue)}.yw2 li{border-color:rgba(38,109,240,.16)}
+/* two more ways in, both driven by the scroll */
+.t-wipe{clip-path:circle(calc(6vmax + var(--p,1)*150vmax) at 50% 0)}
+.t-door{clip-path:inset(0 calc((1 - var(--p,1))*36%) round calc((1 - var(--p,1))*40px))}
+.cq+.yw,.sp+.yw{border-top:1px solid var(--ln)}
+@media(max-width:860px){.sg1 ol,.sg2 ol,.yw-g{grid-template-columns:minmax(0,1fr)}.sg2 li{padding:0 0 22px}.sg0 li{font-size:22px}.yw-g>div{padding:44px var(--pad)}.yw-g>div+div{border-left:0;border-top:1px solid var(--ln)}.yw0 .yw-g>div+div{border-color:var(--dl)}.yw1 .yw-g{padding:44px var(--pad)}.yw1 .yw-g>div{padding:22px}}
+"""
+
 out = pathlib.Path(ROOT) / 'site'
-CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN
+CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V
@@ -2001,7 +2085,7 @@ PAGES = [
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, clean(slug, body), css=PCSS, index=(slug != '404'))
+        doc = page(title, desc, '/' + slug, full(slug, body), css=PCSS, index=(slug != '404'))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)

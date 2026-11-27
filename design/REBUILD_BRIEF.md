@@ -316,3 +316,13 @@ Sam on the finished site: "seems like they all follow the same pattern", wants e
 Sam, after the rhythm pass: "Not like different designs, but something like on the first page ... just clean with a small amount of info." Read as the founder quote block on the homepage (he has praised it twice). The rhythm rows are no longer applied.
 
 Every build page except answering, websites, everything and integrations is now five things: its top; the problem set like the homepage quote (serif line, one small sentence under it); its one diagram; its one line set the same way; three questions folded shut; then the closing band. `clean()` in `mk_pages.py` does this after assembly, so the fuller sections (crossed-out lists, numbered points, second pictures, included lists) are still in the file and can be put back per page.
+
+### 22g. Full pass (27 Nov)
+
+Sam, after the clean pass: pages need to be longer, with more information, unique designs, and stronger transitions on some. `full()` in `mk_pages.py` replaces `clean()`:
+
+- Every section a page had before the clean pass is back, and the `RHYTHM` row for the page is applied again (order, surfaces, hand-overs).
+- Added from copy that already existed but was never shown on the light pages: the three signs ("How you know you have it", three looks), "What we need from you / What we take care of" (three looks; from `pages2.YW`, shared within a part of the business), the four points or the before/after where a page lacked them, the page's line in the homepage quote setting where it had none, and "Works with the rest" linking to three neighbouring builds.
+- Two more scroll-driven hand-overs: `t-wipe` (circle opening from the top, like the homepage clock) and `t-door` (opens from the middle). They sit on the what-we-need section on two pages in three.
+- A page no longer repeats its problem headline as its closing line.
+- Pages now run roughly 5,000 to 5,800 px tall on desktop, up from about 3,500.

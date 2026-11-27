@@ -882,3 +882,29 @@ section:has(+ .t-sheet)::after{content:"";display:block;height:40px}section:has(
 .fq .cq-s{margin:clamp(24px,2vw,38px) auto 0;max-width:34em;font-size:clamp(14.5px,.92vw,17px);line-height:1.5;color:var(--t2);text-wrap:balance}
 .cq+.sx{border-top:0}.sx+.cq{border-top:1px solid var(--ln)}
 @media(max-width:860px){.fq .cq-t{font-size:25px}}
+
+/* the three signs, three ways */
+.sg{border-top:1px solid var(--ln)}.sg-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(64px,5.4vw,104px) var(--pad)}
+.sg-t{margin:0 0 clamp(20px,1.8vw,32px);font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}
+.sg ol{list-style:none;margin:0;padding:0;counter-reset:g}.sg li{counter-increment:g}
+.sg0 li{display:flex;gap:clamp(18px,2vw,36px);align-items:baseline;padding:clamp(16px,1.5vw,28px) 0;border-top:1px solid var(--ln);font-size:clamp(22px,2vw,38px);line-height:1.12;font-weight:540;letter-spacing:-.03em}
+.sg0 li::before{content:"0" counter(g);font:500 12px/1 "Geist Mono",monospace;color:var(--red);letter-spacing:0}
+.sg1{background:linear-gradient(180deg,#f6f8ff,#e6ebfd)}.sg1 ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.2vw,22px)}
+.sg1 li{padding:clamp(20px,1.8vw,34px);border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.06),0 20px 40px -28px rgba(30,40,110,.4);font-size:clamp(17px,1.25vw,24px);line-height:1.2;font-weight:540;letter-spacing:-.02em}
+.sg1 li::before{content:"";display:block;width:10px;height:10px;margin-bottom:clamp(28px,3vw,56px);border-radius:3px;background:var(--red)}
+.sg2{background:var(--dk);color:#fff;border-top:0}.sg2 .sg-i{border-color:var(--dl)}.sg2 .sg-t{color:#8f9197}.sg2 ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.sg2 li{padding:0 clamp(18px,2vw,36px) 0 0;font:400 clamp(21px,1.7vw,32px)/1.2 Georgia,serif;letter-spacing:-.014em}.sg2 li::before{content:counter(g);display:block;margin-bottom:14px;font:500 12px/1 "Geist Mono",monospace;color:#e5484d;letter-spacing:0}
+/* what we need, what we take care of, three ways */
+.yw{border-top:1px solid var(--ln)}.yw-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.yw-g>div{padding:clamp(64px,5.4vw,104px) var(--pad)}.yw-g>div+div{border-left:1px solid var(--ln)}
+.yw h3{margin:0 0 clamp(20px,1.8vw,32px);font-size:clamp(25px,1.8vw,34px);font-weight:500;letter-spacing:-.028em}
+.yw ul{list-style:none;margin:0;padding:0}.yw li{padding:clamp(13px,1.1vw,20px) 0;border-top:1px solid var(--ln);font-size:clamp(15.5px,1vw,19px);line-height:1.36;letter-spacing:-.01em}
+.yw0{background:var(--dk);color:#fff;border-top:0}.yw0 .yw-g,.yw0 .yw-g>div,.yw0 li{border-color:var(--dl)}.yw0 li{color:#d6d7da}.yw0 .yw-g>div:first-child h3{color:#8f9197}
+.yw1 .yw-g{gap:clamp(12px,1.2vw,22px);padding:clamp(64px,5.4vw,104px) var(--pad)}.yw1 .yw-g>div{padding:clamp(22px,2vw,38px);border:0;border-radius:18px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.06),0 20px 40px -28px rgba(30,40,80,.3)}
+.yw1 .yw-g>div+div{background:var(--ink);color:#fff}.yw1 .yw-g>div+div li{border-color:rgba(255,255,255,.12)}
+.yw2{background:linear-gradient(180deg,#f6f8ff,#e6ebfd)}.yw2 .yw-g>div+div h3{color:var(--blue)}.yw2 li{border-color:rgba(38,109,240,.16)}
+/* two more ways in, both driven by the scroll */
+.t-wipe{clip-path:circle(calc(6vmax + var(--p,1)*150vmax) at 50% 0)}
+.t-door{clip-path:inset(0 calc((1 - var(--p,1))*36%) round calc((1 - var(--p,1))*40px))}
+.cq+.yw,.sp+.yw{border-top:1px solid var(--ln)}
+@media(max-width:860px){.sg1 ol,.sg2 ol,.yw-g{grid-template-columns:minmax(0,1fr)}.sg2 li{padding:0 0 22px}.sg0 li{font-size:22px}.yw-g>div{padding:44px var(--pad)}.yw-g>div+div{border-left:0;border-top:1px solid var(--ln)}.yw0 .yw-g>div+div{border-color:var(--dl)}.yw1 .yw-g{padding:44px var(--pad)}.yw1 .yw-g>div{padding:22px}}
