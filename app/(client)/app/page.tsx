@@ -330,18 +330,18 @@ export default function CinderApp() {
         {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
       </button>
       <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} /><span>Search or jump to</span><kbd>⌘K</kbd></button>
-      {(crew ? [{ g: "Run the day", items: [{ k: "inbox" as Tab, l: "Inbox" }, { k: "jobs" as Tab, l: "Jobs" }, { k: "calendar" as Tab, l: "Calendar" }] }] : [
-        { g: "Run the day", items: [{ k: "today" as Tab, l: "Today" }, { k: "inbox" as Tab, l: "Inbox" }, { k: "calendar" as Tab, l: "Calendar" }] },
-        { g: "Sell", items: [{ k: "jobs" as Tab, l: "Jobs" }, { k: "quotes" as Tab, l: "Quotes" }] },
-        { g: "Get paid", items: [{ k: "invoices" as Tab, l: "Money" }, { k: "plans" as Tab, l: "Plans" }] },
-        { g: "People", items: [{ k: "customers" as Tab, l: "Customers" }] },
-        { g: "Business", items: [{ k: "numbers" as Tab, l: "Numbers" }, ...(d.role !== "office" ? [{ k: "system" as Tab, l: "Settings" }] : [])] },
+      {(crew ? [{ g: "Run the day", items: [{ k: "inbox" as Tab, l: "Inbox", ic: "chat" }, { k: "jobs" as Tab, l: "Jobs", ic: "jobs" }, { k: "calendar" as Tab, l: "Calendar", ic: "cal" }] }] : [
+        { g: "Run the day", items: [{ k: "today" as Tab, l: "Today", ic: "home" }, { k: "inbox" as Tab, l: "Inbox", ic: "chat" }, { k: "calendar" as Tab, l: "Calendar", ic: "cal" }] },
+        { g: "Sell", items: [{ k: "jobs" as Tab, l: "Jobs", ic: "jobs" }, { k: "quotes" as Tab, l: "Quotes", ic: "quote" }] },
+        { g: "Get paid", items: [{ k: "invoices" as Tab, l: "Money", ic: "dollar" }, { k: "plans" as Tab, l: "Plans", ic: "clock" }] },
+        { g: "People", items: [{ k: "customers" as Tab, l: "Customers", ic: "users" }] },
+        { g: "Business", items: [{ k: "numbers" as Tab, l: "Numbers", ic: "bars" }, ...(d.role !== "office" ? [{ k: "system" as Tab, l: "Settings", ic: "gear" }] : [])] },
       ]).map(grp => <div key={grp.g}>
         <div className="rail-lbl">{grp.g}</div>
         <div className="rail-grp">{grp.items.map(s => { const on = active(s.k) || (s.k === "system" && (active("sam") || active("help"))) || isOn(s.k);
           const n = s.k === "system" ? d.unreadFromSam : counts[s.k];
           return <button key={s.k} type="button" className={"ri" + (on ? " on" : "")} aria-current={on ? "page" : undefined} onClick={() => goTab(s.k)}>
-            <span>{s.l}</span>{n ? <em className={s.k === "inbox" || s.k === "invoices" || s.k === "system" ? "hot" : ""}>{n}</em> : null}</button>; })}</div>
+            <Icon name={s.ic} size={16} /><span>{s.l}</span>{n ? <em className={s.k === "inbox" || s.k === "invoices" || s.k === "system" ? "hot" : ""}>{n}</em> : null}</button>; })}</div>
       </div>)}
       <div className="rail-foot">
         {d.setup?.show_powered === "yes" && <a className="powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by Cinder</a>}

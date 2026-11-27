@@ -328,8 +328,8 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
           <button type="button" className="v5-card" style={{ textAlign: "left", cursor: "pointer" }} onClick={() => go.tab("invoices")}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span className="v5-lab">Owed to you</span>{lateSum > 0 && <span className="v5-st bad"><i />{usd(lateSum)} past due</span>}</div>
             <div className="v5-kv" style={{ margin: "10px 0 12px" }}>{usd(owed)}</div>
-            <StackBar label={`${usd(notDue)} not yet due, ${usd(lateSum)} late`} parts={[{ key: "due", value: notDue, color: C.grey }, { key: "late", value: lateSum, color: C.accent }]} />
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, gap: 8, flexWrap: "wrap" }}><span className="v5-leg"><i className="sq" style={{ background: C.grey }} />Not yet due {usd(notDue)}</span><span className="v5-leg"><i className="sq" style={{ background: C.accent }} />Late {usd(lateSum)}</span></div>
+            <StackBar label={`${usd(notDue)} not yet due, ${usd(lateSum)} late`} parts={[{ key: "due", value: notDue, color: C.grey }, { key: "late", value: lateSum, color: C.bad }]} />
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, gap: 8, flexWrap: "wrap" }}><span className="v5-leg"><i className="sq" style={{ background: C.grey }} />Not yet due {usd(notDue)}</span><span className="v5-leg"><i className="sq" style={{ background: C.bad }} />Late {usd(lateSum)}</span></div>
           </button>
           <section className="v5-card" aria-label="First reply">
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span className="v5-lab">First reply</span><span className="v5-dim" style={{ fontSize: 12 }}>median, nights too</span></div>

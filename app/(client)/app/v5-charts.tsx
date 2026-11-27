@@ -5,7 +5,7 @@
 import React, { useId, useMemo, useState } from "react";
 
 // The business's own colour (--acc, set from their setup) for the good series; amber for waiting; light grey for the rest.
-export const C = { accent: "var(--acc)", grey: "var(--g4)", light: "var(--warn)", grid: "rgba(23,24,26,.06)", base: "rgba(23,24,26,.14)", label: "var(--g2)" };
+export const C = { accent: "var(--acc)", grey: "var(--g4)", light: "var(--warn)", bad: "var(--bad)", grid: "rgba(23,24,26,.06)", base: "rgba(23,24,26,.14)", label: "var(--g2)" };
 
 /** A round axis top: 1, 2, 2.5, 5 or 10 times a power of ten, at or above the largest value. */
 export function niceMax(v: number): number {

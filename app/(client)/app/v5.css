@@ -407,3 +407,67 @@ html .shell.v5 .tabs em { background: var(--ink); color: #fff; font-size: 11px; 
 /* Settings > Connections: the log table was 9px wider than a 390px phone (already so on production); it scrolls
    inside its own box now instead of moving the page. */
 @media (max-width: 899px) { .shell.v5 table.log { display: block; max-width: 100%; overflow-x: auto; scrollbar-width: none; } }
+
+/* =====================================================================================================
+   The frame, Attio pass (Nov 27). The app felt like the old app in new colours because the frame around every
+   screen was unchanged. Sidebar: an icon on every place, 32px rows, the open place lifted onto a white card.
+   Workspace mark in the business's colour. Search as a real field. Page heads tighter. Sample-data bar quiet.
+   ===================================================================================================== */
+@media (min-width: 900px) {
+  html .shell.v5 .rail { width: 232px; flex-basis: 232px; padding: 14px 10px 12px; }
+  html .shell.v5 .ws { padding: 6px 8px 14px; }
+  html .shell.v5 .ws .ws-mark { width: 24px; height: 24px; border-radius: 7px; background: var(--ember); font-size: 12px; }
+  html .shell.v5 .ws b { font: 600 13.5px/1.25 var(--f5); letter-spacing: -.01em; }
+  html .shell.v5 .rail-search { height: 32px; margin: 0 0 10px; padding: 0 8px 0 10px; gap: 8px; border: 0; background: var(--panel); box-shadow: 0 0 0 1px var(--line2), var(--sh-btn); color: var(--t3); font: 400 13px/1 var(--f5); }
+  html .shell.v5 .rail-search svg { display: block; color: var(--t3); flex: none; }
+  html .shell.v5 .rail-search span { flex: 1; text-align: left; }
+  html .shell.v5 .rail-lbl { margin: 14px 10px 4px; font: 500 11.5px/1.4 var(--f5); color: var(--t3); }
+  html .shell.v5 .ri { height: 32px; gap: 10px; padding: 0 10px; border-radius: 8px; font: 500 13.5px/1 var(--f5); color: var(--t2); }
+  html .shell.v5 .ri svg { display: block; width: 16px; height: 16px; flex: none; color: var(--t3); }
+  html .shell.v5 .ri span { flex: 1; text-align: left; }
+  html .shell.v5 .ri em { font: 500 12px/1 var(--f5); font-style: normal; font-variant-numeric: tabular-nums; color: var(--t3); background: none; }
+  html .shell.v5 .ri em.hot { color: var(--t1); }
+  html .shell.v5 .ri:hover { background: var(--hover); color: var(--t1); }
+  html .shell.v5 .ri.on { background: var(--panel); color: var(--t1); box-shadow: 0 0 0 1px rgba(23, 24, 26, .07), 0 1px 2px rgba(23, 24, 26, .06); }
+  html .shell.v5 .ri.on svg { color: var(--t1); }
+  .v5-top { padding: 22px 32px 18px; }
+  .v5-body { padding: 22px 32px 40px; }
+  .shell.v5 .tb { padding: 22px 32px 18px; }
+}
+.v5 h1.v5-h1, .shell.v5 .tb .h1 { font-weight: 600; letter-spacing: -.03em; }
+@media (min-width: 900px) { .v5 h1.v5-h1, .shell.v5 .tb .h1 { font-size: 26px; } }
+.v5-sub { font-size: 13.5px; margin-top: 5px; }
+.v5-eyebrow { margin-bottom: 8px; }
+/* Card labels: plain grey Inter, as in Attio's app. Mono stays for dates, times and table heads. */
+.v5-lab { font: 500 12.5px/1.4 var(--f5); letter-spacing: -.005em; color: var(--t3); }
+.v5-eyebrow .v5-lab, .v5-tip-h, .q5-gh .v5-lab { font: 500 11px/1.4 var(--m5); letter-spacing: 0; }
+/* The sample-data bar: one quiet line, not a dark strip; and its label isn't repeated in every page head. */
+.shell.v5 .demo { height: 32px; padding: 0 16px 0 20px; background: var(--panel); color: var(--t2); border-bottom: 1px solid var(--line); font: 400 12.5px/1 var(--f5); }
+.shell.v5 .demo span { display: inline-flex; align-items: center; gap: 8px; } .shell.v5 .demo span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
+.shell.v5 .demo button { height: 24px; padding: 0 10px; border-radius: 7px; color: var(--t1); font: 500 12.5px/1 var(--f5); text-decoration: none; box-shadow: 0 0 0 1px var(--line2); background: var(--panel); }
+.shell.v5:has(.demo) .v5-ex { display: none; }
+/* Inbox rows: the "Your turn" tag sits beside the preview instead of on a line of its own (rows 64px, not 90). */
+.ib-t { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 2px; align-items: center; }
+.ib-t .ib-top { grid-column: 1 / -1; }
+.ib-t > small { grid-column: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ib-t > .v5-pill { grid-column: 2; grid-row: 2; margin: 0; }
+/* Phone page heads: the main button was a full-width black bar, the heaviest thing on every screen. It keeps its
+   44px height but only its own width. */
+@media (max-width: 899px) {
+  .v5-top { padding: 16px 16px 14px; gap: 12px; }
+  .v5-acts { flex-wrap: wrap; justify-content: flex-start; }
+  .v5-acts .b5, .v5-acts .btn { flex: none; height: 44px; padding: 0 16px; }
+}
+
+/* The old app used its orange accent to mean "urgent" and "late". Now that the accent is the business's own colour
+   (green for the demo business), those rules painted late invoices green. Meanings, fixed for every business:
+   late or lost red, waiting or going cold amber, "needs you" ink. */
+html .shell.v5 :is(.jrow small.jr-next.red, .jrow .jr-next.red, .jobs-tbl.v5 td.num.late, .next.bad, .next.red) { color: var(--bad-ink); }
+html .shell.v5 :is(.jrow small.jr-next.amber, .jcard .f .stale, .ksub.warn, .fine.warn, .sw-sample td.warn, .pw-warn, .dot.warn, .next.warn, .next.amber) { color: var(--warn-ink); }
+html .shell.v5 :is(.grp.hot b, .inbox .grp.hot b, .cv small.st.needs, .stg.turn, .next.ember, .t7-st.urgent, .t8-row .st.urgent, .t8-table .st.urgent, .t8-hot) { color: var(--t1); font-weight: 500; }
+html .shell.v5 .profit-jobs .bars li i.warn { background: var(--warn); }
+/* Phone: a screen with several head buttons keeps them on one line that scrolls, main button first. */
+@media (max-width: 899px) {
+  .v5-acts:has(> :nth-child(3)) { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -16px; padding-right: 16px; }
+  .v5-acts:has(> :nth-child(3)) > :is(.ink, .b5.pri) { order: -1; }
+}
