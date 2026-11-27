@@ -1265,8 +1265,275 @@ CSS_AFT = r"""
 }
 """
 
+# =====================================================================================
+# Getting found, team and office, custom.
+# =====================================================================================
+# ---- /local-search : the profile as people see it; twelve weeks before and after ----
+p = BY['local-search']
+PROFILE = ('<div class="cd gpf"><div class="gpf-i"><i></i><i></i><i></i></div><div class="gpf-b"><b>Ridgeline Fence</b>%s<span>Fence contractor. Open now.</span>'
+           '<div class="gpf-p"><em>New this week</em><p>Cedar privacy fence finished in Monument.</p></div><div class="gpf-q"><p>Do you do gate repairs?</p><p class="me">Yes. Fence and gate repairs across Monument and Colorado Springs.</p></div></div></div><p class="ph-k">Example. Sample data.</p>' % stars(5))
+def weeks(marks):
+    return ''.join('<i class="%s"></i>' % ('on' if m else '') for m in marks)
+WEEKS = ('<div class="wst"><div><h3>A profile last updated two years ago</h3><div>%s</div></div><div class="v"><h3>A profile updated this week</h3><div>%s</div><p>Posts from real jobs, questions answered, hours and services kept right.</p></div></div>'
+         % (weeks([1] + [0] * 11), weeks([1] * 12)))
+LOCAL = (hero_split('Getting found', p['h1'], p['lede'], '', PROFILE, 'hs-v')
+         + problem('local-search')
+         + sx('A profile that is updated every week.', 'Twelve weeks, side by side.', WEEKS, 'wh')
+         + numbered(p['does'])
+         + bigline(p['line'])
+         + faq('Questions.', xfaq(p)) + CL)
+
+# ---- /job-photos : one photo fanning out into three posts; a gallery that is three years old against one from last week ----
+p = BY['job-photos']
+FAN = ('<div class="pfan"><div class="pfan-a"><i></i><span>From the crew, 4:12 PM</span></div><div class="es-a">%s</div><div class="pfan-b">%s</div></div>' % (ARROW, ''.join(
+    '<div class="cd"><em>%s</em><i></i><p>%s</p></div>' % x for x in [('Google profile', 'New cedar privacy fence, finished today in Monument.'), ('Your site gallery', 'Cedar privacy fence, 180 ft. Monument.'), ('Facebook and Instagram', 'Another one done. Cedar privacy fence in Monument.')])))
+GALLERY = ('<div class="gly"><div><h3>Your gallery is three years old</h3><div>%s</div></div><div class="v"><h3>Your gallery is last week</h3><div>%s</div></div></div>'
+           % (''.join('<i><u>2023</u></i>' for _ in range(4)), ''.join('<i><u>%s</u></i>' % d for d in ('Mon', 'Wed', 'Thu', 'Fri'))))
+JOB_PHOTOS = (inner_hero('Getting found', ap(p['h1']), ap(p['lede']), BOOK + AUDITLINK, FAN)
+              + problem('job-photos')
+              + sx('It posts when you finish a job.', 'Not when you remember.', GALLERY, 'wh')
+              + H.split('How it runs', 'Your best marketing is work you have already done.', 'You can approve each post first, or let it run.', swap(p['cmp']))
+              + qcards(p['faq']) + CL)
+
+# ---- /hiring : seven applicants moving across a board; one applicant's answers ----
+p = BY['hiring']
+BOARDH = ('<div class="cd knb">%s<div class="knb-g">%s</div></div>' % (head('Applicants', 'Fence installer'), ''.join(
+    '<div class="%s"><h3>%s<i>%d</i></h3>%s</div>' % (c, t, len(items), ''.join('<p>%s</p>' % q for q in items)) for c, t, items in [
+        ('', 'Applied', ['Applicant 1', 'Applicant 2', 'Applicant 3', 'Applicant 4', 'Applicant 5', 'Applicant 6', 'Applicant 7']),
+        ('', 'Asked your questions', ['All seven, within a minute of applying']),
+        ('y', 'Fits, booked for a call', ['Applicant 2, Thu 4 PM', 'Applicant 5, Fri 7 AM']),
+        ('n', 'Not a fit, told so', ['Five got a clear, polite answer'])])))
+APPL = ('<div class="cd apl">%s<dl>%s</dl><p>Booked for a call Thursday at 4 PM. You talk to the ones who fit, first.</p></div>' % (head('Applicant 2', 'Applied 9:12 AM', 'A fit'), ''.join(
+    '<div><dt>%s</dt><dd>%s</dd></div>' % x for x in [('Experience', '6 years, wood and vinyl'), ('Licence', 'Valid, clean record'), ('Tools', 'Own hand tools and truck'), ('Availability', 'Can start in two weeks'), ('Pay expectations', 'Inside your range')])))
+HIRING = (hero_left('Team and office', p['h1'], p['lede'], BOARDH)
+          + problem('hiring')
+          + H.split('Your questions, asked for you', 'You call the two.', 'Not ten to find two. Everyone else hears back, including the ones who are not a fit.', APPL)
+          + bigline(p['line'])
+          + numbered(p['does'])
+          + qfold(p['faq']) + CL)
+
+# ---- /team-assistant : a question from the job site; your documents on a shelf, with the answer pulled from one ----
+p = BY['team-assistant']
+ASKS = ('<div class="tas">%s<span>Example. Sample data.</span></div>' % ''.join('<div class="%s"><p>%s</p><p class="me">%s</p><em>%s</em></div>' % x for x in [
+    ('', 'What&rsquo;s the warranty on cedar posts?', 'Five years on posts and rails, two on gates.', 'From: Warranty terms, page 3'),
+    ('h', 'Can we go 7 ft on a back fence in Monument?', 'I don&rsquo;t have that one. I&rsquo;ve sent it to the owner.', 'Sent to you')]))
+SHELF = ('<div class="shf"><div class="shf-b">%s</div><div class="shf-a"><p>&ldquo;How do we price a double drive gate?&rdquo;</p><div><b>From your price book</b><span>Double drive gate: priced per opening, plus hardware. See the gate page for the current rates.</span></div></div></div>' % ''.join(
+    '<i class="%s"><u>%s</u></i>' % x for x in [('on', 'Price book'), ('', 'Procedures'), ('', 'Warranty terms'), ('', 'Supplier list'), ('', 'Past jobs')]))
+TEAM_ASSISTANT = (hero_split('Team and office', p['h1'], p['lede'], 'It says when it does not know, and sends the question to you.', ASKS)
+                  + problem('team-assistant')
+                  + sx('The procedures answer back.', 'Only from what you give it. It does not make up company policy.', SHELF, 'wh')
+                  + bigline(p['line'])
+                  + H.split('What changes', 'The crew gets answers', 'without waiting for you.', swap(p['cmp']))
+                  + qfold(p['faq']) + CL)
+
+# ---- /field-notes : a voice note becoming the job record; spoken in one language, written in another ----
+p = BY['field-notes']
+wave = [30, 52, 78, 44, 90, 60, 36, 72, 96, 54, 40, 66, 84, 48, 28, 58, 76, 42, 68, 88, 50, 34, 62, 80, 46, 30, 56, 70]
+VOICE = ('<div class="vnt"><div class="vnt-a"><b></b><div>%s</div><time>0:58</time></div><div class="es-a">%s</div><div class="cd vnt-b">%s%s</div></div>' % (
+    ''.join('<i style="height:%d%%"></i>' % h for h in wave), ARROW, head('Job record', 'Split Rail Dr'), ''.join('<div><h3>%s</h3><p>%s</p></div>' % x for x in [
+        ('Notes', 'Fence line done on the north and east sides. Gate drags at the bottom and needs a rehang.'), ('Materials', 'Two posts short. One bag of concrete left over.'), ('Next steps', 'Order two posts. Come back Thursday for the gate.')])))
+LANG = ('<div class="lng"><div><em>Spoken, in Spanish</em><p>&ldquo;Faltan dos postes y la puerta roza abajo. Volvemos el jueves.&rdquo;</p></div><div class="es-a">%s</div><div class="v"><em>Written, in English</em><p>Two posts short. Gate drags at the bottom. Back on Thursday.</p></div></div>' % ARROW)
+FIELD_NOTES = (inner_hero('Team and office', ap(p['h1']), ap(p['lede']), BOOK + AUDITLINK, VOICE)
+               + problem('field-notes')
+               + sx('In English and Spanish.', 'Spoken in one, written in whichever you read.', LANG, 'wh')
+               + numbered(p['does'][:3])
+               + bigline(p['line'])
+               + qcards(p['faq']) + CL)
+
+# ---- /reports : the report on a phone; forty charts against the five numbers that matter ----
+p = BY['reports']
+REPORT_PH = ('<div class="ph"><div class="ph-s rpt"><div class="ph-n"><b>Monday report</b><span>7:00 AM</span></div>%s<p>Two things need you: a quote asking about price, and an invoice 30 days past due.</p></div></div><p class="ph-k">Example. Sample data.</p>' % ''.join(
+    '<div><span>%s</span><b>%s</b></div>' % x for x in [('Leads in', '14'), ('Jobs booked', '9'), ('Quotes open', '6'), ('Money owed', '$14,600'), ('Needs you', '2')]))
+FORTY = ('<div class="fty"><div>%s</div><div class="v">%s</div></div>' % (
+    '<i></i>' * 40, ''.join('<p><b>%s</b>%s</p>' % x for x in [('14', 'leads in'), ('9', 'jobs booked'), ('6', 'quotes open'), ('$14,600', 'owed'), ('2', 'need you')])))
+SOURCES = ('<div class="cd srcs">%s%s<div class="srcs-s"><b>What is stuck</b><p>3 quotes with no answer.</p><p>2 invoices past due.</p></div></div>' % (head('Where leads came from', 'Last week'), ''.join(
+    '<div class="srcs-r"><b>%s</b><div><i style="width:%d%%"></i></div><em>%d</em></div>' % x for x in [('Google', 100, 6), ('Referrals', 67, 4), ('Facebook', 50, 3), ('Angi', 17, 1)])))
+REPORTS = (hero_split('Team and office', p['h1'], p['lede'], 'Read it in two minutes.', REPORT_PH, 'ph-h1')
+           + problem('reports')
+           + sx('The handful that matter.', 'Not forty charts.', FORTY, 'wh')
+           + H.split('What is in it', 'You see the week', 'before it becomes the month.', SOURCES)
+           + bigline(p['line'])
+           + faq('Questions.', xfaq(p)) + CL)
+
+# ---- /call-review : a dark top with last week's calls, one flagged; the transcript with the moment it was lost ----
+p = BY['call-review']
+CALLS = ('<div class="ng crv"><div class="ng-h"><b>Last week&rsquo;s calls</b><span>%s</span></div>%s</div>' % (SAMPLE, ''.join(
+    '<div class="crv-r %s"><time>%s</time><b>%s</b><span>%s</span><em>%s</em></div>' % x for x in [
+        ('', 'Mon 9:14', 'New caller, privacy fence', 'Wanted a quote. Estimate booked for Wednesday.', 'Booked'),
+        ('', 'Mon 2:40', 'Existing customer', 'Asked when the crew arrives. Told 1:40 PM.', 'Handled'),
+        ('x', 'Tue 11:05', 'New caller, gate repair', 'Asked about financing. Was told to call back. Did not.', 'Job lost at 1:42'),
+        ('', 'Wed 4:22', 'Supplier', 'Delivery moved to Friday.', 'Handled'),
+        ('u', 'Thu 8:30', 'Existing customer', 'Unhappy about a late start on Tuesday.', 'Flagged for you')])))
+TRANS = ('<div class="cd trx">%s%s</div>' % (head('Tue 11:05, gate repair', '3 min 10 sec'), ''.join('<p class="%s"><time>%s</time><i>%s</i><span>%s</span></p>' % x for x in [
+    ('', '1:20', 'Caller', 'How much would it be to fix a sagging gate?'), ('', '1:28', 'Office', 'It depends, somebody would have to come look at it.'),
+    ('x', '1:42', 'Caller', 'Do you do financing or payment plans?'), ('x', '1:47', 'Office', 'I&rsquo;m not sure, you&rsquo;d have to call back and ask the owner.'), ('', '1:55', 'Caller', 'Okay. I&rsquo;ll think about it.')])))
+PATTERN = ('<div class="cd ptn">%s<p><b>&ldquo;Do you do financing?&rdquo;</b>Asked on 11 calls this month. 7 of those callers did not book.</p></div>' % head('A pattern', 'This month'))
+CALL_REVIEW = (hero_dark('Team and office', p['h1'], p['lede'], CALLS)
+               + problem('call-review')
+               + sx(X['call-review'][2], '', TRANS, 'wh')
+               + H.split('Across a month', 'You fix the pattern,', 'not just the call. The question that keeps costing you work.', PATTERN)
+               + numbered([p['does'][0], p['does'][1], p['does'][3]])
+               + qfold(p['faq']) + CL)
+
+# ---- /custom-agents : an agent's log on a dark panel, stopped where it needs you; what it may do and what it asks first ----
+p = BY['custom-agents']
+LOG = ('<div class="fl">%s%s<div class="rn-f"><span>Stopped at the step you marked for approval.</span><em>Waiting for you</em></div></div>' % (
+    '<div class="fd-h"><span class="dot"></span><b>Materials order</b><span>Split Rail Dr</span><span class="tag">%s</span></div>' % SAMPLE,
+    frows([('7:02', 'Read the job record', '180 ft of cedar privacy, two gates.'), ('7:02', 'Checked the supplier price list', 'Three items changed price since last order.'),
+           ('7:03', 'Wrote the order', 'Pickets, rails, posts, concrete, two gate kits.'), ('7:03', 'Asked before sending', 'Orders over your limit need a yes from you.')])))
+LIMITS = ('<div class="lmt"><div><h3>Does on its own</h3>%s</div><div class="a"><h3>Asks you first</h3>%s</div></div>' % (
+    ''.join('<p>%s</p>' % t for t in ['Reads and writes', 'Looks things up', 'Fills in forms', 'Uses the tools you connect']), ''.join('<p>%s</p>' % t for t in ['Spending money', 'Sending anything you have marked for approval'])))
+CUSTOM_AGENTS = (hero_split('Custom', p['h1'], p['lede'], '', LOG, 'hs-d')
+                 + problem('custom-agents')
+                 + sx(X['custom-agents'][2], 'Every step is logged in your app.', LIMITS, 'wh')
+                 + bigline(p['line'])
+                 + H.split('What changes', 'It runs.', 'You check what it did.', swap(p['cmp']))
+                 + qcards(p['faq']) + CL)
+
+# ---- /integrations : the tools around one inbox; one lead passing through four of them ----
+HUB = ('<div class="hub">%s</div>' % ''.join('<div class="%s">%s</div>' % x for x in [
+    ('', 'Google Calendar'), ('', 'Jobber'), ('', 'QuickBooks Online'), ('', 'Your website form'), ('me', '<b>One inbox</b><span>One thread per customer</span>'), ('', 'Angi, Thumbtack, Google and Yelp'),
+    ('', 'Missed calls'), ('', 'Your own pay link'), ('', 'Zapier and Make')]))
+def group(title, sub, items):
+    return ('<section class="itg"><div class="w itg-g"><div class="itg-t"><p class="st-t">%s <span>%s</span></p></div><dl>%s</dl></div></section>' % (title, sub, ''.join('<div><dt>%s</dt><dd>%s</dd></div>' % (ap(a), ap(b)) for a, b in items)))
+PASS = ('<ol class="rl rl4">%s</ol>' % ''.join('<li><time>%s</time><b>%s</b></li>' % x for x in [
+    ('A call, a text, your website form, Angi, Thumbtack or a Google ad', 'It comes in from anywhere'), ('Answered in seconds, one thread per customer', 'It lands in one inbox'),
+    ('Google Calendar, and Jobber if you use it', 'The estimate goes on your calendar'), ('Invoices and payments land in QuickBooks, on the right customer', 'The money shows up in your books')]))
+INTEGRATIONS = (inner_hero('Custom', 'Keep the tools you already use.', 'Cinder plugs into your calendar, your books and the places your leads come from, so nothing gets copied over by hand.', BOOK + AUDITLINK, HUB)
+                + sx('One lead, start to finish.', 'Nothing gets copied over by hand.', PASS, 'wh')
+                + group('Connected both ways.', 'You approve it once. After that, everything lands where it belongs.', [
+                    ('Google Calendar', 'Leads only see times you’re actually free, and every booked estimate lands on your calendar with the address and the job.'),
+                    ('Jobber', 'Every estimate we book shows up in Jobber as a request on that customer’s record. Nobody retypes a booking.'),
+                    ('QuickBooks Online', 'Every invoice you send and every payment you record lands in your books, on the right customer.')])
+                + group('Every lead source, one inbox.', 'Wherever a lead comes from, it gets a reply in seconds and shows up in the same place.', [
+                    ('Your website form', 'WordPress, Wix, Squarespace, Webflow, Google Forms and the rest. Form fills come straight in.'),
+                    ('Angi, Thumbtack, Google and Yelp', 'Forward the lead emails once. Each lead is read, saved and answered for you.'),
+                    ('Google Ads lead forms', 'Ad leads go straight to the inbox instead of sitting in a spreadsheet.'),
+                    ('Missed calls', 'A missed call on your business number gets a text back right away, from that same number.'),
+                    ('Zapier and Make', 'Anything else you use can send leads in too.')])
+                + group('Get paid your way.', 'We never hold your money.', [('Your own pay link', 'Square, Stripe, PayPal or your own site. Invoices and deposits go out with the link you already use.')])
+                + group('Moving over is the easy part.', 'Bring your customers, jobs and history with you. Duplicates are merged, and every merge is shown so you can undo it.', [
+                    ('Jobber and QuickBooks', 'Pulled in directly, photos included.'), ('Housecall Pro and ServiceTitan', 'From their standard exports.'),
+                    ('Any spreadsheet', 'Customers, payments and service plans.'), ('Your phone’s contacts', 'Customers without an email still come in.')])
+                + qcards([('Do I have to stop using Jobber?', 'No. Cinder can run beside it or replace it. The audit shows which makes sense for you.'), ('Who connects everything?', 'We do, during setup. You approve each connection once.'),
+                          ('Don’t see a tool you use?', 'Ask on your audit call. If it can send an email or a form, it can almost always send leads in.')]) + CL)
+
+# ---- /custom-builds : a blank scope sheet being filled in; the four steps from audit to running ----
+p = BY['custom-builds']
+SCOPE = ('<div class="scp"><div class="scp-a"><span>Tell us the job</span><p>&ldquo;Every Friday I spend three hours matching supplier bills to jobs.&rdquo;</p></div><div class="cd scp-b">%s%s</div></div>' % (head('Scope', 'Written with you', 'Example'), ''.join(
+    '<div><h3>%s</h3><p>%s</p></div>' % x for x in [('What it does', 'Reads each supplier bill and files it against the right job.'), ('What it will not do', 'Pay anything. Anything unclear comes to you.'), ('What you get', 'A timeline and a cost, before anything is built.')])))
+CUSTOM_BUILDS = (hero_left('Custom', p['h1'], p['lede'], SCOPE)
+                 + problem('custom-builds')
+                 + numbered(p['does'])
+                 + fq('We&rsquo;re trying to take apart your business, find what needs to be fixed, and then implement systems that fix it.')
+                 + H.split('What changes', 'The list on this site is where we started,', 'not where we stop.', swap(p['cmp']))
+                 + qfold(p['faq']) + CL)
+
+CSS_TEAM = r"""
+/* ============ /local-search ============ */
+.hs-p:has(.gpf){flex-direction:column}
+.gpf{width:100%;max-width:420px;overflow:hidden;text-align:left}.gpf-i{display:grid;grid-template-columns:2fr 1fr 1fr;gap:3px;height:120px}.gpf-i i{background:repeating-linear-gradient(135deg,#e4e7ee 0 2px,#f1f3f7 2px 6px)}
+.gpf-b{display:grid;gap:8px;padding:18px}.gpf-b>b{font-size:21px;font-weight:600;letter-spacing:-.03em}.gpf-b>span{font-size:13px;color:var(--t2)}
+.gpf-p{margin-top:6px;padding:12px 14px;border-radius:12px;background:#f7f9ff;box-shadow:inset 0 0 0 1px #dfe6fb}.gpf-p em{font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:var(--blue)}.gpf-p p{margin:6px 0 0;font-size:13.5px;font-weight:520}
+.gpf-q{display:grid;gap:6px;font-size:13px;line-height:1.36}.gpf-q p{margin:0;width:fit-content;max-width:88%;padding:8px 12px;border-radius:13px 13px 13px 4px;background:#f1f2f5}.gpf-q p.me{margin-left:auto;border-radius:13px 13px 4px 13px;background:var(--blue);color:#fff}
+@media(min-width:1700px){.gpf,.tas,.pfan,.vnt,.hub,.knb{zoom:1.1}}
+.wst{display:grid;gap:clamp(12px,1.2vw,22px)}.wst>div{padding:clamp(20px,1.6vw,30px);border-radius:16px;background:var(--g);box-shadow:inset 0 0 0 1px var(--ln)}.wst>.v{background:#f7f9ff;box-shadow:inset 0 0 0 1px #dfe6fb}
+.wst h3,.gly h3{margin:0 0 16px;font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}.wst>div>div{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:clamp(4px,.6vw,10px)}
+.wst i{height:clamp(40px,4.4vw,72px);border-radius:8px;box-shadow:inset 0 0 0 1px rgba(23,24,26,.1);background:repeating-linear-gradient(135deg,transparent 0 5px,rgba(23,24,26,.035) 5px 6px)}.wst i.on{background:#c9cbd0;box-shadow:none}.wst .v i.on{background:var(--blue)}
+.wst p{margin:16px 0 0;font-size:clamp(14.5px,.92vw,17px);color:var(--g2)}
+/* ============ /job-photos ============ */
+.pfan{display:grid;grid-template-columns:auto 40px minmax(0,1fr);align-items:center;gap:20px;width:min(980px,100%);text-align:left}
+.pfan-a{width:230px;padding:10px 10px 14px;background:#fff;box-shadow:0 30px 50px -28px rgba(30,40,110,.5);transform:rotate(-3deg)}.pfan-a i,.pfan-b i{display:block;aspect-ratio:4/3;background:repeating-linear-gradient(135deg,#dfe3ec 0 2px,#eef1f6 2px 7px)}
+.pfan-a span{display:block;margin-top:10px;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
+.pfan-b{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.pfan-b>div{padding:12px;overflow:hidden}.pfan-b em{display:block;margin-bottom:10px;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:var(--t3)}
+.pfan-b i{border-radius:8px}.pfan-b p{margin:10px 0 2px;font-size:13px;line-height:1.36;font-weight:500}
+.gly{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(16px,1.8vw,32px)}.gly>div{padding:clamp(20px,1.6vw,30px);border-radius:16px;background:var(--g);box-shadow:inset 0 0 0 1px var(--ln)}
+.gly>div>div{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.gly i{position:relative;aspect-ratio:1;border-radius:10px;background:repeating-linear-gradient(135deg,#e4e6ea 0 2px,#f1f2f4 2px 7px);filter:grayscale(1)}
+.gly u{position:absolute;left:8px;bottom:8px;padding:3px 6px;border-radius:5px;background:rgba(255,255,255,.9);text-decoration:none;font:500 10.5px/1 "Geist Mono",monospace;color:var(--t2)}
+.gly .v{background:#f7f9ff;box-shadow:inset 0 0 0 1px #dfe6fb}.gly .v i{filter:none;background:repeating-linear-gradient(135deg,#cfdcff 0 2px,#e6ecff 2px 7px)}.gly .v u{color:var(--blue)}
+/* ============ /hiring ============ */
+.knb{width:100%;text-align:left;overflow:hidden}.knb-g{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;padding:14px;align-items:start}
+.knb-g>div{padding:12px;border-radius:12px;background:#f6f7f9;display:grid;gap:6px}.knb h3{display:flex;justify-content:space-between;margin:0 0 6px;font-size:12.5px;font-weight:600}.knb h3 i{font:500 11px/1.4 "Geist Mono",monospace;font-style:normal;color:var(--t3)}
+.knb p{margin:0;padding:9px 11px;border-radius:8px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.06);font-size:12.5px;font-weight:520;line-height:1.3}
+.knb .y{background:#eef3ff}.knb .y p{background:var(--blue);color:#fff;box-shadow:none}.knb .n p{color:var(--t2)}
+.apl{width:100%;max-width:500px}.apl dl{margin:0;padding:6px 18px}.apl dl div{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1fr);gap:12px;padding:12px 0;border-top:1px solid var(--line);font-size:14px}.apl dl div:first-child{border-top:0}
+.apl dt{color:var(--t2)}.apl dd{margin:0;font-weight:540}.apl>p{margin:0;padding:15px 18px 17px;border-radius:0 0 12px 12px;background:#f7f9ff;font-size:13.5px;line-height:1.4}.apl .tag{color:var(--blue)}
+/* ============ /team-assistant ============ */
+.tas{display:grid;gap:12px;width:100%;max-width:470px}.tas>span{font:500 11px/1 "Geist Mono",monospace;color:var(--t3);text-align:center;margin-top:6px}
+.tas>div{display:grid;gap:8px;padding:16px 16px 14px;border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.06),0 24px 44px -28px rgba(30,40,110,.5);font-size:14.5px;line-height:1.38}
+.tas p{margin:0;width:fit-content;max-width:86%;padding:9px 13px;border-radius:14px 14px 14px 5px;background:#eceef2}.tas p.me{margin-left:auto;border-radius:14px 14px 5px 14px;background:var(--blue);color:#fff}
+.tas em{justify-self:end;display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:#e9eeff;color:#2a4ea8;font-style:normal;font-size:11.5px;font-weight:560}.tas .h p.me{background:var(--ink)}.tas .h em{background:#fff4d6;color:#a86a00}
+.shf{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,3.4vw,64px);align-items:end}
+.shf-b{display:flex;align-items:flex-end;gap:8px;height:clamp(220px,19vw,320px);padding:0 14px;border-bottom:6px solid #d9dce3}
+.shf-b i{flex:1;display:flex;align-items:flex-end;justify-content:center;border-radius:6px 6px 0 0;background:#e4e6eb;height:82%}.shf-b i:nth-child(2){height:96%;background:#d6d9e0}.shf-b i:nth-child(3){height:70%}.shf-b i:nth-child(4){height:88%;background:#d6d9e0}.shf-b i:nth-child(5){height:76%}
+.shf-b i.on{background:var(--blue);height:100%;transform:translateY(-14px)}.shf-b u{writing-mode:vertical-rl;transform:rotate(180deg);padding:16px 0;text-decoration:none;font-style:normal;font-size:clamp(12px,.9vw,15px);font-weight:560;color:var(--t2);white-space:nowrap}.shf-b i.on u{color:#fff}
+.shf-a p{margin:0 0 14px;font:400 clamp(21px,1.7vw,32px)/1.2 Georgia,serif;letter-spacing:-.014em}.shf-a div{padding:clamp(16px,1.4vw,26px);border-radius:14px;background:#f7f9ff;box-shadow:inset 0 0 0 1px #dfe6fb}
+.shf-a b{display:block;font:500 12px/1 "Geist Mono",monospace;color:var(--blue)}.shf-a span{display:block;margin-top:10px;font-size:clamp(15px,1vw,18.5px);line-height:1.4}
+/* ============ /field-notes ============ */
+.vnt{display:grid;grid-template-columns:minmax(0,.8fr) 40px minmax(0,1fr);gap:18px;align-items:center;width:min(980px,100%);text-align:left}
+.vnt-a{display:flex;align-items:center;gap:12px;height:72px;padding:0 18px;border-radius:999px;background:#17181a}.vnt-a b{flex:none;width:36px;height:36px;border-radius:50%;background:var(--red);box-shadow:0 0 0 5px rgba(229,72,77,.25)}
+.vnt-a div{flex:1;display:flex;align-items:center;gap:3px;height:40px}.vnt-a i{flex:1;border-radius:2px;background:#fff;opacity:.85}.vnt-a time{font:500 12px/1 "Geist Mono",monospace;color:#a3a5aa}
+.vnt-b>div:not(.rep-h){padding:14px 18px;border-top:1px solid var(--line)}.vnt-b>div:nth-child(2){border-top:0}.vnt-b h3{margin:0 0 6px;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}.vnt-b p{margin:0;font-size:14px;line-height:1.42}
+.lng{display:grid;grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr);gap:clamp(14px,1.6vw,28px);align-items:center}
+.lng>div:not(.es-a){padding:clamp(22px,1.8vw,34px);border-radius:16px;background:var(--g);box-shadow:inset 0 0 0 1px var(--ln)}.lng>.v{background:#f7f9ff!important;box-shadow:inset 0 0 0 1px #dfe6fb!important}
+.lng em{font:500 12px/1 "Geist Mono",monospace;font-style:normal;color:var(--t3)}.lng p{margin:14px 0 0;font:400 clamp(21px,1.7vw,32px)/1.22 Georgia,serif;letter-spacing:-.014em}.lng .v p{font:500 clamp(19px,1.5vw,28px)/1.2 Inter,sans-serif;letter-spacing:-.024em}
+/* ============ /reports ============ */
+.rpt>div:not(.ph-n){display:flex;justify-content:space-between;align-items:baseline;margin:0 16px;padding:13px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--t2)}.rpt>div b{font-size:22px;font-weight:600;letter-spacing:-.035em;color:var(--ink)}
+.rpt>p{margin:14px 16px 0;padding:11px 12px;border-radius:10px;background:#fff4d6;color:#7a4d00;font-size:12px;line-height:1.36}
+.fty{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,2.6vw,48px);align-items:center}
+.fty>div:first-child{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;opacity:.75}.fty i{aspect-ratio:4/3;border-radius:6px;background:linear-gradient(180deg,transparent 55%,#dcdee3 55%) ,#f1f2f5;box-shadow:inset 0 0 0 1px rgba(23,24,26,.06)}
+.fty i:nth-child(3n){background:linear-gradient(180deg,transparent 30%,#dcdee3 30%),#f1f2f5}.fty i:nth-child(4n+1){background:linear-gradient(180deg,transparent 70%,#dcdee3 70%),#f1f2f5}
+.fty .v{display:grid;gap:0}.fty p{display:flex;align-items:baseline;gap:14px;margin:0;padding:clamp(10px,.9vw,16px) 0;border-top:1px solid var(--ln);font-size:clamp(15px,1vw,19px);color:var(--g2)}.fty p:first-child{border-top:0}
+.fty p b{min-width:3.4em;font-size:clamp(28px,2.5vw,48px);font-weight:560;letter-spacing:-.045em;line-height:1;color:var(--ink)}
+.srcs{width:100%;max-width:520px}.srcs-r{display:grid;grid-template-columns:90px minmax(0,1fr) 24px;gap:12px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);font-size:13.5px}.srcs-r:first-of-type{border-top:0}
+.srcs-r b{font-weight:540}.srcs-r div{height:12px;border-radius:6px;background:#f1f2f5}.srcs-r i{display:block;height:100%;border-radius:6px;background:var(--blue)}.srcs-r em{font-style:normal;font-weight:600;text-align:right}
+.srcs-s{padding:14px 18px 16px;border-top:1px solid var(--line);background:#fffaf0;border-radius:0 0 12px 12px}.srcs-s b{font:500 11px/1 "Geist Mono",monospace;color:#a86a00}.srcs-s p{margin:8px 0 0;font-size:13.5px}
+/* ============ /call-review ============ */
+.crv-r{display:grid;grid-template-columns:86px minmax(0,.7fr) minmax(0,1.3fr) auto;gap:14px;align-items:center;padding:clamp(13px,1.1vw,19px) 18px;border-top:1px solid var(--dl);font-size:14px}.crv-r:nth-child(2){border-top:0}
+.crv-r time{font:500 11.5px/1 "Geist Mono",monospace;color:#7f8187}.crv-r b{font-weight:560;color:#fff}.crv-r span{color:#a3a5aa}
+.crv-r em{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:6px;background:rgba(255,255,255,.08);color:#b9bbc0;font-style:normal;font-size:11.5px;font-weight:540;white-space:nowrap}
+.crv-r.x{background:rgba(229,72,77,.1)}.crv-r.x em{background:var(--red);color:#fff}.crv-r.u em{background:var(--amber);color:#3d2a00}
+.trx p{display:grid;grid-template-columns:44px 64px minmax(0,1fr);gap:12px;margin:0;padding:clamp(13px,1.1vw,19px) clamp(18px,1.6vw,30px);border-top:1px solid var(--line);font-size:clamp(15px,1vw,18.5px);line-height:1.38}.trx p:first-of-type{border-top:0}
+.trx time,.trx i{font:500 11.5px/1.7 "Geist Mono",monospace;font-style:normal;color:var(--t3)}.trx p.x{background:#fff5f5;box-shadow:inset 3px 0 0 var(--red)}.trx p.x time{color:var(--red)}
+.ptn{width:100%;max-width:480px}.ptn p{margin:0;padding:18px;font-size:14.5px;line-height:1.45;color:var(--g2)}.ptn p b{display:block;margin-bottom:10px;font:400 24px/1.2 Georgia,serif;color:var(--ink)}
+/* ============ /custom-agents ============ */
+.lmt{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:0;border-radius:18px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--ln)}
+.lmt>div{padding:clamp(24px,2.2vw,42px);background:#f7f9ff}.lmt>.a{background:#fffaf0;border-left:2px dashed #e7c877}
+.lmt h3{margin:0 0 18px;font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}.lmt p{display:inline-flex;margin:0 8px 8px 0;padding:10px 14px;border-radius:999px;background:#fff;box-shadow:0 0 0 1px rgba(38,109,240,.25);font-size:clamp(15px,1vw,18.5px);font-weight:520;letter-spacing:-.01em}
+.lmt .a p{box-shadow:0 0 0 1px #e7c877;color:#7a4d00}
+/* ============ /integrations ============ */
+.hub{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;width:min(820px,100%)}
+.hub div{display:grid;place-items:center;min-height:84px;padding:12px 14px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.06),0 18px 34px -24px rgba(30,40,110,.4);font-size:14.5px;font-weight:560;letter-spacing:-.01em;text-align:center;line-height:1.25}
+.hub .me{background:var(--ink);color:#fff;box-shadow:0 0 0 6px rgba(38,109,240,.18),0 30px 50px -24px rgba(30,40,110,.6)}.hub .me b{font-size:18px;font-weight:600}.hub .me span{font-size:12px;color:#a3a5aa;font-weight:450}
+.rl4{grid-template-columns:repeat(4,minmax(0,1fr))}.rl4 time{display:block;font:450 clamp(14px,.86vw,16px)/1.36 Inter,sans-serif;color:var(--g2);max-width:17em}.rl4 li{display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:8px}.rl4 b{margin-top:0}
+.itg{border-top:1px solid var(--ln)}.itg-g{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.itg-t{padding:clamp(64px,5.4vw,104px) var(--pad)}.itg-t .st-t{margin:0;max-width:13em;font-size:clamp(25px,1.8vw,34px)}
+.itg dl{margin:0;padding:clamp(48px,4vw,76px) var(--pad);border-left:1px solid var(--ln);background:#fff}.itg dl div{padding:clamp(14px,1.2vw,22px) 0;border-top:1px solid var(--ln)}.itg dl div:first-child{border-top:0}
+.itg dt{font-size:clamp(16px,1.05vw,20px);font-weight:560;letter-spacing:-.014em}.itg dd{margin:5px 0 0;max-width:36em;font-size:clamp(14.5px,.9vw,16.5px);line-height:1.42;color:var(--g2)}
+/* ============ /custom-builds ============ */
+.scp{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(16px,2vw,36px);align-items:center;width:100%;text-align:left}
+.scp-a{padding:clamp(22px,2vw,38px);border-radius:16px;border:1.5px dashed rgba(38,109,240,.5);background:rgba(255,255,255,.5)}.scp-a span{font:500 12px/1 "Geist Mono",monospace;color:var(--blue)}
+.scp-a p{margin:14px 0 0;font:400 clamp(21px,1.8vw,34px)/1.2 Georgia,serif;letter-spacing:-.014em}
+.scp-b>div:not(.rep-h){padding:16px 18px;border-top:1px solid var(--line)}.scp-b>div:nth-child(2){border-top:0}.scp-b h3{margin:0 0 6px;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}.scp-b p{margin:0;font-size:clamp(14.5px,.95vw,17px);line-height:1.4}
+
+@media(max-width:1180px){.knb-g{grid-template-columns:1fr 1fr}.pfan{grid-template-columns:minmax(0,1fr);justify-items:center}.pfan .es-a,.vnt .es-a{transform:rotate(90deg);margin:0 auto}.vnt{grid-template-columns:minmax(0,1fr)}
+.crv-r{grid-template-columns:86px minmax(0,1fr) auto}.crv-r span{grid-column:2/-1;grid-row:2}}
+@media(max-width:860px){
+.wst>div>div{grid-template-columns:repeat(6,minmax(0,1fr))}
+.pfan-b{grid-template-columns:minmax(0,1fr);width:100%}.gly,.shf,.fty,.lng,.lmt,.scp{grid-template-columns:minmax(0,1fr)}.lng .es-a{transform:rotate(90deg);margin:0 auto}
+.knb-g{grid-template-columns:minmax(0,1fr)}
+.shf-b{height:200px}.lmt>.a{border-left:0;border-top:2px dashed #e7c877}
+.fty>div:first-child{grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.crv-r{grid-template-columns:minmax(0,1fr) auto;gap:6px 10px}.crv-r time{grid-column:1/-1}.crv-r span{grid-column:1/-1;grid-row:auto}
+.trx p{grid-template-columns:40px minmax(0,1fr)}.trx i{display:none}
+.hub{gap:8px}.hub div{min-height:70px;font-size:12px;padding:8px}.hub .me b{font-size:14px}
+.rl4 li{flex-direction:column}
+.itg-g{grid-template-columns:minmax(0,1fr)}.itg-t{padding:56px var(--pad) 8px}.itg dl{border-left:0;background:none;padding:16px var(--pad) 48px}
+}
+"""
+
 out = pathlib.Path(ROOT) / 'site'
-CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT
+CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V
@@ -1293,6 +1560,16 @@ PAGES = [
     ('maintenance-reminders', 'Service reminders', 'Work that comes around again, such as servicing, sealing, staining or inspections, gets a reminder when it is due.', MAINT),
     ('referrals', 'Referrals', 'After a good job and a good review, the customer is asked if they know someone who needs the same thing.', REFERRALS),
     ('campaigns', 'Email and text campaigns', 'Seasonal offers, openings in the schedule and news go to your own customers by email and text. No ad platform involved.', CAMPAIGNS),
+    ('local-search', 'Local search', 'Your Google Business Profile gets regular posts, fresh photos, answered questions and correct details, without you logging in.', LOCAL),
+    ('job-photos', 'Job photos to posts', 'The crew takes a photo when the job is done. It becomes a post for your profile, your site and your social pages.', JOB_PHOTOS),
+    ('hiring', 'Hiring', 'Applicants are asked your questions, the ones who fit are booked for a call, and everyone gets an answer.', HIRING),
+    ('team-assistant', 'Team assistant', 'Your price book, procedures and past jobs become something the crew can ask by text, and get your answer back.', TEAM_ASSISTANT),
+    ('field-notes', 'Field notes', 'The crew records a voice note at the job. It comes back as clean notes, a materials list and next steps on the job record.', FIELD_NOTES),
+    ('reports', 'Reports', 'One short report each week: leads in, jobs booked, quotes open, money owed and what needs you.', REPORTS),
+    ('call-review', 'Call review', 'Calls are transcribed and summarised. The ones where a job was lost, or a customer was unhappy, are flagged for you.', CALL_REVIEW),
+    ('custom-agents', 'Custom agents', 'An AI agent built to do one job in your business the way you do it, with your rules and your tools.', CUSTOM_AGENTS),
+    ('integrations', 'Integrations', 'Cinder plugs into your calendar, your books and the places your leads come from, so nothing gets copied over by hand.', INTEGRATIONS),
+    ('custom-builds', 'Custom builds', 'If your business has a job that eats your week and is not on the list, tell us. If it does not need a person, we can build it.', CUSTOM_BUILDS),
     ('answering', 'Answering', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', ANSWERING),
 ]
 if __name__ == '__main__':
