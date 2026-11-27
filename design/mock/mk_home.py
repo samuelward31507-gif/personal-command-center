@@ -736,12 +736,8 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 @view-transition{navigation:auto}
 ::view-transition-old(root){animation:vt-out .22s cubic-bezier(.4,0,1,1) both}::view-transition-new(root){animation:vt-in .42s cubic-bezier(.2,.7,.2,1) both}
 @keyframes vt-out{to{opacity:0;transform:translateY(-10px)}}@keyframes vt-in{from{opacity:0;transform:translateY(18px)}}
-/* the three leaks, in black, white and grey: what went right is light grey, what went wrong is ink, waiting is mid grey */
-.lk{--blue:#c3c6cd;--red:#17181a;--amber:#8f9197}
-.lk .lk-n li::before{background:var(--ink)}.lk .ch-a i.hot{box-shadow:0 0 0 4px rgba(23,24,26,.14),0 0 0 9px rgba(23,24,26,.06)}
-.lk .sm-r.t b,.lk .fc-r b.r{color:var(--ink)}.lk .ch-k .five,.lk .rp-five{border-left-color:var(--ink)}.lk .rp-five span{color:var(--ink)}
-.lk .lg-r u{background:#eceef2;color:var(--ink)}.lk em.r,.lk .lg-r em.r{background:var(--ink);color:#fff}.lk em.y,.lk .lg-r em.y{background:#eceef2;color:var(--ink)}.lk .fc-r b.y,.lk .sm-r.t.y b,.lk td.n.h{color:var(--ink)}
-.lk .wk-r u{background:repeating-linear-gradient(135deg,#8f9197 0 1px,transparent 1px 5px),#e3e4e8}
+/* the three leaks keep their colours (Sam, 27 Nov: "I liked the colors here"): blue went right, red went wrong, amber is waiting */
+.lk{--blue:#266df1;--red:#e5484e;--amber:#f0a001}
 /* every build under "What we build": a full-width panel on hover or focus, a folding list in the phone menu */
 .nav ul li.mg{position:static}.mg>a{display:inline-flex;align-items:center;gap:7px}
 .mg>a i{width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-2px) rotate(45deg);opacity:.55;transition:transform .2s}
@@ -1392,7 +1388,7 @@ AUDIT = (
 import hashlib
 # Sam, 27 Nov: black, white and grey across the site. Every coloured value in the stylesheets and the pages is turned into the grey of
 # the same lightness on the way out. Kept as they are: the three Mac window buttons and the cool wash of the chapter bands.
-_KEEP = {'#ff5f57', '#febc2e', '#28c840', '#c3ccdb', '#aab6cc', '#8f9bb8', '#a7a9c4', '#b4c0d2', '#e2e6f2', '#e6e4f0'}
+_KEEP = {'#266df1', '#e5484e', '#f0a001', '#ff5f57', '#febc2e', '#28c840', '#c3ccdb', '#aab6cc', '#8f9bb8', '#a7a9c4', '#b4c0d2', '#e2e6f2', '#e6e4f0'}
 _KEEP_RGB = {(170, 182, 204), (143, 155, 184), (195, 204, 219), (167, 169, 196), (180, 192, 210), (226, 230, 242), (230, 228, 240)}
 def _grey(r, g, b):
     if max(r, g, b) - min(r, g, b) < 22:
@@ -1441,7 +1437,7 @@ def page(title, desc, path, body, index=True, css=''):
 
 TRADESROW = ('<section class="tl tl2" aria-label="Trades we build for"><div class="w tl-g"><p class="tl-c">Built for trades that quote</p><ul>%s</ul></div></section>'
              % ''.join('<li><a href="/trades"><span>%s</span></a></li>' % t for t in ['Fence', 'Roofing', 'HVAC', 'Plumbing', 'Landscaping', 'Concrete', 'Painting']))
-HOME = HERO + TOOLS + TRADESROW + PROB + LK + WHAT + HW + CK + BD + FQ + CL   # promise, fits your tools, the problem, what we do, how it starts, how it works, what gets built, who is behind it, ask
+HOME = HERO + TOOLS + PROB + LK + WHAT + HW + CK + BD + FQ + CL   # promise, fits your tools, the problem, what we do, how it starts, how it works, what gets built, who is behind it, ask
 DESC = 'A free fifteen-minute audit of your service business. We find what is costing you jobs and hours, put a number on it, and build systems made for the way you work.'
 open(ROOT + '/site/index.html', 'w').write(page('Find out what your business is losing', DESC, '/', HOME))
 open(ROOT + '/site/free-audit.html', 'w').write(page('The free audit', 'A free fifteen-minute audit of your service business. We walk it from the first call to the last invoice, put a number on what it is costing you, and tell you what to fix first. You keep the plan.', '/free-audit', AUDIT))

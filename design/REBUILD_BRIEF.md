@@ -474,3 +474,11 @@ Sam: "Fix them all. Custom to the page. No repeated images. Every page needs to 
 - Trades page: a small drawing for each of the six trades in the grid (`TRSVG`).
 - Check run: no drawing over 400 characters appears on more than one page; no overflow on any page at 1440 or 390 wide.
 - Not done: the build pages still share section layouts (problem, signs, how it works, what changes, questions). The words and the product windows differ per page; the block shapes do not.
+
+## 22x. Page-by-page passes begin; homepage notes (Nov 27)
+
+Sam: every page needs the homepage treatment, many passes each, not one picture per page. Homepage "is really solid" apart from two notes.
+
+- Homepage: trades row removed (Sam crossed it out). Leaks section back in colour ("I liked the colors here"): `.lk{--blue:#266df1;--red:#e5484e;--amber:#f0a001}`, kept through `mono()` via `_KEEP`.
+- Free audit, pass one (`FAUDIT` in mk_pages.py): a pinned three-step stage (`.fa3`: a week with one slot filling, a call as alternating bubbles, the report drawing in), the report rows arriving one by one (`.far`), and the eight places as one line that walks across and back (`.faw`). Old three-cell row and icon grid removed; all copy unchanged.
+- Order agreed for the rest: one page at a time, shown to Sam after each pass.

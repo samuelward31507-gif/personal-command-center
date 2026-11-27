@@ -2321,6 +2321,111 @@ FIGS = {   # page: (section it goes after, the figure)
 }
 
 
+# ---- /free-audit : rebuilt section by section (Nov 27) ----
+_fa_cal = ('<div class="xc"><div class="xc-h">%s</div><div class="xc-g">%s</div><p class="fa-k">[Fifteen minutes]<em>Example week</em></p></div>'
+           % (''.join('<span>%s</span>' % d for d in ('Mon', 'Tue', 'Wed', 'Thu', 'Fri')),
+              ''.join('<i class="%s"></i>' % ('on' if k == 8 else 'tk' if k in (1, 5, 6, 12, 14) else '') for k in range(15))))
+_fa_talk = ('<div class="xt">%s<p class="fa-k">[One call]<em>How your business runs</em></p></div>'
+            % ''.join('<div class="%s" style="--i:%d"><i style="width:%d%%"></i>%s</div>' % ('r' if k % 2 else 'l', k, w, '<i style="width:%d%%"></i>' % w2 if w2 else '')
+                      for k, (w, w2) in enumerate(((62, 0), (80, 46), (54, 0), (88, 60), (70, 0), (76, 38)))))
+_fa_rep = ('<div class="xr"><div class="xr-h"><b></b><span>[Yours]</span></div>%s<div class="xr-f"><i></i><i></i><i></i></div><p class="fa-k">[The plan]<em>You keep it</em></p></div>'
+           % ''.join('<div class="xr-r" style="--i:%d"><i style="width:%d%%"></i><b></b></div>' % (k, w) for k, w in enumerate((58, 72, 44, 66, 52))))
+FA3 = ('<section class="fa3" data-sp><div class="w fa3-g"><div class="fa3-h"><span class="lb">How it works</span>'
+       '<p class="st-t">Fifteen minutes, then it&rsquo;s yours. <span>No slides and no pitch deck. One call about how your business runs, and a short report you keep whether or not you work with us.</span></p></div>%s</div></section>'
+       % ''.join('<figure class="fa3-f xf%d" aria-hidden="true">%s</figure><div class="fa3-t t%d"><span>[Step 0%d]</span><h3>%s</h3><p>%s</p></div>' % (k, fig, k, k, h, t)
+                 for k, (fig, h, t) in enumerate(((_fa_cal, 'Book a time.', 'Pick a slot. Bring rough numbers: leads a month, your average job, how many quotes you close.'),
+                                                  (_fa_talk, 'We walk your business.', 'Calls, forms, texts, estimates, quotes, invoices, reviews and the work done by hand, including after hours.'),
+                                                  (_fa_rep, 'You keep the plan.', 'What it&rsquo;s costing you, a number on each finding, and what to fix first.')), 1)))
+FAREP = ('<section class="hw far"><div class="w hw-g"><div class="hw-t"><span class="lb">What you leave with</span>'
+         '<p class="st-t">A short report with a number on everything. <span>Made from your business, not from a template.</span></p>'
+         '<ol>%s</ol></div><div class="hw-r" data-in>%s</div></div></section>'
+         % (''.join('<li><div><b>%s</b><span>%s</span></div></li>' % x for x in [
+             ('Every finding, mapped.', 'Each place a job or an hour can slip, checked against how you run today.'),
+             ('A figure on each.', 'Worked out from your own numbers: leads a month, average job, how many quotes you close.'),
+             ('The order to fix them.', 'Ranked by what each one costs you, so the first fix is the one that pays most.'),
+             ('A plan that&rsquo;s yours.', 'Take it to anyone, or build it yourself.')]), H.FD))
+FAWALK = ('<section class="faw"><div class="w faw-i"><div class="faw-h"><span class="lb">What we look at</span>'
+          '<p class="st-t">The whole business, part by part. <span>Not only how fast you answer the phone. Eight places where jobs, money or hours go missing.</span></p></div>'
+          '<p class="faw-n">First call</p><div class="faw-g" data-in>%s</div><p class="faw-n b">Last invoice, and after</p></div></section>'
+          % ''.join('<div class="faw-c" style="--i:%d"><span>[%02d]</span><b>%s</b><p>%s</p></div>' % (k, k + 1, h, t) for k, (h, t) in enumerate((
+              ('Getting found.', 'What your website and your Google listing bring in, and what they lose.'),
+              ('How leads come in.', 'Calls, forms, Facebook, Angi, Thumbtack. Where each one lands and who sees it.'),
+              ('How they get answered.', 'How long a new lead waits to hear back, including after hours.'),
+              ('How estimates get booked.', 'Whether serious leads end up on your calendar and show up.'),
+              ('How quotes get followed up.', 'Quotes sent and never chased.'),
+              ('How you get paid.', 'When invoices go out, how long they wait, and who reminds anyone.'),
+              ('What happens after the job.', 'Finished jobs with no review request, no referral ask and no repeat work.'),
+              ('What&rsquo;s done by hand.', 'Every task someone repeats each week that could run on its own.')))))
+FAUDIT = (H.inner_hero('The free audit', 'A full audit of your business, free.',
+                       'We walk your business from the first call to the last invoice and show you what it&rsquo;s costing you, in dollars a month and hours a week, and what to fix first.',
+                       H.BOOK + '<a class="btn q" href="/audit">Check your site in 60 seconds</a>', H.MAP)
+          + FA3 + FAREP + FAWALK
+          + H.split('What to bring', 'Rough numbers are fine.', 'You don&rsquo;t need a spreadsheet. If you know roughly these four things, we can do the rest on the call.',
+                    H.facts('Bring these', 'Rough is fine', [('Leads a month', 'About 100', ''), ('Your average job', 'About $2,400', ''), ('Quotes you close', 'About 1 in 3', ''), ('Where leads come from', 'Google, Facebook, referrals', '')])
+                    + '<p class="sd-n">Sample answers</p>')
+          + H.faq('Questions.', [('Is it really free?', 'Yes. You keep the plan whether or not you work with us.'),
+                                 ('How long is the call?', 'Fifteen minutes.'),
+                                 ('Do I need to prepare?', 'Just rough numbers. We do the rest.'),
+                                 ('What happens after?', 'If you want the fixes, we build them for your business and price them to it. If not, you keep everything we found.'),
+                                 ('Rather write?', 'Email <a href="mailto:sam.cinderrevenue@gmail.com">sam.cinderrevenue@gmail.com</a>.')])
+          + H.ask('Start with your website.', 'A free check of your site in 60 seconds, before the call.', 'Check your site', '/audit')
+          + ('<section class="bk2" id="book"><div class="w bk2-i"><p class="st-t">Pick a time. <span>Fifteen minutes, on the phone or on video.</span></p>'
+             '<iframe src="https://cal.com/audit-call/15min?embed=true&amp;theme=light" title="Book your free audit" loading="lazy"></iframe></div></section>')
+          + H.CL)
+CSS_FA = r"""
+/* ---- /free-audit ---- */
+.fa-k{margin:18px 0 0;display:flex;justify-content:space-between;font:500 11.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}.fa-k em{font-style:normal;color:var(--t3)}
+.fa3{--l1:clamp(0,calc(var(--p,1)*4.4),1);--l2:clamp(0,calc((var(--p,1) - .4)*3.4),1);--l3:clamp(0,calc((var(--p,1) - .76)*4.8),1)}
+.fa3-g{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(56px,6vw,110px) clamp(22px,3.1vw,60px)}
+.fa3-h{max-width:46em;margin-bottom:clamp(36px,4vw,72px)}.fa3-h .st-t{margin-top:18px}
+.fa3-f{margin:0 0 22px;max-width:520px}
+.fa3-t{margin-bottom:56px}.fa3-t span{font:500 11.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}
+.fa3-t h3{margin:14px 0 0;font:400 clamp(30px,3.3vw,60px)/1.04 Georgia,"Times New Roman",serif;letter-spacing:-.025em}
+.fa3-t p{margin:16px 0 0;max-width:24em;font-size:clamp(15.5px,1.1vw,20px);line-height:1.42;color:var(--g2)}
+.xc-h,.xc-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}.xc-h span{padding:0 0 10px 2px;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)}
+.xc-g{border-top:1px solid var(--ink);border-left:1px solid var(--ln)}.xc-g i{position:relative;aspect-ratio:1.15;border-right:1px solid var(--ln);border-bottom:1px solid var(--ln)}
+.xc-g i.tk::after{content:"";position:absolute;inset:7px;border:1px solid var(--ln);border-radius:5px;background:repeating-linear-gradient(135deg,transparent 0 5px,rgba(0,0,0,.05) 5px 6px)}
+.xc-g i.on::after{content:"";position:absolute;inset:7px;border-radius:5px;background:var(--ink);opacity:clamp(0,calc(var(--l1)*4 - 1.6),1);transform:scale(calc(.82 + .18*clamp(0,calc(var(--l1)*4 - 1.6),1)))}
+.xc-g i.on::before{content:"";position:absolute;inset:7px;border:1px solid var(--ink);border-radius:5px}
+.xt{display:grid;gap:12px}.xt>div{--o:clamp(0,calc(var(--l2)*7 - var(--i)),1);width:62%;padding:15px 16px;border:1px solid var(--ink);border-radius:14px 14px 14px 3px;display:grid;gap:8px;opacity:var(--o);transform:translateY(calc((1 - var(--o))*14px))}
+.xt>div.r{justify-self:end;border-color:var(--ln);border-radius:14px 14px 3px 14px;background:var(--g)}.xt>div i{display:block;height:1px;background:var(--ink)}.xt>div.r i{background:#b4b7bf}
+.xr{border:1px solid var(--ink);border-radius:10px;padding:22px 22px 18px;background:#fff}.xr .fa-k{margin-top:16px}
+.xr-h{display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--ink)}.xr-h b{width:34%;height:9px;background:var(--ink);border-radius:2px}
+.xr-h span{font:500 11px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;opacity:clamp(0,calc(var(--l3)*8 - 6.6),1)}
+.xr-r{--o:clamp(0,calc(var(--l3)*7 - var(--i)),1);display:flex;justify-content:space-between;align-items:center;padding:15px 0;border-bottom:1px solid var(--ln)}
+.xr-r i{height:1px;background:var(--ink);transform-origin:left;transform:scaleX(var(--o))}.xr-r b{width:13%;height:9px;border-radius:2px;background:var(--ink);opacity:var(--o)}
+.xr-f{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding-top:16px;opacity:clamp(0,calc(var(--l3)*7 - 5),1)}.xr-f i{height:34px;border-radius:5px;background:var(--ink)}.xr-f i+i{background:none;border:1px solid var(--ink)}
+@media(min-width:861px){
+.fa3.sp-live .fa3-g{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);column-gap:clamp(40px,6vw,110px)}
+.fa3.sp-live .fa3-h{grid-column:1/-1}
+.fa3.sp-live .fa3-f{grid-column:1;grid-row:2/5;position:sticky;top:calc(50vh - 200px);align-self:start;width:100%;max-width:none;margin:0}
+.fa3.sp-live .fa3-t{grid-column:2;min-height:76vh;margin:0;display:flex;flex-direction:column;justify-content:center}
+.fa3.sp-live .t1{grid-row:2}.fa3.sp-live .t2{grid-row:3}.fa3.sp-live .t3{grid-row:4}
+.fa3.sp-live .xf1{opacity:calc(1 - clamp(0,calc((var(--p,0) - .34)*14),1))}
+.fa3.sp-live .xf2{opacity:calc(clamp(0,calc((var(--p,0) - .4)*14),1)*(1 - clamp(0,calc((var(--p,0) - .7)*14),1)))}
+.fa3.sp-live .xf3{opacity:clamp(0,calc((var(--p,0) - .76)*14),1)}}
+.far .fd-r,.far .fd-f{--o:clamp(0,calc(var(--p,1)*8 - var(--k,0)),1);opacity:var(--o);transform:translateY(calc((1 - var(--o))*10px))}
+.far .fd-r:nth-child(3){--k:1}.far .fd-r:nth-child(4){--k:2}.far .fd-r:nth-child(5){--k:3}.far .fd-r:nth-child(6){--k:4}.far .fd-f{--k:5.4}
+.faw-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(56px,6vw,110px) clamp(22px,3.1vw,60px)}
+.faw-h{max-width:46em;margin-bottom:clamp(40px,4.4vw,80px)}.faw-h .st-t{margin-top:18px}
+.faw-g{--gap:clamp(44px,4.2vw,76px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));row-gap:var(--gap);margin-right:34px}
+.faw-c{--o:clamp(0,calc(var(--p,1)*9 - var(--i)),1);position:relative;padding:26px 22px 0 0}
+.faw-c::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--ink);transform-origin:left;transform:scaleX(var(--o))}
+.faw-c::after{content:"";position:absolute;left:0;top:-3px;width:7px;height:7px;background:var(--ink);opacity:var(--o)}
+.faw-c>*{opacity:var(--o)}
+.faw-c span{font:500 11.5px/1 "Geist Mono",monospace;letter-spacing:.05em;color:var(--t3)}
+.faw-c b{display:block;margin-top:14px;font:400 clamp(21px,1.75vw,31px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.015em}
+.faw-c p{margin:10px 0 0;font-size:clamp(14px,.95vw,16.5px);line-height:1.42;color:var(--g2)}
+.faw-c:nth-child(5){grid-column:4}.faw-c:nth-child(6){grid-column:3}.faw-c:nth-child(7){grid-column:2}.faw-c:nth-child(8){grid-column:1}
+.faw-c:nth-child(n+5){grid-row:2}.faw-c:nth-child(n+5)::before{transform-origin:right}.faw-c:nth-child(n+5)::after{left:auto;right:0}.faw-c:nth-child(n+5){padding:26px 0 0 22px;text-align:left}
+.faw-g>.faw-c:nth-child(4)>i{display:none}
+.faw-g{position:relative}.faw-g::after{content:"";position:absolute;right:-34px;top:0;width:34px;height:calc(50% + var(--gap)/2 + 1px);border:1px solid var(--ink);border-left:0;border-radius:0 34px 34px 0;opacity:clamp(0,calc(var(--p,1)*9 - 3.6),1);box-sizing:border-box}
+.faw-n{margin:0 0 18px;font:500 11.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)}.faw-n.b{margin:clamp(26px,2.6vw,46px) 0 0}
+@media(max-width:860px){.faw-g{grid-template-columns:minmax(0,1fr);row-gap:0;margin:0;border-left:1px solid var(--ink)}.faw-g::after{display:none}
+.faw-c,.faw-c:nth-child(n+5){grid-column:1;grid-row:auto;padding:0 0 30px 22px}.faw-c::before{display:none}.faw-c::after,.faw-c:nth-child(n+5)::after{left:-4px;right:auto;top:2px}
+.fa3-f{max-width:none}}
+"""
+
 import drawings as DW
 DWX = {  # pages that are not builds: (label, line, title)
     'free-audit': ('The free audit', 'The business, taken apart.', 'Every part of it, checked.'),
@@ -2637,7 +2742,7 @@ clip-path:inset(calc(var(--T)*var(--k)) calc((100% - var(--L) - var(--fw)*var(--
 out = pathlib.Path(ROOT) / 'site'
 _home = H.HOME.replace(H.WHAT, portal('bars', 'One example business', 'Three leaks. It adds up.', 'That is what an audit finds.') + H.WHAT)
 assert _home != H.HOME
-CSS = H.mono(CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL + CSS_STAGE + CSS_DAY + CSS_LINE)
+CSS = H.mono(CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL + CSS_STAGE + CSS_DAY + CSS_LINE + CSS_FA)
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V
@@ -2693,6 +2798,6 @@ if __name__ == '__main__':
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)
-    (out / 'free-audit.html').write_text(page('The free audit', 'A free fifteen-minute audit of your service business. We walk it from the first call to the last invoice, put a number on what it is costing you, and tell you what to fix first. You keep the plan.', '/free-audit', trans('free-audit', H.AUDIT), css=PCSS))
+    (out / 'free-audit.html').write_text(page('The free audit', 'A free fifteen-minute audit of your service business. We walk it from the first call to the last invoice, put a number on what it is costing you, and tell you what to fix first. You keep the plan.', '/free-audit', trans('free-audit', FAUDIT), css=PCSS))
     (out / 'index.html').write_text(page('Find out what your business is losing', H.DESC, '/', _home, css=PCSS))
     print('pages', [p[0] for p in PAGES], V)
