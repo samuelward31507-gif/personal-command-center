@@ -63,3 +63,8 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Custom-build drawing redone: an uneven plot marked out in dashed pieces, four blocks of different sizes cut to fit, one piece still open in red.
 - Message notes have speech tails. Hero pin shortened (144svh) so the page moves on sooner after the C forms.
 - Still open with Sam: the typeface (Geist needs his OK to download), the "If AI can do it" line.
+
+## Pass 13 (Sam: numbered steps look like bullet points; drawings still a little tacky)
+- Steps are short paragraphs now: a bold lead and one sentence, hairline between, no numerals (`.mp`, `.mp-i` in home2.css; built by ax() in patch_home.py). Two columns when there are four or more.
+- Drawings quietened: solid faces in three tones instead of outlines over black, no hatching, no guide dashes, no ground plots, no corner marks. The tacky part was the decoration added in pass 10.
+- Audit questions moved out of the drawing panel into the paragraphs. Calendar notes lost their red [01] numerals.
