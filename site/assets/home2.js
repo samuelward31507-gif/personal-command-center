@@ -17,22 +17,6 @@
     return { sub: function (f) { subs.push(f) }, onMeasure: function (f) { ms.push(f) }, now: later }
   })();
   function metric(sec) { var m = { top: 0, h: 1 }; Flow.onMeasure(function (y) { var r = sec.getBoundingClientRect(); m.top = r.top + y; m.h = r.height }); return m }
-  // A pinned section's hand-off. A section marked fl-in starts under the end of the one before it: for most of a screen of scroll both are pinned,
-  // the old one pushes past the camera and the new one arrives from behind it. Returns how far through its own content the section is.
-  function handoff(sec, inner, m) {
-    var cin = sec.classList.contains('fl-in'), nx = sec.nextElementSibling, cout = !!(nx && nx.classList.contains('fl-in')), st = { pc: 0, ui: 0, s: 1 }, la = -1, ls = -1;
-    return function (y) {
-      if (innerWidth <= 900 || rm) { if (la !== -2) { la = -2; inner.style.opacity = ''; inner.style.transform = ''; inner.style.visibility = ''; inner.style.pointerEvents = ''; sec.classList.add('seen') } st.pc = 1; st.ui = 1; st.s = 1; return st }
-      var vh = innerHeight, X = vh * .8, range = Math.max(1, m.h - vh), a, sc, ui = cin ? cl01((y - m.top) / X) : cl01((y + vh - m.top) / vh), uo = cout ? cl01((y - (m.top + range - X)) / X) : 0, e;
-      if (cin) { e = ez01((ui - .4) / .6); a = e; sc = .9 + .1 * e } else { e = ez01((ui - .12) / .8); a = e; sc = .955 + .045 * e }
-      if (uo > 0) { e = ez01(uo / .6); a *= 1 - e; sc *= 1 + .18 * e }
-      a = Math.round(a * 1000) / 1000; sc = Math.round(sc * 10000) / 10000;
-      if (a !== la) { la = a; inner.style.opacity = a; inner.style.visibility = a <= 0 ? 'hidden' : 'visible'; inner.style.pointerEvents = a < .5 ? 'none' : '' }
-      if (sc !== ls) { ls = sc; inner.style.transform = sc === 1 ? '' : 'scale(' + sc + ')' }
-      if (ui > (cin ? .55 : .5)) sec.classList.add('seen');
-      st.ui = ui; st.s = sc; st.pc = cl01((y - m.top - (cin ? X : 0)) / Math.max(1, range - (cin ? X : 0) - (cout ? X : 0))); return st
-    }
-  }
   // Parts of a drawing, scrubbed: each one lowers in while its lines draw, tied to the scroll instead of to a timer.
   function drawParts(list, f) {
     for (var i = 0; i < list.length; i++) { var g = list[i], d = cl01((f - g._n + .55) / .75); if (g._d === d) continue; g._d = d; var st = g.style;
@@ -100,115 +84,84 @@
       new ResizeObserver(size).observe(host); new IntersectionObserver(function (e) { vis = e[0].isIntersecting; if (vis) kick() }).observe(sec); addEventListener('scroll', prog, { passive: true }); if (document.fonts && document.fonts.ready) document.fonts.ready.then(kick); size(); prog()
     })
   })();
-  // ---- the calendar: starts close on the booking, pulls back to the week, and its notes come out of the sides
-  [].forEach.call(document.querySelectorAll('.pz'), function (sec) {
-    var fig = sec.querySelector('.pz-fig'), bs = [].slice.call(sec.querySelectorAll('.pz-b')), tk = false, ezz = function (x) { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x) };
-    var SHOW = [1, 3, 4], lastSt = -1;   // the step at which each card comes out
+  // ---- the steps of a section: ordinary page text. Which block is at the reading line, and how far between two of them the scroll is.
+  function stepper(root, sel) {
+    var steps = [].slice.call(root.querySelectorAll(sel)), at = steps.map(function (s) { return +s.dataset.at }), tops = [], cur = -9;
+    Flow.onMeasure(function (y) { tops = steps.map(function (s) { var r = s.getBoundingClientRect(); return r.top + y + r.height / 2 }) });
+    return {
+      n: steps.length,
+      f: function (y) { var vh = innerHeight, line = y + vh * .52, n = tops.length, i; if (!n) return 0;
+        if (line <= tops[0]) return at[0] - (tops[0] - line) / (vh * .42);
+        for (i = 0; i < n - 1; i++) if (line < tops[i + 1]) return at[i] + (at[i + 1] - at[i]) * (line - tops[i]) / (tops[i + 1] - tops[i]);
+        return at[n - 1] + Math.min(1, (line - tops[n - 1]) / (vh * .5)) },
+      mark: function (y) { var line = y + innerHeight * .52, k = -1, best = innerHeight * .4, i, d; for (i = 0; i < tops.length; i++) { d = Math.abs(line - tops[i]); if (d < best) { best = d; k = i } }
+        if (k !== cur) { cur = k; steps.forEach(function (e, j) { e.classList.toggle('cur', j === k) }) } },
+      all: function () { if (cur !== -5) { cur = -5; steps.forEach(function (e) { e.classList.add('cur') }) } }
+    }
+  }
+  // ---- sections that build while the page keeps scrolling. The words scroll past like any page; the picture beside them stays put and builds as each block reaches it.
+  [].forEach.call(document.querySelectorAll('.sx'), function (sec) {
+    var q = function (x) { return [].slice.call(sec.querySelectorAll(x)) }, S = stepper(sec, '.sx-st'), N = +sec.dataset.steps || S.n, draw = partsOf(sec), plates = q('.pl'), ones = q('.axc [data-is]'), lits = q('.axc [data-lit]'), vals = q('[data-v]'), curC = -9;
+    var fig = sec.querySelector('.pz-fig'), bs = q('.pz-b'), stage = sec.querySelector('.pz-stage'), cs = fig && fig.querySelector('.cs'), SHOW = [1, 3, 4], lastSt = -1;
     function state(st) { if (st === lastSt) return; lastSt = st; for (var k = 1; k <= 4; k++) sec.classList.toggle('s' + k, st >= k); bs.forEach(function (b, i) { b.classList.toggle('on', st >= SHOW[i]) }) }
-    // a portal section: a drawing plays first, then the scroll flies through one face of it and that face opens into the app screen
-    var pt = sec.classList.contains('pt'), art = sec.querySelector('.pt-art'), asvg = art && art.querySelector('svg'), aparts = art ? [].slice.call(art.querySelectorAll('[data-lit]')) : [], M = null, lastK = -9;
-    function cl(x) { return x < 0 ? 0 : x > 1 ? 1 : x }
-    var world = sec.querySelector('.pt-world'), rim = sec.querySelector('.pt-rim'), ov = sec.querySelector('.pt-ov'), pin = sec.querySelector('.pz-in'), G = null;
-    var frame = ov && ov.querySelector('.pt-frame'), ct = ov && ov.querySelector('.pt-ct'), ctb = ct && ct.querySelector('b'), hand2 = ov && ov.querySelector('.pt-hand2'), SPIN = [8, -14, 6, -10, 18, -7, 12, -16], lastN = 0;
-    var tc = ov && ov.querySelector('.pt-c'), rings = ov ? [].slice.call(ov.querySelectorAll('.pt-r')) : [], rays = ov && ov.querySelector('.pt-rays'), hand = ov && ov.querySelector('.pt-hand'), hub = ov && ov.querySelector('.pt-hub'), title = ov && ov.querySelector('.pt-title');
-    function solve() {   // where the dial sits, in the drawing's layer and in the pinned frame, and how far it has to open to swallow the frame
-      var keep = pin.style.transform; pin.style.transform = 'none'; art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), V = pin.getBoundingClientRect(), D = asvg.dataset.dial.split(' ').map(Number); pin.style.transform = keep;
+    function fit() { if (!cs) return; var w = fig.offsetWidth; if (!w) return; cs.style.setProperty('--s', (w / 1600).toFixed(5)); stage.style.setProperty('--fw', w + 'px'); stage.style.setProperty('--pz', Math.max(.58, Math.min(1, w / 780)).toFixed(3)) }
+    if (fig) { if ('ResizeObserver' in window) new ResizeObserver(fit).observe(fig); addEventListener('resize', fit); fit(); setTimeout(fit, 400) }
+    function pick(list, k) { return list[Math.max(0, Math.min(list.length - 1, k))] }
+    function set(c) { if (c === curC) return; curC = c; var k = Math.max(0, c);
+      ones.forEach(function (e) { e.classList.toggle('cur', +e.dataset.is === k) }); lits.forEach(function (e) { e.classList.toggle('now', +e.dataset.lit === c) });
+      vals.forEach(function (e) { e.textContent = pick(e.dataset.v.split('|'), c) }) }
+    function pull(f) { for (var i = 0; i < plates.length; i++) { var o = ez01(1.2 - Math.abs(f - (+plates[i].dataset.is)) * 2.1); if (plates[i]._o !== o) { plates[i]._o = o; plates[i].style.setProperty('--o', o.toFixed(4)) } } }
+    Flow.sub(function (y) {
+      if (innerWidth <= 900) { S.all(); drawParts(draw, 99); set(N - 1); pull(-9); if (fig) state(4); return }
+      var f = S.f(y); S.mark(y); drawParts(draw, f); pull(f); set(f < -.5 ? -1 : Math.min(N - 1, Math.round(f)));
+      if (fig) state(f < -.45 ? 0 : f < .12 ? 1 : f < .7 ? 2 : f < 1.7 ? 3 : 4)
+    })
+  });
+  // ---- the front desk and the way through the clock. The stage is pinned and the words scroll over its left side; each block draws its part of the phone.
+  // When the words run out, the dial beside the phone opens, the scroll goes through the works of a clock, and it lands on a title page that scrolls away like any page.
+  var ptl = document.querySelector('.pt2');
+  if (ptl) (function () {
+    var Q = function (x) { return ptl.querySelector(x) }, pin = Q('.pt2-pin'), art = Q('.pt-art'), asvg = art.querySelector('svg'), ov = Q('.pt-ov'), rim = Q('.pt-rim'), fr = Q('.pt2-fr'), run = Q('.pt2-run');
+    var frame = Q('.pt-frame'), ct = Q('.pt-ct'), ctb = ct.querySelector('b'), hand = Q('.pt-hand'), hand2 = Q('.pt-hand2'), hub = Q('.pt-hub'), tc = Q('.pt-c'), rings = [].slice.call(ptl.querySelectorAll('.pt-r')), rays = Q('.pt-rays'), title = Q('.pt-title');
+    var S = stepper(ptl, '.sx-st'), adraw = partsOf(art), lits = [].slice.call(art.querySelectorAll('[data-lit]')), SPIN = [8, -14, 6, -10, 18, -7, 12, -16], G = null, lastN = 0, lastC = -9, M = { end: 0, run: 0 }, off = false;
+    Flow.onMeasure(function (y) { var r = ptl.getBoundingClientRect(); M.end = r.top + y + r.height - innerHeight; M.run = run.getBoundingClientRect().top + y; G = null });
+    function solve() {   // where the dial sits, in the drawing's layer and in the pinned stage, and how far it has to open to swallow the stage
+      var keep = art.style.transform; art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), V = pin.getBoundingClientRect(), D = asvg.dataset.dial.split(' ').map(Number); art.style.transform = keep;
       if (!c || !L.width) return; var k = Math.sqrt(c.a * c.a + c.b * c.b), x = c.a * D[0] + c.e - L.left, y = c.d * D[1] + c.f - L.top, X = x + L.left - V.left, Y = y + L.top - V.top;
       var far = Math.sqrt(Math.pow(Math.max(X, V.width - X), 2) + Math.pow(Math.max(Y, V.height - Y), 2)) * 1.06;
-      G = { x: x, y: y, X: X, Y: Y, W: V.width, H: V.height, rx: D[2] * k, ry: D[3] * k, far: far, end: far / (D[2] * k) };
+      G = { x: x, y: y, X: X, Y: Y, W: V.width, H: V.height, rx: D[2] * k, ry: D[3] * k, far: far, end: far / (D[2] * k) }
     }
-    var adraw = partsOf(art);
-    function litArt(k) { if (k === lastK) return; lastK = k; aparts.forEach(function (e) { var n = +e.dataset.lit; e.classList.toggle('on', n <= k); e.classList.toggle('now', n === k) }) }
-    // The timeline of the pinned section, as fractions of its scroll: the drawing, the way through the dial, the title page, the calendar coming up, the booking.
-    var P0 = .17, P1 = .45, D0 = .56, D1 = .67;
-    function upPortal(p) {
-      litArt(p < .02 ? -1 : p < .055 ? 0 : p < .09 ? 1 : p < .125 ? 2 : 3); drawParts(adraw, p / .035 - .1 + (UI - 1) * 1.4);
-      var t = cl((p - P0) / (P1 - P0)), d = cl((p - D0) / (D1 - D0)), ed = ezz(d);
+    function rest() { if (off) return; off = true; art.style.transform = ''; art.style.opacity = ''; art.style.visibility = ''; ov.style.visibility = 'hidden'; rim.style.opacity = 0; fr.style.opacity = ''; asvg.classList.remove('flying') }
+    Flow.sub(function (y) {
+      var vh = innerHeight;
+      if (innerWidth <= 900 || rm) { rest(); S.all(); drawParts(adraw, rm && innerWidth > 900 ? S.f(y) : 99); return }
+      var f = S.f(y), c = Math.round(f); S.mark(y); drawParts(adraw, f); if (c !== lastC) { lastC = c; lits.forEach(function (e) { e.classList.toggle('now', +e.dataset.lit === c) }) }
+      var yS = M.run - vh * .62, yE = M.end - vh * .05, t = cl01((y - yS) / Math.max(1, yE - yS));
       if (t > 0 && !G) solve();
-      if (t <= 0 || !G) { art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; ov.style.visibility = 'hidden'; rim.style.opacity = 0; world.style.visibility = 'hidden'; asvg.classList.remove('flying'); sec.style.setProperty('--ha', 1); sec.style.setProperty('--hb', 0); sec.classList.remove('pb'); state(0); return }
+      if (t <= 0 || !G) { rest(); return }
+      off = false;
       // 1. the dial opens and turns to face you; the drawing rushes past
-      var td = cl(t / .4), sc = Math.pow(G.end, ezz(td)), sy = sc * (1 + cl(td * 1.6)), rx = G.rx * sc, ry = G.ry * sy;
+      var td = cl01(t / .4), sc = Math.pow(G.end, ez01(td)), sy = sc * (1 + cl01(td * 1.6)), rx = G.rx * sc, ry = G.ry * sy;
       art.style.transform = 'translate(' + G.x.toFixed(2) + 'px,' + G.y.toFixed(2) + 'px) scale(' + sc.toFixed(4) + ',' + sy.toFixed(4) + ') translate(' + (-G.x).toFixed(2) + 'px,' + (-G.y).toFixed(2) + 'px)';
-      art.style.opacity = (1 - cl((td - .7) / .3)).toFixed(3); art.style.visibility = td >= 1 ? 'hidden' : 'visible'; asvg.classList.add('flying');
-      ov.style.visibility = d >= 1 ? 'hidden' : 'visible'; ov.style.opacity = (1 - cl((d - .25) / .6)).toFixed(3);
+      art.style.opacity = (1 - cl01((td - .7) / .3)).toFixed(3); art.style.visibility = td >= 1 ? 'hidden' : 'visible'; asvg.classList.add('flying'); fr.style.opacity = (1 - cl01(t / .1)).toFixed(3);
+      ov.style.visibility = 'visible';
       ov.style.clipPath = td >= 1 ? 'none' : 'ellipse(' + rx.toFixed(1) + 'px ' + ry.toFixed(1) + 'px at ' + G.X.toFixed(1) + 'px ' + G.Y.toFixed(1) + 'px)';
       rim.style.cssText = 'left:' + (G.X - rx).toFixed(1) + 'px;top:' + (G.Y - ry).toFixed(1) + 'px;width:' + (2 * rx).toFixed(1) + 'px;height:' + (2 * ry).toFixed(1) + 'px;opacity:' + (td >= 1 ? 0 : 1);
-      // 2. through it: the works of a clock come at you ring by ring and pass, each turning its own way; hands sweep; a counter runs the seconds
-      var G2 = 2.05, u = t * (9.1 + Math.log(.46 * Math.min(G.W, G.H) / 44) / Math.log(G2)) - 1.1, m = ezz(cl(t / .5)), cx = G.X + (G.W / 2 - G.X) * m, cy = G.Y + (G.H / 2 - G.Y) * m, live = cl(t / .14) * (1 - cl((t - .7) / .14));
+      // 2. through it: the works of a clock come at you ring by ring and pass, each turning its own way and growing heavier as it nears; hands sweep; a counter runs the seconds
+      var G2 = 2.05, u = t * (9.1 + Math.log(.46 * Math.min(G.W, G.H) / 44) / Math.log(G2)) - 1.1, mm = ez01(t / .5), cx = G.X + (G.W / 2 - G.X) * mm, cy = G.Y + (G.H / 2 - G.Y) * mm, live = cl01(t / .14) * (1 - cl01((t - .7) / .14));
       tc.setAttribute('transform', 'translate(' + cx.toFixed(1) + ',' + cy.toFixed(1) + ')');
-      rings.forEach(function (g, i) { var r = 44 * Math.pow(G2, u - i), o = r < 5 ? 0 : cl((r - 5) / 28) * (1 - cl((r - G.far * .8) / (G.far * .45))); g.setAttribute('transform', 'rotate(' + (u * SPIN[i]).toFixed(2) + ') scale(' + (r / 100).toFixed(4) + ')'); g.style.opacity = (o * (1 - cl((t - .82) / .16))).toFixed(3) });
+      rings.forEach(function (g, i) { var r = 44 * Math.pow(G2, u - i), near = cl01(r / G.far), o = r < 5 ? 0 : cl01((r - 5) / 28) * (1 - cl01((r - G.far * .8) / (G.far * .45))); g.setAttribute('transform', 'rotate(' + (u * SPIN[i]).toFixed(2) + ') scale(' + (r / 100).toFixed(4) + ')'); g.style.opacity = (o * (1 - cl01((t - .82) / .16))).toFixed(3); g.style.setProperty('--sw', (.7 + 1.5 * near).toFixed(2)) });
       rays.style.opacity = (live * .9).toFixed(3); rays.style.strokeDashoffset = (-u * 90).toFixed(1);
       hand.style.opacity = live.toFixed(3); hand2.style.opacity = (live * .8).toFixed(3); hub.style.opacity = live.toFixed(3); hand.setAttribute('transform', 'rotate(' + (t * 620).toFixed(2) + ')'); hand2.setAttribute('transform', 'rotate(' + (140 + t * 70).toFixed(2) + ')');
       var n = Math.max(1, Math.min(6, 1 + Math.floor(t / .7 * 6))); if (n !== lastN) { lastN = n; ctb.textContent = '00:0' + n }
       ct.style.opacity = live.toFixed(3); ct.style.transform = 'translate(' + (cx - G.W / 2).toFixed(1) + 'px,' + (cy - G.H / 2).toFixed(1) + 'px)';
       // 3. the last ring squares itself into the frame of the title page, and the headline rises into it
-      var r8 = 44 * Math.pow(G2, u - 8), ef = ezz(cl((t - .72) / .28)), FX = G.W * .05, FY = G.H * .11, FW = G.W - 2 * FX, FH = G.H - 2 * FY;
+      var r8 = 44 * Math.pow(G2, u - 8), ef = ez01((t - .72) / .28), FX = G.W * .05, FY = G.H * .11, FW = G.W - 2 * FX, FH = G.H - 2 * FY;
       var fw = 2 * r8 + (FW - 2 * r8) * ef, fh = 2 * r8 + (FH - 2 * r8) * ef, fx = (cx - r8) + (FX - (cx - r8)) * ef, fy = (cy - r8) + (FY - (cy - r8)) * ef;
-      frame.style.cssText = 'left:' + fx.toFixed(1) + 'px;top:' + fy.toFixed(1) + 'px;width:' + Math.max(0, fw).toFixed(1) + 'px;height:' + Math.max(0, fh).toFixed(1) + 'px;border-radius:' + ((1 - ef) * Math.min(fw, fh) / 2).toFixed(1) + 'px;opacity:' + (r8 < 5 ? 0 : cl((r8 - 5) / 28)).toFixed(3);
-      var tt = cl((t - .84) / .16);
-      title.style.opacity = (1 - cl(d / .45)).toFixed(3); title.style.setProperty('--tl', ezz(tt).toFixed(4)); title.style.setProperty('--fm', ef.toFixed(3)); title.style.transform = 'translateY(' + (-ed * 14).toFixed(2) + 'vh)';
-      sec.style.setProperty('--ha', (1 - cl(t / .22)).toFixed(3)); sec.style.setProperty('--hb', cl((d - .4) / .5).toFixed(3)); sec.classList.toggle('pb', d > .4);
-      world.style.visibility = d > 0 ? 'visible' : 'hidden'; fig.style.opacity = ed.toFixed(3); fig.style.setProperty('--z', 1); fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', ((1 - ed) * 90).toFixed(1) + 'px');
-      state(d < 1 ? 0 : p > .93 ? 4 : p > .86 ? 3 : p > .78 ? 2 : p > .71 ? 1 : 0);
-    }
-    var m = metric(sec), H = handoff(sec, pin || sec.querySelector('.pz-in'), m), UI = 1;
-    function up(y) {
-      var st = H(y);
-      if (innerWidth <= 900) { fig.style.removeProperty('--z'); if (pt) { fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', '0px'); fig.style.opacity = 1; art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; world.style.visibility = 'visible'; ov.style.visibility = 'hidden'; rim.style.opacity = 0; asvg.classList.remove('flying'); litArt(3); drawParts(adraw, 99) } state(4); return }
-      var p = st.pc; UI = st.ui;
-      if (pt) { upPortal(p); return }
-      fig.style.setProperty('--z', (1.6 - .6 * ezz(p / .3)).toFixed(4)); state(p > .8 ? 4 : p > .66 ? 3 : p > .5 ? 2 : p > .33 ? 1 : 0)
-    }
-    if (pt) addEventListener('resize', function () { G = null });
-    var cs = fig.querySelector('.cs'), stage = sec.querySelector('.pz-stage');
-    function fit() { if (!cs) return; var w = fig.offsetWidth; if (!w) return; cs.style.setProperty('--s', (w / 1600).toFixed(5)); stage.style.setProperty('--fw', w + 'px'); stage.style.setProperty('--pz', Math.max(.58, Math.min(1, w / 780)).toFixed(3)) }
-    if ('ResizeObserver' in window) new ResizeObserver(fit).observe(fig); addEventListener('resize', fit); fit();
-    Flow.sub(up); setTimeout(function () { fit(); Flow.now() }, 400)
-  });
-  // ---- product pieces: a pinned section whose drawing is scrubbed by the scroll. Parts draw in as their moment arrives, a camera starts close on the first part,
-  // tracks from part to part and pulls back at the end to show the whole thing; words and counters still switch on the step.
-  [].forEach.call(document.querySelectorAll('.ax'), function (sec) {
-    var N = +sec.dataset.steps || 3, q = function (x) { return [].slice.call(sec.querySelectorAll(x)) }, parts = q('[data-at],[data-lit]'), lis = q('.px-steps li'), ones = q('[data-is]'), vals = q('[data-v]'), ws = q('[data-w]'), auto = sec.classList.contains('bone'), one = sec.classList.contains('one'), cur = -2, cyc = 0;
-    var inner = sec.querySelector('.ax-in'), svg = sec.querySelector('.axc>svg'), draw = partsOf(sec), plates = q('.pl'), m = metric(sec), H = handoff(sec, inner, m), foc = null, fw = 0, lastT = '';
-    function pick(list, k) { return list[Math.max(0, Math.min(list.length - 1, k))] }
-    function set(k) {
-      if (k === cur) return; cur = k; var c = Math.max(0, k);
-      parts.forEach(function (e) { var n = +(e.dataset.at || e.dataset.lit); e.classList.toggle('on', n <= k); e.classList.toggle('now', n === k) });
-      lis.forEach(function (li, i) { li.classList.toggle('on', i <= k); li.classList.toggle('cur', i === c) });
-      ones.forEach(function (e) { e.classList.toggle('cur', +e.dataset.is === c) });
-      sec.style.setProperty('--k', c);
-      vals.forEach(function (e) { e.textContent = pick(e.dataset.v.split('|'), k) });
-      ws.forEach(function (e) { e.style.width = pick(e.dataset.w.split(','), k) });
-    }
-    function pull(f) { for (var i = 0; i < plates.length; i++) { var o = ez01(1.25 - Math.abs(f - (+plates[i].dataset.is) - .5) * 2.2); if (plates[i]._o !== o) { plates[i]._o = o; plates[i].style.setProperty('--o', o.toFixed(4)) } } }
-    // where each step's part sits, as an offset from the middle of the drawing, so the camera has somewhere to go
-    function focus(sc) {
-      var R = svg.getBoundingClientRect(), c = svg.getScreenCTM(); fw = svg.clientWidth; if (!c || !R.width) return; foc = [];
-      for (var k = 0; k < N; k++) { var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; q('.axc [data-lit="' + k + '"],.axc [data-is="' + k + '"]').forEach(function (e) { var b; try { b = e.getBBox() } catch (x) { return } if (!b.width && !b.height) return; x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height) });
-        foc.push(x1 < x0 ? (foc[k - 1] || [0, 0, 0, 0]) : [(c.a * (x0 + x1) / 2 + c.e - R.left - R.width / 2) / sc, (c.d * (y0 + y1) / 2 + c.f - R.top - R.height / 2) / sc, c.a * (x1 - x0) / 2 / sc, c.d * (y1 - y0) / 2 / sc]) }
-    }
-    function cam(f, sc) {
-      if (!svg) return; if (!foc || fw !== svg.clientWidth) { if (lastT) { svg.style.transform = lastT = '' } focus(sc) } if (!foc) return;
-      var Z0 = 1.42, Z1 = 1, z = Z1 + (Z0 - Z1) * (1 - ez01((f - (N - 1.4)) / .95)), i = Math.max(0, Math.min(N - 1, f)), i0 = Math.floor(i), i1 = Math.min(N - 1, i0 + 1), u = ez01((i - i0 - .2) / .65), w = (z - Z1) / (Z0 - Z1) * .82;
-      var A = foc[i0], B = foc[i1], fx = A[0] + (B[0] - A[0]) * u, fy = A[1] + (B[1] - A[1]) * u, hw = A[2] + (B[2] - A[2]) * u, hh = A[3] + (B[3] - A[3]) * u, W2 = svg.clientWidth * .43, H2 = svg.clientHeight * .44;
-      z = Math.min(z, Math.max(Z1, Math.min(hw ? W2 / hw : 9, hh ? H2 / hh : 9))); w = (z - Z1) / (Z0 - Z1) * .82; hw *= z; hh *= z;   // never closer than the part in focus can fit
-      var tx = -fx * z * w, ty = -fy * z * w;
-      // the part in focus stays whole inside the window, label and all; if it is wider than the window, it is centred
-      if (w > 0) { var kx = fx * z + tx, ky = fy * z + ty, k2 = cl01(w * 3); if (hw > W2) tx -= kx * k2; else if (kx + hw > W2) tx -= (kx + hw - W2) * k2; else if (kx - hw < -W2) tx += (-W2 - kx + hw) * k2; if (hh > H2) ty -= ky * k2; else if (ky + hh > H2) ty -= (ky + hh - H2) * k2; else if (ky - hh < -H2) ty += (-H2 - ky + hh) * k2 }
-      var T = 'translate(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px) scale(' + z.toFixed(4) + ')';
-      if (T !== lastT) svg.style.transform = lastT = T
-    }
-    function up(y) {
-      if (auto) return; var st = H(y);
-      if (innerWidth <= 900 || rm) { drawParts(draw, 99); if (svg && lastT) svg.style.transform = lastT = ''; if (innerWidth > 900) { set(N - 1); pull(N - .5); return }
-        if (one && !rm) { if (!cyc) { set(0); pull(.5); cyc = setInterval(function () { var r = sec.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) { set((cur + 1) % N); pull(cur + .5) } }, 2400) } } else { set(N - 1); pull(N - .5) } return }
-      if (cyc) { clearInterval(cyc); cyc = 0 }
-      var f = st.pc * N * .999 + (st.ui - 1) * 1.3;   // below zero while the section is still arriving
-      set(st.ui < .6 ? -1 : Math.max(0, Math.floor(f))); drawParts(draw, f); pull(f); cam(f, st.s)
-    }
-    if (auto) { drawParts(draw, 99); if (rm || !('IntersectionObserver' in window)) set(N - 1); else new IntersectionObserver(function (e, o) { if (e[0].isIntersecting) { o.disconnect(); var k = 0; set(0); var t = setInterval(function () { k++; set(k); if (k >= N - 1) clearInterval(t) }, 1100) } }, { threshold: .45 }).observe(sec) }
-    else Flow.sub(up)
-  });
+      frame.style.cssText = 'left:' + fx.toFixed(1) + 'px;top:' + fy.toFixed(1) + 'px;width:' + Math.max(0, fw).toFixed(1) + 'px;height:' + Math.max(0, fh).toFixed(1) + 'px;border-radius:' + ((1 - ef) * Math.min(fw, fh) / 2).toFixed(1) + 'px;opacity:' + (r8 < 5 ? 0 : cl01((r8 - 5) / 28)).toFixed(3);
+      title.style.setProperty('--tl', ez01((t - .84) / .16).toFixed(4)); title.style.setProperty('--fm', ef.toFixed(3))
+    })
+  })();
   // ---- hero: pick a problem, get the fix in one line
   var hq = document.getElementById('hq');
   if (hq) {

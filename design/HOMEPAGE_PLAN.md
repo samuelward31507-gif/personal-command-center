@@ -142,3 +142,11 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 
 ## Pass 28 (Sam: "all white / grey / black for the designs")
 - No red inside any drawing or in the clock portal. The old red detail is now the brightest, slightly heavier white line (v28 in home2.css). Red is still used outside the drawings: the label dots, the hero ribbon, the stats.
+
+## Pass 29 (Sam: sections look stuck while you scroll; the zooming looks weird; sections should scroll into each other; a dead spot after the title page; text looks basic)
+- Every section is now `sx()`: ordinary page text in one column (heading, then one block per step, 54vh apart) that scrolls past, beside a sticky picture that builds as each block reaches the reading line (`stepper` in home2.js). No pinned slides, no camera, no dissolves; sections scroll into each other.
+- The portal (`.pt2`) is the one pinned set piece: the phone drawing is pinned on the right while four blocks scroll over the left; when they run out the dial opens (250vh spacer drives the tunnel). It lands on the title page right as the pin releases, so the title scrolls away with no hold.
+- The calendar is its own `sx` section (`.cal2`): the app screen sticky, three blocks scroll past, the pop-outs sit over the screen's edges.
+- Type: pills with red dots replaced by plain mono labels page-wide; h1/h2 at weight 520; step blocks with a mono index, a rail and a tick.
+- Reduced motion: drawings still build with the scroll (it is direct), the portal tunnel is skipped.
+- Still Inter. A new typeface needs a font file from Sam.
