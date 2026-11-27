@@ -518,3 +518,10 @@ What their product pages are made of, in order: a short label and a centred head
 - Follow-up rebuilt to that anatomy as the pattern page: centred live hero (quote and phone, `FU_LIVE`), three cells with pictures made for the page (`FU3`, `.v3`), the dark schedule kept, a self-stepping list that drives the open-quotes window (`FUACD`, `.acd`, runs on the live engine), then included, questions.
 - Every build page: the "Works with the rest" cards are now one numbered grid of the eight parts (`plug()`, `.pl8`).
 - Waiting on Sam's OK on Follow-up before the same anatomy goes onto the other build pages, each with its own pictures.
+
+## 23c. The standard, and Estimates (Nov 27)
+
+Sam's standard: every page as good as the homepage, the homepage as good as Attio. Per page: a playing first screen; a zoom-through transition drawn for it; a second scroll moment of a different kind (a pinned split where one side animates); three cells with pictures made for it; a list that steps and drives a window; a real graph where there are numbers; a little colour where it means something; header and section order unlike its neighbours.
+
+- Estimates rebuilt to all eight: `ES3` (three cells: photos and a voice note, the price book, the approve button), `ESWEEK` (`.ewk`, pinned: one week after the site visit, the slow way crawling along in black while "Another quote" markers arrive in red, the draft sent the same day in blue, with the three before-and-after lines scrolling beside it), `ESACD` (list on the right this time, stepping through one estimate while the draft window follows).
+- `HAND` in mk_pages.py lists pages rebuilt by hand; `full()` adds nothing automatic to them.

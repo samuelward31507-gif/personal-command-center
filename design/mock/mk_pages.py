@@ -873,10 +873,37 @@ DRAFT = ('<div class="es"><div class="cd es-n">%s<div class="es-p"><i></i><i></i
              ('Cedar privacy fence, 6 ft', '180 ft'), ('Walk gates', '2'), ('Remove old chain link', '180 ft'), ('Labour', 'From your price book')])))
 PIPE = ('<div class="pl">%s</div>' % ''.join('<div class="%s"><b>%s</b><span>%s</span></div>' % x for x in [
     ('', ap(p['does'][1][0]), ap(p['does'][1][1])), ('', ap(p['does'][0][0]), ap(p['does'][0][1])), ('me', ap(p['does'][2][0]), ap(p['does'][2][1])), ('', ap(p['does'][3][0]), ap(p['does'][3][1]))]))
+_wv = [10, 22, 34, 16, 40, 26, 12, 30, 44, 20, 14, 28, 36, 18]
+_ev1 = '<div class="ev ev1"><div><i></i><i></i><i></i></div><p>%s</p></div>' % ''.join('<u style="height:%dpx"></u>' % h for h in _wv)
+_ev2 = '<div class="ev ev2">%s</div>' % ''.join('<p><b>%s</b><span>%s</span><i></i></p>' % x for x in [('Cedar, 6 ft', 'per ft'), ('Walk gate', 'each'), ('Labour', 'per hour')])
+_ev3 = '<div class="ev ev3"><em>Approve and send</em><u>Nothing goes out until you say so</u></div>'
+d = p['does']
+ES3 = ('<section class="v3 v3c"><div class="w v3-i"><p class="st-t">%s <span>%s</span></p><div class="v3-g">%s</div></div></section>'
+       % (ap(X['estimates'][2]), ap(X['estimates'][3]), ''.join('<div><div class="v3-p" aria-hidden="true">%s</div><b>%s.</b><span>%s</span></div>' % (pic, ap(a), ap(b))
+                                                                 for pic, (a, b) in ((_ev1, d[1]), (_ev2, d[0]), (_ev3, d[2])))))
+# a pinned week: the usual way crawls along while other quotes arrive; the draft is sent the same day
+_days = ['Visit', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon']
+ESWEEK = ('<section class="ewk" data-sp><div class="w ewk-g"><figure class="ewk-f" aria-hidden="true"><p class="fa-k">[After the site visit]<em>Example. Sample week.</em></p>'
+          '<div class="ewk-x">%s</div>'
+          '<div class="ewk-t a"><b>Written up later</b><div><i></i>%s<em>Sent</em></div></div>'
+          '<div class="ewk-t b"><b>Drafted from the truck</b><div><i></i><em>Sent, same day</em></div></div>'
+          '<p class="ewk-n">%s</p></figure>%s</div></section>'
+          % (''.join('<span>%s</span>' % x for x in _days), ''.join('<u style="--x:%d%%;--k:%d">Another quote</u>' % (x, k) for k, x in enumerate((28, 52, 76))),
+             ap(X['estimates'][0][1]),
+             ''.join('<div class="ewk-c c%d"><span>%s</span><h3>%s</h3></div>' % (k, ap(a), ap(b)) for k, (a, b) in enumerate(p['cmp'], 1))))
+# a list that steps through one estimate; the draft beside it follows
+ESWIN = ('<div class="cd esw">%s<div class="esw-r" data-sc="0"><span>Voice note, 0:14</span><p>&ldquo;180 feet of cedar privacy, six foot. Two gates. Old chain link comes out.&rdquo;</p></div>'
+         '<div class="esw-r" data-sc="1">%s</div><div class="esw-r" data-sc="2"><p><b>Labour</b><span>From your price book</span></p><p class="t"><b>Total</b><span>$6,400</span></p></div>'
+         '<div class="esw-r" data-sc="3"><em>Approve and send</em><span>Sent 10:31 AM</span></div></div>'
+         % (head('Draft estimate', '10:24 AM'), ''.join('<p><b>%s</b><span>%s</span></p>' % x for x in [('Cedar privacy fence, 6 ft', '180 ft'), ('Walk gates', '2'), ('Remove old chain link', '180 ft')])))
+ESACD = ('<section class="acd acd-r" data-live="3,3,3,3"><div class="w acd-g"><div class="acd-t"><span class="lb">One estimate</span><p class="st-t">%s</p>'
+         '<div class="acd-l">%s</div></div><div class="acd-p">%s<p class="sd-n">Example. Sample data.</p></div></div></section>'
+         % (ap(p['line']), ''.join('<div data-sc="%d"><b>%s</b><span>%s</span><u data-at="0"></u></div>' % x for x in [
+             (0, 'You talk through the job.', 'A voice note or photos from the site.'), (1, 'The lines write themselves.', 'What you measured, laid out as an estimate.'),
+             (2, 'Your prices go on.', 'From your price book, with your margins.'), (3, 'You approve it.', 'Nothing goes to a customer until you say so.')]), ESWIN))
 ESTIMATES = (inner_hero('Quotes', ap(p['h1']), ap(p['lede']), BOOK + AUDITLINK, DRAFT)
              + statement('The problem', X['estimates'][0][0], ap(X['estimates'][0][1]))
-             + sx(X['estimates'][2], '', PIPE, 'wh')
-             + H.split('What changes', 'The first estimate in their inbox has an edge.', 'Make it yours.', swap(p['cmp']))
+             + ES3 + ESWEEK + ESACD
              + qfold(p['faq']) + CL)
 
 # ---- /proposals : the proposal as a page; three options with one picked and a place to sign ----
@@ -1842,7 +1869,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'v3': 'v3', 'acd': 'acd', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -1854,7 +1881,7 @@ RHYTHM = {
     'reminders': ('sx st sp', {'sx': 't-sheet v-b', 'st': 's-dk t-angle', 'sp': 'v-f'}),
     'dispatch': ('st sx hw', {'st': 'v-2', 'sx': 't-rule v-c'}),
     'job-updates': ('bl sx st sp', {'bl': 'v-sf t-sheet', 'sx': 's-tn', 'st': 'v-c', 'sp': 'v-f'}),
-    'estimates': ('st sx sp', {'st': 's-tn v-xl', 'sx': 't-exp', 'sp': 's-dkp v-f'}),
+    'estimates': ('st v3 ewk acd', {'st': 's-tn v-xl'}),
     'proposals': ('st bl sx sp', {'bl': 's-dk t-arc', 'sx': 't-sheet'}),
     'follow-up': ('st v3 sx acd ic as', {'st': 'v-2', 'sx': 't-exp'}),
     'invoicing': ('sx st sp bl', {'sx': 't-sheet', 'st': 's-tn v-c', 'sp': 'v-f', 'bl': 's-dk v-sf t-angle'}),
@@ -2024,6 +2051,7 @@ def next_sec(name):
             % (BY[name]['name'], ap(BY[name]['short']), ''.join('<a href="/%s"><b>%s</b><span>%s</span></a>' % (o, BY[o]['name'], ap(BY[o]['short'])) for o in others)))
 
 
+HAND = {'estimates'}
 def full(name, body):
     if name not in CLEAN:
         return body
@@ -2049,6 +2077,8 @@ def full(name, body):
         lw = set(re.findall(r'[a-z]{4,}', p['line'].lower())); first = ap(p['line']).split('.')[0]
         if not (len(lw & wa) >= .5 * len(lw) or first in body):
             extra.append(calm(ap(p['line'])))
+    if name in HAND:   # pages rebuilt by hand carry their own sections; nothing automatic is added to them
+        extra = []
     return ''.join(top + mid + extra + [yw_sec(p['group'], (i + 1) % 3)] + fa_ + [next_sec(name), CL])
 
 
@@ -2438,6 +2468,38 @@ CSS_FA = r"""
 .pl8-g em{font-style:normal;font-size:13.5px;color:var(--g2)}
 @media(max-width:860px){.v3-g,.acd-g{grid-template-columns:minmax(0,1fr)}.v3-g>div{border-right:0;border-bottom:1px solid var(--ln)}.v3-g>div:last-child{border-bottom:0}.acd-p{border-left:0;border-top:1px solid var(--ln)}
 .pl8-g{grid-template-columns:repeat(2,minmax(0,1fr))}.pl8-g a:nth-child(2n){border-right:0}}
+/* ---- /estimates ---- */
+.v3c .st-t{margin:0 auto;text-align:center}.v3c .v3-i{padding-top:clamp(72px,7vw,130px)}
+.ev{width:76%;font-size:13px}.ev1>div{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ev1 i{aspect-ratio:1.2;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ln);background:repeating-linear-gradient(135deg,#fff 0 5px,rgba(23,24,26,.06) 5px 6px)}
+.ev1 p{display:flex;align-items:center;justify-content:space-between;height:46px;margin:14px 0 0;padding:0 12px;border-radius:23px;background:var(--ink)}.ev1 u{width:2px;border-radius:1px;background:#fff;text-decoration:none}
+.ev2{background:#fff;border-radius:10px;box-shadow:0 0 0 1px var(--ln)}.ev2 p{display:flex;align-items:center;gap:10px;margin:0;padding:11px 14px;border-top:1px solid var(--ln)}.ev2 p:first-child{border-top:0}
+.ev2 b{flex:1;font-size:13px;font-weight:540}.ev2 p span{margin:0;font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3)}.ev2 i{width:44px;height:8px;border-radius:2px;background:var(--ink)}
+.ev3{display:grid;gap:12px;text-align:center}.ev3 em{font-style:normal;padding:12px 0;border-radius:8px;background:var(--ink);color:#fff;font-weight:560;font-size:14px}.ev3 u{text-decoration:none;font:500 10.5px/1.3 "Geist Mono",monospace;color:var(--g2)}
+.ewk{--q:var(--p,1)}.ewk-g{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(56px,6vw,110px) clamp(22px,3.1vw,60px)}
+.ewk-f{margin:0 0 30px}.ewk-f .fa-k{margin:0 0 22px}
+.ewk-x{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));border-bottom:1px solid var(--ink);padding-bottom:10px}.ewk-x span{font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}
+.ewk-t{margin-top:clamp(30px,3vw,52px)}.ewk-t>b{display:block;margin-bottom:18px;font:400 clamp(20px,1.7vw,28px)/1.1 Georgia,serif;letter-spacing:-.01em}
+.ewk-t>div{position:relative;height:30px;margin-right:6.25%}.ewk-t i{position:absolute;left:0;top:14px;height:2px;width:100%;background:var(--ink);transform-origin:left}
+.ewk-t.a i{transform:scaleX(clamp(0,calc(var(--q)*1.25),1))}.ewk-t.b i{width:7%;background:#266df1;transform:scaleX(clamp(0,calc(var(--q)*9),1))}
+.ewk-t em{position:absolute;top:2px;font-style:normal;font-size:12px;font-weight:560;padding:6px 9px;border-radius:6px;white-space:nowrap}
+.ewk-t.a em{left:100%;transform:translateX(-50%);background:var(--ink);color:#fff;opacity:clamp(0,calc(var(--q)*12 - 9.4),1)}
+.ewk-t.b em{left:7%;margin-left:8px;background:#266df1;color:#fff;opacity:clamp(0,calc(var(--q)*9 - 1),1)}
+.ewk-t u{position:absolute;left:var(--x);top:-12px;transform:translateX(-50%);text-decoration:none;font:500 10.5px/1 "Geist Mono",monospace;color:#e5484e;white-space:nowrap;opacity:clamp(0,calc(var(--q)*12 - 3 - var(--k)*2.9),1)}
+.ewk-t u::after{content:"";position:absolute;left:50%;top:22px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:#e5484e;box-shadow:0 0 0 3px #fff}
+.ewk-n{margin:30px 0 0;max-width:34em;font-size:14px;line-height:1.45;color:var(--g2)}
+.ewk-c{margin-bottom:44px}.ewk-c span{display:block;font-size:clamp(15px,1.05vw,18px);color:var(--g2);text-decoration:line-through;text-decoration-color:#b4b7bf}
+.ewk-c h3{margin:12px 0 0;max-width:13em;font:400 clamp(28px,3vw,54px)/1.06 Georgia,"Times New Roman",serif;letter-spacing:-.022em}
+@media(min-width:861px){.ewk.sp-live{--q:var(--p,0)}
+.ewk.sp-live .ewk-g{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);column-gap:clamp(40px,6vw,110px)}
+.ewk.sp-live .ewk-f{grid-column:1;grid-row:1/4;position:sticky;top:calc(50vh - 170px);align-self:start;margin:0}
+.ewk.sp-live .ewk-c{grid-column:2;min-height:70vh;margin:0;display:flex;flex-direction:column;justify-content:center}}
+.acd-r .acd-t{order:2}.acd-r .acd-p{border-left:0;border-right:1px solid var(--ln)}
+.esw{width:100%;max-width:520px}.esw-r{padding:14px 18px;border-top:1px solid var(--ln);transition:opacity .3s,background .3s,box-shadow .3s}.esw-r p{display:flex;justify-content:space-between;gap:14px;margin:0;padding:6px 0;font-size:14px}
+.esw-r p b{font-weight:540}.esw-r p span,.esw-r>span{color:var(--g2);font-size:13px}.esw-r p.t b,.esw-r p.t span{font-size:17px;font-weight:600;color:var(--ink)}
+.esw-r[data-sc="0"] p{display:block;font:400 17px/1.35 Georgia,serif}.esw-r[data-sc="0"]>span{font:500 10.5px/1 "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.04em}
+.esw-r[data-sc="3"]{display:flex;align-items:center;gap:14px}.esw-r em{font-style:normal;padding:9px 14px;border-radius:7px;background:var(--ink);color:#fff;font-weight:560;font-size:13.5px}
+.acd.live .esw-r:not(.on){opacity:.4}.acd.live .esw-r.on{background:#fff;box-shadow:inset 2px 0 0 var(--ink)}.acd.live .esw-r[data-sc="3"]:not(.on)>span{visibility:hidden}
+@media(max-width:860px){.acd-r .acd-t{order:0}.acd-r .acd-p{border-right:0}.ewk-x span{font-size:9px}}
 /* ---- live windows on the inner pages ---- */
 .lvh>*{min-width:0}.lvh>.cd,.lvh>div:first-child{flex:0 1 auto}
 .sdw{flex:none;width:clamp(210px,17vw,250px);box-sizing:border-box;padding:14px 12px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.16),0 30px 60px -34px rgba(38,38,40,.4);font-size:13px;text-align:left;min-height:170px}
@@ -2522,7 +2584,7 @@ SIDE = {
     'reminders': ('log', '&gt; What ran', [(0, 'Mon', 'Booking confirmed'), (1, 'Wed', 'Reminder sent'), (3, 'Thu 7 AM', 'Reminder sent'), (4, 'Thu 7 AM', 'Customer confirmed')]),
     'dispatch': ('own', 'Your phone', [(1, 'Job running long', 'Crew 2, about 40 minutes'), (3, 'Next job moved', 'Customer told the new time'), (5, 'Day adjusted', 'No calls made')]),
     'job-updates': ('phone', 'Customer&rsquo;s phone', [(0, 'o', 'Your crew is booked for Thursday.'), (1, 'o', 'On the way. About 20 minutes out.'), (3, 'o', 'Job done. Photos attached.'), (4, 'c', 'Looks great, thank you')]),
-    'estimates': ('log', '&gt; One draft', [(0, '9:10 AM', 'Measurements in'), (1, '9:10 AM', 'Line items priced your way'), (3, '9:11 AM', 'Draft ready for you'), (4, '9:14 AM', 'Approved and sent')]),
+    'estimates': ('log', '&gt; One draft', [(0, '10:20 AM', 'Voice note in'), (1, '10:21 AM', 'Line items priced your way'), (3, '10:24 AM', 'Draft ready for you'), (4, '10:31 AM', 'Approved and sent')]),
     'proposals': ('own', 'Your phone', [(1, 'Proposal opened', 'Twice, last at 8:12 PM'), (4, 'Option picked', 'Better, signed')]),
     'invoicing': ('log', '&gt; What ran', [(0, 'Fri', 'Job finished'), (1, 'Fri', 'Invoice sent'), (3, 'Day 3', 'Reminder sent'), (5, 'Day 3', 'Paid')]),
     'bookkeeping': ('log', '&gt; One receipt', [(0, 'Receipt', 'Read'), (1, 'Receipt', 'Labelled: materials'), (2, 'Receipt', 'Put against the job'), (4, 'Month end', 'Costs by job ready')]),
