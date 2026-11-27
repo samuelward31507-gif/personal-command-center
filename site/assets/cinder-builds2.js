@@ -105,6 +105,23 @@
       if (i === 4) { c.setLineDash([4, 5]); card(c, rx, y, lw, rh, 10, red(.5 + .4 * Math.sin(t * 2))); c.setLineDash([]); txt(c, '+', rx + 18, y + rh / 2, RED, 'left', F('500', 20)); txt(c, 'Yours next', rx + 40, y + rh / 2, ink(.6), 'left', F('500', 13.5)); return }
       if (k <= 0) return; var P = S(lx + lw, y + rh / 2, rx, y + rh / 2); curve(c, P, 0, cl(k * 2), ink(.4)); if (k >= 1) pulse(c, P, (t * .35 + i * .2) % 1.4); c.globalAlpha = cl(k * 2 - .8); card(c, rx + (1 - k) * 30, y, lw, rh, 10, ink(.9), '#101013'); c.fillStyle = ink(.95); c.fillRect(Math.round(rx + 16 + (1 - k) * 30), Math.round(y + rh / 2 - 3), 6, 6); txt(c, ['Reads the quote', 'Checks it against history', 'Places the order', 'Texts the crew'][i], rx + 34 + (1 - k) * 30, y + rh / 2, ink(.95), 'left', F('600', 13.5)); c.globalAlpha = 1; if (i < 3 && k >= 1) line(c, px(rx + 19), y + rh, px(rx + 19), y + rh + H * .03, ink(.5)) })
   }];
+  // Software page: the same app on the phone and the desk, what needs you on top, the source on every lead, everything logged
+  B['software-truck'] = ['L', function (c, W, H, p, t) {
+    var T = (t * .11) % 1, k = ez(T * 5), done = ez((T - .55) * 5), px0 = W * .07, py = H * .1, pw = W * .27, ph = H * .56, dx = W * .43, dy = H * .13, dw = W * .5, dh = H * .43, SRC = ['Google', 'Web form', 'Call', 'Referral', 'Angi'], NAME = [.62, .5, .7, .44, .56];
+    function screen(x, y, w, h, wide) {
+      var rh = (h - 44) / 5.4, n = 0; txt(c, 'Needs you', x + 14, y + 22, ink(.95), 'left', F('600', 12.5)); txt(c, String(done > .5 ? 2 : 3), x + w - 14, y + 22, RED, 'right', F('600', 12.5)); line(c, x, px(y + 36), x + w, px(y + 36), ink(.14));
+      for (var i = 0; i < 5; i++) { var isNew = i === 0, hot = i < 3 && !(i === 2 && done > .5), a = isNew ? k : 1, yy = y + 44 + i * rh + (isNew ? (1 - k) * -10 : 0), dim = i === 2 ? 1 - done * .6 : 1; if (a <= 0) continue; c.globalAlpha = a * (hot ? 1 : .45) * (i === 2 ? dim : 1);
+        card(c, x + 8, yy, w - 16, rh - 6, 7, hot ? ink(isNew ? .95 : .4) : ink(.14), hot ? '#141417' : '#0b0b0d'); c.fillStyle = hot ? (isNew ? RED : ink(.9)) : ink(.4); c.fillRect(Math.round(x + 18), Math.round(yy + (rh - 6) / 2 - 3), 6, 6); bars(c, x + 32, yy + (rh - 6) / 2 - 2, (w - 60) * NAME[i] * (wide ? .5 : .8), 1, hot ? .9 : .5);
+        if (wide) txt(c, SRC[i], x + w - 20, yy + (rh - 6) / 2, ink(hot ? .7 : .4), 'right', F('500', 10.5, 1)); c.globalAlpha = 1; n++ }
+    }
+    card(c, px0, py, pw, ph, 22, ink(.5), '#070708'); card(c, px0 + pw / 2 - 18, py + 8, 36, 5, 3, null, ink(.25)); screen(px0 + 4, py + 16, pw - 8, ph - 24, false);
+    card(c, dx, dy, dw, dh, 12, ink(.5), '#070708'); screen(dx + 4, dy + 4, dw - 8, dh - 8, true); line(c, dx + dw * .42, dy + dh, dx + dw * .38, dy + dh + H * .05, ink(.4)); line(c, dx + dw * .58, dy + dh, dx + dw * .62, dy + dh + H * .05, ink(.4)); line(c, dx + dw * .3, px(dy + dh + H * .05), dx + dw * .7, px(dy + dh + H * .05), ink(.5));
+    var P = S(px0 + pw, py + H * .14, dx, dy + H * .1); curve(c, P, 0, 1, ink(.3)); pulse(c, P, (T * 5) % 1.2, RED); pulse(c, P, 1 - ((T * 5 + .5) % 1.2));
+    txt(c, 'In the truck', px0, py + ph + 22, ink(.5), 'left', F('500', 11.5, 1)); txt(c, 'At the desk', dx, dy + dh + H * .05 + 22, ink(.5), 'left', F('500', 11.5, 1)); txt(c, 'Same app, same numbers', (px0 + pw + dx) / 2, py - 14, ink(.6), 'center', F('500', 11.5, 1));
+    if (W > 700) { line(c, dx + dw - 30, dy - 6, dx + dw - 30, dy - 22, ink(.4)); txt(c, 'Where each lead came from', dx + dw - 30, dy - 32, ink(.6), 'right', F('500', 11.5, 1)) }
+    var ly = H * .86, lx0 = W * .07, lx1 = W * .93, EV = ['Reply sent', 'Estimate booked', 'Follow-up sent', 'Review asked'], np = Math.floor(t * .11); txt(c, 'Went out without you today', lx0, ly - 30, ink(.95), 'left', F('600', 13)); line(c, lx0, px(ly), lx1, px(ly), ink(.25));
+    for (var j = 0; j < 4; j++) { var on = j < 3 || done > .5, x = lerp(lx0, lx1, (j + .5) / 4), a2 = j === 3 ? done : 1; c.globalAlpha = on ? a2 : 0; card(c, x - 5, ly - 5, 10, 10, 3, null, j === 3 ? RED : ink(.95)); txt(c, EV[(j + np) % 4], x, ly + 24, ink(.85), 'center', F('500', 12)); c.globalAlpha = 1 }
+  }];
   // ---- mount: a virtual canvas 960 wide (620 on phones) so every drawing keeps its proportions
   [].forEach.call(document.querySelectorAll('[data-build]'), function (host) {
     var d = B[host.dataset.build]; if (!d) return; var mode = d[0], draw = d[1], cv = document.createElement('canvas'), c = cv.getContext('2d'), W = 1, H = 1, sc = 1, vis = false, raf = 0, sp = 0, s = 0, tIn = 0, last = performance.now(), m = { x: 0, y: 0, on: false }; cv.setAttribute('aria-hidden', 'true'); host.appendChild(cv);

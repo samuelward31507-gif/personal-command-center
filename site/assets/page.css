@@ -454,3 +454,5 @@ main:has(.chap){--sec:190px}
 .sec.sf-g{animation:secrise linear both;animation-timeline:view();animation-range:entry 0% entry 70%}
 @keyframes secrise{from{background-position:0 60px}to{background-position:0 0}}
 }}
+.rows .plate.truck{margin:0}.rows .plate.truck .st-fig{height:min(74vh,640px)}.rows-sub{margin-top:22px;font-size:var(--f4);line-height:1.55;color:var(--t2);max-width:22em}.rows:has(.plate.truck) h2{position:static}.rows:has(.plate.truck) .wrap>div:first-child{position:sticky;top:130px}
+@media (max-width:760px){.rows .plate.truck .st-fig{height:420px}.rows:has(.plate.truck) .wrap>div:first-child{position:static}}
