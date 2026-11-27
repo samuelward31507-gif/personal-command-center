@@ -50,7 +50,7 @@ From Sam's two screen recordings (about 140 frames studied).
 
 **What makes it look clean**
 
-- Text is small. Headlines are around 36 to 44 pixels, not 80.
+- Text is restrained. The hero headline is one line, about 3% of the screen width tall (roughly 46 to 48 pixels on a 1440 screen); section statements are much smaller. Nothing is 80 pixels.
 - One type size per role, repeated exactly.
 - Wide margins and the same vertical gap between every section.
 - Colour is rare and lives in three places: small tinted labels, details inside the pictures, and one soft tint behind the hero picture. Everything else is black, grey and white.
@@ -115,3 +115,8 @@ Not carried over until they are true: customer logos, a customer story.
 - Reusable pieces worth keeping: the eased scroll engine and the clock transition in `site/assets/home2.js`; the real app screens in `site/software.html`.
 - `?motion=on` on any homepage URL forces the motion on when the computer asks for reduced motion.
 - Running notes for every pass so far: `design/HOMEPAGE_PLAN.md`.
+
+## 9. First piece built
+
+- `design/mock/hero-light.html` is the hero, built from scratch for light and checked next to the reference hero frame. It is a mockup: copy it into `site/` to view it (it loads fonts from `/assets/fonts/`). Not on the preview.
+- The hero picture is an audit report for an example business: a five-step drop-off chart, the monthly leak total, and a table of the three leaks with what stops each. Two small cards sit over its edges (a missed call, a quote going cold).
