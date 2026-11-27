@@ -29,7 +29,7 @@
       jobValue: f.jobValue.value, closeRate: f.closeRate.value, speed: f.speed.value, followsUp: f.followsUp.value, fax: f.fax.value,
     };
     if (!body.business.trim()) return fail("Enter your business name.");
-    if (!body.website.trim()) return fail("Enter your website, like summitfence.com.");
+    if (!body.website.trim()) return fail("Enter your website, like yourbusiness.com.");
     go.disabled = true; go.textContent = "Checking your site…";
     if (window.cinderTrack) window.cinderTrack("click", { label: "Audit: run" });
     fetch("/api/site-audit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })

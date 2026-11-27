@@ -525,3 +525,11 @@ Sam's standard: every page as good as the homepage, the homepage as good as Atti
 
 - Estimates rebuilt to all eight: `ES3` (three cells: photos and a voice note, the price book, the approve button), `ESWEEK` (`.ewk`, pinned: one week after the site visit, the slow way crawling along in black while "Another quote" markers arrive in red, the draft sent the same day in blue, with the three before-and-after lines scrolling beside it), `ESACD` (list on the right this time, stepping through one estimate while the draft window follows).
 - `HAND` in mk_pages.py lists pages rebuilt by hand; `full()` adds nothing automatic to them.
+
+## 23d. Nothing tailored to one trade (Nov 27)
+
+Sam: "there should be no reference of a specific trade... It's all generalized because we serve everybody." He approved Estimates and asked for graphs throughout, each page different, including a full-width growth curve like Attio's "Run at any scale" screen.
+
+- `detrade()` in mk_home.py runs on every page as it is written (`_DT`, longest phrase first): the example business is Ridgeline Services, and every sample job, text, line item and review is general (Full install, Repair, Add-ons, Materials). It prints any trade word it finds left over; the build is clean.
+- `site/audit.js`: the website example in the error text is now yourbusiness.com.
+- Not changed: the Trades page, which is about trades by nature. Waiting on Sam for what to do with it.

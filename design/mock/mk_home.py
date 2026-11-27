@@ -1513,7 +1513,75 @@ open(ROOT + '/site/assets/light.css', 'w').write(ALLCSS.strip() + '\n')
 open(ROOT + '/site/assets/light.js', 'w').write(JS.strip() + '\n')
 
 
+# Sam, 27 Nov: nothing on the site is tailored to one trade. The example business and every sample job, message and line item
+# are made general on the way out, so the page builders can keep their own wording. Longest phrases first.
+_DT = [
+    ('&ldquo;180 feet of cedar privacy, six foot. Two gates. Old chain link comes out.&rdquo;', '&ldquo;Full install, standard size. Two add-ons. The old one comes out.&rdquo;'),
+    ('180 ft of cedar privacy, two gates.', 'Full install, two add-ons.'),
+    ('Can I get a quote on a new water heater?', 'Can I get a quote on a replacement?'), ('Question about a water heater', 'Question about a replacement'),
+    ('and the fence looks great', 'and the work looks great'), ('Gate started sagging after a month.', 'It started acting up after a month.'),
+    ('How do we price a double drive gate?', 'How do we price a rush job?'),
+    ('Double drive gate: priced per opening, plus hardware. See the gate page for the current rates.', 'Rush jobs: priced per visit, plus materials. See the pricing page for the current rates.'),
+    ('These are the fence people we used.', 'These are the people we used.'),
+    ('6 ft, cedar on steel posts', 'Premium materials'), ('6 ft, cedar pickets and rails', 'Upgraded materials'), ('6 ft, dog-ear pickets', 'Standard materials'),
+    ('6 years, wood and vinyl', '6 years, installs and repairs'), ('Six, wood and vinyl', 'Six'), ('719 number, wanted gate, never replied', '719 number, wanted a repair, never replied'),
+    ('A burst pipe. The on-call phone rang.', 'An emergency. The on-call phone rang.'), ('The burst pipe at 2 AM', 'The emergency at 2 AM'), ('Burst pipe', 'Emergency call'),
+    ('A fence you built needs staining in two years.', 'The job you finished needs service in two years.'), ('Actually the gate is sagging', 'Actually, something needs a look'),
+    ('someone who is on a roof', 'someone who is on a job'), ('Can we go 7 ft on a back fence in Monument?', 'Do we need a permit for this in Monument?'),
+    ('Another one done. Cedar privacy fence in Monument.', 'Another one done. Full install in Monument.'), ('Cedar privacy fence finished in Monument.', 'Full install finished in Monument.'),
+    ('New cedar privacy fence, finished today in Monument.', 'New install, finished today in Monument.'), ('Cedar privacy fence, 180 ft. Monument.', 'Full install. Monument.'),
+    ('Cedar privacy fence, 6 ft', 'Main install'), ('Cedar fence, 120 ft', 'Full install'), ('cedar fence 120 ft', 'full install'), ('Cedar fence, 2023', 'Install, 2023'), ('Cedar fence, Split Rail Dr', 'Install, Split Rail Dr'),
+    ('Privacy fence, Split Rail Dr', 'Install, Split Rail Dr'), ('Cedar pickets, 6 ft', 'Materials'), ('Cedar, 6 ft', 'Materials'), ('per ft', 'per unit'),
+    ('Cedar, vinyl, chain link, gates, repairs', 'Installs, replacements, repairs'), ('Chain link, 300 ft', 'Large install'),
+    ('Checking in on the cedar fence quote.', 'Checking in on your quote.'), ('Do you build cedar fences in Monument?', 'Do you work in Monument?'),
+    ('Yes. Cedar privacy and picket, and Monument is in our service area.', 'Yes, Monument is in our service area.'), ('Do you do gate repairs?', 'Do you do repairs?'),
+    ('Yes, fence and gate repairs.', 'Yes, we do repairs.'), ('Yes. Fence and gate repairs across', 'Yes. Repairs across'), ('Do you do vinyl fencing?', 'Do you cover my area?'), ('Do you do vinyl?', 'Do you do repairs?'),
+    ('sorry about the gate', 'sorry about that'), ('while you were on the roof', 'while you were on a job'), ('While you were on the roof', 'While you were on a job'),
+    ('you&rsquo;re off the roof', 'you&rsquo;re off the job'), ('you&rsquo;re on a roof', 'you&rsquo;re on a job'), ('Estimate, new fence', 'Estimate, new install'),
+    ('Example plumber, sample data', 'Example business, sample data'), ('Fence contractor. Open now.', 'Service company. Open now.'), ('Open now. Fences, gates, repairs.', 'Open now. Installs, repairs, service.'),
+    ('Fence line done on the north and east sides. Gate drags at the bottom and needs a rehang.', 'Main work done on the north and east sides. One part needs a second visit.'),
+    ('Fences built right.', 'Work done right.'), ('Fences, roofs, wiring, drains. The thing', 'The work itself. The thing'), ('Five years on posts and rails, two on gates.', 'Five years on installs, two on repairs.'),
+    ('For fence: measure the run on site and the quote builds itself.', 'Measure on site and the quote builds itself.'), ('Gate stuck open, customer waiting', 'Urgent repair, customer waiting'),
+    ('Glad the gate is swinging right again.', 'Glad it&rsquo;s working right again.'), ('happy with the fence', 'happy with the work'), ('Had a wood fence built', 'Had work done'),
+    ('questions on the fence quote', 'questions on the quote'), ('since your fence went in', 'since we finished your job'), ('invoice for your gate install', 'invoice for your job'),
+    ('invoice for the gate install', 'invoice for the job'), ('photos of your new gate', 'photos of the finished job'), ('Your gate install now starts', 'Your job now starts'),
+    ('How many years installing fence?', 'How many years doing this work?'), ('How much for a gate repair?', 'How much for a repair?'), ('How much would it be to fix a sagging gate?', 'How much would a repair cost?'),
+    ('I need a quote on a privacy fence.', 'I need a quote on a new install.'), ('Lumber yard', 'Supplier'), ('New caller, gate repair', 'New caller, repair'), ('New caller, privacy fence', 'New caller, new install'),
+    ('New cedar privacy fence', 'New install'), ('New fence, 180 ft', 'New install'), ('New fence', 'New install'), ('Old fence removed, stain included', 'Old one removed, finish included'), ('Old fence removed', 'Old one removed'),
+    ('Two walk gates, one drive gate', 'Three add-ons'), ('Two walk gates', 'Two add-ons'), ('One walk gate', 'One add-on'), ('Walk gates', 'Add-ons'), ('Walk gate', 'Add-on'),
+    ('One year since the gate went in.', 'One year since the job.'), ('Order two posts. Come back Thursday for the gate.', 'Order two parts. Come back Thursday to finish.'),
+    ('Pickets, rails, posts, concrete, two gate kits.', 'Materials, fittings and two add-on kits.'), ('Privacy fence, about 180 ft', 'Full install'), ('Privacy fence, 180 ft', 'Full install'),
+    ('Ranch fencing', 'Large project'), ('Remove old chain link', 'Remove the old one'), ('Split Rail Dr, cedar, paid', 'Split Rail Dr, install, paid'), ('for your fence estimate', 'for your estimate'),
+    ('Standby generators', 'Larger installs'), ('That cedar line along the back was a fun one to build. Enjoy the yard.', 'That was a good one to work on. Enjoy it.'),
+    ('The documents a fence job needs', 'The documents a job needs'), ('Tue 11:05, gate repair', 'Tue 11:05, repair'),
+    ('Two posts short. Gate drags at the bottom. Back on Thursday.', 'Two parts short. One item needs a second visit. Back on Thursday.'), ('Two posts short. One bag of concrete left over.', 'Two parts short. One box of materials left over.'),
+    ('Vinyl fence, 120 ft', 'Replacement'), ('Wants cedar', 'Wants the upgrade'), ('openings for fence staining', 'openings for service visits'), ('adds a gate on site', 'adds work on site'),
+    ('What kind of fence, and roughly how long?', 'What do you need done, and how big is the job?'), ('warranty on cedar posts', 'warranty on parts'),
+    ('Your cedar fence is two years old this month, which is when it should be stained.', 'Your install is two years old this month, which is when it&rsquo;s due for service.'),
+    ('fence company near me', 'service company near me'), ('fence job - dave', 'job - dave'), ('Fence estimate, 7:40 AM', 'Estimate request, 7:40 AM'), ('Ridgeline Fence', 'Ridgeline Services'),
+    ('Cedar with steel posts', 'Premium'), ('Cedar privacy fence', 'Upgraded'), ('Pine privacy fence', 'Standard'), ('Privacy fence', 'Full install'), ('Vinyl fence', 'Replacement'),
+    ('Fence installer', 'Installer'), ('Fence install', 'Install'), ('Fence company', 'Service company'), ('Gate install', 'Small install'), ('Gate repair', 'Repair'), ('Gate quote', 'Repair quote'),
+    ('Stain due in spring', 'Service due in spring'), ('Stain due', 'Service due'), ('>Stain<', '>Service<'), ('Matching the old stain took a few tries', 'Getting it to match took a few tries'),
+    ('Time to stain.', 'Time for service.'), ('Staining, servicing, seasonal checks.', 'Servicing, seasonal checks, inspections.'), ('servicing, sealing, staining or inspections', 'servicing, seasonal checks or inspections'),
+    ('About 180 ft', 'A full job'), ('>180 ft<', '>1<'), ('>Chain link<', '>Basic<'), ('>Gate<', '>Repair<'), ('>Fence<', '>Install<'),
+]
+_DT_LEFT = re.compile(r"fenc|\bgates?\b|cedar|vinyl|chain.link|picket|\broof|hvac|plumb|landscap|hardscap|\bconcrete|\bpaint|generator|water heater|burst pipe|\bft\b|lumber|\bstain", re.I)
+def detrade(doc, path=''):
+    if path == '/trades':
+        return doc
+    for a, b in _DT:
+        doc = doc.replace(a, b)
+    left = set(t.strip()[:90] for t in re.findall(r'>([^<>]{2,})<', re.sub(r'<script.*?</script>|<nav.*?</nav>|<footer.*?</footer>', '', doc, flags=re.S)) if _DT_LEFT.search(t))
+    if left:
+        print('TRADE WORDS LEFT', path, sorted(left)[:8])
+    return doc
+
+
 def page(title, desc, path, body, index=True, css=''):
+    return detrade(_page(title, desc, path, body, index, css), path)
+
+
+def _page(title, desc, path, body, index=True, css=''):
     """One page of the light site: the shared head, nav, footer, stylesheet and script around its own sections."""
     url = 'https://cinderrevenue.com' + path
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
