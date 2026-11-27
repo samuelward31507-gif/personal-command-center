@@ -179,7 +179,7 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 .hm-q .ql{display:flex;gap:10px;margin-top:5px}.hm-q .ql time{flex:none;width:4.6em;color:#7f8187}.hm-q .qf{margin-top:12px;padding-top:10px;border-top:1px solid #2c2d31;color:#8f9197}
 /* moving between pages: the old page fades down a touch, the new one rises in */
 @view-transition{navigation:auto}
-::view-transition-old(root){animation:vt-out .14s cubic-bezier(.4,0,1,1) both}::view-transition-new(root){animation:vt-in .26s cubic-bezier(.2,.7,.2,1) both}
+::view-transition-old(root){animation:vt-out .22s cubic-bezier(.4,0,1,1) both}::view-transition-new(root){animation:vt-in .42s cubic-bezier(.2,.7,.2,1) both}
 @keyframes vt-out{to{opacity:0;transform:translateY(-10px)}}@keyframes vt-in{from{opacity:0;transform:translateY(18px)}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
@@ -352,7 +352,7 @@ em.g,.tg-g{background:#e7f6ec;color:#1c7a43}em.r{background:#fdeaea;color:#c23b3
 .ck-count{margin-top:-96px;height:96px;font:500 13px/1 "Geist Mono",monospace;letter-spacing:.02em;color:rgba(255,255,255,.72)}
 .ck-title span{display:block;font-size:clamp(15px,.92vw,17.5px);color:#8f9197}
 .ck-title h2{margin:clamp(6px,.5vw,10px) 0 0;font-size:clamp(46px,5.05vw,96px);line-height:1;font-weight:600;letter-spacing:-.045em}
-.ck.on{height:200vh;height:calc(100svh + 100vh)}
+.ck.on{height:235vh;height:calc(100svh + 135vh)}
 .ck.on .ck-pin{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;--r:200px;--cy:66vh}
 .ck.on .ck-pin::before,.ck.on .ck-dark::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:min(1390px,calc(100vw - 200px));transform:translateX(-50%);border-left:1px solid var(--ln);border-right:1px solid var(--ln);pointer-events:none}
 .ck.on .ck-dark::before{border-color:var(--dl)}

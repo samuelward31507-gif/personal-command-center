@@ -2449,7 +2449,7 @@ CSS_DAY = r"""
 /* the clock's recipe with other objects: a drawn thing does its job, then its dark body becomes the next screen */
 .pt{background:var(--dk);color:#fff}.pt-s{display:grid;place-items:center;padding:clamp(96px,10vw,180px) 24px;text-align:center}.pt-a,.pt-o,.pt-n{display:none}
 .pt h2{margin:0 auto;max-width:13em;font-size:clamp(34px,4.4vw,84px);line-height:1.02;letter-spacing:-.045em;font-weight:600;text-wrap:balance}
-.pt.sp-live{height:215vh;background:#fff}
+.pt.sp-live{height:300vh;background:#fff}
 .pt.sp-live .pt-s{--cy:61%;--w:300px;--h:100px;--r:30px;position:sticky;top:0;height:100vh;height:100svh;padding:0;overflow:hidden;box-sizing:border-box}
 .pt.sp-live .pt-a{display:block;position:absolute;left:0;right:0;top:clamp(92px,14vh,170px);padding:0 24px;color:var(--ink);opacity:var(--f,1);transform:translateY(calc((1 - var(--f,1))*-36px))}
 .pt-a span{font:500 11.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}
