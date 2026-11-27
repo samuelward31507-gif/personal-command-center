@@ -466,9 +466,9 @@ function loop(){var t=target();if(cur<0||snap)cur=t;else cur+=(t-cur)*.17;if(Mat
 addEventListener('resize',measure);measure();loop();
 })();
 (function(){
-if(document.querySelector('.ck'))return;var top=document.querySelector('.top'),darks=document.querySelectorAll('.hw,.cl,.fo,.sn,.jr,.dh,.sx.dk,.s-dk,.chp,.s3,.sg2,.yw0,.sc'),dk=false;if(!top)return;
+if(document.querySelector('.ck'))return;var top=document.querySelector('.top'),darks=document.querySelectorAll('.hw,.cl,.fo,.sn,.jr,.dh,.sx.dk,.s-dk,.chp,.s3,.sg2,.yw0,.sc,.dsn.dk'),dk=false;if(!top)return;
 function nav(){var d=false;for(var i=0;i<darks.length&&!d;i++){var r=darks[i].getBoundingClientRect();d=r.top<62&&r.bottom>34}if(d!==dk){dk=d;top.classList.toggle('dk',d)}}
-addEventListener('scroll',nav,{passive:true});addEventListener('resize',nav);nav();
+addEventListener('scroll',nav,{passive:true});addEventListener('resize',function(){dk=top.classList.contains('dk');nav()});nav();
 })();
 (function(){
 var root=document.querySelector('.dayp');if(!root)return;
@@ -483,6 +483,15 @@ var t=ch[best].getAttribute('data-t');if(t!==cur){cur=t;root.setAttribute('data-
 if(top&&root.getBoundingClientRect().bottom>60)top.classList.toggle('dk',cur==='dusk'||cur==='night');
 root.style.setProperty('--s',Math.max(0,Math.min(1,scrollY/Math.max(1,root.offsetHeight-vh))).toFixed(4))}
 addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(f)}},{passive:true});addEventListener('resize',f);f();
+})();
+(function(){
+var els=[].slice.call(document.querySelectorAll('[data-sp]'));if(!els.length)return;
+if(innerWidth<861||(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search)))return;
+var top=document.querySelector('.top'),tick=false,mine=false;els.forEach(function(e){e.classList.add('sp-live')});
+function f(){tick=false;var vh=innerHeight,pin=null;els.forEach(function(e){var r=e.getBoundingClientRect(),p=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height-vh)));e.style.setProperty('--p',p.toFixed(4));
+if(e.classList.contains('pt')&&r.top<=0&&r.bottom>60)pin=p});
+if(top){if(pin!==null){mine=true;top.classList.toggle('dk',pin>.5)}else if(mine){mine=false;top.classList.remove('dk');dispatchEvent(new Event('resize'))}}}
+addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(f)}},{passive:true});addEventListener('resize',function(){if(!tick){tick=true;requestAnimationFrame(f)}});f();
 })();
 (function(){
 var sc=[].slice.call(document.querySelectorAll('.sc'));if(!sc.length)return;

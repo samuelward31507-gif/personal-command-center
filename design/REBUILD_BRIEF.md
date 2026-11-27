@@ -359,3 +359,12 @@ Sam: looks pretty good; make it as long as needed, with things popping up and ch
 - Six entrances for the picture: rise, slide in from the right, tilt up from a corner, pop from small, wipe open from the left, drop from above. Rows inside build differently too.
 - A large faint time numeral sits behind each picture and drifts as you scroll. Two or three small tags pop in around each picture; each restates something the picture already shows.
 - The app page's stage has its own colour (deep indigo), scenes that slide sideways and rows that pop. The app page's second button now goes to `/day`.
+
+### 22l. One side moves, the other stays; more clock-style transitions (27 Nov)
+
+Sam on the coloured version of /day: only one side should move at a time; sometimes the words scroll and the picture stays, sometimes the words stay and the other side is an abstract design (not a product picture) that builds; more transitions like the homepage clock, a few, spread across the site; the coloured panels and the big numerals did not look good. High quality, custom.
+
+- `/day` rebuilt in `mk_pages.py` from three pieces. `words()`: the words scroll past on one side while one picture stays pinned on the other (CSS sticky, no script). `design()`: the words stay while an abstract drawing builds with the scroll: a dial whose rings draw and hand turns, a stack of slabs dropping onto each other, a field of dots filling in (dark). `portal()`: a pinned screen where the next dark section opens out of the light one.
+- Colourways, big numerals and pop-in tags removed. Ink, grey and blue on white only.
+- Portals placed: `/day` (clock-hand sweep), `/answering` (blinds, into the lead stage), `/software` (rounded square opening, into the app stage), `/everything` (diamond, before the eight parts), `/story` (sweep, chapter two). With the homepage clock that is six across the site.
+- All driven by one script in `light.js` that sets `--p` on `[data-sp]` sections; off under reduced motion and below 861px, where everything is stacked and fully drawn.

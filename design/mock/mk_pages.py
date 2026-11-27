@@ -2067,9 +2067,20 @@ def flag(name, body):
     if ''.join(secs) != body:
         return body
     if name == 'answering':
-        return ''.join(LEAD if x.startswith('<section class="hw"') else x for x in secs)
+        return ''.join((portal('blinds', 'After the reply', 'One lead, start to finish.') + LEAD) if x.startswith('<section class="hw"') else x for x in secs)
+    if name == 'everything':
+        return ''.join((portal('diamond', '32 builds', 'Eight parts of a business.') + x) if x.startswith('<section class="bn"') else x for x in secs)
+    if name == 'story':
+        seen = [0]
+        def sw(x):
+            if x.startswith('<section class="chp"'):
+                seen[0] += 1
+                if seen[0] == 2:
+                    return portal('sweep', '02', 'The approach')
+            return x
+        return ''.join(sw(x) for x in secs)
     if name == 'software':
-        return ''.join((DAYAPP.replace('<section class="sc"', '<section class="sc k2"', 1) + x) if 'class="duo"' in x else x for x in secs).replace(AUDITLINK, '<a class="btn q" href="/day">See one day, start to finish</a>', 1)
+        return ''.join((portal('iris', 'The app', 'One day in the app.') + DAYAPP.replace('<section class="sc"', '<section class="sc k2"', 1) + x) if 'class="duo"' in x else x for x in secs).replace(AUDITLINK, '<a class="btn q" href="/day">See one day, start to finish</a>', 1)
     return body
 
 
@@ -2110,85 +2121,97 @@ CSS_STAGE = r"""
 # clouds and stars; each chapter pins, its picture builds, then it clears and the sky changes before the next one arrives.
 # Every line is existing copy from the build pages; the pictures are theirs too.
 # =====================================================================================
-TIMES = ['6:31 AM', '9:12 AM', '12:40 PM', '4:12 PM', '6:05 PM', '2:07 AM']
-# small tags that pop in around each picture; every one restates something the picture already shows
-POPS = [['2 booked overnight', 'Nothing waiting on you'], ['9 seconds', 'Booked Wed 2 PM'], ['45 minutes long', '0 calls made'],
-        ['Sent the day the job ended', 'Paid, day 11'], ['Day 2', 'Day 5', 'Accepted'], ['On-call phone rang', 'Nobody else woken']]
+# One side moves, the other stays. Two kinds of section, never both sides changing at once:
+#   words()  the words scroll past on one side while one picture stays put on the other;
+#   design() the words stay put while an abstract drawing (not a product picture) builds on the other side as you scroll.
+# portal() is the homepage clock idea in other shapes: a pinned screen where the next dark section opens out of the light one.
+def words(blocks, pic, flip=False):
+    return ('<section class="wsc%s"><div class="w wsc-g"><div class="wsc-w">%s</div><div class="wsc-p"><div class="wsc-s">%s</div></div></div></section>'
+            % (' f' if flip else '', ''.join('<div>%s<h2>%s</h2><p>%s</p></div>' % (('<time>%s</time>' % t) if t else '', a, b) for t, a, b in blocks), pic))
 
 
-def chap(when, line_, small, href, link, pic):
-    n = TIMES.index(when)
-    rail = ''.join('<li%s>%s</li>' % (' class="on"' if m == n else (' class="past"' if m < n else ''), t) for m, t in enumerate(TIMES))
-    pops = ''.join('<i class="pop p%d">%s</i>' % (m + 1, t) for m, t in enumerate(POPS[n]))
-    return ('<section class="dch k%d" data-t="c%d"><div class="dch-p"><div class="dch-t"><ol class="dch-r">%s</ol><div class="dch-w"><h2>%s</h2><p class="s">%s</p><a class="btn q" href="%s">%s</a></div></div>'
-            '<div class="dch-g" data-w="%s">%s<div class="dch-x">%s</div></div></div></section>' % (n, n, rail, line_, small, href, link, when.split(' ')[0], pic, pops))
+def design(kind, line_, small, href, link, dark_=False):
+    return ('<section class="dsn dsn-%s%s" data-sp><div class="w dsn-g"><div class="dsn-t"><h2>%s</h2><p>%s</p><a class="btn q" href="%s">%s</a></div><div class="dsn-d">%s</div></div></section>'
+            % (kind, ' dk' if dark_ else '', line_, small, href, link, DRAW[kind]))
 
 
-DAYP = ('<div class="dayp">'
-        + '<section class="dch dhero" data-t="c0"><div class="w dhero-i"><span class="lb">A day with it running</span><h1>One day, start to finish.</h1><p class="sub">Scroll through a day at an example business. The pictures are sample data.</p><div class="cta">%s</div><em>Scroll</em></div></section>' % BOOK
-        + chap('6:31 AM', 'Monday starts with a booked calendar.', 'What came in overnight, and what was done with it.', '/after-hours', 'After hours', MORNING)
-        + chap('9:12 AM', 'The phone rings while you&rsquo;re on a roof.', 'It still gets answered.', '/answering', 'Answering', THREAD)
-        + chap('12:40 PM', 'One job running long should not cost you the afternoon.', 'The day adjusts without you making the calls.', '/dispatch', 'Scheduling and dispatch', GANTT)
-        + chap('4:12 PM', 'Invoices go out when the job is done.', 'Not when you find the time.', '/invoicing', 'Invoices', INVOICE)
-        + chap('6:05 PM', 'A quote nobody chases is a job you gave away.', 'Monday&rsquo;s quote gets its check-in.', '/follow-up', 'Follow-up', QUOTE)
-        + chap('2:07 AM', 'The burst pipe at 2 AM and the quote request at 2 AM are not the same call.', 'Only the real emergencies wake you.', '/after-hours', 'After hours', NIGHT)
+def portal(kind, label, title):
+    return '<section class="pt pt-%s" data-sp><div class="pt-s"><div class="pt-a"><span>%s</span></div><div class="pt-d"><h2>%s</h2></div></div></section>' % (kind, label, title)
+
+
+import math
+_ticks = ''.join('<line x1="200" y1="%d" x2="200" y2="%d" transform="rotate(%.1f 200 200)" style="--i:%d"/>' % (22, 40 if t % 4 else 52, t * 7.5, t) for t in range(48))
+DRAW = {
+    'dial': '<svg viewBox="0 0 400 400" aria-hidden="true"><circle class="r0" cx="200" cy="200" r="196"/>%s<circle class="r1" cx="200" cy="200" r="150" transform="rotate(-90 200 200)"/><circle class="r2" cx="200" cy="200" r="112" transform="rotate(30 200 200)"/>'
+            '<circle class="r3" cx="200" cy="200" r="74" transform="rotate(150 200 200)"/><line class="hd" x1="200" y1="200" x2="200" y2="64"/><circle class="c" cx="200" cy="200" r="7"/></svg>' % _ticks,
+    'stack': '<div class="stk" aria-hidden="true">%s</div>' % ''.join('<i class="%s" style="--i:%d;width:%d%%"></i>' % (c, n, w) for n, (c, w) in enumerate(
+        [('k', 96), ('', 82), ('b', 90), ('', 66), ('k', 78), ('o', 58), ('b', 70), ('', 48), ('k', 60), ('b', 36)])),
+    'dots': '<div class="dts" aria-hidden="true">%s</div>' % ''.join('<i class="%s" style="--i:%d"></i>' % ('b' if ORD % 9 == 0 else '', ORD) for ORD in [92, 32, 57, 22, 0, 99, 67, 90, 42, 14, 59, 78, 89, 24, 38, 26, 107, 87, 47, 1, 25, 48, 86, 10, 101, 75, 16, 52, 2, 56, 102, 77, 21, 49, 33, 60, 84, 51, 88, 66, 106, 58, 44, 62, 29, 20, 95, 34, 43, 31, 63, 65, 3, 61, 94, 45, 35, 76, 96, 100, 40, 36, 69, 13, 23, 39, 104, 18, 91, 37, 17, 71, 5, 82, 103, 105, 79, 73, 85, 98, 81, 80, 28, 15, 72, 97, 54, 70, 93, 30, 8, 53, 55, 11, 4, 27, 64, 7, 74, 46, 12, 68, 9, 6, 83, 50, 19, 41]),
+}
+DAYP = ('<div class="dayp2">'
+        + '<section class="dhero"><div class="w dhero-i"><span class="lb">A day with it running</span><h1>One day, start to finish.</h1><p class="sub">Scroll through a day at an example business. The pictures are sample data.</p><div class="cta">%s</div><em>Scroll</em></div></section>' % BOOK
+        + words([('9:12 AM', 'The phone rings while you&rsquo;re on a roof.', 'It still gets answered.'),
+                 ('', 'A reply goes out in seconds.', 'Sorry we missed you, with times to pick from. No callback list.'),
+                 ('', 'It all lands in your app.', 'The thread, the lead and what happens next, in one place.')], THREAD)
+        + design('dial', 'One job running long should not cost you the afternoon.', 'The day adjusts without you making the calls.', '/dispatch', 'Scheduling and dispatch')
+        + portal('sweep', '4:12 PM', 'Invoices go out when the job is done.')
+        + words([('', 'Friendly first, firmer later.', 'And never from you personally.'),
+                 ('', 'They stop the moment it is paid.', 'You can stop them for one customer in one tap.'),
+                 ('', 'You get paid without being the one who asks.', 'What is outstanding, by customer and by age.')], INVOICE, True)
+        + design('stack', 'A quote nobody chases is a job you gave away.', 'Days 2, 5 and 10, then monthly, until it&rsquo;s a yes or a no.', '/follow-up', 'Follow-up')
+        + design('dots', 'Only the real emergencies wake you.', 'The burst pipe at 2 AM and the quote request at 2 AM are not the same call.', '/after-hours', 'After hours', True)
         + '</div>' + CL)
 
 CSS_DAY = r"""
-/* /day, clean: white page, one split screen that stays with you. Left: the time of day and one line in the quote setting.
-   Right: a tinted panel that never moves, with the picture inside it changing and building as you scroll. */
-.dayp{position:relative;background:#fff}
-.dch{position:relative;border-bottom:1px solid var(--ln)}
-.dhero{background:#fff}.dhero-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);text-align:center;padding:clamp(96px,12vh,180px) 24px clamp(88px,11vh,160px);min-height:calc(100vh - 61px);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dayp2{background:#fff}
+.dhero{background:#fff;border-bottom:1px solid var(--ln)}.dhero-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);text-align:center;padding:clamp(96px,12vh,180px) 24px clamp(88px,11vh,160px);min-height:calc(100vh - 61px);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .dhero h1{margin:20px auto 0;max-width:10em;font-size:clamp(44px,5.4vw,104px);line-height:.98;letter-spacing:-.05em;font-weight:600;white-space:normal}
 .dhero .sub{margin:20px auto 0}.dhero em{margin-top:clamp(40px,6vh,80px);font:500 12px/1 "Geist Mono",monospace;font-style:normal;color:var(--t3)}
-.dch-p{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);width:min(1390px,calc(100vw - 200px));margin:0 auto;border-left:1px solid var(--ln);border-right:1px solid var(--ln);box-sizing:border-box}
-.dch-t{display:flex;flex-direction:column;justify-content:center;padding:clamp(56px,6vw,112px) var(--pad)}
-.dch-r{list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px;margin:0 0 clamp(28px,4vh,56px);padding:0;font:500 12px/1 "Geist Mono",monospace;color:var(--g3)}
-.dch-r li.past{color:var(--t3)}.dch-r li.on{color:var(--ink)}.dch-r li.on::before{content:"";display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:2px;background:var(--blue)}
-.dch h2{margin:0;max-width:13em;font:400 clamp(28px,2.9vw,54px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.02em;text-wrap:balance}
-.dch .s{margin:clamp(16px,1.4vw,26px) 0 clamp(22px,2vw,36px);max-width:24em;font-size:clamp(16px,1.1vw,20px);line-height:1.45;color:var(--t2)}
-.dch-w .btn{align-self:flex-start}.dch-w{display:flex;flex-direction:column;align-items:flex-start}
-.dch-g{display:flex;align-items:center;justify-content:center;border-left:1px solid var(--ln);padding:clamp(36px,4vw,72px) clamp(20px,3vw,56px);overflow:hidden}
-.dch-g>*{max-width:100%}.dch-g .ng{margin:0;width:100%;max-width:620px;color:#fff}.dch-g .ng-g{grid-template-columns:repeat(2,minmax(0,1fr))}.dch-g .ng-g div:nth-child(odd){border-left:0}.dch-g .ng-g div:nth-child(n+3){border-top:1px solid var(--dl)}.dch-g .mr{max-width:480px;margin:0}
-.dayp.live .dch{border-bottom:0}.dayp.live .dch:not(.dhero){height:230vh}
-.dayp.live .dch-p{position:sticky;top:0;height:100vh;padding-top:60px;--a:min(calc(var(--p,0)*7),1);--z:min(calc((1 - var(--p,0))*7),1)}
-.dayp.live .dch-w{opacity:calc(var(--a)*var(--z));transform:translateY(calc((1 - var(--a))*44px - (1 - var(--z))*44px))}
-.dayp.live .dch-g>:not(.dch-x){opacity:calc(var(--a)*var(--z));transform:translateY(calc((1 - var(--a))*90px - (1 - var(--z))*90px)) scale(calc(.92 + .08*var(--a)*var(--z)))}
-.dayp.live .bi{opacity:0;transform:translateY(12px);transition:opacity .35s,transform .45s cubic-bezier(.2,.7,.2,1)}.dayp.live .bi.in{opacity:1;transform:none}
-/* each chapter has its own colourway and its own way of arriving */
-.dch{--ac:var(--blue);--p1:#f6f8ff;--p2:#e6ebfd}
-.dch.k0{--ac:#e8703a;--p1:#fff5ee;--p2:#ffe2d0}.dch.k2{--ac:#c98a00;--p1:#fffaf0;--p2:#fdecc6}.dch.k3{--ac:#1c7a43;--p1:#f2fbf6;--p2:#d8f1e2}.dch.k4{--ac:#6b4fd8;--p1:#f8f5ff;--p2:#e5dcfc}.dch.k5{--ac:#6d9bff;--p1:#161d3a;--p2:#0a0f22}
-.dch-g{position:relative;background:linear-gradient(180deg,var(--p1),var(--p2))}
-.dch-r li.on::before{background:var(--ac)}
-.dch-g::before{content:attr(data-w);position:absolute;left:clamp(16px,2.4vw,44px);top:clamp(70px,9vh,120px);font-size:clamp(120px,15vw,290px);line-height:.8;font-weight:600;letter-spacing:-.07em;color:var(--ac);opacity:.11;transform:translateY(calc(var(--p,0)*-70px));pointer-events:none}
-.dch.k5 .dch-g::before{opacity:.2}
-.dch-g>:not(.dch-x){position:relative}
-.dch-x{position:absolute;inset:0;pointer-events:none}
-.pop{position:absolute;display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 13px 0 11px;border-radius:999px;background:#fff;color:#17181a;font-style:normal;font-size:13px;font-weight:560;letter-spacing:-.006em;white-space:nowrap;box-shadow:0 0 0 1px rgba(23,24,26,.07),0 16px 30px -16px rgba(20,30,80,.45)}
-.pop::before{content:"";width:8px;height:8px;border-radius:3px;background:var(--ac)}
-.dch.k5 .pop{background:#1d2547;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 16px 30px -16px #000}
-.pop.p1{right:7%;top:13%}.pop.p2{left:7%;bottom:12%}.pop.p3{right:10%;bottom:8%}
-.dch.k1 .pop.p1,.dch.k3 .pop.p1,.dch.k5 .pop.p1{left:7%;right:auto;top:11%}.dch.k1 .pop.p2,.dch.k3 .pop.p2,.dch.k5 .pop.p2{left:auto;right:7%;bottom:10%}
-.dayp.live .dch-g>.dch-x{opacity:1;transform:none}
-.dayp.live .pop.bi{opacity:0;transform:scale(.4);transition:opacity .25s,transform .5s cubic-bezier(.3,1.7,.5,1)}.dayp.live .pop.bi.in{opacity:1;transform:none}
-.dayp.live .k1 .dch-g>:not(.dch-x){transform:translateX(calc((1 - var(--a))*220px - (1 - var(--z))*220px))}
-.dayp.live .k1 .bi:not(.pop){transform:translateX(26px)}
-.dayp.live .k2 .dch-g>:not(.dch-x){transform-origin:0 100%;transform:translateY(calc((1 - var(--a))*70px - (1 - var(--z))*70px)) rotate(calc((1 - var(--a))*7deg - (1 - var(--z))*7deg))}
-.dayp.live .k2 .bi:not(.pop){transform:scale(.9)}
-.dayp.live .k3 .dch-g>:not(.dch-x){transform:scale(calc(.55 + .45*var(--a)*var(--z)))}
-.dayp.live .k3 .bi:not(.pop){transform:translateX(-26px)}
-.dayp.live .k4 .dch-g>:not(.dch-x){opacity:1;transform:none;clip-path:inset(0 calc((1 - var(--a))*100%) 0 calc((1 - var(--z))*100%) round 12px)}
-.dayp.live .k4 .bi:not(.pop){transform:none}
-.dayp.live .k5 .dch-g>:not(.dch-x){transform:translateY(calc((1 - var(--a))*-130px + (1 - var(--z))*130px))}
-.dayp.live .bi.in:not(.pop){transform:none!important}
-/* the app page's stage: its own colour, scenes that slide sideways, rows that pop */
-.sc.k2{background:#0a1030}.sc.k2 .sc-b i{background:#9c8cff}.sc.k2 .lb{background:rgba(156,140,255,.18);color:#cfc6ff}.sc.k2 .sc-c a{color:#cfc6ff}
-.sc.k2.live .sc-s{transform:translateX(120px) scale(.96)}.sc.k2.live .sc-s.on{transform:none}.sc.k2.live .sc-s.past{transform:translateX(-120px) scale(.96)}
-.sc.k2.live .bi{transform:scale(.86)}.sc.k2.live .bi.in{transform:none}
-@media(max-width:860px){.pop{position:static;margin:6px 6px 0 0}.dch-x{position:static;display:flex;flex-wrap:wrap;justify-content:center;margin-top:14px}.dch-g{flex-direction:column}.dch-g::before{display:none}}
-@media(min-width:1700px){.dch-g>*{zoom:1.12}}
-@media(max-width:860px){.dch-p{grid-template-columns:minmax(0,1fr);width:auto;margin:0 16px}.dch-t{padding:48px var(--pad) 28px}.dch-g{border-left:0;border-top:1px solid var(--ln);padding:28px 14px 36px}.dch h2{font-size:27px}.dhero-i{margin:0 16px;min-height:0}}
+/* words scroll, the picture stays */
+.wsc{background:#fff;border-bottom:1px solid var(--ln)}
+.wsc-g{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.wsc-w>div{display:flex;flex-direction:column;justify-content:center;min-height:88vh;padding:0 var(--pad)}
+.wsc time{margin-bottom:22px;font:500 13px/1 "Geist Mono",monospace;color:var(--t3)}
+.wsc h2,.dsn h2{margin:0;max-width:12em;font:400 clamp(30px,3.1vw,58px)/1.12 Georgia,"Times New Roman",serif;letter-spacing:-.022em;text-wrap:balance}
+.wsc p,.dsn p{margin:clamp(16px,1.4vw,26px) 0 0;max-width:23em;font-size:clamp(16px,1.15vw,21px);line-height:1.45;color:var(--t2)}
+.wsc-p{border-left:1px solid var(--ln);background:var(--pn)}
+.wsc-s{position:sticky;top:60px;height:calc(100vh - 60px);display:flex;align-items:center;justify-content:center;padding:0 clamp(20px,3vw,56px);box-sizing:border-box}.wsc-s>*{max-width:100%}
+.wsc.f .wsc-w{order:2}.wsc.f .wsc-p{border-left:0;border-right:1px solid var(--ln)}
+/* the words stay, a drawing builds */
+.dsn{background:#fff;border-bottom:1px solid var(--ln)}.dsn.dk{background:var(--dk);color:#fff;border-bottom:0}
+.dsn-g{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;border-left:1px solid var(--ln);border-right:1px solid var(--ln);min-height:88vh;box-sizing:border-box}.dsn.dk .dsn-g{border-color:var(--dl)}
+.dsn-t{padding:0 var(--pad)}.dsn .btn{margin-top:clamp(22px,2vw,36px)}.dsn.dk p{color:#a3a5aa}
+.dsn-d{display:flex;align-items:center;justify-content:center;height:100%;padding:clamp(28px,4vw,72px);box-sizing:border-box;border-left:1px solid var(--ln)}.dsn.dk .dsn-d{border-color:var(--dl)}
+.dsn.sp-live{height:300vh}.dsn.sp-live .dsn-g{position:sticky;top:0;height:100vh;padding-top:60px}
+.dsn svg{width:min(560px,100%);height:auto;overflow:visible}
+.dsn svg circle,.dsn svg line{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linecap:round}
+.dsn .r0{stroke:var(--ln)}.dsn svg line[style]{opacity:clamp(.14,calc(var(--p,1)*52 - var(--i)),1)}
+.dsn .r1{stroke-width:10;stroke:var(--blue);stroke-dasharray:942;stroke-dashoffset:calc((1 - var(--p,1))*942)}
+.dsn .r2{stroke-width:22;stroke:var(--ink);stroke-dasharray:704;stroke-dashoffset:calc((1 - min(var(--p,1)*1.5,1))*704)}
+.dsn .r3{stroke-width:34;stroke:#dfe6fb;stroke-dasharray:465;stroke-dashoffset:calc((1 - min(var(--p,1)*2.2,1))*465)}
+.dsn .hd{stroke-width:3;transform-origin:200px 200px;transform:rotate(calc(var(--p,1)*360deg))}.dsn .c{fill:var(--ink)}
+.stk{display:flex;flex-direction:column-reverse;align-items:center;gap:10px;width:min(520px,100%)}
+.stk i{--q:clamp(0,calc(var(--p,1)*11.5 - var(--i)),1);height:clamp(26px,3.6vh,40px);border-radius:10px;background:#eceef2;opacity:var(--q);transform:translateY(calc((1 - var(--q))*-90px)) rotate(calc((1 - var(--q))*-4deg))}
+.stk i.k{background:var(--ink)}.stk i.b{background:var(--blue)}.stk i.o{background:none;box-shadow:inset 0 0 0 1.5px var(--ink)}
+.dts{display:grid;grid-template-columns:repeat(12,1fr);gap:clamp(8px,1.1vw,18px);width:min(560px,100%)}
+.dts i{position:relative;aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.1)}
+.dts i::after{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;opacity:clamp(0,calc(var(--p,1)*118 - var(--i)),1);transform:scale(clamp(.2,calc(var(--p,1)*118 - var(--i)),1))}
+.dts i.b::after{background:#6d9bff}
+/* the clock idea, in other shapes */
+.pt{background:var(--dk);color:#fff}.pt-s{display:grid;place-items:center;padding:clamp(96px,10vw,180px) 24px;text-align:center}.pt-a{display:none}
+.pt h2{margin:0 auto;max-width:13em;font-size:clamp(34px,4.4vw,84px);line-height:1.02;letter-spacing:-.045em;font-weight:600;text-wrap:balance}
+.pt.sp-live{height:260vh;background:#fff}
+.pt.sp-live .pt-s{position:sticky;top:0;height:100vh;padding:0;overflow:hidden;box-sizing:border-box}
+.pt.sp-live .pt-a{display:grid;place-items:center;position:absolute;inset:0;color:var(--ink)}
+.pt-a span{font:500 clamp(14px,1.1vw,18px)/1 "Geist Mono",monospace;color:var(--t2);opacity:calc(1 - var(--p,0)*3)}
+.pt.sp-live .pt-d{position:absolute;inset:0;display:grid;place-items:center;padding:0 24px;background:var(--dk)}
+.pt.sp-live .pt-d h2{opacity:clamp(0,calc(var(--p,0)*4 - 2.2),1);transform:translateY(calc((1 - clamp(0,calc(var(--p,0)*4 - 2.2),1))*40px))}
+.pt-sweep.sp-live .pt-d{-webkit-mask:conic-gradient(from 0deg at 50% 50%,#000 calc(var(--p,0)*520deg),transparent 0);mask:conic-gradient(from 0deg at 50% 50%,#000 calc(var(--p,0)*520deg),transparent 0)}
+.pt-blinds.sp-live .pt-d{-webkit-mask:repeating-linear-gradient(90deg,#000 0 calc(min(var(--p,0)*1.5,1)*12.6vw),transparent 0 12.5vw);mask:repeating-linear-gradient(90deg,#000 0 calc(min(var(--p,0)*1.5,1)*12.6vw),transparent 0 12.5vw)}
+.pt-diamond.sp-live .pt-d{--r:calc(min(var(--p,0)*1.5,1)*125vmax);clip-path:polygon(50% calc(50% - var(--r)),calc(50% + var(--r)) 50%,50% calc(50% + var(--r)),calc(50% - var(--r)) 50%)}
+.pt-iris.sp-live .pt-d{--o:calc((1 - min(var(--p,0)*1.5,1))*50%);clip-path:inset(var(--o) var(--o) round calc((1 - min(var(--p,0)*1.5,1))*120px))}
+@media(max-width:860px){.wsc-g,.dsn-g{grid-template-columns:minmax(0,1fr)}.wsc-p{order:-1;border:0!important;border-bottom:1px solid var(--ln)!important}.wsc-s{position:static;height:auto;padding:28px 14px}.wsc-w>div{min-height:0;padding:44px var(--pad)}.wsc.f .wsc-w{order:0}
+.dsn-g{min-height:0}.dsn-t{padding:56px var(--pad) 8px}.dsn-d{border-left:0;padding:28px var(--pad) 56px}.wsc h2,.dsn h2{font-size:28px}}
 """
 
 out = pathlib.Path(ROOT) / 'site'
