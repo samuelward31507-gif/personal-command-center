@@ -1793,8 +1793,112 @@ CSS_REST = r"""
 }
 """
 
+# =====================================================================================
+# Rhythm. Sam: the pages all followed one pattern below the top. Each build page now gets its own running order,
+# its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
+# The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
+# =====================================================================================
+KIND = {'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+        'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
+RHYTHM = {
+    'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
+    'website-chat': ('st sx bl sp', {'st': 'v-xl', 'sx': 'v-pin', 'bl': 's-bl t-exp', 'sp': 's-dkp'}),
+    'social-messages': ('sx st pg', {'sx': 't-sheet', 'st': 's-dk v-c t-angle', 'pg': 's-dk'}),
+    'lead-vetting': ('st sx sp', {'st': 'v-2 t-rule', 'sx': 's-tn', 'sp': 'v-f t-sheet'}),
+    'after-hours': ('st sx sp', {'st': 'v-c t-arc', 'sp': 's-dkp'}),
+    'booking': ('st sx ic', {'st': 'v-xl', 'sx': 's-tn t-exp'}),
+    'reminders': ('sx st sp', {'sx': 't-sheet v-b', 'st': 's-dk t-angle', 'sp': 'v-f'}),
+    'dispatch': ('st sx hw', {'st': 'v-2', 'sx': 't-rule v-c'}),
+    'job-updates': ('bl sx st sp', {'bl': 'v-sf t-sheet', 'sx': 's-tn', 'st': 'v-c', 'sp': 'v-f'}),
+    'estimates': ('st sx sp', {'st': 's-tn v-xl', 'sx': 't-exp', 'sp': 's-dkp v-f'}),
+    'proposals': ('st bl sx sp', {'bl': 's-dk t-arc', 'sx': 't-sheet'}),
+    'follow-up': ('st sx ic as', {'st': 'v-2', 'sx': 't-exp'}),
+    'invoicing': ('sx st sp bl', {'sx': 't-sheet', 'st': 's-tn v-c', 'sp': 'v-f', 'bl': 's-dk v-sf t-angle'}),
+    'bookkeeping': ('st sx pg sp', {'st': 'v-xl t-rule', 'sx': 'v-pin', 'pg': 'v-l', 'sp': 's-dkp'}),
+    'reviews': ('sx st pg', {'sx': 's-tn t-arc v-c', 'st': 'v-2', 'pg': 's-dk t-sheet'}),
+    'review-replies': ('st sx pg', {'st': 'v-c', 'sx': 'v-pin t-rule', 'pg': 'v-l'}),
+    'win-backs': ('bl st sx sp', {'bl': 's-bl', 'st': 't-sheet', 'sx': 's-tn', 'sp': 'v-f'}),
+    'maintenance-reminders': ('st sx pg bl', {'st': 'v-2', 'sx': 's-tn t-exp', 'pg': 's-dk', 'bl': 'v-xl'}),
+    'referrals': ('sx st sp', {'sx': 't-sheet v-c', 'st': 's-dk t-arc v-xl', 'sp': 't-sheet'}),
+    'campaigns': ('st sx pg bl', {'st': 'v-c', 'sx': 's-tn t-angle', 'pg': 'v-l', 'bl': 's-bl t-exp'}),
+    'local-search': ('st pg sx bl', {'st': 'v-xl', 'pg': 't-rule', 'sx': 's-tn t-sheet', 'bl': 'v-sf'}),
+    'job-photos': ('sx st sp', {'sx': 't-arc', 'st': 's-tn v-2', 'sp': 's-dkp v-f'}),
+    'hiring': ('st sp bl pg', {'st': 'v-c t-sheet', 'sp': 'v-f', 'bl': 's-dk t-exp', 'pg': 'v-l'}),
+    'team-assistant': ('st bl sx sp', {'st': 'v-2', 'bl': 'v-sf s-tn', 'sx': 't-sheet', 'sp': 'v-f'}),
+    'field-notes': ('sx st pg bl', {'sx': 's-tn t-sheet v-c', 'st': 's-dk t-angle', 'pg': 's-dk', 'bl': 'v-l v-xl'}),
+    'reports': ('st sx sp bl', {'st': 'v-xl', 'sx': 'v-pin t-rule', 'sp': 's-dkp', 'bl': 's-bl t-arc'}),
+    'call-review': ('st sx sp pg', {'st': 'v-c t-arc', 'sx': 'v-pin', 'sp': 'v-f', 'pg': 'v-l t-rule'}),
+    'custom-agents': ('st bl sx sp', {'st': 'v-2', 'bl': 's-dk v-sf t-exp', 'sx': 't-sheet', 'sp': 's-dkp'}),
+    'integrations': ('sx itg', {'sx': 't-sheet'}),
+    'custom-builds': ('st pg fq sp', {'st': 'v-xl', 'pg': 't-rule', 'sp': 'v-f t-sheet'}),
+}
+assert len({(o, tuple(sorted(m.items()))) for o, m in RHYTHM.values()}) == len(RHYTHM)
+
+
+def restyle(name, body):
+    if name not in RHYTHM:
+        return body
+    secs = re.findall(r'<section\b.*?</section>', body, re.S)
+    assert ''.join(secs) == body, name
+    order, mods = RHYTHM[name]; order = order.split()
+    kind = lambda x: KIND.get(re.match(r'<section class="([a-z0-9]+)', x).group(1), 'other')
+    top = [x for x in secs if kind(x) == 'top']; end = [x for x in secs if kind(x) in ('faq', 'cl')]
+    mid = [x for x in secs if x not in top and x not in end]
+    assert len(top) == 1 and all(kind(x) in order for x in mid), (name, [kind(x) for x in mid])
+    mid.sort(key=lambda x: order.index(kind(x)))
+    out_ = []
+    for x in top + mid + end:
+        k = kind(x)
+        if k in mods:
+            x = re.sub(r'^<section class="([^"]*)"', lambda m: '<section class="%s %s"' % (m.group(1).strip(), mods[k]), x, count=1)
+        out_.append(x)
+    return ''.join(out_)
+
+
+CSS_RHY = r"""
+/* ============ surfaces ============ */
+.st.s-tn,.sx.s-tn,.bl.s-tn{background:linear-gradient(180deg,#f6f8ff,#e6ebfd)}
+.st.s-dk,.bl.s-dk,.pg.s-dk{background:var(--dk);color:#fff;border-color:var(--dl)}
+.st.s-dk .st-i,.bl.s-dk .bl-i,.pg.s-dk .pg-g,.pg.s-dk .pg-g>div{border-color:var(--dl)}.st.s-dk .st-t{color:#fff}.st.s-dk .st-t span{color:#8f9197}.st.s-dk .lb{background:rgba(109,155,255,.16);color:#a9c4ff}
+.pg.s-dk h3{color:#fff}.pg.s-dk p{color:#8f9197}.pg.s-dk svg{stroke:#fff}.pg.s-dk i{color:#7f8187}
+.bl.s-bl{background:var(--blue);color:#fff;border-color:transparent}.bl.s-bl .bl-i{border-color:rgba(255,255,255,.2)}
+.sp.s-dkp .sp-p{background:#101010}
+/* ============ shapes of the same pieces ============ */
+.st.v-c .st-i{text-align:center;padding-bottom:clamp(112px,8.4vw,160px)}.st.v-c .st-t{margin-left:auto;margin-right:auto;text-wrap:balance}
+.st.v-2 .st-t{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,4vw,76px);max-width:none}.st.v-2 .st-t span{font-size:.62em;line-height:1.36;letter-spacing:-.014em;align-self:end}
+.st.v-xl .st-t{max-width:15em;font-size:clamp(36px,3.5vw,68px);line-height:1.04;letter-spacing:-.04em}.st.v-xl .st-t span{display:block;margin-top:.7em;max-width:31em;font-size:.4em;line-height:1.36;letter-spacing:-.012em}
+.bl.v-sf p{max-width:19em;font:400 clamp(30px,3vw,58px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.022em}
+.bl.v-xl p{max-width:13em;font-size:clamp(40px,4.8vw,92px);line-height:1;letter-spacing:-.05em}
+.bl.v-l .bl-i{text-align:left;padding-left:var(--pad);padding-right:var(--pad)}.bl.v-l p{margin-left:0}
+.sx.v-c .sx-t{margin-left:auto;margin-right:auto;text-align:center;text-wrap:balance}
+.sx.v-b .sx-i{display:flex;flex-direction:column-reverse}.sx.v-b .sx-t{margin:clamp(36px,3vw,56px) 0 0}
+.pg.v-l .pg-g{grid-template-columns:minmax(0,1fr)}.pg.v-l .pg-g>div{display:grid;grid-template-columns:clamp(48px,5vw,90px) minmax(0,.6fr) minmax(0,1fr);gap:16px;align-items:baseline;min-height:0;padding-top:clamp(22px,1.8vw,34px);padding-bottom:clamp(22px,1.8vw,34px)}
+.pg.v-l h3{margin:0;font-size:clamp(19px,1.4vw,26px);letter-spacing:-.022em}.pg.v-l p{margin:0;max-width:34em}.pg.v-l svg{align-self:center}
+@media(min-width:1181px){
+.sx.v-pin .sx-i{display:grid;grid-template-columns:minmax(0,.4fr) minmax(0,1fr);gap:clamp(28px,3.4vw,64px);align-items:start}.sx.v-pin .sx-t{position:sticky;top:110px;margin:0}
+}
+@media(min-width:861px){.sp.v-f .sp-t{order:2}.sp.v-f .sp-p{border-left:0;border-right:1px solid var(--ln)}}
+/* ============ how one section hands over to the next ============ */
+.t-sheet,.t-arc,.t-angle{position:relative;z-index:1;border-top:0!important;background-color:var(--g)}
+.sx.wh.t-sheet,.sx.wh.t-arc,.sx.wh.t-angle,.bl.t-sheet,.bl.t-arc,.bl.t-angle,.qf.t-arc,.qc.t-arc{background-color:#fff}
+.st.s-dk.t-sheet,.st.s-dk.t-arc,.st.s-dk.t-angle,.bl.s-dk.t-sheet,.bl.s-dk.t-arc,.bl.s-dk.t-angle,.pg.s-dk.t-sheet{background-color:var(--dk)}.bl.s-bl.t-arc,.bl.s-bl.t-sheet{background-color:var(--blue)}
+.t-sheet{margin-top:-40px;border-radius:40px 40px 0 0;box-shadow:0 -30px 60px -34px rgba(16,16,16,.3)}
+.t-arc{margin-top:-72px;border-radius:50% 50% 0 0/72px 72px 0 0}
+.t-angle{margin-top:-5vw;padding-top:5vw;clip-path:polygon(0 5vw,100% 0,100% 100%,0 100%)}
+.t-sheet>.w,.t-arc>.w{border-color:transparent!important}
+.t-rule{border-top:8px solid var(--ink)!important}
+section:has(+ .t-sheet)::after{content:"";display:block;height:40px}section:has(+ .t-arc)::after{content:"";display:block;height:72px}section:has(+ .t-angle)::after{content:"";display:block;height:5vw}
+.t-exp{clip-path:inset(0 calc((1 - var(--p,1))*8%) 0 calc((1 - var(--p,1))*8%) round calc((1 - var(--p,1))*48px))}
+@media(max-width:860px){
+.st.v-2 .st-t{grid-template-columns:minmax(0,1fr);gap:14px}.st.v-2 .st-t span{font-size:.72em}.st.v-xl .st-t{font-size:32px}.st.v-xl .st-t span{font-size:.56em}
+.bl.v-xl p{font-size:36px}.bl.v-sf p{font-size:28px}
+.pg.v-l .pg-g>div{grid-template-columns:36px minmax(0,1fr);gap:6px 12px}.pg.v-l p{grid-column:2}
+.t-sheet{margin-top:-28px;border-radius:28px 28px 0 0}.t-arc{margin-top:-40px;border-radius:50% 50% 0 0/40px 40px 0 0}
+}
+"""
+
 out = pathlib.Path(ROOT) / 'site'
-CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST
+CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V
@@ -1845,7 +1949,7 @@ PAGES = [
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, body, css=PCSS, index=(slug != '404'))
+        doc = page(title, desc, '/' + slug, restyle(slug, body), css=PCSS, index=(slug != '404'))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)

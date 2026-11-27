@@ -302,3 +302,11 @@ Open before production:
 4. Not carried over from the old dark pages: the phone booking bar, the mega menu, the 3D/animated scenes.
 5. `light.css` still has unused styles from earlier homepage attempts; old dark scripts and styles are still in `site/assets/` but nothing links to them.
 6. Nothing was checked in a live browser: stills only. The site check posts to `/api/site-audit` and needs a real run on the preview.
+
+### 22e. Rhythm pass (27 Nov)
+
+Sam on the finished site: "seems like they all follow the same pattern", wants each page custom with different styles for how sections switch; keeping the top relatively the same is fine.
+
+- `RHYTHM` in `mk_pages.py`: one row per build page (30 rows, no two alike, asserted). It sets the running order of the sections below the top, which ones sit on dark, tint or blue, the shape of the statement, line and cells, and how a section hands over to the next: `t-sheet` (rounded sheet sliding over), `t-arc` (curved edge), `t-angle` (slanted edge), `t-rule` (heavy rule), `t-exp` (grows from an inset card to full width as it scrolls in; script in `light.js`, off under reduced motion).
+- `restyle()` applies the row after the page is assembled, so page content is untouched. Tops are not changed.
+- Not yet done: the same treatment for home-level pages (app, trades, story, about), and any page-to-page transition. If Sam meant the switch between pages rather than between sections, that is still open.

@@ -835,3 +835,43 @@
 .qs details p{padding-right:0}.chp b{font-size:56px}
 .rl.rl4{grid-template-columns:minmax(0,1fr)}.rl4 li{padding:0 0 26px 22px}
 }
+
+/* ============ surfaces ============ */
+.st.s-tn,.sx.s-tn,.bl.s-tn{background:linear-gradient(180deg,#f6f8ff,#e6ebfd)}
+.st.s-dk,.bl.s-dk,.pg.s-dk{background:var(--dk);color:#fff;border-color:var(--dl)}
+.st.s-dk .st-i,.bl.s-dk .bl-i,.pg.s-dk .pg-g,.pg.s-dk .pg-g>div{border-color:var(--dl)}.st.s-dk .st-t{color:#fff}.st.s-dk .st-t span{color:#8f9197}.st.s-dk .lb{background:rgba(109,155,255,.16);color:#a9c4ff}
+.pg.s-dk h3{color:#fff}.pg.s-dk p{color:#8f9197}.pg.s-dk svg{stroke:#fff}.pg.s-dk i{color:#7f8187}
+.bl.s-bl{background:var(--blue);color:#fff;border-color:transparent}.bl.s-bl .bl-i{border-color:rgba(255,255,255,.2)}
+.sp.s-dkp .sp-p{background:#101010}
+/* ============ shapes of the same pieces ============ */
+.st.v-c .st-i{text-align:center;padding-bottom:clamp(112px,8.4vw,160px)}.st.v-c .st-t{margin-left:auto;margin-right:auto;text-wrap:balance}
+.st.v-2 .st-t{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(24px,4vw,76px);max-width:none}.st.v-2 .st-t span{font-size:.62em;line-height:1.36;letter-spacing:-.014em;align-self:end}
+.st.v-xl .st-t{max-width:15em;font-size:clamp(36px,3.5vw,68px);line-height:1.04;letter-spacing:-.04em}.st.v-xl .st-t span{display:block;margin-top:.7em;max-width:31em;font-size:.4em;line-height:1.36;letter-spacing:-.012em}
+.bl.v-sf p{max-width:19em;font:400 clamp(30px,3vw,58px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.022em}
+.bl.v-xl p{max-width:13em;font-size:clamp(40px,4.8vw,92px);line-height:1;letter-spacing:-.05em}
+.bl.v-l .bl-i{text-align:left;padding-left:var(--pad);padding-right:var(--pad)}.bl.v-l p{margin-left:0}
+.sx.v-c .sx-t{margin-left:auto;margin-right:auto;text-align:center;text-wrap:balance}
+.sx.v-b .sx-i{display:flex;flex-direction:column-reverse}.sx.v-b .sx-t{margin:clamp(36px,3vw,56px) 0 0}
+.pg.v-l .pg-g{grid-template-columns:minmax(0,1fr)}.pg.v-l .pg-g>div{display:grid;grid-template-columns:clamp(48px,5vw,90px) minmax(0,.6fr) minmax(0,1fr);gap:16px;align-items:baseline;min-height:0;padding-top:clamp(22px,1.8vw,34px);padding-bottom:clamp(22px,1.8vw,34px)}
+.pg.v-l h3{margin:0;font-size:clamp(19px,1.4vw,26px);letter-spacing:-.022em}.pg.v-l p{margin:0;max-width:34em}.pg.v-l svg{align-self:center}
+@media(min-width:1181px){
+.sx.v-pin .sx-i{display:grid;grid-template-columns:minmax(0,.4fr) minmax(0,1fr);gap:clamp(28px,3.4vw,64px);align-items:start}.sx.v-pin .sx-t{position:sticky;top:110px;margin:0}
+}
+@media(min-width:861px){.sp.v-f .sp-t{order:2}.sp.v-f .sp-p{border-left:0;border-right:1px solid var(--ln)}}
+/* ============ how one section hands over to the next ============ */
+.t-sheet,.t-arc,.t-angle{position:relative;z-index:1;border-top:0!important;background-color:var(--g)}
+.sx.wh.t-sheet,.sx.wh.t-arc,.sx.wh.t-angle,.bl.t-sheet,.bl.t-arc,.bl.t-angle,.qf.t-arc,.qc.t-arc{background-color:#fff}
+.st.s-dk.t-sheet,.st.s-dk.t-arc,.st.s-dk.t-angle,.bl.s-dk.t-sheet,.bl.s-dk.t-arc,.bl.s-dk.t-angle,.pg.s-dk.t-sheet{background-color:var(--dk)}.bl.s-bl.t-arc,.bl.s-bl.t-sheet{background-color:var(--blue)}
+.t-sheet{margin-top:-40px;border-radius:40px 40px 0 0;box-shadow:0 -30px 60px -34px rgba(16,16,16,.3)}
+.t-arc{margin-top:-72px;border-radius:50% 50% 0 0/72px 72px 0 0}
+.t-angle{margin-top:-5vw;padding-top:5vw;clip-path:polygon(0 5vw,100% 0,100% 100%,0 100%)}
+.t-sheet>.w,.t-arc>.w{border-color:transparent!important}
+.t-rule{border-top:8px solid var(--ink)!important}
+section:has(+ .t-sheet)::after{content:"";display:block;height:40px}section:has(+ .t-arc)::after{content:"";display:block;height:72px}section:has(+ .t-angle)::after{content:"";display:block;height:5vw}
+.t-exp{clip-path:inset(0 calc((1 - var(--p,1))*8%) 0 calc((1 - var(--p,1))*8%) round calc((1 - var(--p,1))*48px))}
+@media(max-width:860px){
+.st.v-2 .st-t{grid-template-columns:minmax(0,1fr);gap:14px}.st.v-2 .st-t span{font-size:.72em}.st.v-xl .st-t{font-size:32px}.st.v-xl .st-t span{font-size:.56em}
+.bl.v-xl p{font-size:36px}.bl.v-sf p{font-size:28px}
+.pg.v-l .pg-g>div{grid-template-columns:36px minmax(0,1fr);gap:6px 12px}.pg.v-l p{grid-column:2}
+.t-sheet{margin-top:-28px;border-radius:28px 28px 0 0}.t-arc{margin-top:-40px;border-radius:50% 50% 0 0/40px 40px 0 0}
+}
