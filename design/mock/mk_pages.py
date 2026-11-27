@@ -1216,16 +1216,26 @@ RVCURVE = ('<section class="rvc" data-sp><div class="rvc-i"><div class="w rvc-f"
            '<div class="rvc-t"><span class="lb">Asked every time</span><p class="st-t">Every finished job gets asked. <span>Most happy customers never leave a review because nobody asked.</span></p>'
            '<div class="rvc-s">%s</div><p class="rvc-n">Example business, one month. Sample data.</p></div></div><div class="rvc-k" aria-hidden="true"></div></div></section>'
            % ''.join('<div><b>%s</b><span>%s</span></div>' % x for x in [('34', 'jobs finished'), ('5', 'asked for a review'), ('3', 'reviews received'), ('About 17', 'reviews missed')]))
+RVCURVE = re.sub(r'((?:<path class="dr"[^>]*/>)+)', r'<g class="drs">\1</g>', RVCURVE, 1)
+RVCURVE = RVCURVE.replace('<path class="ar"', '<path class="lo" d="M0 91 L100 80"/><path class="ar"', 1)
+RVCURVE = RVCURVE.replace('</svg></div>', '</svg><span class="rvc-e a">Asked every time</span><span class="rvc-e b">Asked when someone remembers</span></div>'
+                          '<p class="rvc-h" aria-hidden="true"><span>Reviews, over a year</span><span>Sample data</span></p>', 1)
+assert 'class="drs"' in RVCURVE and 'rvc-h' in RVCURVE and 'class="lo"' in RVCURVE
 # after the job, in one line: five moments on a hairline, lit one after another
 _rn = lambda at, tag, title, body: '<div class="rvp-n" data-hd="%d"><span>%s</span><b>%s</b>%s</div>' % (at, tag, title, body)
-RVPIPE = ('<section class="rvp" data-live="8"><div class="w rvp-i"><p class="st-t">Asked at the right moment, every time. <span>Not when someone remembers.</span></p>'
-          '<div class="rvp-l" aria-hidden="true"><i></i>%s</div><div class="rvp-t">%s</div></div></section>'
-          % (_rn(0, '4:10 PM', 'Job marked done', '<p>Full install</p>') + _rn(1, '4:10 PM', 'Ask queued', '<p>No one had to remember</p>')
-             + _rn(2, '4:11 PM', 'Text sent', '<p class="hb o">Mind leaving a quick review? It takes a minute.</p>') + _rn(4, '4:26 PM', 'Review left', stars(5))
-             + _rn(5, 'On your profile', 'Where people look', '<p>Next to your name in search</p>'),
-             ''.join('<div><b>%s.</b><span>%s</span></div>' % x for x in [
+_rq_a = {3, 9, 17, 22, 30}; _rq_s = {3, 17, 30}; _rq_all = {k for k in range(34) if (k + 1) * 20 // 34 > k * 20 // 34}
+_rq = lambda cls, title, note, asked, got: ('<div class="rvq %s"><p><b>%s</b><span>%s</span></p><div class="rvq-g">%s</div></div>'
+                                            % (cls, title, note, ''.join('<i style="--k:%d" class="%s"></i>' % (k, ('a s' if k in got else 'a') if k in asked else '') for k in range(34))))
+RVPIPE = ('<section class="rvp" data-live="8"><div class="w rvp-i"><div class="rvp-h"><div><p class="st-t">Asked at the right moment, every time. <span>Not when someone remembers.</span></p>'
+          '<div class="rvp-t">%s</div></div><div class="rvp-q" aria-hidden="true">%s%s<p class="rvp-k"><span><i></i>Job finished</span><span><i class="a"></i>Asked</span><span><i class="a s"></i>Review left</span><em>One month, 34 finished jobs. Sample data.</em></p></div></div>'
+          '<div class="rvp-l" aria-hidden="true"><i></i>%s</div></div></section>'
+          % (''.join('<div><b>%s.</b><span>%s</span></div>' % x for x in [
                  ('The job gets paid', 'The moment it&rsquo;s marked done, the review ask is queued.'), ('They get asked at the right time', 'A short text with a direct link, while the job is fresh.'),
-                 ('Your name gets around', 'Reviews and regular posts keep you in front of people searching nearby.')])))
+                 ('Your name gets around', 'Reviews and regular posts keep you in front of people searching nearby.')]),
+             _rq('', 'Asked when someone remembers', '5 asked, 3 reviews', _rq_a, _rq_s), _rq('on', 'Asked every time', '34 asked, about 20 reviews', set(range(34)), _rq_all),
+             _rn(0, '4:10 PM', 'Job marked done', '<p>Full install</p>') + _rn(1, '4:10 PM', 'Ask queued', '<p>No one had to remember</p>')
+             + _rn(2, '4:11 PM', 'Text sent', '<p class="hb o">Mind leaving a quick review? It takes a minute.</p>') + _rn(4, '4:26 PM', 'Review left', stars(5))
+             + _rn(5, 'On your profile', 'Where people look', '<p>Next to your name in search</p>')))
 SEARCH_L = SEARCH.replace('<div class="q">', '<div class="q" data-sc="0">').replace('<div class="on">', '<div class="on" data-sc="2">').replace('<div class="">', '<div class="" data-sc="1">')
 RVACD = ('<section class="acd" data-live="3,3,3"><div class="w acd-g"><div class="acd-t"><span class="lb">Where people look</span><p class="st-t">The shop with the reviews gets the call.</p>'
          '<div class="acd-l">%s</div></div><div class="acd-p">%s<p class="sd-n">Example. Sample data.</p></div></div></section>'
@@ -2123,6 +2133,14 @@ SHOWN = {'phone-agent', 'reminders', 'estimates', 'job-updates', 'referrals'}   
 YWT = {0: 't-wipe', 2: 't-door'}
 
 
+SIGN_PIC = {'invoicing': ['<svg viewBox="0 0 296 190"><rect x="8" y="8" width="34" height="24"/><rect x="48" y="8" width="34" height="24"/><rect x="88" y="8" width="34" height="24"/><rect x="128" y="8" width="34" height="24"/><rect x="168" y="8" width="34" height="24"/><rect x="208" y="8" width="34" height="24"/><rect x="248" y="8" width="34" height="24"/><rect x="8" y="38" width="34" height="24"/><rect x="48" y="38" width="34" height="24"/><rect x="88" y="38" width="34" height="24"/><rect x="128" y="38" width="34" height="24"/><rect x="168" y="38" width="34" height="24"/><rect x="208" y="38" width="34" height="24"/><rect x="248" y="38" width="34" height="24"/><rect x="8" y="68" width="34" height="24"/><rect x="48" y="68" width="34" height="24"/><rect x="88" y="68" width="34" height="24"/><rect x="128" y="68" width="34" height="24"/><rect x="168" y="68" width="34" height="24"/><rect x="208" y="68" width="34" height="24"/><rect x="248" y="68" width="34" height="24"/><rect x="8" y="98" width="34" height="24"/><rect x="48" y="98" width="34" height="24"/><rect x="88" y="98" width="34" height="24"/><rect x="128" y="98" width="34" height="24"/><rect x="168" y="98" width="34" height="24"/><rect x="208" y="98" width="34" height="24"/><rect x="248" y="98" width="34" height="24"/><rect x="8" y="128" width="34" height="24"/><rect x="48" y="128" width="34" height="24"/><rect class="k" x="140" y="15" width="10" height="10"/><rect class="k" x="180" y="45" width="10" height="10"/><rect class="k" x="180" y="75" width="10" height="10"/><rect class="r" x="48" y="128" width="34" height="24"/><rect class="k" x="8" y="170" width="8" height="8"/><text x="22" y="178">JOB DONE</text><rect class="r" x="112" y="170" width="8" height="8"/><text x="126" y="178">INVOICED</text></svg>', '<svg viewBox="0 0 296 190"><rect x="8" y="8" width="280" height="150" rx="14"/><path class="d" d="M60 34 H264 a10 10 0 0 1 10 10 V96 a10 10 0 0 1 -10 10 H60 a10 10 0 0 1 -10 -10 V44 a10 10 0 0 1 10 -10 Z"/><path class="g" d="M66 54 H240 M66 70 H214 M66 86 H128"/><path d="M134 79 V93"/><path d="M24 132 H210"/><rect class="d" x="222" y="120" width="52" height="24" rx="7"/><text x="8" y="178">DRAFT, NOT SENT</text></svg>', '<svg viewBox="0 0 296 190"><rect x="8" y="8" width="280" height="150" rx="14"/><path d="M8 45 H288"/><path class="g" d="M26 27 H150"/><text class="q" x="262" y="32">?</text><path d="M8 83 H288"/><path class="g" d="M26 64 H118"/><text class="q" x="262" y="69">?</text><path d="M8 120 H288"/><path class="g" d="M26 102 H168"/><text class="q" x="262" y="107">?</text><path class="g" d="M26 139 H104"/><text class="q" x="262" y="144">?</text><text x="8" y="178">WHO OWES WHAT</text></svg>']}
+
+
+def signs_pic(items, pics):   # the same three signs, each beside a small line drawing of it
+    return ('<section class="sg sgp"><div class="w sg-i"><p class="sg-t">How you know you have it</p><ol>%s</ol></div></section>'
+            % ''.join('<li><span aria-hidden="true">%s</span><b>%s</b></li>' % (pic, ap(t)) for pic, t in zip(pics, items)))
+
+
 def signs_sec(items, v):
     return ('<section class="sg sg%d"><div class="w sg-i"><p class="sg-t">How you know you have it</p><ol>%s</ol></div></section>' % (v, ''.join('<li>%s</li>' % ap(t) for t in items)))
 
@@ -2151,6 +2169,8 @@ def full(name, body):
     top = [x for x in secs if kind(x) == 'top']; fa_ = [x for x in secs if kind(x) == 'faq']; mid = [x for x in secs if kind(x) not in ('top', 'faq', 'cl')]
     kinds = [kind(x) for x in mid]; p = BY[name]; mods = RHYTHM[name][1]
     sg = signs_sec(X[name][1] if name in X else SIGNS_OLD[name], i % 3)
+    if name in SIGN_PIC:
+        sg = signs_pic(X[name][1], SIGN_PIC[name])
     wa = set()
     if name in X:   # a page should not say the same sentence twice
         wa = set(re.findall(r'[a-z]{4,}', X[name][0][0].lower()))
@@ -2177,6 +2197,14 @@ CSS_FULL = r"""
 .sg{border-top:1px solid var(--ln)}.sg-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(64px,5.4vw,104px) var(--pad)}
 .sg-t{margin:0 0 clamp(20px,1.8vw,32px);font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}
 .sg ol{list-style:none;margin:0;padding:0;counter-reset:g}.sg li{counter-increment:g}
+.sgp .sg-i{padding-top:clamp(48px,4.4vw,84px);padding-bottom:0}.sgp ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--ln)}
+.sgp li{display:grid;align-content:start;gap:clamp(22px,2.2vw,40px);padding:clamp(28px,3vw,56px) clamp(20px,2.4vw,44px) clamp(40px,4vw,72px);border-left:1px solid var(--ln)}.sgp li:first-child{border-left:0;padding-left:0}
+.sgp li span{display:block}.sgp svg{display:block;width:100%;max-width:330px;height:auto;overflow:visible}.sgp svg rect,.sgp svg path{fill:none;stroke:#17181a;stroke-width:1;vector-effect:non-scaling-stroke}
+.sgp svg .k{fill:#17181a}.sgp svg .r{fill:#e5484e;stroke:#e5484e}.sgp svg .d{stroke-dasharray:4 4}.sgp svg .g{stroke:#c9cbd0;stroke-width:6;stroke-linecap:round}
+.sgp svg text{font:500 9.5px/1 "Geist Mono",monospace;letter-spacing:.05em;fill:#75777d}.sgp svg text.q{font-size:15px;fill:#e5484e}
+.sgp li b{display:block;max-width:13em;font-size:clamp(20px,1.65vw,30px);line-height:1.12;font-weight:540;letter-spacing:-.03em}
+.sgp li b::before{content:"0" counter(g);display:block;margin-bottom:12px;font:500 12px/1 "Geist Mono",monospace;color:var(--red);letter-spacing:0}
+@media(max-width:860px){.sgp svg text{display:none}.sgp ol{grid-template-columns:minmax(0,1fr)}.sgp li{grid-template-columns:120px minmax(0,1fr);align-items:center;gap:18px;padding:22px 0;border-left:0;border-top:1px solid var(--ln)}.sgp li:first-child{border-top:0}.sgp .sg-i{padding-bottom:20px}}
 .sg0 li{display:flex;gap:clamp(18px,2vw,36px);align-items:baseline;padding:clamp(16px,1.5vw,28px) 0;border-top:1px solid var(--ln);font-size:clamp(22px,2vw,38px);line-height:1.12;font-weight:540;letter-spacing:-.03em}
 .sg0 li::before{content:"0" counter(g);font:500 12px/1 "Geist Mono",monospace;color:var(--red);letter-spacing:0}
 .sg1{background:linear-gradient(180deg,#f6f8ff,#e6ebfd)}.sg1 ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.2vw,22px)}
@@ -2616,6 +2644,18 @@ CSS_FA = r"""
 .rvc.sp-live .rvc-g .dr{opacity:calc((.08 + .34*var(--x))*clamp(0,calc((var(--a) - var(--x))*18),1)*(1 - var(--r)))}
 .rvc.sp-live .rvc-i{background:color-mix(in srgb,#fff calc((1 - clamp(0,calc(var(--r)*3 - 2),1))*100%),var(--dk))}
 @media(min-width:861px){.rvc.sp-live{height:240vh;--a:clamp(0,calc(var(--p,0)/.46),1);--r:clamp(0,calc((var(--p,0) - .6)/.4),1)}.rvc.sp-live .rvc-i{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center}.rvc.sp-live .rvc-f{flex:none;margin:0 auto}}
+.rvc{--a:1}.rvc-g .hi{clip-path:none}.rvc-g .dr{opacity:calc(.08 + .34*var(--x))}.rvc-g .lo{stroke:#b4b7bf;stroke-width:1.5;stroke-dasharray:5 5}
+.rvc-g .ar{fill:#266df1;opacity:clamp(0,calc(var(--r)*3),1)}
+.rvc-h{position:absolute;left:0;right:0;top:0;height:54px;margin:0;padding:0 clamp(22px,4.2vw,60px);display:flex;align-items:center;justify-content:space-between;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t2)}
+.rvc-h span{padding:6px 8px;background:#fff}
+.rvc-e{position:absolute;padding:7px 11px;border-radius:7px;font-size:13px;font-weight:560;white-space:nowrap;background:#fff;box-shadow:inset 0 0 0 1px var(--ln);color:var(--t2)}
+.rvc-e.a{right:9%;top:3.5%;background:#266df1;color:#fff;box-shadow:none}.rvc-e.b{right:14px;top:calc(80% - 44px)}
+@media(min-width:861px){.rvc.sp-live{height:210vh;--a:1;--r:clamp(0,calc((var(--p,0) - .3)/.55),1);--e:calc(var(--r)*var(--r))}
+.rvc.sp-live .rvc-f{transform:scale(calc(1 + var(--e)*7))}.rvc.sp-live .rvc-g .dr{opacity:calc(.08 + .34*var(--x))}.rvc.sp-live .rvc-g .drs{opacity:calc(1 - var(--r)*3)}
+.rvc.sp-live .rvc-i{background:#fff}.rvc.sp-live .rvc-e,.rvc.sp-live .rvc-h{opacity:calc(1 - var(--r)*5)}
+.rvc.sp-live .rvc-k{display:block;position:absolute;inset:0;z-index:3;pointer-events:none;background:#266df1;opacity:clamp(0,calc(var(--r)*3.4 - 1.5),1)}
+.rvc.sp-live .rvc-k::after{content:"";position:absolute;inset:0;background:var(--dk);opacity:clamp(0,calc(var(--r)*5 - 4),1)}}
+@media(max-width:860px){.rvc-e.b{display:none}.rvc-e.a{right:14px;top:-6px}}
 .rvp{background:var(--dk);color:#fff}.rvp-i{border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(72px,7vw,130px) clamp(22px,3.1vw,60px) clamp(64px,6vw,110px)}
 .rvp .st-t{margin:0 0 clamp(48px,5vw,90px);max-width:22em;color:#fff}.rvp .st-t span{color:#8f9197}
 .rvp-l{position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(12px,1.4vw,26px)}.rvp-l>i{position:absolute;left:0;right:0;top:5px;height:1px;background:#3a3b40}
@@ -2634,6 +2674,16 @@ CSS_FA = r"""
 .acd.live .srx>[data-sc]{transition:opacity .3s,box-shadow .3s}.acd.live .srx>[data-sc]:not(.on){opacity:.45}.acd .srx>div.on{background:#fff;box-shadow:inset 0 0 0 2px var(--ink),0 30px 60px -36px rgba(45,45,47,.5)}
 .acd .acd-p .srx{width:100%;max-width:560px}
 @media(max-width:1100px){.rh-i{padding-bottom:40px}.rh-c{position:static;width:auto;margin:10px auto 0;max-width:340px}.rh-c.c1{margin-top:36px}.rh-n{position:static;margin-top:16px}}
+.rvp-h{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(30px,5vw,100px);align-items:start;margin-bottom:clamp(56px,6vw,104px)}
+.rvp .rvp-h .st-t{margin:0 0 clamp(28px,3vw,48px)}.rvp-h .rvp-t{display:block;margin:0;padding:0;border-top:1px solid var(--dl)}.rvp-h .rvp-t>div{padding:16px 0;border-bottom:1px solid var(--dl)}
+.rvq{padding:clamp(18px,1.8vw,28px);border-radius:14px;box-shadow:inset 0 0 0 1px var(--dl)}.rvq+.rvq{margin-top:14px}.rvq.on{box-shadow:inset 0 0 0 1px #266df1}
+.rvq p{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:0 0 16px}.rvq p b{font-size:clamp(15px,1.1vw,18px);font-weight:560}
+.rvq p span,.rvp-k{font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:#8f9197}
+.rvq-g{display:grid;grid-template-columns:repeat(17,minmax(0,1fr));gap:clamp(4px,.45vw,7px)}
+.rvq-g i,.rvp-k i{position:relative;aspect-ratio:1;border-radius:3px;box-shadow:inset 0 0 0 1px #3a3b40}.rvq-g i.a,.rvp-k i.a{background:#266df1;box-shadow:none}
+.rvq-g i.s::after,.rvp-k i.s::after{content:"";position:absolute;inset:17%;background:#fff;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.rvp-k{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;margin:18px 0 0}.rvp-k span{display:flex;align-items:center;gap:8px}.rvp-k i{width:14px}.rvp-k em{font-style:normal;margin-left:auto}
+@media(max-width:860px){.rvp-h{grid-template-columns:minmax(0,1fr)}.rvq p{display:block}.rvq p span{display:block;margin-top:8px}.rvp-k em{margin-left:0}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
 /* ---- /invoicing ---- */
 .ivn-g{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:center;gap:clamp(30px,5vw,100px);border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(72px,8vw,150px) clamp(22px,3.1vw,60px)}

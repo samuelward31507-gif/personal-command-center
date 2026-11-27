@@ -613,3 +613,9 @@ Sam: "I like these designs... there just needs to be more on the screen." Kept l
 - Blue hand-over: a schedule line through the four markers, each named (Invoice, Friendly reminder, Firmer reminder, Third reminder).
 - Dark screen: per-customer reminder switches under the text (one "Stopped by you").
 New sample wording: Labor, Materials, Third reminder, Reminders / Per customer / On / Stopped by you.
+
+### 23j. Invoicing signs + Reviews upgrade (Nov 27)
+- Invoicing "How you know you have it": Sam crossed the plain list out. Now three ruled columns, each a small line drawing (`signs_pic`, `SIGN_PIC`). Other pages still use the plain list.
+- Reviews graph: appears whole (no draw-in). Hand-over made cheaper: frame scales to 8x at most and flat blue then dark layers fade over it (opacity only), instead of a 44x scale with per-frame colour mixing. Added a dashed comparison line, two end labels and a header strip.
+- Reviews dark section: the month as 34 squares twice (5 asked / 3 reviews against 34 asked / about 20), beside the statement; timeline kept under it.
+- Sam: Invoicing is the standard for every other page.
