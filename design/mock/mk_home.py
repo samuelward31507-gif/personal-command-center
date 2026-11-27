@@ -457,7 +457,7 @@ HERO = ('<section class="hm"><div class="w hm-t"><a class="hm-p" href="/free-aud
         '<h1>Find out what your business is losing.</h1>'
         '<p class="sub">We take your business apart, put a number on what&rsquo;s costing you jobs and hours, and build systems made for it.</p>'
         '<div class="cta"><a class="btn q" href="/free-audit">See what we check</a><a class="btn" %s>Book your free audit</a></div></div>'
-        '<div class="hm-x" data-sp><div class="hm-y"><div class="w hm-s"><div class="hm-w"><div class="hm-b"><i></i><i></i><i></i><b>Free audit</b><span>Ridgeline Fence</span><em>Example business, sample data</em></div>'
+        '<div class="hm-x" data-sp><div class="hm-y"><div class="w hm-s"><div class="hm-w"><div class="hm-b"><i></i><i></i><i></i>@@MARK@@<b>Cinder Revenue</b><em>Example business, sample data</em></div>'
         '<div class="hm-g"><div class="hm-l"><p>Seven parts of the business</p>%s</div>'
         '<div class="hm-m"><div class="hm-v on" data-sc="0" data-s="-1" data-f="-1"><div class="hm-h"><div><h2>Where the jobs went</h2><p>100 leads in the last 30 days. 34 became paid jobs.</p></div><span>[Audit complete]</span></div>%s</div>@@VIEWS@@</div>'
         '<div class="hm-r"><p>Fix first</p>%s</div></div>'
@@ -465,6 +465,7 @@ HERO = ('<section class="hm"><div class="w hm-t"><a class="hm-p" href="/free-aud
         % (CAL, ''.join('<div class="%s" style="--k:%d"><span>%s</span><b class="%s">%s</b></div>' % ('on' if on else '', k, a, 'f' if b == 'Fine' else '', b) for k, (a, b, on) in enumerate(_HM_SIDE)),
            _hm_chart(), ''.join('<div style="--k:%d"><span>%s</span><b>%s</b><em>%s</em><u>%s</u></div>' % (k, a, c, b, d) for k, (a, b, c, d) in enumerate(_HM_FIND))))
 HERO = HERO.replace('@@SAT@@', _HM_SAT)
+HERO = HERO.replace('@@MARK@@', mark)
 # the window walks through the fixes on its own: each screen shows the leak the audit found, then the system handling it, step by step
 def _hm_view(n, side, find, tag, title, figure, body, fix):
     return ('<div class="hm-v" data-sc="%d" data-s="%d" data-f="%d"><div class="hm-h"><div><h2 data-ty="%s">%s</h2><p>%s</p></div><span>[%s]</span></div>%s'
@@ -652,7 +653,7 @@ CSS = r'''
 .hm-w{border-radius:18px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.1),0 40px 80px -40px rgba(30,36,70,.28);overflow:hidden;animation:hmup .9s cubic-bezier(.2,.7,.2,1) both}
 @keyframes hmup{from{opacity:0;transform:translateY(34px)}}@keyframes hmin{from{opacity:0;transform:translateY(8px)}}@keyframes hmwipe{from{clip-path:inset(-14px 100% -14px -14px)}to{clip-path:inset(-14px -14px -14px -14px)}}@keyframes hmfade{from{opacity:0}}
 .hm-b{display:flex;align-items:center;gap:8px;height:46px;padding:0 18px;border-bottom:1px solid var(--ln);background:#fafafa;font-size:13.5px}
-.hm-b i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.hm-b i:nth-child(2){background:#febc2e}.hm-b i:nth-child(3){background:#28c840}.hm-b i:nth-child(3){margin-right:10px}.hm-b b{font-weight:600;white-space:nowrap}.hm-b span{color:var(--g2)}
+.hm-b i{width:11px;height:11px;border-radius:50%;background:#ff5f57}.hm-b i:nth-child(2){background:#febc2e}.hm-b i:nth-child(3){background:#28c840}.hm-b i:nth-child(3){margin-right:10px}.hm-b b{font-weight:600;white-space:nowrap}.hm-b .mk{width:17px;height:17px;flex:none}.hm-b span{color:var(--g2)}
 .hm-b em{margin-left:auto;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:var(--g2)}
 .hm-g{display:grid;grid-template-columns:clamp(230px,18vw,280px) minmax(0,1fr) clamp(270px,22vw,340px)}
 .hm-l{padding:22px 12px;border-right:1px solid var(--ln);background:#fafafa}.hm-l p,.hm-r>p{margin:0 10px 12px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--g2)}
