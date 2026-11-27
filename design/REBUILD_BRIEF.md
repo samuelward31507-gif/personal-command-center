@@ -403,3 +403,10 @@ Sam: the transitions are still weak; he wants the clock's recipe (an image you g
 - Script: portals are smoothed (lerp, like the clock) and get `--a` (act one), `--g` (grow, exponential), `--f` (fade), `--t` (title) and an optional counter (`.pt-n`). Portals now also run on phones; other pinned sections still do not.
 - `wash(kind, tag, title)`: three colour-wash bands (a, b, c) with grain. On /day the first band rises over the pinned spine (`data-cv`). /story chapters are now bands.
 - Monotone: dial, stack, dots, spine, day-line and hero marker are ink and grey only; no blue or red in drawings. Charts slimmed (thinner line, smaller nodes and tags, 540px max).
+
+### 22p. Sam's notes on 22o (27 Nov)
+
+- Bands looked exactly like Attio's. Now our own: a straight colour wash under fluted vertical ribs (`--rib`), three palettes.
+- Stack of slabs replaced by a thin-line drawing: follow-ups as arcs hopping along a baseline (Sent, Day 2, Day 5, Day 10, Monthly).
+- Dial redrawn in hairlines: tick ring, dotted inner rings, one drawn arc, a hand with a square tip.
+- Day-line is a smooth line graph, no steps; labels sit under the line to the right of each point.

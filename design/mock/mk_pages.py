@@ -2146,12 +2146,15 @@ def wash(kind, tag, title, small=''):
 
 
 import math
-_ticks = ''.join('<line x1="200" y1="%d" x2="200" y2="%d" transform="rotate(%.1f 200 200)" style="--i:%d"/>' % (22, 40 if t % 4 else 52, t * 7.5, t) for t in range(48))
+_ticks = ''.join('<line x1="200" y1="%d" x2="200" y2="%d" transform="rotate(%d 200 200)" style="--i:%.1f"/>' % (4, 18 if t % 5 == 0 else 11, t * 6, t * .8) for t in range(60))
+_HOPS = [(40, 96, 'Day 2'), (96, 176, 'Day 5'), (176, 300, 'Day 10'), (300, 520, 'Monthly')]
 DRAW = {
-    'dial': '<svg viewBox="0 0 400 400" aria-hidden="true"><circle class="r0" cx="200" cy="200" r="196"/>%s<circle class="r1" cx="200" cy="200" r="150" transform="rotate(-90 200 200)"/><circle class="r2" cx="200" cy="200" r="112" transform="rotate(30 200 200)"/>'
-            '<circle class="r3" cx="200" cy="200" r="74" transform="rotate(150 200 200)"/><line class="hd" x1="200" y1="200" x2="200" y2="64"/><circle class="c" cx="200" cy="200" r="7"/></svg>' % _ticks,
-    'stack': '<div class="stk" aria-hidden="true">%s</div>' % ''.join('<i class="%s" style="--i:%d;width:%d%%"></i>' % (c, n, w) for n, (c, w) in enumerate(
-        [('k', 96), ('', 82), ('b', 90), ('', 66), ('k', 78), ('o', 58), ('b', 70), ('', 48), ('k', 60), ('b', 36)])),
+    'dial': '<svg viewBox="0 0 400 400" aria-hidden="true"><circle class="r0" cx="200" cy="200" r="196"/>%s<circle class="rd" cx="200" cy="200" r="150"/><circle class="rd" cx="200" cy="200" r="104"/><circle class="rd" cx="200" cy="200" r="58"/>'
+            '<circle class="r1" cx="200" cy="200" r="150" transform="rotate(-90 200 200)" pathLength="1"/><path class="hx" d="M200 96 A104 104 0 0 1 290 252"/>'
+            '<g class="hd"><line x1="200" y1="200" x2="200" y2="50"/><rect x="196.5" y="46.5" width="7" height="7"/></g><rect class="c" x="196.5" y="196.5" width="7" height="7"/></svg>' % _ticks,
+    'stack': '<svg class="hop" viewBox="0 0 560 300" aria-hidden="true"><line class="bl" x1="20" y1="240" x2="540" y2="240"/>%s<rect class="sq" x="36.5" y="236.5" width="7" height="7"/><text x="40" y="266">Sent</text></svg>' % ''.join(
+        '<path class="hp" style="--i:%d" pathLength="1" d="M%d 240 A%d %d 0 0 1 %d 240"/><line class="dr2" style="--i:%d" x1="%d" y1="%d" x2="%d" y2="240"/><rect class="sq" style="--i:%d" x="%.1f" y="236.5" width="7" height="7"/><text style="--i:%d" x="%d" y="266">%s</text>'
+        % (k, a, (b - a) // 2, (b - a) // 2, b, k, (a + b) // 2, 240 - (b - a) // 2, (a + b) // 2, k, b - 3.5, k, b, t) for k, (a, b, t) in enumerate(_HOPS)),
     'dots': '<div class="dts" aria-hidden="true">%s</div>' % ''.join('<i class="%s" style="--i:%d"></i>' % ('b' if ORD % 9 == 0 else '', ORD) for ORD in [92, 32, 57, 22, 0, 99, 67, 90, 42, 14, 59, 78, 89, 24, 38, 26, 107, 87, 47, 1, 25, 48, 86, 10, 101, 75, 16, 52, 2, 56, 102, 77, 21, 49, 33, 60, 84, 51, 88, 66, 106, 58, 44, 62, 29, 20, 95, 34, 43, 31, 63, 65, 3, 61, 94, 45, 35, 76, 96, 100, 40, 36, 69, 13, 23, 39, 104, 18, 91, 37, 17, 71, 5, 82, 103, 105, 79, 73, 85, 98, 81, 80, 28, 15, 72, 97, 54, 70, 93, 30, 8, 53, 55, 11, 4, 27, 64, 7, 74, 46, 12, 68, 9, 6, 83, 50, 19, 41]),
 }
 DRAW['dotsfs'] = '<div class="dts" aria-hidden="true">%s</div>' % ''.join('<i class="%s" style="--i:%d"></i>' % ('b' if q % 11 == 0 else '', q) for q in [168, 249, 55, 180, 41, 67, 242, 12, 52, 209, 196, 176, 93, 128, 256, 216, 99, 46, 123, 156, 43, 56, 90, 14, 259, 147, 116, 89, 68, 138, 164, 237, 226, 38, 262, 105, 110, 122, 203, 57, 239, 244, 133, 192, 44, 42, 204, 60, 51, 134, 205, 219, 252, 220, 146, 213, 125, 64, 208, 160, 28, 222, 109, 72, 198, 158, 191, 35, 126, 91, 103, 154, 8, 170, 217, 233, 62, 236, 88, 82, 174, 165, 32, 202, 187, 171, 182, 6, 140, 136, 142, 221, 108, 87, 250, 70, 111, 258, 20, 24, 92, 121, 78, 148, 39, 19, 201, 251, 49, 188, 197, 106, 248, 129, 232, 224, 211, 223, 139, 76, 234, 31, 81, 190, 26, 11, 230, 247, 149, 214, 84, 186, 66, 113, 145, 37, 245, 246, 100, 47, 183, 5, 253, 173, 185, 184, 150, 179, 29, 240, 178, 33, 155, 130, 254, 229, 143, 45, 124, 119, 261, 2, 25, 63, 34, 30, 206, 235, 85, 79, 22, 86, 69, 172, 218, 161, 200, 18, 107, 257, 96, 120, 13, 53, 54, 0, 175, 4, 195, 98, 74, 193, 102, 27, 144, 17, 228, 73, 131, 58, 194, 80, 65, 181, 210, 141, 104, 71, 241, 117, 21, 169, 1, 127, 75, 163, 59, 132, 50, 215, 151, 112, 83, 118, 199, 7, 153, 61, 225, 255, 9, 15, 16, 135, 212, 3, 159, 40, 166, 157, 189, 167, 115, 101, 152, 10, 162, 177, 227, 207, 137, 23, 36, 77, 114, 48, 95, 243, 94, 97, 260, 263, 238, 231])
@@ -2352,11 +2355,11 @@ def spine(title, events):
 def dayline(title, small, href, link, events):
     # the whole day as one stepped line: it climbs a step each time something is handled; the last moment is the one that rang a person
     hx = lambda h: (h - 6) * 100 / 21.0; lv = lambda k: 88 - k * 14; xs = [hx(h) for h, _, _ in events]; n = len(xs) - 1
-    d = 'M0 %d' % lv(0) + ''.join(' H%.2f V%d' % (x, lv(i + 1)) for i, x in enumerate(xs[:n])) + ' H100'
-    base = _AX + ''.join('<path class="gr" d="M0 %d H100"/>' % lv(k) for k in range(1, n + 1)) + ''.join(_dr(x, lv(i)) for i, x in enumerate(xs[:n])) + _dr(xs[n], lv(n))
-    lab = ''.join('<div class="dln-l" style="left:%.2f%%;top:%d%%;width:%.2f%%;--t:%.3f"><time>%s</time><b>%s</b></div>' % (x, lv(i + 1), xs[i + 1] - x, x / 100, events[i][1], events[i][2]) for i, x in enumerate(xs[:n]))
-    lab += '<div class="dln-l n" style="left:%.2f%%;top:%d%%;--t:.9"><time>%s</time><b>%s</b></div>' % (xs[n], lv(n), events[n][1], events[n][2])
-    html = ''.join(_nd(x, lv(i + 1)) for i, x in enumerate(xs[:n])) + _nd(xs[n], lv(n), 'fl') + lab + _ticks([hx(h) for h in range(6, 28, 3)], ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM', '12 AM', '3 AM'])
+    cur = _dense([(0, lv(0) - 7)] + [(x, lv(i + 1) + (0 if i < n - 1 else 0)) for i, x in enumerate(xs[:n])] + [(xs[n], lv(n) - 3), (100, lv(n) - 4)]); d = _poly(cur)
+    base = _AX + ''.join('<path class="gr" d="M0 %d H100"/>' % lv(k) for k in range(1, n + 1)) + ''.join(_dr(x, lv(i + 1)) for i, x in enumerate(xs[:n])) + _dr(xs[n], lv(n) - 3)
+    lab = ''.join('<div class="dln-l" style="left:%.2f%%;top:%d%%;--t:%.3f"><time>%s</time><b>%s</b></div>' % (x, lv(i + 1), x / 100, events[i][1], events[i][2]) for i, x in enumerate(xs[:n]))
+    lab += '<div class="dln-l n" style="left:%.2f%%;top:%d%%;--t:.9"><time>%s</time><b>%s</b></div>' % (xs[n], lv(n) - 3, events[n][1], events[n][2])
+    html = ''.join(_nd(x, lv(i + 1)) for i, x in enumerate(xs[:n])) + _nd(xs[n], lv(n) - 3, 'fl') + lab + _ticks([hx(h) for h in range(6, 28, 3)], ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM', '12 AM', '3 AM'])
     lst = '<ol class="dln-o">%s</ol>' % ''.join('<li><time>%s</time>%s</li>' % (t, x) for _, t, x in events)
     return ('<section class="dln" data-sp><div class="dln-s"><div class="w dln-i"><div class="dln-t"><h2>%s</h2><div><p>%s</p><a class="btn q" href="%s">%s</a></div></div>%s%s</div></div></section>'
             % (title, small, href, link, _lg(base, _ln(d), html, 'Handled without you, across one day'), lst))
@@ -2414,12 +2417,16 @@ CSS_DAY = r"""
 .dsn-d{display:flex;align-items:center;justify-content:center;height:100%;padding:clamp(28px,4vw,72px);box-sizing:border-box;border-left:1px solid var(--ln)}.dsn.dk .dsn-d{border-color:var(--dl)}
 .dsn.sp-live{height:300vh}.dsn.sp-live .dsn-g{position:sticky;top:0;height:100vh;padding-top:60px}
 .dsn svg{width:min(560px,100%);height:auto;overflow:visible}
-.dsn svg circle,.dsn svg line{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linecap:round}
-.dsn .r0{stroke:var(--ln)}.dsn svg line[style]{opacity:clamp(.14,calc(var(--p,1)*52 - var(--i)),1)}
-.dsn .r1{stroke-width:1.5;stroke:var(--ink);stroke-dasharray:942;stroke-dashoffset:calc((1 - var(--p,1))*942)}
-.dsn .r2{stroke-width:1;stroke:#9a9da5;stroke-dasharray:704;stroke-dashoffset:calc((1 - min(var(--p,1)*1.5,1))*704)}
-.dsn .r3{stroke-width:1;stroke:var(--ink);stroke-dasharray:465;stroke-dashoffset:calc((1 - min(var(--p,1)*2.2,1))*465)}
-.dsn .hd{stroke-width:1.5;transform-origin:200px 200px;transform:rotate(calc(var(--p,1)*360deg))}.dsn .c{fill:var(--ink)}
+.dsn svg circle,.dsn svg line,.dsn svg path{fill:none;stroke:var(--ink);stroke-width:1}
+.dsn svg line[style]{opacity:clamp(.16,calc(var(--p,1)*52 - var(--i)),1)}.dsn .rd{stroke:#a3a6ad;stroke-dasharray:1.5 5}
+.dsn .r1{stroke-width:1.5;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--p,1))}
+.dsn .hx{stroke-width:1.5;stroke-dasharray:3 4;opacity:clamp(0,calc(var(--p,1)*4 - 1.4),1)}
+.dsn .hd{transform-origin:200px 200px;transform:rotate(calc(var(--p,1)*360deg))}.dsn .hd rect,.dsn .c{fill:var(--ink)}
+.dsn .hop{flex:none;width:min(640px,100%);aspect-ratio:560/300}.hop .bl{stroke:var(--ink)}
+.hop .hp{--q:clamp(0,calc(var(--p,1)*4.6 - var(--i) - .1),1);stroke-width:1.25;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--q))}
+.hop .dr2{stroke:#a3a6ad;stroke-dasharray:1.5 4;opacity:clamp(0,calc(var(--p,1)*4.6 - var(--i) - .6),1)}
+.hop .sq{fill:var(--ink);opacity:clamp(0,calc(var(--p,1)*4.6 - var(--i,-1) - .9),1)}
+.hop text{font:500 10.5px "Geist Mono",monospace;fill:var(--t3);text-anchor:middle;opacity:clamp(0,calc(var(--p,1)*4.6 - var(--i,-1) - .9),1)}
 .stk{display:flex;flex-direction:column-reverse;align-items:center;gap:10px;width:min(520px,100%)}
 .stk i{--q:clamp(0,calc(var(--p,1)*11.5 - var(--i)),1);height:clamp(26px,3.6vh,40px);border-radius:10px;background:#eceef2;opacity:var(--q);transform:translateY(calc((1 - var(--q))*-90px)) rotate(calc((1 - var(--q))*-4deg))}
 .stk i.k{background:var(--ink)}.stk i.b{background:#9a9da5}.stk i.o{background:none;box-shadow:inset 0 0 0 1.5px var(--ink)}
@@ -2471,9 +2478,10 @@ clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((10
 .wb-k{margin:0;font:500 11.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(23,24,26,.6)}
 .wb h2{margin:18px auto 0;max-width:14em;font:400 clamp(34px,3.8vw,70px)/1.07 Georgia,"Times New Roman",serif;letter-spacing:-.024em;text-wrap:balance}
 .wb-i>p:not(.wb-k){margin:20px auto 0;font-size:clamp(15.5px,1.1vw,19px);color:rgba(23,24,26,.66)}
-.wb-a{background:radial-gradient(58% 90% at 30% 0,#f1c6a8 0,rgba(241,198,168,0) 72%),radial-gradient(46% 90% at 0 86%,#b9bbd0 0,rgba(185,187,208,0) 72%),radial-gradient(52% 80% at 96% 92%,#ecd0a6 0,rgba(236,208,166,0) 72%),radial-gradient(48% 70% at 82% 4%,#c5d5e3 0,rgba(197,213,227,0) 72%),#e9e3da}
-.wb-b{background:radial-gradient(50% 80% at 46% 22%,#ecb6b0 0,rgba(236,182,176,0) 72%),radial-gradient(48% 90% at 76% 96%,#94bca2 0,rgba(148,188,162,0) 72%),radial-gradient(48% 80% at 4% 30%,#e6d3ae 0,rgba(230,211,174,0) 72%),radial-gradient(40% 70% at 100% 10%,#cfd6dc 0,rgba(207,214,220,0) 72%),#e6dfd4}
-.wb-c{background:radial-gradient(48% 90% at 80% 50%,#a9d8d8 0,rgba(169,216,216,0) 72%),radial-gradient(44% 80% at 40% 64%,#d3d1e8 0,rgba(211,209,232,0) 72%),radial-gradient(46% 70% at 30% 0,#f2d0b8 0,rgba(242,208,184,0) 72%),radial-gradient(50% 60% at 58% 104%,#eeeac6 0,rgba(238,234,198,0) 72%),#e3ebe5}
+.wb{--rib:repeating-linear-gradient(90deg,rgba(255,255,255,.34) 0,rgba(255,255,255,0) 46%,rgba(23,24,26,.07) 100%) 0 0/clamp(34px,3.4vw,54px) 100%}
+.wb-a{background:var(--rib),linear-gradient(96deg,#cfd3dc 0,#e7d9cf 30%,#f0c9a6 58%,#eadfce 82%,#d6dbe0 100%)}
+.wb-b{background:var(--rib),linear-gradient(96deg,#e3d6bf 0,#e6b9a8 34%,#c9a3ad 60%,#9fa3b8 86%,#8f97ab 100%)}
+.wb-c{background:var(--rib),linear-gradient(96deg,#dfe3df 0,#c5d6cf 32%,#d9d2bd 62%,#ecd3ba 100%)}
 .spn.sp-live[data-cv]{height:410vh}.sp-live[data-cv]+.wb{margin-top:-70vh}
 /* whole-screen pieces: a line down the middle with the day branching off it; a field of dots behind centred words */
 .spn{background:#fff;border-bottom:1px solid var(--ln)}
@@ -2503,7 +2511,7 @@ clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((10
 .dln h2{margin:0;max-width:15em;font:400 clamp(30px,3.1vw,58px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.022em;text-wrap:balance}
 .dln-t p{margin:0;max-width:22em;font-size:clamp(15px,1.05vw,19px);line-height:1.45;color:var(--t2)}.dln .btn{margin-top:clamp(14px,1.4vw,22px)}
 .dln .lgr{aspect-ratio:21/9;margin:clamp(56px,7vh,84px) 0 30px}
-.dln-l{position:absolute;box-sizing:border-box;padding:0 10px 12px 14px;transform:translateY(-100%);opacity:clamp(0,calc((var(--d,1) - var(--t))*12),1)}
+.dln-l{position:absolute;box-sizing:border-box;padding:14px 0 0 14px;white-space:nowrap;opacity:clamp(0,calc((var(--d,1) - var(--t))*12),1)}
 .dln-l time{display:block;font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}
 .dln-l b{display:block;margin-top:7px;font:400 clamp(15px,1.3vw,22px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.012em}
 .dln-l.n{padding:0 16px 0 0;transform:translate(-100%,16px);text-align:right;white-space:nowrap}.dln-l.n time{color:var(--ink)}
