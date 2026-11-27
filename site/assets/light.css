@@ -129,7 +129,7 @@ td.n{font-variant-numeric:tabular-nums;color:var(--red);font-weight:560}
 .pv-h{padding:clamp(110px,11vw,210px) var(--pad) clamp(40px,5vw,90px);box-sizing:border-box}
 .pv-g{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);align-items:center;gap:clamp(32px,5vw,96px);padding:0 var(--pad);box-sizing:border-box}
 .pv-w{--h:clamp(46px,7vh,66px);position:relative;padding-left:26px}
-.pv-m{position:absolute;left:0;top:calc(var(--h)/2 - 3.5px);width:7px;height:7px;background:#fff;transform:translateY(calc(var(--p,0)*7*var(--h)))}
+.pv-m{position:absolute;left:0;top:calc(var(--h)/2 + 1px);width:7px;height:7px;background:#fff;transform:translateY(calc(var(--p,0)*7*var(--h)))}
 .pv-x{--n:clamp(0,calc(1 - max(calc(var(--p,1)*7 - var(--i)),calc(var(--i) - var(--p,1)*7))*1.6),1);display:flex;align-items:baseline;gap:18px;height:var(--h);box-sizing:border-box;padding-top:calc(var(--h)/2 - 14px);color:#fff;opacity:calc(.3 + var(--n)*.7)}
 .pv-x em{font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:#7f8187}.pv-x b{font-size:clamp(20px,1.9vw,32px);font-weight:500;letter-spacing:-.022em}
 .pv-a{display:flex;flex-direction:column;align-items:center}.pv-d{width:min(600px,100%);height:auto;max-height:62vh;overflow:visible}
