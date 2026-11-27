@@ -1021,10 +1021,9 @@ clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((10
 .wb-k{margin:0;font:500 11.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(23,24,26,.6)}
 .wb h2{margin:18px auto 0;max-width:14em;font:400 clamp(34px,3.8vw,70px)/1.07 Georgia,"Times New Roman",serif;letter-spacing:-.024em;text-wrap:balance}
 .wb-i>p:not(.wb-k){margin:20px auto 0;font-size:clamp(15.5px,1.1vw,19px);color:rgba(23,24,26,.66)}
-.wb{--rib:repeating-linear-gradient(90deg,rgba(255,255,255,.34) 0,rgba(255,255,255,0) 46%,rgba(23,24,26,.07) 100%) 0 0/clamp(34px,3.4vw,54px) 100%}
-.wb-a{background:var(--rib),linear-gradient(96deg,#cfd3dc 0,#e7d9cf 30%,#f0c9a6 58%,#eadfce 82%,#d6dbe0 100%)}
-.wb-b{background:var(--rib),linear-gradient(96deg,#e3d6bf 0,#e6b9a8 34%,#c9a3ad 60%,#9fa3b8 86%,#8f97ab 100%)}
-.wb-c{background:var(--rib),linear-gradient(96deg,#dfe3df 0,#c5d6cf 32%,#d9d2bd 62%,#ecd3ba 100%)}
+.wb-a{background:radial-gradient(90% 85% at 50% 118%,#eda77c 0,rgba(237,167,124,.55) 34%,rgba(237,167,124,0) 70%),radial-gradient(60% 70% at 8% 0,#d5d6da 0,rgba(213,214,218,0) 70%),radial-gradient(60% 70% at 96% 4%,#dcd8d2 0,rgba(220,216,210,0) 70%),#efece7}
+.wb-b{background:radial-gradient(95% 90% at 50% 120%,#d9785a 0,rgba(217,120,90,.5) 36%,rgba(217,120,90,0) 72%),radial-gradient(70% 80% at 50% -20%,#b9bac2 0,rgba(185,186,194,0) 72%),#e9e5e0}
+.wb-c{background:radial-gradient(80% 90% at 104% 50%,#efb48c 0,rgba(239,180,140,.5) 36%,rgba(239,180,140,0) 72%),radial-gradient(70% 90% at -6% 50%,#cfd0d5 0,rgba(207,208,213,0) 72%),#f0ede8}
 .spn.sp-live[data-cv]{height:410vh}.sp-live[data-cv]+.wb{margin-top:-70vh}
 /* whole-screen pieces: a line down the middle with the day branching off it; a field of dots behind centred words */
 .spn{background:#fff;border-bottom:1px solid var(--ln)}

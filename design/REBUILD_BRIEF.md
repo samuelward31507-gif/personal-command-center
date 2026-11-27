@@ -410,3 +410,4 @@ Sam: the transitions are still weak; he wants the clock's recipe (an image you g
 - Stack of slabs replaced by a thin-line drawing: follow-ups as arcs hopping along a baseline (Sent, Day 2, Day 5, Day 10, Monthly).
 - Dial redrawn in hairlines: tick ring, dotted inner rings, one drawn arc, a hand with a square tip.
 - Day-line is a smooth line graph, no steps; labels sit under the line to the right of each point.
+- (Later, same day) Sam: the ribs still read as Attio's and he does not want lines. Bands are now a clean "ash and ember" wash: warm paper and grey with one ember glow from an edge (a from below, b deeper from below, c from the right). No ribs, no rainbow.
