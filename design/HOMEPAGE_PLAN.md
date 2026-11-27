@@ -47,3 +47,8 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Same grammar as the six-layer plates he likes: 1px bone lines on near-black, 2:1 isometric, one red detail, parts drop in with the scroll.
 - The information lives in the step list beside each drawing, not in the drawing.
 - Kept: six-layer plates, patch bay (only 3D), calendar (only white screen). The app-card pieces (.ap*) are no longer used on the homepage except the calendar.
+
+## Pass 10 (Sam: "much better, keep improving")
+- Drawings: hatched side faces for depth, the newest part is the bright one as you scroll (`.now`), funnel has six rings (one per audit point), its dots fall and the red leak lines flow.
+- Panels carry corner marks. The eight cells each have a small drawing (home_art.icons()). The call band uses the chip instead of the old "04" tag.
+- Next candidates: carry this drawing language and frame to the inner pages; a real typeface if Sam supplies one.

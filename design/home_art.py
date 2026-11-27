@@ -12,7 +12,9 @@ class Iso:
     def path(s, pts, close=True, cls=''):
         d = 'M' + ' L'.join('%s,%s' % s.p(*q) for q in pts) + (' Z' if close else '')
         return '<path%s d="%s"/>' % (' class="%s"' % cls if cls else '', d)
-    def slab(s, x, y, z, w, d, h, cls=''):
+    def slab(s, x, y, z, w, d, h, cls='', shade=0):
+        """shade: gap in units between hatch lines on the right-hand face, 0 for none"""
+        if shade: return s.slab(x, y, z, w, d, h, cls) + ''.join(s.path([(x + w, y + t, z + h), (x + w, y + t, z)], False, 'ht') for t in [shade * i for i in range(1, int(d // shade))])
         side = s.path([(x, y + d, z + h), (x + w, y + d, z + h), (x + w, y, z + h), (x + w, y, z), (x + w, y + d, z), (x, y + d, z)], cls=cls)
         top = s.path([(x, y, z + h), (x + w, y, z + h), (x + w, y + d, z + h), (x, y + d, z + h)], cls=cls)
         return side + top + s.path([(x + w, y + d, z + h), (x + w, y + d, z)], False, cls)
@@ -36,39 +38,42 @@ class Iso:
         pts = [(x + (r if i % 2 == 0 else r * .42) * math.cos(-math.pi / 4 + i * math.pi / 5), y + (r if i % 2 == 0 else r * .42) * math.sin(-math.pi / 4 + i * math.pi / 5), z) for i in range(10)]
         return s.path(pts, True, cls)
 
-def svg(body, label, vb=None, pad=26):
+def svg(body, label, vb=None, pad=26, icon=False):
     if vb is None:
         xs = [a for a, _ in BB]; ys = [b for _, b in BB]; vb = '%d %d %d %d' % (min(xs) - pad, min(ys) - pad - 22, max(xs) - min(xs) + 2 * pad, max(ys) - min(ys) + 2 * pad + 22)
     del BB[:]
+    if icon: return '<svg class="il" viewBox="%s" aria-hidden="true">%s</svg>' % (vb, body)
     return '<svg class="lnv il" viewBox="%s" role="img" aria-label="%s">%s</svg>' % (vb, label, body)
 def lit(n, body, cls=''): return '<g data-lit="%d"%s>%s</g>' % (n, ' class="%s"' % cls if cls else '', body)
 
 def funnel():
-    """Jobs go in at the top. Fewer come out. Three leave through the side."""
-    cx, R = 320, [(64, 214), (150, 170), (236, 124), (322, 80), (402, 46)]; o = []
+    """Jobs go in at the top. Fewer come out. Three leave through the side. Six rings, one for each point the audit follows."""
+    cx, R = 320, [(60, 214), (128, 178), (196, 142), (264, 106), (332, 74), (400, 46)]; o = []
     for i, (y, rx) in enumerate(R):
         ry = round(rx * .24, 1)
         o.append('<path class="ft nf" d="M%s,%s A%s,%s 0 0 1 %s,%s"/>' % (cx - rx, y, rx, ry, cx + rx, y))
-        o.append('<path class="%s nf" d="M%s,%s A%s,%s 0 0 0 %s,%s"/>' % ('hi' if i == 0 else '', cx - rx, y, rx, ry, cx + rx, y))
+        o.append('<path class="nf" data-is="%d" d="M%s,%s A%s,%s 0 0 0 %s,%s"/>' % (i, cx - rx, y, rx, ry, cx + rx, y))
     for (y1, r1), (y2, r2) in zip(R, R[1:]):
         o.append('<path class="nf" d="M%s,%s L%s,%s M%s,%s L%s,%s"/>' % (cx - r1, y1, cx - r2, y2, cx + r1, y1, cx + r2, y2))
-    y, rx = R[-1]; o.append('<path class="nf" d="M%s,%s V%s M%s,%s V%s"/><path class="nf" d="M%s,%s A%s,%s 0 0 0 %s,%s"/>' % (cx - rx, y, y + 52, cx + rx, y, y + 52, cx - rx, y + 52, rx, 11, cx + rx, y + 52))
+    y, rx = R[-1]; o.append('<path class="nf" d="M%s,%s V%s M%s,%s V%s"/><path class="nf" d="M%s,%s A%s,%s 0 0 0 %s,%s"/>' % (cx - rx, y, y + 50, cx + rx, y, y + 50, cx - rx, y + 50, rx, 11, cx + rx, y + 50))
     seed = 7
     def rnd():
         nonlocal seed; seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648
-    for band, n in enumerate([11, 8, 5, 3]):
+    k = 0
+    for band, n in enumerate([11, 9, 6, 5, 3]):
         (y1, r1), (y2, r2) = R[band], R[band + 1]
         for _ in range(n):
-            t = .2 + rnd() * .6; w = (r1 + (r2 - r1) * t) * .72; o.append('<circle class="dt" cx="%.1f" cy="%.1f" r="3.2"/>' % (cx + (rnd() * 2 - 1) * w, y1 + (y2 - y1) * t))
-    o.append('<circle class="dt" cx="%s" cy="476" r="3.2"/><circle class="dt" cx="%s" cy="500" r="3.2"/>' % (cx - 8, cx + 10))
-    for n, (band, side) in zip((1, 3, 5), ((1, -1), (2, 1), (3, -1))):
-        (y1, r1), (y2, r2) = R[band], R[band + 1]; x = cx + side * (r1 + r2) / 2; y = (y1 + y2) / 2
-        o.append(lit(n, '<path class="rd ds" d="M%.1f,%.1f q%s,6 %s,96"/><circle class="rdt" cx="%.1f" cy="%.1f" r="4"/><circle class="rdt" cx="%.1f" cy="%.1f" r="3"/><circle class="rd nf" cx="%.1f" cy="%.1f" r="9"/>' % (x, y, side * 58, side * 70, x + side * 70, y + 96, x + side * 52, y + 52, x, y), 'fade'))
-    return svg(''.join(o), 'A funnel drawn in thin lines. Many dots go in at the top and only a few come out at the bottom. Three red lines leave through its side, where jobs leak away.', '70 20 500 500')
+            u = .16 + rnd() * .6; w = (r1 + (r2 - r1) * u) * .7; k += 1
+            o.append('<circle class="dt drip" style="animation-delay:-%.2fs" cx="%.1f" cy="%.1f" r="3"/>' % (rnd() * 3.6, cx + (rnd() * 2 - 1) * w, y1 + (y2 - y1) * u))
+    o.append('<circle class="dt drip" style="animation-delay:-.4s" cx="%s" cy="470" r="3"/><circle class="dt drip" style="animation-delay:-2.1s" cx="%s" cy="492" r="3"/>' % (cx - 8, cx + 10))
+    for n, side in ((1, -1), (3, 1), (5, -1)):
+        y, rx = R[n]; x = cx + side * rx
+        o.append(lit(n, '<path class="rd ds flow" d="M%.1f,%.1f q%s,4 %s,92"/><circle class="rdt" cx="%.1f" cy="%.1f" r="4"/><circle class="rdt" cx="%.1f" cy="%.1f" r="2.6"/><circle class="rd nf" cx="%.1f" cy="%.1f" r="8"/>' % (x, y, side * 56, side * 68, x + side * 68, y + 92, x + side * 50, y + 48, x, y), 'fade'))
+    return svg(''.join(o), 'A funnel drawn in thin lines. Many dots go in at the top and only a few come out at the bottom. Three red lines leave through its side, where jobs leak away.', '62 14 516 508')
 
 def reply():
     """A phone lying flat. A message rises off it, and the answer is already above it."""
-    I = Iso(300, 200, 1.0); o = [I.slab(0, 0, 0, 170, 290, 12), I.path([(12, 14, 12), (158, 14, 12), (158, 276, 12), (12, 276, 12)], cls='ft nf'), I.path([(66, 264, 12), (104, 264, 12)], False, 'nf')]
+    I = Iso(300, 200, 1.0); o = [I.slab(0, 0, 0, 170, 290, 12, shade=7), I.path([(12, 14, 12), (158, 14, 12), (158, 276, 12), (12, 276, 12)], cls='ft nf'), I.path([(66, 264, 12), (104, 264, 12)], False, 'nf')]
     def bubble(x, y, z, w, d, cls, n, rows=2, red=False):
         g = ''.join(I.path([(a, b, z), (a, b, 12)], False, 'ft ds') for a, b in ((x, y + d), (x + w, y)))
         g += I.slab(x, y, z, w, d, 7, cls) + I.lines(x, y, z + 7, w, d, rows, 'rd nf' if red else 'sk', 14, short=(rows - 1,))
@@ -104,7 +109,7 @@ def review():
     """Five tiles, a star on each. The ask goes out, the stars come in, the thanks goes back."""
     I = Iso(214, 190, .96); o = []
     for i in range(5):
-        x = i * 88; o.append(I.slab(x, 0, 0, 70, 70, 10) + lit(1, I.star(x + 35, 35, 10.5, 27, 'hi nf'), 'fade d%d' % i))
+        x = i * 88; o.append(I.slab(x, 0, 0, 70, 70, 10, shade=6) + lit(1, I.star(x + 35, 35, 10.5, 27, 'hi nf'), 'fade d%d' % i))
     def note(x, y, z, n, red=False):
         return lit(n, I.path([(x + 45, y + 28, z), (x + 45, y + 28, 10)], False, 'ft ds') + I.slab(x, y, z, 90, 56, 5, 'hi' if red else '') + I.lines(x, y, z + 5, 90, 56, 2, 'rd nf' if red else 'sk', 12, short=(1,)))
     o += [note(-10, 8, 96, 0), note(338, 8, 96, 2, True)]
@@ -115,7 +120,7 @@ def blocks():
     I = Iso(176, 196, 1.0); o = []; S, G = 78, 22
     x5 = 4 * (S + G); o.append(I.path([(x5, 0, 0), (x5 + S, 0, 0), (x5 + S, S, 0), (x5, S, 0)], cls='rd ds nf') + ''.join(I.path([(a, b, 0), (a, b, S)], False, 'ft ds') for a, b in ((x5, S), (x5 + S, S), (x5 + S, 0))) + I.path([(x5, 0, S), (x5 + S, 0, S), (x5 + S, S, S), (x5, S, S)], cls='ft ds nf'))
     for i in range(4):
-        x = i * (S + G); g = I.slab(x, 0, 0, S, S, S, 'hi' if i == 3 else '') + (I.hatch(x, 0, S, S, S, 10) if i % 2 == 0 else I.ring(x + S / 2, S / 2, S, 20, 'nf'))
+        x = i * (S + G); g = I.slab(x, 0, 0, S, S, S, 'hi' if i == 3 else '', shade=7) + (I.hatch(x, 0, S, S, S, 10) if i % 2 == 0 else I.ring(x + S / 2, S / 2, S, 20, 'nf'))
         if i: g = I.path([(x - G, S / 2, S / 2), (x, S / 2, S / 2)], False, 'nf') + g
         o.append(lit(i, g))
     return svg(''.join(o), 'Four blocks in a row, drawn in thin lines and joined one to the next. A fifth place is marked out with a dashed outline, still empty.')
@@ -124,5 +129,20 @@ def tower():
     """What got done today, stacking up."""
     I = Iso(320, 322, 1.0); o = [I.path([(-40, -40, 0), (210, -40, 0), (210, 210, 0), (-40, 210, 0)], cls='ft ds nf')]
     for i in range(5):
-        z = i * 44; o.append(lit(i, I.slab(0, 0, z, 170, 170, 26, 'hi' if i == 4 else '') + I.ring(85, 85, z + 26.5, 30, 'nf' if i < 4 else 'rd nf') + I.check(68, 64, z + 26.5, 30, 'hi nf')))
+        z = i * 44; o.append(lit(i, I.slab(0, 0, z, 170, 170, 26, 'hi' if i == 4 else '', shade=7) + I.ring(85, 85, z + 26.5, 30, 'nf' if i < 4 else 'rd nf') + I.check(68, 64, z + 26.5, 30, 'hi nf')))
     return svg(''.join(o), 'Five slabs stacked one on another, drawn in thin lines, each marked with a tick. The pile grows as the day&#8217;s work gets done.')
+
+def icons():
+    """Eight small drawings for the eight parts of a business, same hand as the large ones."""
+    out = []
+    def ic(body): out.append(svg(body, '', pad=4, icon=True))
+    I = Iso(0, 0, 1.0)
+    ic(I.slab(0, 0, 0, 40, 68, 4, shade=6) + I.slab(4, 12, 28, 36, 24, 3, 'hi') + I.lines(4, 12, 31, 36, 24, 2, 'sk', 6, short=(1,)))
+    ic(I.slab(0, 0, 0, 72, 60, 4) + ''.join(I.path([(0, v, 4), (72, v, 4)], False, 'sk') for v in (20, 40)) + ''.join(I.path([(v, 0, 4), (v, 60, 4)], False, 'sk') for v in (24, 48)) + I.path([(48, 20, 4), (72, 20, 4), (72, 40, 4), (48, 40, 4)], cls='hi nf'))
+    ic(I.slab(0, 0, 0, 52, 72, 2) + I.lines(0, 0, 2, 52, 46, 3, 'sk', 8, short=(2,)) + I.path([(8 + v * 5, 56 + (4 if v % 2 else -4), 2) for v in range(8)], False, 'hi nf'))
+    ic(''.join(''.join(I.coin(j * 30, -j * 30, k * 5, 13, 5, 'hi' if k == n - 1 else '') for k in range(n)) for j, n in enumerate((2, 4, 6))))
+    ic(I.slab(0, 0, 0, 58, 58, 7, shade=6) + I.star(29, 29, 7.5, 21, 'hi nf'))
+    top = I.p(0, 0, 50); ic(I.ring(0, 0, 0, 30, 'ft nf') + I.ring(0, 0, 0, 16, 'nf') + I.path([(0, 0, 0), (0, 0, 50)], False, 'nf') + '<circle class="hi" cx="%s" cy="%s" r="7"/>' % top + (BB.append((top[0] - 8, top[1] - 8)) or ''))
+    ic(''.join(I.slab(j * 34, 0, 0, 26, 26, h, 'hi' if j == 1 else '', shade=6) for j, h in enumerate((20, 40, 28))))
+    ic(I.path([(44, 0, 0), (78, 0, 0), (78, 34, 0), (44, 34, 0)], cls='ft ds nf') + ''.join(I.path([(a, b, 0), (a, b, 34)], False, 'ft ds') for a, b in ((44, 34), (78, 34), (78, 0))) + I.path([(44, 0, 34), (78, 0, 34), (78, 34, 34), (44, 34, 34)], cls='ft ds nf') + I.slab(0, 0, 0, 34, 34, 34, 'hi', shade=6))
+    return out

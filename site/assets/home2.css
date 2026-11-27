@@ -252,3 +252,19 @@ h1,h2,h3{letter-spacing:-.03em}
 .ax .px-steps li{font-size:16.5px}
 @media (max-width:900px){.axp.ill{padding:14px 10px}.axp.ill .lnv{height:auto}}
 @media (prefers-reduced-motion:reduce){.il [data-lit]{transition:none}}
+/* ---- v11: finish. The newest part of each drawing is the bright one, the funnel moves, panels carry corner marks, the eight cells get small drawings. ---- */
+.il [data-lit].now path:not(.rd):not(.ft):not(.sk):not(.ht):not(.ds),.il [data-lit].now ellipse:not(.rd):not(.ft){stroke:#f2f1ee}
+.il path,.il ellipse{transition:stroke .45s}.il [data-is].cur{stroke:#f2f1ee;stroke-width:1.4}
+@keyframes ilDrip{0%{transform:translateY(-9px);opacity:0}18%{opacity:1}78%{opacity:1}100%{transform:translateY(15px);opacity:0}}
+@keyframes ilFlow{to{stroke-dashoffset:-14}}
+.il .drip{animation:ilDrip 3.6s linear infinite}.il .flow{animation:ilFlow 1.1s linear infinite}
+.axp.ill,.axp.line{border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,248,240,.08)}
+.axp.ill::before,.axp.line::before{content:"";position:absolute;inset:13px;pointer-events:none;--c:rgba(255,248,240,.34);
+  background:linear-gradient(var(--c),var(--c)) 0 0/9px 1px,linear-gradient(var(--c),var(--c)) 0 0/1px 9px,linear-gradient(var(--c),var(--c)) 100% 0/9px 1px,linear-gradient(var(--c),var(--c)) 100% 0/1px 9px,linear-gradient(var(--c),var(--c)) 0 100%/9px 1px,linear-gradient(var(--c),var(--c)) 0 100%/1px 9px,linear-gradient(var(--c),var(--c)) 100% 100%/9px 1px,linear-gradient(var(--c),var(--c)) 100% 100%/1px 9px;background-repeat:no-repeat}
+.g8 a{position:relative}.g8-i{position:absolute;right:18px;top:16px;width:92px;height:74px;display:block}.g8-i svg{width:100%;height:100%;display:block;overflow:visible}
+.g8-i .il path,.g8-i .il ellipse,.g8-i .il circle,.g8 .il path,.g8 .il ellipse,.g8 .il circle{fill:#000;transition:stroke .3s,fill .3s}.g8 a:hover .il path,.g8 a:hover .il ellipse,.g8 a:hover .il circle{fill:#0e0e10}
+.g8 a:hover .il path:not(.ft):not(.sk):not(.ht),.g8 a:hover .il ellipse:not(.ft){stroke:#f2f1ee}.g8 .il .nf{fill:none!important}
+.ac .px-k{box-shadow:inset 0 0 0 1px rgba(10,10,12,.22);color:#45443f;margin-bottom:28px}
+@media (max-width:900px){.g8-i{width:60px;height:48px;right:12px;top:12px}}
+@media (prefers-reduced-motion:reduce){.il .drip,.il .flow{animation:none}}
+.axp.ill>small{left:32px;bottom:28px}.g8-i{width:104px;height:82px}

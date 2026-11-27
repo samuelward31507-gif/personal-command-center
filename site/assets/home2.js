@@ -75,7 +75,7 @@
     function pick(list, k) { return list[Math.max(0, Math.min(list.length - 1, k))] }
     function set(k) {
       if (k === cur) return; cur = k; var c = Math.max(0, k);
-      parts.forEach(function (e) { e.classList.toggle('on', +(e.dataset.at || e.dataset.lit) <= k) });
+      parts.forEach(function (e) { var n = +(e.dataset.at || e.dataset.lit); e.classList.toggle('on', n <= k); e.classList.toggle('now', n === k) });
       lis.forEach(function (li, i) { li.classList.toggle('on', i <= k); li.classList.toggle('cur', i === c) });
       ones.forEach(function (e) { e.classList.toggle('cur', +e.dataset.is === c) });
       sec.style.setProperty('--k', c);
