@@ -77,3 +77,7 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - ax() has three modes, mixed down the page: a = one two-tone statement (audit, quote, custom), b = headline + full-width picture + short paragraphs side by side (speed, review, what you get back), c = few words (where the jobs go, invoice).
 - Type in the scroll sections is smaller across the board (home2.css v16).
 - Font: still Inter. raw.githubusercontent.com is blocked from this workspace, so a new typeface needs Sam to attach the font file (or OK a git clone attempt).
+
+## Pass 16 (Sam: the calendar section looks basic; wants Attio-style pop-outs)
+- The calendar is now a full app screen with its sidebar, and four white cards pop out of its edges after the zoom: offered times, the text exchange, the booking details, the reminders. Captions are hidden on desktop (kept for phones and screen readers).
+- Classes: `.cal-sb` (sidebar), `.pp*` (pop-out cards) in home2.css v17. Avoid `.ap` for these: the dark override would catch them.

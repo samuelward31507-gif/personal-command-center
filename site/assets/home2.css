@@ -319,3 +319,35 @@ h1,h2,h3{font-weight:560}
 @media (max-width:900px){.ax-h,.pz-h h3{font-size:29px;max-width:none}.ax-st{font-size:22px;max-width:none}.ax.b .ax-copy{display:block}.ax.b .ax-copy>.inl{display:inline-block;margin-top:16px}
   .ax-cols,.ax-cols.n4{grid-template-columns:1fr;margin-top:22px}.ax-c,.ax-c+.ax-c{padding:14px 0;border-left:0;border-top:1px solid rgba(255,248,240,.1)}.ax-c[data-lit]{opacity:1}.ax.b .axp{height:auto}}
 @media (min-width:901px){.ax.b .ax-in{padding-top:88px;padding-bottom:132px}}
+/* ---- v17: the calendar is a full app screen (sidebar and all), and pieces of the app pop out of its edges. ---- */
+.ap-cal{grid-template-rows:none;grid-template-columns:148px minmax(0,1fr)}.cal-mn{display:grid;grid-template-rows:auto 1fr;min-width:0}
+.cal-sb{display:flex;flex-direction:column;gap:2px;padding:16px 10px;background:#f5f5f6;border-right:1px solid #e8e8ea;font:500 13px/1 Inter,system-ui,sans-serif;color:#4d4e52}
+.cal-sb p{margin:0;max-width:none}.cal-br{padding:2px 8px 12px;font-weight:600;font-size:13.5px;letter-spacing:-.01em;color:#0a0a0b}
+.cal-bz{margin:0 0 12px!important;padding:8px;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px #e8e8ea;font-size:12px;color:#0a0a0b}.cal-bz span{display:block;margin-top:5px;font:500 9px/1 "Geist Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:#8a8b90}
+.cal-nv{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:7px}.cal-nv.on{background:#e8e8ea;color:#0a0a0b;font-weight:600}.cal-nv i{font:500 10px/1 "Geist Mono",ui-monospace,monospace;font-style:normal;color:#8a8b90}
+.cal-sd{margin-top:auto!important;padding:0 8px;font:500 9px/1 "Geist Mono",ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:#b9babe}
+.pz-fig{width:min(62%,900px)}
+.pz-b{width:268px;transform:translateY(10px) scale(.95);transform-origin:50% 40%}.pz-b::after{display:none}
+.pz-b1,.pz-b2{left:calc(50% - min(31%,450px) - 206px)}.pz-b3,.pz-b4{right:calc(50% - min(31%,450px) - 206px)}
+.pz-b1{top:5%}.pz-b2{top:44%}.pz-b3{top:9%}.pz-b4{top:54%}
+.pz-b>b{margin-top:14px;font:600 15px/1.25 Inter,system-ui,sans-serif;letter-spacing:-.01em;color:#f2f1ee;max-width:196px}.pz-b>p{margin-top:5px;font-size:13.5px;line-height:1.45;color:#a3a19d;max-width:196px}
+.pz-b3>b,.pz-b3>p,.pz-b4>b,.pz-b4>p{margin-left:72px}
+.pp{background:#fff;color:#0a0a0b;border-radius:14px;padding:13px 14px 14px;box-shadow:0 0 0 1px rgba(10,10,12,.07),0 26px 60px -22px rgba(0,0,0,.6),0 6px 18px -8px rgba(0,0,0,.28);font:500 13.5px/1.35 Inter,system-ui,sans-serif;text-align:left}
+.pp p{margin:0;max-width:none;color:inherit}.pp-l{font:500 9.5px/1 "Geist Mono",ui-monospace,monospace!important;letter-spacing:.07em;text-transform:uppercase;color:#8a8b90!important;margin-bottom:10px!important}
+.pp-m{width:fit-content;max-width:92%;padding:8px 11px;border-radius:13px 13px 13px 4px;background:#f1f1f2;font-size:13px;line-height:1.38}.pp-m.me{margin-left:auto;border-radius:13px 13px 4px 13px;background:#0a0a0b;color:#fff}.pp-m+.pp-m{margin-top:7px}
+.pp-ch{display:flex;flex-wrap:wrap;gap:6px}.pp-ch span{padding:7px 10px;border-radius:999px;box-shadow:inset 0 0 0 1px #d6d6d9;font:600 12px/1 Inter,sans-serif;color:#0a0a0b;white-space:nowrap}.pp-ch .k{background:#0a0a0b;color:#fff;box-shadow:none}
+.pp-r{display:flex;align-items:center;gap:10px}.pp-r+.pp-r{margin-top:10px;padding-top:10px;border-top:1px solid #e8e8ea}.pp-r b{display:block;font-weight:600;font-size:13.5px}.pp-r span{font-size:12.5px;color:#4d4e52}
+.pp-ck{flex:none;width:20px;height:20px;border-radius:50%;background:#0a0a0b;position:relative}.pp-ck::after{content:"";position:absolute;left:7px;top:4px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.pp-dt{flex:none;width:8px;height:8px;margin:0 6px;border-radius:50%;background:#c8102e}
+.pp-kv{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;margin-top:11px;padding-top:11px;border-top:1px solid #e8e8ea;font-size:12.5px}.pp-kv span{color:#8a8b90}.pp-kv b{font-weight:600}
+@media (min-width:901px) and (max-width:1320px){.pz-b{width:228px}.pz-b1,.pz-b2{left:calc(50% - 31% - 150px)}.pz-b3,.pz-b4{right:calc(50% - 31% - 150px)}.pz-b>b,.pz-b>p{max-width:140px}.pz-b3>b,.pz-b3>p,.pz-b4>b,.pz-b4>p{margin-left:88px}}
+@media (min-width:901px) and (max-height:840px){.pz-b{zoom:.84}}
+@media (max-width:900px){.ap-cal{grid-template-columns:1fr}.cal-sb{display:none}.pz-fig{width:100%}.pz-b{width:auto;transform:none}.pz-b>b,.pz-b>p{max-width:none;margin-left:0!important}.pp{max-width:340px}}
+.pz-b .pp b{display:block;margin:0;font:600 13.5px/1.3 Inter,system-ui,sans-serif;letter-spacing:0;color:#0a0a0b;max-width:none}.pz-b .pp-kv b{font-size:12.5px}
+.pz-b .pp p,.pz-b .pp span{max-width:none}.pz-b .pp-r span{font:500 12.5px/1.3 Inter,system-ui,sans-serif;color:#4d4e52}.pz-b .pp-kv span{font:500 12.5px/1.3 Inter,system-ui,sans-serif;color:#8a8b90}.pz-b .pp-ch span{font:600 12px/1 Inter,sans-serif;color:#0a0a0b}.pz-b .pp-ch .k{color:#fff}
+@media (min-width:901px){.pz-b>b,.pz-b>p{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  .pz-b1,.pz-b2{left:calc(50% - min(31%,450px) - 240px)}.pz-b3,.pz-b4{right:calc(50% - min(31%,450px) - 204px)}
+  .pz-b1{top:9%}.pz-b2{top:46%}.pz-b3{top:13%}.pz-b4{top:58%}}
+@media (min-width:901px) and (max-width:1320px){.pz-b1,.pz-b2{left:calc(50% - 31% - 196px)}.pz-b3,.pz-b4{right:calc(50% - 31% - 160px)}}
+@media (min-width:1321px){.pz-b1,.pz-b2{left:calc(50% - min(31%,450px) - 256px)}}
+@media (min-width:901px) and (max-width:1320px){.pz-b1,.pz-b2{left:calc(50% - 31% - 216px)}}
