@@ -2133,6 +2133,7 @@ OBJ = {   # kind: (what is drawn on the dark shape, counter format, counter end)
     'sheet': ('<i class="hd"></i>' + ''.join('<i class="srw" style="--i:%d;--y:%dpx;--l:%d%%"></i>' % (k, 110 + k * 40, w) for k, w in enumerate((52, 40, 46))) + '<i class="ru"></i><em>[Sent]</em>', '$#', 1850),
     'grid': (''.join('<i style="--i:%d"></i>' % k for k in range(32)), '# of 32', 32),
     'app': (H.mark + '<i class="rg"></i>', 'Cinder', 0),
+    'bars': ('<i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i>', '$# a month', 6400),
 }
 
 
@@ -2479,6 +2480,12 @@ clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((10
 .pt-grid.sp-live .pt-d{z-index:2;background:none;clip-path:none}
 .pt-grid.sp-live .pt-o{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:calc((1 - var(--g,0))*8px);opacity:1;top:calc(var(--cy) + (50% - var(--cy))*var(--g,0));width:calc(var(--w) + (100% - var(--w))*var(--g,0));height:calc(var(--h) + (100% - var(--h))*var(--g,0))}
 .pt-grid .pt-o i{position:static;background:var(--dk);border-radius:calc((1 - var(--g,0))*5px);box-shadow:0 0 0 calc(var(--g,0)*1px) var(--dk);opacity:clamp(.09,calc(var(--a,0)*36 - var(--i) + var(--g,0)*60),1)}
+/* three bars filling, one per leak, then closing up into one screen */
+.pt-bars.sp-live .pt-s{--w:min(520px,84vw);--h:min(210px,40vw);--cy:62%}
+.pt-bars.sp-live .pt-d{z-index:2;background:none;clip-path:none}
+.pt-bars.sp-live .pt-o{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:calc((1 - var(--g,0))*14px);opacity:1;top:calc(var(--cy) + (50% - var(--cy))*var(--g,0));width:calc(var(--w) + (100% - var(--w))*var(--g,0));height:calc(var(--h) + (100% - var(--h))*var(--g,0))}
+.pt-bars .pt-o i{position:relative;box-shadow:inset 0 0 0 1px var(--ink),0 0 0 calc(var(--g,0)*1px) var(--dk);border-radius:calc((1 - var(--g,0))*3px);overflow:hidden}
+.pt-bars .pt-o i::after{content:"";position:absolute;inset:0;background:var(--dk);transform-origin:left;transform:scaleX(clamp(0,calc(var(--a,0)*3.3 - var(--i) + var(--g,0)*6),1))}
 /* an app icon being pressed, then opening */
 .pt-app.sp-live .pt-s{--w:168px;--h:168px;--r:40px}
 .pt-app .mk{position:absolute;left:27%;top:27%;width:46%;height:46%;color:#fff;transform:scale(calc(1 - var(--a,0)*.1))}
@@ -2555,6 +2562,8 @@ clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((10
 """
 
 out = pathlib.Path(ROOT) / 'site'
+_home = H.HOME.replace(H.WHAT, portal('bars', 'One example business', 'Three leaks. It adds up.', 'That is what an audit finds.') + H.WHAT)
+assert _home != H.HOME
 CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL + CSS_STAGE + CSS_DAY + CSS_LINE
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
@@ -2611,4 +2620,5 @@ if __name__ == '__main__':
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)
+    (out / 'index.html').write_text(page('Find out what your business is losing', H.DESC, '/', _home, css=PCSS))
     print('pages', [p[0] for p in PAGES], V)

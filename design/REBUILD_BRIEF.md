@@ -439,3 +439,10 @@ Sam sent two Attio homepage screenshots: past the top, their window steps back a
 - (Later) Sam: it looks good but can't look identical to Attio's. The three small windows are no longer Mac windows: they are square-cornered call-outs with a mono tag and the finding's name ([Fix 01] Quotes, [Fix 02] Front desk, [Fix 03] Calendar), each joined to the audit window by a leader line ending in a square node, and each showing that finding fixed.
 - (Later) Sam: transitions need to be quicker. Scroll distances cut: hero call-outs 210vh to 155vh and they start sooner; object transitions on /day, /answering, /everything, /software 300vh to 215vh; the homepage clock 235vh to 200vh. Page-to-page fade 0.64s to 0.40s in total.
 - (Correction) Sam meant only the new hero call-outs. The object transitions (300vh), the clock (235vh) and the page fade are back to their earlier timings; the hero call-outs keep the quicker 155vh.
+
+### 22t. "Fix them all" (27 Nov)
+
+- Analytics: every light page now loads `/t.js` (the existing anonymous, cookie-free script), as the live homepage does.
+- Homepage bottom half: the three leak sections are black, white and grey (scoped under `.lk`: right is light grey, wrong is ink, waiting is mid grey or hatched). Measured: no coloured pixels left in that block.
+- Homepage second transition: `portal('bars', …)` between the leaks and "What we do": three bars fill as a total counts to $6,400 a month, then close up into "That is what an audit finds." The homepage is now written by `mk_pages.py` as well so it can use the pages stylesheet.
+- Still Sam's to decide, not changed: terms page plan names and the $497 add-on, the about page "no contract" line, the quotes under his name.

@@ -736,6 +736,12 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 @view-transition{navigation:auto}
 ::view-transition-old(root){animation:vt-out .22s cubic-bezier(.4,0,1,1) both}::view-transition-new(root){animation:vt-in .42s cubic-bezier(.2,.7,.2,1) both}
 @keyframes vt-out{to{opacity:0;transform:translateY(-10px)}}@keyframes vt-in{from{opacity:0;transform:translateY(18px)}}
+/* the three leaks, in black, white and grey: what went right is light grey, what went wrong is ink, waiting is mid grey */
+.lk{--blue:#c3c6cd;--red:#17181a;--amber:#8f9197}
+.lk .lk-n li::before{background:var(--ink)}.lk .ch-a i.hot{box-shadow:0 0 0 4px rgba(23,24,26,.14),0 0 0 9px rgba(23,24,26,.06)}
+.lk .sm-r.t b,.lk .fc-r b.r{color:var(--ink)}.lk .ch-k .five,.lk .rp-five{border-left-color:var(--ink)}.lk .rp-five span{color:var(--ink)}
+.lk .lg-r u{background:#eceef2;color:var(--ink)}.lk em.r,.lk .lg-r em.r{background:var(--ink);color:#fff}.lk em.y,.lk .lg-r em.y{background:#eceef2;color:var(--ink)}.lk .fc-r b.y,.lk .sm-r.t.y b,.lk td.n.h{color:var(--ink)}
+.lk .wk-r u{background:repeating-linear-gradient(135deg,#8f9197 0 1px,transparent 1px 5px),#e3e4e8}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
@@ -1370,7 +1376,7 @@ def page(title, desc, path, body, index=True, css=''):
             '<meta name="twitter:card" content="summary_large_image"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any">'
             '<link rel="apple-touch-icon" href="/icon/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">'
             '<link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/assets/light.css?v=%(v)s">%(css)s</head>'
-            '<body>%(nav)s<main id="main">%(body)s</main>%(ft)s<script src="/assets/light.js?v=%(v)s" defer></script><script src="/assets/cinder-chat.js" defer></script></body></html>'
+            '<body>%(nav)s<main id="main">%(body)s</main>%(ft)s<script src="/assets/light.js?v=%(v)s" defer></script><script src="/assets/cinder-chat.js" defer></script><script src="/t.js" defer></script></body></html>'
             % dict(t=title, d=desc, u=url, v=VER, nav=NAV, body=body, ft=FT, robots='' if index else '<meta name="robots" content="noindex">', css=('<link rel="stylesheet" href="/assets/%s">' % css) if css else ''))
 
 
