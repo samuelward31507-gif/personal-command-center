@@ -233,3 +233,11 @@ Sam: build everything on the preview, deploy it all together once the whole site
 - `light.css` still carries styles from earlier heroes that are no longer on the page. Prune before production.
 
 Next: the free audit page, then the rest of the inner pages, all through `page()`.
+
+## 21. First inner page: the free audit (27 Nov)
+
+`site/free-audit.html` is rebuilt on the light look from the same generator. The inner-page pieces now exist as functions in `mk_home.py` and are meant to be reused for every other page: `inner_hero`, `statement`, `cells` (a hairline grid of short points), `split` (statement beside a picture), `faq`, `ask`, plus the dark split and the closing band from the homepage.
+
+Order: centred headline over the audit laid out as a map (the earlier horizontal hero, in ink, grey and one blue) / how it works in three steps / dark "What you leave with" beside the example findings report / "What we look at" in eight cells / "What to bring" beside a card of four rough numbers / questions / "Start with your website" / the booking calendar (the same embedded Cal.com calendar the old page had, now in its light theme) / closing band / footer.
+
+The copy is the old page's, widened from leads to the whole business and with "custom" said once. The old page is in git history.

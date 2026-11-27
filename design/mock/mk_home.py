@@ -857,6 +857,7 @@ td i.h{background:var(--amber)}td.n.h{color:#a86a00}td.n{white-space:nowrap}
 .fo-l span:last-child{margin-left:auto;display:flex;gap:20px}
 
 /* ---- nav on every page: skip link, the right-hand group, the phone menu ---- */
+.btn{white-space:nowrap}
 .skip{position:absolute;left:12px;top:-60px;z-index:50;height:36px;padding:0 14px;display:flex;align-items:center;border-radius:9px;background:var(--ink);color:#fff;font-size:14px;font-weight:560;transition:top .15s}.skip:focus{top:12px}
 .nav-r{display:flex;align-items:center;gap:8px}
 .mm{display:none;position:relative}
@@ -871,9 +872,60 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 /* the chat button, restyled for the light pages (its own script is shared with the older pages) */
 .cc-l{background:#fff!important;color:var(--ink)!important;box-shadow:0 0 0 1px rgba(23,24,26,.1),0 14px 34px -14px rgba(30,40,90,.4)!important}.cc-l i{background:var(--blue)!important;border-radius:50%!important}
 
+/* ============ inner pages ============ */
+.ih{background:#fff;border-bottom:1px solid var(--ln)}
+.ih-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);text-align:center;padding:clamp(72px,6.4vw,122px) 24px clamp(48px,4vw,76px)}
+.ih h1{margin:clamp(18px,1.5vw,28px) auto 0;white-space:normal;max-width:14em;font-size:clamp(38px,3.2vw,60px);line-height:1.05;letter-spacing:-.04em;text-wrap:balance}
+.ih .sub{margin:clamp(14px,1.2vw,22px) auto 0;max-width:33em}
+.ih-p{background:linear-gradient(180deg,#fff,#f1f4ff 46%,#e2e8fd)}
+.ih-pi{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:0 0 clamp(48px,4.4vw,84px);display:flex;justify-content:center;overflow:hidden}
+@media(min-width:1700px){.ih-pi .mp{zoom:1.14}}
+/* the audit map in ink, grey and one blue */
+.mp.q{top:0}.mp.q .mp-b{height:470px}
+.mp.q .mp-t,.mp.q .f-r .mp-t,.mp.q .f-y .mp-t,.mp.q .ok .mp-t{background:#fff;color:var(--ink);box-shadow:0 0 0 1px rgba(23,24,26,.11),0 2px 5px rgba(23,24,26,.06)}
+.mp.q .ok .mp-t{color:var(--t3)}.mp.q .ok .mp-lb{color:var(--t2);font-weight:500}
+.mp.q .mp-ok{background:none;color:var(--t3);padding:0;height:auto;font-weight:500}
+.mp.q .mp-t::before{border-color:var(--blue)}
+.mp.q .mp-c::before{display:none}
+.mp.q .mp-c em,.mp.q .mp-c.r em,.mp.q .mp-c.y em{color:var(--ink);font-size:19px}
+.mp.q .mp-c span{background:none;color:var(--blue);padding:0;height:auto;border-radius:0;font-weight:500;white-space:normal}
+/* a hairline grid of short points */
+.pg{border-top:1px solid var(--ln)}
+.pg-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.pg-3 .pg-g{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pg-g>div{padding:clamp(22px,1.5vw,28px) clamp(20px,1.42vw,27px) clamp(30px,2.3vw,44px);min-height:clamp(168px,10.6vw,202px);border-bottom:1px solid var(--ln);border-left:1px solid var(--ln)}
+.pg-4 .pg-g>div:nth-child(4n+1),.pg-3 .pg-g>div:nth-child(3n+1){border-left:0}
+.pg-g svg{display:block;width:clamp(20px,1.26vw,24px);height:clamp(20px,1.26vw,24px);fill:none;stroke:var(--t2);stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round}
+.pg-g i{display:block;font:500 12px/1 "Geist Mono",monospace;font-style:normal;color:var(--t3);height:clamp(20px,1.26vw,24px);padding-top:5px}
+.pg-g h3{margin:clamp(36px,2.9vw,56px) 0 0;font-size:clamp(15px,.92vw,17.5px);font-weight:560;letter-spacing:-.012em}
+.pg-g p{margin:6px 0 0;font-size:clamp(14px,.84vw,16px);line-height:1.34;color:var(--g2);max-width:19em}
+.pg-n .pg-g h3{margin-top:clamp(28px,2.2vw,42px)}
+/* a statement beside a picture */
+.sp{border-top:1px solid var(--ln)}
+.sp-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.sp-t{padding:clamp(88px,7.4vw,140px) var(--pad);align-self:center}.sp-t .st-t{max-width:15em;font-size:clamp(27px,1.95vw,37px)}
+.sp-p{border-left:1px solid var(--ln);background:var(--pn);padding:clamp(48px,4vw,76px) clamp(24px,3vw,56px);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sp-p .fc{margin:0;width:100%;max-width:440px}.sd-n{margin:14px 0 0;width:100%;max-width:440px;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
+/* questions */
+.fa{border-top:1px solid var(--ln)}
+.fa-g{display:grid;grid-template-columns:24.9% minmax(0,1fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.fa-t{padding:clamp(72px,6vw,112px) var(--pad);border-right:1px solid var(--ln)}.fa-t .st-t{margin:0;font-size:clamp(27px,1.95vw,37px)}
+.fa dl{margin:0;padding:clamp(56px,4.8vw,92px) var(--pad)}
+.fa dl div{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:8px 32px;padding:clamp(16px,1.3vw,24px) 0;border-top:1px solid var(--ln)}.fa dl div:first-child{border-top:0}
+.fa dt{font-size:clamp(15.5px,.95vw,18px);font-weight:540;letter-spacing:-.012em}.fa dd{margin:0;font-size:clamp(15px,.9vw,17px);line-height:1.4;color:var(--g2)}
+.fa dd a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--g3);text-underline-offset:3px}
+/* the booking calendar */
+.bk2{border-top:1px solid var(--ln);background:#fff}
+.bk2-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(72px,6vw,112px) var(--pad) clamp(64px,5.4vw,104px)}
+.bk2 .st-t{margin:0 0 clamp(28px,2.4vw,44px);font-size:clamp(27px,1.95vw,37px)}
+.bk2 iframe{display:block;width:100%;height:clamp(640px,52vw,760px);border:0;border-radius:12px;background:var(--g);box-shadow:0 0 0 1px var(--ln)}
+/* a quiet ask */
+.as{border-top:1px solid var(--ln)}
+.as-i{display:flex;align-items:center;justify-content:space-between;gap:24px;border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(36px,3vw,56px) var(--pad)}.as .bs{max-width:none}
+
 /* ---- narrower screens ---- */
 html,body{overflow-x:clip}
-@media(max-width:1180px){.bd-g{grid-template-columns:repeat(2,minmax(0,1fr))}.bd-g a:nth-child(4n+1){border-left:1px solid var(--dl)}.bd-g a:nth-child(2n+1){border-left:0}}
+@media(max-width:1180px){.pg-4 .pg-g{grid-template-columns:repeat(2,minmax(0,1fr))}.pg-4 .pg-g>div:nth-child(4n+1){border-left:1px solid var(--ln)}.pg-4 .pg-g>div:nth-child(2n+1){border-left:0}.bd-g{grid-template-columns:repeat(2,minmax(0,1fr))}.bd-g a:nth-child(4n+1){border-left:1px solid var(--dl)}.bd-g a:nth-child(2n+1){border-left:0}}
 @media(max-width:1300px){.lk-f{grid-template-columns:auto minmax(0,1fr)}.lk-f span{grid-column:2;text-align:left}.lg,.sm,.fc,.bk{zoom:.9}}
 @media(max-width:1180px){.w,.nav{width:calc(100vw - 64px)}.ck.on .ck-pin::before,.ck.on .ck-dark::before{width:calc(100vw - 64px)}.nav ul{display:none}}
 @media(max-width:860px){
@@ -934,6 +986,13 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 .lk-c{flex-direction:column;align-items:flex-start;padding:32px var(--pad)}
 .fq-i{padding:80px 20px 76px}.fq blockquote{font-size:25px}
 .fo-g{grid-template-columns:1fr 1fr;gap:32px 20px;padding:48px var(--pad) 40px}.fo-b{grid-column:1/-1}.fo-l span:last-child{margin-left:0}
+.ih-i{padding:52px 20px 36px}.ih h1{font-size:34px}.ih-pi{padding:0 14px 28px;border:0}.mp.q .mp-b{height:auto}.mp.q .mp-c em{font-size:17px}
+.pg-g,.pg-3 .pg-g,.pg-4 .pg-g{grid-template-columns:minmax(0,1fr)}.cta{flex-wrap:wrap}.pg-g>div{min-height:0;display:grid;grid-template-columns:24px 1fr;column-gap:14px;padding:20px;border-left:0!important}
+.pg-g svg,.pg-g i{grid-row:1/3;margin:2px 0 0}.pg-g h3,.pg-n .pg-g h3{margin:0}.pg-g p{max-width:none}
+.sp-g{grid-template-columns:minmax(0,1fr)}.sp-t{padding:64px var(--pad) 36px}.sp-t .st-t{font-size:25px}.sp-p{border-left:0;border-top:1px solid var(--ln);padding:24px 16px 32px}
+.fa-g{grid-template-columns:minmax(0,1fr)}.fa-t{border-right:0;padding:56px var(--pad) 8px}.fa dl{padding:16px var(--pad) 48px}.fa dl div{grid-template-columns:minmax(0,1fr)}
+.as-i{flex-direction:column;align-items:flex-start}
+.bk2-i{padding:56px var(--pad) 48px}.bk2 iframe{height:680px}
 .lg-r{gap:9px;padding:0 12px}.lg-r em{font-size:11.5px;padding:0 7px}
 }
 '''
@@ -944,6 +1003,84 @@ NAV = ('<a class="skip" href="#main">Skip to content</a><header class="top"><div
        '<details class="mm"><summary aria-label="Menu"><i></i><i></i></summary><nav class="mm-p" aria-label="Menu">%s</nav></details></div></div></header>'
        % (mark, ''.join('<li><a href="%s">%s</a></li>' % l for l in LINKS), CAL, ''.join('<a href="%s">%s</a>' % l for l in LINKS + [('/questions', 'Questions')])))
 HW = HW.replace('@@RUN@@', RUN)
+
+# =====================================================================================
+# Inner pages. Each one is built from the same pieces as the homepage and wrapped by page().
+# =====================================================================================
+def inner_hero(label, title, sub, buttons, picture=''):
+    return ('<section class="ih"><div class="w ih-i"><span class="lb">%s</span><h1>%s</h1><p class="sub">%s</p><div class="cta">%s</div></div>%s</section>'
+            % (label, title, sub, buttons, ('<div class="ih-p"><div class="w ih-pi">%s</div></div>' % picture) if picture else ''))
+
+
+def cells(items, cls=''):
+    """A hairline grid of short points: (icon key or number, title, text)."""
+    out = ''
+    for k, t, d in items:
+        mark_ = ('<svg viewBox="0 0 24 24" aria-hidden="true">%s</svg>' % IC[k]) if k in IC else '<i>%s</i>' % k
+        out += '<div>%s<h3>%s</h3><p>%s</p></div>' % (mark_, t, d)
+    return '<section class="pg %s"><div class="w pg-g">%s</div></section>' % (cls, out)
+
+
+def statement(label, lead, rest, cls=''):
+    return ('<section class="st %s"><div class="w st-i"><span class="lb">%s</span><p class="st-t">%s <span>%s</span></p></div></section>' % (cls, label, lead, rest))
+
+
+def split(label, lead, rest, picture, extra=''):
+    return ('<section class="sp"><div class="w sp-g"><div class="sp-t"><span class="lb">%s</span><p class="st-t">%s <span>%s</span></p>%s</div>'
+            '<div class="sp-p">%s</div></div></section>' % (label, lead, rest, extra, picture))
+
+
+def faq(title, qa):
+    return ('<section class="fa"><div class="w fa-g"><div class="fa-t"><p class="st-t">%s</p></div><dl>%s</dl></div></section>'
+            % (title, ''.join('<div><dt>%s</dt><dd>%s</dd></div>' % x for x in qa)))
+
+
+def ask(lead, rest, label, href):
+    return ('<section class="as"><div class="w as-i"><p class="bs">%s <span>%s</span></p><a class="btn q" href="%s">%s</a></div></section>' % (lead, rest, href, label))
+
+
+BOOK = '<a class="btn" %s>Book your free audit</a>' % CAL
+
+# ---------- /free-audit ----------
+MAP = ('<div class="card mp q"><div class="rep-h"><span class="dot"></span><b>Free audit</b><span>Ridgeline Fence</span><span class="tag">Example business, sample data</span></div>'
+       '<div class="mp-b"><div class="mp-l"><i></i></div>%s</div></div>' % steps)
+AUDIT = (
+    inner_hero('The free audit', 'A full audit of your business, free.',
+               'We walk your business from the first call to the last invoice and show you what it&rsquo;s costing you, in dollars a month and hours a week, and what to fix first.',
+               BOOK + '<a class="btn q" href="/audit">Check your site in 60 seconds</a>', MAP)
+    + statement('How it works', 'Fifteen minutes, then it&rsquo;s yours.', 'No slides and no pitch deck. One call about how your business runs, and a short report you keep whether or not you work with us.')
+    + cells([('1', 'Book a time.', 'Pick a slot. Bring rough numbers: leads a month, your average job, how many quotes you close.'),
+             ('2', 'We walk your business.', 'Calls, forms, texts, estimates, quotes, invoices, reviews and the work done by hand, including after hours.'),
+             ('3', 'You keep the plan.', 'What it&rsquo;s costing you, a number on each finding, and what to fix first.')], 'pg-3 pg-n')
+    + ('<section class="hw"><div class="w hw-g"><div class="hw-t"><span class="lb">What you leave with</span>'
+       '<p class="st-t">A short report with a number on everything. <span>Made from your business, not from a template.</span></p>'
+       '<ol>%s</ol></div><div class="hw-r">%s</div></div></section>'
+       % (''.join('<li><div><b>%s</b><span>%s</span></div></li>' % x for x in [
+           ('Every finding, mapped.', 'Each place a job or an hour can slip, checked against how you run today.'),
+           ('A figure on each.', 'Worked out from your own numbers: leads a month, average job, how many quotes you close.'),
+           ('The order to fix them.', 'Ranked by what each one costs you, so the first fix is the one that pays most.'),
+           ('A plan that&rsquo;s yours.', 'Take it to anyone, or build it yourself.')]), FD))
+    + statement('What we look at', 'The whole business, part by part.', 'Not only how fast you answer the phone. Eight places where jobs, money or hours go missing.', 'st2')
+    + cells([('find', 'Getting found.', 'What your website and your Google listing bring in, and what they lose.'),
+             ('call', 'How leads come in.', 'Calls, forms, Facebook, Angi, Thumbtack. Where each one lands and who sees it.'),
+             ('time', 'How they get answered.', 'How long a new lead waits to hear back, including after hours.'),
+             ('cal', 'How estimates get booked.', 'Whether serious leads end up on your calendar and show up.'),
+             ('quote', 'How quotes get followed up.', 'Quotes sent and never chased.'),
+             ('money', 'How you get paid.', 'When invoices go out, how long they wait, and who reminds anyone.'),
+             ('star', 'What happens after the job.', 'Finished jobs with no review request, no referral ask and no repeat work.'),
+             ('team', 'What&rsquo;s done by hand.', 'Every task someone repeats each week that could run on its own.')], 'pg-4')
+    + split('What to bring', 'Rough numbers are fine.', 'You don&rsquo;t need a spreadsheet. If you know roughly these four things, we can do the rest on the call.',
+            facts('Bring these', 'Rough is fine', [('Leads a month', 'About 100', ''), ('Your average job', 'About $2,400', ''), ('Quotes you close', 'About 1 in 3', ''), ('Where leads come from', 'Google, Facebook, referrals', '')])
+            + '<p class="sd-n">Sample answers</p>')
+    + faq('Questions.', [('Is it really free?', 'Yes. You keep the plan whether or not you work with us.'),
+                         ('How long is the call?', 'Fifteen minutes.'),
+                         ('Do I need to prepare?', 'Just rough numbers. We do the rest.'),
+                         ('What happens after?', 'If you want the fixes, we build them for your business and price them to it. If not, you keep everything we found.'),
+                         ('Rather write?', 'Email <a href="mailto:sam.cinderrevenue@gmail.com">sam.cinderrevenue@gmail.com</a>.')])
+    + ask('Start with your website.', 'A free check of your site in 60 seconds, before the call.', 'Check your site', '/audit')
+    + ('<section class="bk2" id="book"><div class="w bk2-i"><p class="st-t">Pick a time. <span>Fifteen minutes, on the phone or on video.</span></p>'
+       '<iframe src="https://cal.com/audit-call/15min?embed=true&amp;theme=light" title="Book your free audit" loading="lazy"></iframe></div></section>')
+    + CL)
 
 import hashlib
 ALLCSS = hero_css + CSS
@@ -971,4 +1108,5 @@ HOME = HERO + TOOLS + FQ + WHAT + CK + HW + BD + PROB + LK + CL
 DESC = 'A free fifteen-minute audit of your service business. We find what is costing you jobs and hours, put a number on it, and build systems made for the way you work.'
 open(ROOT + '/site/index.html', 'w').write(page('Find out what your business is losing', DESC, '/', HOME))
 open(ROOT + '/site/new.html', 'w').write(page('Find out what your business is losing', DESC, '/', HOME, index=False))
+open(ROOT + '/site/free-audit.html', 'w').write(page('The free audit', 'A free fifteen-minute audit of your service business. We walk it from the first call to the last invoice, put a number on what it is costing you, and tell you what to fix first. You keep the plan.', '/free-audit', AUDIT))
 print('ok', len(HOME), 'css', len(ALLCSS), 'js', len(JS), VER)
