@@ -346,7 +346,7 @@ window.CinderBay=make({fit:[348,272],yaw:[1.04,.98,.9,.84,.94],aim:52,sway:.04,
     copies.forEach(c=>c.r.cab.forEach((q,k)=>{const kk=ez(one*2-k*.15);q.mesh.visible=kk>.01;q.mesh.geometry.setDrawRange(0,Math.floor(q.seg*kk)*48);q.pa.visible=kk>.01;q.pb.visible=kk>.97}))}});
 // ---- Homepage, one job: a machined line. A carriage (the job) rides the rail past seven stations and each one does its part.
 const LN=['CALL','BOOKING','REMINDER','ESTIMATE','FOLLOW-UP','INVOICE','REVIEW'],lnX=i=>(i-3)*90;
-window.CinderLine=make({fit:[288,238],yaw:[1.14,1.04,.94,.86,.92],aim:44,sway:.035,
+window.CinderLine=make({fit:[318,238],yaw:[1.14,1.04,.94,.86,.92],aim:44,sway:.035,
   enterTime:1.6,enter(k,E){const o=1-Math.pow(1-k,4);E.sz=lerp(-280,0,o);E.yaw=lerp(.45,0,o);E.scale=1},
   mats:K=>({led:LN.map(()=>K.led()),car:K.led(0xff1f3a),ring:K.led(),key:K.led(),pin:[0,1].map(()=>K.led()),peg:[0,1,2].map(()=>K.led()),star:[0,1,2,3,4].map(()=>K.led()),
     paid:new T.MeshBasicMaterial({transparent:true,opacity:0,toneMapped:false,map:K.texture(256,96,c=>{c.strokeStyle='#ff1f3a';c.lineWidth=7;c.strokeRect(8,8,240,80);c.fillStyle='#ff1f3a';c.font='700 54px "Geist Mono",monospace';c.textAlign='center';c.fillText('PAID',128,68)},true)}),
