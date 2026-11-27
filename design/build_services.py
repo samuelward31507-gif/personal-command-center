@@ -263,11 +263,12 @@ def main():
 </div></section>''' + secs)
     BAR = '''<div class="bookbar" id="bookbar" hidden><p><b>Free audit.</b> It starts with a 15-minute call, and you keep the plan.</p><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></div>
 <script>(function(){var b=document.getElementById('bookbar');if(!b)return;b.hidden=false;var end=document.querySelector('.p-close,.closing,footer'),near=false;function f(){b.classList.toggle('on',scrollY>innerHeight*.8&&!near)}if(end&&'IntersectionObserver' in window)new IntersectionObserver(function(e){near=e[0].isIntersecting;f()},{rootMargin:'0px 0px -20% 0px'}).observe(end);addEventListener('scroll',f,{passive:true});f()})();</script>
+<script src="/assets/cinder-chat.js" defer></script>
 '''
     for f in sorted(S.glob('*.html')):
         t = f.read_text()
         if '<header class="gnav"' not in t: continue
-        t2 = re.sub(r'<div class="bookbar".*?</script>\n', '', t, flags=re.S).replace('</body>', BAR + '</body>', 1)
+        t2 = re.sub(r'<div class="bookbar".*?</script>\n(?:<script src="/assets/cinder-chat.js" defer></script>\n)?', '', t, flags=re.S).replace('</body>', BAR + '</body>', 1)
         t2 = t2.replace('<li><a href="/privacy">Privacy</a></li>', '<li><a href="/questions">Questions</a></li><li><a href="/privacy">Privacy</a></li>') if '/questions">Questions' not in t2 else t2
         if t2 != t: f.write_text(t2)
     print('pages written:', len(NEW) + 1, 'nav updated on', count, 'files; builds:', len(ALL))

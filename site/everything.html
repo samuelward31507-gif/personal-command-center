@@ -62,5 +62,6 @@ var p=location.pathname.replace(/\/$/,'');document.querySelectorAll('.glinks a,.
 <script type="module" src="/assets/cinder-flow.js"></script>
 <div class="bookbar" id="bookbar" hidden><p><b>Free audit.</b> It starts with a 15-minute call, and you keep the plan.</p><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></div>
 <script>(function(){var b=document.getElementById('bookbar');if(!b)return;b.hidden=false;var end=document.querySelector('.p-close,.closing,footer'),near=false;function f(){b.classList.toggle('on',scrollY>innerHeight*.8&&!near)}if(end&&'IntersectionObserver' in window)new IntersectionObserver(function(e){near=e[0].isIntersecting;f()},{rootMargin:'0px 0px -20% 0px'}).observe(end);addEventListener('scroll',f,{passive:true});f()})();</script>
+<script src="/assets/cinder-chat.js" defer></script>
 </body>
 </html>
