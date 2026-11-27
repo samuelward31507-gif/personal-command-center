@@ -2076,7 +2076,7 @@ def flag(name, body):
             if x.startswith('<section class="chp"'):
                 seen[0] += 1
                 if seen[0] == 2:
-                    return portal('sweep', '02', 'The approach')
+                    return portal('bands', '02', 'The approach')
             return x
         return ''.join(sw(x) for x in secs)
     if name == 'software':
@@ -2130,9 +2130,9 @@ def words(blocks, pic, flip=False):
             % (' f' if flip else '', ''.join('<div>%s<h2>%s</h2><p>%s</p></div>' % (('<time>%s</time>' % t) if t else '', a, b) for t, a, b in blocks), pic))
 
 
-def design(kind, line_, small, href, link, dark_=False):
-    return ('<section class="dsn dsn-%s%s" data-sp><div class="w dsn-g"><div class="dsn-t"><h2>%s</h2><p>%s</p><a class="btn q" href="%s">%s</a></div><div class="dsn-d">%s</div></div></section>'
-            % (kind, ' dk' if dark_ else '', line_, small, href, link, DRAW[kind]))
+def design(kind, line_, small, href, link, dark_=False, cls=''):
+    return ('<section class="dsn dsn-%s%s __CLS__" data-sp><div class="w dsn-g"><div class="dsn-t"><h2>%s</h2><p>%s</p><a class="btn q" href="%s">%s</a></div><div class="dsn-d">%s</div></div></section>'
+            % (kind, ' dk' if dark_ else '', line_, small, href, link, DRAW[kind])).replace('__CLS__', cls)
 
 
 def portal(kind, label, title):
@@ -2148,18 +2148,28 @@ DRAW = {
         [('k', 96), ('', 82), ('b', 90), ('', 66), ('k', 78), ('o', 58), ('b', 70), ('', 48), ('k', 60), ('b', 36)])),
     'dots': '<div class="dts" aria-hidden="true">%s</div>' % ''.join('<i class="%s" style="--i:%d"></i>' % ('b' if ORD % 9 == 0 else '', ORD) for ORD in [92, 32, 57, 22, 0, 99, 67, 90, 42, 14, 59, 78, 89, 24, 38, 26, 107, 87, 47, 1, 25, 48, 86, 10, 101, 75, 16, 52, 2, 56, 102, 77, 21, 49, 33, 60, 84, 51, 88, 66, 106, 58, 44, 62, 29, 20, 95, 34, 43, 31, 63, 65, 3, 61, 94, 45, 35, 76, 96, 100, 40, 36, 69, 13, 23, 39, 104, 18, 91, 37, 17, 71, 5, 82, 103, 105, 79, 73, 85, 98, 81, 80, 28, 15, 72, 97, 54, 70, 93, 30, 8, 53, 55, 11, 4, 27, 64, 7, 74, 46, 12, 68, 9, 6, 83, 50, 19, 41]),
 }
+DRAW['dotsfs'] = '<div class="dts" aria-hidden="true">%s</div>' % ''.join('<i class="%s" style="--i:%d"></i>' % ('b' if q % 11 == 0 else '', q) for q in [168, 249, 55, 180, 41, 67, 242, 12, 52, 209, 196, 176, 93, 128, 256, 216, 99, 46, 123, 156, 43, 56, 90, 14, 259, 147, 116, 89, 68, 138, 164, 237, 226, 38, 262, 105, 110, 122, 203, 57, 239, 244, 133, 192, 44, 42, 204, 60, 51, 134, 205, 219, 252, 220, 146, 213, 125, 64, 208, 160, 28, 222, 109, 72, 198, 158, 191, 35, 126, 91, 103, 154, 8, 170, 217, 233, 62, 236, 88, 82, 174, 165, 32, 202, 187, 171, 182, 6, 140, 136, 142, 221, 108, 87, 250, 70, 111, 258, 20, 24, 92, 121, 78, 148, 39, 19, 201, 251, 49, 188, 197, 106, 248, 129, 232, 224, 211, 223, 139, 76, 234, 31, 81, 190, 26, 11, 230, 247, 149, 214, 84, 186, 66, 113, 145, 37, 245, 246, 100, 47, 183, 5, 253, 173, 185, 184, 150, 179, 29, 240, 178, 33, 155, 130, 254, 229, 143, 45, 124, 119, 261, 2, 25, 63, 34, 30, 206, 235, 85, 79, 22, 86, 69, 172, 218, 161, 200, 18, 107, 257, 96, 120, 13, 53, 54, 0, 175, 4, 195, 98, 74, 193, 102, 27, 144, 17, 228, 73, 131, 58, 194, 80, 65, 181, 210, 141, 104, 71, 241, 117, 21, 169, 1, 127, 75, 163, 59, 132, 50, 215, 151, 112, 83, 118, 199, 7, 153, 61, 225, 255, 9, 15, 16, 135, 212, 3, 159, 40, 166, 157, 189, 167, 115, 101, 152, 10, 162, 177, 227, 207, 137, 23, 36, 77, 114, 48, 95, 243, 94, 97, 260, 263, 238, 231])
+
+
+def spine(title, events):
+    return ('<section class="spn" data-sp><div class="spn-s"><p class="spn-h">%s</p><div class="spn-b"><div class="spn-l"><i></i></div><ol>%s</ol></div></div></section>'
+            % (title, ''.join('<li class="%s" style="--i:%d"><time>%s</time><b>%s</b></li>' % ('l' if n % 2 == 0 else 'r', n, t, x) for n, (t, x) in enumerate(events))))
+
+
 DAYP = ('<div class="dayp2">'
         + '<section class="dhero"><div class="w dhero-i"><span class="lb">A day with it running</span><h1>One day, start to finish.</h1><p class="sub">Scroll through a day at an example business. The pictures are sample data.</p><div class="cta">%s</div><em>Scroll</em></div></section>' % BOOK
+        + spine('One day at an example business', [('6:31 AM', 'A form came in. Answered and booked.'), ('9:12 AM', 'A missed call. A text back in 9 seconds.'), ('12:40 PM', 'One job ran long. Two stops moved.'),
+                                                   ('4:12 PM', 'The job ended. The invoice went out.'), ('6:05 PM', 'Monday&rsquo;s quote got its check-in.'), ('2:07 AM', 'A burst pipe. The on-call phone rang.')])
         + words([('9:12 AM', 'The phone rings while you&rsquo;re on a roof.', 'It still gets answered.'),
                  ('', 'A reply goes out in seconds.', 'Sorry we missed you, with times to pick from. No callback list.'),
                  ('', 'It all lands in your app.', 'The thread, the lead and what happens next, in one place.')], THREAD)
         + design('dial', 'One job running long should not cost you the afternoon.', 'The day adjusts without you making the calls.', '/dispatch', 'Scheduling and dispatch')
-        + portal('sweep', '4:12 PM', 'Invoices go out when the job is done.')
+        + portal('line', '4:12 PM', 'Invoices go out when the job is done.')
         + words([('', 'Friendly first, firmer later.', 'And never from you personally.'),
                  ('', 'They stop the moment it is paid.', 'You can stop them for one customer in one tap.'),
                  ('', 'You get paid without being the one who asks.', 'What is outstanding, by customer and by age.')], INVOICE, True)
-        + design('stack', 'A quote nobody chases is a job you gave away.', 'Days 2, 5 and 10, then monthly, until it&rsquo;s a yes or a no.', '/follow-up', 'Follow-up')
-        + design('dots', 'Only the real emergencies wake you.', 'The burst pipe at 2 AM and the quote request at 2 AM are not the same call.', '/after-hours', 'After hours', True)
+        + design('stack', 'A quote nobody chases is a job you gave away.', 'Days 2, 5 and 10, then monthly, until it&rsquo;s a yes or a no.', '/follow-up', 'Follow-up', False, 'f')
+        + design('dotsfs', 'Only the real emergencies wake you.', 'The burst pipe at 2 AM and the quote request at 2 AM are not the same call.', '/after-hours', 'After hours', True, 'fs')
         + '</div>' + CL)
 
 CSS_DAY = r"""
@@ -2195,7 +2205,7 @@ CSS_DAY = r"""
 .stk i.k{background:var(--ink)}.stk i.b{background:var(--blue)}.stk i.o{background:none;box-shadow:inset 0 0 0 1.5px var(--ink)}
 .dts{display:grid;grid-template-columns:repeat(12,1fr);gap:clamp(8px,1.1vw,18px);width:min(560px,100%)}
 .dts i{position:relative;aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.1)}
-.dts i::after{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;opacity:clamp(0,calc(var(--p,1)*118 - var(--i)),1);transform:scale(clamp(.2,calc(var(--p,1)*118 - var(--i)),1))}
+.dts i::after{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;opacity:clamp(0,calc(var(--p,1)*var(--n) - var(--i)),1);transform:scale(clamp(.2,calc(var(--p,1)*var(--n) - var(--i)),1))}
 .dts i.b::after{background:#6d9bff}
 /* the clock idea, in other shapes */
 .pt{background:var(--dk);color:#fff}.pt-s{display:grid;place-items:center;padding:clamp(96px,10vw,180px) 24px;text-align:center}.pt-a{display:none}
@@ -2206,11 +2216,35 @@ CSS_DAY = r"""
 .pt-a span{font:500 clamp(14px,1.1vw,18px)/1 "Geist Mono",monospace;color:var(--t2);opacity:calc(1 - var(--p,0)*3)}
 .pt.sp-live .pt-d{position:absolute;inset:0;display:grid;place-items:center;padding:0 24px;background:var(--dk)}
 .pt.sp-live .pt-d h2{opacity:clamp(0,calc(var(--p,0)*4 - 2.2),1);transform:translateY(calc((1 - clamp(0,calc(var(--p,0)*4 - 2.2),1))*40px))}
-.pt-sweep.sp-live .pt-d{-webkit-mask:conic-gradient(from 0deg at 50% 50%,#000 calc(var(--p,0)*520deg),transparent 0);mask:conic-gradient(from 0deg at 50% 50%,#000 calc(var(--p,0)*520deg),transparent 0)}
+.pt-line.sp-live .pt-d{--a:min(calc(var(--p,0)*3),1);--b:clamp(0,calc(var(--p,0)*2.6 - .95),1);clip-path:inset(0 calc((1 - var(--b))*50% - 1.5px) calc((1 - var(--a))*100%) calc((1 - var(--b))*50% - 1.5px))}
+.pt-line.sp-live .pt-s::after{content:"";position:absolute;left:50%;top:0;width:11px;height:11px;margin:-5px 0 0 -5.5px;border-radius:50%;background:var(--blue);transform:translateY(calc(min(var(--p,0)*3,1)*100vh));opacity:calc(1 - clamp(0,calc(var(--p,0)*2.6 - .95),1)*4)}
+.pt-bands.sp-live .pt-d{--m:linear-gradient(#000 0 0);-webkit-mask:var(--m) 0 0/calc(clamp(0,calc(var(--p,0)*2.4),1)*100%) 17% no-repeat,var(--m) 100% 20%/calc(clamp(0,calc(var(--p,0)*2.4 - .18),1)*100%) 17% no-repeat,var(--m) 0 40%/calc(clamp(0,calc(var(--p,0)*2.4 - .36),1)*100%) 17% no-repeat,var(--m) 100% 60%/calc(clamp(0,calc(var(--p,0)*2.4 - .54),1)*100%) 17% no-repeat,var(--m) 0 80%/calc(clamp(0,calc(var(--p,0)*2.4 - .72),1)*100%) 17% no-repeat,var(--m) 100% 100%/calc(clamp(0,calc(var(--p,0)*2.4 - .9),1)*100%) 17% no-repeat;mask:var(--m) 0 0/calc(clamp(0,calc(var(--p,0)*2.4),1)*100%) 17% no-repeat,var(--m) 100% 20%/calc(clamp(0,calc(var(--p,0)*2.4 - .18),1)*100%) 17% no-repeat,var(--m) 0 40%/calc(clamp(0,calc(var(--p,0)*2.4 - .36),1)*100%) 17% no-repeat,var(--m) 100% 60%/calc(clamp(0,calc(var(--p,0)*2.4 - .54),1)*100%) 17% no-repeat,var(--m) 0 80%/calc(clamp(0,calc(var(--p,0)*2.4 - .72),1)*100%) 17% no-repeat,var(--m) 100% 100%/calc(clamp(0,calc(var(--p,0)*2.4 - .9),1)*100%) 17% no-repeat}
+/* whole-screen pieces: a line down the middle with the day branching off it; a field of dots behind centred words */
+.spn{background:#fff;border-bottom:1px solid var(--ln)}
+.spn-s{padding:clamp(64px,7vw,120px) 24px}.spn-h{margin:0 0 clamp(28px,4vh,56px);text-align:center;font:500 13px/1 "Geist Mono",monospace;color:var(--t3)}
+.spn-b{position:relative;max-width:1100px;margin:0 auto}.spn-l{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ln)}
+.spn-l i{display:block;height:100%;background:var(--ink);transform-origin:top;transform:scaleY(var(--p,1))}
+.spn-l::after{content:"";position:absolute;left:50%;top:calc(var(--p,1)*100%);width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 5px #fff}
+.spn ol{list-style:none;margin:0;padding:0;display:grid}
+.spn li{--q:clamp(0,calc(var(--p,1)*6.4 - var(--i) - .1),1);position:relative;width:50%;box-sizing:border-box;padding:clamp(14px,2.4vh,30px) clamp(28px,3.4vw,60px);opacity:var(--q)}
+.spn li.l{text-align:right;transform:translateX(calc((1 - var(--q))*-40px))}.spn li.r{margin-left:50%;transform:translateX(calc((1 - var(--q))*40px))}
+.spn li::before{content:"";position:absolute;top:50%;width:clamp(16px,2vw,34px);border-top:1.5px solid var(--ink)}.spn li.l::before{right:0}.spn li.r::before{left:0}
+.spn time{display:block;font:500 12.5px/1 "Geist Mono",monospace;color:var(--blue)}
+.spn b{display:block;margin-top:10px;font:400 clamp(21px,2.1vw,38px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.018em}
+.spn.sp-live{height:340vh}.spn.sp-live .spn-s{position:sticky;top:0;height:100vh;box-sizing:border-box;padding-top:clamp(84px,11vh,120px);padding-bottom:4vh;display:flex;flex-direction:column}
+.spn.sp-live .spn-b{flex:1;width:100%}.spn.sp-live ol{height:100%;grid-template-rows:repeat(6,1fr)}.spn.sp-live li{display:flex;flex-direction:column;justify-content:center;padding-top:0;padding-bottom:0}
+.dsn.f .dsn-t{order:2}.dsn.f .dsn-d{border-left:0;border-right:1px solid var(--ln)}
+.dts{--n:118}.dsn.fs .dts{--n:290;grid-template-columns:repeat(24,1fr);width:100%;gap:clamp(6px,1vw,16px)}
+.dsn.fs .dsn-g{display:block;position:relative;overflow:hidden}.dsn.fs .dsn-d{position:absolute;inset:60px 0 0;border:0;padding:clamp(20px,3vw,48px);align-items:center}
+.dsn.fs .dsn-t{position:relative;z-index:1;display:grid;align-content:center;justify-items:center;min-height:88vh;height:100%;box-sizing:border-box;text-align:center;padding:60px 24px 0}
+.dsn.fs .dsn-t::before{content:"";position:absolute;left:50%;top:50%;width:min(820px,86vw);height:min(460px,64vh);transform:translate(-50%,-46%);background:radial-gradient(closest-side,var(--dk) 58%,transparent);z-index:-1}
+.dsn.fs.sp-live .dsn-g{position:sticky;top:0;height:100vh}.dsn.fs.sp-live .dsn-t{min-height:0}
+.dsn.fs h2{max-width:14em}.dsn.fs p{margin-left:auto;margin-right:auto}
 .pt-blinds.sp-live .pt-d{-webkit-mask:repeating-linear-gradient(90deg,#000 0 calc(min(var(--p,0)*1.5,1)*12.6vw),transparent 0 12.5vw);mask:repeating-linear-gradient(90deg,#000 0 calc(min(var(--p,0)*1.5,1)*12.6vw),transparent 0 12.5vw)}
 .pt-diamond.sp-live .pt-d{--r:calc(min(var(--p,0)*1.5,1)*125vmax);clip-path:polygon(50% calc(50% - var(--r)),calc(50% + var(--r)) 50%,50% calc(50% + var(--r)),calc(50% - var(--r)) 50%)}
 .pt-iris.sp-live .pt-d{--o:calc((1 - min(var(--p,0)*1.5,1))*50%);clip-path:inset(var(--o) var(--o) round calc((1 - min(var(--p,0)*1.5,1))*120px))}
 @media(max-width:860px){.wsc-g,.dsn-g{grid-template-columns:minmax(0,1fr)}.wsc-p{order:-1;border:0!important;border-bottom:1px solid var(--ln)!important}.wsc-s{position:static;height:auto;padding:28px 14px}.wsc-w>div{min-height:0;padding:44px var(--pad)}.wsc.f .wsc-w{order:0}
+.spn li,.spn li.r{width:auto;margin:0;text-align:left;transform:none;opacity:1;padding:16px 0 16px 28px}.spn-l{left:0}.spn li::before{left:0!important;right:auto!important;width:16px}.dsn.f .dsn-t{order:0}.dsn.fs .dsn-t{min-height:70vh}.dsn.fs .dts{grid-template-columns:repeat(12,1fr)}
 .dsn-g{min-height:0}.dsn-t{padding:56px var(--pad) 8px}.dsn-d{border-left:0;padding:28px var(--pad) 56px}.wsc h2,.dsn h2{font-size:28px}}
 """
 

@@ -368,3 +368,11 @@ Sam on the coloured version of /day: only one side should move at a time; someti
 - Colourways, big numerals and pop-in tags removed. Ink, grey and blue on white only.
 - Portals placed: `/day` (clock-hand sweep), `/answering` (blinds, into the lead stage), `/software` (rounded square opening, into the app stage), `/everything` (diamond, before the eight parts), `/story` (sweep, chapter two). With the homepage clock that is six across the site.
 - All driven by one script in `light.js` that sets `--p` on `[data-sp]` sections; off under reduced motion and below 861px, where everything is stacked and fully drawn.
+
+### 22m. Refinement (27 Nov)
+
+Sam: refine it; the clock-hand sweep transition is too basic, replace it with a real visual; the scroll designs look good, improve them; not every pinned section should be a split screen, some should be the whole screen, for example something coming down the middle.
+
+- Sweep removed. `/day` now uses `pt-line`: a line draws down the centre of the screen with a blue dot at its tip, then opens left and right into the dark screen. `/story` uses `pt-bands`: six bands close in from alternating sides.
+- New whole-screen section on `/day`, `spine()`: a line runs down the middle and the six moments of the day branch off it left and right as it passes.
+- The dots design is now whole-screen: the field fills the dark screen behind centred words. The stack design is flipped so the drawing is on the left.
