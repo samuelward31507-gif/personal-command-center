@@ -604,3 +604,12 @@ Sam: "Full upgrade". Lead vetting rebuilt by hand:
 At the standard: homepage, Estimates, Reviews, Invoicing, Lead vetting. Close: Follow-up.
 - Sam on Invoicing: "I like the idea of the first one. I just thought it needed upgrades... better designing, a little bit better transitions. I didn't mean completely redo the page." ("Full upgrade" had meant Invoicing, not "move on".) Upgraded in place, layout unchanged: dashed $2k/$4k/$6k guides, rounder bar tops and a "$14,600 in all" chip on the bars; the hand-over is now three beats (everything but the oldest bar steps back, the view eases into that bar, and "Sent the day the job ends, followed up until it is paid." arrives on the dark before the reminders); the $14,600 figure counts up when it comes into view (`[data-count]`, in light.js). Lesson: when Sam reacts to a page just shown, the note is about that page.
 - Sam on Invoicing again: likes the colour scheme and the idea; "it needs more designing... crisp line designs... and the transition needs to be better." Added, layout unchanged: a ruled strip of 60 day ticks under the $14,600 figure, bracketed into the three ages with their amounts (`.ivn-r`, draws on enter); the hand-over now lands on a blue screen where 22 fine white day lines sweep in from the left with Sent / Day 3 / Day 10 / Day 21 markers before the words arrive, then settles to black (`.ivb-g`); and the reminders section opens with a drawn schedule: a white line with four nodes and dashed drops to a dashed "Paid at any point: the reminders stop" rail (`.ivl-d`). `#1b4fc0` kept through `mono()`.
+
+### 23i. Invoicing: fuller screens (Nov 27)
+Sam: "I like these designs... there just needs to be more on the screen." Kept layout, colours and transition; every picture now draws from one list of seven sample invoices (`_IVX`, sums to $14,600).
+- Hero: three layers on one clock (outstanding list behind, invoice with line items in front, customer's phone beside it).
+- $14,600 screen: each invoice stands on the 60-day ruler at its age, height by amount, with $1k/$2k/$3k guides.
+- Bars screen: customer/job/age/owed table under the statement; bar segments sized by amount and labelled with it.
+- Blue hand-over: a schedule line through the four markers, each named (Invoice, Friendly reminder, Firmer reminder, Third reminder).
+- Dark screen: per-customer reminder switches under the text (one "Stopped by you").
+New sample wording: Labor, Materials, Third reminder, Reminders / Per customer / On / Stopped by you.

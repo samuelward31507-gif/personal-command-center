@@ -1128,22 +1128,34 @@ LADDER = ('<div class="ld">%s</div>' % ''.join('<div><em>%s</em><p>%s</p></div>'
 AGING = ('<div class="cd ag">%s<div class="ag-g">%s</div><div class="pk-f"><b>$14,600</b><span>waiting to be paid, in one list.</span></div></div>' % (head('Outstanding', 'By age'), ''.join(
     '<div><b>%s</b><em>%s</em>%s</div>' % (t, a, ''.join('<i style="width:%d%%"><u>%s</u></i>' % q for q in rows)) for t, a, rows in [
         ('This week', '$4,300', [(92, 'Fence install'), (54, 'Gate repair')]), ('8 to 30 days', '$6,200', [(100, 'Vinyl fence'), (62, 'Fence install'), (30, 'Repair')]), ('Over 30 days', '$4,100', [(80, 'Chain link'), (40, 'Gate')])])))
-# a statement beside one large figure
-IVNUM = ('<section class="ivn"><div class="w ivn-g"><p class="st-t">%s</p><div class="ivn-n"><b data-count="14600" data-pre="$">$14,600</b><span>waiting to be paid</span><em>Example business, sample data</em></div><div class="ivn-r" data-in aria-hidden="true"><i></i>%s</div></div></section>'
-         % (ap(p['line']), ''.join('<span style="--l:%.1f%%;--w:%.1f%%;--k:%d"><b>%s</b><em>%s</em></span>' % x for x in [(0, 15.5, 0, 'This week', '$4,300'), (17.5, 49, 1, '8 to 30 days', '$6,200'), (68.5, 31.5, 2, 'Over 30 days', '$4,100')])))
+# the seven invoices behind the figure: every picture on this page is drawn from the same list
+_IVX = [('Customer A', 'Full install', 2, 2450, 'b'), ('Customer B', 'Repair', 5, 1850, 'b'), ('Customer C', 'Replacement', 9, 2900, 'y'), ('Customer D', 'Full install', 16, 2100, 'y'),
+        ('Customer E', 'Repair', 24, 1200, 'y'), ('Customer F', 'Large install', 34, 3300, 'r'), ('Customer G', 'Repair', 47, 800, 'r')]
+_usd = lambda n: '$' + format(n, ',')
+_ivrow = lambda cls: ''.join('<p style="--k:%d" class="%s"><span><i></i>%s</span><em>%s</em><u>%d days</u><b>%s</b></p>' % (k, c, who, job, dd, _usd(amt)) for k, (who, job, dd, amt, c) in enumerate(_IVX))
+# a statement beside one large figure, then each invoice standing on the day it has reached
+IVNUM = ('<section class="ivn"><div class="w ivn-g"><p class="st-t">%s</p><div class="ivn-n"><b data-count="14600" data-pre="$">$14,600</b><span>waiting to be paid</span><em>Example business, sample data</em></div>'
+         '<div class="ivn-c" data-in aria-hidden="true"><div class="ivn-s">%s%s</div><div class="ivn-r"><i></i>%s</div></div></div></section>'
+         % (ap(p['line']), ''.join('<span class="gy" style="--y:%.1f%%"><b>$%dk</b></span>' % (v / 3300 * 100, v // 1000) for v in (1000, 2000, 3000)),
+            ''.join('<u class="%s" style="--x:%.2f%%;--h:%.1f%%;--k:%d"><b>%s</b><em>Day %d</em></u>' % (c, dd / 60 * 100, amt / 3300 * 100, k, _usd(amt), dd) for k, (who, job, dd, amt, c) in enumerate(_IVX)),
+            ''.join('<span style="--l:%.1f%%;--w:%.1f%%;--k:%d"><b>%s</b><em>%s</em></span>' % x for x in [(0, 11.2, 0, 'This week', '$4,300'), (12.6, 37.2, 1, '8 to 30 days', '$6,200'), (50.8, 49.2, 2, 'Over 30 days', '$4,100')])))
 # what is owed, by age, as three bars. They rise as you scroll, then the view goes into the oldest one and that becomes the next screen.
-_ivb = [('This week', '$4,300', 69, ('Full install', 'Repair'), 'b'), ('8 to 30 days', '$6,200', 100, ('Replacement', 'Full install', 'Repair'), 'y'), ('Over 30 days', '$4,100', 66, ('Large install', 'Repair'), 'r')]
+_ivb = [(t, a, h, [(job, amt) for who, job, dd, amt, c2 in _IVX if c2 == c], c) for t, a, h, c in (('This week', '$4,300', 69, 'b'), ('8 to 30 days', '$6,200', 100, 'y'), ('Over 30 days', '$4,100', 66, 'r'))]
 IVBARS = ('<section class="ivb" data-sp><div class="ivb-i"><div class="w ivb-f"><div class="ivb-t"><span class="lb">What you see</span>'
           '<p class="st-t">You get paid without being the one who asks. <span>What is outstanding, by customer and by age.</span></p>'
-          '<p class="fa-k">[Outstanding, by age]<em>Example business, sample data</em></p></div>'
+          '<p class="fa-k">[Outstanding, by age]<em>Example business, sample data</em></p>'
+          '<div class="ivb-l" aria-hidden="true"><p class="h"><span>Customer</span><em>Job</em><u>Age</u><b>Owed</b></p>%s</div></div>'
           '<div class="ivb-c" aria-hidden="true"><span class="ivb-y" style="--y:25.2%%">$2k</span><span class="ivb-y" style="--y:50.3%%">$4k</span><span class="ivb-y" style="--y:75.5%%">$6k</span>'
           '<span class="ivb-tot">$14,600 in all</span>%s</div></div><div class="ivb-g" aria-hidden="true">%s</div><p class="ivb-n">Sent the day the job ends, followed up until it is paid.</p></div></section>'
-          % (''.join('<div class="ivb-b %s" style="--i:%d;--h:%d%%"><em>%s</em><div>%s</div><b>%s</b></div>' % (c, k, h, a, ''.join('<i>%s</i>' % x for x in jobs), t)
+          % (_ivrow(''),
+             ''.join('<div class="ivb-b %s" style="--i:%d;--h:%d%%"><em>%s</em><div>%s</div><b>%s</b></div>' % (c, k, h, a, ''.join('<i style="flex:%d">%s<u>%s</u></i>' % (amt, job, _usd(amt)) for job, amt in jobs), t)
                      for k, (t, a, h, jobs, c) in enumerate(_ivb)),
-             ''.join('<span style="--x:%.2f%%">%s</span>' % (dd / 22 * 100, lb) for dd, lb in ((0, 'Sent'), (3, 'Day 3'), (10, 'Day 10'), (21, 'Day 21')))))
+             ''.join('<span style="--x:%.2f%%"><b>%s</b>%s</span>' % ((dd + 1) / 24 * 100, w, lb) for dd, lb, w in ((0, 'Sent', 'Invoice'), (3, 'Day 3', 'Friendly reminder'), (10, 'Day 10', 'Firmer reminder'), (21, 'Day 21', 'Third reminder')))))
 # the three reminders, each a little firmer, arriving in turn on a dark ground
 IVLAD = ('<section class="ivl" data-live="8"><div class="w ivl-i"><div class="ivl-t"><p class="st-t">Friendly first, firmer later. <span>And never from you personally.</span></p>'
-         '<p class="ivl-k">They stop the moment it is paid. You can stop them for one customer in one tap.</p></div><div class="ivl-m" aria-hidden="true">'
+         '<p class="ivl-k">They stop the moment it is paid. You can stop them for one customer in one tap.</p>'
+         '<div class="ivl-s" aria-hidden="true"><p class="h"><span>Reminders</span><em>Per customer</em></p><p><span>Customer C</span><em>On</em><i class="on"></i></p><p><span>Customer D</span><em>On</em><i class="on"></i></p>'
+         '<p class="off"><span>Customer F</span><em>Stopped by you</em><i></i></p></div></div><div class="ivl-m" aria-hidden="true">'
          '<div class="ivl-d" data-in><svg viewBox="0 0 1000 150" preserveAspectRatio="none"><path class="m" pathLength="1" d="M20 36 H980"/><path class="rl" d="M20 122 H980"/>'
          + ''.join('<path class="dp" style="--k:%d" d="M%d 36 V122"/>' % (k, 20 + dd / 22 * 960) for k, dd in enumerate((3, 10, 21)))
          + '</svg>' + ''.join('<span class="n" style="--x:%.2f%%;--k:%d">%s</span>' % (2 + dd / 22 * 96, k, lb) for k, (dd, lb) in enumerate(((0, 'Sent'), (3, 'Day 3'), (10, 'Day 10'), (21, 'Day 21'))))
@@ -1154,11 +1166,18 @@ IVLAD = ('<section class="ivl" data-live="8"><div class="w ivl-i"><div class="iv
              (4, 'Day 21', 'This invoice is three weeks past due. Please pay today or reply so we can sort it out.')])))
 _iv1 = '<div class="iv iv1">%s<p><b>Job finished</b><b class="k">Invoice sent</b></p></div>' % ''.join('<i class="%s">%s</i>' % ('on' if d == 'Fri' else '', d) for d in ('Mon', 'Tue', 'Wed', 'Thu', 'Fri'))
 _iv2 = '<div class="iv iv2"><p class="hb o">Your invoice is ready. You can pay from this message.</p><em>Pay now</em></div>'
-_iv3 = '<div class="iv iv3">%s</div>' % ''.join('<p><span>%s</span><b>%s</b><i class="%s"></i></p>' % x for x in [('Customer A', '$2,100', 'b'), ('Customer B', '$1,850', 'y'), ('Customer C', '$4,100', 'r')])
+_iv3 = '<div class="iv iv3">%s</div>' % ''.join('<p><span>%s</span><b>%s</b><i class="%s"></i></p>' % x for x in [('Customer A', '$2,450', 'b'), ('Customer D', '$2,100', 'y'), ('Customer F', '$3,300', 'r')])
 d = p['does']
 IV3 = ('<section class="v3"><div class="w v3-i"><p class="st-t">%s</p><div class="v3-g">%s</div></div></section>'
        % ('%s. <span>%s</span>' % (ap(d[1][0]), ap(d[1][1])), ''.join('<div><div class="v3-p" aria-hidden="true">%s</div><b>%s.</b><span>%s</span></div>' % (pic, ap(a), ap(b)) for pic, (a, b) in ((_iv1, d[0]), (_iv2, d[2]), (_iv3, d[3])))))
-INVOICING = (hero_split('Money', p['h1'], p['lede'], '', INVOICE)
+IVHERO = ('<div class="ivh"><div class="cd ivh-l" aria-hidden="true">%s%s</div>'
+          '<div class="cd inv">%s<div class="qo-t"><span>Gate install</span><b>$1,850</b></div><div class="ivh-i"><p style="--k:0"><span>Labor</span><b>$1,100</b></p><p style="--k:1"><span>Materials</span><b>$750</b></p></div>'
+          '<div class="inv-p"><em>Pay now</em><span>Through the payment provider you already use.</span></div>%s</div>'
+          '<div class="ph2" aria-hidden="true"><p>Customer&rsquo;s phone</p>%s<p data-hd="5" class="ivh-k">Paid $1,850</p></div></div>'
+          % (head('Outstanding', 'By age'), _ivrow(''), head('Invoice', 'Sent the day the job ended', ''),
+             ''.join('<div data-hd="%d" class="qo-r %s"><i></i><b>%s</b><span>%s</span></div>' % x for x in [(3, '', 'Friendly reminder sent', 'Day 3'), (4, '', 'Firmer reminder sent', 'Day 10'), (5, 'y', 'Paid', 'Day 11')]),
+             ''.join('<p data-hd="%d" class="hb">%s</p>' % x for x in [(1, 'Your invoice is ready. You can pay from this message.'), (3, 'Hi, just a reminder that the invoice for your job is ready.'), (4, 'Your invoice for the job is now a week past due. Here is the link to settle it.')])))
+INVOICING = (hero_split('Money', p['h1'], p['lede'], '', IVHERO)
              + problem('invoicing')
              + IVNUM + IVBARS + IVLAD + IV3
              + faq('Questions.', xfaq(p)) + CL)
@@ -2645,8 +2664,8 @@ CSS_FA = r"""
 .ivb.sp-live .ivb-n{display:block;position:absolute;left:0;right:0;top:50%;margin:0 auto;padding:0 24px;max-width:13em;text-align:center;color:#fff;font-size:clamp(34px,4.4vw,84px);line-height:1.02;letter-spacing:-.045em;font-weight:600;
 opacity:var(--w);transform:translateY(calc(-50% + (1 - var(--w))*40px))}}
 .ivn-g{row-gap:clamp(44px,5vw,84px)}.ivn-r{grid-column:1/-1;position:relative;height:74px}
-.ivn-r>i{position:absolute;left:0;right:0;top:0;height:14px;border-bottom:1px solid var(--ink);background:repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px calc(100%/60));clip-path:inset(0 calc((1 - var(--p,1))*100%) 0 0)}
-.ivn-r span{--o:clamp(0,calc(var(--p,1)*4 - 1 - var(--k)*.8),1);position:absolute;left:var(--l);width:var(--w);top:22px;height:10px;border:1px solid var(--ink);border-top:0;opacity:var(--o)}
+.ivn-r>i{position:absolute;left:0;right:0;top:0;height:14px;border-bottom:1px solid var(--ink);background:repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px calc(100%/60));clip-path:inset(0 calc((1 - var(--q,1))*100%) 0 0)}
+.ivn-r span{--o:clamp(0,calc(var(--q,1)*4 - 1 - var(--k)*.8),1);position:absolute;left:var(--l);width:var(--w);top:22px;height:10px;border:1px solid var(--ink);border-top:0;opacity:var(--o)}
 .ivn-r span b{position:absolute;left:0;top:20px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t2);white-space:nowrap}
 .ivn-r span em{position:absolute;right:0;top:18px;font-style:normal;font-size:14px;font-weight:560}
 .ivb-g{display:none}
@@ -2675,6 +2694,42 @@ opacity:var(--w);transform:translateY(calc(-50% + (1 - var(--w))*40px))}}
 .iv3 p span{flex:1;margin:0;font-size:13px;color:var(--ink)}.iv3 p b{font-size:13px;font-weight:560}.iv3 i{width:9px;height:9px;border-radius:50%;background:#266df1}.iv3 i.y{background:#f0a001}.iv3 i.r{background:#e5484e}
 @media(max-width:860px){.ivn-g,.ivb-f,.ivl-i{grid-template-columns:minmax(0,1fr)}.ivn-n{padding:26px 0 0;border-left:0;border-top:1px solid var(--ln)}.ivb-f{height:auto;padding-bottom:46px}.ivb-c{height:320px}
 .ivl-r{margin-left:0;grid-template-columns:minmax(0,1fr);gap:6px}.ivl-r span{padding-top:0}.ivl-p{margin-left:0}}
+.ivn-c{grid-column:1/-1;--q:clamp(0,calc(var(--p,1)*1.55),1)}.ivn-r{height:84px}.ivn-r span em{right:auto;left:0;top:38px}
+.ivn-s{position:relative;height:clamp(170px,16vw,240px)}
+.ivn-s .gy{position:absolute;left:0;right:0;bottom:var(--y);height:0;border-top:1px dashed #d5d8de;opacity:clamp(0,calc(var(--q)*4),1)}
+.ivn-s .gy b{position:absolute;right:0;bottom:6px;font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3)}
+.ivn-s u{--g:clamp(0,calc(var(--q)*4 - .3 - var(--k)*.4),1);position:absolute;left:var(--x);bottom:0;width:1px;height:calc(var(--h)*var(--g));background:var(--ink);text-decoration:none}
+.ivn-s u::before{content:"";position:absolute;left:-5px;top:-5px;width:11px;height:11px;background:#266df1}.ivn-s u.b::before{background:#cfdcfd;box-shadow:inset 0 0 0 1px #7fa8f7}.ivn-s u.y::before{background:#7fa8f7}
+.ivn-s u b{position:absolute;left:14px;top:-10px;font-size:14.5px;line-height:1;font-weight:560;white-space:nowrap;opacity:calc(var(--g)*3 - 2)}
+.ivn-s u em{position:absolute;left:14px;top:10px;font:500 10px/1 "Geist Mono",monospace;font-style:normal;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);white-space:nowrap;opacity:calc(var(--g)*3 - 2)}
+.ivb-l{margin-top:28px;max-width:460px;border-top:1px solid var(--ink)}
+.ivb-l p{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) 4.8em 4.4em;align-items:center;gap:10px;margin:0;padding:8px 0;border-bottom:1px solid var(--ln);font-size:13.5px;line-height:1.2;opacity:clamp(0,calc(var(--a)*9 - 1.5 - var(--k)),1)}
+.ivb-l p.h{opacity:1;padding:9px 0}.ivb-l p.h span,.ivb-l p.h em,.ivb-l p.h b,.ivb-l u{font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);text-decoration:none}
+.ivb-l span{display:flex;align-items:center;gap:9px;font-weight:540}.ivb-l i{flex:none;width:9px;height:9px;background:#266df1}.ivb-l .b i{background:#cfdcfd;box-shadow:inset 0 0 0 1px #7fa8f7}.ivb-l .y i{background:#7fa8f7}
+.ivb-l em{font-style:normal;color:var(--t2)}.ivb-l b{text-align:right;font-weight:560}
+.ivb-b i{justify-content:space-between;gap:8px}.ivb-b i u{text-decoration:none;font-weight:600}
+@media(min-width:861px){.ivb.sp-live .ivb-g{background:repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 1px,transparent 1px calc(100%/24))}
+.ivb.sp-live .ivb-g::after{content:"";position:absolute;left:0;right:0;bottom:calc(11vh + 30px);height:1px;background:rgba(255,255,255,.75)}
+.ivb-g span{padding:20px 0 0}.ivb-g span::before{left:-4px;top:-4px}
+.ivb-g span b{position:absolute;left:0;bottom:calc(100% + 16px);font:560 clamp(14px,1.15vw,18px)/1.15 Inter,system-ui,sans-serif;letter-spacing:-.01em;text-transform:none;white-space:nowrap}.ivb-g span:last-child b{left:auto;right:0}}
+.ivl-s{margin-top:34px;max-width:340px;border-top:1px solid var(--dl)}.ivl-s p{display:flex;align-items:center;gap:12px;margin:0;padding:12px 0;border-bottom:1px solid var(--dl);font-size:14.5px}
+.ivl-s p span{flex:1;font-weight:540;color:#fff}.ivl-s p em,.ivl-s p.h span{font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;letter-spacing:.05em;text-transform:uppercase;color:#8f9197}
+.ivl-s i{position:relative;flex:none;width:34px;height:20px;border-radius:999px;background:#3a3b40}.ivl-s i::after{content:"";position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff}
+.ivl-s i.on{background:#266df1}.ivl-s i.on::after{left:17px}.ivl-s .off span{color:#8f9197}
+.hs-p:has(.ivh){padding-left:clamp(18px,2vw,30px);padding-right:clamp(18px,2vw,30px)}
+.ivh{position:relative;width:100%;max-width:620px;height:590px}.ivh-l{position:absolute;left:0;right:0;top:0}
+.ivh-l p{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) 4.8em 4.6em;gap:10px;align-items:center;margin:0;padding:10px 18px;border-top:1px solid var(--line);font-size:13px;line-height:1.2}
+.ivh-l p span{display:flex;align-items:center;gap:9px;font-weight:540}.ivh-l i{flex:none;width:9px;height:9px;background:#266df1}.ivh-l .b i{background:#cfdcfd;box-shadow:inset 0 0 0 1px #7fa8f7}.ivh-l .y i{background:#7fa8f7}
+.ivh-l em{font-style:normal;color:var(--t2)}.ivh-l u{font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);text-decoration:none}.ivh-l p b{text-align:right;font-weight:560}
+.ivh .inv{position:absolute;left:0;top:172px;width:61%;max-width:none;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 26px 54px -26px rgba(30,40,80,.5)}
+.ivh-i p{display:flex;justify-content:space-between;margin:0;padding:9px 18px;border-bottom:1px solid var(--line);font-size:13px;color:var(--t2)}.ivh-i b{color:var(--ink);font-weight:540}
+.ivh .ph2{position:absolute;right:0;top:150px;width:36%;min-height:390px}.ivh .ph2 .hb{max-width:100%;font-size:12.5px}
+.ivh .ph2 .ivh-k{width:fit-content;margin:10px 0 0 auto;padding:8px 12px;border-radius:999px;background:#266df1;color:#fff;font-size:12.5px;font-weight:560}
+@media(max-width:1080px){.ivh .ph2{display:none}.ivh .inv{width:84%}}
+@media(min-width:861px) and (max-height:770px){.ivh{zoom:.86}.ivb-l{margin-top:18px}.ivb-l p{padding:6px 0}.ivb-t .st-t{margin:16px 0 18px}}
+@media(max-width:860px){.ivn-s u b,.ivn-s u em{display:none}.ivn-s{height:150px}.ivn-r{height:118px}.ivn-r span[style*="--k:1"] b{top:58px;left:auto;right:0}.ivn-r span[style*="--k:1"] em{top:76px;left:auto;right:0}.ivl-d .n:first-of-type{font-size:0}.ivb-b i{padding:8px;font-size:11px}
+.ivb-l p,.ivh-l p{grid-template-columns:minmax(0,1fr) 4.8em 4.6em}.ivb-l em,.ivh-l em{display:none}.ivb-b i u{display:none}
+.ivh{height:auto;max-width:460px}.ivh-l{position:relative;height:126px;overflow:hidden}.ivh .inv{position:relative;top:auto;width:100%;margin-top:-26px}.ivl-s{max-width:none}}
 /* ---- /lead-vetting ---- */
 .lvg{--a:clamp(0,calc(var(--p,1)/.45),1);--r:0;border-top:1px solid var(--ln)}.lvg-i{position:relative;overflow:hidden;background:#fff}
 .lvg-f{box-sizing:border-box;border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(56px,6vw,100px) clamp(22px,3.1vw,60px) clamp(56px,6vw,90px)}
@@ -2790,7 +2845,7 @@ SIDE = {
     'job-updates': ('phone', 'Customer&rsquo;s phone', [(0, 'o', 'Your crew is booked for Thursday.'), (1, 'o', 'On the way. About 20 minutes out.'), (3, 'o', 'Job done. Photos attached.'), (4, 'c', 'Looks great, thank you')]),
     'estimates': ('log', '&gt; One draft', [(0, '10:20 AM', 'Voice note in'), (1, '10:21 AM', 'Line items priced your way'), (3, '10:24 AM', 'Draft ready for you'), (4, '10:31 AM', 'Approved and sent')]),
     'proposals': ('own', 'Your phone', [(1, 'Proposal opened', 'Twice, last at 8:12 PM'), (4, 'Option picked', 'Better, signed')]),
-    'invoicing': ('log', '&gt; What ran', [(0, 'Fri', 'Job finished'), (1, 'Fri', 'Invoice sent'), (3, 'Day 3', 'Reminder sent'), (5, 'Day 3', 'Paid')]),
+    'invoicing': ('log', '&gt; What ran', [(0, 'Fri', 'Job finished'), (1, 'Fri', 'Invoice sent'), (3, 'Day 3', 'Friendly reminder'), (4, 'Day 10', 'Firmer reminder'), (5, 'Day 11', 'Paid')]),
     'bookkeeping': ('log', '&gt; One receipt', [(0, 'Receipt', 'Read'), (1, 'Receipt', 'Labelled: materials'), (2, 'Receipt', 'Put against the job'), (4, 'Month end', 'Costs by job ready')]),
     'review-replies': ('own', 'Your phone', [(1, 'Five stars', 'Reply posted'), (4, 'One star', 'Draft waiting for you')]),
     'win-backs': ('phone', 'Past customer&rsquo;s phone', [(1, 'o', 'Hi, it&rsquo;s Ridgeline Fence. It&rsquo;s been a year since your fence went in. Anything need a look?'), (4, 'c', 'Actually the gate is sagging')]),

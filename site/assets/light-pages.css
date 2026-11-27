@@ -1305,8 +1305,8 @@ clip-path:inset(calc(var(--T)*var(--k)) calc((100% - var(--L) - var(--fw)*var(--
 .ivb.sp-live .ivb-n{display:block;position:absolute;left:0;right:0;top:50%;margin:0 auto;padding:0 24px;max-width:13em;text-align:center;color:#fff;font-size:clamp(34px,4.4vw,84px);line-height:1.02;letter-spacing:-.045em;font-weight:600;
 opacity:var(--w);transform:translateY(calc(-50% + (1 - var(--w))*40px))}}
 .ivn-g{row-gap:clamp(44px,5vw,84px)}.ivn-r{grid-column:1/-1;position:relative;height:74px}
-.ivn-r>i{position:absolute;left:0;right:0;top:0;height:14px;border-bottom:1px solid var(--ink);background:repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px calc(100%/60));clip-path:inset(0 calc((1 - var(--p,1))*100%) 0 0)}
-.ivn-r span{--o:clamp(0,calc(var(--p,1)*4 - 1 - var(--k)*.8),1);position:absolute;left:var(--l);width:var(--w);top:22px;height:10px;border:1px solid var(--ink);border-top:0;opacity:var(--o)}
+.ivn-r>i{position:absolute;left:0;right:0;top:0;height:14px;border-bottom:1px solid var(--ink);background:repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px calc(100%/60));clip-path:inset(0 calc((1 - var(--q,1))*100%) 0 0)}
+.ivn-r span{--o:clamp(0,calc(var(--q,1)*4 - 1 - var(--k)*.8),1);position:absolute;left:var(--l);width:var(--w);top:22px;height:10px;border:1px solid var(--ink);border-top:0;opacity:var(--o)}
 .ivn-r span b{position:absolute;left:0;top:20px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t2);white-space:nowrap}
 .ivn-r span em{position:absolute;right:0;top:18px;font-style:normal;font-size:14px;font-weight:560}
 .ivb-g{display:none}
@@ -1335,6 +1335,42 @@ opacity:var(--w);transform:translateY(calc(-50% + (1 - var(--w))*40px))}}
 .iv3 p span{flex:1;margin:0;font-size:13px;color:var(--ink)}.iv3 p b{font-size:13px;font-weight:560}.iv3 i{width:9px;height:9px;border-radius:50%;background:#266df1}.iv3 i.y{background:#f0a001}.iv3 i.r{background:#e5484e}
 @media(max-width:860px){.ivn-g,.ivb-f,.ivl-i{grid-template-columns:minmax(0,1fr)}.ivn-n{padding:26px 0 0;border-left:0;border-top:1px solid var(--ln)}.ivb-f{height:auto;padding-bottom:46px}.ivb-c{height:320px}
 .ivl-r{margin-left:0;grid-template-columns:minmax(0,1fr);gap:6px}.ivl-r span{padding-top:0}.ivl-p{margin-left:0}}
+.ivn-c{grid-column:1/-1;--q:clamp(0,calc(var(--p,1)*1.55),1)}.ivn-r{height:84px}.ivn-r span em{right:auto;left:0;top:38px}
+.ivn-s{position:relative;height:clamp(170px,16vw,240px)}
+.ivn-s .gy{position:absolute;left:0;right:0;bottom:var(--y);height:0;border-top:1px dashed #d5d8de;opacity:clamp(0,calc(var(--q)*4),1)}
+.ivn-s .gy b{position:absolute;right:0;bottom:6px;font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3)}
+.ivn-s u{--g:clamp(0,calc(var(--q)*4 - .3 - var(--k)*.4),1);position:absolute;left:var(--x);bottom:0;width:1px;height:calc(var(--h)*var(--g));background:var(--ink);text-decoration:none}
+.ivn-s u::before{content:"";position:absolute;left:-5px;top:-5px;width:11px;height:11px;background:#266df1}.ivn-s u.b::before{background:#cfdcfd;box-shadow:inset 0 0 0 1px #7fa8f7}.ivn-s u.y::before{background:#7fa8f7}
+.ivn-s u b{position:absolute;left:14px;top:-10px;font-size:14.5px;line-height:1;font-weight:560;white-space:nowrap;opacity:calc(var(--g)*3 - 2)}
+.ivn-s u em{position:absolute;left:14px;top:10px;font:500 10px/1 "Geist Mono",monospace;font-style:normal;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);white-space:nowrap;opacity:calc(var(--g)*3 - 2)}
+.ivb-l{margin-top:28px;max-width:460px;border-top:1px solid var(--ink)}
+.ivb-l p{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) 4.8em 4.4em;align-items:center;gap:10px;margin:0;padding:8px 0;border-bottom:1px solid var(--ln);font-size:13.5px;line-height:1.2;opacity:clamp(0,calc(var(--a)*9 - 1.5 - var(--k)),1)}
+.ivb-l p.h{opacity:1;padding:9px 0}.ivb-l p.h span,.ivb-l p.h em,.ivb-l p.h b,.ivb-l u{font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);text-decoration:none}
+.ivb-l span{display:flex;align-items:center;gap:9px;font-weight:540}.ivb-l i{flex:none;width:9px;height:9px;background:#266df1}.ivb-l .b i{background:#cfdcfd;box-shadow:inset 0 0 0 1px #7fa8f7}.ivb-l .y i{background:#7fa8f7}
+.ivb-l em{font-style:normal;color:var(--t2)}.ivb-l b{text-align:right;font-weight:560}
+.ivb-b i{justify-content:space-between;gap:8px}.ivb-b i u{text-decoration:none;font-weight:600}
+@media(min-width:861px){.ivb.sp-live .ivb-g{background:repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 1px,transparent 1px calc(100%/24))}
+.ivb.sp-live .ivb-g::after{content:"";position:absolute;left:0;right:0;bottom:calc(11vh + 30px);height:1px;background:rgba(255,255,255,.75)}
+.ivb-g span{padding:20px 0 0}.ivb-g span::before{left:-4px;top:-4px}
+.ivb-g span b{position:absolute;left:0;bottom:calc(100% + 16px);font:560 clamp(14px,1.15vw,18px)/1.15 Inter,system-ui,sans-serif;letter-spacing:-.01em;text-transform:none;white-space:nowrap}.ivb-g span:last-child b{left:auto;right:0}}
+.ivl-s{margin-top:34px;max-width:340px;border-top:1px solid var(--dl)}.ivl-s p{display:flex;align-items:center;gap:12px;margin:0;padding:12px 0;border-bottom:1px solid var(--dl);font-size:14.5px}
+.ivl-s p span{flex:1;font-weight:540;color:#fff}.ivl-s p em,.ivl-s p.h span{font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;letter-spacing:.05em;text-transform:uppercase;color:#8f9197}
+.ivl-s i{position:relative;flex:none;width:34px;height:20px;border-radius:999px;background:#3a3b40}.ivl-s i::after{content:"";position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff}
+.ivl-s i.on{background:#266df1}.ivl-s i.on::after{left:17px}.ivl-s .off span{color:#8f9197}
+.hs-p:has(.ivh){padding-left:clamp(18px,2vw,30px);padding-right:clamp(18px,2vw,30px)}
+.ivh{position:relative;width:100%;max-width:620px;height:590px}.ivh-l{position:absolute;left:0;right:0;top:0}
+.ivh-l p{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) 4.8em 4.6em;gap:10px;align-items:center;margin:0;padding:10px 18px;border-top:1px solid var(--line);font-size:13px;line-height:1.2}
+.ivh-l p span{display:flex;align-items:center;gap:9px;font-weight:540}.ivh-l i{flex:none;width:9px;height:9px;background:#266df1}.ivh-l .b i{background:#cfdcfd;box-shadow:inset 0 0 0 1px #7fa8f7}.ivh-l .y i{background:#7fa8f7}
+.ivh-l em{font-style:normal;color:var(--t2)}.ivh-l u{font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);text-decoration:none}.ivh-l p b{text-align:right;font-weight:560}
+.ivh .inv{position:absolute;left:0;top:172px;width:61%;max-width:none;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 26px 54px -26px rgba(42,42,44,.5)}
+.ivh-i p{display:flex;justify-content:space-between;margin:0;padding:9px 18px;border-bottom:1px solid var(--line);font-size:13px;color:var(--t2)}.ivh-i b{color:var(--ink);font-weight:540}
+.ivh .ph2{position:absolute;right:0;top:150px;width:36%;min-height:390px}.ivh .ph2 .hb{max-width:100%;font-size:12.5px}
+.ivh .ph2 .ivh-k{width:fit-content;margin:10px 0 0 auto;padding:8px 12px;border-radius:999px;background:#266df1;color:#fff;font-size:12.5px;font-weight:560}
+@media(max-width:1080px){.ivh .ph2{display:none}.ivh .inv{width:84%}}
+@media(min-width:861px) and (max-height:770px){.ivh{zoom:.86}.ivb-l{margin-top:18px}.ivb-l p{padding:6px 0}.ivb-t .st-t{margin:16px 0 18px}}
+@media(max-width:860px){.ivn-s u b,.ivn-s u em{display:none}.ivn-s{height:150px}.ivn-r{height:118px}.ivn-r span[style*="--k:1"] b{top:58px;left:auto;right:0}.ivn-r span[style*="--k:1"] em{top:76px;left:auto;right:0}.ivl-d .n:first-of-type{font-size:0}.ivb-b i{padding:8px;font-size:11px}
+.ivb-l p,.ivh-l p{grid-template-columns:minmax(0,1fr) 4.8em 4.6em}.ivb-l em,.ivh-l em{display:none}.ivb-b i u{display:none}
+.ivh{height:auto;max-width:460px}.ivh-l{position:relative;height:126px;overflow:hidden}.ivh .inv{position:relative;top:auto;width:100%;margin-top:-26px}.ivl-s{max-width:none}}
 /* ---- /lead-vetting ---- */
 .lvg{--a:clamp(0,calc(var(--p,1)/.45),1);--r:0;border-top:1px solid var(--ln)}.lvg-i{position:relative;overflow:hidden;background:#fff}
 .lvg-f{box-sizing:border-box;border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(56px,6vw,100px) clamp(22px,3.1vw,60px) clamp(56px,6vw,90px)}
