@@ -2,6 +2,51 @@
 (function () {
   var N = { answering: 'Answering', 'phone-agent': 'Phone agent', 'website-chat': 'Website chat', 'social-messages': 'Messages and DMs', 'lead-vetting': 'Lead vetting', 'after-hours': 'After hours', booking: 'Booking', reminders: 'Reminders', dispatch: 'Scheduling and dispatch', 'job-updates': 'Job updates', estimates: 'Estimates', proposals: 'Proposals', 'follow-up': 'Follow-up', invoicing: 'Invoices', bookkeeping: 'Bookkeeping prep', reviews: 'Reviews', 'review-replies': 'Review replies', 'win-backs': 'Win-backs', 'maintenance-reminders': 'Service reminders', referrals: 'Referrals', campaigns: 'Email and text campaigns', websites: 'Websites', 'local-search': 'Local search', 'job-photos': 'Job photos to posts', hiring: 'Hiring', 'team-assistant': 'Team assistant', 'field-notes': 'Field notes', reports: 'Reports', 'call-review': 'Call review', integrations: 'Tool connections', 'custom-agents': 'Custom agents', 'custom-builds': 'Custom builds' };
   var rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // ---- what we fix: diagrams driven by the scroll inside a pinned section. Two are drawn here, the rest come from the build drawings.
+  var KB = window.CinderBuilds, DR = {};
+  if (KB) (function () {
+    var h = KB.h, cl = h.cl, ez = h.ez, lerp = h.lerp, ink = h.ink, px = h.px, F = h.F, line = h.line, card = h.card, txt = h.txt, curve = h.curve, S = h.S, pulse = h.pulse, pill = h.pill, bubble = h.bubble, bars = h.bars, RED = h.RED;
+    // a quote chased: four sheets land on top of each other
+    DR.stack = function (c, W, H, p, t) {
+      var cx = W * .44, cy = H * .7, a = Math.min(W * .21, 210), b = a * .64, ux = .866, uy = .5, gap = Math.min(H * .15, 78), L = [['Quote sent', 'Day 0'], ['Check-in', 'Day 2'], ['Check-in', 'Day 5'], ['Signed', 'Day 5, 4:10 PM']], n = 0;
+      function P(x, y, lift) { return [cx + (x - y) * ux, cy - lift + (x + y) * uy] }
+      c.strokeStyle = ink(.12); c.lineWidth = 1; for (var g = -3; g <= 3; g++) { var q0 = P(g * a / 2.2, -b * 1.6, 0), q1 = P(g * a / 2.2, b * 1.6, 0); c.beginPath(); c.moveTo(q0[0], q0[1]); c.lineTo(q1[0], q1[1]); c.stroke(); q0 = P(-a * 1.5, g * b / 2, 0); q1 = P(a * 1.5, g * b / 2, 0); c.beginPath(); c.moveTo(q0[0], q0[1]); c.lineTo(q1[0], q1[1]); c.stroke() }
+      for (var i = 0; i < 4; i++) {
+        var e = ez(p * 4.25 - i * 1.02); if (e <= 0) continue; if (e >= 1) n++; var lift = i * gap + (1 - e) * H * .55, top = i === 3, A = P(-a, -b, lift), B = P(a, -b, lift), C = P(a, b, lift), D = P(-a, b, lift), th = 9;
+        c.globalAlpha = e; c.fillStyle = '#08080a'; c.strokeStyle = ink(.45); c.beginPath(); c.moveTo(D[0], D[1]); c.lineTo(C[0], C[1]); c.lineTo(B[0], B[1]); c.lineTo(B[0], B[1] + th); c.lineTo(C[0], C[1] + th); c.lineTo(D[0], D[1] + th); c.closePath(); c.fill(); c.stroke(); c.beginPath(); c.moveTo(C[0], C[1]); c.lineTo(C[0], C[1] + th); c.stroke();
+        c.fillStyle = top ? '#f2f1ee' : '#111114'; c.strokeStyle = ink(top ? 1 : .7); c.beginPath(); c.moveTo(A[0], A[1]); c.lineTo(B[0], B[1]); c.lineTo(C[0], C[1]); c.lineTo(D[0], D[1]); c.closePath(); c.fill(); c.stroke();
+        c.save(); c.transform(ux, uy, -ux, uy, cx, cy - lift); var fg = top ? 'rgba(10,10,12,' : 'rgba(242,241,238,'; txt(c, L[i][0], -a + 22, -b + 32, fg + '.95)', 'left', F('600', 21)); txt(c, L[i][1], a - 22, -b + 32, fg + '.5)', 'right', F('500', 12, 1));
+        c.fillStyle = fg + '.14)'; c.fillRect(-a + 22, -b + 52, a * 2 - 44, 1); for (var r = 0; r < 3; r++) { c.fillStyle = fg + (r ? '.3)' : '.6)'); c.fillRect(-a + 22, -b + 74 + r * 22, (a * 2 - 44) * [.72, .5, .6][r], 6) }
+        if (top) { c.strokeStyle = RED; c.lineWidth = 2.2; c.beginPath(); c.moveTo(-a + 26, b - 26); c.bezierCurveTo(-a + 60, b - 62, -a + 74, b - 2, -a + 104, b - 34); c.bezierCurveTo(-a + 120, b - 50, -a + 136, b - 20, -a + 170, b - 30); c.stroke(); c.fillStyle = RED; c.fillRect(a - 40, b - 38, 16, 16) } else { c.fillStyle = fg + '.9)'; c.fillRect(a - 34, b - 32, 10, 10) }
+        c.restore(); c.globalAlpha = 1;
+        if (e >= .98) { var k = cl((p * 4.25 - i * 1.02 - 1) * 3), lx = W * .76; line(c, B[0] + 8, px(B[1]), lerp(B[0] + 8, lx - 12, k), px(B[1]), ink(.4)); c.globalAlpha = k; c.fillStyle = top ? RED : ink(.95); c.fillRect(Math.round(lx - 4), Math.round(B[1] - 4), 8, 8); txt(c, L[i][0], lx + 14, B[1] - 8, ink(.95), 'left', F('600', 15)); txt(c, L[i][1], lx + 14, B[1] + 12, ink(.5), 'left', F('500', 11.5, 1)); c.globalAlpha = 1 }
+      }
+      txt(c, n + ' of 4', W * .06, H * .14, ink(.95), 'left', F('600', 26)); txt(c, n === 4 ? 'Answered. Follow-up stops.' : 'Still open. Follow-up continues.', W * .06, H * .14 + 26, n === 4 ? RED : ink(.5), 'left', F('500', 12, 1))
+    };
+    // an invoice paid: the sheet on the left, what happened to it on the right
+    DR.invoice = function (c, W, H, p, t) {
+      var a = ez(p * 3.7), b = ez(p * 3.7 - .9), d = ez(p * 3.7 - 1.6), e = ez(p * 3.7 - 2.5), x = W * .06, y = H * .12, w = W * .38, hh = H * .76, tx = W * .58, ty0 = H * .16, ty1 = H * .86, N = [[0, 'Job finished', 'Friday', a], [.22, 'Invoice sent', 'The same day', b], [.5, 'Reminder', 'Day 3', d], [.72, 'Paid', 'Day 4', e], [1, 'Reminder', 'Day 7', e]];
+      c.globalAlpha = .3 + .7 * a; card(c, x, y, w, hh, 14, ink(.5), '#0b0b0d'); txt(c, 'Invoice 1042', x + 24, y + 38, ink(.95), 'left', F('600', 20)); txt(c, 'Example Fence Co.', x + 24, y + 62, ink(.5), 'left', F('500', 12, 1)); line(c, x, px(y + 84), x + w, px(y + 84), ink(.14));
+      for (var i = 0; i < 3; i++) { var yy = y + 116 + i * 38; bars(c, x + 24, yy - 3, w * .44 * a, 1, .7); c.fillStyle = ink(.5); c.fillRect(x + w - 24 - 52 * a, yy - 3, 52 * a, 6); line(c, x + 24, px(yy + 19), x + w - 24, px(yy + 19), ink(.08)) }
+      txt(c, 'Total due', x + 24, y + 116 + 3 * 38 + 6, ink(.95), 'left', F('600', 16)); c.fillStyle = ink(.95); c.fillRect(x + w - 24 - 84 * a, y + 116 + 3 * 38, 84 * a, 10); pill(c, x + 24, y + hh - 40, 'Pay now', { al: 'l', fill: ink(.95), col: '#0a0a0c', stroke: ink(.95), w: '600', s: 13.5, h: 36 }); c.globalAlpha = 1;
+      if (e > 0) { c.save(); c.translate(x + w * .6, y + hh * .66); c.rotate(-.14); c.globalAlpha = e; c.strokeStyle = RED; c.lineWidth = 2; c.strokeRect(-84, -24 - (1 - e) * 14, 168, 48); txt(c, 'PAID, DAY 4', 0, 1 - (1 - e) * 14, RED, 'center', F('600', 18, 1)); c.restore() }
+      line(c, px(tx), ty0, px(tx), ty1, ink(.14)); var head = lerp(ty0, lerp(ty0, ty1, .72), cl(p * 1.15)); line(c, px(tx), ty0, px(tx), head, ink(.95), 1.5); c.setLineDash([3, 6]); line(c, px(tx), lerp(ty0, ty1, .72), px(tx), ty1, ink(.25)); c.setLineDash([]);
+      N.forEach(function (q, i) { var ny = lerp(ty0, ty1, q[0]), k = q[3], gone = i === 4; c.globalAlpha = .28 + .72 * k; card(c, tx - 5, ny - 5, 10, 10, 3, ink(.9), k > .5 && !gone ? (i === 3 ? RED : ink(.95)) : '#050506'); txt(c, q[1], tx + 24, ny - 7, ink(gone && e > .5 ? .4 : .95), 'left', F('600', 16)); txt(c, q[2], tx + 24, ny + 13, ink(.5), 'left', F('500', 11.5, 1)); c.globalAlpha = 1;
+        if (gone && e > 0) { line(c, tx + 22, px(ny - 7), tx + 22 + 78 * e, px(ny - 7), ink(.6)); pill(c, tx + 118, ny - 6, 'Cancelled, not needed', { al: 'l', dot: RED, s: 12, a: e }) } });
+      var P1 = S(x + w, y + hh * .26, tx - 10, lerp(ty0, ty1, .22)); curve(c, P1, 0, b, ink(.4)); if (b >= 1) pulse(c, P1, (t * .3) % 1.3);
+      if (d > 0) bubble(c, tx + 24, lerp(ty0, ty1, .5) + 30, W * .3, 'Friendly reminder about invoice 1042. Pay here whenever you are ready.', 0, d * 3, F('400', 13.5))
+    };
+    [].forEach.call(document.querySelectorAll('.px[data-scrub]'), function (sec) {
+      var name = sec.dataset.scrub, span = +sec.dataset.span || 1, ent = DR[name] ? ['S', DR[name]] : KB.B[name]; if (!ent) return;
+      var host = sec.querySelector('.px-host'), steps = [].slice.call(sec.querySelectorAll('.px-steps li')), cv = document.createElement('canvas'), c = cv.getContext('2d'), W = 1, H = 1, z = 1, s = 0, tgt = 0, vis = false, raf = 0, t0 = performance.now(), on = -1; host.appendChild(cv);
+      function size() { var r = host.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2), nw = r.width < 620, VW = nw ? 620 : 960, sc = r.width / VW; W = VW; H = Math.max(1, r.height / sc); cv.width = Math.max(1, r.width * d); cv.height = Math.max(1, r.height * d); c.setTransform(d * sc, 0, 0, d * sc, 0, 0); z = nw ? 1.28 : 1; kick() }
+      function prog() { var r = sec.getBoundingClientRect(); if (innerWidth <= 900) { var q = host.getBoundingClientRect(); tgt = cl((innerHeight * .95 - q.top) / (innerHeight * .9)) } else tgt = cl((-r.top + innerHeight * .12) / Math.max(1, r.height - innerHeight)); kick() }
+      function frame(n) { raf = 0; s += (tgt - s) * (rm ? 1 : .12); h.setZ(z); c.clearRect(0, 0, W, H); c.globalAlpha = 1; if (ent[0] === 'L') ent[1](c, W, H, 1, s * span, { x: 0, y: 0, on: false }); else ent[1](c, W, H, s, (n - t0) / 1000, { x: 0, y: 0, on: false }); h.setZ(1);
+        var a = Math.min(steps.length - 1, Math.floor(s * steps.length * .999)); if (a !== on) { on = a; steps.forEach(function (li, i) { li.classList.toggle('on', i <= a) }) } if (vis && !rm) raf = requestAnimationFrame(frame) }
+      function kick() { if (!raf) raf = requestAnimationFrame(frame) }
+      new ResizeObserver(size).observe(host); new IntersectionObserver(function (e) { vis = e[0].isIntersecting; if (vis) kick() }).observe(sec); addEventListener('scroll', prog, { passive: true }); if (document.fonts && document.fonts.ready) document.fonts.ready.then(kick); size(); prog()
+    })
+  })();
   // ---- hero: pick a problem, get the fix in one line
   var hq = document.getElementById('hq');
   if (hq) {
