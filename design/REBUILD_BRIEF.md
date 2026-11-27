@@ -592,3 +592,13 @@ Sam approved the Reviews graph-as-transition ("Perfect"). Invoicing rebuilt by h
 - `IV3`: three cells (the job day and invoice on the same day, the pay button in the message, a list by customer).
 - Blues `#cfdcfd` and `#7fa8f7` kept through `mono()`.
 Done to the standard: homepage, Estimates, Reviews, Invoicing. Close: Follow-up.
+
+## 23h. Lead vetting (Nov 27)
+
+Sam: "Full upgrade". Lead vetting rebuilt by hand:
+- Left-set hero over the sorting table with the phone beside it (kept, plays).
+- `LVGATE` (`.lvg`), pinned: a gate chart. Four leads run left to right through five dashed question gates (job type, size, address, timing, budget range). Two stop at the gate they fail with a red dot and the reason (90 miles out; below your minimum); two run the whole way in blue and end on a Booked chip. Then those two blue lines thicken until they are the whole screen, which darkens: that is the page's transition.
+- `LVACD`: the five questions step on their own and both lead cards light the matching answer.
+- `LVCMP` (`.lvc`): the three before-and-after pairs as three columns on black, the old way struck through over the new in serif.
+- "One loose board" is now "A very small job" in `_DT`.
+At the standard: homepage, Estimates, Reviews, Invoicing, Lead vetting. Close: Follow-up.

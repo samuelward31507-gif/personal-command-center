@@ -545,11 +545,35 @@ def lead(cls, verdict, rows, foot):
 LEADS = ('<div class="lc-g">%s%s</div>' % (
     lead('g', 'Good fit', [('Job type', 'Privacy fence', 0), ('Size', 'About 180 ft', 0), ('Address', 'Monument', 0), ('Timing', 'This month', 0), ('Budget range', 'In range', 0)], 'Booked for Wed 2 PM. You walk in knowing what they said.'),
     lead('n', 'Not a fit', [('Job type', 'Ranch fencing', 0), ('Size', 'About 2 miles', 0), ('Address', '90 miles out', 1), ('Timing', 'Next year', 0), ('Budget range', 'Not sure yet', 0)], 'A clear, polite no went out. Nobody is left waiting, and nobody drove out.')))
+# four leads through five questions: two run the whole way and are booked, two stop at the question they fail
+_lvq = ['Job type', 'Size', 'Address', 'Timing', 'Budget range']
+_lvl = [('Full install', 5, 'Booked Wed 2 PM', ''), ('Large project', 2, '90 miles out', 'Polite no'), ('Repair', 5, 'Booked Thu 11 AM', ''), ('A very small job', 1, 'Below your minimum', 'Polite no')]
+LVGATE = ('<section class="lvg" data-sp><div class="lvg-i"><div class="w lvg-f"><div class="lvg-t"><span class="lb">Asked before anyone drives out</span>'
+          '<p class="st-t">%s <span>%s</span></p><p class="fa-k">[Four leads, five questions]<em>Example business, sample data</em></p></div>'
+          '<div class="lvg-c" aria-hidden="true">%s%s</div></div></div></section>'
+          % (ap(X['lead-vetting'][2]), ap(X['lead-vetting'][3]),
+             ''.join('<span class="lvg-q" style="--x:%d%%">%s</span>' % (22 + k * 15, q) for k, q in enumerate(_lvq)),
+             ''.join('<div class="lvg-l %s" style="--k:%d;--to:%d%%"><b>%s</b><i></i><em>%s</em>%s</div>'
+                     % ('ok' if g == 5 else 'no', k, 92 if g == 5 else 22 + g * 15, n, tag, ('<u>%s</u>' % no) if no else '') for k, (n, g, tag, no) in enumerate(_lvl))))
+# the five questions step through; the two lead cards beside them light the matching answer
+def _lvcard(html):
+    k = [0]
+    def f(mm):
+        k[0] += 1; return '<div data-sc="%d"%s><dt>' % (k[0] - 1, mm.group(1))
+    return re.sub(r'<div( class="x")?><dt>', f, html)
+LVACD = ('<section class="acd acd-w" data-live="2,2,2,2,2"><div class="w acd-g"><div class="acd-t"><span class="lb">The answers travel with the lead</span><p class="st-t">You walk in knowing what they said.</p>'
+         '<div class="acd-l">%s</div></div><div class="acd-p"><div class="lc-g">%s%s</div><p class="sd-n">Example. Sample data.</p></div></div></section>'
+         % (''.join('<div data-sc="%d"><b>%s.</b><span>%s</span><u data-at="0"></u></div>' % x for x in [
+             (0, 'What is the job', 'Asked first, in your words.'), (1, 'How big', 'So a job below your minimum never reaches you.'), (2, 'Where', 'Out-of-area is caught before anyone drives.'),
+             (3, 'When', 'This month and next year are not the same lead.'), (4, 'What budget', 'A range, not a negotiation.')]),
+            _lvcard(lead('g', 'Good fit', [('Job type', 'Full install', 0), ('Size', 'A full job', 0), ('Address', 'Monument', 0), ('Timing', 'This month', 0), ('Budget range', 'In range', 0)], 'Booked for Wed 2 PM.')),
+            _lvcard(lead('n', 'Not a fit', [('Job type', 'Large project', 0), ('Size', 'Very large', 0), ('Address', '90 miles out', 1), ('Timing', 'Next year', 0), ('Budget range', 'Not sure yet', 0)], 'A clear, polite no went out.'))))
+LVCMP = ('<section class="lvc"><div class="w lvc-i"><p class="st-t">%s</p><div class="lvc-g">%s</div></div></section>'
+         % (ap(p['line']), ''.join('<div><span>%s</span><b>%s</b></div>' % (ap(a), ap(b)) for a, b in p['cmp'])))
 LEAD_VETTING = ('<section class="ih ih-l"><div class="w ih-i"><span class="lb">Front desk</span><h1>%s</h1><p class="sub">%s</p><div class="cta">%s%s</div></div><div class="ih-p"><div class="w ih-pi">%s</div></div></section>'
                 % (ap(p['h1']), ap(p['lede']), BOOK, AUDITLINK, SORT)
                 + statement('The problem', X['lead-vetting'][0][0], ap(X['lead-vetting'][0][1]))
-                + sx(X['lead-vetting'][2], 'The answers travel with the lead.', LEADS, 'wh')
-                + H.split('What changes', 'Not every lead is a job.', 'You shouldn&rsquo;t have to find that out in person.', swap(p['cmp']))
+                + LVGATE + LVACD + LVCMP
                 + qcards(p['faq']) + CL)
 
 # ---- /after-hours : a dark top with one night on a ruler; two calls at 2 AM going two ways; the rota; the morning summary ----
@@ -1909,13 +1933,13 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
     'website-chat': ('st sx bl sp', {'st': 'v-xl', 'sx': 'v-pin', 'bl': 's-bl t-exp', 'sp': 's-dkp'}),
     'social-messages': ('sx st pg', {'sx': 't-sheet', 'st': 's-dk v-c t-angle', 'pg': 's-dk'}),
-    'lead-vetting': ('st sx sp', {'st': 'v-2 t-rule', 'sx': 's-tn', 'sp': 'v-f t-sheet'}),
+    'lead-vetting': ('st lvg acd lvc', {'st': 'v-2 t-rule'}),
     'after-hours': ('st sx sp', {'st': 'v-c t-arc', 'sp': 's-dkp'}),
     'booking': ('st sx sp ic', {'st': 'v-xl', 'sx': 's-tn t-exp', 'sp': 'v-f'}),
     'reminders': ('sx st sp', {'sx': 't-sheet v-b', 'st': 's-dk t-angle', 'sp': 'v-f'}),
@@ -2091,7 +2115,7 @@ def next_sec(name):
             % (BY[name]['name'], ap(BY[name]['short']), ''.join('<a href="/%s"><b>%s</b><span>%s</span></a>' % (o, BY[o]['name'], ap(BY[o]['short'])) for o in others)))
 
 
-HAND = {'estimates', 'reviews', 'invoicing'}
+HAND = {'estimates', 'reviews', 'invoicing', 'lead-vetting'}
 def full(name, body):
     if name not in CLEAN:
         return body
@@ -2620,6 +2644,35 @@ CSS_FA = r"""
 .iv3 p span{flex:1;margin:0;font-size:13px;color:var(--ink)}.iv3 p b{font-size:13px;font-weight:560}.iv3 i{width:9px;height:9px;border-radius:50%;background:#266df1}.iv3 i.y{background:#f0a001}.iv3 i.r{background:#e5484e}
 @media(max-width:860px){.ivn-g,.ivb-f,.ivl-i{grid-template-columns:minmax(0,1fr)}.ivn-n{padding:26px 0 0;border-left:0;border-top:1px solid var(--ln)}.ivb-f{height:auto;padding-bottom:46px}.ivb-c{height:320px}
 .ivl-r{margin-left:0;grid-template-columns:minmax(0,1fr);gap:6px}.ivl-r span{padding-top:0}.ivl-p{margin-left:0}}
+/* ---- /lead-vetting ---- */
+.lvg{--a:clamp(0,calc(var(--p,1)/.45),1);--r:0;border-top:1px solid var(--ln)}.lvg-i{position:relative;overflow:hidden;background:#fff}
+.lvg-f{box-sizing:border-box;border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(56px,6vw,100px) clamp(22px,3.1vw,60px) clamp(56px,6vw,90px)}
+.lvg-t{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:20px 40px}.lvg-t .lb{grid-column:1/-1;justify-self:start}.lvg-t .st-t{margin:0;max-width:22em}.lvg-t .fa-k{display:grid;gap:8px;margin:0;text-align:right}
+.lvg-c{position:relative;margin-top:clamp(44px,5vw,84px);padding-top:52px;display:grid;gap:clamp(40px,6.4vh,76px);padding-bottom:34px}
+.lvg-q{position:absolute;left:var(--x);top:0;bottom:0;width:0;border-left:1px dashed #c9ccd3;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);white-space:nowrap}
+.lvg-q{text-indent:8px}
+.lvg-l{--v:clamp(0,calc(var(--a)*1.5 - var(--k)*.13),1);position:relative;height:26px}
+.lvg-l b{position:absolute;left:0;top:50%;transform:translateY(-50%);max-width:19%;font:400 clamp(17px,1.5vw,25px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.01em;line-height:1.15;background:#fff;padding-right:10px;z-index:1}
+.lvg-l i{position:absolute;left:20%;top:12px;height:2px;width:calc((var(--to) - 20%)*var(--v));background:var(--ink)}
+.lvg-l.ok i{background:#266df1}.lvg-l.no i{background:#b4b7bf}
+.lvg-l em{position:absolute;left:var(--to);top:50%;transform:translate(0,-50%);font-style:normal;font-size:clamp(12.5px,.95vw,15px);font-weight:560;padding:6px 10px;border-radius:6px;white-space:nowrap;opacity:clamp(0,calc(var(--v)*8 - 7),1);z-index:1}
+.lvg-l.ok em{transform:translate(-100%,-50%);background:#266df1;color:#fff}.lvg-l.no em{margin-left:12px;background:#fff;box-shadow:inset 0 0 0 1px #e5484e;color:#b3262b}
+.lvg-l.no::after{content:"";position:absolute;left:var(--to);top:8px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#e5484e;opacity:clamp(0,calc(var(--v)*8 - 7),1)}
+.lvg-l u{position:absolute;right:0;top:50%;transform:translateY(-50%);text-decoration:none;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3);opacity:clamp(0,calc(var(--v)*8 - 7),1)}
+@media(min-width:861px){.lvg.sp-live{height:230vh;--a:clamp(0,calc(var(--p,0)/.44),1);--r:clamp(0,calc((var(--p,0) - .6)/.4),1)}
+.lvg.sp-live .lvg-i{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,#fff calc((1 - clamp(0,calc(var(--r)*3.4 - 2.4),1))*100%),var(--dk))}
+.lvg.sp-live .lvg-f{flex:none;margin:0 auto}
+/* the hand-over: the two lines that made it through thicken until they are the whole screen */
+.lvg.sp-live .lvg-l.ok i{z-index:5;transform:scale(calc(1 + var(--r)*3.2),calc(1 + var(--r)*var(--r)*900));background:color-mix(in srgb,#266df1 calc((1 - var(--r)*var(--r))*100%),var(--dk))}
+.lvg.sp-live .lvg-l.ok em{z-index:6;opacity:calc(clamp(0,calc(var(--v)*8 - 7),1) - var(--r)*6)}}
+.acd-w .acd-g{grid-template-columns:minmax(0,.62fr) minmax(0,1.38fr)}.acd-w .lc-g{width:100%}.acd-w .lc [data-sc]{transition:background .3s,box-shadow .3s,opacity .3s}
+.acd-w.live .lc [data-sc]:not(.on){opacity:.4}.acd-w.live .lc [data-sc].on{background:#fff;box-shadow:inset 2px 0 0 var(--ink)}
+.lvc{background:var(--dk);color:#fff}.lvc-i{border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(72px,7vw,130px) 0 0}
+.lvc .st-t{margin:0;padding:0 clamp(22px,3.1vw,60px) clamp(48px,5vw,90px);max-width:20em;color:#fff}
+.lvc-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--dl)}.lvc-g div{padding:clamp(26px,2.6vw,48px) clamp(22px,2.6vw,48px) clamp(40px,4vw,72px);border-right:1px solid var(--dl)}.lvc-g div:last-child{border-right:0}
+.lvc-g span{display:block;font-size:clamp(14px,1vw,16.5px);color:#8f9197;text-decoration:line-through;text-decoration-color:#5c5e63}.lvc-g b{display:block;margin-top:16px;font:400 clamp(24px,2.3vw,40px)/1.08 Georgia,"Times New Roman",serif;letter-spacing:-.018em}
+@media(max-width:860px){.lvg-t{grid-template-columns:minmax(0,1fr)}.lvg-t .fa-k{text-align:left}.lvg-q{font-size:8px;text-indent:3px}.lvg-l b{max-width:none;top:-8px;transform:none;font-size:12.5px;background:none}.lvg-l i{left:0;width:calc(var(--to)*var(--v))}.lvg-l u{display:none}
+.lvg-l em{font-size:10.5px;padding:4px 6px}.lvg-c{gap:44px}.acd-w .acd-g,.lvc-g{grid-template-columns:minmax(0,1fr)}.lvc-g div{border-right:0;border-bottom:1px solid var(--dl)}}
 /* ---- live windows on the inner pages ---- */
 .lvh>*{min-width:0}.lvh>.cd,.lvh>div:first-child{flex:0 1 auto}
 .sdw{flex:none;width:clamp(210px,17vw,250px);box-sizing:border-box;padding:14px 12px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.16),0 30px 60px -34px rgba(38,38,40,.4);font-size:13px;text-align:left;min-height:170px}
@@ -2794,7 +2847,7 @@ def dportal(slug, label, line_, title):
 
 def trans(name, body):
     # one transition per page, drawn for that page: the drawing builds as you scroll, then one part of it grows into the next screen
-    if name not in DW.D or name in ('reviews', 'invoicing'):   # these hand over through their own graph
+    if name not in DW.D or name in ('reviews', 'invoicing', 'lead-vetting'):   # these hand over through their own graph
         return body
     body = re.sub(r'<section class="pt pt-(?:bubble|sheet|grid|app|bars|cols)" data-sp>.*?</section>', '', body, flags=re.S) if name in BY and name != 'answering' else body
     if 'class="pt ' in body:

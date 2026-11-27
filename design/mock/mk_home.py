@@ -1564,6 +1564,7 @@ _DT = [
     ('Fence installer', 'Installer'), ('Fence install', 'Install'), ('Fence company', 'Service company'), ('Gate install', 'Small install'), ('Gate repair', 'Repair'), ('Gate quote', 'Repair quote'),
     ('Stain due in spring', 'Service due in spring'), ('Stain due', 'Service due'), ('>Stain<', '>Service<'), ('Matching the old stain took a few tries', 'Getting it to match took a few tries'),
     ('Time to stain.', 'Time for service.'), ('Staining, servicing, seasonal checks.', 'Servicing, seasonal checks, inspections.'), ('servicing, sealing, staining or inspections', 'servicing, seasonal checks or inspections'),
+    ('One loose board', 'A very small job'),
     ('About 180 ft', 'A full job'), ('>180 ft<', '>1<'), ('>Chain link<', '>Basic<'), ('>Gate<', '>Repair<'), ('>Fence<', '>Install<'),
 ]
 _DT_LEFT = re.compile(r"fenc|\bgates?\b|cedar|vinyl|chain.link|picket|\broof|hvac|plumb|landscap|hardscap|\bconcrete|\bpaint|generator|water heater|burst pipe|\bft\b|lumber|\bstain", re.I)
