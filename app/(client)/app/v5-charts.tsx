@@ -1,6 +1,7 @@
 "use client";
 // Charts for the Nov 24 design (build brief Part 2.5): one accent per chart, everything else grey, monotone curves
 // that never overshoot, horizontal gridlines only, no axis lines, a tooltip that sits beside the data, never on it.
+// Areas are a flat 10% tint of their line (Nov 27): no fading gradients, as on the site's pictures.
 import React, { useId, useMemo, useState } from "react";
 
 // The business's own colour (--acc, set from their setup) for the good series; amber for waiting; light grey for the rest.
@@ -63,7 +64,7 @@ export function AreaChart({ series, labels, height = 168, format = (v: number) =
     <svg viewBox={`0 0 ${W} ${height}`} width="100%" role="img" aria-label={summary} tabIndex={0} style={{ display: "block", overflow: "visible" }}
       onPointerMove={onMove} onPointerLeave={() => setHover(initial ?? null)}
       onKeyDown={e => { if (e.key === "ArrowRight") setHover(i => Math.min(n - 1, (i ?? -1) + 1)); else if (e.key === "ArrowLeft") setHover(i => Math.max(0, (i ?? n) - 1)); }}>
-      <defs>{series.filter(s => s.fill).map(s => <linearGradient key={s.key} id={`g${id}${s.key}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={s.color} stopOpacity=".22" /><stop offset="100%" stopColor={s.color} stopOpacity="0" /></linearGradient>)}</defs>
+      <defs>{series.filter(s => s.fill).map(s => <linearGradient key={s.key} id={`g${id}${s.key}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={s.color} stopOpacity=".1" /><stop offset="100%" stopColor={s.color} stopOpacity=".1" /></linearGradient>)}</defs>
       {ticks.map(t => <g key={t}><line x1={left} x2={W - right} y1={y(t)} y2={y(t)} stroke={C.grid} /><text x={left - 10} y={y(t) + 3.5} textAnchor="end" fontSize="11" fill={C.label} className="tn">{axis(t)}</text></g>)}
       <line x1={left} x2={W - right} y1={y(0)} y2={y(0)} stroke={C.base} />
       {xl.map(i => <text key={i} x={x(i)} y={height - 6} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"} fontSize="11" fill={C.label}>{labels[i]}</text>)}
@@ -108,7 +109,7 @@ export function Sparkline({ values, width = 120, height = 32 }: { values: number
   const pts = values.map((v, i) => [(i / (values.length - 1)) * width, height - 3 - ((v - mn) / span) * (height - 6)] as [number, number]);
   const d = monotonePath(pts), [lx, ly] = pts[pts.length - 1];
   return <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true" style={{ display: "block", overflow: "visible" }}>
-    <defs><linearGradient id={`s${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.accent} stopOpacity=".2" /><stop offset="100%" stopColor={C.accent} stopOpacity="0" /></linearGradient></defs>
+    <defs><linearGradient id={`s${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.accent} stopOpacity=".1" /><stop offset="100%" stopColor={C.accent} stopOpacity=".1" /></linearGradient></defs>
     <path d={`${d} L${width},${height} L0,${height} Z`} fill={`url(#s${id})`} /><path d={d} fill="none" stroke={C.accent} strokeWidth="1.75" strokeLinecap="round" />
     <circle cx={lx} cy={ly} r="2.5" fill={C.accent} />
   </svg>;

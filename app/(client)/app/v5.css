@@ -388,3 +388,18 @@ html .shell.v5 .tabs em { background: var(--ink); color: #fff; font-size: 11px; 
 /* On a phone there is no detail pane beside the list, so nothing shows as picked; rows are 56px tap targets. */
 @media (max-width: 1100px) { .q5-row.sel { background: transparent; box-shadow: none; } .q5-row { min-height: 56px; align-items: center; } }
 @media (max-width: 899px) { .q5-opts { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Money and charts, Nov 27 ---------- */
+/* The chart tooltip is 250px wide and placed in viewBox percent, so on a phone it ran off the card. Under 900px it
+   sits under the chart, inside the card, the full width of it. */
+.v5-tip { border: 0; box-shadow: var(--sh-pop); border-radius: 10px; }
+.v5-tip-h { font: 500 11px/1.4 var(--m5); letter-spacing: 0; color: var(--t2); }
+@media (max-width: 899px) {
+  .v5-tip { position: static !important; width: auto !important; margin: 8px 0 0; box-shadow: none; background: var(--bg2); }
+  .ph5 .btn, .shell.v5 .ph-a .btn { height: 44px; }
+  /* The invoice views (Awaiting payment, Drafts, Paid, All) ran 200px past the screen: they wrap under the
+     Invoices / Payments / Expenses switch and scroll sideways if they still don't fit. */
+  .shell.v5 :has(> .views) { flex-wrap: wrap; }
+  .shell.v5 .views { max-width: 100%; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .shell.v5 .views > button { min-height: 44px; flex: none; }
+}
