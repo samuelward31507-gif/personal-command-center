@@ -32,6 +32,10 @@ class Iso:
     def coin(s, x, y, z, r, h, cls=''):
         cx, top = s.p(x, y, z + h); _, bot = s.p(x, y, z); rx, ry = round(r * 1.414 * s.k, 1), round(r * .707 * s.k, 1); c = ' class="%s"' % cls if cls else ''; BB.extend([(cx - rx, top - ry), (cx + rx, bot + ry)])
         return '<path%s d="M%s,%s V%s A%s,%s 0 0 0 %s,%s V%s Z"/><ellipse%s cx="%s" cy="%s" rx="%s" ry="%s"/>' % (c, cx - rx, top, bot, rx, ry, cx + rx, bot, top, c, cx, top, rx, ry)
+    def note(s, x, y, z, w, d, h, cls='', rows=2, red=False):
+        """a message: a thin slab with a small tail at its front edge and lines of writing on it"""
+        tail = s.path([(x + 12, y + d, z + h), (x + 12, y + d + 15, z + h), (x + 30, y + d, z + h)], True, cls)
+        return tail + s.slab(x, y, z, w, d, h, cls) + s.lines(x, y, z + h, w, d, rows, 'rd nf' if red else 'sk', 13, short=(rows - 1,))
     def check(s, x, y, z, r, cls='hi nf'):
         return s.path([(x - r * .1, y + r * .55, z), (x + r * .45, y + r * .95, z), (x + r, y - r * .35, z)], False, cls)
     def star(s, x, y, z, r, cls=''):
@@ -76,7 +80,7 @@ def reply():
     I = Iso(300, 200, 1.0); o = [I.slab(0, 0, 0, 170, 290, 12, shade=7), I.path([(12, 14, 12), (158, 14, 12), (158, 276, 12), (12, 276, 12)], cls='ft nf'), I.path([(66, 264, 12), (104, 264, 12)], False, 'nf')]
     def bubble(x, y, z, w, d, cls, n, rows=2, red=False):
         g = ''.join(I.path([(a, b, z), (a, b, 12)], False, 'ft ds') for a, b in ((x, y + d), (x + w, y)))
-        g += I.slab(x, y, z, w, d, 7, cls) + I.lines(x, y, z + 7, w, d, rows, 'rd nf' if red else 'sk', 14, short=(rows - 1,))
+        g += I.note(x, y, z, w, d, 7, cls, rows, red)
         return lit(n, g)
     o += [bubble(22, 176, 70, 118, 78, '', 0, 3), bubble(34, 84, 140, 124, 78, 'hi', 1, 3, True), bubble(22, 24, 206, 84, 50, '', 2, 1)]
     o.append(lit(3, I.ring(85, 226, 12.5, 30, "hi nf") + I.check(71, 208, 12.5, 28)))
@@ -109,19 +113,22 @@ def review():
     for i in range(5):
         x = i * 88; o.append(I.slab(x, 0, 0, 70, 70, 10, shade=6) + lit(1, I.star(x + 35, 35, 10.5, 27, 'hi nf'), 'fade d%d' % i))
     def note(x, y, z, n, red=False):
-        return lit(n, I.path([(x + 45, y + 28, z), (x + 45, y + 28, 10)], False, 'ft ds') + I.slab(x, y, z, 90, 56, 5, 'hi' if red else '') + I.lines(x, y, z + 5, 90, 56, 2, 'rd nf' if red else 'sk', 12, short=(1,)))
+        return lit(n, I.path([(x + 45, y + 28, z), (x + 45, y + 28, 10)], False, 'ft ds') + I.note(x, y, z, 90, 56, 5, 'hi' if red else '', 2, red))
     o += [note(-10, 8, 96, 0), note(338, 8, 96, 2, True)]
     return svg(''.join(o), 'Five small tiles in a row, each with a star drawn on it. A note goes out on one side to ask for the review and another goes back on the other side to answer it.')
 
 def blocks():
-    """Four blocks set down one at a time. A fifth place is marked out, empty."""
-    I = Iso(176, 196, 1.0); o = []; S, G = 78, 22
-    x5 = 4 * (S + G); o.append(I.path([(x5, 0, 0), (x5 + S, 0, 0), (x5 + S, S, 0), (x5, S, 0)], cls='rd ds nf') + ''.join(I.path([(a, b, 0), (a, b, S)], False, 'ft ds') for a, b in ((x5, S), (x5 + S, S), (x5 + S, 0))) + I.path([(x5, 0, S), (x5 + S, 0, S), (x5 + S, S, S), (x5, S, S)], cls='ft ds nf'))
-    for i in range(4):
-        x = i * (S + G); g = I.slab(x, 0, 0, S, S, S, 'hi' if i == 3 else '', shade=7) + (I.hatch(x, 0, S, S, S, 10) if i % 2 == 0 else I.ring(x + S / 2, S / 2, S, 20, 'nf'))
-        if i: g = I.path([(x - G, S / 2, S / 2), (x, S / 2, S / 2)], False, 'nf') + g
-        o.append(lit(i, g))
-    return svg(''.join(o), 'Four blocks in a row, drawn in thin lines and joined one to the next. A fifth place is marked out with a dashed outline, still empty.')
+    """A plot marked out in uneven pieces, the way a business already runs. Each block is cut to fit its piece. One piece is still open."""
+    I = Iso(300, 150, 1.0); o = []
+    P = [(0, 0, 120, 84, 46), (132, 0, 78, 84, 92), (0, 96, 84, 110, 30), (96, 96, 114, 110, 64)]   # x, y, w, d, height
+    o.append(I.path([(-22, -22, 0), (322, -22, 0), (322, 228, 0), (-22, 228, 0)], cls='ft ds nf'))
+    for x, y, w, d, h in P: o.append(I.path([(x, y, 0), (x + w, y, 0), (x + w, y + d, 0), (x, y + d, 0)], cls='ds nf'))
+    ex, ey, ew, ed = 222, 0, 78, 206
+    o.append(I.path([(ex, ey, 0), (ex + ew, ey, 0), (ex + ew, ey + ed, 0), (ex, ey + ed, 0)], cls='rd ds nf') + I.path([(ex + 26, ey + ed / 2, 0), (ex + 52, ey + ed / 2, 0)], False, 'rd nf') + I.path([(ex + 39, ey + ed / 2 - 13, 0), (ex + 39, ey + ed / 2 + 13, 0)], False, 'rd nf'))
+    for i in (1, 0, 3, 2):   # back to front, so nearer blocks cover farther ones
+        x, y, w, d, h = P[i]; top = I.hatch(x, y, h, w, d, 11) if i % 2 == 0 else I.ring(x + w / 2, y + d / 2, h, min(w, d) * .26, 'nf')
+        o.append(lit(i, I.slab(x, y, 0, w, d, h, 'hi' if i == 3 else '', shade=7) + top))
+    return svg(''.join(o), 'A plot of ground marked out in uneven pieces with dashed lines. Four blocks, each a different size, are set down to fit their pieces exactly. A fifth piece is still open, marked in red.')
 
 def tower():
     """What got done today, stacking up. The one thing that still needs you sits apart."""

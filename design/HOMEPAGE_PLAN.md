@@ -58,3 +58,8 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - New lines: "New leads hear back in seconds." / "No quote goes quiet." / "Every job ends with a review request." / "Built around how you already work." / "Most of the day is already done."
 - Quote drawing is now one quote with two check-in notes and a signature. "What you get back" is the done pile plus one bright tile set apart (what needs you).
 - Open with Sam: "If AI can do it, we build it." breaks his own never-sell-AI rule. A new typeface needs his OK to download the font file.
+
+## Pass 12
+- Custom-build drawing redone: an uneven plot marked out in dashed pieces, four blocks of different sizes cut to fit, one piece still open in red.
+- Message notes have speech tails. Hero pin shortened (144svh) so the page moves on sooner after the C forms.
+- Still open with Sam: the typeface (Geist needs his OK to download), the "If AI can do it" line.
