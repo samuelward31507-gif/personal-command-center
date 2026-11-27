@@ -71,36 +71,41 @@
     // a portal section: a drawing plays first, then the scroll flies through one face of it and that face opens into the app screen
     var pt = sec.classList.contains('pt'), art = sec.querySelector('.pt-art'), asvg = art && art.querySelector('svg'), aparts = art ? [].slice.call(art.querySelectorAll('[data-lit]')) : [], M = null, lastK = -9;
     function cl(x) { return x < 0 ? 0 : x > 1 ? 1 : x }
-    function solve() {   // the affine map that carries the drawn screen (a parallelogram) onto the real screen (a rectangle)
-      art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), F = fig.getBoundingClientRect(), S = asvg.dataset.scr.split(' ').map(Number);
-      if (!c || !F.width) return;
-      function P(i) { return [c.a * S[i] + c.c * S[i + 1] + c.e - L.left, c.b * S[i] + c.d * S[i + 1] + c.f - L.top] }
-      var p1 = P(0), p2 = P(2), p3 = P(4), q = [[F.right - L.left, F.top - L.top], [F.right - L.left, F.bottom - L.top], [F.left - L.left, F.top - L.top]];
-      var det = p1[0] * (p2[1] - p3[1]) - p1[1] * (p2[0] - p3[0]) + (p2[0] * p3[1] - p3[0] * p2[1]);
-      function row(k) { var u1 = q[0][k], u2 = q[1][k], u3 = q[2][k]; return [(u1 * (p2[1] - p3[1]) - p1[1] * (u2 - u3) + (u2 * p3[1] - u3 * p2[1])) / det, (p1[0] * (u2 - u3) - u1 * (p2[0] - p3[0]) + (p2[0] * u3 - p3[0] * u2)) / det, (p1[0] * (p2[1] * u3 - p3[1] * u2) - p1[1] * (p2[0] * u3 - p3[0] * u2) + u1 * (p2[0] * p3[1] - p3[0] * p2[1])) / det] }
-      var X = row(0), Y = row(1); M = [X[0], Y[0], X[1], Y[1], X[2], Y[2]];
+    var world = sec.querySelector('.pt-world'), rim = sec.querySelector('.pt-rim'), G = null;
+    function solve() {   // where the dial sits in the stage, and how far it has to open to swallow the whole frame
+      art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), D = asvg.dataset.dial.split(' ').map(Number);
+      if (!c || !L.width) return; var k = Math.sqrt(c.a * c.a + c.b * c.b), x = c.a * D[0] + c.e - L.left, y = c.d * D[1] + c.f - L.top;
+      var far = Math.sqrt(Math.pow(Math.max(x, L.width - x), 2) + Math.pow(Math.max(y, L.height - y), 2)) * 1.08;
+      fig.style.setProperty('--z', 1); fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', '0px'); var F = fig.getBoundingClientRect();
+      G = { x: x, y: y, rx: D[2] * k, ry: D[3] * k, end: far / (D[2] * k), fx: F.left + F.width / 2 - L.left, fy: F.top + F.height / 2 - L.top, z0: Math.min(.5, 1.7 * D[2] * k / Math.max(1, F.width)) }; M = G;
     }
     function litArt(k) { if (k === lastK) return; lastK = k; aparts.forEach(function (e) { var n = +e.dataset.lit; e.classList.toggle('on', n <= k); e.classList.toggle('now', n === k) }) }
     function upPortal(p) {
       litArt(p < .025 ? -1 : p < .085 ? 0 : p < .145 ? 1 : p < .205 ? 2 : 3);
-      var t = ezz((p - .27) / .2);
-      if (t > 0 && !M) solve();
-      if (t <= 0 || !M) art.style.transform = 'none';
-      else { var I = [1, 0, 0, 1, 0, 0]; art.style.transform = 'matrix(' + I.map(function (v, i) { return (v + (M[i] - v) * t).toFixed(5) }).join(',') + ')' }
+      var t = ezz((p - .27) / .22);
+      if (t > 0 && !G) solve();
+      if (t <= 0 || !G) { art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; world.style.visibility = 'hidden'; rim.style.opacity = 0 }
+      else {
+        var sc = Math.pow(G.end, t), sy = sc * (1 + cl(t * 1.6)), rx = G.rx * sc, ry = G.ry * sy;   // the dial opens, and turns from lying flat to facing you
+        art.style.transform = 'translate(' + G.x.toFixed(2) + 'px,' + G.y.toFixed(2) + 'px) scale(' + sc.toFixed(4) + ',' + sy.toFixed(4) + ') translate(' + (-G.x).toFixed(2) + 'px,' + (-G.y).toFixed(2) + 'px)';
+        art.style.opacity = (1 - cl((t - .62) / .3)).toFixed(3); art.style.visibility = t >= 1 ? 'hidden' : 'visible';
+        world.style.visibility = 'visible'; world.style.clipPath = t >= 1 ? 'none' : 'ellipse(' + rx.toFixed(1) + 'px ' + ry.toFixed(1) + 'px at ' + G.x.toFixed(1) + 'px ' + G.y.toFixed(1) + 'px)';
+        rim.style.cssText = 'left:' + (G.x - rx).toFixed(1) + 'px;top:' + (G.y - ry).toFixed(1) + 'px;width:' + (2 * rx).toFixed(1) + 'px;height:' + (2 * ry).toFixed(1) + 'px;opacity:' + (t >= 1 ? 0 : 1);
+        var z = Math.min(1, G.z0 * sc), e = (z - G.z0) / (1 - G.z0);   // the screen rides out of the dial: small and centred in it at first, then it takes its place
+        fig.style.setProperty('--z', z.toFixed(4)); fig.style.setProperty('--tx', ((G.x - G.fx) * (1 - e)).toFixed(1) + 'px'); fig.style.setProperty('--ty', ((G.y - G.fy) * (1 - e)).toFixed(1) + 'px');
+      }
       asvg.classList.toggle('flying', t > 0);
-      art.style.opacity = (1 - cl((t - .5) / .38)).toFixed(3); art.style.visibility = t >= 1 ? 'hidden' : 'visible';
-      fig.style.opacity = cl((t - .46) / .42).toFixed(3);
       sec.style.setProperty('--ha', (1 - cl(t / .4)).toFixed(3)); sec.style.setProperty('--hb', cl((t - .6) / .4).toFixed(3)); sec.classList.toggle('pb', t > .5);
       state(t < 1 ? 0 : p > .9 ? 4 : p > .78 ? 3 : p > .66 ? 2 : p > .54 ? 1 : 0);
     }
     function up() {
       tk = false;
-      if (innerWidth <= 900) { fig.style.removeProperty('--z'); if (pt) { art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; fig.style.opacity = 1; asvg.classList.remove('flying'); litArt(3) } state(4); return }
+      if (innerWidth <= 900) { fig.style.removeProperty('--z'); if (pt) { fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', '0px'); art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; world.style.visibility = 'visible'; world.style.clipPath = 'none'; rim.style.opacity = 0; asvg.classList.remove('flying'); litArt(3) } state(4); return }
       var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight)));
-      if (pt) { fig.style.setProperty('--z', 1); upPortal(p); return }
+      if (pt) { upPortal(p); return }
       fig.style.setProperty('--z', (1.6 - .6 * ezz(p / .3)).toFixed(4)); state(p > .8 ? 4 : p > .66 ? 3 : p > .5 ? 2 : p > .33 ? 1 : 0)
     }
-    if (pt) addEventListener('resize', function () { M = null });
+    if (pt) addEventListener('resize', function () { G = null });
     var cs = fig.querySelector('.cs'), stage = sec.querySelector('.pz-stage');
     function fit() { if (!cs) return; var w = fig.offsetWidth; if (!w) return; cs.style.setProperty('--s', (w / 1600).toFixed(5)); stage.style.setProperty('--fw', w + 'px'); stage.style.setProperty('--pz', Math.max(.58, Math.min(1, w / 780)).toFixed(3)) }
     if ('ResizeObserver' in window) new ResizeObserver(fit).observe(fig); addEventListener('resize', fit); fit();

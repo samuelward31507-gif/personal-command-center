@@ -103,11 +103,17 @@ def reply():
         return lit(n, I.note(x, y, z, w, d, 7, cls, rows, red) + I.callout(x + w, y, z + 7, name))
     o += [bubble(22, 176, 70, 118, 78, '', 0, 3, False, 'Lead, 12:40 AM'), bubble(34, 84, 140, 124, 78, 'hi', 1, 3, True, 'Reply, 6 s later'), bubble(22, 24, 206, 84, 50, '', 2, 1, False, 'Picks a time')]
     o.append(lit(3, I.ring(85, 226, 12.5, 30, "hi nf") + I.check(71, 208, 12.5, 28) + I.callout(55, 256, 12.5, 'Booked', -1)))
-    cx, cy = I.p(262, 96, 0); R = 54; rx, ry = R * 1.414, R * .707
-    o.append(I.ring(262, 96, 0, R, 'tp'))
+    cx, cy = I.p(262, 96, 0); R = DIAL_R; rx, ry = R * 1.414, R * .707
+    o.append(I.ring(262, 96, 0, R + 9, 'ft nf') + I.ring(262, 96, 0, R, 'tp hi') + I.ring(262, 96, 0, R * .58, 'bv nf') + I.callout(262 + R * .7, 96 - R * .7, 0, '6 seconds', 1, 20, 26))
     o.append('<path class="nf" d="M%.1f,%.1f V%.1f"/>' % (cx, cy, cy - ry * .7))
     o.append(lit(1, '<path class="rd nf" d="M%.1f,%.1f L%.1f,%.1f"/><path class="rd nf" d="M%.1f,%.1f A%.1f,%.1f 0 0 1 %.1f,%.1f"/>' % (cx, cy, cx + rx * math.cos(-1.15), cy + ry * math.sin(-1.15), cx, cy - ry, rx, ry, cx + rx * math.cos(-1.15), cy + ry * math.sin(-1.15)), 'fade'))
     return svg(''.join(o), 'A phone drawn in thin lines, lying flat. A message lifts off the screen, the reply sits just above it, and a small dial beside it shows only a few seconds gone.')
+
+DIAL_R = 62
+def reply_dial():
+    """the dial beside the phone, in the drawing's own coordinates: centre x, centre y, radius across, radius down. The portal opens out of it."""
+    I = Iso(300, 200, 1.0); c = I.p(262, 96, 0); del BB[:]
+    return '%s %s %s %s' % (c[0], c[1], round(DIAL_R * 1.414, 1), round(DIAL_R * .707, 1))
 
 def reply_screen():
     """three corners of the phone's screen in the reply drawing's own coordinates (back, right, left): the portal flies through this"""

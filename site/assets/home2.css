@@ -466,3 +466,9 @@ h1,h2,h3{font-weight:560}
 @media (prefers-reduced-motion:reduce){.pt-art{transition:none}}
 .il.flying text,.il.flying .cl,.il.flying .cd,.il.flying .gd{opacity:0!important;transition:opacity .25s!important}
 @media (max-width:900px){.pz-stage .pt-bm{grid-area:auto}}
+/* ---- v23: the portal opens out of the dial. The calendar's world sits behind a hole that grows from the dial until it is the whole frame. ---- */
+.pt-world{position:absolute;inset:0;background:#000;visibility:hidden;will-change:clip-path}
+.pz.pt .pz-fig{opacity:1;transform-origin:50% 50%}
+.pt-rim{position:absolute;border-radius:50%;box-shadow:inset 0 0 0 1.5px #f2f1ee,0 0 0 1px rgba(224,25,58,.55);pointer-events:none;opacity:0}
+@media (max-width:900px){.pt-world{position:static;visibility:visible!important;background:none;display:grid;gap:22px;clip-path:none!important}.pt-rim{display:none}}
+@media (min-width:901px){.pz.pt .pz-fig{transform:translateX(-50%) translate(var(--tx,0px),var(--ty,0px)) scale(var(--z,1))}}

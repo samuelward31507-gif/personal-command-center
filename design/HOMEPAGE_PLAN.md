@@ -111,3 +111,7 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Phones get the two parts stacked, no fly-through.
 - The "three paragraphs across" under the phone drawing are gone; the labels on the drawing carry it.
 - Next candidates for the same idea: dive down the funnel into the six layers; open the quote sheet; lift the stack to reveal the Today screen (ask Sam first: he wants only one CRM screen on the homepage).
+
+## Pass 23 (Sam: "maybe the clock thing turns into a portal and we go through it")
+- The portal now opens out of the dial beside the phone, not the phone's screen. The dial turns from lying flat to facing you and grows until it is the whole frame (clip-path ellipse on `.pt-world`, rim drawn by `.pt-rim`); the drawing zooms about the dial's centre; the real Calendar rides out of the dial, small at first, then takes its place.
+- Geometry comes from `data-dial` on the drawing (home_art.reply_dial()).
