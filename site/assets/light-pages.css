@@ -1153,6 +1153,38 @@ clip-path:inset(calc(var(--T)*var(--k)) calc((100% - var(--L) - var(--fw)*var(--
 @media(max-width:860px){.lf-i{padding:56px var(--pad) 52px;gap:30px}.lf h2{font-size:28px}.lgr{aspect-ratio:5/4}
 .lgr .lgp,.lgr .tk,.lgr .cp{font-size:9.5px;letter-spacing:.02em}.lgr-k{left:0;right:auto;flex-wrap:wrap}.lgr:has(.lgr-k) .cp{display:none}}
 
+/* ---- three cards, each with a small picture above its line ---- */
+.v3-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(64px,6vw,116px) 0 0}.v3 .st-t{max-width:26em;margin:0;padding:0 clamp(22px,3.1vw,60px) clamp(40px,4vw,72px)}
+.v3-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--ln);border-bottom:1px solid var(--ln)}
+.v3-g>div{padding:clamp(22px,2.2vw,40px) clamp(22px,2.4vw,44px) clamp(30px,3vw,54px);border-right:1px solid var(--ln)}.v3-g>div:last-child{border-right:0}
+.v3-p{height:clamp(190px,15vw,240px);margin-bottom:clamp(22px,2vw,36px);display:grid;place-items:center;border-radius:10px;background:var(--g);box-shadow:inset 0 0 0 1px var(--ln)}
+.v3-g b{display:block;font-size:clamp(16px,1.1vw,19px);font-weight:560;letter-spacing:-.015em}.v3-g span{display:block;margin-top:8px;max-width:24em;font-size:clamp(14px,.95vw,16.5px);line-height:1.42;color:var(--g2)}
+.fv{width:78%;font-size:13px}.fv .hb{margin:0}.fv span{display:inline;margin:0;max-width:none;font-size:inherit;color:inherit}
+.fv1>div{display:flex;gap:6px;margin-top:18px;padding-top:14px;border-top:1px solid var(--ink);position:relative}.fv1 i{flex:1;padding:7px 0;border-radius:6px;background:#fff;box-shadow:inset 0 0 0 1px var(--ln);font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;text-align:center}
+.fv1 i:first-child{background:var(--ink);color:#fff;box-shadow:none}
+.fv2>div{display:grid;gap:6px;margin:14px 0 0 18%}.fv2 span{display:block;padding:8px 10px;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px var(--ln);font-weight:520}.fv2 span.k{background:var(--ink);color:#fff;box-shadow:none}
+.fv3{display:grid;gap:10px;padding:16px;border-radius:10px;background:#fff;box-shadow:0 0 0 1px var(--ln);box-sizing:border-box}.fv3 p{margin:0;display:flex;justify-content:space-between;font-size:13px}.fv3 p b{font-size:13px;font-weight:560}
+.fv3 em{font-style:normal;padding:9px 0;border-radius:7px;background:var(--ink);color:#fff;text-align:center;font-weight:560}.fv3 u{text-decoration:none;font:500 10.5px/1.3 "Geist Mono",monospace;color:var(--g2);text-align:center}
+/* ---- a list on the left that steps through on its own; the window on the right follows it ---- */
+.acd-g{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln);border-bottom:1px solid var(--ln)}
+.acd-t{padding:clamp(48px,5vw,96px) clamp(22px,3.1vw,60px)}.acd-t .st-t{margin:18px 0 clamp(28px,3vw,52px);max-width:14em}
+.acd-l>div{position:relative;padding:15px 0 15px 18px;border-left:1px solid var(--ln);color:var(--g3);transition:color .3s}.acd-l b{display:block;font-size:clamp(15.5px,1.05vw,18.5px);font-weight:540;letter-spacing:-.012em}
+.acd-l span{display:block;max-height:0;overflow:hidden;font-size:clamp(14px,.95vw,16.5px);line-height:1.42;color:var(--g2);transition:max-height .4s,margin .4s}
+.acd-l>div.on{color:var(--ink)}.acd-l>div.on span{max-height:4em;margin-top:6px}.acd-l u{position:absolute;left:-1px;top:0;bottom:0;width:2px;background:var(--ink);transform-origin:top}
+.live .acd-l u.in{animation:acdp 4.2s linear both}@keyframes acdp{from{transform:scaleY(0)}}
+.acd:not(.live) .acd-l>div{color:var(--ink)}.acd:not(.live) .acd-l span{max-height:none;margin-top:6px}
+.acd-p{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(40px,4vw,80px) clamp(22px,3vw,56px);border-left:1px solid var(--ln);background:linear-gradient(180deg,#f4f5f9,#ececef)}
+.acd-p .oq{width:100%;max-width:520px}.acd .oq-r{transition:background .3s,box-shadow .3s,opacity .3s}.acd.live .oq-r:not(.on){opacity:.42}.acd.live .oq-r.on{background:#fff;box-shadow:inset 2px 0 0 var(--ink)}
+/* ---- the eight parts as one numbered grid ---- */
+.pl8-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(72px,7vw,130px) 0 0;text-align:center}
+.pl8 h2{margin:0;font-size:clamp(30px,3vw,54px);line-height:1.04;letter-spacing:-.04em;font-weight:600}.pl8-i>p{margin:14px 0 clamp(48px,5vw,90px);font-size:clamp(15.5px,1.1vw,19px);color:var(--g2)}
+.pl8-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--ln);text-align:left}
+.pl8-g a{position:relative;display:grid;gap:10px;padding:clamp(18px,1.6vw,28px) clamp(18px,1.8vw,32px) clamp(26px,2.4vw,44px);border-right:1px solid var(--ln);border-bottom:1px solid var(--ln);color:var(--ink);transition:background .2s}
+.pl8-g a:nth-child(4n){border-right:0}.pl8-g a:hover{background:#fff}.pl8-g a.on{background:var(--g)}
+.pl8-g span{font:500 11px/1 "Geist Mono",monospace;letter-spacing:.05em;color:var(--t3)}.pl8-g b{margin-top:clamp(14px,1.6vw,30px);font-size:clamp(16px,1.15vw,20px);font-weight:560;letter-spacing:-.015em}
+.pl8-g em{font-style:normal;font-size:13.5px;color:var(--g2)}
+@media(max-width:860px){.v3-g,.acd-g{grid-template-columns:minmax(0,1fr)}.v3-g>div{border-right:0;border-bottom:1px solid var(--ln)}.v3-g>div:last-child{border-bottom:0}.acd-p{border-left:0;border-top:1px solid var(--ln)}
+.pl8-g{grid-template-columns:repeat(2,minmax(0,1fr))}.pl8-g a:nth-child(2n){border-right:0}}
 /* ---- live windows on the inner pages ---- */
 .lvh>*{min-width:0}.lvh>.cd,.lvh>div:first-child{flex:0 1 auto}
 .sdw{flex:none;width:clamp(210px,17vw,250px);box-sizing:border-box;padding:14px 12px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.16),0 30px 60px -34px rgba(38,38,40,.4);font-size:13px;text-align:left;min-height:170px}

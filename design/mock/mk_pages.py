@@ -903,14 +903,35 @@ SCALE = ('<div class="fsc"><div class="fsc-l">%s</div><p>Stops the moment there 
 OPEN = ('<div class="cd oq">%s%s</div>' % (head('Open quotes', '4 open'), ''.join('<div class="oq-r"><b>%s</b><span>%s</span><em class="%s">%s</em></div>' % x for x in [
     ('Privacy fence, 180 ft', 'Sent 2 days ago', '', 'Day 2 went out'), ('Gate repair', 'Sent 6 days ago', '', 'Day 5 went out'),
     ('Vinyl fence, 120 ft', 'Sent 12 days ago', 'y', 'Asked about price. Sent to you'), ('Chain link, 300 ft', 'Sent 5 weeks ago', '', 'Monthly check-in')])))
-FOLLOW_UP = (hero_split('Quotes', 'Every quote gets chased.', 'Quotes and invoices get followed up until the customer says yes, no, or paid.',
-                        'Each quote is followed up on a schedule and stops the moment there is an answer.', QUOTE)
+QUOTE_L = QUOTE.replace('<div class="qo-r "><i></i><b>Day 2', '<div class="qo-r " data-hd="2"><i></i><b>Day 2').replace('<div class="qo-r "><i></i><b>Day 5', '<div class="qo-r " data-hd="4"><i></i><b>Day 5').replace('<div class="qo-r y">', '<div class="qo-r y" data-hd="6">')
+FU_LIVE = ('<div class="lvh" data-live="9">%s<div class="ph2" aria-hidden="true"><p>Customer&rsquo;s phone</p>%s</div></div>'
+           % (QUOTE_L, ''.join('<p class="hb %s" data-at="%d">%s</p>' % x for x in [('o', 0, 'Here is your quote from Ridgeline Fence.'), ('o', 2, 'Any questions on the quote?'), ('o', 4, 'Still happy to hold your date.'), ('c', 5, 'Let&rsquo;s do it')])))
+# three small pictures, one per card, each made for this page
+_fv1 = '<div class="fv fv1"><p class="hb o">Quote sent</p><div><i>Day 2</i><i>Day 5</i><i>Day 10</i><i>Monthly</i></div></div>'
+_fv2 = '<div class="fv fv2"><p class="hb">Too expensive</p><div><span>A smaller option</span><span>Financing</span><span class="k">Real price talk: to you</span></div></div>'
+_fv3 = '<div class="fv fv3"><p><span>Invoice</span><b>Your pay link</b></p><em>Pay now</em><u>Paid to you, not to us</u></div>'
+FU3 = ('<section class="v3"><div class="w v3-i"><p class="st-t">Chased for you, on a schedule. <span>It stops the moment there is a yes, a no, or paid.</span></p><div class="v3-g">%s</div></div></section>'
+       % ''.join('<div><div class="v3-p" aria-hidden="true">%s</div><b>%s</b><span>%s</span></div>' % x for x in [
+           (_fv1, 'It starts on its own.', 'Send a quote with one text and the follow-up starts on its own.'),
+           (_fv2, 'Price talk comes to you.', '&ldquo;Too expensive&rdquo; gets your financing or a smaller option. Real price talk comes to you.'),
+           (_fv3, 'Your own pay link.', 'Customers pay through your own pay link. We never touch your money.')]))
+_oq = [('Privacy fence, 180 ft', 'Sent 2 days ago', '', 'Day 2 went out'), ('Gate repair', 'Sent 6 days ago', '', 'Day 5 went out'),
+       ('Vinyl fence, 120 ft', 'Sent 12 days ago', 'y', 'Asked about price. Sent to you'), ('Chain link, 300 ft', 'Sent 5 weeks ago', '', 'Monthly check-in')]
+OPEN_L = ('<div class="cd oq">%s%s</div>' % (head('Open quotes', '4 open'), ''.join('<div class="oq-r" data-sc="%d"><b>%s</b><span>%s</span><em class="%s">%s</em></div>' % ((k,) + x) for k, x in enumerate(_oq))))
+FUACD = ('<section class="acd" data-live="3,3,3,3"><div class="w acd-g"><div class="acd-t"><span class="lb">Every open quote</span><p class="st-t">Nothing stays open without someone checking in.</p>'
+         '<div class="acd-l">%s</div></div><div class="acd-p">%s<p class="sd-n">Example. Sample data.</p></div></div></section>'
+         % (''.join('<div data-sc="%d"><b>%s</b><span>%s</span><u data-at="0"></u></div>' % x for x in [
+             (0, 'Two days in.', 'The first check-in goes out.'), (1, 'Five days in.', 'The second check-in goes out.'),
+             (2, 'A real question.', 'They asked about price, so it comes to you.'), (3, 'Still open.', 'A check-in every month until they answer.')]), OPEN_L))
+FOLLOW_UP = (inner_hero('Quotes', 'Every quote gets chased.', 'Quotes and invoices get followed up until the customer says yes, no, or paid.', BOOK + AUDITLINK, FU_LIVE)
              + statement('The problem', 'A quote nobody chases is a job you gave away.', 'Most people don&rsquo;t say no. They get busy, mean to reply, and then book whoever checks in. Following up is easy to skip when you are on a job.')
+             + FU3
              + '<section class="sx dk"><div class="w sx-i"><p class="sx-t">Every quote, followed up. <span>Days 2, 5 and 10, then monthly, until it&rsquo;s a yes or a no.</span></p>%s</div></section>' % SCALE
-             + ticks('What&rsquo;s included', 'Nothing stays open without someone checking in.', [
+             + FUACD
+             + ticks('What&rsquo;s included', 'One text from you. The rest runs.', [
                  'Send a quote with one text and the follow-up starts on its own.', '“Too expensive” gets your financing or a smaller option. Real price talk comes to you.',
                  'Invoices and payment reminders sent when the job’s done.', 'Customers pay through your own pay link. We never touch your money.',
-                 'Past customers get a text when they’re due for their next job, with your open times.'], '<div class="ic-x">%s</div>' % OPEN)
+                 'Past customers get a text when they’re due for their next job, with your open times.'])
              + ask('Open quotes, old leads, past customers.', 'One text at launch can bring them back. A one-time campaign when you go live, if your audit calls for it.', 'How the audit works', '/free-audit')
              + '<section class="cv"><div class="w cv-g"><div class="cv-t"><p class="st-t">Questions.</p></div><dl>%s</dl></div></section>' % ''.join('<dt><span>%s</span></dt><dd><span>%s</span></dd>' % x for x in [
                  ('Will it annoy my customers?', 'The check-ins are short and polite, and they stop the moment someone answers.'), ('What if they want to negotiate?', 'Real price talk comes straight to you.'),
@@ -1821,7 +1842,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'v3': 'v3', 'acd': 'acd', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -1835,7 +1856,7 @@ RHYTHM = {
     'job-updates': ('bl sx st sp', {'bl': 'v-sf t-sheet', 'sx': 's-tn', 'st': 'v-c', 'sp': 'v-f'}),
     'estimates': ('st sx sp', {'st': 's-tn v-xl', 'sx': 't-exp', 'sp': 's-dkp v-f'}),
     'proposals': ('st bl sx sp', {'bl': 's-dk t-arc', 'sx': 't-sheet'}),
-    'follow-up': ('st sx ic as', {'st': 'v-2', 'sx': 't-exp'}),
+    'follow-up': ('st v3 sx acd ic as', {'st': 'v-2', 'sx': 't-exp'}),
     'invoicing': ('sx st sp bl', {'sx': 't-sheet', 'st': 's-tn v-c', 'sp': 'v-f', 'bl': 's-dk v-sf t-angle'}),
     'bookkeeping': ('st sx pg sp', {'st': 'v-xl t-rule', 'sx': 'v-pin', 'pg': 'v-l', 'sp': 's-dkp'}),
     'reviews': ('sx st pg', {'sx': 's-tn t-arc v-c', 'st': 'v-2', 'pg': 's-dk t-sheet'}),
@@ -2385,6 +2406,38 @@ FAUDIT = (H.inner_hero('The free audit', 'A full audit of your business, free.',
              '<iframe src="https://cal.com/audit-call/15min?embed=true&amp;theme=light" title="Book your free audit" loading="lazy"></iframe></div></section>')
           + H.CL)
 CSS_FA = r"""
+/* ---- three cards, each with a small picture above its line ---- */
+.v3-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(64px,6vw,116px) 0 0}.v3 .st-t{max-width:26em;margin:0;padding:0 clamp(22px,3.1vw,60px) clamp(40px,4vw,72px)}
+.v3-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--ln);border-bottom:1px solid var(--ln)}
+.v3-g>div{padding:clamp(22px,2.2vw,40px) clamp(22px,2.4vw,44px) clamp(30px,3vw,54px);border-right:1px solid var(--ln)}.v3-g>div:last-child{border-right:0}
+.v3-p{height:clamp(190px,15vw,240px);margin-bottom:clamp(22px,2vw,36px);display:grid;place-items:center;border-radius:10px;background:var(--g);box-shadow:inset 0 0 0 1px var(--ln)}
+.v3-g b{display:block;font-size:clamp(16px,1.1vw,19px);font-weight:560;letter-spacing:-.015em}.v3-g span{display:block;margin-top:8px;max-width:24em;font-size:clamp(14px,.95vw,16.5px);line-height:1.42;color:var(--g2)}
+.fv{width:78%;font-size:13px}.fv .hb{margin:0}.fv span{display:inline;margin:0;max-width:none;font-size:inherit;color:inherit}
+.fv1>div{display:flex;gap:6px;margin-top:18px;padding-top:14px;border-top:1px solid var(--ink);position:relative}.fv1 i{flex:1;padding:7px 0;border-radius:6px;background:#fff;box-shadow:inset 0 0 0 1px var(--ln);font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;text-align:center}
+.fv1 i:first-child{background:var(--ink);color:#fff;box-shadow:none}
+.fv2>div{display:grid;gap:6px;margin:14px 0 0 18%}.fv2 span{display:block;padding:8px 10px;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px var(--ln);font-weight:520}.fv2 span.k{background:var(--ink);color:#fff;box-shadow:none}
+.fv3{display:grid;gap:10px;padding:16px;border-radius:10px;background:#fff;box-shadow:0 0 0 1px var(--ln);box-sizing:border-box}.fv3 p{margin:0;display:flex;justify-content:space-between;font-size:13px}.fv3 p b{font-size:13px;font-weight:560}
+.fv3 em{font-style:normal;padding:9px 0;border-radius:7px;background:var(--ink);color:#fff;text-align:center;font-weight:560}.fv3 u{text-decoration:none;font:500 10.5px/1.3 "Geist Mono",monospace;color:var(--g2);text-align:center}
+/* ---- a list on the left that steps through on its own; the window on the right follows it ---- */
+.acd-g{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln);border-bottom:1px solid var(--ln)}
+.acd-t{padding:clamp(48px,5vw,96px) clamp(22px,3.1vw,60px)}.acd-t .st-t{margin:18px 0 clamp(28px,3vw,52px);max-width:14em}
+.acd-l>div{position:relative;padding:15px 0 15px 18px;border-left:1px solid var(--ln);color:var(--g3);transition:color .3s}.acd-l b{display:block;font-size:clamp(15.5px,1.05vw,18.5px);font-weight:540;letter-spacing:-.012em}
+.acd-l span{display:block;max-height:0;overflow:hidden;font-size:clamp(14px,.95vw,16.5px);line-height:1.42;color:var(--g2);transition:max-height .4s,margin .4s}
+.acd-l>div.on{color:var(--ink)}.acd-l>div.on span{max-height:4em;margin-top:6px}.acd-l u{position:absolute;left:-1px;top:0;bottom:0;width:2px;background:var(--ink);transform-origin:top}
+.live .acd-l u.in{animation:acdp 4.2s linear both}@keyframes acdp{from{transform:scaleY(0)}}
+.acd:not(.live) .acd-l>div{color:var(--ink)}.acd:not(.live) .acd-l span{max-height:none;margin-top:6px}
+.acd-p{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(40px,4vw,80px) clamp(22px,3vw,56px);border-left:1px solid var(--ln);background:linear-gradient(180deg,#f4f5f9,#ececef)}
+.acd-p .oq{width:100%;max-width:520px}.acd .oq-r{transition:background .3s,box-shadow .3s,opacity .3s}.acd.live .oq-r:not(.on){opacity:.42}.acd.live .oq-r.on{background:#fff;box-shadow:inset 2px 0 0 var(--ink)}
+/* ---- the eight parts as one numbered grid ---- */
+.pl8-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(72px,7vw,130px) 0 0;text-align:center}
+.pl8 h2{margin:0;font-size:clamp(30px,3vw,54px);line-height:1.04;letter-spacing:-.04em;font-weight:600}.pl8-i>p{margin:14px 0 clamp(48px,5vw,90px);font-size:clamp(15.5px,1.1vw,19px);color:var(--g2)}
+.pl8-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--ln);text-align:left}
+.pl8-g a{position:relative;display:grid;gap:10px;padding:clamp(18px,1.6vw,28px) clamp(18px,1.8vw,32px) clamp(26px,2.4vw,44px);border-right:1px solid var(--ln);border-bottom:1px solid var(--ln);color:var(--ink);transition:background .2s}
+.pl8-g a:nth-child(4n){border-right:0}.pl8-g a:hover{background:#fff}.pl8-g a.on{background:var(--g)}
+.pl8-g span{font:500 11px/1 "Geist Mono",monospace;letter-spacing:.05em;color:var(--t3)}.pl8-g b{margin-top:clamp(14px,1.6vw,30px);font-size:clamp(16px,1.15vw,20px);font-weight:560;letter-spacing:-.015em}
+.pl8-g em{font-style:normal;font-size:13.5px;color:var(--g2)}
+@media(max-width:860px){.v3-g,.acd-g{grid-template-columns:minmax(0,1fr)}.v3-g>div{border-right:0;border-bottom:1px solid var(--ln)}.v3-g>div:last-child{border-bottom:0}.acd-p{border-left:0;border-top:1px solid var(--ln)}
+.pl8-g{grid-template-columns:repeat(2,minmax(0,1fr))}.pl8-g a:nth-child(2n){border-right:0}}
 /* ---- live windows on the inner pages ---- */
 .lvh>*{min-width:0}.lvh>.cd,.lvh>div:first-child{flex:0 1 auto}
 .sdw{flex:none;width:clamp(210px,17vw,250px);box-sizing:border-box;padding:14px 12px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.16),0 30px 60px -34px rgba(38,38,40,.4);font-size:13px;text-align:left;min-height:170px}
@@ -2471,7 +2524,6 @@ SIDE = {
     'job-updates': ('phone', 'Customer&rsquo;s phone', [(0, 'o', 'Your crew is booked for Thursday.'), (1, 'o', 'On the way. About 20 minutes out.'), (3, 'o', 'Job done. Photos attached.'), (4, 'c', 'Looks great, thank you')]),
     'estimates': ('log', '&gt; One draft', [(0, '9:10 AM', 'Measurements in'), (1, '9:10 AM', 'Line items priced your way'), (3, '9:11 AM', 'Draft ready for you'), (4, '9:14 AM', 'Approved and sent')]),
     'proposals': ('own', 'Your phone', [(1, 'Proposal opened', 'Twice, last at 8:12 PM'), (4, 'Option picked', 'Better, signed')]),
-    'follow-up': ('phone', 'Customer&rsquo;s phone', [(0, 'o', 'Here is your quote from Ridgeline Fence.'), (2, 'o', 'Any questions on the quote?'), (4, 'o', 'Still happy to hold your date.'), (5, 'c', 'Let&rsquo;s do it')]),
     'invoicing': ('log', '&gt; What ran', [(0, 'Fri', 'Job finished'), (1, 'Fri', 'Invoice sent'), (3, 'Day 3', 'Reminder sent'), (5, 'Day 3', 'Paid')]),
     'bookkeeping': ('log', '&gt; One receipt', [(0, 'Receipt', 'Read'), (1, 'Receipt', 'Labelled: materials'), (2, 'Receipt', 'Put against the job'), (4, 'Month end', 'Costs by job ready')]),
     'reviews': ('phone', 'Customer&rsquo;s phone', [(0, 'o', 'Thanks for choosing Ridgeline Fence. How did we do?'), (2, 'c', 'Great job, really happy'), (3, 'o', 'Would you leave that as a Google review? One tap here.'), (5, 'c', 'Done')]),
@@ -2526,6 +2578,19 @@ def liven(name, body):
         hero = hero[:-len('</section>')] + _side(kind, title, rows, True) + '</section>'
     hero = hero.replace('<section class="%s%s"' % (m.group(1), m.group(2)), '<section class="%s%s" data-live="%d"' % (m.group(1), m.group(2), last + 3), 1)
     return hero + body[len(m.group(0)):]
+
+
+def plug(name, body):
+    if name not in BY:
+        return body
+    g0 = BY[name]['group']
+    grid = ('<section class="pl8"><div class="w pl8-i"><h2>It works with the rest.</h2><p>Every build runs in the one app, alongside the others.</p><div class="pl8-g">%s</div></div></section>'
+            % ''.join('<a href="/%s" class="%s"><span>[%02d]</span><b>%s</b><em>%d builds</em></a>' % (ORDER[g][0] if g != g0 else next((x for x in ORDER[g] if x != name), ORDER[g][0]), 'on' if g == g0 else '', k + 1, gn, len(ORDER[g]))
+                      for k, (g, gn) in enumerate(GROUPS)))
+    body, n = re.subn(r'<section class="nx">(?:(?!</section>).)*Works with the rest\.(?:(?!</section>).)*</section>', lambda m: grid, body, flags=re.S)
+    if not n and 'class="pl8"' not in body:
+        i = body.rfind('<section class="cl'); body = body[:i] + grid + body[i:]
+    return body
 
 
 import drawings as DW
@@ -2896,7 +2961,7 @@ PAGES = [
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, liven(slug, trans(slug, figs(slug, full(slug, flag(slug, body))))), css=PCSS, index=(slug not in ('404', 'day', 'terms')))
+        doc = page(title, desc, '/' + slug, plug(slug, liven(slug, trans(slug, figs(slug, full(slug, flag(slug, body)))))), css=PCSS, index=(slug not in ('404', 'day', 'terms')))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)

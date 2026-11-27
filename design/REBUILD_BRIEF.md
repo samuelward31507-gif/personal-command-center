@@ -508,3 +508,13 @@ Sam: homepage "is complete... bring this level of designing to every other page 
 - The other 29 build pages (`SIDE`, `liven()` in mk_pages.py): each page's own first-screen window now fills in row by row, and a second window runs in step with a script written for that page. Centred heroes get a phone, an owner's-phone card or a dark log beside the window; split heroes get a ruled strip under the hero that fills cell by cell.
 - All dialogue and log lines are new sample wording, under each window's "Example, sample data" label.
 - Still to do by hand, page by page: the sections below each first screen.
+
+## 23b. Attio's product-page anatomy, from Sam's recording (Nov 27)
+
+Sam: "everything needs to be following attio's designing" and sent a four-minute recording of attio.com: homepage, Universal Context, Data model, Enrichment, Call intelligence, Reporting, Ask Attio, Workflows, help centre.
+
+What their product pages are made of, in order: a short label and a centred headline with a picture made for that page; a bold sentence that runs on in grey; three bordered cells, each a small product picture over a bold line and a grey line; a split with a statement and a list on the left whose active item changes the window on a tinted panel on the right; a row of four or five short text columns, sometimes on black; a serif quote; a centred heading over a numbered grid linking the other product pages; a black closing block.
+
+- Follow-up rebuilt to that anatomy as the pattern page: centred live hero (quote and phone, `FU_LIVE`), three cells with pictures made for the page (`FU3`, `.v3`), the dark schedule kept, a self-stepping list that drives the open-quotes window (`FUACD`, `.acd`, runs on the live engine), then included, questions.
+- Every build page: the "Works with the rest" cards are now one numbered grid of the eight parts (`plug()`, `.pl8`).
+- Waiting on Sam's OK on Follow-up before the same anatomy goes onto the other build pages, each with its own pictures.
