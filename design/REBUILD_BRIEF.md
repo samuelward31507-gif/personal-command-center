@@ -631,3 +631,6 @@ Sam: smooth now but the graph blurs as the zoom starts (bitmap being scaled). Th
 
 ### 23n. Reviews hand-over to white dots (Nov 27)
 Sam: "i dont really like all the blue, id rather the transition go to the white page with the dots in the background like attio". The hand-over is now a white dotted sheet with a curve-shaped top edge sliding up over the graph (translate only), carrying the words in ink and the 34 squares in blue. The section after it (rvp) is white with dots too, no longer black. No full-blue or black screen left in this run.
+
+### 23o. Reviews landing matched to the Attio dotted screen (Nov 27)
+Sam sent the Attio screen: off-white ground, fine dots about 10px apart, one large centred serif statement with a grey-blue tail and a small two-line credit. Landing now: same ground, statement in serif (ink then #a3abbd), two small lines under it; squares removed from the landing. Own wording, no Attio text or quote.
