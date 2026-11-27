@@ -27,11 +27,11 @@
   html .shell.v5 .ws .av.sm { display: none; }
   html .shell.v5 .ws .ws-mark { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 7px; background: var(--ink-5); color: var(--on-ink); font: 600 13px/1 var(--f5); }
   html .shell.v5 .ws b { font-weight: 500; }
-  html .shell.v5 .ws small { display: block; font: 500 11px/1.4 var(--m5); letter-spacing: 0; color: var(--t3); }
+  html .shell.v5 .ws small { display: block; font: 400 12px/1.4 var(--f5); letter-spacing: -.005em; color: var(--t3); }
   html .shell.v5 .rail-search { height: 32px; padding: 0 10px; margin: 0 0 14px; border: 1px solid var(--line); border-radius: 9px; background: transparent; color: var(--t3); font: 400 12.5px/1 var(--f5); justify-content: space-between; }
   html .shell.v5 .rail-search svg { display: none; }
   html .shell.v5 .rail-search kbd, .shell.v5 .rail kbd { font: 400 10.5px/16px var(--m5); background: transparent; border: 1px solid var(--line2); border-radius: 5px; padding: 0 5px; height: auto; color: var(--t3); }
-  html .shell.v5 .rail-lbl { visibility: visible; height: auto; margin: 10px 8px 5px; padding: 0; font: 500 11px/1.4 var(--m5); letter-spacing: 0; color: var(--t3); }
+  html .shell.v5 .rail-lbl { visibility: visible; height: auto; margin: 10px 8px 5px; padding: 0; font: 500 12px/1.4 var(--f5); letter-spacing: -.005em; color: var(--t3); }
   html .shell.v5 .rail-grp { gap: 0; }
   html .shell.v5 .ri { height: 30px; padding: 0 10px; border-radius: 8px; color: var(--t2); font: 500 13px/1 var(--f5); letter-spacing: -.005em; transition: background var(--d5) var(--e5), color var(--d5) var(--e5); }
   html .shell.v5 .ri svg, .shell.v5 .ri .obj { display: none; }
@@ -47,7 +47,7 @@
 }
 html .shell.v5 .tabs { background: var(--panel); border-top: 1px solid var(--line); }
 html .shell.v5 .tabs > button.on { color: var(--t1); }
-html .shell.v5 .tabs em { background: var(--acc); font-size: 11px; }
+html .shell.v5 .tabs em { background: var(--ink); color: #fff; font-size: 11px; }
 
 /* ---------- Page header ---------- */
 .v5-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 26px 36px 20px; border-bottom: 1px solid var(--line); }
@@ -76,7 +76,8 @@ html .shell.v5 .tabs em { background: var(--acc); font-size: 11px; }
 .v5-ct small { margin-left: 8px; font-weight: 400; color: var(--t3); font-size: 12.5px; }
 .v5-pill { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font: 500 12.5px/1 var(--f5); letter-spacing: -.005em; background: var(--bg2); color: var(--t2); white-space: nowrap; }
 .v5-pill.good { color: var(--ok-text); background: var(--good-bg); } .v5-pill.warn { color: var(--warn-5); background: var(--warn-bg); }
-.v5-pill.bad { color: var(--bad-text); background: var(--bad-bg); } .v5-pill.acc { color: var(--acc-text); background: var(--ember-bg); }
+.v5-pill.bad { color: var(--bad-text); background: var(--bad-bg); } /* "Your turn" is not a status colour: ink words on the neutral tag, with the business's colour as one small dot. */
+.v5-pill.acc { color: var(--t1); background: var(--bg2); gap: 6px; } .v5-pill.acc::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--acc); flex: none; }
 .v5-st { display: inline-flex; align-items: center; gap: 6px; font: 400 12px/1.3 var(--f5); color: var(--t2); white-space: nowrap; }
 .v5-st i { width: 6px; height: 6px; border-radius: 50%; background: var(--t4); }
 .v5-st.good i { background: var(--ok); } .v5-st.bad i { background: var(--bad-5); } .v5-st.acc i { background: var(--acc); } .v5-st.bad { color: var(--bad-text); }
@@ -174,7 +175,7 @@ html .shell.v5 .tabs em { background: var(--acc); font-size: 11px; }
 .ib-conv { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
 .ib-lead { width: 300px; flex: none; padding: 16px 18px; align-self: flex-start; }
 .ib-kv { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font: 400 12.5px/1.4 var(--f5); text-align: right; }
-.ib-kv .v5-lab { padding-top: 2px; text-align: left; flex: none; }
+.ib-kv .v5-lab { padding-top: 1px; text-align: left; flex: none; font: 400 12.5px/1.4 var(--f5); letter-spacing: -.005em; color: var(--t3); }
 @media (max-width: 1279px) { .ib-lead { display: none; } }
 @media (min-width: 900px) { .v5-inbox .v5-body { padding-bottom: 24px; } .shell.v5 .main > .page:has(.v5-inbox) { height: 100dvh; overflow: hidden; } }
 @media (max-width: 899px) { .ib-list { width: auto; } .v5-inbox .ib-grid { flex-direction: column; } .ib-row { min-height: 64px; } }
@@ -184,19 +185,21 @@ html .shell.v5 .tabs em { background: var(--acc); font-size: 11px; }
 .v5 .thread .th { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: transparent; height: auto; }
 .v5 .thread .th .who b { font: 500 13.5px/1.3 var(--f5); } .v5 .thread .th .who small { font: 400 12px/1.3 var(--f5); color: var(--t3); }
 .v5 .thread .th .btn { height: 28px; border-radius: 8px; padding: 0 12px; font: 500 12px/1 var(--f5); box-shadow: none; border: 1px solid var(--line2); background: var(--panel); color: var(--t1); }
-.v5 .thread .th .btn svg { display: none; }
+.v5 .thread .th .btn:not(.ic) svg { display: none; }
+.v5 .thread .th .who .ember-t { color: var(--t1); font-weight: 500; }
 .v5 .thread .texts { flex: 1; overflow-y: auto; padding: 4px 22px 12px; }
 .v5 .thread .day { display: flex; align-items: center; gap: 10px; margin: 14px 0; } .v5 .thread .day::before, .v5 .thread .day::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .v5 .thread .day span { font: 500 11px/1.4 var(--m5); letter-spacing: 0; color: var(--t3); }
-.v5 .thread .event { display: flex; justify-content: center; margin: 10px 0; } .v5 .thread .event span { font: 500 11px/1.4 var(--m5); letter-spacing: 0; color: var(--t3); text-align: center; }
+.v5 .thread .event { display: flex; justify-content: center; margin: 10px 0; } .v5 .thread .event span { max-width: 420px; font: 400 12.5px/1.45 var(--f5); letter-spacing: -.005em; color: var(--t3); text-align: center; }
 .v5 .thread .lgx { display: flex; flex-direction: column; max-width: 440px; margin: 6px 0; }
 .v5 .thread .lgx header { order: 2; display: flex; gap: 6px; margin-top: 4px; font: 400 10.5px/1.4 var(--m5); color: var(--t3); } .v5 .thread .lgx header b { font-weight: 400; }
 .v5 .thread .lgx p { order: 1; padding: 10px 14px; font: 400 13.5px/1.45 var(--f5); background: var(--bg); border: 1px solid var(--line); border-radius: 16px 16px 16px 4px; color: var(--t1); }
 .v5 .thread .lgx.cont { margin-top: 2px; }
 .v5 .thread .lgx.cinder, .v5 .thread .lgx.you { margin-left: auto; align-items: flex-end; }
-.v5 .thread .lgx.cinder p, .v5 .thread .lgx.you p { background: var(--ink-5); color: var(--on-ink); border-color: var(--ink-5); border-radius: 16px 16px 4px 16px; }
+/* Sent for you and by you: blue, as on every phone. Ink bubbles turned the thread into a dark screen. */
+.v5 .thread .lgx.cinder p, .v5 .thread .lgx.you p { background: var(--blue); color: #fff; border-color: var(--blue); border-radius: 16px 16px 4px 16px; }
 .v5 .thread .lgx .dlv { order: 3; font: 400 10.5px/1.4 var(--m5); color: var(--t3); } .v5 .thread .lgx .dlv.bad { color: var(--bad-text); }
-.ib-handoff { display: flex; gap: 10px; align-items: center; margin: 0 22px 12px; padding: 10px 14px; border: 1px solid var(--acc-line); border-radius: 12px; font: 400 13px/1.4 var(--f5); color: var(--t2); }
+.ib-handoff { display: flex; gap: 10px; align-items: center; margin: 0 22px 12px; padding: 10px 14px; border: 0; background: var(--bg2); border-radius: 12px; font: 400 13px/1.4 var(--f5); color: var(--t2); }
 .ib-handoff i { width: 7px; height: 7px; border-radius: 50%; background: var(--acc); flex: none; } .ib-handoff b { font-weight: 500; color: var(--t1); }
 .v5 .thread .compose { border-top: 1px solid var(--line); padding: 14px 18px; background: transparent; }
 .v5 .thread .compose .box { border: 1px solid var(--line2); border-radius: 20px; box-shadow: none; background: var(--panel); }
@@ -204,6 +207,19 @@ html .shell.v5 .tabs em { background: var(--acc); font-size: 11px; }
 .v5 .thread .compose .msg-send svg { color: var(--on-ink); }
 .v5 .thread .lgx p { box-shadow: none !important; }
 .v5 .thread .lgx p::before, .v5 .thread .lgx::before { display: none !important; }
+
+/* Inbox on a phone: the name gets its own line, the actions a row under it, and every tap target is 44px. */
+@media (max-width: 899px) {
+  .v5 .thread .th { flex-wrap: wrap; row-gap: 10px; padding: 10px 14px 12px; }
+  .v5 .thread .th .who { flex: 1; min-width: 0; }
+  .v5 .thread .th .acts-row { order: 3; width: 100%; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .v5 .thread .th .btn { height: 44px; padding: 0 16px; font-size: 14px; border-radius: var(--r-btn); flex: none; }
+  .v5 .thread .th .btn.ic { width: 44px; padding: 0; }
+  .v5 .thread .texts { padding: 4px 14px 12px; }
+  .v5 .thread .compose { padding: 10px 12px; background: var(--panel); }
+  .v5 .thread .compose :is(.kit-snips button, .kit-sug) { min-height: 44px; }
+  .ib-handoff { margin: 0 14px 10px; }
+}
 
 /* ---------- Jobs: summary, board with five fixed columns ---------- */
 .v5 .jobs-sum { margin: 24px 36px 0; padding: 16px 20px; }

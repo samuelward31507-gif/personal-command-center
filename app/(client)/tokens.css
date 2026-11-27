@@ -280,8 +280,10 @@ button.row:hover { background: var(--wash); }
   /* Surfaces: a #fafafa ground, white cards, #f1f2f5 panels and picture areas. No warm greys. */
   --ground: #fafafa; --page: #ffffff; --card: #ffffff; --paper: #fafafa; --paper-2: #f1f2f5; --wash: #fafafa; --canvas: #fafafa; --side: #fafafa;
   --hover: #f1f2f5; --press: #e9eaee; --sel: #f1f2f5;
-  /* Text: ink, then three greys; #c9cbd0 is for inactive things, never for words you need to read. */
-  --ink: #17181a; --ink2: #17181a; --ink-hover: #2b2c30; --g1: #5c5e63; --g2: #6f7279; --g3: #8a8d93; --g4: #c9cbd0; --w2: #5c5e63; --w3: #8a8d93;
+  /* Text: ink and two readable greys (--g3 is kept as a name, at the --g2 value); #c9cbd0 is for inactive things, never for words. */
+  --ink: #17181a; --ink2: #17181a; --ink-hover: #2b2c30; --g1: #5c5e63; --g2: #6f7279; --g3: #6f7279; --g4: #c9cbd0; --w2: #5c5e63; --w3: #6f7279;
+  /* #8a8d93 is too faint for words on a phone in sunlight (3.4:1 on white): placeholders, disabled and icons only. */
+  --g-faint: #8a8d93;
   /* Lines: one hairline; a touch darker around controls. */
   --hair: #e6e6e6; --hair-2: #dfe0e3; --hair-3: #c9cbd0; --line: #e6e6e6; --line-2: #dfe0e3;
   /* The accent is the business's own color: page.tsx sets --ember (and its tints) on .shell from their setup.
@@ -336,3 +338,5 @@ button.row:hover { background: var(--wash); }
 :is(.shell, .gate, .boot) .toast { background: var(--ink); } :is(.shell, .gate, .boot) .toast.bad { background: var(--bad-ink); }
 :is(.shell, .gate, .boot) .toast svg { color: #8fd3a8; }
 :is(.shell, .gate, .boot) .skel { background: linear-gradient(90deg, var(--paper-2) 25%, #e9eaee 50%, var(--paper-2) 75%); background-size: 200% 100%; }
+
+:is(.shell, .gate, .boot) ::placeholder { color: var(--g-faint); opacity: 1; }
