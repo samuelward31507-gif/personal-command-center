@@ -218,27 +218,17 @@ def main():
           'reports': ('The Monday report', 'The handful of numbers that matter, and what needs you.'), 'call-review': ('One call, read for you', 'The moment the job was lost, flagged.'),
           'custom-agents': ('An agent at work', 'It runs inside limits you set and asks before it crosses one.'), 'custom-builds': ('Your process, built', 'Describe how you do it. We turn each step into a part.')}
     btail = tail.replace('<script type="module" src="/assets/cinder-flow.js"></script>', '<script src="/assets/cinder-builds.js" defer></script>\n<script src="/assets/cinder-builds2.js" defer></script>\n<script type="module" src="/assets/cinder-flow.js"></script>')
+    import pages2
     for i, p in enumerate(NEW):
         rel = [s for s in ORDER[p['group']] if s != p['slug']][:4] or ['custom-builds']
         if len(rel) < 3: rel += [s for s in ('answering', 'booking', 'follow-up') if s not in rel][:3 - len(rel)]
-        v = i % 3; pt, pc = PL[p['slug']]; num = ALL.index(p) + 1
-        plate = f'<figure class="plate"><header><span>Fig. 1</span><b>{e(pt)}</b><i>Sample data</i></header><div class="st-fig" data-build="{p["slug"]}" role="img" aria-label="{e(pt)}. {e(pc)}"></div><figcaption><span>{e(pc)}</span></figcaption></figure>'
-        acts = '<div class="acts rv d2"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a><a class="btn ghost" href="/everything">Everything we build</a></div>'
-        crumb = f'<p class="eb"><a href="/everything">{e(gname[p["group"]])}</a> / {e(p["name"])}</p>'
-        if v == 0: hero = f'<section class="ov ov-hero svc split" aria-labelledby="h1"><div class="wrap"><div>{crumb}<h1 id="h1" class="rv">{e(p["h1"])}</h1><p class="rv d1">{e(p["lede"])}</p>{acts}</div>{plate}</div></section>'
-        elif v == 1: hero = f'<section class="ov ov-hero svc" aria-labelledby="h1"><div class="backdrop" data-flow="wave" data-p="{ribbon(i * 2 + 20)}"></div><div class="wrap">{crumb}<h1 id="h1" class="rv">{e(p["h1"])}</h1><p class="rv d1">{e(p["lede"])}</p>{acts}</div></section>\n<section class="platesec"><div class="wrap">{plate}</div></section>'
-        else: hero = f'<section class="ov ov-hero svc type" aria-labelledby="h1"><div class="wrap">{crumb}<h1 id="h1" class="rv">{e(p["h1"])}</h1><p class="rv d1">{e(p["lede"])}</p>{acts}<div class="svc-meta"><span>Build {num:02d} of {len(ALL)}</span><span>{e(gname[p["group"]])}</span><span>Scoped after your audit</span></div></div></section>\n<section class="platesec wide"><div class="wrap">{plate}</div></section>'
-        rows = f'<section class="rows"><div class="wrap"><div><h2 class="rv">What it does.</h2></div><ol>{"".join(f"<li class=\"rv\"><b>{e(b)}</b><p>{e(t)}</p></li>" for b, t in p["does"])}</ol></div></section>'
-        say = f'<section class="ov ov-line"><div class="backdrop" data-flow="wave" data-p="{ribbon(i * 2 + 21)}"></div><div class="wrap"><p class="say rv">{e(p["line"])}</p></div></section>'
-        cmp = f'<section class="cmp{" light" if v == 2 else ""}"><div class="wrap"><h2 class="rv">Before and after.</h2><div class="ch" aria-hidden="true"><span>Without it</span><span>With it</span></div>{"".join(f"<div class=\"cr rv\"><p class=\"x\"><span>Without it</span>{e(x)}</p><p class=\"y\"><span>With it</span>{e(y)}</p></div>" for x, y in p["cmp"])}</div></section>'
-        faq = f'<section class="faq"><div class="wrap"><h2 class="rv">Questions.</h2><div>{"".join(f"<details class=\"rv\"><summary>{e(q)}</summary><p>{e(a)}</p></details>" for q, a in p["faq"])}</div></div></section>'
-        relh = f'<section class="rel"><div class="wrap"><h2 class="rv">Works with the rest.</h2><div class="rel-g">{"".join(f"<a href=\"/{s}\" class=\"rv\"><b>{e(BY[s]["name"])}</b><span>{e(BY[s]["short"])}</span></a>" for s in rel)}</div></div></section>'
         extra, t2 = '', btail
         if p['slug'] == 'invoicing':
             extra = '<section class="stage3"><div class="wrap"><div><h2 class="rv">Every invoice leaves a trail.</h2><p class="rv d1">Sent, reminded, paid. Each step is on the record, so you never have to wonder where one stands.</p></div><div class="stage3-host" data-plate="CinderTape" role="img" aria-label="A machined printer feeding out a tape of tickets: invoice sent, reminder sent, invoice paid. Sample data."></div></div></section>\n<script>window.CinderTapeTickets=[["Job finished, Friday","Invoice sent","The same day"],["Day 3","Reminder sent","A friendly nudge"],["Day 7","Reminder sent","A little firmer"],["Day 9","Invoice paid","Reminders stopped"],["Job finished, Monday","Invoice sent","The same day"],["Day 2","Invoice paid","No reminder needed"]]</script>'
             t2 = btail.replace('<script src="/assets/cinder-builds.js" defer></script>', '<script src="/assets/cinder-plates.js"></script>\n<script type="module" src="/assets/cinder-objects.js"></script>\n<script src="/assets/cinder-builds.js" defer></script>')
-        order = [hero, say, rows, extra, cmp, faq, relh] if v == 0 else [hero, rows, extra, say, cmp, faq, relh] if v == 1 else [hero, cmp, rows, extra, say, faq, relh]
-        page(p['name'], p['lede'], p['slug'], '\n'.join(x for x in order if x), t2)
+        k = ORDER[p['group']].index(p['slug'])
+        body = pages2.compose(p, k, dict(i=i, gname=gname[p['group']], rel=[BY[s] for s in rel], ribbon=ribbon, num=ALL.index(p) + 1, total=len(ALL), plate=PL[p['slug']], extra=extra))
+        page(p['name'], p['lede'], p['slug'], body, t2)
     hub = f'''<section class="ov ov-hero svc" aria-labelledby="h1"><div class="backdrop" data-flow="wave" data-p="{ribbon(7)}"></div><div class="wrap">
   <p class="eb">Everything we build</p><h1 id="h1" class="rv">If AI can do it, we build it.</h1><p class="rv d1">{len(ALL)} builds today, in eight parts of your business, and room for whatever yours needs next. The one thing we don’t do is run ads.</p>
   <div class="acts rv d2"><a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a></div>
