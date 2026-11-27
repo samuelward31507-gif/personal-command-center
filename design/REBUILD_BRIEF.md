@@ -217,3 +217,7 @@ Order on `/new` now, about a quarter shorter than before:
 Cut on purpose: the row of five things the audit covers (a third list of the same parts), and the sourced-numbers section (all three sourced figures are about leads, which is the tilt Sam wanted gone; one of them stays inside the first finding).
 
 Left to do before this replaces the real homepage: prune the unused styles in the generator, move the styles and script into files under `site/assets/`, and write the result to `site/index.html`. Then the inner pages.
+
+## 19. The founder quote moved up (27 Nov)
+
+Sam liked the quote most and asked for it as high as it can go. It now sits straight after the hero and the tools grid, before "What we do". The booking row that stood between the findings and the quote is gone, because the findings now run straight into the closing band and two asks in a row repeated each other.

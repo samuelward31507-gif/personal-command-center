@@ -245,8 +245,7 @@ BLOCKS = [
 ]
 BLOCKS = [re.sub(r'id="leak-\d+"', 'id="leak-%d"' % (n + 1), BLOCKS[k]) for n, k in enumerate(KEEP)]
 LK = ('<section class="lk"><div class="w lk-g"><aside class="lk-n"><ul>%s</ul></aside><div class="lk-m">%s</div></div>'
-      '<div class="w lk-c"><p class="bs">Yours will be different. <span>That&rsquo;s what the fifteen minutes are for.</span></p>'
-      '<a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener">Book your free audit</a></div></section>'
+      '</section>'
       % (''.join('<li%s><a href="#leak-%d">%s</a></li>' % (' class="on"' if i == 0 else '', i + 1, n) for i, n in enumerate(LEAKS)), ''.join(BLOCKS)))
 
 # ---------- the clock: light to dark through the dial ----------
@@ -843,8 +842,8 @@ td i.h{background:var(--amber)}td.n.h{color:#a86a00}td.n{white-space:nowrap}
 .rn-f em{font-style:normal;display:inline-flex;align-items:center;height:23px;padding:0 10px;border-radius:999px;background:rgba(109,155,255,.16);color:#a9c4ff;font-size:12px;font-weight:520;white-space:nowrap}
 .lk-c{display:flex;align-items:center;justify-content:space-between;gap:24px;border:1px solid var(--ln);border-bottom:0;padding:clamp(36px,3vw,56px) var(--pad)}
 .lk-c .bs{max-width:none}
-.fq{border-top:1px solid var(--ln);background:#fff}
-.fq-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(120px,10.5vw,200px) 24px clamp(112px,9.5vw,184px);text-align:center}
+.fq{border-bottom:1px solid var(--ln);background:#fff}
+.fq-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(104px,9vw,172px) 24px clamp(100px,8.6vw,164px);text-align:center}
 .fq blockquote{margin:0 auto;max-width:21em;font:400 clamp(27px,2.35vw,45px)/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.018em;color:var(--ink);text-wrap:balance}
 .fq blockquote.fill span{color:#c9cbd0;transition:color .25s}.fq blockquote.fill span.on{color:var(--ink)}
 .fq p{margin:clamp(26px,2.2vw,42px) 0 0;font-size:clamp(13.5px,.82vw,15.5px);color:var(--t3)}.fq p b{display:block;color:var(--ink);font-weight:560}
@@ -929,7 +928,7 @@ NAV = ('<header class="top"><div class="nav"><a href="/" class="nav-b"><b>%s Cin
 HW = HW.replace('@@RUN@@', RUN)
 html = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
         '<title>Find out what your business is losing | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s%s%s%s%s%s%s%s%s%s%s%s<script>%s</script></body></html>'
-        % (hero_css, CSS, NAV, HERO, TOOLS, WHAT, CK, HW, BD, PROB, LK, FQ, CL, FT, JS))
+        % (hero_css, CSS, NAV, HERO, TOOLS, FQ, WHAT, CK, HW, BD, PROB, LK, CL, FT, JS))
 for p in (ROOT + '/design/mock/home-light.html', ROOT + '/site/new.html'):
     open(p, 'w').write(html)
 print('ok', len(html))
