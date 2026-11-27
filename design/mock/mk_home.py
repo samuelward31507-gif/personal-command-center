@@ -316,12 +316,22 @@ WHEEL = ('<svg class="bd-w" viewBox="0 0 520 412" role="img" aria-label="Eight p
          '<g class="bd-k">%s</g>%s%s%s<text class="bd-c1" x="%d" y="%d" text-anchor="middle">Example audit</text>'
          '<text class="bd-c2" x="%d" y="%d" text-anchor="middle">5 of 8</text></svg>' % (ring, spokes, nodes, labels, CX, CY - 8, CX, CY + 20))
 def _pv_stack():
-    # eight thin plates, one per part of the business, set down one on another as the list moves
-    ys = [372 - k * 36 for k in range(8)]
-    plate = lambda y: 'M200 %d L352 %d L200 %d L48 %d Z' % (y - 60, y, y + 60, y)
-    guides = ''.join('<path class="gd" d="M%d %d V%d"/>' % (x, ys[-1] + dy, ys[0] + dy) for x, dy in ((48, 0), (352, 0), (200, 60)))
-    return ('<svg class="pv-d" viewBox="0 0 400 460" aria-hidden="true">%s%s</svg>'
-            % (guides, ''.join('<g style="--i:%d"><path class="pl" d="%s"/><rect class="q" x="45" y="%d" width="6" height="6"/><rect class="q" x="349" y="%d" width="6" height="6"/></g>' % (k, plate(y), y - 3, y - 3) for k, y in enumerate(ys))))
+    # eight plates, one per part of the business. Each is drawn as a flat square with its own pattern and laid over by a CSS matrix,
+    # so the first one can start face-on as a dotted panel and tip into place, and the rest set down above it.
+    def inner(k):
+        t = k % 4
+        if t == 0:
+            return ''.join('<circle class="dt" cx="%d" cy="%d" r="1.7"/>' % (x, y) for x in range(-90, 91, 30) for y in range(-90, 91, 30))
+        if t == 1:
+            return '<circle r="30"/><circle r="60"/><circle class="ds" r="90"/><rect class="q" x="-4" y="-4" width="8" height="8"/>'
+        if t == 2:
+            return ''.join('<path class="%s" d="M-90 %d H90"/>' % ('ds' if n % 2 else '', y) for n, y in enumerate(range(-90, 91, 30)))
+        return ('<path d="M-60 -50 L40 -66 L58 44 L-44 62 Z"/>' + ''.join('<circle class="nb" cx="%d" cy="%d" r="9"/><circle class="dt" cx="%d" cy="%d" r="2.4"/>' % (x, y, x, y) for x, y in ((-60, -50), (40, -66), (58, 44), (-44, 62))))
+    ys = [476 - k * 52 for k in range(8)]
+    guides = ''.join('<path class="gd" d="M%d %d V%d"/>' % (x, ys[-1], ys[0]) for x in (68, 372)) + '<path class="gd" d="M220 %d V%d"/>' % (ys[-1] - 30, ys[0] + 30)
+    plates = ''.join('<g class="pt8" style="--i:%d;--y:%d"><rect class="pl" x="-108" y="-108" width="216" height="216"/>%s</g>' % (k, y, inner(k)) for k, y in enumerate(ys))
+    labels = ''.join('<text style="--i:%d" x="386" y="%d">%s</text>' % (k, y + 4, n.upper()) for k, (y, (n, _, _, _, _)) in enumerate(zip(ys, PARTS)))
+    return '<svg class="pv-d" viewBox="0 0 520 600" aria-hidden="true">%s%s%s</svg>' % (guides, plates, labels)
 
 
 BD = ('<section class="pv"><div class="pv-o"><p>Then we build whatever fixes it.</p></div>'
@@ -670,13 +680,18 @@ CSS = r'''
 .pv-x sup{margin-left:10px;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.04em;color:#8f9197;vertical-align:top;position:relative;top:.9em}
 .pv-x span{display:block;margin-top:24vh;max-width:17em;font-size:clamp(18px,1.55vw,27px);line-height:1.28;font-weight:500;letter-spacing:-.015em;color:#fff}
 .pv-a{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center}
-.pv-d{width:min(520px,100%);height:auto;max-height:70vh;overflow:visible}
-.pv-d *{fill:none;stroke:#fff;stroke-width:1;vector-effect:non-scaling-stroke}.pv-d .q{fill:#fff;stroke:none}.pv-d .gd{stroke:#3a3b40;stroke-dasharray:1.5 5}
-.pv-d g{--c:calc(var(--p,1) - var(--i)*.126 + .03);--q:clamp(0,calc(var(--c)*13),1);--n:clamp(0,calc(1 - max(var(--c) - .06,.06 - var(--c))*9),1);opacity:var(--q);transform:translateY(calc((1 - var(--q))*-54px))}
-.pv-d .pl{fill:rgba(16,16,16,.92);stroke:rgba(255,255,255,calc(.3 + var(--n)*.7))}.pv-d g .q{opacity:calc(.3 + var(--n)*.7)}
+.pv-d{width:min(620px,100%);height:auto;max-height:78vh;overflow:visible}
+.pv-d *{fill:none;stroke:#fff;stroke-width:1;vector-effect:non-scaling-stroke}.pv-d .gd{stroke:#3a3b40;stroke-dasharray:1.5 5}
+.pv-d .pt8{--c:calc(var(--p,1) - var(--i)*.126 + .03);--q:clamp(0,calc(var(--c)*13),1);--n:clamp(0,calc(1 - max(var(--c) - .06,.06 - var(--c))*9),1);--t:1;opacity:var(--q);
+transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)),calc(1 - .722*var(--t)),220,calc(var(--y) - (1 - var(--q))*60))}
+.pv-d .pt8:first-of-type{--t:clamp(0,calc(var(--p,1)*16 - .15),1);opacity:1;transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)),calc(1 - .722*var(--t)),220,calc(290 + (var(--y) - 290)*var(--t)))}
+.pv-d .pt8>*{stroke-opacity:calc(.2 + var(--n)*.5)}.pv-d .pl{fill:rgba(16,16,16,.93);stroke-opacity:calc(.34 + var(--n)*.66)}
+.pv-d .dt{fill:#fff;stroke:none;fill-opacity:calc(.3 + var(--n)*.6)}.pv-d .q{fill:#fff;stroke:none;fill-opacity:calc(.4 + var(--n)*.6)}.pv-d .ds{stroke-dasharray:2 5}.pv-d .nb{fill:#101010}
+.pv-d text{--c:calc(var(--p,1) - var(--i)*.126 + .03);fill:#fff;stroke:none;font:500 9.5px "Geist Mono",monospace;letter-spacing:.06em;opacity:clamp(0,calc(1 - max(var(--c) - .06,.06 - var(--c))*14),1)}
+.pv-d text:first-of-type{opacity:calc(clamp(0,calc(var(--p,1)*16 - .6),1)*clamp(0,calc(1 - max(var(--c) - .06,.06 - var(--c))*14),1))}
 .pv-e{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:clamp(56px,6vw,110px) var(--pad) clamp(90px,9vw,170px);box-sizing:border-box}.pv-e p{margin:0;font-size:14.5px;color:#7f8187}
 @media(max-width:860px){.hq-i{padding:64px var(--pad)}.hq-t{grid-template-columns:minmax(0,1fr)}.hq-g{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 20px;margin-top:48px}.pv-o{min-height:60vh}
-.pv-g{grid-template-columns:minmax(0,1fr)}.pv-a{position:static;height:auto;order:-1;padding-top:8px}.pv-d{width:220px}.pv-w{padding:36px 0 48px}.pv-x{min-height:0;padding:22px 0;border-top:1px solid var(--dl)}.pv-x b{font-size:34px}.pv-x span{margin-top:10px;font-size:16px;font-weight:400;color:#a3a5aa}.pv-e{padding:40px var(--pad) 72px}}
+.pv-g{grid-template-columns:minmax(0,1fr)}.pv-a{position:static;height:auto;order:-1;padding-top:8px}.pv-d{width:260px}.pv-d text{display:none}.pv-w{padding:36px 0 48px}.pv-x{min-height:0;padding:22px 0;border-top:1px solid var(--dl)}.pv-x b{font-size:34px}.pv-x span{margin-top:10px;font-size:16px;font-weight:400;color:#a3a5aa}.pv-e{padding:40px var(--pad) 72px}}
 /* fine vertical lines along the top and bottom of the dark section, inside the frame; side rules; a ruled strip with nodes */
 .pv{position:relative;border-top:1px solid var(--dl)}
 .pv::before,.pv::after{content:"";position:absolute;left:max(100px,calc((100vw - 1390px)/2));right:max(100px,calc((100vw - 1390px)/2));height:240px;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px)}
