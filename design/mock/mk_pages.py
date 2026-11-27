@@ -2616,7 +2616,7 @@ PAGES = [
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, figs(slug, full(slug, flag(slug, body))), css=PCSS, index=(slug not in ('404', 'day')))
+        doc = page(title, desc, '/' + slug, figs(slug, full(slug, flag(slug, body))), css=PCSS, index=(slug not in ('404', 'day', 'terms')))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)

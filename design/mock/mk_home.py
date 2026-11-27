@@ -460,7 +460,7 @@ FT = ('<footer class="fo"><div class="w fo-g"><div class="fo-b"><a href="/" clas
       '<div><h4>What we build</h4><a href="/everything">Everything we build</a><a href="/websites">Websites</a><a href="/booking">Booking</a><a href="/estimates">Quotes</a><a href="/invoicing">Invoices</a><a href="/custom-builds">Custom builds</a></div>'
       '<div><h4>Company</h4><a href="/software">The app</a><a href="/trades">Trades</a><a href="/story">Our story</a><a href="/questions">Questions</a><a href="mailto:sam.cinderrevenue@gmail.com">Email Sam</a></div></div>'
       '<div class="w fo-l"><span>&copy; 2026 Cinder Revenue Company, Colorado</span><span>Pictures show an example business with sample data.</span>'
-      '<span><a href="/privacy">Privacy</a><a href="/terms">Terms</a></span></div></footer>' % (mark, CAL))
+      '<span><a href="/privacy">Privacy</a></span></div></footer>' % (mark, CAL))
 
 JS = r"""
 (function(){
