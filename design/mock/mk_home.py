@@ -12,7 +12,7 @@ mark = re.sub(r'<style>.*?</style>', '', fav, flags=re.S).replace('class="m"', '
 hero = open(ROOT + '/design/mock/hero-light.html').read()
 hero_css = re.search(r'<style>(.*?)</style>', hero, re.S).group(1)
 hero_body = re.search(r'(<section class="hero">.*?)</body>', hero, re.S).group(1)
-CAL = 'href="https://cal.com/audit-call/15min" target="_blank" rel="noopener"'
+CAL = 'href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta'
 hero_body = hero_body.replace('<a class="btn" href="#">Book your free audit</a>', '<a class="btn" %s>Book your free audit</a>' % CAL)
 hero_body = hero_body.replace('<a class="btn q" href="#">See what we check</a>', '<a class="btn q" href="/free-audit">See what we check</a>')
 for _a, _b in [
@@ -856,6 +856,21 @@ td i.h{background:var(--amber)}td.n.h{color:#a86a00}td.n{white-space:nowrap}
 .fo-l{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;border:1px solid var(--dl);border-bottom:0;padding:18px var(--pad) 22px;font-size:clamp(12.5px,.74vw,14px);color:#7f8187}
 .fo-l span:last-child{margin-left:auto;display:flex;gap:20px}
 
+/* ---- nav on every page: skip link, the right-hand group, the phone menu ---- */
+.skip{position:absolute;left:12px;top:-60px;z-index:50;height:36px;padding:0 14px;display:flex;align-items:center;border-radius:9px;background:var(--ink);color:#fff;font-size:14px;font-weight:560;transition:top .15s}.skip:focus{top:12px}
+.nav-r{display:flex;align-items:center;gap:8px}
+.mm{display:none;position:relative}
+.mm summary{list-style:none;width:clamp(34px,2.1vw,40px);height:clamp(34px,2.1vw,40px);display:grid;place-content:center;gap:5px;cursor:pointer;border-radius:9px;box-shadow:inset 0 0 0 1px rgba(23,24,26,.14)}
+.mm summary::-webkit-details-marker{display:none}.mm summary i{display:block;width:15px;height:1.5px;border-radius:1px;background:var(--ink);transition:transform .2s}
+.mm[open] summary i:first-child{transform:translateY(3.25px) rotate(45deg)}.mm[open] summary i:last-child{transform:translateY(-3.25px) rotate(-45deg)}
+.mm-p{position:fixed;left:0;right:0;top:clamp(60px,3.6vw,68px);background:#fff;border-bottom:1px solid var(--ln);box-shadow:0 30px 50px -30px rgba(23,24,26,.25);padding:8px 16px 16px;display:grid}
+.mm-p a{display:flex;align-items:center;height:50px;font-size:17px;font-weight:520;letter-spacing:-.012em;color:var(--ink);border-bottom:1px solid var(--ln)}.mm-p a:last-child{border-bottom:0}
+.top.dk .mm summary{box-shadow:inset 0 0 0 1px rgba(255,255,255,.24)}.top.dk .mm summary i{background:#fff}
+@media(max-width:1180px){.mm{display:block}}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+/* the chat button, restyled for the light pages (its own script is shared with the older pages) */
+.cc-l{background:#fff!important;color:var(--ink)!important;box-shadow:0 0 0 1px rgba(23,24,26,.1),0 14px 34px -14px rgba(30,40,90,.4)!important}.cc-l i{background:var(--blue)!important;border-radius:50%!important}
+
 /* ---- narrower screens ---- */
 html,body{overflow-x:clip}
 @media(max-width:1180px){.bd-g{grid-template-columns:repeat(2,minmax(0,1fr))}.bd-g a:nth-child(4n+1){border-left:1px solid var(--dl)}.bd-g a:nth-child(2n+1){border-left:0}}
@@ -923,12 +938,37 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 }
 '''
 
-NAV = ('<header class="top"><div class="nav"><a href="/" class="nav-b"><b>%s Cinder Revenue</b></a><ul><li><a href="/everything">What we fix</a></li><li><a href="/free-audit">The free audit</a></li><li><a href="/software">The app</a></li><li><a href="/trades">Trades</a></li><li><a href="/story">Our story</a></li></ul>'
-       '<a class="btn" %s>Book your free audit</a></div></header>' % (mark, CAL))
+LINKS = [('/everything', 'What we build'), ('/free-audit', 'The free audit'), ('/software', 'The app'), ('/trades', 'Trades'), ('/story', 'Our story')]
+NAV = ('<a class="skip" href="#main">Skip to content</a><header class="top"><div class="nav"><a href="/" class="nav-b" aria-label="Cinder Revenue Company, home"><b>%s Cinder Revenue</b></a>'
+       '<ul>%s</ul><div class="nav-r"><a class="btn" %s>Book your free audit</a>'
+       '<details class="mm"><summary aria-label="Menu"><i></i><i></i></summary><nav class="mm-p" aria-label="Menu">%s</nav></details></div></div></header>'
+       % (mark, ''.join('<li><a href="%s">%s</a></li>' % l for l in LINKS), CAL, ''.join('<a href="%s">%s</a>' % l for l in LINKS + [('/questions', 'Questions')])))
 HW = HW.replace('@@RUN@@', RUN)
-html = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        '<title>Find out what your business is losing | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s%s%s%s%s%s%s%s%s%s%s%s<script>%s</script></body></html>'
-        % (hero_css, CSS, NAV, HERO, TOOLS, FQ, WHAT, CK, HW, BD, PROB, LK, CL, FT, JS))
-for p in (ROOT + '/design/mock/home-light.html', ROOT + '/site/new.html'):
-    open(p, 'w').write(html)
-print('ok', len(html))
+
+import hashlib
+ALLCSS = hero_css + CSS
+VER = hashlib.sha1((ALLCSS + JS).encode()).hexdigest()[:8]
+open(ROOT + '/site/assets/light.css', 'w').write(ALLCSS.strip() + '\n')
+open(ROOT + '/site/assets/light.js', 'w').write(JS.strip() + '\n')
+
+
+def page(title, desc, path, body, index=True):
+    """One page of the light site: the shared head, nav, footer, stylesheet and script around its own sections."""
+    url = 'https://cinderrevenue.com' + path
+    return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+            '<title>%(t)s | Cinder Revenue Company</title><meta name="description" content="%(d)s">%(robots)s<meta name="theme-color" content="#ffffff">'
+            '<link rel="canonical" href="%(u)s"><meta property="og:title" content="%(t)s | Cinder Revenue Company"><meta property="og:description" content="%(d)s">'
+            '<meta property="og:type" content="website"><meta property="og:url" content="%(u)s"><meta property="og:image" content="https://cinderrevenue.com/og.jpg">'
+            '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:site_name" content="Cinder Revenue Company">'
+            '<meta name="twitter:card" content="summary_large_image"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any">'
+            '<link rel="apple-touch-icon" href="/icon/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">'
+            '<link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/assets/light.css?v=%(v)s"></head>'
+            '<body>%(nav)s<main id="main">%(body)s</main>%(ft)s<script src="/assets/light.js?v=%(v)s" defer></script><script src="/assets/cinder-chat.js" defer></script></body></html>'
+            % dict(t=title, d=desc, u=url, v=VER, nav=NAV, body=body, ft=FT, robots='' if index else '<meta name="robots" content="noindex">'))
+
+
+HOME = HERO + TOOLS + FQ + WHAT + CK + HW + BD + PROB + LK + CL
+DESC = 'A free fifteen-minute audit of your service business. We find what is costing you jobs and hours, put a number on it, and build systems made for the way you work.'
+open(ROOT + '/site/index.html', 'w').write(page('Find out what your business is losing', DESC, '/', HOME))
+open(ROOT + '/site/new.html', 'w').write(page('Find out what your business is losing', DESC, '/', HOME, index=False))
+print('ok', len(HOME), 'css', len(ALLCSS), 'js', len(JS), VER)

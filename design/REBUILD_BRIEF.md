@@ -221,3 +221,15 @@ Left to do before this replaces the real homepage: prune the unused styles in th
 ## 19. The founder quote moved up (27 Nov)
 
 Sam liked the quote most and asked for it as high as it can go. It now sits straight after the hero and the tools grid, before "What we do". The booking row that stood between the findings and the quote is gone, because the findings now run straight into the closing band and two asks in a row repeated each other.
+
+## 20. The new page is the homepage on the preview (27 Nov)
+
+Sam: build everything on the preview, deploy it all together once the whole site is done. The voice agent page stays on the site; it is only kept off the homepage.
+
+- `design/mock/mk_home.py` now writes `site/index.html` (the homepage), `site/new.html` (the same page, kept so the old link works, marked noindex), `site/assets/light.css` and `site/assets/light.js`. Its `page()` function is the shared shell for every light page: head tags, nav, footer, stylesheet, script, chat.
+- Carried over from the old homepage so nothing was lost: description, canonical and social tags, icons and manifest, the skip link, the chat assistant, and `data-cta` on every booking link. Added a phone menu, since the old nav's menus are not in the new nav.
+- Not carried over: the bar that slid up from the bottom on phones asking for the booking (the new nav keeps the booking button on screen at all times), and the mega menu listing every build (the nav links to "What we build" instead).
+- The old dark homepage is saved at `design/archive/home-dark-pass36.html`. Do not run `design/patch_home.py` again; it would overwrite the new homepage.
+- `light.css` still carries styles from earlier heroes that are no longer on the page. Prune before production.
+
+Next: the free audit page, then the rest of the inner pages, all through `page()`.
