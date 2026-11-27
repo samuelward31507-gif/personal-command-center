@@ -15,11 +15,13 @@ def ins(before, html):
     global s
     k = s.index(before); s = s[:k] + html + s[k:]
 # The old 3D leak track, the six-layer render and the dial are retired. Their sections are rebuilt below as flat product pieces.
-for old in ('<section id="leaks"', '<section id="inside"', '<section id="back"', '<section id="build"', '<section id="everything"'):   # pass 31: the 3D bay is rebuilt below as the overview; the bottom grid repeated it and is gone
+for old in ('<section id="leaks"', '<section id="inside"', '<section id="back"', '<section id="build"', '<section id="everything"', '<section class="hs"', '<section id="problem"'):   # pass 31: the 3D bay is rebuilt below as the overview; the bottom grid repeated it and is gone
     if old in s:
         a_, b_ = blk(old); s = s[:a_] + s[b_:]
 s = s.replace('<script src="/assets/cinder-leaks.js" defer></script>\n', '').replace("when('#inside','/assets/cinder-unit.js',2600);", '')
-if "when('#build'" not in s: s = s.replace("addEventListener('load',late)}})();</script>", "addEventListener('load',late)}when('#build','/assets/cinder-objects.js',4200)})();</script>", 1)
+s = s.replace("when('#build','/assets/cinder-objects.js',4200)", '')
+s = re.sub(r'<script type="module" src="/assets/cinder-(?:field|flow)\.js"></script>\n?', '', s)
+s = s.replace('<link rel="modulepreload" href="/assets/vendor/three/three.module.min.js" crossorigin>\n', '')
 s = s.replace("addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update();\n})();", "if(bd&&bdHost){addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update()}\n})();")
 SMALL = '<small>Example business, sample data</small>'
 BOOK = '<a class="inl" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a>'
@@ -137,17 +139,57 @@ BAYS = [('Leads', '[01]', 'Answered in seconds, day or night.'), ('Booking', '[0
 BAY = ('<section id="build" class="hx rev" aria-labelledby="h-build"><div class="hx-vis"><div class="hx-host" data-plate="CinderBay" role="img" aria-label="A machined chassis with eight bays. Six modules are lowered in and screwed down one at a time: leads, booking, quotes, after the job, win-backs and the office. Two blank panels hold places for whatever else your business needs. Red cables then patch every module together."></div></div>'
   '<div class="hx-copy"><div class="hx-step"><p class="sx-k">02  We build</p><h2 id="h-build">Then we build only what you need.</h2><p class="hx-lead">No packages. Some businesses need two of these, some need twelve. The audit decides.</p></div>'
   + ''.join(f'<div class="hx-step"><p class="bw">{n}{f"<sup>{i}</sup>" if i else ""}</p><p>{d}</p></div>' for n, i, d in BAYS) + '</div></section>')
-TK = '<div class="tk" aria-hidden="true"></div>'
-W = lambda x: '<!--h2-->' + TK + x + '<!--/h2-->\n'
-ins('<section id="problem"', '<!--h2--><svg class="il-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="ilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0f0f12"/></linearGradient><linearGradient id="ill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111114"/><stop offset="1" stop-color="#08080a"/></linearGradient><linearGradient id="ilr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0a0c"/><stop offset="1" stop-color="#040405"/></linearGradient><radialGradient id="ilg"><stop offset=".12" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="ilm" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#ilg)"/></mask></defs></svg><!--/h2-->\n')
-# The six-layer audit section was folded into the funnel above in pass 30 (AUDIT and stack() are kept in this file but no longer placed).
+# ---- pass 32: the homepage is one line, the path of a single lead from the moment it comes in to the review.
+# Hero: the places leads already come from run into one line. Five stops down it, each a heading, a sentence and one plain drawing; at each stop a red
+# dashed line falls away with what happens without it. After stop one the line runs through a clock (the portal). Then: one app, anything else, the call.
+import math as _m
+_P = lambda d, c='': f'<path pathLength="1"{f" class=\"{c}\"" if c else ""} d="{d}"/>'
+_hs = []
+for _i, _n in enumerate(['A call', 'A text', 'A web form', 'Facebook', 'Google']):
+    _y = 96 + _i * 64; _d = f'M898,{_y} H760 C660,{_y} 600,{_y + 50} 600,{_y + 150} V600'
+    _hs.append(f'<g style="--i:{_i}"><rect x="900" y="{_y - 6}" width="12" height="12"/><text x="928" y="{_y + 5}">{_n}</text><path class="w" pathLength="1" d="{_d}"/><circle class="dot" r="2.6" opacity="0"><set attributeName="opacity" to="1" begin="{1.2 + _i * .6:.1f}s"/><animateMotion dur="3.6s" begin="{1.2 + _i * .6:.1f}s" repeatCount="indefinite" path="{_d}"/></circle></g>')
+LHERO = ('<section class="lh" id="top" aria-labelledby="h1"><svg class="lh-d" viewBox="0 0 1200 600" aria-hidden="true">' + ''.join(_hs) + '</svg>'
+  '<div class="lh-t"><h1 id="h1">More jobs from the leads you already get.</h1><p>You already paid for the calls, the forms and the messages. Most lost jobs are lost after the lead comes in. We find where, and build what stops it.</p>'
+  f'<div class="lh-b">{CTA}<a class="btn ghost" href="/audit">Check your site in 60 seconds</a></div></div><p class="lh-k">Follow one lead</p></section>')
+_star = lambda cx, cy, r: 'M' + ' L'.join('%.1f,%.1f' % (cx + (r if k % 2 == 0 else r * .42) * _m.cos(-_m.pi / 2 + k * _m.pi / 5), cy + (r if k % 2 == 0 else r * .42) * _m.sin(-_m.pi / 2 + k * _m.pi / 5)) for k in range(10)) + ' Z'
+_D = [  # five drawings, each one idea in a few lines
+  _P('M40,40 H190 V120 H90 L62,146 V120 H40 Z') + _P('M62,68 H168', 'd') + _P('M62,92 H132', 'd'),
+  '<rect pathLength="1" x="30" y="34" width="200" height="120"/>' + _P('M70,34 V154 M110,34 V154 M150,34 V154 M190,34 V154 M30,74 H230 M30,114 H230', 'd') + '<rect class="f" x="190" y="34" width="40" height="40"/><text x="210" y="24" text-anchor="middle">Fri 8:00</text>',
+  '<rect pathLength="1" x="40" y="24" width="96" height="132"/>' + _P('M58,50 H118 M58,70 H118 M58,90 H98', 'd') + _P('M136,66 H172', 'd ds') + _P('M136,106 H172', 'd ds') + '<rect pathLength="1" x="172" y="60" width="12" height="12"/><rect pathLength="1" x="172" y="100" width="12" height="12"/><text x="194" y="70">Day 2</text><text x="194" y="110">Day 5</text>' + _P('M58,134 l8,-8 l8,8 l8,-8 l8,8 l8,-8 l8,8', 'l'),
+  '<rect pathLength="1" x="40" y="24" width="96" height="132"/>' + _P('M58,50 H118 M58,70 H118 M58,90 H98', 'd') + _P('M78,130 H118') + '<circle pathLength="1" cx="184" cy="112" r="32"/>' + _P('M170,112 l10,10 l17,-21', 'l'),
+  ''.join(f'<path pathLength="1" class="st" style="--k:{k}" d="{_star(42 + k * 44, 90, 17)}"/>' for k in range(5))]
+_ALT = ['A message in a speech bubble.', 'A week on a calendar with Friday at 8:00 filled in.', 'A quote with two check-ins beside it, on day two and day five, and a signature.', 'An invoice with a coin beside it, ticked.', 'Five stars.']
+STOPS = [('It gets an answer.', 'In seconds, by text, in your business’s name. Day or night.', 'Voicemail. 78% of people have taken their business elsewhere after a company didn’t pick up.', 'CallRail, 2025', '/answering|How answering works'),
+         ('It gets booked.', 'They pick a time from your real calendar. No phone tag.', 'Days of back and forth, then silence.', '', '/booking|How booking works'),
+         ('The quote gets followed up.', 'On day two and day five, until it is a yes or a no.', 'Sent once and never mentioned again.', '', '/follow-up|How follow-up works'),
+         ('The invoice gets paid.', 'Sent the day the job ends, with reminders until it clears.', 'It goes out when someone gets to it.', '', '/invoicing|How invoices work'),
+         ('The job gets a review.', 'Asked for the day after, while they are still happy.', 'Nobody asks, so nobody writes one.', '', '/reviews|How reviews work')]
+def _stop(i):
+    h, p_, x, src, lk = STOPS[i]; href, lab = lk.split('|')
+    return (f'<div class="ln-st"><div class="ln-c"><span class="sx-n">{i + 1:02d}</span><h2>{h}</h2><p>{p_}</p><a class="inl" href="{href}">{lab}</a><p class="ln-x"><b>Without it</b>{x}{f"<small>{src}</small>" if src else ""}</p></div>'
+            f'<div class="ln-m"><i class="ln-nd"></i><svg class="ln-lost" viewBox="0 0 100 70" aria-hidden="true"><path d="M100,0 C100,40 62,60 14,60"/><path d="M4,54 l12,12 M16,54 l-12,12"/></svg></div>'
+            f'<div class="ln-v"><svg viewBox="0 0 260 180" role="img" aria-label="{_ALT[i]}">{_D[i]}</svg></div></div>')
+# the clock the line runs through: a plain dial sitting on the line. The scroll opens it, goes through the works of a clock and lands on a title page.
+_CLK = ('<svg class="lnv il" data-dial="450 450 90 90" viewBox="0 0 900 900" role="img" aria-label="A clock on the line, showing six seconds."><path class="nf" d="M450,-1400 V360 M450,540 V2300"/><circle class="hi" cx="450" cy="450" r="90"/>'
+        + '<path class="nf" d="' + ''.join('M%.1f,%.1f L%.1f,%.1f ' % (450 + 74 * _m.cos(k * _m.pi / 6), 450 + 74 * _m.sin(k * _m.pi / 6), 450 + 84 * _m.cos(k * _m.pi / 6), 450 + 84 * _m.sin(k * _m.pi / 6)) for k in range(12)) + '"/>'
+        + '<path class="hi nf" d="M450,450 V384"/><path class="hi nf" d="M450,450 L494,476"/><text class="lb" x="568" y="447">0:06</text><text class="lb sub" x="568" y="465">Reply sent</text></svg>')
+OV = (OV.replace('<p class="sx-k">Calendar</p>', '<p class="sx-k">0:06</p>').replace('<span><i>The estimate lands</i></span><span><i>on your calendar.</i></span>', '<span><i>Answered in</i></span><span><i>six seconds.</i></span>')
+        .replace('The lead is offered three times from your real calendar and picks one. You just show up.', 'Reach a lead within 5 minutes instead of 30 and you are 21 times more likely to qualify them. <small>MIT / InsideSales lead response study</small>'))
+assert 'six seconds.' in OV and '21 times' in OV
+PORTAL = ('<section class="pt2 pt-ln" id="frontdesk" aria-label="Answered in six seconds"><div class="pt2-pin"><div class="pt2-box"><i class="pt2-fr" aria-hidden="true"></i><div class="pt-art">' + _CLK + '</div></div>' + OV + '<i class="pt-rim" aria-hidden="true"></i></div><div class="pt2-flow"></div><div class="pt2-run" aria-hidden="true"></div></section>')
+LINE = ('<section class="ln" aria-label="One lead, from first contact to review"><div class="ln-rows"><div class="ln-spine" aria-hidden="true"><i class="ln-fill"></i><i class="ln-dot"></i></div>' + _stop(0) + PORTAL + ''.join(_stop(i) for i in (1, 2, 3, 4)) + '<div class="ln-gap"></div></div>'
+  + f'<div class="ln-end"><i class="ln-nd"></i><h2>One more job, from a lead you already had.</h2><p>The free audit finds where your leads drop off this line. Then we build only what stops it.</p>{CTA}</div></section>')
+# one app: the only real screen on the page
+APP = sx('cal2 shd pz', 'The app', 'It all runs in one app.', 'Every lead, booking, quote and invoice in one place. Open it and see what needs you today.',
+  [('It is on your calendar.', 'The time they picked is booked. The two they did not pick open back up.'), ('With everything on it.', 'The address and the job are on the booking when you open it.'), ('Reminders set themselves.', 'One the day before and one the morning of, from the moment it books.')], '/software|See the app',
+  '<div class="pz-stage"><figure class="pz-fig">' + CALV + '</figure>' + ''.join(f'<div class="pz-b pz-b{i + 1}"><div class="pp">{card}</div></div>' for i, (card, _b, _d) in enumerate(POPS)) + '</div>', frame=False, tag='h2')
+# anything else: one short band
+LX = ('<section class="lx" aria-labelledby="h-lx"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M60,0 V34 M60,86 V120"/><rect x="34" y="34" width="52" height="52"/><path d="M60,48 V72 M48,60 H72"/></svg>'
+  '<h2 id="h-lx">If yours is not on the line, we build it.</h2><p>Anything in your business that follows the same steps every time can run without you. The one thing we don’t do is run ads.</p>'
+  '<p class="lx-l"><a class="inl" href="/custom-builds">How custom builds work</a><a class="inl" href="/everything">See everything we build</a></p></section>')
 W0 = lambda x: '<!--h2-->' + x + '<!--/h2-->\n'
-ins('<section class="samq"', W(WHERE) + W0(BAY) + W(PORTAL) + W0(CALSEC) + W0(QUOTE) + W0(INVOICE) + W0(REVIEW) + W0(CUSTOM) + W0(BACK) + '<!--h2-->' + TK + '<!--/h2-->\n')
-# the numbers: say what the audit checks against each one
-a_, b_ = blk('<section id="problem"'); P = s[a_:b_].split('</a></li>')
-for i, x in enumerate(['We count the calls you missed last month.', 'We time how long a new lead waits for a first reply.', 'We check how many missed calls got a call back.']):
-    P[i] += f'</a><!--h2--><p class="ov-a"><span>In your audit</span>{x}</p><!--/h2--></li>' if i < len(P) - 1 else ''
-s = s[:a_] + ''.join(P[:3]) + ''.join(P[3:]) + s[b_:]
+ins('<section class="tools"', W0(LHERO) + W0(LINE) + W0(APP))
+ins('<section class="samq"', W0(LX))
 AC = '<!--h2--><section class="ac" id="call" aria-labelledby="h-call"><div class="wrap"><p class="px-k"><i></i>The free audit call</p><h2 id="h-call">Fifteen minutes. You leave with a plan.</h2><p class="sub">We can fix it. First we have to know what it is, and that is what the call is for.</p><div class="ac-t" aria-hidden="true"><u></u><b></b></div><div class="ac-g"><div><span>First</span><b>You tell us where it hurts.</b><p>Missed calls, slow weeks, quotes that vanish. Whatever is costing you.</p></div><div><span>Then</span><b>We walk a job with you.</b><p>From the first call to the review, looking for where jobs slip and what each leak is worth.</p></div><div><span>Before you hang up</span><b>You get the plan.</b><p>What to fix first, in order. It is yours to keep, whether or not you work with us.</p></div></div><div class="ac-f"><p><b>Bring rough numbers.</b> Leads a month, your average job, and how many quotes you close.</p>' + CTA + '</div></div></section><!--/h2-->\n'
 ins('<section class="closing"', AC)
 # red marks what is being lost, in three places only: this line in the stats, the running total under the funnel, and one word of the last headline
