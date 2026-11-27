@@ -52,3 +52,9 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Drawings: hatched side faces for depth, the newest part is the bright one as you scroll (`.now`), funnel has six rings (one per audit point), its dots fall and the red leak lines flow.
 - Panels carry corner marks. The eight cells each have a small drawing (home_art.icons()). The call band uses the chip instead of the old "04" tag.
 - Next candidates: carry this drawing language and frame to the inner pages; a real typeface if Sam supplies one.
+
+## Pass 11 (Sam: "are these the best designs for the wording? wording / font / lettering isn't great")
+- Headlines are one short line (560 weight, larger), with one plain sentence under each (`.ax-s`). No more two-tone run-on headings in the scroll sections.
+- New lines: "New leads hear back in seconds." / "No quote goes quiet." / "Every job ends with a review request." / "Built around how you already work." / "Most of the day is already done."
+- Quote drawing is now one quote with two check-in notes and a signature. "What you get back" is the done pile plus one bright tile set apart (what needs you).
+- Open with Sam: "If AI can do it, we build it." breaks his own never-sell-AI rule. A new typeface needs his OK to download the font file.

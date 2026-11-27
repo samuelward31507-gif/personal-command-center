@@ -268,3 +268,13 @@ h1,h2,h3{letter-spacing:-.03em}
 @media (max-width:900px){.g8-i{width:60px;height:48px;right:12px;top:12px}}
 @media (prefers-reduced-motion:reduce){.il .drip,.il .flow{animation:none}}
 .axp.ill>small{left:32px;bottom:28px}.g8-i{width:104px;height:82px}
+/* ---- v12: lettering. One short line per section, set larger and a touch lighter, with a single plain sentence under it. ---- */
+h1,h2,h3{font-weight:560}
+.ax-h,.pz-h h3{font-size:clamp(32px,3.5vw,52px);line-height:1.03;letter-spacing:-.036em;max-width:13ch;font-weight:560}
+.ax.wide .ax-h,.pz-h h3{max-width:18ch}
+.ax-s{margin-top:20px;font-size:18px;line-height:1.5;color:#a8a6a1;max-width:25em}
+.pz-h .ax-s{margin:14px 0 0}
+.ax .px-steps{margin-top:30px}
+.ax-tot{margin-top:28px}
+@media (min-width:901px) and (max-height:840px){.ax-h,.pz-h h3{font-size:clamp(28px,3vw,42px)}.ax-s{font-size:16.5px;margin-top:14px}.ax .px-steps{margin-top:20px}}
+@media (max-width:900px){.ax-h,.pz-h h3{font-size:34px;max-width:none}.ax-s{font-size:17px}}

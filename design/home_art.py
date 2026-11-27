@@ -87,14 +87,12 @@ def reply():
     return svg(''.join(o), 'A phone drawn in thin lines, lying flat. A message lifts off the screen, the reply sits just above it, and a small dial beside it shows only a few seconds gone.')
 
 def quote():
-    """Four sheets in a row: sent, checked in, checked in, signed."""
-    I = Iso(196, 128, .92); o = []
-    for i in range(4):
-        x = i * 132; g = I.slab(x, 0, 0, 104, 150, 4, 'hi' if i == 3 else '') + I.lines(x, 0, 4, 104, 150 - (46 if i == 3 else 0), 4 if i == 3 else 5, 'sk', 14, short=(1, 4))
-        if i == 3: g += I.path([(x + 16 + t * 9, 118 + (7 if t % 2 else -7) * (1 - t / 12), 4) for t in range(9)], False, 'rd nf') + I.path([(x + 14, 132, 4), (x + 92, 132, 4)], False, 'sk')
-        if i: g = I.path([(x - 24, 75, 0), (x - 4, 75, 0)], False, 'ds nf') + g
-        o.append(lit(i, g))
-    return svg(''.join(o), 'Four sheets of paper in a row, drawn in thin lines. The quote is sent, followed up twice, and the last sheet carries a signature.')
+    """One quote. Two check-ins set down beside it, then the signature."""
+    I = Iso(250, 120, 1.0); o = [lit(0, I.slab(0, 0, 0, 170, 236, 4) + I.lines(0, 0, 4, 170, 150, 5, 'sk', 18, short=(0, 4)) + I.path([(18, 204, 4), (152, 204, 4)], False, 'sk'))]
+    for n, x in ((1, 214), (2, 318)):
+        o.append(lit(n, I.path([(x - 36, 118, 0), (x - 8, 118, 0)], False, 'ds nf') + I.slab(x, 86, 0, 72, 64, 4) + I.lines(x, 86, 4, 72, 64, 2, 'sk', 14, short=(1,))))
+    o.append(lit(3, I.path([(24 + v * 11, 186 + (9 if v % 2 else -9) * (1 - v / 14), 4) for v in range(11)], False, 'rd nf') + I.ring(360, 190, 0, 26, 'hi nf') + I.check(346, 172, 0, 26), 'fade'))
+    return svg(''.join(o), 'A quote drawn as a sheet of paper in thin lines. Two small check-in notes are set down beside it, and then a red signature appears on the quote.')
 
 def invoice():
     """One invoice. A reminder lifts off it. Then it is stamped and the coins stack up."""
@@ -126,11 +124,12 @@ def blocks():
     return svg(''.join(o), 'Four blocks in a row, drawn in thin lines and joined one to the next. A fifth place is marked out with a dashed outline, still empty.')
 
 def tower():
-    """What got done today, stacking up."""
-    I = Iso(320, 322, 1.0); o = [I.path([(-40, -40, 0), (210, -40, 0), (210, 210, 0), (-40, 210, 0)], cls='ft ds nf')]
+    """What got done today, stacking up. The one thing that still needs you sits apart."""
+    I = Iso(280, 322, 1.0); o = [I.path([(-40, -40, 0), (330, -40, 0), (330, 210, 0), (-40, 210, 0)], cls='ft ds nf')]
     for i in range(5):
-        z = i * 44; o.append(lit(i, I.slab(0, 0, z, 170, 170, 26, 'hi' if i == 4 else '', shade=7) + I.ring(85, 85, z + 26.5, 30, 'nf' if i < 4 else 'rd nf') + I.check(68, 64, z + 26.5, 30, 'hi nf')))
-    return svg(''.join(o), 'Five slabs stacked one on another, drawn in thin lines, each marked with a tick. The pile grows as the day&#8217;s work gets done.')
+        z = i * 44; o.append(lit(i, I.slab(0, 0, z, 170, 170, 26, shade=7) + I.check(64, 60, z + 26.5, 34, 'nf')))
+    o.append(I.slab(226, 60, 0, 78, 78, 18, 'hi', shade=7) + I.ring(265, 99, 18.5, 15, 'rd nf') + '<circle class="rdt" cx="%s" cy="%s" r="3.5"/>' % I.p(265, 99, 18.5))
+    return svg(''.join(o), 'Five slabs stacked one on another, drawn in thin lines, each marked with a tick: the work already done. One small bright tile sits apart from the pile, marked in red: the thing that needs you.')
 
 def icons():
     """Eight small drawings for the eight parts of a business, same hand as the large ones."""
