@@ -28,3 +28,11 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Retired from the homepage: the 3D leak track (cinder-leaks.js), the six-layer render (cinder-unit.js), the dial. Dot textures removed. Hero no longer overlaps the tools strip.
 - Class names to avoid on the homepage (already taken by index.html): `.bd`, `.hd`, `.ln`.
 - Type: tracking loosened, labels moved from mono to Inter. A different typeface needs a font file from Sam.
+
+## Attio, second capture (workflows, ask, enrichment, sequences, customers, apps, changelog, pricing)
+- Hero visuals are product fragments: a workflow node chain, a four-column board of record cards, a message being written.
+- Rows of three small product fragments, each with a bold line and a grey line under it.
+- One dark chapter per light page, with icon cells on a ruled grid. For us: one bone chapter per dark page.
+- Sequences page: recipient list beside a vertical timeline of sent messages and waits. Same idea as our quote timeline.
+- Centered chip above a two-line heading on inner pages; changelog uses a ruler of ticks as a year scale.
+- Still to do with these: carry the frame, chips and product pieces to the inner pages.
