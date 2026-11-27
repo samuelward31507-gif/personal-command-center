@@ -1465,7 +1465,7 @@ AUDIT = (
 import hashlib
 # Sam, 27 Nov: black, white and grey across the site. Every coloured value in the stylesheets and the pages is turned into the grey of
 # the same lightness on the way out. Kept as they are: the three Mac window buttons and the cool wash of the chapter bands.
-_KEEP = {'#266df1', '#e5484e', '#f0a001', '#ff5f57', '#febc2e', '#28c840', '#c3ccdb', '#aab6cc', '#8f9bb8', '#a7a9c4', '#b4c0d2', '#e2e6f2', '#e6e4f0'}
+_KEEP = {'#e4ebfe', '#1f4fbe', '#266df1', '#e5484e', '#f0a001', '#ff5f57', '#febc2e', '#28c840', '#c3ccdb', '#aab6cc', '#8f9bb8', '#a7a9c4', '#b4c0d2', '#e2e6f2', '#e6e4f0'}
 _KEEP_RGB = {(170, 182, 204), (143, 155, 184), (195, 204, 219), (167, 169, 196), (180, 192, 210), (226, 230, 242), (230, 228, 240)}
 def _grey(r, g, b):
     if max(r, g, b) - min(r, g, b) < 22:
