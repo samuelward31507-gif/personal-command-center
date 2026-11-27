@@ -628,3 +628,6 @@ Sam: "Keep improving it". Problem signs now three line drawings (SIGN_PIC review
 
 ### 23m. Reviews graph hand-over, crisp (Nov 27)
 Sam: smooth now but the graph blurs as the zoom starts (bitmap being scaled). The graph no longer scales at all: a flat blue shape cut to the curve grows from under it (sharp at any size), then the worded blue. Added year totals to the two labels (about 240 / 36, from 20 and 3 a month) and month marks. Curve is still a shape: a steady rate is a straight line; Sam asked for the exponential look.
+
+### 23n. Reviews hand-over to white dots (Nov 27)
+Sam: "i dont really like all the blue, id rather the transition go to the white page with the dots in the background like attio". The hand-over is now a white dotted sheet with a curve-shaped top edge sliding up over the graph (translate only), carrying the words in ink and the 34 squares in blue. The section after it (rvp) is white with dots too, no longer black. No full-blue or black screen left in this run.
