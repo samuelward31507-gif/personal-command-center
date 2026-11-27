@@ -139,3 +139,6 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 ## Pass 27 (Sam: "super clean like no images on the designs just super clean lines")
 - The drawings take the clock portal's look: hairlines on pure black. Removed the ground grid, shaded faces, the pictures engraved on the six plates, ruler ticks, corner crosses and the funnel's wireframe (v27 in home2.css hides them; the markup is still generated, so any of it can come back).
 - Square joins and butt caps. Two line weights. Red stays the only accent.
+
+## Pass 28 (Sam: "all white / grey / black for the designs")
+- No red inside any drawing or in the clock portal. The old red detail is now the brightest, slightly heavier white line (v28 in home2.css). Red is still used outside the drawings: the label dots, the hero ribbon, the stats.
