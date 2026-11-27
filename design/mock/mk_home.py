@@ -1322,7 +1322,7 @@ def page(title, desc, path, body, index=True, css=''):
             % dict(t=title, d=desc, u=url, v=VER, nav=NAV, body=body, ft=FT, robots='' if index else '<meta name="robots" content="noindex">', css=('<link rel="stylesheet" href="/assets/%s">' % css) if css else ''))
 
 
-HOME = HERO + TOOLS + FQ + WHAT + CK + HW + BD + PROB + LK + CL
+HOME = HERO + TOOLS + PROB + LK + WHAT + CK + HW + BD + FQ + CL   # promise, fits your tools, the problem, what we do, how it starts, how it works, what gets built, who is behind it, ask
 DESC = 'A free fifteen-minute audit of your service business. We find what is costing you jobs and hours, put a number on it, and build systems made for the way you work.'
 open(ROOT + '/site/index.html', 'w').write(page('Find out what your business is losing', DESC, '/', HOME))
 open(ROOT + '/site/new.html', 'w').write(page('Find out what your business is losing', DESC, '/', HOME, index=False))
