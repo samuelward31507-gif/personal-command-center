@@ -403,3 +403,7 @@ html .shell.v5 .tabs em { background: var(--ink); color: #fff; font-size: 11px; 
   .shell.v5 .views { max-width: 100%; min-width: 0; overflow-x: auto; scrollbar-width: none; }
   .shell.v5 .views > button { min-height: 44px; flex: none; }
 }
+
+/* Settings > Connections: the log table was 9px wider than a 390px phone (already so on production); it scrolls
+   inside its own box now instead of moving the page. */
+@media (max-width: 899px) { .shell.v5 table.log { display: block; max-width: 100%; overflow-x: auto; scrollbar-width: none; } }
