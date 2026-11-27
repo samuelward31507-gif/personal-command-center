@@ -370,3 +370,21 @@ html .shell.v5 .tabs em { background: var(--ink); color: #fff; font-size: 11px; 
   .shell.v5 .tb .h1 { font-size: 26px; }
   .shell.v5 .tb .btn { height: 44px; padding: 0 14px; }
 }
+
+/* ---------- Quotes, Nov 27 ---------- */
+/* Follow-ups read as one line through time: a rail joins the dots, sent steps solid ink, the next one a ring in the
+   business's colour, the rest hollow. Rows lose their hairlines; the rail does the joining. */
+.q5-follow li { position: relative; border-bottom: 0; padding: 9px 0; }
+.q5-follow li::before { content: ""; position: absolute; left: 3.5px; top: 0; bottom: 0; width: 1px; background: var(--g4); }
+.q5-follow li:first-child::before { top: 50%; } .q5-follow li:last-child::before { bottom: 50%; }
+.q5-follow li i { position: relative; z-index: 1; background: var(--panel); }
+.q5-follow li.next i { background: var(--panel); border: 2px solid var(--acc); box-shadow: 0 0 0 3px var(--ember-bg); }
+.q5-follow li.next b { color: var(--t1); }
+/* Good / better / best: the picked one carries the site's card shadow, the others stay flat on a hairline. */
+.q5-opt { border-color: var(--line); background: var(--panel); transition: box-shadow var(--d5) var(--e5), border-color var(--d5) var(--e5); }
+.q5-opt.on { border-color: transparent; box-shadow: 0 0 0 1.5px var(--t1), var(--sh-card); }
+.q5-dep { background: var(--bg2); border-color: transparent; }
+.q5-row.sel { box-shadow: inset 2px 0 0 var(--t1); }
+/* On a phone there is no detail pane beside the list, so nothing shows as picked; rows are 56px tap targets. */
+@media (max-width: 1100px) { .q5-row.sel { background: transparent; box-shadow: none; } .q5-row { min-height: 56px; align-items: center; } }
+@media (max-width: 899px) { .q5-opts { grid-template-columns: minmax(0, 1fr); } }
