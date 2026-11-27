@@ -707,3 +707,4 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 }
 @media (min-width:901px){.hs{padding:132px 0 30px!important}.hs .hs-steps{display:none}}
 .it-s{max-width:30ch}.fa-st{max-width:30ch}
+@media (min-width:901px){.hs-pin{height:auto!important;min-height:0!important}}
