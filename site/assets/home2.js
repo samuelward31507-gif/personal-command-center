@@ -67,7 +67,10 @@
   [].forEach.call(document.querySelectorAll('.pz'), function (sec) {
     var fig = sec.querySelector('.pz-fig'), bs = [].slice.call(sec.querySelectorAll('.pz-b')), tk = false, ezz = function (x) { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x) };
     function up() { tk = false; if (innerWidth <= 900) { fig.style.removeProperty('--z'); bs.forEach(function (b) { b.classList.add('on') }); return } var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight))); fig.style.setProperty('--z', (1.75 - .75 * ezz(p / .42)).toFixed(4)); bs.forEach(function (b, i) { b.classList.toggle('on', p > .46 + i * .12) }) }
-    addEventListener('scroll', function () { if (!tk) { tk = true; requestAnimationFrame(up) } }, { passive: true }); addEventListener('resize', up); setTimeout(up, 400)
+    var cs = fig.querySelector('.cs'), stage = sec.querySelector('.pz-stage');
+    function fit() { if (!cs) return; var w = fig.offsetWidth; if (!w) return; cs.style.setProperty('--s', (w / 1600).toFixed(5)); stage.style.setProperty('--fw', w + 'px') }
+    if ('ResizeObserver' in window) new ResizeObserver(fit).observe(fig); addEventListener('resize', fit); fit();
+    addEventListener('scroll', function () { if (!tk) { tk = true; requestAnimationFrame(up) } }, { passive: true }); addEventListener('resize', up); setTimeout(function () { fit(); up() }, 400)
   });
   // ---- product pieces: the scroll steps through a pinned section and each step switches parts of the piece on
   [].forEach.call(document.querySelectorAll('.ax'), function (sec) {

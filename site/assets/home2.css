@@ -351,3 +351,39 @@ h1,h2,h3{font-weight:560}
 @media (min-width:901px) and (max-width:1320px){.pz-b1,.pz-b2{left:calc(50% - 31% - 196px)}.pz-b3,.pz-b4{right:calc(50% - 31% - 160px)}}
 @media (min-width:1321px){.pz-b1,.pz-b2{left:calc(50% - min(31%,450px) - 256px)}}
 @media (min-width:901px) and (max-width:1320px){.pz-b1,.pz-b2{left:calc(50% - 31% - 216px)}}
+/* ---- v18: the calendar is the app's own Calendar view, drawn at 1600x1000 and scaled into its frame. Styles copied from tour.css (.cs). ---- */
+.cs{--ink:#0a0a0b;--g1:#4d4e52;--g2:#8a8b90;--g3:#b9babe;--line:#e8e8ea;--paper:#f5f5f6;--red:#c8102e;position:absolute;left:0;top:0;width:1600px;height:1000px;transform-origin:0 0;transform:scale(var(--s,1));background:#fff;color:var(--ink);font:500 21px/1.35 "Inter",system-ui,sans-serif;letter-spacing:-.012em;text-align:left;-webkit-font-smoothing:antialiased}
+.cs p,.cs b,.cs small,.cs em,.cs span{color:inherit;max-width:none}
+.cs .mono{font:500 14px/1 "Geist Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--g2)}
+.cs aside{position:absolute;left:0;top:0;bottom:0;width:252px;background:var(--paper);border-right:1px solid var(--line);padding:34px 18px;display:flex;flex-direction:column}
+.cs .biz{display:flex;align-items:center;gap:11px;padding:0 8px 18px;font-weight:600;font-size:21px;letter-spacing:-.025em;white-space:nowrap}
+.cs .biz svg{width:32px;height:28px;flex:none}
+.cs .co{display:flex;justify-content:space-between;align-items:center;margin:0 0 22px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:16px}
+.cs .co b{font-weight:500}
+.cs .co span{font:500 11px "Geist Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--g2)}
+.cs aside a{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-radius:10px;color:var(--g1);font-size:21px;margin-bottom:2px;transition:background .3s,color .3s}
+.cs aside a.on{background:#e9e9eb;color:var(--ink);font-weight:600}
+.cs aside a em{font:500 15px "Geist Mono",monospace;font-style:normal;color:var(--g2)}
+.cs aside .ft{margin-top:auto;padding:0 12px;white-space:nowrap}
+.cs main{position:absolute;left:252px;top:0;right:0;bottom:0;padding:44px 52px 0;display:flex;flex-direction:column;opacity:0;transform:translateY(22px);transition:opacity .3s,transform .3s}
+.cs main.on{opacity:1;transform:none;transition:opacity .5s .05s,transform .7s cubic-bezier(.2,.8,.2,1) .05s}
+.cs h4{font-size:50px;font-weight:600;letter-spacing:-.035em;line-height:1.1;margin-top:14px}
+.cs .sub{font-size:23px;color:var(--g1);margin-top:8px;font-weight:400}
+.cs .card{border:1px solid var(--line);border-radius:18px;background:#fff;padding:26px 28px}
+.cs .cal{margin:30px 0 44px;flex:1;padding:0;display:grid;grid-template-columns:86px repeat(5,1fr);grid-template-rows:64px repeat(8,1fr);position:relative;overflow:hidden}
+.cs .c{border-left:1px solid var(--line);border-top:1px solid var(--line)}
+.cs .hd{display:flex;align-items:center;padding:0 18px;font-size:19px;color:var(--g1);border-left:1px solid var(--line)}
+.cs .hd b{color:var(--ink);margin-left:8px}
+.cs .tm{border-top:1px solid var(--line);font:500 13px "Geist Mono",monospace;color:var(--g2);padding:10px 12px;text-align:right}
+.cs .cev{position:absolute;border-radius:12px;padding:12px 16px;font-size:18px;line-height:1.3;background:var(--paper);border:1px solid var(--line)}
+.cs .cev b{display:block;font-size:19px}
+.cs .cev.k{background:var(--ink);color:#fff;border:0}
+.cs .cev small{font-size:16px;opacity:.7;font-weight:400}
+.cs .cev.o{background:#fff;border:1.5px dashed var(--red);color:var(--red)}.cs .cev.o b{font-size:17px}
+.cs .cev.new{box-shadow:0 0 0 5px rgba(200,16,46,.2),0 22px 44px -16px rgba(0,0,0,.5)}
+.cs main{opacity:1;transform:none}
+@media (min-width:901px){.pz-fig{top:0;bottom:auto;height:100%;width:auto;aspect-ratio:16/10;max-width:68%;background:#fff;border-radius:16px;box-shadow:0 0 0 1px rgba(255,248,240,.16),0 40px 90px -40px #000}
+  .pz-b1,.pz-b2{left:calc(50% - var(--fw,800px)/2 - 232px)!important}.pz-b3,.pz-b4{right:calc(50% - var(--fw,800px)/2 - 196px)!important}
+  .pz-b1{top:16%}.pz-b2{top:50%}.pz-b3{top:11%}.pz-b4{top:55%}}
+@media (max-width:900px){.pz-fig{height:auto!important;aspect-ratio:16/10;background:#fff;overflow:hidden;border-radius:12px}}
+@media (min-width:901px){.pz-b1,.pz-b2{left:calc(50% - var(--fw,800px)/2 - 258px)!important}.pz-b3,.pz-b4{right:calc(50% - var(--fw,800px)/2 - 222px)!important}}

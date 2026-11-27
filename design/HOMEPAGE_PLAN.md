@@ -81,3 +81,8 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 ## Pass 16 (Sam: the calendar section looks basic; wants Attio-style pop-outs)
 - The calendar is now a full app screen with its sidebar, and four white cards pop out of its edges after the zoom: offered times, the text exchange, the booking details, the reminders. Captions are hidden on desktop (kept for phones and screen readers).
 - Classes: `.cal-sb` (sidebar), `.pp*` (pop-out cards) in home2.css v17. Avoid `.ap` for these: the dark override would catch them.
+
+## Pass 17 (Sam: calendar pop-outs "still not up to par")
+- The hand-built calendar is replaced by the app's real Calendar view: the same `.cs` markup and styles as the Software page (copied into home2.css v18), drawn at 1600x1000 and scaled into its frame by home2.js (`--s`, `--fw`).
+- Events tell the homepage story: Dana Ruiz estimate Friday 8:00 AM (new), the two other offered times shown dashed.
+- Lesson: when a section shows "the CRM", use the real `.cs` screens from software.html, never a re-drawn imitation.
