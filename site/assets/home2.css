@@ -708,3 +708,5 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 @media (min-width:901px){.hs{padding:132px 0 30px!important}.hs .hs-steps{display:none}}
 .it-s{max-width:30ch}.fa-st{max-width:30ch}
 @media (min-width:901px){.hs-pin{height:auto!important;min-height:0!important}}
+@media (min-width:1381px){.hv-c1{left:-104px}.hv-c2{right:-104px}}
+@media (min-width:901px) and (max-width:1380px){.hv-c2{display:none}.hv-c1{left:16px;bottom:44px;width:230px}}
