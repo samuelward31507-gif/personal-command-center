@@ -350,3 +350,12 @@ Sam: wants page themes that change colour as you scroll from one "page" to the n
 Sam on the sky version: he still wants the clean designs from earlier; clouds maybe later, sketched, left out for now; the page should be long and be a design that stays with the screen and animates as you scroll.
 
 `/day` is now white, in the site's clean look. One split screen stays in place for the whole page: on the left, a row of the six times with the current one marked, one line in the homepage quote setting, one small sentence and a link; on the right, a tinted panel that never moves, with the picture inside it changing and building row by row. Six chapters, about 14,000 px of scroll on desktop. The sky, sun, moon, stars and clouds are removed (the sky version is in git at 6e1357e if he wants it back).
+
+### 22k. /day: each chapter made its own (27 Nov)
+
+Sam: looks pretty good; make it as long as needed, with things popping up and changing as you scroll, and make each one custom: a different colourway and a different kind of animation.
+
+- Six chapters, six colourways (peach, blue, amber, mint, lilac, navy), each with its accent on the time marker and the tags.
+- Six entrances for the picture: rise, slide in from the right, tilt up from a corner, pop from small, wipe open from the left, drop from above. Rows inside build differently too.
+- A large faint time numeral sits behind each picture and drifts as you scroll. Two or three small tags pop in around each picture; each restates something the picture already shows.
+- The app page's stage has its own colour (deep indigo), scenes that slide sideways and rows that pop. The app page's second button now goes to `/day`.

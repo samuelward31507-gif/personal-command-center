@@ -474,7 +474,7 @@ addEventListener('scroll',nav,{passive:true});addEventListener('resize',nav);nav
 var root=document.querySelector('.dayp');if(!root)return;
 var ch=[].slice.call(root.querySelectorAll('.dch')),top=document.querySelector('.top'),cur='',tick=false;
 var still=innerWidth<861||(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search));
-var items=ch.map(function(c){var it=[].slice.call(c.querySelectorAll('.tr-e,.tr-f,.qo-t,.qo-r,.inv-p,.gt-r,.gt-f,.ng-x,.ng-g>div,.mr p'));if(!still)it.forEach(function(x){x.classList.add('bi')});return it});
+var items=ch.map(function(c){var it=[].slice.call(c.querySelectorAll('.tr-e,.tr-f,.qo-t,.qo-r,.inv-p,.gt-r,.gt-f,.ng-x,.ng-g>div,.mr p,.pop'));if(!still)it.forEach(function(x){x.classList.add('bi')});return it});
 if(!still)root.classList.add('live');
 function f(){tick=false;var vh=innerHeight,best=0,bd=1e9,total=document.documentElement.scrollHeight-vh;
 ch.forEach(function(c,i){var r=c.getBoundingClientRect(),d=Math.abs(r.top+r.height/2-vh/2);if(d<bd){bd=d;best=i}

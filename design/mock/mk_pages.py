@@ -2069,7 +2069,7 @@ def flag(name, body):
     if name == 'answering':
         return ''.join(LEAD if x.startswith('<section class="hw"') else x for x in secs)
     if name == 'software':
-        return ''.join((DAYAPP + x) if 'class="duo"' in x else x for x in secs)
+        return ''.join((DAYAPP.replace('<section class="sc"', '<section class="sc k2"', 1) + x) if 'class="duo"' in x else x for x in secs).replace(AUDITLINK, '<a class="btn q" href="/day">See one day, start to finish</a>', 1)
     return body
 
 
@@ -2111,13 +2111,17 @@ CSS_STAGE = r"""
 # Every line is existing copy from the build pages; the pictures are theirs too.
 # =====================================================================================
 TIMES = ['6:31 AM', '9:12 AM', '12:40 PM', '4:12 PM', '6:05 PM', '2:07 AM']
+# small tags that pop in around each picture; every one restates something the picture already shows
+POPS = [['2 booked overnight', 'Nothing waiting on you'], ['9 seconds', 'Booked Wed 2 PM'], ['45 minutes long', '0 calls made'],
+        ['Sent the day the job ended', 'Paid, day 11'], ['Day 2', 'Day 5', 'Accepted'], ['On-call phone rang', 'Nobody else woken']]
 
 
 def chap(when, line_, small, href, link, pic):
     n = TIMES.index(when)
     rail = ''.join('<li%s>%s</li>' % (' class="on"' if m == n else (' class="past"' if m < n else ''), t) for m, t in enumerate(TIMES))
-    return ('<section class="dch" data-t="c%d"><div class="dch-p"><div class="dch-t"><ol class="dch-r">%s</ol><div class="dch-w"><h2>%s</h2><p class="s">%s</p><a class="btn q" href="%s">%s</a></div></div><div class="dch-g">%s</div></div></section>'
-            % (n, rail, line_, small, href, link, pic))
+    pops = ''.join('<i class="pop p%d">%s</i>' % (m + 1, t) for m, t in enumerate(POPS[n]))
+    return ('<section class="dch k%d" data-t="c%d"><div class="dch-p"><div class="dch-t"><ol class="dch-r">%s</ol><div class="dch-w"><h2>%s</h2><p class="s">%s</p><a class="btn q" href="%s">%s</a></div></div>'
+            '<div class="dch-g" data-w="%s">%s<div class="dch-x">%s</div></div></div></section>' % (n, n, rail, line_, small, href, link, when.split(' ')[0], pic, pops))
 
 
 DAYP = ('<div class="dayp">'
@@ -2145,13 +2149,44 @@ CSS_DAY = r"""
 .dch h2{margin:0;max-width:13em;font:400 clamp(28px,2.9vw,54px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.02em;text-wrap:balance}
 .dch .s{margin:clamp(16px,1.4vw,26px) 0 clamp(22px,2vw,36px);max-width:24em;font-size:clamp(16px,1.1vw,20px);line-height:1.45;color:var(--t2)}
 .dch-w .btn{align-self:flex-start}.dch-w{display:flex;flex-direction:column;align-items:flex-start}
-.dch-g{display:flex;align-items:center;justify-content:center;border-left:1px solid var(--ln);background:linear-gradient(180deg,#f6f8ff,#e6ebfd);padding:clamp(36px,4vw,72px) clamp(20px,3vw,56px);overflow:hidden}
+.dch-g{display:flex;align-items:center;justify-content:center;border-left:1px solid var(--ln);padding:clamp(36px,4vw,72px) clamp(20px,3vw,56px);overflow:hidden}
 .dch-g>*{max-width:100%}.dch-g .ng{margin:0;width:100%;max-width:620px;color:#fff}.dch-g .ng-g{grid-template-columns:repeat(2,minmax(0,1fr))}.dch-g .ng-g div:nth-child(odd){border-left:0}.dch-g .ng-g div:nth-child(n+3){border-top:1px solid var(--dl)}.dch-g .mr{max-width:480px;margin:0}
 .dayp.live .dch{border-bottom:0}.dayp.live .dch:not(.dhero){height:230vh}
 .dayp.live .dch-p{position:sticky;top:0;height:100vh;padding-top:60px;--a:min(calc(var(--p,0)*7),1);--z:min(calc((1 - var(--p,0))*7),1)}
 .dayp.live .dch-w{opacity:calc(var(--a)*var(--z));transform:translateY(calc((1 - var(--a))*44px - (1 - var(--z))*44px))}
-.dayp.live .dch-g>*{opacity:calc(var(--a)*var(--z));transform:translateY(calc((1 - var(--a))*90px - (1 - var(--z))*90px)) scale(calc(.92 + .08*var(--a)*var(--z)))}
+.dayp.live .dch-g>:not(.dch-x){opacity:calc(var(--a)*var(--z));transform:translateY(calc((1 - var(--a))*90px - (1 - var(--z))*90px)) scale(calc(.92 + .08*var(--a)*var(--z)))}
 .dayp.live .bi{opacity:0;transform:translateY(12px);transition:opacity .35s,transform .45s cubic-bezier(.2,.7,.2,1)}.dayp.live .bi.in{opacity:1;transform:none}
+/* each chapter has its own colourway and its own way of arriving */
+.dch{--ac:var(--blue);--p1:#f6f8ff;--p2:#e6ebfd}
+.dch.k0{--ac:#e8703a;--p1:#fff5ee;--p2:#ffe2d0}.dch.k2{--ac:#c98a00;--p1:#fffaf0;--p2:#fdecc6}.dch.k3{--ac:#1c7a43;--p1:#f2fbf6;--p2:#d8f1e2}.dch.k4{--ac:#6b4fd8;--p1:#f8f5ff;--p2:#e5dcfc}.dch.k5{--ac:#6d9bff;--p1:#161d3a;--p2:#0a0f22}
+.dch-g{position:relative;background:linear-gradient(180deg,var(--p1),var(--p2))}
+.dch-r li.on::before{background:var(--ac)}
+.dch-g::before{content:attr(data-w);position:absolute;left:clamp(16px,2.4vw,44px);top:clamp(70px,9vh,120px);font-size:clamp(120px,15vw,290px);line-height:.8;font-weight:600;letter-spacing:-.07em;color:var(--ac);opacity:.11;transform:translateY(calc(var(--p,0)*-70px));pointer-events:none}
+.dch.k5 .dch-g::before{opacity:.2}
+.dch-g>:not(.dch-x){position:relative}
+.dch-x{position:absolute;inset:0;pointer-events:none}
+.pop{position:absolute;display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 13px 0 11px;border-radius:999px;background:#fff;color:#17181a;font-style:normal;font-size:13px;font-weight:560;letter-spacing:-.006em;white-space:nowrap;box-shadow:0 0 0 1px rgba(23,24,26,.07),0 16px 30px -16px rgba(20,30,80,.45)}
+.pop::before{content:"";width:8px;height:8px;border-radius:3px;background:var(--ac)}
+.dch.k5 .pop{background:#1d2547;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 16px 30px -16px #000}
+.pop.p1{right:7%;top:13%}.pop.p2{left:7%;bottom:12%}.pop.p3{right:10%;bottom:8%}
+.dch.k1 .pop.p1,.dch.k3 .pop.p1,.dch.k5 .pop.p1{left:7%;right:auto;top:11%}.dch.k1 .pop.p2,.dch.k3 .pop.p2,.dch.k5 .pop.p2{left:auto;right:7%;bottom:10%}
+.dayp.live .dch-g>.dch-x{opacity:1;transform:none}
+.dayp.live .pop.bi{opacity:0;transform:scale(.4);transition:opacity .25s,transform .5s cubic-bezier(.3,1.7,.5,1)}.dayp.live .pop.bi.in{opacity:1;transform:none}
+.dayp.live .k1 .dch-g>:not(.dch-x){transform:translateX(calc((1 - var(--a))*220px - (1 - var(--z))*220px))}
+.dayp.live .k1 .bi:not(.pop){transform:translateX(26px)}
+.dayp.live .k2 .dch-g>:not(.dch-x){transform-origin:0 100%;transform:translateY(calc((1 - var(--a))*70px - (1 - var(--z))*70px)) rotate(calc((1 - var(--a))*7deg - (1 - var(--z))*7deg))}
+.dayp.live .k2 .bi:not(.pop){transform:scale(.9)}
+.dayp.live .k3 .dch-g>:not(.dch-x){transform:scale(calc(.55 + .45*var(--a)*var(--z)))}
+.dayp.live .k3 .bi:not(.pop){transform:translateX(-26px)}
+.dayp.live .k4 .dch-g>:not(.dch-x){opacity:1;transform:none;clip-path:inset(0 calc((1 - var(--a))*100%) 0 calc((1 - var(--z))*100%) round 12px)}
+.dayp.live .k4 .bi:not(.pop){transform:none}
+.dayp.live .k5 .dch-g>:not(.dch-x){transform:translateY(calc((1 - var(--a))*-130px + (1 - var(--z))*130px))}
+.dayp.live .bi.in:not(.pop){transform:none!important}
+/* the app page's stage: its own colour, scenes that slide sideways, rows that pop */
+.sc.k2{background:#0a1030}.sc.k2 .sc-b i{background:#9c8cff}.sc.k2 .lb{background:rgba(156,140,255,.18);color:#cfc6ff}.sc.k2 .sc-c a{color:#cfc6ff}
+.sc.k2.live .sc-s{transform:translateX(120px) scale(.96)}.sc.k2.live .sc-s.on{transform:none}.sc.k2.live .sc-s.past{transform:translateX(-120px) scale(.96)}
+.sc.k2.live .bi{transform:scale(.86)}.sc.k2.live .bi.in{transform:none}
+@media(max-width:860px){.pop{position:static;margin:6px 6px 0 0}.dch-x{position:static;display:flex;flex-wrap:wrap;justify-content:center;margin-top:14px}.dch-g{flex-direction:column}.dch-g::before{display:none}}
 @media(min-width:1700px){.dch-g>*{zoom:1.12}}
 @media(max-width:860px){.dch-p{grid-template-columns:minmax(0,1fr);width:auto;margin:0 16px}.dch-t{padding:48px var(--pad) 28px}.dch-g{border-left:0;border-top:1px solid var(--ln);padding:28px 14px 36px}.dch h2{font-size:27px}.dhero-i{margin:0 16px;min-height:0}}
 """
