@@ -96,7 +96,7 @@ Not carried over until they are true: customer logos, a customer story.
 ## 6. Design decisions to make before building
 
 1. **Typeface.** Attio's site is reported to use Inter with a serif for quotes. Cinder already ships Inter and Geist Mono. Decide on a serif for the quote.
-2. **Palette.** Light ground, near-black text, one pale panel tint, crimson as the brand accent. Decide whether to add one or two secondary tints for labels.
+2. **Palette.** Sam's call (27 Nov): use the reference's colours. Sampled from his recording: white ground `#ffffff`; ink about `#17181a`; blue accent about `#266df0`; soft blue tints `#eef1fe` to `#d5dcfa` behind the hero picture; amber `#f0a000` and coral red `#e5484d` for tags and chart segments; green tags for positives. Crimson is no longer the accent.
 3. **Pictures.** The current line drawings were made for black and look empty on white. Each needs redrawing for light, with more inside it.
 4. **Where the app appears.** Not in the hero. Decide whether it appears lower on the homepage or only on the app page.
 
