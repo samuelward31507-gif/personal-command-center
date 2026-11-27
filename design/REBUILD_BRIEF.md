@@ -411,3 +411,4 @@ Sam: the transitions are still weak; he wants the clock's recipe (an image you g
 - Dial redrawn in hairlines: tick ring, dotted inner rings, one drawn arc, a hand with a square tip.
 - Day-line is a smooth line graph, no steps; labels sit under the line to the right of each point.
 - (Later, same day) Sam: the ribs still read as Attio's and he does not want lines. Bands are now a clean "ash and ember" wash: warm paper and grey with one ember glow from an edge (a from below, b deeper from below, c from the right). No ribs, no rainbow.
+- (Later still) Sam: the ember wash "still feels the same". The feel was the blurred gradient with centred type, not the colours. Bands are now flat colour panels (cream, clay, ash) with a hairline sun on a ruled horizon (rising, setting, overhead) and left-aligned type. No gradients, no grain.
