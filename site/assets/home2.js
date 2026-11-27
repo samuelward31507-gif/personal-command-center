@@ -71,36 +71,45 @@
     // a portal section: a drawing plays first, then the scroll flies through one face of it and that face opens into the app screen
     var pt = sec.classList.contains('pt'), art = sec.querySelector('.pt-art'), asvg = art && art.querySelector('svg'), aparts = art ? [].slice.call(art.querySelectorAll('[data-lit]')) : [], M = null, lastK = -9;
     function cl(x) { return x < 0 ? 0 : x > 1 ? 1 : x }
-    var world = sec.querySelector('.pt-world'), rim = sec.querySelector('.pt-rim'), G = null;
-    function solve() {   // where the dial sits in the stage, and how far it has to open to swallow the whole frame
-      art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), D = asvg.dataset.dial.split(' ').map(Number);
-      if (!c || !L.width) return; var k = Math.sqrt(c.a * c.a + c.b * c.b), x = c.a * D[0] + c.e - L.left, y = c.d * D[1] + c.f - L.top;
-      var far = Math.sqrt(Math.pow(Math.max(x, L.width - x), 2) + Math.pow(Math.max(y, L.height - y), 2)) * 1.08;
-      fig.style.setProperty('--z', 1); fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', '0px'); var F = fig.getBoundingClientRect();
-      G = { x: x, y: y, rx: D[2] * k, ry: D[3] * k, end: far / (D[2] * k), fx: F.left + F.width / 2 - L.left, fy: F.top + F.height / 2 - L.top, z0: Math.min(.5, 1.7 * D[2] * k / Math.max(1, F.width)) }; M = G;
+    var world = sec.querySelector('.pt-world'), rim = sec.querySelector('.pt-rim'), ov = sec.querySelector('.pt-ov'), pin = sec.querySelector('.pz-in'), G = null;
+    var tc = ov && ov.querySelector('.pt-c'), rings = ov ? [].slice.call(ov.querySelectorAll('.pt-r')) : [], rays = ov && ov.querySelector('.pt-rays'), hand = ov && ov.querySelector('.pt-hand'), hub = ov && ov.querySelector('.pt-hub'), title = ov && ov.querySelector('.pt-title');
+    function solve() {   // where the dial sits, in the drawing's layer and in the pinned frame, and how far it has to open to swallow the frame
+      art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), V = pin.getBoundingClientRect(), D = asvg.dataset.dial.split(' ').map(Number);
+      if (!c || !L.width) return; var k = Math.sqrt(c.a * c.a + c.b * c.b), x = c.a * D[0] + c.e - L.left, y = c.d * D[1] + c.f - L.top, X = x + L.left - V.left, Y = y + L.top - V.top;
+      var far = Math.sqrt(Math.pow(Math.max(X, V.width - X), 2) + Math.pow(Math.max(Y, V.height - Y), 2)) * 1.06;
+      G = { x: x, y: y, X: X, Y: Y, W: V.width, H: V.height, rx: D[2] * k, ry: D[3] * k, far: far, end: far / (D[2] * k) };
     }
     function litArt(k) { if (k === lastK) return; lastK = k; aparts.forEach(function (e) { var n = +e.dataset.lit; e.classList.toggle('on', n <= k); e.classList.toggle('now', n === k) }) }
+    // The timeline of the pinned section, as fractions of its scroll: the drawing, the way through the dial, the title page, the calendar coming up, the booking.
+    var P0 = .17, P1 = .45, D0 = .56, D1 = .67;
     function upPortal(p) {
-      litArt(p < .025 ? -1 : p < .085 ? 0 : p < .145 ? 1 : p < .205 ? 2 : 3);
-      var t = ezz((p - .27) / .22);
+      litArt(p < .02 ? -1 : p < .055 ? 0 : p < .09 ? 1 : p < .125 ? 2 : 3);
+      var t = cl((p - P0) / (P1 - P0)), d = cl((p - D0) / (D1 - D0)), ed = ezz(d);
       if (t > 0 && !G) solve();
-      if (t <= 0 || !G) { art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; world.style.visibility = 'hidden'; rim.style.opacity = 0 }
-      else {
-        var sc = Math.pow(G.end, t), sy = sc * (1 + cl(t * 1.6)), rx = G.rx * sc, ry = G.ry * sy;   // the dial opens, and turns from lying flat to facing you
-        art.style.transform = 'translate(' + G.x.toFixed(2) + 'px,' + G.y.toFixed(2) + 'px) scale(' + sc.toFixed(4) + ',' + sy.toFixed(4) + ') translate(' + (-G.x).toFixed(2) + 'px,' + (-G.y).toFixed(2) + 'px)';
-        art.style.opacity = (1 - cl((t - .62) / .3)).toFixed(3); art.style.visibility = t >= 1 ? 'hidden' : 'visible';
-        world.style.visibility = 'visible'; world.style.clipPath = t >= 1 ? 'none' : 'ellipse(' + rx.toFixed(1) + 'px ' + ry.toFixed(1) + 'px at ' + G.x.toFixed(1) + 'px ' + G.y.toFixed(1) + 'px)';
-        rim.style.cssText = 'left:' + (G.x - rx).toFixed(1) + 'px;top:' + (G.y - ry).toFixed(1) + 'px;width:' + (2 * rx).toFixed(1) + 'px;height:' + (2 * ry).toFixed(1) + 'px;opacity:' + (t >= 1 ? 0 : 1);
-        var z = Math.min(1, G.z0 * sc), e = (z - G.z0) / (1 - G.z0);   // the screen rides out of the dial: small and centred in it at first, then it takes its place
-        fig.style.setProperty('--z', z.toFixed(4)); fig.style.setProperty('--tx', ((G.x - G.fx) * (1 - e)).toFixed(1) + 'px'); fig.style.setProperty('--ty', ((G.y - G.fy) * (1 - e)).toFixed(1) + 'px');
-      }
-      asvg.classList.toggle('flying', t > 0);
-      sec.style.setProperty('--ha', (1 - cl(t / .4)).toFixed(3)); sec.style.setProperty('--hb', cl((t - .6) / .4).toFixed(3)); sec.classList.toggle('pb', t > .5);
-      state(t < 1 ? 0 : p > .9 ? 4 : p > .78 ? 3 : p > .66 ? 2 : p > .54 ? 1 : 0);
+      if (t <= 0 || !G) { art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; ov.style.visibility = 'hidden'; rim.style.opacity = 0; world.style.visibility = 'hidden'; asvg.classList.remove('flying'); sec.style.setProperty('--ha', 1); sec.style.setProperty('--hb', 0); sec.classList.remove('pb'); state(0); return }
+      // 1. the dial opens and turns to face you; the drawing rushes past
+      var td = cl(t / .4), sc = Math.pow(G.end, ezz(td)), sy = sc * (1 + cl(td * 1.6)), rx = G.rx * sc, ry = G.ry * sy;
+      art.style.transform = 'translate(' + G.x.toFixed(2) + 'px,' + G.y.toFixed(2) + 'px) scale(' + sc.toFixed(4) + ',' + sy.toFixed(4) + ') translate(' + (-G.x).toFixed(2) + 'px,' + (-G.y).toFixed(2) + 'px)';
+      art.style.opacity = (1 - cl((td - .7) / .3)).toFixed(3); art.style.visibility = td >= 1 ? 'hidden' : 'visible'; asvg.classList.add('flying');
+      ov.style.visibility = d >= 1 ? 'hidden' : 'visible'; ov.style.opacity = (1 - cl((d - .25) / .6)).toFixed(3);
+      ov.style.clipPath = td >= 1 ? 'none' : 'ellipse(' + rx.toFixed(1) + 'px ' + ry.toFixed(1) + 'px at ' + G.X.toFixed(1) + 'px ' + G.Y.toFixed(1) + 'px)';
+      rim.style.cssText = 'left:' + (G.X - rx).toFixed(1) + 'px;top:' + (G.Y - ry).toFixed(1) + 'px;width:' + (2 * rx).toFixed(1) + 'px;height:' + (2 * ry).toFixed(1) + 'px;opacity:' + (td >= 1 ? 0 : 1);
+      // 2. through it: rings of a clock face come at you and pass, a second hand sweeps, the centre drifts to the middle of the frame
+      var u = t * (9.1 + Math.log(.46 * Math.min(G.W, G.H) / 44) / Math.log(2.05)) - 1.1, m = ezz(cl(t / .5)), cx = G.X + (G.W / 2 - G.X) * m, cy = G.Y + (G.H / 2 - G.Y) * m, live = cl(t / .16) * (1 - cl((t - .74) / .16));
+      tc.setAttribute('transform', 'translate(' + cx.toFixed(1) + ',' + cy.toFixed(1) + ')');
+      rings.forEach(function (g, i) { var r = 44 * Math.pow(2.05, u - i), o = r < 5 ? 0 : cl((r - 5) / 28) * (1 - cl((r - G.far * .85) / (G.far * .5))); g.setAttribute('transform', 'scale(' + (r / 100).toFixed(4) + ')'); g.style.opacity = (o * (i === 8 ? 1 : .8)).toFixed(3) });
+      rays.style.opacity = (live * .9).toFixed(3); rays.style.strokeDashoffset = (-u * 70).toFixed(1);
+      hand.style.opacity = live.toFixed(3); hub.style.opacity = live.toFixed(3); hand.setAttribute('transform', 'rotate(' + (t * 560).toFixed(2) + ')');
+      // 3. the title page, then 4. scrolling on brings the calendar up
+      var tt = cl((t - .8) / .2);
+      title.style.opacity = (tt * (1 - cl(d / .45))).toFixed(3); title.style.transform = 'translateY(' + (-ed * 14).toFixed(2) + 'vh) scale(' + (.93 + .07 * ezz(tt)).toFixed(4) + ')';
+      sec.style.setProperty('--ha', (1 - cl(t / .22)).toFixed(3)); sec.style.setProperty('--hb', cl((d - .4) / .5).toFixed(3)); sec.classList.toggle('pb', d > .4);
+      world.style.visibility = d > 0 ? 'visible' : 'hidden'; fig.style.opacity = ed.toFixed(3); fig.style.setProperty('--z', 1); fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', ((1 - ed) * 90).toFixed(1) + 'px');
+      state(d < 1 ? 0 : p > .93 ? 4 : p > .86 ? 3 : p > .78 ? 2 : p > .71 ? 1 : 0);
     }
     function up() {
       tk = false;
-      if (innerWidth <= 900) { fig.style.removeProperty('--z'); if (pt) { fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', '0px'); art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; world.style.visibility = 'visible'; world.style.clipPath = 'none'; rim.style.opacity = 0; asvg.classList.remove('flying'); litArt(3) } state(4); return }
+      if (innerWidth <= 900) { fig.style.removeProperty('--z'); if (pt) { fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', '0px'); fig.style.opacity = 1; art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; world.style.visibility = 'visible'; ov.style.visibility = 'hidden'; rim.style.opacity = 0; asvg.classList.remove('flying'); litArt(3) } state(4); return }
       var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight)));
       if (pt) { upPortal(p); return }
       fig.style.setProperty('--z', (1.6 - .6 * ezz(p / .3)).toFixed(4)); state(p > .8 ? 4 : p > .66 ? 3 : p > .5 ? 2 : p > .33 ? 1 : 0)

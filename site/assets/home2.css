@@ -472,3 +472,25 @@ h1,h2,h3{font-weight:560}
 .pt-rim{position:absolute;border-radius:50%;box-shadow:inset 0 0 0 1.5px #f2f1ee,0 0 0 1px rgba(224,25,58,.55);pointer-events:none;opacity:0}
 @media (max-width:900px){.pt-world{position:static;visibility:visible!important;background:none;display:grid;gap:22px;clip-path:none!important}.pt-rim{display:none}}
 @media (min-width:901px){.pz.pt .pz-fig{transform:translateX(-50%) translate(var(--tx,0px),var(--ty,0px)) scale(var(--z,1))}}
+/* ---- v24: through the dial. No app in sight: a tunnel of clock rings, then a title page, then the calendar comes up as you scroll on. ---- */
+.pz.pt{height:780vh}
+.pt-world{position:absolute;inset:0;background:none;visibility:hidden;clip-path:none!important}
+.pt-ov{position:absolute;inset:0;z-index:3;background:#000;visibility:hidden;overflow:hidden;will-change:clip-path,opacity}
+.pt-tun{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.pt-tun circle,.pt-tun path{fill:none;stroke:rgba(255,248,240,.62);stroke-width:1;vector-effect:non-scaling-stroke}
+.pt-r path{stroke:rgba(255,248,240,.38)}.pt-r:nth-of-type(3n+1) circle{stroke:#f2f1ee}.pt-r:last-of-type circle{stroke:#e0193a}
+.pt-rays path{stroke:rgba(255,248,240,.16);stroke-dasharray:6 34}
+.pt-tun .pt-hand{stroke:#e0193a;stroke-width:1.5}.pt-tun .pt-hub{fill:#e0193a;stroke:none}
+.pt-title{position:absolute;inset:0;display:grid;align-content:center;justify-items:center;text-align:center;padding:0 6vw;opacity:0;will-change:transform,opacity}
+.pt-title .px-k{margin-bottom:26px}
+.pt-tt{font:560 clamp(38px,5.6vw,88px)/1 "Inter Display",Inter,sans-serif;letter-spacing:-.042em;color:#f2f1ee;max-width:13ch;text-wrap:balance}
+.pt-ts{margin-top:26px;font-size:clamp(16px,1.3vw,19px);line-height:1.5;color:#a8a6a1;max-width:30em}
+.pt-cue{margin-top:44px;width:1px;height:54px;background:linear-gradient(#f2f1ee,rgba(242,241,238,0));animation:ptCue 1.8s cubic-bezier(.6,0,.2,1) infinite;transform-origin:50% 0}
+@keyframes ptCue{0%{transform:scaleY(0);opacity:1}60%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);opacity:0}}
+.pt-title::before{content:"";position:absolute;inset:11vh 5vw;pointer-events:none;--c:rgba(255,248,240,.5);background-repeat:no-repeat;
+  background-image:linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c));
+  background-size:11px 1px,1px 11px,11px 1px,1px 11px,11px 1px,1px 11px,11px 1px,1px 11px;
+  background-position:0 5px,5px 0,100% 5px,calc(100% - 5px) 0,0 calc(100% - 5px),5px 100%,100% calc(100% - 5px),calc(100% - 5px) 100%}
+.pt-rim{z-index:4}
+@media (max-width:900px){.pz.pt{height:auto}.pt-ov,.pt-rim{display:none!important}.pt-world{position:static;visibility:visible!important;display:grid;gap:22px}}
+@media (prefers-reduced-motion:reduce){.pt-cue{animation:none}}

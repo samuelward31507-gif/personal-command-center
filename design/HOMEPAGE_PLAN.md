@@ -115,3 +115,12 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 ## Pass 23 (Sam: "maybe the clock thing turns into a portal and we go through it")
 - The portal now opens out of the dial beside the phone, not the phone's screen. The dial turns from lying flat to facing you and grows until it is the whole frame (clip-path ellipse on `.pt-world`, rim drawn by `.pt-rim`); the drawing zooms about the dial's centre; the real Calendar rides out of the dial, small at first, then takes its place.
 - Geometry comes from `data-dial` on the drawing (home_art.reply_dial()).
+
+## Pass 24 (Sam: once we zoom into the clock the CRM must not be visible; go through it as a motion graphic, land on a header page, then scroll on into the CRM)
+- `.pz.pt` is 780vh and runs five beats (fractions in home2.js upPortal: P0 .17, P1 .45, D0 .56, D1 .67):
+  1. the phone drawing plays its four steps;
+  2. the dial opens and turns to face you (clip-path ellipse on `.pt-ov`, a full-frame black overlay), the drawing rushes past;
+  3. through it: nine clock-face rings with tick marks come at you and pass, a red second hand sweeps, faint speed lines, centre drifts to mid-frame. No app visible;
+  4. title page: chip, big centred headline, one line, corner marks, a scroll cue. The last ring settles as a red frame around it;
+  5. scrolling on fades the title page, brings the top-left heading in and the real Calendar up from below; then the booking story plays.
+- The tunnel is `.pt-tun` (inline SVG built in patch_home.py). Sam may want to design what we pass through himself; it is one SVG group to swap.
