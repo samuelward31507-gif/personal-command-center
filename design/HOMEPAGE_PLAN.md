@@ -150,3 +150,8 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Type: pills with red dots replaced by plain mono labels page-wide; h1/h2 at weight 520; step blocks with a mono index, a rail and a tick.
 - Reduced motion: drawings still build with the scroll (it is direct), the portal tunnel is skipped.
 - Still Inter. A new typeface needs a font file from Sam.
+
+## Pass 30 (Sam approved the two cuts; wants a little more colour, used sparingly)
+- Cut the six-layer audit section: its promise ("You keep the plan, whether or not you work with us") moved onto the funnel, now labelled "The free audit". `stack()` and `AUDIT` stay in patch_home.py, unplaced.
+- Cut the 3D patch bay (`#build`) and its loader. Order is now: hero, tools, audit funnel, stats, front desk + portal, calendar, quotes, money, after the job, custom, what you get back, grid, quote, call band, close.
+- Colour rule (v30): crimson marks what is being lost ("someone else gets.", the running total, "missing.") and marks the step being read (a short bar on the rail and the step's number). Nothing else is red; drawings stay monochrome.

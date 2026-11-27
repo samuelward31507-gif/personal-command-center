@@ -15,10 +15,10 @@ def ins(before, html):
     global s
     k = s.index(before); s = s[:k] + html + s[k:]
 # The old 3D leak track, the six-layer render and the dial are retired. Their sections are rebuilt below as flat product pieces.
-for old in ('<section id="leaks"', '<section id="inside"', '<section id="back"'):
+for old in ('<section id="leaks"', '<section id="inside"', '<section id="back"', '<section id="build"'):   # the patch bay went in pass 30: it previewed the sections that follow it
     if old in s:
         a_, b_ = blk(old); s = s[:a_] + s[b_:]
-s = s.replace('<script src="/assets/cinder-leaks.js" defer></script>\n', '').replace("when('#inside','/assets/cinder-unit.js',2600);", '')
+s = s.replace('<script src="/assets/cinder-leaks.js" defer></script>\n', '').replace("when('#inside','/assets/cinder-unit.js',2600);", '').replace("when('#build','/assets/cinder-objects.js',4200)", '')
 s = s.replace("addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update();\n})();", "if(bd&&bdHost){addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update()}\n})();")
 SMALL = '<small>Example business, sample data</small>'
 BOOK = '<a class="inl" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a>'
@@ -40,7 +40,7 @@ AV = lambda x: f'<span class="ap-av">{x}</span>'; CK = '<span class="ap-ck"></sp
 # 1. where the jobs go: a funnel, with three lines leaving through its side
 import sys; sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent)); import home_art as ART
 TOT = '$0|$2,400|$2,400|$5,500|$5,500|$6,400'
-WHERE = sx('', 'The audit', 'Where the jobs go.', 'Most businesses lose them at the same few points. The audit finds yours and puts a dollar number on each.',
+WHERE = sx('', 'The free audit', 'Where the jobs go.', 'Most businesses lose them at the same few points. The free audit finds yours and puts a dollar number on each. You keep the plan, whether or not you work with us.',
   [('Leads come in.', 'Calls, forms and messages. Every one of them cost you something to get.'),
    ('Some never hear back.', 'The ones that came in after hours, or while you were on a job. In this example that is $2,400 a month.'),
    ('Some get booked.', 'The ones you reached in time are on the calendar.'),
@@ -134,7 +134,7 @@ BACK = sx('rev', 'What you get back', 'Most of the day is already done.', 'By th
 TK = '<div class="tk" aria-hidden="true"></div>'
 W = lambda x: '<!--h2-->' + TK + x + '<!--/h2-->\n'
 ins('<section id="problem"', '<!--h2--><svg class="il-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="ilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0f0f12"/></linearGradient><linearGradient id="ill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111114"/><stop offset="1" stop-color="#08080a"/></linearGradient><linearGradient id="ilr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0a0c"/><stop offset="1" stop-color="#040405"/></linearGradient><radialGradient id="ilg"><stop offset=".12" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="ilm" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#ilg)"/></mask></defs></svg><!--/h2-->\n' + W(WHERE))
-ins('<section id="build"', W(AUDIT) + '<!--h2-->' + TK + '<!--/h2-->\n')
+# The six-layer audit section was folded into the funnel above in pass 30 (AUDIT and stack() are kept in this file but no longer placed).
 W0 = lambda x: '<!--h2-->' + x + '<!--/h2-->\n'
 ins('<section id="everything"', W(PORTAL) + W0(CALSEC) + W0(QUOTE) + W0(INVOICE) + W0(REVIEW) + W0(CUSTOM) + W0(BACK) + '<!--h2-->' + TK + '<!--/h2-->\n')
 # the numbers: say what the audit checks against each one
@@ -150,6 +150,8 @@ k = s.index('</div>', s.index('class="ixs-h"', s.index('<section id="everything"
 s = s[:k] + '<!--h2--><div class="g8">' + ''.join(f'<a href="/everything"><span>[{i + 1:02d}]</span><i class="g8-i">{ICONS[i]}</i><b>{n}</b><p>{d}</p></a>' for i, (n, d) in enumerate(G8)) + '</div><p class="sw-n"><span>Thirty-two builds so far. If yours is not on the list and it does not need a person, we can probably build it.</span><a class="btn ghost" href="/everything">See everything we build</a>' + CTA + '</p><!--/h2-->' + s[k:]
 AC = '<!--h2--><section class="ac" id="call" aria-labelledby="h-call"><div class="wrap"><p class="px-k"><i></i>The free audit call</p><h2 id="h-call">Fifteen minutes. You leave with a plan.</h2><p class="sub">We can fix it. First we have to know what it is, and that is what the call is for.</p><div class="ac-t" aria-hidden="true"><u></u><b></b></div><div class="ac-g"><div><span>First</span><b>You tell us where it hurts.</b><p>Missed calls, slow weeks, quotes that vanish. Whatever is costing you.</p></div><div><span>Then</span><b>We walk a job with you.</b><p>From the first call to the review, looking for where jobs slip and what each leak is worth.</p></div><div><span>Before you hang up</span><b>You get the plan.</b><p>What to fix first, in order. It is yours to keep, whether or not you work with us.</p></div></div><div class="ac-f"><p><b>Bring rough numbers.</b> Leads a month, your average job, and how many quotes you close.</p>' + CTA + '</div></div></section><!--/h2-->\n'
 ins('<section class="closing"', AC)
+# red marks what is being lost, in three places only: this line in the stats, the running total under the funnel, and one word of the last headline
+if 'class="rd-t"' not in s: s = s.replace('Find out what you’re missing.', 'Find out what you’re <em class="rd-t">missing.</em>', 1)
 if 'home2.css' not in s: s = s.replace('</head>', '<link rel="stylesheet" href="/assets/home2.css">\n</head>', 1)
 for tag in ('<script src="/assets/cinder-builds.js" defer></script>\n', '<script src="/assets/cinder-builds2.js" defer></script>\n', '<script src="/assets/cinder-figs.js" defer></script>\n', '<script src="/assets/home2.js" defer></script>\n'): s = s.replace(tag, '')
 s = s.replace('<script src="/assets/cinder-chat.js" defer></script>', '<script src="/assets/cinder-builds.js" defer></script>\n<script src="/assets/cinder-builds2.js" defer></script>\n<script src="/assets/cinder-figs.js" defer></script>\n<script src="/assets/home2.js" defer></script>\n<script src="/assets/cinder-chat.js" defer></script>', 1)
