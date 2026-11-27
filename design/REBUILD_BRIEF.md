@@ -447,3 +447,8 @@ Sam sent two Attio homepage screenshots: past the top, their window steps back a
 - Homepage second transition: `portal('bars', …)` between the leaks and "What we do": three bars fill as a total counts to $6,400 a month, then close up into "That is what an audit finds." The homepage is now written by `mk_pages.py` as well so it can use the pages stylesheet.
 - Still Sam's to decide, not changed: terms page plan names and the $497 add-on, the about page "no contract" line, the quotes under his name.
 - Sam's answers (27 Nov): hide the terms page for now (footer link removed, page set to noindex; the file is kept for when he sends new terms); keep "No contract. Month to month, cancel by text with 30 days' notice." on About; all three quotes under his name approved.
+
+### 22u. Menu of every build, and the whole site in black, white and grey (27 Nov)
+
+- Sam: "I want all the tabs… at the top of the page." The nav's "What we build" now opens a full-width panel listing all 32 builds in their eight groups, plus links to Everything, One day, Check your site and Questions. On phones the menu has a folding "All 32 builds" list. `MEGA` in `mk_home.py` reads the same data as the pages.
+- Sam: bring every page up to the homepage. `mono()` in `mk_home.py` turns every coloured value in both stylesheets and in page markup into the grey of the same lightness at build time (strong accents go near-ink). Kept: the Mac window buttons and the cool wash of the chapter bands. Measured on twelve pages: no coloured pixels above the threshold.

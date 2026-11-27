@@ -2564,7 +2564,7 @@ clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((10
 out = pathlib.Path(ROOT) / 'site'
 _home = H.HOME.replace(H.WHAT, portal('bars', 'One example business', 'Three leaks. It adds up.', 'That is what an audit finds.') + H.WHAT)
 assert _home != H.HOME
-CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL + CSS_STAGE + CSS_DAY + CSS_LINE
+CSS = H.mono(CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL + CSS_STAGE + CSS_DAY + CSS_LINE)
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V

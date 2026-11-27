@@ -742,6 +742,24 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 .lk .sm-r.t b,.lk .fc-r b.r{color:var(--ink)}.lk .ch-k .five,.lk .rp-five{border-left-color:var(--ink)}.lk .rp-five span{color:var(--ink)}
 .lk .lg-r u{background:#eceef2;color:var(--ink)}.lk em.r,.lk .lg-r em.r{background:var(--ink);color:#fff}.lk em.y,.lk .lg-r em.y{background:#eceef2;color:var(--ink)}.lk .fc-r b.y,.lk .sm-r.t.y b,.lk td.n.h{color:var(--ink)}
 .lk .wk-r u{background:repeating-linear-gradient(135deg,#8f9197 0 1px,transparent 1px 5px),#e3e4e8}
+/* every build under "What we build": a full-width panel on hover or focus, a folding list in the phone menu */
+.nav ul li.mg{position:static}.mg>a{display:inline-flex;align-items:center;gap:7px}
+.mg>a i{width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-2px) rotate(45deg);opacity:.55;transition:transform .2s}
+.mg:hover>a i,.mg:focus-within>a i{transform:translateY(1px) rotate(225deg)}
+.mg-p{position:absolute;left:0;right:0;top:100%;background:#fff;color:var(--ink);border-bottom:1px solid var(--ln);box-shadow:0 40px 60px -40px rgba(23,24,26,.28);opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s,transform .18s,visibility 0s .18s}
+.mg:hover .mg-p,.mg:focus-within .mg-p{opacity:1;visibility:visible;transform:none;transition:opacity .18s,transform .18s}
+.mg-g{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:0;width:min(1390px,calc(100vw - 200px));margin:0 auto;border-left:1px solid var(--ln)}
+.mg-g div{padding:26px 18px 28px;border-right:1px solid var(--ln)}
+.mg-g p{margin:0 0 14px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--g2)}
+.mg-g a{display:block;padding:6px 0;font-size:14.5px;font-weight:500;letter-spacing:-.01em;color:var(--ink)}.mg-g a:hover{color:var(--g2)}
+.mg-f{display:flex;gap:28px;width:min(1390px,calc(100vw - 200px));margin:0 auto;padding:16px 18px;box-sizing:border-box;border-top:1px solid var(--ln);border-left:1px solid var(--ln);border-right:1px solid var(--ln);font-size:14px;color:var(--g2)}
+.mg-f a:first-child{color:var(--ink);font-weight:540}.mg-f a:hover{color:var(--ink)}
+.mm-b{border-bottom:1px solid var(--ln)}.mm-b summary{display:flex;align-items:center;height:50px;font-size:17px;font-weight:520;letter-spacing:-.012em;cursor:pointer;list-style:none}.mm-b summary::-webkit-details-marker{display:none}
+.mm-b summary::after{content:"";margin-left:auto;width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg)}.mm-b[open] summary::after{transform:rotate(225deg)}
+.mm-b div{padding:4px 0 10px}.mm-b p{margin:10px 0 2px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--g2)}
+.mm-p .mm-b a{height:40px;font-size:15.5px;font-weight:480;border-bottom:0}
+.mm-p{max-height:calc(100vh - 70px);overflow:auto}
+@media(max-width:1180px){.mg-p{display:none}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
@@ -1274,10 +1292,18 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 '''
 
 LINKS = [('/everything', 'What we build'), ('/free-audit', 'The free audit'), ('/software', 'The app'), ('/trades', 'Trades'), ('/story', 'Our story')]
+# every build page, grouped, read from the old generator's data without running it; used for the menu under "What we build"
+_bs = open(ROOT + '/design/build_services.py').read().split('\nBY = ')[0]
+_bn = {'__file__': ROOT + '/design/build_services.py'}
+exec(_bs, _bn)
+_BY = {p['slug']: p for p in _bn['ALL']}
+MEGA = ''.join('<div><p>%s</p>%s</div>' % (gname, ''.join('<a href="/%s">%s</a>' % (sl, _BY[sl]['name']) for sl in _bn['ORDER'][g])) for g, gname in _bn['GROUPS'])
 NAV = ('<a class="skip" href="#main">Skip to content</a><header class="top"><div class="nav"><a href="/" class="nav-b" aria-label="Cinder Revenue Company, home"><b>%s Cinder Revenue</b></a>'
-       '<ul>%s</ul><div class="nav-r"><a class="btn" %s>Book your free audit</a>'
-       '<details class="mm"><summary aria-label="Menu"><i></i><i></i></summary><nav class="mm-p" aria-label="Menu">%s</nav></details></div></div></header>'
-       % (mark, ''.join('<li><a href="%s">%s</a></li>' % l for l in LINKS), CAL, ''.join('<a href="%s">%s</a>' % l for l in LINKS + [('/questions', 'Questions')])))
+       '<ul><li class="mg"><a href="/everything" aria-haspopup="true">What we build<i></i></a><div class="mg-p"><div class="mg-g">%s</div>'
+       '<div class="mg-f"><a href="/everything">See everything we build</a><a href="/day">One day with it running</a><a href="/audit">Check your site</a><a href="/questions">Questions</a></div></div></li>%s</ul>'
+       '<div class="nav-r"><a class="btn" %s>Book your free audit</a>'
+       '<details class="mm"><summary aria-label="Menu"><i></i><i></i></summary><nav class="mm-p" aria-label="Menu">%s<details class="mm-b"><summary>All 32 builds</summary>%s</details></nav></details></div></div></header>'
+       % (mark, MEGA, ''.join('<li><a href="%s">%s</a></li>' % l for l in LINKS[1:]), CAL, ''.join('<a href="%s">%s</a>' % l for l in LINKS + [('/questions', 'Questions')]), MEGA))
 
 
 # =====================================================================================
@@ -1359,7 +1385,35 @@ AUDIT = (
     + CL)
 
 import hashlib
-ALLCSS = hero_css + CSS
+# Sam, 27 Nov: black, white and grey across the site. Every coloured value in the stylesheets and the pages is turned into the grey of
+# the same lightness on the way out. Kept as they are: the three Mac window buttons and the cool wash of the chapter bands.
+_KEEP = {'#ff5f57', '#febc2e', '#28c840', '#c3ccdb', '#aab6cc', '#8f9bb8', '#a7a9c4', '#b4c0d2', '#e2e6f2', '#e6e4f0'}
+_KEEP_RGB = {(170, 182, 204), (143, 155, 184), (195, 204, 219), (167, 169, 196), (180, 192, 210), (226, 230, 242), (230, 228, 240)}
+def _grey(r, g, b):
+    if max(r, g, b) - min(r, g, b) < 22:
+        return None
+    y = .299 * r + .587 * g + .114 * b
+    if y < 120 and max(r, g, b) - min(r, g, b) > 90:
+        y *= .55   # a strong accent becomes near-ink, not a muddy mid grey
+    y = int(round(max(0, min(255, y))))
+    return y, y, min(255, y + 2)
+def mono(text):
+    def hx(m):
+        h = m.group(0).lower()
+        if h in _KEEP:
+            return m.group(0)
+        q = _grey(int(h[1:3], 16), int(h[3:5], 16), int(h[5:7], 16))
+        return m.group(0) if q is None else '#%02x%02x%02x' % q
+    def rg(m):
+        r, g, b = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if (r, g, b) in _KEEP_RGB:
+            return m.group(0)
+        q = _grey(r, g, b)
+        return m.group(0) if q is None else 'rgba(%d,%d,%d,' % q
+    return re.sub(r'rgba\((\d+),\s*(\d+),\s*(\d+),', rg, re.sub(r'#[0-9a-fA-F]{6}\b', hx, text))
+
+
+ALLCSS = mono(hero_css + CSS)
 VER = hashlib.sha1((ALLCSS + JS).encode()).hexdigest()[:8]
 open(ROOT + '/site/assets/light.css', 'w').write(ALLCSS.strip() + '\n')
 open(ROOT + '/site/assets/light.js', 'w').write(JS.strip() + '\n')
@@ -1377,7 +1431,7 @@ def page(title, desc, path, body, index=True, css=''):
             '<link rel="apple-touch-icon" href="/icon/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">'
             '<link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/assets/light.css?v=%(v)s">%(css)s</head>'
             '<body>%(nav)s<main id="main">%(body)s</main>%(ft)s<script src="/assets/light.js?v=%(v)s" defer></script><script src="/assets/cinder-chat.js" defer></script><script src="/t.js" defer></script></body></html>'
-            % dict(t=title, d=desc, u=url, v=VER, nav=NAV, body=body, ft=FT, robots='' if index else '<meta name="robots" content="noindex">', css=('<link rel="stylesheet" href="/assets/%s">' % css) if css else ''))
+            % dict(t=title, d=desc, u=url, v=VER, nav=NAV, body=mono(body), ft=FT, robots='' if index else '<meta name="robots" content="noindex">', css=('<link rel="stylesheet" href="/assets/%s">' % css) if css else ''))
 
 
 HOME = HERO + TOOLS + PROB + LK + WHAT + HW + CK + BD + FQ + CL   # promise, fits your tools, the problem, what we do, how it starts, how it works, what gets built, who is behind it, ask
