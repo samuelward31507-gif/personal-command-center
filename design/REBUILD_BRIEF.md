@@ -196,3 +196,24 @@ Sam: the hero had too many colours and he wanted to try a split screen.
 - Right half, on a soft blue wash: one card, the example audit as a list of the seven parts of the business top to bottom, each with what was found, what it costs and the fix. A dashed line joins them and a blue dot travels down it. The totals are a black bar at the bottom of the card.
 - Colours in the hero are now ink, grey and one blue. The red, amber and green tints, the floating dark card and the dot grid are gone.
 - The previous hero (the horizontal map) is still in `mk_home.py` as `steps` / `TOTAL` but is not placed.
+
+## 18. The homepage, finished pass (27 Nov)
+
+Sam approved the split hero and asked for the fixes from the message check, then to perfect the page before the look goes to the rest of the site.
+
+Order on `/new` now, about a quarter shorter than before:
+
+1. Split hero.
+2. Tools grid.
+3. "What we do".
+4. The clock into the dark stretch: "It starts with / The free audit".
+5. "How it works": four steps beside **what ran today** (five things the systems did for the example business, one that needs the owner). The findings report that used to sit here repeated the hero and is gone.
+6. "Then we build whatever fixes it": the ring with three example audits, the eight parts, the ads line.
+7. "What an audit finds": **three** examples, one about leads (calls nobody answered), one about money (work that isn't paid), one about hours (work done by hand). The other three blocks are still built in `mk_home.py` and are for the inner pages.
+8. A booking row straight after the findings: "Yours will be different. That's what the fifteen minutes are for."
+9. Founder quote, in a serif, filling in word by word as it scrolls. The words are the ones already on the old homepage.
+10. Dark closing band, then the footer.
+
+Cut on purpose: the row of five things the audit covers (a third list of the same parts), and the sourced-numbers section (all three sourced figures are about leads, which is the tilt Sam wanted gone; one of them stays inside the first finding).
+
+Left to do before this replaces the real homepage: prune the unused styles in the generator, move the styles and script into files under `site/assets/`, and write the result to `site/index.html`. Then the inner pages.

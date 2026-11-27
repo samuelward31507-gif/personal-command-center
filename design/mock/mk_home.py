@@ -43,7 +43,7 @@ WHAT = ('<section class="st"><div class="w st-i"><span class="lb">What we do</sp
 PROB = ('<section class="st st2"><div class="w st-i"><span class="lb">What an audit finds</span>'
         '<p class="st-t">The jobs and hours you lose, you never hear about. '
         '<span>The caller who got voicemail doesn&rsquo;t ring back. The quote that went quiet doesn&rsquo;t remind you. '
-        'Here are six places we look.</span></p></div></section>')
+        'Here are three places we look.</span></p></div></section>')
 
 # ---------- the chart: calls by day and hour ----------
 DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -215,7 +215,8 @@ WK_A = facts('One Tuesday', 'By hand', [('Reminder texts sent', '9', ''), ('Book
 WK_B = summ([('Hours a week by hand', '11', False), ('Working weeks a year', '50', True)], ('Hours a year', 'About 550'), 'y')
 
 SUM = summ([('New callers who got no answer', '3', False), ('Leads that become jobs', '1 in 3', True), ('Average job', '$2,400', True)], ('Lost a month', '$2,400'))
-LEAKS = ['After-hours calls', 'Slow replies', 'Quotes that go quiet', 'Late invoices', 'No reviews', 'Work done by hand']
+LEAKS = ['Calls nobody answered', 'Work that isn&rsquo;t paid', 'Hours done by hand']
+KEEP = [0, 3, 5]  # of the six blocks built below; the other three stay here for the inner pages
 BLOCKS = [
     block(1, 'The call you never knew about.', 'Saturday, 7:42 PM: a homeowner gets your voicemail and calls the next company on the list.',
           CHART + TALLY, ('78%', 'of people have taken their business elsewhere after a company didn&rsquo;t pick up.', 'CallRail survey of 1,000 consumers, 2025'),
@@ -242,7 +243,10 @@ BLOCKS = [
           'For one week, write down every task you do by hand more than twice. That list is where the audit starts.', WK_A,
           'It doesn&rsquo;t show up as a lost job. It shows up as your evenings. The audit adds up the hours and marks which ones can run on their own.', WK_B),
 ]
-LK = ('<section class="lk"><div class="w lk-g"><aside class="lk-n"><ul>%s</ul></aside><div class="lk-m">%s</div></div></section>'
+BLOCKS = [re.sub(r'id="leak-\d+"', 'id="leak-%d"' % (n + 1), BLOCKS[k]) for n, k in enumerate(KEEP)]
+LK = ('<section class="lk"><div class="w lk-g"><aside class="lk-n"><ul>%s</ul></aside><div class="lk-m">%s</div></div>'
+      '<div class="w lk-c"><p class="bs">Yours will be different. <span>That&rsquo;s what the fifteen minutes are for.</span></p>'
+      '<a class="btn" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener">Book your free audit</a></div></section>'
       % (''.join('<li%s><a href="#leak-%d">%s</a></li>' % (' class="on"' if i == 0 else '', i + 1, n) for i, n in enumerate(LEAKS)), ''.join(BLOCKS)))
 
 # ---------- the clock: light to dark through the dial ----------
@@ -336,7 +340,7 @@ FD = ('<div class="fd"><div class="fd-h"><span class="dot"></span><b>Audit findi
 HW = ('<section class="hw"><div class="w hw-g"><div class="hw-t"><span class="lb">How it works</span>'
       '<p class="st-t">One call. Then a plan with numbers on it. <span>You decide what gets built.</span></p>'
       '<ol>%s</ol></div><div class="hw-r">%s</div></div></section>'
-      % (''.join('<li><div><b>%s</b><span>%s</span></div></li>' % st for st in STEPS), FD))
+      % (''.join('<li><div><b>%s</b><span>%s</span></div></li>' % st for st in STEPS), '@@RUN@@'))
 CL = ('<section class="cl"><div class="w cl-i"><h2>Find out what you&rsquo;re missing.</h2><p>A free audit of your business. You keep what we find.</p>'
       '<div><a class="btn" %s>Book your free audit</a><a class="btn g" href="/free-audit">See what we check</a></div></div></section>' % CAL)
 
@@ -380,6 +384,24 @@ HERO = ('<section class="hs"><div class="w hs-g"><div class="hs-t"><span class="
         '<div class="ac-f"><div><b>$6,400</b>lost a month</div><div><b>$14,600</b>waiting to be paid</div><div><b>11 hours</b>by hand a week</div></div>'
         '</div></div></div></section>' % (CAL, rows))
 
+RAN = [('8:00 AM', 'Four customers reminded', 'Tomorrow&rsquo;s visits, by text'),
+       ('9:15 AM', 'Quote #1042 followed up', 'The day-two check-in'),
+       ('2:30 PM', 'Invoice sent', 'Cedar fence, the day it finished'),
+       ('5:00 PM', 'Review asked for', 'Gate repair, finished yesterday'),
+       ('7:42 PM', 'Missed call texted back', 'Nine seconds after it rang out')]
+TICK = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.25"/><path d="m4.9 8.2 2.1 2.1 4.1-4.4"/></svg>'
+RUN = ('<div class="fd rn"><div class="fd-h"><span class="dot"></span><b>What ran today</b><span>Ridgeline Fence</span><span class="tag">Example business, sample data</span></div>%s'
+       '<div class="rn-f"><span>Five things done. None of them by hand.</span><em>1 needs you</em></div></div>'
+       % ''.join('<div class="rn-r"><time>%s</time>%s<b>%s</b><span>%s</span></div>' % (t, TICK, a_, b_) for t, a_, b_ in RAN))
+FQ = ('<section class="fq"><div class="w fq-i"><blockquote>&ldquo;I build and watch every client&rsquo;s system myself, and I only take on a few businesses at a time. '
+      'If it isn&rsquo;t a fit, I&rsquo;ll say so.&rdquo;</blockquote><p><b>Sam Ward</b>Founder, Cinder Revenue</p></div></section>')
+FT = ('<footer class="fo"><div class="w fo-g"><div class="fo-b"><a href="/" class="nav-b"><b>%s Cinder Revenue</b></a><p>We audit service businesses, then build what fixes them.</p></div>'
+      '<div><h4>The audit</h4><a href="/free-audit">How it works</a><a href="/audit">Check your site</a><a %s>Book your free audit</a></div>'
+      '<div><h4>What we build</h4><a href="/everything">Everything we build</a><a href="/websites">Websites</a><a href="/booking">Booking</a><a href="/estimates">Quotes</a><a href="/invoicing">Invoices</a><a href="/custom-builds">Custom builds</a></div>'
+      '<div><h4>Company</h4><a href="/software">The app</a><a href="/trades">Trades</a><a href="/story">Our story</a><a href="/questions">Questions</a><a href="mailto:sam.cinderrevenue@gmail.com">Email Sam</a></div></div>'
+      '<div class="w fo-l"><span>&copy; 2026 Cinder Revenue Company, Colorado</span><span>Pictures show an example business with sample data.</span>'
+      '<span><a href="/privacy">Privacy</a><a href="/terms">Terms</a></span></div></footer>' % (mark, CAL))
+
 JS = r"""
 (function(){
 var items=[].slice.call(document.querySelectorAll('.lk-n li')),blocks=[].slice.call(document.querySelectorAll('.lk-b')),strip=document.querySelector('.lk-n ul'),at=0,tick=false;
@@ -388,6 +410,16 @@ function pick(){tick=false;var line=innerHeight*.42,n=0;for(var i=0;i<blocks.len
 if(n===at)return;items[at].classList.remove('on');items[n].classList.add('on');at=n;
 if(strip.scrollWidth>strip.clientWidth+4){var el=items[n];strip.scrollTo({left:el.offsetLeft-20,behavior:'smooth'})}}
 addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(pick)}},{passive:true});addEventListener('resize',pick);pick();
+})();
+
+(function(){
+var q=document.querySelector('.fq blockquote');if(!q)return;
+if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search))return;
+var words=q.textContent.split(' ');q.innerHTML=words.map(function(w){return '<span>'+w+'</span>'}).join(' ');q.classList.add('fill');
+var sp=q.querySelectorAll('span'),last=-1,tick=false;
+function paint(){tick=false;var r=q.getBoundingClientRect(),vh=innerHeight,p=(vh*.86-r.top)/(vh*.5),n=Math.round(Math.max(0,Math.min(1,p))*sp.length);
+if(n===last)return;last=n;for(var i=0;i<sp.length;i++)sp[i].classList.toggle('on',i<n)}
+addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(paint)}},{passive:true});addEventListener('resize',paint);paint();
 })();
 
 (function(){
@@ -403,7 +435,7 @@ new IntersectionObserver(function(e){if(e[0].isIntersecting){bd.classList.remove
 })();
 
 (function(){
-var ck=document.querySelector('.ck'),top=document.querySelector('.top'),darks=document.querySelectorAll('.au,.hw,.bd,.cl');if(!ck)return;
+var ck=document.querySelector('.ck'),top=document.querySelector('.top'),darks=document.querySelectorAll('.au,.hw,.bd,.cl,.fo');if(!ck)return;
 var q=location.search,force=/[?&]motion=on/.test(q),snap=/[?&]snap=1/.test(q),band=ck.querySelector('.ck-dark'),cur=-1,dk=false;
 if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!force){onscroll=nav;nav();return}
 ck.classList.add('on');
@@ -801,6 +833,30 @@ td i.h{background:var(--amber)}td.n.h{color:#a86a00}td.n{white-space:nowrap}
 @media(min-width:1700px){.ac{zoom:1.16}}
 @media(max-width:1180px){.hs h1{font-size:40px}.ac-r>small{display:none}}
 
+/* ---- the finished page: what ran today, the ask after the findings, the quote, the footer ---- */
+.rn-r{display:grid;grid-template-columns:62px 18px minmax(0,1fr);column-gap:12px;row-gap:2px;align-items:center;padding:13px 18px 14px;border-bottom:1px solid var(--dl)}
+.rn-r time{grid-row:1/3;align-self:start;padding-top:3px;font:500 11.5px/1.2 "Geist Mono",monospace;color:#7f8187;white-space:nowrap}
+.rn-r svg{grid-row:1/3;align-self:start;margin-top:1px;width:18px;height:18px;fill:none;stroke:#5d90fb;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.rn-r svg circle{fill:rgba(93,144,251,.14)}
+.rn-r b{font-size:14px;font-weight:540;letter-spacing:-.008em}.rn-r span{grid-column:3;font-size:12.5px;color:#8f9197}
+.rn-f{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px 15px;font-size:12.5px;color:#a3a5aa}
+.rn-f em{font-style:normal;display:inline-flex;align-items:center;height:23px;padding:0 10px;border-radius:999px;background:rgba(109,155,255,.16);color:#a9c4ff;font-size:12px;font-weight:520;white-space:nowrap}
+.lk-c{display:flex;align-items:center;justify-content:space-between;gap:24px;border:1px solid var(--ln);border-bottom:0;padding:clamp(36px,3vw,56px) var(--pad)}
+.lk-c .bs{max-width:none}
+.fq{border-top:1px solid var(--ln);background:#fff}
+.fq-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(120px,10.5vw,200px) 24px clamp(112px,9.5vw,184px);text-align:center}
+.fq blockquote{margin:0 auto;max-width:21em;font:400 clamp(27px,2.35vw,45px)/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.018em;color:var(--ink);text-wrap:balance}
+.fq blockquote.fill span{color:#c9cbd0;transition:color .25s}.fq blockquote.fill span.on{color:var(--ink)}
+.fq p{margin:clamp(26px,2.2vw,42px) 0 0;font-size:clamp(13.5px,.82vw,15.5px);color:var(--t3)}.fq p b{display:block;color:var(--ink);font-weight:560}
+.fo{background:var(--dk);color:#8f9197;border-top:1px solid var(--dl);font-size:clamp(13.5px,.82vw,15.5px)}
+.fo-g{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(3,minmax(0,1fr));gap:32px;border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(56px,4.6vw,88px) var(--pad) clamp(48px,4vw,76px)}
+.fo .nav-b b{display:flex;align-items:center;gap:8px;color:#fff;font-weight:600;font-size:clamp(15px,.95vw,18px)}.fo .mk{color:#fff}
+.fo-b p{margin:14px 0 0;max-width:19em;line-height:1.4}
+.fo h4{margin:0 0 12px;font-size:inherit;font-weight:560;color:#fff}
+.fo-g>div>a:not(.nav-b){display:block;padding:5px 0;transition:color .2s}.fo a:hover{color:#fff}
+.fo-l{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;border:1px solid var(--dl);border-bottom:0;padding:18px var(--pad) 22px;font-size:clamp(12.5px,.74vw,14px);color:#7f8187}
+.fo-l span:last-child{margin-left:auto;display:flex;gap:20px}
+
 /* ---- narrower screens ---- */
 html,body{overflow-x:clip}
 @media(max-width:1180px){.bd-g{grid-template-columns:repeat(2,minmax(0,1fr))}.bd-g a:nth-child(4n+1){border-left:1px solid var(--dl)}.bd-g a:nth-child(2n+1){border-left:0}}
@@ -860,15 +916,20 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 .hs-g{grid-template-columns:minmax(0,1fr);min-height:0}.hs-t{padding:44px 20px 36px}.hs h1{font-size:37px;max-width:none}
 .hs-p{border-left:0;border-top:1px solid var(--ln);padding:20px 14px 28px}.ac-r{padding:10px 14px;column-gap:12px}.ac-l{left:31.25px}.ac-r+.ac-r::before{left:64px;right:14px}
 .ac-r>em{font-size:13.5px}.ac-r>small{display:block;grid-column:2;grid-row:3;text-align:left;white-space:normal}.ac-f{padding:15px 14px;gap:8px}.ac-f b{font-size:18px}
+.rn-r{grid-template-columns:56px 18px minmax(0,1fr);padding:12px 14px 13px}.rn-f{padding:13px 14px;flex-wrap:wrap}
+.lk-c{flex-direction:column;align-items:flex-start;padding:32px var(--pad)}
+.fq-i{padding:80px 20px 76px}.fq blockquote{font-size:25px}
+.fo-g{grid-template-columns:1fr 1fr;gap:32px 20px;padding:48px var(--pad) 40px}.fo-b{grid-column:1/-1}.fo-l span:last-child{margin-left:0}
 .lg-r{gap:9px;padding:0 12px}.lg-r em{font-size:11.5px;padding:0 7px}
 }
 '''
 
 NAV = ('<header class="top"><div class="nav"><a href="/" class="nav-b"><b>%s Cinder Revenue</b></a><ul><li><a href="/everything">What we fix</a></li><li><a href="/free-audit">The free audit</a></li><li><a href="/software">The app</a></li><li><a href="/trades">Trades</a></li><li><a href="/story">Our story</a></li></ul>'
        '<a class="btn" %s>Book your free audit</a></div></header>' % (mark, CAL))
+HW = HW.replace('@@RUN@@', RUN)
 html = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        '<title>More jobs from the leads you already get | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s%s%s%s%s%s%s%s%s%s%s<script>%s</script></body></html>'
-        % (hero_css, CSS, NAV, HERO, TOOLS, WHAT, CK, AU, HW, BD, PROB, LK, CL, JS))
+        '<title>Find out what your business is losing | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s%s%s%s%s%s%s%s%s%s%s%s<script>%s</script></body></html>'
+        % (hero_css, CSS, NAV, HERO, TOOLS, WHAT, CK, HW, BD, PROB, LK, FQ, CL, FT, JS))
 for p in (ROOT + '/design/mock/home-light.html', ROOT + '/site/new.html'):
     open(p, 'w').write(html)
 print('ok', len(html))
