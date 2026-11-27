@@ -12,16 +12,6 @@ exec(_src, _ns)
 GROUPS, ALL, ORDER = _ns['GROUPS'], _ns['ALL'], _ns['ORDER']
 BY = {p['slug']: p for p in ALL}
 ap = lambda t: t.replace("'", '&rsquo;')
-# a small hairline drawing for each trade, each used once
-_tr = lambda body: '<svg viewBox="0 0 120 64" aria-hidden="true">%s</svg>' % body
-TRSVG = {
-    'Roofing': _tr('<path d="M8 54 L60 12 L112 54"/><path class="g" d="M22 54 L60 23 L98 54M36 54 L60 34 L84 54M50 54 L60 45 L70 54"/><path d="M84 31 V16 h10 V39"/><path class="g" d="M4 54 H116"/>'),
-    'HVAC': _tr('<rect x="24" y="8" width="72" height="48" rx="4"/><circle cx="52" cy="32" r="16"/><path d="M52 16 C58 24 58 28 52 32 C46 36 46 40 52 48M36 32 C44 26 48 26 52 32 C56 38 60 38 68 32"/><path class="g" d="M76 20 H90M76 28 H90M76 36 H90M76 44 H90"/>'),
-    'Plumbing': _tr('<path d="M8 20 H70 a14 14 0 0 1 14 14 V58M8 36 H62 a6 6 0 0 1 6 6 V58"/><path d="M30 16 V40M36 16 V40"/><path class="g" d="M64 50 H88M64 56 H88"/><path class="g" d="M100 14 c-6 8 -6 12 0 12 c6 0 6 -4 0 -12z"/>'),
-    'Landscaping and hardscaping': _tr('<path class="g" d="M4 50 C30 34 50 58 76 42 S108 40 116 30M4 58 C30 44 52 64 78 50 S108 50 116 40"/><circle cx="34" cy="20" r="12"/><path d="M34 32 V46"/><path d="M78 10 h30 v20 h-30z"/><path class="g" d="M88 10 v20M98 10 v20M78 20 h30"/>'),
-    'Concrete': _tr('<path d="M10 40 L50 20 L110 30 L70 52 Z"/><path d="M10 40 V46 L70 58 V52M70 58 L110 36 V30"/><path class="g" d="M30 30 L90 41M40 46 L80 25"/>'),
-    'Painting': _tr('<rect x="14" y="10" width="62" height="18" rx="5"/><path d="M76 19 H88 V36 H46 V46"/><rect x="42" y="46" width="8" height="14" rx="2"/><path class="g" d="M96 12 V56M104 12 V44M112 12 V52"/>'),
-}
 GICON = {'desk': 'chat', 'cal': 'cal', 'sales': 'quote', 'money': 'money', 'after': 'star', 'seen': 'find', 'team': 'team', 'custom': 'plus'}
 GLINE = {'desk': 'Every call, form and message answered, day or night.', 'cal': 'Estimates booked, crews scheduled, customers reminded.',
          'sales': 'Sent the same day and followed up until there is an answer.', 'money': 'Invoices out the day the job ends, and chased until paid.',
@@ -1717,20 +1707,23 @@ SOFTWARE = (inner_hero('The app', 'Everything in one place.', 'Every lead, estim
             + faq('Questions.', [('Do I have to switch from what I use now?', 'No. It can work alongside the tools you already use, or replace them. The audit shows which makes sense for you.'), ('Do you take payments?', 'No. Invoices go out with your own pay link.'), ('Who sets it up?', 'We do.')])
             + CL)
 
-# ---- /trades : a tape measure turning into a quote; the fence tools; the other trades ----
-TAPE = ('<div class="tpm"><div class="tpm-r"><i></i><b>180 ft</b></div><div class="es-a">%s</div><div class="cd tpm-q">%s%s<div class="tpm-s"><em>Sign and pay the deposit</em></div></div></div>' % (ARROW, head('Quote', 'From the measure'),
-        ''.join('<div class="%s"><span>%s</span><b>%s</b></div>' % x for x in [('', 'Good', 'Pine privacy'), ('on', 'Better', 'Cedar privacy'), ('', 'Best', 'Cedar on steel posts')])))
-TRADES = (inner_hero('Trades', 'Built for the trades.', 'For owner-run service businesses that sell estimates and quotes. The leaks look the same in every trade: missed calls, slow replies, quotes nobody chases.', BOOK + AUDITLINK, TAPE)
-          + sx('From a tape measure to a signed quote.', '', '<ol class="rl rl4">%s</ol>' % ''.join('<li><time>%s</time><b>%s</b></li>' % x for x in [
-              ('Walk the line on site and enter the footage, the gates and the fence type.', 'Measure the run'), ('Good, Better and Best options, priced the way you price.', 'The quote builds itself'),
+# ---- /who-its-for : any business that quotes jobs. No trade is named anywhere (Sam, 27 Nov). ----
+QOPT = ('<div class="tpm"><div class="cd wn">%s<p>&ldquo;Standard job, two add-ons. They want it done this month.&rdquo;</p><span>Your notes from the visit</span></div><div class="es-a">%s</div>'
+        '<div class="cd tpm-q">%s%s<div class="tpm-s"><em>Sign and pay the deposit</em></div></div></div>'
+        % (head('Site visit', '10:20 AM', 'Example'), ARROW, head('Quote', 'From your notes'),
+           ''.join('<div class="%s"><span>%s</span><b>%s</b></div>' % x for x in [('', 'Good', 'Standard'), ('on', 'Better', 'Upgraded'), ('', 'Best', 'Premium')])))
+WHOFOR = (inner_hero('Who it&rsquo;s for', 'Built for businesses that quote jobs.', 'For owner-run service businesses that sell estimates and quotes. The leaks look the same in every one: missed calls, slow replies, quotes nobody chases.', BOOK + AUDITLINK, QOPT)
+          + sx('From the site visit to a signed quote.', '', '<ol class="rl rl4">%s</ol>' % ''.join('<li><time>%s</time><b>%s</b></li>' % x for x in [
+              ('Look at the job and note what it needs.', 'Visit the job'), ('Good, Better and Best options, priced the way you price.', 'The quote builds itself'),
               ('The customer picks an option, signs, and pays the deposit to hold the date.', 'They sign on their phone'), ('The order list and the job documents fill in from the same numbers.', 'Materials and paperwork follow')]), 'wh')
-          + statement('Built first for fence', 'Fence companies get tools made for how they actually sell.', '')
-          + cells([('quote', 'Measure to quote', 'Measure the run on site and the quote builds itself, with Good, Better and Best options.'), ('tool', 'Seven fence types', 'Wood, vinyl, chain link, aluminum and more, each priced its own way.'),
-                   ('plus', 'Material orders', 'Order what each job needs, straight from the job.'), ('find', 'Job paperwork', 'The documents a fence job needs, filled in for you.')], 'pg-4')
-          + sx('Works for any trade that quotes.', 'The same system answers, books, follows up and asks for reviews, whatever you install or fix.', '<div class="trd">%s</div>' % ''.join('<div>%s<b>%s</b><span>%s</span></div>' % (TRSVG[x[0]], x[0], x[1]) for x in [
-              ('Roofing', 'Storm-season call spikes answered in seconds, inspections booked.'), ('HVAC', 'After-hours calls answered, tune-ups and installs booked.'), ('Plumbing', 'Urgent calls answered first, estimates booked the same day.'),
-              ('Landscaping and hardscaping', 'Quotes chased until they&rsquo;re settled, spring rush included.'), ('Concrete', 'Bids followed up on, deposits collected to hold the date.'), ('Painting', 'Estimates booked, quotes followed up, reviews asked for.')]), 'wh')
-          + ask('Don&rsquo;t see your trade?', 'If you quote jobs, it fits.', 'How the audit works', '/free-audit')
+          + statement('One system', 'It works for any business that quotes.', 'The same system answers, books, follows up and asks for reviews, whatever you install or fix.')
+          + cells([('quote', 'Notes to quote', 'What you saw on site becomes a quote with Good, Better and Best options.'), ('cal', 'Booked and reminded', 'Serious leads pick a time and show up.'),
+                   ('plus', 'Material orders', 'Order what each job needs, straight from the job.'), ('find', 'Job paperwork', 'The documents a job needs, filled in for you.')], 'pg-4')
+          + sx('You&rsquo;ll recognise it if', 'None of this depends on what you install or fix.', '<div class="trd fit">%s</div>' % ''.join('<div><b>%s</b><span>%s</span></div>' % x for x in [
+              ('You quote before you work.', 'An estimate or a proposal comes before the job.'), ('The phone rings while your hands are full.', 'Calls and messages arrive when you can&rsquo;t answer.'),
+              ('Leads come from more than one place.', 'Calls, forms, messages and lead sites.'), ('Quotes go quiet.', 'Nobody has time to check in on them.'),
+              ('Invoices go out after the job.', 'Sometimes days after.'), ('Some of it is still done by hand.', 'Usually at night.')]), 'wh')
+          + ask('Not sure it fits?', 'If you quote jobs, it fits.', 'How the audit works', '/free-audit')
           + CL)
 
 # ---- /whats-new : a dated list of what shipped ----
@@ -2500,6 +2493,8 @@ CSS_FA = r"""
 .esw-r[data-sc="3"]{display:flex;align-items:center;gap:14px}.esw-r em{font-style:normal;padding:9px 14px;border-radius:7px;background:var(--ink);color:#fff;font-weight:560;font-size:13.5px}
 .acd.live .esw-r:not(.on){opacity:.4}.acd.live .esw-r.on{background:#fff;box-shadow:inset 2px 0 0 var(--ink)}.acd.live .esw-r[data-sc="3"]:not(.on)>span{visibility:hidden}
 @media(max-width:860px){.acd-r .acd-t{order:0}.acd-r .acd-p{border-right:0}.ewk-x span{font-size:9px}}
+.wn{padding-bottom:18px}.wn>p{margin:18px 18px 10px;font:400 clamp(18px,1.5vw,24px)/1.3 Georgia,"Times New Roman",serif;letter-spacing:-.01em}.wn>span{display:block;margin:0 18px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}
+.trd.fit div{padding-top:clamp(26px,2.2vw,40px)}.trd.fit b{position:relative;padding-top:22px}.trd.fit b::before{content:"";position:absolute;left:0;top:0;width:8px;height:8px;background:var(--ink)}
 /* ---- live windows on the inner pages ---- */
 .lvh>*{min-width:0}.lvh>.cd,.lvh>div:first-child{flex:0 1 auto}
 .sdw{flex:none;width:clamp(210px,17vw,250px);box-sizing:border-box;padding:14px 12px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.16),0 30px 60px -34px rgba(38,38,40,.4);font-size:13px;text-align:left;min-height:170px}
@@ -2658,7 +2653,7 @@ def plug(name, body):
 import drawings as DW
 DWX = {  # pages that are not builds: (label, line, title)
     'free-audit': ('The free audit', 'The business, taken apart.', 'Every part of it, checked.'),
-    'trades': ('Trades', 'Built first for fence.', 'Built around how you quote.'),
+    'who-its-for': ('Who it&rsquo;s for', 'Any business that quotes.', 'Built around how you quote.'),
     'about': ('About', 'Colorado.', 'Working with service businesses anywhere in the US.'),
     'whats-new': ('What&rsquo;s new', 'What shipped.', 'Every change, with its date.'),
     'questions': ('Questions', 'Asked before the call.', 'Straight answers.'),
@@ -3009,7 +3004,7 @@ PAGES = [
     ('integrations', 'Integrations', 'Cinder plugs into your calendar, your books and the places your leads come from, so nothing gets copied over by hand.', INTEGRATIONS),
     ('custom-builds', 'Custom builds', 'If your business has a job that eats your week and is not on the list, tell us. If it does not need a person, we can build it.', CUSTOM_BUILDS),
     ('software', 'The app', 'Every lead, estimate, quote and invoice in one place, with what needs you at the top. On your phone or your desk.', SOFTWARE),
-    ('trades', 'Trades', 'For owner-run service businesses that sell estimates and quotes. Built first for fence, and it works for any trade that quotes.', TRADES),
+    ('who-its-for', 'Who it is for', 'For owner-run service businesses that sell estimates and quotes. It works for any business that quotes jobs.', WHOFOR),
     ('story', 'Our story', 'Why service businesses lose work they already earned, and what we do about it.', STORY),
     ('about', 'About', 'Cinder Revenue Company audits service businesses, then fixes what is costing them jobs. One founder, a few clients at a time.', ABOUT),
     ('questions', 'Questions', 'The questions owners ask before they book a free audit, answered plainly.', QUESTIONS),

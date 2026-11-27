@@ -499,7 +499,7 @@ FQ = ('<section class="fq"><div class="w fq-i"><blockquote>&ldquo;I build and wa
 FT = ('<footer class="fo"><div class="w fo-g"><div class="fo-b"><a href="/" class="nav-b"><b>%s Cinder Revenue</b></a><p>We audit service businesses, then build what fixes them.</p></div>'
       '<div><h4>The audit</h4><a href="/free-audit">How it works</a><a href="/audit">Check your site</a><a %s>Book your free audit</a></div>'
       '<div><h4>What we build</h4><a href="/everything">Everything we build</a><a href="/websites">Websites</a><a href="/booking">Booking</a><a href="/estimates">Quotes</a><a href="/invoicing">Invoices</a><a href="/custom-builds">Custom builds</a></div>'
-      '<div><h4>Company</h4><a href="/software">The app</a><a href="/trades">Trades</a><a href="/story">Our story</a><a href="/questions">Questions</a><a href="mailto:sam.cinderrevenue@gmail.com">Email Sam</a></div></div>'
+      '<div><h4>Company</h4><a href="/software">The app</a><a href="/who-its-for">Who it&rsquo;s for</a><a href="/story">Our story</a><a href="/questions">Questions</a><a href="mailto:sam.cinderrevenue@gmail.com">Email Sam</a></div></div>'
       '<div class="w fo-l"><span>&copy; 2026 Cinder Revenue Company, Colorado</span><span>Pictures show an example business with sample data.</span>'
       '<span><a href="/privacy">Privacy</a></span></div></footer>' % (mark, CAL))
 
@@ -1368,7 +1368,7 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 }
 '''
 
-LINKS = [('/everything', 'What we build'), ('/free-audit', 'The free audit'), ('/software', 'The app'), ('/trades', 'Trades'), ('/story', 'Our story')]
+LINKS = [('/everything', 'What we build'), ('/free-audit', 'The free audit'), ('/software', 'The app'), ('/who-its-for', 'Who it&rsquo;s for'), ('/story', 'Our story')]
 # every build page, grouped, read from the old generator's data without running it; used for the menu under "What we build"
 _bs = open(ROOT + '/design/build_services.py').read().split('\nBY = ')[0]
 _bn = {'__file__': ROOT + '/design/build_services.py'}
@@ -1567,8 +1567,6 @@ _DT = [
 ]
 _DT_LEFT = re.compile(r"fenc|\bgates?\b|cedar|vinyl|chain.link|picket|\broof|hvac|plumb|landscap|hardscap|\bconcrete|\bpaint|generator|water heater|burst pipe|\bft\b|lumber|\bstain", re.I)
 def detrade(doc, path=''):
-    if path == '/trades':
-        return doc
     for a, b in _DT:
         doc = doc.replace(a, b)
     left = set(t.strip()[:90] for t in re.findall(r'>([^<>]{2,})<', re.sub(r'<script.*?</script>|<nav.*?</nav>|<footer.*?</footer>', '', doc, flags=re.S)) if _DT_LEFT.search(t))
@@ -1596,8 +1594,6 @@ def _page(title, desc, path, body, index=True, css=''):
             % dict(t=title, d=desc, u=url, v=VER, nav=NAV, body=mono(body), ft=FT, robots='' if index else '<meta name="robots" content="noindex">', css=('<link rel="stylesheet" href="/assets/%s">' % css) if css else ''))
 
 
-TRADESROW = ('<section class="tl tl2" aria-label="Trades we build for"><div class="w tl-g"><p class="tl-c">Built for trades that quote</p><ul>%s</ul></div></section>'
-             % ''.join('<li><a href="/trades"><span>%s</span></a></li>' % t for t in ['Fence', 'Roofing', 'HVAC', 'Plumbing', 'Landscaping', 'Concrete', 'Painting']))
 HOME = HERO + TOOLS + PROB + LK + WHAT + HW + CK + BD + FQ + CL   # promise, fits your tools, the problem, what we do, how it starts, how it works, what gets built, who is behind it, ask
 DESC = 'A free fifteen-minute audit of your service business. We find what is costing you jobs and hours, put a number on it, and build systems made for the way you work.'
 open(ROOT + '/site/index.html', 'w').write(page('Find out what your business is losing', DESC, '/', HOME))

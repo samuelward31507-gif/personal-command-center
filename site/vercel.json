@@ -331,7 +331,12 @@
     },
     {
       "source": "/generators",
-      "destination": "/trades",
+      "destination": "/who-its-for",
+      "permanent": false
+    },
+    {
+      "source": "/trades",
+      "destination": "/who-its-for",
       "permanent": false
     }
   ]
