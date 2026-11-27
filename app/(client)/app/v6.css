@@ -57,8 +57,10 @@
 /* ---------- Buttons: one shape ---------- */
 .v5 .b5, .shell.v5 .btn:not(.ic):not(.link) { border: 0; box-shadow: 0 0 0 1px var(--line2), 0 1px 1px rgba(23, 24, 26, .04); background: #fff; color: var(--t1); }
 .v5 .b5:hover, .shell.v5 .btn:not(.ic):not(.link):not(:disabled):hover { background: #fafafa; }
-.v5 .b5.pri, .shell.v5 .btn.ink { background: var(--ink); color: #fff; box-shadow: 0 0 0 1px var(--ink); }
-.v5 .b5.pri:hover, .shell.v5 .btn.ink:not(:disabled):hover { background: var(--ink-hover); }
+/* The main button stays ink (the shape rule above must not wash it out to white). */
+.v5 .b5.pri, .shell.v5 .btn.ink:not(.ic):not(.link) { background: var(--ink); color: #fff; box-shadow: 0 0 0 1px var(--ink); }
+.v5 .b5.pri:hover, .shell.v5 .btn.ink:not(.ic):not(.link):not(:disabled):hover { background: var(--ink-hover); }
+.shell.v5 .btn.ink:disabled { background: var(--g4); box-shadow: 0 0 0 1px var(--g4); color: #fff; }
 .shell.v5 .btn.ghost { box-shadow: none; background: transparent; }
 .shell.v5 .btn.ghost:hover { background: var(--hover); }
 
