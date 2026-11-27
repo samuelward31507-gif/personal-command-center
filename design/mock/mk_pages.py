@@ -742,8 +742,285 @@ CSS_DESK = r"""
 }
 """
 
+# =====================================================================================
+# Calendar and quotes. Same rules: existing copy, one drawn picture and one diagram per page that no other page has.
+# =====================================================================================
+def hero_left(label, h1, sub, picture):
+    return ('<section class="ih ih-l"><div class="w ih-i"><span class="lb">%s</span><h1>%s</h1><p class="sub">%s</p><div class="cta">%s%s</div></div><div class="ih-p"><div class="w ih-pi">%s</div></div></section>'
+            % (label, ap(h1), ap(sub), BOOK, AUDITLINK, picture))
+
+
+def hero_dark(label, h1, sub, picture):
+    return ('<section class="dh"><div class="w dh-i"><span class="lb">%s</span><h1>%s</h1><p class="sub">%s</p><div class="cta">%s%s</div>%s</div></section>' % (label, ap(h1), ap(sub), BOOK, AUDITLINK, picture))
+
+
+def ticks(label, title, items, extra=''):
+    return ('<section class="ic"><div class="w ic-g"><div class="ic-t"><span class="lb">%s</span><p class="st-t">%s</p>%s</div><ul>%s</ul></div></section>'
+            % (label, title, extra, ''.join('<li>%s<span>%s</span></li>' % (TICK, ap(t)) for t in items)))
+
+
+def bigline(text):
+    return '<section class="bl"><div class="w bl-i"><p>%s</p></div></section>' % ap(text)
+
+
+def head(title, sub='Ridgeline Fence', tag=SAMPLE):
+    return '<div class="rep-h"><span class="dot"></span><b>%s</b>%s<span class="tag">%s</span></div>' % (title, ('<span>%s</span>' % sub) if sub else '', tag)
+
+
+def xfaq(p):
+    return [(ap(q), ap(a)) for q, a in p['faq']]
+
+
+# ---- /booking : a week with one estimate on it; one lead on a rail from the form to the driveway ----
+WEEK = ('<div class="cd wk">%s<div class="wkc-g">%s</div></div>' % (head('This week', 'Estimates and jobs'), ''.join(
+    '<div><b>%s</b>%s</div>' % (d, ''.join('<i class="%s">%s</i>' % x for x in sl)) for d, sl in [
+        ('Mon', [('j', 'Job<u>8:00 AM</u>'), ('', ''), ('j', 'Job<u>1:00 PM</u>')]), ('Tue', [('e', 'Estimate<u>9:00 AM</u>'), ('j', 'Job<u>11:00 AM</u>'), ('', '')]),
+        ('Wed', [('j', 'Job<u>8:00 AM</u>'), ('', ''), ('', '')]), ('Thu', [('j', 'Job<u>8:00 AM</u>'), ('', ''), ('e on', 'Estimate<u>2:00 PM</u>')]),
+        ('Fri', [('', ''), ('j', 'Job<u>10:00 AM</u>'), ('', '')])])))
+RAIL = ('<ol class="rl">%s</ol>' % ''.join('<li><time>%s</time><b>%s</b></li>' % x for x in [
+    ('7:40 AM', 'A form comes in'), ('7:40 AM', 'A reply goes out with three times'), ('7:52 AM', 'They pick Thursday at 2 PM'), ('Wed 6 PM', 'A reminder goes out'), ('Thu 2 PM', 'You show up')]))
+BOOKING = (hero_split('Calendar', 'Estimates on your calendar.', 'Serious leads pick a time themselves, get reminded, and show up.',
+                      'The lead picks from times you are actually free. Reminders are set the moment it books.', WEEK, 'hs-v')
+           + statement('The problem', 'A lead who says yes still has to get on your calendar.', 'That takes a call back, a few texts about times, and a reminder nobody sends. Every extra step is a chance for them to go quiet.')
+           + sx('One lead, from the form to the driveway.', '', RAIL + '<p class="rl-k">Example. Sample data.</p>', 'wh')
+           + ticks('What&rsquo;s included', 'A booked estimate is a job you can still win.', [
+               'Leads pick from times you’re actually free.', 'Estimates booked on your calendar, with the address and what the job is.', 'The right person’s calendar, if you have a crew.',
+               'A reminder text the night before.', 'No-shows get a rebooking text automatically.', 'Works with Google Calendar.'])
+           + faq('Questions.', [('Can they book outside my hours?', 'No. They only see the open times you set.'), ('What if they don&rsquo;t show?', 'A rebooking text goes out with new times.'),
+                                ('Does it work with my crew?', 'Each booking can land on the right person&rsquo;s calendar.')]) + CL)
+
+# ---- /reminders : a lock screen of reminders; the four moments between booking and the knock on the door ----
+p = BY['reminders']
+LOCK = ('<div class="nt"><time>7:00</time><span>Thursday</span>%s<p>Example. Sample data.</p></div>' % ''.join(
+    '<div><i>Ridgeline Fence</i><em>%s</em><b>%s</b></div>' % x for x in [
+        ('now', 'See you today at 2 PM for your fence estimate. Reply C to confirm or R to pick a new time.'),
+        ('Yesterday', 'Reminder: your estimate is tomorrow at 2 PM at your address on Split Rail Dr.'),
+        ('Monday', 'You&rsquo;re booked for Thursday at 2 PM. Here is what to expect.')]))
+d = p['does']
+MOMENTS = ('<div class="mo4">%s</div>' % ''.join('<div class="%s"><em>%s</em><b>%s</b><span>%s</span></div>' % (c, big, ap(t), ap(x)) for (c, big), (t, x) in zip(
+    [('', 'Booked'), ('', '1 day'), ('y', 'Any time'), ('g', 'Freed')], d)))
+REMINDERS = (inner_hero('Calendar', ap(p['h1']), ap(p['lede']), BOOK + AUDITLINK, LOCK)
+             + statement('The problem', X['reminders'][0][0], ap(X['reminders'][0][1]))
+             + sx(X['reminders'][2], '', MOMENTS, 'wh')
+             + H.split('What changes', 'The people on your calendar show up.', 'A reminder costs nothing.', swap(p['cmp']))
+             + qcards(p['faq']) + CL)
+
+# ---- /dispatch : three crews on a day board with a job running long; two maps of the same stops ----
+p = BY['dispatch']
+def blk(a, b, cls='', t=''):
+    return '<i class="%s" style="left:%.1f%%;width:%.1f%%">%s</i>' % (cls, (a - 8) / 9 * 100, (b - a) / 9 * 100, t)
+GANTT = ('<div class="cd gt">%s<div class="gt-x"><span></span><div>%s</div></div>%s<div class="gt-f"><b>One job ran 45 minutes long.</b><span>Two stops moved, both customers were told, nobody made a call.</span></div></div>'
+         % (head('Today', 'Three crews'), ''.join('<i>%s</i>' % t for t in ('8 AM', '11 AM', '2 PM', '5 PM')), ''.join(
+             '<div class="gt-r"><b>%s</b><div>%s</div></div>' % x for x in [
+                 ('Crew one', blk(8, 10.5, '', 'Fence install') + blk(11, 13, '', 'Gate') + blk(13.5, 16.5, '', 'Fence install')),
+                 ('Crew two', blk(8, 11, 'l', 'Repair') + blk(11, 11.75, 'o', '') + blk(12.25, 14.25, 'm', 'Gate') + blk(14.75, 16.75, 'm', 'Estimate')),
+                 ('Crew three', blk(9, 12, '', 'Fence install') + blk(12.5, 15, '', 'Repair'))])))
+def route(pts, cls):
+    return ('<svg viewBox="0 0 300 180" class="%s" aria-hidden="true"><path d="M%s"/>%s</svg>' % (cls, ' L'.join('%d %d' % q for q in pts), ''.join('<circle cx="%d" cy="%d" r="6"/>' % q for q in pts)))
+STOPS = [(40, 140), (250, 40), (80, 50), (260, 130), (150, 30), (160, 150)]
+TIDY = [(40, 140), (80, 50), (150, 30), (250, 40), (260, 130), (160, 150)]
+ROUTES = ('<div class="rt"><figure>%s<figcaption><s>Crews cross town twice a day.</s></figcaption></figure><figure>%s<figcaption><b>Stops are grouped.</b> The same six stops, fewer miles between them.</figcaption></figure></div>' % (route(STOPS, 'x'), route(TIDY, 'v')))
+DISPATCH = (hero_left('Calendar', p['h1'], p['lede'], GANTT)
+            + statement('The problem', X['dispatch'][0][0], ap(X['dispatch'][0][1]))
+            + sx('Routes that make sense.', 'Jobs are matched to crews by skill, equipment and who is already nearby.', ROUTES, 'wh')
+            + dark('What changes', 'The day adjusts', 'without you making the calls.', swap(p['cmp']),
+                   '<div class="fl">%s%s<div class="rn-f"><span>Sent to crews and customers at 11:02 AM.</span><em>0 calls made</em></div></div>' % (
+                       '<div class="fd-h"><span class="dot"></span><b>One update</b><span>11:02 AM</span><span class="tag">%s</span></div>' % SAMPLE,
+                       frows([('Crew', 'Crew two, your 12:00 moved to 12:15', 'Route updated on your phone.'), ('Cust.', 'Your gate install now starts at 12:15', 'Sorry for the wait. We&rsquo;ll text when we&rsquo;re on the way.'), ('Cust.', 'Your estimate moved to 2:45 PM', 'Reply R if that no longer works.')])))
+            + qfold(p['faq']) + CL)
+
+# ---- /job-updates : the customer's phone; the job as a tracker with four stops ----
+p = BY['job-updates']
+MSGS = ('<div class="ph"><div class="ph-s ms"><div class="ph-n"><b>Ridgeline Fence</b><span>Today</span></div>%s</div></div><p class="ph-k">Example. Sample data.</p>' % ''.join(
+    '<time>%s</time><p>%s</p>' % x for x in [('12:58 PM', 'Your crew is on the way. They should arrive around 1:40 PM.'), ('1:31 PM', 'Running about 15 minutes behind. New arrival 1:55 PM. Sorry for the wait.'),
+                                              ('4:12 PM', 'Job finished. Here are the photos of your new gate.<span><i></i><i></i></span>')]))
+TRACK = ('<div class="tk2"><div class="tk2-b"><i></i></div><ol>%s</ol></div>' % ''.join('<li class="%s"><b>%s</b><span>%s</span></li>' % x for x in [
+    ('on', 'On our way', 'With a realistic arrival time.'), ('on', 'Running late', 'They hear it from you first.'), ('on', 'Job started', 'The crew taps once, or sends a text.'), ('', 'Job finished', 'With photos if you take them.')]))
+JOB_UPDATES = (hero_split('Calendar', p['h1'], p['lede'], 'Nobody in your office sends a text.', MSGS, 'ph-h1')
+               + statement('The problem', X['job-updates'][0][0], ap(X['job-updates'][0][1]))
+               + sx(X['job-updates'][2], '', TRACK, 'wh')
+               + bigline(p['line'])
+               + H.split('What changes', 'They know before they have to ask.', 'Fewer &ldquo;where are you&rdquo; calls, because they already know.', swap(p['cmp']))
+               + faq('Questions.', xfaq(p)) + CL)
+
+# ---- /estimates : notes on the left, a draft estimate on the right; the pipeline with one gate that is you ----
+p = BY['estimates']
+DRAFT = ('<div class="es"><div class="cd es-n">%s<div class="es-p"><i></i><i></i><i></i></div><p>&ldquo;180 feet of cedar privacy, six foot. Two gates. Old chain link comes out.&rdquo;</p><span>Voice note, 0:14</span></div>'
+         '<div class="es-a">%s</div><div class="cd es-d">%s%s<div class="es-t"><span>Total</span><b>$6,400</b></div><div class="es-b"><em>Approve and send</em><span>Nothing goes out until you say so.</span></div></div></div>'
+         % (head('From the job', '10:20 AM', 'Example'), ARROW, head('Draft estimate', '10:24 AM'), ''.join('<div class="es-r"><b>%s</b><span>%s</span></div>' % x for x in [
+             ('Cedar privacy fence, 6 ft', '180 ft'), ('Walk gates', '2'), ('Remove old chain link', '180 ft'), ('Labour', 'From your price book')])))
+PIPE = ('<div class="pl">%s</div>' % ''.join('<div class="%s"><b>%s</b><span>%s</span></div>' % x for x in [
+    ('', ap(p['does'][1][0]), ap(p['does'][1][1])), ('', ap(p['does'][0][0]), ap(p['does'][0][1])), ('me', ap(p['does'][2][0]), ap(p['does'][2][1])), ('', ap(p['does'][3][0]), ap(p['does'][3][1]))]))
+ESTIMATES = (inner_hero('Quotes', ap(p['h1']), ap(p['lede']), BOOK + AUDITLINK, DRAFT)
+             + statement('The problem', X['estimates'][0][0], ap(X['estimates'][0][1]))
+             + sx(X['estimates'][2], '', PIPE, 'wh')
+             + H.split('What changes', 'The first estimate in their inbox has an edge.', 'Make it yours.', swap(p['cmp']))
+             + qfold(p['faq']) + CL)
+
+# ---- /proposals : the proposal as a page; three options with one picked and a place to sign ----
+p = BY['proposals']
+PAPER = ('<div class="pp"><div class="pp-h"><b>Ridgeline Fence</b><span>Proposal</span></div><h3>New cedar privacy fence</h3><div class="pp-i"><i></i><i></i><i></i></div>'
+         '<h4>What is included</h4><u></u><u></u><u class="s"></u><h4>What is not</h4><u class="s"></u><h4>When</h4><u class="m"></u><div class="pp-s"><span>Sign here</span><em>Accept</em></div></div><p class="ph-k">Example. Sample data.</p>')
+OPTS = ('<div class="op">%s</div><div class="op-f"><span><i></i>Opened twice, last at 7:42 PM</span><span><i></i>Signed from a phone</span></div>' % ''.join(
+    '<div class="%s"><em>%s</em><b>%s</b><ul>%s</ul>%s</div>' % (c, t, n, ''.join('<li>%s</li>' % q for q in li), '<span>Picked</span>' if c else '') for c, t, n, li in [
+        ('', 'Good', 'Pine privacy fence', ['6 ft, dog-ear pickets', 'One walk gate', 'Old fence removed']),
+        ('on', 'Better', 'Cedar privacy fence', ['6 ft, cedar pickets and rails', 'Two walk gates', 'Old fence removed']),
+        ('', 'Best', 'Cedar with steel posts', ['6 ft, cedar on steel posts', 'Two walk gates, one drive gate', 'Old fence removed, stain included'])]))
+PROPOSALS = (hero_split('Quotes', p['h1'], p['lede'], '', PAPER, 'hs-v')
+             + statement('The problem', X['proposals'][0][0], ap(X['proposals'][0][1]))
+             + sx(X['proposals'][2], 'They accept without printing anything, and you see when it is opened.', OPTS, 'wh')
+             + bigline(p['line'])
+             + H.split('What changes', 'The proposal does some of the selling for you.', '', swap(p['cmp']))
+             + qcards(p['faq']) + CL)
+
+# ---- /follow-up : one quote and its check-ins; the schedule on a real time scale, on dark; the list of what is still open ----
+QUOTE = ('<div class="cd qt">%s<div class="qo-t"><span>New fence, 180 ft</span><b>$6,400</b></div>%s</div>' % (head('Quote', 'Sent Monday'), ''.join(
+    '<div class="qo-r %s"><i></i><b>%s</b><span>%s</span></div>' % x for x in [('', 'Day 2 check-in sent', 'Wednesday'), ('', 'Day 5 check-in sent', 'Saturday'), ('y', 'Accepted', 'Saturday, 11:20 AM')])))
+SCALE = ('<div class="fsc"><div class="fsc-l">%s</div><p>Stops the moment there is a yes, a no, or paid.</p></div>' % ''.join(
+    '<div style="left:%s"><i></i><b>%s</b><span>%s</span></div>' % x for x in [('0%', 'Sent', 'Quote goes out'), ('14%', 'Day 2', 'First check-in'), ('30%', 'Day 5', 'Second check-in'), ('52%', 'Day 10', 'Third check-in'), ('100%', 'Monthly', 'Until they answer')]))
+OPEN = ('<div class="cd oq">%s%s</div>' % (head('Open quotes', '4 open'), ''.join('<div class="oq-r"><b>%s</b><span>%s</span><em class="%s">%s</em></div>' % x for x in [
+    ('Privacy fence, 180 ft', 'Sent 2 days ago', '', 'Day 2 went out'), ('Gate repair', 'Sent 6 days ago', '', 'Day 5 went out'),
+    ('Vinyl fence, 120 ft', 'Sent 12 days ago', 'y', 'Asked about price. Sent to you'), ('Chain link, 300 ft', 'Sent 5 weeks ago', '', 'Monthly check-in')])))
+FOLLOW_UP = (hero_split('Quotes', 'Every quote gets chased.', 'Quotes and invoices get followed up until the customer says yes, no, or paid.',
+                        'Each quote is followed up on a schedule and stops the moment there is an answer.', QUOTE)
+             + statement('The problem', 'A quote nobody chases is a job you gave away.', 'Most people don&rsquo;t say no. They get busy, mean to reply, and then book whoever checks in. Following up is easy to skip when you are on a job.')
+             + '<section class="sx dk"><div class="w sx-i"><p class="sx-t">Every quote, followed up. <span>Days 2, 5 and 10, then monthly, until it&rsquo;s a yes or a no.</span></p>%s</div></section>' % SCALE
+             + ticks('What&rsquo;s included', 'Nothing stays open without someone checking in.', [
+                 'Send a quote with one text and the follow-up starts on its own.', '“Too expensive” gets your financing or a smaller option. Real price talk comes to you.',
+                 'Invoices and payment reminders sent when the job’s done.', 'Customers pay through your own pay link. We never touch your money.',
+                 'Past customers get a text when they’re due for their next job, with your open times.'], '<div class="ic-x">%s</div>' % OPEN)
+             + ask('Open quotes, old leads, past customers.', 'One text at launch can bring them back. A one-time campaign when you go live, if your audit calls for it.', 'How the audit works', '/free-audit')
+             + '<section class="cv"><div class="w cv-g"><div class="cv-t"><p class="st-t">Questions.</p></div><dl>%s</dl></div></section>' % ''.join('<dt><span>%s</span></dt><dd><span>%s</span></dd>' % x for x in [
+                 ('Will it annoy my customers?', 'The check-ins are short and polite, and they stop the moment someone answers.'), ('What if they want to negotiate?', 'Real price talk comes straight to you.'),
+                 ('Do you take payments?', 'No. Invoices go out with your own pay link.'), ('What counts as settled?', 'A yes, a no, or paid.')])
+             + CL)
+
+CSS_CAL = r"""
+/* ============ shared by later pages ============ */
+.sx.dk{background:var(--dk);color:#fff;border-top:0}.sx.dk .sx-i{border-color:var(--dl);border-bottom:1px solid var(--dl)}.sx.dk .sx-t span{color:#8f9197}
+.hs-v .hs-t{order:2}.hs-v .hs-p{border-left:0;border-right:1px solid var(--ln)}
+.ic-x{margin-top:clamp(32px,2.8vw,52px)}
+.ph-s.ms{min-height:500px;background:#fff}
+/* ============ /booking ============ */
+.wkc{width:100%;max-width:600px}
+.wkc-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;padding:16px}.wkc-g div{display:grid;gap:7px;align-content:start}
+.wkc-g b{padding-bottom:4px;font:500 11px/1 "Geist Mono",monospace;color:var(--t3);text-align:center}
+.wkc-g i{display:grid;align-content:center;gap:3px;height:66px;padding:0 10px;border-radius:9px;font-style:normal;font-size:12.5px;font-weight:560;box-shadow:inset 0 0 0 1px rgba(23,24,26,.09);background:repeating-linear-gradient(135deg,transparent 0 5px,rgba(23,24,26,.035) 5px 6px)}
+.wkc-g i u{text-decoration:none;font:500 10.5px/1 "Geist Mono",monospace;opacity:.7}
+.wkc-g i.j{background:#eceef2;box-shadow:none;color:var(--t2)}.wkc-g i.e{background:#e9eeff;box-shadow:none;color:#2a4ea8}.wkc-g i.on{background:var(--blue);color:#fff;box-shadow:0 14px 26px -14px rgba(38,109,240,.9)}
+@media(min-width:1700px){.wkc,.qo,.pp{zoom:1.12}}
+.rl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:2px solid var(--ink)}
+.rl li{position:relative;padding:clamp(22px,1.8vw,34px) clamp(14px,1.2vw,22px) 0 0}
+.rl li::before{content:"";position:absolute;left:0;top:-8px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 2px var(--ink)}.rl li:last-child::before{background:var(--blue);box-shadow:none}
+.rl time{font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}.rl b{display:block;margin-top:10px;max-width:11em;font-size:clamp(17px,1.2vw,23px);line-height:1.16;font-weight:540;letter-spacing:-.02em}
+.rl-k{margin:clamp(28px,2.4vw,44px) 0 0;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
+/* ============ /reminders ============ */
+.nt{width:min(400px,100%);padding:34px 14px 18px;border-radius:38px 38px 0 0;background:linear-gradient(180deg,#1b2440,#31457e);color:#fff;text-align:center;margin-bottom:calc(-1*clamp(48px,4.4vw,84px));box-shadow:0 0 0 9px #17181a,0 40px 80px -30px rgba(30,40,110,.6)}
+.nt time{display:block;font-size:64px;font-weight:300;letter-spacing:-.04em;line-height:1}.nt>span{display:block;margin:6px 0 22px;font-size:14px;opacity:.8}
+.nt div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;margin-top:8px;padding:12px 14px 13px;border-radius:16px;background:rgba(255,255,255,.16);text-align:left;backdrop-filter:blur(6px)}
+.nt i{font-style:normal;font-size:12px;font-weight:600}.nt em{font-style:normal;font-size:11.5px;opacity:.7}.nt b{grid-column:1/-1;font-size:13.5px;font-weight:450;line-height:1.36}
+.nt div:nth-of-type(n+2){opacity:.82}.nt p{margin:16px 0 36px;font:500 10.5px/1 "Geist Mono",monospace;opacity:.6}
+.mo4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--ln);border-radius:16px;overflow:hidden}
+.mo4 div{padding:clamp(22px,1.8vw,34px) clamp(18px,1.5vw,28px) clamp(26px,2.1vw,40px);border-left:1px solid var(--ln);background:var(--g)}.mo4 div:first-child{border-left:0}
+.mo4 em{display:block;margin-bottom:clamp(28px,2.6vw,48px);font-style:normal;font-size:clamp(30px,2.6vw,50px);font-weight:560;letter-spacing:-.045em;line-height:1}
+.mo4 .y em{color:var(--blue)}.mo4 .g em{color:#1c7a43}
+.mo4 b{display:block;font-size:clamp(15.5px,1vw,19px);font-weight:560;letter-spacing:-.014em}.mo4 span{display:block;margin-top:6px;font-size:clamp(14px,.86vw,16px);line-height:1.36;color:var(--g2)}
+/* ============ /dispatch ============ */
+.gt{width:100%;overflow:hidden;text-align:left}
+.gt-x,.gt-r{display:grid;grid-template-columns:clamp(96px,9vw,150px) minmax(0,1fr);align-items:center}
+.gt-x div{display:flex;justify-content:space-between;padding:12px 0 10px;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}.gt-x i{font-style:normal;width:0;display:flex;justify-content:center;white-space:nowrap}.gt-x i:first-child{justify-content:flex-start}.gt-x i:last-child{justify-content:flex-end;padding-right:14px}
+.gt-r{border-top:1px solid var(--line)}.gt-r b{padding:0 clamp(16px,1.5vw,28px);font-size:clamp(14px,.92vw,17px);font-weight:560;letter-spacing:-.01em}
+.gt-r div{position:relative;height:clamp(64px,5vw,88px);border-left:1px solid var(--line);background:linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/33.333% 100%}
+.gt-r i{position:absolute;top:22%;bottom:22%;display:flex;align-items:center;padding:0 10px;border-radius:8px;background:#eceef2;font-style:normal;font-size:12.5px;font-weight:540;color:var(--t2);white-space:nowrap;overflow:hidden}
+.gt-r i.l{background:#fff4d6;color:#a86a00;border-radius:8px 0 0 8px}.gt-r i.o{background:repeating-linear-gradient(135deg,#f0a000 0 4px,#f6c14d 4px 8px);border-radius:0 8px 8px 0;padding:0}
+.gt-r i.m{background:#e9eeff;color:#2a4ea8;box-shadow:inset 0 0 0 1.5px rgba(38,109,240,.5)}
+.gt-f{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;padding:16px clamp(16px,1.5vw,28px) 17px;background:#101113;color:#8f9197;font-size:13px}.gt-f b{color:#fff;font-size:15px;font-weight:560}
+.rt{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(16px,1.8vw,32px)}
+.rt figure{margin:0;padding:clamp(18px,1.6vw,30px);border-radius:16px;background:var(--g);box-shadow:inset 0 0 0 1px var(--ln)}
+.rt svg{display:block;width:100%;height:auto;max-height:300px}.rt path{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.rt svg.x path{stroke:#c9cbd0;stroke-dasharray:1 7}.rt svg.x circle{fill:#8a8d93}.rt svg.v path{stroke:var(--blue)}.rt svg.v circle{fill:var(--blue)}
+.rt figcaption{margin-top:14px;font-size:clamp(14.5px,.92vw,17px);line-height:1.36;color:var(--g2)}.rt figcaption s{color:var(--t3)}.rt figcaption b{color:var(--ink);font-weight:560}
+.rt figure:last-child{background:#f7f9ff;box-shadow:inset 0 0 0 1px #dfe6fb}
+/* ============ /job-updates ============ */
+.ph-h1 .hs-p{flex-direction:column}
+.ms time{display:block;margin:16px 0 6px;text-align:center;font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3)}
+.ms p{margin:0 34px 0 12px;padding:9px 12px;border-radius:15px 15px 15px 5px;background:#f1f2f5;font-size:13px;line-height:1.36}
+.ms p span{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}.ms p i{aspect-ratio:1;border-radius:8px;background:repeating-linear-gradient(135deg,#dfe2e8 0 2px,#eef0f3 2px 6px)}
+.tk2-b{height:6px;border-radius:3px;background:#eceef2}.tk2-b i{display:block;width:62.5%;height:100%;border-radius:3px;background:var(--blue)}
+.tk2 ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tk2 li{position:relative;padding:clamp(24px,2vw,38px) clamp(14px,1.2vw,22px) 0 0}
+.tk2 li::before{content:"";position:absolute;left:0;top:-13px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 2px #c9cbd0}
+.tk2 li.on::before{background:var(--blue) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m5.8 10.4 2.8 2.8 5.6-6' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");box-shadow:none}
+.tk2 b{display:block;font-size:clamp(17px,1.2vw,23px);font-weight:540;letter-spacing:-.02em}.tk2 span{display:block;margin-top:6px;max-width:15em;font-size:clamp(14px,.86vw,16px);line-height:1.36;color:var(--g2)}
+.tk2 li:not(.on) b{color:var(--t3)}
+/* ============ /estimates ============ */
+.es{display:grid;grid-template-columns:minmax(0,.8fr) 40px minmax(0,1fr);align-items:center;gap:10px;width:min(980px,100%);text-align:left}
+.es-p{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:14px 16px 0}.es-p i{aspect-ratio:1;border-radius:9px;background:repeating-linear-gradient(135deg,#eceef2 0 2px,#f7f8fa 2px 6px)}
+.es-n p{margin:0;padding:14px 16px 6px;font:400 17px/1.3 Georgia,serif;letter-spacing:-.01em}.es-n>span{display:block;padding:0 16px 16px;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
+.es-a{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08)}.es-a svg{width:16px;height:16px;fill:none;stroke:var(--blue);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.es-r{display:flex;justify-content:space-between;gap:16px;padding:12px 18px;border-top:1px solid var(--line);font-size:14px}.es-r:first-of-type{border-top:0}.es-r b{font-weight:540}.es-r span{color:var(--t2);white-space:nowrap}
+.es-t{display:flex;justify-content:space-between;align-items:baseline;padding:14px 18px;border-top:1px solid var(--line);font-size:13px;color:var(--t2)}.es-t b{color:var(--ink);font-size:22px;font-weight:600;letter-spacing:-.03em}
+.es-b{display:flex;align-items:center;gap:14px;padding:14px 18px 16px;border-radius:0 0 12px 12px;background:#f7f9ff;font-size:12.5px;color:var(--t2)}
+.es-b em{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:9px;background:var(--blue);color:#fff;font-style:normal;font-size:13.5px;font-weight:560;white-space:nowrap}
+@media(min-width:1700px){.es{zoom:1.1}}
+.pl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+.pl div{position:relative;padding:clamp(22px,1.8vw,34px) clamp(18px,1.5vw,28px) clamp(26px,2.1vw,40px);background:var(--g);box-shadow:inset 0 0 0 1px var(--ln);margin-left:-1px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%,18px 50%)}
+.pl div:first-child{clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%);border-radius:14px 0 0 14px}.pl div:last-child{clip-path:polygon(0 0,100% 0,100% 100%,0 100%,18px 50%);border-radius:0 14px 14px 0}
+.pl div:not(:first-child){padding-left:clamp(34px,2.6vw,46px)}
+.pl .me{background:var(--ink);color:#fff;box-shadow:none}.pl .me span{color:#a3a5aa}
+.pl b{display:block;font-size:clamp(16px,1.05vw,20px);font-weight:560;letter-spacing:-.014em}.pl span{display:block;margin-top:6px;max-width:15em;font-size:clamp(14px,.86vw,16px);line-height:1.36;color:var(--g2)}
+/* ============ /proposals ============ */
+.hs-p:has(.pp){flex-direction:column}
+.pp{width:340px;padding:26px 26px 22px;border-radius:6px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.06),0 2px 3px rgba(23,24,26,.05),0 40px 70px -34px rgba(30,40,110,.55);transform:rotate(-1.5deg);text-align:left}
+.pp-h{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--line);font-size:12.5px}.pp-h b{font-weight:620}.pp-h span{font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3)}
+.pp h3{margin:18px 0 12px;font-size:21px;font-weight:600;letter-spacing:-.03em;line-height:1.1}.pp h4{margin:16px 0 8px;font-size:11.5px;font-weight:600;color:var(--t2)}
+.pp-i{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.pp-i i{aspect-ratio:4/3;border-radius:6px;background:repeating-linear-gradient(135deg,#eceef2 0 2px,#f7f8fa 2px 6px)}
+.pp u{display:block;height:6px;margin-top:6px;border-radius:3px;background:#eceef2}.pp u.s{width:62%}.pp u.m{width:38%}
+.pp-s{display:flex;justify-content:space-between;align-items:flex-end;margin-top:22px;padding-top:14px;border-top:1px dashed #c9cbd0}
+.pp-s span{font:italic 400 17px/1 Georgia,serif;color:var(--g3)}.pp-s em{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:8px;background:var(--blue);color:#fff;font-style:normal;font-size:12.5px;font-weight:560}
+.op{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.2vw,22px);align-items:stretch}
+.op>div{position:relative;padding:clamp(22px,1.8vw,34px);border-radius:16px;background:var(--g);box-shadow:inset 0 0 0 1px var(--ln)}
+.op>div.on{background:#fff;box-shadow:inset 0 0 0 2px var(--blue),0 30px 60px -34px rgba(30,40,110,.5)}
+.op em{font:500 12px/1 "Geist Mono",monospace;font-style:normal;color:var(--t3)}.op .on em{color:var(--blue)}
+.op b{display:block;margin:12px 0 clamp(16px,1.4vw,26px);font-size:clamp(19px,1.4vw,26px);font-weight:560;letter-spacing:-.024em;line-height:1.12}
+.op ul{list-style:none;margin:0;padding:0}.op li{padding:11px 0;border-top:1px solid var(--ln);font-size:clamp(14px,.9vw,16.5px);color:var(--g2)}
+.op>div>span{position:absolute;top:clamp(18px,1.5vw,28px);right:clamp(18px,1.5vw,28px);display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;background:var(--blue);color:#fff;font-size:11.5px;font-weight:560}
+.op-f{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:clamp(20px,1.8vw,32px);font-size:clamp(14px,.9vw,16.5px);color:var(--g2)}.op-f span{display:flex;align-items:center;gap:9px}.op-f i{width:8px;height:8px;border-radius:50%;background:var(--blue)}
+/* ============ /follow-up ============ */
+.qo{width:100%;max-width:460px}
+.qo-t{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:18px 18px 16px;border-bottom:1px solid var(--line);font-size:14px;color:var(--t2)}.qo-t b{color:var(--ink);font-size:30px;font-weight:600;letter-spacing:-.035em}
+.qo-r{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:center;padding:13px 18px;border-top:1px solid var(--line);font-size:14px}.qo-r:first-of-type{border-top:0}
+.qo-r i{width:8px;height:8px;margin-left:4px;border-radius:50%;background:#c9cbd0}.qo-r b{font-weight:540}.qo-r span{font:500 11.5px/1 "Geist Mono",monospace;color:var(--t3)}
+.qo-r.y{background:#f3faf5;border-radius:0 0 12px 12px}.qo-r.y i{background:#1c7a43}.qo-r.y b{color:#1c7a43;font-weight:600}
+.fsc{padding:8px 0 0}.fsc-l{position:relative;height:clamp(120px,9vw,150px);margin-right:clamp(90px,8vw,130px);border-top:2px solid rgba(255,255,255,.22)}
+.fsc-l div{position:absolute;top:-7px;white-space:nowrap}.fsc-l i{display:block;width:12px;height:12px;border-radius:50%;background:#fff}.fsc-l div:last-child i{background:#6d9bff}
+.fsc-l b{display:block;margin-top:18px;font-size:clamp(17px,1.25vw,24px);font-weight:560;letter-spacing:-.02em}.fsc-l span{display:block;margin-top:5px;font-size:clamp(13px,.84vw,15.5px);color:#8f9197}
+.fsc p{margin:clamp(20px,1.8vw,32px) 0 0;font:500 12px/1.4 "Geist Mono",monospace;color:#a9c4ff}
+.oq{max-width:500px}.oq-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;padding:12px 18px 13px;border-top:1px solid var(--line)}.oq-r:first-of-type{border-top:0}
+.oq-r b{font-size:14px;font-weight:560}.oq-r span{grid-column:1;font-size:12px;color:var(--t3)}
+.oq-r em{grid-row:1/3;grid-column:2;display:inline-flex;align-items:center;min-height:24px;padding:2px 9px;border-radius:6px;background:#f1f2f5;color:var(--t2);font-style:normal;font-size:11.5px;font-weight:540}.oq-r em.y{background:#fff4d6;color:#a86a00}
+
+@media(max-width:1180px){.pl{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.pl div,.pl div:first-child,.pl div:last-child{clip-path:none;border-radius:14px;margin:0;padding-left:clamp(18px,1.5vw,28px)}
+.mo4{grid-template-columns:repeat(2,minmax(0,1fr))}.mo4 div:nth-child(odd){border-left:0}.mo4 div:nth-child(n+3){border-top:1px solid var(--ln)}
+.es{grid-template-columns:minmax(0,1fr)}.es-a{margin:0 auto;transform:rotate(90deg)}}
+@media(max-width:860px){
+.hs-v .hs-t{order:0}.hs-v .hs-p{border-right:0}
+.wkc-g{gap:5px;padding:12px 10px}.wkc-g i{height:56px;padding:0 5px;font-size:10.5px}.wkc-g i u{font-size:9px}
+.rl{grid-template-columns:minmax(0,1fr);border-top:0;border-left:2px solid var(--ink);margin-left:6px}.rl li{padding:0 0 26px 22px}.rl li::before{left:-8px;top:0}.rl b{max-width:none;margin-top:6px}
+.nt{margin-bottom:-36px}
+.mo4{grid-template-columns:minmax(0,1fr)}.mo4 div{border-left:0;border-top:1px solid var(--ln)}.mo4 div:first-child{border-top:0}.mo4 em{margin-bottom:18px}
+.gt-x,.gt-r{grid-template-columns:minmax(0,1fr)}.gt-x span{display:none}.gt-x div{padding:12px 12px 10px}.gt-r b{padding:12px 12px 0}.gt-r div{border-left:0;margin-top:8px;height:56px}.gt-r i{font-size:0;padding:0}
+.rt{grid-template-columns:minmax(0,1fr)}
+.tk2-b{display:none}.tk2 ol{grid-template-columns:minmax(0,1fr);border-left:2px solid #eceef2;margin-left:9px}.tk2 li{padding:0 0 26px 26px}.tk2 li::before{left:-11px;top:0}
+.pl{grid-template-columns:minmax(0,1fr)}
+.pp{width:min(320px,100%);transform:none}
+.op{grid-template-columns:minmax(0,1fr)}
+.fsc-l{height:auto;margin:0 0 0 6px;border-top:0;border-left:2px solid rgba(255,255,255,.22);display:grid;gap:26px}.fsc-l div{position:relative;left:auto!important;top:auto;padding-left:22px;white-space:normal}.fsc-l i{position:absolute;left:-7px;top:4px}.fsc-l b{margin-top:0}
+}
+"""
+
 out = pathlib.Path(ROOT) / 'site'
-CSS = CSS + CSS_DESK
+CSS = CSS + CSS_DESK + CSS_CAL
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V
@@ -755,6 +1032,13 @@ PAGES = [
     ('social-messages', 'Messages and DMs', 'Messages from Facebook, Instagram and your Google profile land in one inbox and get a reply in seconds.', SOCIAL),
     ('lead-vetting', 'Lead vetting', 'Every new lead is asked your questions first, so good fits are booked and poor fits get a polite no before anyone drives out.', LEAD_VETTING),
     ('after-hours', 'After hours', 'Calls and messages that come in after you close get handled, and only real emergencies ring whoever is on call.', AFTER_HOURS),
+    ('booking', 'Booking', 'Serious leads pick a time for their estimate themselves, from times you are actually free, get reminded, and show up.', BOOKING),
+    ('reminders', 'Reminders', 'Every appointment gets a confirmation and reminders, and a customer who cannot make it can move it without calling you.', REMINDERS),
+    ('dispatch', 'Scheduling and dispatch', 'Jobs are placed on the calendar by who can do them, where they are and how long they take, and the day is rebuilt when something changes.', DISPATCH),
+    ('job-updates', 'Job updates', 'Customers are told when the crew is on the way, when the job starts and when it is done, without anyone in your office sending a text.', JOB_UPDATES),
+    ('estimates', 'Estimates', 'Measurements, photos and your notes become a draft estimate using your own prices. You check it and send it the same day.', ESTIMATES),
+    ('proposals', 'Proposals', 'An approved estimate becomes a clean proposal with scope, photos, options and a way to say yes from a phone.', PROPOSALS),
+    ('follow-up', 'Follow-up', 'Quotes and invoices get followed up on a schedule until the customer says yes, no, or paid.', FOLLOW_UP),
     ('answering', 'Answering', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', ANSWERING),
 ]
 if __name__ == '__main__':
