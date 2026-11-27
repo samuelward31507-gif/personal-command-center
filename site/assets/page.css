@@ -379,3 +379,7 @@ footer{border-top:1px solid var(--line);padding:72px 0 48px}
 @media (max-width:760px){.nf-g{grid-template-columns:1fr 1fr}}
 @media (max-width:1000px){.aud-grid{grid-template-columns:1fr;gap:36px}.aud-out{position:static}}
 @media (max-width:760px){.aud{padding-top:120px}.tf{padding:18px}.tf-row{grid-template-columns:1fr}.aud-card{padding:20px}.legal-sec{padding-top:130px}.legal h2{margin-top:44px}}
+
+.ov-hero.svc.split.flip .wrap{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr)}.ov-hero.svc.split.flip .plate{order:-1}
+.ov-hero.svc.split .plate.pv2{margin-top:0}
+@media (max-width:1000px){.ov-hero.svc.split.flip .wrap{grid-template-columns:1fr}.ov-hero.svc.split.flip .plate{order:0}}
