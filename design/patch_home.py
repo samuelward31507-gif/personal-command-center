@@ -24,15 +24,19 @@ def px(slug, span, cls, k, h3, p, steps, href, more, aria):
     return f'<section class="px {cls}" data-scrub="{slug}" data-span="{span}"><div class="px-in"><div class="px-copy"><p class="px-k"><i></i>{k}</p><h3>{h3}</h3><p>{p}</p><ol class="px-steps">{"".join(f"<li>{x}</li>" for x in steps)}</ol><a class="inl" href="{href}">{more}</a></div><div class="px-vis"><div class="px-host" role="img" aria-label="{aria}"></div></div></div></section>'
 def pb(cls, fig, k, h3, p, href, more, aria, cap):
     return f'<section class="pb {cls}"><div class="wrap"><div class="pb-h"><div><p class="px-k"><i></i>{k}</p><h3>{h3}</h3></div><div><p>{p}</p><a class="inl" href="{href}">{more}</a></div></div><figure class="pb-f"><div class="hf" data-fig="{fig}" role="img" aria-label="{aria}"></div><figcaption><span>{cap}</span><span>Sample data</span></figcaption></figure></div></section>'
-P4 = '<!--h2-->' + hb(3, 'b', 'What we fix', 'Whatever is slowing you down, there is a build for it.', 9).replace('<!--h2-->', '').replace('<!--/h2-->\n', '') + '\n'.join([
+IT = [
  px('phone-agent', 13, '', 'Front desk', 'A missed call gets answered.', 'You are on a roof. The phone rings. It is picked up, and the call ends with a time on your calendar.', ['It rings while you are on a job', 'It is answered and the details are taken', 'The estimate is booked before they hang up'], '/phone-agent', 'How the phone agent works', 'A call drawn as a waveform: the caller speaks, the assistant answers, and the details fill in one by one until the estimate is booked.'),
  pb('', 'week', 'Calendar', 'The estimate lands on your calendar.', 'The lead picks from times you are actually free. Reminders are set the moment it books.', '/booking', 'How booking works', 'A working week on a calendar. Three open times are offered, one becomes a booked estimate, and two reminders are set for it.', 'One more job in the week, without a phone call.'),
  px('stack', 1, 'wide', 'Quotes', 'A quote gets chased until there is an answer.', 'Each check-in lands on top of the last. It stops the moment they say yes or no.', ['Quote sent', 'Day 2 check-in', 'Day 5 check-in', 'Signed'], '/follow-up', 'How follow-up works', 'Four sheets stack on top of each other: the quote, a check-in on day 2, a check-in on day 5, and the signed quote on top.'),
  px('invoice', 1, 'rev', 'Money', 'The invoice gets paid.', 'It goes out the day the job ends. Reminders run until it is settled, then stop on their own.', ['Sent the day the job ends', 'A reminder on day 3', 'Paid on day 4, reminders stop'], '/invoicing', 'How invoices work', 'An invoice on the left and a timeline on the right: sent the same day, one reminder on day 3, paid on day 4, and the day 7 reminder cancelled.'),
  pb('pop', 'ratings', 'After the job', 'Every finished job gets asked for a review.', 'Most happy customers never leave one, because nobody asks.', '/reviews', 'How reviews work', 'Five stars filling in above a grid of finished jobs. Each job is asked for a review and most of them leave one.', 'Asked once, at the right moment.'),
  px('custom-builds', 1, 'wide', 'Custom', 'Something only your business has.', 'Describe how you do it today. We turn each step into a part, and leave room for the next one.', ['How you do it today', 'Built, step by step', 'Yours next'], '/custom-builds', 'How custom builds work', 'Four steps of a process, drawn as dashed boxes, each become a built module. A fifth slot is left open, marked yours next.'),
-]) + '<!--/h2-->\n'
-ins('<section id="everything"', P4)
+]
+W = lambda x: '<!--h2-->' + x + '<!--/h2-->\n'
+# 3D and diagrams take turns: audit (3D), a missed call (2D), the patch bay (3D), calendar and quote (2D), the dial (3D), invoice, reviews, custom (2D)
+ins('<section id="build"', hb(3, 'b', 'What we fix', 'Whatever is slowing you down, there is a build for it.', 9) + W(IT[0]))
+ins('<section id="back"', W(IT[1]) + W(IT[2]))
+ins('<section id="everything"', W(IT[3]) + W(IT[4]) + W(IT[5]))
 # everything: one line and a link, the full list lives on its own page
 s = re.sub(r'<section id="everything" class="ixs(?: min)?"', '<section id="everything" class="ixs min"', s, count=1)
 k = s.index('</div>', s.index('class="ixs-h"', s.index('<section id="everything"'))) + 6
