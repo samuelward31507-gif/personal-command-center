@@ -1598,7 +1598,7 @@ ABOUT = ('<section class="hs ab"><div class="w hs-g"><div class="hs-t"><span cla
 
 # ---- /story : a long read in three chapters ----
 def chapter(n, name):
-    return '<section class="chp"><div class="w chp-i"><b>%s</b><span>%s</span></div></section>' % (n, name)
+    return '<section class="wb wb-%s"><div class="wb-i"><p class="wb-k">[Chapter %s]</p><h2>%s</h2></div></section>' % ({'01': 'a', '02': 'c', '03': 'b'}[n], n, name)
 STORY = ('<section class="ih sty"><div class="w ih-i"><span class="lb">Our story</span><h1>The phone was never the job.</h1><p class="sub">Why service businesses lose work they already earned, and what we do about it.</p></div></section>'
          + chapter('01', 'The story')
          + sx('A service business has always been two jobs.', 'Most shops only have someone for the first one.',
@@ -2067,20 +2067,11 @@ def flag(name, body):
     if ''.join(secs) != body:
         return body
     if name == 'answering':
-        return ''.join((portal('blinds', 'After the reply', 'One lead, start to finish.') + LEAD) if x.startswith('<section class="hw"') else x for x in secs)
+        return ''.join((portal('bubble', '7:42 PM', 'A call rings out.', 'One lead, start to finish.') + LEAD) if x.startswith('<section class="hw"') else x for x in secs)
     if name == 'everything':
-        return ''.join((portal('diamond', '32 builds', 'Eight parts of a business.') + x) if x.startswith('<section class="bn"') else x for x in secs)
-    if name == 'story':
-        seen = [0]
-        def sw(x):
-            if x.startswith('<section class="chp"'):
-                seen[0] += 1
-                if seen[0] == 2:
-                    return portal('bands', '02', 'The approach')
-            return x
-        return ''.join(sw(x) for x in secs)
+        return ''.join((portal('grid', 'What we build', 'Thirty-two builds.', 'Eight parts of a business.') + x) if x.startswith('<section class="bn"') else x for x in secs)
     if name == 'software':
-        return ''.join((portal('iris', 'The app', 'One day in the app.') + DAYAPP.replace('<section class="sc"', '<section class="sc k2"', 1) + x) if 'class="duo"' in x else x for x in secs).replace(AUDITLINK, '<a class="btn q" href="/day">See one day, start to finish</a>', 1)
+        return ''.join((portal('app', 'The app', 'Every lead, estimate, quote and invoice in one place.', 'One day in the app.') + DAYAPP.replace('<section class="sc"', '<section class="sc k2"', 1) + x) if 'class="duo"' in x else x for x in secs).replace(AUDITLINK, '<a class="btn q" href="/day">See one day, start to finish</a>', 1)
     return body
 
 
@@ -2135,8 +2126,23 @@ def design(kind, line_, small, href, link, dark_=False, cls=''):
             % (kind, ' dk' if dark_ else '', line_, small, href, link, DRAW[kind])).replace('__CLS__', cls)
 
 
-def portal(kind, label, title):
-    return '<section class="pt pt-%s" data-sp><div class="pt-s"><div class="pt-a"><span>%s</span></div><div class="pt-d"><h2>%s</h2></div></div></section>' % (kind, label, title)
+OBJ = {   # kind: (what is drawn on the dark shape, counter format, counter end)
+    'bubble': ('<i class="btl"></i><i class="d" style="--i:0"></i><i class="d" style="--i:1"></i><i class="d" style="--i:2"></i><i class="b b1"></i><i class="b b2"></i>', '0:0#', 9),
+    'sheet': ('<i class="hd"></i>' + ''.join('<i class="srw" style="--i:%d;--y:%dpx;--l:%d%%"></i>' % (k, 110 + k * 40, w) for k, w in enumerate((52, 40, 46))) + '<i class="ru"></i><em>[Sent]</em>', '$#', 1850),
+    'grid': (''.join('<i style="--i:%d"></i>' % k for k in range(32)), '# of 32', 32),
+    'app': (H.mark + '<i class="rg"></i>', 'Cinder', 0),
+}
+
+
+def portal(kind, label, line_, title):
+    body, fmt, to = OBJ[kind]
+    return ('<section class="pt pt-%s" data-sp><div class="pt-s"><div class="pt-a"><span>[%s]</span><p>%s</p></div><div class="pt-d"><h2>%s</h2></div><div class="pt-o" aria-hidden="true">%s</div>'
+            '<b class="pt-n" aria-hidden="true" data-fmt="%s" data-to="%d">%s</b></div></section>' % (kind, label, line_, title, body, fmt, to, fmt.replace('#', '0')))
+
+
+def wash(kind, tag, title, small=''):
+    # a soft colour-wash band that opens a chapter, then the page goes back to white
+    return '<section class="wb wb-%s"><div class="wb-i"><p class="wb-k">[%s]</p><h2>%s</h2>%s</div></section>' % (kind, tag, title, ('<p>%s</p>' % small) if small else '')
 
 
 import math
@@ -2296,29 +2302,29 @@ def figs(name, body):
 
 CSS_LINE = r"""
 .lf{background:#fff;border-top:1px solid var(--ln)}
-.lf-i{position:relative;display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr);gap:clamp(36px,5.4vw,104px);align-items:center;border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(80px,7vw,136px) var(--pad)}
+.lf-i{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(36px,5.4vw,104px);align-items:center;border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(80px,7vw,136px) var(--pad)}
 .lf-i::before,.lf-i::after{content:"";position:absolute;top:-3px;width:5px;height:5px;background:var(--ink)}.lf-i::before{left:-3px}.lf-i::after{right:-3px}
 .lf h2{margin:0;max-width:11em;font:400 clamp(30px,2.9vw,54px)/1.08 Georgia,"Times New Roman",serif;letter-spacing:-.022em;text-wrap:balance}
 .lf-k{margin:clamp(12px,1vw,18px) 0 0;font:500 11.5px/1.5 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}
 .lf-t>p:not(.lf-k){margin:clamp(18px,1.6vw,30px) 0 0;max-width:25em;font-size:clamp(15.5px,1.05vw,19px);line-height:1.5;color:var(--t2)}
 .lf .cta{margin-top:clamp(22px,2vw,36px);justify-content:flex-start}
-.lf.f .lf-i{grid-template-columns:minmax(0,1.22fr) minmax(0,.78fr)}.lf.f .lf-t{order:2}
-.lf-d{--d:clamp(0,calc((var(--p,1) - .3)*1.75),1)}
+.lf.f .lf-d{justify-self:start}.lf.f .lf-t{order:2}
+.lf-d{--d:clamp(0,calc((var(--p,1) - .3)*1.75),1);width:100%;max-width:540px;justify-self:end}
 .lf-n{margin:0;text-align:right;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
 .lgr{--k:var(--ink);--bg:#fff;--soft:#eceef2;position:relative;aspect-ratio:16/10;margin:34px 0 46px}
 .lgr svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.lgr svg *{vector-effect:non-scaling-stroke;fill:none}
 .lgr-w{position:absolute;inset:0;clip-path:inset(-14px calc((1 - var(--d,1))*(100% + 14px) - 14px) -14px -14px)}
 .lgr .ax{stroke:var(--k);stroke-width:1}.lgr .gr{stroke:#c4c7cd;stroke-width:1;stroke-dasharray:1.5 5}
-.lgr .ln{stroke:var(--k);stroke-width:1.6;stroke-linejoin:round}.lgr .ln.n2{stroke-width:1.1}
+.lgr .ln{stroke:var(--k);stroke-width:1.25;stroke-linejoin:round}.lgr .ln.n2{stroke-width:1.1}
 .lgr .l2{stroke:#9a9da5;stroke-width:1.2;stroke-dasharray:5 4;opacity:clamp(0,calc(var(--p,1)*5 - 1),1)}
 .lgr .l2[style]{opacity:clamp(0,calc((var(--d,1) - var(--t))*8),1)}
 .lgr .dr{stroke:#a3a6ad;stroke-width:1;stroke-dasharray:1.5 3.5;opacity:clamp(0,calc((var(--d,1) - var(--t))*14),1)}
-.lgr .nd{--q:clamp(0,calc((var(--d,1) - var(--t))*14 + .02),1);position:absolute;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;background:var(--k);opacity:var(--q);transform:scale(calc(.4 + var(--q)*.6))}
-.lgr .nd.o{width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%}
-.lgr .nd.r,.lgr .nd.fl{width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--k)}
-.lgr .nd.r::after,.lgr .nd.fl::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--k)}
-.lgr .nd.fl{box-shadow:inset 0 0 0 1.5px var(--red)}.lgr .nd.fl::after{background:var(--red)}
-.lgr .lgp{position:absolute;padding:5px 7px 4px;border-radius:3px;background:var(--k);color:var(--bg);font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;transform:translate(-50%,-50%);opacity:clamp(0,calc((var(--d,1) - var(--t))*10 + .02),1)}
+.lgr .nd{--q:clamp(0,calc((var(--d,1) - var(--t))*14 + .02),1);position:absolute;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;background:var(--k);opacity:var(--q);transform:scale(calc(.4 + var(--q)*.6))}
+.lgr .nd.o{width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%}
+.lgr .nd.r,.lgr .nd.fl{width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--k)}
+.lgr .nd.r::after,.lgr .nd.fl::after{content:"";position:absolute;inset:4.5px;border-radius:50%;background:var(--k)}
+.lgr .nd.fl{box-shadow:inset 0 0 0 1.5px var(--k),0 0 0 3px var(--bg),0 0 0 4px var(--k)}
+.lgr .lgp{position:absolute;padding:4px 6px 3px;border-radius:3px;background:var(--k);color:var(--bg);font:500 9.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;transform:translate(-50%,-50%);opacity:clamp(0,calc((var(--d,1) - var(--t))*10 + .02),1)}
 .lgr .lgp.g{background:var(--soft);color:var(--k)}.lgr .lgp.e{transform:translate(-100%,-50%)}
 .lgr .tk{position:absolute;top:calc(100% + 13px);transform:translateX(-50%);font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3);white-space:nowrap}
 .lgr .tk::before{content:"";position:absolute;left:50%;top:-13px;height:5px;border-left:1px solid var(--k)}
@@ -2332,7 +2338,7 @@ CSS_LINE = r"""
 .lf.dk{background:var(--dk);color:#fff;border-top:0}.lf.dk .lf-i{border-color:var(--dl)}.lf.dk .lf-i::before,.lf.dk .lf-i::after{background:#fff}
 .lf.dk .lf-t>p:not(.lf-k){color:#a3a5aa}.lf.dk .lf-k,.lf.dk .lf-n,.lf.dk .lgr .cp,.lf.dk .lgr .tk{color:#7f8187}
 .lf.dk .lgr{--k:#fff;--bg:var(--dk);--soft:#2b2c30}.lf.dk .lgr .lgp.g{color:#e3e4e7}.lf.dk .lgr .l2{stroke:#6f7279}.lf.dk .lgr .hz{background:repeating-linear-gradient(135deg,transparent 0 5px,rgba(255,255,255,.2) 5px 6px)}
-@media(max-width:1100px){.lf-i,.lf.f .lf-i{grid-template-columns:minmax(0,1fr)}.lf.f .lf-t{order:0}.lf h2{max-width:14em}}
+@media(max-width:1100px){.lf-i{grid-template-columns:minmax(0,1fr)}.lf-d,.lf.f .lf-d{justify-self:start}.lf.f .lf-t{order:0}.lf h2{max-width:14em}}
 @media(max-width:860px){.lf-i{padding:56px var(--pad) 52px;gap:30px}.lf h2{font-size:28px}.lgr{aspect-ratio:5/4}
 .lgr .lgp,.lgr .tk,.lgr .cp{font-size:9.5px;letter-spacing:.02em}.lgr-k{left:0;right:auto;flex-wrap:wrap}.lgr:has(.lgr-k) .cp{display:none}}
 """
@@ -2369,16 +2375,17 @@ CHB = '<nav class="chb" aria-label="Parts of the day">%s</nav>' % ''.join('<a hr
 DAYP = ('<div class="dayp2">'
         + '<section class="dhero">%s<div class="w dhero-i"><span class="lb">A day with it running</span><h1>One day, start to finish.</h1><p class="sub">Scroll through a day at an example business. The pictures are sample data.</p><div class="cta">%s</div></div></section>' % (DHERO_ART, BOOK)
         + ch(0, spine('One day at an example business', [('6:31 AM', 'A form came in. Answered and booked.'), ('9:12 AM', 'A missed call. A text back in 9 seconds.'), ('12:40 PM', 'One job ran long. Two stops moved.'),
-                                                          ('4:12 PM', 'The job ended. The invoice went out.'), ('6:05 PM', 'Monday&rsquo;s quote got its check-in.'), ('2:07 AM', 'A burst pipe. The on-call phone rang.')]))
-        + ch(1, words([('9:12 AM', 'The phone rings while you&rsquo;re on a roof.', 'It still gets answered.'),
-                       ('', 'A reply goes out in seconds.', 'Sorry we missed you, with times to pick from. No callback list.'),
+                                                          ('4:12 PM', 'The job ended. The invoice went out.'), ('6:05 PM', 'Monday&rsquo;s quote got its check-in.'), ('2:07 AM', 'A burst pipe. The on-call phone rang.')]).replace('data-sp', 'data-sp data-cv', 1))
+        + ch(1, wash('a', '9:12 AM', 'The phone rings while you&rsquo;re on a roof.', 'It still gets answered.'))
+        + ch(1, words([('', 'A reply goes out in seconds.', 'Sorry we missed you, with times to pick from. No callback list.'),
                        ('', 'It all lands in your app.', 'The thread, the lead and what happens next, in one place.')], THREAD))
         + ch(2, design('dial', 'One job running long should not cost you the afternoon.', 'The day adjusts without you making the calls.', '/dispatch', 'Scheduling and dispatch'))
-        + ch(2, portal('line', '4:12 PM', 'Invoices go out when the job is done.'))
+        + ch(2, portal('sheet', '4:12 PM', 'The job ended.', 'Invoices go out when the job is done.'))
         + ch(2, words([('', 'Friendly first, firmer later.', 'And never from you personally.'),
                        ('', 'They stop the moment it is paid.', 'You can stop them for one customer in one tap.'),
                        ('', 'You get paid without being the one who asks.', 'What is outstanding, by customer and by age.')], INVOICE, True))
-        + ch(3, design('stack', 'A quote nobody chases is a job you gave away.', 'Days 2, 5 and 10, then monthly, until it&rsquo;s a yes or a no.', '/follow-up', 'Follow-up', False, 'f'))
+        + ch(3, wash('b', '6:05 PM', 'A quote nobody chases is a job you gave away.'))
+        + ch(3, design('stack', 'Days 2, 5 and 10, then monthly, until it&rsquo;s a yes or a no.', 'Each quote is followed up on a schedule and stops the moment there is an answer.', '/follow-up', 'Follow-up', False, 'f'))
         + ch(3, dayline('Five things handled without you. One worth waking up for.', 'The whole day on one line. Sample data from an example business.', '/reports', 'Reports',
                         [(6.52, '6:31 AM', 'Form answered and booked'), (9.2, '9:12 AM', 'Missed call texted back'), (12.67, '12:40 PM', 'Two stops moved'), (16.2, '4:12 PM', 'Invoice sent'),
                          (18.08, '6:05 PM', 'Quote check-in sent'), (26.12, '2:07 AM', 'On-call phone rang')]))
@@ -2409,40 +2416,76 @@ CSS_DAY = r"""
 .dsn svg{width:min(560px,100%);height:auto;overflow:visible}
 .dsn svg circle,.dsn svg line{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-linecap:round}
 .dsn .r0{stroke:var(--ln)}.dsn svg line[style]{opacity:clamp(.14,calc(var(--p,1)*52 - var(--i)),1)}
-.dsn .r1{stroke-width:10;stroke:var(--blue);stroke-dasharray:942;stroke-dashoffset:calc((1 - var(--p,1))*942)}
-.dsn .r2{stroke-width:22;stroke:var(--ink);stroke-dasharray:704;stroke-dashoffset:calc((1 - min(var(--p,1)*1.5,1))*704)}
-.dsn .r3{stroke-width:34;stroke:#dfe6fb;stroke-dasharray:465;stroke-dashoffset:calc((1 - min(var(--p,1)*2.2,1))*465)}
-.dsn .hd{stroke-width:3;transform-origin:200px 200px;transform:rotate(calc(var(--p,1)*360deg))}.dsn .c{fill:var(--ink)}
+.dsn .r1{stroke-width:1.5;stroke:var(--ink);stroke-dasharray:942;stroke-dashoffset:calc((1 - var(--p,1))*942)}
+.dsn .r2{stroke-width:1;stroke:#9a9da5;stroke-dasharray:704;stroke-dashoffset:calc((1 - min(var(--p,1)*1.5,1))*704)}
+.dsn .r3{stroke-width:1;stroke:var(--ink);stroke-dasharray:465;stroke-dashoffset:calc((1 - min(var(--p,1)*2.2,1))*465)}
+.dsn .hd{stroke-width:1.5;transform-origin:200px 200px;transform:rotate(calc(var(--p,1)*360deg))}.dsn .c{fill:var(--ink)}
 .stk{display:flex;flex-direction:column-reverse;align-items:center;gap:10px;width:min(520px,100%)}
 .stk i{--q:clamp(0,calc(var(--p,1)*11.5 - var(--i)),1);height:clamp(26px,3.6vh,40px);border-radius:10px;background:#eceef2;opacity:var(--q);transform:translateY(calc((1 - var(--q))*-90px)) rotate(calc((1 - var(--q))*-4deg))}
-.stk i.k{background:var(--ink)}.stk i.b{background:var(--blue)}.stk i.o{background:none;box-shadow:inset 0 0 0 1.5px var(--ink)}
+.stk i.k{background:var(--ink)}.stk i.b{background:#9a9da5}.stk i.o{background:none;box-shadow:inset 0 0 0 1.5px var(--ink)}
 .dts{display:grid;grid-template-columns:repeat(12,1fr);gap:clamp(8px,1.1vw,18px);width:min(560px,100%)}
 .dts i{position:relative;aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.1)}
 .dts i::after{content:"";position:absolute;inset:0;border-radius:50%;background:#fff;opacity:clamp(0,calc(var(--p,1)*var(--n) - var(--i)),1);transform:scale(clamp(.2,calc(var(--p,1)*var(--n) - var(--i)),1))}
-.dts i.b::after{background:#6d9bff}
-/* the clock idea, in other shapes */
-.pt{background:var(--dk);color:#fff}.pt-s{display:grid;place-items:center;padding:clamp(96px,10vw,180px) 24px;text-align:center}.pt-a{display:none}
+.dts i.b::after{background:none;box-shadow:inset 0 0 0 1.5px #fff}
+/* the clock's recipe with other objects: a drawn thing does its job, then its dark body becomes the next screen */
+.pt{background:var(--dk);color:#fff}.pt-s{display:grid;place-items:center;padding:clamp(96px,10vw,180px) 24px;text-align:center}.pt-a,.pt-o,.pt-n{display:none}
 .pt h2{margin:0 auto;max-width:13em;font-size:clamp(34px,4.4vw,84px);line-height:1.02;letter-spacing:-.045em;font-weight:600;text-wrap:balance}
-.pt.sp-live{height:260vh;background:#fff}
-.pt.sp-live .pt-s{position:sticky;top:0;height:100vh;padding:0;overflow:hidden;box-sizing:border-box}
-.pt.sp-live .pt-a{display:grid;place-items:center;position:absolute;inset:0;color:var(--ink)}
-.pt-a span{font:500 clamp(14px,1.1vw,18px)/1 "Geist Mono",monospace;color:var(--t2);opacity:calc(1 - var(--p,0)*3)}
-.pt.sp-live .pt-d{position:absolute;inset:0;display:grid;place-items:center;padding:0 24px;background:var(--dk)}
-.pt.sp-live .pt-d h2{opacity:clamp(0,calc(var(--p,0)*4 - 2.2),1);transform:translateY(calc((1 - clamp(0,calc(var(--p,0)*4 - 2.2),1))*40px))}
-.pt-line.sp-live .pt-d{--a:min(calc(var(--p,0)*3),1);--b:clamp(0,calc(var(--p,0)*2.6 - .95),1);clip-path:inset(0 calc((1 - var(--b))*50% - 1.5px) calc((1 - var(--a))*100%) calc((1 - var(--b))*50% - 1.5px))}
-.pt-line.sp-live .pt-s::after{content:"";position:absolute;left:50%;top:0;width:11px;height:11px;margin:-5px 0 0 -5.5px;border-radius:50%;background:var(--blue);transform:translateY(calc(min(var(--p,0)*3,1)*100vh));opacity:calc(1 - clamp(0,calc(var(--p,0)*2.6 - .95),1)*4)}
-.pt-bands.sp-live .pt-d{--m:linear-gradient(#000 0 0);-webkit-mask:var(--m) 0 0/calc(clamp(0,calc(var(--p,0)*2.4),1)*100%) 17% no-repeat,var(--m) 100% 20%/calc(clamp(0,calc(var(--p,0)*2.4 - .18),1)*100%) 17% no-repeat,var(--m) 0 40%/calc(clamp(0,calc(var(--p,0)*2.4 - .36),1)*100%) 17% no-repeat,var(--m) 100% 60%/calc(clamp(0,calc(var(--p,0)*2.4 - .54),1)*100%) 17% no-repeat,var(--m) 0 80%/calc(clamp(0,calc(var(--p,0)*2.4 - .72),1)*100%) 17% no-repeat,var(--m) 100% 100%/calc(clamp(0,calc(var(--p,0)*2.4 - .9),1)*100%) 17% no-repeat;mask:var(--m) 0 0/calc(clamp(0,calc(var(--p,0)*2.4),1)*100%) 17% no-repeat,var(--m) 100% 20%/calc(clamp(0,calc(var(--p,0)*2.4 - .18),1)*100%) 17% no-repeat,var(--m) 0 40%/calc(clamp(0,calc(var(--p,0)*2.4 - .36),1)*100%) 17% no-repeat,var(--m) 100% 60%/calc(clamp(0,calc(var(--p,0)*2.4 - .54),1)*100%) 17% no-repeat,var(--m) 0 80%/calc(clamp(0,calc(var(--p,0)*2.4 - .72),1)*100%) 17% no-repeat,var(--m) 100% 100%/calc(clamp(0,calc(var(--p,0)*2.4 - .9),1)*100%) 17% no-repeat}
+.pt.sp-live{height:300vh;background:#fff}
+.pt.sp-live .pt-s{--cy:61%;--w:300px;--h:100px;--r:30px;position:sticky;top:0;height:100vh;height:100svh;padding:0;overflow:hidden;box-sizing:border-box}
+.pt.sp-live .pt-a{display:block;position:absolute;left:0;right:0;top:clamp(92px,14vh,170px);padding:0 24px;color:var(--ink);opacity:var(--f,1);transform:translateY(calc((1 - var(--f,1))*-36px))}
+.pt-a span{font:500 11.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}
+.pt-a p{margin:16px auto 0;max-width:15em;font:400 clamp(28px,2.9vw,52px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.02em;text-wrap:balance}
+.pt.sp-live .pt-d{--gx:var(--g,0);--gy:var(--g,0);--x:calc((50% - var(--w)/2)*(1 - var(--gx)));position:absolute;inset:0;display:grid;place-items:center;padding:0 24px;background:var(--dk);
+clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((100% - var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) round calc(var(--r)*(1 - var(--g,0))))}
+.pt.sp-live .pt-d h2{opacity:var(--t,0);transform:translateY(calc((1 - var(--t,0))*40px))}
+.pt.sp-live .pt-o{display:block;position:absolute;left:50%;top:var(--cy);width:var(--w);height:var(--h);transform:translate(-50%,-50%);opacity:var(--f,1)}
+.pt.sp-live .pt-n{display:block;position:absolute;left:0;right:0;top:calc(var(--cy) + var(--h)/2 + 24px);font:500 13px/1 "Geist Mono",monospace;letter-spacing:.02em;color:var(--t2);opacity:var(--f,1)}
+.pt-o i{position:absolute}
+/* a reply being typed */
+.pt-bubble.sp-live .pt-s{--w:min(420px,80vw);--h:128px;--r:38px}
+.pt-bubble .btl{right:30px;bottom:-9px;width:26px;height:26px;border-radius:3px;background:var(--dk);transform:rotate(45deg)}
+.pt-bubble .d{left:calc(42px + var(--i)*24px);top:50%;width:11px;height:11px;margin-top:-5.5px;border-radius:50%;background:#fff;opacity:calc(clamp(.22,calc(var(--a,0)*7 - var(--i) - .4),1)*clamp(0,calc((.6 - var(--a,0))*14),1))}
+.pt-bubble .b{left:42px;height:2px;background:#fff}.pt-bubble .b1{top:50px;width:calc(clamp(0,calc((var(--a,0) - .58)*5),1)*66%)}.pt-bubble .b2{top:78px;width:calc(clamp(0,calc((var(--a,0) - .76)*5),1)*42%)}
+/* an invoice writing itself, then unfolding sideways before it opens */
+.pt-sheet.sp-live .pt-s{--w:min(290px,66vw);--h:372px;--r:12px;--cy:63%}
+.pt-sheet.sp-live .pt-d{--gx:min(calc(var(--g,0)*3.2),1);--gy:clamp(0,calc(var(--g,0)*1.5 - .5),1)}
+.pt-sheet .hd{left:24px;top:30px;width:34%;height:2px;background:#fff}
+.pt-sheet .srw{left:24px;right:24px;top:var(--y);height:1px;opacity:clamp(0,calc(var(--a,0)*5 - var(--i) - .6),1)}
+.pt-sheet .srw::before,.pt-sheet .srw::after{content:"";position:absolute;top:0;height:1px;background:rgba(255,255,255,.75)}.pt-sheet .srw::before{left:0;width:var(--l)}.pt-sheet .srw::after{right:0;width:16%}
+.pt-sheet .ru{left:24px;right:24px;top:240px;border-top:1px dashed rgba(255,255,255,.4)}
+.pt-sheet em{position:absolute;left:24px;bottom:28px;padding:5px 7px 4px;border:1px solid rgba(255,255,255,.55);border-radius:3px;font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;letter-spacing:.05em;text-transform:uppercase;color:#fff;opacity:clamp(0,calc((var(--a,0) - .88)*12),1)}
+.pt-sheet.sp-live .pt-n{left:50%;right:auto;width:var(--w);top:calc(var(--cy) + var(--h)/2 - 112px);transform:translateX(-50%);box-sizing:border-box;padding-right:24px;text-align:right;font-size:22px;letter-spacing:-.01em;color:#fff}
+/* thirty-two tiles filling in, then closing up into one screen */
+.pt-grid.sp-live .pt-s{--w:min(560px,84vw);--h:min(280px,42vw);--cy:62%}
+.pt-grid.sp-live .pt-d{z-index:2;background:none;clip-path:none}
+.pt-grid.sp-live .pt-o{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:calc((1 - var(--g,0))*8px);opacity:1;top:calc(var(--cy) + (50% - var(--cy))*var(--g,0));width:calc(var(--w) + (100% - var(--w))*var(--g,0));height:calc(var(--h) + (100% - var(--h))*var(--g,0))}
+.pt-grid .pt-o i{position:static;background:var(--dk);border-radius:calc((1 - var(--g,0))*5px);box-shadow:0 0 0 calc(var(--g,0)*1px) var(--dk);opacity:clamp(.09,calc(var(--a,0)*36 - var(--i) + var(--g,0)*60),1)}
+/* an app icon being pressed, then opening */
+.pt-app.sp-live .pt-s{--w:168px;--h:168px;--r:40px}
+.pt-app .mk{position:absolute;left:27%;top:27%;width:46%;height:46%;color:#fff;transform:scale(calc(1 - var(--a,0)*.1))}
+.pt-app .rg{inset:-24px;border:1px solid var(--ink);border-radius:58px;opacity:calc(1 - var(--a,0));transform:scale(calc(1.5 - var(--a,0)*.5))}
+/* colour-wash bands that open a chapter */
+.wb{position:relative;z-index:3;display:grid;place-items:center;min-height:clamp(400px,68vh,740px);padding:80px 24px;box-sizing:border-box;overflow:hidden;text-align:center;color:var(--ink)}
+.wb::after{content:"";position:absolute;inset:0;opacity:.5;mix-blend-mode:soft-light;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wb-i{position:relative;z-index:1}
+.wb-k{margin:0;font:500 11.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:rgba(23,24,26,.6)}
+.wb h2{margin:18px auto 0;max-width:14em;font:400 clamp(34px,3.8vw,70px)/1.07 Georgia,"Times New Roman",serif;letter-spacing:-.024em;text-wrap:balance}
+.wb-i>p:not(.wb-k){margin:20px auto 0;font-size:clamp(15.5px,1.1vw,19px);color:rgba(23,24,26,.66)}
+.wb-a{background:radial-gradient(58% 90% at 30% 0,#f1c6a8 0,rgba(241,198,168,0) 72%),radial-gradient(46% 90% at 0 86%,#b9bbd0 0,rgba(185,187,208,0) 72%),radial-gradient(52% 80% at 96% 92%,#ecd0a6 0,rgba(236,208,166,0) 72%),radial-gradient(48% 70% at 82% 4%,#c5d5e3 0,rgba(197,213,227,0) 72%),#e9e3da}
+.wb-b{background:radial-gradient(50% 80% at 46% 22%,#ecb6b0 0,rgba(236,182,176,0) 72%),radial-gradient(48% 90% at 76% 96%,#94bca2 0,rgba(148,188,162,0) 72%),radial-gradient(48% 80% at 4% 30%,#e6d3ae 0,rgba(230,211,174,0) 72%),radial-gradient(40% 70% at 100% 10%,#cfd6dc 0,rgba(207,214,220,0) 72%),#e6dfd4}
+.wb-c{background:radial-gradient(48% 90% at 80% 50%,#a9d8d8 0,rgba(169,216,216,0) 72%),radial-gradient(44% 80% at 40% 64%,#d3d1e8 0,rgba(211,209,232,0) 72%),radial-gradient(46% 70% at 30% 0,#f2d0b8 0,rgba(242,208,184,0) 72%),radial-gradient(50% 60% at 58% 104%,#eeeac6 0,rgba(238,234,198,0) 72%),#e3ebe5}
+.spn.sp-live[data-cv]{height:410vh}.sp-live[data-cv]+.wb{margin-top:-70vh}
 /* whole-screen pieces: a line down the middle with the day branching off it; a field of dots behind centred words */
 .spn{background:#fff;border-bottom:1px solid var(--ln)}
 .spn-s{padding:clamp(64px,7vw,120px) 24px}.spn-h{margin:0 0 clamp(28px,4vh,56px);text-align:center;font:500 13px/1 "Geist Mono",monospace;color:var(--t3)}
 .spn-b{position:relative;max-width:1100px;margin:0 auto}.spn-l{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--ln)}
 .spn-l i{display:block;height:100%;background:var(--ink);transform-origin:top;transform:scaleY(var(--p,1))}
-.spn-l::after{content:"";position:absolute;left:50%;top:calc(var(--p,1)*100%);width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 5px #fff}
+.spn-l::after{content:"";position:absolute;left:50%;top:calc(var(--p,1)*100%);width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 5px #fff}
 .spn ol{list-style:none;margin:0;padding:0;display:grid}
 .spn li{--q:clamp(0,calc(var(--p,1)*6.4 - var(--i) - .1),1);position:relative;width:50%;box-sizing:border-box;padding:clamp(14px,2.4vh,30px) clamp(28px,3.4vw,60px);opacity:var(--q)}
 .spn li.l{text-align:right;transform:translateX(calc((1 - var(--q))*-40px))}.spn li.r{margin-left:50%;transform:translateX(calc((1 - var(--q))*40px))}
 .spn li::before{content:"";position:absolute;top:50%;width:clamp(16px,2vw,34px);border-top:1.5px solid var(--ink)}.spn li.l::before{right:0}.spn li.r::before{left:0}
-.spn time{display:block;font:500 12.5px/1 "Geist Mono",monospace;color:var(--blue)}
+.spn time{display:block;font:500 12.5px/1 "Geist Mono",monospace;color:var(--t3)}
 .spn b{display:block;margin-top:10px;font:400 clamp(21px,2.1vw,38px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.018em}
 .spn.sp-live{height:340vh}.spn.sp-live .spn-s{position:sticky;top:0;height:100vh;box-sizing:border-box;padding-top:clamp(84px,11vh,120px);padding-bottom:4vh;display:flex;flex-direction:column}
 .spn.sp-live .spn-b{flex:1;width:100%}.spn.sp-live ol{height:100%;grid-template-rows:repeat(6,1fr)}.spn.sp-live li{display:flex;flex-direction:column;justify-content:center;padding-top:0;padding-bottom:0}
@@ -2453,9 +2496,6 @@ CSS_DAY = r"""
 .dsn.fs .dsn-t::before{content:"";position:absolute;left:50%;top:50%;width:min(820px,86vw);height:min(460px,64vh);transform:translate(-50%,-46%);background:radial-gradient(closest-side,var(--dk) 58%,transparent);z-index:-1}
 .dsn.fs.sp-live .dsn-g{position:sticky;top:0;height:100vh}.dsn.fs.sp-live .dsn-t{min-height:0}
 .dsn.fs h2{max-width:14em}.dsn.fs p{margin-left:auto;margin-right:auto}
-.pt-blinds.sp-live .pt-d{-webkit-mask:repeating-linear-gradient(90deg,#000 0 calc(min(var(--p,0)*1.5,1)*12.6vw),transparent 0 12.5vw);mask:repeating-linear-gradient(90deg,#000 0 calc(min(var(--p,0)*1.5,1)*12.6vw),transparent 0 12.5vw)}
-.pt-diamond.sp-live .pt-d{--r:calc(min(var(--p,0)*1.5,1)*125vmax);clip-path:polygon(50% calc(50% - var(--r)),calc(50% + var(--r)) 50%,50% calc(50% + var(--r)),calc(50% - var(--r)) 50%)}
-.pt-iris.sp-live .pt-d{--o:calc((1 - min(var(--p,0)*1.5,1))*50%);clip-path:inset(var(--o) var(--o) round calc((1 - min(var(--p,0)*1.5,1))*120px))}
 /* the day as one line: a whole-screen stepped line graph that is wiped in by the scroll */
 .dln{--d:clamp(0,calc(var(--p,1)*1.3 - .1),1);background:#fff;border-bottom:1px solid var(--ln)}
 .dln-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(64px,6vw,112px) var(--pad);box-sizing:border-box}
@@ -2464,9 +2504,9 @@ CSS_DAY = r"""
 .dln-t p{margin:0;max-width:22em;font-size:clamp(15px,1.05vw,19px);line-height:1.45;color:var(--t2)}.dln .btn{margin-top:clamp(14px,1.4vw,22px)}
 .dln .lgr{aspect-ratio:21/9;margin:clamp(56px,7vh,84px) 0 30px}
 .dln-l{position:absolute;box-sizing:border-box;padding:0 10px 12px 14px;transform:translateY(-100%);opacity:clamp(0,calc((var(--d,1) - var(--t))*12),1)}
-.dln-l time{display:block;font:500 12px/1 "Geist Mono",monospace;color:var(--blue)}
+.dln-l time{display:block;font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}
 .dln-l b{display:block;margin-top:7px;font:400 clamp(15px,1.3vw,22px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.012em}
-.dln-l.n{padding:0 16px 0 0;transform:translate(-100%,16px);text-align:right;white-space:nowrap}.dln-l.n time{color:var(--red)}
+.dln-l.n{padding:0 16px 0 0;transform:translate(-100%,16px);text-align:right;white-space:nowrap}.dln-l.n time{color:var(--ink)}
 .dln-o{display:none}
 .dln.sp-live{height:300vh}.dln.sp-live .dln-s{position:sticky;top:0;height:100vh}
 .dln.sp-live .dln-i{display:flex;flex-direction:column;height:100%;padding-top:clamp(92px,12vh,128px);padding-bottom:clamp(84px,11vh,104px)}
@@ -2481,7 +2521,7 @@ CSS_DAY = r"""
 .dh-a .hr span{position:absolute;left:0;top:18px;transform:translateX(-50%);font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3);white-space:nowrap}
 .dh-a .sun{--a:calc(-20deg + var(--h,0)*40deg)}
 .dh-a .sun::before{content:"";position:absolute;left:-8px;top:-8px;width:16px;height:16px;box-sizing:border-box;border-radius:50%;background:#fff;border:1.5px solid var(--ink)}
-.dh-a .sun::after{content:"";position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--blue)}
+.dh-a .sun::after{content:"";position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--ink)}
 /* where you are in the day, along the bottom */
 .chb{position:fixed;left:50%;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:min(780px,calc(100vw - 460px));background:#fff;box-shadow:0 0 0 1px var(--ln);transform:translate(-50%,110%);transition:transform .35s cubic-bezier(.2,.7,.2,1),background .25s}
 .chb.on{transform:translate(-50%,0)}
@@ -2489,9 +2529,9 @@ CSS_DAY = r"""
 .chb a+a{border-left:1px solid var(--ln)}.chb i{font-style:normal;opacity:.6}.chb a.on{background:var(--ink);color:#fff}
 .chb.dk{background:#1a1b1e;box-shadow:0 0 0 1px #2c2d31}.chb.dk a{color:#8f9197}.chb.dk a+a{border-color:#2c2d31}.chb.dk a.on{background:#fff;color:var(--ink)}
 @media(max-width:1000px){.chb{display:none}}
-@media(max-width:860px){.dln-i{padding:56px var(--pad)}.dln-t{grid-template-columns:minmax(0,1fr);gap:16px}.dln h2{font-size:28px}.dln .lgr{aspect-ratio:4/3;margin-top:44px}.dln-l{display:none}.dln-o{display:block;list-style:none;margin:34px 0 0;padding:0}.dln-o li{display:flex;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--ln);font-size:15.5px;line-height:1.3}.dln-o time{flex:none;width:5.4em;font:500 11.5px/1 "Geist Mono",monospace;color:var(--blue)}.dln-o li:last-child time{color:var(--red)}
+@media(max-width:860px){.dln-i{padding:56px var(--pad)}.dln-t{grid-template-columns:minmax(0,1fr);gap:16px}.dln h2{font-size:28px}.dln .lgr{aspect-ratio:4/3;margin-top:44px}.dln-l{display:none}.dln-o{display:block;list-style:none;margin:34px 0 0;padding:0}.dln-o li{display:flex;gap:14px;align-items:baseline;padding:11px 0;border-top:1px solid var(--ln);font-size:15.5px;line-height:1.3}.dln-o time{flex:none;width:5.4em;font:500 11.5px/1 "Geist Mono",monospace;color:var(--t3)}.dln-o li:last-child time{color:var(--ink)}
 .dln .tk:nth-of-type(even){display:none}.dh-a .hr:nth-of-type(odd) span{display:none}.dh-a .hr span{font-size:9.5px}.dh-g{background-size:40px 40px}}
-@media(max-width:860px){.wsc-g,.dsn-g{grid-template-columns:minmax(0,1fr)}.wsc-p{order:-1;border:0!important;border-bottom:1px solid var(--ln)!important}.wsc-s{position:static;height:auto;padding:28px 14px}.wsc-w>div{min-height:0;padding:44px var(--pad)}.wsc.f .wsc-w{order:0}
+@media(max-width:860px){.wb{min-height:56vh}.wb h2{font-size:32px}.pt-a p{font-size:27px}.wsc-g,.dsn-g{grid-template-columns:minmax(0,1fr)}.wsc-p{order:-1;border:0!important;border-bottom:1px solid var(--ln)!important}.wsc-s{position:static;height:auto;padding:28px 14px}.wsc-w>div{min-height:0;padding:44px var(--pad)}.wsc.f .wsc-w{order:0}
 .spn li,.spn li.r{width:auto;margin:0;text-align:left;transform:none;opacity:1;padding:16px 0 16px 28px}.spn-l{left:0}.spn li::before{left:0!important;right:auto!important;width:16px}.dsn.f .dsn-t{order:0}.dsn.fs .dsn-t{min-height:70vh}.dsn.fs .dts{grid-template-columns:repeat(12,1fr)}
 .dsn-g{min-height:0}.dsn-t{padding:56px var(--pad) 8px}.dsn-d{border-left:0;padding:28px var(--pad) 56px}.wsc h2,.dsn h2{font-size:28px}}
 """

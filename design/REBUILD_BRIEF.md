@@ -394,3 +394,12 @@ What he is responding to there: hairline technical drawings (a curve with dotted
   - `/everything`: one business from lead to paid as a stepped line, the two biggest drops hatched and tagged "Fix this first" / "Then this", with the book button.
 - `/day`: the top now sits on graph paper with the day's arc along the bottom and a marker that moves along it as the page starts to scroll. New whole-screen section `dayline()`: the day as one stepped line that climbs each time something is handled, wiped in by the scroll, ending on the 2:07 AM call that rang a person. A chapter bar (`.chb`, The day / Morning / Afternoon / Evening / Night) is fixed along the bottom from the spine onward, shows where you are, and jumps on click; hidden below 1000px.
 - Not done: the homepage and `/free-audit` were left alone (approved). The audit chart is the obvious candidate for both; needs Sam's OK.
+
+### 22o. Transitions like the clock, colour-wash bands, monotone (27 Nov)
+
+Sam: the transitions are still weak; he wants the clock's recipe (an image you go through that opens on the next screen) with other images, Attio's colour-wash chapter bands that then go back to normal, and drawings that are black, white and grey.
+
+- `portal(kind, label, line, title)` rebuilt. Each is an object that does its job, then its dark body becomes the next screen: `sheet` (an invoice writes itself and totals, unfolds sideways, opens; /day), `bubble` (a reply is typed, 0:00 to 0:09; /answering), `grid` (32 tiles fill and close up; /everything), `app` (the app icon is pressed and opens; /software). Line, bands, blinds, diamond and iris removed.
+- Script: portals are smoothed (lerp, like the clock) and get `--a` (act one), `--g` (grow, exponential), `--f` (fade), `--t` (title) and an optional counter (`.pt-n`). Portals now also run on phones; other pinned sections still do not.
+- `wash(kind, tag, title)`: three colour-wash bands (a, b, c) with grain. On /day the first band rises over the pinned spine (`data-cv`). /story chapters are now bands.
+- Monotone: dial, stack, dots, spine, day-line and hero marker are ink and grey only; no blue or red in drawings. Charts slimmed (thinner line, smaller nodes and tags, 540px max).

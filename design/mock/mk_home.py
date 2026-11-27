@@ -486,12 +486,22 @@ addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(f
 })();
 (function(){
 var els=[].slice.call(document.querySelectorAll('[data-sp]'));if(!els.length)return;
-if(innerWidth<861||(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search)))return;
-var top=document.querySelector('.top'),tick=false,mine=false;els.forEach(function(e){e.classList.add('sp-live')});
-function f(){tick=false;var vh=innerHeight,pin=null;els.forEach(function(e){var r=e.getBoundingClientRect(),p=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height-vh)));e.style.setProperty('--p',p.toFixed(4));
-if(e.classList.contains('pt')&&r.top<=0&&r.bottom>60)pin=p});
-if(top){if(pin!==null){mine=true;top.classList.toggle('dk',pin>.5)}else if(mine){mine=false;top.classList.remove('dk');dispatchEvent(new Event('resize'))}}}
-addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(f)}},{passive:true});addEventListener('resize',function(){if(!tick){tick=true;requestAnimationFrame(f)}});f();
+if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search))return;
+if(innerWidth<861)els=els.filter(function(e){return e.classList.contains('pt')});if(!els.length)return;
+var top=document.querySelector('.top'),mine=false,run=false,snap=/[?&]snap=1/.test(location.search);
+var st=els.map(function(e){e.classList.add('sp-live');var n=e.querySelector('.pt-n');return {e:e,pt:e.classList.contains('pt'),cv:e.hasAttribute('data-cv'),c:-1,n:n,to:n?+n.getAttribute('data-to'):0,fmt:n?n.getAttribute('data-fmt'):'',last:-1}});
+function cl(x){return x<0?0:x>1?1:x}function ez(x){return x*x*(3-2*x)}
+function f(){var vh=innerHeight,pin=null,more=false;st.forEach(function(s){var r=s.e.getBoundingClientRect(),t=cl(-r.top/Math.max(1,r.height-vh-(s.cv?vh*.7:0)));
+if(!s.pt){s.e.style.setProperty('--p',t.toFixed(4));return}
+if(s.c<0||snap)s.c=t;else{s.c+=(t-s.c)*.16;if(Math.abs(t-s.c)<.0005)s.c=t;else more=true}
+var p=s.c,a=ez(cl(p/.42)),g=cl((p-.46)/.36),k=g>=1?1:(Math.pow(40,g)-1)/39,y=s.e.style;
+y.setProperty('--p',p.toFixed(4));y.setProperty('--a',a.toFixed(4));y.setProperty('--g',k.toFixed(4));y.setProperty('--f',(1-cl((p-.44)/.12)).toFixed(3));y.setProperty('--t',ez(cl((p-.76)/.2)).toFixed(3));
+if(s.n){var v=Math.round(a*s.to);if(v!==s.last){s.last=v;s.n.textContent=s.fmt.replace('#',v.toLocaleString('en-US'))}}
+if(r.top<=0&&r.bottom>60)pin=k});
+if(top){if(pin!==null){mine=true;top.classList.toggle('dk',pin>.6)}else if(mine){mine=false;top.classList.remove('dk');dispatchEvent(new Event('resize'))}}
+run=more;if(more)requestAnimationFrame(f)}
+function q(){if(!run){run=true;requestAnimationFrame(f)}}
+addEventListener('scroll',q,{passive:true});addEventListener('resize',q);f();
 })();
 (function(){
 var sc=[].slice.call(document.querySelectorAll('.sc'));if(!sc.length)return;
@@ -518,7 +528,7 @@ var bar=document.querySelector('.chb');if(!bar)return;
 var secs=[].slice.call(document.querySelectorAll('[data-ch]')),cells=[].slice.call(bar.querySelectorAll('a')),cur=-2,dk=null,tick=false;
 var calm=matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search),hero=document.querySelector('.dhero');
 function f(){tick=false;var mid=innerHeight/2,low=innerHeight-40,at=-1,d=false;if(hero&&!calm)hero.style.setProperty('--h',Math.max(0,Math.min(1,scrollY/(hero.offsetHeight*.7))).toFixed(4));secs.forEach(function(s){var r=s.getBoundingClientRect();if(r.top<=mid&&r.bottom>mid)at=+s.getAttribute('data-ch');
-if(r.top<=low&&r.bottom>low)d=s.classList.contains('dk')||(s.classList.contains('pt')&&(!s.classList.contains('sp-live')||parseFloat(s.style.getPropertyValue('--p'))>.5))});
+if(r.top<=low&&r.bottom>low)d=s.classList.contains('dk')||(s.classList.contains('pt')&&(!s.classList.contains('sp-live')||parseFloat(s.style.getPropertyValue('--g'))>.5))});
 if(at!==cur){cur=at;bar.classList.toggle('on',at>=0);cells.forEach(function(c,i){c.classList.toggle('on',i===at)})}
 if(d!==dk){dk=d;bar.classList.toggle('dk',d)}}
 function q(){if(!tick){tick=true;requestAnimationFrame(f)}}addEventListener('scroll',q,{passive:true});addEventListener('resize',q);f();
