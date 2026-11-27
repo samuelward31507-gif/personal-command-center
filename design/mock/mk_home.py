@@ -399,6 +399,20 @@ for i, (part, ic, find, cost, tone, fix, _) in enumerate(PATH):
         rows += '<div class="ac-r" style="--d:%d">%s<b>%s</b><span>%s</span><em>%s</em><small>%s</small></div>' % (i, tile, part, find, cost, fix)
     else:
         rows += '<div class="ac-r ok" style="--d:%d">%s<b>%s</b><em>Fine as it is</em></div>' % (i, tile, part)
+RAN = [('8:00 AM', 'Four customers reminded', 'Tomorrow&rsquo;s visits, by text'),
+       ('9:15 AM', 'Quote #1042 followed up', 'The day-two check-in'),
+       ('2:30 PM', 'Invoice sent', 'Cedar fence, the day it finished'),
+       ('5:00 PM', 'Review asked for', 'Gate repair, finished yesterday'),
+       ('7:42 PM', 'Missed call texted back', 'Nine seconds after it rang out')]
+_HM_SAT = (
+    '<div class="hm-q q1" aria-hidden="true"><div class="hm-qb"><i></i><i></i><i></i></div><div class="hm-qc"><p class="qk">Saturday, 7:42 PM</p>'
+    '<p class="qm" style="--j:0"><b>Missed call</b>New number, no voicemail</p><p class="qm o" style="--j:1">Sorry we missed you. Want a time tomorrow? 9:00 or 1:30</p><p class="qm" style="--j:2">1:30 works</p></div></div>'
+    '<div class="hm-q q2 dk" aria-hidden="true"><div class="hm-qb"><i></i><i></i><i></i></div><div class="hm-qc"><p class="qk">&gt; What ran today</p>%s<p class="qf" style="--j:5">Five things done. None of them by hand.</p></div></div>'
+    '<div class="hm-q q3" aria-hidden="true"><div class="hm-qb"><i></i><i></i><i></i></div><div class="hm-qc"><p class="qk">Invoice, cedar fence 120 ft</p>'
+    '<p class="qr" style="--j:0"><span>Job finished</span><b>Fri 4:12 PM</b></p><p class="qr" style="--j:1"><span>Invoice sent</span><b>Fri 4:12 PM</b></p><p class="qr" style="--j:2"><span>Reminder</span><b>Day 3</b></p>'
+    '<p class="qr t" style="--j:3"><span>Paid</span><b>$4,800</b></p></div></div>'
+    % ''.join('<p class="ql" style="--j:%d"><time>%s</time>%s</p>' % (k, t, a_) for k, (t, a_, b_) in enumerate(RAN)))
+
 def _hm_chart():
     # where 100 leads went, as one clean line: the sample audit's own numbers
     v = [100, 71, 58, 39, 34]; xs = [0, 25, 50, 75, 100]; yv = lambda a: 100 - a * .86
@@ -427,19 +441,15 @@ HERO = ('<section class="hm"><div class="w hm-t"><a class="hm-p" href="/free-aud
         '<h1>Find out what your business is losing.</h1>'
         '<p class="sub">We take your business apart, put a number on what&rsquo;s costing you jobs and hours, and build systems made for it.</p>'
         '<div class="cta"><a class="btn q" href="/free-audit">See what we check</a><a class="btn" %s>Book your free audit</a></div></div>'
-        '<div class="w hm-s"><div class="hm-w"><div class="hm-b"><i></i><i></i><i></i><b>Free audit</b><span>Ridgeline Fence</span><em>Example business, sample data</em></div>'
+        '<div class="hm-x" data-sp><div class="hm-y"><div class="w hm-s"><div class="hm-w"><div class="hm-b"><i></i><i></i><i></i><b>Free audit</b><span>Ridgeline Fence</span><em>Example business, sample data</em></div>'
         '<div class="hm-g"><div class="hm-l"><p>Seven parts of the business</p>%s</div>'
         '<div class="hm-m"><div class="hm-h"><div><h2>Where the jobs went</h2><p>100 leads in the last 30 days. 34 became paid jobs.</p></div><span>[Audit complete]</span></div>%s</div>'
         '<div class="hm-r"><p>Fix first</p>%s</div></div>'
-        '</div></div></section>'
+        '</div></div>@@SAT@@</div></div></section>'
         % (CAL, ''.join('<div class="%s" style="--k:%d"><span>%s</span><b class="%s">%s</b></div>' % ('on' if on else '', k, a, 'f' if b == 'Fine' else '', b) for k, (a, b, on) in enumerate(_HM_SIDE)),
            _hm_chart(), ''.join('<div style="--k:%d"><span>%s</span><b>%s</b><em>%s</em><u>%s</u></div>' % (k, a, c, b, d) for k, (a, b, c, d) in enumerate(_HM_FIND))))
+HERO = HERO.replace('@@SAT@@', _HM_SAT)
 
-RAN = [('8:00 AM', 'Four customers reminded', 'Tomorrow&rsquo;s visits, by text'),
-       ('9:15 AM', 'Quote #1042 followed up', 'The day-two check-in'),
-       ('2:30 PM', 'Invoice sent', 'Cedar fence, the day it finished'),
-       ('5:00 PM', 'Review asked for', 'Gate repair, finished yesterday'),
-       ('7:42 PM', 'Missed call texted back', 'Nine seconds after it rang out')]
 TICK = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.25"/><path d="m4.9 8.2 2.1 2.1 4.1-4.4"/></svg>'
 RUN = ('<div class="tml" data-in><p class="tml-k">[What ran today]<em>Example business, sample data</em></p><div class="tml-l">%s</div><p class="tml-f">Five things done. None of them by hand.</p></div>'
        % ''.join('<div class="tml-r" style="--i:%d"><time>%s</time><i></i><b>%s</b><span>%s</span></div>' % (k, t, a_, b_) for k, (t, a_, b_) in enumerate(RAN)))
@@ -591,7 +601,7 @@ if(s)scrollTo({top:s.getBoundingClientRect().top+scrollY+4,behavior:calm?'auto':
 CSS = r'''
 /* ---- homepage top: one centred statement over the audit itself, drawn in hairlines ---- */
 .hm{position:relative;overflow:hidden;background:radial-gradient(46% 38% at 0 100%,#e2e6f2 0,rgba(226,230,242,0) 72%),radial-gradient(46% 38% at 100% 100%,#e6e4f0 0,rgba(230,228,240,0) 72%),#fff;border-bottom:1px solid var(--ln)}
-.hm-t{text-align:center;padding:clamp(72px,9.5vh,132px) 0 clamp(44px,5.4vh,72px)}
+.hm-t{text-align:center;padding:clamp(72px,9.5vh,132px) 0 clamp(44px,5.4vh,72px)}.hm-x.sp-live{margin-top:calc(clamp(84px,12vh,130px)*-1)}
 .hm-p{display:inline-flex;align-items:center;gap:8px;padding:7px 12px 7px 14px;border-radius:10px;box-shadow:0 0 0 1px var(--ln);font-size:14.5px;font-weight:500;color:var(--ink);background:#fff}
 .hm-p i{width:6px;height:6px;border-top:1.5px solid currentColor;border-right:1.5px solid currentColor;transform:rotate(45deg);opacity:.6}
 .hm h1{margin:clamp(26px,3.4vh,44px) auto 0;max-width:12.5em;font-size:clamp(44px,5.5vw,104px);line-height:.98;letter-spacing:-.052em;font-weight:600;text-wrap:balance}
@@ -702,6 +712,28 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 .rsp{position:relative;z-index:1;height:58px;box-sizing:border-box;border:1px solid var(--dl);background:repeating-linear-gradient(90deg,var(--dl) 0 1px,transparent 1px 58px)}
 .rsp::before,.rsp::after{content:"";position:absolute;top:-3px;width:5px;height:5px;background:#55575d;box-shadow:0 58px 0 #55575d}.rsp::before{left:-3px}.rsp::after{right:-3px}
 @media(max-width:860px){.pv::before,.pv::after{left:var(--pad);right:var(--pad)}}
+/* past the top, the audit window steps back and three small windows come out from behind it, each filling in as you scroll */
+.hm{overflow:visible;overflow-x:clip}
+.hm-q{display:none}
+.hm-x.sp-live{height:210vh}.hm-x.sp-live .hm-y{position:sticky;top:0;height:100vh;display:flex;align-items:flex-start;justify-content:center;padding-top:clamp(84px,12vh,130px);box-sizing:border-box}
+.hm-x.sp-live .hm-s{padding-bottom:0}.hm-x.sp-live .hm-w{transform:scale(calc(1 - var(--p,0)*.2));transform-origin:50% 45%}
+.hm-x.sp-live .hm-q{--e:clamp(0,calc((var(--p,0) - var(--s))*3.4),1);display:block;position:absolute;z-index:3;width:clamp(230px,17.5vw,300px);border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.1),0 30px 60px -30px rgba(30,36,70,.35);overflow:hidden;opacity:var(--e);font-size:13px}
+.hm-q.q1{--s:.12;left:max(24px,calc(50% - 800px));top:15vh;transform:translate(calc((1 - var(--e))*140px),calc((1 - var(--e))*40px))}
+.hm-q.q2{--s:.3;left:max(40px,calc(50% - 760px));bottom:9vh;transform:translate(calc((1 - var(--e))*140px),calc((1 - var(--e))*-40px))}
+.hm-q.q3{--s:.2;right:max(24px,calc(50% - 800px));top:24vh;transform:translate(calc((1 - var(--e))*-140px),calc((1 - var(--e))*30px))}
+.hm-qb{display:flex;gap:6px;padding:12px 12px 10px}.hm-qb i{width:9px;height:9px;border-radius:50%;background:#ff5f57}.hm-qb i:nth-child(2){background:#febc2e}.hm-qb i:nth-child(3){background:#28c840}
+.hm-qc{margin:0 8px 8px;padding:12px;border-radius:8px;background:#fafafa;box-shadow:0 0 0 1px var(--ln)}.hm-qc p{margin:0}
+.hm-qc p[style]{--v:clamp(0,calc((var(--p,0) - var(--s) - .16 - var(--j)*.07)*12),1);opacity:var(--v);transform:translateY(calc((1 - var(--v))*8px))}
+.hm-q .qk{font:500 10.5px/1.3 "Geist Mono",monospace;color:var(--g2);margin-bottom:10px}
+.hm-q .qm{max-width:88%;margin-top:7px;padding:8px 10px;border-radius:10px 10px 10px 3px;background:#eceef2;line-height:1.35}.hm-q .qm b{display:block;font-weight:600}
+.hm-q .qm.o{margin-left:auto;border-radius:10px 10px 3px 10px;background:var(--ink);color:#fff}
+.hm-q .qr{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--ln);color:var(--g2)}.hm-q .qr b{font-weight:540;color:var(--ink)}.hm-q .qr.t b{font-size:16px}
+.hm-q.dk{background:#17181a}.hm-q.dk .hm-qc{background:#101010;box-shadow:0 0 0 1px #2c2d31;color:#e3e4e7;font:500 11px/1.5 "Geist Mono",monospace}.hm-q.dk .qk{color:#fff}
+.hm-q .ql{display:flex;gap:10px;margin-top:5px}.hm-q .ql time{flex:none;width:4.6em;color:#7f8187}.hm-q .qf{margin-top:12px;padding-top:10px;border-top:1px solid #2c2d31;color:#8f9197}
+/* moving between pages: the old page fades down a touch, the new one rises in */
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vt-out .22s cubic-bezier(.4,0,1,1) both}::view-transition-new(root){animation:vt-in .42s cubic-bezier(.2,.7,.2,1) both}
+@keyframes vt-out{to{opacity:0;transform:translateY(-10px)}}@keyframes vt-in{from{opacity:0;transform:translateY(18px)}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
