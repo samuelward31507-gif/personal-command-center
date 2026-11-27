@@ -36,10 +36,26 @@
       var P1 = S(x + w, y + hh * .26, tx - 10, lerp(ty0, ty1, .22)); curve(c, P1, 0, b, ink(.4)); if (b >= 1) pulse(c, P1, (t * .3) % 1.3);
       if (d > 0) bubble(c, tx + 24, lerp(ty0, ty1, .5) + 30, W * .3, 'Friendly reminder about invoice 1042. Pay here whenever you are ready.', 0, d * 3, F('400', 13.5))
     };
+    // speed to lead: the same lead on two clocks
+    DR.speed = function (c, W, H, p, t) {
+      var x0 = W * .09, x1 = W * .93, yA = H * .54, yB = H * .8, k = cl(p * 1.12), brk = .58, hx = lerp(x0, x1, k), X = function (u) { return lerp(x0, x1, u) }, sec = function (s) { return X(s / 60 * (brk - .04)) };
+      var clock = k < (brk - .04) * 59.4 / 60 ? '0:' + ('0' + Math.round(k / (brk - .04) * 60)).slice(-2) : k < brk + .06 ? '1:00' : Math.floor(lerp(1, 5.6, (k - brk - .06) / (1 - brk - .06))) + ' h ' + ('0' + (Math.round(lerp(0, 336, (k - brk - .06) / (1 - brk - .06))) % 60)).slice(-2) + ' min';
+      txt(c, 'Since the lead came in', x0, H * .1, ink(.5), 'left', F('500', 12, 1)); txt(c, clock, x0, H * .1 + 58, ink(1), 'left', F('600', 60));
+      ['Form', 'Message', 'Missed call'].forEach(function (s, i) { pill(c, x1, H * .09 + i * H * .058, s, { al: 'r', dot: i === 0 ? RED : ink(.5), s: 12.5 }) });
+      [[0, '0:00'], [10, '0:10'], [30, '0:30'], [60, '1:00']].forEach(function (q) { var x = sec(q[0]); line(c, px(x), yA - H * .13, px(x), yB + 18, ink(.08)); txt(c, q[1], x, yA - H * .13 - 10, ink(.4), 'center', F('500', 11, 1)) });
+      var bx = X(brk + .01); c.strokeStyle = ink(.4); c.lineWidth = 1; [0, 6].forEach(function (o) { c.beginPath(); c.moveTo(bx + o - 4, yA - H * .13 - 4); c.lineTo(bx + o + 4, yA - H * .13 - 18); c.stroke() }); txt(c, 'That evening', X(.86), yA - H * .13 - 10, ink(.4), 'center', F('500', 11, 1));
+      function lane(y, name, ev, live) {
+        txt(c, name, x1, y - 16, ink(live ? .95 : .5), 'right', F('600', 14)); line(c, x0, px(y), x1, px(y), ink(.14)); line(c, x0, px(y), hx, px(y), ink(live ? .95 : .4), live ? 1.5 : 1);
+        ev.forEach(function (q, i) { var e = ez((k - q[0]) * 16), x = X(q[0]); if (e <= 0) return; c.globalAlpha = e; card(c, x - 5, y - 5, 10, 10, 3, ink(.9), q[2] === 2 ? RED : live ? ink(.95) : '#050506'); pill(c, q[0] > .8 ? x + 8 : x, y + ((i % 2 ? 1 : -1) * (live ? 1 : -1)) * 34, q[1], { al: q[0] > .8 ? 'r' : null, dot: q[2] === 2 ? RED : null, s: 12.5, stroke: ink(live ? .5 : .22), col: ink(live ? .95 : .55), fill: '#050506' }); c.globalAlpha = 1 })
+      }
+      lane(yA, 'With it', [[9 / 60 * (brk - .04), 'Reply sent, 0:09', 1], [34 / 60 * (brk - .04), 'Time picked', 1], [brk - .04, 'Estimate booked', 2]], true);
+      lane(yB, 'Without it', [[5 / 60 * (brk - .04), 'Voicemail', 0], [.74, 'They book someone else', 2], [.9, 'You call back, 7:40 PM', 0]], false);
+      card(c, x0 - 5, yA - 5, 10, 10, 3, null, RED); card(c, x0 - 5, yB - 5, 10, 10, 3, null, RED); line(c, px(x0), yA, px(x0), yB, 'rgba(224,25,58,.6)'); c.setLineDash([2, 5]); line(c, px(hx), yA - H * .13, px(hx), yB + 18, ink(.5)); c.setLineDash([])
+    };
     [].forEach.call(document.querySelectorAll('.px[data-scrub]'), function (sec) {
       var name = sec.dataset.scrub, span = +sec.dataset.span || 1, ent = DR[name] ? ['S', DR[name]] : KB.B[name]; if (!ent) return;
       var host = sec.querySelector('.px-host'), steps = [].slice.call(sec.querySelectorAll('.px-steps li')), cv = document.createElement('canvas'), c = cv.getContext('2d'), W = 1, H = 1, z = 1, s = 0, tgt = 0, vis = false, raf = 0, t0 = performance.now(), on = -1; host.appendChild(cv);
-      function size() { var r = host.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2), nw = r.width < 620, VW = nw ? 620 : 960, sc = r.width / VW; W = VW; H = Math.max(1, r.height / sc); cv.width = Math.max(1, r.width * d); cv.height = Math.max(1, r.height * d); c.setTransform(d * sc, 0, 0, d * sc, 0, 0); z = nw ? 1.28 : 1; kick() }
+      function size() { var r = host.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2), nw = r.width < 780, VW = nw ? 620 : 960, sc = r.width / VW; W = VW; H = Math.max(1, r.height / sc); cv.width = Math.max(1, r.width * d); cv.height = Math.max(1, r.height * d); c.setTransform(d * sc, 0, 0, d * sc, 0, 0); z = nw ? 1.28 : 1; kick() }
       function prog() { var r = sec.getBoundingClientRect(); if (innerWidth <= 900) { var q = host.getBoundingClientRect(); tgt = cl((innerHeight * .95 - q.top) / (innerHeight * .9)) } else tgt = cl((-r.top + innerHeight * .12) / Math.max(1, r.height - innerHeight)); kick() }
       function frame(n) { raf = 0; s += (tgt - s) * (rm ? 1 : .12); h.setZ(z); c.clearRect(0, 0, W, H); c.globalAlpha = 1; if (ent[0] === 'L') ent[1](c, W, H, 1, s * span, { x: 0, y: 0, on: false }); else ent[1](c, W, H, s, (n - t0) / 1000, { x: 0, y: 0, on: false }); h.setZ(1);
         var a = Math.min(steps.length - 1, Math.floor(s * steps.length * .999)); if (a !== on) { on = a; steps.forEach(function (li, i) { li.classList.toggle('on', i <= a) }) } if (vis && !rm) raf = requestAnimationFrame(frame) }
@@ -47,6 +63,12 @@
       new ResizeObserver(size).observe(host); new IntersectionObserver(function (e) { vis = e[0].isIntersecting; if (vis) kick() }).observe(sec); addEventListener('scroll', prog, { passive: true }); if (document.fonts && document.fonts.ready) document.fonts.ready.then(kick); size(); prog()
     })
   })();
+  // ---- the calendar: starts close on the booking, pulls back to the week, and its notes come out of the sides
+  [].forEach.call(document.querySelectorAll('.pz'), function (sec) {
+    var fig = sec.querySelector('.pz-fig'), bs = [].slice.call(sec.querySelectorAll('.pz-b')), tk = false, ezz = function (x) { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x) };
+    function up() { tk = false; if (innerWidth <= 900) { fig.style.removeProperty('--z'); bs.forEach(function (b) { b.classList.add('on') }); return } var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight))); fig.style.setProperty('--z', (1.75 - .75 * ezz(p / .42)).toFixed(4)); bs.forEach(function (b, i) { b.classList.toggle('on', p > .46 + i * .12) }) }
+    addEventListener('scroll', function () { if (!tk) { tk = true; requestAnimationFrame(up) } }, { passive: true }); addEventListener('resize', up); setTimeout(up, 400)
+  });
   // ---- hero: pick a problem, get the fix in one line
   var hq = document.getElementById('hq');
   if (hq) {
