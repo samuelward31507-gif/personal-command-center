@@ -122,10 +122,10 @@ INVOICE = sx('', 'Money', 'The invoice gets paid.', 'Sent the day the job ends a
 REVIEW = sx('rev', 'After the job', 'Every job ends with a review request.', 'Asked while the work is still fresh, and answered when it comes in.',
   [('Asked the day after.', 'While the job is still fresh, not three weeks later.'), ('The review comes in.', 'On your Google profile, where the next customer looks.'), ('It gets a reply.', 'The same day, in your name.')],
   '/reviews|How reviews work', ART.review())
-CUSTOM = sx('', 'Custom', 'Built around how you already work.', 'Tell us how the job gets done today and we build it step by step, with room for the next piece.',
+CUSTOM = sx('', 'Whatever the problem is', 'If AI can do it, we build it.', 'Tell us what is slowing the business down. If it follows the same steps every time, it can run without you. The one thing we don’t do is run ads.',
   [('We start with how you work now.', 'You walk us through one job, start to finish.'), ('Each step gets its own piece.', 'Cut to the way you already do it, not the other way round.'),
    ('The pieces hand off.', 'One finishes and the next starts, so nothing waits on you.'), ('There is room for the next one.', 'When something new comes up, it already has a place.')],
-  '<a class="inl" href="/custom-builds">How custom builds work</a><a class="inl" href="/everything">See everything we build</a>', ART.blocks())
+  '<a class="inl" href="/custom-builds">How custom builds work</a><a class="inl" href="/everything">See everything we build</a>', ART.blocks(), tag='h2')
 BACK = sx('rev', '03  It runs', 'Most of the day is already done.', 'By the time you look at your phone, the routine work has happened.',
   [('Answered.', 'New leads got a reply while you were on a job.', 0), ('Booked and followed up.', 'Estimates are on the calendar. Open quotes got their check-in.', 2),
    ('Reminded and asked.', 'Late invoices were nudged. Finished jobs were asked for a review.', 4), ('What’s left is yours.', 'The few things that need a person.', 5)],
@@ -133,7 +133,7 @@ BACK = sx('rev', '03  It runs', 'Most of the day is already done.', 'By the time
 
 BAYS = [('Leads', '[01]', 'Answered in seconds, day or night.'), ('Booking', '[02]', 'On your calendar, with a reminder so they show up.'), ('Quotes', '[03]', 'Followed up until it is a yes or a no.'),
         ('After the job', '[04]', 'Paid, then asked for a review.'), ('Win-backs', '[05]', 'Past customers and quiet quotes hear from you again.'), ('The office', '[06]', 'Job updates, the crew’s schedule, a weekly report, your website.'),
-        ('Anything else', '', 'Two bays stay open for whatever only your business has.'), ('One app', '', 'It all runs in one place. Open it and see what needs you today.')]
+        ('Anything else', '', 'Two bays stay open for whatever only your business has.'), ('All connected', '', 'Each piece hands off to the next, so nothing waits on you.')]
 BAY = ('<section id="build" class="hx rev" aria-labelledby="h-build"><div class="hx-vis"><div class="hx-host" data-plate="CinderBay" role="img" aria-label="A machined chassis with eight bays. Six modules are lowered in and screwed down one at a time: leads, booking, quotes, after the job, win-backs and the office. Two blank panels hold places for whatever else your business needs. Red cables then patch every module together."></div></div>'
   '<div class="hx-copy"><div class="hx-step"><p class="sx-k">02  We build</p><h2 id="h-build">Then we build only what you need.</h2><p class="hx-lead">No packages. Some businesses need two of these, some need twelve. The audit decides.</p></div>'
   + ''.join(f'<div class="hx-step"><p class="bw">{n}{f"<sup>{i}</sup>" if i else ""}</p><p>{d}</p></div>' for n, i, d in BAYS) + '</div></section>')
@@ -142,14 +142,25 @@ W = lambda x: '<!--h2-->' + TK + x + '<!--/h2-->\n'
 ins('<section id="problem"', '<!--h2--><svg class="il-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="ilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0f0f12"/></linearGradient><linearGradient id="ill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111114"/><stop offset="1" stop-color="#08080a"/></linearGradient><linearGradient id="ilr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0a0c"/><stop offset="1" stop-color="#040405"/></linearGradient><radialGradient id="ilg"><stop offset=".12" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="ilm" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#ilg)"/></mask></defs></svg><!--/h2-->\n')
 # The six-layer audit section was folded into the funnel above in pass 30 (AUDIT and stack() are kept in this file but no longer placed).
 W0 = lambda x: '<!--h2-->' + x + '<!--/h2-->\n'
-ins('<section class="samq"', W(WHERE) + W0(BAY) + W(PORTAL) + W0(CALSEC) + W0(QUOTE) + W0(INVOICE) + W0(REVIEW) + W0(CUSTOM) + W0(BACK) + '<!--h2-->' + TK + '<!--/h2-->\n')
+# pass 33: an overview only. Audit (funnel), build (the 3D bay, one line per thing), anything else, it runs. No section for a single product.
+ins('<section class="samq"', W(WHERE) + W0(BAY) + W0(CUSTOM) + W0(BACK) + '<!--h2-->' + TK + '<!--/h2-->\n')
 # the numbers: say what the audit checks against each one
 a_, b_ = blk('<section id="problem"'); P = s[a_:b_].split('</a></li>')
 for i, x in enumerate(['We count the calls you missed last month.', 'We time how long a new lead waits for a first reply.', 'We check how many missed calls got a call back.']):
     P[i] += f'</a><!--h2--><p class="ov-a"><span>In your audit</span>{x}</p><!--/h2--></li>' if i < len(P) - 1 else ''
 s = s[:a_] + ''.join(P[:3]) + ''.join(P[3:]) + s[b_:]
 AC = '<!--h2--><section class="ac" id="call" aria-labelledby="h-call"><div class="wrap"><p class="px-k"><i></i>The free audit call</p><h2 id="h-call">Fifteen minutes. You leave with a plan.</h2><p class="sub">We can fix it. First we have to know what it is, and that is what the call is for.</p><div class="ac-t" aria-hidden="true"><u></u><b></b></div><div class="ac-g"><div><span>First</span><b>You tell us where it hurts.</b><p>Missed calls, slow weeks, quotes that vanish. Whatever is costing you.</p></div><div><span>Then</span><b>We walk a job with you.</b><p>From the first call to the review, looking for where jobs slip and what each leak is worth.</p></div><div><span>Before you hang up</span><b>You get the plan.</b><p>What to fix first, in order. It is yours to keep, whether or not you work with us.</p></div></div><div class="ac-f"><p><b>Bring rough numbers.</b> Leads a month, your average job, and how many quotes you close.</p>' + CTA + '</div></div></section><!--/h2-->\n'
-ins('<section class="closing"', AC)
+import math as _m
+_CLK = ('<svg class="lnv il" data-dial="450 450 90 90" viewBox="0 0 900 900" role="img" aria-label="A clock showing fifteen minutes."><circle class="hi" cx="450" cy="450" r="90"/><circle class="ft nf" cx="450" cy="450" r="102"/>'
+        + '<path class="nf" d="' + ''.join('M%.1f,%.1f L%.1f,%.1f ' % (450 + 74 * _m.cos(k * _m.pi / 6), 450 + 74 * _m.sin(k * _m.pi / 6), 450 + 84 * _m.cos(k * _m.pi / 6), 450 + 84 * _m.sin(k * _m.pi / 6)) for k in range(12)) + '"/>'
+        + '<path class="hi nf" d="M450,450 V380"/><path class="hi nf" d="M450,450 H500"/><text class="lb" x="576" y="447">15:00</text><text class="lb sub" x="576" y="465">One call</text></svg>')
+_OVC = (OV.replace('<p class="sx-k">Calendar</p>', '<p class="sx-k">The free audit call</p>').replace('<span><i>The estimate lands</i></span><span><i>on your calendar.</i></span>', '<span><i>Fifteen minutes.</i></span><span><i>You leave with a plan.</i></span>')
+          .replace('The lead is offered three times from your real calendar and picks one. You just show up.', 'We can fix it. First we have to know what it is, and that is what the call is for.')
+          .replace('<p class="pt-ct"><b>00:01</b><span>seconds</span></p>', '<p class="pt-ct" data-v="03:00|06:00|09:00|12:00|15:00|15:00"><b>03:00</b><span>minutes</span></p>'))
+assert 'Fifteen minutes.' in _OVC and 'data-v=' in _OVC and 'What is for' not in _OVC
+PCALL = ('<section class="pt2 pt-ac" aria-label="The free audit call"><div class="pt2-pin"><div class="pt2-box"><i class="pt2-fr" aria-hidden="true"></i><div class="pt-art">' + _CLK + '</div></div>' + _OVC + '<i class="pt-rim" aria-hidden="true"></i></div>'
+  '<div class="pt2-flow"><div class="ptc-h"><p class="sx-k">You have a problem. Start here.</p><h2>It starts with one short call.</h2></div></div><div class="pt2-run" aria-hidden="true"></div></section>')
+ins('<section class="closing"', W0(PCALL) + AC)
 # red marks what is being lost, in three places only: this line in the stats, the running total under the funnel, and one word of the last headline
 if 'class="rd-t"' not in s: s = s.replace('Find out what you’re missing.', 'Find out what you’re <em class="rd-t">missing.</em>', 1)
 if 'home2.css' not in s: s = s.replace('</head>', '<link rel="stylesheet" href="/assets/home2.css">\n</head>', 1)

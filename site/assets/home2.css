@@ -655,3 +655,13 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 #build .hx-step .sx-k{margin-bottom:24px}
 #build .hx-step p:not(.bw):not(.hx-lead):not(.sx-k){max-width:20em}
 .sx-lk .inl+.inl{margin-left:28px}
+/* ---- v33: the homepage is an overview. The clock no longer belongs to one product: it is the fifteen-minute call. A dial sits alone on the stage,
+   the scroll goes through it, and the title page it lands on is the heading of the call band that follows. ---- */
+.pt-ac .pt2-box{max-width:none}.pt-ac .pt2-fr{display:none}
+.pt-ac .pt-art{position:absolute;inset:0;left:0;right:0;top:0;height:auto;margin:0;padding:0}
+.pt-ac .pt2-flow{height:90vh;padding:0;max-width:none}
+.ptc-h{padding-top:16vh;text-align:center;display:grid;justify-items:center}
+.ptc-h h2{margin:0;font:520 clamp(30px,3.2vw,48px)/1.04 "Inter Display",Inter,sans-serif;letter-spacing:-.037em;color:#f2f1ee;max-width:16ch;text-wrap:balance}
+@media (min-width:901px) and (prefers-reduced-motion:no-preference){.pt-ac+.ac .px-k,.pt-ac+.ac h2,.pt-ac+.ac .sub{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}}
+@media (max-width:900px){.pt-ac{display:none!important}}
+@media (prefers-reduced-motion:reduce){.pt-ac{display:none}}

@@ -123,7 +123,7 @@
   if (ptl) (function () {
     var Q = function (x) { return ptl.querySelector(x) }, pin = Q('.pt2-pin'), art = Q('.pt-art'), asvg = art.querySelector('svg'), ov = Q('.pt-ov'), rim = Q('.pt-rim'), fr = Q('.pt2-fr'), run = Q('.pt2-run');
     var frame = Q('.pt-frame'), ct = Q('.pt-ct'), ctb = ct.querySelector('b'), hand = Q('.pt-hand'), hand2 = Q('.pt-hand2'), hub = Q('.pt-hub'), tc = Q('.pt-c'), rings = [].slice.call(ptl.querySelectorAll('.pt-r')), rays = Q('.pt-rays'), title = Q('.pt-title');
-    var S = stepper(ptl, '.sx-st'), adraw = partsOf(art), lits = [].slice.call(art.querySelectorAll('[data-lit]')), SPIN = [8, -14, 6, -10, 18, -7, 12, -16], G = null, lastN = 0, lastC = -9, M = { end: 0, run: 0 }, off = false;
+    var CT = (ct.dataset.v || '').split('|'), S = stepper(ptl, '.sx-st'), adraw = partsOf(art), lits = [].slice.call(art.querySelectorAll('[data-lit]')), SPIN = [8, -14, 6, -10, 18, -7, 12, -16], G = null, lastN = 0, lastC = -9, M = { end: 0, run: 0 }, off = false;
     Flow.onMeasure(function (y) { var r = ptl.getBoundingClientRect(); M.end = r.top + y + r.height - innerHeight; M.run = run.getBoundingClientRect().top + y; G = null });
     function solve() {   // where the dial sits, in the drawing's layer and in the pinned stage, and how far it has to open to swallow the stage
       var keep = art.style.transform; art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), V = pin.getBoundingClientRect(), D = asvg.dataset.dial.split(' ').map(Number); art.style.transform = keep;
@@ -153,7 +153,7 @@
       rings.forEach(function (g, i) { var r = 44 * Math.pow(G2, u - i), near = cl01(r / G.far), o = r < 5 ? 0 : cl01((r - 5) / 28) * (1 - cl01((r - G.far * .8) / (G.far * .45))); g.setAttribute('transform', 'rotate(' + (u * SPIN[i]).toFixed(2) + ') scale(' + (r / 100).toFixed(4) + ')'); g.style.opacity = (o * (1 - cl01((t - .82) / .16))).toFixed(3); g.style.setProperty('--sw', (.7 + 1.5 * near).toFixed(2)) });
       rays.style.opacity = (live * .9).toFixed(3); rays.style.strokeDashoffset = (-u * 90).toFixed(1);
       hand.style.opacity = live.toFixed(3); hand2.style.opacity = (live * .8).toFixed(3); hub.style.opacity = live.toFixed(3); hand.setAttribute('transform', 'rotate(' + (t * 620).toFixed(2) + ')'); hand2.setAttribute('transform', 'rotate(' + (140 + t * 70).toFixed(2) + ')');
-      var n = Math.max(1, Math.min(6, 1 + Math.floor(t / .7 * 6))); if (n !== lastN) { lastN = n; ctb.textContent = '00:0' + n }
+      var n = Math.max(1, Math.min(6, 1 + Math.floor(t / .7 * 6))); if (n !== lastN) { lastN = n; ctb.textContent = CT[n - 1] || '00:0' + n }
       ct.style.opacity = live.toFixed(3); ct.style.transform = 'translate(' + (cx - G.W / 2).toFixed(1) + 'px,' + (cy - G.H / 2).toFixed(1) + 'px)';
       // 3. the last ring squares itself into the frame of the title page, and the headline rises into it
       var r8 = 44 * Math.pow(G2, u - 8), ef = ez01((t - .72) / .28), FX = G.W * .05, FY = G.H * .11, FW = G.W - 2 * FX, FH = G.H - 2 * FY;

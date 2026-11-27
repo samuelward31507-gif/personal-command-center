@@ -161,3 +161,10 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - The 3D bay is generated now (`BAY` in patch_home.py) with one line per bay and no links; its long paragraphs repeated the sections below it.
 - Removed `#everything` ("If AI can do it, we build it." plus the eight-part grid): it repeated the bay. Its link moved to the Custom section.
 - Copy overlaps removed: the front desk no longer tells the booking (the calendar does); "you keep the plan" is said in the call band, not also on the funnel.
+
+## Pass 33 (Sam: revert, he liked the old look better; the homepage is an overview, no CRM / speed-to-lead / voice sections; he really likes the clock)
+- The line homepage (pass 32) is reverted. Look is pass 31: ribbon hero, stats, framed drawings, the 3D bay, text scrolling past a picture that builds.
+- What the homepage is for, in Sam's words: you have a problem, book a call. "We audit your business, we figure out what's wrong with it, and then we fix it with AI." No section may focus on one product.
+- Order: hero, tools, stats, 01 We audit (funnel), 02 We build (3D bay, one line per thing; "One app" line replaced by "All connected"), "If AI can do it, we build it." (custom), 03 It runs, founder quote, the clock, the call band, close.
+- Removed from the homepage: front desk, calendar/CRM, quotes, money and reviews sections (their code stays in patch_home.py, unplaced).
+- The clock is now the fifteen-minute audit call (`.pt2.pt-ac`): a dial alone on the stage, the same tunnel counting 03:00 to 15:00, landing on "Fifteen minutes. You leave with a plan.", which is the heading of the call band below it. Hidden on phones and with reduced motion, where the band shows its own heading.
