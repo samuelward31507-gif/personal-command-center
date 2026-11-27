@@ -1,7 +1,8 @@
 // Homepage, second pass. Three small pieces: the problem picker in the hero, the job told as a stack, the switchboard.
 (function () {
   var N = { answering: 'Answering', 'phone-agent': 'Phone agent', 'website-chat': 'Website chat', 'social-messages': 'Messages and DMs', 'lead-vetting': 'Lead vetting', 'after-hours': 'After hours', booking: 'Booking', reminders: 'Reminders', dispatch: 'Scheduling and dispatch', 'job-updates': 'Job updates', estimates: 'Estimates', proposals: 'Proposals', 'follow-up': 'Follow-up', invoicing: 'Invoices', bookkeeping: 'Bookkeeping prep', reviews: 'Reviews', 'review-replies': 'Review replies', 'win-backs': 'Win-backs', 'maintenance-reminders': 'Service reminders', referrals: 'Referrals', campaigns: 'Email and text campaigns', websites: 'Websites', 'local-search': 'Local search', 'job-photos': 'Job photos to posts', hiring: 'Hiring', 'team-assistant': 'Team assistant', 'field-notes': 'Field notes', reports: 'Reports', 'call-review': 'Call review', integrations: 'Tool connections', 'custom-agents': 'Custom agents', 'custom-builds': 'Custom builds' };
-  var rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var FM = /[?&]motion=on\b/.test(location.search); if (FM) document.documentElement.classList.add('fm');   // ?motion=on shows the full motion even where the system asks for less
+  var rm = matchMedia('(prefers-reduced-motion: reduce)').matches && !FM;
   // ---- flow: one eased scroll position drives every pinned section, so a mouse wheel's steps come out as one continuous move.
   // Sections are measured once (and again when the page changes size), never while animating.
   var cl01 = function (x) { return x < 0 ? 0 : x > 1 ? 1 : x }, ez01 = function (x) { x = cl01(x); return x * x * (3 - 2 * x) };
