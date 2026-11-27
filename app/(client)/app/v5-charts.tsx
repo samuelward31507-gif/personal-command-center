@@ -3,7 +3,8 @@
 // that never overshoot, horizontal gridlines only, no axis lines, a tooltip that sits beside the data, never on it.
 import React, { useId, useMemo, useState } from "react";
 
-export const C = { accent: "#f2431d", grey: "#c4c8cf", light: "#f9a48f", grid: "rgba(18,20,23,.06)", base: "rgba(18,20,23,.14)", label: "#666c76" };
+// The business's own colour (--acc, set from their setup) for the good series; amber for waiting; light grey for the rest.
+export const C = { accent: "var(--acc)", grey: "var(--g4)", light: "var(--warn)", grid: "rgba(23,24,26,.06)", base: "rgba(23,24,26,.14)", label: "var(--g2)" };
 
 /** A round axis top: 1, 2, 2.5, 5 or 10 times a power of ten, at or above the largest value. */
 export function niceMax(v: number): number {
@@ -66,7 +67,7 @@ export function AreaChart({ series, labels, height = 168, format = (v: number) =
       {ticks.map(t => <g key={t}><line x1={left} x2={W - right} y1={y(t)} y2={y(t)} stroke={C.grid} /><text x={left - 10} y={y(t) + 3.5} textAnchor="end" fontSize="11" fill={C.label} className="tn">{axis(t)}</text></g>)}
       <line x1={left} x2={W - right} y1={y(0)} y2={y(0)} stroke={C.base} />
       {xl.map(i => <text key={i} x={x(i)} y={height - 6} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"} fontSize="11" fill={C.label}>{labels[i]}</text>)}
-      {h != null && <line x1={x(h)} x2={x(h)} y1={top} y2={y(0)} stroke="rgba(18,20,23,.22)" />}
+      {h != null && <line x1={x(h)} x2={x(h)} y1={top} y2={y(0)} stroke="rgba(23,24,26,.22)" />}
       {[...series].reverse().map(s => {
         const pts = s.values.map((v, i) => [x(i), y(v)] as [number, number]);
         const d = monotonePath(pts);
@@ -127,7 +128,7 @@ export function GroupedBars({ data, aLabel, bLabel, summary, height = 180 }: { d
       {ticks.map(t => <g key={t}><line x1={left} x2={W} y1={y(t)} y2={y(t)} stroke={C.grid} /><text x={left - 10} y={y(t) + 3.5} textAnchor="end" fontSize="11" fill={C.label}>{Math.round(t)}</text></g>)}
       <line x1={left} x2={W} y1={y(0)} y2={y(0)} stroke={C.base} />
       {data.map((x, i) => { const cx = left + slot * i + slot / 2; return <g key={i} onPointerEnter={() => setH(i)}>
-        {h === i && <rect x={cx - bw - 10} y={top} width={bw * 2 + 24} height={ph} rx="8" fill="rgba(18,20,23,.035)" />}
+        {h === i && <rect x={cx - bw - 10} y={top} width={bw * 2 + 24} height={ph} rx="8" fill="rgba(23,24,26,.035)" />}
         <rect x={cx - bw - 2} y={y(x.a)} width={bw} height={Math.max(0, y(0) - y(x.a))} rx="4" fill={C.grey} />
         <rect x={cx + 2} y={y(x.b)} width={bw} height={Math.max(0, y(0) - y(x.b))} rx="4" fill={C.accent} />
         <text x={cx} y={height - 6} textAnchor="middle" fontSize="11" fill={C.label}>{x.label}</text>

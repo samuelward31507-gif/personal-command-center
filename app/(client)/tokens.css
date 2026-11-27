@@ -269,3 +269,70 @@ button.row:hover { background: var(--wash); }
 .skel { border-radius: 6px; background: linear-gradient(90deg, var(--paper-2) 25%, #eceef1 50%, var(--paper-2) 75%); background-size: 200% 100%; animation: shim 1.2s linear infinite; }
 @keyframes shim { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001s !important; transition-duration: .001s !important; } }
+
+/* =====================================================================================================
+   The app's look (Nov 27 2026): the values of the new cinderrevenue.com homepage (site/new.html), one set for the
+   whole owner app. Scoped to the app's own roots (.shell, plus the sign-in .gate and the first-load .boot) so the
+   customer pages at /q, /i, /p, /c and /b keep the :root values above untouched. app.css and v5.css read these names;
+   nothing under /app should carry its own hex.
+   ===================================================================================================== */
+.shell, .gate, .boot {
+  /* Surfaces: a #fafafa ground, white cards, #f1f2f5 panels and picture areas. No warm greys. */
+  --ground: #fafafa; --page: #ffffff; --card: #ffffff; --paper: #fafafa; --paper-2: #f1f2f5; --wash: #fafafa; --canvas: #fafafa; --side: #fafafa;
+  --hover: #f1f2f5; --press: #e9eaee; --sel: #f1f2f5;
+  /* Text: ink, then three greys; #c9cbd0 is for inactive things, never for words you need to read. */
+  --ink: #17181a; --ink2: #17181a; --ink-hover: #2b2c30; --g1: #5c5e63; --g2: #6f7279; --g3: #8a8d93; --g4: #c9cbd0; --w2: #5c5e63; --w3: #8a8d93;
+  /* Lines: one hairline; a touch darker around controls. */
+  --hair: #e6e6e6; --hair-2: #dfe0e3; --hair-3: #c9cbd0; --line: #e6e6e6; --line-2: #dfe0e3;
+  /* The accent is the business's own color: page.tsx sets --ember (and its tints) on .shell from their setup.
+     Blue is only the fallback, and the darker text shade and tints follow whichever color is in force. */
+  --ember: #266df0;
+  --ember-ink: color-mix(in srgb, var(--ember) 74%, #000);
+  --ember-soft: color-mix(in srgb, var(--ember) 12%, transparent);
+  --ember-bg: color-mix(in srgb, var(--ember) 9%, transparent);
+  --on-row: color-mix(in srgb, var(--ember) 6%, #fff);
+  --blue: #266df0; --blue-bg: #eaf0ff; --blue-ink: #1f4fbf;
+  /* Color only where it means something: red lost or overdue, amber waiting or going cold, green done or paid. */
+  --bad: #e5484d; --bad-ink: #c23b3f; --bad-bg: #fdeaea;
+  --warn: #f0a000; --warn-ink: #a86a00; --warn-bg: #fff4d6;
+  --good: #1c7a43; --good-ink: #1c7a43; --good-bg: #e7f6ec;
+  --msg: var(--ember); --msg-in: #f1f2f5;
+  /* Dark surfaces, used rarely: one headline-number card, never a whole screen. */
+  --dark: #101010; --dark-card: #17181a; --dark-line: rgba(255, 255, 255, .1); --on-dark-2: #b7b8bc;
+  /* Shape */
+  --r1: 6px; --r2: 9px; --r3: 12px; --r4: 14px; --r-btn: 10px;
+  /* Depth: a hairline ring, a 1px drop and one long soft shadow, as on the site's cards. */
+  --sh-btn: 0 1px 2px rgba(23, 24, 26, .05);
+  --sh-card: 0 0 0 1px rgba(23, 24, 26, .06), 0 1px 2px rgba(23, 24, 26, .04), 0 14px 34px -22px rgba(30, 40, 80, .28);
+  --sh-pop: 0 0 0 1px rgba(23, 24, 26, .07), 0 6px 16px -4px rgba(23, 24, 26, .08), 0 18px 40px -20px rgba(30, 40, 80, .3);
+  --sh-panel: 0 0 0 1px rgba(23, 24, 26, .07), 0 2px 6px -2px rgba(23, 24, 26, .08), 0 28px 60px -28px rgba(30, 40, 80, .35);
+  --sh-pri: 0 0 0 1px var(--ink);
+  --shadow-sm: var(--sh-btn); --shadow: var(--sh-pop); --float: var(--sh-pop); --win: var(--sh-panel);
+  --ring: 0 0 0 2px var(--ink);
+}
+
+/* The shared parts, in the app only. */
+:is(.shell, .gate, .boot) ::selection { background: rgba(38, 109, 240, .16); }
+:is(.shell, .gate, .boot) :focus-visible { outline-color: var(--ink); }
+:is(.shell, .gate, .boot) .btn { border-radius: var(--r-btn); }
+:is(.shell, .gate, .boot) .btn.sm { border-radius: 8px; }
+:is(.shell, .gate, .boot) .btn.ink { background: var(--ink); color: #fff; box-shadow: var(--sh-pri); }
+:is(.shell, .gate, .boot) .btn.ink:hover:not(:disabled) { background: var(--ink-hover); box-shadow: var(--sh-pri); }
+:is(.shell, .gate, .boot) :is(.tag, .chip, .chipx) { height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12.5px; background: var(--paper-2); color: var(--g1); box-shadow: none; }
+:is(.shell, .gate, .boot) :is(.tag, .chip, .chipx).good { background: var(--good-bg); color: var(--good-ink); box-shadow: none; }
+:is(.shell, .gate, .boot) :is(.tag, .chipx).bad { background: var(--bad-bg); color: var(--bad-ink); box-shadow: none; }
+:is(.shell, .gate, .boot) :is(.tag, .chipx).ember { background: var(--ember-bg); color: var(--ember-ink); box-shadow: none; }
+:is(.shell, .gate, .boot) .chipx.blue { background: var(--blue-bg); color: var(--blue-ink); box-shadow: none; }
+:is(.shell, .gate, .boot) .chipx.ink { background: var(--ink); color: #fff; }
+:is(.shell, .gate, .boot) .tag.count { height: 16px; padding: 0 4px; background: var(--ember); color: #fff; }
+:is(.shell, .gate, .boot) button.chip:hover { box-shadow: inset 0 0 0 1px var(--hair-3); }
+:is(.shell, .gate, .boot) .chip.on { box-shadow: inset 0 0 0 1px var(--ink); }
+:is(.shell, .gate, .boot) .chip.dash { background: #fff; box-shadow: inset 0 0 0 1px var(--hair-3); }
+:is(.shell, .gate, .boot) .dot.good, :is(.shell, .gate, .boot) .stage.won { color: var(--good-ink); }
+:is(.shell, .gate, .boot) .dot.bad, :is(.shell, .gate, .boot) .stage.late, :is(.shell, .gate, .boot) .next.red { color: var(--bad-ink); }
+:is(.shell, .gate, .boot) .next.green { color: var(--good-ink); }
+:is(.shell, .gate, .boot) .stage.quoted i { background: var(--warn); }
+:is(.shell, .gate, .boot) .toggle input:checked + i { background: var(--ink); }
+:is(.shell, .gate, .boot) .toast { background: var(--ink); } :is(.shell, .gate, .boot) .toast.bad { background: var(--bad-ink); }
+:is(.shell, .gate, .boot) .toast svg { color: #8fd3a8; }
+:is(.shell, .gate, .boot) .skel { background: linear-gradient(90deg, var(--paper-2) 25%, #e9eaee 50%, var(--paper-2) 75%); background-size: 200% 100%; }
