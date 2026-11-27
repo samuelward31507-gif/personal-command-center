@@ -20,7 +20,8 @@ const screw=(g,K,x,y,z,a=.6)=>{add(g,cyl(6.5,3,24),K.graphite,x,y,z,false);const
 
 function make(def){
   let prog=0,kick=()=>{},now=0;
-  return {setActive(){},setProgress(v){prog=v<0?0:v>1?1:v;kick()},mount(host){
+  const api={setActive(){},setProgress(v){prog=v<0?0:v>1?1:v;kick()},mount(host){
+    if(!host.__near&&'IntersectionObserver' in window){new IntersectionObserver((e,o)=>{if(e[0].isIntersecting){o.disconnect();host.__near=1;api.mount(host)}},{rootMargin:'90% 0px'}).observe(host);return}
     const canvas=document.createElement('canvas');canvas.style.cssText='position:absolute;inset:0;display:block;width:100%;height:100%;opacity:0;transition:opacity 1s cubic-bezier(.2,.8,.2,1)';canvas.setAttribute('aria-hidden','true');
     if(getComputedStyle(host).position==='static')host.style.position='relative';host.append(canvas);
     const renderer=new T.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance'});
@@ -67,7 +68,7 @@ function make(def){
       def.update({t:now,p:s,copies,M});composer?composer.render():renderer.render(scene,camera);if(vis&&!RM)raf=requestAnimationFrame(frame)}
     kick=()=>{if(!raf)raf=requestAnimationFrame(frame)};
     new ResizeObserver(size).observe(host);new IntersectionObserver(e=>{vis=e[0].isIntersecting;if(vis){last=performance.now();kick()}}).observe(host);size();
-  }}}
+  }};return api}
 
 // ---- Homepage, the audit: a machined sheet. A gantry walks the rows, the costs rank themselves, three get picked.
 const COST=[1,.45,.35,.8,.25,.6],ORDER=[0,3,5,1,2,4],PICK=[0,3,5],ROWS=['CALLS','FORMS','ESTIMATES','QUOTES','INVOICES','REVIEWS'];
@@ -343,4 +344,44 @@ window.CinderBay=make({fit:[348,272],yaw:[1.04,.98,.9,.84,.94],aim:52,sway:.04,
         o.r.caps.forEach((q,k)=>{const d=q.userData,v=(lerp(.16,.5+.42*Math.sin(t*.9+k*2.1+i),hot)-.5)*d.len*.78;if(d.v)q.position.z=d.z0+v;else q.position.x=d.x0+v});
         o.r.bars.forEach((q,k)=>{const d=q.userData,l=lerp(.16,.3+.7*(.5+.5*Math.sin(t*1.6+k*1.7+i)),Math.max(hot,one*.8));q.scale.x=l;q.position.x=d.x0-(1-l)*d.w/2})})}
     copies.forEach(c=>c.r.cab.forEach((q,k)=>{const kk=ez(one*2-k*.15);q.mesh.visible=kk>.01;q.mesh.geometry.setDrawRange(0,Math.floor(q.seg*kk)*48);q.pa.visible=kk>.01;q.pb.visible=kk>.97}))}});
+// ---- Homepage, one job: a machined line. A carriage (the job) rides the rail past seven stations and each one does its part.
+const LN=['CALL','BOOKING','REMINDER','ESTIMATE','FOLLOW-UP','INVOICE','REVIEW'],lnX=i=>(i-3)*90;
+window.CinderLine=make({fit:[288,238],yaw:[1.14,1.04,.94,.86,.92],aim:44,sway:.035,
+  enterTime:1.6,enter(k,E){const o=1-Math.pow(1-k,4);E.sz=lerp(-280,0,o);E.yaw=lerp(.45,0,o);E.scale=1},
+  mats:K=>({led:LN.map(()=>K.led()),car:K.led(0xff1f3a),ring:K.led(),key:K.led(),pin:[0,1].map(()=>K.led()),peg:[0,1,2].map(()=>K.led()),star:[0,1,2,3,4].map(()=>K.led()),
+    paid:new T.MeshBasicMaterial({transparent:true,opacity:0,toneMapped:false,map:K.texture(256,96,c=>{c.strokeStyle='#ff1f3a';c.lineWidth=7;c.strokeRect(8,8,240,80);c.fillStyle='#ff1f3a';c.font='700 54px "Geist Mono",monospace';c.textAlign='center';c.fillText('PAID',128,68)},true)}),
+    rubber:new T.MeshStandardMaterial({color:0x0b0b0c,roughness:.62,metalness:0}),
+    paper:new T.MeshStandardMaterial({color:0xe6e3dc,roughness:.9,metalness:0,map:K.texture(256,320,c=>{c.fillStyle='#efede6';c.fillRect(0,0,256,320);c.fillStyle='#16161a';c.fillRect(24,26,120,12);c.fillStyle='rgba(22,22,26,.45)';for(let i=0;i<6;i++){c.fillRect(24,70+i*30,130+((i*37)%60),7);c.fillRect(196,70+i*30,36,7)}c.fillStyle='#16161a';c.fillRect(24,262,208,3);c.fillRect(170,280,62,12)},true)})}),
+  build(K,M){const g=new T.Group(),r={car:null,ring:null,key:null,pins:[],paper:null,slider:null,head:null,stars:[]};
+    add(g,rb(690,12,196,9),K.graphite,0,6,0);add(g,box(650,1.4,156),K.enamel,0,12.6,0,false);
+    // the rail the job rides
+    add(g,rb(640,6,30,2),K.graphite,0,15,60);[-9,9].forEach(z=>add(g,box(630,3,3),K.alloy,0,19.5,60+z,false));for(let i=0;i<32;i++)add(g,box(1.4,1,14),K.enamel,-310+i*20,18.3,60,false);
+    [-1,1].forEach(q=>{add(g,rb(20,26,40,4),K.graphite,q*328,22,60);screw(g,K,q*328,35.2,60,q)});
+    const car=new T.Group();add(car,rb(40,12,26,3),K.alloy,0,0,0);add(car,rb(30,5,18,2),K.enamel,0,8,0);add(car,box(22,1.2,3),M.car,0,11,5,false);add(car,cyl(3,3,20),K.graphite,-12,11,-5,false);add(car,cyl(3,3,20),K.graphite,12,11,-5,false);car.position.set(-300,27,60);g.add(car);r.car=car;
+    // the bus behind the stations, and the lead out
+    add(g,rb(650,10,14,3),K.graphite,0,18,-84);for(let i=0;i<7;i++)add(g,rb(22,4,16,1.5),K.enamel,lnX(i),24,-84);add(g,new T.TubeGeometry(new T.CatmullRomCurve3([[-330,18,-84],[-352,8,-96],[-400,4.4,-120],[-470,4.4,-112]].map(p=>new T.Vector3(p[0],p[1],p[2]))),40,4.4,12),M.rubber);
+    for(let i=0;i<7;i++){const s=new T.Group();s.position.set(lnX(i),13,-14);g.add(s);
+      add(s,rb(76,8,104,3),K.body,0,4,0);[[-31,-45],[31,-45],[-31,45],[31,45]].forEach((q,e)=>screw(s,K,q[0],8.2,q[1],e*.7));
+      const lab=K.texture(256,44,c=>{c.fillStyle='rgba(10,10,12,.86)';c.font='600 24px "Geist Mono",ui-monospace,monospace';c.textAlign='center';c.fillText(LN[i],128,31)},true);
+      add(s,new T.PlaneGeometry(58,10),new T.MeshBasicMaterial({map:lab,transparent:true,toneMapped:false}),0,8.3,40,false).rotation.x=-Math.PI/2;
+      add(s,box(18,1.6,4),M.led[i],0,8.6,30,false);add(s,box(6,6,12),K.alloy,0,3,-58);
+      if(i===0){add(s,cyl(27,10,64),K.graphite,0,13,-6);add(s,cyl(22,2,64),K.enamel,0,19,-6,false);for(let k=0;k<3;k++)add(s,new T.TorusGeometry(7+k*5.5,.9,8,48),K.alloy,0,20.4,-6,false).rotation.x=Math.PI/2;r.ring=add(s,new T.TorusGeometry(24,1.6,10,64),M.ring,0,20,-6,false);r.ring.rotation.x=Math.PI/2}
+      if(i===1){add(s,rb(60,5,60,2),K.graphite,0,10.5,-6);for(let a=0;a<3;a++)for(let b=0;b<3;b++){const on=a===1&&b===2,k=add(s,rb(15,7,15,2),on?M.key:K.enamel,(b-1)*18,16.5,(a-1)*18-6);if(on)r.key=k}}
+      if(i===2){add(s,rb(52,6,30,2),K.graphite,0,11,-6);[-13,13].forEach((x2,e)=>{add(s,cyl(7,3,32),K.alloy,x2,15,-6);const q=new T.Group();add(q,cyl(4.6,16,32),K.enamel,0,0,0);add(q,cyl(4.7,2.4,32),M.pin[e],0,9,0,false);q.position.set(x2,10,-6);s.add(q);r.pins.push(q)})}
+      if(i===3){add(s,rb(62,24,44,3),K.graphite,0,20,-22);add(s,box(50,2,2),K.enamel,0,22,.4,false);add(s,rb(62,4,44,2),K.alloy,0,34,-22);r.paper=add(s,box(46,.8,58),M.paper,0,21.4,-24)}
+      if(i===4){add(s,rb(64,5,14,2),K.graphite,0,10.5,-6);add(s,box(58,2,3),K.alloy,0,14,-6,false);[-22,0,22].forEach((x2,e)=>{add(s,cyl(4,9,24),K.enamel,x2,17,-24);add(s,cyl(4.1,2,24),M.peg[e],x2,22.5,-24,false)});r.slider=add(s,rb(12,8,18,2),K.alloy,-24,18,-6)}
+      if(i===5){[-22,22].forEach(x2=>add(s,cyl(3.4,44,24),K.alloy,x2,30,-10));add(s,rb(56,7,12,2),K.graphite,0,52,-10);add(s,rb(46,3,34,1.5),K.enamel,0,9.5,-10);add(s,new T.PlaneGeometry(40,15),M.paid,0,11.2,-10,false).rotation.x=-Math.PI/2;
+        const h=new T.Group();add(h,cyl(4,22,24),K.alloy,0,11,0);add(h,rb(40,8,22,2),K.graphite,0,-2,0);h.position.set(0,44,-10);s.add(h);r.head=h}
+      if(i===6){add(s,rb(66,5,22,2),K.graphite,0,10.5,-6);for(let k=0;k<5;k++)r.stars.push(add(s,cyl(5.6,6,5),M.star[k],(k-2)*13,12,-6))}}
+    const brand=K.texture(512,48,c=>{c.fillStyle='rgba(242,241,238,.5)';c.font='500 26px "Geist Mono",monospace';c.fillText('CINDER  JOB LINE',6,33)},true);
+    add(g,new T.PlaneGeometry(120,9),new T.MeshBasicMaterial({map:brand,transparent:true,toneMapped:false}),-262,6,98.3,false);
+    [[-310,-80],[310,-80],[-310,80],[310,80]].forEach(q=>add(g,cyl(13,4,32),M.rubber,q[0],-2,q[1]));
+    return {g,r}},
+  update({t,p,copies,M}){const s=p*7,A=i=>ez(c01((s-i)*1.5)),cur=Math.min(6,Math.floor(s)),x=lerp(-300,300,ez(c01(s/7))*.25+c01(s/7)*.75);
+    LN.forEach((n,i)=>lit(M.led[i],DARK,i===cur&&s<6.95?RED:WHITE,A(i)));
+    lit(M.ring,DARK,WHITE,A(0)*(.65+.35*Math.sin(t*5)));lit(M.key,DARK,WHITE,A(1));M.pin.forEach((m,e)=>lit(m,DARK,e?RED:WHITE,ez(c01((s-2)*2-e*.8))));
+    M.peg.forEach((m,e)=>lit(m,DARK,e===2?RED:WHITE,ez(c01((s-4)*3-e))));M.paid.opacity=ez(c01((s-5.45)*4));M.star.forEach((m,e)=>lit(m,DARK,WHITE,ez(c01((s-6)*5-e))));
+    copies.forEach(c=>{const r=c.r;r.car.position.x=x;r.ring.position.y=20+A(0)*5+Math.sin(t*5)*A(0)*.8;r.key.position.y=16.5+A(1)*6;
+      r.pins.forEach((q,e)=>{q.position.y=10+ez(c01((s-2)*2-e*.8))*9});r.paper.position.z=-24+A(3)*27;r.slider.position.x=-24+ez(c01(s-4))*48;
+      r.head.position.y=44-Math.sin(c01((s-5)*2.2)*Math.PI)*27;r.stars.forEach((q,e)=>{const k=ez(c01((s-6)*5-e));q.position.y=12+k*7;q.rotation.y=k*TAU/5})})}});
 dispatchEvent(new Event('cinder-visual'));dispatchEvent(new Event('cinder-plate'));
