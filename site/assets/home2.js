@@ -246,18 +246,6 @@
     if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { if (e[0].isIntersecting && !seen) { seen = true; go(0) } if (!e[0].isIntersecting) clearTimeout(t2); else if (seen && au) go(sel) }, { threshold: .25 }).observe(sw); else go(0);
     addEventListener('resize', function () { if (seen) go(sel) })
   }
-  // ---- the line: one lead's path down the page. It fills as you scroll, a dot rides its head, and each stop wakes when the dot reaches it.
-  var lnr = document.querySelector('.ln-rows');
-  if (lnr) (function () {
-    var all = lnr.closest('.ln'), fill = lnr.querySelector('.ln-fill'), dot = lnr.querySelector('.ln-dot'), st = [].slice.call(all.querySelectorAll('.ln-st,.ln-end')), nd = [], top = 0, h = 1, lastK = -9;
-    Flow.onMeasure(function (y) { var r = lnr.getBoundingClientRect(); top = r.top + y; h = Math.max(1, r.height); nd = st.map(function (e) { return e.querySelector('.ln-nd').getBoundingClientRect().top + y }) });
-    Flow.sub(function (y) {
-      var line = y + innerHeight * .7, head = Math.max(0, Math.min(h, line - top)), k = 0;
-      fill.style.transform = 'scaleY(' + (head / h).toFixed(5) + ')'; dot.style.transform = 'translateY(' + head.toFixed(1) + 'px)';
-      for (var i = 0; i < nd.length; i++) if (nd[i] < line + 2) k = i + 1;
-      if (k !== lastK) { lastK = k; st.forEach(function (e, i) { e.classList.toggle('on', i < k) }) }
-    })
-  })();
   // ---- drawings: measure every stroke so it can draw itself in. Lengths come from the drawing's laid-out size, with room for the camera's zoom.
   function arm() {
     [].forEach.call(document.querySelectorAll('svg.il'), function (svg) {
