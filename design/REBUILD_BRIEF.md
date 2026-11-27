@@ -261,3 +261,13 @@ First three, built to set the level:
 | `/answering` | Centred over a thread | One missed call timed to the second: 9 seconds to reply, 2 minutes to booked | Where calls get missed across one day, then the 78% figure filling a dark band |
 
 Copy on all three is the existing copy from the old pages. Do not run `design/build_services.py`; it would overwrite these with the old dark pages.
+
+### 22b. Second pass after Sam's review (27 Nov)
+
+Sam: go further, every page has to hold the homepage's standard; he likes the founder quote and its setting; the plain list of rows on `/everything` is out, use diagrams.
+
+- Founder quote block (`fq()` in `mk_pages.py`) now appears on inner pages, using only words Sam has actually said. `/everything`: "If it can be automated, it should be automated. If it's a repetitive task, it should be automated." `/websites`: "Everything is custom. It's custom to you. It's custom to your problem. It's not a template." Other pages need a line from Sam before they get one. Never write a quote for him.
+- `/everything`: the 32-row index is gone. In its place: one audit picking 4 of 32 (drawn), then the eight parts as a grid of panels, each with its own small picture and its builds as quiet links.
+- `/websites`: two phones side by side (most sites, greyed and crossed out, against yours); one visit drawn in four numbered steps on dark; a field that links to the site check. Sign cells, built-in cells and the related row removed.
+- `/answering`: the day is now one chart, hour by hour, with a blue "With it" row; Monday report card beside the included list; questions set as a text thread; the related row became a four-step chain. Before/after table removed.
+- No two of the three pages now share a section below the top, apart from the closing band and footer.
