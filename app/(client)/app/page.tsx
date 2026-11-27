@@ -7,6 +7,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import "./app.css";
 import "./v5.css";
 import "./v6.css";
+import "./kit.css";
+import { Av, Head, ShellCtx, type View } from "./kit";
 import { Wordmark } from "../brand";
 import { QuotesScreen, QuoteEditor } from "./quotes";
 import { Avatar, Icon, Spinner, fmtPhone, initials, typePhone, useToast } from "./parts";
@@ -163,8 +165,10 @@ function SignIn({ onIn, onDemo }: { onIn: () => void; onDemo: () => void }) {
 
 // ---------- The app ----------
 type Open = { kind: "record"; id: string; ask?: "quoted" | "won"; view?: "activity" | "job"; draft?: string } | { kind: "thread"; id: string } | { kind: "quote"; id: string } | null;
-const MORE: Tab[] = ["customers", "invoices", "numbers", "system", "sam", "calendar", "help", "plans", "switch", "from"];
-const SECTIONS: { k: Tab; l: string; ic: string; n: string }[] = [{ k: "today", l: "Today", ic: "home", n: "1" }, { k: "inbox", l: "Inbox", ic: "chat", n: "2" }, { k: "jobs", l: "Jobs", ic: "jobs", n: "3" }, { k: "quotes", l: "Quotes", ic: "quote", n: "4" }, { k: "calendar", l: "Calendar", ic: "cal", n: "5" }, { k: "invoices", l: "Money", ic: "invoice", n: "5" }, { k: "numbers", l: "Numbers", ic: "bars", n: "6" }];
+// Five places. Everything else is a view inside one of them: Quotes and Customers under Jobs, Plans and Numbers under Money,
+// Sam, Help and moving in under Settings. Quick search (⌘K) reaches all of it.
+const SECTIONS: { k: Tab; l: string; ic: string }[] = [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat" }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal" }, { k: "invoices", l: "Money", ic: "dollar" }];
+const PLACE: Partial<Record<Tab, Tab>> = { customers: "jobs", quotes: "jobs", plans: "invoices", numbers: "invoices", sam: "system", help: "system", switch: "system", from: "system" };
 
 export default function CinderApp() {
   const [state, setState] = useState<"loading" | "out" | "in">("loading");
@@ -251,7 +255,7 @@ export default function CinderApp() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setSheet(s => s === "cmd" ? null : "cmd"); return; }
       const typingNow = e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName));
       if (e.key === "/" && !typingNow && !e.metaKey && !e.ctrlKey && !sheet) { e.preventDefault(); setSheet("cmd"); return; }
-      if ((e.metaKey || e.ctrlKey) && /^[1-7]$/.test(e.key)) { e.preventDefault(); const t = ([...SECTIONS.map(s => s.k), "system"] as Tab[])[Number(e.key) - 1]; if (t) goTab(t); return; }
+      if ((e.metaKey || e.ctrlKey) && /^[1-7]$/.test(e.key)) { e.preventDefault(); const t = ([...SECTIONS.map(s => s.k), "system", "quotes"] as Tab[])[Number(e.key) - 1]; if (t) goTab(t); return; }
       const el = e.target as HTMLElement | null;
       if (e.key === "Escape" && open && !sheet && !inv && !(el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA"))) setOpen(null);
     };
@@ -271,14 +275,6 @@ export default function CinderApp() {
     priceBook: d.setup?.price_book || "", taxRate: d.setup?.tax_rate || "", payLink: !!d.setup?.pay_link, calendar: d.setup?.has_calendar === "yes" || !!d.calendar?.connected, trade: d.setup?.trade || "", canCall: d.canCall };
   const owed = (d.invoices ?? []).filter(i => i.status === "sent").length;
   const crew = d.role === "crew";
-  const sections = crew ? SECTIONS.filter(s => s.k === "inbox" || s.k === "jobs" || s.k === "calendar") : SECTIONS;
-  const top = sections.filter(s => s.k === "today" || s.k === "inbox" || s.k === "calendar");
-  const records: { k: Tab; l: string; ic: string; obj: string }[] = crew ? [{ k: "jobs", l: "Jobs", ic: "jobs", obj: "jobs" }]
-    : [{ k: "customers", l: "Customers", ic: "users", obj: "customers" }, { k: "jobs", l: "Jobs", ic: "jobs", obj: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote", obj: "quotes" },
-       { k: "invoices", l: "Money", ic: "invoice", obj: "invoices" }, { k: "plans", l: "Service plans", ic: "cal", obj: "plans" }];
-  // The rail lights the section you're in, from what's on screen: a quote is Quotes, a conversation is Inbox, a record is Customers or Jobs.
-  const here: Tab = !open ? tab : open.kind === "quote" ? "quotes" : open.kind === "thread" ? "inbox" : tab === "customers" ? "customers" : "jobs";
-  const isOn = (k: Tab) => here === k;
   const signOut = async () => { if (demo) return exitDemo(); await api("/api/app/auth", { action: "logout" }).catch(() => null);
     // A shared phone keeps nothing: the saved copy of the app's data and anything still waiting go with the sign-out.
     try { localStorage.removeItem(QUEUE_KEY); navigator.serviceWorker?.controller?.postMessage("cinder-clear"); } catch { /* nothing saved */ }
@@ -293,11 +289,27 @@ export default function CinderApp() {
 
   const mailN = crew ? 0 : mailWaiting(d).length;
   const counts: Partial<Record<Tab, number>> = { inbox: L.needs + mailN, calendar: due.length, invoices: owed };
-  const phoneTabs: { k: Tab; l: string; ic: string; n?: number }[] = crew ? [{ k: "inbox", l: "Inbox", ic: "chat", n: L.needs }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "calendar", l: "Calendar", ic: "cal", n: due.length }]
-    : [{ k: "today", l: "Today", ic: "home" }, { k: "inbox", l: "Inbox", ic: "chat", n: L.needs + mailN }, { k: "jobs", l: "Jobs", ic: "jobs" }, { k: "quotes", l: "Quotes", ic: "quote" }, { k: "more", l: "More", ic: "more", n: d.unreadFromSam }];
-  const phoneTab: Tab = MORE.includes(here) ? "more" : here;
-  const active = (k: Tab) => here === k;
-
+  // The place you're in: a quote is Jobs, a conversation is Inbox, a record is Jobs.
+  const here: Tab = !open ? (PLACE[tab] ?? tab) : open.kind === "thread" ? "inbox" : "jobs";
+  const places = crew ? SECTIONS.filter(s => s.k === "inbox" || s.k === "jobs" || s.k === "calendar") : SECTIONS;
+  const quotesOut = cards.filter(c => c.stage === "quoted" && c.quote && !c.pastCustomer).length;
+  const views: View[] | undefined = open || crew ? undefined
+    : here === "jobs" ? [
+      { k: "open", l: "Open", n: jobCounts.open, on: tab === "jobs" && jobsView === "open", go: () => { setJobsView("open"); goTab("jobs"); } },
+      { k: "won", l: "Won", n: jobCounts.won, on: tab === "jobs" && jobsView === "won", go: () => { setJobsView("won"); goTab("jobs"); } },
+      { k: "quotes", l: "Quotes", n: quotesOut, on: tab === "quotes", go: () => goTab("quotes") },
+      { k: "customers", l: "Customers", n: jobCounts.all, on: tab === "customers", go: () => goTab("customers") }]
+    : here === "invoices" ? [
+      { k: "invoices", l: "Invoices", n: owed, on: tab === "invoices", go: () => goTab("invoices") },
+      { k: "plans", l: "Service plans", on: tab === "plans", go: () => goTab("plans") },
+      { k: "numbers", l: "Numbers", on: tab === "numbers", go: () => goTab("numbers") }]
+    : here === "system" ? [
+      { k: "system", l: "Settings", on: tab === "system", go: () => goTab("system") },
+      { k: "sam", l: "Sam", n: d.unreadFromSam, on: tab === "sam", go: () => goTab("sam") },
+      { k: "help", l: "Help", on: tab === "help", go: () => goTab("help") },
+      { k: "switch", l: "Move your business in", on: tab === "switch" || tab === "from", go: () => goTab("switch") }]
+    : undefined;
+  const shellCtx = { views, onMore: wide ? undefined : () => goTab(crew ? "system" : "more"), me: d.owner || bizName || "Me" };
   let page: React.ReactNode;
   if (open?.kind === "thread") page = <ThreadView id={open.id} project={project} canCall={d.canCall} api={api} toast={toast} onBack={() => { setOpen(null); void reload(); }} onChange={() => void reload()} onRecord={() => setOpen({ kind: "record", id: open.id })} />;
   else if (open?.kind === "quote") page = <QuoteEditor key={open.id} id={open.id} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onBack={() => setOpen(null)} />;
@@ -324,43 +336,38 @@ export default function CinderApp() {
   const tint = (a: number) => brand ? `rgba(${parseInt(brand.slice(1, 3), 16)}, ${parseInt(brand.slice(3, 5), 16)}, ${parseInt(brand.slice(5, 7), 16)}, ${a})` : "";
   const shellStyle = brand ? { "--ember": brand, "--ember-soft": tint(0.12), "--ember-bg": tint(0.1) } as React.CSSProperties : undefined;
   return <CatalogContext.Provider value={catalog}><div className="shell v5" style={shellStyle}>
-    <nav className="rail" aria-label="Sections">
-      <div className="brand-row">{d.setup?.brand_logo ? <img className="biz-logo" src={d.setup.brand_logo} alt={bizName || "Logo"} /> : <span className="biz-mark" style={brand ? { background: brand } : undefined} aria-hidden="true">{initials(bizName || "B").charAt(0)}</span>}</div>
-      <button type="button" className="ws" title={bizName}>
-        <span className="av sm">{initials(bizName || "C").charAt(0)}</span><span className="ws-mark" aria-hidden="true">{initials(bizName || "Y").charAt(0)}</span><span style={{ minWidth: 0, flex: 1 }}><b>{(bizName || "Your business").replace(/ \(example\)$/, "")}</b>{demo && <small>Example</small>}</span>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
+    <nav className="k-rail" aria-label="Places">
+      <div className="k-ws" title={bizName}>
+        <span className="k-mark" style={brand ? { background: brand } : undefined} aria-hidden="true">{d.setup?.brand_logo ? <img src={d.setup.brand_logo} alt="" /> : initials(bizName || "B").charAt(0)}</span>
+        <b>{(bizName || "Your business").replace(/ \(example\)$/, "")}</b>{d.businesses.length > 1 && <Icon name="updown" size={13} />}
         {d.businesses.length > 1 && <select value={project} aria-label="Business" onChange={e => { setProject(e.target.value); void load(e.target.value); }}>{d.businesses.map(b => <option key={b.project_id} value={b.project_id}>{b.name}</option>)}</select>}
-      </button>
-      <button type="button" className="rail-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} /><span>Search or jump to</span><kbd>⌘K</kbd></button>
-      {(crew ? [{ g: "Run the day", items: [{ k: "inbox" as Tab, l: "Inbox", ic: "chat" }, { k: "jobs" as Tab, l: "Jobs", ic: "jobs" }, { k: "calendar" as Tab, l: "Calendar", ic: "cal" }] }] : [
-        { g: "Run the day", items: [{ k: "today" as Tab, l: "Today", ic: "home" }, { k: "inbox" as Tab, l: "Inbox", ic: "chat" }, { k: "calendar" as Tab, l: "Calendar", ic: "cal" }] },
-        { g: "Sell", items: [{ k: "jobs" as Tab, l: "Jobs", ic: "jobs" }, { k: "quotes" as Tab, l: "Quotes", ic: "quote" }] },
-        { g: "Get paid", items: [{ k: "invoices" as Tab, l: "Money", ic: "dollar" }, { k: "plans" as Tab, l: "Plans", ic: "clock" }] },
-        { g: "People", items: [{ k: "customers" as Tab, l: "Customers", ic: "users" }] },
-        { g: "Business", items: [{ k: "numbers" as Tab, l: "Numbers", ic: "bars" }, ...(d.role !== "office" ? [{ k: "system" as Tab, l: "Settings", ic: "gear" }] : [])] },
-      ]).map(grp => <div key={grp.g}>
-        <div className="rail-lbl">{grp.g}</div>
-        <div className="rail-grp">{grp.items.map(s => { const on = active(s.k) || (s.k === "system" && (active("sam") || active("help"))) || isOn(s.k);
-          const n = s.k === "system" ? d.unreadFromSam : counts[s.k];
-          return <button key={s.k} type="button" className={"ri" + (on ? " on" : "")} aria-current={on ? "page" : undefined} onClick={() => goTab(s.k)}>
-            <Icon name={s.ic} size={16} /><span>{s.l}</span>{n ? <em className={s.k === "inbox" || s.k === "invoices" || s.k === "system" ? "hot" : ""}>{n}</em> : null}</button>; })}</div>
-      </div>)}
-      <div className="rail-foot">
-        {d.setup?.show_powered === "yes" && <a className="powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by Cinder</a>}
-        {crew ? <button type="button" className="me" onClick={() => void signOut()}><Avatar name="Crew" /><span className="t"><b>Crew</b><small>Sign out</small></span></button>
-          : <div className="me"><button type="button" className="me-who" onClick={() => goTab("sam")} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, textAlign: "left" }}><Avatar name={d.owner || bizName || "Me"} /><span className="t"><b>{(d.owner || "You").split(" ")[0]}</b><small>Owner</small></span></button>
-            <button type="button" className="me-help" aria-label="Help" title="Help" onClick={() => goTab("help")}><kbd>?</kbd></button></div>}
+      </div>
+      <button type="button" className="k-search" onClick={() => setSheet("cmd")}><Icon name="search" size={14} /><span>Search</span><kbd>⌘K</kbd></button>
+      <div className="k-nav">{places.map(s => { const on = here === s.k, n = counts[s.k];
+        return <button key={s.k} type="button" className={"k-ri" + (on ? " on" : "")} aria-current={on ? "page" : undefined} onClick={() => goTab(s.k)}>
+          <Icon name={s.ic} size={16} /><span>{s.l}</span>{n ? <em className={s.k === "inbox" ? "hot" : ""}>{n}</em> : null}</button>; })}</div>
+      <div className="k-rail-sp" />
+      {!crew && d.role !== "office" && <div className="k-nav">
+        <button type="button" className={"k-ri" + (here === "system" ? " on" : "")} aria-current={here === "system" ? "page" : undefined} onClick={() => goTab("system")}><Icon name="gear" size={16} /><span>Settings</span>{d.unreadFromSam ? <em className="hot">{d.unreadFromSam}</em> : null}</button>
+      </div>}
+      {d.setup?.show_powered === "yes" && <a className="k-powered" href="https://cinderrevenue.com" target="_blank" rel="noreferrer">Powered by Cinder</a>}
+      <div className="k-rail-me">
+        {crew ? <button type="button" className="k-who" onClick={() => void signOut()}><Av name="Crew" /><span><b>Crew</b><small>Sign out</small></span></button>
+          : <><button type="button" className="k-who" onClick={() => goTab("sam")}><Av name={d.owner || bizName || "Me"} /><span><b>{(d.owner || "You").split(" ")[0]}</b><small>{demo ? "Example business" : "Owner"}</small></span></button>
+            <button type="button" className="k-btn ghost ic sm" aria-label="Help" title="Help" onClick={() => goTab("help")}><kbd>?</kbd></button></>}
       </div>
     </nav>
     <div className="main">
-      {demo && <div className="demo"><span>Example business, sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>}
+      {demo && <div className="k-demo"><i aria-hidden="true" /><span>Example business, sample data</span><button type="button" onClick={exitDemo}>Exit</button></div>}
       {!demo && (d.failed?.length ?? 0) > 0 && <div className="offline-bar" role="alert"><span>Your {d.failed!.length > 1 ? `${d.failed!.slice(0, -1).join(", ")} and ${d.failed!.at(-1)}` : d.failed![0]} didn&rsquo;t load. Nothing is lost.</span>
         <button type="button" className="btn sm" onClick={() => void reload()}>Try again</button></div>}
       {!demo && (!online || pending > 0) && <div className={"offline-bar" + (online ? " syncing" : "")} role="status"><span>{online ? `Saving ${pending} ${pending === 1 ? "change" : "changes"} from while you were offline` : `Offline. You're seeing what was saved on this phone${pending ? `; ${pending} ${pending === 1 ? "change waits" : "changes wait"} to send` : ""}. Checklists, photos, notes and the clock still work.`}</span></div>}
-      <div className={"page" + (open ? " has-open" : "")} role="main">{page}</div>
+      <div className={"page" + (open ? " has-open" : "")} role="main"><ShellCtx.Provider value={shellCtx}>{page}</ShellCtx.Provider></div>
     </div>
-    <nav className="tabs" aria-label="Sections">
-      {phoneTabs.map(t => <button key={t.k} type="button" className={phoneTab === t.k ? "on" : ""} aria-current={phoneTab === t.k ? "page" : undefined} onClick={() => goTab(t.k)}>
-        <Icon name={t.ic} size={21} />{t.l}{t.n ? <em>{t.n}</em> : null}</button>)}
+    <nav className="k-tabs" aria-label="Places">
+      {places.map(t => { const on = here === t.k, n = t.k === "inbox" ? counts.inbox : undefined;
+        return <button key={t.k} type="button" className={on ? "on" : ""} aria-current={on ? "page" : undefined} onClick={() => goTab(t.k)}>
+          <Icon name={t.ic} size={21} />{t.l}{n ? <em>{n}</em> : null}</button>; })}
     </nav>
     {sheet === "cmd" && <CommandBar d={d} go={go} onClose={() => setSheet(null)} onWinback={() => setSheet("winback")} onAsk={crew ? undefined : q => { setAskQ({ q, n: Date.now() }); goTab("today"); }} />}
     {sheet === "add" && <AddLeadSheet trade={biz.trade} project={project} api={api} toast={toast} reload={reload} onClose={() => setSheet(null)} />}
@@ -373,25 +380,26 @@ export default function CinderApp() {
   </div></CatalogContext.Provider>;
 }
 
-// ---------- More (phone) ----------
+// ---------- More (phone): everything that isn't one of the five tabs ----------
 function MoreScreen({ d, go, owed }: { d: Data; go: Go; owed: number }) {
   const items: { k: Tab; l: string; s: string; ic: string; n?: number }[] = [
-    { k: "calendar", l: "Calendar", s: "Estimates and installs this week", ic: "cal" },
-    { k: "invoices", l: "Money", s: owed ? `${owed} outstanding` : "All paid up", ic: "invoice", n: owed },
-    { k: "numbers", l: "Numbers", s: "What came in and what it made", ic: "bars" },
+    { k: "quotes", l: "Quotes", s: "Every quote out, and who's looking", ic: "quote" },
     { k: "customers", l: "Customers", s: `${d.customers?.length ?? 0} people`, ic: "users" },
+    { k: "plans", l: "Service plans", s: (d.plans ?? []).some(p => p.status === "active") ? `${(d.plans ?? []).filter(p => p.status === "active").length} active` : "Repeat work on a schedule", ic: "clock" },
+    { k: "numbers", l: "Numbers", s: owed ? `What came in and what it made. ${owed} invoices out` : "What came in and what it made", ic: "bars" },
+    { k: "system", l: "Settings", s: "How leads come in, prices, notifications", ic: "gear" },
+    { k: "sam", l: "Sam", s: d.unreadFromSam ? `${d.unreadFromSam} new` : "Your account rep", ic: "user", n: d.unreadFromSam },
     { k: "switch", l: "Move your business in", s: "From Jobber, QuickBooks, a spreadsheet or your phone", ic: "upload" },
     { k: "from", l: "Coming from Jobber or Housecall Pro", s: "What each thing is called here", ic: "table" },
-    { k: "plans", l: "Service plans", s: (d.plans ?? []).some(p => p.status === "active") ? `${(d.plans ?? []).filter(p => p.status === "active").length} active` : "Repeat work on a schedule", ic: "cal" },
-    { k: "system", l: "Settings", s: "How leads come in, prices, notifications", ic: "gear" },
     { k: "help", l: "Help", s: "Short answers to common questions", ic: "search" },
-    { k: "sam", l: "Sam", s: d.unreadFromSam ? `${d.unreadFromSam} new` : "Your account rep", ic: "user", n: d.unreadFromSam },
   ];
-  return <>
-    <header className="tb"><h1 className="h1">More</h1></header>
-    <div className="pad">{items.map(it => <button key={it.k} type="button" className="row tall" style={{ gridTemplateColumns: "16px minmax(0,1fr) auto" }} onClick={() => go.tab(it.k)}>
-      <span className="ic"><Icon name={it.ic} size={15} /></span><span><b>{it.l}</b><small>{it.s}</small></span>{it.n ? <span className="tag count">{it.n}</span> : <Icon name="fwd" size={14} className="faint" />}</button>)}</div>
-  </>;
+  return <div className="k-page">
+    <Head title="More" noViews />
+    <div className="k-body"><div className="k-box k-list">{items.map(it => <button key={it.k} type="button" className="k-row" onClick={() => go.tab(it.k)}>
+      <span className="k-head-ic" style={{ display: "grid", width: 32, height: 32, borderRadius: 8 }} aria-hidden="true"><Icon name={it.ic} size={16} /></span>
+      <span className="k-row-m"><span className="k-row-t"><b>{it.l}</b></span><span className="k-row-s">{it.s}</span></span>
+      <span className="k-row-r">{it.n ? <span className="k-count hot">{it.n}</span> : <Icon name="fwd" size={14} className="k-faint" />}</span></button>)}</div></div>
+  </div>;
 }
 
 // ---------- Sam and settings ----------
@@ -399,7 +407,7 @@ function SamScreen({ d, project, api: call, toast, reload, go }: { d: Data; proj
   const [msg, setMsg] = useState("");
   const agoText = (iso: string) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 60 ? `${Math.max(1, m)}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
   return <>
-    <header className="tb"><h1 className="h1">Sam</h1><span className="sub">Your account rep</span><div className="acts"><button type="button" className="btn ghost" onClick={() => go.tab("system")}><Icon name="gear" size={14} />Settings</button></div></header>
+    <Head title="Sam" sub="Your account rep" icon="user" />
     <div className="pad" style={{ maxWidth: 760 }}>
       <section className="card" style={{ paddingTop: 0 }}>
         {d.messages.length > 0 ? <div className="sam-msgs">{d.messages.map((m, i) => <article key={i} className="sam-msg">

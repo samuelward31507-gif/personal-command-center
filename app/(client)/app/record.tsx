@@ -37,6 +37,7 @@ import { LineEditor, invoiceState } from "./money";
 import { Photos, shrink } from "./photos";
 import { nextUp, LostPicker } from "./jobs";
 import { sourceLabel, type Biz, type Data, type Go, type Text, type Thread } from "./types";
+import { Av, Prop, Tag, type Tone as KTone } from "./kit";
 
 type R = { sent?: boolean; warn?: string; link?: string; calendar?: string; invoice?: CardInvoice; review?: string };
 type Act = (k: string, b: Record<string, unknown>, done: string | ((r: R) => string)) => Promise<R | null>;
@@ -173,11 +174,11 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
   const lostSheet = losing && <LostPicker name={r.name} busy={!!r.busy} onClose={() => setLosing(false)} onPick={why => { void r.act("stage", { action: "stage", stage: "lost", reason: why }, `Marked lost, ${why.toLowerCase()}. Follow-ups stopped.`); setLosing(false); }} />;
   const primary = (() => {
     if (!card) return null;
-    if (card.stage === "won" && inv) return <button type="button" className="btn ink" onClick={() => go.invoice(inv.id)}>Open invoice</button>;
-    if (card.stage === "won") return <button type="button" className="btn ink" onClick={() => setTab("job")}>Create invoice</button>;
-    if (card.stage === "quoted" && card.quote && !card.quote.linked) return <button type="button" className="btn ink" onClick={() => go.quote(card.id)}>Send the quote</button>;
-    if (card.stage === "quoted") return <button type="button" className="btn ink" onClick={() => pick("won")}>Mark won</button>;
-    return <button type="button" className="btn ink" onClick={() => pick("quoted")}>Write quote</button>;
+    if (card.stage === "won" && inv) return <button type="button" className="k-btn pri" onClick={() => go.invoice(inv.id)}>Open invoice</button>;
+    if (card.stage === "won") return <button type="button" className="k-btn pri" onClick={() => setTab("job")}>Create invoice</button>;
+    if (card.stage === "quoted" && card.quote && !card.quote.linked) return <button type="button" className="k-btn pri" onClick={() => go.quote(card.id)}>Send the quote</button>;
+    if (card.stage === "quoted") return <button type="button" className="k-btn pri" onClick={() => pick("won")}>Mark won</button>;
+    return <button type="button" className="k-btn pri" onClick={() => pick("quoted")}>Write quote</button>;
   })();
   const money = <section className="card"><div className="hd"><h2>Money</h2></div>
     <div className="money"><span>Quote</span><b className={card?.quote?.amount || card?.value ? "" : "mut"}>{card?.quote?.amount ? dollars(card.quote.amount) : card?.value ? dollars(card.value) : card?.ballpark ? `~${rangeText(card.ballpark)}` : "–"}</b></div>
@@ -213,20 +214,29 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       {card?.install && <div className="money"><span>Install</span><b>{dateLabel(card.install)}{card.installDays > 1 ? `, ${card.installDays} days` : ""}{card.onCalendar ? ", on calendar" : ""}</b></div>}
     </section></>;
 
-  return <div className="rec">
+  const stTone = ({ new: "", booked: "blue", quoted: "amber", won: "violet", lost: "red" } as Record<string, KTone>);
+  const saveCard = (k: string, body: Record<string, unknown>) => r.act("prop:" + k, { action: "card", ...body }, "Saved.").then(() => undefined);
+  const saveDetail = (k: string, v: string) => card ? saveCard(k, { details: { ...asStrings(card.details), [k]: v } }) : undefined;
+  const canEdit = !biz.crew && !!card;
+  return <div className="rec k-page k-rec">
     {noPhone(phone) && <AddPhone r={r} />}
-    <header className="rec-h">
-      <button type="button" className="btn ghost ic" onClick={onBack} aria-label="Back" title="Back (esc)"><Icon name="back" size={16} /></button>
-      <Avatar name={name} size="xl" /><div className="t"><h1>{name}</h1><span>{[fmtPhone(phone), address, since ? `Customer since ${since}` : sourceLabel(source)].filter(Boolean).join(", ")}</span></div>
-      {card && <Stg stage={card.pastCustomer ? "won" : card.stage}>{`${card.pastCustomer ? "Past customer" : STAGE_LABEL[card.stage]}${price && !biz.crew ? `, ${dollars(price)}` : ""}`}</Stg>}
-      <div className="acts">
-        {noPhone(phone) ? null : biz.canCall ? <button type="button" className="btn" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} />Call</button> : <a className="btn" href={`tel:${phone}`}><Icon name="phone" size={14} />Call</a>}
-        <button type="button" className="btn" onClick={() => { setTab("activity"); setTimeout(() => ta.current?.focus(), 50); }}><Icon name="chat" size={14} />Text</button>
-        {address && <a className="btn ic" href={`https://maps.google.com/?q=${encodeURIComponent(address)}`} target="_blank" rel="noreferrer" aria-label="Directions" title="Directions"><Icon name="pin" size={14} /></a>}
-        {card?.email && <a className="btn ic" href={`mailto:${card.email}`} aria-label="Email" title={card.email}><Icon name="send" size={14} /></a>}
-        {!biz.crew && (card || cust) && <button type="button" className="btn ic" onClick={() => setPortal(true)} aria-label="Customer page" title={`${first(name)}'s page: quotes, invoices, visits`}><Icon name="user" size={14} /></button>}
-        {card && !biz.crew && <button type="button" className={"btn ic" + (card.remind && !card.remind.sent ? " on" : "")} onClick={() => setReminding(true)} aria-label="Remind me" title={card.remind && !card.remind.sent ? `Reminder ${dateLabel(card.remind.at)}` : "Remind me"}><Icon name="clock" size={14} /></button>}
-        {!biz.crew && primary}
+    <header className="k-head k-rec-head">
+      <div className="k-head-row">
+        <div className="k-head-t">
+          <button type="button" className="k-btn ghost ic k-back" onClick={onBack} aria-label="Back" title="Back (esc)"><Icon name="back" size={16} /></button>
+          <Av name={name} size="lg" />
+          <span className="k-rec-who"><h1 className="k-title">{name}</h1><small>{[fmtPhone(phone), address, since ? `Customer since ${since}` : sourceLabel(source)].filter(Boolean).join(" · ")}</small></span>
+          {card && <Tag tone={card.pastCustomer ? "green" : stTone[card.stage]}>{`${card.pastCustomer ? "Past customer" : STAGE_LABEL[card.stage]}${price && !biz.crew ? ` · ${dollars(price)}` : ""}`}</Tag>}
+        </div>
+        <div className="k-head-acts k-rec-acts">
+          {noPhone(phone) ? null : biz.canCall ? <button type="button" className="k-btn" disabled={!!r.busy} onClick={() => void r.act("call", { action: "call" }, "Calling your cell now.")}><Icon name="phone" size={14} />Call</button> : <a className="k-btn" href={`tel:${phone}`}><Icon name="phone" size={14} />Call</a>}
+          <button type="button" className="k-btn" onClick={() => { setTab("activity"); setTimeout(() => ta.current?.focus(), 50); }}><Icon name="chat" size={14} />Text</button>
+          {address && <a className="k-btn ic" href={`https://maps.google.com/?q=${encodeURIComponent(address)}`} target="_blank" rel="noreferrer" aria-label="Directions" title="Directions"><Icon name="pin" size={14} /></a>}
+          {card?.email && <a className="k-btn ic" href={`mailto:${card.email}`} aria-label="Email" title={card.email}><Icon name="send" size={14} /></a>}
+          {!biz.crew && (card || cust) && <button type="button" className="k-btn ic" onClick={() => setPortal(true)} aria-label="Customer page" title={`${first(name)}'s page: quotes, invoices, visits`}><Icon name="user" size={14} /></button>}
+          {card && !biz.crew && <button type="button" className={"k-btn ic" + (card.remind && !card.remind.sent ? " pri" : "")} onClick={() => setReminding(true)} aria-label="Remind me" title={card.remind && !card.remind.sent ? `Reminder ${dateLabel(card.remind.at)}` : "Remind me"}><Icon name="clock" size={14} /></button>}
+          {!biz.crew && primary}
+        </div>
       </div>
     </header>
     {/* On a phone: the three things you do with a customer, under your thumb. */}
@@ -239,38 +249,38 @@ export function RecordPage({ id, ask: ask0, view: view0, draft: draft0, d, biz, 
       <button type="button" className="btn sm" disabled={!!r.busy || !canText} onClick={() => void r.act("nudge", { action: "quotenudge" }, `Texted ${first(name)} about the quote.`)}>{r.busy === "nudge" ? <Spinner /> : "Nudge"}</button></div>}
     <div className="rec-body">
       <aside className="rec-side" aria-label="Details">
-        <section>
-          <p className="sec">The job{card && <button type="button" className="link" onClick={() => setTab("job")}>Edit</button>}</p>
-          {card ? <dl>
-            {jobFields(biz.trade).filter(f => f.key !== "address" && card.details[f.key] != null && card.details[f.key] !== "").map(f => <div key={f.key} className="kv"><dt><FieldIcon name={fieldIconFor(f.label)} />{f.label}</dt><dd>{String(card.details[f.key])}{f.unit ? ` ${f.unit}` : ""}</dd></div>)}
-            {address && <div className="kv"><dt><FieldIcon name="pin" />Address</dt><dd title={address}>{address}</dd></div>}
-            <div className="kv"><dt><FieldIcon name="link" />Source</dt><dd>{sourceLabel(source)}</dd></div>
-            <div className="kv"><dt><FieldIcon name="dollar" />Job value</dt><dd className={card.value ? "" : "mut"}>{card.value ? dollars(card.value) : card.ballpark ? `~${rangeText(card.ballpark)}` : "Not set"}</dd></div>
-            {card.next && <div className="kv"><dt><FieldIcon name="cal" />Estimate</dt><dd>{new Date(card.next).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</dd></div>}
-            {card.install && <div className="kv"><dt><FieldIcon name="cal" />Install</dt><dd>{dateLabel(card.install)}{card.installDays > 1 ? `, ${card.installDays} days` : ""}</dd></div>}
-            {!card.line && !address && <p className="fine">Nothing yet. These fill in as the customer answers.</p>}
-          </dl> : <>
-            <dl>{address && <div className="kv"><dt>Address</dt><dd title={address}>{address}</dd></div>}<div className="kv"><dt>Source</dt><dd>{sourceLabel(source)}</dd></div>{cust && cust.spent > 0 && <div className="kv"><dt>Billed</dt><dd>{dollars(cust.spent)}, {cust.jobs} {cust.jobs === 1 ? "job" : "jobs"}</dd></div>}</dl>
-            <p className="fine" style={{ marginTop: 8 }}>No job on the board for {first(name)} right now.</p>
-            <button type="button" className="btn sm" style={{ marginTop: 8 }} disabled={!!r.busy} onClick={() => void r.act("stage", { action: "stage", stage: "new" }, "Added to New.")}><Icon name="plus" size={13} />Start a job</button>
+        <section className="k-rec-sec">
+          <h3>Details{card && !biz.crew && <button type="button" className="k-btn ghost sm" onClick={() => setTab("job")}>All fields</button>}</h3>
+          {card ? <div className="k-props">
+            {!biz.crew && <Prop label="Stage" icon="jobs" value={card.stage} shown={<Tag tone={stTone[card.stage]}>{STAGE_LABEL[card.stage]}</Tag>} options={STAGES.map(st => ({ v: st, l: STAGE_LABEL[st] }))} onSave={v => { pick(v as Stage); }} />}
+            {jobFields(biz.trade).filter(f => f.key !== "address").map(f => { const v = card.details[f.key] != null ? String(card.details[f.key]) : "";
+              return <Prop key={f.key} label={f.label} icon={fieldIconFor(f.label)} value={v} shown={v ? `${v}${f.unit ? ` ${f.unit}` : ""}` : undefined} type={f.kind === "number" ? "number" : "text"} placeholder="Add" readOnly={!canEdit} onSave={v2 => saveDetail(f.key, v2)} />; })}
+            <Prop label="Address" icon="pin" value={address} readOnly={!canEdit} onSave={v => saveDetail("address", v)} />
+            <Prop label="Job value" icon="dollar" value={card.value ? String(card.value) : ""} shown={card.value ? dollars(card.value) : undefined} placeholder={card.ballpark ? `~${rangeText(card.ballpark)}` : "Add"} type="number" readOnly={!canEdit} onSave={v => saveCard("value", { value: v || null })} />
+            <Prop label="Email" icon="send" value={card.email ?? ""} type="email" readOnly={!canEdit} onSave={v => saveCard("email", { email: v })} />
+            <Prop label="Source" icon="link" value={sourceLabel(source)} />
+            {card.next && <Prop label="Estimate" icon="cal" value={new Date(card.next).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} />}
+            {card.install && <Prop label="Install" icon="cal" value={`${dateLabel(card.install)}${card.installDays > 1 ? `, ${card.installDays} days` : ""}`} />}
+            <Prop label="Notes" icon="edit" value={card.notes ?? ""} multiline readOnly={!canEdit} onSave={v => saveCard("notes", { notes: v })} />
+          </div> : <>
+            <div className="k-props">{address && <Prop label="Address" icon="pin" value={address} />}<Prop label="Source" icon="link" value={sourceLabel(source)} />{cust && cust.spent > 0 && <Prop label="Billed" icon="dollar" value={`${dollars(cust.spent)}, ${cust.jobs} ${cust.jobs === 1 ? "job" : "jobs"}`} />}</div>
+            <p className="k-mut" style={{ margin: "8px 0", font: "400 13px/1.5 var(--k-f)" }}>No job on the board for {first(name)} right now.</p>
+            <button type="button" className="k-btn sm" disabled={!!r.busy} onClick={() => void r.act("stage", { action: "stage", stage: "new" }, "Added to New.")}><Icon name="plus" size={13} />Start a job</button>
           </>}
+          {card?.ballpark && (card.stage === "new" || card.stage === "booked") && <p className="k-faint" style={{ margin: "6px 0 0", font: "400 12.5px/1.4 var(--k-f)" }}>Ballpark from your prices: <b className="k-mut">{rangeText(card.ballpark)}</b></p>}
         </section>
-        {card && <section><p className="sec">Stage</p>
-          <div className="stages" role="radiogroup" aria-label="Stage">{STAGES.map(s => <button key={s} type="button" role="radio" aria-checked={card.stage === s} className={card.stage === s ? "on" : ""} disabled={!!r.busy} onClick={() => pick(s)}>{STAGE_LABEL[s]}</button>)}</div>
-          {card.ballpark && (card.stage === "new" || card.stage === "booked") && <p className="fine" style={{ marginTop: 6 }}>Ballpark from your prices: <b className="t-em">{rangeText(card.ballpark)}</b></p>}
-        </section>}
         {card && card.stage === "won" && !card.pastCustomer && <Steps card={card} trade={biz.trade} busy={r.busy} tick={(step, done) => void r.act("step:" + step, { action: "jobstep", step, done }, done ? "Done." : "Unticked.")} />}
         {card && (card.stage === "new" || card.stage === "booked") && <Brief card={card} name={name} phone={phone} address={address} texts={r.texts} trade={biz.trade} toast={toast} />}
         {card && <Photos thread={card.id} photos={card.photos ?? []} stage={card.stage} project={project} api={api} toast={toast} reload={reload} />}
         {card?.crew && <section><p className="sec">Crew notes</p><p style={{ lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{card.crew}</p></section>}
-        {(card?.notes || cust?.line) && <section><p className="sec">Notes</p><p style={{ lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{card?.notes || cust?.line}</p></section>}
+        {!card && cust?.line && <section><p className="sec">Notes</p><p style={{ lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{cust.line}</p></section>}
         {!wide && <div className="rail-mobile">{rail}</div>}
       </aside>
       <section className="rec-act" aria-label="Activity">
-        <div className="insp-tabs" role="tablist" style={{ padding: "0" }}>
-          <button type="button" role="tab" aria-selected={tab === "activity"} className={tab === "activity" ? "on" : ""} onClick={() => setTab("activity")}>Activity</button>
-          <button type="button" role="tab" aria-selected={tab === "job"} className={tab === "job" ? "on" : ""} onClick={() => setTab("job")}>{card ? (card.stage === "won" ? "Job, invoice, review" : card.stage === "quoted" ? "The quote" : "Job details") : "Details"}</button>
-        </div>
+        <nav className="k-views k-rec-tabs" role="tablist">
+          <button type="button" role="tab" aria-selected={tab === "activity"} className={"k-view" + (tab === "activity" ? " on" : "")} onClick={() => setTab("activity")}>Activity</button>
+          <button type="button" role="tab" aria-selected={tab === "job"} className={"k-view" + (tab === "job" ? " on" : "")} onClick={() => setTab("job")}>{card ? (card.stage === "won" ? "Job, invoice, review" : card.stage === "quoted" ? "The quote" : "Job details") : "Details"}</button>
+        </nav>
         {tab === "activity" ? <Activity r={r} canText={!!canText} ta={ta} draft0={draft0} /> : <div className="job" style={{ display: "flex", flexDirection: "column", paddingTop: 8 }}><JobPanel r={r} biz={biz} ask={ask} setAsk={setAsk} go={go} canText={!!canText} /></div>}
       </section>
       {wide && <aside className="rec-rail" aria-label="Money and next steps">{rail}</aside>}

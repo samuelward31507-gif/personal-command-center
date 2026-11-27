@@ -13,6 +13,7 @@ import { routeUrl } from "./parity";
 import { visitDays } from "@/lib/service";
 import { cleanDaysOff, offOn, type DayOff } from "@/lib/client-booking";
 import type { Biz, Data, Go } from "./types";
+import { Blank, Head, Section, Tag } from "./kit";
 
 type Block = { key: string; kind: "estimate" | "install" | "event" | "visit"; title: string; sub: string; start: number; end: number; allDay: boolean; day: string; thread?: string; link?: string; apptId?: string; name?: string; addr?: string; crew?: string };
 const maps = (a: string) => `https://maps.google.com/?daddr=${encodeURIComponent(a)}`;
@@ -184,32 +185,40 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
         </div>}
     </div>; })}</div></section>;
 
-  const omw = (b: Block) => <button type="button" className={"btn sm" + (arm === "omw" + b.apptId ? " ink" : "")} disabled={busy === "omw" + b.apptId} onClick={e => { e.stopPropagation(); if (arm === "omw" + b.apptId) void act("omw" + b.apptId, { action: "reply", thread: b.thread, body: onMyWayText(b.name || "", d.owner, d.business) }, () => `Texted ${first(b.name || "them")} you're on the way.`); else setArm("omw" + b.apptId); }}><Icon name="car" size={13} />{arm === "omw" + b.apptId ? "Tap to send" : "On my way"}</button>;
+  const omw = (b: Block) => <button type="button" className={"k-btn sm" + (arm === "omw" + b.apptId ? " pri" : "")} disabled={busy === "omw" + b.apptId} onClick={e => { e.stopPropagation(); if (arm === "omw" + b.apptId) void act("omw" + b.apptId, { action: "reply", thread: b.thread, body: onMyWayText(b.name || "", d.owner, d.business) }, () => `Texted ${first(b.name || "them")} you're on the way.`); else setArm("omw" + b.apptId); }}><Icon name="car" size={13} />{arm === "omw" + b.apptId ? "Tap to send" : "On my way"}</button>;
 
   if (!wide) {
     const list = blocks.filter(b => b.day === day).sort((a, b) => Number(b.allDay) - Number(a.allDay) || a.start - b.start);
     const strip = Array.from({ length: 14 }, (_, k) => { const x = new Date(Date.parse(today + "T12:00:00") + k * 86400000); return iso(x); });
-    return <>
-      <header className="tb"><h1 className="h1">Calendar</h1><span className="sub">{estWeek} estimates this week</span><div className="acts">{crewPick}{route(day) && <a className="btn sm" href={route(day)!} target="_blank" rel="noreferrer"><Icon name="pin" size={13} />Route</a>}</div></header>
-      <div className="daystrip">{strip.map(dd => { const x = new Date(dd + "T12:00:00"); const n = blocks.filter(b => b.day === dd).length; return <button key={dd} type="button" className={(dd === day ? "on" : "") + (dd === today ? " today" : "")} onClick={() => setDay(dd)}><small>{x.toLocaleDateString("en-US", { weekday: "short" })}</small><b>{x.getDate()}</b><i style={{ opacity: n ? 1 : 0 }} /></button>; })}</div>
-      <div className="pad" style={{ paddingTop: 8 }}>
+    return <div className="k-page">
+      <Head title="Calendar" icon="cal" sub={`${estWeek} ${estWeek === 1 ? "estimate" : "estimates"} this week`} actions={<>{crewPick}{route(day) && <a className="k-btn" href={route(day)!} target="_blank" rel="noreferrer"><Icon name="pin" size={14} />Route</a>}</>} />
+      <div className="k-strip">{strip.map(dd => { const x = new Date(dd + "T12:00:00"); const n = blocks.filter(b => b.day === dd).length; return <button key={dd} type="button" className={"k-strip-d" + (dd === day ? " on" : "") + (dd === today ? " today" : "")} aria-pressed={dd === day} onClick={() => setDay(dd)}><small>{x.toLocaleDateString("en-US", { weekday: "short" })}</small><b>{x.getDate()}</b><i style={{ opacity: n ? 1 : 0 }} /></button>; })}</div>
+      <div className="k-body" style={{ paddingTop: 12, gap: 16 }}>
         {outcomes}
-        {list.length ? list.map(b => <button key={b.key} type="button" className={"dayrow " + b.kind} onClick={() => open(b)}><time>{b.allDay ? "All day" : clock(new Date(b.start).toISOString())}</time><span style={{ minWidth: 0 }}><b>{b.title}</b><small>{b.sub}</small></span>{b.kind === "estimate" && b.apptId && Date.parse(b.day + "T23:59:00") > Date.now() && <span className="acts-row" style={{ flexWrap: "nowrap" }}>{omw(b)}<button type="button" className="btn sm ic" aria-label="Move" title="Move" onClick={e => { e.stopPropagation(); askMove(b); }}><Icon name="clock" size={13} /></button></span>}{b.kind === "install" && b.addr && <a className="btn sm ic" href={maps(b.addr)} target="_blank" rel="noreferrer" aria-label="Directions" title={b.addr} onClick={e => e.stopPropagation()}><Icon name="pin" size={13} /></a>}</button>)
-          : <Empty title={`Nothing on ${dayName(day + "T12:00:00")}`} text="Booked estimates and the installs you set show up here." />}
-        {!cal.connected && <p className="fine" style={{ marginTop: 12 }}>Connect Google Calendar and your own events show here too. <a className="link" href={cal.connectUrl} target="_blank" rel="noreferrer">Connect</a></p>}
+        <Section title={day === today ? "Today" : new Date(day + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} sub={(() => { const n = list.length; return n ? `${n} ${n === 1 ? "visit" : "visits"}` : undefined; })()}>
+        {list.length ? <div className="k-list">{list.map(b => <div key={b.key} role="button" tabIndex={0} className="k-row" onClick={() => open(b)} onKeyDown={e => { if (e.key === "Enter") open(b); }}>
+          <span className="k-time">{b.allDay ? "All day" : clock(new Date(b.start).toISOString())}</span>
+          <span className="k-row-m"><span className="k-row-t"><b>{b.title}</b><Tag tone={b.kind === "estimate" ? "blue" : b.kind === "install" ? "violet" : ""}>{b.kind === "estimate" ? "Estimate" : b.kind === "install" ? "Install" : b.kind === "visit" ? "Service visit" : "Your calendar"}</Tag></span><span className="k-row-s">{b.sub}</span></span>
+          <span className="k-row-r">{b.kind === "estimate" && b.apptId && Date.parse(b.day + "T23:59:00") > Date.now() && <>{omw(b)}<button type="button" className="k-btn ic" aria-label="Move" title="Move" onClick={e => { e.stopPropagation(); askMove(b); }}><Icon name="clock" size={15} /></button></>}{b.kind === "install" && b.addr && <a className="k-btn ic" href={maps(b.addr)} target="_blank" rel="noreferrer" aria-label="Directions" title={b.addr} onClick={e => e.stopPropagation()}><Icon name="pin" size={15} /></a>}</span></div>)}</div>
+          : <Blank icon="cal" title={`Nothing on ${dayName(day + "T12:00:00")}`} text="Booked estimates and the installs you set show up here." />}
+        </Section>
+        {!cal.connected && <p className="k-mut" style={{ margin: 0, font: "400 13px/1.5 var(--k-f)" }}>Connect Google Calendar and your own events show here too. <a className="link" href={cal.connectUrl} target="_blank" rel="noreferrer">Connect</a></p>}
       </div>
       {moveSheet}
-    </>;
+    </div>;
   }
 
-  return <>
-    <header className="tb"><h1 className="h1">Calendar</h1>
-      <div className="acts-row" style={{ gap: 2 }}><button type="button" className="btn ghost sm ic" aria-label="Previous week" onClick={() => setWeek(w => w - 1)}><Icon name="back" size={14} /></button><button type="button" className="btn ghost sm" onClick={() => setWeek(0)}>Today</button><button type="button" className="btn ghost sm ic" aria-label="Next week" onClick={() => setWeek(w => w + 1)}><Icon name="fwd" size={14} /></button></div>
-      <span className="sub">{range}{week === 0 ? `, ${estWeek} ${estWeek === 1 ? "estimate" : "estimates"}` : ""}</span>
-      <div className="acts">{team.length > 1 && wide && <div className="seg" role="tablist" aria-label="View"><button type="button" role="tab" aria-selected={mode === "week"} className={mode === "week" ? "on" : ""} onClick={() => setMode("week")}>Week</button><button type="button" role="tab" aria-selected={mode === "crew"} className={mode === "crew" ? "on" : ""} onClick={() => setMode("crew")}>Crew</button></div>}{mode === "week" && crewPick}{route(today) && <a className="btn" href={route(today)!} target="_blank" rel="noreferrer" title="Today's stops in order, on the map"><Icon name="pin" size={13} />Today's route</a>}{cal.connected ? <a className="btn" href={googleCalendarUrl(cal.email)} target="_blank" rel="noreferrer"><Icon name="ext" size={13} />Google Calendar</a>
-        : <a className="btn ink" href={cal.connectUrl} target="_blank" rel="noreferrer">Connect Google Calendar</a>}</div></header>
-    <div className={"split" + (sel ? " has-insp" : "")}>
-      <div className="pane list">
+  return <div className="k-page">
+    <Head title="Calendar" icon="cal" sub={`${range}${week === 0 ? `, ${estWeek} ${estWeek === 1 ? "estimate" : "estimates"}` : ""}`} actions={<>
+      <div className="k-step"><button type="button" className="k-btn ghost ic" aria-label="Previous week" onClick={() => setWeek(w => w - 1)}><Icon name="back" size={14} /></button><button type="button" className="k-btn" onClick={() => setWeek(0)}>Today</button><button type="button" className="k-btn ghost ic" aria-label="Next week" onClick={() => setWeek(w => w + 1)}><Icon name="fwd" size={14} /></button></div>
+      {team.length > 1 && wide && <div className="k-seg" role="tablist" aria-label="View"><button type="button" role="tab" aria-selected={mode === "week"} onClick={() => setMode("week")}>Week</button><button type="button" role="tab" aria-selected={mode === "crew"} onClick={() => setMode("crew")}>Crew</button></div>}
+      {mode === "week" && crewPick}
+      {route(today) && <a className="k-btn" href={route(today)!} target="_blank" rel="noreferrer" title="Today's stops in order, on the map"><Icon name="pin" size={13} />Today&rsquo;s route</a>}
+      {cal.connected ? <a className="k-btn" href={googleCalendarUrl(cal.email)} target="_blank" rel="noreferrer"><Icon name="ext" size={13} />Google Calendar</a>
+        : <a className="k-btn pri" href={cal.connectUrl} target="_blank" rel="noreferrer">Connect Google Calendar</a>}
+    </>} />
+    <div className={"k-split" + (sel ? " has-insp" : "")}>
+      <div className="k-split-main k-cal">
         {(cal.error || !cal.connected || due.length > 0) && <div className="pad" style={{ paddingBottom: 0 }}>
           {cal.error && <div className="card box" style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}><span>{cal.error}</span><a className="btn sm" href={cal.connectUrl} target="_blank" rel="noreferrer">Reconnect</a></div>}
           {!cal.connected && !cal.error && <p className="fine">Connect your Google Calendar and estimates only get booked where you&rsquo;re free. Your own events show up here too.</p>}
@@ -237,8 +246,8 @@ export function CalendarScreen({ d, biz, project, api, toast, reload, go, wide }
           {blocks.filter(b => b.kind === "estimate" && b.day >= today && days.includes(b.day)).sort((a, b) => a.start - b.start).map(b => <div key={b.key} className="row"><span className="ic"><Icon name="cal" size={14} /></span><span style={{ minWidth: 0 }}><b>{b.title}<span className="faint" style={{ fontWeight: 400 }}>, {dayName(new Date(b.start).toISOString())} {clock(new Date(b.start).toISOString())}</span></b></span><span className="acts-row" style={{ flexWrap: "nowrap" }}>{omw(b)}<button type="button" className="btn sm" onClick={() => askMove(b)}>Move</button></span></div>)}
         </section></div>}
       </div>
-      {sel && <aside className="pane insp" aria-label="Record"><Inspector key={sel} id={sel} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onClose={() => setSel(null)} onExpand={() => go.record(sel)} /></aside>}
+      {sel && <aside className="k-insp" aria-label="Record"><Inspector key={sel} id={sel} d={d} biz={biz} project={project} api={api} toast={toast} reload={reload} go={go} onClose={() => setSel(null)} onExpand={() => go.record(sel)} /></aside>}
     </div>
     {moveSheet}
-  </>;
+  </div>;
 }

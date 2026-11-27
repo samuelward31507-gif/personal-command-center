@@ -9,6 +9,7 @@ import { mailWaiting, sourceLabel, type Conv, type Data, type Go, type Text, typ
 import dynamic from "next/dynamic";
 const MailWaiting = dynamic(() => import("./system").then(m => m.MailWaiting), { ssr: false });
 import { Chip, SourceMark, secText, type Tone } from "./sources";
+import { Av, Blank, Head, Prop, Tag, type Tone as KTone } from "./kit";
 
 /** What a lead's row says about where it stands, in the fixed colors: green booked or won, amber waiting on them, red your turn, grey new. */
 export function leadState(c: Conv): { text: string; tone: Tone } {
@@ -75,83 +76,93 @@ export function InboxScreen({ d, project, api, toast, reload, go, wide, push, on
   const ini = (s: string) => { const p = s.replace(/[^A-Za-z ]/g, "").split(" ").filter(Boolean); return ((p[0]?.[0] ?? "") + (p[1]?.[0] ?? "")).toUpperCase() || "#"; };
   const when = (iso: string | null) => { if (!iso) return ""; const dd = new Date(iso), now = new Date(); const sameDay = dd.toDateString() === now.toDateString();
     return sameDay ? clock(iso) : Date.now() - dd.getTime() < 6 * 86400000 ? dd.toLocaleDateString("en-US", { weekday: "short" }) + " " + clock(iso) : dd.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
-  return <div className="v5 v5-inbox">
-    <header className="v5-top">
-      <div>
-        <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{eyebrow}</span>{d.project === "demo" && <span className="v5-ex">Example business, sample data</span>}</div>
-        <h1 className="v5-h1">Inbox</h1>
-        <p className="v5-sub">Every text, call, form and lead site in one thread per customer. {yourTurn ? `${yourTurn} ${yourTurn === 1 ? "is" : "are"} your turn.` : "Nothing is waiting on you."}</p>
-      </div>
-      <div className="v5-acts"><button type="button" className="b5 pri" onClick={go.addLead}>New lead</button></div>
-    </header>
-    <div className="v5-body ib-grid">
-      <section className="v5-card ib-list" aria-label="Conversations">
-        <div className="ib-filt"><div className="v5-seg" role="tablist" aria-label="Filter">
-          {([["needs", "Your turn", yourTurn], ["auto", "Replying for you", auto], ["all", "All", 0]] as const).map(([k, l, n]) =>
-            <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>{l}{n ? ` ${n}` : ""}</button>)}
-        </div></div>
-        {!hidePush && (push === "off" || push === "ios-install") && <div className="ib-push">
+  const ibTone = (c: Conv): [string, KTone, boolean] => { const [l, t] = pill(c); return [l, t === "acc" ? "acc" : t === "good" ? "green" : l === "Booked" ? "blue" : l === "Quote out" ? "amber" : "", t === "acc"]; };
+  const filters = ([["needs", "Your turn", yourTurn], ["auto", "Replying for you", auto], ["all", "All", L.conversations.length]] as const);
+  return <div className="k-page">
+    <Head title="Inbox" icon="chat" sub={yourTurn ? `${yourTurn} ${yourTurn === 1 ? "is" : "are"} your turn` : "Nothing is waiting on you"}
+      actions={<button type="button" className="k-btn pri" onClick={go.addLead}><Icon name="plus" size={14} />New lead</button>}
+      views={filters.map(([k, l, n]) => ({ k, l, n: n || undefined, on: filter === k, go: () => { setFilter(k); if (wide) setSel(null); } }))} />
+    <div className="k-ib">
+      <section className="k-ib-list" aria-label="Conversations">
+        {!hidePush && (push === "off" || push === "ios-install") && <div className="k-ib-push">
           <b>Turn on notifications</b><p>{push === "off" ? "New leads, bookings and replies that need you." : "Tap Share, then \u201cAdd to Home Screen\u201d, and open the app from there."}</p>
-          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>{push === "off" && <button type="button" className="b5 sm pri" onClick={onPush}>Turn on</button>}
-            <button type="button" className="b5 sm ghost" onClick={() => { setHidePush(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>}
-        <div className="ib-rows">
+          <div>{push === "off" && <button type="button" className="k-btn pri sm" onClick={onPush}>Turn on</button>}
+            <button type="button" className="k-btn ghost sm" onClick={() => { setHidePush(true); try { localStorage.setItem("cinder-push-card", "hide"); } catch { /* private mode */ } }}>Not now</button></div></div>}
+        <div className="k-ib-rows">
+          {showMails && <div className="k-ib-grp">Email, no phone yet <span className="k-faint">{mails.length}</span></div>}
           {showMails && mails.map(m => { const key = "mail:" + m.id, who = m.name || m.email || sourceLabel(m.source); return <Fragment key={m.id}>
-            <button type="button" className={"ib-row" + (sel === key || openMail === m.id ? " sel" : "")} aria-current={sel === key ? "true" : undefined} aria-expanded={wide ? undefined : openMail === m.id}
+            <button type="button" className={"k-row k-ib-row unread" + (sel === key || openMail === m.id ? " sel" : "")} aria-current={sel === key ? "true" : undefined} aria-expanded={wide ? undefined : openMail === m.id}
               onClick={() => (wide ? setSel(key) : setOpenMail(o => (o === m.id ? null : m.id)))}>
-              <span className="v5-av" aria-hidden="true">{ini(who)}</span>
-              <span className="ib-t"><span className="ib-top"><b>{who}</b><time>{when(m.at)}</time></span>
-                <small>{sourceLabel(m.source || "email")} by email, no phone. {m.message || m.subject}</small><span className="v5-pill acc">Your turn</span></span>
+              <Av name={who} />
+              <span className="k-row-m"><span className="k-row-t"><b>{who}</b><span className="k-row-time">{when(m.at)}</span></span>
+                <span className="k-row-s">{sourceLabel(m.source || "email")} by email. {m.message || m.subject}</span>
+                <span className="k-row-tags"><Tag tone="acc" dot>Your turn</Tag></span></span>
             </button>
             {!wide && openMail === m.id && <div className="mail-inline"><MailWaiting r={m} go={go} toast={toast} api={api} project={project} reload={reload} /></div>}
           </Fragment>; })}
-          {convs.map(c => { const [pl, tone] = pill(c); return <button key={c.id} type="button" data-cv={c.id} className={"ib-row" + (sel === c.id ? " sel" : "")} aria-current={sel === c.id ? "true" : undefined} onClick={() => pick(c.id)}>
-            <span className="v5-av" aria-hidden="true">{ini(c.name)}</span>
-            <span className="ib-t"><span className="ib-top"><b>{c.name}</b><time>{when(c.at)}</time></span>
-              <small>{c.last}</small><span className={"v5-pill " + tone}>{pl}</span></span>
-          </button>; })}
-          {!convs.length && !showMails && <div className="v5-empty">{filter === "needs" ? "Nothing is waiting on you. New leads get answered for you." : filter === "auto" ? "No conversations are being answered for you right now." : "No leads yet. Calls, texts and form leads show up here the moment they come in."}</div>}
+          {groups.map(g => <Fragment key={g.day}>
+            <div className="k-ib-grp">{g.day}<span className="k-faint">{g.items.length}</span></div>
+            {g.items.map(c => { const [pl, tone, dot] = ibTone(c); return <button key={c.id} type="button" data-cv={c.id} className={"k-row k-ib-row" + (sel === c.id ? " sel" : "") + (c.status === "paused" ? " unread" : "")} aria-current={sel === c.id ? "true" : undefined} onClick={() => pick(c.id)}>
+              <Av name={c.name} />
+              <span className="k-row-m"><span className="k-row-t"><b>{c.name}</b><span className="k-row-time">{when(c.at)}</span></span>
+                <span className="k-row-s">{c.last}</span>
+                <span className="k-row-tags"><Tag tone={tone} dot={dot}>{pl}</Tag>{c.source && <span className="k-faint" style={{ font: "400 12px/22px var(--k-f)" }}>{sourceLabel(c.source)}</span>}</span></span>
+            </button>; })}
+          </Fragment>)}
+          {!convs.length && !showMails && <Blank icon={filter === "needs" ? "check" : "chat"} title={filter === "needs" ? "Nothing is waiting on you" : filter === "auto" ? "Nothing being answered right now" : "No conversations yet"}
+            text={filter === "needs" ? "New leads get answered for you. They land here when it's your turn." : filter === "auto" ? "No conversations are being answered for you right now." : "Calls, texts and form leads show up here the moment they come in."} />}
         </div>
       </section>
-      {wide && <section className="v5-card ib-conv" aria-label="Conversation">{selMail
-        ? <div className="mail-pane">
-            <header><b>{selMail.name || selMail.email || sourceLabel(selMail.source)}</b><small>{sourceLabel(selMail.source || "email")} by email, {ago(selMail.at)}</small></header>
-            <dl><dt>From</dt><dd>{selMail.from}</dd><dt>Subject</dt><dd>{selMail.subject}</dd>{selMail.email && <><dt>Email</dt><dd>{selMail.email}</dd></>}</dl>
-            <p className="fine">This lead came in by email without a phone number. Find it on the lead site or reply by email, then add the number to put them on the board. Nobody is texted until you do.</p>
+      <section className="k-ib-conv" aria-label="Conversation">{!wide ? null : selMail
+        ? <div className="k-lead" style={{ flex: 1, overflowY: "auto", padding: 24 }}>
+            <div className="k-lead-h"><Av name={selMail.name || selMail.email || "Email"} size="lg" /><span><b>{selMail.name || selMail.email || sourceLabel(selMail.source)}</b><small>{sourceLabel(selMail.source || "email")} by email, {ago(selMail.at)}</small></span></div>
+            <div className="k-props" style={{ margin: "12px 0" }}>
+              <Prop label="From" icon="user" value={selMail.from || ""} />
+              <Prop label="Subject" icon="quote" value={selMail.subject || ""} />
+              {selMail.email && <Prop label="Email" icon="link" value={selMail.email} />}
+            </div>
+            <p className="k-mut" style={{ font: "400 13px/1.5 var(--k-f)", margin: "0 0 12px", maxWidth: 520 }}>This lead came in by email without a phone number. Find it on the lead site or reply by email, then add the number to put them on the board. Nobody is texted until you do.</p>
             <MailWaiting bare r={selMail} go={go} toast={toast} api={api} project={project} reload={reload} />
           </div>
         : sel && !sel.startsWith("mail:")
         ? <ThreadView key={sel} id={sel} project={project} canCall={d.canCall} api={api} toast={toast} onChange={() => void reload()} onRecord={() => go.record(sel)} embedded conv={current} />
-        : <div className="v5-empty" style={{ margin: "auto" }}>Pick a conversation on the left, or press J.</div>}</section>}
+        : <div className="k-pane-empty k-anim-fade">
+            <span className="k-empty-ic"><Icon name="chat" size={18} /></span>
+            <b>{convs.length ? "Pick a conversation" : "No conversations here"}</b>
+            <p>{convs.length ? "Every text, call, form and lead site in one thread per customer. Replies go from your business number." : "Switch views to see the rest."}</p>
+            {convs.length > 0 && <div className="k-keys"><span><kbd>j</kbd><kbd>k</kbd>move</span><span><kbd>↵</kbd>open record</span><span><kbd>c</kbd>new lead</span></div>}
+          </div>}</section>
       {wide && sel && !sel.startsWith("mail:") && current && <LeadCard d={d} conv={current} go={go} />}
     </div>
   </div>;
 }
 
-/** The lead card beside the thread: made from what came in, the source stamped on arrival. */
+/** The lead beside the thread: made from what came in, the source stamped on arrival. */
 function LeadCard({ d, conv, go }: { d: Data; conv: Conv; go: Go }) {
   const c = (d.board ?? []).find(b => b.id === conv.id);
   const appt = d.appointments.filter(a => a.thread_id === conv.id).sort((a, b) => a.starts_at.localeCompare(b.starts_at)).find(a => Date.parse(a.starts_at) > Date.now() - 12 * 3600000);
-  const STAGE: Record<string, string> = { new: "New", booked: "Estimate booked", quoted: "Quoted", won: "Won", lost: "Lost" };
+  const STAGE: Record<string, [string, KTone]> = { new: ["New", ""], booked: ["Estimate booked", "blue"], quoted: ["Quoted", "amber"], won: ["Won", "violet"], lost: ["Lost", "red"] };
   const value = c ? c.value ?? c.quote?.amount ?? (c.ballpark ? c.ballpark.high : null) : null;
   const usd = (v: number) => "$" + Math.round(v).toLocaleString("en-US");
-  const rows: [string, ReactNode][] = [
-    ["Stage", <span key="s" className="v5-pill">{STAGE[c?.stage ?? ""] ?? (conv.status === "booked" ? "Estimate booked" : "New")}</span>],
-    ["Source", sourceLabel(conv.source)],
-    ["Job", c?.line || "Not known yet"],
-    ["Address", String(c?.details.address ?? "") || "Not given yet"],
-    ["Estimate", appt ? new Date(appt.starts_at).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Not booked"],
-    ["Likely value", value ? usd(value) : "Not priced yet"],
-    ["Came in", conv.created ? new Date(conv.created).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "–"],
-    ["First reply", conv.replySec != null ? `${conv.replySec}s` : "–"],
-  ];
-  return <aside className="v5-card ib-lead" aria-label="Lead card">
-    <div className="v5-ct">Lead card</div>
-    <p className="v5-dim" style={{ fontSize: 12, margin: "2px 0 8px" }}>Made automatically when the {sourceLabel(conv.source).toLowerCase()} came in</p>
-    {rows.map(([k, v]) => <div key={k} className="ib-kv"><span className="v5-lab">{k}</span><span>{v}</span></div>)}
-    <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-      <button type="button" className="b5 sm" onClick={() => go.record(conv.id, { view: "job" })}>Open job</button>
-      {appt && <button type="button" className="b5 sm" onClick={() => go.tab("calendar")}>Move estimate</button>}
+  const st = STAGE[c?.stage ?? ""] ?? (conv.status === "booked" ? STAGE.booked : STAGE.new);
+  const dt = (iso: string) => new Date(iso).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return <aside className="k-ib-lead k-anim-fade" key={conv.id} aria-label="Lead">
+    <div className="k-lead">
+      <div className="k-lead-h"><Av name={conv.name} size="lg" /><span style={{ minWidth: 0 }}><b>{conv.name}</b><small>Made when the {sourceLabel(conv.source).toLowerCase()} came in</small></span></div>
+      <div className="k-lead-a"><button type="button" className="k-btn sm" onClick={() => go.record(conv.id, { view: "job" })}>Open job</button>{appt && <button type="button" className="k-btn sm ghost" onClick={() => go.tab("calendar")}>Move estimate</button>}</div>
     </div>
+    <div className="k-lead"><h3>Details</h3><div className="k-props">
+      <Prop label="Stage" icon="jobs" value={st[0]} shown={<Tag tone={st[1]}>{st[0]}</Tag>} />
+      <Prop label="Source" icon="link" value={sourceLabel(conv.source)} />
+      <Prop label="Job" icon="ruler" value={c?.line || ""} shown={c?.line} />
+      <Prop label="Address" icon="pin" value={String(c?.details.address ?? "")} />
+      <Prop label="Estimate" icon="cal" value={appt ? dt(appt.starts_at) : ""} />
+      <Prop label="Likely value" icon="dollar" value={value ? usd(value) : ""} />
+    </div></div>
+    <div className="k-lead"><h3>Speed</h3><div className="k-props">
+      <Prop label="Came in" icon="clock" value={conv.created ? dt(conv.created) : ""} />
+      <Prop label="First reply" icon="bolt" value={conv.replySec != null ? `${conv.replySec}s` : ""} />
+    </div></div>
   </aside>;
 }
 

@@ -20,6 +20,7 @@ import { taskOrder, warrantyEndingSoon } from "@/lib/records";
 import { AreaChart, StackBar, Sparkline, C } from "./v5-charts";
 import { todayFigures } from "@/lib/today-figures";
 import "./v5.css";
+import { Av, Blank, Head, Section, Stats, Tag, type Stat, type Tone } from "./kit";
 
 type Kind = "reply" | "money" | "quote" | "install" | "invoice" | "review" | "sam" | "remind";
 type Action = { key: string; kind: Kind; title: string; sub: string; go: () => void; cta: string; primary?: boolean; draft?: string; money: number; urgent?: boolean };
@@ -287,88 +288,64 @@ export function TodayScreen({ d, biz, go, wide, api, project, ask, toast, reload
   const subline = actions.length ? `${actions.length} ${actions.length === 1 ? "thing needs" : "things need"} you. Everything else is handled.` : "Nothing needs you. Everything else is handled.";
   const eyebrowDate = new Date(noon(today)).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase();
 
-  return <div className="v5 v5-today">
-    <header className="v5-top">
-      <div>
-        <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{eyebrowDate}</span>{demo && <span className="v5-ex">Example business, sample data</span>}</div>
-        <h1 className="v5-h1">{greeting}</h1>
-        <p className="v5-sub">{subline}</p>
-      </div>
-      <div className="v5-acts">
-        {lead ? <><button type="button" className="b5" onClick={go.addLead}>New lead</button><button type="button" className="b5 pri" onClick={lead.go}>Start with {first(whoOf(lead)) || "the first one"}</button></>
-          : <button type="button" className="b5 pri" onClick={go.addLead}>New lead</button>}
-      </div>
-    </header>
-    {ask && ask.q && <section className="t7-ask" style={{ margin: "16px 36px 0" }}><AskBox api={api} project={project} ask={ask} d={d} go={go} /></section>}
+  const toneOf = (a: Action): Tone => { const st = STATUS_OF(a), p = a.key;
+    return p.startsWith("od") || p.startsWith("pm") ? "red" : st.tone === "good" ? "green" : p.startsWith("r") && !p.startsWith("rm") && !p.startsWith("rv") || p.startsWith("m") ? "acc" : st.tone === "urgent" ? "amber" : ""; };
+  const stats: Stat[] = [
+    { label: "Won, last 30 days", value: usd(wonV), delta, sub: `${wonN} ${wonN === 1 ? "job" : "jobs"} · ${usd(collected)} collected`, spark: wonRun, go: () => go.tab("numbers") },
+    { label: "Owed to you", value: usd(owed), sub: lateSum > 0 ? `${usd(lateSum)} past due` : sent.length ? `${sent.length} ${sent.length === 1 ? "invoice" : "invoices"} out, none late` : "Nothing out", red: lateSum > 0, go: () => go.tab("invoices") },
+    { label: "Quotes out", value: usd(qTotal), sub: qCards.length ? `${qCards.length} waiting on a yes` : "None out", go: () => go.tab("quotes") },
+    { label: "First reply", value: secs(sec), sub: `${answered30} of ${leads30} leads answered`, go: () => go.tab("numbers") },
+  ];
+  const dateLong = new Date(noon(today)).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const startBtn = lead ? <button type="button" className="k-btn pri" onClick={lead.go}>Start with {first(whoOf(lead)) || "the first one"}</button> : null;
 
-    <div className="v5-body grid-mobile">
-      <div className="row1">
-        <section className="v5-card hero-card" aria-label="Won in the last 30 days">
-          <div className="hero-top">
-            <div>
-              <div className="v5-lab">Won · last 30 days</div>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
-                <span className="v5-hero">{usd(wonV)}</span>
-                {delta != null && <span className={"v5-delta " + (delta > 0 ? "up" : "flat")}>{delta > 0 ? "+" : ""}{delta}%</span>}
-                {delta != null && <span className="v5-dim" style={{ fontSize: 12 }}>vs prior 30 days</span>}
-              </div>
-              <p className="v5-muted" style={{ marginTop: 8 }}>{wonN} {wonN === 1 ? "job" : "jobs"}{wonN ? `, ${usd(Math.round(wonV / wonN))} average` : ""} · {usd(collected)} collected{sentQ.length ? ` · ${usd(sentQ.reduce((a, c) => a + qv(c), 0))} waiting on ${sentQ.length} ${sentQ.length === 1 ? "quote" : "quotes"}` : ""}</p>
-            </div>
-            <div className="hero-legend" style={{ display: "flex", gap: 14, marginTop: 4 }}><span className="v5-leg"><i style={{ background: C.accent }} />Won</span><span className="v5-leg"><i style={{ background: C.grey }} />Collected</span></div>
-          </div>
-          <div className="m-spark" style={{ display: "none" }}><Sparkline values={wonRun} width={320} height={40} /></div>
-          <div style={{ marginTop: 12 }}>
-            <AreaChart labels={days30.map(shortDay)} initial={wonN ? lastWonIdx : undefined}
-              series={[{ key: "won", label: "Won", values: wonRun, color: C.accent, fill: true }, { key: "col", label: "Collected", values: colRun, color: C.grey }]}
-              note={i => { const c = wonIn.find(x => wonDay(x) === days30[i]); return c ? { text: `${c.name} approved`, value: usd(jobPrice(c) ?? 0) } : null; }}
-              summary={`Won ${usd(wonV)} and collected ${usd(collected)} in the last 30 days.`} />
-          </div>
-        </section>
-        <div className="side">
-          <button type="button" className="v5-card" style={{ textAlign: "left", cursor: "pointer" }} onClick={() => go.tab("invoices")}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span className="v5-lab">Owed to you</span>{lateSum > 0 && <span className="v5-st bad"><i />{usd(lateSum)} past due</span>}</div>
-            <div className="v5-kv" style={{ margin: "10px 0 12px" }}>{usd(owed)}</div>
-            <StackBar label={`${usd(notDue)} not yet due, ${usd(lateSum)} late`} parts={[{ key: "due", value: notDue, color: C.grey }, { key: "late", value: lateSum, color: C.bad }]} />
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, gap: 8, flexWrap: "wrap" }}><span className="v5-leg"><i className="sq" style={{ background: C.grey }} />Not yet due {usd(notDue)}</span><span className="v5-leg"><i className="sq" style={{ background: C.bad }} />Late {usd(lateSum)}</span></div>
-          </button>
-          <section className="v5-card" aria-label="First reply">
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span className="v5-lab">First reply</span><span className="v5-dim" style={{ fontSize: 12 }}>median, nights too</span></div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 10, margin: "10px 0 12px", flexWrap: "wrap" }}><span className="v5-kv">{secs(sec)}</span><span className="v5-muted">{answered30} of {leads30} leads answered</span></div>
-            <StackBar label={`${answered30} of ${leads30} leads answered`} parts={[{ key: "a", value: answered30, color: C.accent }, { key: "m", value: Math.max(0, leads30 - answered30), color: C.grey }]} />
-          </section>
+  return <div className="k-page">
+    <Head title="Today" icon="home" sub={dateLong} noViews actions={<><button type="button" className="k-btn" onClick={go.addLead}><Icon name="plus" size={14} />New lead</button>{startBtn}</>} />
+    {ask && ask.q && <div className="k-body k-narrow" style={{ paddingBottom: 0 }}><AskBox api={api} project={project} ask={ask} d={d} go={go} /></div>}
+    <div className="k-body k-narrow">
+      <div className="k-hello">
+        <h2>{greeting}</h2>
+        <p>{actions.length ? <><b>{actions.length} {actions.length === 1 ? "thing needs" : "things need"} you</b>{atStake ? `, ${usd(atStake)} riding on them` : ""}. Everything else is handled.</> : "Nothing needs you. Everything else is handled."}{evText ? " " + evText : ""}</p>
+      </div>
+
+      <Stats items={stats} />
+
+      <Section title="Needs you" sub={actions.length ? `${actions.length} · most urgent first` : undefined}
+        aside={actions.length > 6 ? <button type="button" className="k-btn ghost sm" onClick={() => setAll(x => !x)}>{all ? "Show fewer" : `Show all ${actions.length}`}</button> : undefined}>
+        {actions.length === 0 ? <Blank icon="check" title="You're all caught up" text="New leads get answered for you. They land here the moment it's your turn." />
+          : <div className="k-list">{rows.map((a, i) => { const st = STATUS_OF(a), who = whoOf(a) || a.title;
+            return <div key={a.key} role="button" tabIndex={0} className={"k-row" + (i === sel ? " kbd-sel" : "")} onClick={a.go} onKeyDown={e => { if (e.key === "Enter") a.go(); }} onMouseEnter={() => sel >= 0 && setSel(i)}>
+              <Av name={who} />
+              <span className="k-row-m"><span className="k-row-t"><b>{who}</b>{st.text && <Tag tone={toneOf(a)} dot={toneOf(a) === "acc"}>{st.text}</Tag>}</span><span className="k-row-s">{a.sub}</span></span>
+              <span className="k-row-r"><button type="button" className="k-btn sm k-row-act" onClick={e => { e.stopPropagation(); a.go(); }}>{a.cta}</button><span className="k-row-v">{a.money ? usd(a.money) : ""}</span></span>
+            </div>; })}
+            {!all && actions.length > rows.length && <button type="button" className="k-more" onClick={() => setAll(true)}>{actions.length - rows.length} more<Icon name="down" size={14} /></button>}
+          </div>}
+      </Section>
+
+      <Section title="Coming up" sub={todayList.length ? `${todayList.length} today` : undefined} aside={<button type="button" className="k-btn ghost sm" onClick={() => go.tab("calendar")}>Calendar<Icon name="fwd" size={13} /></button>}>
+        {upcoming.length === 0 && !holiday ? <Blank icon="cal" title="Nothing booked yet" text="Estimates land here the moment a lead books one." />
+          : <div className="k-list">
+            {upcoming.map(v => { const dd = new Date(v.at), isT = v.day === today;
+              return <button type="button" key={v.key} className="k-row" onClick={v.go}>
+                <span className={"k-day" + (isT ? " today" : "")} aria-hidden="true"><small>{isT ? "Today" : dd.toLocaleDateString("en-US", { weekday: "short" })}</small><b>{dd.getDate()}</b></span>
+                <span className="k-row-m"><span className="k-row-t"><b>{v.who}</b><Tag tone={v.what === "estimate" ? "blue" : "violet"}>{v.what === "estimate" ? "Estimate" : "Install"}</Tag></span><span className="k-row-s">{[v.time, v.addr || v.sub].filter(Boolean).join(" · ")}</span></span>
+                <span className="k-row-r"><Icon name="fwd" size={14} className="k-faint" /></span>
+              </button>; })}
+            {holiday && <div className="k-row" style={{ cursor: "default" }}>
+              <span className="k-day off" aria-hidden="true"><small>{new Date(noon(holiday[0])).toLocaleDateString("en-US", { weekday: "short" })}</small><b>{new Date(noon(holiday[0])).getDate()}</b></span>
+              <span className="k-row-m"><span className="k-row-t"><b>{holiday[1]}</b><Tag>Closed</Tag></span><span className="k-row-s">{longDay(holiday[0])}</span></span><span />
+            </div>}
+          </div>}
+      </Section>
+
+      {isOwner && (nextSetup || openTasks > 0) && <Section title="Also">
+        <div className="k-list">
+          {openTasks > 0 && <button type="button" className="k-line" aria-expanded={showTasks} onClick={() => setShowTasks(x => !x)}><Icon name="check" size={15} /><b>To-dos</b><span>{openTasks} open</span><Icon name={showTasks ? "up" : "down"} size={14} /></button>}
+          {showTasks && <div style={{ padding: "4px 14px 12px", borderTop: "1px solid var(--k-line)" }}><TasksSection ctx={{ d, project, api, toast: toast ?? (() => {}), reload: reload ?? (async () => {}) }} go={go} /></div>}
+          {nextSetup && <button type="button" className="k-line" onClick={() => go.tab("system")}><Icon name="gear" size={15} /><b>Setup</b><span>{setupLeft} {setupLeft === 1 ? "step" : "steps"} left · {nextSetup.title}</span><Icon name="fwd" size={14} /></button>}
         </div>
-      </div>
-
-      <div className="row2">
-        <section className="v5-card needs" aria-label="Needs you">
-          <div className="v5-ch"><span className="v5-ct">Needs you<small>{actions.length} {actions.length === 1 ? "thing" : "things"}{atStake ? ` · ${usd(atStake)} riding on them` : ""} · most urgent first</small></span>
-            {actions.length > 6 && <button type="button" className="b5 ghost sm" onClick={() => setAll(x => !x)}>{all ? "Show fewer" : `Show all ${actions.length}`}</button>}</div>
-          {actions.length === 0 ? <div className="v5-empty">Nothing needs you right now. New leads get answered for you and show up here when it&apos;s your turn.</div>
-            : rows.map((a, i) => { const st = STATUS_OF(a), who = whoOf(a);
-              return <div key={a.key} role="button" tabIndex={0} className={"v5-row" + (i === sel ? " sel" : "")} onClick={a.go} onKeyDown={e => { if (e.key === "Enter") a.go(); }} onMouseEnter={() => sel >= 0 && setSel(i)}>
-                <span className="v5-av" aria-hidden="true">{ini(who)}</span>
-                <span className="who"><b>{who || a.title}</b><small>{a.sub}{st.text ? ` · ${st.text}` : ""}</small></span>
-                <span className="amt">{a.money ? usd(a.money) : "–"}</span>
-                <span className="act"><button type="button" className="b5 sm" onClick={e => { e.stopPropagation(); a.go(); }}>{a.cta}</button></span>
-              </div>; })}
-        </section>
-        <section className="v5-card cal" aria-label="Next on the calendar">
-          <div className="v5-ch"><span className="v5-ct">Next on the calendar</span><button type="button" className="b5 ghost sm" onClick={() => go.tab("calendar")}>Calendar</button></div>
-          {upcoming.length === 0 && !holiday ? <div className="v5-empty">Nothing booked yet. Estimates land here the moment a lead books one.</div> : <>
-            {upcoming.map(v => <button type="button" key={v.key} className="v5-cal-row" style={{ width: "100%", border: 0, borderBottom: "1px solid var(--line)", background: "transparent", textAlign: "left", cursor: "pointer" }} onClick={v.go}>
-              <span className="d">{new Date(v.at).toLocaleDateString("en-US", { weekday: "short" })} {new Date(v.at).getDate()}</span>
-              <span style={{ minWidth: 0 }}><b>{v.who}</b><small>{v.what === "estimate" ? "Estimate" : "Install"}{v.addr ? ` · ${v.addr}` : ""}</small></span>
-              <span className="t">{v.time}</span></button>)}
-            {holiday && <div className="v5-cal-row closed"><span className="d">{longDay(holiday[0]).split(",")[0]}</span><span>{longDay(holiday[0])} · {holiday[1]}, closed</span><span /></div>}
-          </>}
-        </section>
-      </div>
-
-      {isOwner && (nextSetup || openTasks > 0) && <div className="t8-next" style={{ marginTop: 16 }}>
-        {openTasks > 0 && <button type="button" className="t7-line" aria-expanded={showTasks} onClick={() => setShowTasks(x => !x)}><span className="t7-k">To-dos</span><span className="t7-v">{openTasks} open</span><span className="t7-arr" aria-hidden="true">{showTasks ? "↑" : "→"}</span></button>}
-        {showTasks && <div className="t7-tasks"><TasksSection ctx={{ d, project, api, toast: toast ?? (() => {}), reload: reload ?? (async () => {}) }} go={go} /></div>}
-        {nextSetup && <button type="button" className="t7-line" onClick={() => go.tab("system")}><span className="t7-k">Setup</span><span className="t7-v">{setupLeft} {setupLeft === 1 ? "step" : "steps"} left · {nextSetup.title}</span><span className="t7-arr" aria-hidden="true">→</span></button>}
-      </div>}
+      </Section>}
     </div>
   </div>;
 }

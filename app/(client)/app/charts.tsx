@@ -1,4 +1,5 @@
 "use client";
+import { Head } from "./kit";
 
 // Small, exact charts drawn in SVG: no library, no animation for its own sake. They read the way the site's
 // product window does: thin strokes, one ink series, one soft series, numbers in tabular figures.
@@ -65,18 +66,9 @@ export function Kpis({ items, quiet }: { items: Kpi[]; quiet?: boolean }) {
   </div>;
 }
 
-/** A page's opening line in the site's two-tone style: the point in ink, the context in grey. */
-export function PageHead({ title, sub, actions, kicker }: { title: string; sub?: string; actions?: React.ReactNode; kicker?: React.ReactNode }) {
-  // The Nov 24 header: date eyebrow, 30px title, one plain sentence, pill actions (the old .btn ink is the one primary).
-  const eyebrow = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase();
-  return <header className="v5-top v5 ph5">
-    <div>
-      <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{eyebrow}</span>{typeof window !== "undefined" && (() => { try { return sessionStorage.getItem("cinder-demo") === "1"; } catch { return false; } })() && <span className="v5-ex">Example business, sample data</span>}{kicker}</div>
-      <h1 className="v5-h1">{title}</h1>
-      {sub && <p className="v5-sub">{sub}</p>}
-    </div>
-    {actions && <div className="v5-acts ph-a">{actions}</div>}
-  </header>;
+/** A page's top bar. Every screen's header is the kit's: title, one grey line, the actions, the place's views. */
+export function PageHead({ title, sub, actions, kicker, icon }: { title: string; sub?: string; actions?: React.ReactNode; kicker?: React.ReactNode; icon?: string }) {
+  return <Head title={title} sub={sub} icon={icon} actions={kicker || actions ? <>{kicker}{actions}</> : undefined} />;
 }
 
 /** An empty screen that teaches: what this place is for, the steps to fill it, each with its button and a tick. */

@@ -55,6 +55,7 @@ const P: Record<string, React.ReactNode> = {
   back: <path d="M15 5l-7 7 7 7" />,
   fwd: <path d="M9 5l7 7-7 7" />,
   down: <path d="m6 9 6 6 6-6" />,
+  up: <path d="m6 15 6-6 6 6" />,
   plus: <path d="M12 5v14M5 12h14" />,
   search: <><circle cx="11" cy="11" r="6.5" /><path d="m20 20-4-4" /></>,
   upload: <><path d="M12 16V4M6 10l6-6 6 6" /><path d="M4 20h16" /></>,

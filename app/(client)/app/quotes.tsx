@@ -2,7 +2,7 @@
 
 // Quotes: every quote in one list, named by whose move it is, and a full-page editor. The editor is the form on the
 // left and, on the right, exactly what the customer will see behind the link, updating as the owner types.
-import React, { useMemo, useState } from "react";
+import React, { Fragment, useMemo, useState } from "react";
 import "../doc.css";
 import { DocLines } from "../doc-lines";
 import { chosen, dollars, tiersOf, totals, type Item } from "@/lib/billing";
@@ -18,6 +18,7 @@ import { emailDoc } from "./crew";
 import { Guide, Kpis, MiniDoc, PageHead } from "./charts";
 import { line, LostPicker } from "./jobs";
 import type { Biz, Data, Go } from "./types";
+import { Av, Head, Stats, Tag } from "./kit";
 
 export type QStatus = "draft" | "awaiting" | "opened" | "changes" | "approved" | "declined";
 export const Q_LABEL: Record<QStatus, string> = { draft: "Draft", awaiting: "Awaiting response", opened: "Opened", changes: "Changes requested", approved: "Approved", declined: "Declined" };
@@ -54,44 +55,37 @@ export function QuotesScreen({ d, go, wide, biz }: { d: Data; go: Go; wide: bool
   const cand = board.filter(c => (c.stage === "new" || c.stage === "booked") && !c.pastCustomer);
   const current = board.find(c => c.id === sel) ?? waiting.sort((a, b) => (b.quote?.views ?? 0) - (a.quote?.views ?? 0))[0] ?? drafts[0] ?? approved[0] ?? null;
   if (table) return <><QuotesList d={d} go={go} wide={wide} biz={biz} /><div style={{ padding: "0 36px 24px" }}><button type="button" className="btn ghost" onClick={() => setTable(false)}>Back to the quote view</button></div></>;
-  const eyebrow = new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).replace(",", " ·").toUpperCase();
-  const Row = ({ c, right }: { c: Card; right: React.ReactNode }) => <button type="button" className={"q5-row" + (current?.id === c.id ? " sel" : "")} onClick={() => wide ? setSel(c.id) : go.quote(c.id)}>
-    <span className="q5-t"><b>{c.name || fmtPhone(c.phone)}</b><small>{line(c) || "No details yet"}</small></span><span className="q5-r">{right}</span></button>;
-  const group = (title: string, list: Card[], right: (c: Card) => React.ReactNode, empty?: string) => <div className="q5-g">
-    <div className="q5-gh"><span className="v5-lab">{title}</span><span className="v5-dim">{list.length}{list.length ? ` · ${usd(sum(list))}` : ""}</span></div>
-    {list.length ? list.map(c => <Row key={c.id} c={c} right={right(c)} />) : empty ? <p className="v5-dim q5-none">{empty}</p> : null}</div>;
-  return <div className="v5 v5-quotes">
-    <header className="v5-top">
-      <div>
-        <div className="v5-eyebrow"><span className="v5-lab" style={{ color: "var(--t2)" }}>{eyebrow}</span>{d.project === "demo" && <span className="v5-ex">Example business, sample data</span>}</div>
-        <h1 className="v5-h1">Quotes</h1>
-        <p className="v5-sub">{waiting.length ? `${usd(sum(waiting))} waiting on ${waiting.length} ${waiting.length === 1 ? "answer" : "answers"}.` : "Nothing waiting on an answer."}{sent ? ` ${approved.length} of ${sent} quotes sent in the last 30 days ${approved.length === 1 ? "was" : "were"} approved.` : ""}</p>
-      </div>
-      <div className="v5-acts">{wide && <button type="button" className="b5" onClick={() => setTable(true)}>All quotes</button>}<button type="button" className="b5 pri" onClick={() => setPicking(true)}>New quote</button></div>
-    </header>
-    <div className="v5-body">
+  const Row = ({ c, right, tag }: { c: Card; right: React.ReactNode; tag?: React.ReactNode }) => <button type="button" className={"k-row" + (wide && current?.id === c.id ? " sel" : "")} onClick={() => wide ? setSel(c.id) : go.quote(c.id)}>
+    <Av name={c.name || c.phone} />
+    <span className="k-row-m"><span className="k-row-t"><b>{c.name || fmtPhone(c.phone)}</b>{tag}</span><span className="k-row-s">{line(c) || "No details yet"}</span></span>
+    <span className="k-row-r" style={{ flexDirection: "column", alignItems: "flex-end", gap: 3 }}>{right}</span></button>;
+  const group = (title: string, list: Card[], right: (c: Card) => React.ReactNode, tag?: (c: Card) => React.ReactNode, empty?: string) => (list.length || empty) ? <Fragment key={title}>
+    <div className="k-ib-grp"><b>{title}</b><span className="k-faint">{list.length}{list.length ? ` · ${usd(sum(list))}` : ""}</span></div>
+    {list.length ? list.map(c => <Row key={c.id} c={c} right={right(c)} tag={tag?.(c)} />) : <p className="k-faint" style={{ margin: 0, padding: "14px 16px", font: "400 13px/1.4 var(--k-f)" }}>{empty}</p>}</Fragment> : null;
+  const small = (t: string) => <span className="k-row-time">{t}</span>;
+  return <div className="k-page">
+    <Head title="Quotes" icon="quote" sub={waiting.length ? `${usd(sum(waiting))} waiting on ${waiting.length} ${waiting.length === 1 ? "answer" : "answers"}` : "Nothing waiting on an answer"}
+      actions={<>{wide && <button type="button" className="k-btn" onClick={() => setTable(true)}>All quotes</button>}<button type="button" className="k-btn pri" onClick={() => setPicking(true)}><Icon name="plus" size={14} />New quote</button></>} />
+    <div className="k-body">
       {!board.some(c => c.quote) && <Guide title="Quotes that close themselves" sub="Write the quote once. It goes out as a link the customer approves on their phone, then follows up on day 2, 5 and 10, and once a month after that, until they answer."
         steps={[
           { title: "Add your prices", text: "With a price book, every quote starts drafted from the job details.", done: !!biz.priceBook, action: <button type="button" className="btn sm" onClick={go.setup}>Add prices</button> },
           { title: "Write the first quote", text: "Lines, what's included and a deposit to hold the date, with a live preview.", action: <button type="button" className="btn sm ink" onClick={() => setPicking(true)}>New quote</button> },
         ]} side={<MiniDoc kind="quote" business={biz.business} href="/q/example" />} />}
-      {sent > 0 && <section className="v5-card q5-sum" aria-label="Approvals in the last 30 days">
-        <div className="q5-sum-h"><span className="v5-lab">Approved · last 30 days</span><span className="v5-kv">{approved.length} of {sent}</span><span className="v5-muted">{rate}% close rate (won ÷ quoted)</span>
-          <UnitDots of={sent} on={approved.length} label={`${approved.length} of ${sent} approved`} /></div>
-        <StackBar label={`Won ${usd(sum(approved))}, waiting ${usd(sum(waiting))}, lost ${usd(sum(lost))}`} parts={[{ key: "w", value: sum(approved), color: C.accent }, { key: "o", value: sum(waiting), color: C.light }, { key: "l", value: sum(lost), color: C.grey }]} />
-        <div className="js-leg" style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 10 }}>
-          <span className="v5-leg"><i className="sq" style={{ background: C.accent }} />Won {approved.length} · {usd(sum(approved))}</span>
-          <span className="v5-leg"><i className="sq" style={{ background: C.light }} />Waiting {waiting.length} · {usd(sum(waiting))}</span>
-          <span className="v5-leg"><i className="sq" style={{ background: C.grey }} />Lost {lost.length} · {usd(sum(lost))}</span></div>
-      </section>}
-      {board.some(c => c.quote) && <div className="q5-grid">
-        <section className="v5-card q5-lists" aria-label="Quotes">
-          {group("Waiting on them", waiting, c => <><b className="num">{usd(amountOf(c))}</b><small>{c.quote?.views ? `Opened ${c.quote.views}×` : "Not opened yet"}</small></>, "Nothing out right now.")}
-          {group("Drafts", drafts, c => <><b className="num">{usd(amountOf(c))}</b><small>Not sent</small></>)}
-          {group("Approved", approved, c => <><b className="num">{usd(amountOf(c))}</b><small>{dateLabel((c.stageAt ?? c.at).slice(0, 10))}</small></>)}
-          {group("Lost", lost, c => <><b className="num">{usd(amountOf(c))}</b><small>{c.lostReason || "Lost"}</small></>)}
+      {sent > 0 && <Stats items={[
+        { label: "Approved, 30 days", value: `${approved.length} of ${sent}`, sub: `${usd(sum(approved))} won` },
+        { label: "Close rate", value: rate == null ? "–" : `${rate}%`, sub: "won ÷ quoted" },
+        { label: "Waiting on them", value: usd(sum(waiting)), sub: `${waiting.length} ${waiting.length === 1 ? "quote" : "quotes"} out` },
+        { label: "Lost, 30 days", value: usd(sum(lost)), sub: `${lost.length} ${lost.length === 1 ? "quote" : "quotes"}` },
+      ]} />}
+      {board.some(c => c.quote) && <div className="k-qgrid">
+        <section className="k-box k-list" aria-label="Quotes">
+          {group("Waiting on them", waiting, c => <><span className="k-row-v">{usd(amountOf(c))}</span>{small(c.quote?.views ? `Opened ${c.quote.views}×` : "Not opened yet")}</>, c => (c.quote?.views ?? 0) >= 2 ? <Tag tone="amber">Keeps looking</Tag> : quoteStatus(c) === "changes" ? <Tag tone="acc" dot>Answered</Tag> : null, "Nothing out right now.")}
+          {group("Drafts", drafts, c => <><span className="k-row-v">{usd(amountOf(c))}</span>{small("Not sent")}</>, () => <Tag tone="amber">Draft</Tag>)}
+          {group("Approved", approved, c => <><span className="k-row-v">{usd(amountOf(c))}</span>{small(dateLabel((c.stageAt ?? c.at).slice(0, 10)))}</>, () => <Tag tone="green">Approved</Tag>)}
+          {group("Lost", lost, c => <><span className="k-row-v k-faint">{usd(amountOf(c))}</span>{small(c.lostReason || "Lost")}</>)}
         </section>
-        {wide && current && <QuoteDetail c={current} d={d} go={go} />}
+        {wide && current && <QuoteDetail key={current.id} c={current} d={d} go={go} />}
       </div>}
     </div>
     {picking && <Sheet title="New quote" sub="Who is it for?" onClose={() => setPicking(false)}>
@@ -117,21 +111,19 @@ function QuoteDetail({ c, d, go }: { c: Card; d: Data; go: Go }) {
     { label: "Then monthly", day: addDays(sentOn, FOLLOW[FOLLOW.length - 1] + 30), done: false },
   ] : [];
   const next = timeline.find(x => !x.done);
-  return <section className="v5-card q5-detail" aria-label={`Quote for ${c.name}`}>
-    <div className="v5-ch"><div><div className="v5-ct">{c.name || fmtPhone(c.phone)}</div><div className="v5-dim" style={{ fontSize: 12 }}>{line(c) || "No details yet"}</div></div>
-      <div style={{ display: "flex", gap: 8 }}>{q?.views ? <span className="v5-pill acc">Opened {q.views} times</span> : q?.linked ? <span className="v5-pill">Not opened yet</span> : q ? <span className="v5-pill warn">Draft</span> : null}
-        <button type="button" className="b5 sm" onClick={() => go.quote(c.id)}>Open quote</button></div></div>
-    <div className="q5-body">
-      {opts.length > 0 ? <div className="q5-opts">{opts.map((o, i) => <div key={o.t} className={"q5-opt" + (i === 0 ? " on" : "")}><span className="v5-lab">{o.t}</span><span className="v5-kv" style={{ fontSize: 24 }}>{usd(o.total)}</span>
-        <small className="v5-dim">{chosen(items, { tier: o.t, addons: [] }).filter(x => !x.name.match(/^Walk gate|Tear-out/)).map(x => x.name).join(", ").slice(0, 70)}</small></div>)}</div>
-        : <div className="q5-opts"><div className="q5-opt on"><span className="v5-lab">Total</span><span className="v5-kv" style={{ fontSize: 24 }}>{usd(amountOf(c))}</span></div></div>}
-      {q?.deposit ? <div className="q5-dep"><span><b>Deposit to hold the date</b><small className="v5-dim">Paid by card when they approve</small></span><b className="num">{usd(q.deposit)}</b></div> : null}
-      {timeline.length > 0 && <div className="q5-follow">
-        <div className="q5-gh"><span className="v5-lab">Follow-ups · stop the moment they answer</span></div>
-        <ol>{timeline.map(x => <li key={x.label} className={x.done ? "done" : x === next ? "next" : ""}><i aria-hidden="true" /><b>{x.label}</b><span>{dayLong(x.day)}{x === next ? " · next, 9:00 AM" : x.done && x.label !== "Sent" ? " · sent" : ""}</span></li>)}</ol>
+  return <section className="k-box k-qd k-anim-fade" aria-label={`Quote for ${c.name}`}>
+    <div className="k-qd-h"><Av name={c.name || c.phone} size="lg" /><span style={{ minWidth: 0, flex: 1 }}><b>{c.name || fmtPhone(c.phone)}</b><small>{line(c) || "No details yet"}</small></span>
+      {q?.views ? <Tag tone="amber">Opened {q.views}×</Tag> : q?.linked ? <Tag>Not opened yet</Tag> : q ? <Tag tone="amber">Draft</Tag> : null}
+      <button type="button" className="k-btn sm" onClick={() => go.quote(c.id)}>Open quote</button></div>
+    <div className="k-qd-b">
+      <div className="k-opts">{(opts.length ? opts : [{ t: "Total", total: amountOf(c) }]).map((o, i) => <div key={o.t} className={"k-opt" + (i === 0 ? " on" : "")}><span>{o.t}</span><b>{usd(o.total)}</b>
+        {opts.length > 0 && <small>{chosen(items, { tier: o.t, addons: [] }).filter(x => !x.name.match(/^Walk gate|Tear-out/)).map(x => x.name).join(", ").slice(0, 70)}</small>}</div>)}</div>
+      {q?.deposit ? <div className="k-prop" style={{ marginTop: 8 }}><span className="k-prop-l"><Icon name="dollar" size={14} />Deposit</span><span className="k-prop-v">{usd(q.deposit)} to hold the date, paid by card when they approve</span></div> : null}
+      {timeline.length > 0 && <div className="k-steps"><h3>Follow-ups <small>stop the moment they answer</small></h3>
+        <ol>{timeline.map(x => <li key={x.label} className={x.done ? "k-s-done" : x === next ? "k-s-next" : ""}><i aria-hidden="true" /><b>{x.label}</b><span>{dayLong(x.day)}{x === next ? " · next, 9:00 AM" : x.done && x.label !== "Sent" ? " · sent" : ""}</span></li>)}</ol>
       </div>}
-      {c.stage === "won" && <p className="v5-muted" style={{ marginTop: 12 }}>Approved {dateLabel((c.stageAt ?? c.at).slice(0, 10))}. Follow-ups stopped.</p>}
-      {c.stage === "lost" && <p className="v5-muted" style={{ marginTop: 12 }}>Lost: {c.lostReason || "no reason given"}.</p>}
+      {c.stage === "won" && <p className="k-mut" style={{ margin: "12px 0 0" }}>Approved {dateLabel((c.stageAt ?? c.at).slice(0, 10))}. Follow-ups stopped.</p>}
+      {c.stage === "lost" && <p className="k-mut" style={{ margin: "12px 0 0" }}>Lost: {c.lostReason || "no reason given"}.</p>}
     </div>
   </section>;
 }
