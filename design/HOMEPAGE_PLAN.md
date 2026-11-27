@@ -128,3 +128,10 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 ## Pass 25 (Sam: "need better", the trip through the clock)
 - The tunnel is clockwork now: eight different rings (tick ring, broken arcs, numerals, double ring with inward ticks, dashes, notched gear) scaling past and turning against each other (SPIN in home2.js), a red second hand and a bone minute hand, moving speed lines, and a mono counter running 00:01 to 00:06.
 - The last ring is a div (`.pt-frame`) that squares itself from a circle into the title page's frame; the headline rises into it line by line (`--tl`), corner marks arrive with the frame (`--fm`).
+
+## Pass 26 (Sam: the portal is choppy; the site clicks through like a slideshow; bring the portal's level of motion everywhere; better detail on every drawing)
+- One eased scroll position (`Flow` in home2.js) drives every pinned section. Wheel steps come out as one move. Sections are measured once, not per frame.
+- The five pinned sections after the portal carry `fl-in`: each starts 180vh under the end of the one before, so for 80vh both are pinned and the scroll dissolves front to back (`handoff`). No seams between them. Off on phones and with reduced motion.
+- Drawings are scrubbed, not stepped: `drawParts` sets --d/--e/--f/--t per part; a camera (`cam`) starts close on the first part, tracks part to part, pulls back at the end, never closer than the part in focus fits. The six plates slide with the scroll (`--o`).
+- Detail: ground outlines with corner crosses, ruler ticks, lift lines, order arrows, printed sheets, a day rail under the quote, measured edges, second-line labels, a wireframe funnel with counts, engraved plates with exploded-view axes.
+- Not touched: hero, stats, patch bay, the grid, the call band. They still scroll plainly.

@@ -28,7 +28,7 @@ def ax(cls, n, chip, h, body, link, vis, mode='c', extra='', tag='h3', sid='', p
     b: headline, the picture full width, then short paragraphs side by side under it. body is [(lead, sentence, step or None)].
     c: few words. A headline and one sentence beside the picture."""
     lk = link if link.startswith('<') else '<a class="inl" href="{}">{}</a>'.format(*link.split('|'))
-    pan = f'<div class="ax-vis"><div class="axp {panel}">{vis}{small}</div></div>'; k = f'<p class="px-k"><i></i>{chip}</p>'
+    pan = f'<div class="ax-vis"><div class="axp {panel}"><div class="axc">{vis}</div>{small}</div></div>'; k = f'<p class="px-k"><i></i>{chip}</p>'
     if mode == 'a':
         copy = f'{k}<{tag} class="ax-st"><b>{h}</b> {body}</{tag}>{extra}{lk}'
     elif mode == 'b':
@@ -50,12 +50,25 @@ WHERE = ax('long', 6, 'The audit', 'Where the jobs go.', 'Most businesses lose t
 
 # 2. the audit: six layers, drawn as plain line geometry
 LAYERS = [('Answering', 'What a new customer gets when they call or write after hours.'), ('Booking', 'How many steps sit between “I’m interested” and a time on your calendar.'), ('Quote follow-up', 'What happens to a quote after it’s sent, and how many went quiet.'), ('Invoices', 'How long a finished job takes to get paid, and what’s late.'), ('Reviews', 'How many finished jobs turned into a review.'), ('Website', 'Whether your site turns a visitor into a call, tested on a phone.')]
+SUBL = ['Calls, forms, texts', 'Lead to calendar', 'Sent, then chased', 'Job to paid', 'Job to review', 'Visitor to call']
+# what is engraved on each plate, drawn flat in the plate's own square (-1..1) and laid down onto it
+GLY = ['M-.5,-.34 H.5 V.26 H-.14 L-.36,.5 V.26 H-.5 Z M-.3,-.14 H.3 M-.3,.06 H.08',
+       'M-.5,-.42 H.5 V.46 H-.5 Z M-.5,-.18 H.5 M-.17,-.18 V.46 M.17,-.18 V.46 M-.5,.14 H.5 M-.3,-.52 V-.34 M.3,-.52 V-.34',
+       'M-.36,-.5 H.36 V.5 H-.36 Z M-.2,-.3 H.2 M-.2,-.12 H.2 M-.2,.06 H.02 M-.2,.32 L-.1,.22 L0,.32 L.1,.22 L.2,.32',
+       'M-.36,-.5 H.36 V.5 H-.36 Z M-.2,-.3 H-.02 M.1,-.3 H.2 M-.2,-.12 H-.02 M.1,-.12 H.2 M-.2,.12 H.2 M.02,.3 H.2',
+       'M0.000,-0.500 L0.123,-0.170 L0.476,-0.155 L0.200,0.065 L0.294,0.405 L0.000,0.210 L-0.294,0.405 L-0.200,0.065 L-0.476,-0.155 L-0.123,-0.170 Z',
+       'M-.54,-.4 H.54 V.42 H-.54 Z M-.54,-.2 H.54 M-.44,-.3 H-.4 M-.32,-.3 H-.28 M-.3,0 H.3 M-.3,.18 H.06']
 def stack():
     cx, a, b, th, gap, y0 = 236, 168, 84, 12, 70, 104; g = []
+    # an exploded view: thin axes through the three near corners tie the plates together
+    g.append(''.join(f'<path class="pl-ax" d="M{x},{y0 + dy} V{y0 + dy + 5 * gap + th}"/>' for x, dy in ((cx - a, 0), (cx + a, 0), (cx, b))))
     for i in reversed(range(6)):
-        cy = y0 + i * gap; ia, ib = a * .4, b * .4
-        g.append(f'<g class="pl" data-is="{i}"><g class="pl-m"><path d="M{cx - a},{cy} L{cx},{cy + b} L{cx + a},{cy} v{th} L{cx},{cy + b + th} L{cx - a},{cy + th} Z"/><path d="M{cx},{cy - b} L{cx + a},{cy} L{cx},{cy + b} L{cx - a},{cy} Z"/><path d="M{cx},{cy + b} v{th}"/><path class="pl-i" d="M{cx},{cy - ib} L{cx + ia},{cy} L{cx},{cy + ib} L{cx - ia},{cy} Z"/></g><path class="pl-ld" d="M{cx + a + 10},{cy + 6} H{cx + a + 44}"/><text x="{cx + a + 56}" y="{cy + 10}">{i + 1:02d}  {LAYERS[i][0]}</text></g>')
-    return '<svg class="lnv" viewBox="0 0 620 590" role="img" aria-label="Six layers of a service business drawn as a stack of outlined plates: answering, booking, quote follow-up, invoices, reviews and website. The audit pulls each one out in turn."><title>The six layers the audit checks</title>' + ''.join(g) + '</svg>'
+        cy = y0 + i * gap; ia, ib = a * .7, b * .7
+        rim = ''.join(f'M{cx - a + a * k / 14:.1f},{cy + b * k / 14 + 1:.1f} v{6 if k % 7 == 0 else 3.5} M{cx + a - a * k / 14:.1f},{cy + b * k / 14 + 1:.1f} v{6 if k % 7 == 0 else 3.5} ' for k in range(1, 14))
+        g.append(f'<g class="pl" data-is="{i}"><g class="pl-m"><path d="M{cx - a},{cy} L{cx},{cy + b} L{cx + a},{cy} v{th} L{cx},{cy + b + th} L{cx - a},{cy + th} Z"/><path d="M{cx},{cy - b} L{cx + a},{cy} L{cx},{cy + b} L{cx - a},{cy} Z"/><path d="M{cx},{cy + b} v{th}"/><path class="pl-t" d="{rim}"/>'
+                 f'<path class="pl-i" d="M{cx},{cy - ib} L{cx + ia},{cy} L{cx},{cy + ib} L{cx - ia},{cy} Z"/><g transform="matrix({a / 2} {b / 2} {-a / 2} {b / 2} {cx} {cy})"><path class="pl-g" d="{GLY[i]}"/></g></g>'
+                 f'<path class="pl-ld" d="M{cx + a + 10},{cy + 6} H{cx + a + 44}"/><text x="{cx + a + 56}" y="{cy + 8}">{i + 1:02d}  {LAYERS[i][0]}</text><text class="sub" x="{cx + a + 56}" y="{cy + 24}">{SUBL[i]}</text></g>')
+    return '<svg class="lnv" viewBox="0 0 640 590" role="img" aria-label="Six layers of a service business drawn as a stack of outlined plates: answering, booking, quote follow-up, invoices, reviews and website. The audit pulls each one out in turn."><title>The six layers the audit checks</title>' + ''.join(g) + '</svg>'
 AUDIT = ax('rev one long', 6, 'Step one', 'First, a free audit.', 'We go through your business layer by layer and find what is costing you jobs. You keep the plan, whether or not you work with us.', BOOK, stack(), 'a', tag='h2', sid=' id="inside"', panel='line', small='')
 
 # 3. speed to lead
@@ -107,7 +120,9 @@ TK = '<div class="tk" aria-hidden="true"></div>'
 W = lambda x: '<!--h2-->' + TK + x + '<!--/h2-->\n'
 ins('<section id="problem"', '<!--h2--><svg class="il-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="ilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0f0f12"/></linearGradient><linearGradient id="ill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111114"/><stop offset="1" stop-color="#08080a"/></linearGradient><linearGradient id="ilr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0a0c"/><stop offset="1" stop-color="#040405"/></linearGradient><radialGradient id="ilg"><stop offset=".12" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="ilm" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#ilg)"/></mask></defs></svg><!--/h2-->\n' + W(WHERE))
 ins('<section id="build"', W(AUDIT) + '<!--h2-->' + TK + '<!--/h2-->\n')
-ins('<section id="everything"', W(CAL) + W(QUOTE) + W(INVOICE) + W(REVIEW) + W(CUSTOM) + W(BACK) + '<!--h2-->' + TK + '<!--/h2-->\n')
+# The pinned sections after the portal hand off to each other: each one starts under the end of the one before, and the scroll dissolves between them (driver in home2.js).
+WC = lambda x: '<!--h2-->' + x.replace('<section class="', '<section class="fl-in ', 1) + '<!--/h2-->\n'
+ins('<section id="everything"', W(CAL) + WC(QUOTE) + WC(INVOICE) + WC(REVIEW) + WC(CUSTOM) + WC(BACK) + '<!--h2-->' + TK + '<!--/h2-->\n')
 # the numbers: say what the audit checks against each one
 a_, b_ = blk('<section id="problem"'); P = s[a_:b_].split('</a></li>')
 for i, x in enumerate(['We count the calls you missed last month.', 'We time how long a new lead waits for a first reply.', 'We check how many missed calls got a call back.']):

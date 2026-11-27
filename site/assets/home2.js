@@ -2,6 +2,43 @@
 (function () {
   var N = { answering: 'Answering', 'phone-agent': 'Phone agent', 'website-chat': 'Website chat', 'social-messages': 'Messages and DMs', 'lead-vetting': 'Lead vetting', 'after-hours': 'After hours', booking: 'Booking', reminders: 'Reminders', dispatch: 'Scheduling and dispatch', 'job-updates': 'Job updates', estimates: 'Estimates', proposals: 'Proposals', 'follow-up': 'Follow-up', invoicing: 'Invoices', bookkeeping: 'Bookkeeping prep', reviews: 'Reviews', 'review-replies': 'Review replies', 'win-backs': 'Win-backs', 'maintenance-reminders': 'Service reminders', referrals: 'Referrals', campaigns: 'Email and text campaigns', websites: 'Websites', 'local-search': 'Local search', 'job-photos': 'Job photos to posts', hiring: 'Hiring', 'team-assistant': 'Team assistant', 'field-notes': 'Field notes', reports: 'Reports', 'call-review': 'Call review', integrations: 'Tool connections', 'custom-agents': 'Custom agents', 'custom-builds': 'Custom builds' };
   var rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // ---- flow: one eased scroll position drives every pinned section, so a mouse wheel's steps come out as one continuous move.
+  // Sections are measured once (and again when the page changes size), never while animating.
+  var cl01 = function (x) { return x < 0 ? 0 : x > 1 ? 1 : x }, ez01 = function (x) { x = cl01(x); return x * x * (3 - 2 * x) };
+  var Flow = (function () {
+    var subs = [], ms = [], SY = scrollY, TY = SY, on = false, last = 0, mq = 0;
+    function run(y) { for (var i = 0; i < subs.length; i++) subs[i](y) }
+    function tick(now) { var dt = Math.min(64, Math.max(1, now - last)); last = now; SY += (TY - SY) * (rm ? 1 : 1 - Math.exp(-dt / 105)); if (Math.abs(TY - SY) < .4) SY = TY; run(SY); if (SY !== TY) requestAnimationFrame(tick); else on = false }
+    function kick() { TY = scrollY; if (!on) { on = true; last = performance.now() - 16; requestAnimationFrame(tick) } }
+    function measure() { mq = 0; var y = scrollY; for (var i = 0; i < ms.length; i++) ms[i](y); SY = TY = y; run(y) }
+    function later() { if (!mq) mq = requestAnimationFrame(measure) }
+    addEventListener('scroll', kick, { passive: true }); addEventListener('resize', later); addEventListener('load', later); if (document.fonts && document.fonts.ready) document.fonts.ready.then(later);
+    if ('ResizeObserver' in window) new ResizeObserver(later).observe(document.body); setTimeout(later, 600);
+    return { sub: function (f) { subs.push(f) }, onMeasure: function (f) { ms.push(f) }, now: later }
+  })();
+  function metric(sec) { var m = { top: 0, h: 1 }; Flow.onMeasure(function (y) { var r = sec.getBoundingClientRect(); m.top = r.top + y; m.h = r.height }); return m }
+  // A pinned section's hand-off. A section marked fl-in starts under the end of the one before it: for most of a screen of scroll both are pinned,
+  // the old one pushes past the camera and the new one arrives from behind it. Returns how far through its own content the section is.
+  function handoff(sec, inner, m) {
+    var cin = sec.classList.contains('fl-in'), nx = sec.nextElementSibling, cout = !!(nx && nx.classList.contains('fl-in')), st = { pc: 0, ui: 0, s: 1 }, la = -1, ls = -1;
+    return function (y) {
+      if (innerWidth <= 900 || rm) { if (la !== -2) { la = -2; inner.style.opacity = ''; inner.style.transform = ''; inner.style.visibility = ''; inner.style.pointerEvents = ''; sec.classList.add('seen') } st.pc = 1; st.ui = 1; st.s = 1; return st }
+      var vh = innerHeight, X = vh * .8, range = Math.max(1, m.h - vh), a, sc, ui = cin ? cl01((y - m.top) / X) : cl01((y + vh - m.top) / vh), uo = cout ? cl01((y - (m.top + range - X)) / X) : 0, e;
+      if (cin) { e = ez01((ui - .4) / .6); a = e; sc = .9 + .1 * e } else { e = ez01((ui - .12) / .8); a = e; sc = .955 + .045 * e }
+      if (uo > 0) { e = ez01(uo / .6); a *= 1 - e; sc *= 1 + .18 * e }
+      a = Math.round(a * 1000) / 1000; sc = Math.round(sc * 10000) / 10000;
+      if (a !== la) { la = a; inner.style.opacity = a; inner.style.visibility = a <= 0 ? 'hidden' : 'visible'; inner.style.pointerEvents = a < .5 ? 'none' : '' }
+      if (sc !== ls) { ls = sc; inner.style.transform = sc === 1 ? '' : 'scale(' + sc + ')' }
+      if (ui > (cin ? .55 : .5)) sec.classList.add('seen');
+      st.ui = ui; st.s = sc; st.pc = cl01((y - m.top - (cin ? X : 0)) / Math.max(1, range - (cin ? X : 0) - (cout ? X : 0))); return st
+    }
+  }
+  // Parts of a drawing, scrubbed: each one lowers in while its lines draw, tied to the scroll instead of to a timer.
+  function drawParts(list, f) {
+    for (var i = 0; i < list.length; i++) { var g = list[i], d = cl01((f - g._n + .55) / .75); if (g._d === d) continue; g._d = d; var st = g.style;
+      st.setProperty('--d', ez01(d).toFixed(4)); st.setProperty('--e', (1 - Math.pow(1 - d, 3)).toFixed(4)); st.setProperty('--f', cl01((d - .5) / .5).toFixed(3)); st.setProperty('--t', cl01((d - .62) / .38).toFixed(3)); g.classList.toggle('done', d >= 1) }
+  }
+  function partsOf(root) { var l = root ? [].slice.call(root.querySelectorAll('.il [data-lit]')) : []; l.forEach(function (g) { g._n = +g.dataset.lit; g._d = -1 }); return l }
   // ---- what we fix: diagrams driven by the scroll inside a pinned section. Two are drawn here, the rest come from the build drawings.
   var KB = window.CinderBuilds, DR = {};
   if (KB) (function () {
@@ -75,16 +112,17 @@
     var frame = ov && ov.querySelector('.pt-frame'), ct = ov && ov.querySelector('.pt-ct'), ctb = ct && ct.querySelector('b'), hand2 = ov && ov.querySelector('.pt-hand2'), SPIN = [8, -14, 6, -10, 18, -7, 12, -16], lastN = 0;
     var tc = ov && ov.querySelector('.pt-c'), rings = ov ? [].slice.call(ov.querySelectorAll('.pt-r')) : [], rays = ov && ov.querySelector('.pt-rays'), hand = ov && ov.querySelector('.pt-hand'), hub = ov && ov.querySelector('.pt-hub'), title = ov && ov.querySelector('.pt-title');
     function solve() {   // where the dial sits, in the drawing's layer and in the pinned frame, and how far it has to open to swallow the frame
-      art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), V = pin.getBoundingClientRect(), D = asvg.dataset.dial.split(' ').map(Number);
+      var keep = pin.style.transform; pin.style.transform = 'none'; art.style.transform = 'none'; var c = asvg.getScreenCTM(), L = art.getBoundingClientRect(), V = pin.getBoundingClientRect(), D = asvg.dataset.dial.split(' ').map(Number); pin.style.transform = keep;
       if (!c || !L.width) return; var k = Math.sqrt(c.a * c.a + c.b * c.b), x = c.a * D[0] + c.e - L.left, y = c.d * D[1] + c.f - L.top, X = x + L.left - V.left, Y = y + L.top - V.top;
       var far = Math.sqrt(Math.pow(Math.max(X, V.width - X), 2) + Math.pow(Math.max(Y, V.height - Y), 2)) * 1.06;
       G = { x: x, y: y, X: X, Y: Y, W: V.width, H: V.height, rx: D[2] * k, ry: D[3] * k, far: far, end: far / (D[2] * k) };
     }
+    var adraw = partsOf(art);
     function litArt(k) { if (k === lastK) return; lastK = k; aparts.forEach(function (e) { var n = +e.dataset.lit; e.classList.toggle('on', n <= k); e.classList.toggle('now', n === k) }) }
     // The timeline of the pinned section, as fractions of its scroll: the drawing, the way through the dial, the title page, the calendar coming up, the booking.
     var P0 = .17, P1 = .45, D0 = .56, D1 = .67;
     function upPortal(p) {
-      litArt(p < .02 ? -1 : p < .055 ? 0 : p < .09 ? 1 : p < .125 ? 2 : 3);
+      litArt(p < .02 ? -1 : p < .055 ? 0 : p < .09 ? 1 : p < .125 ? 2 : 3); drawParts(adraw, p / .035 - .1 + (UI - 1) * 1.4);
       var t = cl((p - P0) / (P1 - P0)), d = cl((p - D0) / (D1 - D0)), ed = ezz(d);
       if (t > 0 && !G) solve();
       if (t <= 0 || !G) { art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; ov.style.visibility = 'hidden'; rim.style.opacity = 0; world.style.visibility = 'hidden'; asvg.classList.remove('flying'); sec.style.setProperty('--ha', 1); sec.style.setProperty('--hb', 0); sec.classList.remove('pb'); state(0); return }
@@ -113,10 +151,11 @@
       world.style.visibility = d > 0 ? 'visible' : 'hidden'; fig.style.opacity = ed.toFixed(3); fig.style.setProperty('--z', 1); fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', ((1 - ed) * 90).toFixed(1) + 'px');
       state(d < 1 ? 0 : p > .93 ? 4 : p > .86 ? 3 : p > .78 ? 2 : p > .71 ? 1 : 0);
     }
-    function up() {
-      tk = false;
-      if (innerWidth <= 900) { fig.style.removeProperty('--z'); if (pt) { fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', '0px'); fig.style.opacity = 1; art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; world.style.visibility = 'visible'; ov.style.visibility = 'hidden'; rim.style.opacity = 0; asvg.classList.remove('flying'); litArt(3) } state(4); return }
-      var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight)));
+    var m = metric(sec), H = handoff(sec, pin || sec.querySelector('.pz-in'), m), UI = 1;
+    function up(y) {
+      var st = H(y);
+      if (innerWidth <= 900) { fig.style.removeProperty('--z'); if (pt) { fig.style.setProperty('--tx', '0px'); fig.style.setProperty('--ty', '0px'); fig.style.opacity = 1; art.style.transform = 'none'; art.style.opacity = 1; art.style.visibility = 'visible'; world.style.visibility = 'visible'; ov.style.visibility = 'hidden'; rim.style.opacity = 0; asvg.classList.remove('flying'); litArt(3); drawParts(adraw, 99) } state(4); return }
+      var p = st.pc; UI = st.ui;
       if (pt) { upPortal(p); return }
       fig.style.setProperty('--z', (1.6 - .6 * ezz(p / .3)).toFixed(4)); state(p > .8 ? 4 : p > .66 ? 3 : p > .5 ? 2 : p > .33 ? 1 : 0)
     }
@@ -124,11 +163,13 @@
     var cs = fig.querySelector('.cs'), stage = sec.querySelector('.pz-stage');
     function fit() { if (!cs) return; var w = fig.offsetWidth; if (!w) return; cs.style.setProperty('--s', (w / 1600).toFixed(5)); stage.style.setProperty('--fw', w + 'px'); stage.style.setProperty('--pz', Math.max(.58, Math.min(1, w / 780)).toFixed(3)) }
     if ('ResizeObserver' in window) new ResizeObserver(fit).observe(fig); addEventListener('resize', fit); fit();
-    addEventListener('scroll', function () { if (!tk) { tk = true; requestAnimationFrame(up) } }, { passive: true }); addEventListener('resize', up); setTimeout(function () { fit(); up() }, 400)
+    Flow.sub(up); setTimeout(function () { fit(); Flow.now() }, 400)
   });
-  // ---- product pieces: the scroll steps through a pinned section and each step switches parts of the piece on
+  // ---- product pieces: a pinned section whose drawing is scrubbed by the scroll. Parts draw in as their moment arrives, a camera starts close on the first part,
+  // tracks from part to part and pulls back at the end to show the whole thing; words and counters still switch on the step.
   [].forEach.call(document.querySelectorAll('.ax'), function (sec) {
-    var N = +sec.dataset.steps || 3, q = function (x) { return [].slice.call(sec.querySelectorAll(x)) }, parts = q('[data-at],[data-lit]'), lis = q('.px-steps li'), ones = q('[data-is]'), vals = q('[data-v]'), ws = q('[data-w]'), auto = sec.classList.contains('bone'), one = sec.classList.contains('one'), cur = -2, tk = false, cyc = 0;
+    var N = +sec.dataset.steps || 3, q = function (x) { return [].slice.call(sec.querySelectorAll(x)) }, parts = q('[data-at],[data-lit]'), lis = q('.px-steps li'), ones = q('[data-is]'), vals = q('[data-v]'), ws = q('[data-w]'), auto = sec.classList.contains('bone'), one = sec.classList.contains('one'), cur = -2, cyc = 0;
+    var inner = sec.querySelector('.ax-in'), svg = sec.querySelector('.axc>svg'), draw = partsOf(sec), plates = q('.pl'), m = metric(sec), H = handoff(sec, inner, m), foc = null, fw = 0, lastT = '';
     function pick(list, k) { return list[Math.max(0, Math.min(list.length - 1, k))] }
     function set(k) {
       if (k === cur) return; cur = k; var c = Math.max(0, k);
@@ -139,15 +180,34 @@
       vals.forEach(function (e) { e.textContent = pick(e.dataset.v.split('|'), k) });
       ws.forEach(function (e) { e.style.width = pick(e.dataset.w.split(','), k) });
     }
-    function up() {
-      tk = false; if (auto) return;
-      if (innerWidth <= 900) { if (one && !rm) { if (!cyc) { set(0); cyc = setInterval(function () { var r = sec.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) set((cur + 1) % N) }, 2400) } } else set(N - 1); return }
-      if (cyc) { clearInterval(cyc); cyc = 0 }
-      var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(.999, (-r.top + innerHeight * .12) / Math.max(1, r.height - innerHeight)));
-      set(r.top > innerHeight * .55 ? -1 : Math.floor(p * N));
+    function pull(f) { for (var i = 0; i < plates.length; i++) { var o = ez01(1.25 - Math.abs(f - (+plates[i].dataset.is) - .5) * 2.2); if (plates[i]._o !== o) { plates[i]._o = o; plates[i].style.setProperty('--o', o.toFixed(4)) } } }
+    // where each step's part sits, as an offset from the middle of the drawing, so the camera has somewhere to go
+    function focus(sc) {
+      var R = svg.getBoundingClientRect(), c = svg.getScreenCTM(); fw = svg.clientWidth; if (!c || !R.width) return; foc = [];
+      for (var k = 0; k < N; k++) { var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; q('.axc [data-lit="' + k + '"],.axc [data-is="' + k + '"]').forEach(function (e) { var b; try { b = e.getBBox() } catch (x) { return } if (!b.width && !b.height) return; x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height) });
+        foc.push(x1 < x0 ? (foc[k - 1] || [0, 0, 0, 0]) : [(c.a * (x0 + x1) / 2 + c.e - R.left - R.width / 2) / sc, (c.d * (y0 + y1) / 2 + c.f - R.top - R.height / 2) / sc, c.a * (x1 - x0) / 2 / sc, c.d * (y1 - y0) / 2 / sc]) }
     }
-    if (auto) { if (rm || !('IntersectionObserver' in window)) set(N - 1); else new IntersectionObserver(function (e, o) { if (e[0].isIntersecting) { o.disconnect(); var k = 0; set(0); var t = setInterval(function () { k++; set(k); if (k >= N - 1) clearInterval(t) }, 1100) } }, { threshold: .45 }).observe(sec) }
-    else { addEventListener('scroll', function () { if (!tk) { tk = true; requestAnimationFrame(up) } }, { passive: true }); addEventListener('resize', up); up() }
+    function cam(f, sc) {
+      if (!svg) return; if (!foc || fw !== svg.clientWidth) { if (lastT) { svg.style.transform = lastT = '' } focus(sc) } if (!foc) return;
+      var Z0 = 1.42, Z1 = 1, z = Z1 + (Z0 - Z1) * (1 - ez01((f - (N - 1.4)) / .95)), i = Math.max(0, Math.min(N - 1, f)), i0 = Math.floor(i), i1 = Math.min(N - 1, i0 + 1), u = ez01((i - i0 - .2) / .65), w = (z - Z1) / (Z0 - Z1) * .82;
+      var A = foc[i0], B = foc[i1], fx = A[0] + (B[0] - A[0]) * u, fy = A[1] + (B[1] - A[1]) * u, hw = A[2] + (B[2] - A[2]) * u, hh = A[3] + (B[3] - A[3]) * u, W2 = svg.clientWidth * .43, H2 = svg.clientHeight * .44;
+      z = Math.min(z, Math.max(Z1, Math.min(hw ? W2 / hw : 9, hh ? H2 / hh : 9))); w = (z - Z1) / (Z0 - Z1) * .82; hw *= z; hh *= z;   // never closer than the part in focus can fit
+      var tx = -fx * z * w, ty = -fy * z * w;
+      // the part in focus stays whole inside the window, label and all; if it is wider than the window, it is centred
+      if (w > 0) { var kx = fx * z + tx, ky = fy * z + ty, k2 = cl01(w * 3); if (hw > W2) tx -= kx * k2; else if (kx + hw > W2) tx -= (kx + hw - W2) * k2; else if (kx - hw < -W2) tx += (-W2 - kx + hw) * k2; if (hh > H2) ty -= ky * k2; else if (ky + hh > H2) ty -= (ky + hh - H2) * k2; else if (ky - hh < -H2) ty += (-H2 - ky + hh) * k2 }
+      var T = 'translate(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px) scale(' + z.toFixed(4) + ')';
+      if (T !== lastT) svg.style.transform = lastT = T
+    }
+    function up(y) {
+      if (auto) return; var st = H(y);
+      if (innerWidth <= 900 || rm) { drawParts(draw, 99); if (svg && lastT) svg.style.transform = lastT = ''; if (innerWidth > 900) { set(N - 1); pull(N - .5); return }
+        if (one && !rm) { if (!cyc) { set(0); pull(.5); cyc = setInterval(function () { var r = sec.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) { set((cur + 1) % N); pull(cur + .5) } }, 2400) } } else { set(N - 1); pull(N - .5) } return }
+      if (cyc) { clearInterval(cyc); cyc = 0 }
+      var f = st.pc * N * .999 + (st.ui - 1) * 1.3;   // below zero while the section is still arriving
+      set(st.ui < .6 ? -1 : Math.max(0, Math.floor(f))); drawParts(draw, f); pull(f); cam(f, st.s)
+    }
+    if (auto) { drawParts(draw, 99); if (rm || !('IntersectionObserver' in window)) set(N - 1); else new IntersectionObserver(function (e, o) { if (e[0].isIntersecting) { o.disconnect(); var k = 0; set(0); var t = setInterval(function () { k++; set(k); if (k >= N - 1) clearInterval(t) }, 1100) } }, { threshold: .45 }).observe(sec) }
+    else Flow.sub(up)
   });
   // ---- hero: pick a problem, get the fix in one line
   var hq = document.getElementById('hq');
@@ -233,17 +293,15 @@
     if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { if (e[0].isIntersecting && !seen) { seen = true; go(0) } if (!e[0].isIntersecting) clearTimeout(t2); else if (seen && au) go(sel) }, { threshold: .25 }).observe(sw); else go(0);
     addEventListener('resize', function () { if (seen) go(sel) })
   }
-  // ---- drawings: measure every stroke so it can draw itself in when its part arrives
+  // ---- drawings: measure every stroke so it can draw itself in. Lengths come from the drawing's laid-out size, with room for the camera's zoom.
   function arm() {
     [].forEach.call(document.querySelectorAll('svg.il'), function (svg) {
       if (svg.classList.contains('flying')) return;
-      var m = svg.getScreenCTM && svg.getScreenCTM(), k = m ? Math.sqrt(m.a * m.a + m.b * m.b) : 1;
-      [].forEach.call(svg.querySelectorAll('[data-lit] path:not(.ds),[data-lit] ellipse'), function (e) { var L = 0; try { L = e.getTotalLength() * k } catch (x) { } e.style.setProperty('--l', Math.ceil(L || 600) + 4) });
+      var vb = svg.viewBox && svg.viewBox.baseVal, k = vb && vb.width && svg.clientWidth ? Math.min(svg.clientWidth / vb.width, (svg.clientHeight || 1e9) / vb.height) : 1;
+      [].forEach.call(svg.querySelectorAll('[data-lit] path:not(.ds),[data-lit] ellipse'), function (e) { var L = 0; try { L = e.getTotalLength() * k } catch (x) { } e.style.setProperty('--l', Math.ceil((L || 600) * 1.5) + 6) });
     });
   }
   arm(); addEventListener('resize', arm); addEventListener('load', arm);
-  // ---- sections make an entrance the first time they come into view
-  var secs = [].slice.call(document.querySelectorAll('.ax,.pz'));
-  if (!rm && 'IntersectionObserver' in window) { var so = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('seen'); so.unobserve(e.target) } }) }, { rootMargin: '0px 0px -22% 0px' }); secs.forEach(function (x) { so.observe(x) }) }
-  else secs.forEach(function (x) { x.classList.add('seen') });
+  if (rm) [].forEach.call(document.querySelectorAll('.ax,.pz'), function (x) { x.classList.add('seen') });
+  Flow.now();
 })();
