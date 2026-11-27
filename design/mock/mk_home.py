@@ -363,12 +363,22 @@ for i, (part, ic, find, cost, tone, fix, _) in enumerate(PATH):
 TOTAL = ('<div class="mp-tot"><div class="fk">What it adds up to</div><b>$6,400</b><span>lost every month</span>'
          '<dl><div><dt>Waiting to be paid</dt><dd>$14,600</dd></div><div><dt>By hand, every week</dt><dd>11 hours</dd></div></dl>'
          '<p>Five findings. Two parts fine as they are.</p></div>')
-HERO = ('<section class="hero"><span class="pill"><i></i>The free audit takes fifteen minutes</span>'
+rows = ''
+for i, (part, ic, find, cost, tone, fix, _) in enumerate(PATH):
+    tile = '<i class="ac-i"><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg></i>' % IC[ic]
+    if find:
+        rows += '<div class="ac-r" style="--d:%d">%s<b>%s</b><span>%s</span><em>%s</em><small>%s</small></div>' % (i, tile, part, find, cost, fix)
+    else:
+        rows += '<div class="ac-r ok" style="--d:%d">%s<b>%s</b><em>Fine as it is</em></div>' % (i, tile, part)
+HERO = ('<section class="hs"><div class="w hs-g"><div class="hs-t"><span class="pill"><i></i>The free audit takes fifteen minutes</span>'
         '<h1>Find out what your business is losing.</h1>'
         '<p class="sub">We take your business apart, put a number on what&rsquo;s costing you jobs and hours, and build systems made for it. Nothing off the shelf.</p>'
-        '<div class="cta"><a class="btn" %s>Book your free audit</a><a class="btn q" href="/free-audit">See what we check</a></div></section>'
-        '<div class="stage"><div class="ground"><div class="card mp"><div class="rep-h"><span class="dot"></span><b>Free audit</b><span>Ridgeline Fence</span>'
-        '<span class="tag">Example business, sample data</span></div><div class="mp-b"><div class="mp-l"><i></i></div>%s</div>%s</div></div></div>' % (CAL, steps, TOTAL))
+        '<div class="cta"><a class="btn" %s>Book your free audit</a><a class="btn q" href="/free-audit">See what we check</a></div>'
+        '<p class="hs-n">Free. Fifteen minutes. You keep what we find.</p></div>'
+        '<div class="hs-p"><div class="card ac"><div class="rep-h"><span class="dot"></span><b>Free audit</b><span>Ridgeline Fence</span>'
+        '<span class="tag">Example business, sample data</span></div><div class="ac-b"><i class="ac-l"><b></b></i>%s</div>'
+        '<div class="ac-f"><div><b>$6,400</b>lost a month</div><div><b>$14,600</b>waiting to be paid</div><div><b>11 hours</b>by hand a week</div></div>'
+        '</div></div></div></section>' % (CAL, rows))
 
 JS = r"""
 (function(){
@@ -760,6 +770,37 @@ td i.h{background:var(--amber)}td.n.h{color:#a86a00}td.n{white-space:nowrap}
 @media(prefers-reduced-motion:reduce){.mp-l i,.mp-t::before{animation:none;opacity:0}.mp-tot{animation:none}}
 @media(max-width:1100px){.ground{height:610px}.mp-tot{left:-34px;width:236px}}
 
+/* ---- hero, split: the words on the left, one audit on the right. Ink, grey and one blue. ---- */
+.hs{background:#fff;border-bottom:1px solid var(--ln)}
+.hs-g{display:grid;grid-template-columns:minmax(0,.94fr) minmax(0,1.06fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln);min-height:min(860px,calc(100vh - clamp(60px,3.6vw,68px)))}
+.hs-t{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:clamp(56px,5vw,96px) var(--pad)}
+.hs h1{margin:clamp(20px,1.6vw,30px) 0 0;text-align:left;white-space:normal;max-width:9.6em;font-size:clamp(42px,3.75vw,70px);line-height:1.02;letter-spacing:-.042em;text-wrap:balance}
+.hs .sub{margin:clamp(16px,1.3vw,24px) 0 0;text-align:left;max-width:26em}
+.hs .cta{justify-content:flex-start;margin-top:clamp(24px,1.9vw,36px)}
+.hs-n{margin:clamp(16px,1.2vw,22px) 0 0;font-size:clamp(13px,.76vw,14.5px);color:var(--t3)}
+.hs-p{border-left:1px solid var(--ln);background:linear-gradient(180deg,#f6f8ff,#e6ebfd);display:flex;align-items:center;justify-content:center;padding:clamp(36px,3.4vw,64px) clamp(24px,3vw,56px);overflow:hidden}
+.ac{position:relative;left:auto;top:auto;width:100%;max-width:540px;box-shadow:0 0 0 1px rgba(23,24,26,.07),0 2px 4px rgba(23,24,26,.04),0 36px 70px -32px rgba(40,60,150,.4)}
+.ac .rep-h{height:auto;min-height:46px;flex-wrap:wrap;gap:4px 10px;padding:10px 18px}.ac .rep-h b,.ac .rep-h span{white-space:nowrap}
+.ac-b{position:relative;padding:6px 0}
+.ac-l{position:absolute;left:37.25px;top:36px;bottom:36px;border-left:1.5px dashed #cfd3dc}
+.ac-l b{position:absolute;left:-6px;top:0;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px rgba(38,109,240,.16);animation:acd 7s linear infinite}
+.ac-r{position:relative;display:grid;grid-template-columns:38px minmax(0,1fr) auto;column-gap:14px;row-gap:1px;align-items:center;padding:10px 20px;min-height:58px;animation:mpc .5s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(.15s + var(--d)*.07s)}
+.ac-r+.ac-r::before{content:"";position:absolute;left:72px;right:20px;top:0;border-top:1px solid var(--line)}
+.ac-i{grid-row:1/3;position:relative;z-index:1;width:38px;height:38px;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.11),0 1px 2px rgba(23,24,26,.05);display:grid;place-items:center;color:var(--ink)}
+.ac-i svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.ac-r>b{grid-column:2;align-self:end;font-size:14px;font-weight:560;letter-spacing:-.01em}
+.ac-r>span{grid-column:2;align-self:start;font-size:12.5px;color:var(--t2)}
+.ac-r>em{grid-column:3;grid-row:1;align-self:end;text-align:right;font-style:normal;font-size:14.5px;font-weight:600;letter-spacing:-.015em;font-variant-numeric:tabular-nums;white-space:nowrap;background:none;color:var(--ink)}
+.ac-r>small{grid-column:3;grid-row:2;align-self:start;text-align:right;font-size:12px;color:var(--blue);white-space:nowrap}
+.ac-r.ok>b{grid-row:1/3;align-self:center;font-weight:500;color:var(--t2)}.ac-r.ok>em{grid-row:1/3;align-self:center;font-size:12.5px;font-weight:500;color:var(--t3)}
+.ac-r.ok .ac-i{color:var(--t3)}
+.ac-f{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:17px 20px 18px;border-radius:0 0 12px 12px;background:#101113;color:#8f9197;font-size:12px}
+.ac-f b{display:block;margin-bottom:3px;color:#fff;font-size:21px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+@keyframes acd{0%{top:0;opacity:0}4%{opacity:1}96%{opacity:1}100%{top:100%;opacity:0}}
+@media(prefers-reduced-motion:reduce){.ac-l b{animation:none;opacity:0}.ac-r{animation:none}}
+@media(min-width:1700px){.ac{zoom:1.16}}
+@media(max-width:1180px){.hs h1{font-size:40px}.ac-r>small{display:none}}
+
 /* ---- narrower screens ---- */
 html,body{overflow-x:clip}
 @media(max-width:1180px){.bd-g{grid-template-columns:repeat(2,minmax(0,1fr))}.bd-g a:nth-child(4n+1){border-left:1px solid var(--dl)}.bd-g a:nth-child(2n+1){border-left:0}}
@@ -816,6 +857,9 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 .stage::before{display:none}.mp-b{height:auto}.mp-t{left:auto;width:44px;height:44px;border-radius:12px}.mp-t::before,.mp-l i{display:none}
 .mp-c{width:auto;padding:12px 14px}.mp-c em{font-size:19px}.mp-s{top:auto}
 .mp-tot{position:static;width:auto;margin:6px 14px 14px;animation:none}.mp-tot b{font-size:34px}
+.hs-g{grid-template-columns:minmax(0,1fr);min-height:0}.hs-t{padding:44px 20px 36px}.hs h1{font-size:37px;max-width:none}
+.hs-p{border-left:0;border-top:1px solid var(--ln);padding:20px 14px 28px}.ac-r{padding:10px 14px;column-gap:12px}.ac-l{left:31.25px}.ac-r+.ac-r::before{left:64px;right:14px}
+.ac-r>em{font-size:13.5px}.ac-r>small{display:block;grid-column:2;grid-row:3;text-align:left;white-space:normal}.ac-f{padding:15px 14px;gap:8px}.ac-f b{font-size:18px}
 .lg-r{gap:9px;padding:0 12px}.lg-r em{font-size:11.5px;padding:0 7px}
 }
 '''
@@ -823,7 +867,7 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 NAV = ('<header class="top"><div class="nav"><a href="/" class="nav-b"><b>%s Cinder Revenue</b></a><ul><li><a href="/everything">What we fix</a></li><li><a href="/free-audit">The free audit</a></li><li><a href="/software">The app</a></li><li><a href="/trades">Trades</a></li><li><a href="/story">Our story</a></li></ul>'
        '<a class="btn" %s>Book your free audit</a></div></header>' % (mark, CAL))
 html = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        '<title>More jobs from the leads you already get | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s<div class="heroband">%s</div>%s%s%s%s%s%s%s%s%s<script>%s</script></body></html>'
+        '<title>More jobs from the leads you already get | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s%s%s%s%s%s%s%s%s%s%s<script>%s</script></body></html>'
         % (hero_css, CSS, NAV, HERO, TOOLS, WHAT, CK, AU, HW, BD, PROB, LK, CL, JS))
 for p in (ROOT + '/design/mock/home-light.html', ROOT + '/site/new.html'):
     open(p, 'w').write(html)

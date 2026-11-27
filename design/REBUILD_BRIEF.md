@@ -187,3 +187,12 @@ Still to build: founder quote, sourced numbers, footer.
 - Sam asked for the tools grid back in place of the moving strip. Restored.
 - Hero picture, same idea, more in it: the parts of the path are tinted by what the audit found (red for money lost, amber for hours or money waiting, green for fine); each finding card has a large figure and its fix in a green tag; a blue dot travels the path on a loop and each part pulses as it passes; the totals are a dark card that overlaps the bottom-left corner; the ground behind is a deeper blue wash with a faint dot grid.
 - Prompts were written for two other chats to carry this look into the personal CRM (`app/(agency)`) and the client app (`app/(client)/app`).
+
+## 17. Split-screen hero, fewer colours (27 Nov)
+
+Sam: the hero had too many colours and he wanted to try a split screen.
+
+- Left half: label, headline on two lines, the line under it, two buttons, and "Free. Fifteen minutes. You keep what we find."
+- Right half, on a soft blue wash: one card, the example audit as a list of the seven parts of the business top to bottom, each with what was found, what it costs and the fix. A dashed line joins them and a blue dot travels down it. The totals are a black bar at the bottom of the card.
+- Colours in the hero are now ink, grey and one blue. The red, amber and green tints, the floating dark card and the dot grid are gone.
+- The previous hero (the horizontal map) is still in `mk_home.py` as `steps` / `TOTAL` but is not placed.
