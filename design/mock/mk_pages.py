@@ -2105,8 +2105,72 @@ CSS_STAGE = r"""
 @media(max-height:760px){.sc.live .sc-s>*{zoom:.86}}
 """
 
+# =====================================================================================
+# /day : a whole page that is only pictures and scroll. The sky behind it runs from dawn to night as you scroll, with a sun,
+# clouds and stars; each chapter pins, its picture builds, then it clears and the sky changes before the next one arrives.
+# Every line is existing copy from the build pages; the pictures are theirs too.
+# =====================================================================================
+def chap(theme, when, line_, small, href, link, pic):
+    return ('<section class="dch" data-t="%s"><div class="dch-p"><div class="dch-t"><time>%s</time><h2>%s</h2><p class="s">%s</p><a class="l" href="%s">%s %s</a></div><div class="dch-g">%s</div></div></section>'
+            % (theme, when, line_, small, href, link, ARROW, pic))
+
+
+SKY = ('<div class="sky" aria-hidden="true"><i class="dawn"></i><i class="morning"></i><i class="noon"></i><i class="late"></i><i class="dusk"></i><i class="night"></i><i class="stars"></i>'
+       '<b class="sun"></b><b class="moon"></b>%s</div>' % ''.join('<u class="cloud c%d"></u>' % k for k in range(1, 8)))
+DAYP = ('<div class="dayp" data-sky="dawn">' + SKY
+        + '<section class="dch dhero" data-t="dawn"><div><span class="lb">A day with it running</span><h1>One day, start to finish.</h1><p>Scroll through a day at an example business. The pictures are sample data.</p><div class="cta">%s</div><em>Scroll</em></div></section>' % BOOK
+        + chap('dawn', '6:31 AM', 'Monday starts with a booked calendar.', 'What came in overnight, and what was done with it.', '/after-hours', 'After hours', MORNING)
+        + chap('morning', '9:12 AM', 'The phone rings while you&rsquo;re on a roof.', 'It still gets answered.', '/answering', 'Answering', THREAD)
+        + chap('noon', '12:40 PM', 'One job running long should not cost you the afternoon.', 'The day adjusts without you making the calls.', '/dispatch', 'Scheduling and dispatch', GANTT)
+        + chap('late', '4:12 PM', 'Invoices go out when the job is done.', 'Not when you find the time.', '/invoicing', 'Invoices', INVOICE)
+        + chap('dusk', '6:05 PM', 'A quote nobody chases is a job you gave away.', 'Monday&rsquo;s quote gets its check-in.', '/follow-up', 'Follow-up', QUOTE)
+        + chap('night', '2:07 AM', 'The burst pipe at 2 AM and the quote request at 2 AM are not the same call.', 'Only the real emergencies wake you.', '/after-hours', 'After hours', NIGHT)
+        + '</div>' + CL)
+
+CSS_DAY = r"""
+.dayp{position:relative;--fg:#17181a;--mut:#3f4756;--cc:#fff}
+.dayp[data-sky=dusk]{--fg:#fff;--mut:rgba(255,255,255,.8);--cc:#f6b79d}.dayp[data-sky=night]{--fg:#fff;--mut:rgba(255,255,255,.72);--cc:#2a3566}
+.dayp[data-sky=dawn]{--cc:#fff3ea}.dayp[data-sky=late]{--cc:#fff6e6}
+.sky{position:fixed;inset:0;z-index:0;overflow:hidden;background:#cfe0ff}
+.sky>i{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease}
+.sky .dawn{background:linear-gradient(180deg,#b9cdfb,#f0d6d2 58%,#ffe6cf)}.sky .morning{background:linear-gradient(180deg,#8dbcff,#e3f1ff)}.sky .noon{background:linear-gradient(180deg,#4f9dff,#c6e3ff)}
+.sky .late{background:linear-gradient(180deg,#7fb2f2,#f7e3c2 78%,#ffe2b4)}.sky .dusk{background:linear-gradient(180deg,#2c2d6b,#8d4f86 48%,#f08a62 86%,#f9c58f)}.sky .night{background:linear-gradient(180deg,#050817,#111a3f)}
+.sky .stars{background-image:radial-gradient(1.4px 1.4px at 8% 14%,#fff 50%,transparent 51%),radial-gradient(1.2px 1.2px at 21% 32%,#fff 50%,transparent 51%),radial-gradient(1.6px 1.6px at 34% 9%,#fff 50%,transparent 51%),radial-gradient(1.2px 1.2px at 47% 26%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 58% 12%,#fff 50%,transparent 51%),radial-gradient(1.1px 1.1px at 66% 38%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 77% 19%,#fff 50%,transparent 51%),radial-gradient(1.2px 1.2px at 88% 30%,#fff 50%,transparent 51%),radial-gradient(1.3px 1.3px at 93% 8%,#fff 50%,transparent 51%),radial-gradient(1.1px 1.1px at 15% 52%,#fff 50%,transparent 51%),radial-gradient(1.3px 1.3px at 72% 55%,#fff 50%,transparent 51%),radial-gradient(1.2px 1.2px at 40% 47%,#fff 50%,transparent 51%)}
+.dayp[data-sky=dawn] .dawn,.dayp[data-sky=morning] .morning,.dayp[data-sky=noon] .noon,.dayp[data-sky=late] .late,.dayp[data-sky=dusk] .dusk,.dayp[data-sky=night] .night{opacity:1}.dayp[data-sky=night] .stars{opacity:.9}
+.sun,.moon{position:absolute;left:0;top:0;border-radius:50%;transition:background 1.2s,opacity 1.2s}
+.sun{width:clamp(84px,8vw,140px);height:clamp(84px,8vw,140px);background:#ffe7a3;--u:calc(var(--s,0)*2.5 - 1);transform:translate(calc(6vw + var(--s,0)*104vw),calc(9vh + var(--u)*var(--u)*48vh))}
+.dayp[data-sky=noon] .sun{background:#fff6cf}.dayp[data-sky=late] .sun{background:#ffd98a}.dayp[data-sky=dusk] .sun{background:#ff9a5c}.dayp[data-sky=night] .sun{opacity:0}
+.moon{width:clamp(64px,5.4vw,96px);height:clamp(64px,5.4vw,96px);left:auto;right:12vw;top:14vh;background:#e9edff;box-shadow:inset -14px -8px 0 #c6cdea;opacity:0}.dayp[data-sky=night] .moon{opacity:1}
+.cloud{position:absolute;width:220px;height:64px;border-radius:64px;background:var(--cc);opacity:.92;transition:background 1.2s,opacity 1.2s;transform:translateX(calc(var(--s,0)*var(--v,-30vw))) scale(var(--k,1))}
+.cloud::before,.cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}.cloud::before{width:96px;height:96px;left:34px;top:-46px}.cloud::after{width:120px;height:120px;right:30px;top:-62px}
+.c1{left:6vw;top:22vh;--k:1.5;--v:-22vw}.c2{left:62vw;top:14vh;--k:1.1;--v:-46vw}.c3{left:84vw;top:40vh;--k:1.9;--v:-70vw}.c4{left:30vw;top:66vh;--k:.9;--v:-34vw}.c5{left:104vw;top:74vh;--k:1.6;--v:-96vw}.c6{left:-6vw;top:82vh;--k:1.2;--v:26vw}.c7{left:126vw;top:28vh;--k:1.3;--v:-130vw}
+.dayp[data-sky=night] .cloud{opacity:.5}.dayp[data-sky=noon] .cloud{opacity:1}
+.dch{position:relative;z-index:1;color:var(--fg);transition:color .9s}
+.dhero{display:grid;place-items:center;min-height:calc(100vh - 60px);padding:40px 24px;text-align:center}
+.dhero h1{margin:20px auto 0;max-width:9em;font-size:clamp(48px,6.6vw,124px);line-height:.96;letter-spacing:-.052em;font-weight:600}
+.dhero p{margin:22px auto 0;max-width:27em;font-size:clamp(16px,1.2vw,21px);line-height:1.45;color:var(--mut)}.dhero .lb{background:rgba(255,255,255,.7)}
+.dhero em{display:block;margin-top:clamp(40px,6vh,80px);font:500 12px/1 "Geist Mono",monospace;font-style:normal;color:var(--mut)}
+.dch-p{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1fr);gap:clamp(28px,4.4vw,84px);align-items:center;width:min(1390px,calc(100vw - 200px));margin:0 auto;padding:clamp(80px,12vh,160px) 0;box-sizing:border-box}
+.dch time{font:500 14px/1 "Geist Mono",monospace;opacity:.75}
+.dch h2{margin:18px 0 0;max-width:11em;font-size:clamp(32px,3.5vw,66px);line-height:1.03;letter-spacing:-.042em;font-weight:600;text-wrap:balance}
+.dch .s{margin:18px 0 0;max-width:22em;font-size:clamp(17px,1.25vw,23px);line-height:1.36;color:var(--mut);transition:color .9s}
+.dch .l{display:inline-flex;align-items:center;gap:7px;margin-top:22px;height:36px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.72);color:#17181a;font-size:14px;font-weight:560}
+.dch .l svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.dch-g{display:flex;justify-content:center}.dch-g>*{color:var(--ink);box-shadow:0 0 0 1px rgba(23,24,26,.06),0 50px 90px -40px rgba(10,20,60,.55)}
+.dch-g .ng{margin:0;width:100%;max-width:680px;color:#fff}.dch-g .mr{max-width:480px;margin:0}.dch-g .gt{max-width:760px}
+.dch:nth-of-type(odd) .dch-t{order:2}
+.dayp~.cl,.dayp~.cl~*{position:relative;z-index:1}
+.dayp.live .dch:not(.dhero){height:230vh}
+.dayp.live .dch-p{position:sticky;top:0;height:100vh;padding:60px 0 0;--a:min(calc(var(--p,0)*7),1);--z:min(calc((1 - var(--p,0))*7),1)}
+.dayp.live .dch-t{opacity:calc(var(--a)*var(--z));transform:translateY(calc((1 - var(--a))*56px - (1 - var(--z))*56px))}
+.dayp.live .dch-g{opacity:calc(var(--a)*var(--z));transform:translateY(calc((1 - var(--a))*110px - (1 - var(--z))*110px)) scale(calc(.9 + .1*var(--a)*var(--z)))}
+.dayp.live .bi{opacity:0;transform:translateY(12px);transition:opacity .35s,transform .45s cubic-bezier(.2,.7,.2,1)}.dayp.live .bi.in{opacity:1;transform:none}
+@media(min-width:1700px){.dch-g>*{zoom:1.12}}
+@media(max-width:860px){.dch-p{grid-template-columns:minmax(0,1fr);width:auto;padding:72px 20px}.dch:nth-of-type(odd) .dch-t{order:0}.cloud{--k:.6!important}.dch h2{font-size:34px}}
+"""
+
 out = pathlib.Path(ROOT) / 'site'
-CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL + CSS_STAGE
+CSS = CSS + CSS_DESK + CSS_CAL + CSS_AFT + CSS_TEAM + CSS_REST + CSS_RHY + CSS_CLEAN + CSS_FULL + CSS_STAGE + CSS_DAY
 (out / 'assets/light-pages.css').write_text(CSS.strip() + '\n')
 V = hashlib.sha1(CSS.encode()).hexdigest()[:8]
 PCSS = 'light-pages.css?v=' + V
@@ -2153,11 +2217,12 @@ PAGES = [
     ('privacy', 'Privacy policy', 'How Cinder Revenue Company collects and uses information through this website.', legal('privacy')),
     ('terms', 'Terms of use', 'The terms that apply to your use of the Cinder Revenue Company website.', legal('terms')),
     ('404', 'Page not found', 'This page does not exist.', NOTFOUND),
+    ('day', 'One day, start to finish', 'A scroll through one day at an example business: what gets answered, booked, chased and paid while the owner is on the job.', DAYP),
     ('answering', 'Answering', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', ANSWERING),
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, full(slug, flag(slug, body)), css=PCSS, index=(slug != '404'))
+        doc = page(title, desc, '/' + slug, full(slug, flag(slug, body)), css=PCSS, index=(slug not in ('404', 'day')))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)

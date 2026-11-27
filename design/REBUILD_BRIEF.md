@@ -335,3 +335,12 @@ Sam: the most useful pages should be much longer and more intricate, with other 
 - `/answering`: "Follow one lead through the business": the missed-call thread, the week calendar (booking), the quote and its check-ins (follow-up), the invoice (invoices), the review ask (reviews). Replaces the old dark "How it works" split.
 - `/software`: "What it did while you were on the job": inbox, calendar, open quotes, money owed, Monday report, each linking to its page.
 - Candidates for the same treatment next: free audit, everything, websites, home.
+
+### 22i. /day: a page that is only pictures and scroll (27 Nov)
+
+Sam: wants page themes that change colour as you scroll from one "page" to the next, with a visible page change, and fuller pages that are just designs and scroll animations "with clouds in the background or something".
+
+- New page `site/day.html` (noindex, not linked from anywhere yet): "One day, start to finish." A fixed sky behind the page runs dawn, morning, noon, late afternoon, dusk, night as you scroll; a sun crosses and sets, a moon and stars come out, clouds drift at different speeds and change colour with the sky. Six chapters, each pinned: time, one line, one small sentence, a link, and a picture from another page whose rows build as you scroll. Between chapters the screen clears to sky while the colours change. The nav turns dark at dusk and night.
+- Lines are existing copy from the build pages; the hero heading and "Scroll through a day at an example business" are new.
+- Reduced motion or under 861px: chapters are stacked, the sky still changes colour.
+- Code: `chap()`, `SKY`, `DAYP`, `CSS_DAY` in `mk_pages.py`; the `.dayp` script in `light.js`.
