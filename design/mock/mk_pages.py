@@ -782,17 +782,29 @@ def xfaq(p):
 
 
 # ---- /booking : a week with one estimate on it; one lead on a rail from the form to the driveway ----
+_wo = lambda at, to, t: '<i class="of" data-at="%d" data-to="%d">Open<u>%s</u></i>' % (at, to, t)        # an open time being offered
+_we = lambda cls='': '<i class="%s"></i>' % cls
 WEEK = ('<div class="cd wk">%s<div class="wkc-g">%s</div></div>' % (head('This week', 'Estimates and jobs'), ''.join(
-    '<div><b>%s</b>%s</div>' % (d, ''.join('<i class="%s">%s</i>' % x for x in sl)) for d, sl in [
-        ('Mon', [('j', 'Job<u>8:00 AM</u>'), ('', ''), ('j', 'Job<u>1:00 PM</u>')]), ('Tue', [('e', 'Estimate<u>9:00 AM</u>'), ('j', 'Job<u>11:00 AM</u>'), ('', '')]),
-        ('Wed', [('j', 'Job<u>8:00 AM</u>'), ('', ''), ('', '')]), ('Thu', [('j', 'Job<u>8:00 AM</u>'), ('', ''), ('e on', 'Estimate<u>2:00 PM</u>')]),
-        ('Fri', [('', ''), ('j', 'Job<u>10:00 AM</u>'), ('', '')])])))
+    '<div><b>%s</b>%s</div>' % (d, ''.join(sl)) for d, sl in [
+        ('Mon', ['<i class="j">Job<u>8:00 AM</u></i>', _we(), '<i class="j">Job<u>1:00 PM</u></i>']),
+        ('Tue', ['<i class="e">Estimate<u>9:00 AM</u></i>', '<i class="j">Job<u>11:00 AM</u></i>', _we()]),
+        ('Wed', ['<i class="j">Job<u>8:00 AM</u></i>', _we(), '<i class="em" data-at="0" data-to="1"></i>' + _wo(1, 4, '1:00 PM') + '<i class="em" data-at="4"></i>']),
+        ('Thu', ['<i class="j">Job<u>8:00 AM</u></i>', _we(),
+                 '<i class="em" data-at="0" data-to="1"></i>' + _wo(1, 4, '2:00 PM') + '<i class="e on" data-at="4" data-to="6">Estimate<u>2:00 PM</u></i><i class="e on" data-at="6" data-to="7">Estimate<u>Reminder sent</u></i><i class="e on" data-at="7">Estimate<u>Confirmed</u></i>']),
+        ('Fri', ['<i class="em" data-at="0" data-to="1"></i>' + _wo(1, 4, '8:00 AM') + '<i class="em" data-at="4"></i>', '<i class="j">Job<u>10:00 AM</u></i>', _we()])])))
+_pb = lambda at, who, text: '<p class="hb %s" data-at="%d">%s</p>' % (who, at, text)
+BKLIVE = ('<div class="lvh" data-live="9">%s<div class="ph2" aria-hidden="true"><p>Customer&rsquo;s phone</p>%s</div></div>'
+          % (WEEK, _pb(0, 'c', '<b>Form sent</b>Fence estimate, 7:40 AM') + _pb(1, 'o', 'Thanks for reaching out to Ridgeline Fence. Three open times: Wed 1 PM, Thu 2 PM or Fri 8 AM.')
+             + _pb(3, 'c', 'Thursday at 2 works') + _pb(4, 'o', 'Booked. Thursday at 2 PM.') + _pb(6, 'o', 'Reminder: your estimate is tomorrow at 2 PM. Reply C to confirm.') + _pb(7, 'c', 'C')))
+BKCARD = ('<div class="cd bkd">%s<div class="bkd-b"><p class="bkd-t">Estimate<b>Thursday, 2:00 PM</b></p>%s</div></div><p class="sd-n">Example. Sample data.</p>'
+          % (head('On your calendar', 'Booked 7:52 AM'), ''.join('<p><span>%s</span><b>%s</b></p>' % x for x in [
+              ('Address', 'Split Rail Dr'), ('The job', 'Privacy fence, about 180 ft'), ('Picked by', 'The customer, from your open times'), ('Reminder', 'Set for Wed 6 PM')])))
 RAIL = ('<ol class="rl">%s</ol>' % ''.join('<li><time>%s</time><b>%s</b></li>' % x for x in [
     ('7:40 AM', 'A form comes in'), ('7:40 AM', 'A reply goes out with three times'), ('7:52 AM', 'They pick Thursday at 2 PM'), ('Wed 6 PM', 'A reminder goes out'), ('Thu 2 PM', 'You show up')]))
-BOOKING = (hero_split('Calendar', 'Estimates on your calendar.', 'Serious leads pick a time themselves, get reminded, and show up.',
-                      'The lead picks from times you are actually free. Reminders are set the moment it books.', WEEK, 'hs-v')
+BOOKING = (inner_hero('Calendar', 'Estimates on your calendar.', 'Serious leads pick a time themselves, get reminded, and show up.', BOOK + AUDITLINK, BKLIVE)
            + statement('The problem', 'A lead who says yes still has to get on your calendar.', 'That takes a call back, a few texts about times, and a reminder nobody sends. Every extra step is a chance for them to go quiet.')
            + sx('One lead, from the form to the driveway.', '', RAIL + '<p class="rl-k">Example. Sample data.</p>', 'wh')
+           + H.split('What lands on your calendar', 'The time, the address and the job.', 'The lead picks from times you are actually free. Reminders are set the moment it books.', BKCARD)
            + ticks('What&rsquo;s included', 'A booked estimate is a job you can still win.', [
                'Leads pick from times you’re actually free.', 'Estimates booked on your calendar, with the address and what the job is.', 'The right person’s calendar, if you have a crew.',
                'A reminder text the night before.', 'No-shows get a rebooking text automatically.', 'Works with Google Calendar.'])
@@ -1817,7 +1829,7 @@ RHYTHM = {
     'social-messages': ('sx st pg', {'sx': 't-sheet', 'st': 's-dk v-c t-angle', 'pg': 's-dk'}),
     'lead-vetting': ('st sx sp', {'st': 'v-2 t-rule', 'sx': 's-tn', 'sp': 'v-f t-sheet'}),
     'after-hours': ('st sx sp', {'st': 'v-c t-arc', 'sp': 's-dkp'}),
-    'booking': ('st sx ic', {'st': 'v-xl', 'sx': 's-tn t-exp'}),
+    'booking': ('st sx sp ic', {'st': 'v-xl', 'sx': 's-tn t-exp', 'sp': 'v-f'}),
     'reminders': ('sx st sp', {'sx': 't-sheet v-b', 'st': 's-dk t-angle', 'sp': 'v-f'}),
     'dispatch': ('st sx hw', {'st': 'v-2', 'sx': 't-rule v-c'}),
     'job-updates': ('bl sx st sp', {'bl': 'v-sf t-sheet', 'sx': 's-tn', 'st': 'v-c', 'sp': 'v-f'}),
@@ -2373,6 +2385,27 @@ FAUDIT = (H.inner_hero('The free audit', 'A full audit of your business, free.',
              '<iframe src="https://cal.com/audit-call/15min?embed=true&amp;theme=light" title="Book your free audit" loading="lazy"></iframe></div></section>')
           + H.CL)
 CSS_FA = r"""
+/* ---- live windows on the inner pages ---- */
+.lvh>*{min-width:0}.lvh>.cd,.lvh>div:first-child{flex:0 1 auto}
+.sdw{flex:none;width:clamp(210px,17vw,250px);box-sizing:border-box;padding:14px 12px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.16),0 30px 60px -34px rgba(38,38,40,.4);font-size:13px;text-align:left;min-height:170px}
+.sdw>p:first-child{margin:0 0 12px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--g2)}
+.sdw.log{background:#17181a;color:#e3e4e7;border-radius:10px;box-shadow:0 30px 60px -34px rgba(38,38,40,.5);min-height:200px}.sdw.log>p:first-child{color:#fff}
+.lvs{display:grid;grid-template-columns:auto repeat(auto-fit,minmax(0,1fr));grid-auto-flow:column;align-items:stretch;border-top:1px solid var(--ln);border-left:1px solid var(--ln);border-right:1px solid var(--ln);box-sizing:border-box}
+.lvs>p{margin:0;padding:18px clamp(16px,2vw,36px);display:flex;align-items:center;font:500 11px/1.3 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--g2);border-right:1px solid var(--ln)}
+.lvs>div{padding:16px clamp(14px,1.6vw,28px);border-right:1px solid var(--ln);display:grid;gap:5px;align-content:center;min-width:0}.lvs>div:last-child{border-right:0}
+.lvs span{font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}.lvs b{font-size:14px;font-weight:540;line-height:1.3}
+@media(max-width:860px){.sdw{width:min(100%,300px);min-height:0}.lvs{grid-auto-flow:row;grid-template-columns:minmax(0,1fr)}.lvs>p,.lvs>div{border-right:0;border-bottom:1px solid var(--ln);padding:13px var(--pad)}}
+
+.lvh{display:flex;align-items:flex-end;justify-content:center;gap:clamp(16px,2vw,32px);width:100%}
+.lvh .wk{flex:0 1 640px;width:auto;min-width:0}.lvh .ph2{margin-bottom:-18px}
+.wkc-g i.em{background:repeating-linear-gradient(135deg,transparent 0 5px,rgba(23,24,26,.035) 5px 6px)}
+.wkc-g i.of{background:#fff;box-shadow:inset 0 0 0 1px var(--ink);color:var(--ink)}
+.live .wkc-g i[data-at].in{animation:hmin .35s both}
+.bkd{width:100%;max-width:440px}.bkd-b{padding:18px 18px 8px}.bkd-t{margin:0 0 12px;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)}
+.bkd-t b{display:block;margin-top:10px;font:400 clamp(24px,2vw,32px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.015em;text-transform:none;color:var(--ink)}
+.bkd-b p+p{display:flex;justify-content:space-between;gap:16px;margin:0;padding:12px 0;border-top:1px solid var(--ln);font-size:14px}.bkd-b p span{color:var(--g2)}.bkd-b p+p b{font-weight:540;text-align:right}
+@media(max-width:860px){.lvh{flex-direction:column;align-items:center}.lvh .wk{flex:none;width:100%}.lvh .ph2{width:min(100%,300px);min-height:0;margin:0}}
+
 /* ---- /free-audit ---- */
 .fa-k{margin:18px 0 0;display:flex;justify-content:space-between;font:500 11.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}.fa-k em{font-style:normal;color:var(--t3)}
 .fa3{--l1:clamp(0,calc(var(--p,1)*4.4),1);--l2:clamp(0,calc((var(--p,1) - .4)*3.4),1);--l3:clamp(0,calc((var(--p,1) - .76)*4.8),1)}
@@ -2425,6 +2458,75 @@ CSS_FA = r"""
 .faw-c,.faw-c:nth-child(n+5){grid-column:1;grid-row:auto;padding:0 0 30px 22px}.faw-c::before{display:none}.faw-c::after,.faw-c:nth-child(n+5)::after{left:-4px;right:auto;top:2px}
 .fa3-f{max-width:none}}
 """
+
+# ---- every build page's first screen plays: its own window fills in row by row, and a second window beside or under it runs in step ----
+SIDE = {
+    'phone-agent': ('log', '&gt; On the call', [(0, '2:14 PM', 'Call answered'), (1, '2:14 PM', 'Job type and address taken'), (3, '2:15 PM', 'Estimate time offered'), (4, '2:16 PM', 'Booked, summary sent to you')]),
+    'website-chat': ('phone', 'Visitor, 10:04 PM', [(0, 'c', 'Do you do vinyl fencing?'), (1, 'o', 'Yes. Want a time for a free estimate?'), (3, 'c', 'Thursday morning?'), (4, 'o', 'Thursday 9 AM is yours.')]),
+    'social-messages': ('log', '&gt; One inbox', [(0, 'Facebook', 'Message answered'), (1, 'Instagram', 'Message answered'), (2, 'Google', 'Message answered'), (4, 'All three', 'Same reply, same speed')]),
+    'lead-vetting': ('phone', 'New lead', [(0, 'o', 'What kind of fence, and roughly how long?'), (1, 'c', 'Privacy fence, about 180 ft'), (2, 'o', 'When do you want it done?'), (4, 'c', 'This month'), (5, 'o', 'Good fit. Wed 2 PM for an estimate?')]),
+    'after-hours': ('own', 'Your phone, 11:40 PM', [(1, 'Not urgent', 'Three calls answered and booked'), (4, 'Urgent', 'Gate stuck open, customer waiting')]),
+    'reminders': ('log', '&gt; What ran', [(0, 'Mon', 'Booking confirmed'), (1, 'Wed', 'Reminder sent'), (3, 'Thu 7 AM', 'Reminder sent'), (4, 'Thu 7 AM', 'Customer confirmed')]),
+    'dispatch': ('own', 'Your phone', [(1, 'Job running long', 'Crew 2, about 40 minutes'), (3, 'Next job moved', 'Customer told the new time'), (5, 'Day adjusted', 'No calls made')]),
+    'job-updates': ('phone', 'Customer&rsquo;s phone', [(0, 'o', 'Your crew is booked for Thursday.'), (1, 'o', 'On the way. About 20 minutes out.'), (3, 'o', 'Job done. Photos attached.'), (4, 'c', 'Looks great, thank you')]),
+    'estimates': ('log', '&gt; One draft', [(0, '9:10 AM', 'Measurements in'), (1, '9:10 AM', 'Line items priced your way'), (3, '9:11 AM', 'Draft ready for you'), (4, '9:14 AM', 'Approved and sent')]),
+    'proposals': ('own', 'Your phone', [(1, 'Proposal opened', 'Twice, last at 8:12 PM'), (4, 'Option picked', 'Better, signed')]),
+    'follow-up': ('phone', 'Customer&rsquo;s phone', [(0, 'o', 'Here is your quote from Ridgeline Fence.'), (2, 'o', 'Any questions on the quote?'), (4, 'o', 'Still happy to hold your date.'), (5, 'c', 'Let&rsquo;s do it')]),
+    'invoicing': ('log', '&gt; What ran', [(0, 'Fri', 'Job finished'), (1, 'Fri', 'Invoice sent'), (3, 'Day 3', 'Reminder sent'), (5, 'Day 3', 'Paid')]),
+    'bookkeeping': ('log', '&gt; One receipt', [(0, 'Receipt', 'Read'), (1, 'Receipt', 'Labelled: materials'), (2, 'Receipt', 'Put against the job'), (4, 'Month end', 'Costs by job ready')]),
+    'reviews': ('phone', 'Customer&rsquo;s phone', [(0, 'o', 'Thanks for choosing Ridgeline Fence. How did we do?'), (2, 'c', 'Great job, really happy'), (3, 'o', 'Would you leave that as a Google review? One tap here.'), (5, 'c', 'Done')]),
+    'review-replies': ('own', 'Your phone', [(1, 'Five stars', 'Reply posted'), (4, 'One star', 'Draft waiting for you')]),
+    'win-backs': ('phone', 'Past customer&rsquo;s phone', [(1, 'o', 'Hi, it&rsquo;s Ridgeline Fence. It&rsquo;s been a year since your fence went in. Anything need a look?'), (4, 'c', 'Actually the gate is sagging')]),
+    'maintenance-reminders': ('log', '&gt; Due dates', [(0, 'Job done', 'Next service date set'), (2, 'When due', 'Reminder sent'), (4, 'Same week', 'Visit booked')]),
+    'referrals': ('phone', 'Customer&rsquo;s phone', [(1, 'o', 'Glad you&rsquo;re happy with the fence. Know a neighbor who needs one?'), (3, 'c', 'My neighbor asked about it, actually'), (4, 'o', 'Send them this link and we&rsquo;ll take it from there.')]),
+    'campaigns': ('log', '&gt; One send', [(0, 'List', 'People it fits picked'), (2, 'Message', 'Sent'), (4, 'Replies', 'Landing in your inbox')]),
+    'websites': ('log', '&gt; One visitor', [(0, '10:02 PM', 'Lands on your site'), (1, '10:03 PM', 'Reads about the work'), (3, '10:04 PM', 'Books an estimate')]),
+    'local-search': ('log', '&gt; This week', [(0, 'Mon', 'Photos added'), (1, 'Wed', 'Post published'), (3, 'Fri', 'Questions answered')]),
+    'job-photos': ('log', '&gt; One photo', [(0, 'Photo', 'In from the job'), (1, 'Post', 'Google'), (2, 'Post', 'Facebook'), (3, 'Post', 'Instagram')]),
+    'hiring': ('phone', 'Applicant&rsquo;s phone', [(0, 'o', 'Thanks for applying. A few quick questions.'), (1, 'o', 'How many years installing fence?'), (2, 'c', 'Six, wood and vinyl'), (4, 'o', 'Can you do a call Thursday at 4 PM?'), (5, 'c', 'Yes')]),
+    'team-assistant': ('phone', 'Crew phone', [(0, 'c', 'What do we do when the customer adds a gate on site?'), (2, 'o', 'From your playbook: the answer, and the page it came from.')]),
+    'field-notes': ('log', '&gt; One minute', [(0, 'Voice note', 'Recorded on site'), (1, 'Notes', 'Written up'), (3, 'Job', 'Record updated')]),
+    'reports': ('own', 'Your phone, Monday', [(1, 'Your week', 'One page, ready to read')]),
+    'call-review': ('log', '&gt; Last month', [(0, 'Calls', 'Read'), (2, 'Lost jobs', 'The moment flagged'), (4, 'Pattern', 'Sent to you')]),
+    'custom-agents': ('log', '&gt; Your task', [(0, 'Run', 'Started'), (1, 'Limits', 'Inside the ones you set'), (3, 'Done', 'Summary sent')]),
+    'custom-builds': ('log', '&gt; Your process', [(0, 'Described', 'Once'), (2, 'Built', 'Around how you work'), (4, 'Running', 'Adjusted with you')]),
+}
+def _side(kind, title, rows, strip=False):
+    if strip:   # under a split hero: a ruled strip that fills in cell by cell
+        return ('<div class="w lvs" aria-hidden="true"><p>%s</p>%s</div>'
+                % (title.replace('&gt; ', ''), ''.join('<div data-hd="%d"><span>%s</span><b>%s</b></div>' % (at, {'o': 'Sent', 'c': 'Reply'}.get(a, a), b) for at, a, b in rows)))
+    if kind == 'phone':
+        return '<div class="ph2" aria-hidden="true"><p>%s</p>%s</div>' % (title, ''.join('<p class="hb %s" data-at="%d">%s</p>' % (a, at, b) for at, a, b in rows))
+    if kind == 'own':
+        return '<div class="sdw own" aria-hidden="true"><p>%s</p>%s</div>' % (title, ''.join('<p class="hn" data-at="%d"><b>%s</b>%s</p>' % (at, a, b) for at, a, b in rows))
+    return '<div class="sdw log" aria-hidden="true"><p>%s</p>%s</div>' % (title, ''.join('<p class="hl" data-at="%d"><time>%s</time>%s</p>' % (at, a, b) for at, a, b in rows))
+
+
+def liven(name, body):
+    if name not in SIDE:
+        return body
+    m = re.match(r'<section class="(\w+)([^"]*)"(.*?)</section>', body, re.S)
+    if not m or 'data-live' in m.group(0):
+        return body
+    kind, title, rows = SIDE[name]; hero = m.group(0); last = max(r[0] for r in rows)
+    # rows of the page's own window arrive one after another
+    cnt = {}
+    for c in re.findall(r'<(?:div|li|p|tr|a) class="([\w-]+)', hero):
+        cnt[c] = cnt.get(c, 0) + 1
+    rep = [c for c, v in sorted(cnt.items(), key=lambda x: -x[1]) if 3 <= v <= 8 and c not in ('cta', 'on', 'cd', 'n')]
+    if rep:
+        k = [0]
+        def tag(mm):
+            k[0] += 1; return '%s data-hd="%d"' % (mm.group(0), min(k[0] - 1, 6))
+        hero = re.sub(r'<(?:div|li|p|tr|a) class="%s[^"]*"' % re.escape(rep[0]), tag, hero); last = max(last, min(k[0] - 1, 6))
+    if m.group(1) == 'ih' and '<div class="ih-p"><div class="w ih-pi">' in hero:
+        a, b = hero.split('<div class="ih-p"><div class="w ih-pi">', 1); pic = b[:b.rindex('</div></div></section>')]
+        hero = '%s<div class="ih-p"><div class="w ih-pi"><div class="lvh">%s%s</div></div></div></section>' % (a, pic, _side(kind, title, rows))
+    else:
+        hero = hero[:-len('</section>')] + _side(kind, title, rows, True) + '</section>'
+    hero = hero.replace('<section class="%s%s"' % (m.group(1), m.group(2)), '<section class="%s%s" data-live="%d"' % (m.group(1), m.group(2), last + 3), 1)
+    return hero + body[len(m.group(0)):]
+
 
 import drawings as DW
 DWX = {  # pages that are not builds: (label, line, title)
@@ -2794,7 +2896,7 @@ PAGES = [
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, trans(slug, figs(slug, full(slug, flag(slug, body)))), css=PCSS, index=(slug not in ('404', 'day', 'terms')))
+        doc = page(title, desc, '/' + slug, liven(slug, trans(slug, figs(slug, full(slug, flag(slug, body))))), css=PCSS, index=(slug not in ('404', 'day', 'terms')))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)

@@ -498,3 +498,13 @@ Sam: "not just pictures put into a slideshow... an actual walkthrough... the thi
 - Pop-outs and leader lines removed. On scroll the window shrinks and three windows slide out beside it, not over it: the customer's phone (left), the owner's phone (right, top) and a dark log (right, bottom). `_HM_SAT` in mk_home.py.
 - One clock (1.05 s a step) drives the screen and all three windows. Each scene shows the leak the audit found, then the fix handling it step by step: a missed call texted back and booked; the five hand tasks switching to "Runs itself"; quote #1042 checked in on day 2 and 5 and signed; an invoice sent the day the job ended, reminded, paid. Elements carry `data-sc` (scene) and `data-at` / `data-to` (steps). `?view=N&step=K` holds a moment for screenshots.
 - Sample dialogue in the phone is new wording, shown under "Example business, sample data".
+
+## 23a. The homepage standard carried to the other pages, pass one (Nov 27)
+
+Sam: homepage "is complete... bring this level of designing to every other page GO".
+
+- One live engine for the whole site (end of `JS` in mk_home.py): any `.hm-x` or `[data-live]` root; `data-sc` scenes, `data-at`/`data-to` steps that appear and leave, `data-hd` steps that hold their place and fade in, `data-ty` typing. `data-live="N"` is the number of steps before it loops. `?view=0&step=9` holds the end state.
+- Booking rebuilt by hand: the week and the customer's phone play one booking together (three open times offered, Thursday picked, the slot fills, reminder, confirmed), plus a new "What lands on your calendar" card. `BKLIVE`, `BKCARD`.
+- The other 29 build pages (`SIDE`, `liven()` in mk_pages.py): each page's own first-screen window now fills in row by row, and a second window runs in step with a script written for that page. Centred heroes get a phone, an owner's-phone card or a dark log beside the window; split heroes get a ruled strip under the hero that fills cell by cell.
+- All dialogue and log lines are new sample wording, under each window's "Example, sample data" label.
+- Still to do by hand, page by page: the sections below each first screen.
