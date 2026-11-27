@@ -147,11 +147,13 @@ W0 = lambda x: '<!--h2-->' + x + '<!--/h2-->\n'
 # list that stays put on the left while each item's block (statement, big picture, two short points) scrolls past on the right; a big quote;
 # numbers; four columns; then the clock and the call.
 def _two(h, rest): return f'<b>{h}</b> {rest}'
-HV = ('<section class="hv" aria-label="Where the jobs go"><div class="hv-in"><div class="axp ill hv-f"><div class="axc">' + ART.funnel() + '</div><small>Illustration. Sample findings; your audit uses your own numbers.</small></div>'
-  f'<div class="hv-c hv-c1"><span>Leaking every month, example business</span><b data-v="{TOT}">$6,400</b></div>'
-  '<div class="hv-c hv-c2"><span>What the free audit checks</span><ul><li>Calls you missed last month</li><li>How long a new lead waits</li><li>Quotes that went quiet</li><li>Invoices still unpaid</li></ul></div></div></section>')
+# pass 36: light theme, and the app is back as the hero picture: the real Calendar screen with its three pieces floating over its edges
+HV = ('<section class="hv hvc cal2 pz" aria-label="The app, showing a week of booked estimates"><div class="hv-in"><div class="pz-stage"><figure class="pz-fig">' + CALV + '</figure>'
+  + ''.join(f'<div class="pz-b pz-b{i + 1}"><div class="pp">{card}</div></div>' for i, (card, _b, _d) in enumerate(POPS)) + '</div></div></section>')
 INTRO = ('<section class="it"><p class="sx-k">How it works</p><h2 class="it-s">' + _two('We find where you’re losing jobs.', 'Then we build what fixes it, with AI doing the work that doesn’t need a person. You keep the plan either way.') + '</h2></section>')
-FA = [('Leads', 'leads', _two('Every lead gets an answer.', 'In seconds, by text, in your business’s name, with a time to pick.'), ART.reply(), 4,
+FA = [('The audit', 'audit', _two('We find where the jobs go.', 'Most businesses lose them at the same few points. The free audit finds yours and puts a dollar number on each.'), ART.funnel(), 6,
+       [('It starts with one call.', 'Fifteen minutes, then we do the digging.'), ('A number on every leak.', 'So you know what to fix first.')], BOOK),
+      ('Leads', 'leads', _two('Every lead gets an answer.', 'In seconds, by text, in your business’s name, with a time to pick.'), ART.reply(), 4,
        [('A reply in seconds.', 'Day or night, before they try the next company.'), ('They pick the time.', 'Openings from your real calendar. No phone tag.')], '<a class="inl" href="/answering">How answering works</a>'),
       ('Quotes', 'quotes', _two('No quote goes quiet.', 'A check-in on day two and another on day five, until it is a yes or a no.'), ART.quote(), 4,
        [('Out the same day.', 'While the job is still fresh for them.'), ('It stops when they answer.', 'A yes gets booked and a no gets closed.')], '<a class="inl" href="/follow-up">How follow-up works</a>'),

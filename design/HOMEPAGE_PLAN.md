@@ -178,3 +178,10 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Pulled 50 frames from the recording. What the reference does between sections: the hero picture grows and its side pieces fly in on first scroll; a list stays put beside scrolling blocks; hard edges where the theme flips for its core section; the quote fills in word by word; a line graph draws with the scroll.
 - Ours: hero picture scales in with its two pieces (`--hq`); the clock moved mid-page, after the list, and is the flip to light (the title page floods bone via `--lt` and runs into the bone call band); the founder quote reads itself word by word (`.qw`); then dark again for the stats and four columns.
 - Order: hero, picture, tools, statement, list of five blocks, clock, call band (light), quote, stats, four columns, close.
+
+## Pass 36 (Sam: go fully light and follow Attio's templates across the whole site, with our own content and our own CRM screens)
+- Homepage is light (v36 in home2.css): warm white ground, near-black type, pale grey panels with dark line drawings, crimson accent. Palette is Cinder's own, not lifted from the reference.
+- The app is the hero picture again (real Calendar screen with its three floating pieces, playing the booking on first scroll). The funnel moved into the list as "The audit".
+- One dark stretch: the clock (black stage, tunnel, floods to light on the title page, into the light call band). The closing band and footer are dark.
+- `?motion=on` forces the motion on where the system asks for reduced motion.
+- Next: inner pages on the reference's inner-page template (small centered headline over one picture, alternating statement-and-picture blocks, quote, grid, dark closing band). Not started.

@@ -265,7 +265,13 @@
   })();
   // ---- hero picture: it grows into place and its two floating pieces slide in as the first scroll happens
   var hvs = document.querySelector('.hv');
-  if (hvs) Flow.sub(function (y) { hvs.style.setProperty('--hq', innerWidth <= 900 ? 1 : ez01(y / (innerHeight * .5)).toFixed(4)) });
+  if (hvs) (function () {
+    var fig = hvs.querySelector('.pz-fig'), cs = fig && fig.querySelector('.cs'), stage = hvs.querySelector('.pz-stage'), bs = [].slice.call(hvs.querySelectorAll('.pz-b')), SHOW = [1, 3, 4], last = -1;
+    function fit() { if (!cs) return; var w = fig.offsetWidth; if (!w) return; cs.style.setProperty('--s', (w / 1600).toFixed(5)); stage.style.setProperty('--fw', w + 'px'); stage.style.setProperty('--pz', Math.max(.58, Math.min(1, w / 780)).toFixed(3)) }
+    if (cs) { if ('ResizeObserver' in window) new ResizeObserver(fit).observe(fig); addEventListener('resize', fit); fit(); setTimeout(fit, 400) }
+    Flow.sub(function (y) { hvs.style.setProperty('--hq', innerWidth <= 900 ? 1 : ez01(y / (innerHeight * .5)).toFixed(4));
+      if (!cs) return; var st = innerWidth <= 900 ? 4 : y < 30 ? 0 : y < 170 ? 1 : y < 330 ? 2 : y < 480 ? 3 : 4; if (st !== last) { last = st; for (var k = 1; k <= 4; k++) hvs.classList.toggle('s' + k, st >= k); bs.forEach(function (b, i) { b.classList.toggle('on', st >= SHOW[i]) }) } })
+  })();
   // ---- the quote reads itself: words go from grey to white as it comes up the screen
   var sq = document.querySelector('.samq blockquote');
   if (sq && sq.firstChild && sq.firstChild.nodeType === 3) (function () {

@@ -727,3 +727,40 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 .pt-ac+.ac{animation:none!important;background:#f2f1ee;padding-top:40px}
 .samq .qw{color:#55534f;transition:color .3s}.samq .qw.on{color:#f2f1ee}
 @media (prefers-reduced-motion:reduce){html.fm .pt-ac{display:block!important}html.fm .pt2-run{display:block!important}}
+/* ---- v36: the homepage is light. Warm white ground, near-black type, pale grey panels behind the drawings (now dark lines), crimson as the accent.
+   The app is the hero picture again. The page goes dark once, for the clock, and ends on the dark closing band. ---- */
+html,body{background:#fbfaf8!important;color:#0a0a0c}
+.backdrop,.hs canvas,.tk{display:none!important}
+.hs{background:linear-gradient(#fbfaf8 30%,#f5eceb)}
+#nav{background:rgba(251,250,248,.88)!important;border-color:rgba(10,10,12,.08)!important}
+#nav a,#nav summary{color:#3a3936!important}#nav .btn{background:#0a0a0c!important;color:#fbfaf8!important}#nav svg path{fill:#0a0a0c}
+.hs h1,.hs h1 span,.it-s b,.fa-st b,.fa-two b,.b4-g b,.sx-h{color:#0a0a0c!important}
+.hs p,.fa-two p,.b4-g p{color:#55534f!important}.it-s,.fa-st{color:#9a9893!important}
+.hs .btn,.fa .btn,.ac .btn{background:#0a0a0c!important;color:#fbfaf8!important}.hs .btn.ghost{background:transparent!important;color:#0a0a0c!important;box-shadow:inset 0 0 0 1px rgba(10,10,12,.22)!important}
+.hv{max-width:1280px;background:none}.hv.pz{height:auto}
+.hv-in{padding:44px 40px 52px;background:linear-gradient(#f5eceb,#f1eeea);transform:scale(calc(.94 + var(--hq,0)*.06));transform-origin:50% 0}
+.hv .pz-stage{position:relative;height:min(620px,68vh);overflow:visible;border-radius:0;container-type:size}
+.hv .pz-fig{box-shadow:0 0 0 1px rgba(10,10,12,.08),0 40px 80px -40px rgba(10,10,12,.35)!important}
+.hv .pp{box-shadow:0 0 0 1px rgba(10,10,12,.08),0 24px 60px -24px rgba(10,10,12,.4)}
+.axp.ill{background:#f3f1ed!important;border-color:rgba(10,10,12,.1)!important}.axp.ill::before{--c:rgba(10,10,12,.5)!important}.axp>small{color:#8b8985!important}
+.il path,.il ellipse,.il circle,.il .tp,.il .lf,.il .rt{fill:#f3f1ed!important;stroke:rgba(10,10,12,.55)!important}
+.il .nf{fill:none!important}.il .hi,.il .hi.tp{stroke:#0a0a0c!important}.il .ft,.il .sk,.il .bv,.il .fo{stroke:rgba(10,10,12,.2)!important}
+.il .dt,.il .cd{fill:#0a0a0c!important;stroke:none!important}.il .cl,.il .rs,.il .lk,.il .dm{stroke:rgba(10,10,12,.34)!important}
+.il .rd{stroke:#e0193a!important}.il .rdt{fill:#e0193a!important;stroke:none!important}
+.il text.lb{fill:#6f6d69!important}.il .now text.lb,.il .fl.cur text.lb{fill:#0a0a0c!important}.il text.lb.rdx{fill:#e0193a!important}.il [data-is].cur{stroke:#0a0a0c!important}
+.tools{background:transparent!important}.tools-lab,.sx-k{color:#8b8985!important}.tools li{color:#3a3936!important}
+.fa-nav a{color:#a8a6a1!important;border-color:rgba(10,10,12,.12)!important}.fa-nav a:hover{color:#55534f!important}.fa-nav a.cur{color:#0a0a0c!important;border-left-color:#e0193a!important}
+.fa .inl,.b4 .inl{color:#0a0a0c!important}
+.b4-g{border-color:rgba(10,10,12,.14)!important}.b4-g span{color:#8b8985!important}
+/* the one dark stretch: the clock */
+.pt-ac{background:#000}.pt-ac .ptc-h .sx-k{color:#8b8985!important}.pt-ac .ptc-h h2{color:#f2f1ee!important}
+.pt-ac .il path,.pt-ac .il circle{fill:#000!important;stroke:rgba(255,248,240,.5)!important}.pt-ac .il .nf{fill:none!important}.pt-ac .il .hi{stroke:#f7f6f3!important}.pt-ac .il .ft{stroke:rgba(255,248,240,.2)!important}
+.pt-ac .il text.lb{fill:#8b8985!important}
+.pt-ac .pt-ov{background:color-mix(in srgb,#fbfaf8 calc(var(--lt,0)*100%),#000)}
+.pt-ac+.ac{background:#fbfaf8!important}
+/* quote, numbers */
+.samq blockquote{color:#0a0a0c}.samq .qw{color:#c4c2bd}.samq .qw.on{color:#0a0a0c}.samq small{color:#8b8985!important}
+#problem h2{color:#0a0a0c!important}#problem p{color:#55534f!important}#problem li{background:#fff!important;border-color:rgba(10,10,12,.1)!important;box-shadow:0 0 0 1px rgba(10,10,12,.08)}
+#problem li b,#problem li strong,#problem li a{color:#0a0a0c!important}#problem li span,#problem li small{color:#8b8985!important}#problem li i,#problem li em,#problem .ov-a span{color:#e0193a!important}
+@media (max-width:900px){.hv-in{padding:16px 10px;transform:none}.hv .pz-stage{height:auto}}
+.closing,footer{background:#000!important}.closing{margin-top:14vh}
