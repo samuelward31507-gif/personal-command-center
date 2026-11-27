@@ -156,3 +156,21 @@ Sam's point: the page read as a speed-to-lead offer, and Cinder builds across th
 - Under it, the eight parts as cells, each one line about the outcome and a link to its page: getting found, front desk, calendar, quotes, money, after the job, team and office, custom. Outcomes, not a feature list.
 - Closing line: "The one thing we don't do is run ads." (already on `/everything`).
 - No count of builds is stated, and the phone agent is not mentioned, because voice is not being pitched.
+
+## 14. Re-ordered around the audit (27 Nov, Sam: "We're not selling speed to lead. We're selling audits.")
+
+The look stays. The order and the information changed so the page says, from the top, that Cinder audits the whole business and then builds whatever fixes it.
+
+Order on `/new` now:
+
+1. Hero. Headline unchanged (Sam's call, still open). New line under it: "We audit your business for free, find what's costing you jobs and hours, and build the systems that fix it." The audit report now has a fourth finding in hours, not dollars.
+2. Tools row.
+3. "What we do": "We take your business apart and fix what's costing you. Not one product. ... If a task repeats, AI should be doing it."
+4. The clock: "Fifteen minutes, one call." into the dark stretch.
+5. Dark: "It starts with / The free audit", then five things the audit covers across the business (calls and messages, quotes and booking, getting paid, work done by hand, getting found).
+6. Dark: "How it works". Four steps (the call, the findings, the build, it runs) beside an example findings report with five findings in dollars a month, money waiting and hours a week.
+7. Dark: "Then we build whatever fixes it", the ring (five of eight parts lit, matching the findings) and the eight parts.
+8. Light: "What an audit finds". The leaks are now examples, and there are six: the five lead leaks plus "Work done by hand".
+9. Dark closing band: "Find out what you're missing."
+
+Still to build: founder quote, sourced numbers, footer.

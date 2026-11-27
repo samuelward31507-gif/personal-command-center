@@ -15,6 +15,18 @@ hero_body = re.search(r'(<section class="hero">.*?)</body>', hero, re.S).group(1
 CAL = 'href="https://cal.com/audit-call/15min" target="_blank" rel="noopener"'
 hero_body = hero_body.replace('<a class="btn" href="#">Book your free audit</a>', '<a class="btn" %s>Book your free audit</a>' % CAL)
 hero_body = hero_body.replace('<a class="btn q" href="#">See what we check</a>', '<a class="btn q" href="/free-audit">See what we check</a>')
+for _a, _b in [
+    ('Most lost jobs are lost after the lead comes in. We find where yours go, put a number on each leak, and build what stops it.',
+     'We audit your business for free, find what&rsquo;s costing you jobs and hours, and build the systems that fix it.'),
+    ('<tr><th>Leak</th><th>Lost a month</th><th>What stops it</th></tr>', '<tr><th>Finding</th><th>Costing you</th><th>What fixes it</th></tr>'),
+    ('<td class="n">$2,400</td>', '<td class="n">$2,400 a month</td>'), ('<td class="n">$3,100</td>', '<td class="n">$3,100 a month</td>'),
+    ('<td class="n">$900</td><td><span class="fix">A request the day after</span></td></tr>',
+     '<td class="n">$900 a month</td><td><span class="fix">A request the day after</span></td></tr>'
+     '<tr><td><i class="h"></i>Scheduling and reminders done by hand</td><td class="n h">11 hours a week</td><td><span class="fix">Booking that runs itself</span></td></tr>'),
+    ('<h2>Where the jobs went</h2>', '<h2>Where the jobs and hours went</h2>'),
+]:
+    assert _a in hero_body, _a[:50]
+    hero_body = hero_body.replace(_a, _b)
 
 # ---------- tools grid ----------
 ORDER = ['Google Calendar', 'Jobber', 'Gmail', 'Housecall Pro', 'Instagram',
@@ -24,10 +36,14 @@ TOOLS = ('<section class="tl" aria-label="Works alongside the tools you already 
          '<p class="tl-c">Works alongside the tools you already use</p><ul>%s</ul></div></section>' % cells)
 
 # ---------- problem statement ----------
-PROB = ('<section class="st"><div class="w st-i"><span class="lb">The problem</span>'
-        '<p class="st-t">The jobs you lose, you never hear about. '
+WHAT = ('<section class="st"><div class="w st-i"><span class="lb">What we do</span>'
+        '<p class="st-t">We take your business apart and fix what&rsquo;s costing you. '
+        '<span>Not one product. We look at how you run, find where the jobs and the hours go, and build the systems that stop it. '
+        'If a task repeats, AI should be doing it.</span></p></div></section>')
+PROB = ('<section class="st st2"><div class="w st-i"><span class="lb">What an audit finds</span>'
+        '<p class="st-t">The jobs and hours you lose, you never hear about. '
         '<span>The caller who got voicemail doesn&rsquo;t ring back. The quote that went quiet doesn&rsquo;t remind you. '
-        'They hire someone else, and your month looks normal.</span></p></div></section>')
+        'Here are six places we look.</span></p></div></section>')
 
 # ---------- the chart: calls by day and hour ----------
 DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -187,8 +203,19 @@ RV_T = tally('Reviews, last 30 days', '34 jobs. 3 reviews.',
 RV_A = facts('Last month', 'Your count', [('Jobs finished', '34', ''), ('Asked for a review', '5', ''), ('Reviews received', '3', 'y')])
 RV_B = summ([('Finished jobs never asked', '29', False), ('Leave one when asked', '3 in 5', True)], ('Reviews missed a month', 'About 17'), 'y')
 
+# ---------- 6: work done by hand ----------
+TASKS = [('Scheduling and rescheduling', 3), ('Writing up estimates', 2.5), ('Appointment reminders', 2), ('Typing leads into the calendar', 2), ('Invoices and payment reminders', 1.5)]
+WK = ('<div class="cd ch wk">%s<div class="wk-b">%s</div></div>'
+      % (head('A week of repeat work', 'Ridgeline Fence, one week'),
+         ''.join('<div class="wk-r"><span>%s</span><div><u style="width:%d%%"></u></div><b>%s h</b></div>' % (n, round(h / 3 * 100), ('%g' % h)) for n, h in TASKS)))
+WK_T = tally('By hand, one week', '11 hours. Five tasks.',
+             '<div class="ta-s">%s</div>' % ''.join('<i class="y" style="flex:%g"></i>' % h for _, h in TASKS),
+             [('Done every working day', '3 of 5'), ('Could run on their own', '5 of 5'), ('Across a year', 'About 550 hours')])
+WK_A = facts('One Tuesday', 'By hand', [('Reminder texts sent', '9', ''), ('Bookings typed into the calendar', '6', ''), ('Invoices written up', '3', 'y')])
+WK_B = summ([('Hours a week by hand', '11', False), ('Working weeks a year', '50', True)], ('Hours a year', 'About 550'), 'y')
+
 SUM = summ([('New callers who got no answer', '3', False), ('Leads that become jobs', '1 in 3', True), ('Average job', '$2,400', True)], ('Lost a month', '$2,400'))
-LEAKS = ['After-hours calls', 'Slow replies', 'Quotes that go quiet', 'Late invoices', 'No reviews']
+LEAKS = ['After-hours calls', 'Slow replies', 'Quotes that go quiet', 'Late invoices', 'No reviews', 'Work done by hand']
 BLOCKS = [
     block(1, 'The call you never knew about.', 'Saturday, 7:42 PM: a homeowner gets your voicemail and calls the next company on the list.',
           CHART + TALLY, ('78%', 'of people have taken their business elsewhere after a company didn&rsquo;t pick up.', 'CallRail survey of 1,000 consumers, 2025'),
@@ -210,6 +237,10 @@ BLOCKS = [
           RV + RV_T, None,
           'Count the jobs you finished last month and the reviews you got. Then search your trade and town and count theirs.', RV_A,
           'A homeowner choosing between two companies sees the review counts side by side. The audit works out how many you missed.', RV_B),
+    block(6, 'The hours nobody counts.', 'Every booking typed in twice, every reminder sent by hand, every Friday night spent on invoices. Most of it doesn&rsquo;t need a person.',
+          WK + WK_T, None,
+          'For one week, write down every task you do by hand more than twice. That list is where the audit starts.', WK_A,
+          'It doesn&rsquo;t show up as a lost job. It shows up as your evenings. The audit adds up the hours and marks which ones can run on their own.', WK_B),
 ]
 LK = ('<section class="lk"><div class="w lk-g"><aside class="lk-n"><ul>%s</ul></aside><div class="lk-m">%s</div></div></section>'
       % (''.join('<li%s><a href="#leak-%d">%s</a></li>' % (' class="on"' if i == 0 else '', i + 1, n) for i, n in enumerate(LEAKS)), ''.join(BLOCKS)))
@@ -228,23 +259,24 @@ FACE = ('<svg class="ck-face" viewBox="-100 -100 200 200" aria-hidden="true"><g 
         '<g class="ck-h"><path class="ck-w" d="M0 0L0 -80A80 80 0 0 1 80 0Z"/><path class="ck-a" d="M0 -80A80 80 0 0 1 80 0"/>'
         '<line class="ck-n" x1="0" y1="0" x2="0" y2="-80" transform="rotate(90)"/><circle r="1.9" fill="#fff"/></g></svg>' % (outer, inner))
 CK = ('<section class="ck"><div class="ck-pin"><div class="ck-top"><span class="lb">Where to start</span>'
-      '<p class="st-t">Fifteen minutes to find yours. <span>One call. We ask how leads reach you and what happens after, then put a number on each leak.</span></p>'
+      '<p class="st-t">Fifteen minutes, one call. <span>We go through how your business runs, part by part, and put a number on what it&rsquo;s costing you.</span></p>'
       '<a class="btn" %s>Book your free audit</a></div>'
       '<div class="ck-dark">%s<div class="ck-count">15:00</div>'
       '<div class="ck-title"><span>It starts with</span><h2>The free audit</h2></div></div></div></section>' % (CAL, FACE))
 
 IC = {
+ 'find': '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
  'call': '<path d="M7.6 3.6 5.4 4.2c-.8.2-1.3 1-1.2 1.8.7 6.3 6.2 11.7 12.4 12.4.9.1 1.6-.4 1.9-1.2l.6-2.2-3.7-2-1.6 1.6c-1.9-1-3.6-2.7-4.6-4.6l1.6-1.6z"/><path d="m15 4 4.5 4.5m0-4.5L15 8.5"/>',
  'time': '<circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.6 1.7M9.5 2.8h5"/>',
  'quote': '<path d="M6.5 3.5h8l3.5 3.5v13.5h-11.5z"/><path d="M14.5 3.5V7H18M9.5 11.5h5.5M9.5 15h3.5"/>',
  'money': '<rect x="3.5" y="6" width="17" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 9.5v5M17.5 9.5v5"/>',
  'star': '<path d="m12 3.8 2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
 }
-PTS = [('call', 'Missed calls.', 'We count the calls nobody answered last month.'),
-       ('time', 'First replies.', 'We time how long a new lead waits to hear back.'),
-       ('quote', 'Open quotes.', 'We count the quotes that never got a follow-up.'),
-       ('money', 'Unpaid work.', 'We total the finished jobs still waiting on money.'),
-       ('star', 'Reviews.', 'We compare jobs finished with reviews asked for.')]
+PTS = [('call', 'Calls and messages.', 'Who answers, how fast, and what gets missed.'),
+       ('quote', 'Quotes and booking.', 'How a lead becomes a job on the calendar.'),
+       ('money', 'Getting paid.', 'When invoices go out and how long they wait.'),
+       ('time', 'Work done by hand.', 'Every task someone repeats that could run itself.'),
+       ('find', 'Getting found.', 'What your website and your Google listing bring in.')]
 AU = ('<section class="au"><div class="w au-g">%s</div><div class="w au-e"></div></section>'
       % ''.join('<div><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg><h3>%s</h3><p>%s</p></div>' % (IC[k], t, p) for k, t, p in PTS))
 
@@ -253,9 +285,9 @@ PARTS = [('Getting found', 'find', 'A website and a Google listing that turn sea
          ('Front desk', 'chat', 'Every call, form and message answered, day or night.', '/answering', True),
          ('Calendar', 'cal', 'Estimates booked, crews scheduled, customers reminded.', '/booking', False),
          ('Quotes', 'quote', 'Sent the same day and followed up until there is an answer.', '/estimates', True),
-         ('Money', 'money', 'Invoices out the day the job ends, and chased until paid.', '/invoicing', False),
+         ('Money', 'money', 'Invoices out the day the job ends, and chased until paid.', '/invoicing', True),
          ('After the job', 'star', 'Reviews, referrals and repeat work asked for every time.', '/reviews', True),
-         ('Team and office', 'team', 'Hiring, reports and the paperwork nobody has time for.', '/reports', False),
+         ('Team and office', 'team', 'Hiring, reports and the paperwork nobody has time for.', '/reports', True),
          ('Custom', 'plus', 'If it is not on this list, we build it anyway.', '/custom-builds', False)]
 IC.update({
  'find': '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
@@ -278,15 +310,35 @@ for i, (name, _, _, _, lit) in enumerate(PARTS):
         spokes += '<path class="bd-sp" pathLength="1" d="M%.1f %.1fL%.1f %.1f"/>' % (CX + 52 * math.sin(a), CY - 52 * math.cos(a), x, y)
     nodes += '<circle class="bd-n%s" cx="%.1f" cy="%.1f" r="5"/>' % (' lit' if lit else '', x, y)
     labels += '<text class="bd-l%s" x="%.1f" y="%.1f" text-anchor="%s">%s</text>' % (' lit' if lit else '', lx, ly + dy, anchor, name)
-WHEEL = ('<svg class="bd-w" viewBox="0 0 520 412" role="img" aria-label="Eight parts of a business in a ring. Three are marked as found by an example audit: front desk, quotes and after the job.">'
+WHEEL = ('<svg class="bd-w" viewBox="0 0 520 412" role="img" aria-label="Eight parts of a business in a ring. Five are marked as found by an example audit: front desk, quotes, money, after the job, and team and office.">'
          '<g class="bd-k">%s</g>%s%s%s<text class="bd-c1" x="%d" y="%d" text-anchor="middle">Example audit</text>'
-         '<text class="bd-c2" x="%d" y="%d" text-anchor="middle">3 of 8</text></svg>' % (ring, spokes, nodes, labels, CX, CY - 8, CX, CY + 20))
+         '<text class="bd-c2" x="%d" y="%d" text-anchor="middle">5 of 8</text></svg>' % (ring, spokes, nodes, labels, CX, CY - 8, CX, CY + 20))
 BD = ('<section class="bd"><div class="w bd-h"><div class="bd-t"><span class="lb">After the audit</span>'
       '<p class="st-t">Then we build whatever fixes it. <span>Not one product. A website, a front desk, a calendar, quotes, invoices, reviews: '
       'whichever parts the audit says are costing you.</span></p><a class="btn g" href="/everything">See everything we build</a></div>'
       '<div class="bd-r">%s</div></div><div class="w bd-g">%s</div>'
       '<div class="w bd-e"><p>The one thing we don&rsquo;t do is run ads.</p></div></section>'
       % (WHEEL, ''.join('<a href="%s"><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg><h3>%s.</h3><p>%s</p></a>' % (h, IC[k], n, t) for n, k, t, h, _ in PARTS)))
+
+# ---------- how it works: the call, the findings, the build, it runs ----------
+STEPS = [('The call.', 'Fifteen minutes, part by part: how work comes in, gets quoted, gets done and gets paid.'),
+         ('The findings.', 'A short report of what&rsquo;s costing you, in dollars a month and hours a week. It&rsquo;s yours to keep.'),
+         ('The build.', 'We build the fixes you choose, and only those.'),
+         ('It runs.', 'The systems do the repeat work. You see what they did in one app on your phone.')]
+FIND = [('Front desk', '8 calls missed after hours', '$2,400 a month', 'r', 'A text back in seconds'),
+        ('Quotes', '13 quotes never followed up', '$3,100 a month', 'r', 'Check-ins on day two and five'),
+        ('After the job', '29 finished jobs never asked for a review', '$900 a month', 'r', 'A request the day after'),
+        ('Money', 'Invoices go out six days late', '$14,600 waiting', 'y', 'An invoice the day the job ends'),
+        ('Team and office', 'Scheduling and reminders done by hand', '11 hours a week', 'y', 'Booking and reminders that run themselves')]
+FD = ('<div class="fd"><div class="fd-h"><span class="dot"></span><b>Audit findings</b><span>Ridgeline Fence</span><span class="tag">Example business, sample data</span></div>%s'
+      '<div class="fd-f"><div><b>$6,400</b>lost a month</div><div><b>$14,600</b>waiting to be paid</div><div><b>11 hours</b>by hand a week</div></div></div>'
+      % ''.join('<div class="fd-r"><small>%s</small><b>%s</b><em class="%s">%s</em><span><i></i>%s</span></div>' % (p, f, t, c, b) for p, f, c, t, b in FIND))
+HW = ('<section class="hw"><div class="w hw-g"><div class="hw-t"><span class="lb">How it works</span>'
+      '<p class="st-t">One call. Then a plan with numbers on it. <span>You decide what gets built.</span></p>'
+      '<ol>%s</ol></div><div class="hw-r">%s</div></div></section>'
+      % (''.join('<li><div><b>%s</b><span>%s</span></div></li>' % st for st in STEPS), FD))
+CL = ('<section class="cl"><div class="w cl-i"><h2>Find out what you&rsquo;re missing.</h2><p>A free audit of your business. You keep what we find.</p>'
+      '<div><a class="btn" %s>Book your free audit</a><a class="btn g" href="/free-audit">See what we check</a></div></div></section>' % CAL)
 
 JS = r"""
 (function(){
@@ -306,7 +358,7 @@ new IntersectionObserver(function(e,o){if(e[0].isIntersecting){bd.classList.remo
 })();
 
 (function(){
-var ck=document.querySelector('.ck'),top=document.querySelector('.top'),au=document.querySelector('.au');if(!ck)return;
+var ck=document.querySelector('.ck'),top=document.querySelector('.top'),darks=document.querySelectorAll('.au,.hw,.bd,.cl');if(!ck)return;
 var q=location.search,force=/[?&]motion=on/.test(q),snap=/[?&]snap=1/.test(q),band=ck.querySelector('.ck-dark'),cur=-1,dk=false;
 if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!force){onscroll=nav;nav();return}
 ck.classList.add('on');
@@ -318,7 +370,8 @@ function ez(x){return x*x*(3-2*x)}
 function measure(){vw=document.documentElement.clientWidth;vh=innerHeight;R0=Math.min(vh*.22,vw*.36,240);R1=Math.hypot(vw/2,vh/2)*1.03;
 inner.setAttribute('transform','scale('+Math.min(.8,.44*vh/R1).toFixed(4)+')');cur=-1}
 function target(){var r=ck.getBoundingClientRect();return cl((vh*.85-r.top)/(vh*.85))+cl(-r.top/(r.height-vh))}
-function nav(){var a=au.getBoundingClientRect(),c=ck.getBoundingClientRect(),o=ck.classList.contains('on'),k=band.getBoundingClientRect(),b2=document.querySelector('.bd'),d=(a.top<34&&(b2||au).getBoundingClientRect().bottom>34)||(o&&cur>1.8&&c.bottom>34)||(!o&&k.top<34&&k.bottom>34);
+function nav(){var c=ck.getBoundingClientRect(),o=ck.classList.contains('on'),k=band.getBoundingClientRect(),d=(o&&cur>1.8&&c.bottom>34)||(!o&&k.top<34&&k.bottom>34);
+for(var i=0;i<darks.length&&!d;i++){var r=darks[i].getBoundingClientRect();d=r.top<34&&r.bottom>34}
 if(d!==dk){dk=d;top.classList.toggle('dk',d)}}
 function draw(v){var a=ez(cl(v)),p=cl(v-1),th=a*Math.PI/2,x=(80*Math.sin(th)).toFixed(2),y=(-80*Math.cos(th)).toFixed(2);
 needle.setAttribute('transform','rotate('+(a*90).toFixed(2)+')');
@@ -555,6 +608,42 @@ em.g,.tg-g{background:#e7f6ec;color:#1c7a43}em.r{background:#fdeaea;color:#c23b3
 .bd-e{border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(40px,3.4vw,64px) var(--pad) clamp(88px,7vw,132px)}
 .bd-e p{margin:0;font-size:clamp(15px,.92vw,17.5px);color:#8f9197}
 
+/* ---- re-ordered page: audit first ---- */
+.ground{height:690px}.rep{height:742px}
+td i.h{background:var(--amber)}td.n.h{color:#a86a00}td.n{white-space:nowrap}
+.st2{border-top:0}
+.hw{background:var(--dk);color:#fff}
+.hw .lb,.cl .lb{background:rgba(109,155,255,.16);color:#a9c4ff}
+.hw-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.06fr);border-left:1px solid var(--dl);border-right:1px solid var(--dl);border-bottom:1px solid var(--dl)}
+.hw-t{padding:clamp(88px,7.4vw,140px) var(--pad) clamp(72px,6vw,112px)}
+.hw-t .st-t{color:#fff;max-width:14em;font-size:clamp(27px,1.95vw,37px)}.hw-t .st-t span{color:#8f9197}
+.hw ol{list-style:none;margin:clamp(36px,3vw,56px) 0 0;padding:0;counter-reset:s;max-width:34em}
+.hw li{display:grid;grid-template-columns:clamp(30px,2.1vw,40px) 1fr;padding:clamp(14px,1.05vw,20px) 0;border-top:1px solid var(--dl)}
+.hw li::before{counter-increment:s;content:counter(s);font:500 12px/1 "Geist Mono",monospace;color:#7f8187;padding-top:5px}
+.hw li b{display:block;font-size:clamp(15px,.92vw,17.5px);font-weight:560;letter-spacing:-.012em}
+.hw li span{display:block;margin-top:3px;font-size:clamp(14px,.84vw,16px);line-height:1.35;color:#8f9197}
+.hw-r{border-left:1px solid var(--dl);padding:clamp(40px,3.4vw,64px) clamp(24px,2.6vw,50px);display:flex;align-items:center;justify-content:center}
+.fd{width:100%;max-width:580px;background:#17181a;border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.09),0 40px 70px -36px rgba(0,0,0,.9)}
+.fd-h{display:flex;align-items:center;gap:10px;height:46px;padding:0 18px;border-bottom:1px solid var(--dl);font-size:13px;color:#8f9197}
+.fd-h b{color:#fff;font-weight:600}.fd-h .tag{margin-left:auto;font:500 11px/1 "Geist Mono",monospace;color:#7f8187}.fd-h .dot{width:9px;height:9px;border-radius:3px;background:#5d90fb}
+.fd-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 16px;padding:13px 18px 14px;border-bottom:1px solid var(--dl)}
+.fd-r small{grid-column:1/-1;font:500 11px/1 "Geist Mono",monospace;color:#7f8187}
+.fd-r b{font-size:14px;font-weight:540;letter-spacing:-.008em}
+.fd-r em{font-style:normal;font-size:14px;font-weight:560;font-variant-numeric:tabular-nums;white-space:nowrap;color:#ff8a8e}.fd-r em.r,.fd-r em.y{background:none}.fd-r em.r{color:#ff8a8e}.fd-r em.y{color:#f5b83d}
+.fd-r span{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12.5px;color:#8f9197}.fd-r span i{width:6px;height:6px;border-radius:50%;background:#5d90fb;flex:none}
+.fd-f{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:15px 18px 17px;font-size:12px;color:#8f9197}
+.fd-f b{display:block;margin-bottom:2px;color:#fff;font-size:18px;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+@media(min-width:1700px){.fd{zoom:1.1}}
+.wk{width:596px}.wk-b{margin-top:16px;padding-top:8px;border-top:1px solid var(--line)}
+.wk-r{display:grid;grid-template-columns:204px 1fr 46px;align-items:center;gap:12px;height:42px;font-size:12.5px;color:var(--t2)}
+.wk-r div{height:10px;border-radius:5px;background:#f1f2f5}.wk-r u{display:block;height:100%;border-radius:5px;background:var(--amber)}
+.wk-r b{text-align:right;font-weight:540;color:var(--ink);font-variant-numeric:tabular-nums}
+.cl{background:var(--dk);color:#fff;text-align:center}
+.cl-i{border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(112px,9.5vw,180px) 24px clamp(120px,10vw,190px)}
+.cl h2{margin:0;font-size:clamp(34px,2.95vw,56px);line-height:1.04;font-weight:600;letter-spacing:-.04em}
+.cl p{margin:clamp(12px,.95vw,18px) 0 0;font-size:clamp(16px,1vw,19px);color:#8f9197}
+.cl-i div{margin-top:clamp(24px,1.9vw,36px);display:flex;gap:8px;justify-content:center}.cl .btn:not(.g){background:#fff;color:var(--ink)}
+
 /* ---- narrower screens ---- */
 html,body{overflow-x:clip}
 @media(max-width:1180px){.bd-g{grid-template-columns:repeat(2,minmax(0,1fr))}.bd-g a:nth-child(4n+1){border-left:1px solid var(--dl)}.bd-g a:nth-child(2n+1){border-left:0}}
@@ -596,6 +685,11 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 .bd-r{border-left:0;padding:8px 6px 40px}.bd-l{font-size:15px}
 .bd-g{grid-template-columns:minmax(0,1fr)}.bd-g a{min-height:0;display:grid;grid-template-columns:24px 1fr;column-gap:14px;padding:20px;border-left:0}
 .bd-g svg{grid-row:1/3;margin:2px 0 0}.bd-g h3{margin:0}.bd-g p{max-width:none}.bd-e{padding:32px var(--pad) 72px}
+.hw-g{grid-template-columns:minmax(0,1fr)}.hw-t{padding:72px var(--pad) 32px}.hw-t .st-t{font-size:25px}
+.hw-r{border-left:0;padding:8px 16px 56px}.fd-h{height:auto;flex-wrap:wrap;gap:6px 10px;padding:12px 14px}.fd-h .tag{margin-left:0;width:100%}
+.fd-r{padding:12px 14px 13px;gap:5px 10px}.fd-r b,.fd-r em{font-size:13px}.fd-f{padding:14px;gap:8px}.fd-f b{font-size:16px}
+.wk{width:100%}.wk-r{grid-template-columns:128px 1fr 40px;gap:8px;height:46px;font-size:12px;line-height:1.25}
+.cl-i{padding:88px 20px 96px}.cl-i div{flex-wrap:wrap}
 .lg-r{gap:9px;padding:0 12px}.lg-r em{font-size:11.5px;padding:0 7px}
 }
 '''
@@ -603,8 +697,8 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 NAV = ('<header class="top"><div class="nav"><a href="/" class="nav-b"><b>%s Cinder Revenue</b></a><ul><li><a href="/everything">What we fix</a></li><li><a href="/free-audit">The free audit</a></li><li><a href="/software">The app</a></li><li><a href="/trades">Trades</a></li><li><a href="/story">Our story</a></li></ul>'
        '<a class="btn" %s>Book your free audit</a></div></header>' % (mark, CAL))
 html = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        '<title>More jobs from the leads you already get | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s<div class="heroband">%s</div>%s%s%s%s%s%s<script>%s</script></body></html>'
-        % (hero_css, CSS, NAV, hero_body, TOOLS, PROB, LK, CK, AU, BD, JS))
+        '<title>More jobs from the leads you already get | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s<div class="heroband">%s</div>%s%s%s%s%s%s%s%s%s<script>%s</script></body></html>'
+        % (hero_css, CSS, NAV, hero_body, TOOLS, WHAT, CK, AU, HW, BD, PROB, LK, CL, JS))
 for p in (ROOT + '/design/mock/home-light.html', ROOT + '/site/new.html'):
     open(p, 'w').write(html)
 print('ok', len(html))
