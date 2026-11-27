@@ -2134,11 +2134,14 @@ OBJ = {   # kind: (what is drawn on the dark shape, counter format, counter end)
     'grid': (''.join('<i style="--i:%d"></i>' % k for k in range(32)), '# of 32', 32),
     'app': (H.mark + '<i class="rg"></i>', 'Cinder', 0),
     'bars': ('<i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i>', '$# a month', 6400),
+    'cols': (''.join('<i style="--i:%d"></i>' % k for k in range(5)), '# of 5', 5),
 }
 
 
-def portal(kind, label, line_, title):
+def portal(kind, label, line_, title, count=True):
     body, fmt, to = OBJ[kind]
+    if not count:
+        fmt, to = '', 0
     return ('<section class="pt pt-%s" data-sp><div class="pt-s"><div class="pt-a"><span>[%s]</span><p>%s</p></div><div class="pt-d"><h2>%s</h2></div><div class="pt-o" aria-hidden="true">%s</div>'
             '<b class="pt-n" aria-hidden="true" data-fmt="%s" data-to="%d">%s</b></div></section>' % (kind, label, line_, title, body, fmt, to, fmt.replace('#', '0')))
 
@@ -2305,6 +2308,24 @@ FIGS = {   # page: (section it goes after, the figure)
     'answering': ('st', linefig('Day or night, the reply goes out from your number.', 'Calls, texts, forms and lead sites', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', _g_answer())),
     'everything': ('fq', linefig('The audit finds what to fix first.', 'Free, and built around your business', 'Each build is made for the business it goes into. Your free audit decides which ones you need.', _g_audit(), 'f', '<div class="cta">%s</div>' % BOOK)),
 }
+
+
+GKIND = {'desk': 'bubble', 'cal': 'grid', 'sales': 'sheet', 'money': 'bars', 'after': 'cols', 'seen': 'app', 'team': 'grid', 'custom': 'app'}
+GNAME = dict(GROUPS)
+def trans(name, body):
+    if name not in BY or 'class="pt ' in body:
+        return body
+    secs = re.findall(r'<section\b.*?</section>', body, re.S)
+    if ''.join(secs) != body:
+        return body
+    hit = [i for i, x in enumerate(secs) if re.match(r'<section class="st\b', x)]
+    if not hit:
+        return body
+    g = BY[name]['group']; plain = re.sub(r'<[^>]+>', '', body)
+    short = ap(BY[name]['short']); x3 = ap(X[name][3]) if name in X and isinstance(X[name][3], str) else ''
+    title = short if short and re.sub(r'<[^>]+>', '', short) not in plain else (x3 or short or GLINE[g])
+    secs.insert(hit[0] + 1, portal(GKIND[g], GNAME[g], BY[name]['name'] + '.', title, count=(GKIND[g] == 'sheet')))
+    return ''.join(secs)
 
 
 def figs(name, body):
@@ -2486,6 +2507,14 @@ clip-path:inset(calc((var(--cy) - var(--h)/2)*(1 - var(--gy))) var(--x) calc((10
 .pt-bars.sp-live .pt-o{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));gap:calc((1 - var(--g,0))*14px);opacity:1;top:calc(var(--cy) + (50% - var(--cy))*var(--g,0));width:calc(var(--w) + (100% - var(--w))*var(--g,0));height:calc(var(--h) + (100% - var(--h))*var(--g,0))}
 .pt-bars .pt-o i{position:relative;box-shadow:inset 0 0 0 1px var(--ink),0 0 0 calc(var(--g,0)*1px) var(--dk);border-radius:calc((1 - var(--g,0))*3px);overflow:hidden}
 .pt-bars .pt-o i::after{content:"";position:absolute;inset:0;background:var(--dk);transform-origin:left;transform:scaleX(clamp(0,calc(var(--a,0)*3.3 - var(--i) + var(--g,0)*6),1))}
+/* five columns filling, then closing up into one screen */
+.pt-cols.sp-live .pt-s{--w:min(420px,80vw);--h:min(150px,34vw);--cy:62%}
+.pt-cols.sp-live .pt-d{z-index:2;background:none;clip-path:none}
+.pt-cols.sp-live .pt-o{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:calc((1 - var(--g,0))*12px);opacity:1;top:calc(var(--cy) + (50% - var(--cy))*var(--g,0));width:calc(var(--w) + (100% - var(--w))*var(--g,0));height:calc(var(--h) + (100% - var(--h))*var(--g,0))}
+.pt-cols .pt-o i{position:relative;box-shadow:inset 0 0 0 1px var(--ink),0 0 0 calc(var(--g,0)*1px) var(--dk);border-radius:calc((1 - var(--g,0))*3px);overflow:hidden}
+.pt-cols .pt-o i::after{content:"";position:absolute;inset:0;background:var(--dk);transform-origin:bottom;transform:scaleY(clamp(0,calc(var(--a,0)*5.4 - var(--i) + var(--g,0)*8),1))}
+/* fine vertical lines along the top and bottom of dark sections on the build pages */
+.yw0,.sg2,.sx.dk,.lf.dk{background-image:linear-gradient(180deg,rgba(16,16,16,0) 0,var(--dk) 180px,var(--dk) calc(100% - 180px),rgba(16,16,16,0) 100%),repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px)}
 /* an app icon being pressed, then opening */
 .pt-app.sp-live .pt-s{--w:168px;--h:168px;--r:40px}
 .pt-app .mk{position:absolute;left:27%;top:27%;width:46%;height:46%;color:#fff;transform:scale(calc(1 - var(--a,0)*.1))}
@@ -2616,7 +2645,7 @@ PAGES = [
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, figs(slug, full(slug, flag(slug, body))), css=PCSS, index=(slug not in ('404', 'day', 'terms')))
+        doc = page(title, desc, '/' + slug, trans(slug, figs(slug, full(slug, flag(slug, body)))), css=PCSS, index=(slug not in ('404', 'day', 'terms')))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)

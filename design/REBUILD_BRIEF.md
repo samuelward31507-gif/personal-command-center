@@ -452,3 +452,14 @@ Sam sent two Attio homepage screenshots: past the top, their window steps back a
 
 - Sam: "I want all the tabs… at the top of the page." The nav's "What we build" now opens a full-width panel listing all 32 builds in their eight groups, plus links to Everything, One day, Check your site and Questions. On phones the menu has a folding "All 32 builds" list. `MEGA` in `mk_home.py` reads the same data as the pages.
 - Sam: bring every page up to the homepage. `mono()` in `mk_home.py` turns every coloured value in both stylesheets and in page markup into the grey of the same lightness at build time (strong accents go near-ink). Kept: the Mac window buttons and the cool wash of the chapter bands. Measured on twelve pages: no coloured pixels above the threshold.
+
+
+## 22v. Every page brought up to the homepage (Nov 27)
+
+Sam: "Do the things you can and bring that custom / advanced feel to all pages."
+
+- Every build page now has a clock-style transition (`trans()` in mk_pages.py) after its problem section: an object fills, grows to the whole screen, and opens on a dark screen with the page's own line. Object by part of the business (`GKIND`): desk = bubble, sales = sheet, calendar and team = grid, money = bars, after the job = five columns (new `cols` kind), getting found and custom = app. Titles reuse copy already on file (`BY[slug]['short']` or `X[slug][3]`); no new claims, and no counter where a number would be invented.
+- Fine vertical lines at the top and bottom of dark sections site-wide (`.cl` in light.css; `.yw0,.sg2,.sx.dk,.lf.dk` in light-pages.css), as background layers.
+- Homepage: a "Built for trades that quote" row under the tools row, seven trades linking to /trades (names from the Trades page plus Fence).
+- `/new` removed (unlinked duplicate of the homepage).
+- Still needs Sam: photo and background, real proof, build timeline, terms wording.

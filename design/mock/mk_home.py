@@ -760,6 +760,11 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 .mm-p .mm-b a{height:40px;font-size:15.5px;font-weight:480;border-bottom:0}
 .mm-p{max-height:calc(100vh - 70px);overflow:auto}
 @media(max-width:1180px){.mg-p{display:none}}
+.tl.tl2{border-top:0}.tl.tl2 ul{grid-template-columns:repeat(7,minmax(0,1fr))}.tl2 li a{display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:inherit}
+@media(min-width:861px){.tl.tl2 li{border-right:1px solid var(--ln);border-bottom:0}.tl.tl2 li:last-child{border-right:0}}
+@media(max-width:860px){.tl.tl2 ul{grid-template-columns:repeat(2,minmax(0,1fr))}.tl.tl2 li:nth-last-child(2){border-bottom:1px solid var(--ln)!important}}
+/* fine vertical lines along the top and bottom of the closing block on every page */
+.cl{background-image:linear-gradient(180deg,rgba(16,16,16,0) 0,var(--dk) 200px,var(--dk) calc(100% - 200px),rgba(16,16,16,0) 100%),repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px)}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
@@ -1434,9 +1439,10 @@ def page(title, desc, path, body, index=True, css=''):
             % dict(t=title, d=desc, u=url, v=VER, nav=NAV, body=mono(body), ft=FT, robots='' if index else '<meta name="robots" content="noindex">', css=('<link rel="stylesheet" href="/assets/%s">' % css) if css else ''))
 
 
-HOME = HERO + TOOLS + PROB + LK + WHAT + HW + CK + BD + FQ + CL   # promise, fits your tools, the problem, what we do, how it starts, how it works, what gets built, who is behind it, ask
+TRADESROW = ('<section class="tl tl2" aria-label="Trades we build for"><div class="w tl-g"><p class="tl-c">Built for trades that quote</p><ul>%s</ul></div></section>'
+             % ''.join('<li><a href="/trades"><span>%s</span></a></li>' % t for t in ['Fence', 'Roofing', 'HVAC', 'Plumbing', 'Landscaping', 'Concrete', 'Painting']))
+HOME = HERO + TOOLS + TRADESROW + PROB + LK + WHAT + HW + CK + BD + FQ + CL   # promise, fits your tools, the problem, what we do, how it starts, how it works, what gets built, who is behind it, ask
 DESC = 'A free fifteen-minute audit of your service business. We find what is costing you jobs and hours, put a number on it, and build systems made for the way you work.'
 open(ROOT + '/site/index.html', 'w').write(page('Find out what your business is losing', DESC, '/', HOME))
-open(ROOT + '/site/new.html', 'w').write(page('Find out what your business is losing', DESC, '/', HOME, index=False))
 open(ROOT + '/site/free-audit.html', 'w').write(page('The free audit', 'A free fifteen-minute audit of your service business. We walk it from the first call to the last invoice, put a number on what it is costing you, and tell you what to fix first. You keep the plan.', '/free-audit', AUDIT))
 print('ok', len(HOME), 'css', len(ALLCSS), 'js', len(JS), VER)

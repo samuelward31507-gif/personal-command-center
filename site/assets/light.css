@@ -205,6 +205,11 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 .mm-p .mm-b a{height:40px;font-size:15.5px;font-weight:480;border-bottom:0}
 .mm-p{max-height:calc(100vh - 70px);overflow:auto}
 @media(max-width:1180px){.mg-p{display:none}}
+.tl.tl2{border-top:0}.tl.tl2 ul{grid-template-columns:repeat(7,minmax(0,1fr))}.tl2 li a{display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:inherit}
+@media(min-width:861px){.tl.tl2 li{border-right:1px solid var(--ln);border-bottom:0}.tl.tl2 li:last-child{border-right:0}}
+@media(max-width:860px){.tl.tl2 ul{grid-template-columns:repeat(2,minmax(0,1fr))}.tl.tl2 li:nth-last-child(2){border-bottom:1px solid var(--ln)!important}}
+/* fine vertical lines along the top and bottom of the closing block on every page */
+.cl{background-image:linear-gradient(180deg,rgba(16,16,16,0) 0,var(--dk) 200px,var(--dk) calc(100% - 200px),rgba(16,16,16,0) 100%),repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px)}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
