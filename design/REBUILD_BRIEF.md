@@ -634,3 +634,6 @@ Sam: "i dont really like all the blue, id rather the transition go to the white 
 
 ### 23o. Reviews landing matched to the Attio dotted screen (Nov 27)
 Sam sent the Attio screen: off-white ground, fine dots about 10px apart, one large centred serif statement with a grey-blue tail and a small two-line credit. Landing now: same ground, statement in serif (ink then #a3abbd), two small lines under it; squares removed from the landing. Own wording, no Attio text or quote.
+
+### 23p. Reviews graph in black and grey (Nov 27)
+Sam: "But the graph is still blue". Curve, drop lines, fill, label and stat rules now ink and grey. Blue remains on Reviews only in the squares, the ask bubble and buttons.
