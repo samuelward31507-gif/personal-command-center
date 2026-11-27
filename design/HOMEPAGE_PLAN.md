@@ -155,3 +155,9 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Cut the six-layer audit section: its promise ("You keep the plan, whether or not you work with us") moved onto the funnel, now labelled "The free audit". `stack()` and `AUDIT` stay in patch_home.py, unplaced.
 - Cut the 3D patch bay (`#build`) and its loader. Order is now: hero, tools, audit funnel, stats, front desk + portal, calendar, quotes, money, after the job, custom, what you get back, grid, quote, call band, close.
 - Colour rule (v30): crimson marks what is being lost ("someone else gets.", the running total, "missing.") and marks the step being read (a short bar on the rail and the step's number). Nothing else is red; drawings stay monochrome.
+
+## Pass 31 (Sam: nothing redundant, the layout should have a reason, and the 3D animation back)
+- The page follows the hero's three steps. Stats (why), then 01 We audit (funnel), 02 We build (the 3D bay as an overview of eight bays in one line each, then four of them shown at work: front desk + portal, calendar, quotes, money, reviews, then custom), 03 It runs ("Most of the day is already done"), the founder quote, the call, the close.
+- The 3D bay is generated now (`BAY` in patch_home.py) with one line per bay and no links; its long paragraphs repeated the sections below it.
+- Removed `#everything` ("If AI can do it, we build it." plus the eight-part grid): it repeated the bay. Its link moved to the Custom section.
+- Copy overlaps removed: the front desk no longer tells the booking (the calendar does); "you keep the plan" is said in the call band, not also on the funnel.

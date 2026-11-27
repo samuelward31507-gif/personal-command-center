@@ -650,3 +650,8 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 .sx-st.cur::after{transform:scaleY(1)}
 .sx-st.cur .sx-n{color:#e0193a}
 @media (max-width:900px){.sx-st::after{display:none}.sx-st .sx-n{color:#e0193a}}
+/* ---- v31: the 3D bay is back as the overview (eight short lines, one per bay), in place of the grid that used to repeat it at the bottom. ---- */
+@media (min-width:901px){#build .hx-step{min-height:50vh}#build .hx-step:first-child{min-height:74vh}}
+#build .hx-step .sx-k{margin-bottom:24px}
+#build .hx-step p:not(.bw):not(.hx-lead):not(.sx-k){max-width:20em}
+.sx-lk .inl+.inl{margin-left:28px}

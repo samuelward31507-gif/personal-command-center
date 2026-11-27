@@ -15,10 +15,11 @@ def ins(before, html):
     global s
     k = s.index(before); s = s[:k] + html + s[k:]
 # The old 3D leak track, the six-layer render and the dial are retired. Their sections are rebuilt below as flat product pieces.
-for old in ('<section id="leaks"', '<section id="inside"', '<section id="back"', '<section id="build"'):   # the patch bay went in pass 30: it previewed the sections that follow it
+for old in ('<section id="leaks"', '<section id="inside"', '<section id="back"', '<section id="build"', '<section id="everything"'):   # pass 31: the 3D bay is rebuilt below as the overview; the bottom grid repeated it and is gone
     if old in s:
         a_, b_ = blk(old); s = s[:a_] + s[b_:]
-s = s.replace('<script src="/assets/cinder-leaks.js" defer></script>\n', '').replace("when('#inside','/assets/cinder-unit.js',2600);", '').replace("when('#build','/assets/cinder-objects.js',4200)", '')
+s = s.replace('<script src="/assets/cinder-leaks.js" defer></script>\n', '').replace("when('#inside','/assets/cinder-unit.js',2600);", '')
+if "when('#build'" not in s: s = s.replace("addEventListener('load',late)}})();</script>", "addEventListener('load',late)}when('#build','/assets/cinder-objects.js',4200)})();</script>", 1)
 s = s.replace("addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update();\n})();", "if(bd&&bdHost){addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onScroll);update()}\n})();")
 SMALL = '<small>Example business, sample data</small>'
 BOOK = '<a class="inl" href="https://cal.com/audit-call/15min" target="_blank" rel="noopener" data-cta>Book your free audit</a>'
@@ -40,7 +41,7 @@ AV = lambda x: f'<span class="ap-av">{x}</span>'; CK = '<span class="ap-ck"></sp
 # 1. where the jobs go: a funnel, with three lines leaving through its side
 import sys; sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent)); import home_art as ART
 TOT = '$0|$2,400|$2,400|$5,500|$5,500|$6,400'
-WHERE = sx('', 'The free audit', 'Where the jobs go.', 'Most businesses lose them at the same few points. The free audit finds yours and puts a dollar number on each. You keep the plan, whether or not you work with us.',
+WHERE = sx('rev', '01  We audit', 'Where the jobs go.', 'Most businesses lose them at the same few points. The free audit finds yours and puts a dollar number on each.',
   [('Leads come in.', 'Calls, forms and messages. Every one of them cost you something to get.'),
    ('Some never hear back.', 'The ones that came in after hours, or while you were on a job. In this example that is $2,400 a month.'),
    ('Some get booked.', 'The ones you reached in time are on the calendar.'),
@@ -102,15 +103,14 @@ OV = '<div class="pt-ov" aria-hidden="true"><svg class="pt-tun"><g class="pt-c">
 _ART = ART.reply().replace('<svg class="lnv il"', f'<svg class="lnv il" data-dial="{ART.reply_dial()}"', 1)
 FD = [('A lead writes in.', 'A form at 12:40 at night, a text, or a call you could not pick up.'),
       ('A reply in seconds.', 'By text, in your business’s name, before they try the next company.'),
-      ('They pick the time.', 'The reply offers openings from your real calendar. No phone tag.'),
-      ('It lands booked.', 'The estimate is on your calendar with the address and the job on it.')]
+      ('They pick a time.', 'The reply offers three openings from your real calendar. No phone tag.')]
 PORTAL = ('<section class="pt2" id="frontdesk"><div class="pt2-pin"><div class="pt2-box"><i class="pt2-fr" aria-hidden="true"></i><div class="pt-art">' + _ART + '</div></div>' + OV + '<i class="pt-rim" aria-hidden="true"></i></div>'
   + '<div class="pt2-flow"><div class="sx-copy"><div class="sx-hd"><p class="sx-k">Front desk</p><h3 class="sx-h">New leads hear back in seconds.</h3><p class="sx-s">By text, in your business’s name, while they are still looking.</p></div><div class="sx-sts">'
   + ''.join(f'<div class="sx-st" data-at="{i}"><span class="sx-n">{i + 1:02d}</span><h4>{a_}</h4><p>{b_}</p></div>' for i, (a_, b_) in enumerate(FD))
   + '</div><p class="sx-lk"><a class="inl" href="/answering">How answering works</a></p></div></div><div class="pt2-run" aria-hidden="true"></div></section>')
 # The calendar: the app's own screen stays put while three short blocks scroll past and the booking plays on it.
 CALSEC = sx('cal2 pz', 'Calendar', 'The estimate lands on your calendar.', 'The lead is offered three times from your real calendar and picks one. You just show up.',
-  [(b_, d) for _, b_, d in POPS], '/booking|How booking works',
+  [('It is on your calendar.', 'The time they picked is booked. The two they did not pick open back up.'), ('With everything on it.', 'The address and the job are on the booking when you open it.'), ('Reminders set themselves.', 'One the day before and one the morning of, from the moment it books.')], '/booking|How booking works',
   '<div class="pz-stage"><figure class="pz-fig">' + CALV + '</figure>' + ''.join(f'<div class="pz-b pz-b{i + 1}"><div class="pp">{card}</div></div>' for i, (card, _b, _d) in enumerate(POPS)) + '</div>', frame=False)
 QUOTE = sx('rev', 'Quotes', 'No quote goes quiet.', 'Each one gets a check-in on day two and another on day five, and it stops the moment they say yes or no.',
   [('The quote goes out.', 'The same day, while the job is still fresh for them.'), ('Day two, a check-in.', 'A short text asking if they have questions. Sent for you, in your name.'),
@@ -125,29 +125,29 @@ REVIEW = sx('rev', 'After the job', 'Every job ends with a review request.', 'As
 CUSTOM = sx('', 'Custom', 'Built around how you already work.', 'Tell us how the job gets done today and we build it step by step, with room for the next piece.',
   [('We start with how you work now.', 'You walk us through one job, start to finish.'), ('Each step gets its own piece.', 'Cut to the way you already do it, not the other way round.'),
    ('The pieces hand off.', 'One finishes and the next starts, so nothing waits on you.'), ('There is room for the next one.', 'When something new comes up, it already has a place.')],
-  '/custom-builds|How custom builds work', ART.blocks())
-BACK = sx('rev', 'What you get back', 'Most of the day is already done.', 'By the time you look at your phone, the routine work has happened.',
+  '<a class="inl" href="/custom-builds">How custom builds work</a><a class="inl" href="/everything">See everything we build</a>', ART.blocks())
+BACK = sx('rev', '03  It runs', 'Most of the day is already done.', 'By the time you look at your phone, the routine work has happened.',
   [('Answered.', 'New leads got a reply while you were on a job.', 0), ('Booked and followed up.', 'Estimates are on the calendar. Open quotes got their check-in.', 2),
    ('Reminded and asked.', 'Late invoices were nudged. Finished jobs were asked for a review.', 4), ('What’s left is yours.', 'The few things that need a person.', 5)],
   '/software|See the software', ART.tower(), sid=' id="back"')
 
+BAYS = [('Leads', '[01]', 'Answered in seconds, day or night.'), ('Booking', '[02]', 'On your calendar, with a reminder so they show up.'), ('Quotes', '[03]', 'Followed up until it is a yes or a no.'),
+        ('After the job', '[04]', 'Paid, then asked for a review.'), ('Win-backs', '[05]', 'Past customers and quiet quotes hear from you again.'), ('The office', '[06]', 'Job updates, the crew’s schedule, a weekly report, your website.'),
+        ('Anything else', '', 'Two bays stay open for whatever only your business has.'), ('One app', '', 'It all runs in one place. Open it and see what needs you today.')]
+BAY = ('<section id="build" class="hx rev" aria-labelledby="h-build"><div class="hx-vis"><div class="hx-host" data-plate="CinderBay" role="img" aria-label="A machined chassis with eight bays. Six modules are lowered in and screwed down one at a time: leads, booking, quotes, after the job, win-backs and the office. Two blank panels hold places for whatever else your business needs. Red cables then patch every module together."></div></div>'
+  '<div class="hx-copy"><div class="hx-step"><p class="sx-k">02  We build</p><h2 id="h-build">Then we build only what you need.</h2><p class="hx-lead">No packages. Some businesses need two of these, some need twelve. The audit decides.</p></div>'
+  + ''.join(f'<div class="hx-step"><p class="bw">{n}{f"<sup>{i}</sup>" if i else ""}</p><p>{d}</p></div>' for n, i, d in BAYS) + '</div></section>')
 TK = '<div class="tk" aria-hidden="true"></div>'
 W = lambda x: '<!--h2-->' + TK + x + '<!--/h2-->\n'
-ins('<section id="problem"', '<!--h2--><svg class="il-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="ilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0f0f12"/></linearGradient><linearGradient id="ill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111114"/><stop offset="1" stop-color="#08080a"/></linearGradient><linearGradient id="ilr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0a0c"/><stop offset="1" stop-color="#040405"/></linearGradient><radialGradient id="ilg"><stop offset=".12" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="ilm" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#ilg)"/></mask></defs></svg><!--/h2-->\n' + W(WHERE))
+ins('<section id="problem"', '<!--h2--><svg class="il-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="ilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0f0f12"/></linearGradient><linearGradient id="ill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111114"/><stop offset="1" stop-color="#08080a"/></linearGradient><linearGradient id="ilr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0a0c"/><stop offset="1" stop-color="#040405"/></linearGradient><radialGradient id="ilg"><stop offset=".12" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="ilm" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#ilg)"/></mask></defs></svg><!--/h2-->\n')
 # The six-layer audit section was folded into the funnel above in pass 30 (AUDIT and stack() are kept in this file but no longer placed).
 W0 = lambda x: '<!--h2-->' + x + '<!--/h2-->\n'
-ins('<section id="everything"', W(PORTAL) + W0(CALSEC) + W0(QUOTE) + W0(INVOICE) + W0(REVIEW) + W0(CUSTOM) + W0(BACK) + '<!--h2-->' + TK + '<!--/h2-->\n')
+ins('<section class="samq"', W(WHERE) + W0(BAY) + W(PORTAL) + W0(CALSEC) + W0(QUOTE) + W0(INVOICE) + W0(REVIEW) + W0(CUSTOM) + W0(BACK) + '<!--h2-->' + TK + '<!--/h2-->\n')
 # the numbers: say what the audit checks against each one
 a_, b_ = blk('<section id="problem"'); P = s[a_:b_].split('</a></li>')
 for i, x in enumerate(['We count the calls you missed last month.', 'We time how long a new lead waits for a first reply.', 'We check how many missed calls got a call back.']):
     P[i] += f'</a><!--h2--><p class="ov-a"><span>In your audit</span>{x}</p><!--/h2--></li>' if i < len(P) - 1 else ''
 s = s[:a_] + ''.join(P[:3]) + ''.join(P[3:]) + s[b_:]
-ICONS = ART.icons()
-G8 = [('Front desk', 'Every call, form and message gets an answer.'), ('Calendar', 'Estimates booked, reminded and kept.'), ('Quotes', 'Out the same day, and chased until answered.'), ('Money', 'Invoices sent and followed up until paid.'), ('After the job', 'Reviews, repeat work and referrals.'), ('Getting found', 'Your site and your Google profile, kept working.'), ('Team and office', 'Hiring, notes, reports and answers for the crew.'), ('Custom', 'Anything else that does not need a person.')]
-# everything: one line and a link, the full list lives on its own page
-s = re.sub(r'<section id="everything" class="ixs(?: min)?"', '<section id="everything" class="ixs min"', s, count=1)
-k = s.index('</div>', s.index('class="ixs-h"', s.index('<section id="everything"'))) + 6
-s = s[:k] + '<!--h2--><div class="g8">' + ''.join(f'<a href="/everything"><span>[{i + 1:02d}]</span><i class="g8-i">{ICONS[i]}</i><b>{n}</b><p>{d}</p></a>' for i, (n, d) in enumerate(G8)) + '</div><p class="sw-n"><span>Thirty-two builds so far. If yours is not on the list and it does not need a person, we can probably build it.</span><a class="btn ghost" href="/everything">See everything we build</a>' + CTA + '</p><!--/h2-->' + s[k:]
 AC = '<!--h2--><section class="ac" id="call" aria-labelledby="h-call"><div class="wrap"><p class="px-k"><i></i>The free audit call</p><h2 id="h-call">Fifteen minutes. You leave with a plan.</h2><p class="sub">We can fix it. First we have to know what it is, and that is what the call is for.</p><div class="ac-t" aria-hidden="true"><u></u><b></b></div><div class="ac-g"><div><span>First</span><b>You tell us where it hurts.</b><p>Missed calls, slow weeks, quotes that vanish. Whatever is costing you.</p></div><div><span>Then</span><b>We walk a job with you.</b><p>From the first call to the review, looking for where jobs slip and what each leak is worth.</p></div><div><span>Before you hang up</span><b>You get the plan.</b><p>What to fix first, in order. It is yours to keep, whether or not you work with us.</p></div></div><div class="ac-f"><p><b>Bring rough numbers.</b> Leads a month, your average job, and how many quotes you close.</p>' + CTA + '</div></div></section><!--/h2-->\n'
 ins('<section class="closing"', AC)
 # red marks what is being lost, in three places only: this line in the stats, the running total under the funnel, and one word of the last headline
