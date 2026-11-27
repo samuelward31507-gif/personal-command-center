@@ -1132,12 +1132,39 @@ ASK = ('<div class="rvw"><time>Job marked done, 4:10 PM</time><p>Thanks for choo
 SEARCH = ('<div class="srx"><div class="q">%sfence company near me</div>%s</div>' % (svg('find'), ''.join(
     '<div class="%s"><b>%s</b>%s<span>%s</span>%s</div>' % (c, n, stars(5), r, ('<em>%s</em>' % t) if t else '') for c, n, r, t in [
         ('on', 'The shop with the reviews', '212 reviews', 'Gets the call'), ('', 'Same work, nobody asked', '9 reviews', '')])))
-REVIEWS = (hero_split('After the job', 'More five-star reviews.', 'Every finished job gets asked for a review, and your name keeps showing up where people look.',
-                      'Most happy customers never leave a review because nobody asked.', ASK, 'hs-v')
+# the first screen: the headline with four small cards arriving around it, in the order they happen
+RVHERO = ('<section class="rh" data-live="8"><div class="w rh-i"><span class="lb">After the job</span><h1>More five-star reviews.</h1>'
+          '<p class="sub">Every finished job gets asked for a review, and your name keeps showing up where people look.</p><div class="cta">%s%s</div>'
+          '<div class="rh-c c1" data-hd="0"><span>4:10 PM</span><b>Job marked done</b></div>'
+          '<div class="rh-c c2" data-hd="1"><span>4:10 PM, sent for you</span><p>Thanks for choosing us today. Mind leaving a quick review? It takes a minute.</p></div>'
+          '<div class="rh-c c3" data-hd="3">%s<p>&ldquo;Great job, really happy.&rdquo;</p></div>'
+          '<div class="rh-c c4" data-hd="5"><span>Your Google profile</span><b>New review</b></div>'
+          '<p class="rh-n">Example. Sample data.</p></div></section>' % (BOOK, AUDITLINK, stars(5)))
+# one line across the whole screen: reviews over a year, asked every time against asked when someone remembers
+_rvx = [i / 12 for i in range(13)]
+RVCURVE = ('<section class="rvc"><div class="rvc-i" data-in><div class="w rvc-t"><p class="fa-k">[Reviews, one year]<em>Example business, sample data</em></p>'
+           '<h2>Every finished job gets asked.</h2><p>Most happy customers never leave a review because nobody asked.</p></div>'
+           '<div class="rvc-g" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none">%s<path class="ar" d="M0 100 L100 12 L100 100Z"/>'
+           '<path class="lo" d="M0 100 L100 86.8"/><path class="hi" d="M0 100 L100 12"/></svg>'
+           '<b class="tg hi">Asked every time<em>about 20 a month</em></b><b class="tg lo">Asked when someone remembers<em>3 a month</em></b>%s</div></div></section>'
+           % (''.join('<path class="dr" d="M%.2f %.2f V100"/>' % (x * 100, 100 - x * 88) for x in _rvx[1:]),
+              ''.join('<span style="left:%.2f%%">%s</span>' % (x * 100, m) for x, m in zip(_rvx[::3], ('Start', '3 months', '6 months', '9 months', 'A year')))))
+_rv1 = '<div class="rv rv1"><p><span>Full install</span><b>Done</b></p><p class="k"><span>Review ask</span><b>Queued</b></p></div>'
+_rv2 = '<div class="rv rv2"><p class="hb o">Mind leaving a quick review? It takes a minute.</p><em>Leave a review</em></div>'
+_rv3 = '<div class="rv rv3"><div>%s<b>212</b></div><div class="g">%s<b>9</b></div></div>' % (stars(5), stars(5))
+RV3 = ('<section class="v3 v3d"><div class="w v3-i"><p class="st-t">Asked at the right moment, every time. <span>Not when someone remembers.</span></p><div class="v3-g">%s</div></div></section>'
+       % ''.join('<div><div class="v3-p" aria-hidden="true">%s</div><b>%s.</b><span>%s</span></div>' % x for x in [
+           (_rv1, 'The job gets paid', 'The moment it&rsquo;s marked done, the review ask is queued.'), (_rv2, 'They get asked at the right time', 'A short text with a direct link, while the job is fresh.'),
+           (_rv3, 'Your name gets around', 'Reviews and regular posts keep you in front of people searching nearby.')]))
+SEARCH_L = SEARCH.replace('<div class="q">', '<div class="q" data-sc="0">').replace('<div class="on">', '<div class="on" data-sc="2">').replace('<div class="">', '<div class="" data-sc="1">')
+RVACD = ('<section class="acd" data-live="3,3,3"><div class="w acd-g"><div class="acd-t"><span class="lb">Where people look</span><p class="st-t">The shop with the reviews gets the call.</p>'
+         '<div class="acd-l">%s</div></div><div class="acd-p">%s<p class="sd-n">Example. Sample data.</p></div></div></section>'
+         % (''.join('<div data-sc="%d"><b>%s</b><span>%s</span><u data-at="0"></u></div>' % x for x in [
+             (0, 'Someone nearby searches.', 'They need the work done and don&rsquo;t know a name yet.'), (1, 'Two names come up.', 'Same work. One of them never asked for a review.'),
+             (2, 'The one with the reviews gets the call.', 'Asking in person feels awkward, so it doesn&rsquo;t happen. This asks for you.')]), SEARCH_L))
+REVIEWS = (RVHERO
            + statement('The problem', 'People pick the name with the reviews.', 'Your work is good and your customers are happy. But nobody asks them, so the shop down the road with more stars gets the call.')
-           + sx('The shop with the reviews gets the call.', 'Asking in person feels awkward, so it doesn&rsquo;t happen.', SEARCH, 'wh')
-           + numbered([('The job gets paid', 'The moment it’s marked done, the review ask is queued.'), ('They get asked at the right time', 'A short text with a direct link, while the job is fresh.'),
-                       ('Your name gets around', 'Reviews and regular posts keep you in front of people searching nearby.')])
+           + RVCURVE + RV3 + RVACD
            + qcards([('When does the ask go out?', 'Right after the job is marked done.'), ('Does every customer get asked?', 'Every finished job gets a request.'),
                      ('Where do reviews go?', 'Straight to the place you want them, usually your Google profile.')]) + CL)
 
@@ -1862,7 +1889,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rh': 'top', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -1879,7 +1906,7 @@ RHYTHM = {
     'follow-up': ('st v3 sx acd ic as', {'st': 'v-2', 'sx': 't-exp'}),
     'invoicing': ('sx st sp bl', {'sx': 't-sheet', 'st': 's-tn v-c', 'sp': 'v-f', 'bl': 's-dk v-sf t-angle'}),
     'bookkeeping': ('st sx pg sp', {'st': 'v-xl t-rule', 'sx': 'v-pin', 'pg': 'v-l', 'sp': 's-dkp'}),
-    'reviews': ('sx st pg', {'sx': 's-tn t-arc v-c', 'st': 'v-2', 'pg': 's-dk t-sheet'}),
+    'reviews': ('st rvc v3 acd', {'st': 'v-2'}),
     'review-replies': ('st sx pg', {'st': 'v-c', 'sx': 'v-pin t-rule', 'pg': 'v-l'}),
     'win-backs': ('bl st sx sp', {'bl': 's-bl', 'st': 't-sheet', 'sx': 's-tn', 'sp': 'v-f'}),
     'maintenance-reminders': ('st sx pg bl', {'st': 'v-2', 'sx': 's-tn t-exp', 'pg': 's-dk', 'bl': 'v-xl'}),
@@ -2044,7 +2071,7 @@ def next_sec(name):
             % (BY[name]['name'], ap(BY[name]['short']), ''.join('<a href="/%s"><b>%s</b><span>%s</span></a>' % (o, BY[o]['name'], ap(BY[o]['short'])) for o in others)))
 
 
-HAND = {'estimates'}
+HAND = {'estimates', 'reviews'}
 def full(name, body):
     if name not in CLEAN:
         return body
@@ -2369,7 +2396,6 @@ def _g_audit():   # one business from first lead to paid, with the two biggest d
 
 FIGS = {   # page: (section it goes after, the figure)
     'follow-up': ('sg', linefig('Chased until it is a yes or a no.', 'Days 2, 5 and 10, then monthly', 'Each quote is followed up on a schedule and stops the moment there is an answer.', _g_follow())),
-    'reviews': ('sg', linefig('Every finished job gets asked.', 'A short text with a direct link', 'Most happy customers never leave a review because nobody asked.', _g_reviews(), 'f')),
     'invoicing': ('pg', linefig('Polite reminders until it is settled.', 'Sent the day the job ends', 'Friendly first, firmer later. They stop the moment it is paid.', _g_invoice(), 'dk')),
     'reports': ('sg', linefig('Your numbers, every Monday.', 'One short report each week', 'Leads in, jobs booked, quotes open, money owed and what needs you.', _g_reports(), 'f')),
     'answering': ('st', linefig('Day or night, the reply goes out from your number.', 'Calls, texts, forms and lead sites', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', _g_answer())),
@@ -2495,6 +2521,35 @@ CSS_FA = r"""
 @media(max-width:860px){.acd-r .acd-t{order:0}.acd-r .acd-p{border-right:0}.ewk-x span{font-size:9px}}
 .wn{padding-bottom:18px}.wn>p{margin:18px 18px 10px;font:400 clamp(18px,1.5vw,24px)/1.3 Georgia,"Times New Roman",serif;letter-spacing:-.01em}.wn>span{display:block;margin:0 18px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}
 .trd.fit div{padding-top:clamp(26px,2.2vw,40px)}.trd.fit b{position:relative;padding-top:22px}.trd.fit b::before{content:"";position:absolute;left:0;top:0;width:8px;height:8px;background:var(--ink)}
+/* ---- /reviews ---- */
+.rh{background:radial-gradient(120% 90% at 50% 0,#fff 30%,#eef1fb 78%,#e9e9ee)}.rh-i{position:relative;text-align:center;padding:clamp(120px,13vw,230px) var(--pad) clamp(150px,15vw,260px);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.rh h1{margin:18px auto 0;max-width:11em;font-size:clamp(40px,5.2vw,96px);line-height:.98;letter-spacing:-.05em;font-weight:600}.rh .sub{margin:20px auto 0;max-width:30em}.rh .cta{justify-content:center}
+.rh-c{position:absolute;width:clamp(190px,17vw,260px);padding:14px 16px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 24px 50px -30px rgba(38,38,60,.45);text-align:left;font-size:13.5px}
+.rh-c span{display:block;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}.rh-c b{display:block;margin-top:8px;font-size:15.5px;font-weight:560}
+.rh-c p{margin:8px 0 0;line-height:1.38}.rh-c .sr5,.rh-c .sr5 svg{color:#f0a001;fill:#f0a001}
+.rh-c.c1{left:5%;top:17%}.rh-c.c2{right:4%;top:24%}.rh-c.c3{left:9%;bottom:15%}.rh-c.c4{right:8%;bottom:12%}
+.rh-n{position:absolute;left:0;right:0;bottom:22px;margin:0;font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3)}
+.rvc{background:#fff;border-top:1px solid var(--ln);border-bottom:1px solid var(--ln);overflow:hidden}.rvc-i{position:relative;min-height:min(92vh,900px);display:flex;flex-direction:column}
+.rvc-t{position:relative;z-index:2;padding-top:clamp(64px,6vw,110px);box-sizing:border-box}.rvc-t .fa-k{justify-content:flex-start;gap:16px;margin:0 0 22px}
+.rvc h2{margin:0;max-width:9em;font-size:clamp(38px,4.6vw,84px);line-height:1;letter-spacing:-.045em;font-weight:600}.rvc-t>p:last-child{margin:18px 0 0;max-width:24em;font-size:clamp(15.5px,1.1vw,19px);line-height:1.42;color:var(--g2)}
+.rvc-g{position:relative;flex:1;min-height:340px;margin-top:-6vh}.rvc-g svg{position:absolute;inset:0 0 34px 0;width:100%;height:calc(100% - 34px);overflow:visible;clip-path:inset(0 calc((1 - var(--p,1))*100%) 0 0)}
+.rvc-g path{fill:none;vector-effect:non-scaling-stroke}.rvc-g .hi{stroke:#266df1;stroke-width:2}.rvc-g .lo{stroke:#b4b7bf;stroke-width:1.5}.rvc-g .dr{stroke:#266df1;stroke-width:1;opacity:.22}
+.rvc-g .ar{fill:#266df1;opacity:.05}
+.rvc-g span{position:absolute;bottom:8px;transform:translateX(-50%);font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}
+.rvc-g span:first-of-type{transform:none;margin-left:14px}.rvc-g span:last-of-type{transform:translateX(-100%);margin-left:-14px}
+.rvc-g .tg{position:absolute;right:clamp(18px,4vw,80px);font-size:14px;font-weight:560;padding:8px 12px;border-radius:8px;white-space:nowrap;opacity:clamp(0,calc(var(--p,1)*6 - 4.6),1)}
+.rvc-g .tg em{display:block;margin-top:3px;font-style:normal;font-weight:400;font-size:12.5px;opacity:.82}
+.rvc-g .tg.hi{top:20%;background:#266df1;color:#fff}.rvc-g .tg.lo{bottom:calc(34px + 15%);background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--ln)}
+.v3d{background:var(--dk);color:#fff}.v3d .st-t{color:#fff}.v3d .v3-i,.v3d .v3-g,.v3d .v3-g>div{border-color:var(--dl)}.v3d .st-t span{color:#8f9197}.v3d .v3-g span{color:#a9abb0}
+.v3d .v3-p{background:#17181a;box-shadow:inset 0 0 0 1px var(--dl);color:var(--ink)}
+.rv{width:76%;font-size:13px}.rv1{background:#fff;border-radius:10px;overflow:hidden}.rv1 p{display:flex;justify-content:space-between;margin:0;padding:12px 14px}.rv1 p span{margin:0;font-size:13px;color:var(--g2)}.rv1 p b{font-size:13px}
+.rv1 p.k{background:#266df1;color:#fff}.rv1 p.k span{color:#fff}.rv2{display:grid;gap:10px}.rv2 .hb{margin:0;max-width:none;background:#2a2b30;color:#fff}.rv2 em{font-style:normal;justify-self:start;padding:8px 12px;border-radius:7px;background:#fff;font-weight:560}
+.rv3{display:grid;gap:8px}.rv3>div{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-radius:9px;background:#fff}.rv3>div b{font-size:14px}.rv3 .sr5,.rv3 .sr5 svg{color:#f0a001;fill:#f0a001}
+.rv3>div.g{background:#232427;color:#8f9197}.rv3>div.g .sr5,.rv3>div.g .sr5 svg{color:#5c5e63;fill:#5c5e63}
+.acd.live .srx>[data-sc]{transition:opacity .3s,box-shadow .3s}.acd.live .srx>[data-sc]:not(.on){opacity:.45}.acd .srx>div.on{background:#fff;box-shadow:inset 0 0 0 2px var(--ink),0 30px 60px -36px rgba(45,45,47,.5)}
+.acd .acd-p .srx{width:100%;max-width:560px}
+@media(max-width:1100px){.rh-i{padding-bottom:40px}.rh-c{position:static;width:auto;margin:10px auto 0;max-width:340px}.rh-c.c1{margin-top:36px}.rh-n{position:static;margin-top:16px}}
+@media(max-width:860px){.rvc-g .tg{font-size:12px;right:10px}.rvc-g span:nth-of-type(2),.rvc-g span:nth-of-type(4){display:none}.rvc-i{min-height:640px}}
 /* ---- live windows on the inner pages ---- */
 .lvh>*{min-width:0}.lvh>.cd,.lvh>div:first-child{flex:0 1 auto}
 .sdw{flex:none;width:clamp(210px,17vw,250px);box-sizing:border-box;padding:14px 12px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.16),0 30px 60px -34px rgba(38,38,40,.4);font-size:13px;text-align:left;min-height:170px}
@@ -2583,7 +2638,6 @@ SIDE = {
     'proposals': ('own', 'Your phone', [(1, 'Proposal opened', 'Twice, last at 8:12 PM'), (4, 'Option picked', 'Better, signed')]),
     'invoicing': ('log', '&gt; What ran', [(0, 'Fri', 'Job finished'), (1, 'Fri', 'Invoice sent'), (3, 'Day 3', 'Reminder sent'), (5, 'Day 3', 'Paid')]),
     'bookkeeping': ('log', '&gt; One receipt', [(0, 'Receipt', 'Read'), (1, 'Receipt', 'Labelled: materials'), (2, 'Receipt', 'Put against the job'), (4, 'Month end', 'Costs by job ready')]),
-    'reviews': ('phone', 'Customer&rsquo;s phone', [(0, 'o', 'Thanks for choosing Ridgeline Fence. How did we do?'), (2, 'c', 'Great job, really happy'), (3, 'o', 'Would you leave that as a Google review? One tap here.'), (5, 'c', 'Done')]),
     'review-replies': ('own', 'Your phone', [(1, 'Five stars', 'Reply posted'), (4, 'One star', 'Draft waiting for you')]),
     'win-backs': ('phone', 'Past customer&rsquo;s phone', [(1, 'o', 'Hi, it&rsquo;s Ridgeline Fence. It&rsquo;s been a year since your fence went in. Anything need a look?'), (4, 'c', 'Actually the gate is sagging')]),
     'maintenance-reminders': ('log', '&gt; Due dates', [(0, 'Job done', 'Next service date set'), (2, 'When due', 'Reminder sent'), (4, 'Same week', 'Visit booked')]),

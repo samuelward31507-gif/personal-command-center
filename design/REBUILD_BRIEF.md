@@ -535,3 +535,38 @@ Sam: "there should be no reference of a specific trade... It's all generalized b
 - Not changed: the Trades page, which is about trades by nature. Waiting on Sam for what to do with it.
 - Sam chose to rewrite the Trades page general: it is now `/who-its-for` ("Built for businesses that quote jobs."), with no trade named; `/trades` and `/generators` redirect to it (site/vercel.json); menu, footer and sitemap updated; the six trade drawings and the fence drawing are gone, replaced by one drawing of three different buildings and a quote sheet. The fence-only line "Seven fence types" is no longer on the site.
 - Next: Reviews, with a full-width curve as its own graph (Sam asked for the Attio "Run at any scale" kind somewhere), then Invoicing, Answering, Lead vetting, Websites. Each page's graph and scroll moment must differ from the last.
+
+## 23e. Audit of Attio's site, from Sam's four-minute recording (Nov 27)
+
+Sam: "audit all of their pages first and look at all the possible different designs, then begin." All 130 distinct screens read. Pages seen: home, Universal Context, Data model, Enrichment, Call intelligence, Reporting, Ask Attio, Workflows, Custom agents, Web agent, Sequences, Apps, MCP, Developer platform, Customers, Pricing, Help.
+
+**First screens (ten kinds)**
+- H1 centred headline over a product window on a lavender wash (home, Sequences)
+- H2 headline in the middle with small cards floating around it on faint guide lines (Reporting, Custom agents)
+- H3 headline left, a flow diagram of connected nodes right (Workflows)
+- H4 headline left, one card floating right (Call intelligence)
+- H5 headline over a board of columns (Enrichment)
+- H6 headline over a map of linked objects (Data model)
+- H7 headline over a huge arc (Universal Context)
+- H8 an all-black page with a wireframe figure and a mono label (Developer platform)
+- H9 headline between rows of app icons on a dotted grid (Apps, MCP)
+- H10 plain centred with a control under it (Pricing toggle, Help search)
+
+**Sections (twenty kinds)**
+S1 bold sentence running on in grey. S2 three bordered cells, picture over title over line. S3 split: statement and stepping list left, window on a tinted panel right. S4 tabs over one chart. S5 statement left, one huge number right. S6 a curve across the full width with lines dropping to the baseline and a small stat grid. S7 serif quote on a dotted ground. S8 logo strip. S9 a row of four or five short text columns, light or black. S10 black band with an arc and five columns. S11 centred heading over a numbered grid of the other pages. S12 dated cards in a row. S13 three numbered steps on hairlines. S14 a heatmap of small squares. S15 two rows of small cards sliding sideways. S16 case-study cards with a photo. S17 pricing table. S18 one-line sign-up strip. S19 a gallery of different charts in cells (map, ring, bars, area). S20 centred heading over a row of icons.
+
+**Grounds and colour**
+White inside a hairline frame; a lavender-to-white wash under heroes; soft grey tinted panels behind windows; dotted grids; black with fine vertical lines at top and bottom; black with a dotted grid; a faint grey glow in one corner. Ink, greys and one cornflower blue carry almost everything. Purple, orange, green and pink appear only inside charts and status chips.
+
+**What we cannot honestly use:** S8 logos, S7 customer quotes, S5 and S6 with real usage numbers, S16 case studies, S17 pricing (no prices on the site). S5 and S6 can be used with sample data clearly labelled.
+
+**Assignment, so no two neighbouring pages share a first screen or a signature section**
+- Estimates: H1 + pinned week graph (done). Reviews: H2 + S6 full-width line (done). Follow-up: H1 + S3 (done; add S13).
+- Invoicing: H4 + S19 small chart gallery of the unpaid buckets. Bookkeeping: H5 board + S14 heatmap of receipts by job.
+- Answering: keep; add S5 with the 78% survey figure it already cites. Phone agent: H3 flow of one call. Website chat: H4. Social messages: H6 three apps into one inbox. Lead vetting: H5 board (fit / not a fit). After hours: H8 all black.
+- Booking: H1 (done) + S13. Reminders: H4 lock screen. Dispatch: H5 three crews + pinned day. Job updates: H3 route.
+- Proposals: H2 three options floating. Win-backs: H7 year arc. Maintenance reminders: H7 variant, ring. Referrals: S6 as a true doubling curve. Campaigns: H6 list to one send. Review replies: H2 two reviews.
+- Websites: H1 browser. Local search: H9 pins on a dotted map. Job photos: H2 one photo, three posts.
+- Hiring: H5 board. Team assistant: H4. Field notes: H3 voice to notes. Reports: H2 + S19. Call review: H8 black + waveform.
+- Custom agents: H3. Custom builds: H6. Integrations: H9.
+- About, Questions, What's new (S12), The app (S4 tabs), Everything (S11), Who it's for, Free audit: one each, after the build pages.
