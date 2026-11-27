@@ -206,6 +206,24 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 @media(max-width:860px){.tl.tl2 ul{grid-template-columns:repeat(2,minmax(0,1fr))}.tl.tl2 li:nth-last-child(2){border-bottom:1px solid var(--ln)!important}}
 /* fine vertical lines along the top and bottom of the closing block on every page */
 .cl{background-image:linear-gradient(180deg,rgba(16,16,16,0) 0,var(--dk) 200px,var(--dk) calc(100% - 200px),rgba(16,16,16,0) 100%),repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px)}
+/* the hero window plays on its own, one finding after another */
+.hm-m{display:grid}.hm-v{grid-area:1/1;min-width:0;opacity:0;visibility:hidden;transition:opacity .35s,visibility 0s .35s}.hm-v.on{opacity:1;visibility:visible;transition:opacity .45s .14s}
+.hm-l div,.hm-r div{transition:background .3s,box-shadow .3s}.hm-r div.hi{box-shadow:0 0 0 1px var(--ink)}
+.hm-vb{margin-top:24px}.vr{display:flex;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--ln);font-size:14.5px}.vr b{font-weight:520;flex:1}.vr span{font-size:13px;color:var(--g2);white-space:nowrap}
+.vr em{font-style:normal;font-size:12px;font-weight:500;padding:4px 8px;border-radius:6px;background:#eeeef0;white-space:nowrap}.vr em.r{background:var(--ink);color:#fff}
+.vr.vt b{flex:0 0 46%}.vr.vt u{flex:1;height:6px;border-radius:3px;background:#eeeef0;overflow:hidden}.vr.vt u i{display:block;height:100%;background:var(--ink);border-radius:3px;transform-origin:left}
+.vr.vt span{flex:0 0 3.2em;text-align:right}
+.vq{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:clamp(5px,.6vw,10px);margin-top:34px;padding-bottom:26px;border-bottom:1px solid var(--ln)}
+.vq i{aspect-ratio:.74;border:1px solid var(--ink);border-radius:3px;background:linear-gradient(#c3c6cd,#c3c6cd) 50% 30%/56% 1px no-repeat,linear-gradient(#c3c6cd,#c3c6cd) 50% 48%/56% 1px no-repeat,linear-gradient(#c3c6cd,#c3c6cd) 30% 66%/36% 1px no-repeat}
+.vb{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,20px);margin-top:22px;height:clamp(170px,14vw,230px)}
+.vb div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}.vb b{font-size:14px;font-weight:540;margin-bottom:7px}.vb i{display:block;border-radius:5px 5px 0 0;background:#dfe1e6;transform-origin:bottom}
+.vb div:nth-child(2) i,.vb div:nth-child(4) i{background:var(--ink)}.vb span{padding-top:9px;border-top:1px solid var(--ink);font-size:12.5px;color:var(--g2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vf{margin:20px 0 0;display:flex;gap:10px;align-items:center;font:500 11.5px/1.3 "Geist Mono",monospace;letter-spacing:.02em}.vf b{color:var(--g2);font-weight:500}
+.vf span::after{content:"";display:inline-block;width:6px;height:12px;margin-left:4px;vertical-align:-2px;background:var(--ink);animation:vcar 1s steps(1) infinite}@keyframes vcar{50%{opacity:0}}
+.hm-v.on .vr,.hm-v.on .vq i,.hm-v.on .vb div{animation:hmin .5s calc(.3s + var(--k)*.07s) both}
+.hm-v.on .vr.vt u i{animation:vgrow .7s calc(.45s + var(--k)*.07s) cubic-bezier(.2,.7,.2,1) both}.hm-v.on .vb i{animation:vup .7s calc(.4s + var(--k)*.09s) cubic-bezier(.2,.7,.2,1) both}
+@keyframes vgrow{from{transform:scaleX(0)}}@keyframes vup{from{transform:scaleY(0)}}
+@media(max-width:860px){.vq{grid-template-columns:repeat(7,minmax(0,1fr))}.vr.vt b{flex-basis:52%}.vb span{white-space:normal;font-size:11.5px;line-height:1.25;min-height:2.6em}.vb b{font-size:13px}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}

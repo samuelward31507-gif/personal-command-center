@@ -443,12 +443,32 @@ HERO = ('<section class="hm"><div class="w hm-t"><a class="hm-p" href="/free-aud
         '<div class="cta"><a class="btn q" href="/free-audit">See what we check</a><a class="btn" %s>Book your free audit</a></div></div>'
         '<div class="hm-x" data-sp><div class="hm-y"><div class="w hm-s"><div class="hm-w"><div class="hm-b"><i></i><i></i><i></i><b>Free audit</b><span>Ridgeline Fence</span><em>Example business, sample data</em></div>'
         '<div class="hm-g"><div class="hm-l"><p>Seven parts of the business</p>%s</div>'
-        '<div class="hm-m"><div class="hm-h"><div><h2>Where the jobs went</h2><p>100 leads in the last 30 days. 34 became paid jobs.</p></div><span>[Audit complete]</span></div>%s</div>'
+        '<div class="hm-m"><div class="hm-v on" data-s="-1" data-f="-1"><div class="hm-h"><div><h2>Where the jobs went</h2><p>100 leads in the last 30 days. 34 became paid jobs.</p></div><span>[Audit complete]</span></div>%s</div>@@VIEWS@@</div>'
         '<div class="hm-r"><p>Fix first</p>%s</div></div>'
         '</div></div>@@SAT@@</div></div></section>'
         % (CAL, ''.join('<div class="%s" style="--k:%d"><span>%s</span><b class="%s">%s</b></div>' % ('on' if on else '', k, a, 'f' if b == 'Fine' else '', b) for k, (a, b, on) in enumerate(_HM_SIDE)),
            _hm_chart(), ''.join('<div style="--k:%d"><span>%s</span><b>%s</b><em>%s</em><u>%s</u></div>' % (k, a, c, b, d) for k, (a, b, c, d) in enumerate(_HM_FIND))))
 HERO = HERO.replace('@@SAT@@', _HM_SAT)
+# the window plays on its own: after the overview it opens each finding in turn, the way someone would click through the report
+def _hm_view(side, find, tag, title, figure, body, fix):
+    return ('<div class="hm-v" data-s="%d" data-f="%d"><div class="hm-h"><div><h2 data-ty="%s">%s</h2><p>%s</p></div><span>[%s]</span></div>%s'
+            '<p class="vf"><b>[Fix]</b><span data-ty="%s">%s</span></p></div>' % (side, find, title, title, figure, tag, body, fix, fix))
+_HM_VIEWS = (
+    _hm_view(1, 1, 'Front desk', '8 calls missed after hours', '$2,400 a month',
+             '<div class="hm-vb">%s</div>' % ''.join('<div class="vr" style="--k:%d"><b>%s</b><span>%s</span><em class="%s">%s</em></div>' % (k, a, b, d, c) for k, (a, b, c, d) in enumerate(LOGROWS)),
+             'A text back in seconds')
+    + _hm_view(2, 2, 'Calendar', 'Scheduling and reminders by hand', '11 hours a week',
+               '<div class="hm-vb">%s</div>' % ''.join('<div class="vr vt" style="--k:%d"><b>%s</b><u><i style="width:%d%%"></i></u><span>%s h</span></div>' % (k, a, h / 3 * 100, ('%g' % h)) for k, (a, h) in enumerate(TASKS)),
+               'Booking that runs itself')
+    + _hm_view(3, 0, 'Quotes', '13 quotes never followed up', '$3,100 a month',
+               '<div class="vq">%s</div>' % ''.join('<i style="--k:%d"></i>' % k for k in range(13)),
+               'Check-ins on day two and five')
+    + _hm_view(5, -1, 'Money', 'Invoices go out six days late', '$14,600 waiting',
+               '<div class="vb">%s</div>' % ''.join('<div style="--k:%d"><b>%s</b><i style="height:%d%%"></i><span>%s</span></div>' % (k, v, h, n)
+                                                   for k, (n, v, h) in enumerate((('Not invoiced yet', '$2,100', 39), ('Under 2 weeks', '$5,400', 100), ('2 to 4 weeks', '$3,100', 57), ('Over 30 days', '$4,000', 74)))),
+               'An invoice the day the job ends'))
+HERO = HERO.replace('@@VIEWS@@', _HM_VIEWS)
+
 
 TICK = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.25"/><path d="m4.9 8.2 2.1 2.1 4.1-4.4"/></svg>'
 RUN = ('<div class="tml" data-in><p class="tml-k">[What ran today]<em>Example business, sample data</em></p><div class="tml-l">%s</div><p class="tml-f">Five things done. None of them by hand.</p></div>'
@@ -761,6 +781,24 @@ transform:matrix(calc(1 - .296*var(--t)),calc(.278*var(--t)),calc(-.704*var(--t)
 @media(max-width:860px){.tl.tl2 ul{grid-template-columns:repeat(2,minmax(0,1fr))}.tl.tl2 li:nth-last-child(2){border-bottom:1px solid var(--ln)!important}}
 /* fine vertical lines along the top and bottom of the closing block on every page */
 .cl{background-image:linear-gradient(180deg,rgba(16,16,16,0) 0,var(--dk) 200px,var(--dk) calc(100% - 200px),rgba(16,16,16,0) 100%),repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px)}
+/* the hero window plays on its own, one finding after another */
+.hm-m{display:grid}.hm-v{grid-area:1/1;min-width:0;opacity:0;visibility:hidden;transition:opacity .35s,visibility 0s .35s}.hm-v.on{opacity:1;visibility:visible;transition:opacity .45s .14s}
+.hm-l div,.hm-r div{transition:background .3s,box-shadow .3s}.hm-r div.hi{box-shadow:0 0 0 1px var(--ink)}
+.hm-vb{margin-top:24px}.vr{display:flex;align-items:center;gap:14px;padding:13px 0;border-top:1px solid var(--ln);font-size:14.5px}.vr b{font-weight:520;flex:1}.vr span{font-size:13px;color:var(--g2);white-space:nowrap}
+.vr em{font-style:normal;font-size:12px;font-weight:500;padding:4px 8px;border-radius:6px;background:#eeeef0;white-space:nowrap}.vr em.r{background:var(--ink);color:#fff}
+.vr.vt b{flex:0 0 46%}.vr.vt u{flex:1;height:6px;border-radius:3px;background:#eeeef0;overflow:hidden}.vr.vt u i{display:block;height:100%;background:var(--ink);border-radius:3px;transform-origin:left}
+.vr.vt span{flex:0 0 3.2em;text-align:right}
+.vq{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:clamp(5px,.6vw,10px);margin-top:34px;padding-bottom:26px;border-bottom:1px solid var(--ln)}
+.vq i{aspect-ratio:.74;border:1px solid var(--ink);border-radius:3px;background:linear-gradient(#c3c6cd,#c3c6cd) 50% 30%/56% 1px no-repeat,linear-gradient(#c3c6cd,#c3c6cd) 50% 48%/56% 1px no-repeat,linear-gradient(#c3c6cd,#c3c6cd) 30% 66%/36% 1px no-repeat}
+.vb{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,20px);margin-top:22px;height:clamp(170px,14vw,230px)}
+.vb div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}.vb b{font-size:14px;font-weight:540;margin-bottom:7px}.vb i{display:block;border-radius:5px 5px 0 0;background:#dfe1e6;transform-origin:bottom}
+.vb div:nth-child(2) i,.vb div:nth-child(4) i{background:var(--ink)}.vb span{padding-top:9px;border-top:1px solid var(--ink);font-size:12.5px;color:var(--g2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vf{margin:20px 0 0;display:flex;gap:10px;align-items:center;font:500 11.5px/1.3 "Geist Mono",monospace;letter-spacing:.02em}.vf b{color:var(--g2);font-weight:500}
+.vf span::after{content:"";display:inline-block;width:6px;height:12px;margin-left:4px;vertical-align:-2px;background:var(--ink);animation:vcar 1s steps(1) infinite}@keyframes vcar{50%{opacity:0}}
+.hm-v.on .vr,.hm-v.on .vq i,.hm-v.on .vb div{animation:hmin .5s calc(.3s + var(--k)*.07s) both}
+.hm-v.on .vr.vt u i{animation:vgrow .7s calc(.45s + var(--k)*.07s) cubic-bezier(.2,.7,.2,1) both}.hm-v.on .vb i{animation:vup .7s calc(.4s + var(--k)*.09s) cubic-bezier(.2,.7,.2,1) both}
+@keyframes vgrow{from{transform:scaleX(0)}}@keyframes vup{from{transform:scaleY(0)}}
+@media(max-width:860px){.vq{grid-template-columns:repeat(7,minmax(0,1fr))}.vr.vt b{flex-basis:52%}.vb span{white-space:normal;font-size:11.5px;line-height:1.25;min-height:2.6em}.vb b{font-size:13px}}
 /* ---- shared page frame ---- */
 :root{--g:#fafafa;--ln:#e6e6e6;--pn:#f1f2f5;--g2:#6f7279;--g3:#c9cbd0;--pad:clamp(36px,3.05vw,58px)}
 body{background:var(--g)}
@@ -1414,6 +1452,16 @@ def mono(text):
     return re.sub(r'rgba\((\d+),\s*(\d+),\s*(\d+),', rg, re.sub(r'#[0-9a-fA-F]{6}\b', hx, text))
 
 
+JS += r"""
+(function(){var m=document.querySelector('.hm-m');if(!m)return;var vs=[].slice.call(m.querySelectorAll('.hm-v'));if(vs.length<2)return;
+var sd=[].slice.call(document.querySelectorAll('.hm-l div')),fr=[].slice.call(document.querySelectorAll('.hm-r div')),i=0,vis=true;
+function type(el){var t=el.getAttribute('data-ty'),n=0;clearTimeout(el._t);el.textContent='';(function f(){n+=2;el.textContent=t.slice(0,n);if(n<t.length)el._t=setTimeout(f,24)})()}
+function show(k){i=k;vs.forEach(function(v,j){v.classList.toggle('on',j===k)});var s=+vs[k].getAttribute('data-s'),f=+vs[k].getAttribute('data-f');
+sd.forEach(function(d,j){d.classList.toggle('on',j===s)});fr.forEach(function(d,j){d.classList.toggle('hi',j===f)});[].forEach.call(vs[k].querySelectorAll('[data-ty]'),type)}
+if('IntersectionObserver' in window)new IntersectionObserver(function(e){vis=e[0].isIntersecting}).observe(m);
+var q=/[?&]view=(\d)/.exec(location.search);if(q){show(+q[1]);return}
+setInterval(function(){if(vis&&!document.hidden)show((i+1)%vs.length)},4800)})();
+"""
 ALLCSS = mono(hero_css + CSS)
 VER = hashlib.sha1((ALLCSS + JS).encode()).hexdigest()[:8]
 open(ROOT + '/site/assets/light.css', 'w').write(ALLCSS.strip() + '\n')

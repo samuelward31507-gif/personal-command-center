@@ -482,3 +482,11 @@ Sam: every page needs the homepage treatment, many passes each, not one picture 
 - Homepage: trades row removed (Sam crossed it out). Leaks section back in colour ("I liked the colors here"): `.lk{--blue:#266df1;--red:#e5484e;--amber:#f0a001}`, kept through `mono()` via `_KEEP`.
 - Free audit, pass one (`FAUDIT` in mk_pages.py): a pinned three-step stage (`.fa3`: a week with one slot filling, a call as alternating bubbles, the report drawing in), the report rows arriving one by one (`.far`), and the eight places as one line that walks across and back (`.faw`). Old three-cell row and icon grid removed; all copy unchanged.
 - Order agreed for the rest: one page at a time, shown to Sam after each pass.
+
+## 22y. The hero window plays on its own (Nov 27)
+
+Sam sent a recording of Attio's homepage hero: "i like this... it's just a video, has nothing to do with the scroll."
+
+- The audit window now steps through five views on a timer (4.8 s each, paused off screen or in a background tab): the overview, then Front desk, Calendar, Quotes and Money. The sidebar selection and the matching "Fix first" card move with it, the heading and the fix line type in, rows and bars arrive in turn. `_hm_view()` / `_HM_VIEWS` in mk_home.py; script at the end of `JS`. `?view=N` holds one view for screenshots.
+- Every figure in the views is sample data already on the homepage (`LOGROWS`, `TASKS`, the unpaid buckets, the findings). Nothing new.
+- The scroll call-outs are unchanged.
