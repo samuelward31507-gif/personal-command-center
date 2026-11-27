@@ -246,6 +246,22 @@
     if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { if (e[0].isIntersecting && !seen) { seen = true; go(0) } if (!e[0].isIntersecting) clearTimeout(t2); else if (seen && au) go(sel) }, { threshold: .25 }).observe(sw); else go(0);
     addEventListener('resize', function () { if (seen) go(sel) })
   }
+  // ---- the long area: a list that stays put while each item's block scrolls past. The list marks where you are; each block's drawing builds as it comes up the screen.
+  [].forEach.call(document.querySelectorAll('.fa-b,.hv'), function (b) {
+    var N = +b.dataset.steps || 6, draw = partsOf(b), ones = [].slice.call(b.querySelectorAll('.axc [data-is]')), vals = [].slice.call(b.querySelectorAll('[data-v]')), top = 0, h = 1, cur = -9;
+    Flow.onMeasure(function (y) { var r = b.getBoundingClientRect(); top = r.top + y; h = Math.max(1, r.height) });
+    Flow.sub(function (y) {
+      if (innerWidth <= 900) { drawParts(draw, 99); return }
+      var f = (y + innerHeight * .82 - top) / (h * .8) * (N + .6) - .5, c = Math.max(0, Math.min(N - 1, Math.round(f))); drawParts(draw, f);
+      if (c !== cur) { cur = c; ones.forEach(function (e) { e.classList.toggle('cur', +e.dataset.is === c) }); vals.forEach(function (e) { var l = e.dataset.v.split('|'); e.textContent = l[Math.min(l.length - 1, c)] }) }
+    })
+  });
+  var fan = document.querySelector('.fa-nav');
+  if (fan) (function () {
+    var links = [].slice.call(fan.querySelectorAll('a')), bs = [].slice.call(document.querySelectorAll('.fa-b')), tops = [], cur = -9;
+    Flow.onMeasure(function (y) { tops = bs.map(function (b) { return b.getBoundingClientRect().top + y }) });
+    Flow.sub(function (y) { var line = y + innerHeight * .45, k = 0; for (var i = 0; i < tops.length; i++) if (tops[i] <= line) k = i; if (k !== cur) { cur = k; links.forEach(function (a, i) { a.classList.toggle('cur', i === k) }) } })
+  })();
   // ---- drawings: measure every stroke so it can draw itself in. Lengths come from the drawing's laid-out size, with room for the camera's zoom.
   function arm() {
     [].forEach.call(document.querySelectorAll('svg.il'), function (svg) {

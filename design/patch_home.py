@@ -142,8 +142,35 @@ W = lambda x: '<!--h2-->' + TK + x + '<!--/h2-->\n'
 ins('<section id="problem"', '<!--h2--><svg class="il-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="ilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0f0f12"/></linearGradient><linearGradient id="ill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#111114"/><stop offset="1" stop-color="#08080a"/></linearGradient><linearGradient id="ilr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a0a0c"/><stop offset="1" stop-color="#040405"/></linearGradient><radialGradient id="ilg"><stop offset=".12" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="ilm" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="url(#ilg)"/></mask></defs></svg><!--/h2-->\n')
 # The six-layer audit section was folded into the funnel above in pass 30 (AUDIT and stack() are kept in this file but no longer placed).
 W0 = lambda x: '<!--h2-->' + x + '<!--/h2-->\n'
-# pass 33: an overview only. Audit (funnel), build (the 3D bay, one line per thing), anything else, it runs. No section for a single product.
-ins('<section class="samq"', W(WHERE) + W0(BAY) + W0(CUSTOM) + W0(BACK) + '<!--h2-->' + TK + '<!--/h2-->\n')
+# ---- pass 34: the page is laid out the way the Attio homepage is, with Cinder's own content and drawings (Sam's screen recording, Nov 27).
+# Centered hero with one large picture under it and two pieces floating over its edges; the tools row; a two-tone statement; a long area with a
+# list that stays put on the left while each item's block (statement, big picture, two short points) scrolls past on the right; a big quote;
+# numbers; four columns; then the clock and the call.
+def _two(h, rest): return f'<b>{h}</b> {rest}'
+HV = ('<section class="hv" aria-label="Where the jobs go"><div class="hv-in"><div class="axp ill hv-f"><div class="axc">' + ART.funnel() + '</div><small>Illustration. Sample findings; your audit uses your own numbers.</small></div>'
+  f'<div class="hv-c hv-c1"><span>Leaking every month, example business</span><b data-v="{TOT}">$6,400</b></div>'
+  '<div class="hv-c hv-c2"><span>What the free audit checks</span><ul><li>Calls you missed last month</li><li>How long a new lead waits</li><li>Quotes that went quiet</li><li>Invoices still unpaid</li></ul></div></div></section>')
+INTRO = ('<section class="it"><p class="sx-k">How it works</p><h2 class="it-s">' + _two('We find where you’re losing jobs.', 'Then we build what fixes it, with AI doing the work that doesn’t need a person. You keep the plan either way.') + '</h2></section>')
+FA = [('Leads', 'leads', _two('Every lead gets an answer.', 'In seconds, by text, in your business’s name, with a time to pick.'), ART.reply(), 4,
+       [('A reply in seconds.', 'Day or night, before they try the next company.'), ('They pick the time.', 'Openings from your real calendar. No phone tag.')], '<a class="inl" href="/answering">How answering works</a>'),
+      ('Quotes', 'quotes', _two('No quote goes quiet.', 'A check-in on day two and another on day five, until it is a yes or a no.'), ART.quote(), 4,
+       [('Out the same day.', 'While the job is still fresh for them.'), ('It stops when they answer.', 'A yes gets booked and a no gets closed.')], '<a class="inl" href="/follow-up">How follow-up works</a>'),
+      ('Getting paid', 'paid', _two('The invoice gets paid.', 'Sent the day the job ends and followed up until it is settled.'), ART.invoice(), 3,
+       [('Sent the day the job ends.', 'Not at the end of the month.'), ('Reminders stop on their own.', 'The moment it is paid.')], '<a class="inl" href="/invoicing">How invoices work</a>'),
+      ('Reviews', 'reviews', _two('Every job ends with a review request.', 'Asked while the work is fresh, and answered when it comes in.'), ART.review(), 3,
+       [('Asked the day after.', 'Not three weeks later.'), ('It gets a reply.', 'The same day, in your name.')], '<a class="inl" href="/reviews">How reviews work</a>'),
+      ('Anything else', 'custom', _two('If AI can do it, we build it.', 'Tell us what is slowing the business down. If it follows the same steps every time, it can run without you.'), ART.blocks(), 4,
+       [('Built around how you work.', 'Step by step, cut to the way you already do it.'), ('Room for the next piece.', 'When something new comes up, it already has a place.')], '<a class="inl" href="/custom-builds">How custom builds work</a><a class="inl" href="/everything">See everything we build</a>')]
+FAS = ('<section class="fa" aria-label="What we fix"><div class="fa-in"><nav class="fa-nav" aria-label="What we fix"><p class="sx-k">What we fix</p><ul>' + ''.join(f'<li><a href="#fa-{sid}">{n}</a></li>' for n, sid, *_ in FA) + '</ul></nav><div class="fa-main">'
+  + ''.join(f'<article class="fa-b" id="fa-{sid}" data-steps="{n_}"><h3 class="fa-st">{st}</h3><div class="axp ill"><div class="axc">{vis}</div></div><div class="fa-two">' + ''.join(f'<div><b>{b_}</b><p>{d}</p></div>' for b_, d in two) + f'</div><p class="fa-l">{lk}</p></article>' for _n, sid, st, vis, n_, two, lk in FA)
+  + '</div></div></section>')
+B4 = ('<section class="b4"><p class="sx-k">It runs</p><h2 class="it-s">' + _two('Most of the day is already done.', 'By the time you look at your phone, the routine work has happened.') + '</h2><div class="b4-g">'
+  + ''.join(f'<div><span>{i + 1:02d}</span><b>{b_}</b><p>{d}</p></div>' for i, (b_, d) in enumerate([('Answered.', 'New leads got a reply while you were on a job.'), ('Booked and followed up.', 'Estimates are on the calendar. Open quotes got their check-in.'), ('Reminded and asked.', 'Late invoices were nudged. Finished jobs were asked for a review.'), ('What’s left is yours.', 'The few things that need a person.')]))
+  + '</div></section>')
+move_before('<section id="problem"', '<section class="closing"')
+ins('<section class="tools"', W0(HV))
+ins('<section class="samq"', W0(INTRO) + W0(FAS))
+ins('<section class="closing"', W0(B4))
 # the numbers: say what the audit checks against each one
 a_, b_ = blk('<section id="problem"'); P = s[a_:b_].split('</a></li>')
 for i, x in enumerate(['We count the calls you missed last month.', 'We time how long a new lead waits for a first reply.', 'We check how many missed calls got a call back.']):

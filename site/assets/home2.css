@@ -665,3 +665,45 @@ html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-r
 @media (min-width:901px) and (prefers-reduced-motion:no-preference){.pt-ac+.ac .px-k,.pt-ac+.ac h2,.pt-ac+.ac .sub{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}}
 @media (max-width:900px){.pt-ac{display:none!important}}
 @media (prefers-reduced-motion:reduce){.pt-ac{display:none}}
+/* ---- v34: Attio's page structure with Cinder's content. A centered hero with one large picture under it and two pieces floating over its edges;
+   a two-tone statement; a list that stays put while each item's block scrolls past; four columns. Cinder's dark theme and drawings throughout. ---- */
+@media (min-width:901px){.hs{position:relative!important;height:auto!important;min-height:0!important;padding:150px 0 36px!important}}
+.hv{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:0 56px}
+.hv-in{position:relative}
+.hv-f{height:min(620px,66vh);background:#000}
+.hv-c{position:absolute;z-index:2;background:#0a0a0c;border:1px solid rgba(255,248,240,.16);padding:18px 20px;box-shadow:0 30px 70px -30px #000}
+.hv-c span{display:block;font:500 11.5px/1.3 "Geist Mono",ui-monospace,monospace;color:#8b8985}
+.hv-c1{left:-28px;bottom:14%;width:250px}.hv-c1 b{display:block;margin-top:12px;font:520 40px/1 "Inter Display",Inter,sans-serif;letter-spacing:-.03em;color:#e0193a;font-variant-numeric:tabular-nums}
+.hv-c2{right:-28px;top:12%;width:270px}.hv-c2 ul{list-style:none;margin:12px 0 0;padding:0}
+.hv-c2 li{position:relative;padding:9px 0 9px 24px;border-top:1px solid rgba(255,248,240,.1);font-size:14px;color:#f2f1ee}
+.hv-c2 li::before{content:"";position:absolute;left:3px;top:13px;width:9px;height:5px;border:solid #f2f1ee;border-width:0 0 1.5px 1.5px;transform:rotate(-45deg)}
+.hv+.tools{margin-top:9vh}
+.it,.b4{max-width:1280px;margin:0 auto;padding:16vh 56px 0}
+.it-s{margin:0;font:520 clamp(28px,3vw,44px)/1.1 "Inter Display",Inter,system-ui,sans-serif;letter-spacing:-.034em;color:#8b8985;max-width:22ch;text-wrap:balance}
+.it-s b{font-weight:520;color:#f2f1ee}
+.fa{max-width:1280px;margin:0 auto;padding:12vh 56px 0}
+.fa-in{display:grid;grid-template-columns:220px minmax(0,1fr);gap:0 72px;align-items:start}
+.fa-nav{position:sticky;top:calc(50vh - 110px)}
+.fa-nav ul{list-style:none;margin:0;padding:0}
+.fa-nav a{display:block;padding:9px 0 9px 16px;border-left:1px solid rgba(255,248,240,.14);font-size:15.5px;color:#6f6d69;text-decoration:none;transition:color .3s,border-color .3s}
+.fa-nav a:hover{color:#c9c7c2}.fa-nav a.cur{color:#f2f1ee;border-left-color:#e0193a}
+.fa-b{padding:0 0 18vh;scroll-margin-top:110px}
+.fa-st{margin:0 0 34px;font:520 clamp(24px,2.3vw,34px)/1.14 "Inter Display",Inter,system-ui,sans-serif;letter-spacing:-.028em;color:#8b8985;max-width:26ch;text-wrap:balance}
+.fa-st b{font-weight:520;color:#f2f1ee}
+.fa-b .axp{height:min(560px,62vh)}
+.fa-two{display:grid;grid-template-columns:1fr 1fr;gap:0 48px;margin-top:30px}
+.fa-two b{display:block;font:560 17px/1.3 Inter,system-ui,sans-serif;letter-spacing:-.012em;color:#f2f1ee}
+.fa-two p{margin:6px 0 0;font-size:15.5px;line-height:1.5;color:#a8a6a1;max-width:24em}
+.fa-l{margin:26px 0 0}.fa-l .inl{position:static;font-size:15px}.fa-l .inl+.inl{margin-left:28px}
+.b4{padding-bottom:6vh}
+.b4-g{display:grid;grid-template-columns:repeat(4,1fr);gap:0 36px;margin-top:8vh;border-top:1px solid rgba(255,248,240,.14)}
+.b4-g>div{padding-top:22px}.b4-g span{display:block;font:500 11.5px/1 "Geist Mono",ui-monospace,monospace;color:#8b8985;margin-bottom:16px}
+.b4-g b{display:block;font:560 18px/1.25 Inter,system-ui,sans-serif;letter-spacing:-.014em;color:#f2f1ee}.b4-g p{margin:8px 0 0;font-size:15px;line-height:1.5;color:#a8a6a1}
+@media (max-width:900px){
+  .hv{padding:0 20px}.hv-f{height:auto}.hv-c{position:static;width:auto!important;margin-top:12px}
+  .it,.b4{padding:84px 20px 0}.it-s{font-size:27px;max-width:none}
+  .fa{padding:56px 20px 0}.fa-in{display:block}.fa-nav{display:none}.fa-b{padding-bottom:64px}.fa-b .axp{height:auto}.fa-two{grid-template-columns:1fr;gap:16px}
+  .b4-g{grid-template-columns:1fr 1fr;gap:0 20px}.b4-g>div{padding-bottom:18px}
+}
+@media (min-width:901px){.hs{padding:132px 0 30px!important}.hs .hs-steps{display:none}}
+.it-s{max-width:30ch}.fa-st{max-width:30ch}

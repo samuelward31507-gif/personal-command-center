@@ -168,3 +168,8 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Order: hero, tools, stats, 01 We audit (funnel), 02 We build (3D bay, one line per thing; "One app" line replaced by "All connected"), "If AI can do it, we build it." (custom), 03 It runs, founder quote, the clock, the call band, close.
 - Removed from the homepage: front desk, calendar/CRM, quotes, money and reviews sections (their code stays in patch_home.py, unplaced).
 - The clock is now the fifteen-minute audit call (`.pt2.pt-ac`): a dial alone on the stage, the same tunnel counting 03:00 to 15:00, landing on "Fifteen minutes. You leave with a plan.", which is the heading of the call band below it. Hidden on phones and with reduced motion, where the band shows its own heading.
+
+## Pass 34 (Sam sent a screen recording of attio.com: "bring this exact layout, with our product, homepage only")
+- Same page structure, Cinder's own content, drawings and dark theme. Hero stays (ribbon, centered) with one large picture under it (the funnel, `.hv`) and two pieces floating over its edges; tools row; two-tone statement (`.it`); a list that stays put on the left while five blocks scroll past on the right (`.fa`: Leads, Quotes, Getting paid, Reviews, Anything else; statement + framed drawing + two short points each); founder quote; the stats; four columns ("Most of the day is already done", `.b4`); the clock; the call band; close.
+- Not carried over because Cinder has nothing true to put there: customer logos, customer story, changelog, newsletter.
+- Off the page in this layout: the 3D bay, the separate funnel / custom / "it runs" drawing sections (code still in patch_home.py).
