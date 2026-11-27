@@ -86,3 +86,7 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - The hand-built calendar is replaced by the app's real Calendar view: the same `.cs` markup and styles as the Software page (copied into home2.css v18), drawn at 1600x1000 and scaled into its frame by home2.js (`--s`, `--fw`).
 - Events tell the homepage story: Dana Ruiz estimate Friday 8:00 AM (new), the two other offered times shown dashed.
 - Lesson: when a section shows "the CRM", use the real `.cs` screens from software.html, never a re-drawn imitation.
+
+## Pass 18 (Sam: "make it better", calendar section)
+- The section now plays the booking as you scroll (classes s1..s4 on `.pz`, set in home2.js): three offered slots on the calendar, the text goes out (thread card), the lead picks, Friday's offered slot becomes the black estimate and the other two disappear, then the booking card, then the reminders card.
+- Three pop-outs instead of four, asymmetric: thread on the left, booking and reminders on the right. Cards scale with the screen (`--pz`), and the screen is sized so the cards always fit beside it (container units on `.pz-stage`).

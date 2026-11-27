@@ -66,9 +66,11 @@
   // ---- the calendar: starts close on the booking, pulls back to the week, and its notes come out of the sides
   [].forEach.call(document.querySelectorAll('.pz'), function (sec) {
     var fig = sec.querySelector('.pz-fig'), bs = [].slice.call(sec.querySelectorAll('.pz-b')), tk = false, ezz = function (x) { x = x < 0 ? 0 : x > 1 ? 1 : x; return x * x * (3 - 2 * x) };
-    function up() { tk = false; if (innerWidth <= 900) { fig.style.removeProperty('--z'); bs.forEach(function (b) { b.classList.add('on') }); return } var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight))); fig.style.setProperty('--z', (1.75 - .75 * ezz(p / .42)).toFixed(4)); bs.forEach(function (b, i) { b.classList.toggle('on', p > .46 + i * .12) }) }
+    var SHOW = [1, 3, 4], lastSt = -1;   // the step at which each card comes out
+    function state(st) { if (st === lastSt) return; lastSt = st; for (var k = 1; k <= 4; k++) sec.classList.toggle('s' + k, st >= k); bs.forEach(function (b, i) { b.classList.toggle('on', st >= SHOW[i]) }) }
+    function up() { tk = false; if (innerWidth <= 900) { fig.style.removeProperty('--z'); state(4); return } var r = sec.getBoundingClientRect(), p = Math.max(0, Math.min(1, -r.top / Math.max(1, r.height - innerHeight))); fig.style.setProperty('--z', (1.6 - .6 * ezz(p / .3)).toFixed(4)); state(p > .8 ? 4 : p > .66 ? 3 : p > .5 ? 2 : p > .33 ? 1 : 0) }
     var cs = fig.querySelector('.cs'), stage = sec.querySelector('.pz-stage');
-    function fit() { if (!cs) return; var w = fig.offsetWidth; if (!w) return; cs.style.setProperty('--s', (w / 1600).toFixed(5)); stage.style.setProperty('--fw', w + 'px') }
+    function fit() { if (!cs) return; var w = fig.offsetWidth; if (!w) return; cs.style.setProperty('--s', (w / 1600).toFixed(5)); stage.style.setProperty('--fw', w + 'px'); stage.style.setProperty('--pz', Math.max(.58, Math.min(1, w / 780)).toFixed(3)) }
     if ('ResizeObserver' in window) new ResizeObserver(fit).observe(fig); addEventListener('resize', fit); fit();
     addEventListener('scroll', function () { if (!tk) { tk = true; requestAnimationFrame(up) } }, { passive: true }); addEventListener('resize', up); setTimeout(function () { fit(); up() }, 400)
   });
