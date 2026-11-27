@@ -28,18 +28,18 @@ for _a, _b in [
     assert _a in hero_body, _a[:50]
     hero_body = hero_body.replace(_a, _b)
 
-# ---------- tools grid ----------
+# ---------- tools: the moving strip ----------
 ORDER = ['Google Calendar', 'Jobber', 'Gmail', 'Housecall Pro', 'Instagram',
          'QuickBooks', 'Facebook Lead Ads', 'Angi', 'Google Business Profile', 'Thumbtack']
 cells = ''.join('<li>%s<span>%s</span></li>' % (tools.get(n, ''), n) for n in ORDER)
-TOOLS = ('<section class="tl" aria-label="Works alongside the tools you already use"><div class="w tl-g">'
-         '<p class="tl-c">Works alongside the tools you already use</p><ul>%s</ul></div></section>' % cells)
+TOOLS = ('<section class="tm" aria-label="Works alongside the tools you already use"><p>Works alongside the tools you already use</p>'
+         '<div class="tm-v"><ul>%s%s</ul></div></section>' % (cells, cells.replace('<li>', '<li aria-hidden="true">')))
 
 # ---------- problem statement ----------
 WHAT = ('<section class="st"><div class="w st-i"><span class="lb">What we do</span>'
         '<p class="st-t">We take your business apart and fix what&rsquo;s costing you. '
-        '<span>Not one product. We look at how you run, find where the jobs and the hours go, and build the systems that stop it. '
-        'If a task repeats, AI should be doing it.</span></p></div></section>')
+        '<span>Not one product, and not a template. We look at how you run, find where the jobs and the hours go, '
+        'and build systems made for the way you work. If a task repeats, AI should be doing it.</span></p></div></section>')
 PROB = ('<section class="st st2"><div class="w st-i"><span class="lb">What an audit finds</span>'
         '<p class="st-t">The jobs and hours you lose, you never hear about. '
         '<span>The caller who got voicemail doesn&rsquo;t ring back. The quote that went quiet doesn&rsquo;t remind you. '
@@ -283,11 +283,11 @@ AU = ('<section class="au"><div class="w au-g">%s</div><div class="w au-e"></div
 # ---------- what we build: eight parts of the business ----------
 PARTS = [('Getting found', 'find', 'A website and a Google listing that turn searches into calls.', '/websites', False),
          ('Front desk', 'chat', 'Every call, form and message answered, day or night.', '/answering', True),
-         ('Calendar', 'cal', 'Estimates booked, crews scheduled, customers reminded.', '/booking', False),
+         ('Calendar', 'cal', 'Estimates booked, crews scheduled, customers reminded.', '/booking', True),
          ('Quotes', 'quote', 'Sent the same day and followed up until there is an answer.', '/estimates', True),
          ('Money', 'money', 'Invoices out the day the job ends, and chased until paid.', '/invoicing', True),
          ('After the job', 'star', 'Reviews, referrals and repeat work asked for every time.', '/reviews', True),
-         ('Team and office', 'team', 'Hiring, reports and the paperwork nobody has time for.', '/reports', True),
+         ('Team and office', 'team', 'Hiring, reports and the paperwork nobody has time for.', '/reports', False),
          ('Custom', 'plus', 'If it is not on this list, we build it anyway.', '/custom-builds', False)]
 IC.update({
  'find': '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
@@ -306,30 +306,30 @@ for i, (name, _, _, _, lit) in enumerate(PARTS):
     lx, ly = CX + (RR + 34) * math.sin(a), CY - (RR + 34) * math.cos(a)
     anchor = 'middle' if i in (0, 4) else ('start' if i < 4 else 'end')
     dy = -4 if i == 0 else (14 if i == 4 else 4.5)
-    if lit:
-        spokes += '<path class="bd-sp" pathLength="1" d="M%.1f %.1fL%.1f %.1f"/>' % (CX + 52 * math.sin(a), CY - 52 * math.cos(a), x, y)
+    spokes += '<path class="bd-sp%s" pathLength="1" d="M%.1f %.1fL%.1f %.1f"/>' % (' lit' if lit else '', CX + 52 * math.sin(a), CY - 52 * math.cos(a), x, y)
     nodes += '<circle class="bd-n%s" cx="%.1f" cy="%.1f" r="5"/>' % (' lit' if lit else '', x, y)
     labels += '<text class="bd-l%s" x="%.1f" y="%.1f" text-anchor="%s">%s</text>' % (' lit' if lit else '', lx, ly + dy, anchor, name)
-WHEEL = ('<svg class="bd-w" viewBox="0 0 520 412" role="img" aria-label="Eight parts of a business in a ring. Five are marked as found by an example audit: front desk, quotes, money, after the job, and team and office.">'
+WHEEL = ('<svg class="bd-w" viewBox="0 0 520 412" role="img" aria-label="Eight parts of a business in a ring. Example audits light different parts for different businesses.">'
          '<g class="bd-k">%s</g>%s%s%s<text class="bd-c1" x="%d" y="%d" text-anchor="middle">Example audit</text>'
          '<text class="bd-c2" x="%d" y="%d" text-anchor="middle">5 of 8</text></svg>' % (ring, spokes, nodes, labels, CX, CY - 8, CX, CY + 20))
 BD = ('<section class="bd"><div class="w bd-h"><div class="bd-t"><span class="lb">After the audit</span>'
-      '<p class="st-t">Then we build whatever fixes it. <span>Not one product. A website, a front desk, a calendar, quotes, invoices, reviews: '
-      'whichever parts the audit says are costing you.</span></p><a class="btn g" href="/everything">See everything we build</a></div>'
-      '<div class="bd-r">%s</div></div><div class="w bd-g">%s</div>'
+      '<p class="st-t">Then we build whatever fixes it. <span>Made for your business, not pulled from a template. No two audits turn up the same list, '
+      'so no two builds are the same.</span></p><a class="btn g" href="/everything">See everything we build</a></div>'
+      '<div class="bd-r"><div class="bd-x">%s<div class="bd-tabs"><span>Example audits</span><button type="button" class="on">Fence company</button>'
+      '<button type="button">Plumber</button><button type="button">Roofer</button></div></div></div></div><div class="w bd-g">%s</div>'
       '<div class="w bd-e"><p>The one thing we don&rsquo;t do is run ads.</p></div></section>'
       % (WHEEL, ''.join('<a href="%s"><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg><h3>%s.</h3><p>%s</p></a>' % (h, IC[k], n, t) for n, k, t, h, _ in PARTS)))
 
 # ---------- how it works: the call, the findings, the build, it runs ----------
 STEPS = [('The call.', 'Fifteen minutes, part by part: how work comes in, gets quoted, gets done and gets paid.'),
          ('The findings.', 'A short report of what&rsquo;s costing you, in dollars a month and hours a week. It&rsquo;s yours to keep.'),
-         ('The build.', 'We build the fixes you choose, and only those.'),
+         ('The build.', 'Made for your business: your tools, your wording, your way of working. Only the fixes you choose.'),
          ('It runs.', 'The systems do the repeat work. You see what they did in one app on your phone.')]
 FIND = [('Front desk', '8 calls missed after hours', '$2,400 a month', 'r', 'A text back in seconds'),
         ('Quotes', '13 quotes never followed up', '$3,100 a month', 'r', 'Check-ins on day two and five'),
         ('After the job', '29 finished jobs never asked for a review', '$900 a month', 'r', 'A request the day after'),
         ('Money', 'Invoices go out six days late', '$14,600 waiting', 'y', 'An invoice the day the job ends'),
-        ('Team and office', 'Scheduling and reminders done by hand', '11 hours a week', 'y', 'Booking and reminders that run themselves')]
+        ('Calendar', 'Scheduling and reminders done by hand', '11 hours a week', 'y', 'Booking and reminders that run themselves')]
 FD = ('<div class="fd"><div class="fd-h"><span class="dot"></span><b>Audit findings</b><span>Ridgeline Fence</span><span class="tag">Example business, sample data</span></div>%s'
       '<div class="fd-f"><div><b>$6,400</b>lost a month</div><div><b>$14,600</b>waiting to be paid</div><div><b>11 hours</b>by hand a week</div></div></div>'
       % ''.join('<div class="fd-r"><small>%s</small><b>%s</b><em class="%s">%s</em><span><i></i>%s</span></div>' % (p, f, t, c, b) for p, f, c, t, b in FIND))
@@ -339,6 +339,34 @@ HW = ('<section class="hw"><div class="w hw-g"><div class="hw-t"><span class="lb
       % (''.join('<li><div><b>%s</b><span>%s</span></div></li>' % st for st in STEPS), FD))
 CL = ('<section class="cl"><div class="w cl-i"><h2>Find out what you&rsquo;re missing.</h2><p>A free audit of your business. You keep what we find.</p>'
       '<div><a class="btn" %s>Book your free audit</a><a class="btn g" href="/free-audit">See what we check</a></div></div></section>' % CAL)
+
+# ---------- hero: the path of a job through the business, with the findings on it ----------
+IC['tool'] = '<path d="M14.6 5.3a4.2 4.2 0 0 0-5.3 5.3L4 15.9 8.1 20l5.3-5.3a4.2 4.2 0 0 0 5.3-5.3l-2.6 2.6-2.4-.6-.6-2.4z"/>'
+# (part, icon, finding, cost, tone, fix, card goes up or down)
+PATH = [('Getting found', 'find', None, None, None, None, None),
+        ('Front desk', 'chat', '8 calls missed after hours', '$2,400 a month', 'r', 'A text back in seconds', 'up'),
+        ('Calendar', 'cal', 'Scheduling and reminders by hand', '11 hours a week', 'y', 'Booking that runs itself', 'dn'),
+        ('Quotes', 'quote', '13 quotes never followed up', '$3,100 a month', 'r', 'Check-ins on day two and five', 'up'),
+        ('The work', 'tool', None, None, None, None, None),
+        ('Money', 'money', 'Invoices go out six days late', '$14,600 waiting', 'y', 'An invoice the day the job ends', 'dn'),
+        ('After the job', 'star', 'No review request on 29 jobs', '$900 a month', 'r', 'A request the day after', 'up')]
+MW, CW = 1000, 214
+steps = ''
+for i, (part, ic, find, cost, tone, fix, side) in enumerate(PATH):
+    x = 62 + i * (MW - 124) / 6
+    cl = min(max(x - CW / 2, 18), MW - 18 - CW) - x
+    card = ('<div class="mp-c %s" style="--cl:%.1fpx;--cx:%.1fpx;--d:%d"><b>%s</b><em class="%s">%s</em><span><i></i>%s</span></div>'
+            % (side, cl, -cl, i, find, tone, cost, fix)) if find else '<span class="mp-ok">Fine as it is</span>'
+    steps += ('<div class="mp-s%s" style="--x:%.1fpx"><div class="mp-t"><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg></div><div class="mp-lb">%s</div>%s</div>'
+              % (' f-' + tone if find else ' ok', x, IC[ic], part, card))
+HERO = ('<section class="hero"><span class="pill"><i></i>The free audit takes fifteen minutes</span>'
+        '<h1>Find out what your business is losing.</h1>'
+        '<p class="sub">We take your business apart, put a number on what&rsquo;s costing you jobs and hours, and build systems made for it. Nothing off the shelf.</p>'
+        '<div class="cta"><a class="btn" %s>Book your free audit</a><a class="btn q" href="/free-audit">See what we check</a></div></section>'
+        '<div class="stage"><div class="ground"><div class="card mp"><div class="rep-h"><span class="dot"></span><b>Free audit</b><span>Ridgeline Fence</span>'
+        '<span class="tag">Example business, sample data</span></div><div class="mp-b"><div class="mp-l"></div>%s</div>'
+        '<div class="mp-f"><div><b>$6,400</b>lost a month</div><div><b>$14,600</b>waiting to be paid</div><div><b>11 hours</b>by hand a week</div>'
+        '<p>Five findings. Two parts fine as they are.</p></div></div></div></div>' % (CAL, steps))
 
 JS = r"""
 (function(){
@@ -351,10 +379,15 @@ addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(p
 })();
 
 (function(){
-var bd=document.querySelector('.bd');if(!bd||!('IntersectionObserver' in window))return;
+var bd=document.querySelector('.bd');if(!bd)return;
+var sets=[[1,2,3,4,5],[0,1,2],[0,3,5,7]],sp=bd.querySelectorAll('.bd-sp'),nd=bd.querySelectorAll('.bd-n'),lb=bd.querySelectorAll('.bd-l'),c2=bd.querySelector('.bd-c2'),tabs=bd.querySelectorAll('.bd-tabs button'),at=0,timer=0;
+function show(k){at=k;for(var i=0;i<8;i++){var on=sets[k].indexOf(i)>-1;sp[i].classList.toggle('lit',on);nd[i].classList.toggle('lit',on);lb[i].classList.toggle('lit',on)}
+c2.textContent=sets[k].length+' of 8';for(var j=0;j<tabs.length;j++)tabs[j].classList.toggle('on',j===k)}
+[].forEach.call(tabs,function(t,k){t.addEventListener('click',function(){clearInterval(timer);timer=-1;show(k)})});
+if(!('IntersectionObserver' in window))return;
 if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search))return;
 bd.classList.add('pre');
-new IntersectionObserver(function(e,o){if(e[0].isIntersecting){bd.classList.remove('pre');o.disconnect()}},{threshold:.45}).observe(bd.querySelector('.bd-w'));
+new IntersectionObserver(function(e){if(e[0].isIntersecting){bd.classList.remove('pre');if(!timer)timer=setInterval(function(){show((at+1)%3)},3600)}else if(timer>0){clearInterval(timer);timer=0}},{threshold:.45}).observe(bd.querySelector('.bd-w'));
 })();
 
 (function(){
@@ -592,13 +625,13 @@ em.g,.tg-g{background:#e7f6ec;color:#1c7a43}em.r{background:#fdeaea;color:#c23b3
 .bd-r{padding:clamp(40px,3.4vw,64px) clamp(16px,2vw,38px);border-left:1px solid var(--dl);align-self:stretch;display:flex;align-items:center}
 .bd-w{width:100%;height:auto;max-height:min(520px,60vh);overflow:visible}
 .bd-k line{stroke:rgba(255,255,255,.22);stroke-width:1}.bd-k line:nth-child(5n+1){stroke:rgba(255,255,255,.5)}
-.bd-sp{fill:none;stroke:#5d90fb;stroke-width:1.2;stroke-dasharray:1;stroke-dashoffset:0;transition:stroke-dashoffset .7s cubic-bezier(.2,.7,.2,1)}
+.bd-sp{fill:none;stroke:#5d90fb;stroke-width:1.2;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .6s cubic-bezier(.2,.7,.2,1)}.bd-sp.lit{stroke-dashoffset:0}
 .bd-n{fill:var(--dk);stroke:rgba(255,255,255,.4);stroke-width:1.3;transition:fill .35s,stroke .35s}
 .bd-n.lit{fill:#5d90fb;stroke:#5d90fb;filter:drop-shadow(0 0 0 rgba(0,0,0,0))}
 .bd-l{font:500 13.5px Inter,sans-serif;fill:#7f8187;letter-spacing:-.005em;transition:fill .35s}.bd-l.lit{fill:#fff}
 .bd-c1{font:500 11px "Geist Mono",monospace;fill:#7f8187}.bd-c2{font:600 26px Inter,sans-serif;fill:#fff;letter-spacing:-.03em;transition:opacity .4s}
-.bd.pre .bd-sp{stroke-dashoffset:1}.bd.pre .bd-n.lit{fill:var(--dk);stroke:rgba(255,255,255,.4)}.bd.pre .bd-l.lit{fill:#7f8187}.bd.pre .bd-c2{opacity:.25}
-.bd-sp:nth-of-type(2),.bd-n.lit:nth-of-type(n){transition-delay:.12s}
+.bd.pre .bd-sp.lit{stroke-dashoffset:1}.bd.pre .bd-n.lit{fill:var(--dk);stroke:rgba(255,255,255,.4)}.bd.pre .bd-l.lit{fill:#7f8187}.bd.pre .bd-c2{opacity:.25}
+
 .bd-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--dl);border-bottom:0}
 .bd-g a{display:block;padding:clamp(22px,1.5vw,28px) clamp(20px,1.42vw,27px) clamp(28px,2.1vw,40px);min-height:clamp(170px,10.6vw,202px);border-bottom:1px solid var(--dl);border-left:1px solid var(--dl);transition:background .2s}
 .bd-g a:nth-child(4n+1){border-left:0}.bd-g a:hover{background:rgba(255,255,255,.035)}
@@ -609,7 +642,7 @@ em.g,.tg-g{background:#e7f6ec;color:#1c7a43}em.r{background:#fdeaea;color:#c23b3
 .bd-e p{margin:0;font-size:clamp(15px,.92vw,17.5px);color:#8f9197}
 
 /* ---- re-ordered page: audit first ---- */
-.ground{height:690px}.rep{height:742px}
+
 td i.h{background:var(--amber)}td.n.h{color:#a86a00}td.n{white-space:nowrap}
 .st2{border-top:0}
 .hw{background:var(--dk);color:#fff}
@@ -643,6 +676,50 @@ td i.h{background:var(--amber)}td.n.h{color:#a86a00}td.n{white-space:nowrap}
 .cl h2{margin:0;font-size:clamp(34px,2.95vw,56px);line-height:1.04;font-weight:600;letter-spacing:-.04em}
 .cl p{margin:clamp(12px,.95vw,18px) 0 0;font-size:clamp(16px,1vw,19px);color:#8f9197}
 .cl-i div{margin-top:clamp(24px,1.9vw,36px);display:flex;gap:8px;justify-content:center}.cl .btn:not(.g){background:#fff;color:var(--ink)}
+
+/* ---- hero: the business laid out ---- */
+.ground{height:654px}
+.mp{position:relative;left:auto;top:6px;width:1000px;margin:0 auto}
+.mp-b{position:relative;height:462px}
+.mp-l{position:absolute;left:62px;right:62px;top:231px;height:0;border-top:1.5px dashed #cfd3dc;transform-origin:0 50%;animation:mpl .9s cubic-bezier(.2,.7,.2,1) both}
+.mp-s{position:absolute;left:var(--x);top:209px;width:0}
+.mp-t{position:absolute;left:-22px;top:0;width:44px;height:44px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:0 0 0 1px rgba(23,24,26,.1),0 2px 5px rgba(23,24,26,.06);color:var(--ink)}
+.mp-t svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.mp-t::after{content:"";position:absolute;right:-4px;top:-4px;width:11px;height:11px;border-radius:50%;box-shadow:0 0 0 2px #fff}
+.f-r .mp-t::after{background:var(--red)}.f-y .mp-t::after{background:var(--amber)}.ok .mp-t::after{background:#2a9d5c}
+.mp-lb{position:absolute;left:0;top:53px;transform:translateX(-50%);white-space:nowrap;font-size:13px;font-weight:540;letter-spacing:-.008em;background:#fff;padding:0 6px}
+.mp-ok{position:absolute;left:0;top:79px;transform:translateX(-50%);white-space:nowrap;display:inline-flex;align-items:center;height:21px;padding:0 8px;border-radius:999px;background:#e7f6ec;color:#1c7a43;font-size:11.5px;font-weight:520}
+.mp-c{position:absolute;left:var(--cl);width:214px;padding:12px 13px 12px;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 2px 4px rgba(23,24,26,.04),0 16px 30px -18px rgba(30,40,90,.3);animation:mpc .55s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(.35s + var(--d)*.13s)}
+.mp-c.up{bottom:52px}.mp-c.dn{top:104px}
+.mp-c::after{content:"";position:absolute;left:var(--cx);width:0;border-left:1.5px solid #cfd3dc}
+.mp-c.up::after{top:100%;height:52px}.mp-c.dn::after{bottom:100%;height:24px}
+.mp-c b{display:block;font-size:13.5px;font-weight:560;letter-spacing:-.01em;line-height:1.25}
+.mp-c em{display:block;margin-top:5px;font-style:normal;font-size:15px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;background:none}
+.mp-c em.r{color:var(--red);background:none}.mp-c em.y{color:#a86a00;background:none}
+.mp-c span{display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:12px;color:var(--t2)}
+.mp-c span i{width:6px;height:6px;border-radius:50%;background:var(--blue);flex:none}
+.mp-f{display:flex;align-items:flex-end;gap:44px;height:72px;padding:0 22px 16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--t3)}
+.mp-f b{display:block;color:var(--ink);font-size:19px;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+.mp-f p{margin:0 0 0 auto;font-size:12.5px;color:var(--t2)}
+@keyframes mpc{from{opacity:0;transform:translateY(8px)}}@keyframes mpl{from{transform:scaleX(0)}}
+@media(prefers-reduced-motion:reduce){.mp-c,.mp-l{animation:none}}
+@media(max-width:1100px){.mp{zoom:.84}.ground{height:560px}}
+/* ---- tools: the moving strip ---- */
+.tm{border-top:1px solid var(--ln);border-bottom:1px solid var(--ln);padding:clamp(26px,2.1vw,40px) 0 clamp(30px,2.4vw,46px);text-align:center}
+.tm p{margin:0 0 clamp(18px,1.5vw,28px);font-size:clamp(13px,.8vw,15px);color:var(--g2)}
+.tm-v{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)}
+.tm ul{display:flex;width:max-content;list-style:none;margin:0;padding:0;animation:tm 52s linear infinite}
+.tm:hover ul{animation-play-state:paused}
+.tm li{display:flex;align-items:center;gap:10px;margin-right:clamp(44px,3.9vw,74px);font-weight:600;font-size:clamp(15px,1.03vw,19.5px);letter-spacing:-.015em;color:var(--ink);white-space:nowrap}
+.tm li svg{width:clamp(20px,1.3vw,24px);height:clamp(20px,1.3vw,24px);flex:none}
+@keyframes tm{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.tm ul{animation:none}}
+/* ---- the wheel's example tabs ---- */
+.bd-x{width:100%}
+.bd-tabs{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:clamp(14px,1.4vw,26px);flex-wrap:wrap}
+.bd-tabs span{font:500 11px/1 "Geist Mono",monospace;color:#7f8187;margin-right:8px}
+.bd-tabs button{appearance:none;border:0;cursor:pointer;height:30px;padding:0 12px;border-radius:999px;background:transparent;color:#8f9197;font:500 13px/1 Inter,sans-serif;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);transition:background .25s,color .25s}
+.bd-tabs button.on{background:#fff;color:var(--ink);box-shadow:none}.bd-tabs button:focus-visible{outline:2px solid #5d90fb;outline-offset:2px}
 
 /* ---- narrower screens ---- */
 html,body{overflow-x:clip}
@@ -690,6 +767,13 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 .fd-r{padding:12px 14px 13px;gap:5px 10px}.fd-r b,.fd-r em{font-size:13px}.fd-f{padding:14px;gap:8px}.fd-f b{font-size:16px}
 .wk{width:100%}.wk-r{grid-template-columns:128px 1fr 40px;gap:8px;height:46px;font-size:12px;line-height:1.25}
 .cl-i{padding:88px 20px 96px}.cl-i div{flex-wrap:wrap}
+.ground{height:auto!important}.mp{zoom:1;width:100%;top:0}.mp-b{height:auto;padding:4px 14px 6px}.mp-l{display:none}
+.mp-s{position:relative;left:auto;top:auto;width:auto;display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:12px;row-gap:8px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}.mp-s:first-of-type{border-top:0}
+.mp-t{position:relative;left:auto;top:auto}.mp-lb{position:static;transform:none;background:none;padding:0;font-size:14px}
+.mp-ok{position:static;transform:none;grid-column:2;justify-self:start}.mp-s.ok{grid-template-columns:44px auto 1fr}.mp-s.ok .mp-ok{grid-column:3;justify-self:end}
+.mp-c{position:static;width:auto;grid-column:1/-1;animation:none}.mp-c::after{display:none}
+.mp-f{height:auto;flex-wrap:wrap;gap:12px 22px;padding:14px;align-items:flex-start}.mp-f b{font-size:17px}.mp-f p{margin:0;width:100%}
+.tm li{font-size:14.5px;margin-right:40px}
 .lg-r{gap:9px;padding:0 12px}.lg-r em{font-size:11.5px;padding:0 7px}
 }
 '''
@@ -698,7 +782,7 @@ NAV = ('<header class="top"><div class="nav"><a href="/" class="nav-b"><b>%s Cin
        '<a class="btn" %s>Book your free audit</a></div></header>' % (mark, CAL))
 html = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
         '<title>More jobs from the leads you already get | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s<div class="heroband">%s</div>%s%s%s%s%s%s%s%s%s<script>%s</script></body></html>'
-        % (hero_css, CSS, NAV, hero_body, TOOLS, WHAT, CK, AU, HW, BD, PROB, LK, CL, JS))
+        % (hero_css, CSS, NAV, HERO, TOOLS, WHAT, CK, AU, HW, BD, PROB, LK, CL, JS))
 for p in (ROOT + '/design/mock/home-light.html', ROOT + '/site/new.html'):
     open(p, 'w').write(html)
 print('ok', len(html))

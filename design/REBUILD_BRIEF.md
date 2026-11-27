@@ -174,3 +174,10 @@ Order on `/new` now:
 9. Dark closing band: "Find out what you're missing."
 
 Still to build: founder quote, sourced numbers, footer.
+
+## 15. Custom, a new hero, and the old tools strip (27 Nov)
+
+- **Hero picture.** No longer a report screen. It is the business laid out as the path a job takes (getting found, front desk, calendar, quotes, the work, money, after the job) with the example audit's five findings pinned to the parts they belong to, each with its cost and its fix, and two parts marked "Fine as it is". Totals underneath. On a phone it becomes a list.
+- **Headline.** Changed to "Find out what your business is losing." Sam had not answered the question; he said the hero still read as speed to lead. The old line was "More jobs from the leads you already get." Swap it back in `HERO` in `mk_home.py` if he says so.
+- **Custom.** Said in four places: under the headline ("systems made for it. Nothing off the shelf."), in "What we do" ("Not one product, and not a template"), in step three of how it works, and in the build statement ("Made for your business, not pulled from a template. No two audits turn up the same list, so no two builds are the same."). The ring now switches between three example audits (fence company, plumber, roofer) that light different parts.
+- **Tools.** The grid looked too much like the reference's logo grid. It is the moving strip from the old homepage again, with the logos in their own colours.
