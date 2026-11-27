@@ -241,3 +241,23 @@ Next: the free audit page, then the rest of the inner pages, all through `page()
 Order: centred headline over the audit laid out as a map (the earlier horizontal hero, in ink, grey and one blue) / how it works in three steps / dark "What you leave with" beside the example findings report / "What we look at" in eight cells / "What to bring" beside a card of four rough numbers / questions / "Start with your website" / the booking calendar (the same embedded Cal.com calendar the old page had, now in its light theme) / closing band / footer.
 
 The copy is the old page's, widened from leads to the whole business and with "custom" said once. The old page is in git history.
+
+## 22. Every page gets its own spin (27 Nov)
+
+Sam's rule: the theme is shared, but pages must not be the same few templates repeated. Each page needs its own picture, its own layout and one thing no other page has. The plan to put all the build pages on one template is dropped.
+
+How that is kept honest:
+
+- Shared and never varied: nav, footer, colours, type sizes, hairlines, the closing band.
+- Varied on every page: the shape of the top (centred over a picture, split, split reversed), the picture itself (drawn for that page's subject), the order of sections, and one signature block.
+- Inner pages are built by `design/mock/mk_pages.py`, which imports the shared pieces from `mk_home.py`, reads the builds' names and copy from `design/build_services.py` without running it, and writes its own stylesheet `site/assets/light-pages.css`.
+
+First three, built to set the level:
+
+| Page | Top | Its own picture | Its one thing |
+|---|---|---|---|
+| `/everything` | Centred over a board | All 32 builds on one board in eight columns, each a link, ending in a dashed "Yours" | An index that follows you down the page, part by part |
+| `/websites` | Split, picture on the left | A phone showing a site with a quote form and open times, three callouts | A table that crosses out what most contractor sites do |
+| `/answering` | Centred over a thread | One missed call timed to the second: 9 seconds to reply, 2 minutes to booked | Where calls get missed across one day, then the 78% figure filling a dark band |
+
+Copy on all three is the existing copy from the old pages. Do not run `design/build_services.py`; it would overwrite these with the old dark pages.

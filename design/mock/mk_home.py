@@ -1089,7 +1089,7 @@ open(ROOT + '/site/assets/light.css', 'w').write(ALLCSS.strip() + '\n')
 open(ROOT + '/site/assets/light.js', 'w').write(JS.strip() + '\n')
 
 
-def page(title, desc, path, body, index=True):
+def page(title, desc, path, body, index=True, css=''):
     """One page of the light site: the shared head, nav, footer, stylesheet and script around its own sections."""
     url = 'https://cinderrevenue.com' + path
     return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
@@ -1099,9 +1099,9 @@ def page(title, desc, path, body, index=True):
             '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:site_name" content="Cinder Revenue Company">'
             '<meta name="twitter:card" content="summary_large_image"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any">'
             '<link rel="apple-touch-icon" href="/icon/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">'
-            '<link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/assets/light.css?v=%(v)s"></head>'
+            '<link rel="preload" href="/assets/fonts/InterVariable.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="/assets/light.css?v=%(v)s">%(css)s</head>'
             '<body>%(nav)s<main id="main">%(body)s</main>%(ft)s<script src="/assets/light.js?v=%(v)s" defer></script><script src="/assets/cinder-chat.js" defer></script></body></html>'
-            % dict(t=title, d=desc, u=url, v=VER, nav=NAV, body=body, ft=FT, robots='' if index else '<meta name="robots" content="noindex">'))
+            % dict(t=title, d=desc, u=url, v=VER, nav=NAV, body=body, ft=FT, robots='' if index else '<meta name="robots" content="noindex">', css=('<link rel="stylesheet" href="/assets/%s">' % css) if css else ''))
 
 
 HOME = HERO + TOOLS + FQ + WHAT + CK + HW + BD + PROB + LK + CL
