@@ -135,3 +135,7 @@ Still to capture from attio.com for reference: ask, workflows, enrichment, ai, c
 - Drawings are scrubbed, not stepped: `drawParts` sets --d/--e/--f/--t per part; a camera (`cam`) starts close on the first part, tracks part to part, pulls back at the end, never closer than the part in focus fits. The six plates slide with the scroll (`--o`).
 - Detail: ground outlines with corner crosses, ruler ticks, lift lines, order arrows, printed sheets, a day rail under the quote, measured edges, second-line labels, a wireframe funnel with counts, engraved plates with exploded-view axes.
 - Not touched: hero, stats, patch bay, the grid, the call band. They still scroll plainly.
+
+## Pass 27 (Sam: "super clean like no images on the designs just super clean lines")
+- The drawings take the clock portal's look: hairlines on pure black. Removed the ground grid, shaded faces, the pictures engraved on the six plates, ruler ticks, corner crosses and the funnel's wireframe (v27 in home2.css hides them; the markup is still generated, so any of it can come back).
+- Square joins and butt caps. Two line weights. Red stays the only accent.

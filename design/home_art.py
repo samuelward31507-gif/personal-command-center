@@ -61,7 +61,7 @@ class Iso:
         return '<path class="lk ds nf" d="M%s"/><path class="ah nf" d="%s"/>' % (' L'.join('%s,%s' % p for p in q), ah)
     def dial(s, x, y, z, r1, r2, n=12):
         """the minute marks of a dial lying on a face"""
-        return '<path class="tkk nf" d="%s"/>' % ''.join('M%s,%s L%s,%s ' % (s.p(x + r1 * math.cos(k * 2 * math.pi / n), y + r1 * math.sin(k * 2 * math.pi / n), z) + s.p(x + r2 * math.cos(k * 2 * math.pi / n), y + r2 * math.sin(k * 2 * math.pi / n), z)) for k in range(n))
+        return '<path class="tkk dl nf" d="%s"/>' % ''.join('M%s,%s L%s,%s ' % (s.p(x + r1 * math.cos(k * 2 * math.pi / n), y + r1 * math.sin(k * 2 * math.pi / n), z) + s.p(x + r2 * math.cos(k * 2 * math.pi / n), y + r2 * math.sin(k * 2 * math.pi / n), z)) for k in range(n))
     def sheet(s, x, y, z, w, d, rows=3):
         """what is printed on a quote or an invoice: a mark, a heading, a rule, rows with an amount each, and the total"""
         o = s.path([(x + 18, y + 18, z), (x + 44, y + 18, z), (x + 44, y + 44, z), (x + 18, y + 44, z)], cls='sk nf')

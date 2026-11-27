@@ -63,7 +63,7 @@ def stack():
     # an exploded view: thin axes through the three near corners tie the plates together
     g.append(''.join(f'<path class="pl-ax" d="M{x},{y0 + dy} V{y0 + dy + 5 * gap + th}"/>' for x, dy in ((cx - a, 0), (cx + a, 0), (cx, b))))
     for i in reversed(range(6)):
-        cy = y0 + i * gap; ia, ib = a * .7, b * .7
+        cy = y0 + i * gap; ia, ib = a * .46, b * .46
         rim = ''.join(f'M{cx - a + a * k / 14:.1f},{cy + b * k / 14 + 1:.1f} v{6 if k % 7 == 0 else 3.5} M{cx + a - a * k / 14:.1f},{cy + b * k / 14 + 1:.1f} v{6 if k % 7 == 0 else 3.5} ' for k in range(1, 14))
         g.append(f'<g class="pl" data-is="{i}"><g class="pl-m"><path d="M{cx - a},{cy} L{cx},{cy + b} L{cx + a},{cy} v{th} L{cx},{cy + b + th} L{cx - a},{cy + th} Z"/><path d="M{cx},{cy - b} L{cx + a},{cy} L{cx},{cy + b} L{cx - a},{cy} Z"/><path d="M{cx},{cy + b} v{th}"/><path class="pl-t" d="{rim}"/>'
                  f'<path class="pl-i" d="M{cx},{cy - ib} L{cx + ia},{cy} L{cx},{cy + ib} L{cx - ia},{cy} Z"/><g transform="matrix({a / 2} {b / 2} {-a / 2} {b / 2} {cx} {cy})"><path class="pl-g" d="{GLY[i]}"/></g></g>'
