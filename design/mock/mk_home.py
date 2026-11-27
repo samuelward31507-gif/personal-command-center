@@ -248,6 +248,46 @@ PTS = [('call', 'Missed calls.', 'We count the calls nobody answered last month.
 AU = ('<section class="au"><div class="w au-g">%s</div><div class="w au-e"></div></section>'
       % ''.join('<div><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg><h3>%s</h3><p>%s</p></div>' % (IC[k], t, p) for k, t, p in PTS))
 
+# ---------- what we build: eight parts of the business ----------
+PARTS = [('Getting found', 'find', 'A website and a Google listing that turn searches into calls.', '/websites', False),
+         ('Front desk', 'chat', 'Every call, form and message answered, day or night.', '/answering', True),
+         ('Calendar', 'cal', 'Estimates booked, crews scheduled, customers reminded.', '/booking', False),
+         ('Quotes', 'quote', 'Sent the same day and followed up until there is an answer.', '/estimates', True),
+         ('Money', 'money', 'Invoices out the day the job ends, and chased until paid.', '/invoicing', False),
+         ('After the job', 'star', 'Reviews, referrals and repeat work asked for every time.', '/reviews', True),
+         ('Team and office', 'team', 'Hiring, reports and the paperwork nobody has time for.', '/reports', False),
+         ('Custom', 'plus', 'If it is not on this list, we build it anyway.', '/custom-builds', False)]
+IC.update({
+ 'find': '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
+ 'chat': '<path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 3.5V16.5a2 2 0 0 1-2-2z"/>',
+ 'cal': '<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+ 'team': '<circle cx="9" cy="9" r="3.2"/><path d="M3.5 19.5c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5"/><circle cx="17" cy="8" r="2.4"/><path d="M16.5 13.2c2.200 .2 3.700 1.500 4.200 3.800"/>'.replace('00 ', ' '),
+ 'plus': '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8.5v7M8.5 12h7"/>',
+})
+CX, CY, RR = 260, 206, 128
+ring = ''.join('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f"/>' % (CX + (RR - (9 if i % 5 == 0 else 5)) * math.sin(math.radians(i * 6)), CY - (RR - (9 if i % 5 == 0 else 5)) * math.cos(math.radians(i * 6)),
+                                                                   CX + RR * math.sin(math.radians(i * 6)), CY - RR * math.cos(math.radians(i * 6))) for i in range(60))
+spokes = nodes = labels = ''
+for i, (name, _, _, _, lit) in enumerate(PARTS):
+    a = math.radians(i * 45)
+    x, y = CX + (RR + 16) * math.sin(a), CY - (RR + 16) * math.cos(a)
+    lx, ly = CX + (RR + 34) * math.sin(a), CY - (RR + 34) * math.cos(a)
+    anchor = 'middle' if i in (0, 4) else ('start' if i < 4 else 'end')
+    dy = -4 if i == 0 else (14 if i == 4 else 4.5)
+    if lit:
+        spokes += '<path class="bd-sp" pathLength="1" d="M%.1f %.1fL%.1f %.1f"/>' % (CX + 52 * math.sin(a), CY - 52 * math.cos(a), x, y)
+    nodes += '<circle class="bd-n%s" cx="%.1f" cy="%.1f" r="5"/>' % (' lit' if lit else '', x, y)
+    labels += '<text class="bd-l%s" x="%.1f" y="%.1f" text-anchor="%s">%s</text>' % (' lit' if lit else '', lx, ly + dy, anchor, name)
+WHEEL = ('<svg class="bd-w" viewBox="0 0 520 412" role="img" aria-label="Eight parts of a business in a ring. Three are marked as found by an example audit: front desk, quotes and after the job.">'
+         '<g class="bd-k">%s</g>%s%s%s<text class="bd-c1" x="%d" y="%d" text-anchor="middle">Example audit</text>'
+         '<text class="bd-c2" x="%d" y="%d" text-anchor="middle">3 of 8</text></svg>' % (ring, spokes, nodes, labels, CX, CY - 8, CX, CY + 20))
+BD = ('<section class="bd"><div class="w bd-h"><div class="bd-t"><span class="lb">After the audit</span>'
+      '<p class="st-t">Then we build whatever fixes it. <span>Not one product. A website, a front desk, a calendar, quotes, invoices, reviews: '
+      'whichever parts the audit says are costing you.</span></p><a class="btn g" href="/everything">See everything we build</a></div>'
+      '<div class="bd-r">%s</div></div><div class="w bd-g">%s</div>'
+      '<div class="w bd-e"><p>The one thing we don&rsquo;t do is run ads.</p></div></section>'
+      % (WHEEL, ''.join('<a href="%s"><svg viewBox="0 0 24 24" aria-hidden="true">%s</svg><h3>%s.</h3><p>%s</p></a>' % (h, IC[k], n, t) for n, k, t, h, _ in PARTS)))
+
 JS = r"""
 (function(){
 var items=[].slice.call(document.querySelectorAll('.lk-n li')),blocks=[].slice.call(document.querySelectorAll('.lk-b')),strip=document.querySelector('.lk-n ul'),at=0,tick=false;
@@ -256,6 +296,13 @@ function pick(){tick=false;var line=innerHeight*.42,n=0;for(var i=0;i<blocks.len
 if(n===at)return;items[at].classList.remove('on');items[n].classList.add('on');at=n;
 if(strip.scrollWidth>strip.clientWidth+4){var el=items[n];strip.scrollTo({left:el.offsetLeft-20,behavior:'smooth'})}}
 addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(pick)}},{passive:true});addEventListener('resize',pick);pick();
+})();
+
+(function(){
+var bd=document.querySelector('.bd');if(!bd||!('IntersectionObserver' in window))return;
+if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]motion=on/.test(location.search))return;
+bd.classList.add('pre');
+new IntersectionObserver(function(e,o){if(e[0].isIntersecting){bd.classList.remove('pre');o.disconnect()}},{threshold:.45}).observe(bd.querySelector('.bd-w'));
 })();
 
 (function(){
@@ -271,7 +318,7 @@ function ez(x){return x*x*(3-2*x)}
 function measure(){vw=document.documentElement.clientWidth;vh=innerHeight;R0=Math.min(vh*.22,vw*.36,240);R1=Math.hypot(vw/2,vh/2)*1.03;
 inner.setAttribute('transform','scale('+Math.min(.8,.44*vh/R1).toFixed(4)+')');cur=-1}
 function target(){var r=ck.getBoundingClientRect();return cl((vh*.85-r.top)/(vh*.85))+cl(-r.top/(r.height-vh))}
-function nav(){var a=au.getBoundingClientRect(),c=ck.getBoundingClientRect(),o=ck.classList.contains('on'),k=band.getBoundingClientRect(),d=(a.top<34&&a.bottom>34)||(o&&cur>1.8&&c.bottom>34)||(!o&&k.top<34&&k.bottom>34);
+function nav(){var a=au.getBoundingClientRect(),c=ck.getBoundingClientRect(),o=ck.classList.contains('on'),k=band.getBoundingClientRect(),b2=document.querySelector('.bd'),d=(a.top<34&&(b2||au).getBoundingClientRect().bottom>34)||(o&&cur>1.8&&c.bottom>34)||(!o&&k.top<34&&k.bottom>34);
 if(d!==dk){dk=d;top.classList.toggle('dk',d)}}
 function draw(v){var a=ez(cl(v)),p=cl(v-1),th=a*Math.PI/2,x=(80*Math.sin(th)).toFixed(2),y=(-80*Math.cos(th)).toFixed(2);
 needle.setAttribute('transform','rotate('+(a*90).toFixed(2)+')');
@@ -480,8 +527,37 @@ em.g,.tg-g{background:#e7f6ec;color:#1c7a43}em.r{background:#fdeaea;color:#c23b3
 .au-g p{margin:6px 0 0;font-size:clamp(14px,.84vw,16px);line-height:1.3;color:#8f9197;max-width:15em}
 .au-e{height:clamp(120px,10vw,190px);border-left:1px solid var(--dl);border-right:1px solid var(--dl)}
 
+/* ---- what we build: the wheel and the eight parts ---- */
+.au-e{display:none}
+.bd{background:var(--dk);color:#fff}
+.bd .lb{background:rgba(109,155,255,.16);color:#a9c4ff}
+.btn.g{background:transparent;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.24)}
+.bd-h{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);align-items:center;border-left:1px solid var(--dl);border-right:1px solid var(--dl)}
+.bd-t{padding:clamp(96px,8vw,152px) var(--pad) clamp(88px,7.4vw,140px)}
+.bd-t .st-t{color:#fff;max-width:17.5em;font-size:clamp(27px,1.95vw,37px)}.bd-t .st-t span{color:#8f9197}
+.bd-t .btn{margin-top:clamp(24px,1.9vw,36px)}
+.bd-r{padding:clamp(40px,3.4vw,64px) clamp(16px,2vw,38px);border-left:1px solid var(--dl);align-self:stretch;display:flex;align-items:center}
+.bd-w{width:100%;height:auto;max-height:min(520px,60vh);overflow:visible}
+.bd-k line{stroke:rgba(255,255,255,.22);stroke-width:1}.bd-k line:nth-child(5n+1){stroke:rgba(255,255,255,.5)}
+.bd-sp{fill:none;stroke:#5d90fb;stroke-width:1.2;stroke-dasharray:1;stroke-dashoffset:0;transition:stroke-dashoffset .7s cubic-bezier(.2,.7,.2,1)}
+.bd-n{fill:var(--dk);stroke:rgba(255,255,255,.4);stroke-width:1.3;transition:fill .35s,stroke .35s}
+.bd-n.lit{fill:#5d90fb;stroke:#5d90fb;filter:drop-shadow(0 0 0 rgba(0,0,0,0))}
+.bd-l{font:500 13.5px Inter,sans-serif;fill:#7f8187;letter-spacing:-.005em;transition:fill .35s}.bd-l.lit{fill:#fff}
+.bd-c1{font:500 11px "Geist Mono",monospace;fill:#7f8187}.bd-c2{font:600 26px Inter,sans-serif;fill:#fff;letter-spacing:-.03em;transition:opacity .4s}
+.bd.pre .bd-sp{stroke-dashoffset:1}.bd.pre .bd-n.lit{fill:var(--dk);stroke:rgba(255,255,255,.4)}.bd.pre .bd-l.lit{fill:#7f8187}.bd.pre .bd-c2{opacity:.25}
+.bd-sp:nth-of-type(2),.bd-n.lit:nth-of-type(n){transition-delay:.12s}
+.bd-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--dl);border-bottom:0}
+.bd-g a{display:block;padding:clamp(22px,1.5vw,28px) clamp(20px,1.42vw,27px) clamp(28px,2.1vw,40px);min-height:clamp(170px,10.6vw,202px);border-bottom:1px solid var(--dl);border-left:1px solid var(--dl);transition:background .2s}
+.bd-g a:nth-child(4n+1){border-left:0}.bd-g a:hover{background:rgba(255,255,255,.035)}
+.bd-g svg{display:block;width:clamp(20px,1.26vw,24px);height:clamp(20px,1.26vw,24px);fill:none;stroke:#a9abb0;stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round}
+.bd-g h3{margin:clamp(36px,2.9vw,56px) 0 0;font-size:clamp(15px,.92vw,17.5px);font-weight:560;letter-spacing:-.012em}
+.bd-g p{margin:6px 0 0;font-size:clamp(14px,.84vw,16px);line-height:1.3;color:#8f9197;max-width:17em}
+.bd-e{border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(40px,3.4vw,64px) var(--pad) clamp(88px,7vw,132px)}
+.bd-e p{margin:0;font-size:clamp(15px,.92vw,17.5px);color:#8f9197}
+
 /* ---- narrower screens ---- */
 html,body{overflow-x:clip}
+@media(max-width:1180px){.bd-g{grid-template-columns:repeat(2,minmax(0,1fr))}.bd-g a:nth-child(4n+1){border-left:1px solid var(--dl)}.bd-g a:nth-child(2n+1){border-left:0}}
 @media(max-width:1300px){.lk-f{grid-template-columns:auto minmax(0,1fr)}.lk-f span{grid-column:2;text-align:left}.lg,.sm,.fc,.bk{zoom:.9}}
 @media(max-width:1180px){.w,.nav{width:calc(100vw - 64px)}.ck.on .ck-pin::before,.ck.on .ck-dark::before{width:calc(100vw - 64px)}.nav ul{display:none}}
 @media(max-width:860px){
@@ -516,6 +592,10 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 .qt-r{grid-template-columns:104px 1fr 0}.qt-r>span b{display:block;margin:0 0 3px}.qt-r>em{display:none!important}.qt-t{margin:0 8px 0 6px}.qt-r{height:44px}.qt-x{margin:6px 8px 0 110px}
 .iv-b{gap:8px}.iv-c{height:150px}.iv-c u b{left:7px;top:8px;font-size:12.5px}.iv-b span{font-size:11.5px}
 .rv-g{gap:4px}.rv-g i{border-radius:4px}.rv-r{grid-template-columns:96px 1fr 78px;gap:8px}
+.bd-h{grid-template-columns:minmax(0,1fr)}.bd-t{padding:72px var(--pad) 28px}.bd-t .st-t{font-size:25px}
+.bd-r{border-left:0;padding:8px 6px 40px}.bd-l{font-size:15px}
+.bd-g{grid-template-columns:minmax(0,1fr)}.bd-g a{min-height:0;display:grid;grid-template-columns:24px 1fr;column-gap:14px;padding:20px;border-left:0}
+.bd-g svg{grid-row:1/3;margin:2px 0 0}.bd-g h3{margin:0}.bd-g p{max-width:none}.bd-e{padding:32px var(--pad) 72px}
 .lg-r{gap:9px;padding:0 12px}.lg-r em{font-size:11.5px;padding:0 7px}
 }
 '''
@@ -523,8 +603,8 @@ table{font-size:13px}th:nth-child(3),td:nth-child(3){display:none}td.n,th:nth-ch
 NAV = ('<header class="top"><div class="nav"><a href="/" class="nav-b"><b>%s Cinder Revenue</b></a><ul><li><a href="/everything">What we fix</a></li><li><a href="/free-audit">The free audit</a></li><li><a href="/software">The app</a></li><li><a href="/trades">Trades</a></li><li><a href="/story">Our story</a></li></ul>'
        '<a class="btn" %s>Book your free audit</a></div></header>' % (mark, CAL))
 html = ('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-        '<title>More jobs from the leads you already get | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s<div class="heroband">%s</div>%s%s%s%s%s<script>%s</script></body></html>'
-        % (hero_css, CSS, NAV, hero_body, TOOLS, PROB, LK, CK, AU, JS))
+        '<title>More jobs from the leads you already get | Cinder Revenue</title><meta name="robots" content="noindex"><link rel="icon" href="/assets/favicon.svg"><style>%s%s</style></head><body>%s<div class="heroband">%s</div>%s%s%s%s%s%s<script>%s</script></body></html>'
+        % (hero_css, CSS, NAV, hero_body, TOOLS, PROB, LK, CK, AU, BD, JS))
 for p in (ROOT + '/design/mock/home-light.html', ROOT + '/site/new.html'):
     open(p, 'w').write(html)
 print('ok', len(html))

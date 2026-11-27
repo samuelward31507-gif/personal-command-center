@@ -146,3 +146,13 @@ Sam asked for the clock transition back as Cinder's own touch, simpler and in th
 - Pictures: calls by day and hour; time to first reply per lead; quotes on a fourteen-day line with opens and follow-ups; unpaid work by how long it has waited; finished jobs as tiles with the reviews marked.
 - Sourced lines: CallRail on the first block, MIT / InsideSales on the second. Quotes, invoices and reviews have none because the site has no sourced figure for them yet.
 - Sample numbers agree with the hero report: 71 replies and 58 booked, 19 quotes not signed, $3,100 a month from quotes, 34 finished jobs.
+
+## 13. "Then we build whatever fixes it" (27 Nov)
+
+Sam's point: the page read as a speed-to-lead offer, and Cinder builds across the whole business, websites included.
+
+- New section in the dark stretch, straight after the five audit points. Label "After the audit", statement "Then we build whatever fixes it. Not one product. ..." and a button to `/everything`.
+- Beside it, a ring in the clock's tick style with the eight parts of the business around it. An example audit lights three of them (front desk, quotes, after the job, the same three as the hero report). They light when the ring scrolls into view.
+- Under it, the eight parts as cells, each one line about the outcome and a link to its page: getting found, front desk, calendar, quotes, money, after the job, team and office, custom. Outcomes, not a feature list.
+- Closing line: "The one thing we don't do is run ads." (already on `/everything`).
+- No count of builds is stated, and the phone agent is not mentioned, because voice is not being pitched.
