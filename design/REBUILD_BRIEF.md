@@ -619,3 +619,6 @@ New sample wording: Labor, Materials, Third reminder, Reminders / Per customer /
 - Reviews graph: appears whole (no draw-in). Hand-over made cheaper: frame scales to 8x at most and flat blue then dark layers fade over it (opacity only), instead of a 44x scale with per-frame colour mixing. Added a dashed comparison line, two end labels and a header strip.
 - Reviews dark section: the month as 34 squares twice (5 asked / 3 reviews against 34 asked / about 20), beside the statement; timeline kept under it.
 - Sam: Invoicing is the standard for every other page.
+
+### 23k. Reviews, second pass (Nov 27)
+Sam: still laggy, page not at the Invoicing standard. Hero now has the profile window rising from the bottom edge (count + rows arriving). Hand-over no longer changes anything inside the scaled graph (that repainted 150 SVG lines every frame): only transform and opacity on separate layers. Blue landing with words and the month as 34 squares, then dark. Search panel: three names with review-count bars.
