@@ -2908,6 +2908,16 @@ main:has(.bkw) .ic li:nth-child(3n){border-right:0}main:has(.bkw) .ic li:nth-chi
 main:has(.bkw) .ic li svg{display:none}main:has(.bkw) .ic li::before{content:"0" counter(c);display:flex;align-items:center;gap:10px;margin-bottom:clamp(34px,3.8vw,68px);font:500 11px/1 "Geist Mono",monospace;letter-spacing:.06em;color:var(--t3)}
 main:has(.bkw) .ic li span{display:block;max-width:15em}main:has(.bkw) .ic li:last-child{background:var(--ink);color:#fff}main:has(.bkw) .ic li:last-child::before{color:#a9abb0}
 @media(max-width:860px){main:has(.bkw) .ic ul{grid-template-columns:minmax(0,1fr)}main:has(.bkw) .ic li{border-right:0;border-bottom:1px solid var(--ln)!important}main:has(.bkw) .ic li::before{margin-bottom:18px}main:has(.bkw) .ic-t{grid-template-columns:minmax(0,1fr);padding:56px var(--pad) 32px}}
+.pt-fu .pt-d h2 u{position:relative;text-decoration:none;white-space:nowrap}.pt-fu .pt-d h2 u::after{content:"";position:absolute;left:0;right:0;bottom:-.06em;height:.07em;min-height:3px;background:#266df1;transform-origin:0 50%;transform:scaleX(clamp(0,calc(var(--p,1)*2.4 - .5),1))}
+.ic-fu .ic-g{grid-template-columns:minmax(0,.82fr) clamp(90px,10vw,170px) minmax(0,1.18fr)}.ic-fu .ic-t{align-self:center}.ic-fu .ic-t .st-t{font-size:clamp(30px,3vw,52px);line-height:1.04;letter-spacing:-.04em;font-weight:600}
+.ic-fu .ic-t .lb{padding:0;border-radius:0;background:none;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}.ic-fu .ic-t .lb::before{content:"["}.ic-fu .ic-t .lb::after{content:"]"}
+.icf-l{align-self:center;width:100%;height:500px;overflow:visible;clip-path:inset(-6px calc((1 - clamp(0,calc(var(--p,1)*2.2 - .35),1))*100%) -6px -6px)}.icf-l path{fill:none;stroke:#17181a;stroke-width:1;vector-effect:non-scaling-stroke}.icf-l circle{fill:#17181a}
+.ic-fu ul{align-content:center;padding:clamp(56px,5vw,96px) var(--pad);border-left:0;background:none}.ic-fu li{box-sizing:border-box;height:100px;align-items:center;padding:0 0 0 4px;border-top:1px solid var(--ln)}.ic-fu li:first-child{border-top:1px solid var(--ln)}.ic-fu li:last-child{border-bottom:1px solid var(--ln)}
+.ic-fu ul{padding-top:calc((100% - 500px)/2)}.ic-fu .ic-g{align-items:center}.ic-fu ul{padding:0 var(--pad) 0 0;height:500px;align-content:stretch;margin:clamp(56px,5vw,96px) 0}
+.ic-fu li svg{stroke:#266df1}
+.as-fu .as-i{display:grid;justify-content:center;justify-items:center;gap:clamp(26px,2.6vw,40px);padding:clamp(84px,8vw,150px) var(--pad);text-align:center}.as.as-fu .as-i .bs{justify-self:center;margin:0 auto;max-width:18em;font-size:clamp(30px,3.4vw,58px);line-height:1.05;letter-spacing:-.04em;font-weight:600}
+.as-fu .bs span{display:block;margin:20px auto 0;max-width:30em;font-size:clamp(16px,1.2vw,20px);line-height:1.45;letter-spacing:0;font-weight:400;color:var(--t2)}
+@media(max-width:860px){.ic-fu .ic-g{grid-template-columns:minmax(0,1fr)}.icf-l{display:none}.ic-fu ul{height:auto;margin:0;padding:8px var(--pad) 40px}.ic-fu li{height:auto;padding:16px 0}.pt-fu .pt-d h2 u{white-space:normal}}
 @media(max-width:860px){.rvqs-g{grid-template-columns:minmax(0,1fr)}.rvqs-l{display:block}.rvqs-l em{display:block;margin-top:10px}}
 @media(max-width:860px){.rvp-h{grid-template-columns:minmax(0,1fr)}.rvq p{display:block}.rvq p span{display:block;margin-top:8px}.rvp-k em{margin-left:0}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
@@ -3423,7 +3433,7 @@ opacity:clamp(0,calc(var(--a,0)*9 - 7.9 + var(--g,0)*20),1);
 clip-path:inset(calc(var(--T)*var(--k)) calc((100% - var(--L) - var(--fw)*var(--W))*var(--k)) calc((100% - var(--T) - var(--fh)*var(--W))*var(--k)) calc(var(--L)*var(--k)) round calc(var(--fr)*var(--W)*var(--k)))}
 @media(max-width:860px){.pt-dw.sp-live .pt-s{--W:min(86vw,calc((100vh - 300px)*1.75));--cy:58%}.pt-dw svg *{stroke-width:1.7}}
 /* seven ways a drawing hands over to the next screen */
-.pt-dw.t-blue .pt-d{background:#266df1}
+.pt-dw.t-blue .pt-d{background:none}
 .pt-dw.k-iris.sp-live .pt-d{clip-path:circle(calc(var(--fh)*var(--W)*.5*var(--k) + 150vmax*var(--g,0)) at calc(var(--L) + var(--fw)*var(--W)/2) calc(var(--T) + var(--fh)*var(--W)/2))}
 .pt-dw.k-rise.sp-live .pt-d{opacity:1;clip-path:inset(calc(var(--k)*100%) 0 0 0 round calc(var(--k)*56px) calc(var(--k)*56px) 0 0)}
 .pt-dw.k-blinds.sp-live .pt-d{opacity:1;clip-path:none;-webkit-mask:repeating-linear-gradient(180deg,#000 0 calc(var(--g,0)*12.6vh),transparent 0 12.5vh);mask:repeating-linear-gradient(180deg,#000 0 calc(var(--g,0)*12.6vh),transparent 0 12.5vh)}
@@ -3573,7 +3583,12 @@ PAGES = [
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
         _b = plug(slug, liven(slug, trans(slug, figs(slug, full(slug, flag(slug, body))))))
-        _b = re.sub(r'(<section class="pt [^"]*") data-sp', r'\1', _b)   # no stops: the transition band scrolls past like any other section
+        _b = re.sub(r'(<section class="pt [^"]*") data-sp', r'\1', _b)
+        if slug == 'follow-up':
+            _b = _b.replace('<section class="pt ', '<section data-in class="pt pt-fu ', 1).replace('gets chased until it&rsquo;s settled.</h2>', 'gets chased <u>until it&rsquo;s settled.</u></h2>', 1)
+            _b = _b.replace('<section class="ic">', '<section class="ic ic-fu" data-in>', 1)
+            _b = re.sub(r'(<section class="ic ic-fu" data-in>.*?</div>)(<ul>)', lambda m: m.group(1) + '<svg class="icf-l" viewBox="0 0 200 500" preserveAspectRatio="none" aria-hidden="true"><path d="M0 250 C110 250 90 50 200 50"/><path d="M0 250 C110 250 90 150 200 150"/><path d="M0 250 C110 250 90 250 200 250"/><path d="M0 250 C110 250 90 350 200 350"/><path d="M0 250 C110 250 90 450 200 450"/><circle cx="2" cy="250" r="3"/></svg>' + m.group(2), _b, count=1, flags=re.S)
+            _b = _b.replace('<section class="as">', '<section class="as as-fu">', 1)   # no stops: the transition band scrolls past like any other section
         doc = page(title, desc, '/' + slug, _b, css=PCSS, index=(slug not in ('404', 'day', 'terms')))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')

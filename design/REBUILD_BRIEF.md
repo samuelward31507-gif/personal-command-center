@@ -714,3 +714,10 @@ Sam on the centred dotted version: "looks bad maybe do a spliscreen". Now half a
 
 ### 24e. Booking, what is included (Nov 27)
 Sam approved the split questions ("good onto the next"). The ticked checklist is now a large sans headline over a ruled three-by-two grid of numbered cells, the last cell (Works with Google Calendar) in black. Scoped to Booking. With this every section on Booking has had a pass except the shared need/take band and the build grid.
+
+### 24f. Follow-up, first pass (Nov 28)
+- Site-wide: the blue highlighter box behind some statement bands (t-blue, every fifth build page) removed; it was the old zoom landing colour and read as a crude highlighter once the zoom was gone.
+- Follow-up statement band: "until it is settled" gets a blue underline that draws in as it scrolls into view.
+- Follow-up included list: "One text from you. The rest runs." with one point fanning out in five fine lines to the five items (draws left to right on scroll). Different from the Booking grid on purpose.
+- Follow-up campaign strip: was a thin one-liner; now a large centred headline with the sentence and button under it.
+Gotcha: .as-i keeps justify-content:space-between from the home stylesheet; when making it a grid, set justify-content:center or the single track sits at the start.
