@@ -649,3 +649,12 @@ Sam: make the whole page look amazing, not crowded, keep all the information, ma
 
 ### 23t. Dots are for the transition only (Nov 27)
 Sam: the dotted white is meant to be one transition screen, then black or the normal white, not the ground for whole sections. Reviews now: dotted landing, then the month comparison on black, then the timeline on plain white. Rule for other pages: dotted ground only on a hand-over landing.
+
+### 23u. Reviews, one planned pass (Nov 27)
+Sam: I am the designer; the first pass must be my best, not a mediocre draft he critiques five times. Reviews rebuilt around one spine (a month of 34 finished jobs, the same three objects throughout: your jobs list, the customer phone, your Google profile).
+- First screen: one scene, three windows on one clock (job marked done, ask sent, text on the phone, review, profile updates). Floating cards removed.
+- Chart screen: statement and the staircase only; the four monthly numbers moved to the comparison.
+- Comparison (black): four numbers, then the two 34-square cards.
+- Timeline: now a pinned split (rvt). Five steps on the left light in turn with the scroll; app card, phone and profile card on the right fill in step by step.
+- Three statements in their own row after it. Search results no longer washed out.
+Standing rule: plan the whole page once, build the best version first, show once.

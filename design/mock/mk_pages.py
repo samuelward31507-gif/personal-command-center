@@ -1204,15 +1204,21 @@ SEARCH = ('<div class="srx"><div class="q">%sfence company near me</div>%s<p cla
     '<div class="%s"><b>%s</b>%s<span>%s</span>%s<u style="--w:%d%%"></u></div>' % (c, n, stars(5), r, ('<em>%s</em>' % t) if t else '', w) for c, n, r, t, w in [
         ('on', 'The shop with the reviews', '212 reviews', 'Gets the call', 100), ('', 'Another name nearby', '31 reviews', '', 15), ('', 'Same work, nobody asked', '9 reviews', '', 4)])))
 # the first screen: the headline with four small cards arriving around it, in the order they happen
-RVHERO = ('<section class="rh" data-live="8"><div class="w rh-i"><span class="lb">After the job</span><h1>More five-star reviews.</h1>'
+_jr = lambda job, who, chips: '<div style="--k:0" class="rjr"><p><b>%s</b><span>%s</span></p><p class="c">%s</p></div>' % (job, who, chips)
+RVHERO = ('<section class="rh" data-live="9"><div class="w rh-i"><span class="lb">After the job</span><h1>More five-star reviews.</h1>'
           '<p class="sub">Every finished job gets asked for a review, and your name keeps showing up where people look.</p><div class="cta">%s%s</div>'
-          '<div class="rh-c c1" data-hd="0"><span>4:10 PM</span><b>Job marked done</b></div>'
-          '<div class="rh-c c2" data-hd="1"><span>4:10 PM, sent for you</span><p>Thanks for choosing us today. Mind leaving a quick review? It takes a minute.</p></div>'
-          '<div class="rh-c c3" data-hd="3">%s<p>&ldquo;Great job, really happy.&rdquo;</p></div>'
-          '<div class="rh-c c4" data-hd="5"><span>Your Google profile</span><b>New review</b></div>'
-          '<div class="rh-w" aria-hidden="true"><div class="rh-wb"><i></i><i></i><i></i><b>Your Google profile</b><em>Example business, sample data</em></div>'
-          '<div class="rh-wg"><div class="rh-wn"><b>20</b><span>reviews this month</span>%s<em>3 the month before</em></div><div class="rh-wl">%s</div></div></div>'
-          '</div></section>' % (BOOK, AUDITLINK, stars(5), stars(5), ''.join('<div data-hd="%d" class="rw">%s<i style="--w:%d%%"></i><time>%s</time></div>' % (at, stars(5), w, t) for at, w, t in [(3, 62, 'Just now'), (4, 44, 'Today'), (5, 70, 'Today'), (6, 52, 'Yesterday')])))
+          '<div class="rh-s" aria-hidden="true"><div class="cd rh-j"><div class="rh-wb"><i></i><i></i><i></i><b>Jobs</b><em>34 finished this month</em></div>%s</div>'
+          '<div class="ph2"><p>Customer&rsquo;s phone</p><p data-hd="1" class="hb">Thanks for choosing us today. Mind leaving a quick review? It takes a minute.</p><p data-hd="2" class="rh-b">Leave a review</p>'
+          '<div data-hd="3" class="rh-r">%s<span>&ldquo;Great job, really happy.&rdquo;</span></div><p data-hd="4" class="rh-k">Review posted</p></div>'
+          '<div class="cd rh-w"><div class="rh-wb"><i></i><i></i><i></i><b>Your Google profile</b><em>Example business, sample data</em></div>'
+          '<div class="rh-wg"><div class="rh-wn"><b>20</b><span>reviews this month</span>%s<em>3 the month before</em></div><div class="rh-wl">%s</div></div></div></div>'
+          '</div></section>'
+          % (BOOK, AUDITLINK,
+             _jr('Full install', 'Customer A', '<u data-hd="0">Marked done, 4:10 PM</u><u data-hd="1" class="k">Review asked</u>')
+             + _jr('Repair', 'Customer B', '<u>Done, 2:40 PM</u><u class="k">Review asked</u>') + _jr('Replacement', 'Customer C', '<u>Done, 11:15 AM</u><u class="s">Review left</u>')
+             + _jr('Large install', 'Customer D', '<u>Done, yesterday</u><u class="s">Review left</u>'),
+             stars(5), stars(5),
+             ''.join('<div %s class="rw">%s<i style="--w:%d%%"></i><time>%s</time></div>' % (('data-hd="%d"' % at) if at else 'style="--k:0"', stars(5), w, t) for at, w, t in [(5, 62, 'Just now'), (0, 44, 'Today'), (0, 70, 'Today'), (0, 52, 'Yesterday')])))
 # a year of reviews as two staircases: twenty a month when every job is asked, three a month when someone remembers
 _ry = lambda v: 100 - (9 + v / 240 * 66)
 _stair = lambda per: 'M0 %.2f ' % _ry(0) + ' '.join('V%.2f H%.3f' % (_ry(per * m), m / 12 * 100) for m in range(1, 13))
@@ -1220,31 +1226,38 @@ RVCURVE = ('<section class="rvc" data-sp><div class="rvc-i"><div class="w rvc-f"
            '<path class="fa" d="%s V%.2f H0Z"/><path class="fb" d="%s V%.2f H0Z"/>%s<path class="bs" d="M0 %.2f H100"/><path class="lo2" d="%s"/><path class="hi2" d="%s"/></svg>%s%s'
            '<p class="rvs-a"><b>About 240</b><span>reviews in a year when every finished job is asked</span></p><p class="rvs-b"><b>36</b><span>when someone remembers to ask</span></p></div>'
            '<div class="rvc-t"><span class="lb">Asked every time</span><p class="st-t">Every finished job gets asked. <span>Most happy customers never leave a review because nobody asked.</span></p>'
-           '<div class="rvc-s">%s</div><p class="rvc-n">Example business. Sample data.</p></div></div>'
+           '<p class="rvc-n">Example business. Sample data.</p></div></div>'
            '<div class="rvc-k" aria-hidden="true"><p>Asked every time. <span>Not when someone remembers.</span></p><div class="rvc-m"><b>34 finished jobs in a month</b><em>Every one asked. Sample data.</em></div></div></div></section>'
            % (_stair(20), _ry(0), _stair(3), _ry(0),
               ''.join('<path class="vt" d="M%.3f %.2f V%.2f"/>' % (m / 12 * 100, _ry(20 * m), _ry(0)) for m in range(1, 12)), _ry(0), _stair(3), _stair(20),
               ''.join('<span class="rvs-n" style="--x:%.3f%%;--y:%.2f%%">%d</span>' % (m / 12 * 100, 100 - _ry(20 * m), 20 * m) for m in range(1, 12)),
-              ''.join('<span class="rvs-m" style="--x:%.3f%%">%s</span>' % ((m + .5) / 12 * 100, t) for m, t in enumerate('Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split())),
-              ''.join('<div><b>%s</b><span>%s</span></div>' % x for x in [('34', 'jobs finished a month'), ('5', 'asked for a review'), ('3', 'reviews received'), ('About 17', 'reviews missed')])))
+              ''.join('<span class="rvs-m" style="--x:%.3f%%">%s</span>' % ((m + .5) / 12 * 100, t) for m, t in enumerate('Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split()))
+              ))
 # after the job, in one line: five moments on a hairline, lit one after another
 _rn = lambda at, tag, title, body: '<div class="rvp-n" data-hd="%d"><span>%s</span><b>%s</b>%s</div>' % (at, tag, title, body)
 _rq_a = {3, 9, 17, 22, 30}; _rq_s = {3, 17, 30}; _rq_all = {k for k in range(34) if (k + 1) * 20 // 34 > k * 20 // 34}
 _rq = lambda cls, title, big, note, asked, got: ('<div class="rvq %s"><p><b>%s</b></p><div class="rvq-g">%s</div><div class="rvq-f"><b>%s</b><span>%s</span></div></div>'
                                                  % (cls, title, ''.join('<i style="--k:%d" class="%s"></i>' % (k, ('a s' if k in got else 'a') if k in asked else '') for k in range(34)), big, note))
 # the month twice, side by side, on the dotted ground the hand-over lands on
-RVMONTH = ('<section class="rvqs"><div class="w rvqs-i"><p class="rvqs-l">One month, 34 finished jobs<em>Example business, sample data</em></p><div class="rvqs-g" aria-hidden="true">%s%s</div>'
+RVMONTH = ('<section class="rvqs"><div class="w rvqs-i"><p class="rvqs-l">One month, 34 finished jobs<em>Example business, sample data</em></p>'
+           '<div class="rvqs-s"><div><b>34</b><span>jobs finished</span></div><div><b>5</b><span>asked for a review</span></div><div><b>3</b><span>reviews received</span></div><div><b>About 17</b><span>reviews missed</span></div></div>'
+           '<div class="rvqs-g" aria-hidden="true">%s%s</div>'
            '<p class="rvp-k" aria-hidden="true"><span><i></i>Job finished</span><span><i class="a"></i>Asked</span><span><i class="a s"></i>Review left</span></p></div></section>'
            % (_rq('', 'Asked when someone remembers', '3', 'reviews, from 5 asks', _rq_a, _rq_s), _rq('on', 'Asked every time', 'About 20', 'reviews, from 34 asks', set(range(34)), _rq_all)))
 # after the job, in one line: five moments on a hairline, lit one after another, then what each part does
-RVPIPE = (RVMONTH + '<section class="rvp" data-live="8"><div class="w rvp-i"><span class="lb">After the job</span><p class="st-t">Asked at the right moment, every time. <span>Not when someone remembers.</span></p>'
-          '<div class="rvp-l" aria-hidden="true"><i></i>%s</div><div class="rvp-t">%s</div></div></section>'
-          % (_rn(0, '4:10 PM', 'Job marked done', '<p>Full install</p>') + _rn(1, '4:10 PM', 'Ask queued', '<p>No one had to remember</p>')
-             + _rn(2, '4:11 PM', 'Text sent', '<p class="hb o">Mind leaving a quick review? It takes a minute.</p>') + _rn(4, '4:26 PM', 'Review left', stars(5))
-             + _rn(5, 'On your profile', 'Where people look', '<p>Next to your name in search</p>'),
-             ''.join('<div><b>%s.</b><span>%s</span></div>' % x for x in [
-                 ('The job gets paid', 'The moment it&rsquo;s marked done, the review ask is queued.'), ('They get asked at the right time', 'A short text with a direct link, while the job is fresh.'),
-                 ('Your name gets around', 'Reviews and regular posts keep you in front of people searching nearby.')])))
+_rt = [('4:10 PM', 'Job marked done', 'Full install'), ('4:10 PM', 'Ask queued', 'No one had to remember'), ('4:11 PM', 'Text sent', 'A short text with a direct link, while the job is fresh'),
+       ('4:26 PM', 'Review left', 'While the job is fresh'), ('On your profile', 'Where people look', 'Next to your name in search')]
+RVSTEPS = ('<section class="rvt" data-sp><div class="rvt-i"><div class="w rvt-g"><div class="rvt-t"><span class="lb">After the job</span>'
+           '<p class="st-t">Asked at the right moment, every time. <span>Not when someone remembers.</span></p><ol>%s</ol></div>'
+           '<div class="rvt-p" aria-hidden="true"><div class="cd rvt-a" style="--i:0"><span>Your app</span><b>Full install, Customer A</b><p><u>Marked done, 4:10 PM</u><u class="k" style="--i:1">Review ask queued</u></p></div>'
+           '<div class="ph2"><p>Customer&rsquo;s phone</p><p class="hb" style="--i:2">Mind leaving a quick review? It takes a minute.</p><p class="rh-b" style="--i:2">Leave a review</p>'
+           '<div class="rh-r" style="--i:3">%s<span>&ldquo;Great job, really happy.&rdquo;</span></div></div>'
+           '<div class="cd rvt-b" style="--i:4"><span>Your Google profile</span><b>New review</b>%s<em>Next to your name in search</em></div></div></div></div></section>'
+           % (''.join('<li style="--i:%d"><time>%s</time><b>%s</b><span>%s</span></li>' % (k, a, b, c) for k, (a, b, c) in enumerate(_rt)), stars(5), stars(5)))
+RVPIPE = (RVMONTH + RVSTEPS + '<section class="rvp"><div class="w rvp-i"><div class="rvp-t">%s</div></div></section>'
+          % ''.join('<div><b>%s.</b><span>%s</span></div>' % x for x in [
+              ('The job gets paid', 'The moment it&rsquo;s marked done, the review ask is queued.'), ('They get asked at the right time', 'A short text with a direct link, while the job is fresh.'),
+              ('Your name gets around', 'Reviews and regular posts keep you in front of people searching nearby.')]))
 SEARCH_L = SEARCH.replace('<div class="q">', '<div class="q" data-sc="0">').replace('<div class="on">', '<div class="on" data-sc="2">').replace('<div class="">', '<div class="" data-sc="1">')
 RVACD = ('<section class="acd" data-live="3,3,3"><div class="w acd-g"><div class="acd-t"><span class="lb">Where people look</span><p class="st-t">The shop with the reviews gets the call.</p>'
          '<div class="acd-l">%s</div></div><div class="acd-p">%s<p class="sd-n">Example. Sample data.</p></div></div></section>'
@@ -1985,7 +1998,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'rvqs': 'rvqs', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'rvqs': 'rvqs', 'rvt': 'rvt', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -2002,7 +2015,7 @@ RHYTHM = {
     'follow-up': ('st v3 sx acd ic as', {'st': 'v-2', 'sx': 't-exp'}),
     'invoicing': ('st ivn ivb ivl v3', {'st': 's-tn v-c'}),
     'bookkeeping': ('st sx pg sp', {'st': 'v-xl t-rule', 'sx': 'v-pin', 'pg': 'v-l', 'sp': 's-dkp'}),
-    'reviews': ('st rvc rvqs rvp acd v3', {'st': 'v-xl'}),
+    'reviews': ('st rvc rvqs rvt rvp acd v3', {'st': 'v-xl'}),
     'review-replies': ('st sx pg', {'st': 'v-c', 'sx': 'v-pin t-rule', 'pg': 'v-l'}),
     'win-backs': ('bl st sx sp', {'bl': 's-bl', 'st': 't-sheet', 'sx': 's-tn', 'sp': 'v-f'}),
     'maintenance-reminders': ('st sx pg bl', {'st': 'v-2', 'sx': 's-tn t-exp', 'pg': 's-dk', 'bl': 'v-xl'}),
@@ -2743,13 +2756,41 @@ CSS_FA = r"""
 .rvqs-l{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin:0 0 clamp(22px,2.2vw,36px);font-size:clamp(20px,1.7vw,28px);font-weight:560;letter-spacing:-.025em}
 .rvqs-l em{font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}
 .rvqs-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(14px,1.6vw,26px)}.rvqs .rvq{margin:0;padding:clamp(22px,2.4vw,40px)}.rvqs .rvq p{margin:0 0 clamp(18px,1.8vw,28px)}.rvqs .rvq p b{font-size:clamp(17px,1.3vw,22px)}
-.rvq-f{display:flex;align-items:baseline;gap:12px;margin-top:clamp(22px,2.2vw,36px);padding-top:clamp(16px,1.6vw,24px);border-top:1px solid var(--ln)}.rvq-f b{font-size:clamp(34px,3.4vw,60px);line-height:.95;font-weight:500;letter-spacing:-.04em}
+.rvq-f{display:flex;align-items:baseline;gap:12px;margin-top:clamp(22px,2.2vw,36px);padding-top:clamp(16px,1.6vw,24px);border-top:1px solid var(--ln)}.rvq-f b{white-space:nowrap;font-size:clamp(34px,3.4vw,60px);line-height:.95;font-weight:500;letter-spacing:-.04em}
 .rvq.on .rvq-f b{color:#266df1}.rvq-f span{font-size:clamp(14px,1vw,17px);color:var(--t2)}.rvqs .rvp-k{margin-top:clamp(18px,1.8vw,28px)}
 .rvp{background:#fff}.rvp-i{padding-top:clamp(80px,8vw,150px);padding-bottom:clamp(80px,8vw,150px)}.rvp .st-t{margin:20px 0 clamp(56px,6vw,104px);max-width:18em}.rvp .rvp-t{border-color:var(--ln);margin-top:clamp(64px,7vw,120px)}
 .rvp .lb{background:#eeeff2}
 main:has(>.rh) .st .st-i{padding-top:clamp(84px,8.5vw,160px);padding-bottom:clamp(84px,8.5vw,160px)}main:has(>.rh) .sgp .sg-i{padding-top:clamp(64px,6vw,110px)}
 main:has(>.rh) .acd,main:has(>.rh) .v3{border-top:1px solid var(--ln)}
 .rvqs .rvqs-l em,.rvqs .rvp-k,.rvqs .rvq-f span{color:#8f9197}.rvqs .rvq{background:#17181a;box-shadow:inset 0 0 0 1px var(--dl)}.rvqs .rvq.on{box-shadow:inset 0 0 0 1.5px #266df1}.rvqs .rvq-g i,.rvqs .rvp-k i{background:transparent;box-shadow:inset 0 0 0 1px #3a3b40}.rvqs .rvq-g i.a,.rvqs .rvp-k i.a{background:#266df1;box-shadow:none}.rvqs .rvq-f{border-color:var(--dl)}.rvqs .rvq.on .rvq-f b{color:#7fa8f7}
+.rh-i{padding-top:clamp(84px,8vw,136px)}.rh-s{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.08fr);gap:clamp(12px,1.4vw,22px);align-items:start;width:min(1200px,97%);margin:clamp(40px,4vw,68px) auto -54px;text-align:left}
+.rh-s .rh-w,.rh-s .rh-j{width:auto;margin:38px 0 0;border-radius:14px;box-shadow:0 0 0 1px rgba(23,24,26,.1),0 30px 60px -36px rgba(38,38,60,.45)}.rh-s .ph2{min-height:430px}
+.rjr{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px 16px;border-top:1px solid var(--ln)}.rh-j .rh-wb+.rjr{border-top:0}.rjr p{margin:0}.rjr b{display:block;font-size:14px;font-weight:560}.rjr span{display:block;margin-top:3px;font-size:12.5px;color:var(--t2)}
+.rjr .c{display:flex;flex-direction:column;align-items:flex-end;gap:5px}.rjr u,.rvt-a u{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:#eeeff2;text-decoration:none;font-size:11.5px;font-weight:540;white-space:nowrap}
+.rjr u.k,.rvt-a u.k{background:#266df1;color:#fff}.rjr u.s{background:#fff;box-shadow:inset 0 0 0 1px var(--ln)}.rjr u.s::before{content:"";width:10px;height:10px;margin-right:6px;background:#f0a001;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.ph2 .rh-b{width:fit-content;margin:8px 0 0;padding:8px 13px;border-radius:8px;background:#266df1;color:#fff;font-size:12.5px;font-weight:560}
+.ph2 .rh-r{margin:14px 0 0 auto;width:fit-content;max-width:92%;padding:10px 12px;border-radius:12px 12px 3px 12px;background:var(--ink);color:#fff}.ph2 .rh-r .sr5 svg{fill:#f0a001;width:15px;height:15px}.ph2 .rh-r span{display:block;margin-top:6px;font-size:12.5px;line-height:1.35}
+.ph2 .rh-k{margin:12px 0 0;text-align:center;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t2)}
+.rvc .rvc-t{top:50%;max-width:min(24em,30%)}
+.rvqs-s{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(14px,1.6vw,26px);margin:0 0 clamp(26px,2.8vw,44px);padding:clamp(18px,2vw,30px) 0;border-top:1px solid var(--dl);border-bottom:1px solid var(--dl)}
+.rvqs-s div{padding-left:16px;border-left:1.5px solid #3a3b40}.rvqs-s b{display:block;font-size:clamp(24px,2.3vw,40px);line-height:1;font-weight:500;letter-spacing:-.03em}.rvqs-s span{display:block;margin-top:9px;font-size:clamp(13.5px,1vw,16px);color:#a9abb0}
+.rvt{--s:5;background:#fff;border-top:1px solid var(--ln)}.rvt-g{display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);gap:clamp(30px,5vw,100px);align-items:center;box-sizing:border-box;border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(64px,6vw,110px) clamp(22px,3.1vw,60px)}
+.rvt .lb{background:#eeeff2}.rvt .st-t{margin:20px 0 0;max-width:13em}.rvt ol{list-style:none;margin:clamp(28px,3vw,48px) 0 0;padding:0;border-top:1px solid var(--ln)}
+.rvt li{--on:1;position:relative;display:grid;grid-template-columns:7.2em minmax(0,1fr);gap:4px 14px;align-items:baseline;padding:15px 0 15px 16px;border-bottom:1px solid var(--ln);opacity:calc(.3 + .7*var(--on))}
+.rvt li::before{content:"";position:absolute;left:0;top:-1px;bottom:-1px;width:2px;background:#266df1;opacity:var(--on)}.rvt li time{font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)}
+.rvt li b{font-size:clamp(17px,1.35vw,23px);font-weight:560;letter-spacing:-.02em}.rvt li span{grid-column:2;font-size:14.5px;line-height:1.4;color:var(--t2)}
+.rvt-p{position:relative;height:min(580px,66vh);border-radius:16px;background:linear-gradient(180deg,#f6f8ff,#e6ebfd)}
+.rvt-p>*,.rvt-p .ph2>[style],.rvt-a u[style]{--v:clamp(0,calc((var(--s) - var(--i))*5 + 1),1);opacity:var(--v);transform:translateY(calc((1 - var(--v))*14px))}.rvt-p>.ph2{opacity:1;transform:none}
+.rvt-a,.rvt-b{position:absolute;z-index:2;padding:16px 18px}.rvt-a{left:6%;top:11%;width:42%}.rvt-b{left:10%;bottom:11%;width:40%}
+.rvt-a span,.rvt-b span{display:block;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)}.rvt-a b,.rvt-b b{display:block;margin-top:10px;font-size:16px;font-weight:560}
+.rvt-a p{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}.rvt-b .sr5{margin-top:10px}.rvt-b .sr5 svg{fill:#f0a001;width:18px;height:18px}.rvt-b em{display:block;margin-top:10px;font-style:normal;font-size:13.5px;color:var(--t2)}
+.rvt .ph2{position:absolute;left:auto;right:7%;top:8%;min-height:0;height:84%}
+@media(min-width:861px){.rvt.sp-live{height:360vh;--s:calc(var(--p,0)*5.3)}.rvt.sp-live .rvt-i{position:sticky;top:0;height:100vh;display:flex;align-items:center}.rvt.sp-live .rvt-g{flex:none;min-height:100vh}
+.rvt.sp-live li{--on:clamp(0,min(calc((var(--s) - var(--i))*8 + 1),calc((var(--i) + 1 - var(--s))*8)),1)}.rvt.sp-live li:last-child{--on:clamp(0,calc((var(--s) - 4)*8 + 1),1)}}
+.rvp .rvp-i{padding-top:clamp(48px,5vw,90px);padding-bottom:clamp(64px,6.4vw,120px)}.rvp .rvp-t{margin-top:0;padding-top:0;border-top:0}
+main:has(>.rh) .srx>div:not(.on):not(.q){opacity:1}main:has(>.rh) .srx>div:not(.on) b{color:var(--ink)}
+@media(max-width:980px){.rh-s{grid-template-columns:minmax(0,1fr);margin-bottom:40px}.rh-s .ph2{justify-self:center;min-height:0;order:-1}.rh-s .rh-w,.rh-s .rh-j{margin-top:0}}
+@media(max-width:860px){.rvqs-s{grid-template-columns:repeat(2,minmax(0,1fr))}.rvc .rvc-t{top:auto;max-width:none}.rvq-f{flex-wrap:wrap}.rvt-g{grid-template-columns:minmax(0,1fr)}.rvt-p{height:520px}.rvt-p{height:auto;padding:16px;display:grid;gap:12px}.rvt-p>*,.rvt .ph2{position:relative;inset:auto;width:auto;height:auto}.rvt .ph2{justify-self:center;width:230px;min-height:300px}.rvt li{grid-template-columns:minmax(0,1fr)}.rvt li span{grid-column:1}}
 @media(max-width:860px){.rvqs-g{grid-template-columns:minmax(0,1fr)}.rvqs-l{display:block}.rvqs-l em{display:block;margin-top:10px}}
 @media(max-width:860px){.rvp-h{grid-template-columns:minmax(0,1fr)}.rvq p{display:block}.rvq p span{display:block;margin-top:8px}.rvp-k em{margin-left:0}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
