@@ -721,3 +721,13 @@ Sam approved the split questions ("good onto the next"). The ticked checklist is
 - Follow-up included list: "One text from you. The rest runs." with one point fanning out in five fine lines to the five items (draws left to right on scroll). Different from the Booking grid on purpose.
 - Follow-up campaign strip: was a thin one-liner; now a large centred headline with the sentence and button under it.
 Gotcha: .as-i keeps justify-content:space-between from the home stylesheet; when making it a grid, set justify-content:center or the single track sits at the start.
+
+### 24g. Follow-up made its own (Nov 28)
+Sam asked whether Follow-up is unique in layout, font, theme. Honest answer: about 40% own. Fonts and theme stay shared site-wide (one sans, one serif, mono labels; white with black bands), as Attio does; uniqueness is in layouts, diagrams, type treatment and order. Sam: every section follows the Attio-inspired design, colourway and template, with our own custom spin.
+Now only on Follow-up:
+- First screen (fuh): left-aligned split, huge headline left; right a pale-blue panel with one quote thread (Sent, Day 2, Day 5, They replied, Accepted) playing on a loop.
+- Signs (fus): light split; three signs in serif left; right one thread that goes quiet (quote sent, dashed gap "14 days. Nothing sent." in red, "went with someone else", "Quote closed. Not won.").
+- Open quotes (fub): an Attio-style board, columns Checking in / Needs you / Answered with cards and status chips; cards drop in as it scrolls.
+- Plus the underline band, the one-to-five fan and the campaign band from 24f.
+Shared still: problem statement, chart frame, three picture cells, need/take band, chat-bubble questions (keep chat on Follow-up; give Answering and Review replies something else).
+Gotcha: .fc is taken; use .fqc for board cards. Hero h1 inherits nowrap; set white-space:normal.

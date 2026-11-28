@@ -981,11 +981,40 @@ FUACD = ('<section class="acd" data-live="3,3,3,3"><div class="w acd-g"><div cla
          % (''.join('<div data-sc="%d"><b>%s</b><span>%s</span><u data-at="0"></u></div>' % x for x in [
              (0, 'Two days in.', 'The first check-in goes out.'), (1, 'Five days in.', 'The second check-in goes out.'),
              (2, 'A real question.', 'They asked about price, so it comes to you.'), (3, 'Still open.', 'A check-in every month until they answer.')]), OPEN_L))
-FOLLOW_UP = (inner_hero('Quotes', 'Every quote gets chased.', 'Quotes and invoices get followed up until the customer says yes, no, or paid.', BOOK + AUDITLINK, FU_LIVE)
+# Follow-up's own first screen: a split, one quote's life drawn as a thread that plays on a loop
+_fl = [(0, 'Mon 9:12 AM', 'Quote sent', '<p class="hb">Here is your quote from Ridgeline Services.</p>', ''),
+       (2, 'Wed', 'Day 2 check-in', '<p class="hb">Any questions on the quote?</p>', ''),
+       (4, 'Sat', 'Day 5 check-in', '<p class="hb">Still happy to hold your date.</p>', ''),
+       (6, 'Sat 11:20 AM', 'They replied', '<p class="hb c">Let&rsquo;s do it</p>', 'r'),
+       (7, 'Sat 11:20 AM', 'Accepted. The check-ins stop.', '', 'k')]
+FUHERO = ('<section class="fuh"><div class="w fuh-g"><div class="fuh-t"><span class="lb">Quotes</span><h1>Every quote gets chased.</h1>'
+          '<p class="sub">Quotes and invoices get followed up until the customer says yes, no, or paid.</p><div class="cta">%s%s</div></div>'
+          '<div class="fuh-p" data-live="10" aria-hidden="true"><div class="fuh-c"><div class="fuh-h"><span><b>Quote #1042</b><em>New install</em></span><strong>$6,400</strong></div>'
+          '<ol class="fuh-l">%s</ol></div><p class="sd-n">Example business. Sample data.</p></div></div></section>'
+          % (BOOK, AUDITLINK, ''.join('<li data-hd="%d" class="%s"><time>%s</time><b>%s</b>%s</li>' % (k, c, t, b, m) for k, t, b, m, c in _fl)))
+# the signs, beside one thread that goes quiet
+FUSIGNS = ('<section class="fus"><div class="w fus-g"><div class="fus-t"><p class="fu-lab">How you know you have it</p><ol>%s</ol></div>'
+           '<div class="fus-p" aria-hidden="true"><div class="fus-c" data-in><div class="fus-h"><b>Customer B</b><span>Repair quote, $1,850</span></div>'
+           '<p class="m"><time>Mon 9:12 AM</time>Here is your quote. Any questions, just reply.</p><div class="gap"><span>14 days. Nothing sent.</span></div>'
+           '<p class="m i"><time>Two weeks later</time>Sorry, forgot about this one. We went with someone else.</p><p class="end">Quote closed. Not won.</p></div>'
+           '<p class="sd-n">Example. Sample data.</p></div></div></section>'
+           % ''.join('<li><b>%s</b></li>' % t for t in ['Quotes sent and never mentioned again', 'Customers who say they forgot', 'No list of what is still open']))
+# every open quote, as a board
+_fcol = [('Checking in', 'A check-in on day 2, day 5, then every month until they answer.', '', [('Privacy fence, 180 ft', 'Sent 2 days ago', 'Day 2 went out', ''), ('Gate repair', 'Sent 6 days ago', 'Day 5 went out', ''), ('Chain link, 300 ft', 'Sent 5 weeks ago', 'Monthly check-in', '')]),
+         ('Needs you', 'They asked about price, so it comes to you.', 'y', [('Vinyl fence, 120 ft', 'Sent 12 days ago', 'Asked about price', 'y')]),
+         ('Answered', 'A yes, a no, or paid. The check-ins stop.', 'k', [('New install', 'Sent Monday', 'Accepted, $6,400', 'k')])]
+_fk = [0]
+def _fcard(job, meta, chip, c):
+    _fk[0] += 1
+    return '<div class="fqc" style="--k:%d"><b>%s</b><span>%s</span><em class="%s">%s</em></div>' % (_fk[0], job, meta, c, chip)
+FUBOARD = ('<section class="fub"><div class="w fub-i"><div class="fub-t"><p class="fu-lab">Every open quote</p><p class="st-t">Nothing stays open without someone checking in.</p></div>'
+           '<div class="fub-b" data-in aria-hidden="true">%s</div><p class="sd-n">Example. Sample data.</p></div></section>'
+           % ''.join('<div class="fcol %s"><p class="fch"><b>%s</b><i>%d</i></p><p class="fcn">%s</p>%s</div>' % (c, t, len(cards), n, ''.join(_fcard(*x) for x in cards)) for t, n, c, cards in _fcol))
+FOLLOW_UP = (FUHERO
              + statement('The problem', 'A quote nobody chases is a job you gave away.', 'Most people don&rsquo;t say no. They get busy, mean to reply, and then book whoever checks in. Following up is easy to skip when you are on a job.')
              + FU3
              + '<section class="sx dk"><div class="w sx-i"><p class="sx-t">Every quote, followed up. <span>Days 2, 5 and 10, then monthly, until it&rsquo;s a yes or a no.</span></p>%s</div></section>' % SCALE
-             + FUACD
+             + FUBOARD
              + ticks('What&rsquo;s included', 'One text from you. The rest runs.', [
                  'Send a quote with one text and the follow-up starts on its own.', '“Too expensive” gets your financing or a smaller option. Real price talk comes to you.',
                  'Invoices and payment reminders sent when the job’s done.', 'Customers pay through your own pay link. We never touch your money.',
@@ -2016,7 +2045,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'fuh': 'top', 'fub': 'fub', 'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -2030,7 +2059,7 @@ RHYTHM = {
     'job-updates': ('bl sx st sp', {'bl': 'v-sf t-sheet', 'sx': 's-tn', 'st': 'v-c', 'sp': 'v-f'}),
     'estimates': ('st v3 ewk acd', {'st': 's-tn v-xl'}),
     'proposals': ('st bl sx sp', {'bl': 's-dk t-arc', 'sx': 't-sheet'}),
-    'follow-up': ('st v3 sx acd ic as', {'st': 'v-2', 'sx': 't-exp'}),
+    'follow-up': ('st v3 sx fub ic as', {'st': 'v-2', 'sx': 't-exp'}),
     'invoicing': ('st ivn ivb ivc ivl v3', {'st': 's-tn v-c'}),
     'bookkeeping': ('st sx pg sp', {'st': 'v-xl t-rule', 'sx': 'v-pin', 'pg': 'v-l', 'sp': 's-dkp'}),
     'reviews': ('st rvc rvd rvqs rvt rvp acd v3', {'st': 'v-xl'}),
@@ -2918,6 +2947,38 @@ main:has(.bkw) .ic li span{display:block;max-width:15em}main:has(.bkw) .ic li:la
 .as-fu .as-i{display:grid;justify-content:center;justify-items:center;gap:clamp(26px,2.6vw,40px);padding:clamp(84px,8vw,150px) var(--pad);text-align:center}.as.as-fu .as-i .bs{justify-self:center;margin:0 auto;max-width:18em;font-size:clamp(30px,3.4vw,58px);line-height:1.05;letter-spacing:-.04em;font-weight:600}
 .as-fu .bs span{display:block;margin:20px auto 0;max-width:30em;font-size:clamp(16px,1.2vw,20px);line-height:1.45;letter-spacing:0;font-weight:400;color:var(--t2)}
 @media(max-width:860px){.ic-fu .ic-g{grid-template-columns:minmax(0,1fr)}.icf-l{display:none}.ic-fu ul{height:auto;margin:0;padding:8px var(--pad) 40px}.ic-fu li{height:auto;padding:16px 0}.pt-fu .pt-d h2 u{white-space:normal}}
+.fu-lab{margin:0;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}.fu-lab::before{content:"["}.fu-lab::after{content:"]"}
+.fuh{border-bottom:1px solid var(--ln)}.fuh-g{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln);min-height:min(86vh,800px)}
+.fuh-t{align-self:center;padding:clamp(70px,7vw,130px) clamp(22px,3.1vw,60px)}.fuh h1{white-space:normal;text-wrap:balance;margin:22px 0 0;max-width:8em;font-size:clamp(46px,5.4vw,96px);line-height:.98;letter-spacing:-.05em;font-weight:600}
+.fuh .sub{margin:clamp(20px,2vw,30px) 0 0;max-width:24em;font-size:clamp(16.5px,1.2vw,20px);line-height:1.45;color:var(--t2)}.fuh .cta{margin-top:clamp(26px,2.6vw,40px);display:flex;flex-wrap:wrap;justify-content:flex-start;gap:8px}.fuh-t{text-align:left}.fuh-t>*{margin-left:0}.fcol{min-width:0}
+.fuh-p{display:grid;align-content:center;justify-items:center;padding:clamp(40px,4vw,80px) clamp(22px,3vw,56px);border-left:1px solid var(--ln);background:linear-gradient(180deg,#f6f8ff,#e7ecfd)}
+.fuh-c{width:100%;max-width:470px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 30px 60px -34px rgba(38,46,90,.45)}
+.fuh-h{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;border-bottom:1px solid var(--ln)}.fuh-h b{font-size:14.5px;font-weight:600}.fuh-h em{margin-left:10px;font-style:normal;font-size:13.5px;color:var(--t2)}.fuh-h strong{font-size:22px;font-weight:560;letter-spacing:-.02em}
+.fuh-l{position:relative;list-style:none;margin:0;padding:18px 20px 20px 46px}.fuh-l::before{content:"";position:absolute;left:26px;top:28px;bottom:34px;width:1px;background:#d5d8de}
+.fuh-l li{position:relative;padding:0 0 16px}.fuh-l li::before{content:"";position:absolute;left:-25px;top:3px;width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1.5px #17181a}
+.fuh-l li.r::before{background:#17181a}.fuh-l li.k::before{background:#266df1;box-shadow:none}.fuh-l li.k{padding-bottom:0}
+.fuh-l time{display:block;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)}.fuh-l b{display:block;margin-top:6px;font-size:14px;font-weight:560}.fuh-l li.k b{color:#1f4fbe}
+.fuh-l .hb{display:inline-block;margin:8px 0 0;max-width:85%;padding:8px 12px;border-radius:12px 12px 12px 3px;background:#eef0f3;font-size:13px;line-height:1.35}.fuh-l .hb.c{background:#17181a;color:#fff;border-radius:12px 12px 3px 12px}
+.fus{background:#f6f7f9;border-top:1px solid var(--ln)}.fus-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.fus-t{padding:clamp(80px,8vw,150px) clamp(22px,3.1vw,60px)}.fus ol{list-style:none;margin:clamp(24px,2.6vw,40px) 0 0;padding:0;counter-reset:s}.fus li{counter-increment:s;padding:clamp(18px,1.8vw,28px) 0;border-top:1px solid #dfe1e6}
+.fus li b{display:block;max-width:14em;font:400 clamp(26px,2.5vw,42px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.016em}.fus li b::before{content:"0" counter(s);display:block;margin-bottom:12px;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.06em;color:var(--t3)}
+.fus-p{display:grid;align-content:center;justify-items:center;padding:clamp(40px,4vw,80px) clamp(22px,3vw,56px);border-left:1px solid var(--ln);background:#fff}
+.fus-c{--q:clamp(0,calc(var(--p,1)*1.8 - .3),1);width:100%;max-width:430px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.09),0 28px 56px -36px rgba(30,40,80,.4);padding-bottom:18px}
+.fus-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--ln)}.fus-h b{font-size:14px;font-weight:600}.fus-h span{font-size:13px;color:var(--t2)}
+.fus .m{margin:16px 18px 0 auto;width:fit-content;max-width:78%;padding:9px 12px;border-radius:12px 12px 3px 12px;background:#17181a;color:#fff;font-size:13.5px;line-height:1.38}.fus .m time{display:block;margin-bottom:5px;font:500 10px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:#a9abb0}
+.fus .m.i{margin:0 auto 0 18px;border-radius:12px 12px 12px 3px;background:#eef0f3;color:var(--ink);opacity:clamp(0,calc(var(--q)*4 - 2.6),1)}.fus .m.i time{color:var(--t3)}
+.fus .gap{position:relative;height:clamp(110px,11vw,160px);margin:0 18px}.fus .gap::before{content:"";position:absolute;left:50%;top:12px;bottom:12px;border-left:1.5px dashed #c9cbd0;transform-origin:50% 0;transform:scaleY(clamp(0,calc(var(--q)*2.4 - .3),1))}
+.fus .gap span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:6px 10px;border-radius:6px;background:#fff;box-shadow:inset 0 0 0 1px #f3c2c4;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:#e5484e;white-space:nowrap;opacity:clamp(0,calc(var(--q)*4 - 1.4),1)}
+.fus .end{margin:16px 18px 0;padding-top:12px;border-top:1px solid var(--ln);font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);opacity:clamp(0,calc(var(--q)*4 - 3),1)}
+.fub{border-top:1px solid var(--ln)}.fub-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(80px,8vw,150px) clamp(22px,3.1vw,60px)}
+.fub-t{display:grid;gap:22px;margin-bottom:clamp(36px,4vw,64px)}.fub-t .st-t{margin:0;max-width:14em;font-size:clamp(32px,3.6vw,62px);line-height:1.03;letter-spacing:-.045em;font-weight:600}
+.fub-b{--q:clamp(0,calc(var(--p,1)*1.8 - .2),1);display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:12px;padding:12px;border-radius:16px;background:#f1f2f5;box-shadow:inset 0 0 0 1px var(--ln)}
+.fcol{display:grid;align-content:start;gap:8px;padding:6px}.fch{display:flex;align-items:center;gap:8px;margin:2px 2px 0;font-size:13.5px}.fch b{font-weight:600}.fch i{font-style:normal;padding:2px 7px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px var(--ln);font-size:11.5px;color:var(--t2)}
+.fch::before{content:"";width:8px;height:8px;border-radius:50%;background:#17181a}.fcol.y .fch::before{background:#f0a001}.fcol.k .fch::before{background:#266df1}
+.fcn{margin:0 2px 6px;font-size:13px;line-height:1.4;color:var(--t2);max-width:24em}
+.fqc{display:grid;gap:5px;padding:13px 14px;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.07),0 6px 14px -10px rgba(30,40,80,.35);opacity:clamp(0,calc(var(--q)*6 - var(--k)),1);transform:translateY(calc((1 - clamp(0,calc(var(--q)*6 - var(--k)),1))*10px))}
+.fqc b{font-size:14px;font-weight:560}.fqc span{font-size:12.5px;color:var(--t3)}.fqc em{justify-self:start;margin-top:4px;padding:3px 8px;border-radius:6px;background:#eef0f3;font-style:normal;font-size:12px;font-weight:540}.fqc em.y{background:#fdf1d6;color:#8a5a00}.fqc em.k{background:#266df1;color:#fff}
+@media(max-width:960px){.fuh-g,.fus-g{grid-template-columns:minmax(0,1fr)}.fuh-p,.fus-p{border-left:0;border-top:1px solid var(--ln)}.fub-b{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:860px){.rvqs-g{grid-template-columns:minmax(0,1fr)}.rvqs-l{display:block}.rvqs-l em{display:block;margin-top:10px}}
 @media(max-width:860px){.rvp-h{grid-template-columns:minmax(0,1fr)}.rvq p{display:block}.rvq p span{display:block;margin-top:8px}.rvp-k em{margin-left:0}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
@@ -3588,7 +3649,8 @@ if __name__ == '__main__':
             _b = _b.replace('<section class="pt ', '<section data-in class="pt pt-fu ', 1).replace('gets chased until it&rsquo;s settled.</h2>', 'gets chased <u>until it&rsquo;s settled.</u></h2>', 1)
             _b = _b.replace('<section class="ic">', '<section class="ic ic-fu" data-in>', 1)
             _b = re.sub(r'(<section class="ic ic-fu" data-in>.*?</div>)(<ul>)', lambda m: m.group(1) + '<svg class="icf-l" viewBox="0 0 200 500" preserveAspectRatio="none" aria-hidden="true"><path d="M0 250 C110 250 90 50 200 50"/><path d="M0 250 C110 250 90 150 200 150"/><path d="M0 250 C110 250 90 250 200 250"/><path d="M0 250 C110 250 90 350 200 350"/><path d="M0 250 C110 250 90 450 200 450"/><circle cx="2" cy="250" r="3"/></svg>' + m.group(2), _b, count=1, flags=re.S)
-            _b = _b.replace('<section class="as">', '<section class="as as-fu">', 1)   # no stops: the transition band scrolls past like any other section
+            _b = _b.replace('<section class="as">', '<section class="as as-fu">', 1)
+            _b = re.sub(r'<section class="sg sg2">.*?</section>', lambda m: FUSIGNS, _b, count=1, flags=re.S)   # no stops: the transition band scrolls past like any other section
         doc = page(title, desc, '/' + slug, _b, css=PCSS, index=(slug not in ('404', 'day', 'terms')))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
