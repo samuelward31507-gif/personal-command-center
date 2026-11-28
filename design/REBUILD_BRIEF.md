@@ -711,3 +711,6 @@ Sam: the plain Questions list at the bottom of Booking "looks really bad"; sugge
 
 ### 24d. Booking questions as a split (Nov 27)
 Sam on the centred dotted version: "looks bad maybe do a spliscreen". Now half and half: left a dotted panel with a bracket label and one very large serif "Questions."; right, on white, the three questions numbered in sans with answers under them. Lesson: big centred serif questions stacked down a dotted page did not work; dots work as a panel, not as a whole long section.
+
+### 24e. Booking, what is included (Nov 27)
+Sam approved the split questions ("good onto the next"). The ticked checklist is now a large sans headline over a ruled three-by-two grid of numbered cells, the last cell (Works with Google Calendar) in black. Scoped to Booking. With this every section on Booking has had a pass except the shared need/take band and the build grid.
