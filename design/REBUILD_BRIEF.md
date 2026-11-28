@@ -731,3 +731,10 @@ Now only on Follow-up:
 - Plus the underline band, the one-to-five fan and the campaign band from 24f.
 Shared still: problem statement, chart frame, three picture cells, need/take band, chat-bubble questions (keep chat on Follow-up; give Answering and Review replies something else).
 Gotcha: .fc is taken; use .fqc for board cards. Hero h1 inherits nowrap; set white-space:normal.
+
+### 24h. Answering made its own (Nov 28)
+Sam approved Follow-up ("good, next").
+- First screen (anh): headline left and words plus buttons right on one row; under it the whole exchange as a flow across the page: Missed call card, arrow "9 seconds", Text back card, arrow "2 minutes", Booked card in blue with "Wed, 2:00 PM". Plays step by step.
+- What is included (anx): serif heading with the Monday report on the left; right a two-column table, Covers / What happens.
+- Questions (aq): large sans "Questions." then the five as a ruled row of columns, serif questions with mono numbers. Chat bubbles stay on Follow-up only.
+Kept: day chart, 78 percent band, statement band, the one-lead walk-through on black, the chain row.

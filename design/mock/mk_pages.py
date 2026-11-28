@@ -168,9 +168,32 @@ TALK = ('<section class="cv"><div class="w cv-g"><div class="cv-t"><p class="st-
             ('Where do I see it?', 'Every thread lands in your app, and a text report comes every Monday.')]))
 CHAIN = ('<section class="nx"><div class="w nx-i"><p class="nx-t">What happens after the reply.</p><div class="nx-g"><div class="on"><b>Answering</b><span>%s</span></div>%s</div></div></section>'
          % (ap(BY['answering']['short']), ''.join('<a href="/%s"><b>%s</b><span>%s</span></a>' % (s, BY[s]['name'], ap(BY[s]['short'])) for s in ('booking', 'follow-up', 'reviews'))))
-ANSWERING = (inner_hero('Front desk', 'Every call gets an answer.',
-                        'Missed calls and new leads get a text back in seconds, even after hours and while you&rsquo;re on a job.',
-                        BOOK + '<a class="btn q" href="/free-audit">How the audit works</a>', THREAD)
+# Answering's own first screen: headline and words side by side, then the whole exchange as a flow across the page
+ANSHERO = ('<section class="anh"><div class="w anh-i"><div class="anh-t"><div><span class="lb">Front desk</span><h1>Every call gets an answer.</h1></div>'
+           '<div><p class="sub">Missed calls and new leads get a text back in seconds, even after hours and while you&rsquo;re on a job.</p><div class="cta">%s<a class="btn q" href="/free-audit">How the audit works</a></div></div></div>'
+           '<div class="anh-f" data-live="9" aria-hidden="true">'
+           '<div class="anf" data-hd="0"><p class="anf-k"><i class="r"></i>Missed call</p><time>7:42:10 PM</time><p class="anf-m">Missed call from a new number. No voicemail.</p></div>'
+           '<div class="anc" data-hd="1"><b>9 seconds</b><i></i></div>'
+           '<div class="anf" data-hd="2"><p class="anf-k"><i></i>Text back</p><time>7:42:19 PM</time><p class="hb me">Sorry we missed you. Looking for a quote? Pick a time that works: Tue 9 AM, Wed 2 PM or Thu 11 AM.</p><p class="hb in" data-hd="3">Wed 2 works</p></div>'
+           '<div class="anc" data-hd="4"><b>2 minutes</b><i></i></div>'
+           '<div class="anf k" data-hd="5"><p class="anf-k"><i class="b"></i>Booked</p><time>7:44:05 PM</time><strong>Wed, 2:00 PM</strong><p class="anf-m">See you Wednesday at 2. We&rsquo;ll text a reminder that morning.</p></div>'
+           '</div><p class="sd-n">Example business, sample data.</p></div></section>' % BOOK)
+# what is included, as a two-column table: what it covers, what happens
+ANSINC = ('<section class="anx"><div class="w anx-g"><div class="anx-t"><p class="fu-lab">What&rsquo;s included</p><p class="st-t">Set up around the number you already use.</p>%s</div>'
+          '<div class="anx-l"><p class="h"><span>Covers</span><span>What happens</span></p>%s</div></div></section>'
+          % (REPORT, ''.join('<p><em>%s</em><span>%s</span></p>' % x for x in [
+              ('Calls', 'Missed calls get a text back from your business.'), ('Lead sites', 'Web forms, Facebook, Angi and Thumbtack leads answered by text.'),
+              ('Your questions', 'Your questions and your price range before anything books.'), ('Follow-ups', 'No reply? Up to 3 friendly follow-ups so the lead doesn&rsquo;t go cold.'),
+              ('Languages', 'English and Spanish.'), ('Report', 'A Monday text report of every lead and reply.')])))
+# questions as a ruled row of columns
+ANSQ = ('<section class="aq"><div class="w aq-i"><p class="aq-t">Questions.</p><dl>%s</dl></div></section>'
+        % ''.join('<div><dt>%s</dt><dd>%s</dd></div>' % x for x in [
+            ('Which leads does it cover?', 'Missed calls, texts, website forms, and requests from Facebook, Angi and Thumbtack.'),
+            ('What if the lead isn&rsquo;t a fit?', 'Your questions and your price range come before anything books, so you only see the serious ones.'),
+            ('What if they don&rsquo;t reply?', 'Up to 3 friendly follow-ups go out, then it stops.'),
+            ('Do I have to change how I work?', 'No. You answer the calls you can. Everything you miss gets handled.'),
+            ('Where do I see it?', 'Every thread lands in your app, and a text report comes every Monday.')]))
+ANSWERING = (ANSHERO
              + statement('The problem', 'Most leads go to whoever answers first.', 'A missed call, a web form, a message on a lead site. Each one is a person ready to hire, and each one is also contacting someone else. The reply that arrives tonight is usually too late.')
              + DAY
              + '<section class="sn"><div class="w sn-i"><b>78%</b><p>of people have taken their business elsewhere after a company didn&rsquo;t pick up.</p><span>CallRail survey of 1,000 consumers, 2025</span></div></section>'
@@ -178,7 +201,7 @@ ANSWERING = (inner_hero('Front desk', 'Every call gets an answer.',
                           [('A call rings out.', 'You&rsquo;re on a job site and can&rsquo;t pick up. A form comes in at 9 PM.'),
                            ('A reply goes out in seconds.', 'Sorry we missed you, with times to pick from. No callback list.'),
                            ('It all lands in your app.', 'The thread, the lead and what happens next, in one place.')], INBOX)
-             + INCLUDED + TALK + CHAIN + CL)
+             + ANSINC + ANSQ + CHAIN + CL)
 
 CSS = r"""
 /* ============ shared by the inner pages ============ */
@@ -2045,7 +2068,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'fuh': 'top', 'fub': 'fub', 'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'anh': 'top', 'anx': 'anx', 'aq': 'aq', 'fuh': 'top', 'fub': 'fub', 'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -2979,6 +3002,32 @@ main:has(.bkw) .ic li span{display:block;max-width:15em}main:has(.bkw) .ic li:la
 .fqc{display:grid;gap:5px;padding:13px 14px;border-radius:10px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.07),0 6px 14px -10px rgba(30,40,80,.35);opacity:clamp(0,calc(var(--q)*6 - var(--k)),1);transform:translateY(calc((1 - clamp(0,calc(var(--q)*6 - var(--k)),1))*10px))}
 .fqc b{font-size:14px;font-weight:560}.fqc span{font-size:12.5px;color:var(--t3)}.fqc em{justify-self:start;margin-top:4px;padding:3px 8px;border-radius:6px;background:#eef0f3;font-style:normal;font-size:12px;font-weight:540}.fqc em.y{background:#fdf1d6;color:#8a5a00}.fqc em.k{background:#266df1;color:#fff}
 @media(max-width:960px){.fuh-g,.fus-g{grid-template-columns:minmax(0,1fr)}.fuh-p,.fus-p{border-left:0;border-top:1px solid var(--ln)}.fub-b{grid-template-columns:minmax(0,1fr)}}
+.anh{border-bottom:1px solid var(--ln);background:linear-gradient(180deg,#fff 0,#fff 55%,#eef2fd 100%)}.anh-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(70px,7vw,130px) clamp(22px,3.1vw,60px) clamp(56px,5vw,90px)}
+.anh-t{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(30px,4vw,80px);align-items:end}.anh h1{white-space:normal;margin:22px 0 0;max-width:9em;font-size:clamp(46px,5.6vw,100px);line-height:.98;letter-spacing:-.05em;font-weight:600}
+.anh .sub{margin:0;max-width:24em;font-size:clamp(16.5px,1.2vw,20px);line-height:1.45;color:var(--t2)}.anh .cta{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:8px;margin-top:24px}
+.anh-f{display:grid;grid-template-columns:minmax(0,1fr) clamp(80px,8vw,130px) minmax(0,1.25fr) clamp(80px,8vw,130px) minmax(0,1fr);align-items:center;margin-top:clamp(50px,5vw,90px)}
+.anf{align-self:stretch;display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 26px 50px -34px rgba(38,46,90,.45)}
+.anf-k{display:flex;align-items:center;gap:8px;margin:0;font-size:13.5px;font-weight:600}.anf-k i{width:8px;height:8px;border-radius:50%;background:#17181a}.anf-k i.r{background:#e5484e}.anf-k i.b{background:#266df1}
+.anf time{font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)}.anf-m{margin:0;font-size:14px;line-height:1.42;color:var(--t2)}.anf strong{font-size:clamp(24px,2vw,32px);font-weight:560;letter-spacing:-.025em;color:#1f4fbe}
+.anf .hb{margin:0;max-width:92%;padding:9px 12px;font-size:13px;line-height:1.38;border-radius:12px}.anf .hb.me{align-self:flex-end;background:#17181a;color:#fff;border-radius:12px 12px 3px 12px}.anf .hb.in{background:#eef0f3;border-radius:12px 12px 12px 3px}
+.anf.k{box-shadow:0 0 0 1.5px #266df1,0 26px 50px -34px rgba(38,46,90,.45)}
+.anc{position:relative;display:grid;justify-items:center;gap:10px;padding:0 6px}.anc b{font:500 11px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
+.anc i{position:relative;display:block;width:100%;height:1px;background:#d5d8de}.anc i::after{content:"";position:absolute;left:0;top:-1px;height:3px;width:0;background:#266df1;transition:width .9s cubic-bezier(.3,.7,.2,1)}.anc.in i::after,.anh-f:not(.live) .anc i::after{width:100%}
+.anc i::before{content:"";position:absolute;right:-1px;top:-4px;border:4.5px solid transparent;border-left:7px solid #266df1;border-right:0}
+.anx{border-top:1px solid var(--ln)}.anx-g{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.anx-t{padding:clamp(80px,8vw,150px) clamp(22px,3.1vw,60px)}.anx-t .st-t{margin:20px 0 clamp(28px,3vw,48px);max-width:11em;font:400 clamp(30px,3.1vw,54px)/1.08 Georgia,"Times New Roman",serif;letter-spacing:-.02em}
+.anx-l{display:grid;align-content:center;padding:clamp(60px,6vw,110px) clamp(22px,3.1vw,60px);border-left:1px solid var(--ln);background:#fff}
+.anx-l p{display:grid;grid-template-columns:10em minmax(0,1fr);gap:20px;align-items:baseline;margin:0;padding:clamp(16px,1.6vw,24px) 0;border-bottom:1px solid var(--ln)}
+.anx-l p.h{padding-top:0;border-bottom-color:var(--ink)}.anx-l p.h span{font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}
+.anx-l em{font-style:normal;font-size:clamp(15px,1.1vw,18px);font-weight:600;letter-spacing:-.01em}.anx-l p:not(.h) span{font-size:clamp(15.5px,1.1vw,18.5px);line-height:1.42;color:var(--t2)}
+.aq{border-top:1px solid var(--ln)}.aq-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(80px,8vw,150px) 0 0}
+.aq-t{margin:0 0 clamp(36px,4vw,64px);padding:0 clamp(22px,3.1vw,60px);font-size:clamp(34px,4vw,72px);line-height:1;letter-spacing:-.045em;font-weight:600}
+.aq dl{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:0;border-top:1px solid var(--ln);counter-reset:q}.aq dl div{counter-increment:q;padding:clamp(22px,2.2vw,34px) clamp(16px,1.6vw,26px) clamp(40px,4vw,72px);border-right:1px solid var(--ln)}.aq dl div:last-child{border-right:0}
+.aq dt{font:400 clamp(20px,1.6vw,27px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.012em}.aq dt::before{content:"0" counter(q);display:block;margin-bottom:clamp(26px,3vw,52px);font:500 11px/1 "Geist Mono",monospace;letter-spacing:.06em;color:var(--t3)}
+.aq dd{margin:14px 0 0;font-size:clamp(14.5px,1vw,16.5px);line-height:1.45;color:var(--t2)}
+@media(max-width:1060px){.aq dl{grid-template-columns:repeat(2,minmax(0,1fr))}.aq dl div{border-bottom:1px solid var(--ln)}}
+@media(max-width:960px){.anh-t,.anx-g{grid-template-columns:minmax(0,1fr)}.anh-f{grid-template-columns:minmax(0,1fr)}.anc{padding:14px 0;grid-template-columns:auto 1fr;align-items:center;justify-items:start}.anc i{height:1px}.anx-l{border-left:0;border-top:1px solid var(--ln)}.anx-l p{grid-template-columns:minmax(0,1fr);gap:6px}.anx-l p.h{display:none}}
+@media(max-width:620px){.aq dl{grid-template-columns:minmax(0,1fr)}.aq dl div{border-right:0}}
 @media(max-width:860px){.rvqs-g{grid-template-columns:minmax(0,1fr)}.rvqs-l{display:block}.rvqs-l em{display:block;margin-top:10px}}
 @media(max-width:860px){.rvp-h{grid-template-columns:minmax(0,1fr)}.rvq p{display:block}.rvq p span{display:block;margin-top:8px}.rvp-k em{margin-left:0}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
