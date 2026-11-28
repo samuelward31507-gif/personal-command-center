@@ -1019,7 +1019,7 @@ KB = ('<div class="kb"><div class="kb-s"><h3>What you give it</h3>%s</div><div c
 # --- Website chat, rebuilt (Nov 28): one evening of questions on a timeline; the page turns from day to night as the clock runs to 10:04 PM;
 # the 10 PM conversation on black with margin notes; every answer traced to the information it came from; questions as the chat would answer them.
 _WQ = [(12, 'up', 'Do you do repairs?', 'a', 'Answered'), (100, 'dn', 'Are you open Saturday?', 'a', 'Answered'), (175, 'up', 'Do you work in Monument?', 'a', 'Answered'),
-       (210, 'dn', 'Roughly what does it cost?', 'a', 'Answered'), (244, 'up', 'Can someone come Thursday?', 'b', 'Booked, Thu 9 AM'), (318, 'dn', 'Can you beat another quote?', 'h', 'Handed to you')]
+       (190, 'dn', 'Roughly what does it cost?', 'a', 'Answered'), (244, 'up', 'Can someone come Thursday?', 'b', 'Booked, Thu 9 AM'), (318, 'dn', 'Can you beat another quote?', 'h', 'Handed to you')]
 WCHERO = ('<section class="wch"><div class="w wch-i"><p class="fu-lab">Website chat</p><h1>Visitors get an answer while they&rsquo;re still on the page.</h1>'
           '<p class="sub">A chat on your site answers questions about your services and your area, then offers a time for an estimate. Including at night, when most people look.</p>'
           '<div class="cta">%s%s</div>'
