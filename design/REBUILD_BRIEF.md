@@ -646,3 +646,6 @@ Sam: "I want you to redo it, and do your own thing". Dropped the Attio-style cur
 
 ### 23s. Reviews, whole-page pass (Nov 27)
 Sam: make the whole page look amazing, not crowded, keep all the information, make it longer if it is choppy. The crowded dotted section is split in two: the month comparison alone on dots (two large cards, each with its result figure), then the timeline on white with its heading and the three statements under it. Problem statement larger with more room. More space between sections. No copy removed.
+
+### 23t. Dots are for the transition only (Nov 27)
+Sam: the dotted white is meant to be one transition screen, then black or the normal white, not the ground for whole sections. Reviews now: dotted landing, then the month comparison on black, then the timeline on plain white. Rule for other pages: dotted ground only on a hand-over landing.
