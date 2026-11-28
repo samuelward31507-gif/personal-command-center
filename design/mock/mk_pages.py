@@ -95,7 +95,7 @@ PHONE = (GOOD + '<div class="ph-c c1"><b>Loads fast</b><span>Most visitors are o
          '<div class="ph-c c2"><b>One clear button</b><span>No hunting for a number.</span></div>'
          '<div class="ph-c c3"><b>The button books</b><span>A time on your calendar.</span></div>'
          '<p class="ph-k">Example. Sample data.</p>')
-VS = ('<section class="vs"><div class="w vs-i"><p class="vs-t">What most contractor sites get wrong.</p><div class="vs-g">'
+VS = ('<section class="vs"><div class="w vs-i"><p class="vs-t">What most contractor sites get wrong.</p><div class="vs-g" data-in>'
       '<div class="vs-c x"><ul>%s</ul><figure><figcaption>Most sites</figcaption>%s</figure></div>'
       '<div class="vs-c v"><figure><figcaption>Yours</figcaption>%s</figure><ul>%s</ul></div></div></div></section>'
       % (''.join('<li>%s<span>%s</span></li>' % (CROSS, t) for t in ['Slow on a phone.', 'Says &ldquo;quality service&rdquo;.', 'A contact form that goes to an inbox.', 'Hard to find nearby.']),
@@ -105,21 +105,59 @@ JMINI = ['<div class="jm jm-q">%sfence company near me</div>' % svg('find'),
          '<div class="jm jm-p"><u></u><u class="s"></u><em></em></div>',
          '<div class="jm jm-t"><span>Tue 9 AM</span><span class="on">Wed 2 PM</span><span>Thu 11 AM</span></div>',
          '<div class="jm jm-c"><b>Wed, 2:00 PM</b><span>Estimate, new fence, 80920</span></div>']
-JOURNEY = ('<section class="jr"><div class="w jr-i"><div class="jr-h"><span class="lb">What you get</span><p class="st-t">Your site should book jobs while you&rsquo;re on one.</p>'
-           '<span class="tag">One visit. Example, sample data.</span></div><ol>%s</ol></div></section>'
-           % ''.join('<li><div class="jr-p">%s</div><b>%s</b><span>%s</span></li>' % (JMINI[i], a, b) for i, (a, b) in enumerate([
+JOURNEY = ('<section class="jr"><div class="w jr-i"><div class="jr-h"><p class="fu-lab">One visit</p><p class="st-t">Your site should book jobs while you&rsquo;re on one.</p>'
+           '<span class="tag">10:02 to 10:04 PM. Example, sample data.</span></div><ol data-in>%s</ol></div></section>'
+           % ''.join('<li style="--i:%d"><time>%s</time><div class="jr-p">%s</div><b>%s</b><span>%s</span></li>' % (i, ['10:02 PM', '10:02 PM', '10:03 PM', '10:04 PM'][i], JMINI[i], a, b) for i, (a, b) in enumerate([
                ('They search.', 'Built so the people near you can find you.'),
                ('The page loads.', 'Most visitors are on a phone. It loads before they give up.'),
                ('They pick a time.', 'Right from the page, from your open slots.'),
                ('It&rsquo;s on your calendar.', 'With the job, the address and the zip code.')])))
 CHECK = ('<section class="uc"><div class="w uc-i"><p class="st-t">Check your site first. <span>A free check, done in 60 seconds.</span></p>'
          '<a class="uc-f" href="/audit"><span>yourbusiness.com</span><em>Check my site</em></a></div></section>')
+
+# the first three seconds: two sites filmed half a second at a time, a playhead runs across as you scroll, the 3-second line in red
+def _wframe(kind, t):
+    if kind == 'bad':
+        parts = [] if t < 1.5 else ['<em></em>'] if t < 3 else ['<i class="n"></i><i class="h"></i><i class="f"></i>'] if t < 4.5 else ['<i class="n"></i><i class="h"></i><i class="h2"></i><i class="f"></i><i class="f"></i><i class="b"></i>']
+    else:
+        parts = [] if t < .5 else ['<i class="n"></i><i class="h"></i><i class="h2"></i>'] if t < 1 else ['<i class="n"></i><i class="h"></i><i class="h2"></i><i class="f"></i><i class="b"></i><i class="t"><u></u><u class="on"></u><u></u></i>']
+    return '<div class="wf-f" style="--k:%d">%s</div>' % (int(t * 2), ''.join(parts))
+WFILM = ('<section class="wfs"><div class="w wfs-i"><div class="wfs-h"><div><p class="fu-lab">The first three seconds</p>'
+         '<h2 class="wfs-t">Most visitors decide before the page does.</h2><p class="wfs-s">Two sites opening on a phone, half a second at a time.</p></div>'
+         '<div class="wfs-n"><b data-count="53" data-suf="%%">53%%</b><span>of visits on a phone are dropped when a page takes longer than three seconds to load.</span><em>Google, 2016</em></div></div>'
+         '<div class="wf-t" data-in><div class="wf-x">%s</div>'
+         '<p class="wf-l">Most sites</p><div class="wf-s bad">%s<div class="wf-g"><span>Half of them have left</span></div></div>'
+         '<p class="wf-l v">Yours</p><div class="wf-s good">%s</div>'
+         '<i class="wf-3" aria-hidden="true"><span>3 seconds</span></i><i class="wf-ph" aria-hidden="true"></i></div>'
+         '<p class="wf-k">Example. Sample data.</p></div></section>'
+         % (''.join('<span>%ss</span>' % ('%g' % (k / 2)) for k in range(13)),
+            ''.join(_wframe('bad', k / 2) for k in range(13)), ''.join(_wframe('good', k / 2) for k in range(13))))
+
+# the first screen, drawn as lines: four parts, each with a leader out to what it does
+_WAN = [('a', 132, 'Says what you do.', 'The work and the area, in plain words, before anyone scrolls.', 'M504 132H330'),
+        ('b', 470, 'Asks for a zip code.', 'So the only estimates that book are inside the area you cover.', 'M518 317H440V470H330'),
+        ('c', 190, 'One button.', 'No hunting for a phone number or a contact page.', 'M682 371H760V190H870'),
+        ('d', 560, 'Times to pick from.', 'Open slots from your calendar. They tap one and it is booked.', 'M682 419H790V560H870')]
+WANAT = ('<section class="wan"><div class="w wan-i"><div class="wan-h"><p class="fu-lab">The first screen</p><h2 class="wan-t">Four things on the first screen. Nothing else.</h2></div>'
+         '<div class="wan-s" data-in><svg viewBox="0 0 1200 700" aria-hidden="true">'
+         '<g class="wp"><rect pathLength="1" x="480" y="30" width="240" height="640" rx="36"/><rect pathLength="1" class="wl" x="492" y="42" width="216" height="616" rx="27"/>'
+         '<path pathLength="1" class="wl" d="M492 82H708"/><path class="wk" d="M514 62H572"/><path class="wk ws" d="M672 62H690"/>'
+         '<path class="whd" d="M514 122H672M514 146H628"/><path class="wg" d="M514 176H682M514 189H640"/>'
+         '<rect pathLength="1" class="wl" x="504" y="214" width="192" height="292" rx="14"/>'
+         '<path class="wg" d="M518 236H566M518 294H556"/><rect pathLength="1" class="wl" x="518" y="244" width="164" height="34" rx="8"/><rect pathLength="1" class="wl" x="518" y="300" width="164" height="34" rx="8"/><path class="wk" d="M532 317H578"/>'
+         '<rect class="wbt" x="518" y="354" width="164" height="36" rx="9"/><path class="ww" d="M572 372H628"/>'
+         '<rect pathLength="1" class="wl" x="518" y="404" width="48" height="30" rx="7"/><rect class="wpk" x="576" y="404" width="48" height="30" rx="7"/><rect pathLength="1" class="wl" x="634" y="404" width="48" height="30" rx="7"/>'
+         '<rect pathLength="1" class="wl" x="504" y="528" width="60" height="60" rx="9"/><rect pathLength="1" class="wl" x="570" y="528" width="60" height="60" rx="9"/><rect pathLength="1" class="wl" x="636" y="528" width="60" height="60" rx="9"/></g>'
+         '%s</svg>%s</div><p class="wf-k">Example. Sample data.</p></div></section>'
+         % (''.join('<g class="ld ld-%s" style="--i:%d"><path pathLength="1" d="%s"/><circle cx="%s" cy="%s" r="5"/></g>' % (k, i, d, d[1:4], d[5:8]) for i, (k, y, a, b, d) in enumerate(_WAN)),
+            ''.join('<div class="wan-o wan-%s" style="--i:%d;top:%.2f%%"><b>%s</b><span>%s</span></div>' % (k, i, (y - 16) / 7, a, b) for i, (k, y, a, b, d) in enumerate(_WAN))))
+
 WEBSITES = ('<section class="hs hs-r"><div class="w hs-g"><div class="hs-p ph-p">%s</div><div class="hs-t"><span class="pill"><i></i>Getting found</span>'
             '<h1>A site that books jobs.</h1><p class="sub">Fast on a phone, clear about what you do, and built to turn visitors into booked estimates. Written and built for your business, not from a theme.</p>'
             '<div class="cta">%s<a class="btn q" href="/audit">Check your site in 60 seconds</a></div>'
             '<p class="hs-n">Three things do most of the work: it loads fast, it has one clear button, and the button books.</p></div></div></section>' % (PHONE, BOOK)
             + statement('The problem', 'Most contractor sites lose the visitor on the first screen.', 'Slow on a phone, no clear next step, and a contact form that goes nowhere. The visitor wanted a price and a time. They leave with neither.')
-            + VS + JOURNEY
+            + WFILM + VS + WANAT + JOURNEY
             + fq('Everything is custom. It&rsquo;s custom to you. It&rsquo;s custom to your problem. It&rsquo;s not a template.')
             + CHECK
             + faq('Questions.', [('Do I need a new site?', 'Not always. The free audit tells you if yours is costing you jobs.'),
@@ -347,6 +385,85 @@ CSS = r"""
 .uc-f span::after{content:"";display:inline-block;width:1.5px;height:1.1em;margin-left:3px;vertical-align:-.18em;background:var(--blue)}
 .uc-f em{display:inline-flex;align-items:center;height:clamp(44px,3vw,54px);padding:0 clamp(16px,1.2vw,22px);border-radius:11px;background:var(--ink);color:#fff;font-style:normal;font-size:clamp(14px,.9vw,16.5px);font-weight:560;white-space:nowrap}
 .uc+.fa{border-top:1px solid var(--ln)}
+/* websites: the first three seconds */
+.wfs{border-top:1px solid var(--ln)}.wfs-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(96px,8vw,150px) var(--pad) clamp(64px,5vw,96px)}
+.wfs-h{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:40px clamp(40px,6vw,120px);align-items:end;margin-bottom:clamp(56px,5vw,90px)}
+.wfs-t{margin:22px 0 0;max-width:11em;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em}
+.wfs-s{margin:22px 0 0;max-width:24em;font-size:clamp(16px,1.1vw,19px);line-height:1.4;color:var(--t2)}
+.wfs-n{padding-left:28px;border-left:2px solid #e5484e}.wfs-n b{display:block;font-size:clamp(64px,6vw,108px);line-height:.9;font-weight:560;letter-spacing:-.05em}
+.wfs-n span{display:block;margin-top:16px;max-width:19em;font-size:clamp(15px,1vw,18px);line-height:1.38;font-weight:500}.wfs-n em{display:block;margin-top:14px;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:var(--t3)}
+.wf-t{position:relative;--cols:13;--span:12;--q:clamp(0,calc((var(--p,1) - .1)*1.45),1)}
+.wf-x,.wf-s{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:clamp(6px,.7vw,12px)}
+.wf-x span{text-align:center;font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3);padding-bottom:14px;border-bottom:1px solid var(--ln)}
+.wf-l{margin:28px 0 12px;font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}.wf-l.v{color:#266df1}
+.wf-s{position:relative}
+.wf-f{--o:clamp(0,calc((var(--q)*var(--span) - var(--k)*var(--span)/12)*3 + 1),1);display:flex;flex-direction:column;gap:5%;aspect-ratio:9/17;padding:9% 8%;box-sizing:border-box;border-radius:clamp(7px,.7vw,12px);background:#fff;box-shadow:0 0 0 1.5px #dfe2e8;opacity:calc(.16 + var(--o)*.84);transform:translateY(calc((1 - var(--o))*8px))}
+.wf-f i{display:block;border-radius:3px;background:#e7e9ee}.wf-f .n{height:4%;width:50%}.wf-f .h{height:6%;width:88%;background:#17181a}.wf-f .h2{height:6%;width:60%;background:#17181a}
+.wf-f .f{height:9%;background:none;box-shadow:inset 0 0 0 1px #d6d9df}.wf-f .b{height:10%;background:#266df1}.wf-f .t{display:flex;gap:6%;height:8%;background:none}.wf-f .t u{flex:1;border-radius:3px;box-shadow:inset 0 0 0 1px #d6d9df}.wf-f .t u.on{background:#266df1;box-shadow:none}
+.bad .wf-f{background:#fbfbfc}.bad .wf-f .h,.bad .wf-f .h2{background:#c9ccd2}.bad .wf-f .b{background:#d4d6db}
+.wf-f em{align-self:center;margin:auto;width:28%;aspect-ratio:1;border-radius:50%;border:2px solid #e2e4e9;border-top-color:#9a9da4}
+.wf-g{position:absolute;left:calc(50% + 4px);right:-4px;top:-6px;bottom:-6px;display:grid;place-items:center;border-radius:12px;isolation:isolate;opacity:clamp(0,calc((var(--q) - .52)*6),1)}
+.wf-g::before,.wf-g::after{content:"";position:absolute;inset:0;border-radius:12px;z-index:-1}.wf-g::before{background:#e5484e;opacity:.07}.wf-g::after{border:1px solid #e5484e;opacity:.3}
+.wf-g span{padding:7px 12px;border-radius:8px;background:#fff;font:500 12px/1 "Geist Mono",monospace;color:#e5484e;border:1px solid #e5484e}
+.wf-3,.wf-ph{position:absolute;top:0;bottom:-10px;width:0;pointer-events:none}
+.wf-3{left:50%;top:30px;border-left:1.5px dashed #e5484e}.wf-3 span{position:absolute;left:8px;bottom:-4px;white-space:nowrap;font:500 11px/1 "Geist Mono",monospace;color:#e5484e;background:#fff;padding:2px 4px}
+.wf-ph{left:calc((var(--q)*var(--span) + .5)/var(--cols)*100%);border-left:2px solid #266df1}.wf-ph::before{content:"";position:absolute;top:-5px;left:-6px;width:10px;height:10px;border-radius:50%;background:#266df1}
+.wf-k{margin:28px 0 0;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
+main:has(.wfs) .vs-t{font:400 clamp(36px,3.6vw,64px)/1.04 Georgia,"Times New Roman",serif;letter-spacing:-.028em;max-width:12em}
+/* websites: VS strikes and ticks arrive in turn */
+.vs-g[data-in] .vs-c.x li{text-decoration:none}.vs-g[data-in] .vs-c.x li span{background:linear-gradient(currentColor,currentColor) 0 58%/calc(clamp(0,calc(var(--p,1)*6 - var(--r,0) - 1),1)*100%) 1.5px no-repeat}
+.vs-g[data-in] .vs-c.v li{opacity:clamp(0,calc(var(--p,1)*6 - var(--r,0) - 1.5),1);transform:translateX(calc((1 - clamp(0,calc(var(--p,1)*6 - var(--r,0) - 1.5),1))*-14px))}
+.vs-c li:nth-child(2){--r:1}.vs-c li:nth-child(3){--r:2}.vs-c li:nth-child(4){--r:3}
+/* websites: the first screen as a line drawing */
+.wan{border-top:1px solid var(--ln)}.wan-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(96px,8vw,150px) var(--pad) clamp(64px,5vw,96px)}
+.wan-h{text-align:center}.wan-h .fu-lab{display:inline-block}.wan-t{margin:22px auto 0;max-width:12em;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em;text-wrap:balance}
+.wan-s{position:relative;aspect-ratio:12/7;margin-top:clamp(40px,4vw,72px)}
+.wan-s::before{content:"";position:absolute;left:31%;right:31%;top:0;bottom:0;border-radius:18px;background:#fcfcfd radial-gradient(circle,#d3d6de .8px,transparent 1.2px) 0 0/10px 10px;box-shadow:0 0 0 1px var(--ln)}
+.wan-s svg{position:relative;display:block;width:100%;height:100%;overflow:visible}
+.wan-s .wp{--d:clamp(0,calc(var(--p,1)*2.4),1)}
+.wan-s .wp *{fill:none;stroke:#17181a;stroke-width:2;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--d))}
+.wan-s .wp .wl{stroke:#b9bdc6;stroke-width:1.5}.wan-s .wp .wk{stroke:#b9bdc6;stroke-width:5;stroke-dasharray:none;opacity:var(--d)}.wan-s .wp .wk.ws{stroke-width:4}
+.wan-s .wp .whd{stroke:#17181a;stroke-width:12;stroke-dasharray:none;opacity:var(--d)}.wan-s .wp .wg{stroke:#cfd2d9;stroke-width:4;stroke-dasharray:none;opacity:var(--d)}
+.wan-s .wp .wbt{fill:#266df1;stroke:none;opacity:var(--d)}.wan-s .wp .ww{stroke:#fff;stroke-width:4;stroke-dasharray:none;opacity:var(--d)}.wan-s .wp .wpk{fill:#e4ebfe;stroke:#266df1;stroke-width:1.5;stroke-dasharray:none;opacity:var(--d)}
+.wan-s .ld{--e:clamp(0,calc(var(--p,1)*3.4 - 1.2 - var(--i)*.38),1)}
+.wan-s .ld path{fill:none;stroke:var(--c);stroke-width:1.6;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--e))}.wan-s .ld circle{fill:#fff;stroke:var(--c);stroke-width:2.5;opacity:clamp(0,calc(var(--e)*6),1)}
+.ld-a,.wan-a{--c:#266df1}.ld-b,.wan-b{--c:#f0a001}.ld-c,.wan-c{--c:#8b5cf6}.ld-d,.wan-d{--c:#0ea5a0}
+.wan-o{position:absolute;width:25.5%;opacity:clamp(0,calc(var(--p,1)*3.4 - 1.5 - var(--i)*.38),1)}
+.wan-a,.wan-b{left:0;text-align:right}.wan-c,.wan-d{left:74%}
+.wan-o b{display:flex;align-items:center;gap:12px;font:400 clamp(24px,2.1vw,38px)/1.05 Georgia,"Times New Roman",serif;letter-spacing:-.02em}
+.wan-a b,.wan-b b{flex-direction:row-reverse}
+.wan-o b::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:var(--c)}
+.wan-o span{display:block;margin-top:12px;font-size:clamp(14.5px,.95vw,17px);line-height:1.4;color:var(--t2)}.wan-a span,.wan-b span{margin-left:auto;max-width:18em}.wan-c span,.wan-d span{max-width:18em}
+/* websites: one visit on black */
+main:has(.wfs) .jr{position:relative}
+main:has(.wfs) .jr::before{content:"";position:absolute;top:0;left:max(100px,calc((100vw - 1390px)/2));right:max(100px,calc((100vw - 1390px)/2));height:240px;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px);-webkit-mask-image:linear-gradient(180deg,#000,transparent);mask-image:linear-gradient(180deg,#000,transparent)}
+main:has(.wfs) .jr-i{position:relative;z-index:1}main:has(.wfs) .jr-h{padding-top:clamp(140px,12vw,220px)}
+main:has(.wfs) .jr-h .fu-lab{grid-column:1/-1;color:#8f9197}
+main:has(.wfs) .jr-h .st-t{font:400 clamp(38px,4vw,72px)/1.04 Georgia,"Times New Roman",serif;letter-spacing:-.028em;max-width:12em}
+main:has(.wfs) .jr ol{position:relative}main:has(.wfs) .jr ol::after{content:"";position:absolute;top:-1px;left:0;height:2px;width:calc(clamp(0,calc(var(--p,1)*1.5 - .1),1)*100%);background:#266df1}
+main:has(.wfs) .jr li{--v:clamp(0,calc(var(--p,1)*6 - var(--i)*1.1 - .3),1);opacity:calc(.25 + var(--v)*.75)}
+main:has(.wfs) .jr li::before{background:#fff;color:#101010}
+main:has(.wfs) .jr li time{display:block;margin-top:14px;font:500 11px/1 "Geist Mono",monospace;color:#7fa8f7}
+main:has(.wfs) .jr li b{font:400 clamp(22px,1.7vw,30px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.015em}
+/* websites: questions as a ruled index */
+main:has(.wfs) .fa-g{display:block;padding:clamp(88px,7vw,130px) var(--pad)}main:has(.wfs) .fa-t{border:0;padding:0;min-height:0;position:static;background:none}
+main:has(.wfs) .fa-t .st-t{margin:0 0 clamp(36px,3vw,56px);font:400 clamp(40px,4.4vw,80px)/1 Georgia,"Times New Roman",serif;letter-spacing:-.03em}
+main:has(.wfs) .fa dl{margin:0;padding:0;counter-reset:q;border-top:1.5px solid var(--ink)}
+main:has(.wfs) .fa dl div{display:grid;grid-template-columns:5em minmax(0,1.1fr) minmax(0,.9fr);gap:10px 32px;align-items:baseline;padding:clamp(26px,2.4vw,40px) 0;border-bottom:1px solid var(--ln);counter-increment:q}
+main:has(.wfs) .fa dl div::before{content:"0" counter(q);font:500 12px/1 "Geist Mono",monospace;color:#266df1}
+main:has(.wfs) .fa dt{font-size:clamp(22px,1.9vw,34px);line-height:1.15;font-weight:500;letter-spacing:-.022em}
+main:has(.wfs) .fa dd{margin:0;font-size:clamp(15.5px,1.05vw,19px);line-height:1.42;color:var(--t2)}
+/* websites: the hero phone opens like a fast page */
+@keyframes wfin{from{opacity:0;transform:translateY(8px)}}
+.hs-r .ph-s>*{animation:wfin .5s cubic-bezier(.2,.7,.2,1) both}.hs-r .ph-s>:nth-child(2){animation-delay:.12s}.hs-r .ph-s>:nth-child(3){animation-delay:.24s}.hs-r .ph-s>:nth-child(4){animation-delay:.36s}
+.hs-r .ph-c{animation:wfin .6s .5s cubic-bezier(.2,.7,.2,1) both}.hs-r .ph-c.c2{animation-delay:.62s}.hs-r .ph-c.c3{animation-delay:.74s}
+@media(prefers-reduced-motion:reduce){.hs-r .ph-s>*,.hs-r .ph-c{animation:none}}
+@media(max-width:860px){.wfs-h{grid-template-columns:minmax(0,1fr)}.wf-t{--cols:7;--span:6}.wf-s .wf-f:nth-child(even):not(.wf-g),.wf-x span:nth-child(even){display:none}.wf-x,.wf-s{gap:6px}.wf-g{left:calc(50% + 3px)}.wf-g span{font-size:10px;padding:5px 7px;text-align:center}
+.wan-s{aspect-ratio:auto;overflow:hidden}.wan-s::before{display:none}.wan-s svg{width:250%;height:auto;margin-left:-75%}.wan-s .ld{display:none}
+.wan-o{position:static;width:auto;text-align:left;padding:22px 0;border-top:1px solid var(--ln);opacity:1}.wan-a b,.wan-b b{flex-direction:row}.wan-o b{font-size:26px}.wan-a span,.wan-b span{margin-left:0}
+main:has(.wfs) .jr ol{grid-template-columns:minmax(0,1fr)}main:has(.wfs) .jr li{border-left:0;border-top:1px solid var(--dl);opacity:1}
+main:has(.wfs) .fa dl div{grid-template-columns:minmax(0,1fr)}}
+
 
 /* ============ /answering ============ */
 .tr{width:min(680px,100%)}

@@ -752,3 +752,13 @@ Sam wanted the walk-through to work like the homepage dark "Then we build whatev
 - Line fringes now white-on-black inside the column like the homepage .pv (top of the 78 percent band, bottom of the walk-through).
 - Dots only inside the column on What is included.
 - More motion: 78 percent counts up (data-suf added to the count script), day chart bars draw and dots pop in, table rows and question columns arrive in turn.
+
+### 24k. Websites, full pass (Nov 28)
+Sam approved Answering ("Beautiful"). Websites was short and plain (5.5k px). Now 8k px desktop:
+- Hero phone opens like a fast page (parts arrive in turn on load, then the three notes).
+- NEW signature: "The first three seconds" filmstrip. Two rows of 13 phone frames, half a second apart (most sites: blank, spinner, half-drawn; yours: drawn by 1s). A blue playhead runs across as you scroll, a red dashed line at 3 seconds, and a red band over the slow row after it ("Half of them have left"). Stat beside it, counting up: 53% of phone visits dropped past three seconds (Google, 2016, checked). Example data labelled.
+- What most sites get wrong: serif title; the crossed list strikes through in turn, the ticks arrive in turn.
+- NEW "Four things on the first screen. Nothing else.": the first screen drawn in lines on a dotted panel, four leader lines draw out to serif callouts, each its own colour (blue, amber, purple, teal). Phone: drawing then a list.
+- One visit on black: line fringes on the black, serif, times 10:02 to 10:04, a blue line fills across the four steps as they light in turn.
+- Questions: ruled index (blue mono number, large question, answer right).
+Register additions, do not reuse: filmstrip with playhead, line-drawn screen with leader callouts.
