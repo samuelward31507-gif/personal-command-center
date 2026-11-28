@@ -692,3 +692,9 @@ Sam: when everything is complete, no two pages may look or feel the same; each n
 - Reviews: centred first screen with three windows; year staircase; 34-square month comparison on black; timed step-through.
 - Booking: centred first screen with week and phone; dark serif signs; NEW the week grid as the lead sees it (jobs hatched, three offered, one booked); rail from form to driveway.
 Used up, do not repeat: lollipop ruler, age bars, staircase, square comparison, gate chart, week hour-grid, week strip.
+
+### 23z. Small diagrams beside information (Nov 27) — standing rule
+Sam: every page needs transitions and small diagrams. He does not want these to be pictures or videos of the product; he wants simple line drawings paired with information, often as a split screen, with a little animation. They are what brings the site alive.
+Booking, his own pick: the black section after "Serious leads land on your calendar and show up." is now a split (signs_split, SIGN_SPLIT, class sg3): the three signs stacked on the left in serif, lighting in turn on a timer; on the right one white line drawing per sign that draws itself (two phones passing missed calls, a calendar with one unconfirmed cell, a house with an empty driveway and a clock). Page keeps scrolling.
+Gotcha: do not use vector-effect:non-scaling-stroke on paths that draw in with pathLength; the lines stop short.
+To do: the same idea, with different drawings and different arrangements, on every other page.
