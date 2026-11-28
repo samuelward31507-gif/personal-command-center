@@ -815,8 +815,23 @@ BKCARD = ('<div class="cd bkd">%s<div class="bkd-b"><p class="bkd-t">Estimate<b>
               ('Address', 'Split Rail Dr'), ('The job', 'Privacy fence, about 180 ft'), ('Picked by', 'The customer, from your open times'), ('Reminder', 'Set for Wed 6 PM')])))
 RAIL = ('<ol class="rl">%s</ol>' % ''.join('<li><time>%s</time><b>%s</b></li>' % x for x in [
     ('7:40 AM', 'A form comes in'), ('7:40 AM', 'A reply goes out with three times'), ('7:52 AM', 'They pick Thursday at 2 PM'), ('Wed 6 PM', 'A reminder goes out'), ('Thu 2 PM', 'You show up')]))
+# the week as the lead sees it: your jobs, the three times offered, the one they picked
+_bk_busy = {0: [(8, 12), (13, 16)], 1: [(9, 10), (11, 15)], 2: [(8, 12)], 3: [(8, 12)], 4: [(10, 14)]}
+_bk_open = {(2, 13), (3, 14), (4, 8)}; _bk_pick = (3, 14)
+def _bk_cell(d, h):
+    if (d, h) == _bk_pick: return '<i class="k" style="--k:%d">Booked</i>' % (d + h)
+    if (d, h) in _bk_open: return '<i class="o" style="--k:%d">Open</i>' % (d + h)
+    return '<i class="%s" style="--k:%d"></i>' % ('j' if any(a <= h < b for a, b in _bk_busy[d]) else '', d + h)
+_bk_hr = lambda h: '%d %s' % (h if h <= 12 else h - 12, 'AM' if h < 12 else 'PM')
+BKGRID = ('<section class="bkg"><div class="w bkg-i"><div class="bkg-t"><span class="lb">Your open times</span><p class="st-t">The week, as the lead sees it. <span>Only the times you are actually free.</span></p>'
+          '<div class="bkg-s"><div><b>3</b><span>open times offered</span></div><div><b>1</b><span>picked by the customer</span></div><div><b>Thu 2 PM</b><span>on your calendar</span></div></div>'
+          '<p class="bkg-k"><span><i class="j"></i>Your jobs</span><span><i class="o"></i>Offered</span><span><i class="k"></i>Booked</span><em>Example week. Sample data.</em></p></div>'
+          '<div class="bkg-g" data-in aria-hidden="true"><b></b>%s%s</div></div></section>'
+          % (''.join('<b>%s</b>' % d for d in ('Mon', 'Tue', 'Wed', 'Thu', 'Fri')),
+             ''.join('<u>%s</u>%s' % (_bk_hr(h), ''.join(_bk_cell(d, h) for d in range(5))) for h in range(8, 18))))
 BOOKING = (inner_hero('Calendar', 'Estimates on your calendar.', 'Serious leads pick a time themselves, get reminded, and show up.', BOOK + AUDITLINK, BKLIVE)
            + statement('The problem', 'A lead who says yes still has to get on your calendar.', 'That takes a call back, a few texts about times, and a reminder nobody sends. Every extra step is a chance for them to go quiet.')
+           + BKGRID
            + sx('One lead, from the form to the driveway.', '', RAIL + '<p class="rl-k">Example. Sample data.</p>', 'wh')
            + H.split('What lands on your calendar', 'The time, the address and the job.', 'The lead picks from times you are actually free. Reminders are set the moment it books.', BKCARD)
            + ticks('What&rsquo;s included', 'A booked estimate is a job you can still win.', [
@@ -1999,7 +2014,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -2007,7 +2022,7 @@ RHYTHM = {
     'social-messages': ('sx st pg', {'sx': 't-sheet', 'st': 's-dk v-c t-angle', 'pg': 's-dk'}),
     'lead-vetting': ('st lvg acd lvc', {'st': 'v-2 t-rule'}),
     'after-hours': ('st sx sp', {'st': 'v-c t-arc', 'sp': 's-dkp'}),
-    'booking': ('st sx sp ic', {'st': 'v-xl', 'sx': 's-tn t-exp', 'sp': 'v-f'}),
+    'booking': ('st bkg sx sp ic', {'st': 'v-xl', 'sx': 's-tn t-exp', 'sp': 'v-f'}),
     'reminders': ('sx st sp', {'sx': 't-sheet v-b', 'st': 's-dk t-angle', 'sp': 'v-f'}),
     'dispatch': ('st sx hw', {'st': 'v-2', 'sx': 't-rule v-c'}),
     'job-updates': ('bl sx st sp', {'bl': 'v-sf t-sheet', 'sx': 's-tn', 'st': 'v-c', 'sp': 'v-f'}),
@@ -2821,6 +2836,17 @@ main:has(>.rh) .sgp li b{font:400 clamp(22px,1.9vw,32px)/1.12 Georgia,"Times New
 .ivb .ivb-c .ivb-b.b i{background:#266df1;color:#fff}.ivb .ivb-c .ivb-b.y i{background:#f0a001;color:#fff}.ivb .ivb-c .ivb-b.r i{background:#e5484e;color:#fff}
 .ivn .ivn-s u::before,.ivb .ivb-l p i,.ivh .ivh-l p i{background:#e5484e;box-shadow:none}.ivn .ivn-s u.b::before,.ivb .ivb-l p.b i,.ivh .ivh-l p.b i{background:#266df1}.ivn .ivn-s u.y::before,.ivb .ivb-l p.y i,.ivh .ivh-l p.y i{background:#f0a001}
 .lvg .lb{padding:0;border-radius:0;background:none;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}.lvg .lb::before{content:"["}.lvg .lb::after{content:"]"}
+.bkg{background:#fff;border-top:1px solid var(--ln)}.bkg-i{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(30px,5vw,100px);align-items:center;border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(80px,8vw,150px) clamp(22px,3.1vw,60px)}
+.bkg .lb{padding:0;border-radius:0;background:none;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}.bkg .lb::before{content:"["}.bkg .lb::after{content:"]"}
+.bkg .st-t{margin:22px 0 0;max-width:12em;font:400 clamp(30px,3.1vw,54px)/1.08 Georgia,"Times New Roman",serif;letter-spacing:-.02em}.bkg .st-t span{display:block;margin-top:.5em;font:400 clamp(16px,1.2vw,20px)/1.45 Inter,system-ui,sans-serif;letter-spacing:0;color:var(--t2)}
+.bkg-s{display:grid;gap:0;margin-top:clamp(28px,3vw,48px);border-top:1px solid var(--ink)}.bkg-s div{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--ln)}
+.bkg-s b{font-size:clamp(20px,1.7vw,28px);font-weight:500;letter-spacing:-.025em}.bkg-s span{font-size:14.5px;color:var(--t2)}.bkg-s div:last-child b{color:#266df1}
+.bkg-k{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:22px 0 0;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t2)}.bkg-k span{display:flex;align-items:center;gap:7px}.bkg-k em{font-style:normal;color:var(--t3);width:100%}
+.bkg-k i{width:13px;height:13px;border-radius:3px}.bkg-g i.j,.bkg-k i.j{background:repeating-linear-gradient(135deg,#e3e4e8 0 1px,#f3f3f5 1px 5px);box-shadow:inset 0 0 0 1px #e3e4e8}.bkg-g i.o,.bkg-k i.o{background:#fff;box-shadow:inset 0 0 0 1.5px #266df1;color:#1f4fbe}.bkg-g i.k,.bkg-k i.k{background:#266df1;box-shadow:none;color:#fff}
+.bkg-g{display:grid;grid-template-columns:4.2em repeat(5,minmax(0,1fr));gap:5px}.bkg-g b{padding:0 0 10px;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t2);text-align:center}
+.bkg-g u{align-self:center;text-decoration:none;font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.04em;color:var(--t3)}
+.bkg-g i{display:grid;place-items:center;height:clamp(30px,4.4vh,42px);border-radius:6px;box-shadow:inset 0 0 0 1px var(--ln);font-style:normal;font-size:12px;font-weight:560;opacity:clamp(0,calc(var(--p,1)*4.4 - var(--k)*.14),1)}
+@media(max-width:860px){.bkg-i{grid-template-columns:minmax(0,1fr)}.bkg-g{grid-template-columns:3.4em repeat(5,minmax(0,1fr));gap:3px}.bkg-g i{font-size:0;height:26px}}
 @media(max-width:860px){.rvqs-g{grid-template-columns:minmax(0,1fr)}.rvqs-l{display:block}.rvqs-l em{display:block;margin-top:10px}}
 @media(max-width:860px){.rvp-h{grid-template-columns:minmax(0,1fr)}.rvq p{display:block}.rvq p span{display:block;margin-top:8px}.rvp-k em{margin-left:0}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}

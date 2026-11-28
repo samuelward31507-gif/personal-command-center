@@ -682,3 +682,13 @@ To do with this list: Invoicing, Estimates, Lead vetting, Booking, Follow-up, Fr
 - Lead vetting: bracket label on the gate chart.
 - Invoicing: the three ages now in the homepage money chart colours (blue, amber, red) on the bars, the day chart and the list dots. Earlier I argued for all blue because the zoom flooded the screen with the last bar; the zoom is gone, so that reason is gone.
 Still plain numbered signs lists: every other build page.
+
+### 23y. Distinct pages register (Nov 27) — check before designing any page
+Sam: when everything is complete, no two pages may look or feel the same; each needs distinct designs and layouts. One signature chart and one layout idea per page, never reused:
+- Homepage: line chart in a product window, dot plot, coloured bars, stacking bars, clock, layered line drawings.
+- Invoicing: split first screen with three stacked windows; invoices standing on a 60-day ruler; age bars with a table; blue calendar band; reminder schedule on black.
+- Estimates: centred first screen with three cards in a row; the week strip beside scrolling text; sign drawings.
+- Lead vetting: left first screen with table and phone; the gate chart (leads against questions).
+- Reviews: centred first screen with three windows; year staircase; 34-square month comparison on black; timed step-through.
+- Booking: centred first screen with week and phone; dark serif signs; NEW the week grid as the lead sees it (jobs hatched, three offered, one booked); rail from form to driveway.
+Used up, do not repeat: lollipop ruler, age bars, staircase, square comparison, gate chart, week hour-grid, week strip.
