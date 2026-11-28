@@ -548,7 +548,7 @@ LEADS = ('<div class="lc-g">%s%s</div>' % (
 # four leads through five questions: two run the whole way and are booked, two stop at the question they fail
 _lvq = ['Job type', 'Size', 'Address', 'Timing', 'Budget range']
 _lvl = [('Full install', 5, 'Booked Wed 2 PM', ''), ('Large project', 2, '90 miles out', 'Polite no'), ('Repair', 5, 'Booked Thu 11 AM', ''), ('A very small job', 1, 'Below your minimum', 'Polite no')]
-LVGATE = ('<section class="lvg" data-sp><div class="lvg-i"><div class="w lvg-f"><div class="lvg-t"><span class="lb">Asked before anyone drives out</span>'
+LVGATE = ('<section class="lvg" data-in><div class="lvg-i"><div class="w lvg-f"><div class="lvg-t"><span class="lb">Asked before anyone drives out</span>'
           '<p class="st-t">%s <span>%s</span></p><p class="fa-k">[Four leads, five questions]<em>Example business, sample data</em></p></div>'
           '<div class="lvg-c" aria-hidden="true">%s%s</div></div></div></section>'
           % (ap(X['lead-vetting'][2]), ap(X['lead-vetting'][3]),
@@ -1141,12 +1141,13 @@ IVNUM = ('<section class="ivn"><div class="w ivn-g"><p class="st-t">%s</p><div c
             ''.join('<span style="--l:%.1f%%;--w:%.1f%%;--k:%d"><b>%s</b><em>%s</em></span>' % x for x in [(0, 11.2, 0, 'This week', '$4,300'), (12.6, 37.2, 1, '8 to 30 days', '$6,200'), (50.8, 49.2, 2, 'Over 30 days', '$4,100')])))
 # what is owed, by age, as three bars. They rise as you scroll, then the view goes into the oldest one and that becomes the next screen.
 _ivb = [(t, a, h, [(job, amt) for who, job, dd, amt, c2 in _IVX if c2 == c], c) for t, a, h, c in (('This week', '$4,300', 69, 'b'), ('8 to 30 days', '$6,200', 100, 'y'), ('Over 30 days', '$4,100', 66, 'r'))]
-IVBARS = ('<section class="ivb" data-sp><div class="ivb-i"><div class="w ivb-f"><div class="ivb-t"><span class="lb">What you see</span>'
+IVBARS = ('<section class="ivb" data-in><div class="ivb-i"><div class="w ivb-f"><div class="ivb-t"><span class="lb">What you see</span>'
           '<p class="st-t">You get paid without being the one who asks. <span>What is outstanding, by customer and by age.</span></p>'
           '<p class="fa-k">[Outstanding, by age]<em>Example business, sample data</em></p>'
           '<div class="ivb-l" aria-hidden="true"><p class="h"><span>Customer</span><em>Job</em><u>Age</u><b>Owed</b></p>%s</div></div>'
           '<div class="ivb-c" aria-hidden="true"><span class="ivb-y" style="--y:25.2%%">$2k</span><span class="ivb-y" style="--y:50.3%%">$4k</span><span class="ivb-y" style="--y:75.5%%">$6k</span>'
-          '<span class="ivb-tot">$14,600 in all</span>%s</div></div><div class="ivb-g" aria-hidden="true">%s</div><p class="ivb-n">Sent the day the job ends, followed up until it is paid.</p></div></section>'
+          '<span class="ivb-tot">$14,600 in all</span>%s</div></div></div></section>'
+          '<section class="ivc" data-in><div class="ivc-g" aria-hidden="true">%s</div><p class="ivc-s">Sent the day the job ends, <span>followed up until it is paid.</span></p></section>'
           % (_ivrow(''),
              ''.join('<div class="ivb-b %s" style="--i:%d;--h:%d%%"><em>%s</em><div>%s</div><b>%s</b></div>' % (c, k, h, a, ''.join('<i style="flex:%d">%s<u>%s</u></i>' % (amt, job, _usd(amt)) for job, amt in jobs), t)
                      for k, (t, a, h, jobs, c) in enumerate(_ivb)),
@@ -1222,12 +1223,12 @@ RVHERO = ('<section class="rh" data-live="9"><div class="w rh-i"><span class="lb
 # a year of reviews as two staircases: twenty a month when every job is asked, three a month when someone remembers
 _ry = lambda v: 100 - (9 + v / 240 * 66)
 _stair = lambda per: 'M0 %.2f ' % _ry(0) + ' '.join('V%.2f H%.3f' % (_ry(per * m), m / 12 * 100) for m in range(1, 13))
-RVCURVE = ('<section class="rvc" data-sp><div class="rvc-i"><div class="w rvc-f"><div class="rvc-g rvs" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none">'
+RVCURVE = ('<section class="rvc"><div class="rvc-i"><div class="w rvc-f"><div class="rvc-g rvs" aria-hidden="true"><svg viewBox="0 0 100 100" preserveAspectRatio="none">'
            '<path class="fa" d="%s V%.2f H0Z"/><path class="fb" d="%s V%.2f H0Z"/>%s<path class="bs" d="M0 %.2f H100"/><path class="lo2" d="%s"/><path class="hi2" d="%s"/></svg>%s%s'
            '<p class="rvs-a"><b>About 240</b><span>reviews in a year when every finished job is asked</span></p><p class="rvs-b"><b>36</b><span>when someone remembers to ask</span></p></div>'
            '<div class="rvc-t"><span class="lb">Asked every time</span><p class="st-t">Every finished job gets asked. <span>Most happy customers never leave a review because nobody asked.</span></p>'
-           '<p class="rvc-n">Example business. Sample data.</p></div></div>'
-           '<div class="rvc-k" aria-hidden="true"><p>Asked every time. <span>Not when someone remembers.</span></p><div class="rvc-m"><b>34 finished jobs in a month</b><em>Every one asked. Sample data.</em></div></div></div></section>'
+           '<p class="rvc-n">Example business. Sample data.</p></div></div></div></section>'
+           '<section class="rvd"><div class="rvd-i"><p class="rvd-s">Asked every time. <span>Not when someone remembers.</span></p><p class="rvd-c"><b>34 finished jobs in a month</b><span>Every one asked. Sample data.</span></p></div></section>'
            % (_stair(20), _ry(0), _stair(3), _ry(0),
               ''.join('<path class="vt" d="M%.3f %.2f V%.2f"/>' % (m / 12 * 100, _ry(20 * m), _ry(0)) for m in range(1, 12)), _ry(0), _stair(3), _stair(20),
               ''.join('<span class="rvs-n" style="--x:%.3f%%;--y:%.2f%%">%d</span>' % (m / 12 * 100, 100 - _ry(20 * m), 20 * m) for m in range(1, 12)),
@@ -1241,19 +1242,19 @@ _rq = lambda cls, title, big, note, asked, got: ('<div class="rvq %s"><p><b>%s</
 # the month twice, side by side, on the dotted ground the hand-over lands on
 RVMONTH = ('<section class="rvqs"><div class="w rvqs-i"><p class="rvqs-l">One month, 34 finished jobs<em>Example business, sample data</em></p>'
            '<div class="rvqs-s"><div><b>34</b><span>jobs finished</span></div><div><b>5</b><span>asked for a review</span></div><div><b>3</b><span>reviews received</span></div><div><b>About 17</b><span>reviews missed</span></div></div>'
-           '<div class="rvqs-g" aria-hidden="true">%s%s</div>'
+           '<div class="rvqs-g" data-in aria-hidden="true">%s%s</div>'
            '<p class="rvp-k" aria-hidden="true"><span><i></i>Job finished</span><span><i class="a"></i>Asked</span><span><i class="a s"></i>Review left</span></p></div></section>'
            % (_rq('', 'Asked when someone remembers', '3', 'reviews, from 5 asks', _rq_a, _rq_s), _rq('on', 'Asked every time', 'About 20', 'reviews, from 34 asks', set(range(34)), _rq_all)))
 # after the job, in one line: five moments on a hairline, lit one after another, then what each part does
 _rt = [('4:10 PM', 'Job marked done', 'Full install'), ('4:10 PM', 'Ask queued', 'No one had to remember'), ('4:11 PM', 'Text sent', 'A short text with a direct link, while the job is fresh'),
        ('4:26 PM', 'Review left', 'While the job is fresh'), ('On your profile', 'Where people look', 'Next to your name in search')]
-RVSTEPS = ('<section class="rvt" data-sp><div class="rvt-i"><div class="w rvt-g"><div class="rvt-t"><span class="lb">After the job</span>'
+RVSTEPS = ('<section class="rvt" data-live="11"><div class="rvt-i"><div class="w rvt-g"><div class="rvt-t"><span class="lb">After the job</span>'
            '<p class="st-t">Asked at the right moment, every time. <span>Not when someone remembers.</span></p><ol>%s</ol></div>'
-           '<div class="rvt-p" aria-hidden="true"><div class="cd rvt-a" style="--i:0"><span>Your app</span><b>Full install, Customer A</b><p><u>Marked done, 4:10 PM</u><u class="k" style="--i:1">Review ask queued</u></p></div>'
-           '<div class="ph2"><p>Customer&rsquo;s phone</p><p class="hb" style="--i:2">Mind leaving a quick review? It takes a minute.</p><p class="rh-b" style="--i:2">Leave a review</p>'
-           '<div class="rh-r" style="--i:3">%s<span>&ldquo;Great job, really happy.&rdquo;</span></div></div>'
-           '<div class="cd rvt-b" style="--i:4"><span>Your Google profile</span><b>New review</b>%s<em>Next to your name in search</em></div></div></div></div></section>'
-           % (''.join('<li style="--i:%d"><time>%s</time><b>%s</b><span>%s</span></li>' % (k, a, b, c) for k, (a, b, c) in enumerate(_rt)), stars(5), stars(5)))
+           '<div class="rvt-p" aria-hidden="true"><div data-hd="0" class="cd rvt-a"><span>Your app</span><b>Full install, Customer A</b><p><u>Marked done, 4:10 PM</u><u data-hd="2" class="k">Review ask queued</u></p></div>'
+           '<div class="ph2"><p>Customer&rsquo;s phone</p><p data-hd="4" class="hb">Mind leaving a quick review? It takes a minute.</p><p data-hd="4" class="rh-b">Leave a review</p>'
+           '<div data-hd="6" class="rh-r">%s<span>&ldquo;Great job, really happy.&rdquo;</span></div></div>'
+           '<div data-hd="8" class="cd rvt-b"><span>Your Google profile</span><b>New review</b>%s<em>Next to your name in search</em></div></div></div></div></section>'
+           % (''.join('<li data-hd="%d"%s><time>%s</time><b>%s</b><span>%s</span></li>' % (2 * k, (' data-to="%d"' % (2 * k + 2)) if k < 4 else '', a, b, c) for k, (a, b, c) in enumerate(_rt)), stars(5), stars(5)))
 RVPIPE = (RVMONTH + RVSTEPS + '<section class="rvp"><div class="w rvp-i"><div class="rvp-t">%s</div></div></section>'
           % ''.join('<div><b>%s.</b><span>%s</span></div>' % x for x in [
               ('The job gets paid', 'The moment it&rsquo;s marked done, the review ask is queued.'), ('They get asked at the right time', 'A short text with a direct link, while the job is fresh.'),
@@ -1998,7 +1999,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'rvqs': 'rvqs', 'rvt': 'rvt', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -2013,9 +2014,9 @@ RHYTHM = {
     'estimates': ('st v3 ewk acd', {'st': 's-tn v-xl'}),
     'proposals': ('st bl sx sp', {'bl': 's-dk t-arc', 'sx': 't-sheet'}),
     'follow-up': ('st v3 sx acd ic as', {'st': 'v-2', 'sx': 't-exp'}),
-    'invoicing': ('st ivn ivb ivl v3', {'st': 's-tn v-c'}),
+    'invoicing': ('st ivn ivb ivc ivl v3', {'st': 's-tn v-c'}),
     'bookkeeping': ('st sx pg sp', {'st': 'v-xl t-rule', 'sx': 'v-pin', 'pg': 'v-l', 'sp': 's-dkp'}),
-    'reviews': ('st rvc rvqs rvt rvp acd v3', {'st': 'v-xl'}),
+    'reviews': ('st rvc rvd rvqs rvt rvp acd v3', {'st': 'v-xl'}),
     'review-replies': ('st sx pg', {'st': 'v-c', 'sx': 'v-pin t-rule', 'pg': 'v-l'}),
     'win-backs': ('bl st sx sp', {'bl': 's-bl', 'st': 't-sheet', 'sx': 's-tn', 'sp': 'v-f'}),
     'maintenance-reminders': ('st sx pg bl', {'st': 'v-2', 'sx': 's-tn t-exp', 'pg': 's-dk', 'bl': 'v-xl'}),
@@ -2791,6 +2792,21 @@ main:has(>.rh) .acd,main:has(>.rh) .v3{border-top:1px solid var(--ln)}
 main:has(>.rh) .srx>div:not(.on):not(.q){opacity:1}main:has(>.rh) .srx>div:not(.on) b{color:var(--ink)}
 @media(max-width:980px){.rh-s{grid-template-columns:minmax(0,1fr);margin-bottom:40px}.rh-s .ph2{justify-self:center;min-height:0;order:-1}.rh-s .rh-w,.rh-s .rh-j{margin-top:0}}
 @media(max-width:860px){.rvqs-s{grid-template-columns:repeat(2,minmax(0,1fr))}.rvc .rvc-t{top:auto;max-width:none}.rvq-f{flex-wrap:wrap}.rvt-g{grid-template-columns:minmax(0,1fr)}.rvt-p{height:520px}.rvt-p{height:auto;padding:16px;display:grid;gap:12px}.rvt-p>*,.rvt .ph2{position:relative;inset:auto;width:auto;height:auto}.rvt .ph2{justify-self:center;width:230px;min-height:300px}.rvt li{grid-template-columns:minmax(0,1fr)}.rvt li span{grid-column:1}}
+.rvd{background:#fcfcfd radial-gradient(circle,#d3d6de .8px,transparent 1.2px) 0 0/10px 10px;border-top:1px solid var(--ln)}
+.rvd-i{min-height:min(78vh,720px);display:grid;align-content:center;justify-items:center;gap:clamp(40px,5vw,84px);padding:clamp(90px,10vw,170px) 24px;text-align:center}
+.rvd-s{margin:0;max-width:13em;font:400 clamp(38px,4.8vw,88px)/1.06 Georgia,"Times New Roman",serif;letter-spacing:-.022em;color:var(--ink)}.rvd-s span{color:#a3abbd}
+.rvd-c{margin:0}.rvd-c b{display:block;font-size:clamp(16px,1.2vw,20px);font-weight:560}.rvd-c span{display:block;margin-top:8px;font-size:clamp(15px,1.1vw,19px);color:var(--t2)}
+.rvqs-g .rvq.on .rvq-g i{opacity:clamp(.12,calc(var(--p,1)*3.2 - .5 - var(--k)*.045),1)}
+.rvt.live li[data-hd]:not(.in){opacity:.34;animation:none}.rvt.live li[data-hd].in{animation:none;opacity:1}.rvt li{transition:opacity .35s}.rvt li::before{transition:opacity .35s}.rvt.live li:not(.in)::before{opacity:0}
+.rvt li b{font:400 clamp(21px,1.7vw,29px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.012em}.rvt-g{padding-top:clamp(84px,8vw,150px);padding-bottom:clamp(84px,8vw,150px)}
+.ivc{position:relative;overflow:hidden;background:#1b4fc0;color:#fff;min-height:min(76vh,700px);display:grid;place-items:center;padding:clamp(90px,10vw,170px) 24px clamp(150px,15vw,230px);box-sizing:border-box}
+.ivc-g{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.2) 0 1px,transparent 1px calc(100%/24));clip-path:inset(0 calc((1 - clamp(0,calc(var(--p,1)*1.7),1))*100%) 0 0)}
+.ivc-g::after{content:"";position:absolute;left:0;right:0;bottom:calc(64px + 30px);height:1px;background:rgba(255,255,255,.75)}
+.ivc-g span{position:absolute;left:var(--x);bottom:64px;padding:20px 0 0;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:#fff;white-space:nowrap}
+.ivc-g span::before{content:"";position:absolute;left:-4px;top:-4px;width:8px;height:8px;background:#fff}
+.ivc-g span b{position:absolute;left:0;bottom:calc(100% + 16px);font:560 clamp(14px,1.15vw,18px)/1.15 Inter,system-ui,sans-serif;letter-spacing:-.01em;text-transform:none;white-space:nowrap}.ivc-g span:last-child b{left:auto;right:0}
+.ivc-s{position:relative;margin:0;max-width:13em;text-align:center;font-size:clamp(34px,4.4vw,84px);line-height:1.02;letter-spacing:-.045em;font-weight:600}.ivc-s span{color:#b9cdfb}
+@media(max-width:860px){.ivc-g span b{display:none}.ivc-g span:nth-child(2){display:none}}
 @media(max-width:860px){.rvqs-g{grid-template-columns:minmax(0,1fr)}.rvqs-l{display:block}.rvqs-l em{display:block;margin-top:10px}}
 @media(max-width:860px){.rvp-h{grid-template-columns:minmax(0,1fr)}.rvq p{display:block}.rvq p span{display:block;margin-top:8px}.rvp-k em{margin-left:0}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
@@ -3086,7 +3102,7 @@ TKINDS = ['rect', 'iris', 'doors', 'blinds', 'thru', 'rise', 'slash']
 _TORDER = [x for g, _ in GROUPS for x in ORDER[g]] + ['free-audit', 'who-its-for', 'about', 'whats-new', 'questions']
 def dportal(slug, label, line_, title):
     i = _TORDER.index(slug) if slug in _TORDER else len(slug)
-    return ('<section class="pt pt-dw k-%s%s" data-sp style="%s"><div class="pt-s"><div class="pt-a"><span>[%s]</span><p>%s</p></div><div class="pt-d"><h2>%s</h2></div>'
+    return ('<section class="pt pt-dw k-%s%s" style="%s"><div class="pt-s"><div class="pt-a"><span>[%s]</span><p>%s</p></div><div class="pt-d"><h2>%s</h2></div>'
             '<div class="pt-o" aria-hidden="true">%s</div></div></section>' % (TKINDS[i % 7], ' t-blue' if i % 5 == 2 else '', DW.focal(slug), label, line_, title, DW.svg(slug)))
 
 
@@ -3455,7 +3471,9 @@ PAGES = [
 ]
 if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
-        doc = page(title, desc, '/' + slug, plug(slug, liven(slug, trans(slug, figs(slug, full(slug, flag(slug, body)))))), css=PCSS, index=(slug not in ('404', 'day', 'terms')))
+        _b = plug(slug, liven(slug, trans(slug, figs(slug, full(slug, flag(slug, body))))))
+        _b = re.sub(r'(<section class="pt [^"]*") data-sp', r'\1', _b)   # no stops: the transition band scrolls past like any other section
+        doc = page(title, desc, '/' + slug, _b, css=PCSS, index=(slug not in ('404', 'day', 'terms')))
         if slug == 'audit':
             doc = doc.replace('</body>', '<script src="/audit.js" defer></script></body>')
         (out / (slug + '.html')).write_text(doc)

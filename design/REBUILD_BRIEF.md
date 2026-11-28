@@ -658,3 +658,12 @@ Sam: I am the designer; the first pass must be my best, not a mediocre draft he 
 - Timeline: now a pinned split (rvt). Five steps on the left light in turn with the scroll; app card, phone and profile card on the right fill in step by step.
 - Three statements in their own row after it. Search results no longer washed out.
 Standing rule: plan the whole page once, build the best version first, show once.
+
+### 23v. No stops (Nov 27) — standing rule
+Sam: the page must scroll continuously the whole time, like the homepage feels and like Attio. No section may hold the screen while an animation scrubs. Animations either play on their own once in view, or follow the scroll while the page keeps moving. Only exception: the homepage first screen. He also wants more variety per page (type, text treatments, kinds of design), mixed and matched, never one template.
+Done:
+- Reviews: chart is a normal section; the dotted statement is its own section (serif); the step-through plays on a timer in a normal split (rvt, data-live); squares fill as they scroll in.
+- Invoicing: bars rise as they scroll in (data-in); the blue calendar is its own band (ivc) between the bars and the reminders.
+- Lead vetting: gate chart no longer pinned (data-in).
+- All build pages + Free audit: the pinned zoom-through transition is now a plain statement band that scrolls past (data-sp stripped from .pt). The per-page drawings inside those transitions no longer show.
+Still pinning: A day (six sections), homepage (left alone on purpose). Estimates (ewk) and Free audit (fa3) keep a sticky picture beside scrolling text, which does not stop the page.
