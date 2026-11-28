@@ -790,3 +790,12 @@ Register additions, do not reuse: live waveform hero, rings transition with circ
 
 ### 24o. Phone agent, second pass (Nov 28)
 Sam asked if it was at homepage level; my honest answer: hero, rings and after-the-call yes; the old problem split, the small fork and the static end were not. Fixed: problem section is now its own split (serif headline, How you would know list; a Recents card that fills with seven red missed calls as you scroll, then "7 missed calls" counts up). Fork is full width on a rounded dotted panel: Call answered splits to Takes the details then Estimate booked (blue) or Puts them through then Rings through to you (amber), both joining Summary in your app (black); dots run the whole route; a vertical version on phones. Setup: the spine fills blue, rows slide in from both sides, dots fill blue.
+
+### 24p. Website chat, rebuilt (Nov 28)
+- Hero centred: headline, then "One evening on your site": a 6 PM to 12 AM line drawn on load with six visitor questions popping in at their times, each tagged Answered (blue), Booked Thu 9 AM (teal) or Handed to you (amber). Vertical on phones.
+- Problem statement kept.
+- Transition: the clock. A huge time runs from 5:00 PM to 10:04 PM with the scroll (data-clock, set by the scroll script), while night falls from the top of the screen; the time inverts exactly where the dark passes (mix-blend difference; the sticky stage needs its own white background for that). Ends on "Someone is on your site with one question." then the black section follows.
+- On black: the 10:04 PM conversation, bubbles arriving with scroll, coloured margin notes (from your service area, from how you price, open times from your calendar, on your calendar).
+- Sources: five cards (Services, Service area, Hours, How you price, Not in your information in black), each with the questions it answers as chat bubbles.
+- Questions inside a chat card on a dotted panel.
+Register additions, do not reuse: evening timeline with question pins, day-to-night clock transition, margin-noted chat, source cards with Q&A.

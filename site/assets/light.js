@@ -88,7 +88,7 @@ var top=document.querySelector('.top'),mine=false,run=false,snap=/[?&]snap=1/.te
 var st=els.map(function(e){e.classList.add('sp-live');var n=e.querySelector('.pt-n');return {e:e,pt:e.classList.contains('pt'),cv:e.hasAttribute('data-cv'),c:-1,n:n,to:n?+n.getAttribute('data-to'):0,fmt:n?n.getAttribute('data-fmt'):'',last:-1}});
 function cl(x){return x<0?0:x>1?1:x}function ez(x){return x*x*(3-2*x)}
 function f(){var vh=innerHeight,pin=null,more=false;st.forEach(function(s){var r=s.e.getBoundingClientRect(),t=cl(-r.top/Math.max(1,r.height-vh-(s.cv?vh*.7:0)));
-if(!s.pt){s.e.style.setProperty('--p',t.toFixed(4));return}
+if(!s.pt){s.e.style.setProperty('--p',t.toFixed(4));if(s.ck===undefined)s.ck=s.e.querySelector('[data-clock]');if(s.ck){var ab=s.ck.getAttribute('data-clock').split(','),mm=Math.round(+ab[0]+(ab[1]-ab[0])*t),hh=Math.floor(mm/60)%24,tx=((hh+11)%12+1)+':'+('0'+mm%60).slice(-2)+(hh<12?' AM':' PM');if(s.ck.textContent!==tx)s.ck.textContent=tx}return}
 if(s.c<0||snap)s.c=t;else{s.c+=(t-s.c)*.16;if(Math.abs(t-s.c)<.0005)s.c=t;else more=true}
 var p=s.c,a=ez(cl(p/.42)),g=cl((p-.46)/.36),k=g>=1?1:(Math.pow(40,g)-1)/39,y=s.e.style;
 y.setProperty('--p',p.toFixed(4));y.setProperty('--a',a.toFixed(4));y.setProperty('--g',k.toFixed(4));y.setProperty('--f',(1-cl((p-.44)/.12)).toFixed(3));y.setProperty('--t',ez(cl((p-.76)/.2)).toFixed(3));

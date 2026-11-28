@@ -448,6 +448,80 @@ CSS = r"""
 .uc-f em{display:inline-flex;align-items:center;height:clamp(44px,3vw,54px);padding:0 clamp(16px,1.2vw,22px);border-radius:11px;background:var(--ink);color:#fff;font-style:normal;font-size:clamp(14px,.9vw,16.5px);font-weight:560;white-space:nowrap}
 .uc+.fa{border-top:1px solid var(--ln)}
 
+
+/* ============ website chat, rebuilt ============ */
+.b0{--c:#17181a}.b1{--c:#266df1}.b2{--c:#f0a001}.b3{--c:#0ea5a0}.b4{--c:#8b5cf6}
+.wch-i{display:grid;justify-items:center;text-align:center;padding:clamp(64px,6vw,110px) var(--pad) clamp(70px,6vw,110px);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.wch h1{margin:22px 0 0;max-width:13em;font-size:clamp(44px,4.6vw,86px);line-height:1;font-weight:600;letter-spacing:-.045em;white-space:normal;text-wrap:balance}
+.wch .sub{margin:24px auto 0;max-width:34em;font-size:clamp(16px,1.15vw,20px);line-height:1.45;color:var(--t2)}
+.wch .cta{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:32px}
+.wch-tl{width:100%;max-width:1160px;margin-top:clamp(64px,5.6vw,100px);text-align:left}
+.wch-k{display:flex;justify-content:space-between;gap:16px;margin:0;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}.wch-k b{font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--ink)}
+.wch-l{position:relative;height:330px;margin-top:10px}
+.wch-l::before{content:"";position:absolute;left:0;right:0;top:50%;height:1.5px;background:#17181a;transform-origin:0 50%;animation:wcline 1.4s .2s cubic-bezier(.4,0,.2,1) both}
+@keyframes wcline{from{transform:scaleX(0)}}
+.wch-x{position:absolute;top:calc(50% + 12px);transform:translateX(-50%);font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}.wch-x:first-child{transform:none}.wch-x:nth-child(7){transform:translateX(-100%)}
+.wch-x::before{content:"";position:absolute;left:50%;top:-16px;width:1px;height:8px;background:#17181a}.wch-x:first-child::before{left:0}.wch-x:nth-child(7)::before{left:auto;right:0}
+.wch-q{position:absolute;left:var(--x);top:50%}.wch-q.a{--c:#266df1}.wch-q.b{--c:#0ea5a0}.wch-q.h{--c:#f0a001}
+.wch-q>i{position:absolute;left:-6px;top:-6px;width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px #fff;animation:wcpop .4s calc(.9s + var(--i)*.42s) cubic-bezier(.3,1.4,.5,1) both}
+@keyframes wcpop{from{transform:scale(0)}}
+.wch-q>div{position:absolute;left:-16px;width:max-content;max-width:212px;padding:10px 13px 11px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 18px 36px -20px rgba(30,40,110,.35);animation:wcin .5s calc(1s + var(--i)*.42s) cubic-bezier(.2,.7,.2,1) both}
+.wch-q.up>div{bottom:30px}.wch-q.dn>div{top:44px}
+.wch-q>div::before{content:"";position:absolute;left:16px;width:1px;background:#c9ccd2}.wch-q.up>div::before{bottom:-30px;height:30px}.wch-q.dn>div::before{top:-44px;height:38px}
+.wch-q:last-child>div{left:auto;right:-16px}.wch-q:last-child>div::before{left:auto;right:16px}
+@keyframes wcin{from{opacity:0;transform:translateY(8px)}}
+.wch-q time{display:block;font:500 10.5px/1 "Geist Mono",monospace;color:#8a8d93}.wch-q p{margin:6px 0 0;font-size:14px;line-height:1.3;font-weight:540;letter-spacing:-.01em}
+.wch-q em{display:flex;align-items:center;gap:6px;margin-top:8px;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:var(--c)}.wch-q em::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c)}
+@media(prefers-reduced-motion:reduce){.wch-l::before,.wch-q>i,.wch-q>div{animation:none}}
+/* day to night: the clock runs to 10:04 PM and the page goes dark */
+.wct{--q:var(--p,1);position:relative;height:260vh;background:#fff}
+.wct-s{position:sticky;top:0;height:100vh;overflow:hidden;background:#fff}.wct-w{position:relative;z-index:1;height:100%;border-left:1px solid var(--ln);border-right:1px solid var(--ln);pointer-events:none}
+.wct-n{--g:clamp(0,calc((var(--q) - .04)/.62),1);position:absolute;left:0;right:0;top:0;height:calc(100% + 28px);background:linear-gradient(180deg,#101010 calc(100% - 28px),rgba(16,16,16,0));transform:translateY(calc((var(--g)*var(--g)*(3 - 2*var(--g)) - 1)*100%))}
+.wct-c{--u:clamp(0,calc((var(--q) - .7)*5),1);position:absolute;left:0;right:0;top:50%;text-align:center;color:#fff;mix-blend-mode:difference;transform:translateY(calc(-50% - var(--u)*6vh))}
+.wct-l{margin:0;font:500 12px/1 "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.08em}
+.wct-t{margin:16px 0 0;font-size:clamp(72px,11vw,200px);line-height:.9;font-weight:600;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.wct-b{width:min(460px,70vw);height:2px;margin:30px auto 0;background:rgba(255,255,255,.35)}.wct-b i{display:block;height:100%;width:calc(clamp(0,calc(var(--q)/.66),1)*100%);background:#fff}
+.wct-m{--v:clamp(0,calc((var(--q) - .74)*7),1);position:absolute;left:0;right:0;top:calc(50% + clamp(90px,10vw,170px));margin:0;padding:0 24px;text-align:center;color:#fff;font:400 clamp(24px,2.2vw,40px)/1.2 Georgia,"Times New Roman",serif;letter-spacing:-.02em;opacity:var(--v);transform:translateY(calc((1 - var(--v))*14px))}
+.wct:not(.sp-live){--q:1;height:auto}.wct:not(.sp-live) .wct-s{position:relative;height:720px}
+/* the 10 PM conversation on black, with notes in the margin */
+.wcx{position:relative;background:var(--dk);color:#fff}
+.wcx::after{content:"";position:absolute;bottom:0;left:max(100px,calc((100vw - 1390px)/2));right:max(100px,calc((100vw - 1390px)/2));height:240px;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px);-webkit-mask-image:linear-gradient(0deg,#000,transparent);mask-image:linear-gradient(0deg,#000,transparent)}
+.wcx-i{position:relative;z-index:1;border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(60px,5vw,100px) var(--pad) clamp(160px,13vw,240px)}
+.wcx-h{text-align:center}.wcx-h .fu-lab{display:inline-block;color:#7fa8f7}.wcx-h h2{margin:22px auto 0;max-width:13em;font:400 clamp(38px,4vw,72px)/1.04 Georgia,"Times New Roman",serif;letter-spacing:-.03em;text-wrap:balance}
+.wcx-g{display:grid;gap:14px;max-width:1120px;margin:clamp(56px,5vw,90px) auto 0}
+.wcx-r{--v:clamp(0,calc(var(--p,1)*5.2 - var(--i)*.55 - .3),1);position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,520px) minmax(0,1fr);opacity:var(--v);transform:translateY(calc((1 - var(--v))*14px))}
+.wcx-r>p{grid-column:2;margin:0;max-width:84%;padding:13px 16px;border-radius:16px;font-size:clamp(15px,1.1vw,18px);line-height:1.4}
+.wcx-r.v>p{justify-self:end;background:#fff;color:#17181a;border-bottom-right-radius:5px}.wcx-r.o>p{justify-self:start;background:#266df1;color:#fff;border-bottom-left-radius:5px}
+.wcx-n{position:absolute;top:50%;display:flex;align-items:center;gap:12px;font:500 12px/1.3 "Geist Mono",monospace;color:var(--c);transform:translateY(-50%)}.wcx-n.b0{--c:#fff}
+.wcx-n i{flex:none;width:clamp(28px,3vw,56px);height:1px;background:var(--c)}.wcx-n::after{content:"";order:-1;width:7px;height:7px;border-radius:50%;background:var(--c)}
+.wcx-n.r{left:calc(50% + 276px)}.wcx-n.l{right:calc(50% + 276px);flex-direction:row-reverse;text-align:right}
+.wcx-k{margin:40px 0 0;text-align:center;font:500 11px/1 "Geist Mono",monospace;color:#6f7177}
+/* every answer traced to where it came from */
+.wcs{border-top:1px solid var(--ln)}.wcs-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(96px,8vw,150px) var(--pad)}
+.wcs-h{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:24px 64px;align-items:end}.wcs-h .fu-lab{grid-column:1/-1}
+.wcs-h h2{margin:0;max-width:11em;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em}.wcs-h p:last-child{margin:0;max-width:26em;font-size:clamp(16px,1.1vw,19px);line-height:1.45;color:var(--t2)}
+.wcs-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:start;margin-top:clamp(52px,4.6vw,84px)}
+.wcs-c{--v:clamp(0,calc(var(--p,1)*5 - var(--i)*.7 - .2),1);position:relative;padding-bottom:16px;border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 24px 50px -32px rgba(30,40,110,.4);overflow:hidden;opacity:var(--v);transform:translateY(calc((1 - var(--v))*20px))}
+.wcs-t{position:relative;padding:18px 16px 15px;border-bottom:1px solid #eef0f3}.wcs-t::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--c)}
+.wcs-t i{display:block;width:8px;height:8px;border-radius:50%;background:var(--c)}.wcs-t b{display:block;margin-top:12px;font-size:15.5px;font-weight:600;letter-spacing:-.015em}.wcs-t span{display:block;margin-top:5px;font-size:13px;line-height:1.38;color:var(--t2)}
+.wcs-c.b0 .wcs-t{background:#17181a;color:#fff;border-bottom:0}.wcs-c.b0 .wcs-t::before{display:none}.wcs-c.b0 .wcs-t i{background:#fff}.wcs-c.b0 .wcs-t span{color:#a3a5aa}
+.wcs-c>p,.wcq-c>p{margin:12px 14px 0;max-width:86%;width:fit-content;padding:9px 12px;border-radius:13px;font-size:13.5px;line-height:1.38}
+.wcs-c>p.v,.wcq-c>p.v{margin-left:auto;background:#f0f1f4;color:#17181a;border-bottom-right-radius:4px}.wcs-c>p.o,.wcq-c>p.o{background:#266df1;color:#fff;border-bottom-left-radius:4px}
+.wcs-c.b0>p.o{background:#17181a}.wcs-c>p.v+p.o{margin-top:6px}
+.wcs .wcx-k{color:var(--t3);text-align:left}
+/* questions, the way the chat would answer them */
+.wcq{border-top:1px solid var(--ln)}.wcq-g{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.wcq-t{align-self:center;padding:clamp(96px,8vw,150px) var(--pad)}.wcq-t h2{margin:0;font:400 clamp(52px,6vw,110px)/1 Georgia,"Times New Roman",serif;letter-spacing:-.035em}.wcq-t p{margin:20px 0 0;max-width:22em;font-size:clamp(16px,1.1vw,19px);line-height:1.45;color:var(--t2)}
+.wcq-p{display:grid;place-items:center;padding:clamp(56px,5vw,96px) clamp(24px,3.4vw,64px);border-left:1px solid var(--ln);background:#fcfcfd radial-gradient(circle,#d3d6de .8px,transparent 1.2px) 0 0/10px 10px}
+.wcq-c{width:100%;max-width:470px;padding-bottom:18px;border-radius:18px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 2px 4px rgba(23,24,26,.04),0 40px 80px -40px rgba(30,40,110,.45)}
+.wcq-b{display:flex;align-items:center;gap:9px;padding:15px 18px;border-bottom:1px solid #eceef2;font-size:14px}.wcq-b .dot{width:8px;height:8px;border-radius:50%;background:#266df1}.wcq-b b{font-weight:600}.wcq-b em{margin-left:auto;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:#8a8d93}
+.wcq-c>p{font-size:14.5px}.wcq-c>p.v{margin-top:16px}.wcq-c>p.o{margin-top:6px}
+@media(max-width:1180px){.wcs-g{grid-template-columns:repeat(3,minmax(0,1fr))}.wcx-n{display:none}}
+@media(max-width:860px){.wch h1{font-size:40px}.wch-l{height:auto;margin-top:22px}.wch-l::before{left:5px;right:auto;top:0;bottom:0;width:1.5px;height:auto;transform-origin:50% 0;animation-name:wclinev}
+@keyframes wclinev{from{transform:scaleY(0)}}
+.wch-x{display:none}.wch-q{position:relative;left:auto;top:auto;padding:0 0 16px 28px}.wch-q>i{left:0;top:14px}.wch-q>div,.wch-q:last-child>div{position:static;max-width:none;width:auto}.wch-q>div::before{display:none}
+.wct{height:230vh}.wcx-r{grid-template-columns:minmax(0,1fr)}.wcx-r>p{grid-column:1;max-width:88%}
+.wcs-h,.wcq-g{grid-template-columns:minmax(0,1fr)}.wcs-g{grid-template-columns:minmax(0,1fr)}.wcq-t{padding:64px var(--pad) 28px}.wcq-p{border-left:0;border-top:1px solid var(--ln);padding:32px 14px}}
 /* ============ phone agent, rebuilt ============ */
 .pah,.pax{position:relative;background:var(--dk);color:#fff}
 .pah::after,.pax::before,.pax::after{content:"";position:absolute;left:max(100px,calc((100vw - 1390px)/2));right:max(100px,calc((100vw - 1390px)/2));height:240px;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px)}
@@ -942,12 +1016,42 @@ KB = ('<div class="kb"><div class="kb-s"><h3>What you give it</h3>%s</div><div c
              ('', 'Do you do repairs?', 'Yes, fence and gate repairs.', 'From: Services'),
              ('', 'Are you open Saturday?', 'Yes, 7 to 5.', 'From: Hours'),
              ('h', 'Can you beat another quote?', 'That one is for the owner. I&rsquo;ve passed it on with this conversation.', 'Handed to you')])))
-WEBSITE_CHAT = (inner_hero('Front desk', ap(p['h1']), ap(p['lede']), BOOK + AUDITLINK, BROWSER)
+# --- Website chat, rebuilt (Nov 28): one evening of questions on a timeline; the page turns from day to night as the clock runs to 10:04 PM;
+# the 10 PM conversation on black with margin notes; every answer traced to the information it came from; questions as the chat would answer them.
+_WQ = [(12, 'up', 'Do you do repairs?', 'a', 'Answered'), (100, 'dn', 'Are you open Saturday?', 'a', 'Answered'), (175, 'up', 'Do you work in Monument?', 'a', 'Answered'),
+       (210, 'dn', 'Roughly what does it cost?', 'a', 'Answered'), (244, 'up', 'Can someone come Thursday?', 'b', 'Booked, Thu 9 AM'), (318, 'dn', 'Can you beat another quote?', 'h', 'Handed to you')]
+WCHERO = ('<section class="wch"><div class="w wch-i"><p class="fu-lab">Website chat</p><h1>Visitors get an answer while they&rsquo;re still on the page.</h1>'
+          '<p class="sub">A chat on your site answers questions about your services and your area, then offers a time for an estimate. Including at night, when most people look.</p>'
+          '<div class="cta">%s%s</div>'
+          '<div class="wch-tl"><p class="wch-k"><b>One evening on your site</b><span>Example business. Sample data.</span></p><div class="wch-l">%s%s</div></div></div></section>'
+          % (BOOK, AUDITLINK, ''.join('<span class="wch-x" style="left:%.2f%%">%s</span>' % (k * 100 / 6, t) for k, t in enumerate(['6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM', '12 AM'])),
+             ''.join('<div class="wch-q %s %s" style="--x:%.2f%%;--i:%d"><i></i><div><time>%d:%02d PM</time><p>%s</p><em>%s</em></div></div>'
+                     % (pos, c, m * 100 / 360, k, 6 + m // 60, m % 60, q, st) for k, (m, pos, q, c, st) in enumerate(_WQ))))
+WCTURN = ('<section class="wct" data-sp="all"><div class="wct-s"><div class="w wct-w"></div><div class="wct-n" aria-hidden="true"></div>'
+          '<div class="wct-c"><p class="wct-l">Your site, tonight</p><p class="wct-t" data-clock="1020,1324">10:04 PM</p><div class="wct-b"><i></i></div></div>'
+          '<p class="wct-m">Someone is on your site with one question.</p></div></section>')
+_WX = [('v', 'Do you work in Monument?', ''), ('o', 'Yes, Monument is in our area. Want a time for a free estimate?', ('r', 'b2', 'Answered from your service area')),
+       ('v', 'Is the estimate free?', ''), ('o', 'Yes, always.', ('l', 'b4', 'From how you price')),
+       ('v', 'Thursday morning?', ''), ('o', 'Thursday at 9 is open. Want it?', ('r', 'b3', 'Open times from your calendar')),
+       ('v', 'Yes please.', ''), ('o', 'Booked: Thursday, 9 AM. You&rsquo;ll get a text the night before.', ('l', 'b0', 'On your calendar, with the chat attached'))]
+WCCHAT = ('<section class="wcx"><div class="w wcx-i"><div class="wcx-h"><p class="fu-lab">10:04 PM</p><h2>One question at night. Booked before they close the tab.</h2></div>'
+          '<div class="wcx-g" data-in=".2">%s</div><p class="wcx-k">Example business. Sample data.</p></div></section>'
+          % ''.join('<div class="wcx-r %s" style="--i:%d">%s<p>%s</p></div>' % (c, k, ('<span class="wcx-n %s %s"><i></i>%s</span>' % n) if n else '', t) for k, (c, t, n) in enumerate(_WX)))
+_WS = [('b1', 'Services', 'New installs, repairs and maintenance', [('Do you do repairs?', 'Yes, repairs and new installs.'), ('Do you do maintenance?', 'Yes, regular maintenance visits.')]),
+       ('b2', 'Service area', 'Colorado Springs, Monument, Castle Rock', [('Do you work in Monument?', 'Yes, Monument is in our area.'), ('What about Pueblo?', 'Not right now. We cover Colorado Springs, Monument and Castle Rock.')]),
+       ('b3', 'Hours', 'Monday to Saturday, 7 to 5', [('Are you open Saturday?', 'Yes, 7 to 5.'), ('Can someone come at 6 PM?', 'We book 7 to 5. Thursday at 9 is open.')]),
+       ('b4', 'How you price', 'Free estimates. Ranges only, never a final price.', [('Roughly what does it cost?', 'Every job is priced at a free estimate. Want a time?'), ('Is the estimate free?', 'Yes, always.')]),
+       ('b0', 'Not in your information', 'Goes to you, with the chat attached', [('Can you beat another quote?', 'That one is for the owner. I&rsquo;ve passed it on with this chat.')])]
+WCSRC = ('<section class="wcs"><div class="w wcs-i"><div class="wcs-h"><p class="fu-lab">Only what you give it</p><h2>It answers from your information. Nothing else.</h2>'
+         '<p>Your services, your area, your hours and how you price. Anything it can&rsquo;t answer goes to you with the conversation attached, and we tune it from the transcripts.</p></div>'
+         '<div class="wcs-g" data-in=".1">%s</div><p class="wcx-k">Example business. Sample data.</p></div></section>'
+         % ''.join('<div class="wcs-c %s" style="--i:%d"><div class="wcs-t"><i></i><b>%s</b><span>%s</span></div>%s</div>' % (c, k, t, f, ''.join('<p class="v">%s</p><p class="o">%s</p>' % qa for qa in qs)) for k, (c, t, f, qs) in enumerate(_WS)))
+WCFAQ = ('<section class="wcq"><div class="w wcq-g"><div class="wcq-t"><h2>Questions.</h2><p>Asked the way a visitor would ask the chat.</p></div>'
+         '<div class="wcq-p"><div class="wcq-c"><div class="wcq-b"><span class="dot"></span><b>Ask us anything</b><em>Cinder Revenue</em></div>%s</div></div></div></section>'
+         % ''.join('<p class="v">%s</p><p class="o">%s</p>' % (ap(q), ap(a)) for q, a in p['faq']))
+WEBSITE_CHAT = (WCHERO
                 + statement('The problem', X['website-chat'][0][0], ap(X['website-chat'][0][1]))
-                + sx('It answers from your own information.', 'Anything it can&rsquo;t answer goes to you with the conversation attached.', KB, 'wh')
-                + '<section class="bl"><div class="w bl-i"><p>%s</p></div></section>' % ap(p['line'])
-                + H.split('What changes', 'The visitor leaves with a time,', 'not a number to call tomorrow.', swap(p['cmp']))
-                + qfold(p['faq']) + CL)
+                + WCTURN + WCCHAT + WCSRC + WCFAQ + CL)
 
 # ---- /social-messages : three apps dropping into one inbox; three companies racing to reply ----
 p = BY['social-messages']
@@ -2489,7 +2593,6 @@ CSS_REST = r"""
 KIND = {'wbh': 'top', 'wbw': 'wbw', 'wbm': 'wbm', 'wbc': 'wbc', 'scr': 'scr', 'anh': 'top', 'anx': 'anx', 'aq': 'aq', 'fuh': 'top', 'fub': 'fub', 'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
-    'website-chat': ('st sx bl sp', {'st': 'v-xl', 'sx': 'v-pin', 'bl': 's-bl t-exp', 'sp': 's-dkp'}),
     'social-messages': ('sx st pg', {'sx': 't-sheet', 'st': 's-dk v-c t-angle', 'pg': 's-dk'}),
     'lead-vetting': ('st lvg acd lvc', {'st': 'v-2 t-rule'}),
     'after-hours': ('st sx sp', {'st': 'v-c t-arc', 'sp': 's-dkp'}),
@@ -4153,7 +4256,7 @@ PAGES = [
     ('answering', 'Answering', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', ANSWERING),
 ]
 if __name__ == '__main__':
-    SIDE.pop('websites', None); SIDE.pop('phone-agent', None)
+    SIDE.pop('websites', None); SIDE.pop('phone-agent', None); SIDE.pop('website-chat', None)
     for slug, title, desc, body in PAGES:
         _b = plug(slug, liven(slug, trans(slug, figs(slug, full(slug, flag(slug, body))))))
         _b = re.sub(r'(<section class="pt [^"]*") data-sp', r'\1', _b)
@@ -4163,6 +4266,8 @@ if __name__ == '__main__':
             _b = _b.replace('<section class="sn"><div class="w sn-i"><b>78%</b>', '<section class="sn"><div class="w sn-i"><b data-count="78" data-suf="%">78%</b>', 1)
             _b = _b.replace('<div class="cd dc">', '<div class="cd dc" data-in>', 1).replace('<div class="anx-l">', '<div class="anx-l" data-in>', 1).replace('<dl>', '<dl data-in>', 1)
             _b = _b.replace('<section class="dy">', '<section class="dy dy-c">', 1)
+        if slug == 'website-chat':
+            _b = re.sub(r'<section class="pt [^"]*"[^>]*>.*?</section>', '', _b, count=1, flags=re.S)   # the day-to-night clock is this page's transition
         if slug == 'phone-agent':
             _b = re.sub(r'<section class="pt [^"]*"[^>]*>.*?</section>', '', _b, count=1, flags=re.S)   # the rings are this page's transition
         if slug == 'websites':
