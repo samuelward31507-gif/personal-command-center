@@ -705,3 +705,6 @@ Next section down, the rail "One lead, from the form to the driveway": the line 
 
 ### 24b. Booking card section (Nov 27)
 Restrained pass on "The time, the address and the job": card larger, its four rows arrive in turn as it scrolls in, the reminder value in blue, and a reminder slip slides out from under the card last (existing line "A reminder text the night before."). Bracket label. No new drawings.
+
+### 24c. Booking questions (Nov 27)
+Sam: the plain Questions list at the bottom of Booking "looks really bad"; suggested the dotted ground with the serif. Now a full-width dotted section: bracket label, each question large in serif with a mono number, answer in grey sans beneath, hairlines between. Scoped to Booking. Other pages still have the plain list; give each its own treatment, do not copy this one everywhere. He also said Booking feels a little crammed between sections but is not worried about it.
