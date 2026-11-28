@@ -698,3 +698,7 @@ Sam: every page needs transitions and small diagrams. He does not want these to 
 Booking, his own pick: the black section after "Serious leads land on your calendar and show up." is now a split (signs_split, SIGN_SPLIT, class sg3): the three signs stacked on the left in serif, lighting in turn on a timer; on the right one white line drawing per sign that draws itself (two phones passing missed calls, a calendar with one unconfirmed cell, a house with an empty driveway and a clock). Page keeps scrolling.
 Gotcha: do not use vector-effect:non-scaling-stroke on paths that draw in with pathLength; the lines stop short.
 To do: the same idea, with different drawings and different arrangements, on every other page.
+
+### 24a. Booking: split signs reverted; rail reworked (Nov 27)
+Sam on the three-signs-beside-a-changing-drawing split: "Revert this looks bad". Reverted to the dark three-column serif row. SIGN_SPLIT is empty; do not bring that layout back. His note was on my drawings (two phones, a calendar, a house): keep line drawings far simpler and smaller than that.
+Next section down, the rail "One lead, from the form to the driveway": the line now fills as it scrolls in, nodes fill in turn, the last one blue; numbered mono times, serif step titles, and a measured bracket over the first three steps ("12 minutes from the form to a booked time", from the sample times 7:40 and 7:52).
