@@ -776,3 +776,14 @@ Gotcha: .sm, .sb and .bw are taken by the homepage; the site mock uses wsm, wsb,
 
 ### 24m. Websites transition: the tap (Nov 28)
 Sam: page approved ("the whole page is really good"), wanted one high-quality homepage-style transition. Built .wbt between the before-and-after and the site map: the booking card sits centred on white, a blue tap ring lands on "Book Wed, 2:00 PM", the button flips to "Booked", then its black grows (clip-path from the button's exact spot) until it is the whole screen; "Booked." in large serif with one line, then the black site map follows with no seam. Scroll-linked, 235vh, sticky stage, never stops the page. Works on phones too: data-sp="all" now runs below 861px. The shared statement band was removed from Websites. Register: do not reuse the button-grows-into-the-screen move on another page.
+
+### 24n. Phone agent, rebuilt (Nov 28)
+Full new page at the homepage standard, distinct from every page in the register:
+- Hero on black, centred: big sans headline, then a live call: red live dot, a full-width waveform (blue bars where the assistant speaks, grey where the caller does) that moves gently, transcript lines arriving one by one. Line fringes on the black.
+- Problem split kept (Recents card).
+- Transition, "Picked up on the second ring.": white sticky stage, rings drawn out from a phone as you scroll; ring 2 turns blue ("Answered, 0:06"), rings 3 to 5 dashed up to "voicemail"; then the black of the connected call grows as a circle from the phone until it is the screen, and the greeting appears in serif: "Thanks for calling Ridgeline Services." Runs on phones (data-sp="all"). Shared statement band removed from this page.
+- After the call, on black: transcript card and summary card joined by coloured lines (purple who, blue job, amber where, teal next); the words underline in the same colour as their row fills. Sized with container units so the lines meet the rows exactly; stacks on phones.
+- The fork on a dotted panel: call answered splits blue to Estimate booked, amber to Rings through to you; a dot travels each branch with the scroll.
+- Setup as a two-sided spine (From you / From us).
+- Questions as a thread (You / Us).
+Register additions, do not reuse: live waveform hero, rings transition with circle growth, transcript-to-summary colour lines, two-sided spine, You/Us question thread.

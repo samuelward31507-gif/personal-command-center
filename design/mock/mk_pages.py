@@ -1,3 +1,4 @@
+import random
 #!/usr/bin/env python3
 """The inner pages of the light site. Every page shares the theme (nav, footer, type, colours) from mk_home.py
 and gets its own picture, its own layout and one thing no other page has. Run after mk_home.py; it imports it."""
@@ -446,6 +447,107 @@ CSS = r"""
 .uc-f span::after{content:"";display:inline-block;width:1.5px;height:1.1em;margin-left:3px;vertical-align:-.18em;background:var(--blue)}
 .uc-f em{display:inline-flex;align-items:center;height:clamp(44px,3vw,54px);padding:0 clamp(16px,1.2vw,22px);border-radius:11px;background:var(--ink);color:#fff;font-style:normal;font-size:clamp(14px,.9vw,16.5px);font-weight:560;white-space:nowrap}
 .uc+.fa{border-top:1px solid var(--ln)}
+
+/* ============ phone agent, rebuilt ============ */
+.pah,.pax{position:relative;background:var(--dk);color:#fff}
+.pah::after,.pax::before,.pax::after{content:"";position:absolute;left:max(100px,calc((100vw - 1390px)/2));right:max(100px,calc((100vw - 1390px)/2));height:240px;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px)}
+.pah::after,.pax::after{bottom:0;-webkit-mask-image:linear-gradient(0deg,#000,transparent);mask-image:linear-gradient(0deg,#000,transparent)}.pax::before{top:0;-webkit-mask-image:linear-gradient(180deg,#000,transparent);mask-image:linear-gradient(180deg,#000,transparent)}
+.pah-i{position:relative;z-index:1;display:grid;justify-items:center;text-align:center;padding:clamp(72px,7vw,124px) var(--pad) clamp(110px,9vw,170px);border-left:1px solid var(--dl);border-right:1px solid var(--dl)}
+.pah .fu-lab,.pax .fu-lab{color:#8f9197}
+.pah h1{margin:24px 0 0;max-width:12em;color:#fff;font-size:clamp(48px,5.6vw,104px);line-height:.96;font-weight:600;letter-spacing:-.05em;white-space:normal}
+.pah .sub{margin:26px auto 0;max-width:34em;font-size:clamp(16px,1.15vw,20px);line-height:1.45;color:#a3a5aa}
+.pah .cta{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:34px}.pah .cta .btn{background:#fff;color:#101010}.pah .cta .btn.q{background:transparent;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+.pah-c{width:100%;max-width:1000px;margin-top:clamp(60px,5.4vw,96px);text-align:left}
+.pah-h{display:flex;align-items:center;gap:16px;padding-bottom:16px;border-bottom:1px solid var(--dl);font-size:14px}
+.pah-h span{display:flex;align-items:center;gap:8px;font:500 11px/1 "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:#8f9197}.pah-h span i{width:8px;height:8px;border-radius:50%;background:#e5484e;animation:pablink 1.6s ease-in-out infinite}
+.pah-h b{font-weight:560}.pah-h time{margin-left:auto;font:500 13px/1 "Geist Mono",monospace}
+@keyframes pablink{50%{opacity:.25}}
+.pah-w{display:flex;align-items:center;gap:3px;height:clamp(110px,10vw,170px);margin:24px 0}
+.pah-w i{flex:1;height:calc(var(--h)*1%);border-radius:2px;background:rgba(255,255,255,.5);animation:pawave 1.2s var(--d) ease-in-out infinite alternate}.pah-w i.a{background:#266df1}
+@keyframes pawave{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+.pah-t{display:grid;gap:12px;padding-top:22px;border-top:1px solid var(--dl)}
+.pah-t p{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:16px;margin:0;font-size:clamp(15px,1.05vw,18px);line-height:1.42;color:#d9dade;opacity:0;animation:pain .6s calc(.7s + var(--i)*1.3s) cubic-bezier(.2,.7,.2,1) forwards}
+.pah-t span{font:500 11px/1.9 "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:#8f9197}.pah-t p.a span{color:#7fa8f7}
+@keyframes pain{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.pah-x{margin:24px 0 0;font:500 11px/1 "Geist Mono",monospace;color:#6f7177}
+@media(prefers-reduced-motion:reduce){.pah-w i,.pah-h span i{animation:none}.pah-t p{animation:none;opacity:1}}
+/* the rings: answered on the second; the connected call's black grows from the phone */
+.par{--q:var(--p,1);--cx:64%;--cy:50%;--gs:min(76vh,700px);position:relative;height:270vh;background:#fff}
+.par-s{position:sticky;top:0;height:100vh;overflow:hidden}.par-w{height:100%;border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.par-t{position:absolute;left:calc(max(0px,(100vw - 1390px)/2) + var(--pad));top:50%;max-width:30em;transform:translateY(-50%)}
+.par-t h2{margin:20px 0 0;max-width:8.5em;font:400 clamp(40px,4.2vw,78px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em}.par-t p:last-child{margin:22px 0 0;max-width:23em;font-size:clamp(16px,1.1vw,19px);line-height:1.45;color:var(--t2)}
+.par-g{position:absolute;left:var(--cx);top:var(--cy);width:var(--gs);height:var(--gs);transform:translate(-50%,-50%);overflow:visible}
+.pr{--s:clamp(0,calc((var(--q) - var(--t))*11),1)}.pr1{--t:0}.pr2{--t:.09}.pr3{--t:.27}.pr4{--t:.3}.pr5{--t:.33}
+.pr circle{fill:none;stroke:#17181a;stroke-width:1.5;vector-effect:non-scaling-stroke;transform:scale(calc(.55 + var(--s)*.45));opacity:var(--s)}
+.pr3 circle,.pr4 circle,.pr5 circle{stroke:#c3c6cd;stroke-dasharray:3 6}
+.pr text{font:500 15px "Geist Mono",monospace;fill:#8a8d93;opacity:var(--s)}.pr2 text{opacity:calc(var(--s) - var(--a,0)*4)}
+.par-g{--a:clamp(0,calc((var(--q) - .2)*12),1)}
+.pr-a{fill:none;stroke:#266df1;stroke-width:3;vector-effect:non-scaling-stroke;opacity:var(--a)}.pr-at{font:500 15px "Geist Mono",monospace;fill:#266df1;opacity:var(--a)}
+.pr-p circle{fill:#17181a}.pr-p circle.b{fill:#266df1;opacity:var(--a)}.pr-h path{fill:none;stroke:#fff;stroke-width:2.4;stroke-linejoin:round}
+.par-z{--g:clamp(0,calc((var(--q) - .44)/.32),1);--e:calc(var(--g)*var(--g)*(3 - 2*var(--g)));position:absolute;inset:0;background:#101010;clip-path:circle(calc(var(--e)*125vmax + (1 - var(--e))*var(--gs)*.05) at var(--cx) var(--cy));opacity:clamp(0,calc((var(--q) - .44)*80),1)}
+.par-e{--v:clamp(0,calc((var(--q) - .74)*7),1);position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:22px;padding:0 24px;text-align:center;color:#fff;opacity:var(--v);transform:translateY(calc((1 - var(--v))*18px))}
+.par-e time{font:500 12px/1 "Geist Mono",monospace;color:#7fa8f7}.par-e p{margin:0;max-width:14em;font:400 clamp(40px,5vw,92px)/1.04 Georgia,"Times New Roman",serif;letter-spacing:-.03em}.par-e span{max-width:26em;font-size:clamp(16px,1.15vw,20px);line-height:1.45;color:#a3a5aa}
+.par:not(.sp-live){--q:.34;height:auto}.par:not(.sp-live) .par-s{position:relative;height:auto;min-height:760px}.par:not(.sp-live) .par-z,.par:not(.sp-live) .par-e{display:none}
+/* after the call: the transcript and what you read, joined by colour */
+.pax-i{position:relative;z-index:1;border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(120px,10vw,190px) var(--pad) clamp(150px,13vw,240px)}
+.pax-h{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:24px 64px;align-items:end}.pax-h .fu-lab{grid-column:1/-1}
+.pax-h h2{margin:0;max-width:10em;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em}.pax-h p:last-child{margin:0;max-width:26em;font-size:clamp(16px,1.1vw,19px);line-height:1.45;color:#a3a5aa}
+.pk0{--c:#8b5cf6}.pk1{--c:#266df1}.pk2{--c:#f0a001}.pk3{--c:#0ea5a0}
+.pax-d{position:relative;container-type:inline-size;aspect-ratio:1200/560;margin-top:clamp(56px,5vw,96px)}
+.pax-d svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.pxl{--e:clamp(0,calc(var(--p,1)*4.6 - var(--i)*.75 - .5),1);fill:none;stroke:var(--c);stroke-width:1.6;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--e))}
+.pax-a,.pax-b{position:absolute;top:0;height:100%;border-radius:1.4cqw;overflow:hidden}
+.pax-a{left:0;width:45%;background:#17181a;box-shadow:inset 0 0 0 1px rgba(255,255,255,.09)}
+.pax-ah,.pax-bh{position:absolute;left:0;right:0;top:0;height:10%;display:flex;align-items:center;gap:1cqw;padding:0 2cqw;font-size:1.1cqw;border-bottom:1px solid rgba(255,255,255,.09)}
+.pax-ah b,.pax-bh b{font-weight:600}.pax-ah span,.pax-bh span{font:500 .85cqw/1 "Geist Mono",monospace;color:#8f9197}.pax-ah em{margin-left:auto;font:500 .85cqw/1 "Geist Mono",monospace;font-style:normal;color:#8f9197}
+.pxa{position:absolute;left:2cqw;right:2cqw;display:grid;grid-template-columns:7.4cqw minmax(0,1fr);gap:1cqw;margin:0;font-size:1.22cqw;line-height:1.42;color:#d9dade}
+.pxa .tx{font-style:normal}.pxa span{font:500 .82cqw/1.75 "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:#8f9197}.pxa.a{color:#a3a5aa}.pxa.a span{color:#7fa8f7}
+.pxa mark{color:#fff;background:linear-gradient(var(--c),var(--c)) 0 100%/calc(var(--u)*100%) .2cqw no-repeat;--u:clamp(0,calc(var(--p,1)*4.6 - var(--i)*.75 - .2),1)}.pk1{--i:1}.pk2{--i:2}.pk3{--i:3}
+.pax-b{left:56.667%;width:43.333%;background:#fff;color:#17181a}.pax-bh{border-bottom-color:#eef0f3}.pax-bh span{margin-left:auto}
+.pxr{--v:clamp(0,calc(var(--p,1)*4.6 - var(--i)*.75 - .9),1);position:absolute;left:0;right:0;height:12.14%;display:grid;grid-template-columns:2cqw 6.4cqw minmax(0,1fr);grid-template-rows:auto auto;align-content:center;column-gap:.4cqw;padding:0 2cqw;border-top:1px solid #f0f1f4;opacity:calc(.25 + var(--v)*.75)}
+.pxr i{grid-row:1/3;align-self:center;width:.85cqw;height:.85cqw;border-radius:50%;background:var(--c)}
+.pxr span{grid-row:1/3;align-self:center;font:500 .82cqw/1 "Geist Mono",monospace;color:#8a8d93}.pxr b{font-size:1.4cqw;font-weight:560;letter-spacing:-.015em}.pxr em{font-size:1cqw;font-style:normal;color:#6b6e75}
+.pxr::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c);transform:scaleY(var(--v))}
+.pax-bf{position:absolute;left:2cqw;bottom:1.6cqw;margin:0;font:500 .85cqw/1 "Geist Mono",monospace;color:#8a8d93}
+/* the fork */
+.paf{border-top:1px solid var(--ln)}.paf-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.paf-t{align-self:center;padding:clamp(96px,8vw,150px) var(--pad)}.paf-t h2{margin:22px 0 0;max-width:10em;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em}
+.paf-t p:last-child{margin:22px 0 0;max-width:26em;font-size:clamp(16px,1.1vw,19px);line-height:1.45;color:var(--t2)}
+.paf-p{display:grid;place-items:center;padding:clamp(56px,5vw,96px) clamp(24px,3vw,56px);border-left:1px solid var(--ln);background:#fcfcfd radial-gradient(circle,#d3d6de .8px,transparent 1.2px) 0 0/10px 10px}
+.paf-d{width:100%;max-width:560px;overflow:visible}
+.pfl{--e:clamp(0,calc(var(--p,1)*3.2 - .2),1);fill:none;stroke:#17181a;stroke-width:1.6;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--e))}.pfl.b,.pfl.y{--e:clamp(0,calc(var(--p,1)*3.2 - 1),1)}.pfl.b{stroke:#266df1}.pfl.y{stroke:#f0a001}
+.pfn rect{fill:#fff;stroke:#d6d9df;stroke-width:1}.pfn text{font-size:16px;font-weight:560;letter-spacing:-.01em;text-anchor:middle;fill:#17181a}.pfn text.s{font:500 11.5px "Geist Mono",monospace;fill:#8a8d93}
+.pfn.b rect{fill:#266df1;stroke:none}.pfn.b text{fill:#fff}.pfn.b text.s{fill:#cfdcfd}.pfn.y rect{stroke:#f0a001;stroke-width:1.5}
+.pfn.b,.pfn.y{opacity:clamp(0,calc(var(--p,1)*4 - 2.6),1)}
+.pfc{font:500 12px "Geist Mono",monospace;fill:#5d6067;text-anchor:middle;stroke:#fcfcfd;stroke-width:7px;paint-order:stroke;opacity:clamp(0,calc(var(--p,1)*4 - 1.8),1)}
+.pfd{--m:clamp(0,calc(var(--p,1)*2.2 - .9),1);fill:none;stroke-width:11;stroke-linecap:round;stroke-dasharray:0 1;stroke-dashoffset:calc(var(--m)*-1);opacity:calc(clamp(0,var(--m)*30,1) - clamp(0,calc((var(--m) - .97)*40),1))}.pfd.b{stroke:#266df1}.pfd.y{stroke:#f0a001}
+/* setup as a two-sided spine */
+.pas{border-top:1px solid var(--ln)}.pas-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(96px,8vw,150px) var(--pad)}
+.pas-h{text-align:center}.pas-h .fu-lab{display:inline-block}.pas-h h2{margin:22px auto 0;max-width:12em;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em;text-wrap:balance}
+.pas-g{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:clamp(64px,8vw,150px);max-width:1040px;margin:clamp(52px,4.4vw,80px) auto 0}
+.pas-g::before{content:"";position:absolute;left:50%;top:40px;bottom:0;width:1.5px;margin-left:-.75px;background:#17181a;transform-origin:50% 0;transform:scaleY(clamp(0,calc(var(--p,1)*1.5),1))}
+.pas-l{margin:0 0 22px;text-align:right;font:500 11px/1 "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--t3)}.pas-l.r{text-align:left;color:#266df1}
+.pas-r{--v:clamp(0,calc(var(--p,1)*5 - var(--i) - .6),1);position:relative;grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:inherit;padding:30px 0;border-top:1px solid var(--ln);opacity:calc(.2 + var(--v)*.8)}
+.pas-r p{margin:0;font-size:clamp(18px,1.45vw,26px);line-height:1.28;font-weight:500;letter-spacing:-.016em}.pas-r p:first-child{text-align:right}
+.pas-r i{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #17181a}
+/* questions as a thread */
+.paq{border-top:1px solid var(--ln)}.paq-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(96px,8vw,150px) var(--pad)}
+.paq h2{margin:0 0 clamp(44px,3.6vw,68px);font:400 clamp(40px,4.4vw,80px)/1 Georgia,"Times New Roman",serif;letter-spacing:-.03em}
+.paq-t{display:grid;gap:clamp(44px,3.8vw,68px);max-width:1040px}
+.paq-r{display:grid;gap:14px;padding-top:clamp(28px,2.4vw,40px);border-top:1px solid var(--ln)}
+.paq-r p{display:grid;grid-template-columns:4em minmax(0,1fr);gap:18px;align-items:baseline;margin:0}
+.paq-r span{font:500 11px/1 "Geist Mono",monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--t3)}
+.paq-r .q{font:400 clamp(26px,2.4vw,42px)/1.12 Georgia,"Times New Roman",serif;letter-spacing:-.02em}
+.paq-r .a{margin-left:clamp(0px,7vw,130px);font-size:clamp(16px,1.15vw,20px);line-height:1.45;color:var(--t2)}.paq-r .a span{color:#266df1}
+@media(max-width:860px){.pah h1{font-size:46px}.pah-t p{grid-template-columns:minmax(0,1fr);gap:4px}.pah-w{gap:2px}
+.par{--cx:50%;--cy:68%;--gs:min(92vw,50vh);height:240vh}.par-t{top:84px;left:20px;right:20px;transform:none}.par-t h2{font-size:36px}.par-t p:last-child{margin-top:14px;font-size:15.5px}.pr text,.pr-at{font-size:22px}
+.pax-h,.paf-g{grid-template-columns:minmax(0,1fr)}.pax-i{padding:110px var(--pad) 130px}
+.pax-d{aspect-ratio:auto;container-type:normal}.pax-d svg{display:none}.pax-a,.pax-b{position:static;width:auto;height:auto;border-radius:14px}.pax-b{margin-top:14px}
+.pax-ah,.pax-bh{position:static;height:auto;padding:14px 16px;font-size:13px;gap:10px}.pax-ah span,.pax-bh span,.pax-ah em{font-size:11px}
+.pxa{position:static;grid-template-columns:minmax(0,1fr);gap:4px;padding:10px 16px;font-size:15px}.pxa span{font-size:10.5px}.pxa:last-child{padding-bottom:18px}.pxa mark{background-size:calc(var(--u)*100%) 2px}
+.pxr{position:static;height:auto;grid-template-columns:14px 4.8em minmax(0,1fr);padding:14px 16px;column-gap:6px}.pxr i{width:8px;height:8px}.pxr span{font-size:10.5px}.pxr b{font-size:16px}.pxr em{font-size:13px}.pax-bf{position:static;padding:12px 16px 16px;font-size:11px}
+.paf-t{padding:64px var(--pad) 32px}.paf-p{border-left:0;border-top:1px solid var(--ln);padding:32px 10px}.pfc,.pfn text.s{display:none}.pfn text{font-size:21px;transform:translateY(10px)}
+.pas-g{column-gap:44px}.pas-r p{font-size:15.5px}.paq-r .a{margin-left:0}.paq-r p{grid-template-columns:minmax(0,1fr);gap:8px}}
 /* ============ websites, redone ============ */
 .wbx{border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 2px 4px rgba(23,24,26,.04),0 44px 90px -44px rgba(30,40,110,.5);overflow:hidden}
 .wbx-b{display:flex;align-items:center;gap:7px;height:38px;padding:0 14px;border-bottom:1px solid #eceef2;background:#fafafb}.wbx-b i{width:10px;height:10px;border-radius:50%;background:#e2e4e8}
@@ -723,12 +825,71 @@ SUMMARY = ('<div class="fl"><div class="fd-h"><span class="dot"></span><b>Call s
            '<div class="rn-f"><span>Recording attached.</span><em>1 min 32 sec</em></div></div>'
            % (SAMPLE, frows([('Who', 'New caller', 'Homeowner, first call'), ('Job', 'Privacy fence, about 180 ft', 'Wants cedar'),
                              ('Where', 'Monument', 'Inside your service area'), ('Next', 'Estimate booked', 'Wed 2 PM, on your calendar')])))
-PHONE_AGENT = (hero_split('Front desk', p['h1'], 'A voice assistant answers when you can&rsquo;t, takes the details and books the estimate.',
-                          'It says who it is, and it hands the call to you when someone asks for a person.', CALL, 'hs-d')
+# --- Phone agent, rebuilt (Nov 28): a live call on black; the rings as the page's transition (answered on the second ring, the black of the
+# connected call grows from the phone); the call and what you read after on black; the fork; setup as a two-sided spine; questions as a thread.
+_pr = random.Random(7)
+_SEG = [('a', 14), ('c', 10), ('a', 14), ('c', 8), ('a', 16), ('c', 10)]
+_bars = []
+for who, n in _SEG:
+    for k in range(n):
+        _bars.append('<i class="%s" style="--h:%d;--d:-%.2fs"></i>' % (who, _pr.randint(18, 96) if 1 < k < n - 2 else _pr.randint(8, 30), _pr.random() * 1.2))
+_PL = [('a', 'Assistant', 'Thanks for calling Ridgeline Services, this is the assistant. What can I help with?'),
+       ('c', 'Caller', 'I need a quote on a new install out back.'),
+       ('a', 'Assistant', 'Happy to set that up. What&rsquo;s the address, and how soon do you need it?'),
+       ('c', 'Caller', 'It&rsquo;s in Monument. Sometime this month.')]
+PAHERO = ('<section class="pah"><div class="w pah-i"><p class="fu-lab">Phone agent</p><h1>Every call gets picked up.</h1>'
+          '<p class="sub">A voice assistant answers when you can&rsquo;t, takes the details and books the estimate. It says who it is, and it hands the call to you when someone asks for a person.</p>'
+          '<div class="cta">%s%s</div>'
+          '<div class="pah-c"><div class="pah-h"><span><i></i>Live call</span><b>Ridgeline Services</b><time>0:48</time></div>'
+          '<div class="pah-w" aria-hidden="true">%s</div><div class="pah-t">%s</div><p class="pah-x">Example business. Sample data.</p></div></div></section>'
+          % (BOOK, AUDITLINK, ''.join(_bars), ''.join('<p class="%s" style="--i:%d"><span>%s</span>%s</p>' % (c, k, who, t) for k, (c, who, t) in enumerate(_PL))))
+_HS = '<path d="M-9-11h5l2.4 6-3 2a17 17 0 0 0 7.6 7.6l2-3 6 2.4v5a3 3 0 0 1-3.2 3A26 26 0 0 1-12-8a3 3 0 0 1 3-3z"/>'
+PARINGS = ('<section class="par" data-sp="all"><div class="par-s"><div class="w par-w"></div>'
+           '<div class="par-t"><p class="fu-lab">When the phone rings</p><h2>Picked up on the second ring.</h2>'
+           '<p>Day, night and weekends, including while you&rsquo;re on a job. Voicemail would have started around the fifth.</p></div>'
+           '<svg class="par-g" viewBox="-400 -400 800 800" aria-hidden="true">'
+           + ''.join('<g class="pr pr%d" style="--k:%d"><circle r="%d"/><text x="%d" y="%d">%s</text></g>' % (k, k, r, int(r * .7071) + 10, -int(r * .7071) - 6, lab)
+                     for k, r, lab in [(1, 96, 'Ring 1, 0:00'), (2, 156, 'Ring 2, 0:06'), (3, 216, 'Ring 3'), (4, 276, 'Ring 4'), (5, 336, 'Ring 5, voicemail')])
+           + '<circle class="pr-a" r="156"/><text class="pr-at" x="120" y="-118">Answered, 0:06</text>'
+           '<g class="pr-p"><circle r="40"/><circle class="b" r="40"/><g class="pr-h">%s</g></g></svg>'
+           '<div class="par-z" aria-hidden="true"></div>'
+           '<div class="par-e"><time>0:06</time><p>&ldquo;Thanks for calling Ridgeline Services.&rdquo;</p><span>The phone rang while you were on a roof. It still got answered.</span></div></div></section>' % _HS)
+_TX = [('a', 'Assistant', 'Thanks for calling Ridgeline Services, this is the assistant. What can I help with?', ''),
+       ('c', 'Caller', 'I need a quote on a <mark class="pk1">new install</mark> out back.', '1'),
+       ('a', 'Assistant', 'Happy to set that up. What&rsquo;s the address, and how soon?', ''),
+       ('c', 'Caller', 'It&rsquo;s in <mark class="pk2">Monument</mark>. Sometime this month.', '2'),
+       ('a', 'Assistant', 'I have Wednesday at 2 or Thursday at 11.', ''),
+       ('c', 'Caller', '<mark class="pk3">Wednesday works.</mark>', '3')]
+_SR = [('pk0', 'Who', 'New caller', 'First call, 2:14 PM'), ('pk1', 'Job', 'New install', 'Wants a quote'),
+       ('pk2', 'Where', 'Monument', 'Inside your service area'), ('pk3', 'Next', 'Estimate booked', 'Wed 2 PM, on your calendar')]
+_TY = [128, 196, 264, 332, 400, 468]; _SY = [124, 220, 316, 412]
+PAX = ('<section class="pax"><div class="w pax-i"><div class="pax-h"><p class="fu-lab">After the call</p><h2>Two minutes on the phone. Ten seconds to read.</h2>'
+       '<p>The call is written up the moment it ends: who called, the job, where, and what happens next. The recording comes with it.</p></div>'
+       '<div class="pax-d" data-in=".3"><svg viewBox="0 0 1200 560" aria-hidden="true">%s</svg>'
+       '<div class="pax-a"><div class="pax-ah"><b>Call</b><span>New number, 2:14 PM</span><em>1 min 32 sec</em></div>%s</div>'
+       '<div class="pax-b"><div class="pax-bh"><b>Call summary</b><span>Example, sample data</span></div>%s<p class="pax-bf">Recording attached.</p></div></div></div></section>'
+       % (''.join('<path class="pxl %s" style="--i:%d" pathLength="1" d="M540 %dC610 %d 610 %d 680 %d"/>' % (c, k, y1, y1, y2, y2) for k, (c, y1, y2) in enumerate([('pk0', 28, _SY[0]), ('pk1', _TY[1], _SY[1]), ('pk2', _TY[3], _SY[2]), ('pk3', _TY[5], _SY[3])])),
+          ''.join('<p class="pxa %s" style="top:%.3f%%"><span>%s</span><i class="tx">%s</i></p>' % (c, (y - 26) / 5.6, who, t) for (c, who, t, _), y in zip(_TX, _TY)),
+          ''.join('<div class="pxr %s" style="top:%.3f%%;--i:%d"><i></i><span>%s</span><b>%s</b><em>%s</em></div>' % (c, (y - 34) / 5.6, k, a, b, d) for k, ((c, a, b, d), y) in enumerate(zip(_SR, _SY)))))
+PAFORK = ('<section class="paf"><div class="w paf-g"><div class="paf-t"><p class="fu-lab">Books it or hands it off</p><h2>It books the estimate, or it rings you.</h2>'
+          '<p>You choose which calls ring through: someone asking for a person, an emergency, a customer you already work for. Either way, a summary and the recording land in your app.</p></div>'
+          '<div class="paf-p"><svg class="paf-d" data-in=".2" viewBox="0 0 600 560" aria-hidden="true">'
+          '<path class="pfl" pathLength="1" d="M300 92V200"/><path class="pfl b" pathLength="1" d="M300 200C300 270 150 250 150 330V392"/><path class="pfl y" pathLength="1" d="M300 200C300 270 450 250 450 330V392"/>'
+          '<g class="pfn"><rect x="190" y="44" width="220" height="48" rx="12"/><text x="300" y="74">Call answered</text></g>'
+          '<text class="pfc" x="150" y="290">Wants an estimate</text><text class="pfc" x="450" y="290">Asks for a person, or it&rsquo;s urgent</text>'
+          '<g class="pfn b"><rect x="40" y="392" width="220" height="64" rx="12"/><text x="150" y="420">Estimate booked</text><text class="s" x="150" y="442">Wed 2 PM, on your calendar</text></g>'
+          '<g class="pfn y"><rect x="340" y="392" width="220" height="64" rx="12"/><text x="450" y="420">Rings through to you</text><text class="s" x="450" y="442">With who it is and why</text></g>'
+          '<path class="pfd b" pathLength="1" d="M300 92V200C300 270 150 250 150 330V392"/><path class="pfd y" pathLength="1" d="M300 92V200C300 270 450 250 450 330V392"/></svg></div></div></section>')
+_NEED = ['Your hours and service area', 'The questions you ask a new lead', 'Who gets the call when it needs a person']
+_TAKE = ['Set it up around the number and pages you already use', 'Test it with you before it takes a real lead', 'Watch the first weeks and adjust']
+PASETUP = ('<section class="pas"><div class="w pas-i"><div class="pas-h"><p class="fu-lab">Setup</p><h2>Three things from you. The rest is on us.</h2></div>'
+           '<div class="pas-g" data-in><p class="pas-l">From you</p><p class="pas-l r">From us</p>%s</div></div></section>'
+           % ''.join('<div class="pas-r" style="--i:%d"><p>%s</p><i></i><p>%s</p></div>' % (k, a, b) for k, (a, b) in enumerate(zip(_NEED, _TAKE))))
+PAQ = ('<section class="paq"><div class="w paq-i"><h2>Questions.</h2><div class="paq-t">%s</div></div></section>'
+       % ''.join('<div class="paq-r"><p class="q"><span>You</span>%s</p><p class="a"><span>Us</span>%s</p></div>' % (ap(a), ap(b)) for a, b in p['faq']))
+PHONE_AGENT = (PAHERO
                + H.split('The problem', X['phone-agent'][0][0], X['phone-agent'][0][1], RECENTS)
-               + sx(X['phone-agent'][2], '', FORK, 'wh')
-               + dark('What changes', 'You stay on the job.', 'The call still turns into an estimate.', swap(p['cmp']), SUMMARY)
-               + qcards(p['faq']) + CL)
+               + PARINGS + PAX + PAFORK + PASETUP + PAQ + CL)
 
 # ---- /website-chat : a browser window with the chat open at 10 PM; every answer tagged with where it came from ----
 p = BY['website-chat']
@@ -2290,7 +2451,6 @@ CSS_REST = r"""
 KIND = {'wbh': 'top', 'wbw': 'wbw', 'wbm': 'wbm', 'wbc': 'wbc', 'scr': 'scr', 'anh': 'top', 'anx': 'anx', 'aq': 'aq', 'fuh': 'top', 'fub': 'fub', 'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
-    'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
     'website-chat': ('st sx bl sp', {'st': 'v-xl', 'sx': 'v-pin', 'bl': 's-bl t-exp', 'sp': 's-dkp'}),
     'social-messages': ('sx st pg', {'sx': 't-sheet', 'st': 's-dk v-c t-angle', 'pg': 's-dk'}),
     'lead-vetting': ('st lvg acd lvc', {'st': 'v-2 t-rule'}),
@@ -3955,7 +4115,7 @@ PAGES = [
     ('answering', 'Answering', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', ANSWERING),
 ]
 if __name__ == '__main__':
-    SIDE.pop('websites', None)
+    SIDE.pop('websites', None); SIDE.pop('phone-agent', None)
     for slug, title, desc, body in PAGES:
         _b = plug(slug, liven(slug, trans(slug, figs(slug, full(slug, flag(slug, body))))))
         _b = re.sub(r'(<section class="pt [^"]*") data-sp', r'\1', _b)
@@ -3965,6 +4125,8 @@ if __name__ == '__main__':
             _b = _b.replace('<section class="sn"><div class="w sn-i"><b>78%</b>', '<section class="sn"><div class="w sn-i"><b data-count="78" data-suf="%">78%</b>', 1)
             _b = _b.replace('<div class="cd dc">', '<div class="cd dc" data-in>', 1).replace('<div class="anx-l">', '<div class="anx-l" data-in>', 1).replace('<dl>', '<dl data-in>', 1)
             _b = _b.replace('<section class="dy">', '<section class="dy dy-c">', 1)
+        if slug == 'phone-agent':
+            _b = re.sub(r'<section class="pt [^"]*"[^>]*>.*?</section>', '', _b, count=1, flags=re.S)   # the rings are this page's transition
         if slug == 'websites':
             _b = re.sub(r'<section class="pt [^"]*"[^>]*>.*?</section>', '', _b, count=1, flags=re.S)   # the tap is this page's transition
         if slug == 'follow-up':
