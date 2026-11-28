@@ -708,3 +708,6 @@ Restrained pass on "The time, the address and the job": card larger, its four ro
 
 ### 24c. Booking questions (Nov 27)
 Sam: the plain Questions list at the bottom of Booking "looks really bad"; suggested the dotted ground with the serif. Now a full-width dotted section: bracket label, each question large in serif with a mono number, answer in grey sans beneath, hairlines between. Scoped to Booking. Other pages still have the plain list; give each its own treatment, do not copy this one everywhere. He also said Booking feels a little crammed between sections but is not worried about it.
+
+### 24d. Booking questions as a split (Nov 27)
+Sam on the centred dotted version: "looks bad maybe do a spliscreen". Now half and half: left a dotted panel with a bracket label and one very large serif "Questions."; right, on white, the three questions numbered in sans with answers under them. Lesson: big centred serif questions stacked down a dotted page did not work; dots work as a panel, not as a whole long section.
