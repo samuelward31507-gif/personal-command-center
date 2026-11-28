@@ -590,7 +590,7 @@ addEventListener('scroll',function(){if(!tick){tick=true;requestAnimationFrame(f
 (function(){
 var els=[].slice.call(document.querySelectorAll('[data-sp]'));if(!els.length)return;
 if(/[?&]motion=off/.test(location.search))return;
-if(innerWidth<861)els=els.filter(function(e){return e.classList.contains('pt')});if(!els.length)return;
+if(innerWidth<861)els=els.filter(function(e){return e.classList.contains('pt')||e.getAttribute('data-sp')==='all'});if(!els.length)return;
 var top=document.querySelector('.top'),mine=false,run=false,snap=/[?&]snap=1/.test(location.search);
 var st=els.map(function(e){e.classList.add('sp-live');var n=e.querySelector('.pt-n');return {e:e,pt:e.classList.contains('pt'),cv:e.hasAttribute('data-cv'),c:-1,n:n,to:n?+n.getAttribute('data-to'):0,fmt:n?n.getAttribute('data-fmt'):'',last:-1}});
 function cl(x){return x<0?0:x>1?1:x}function ez(x){return x*x*(3-2*x)}

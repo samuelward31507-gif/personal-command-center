@@ -773,3 +773,6 @@ New page, no phones:
 - Questions as a ruled index.
 Engine: data-in can now take an offset (data-in=".34" measures from that fraction down the element) so a scroll animation can track the middle of a tall element.
 Gotcha: .sm, .sb and .bw are taken by the homepage; the site mock uses wsm, wsb, wbx.
+
+### 24m. Websites transition: the tap (Nov 28)
+Sam: page approved ("the whole page is really good"), wanted one high-quality homepage-style transition. Built .wbt between the before-and-after and the site map: the booking card sits centred on white, a blue tap ring lands on "Book Wed, 2:00 PM", the button flips to "Booked", then its black grows (clip-path from the button's exact spot) until it is the whole screen; "Booked." in large serif with one line, then the black site map follows with no seam. Scroll-linked, 235vh, sticky stage, never stops the page. Works on phones too: data-sp="all" now runs below 861px. The shared statement band was removed from Websites. Register: do not reuse the button-grows-into-the-screen move on another page.
