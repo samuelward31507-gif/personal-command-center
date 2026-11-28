@@ -319,7 +319,7 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
           : <div className="k-tbl-wrap"><table className="k-tbl flat"><colgroup><col style={{ width: 110 }} /><col /><col style={{ width: 100 }} /><col style={{ width: 220 }} /><col style={{ width: 120 }} /></colgroup>
             <thead><tr><th>Date</th><th>Customer</th><th>Invoice</th><th>How</th><th className="r">Amount</th></tr></thead>
             <tbody>{pays.map(p => <tr key={p.id} tabIndex={0} onClick={() => go.invoice(p.invoice_id)} onKeyDown={e => { if (e.key === "Enter") go.invoice(p.invoice_id); }}>
-              <td className="k-mut">{dateLabel(p.paid_on)}</td><td><span className="k-cell-name"><Av name={p.customer} size="sm" /><b>{p.customer}</b></span></td><td className="k-mut">#{p.number}</td><td className="k-mut">{p.refund ? "Refund, " : ""}{method(p.method)}{p.note ? `, ${p.note}` : ""}</td><td className="r k-num"><b>{p.refund ? `−${dollars(-p.amount)}` : dollars(p.amount)}</b></td></tr>)}</tbody></table></div>)
+              <td className="k-mut">{dateLabel(p.paid_on)}</td><td><span className="k-cell-name"><Av name={p.customer || "?"} size="sm" /><b>{p.customer}</b></span></td><td className="k-mut">#{p.number}</td><td className="k-mut">{p.refund ? "Refund, " : ""}{method(p.method)}{p.note ? `, ${p.note}` : ""}</td><td className="r k-num"><b>{p.refund ? `−${dollars(-p.amount)}` : dollars(p.amount)}</b></td></tr>)}</tbody></table></div>)
         : !shown.length ? <Blank icon="invoice" title={f === "open" ? "Nothing outstanding" : "No invoices here"} text={f === "open" ? "Invoices start from a won job and pull the lines from the quote." : undefined} />
         : wide ? <div className="k-tbl-wrap"><table className="k-tbl flat">
           <colgroup><col style={{ width: 44 }} /><col style={{ width: 80 }} /><col style={{ width: 200 }} /><col /><col style={{ width: 92 }} /><col style={{ width: 92 }} /><col style={{ width: 170 }} /><col style={{ width: 110 }} /><col style={{ width: 110 }} /></colgroup>
@@ -355,7 +355,7 @@ export function MoneyScreen({ d, go, wide, biz, project, api, toast, reload }: {
       <div className="k-grid2">
         <Section title="Latest payments" sub={pays.length ? `${usd(pays.slice(0, 6).reduce((a, p) => a + p.amount, 0))} across the last ${Math.min(6, pays.length)}` : undefined} aside={pays.length > 0 ? <button type="button" className="k-btn ghost sm" onClick={() => setView("payments")}>All payments</button> : undefined}>
           {pays.length ? <div className="k-list">{pays.slice(0, 6).map(p => <button key={p.id} type="button" className="k-row" onClick={() => go.invoice(p.invoice_id)}>
-            <Av name={p.customer} />
+            <Av name={p.customer || "?"} />
             <span className="k-row-m"><span className="k-row-t"><b>{p.customer}</b>{p.refund && <Tag>Refund</Tag>}</span><span className="k-row-s">#{p.number} · {method(p.method)}{p.note ? `, ${p.note}` : ""} · {dateLabel(p.paid_on)}</span></span>
             <span className="k-row-r"><span className={"k-row-v" + (p.refund ? "" : " k-green-t")}>{p.refund ? "" : "+"}{dollars(p.amount)}</span></span></button>)}</div>
             : <Blank icon="check" title="No payments yet" text="Record a payment on any invoice and it lands here: card, cash, check or a deposit." />}
