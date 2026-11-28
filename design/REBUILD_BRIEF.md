@@ -702,3 +702,6 @@ To do: the same idea, with different drawings and different arrangements, on eve
 ### 24a. Booking: split signs reverted; rail reworked (Nov 27)
 Sam on the three-signs-beside-a-changing-drawing split: "Revert this looks bad". Reverted to the dark three-column serif row. SIGN_SPLIT is empty; do not bring that layout back. His note was on my drawings (two phones, a calendar, a house): keep line drawings far simpler and smaller than that.
 Next section down, the rail "One lead, from the form to the driveway": the line now fills as it scrolls in, nodes fill in turn, the last one blue; numbered mono times, serif step titles, and a measured bracket over the first three steps ("12 minutes from the form to a booked time", from the sample times 7:40 and 7:52).
+
+### 24b. Booking card section (Nov 27)
+Restrained pass on "The time, the address and the job": card larger, its four rows arrive in turn as it scrolls in, the reminder value in blue, and a reminder slip slides out from under the card last (existing line "A reminder text the night before."). Bracket label. No new drawings.

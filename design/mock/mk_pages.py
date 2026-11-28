@@ -810,7 +810,8 @@ _pb = lambda at, who, text: '<p class="hb %s" data-at="%d">%s</p>' % (who, at, t
 BKLIVE = ('<div class="lvh" data-live="9">%s<div class="ph2" aria-hidden="true"><p>Customer&rsquo;s phone</p>%s</div></div>'
           % (WEEK, _pb(0, 'c', '<b>Form sent</b>Fence estimate, 7:40 AM') + _pb(1, 'o', 'Thanks for reaching out to Ridgeline Fence. Three open times: Wed 1 PM, Thu 2 PM or Fri 8 AM.')
              + _pb(3, 'c', 'Thursday at 2 works') + _pb(4, 'o', 'Booked. Thursday at 2 PM.') + _pb(6, 'o', 'Reminder: your estimate is tomorrow at 2 PM. Reply C to confirm.') + _pb(7, 'c', 'C')))
-BKCARD = ('<div class="cd bkd">%s<div class="bkd-b"><p class="bkd-t">Estimate<b>Thursday, 2:00 PM</b></p>%s</div></div><p class="sd-n">Example. Sample data.</p>'
+BKCARD = ('<div class="bkw" data-in><div class="cd bkd">%s<div class="bkd-b"><p class="bkd-t">Estimate<b>Thursday, 2:00 PM</b></p>%s</div></div>'
+          '<p class="bkd-r" aria-hidden="true"><time>Wed 6 PM</time><span>A reminder text the night before.</span><i></i></p></div><p class="sd-n">Example. Sample data.</p>'
           % (head('On your calendar', 'Booked 7:52 AM'), ''.join('<p><span>%s</span><b>%s</b></p>' % x for x in [
               ('Address', 'Split Rail Dr'), ('The job', 'Privacy fence, about 180 ft'), ('Picked by', 'The customer, from your open times'), ('Reminder', 'Set for Wed 6 PM')])))
 RAIL = ('<ol class="rl">%s</ol>' % ''.join('<li><time>%s</time><b>%s</b></li>' % x for x in [
@@ -2882,6 +2883,13 @@ main:has(>.rh) .sgp li b{font:400 clamp(22px,1.9vw,32px)/1.12 Georgia,"Times New
 .rlx li:last-child::before{background:#fff;box-shadow:inset 0 0 0 2px #c9cbd0}.rlx li:last-child::after{background:#266df1}
 .rlx time,.rlx b{opacity:calc(.3 + .7*var(--on))}.rlx time::before{content:"0" counter(r) "  "}.rlx b{font:400 clamp(20px,1.6vw,28px)/1.14 Georgia,"Times New Roman",serif;letter-spacing:-.012em}
 @media(max-width:860px){.rlb-s{display:none}.rlx::before{display:none}.rlx li{--on:1}.rlx li::after{left:-8px;top:0}}
+.bkw{--q:clamp(0,calc(var(--p,1)*1.7 - .25),1);position:relative;width:100%;max-width:480px;padding-bottom:58px}.bkw .bkd{position:relative;z-index:2;max-width:none}
+.bkw .bkd-t b{font-size:clamp(28px,2.6vw,42px)}.bkw .bkd-b p+p{opacity:clamp(0,calc(var(--q)*5.4 - var(--i,0)),1)}.bkw .bkd-b p:nth-child(3){--i:1}.bkw .bkd-b p:nth-child(4){--i:2}.bkw .bkd-b p:nth-child(5){--i:3}
+.bkw .bkd-b p:nth-child(5) b{color:#1f4fbe}
+.bkd-r{position:absolute;left:14px;right:14px;bottom:0;z-index:1;display:flex;align-items:center;gap:14px;margin:0;padding:26px 16px 14px;border-radius:0 0 12px 12px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 18px 34px -24px rgba(30,40,80,.4);font-size:13.5px;
+transform:translateY(calc((1 - clamp(0,calc(var(--q)*5.4 - 4),1))*-46px));opacity:clamp(0,calc(var(--q)*5.4 - 4),1)}
+.bkd-r time{font:500 10.5px/1 "Geist Mono",monospace;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);white-space:nowrap}.bkd-r span{flex:1;font-weight:540}.bkd-r i{flex:none;width:9px;height:9px;border-radius:50%;background:#266df1}
+main:has(.bkw) .sp .lb{padding:0;border-radius:0;background:none;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)}main:has(.bkw) .sp .lb::before{content:"["}main:has(.bkw) .sp .lb::after{content:"]"}
 @media(max-width:860px){.rvqs-g{grid-template-columns:minmax(0,1fr)}.rvqs-l{display:block}.rvqs-l em{display:block;margin-top:10px}}
 @media(max-width:860px){.rvp-h{grid-template-columns:minmax(0,1fr)}.rvq p{display:block}.rvq p span{display:block;margin-top:8px}.rvp-k em{margin-left:0}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
