@@ -2068,7 +2068,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'anh': 'top', 'anx': 'anx', 'aq': 'aq', 'fuh': 'top', 'fub': 'fub', 'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'scr': 'scr', 'anh': 'top', 'anx': 'anx', 'aq': 'aq', 'fuh': 'top', 'fub': 'fub', 'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -2244,6 +2244,19 @@ def signs_split(items, pics):   # three signs stacked on one side; on the other 
     return ('<section class="sg sg3" data-live="3,3,3"><div class="w sg-i"><div class="sg3-l"><p class="sg-t">How you know you have it</p><ol>%s</ol></div>'
             '<div class="sg3-p" aria-hidden="true">%s</div></div></section>'
             % (''.join('<li data-sc="%d"><b>%s</b><u data-at="0"></u></li>' % (k, ap(t)) for k, t in enumerate(items)), ''.join(pics)))
+
+def _scrows(sec):
+    # the one-lead walk-through without the pin: each step is a row, words on the left, its picture on the right, and the page keeps scrolling
+    items = re.findall(r'<li class="sc-c[^"]*">(.*?)</li>', sec, re.S)
+    r = sec[sec.index('<div class="sc-r">') + len('<div class="sc-r">'):]
+    r = r[:r.rindex('</div></div></div></section>')]
+    pics = []
+    for ch in r.split('<div class="sc-s')[1:]:
+        ch = ch[ch.index('</p>') + 4:]
+        pics.append(ch[:ch.rindex('</div>')])
+    head = re.search(r'<span class="lb">(.*?)</span><p class="st-t">(.*?)</p>', sec, re.S)
+    rows = ''.join('<div class="scr-r" data-in><div class="scr-t"><time>0%d</time>%s</div><div class="scr-p">%s</div></div>' % (k + 1, it, p) for k, (it, p) in enumerate(zip(items, pics)))
+    return ('<section class="scr"><div class="w scr-i"><div class="scr-h"><p class="fu-lab">%s</p><p class="st-t">%s</p></div><div class="scr-l">%s</div></div></section>' % (head.group(1), head.group(2), rows))
 
 
 def signs_pic(items, pics):   # the same three signs, each beside a small line drawing of it
@@ -3028,6 +3041,24 @@ main:has(.bkw) .ic li span{display:block;max-width:15em}main:has(.bkw) .ic li:la
 @media(max-width:1060px){.aq dl{grid-template-columns:repeat(2,minmax(0,1fr))}.aq dl div{border-bottom:1px solid var(--ln)}}
 @media(max-width:960px){.anh-t,.anx-g{grid-template-columns:minmax(0,1fr)}.anh-f{grid-template-columns:minmax(0,1fr)}.anc{padding:14px 0;grid-template-columns:auto 1fr;align-items:center;justify-items:start}.anc i{height:1px}.anx-l{border-left:0;border-top:1px solid var(--ln)}.anx-l p{grid-template-columns:minmax(0,1fr);gap:6px}.anx-l p.h{display:none}}
 @media(max-width:620px){.aq dl{grid-template-columns:minmax(0,1fr)}.aq dl div{border-right:0}}
+.scr{background:var(--dk);color:#fff}.scr-i{border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(80px,8vw,150px) clamp(22px,3.1vw,60px) clamp(40px,4vw,80px)}
+.scr-h{margin-bottom:clamp(40px,4.4vw,80px)}.scr .fu-lab{color:#8f9197}.scr-h .st-t{margin:20px 0 0;max-width:12em;color:#fff;font-size:clamp(34px,4vw,72px);line-height:1.02;letter-spacing:-.045em;font-weight:600}
+.scr-l{position:relative}.scr-r{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(30px,5vw,100px);align-items:center;padding:clamp(60px,6vw,110px) 0;border-top:1px solid var(--dl)}
+.scr-t{position:relative;padding-left:clamp(26px,2.4vw,40px);opacity:clamp(0,calc(var(--p,1)*3.2 - .4),1);transform:translateY(calc((1 - clamp(0,calc(var(--p,1)*3.2 - .4),1))*24px))}
+.scr-t::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:2px;background:#266df1;transform-origin:50% 0;transform:scaleY(clamp(0,calc(var(--p,1)*3 - .5),1))}
+.scr-t time{display:block;margin-bottom:18px;font:500 11px/1 "Geist Mono",monospace;letter-spacing:.06em;color:#8f9197}.scr-t b{display:block;max-width:13em;font:400 clamp(28px,2.8vw,48px)/1.08 Georgia,"Times New Roman",serif;letter-spacing:-.018em}
+.scr-t span{display:block;margin-top:16px;max-width:26em;font-size:clamp(16px,1.15vw,19px);line-height:1.45;color:#a3a5aa}
+.scr-t a{display:inline-flex;align-items:center;gap:6px;margin-top:20px;color:#fff;font-size:14.5px;font-weight:540;text-decoration:none}.scr-t a svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6}
+.scr-p{display:grid;justify-items:center;opacity:clamp(0,calc(var(--p,1)*3 - .7),1);transform:translateY(calc((1 - clamp(0,calc(var(--p,1)*3 - .7),1))*40px))}.scr-p>*{max-width:100%}.scr .cd,.scr .rvw,.scr .ph-s{color:var(--ink)}.scr .ph-k{display:none}
+.dy-c .dc-r:not(.dc-x):not(.ok)>div:first-child b::before{content:"";display:inline-block;width:9px;height:9px;margin-right:10px;border-radius:50%;background:var(--c);vertical-align:1px}
+.dy-c .dc-r:nth-child(3){--c:#f0a001}.dy-c .dc-r:nth-child(4){--c:#e5484e}.dy-c .dc-r:nth-child(5){--c:#8b5cf6}.dy-c .dc-r:nth-child(6){--c:#0ea5a0}
+.dy-c .dc-r:not(.ok) .dc-k i{background:var(--c,#e5484e)}.dy-c .dc-r:not(.ok):not(.dc-x) .dc-k{background-color:color-mix(in srgb,var(--c) 6%,#fff)}
+.dy-c .dc-r.ok .dc-k{background-color:#eef3ff}.dy-c .dc-r.ok .dc-k i{background:#266df1}
+.sn{position:relative;background:#fff;background-image:linear-gradient(180deg,rgba(16,16,16,0) 0,var(--dk) 150px,var(--dk) 100%),repeating-linear-gradient(90deg,rgba(16,16,16,.5) 0 1px,transparent 1px 7px);padding:150px 0 0}.scr{background-color:#fff;background-image:linear-gradient(180deg,var(--dk) 0,var(--dk) calc(100% - 150px),rgba(16,16,16,0) 100%),repeating-linear-gradient(90deg,rgba(16,16,16,.5) 0 1px,transparent 1px 7px);padding-bottom:150px}
+.sn-i{border-bottom:0}
+.anx{background:#fcfcfd radial-gradient(circle,#d3d6de .8px,transparent 1.2px) 0 0/10px 10px}.anx .anx-l{background:none;align-content:center}.anx .anx-l>p{background:#fff;padding-left:18px;padding-right:18px}
+.anx .anx-l>p.h{background:none}.anx .mr{background:#fff}
+@media(max-width:960px){.scr-r{grid-template-columns:minmax(0,1fr)}.sn{padding-top:100px}.scr{padding-bottom:100px}}
 @media(max-width:860px){.rvqs-g{grid-template-columns:minmax(0,1fr)}.rvqs-l{display:block}.rvqs-l em{display:block;margin-top:10px}}
 @media(max-width:860px){.rvp-h{grid-template-columns:minmax(0,1fr)}.rvq p{display:block}.rvq p span{display:block;margin-top:8px}.rvp-k em{margin-left:0}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
@@ -3694,6 +3725,9 @@ if __name__ == '__main__':
     for slug, title, desc, body in PAGES:
         _b = plug(slug, liven(slug, trans(slug, figs(slug, full(slug, flag(slug, body))))))
         _b = re.sub(r'(<section class="pt [^"]*") data-sp', r'\1', _b)
+        if slug == 'answering':
+            _b = re.sub(r'<section class="sc"[^>]*>.*?</section>', lambda m: _scrows(m.group(0)), _b, count=1, flags=re.S)
+            _b = _b.replace('<section class="dy">', '<section class="dy dy-c">', 1)
         if slug == 'follow-up':
             _b = _b.replace('<section class="pt ', '<section data-in class="pt pt-fu ', 1).replace('gets chased until it&rsquo;s settled.</h2>', 'gets chased <u>until it&rsquo;s settled.</u></h2>', 1)
             _b = _b.replace('<section class="ic">', '<section class="ic ic-fu" data-in>', 1)

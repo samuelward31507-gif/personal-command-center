@@ -738,3 +738,10 @@ Sam approved Follow-up ("good, next").
 - What is included (anx): serif heading with the Monday report on the left; right a two-column table, Covers / What happens.
 - Questions (aq): large sans "Questions." then the five as a ruled row of columns, serif questions with mono numbers. Chat bubbles stay on Follow-up only.
 Kept: day chart, 78 percent band, statement band, the one-lead walk-through on black, the chain row.
+
+### 24i. Answering fixes (Nov 28)
+Sam marked "Dont like that your stuck scrolling here" on the one-lead walk-through.
+- Walk-through (scr, built from .sc by _scrows): no pin. Five rows down the page, each a numbered serif step with its words and link on the left (blue rule draws in) and its picture on the right (rises in). Page keeps scrolling.
+- Day chart (dy-c): each row its own colour, amber, red, purple, teal, tinted row and coloured dot; With it stays blue. #8b5cf6 and #0ea5a0 added to _KEEP.
+- Line fringes: fine vertical lines fading from white into black above the 78 percent band, and from black back to white below the walk-through (where the page returns to white).
+- What is included (anx): on the fine dot ground; table rows on white.
