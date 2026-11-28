@@ -1230,18 +1230,21 @@ RVCURVE = ('<section class="rvc" data-sp><div class="rvc-i"><div class="w rvc-f"
 # after the job, in one line: five moments on a hairline, lit one after another
 _rn = lambda at, tag, title, body: '<div class="rvp-n" data-hd="%d"><span>%s</span><b>%s</b>%s</div>' % (at, tag, title, body)
 _rq_a = {3, 9, 17, 22, 30}; _rq_s = {3, 17, 30}; _rq_all = {k for k in range(34) if (k + 1) * 20 // 34 > k * 20 // 34}
-_rq = lambda cls, title, note, asked, got: ('<div class="rvq %s"><p><b>%s</b><span>%s</span></p><div class="rvq-g">%s</div></div>'
-                                            % (cls, title, note, ''.join('<i style="--k:%d" class="%s"></i>' % (k, ('a s' if k in got else 'a') if k in asked else '') for k in range(34))))
-RVPIPE = ('<section class="rvp" data-live="8"><div class="w rvp-i"><div class="rvp-h"><div><p class="st-t">Asked at the right moment, every time. <span>Not when someone remembers.</span></p>'
-          '<div class="rvp-t">%s</div></div><div class="rvp-q" aria-hidden="true">%s%s<p class="rvp-k"><span><i></i>Job finished</span><span><i class="a"></i>Asked</span><span><i class="a s"></i>Review left</span><em>One month, 34 finished jobs. Sample data.</em></p></div></div>'
-          '<div class="rvp-l" aria-hidden="true"><i></i>%s</div></div></section>'
-          % (''.join('<div><b>%s.</b><span>%s</span></div>' % x for x in [
-                 ('The job gets paid', 'The moment it&rsquo;s marked done, the review ask is queued.'), ('They get asked at the right time', 'A short text with a direct link, while the job is fresh.'),
-                 ('Your name gets around', 'Reviews and regular posts keep you in front of people searching nearby.')]),
-             _rq('', 'Asked when someone remembers', '5 asked, 3 reviews', _rq_a, _rq_s), _rq('on', 'Asked every time', '34 asked, about 20 reviews', set(range(34)), _rq_all),
-             _rn(0, '4:10 PM', 'Job marked done', '<p>Full install</p>') + _rn(1, '4:10 PM', 'Ask queued', '<p>No one had to remember</p>')
+_rq = lambda cls, title, big, note, asked, got: ('<div class="rvq %s"><p><b>%s</b></p><div class="rvq-g">%s</div><div class="rvq-f"><b>%s</b><span>%s</span></div></div>'
+                                                 % (cls, title, ''.join('<i style="--k:%d" class="%s"></i>' % (k, ('a s' if k in got else 'a') if k in asked else '') for k in range(34)), big, note))
+# the month twice, side by side, on the dotted ground the hand-over lands on
+RVMONTH = ('<section class="rvqs"><div class="w rvqs-i"><p class="rvqs-l">One month, 34 finished jobs<em>Example business, sample data</em></p><div class="rvqs-g" aria-hidden="true">%s%s</div>'
+           '<p class="rvp-k" aria-hidden="true"><span><i></i>Job finished</span><span><i class="a"></i>Asked</span><span><i class="a s"></i>Review left</span></p></div></section>'
+           % (_rq('', 'Asked when someone remembers', '3', 'reviews, from 5 asks', _rq_a, _rq_s), _rq('on', 'Asked every time', 'About 20', 'reviews, from 34 asks', set(range(34)), _rq_all)))
+# after the job, in one line: five moments on a hairline, lit one after another, then what each part does
+RVPIPE = (RVMONTH + '<section class="rvp" data-live="8"><div class="w rvp-i"><span class="lb">After the job</span><p class="st-t">Asked at the right moment, every time. <span>Not when someone remembers.</span></p>'
+          '<div class="rvp-l" aria-hidden="true"><i></i>%s</div><div class="rvp-t">%s</div></div></section>'
+          % (_rn(0, '4:10 PM', 'Job marked done', '<p>Full install</p>') + _rn(1, '4:10 PM', 'Ask queued', '<p>No one had to remember</p>')
              + _rn(2, '4:11 PM', 'Text sent', '<p class="hb o">Mind leaving a quick review? It takes a minute.</p>') + _rn(4, '4:26 PM', 'Review left', stars(5))
-             + _rn(5, 'On your profile', 'Where people look', '<p>Next to your name in search</p>')))
+             + _rn(5, 'On your profile', 'Where people look', '<p>Next to your name in search</p>'),
+             ''.join('<div><b>%s.</b><span>%s</span></div>' % x for x in [
+                 ('The job gets paid', 'The moment it&rsquo;s marked done, the review ask is queued.'), ('They get asked at the right time', 'A short text with a direct link, while the job is fresh.'),
+                 ('Your name gets around', 'Reviews and regular posts keep you in front of people searching nearby.')])))
 SEARCH_L = SEARCH.replace('<div class="q">', '<div class="q" data-sc="0">').replace('<div class="on">', '<div class="on" data-sc="2">').replace('<div class="">', '<div class="" data-sc="1">')
 RVACD = ('<section class="acd" data-live="3,3,3"><div class="w acd-g"><div class="acd-t"><span class="lb">Where people look</span><p class="st-t">The shop with the reviews gets the call.</p>'
          '<div class="acd-l">%s</div></div><div class="acd-p">%s<p class="sd-n">Example. Sample data.</p></div></div></section>'
@@ -1982,7 +1985,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'rvqs': 'rvqs', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -1999,7 +2002,7 @@ RHYTHM = {
     'follow-up': ('st v3 sx acd ic as', {'st': 'v-2', 'sx': 't-exp'}),
     'invoicing': ('st ivn ivb ivl v3', {'st': 's-tn v-c'}),
     'bookkeeping': ('st sx pg sp', {'st': 'v-xl t-rule', 'sx': 'v-pin', 'pg': 'v-l', 'sp': 's-dkp'}),
-    'reviews': ('st rvc rvp acd v3', {'st': 'v-2'}),
+    'reviews': ('st rvc rvqs rvp acd v3', {'st': 'v-xl'}),
     'review-replies': ('st sx pg', {'st': 'v-c', 'sx': 'v-pin t-rule', 'pg': 'v-l'}),
     'win-backs': ('bl st sx sp', {'bl': 's-bl', 'st': 't-sheet', 'sx': 's-tn', 'sp': 'v-f'}),
     'maintenance-reminders': ('st sx pg bl', {'st': 'v-2', 'sx': 's-tn t-exp', 'pg': 's-dk', 'bl': 'v-xl'}),
@@ -2735,6 +2738,18 @@ CSS_FA = r"""
 .rvp-h .rvp-t,.rvp-h .rvp-t>div{border-color:var(--ln)}.rvp-t span{color:var(--t2)}.rvq{background:#fff;box-shadow:inset 0 0 0 1px var(--ln),0 20px 40px -32px rgba(30,40,80,.35)}.rvq.on{box-shadow:inset 0 0 0 1.5px #266df1,0 20px 40px -32px rgba(30,40,110,.45)}
 .rvq p span,.rvp-k{color:var(--t2)}.rvq-g i,.rvp-k i{box-shadow:inset 0 0 0 1px #d5d8de;background:#fff}.rvq-g i.a,.rvp-k i.a{background:#266df1;box-shadow:none}
 .rvp-l>i{background:var(--ink)}.rvp-n::before{box-shadow:0 0 0 5px #fff}.rvp.live .rvp-n[data-hd]:not(.in)::before{background:#c9cbd0}.rvp-n span{color:var(--t3)}.rvp-n p{color:var(--t2)}.rvp-n p.hb{color:#fff}
+.rvqs{background:#fcfcfd radial-gradient(circle,#d3d6de .8px,transparent 1.2px) 0 0/10px 10px;border-bottom:1px solid var(--ln)}
+.rvqs-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(72px,7.4vw,140px) clamp(22px,3.1vw,60px)}
+.rvqs-l{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin:0 0 clamp(22px,2.2vw,36px);font-size:clamp(20px,1.7vw,28px);font-weight:560;letter-spacing:-.025em}
+.rvqs-l em{font:500 10.5px/1 "Geist Mono",monospace;font-style:normal;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}
+.rvqs-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(14px,1.6vw,26px)}.rvqs .rvq{margin:0;padding:clamp(22px,2.4vw,40px)}.rvqs .rvq p{margin:0 0 clamp(18px,1.8vw,28px)}.rvqs .rvq p b{font-size:clamp(17px,1.3vw,22px)}
+.rvq-f{display:flex;align-items:baseline;gap:12px;margin-top:clamp(22px,2.2vw,36px);padding-top:clamp(16px,1.6vw,24px);border-top:1px solid var(--ln)}.rvq-f b{font-size:clamp(34px,3.4vw,60px);line-height:.95;font-weight:500;letter-spacing:-.04em}
+.rvq.on .rvq-f b{color:#266df1}.rvq-f span{font-size:clamp(14px,1vw,17px);color:var(--t2)}.rvqs .rvp-k{margin-top:clamp(18px,1.8vw,28px)}
+.rvp{background:#fff}.rvp-i{padding-top:clamp(80px,8vw,150px);padding-bottom:clamp(80px,8vw,150px)}.rvp .st-t{margin:20px 0 clamp(56px,6vw,104px);max-width:18em}.rvp .rvp-t{border-color:var(--ln);margin-top:clamp(64px,7vw,120px)}
+.rvp .lb{background:#eeeff2}
+main:has(>.rh) .st .st-i{padding-top:clamp(84px,8.5vw,160px);padding-bottom:clamp(84px,8.5vw,160px)}main:has(>.rh) .sgp .sg-i{padding-top:clamp(64px,6vw,110px)}
+main:has(>.rh) .acd,main:has(>.rh) .v3{border-top:1px solid var(--ln)}
+@media(max-width:860px){.rvqs-g{grid-template-columns:minmax(0,1fr)}.rvqs-l{display:block}.rvqs-l em{display:block;margin-top:10px}}
 @media(max-width:860px){.rvp-h{grid-template-columns:minmax(0,1fr)}.rvq p{display:block}.rvq p span{display:block;margin-top:8px}.rvp-k em{margin-left:0}}
 @media(max-width:860px){.rvc-f{height:auto;padding:84px 0 46vw}.rvc-t{position:relative;top:auto;transform:none;max-width:none;left:0;padding:0 var(--pad)}.rvc-g{top:auto;height:56vw}.rvp-l{grid-template-columns:minmax(0,1fr);gap:28px}.rvp-l>i{left:5px;right:auto;top:0;bottom:0;width:1px;height:auto}.rvp-n{padding:0 0 0 30px}.rvp-t{grid-template-columns:minmax(0,1fr)}}
 /* ---- /invoicing ---- */

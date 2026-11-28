@@ -643,3 +643,6 @@ Sam: "I want the exact blue design from attio" (after the ink version). Graph no
 
 ### 23r. Reviews graph redone as our own (Nov 27)
 Sam: "I want you to redo it, and do your own thing". Dropped the Attio-style curve. New: a year as two staircases drawn from the page numbers (20 a month to about 240 when every job is asked, 3 a month to 36 when someone remembers), month marks, running totals on each step, one large figure. Hand-over: the white dotted page rises with a stepped top edge. Landing statement back in the site sans. Honest shape: steady rate, straight steps, no exponential claim.
+
+### 23s. Reviews, whole-page pass (Nov 27)
+Sam: make the whole page look amazing, not crowded, keep all the information, make it longer if it is choppy. The crowded dotted section is split in two: the month comparison alone on dots (two large cards, each with its result figure), then the timeline on white with its heading and the three statements under it. Problem statement larger with more room. More space between sections. No copy removed.
