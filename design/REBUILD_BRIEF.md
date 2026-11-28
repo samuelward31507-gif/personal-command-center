@@ -745,3 +745,10 @@ Sam marked "Dont like that your stuck scrolling here" on the one-lead walk-throu
 - Day chart (dy-c): each row its own colour, amber, red, purple, teal, tinted row and coloured dot; With it stays blue. #8b5cf6 and #0ea5a0 added to _KEEP.
 - Line fringes: fine vertical lines fading from white into black above the 78 percent band, and from black back to white below the walk-through (where the page returns to white).
 - What is included (anx): on the fine dot ground; table rows on white.
+
+### 24j. Answering, homepage-style walk-through (Nov 28)
+Sam wanted the walk-through to work like the homepage dark "Then we build whatever fixes it" section: words scroll up on the left, the picture on the right stays put and changes with them. Built (scr): centred serif opener "Follow one lead through the business.", then tall left items (serif step, sentence, link) with a sticky right panel; each picture fades in while its step is in view (data-sp on .scr-g, --d per item). Nothing pins. Phone: each step with its picture inline.
+- Removed the redundant "One lead, start to finish." statement band and the second header.
+- Line fringes now white-on-black inside the column like the homepage .pv (top of the 78 percent band, bottom of the walk-through).
+- Dots only inside the column on What is included.
+- More motion: 78 percent counts up (data-suf added to the count script), day chart bars draw and dots pop in, table rows and question columns arrive in turn.

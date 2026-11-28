@@ -1509,9 +1509,9 @@ draw(true);if('IntersectionObserver' in window)new IntersectionObserver(function
 setInterval(function(){if(!vis||document.hidden)return;st++;if(st>(len[sc]||len[len.length-1])){sc=(sc+1)%n;st=0;draw(true)}else draw(false)},1050)});
 """
 JS += r"""
-[].forEach.call(document.querySelectorAll('[data-count]'),function(e){var to=+e.getAttribute('data-count'),pre=e.getAttribute('data-pre')||'',done=false;
+[].forEach.call(document.querySelectorAll('[data-count]'),function(e){var to=+e.getAttribute('data-count'),pre=e.getAttribute('data-pre')||'',suf=e.getAttribute('data-suf')||'',done=false;
 if(!('IntersectionObserver' in window))return;new IntersectionObserver(function(x,o){if(!x[0].isIntersecting||done)return;done=true;o.disconnect();var t0=performance.now();
-(function f(t){var k=Math.min(1,(t-t0)/1100);k=1-Math.pow(1-k,3);e.textContent=pre+Math.round(to*k).toLocaleString('en-US');if(k<1)requestAnimationFrame(f)})(t0)},{threshold:.6}).observe(e)});
+(function f(t){var k=Math.min(1,(t-t0)/1100);k=1-Math.pow(1-k,3);e.textContent=pre+Math.round(to*k).toLocaleString('en-US')+suf;if(k<1)requestAnimationFrame(f)})(t0)},{threshold:.6}).observe(e)});
 """
 ALLCSS = mono(hero_css + CSS)
 VER = hashlib.sha1((ALLCSS + JS).encode()).hexdigest()[:8]
