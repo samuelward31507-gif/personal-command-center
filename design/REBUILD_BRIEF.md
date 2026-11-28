@@ -787,3 +787,6 @@ Full new page at the homepage standard, distinct from every page in the register
 - Setup as a two-sided spine (From you / From us).
 - Questions as a thread (You / Us).
 Register additions, do not reuse: live waveform hero, rings transition with circle growth, transcript-to-summary colour lines, two-sided spine, You/Us question thread.
+
+### 24o. Phone agent, second pass (Nov 28)
+Sam asked if it was at homepage level; my honest answer: hero, rings and after-the-call yes; the old problem split, the small fork and the static end were not. Fixed: problem section is now its own split (serif headline, How you would know list; a Recents card that fills with seven red missed calls as you scroll, then "7 missed calls" counts up). Fork is full width on a rounded dotted panel: Call answered splits to Takes the details then Estimate booked (blue) or Puts them through then Rings through to you (amber), both joining Summary in your app (black); dots run the whole route; a vertical version on phones. Setup: the spine fills blue, rows slide in from both sides, dots fill blue.
