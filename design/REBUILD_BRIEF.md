@@ -640,3 +640,6 @@ Sam: "But the graph is still blue". Curve, drop lines, fill, label and stat rule
 
 ### 23q. Reviews graph back to the Attio blue (Nov 27)
 Sam: "I want the exact blue design from attio" (after the ink version). Graph now as in his recording: thin blue curve, fine pale-blue lines under it, a faint tint toward the right, dotted band on top, blue rules on the stats. My additions (dashed line, year totals, month marks, header text) are hidden. Own numbers and wording. Landing stays white with dots.
+
+### 23r. Reviews graph redone as our own (Nov 27)
+Sam: "I want you to redo it, and do your own thing". Dropped the Attio-style curve. New: a year as two staircases drawn from the page numbers (20 a month to about 240 when every job is asked, 3 a month to 36 when someone remembers), month marks, running totals on each step, one large figure. Hand-over: the white dotted page rises with a stepped top edge. Landing statement back in the site sans. Honest shape: steady rate, straight steps, no exponential claim.
