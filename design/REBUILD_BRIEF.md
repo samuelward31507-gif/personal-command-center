@@ -762,3 +762,14 @@ Sam approved Answering ("Beautiful"). Websites was short and plain (5.5k px). No
 - One visit on black: line fringes on the black, serif, times 10:02 to 10:04, a blue line fills across the four steps as they light in turn.
 - Questions: ruled index (blue mono number, large question, answer right).
 Register additions, do not reuse: filmstrip with playhead, line-drawn screen with leader callouts.
+
+### 24l. Websites, redone from scratch (Nov 28)
+Sam on 24k: "really bad", too many phone screenshots, the filmstrip looked garbage, the line-drawn first screen looked bad. Rejected, do not bring back: filmstrip of phone frames, wireframe phone with leader callouts, phone pictures on this page.
+New page, no phones:
+- Hero split: headline left; right a dotted panel with the example site in a desktop browser window (nav, headline, booking card with open times), a "New estimate booked" note slides in.
+- Before and after: one browser window; as you scroll, a wipe line moves across and turns a template site (slideshow, eight-link menu, contact form, cookie bar) into the booking site. Three notes under it fill in colour as the wipe passes them (53 percent stat kept, Google 2016).
+- Site map on black with line fringes: Home to five page types to their pages, every line running into one blue "Book a time" node; draws in on scroll.
+- Free check split: serif headline and URL field; dotted panel with an example result card, three rows arriving in turn.
+- Questions as a ruled index.
+Engine: data-in can now take an offset (data-in=".34" measures from that fraction down the element) so a scroll animation can track the middle of a tall element.
+Gotcha: .sm, .sb and .bw are taken by the homepage; the site mock uses wsm, wsb, wbx.

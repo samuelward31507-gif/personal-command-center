@@ -623,7 +623,7 @@ cs.forEach(function(c,j){c.addEventListener('click',function(e){if(e.target.clos
 (function(){
 var els=[].slice.call(document.querySelectorAll('.t-exp,.t-wipe,.t-door,[data-in]'));if(!els.length)return;
 if(/[?&]motion=off/.test(location.search))return;
-var tick=false;function f(){tick=false;var vh=innerHeight;els.forEach(function(e){var r=e.getBoundingClientRect(),p=Math.max(0,Math.min(1,(vh-r.top)/(vh*.72)));e.style.setProperty('--p',p.toFixed(3))})}
+var tick=false;function f(){tick=false;var vh=innerHeight;els.forEach(function(e){var r=e.getBoundingClientRect(),o=+e.getAttribute('data-in')||0,p=Math.max(0,Math.min(1,(vh-r.top-o*r.height)/(vh*.72)));e.style.setProperty('--p',p.toFixed(3))})}
 function q(){if(!tick){tick=true;requestAnimationFrame(f)}}addEventListener('scroll',q,{passive:true});addEventListener('resize',q);f();
 })();
 (function(){

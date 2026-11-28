@@ -152,14 +152,67 @@ WANAT = ('<section class="wan"><div class="w wan-i"><div class="wan-h"><p class=
          % (''.join('<g class="ld ld-%s" style="--i:%d"><path pathLength="1" d="%s"/><circle cx="%s" cy="%s" r="5"/></g>' % (k, i, d, d[1:4], d[5:8]) for i, (k, y, a, b, d) in enumerate(_WAN)),
             ''.join('<div class="wan-o wan-%s" style="--i:%d;top:%.2f%%"><b>%s</b><span>%s</span></div>' % (k, i, (y - 16) / 7, a, b) for i, (k, y, a, b, d) in enumerate(_WAN))))
 
-WEBSITES = ('<section class="hs hs-r"><div class="w hs-g"><div class="hs-p ph-p">%s</div><div class="hs-t"><span class="pill"><i></i>Getting found</span>'
-            '<h1>A site that books jobs.</h1><p class="sub">Fast on a phone, clear about what you do, and built to turn visitors into booked estimates. Written and built for your business, not from a theme.</p>'
-            '<div class="cta">%s<a class="btn q" href="/audit">Check your site in 60 seconds</a></div>'
-            '<p class="hs-n">Three things do most of the work: it loads fast, it has one clear button, and the button books.</p></div></div></section>' % (PHONE, BOOK)
+# --- Websites, redone (Nov 28): no phones. The site in a browser bleeding off the hero; a scroll wipe from a template site to yours;
+# the site map drawn on black, every page running into one button; the free check with an example result.
+def _bw(url, inner, cls=''):
+    return '<div class="wbx %s"><div class="wbx-b"><i></i><i></i><i></i><span>%s</span></div><div class="wbx-v">%s</div></div>' % (cls, url, inner)
+SM_AFTER = ('<div class="wsm"><div class="wsm-n"><b><i></i>Ridgeline Services</b><span>Services</span><span>Areas</span><span>Reviews</span><em>Book a time</em></div>'
+            '<div class="wsm-g"><div class="wsm-t"><p class="wsm-k">Free estimates in Colorado Springs</p><h3>Work done right.<br>Pick a time today.</h3>'
+            '<p class="wsm-s">Colorado Springs, Monument and Fountain. Choose a time and it goes straight on our calendar.</p>'
+            '<div class="wsm-p"><i></i><i></i><i></i></div></div>'
+            '<div class="wsm-b"><b>Book a free estimate</b><label>What do you need?<u>New install</u></label><label>Zip code<u>80920</u></label>'
+            '<p>Open this week</p><div class="wsm-tm"><span>Tue 9 AM</span><span class="on">Wed 2 PM</span><span>Thu 11 AM</span><span>Thu 3 PM</span><span>Fri 8 AM</span><span>Fri 1 PM</span></div>'
+            '<em>Book Wed, 2:00 PM</em></div></div></div>')
+SM_BEFORE = ('<div class="wsb"><div class="wsb-n"><b>Service Company</b><span>Home</span><span>About Us</span><span>Services</span><span>Gallery</span><span>Testimonials</span><span>Blog</span><span>FAQ</span><span>Contact</span></div>'
+             '<div class="wsb-h"><span class="wsb-a">&lsaquo;</span><div><b>Welcome to Our Website</b><p>Quality service you can trust.</p><em>Learn more</em></div><span class="wsb-a">&rsaquo;</span><div class="wsb-d"><i class="on"></i><i></i><i></i><i></i></div></div>'
+             '<div class="wsb-g"><div class="wsb-x"><b>About Us</b><u></u><u></u><u></u><u class="s"></u><u></u><u class="s"></u></div>'
+             '<div class="wsb-f"><b>Contact Us</b><label>Name<u></u></label><label>Email<u></u></label><label>Message<u class="t"></u></label><em>Submit</em></div></div>'
+             '<div class="wsb-c"><span>This website uses cookies to improve your experience.</span><em>Accept</em></div></div>')
+WBHERO = ('<section class="wbh"><div class="w wbh-g"><div class="wbh-t"><p class="fu-lab">Websites</p><h1>A website that books the job.</h1>'
+          '<p class="sub">Written and built for your business. Fast on a phone, clear about what you do, and one button that puts the estimate on your calendar.</p>'
+          '<div class="cta">%s<a class="btn q" href="/audit">Check your site in 60 seconds</a></div></div>'
+          '<div class="wbh-p">%s<div class="wbh-k"><i></i><div><b>New estimate booked</b><span>Wed, 2:00 PM. New install, 80920</span></div></div>'
+          '<p class="wbh-x">Example business. Sample data.</p></div></div></section>' % (BOOK, _bw('ridgelineservices.com', SM_AFTER)))
+_WN = [('#266df1', 'Says the work and the town.', 'Not &ldquo;welcome to our website&rdquo;.', .22),
+       ('#f0a001', 'One button, and it books.', 'Not a contact form that goes to an inbox.', .5),
+       ('#0ea5a0', 'Light enough to load on a phone.', '53% of phone visits are dropped past three seconds (Google, 2016).', .78)]
+WBWIPE = ('<section class="wbw"><div class="w wbw-i"><div class="wbw-h"><p class="fu-lab">Before and after</p><h2 class="wbw-t">Same business. A different first screen.</h2></div>'
+          '<div class="wbw-s" data-in=".34">%s<div class="wbw-n">%s</div><p class="wbw-x">Example business. Sample data.</p></div></div></section>'
+          % (_bw('yourbusiness.com', '<div class="wbw-a">%s</div><div class="wbw-b">%s</div><div class="wbw-r" aria-hidden="true"><span>After</span><span>Before</span></div>' % (SM_AFTER, SM_BEFORE), 'bw-l'),
+             ''.join('<div class="wbw-o" style="--t:%s;--c:%s"><i></i><b>%s</b><span>%s</span></div>' % (t, c, a, b) for c, a, b, t in _WN)))
+def _wnode(x, y, w, label, s, cls=''):
+    return ('<g class="wm-n %s" style="--s:%s"><rect x="%d" y="%d" width="%d" height="40" rx="10"/><text x="%d" y="%d">%s</text></g>'
+            % (cls, s, x, y - 20, w, x + w / 2, y + 5, label))
+def _wedge(d, s, cls=''):
+    return '<path class="wm-e %s" style="--s:%s" pathLength="1" d="%s"/>' % (cls, s, d)
+_C2 = [('Services', 95), ('Service areas', 265), ('Reviews', 400), ('About', 480)]
+_C3 = [('New work', 40, 95), ('Repairs', 95, 95), ('Upkeep', 150, 95), ('Colorado Springs', 210, 265), ('Monument', 265, 265), ('Fountain', 320, 265)]
+WBMAP = ('<section class="wbm"><div class="w wbm-i"><div class="wbm-h"><p class="fu-lab">The build</p><h2 class="wbm-t">Every page ends at a booked time.</h2>'
+         '<p class="wbm-s">Written from your call: the work you do, the towns you cover, the questions people ask before they book. Every page carries the same button.</p></div>'
+         '<div class="wbm-d" data-in><svg viewBox="0 0 1200 520" role="img" aria-label="Example site map: home, services, service areas, reviews and about, all leading to Book a time">'
+         + ''.join(_wedge('M170 270C230 270 230 %d 290 %d' % (y, y), 0) for _, y in _C2)
+         + ''.join(_wedge('M450 %dC505 %d 505 %d 560 %d' % (py, py, y, y), .18) for _, y, py in _C3)
+         + ''.join(_wedge('M750 %dC850 %d 850 270 930 270' % (y, y), .36, 'b') for _, y, _p in _C3)
+         + ''.join(_wedge('M450 %dC700 %d 760 270 930 270' % (y, y), .36, 'b') for _, y in _C2[2:])
+         + _wnode(40, 270, 130, 'Home', 0)
+         + ''.join(_wnode(290, y, 160, l, .1) for l, y in _C2)
+         + ''.join(_wnode(560, y, 190, l, .28) for l, y, _p in _C3)
+         + _wnode(930, 270, 200, 'Book a time', .5, 'k')
+         + '<text class="wm-c" x="1030" y="320" style="--s:.58">Wed, 2:00 PM, on your calendar</text>'
+         '</svg></div><p class="wbm-x">Example site map. Each one is planned for the business.</p></div></section>')
+WBCHECK = ('<section class="wbc"><div class="w wbc-g"><div class="wbc-t"><p class="fu-lab">Free site check</p><h2 class="wbc-h">Check your site first.</h2>'
+           '<p class="wbc-s">See what a homeowner runs into on a phone, what slow replies likely cost you, and what to fix first. Free, in about 60 seconds.</p>'
+           '<a class="uc-f" href="/audit"><span>yourbusiness.com</span><em>Check my site</em></a></div>'
+           '<div class="wbc-p"><div class="wbc-r" data-in><div class="wbc-b"><b>Site check</b><span>yourbusiness.com</span><em>Example result</em></div>%s</div></div></div></section>'
+           % ''.join('<div class="wbc-x" style="--i:%d;--c:%s"><i></i><div><span>%s</span><b>%s</b></div></div>' % (k, c, a, b) for k, (c, a, b) in enumerate([
+               ('#e5484e', 'What a homeowner runs into', 'A contact form, and no way to book.'),
+               ('#f0a001', 'What it likely costs', 'About $2,400 a month in slow replies.'),
+               ('#266df1', 'What to fix first', 'A button that books a time.')])))
+WEBSITES = (WBHERO
             + statement('The problem', 'Most contractor sites lose the visitor on the first screen.', 'Slow on a phone, no clear next step, and a contact form that goes nowhere. The visitor wanted a price and a time. They leave with neither.')
-            + WFILM + VS + WANAT + JOURNEY
+            + WBWIPE + WBMAP
             + fq('Everything is custom. It&rsquo;s custom to you. It&rsquo;s custom to your problem. It&rsquo;s not a template.')
-            + CHECK
+            + WBCHECK
             + faq('Questions.', [('Do I need a new site?', 'Not always. The free audit tells you if yours is costing you jobs.'),
                                  ('Who writes it?', 'We do, from what you tell us on the call.'),
                                  ('Can it work with my current setup?', 'Yes. It plugs into your calendar and everything else we set up.')])
@@ -385,84 +438,108 @@ CSS = r"""
 .uc-f span::after{content:"";display:inline-block;width:1.5px;height:1.1em;margin-left:3px;vertical-align:-.18em;background:var(--blue)}
 .uc-f em{display:inline-flex;align-items:center;height:clamp(44px,3vw,54px);padding:0 clamp(16px,1.2vw,22px);border-radius:11px;background:var(--ink);color:#fff;font-style:normal;font-size:clamp(14px,.9vw,16.5px);font-weight:560;white-space:nowrap}
 .uc+.fa{border-top:1px solid var(--ln)}
-/* websites: the first three seconds */
-.wfs{border-top:1px solid var(--ln)}.wfs-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(96px,8vw,150px) var(--pad) clamp(64px,5vw,96px)}
-.wfs-h{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:40px clamp(40px,6vw,120px);align-items:end;margin-bottom:clamp(56px,5vw,90px)}
-.wfs-t{margin:22px 0 0;max-width:11em;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em}
-.wfs-s{margin:22px 0 0;max-width:24em;font-size:clamp(16px,1.1vw,19px);line-height:1.4;color:var(--t2)}
-.wfs-n{padding-left:28px;border-left:2px solid #e5484e}.wfs-n b{display:block;font-size:clamp(64px,6vw,108px);line-height:.9;font-weight:560;letter-spacing:-.05em}
-.wfs-n span{display:block;margin-top:16px;max-width:19em;font-size:clamp(15px,1vw,18px);line-height:1.38;font-weight:500}.wfs-n em{display:block;margin-top:14px;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:var(--t3)}
-.wf-t{position:relative;--cols:13;--span:12;--q:clamp(0,calc((var(--p,1) - .1)*1.45),1)}
-.wf-x,.wf-s{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:clamp(6px,.7vw,12px)}
-.wf-x span{text-align:center;font:500 10.5px/1 "Geist Mono",monospace;color:var(--t3);padding-bottom:14px;border-bottom:1px solid var(--ln)}
-.wf-l{margin:28px 0 12px;font:500 12px/1 "Geist Mono",monospace;color:var(--t3)}.wf-l.v{color:#266df1}
-.wf-s{position:relative}
-.wf-f{--o:clamp(0,calc((var(--q)*var(--span) - var(--k)*var(--span)/12)*3 + 1),1);display:flex;flex-direction:column;gap:5%;aspect-ratio:9/17;padding:9% 8%;box-sizing:border-box;border-radius:clamp(7px,.7vw,12px);background:#fff;box-shadow:0 0 0 1.5px #dfe2e8;opacity:calc(.16 + var(--o)*.84);transform:translateY(calc((1 - var(--o))*8px))}
-.wf-f i{display:block;border-radius:3px;background:#e7e9ee}.wf-f .n{height:4%;width:50%}.wf-f .h{height:6%;width:88%;background:#17181a}.wf-f .h2{height:6%;width:60%;background:#17181a}
-.wf-f .f{height:9%;background:none;box-shadow:inset 0 0 0 1px #d6d9df}.wf-f .b{height:10%;background:#266df1}.wf-f .t{display:flex;gap:6%;height:8%;background:none}.wf-f .t u{flex:1;border-radius:3px;box-shadow:inset 0 0 0 1px #d6d9df}.wf-f .t u.on{background:#266df1;box-shadow:none}
-.bad .wf-f{background:#fbfbfc}.bad .wf-f .h,.bad .wf-f .h2{background:#c9ccd2}.bad .wf-f .b{background:#d4d6db}
-.wf-f em{align-self:center;margin:auto;width:28%;aspect-ratio:1;border-radius:50%;border:2px solid #e2e4e9;border-top-color:#9a9da4}
-.wf-g{position:absolute;left:calc(50% + 4px);right:-4px;top:-6px;bottom:-6px;display:grid;place-items:center;border-radius:12px;isolation:isolate;opacity:clamp(0,calc((var(--q) - .52)*6),1)}
-.wf-g::before,.wf-g::after{content:"";position:absolute;inset:0;border-radius:12px;z-index:-1}.wf-g::before{background:#e5484e;opacity:.07}.wf-g::after{border:1px solid #e5484e;opacity:.3}
-.wf-g span{padding:7px 12px;border-radius:8px;background:#fff;font:500 12px/1 "Geist Mono",monospace;color:#e5484e;border:1px solid #e5484e}
-.wf-3,.wf-ph{position:absolute;top:0;bottom:-10px;width:0;pointer-events:none}
-.wf-3{left:50%;top:30px;border-left:1.5px dashed #e5484e}.wf-3 span{position:absolute;left:8px;bottom:-4px;white-space:nowrap;font:500 11px/1 "Geist Mono",monospace;color:#e5484e;background:#fff;padding:2px 4px}
-.wf-ph{left:calc((var(--q)*var(--span) + .5)/var(--cols)*100%);border-left:2px solid #266df1}.wf-ph::before{content:"";position:absolute;top:-5px;left:-6px;width:10px;height:10px;border-radius:50%;background:#266df1}
-.wf-k{margin:28px 0 0;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
-main:has(.wfs) .vs-t{font:400 clamp(36px,3.6vw,64px)/1.04 Georgia,"Times New Roman",serif;letter-spacing:-.028em;max-width:12em}
-/* websites: VS strikes and ticks arrive in turn */
-.vs-g[data-in] .vs-c.x li{text-decoration:none}.vs-g[data-in] .vs-c.x li span{background:linear-gradient(currentColor,currentColor) 0 58%/calc(clamp(0,calc(var(--p,1)*6 - var(--r,0) - 1),1)*100%) 1.5px no-repeat}
-.vs-g[data-in] .vs-c.v li{opacity:clamp(0,calc(var(--p,1)*6 - var(--r,0) - 1.5),1);transform:translateX(calc((1 - clamp(0,calc(var(--p,1)*6 - var(--r,0) - 1.5),1))*-14px))}
-.vs-c li:nth-child(2){--r:1}.vs-c li:nth-child(3){--r:2}.vs-c li:nth-child(4){--r:3}
-/* websites: the first screen as a line drawing */
-.wan{border-top:1px solid var(--ln)}.wan-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(96px,8vw,150px) var(--pad) clamp(64px,5vw,96px)}
-.wan-h{text-align:center}.wan-h .fu-lab{display:inline-block}.wan-t{margin:22px auto 0;max-width:12em;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em;text-wrap:balance}
-.wan-s{position:relative;aspect-ratio:12/7;margin-top:clamp(40px,4vw,72px)}
-.wan-s::before{content:"";position:absolute;left:31%;right:31%;top:0;bottom:0;border-radius:18px;background:#fcfcfd radial-gradient(circle,#d3d6de .8px,transparent 1.2px) 0 0/10px 10px;box-shadow:0 0 0 1px var(--ln)}
-.wan-s svg{position:relative;display:block;width:100%;height:100%;overflow:visible}
-.wan-s .wp{--d:clamp(0,calc(var(--p,1)*2.4),1)}
-.wan-s .wp *{fill:none;stroke:#17181a;stroke-width:2;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--d))}
-.wan-s .wp .wl{stroke:#b9bdc6;stroke-width:1.5}.wan-s .wp .wk{stroke:#b9bdc6;stroke-width:5;stroke-dasharray:none;opacity:var(--d)}.wan-s .wp .wk.ws{stroke-width:4}
-.wan-s .wp .whd{stroke:#17181a;stroke-width:12;stroke-dasharray:none;opacity:var(--d)}.wan-s .wp .wg{stroke:#cfd2d9;stroke-width:4;stroke-dasharray:none;opacity:var(--d)}
-.wan-s .wp .wbt{fill:#266df1;stroke:none;opacity:var(--d)}.wan-s .wp .ww{stroke:#fff;stroke-width:4;stroke-dasharray:none;opacity:var(--d)}.wan-s .wp .wpk{fill:#e4ebfe;stroke:#266df1;stroke-width:1.5;stroke-dasharray:none;opacity:var(--d)}
-.wan-s .ld{--e:clamp(0,calc(var(--p,1)*3.4 - 1.2 - var(--i)*.38),1)}
-.wan-s .ld path{fill:none;stroke:var(--c);stroke-width:1.6;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--e))}.wan-s .ld circle{fill:#fff;stroke:var(--c);stroke-width:2.5;opacity:clamp(0,calc(var(--e)*6),1)}
-.ld-a,.wan-a{--c:#266df1}.ld-b,.wan-b{--c:#f0a001}.ld-c,.wan-c{--c:#8b5cf6}.ld-d,.wan-d{--c:#0ea5a0}
-.wan-o{position:absolute;width:25.5%;opacity:clamp(0,calc(var(--p,1)*3.4 - 1.5 - var(--i)*.38),1)}
-.wan-a,.wan-b{left:0;text-align:right}.wan-c,.wan-d{left:74%}
-.wan-o b{display:flex;align-items:center;gap:12px;font:400 clamp(24px,2.1vw,38px)/1.05 Georgia,"Times New Roman",serif;letter-spacing:-.02em}
-.wan-a b,.wan-b b{flex-direction:row-reverse}
-.wan-o b::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:var(--c)}
-.wan-o span{display:block;margin-top:12px;font-size:clamp(14.5px,.95vw,17px);line-height:1.4;color:var(--t2)}.wan-a span,.wan-b span{margin-left:auto;max-width:18em}.wan-c span,.wan-d span{max-width:18em}
-/* websites: one visit on black */
-main:has(.wfs) .jr{position:relative}
-main:has(.wfs) .jr::before{content:"";position:absolute;top:0;left:max(100px,calc((100vw - 1390px)/2));right:max(100px,calc((100vw - 1390px)/2));height:240px;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px);-webkit-mask-image:linear-gradient(180deg,#000,transparent);mask-image:linear-gradient(180deg,#000,transparent)}
-main:has(.wfs) .jr-i{position:relative;z-index:1}main:has(.wfs) .jr-h{padding-top:clamp(140px,12vw,220px)}
-main:has(.wfs) .jr-h .fu-lab{grid-column:1/-1;color:#8f9197}
-main:has(.wfs) .jr-h .st-t{font:400 clamp(38px,4vw,72px)/1.04 Georgia,"Times New Roman",serif;letter-spacing:-.028em;max-width:12em}
-main:has(.wfs) .jr ol{position:relative}main:has(.wfs) .jr ol::after{content:"";position:absolute;top:-1px;left:0;height:2px;width:calc(clamp(0,calc(var(--p,1)*1.5 - .1),1)*100%);background:#266df1}
-main:has(.wfs) .jr li{--v:clamp(0,calc(var(--p,1)*6 - var(--i)*1.1 - .3),1);opacity:calc(.25 + var(--v)*.75)}
-main:has(.wfs) .jr li::before{background:#fff;color:#101010}
-main:has(.wfs) .jr li time{display:block;margin-top:14px;font:500 11px/1 "Geist Mono",monospace;color:#7fa8f7}
-main:has(.wfs) .jr li b{font:400 clamp(22px,1.7vw,30px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.015em}
-/* websites: questions as a ruled index */
-main:has(.wfs) .fa-g{display:block;padding:clamp(88px,7vw,130px) var(--pad)}main:has(.wfs) .fa-t{border:0;padding:0;min-height:0;position:static;background:none}
-main:has(.wfs) .fa-t .st-t{margin:0 0 clamp(36px,3vw,56px);font:400 clamp(40px,4.4vw,80px)/1 Georgia,"Times New Roman",serif;letter-spacing:-.03em}
-main:has(.wfs) .fa dl{margin:0;padding:0;counter-reset:q;border-top:1.5px solid var(--ink)}
-main:has(.wfs) .fa dl div{display:grid;grid-template-columns:5em minmax(0,1.1fr) minmax(0,.9fr);gap:10px 32px;align-items:baseline;padding:clamp(26px,2.4vw,40px) 0;border-bottom:1px solid var(--ln);counter-increment:q}
-main:has(.wfs) .fa dl div::before{content:"0" counter(q);font:500 12px/1 "Geist Mono",monospace;color:#266df1}
-main:has(.wfs) .fa dt{font-size:clamp(22px,1.9vw,34px);line-height:1.15;font-weight:500;letter-spacing:-.022em}
-main:has(.wfs) .fa dd{margin:0;font-size:clamp(15.5px,1.05vw,19px);line-height:1.42;color:var(--t2)}
-/* websites: the hero phone opens like a fast page */
-@keyframes wfin{from{opacity:0;transform:translateY(8px)}}
-.hs-r .ph-s>*{animation:wfin .5s cubic-bezier(.2,.7,.2,1) both}.hs-r .ph-s>:nth-child(2){animation-delay:.12s}.hs-r .ph-s>:nth-child(3){animation-delay:.24s}.hs-r .ph-s>:nth-child(4){animation-delay:.36s}
-.hs-r .ph-c{animation:wfin .6s .5s cubic-bezier(.2,.7,.2,1) both}.hs-r .ph-c.c2{animation-delay:.62s}.hs-r .ph-c.c3{animation-delay:.74s}
-@media(prefers-reduced-motion:reduce){.hs-r .ph-s>*,.hs-r .ph-c{animation:none}}
-@media(max-width:860px){.wfs-h{grid-template-columns:minmax(0,1fr)}.wf-t{--cols:7;--span:6}.wf-s .wf-f:nth-child(even):not(.wf-g),.wf-x span:nth-child(even){display:none}.wf-x,.wf-s{gap:6px}.wf-g{left:calc(50% + 3px)}.wf-g span{font-size:10px;padding:5px 7px;text-align:center}
-.wan-s{aspect-ratio:auto;overflow:hidden}.wan-s::before{display:none}.wan-s svg{width:250%;height:auto;margin-left:-75%}.wan-s .ld{display:none}
-.wan-o{position:static;width:auto;text-align:left;padding:22px 0;border-top:1px solid var(--ln);opacity:1}.wan-a b,.wan-b b{flex-direction:row}.wan-o b{font-size:26px}.wan-a span,.wan-b span{margin-left:0}
-main:has(.wfs) .jr ol{grid-template-columns:minmax(0,1fr)}main:has(.wfs) .jr li{border-left:0;border-top:1px solid var(--dl);opacity:1}
-main:has(.wfs) .fa dl div{grid-template-columns:minmax(0,1fr)}}
+/* ============ websites, redone ============ */
+.wbx{border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 2px 4px rgba(23,24,26,.04),0 44px 90px -44px rgba(30,40,110,.5);overflow:hidden}
+.wbx-b{display:flex;align-items:center;gap:7px;height:38px;padding:0 14px;border-bottom:1px solid #eceef2;background:#fafafb}.wbx-b i{width:10px;height:10px;border-radius:50%;background:#e2e4e8}
+.wbx-b span{display:flex;align-items:center;margin-left:16px;flex:0 1 300px;height:24px;padding:0 12px;border-radius:7px;background:#f0f1f4;font:500 11.5px/1 "Geist Mono",monospace;color:#8a8d93}
+.wbx-v{position:relative;overflow:hidden}
+.wsm{color:#17181a;background:#fff}
+.wsm-n{display:flex;align-items:center;gap:2em;height:4.4em;padding:0 2.2em;border-bottom:1px solid #eef0f3}
+.wsm-n b{display:flex;align-items:center;gap:.6em;margin-right:auto;font-weight:640;letter-spacing:-.02em}.wsm-n b i{width:1.4em;height:1.4em;border-radius:.4em;background:#17181a}
+.wsm-n span{color:#6b6e75;font-size:.92em}.wsm-n em{font-style:normal;padding:.65em 1.1em;border-radius:.6em;background:#266df1;color:#fff;font-weight:560;font-size:.92em}
+.wsm-g{display:grid;grid-template-columns:1.15fr .85fr;gap:2.6em;padding:3.2em 2.2em 2.8em}
+.wsm-k{margin:0;font:500 .78em/1 "Geist Mono",monospace;color:#8a8d93}
+.wsm-t h3{margin:.75em 0 0;font-size:3.1em;line-height:1;font-weight:640;letter-spacing:-.045em}
+.wsm-s{margin:1.1em 0 0;max-width:24em;line-height:1.45;color:#5d6067}
+.wsm-p{display:grid;grid-template-columns:repeat(3,1fr);gap:.7em;margin-top:2.2em}.wsm-p i{aspect-ratio:4/3;border-radius:.7em;background:repeating-linear-gradient(135deg,#eceef2 0 2px,#f7f8fa 2px 7px)}
+.wsm-b{align-self:start;display:grid;gap:.8em;padding:1.4em;border-radius:1em;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.09),0 22px 44px -26px rgba(30,40,110,.4)}
+.wsm-b>b{font-size:1.15em;font-weight:600;letter-spacing:-.02em}
+.wsm-b label{display:grid;gap:.45em;font-size:.8em;color:#6b6e75}.wsm-b u{display:flex;align-items:center;height:2.6em;padding:0 .9em;border-radius:.6em;box-shadow:inset 0 0 0 1px #dfe1e6;text-decoration:none;color:#17181a;font-size:1.2em;font-weight:520}
+.wsm-b p{margin:.3em 0 0;font-size:.8em;color:#6b6e75}
+.wsm-tm{display:grid;grid-template-columns:repeat(3,1fr);gap:.45em}.wsm-tm span{display:grid;place-items:center;height:2.4em;border-radius:.55em;box-shadow:inset 0 0 0 1px #dfe1e6;font-size:.82em;font-weight:520}.wsm-tm span.on{background:#266df1;color:#fff;box-shadow:none}
+.wsm-b em{display:grid;place-items:center;height:2.9em;border-radius:.7em;background:#17181a;color:#fff;font-style:normal;font-weight:560;font-size:.95em}
+/* hero: the site bleeds off the right */
+.wbh{border-bottom:1px solid var(--ln);overflow:hidden}
+.wbh-g{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr);min-height:min(880px,calc(100vh - 64px));border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.wbh-t{align-self:center;padding:clamp(48px,5vw,96px) var(--pad)}
+.wbh h1{margin:22px 0 0;max-width:7.5em;font-size:clamp(46px,4.7vw,88px);line-height:.98;font-weight:600;letter-spacing:-.048em;white-space:normal}
+.wbh .sub{margin:26px 0 0;max-width:25em;font-size:clamp(16px,1.12vw,20px);line-height:1.45;color:var(--t2)}
+.wbh .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:34px}
+.wbh-p{position:relative;display:flex;align-items:center;padding:clamp(48px,5vw,96px) 0;border-left:1px solid var(--ln);background:#fcfcfd radial-gradient(circle,#d3d6de .8px,transparent 1.2px) 0 0/10px 10px}
+.wbh-p .wbx{flex:1;min-width:0;margin:0 clamp(28px,3.4vw,64px);animation:wbup .9s cubic-bezier(.2,.7,.2,1) both}
+.wbh .wsm{font-size:clamp(10.5px,.84vw,14px)}
+.wbh-k{position:absolute;left:clamp(18px,2vw,40px);bottom:clamp(44px,7vh,96px);z-index:2;display:flex;gap:12px;align-items:flex-start;padding:14px 18px 15px;border-radius:14px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 26px 50px -24px rgba(30,40,110,.5);animation:wbup .7s 1.2s cubic-bezier(.2,.7,.2,1) both}
+.wbh-k i{flex:none;width:9px;height:9px;margin-top:5px;border-radius:50%;background:#266df1}.wbh-k b{display:block;font-size:14.5px;font-weight:580;letter-spacing:-.012em}.wbh-k span{display:block;margin-top:4px;font-size:12.5px;color:var(--t2)}
+.wbh-x{position:absolute;left:clamp(32px,4vw,80px);bottom:18px;margin:0;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
+@keyframes wbup{from{opacity:0;transform:translateY(18px)}}
+@media(prefers-reduced-motion:reduce){.wbh-p .wbx,.wbh-k{animation:none}}
+/* before and after: a wipe that follows the scroll */
+.wbw{border-top:1px solid var(--ln)}.wbw-i{border-left:1px solid var(--ln);border-right:1px solid var(--ln);padding:clamp(100px,8.4vw,160px) var(--pad) clamp(80px,6.4vw,120px)}
+.wbw-h{text-align:center}.wbw-h .fu-lab{display:inline-block}
+.wbw-t{margin:22px auto 0;max-width:11em;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em;text-wrap:balance}
+.wbw-s{--w:clamp(0,calc((var(--p,1) - .12)*1.5),1);max-width:1120px;margin:clamp(52px,4.6vw,84px) auto 0}
+.wbw .wsm,.wbw .wsb{font-size:clamp(10px,.94vw,15px)}
+.wbw-b{position:absolute;inset:0;clip-path:inset(0 0 0 calc(var(--w)*100%))}
+.wbw-r{position:absolute;top:0;bottom:0;left:calc(var(--w)*100%);z-index:3;border-left:2px solid #17181a}
+.wbw-r::after{content:"";position:absolute;top:50%;left:-14px;width:22px;height:22px;margin-top:-11px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #17181a}
+.wbw-r span{opacity:calc(clamp(0,calc((1 - var(--w))*10),1)*clamp(0,calc(var(--w)*10),1));position:absolute;top:16px;padding:6px 10px;border-radius:7px;font:500 11px/1 "Geist Mono",monospace;white-space:nowrap;color:#fff}.wbw-r span:first-child{right:12px;background:#266df1}.wbw-r span:last-child{left:12px;background:#17181a}
+.wsb{position:absolute;inset:0;display:flex;flex-direction:column;background:#fbfbfc;color:#7b7e85}
+.wsb-n{display:flex;align-items:center;gap:1.4em;height:4.4em;padding:0 2.2em;border-bottom:1px solid #e9eaee;font-size:.9em}.wsb-n b{margin-right:auto;color:#5f6268;font-weight:600}
+.wsb-h{position:relative;display:flex;align-items:center;justify-content:space-between;gap:2em;height:40%;padding:0 2em;background:linear-gradient(180deg,#c9ccd2,#b4b7be);color:#fff;text-align:center}
+.wsb-h>div:not(.wsb-d){flex:1}.wsb-h b{display:block;font-size:2.3em;font-weight:500;letter-spacing:-.02em}.wsb-h p{margin:.5em 0 0;font-size:1.05em}.wsb-h em{display:inline-block;margin-top:1.2em;padding:.6em 1.3em;border:1px solid rgba(255,255,255,.85);font-style:normal;font-size:.85em}
+.wsb-a{font-size:2.6em;line-height:1}.wsb-d{position:absolute;left:0;right:0;bottom:1em;display:flex;justify-content:center;gap:.5em}.wsb-d i{width:.55em;height:.55em;border-radius:50%;background:rgba(255,255,255,.5)}.wsb-d i.on{background:#fff}
+.wsb-g{flex:1;display:grid;grid-template-columns:1.2fr .8fr;gap:2.4em;padding:2em 2.2em}
+.wsb-x b,.wsb-f b{display:block;margin-bottom:.9em;color:#5f6268;font-weight:560}.wsb-x u{display:block;height:.6em;margin-bottom:.75em;border-radius:3px;background:#e3e5e9}.wsb-x u.s{width:62%}
+.wsb-f{display:grid;align-content:start;gap:.6em;padding:1.2em;border-radius:.4em;background:#f1f2f4}.wsb-f label{display:grid;gap:.3em;font-size:.8em}.wsb-f u{display:block;height:2em;background:#fff;box-shadow:inset 0 0 0 1px #dcdee2}.wsb-f u.t{height:4em}
+.wsb-f em{justify-self:start;padding:.5em 1.2em;background:#c4c6cc;color:#fff;font-style:normal;font-size:.85em}
+.wsb-c{position:absolute;left:1.4em;right:1.4em;bottom:1.4em;display:flex;align-items:center;justify-content:space-between;gap:1em;padding:1em 1.3em;border-radius:.5em;background:#5f6268;color:#fff;font-size:.85em}.wsb-c em{padding:.45em 1.1em;border-radius:.3em;background:#fff;color:#5f6268;font-style:normal}
+.wbw-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(24px,3vw,56px);margin-top:clamp(40px,3.4vw,60px)}
+.wbw-o{--v:clamp(0,calc((var(--w) - var(--t))*7 + .3),1);position:relative;padding-top:22px;border-top:1px solid var(--ln);opacity:calc(.22 + var(--v)*.78)}
+.wbw-o::before{content:"";position:absolute;top:-1px;left:0;height:2px;width:calc(var(--v)*100%);background:var(--c)}
+.wbw-o i{display:block;width:9px;height:9px;border-radius:50%;background:var(--c)}
+.wbw-o b{display:block;margin-top:16px;font:400 clamp(22px,1.75vw,31px)/1.1 Georgia,"Times New Roman",serif;letter-spacing:-.02em}.wbw-o span{display:block;margin-top:10px;max-width:22em;font-size:clamp(14.5px,.95vw,17px);line-height:1.42;color:var(--t2)}
+.wbw-x,.wbm-x{margin:28px 0 0;font:500 11px/1 "Geist Mono",monospace;color:var(--t3)}
+/* the site map, drawn on black */
+.wbm{position:relative;background:var(--dk);color:#fff}
+.wbm::before,.wbm::after{content:"";position:absolute;left:max(100px,calc((100vw - 1390px)/2));right:max(100px,calc((100vw - 1390px)/2));height:240px;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.075) 0 1px,transparent 1px 7px)}
+.wbm::before{top:0;-webkit-mask-image:linear-gradient(180deg,#000,transparent);mask-image:linear-gradient(180deg,#000,transparent)}.wbm::after{bottom:0;-webkit-mask-image:linear-gradient(0deg,#000,transparent);mask-image:linear-gradient(0deg,#000,transparent)}
+.wbm-i{position:relative;z-index:1;border-left:1px solid var(--dl);border-right:1px solid var(--dl);padding:clamp(150px,13vw,240px) var(--pad)}
+.wbm-h{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:24px 64px;align-items:end}.wbm-h .fu-lab{grid-column:1/-1;color:#8f9197}
+.wbm-t{margin:0;max-width:10em;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em}
+.wbm-s{margin:0;max-width:26em;font-size:clamp(16px,1.1vw,19px);line-height:1.45;color:#a3a5aa}
+.wbm-d{margin-top:clamp(64px,5.6vw,104px)}.wbm-d svg{display:block;width:100%;height:auto;overflow:visible}
+.wm-e{--e:clamp(0,calc((var(--p,1) - var(--s))*3.2),1);fill:none;stroke:rgba(255,255,255,.34);stroke-width:1.5;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--e))}.wm-e.b{stroke:#266df1;stroke-width:1.8}
+.wm-n{--e:clamp(0,calc((var(--p,1) - var(--s))*5),1);opacity:var(--e)}
+.wm-n rect{fill:#1a1b1e;stroke:rgba(255,255,255,.24)}.wm-n text{fill:#fff;font-size:15px;font-weight:500;letter-spacing:-.01em;text-anchor:middle}
+.wm-n.k rect{fill:#266df1;stroke:none}.wm-n.k text{font-weight:600}
+.wm-c{fill:#8f9197;font:500 12px "Geist Mono",monospace;text-anchor:middle;opacity:clamp(0,calc((var(--p,1) - var(--s))*5),1)}
+.wbm-x{color:#6f7177}
+/* the free check, with an example result */
+.wbc{border-top:1px solid var(--ln)}
+.wbc-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-left:1px solid var(--ln);border-right:1px solid var(--ln)}
+.wbc-t{align-self:center;padding:clamp(88px,7.4vw,140px) var(--pad)}
+.wbc-h{margin:22px 0 0;font:400 clamp(40px,4.4vw,80px)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.03em}
+.wbc-s{margin:22px 0 34px;max-width:26em;font-size:clamp(16px,1.1vw,19px);line-height:1.45;color:var(--t2)}.wbc-t .uc-f{max-width:540px}
+.wbc-p{display:grid;place-items:center;padding:clamp(60px,5vw,100px) clamp(24px,3vw,60px);border-left:1px solid var(--ln);background:#fcfcfd radial-gradient(circle,#d3d6de .8px,transparent 1.2px) 0 0/10px 10px}
+.wbc-r{width:100%;max-width:470px;border-radius:16px;background:#fff;box-shadow:0 0 0 1px rgba(23,24,26,.08),0 2px 4px rgba(23,24,26,.04),0 36px 70px -34px rgba(30,40,110,.45);overflow:hidden}
+.wbc-b{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid #eceef2;font-size:13.5px}.wbc-b b{font-weight:600}.wbc-b span{font:500 12px/1 "Geist Mono",monospace;color:#8a8d93}.wbc-b em{margin-left:auto;font:500 11px/1 "Geist Mono",monospace;font-style:normal;color:#8a8d93}
+.wbc-x{--v:clamp(0,calc(var(--p,1)*4 - var(--i)*.8 - .6),1);display:flex;gap:14px;padding:20px 20px 22px;border-bottom:1px solid #f0f1f4;opacity:var(--v);transform:translateY(calc((1 - var(--v))*12px))}.wbc-x:last-child{border-bottom:0}
+.wbc-x i{flex:none;width:10px;height:10px;margin-top:3px;border-radius:50%;background:var(--c)}
+.wbc-x span{display:block;font:500 11px/1 "Geist Mono",monospace;color:#8a8d93}.wbc-x b{display:block;margin-top:9px;font-size:17.5px;line-height:1.3;font-weight:540;letter-spacing:-.016em}
+/* questions as a ruled index */
+main:has(.wbh) .fa-g{display:block;padding:clamp(88px,7vw,130px) var(--pad)}main:has(.wbh) .fa-t{border:0;padding:0;min-height:0;background:none}
+main:has(.wbh) .fa-t .st-t{margin:0 0 clamp(36px,3vw,56px);font:400 clamp(40px,4.4vw,80px)/1 Georgia,"Times New Roman",serif;letter-spacing:-.03em}
+main:has(.wbh) .fa dl{margin:0;padding:0;counter-reset:q;border-top:1.5px solid var(--ink)}
+main:has(.wbh) .fa dl div{display:grid;grid-template-columns:5em minmax(0,1.1fr) minmax(0,.9fr);gap:10px 32px;align-items:baseline;padding:clamp(26px,2.4vw,40px) 0;border-bottom:1px solid var(--ln);counter-increment:q}
+main:has(.wbh) .fa dl div::before{content:"0" counter(q);font:500 12px/1 "Geist Mono",monospace;color:#266df1}
+main:has(.wbh) .fa dt{font-size:clamp(22px,1.9vw,34px);line-height:1.15;font-weight:500;letter-spacing:-.022em}main:has(.wbh) .fa dd{margin:0;font-size:clamp(15.5px,1.05vw,19px);line-height:1.42;color:var(--t2)}
+@media(max-width:860px){.wbh-g{grid-template-columns:minmax(0,1fr);min-height:0}.wbh-t{padding:44px 20px 36px}.wbh h1{font-size:44px}
+.wbh-p{border-left:0;border-top:1px solid var(--ln);padding:28px 0 64px}.wbh-p .wbx{flex:none;width:600px;margin:0 0 0 20px}.wbc-b span{display:none}.wbh .wsm{font-size:9px}.wbh-k{left:20px;bottom:30px}.wbh-x{left:20px;bottom:12px}
+.wbw .wsm,.wbw .wsb{font-size:calc((100vw - 42px)/70)}.wbw-n{grid-template-columns:minmax(0,1fr)}
+.wbm-h{grid-template-columns:minmax(0,1fr)}.wbm-i{padding:120px var(--pad)}.wbm-d{overflow-x:auto;margin-right:calc(var(--pad)*-1)}.wbm-d svg{width:820px}
+.wbc-g{grid-template-columns:minmax(0,1fr)}.wbc-t{padding:64px var(--pad) 40px}.wbc-p{border-left:0;border-top:1px solid var(--ln);padding:40px 16px}
+main:has(.wbh) .fa dl div{grid-template-columns:minmax(0,1fr)}}
+
 
 
 /* ============ /answering ============ */
@@ -2185,7 +2262,7 @@ CSS_REST = r"""
 # its own surfaces (dark, tint, blue) and its own way of moving from one section to the next (sheet, arc, angle, rule, expand).
 # The top of each page is left alone. One row per page; nothing here is shared between two pages on purpose.
 # =====================================================================================
-KIND = {'scr': 'scr', 'anh': 'top', 'anx': 'anx', 'aq': 'aq', 'fuh': 'top', 'fub': 'fub', 'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
+KIND = {'wbh': 'top', 'wbw': 'wbw', 'wbm': 'wbm', 'wbc': 'wbc', 'scr': 'scr', 'anh': 'top', 'anx': 'anx', 'aq': 'aq', 'fuh': 'top', 'fub': 'fub', 'bkg': 'bkg', 'rvqs': 'rvqs', 'rvt': 'rvt', 'rvd': 'rvd', 'ivc': 'ivc', 'v3': 'v3', 'acd': 'acd', 'ewk': 'ewk', 'rvc': 'rvc', 'rvp': 'rvp', 'rh': 'top', 'ivn': 'ivn', 'ivb': 'ivb', 'ivl': 'ivl', 'lvg': 'lvg', 'lvc': 'lvc', 'hs': 'top', 'ih': 'top', 'dh': 'top', 'st': 'st', 'sx': 'sx', 'sp': 'sp', 'hw': 'hw', 'bl': 'bl', 'pg': 'pg', 'ic': 'ic', 'as': 'as', 'fq': 'fq',
         'fa': 'faq', 'qc': 'faq', 'qf': 'faq', 'cv': 'faq', 'cl': 'cl', 'itg': 'itg'}
 RHYTHM = {
     'phone-agent': ('sx sp hw', {'sx': 's-tn t-sheet v-c', 'sp': 'v-f', 'faq': 't-arc'}),
@@ -3853,6 +3930,7 @@ PAGES = [
     ('answering', 'Answering', 'Missed calls and new leads get a text back from your business in seconds, even after hours and while you are on a job.', ANSWERING),
 ]
 if __name__ == '__main__':
+    SIDE.pop('websites', None)
     for slug, title, desc, body in PAGES:
         _b = plug(slug, liven(slug, trans(slug, figs(slug, full(slug, flag(slug, body))))))
         _b = re.sub(r'(<section class="pt [^"]*") data-sp', r'\1', _b)
