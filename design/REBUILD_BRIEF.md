@@ -667,3 +667,12 @@ Done:
 - Lead vetting: gate chart no longer pinned (data-in).
 - All build pages + Free audit: the pinned zoom-through transition is now a plain statement band that scrolls past (data-sp stripped from .pt). The per-page drawings inside those transitions no longer show.
 Still pinning: A day (six sections), homepage (left alone on purpose). Estimates (ewk) and Free audit (fa3) keep a sticky picture beside scrolling text, which does not stop the page.
+
+### 23w. Mimic the homepage on every page (Nov 27) — standing rule
+Sam: everything custom per page (fonts, texts, headers, diagrams); every page must have the homepage's mix. What the homepage actually mixes (walked top to bottom):
+- Type: sans headline; serif (Georgia) for quiet centred statements and for big section titles; mono labels in square brackets above statements; small sans body.
+- Headers: centred with a pill; centred serif with a bracket label; left label + statement paragraph; one large white line on a black band; serif titles with a mono index tag.
+- Diagrams: product window with a line chart; dot plot; coloured bars (blue, amber, red); small tables under "How you'd know / What it costs"; three stacking black bars; square clusters going from scattered to ordered; isometric stacked-layer line drawings on black; the clock disc.
+- Grounds: white, pale tint, black bands, one long black section.
+Applied to Reviews: problem statement centred in serif under a bracket label; sign titles in serif; bracket labels on the chart, comparison and steps; comparison headed by one large white line on black; the missed-reviews figure in red.
+To do with this list: Invoicing, Estimates, Lead vetting, Booking, Follow-up, Free audit, Who it's for, then the remaining pages.
